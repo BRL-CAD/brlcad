@@ -169,7 +169,7 @@ int main(int argc, char **argv)
 			/*  from 1 position.  */
 
   /*  Check to see if arguments implimented correctly.  */
-  if(argv[1] == NULL || argv[2] == NULL)
+  if (argv[1] == NULL || argv[2] == NULL)
     {
       (void)fprintf(stderr, "\nusage:  secpass file.g objects\n\n");
     }
@@ -181,9 +181,9 @@ int main(int argc, char **argv)
       (void)fprintf(stdout, "Write output to standard out (0) or a file(1) ");
       (void)fprintf(stdout, "not at all (2)?  ");
       (void)fflush(stdout);
-      (void)scanf("%d",&iwrite);
-      if((iwrite != 0) && (iwrite != 1)) iwrite=2;
-      if(iwrite == 1)
+      (void)scanf("%d", &iwrite);
+      if ((iwrite != 0) && (iwrite != 1)) iwrite=2;
+      if (iwrite == 1)
 	{
 	  (void)fprintf(stdout, "Enter name of output file (15 char max).  ");
 	  (void)fflush(stdout);
@@ -202,11 +202,11 @@ int main(int argc, char **argv)
       (void)printf("\t 0 - PRISM File\n");
       (void)printf("\t 1 - Generic File\n");
       (void)fflush(stdout);
-      (void)scanf("%d",&typeout);
+      (void)scanf("%d", &typeout);
 
       /*  Read name of file to write conductivity information  */
       /*  to for use in PRISM.  */
-      if(typeout == 0)
+      if (typeout == 0)
 	{
 	  (void)fprintf(stdout, "Enter name of file to be created for PRISM ");
 	  (void)fprintf(stdout, "conductivity\ninformation (15 char max).  ");
@@ -220,12 +220,12 @@ int main(int argc, char **argv)
 	  (void)printf("Which release of PRISM is being used, 2.0 (2) ");
 	  (void)printf("or 3.0 (3)?  ");
 	  (void)fflush(stdout);
-	  (void)scanf("%d",&prmrel);
-	  if(prmrel != 3) prmrel = 2;
+	  (void)scanf("%d", &prmrel);
+	  if (prmrel != 3) prmrel = 2;
 	}
 
       /*  Read generic file name if necessary.  */
-      if(typeout == 1)
+      if (typeout == 1)
 	{
 	  (void)printf("Enter name of generic file to be created (15 char ");
 	  (void)printf("max).  ");
@@ -243,7 +243,7 @@ int main(int argc, char **argv)
       (void)fprintf(stdout, "\t3 - minimum length\n");
       (void)fprintf(stdout, "\t4 - maximum length\n");
       (void)fflush(stdout);
-      (void)scanf("%d",&itype);
+      (void)scanf("%d", &itype);
 
       /*  Read name of file to write conductivity information to  */
       /*  in table format.  */
@@ -269,35 +269,35 @@ int main(int argc, char **argv)
       (void)printf("Should there be 3 sets of orhogonal rays fired ");
       (void)printf("(0) or 1 set (1)?\n\t");
       (void)fflush(stdout);
-      (void)scanf("%d",&ifire);
-      if(ifire != 0) ifire = 1;
-      if(ifire == 0)
+      (void)scanf("%d", &ifire);
+      if (ifire != 0) ifire = 1;
+      if (ifire == 0)
 	{
 	  (void)printf("3 sets of orthogonal rays will be fired.\n");
 	}
-      if(ifire == 1)
+      if (ifire == 1)
 	{
 	  (void)printf("1 set of rays will be fired.\n");
 	}
       (void)fflush(stdout);
 
       /*  Write out file information.  */
-      if(iwrite ==1)
+      if (iwrite ==1)
 	{
 	  (void)fprintf(fp3, "\nsecond pass file:  %s\n", spfile);
 	  (void)fprintf(fp3, "material file:  %s\n", filemat);
-	  if(typeout == 0)
+	  if (typeout == 0)
 	    {
 	      (void)fprintf(fp3, "conductivity file for use ");
 	      (void)fprintf(fp3, "with PRISM:  %s\n", confile);
 	      (void)fprintf(fp3, "  (format is PRISM %d.0)\n", prmrel);
 	    }
-	  if(typeout == 1) (void)fprintf(fp3, "generic file:  %s\n", genfile);
+	  if (typeout == 1) (void)fprintf(fp3, "generic file:  %s\n", genfile);
 	  (void)fflush(fp3);
-	  if(itype == 1) (void)fprintf(fp3, "\taverage length being used\n");
-	  if(itype == 2) (void)fprintf(fp3, "\trms length being used\n");
-	  if(itype == 3) (void)fprintf(fp3, "\tminimum length being used\n");
-	  if(itype == 4) (void)fprintf(fp3, "\tmaximum length being used\n");
+	  if (itype == 1) (void)fprintf(fp3, "\taverage length being used\n");
+	  if (itype == 2) (void)fprintf(fp3, "\trms length being used\n");
+	  if (itype == 3) (void)fprintf(fp3, "\tminimum length being used\n");
+	  if (itype == 4) (void)fprintf(fp3, "\tmaximum length being used\n");
 	  (void)fprintf(fp3, "conductivity table file:  %s\n", tblfile);
 	  (void)fprintf(fp3, "error file:  %s\n\n", fileerr);
 	  (void)fflush(fp3);
@@ -305,15 +305,15 @@ int main(int argc, char **argv)
 
       /*  Read thermal conductivity file.  */
       fp5 = fopen(filemat, "r");
-      for(i=0; i<41; i++)
+      for (i=0; i<41; i++)
 	{
 	  (void)bu_fgets(line, 151, fp5);
-	  (void)sscanf(line, "%*d%*f%*f%*f%*f%lf",&k[i]);
+	  (void)sscanf(line, "%*d%*f%*f%*f%*f%lf", &k[i]);
 	}
 
       /*  Print out the thermal conductivity.  */
       /*
-       *	for(i=0; i<41; i++)
+       *	for (i=0; i<41; i++)
        *	{
        *	   (void)fprintf(stdout, "  thermal conductivity %d = %f\n", i, k[i]);
        *	   (void)fflush(stdout);
@@ -331,7 +331,7 @@ int main(int argc, char **argv)
 
       /*  Load desired objects.  */
       index = 2;	/*  Set index for rt_gettree.  */
-      while(argv[index] != NULL)
+      while (argv[index] != NULL)
 	{
 	  rt_gettree(rtip, argv[index]);
 	  index += 1;
@@ -343,7 +343,7 @@ int main(int argc, char **argv)
       (void)fprintf(stdout, "Number of regions in mged file:  %d\n", nmged);
       (void)fflush(stdout);
 
-      if(iwrite == 1)
+      if (iwrite == 1)
 	{
 	  (void)fprintf(fp3, "Number of regions in mged file:  %d\n", nmged);
 	  (void)fflush(fp3);
@@ -356,7 +356,7 @@ int main(int argc, char **argv)
       cond = (struct table *)bu_malloc( nmged * sizeof(struct table), "cond" );
       (void)fprintf(stdout, "cond malloced\n");
       (void)fflush(stdout);
-      for(i=0; i<nmged; i++)
+      for (i=0; i<nmged; i++)
 	{
 	  cond[i].shrarea = (double *)bu_malloc( nmged * sizeof(double), "cond[i].shrarea" );
 	  cond[i].avglen = (double *)bu_malloc( nmged * sizeof(double), "cond[i].avglen" );
@@ -373,13 +373,13 @@ int main(int argc, char **argv)
       (void)fflush(stdout);
 
       /*  All variables 'dimensioned', now zero all variables.  */
-      for(i=0; i<nmged; i++)
+      for (i=0; i<nmged; i++)
 	{
 	  cond[i].centroid[0] = (double)0.;
 	  cond[i].centroid[1] = (double)0.;
 	  cond[i].centroid[2] = (double)0.;
 	  cond[i].mat = (int)0;
-	  for(j=0; j<nmged; j++)
+	  for (j=0; j<nmged; j++)
 	    {
 	      cond[i].shrarea[j] = (double)0.;
 	      cond[i].avglen[j] = (double)0.;
@@ -402,11 +402,11 @@ int main(int argc, char **argv)
       (void)fflush(stdout);
 
       /*  Read number of regions in file.  */
-      (void)fscanf(fp, "%d\n",&numreg);
+      (void)fscanf(fp, "%d\n", &numreg);
       (void)fprintf(stdout, "The number of regions read was %d\n", numreg);
       (void)fflush(stdout);
 
-      if(iwrite == 1)
+      if (iwrite == 1)
 	{
 	  (void)fprintf(fp3, "number of regions read from second ");
 	  (void)fprintf(fp3, "pass file:  %d\n", numreg);
@@ -414,20 +414,20 @@ int main(int argc, char **argv)
 	}
 
       /*  Read all information in file.  */
-      for(i=0; i<numreg; i++)
+      for (i=0; i<numreg; i++)
 	{
-	  (void)fscanf(fp, "%*d%le%le%le%d\n",&cond[i].centroid[0],
+	  (void)fscanf(fp, "%*d%le%le%le%d\n", &cond[i].centroid[0],
 		       &cond[i].centroid[1],
-		       &cond[i].centroid[2],&cond[i].mat);
+		       &cond[i].centroid[2], &cond[i].mat);
 	  /*
 	   *	   (void)fprintf(stdout, "reg=%8d, centroid:  %10.0f, %10.0f, %10.0f\n",
 	   *		i, cond[i].centroid[0], cond[i].centroid[1], cond[i].centroid[2]);
 	   *	   (void)fflush(stdout);
 	   */
 
-	  for(j=0; j<numreg; j++)
+	  for (j=0; j<numreg; j++)
 	    {
-	      (void)fscanf(fp, "%*d%le\n",&cond[i].shrarea[j]);
+	      (void)fscanf(fp, "%*d%le\n", &cond[i].shrarea[j]);
 	      /*
 	       *		(void)fprintf(stdout, "\treg=%8d, area=%10.0f\n",
 	       *		   j, cond[i].shrarea[j]);
@@ -440,7 +440,7 @@ int main(int argc, char **argv)
 
       /*  Check that the number of regions in the mged file  */
       /*  and the second pass file are equal.  */
-      if(nmged != numreg)
+      if (nmged != numreg)
 	{
 	  (void)fprintf(stdout, "ERROR -- The number of regions in the mged\n");
 	  (void)fprintf(stdout, "file (%d) does not equal the number of\n",
@@ -450,7 +450,7 @@ int main(int argc, char **argv)
 	  (void)fprintf(stdout, "Watch for unexplained errors.\n");
 	  (void)fflush(stdout);
 
-	  if(iwrite == 1)
+	  if (iwrite == 1)
 	    {
 	      (void)fprintf(fp3, "ERROR -- The number of regions in the mged\n");
 	      (void)fprintf(fp3, "file (%d) does not equal the number of\n",
@@ -510,7 +510,7 @@ int main(int argc, char **argv)
 		    rtip->mdl_min[Z], rtip->mdl_max[Z]);
       (void)fflush(stdout);
 
-      if(iwrite == 1)
+      if (iwrite == 1)
 	{
 	  (void)fprintf(fp3, "Model minimum & maximum.\n");
 	  (void)fprintf(fp3, "\tX:  %f to %f\n\tY:  %f kto %f\n",
@@ -524,12 +524,12 @@ int main(int argc, char **argv)
       /*  User enters grid spacing.  All units are in mm.  */
       (void)fprintf(stdout, "Enter spacing (mm) between fired rays.  ");
       (void)fflush(stdout);
-      (void)scanf("%lf",&gridspace);
+      (void)scanf("%lf", &gridspace);
 
       (void)fprintf(stdout, "\ngrid spacing:  %f\n", gridspace);
       (void)fflush(stdout);
 
-      if(iwrite == 1)
+      if (iwrite == 1)
 	{
 	  (void)fprintf(fp3, "gridspacing:  %f\n\n", gridspace);
 	  (void)fflush(fp3);
@@ -580,7 +580,7 @@ int main(int argc, char **argv)
       ap.a_ray.r_dir[Y] = r[Y];
       ap.a_ray.r_dir[Z] = r[Z];
 
-      while(strtpt[Z] <= zmax)
+      while (strtpt[Z] <= zmax)
 	{	/*  START # 3  */
 
 	  iprev = (-1);	/*  No previous shots.  */
@@ -589,7 +589,7 @@ int main(int argc, char **argv)
 	  (void)rt_shootray ( &ap );
 
 	  strtpt[Y] += gridspace;
-	  if(strtpt[Y] > ymax)
+	  if (strtpt[Y] > ymax)
 	    {
 	      strtpt[Y] = ymin + gridspace / 2.;
 	      strtpt[Z] += gridspace;
@@ -608,7 +608,7 @@ int main(int argc, char **argv)
 	}	/*  END # 3  */
 
       /*  Shoot down 2nd & 3rd axes if necessary.  */
-      if(ifire == 0)
+      if (ifire == 0)
 	{						/*  START # 1000  */
 	  /*  Set up & shoot down the 2nd axis (y-axis).  */
 	  (void)printf("\nShooting down the 2nd axis.\n");
@@ -639,7 +639,7 @@ int main(int argc, char **argv)
 	  ap.a_ray.r_dir[Y] = r[Y];
 	  ap.a_ray.r_dir[Z] = r[Z];
 
-	  while(strtpt[Z] <= zmax)
+	  while (strtpt[Z] <= zmax)
 	    {						/*  START # 1010  */
 	      iprev = (-1);		/*  No previous shots.  */
 
@@ -647,7 +647,7 @@ int main(int argc, char **argv)
 	      (void)rt_shootray(&ap);
 
 	      strtpt[X] += gridspace;
-	      if(strtpt[X] > xmax)
+	      if (strtpt[X] > xmax)
 		{
 		  strtpt[X] = xmin + gridspace / 2.;
 		  strtpt[Z] += gridspace;
@@ -686,7 +686,7 @@ int main(int argc, char **argv)
 	  ap.a_ray.r_pt[Y] = r[Y];
 	  ap.a_ray.r_pt[Z] = r[Z];
 
-	  while(strtpt[Y] <= ymax)
+	  while (strtpt[Y] <= ymax)
 	    {						/*  START # 1020  */
 	      iprev = (-1);		/*  No previous shots.  */
 
@@ -694,7 +694,7 @@ int main(int argc, char **argv)
 	      (void)rt_shootray(&ap);
 
 	      strtpt[X] += gridspace;
-	      if(strtpt[X] > xmax)
+	      if (strtpt[X] > xmax)
 		{
 		  strtpt[X] = xmin + gridspace / 2.;
 		  strtpt[Y] += gridspace;
@@ -713,36 +713,36 @@ int main(int argc, char **argv)
 	}						/*  END # 1000  */
 
       /*  Calculate final length between centroid & shared surface area.  */
-      if(iwrite == 0)
+      if (iwrite == 0)
 	{
 	  (void)fprintf(stdout, "\n\nFinal numbers.\n");
 	  (void)fflush(stdout);
 	}
 
-      for(i=0; i<numreg; i++)
+      for (i=0; i<numreg; i++)
 	{
 
-	  if(iwrite == 0)
+	  if (iwrite == 0)
 	    {
-	      (void)fprintf(stdout, "reg#=%d, matid=%d\n",(i+1), cond[i].mat);
+	      (void)fprintf(stdout, "reg#=%d, matid=%d\n", (i+1), cond[i].mat);
 	      (void)fflush(stdout);
 	    }
 
-	  if(iwrite == 1)
+	  if (iwrite == 1)
 	    {
-	      (void)fprintf(fp3, "reg#=%d, matid=%d\n",(i+1), cond[i].mat);
+	      (void)fprintf(fp3, "reg#=%d, matid=%d\n", (i+1), cond[i].mat);
 	      (void)fflush(fp3);
 	    }
 
-	  for(j=0; j<numreg; j++)
+	  for (j=0; j<numreg; j++)
 	    {
-	      if(cond[i].numcal[j] > ZEROTOL)
+	      if (cond[i].numcal[j] > ZEROTOL)
 		{
 		  cond[i].avglen[j] /= cond[i].numcal[j];
 		  cond[i].rmslen[j] /= cond[i].numcal[j];
 		  cond[i].rmslen[j] = sqrt(cond[i].rmslen[j]);
 
-		  if(iwrite == 0)
+		  if (iwrite == 0)
 		    {
 		      (void)fprintf(stdout, "\tadjreg=%d, numcal=%f, shrarea=%f, ",
 				    (j+1), cond[i].numcal[j], cond[i].shrarea[j]);
@@ -753,7 +753,7 @@ int main(int argc, char **argv)
 		      (void)fflush(stdout);
 		    }
 
-		  if(iwrite == 1)
+		  if (iwrite == 1)
 		    {
 		      (void)fprintf(fp3, "\tadjreg=%d, numcal=%f, shrarea=%f, ",
 				    (j+1), cond[i].numcal[j], cond[i].shrarea[j]);
@@ -773,7 +773,7 @@ int main(int argc, char **argv)
 	    }
 	}
 
-      if(iwrite == 1)
+      if (iwrite == 1)
 	{
 	  /*  Print summary of all files used.  */
 	  (void)fprintf(fp3, "\n\nSUMMARY OF FILES USED & CREATED\n");
@@ -781,7 +781,7 @@ int main(int argc, char **argv)
 	  (void)fprintf(fp3, "\tregions used:\n");
 	  (void)fflush(fp3);
 	  i=2;
-	  while(argv[i] != NULL)
+	  while (argv[i] != NULL)
 	    {
 	      (void)fprintf(fp3, "\t\t%s\n", argv[i]);
 	      (void)fflush(fp3);
@@ -791,12 +791,12 @@ int main(int argc, char **argv)
 			spfile);
 	  (void)fprintf(fp3, "\tmaterial file used:  %s\n", filemat);
 	  (void)fprintf(fp3, "\toutput file created:  %s\n", filename);
-	  if(typeout == 0)
+	  if (typeout == 0)
 	    {
 	      (void)fprintf(fp3, "\tconductivity file created:  %s\n", confile);
 	      (void)fprintf(fp3, "\t  (format is PRISM %d.0)\n", prmrel);
 	    }
-	  if(typeout == 1) (void)fprintf(fp3, "\tgeneric file created:  %s\n"
+	  if (typeout == 1) (void)fprintf(fp3, "\tgeneric file created:  %s\n"
 					, genfile);
 	  (void)fprintf(fp3, "\tconductivity table file created:  %s\n",
 			tblfile);
@@ -809,7 +809,7 @@ int main(int argc, char **argv)
       /*------------------------------------------------------------------*/
 
       /*  Open conductivity file to be used with PRISM if needed.  */
-      if(typeout == 0)
+      if (typeout == 0)
 	{
 	  fp1=fopen(confile, "w");
 	  (void)fprintf(fp1, "Conductivity file for use with PRISM.\n");
@@ -817,16 +817,16 @@ int main(int argc, char **argv)
 	}
 
       /*  Make calculations & write to conductivity file.  */
-      for(i=0; i<numreg; i++)
+      for (i=0; i<numreg; i++)
 	{	/*  START # 6  */
 
 	  /*  Make conductivity file triangular.  This program still  */
 	  /*  computes the ENTIRE matrix.  */
 
-	  for(j=(i+1); j<numreg; j++)
+	  for (j=(i+1); j<numreg; j++)
 	    {	/*  START # 7  */
 
-	      if( (cond[i].avglen[j] != 0) )
+	      if ( (cond[i].avglen[j] != 0) )
 		{	/*  START # 8  */
 		  /*  Find correct thermal conductivity.  */
 		  /*  If ki or kj = 0 => rk = 0.  */
@@ -841,7 +841,7 @@ int main(int argc, char **argv)
 		  /*  average length  */
 		  leni = cond[i].avglen[j] * 1.e-3;
 		  lenj = cond[j].avglen[i] * 1.e-3;
-		  if(((-ZEROTOL < ki) && (ki < ZEROTOL)) ||
+		  if (((-ZEROTOL < ki) && (ki < ZEROTOL)) ||
 		     ((-ZEROTOL < kj) && (kj < ZEROTOL)))
 		    cond[i].rkavg[j] = 0.;
 		  else
@@ -854,7 +854,7 @@ int main(int argc, char **argv)
 		  /*  rms length  */
 		  leni = cond[i].rmslen[j] * 1.e-3;
 		  lenj = cond[j].rmslen[i] * 1.e-3;
-		  if(((-ZEROTOL < ki) && (ki < ZEROTOL)) ||
+		  if (((-ZEROTOL < ki) && (ki < ZEROTOL)) ||
 		     ((-ZEROTOL < kj) && (kj < ZEROTOL)))
 		    cond[i].rkrms[j] = 0.;
 		  else
@@ -867,7 +867,7 @@ int main(int argc, char **argv)
 		  /*  minimum length  */
 		  leni = cond[i].minlen[j] * 1.e-3;
 		  lenj = cond[j].minlen[i] * 1.e-3;
-		  if(((-ZEROTOL < ki) && (ki < ZEROTOL)) ||
+		  if (((-ZEROTOL < ki) && (ki < ZEROTOL)) ||
 		     ((-ZEROTOL < kj) && (kj < ZEROTOL)))
 		    cond[i].rkmin[j] = 0.;
 		  else
@@ -880,7 +880,7 @@ int main(int argc, char **argv)
 		  /*  maximum length  */
 		  leni = cond[i].maxlen[j] * 1.e-3;
 		  lenj = cond[j].maxlen[i] * 1.e-3;
-		  if(((-ZEROTOL < ki) && (ki < ZEROTOL)) ||
+		  if (((-ZEROTOL < ki) && (ki < ZEROTOL)) ||
 		     ((-ZEROTOL < kj) && (kj < ZEROTOL)))
 		    cond[i].rkmax[j] = 0.;
 		  else
@@ -894,52 +894,52 @@ int main(int argc, char **argv)
 		  /*  may be zero.  */
 
 		  /*  Print only if PRISM file is to be created.  */
-		  if(typeout == 0) {		/*  START # 8A  */
-		    if( (itype == 1) && (cond[i].shrarea[j] > ZEROTOL) )
+		  if (typeout == 0) {		/*  START # 8A  */
+		    if ( (itype == 1) && (cond[i].shrarea[j] > ZEROTOL) )
 		      {
-			if(prmrel == 2)
+			if (prmrel == 2)
 			  (void)fprintf(fp1, "%3d %3d %7.3f %.3e\n",
-					(j+1),(i+1), cond[i].rkavg[j],
+					(j+1), (i+1), cond[i].rkavg[j],
 					(cond[i].shrarea[j] * 1.0e-6));
-			if(prmrel == 3)
+			if (prmrel == 3)
 			  (void)fprintf(fp1, "%6d %6d %7.3f %.3e\n",
-					(j+1),(i+1), cond[i].rkavg[j],
+					(j+1), (i+1), cond[i].rkavg[j],
 					(cond[i].shrarea[j] * 1.0e-6));
 		      }
 
-		    if( (itype == 2) && (cond[i].shrarea[j] > ZEROTOL) )
+		    if ( (itype == 2) && (cond[i].shrarea[j] > ZEROTOL) )
 		      {
-			if(prmrel == 2)
+			if (prmrel == 2)
 			  (void)fprintf(fp1, "%3d %3d %7.3f %.3e\n",
-					(j+1),(i+1), cond[i].rkrms[j],
+					(j+1), (i+1), cond[i].rkrms[j],
 					(cond[i].shrarea[j] * 1.0e-6));
-			if(prmrel == 3)
+			if (prmrel == 3)
 			  (void)fprintf(fp1, "%6d %6d %7.3f %.3e\n",
-					(j+1),(i+1), cond[i].rkrms[j],
+					(j+1), (i+1), cond[i].rkrms[j],
 					(cond[i].shrarea[j] * 1.0e-6));
 		      }
 
-		    if( (itype == 3) && (cond[i].shrarea[j] > ZEROTOL) )
+		    if ( (itype == 3) && (cond[i].shrarea[j] > ZEROTOL) )
 		      {
-			if(prmrel == 2)
+			if (prmrel == 2)
 			  (void)fprintf(fp1, "%3d %3d %7.3f %.3e\n",
-					(j+1),(i+1), cond[i].rkmin[j],
+					(j+1), (i+1), cond[i].rkmin[j],
 					(cond[i].shrarea[j] * 1.0e-6));
-			if(prmrel == 3)
+			if (prmrel == 3)
 			  (void)fprintf(fp1, "%6d %6d %7.3f %.3e\n",
-					(j+1),(i+1), cond[i].rkmin[j],
+					(j+1), (i+1), cond[i].rkmin[j],
 					(cond[i].shrarea[j] * 1.0e-6));
 		      }
 
-		    if( (itype == 4) && (cond[i].shrarea[j] > ZEROTOL) )
+		    if ( (itype == 4) && (cond[i].shrarea[j] > ZEROTOL) )
 		      {
-			if(prmrel == 2)
+			if (prmrel == 2)
 			  (void)fprintf(fp1, "%3d %3d %7.3f %.3e\n",
-					(j+1),(i+1), cond[i].rkmax[j],
+					(j+1), (i+1), cond[i].rkmax[j],
 					(cond[i].shrarea[j] * 1.0e-6));
-			if(prmrel == 3)
+			if (prmrel == 3)
 			  (void)fprintf(fp1, "%6d %6d %7.3f %.3e\n",
-					(j+1),(i+1), cond[i].rkmax[j],
+					(j+1), (i+1), cond[i].rkmax[j],
 					(cond[i].shrarea[j] * 1.0e-6));
 		      }
 
@@ -949,7 +949,7 @@ int main(int argc, char **argv)
 	    }	/*  END # 7  */
 	}	/*  END # 6  */
 
-      if(typeout == 0) (void)fclose(fp1);
+      if (typeout == 0) (void)fclose(fp1);
 
       /*------------------------------------------------------------------*/
 
@@ -958,14 +958,14 @@ int main(int argc, char **argv)
       /*  4  region number  number of adjacent regions  */
       /*     adjacent region  shared area  conduction distance  */
 
-      if(typeout == 1)
+      if (typeout == 1)
 	{
 	  /*  Open file.  */
 	  fp6 = fopen(genfile, "w");
 	  (void)printf("Opened generic file.\n");
 	  (void)fflush(stdout);
 
-	  for(i=0; i<numreg; i++)
+	  for (i=0; i<numreg; i++)
 	    {
 	      /*  Find number of adjacent regions.  */
 	      /*
@@ -977,35 +977,35 @@ int main(int argc, char **argv)
 	       *		(void)printf("nadjreg = %d\n", nadjreg);
 	       *		(void)fflush(stdout);
 	       */
-	      for(j=0; j<numreg; j++)
+	      for (j=0; j<numreg; j++)
 		{
 		  /*
 		   *		   (void)printf("%d, %d, %f\n", i, j, cond[i].shrarea[j]);
 		   *		   (void)fflush(stdout);
 		   */
-		  if(cond[i].shrarea[j] > ZEROTOL) nadjreg += 1;
+		  if (cond[i].shrarea[j] > ZEROTOL) nadjreg += 1;
 		}
 	      /*
 	       *		(void)printf("Found number of adjacent areas.\n");
 	       *		(void)fflush(stdout);
 	       */
 
-	      (void)fprintf(fp6, "4  %5d  %5d\n",(i+1), nadjreg);
+	      (void)fprintf(fp6, "4  %5d  %5d\n", (i+1), nadjreg);
 	      (void)fflush(fp6);
 
-	      for(j=0; j<numreg; j++)
+	      for (j=0; j<numreg; j++)
 		{
-		  if(cond[i].shrarea[j] > ZEROTOL)
+		  if (cond[i].shrarea[j] > ZEROTOL)
 		    {
-		      (void)fprintf(fp6, "   %5d  %.3e  ",(j+1),
+		      (void)fprintf(fp6, "   %5d  %.3e  ", (j+1),
 				    (cond[i].shrarea[j] * 1.e-6));
-		      if(itype == 1) (void)fprintf(fp6, "%.3e\n",
+		      if (itype == 1) (void)fprintf(fp6, "%.3e\n",
 						   (cond[i].avglen[j] * 1.e-3));
-		      if(itype == 2) (void)fprintf(fp6, "%.3e\n",
+		      if (itype == 2) (void)fprintf(fp6, "%.3e\n",
 						   (cond[i].rmslen[j] * 1.e-3));
-		      if(itype == 3) (void)fprintf(fp6, "%.3e\n",
+		      if (itype == 3) (void)fprintf(fp6, "%.3e\n",
 						   (cond[i].minlen[j] * 1.e-3));
-		      if(itype == 4) (void)fprintf(fp6, "%.3e\n",
+		      if (itype == 4) (void)fprintf(fp6, "%.3e\n",
 						   (cond[i].maxlen[j] * 1.e-3));
 		    }
 		  (void)fflush(fp6);
@@ -1030,11 +1030,11 @@ int main(int argc, char **argv)
 
       (void)fflush(fp2);
 
-      for(i=0; i<numreg; i++)
+      for (i=0; i<numreg; i++)
 	{	/*  START # 9  */
-	  for(j=0; j<numreg; j++)
+	  for (j=0; j<numreg; j++)
 	    {	/*  START # 10  */
-	      if(cond[i].shrarea[j] != 0)
+	      if (cond[i].shrarea[j] != 0)
 		{	/*  START # 11  */
 		  a1 = cond[i].shrarea[j] * 1.e-6;
 		  l1 = cond[i].avglen[j] * 1.e-3;
@@ -1043,8 +1043,8 @@ int main(int argc, char **argv)
 		  l4 = cond[i].maxlen[j] * 1.e-3;
 
 		  (void)fprintf(fp2, "%4d,%4d,%4d, %.3e,",
-				(i+1), cond[i].mat,(j+1), a1);
-		  if(j > i)
+				(i+1), cond[i].mat, (j+1), a1);
+		  if (j > i)
 		    {
 		      (void)fprintf(fp2, " %.3e, %.3e,", l1, cond[i].rkavg[j]);
 		      (void)fprintf(fp2, " %.3e, %.3e,", l2, cond[i].rkrms[j]);
@@ -1074,7 +1074,7 @@ int main(int argc, char **argv)
       (void)fprintf(stdout, "\tregions used:\n");
       (void)fflush(stdout);
       i=2;
-      while(argv[i] != NULL)
+      while (argv[i] != NULL)
 	{
 	  (void)fprintf(stdout, "\t\t%s\n", argv[i]);
 	  (void)fflush(stdout);
@@ -1083,16 +1083,16 @@ int main(int argc, char **argv)
       (void)fprintf(stdout, "\tfile containing second pass information:  %s\n",
 		    spfile);
       (void)fprintf(stdout, "\tmaterial file used:  %s\n", filemat);
-      if(iwrite == 1)
+      if (iwrite == 1)
 	{
 	  (void)fprintf(stdout, "\toutput file created:  %s\n", filename);
 	}
-      if(typeout == 0)
+      if (typeout == 0)
 	{
 	  (void)fprintf(stdout, "\tconductivity file created:  %s\n", confile);
 	  (void)fprintf(stdout, "\t  (format is PRISM %d.0)\n", prmrel);
 	}
-      if(typeout == 1) (void)printf("\tgeneric file created:  %s\n", genfile);
+      if (typeout == 1) (void)printf("\tgeneric file created:  %s\n", genfile);
       (void)fprintf(stdout, "\tconductivity table file created:  %s\n", tblfile);
       (void)fprintf(stdout, "\terror file created:  %s\n\n\n", fileerr);
       (void)fflush(stdout);
@@ -1105,23 +1105,23 @@ int main(int argc, char **argv)
       /*  Write errors to error file.  */
       (void)fprintf(fp4, "\nERRORS from secpass\n\n");
       /*  Write type of file created to error file.  */
-      if(typeout == 0)
+      if (typeout == 0)
 	{
 	  (void)fprintf(fp4, "PRISM %d.0 conductivity file, %s, created.\n\n",
 			prmrel, confile);
 	}
-      if(typeout == 1) (void)fprintf(fp4, "Generic file, %s, created.\n\n",
+      if (typeout == 1) (void)fprintf(fp4, "Generic file, %s, created.\n\n",
 				     genfile);
       (void)fflush(fp4);
-      for(i=0; i<numreg; i++)
+      for (i=0; i<numreg; i++)
 	{
-	  for(j=0; j<numreg;  j++)
+	  for (j=0; j<numreg;  j++)
 	    {
-	      if( (cond[i].numcal[j] > ZEROTOL) &&
+	      if ( (cond[i].numcal[j] > ZEROTOL) &&
 		  ( cond[i].numcal[j] < MINCAL ) )
 		{
 		  (void)fprintf(fp4, "region %d, adjacent region %d:\n",
-				(i+1),(j+1));
+				(i+1), (j+1));
 		  (void)fprintf(fp4, "\tnumber of length calculations ");
 		  (void)fprintf(fp4, "below minimum of %d\n", MINCAL);
 		  (void)fflush(fp4);
@@ -1135,7 +1135,7 @@ int main(int argc, char **argv)
       /*  Everything completed, free memory.  */
       (void)fprintf(stdout, "Freeing memory.\n");
       (void)fflush(stdout);
-      for(i=0; i<nmged; i++)
+      for (i=0; i<nmged; i++)
 	{
 	  bu_free(cond[i].shrarea, "cond[i].shrarea");
 	  bu_free(cond[i].avglen, "cond[i].avglen");
@@ -1175,30 +1175,30 @@ hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *
    */
 
   pp = PartHeadp->pt_forw;
-  for( ; pp != PartHeadp; pp = pp->pt_forw)
+  for (; pp != PartHeadp; pp = pp->pt_forw)
     {	/*  START # 2H  */
       icur = pp->pt_regionp->reg_bit;	/*  Number of region hit.  */
 
       /*  Find hit point of entering ray.  */
       hitp = pp->pt_inhit;
       stp = pp->pt_inseg->seg_stp;
-      RT_HIT_NORM(hitp, stp,&(ap_p->a_ray));
+      RT_HIT_NORM(hitp, stp, &(ap_p->a_ray));
       enterpt[X] = hitp->hit_point[X];
       enterpt[Y] = hitp->hit_point[Y];
       enterpt[Z] = hitp->hit_point[Z];
 
       /*  Find lengths between centroids and adjacent surface areas.  */
 
-      if(iprev >= 0)
+      if (iprev >= 0)
 	{	/*  START # 3H  */
 	  d[X] = enterpt[X] - leavept[X];
-	  if(d[X] < 0) d[X] = (-d[X]);
+	  if (d[X] < 0) d[X] = (-d[X]);
 	  d[Y] = enterpt[Y] - leavept[Y];
-	  if(d[Y] < 0) d[Y] = (-d[Y]);
+	  if (d[Y] < 0) d[Y] = (-d[Y]);
 	  d[Z] = enterpt[Z] - leavept[Z];
-	  if(d[Z] < 0) d[Z] = (-d[Z]);
+	  if (d[Z] < 0) d[Z] = (-d[Z]);
 
-	  if( (d[X] < ADJTOL) && (d[Y] < ADJTOL) && (d[Z] < ADJTOL) )
+	  if ( (d[X] < ADJTOL) && (d[Y] < ADJTOL) && (d[Z] < ADJTOL) )
 	    {	/*  START # 4H  */
 		/*  Find length for previous region. */
 	      dist = ( (cond[iprev].centroid[X] - enterpt[X])
@@ -1212,22 +1212,22 @@ hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *
 	      cond[iprev].rmslen[icur] += (dist * dist);
 	      cond[iprev].numcal[icur] += 1.;
 
-	      if( (-ZEROTOL < cond[iprev].minlen[icur]) &&
+	      if ( (-ZEROTOL < cond[iprev].minlen[icur]) &&
 		  (cond[iprev].minlen[icur] < ZEROTOL) )
 		{
 		  cond[iprev].minlen[icur] = dist;
 		}
-	      else if( dist < cond[iprev].minlen[icur] )
+	      else if ( dist < cond[iprev].minlen[icur] )
 		{
 		  cond[iprev].minlen[icur] = dist;
 		}
 
-	      if( (-ZEROTOL < cond[iprev].maxlen[icur]) &&
+	      if ( (-ZEROTOL < cond[iprev].maxlen[icur]) &&
 		  (cond[iprev].maxlen[icur] < ZEROTOL) )
 		{
 		  cond[iprev].maxlen[icur] = dist;
 		}
-	      else if( cond[iprev].maxlen[icur] < dist )
+	      else if ( cond[iprev].maxlen[icur] < dist )
 		{
 		  cond[iprev].maxlen[icur] = dist;
 		}
@@ -1249,22 +1249,22 @@ hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *
 	      cond[icur].rmslen[iprev] += (dist * dist);
 	      cond[icur].numcal[iprev] += 1.;
 
-	      if( (-ZEROTOL < cond[icur].minlen[iprev]) &&
+	      if ( (-ZEROTOL < cond[icur].minlen[iprev]) &&
 		  (cond[icur].minlen[iprev] < ZEROTOL) )
 		{
 		  cond[icur].minlen[iprev] = dist;
 		}
-	      else if( dist < cond[icur].minlen[iprev] )
+	      else if ( dist < cond[icur].minlen[iprev] )
 		{
 		  cond[icur].minlen[iprev] = dist;
 		}
 
-	      if( (-ZEROTOL < cond[icur].maxlen[iprev]) &&
+	      if ( (-ZEROTOL < cond[icur].maxlen[iprev]) &&
 		  (cond[icur].maxlen[iprev] < ZEROTOL) )
 		{
 		  cond[icur].maxlen[iprev] = dist;
 		}
-	      else if( cond[icur].maxlen[iprev] < dist )
+	      else if ( cond[icur].maxlen[iprev] < dist )
 		{
 		  cond[icur].maxlen[iprev] = dist;
 		}
@@ -1280,7 +1280,7 @@ hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *
       /*  Find hit point of leaving ray.  */
       hitp = pp->pt_outhit;
       stp = pp->pt_outseg->seg_stp;
-      RT_HIT_NORM(hitp, stp,&(ap_p->a_ray));
+      RT_HIT_NORM(hitp, stp, &(ap_p->a_ray));
       leavept[X] = hitp->hit_point[X];
       leavept[Y] = hitp->hit_point[Y];
       leavept[Z] = hitp->hit_point[Z];

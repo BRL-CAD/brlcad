@@ -74,7 +74,7 @@ main(int argc, char **argv)
 			printf("PA %d %d;\n", x2, y2);
 			break;
 		case 'f':		/* line style */
-			while( getchar() != '\n');
+			while ( getchar() != '\n');
 			/* set line style ignored */
 			break;
 		case 'm':		/* move */
@@ -90,7 +90,7 @@ main(int argc, char **argv)
 			printf("PA %d %d;\n", x, y);
 			break;
 		case 't':		/* text */
-			while( getchar() != '\n' );
+			while ( getchar() != '\n' );
 			/* draw text ignored */
 			break;
 		case 's':		/* space */

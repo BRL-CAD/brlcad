@@ -59,19 +59,19 @@ do_line(int xpos, int ypos, register char *line, RGBpixel (*menu_border))
 	fb_log( "do_line: xpos=%d ypos=%d line=\"%s\" menu_border=0x%x\n",
 		xpos, ypos, line, (int) menu_border );
 #endif
-	if( ffdes == NULL )
+	if ( ffdes == NULL )
 		{
 		fb_log( "ERROR: must read font first.\n" );
 		return;
 		}
 	currx = xpos;
 
-	for( char_count = 0; char_count < len; char_count++ )
+	for ( char_count = 0; char_count < len; char_count++ )
 		{
 		char_id = (int) line[char_count] & 0377;
 
 		/* locate the bitmap for the character in the file */
-		if( fseek( ffdes, (long)(SWABV(dir[char_id].addr)+offset), 0 )
+		if ( fseek( ffdes, (long)(SWABV(dir[char_id].addr)+offset), 0 )
 			== EOF
 			)
 			{
@@ -97,10 +97,10 @@ do_line(int xpos, int ypos, register char *line, RGBpixel (*menu_border))
 		fb_log( "do_line: width=%d height=%d\n", width, height );
 #endif
 
-		if( currx + width > fb_getwidth(fbp) - 1 )
+		if ( currx + width > fb_getwidth(fbp) - 1 )
 			break;		/* won't fit on screen */
 
-		if( menu_border == (RGBpixel *)RGBPIXEL_NULL )
+		if ( menu_border == (RGBpixel *)RGBPIXEL_NULL )
 			do_Char( char_id, currx, ypos,
 				SignedChar(dir[char_id].down)%2 );
 		else
@@ -207,7 +207,7 @@ menu_char(int x_adjust, int menu_wid, int odd, register unsigned char *menu_bord
 		{	register RGBpixel *menu;
 		menu = menu_addr + k * menu_wid + x_adjust;
 		for (j = 0; j < (totwid + 3) - 1; j++, menu++ )
-			if( filterbuf[i][j] )
+			if ( filterbuf[i][j] )
 				{
 				COPYRGB(*menu, menu_border);
 				}
@@ -227,10 +227,10 @@ bitx(register char *bitstring, register int posn)
 	asm("extzv	r10,$1,(r11), r8");
 	return field;
 #else
-	for( ; posn >= 8; posn -= 8, bitstring++ )
+	for (; posn >= 8; posn -= 8, bitstring++ )
 		;
 #if defined( CANT_DO_ZERO_SHIFT )
-	if( posn == 0 )
+	if ( posn == 0 )
 		return (int)(*bitstring) & 1;
 	else
 #endif

@@ -42,14 +42,14 @@
 
 
 #define NewTrie( p ) \
-		if( ((p) = (Trie *) malloc( sizeof(Trie) )) == TRIE_NULL ) \
+		if ( ((p) = (Trie *) malloc( sizeof(Trie) )) == TRIE_NULL ) \
 			{ \
 			Malloc_Bomb(sizeof(Trie)); \
 			fatal_error = TRUE; \
 			return	TRIE_NULL; \
 			}
 #define NewOcList( p ) \
-		if( ((p) = (OcList *) malloc( sizeof(OcList) )) == OCLIST_NULL ) \
+		if ( ((p) = (OcList *) malloc( sizeof(OcList) )) == OCLIST_NULL ) \
 			{ \
 			Malloc_Bomb(sizeof(OcList)); \
 			fatal_error = TRUE; \
@@ -61,11 +61,11 @@ static OcList	*match_Trie(register Trie *triep);
 void
 append_Octp(Trie *triep, Octree *octp)
 {	register OcList	**opp = &triep->l.t_octp;
-	if( octp == OCTREE_NULL )
+	if ( octp == OCTREE_NULL )
 		return;
-	for( ; *opp != OCLIST_NULL; opp = &(*opp)->p_next )
+	for (; *opp != OCLIST_NULL; opp = &(*opp)->p_next )
 		{
-		if( (*opp)->p_octp == octp )
+		if ( (*opp)->p_octp == octp )
 			{
 			/* Octree pointer already in list.	*/
 			return;
@@ -80,8 +80,8 @@ append_Octp(Trie *triep, Octree *octp)
 int
 delete_Node_OcList(register OcList **oclistp, register Octree *octreep)
 {
-	for( ; *oclistp != OCLIST_NULL; oclistp = &(*oclistp)->p_next )
-		if( (*oclistp)->p_octp == octreep )
+	for (; *oclistp != OCLIST_NULL; oclistp = &(*oclistp)->p_next )
+		if ( (*oclistp)->p_octp == octreep )
 			{	register OcList	*tmp = *oclistp;
 			*oclistp = (*oclistp)->p_next;
 			free( (char *) tmp );
@@ -94,7 +94,7 @@ void
 delete_OcList(OcList **oclistp)
 {	register OcList	*op = *oclistp, *np;
 	*oclistp = OCLIST_NULL;
-	for( ; op != OCLIST_NULL; op = np )
+	for (; op != OCLIST_NULL; op = np )
 		{
 		np = op->p_next;
 		free( (char *) op );
@@ -105,16 +105,16 @@ delete_OcList(OcList **oclistp)
 Trie	*
 add_Trie(const char *name, register Trie **triepp)
 {	register Trie	*curp;
-	if( *name == NUL )
+	if ( *name == NUL )
 		{ /* See if name already exists.			*/
-		if( *triepp == TRIE_NULL )
+		if ( *triepp == TRIE_NULL )
 			{ /* Name does not exist, make leaf node.	*/
 			NewTrie( *triepp );
 			(*triepp)->l.t_altr = (*triepp)->l.t_next = TRIE_NULL;
 			(*triepp)->l.t_octp = OCLIST_NULL;
 			}
 		else
-		if( (*triepp)->n.t_next != TRIE_NULL )
+		if ( (*triepp)->n.t_next != TRIE_NULL )
 			{ /* Name is subset of another name.		*/
 			return	add_Trie( name, &(*triepp)->n.t_altr );
 			}
@@ -122,12 +122,12 @@ add_Trie(const char *name, register Trie **triepp)
 			; /* Name already inserted, so do nothing.	*/
 		return	*triepp;
 		}
-	for(	curp = *triepp;
+	for (	curp = *triepp;
 		curp != TRIE_NULL && *name != curp->n.t_char;
 		curp = curp->n.t_altr
 		)
 		;
-	if( curp == TRIE_NULL )
+	if ( curp == TRIE_NULL )
 		{ /* No Match, this level, so create new alternate.	*/
 		curp = *triepp;
 		NewTrie( *triepp );
@@ -146,12 +146,12 @@ get_Trie(register char *name, register Trie *triep)
 {	register Trie *curp = triep; /* initialize to shutup compiler */
 	assert( triep != NULL );
 	/* Traverse next links to end of region name.			*/
-	for( ; triep != TRIE_NULL; triep = triep->n.t_next )
+	for (; triep != TRIE_NULL; triep = triep->n.t_next )
 		{
 		curp = triep;
-		if( *name == NUL )
+		if ( *name == NUL )
 			{ /* End of user-typed name.			*/
-			if( triep->n.t_altr != TRIE_NULL )
+			if ( triep->n.t_altr != TRIE_NULL )
 				/* Ambiguous at this point.		*/
 				return	OCLIST_NULL;
 			else	  /* Complete next character.		*/
@@ -161,18 +161,18 @@ get_Trie(register char *name, register Trie *triep)
 				}
 			}
 		else
-		if( *name == '*' )
+		if ( *name == '*' )
 			return	match_Trie( triep );
 		else	/* Not at end of user-typed name yet, traverse
 				alternate list to find current letter.
 			 */
 			{
-			for(	;
+			for (	;
 				triep != TRIE_NULL && *name != triep->n.t_char;
 				triep = triep->n.t_altr
 				)
 				;
-			if( triep == TRIE_NULL )
+			if ( triep == TRIE_NULL )
 				/* Non-existant name, truncate bad part.*/
 				{
 				*name = NUL;
@@ -195,18 +195,18 @@ static OcList	*
 match_Trie(register Trie *triep)
 {	OcList	*oclist = OCLIST_NULL;
 		register OcList	**oclistp = &oclist;
-	if( triep == TRIE_NULL )
+	if ( triep == TRIE_NULL )
 		return	OCLIST_NULL;
-	if( triep->n.t_altr != TRIE_NULL )
+	if ( triep->n.t_altr != TRIE_NULL )
 		 /* Traverse alternate character pointer.		*/
 		*oclistp = match_Trie( triep->n.t_altr );
 	/* Advance ptr to end of list.					*/
-	for(	;
+	for (	;
 		*oclistp != OCLIST_NULL;
 		oclistp = &(*oclistp)->p_next
 		)
 		;
-	if( triep->n.t_next == TRIE_NULL )
+	if ( triep->n.t_next == TRIE_NULL )
 		/* At leaf node, return copy of list.			*/
 		*oclistp = copy_OcList( triep->l.t_octp );
 	else
@@ -222,13 +222,13 @@ copy_OcList(register OcList *orp)
 	{	OcList *oclistp = OCLIST_NULL;	/* Output list pointer.	*/
 		register OcList	**owpp = &oclistp; /* Write pointer.	*/
 	/* Make copy of Octree pointer list.				*/
-	for(	owpp = &oclistp;
+	for (	owpp = &oclistp;
 		orp != OCLIST_NULL;
 		orp = orp->p_next,
 		owpp = &(*owpp)->p_next
 		)
 		{
-		if( (*owpp = (OcList *) malloc( sizeof(OcList) )) == OCLIST_NULL )
+		if ( (*owpp = (OcList *) malloc( sizeof(OcList) )) == OCLIST_NULL )
 			{
 			Malloc_Bomb(sizeof(OcList));
 			fatal_error = TRUE;
@@ -247,25 +247,25 @@ prnt_Trie(Trie *triep, int level)
 {	register Trie	*tp = triep;
 		static char	name_buf[MAX_TRIE_LEVEL+1], *namep;
 	/*bu_log( "prnt_Trie(triep=0x%x, level=%d)\n", triep, level );*/
-	if( tp == TRIE_NULL )
+	if ( tp == TRIE_NULL )
 		return;
-	if( tp->n.t_altr != TRIE_NULL )
+	if ( tp->n.t_altr != TRIE_NULL )
 		prnt_Trie( tp->n.t_altr, level );
-	if( level == 0 )
+	if ( level == 0 )
 		namep = name_buf;
 	*namep = tp->n.t_char;
-	if( tp->n.t_next == TRIE_NULL )
+	if ( tp->n.t_next == TRIE_NULL )
 		{	register OcList	*op, *ip;
 		/* At end of name, so print it out.			*/
 		*namep = NUL;
 		bu_log( "%s: ", name_buf );
-		for( op = tp->l.t_octp; op != OCLIST_NULL; op = op->p_next )
+		for ( op = tp->l.t_octp; op != OCLIST_NULL; op = op->p_next )
 			{
-			for( ip = tp->l.t_octp; ip != op; ip = ip->p_next )
-				if( ip->p_octp->o_temp == op->p_octp->o_temp )
+			for ( ip = tp->l.t_octp; ip != op; ip = ip->p_next )
+				if ( ip->p_octp->o_temp == op->p_octp->o_temp )
 					/* Already printed this temp.	*/
 					break;
-			if( ip == op )
+			if ( ip == op )
 				/* This temperature not printed yet.	*/
 				bu_log( "%d,", op->p_octp->o_temp );
 			}
@@ -284,13 +284,13 @@ int
 write_Trie(Trie *triep, int level, FILE *fp)
 {	register Trie	*tp = triep;
 		static char	name_buf[MAX_TRIE_LEVEL+1], *namep;
-	if( tp == TRIE_NULL )
+	if ( tp == TRIE_NULL )
 		return	1;
-	if( tp->n.t_altr != TRIE_NULL )
+	if ( tp->n.t_altr != TRIE_NULL )
 		(void) write_Trie( tp->n.t_altr, level, fp );
-	if( level == 0 )
+	if ( level == 0 )
 		{
-		if(	fwrite( (char *) &ir_min, (int) sizeof(int), 1, fp ) != 1
+		if (	fwrite( (char *) &ir_min, (int) sizeof(int), 1, fp ) != 1
 		    ||	fwrite( (char *) &ir_max, (int) sizeof(int), 1, fp ) != 1
 			)
 			{
@@ -300,14 +300,14 @@ write_Trie(Trie *triep, int level, FILE *fp)
 		namep = name_buf;
 		}
 	*namep = tp->n.t_char;
-	if( tp->n.t_next == TRIE_NULL )
+	if ( tp->n.t_next == TRIE_NULL )
 		{	register OcList	*op;
 		/* At end of name, so print it out.			*/
 		*namep = NUL;
-		for( op = tp->l.t_octp; op != OCLIST_NULL; op = op->p_next )
+		for ( op = tp->l.t_octp; op != OCLIST_NULL; op = op->p_next )
 			{
 			(void) fprintf(	fp, "%s\n", name_buf );
-			if( ! write_Octree( op->p_octp, fp ) )
+			if ( ! write_Octree( op->p_octp, fp ) )
 				return	0;
 			}
 		}
@@ -328,7 +328,7 @@ read_Trie(FILE *fp)
 		int		min, max;
 		extern Trie	*reg_triep;
 	/* Read temperature range information.				*/
-	if(	fread( (char *) &min, (int) sizeof(int), 1, fp ) != 1
+	if (	fread( (char *) &min, (int) sizeof(int), 1, fp ) != 1
 	     ||	fread( (char *) &max, (int) sizeof(int), 1, fp ) != 1
 		)
 		{
@@ -340,7 +340,7 @@ read_Trie(FILE *fp)
 		bu_log( "IR data base temperature range is %d to %d\n",
 			min, max
 			);
-		if( ir_min == ABSOLUTE_ZERO )
+		if ( ir_min == ABSOLUTE_ZERO )
 			{ /* Temperature range not set.			*/
 			ir_min = min;
 			ir_max = max;
@@ -355,33 +355,33 @@ read_Trie(FILE *fp)
 			(void) fflush( stdout );
 			}
 		}
-	if( ! init_Temp_To_RGB() )
+	if ( ! init_Temp_To_RGB() )
 		{
 		return	0;
 		}
-	while( bu_fgets( name_buf, MAX_TRIE_LEVEL, fp ) != NULL )
+	while ( bu_fgets( name_buf, MAX_TRIE_LEVEL, fp ) != NULL )
 		{
 		name_buf[strlen(name_buf)-1] = '\0'; /* Clobber new-line.*/
 		triep = add_Trie( name_buf, &reg_triep );
-		if( fread( (char *) &hdr_ptlist, (int) sizeof(F_Hdr_Ptlist), 1, fp )
+		if ( fread( (char *) &hdr_ptlist, (int) sizeof(F_Hdr_Ptlist), 1, fp )
 			!= 1
 			)
 			{
 			bu_log( "\"%s\"(%d) Read failed!\n", __FILE__, __LINE__ );
 			return	0;
 			}
-		for( ; hdr_ptlist.f_length > 0; hdr_ptlist.f_length-- )
+		for (; hdr_ptlist.f_length > 0; hdr_ptlist.f_length-- )
 			{	fastf_t		point[3];
 				float		c_point[3];
 				Octree		*octreep;
-			if( fread( (char *) c_point, (int) sizeof(c_point), 1, fp ) != 1 )
+			if ( fread( (char *) c_point, (int) sizeof(c_point), 1, fp ) != 1 )
 				{
 				bu_log(	"\"%s\"(%d) Read failed.\n",
 					__FILE__, __LINE__ );
 				return	0;
 				}
 			VMOVE( point, c_point );
-			if( (octreep = add_Region_Octree(	&ir_octree,
+			if ( (octreep = add_Region_Octree(	&ir_octree,
 								point,
 								triep,
 								hdr_ptlist.f_temp,
@@ -405,20 +405,20 @@ ring_Bell(void)
 char	*
 char_To_String(int i)
 {	static char	buf[4];
-	if( i >= SP && i < DEL )
+	if ( i >= SP && i < DEL )
 		{
 		buf[0] = i;
 		buf[1] = NUL;
 		}
 	else
-	if( i >= NUL && i < SP )
+	if ( i >= NUL && i < SP )
 		{
 		buf[0] = '^';
 		buf[1] = i + 64;
 		buf[2] = NUL;
 		}
 	else
-	if( i == DEL )
+	if ( i == DEL )
 		return	"DL";
 	else
 		return	"EOF";
@@ -437,7 +437,7 @@ get_Region_Name(char *inbuf, int bufsz, char *msg)
 		OcList		*oclistp = OCLIST_NULL;
 		extern Trie	*reg_triep;
 		extern int	tty;
-	if( tty )
+	if ( tty )
 		{
 		save_Tty( 0 );
 		set_Raw( 0 );
@@ -449,16 +449,16 @@ get_Region_Name(char *inbuf, int bufsz, char *msg)
 		{
 		(void) fflush( stdout );
 		c = hm_getchar();
-		switch( c )
+		switch ( c )
 			{
 		case SP :
 			{
-			if(	reg_triep == TRIE_NULL
+			if (	reg_triep == TRIE_NULL
 			    ||	(oclistp = get_Trie( buffer, reg_triep ))
 				== OCLIST_NULL
 				)
 				(void) putchar( BEL );
-			for( ; p > buffer; p-- )
+			for (; p > buffer; p-- )
 				(void) putchar( BS );
 			(void) printf( "%s", buffer );
 			(void) ClrEOL();
@@ -467,17 +467,17 @@ get_Region_Name(char *inbuf, int bufsz, char *msg)
 			break;
 			}
 		case Ctrl('A') : /* Cursor to beginning of line.	*/
-			if( p == buffer )
+			if ( p == buffer )
 				{
 				ring_Bell();
 				break;
 				}
-			for( ; p > buffer; p-- )
+			for (; p > buffer; p-- )
 				(void) putchar( BS );
 			break;
 		case Ctrl('B') :
 		case BS : /* Move cursor back one character.		*/
-			if( p == buffer )
+			if ( p == buffer )
 				{
 				ring_Bell();
 				break;
@@ -487,22 +487,22 @@ get_Region_Name(char *inbuf, int bufsz, char *msg)
 			break;
 		case Ctrl('D') : /* Delete character under cursor.	*/
 			{	register char	*q = p;
-			if( *p == NUL )
+			if ( *p == NUL )
 				{
 				ring_Bell();
 				break;
 				}
-			for( ; *q != NUL; ++q )
+			for (; *q != NUL; ++q )
 				{
 				*q = *(q+1);
 				(void) putchar( *q != NUL ? *q : SP );
 				}
-			for( ; q > p; --q )
+			for (; q > p; --q )
 				(void) putchar( BS );
 			break;
 			}
 		case Ctrl('E') : /* Cursor to end of line.		*/
-			if( *p == NUL )
+			if ( *p == NUL )
 				{
 				ring_Bell();
 				break;
@@ -511,7 +511,7 @@ get_Region_Name(char *inbuf, int bufsz, char *msg)
 			p += strlen( p );
 			break;
 		case Ctrl('F') : /* Cursor forward one character.	*/
-			if( *p == NUL || p-buffer >= bufsz-2 )
+			if ( *p == NUL || p-buffer >= bufsz-2 )
 				{
 				ring_Bell();
 				break;
@@ -523,7 +523,7 @@ get_Region_Name(char *inbuf, int bufsz, char *msg)
 			prnt_Event( "Aborted." );
 			goto	clean_return;
 		case Ctrl('K') : /* Erase from cursor to end of line.	*/
-			if( *p == NUL )
+			if ( *p == NUL )
 				{
 				ring_Bell();
 				break;
@@ -533,7 +533,7 @@ get_Region_Name(char *inbuf, int bufsz, char *msg)
 			break;
 		case Ctrl('P') : /* Yank previous contents of "inbuf".	*/
 			{	register int	len = strlen( inbuf );
-			if( (p + len) - buffer >= BUFSIZ )
+			if ( (p + len) - buffer >= BUFSIZ )
 				{
 				ring_Bell();
 				break;
@@ -544,48 +544,48 @@ get_Region_Name(char *inbuf, int bufsz, char *msg)
 			break;
 			}
 		case Ctrl('U') : /* Erase from start of line to cursor.	*/
-			if( p == buffer )
+			if ( p == buffer )
 				{
 				ring_Bell();
 				break;
 				}
-			for( ; p > buffer; --p )
+			for (; p > buffer; --p )
 				{	register char	*q = p;
 				(void) putchar( BS );
-				for( ; *(q-1) != NUL; ++q )
+				for (; *(q-1) != NUL; ++q )
 					{
 					*(q-1) = *q;
 					(void) putchar( *q != NUL ? *q : SP );
 					}
-				for( ; q > p; --q )
+				for (; q > p; --q )
 					(void) putchar( BS );
 				}
 			break;
 		case Ctrl('R') : /* Print line, cursor doesn't move.	*/
 			{	register int	i;
-			if( buffer[0] == NUL )
+			if ( buffer[0] == NUL )
 				break;
-			for( i = p - buffer; i > 0; i-- )
+			for ( i = p - buffer; i > 0; i-- )
 				(void) putchar( BS );
 			(void) printf( "%s", buffer );
-			for( i = strlen( buffer ) - (p - buffer); i > 0; i-- )
+			for ( i = strlen( buffer ) - (p - buffer); i > 0; i-- )
 				(void) putchar( BS );
 			break;
 			}
 		case DEL : /* Delete character behind cursor.		*/
 			{	register char	*q = p;
-			if( p == buffer )
+			if ( p == buffer )
 				{
 				ring_Bell();
 				break;
 				}
 			(void) putchar( BS );
-			for( ; *(q-1) != NUL; ++q )
+			for (; *(q-1) != NUL; ++q )
 				{
 				*(q-1) = *q;
 				(void) putchar( *q != NUL ? *q : SP );
 				}
-			for( ; q > p; --q )
+			for (; q > p; --q )
 				(void) putchar( BS );
 			p--;
 			break;
@@ -593,7 +593,7 @@ get_Region_Name(char *inbuf, int bufsz, char *msg)
 		case CR :
 		case LF :
 		case EOF :
-			if(	reg_triep == TRIE_NULL
+			if (	reg_triep == TRIE_NULL
 			    ||	(oclistp = get_Trie( buffer, reg_triep ))
 				== OCLIST_NULL
 				)
@@ -615,13 +615,13 @@ get_Region_Name(char *inbuf, int bufsz, char *msg)
 			{	register char	*q = p;
 				register int	len = strlen( p );
 			/* Scroll characters forward.			*/
-			if( c >= NUL && c < SP )
+			if ( c >= NUL && c < SP )
 				(void) printf( "%s", char_To_String( c ) );
 			else
 				(void) putchar( c );
-			for( ; len >= 0; len--, q++ )
+			for (; len >= 0; len--, q++ )
 				(void) putchar( *q == NUL ? SP : *q );
-			for( ; q > p; q-- )
+			for (; q > p; q-- )
 				{
 				(void) putchar( BS );
 				*q = *(q-1);
@@ -631,12 +631,12 @@ get_Region_Name(char *inbuf, int bufsz, char *msg)
 			}
 			} /* End switch. */
 		}
-	while( strlen( buffer ) < BUFSIZ);
+	while ( strlen( buffer ) < BUFSIZ);
 	ring_Bell();
 	prnt_Event( "Buffer full." );
 clean_return :
 	prnt_Prompt( "" );
-	if( tty )
+	if ( tty )
 		reset_Tty( 0 );
 	return	oclistp;
 	}

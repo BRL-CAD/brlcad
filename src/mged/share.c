@@ -167,9 +167,9 @@ f_share(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
   case 'a':
   case 'A':
     if (argv[1][1] == 'd' || argv[1][1] == 'D')
-      SHARE_RESOURCE(uflag,_adc_state, dml_adc_state, adc_rc, dlp1, dlp2, vls, "share: adc_state")
+      SHARE_RESOURCE(uflag, _adc_state, dml_adc_state, adc_rc, dlp1, dlp2, vls, "share: adc_state")
     else if (argv[1][1] == 'x' || argv[1][1] == 'X')
-      SHARE_RESOURCE(uflag,_axes_state, dml_axes_state, ax_rc, dlp1, dlp2, vls, "share: axes_state")
+      SHARE_RESOURCE(uflag, _axes_state, dml_axes_state, ax_rc, dlp1, dlp2, vls, "share: axes_state")
     else {
       bu_vls_printf(&vls, "share: resource type '%s' unknown\n", argv[1]);
       Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
@@ -180,7 +180,7 @@ f_share(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     break;
   case 'c':
   case 'C':
-    SHARE_RESOURCE(uflag,_color_scheme, dml_color_scheme, cs_rc, dlp1, dlp2, vls, "share: color_scheme")
+    SHARE_RESOURCE(uflag, _color_scheme, dml_color_scheme, cs_rc, dlp1, dlp2, vls, "share: color_scheme")
     break;
   case 'd':
   case 'D':
@@ -193,7 +193,7 @@ f_share(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	dmp2 = dlp2->dml_dmp;
 
       if (dm_share_dlist(dmp1, dmp2) == TCL_OK) {
-	SHARE_RESOURCE(uflag,_dlist_state, dml_dlist_state, dl_rc, dlp1, dlp2, vls, "share: dlist_state");
+	SHARE_RESOURCE(uflag, _dlist_state, dml_dlist_state, dl_rc, dlp1, dlp2, vls, "share: dlist_state");
 	if (uflag) {
 	  dlp1->dml_dlist_state->dl_active = dlp1->dml_mged_variables->mv_dlist;
 
@@ -218,27 +218,27 @@ f_share(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     break;
   case 'g':
   case 'G':
-    SHARE_RESOURCE(uflag,_grid_state, dml_grid_state, gr_rc, dlp1, dlp2, vls, "share: grid_state")
+    SHARE_RESOURCE(uflag, _grid_state, dml_grid_state, gr_rc, dlp1, dlp2, vls, "share: grid_state")
     break;
   case 'm':
   case 'M':
-    SHARE_RESOURCE(uflag,_menu_state, dml_menu_state, ms_rc, dlp1, dlp2, vls, "share: menu_state")
+    SHARE_RESOURCE(uflag, _menu_state, dml_menu_state, ms_rc, dlp1, dlp2, vls, "share: menu_state")
     break;
   case 'r':
   case 'R':
-    SHARE_RESOURCE(uflag,_rubber_band, dml_rubber_band, rb_rc, dlp1, dlp2, vls, "share: rubber_band")
+    SHARE_RESOURCE(uflag, _rubber_band, dml_rubber_band, rb_rc, dlp1, dlp2, vls, "share: rubber_band")
     break;
   case 'v':
   case 'V':
     if ((argv[1][1] == 'a' || argv[1][1] == 'A') &&
 	(argv[1][2] == 'r' || argv[1][2] == 'R'))
-      SHARE_RESOURCE(uflag,_mged_variables, dml_mged_variables, mv_rc, dlp1, dlp2, vls, "share: mged_variables")
+      SHARE_RESOURCE(uflag, _mged_variables, dml_mged_variables, mv_rc, dlp1, dlp2, vls, "share: mged_variables")
     else if (argv[1][1] == 'i' || argv[1][1] == 'I') {
       if (uflag) {
 	struct _view_state *ovsp;
 
 	ovsp = dlp1->dml_view_state;
-	SHARE_RESOURCE(uflag,_view_state, dml_view_state, vs_rc, dlp1, dlp2, vls, "share: view_state")
+	SHARE_RESOURCE(uflag, _view_state, dml_view_state, vs_rc, dlp1, dlp2, vls, "share: view_state")
 
 	/* initialize dlp1's view_state */
 	if (ovsp != dlp1->dml_view_state)
@@ -248,7 +248,7 @@ f_share(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	if (dlp2->dml_view_state->vs_rc == 1)
 	  view_ring_destroy(dlp2);
 
-	SHARE_RESOURCE(uflag,_view_state, dml_view_state, vs_rc, dlp1, dlp2, vls, "share: view_state")
+	SHARE_RESOURCE(uflag, _view_state, dml_view_state, vs_rc, dlp1, dlp2, vls, "share: view_state")
       }
     }else {
       bu_vls_printf(&vls, "share: resource type '%s' unknown\n", argv[1]);
@@ -404,7 +404,7 @@ usurp_all_resources(struct dm_list *dlp1, struct dm_list *dlp2)
   dlp2->dml_axes_state = (struct _axes_state *)NULL;
 
   /* it doesn't make sense to save display list info */
-  if(!--dlp2->dml_dlist_state->dl_rc)
+  if (!--dlp2->dml_dlist_state->dl_rc)
     bu_free((genptr_t)curr_dm_list->dml_dlist_state, "usurp_all_resources: _dlist_state");
 }
 
@@ -415,7 +415,7 @@ usurp_all_resources(struct dm_list *dlp1, struct dm_list *dlp2)
 void
 free_all_resources(struct dm_list *dlp)
 {
-  if(!--dlp->dml_view_state->vs_rc){
+  if (!--dlp->dml_view_state->vs_rc){
     view_ring_destroy(dlp);
     bu_free((genptr_t)dlp->dml_view_state, "free_all_resources: view_state");
   }
@@ -447,18 +447,18 @@ share_dlist(struct dm_list *dlp2)
 {
   struct dm_list *dlp1;
 
-  if(!dlp2->dml_dmp->dm_displaylist)
+  if (!dlp2->dml_dmp->dm_displaylist)
     return;
 
   FOR_ALL_DISPLAYS(dlp1, &head_dm_list.l){
-    if(dlp1 != dlp2 &&
+    if (dlp1 != dlp2 &&
        dlp1->dml_dmp->dm_type == dlp2->dml_dmp->dm_type &&
        !bu_vls_strcmp(&dlp1->dml_dmp->dm_dName, &dlp2->dml_dmp->dm_dName)) {
       if (dm_share_dlist(dlp1->dml_dmp, dlp2->dml_dmp) == TCL_OK) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
-	SHARE_RESOURCE(0,_dlist_state, dml_dlist_state, dl_rc, dlp1, dlp2, vls, "share: dlist_state");
+	SHARE_RESOURCE(0, _dlist_state, dml_dlist_state, dl_rc, dlp1, dlp2, vls, "share: dlist_state");
 	dlp1->dml_dirty = dlp2->dml_dirty = 1;
 	bu_vls_free(&vls);
       }

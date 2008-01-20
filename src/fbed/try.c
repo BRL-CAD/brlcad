@@ -40,26 +40,26 @@ static const char RCSid[] = "@(#) try.c 2.1, modified 12/9/86 at 15:54:34, archi
 #include "./extern.h"
 
 #define NewTry( p ) \
-		if( ((p) = (Try *) malloc( sizeof(Try) )) == TRY_NULL ) \
+		if ( ((p) = (Try *) malloc( sizeof(Try) )) == TRY_NULL ) \
 			{ \
 			Malloc_Bomb(); \
 			}
 int
 add_Try(Func_Tab *ftbl, register char *name, register Try **trypp)
 {	register Try	*curp;
-	if( *name == NUL )
+	if ( *name == NUL )
 		{ /* We are finished, make leaf node. */
 		NewTry( *trypp );
 		(*trypp)->l.t_altr = (*trypp)->l.t_next = TRY_NULL;
 		(*trypp)->l.t_ftbl = ftbl;
 		return 1;
 		}
-	for(	curp = *trypp;
+	for (	curp = *trypp;
 		curp != TRY_NULL && *name != curp->n.t_curr;
 		curp = curp->n.t_altr
 		)
 		;
-	if( curp == TRY_NULL )
+	if ( curp == TRY_NULL )
 		{ /* No Match, this level, so create new alternate. */
 		curp = *trypp;
 		NewTry( *trypp );
@@ -78,12 +78,12 @@ Func_Tab *
 get_Try(register char *name, register Try *tryp)
 {	register Try *curp = NULL; /* initialize to shutup compiler. */
 	/* Traverse next links to end of function name. */
-	for( ; tryp != TRY_NULL; tryp = tryp->n.t_next )
+	for (; tryp != TRY_NULL; tryp = tryp->n.t_next )
 		{
 		curp = tryp;
-		if( *name == NUL )
+		if ( *name == NUL )
 			{ /* End of user-typed name. */
-			if( tryp->n.t_altr != TRY_NULL )
+			if ( tryp->n.t_altr != TRY_NULL )
 				/* Ambiguous at this point. */
 				return FT_NULL;
 			else	  /* Complete next character. */
@@ -96,12 +96,12 @@ get_Try(register char *name, register Try *tryp)
 				alternate list to find current letter.
 			 */
 			{
-			for(	;
+			for (	;
 				tryp != TRY_NULL && *name != tryp->n.t_curr;
 				tryp = tryp->n.t_altr
 				)
 				;
-			if( tryp == TRY_NULL )
+			if ( tryp == TRY_NULL )
 				/* Non-existant name, truncate bad part.*/
 				{
 				*name = NUL;

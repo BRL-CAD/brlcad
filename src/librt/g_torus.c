@@ -67,7 +67,7 @@ const struct bu_structparse rt_tor_parse[] = {
     { "%f", 3, "H",   bu_offsetof(struct rt_tor_internal, h[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 1, "r_a", bu_offsetof(struct rt_tor_internal, r_a),  BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 1, "r_h", bu_offsetof(struct rt_tor_internal, r_h),  BU_STRUCTPARSE_FUNC_NULL },
-    { {'\0','\0','\0','\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
+    { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
     };
 
 /*
@@ -196,7 +196,7 @@ rt_tor_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	RT_TOR_CK_MAGIC(tip);
 
 	/* Validate that |A| == |B| (for now) */
-	if( rt_fdiff( tip->r_a, tip->r_b ) != 0 ) {
+	if ( rt_fdiff( tip->r_a, tip->r_b ) != 0 ) {
 		bu_log("tor(%s):  (|A|=%f) != (|B|=%f) \n",
 			stp->st_name, tip->r_a, tip->r_b );
 		return(1);		/* BAD */
@@ -205,26 +205,26 @@ rt_tor_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	/* Validate that A.B == 0, B.H == 0, A.H == 0 */
 	f = VDOT( tip->a, tip->b )/(tip->r_a*tip->r_b);
 
-	if( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
+	if ( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
 		bu_log("tor(%s):  A not perpendicular to B, f=%f\n",
 			stp->st_name, f);
 		return(1);		/* BAD */
 	}
 	f = VDOT( tip->b, tip->h )/(tip->r_b);
-	if( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
+	if ( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
 		bu_log("tor(%s):  B not perpendicular to H, f=%f\n",
 			stp->st_name, f);
 		return(1);		/* BAD */
 	}
 	f = VDOT( tip->a, tip->h )/(tip->r_a);
-	if( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
+	if ( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
 		bu_log("tor(%s):  A not perpendicular to H, f=%f\n",
 			stp->st_name, f);
 		return(1);		/* BAD */
 	}
 
 	/* Validate that 0 < r2 <= r1 for alpha computation */
-	if( 0.0 >= tip->r_h  || tip->r_h > tip->r_a )  {
+	if ( 0.0 >= tip->r_h  || tip->r_h > tip->r_a )  {
 		bu_log("r1 = %f, r2 = %f\n", tip->r_a, tip->r_h );
 		bu_log("tor(%s):  0 < r2 <= r1 is not true\n", stp->st_name);
 		return(1);		/* BAD */
@@ -434,7 +434,7 @@ rt_tor_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	 *  if the root finder returns other than 4 roots, error.
 	 */
 	if ( (i = rt_poly_roots( &C, val, stp->st_dp->d_namep )) != 4 ){
-	    if( i > 0 )  {
+	    if ( i > 0 )  {
 		bu_log("tor:  rt_poly_roots() 4!=%d\n", i);
 		bn_pr_roots( stp->st_name, val, i );
 	    } else if (i < 0) {
@@ -457,16 +457,16 @@ rt_tor_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	 *  of 't' for the intersections
 	 */
 	for ( j=0, i=0; j < 4; j++ ){
-		if( NEAR_ZERO( val[j].im, ap->a_rt_i->rti_tol.dist ) )
+		if ( NEAR_ZERO( val[j].im, ap->a_rt_i->rti_tol.dist ) )
 			k[i++] = val[j].re;
 	}
 
 	/* reverse above translation by adding distance to all 'k' values. */
-	for( j = 0; j < i; ++j )
+	for ( j = 0; j < i; ++j )
 		k[j] -= cor_proj;
 
 	/* Here, 'i' is number of points found */
-	switch( i )  {
+	switch ( i )  {
 	case 0:
 		return(0);		/* No hit */
 
@@ -479,7 +479,7 @@ rt_tor_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 		{
 			/* Sort most distant to least distant. */
 			fastf_t	u;
-			if( (u=k[0]) < k[1] )  {
+			if ( (u=k[0]) < k[1] )  {
 				/* bubble larger towards [0] */
 				k[0] = k[1];
 				k[1] = u;
@@ -492,10 +492,10 @@ rt_tor_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 			register short	lim;
 
 			/*  Inline rt_pt_sort().  Sorts k[] into descending order. */
-			for( lim = i-1; lim > 0; lim-- )  {
-				for( n = 0; n < lim; n++ )  {
+			for ( lim = i-1; lim > 0; lim-- )  {
+				for ( n = 0; n < lim; n++ )  {
 					fastf_t	u;
-					if( (u=k[n]) < k[n+1] )  {
+					if ( (u=k[n]) < k[n+1] )  {
 						/* bubble larger towards [0] */
 						k[n] = k[n+1];
 						k[n+1] = u;
@@ -518,7 +518,7 @@ rt_tor_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	VJOIN1( segp->seg_out.hit_vpriv, pprime, k[0], dprime );
 	BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 
-	if( i == 2 )
+	if ( i == 2 )
 		return(2);			/* HIT */
 
 	/* 4 points */
@@ -569,11 +569,11 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	cor_proj = (fastf_t *)bu_malloc(n * sizeof(fastf_t), "tor proj");
 
 	/* Initialize seg_stp to assume hit (zero will then flag miss) */
-	for(i = 0; i < n; i++) segp[i].seg_stp = stp[i];
+	for (i = 0; i < n; i++) segp[i].seg_stp = stp[i];
 
 	/* for each ray/torus pair */
-	for(i = 0; i < n; i++){
-		if( segp[i].seg_stp == 0) continue;	/* Skip */
+	for (i = 0; i < n; i++){
+		if ( segp[i].seg_stp == 0) continue;	/* Skip */
 		tor = (struct tor_specific *)stp[i]->st_specific;
 
 		/* Convert vector into the space of the unit torus */
@@ -659,14 +659,14 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	}
 
 	/* Unfortunately finding the 4th order roots are too ugly to inline */
-	for(i = 0; i < n; i++){
-	    if( segp[i].seg_stp == 0) continue;	/* Skip */
+	for (i = 0; i < n; i++){
+	    if ( segp[i].seg_stp == 0) continue;	/* Skip */
 
 	    /*  It is known that the equation is 4th order.  Therefore,
 	     *  if the root finder returns other than 4 roots, error.
 	     */
 	    if ( (num_roots = rt_poly_roots( &(C[i]), &(val[i][0]), (*stp)->st_dp->d_namep )) != 4 ){
-		if( num_roots > 0 )  {
+		if ( num_roots > 0 )  {
 		    bu_log("tor:  rt_poly_roots() 4!=%d\n", num_roots);
 		    bn_pr_roots( "tor", val[i], num_roots );
 		} else if (num_roots < 0) {
@@ -684,8 +684,8 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	}
 
 	/* for each ray/torus pair */
-	for(i = 0; i < n; i++){
-		if( segp[i].seg_stp == 0) continue; /* Skip */
+	for (i = 0; i < n; i++){
+		if ( segp[i].seg_stp == 0) continue; /* Skip */
 
 		/*  Only real roots indicate an intersection in real space.
 		 *
@@ -696,24 +696,24 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 		/* Also reverse translation by adding distance to all 'k' values. */
 		/* Reuse C to hold k values */
 		num_zero = 0;
-		if( NEAR_ZERO( val[i][0].im, ap->a_rt_i->rti_tol.dist ) )
+		if ( NEAR_ZERO( val[i][0].im, ap->a_rt_i->rti_tol.dist ) )
 			C[i].cf[num_zero++] = val[i][0].re - cor_proj[i];
-		if( NEAR_ZERO( val[i][1].im, ap->a_rt_i->rti_tol.dist ) ) {
+		if ( NEAR_ZERO( val[i][1].im, ap->a_rt_i->rti_tol.dist ) ) {
 			C[i].cf[num_zero++] = val[i][1].re - cor_proj[i];
 		}
-		if( NEAR_ZERO( val[i][2].im, ap->a_rt_i->rti_tol.dist ) ) {
+		if ( NEAR_ZERO( val[i][2].im, ap->a_rt_i->rti_tol.dist ) ) {
 			C[i].cf[num_zero++] = val[i][2].re - cor_proj[i];
 		}
-		if( NEAR_ZERO( val[i][3].im, ap->a_rt_i->rti_tol.dist ) ) {
+		if ( NEAR_ZERO( val[i][3].im, ap->a_rt_i->rti_tol.dist ) ) {
 			C[i].cf[num_zero++] = val[i][3].re - cor_proj[i];
 		}
 		C[i].dgr   = num_zero;
 
 		/* Here, 'i' is number of points found */
-		if( num_zero == 0 ) {
+		if ( num_zero == 0 ) {
 			SEG_MISS(segp[i]);		/* MISS */
 		}
-		else if( num_zero != 2 && num_zero != 4 ) {
+		else if ( num_zero != 2 && num_zero != 4 ) {
 #if 0
 			bu_log("rt_tor_shot: reduced 4 to %d roots\n", i);
 			bn_pr_roots( stp->st_name, val, 4 );
@@ -723,9 +723,9 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	}
 
 	/* Process each one segment hit */
-	for(i = 0; i < n; i++){
-		if( segp[i].seg_stp == 0) continue; /* Skip */
-		if( C[i].dgr != 2 )  continue;  /* Not one segment */
+	for (i = 0; i < n; i++){
+		if ( segp[i].seg_stp == 0) continue; /* Skip */
+		if ( C[i].dgr != 2 )  continue;  /* Not one segment */
 
 		tor = (struct tor_specific *)stp[i]->st_specific;
 
@@ -757,10 +757,10 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	}
 
 	/* Process each two segment hit */
-	for(i = 0; i < n; i++){
+	for (i = 0; i < n; i++){
 
-		if( segp[i].seg_stp == 0) continue;	/* Skip */
-		if( C[i].dgr != 4 )  continue;  /* Not two segment */
+		if ( segp[i].seg_stp == 0) continue;	/* Skip */
+		if ( C[i].dgr != 4 )  continue;  /* Not two segment */
 
 		tor = (struct tor_specific *)stp[i]->st_specific;
 
@@ -871,11 +871,11 @@ rt_tor_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 	/* vector from V to hit point */
 	VSUB2( w4, hitp->hit_point, tor->tor_V );
 
-	if( !NEAR_ZERO(nz, 0.00001) ) {
+	if ( !NEAR_ZERO(nz, 0.00001) ) {
 		z1 = w4[Z]*nx*nx + w4[Z]*ny*ny - w4[X]*nx*nz - w4[Y]*ny*nz;
 		x1 = (nx*(z1-w4[Z])/nz) + w4[X];
 		y1 = (ny*(z1-w4[Z])/nz) + w4[Y];
-	} else if( !NEAR_ZERO(ny, 0.00001) ) {
+	} else if ( !NEAR_ZERO(ny, 0.00001) ) {
 		y1 = w4[Y]*nx*nx + w4[Y]*nz*nz - w4[X]*nx*ny - w4[Z]*ny*nz;
 		x1 = (nx*(y1-w4[Y])/ny) + w4[X];
 		z1 = (nz*(y1-w4[Y])/ny) + w4[Z];
@@ -973,7 +973,7 @@ rt_num_circular_segments(double	maxerr, double	radius)
 	register fastf_t	half_theta;
 	int			n;
 
-	if( radius <= 0.0 || maxerr <= 0.0 || maxerr >= radius )  {
+	if ( radius <= 0.0 || maxerr <= 0.0 || maxerr >= radius )  {
 		/* Return a default number of segments */
 		return(6);
 	}
@@ -981,12 +981,12 @@ rt_num_circular_segments(double	maxerr, double	radius)
 	/* There does not seem to be any reasonable way to express the
 	 * acos in terms of an atan2(), so extra checking is done.
 	 */
-	if( cos_half_theta <= 0.0 || cos_half_theta >= 1.0 )  {
+	if ( cos_half_theta <= 0.0 || cos_half_theta >= 1.0 )  {
 		/* Return a default number of segments */
 		return(6);
 	}
 	half_theta = acos( cos_half_theta );
-	if( half_theta <= SMALL )  {
+	if ( half_theta <= SMALL )  {
 		/* A very large number of segments will be needed.
 		 * Impose an upper bound here
 		 */
@@ -995,8 +995,8 @@ rt_num_circular_segments(double	maxerr, double	radius)
 	n = bn_pi / half_theta + 0.99;
 
 	/* Impose the limits again */
-	if( n <= 6 )  return(6);
-	if( n >= 360*10 )  return( 360*10 );
+	if ( n <= 6 )  return(6);
+	if ( n >= 360*10 )  return( 360*10 );
 	return(n);
 }
 /**
@@ -1031,7 +1031,7 @@ rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	tip = (struct rt_tor_internal *)ip->idb_ptr;
 	RT_TOR_CK_MAGIC(tip);
 
-	if( ttol->rel <= 0.0 || ttol->rel >= 1.0 )  {
+	if ( ttol->rel <= 0.0 || ttol->rel >= 1.0 )  {
 		rel = 0.0;		/* none */
 	} else {
 		/* Convert relative tolerance to absolute tolerance
@@ -1040,9 +1040,9 @@ rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 		rel = ttol->rel * 2 * (tip->r_a+tip->r_h);
 	}
 	/* Take tighter of two (absolute) tolerances */
-	if( ttol->abs <= 0.0 )  {
+	if ( ttol->abs <= 0.0 )  {
 		/* No absolute tolerance given */
-		if( rel <= 0.0 )  {
+		if ( rel <= 0.0 )  {
 			/* User has no tolerance for this kind of drink! */
 			nw = 8;
 			nlen = 16;
@@ -1053,7 +1053,7 @@ rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 		}
 	} else {
 		/* Absolute tolerance was given */
-		if( rel <= 0.0 || rel > ttol->abs)
+		if ( rel <= 0.0 || rel > ttol->abs)
 			rel = ttol->abs;
 		nlen = rt_num_circular_segments( rel, tip->r_a );
 		nw = rt_num_circular_segments( rel, tip->r_h );
@@ -1066,11 +1066,11 @@ rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	 *  is exact in the center, and off by theta/2 at the edges.
 	 *  Note:  1 degree tolerance requires 180*180 tessellation!
 	 */
-	if( ttol->norm > 0.0 )  {
+	if ( ttol->norm > 0.0 )  {
 		register int	nseg;
 		nseg = (bn_pi / ttol->norm) + 0.99;
-		if( nseg > nlen ) nlen = nseg;
-		if( nseg > nw ) nw = nseg;
+		if ( nseg > nlen ) nlen = nseg;
+		if ( nseg > nw ) nw = nseg;
 	}
 
 	/* Compute the points on the surface of the torus */
@@ -1082,7 +1082,7 @@ rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 #define TOR_PTA(ww, ll)	(&pts[TOR_PT(ww, ll)*3])
 #define TOR_NORM_A(ww, ll)	(&norms[TOR_PT(ww, ll)*3])
 
-	for( len = 0; len < nlen; len++ )  {
+	for ( len = 0; len < nlen; len++ )  {
 		beta = bn_twopi * len / nlen;
 		cos_beta = cos(beta);
 		sin_beta = sin(beta);
@@ -1090,7 +1090,7 @@ rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 		VCOMB2( radius, cos_beta, tip->a, sin_beta, tip->b );
 		/* We assume that |radius| = |A|.  Circular */
 		VSCALE( G, radius, dist_to_rim );
-		for( w = 0; w < nw; w++ )  {
+		for ( w = 0; w < nw; w++ )  {
 			alpha = bn_twopi * w / nw;
 			cos_alpha = cos(alpha);
 			sin_alpha = sin(alpha);
@@ -1100,18 +1100,18 @@ rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	}
 
 	/* Draw lengthwise (around outside rim) */
-	for( w = 0; w < nw; w++ )  {
+	for ( w = 0; w < nw; w++ )  {
 		len = nlen-1;
 		RT_ADD_VLIST( vhead, TOR_PTA(w, len), BN_VLIST_LINE_MOVE );
-		for( len = 0; len < nlen; len++ )  {
+		for ( len = 0; len < nlen; len++ )  {
 			RT_ADD_VLIST( vhead, TOR_PTA(w, len), BN_VLIST_LINE_DRAW );
 		}
 	}
 	/* Draw around the "width" (1 cross section) */
-	for( len = 0; len < nlen; len++ )  {
+	for ( len = 0; len < nlen; len++ )  {
 		w = nw-1;
 		RT_ADD_VLIST( vhead, TOR_PTA(w, len), BN_VLIST_LINE_MOVE );
-		for( w = 0; w < nw; w++ )  {
+		for ( w = 0; w < nw; w++ )  {
 			RT_ADD_VLIST( vhead, TOR_PTA(w, len), BN_VLIST_LINE_DRAW );
 		}
 	}
@@ -1153,7 +1153,7 @@ rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	tip = (struct rt_tor_internal *)ip->idb_ptr;
 	RT_TOR_CK_MAGIC(tip);
 
-	if( ttol->rel <= 0.0 || ttol->rel >= 1.0 )  {
+	if ( ttol->rel <= 0.0 || ttol->rel >= 1.0 )  {
 		rel = 0.0;		/* none */
 	} else {
 		/* Convert relative tolerance to absolute tolerance
@@ -1162,9 +1162,9 @@ rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		rel = ttol->rel * 2 * (tip->r_a+tip->r_h);
 	}
 	/* Take tighter of two (absolute) tolerances */
-	if( ttol->abs <= 0.0 )  {
+	if ( ttol->abs <= 0.0 )  {
 		/* No absolute tolerance given */
-		if( rel <= 0.0 )  {
+		if ( rel <= 0.0 )  {
 			/* User has no tolerance for this kind of drink! */
 			nw = 8;
 			nlen = 16;
@@ -1175,7 +1175,7 @@ rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		}
 	} else {
 		/* Absolute tolerance was given */
-		if( rel <= 0.0 || rel > ttol->abs)
+		if ( rel <= 0.0 || rel > ttol->abs)
 			rel = ttol->abs;
 		nlen = rt_num_circular_segments( rel, tip->r_a );
 		nw = rt_num_circular_segments( rel, tip->r_h );
@@ -1188,11 +1188,11 @@ rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	 *  is exact in the center, and off by theta/2 at the edges.
 	 *  Note:  1 degree tolerance requires 180*180 tessellation!
 	 */
-	if( ttol->norm > 0.0 )  {
+	if ( ttol->norm > 0.0 )  {
 		register int	nseg;
 		nseg = (bn_pi / ttol->norm) + 0.99;
-		if( nseg > nlen ) nlen = nseg;
-		if( nseg > nw ) nw = nseg;
+		if ( nseg > nlen ) nlen = nseg;
+		if ( nseg > nw ) nw = nseg;
 	}
 
 	/* Compute the points on the surface of the torus */
@@ -1201,7 +1201,7 @@ rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		"rt_tor_tess pts[]" );
 	norms = (fastf_t *)bu_malloc( nw * nlen * sizeof( vect_t ), "rt_tor_tess: norms[]" );
 
-	for( len = 0; len < nlen; len++ )  {
+	for ( len = 0; len < nlen; len++ )  {
 		beta = bn_twopi * len / nlen;
 		cos_beta = cos(beta);
 		sin_beta = sin(beta);
@@ -1209,7 +1209,7 @@ rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		VCOMB2( radius, cos_beta, tip->a, sin_beta, tip->b );
 		/* We assume that |radius| = |A|.  Circular */
 		VSCALE( G, radius, dist_to_rim );
-		for( w = 0; w < nw; w++ )  {
+		for ( w = 0; w < nw; w++ )  {
 			alpha = bn_twopi * w / nw;
 			cos_alpha = cos(alpha);
 			sin_alpha = sin(alpha);
@@ -1232,13 +1232,13 @@ rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	/* Build the topology of the torus */
 	/* Note that increasing 'w' goes to the left (alpha goes ccw) */
 	nfaces = 0;
-	for( w = 0; w < nw; w++ )  {
-		for( len = 0; len < nlen; len++ )  {
+	for ( w = 0; w < nw; w++ )  {
+		for ( len = 0; len < nlen; len++ )  {
 			vertp[0] = &verts[ TOR_PT(w+0, len+0) ];
 			vertp[1] = &verts[ TOR_PT(w+0, len+1) ];
 			vertp[2] = &verts[ TOR_PT(w+1, len+1) ];
 			vertp[3] = &verts[ TOR_PT(w+1, len+0) ];
-			if( (faces[nfaces++] = nmg_cmface( s, vertp, 4 )) == (struct faceuse *)0 )  {
+			if ( (faces[nfaces++] = nmg_cmface( s, vertp, 4 )) == (struct faceuse *)0 )  {
 				bu_log("rt_tor_tess() nmg_cmface failed, w=%d/%d, len=%d/%d\n",
 					w, nw, len, nlen );
 				nfaces--;
@@ -1247,29 +1247,29 @@ rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	}
 
 	/* Associate vertex geometry */
-	for( w = 0; w < nw; w++ )  {
-		for( len = 0; len < nlen; len++ )  {
+	for ( w = 0; w < nw; w++ )  {
+		for ( len = 0; len < nlen; len++ )  {
 			nmg_vertex_gv( verts[TOR_PT(w, len)], TOR_PTA(w, len) );
 		}
 	}
 
 	/* Associate face geometry */
-	for( i=0; i < nfaces; i++ )  {
-		if( nmg_fu_planeeqn( faces[i], tol ) < 0 )
+	for ( i=0; i < nfaces; i++ )  {
+		if ( nmg_fu_planeeqn( faces[i], tol ) < 0 )
 			return -1;		/* FAIL */
 	}
 
 	/* Associate vertexuse normals */
-	for( w=0 ; w<nw ; w++ )
+	for ( w=0; w<nw; w++ )
 	{
-		for( len=0 ; len<nlen ; len++ )
+		for ( len=0; len<nlen; len++ )
 		{
 			struct vertexuse *vu;
 			vect_t rev_norm;
 
 			VREVERSE( rev_norm, TOR_NORM_A(w, len) );
 
-			for( BU_LIST_FOR( vu, vertexuse, &verts[TOR_PT(w, len)]->vu_hd ) )
+			for ( BU_LIST_FOR( vu, vertexuse, &verts[TOR_PT(w, len)]->vu_hd ) )
 			{
 				struct faceuse *fu;
 
@@ -1278,9 +1278,9 @@ rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 				fu = nmg_find_fu_of_vu( vu );
 				NMG_CK_FACEUSE( fu );
 
-				if( fu->orientation == OT_SAME )
+				if ( fu->orientation == OT_SAME )
 					nmg_vertexuse_nv( vu, TOR_NORM_A(w, len) );
-				else if( fu->orientation == OT_OPPOSITE )
+				else if ( fu->orientation == OT_OPPOSITE )
 					nmg_vertexuse_nv( vu, rev_norm );
 			}
 		}
@@ -1315,7 +1315,7 @@ rt_tor_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 	BU_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
 	/* Check record type */
-	if( rp->u_id != ID_SOLID )  {
+	if ( rp->u_id != ID_SOLID )  {
 		bu_log("rt_tor_import: defective record\n");
 		return(-1);
 	}
@@ -1342,7 +1342,7 @@ rt_tor_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 	tip->r_a = MAGNITUDE(tip->a);
 	tip->r_b = MAGNITUDE(tip->b);
 	tip->r_h = MAGNITUDE(tip->h);
-	if( tip->r_a <= SMALL || tip->r_b <= SMALL || tip->r_h <= SMALL )  {
+	if ( tip->r_a <= SMALL || tip->r_b <= SMALL || tip->r_h <= SMALL )  {
 		bu_log("rt_tor_import:  zero length A, B, or H vector\n");
 		return(-1);
 	}
@@ -1353,7 +1353,7 @@ rt_tor_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 	/* If H does not point in the direction of A cross B, reverse H. */
 	/* Somehow, database records have been written with this problem. */
 	VCROSS( axb, tip->a, tip->b );
-	if( VDOT( axb, tip->h ) < 0 )  {
+	if ( VDOT( axb, tip->h ) < 0 )  {
 		VREVERSE( tip->h, tip->h );
 	}
 
@@ -1406,7 +1406,7 @@ rt_tor_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 	double			m2;
 
 	RT_CK_DB_INTERNAL(ip);
-	if( ip->idb_type != ID_TOR )  return(-1);
+	if ( ip->idb_type != ID_TOR )  return(-1);
 	tip = (struct rt_tor_internal *)ip->idb_ptr;
 	RT_TOR_CK_MAGIC(tip);
 
@@ -1422,11 +1422,11 @@ rt_tor_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 	r2 = tip->r_h;
 
 	/* Validate that 0 < r2 <= r1 */
-	if( r2 <= 0.0 )  {
+	if ( r2 <= 0.0 )  {
 		bu_log("rt_tor_export:  illegal r2=%.12e <= 0\n", r2);
 		return(-1);
 	}
-	if( r2 > r1 )  {
+	if ( r2 > r1 )  {
 		bu_log("rt_tor_export:  illegal r2=%.12e > r1=%.12e\n",
 			r2, r1);
 		return(-1);
@@ -1438,7 +1438,7 @@ rt_tor_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 
 	VMOVE( norm, tip->h );
 	m2 = MAGNITUDE( norm );		/* F2 is NORMAL to torus */
-	if( m2 <= SQRT_SMALL_FASTF )  {
+	if ( m2 <= SQRT_SMALL_FASTF )  {
 		bu_log("rt_tor_export: normal magnitude is zero!\n");
 		return(-1);		/* failure */
 	}
@@ -1567,7 +1567,7 @@ rt_tor_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 		INTCLAMP(tip->h[Y] * mm2local),
 		INTCLAMP(tip->h[Z] * mm2local) );
 
-	if( !verbose )  return(0);
+	if ( !verbose )  return(0);
 
 	bu_vls_printf( str, "\tA=(%g, %g, %g)\n",
 		INTCLAMP(tip->a[X] * mm2local / tip->r_a),

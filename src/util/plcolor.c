@@ -46,13 +46,13 @@ main(int argc, char **argv)
 	int	c;
 	int	r, g, b;
 
-	if( argc != 4 || isatty(fileno(stdout)) ) {
+	if ( argc != 4 || isatty(fileno(stdout)) ) {
 		bu_exit(1, "%s", usage );
 	}
 
-	if( !isatty(fileno(stdin)) ) {
+	if ( !isatty(fileno(stdin)) ) {
 		/* Permit use in a pipeline -- copy input to output first */
-		while( (c = getchar()) != EOF )
+		while ( (c = getchar()) != EOF )
 			putchar( c );
 	}
 

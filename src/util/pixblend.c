@@ -83,7 +83,7 @@ get_args(int argc, register char **argv)
 	register int c;
 
 	while ( (c = bu_getopt( argc, argv, "r:i:Ss:g:" )) != EOF )  {
-		switch( c )  {
+		switch ( c )  {
 		case 'r':
 		    if (iflg)
 			return 0;
@@ -123,13 +123,13 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( bu_optind+2 > argc )
+	if ( bu_optind+2 > argc )
 		return(0);
 
 	f1_name = argv[bu_optind++];
-	if( strcmp( f1_name, "-" ) == 0 )
+	if ( strcmp( f1_name, "-" ) == 0 )
 		f1 = stdin;
-	else if( (f1 = fopen(f1_name, "r")) == NULL )  {
+	else if ( (f1 = fopen(f1_name, "r")) == NULL )  {
 		perror(f1_name);
 		(void)fprintf( stderr,
 			"pixblend: cannot open \"%s\" for reading\n",
@@ -138,9 +138,9 @@ get_args(int argc, register char **argv)
 	}
 
 	f2_name = argv[bu_optind++];
-	if( strcmp( f2_name, "-" ) == 0 )
+	if ( strcmp( f2_name, "-" ) == 0 )
 		f2 = stdin;
-	else if( (f2 = fopen(f2_name, "r")) == NULL )  {
+	else if ( (f2 = fopen(f2_name, "r")) == NULL )  {
 		perror(f2_name);
 		(void)fprintf( stderr,
 			"pixblend: cannot open \"%s\" for reading\n",
@@ -177,7 +177,7 @@ main(int argc, char **argv)
 	    value = 0.5;
 	}
 
-	if( value < 0.0 || value > 1.0)
+	if ( value < 0.0 || value > 1.0)
 	{
 		fprintf(stderr, "pixblend: Blend value must be between 0.0 and 1.0\n");
 		bu_exit (0, NULL);
@@ -194,14 +194,14 @@ main(int argc, char **argv)
 #endif
 	}
 
-	if( (b1 = (char *)malloc( CHUNK )) == (char *)0 ||
+	if ( (b1 = (char *)malloc( CHUNK )) == (char *)0 ||
 	    (b2 = (char *)malloc( CHUNK )) == (char *)0 ||
 	    (b3 = (char *)malloc( CHUNK )) == (char *)0 ) {
 		fprintf(stderr, "pixblend:  malloc failure\n");
 		bu_exit (3, NULL);
 	}
 
-	while(1)  {
+	while (1)  {
 		unsigned char	*cb1, *cb2;	/* current input buf ptrs */
 		register unsigned char	*cb3; 	/* current output buf ptr */
 		int r1, r2, len, todo;
@@ -210,9 +210,9 @@ main(int argc, char **argv)
 		r1 = fread( b1, 1, CHUNK, f1 );
 		r2 = fread( b2, 1, CHUNK, f2 );
 		len = r1;
-		if( r2 < len )
+		if ( r2 < len )
 			len = r2;
-		if( len <= 0 )
+		if ( len <= 0 )
 			break;
 
 		cb1 = (unsigned char *)b1;
@@ -220,12 +220,12 @@ main(int argc, char **argv)
 		cb3 = (unsigned char *)b3;
 		todo = len;
 		if (iflg) {
-		    while( todo-- ) {
+		    while ( todo-- ) {
 			*cb3++ = (char) ((1.0 - value) * (*cb1++) +
 					 value * (*cb2++));
 		    }
 		} else {
-		    while( todo > 0 ) {
+		    while ( todo > 0 ) {
 			if (cb1[0] == cb2[0] &&
 			    cb1[1] == cb2[1] &&
 			    cb1[2] == cb2[2]) {

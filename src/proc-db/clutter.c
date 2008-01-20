@@ -124,9 +124,9 @@ main(int argc, char **argv)
 	quant = 7;	/* XXXX 5 */
 	base = -size*(quant/2);
 	maxheight = size/2;		/* keep lights off the floor */
-	for( ix=quant-1; ix>=0; ix-- )  {
+	for ( ix=quant-1; ix>=0; ix-- )  {
 		x = base + ix*size;
-		for( iy=quant-1; iy>=0; iy-- )  {
+		for ( iy=quant-1; iy>=0; iy-- )  {
 			y = base + iy*size;
 			sprintf( name, "Bx%dy%d", ix, iy );
 			do_plate( name, x, y, size );
@@ -135,7 +135,7 @@ main(int argc, char **argv)
 			sprintf( name, "x%dy%d", ix, iy );
 			(void)mk_addmember( name, &head.l, NULL, WMOP_UNION );
 			n = rand() & 03;
-			switch(n)  {
+			switch (n)  {
 			case 0:
 				height = ball_stack( name, x, y, size );
 				break;
@@ -146,7 +146,7 @@ main(int argc, char **argv)
 				height = prim_stack( name, x, y, size );
 				break;
 			}
-			if( height > maxheight )  maxheight = height;
+			if ( height > maxheight )  maxheight = height;
 		}
 	}
 
@@ -156,7 +156,7 @@ main(int argc, char **argv)
 	do_rings( "rings", pos, 2*size*quant/2, size/4, size, 4 );
 	(void)mk_addmember( "rings", &head.l, NULL, WMOP_UNION );
 
-	if( maxheight < minheight ) maxheight = minheight;
+	if ( maxheight < minheight ) maxheight = minheight;
 
 	/* Create some light */
 	white[0] = white[1] = white[2] = 255;
@@ -206,7 +206,7 @@ crystal_stack(char *cname, double xc, double yc, double size)
 	VUNITIZE( maj );
 	VUNITIZE( min );
 
-	for( i=0; i<3; i++ )  {
+	for ( i=0; i<3; i++ )  {
 		snprintf( name, 64, "%sL%c", cname, 'a'+i);
 		(void)mk_addmember( name, &head.l, NULL, WMOP_UNION );
 		VSET( center, xc, yc, size/2*i );
@@ -217,7 +217,7 @@ crystal_stack(char *cname, double xc, double yc, double size)
 			rand_num(rbuf) * 90.0,
 			rand_num(rbuf) * 8.0 + 2.0,
 			nsolids );
-		if( high > height )  height = high;
+		if ( high > height )  height = high;
 	}
 
 	/* Build the crystal union */
@@ -271,11 +271,11 @@ crystal_layer(char *crname, fastf_t *center, double radius, fastf_t *maj, fastf_
 
 	BU_LIST_INIT( &head.l );
 
-	for( todo = nsolids-1; todo >= 0; todo-- )  {
+	for ( todo = nsolids-1; todo >= 0; todo-- )  {
 		cos_var = cos( var*rand_num(rbuf) );
 		m_cos_var = 1 - cos_var;
 		/* Blend together two original axes for new orthog. set */
-		if( rand() & 1 )  {
+		if ( rand() & 1 )  {
 			maj_axis = maj;
 			min_axis = min;
 		}  else  {
@@ -318,8 +318,8 @@ crystal_layer(char *crname, fastf_t *center, double radius, fastf_t *maj, fastf_
 		mk_arb8( outfp, name, &pt[0][X] );
 		(void)mk_addmember( name, &head.l, NULL, WMOP_UNION );
 
-		for( i=0; i<8; i++ )  {
-			if( pt[i][Z] > height )
+		for ( i=0; i<8; i++ )  {
+			if ( pt[i][Z] > height )
 				height = pt[i][Z];
 		}
 	}
@@ -373,7 +373,7 @@ ball_stack(char *bname, double xc, double yc, double size)
 	/* Make some objects */
 	esz = size*0.5*0.9;	/* dist from ctr to edge of base */
 	n = rand()&7;
-	for( i=0; i<n; i++ )  {
+	for ( i=0; i<n; i++ )  {
 		snprintf( name, 64, "%s%c", bname, 'A'+i );
 		VSET( center, xc, yc, size/2+i*size );
 		mk_sph( outfp, name, center, esz/2 );
@@ -415,12 +415,12 @@ prim_stack(char *pname, double xc, double yc, double size)
 
 	/* Make some objects */
 	n = (rand()&7)+1;
-	for( nobj=0; nobj<n; nobj++ )  {
+	for ( nobj=0; nobj<n; nobj++ )  {
 		snprintf( name, 64, "%s%c", pname, 'A'+nobj );
 		(void)mk_addmember( name, &head.l, NULL, WMOP_UNION );
 		height = ((rand()&7)+1)*size/3;
 		i = rand()%5;
-		switch(i)  {
+		switch (i)  {
 		default:
 			VSET( center, xc, yc, vpos+size/2 );
 			mk_sph( outfp, name, center, size/2 );
@@ -480,7 +480,7 @@ do_rings(char *ringname, fastf_t *center, double r1, double r2, double incr, int
 	BU_LIST_INIT( &head.l );
 
 	VSET( normal, 0, 0, 1 );
-	for( i=0; i<n; i++ )  {
+	for ( i=0; i<n; i++ )  {
 		snprintf( sname, 32, "%s%ds", ringname, i );
 		snprintf( rname, 32, "%s%dr", ringname, i );
 

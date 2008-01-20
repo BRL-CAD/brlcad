@@ -77,7 +77,7 @@ int
 main(int argc, char **argv)
 {
 
-	if( argc != 2 )  {
+	if ( argc != 2 )  {
 		fputs( usage, stderr );
 		return 1;
 	}
@@ -211,7 +211,7 @@ make_bond( int sp1, int sp2 )
 
 	s1 = s2 = (struct sphere *) 0;
 
-	for( s_ptr = s_head; s_ptr != (struct sphere *)0; s_ptr = s_ptr->next )
+	for ( s_ptr = s_head; s_ptr != (struct sphere *)0; s_ptr = s_ptr->next )
 	{
 		if ( s_ptr->s_id == sp1 )
 			s1 = s_ptr;
@@ -220,7 +220,7 @@ make_bond( int sp1, int sp2 )
 			s2 = s_ptr;
 	}
 
-	if( s1 == (struct sphere *) 0 || s2 == (struct sphere *)0 )
+	if ( s1 == (struct sphere *) 0 || s2 == (struct sphere *)0 )
 		return -1;		/* error */
 
 	VMOVE( base, s1->s_center );

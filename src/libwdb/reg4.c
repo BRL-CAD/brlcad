@@ -86,26 +86,26 @@ int			inherit;
 	memset((char *)&rec, 0, sizeof(rec));
 	rec.c.c_id = ID_COMB;
 	/* XXX What values to pass for FASTGEN plate and volume regions? */
-	if( region )
+	if ( region )
 		rec.c.c_flags = DBV4_REGION;
 	else
 		rec.c.c_flags = DBV4_NON_REGION;
 	NAMEMOVE( name, rec.c.c_name );
 	rec.c.c_pad1 = len;		/* backwards compat, was c_length */
-	if( matname ) {
+	if ( matname ) {
 		strncpy( rec.c.c_matname, matname, sizeof(rec.c.c_matname) );
-		if( matparm )
+		if ( matparm )
 			strncpy( rec.c.c_matparm, matparm,
 				sizeof(rec.c.c_matparm) );
 	}
-	if( rgb )  {
+	if ( rgb )  {
 		rec.c.c_override = 1;
 		rec.c.c_rgb[0] = rgb[0];
 		rec.c.c_rgb[1] = rgb[1];
 		rec.c.c_rgb[2] = rgb[2];
 	}
 	rec.c.c_inherit = inherit;
-	if( fwrite( (char *)&rec, sizeof(rec), 1, fp ) != 1 )
+	if ( fwrite( (char *)&rec, sizeof(rec), 1, fp ) != 1 )
 		return(-1);
 	return(0);
 }
@@ -141,8 +141,8 @@ int		inherit;
 
 	memset((char *)&rec, 0, sizeof(rec));
 	rec.c.c_id = ID_COMB;
-	if( region ){
-		switch( region )  {
+	if ( region ){
+		switch ( region )  {
 		case DBV4_NON_REGION:	/* sanity, fixes a non-bool arg */
 		case DBV4_REGION:
 		case DBV4_REGION_FASTGEN_PLATE:
@@ -162,20 +162,20 @@ int		inherit;
 		rec.c.c_flags = DBV4_NON_REGION;
 	NAMEMOVE( name, rec.c.c_name );
 	rec.c.c_pad1 = len;		/* backwards compat, was c_length */
-	if( matname ) {
+	if ( matname ) {
 		strncpy( rec.c.c_matname, matname, sizeof(rec.c.c_matname) );
-		if( matparm )
+		if ( matparm )
 			strncpy( rec.c.c_matparm, matparm,
 				sizeof(rec.c.c_matparm) );
 	}
-	if( rgb )  {
+	if ( rgb )  {
 		rec.c.c_override = 1;
 		rec.c.c_rgb[0] = rgb[0];
 		rec.c.c_rgb[1] = rgb[1];
 		rec.c.c_rgb[2] = rgb[2];
 	}
 
-	if( fwrite( (char *)&rec, sizeof(rec), 1, fp ) != 1 )
+	if ( fwrite( (char *)&rec, sizeof(rec), 1, fp ) != 1 )
 		return(-1);
 	return(0);
 }
@@ -202,13 +202,13 @@ int		region;
 
 	memset((char *)&rec, 0, sizeof(rec));
 	rec.c.c_id = ID_COMB;
-	if( region )
+	if ( region )
 		rec.c.c_flags = DBV4_REGION;
 	else
 		rec.c.c_flags = DBV4_NON_REGION;
 	NAMEMOVE( name, rec.c.c_name );
 	rec.c.c_pad1 = len;		/* backwards compat, was c_length */
-	if( fwrite( (char *)&rec, sizeof(rec), 1, fp ) != 1 )
+	if ( fwrite( (char *)&rec, sizeof(rec), 1, fp ) != 1 )
 		return(-1);
 	return(0);
 }
@@ -235,18 +235,18 @@ int		bool_op;
 	memset((char *)&rec, 0, sizeof(rec));
 	rec.M.m_id = ID_MEMB;
 	NAMEMOVE( name, rec.M.m_instname );
-	if( bool_op )
+	if ( bool_op )
 		rec.M.m_relation = bool_op;
 	else
 		rec.M.m_relation = UNION;
-	if( mat ) {
-		for( i=0; i<16; i++ )
+	if ( mat ) {
+		for ( i=0; i<16; i++ )
 			rec.M.m_mat[i] = mat[i];  /* double -> float */
 	} else {
-		for( i=0; i<16; i++ )
+		for ( i=0; i<16; i++ )
 			rec.M.m_mat[i] = ident_mat[i];
 	}
-	if( fwrite( (char *)&rec, sizeof(rec), 1, fp ) != 1 )
+	if ( fwrite( (char *)&rec, sizeof(rec), 1, fp ) != 1 )
 		return(-1);
 	return(0);
 }

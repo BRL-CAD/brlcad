@@ -236,7 +236,7 @@ get_name(struct db_i *_dbip, struct directory *dp, struct clone_state *state, in
     newname = bu_vls_vlsinit();
 
     /* Ugh. This needs much repair/cleanup. */
-    if( state->updpos == 0 ) {
+    if ( state->updpos == 0 ) {
 	sscanf(dp->d_namep, "%[!-/,:-~]%d%[!-/,:-~]%512s", &prefix, &num, &suffix, &suffix2); /* CLONE_BUFSIZE */
 	snprintf(suffix, CLONE_BUFSIZE, "%s", suffix2);
     } else if ( state->updpos == 1 ) {
@@ -548,7 +548,7 @@ int
 copy_v5_comb_tree(union tree *tree, int idx)
 {
     char *buf;
-    switch(tree->tr_op){
+    switch (tree->tr_op){
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
@@ -783,12 +783,12 @@ copy_object(struct db_i *_dbip, struct resource *resp, struct clone_state *state
 	char *av[3] = {"e", NULL, NULL};
 
 	idx = index_in_list(obj_list, state->src->d_namep);
-	for (i = 0; i < (state->n_copies > obj_list.name_size ? obj_list.name_size : state->n_copies) ; i++) {
+	for (i = 0; i < (state->n_copies > obj_list.name_size ? obj_list.name_size : state->n_copies); i++) {
 	    av[1] = bu_vls_addr(&obj_list.names[idx].dest[i]);
 	    /* draw does not use clientdata */
 	    cmd_draw( (ClientData)NULL, INTERP, 2, av );
 	}
-	if(state->autoview) {
+	if (state->autoview) {
 	    av[0] = "autoview";
 	    cmd_autoview((ClientData)NULL, INTERP, 1, av);
 	}
@@ -963,7 +963,7 @@ f_clone(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     struct clone_state	state;
 
     /* allow interrupts */
-    if( setjmp( jmp_env ) == 0 )
+    if ( setjmp( jmp_env ) == 0 )
 	(void)signal( SIGINT, sig3);
     else
 	return TCL_OK;
@@ -1036,7 +1036,7 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     int no_draw = 0;
 
     /* allow interrupts */
-    if( setjmp( jmp_env ) == 0 )
+    if ( setjmp( jmp_env ) == 0 )
 	(void)signal( SIGINT, sig3 );
     else
 	return TCL_OK;

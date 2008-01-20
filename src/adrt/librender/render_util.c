@@ -69,7 +69,7 @@ void render_util_spall_vec(TIE_3 dir, tfloat angle, int vec_num, TIE_3 *vec_list
   vec.v[0] = vec.v[1] < 0 ? 360.0 - acos(vec.v[0])*MATH_RAD2DEG : acos(vec.v[0])*MATH_RAD2DEG;
 
   /* triangles to approximate */
-  for(i = 0; i < vec_num; i++) {
+  for (i = 0; i < vec_num; i++) {
     t = angle * sin((i * 360 / vec_num) * MATH_DEG2RAD);
     vec_list[i].v[0] = cos((vec.v[0] + t) * MATH_DEG2RAD);
     vec_list[i].v[1] = sin((vec.v[0] + t) * MATH_DEG2RAD);
@@ -89,20 +89,20 @@ static void* shot_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr) {
 
   /* Scan from segind to segnum to find a match */
   found = 0;
-  for(i = shotline->segind; i < shotline->segnum; i++) {
-    if(shotline->seglist[i].mesh == mesh) {
+  for (i = shotline->segind; i < shotline->segnum; i++) {
+    if (shotline->seglist[i].mesh == mesh) {
       found = 1;
       shotline->seglist[i].complete = 1;
       shotline->seglist[i].thickness = sqrt(id->dist) - sqrt(shotline->seglist[i].thickness);
 
       /* Advance to next !complete */
-      while(shotline->seglist[shotline->segind].complete && shotline->segind <= i)
+      while (shotline->seglist[shotline->segind].complete && shotline->segind <= i)
         shotline->segind++;
       break;
     }
   }
 
-  if(!found) {
+  if (!found) {
     /* Grow the shotline */
     shotline->seglist = (render_segment_t *)realloc(shotline->seglist, (shotline->segnum + 1) * sizeof(render_segment_t));
 
@@ -112,7 +112,7 @@ static void* shot_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr) {
     shotline->seglist[shotline->segnum].thickness = id->dist;
 
     /* In-hit */
-    if(shotline->segnum == 0) {
+    if (shotline->segnum == 0) {
       shotline->in_hit = ray->dir;
       MATH_VEC_MUL_SCALAR(shotline->in_hit, shotline->in_hit, id->dist);
       MATH_VEC_ADD(shotline->in_hit, shotline->in_hit, ray->pos);
@@ -151,7 +151,7 @@ void render_util_shotline_list(tie_t *tie, tie_ray_t *ray, void **data, int *dle
   memcpy(&((char *)*data)[*dlen], &shotline.segnum, sizeof(uint32_t));
   *dlen += sizeof(uint32_t);
 
-  for(i = 0; i < shotline.segnum; i++) {
+  for (i = 0; i < shotline.segnum; i++) {
 /*    printf("i: %d, complete: %d, thickness: %.3f, name: %s\n", i, shotline.seglist[i].complete, shotline.seglist[i].thickness, shotline.seglist[i].mesh->name); */
     c = strlen(shotline.seglist[i].mesh->name) + 1;
 
@@ -208,21 +208,21 @@ void render_util_spall_list(tie_t *tie, tie_ray_t *ray, tfloat angle, void **dat
 
   /* Fire the 32 spall rays from the first in-hit at full angle */
   render_util_spall_vec(ray->dir, angle, 32, vec_list);
-  for(i = 0; i < 32; i++) {
+  for (i = 0; i < 32; i++) {
     sray.dir = vec_list[i];
     tie_work(tie, &sray, &id, shot_hit, &shotline);
   }
 
   /* Fire the 16 spall rays from the first in-hit at half angle */
   render_util_spall_vec(ray->dir, angle*0.5, 16, vec_list);
-  for(i = 0; i < 16; i++) {
+  for (i = 0; i < 16; i++) {
     sray.dir = vec_list[i];
     tie_work(tie, &sray, &id, shot_hit, &shotline);
   }
 
   /* Fire the 12 spall rays from the first in-hit at quarter angle */
   render_util_spall_vec(ray->dir, angle*0.25, 12, vec_list);
-  for(i = 0; i < 12; i++) {
+  for (i = 0; i < 12; i++) {
     sray.dir = vec_list[i];
     tie_work(tie, &sray, &id, shot_hit, &shotline);
   }
@@ -247,7 +247,7 @@ void render_util_spall_list(tie_t *tie, tie_ray_t *ray, tfloat angle, void **dat
   memcpy(&((char *)*data)[ind], &shotline.mesh_num, sizeof(int));
   ind += sizeof(int);
 
-  for(i = 0; i < shotline.mesh_num; i++) {
+  for (i = 0; i < shotline.mesh_num; i++) {
     c = strlen(shotline.mesh_list[i]->name) + 1;
 
     *data = realloc(*data, ind + c + 2); /* 1 for length, 1 for null char */

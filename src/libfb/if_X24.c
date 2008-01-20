@@ -95,7 +95,7 @@
 
 /* Print a debug message on first time into a piece of code */
 #if 0
-# define DEBUG1(str)	{static int before=1; if(before) {write(2, str, strlen(str)); before=0;} }
+# define DEBUG1(str)	{static int before=1; if (before) {write(2, str, strlen(str)); before=0;} }
 #else
 # define DEBUG1(str)	/*NIL*/
 #endif
@@ -451,14 +451,14 @@ printf("X24_open(ifp:0x%x, file:%s width:%d, height:%d): entered.\n",
 			alpha = 0;
 			mp = &modebuf[0];
 			cp = &file[sizeof("/dev/X")-1];
-			while(*cp != '\0' && !isspace(*cp)) {
+			while (*cp != '\0' && !isspace(*cp)) {
 				*mp++ = *cp;	/* copy it to buffer */
 				if (isdigit(*cp)) {
 					cp++;
 					continue;
 				}
 				alpha++;
-				for(mfp = modeflags; mfp->c != '\0'; mfp++) {
+				for (mfp = modeflags; mfp->c != '\0'; mfp++) {
 					if (mfp->c == *cp) {
 						mode = (mode&~mfp->mask)|mfp->value;
 						break;
@@ -564,31 +564,31 @@ char **argv;
   int height;
   GC gc;
 
-  if(argc != 9)
+  if (argc != 9)
     return -1;
 
-  if(sscanf(argv[1], "%lu", (unsigned long *)&dpy) != 1)
+  if (sscanf(argv[1], "%lu", (unsigned long *)&dpy) != 1)
      return -1;
 
-  if(sscanf(argv[2], "%lu", (unsigned long *)&win) != 1)
+  if (sscanf(argv[2], "%lu", (unsigned long *)&win) != 1)
     return -1;
 
-  if(sscanf(argv[3], "%lu", (unsigned long *)&cwinp) != 1)
+  if (sscanf(argv[3], "%lu", (unsigned long *)&cwinp) != 1)
     return -1;
 
-  if(sscanf(argv[4], "%lu", (unsigned long *)&cmap) != 1)
+  if (sscanf(argv[4], "%lu", (unsigned long *)&cmap) != 1)
     return -1;
 
-  if(sscanf(argv[5], "%lu", (unsigned long *)&vip) != 1)
+  if (sscanf(argv[5], "%lu", (unsigned long *)&vip) != 1)
     return -1;
 
-  if(sscanf(argv[6], "%d", &width) != 1)
+  if (sscanf(argv[6], "%d", &width) != 1)
     return -1;
 
-  if(sscanf(argv[7], "%d", &height) != 1)
+  if (sscanf(argv[7], "%d", &height) != 1)
     return -1;
 
-  if(sscanf(argv[8], "%lu", (unsigned long *)&gc) != 1)
+  if (sscanf(argv[8], "%lu", (unsigned long *)&gc) != 1)
     return -1;
 
   return _X24_open_existing(ifp, dpy, win, cwinp, cmap, vip, width, height, gc);
@@ -887,7 +887,7 @@ unsigned char	*pp;
 	 ifp, pp, pp[RED], pp[GRN], pp[BLU]);
 #endif
 
-  if(pp == (unsigned char *)NULL){
+  if (pp == (unsigned char *)NULL){
     red = grn = blu = 0;
   }else{
     red = pp[RED];
@@ -898,12 +898,12 @@ unsigned char	*pp;
   /* Clear the backing store */
   npix = xi->xi_iwidth * xi->xi_xheight;
 
-  if(red == grn && red == blu){
+  if (red == grn && red == blu){
     memset(xi->xi_mem, red, npix*3);
   }else{
     cp = xi->xi_mem;
     n = npix;
-    while(n--){
+    while (n--){
       *cp++ = red;
       *cp++ = grn;
       *cp++ = blu;
@@ -1431,7 +1431,7 @@ printf("X24_help(ifp:0x%x) entered\n", ifp);
 		X24_interface.if_width,
 		X24_interface.if_height);
 	fb_log("Usage: /dev/X[options]\n");
-	for(mfp = modeflags; mfp->c != '\0'; mfp++) {
+	for (mfp = modeflags; mfp->c != '\0'; mfp++) {
 		fb_log("   %c   %s\n", mfp->c, mfp->help);
 	}
 
@@ -1445,7 +1445,7 @@ printf("X24_help(ifp:0x%x) entered\n", ifp);
 	fb_log("X11 Visual:\n");
 	fb_log( "	class=%d\n", xi->xi_visinfo.class );
 
-	switch(xi->xi_visinfo.class) {
+	switch (xi->xi_visinfo.class) {
 	case DirectColor:
 		fb_log("\tDirectColor: Alterable RGB maps, pixel RGB subfield indicies\n");
 		fb_log("\tRGB Masks: 0x%x 0x%x 0x%x\n", xi->xi_visinfo.red_mask,
@@ -1477,7 +1477,7 @@ printf("X24_help(ifp:0x%x) entered\n", ifp);
 	fb_log("\tBits per RGB: %d\n", xi->xi_visinfo.bits_per_rgb);
 	fb_log("\tscreen: %d\n", xi->xi_visinfo.screen);
 	fb_log("\tdepth (total bits per pixel): %d\n", xi->xi_visinfo.depth);
-	if( xi->xi_visinfo.depth < 24 )
+	if ( xi->xi_visinfo.depth < 24 )
 		fb_log("\tWARNING: unable to obtain full 24-bits of color, image will be quantized.\n");
 
 	return(0);
@@ -1609,7 +1609,7 @@ printf("x24_setup(ifp:0x%x, width:%d, height:%d) entered\n", ifp, width, height)
 	/* Open the display - use the env variable DISPLAY */
 	xname = XDisplayName(NULL);
 	/* Attempt one level of fallback, esp. for fbserv daemon */
-	if( !xname || *xname == '\0' )  xname = ":0";
+	if ( !xname || *xname == '\0' )  xname = ":0";
 
 	if ((xi->xi_dpy = XOpenDisplay(xname)) == NULL) {
 		fb_log("if_X: Can't open X display \"%s\"\n", xname);
@@ -2052,7 +2052,7 @@ FBIO	*ifp;
 	if (fork() != 0)
 		return (1);	/* release the parent */
 
-	while(alive) {
+	while (alive) {
 		XNextEvent(xi->xi_dpy, &event);
 		X24_handle_event(ifp, &event);
 	}
@@ -2067,7 +2067,7 @@ XEvent *event;
 {
   struct xinfo *xi = XI(ifp);
 
-  switch((int)event->type){
+  switch ((int)event->type){
   case Expose:
     {
       XExposeEvent *expose = (XExposeEvent *)event;
@@ -2120,7 +2120,7 @@ XEvent *event;
 	  button = Button3;
       }
 
-      switch(button){
+      switch (button){
       case Button1:
 	break;
       case Button2:
@@ -2134,7 +2134,7 @@ XEvent *event;
 
 	  x -= xi->xi_xlf;
 	  sy -= xi->xi_xheight - xi->xi_xbt - 1;
-	  if(x < 0 || sy < 0){
+	  if (x < 0 || sy < 0){
 	    fb_log("No RGB (outside image) 1\n");
 	    break;
 	  }
@@ -2149,7 +2149,7 @@ XEvent *event;
 	  else
 	    isy = xi->xi_ibt + (sy - xi->xi_ibt_h + ifp->if_yzoom - 1) / ifp->if_yzoom;
 
-	  if(ix >= xi->xi_iwidth || isy >= xi->xi_iheight){
+	  if (ix >= xi->xi_iwidth || isy >= xi->xi_iheight){
 	    fb_log("No RGB (outside image) 2\n");
 	    break;
 	  }
@@ -2170,7 +2170,7 @@ XEvent *event;
     {
       XConfigureEvent *conf = (XConfigureEvent *)event;
 
-      if(conf->width == xi->xi_xwidth &&
+      if (conf->width == xi->xi_xwidth &&
 	 conf->height == xi->xi_xheight)
 	return;
 
@@ -2208,7 +2208,7 @@ int width, height;
       return;
   }
 
-  if(width == xi->xi_xwidth && height == xi->xi_xheight) {
+  if (width == xi->xi_xwidth && height == xi->xi_xheight) {
     return;
   }
 
@@ -2234,7 +2234,7 @@ int width, height;
 
   X24_updstate(ifp);
 
-  switch(xi->xi_flags & FLG_VMASK){
+  switch (xi->xi_flags & FLG_VMASK){
   case FLG_VD24:
   case FLG_VT24:
     /* Destroy old image struct and image buffer */
@@ -2379,7 +2379,7 @@ Display *dpy;
 		printf("screen: %d\n", vp[i].screen);
 		printf("depth : %d\n", vp[i].depth);
 
-		switch(visual->class) {
+		switch (visual->class) {
 		case DirectColor:
 			printf("DirectColor: Alterable RGB maps, pixel RGB subfield indicies\n");
 			printf("RGB Masks: 0x%lx 0x%lx 0x%lx\n", visual->red_mask,
@@ -3156,7 +3156,7 @@ printf("blit: xi_flags & FLG_VMASK = 0x%x\n", xi->xi_flags & FLG_VMASK );
 				 * The while loop on the inside causes pixel
 				 * replication for when we are zoomed.
 				 */
-				if( ImageByteOrder(xi->xi_dpy) == MSBFirst )  {
+				if ( ImageByteOrder(xi->xi_dpy) == MSBFirst )  {
 					if (xi->xi_image->bits_per_pixel == 16) {
 						while (pxwd--)   {
 							*p++ = (a_pixel >> 8) & 0xff;
@@ -3834,12 +3834,12 @@ X24_refresh(ifp, x, y, w, h)
 FBIO *ifp;
 int x, y, w, h;
 {
-  if(w < 0){
+  if (w < 0){
     w = -w;
     x -= w;
   }
 
-  if(h < 0){
+  if (h < 0){
     h = -h;
     y -= h;
   }

@@ -103,7 +103,7 @@ main(int argc, char **argv)
    grpnam[4] = '\0';
 
    /*  If there are no arguments ask questions.  */
-   if(argc == 1)
+   if (argc == 1)
    {							/*  START # 3  */
 
    /*  Explain makings of handle.  */
@@ -122,21 +122,21 @@ main(int argc, char **argv)
    /*  Find number of handles to create (<=26).  */
    (void)printf("Enter number of handles to create (26 max).\n\t");
    (void)fflush(stdout);
-   (void)scanf("%d",&numhan);
-   if(numhan > 26) numhan = 26;
+   (void)scanf("%d", &numhan);
+   if (numhan > 26) numhan = 26;
 
    /*  Find dimensions of handle.  */
    (void)printf("Enter the length and height of handle in mm.\n\t");
    (void)fflush(stdout);
-   (void)scanf("%lf %lf",&len,&hgt);
+   (void)scanf("%lf %lf", &len, &hgt);
 
    (void)printf("Enter the radius of the tori in mm.\n\t");
    (void)fflush(stdout);
-   (void)scanf("%lf",&r1);
+   (void)scanf("%lf", &r1);
 
    (void)printf("Enter the radius of the cylinders in mm.\n\t");
    (void)fflush(stdout);
-   (void)scanf("%lf",&r2);
+   (void)scanf("%lf", &r2);
 
    }							/*  END # 3  */
 
@@ -151,17 +151,17 @@ main(int argc, char **argv)
 	/*	-r1# - # = r1 radius of torus.  */
 	/*	-r2# - # = r2 radius of torus & cylinder.  */
 
-	for(i=1; i<argc; i++)
+	for (i=1; i<argc; i++)
 	{						/*  START # 5  */
 	   /*  Put argument into temporary character string.  */
 	   temp = argv[i];
 
 	   /*  -f - mged file name.  */
-	   if(temp[1] == 'f')
+	   if (temp[1] == 'f')
 	   {						/*  START # 6  */
 		j = 2;
 		k = 0;
-		while( (temp[j] != '\0') && (k < 25) )
+		while ( (temp[j] != '\0') && (k < 25) )
 		{					/*  START # 7  */
 		   filemged[k] = temp[j];
 		   j++;
@@ -171,54 +171,54 @@ main(int argc, char **argv)
 	   }						/*  END # 6  */
 
 	   /*  -n - # of handles to be created.  */
-	   else if(temp[1] == 'n')
+	   else if (temp[1] == 'n')
 	   {						/*  START # 8  */
 		/*  Set up temporary character string.  */
 		j = 2;
 		k = 0;
-		while( (temp[j] != '\0') && (k < 15) )
+		while ( (temp[j] != '\0') && (k < 15) )
 		{					/*  START # 9  */
 		   temp1[k] = temp[j];
 		   j++;
 		   k++;
 		}					/*  END # 9  */
 		temp1[k] = '\0';
-		(void)sscanf(temp1, "%d",&numhan);
-		if(numhan > 26) numhan = 26;
+		(void)sscanf(temp1, "%d", &numhan);
+		if (numhan > 26) numhan = 26;
 	   }						/*  END # 8  */
 
 	   /*  -l or -h - length and height of handle in mm.  */
-	   else if( (temp[1] == 'l') || (temp[1] == 'h') )
+	   else if ( (temp[1] == 'l') || (temp[1] == 'h') )
 	   {						/*  START # 10  */
 		/*  Set up temporary character string.  */
 		j = 2;
 		k = 0;
-		while( (temp[j] != '\0') && (k < 15) )
+		while ( (temp[j] != '\0') && (k < 15) )
 		{					/*  START # 11  */
 		   temp1[k] = temp[j];
 		   j++;
 		   k++;
 		}					/*  END # 11  */
 		temp1[k] = '\0';
-		if(temp[1] == 'l') (void)sscanf(temp1, "%lf",&len);
-		else if(temp[1] == 'h') (void)sscanf(temp1, "%lf",&hgt);
+		if (temp[1] == 'l') (void)sscanf(temp1, "%lf", &len);
+		else if (temp[1] == 'h') (void)sscanf(temp1, "%lf", &hgt);
 	   }						/*  END # 10  */
 
 	   /*  -r1 or -r2 - radii for torus.  */
-	   else if(temp[1] == 'r')
+	   else if (temp[1] == 'r')
 	   {						/*  START # 12  */
 		/*  Set up temporary character string.  */
 		j = 3;
 		k = 0;
-		while( (temp[j] != '\0') && (k < 15) )
+		while ( (temp[j] != '\0') && (k < 15) )
 		{					/*  START # 13  */
 		   temp1[k] = temp[j];
 		   j++;
 		   k++;
 		}					/*  END # 13  */
 		temp1[k] = '\0';
-		if(temp[2] == '1') (void)sscanf(temp1, "%lf",&r1);
-		else if(temp[2] == '2') (void)sscanf(temp1, "%lf",&r2);
+		if (temp[2] == '1') (void)sscanf(temp1, "%lf", &r1);
+		else if (temp[2] == '2') (void)sscanf(temp1, "%lf", &r2);
 	   }						/*  END # 12  */
 	}						/*  END # 5  */
    }							/*  END # 4  */
@@ -238,7 +238,7 @@ main(int argc, char **argv)
    /*  Write ident record.  */
    mk_id(fpw, "handles");
 
-   for(i=0; i<numhan; i++)
+   for (i=0; i<numhan; i++)
    {							/*  START # 2  */
 
    /*  Create solids for handle.  */
@@ -334,42 +334,42 @@ main(int argc, char **argv)
    BU_LIST_INIT(&comb.l);
 
    solnam[6] = '1';
-   (void)mk_addmember(solnam,&comb.l, NULL, WMOP_INTERSECT);
+   (void)mk_addmember(solnam, &comb.l, NULL, WMOP_INTERSECT);
    regnam[5] = 97 + i;
    regnam[6] = '1';
-   mk_lfcomb(fpw, regnam,&comb, 1);
+   mk_lfcomb(fpw, regnam, &comb, 1);
 
    solnam[6] = '2';
-   (void)mk_addmember(solnam,&comb.l, NULL, WMOP_INTERSECT);
+   (void)mk_addmember(solnam, &comb.l, NULL, WMOP_INTERSECT);
    regnam[6] = '2';
-   mk_lfcomb(fpw, regnam,&comb, 1);
+   mk_lfcomb(fpw, regnam, &comb, 1);
 
    solnam[6] = '3';
-   (void)mk_addmember(solnam,&comb.l, NULL, WMOP_INTERSECT);
+   (void)mk_addmember(solnam, &comb.l, NULL, WMOP_INTERSECT);
    regnam[6] = '3';
-   mk_lfcomb(fpw, regnam,&comb, 1);
+   mk_lfcomb(fpw, regnam, &comb, 1);
 
    solnam[6] = '4';
-   (void)mk_addmember(solnam,&comb.l, NULL, WMOP_INTERSECT);
+   (void)mk_addmember(solnam, &comb.l, NULL, WMOP_INTERSECT);
    solnam[6] = '6';
-   (void)mk_addmember(solnam,&comb.l, NULL, WMOP_INTERSECT);
+   (void)mk_addmember(solnam, &comb.l, NULL, WMOP_INTERSECT);
    solnam[6] = '1';
-   (void)mk_addmember(solnam,&comb.l, NULL, WMOP_SUBTRACT);
+   (void)mk_addmember(solnam, &comb.l, NULL, WMOP_SUBTRACT);
    solnam[6] = '2';
-   (void)mk_addmember(solnam,&comb.l, NULL, WMOP_SUBTRACT);
+   (void)mk_addmember(solnam, &comb.l, NULL, WMOP_SUBTRACT);
    regnam[6] = '4';
-   mk_lfcomb(fpw, regnam,&comb, 1);
+   mk_lfcomb(fpw, regnam, &comb, 1);
 
    solnam[6] = '5';
-   (void)mk_addmember(solnam,&comb.l, NULL, WMOP_INTERSECT);
+   (void)mk_addmember(solnam, &comb.l, NULL, WMOP_INTERSECT);
    solnam[6] = '7';
-   (void)mk_addmember(solnam,&comb.l, NULL, WMOP_INTERSECT);
+   (void)mk_addmember(solnam, &comb.l, NULL, WMOP_INTERSECT);
    solnam[6] = '1';
-   (void)mk_addmember(solnam,&comb.l, NULL, WMOP_SUBTRACT);
+   (void)mk_addmember(solnam, &comb.l, NULL, WMOP_SUBTRACT);
    solnam[6] = '3';
-   (void)mk_addmember(solnam,&comb.l, NULL, WMOP_SUBTRACT);
+   (void)mk_addmember(solnam, &comb.l, NULL, WMOP_SUBTRACT);
    regnam[6] = '5';
-   mk_lfcomb(fpw, regnam,&comb, 1);
+   mk_lfcomb(fpw, regnam, &comb, 1);
 
    /*  Create a group.  */
 
@@ -377,17 +377,17 @@ main(int argc, char **argv)
    BU_LIST_INIT(&comb1.l);
 
    regnam[6] = '1';
-   (void)mk_addmember(regnam,&comb1.l, NULL, WMOP_UNION);
+   (void)mk_addmember(regnam, &comb1.l, NULL, WMOP_UNION);
    regnam[6] = '2';
-   (void)mk_addmember(regnam,&comb1.l, NULL, WMOP_UNION);
+   (void)mk_addmember(regnam, &comb1.l, NULL, WMOP_UNION);
    regnam[6] = '3';
-   (void)mk_addmember(regnam,&comb1.l, NULL, WMOP_UNION);
+   (void)mk_addmember(regnam, &comb1.l, NULL, WMOP_UNION);
    regnam[6] = '4';
-   (void)mk_addmember(regnam,&comb1.l, NULL, WMOP_UNION);
+   (void)mk_addmember(regnam, &comb1.l, NULL, WMOP_UNION);
    regnam[6] = '5';
-   (void)mk_addmember(regnam,&comb1.l, NULL, WMOP_UNION);
+   (void)mk_addmember(regnam, &comb1.l, NULL, WMOP_UNION);
    grpnam[3] = 97 + i;
-   mk_lfcomb(fpw, grpnam,&comb1, 0);
+   mk_lfcomb(fpw, grpnam, &comb1, 0);
 
    }							/*  END # 2  */
 

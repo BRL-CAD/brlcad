@@ -80,9 +80,9 @@ main(int ac, char *av)
     rt_spect_make_CIE_XYZ( &cie_x, &cie_y, &cie_z, spectrum );
     rt_make_ntsc_xyz2rgb( xyz2rgb );
 
-    for(;;)  {
-	if( fread(rgb, 1, 3, stdin) != 3 )  break;
-	if( feof(stdin) )  break;
+    for (;;)  {
+	if ( fread(rgb, 1, 3, stdin) != 3 )  break;
+	if ( feof(stdin) )  break;
 
 	VSET( src, rgb[0]/255., rgb[1]/255., rgb[2]/255. );
 
@@ -92,18 +92,18 @@ main(int ac, char *av)
 
 	MAT3X3VEC( dest, xyz2rgb, xyz );
 
-	if( dest[0] > 1 || dest[1] > 1 || dest[2] > 1 ||
+	if ( dest[0] > 1 || dest[1] > 1 || dest[2] > 1 ||
 	    dest[0] < 0 || dest[1] < 0 || dest[2] < 0 )  {
 	    VPRINT("src ", src);
 	    VPRINT("dest", dest);
 	}
 
-	if( dest[0] > 1 )  dest[0] = 1;
-	if( dest[1] > 1 )  dest[1] = 1;
-	if( dest[2] > 1 )  dest[2] = 1;
-	if( dest[0] < 0 )  dest[0] = 0;
-	if( dest[1] < 0 )  dest[1] = 0;
-	if( dest[2] < 0 )  dest[2] = 0;
+	if ( dest[0] > 1 )  dest[0] = 1;
+	if ( dest[1] > 1 )  dest[1] = 1;
+	if ( dest[2] > 1 )  dest[2] = 1;
+	if ( dest[0] < 0 )  dest[0] = 0;
+	if ( dest[1] < 0 )  dest[1] = 0;
+	if ( dest[2] < 0 )  dest[2] = 0;
 
 	VSCALE( rgb, dest, 255.0 );
 

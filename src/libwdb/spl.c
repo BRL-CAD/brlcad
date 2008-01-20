@@ -69,7 +69,7 @@ mk_bsolid( FILE *fp, char *name, int nsurf, double res )
 	rec.B.B_nsurf = nsurf;
 	rec.B.B_resolution = res;
 
-	if( fwrite( (char *)&rec, sizeof(rec), 1, fp ) != 1 )
+	if ( fwrite( (char *)&rec, sizeof(rec), 1, fp ) != 1 )
 		return(-1);
 	return(0);
 }
@@ -95,7 +95,7 @@ mk_bsurf( FILE *filep, struct face_g_snurb *srf )
 	/* if caller has an rt_nurb_internal struct, should use mk_export_fwrite or mk_fwrite_internal */
 	BU_ASSERT_LONG( mk_version, <=, 4 );
 
-	if( srf->u.k_size != srf->s_size[RT_NURB_SPLIT_COL] + srf->order[0] ||
+	if ( srf->u.k_size != srf->s_size[RT_NURB_SPLIT_COL] + srf->order[0] ||
 	    srf->v.k_size != srf->s_size[RT_NURB_SPLIT_ROW] + srf->order[1]) {
 		fprintf(stderr, "mk_bsurf:  mis-matched knot/mesh/order\n");
 		return(-1);
@@ -126,9 +126,9 @@ mk_bsurf( FILE *filep, struct face_g_snurb *srf )
 
 	/* Reformat the knot vectors */
 	dbp = kp;
-	for( i=0; i<srf->u.k_size; i++ )
+	for ( i=0; i<srf->u.k_size; i++ )
 		*dbp++ = srf->u.knots[i];
-	for( i=0; i<srf->v.k_size; i++ )
+	for ( i=0; i<srf->v.k_size; i++ )
 		*dbp++ = srf->v.knots[i];
 
 	/* Reformat the mesh */
@@ -136,10 +136,10 @@ mk_bsurf( FILE *filep, struct face_g_snurb *srf )
 	fp = srf->ctl_points;
 	i = srf->s_size[RT_NURB_SPLIT_ROW] * srf->s_size[RT_NURB_SPLIT_COL] *
 	    RT_NURB_EXTRACT_COORDS(srf->pt_type);	/* # floats/point */
-	for( ; i>0; i-- )
+	for (; i>0; i-- )
 		*dbp++ = *fp++ * mk_conv2mm;
 
-	if( fwrite( (char *)&rec, sizeof(rec), 1, filep ) != 1 ||
+	if ( fwrite( (char *)&rec, sizeof(rec), 1, filep ) != 1 ||
 	    fwrite( (char *)kp, sizeof(rec), rec.d.d_nknots, filep ) != rec.d.d_nknots ||
 	    fwrite( (char *)mp, sizeof(rec), rec.d.d_nctls, filep ) != rec.d.d_nctls )  {
 		free( (char *)kp );

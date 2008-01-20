@@ -68,44 +68,44 @@ main(int argc, char **argv)
 	int		scan_bytes;
 
 	fp = stdin;
-	if( ! pars_Argv( argc, argv ) || isatty(fileno(stdout)) )  {
+	if ( ! pars_Argv( argc, argv ) || isatty(fileno(stdout)) )  {
 		prnt_Usage();
 		return	1;
 	}
-	if( rle_rhdr( fp, &get_flags, bgflag ? NULL : bgpixel ) == -1 )
+	if ( rle_rhdr( fp, &get_flags, bgflag ? NULL : bgpixel ) == -1 )
 		return	1;
 
 	rle_rlen( &xlen, &ylen );
 	rle_rpos( &xpos, &ypos );
 
 	/* Automatic selection of high res. device.			*/
-	if( xpos + xlen > 512 || ypos + ylen > 512 )
+	if ( xpos + xlen > 512 || ypos + ylen > 512 )
 		fb_size = 1024;
-	if( xpos + xlen > fb_size )
+	if ( xpos + xlen > fb_size )
 		xlen = fb_size - xpos;
-	if( ypos + ylen > fb_size )
+	if ( ypos + ylen > fb_size )
 		ylen = fb_size - ypos;
 	rle_wlen( xlen, ylen, 0 );
 
 	scan_bytes = fb_size * sizeof(RGBpixel);
 
-	if( rle_verbose )
+	if ( rle_verbose )
 		(void) fprintf( stderr,
 		"Background is %d %d %d\n",
 		bgpixel[RED], bgpixel[GRN], bgpixel[BLU]
 		    );
 
 	/* If color map provided, use it, else go with standard map. */
-	if( ! (get_flags & NO_COLORMAP) )  {
-		if( rle_verbose )
+	if ( ! (get_flags & NO_COLORMAP) )  {
+		if ( rle_verbose )
 			(void) fprintf( stderr,
 			"Reading color map from file\n"
 			    );
-		if( rle_rmap( fp, &cmap ) == -1 )
+		if ( rle_rmap( fp, &cmap ) == -1 )
 			return	1;
-		if( rle_verbose )
+		if ( rle_verbose )
 			prnt_Cmap( &cmap );
-		if( fb_is_linear_cmap( &cmap ) )
+		if ( fb_is_linear_cmap( &cmap ) )
 			non_linear_cmap = 0;
 		else
 			non_linear_cmap = 1;
@@ -113,31 +113,31 @@ main(int argc, char **argv)
 		/* Standard linear colormap */
 		non_linear_cmap = 0;
 	}
-	if( rle_verbose )  (void)fprintf(stderr, "Using %s colormap\n",
+	if ( rle_verbose )  (void)fprintf(stderr, "Using %s colormap\n",
 		non_linear_cmap ? "stored" : "linear" );
 
 	/* Fill buffer with background.	*/
-	if( (get_flags & NO_BOX_SAVE) )  {
+	if ( (get_flags & NO_BOX_SAVE) )  {
 		register int	i;
 		register RGBpixel	*to;
 
 		to = bg_scan;
-		for( i = 0; i < fb_size; i++, to++ )  {
+		for ( i = 0; i < fb_size; i++, to++ )  {
 			COPYRGB( *to, bgpixel );
 		}
 	}
 
 	{
-		for( scan_ln = fb_size-1; scan_ln >= 0; scan_ln-- )  {
+		for ( scan_ln = fb_size-1; scan_ln >= 0; scan_ln-- )  {
 			static int	touched = 1;
 			register int	pix;
-			if( touched && (get_flags & NO_BOX_SAVE) )  {
+			if ( touched && (get_flags & NO_BOX_SAVE) )  {
 				memcpy((char *)scanbuf, (char *)bg_scan, scan_bytes);
 			}
-			if( (touched = rle_decode_ln( fp, scanbuf )) == -1 )
+			if ( (touched = rle_decode_ln( fp, scanbuf )) == -1 )
 				return	1;
-			if( non_linear_cmap )  {
-				for( pix = 0; pix < fb_size; pix++ )  {
+			if ( non_linear_cmap )  {
+				for ( pix = 0; pix < fb_size; pix++ )  {
 					(void) putchar( cmap.cm_red[scanbuf[pix][RED]]>>8 );
 					(void) putchar( cmap.cm_green[scanbuf[pix][GRN]]>>8 );
 					(void) putchar( cmap.cm_blue[scanbuf[pix][BLU]]>>8 );
@@ -158,13 +158,13 @@ pars_Argv(int argc, register char **argv)
 		extern int	bu_optind;
 		extern char	*bu_optarg;
 	/* Parse options.						*/
-	while( (c = bu_getopt( argc, argv, "b:dv" )) != EOF )
+	while ( (c = bu_getopt( argc, argv, "b:dv" )) != EOF )
 		{
-		switch( c )
+		switch ( c )
 			{
 		case 'b' : /* User-specified background.		*/
 			bgflag = bu_optarg[0];
-			switch( bgflag )
+			switch ( bgflag )
 				{
 			case 'r':
 				bgpixel[RED] = 255;
@@ -207,8 +207,8 @@ pars_Argv(int argc, register char **argv)
 			} /* end switch */
 		} /* end while */
 
-	if( argv[bu_optind] != NULL )
-		if( (fp = fopen( argv[bu_optind], "r" )) == NULL )
+	if ( argv[bu_optind] != NULL )
+		if ( (fp = fopen( argv[bu_optind], "r" )) == NULL )
 			{
 			(void) fprintf( stderr,
 					"Can't open %s for reading!\n",
@@ -216,7 +216,7 @@ pars_Argv(int argc, register char **argv)
 					);
 			return	0;
 			}
-	if( argc > ++bu_optind )
+	if ( argc > ++bu_optind )
 		{
 		(void) fprintf( stderr, "Too many arguments!\n" );
 		return	0;
@@ -230,7 +230,7 @@ pars_Argv(int argc, register char **argv)
 static void
 prnt_Usage(void)
 {	register char	**p = usage;
-	while( *p )
+	while ( *p )
 		(void) fprintf( stderr, "%s\n", *p++ );
 	return;
 	}
@@ -241,7 +241,7 @@ prnt_Cmap(ColorMap *cmap)
 		register int	i;
 	(void) fprintf( stderr, "\t\t\t_________ Color map __________\n" );
 	(void) fprintf( stderr, "Red segment :\n" );
-	for( i = 0, cp = cmap->cm_red; i < 16; ++i, cp += 16 )
+	for ( i = 0, cp = cmap->cm_red; i < 16; ++i, cp += 16 )
 		{
 		(void) fprintf( stderr,
 	"%4x %4x %4x %4x %4x %4x %4x %4x %4x %4x %4x %4x %4x %4x %4x %4x\n",
@@ -265,7 +265,7 @@ prnt_Cmap(ColorMap *cmap)
 				);
 		}
 	(void) fprintf( stderr, "Green segment :\n" );
-	for( i = 0, cp = cmap->cm_green; i < 16; ++i, cp += 16 )
+	for ( i = 0, cp = cmap->cm_green; i < 16; ++i, cp += 16 )
 		{
 		(void) fprintf( stderr,
 	"%4x %4x %4x %4x %4x %4x %4x %4x %4x %4x %4x %4x %4x %4x %4x %4x\n",
@@ -289,7 +289,7 @@ prnt_Cmap(ColorMap *cmap)
 				);
 		}
 	(void) fprintf( stderr, "Blue segment :\n" );
-	for( i = 0, cp = cmap->cm_blue; i < 16; ++i, cp += 16 )
+	for ( i = 0, cp = cmap->cm_blue; i < 16; ++i, cp += 16 )
 		{
 		(void) fprintf( stderr,
 	"%4x %4x %4x %4x %4x %4x %4x %4x %4x %4x %4x %4x %4x %4x %4x %4x\n",

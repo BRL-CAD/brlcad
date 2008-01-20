@@ -100,13 +100,13 @@ void render_spall_init(render_t *render, TIE_3 ray_pos, TIE_3 ray_dir, tfloat an
   render_util_spall_vec(ray_dir, angle, TESSELATION, vec_list);
 
   /* triangles to approximate */
-  for(i = 0; i < TESSELATION; i++) {
+  for (i = 0; i < TESSELATION; i++) {
     tri_list[3*i+0] = ray_pos;
 
     MATH_VEC_MUL_SCALAR(tri_list[3*i+1], vec_list[i], SPALL_LEN);
     MATH_VEC_ADD(tri_list[3*i+1], tri_list[3*i+1], ray_pos);
 
-    if(i == TESSELATION - 1) {
+    if (i == TESSELATION - 1) {
       MATH_VEC_MUL_SCALAR(tri_list[3*i+2], vec_list[0], SPALL_LEN);
       MATH_VEC_ADD(tri_list[3*i+2], tri_list[3*i+2], ray_pos);
     } else {
@@ -153,7 +153,7 @@ void render_spall_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixe
   rd = (render_spall_t *)render->data;
 
   /* Draw spall Cone */
-  if(tie_work(&rd->tie, ray, &id, render_arrow_hit, NULL)) {
+  if (tie_work(&rd->tie, ray, &id, render_arrow_hit, NULL)) {
     pixel->v[0] = 0.4;
     pixel->v[1] = 0.4;
     pixel->v[2] = 0.4;
@@ -180,7 +180,7 @@ void render_spall_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixe
       (rd->plane[0]*ray->dir.v[0] + rd->plane[1]*ray->dir.v[1] + rd->plane[2]*ray->dir.v[2]);
 
   /* Ray never intersects plane */
-  if(t > 0)
+  if (t > 0)
     return;
 
   ray->pos.v[0] += -t * ray->dir.v[0];
@@ -193,7 +193,7 @@ void render_spall_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixe
   hit.plane[3] = rd->plane[3];
 
   /* Render Geometry */
-  if(!tie_work(tie, ray, &id, render_spall_hit, &hit))
+  if (!tie_work(tie, ray, &id, render_spall_hit, &hit))
     return;
 
 
@@ -207,7 +207,7 @@ void render_spall_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixe
   dot = fabs(dot);
   
 
-  if(hit.mesh->flags == 1) {
+  if (hit.mesh->flags == 1) {
     MATH_VEC_SET(color, 0.9, 0.2, 0.2);
   } else {
     /* Mix actual color with white 4:1, shade 50% darker */
@@ -218,7 +218,7 @@ void render_spall_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixe
   }
 
 #if 0
-  if(dot < 0) {
+  if (dot < 0) {
 #endif
     /* Shade using inhit */
     MATH_VEC_MUL_SCALAR(color, color, (dot*0.50));

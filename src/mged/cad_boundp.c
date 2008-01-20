@@ -392,7 +392,7 @@ Search(void)				/* output bounding polygon */
 
 	/* Output point and look for next CCW point on periphery. */
 
-	for ( ; ; )
+	for (;;)
 	{
 		coords		first;	/* first output if -v */
 		double		mindir; /* smallest from->to angle */

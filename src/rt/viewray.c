@@ -111,7 +111,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 	vect_t		onormal;
 	vect_t		inormal2;
 
-	if( pp == PartHeadp )
+	if ( pp == PartHeadp )
 		return(0);		/* nothing was actually hit?? */
 
 	/* "1st entry" paint */
@@ -119,11 +119,11 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 	wraypaint( pp->pt_inhit->hit_point, inormal,
 		PAINT_FIRST_ENTRY, ap, outfp );
 
-	for( ; pp != PartHeadp; pp = pp->pt_forw )  {
+	for (; pp != PartHeadp; pp = pp->pt_forw )  {
 		/* Write the ray for this partition */
 		RT_HIT_NORMAL( inormal, pp->pt_inhit, pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip );
 
-		if( pp->pt_outhit->hit_dist < INFINITY )  {
+		if ( pp->pt_outhit->hit_dist < INFINITY )  {
 			/* next macro must be on one line for 3d compiler */
 			RT_HIT_NORMAL( onormal, pp->pt_outhit, pp->pt_outseg->seg_stp, &(ap->a_ray), pp->pt_outflip );
 		}
@@ -134,22 +134,22 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 		 * directly join this one, output an invented
 		 * "air" partition between them.
 		 */
-		if( (np = pp->pt_forw) == PartHeadp )
+		if ( (np = pp->pt_forw) == PartHeadp )
 			break;		/* end of list */
 
 		/* Obtain next inhit normals & hit point, for code below */
 		RT_HIT_NORMAL( inormal2, np->pt_inhit, np->pt_inseg->seg_stp, &(ap->a_ray), np->pt_inflip );
 
-		if( rt_fdiff( pp->pt_outhit->hit_dist,
+		if ( rt_fdiff( pp->pt_outhit->hit_dist,
 			      np->pt_inhit->hit_dist) >= 0 )  {
 			/*
 			 *  The two partitions touch (or overlap!).
 			 *  If both are air, or both are solid, then don't
 			 *  output any paint.
 			 */
-			if( pp->pt_regionp->reg_regionid > 0 )  {
+			if ( pp->pt_regionp->reg_regionid > 0 )  {
 				/* Exiting a solid */
-				if( np->pt_regionp->reg_regionid > 0 )
+				if ( np->pt_regionp->reg_regionid > 0 )
 					continue;	/* both are solid */
 				/* output "internal exit" paint */
 				wraypaint( pp->pt_outhit->hit_point,
@@ -157,7 +157,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 					PAINT_INTERN_EXIT, ap, outfp );
 			} else {
 				/* Exiting air */
-				if( np->pt_regionp->reg_regionid <= 0 )
+				if ( np->pt_regionp->reg_regionid <= 0 )
 					continue;	/* both are air */
 				/* output "internal entry" paint */
 				wraypaint( np->pt_inhit->hit_point,
@@ -189,7 +189,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 
 	/* "final exit" paint -- ray va(r)nishes off into the sunset */
 	pp = PartHeadp->pt_back;
-	if( pp->pt_outhit->hit_dist < INFINITY )  {
+	if ( pp->pt_outhit->hit_dist < INFINITY )  {
 		RT_HIT_NORMAL( inormal, pp->pt_inhit, pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip );
 		wraypaint( pp->pt_outhit->hit_point,
 			inormal,
@@ -223,7 +223,7 @@ void
 view_2init(struct application *ap)
 {
 
-	if( outfp == NULL )
+	if ( outfp == NULL )
 		bu_exit(EXIT_FAILURE, "outfp is NULL\n");
 }
 

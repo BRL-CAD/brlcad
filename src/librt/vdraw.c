@@ -176,19 +176,19 @@ vdraw_write_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 				break;
 			}
 		}
-		if (BU_LIST_IS_HEAD(vp,&(dgop->dgo_currVHead->vdc_vhd))) {
+		if (BU_LIST_IS_HEAD(vp, &(dgop->dgo_currVHead->vdc_vhd))) {
 				/* we went all the way through */
 			vp = BU_LIST_PNEXT(bn_vlist, vp);
-			if (BU_LIST_IS_HEAD(vp,&(dgop->dgo_currVHead->vdc_vhd))) {
+			if (BU_LIST_IS_HEAD(vp, &(dgop->dgo_currVHead->vdc_vhd))) {
 				RT_GET_VLIST(vp);
 				BU_LIST_INSERT(&(dgop->dgo_currVHead->vdc_vhd), &(vp->l));
 			}
 		}
 		if (vp->nused >= BN_VLIST_CHUNK) {
 			vp = BU_LIST_PNEXT(bn_vlist, vp);
-			if (BU_LIST_IS_HEAD(vp,&(dgop->dgo_currVHead->vdc_vhd))) {
+			if (BU_LIST_IS_HEAD(vp, &(dgop->dgo_currVHead->vdc_vhd))) {
 				RT_GET_VLIST(vp);
-				BU_LIST_INSERT(&(dgop->dgo_currVHead->vdc_vhd),&(vp->l));
+				BU_LIST_INSERT(&(dgop->dgo_currVHead->vdc_vhd), &(vp->l));
 			}
 		}
 		cp = vp;
@@ -211,13 +211,13 @@ vdraw_write_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 			uind -= vp->nused;
 		}
 
-		if (BU_LIST_IS_HEAD(vp,&(dgop->dgo_currVHead->vdc_vhd))) {
+		if (BU_LIST_IS_HEAD(vp, &(dgop->dgo_currVHead->vdc_vhd))) {
 			if (uind > 0) {
 				Tcl_AppendResult(interp, "vdraw: write out of range\n", (char *)NULL);
 				return TCL_ERROR;
 			}
 			RT_GET_VLIST(vp);
-			BU_LIST_INSERT(&(dgop->dgo_currVHead->vdc_vhd),&(vp->l));
+			BU_LIST_INSERT(&(dgop->dgo_currVHead->vdc_vhd), &(vp->l));
 		}
 		if (uind > vp->nused) {
 			Tcl_AppendResult(interp, "vdraw: write out of range\n", (char *)NULL);
@@ -227,7 +227,7 @@ vdraw_write_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 		index = uind;
 	}
 
-	if (sscanf(argv[2], "%d",&(cp->cmd[index])) < 1) {
+	if (sscanf(argv[2], "%d", &(cp->cmd[index])) < 1) {
 		Tcl_AppendResult(interp, "vdraw: cmd not an integer\n", (char *)NULL);
 		return TCL_ERROR;
 	}
@@ -288,13 +288,13 @@ vdraw_insert_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
 		uind -= vp->nused;
 	}
 
-	if (BU_LIST_IS_HEAD(vp,&(dgop->dgo_currVHead->vdc_vhd))) {
+	if (BU_LIST_IS_HEAD(vp, &(dgop->dgo_currVHead->vdc_vhd))) {
 		if (uind > 0) {
 			Tcl_AppendResult(interp, "vdraw: insert out of range\n", (char *)NULL);
 			return TCL_ERROR;
 		}
 		RT_GET_VLIST(vp);
-		BU_LIST_INSERT(&(dgop->dgo_currVHead->vdc_vhd),&(vp->l));
+		BU_LIST_INSERT(&(dgop->dgo_currVHead->vdc_vhd), &(vp->l));
 	}
 	if (uind > vp->nused) {
 		Tcl_AppendResult(interp, "vdraw: insert out of range\n", (char *)NULL);
@@ -323,7 +323,7 @@ vdraw_insert_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
 		vp->cmd[i] = vp->cmd[i-1];
 		VMOVE(vp->pt[i], vp->pt[i-1]);
 	}
-	if (sscanf(argv[2], "%d",&(vp->cmd[index])) < 1) {
+	if (sscanf(argv[2], "%d", &(vp->cmd[index])) < 1) {
 		Tcl_AppendResult(interp, "vdraw: cmd not an integer\n", (char *)NULL);
 		return TCL_ERROR;
 	}
@@ -596,7 +596,7 @@ vdraw_params_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
 		/* otherwise name not yet used */
 		strncpy(dgop->dgo_currVHead->vdc_name, argv[2], RT_VDRW_MAXNAME);
 		dgop->dgo_currVHead->vdc_name[RT_VDRW_MAXNAME] = '\0';
-		Tcl_AppendResult(interp, "0",(char *)NULL);
+		Tcl_AppendResult(interp, "0", (char *)NULL);
 		return TCL_OK;
 	}
 
@@ -684,7 +684,7 @@ vdraw_vlist_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 	struct bu_vls vls;
 
 	if (argc < 2) {
-		Tcl_AppendResult(interp, "vdraw: need more args",(char *)NULL);
+		Tcl_AppendResult(interp, "vdraw: need more args", (char *)NULL);
 		return TCL_ERROR;
 	}
 
@@ -723,7 +723,7 @@ vdraw_vlist_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 			if (BU_LIST_IS_EMPTY(&dgop->dgo_headVDraw)) {
 				dgop->dgo_currVHead = (struct vd_curve *)NULL;
 			} else {
-				dgop->dgo_currVHead = BU_LIST_LAST(vd_curve,&dgop->dgo_headVDraw);
+				dgop->dgo_currVHead = BU_LIST_LAST(vd_curve, &dgop->dgo_headVDraw);
 			}
 		}
 		RT_FREE_VLIST(&(rcp2->vdc_vhd));

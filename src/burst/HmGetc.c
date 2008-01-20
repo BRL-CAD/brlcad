@@ -35,7 +35,7 @@ HmGetchar( void )
 {
     int	c;
 
-    while( (c = getc( HmTtyFp )) == EOF )
+    while ( (c = getc( HmTtyFp )) == EOF )
 	;
 
     return c;

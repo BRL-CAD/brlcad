@@ -69,7 +69,7 @@ pop_init (struct population *p, int size)
 
     /* pre-compute indidvidual names */
     /*
-    for(i = 0; i < size; i++){
+    for (i = 0; i < size; i++){
 	p->name[i] = bu_malloc(sizeof(char *) * 256, "name");
 	snprintf(p->name[i], 256, "ind%.3d", i);
     }
@@ -88,7 +88,7 @@ void
 pop_clean (struct population *p)
 {
     int i;
-    for(i = 0; i < p->size; i++)
+    for (i = 0; i < p->size; i++)
 	bu_free(p->name[i], "name");
     bu_free(p->name, "names");
     bu_free(p->parent, "parent");
@@ -113,7 +113,7 @@ pop_spawn (struct population *p)
     p->db_p = db_create("gen000", 5);
     p->db_p->dbi_wdbp = wdb_dbopen(p->db_p, RT_WDB_TYPE_DB_DISK);
 
-    for(i = 0; i < p->size; i++) {
+    for (i = 0; i < p->size; i++) {
 	p->name[i] = bu_malloc(sizeof(char *) * 256, "name");
 	snprintf(p->name[i], 256, "ind%.3d", i);
 
@@ -123,7 +123,7 @@ pop_spawn (struct population *p)
 	VSET(p2, 5, 5, 5);
 	r1 = r2 = 2.5;
 	*/
-	for(j = 0; j < 6; j++){
+	for (j = 0; j < 6; j++){
 	    /* VSETALL(p1, -10+pop_rand()*10); */
 	    p1[0] = -10*pop_rand()*10;
 	    p1[1] = -10*pop_rand()*10;
@@ -162,9 +162,9 @@ pop_spawn (struct population *p)
  * in the main looop
  */
     wdb_close(p->db_p->dbi_wdbp);
-    if((p->db_p = db_open("gen000", "r")) == DBI_NULL)
+    if ((p->db_p = db_open("gen000", "r")) == DBI_NULL)
 	bu_exit(EXIT_FAILURE, "Failed to re-open initial population");
-    if(db_dirbuild(p->db_p) < 0)
+    if (db_dirbuild(p->db_p) < 0)
 	bu_exit(EXIT_FAILURE, "Failed to load initial database");
 }
 
@@ -176,7 +176,7 @@ pop_spawn (struct population *p)
 void
 pop_add(struct individual *i, struct rt_wdb *db_fp)
 {
-    switch(i->type)
+    switch (i->type)
     {
     case GEO_SPHERE:
 	mk_sph(db_fp, i->id, i->p, i->r);
@@ -195,9 +195,9 @@ pop_wrand_ind(struct individual *i, int size, fastf_t total_fitness, int offset)
     fastf_t rindex, psum = 0;
     rindex =pop_rand() * total_fitness;
     psum = i[n].fitness;
-    for(n = offset+1; n < size; n++) {
+    for (n = offset+1; n < size; n++) {
 	psum += i[n].fitness;
-	if( rindex <= psum )
+	if ( rindex <= psum )
 	    return n-1;
     }
     return size-1;
@@ -220,9 +220,9 @@ int
 pop_wrand_gop(void)
 {
     float i = bn_rand0to1(idx);
-    if(i < 0.1)
+    if (i < 0.1)
 	return REPRODUCE;
-    if(i < 0.3)
+    if (i < 0.3)
 	return MUTATE;
     return CROSSOVER;
 }
@@ -248,10 +248,10 @@ pop_find_nodes(	union tree *tp)
     int n1, n2;
     struct node *add;
 
-    if(!tp)
+    if (!tp)
 	return 0;
 
-    switch(tp->tr_op){
+    switch (tp->tr_op){
 	case OP_DB_LEAF:
 	    return 1;
 	case OP_UNION:
@@ -260,8 +260,8 @@ pop_find_nodes(	union tree *tp)
 	case OP_XOR:
 	    crossover_parent = &tp->tr_b.tb_left;
 	    n1 = pop_find_nodes(tp->tr_b.tb_left);
-	    if(n1 == crossover_node){
-		if(tp->tr_b.tb_left->tr_op & crossover_op){
+	    if (n1 == crossover_node){
+		if (tp->tr_b.tb_left->tr_op & crossover_op){
 		add = bu_malloc(sizeof(struct node), "node");
 		add->s_parent = &tp->tr_b.tb_left;
 		add->s_child = tp->tr_b.tb_left;
@@ -271,8 +271,8 @@ pop_find_nodes(	union tree *tp)
 	    }
 	    crossover_parent = &tp->tr_b.tb_right;
 	    n2 = pop_find_nodes(tp->tr_b.tb_right);
-	    if(n2 == crossover_node){
-		if(tp->tr_b.tb_right->tr_op & crossover_op){
+	    if (n2 == crossover_node){
+		if (tp->tr_b.tb_right->tr_op & crossover_op){
 		add = bu_malloc(sizeof(struct node), "node");
 		add->s_parent = &tp->tr_b.tb_right;
 		add->s_child = tp->tr_b.tb_right;
@@ -293,7 +293,7 @@ void
 pop_mutate(int type, genptr_t ptr)
 {
     int i;
-    switch(type) {
+    switch (type) {
 	case ID_ELL:
 	    VMUTATE(((struct rt_ell_internal *)ptr)->v);
 	    VMUTATE(((struct rt_ell_internal *)ptr)->a);
@@ -309,7 +309,7 @@ pop_mutate(int type, genptr_t ptr)
 	    VMUTATE(((struct rt_tgc_internal *)ptr)->d);
 	    break;
 	case ID_ARB8:
-	    for(i=0; i < 8; i++)
+	    for (i=0; i < 8; i++)
 		VMUTATE(((struct rt_arb_internal *)ptr)->pt[i]);
 
 	default:
@@ -333,26 +333,26 @@ pop_functree(struct db_i *dbi_p, struct db_i *dbi_c,
     struct rt_db_internal in;
     char shape[256];
 
-    if( !tp ){
+    if ( !tp ){
 	return;
     }
-    if(crossover){
-	if(node_idx > crossover_node) return;
-	if(node_idx == crossover_node){
+    if (crossover){
+	if (node_idx > crossover_node) return;
+	if (node_idx == crossover_node){
 	    crossover_point = tp;
 	    ++node_idx;
 	    return;
 	}
 	else
 	    ++node_idx;
-    } else if(mutate)
+    } else if (mutate)
 	++node_idx;
 
-    switch( tp->tr_op )  {
+    switch ( tp->tr_op )  {
 
 	case OP_DB_LEAF:
 	    /* dont need to do any processing if crossing over */
-	    if(crossover){
+	    if (crossover){
 		return;
 	    }
 
@@ -361,7 +361,7 @@ pop_functree(struct db_i *dbi_p, struct db_i *dbi_c,
 	     * new database. If we're mutating, mutate the object after loading
 	     * the internetal object */
 
-	    if( !rt_db_lookup_internal(dbi_p, tp->tr_l.tl_name, &dp, &in, LOOKUP_NOISY, resp))
+	    if ( !rt_db_lookup_internal(dbi_p, tp->tr_l.tl_name, &dp, &in, LOOKUP_NOISY, resp))
 		bu_exit(EXIT_FAILURE, "Failed to read parent");
 
 	    /* rename leaf based on individual it belongs to */
@@ -371,14 +371,14 @@ pop_functree(struct db_i *dbi_p, struct db_i *dbi_c,
 
 	    /* if we're mutating, and this is the node we've chosen
 	     * to modify. mutate this node */
-	    if( mutate && node_idx == crossover_node )
+	    if ( mutate && node_idx == crossover_node )
 		pop_mutate(in.idb_minor_type, in.idb_ptr);
 
 
 	    /* write child to new database */
-	    if((dp=db_diradd(dbi_c, shape, -1, 0, dp->d_flags, (genptr_t)&dp->d_minor_type)) == DIR_NULL)
+	    if ((dp=db_diradd(dbi_c, shape, -1, 0, dp->d_flags, (genptr_t)&dp->d_minor_type)) == DIR_NULL)
 		bu_exit(EXIT_FAILURE, "Failed to add new object to the database");
-	    if(rt_db_put_internal(dp, dbi_c, &in, resp) < 0)
+	    if (rt_db_put_internal(dp, dbi_c, &in, resp) < 0)
 		bu_exit(EXIT_FAILURE, "Failed to write new individual to databse");
 	    rt_db_free_internal(&in, resp);
 
@@ -389,17 +389,17 @@ pop_functree(struct db_i *dbi_p, struct db_i *dbi_c,
 	case OP_SUBTRACT:
 	case OP_XOR:
 	    /* mutate CSG operation */
-	    if(mutate)
-		if(node_idx == crossover_node){
+	    if (mutate)
+		if (node_idx == crossover_node){
 		  /*  tp->tr_op = (int)(2+pop_rand()*3);//FIXME: pop_rand() can be 1!*/
 		}
 
 	    /* if we're performing, save parent as it's right or left pointer will need
 	     * to be modified to point to the new child node */
-	    if(crossover && node_idx == crossover_node)
+	    if (crossover && node_idx == crossover_node)
 		crossover_parent = &tp->tr_b.tb_left;
 	    pop_functree( dbi_p, dbi_c, tp->tr_b.tb_left, resp, name);
-	    if(crossover && node_idx == crossover_node)
+	    if (crossover && node_idx == crossover_node)
 		crossover_parent = &tp->tr_b.tb_right;
 	    pop_functree( dbi_p, dbi_c, tp->tr_b.tb_right, resp, name);
 	    break;
@@ -431,12 +431,12 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
     crossover_parent = (union tree **)NULL;
     node = (struct node*)NULL;
 
-    if( !rt_db_lookup_internal(dbi_p, parent1_id, &dp, &in1, LOOKUP_NOISY, &rt_uniresource))
+    if ( !rt_db_lookup_internal(dbi_p, parent1_id, &dp, &in1, LOOKUP_NOISY, &rt_uniresource))
 	bu_exit(EXIT_FAILURE, "Failed to read parent1");
     shape_number =num_nodes= 0;
     parent1 = (struct rt_comb_internal *)in1.idb_ptr;
     mutate = 0;
-    switch(gop){
+    switch (gop){
 	case REPRODUCE:
 	    pop_functree(dbi_p, dbi_c, parent1->tree, resp, child1_id);
 	    break;
@@ -444,7 +444,7 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
 
 	    crossover = 1;
 	    /*load other parent */
-	    if( !rt_db_lookup_internal(dbi_p, parent2_id, &dp, &in2, LOOKUP_NOISY, resp))
+	    if ( !rt_db_lookup_internal(dbi_p, parent2_id, &dp, &in2, LOOKUP_NOISY, resp))
 		bu_exit(EXIT_FAILURE, "Failed to read parent2");
 	    parent2 = (struct rt_comb_internal *)in2.idb_ptr;
 
@@ -464,19 +464,19 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
 
 		crossover_op = crossover_point->tr_op;
 #define MASK (OP_UNION | OP_XOR | OP_SUBTRACT|OP_INTERSECT)
-		if(crossover_op & MASK)crossover_op = MASK;
+		if (crossover_op & MASK)crossover_op = MASK;
 		crossover_node = db_count_tree_nodes(crossover_point, 0);
-		if(pop_find_nodes(parent2->tree) == crossover_node){
+		if (pop_find_nodes(parent2->tree) == crossover_node){
 		    add = bu_malloc(sizeof(struct node), "node");
 		    add->s_parent = &parent2->tree;
 		    add->s_child = parent2->tree;
 		    BU_LIST_INSERT(&node->l, &add->l);
 		    ++num_nodes;
 		}
-		if(num_nodes > 0){
+		if (num_nodes > 0){
 		    rand_node = (int)(pop_rand() * num_nodes);
-		    for(add=BU_LIST_FIRST(node, &node->l);BU_LIST_NOT_HEAD(add, &node->l) && chosen_node == NULL; add=BU_LIST_PNEXT(node, add)){
-			if(i++ == rand_node){
+		    for (add=BU_LIST_FIRST(node, &node->l);BU_LIST_NOT_HEAD(add, &node->l) && chosen_node == NULL; add=BU_LIST_PNEXT(node, add)){
+			if (i++ == rand_node){
 			    chosen_node = add;
 			    /* break cleanly...? */
 			}
@@ -489,7 +489,7 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
 	    *cross_parent = chosen_node->s_child, resp;
 	    *chosen_node->s_parent =cpoint;
 
-	    while(BU_LIST_WHILE(add, node, &node->l)){
+	    while (BU_LIST_WHILE(add, node, &node->l)){
 		BU_LIST_DEQUEUE(&add->l);
 		bu_free(add, "node");
 	    }
@@ -504,7 +504,7 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
 	    pop_functree(dbi_p, dbi_c, parent2->tree, resp, child2_id);
 
 
-	    if((dp = db_diradd(dbi_c, child2_id, -1, 0, dp->d_flags, (genptr_t)&dp->d_minor_type)) == DIR_NULL)
+	    if ((dp = db_diradd(dbi_c, child2_id, -1, 0, dp->d_flags, (genptr_t)&dp->d_minor_type)) == DIR_NULL)
 		bu_exit(EXIT_FAILURE, "Failed to add new individual to child database");
 	    rt_db_put_internal(dp, dbi_c, &in2, resp);
 	    rt_db_free_internal(&in2, resp);
@@ -536,7 +536,7 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
     }
 
 
-    if((dp=db_diradd(dbi_c, child1_id, -1, 0, dp->d_flags, (genptr_t)&dp->d_minor_type)) == DIR_NULL){
+    if ((dp=db_diradd(dbi_c, child1_id, -1, 0, dp->d_flags, (genptr_t)&dp->d_minor_type)) == DIR_NULL){
 	bu_exit(EXIT_FAILURE, "Failed to add new individual to child database");
     }
     rt_db_put_internal(dp, dbi_c,  &in1, resp);

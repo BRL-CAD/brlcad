@@ -122,12 +122,12 @@ dsk_open(FBIO *ifp, char *file, int width, int height)
 	FB_CK_FBIO(ifp);
 
 	/* check for default size */
-	if( width == 0 )
+	if ( width == 0 )
 		width = ifp->if_width;
-	if( height == 0 )
+	if ( height == 0 )
 		height = ifp->if_height;
 
-	if( strcmp( file, "-" ) == 0 )  {
+	if ( strcmp( file, "-" ) == 0 )  {
 		/*
 		 *  It is the applications job to write ascending scanlines.
 		 *  If it does not, then this can be stacked with /dev/mem,
@@ -140,15 +140,15 @@ dsk_open(FBIO *ifp, char *file, int width, int height)
 		return 0;
 	}
 
-	if( (ifp->if_fd = open( file, O_RDWR, 0 )) == -1
+	if ( (ifp->if_fd = open( file, O_RDWR, 0 )) == -1
 	  && (ifp->if_fd = open( file, O_RDONLY, 0 )) == -1 ) {
-		if( (ifp->if_fd = open( file, O_RDWR|O_CREAT, 0664 )) > 0 ) {
+		if ( (ifp->if_fd = open( file, O_RDWR|O_CREAT, 0664 )) > 0 ) {
 			/* New file, write byte at end */
-			if( lseek( ifp->if_fd, (off_t)(height*width*sizeof(RGBpixel)-1), 0 ) == -1 ) {
+			if ( lseek( ifp->if_fd, (off_t)(height*width*sizeof(RGBpixel)-1), 0 ) == -1 ) {
 				fb_log( "disk_device_open : can not seek to end of new file.\n" );
 				return	-1;
 			}
-			if( write( ifp->if_fd, &zero, 1 ) < 0 ) {
+			if ( write( ifp->if_fd, &zero, 1 ) < 0 ) {
 				fb_log( "disk_device_open : initial write failed.\n" );
 				return	-1;
 			}
@@ -157,7 +157,7 @@ dsk_open(FBIO *ifp, char *file, int width, int height)
 	}
 	ifp->if_width = width;
 	ifp->if_height = height;
-	if( lseek( ifp->if_fd, (off_t)0L, 0 ) == -1L ) {
+	if ( lseek( ifp->if_fd, (off_t)0L, 0 ) == -1L ) {
 		fb_log( "disk_device_open : can not seek to beginning.\n" );
 		return	-1;
 	}
@@ -183,7 +183,7 @@ dsk_clear(FBIO *ifp, unsigned char *bgpp)
 {
 	static RGBpixel	black = { 0, 0, 0 };
 
-	if( bgpp == (unsigned char *)NULL )
+	if ( bgpp == (unsigned char *)NULL )
 		return disk_color_clear( ifp, black );
 
 	return	disk_color_clear( ifp, bgpp );
@@ -200,30 +200,30 @@ dsk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
 	int		fd = ifp->if_fd;
 
 	/* Reads on stdout make no sense.  Take reads from stdin. */
-	if( fd == 1 )  fd = 0;
+	if ( fd == 1 )  fd = 0;
 
 	dest = (((long) y * (long) ifp->if_width) + (long) x)
 	     * (long) sizeof(RGBpixel);
-	if( ifp->if_seekpos != dest && lseek(fd, (off_t)dest, 0) == -1L ) {
+	if ( ifp->if_seekpos != dest && lseek(fd, (off_t)dest, 0) == -1L ) {
 		fb_log( "disk_buffer_read : seek to %ld failed.\n", dest );
 		return	-1;
 	}
 	ifp->if_seekpos = dest;
-	while( bytes > 0 ) {
+	while ( bytes > 0 ) {
 		todo = bytes;
-		if( (got = read( fd, (char *) pixelp, todo )) != todo )  {
-			if( got <= 0 )  {
+		if ( (got = read( fd, (char *) pixelp, todo )) != todo )  {
+			if ( got <= 0 )  {
 			    if (got < 0) {
 				perror("READ ERROR");
 			    }
 
-			    if( bytes_read <= 0 )
+			    if ( bytes_read <= 0 )
 				return -1;	/* error */
 
 			    /* early EOF -- indicate what we got */
 			    return bytes_read/sizeof(RGBpixel);
 			}
-			if( fd != 0 )  {
+			if ( fd != 0 )  {
 				/* This happens all the time reading from pipes */
 				fb_log("disk_buffer_read(fd=%d): y=%d read of %d got %d bytes\n",
 					fd, y, todo, got);
@@ -246,16 +246,16 @@ dsk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
 
 	dest = ((long) y * (long) ifp->if_width + (long) x)
 	     * (long) sizeof(RGBpixel);
-	if( dest != ifp->if_seekpos )  {
-		if( lseek(ifp->if_fd, (off_t)dest, 0) == -1L ) {
+	if ( dest != ifp->if_seekpos )  {
+		if ( lseek(ifp->if_fd, (off_t)dest, 0) == -1L ) {
 			fb_log( "disk_buffer_write : seek to %ld failed.\n", dest );
 			return	-1;
 		}
 		ifp->if_seekpos = dest;
 	}
-	while( bytes > 0 ) {
+	while ( bytes > 0 ) {
 		todo = bytes;
-		if( write( ifp->if_fd, (char *) pixelp, todo ) != todo )  {
+		if ( write( ifp->if_fd, (char *) pixelp, todo ) != todo )  {
 			fb_log( "disk_buffer_write: write failed\n" );
 			return	-1;
 		}
@@ -272,15 +272,15 @@ dsk_rmap(FBIO *ifp, ColorMap *cmap)
 	int		fd = ifp->if_fd;
 
 	/* Reads on stdout make no sense.  Take reads from stdin. */
-	if( fd == 1 )  fd = 0;
+	if ( fd == 1 )  fd = 0;
 
-	if( ifp->if_seekpos != FILE_CMAP_ADDR &&
+	if ( ifp->if_seekpos != FILE_CMAP_ADDR &&
 	    lseek( fd, (off_t)FILE_CMAP_ADDR, 0 ) == -1 ) {
 		fb_log(	"disk_colormap_read : seek to %ld failed.\n",
 				FILE_CMAP_ADDR );
 		return	-1;
 	}
-	if(read( fd, (char *) cmap, sizeof(ColorMap) ) != sizeof(ColorMap) ) {
+	if (read( fd, (char *) cmap, sizeof(ColorMap) ) != sizeof(ColorMap) ) {
 	    /* Not necessarily an error.  It is not required that a
 	     * color map be saved and the standard map is not
 	     * generally saved.
@@ -293,17 +293,17 @@ dsk_rmap(FBIO *ifp, ColorMap *cmap)
 HIDDEN int
 dsk_wmap(FBIO *ifp, const ColorMap *cmap)
 {
-	if( cmap == (ColorMap *) NULL )
+	if ( cmap == (ColorMap *) NULL )
 		/* Do not write default map to file. */
 		return	0;
-	if( fb_is_linear_cmap( cmap ) )
+	if ( fb_is_linear_cmap( cmap ) )
 		return  0;
-	if( lseek( ifp->if_fd, (off_t)FILE_CMAP_ADDR, 0 ) == -1 ) {
+	if ( lseek( ifp->if_fd, (off_t)FILE_CMAP_ADDR, 0 ) == -1 ) {
 		fb_log(	"disk_colormap_write : seek to %ld failed.\n",
 				FILE_CMAP_ADDR );
 		return	-1;
 	}
-	if( write( ifp->if_fd, (char *) cmap, sizeof(ColorMap) )
+	if ( write( ifp->if_fd, (char *) cmap, sizeof(ColorMap) )
 	    != sizeof(ColorMap) ) {
 		fb_log( "disk_colormap_write : write failed.\n" );
 		return	-1;
@@ -325,23 +325,23 @@ disk_color_clear(FBIO *ifp, register unsigned char *bpp)
 	int	fd, pixelstodo;
 
 	/* Fill buffer with background color. */
-	for( i = DISK_DMA_PIXELS, pix_to = pix_buf; i > 0; i-- ) {
+	for ( i = DISK_DMA_PIXELS, pix_to = pix_buf; i > 0; i-- ) {
 		COPYRGB( pix_to, bpp );
 		pix_to += sizeof(RGBpixel);
 	}
 
 	/* Set start of framebuffer */
 	fd = ifp->if_fd;
-	if( ifp->if_seekpos != 0L && lseek( fd, (off_t)0L, 0 ) == -1 ) {
+	if ( ifp->if_seekpos != 0L && lseek( fd, (off_t)0L, 0 ) == -1 ) {
 		fb_log( "disk_color_clear : seek failed.\n" );
 		return	-1;
 	}
 
 	/* Send until frame buffer is full. */
 	pixelstodo = ifp->if_height * ifp->if_width;
-	while( pixelstodo > 0 ) {
+	while ( pixelstodo > 0 ) {
 		i = pixelstodo > DISK_DMA_PIXELS ? DISK_DMA_PIXELS : pixelstodo;
-		if( write( fd, pix_buf, i * sizeof(RGBpixel) ) == -1 )
+		if ( write( fd, pix_buf, i * sizeof(RGBpixel) ) == -1 )
 			return	-1;
 		pixelstodo -= i;
 		ifp->if_seekpos += i * sizeof(RGBpixel);
@@ -361,7 +361,7 @@ dsk_help(FBIO *ifp)
 	fb_log( "Default width/height: %d %d\n",
 		disk_interface.if_width,
 		disk_interface.if_height );
-	if( ifp->if_fd == 1 )  {
+	if ( ifp->if_fd == 1 )  {
 		fb_log("File \"-\" reads from stdin, writes to stdout\n");
 	} else {
 		fb_log( "Note: you may have just created a disk file\n" );

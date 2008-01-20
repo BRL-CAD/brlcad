@@ -52,7 +52,7 @@ struct trclist
 	int index;
 	char name[NAMESIZE];
 	struct subtracts *subtr;
-	struct trclist *next,*prev;
+	struct trclist *next, *prev;
 };
 
 int
@@ -68,10 +68,10 @@ int entityno;
 	vect_t		v1;			/* Vector from "pt" to any point along curve */
 	fastf_t		h;			/* height of "TRC" */
 	int		npts;			/* Number of points used to approximate curve */
-	struct ptlist	*curv_pts,*ptr;		/* Pointer to a linked list of npts points along curve */
+	struct ptlist	*curv_pts, *ptr;		/* Pointer to a linked list of npts points along curve */
 	int		ntrcs;			/* number of "TRC" solids used */
 	vect_t		tmp;			/* temporary storage for a vector */
-	struct trclist	*trcs,*trcptr,*ptr2;	/* Pointers to linked list of TRC`s */
+	struct trclist	*trcs, *trcptr, *ptr2;	/* Pointers to linked list of TRC`s */
 	fastf_t		r2;			/* TRC radius */
 	fastf_t		hmax, hmin;		/* Max and Min distances along axis of rotation */
 	fastf_t		rmax;			/* Max radius */
@@ -89,7 +89,7 @@ int entityno;
 
 	/* Acquire data */
 
-	if( dir[entityno]->param <= pstart )
+	if ( dir[entityno]->param <= pstart )
 	{
 		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[entityno]->direct, dir[entityno]->name );
@@ -117,7 +117,7 @@ int entityno;
 	/* just to be safe */
 	VUNITIZE( adir );
 
-	if( fract <= 0.0 || fract > 1.0 )
+	if ( fract <= 0.0 || fract > 1.0 )
 	{
 		bu_log( "Illegal parameters for entity D%07d (%s)\n" ,
 			dir[entityno]->direct, dir[entityno]->name );
@@ -129,7 +129,7 @@ int entityno;
 	/* Get the curve in the form of a series of straight line segments */
 
 	npts = Getcurve( curve, &curv_pts );
-	if( npts == 0 )
+	if ( npts == 0 )
 	{
 		bu_log( "Could not get points along curve for revovling\n" );
 		bu_log( "Illegal parameters for entity D%07d (%s)\n" ,
@@ -146,26 +146,26 @@ int entityno;
 	VSUB2( v1, ptr->pt, pt );
 	VCROSS( tmp, v1, adir );
 	r2 = MAGNITUDE( tmp );
-	if( r2 < TOL )
+	if ( r2 < TOL )
 		r2 = TOL;
 	rmax = r2;
 	hmax = VDOT( v1, adir );
 	hmin = hmax;
 
 	trcptr = NULL;
-	while( ptr->next != NULL )
+	while ( ptr->next != NULL )
 	{
 		struct trclist *prev;
 		fastf_t h1;
 
-		if( trcs == NULL )
+		if ( trcs == NULL )
 		{
 			trcs = (struct trclist *)bu_malloc( sizeof( struct trclist ),
 				"Revolve: trcs" );
 			trcptr = trcs;
 			prev = NULL;
 		}
-		else if( trcptr->name[0] != '\0' )
+		else if ( trcptr->name[0] != '\0' )
 		{
 			trcptr->next = (struct trclist *)bu_malloc( sizeof( struct trclist ),
 				"Revolve: trcptr->next" );
@@ -185,9 +185,9 @@ int entityno;
 
 		/* Height along axis of rotation */
 		h1 = VDOT( v1, adir );
-		if( h1 < hmin )
+		if ( h1 < hmin )
 			hmin = h1;
-		if( h1 > hmax )
+		if ( h1 > hmax )
 			hmax = h1;
 
 		/* Radius at base is top radius from previous TRC */
@@ -197,10 +197,10 @@ int entityno;
 		VSUB2( v1, ptr->next->pt, pt );
 		VCROSS( tmp, v1, adir );
 		trcptr->r2 = MAGNITUDE( tmp );
-		if( trcptr->r2 < TOL )
+		if ( trcptr->r2 < TOL )
 			trcptr->r2 = TOL;
 		r2 = trcptr->r2;
-		if( r2 > rmax )
+		if ( r2 > rmax )
 			rmax = r2;
 
 		/* Calculate height of TRC */
@@ -209,7 +209,7 @@ int entityno;
 		VSUB2( v1, trcptr->top, trcptr->base );
 		h = MAGNITUDE( v1 );
 		/* If height is zero, don't make a TRC */
-		if( NEAR_ZERO( h, TOL ) )
+		if ( NEAR_ZERO( h, TOL ) )
 		{
 			ptr = ptr->next;
 			continue;
@@ -219,7 +219,7 @@ int entityno;
 		snprintf( trcptr->name, NAMESIZE, "rev.%d.%d", entityno, ntrcs ); /* Format for creating TRC names */
 
 		/* Make the TRC */
-		if( mk_trc_top( fdout, trcptr->name, trcptr->base,
+		if ( mk_trc_top( fdout, trcptr->name, trcptr->base,
 		    trcptr->top, trcptr->r1, trcptr->r2 ) < 0 )  {
 			bu_log( "Unable to write TRC for entity D%07d (%s)\n" ,
 				dir[entityno]->direct, dir[entityno]->name );
@@ -232,16 +232,16 @@ int entityno;
 	}
 
 	/* Eliminate last struct if not used */
-	if( trcptr->name[0] == '\0' )
+	if ( trcptr->name[0] == '\0' )
 	{
 		trcptr->prev->next = NULL;
 		bu_free( (char *)trcptr, "Revolve: trcptr" );
 	}
 
-	if( dir[entityno]->form == 1 ) /* curve closed on itself */
+	if ( dir[entityno]->form == 1 ) /* curve closed on itself */
 	{
 		trcptr = trcs;
-		while( trcptr != NULL )
+		while ( trcptr != NULL )
 		{
 			fastf_t hb1, ht1, hb2, ht2; /* distance from "pt" to bottom and top of TRC's */
 			fastf_t	rtmp;	/* interpolated radii for TRC */
@@ -253,7 +253,7 @@ int entityno;
 			VSUB2( tmp, trcptr->top, pt );
 			ht1 = MAGNITUDE( tmp );
 			/* Make sure distance to base is smaller */
-			if( ht1 < hb1 )
+			if ( ht1 < hb1 )
 			{
 				tmpp = ht1;
 				ht1 = hb1;
@@ -262,9 +262,9 @@ int entityno;
 
 			/* Check every TRC against this one */
 			ptr2 = trcs;
-			while( ptr2 != NULL )
+			while ( ptr2 != NULL )
 			{
-				if( ptr2 == trcptr ) /* but not itself */
+				if ( ptr2 == trcptr ) /* but not itself */
 					ptr2 = ptr2->next;
 				else
 				{
@@ -274,42 +274,42 @@ int entityno;
 					VSUB2( tmp, ptr2->top, pt );
 					ht2 = MAGNITUDE( tmp );
 					/* and order them */
-					if( ht2 < hb2 )
+					if ( ht2 < hb2 )
 					{
 						tmpp = ht2;
 						ht2 = hb2;
 						hb2 = tmpp;
 					}
-					if( hb2 < ht1 && hb2 > hb1 )
+					if ( hb2 < ht1 && hb2 > hb1 )
 					{
 						/* These TRC's overlap */
 						/* Calculate radius at hb2 */
 						rtmp = trcptr->r1 + (trcptr->r2 - trcptr->r1)*(hb2-hb1)/(ht1-hb1);
-						if( rtmp > ptr2->r1 )
+						if ( rtmp > ptr2->r1 )
 						{
 							/* ptr2 must be an inside solid, so subtract it */
 							Addsub( trcptr, ptr2 );
 							ptr2->op = 1;
 						}
-						else if( rtmp < ptr2->r1 )
+						else if ( rtmp < ptr2->r1 )
 						{
 							/* trcptr must be an inside solid */
 							Addsub( ptr2, trcptr );
 							trcptr->op = 1;
 						}
 					}
-					else if( ht2 < ht1 && ht2 > hb1 )
+					else if ( ht2 < ht1 && ht2 > hb1 )
 					{
 						/* These TRC's overlap */
 						/* Calculate radius at ht2 */
 						rtmp = trcptr->r1 + (trcptr->r2 - trcptr->r1)*(ht2-hb1)/(ht1-hb1);
-						if( rtmp > ptr2->r2 )
+						if ( rtmp > ptr2->r2 )
 						{
 							/* ptr2 must be an inside solid, so subtract it */
 							Addsub( trcptr, ptr2 );
 							ptr2->op = 1;
 						}
-						else if( rtmp < ptr2->r1 )
+						else if ( rtmp < ptr2->r1 )
 						{
 							/* trcptr must be an inside solid */
 							Addsub( ptr2, trcptr );
@@ -323,7 +323,7 @@ int entityno;
 		}
 	}
 
-	if( fract < 1.0 )
+	if ( fract < 1.0 )
 	{
 		/* Must calculate a cutting solid */
 		vect_t pdir, enddir, startdir;
@@ -333,7 +333,7 @@ int entityno;
 		/* Calculate direction from axis to curve */
 		len = 0.0;
 		ptr = curv_pts;
-		while( len == 0.0 )
+		while ( len == 0.0 )
 		{
 			VSUB2( pdir, ptr->pt, pt );
 			VJOIN1( startdir, pdir, -VDOT( pdir, adir ), adir );
@@ -346,12 +346,12 @@ int entityno;
 		VCROSS( pdir, adir, startdir );
 		VUNITIZE( pdir );
 
-		if( fract < 0.5 )
+		if ( fract < 0.5 )
 		{
 			theta = 2.0*PI*fract;
 			cutop = Intersect;
 		}
-		else if( fract > 0.5 )
+		else if ( fract > 0.5 )
 		{
 			theta = (-2.0*PI*(1.0-fract));
 			cutop = Subtract;
@@ -366,12 +366,12 @@ int entityno;
 			VJOIN1( pts[1], pts[0], (-2.0*rmax), startdir );
 			VJOIN1( pts[2], pts[1], rmax, pdir );
 			VJOIN1( pts[3], pts[0], rmax, pdir );
-			for( i=0 ; i<4 ; i++ )
+			for ( i=0; i<4; i++ )
 			{
 				VJOIN1( pts[i+4], pts[i], (hmax-hmin), adir );
 			}
 		}
-		if( fract != 0.5 )
+		if ( fract != 0.5 )
 		{
 			/* Calculate direction to end of revolve */
 			VSCALE( enddir, startdir, cos( theta ) );
@@ -395,14 +395,14 @@ int entityno;
 			VJOIN1( pts[2], pts[0], len, enddir );
 
 			/* Calculate top vertices */
-			for( i=0 ; i<4 ; i++ )
+			for ( i=0; i<4; i++ )
 			{
 				VJOIN1( pts[i+4], pts[i], (hmax-hmin), adir );
 			}
 		}
 
 		/* Make the BRL-CAD solid */
-		if( mk_arb8( fdout, cutname, &pts[0][X] ) < 0 )  {
+		if ( mk_arb8( fdout, cutname, &pts[0][X] ) < 0 )  {
 			bu_log( "Unable to write ARB8 for entity D%07d (%s)\n" ,
 				dir[entityno]->direct, dir[entityno]->name );
 			return( 0 );
@@ -411,14 +411,14 @@ int entityno;
 
 	/* Build region */
 	trcptr = trcs;
-	while( trcptr != NULL )
+	while ( trcptr != NULL )
 	{
 		/* Union together all the TRC's that are not subtracts */
-		if( trcptr->op != 1 )
+		if ( trcptr->op != 1 )
 		{
 			(void)mk_addmember( trcptr->name, &head.l, NULL, operator[Union] );
 
-			if( fract < 1.0 )
+			if ( fract < 1.0 )
 			{
 				/* include cutting solid */
 				(void)mk_addmember( cutname, &head.l, NULL, operator[cutop] );
@@ -426,7 +426,7 @@ int entityno;
 
 			subp = trcptr->subtr;
 			/* Subtract the inside TRC's */
-			while( subp != NULL )
+			while ( subp != NULL )
 			{
 				(void)mk_addmember( subp->name, &head.l, NULL, operator[Subtract] );
 				subp = subp->next;
@@ -436,7 +436,7 @@ int entityno;
 	}
 
 	/* Make the object */
-	if( mk_lcomb( fdout, dir[entityno]->name, &head, 0 ,
+	if ( mk_lcomb( fdout, dir[entityno]->name, &head, 0 ,
 	    (char *)0, (char *)0, (unsigned char *)0, 0 ) < 0 )  {
 		bu_log( "Unable to make combination for entity D%07d (%s)\n" ,
 			dir[entityno]->direct, dir[entityno]->name );
@@ -446,7 +446,7 @@ int entityno;
 
 	/* Free the TRC structures */
 	trcptr = trcs;
-	while( trcptr != NULL )
+	while ( trcptr != NULL )
 	{
 		bu_free( (char *)trcptr, "Revolve: trcptr" );
 		trcptr = trcptr->next;
@@ -457,11 +457,11 @@ int entityno;
 /* Routine to add a name to the list of subtractions */
 void
 Addsub( trc, ptr )
-struct trclist *trc,*ptr;
+struct trclist *trc, *ptr;
 {
 	struct subtracts *subp;
 
-	if( trc->subtr == NULL )
+	if ( trc->subtr == NULL )
 	{
 		trc->subtr = (struct subtracts *)bu_malloc( sizeof( struct subtracts ),
 			"Revolve: trc->subtr" );
@@ -470,7 +470,7 @@ struct trclist *trc,*ptr;
 	else
 	{
 		subp = trc->subtr;
-		while( subp->next != NULL )
+		while ( subp->next != NULL )
 			subp = subp->next;
 		subp->next = (struct subtracts *)bu_malloc( sizeof( struct subtracts ),
 			"Revolve: subp->next" );

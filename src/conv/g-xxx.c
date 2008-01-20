@@ -157,7 +157,7 @@ main(int argc, char *argv[])
     /* Walk the trees named on the command line
      * outputting combinations and primitives
      */
-    for( i=bu_optind ; i<argc ; i++ ) {
+    for ( i=bu_optind; i<argc; i++ ) {
 	db_walk_tree(rtip->rti_dbip, argc - i, (const char **)&argv[i], NUM_OF_CPUS_TO_USE,
 		     &init_state, region_start, region_end, primitive_func, (genptr_t) &user_data);
     }
@@ -197,7 +197,7 @@ region_start (struct db_tree_state *tsp,
     dp = DB_FULL_PATH_CUR_DIR(pathp);
 
     /* here is where the conversion should be done */
-    if( combp->region_flag )
+    if ( combp->region_flag )
 	printf( "Write this region (name=%s) as a part in your format:\n", dp->d_namep );
     else
 	printf( "Write this combination (name=%s) as an assembly in your format:\n", dp->d_namep );
@@ -264,7 +264,7 @@ describe_tree( union tree *tree,
 
     BU_CK_VLS(str);
 
-    if( !tree )	{
+    if ( !tree )	{
 	/* this tree has no members */
 	bu_vls_strcat( str, "-empty-" );
 	return;
@@ -276,7 +276,7 @@ describe_tree( union tree *tree,
      * the first four are the most common types, and are typically
      * the only ones found in a BRL-CAD database.
      */
-    switch( tree->tr_op ) {
+    switch ( tree->tr_op ) {
 	case OP_DB_LEAF:	/* leaf node, this is a member */
 	    /* Note: tree->tr_l.tl_mat is a pointer to a
 	     * transformation matrix to apply to this member
@@ -349,8 +349,8 @@ primitive_func( struct db_tree_state *tsp,
     }
 
     /* handle each type of primitive (see h/rtgeom.h) */
-    if( ip->idb_major_type == DB5_MAJORTYPE_BRLCAD ) {
-	switch( ip->idb_type ) {
+    if ( ip->idb_major_type == DB5_MAJORTYPE_BRLCAD ) {
+	switch ( ip->idb_type ) {
 	    /* most commonly used primitives */
 	    case ID_TOR:	/* torus */
 		{
@@ -402,7 +402,7 @@ primitive_func( struct db_tree_state *tsp,
 		    struct rt_arb_internal *arb = (struct rt_arb_internal *)ip->idb_ptr;
 
 		    printf( "Write this ARB (name=%s) in your format:\n", dp->d_namep );
-		    for( i=0 ; i<8 ; i++ )
+		    for ( i=0; i<8; i++ )
 			printf( "\tpoint #%d: (%g %g %g)\n", i, V3ARGS( arb->pt[i] ) );
 		    break;
 		}
@@ -541,7 +541,7 @@ primitive_func( struct db_tree_state *tsp,
 		break;
 	}
     } else {
-	switch( ip->idb_major_type ) {
+	switch ( ip->idb_major_type ) {
 	    case DB5_MAJORTYPE_BINARY_UNIF:
 		{
 		    /* not actually a primitive, just a block of storage for data

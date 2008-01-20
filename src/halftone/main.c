@@ -145,7 +145,7 @@ setup(int argc, char **argv)
 	int	autosize = 0;
 
 	while ((c = bu_getopt(argc, argv, "D:hsa:n:w:B:M:RSI:T:")) != EOF) {
-		switch(c) {
+		switch (c) {
 		case 's':
 			width = height = atol(bu_optarg);
 		break;
@@ -188,8 +188,8 @@ setup(int argc, char **argv)
  */
 		case 'T':
 			--bu_optind;
-			for(i=bu_optind; i < argc && (isdigit(*argv[i]) ||
-			    (*argv[i] == '-' && isdigit(*(argv[i]+1)))) ; i++);
+			for (i=bu_optind; i < argc && (isdigit(*argv[i]) ||
+			    (*argv[i] == '-' && isdigit(*(argv[i]+1)))); i++);
 			if ((c=i-bu_optind) % 2) {
 				fprintf(stderr, "Missing Y coordent for tone map.\n");
 				bu_exit(1, NULL);
@@ -281,7 +281,7 @@ main(int argc, char **argv)
 	}
 
 	if (Debug>2) {
-		for(i=0;i<256;i++) fprintf(stderr, "%d ", Map[i]);
+		for (i=0;i<256;i++) fprintf(stderr, "%d ", Map[i]);
 		fprintf(stderr, "\n");
 	}
 

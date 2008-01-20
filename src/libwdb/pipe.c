@@ -88,7 +88,7 @@ mk_pipe(struct rt_wdb *fp, const char *name, struct bu_list *headp)
 {
 	struct rt_pipe_internal *pipe;
 
-	if( rt_pipe_ck( headp ) )
+	if ( rt_pipe_ck( headp ) )
 	{
 		bu_log( "mk_pipe: BAD PIPE SOLID (%s)\n", name );
 		return( 1 );
@@ -114,7 +114,7 @@ mk_pipe_free( struct bu_list *headp )
 {
 	register struct wdb_pipept	*wp;
 
-	while( BU_LIST_WHILE( wp, wdb_pipept, headp ) )  {
+	while ( BU_LIST_WHILE( wp, wdb_pipept, headp ) )  {
 		BU_LIST_DEQUEUE( &wp->l );
 		bu_free( (char *)wp, "mk_pipe_free" );
 	}

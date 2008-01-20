@@ -84,7 +84,7 @@ int main(int argc, char **argv) {
 
   signal(SIGINT, finish);
 
-  if(argc == 1) {
+  if (argc == 1) {
     help();
     return EXIT_FAILURE;
   }
@@ -98,7 +98,7 @@ int main(int argc, char **argv) {
 
   /* Parse command line options */
 
-  while((c =
+  while ((c =
 #ifdef HAVE_GETOPT_LONG
 	getopt_long(argc, argv, shortopts, longopts, NULL)
 #else
@@ -106,7 +106,7 @@ int main(int argc, char **argv) {
 #endif
 	)!= -1)
   {
-	  switch(c) {
+	  switch (c) {
 		  case 'o':
 			  obs_port = atoi(optarg);
 			  break;
@@ -119,8 +119,8 @@ int main(int argc, char **argv) {
 		  case 'i':
 			  strncpy(temp, optarg, 4);
 			  interval = atoi(temp);
-			  if(interval < 0) interval = 0;
-			  if(interval > 60) interval = 60;
+			  if (interval < 0) interval = 0;
+			  if (interval > 60) interval = 60;
 			  break;
 		  case 'l':
 			  strncpy(list, optarg, 64);
@@ -141,7 +141,7 @@ int main(int argc, char **argv) {
 
   strncpy(proj, argv[0], 64);
 
-  if(proj[0]) {
+  if (proj[0]) {
     rise_master(port, obs_port, proj, list, exec, interval);
   } else {
     help();

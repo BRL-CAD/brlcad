@@ -93,17 +93,17 @@ struct dbcmdstruct {
 int
 rt_tcl_parse_ray( Tcl_Interp *interp, struct xray *rp, const char *const*argv )
 {
-	if( bn_decode_vect( rp->r_pt,  argv[0] ) != 3 )  {
+	if ( bn_decode_vect( rp->r_pt,  argv[0] ) != 3 )  {
 		Tcl_AppendResult( interp,
 			"badly formatted point: ", argv[0], (char *)NULL );
 		return TCL_ERROR;
 	}
-	if( bn_decode_vect( rp->r_dir, argv[2] ) != 3 )  {
+	if ( bn_decode_vect( rp->r_dir, argv[2] ) != 3 )  {
 		Tcl_AppendResult( interp,
 			"badly formatted vector: ", argv[2], (char *)NULL );
 		return TCL_ERROR;
 	}
-	switch( argv[1][0] )  {
+	switch ( argv[1][0] )  {
 	case 'd':
 		/* [2] is direction vector */
 		break;
@@ -142,7 +142,7 @@ rt_tcl_pr_cutter( Tcl_Interp *interp, const union cutter *cutp )
 
 	bu_vls_init(&str);
 
-	switch( cutp->cut_type )  {
+	switch ( cutp->cut_type )  {
 	case CUT_CUTNODE:
 		bu_vls_printf( &str,
 			"type cutnode axis %c point %.25G",
@@ -156,18 +156,18 @@ rt_tcl_pr_cutter( Tcl_Interp *interp, const union cutter *cutp )
 			" max {%.25G %.25G %.25G}",
 			V3ARGS(cutp->bn.bn_max) );
 		bu_vls_printf( &str, " solids {");
-		for( i=0; i < cutp->bn.bn_len; i++ )  {
+		for ( i=0; i < cutp->bn.bn_len; i++ )  {
 			bu_vls_strcat( &str, cutp->bn.bn_list[i]->st_name );
 			bu_vls_putc( &str, ' ' );
 		}
 		bu_vls_printf( &str, "} pieces {");
-		for( i = 0; i < cutp->bn.bn_piecelen; i++ )  {
+		for ( i = 0; i < cutp->bn.bn_piecelen; i++ )  {
 			struct rt_piecelist *plp = &cutp->bn.bn_piecelist[i];
 			int j;
 			RT_CK_PIECELIST(plp);
 			/* These can be taken by user positionally */
 			bu_vls_printf( &str, "{%s {", plp->stp->st_name );
-			for( j=0; j < plp->npieces; j++ )  {
+			for ( j=0; j < plp->npieces; j++ )  {
 				bu_vls_printf( &str, "%ld ", plp->pieces[j] );
 			}
 			bu_vls_strcat( &str, "} } " );
@@ -176,7 +176,7 @@ rt_tcl_pr_cutter( Tcl_Interp *interp, const union cutter *cutp )
 		break;
 	case CUT_NUGRIDNODE:
 		bu_vls_printf( &str, "type nugridnode" );
-		for( i = 0; i < 3; i++ )  {
+		for ( i = 0; i < 3; i++ )  {
 			bu_vls_printf( &str, " %c {", xyz[i] );
 			bu_vls_printf( &str, "spos %.25G epos %.25G width %.25g",
 				cutp->nugn.nu_axis[i]->nu_spos,
@@ -214,7 +214,7 @@ rt_tcl_cutter( ClientData clientData, Tcl_Interp *interp, int argc, const char *
 	const union cutter	*cutp;
 	int			n;
 
-	if( argc != 6 )  {
+	if ( argc != 6 )  {
 		Tcl_AppendResult( interp,
 				"wrong # args: should be \"",
 				argv[0], " ", argv[1], "cutnum {P} dir|at {V}\"",
@@ -227,11 +227,11 @@ rt_tcl_cutter( ClientData clientData, Tcl_Interp *interp, int argc, const char *
 	RT_CK_RTI_TCL(interp, rtip);
 
 	n = atoi(argv[2]);
-	if( rt_tcl_parse_ray( interp, &ap->a_ray, &argv[3] ) == TCL_ERROR )
+	if ( rt_tcl_parse_ray( interp, &ap->a_ray, &argv[3] ) == TCL_ERROR )
 		return TCL_ERROR;
 
 	cutp = rt_cell_n_on_ray( ap, n );
-	if( cutp == CUTTER_NULL )  {
+	if ( cutp == CUTTER_NULL )  {
 		Tcl_AppendResult( interp, "rt_cell_n_on_ray() failed to find cell ", argv[2], (char *)NULL );
 		return TCL_ERROR;
 	}
@@ -278,7 +278,7 @@ rt_tcl_pr_hit( Tcl_Interp *interp, struct hit *hitp, const struct seg *segp, con
 		crv.crv_c1, crv.crv_c2 );
 	bn_encode_vect( &str, crv.crv_pdir );
 	bu_vls_printf( &str, "} surfno %d", hitp->hit_surfno );
-	if( stp->st_path.magic == DB_FULL_PATH_MAGIC )  {
+	if ( stp->st_path.magic == DB_FULL_PATH_MAGIC )  {
 		/* Magic is left 0 if the path is not filled in. */
 		char	*sofar = db_path_to_string(&stp->st_path);
 		bu_vls_printf( &str, " path ");
@@ -304,7 +304,7 @@ rt_tcl_a_hit( struct application *ap,
 
 	RT_CK_PT_HD(PartHeadp);
 
-	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )  {
+	for ( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )  {
 		RT_CK_PT(pp);
 		Tcl_AppendResult( interp, "{in", (char *)NULL );
 		rt_tcl_pr_hit( interp, pp->pt_inhit, pp->pt_inseg,
@@ -362,7 +362,7 @@ rt_tcl_rt_shootray(ClientData clientData, Tcl_Interp *interp, int argc, const ch
 	struct rt_i		*rtip;
 	int			index;
 
-	if( (argc != 5 && argc != 6) || (argc == 6 && strcmp( argv[2], "-R"))  )  {
+	if ( (argc != 5 && argc != 6) || (argc == 6 && strcmp( argv[2], "-R"))  )  {
 		Tcl_AppendResult( interp,
 				"wrong # args: should be \"",
 				argv[0], " ", argv[1], " [-R] {P} dir|at {V}\"",
@@ -370,7 +370,7 @@ rt_tcl_rt_shootray(ClientData clientData, Tcl_Interp *interp, int argc, const ch
 		return TCL_ERROR;
 	}
 
-	if( argc == 6 ) {
+	if ( argc == 6 ) {
 		ap->a_logoverlap = rt_silent_logoverlap;
 		index = 3;
 	} else {
@@ -381,7 +381,7 @@ rt_tcl_rt_shootray(ClientData clientData, Tcl_Interp *interp, int argc, const ch
 	rtip = ap->a_rt_i;
 	RT_CK_RTI_TCL(interp, rtip);
 
-	if( rt_tcl_parse_ray( interp, &ap->a_ray, &argv[index] ) == TCL_ERROR )
+	if ( rt_tcl_parse_ray( interp, &ap->a_ray, &argv[index] ) == TCL_ERROR )
 		return TCL_ERROR;
 	ap->a_hit = rt_tcl_a_hit;
 	ap->a_miss = rt_tcl_a_miss;
@@ -405,7 +405,7 @@ rt_tcl_rt_onehit(ClientData clientData, Tcl_Interp *interp, int argc, const char
 	struct rt_i		*rtip;
 	char			buf[64];
 
-	if( argc < 2 || argc > 3 )  {
+	if ( argc < 2 || argc > 3 )  {
 		Tcl_AppendResult( interp,
 				"wrong # args: should be \"",
 				argv[0], " ", argv[1], " [#]\"",
@@ -417,7 +417,7 @@ rt_tcl_rt_onehit(ClientData clientData, Tcl_Interp *interp, int argc, const char
 	rtip = ap->a_rt_i;
 	RT_CK_RTI_TCL(interp, rtip);
 
-	if( argc == 3 )  {
+	if ( argc == 3 )  {
 		ap->a_onehit = atoi(argv[2]);
 	}
 	sprintf(buf, "%d", ap->a_onehit );
@@ -438,7 +438,7 @@ rt_tcl_rt_no_bool(ClientData clientData, Tcl_Interp *interp, int argc, const cha
 	struct rt_i		*rtip;
 	char			buf[64];
 
-	if( argc < 2 || argc > 3 )  {
+	if ( argc < 2 || argc > 3 )  {
 		Tcl_AppendResult( interp,
 				"wrong # args: should be \"",
 				argv[0], " ", argv[1], " [#]\"",
@@ -450,7 +450,7 @@ rt_tcl_rt_no_bool(ClientData clientData, Tcl_Interp *interp, int argc, const cha
 	rtip = ap->a_rt_i;
 	RT_CK_RTI_TCL(interp, rtip);
 
-	if( argc == 3 )  {
+	if ( argc == 3 )  {
 		ap->a_no_booleans = atoi(argv[2]);
 	}
 	sprintf(buf, "%d", ap->a_no_booleans );
@@ -472,7 +472,7 @@ rt_tcl_rt_check(ClientData clientData, Tcl_Interp *interp, int argc, const char 
 	struct application	*ap = (struct application *)clientData;
 	struct rt_i		*rtip;
 
-	if( argc != 2 )  {
+	if ( argc != 2 )  {
 		Tcl_AppendResult( interp,
 				"wrong # args: should be \"",
 				argv[0], " ", argv[1], "\"",
@@ -505,7 +505,7 @@ rt_tcl_rt_prep(ClientData clientData, Tcl_Interp *interp, int argc, const char *
 	struct rt_i		*rtip;
 	struct bu_vls		str;
 
-	if( argc < 2 || argc > 4 )  {
+	if ( argc < 2 || argc > 4 )  {
 		Tcl_AppendResult( interp,
 				"wrong # args: should be \"",
 				argv[0], " ", argv[1],
@@ -518,7 +518,7 @@ rt_tcl_rt_prep(ClientData clientData, Tcl_Interp *interp, int argc, const char *
 	rtip = ap->a_rt_i;
 	RT_CK_RTI_TCL(interp, rtip);
 
-	if( argc >= 3 && !rtip->needprep )  {
+	if ( argc >= 3 && !rtip->needprep )  {
 		Tcl_AppendResult( interp,
 			argv[0], " ", argv[1],
 			" invoked when model has already been prepped.\n",
@@ -526,10 +526,10 @@ rt_tcl_rt_prep(ClientData clientData, Tcl_Interp *interp, int argc, const char *
 		return TCL_ERROR;
 	}
 
-	if( argc == 4 )  rtip->rti_hasty_prep = atoi(argv[3]);
+	if ( argc == 4 )  rtip->rti_hasty_prep = atoi(argv[3]);
 
 	/* If args were given, prep now. */
-	if( argc >= 3 )  rt_prep_parallel( rtip, 1 );
+	if ( argc >= 3 )  rt_prep_parallel( rtip, 1 );
 
 	/* Now, describe the current state */
 	bu_vls_init( &str );
@@ -550,7 +550,7 @@ rt_tcl_rt_prep(ClientData clientData, Tcl_Interp *interp, int argc, const char *
 	bu_vls_printf( &str, " maxdepth %d maxlen %d",
 		rtip->rti_cut_maxdepth,
 		rtip->rti_cut_maxlen );
-	if( rtip->rti_ncut_by_type[CUT_BOXNODE] )  bu_vls_printf( &str, " avglen %g",
+	if ( rtip->rti_ncut_by_type[CUT_BOXNODE] )  bu_vls_printf( &str, " avglen %g",
 		((double)rtip->rti_cut_totobj) /
 		rtip->rti_ncut_by_type[CUT_BOXNODE] );
 
@@ -589,7 +589,7 @@ rt_tcl_rt(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv
 {
 	struct dbcmdstruct	*dbcmd;
 
-	if( argc < 2 ) {
+	if ( argc < 2 ) {
 		Tcl_AppendResult( interp,
 				  "wrong # args: should be \"", argv[0],
 				  " command [args...]\"",
@@ -597,8 +597,8 @@ rt_tcl_rt(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv
 		return TCL_ERROR;
 	}
 
-	for( dbcmd = rt_tcl_rt_cmds; dbcmd->cmdname != NULL; dbcmd++ ) {
-		if( strcmp(dbcmd->cmdname, argv[1]) == 0 ) {
+	for ( dbcmd = rt_tcl_rt_cmds; dbcmd->cmdname != NULL; dbcmd++ ) {
+		if ( strcmp(dbcmd->cmdname, argv[1]) == 0 ) {
 			return (*dbcmd->cmdfunc)( clientData, interp,
 						  argc, argv );
 		}
@@ -608,7 +608,7 @@ rt_tcl_rt(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv
 	Tcl_AppendResult( interp, "unknown LIBRT command '",
 			argv[1], "'; must be one of:",
 			(char *)NULL );
-	for( dbcmd = rt_tcl_rt_cmds; dbcmd->cmdname != NULL; dbcmd++ ) {
+	for ( dbcmd = rt_tcl_rt_cmds; dbcmd->cmdname != NULL; dbcmd++ ) {
 		Tcl_AppendResult( interp, " ", dbcmd->cmdname, (char *)NULL );
 	}
 	return TCL_ERROR;
@@ -652,14 +652,14 @@ rt_tcl_rt(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv
 void
 db_tcl_tree_describe(Tcl_DString *dsp, const union tree *tp)
 {
-	if( !tp ) return;
+	if ( !tp ) return;
 
 	RT_CK_TREE(tp);
-	switch( tp->tr_op ) {
+	switch ( tp->tr_op ) {
 	case OP_DB_LEAF:
 		Tcl_DStringAppendElement( dsp, "l" );
 		Tcl_DStringAppendElement( dsp, tp->tr_l.tl_name );
-		if( tp->tr_l.tl_mat )  {
+		if ( tp->tr_l.tl_mat )  {
 			struct bu_vls vls;
 			bu_vls_init( &vls );
 			bn_encode_mat( &vls, tp->tr_l.tl_mat );
@@ -731,12 +731,12 @@ db_tcl_tree_parse( Tcl_Interp *interp, const char *str, struct resource *resp )
 	union tree	*tp = TREE_NULL;
 
 	/* Skip over leading spaces in input */
-	while( *str && isspace(*str) ) str++;
+	while ( *str && isspace(*str) ) str++;
 
-	if( Tcl_SplitList( interp, str, &argc, (const char ***)&argv ) != TCL_OK )
+	if ( Tcl_SplitList( interp, str, &argc, (const char ***)&argv ) != TCL_OK )
 		return TREE_NULL;
 
-	if( argc <= 0 || argc > 3 )  {
+	if ( argc <= 0 || argc > 3 )  {
 		Tcl_AppendResult( interp, "db_tcl_tree_parse: tree node does not have 1, 2 or 2 elements: ",
 			str, "\n", (char *)NULL );
 		goto out;
@@ -751,13 +751,13 @@ if(argc > 2 ) Tcl_AppendResult( interp, "\n\targ2=", argv[2], NULL );
 Tcl_AppendResult( interp, "\n\n", NULL);
 #endif
 
-	if( argv[0][1] != '\0' )  {
+	if ( argv[0][1] != '\0' )  {
 		Tcl_AppendResult( interp, "db_tcl_tree_parse() operator is not single character: ",
 			argv[0], (char *)NULL );
 		goto out;
 	}
 
-	switch( argv[0][0] )  {
+	switch ( argv[0][0] )  {
 	case 'l':
 		/* Leaf node: {l name {mat}} */
 		RT_GET_TREE( tp, resp );
@@ -766,17 +766,17 @@ Tcl_AppendResult( interp, "\n\n", NULL);
 		tp->tr_l.tl_name = bu_strdup( argv[1] );
 		/* If matrix not specified, NULL pointer ==> identity matrix */
 		tp->tr_l.tl_mat = NULL;
-		if( argc == 3 )  {
+		if ( argc == 3 )  {
 			mat_t	m;
 			/* decode also recognizes "I" notation for identity */
-			if( bn_decode_mat( m, argv[2] ) != 16 )  {
+			if ( bn_decode_mat( m, argv[2] ) != 16 )  {
 				Tcl_AppendResult( interp, "db_tcl_tree_parse: unable to parse matrix '",
 					argv[2], "', using identity", (char *)NULL );
 				break;
 			}
-			if( bn_mat_is_identity(m) )
+			if ( bn_mat_is_identity(m) )
 				break;
-			if( bn_mat_ck( "db_tcl_tree_parse", m ) )  {
+			if ( bn_mat_ck( "db_tcl_tree_parse", m ) )  {
 				Tcl_AppendResult( interp, "db_tcl_tree_parse: matrix '",
 					argv[2],
 					"', does not preserve axis perpendicularity, using identity", (char *)NULL );
@@ -809,7 +809,7 @@ Tcl_AppendResult( interp, "\n\n", NULL);
 		goto binary;
 binary:
 		tp->tr_b.magic = RT_TREE_MAGIC;
-		if( argv[1] == (char *)NULL || argv[2] == (char *)NULL )  {
+		if ( argv[1] == (char *)NULL || argv[2] == (char *)NULL )  {
 			Tcl_AppendResult( interp, "db_tcl_tree_parse: binary operator ",
 				argv[0], " has insufficient operands in ",
 				str, (char *)NULL );
@@ -818,13 +818,13 @@ binary:
 			goto out;
 		}
 		tp->tr_b.tb_left = db_tcl_tree_parse( interp, argv[1], resp );
-		if( tp->tr_b.tb_left == TREE_NULL )  {
+		if ( tp->tr_b.tb_left == TREE_NULL )  {
 			RT_FREE_TREE( tp, resp );
 			tp = TREE_NULL;
 			goto out;
 		}
 		tp->tr_b.tb_right = db_tcl_tree_parse( interp, argv[2], resp );
-		if( tp->tr_b.tb_left == TREE_NULL )  {
+		if ( tp->tr_b.tb_left == TREE_NULL )  {
 			db_free_tree( tp->tr_b.tb_left, resp );
 			RT_FREE_TREE( tp, resp );
 			tp = TREE_NULL;
@@ -849,7 +849,7 @@ binary:
 		goto unary;
 unary:
 		tp->tr_b.magic = RT_TREE_MAGIC;
-		if( argv[1] == (char *)NULL )  {
+		if ( argv[1] == (char *)NULL )  {
 			Tcl_AppendResult( interp, "db_tcl_tree_parse: unary operator ",
 				argv[0], " has insufficient operands in ",
 				str, "\n", (char *)NULL );
@@ -858,7 +858,7 @@ unary:
 			goto out;
 		}
 		tp->tr_b.tb_left = db_tcl_tree_parse( interp, argv[1], resp );
-		if( tp->tr_b.tb_left == TREE_NULL )  {
+		if ( tp->tr_b.tb_left == TREE_NULL )  {
 			bu_free( (char *)tp, "union tree" );
 			tp = TREE_NULL;
 			goto out;
@@ -899,31 +899,31 @@ rt_comb_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const ch
 	comb = (struct rt_comb_internal *)intern->idb_ptr;
 	RT_CK_COMB_TCL(interp, comb);
 
-	if( item==0 ) {
+	if ( item==0 ) {
 		/* Print out the whole combination. */
 		Tcl_DStringInit( &ds );
 
 		Tcl_DStringAppendElement( &ds, "comb" );
 		Tcl_DStringAppendElement( &ds, "region" );
-		if( comb->region_flag ) {
+		if ( comb->region_flag ) {
 			Tcl_DStringAppendElement( &ds, "yes" );
 
 			Tcl_DStringAppendElement( &ds, "id" );
 			snprintf( buf, 128, "%d", comb->region_id );
 			Tcl_DStringAppendElement( &ds, buf );
 
-			if( comb->aircode )  {
+			if ( comb->aircode )  {
 				Tcl_DStringAppendElement( &ds, "air" );
 				snprintf( buf, 128, "%d", comb->aircode );
 				Tcl_DStringAppendElement( &ds, buf );
 			}
-			if( comb->los )  {
+			if ( comb->los )  {
 				Tcl_DStringAppendElement( &ds, "los" );
 				snprintf( buf, 128, "%d", comb->los );
 				Tcl_DStringAppendElement( &ds, buf );
 			}
 
-			if( comb->GIFTmater )  {
+			if ( comb->GIFTmater )  {
 				Tcl_DStringAppendElement( &ds, "GIFTmater" );
 				snprintf( buf, 128, "%d", comb->GIFTmater );
 				Tcl_DStringAppendElement( &ds, buf );
@@ -932,23 +932,23 @@ rt_comb_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const ch
 			Tcl_DStringAppendElement( &ds, "no" );
 		}
 
-		if( comb->rgb_valid ) {
+		if ( comb->rgb_valid ) {
 			Tcl_DStringAppendElement( &ds, "rgb" );
 			snprintf( buf, 128, "%d %d %d", V3ARGS(comb->rgb) );
 			Tcl_DStringAppendElement( &ds, buf );
 		}
 
-		if( bu_vls_strlen(&comb->shader) > 0 )  {
+		if ( bu_vls_strlen(&comb->shader) > 0 )  {
 			Tcl_DStringAppendElement( &ds, "shader" );
 			Tcl_DStringAppendElement( &ds, bu_vls_addr(&comb->shader) );
 		}
 
-		if( bu_vls_strlen(&comb->material) > 0 )  {
+		if ( bu_vls_strlen(&comb->material) > 0 )  {
 			Tcl_DStringAppendElement( &ds, "material" );
 			Tcl_DStringAppendElement( &ds, bu_vls_addr(&comb->material) );
 		}
 
-		if( comb->inherit ) {
+		if ( comb->inherit ) {
 			Tcl_DStringAppendElement( &ds, "inherit" );
 			Tcl_DStringAppendElement( &ds, "yes" );
 		}
@@ -967,42 +967,42 @@ rt_comb_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const ch
 		register int i;
 		char itemlwr[128];
 
-		for( i = 0; i < 128 && item[i]; i++ ) {
+		for ( i = 0; i < 128 && item[i]; i++ ) {
 			itemlwr[i] = (isupper(item[i]) ? tolower(item[i]) :
 				      item[i]);
 		}
 		itemlwr[i] = 0;
 
-		if( strcmp(itemlwr, "region")==0 ) {
+		if ( strcmp(itemlwr, "region")==0 ) {
 			snprintf( buf, 128, "%s", comb->region_flag ? "yes" : "no");
-		} else if( strcmp(itemlwr, "id")==0 ) {
-			if( !comb->region_flag ) goto not_region;
+		} else if ( strcmp(itemlwr, "id")==0 ) {
+			if ( !comb->region_flag ) goto not_region;
 			snprintf( buf, 128, "%d", comb->region_id );
-		} else if( strcmp(itemlwr, "air")==0 ) {
-			if( !comb->region_flag ) goto not_region;
+		} else if ( strcmp(itemlwr, "air")==0 ) {
+			if ( !comb->region_flag ) goto not_region;
 			snprintf( buf, 128, "%d", comb->aircode );
-		} else if( strcmp(itemlwr, "los")==0 ) {
-			if( !comb->region_flag ) goto not_region;
+		} else if ( strcmp(itemlwr, "los")==0 ) {
+			if ( !comb->region_flag ) goto not_region;
 			snprintf( buf, 128, "%d", comb->los );
-		} else if( strcmp(itemlwr, "giftmater")==0 ) {
-			if( !comb->region_flag ) goto not_region;
+		} else if ( strcmp(itemlwr, "giftmater")==0 ) {
+			if ( !comb->region_flag ) goto not_region;
 			snprintf( buf, 128, "%d", comb->GIFTmater );
-		} else if( strcmp(itemlwr, "rgb")==0 ) {
-			if( comb->rgb_valid )
+		} else if ( strcmp(itemlwr, "rgb")==0 ) {
+			if ( comb->rgb_valid )
 				snprintf( buf, 128, "%d %d %d", V3ARGS(comb->rgb) );
 			else
 				snprintf( buf, 128, "invalid" );
-		} else if( strcmp(itemlwr, "shader")==0 ) {
+		} else if ( strcmp(itemlwr, "shader")==0 ) {
 			Tcl_AppendResult( interp, bu_vls_addr(&comb->shader),
 					  (char *)NULL );
 			return TCL_OK;
-		} else if( strcmp(itemlwr, "material")==0 ) {
+		} else if ( strcmp(itemlwr, "material")==0 ) {
 			Tcl_AppendResult( interp, bu_vls_addr(&comb->material),
 					  (char *)NULL );
 			return TCL_OK;
-		} else if( strcmp(itemlwr, "inherit")==0 ) {
+		} else if ( strcmp(itemlwr, "inherit")==0 ) {
 			snprintf( buf, 128, "%s", comb->inherit ? "yes" : "no" );
-		} else if( strcmp(itemlwr, "tree")==0 ) {
+		} else if ( strcmp(itemlwr, "tree")==0 ) {
 			Tcl_DStringInit( &ds );
 			db_tcl_tree_describe( &ds, comb->tree );
 			Tcl_DStringResult( interp, &ds );
@@ -1051,73 +1051,73 @@ rt_comb_tcladjust(
 	comb = (struct rt_comb_internal *)intern->idb_ptr;
 	RT_CK_COMB(comb);
 
-	while( argc >= 2 ) {
+	while ( argc >= 2 ) {
 		/* Force to lower case */
-		for( i=0; i<128 && argv[0][i]!='\0'; i++ )
+		for ( i=0; i<128 && argv[0][i]!='\0'; i++ )
 			buf[i] = isupper(argv[0][i])?tolower(argv[0][i]):argv[0][i];
 		buf[i] = 0;
 
-		if( strcmp(buf, "region")==0 ) {
-			if( strcmp( argv[1], "none" ) == 0 )
+		if ( strcmp(buf, "region")==0 ) {
+			if ( strcmp( argv[1], "none" ) == 0 )
 				comb->region_flag = 0;
 			else
 			{
-				if( Tcl_GetBoolean( interp, argv[1], &i )!= TCL_OK )
+				if ( Tcl_GetBoolean( interp, argv[1], &i )!= TCL_OK )
 					return TCL_ERROR;
 				comb->region_flag = (char)i;
 			}
-		} else if( strcmp(buf, "temp")==0 ) {
-			if( !comb->region_flag ) goto not_region;
-			if( strcmp( argv[1], "none" ) == 0 )
+		} else if ( strcmp(buf, "temp")==0 ) {
+			if ( !comb->region_flag ) goto not_region;
+			if ( strcmp( argv[1], "none" ) == 0 )
 				comb->temperature = 0.0;
 			else
 			{
-				if( Tcl_GetDouble( interp, argv[1], &d ) != TCL_OK )
+				if ( Tcl_GetDouble( interp, argv[1], &d ) != TCL_OK )
 					return TCL_ERROR;
 				comb->temperature = (float)d;
 			}
-		} else if( strcmp(buf, "id")==0 ) {
-			if( !comb->region_flag ) goto not_region;
-			if( strcmp( argv[1], "none" ) == 0 )
+		} else if ( strcmp(buf, "id")==0 ) {
+			if ( !comb->region_flag ) goto not_region;
+			if ( strcmp( argv[1], "none" ) == 0 )
 				comb->region_id = 0;
 			else
 			{
-				if( Tcl_GetInt( interp, argv[1], &i ) != TCL_OK )
+				if ( Tcl_GetInt( interp, argv[1], &i ) != TCL_OK )
 					return TCL_ERROR;
 				comb->region_id = i;
 			}
-		} else if( strcmp(buf, "air")==0 ) {
-			if( !comb->region_flag ) goto not_region;
-			if( strcmp( argv[1], "none" ) == 0 )
+		} else if ( strcmp(buf, "air")==0 ) {
+			if ( !comb->region_flag ) goto not_region;
+			if ( strcmp( argv[1], "none" ) == 0 )
 				comb->aircode = 0;
 			else
 			{
-				if( Tcl_GetInt( interp, argv[1], &i ) != TCL_OK)
+				if ( Tcl_GetInt( interp, argv[1], &i ) != TCL_OK)
 					return TCL_ERROR;
 				comb->aircode = i;
 			}
-		} else if( strcmp(buf, "los")==0 ) {
-			if( !comb->region_flag ) goto not_region;
-			if( strcmp( argv[1], "none" ) == 0 )
+		} else if ( strcmp(buf, "los")==0 ) {
+			if ( !comb->region_flag ) goto not_region;
+			if ( strcmp( argv[1], "none" ) == 0 )
 				comb->los = 0;
 			else
 			{
-				if( Tcl_GetInt( interp, argv[1], &i ) != TCL_OK )
+				if ( Tcl_GetInt( interp, argv[1], &i ) != TCL_OK )
 					return TCL_ERROR;
 				comb->los = i;
 			}
-		} else if( strcmp(buf, "giftmater")==0 ) {
-			if( !comb->region_flag ) goto not_region;
-			if( strcmp( argv[1], "none" ) == 0 )
+		} else if ( strcmp(buf, "giftmater")==0 ) {
+			if ( !comb->region_flag ) goto not_region;
+			if ( strcmp( argv[1], "none" ) == 0 )
 				comb->GIFTmater = 0;
 			else
 			{
-				if( Tcl_GetInt( interp, argv[1], &i ) != TCL_OK )
+				if ( Tcl_GetInt( interp, argv[1], &i ) != TCL_OK )
 					return TCL_ERROR;
 				comb->GIFTmater = i;
 			}
-		} else if( strcmp(buf, "rgb")==0 ) {
-			if( strcmp(argv[1], "invalid")==0 || strcmp( argv[1], "none" ) == 0 ) {
+		} else if ( strcmp(buf, "rgb")==0 ) {
+			if ( strcmp(argv[1], "invalid")==0 || strcmp( argv[1], "none" ) == 0 ) {
 				comb->rgb[0] = comb->rgb[1] =
 					comb->rgb[2] = 0;
 				comb->rgb_valid = 0;
@@ -1125,7 +1125,7 @@ rt_comb_tcladjust(
 				unsigned int r, g, b;
 				i = sscanf( argv[1], "%u %u %u",
 					&r, &g, &b );
-				if( i != 3 )   {
+				if ( i != 3 )   {
 					Tcl_AppendResult( interp, "adjust rgb ",
 						argv[1], ": not valid rgb 3-tuple\n", (char *)NULL );
 					return TCL_ERROR;
@@ -1135,36 +1135,36 @@ rt_comb_tcladjust(
 				comb->rgb[2] = (unsigned char)b;
 				comb->rgb_valid = 1;
 			}
-		} else if( strcmp(buf, "shader" )==0 ) {
+		} else if ( strcmp(buf, "shader" )==0 ) {
 			bu_vls_trunc( &comb->shader, 0 );
-			if( strcmp( argv[1], "none" ) )
+			if ( strcmp( argv[1], "none" ) )
 			{
 				bu_vls_strcat( &comb->shader, argv[1] );
 				/* Leading spaces boggle the combination exporter */
 				bu_vls_trimspace( &comb->shader );
 			}
-		} else if( strcmp(buf, "material" )==0 ) {
+		} else if ( strcmp(buf, "material" )==0 ) {
 			bu_vls_trunc( &comb->material, 0 );
-			if( strcmp( argv[1], "none" ) )
+			if ( strcmp( argv[1], "none" ) )
 			{
 				bu_vls_strcat( &comb->material, argv[1] );
 				bu_vls_trimspace( &comb->material );
 			}
-		} else if( strcmp(buf, "inherit" )==0 ) {
-			if( strcmp( argv[1], "none" ) == 0 )
+		} else if ( strcmp(buf, "inherit" )==0 ) {
+			if ( strcmp( argv[1], "none" ) == 0 )
 				comb->inherit = 0;
 			else
 			{
-				if( Tcl_GetBoolean( interp, argv[1], &i ) != TCL_OK )
+				if ( Tcl_GetBoolean( interp, argv[1], &i ) != TCL_OK )
 					return TCL_ERROR;
 				comb->inherit = (char)i;
 			}
-		} else if( strcmp(buf, "tree" )==0 ) {
+		} else if ( strcmp(buf, "tree" )==0 ) {
 			union tree	*new;
 
-			if( *argv[1] == '\0' || strcmp( argv[1], "none" ) == 0 )
+			if ( *argv[1] == '\0' || strcmp( argv[1], "none" ) == 0 )
 			{
-				if( comb->tree ) {
+				if ( comb->tree ) {
 					db_free_tree( comb->tree, resp );
 				}
 				comb->tree = TREE_NULL;
@@ -1172,12 +1172,12 @@ rt_comb_tcladjust(
 			else
 			{
 				new = db_tcl_tree_parse( interp, argv[1], resp );
-				if( new == TREE_NULL )  {
+				if ( new == TREE_NULL )  {
 					Tcl_AppendResult( interp, "db adjust tree: bad tree '",
 						argv[1], "'\n", (char *)NULL );
 					return TCL_ERROR;
 				}
-				if( comb->tree )
+				if ( comb->tree )
 					db_free_tree( comb->tree, resp );
 				comb->tree = new;
 			}
@@ -1230,20 +1230,20 @@ rt_tcl_import_from_path(Tcl_Interp *interp, struct rt_db_internal *ip, const cha
 
 #if 0
 	dp = db_lookup( dbip, path, LOOKUP_QUIET );
-	if( dp == NULL ) {
+	if ( dp == NULL ) {
 		Tcl_AppendResult( interp, path, ": not found\n",
 				  (char *)NULL );
 		return TCL_ERROR;
 	}
 
 	status = rt_db_get_internal( ip, dp, dbip, (matp_t)NULL );
-	if( status < 0 ) {
+	if ( status < 0 ) {
 		Tcl_AppendResult( interp, "rt_tcl_import_from_path failure: ",
 				  path, (char *)NULL );
 		return TCL_ERROR;
 	}
 #else
-	if( strchr( path, '/' ) )
+	if ( strchr( path, '/' ) )
 	{
 		/* This is a path */
 		struct db_tree_state	ts;
@@ -1256,7 +1256,7 @@ rt_tcl_import_from_path(Tcl_Interp *interp, struct rt_db_internal *ip, const cha
 		db_full_path_init(&old_path);
 		db_full_path_init(&new_path);
 
-		if( db_string_to_path( &new_path, dbip, path ) < 0 )  {
+		if ( db_string_to_path( &new_path, dbip, path ) < 0 )  {
 			Tcl_AppendResult(interp, "rt_tcl_import_from_path: '",
 				path, "' contains unknown object names\n", (char *)NULL);
 			return TCL_ERROR;
@@ -1267,20 +1267,20 @@ rt_tcl_import_from_path(Tcl_Interp *interp, struct rt_db_internal *ip, const cha
 		db_free_full_path( &old_path );
 		db_free_full_path( &new_path );
 
-		if( ret < 0 )  {
+		if ( ret < 0 )  {
 			Tcl_AppendResult(interp, "rt_tcl_import_from_path: '",
 				path, "' is a bad path\n", (char *)NULL );
 			return TCL_ERROR;
 		}
 
 		status = wdb_import( wdb, ip, dp_curr->d_namep, ts.ts_mat );
-		if( status == -4 )  {
+		if ( status == -4 )  {
 			Tcl_AppendResult( interp, dp_curr->d_namep,
 					" not found in path ", path, "\n",
 					(char *)NULL );
 			return TCL_ERROR;
 		}
-		if( status < 0 ) {
+		if ( status < 0 ) {
 			Tcl_AppendResult( interp, "wdb_import failure: ",
 					  dp_curr->d_namep, (char *)NULL );
 			return TCL_ERROR;
@@ -1289,12 +1289,12 @@ rt_tcl_import_from_path(Tcl_Interp *interp, struct rt_db_internal *ip, const cha
 	else
 	{
 		status = wdb_import( wdb, ip, path, (matp_t)NULL );
-		if( status == -4 )  {
+		if ( status == -4 )  {
 			Tcl_AppendResult( interp, path, ": not found\n",
 					  (char *)NULL );
 			return TCL_ERROR;
 		}
-		if( status < 0 ) {
+		if ( status < 0 ) {
 			Tcl_AppendResult( interp, "wdb_import failure: ",
 					  path, (char *)NULL );
 			return TCL_ERROR;
@@ -1328,7 +1328,7 @@ rt_parsetab_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, cons
 	RT_CK_FUNCTAB(ftp);
 
 	sp = ftp->ft_parsetab;
-	if( !sp )  {
+	if ( !sp )  {
 		Tcl_AppendResult( interp, ftp->ft_label,
  " {a Tcl output routine for this type of object has not yet been implemented}",
 		  (char *)NULL );
@@ -1338,10 +1338,10 @@ rt_parsetab_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, cons
 	bu_vls_init( &str );
 	Tcl_DStringInit( &ds );
 
-	if( attr == (char *)0 ) {
+	if ( attr == (char *)0 ) {
 		/* Print out solid type and all attributes */
 		Tcl_DStringAppendElement( &ds, ftp->ft_label );
-		while( sp->sp_name != NULL ) {
+		while ( sp->sp_name != NULL ) {
 			Tcl_DStringAppendElement( &ds, sp->sp_name );
 			bu_vls_trunc( &str, 0 );
 			bu_vls_struct_item( &str, sp,
@@ -1351,7 +1351,7 @@ rt_parsetab_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, cons
 		}
 		status = TCL_OK;
 	} else {
-		if( bu_vls_struct_item_named( &str, sp, attr,
+		if ( bu_vls_struct_item_named( &str, sp, attr,
 				   (char *)intern->idb_ptr, ' ') < 0 ) {
 			bu_vls_printf(&str,
 				"Objects of type %s do not have a %s attribute.",
@@ -1452,7 +1452,7 @@ rt_parsetab_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int arg
 	ftp = intern->idb_meth;
 	RT_CK_FUNCTAB(ftp);
 
-	if( ftp->ft_parsetab == (struct bu_structparse *)NULL ) {
+	if ( ftp->ft_parsetab == (struct bu_structparse *)NULL ) {
 		Tcl_AppendResult( interp, ftp->ft_label,
 			  " type objects do not yet have a 'db put' (tcladjust) handler.",
 			  (char *)NULL );
@@ -1475,7 +1475,7 @@ rt_parsetab_tclform(const struct rt_functab *ftp, Tcl_Interp *interp)
 {
 	RT_CK_FUNCTAB(ftp);
 
-	if( ftp->ft_parsetab )  {
+	if ( ftp->ft_parsetab )  {
 		bu_structparse_get_terse_form( interp, ftp->ft_parsetab );
 		return TCL_OK;
 	}
@@ -1577,7 +1577,7 @@ db_full_path_appendresult( Tcl_Interp *interp, const struct db_full_path *pp )
 
 	RT_CK_FULL_PATH(pp);
 
-	for( i=0; i<pp->fp_len; i++ )  {
+	for ( i=0; i<pp->fp_len; i++ )  {
 		Tcl_AppendResult(interp, "/", pp->fp_names[i]->d_namep, (char *)NULL );
 	}
 }
@@ -1597,19 +1597,19 @@ tcl_obj_to_int_array(Tcl_Interp *interp, Tcl_Obj *list, int **array, int *array_
 	Tcl_Obj **obj_array;
 	int len, i;
 
-	if( Tcl_ListObjGetElements( interp, list, &len, &obj_array ) != TCL_OK )
+	if ( Tcl_ListObjGetElements( interp, list, &len, &obj_array ) != TCL_OK )
 		return( 0 );
 
-	if( len < 1 )
+	if ( len < 1 )
 		return( 0 );
 
-	if( *array_len < 1 )
+	if ( *array_len < 1 )
 	{
 		*array = (int *)bu_calloc( len, sizeof( int ), "array" );
 		*array_len = len;
 	}
 
-	for( i=0 ; i<len && i<*array_len ; i++ ) {
+	for ( i=0; i<len && i<*array_len; i++ ) {
 		(*array)[i] = atoi( Tcl_GetStringFromObj( obj_array[i], NULL ) );
 		Tcl_DecrRefCount( obj_array[i] );
 	}
@@ -1655,19 +1655,19 @@ tcl_obj_to_fastf_array(Tcl_Interp *interp, Tcl_Obj *list, fastf_t **array, int *
 	int len, i;
 	int ret;
 
-	if( (ret=Tcl_ListObjGetElements( interp, list, &len, &obj_array )) != TCL_OK )
+	if ( (ret=Tcl_ListObjGetElements( interp, list, &len, &obj_array )) != TCL_OK )
 		return( ret );
 
-	if( len < 1 )
+	if ( len < 1 )
 		return( 0 );
 
-	if( *array_len < 1 )
+	if ( *array_len < 1 )
 	{
 		*array = (fastf_t *)bu_calloc( len, sizeof( fastf_t ), "array" );
 		*array_len = len;
 	}
 
-	for( i=0 ; i<len && i<*array_len ; i++ ) {
+	for ( i=0; i<len && i<*array_len; i++ ) {
 		(*array)[i] = atof( Tcl_GetStringFromObj( obj_array[i], NULL ) );
 		Tcl_DecrRefCount( obj_array[i] );
 	}

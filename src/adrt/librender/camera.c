@@ -401,7 +401,7 @@ void* render_camera_render_thread(void *ptr)
   for (i = td->tile->orig_y; i < td->tile->orig_y + td->tile->size_y; i++)
   {
 */
-  while(1)
+  while (1)
   {
     /* Determine if this scanline should be computed by this thread */
     pthread_mutex_lock(&td->mut);

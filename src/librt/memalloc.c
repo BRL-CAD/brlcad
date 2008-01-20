@@ -92,15 +92,15 @@ rt_memalloc(struct mem_map **pp, register unsigned int size)
 	register struct mem_map *curp;
 	unsigned long	addr;
 
-	if( size == 0 )
+	if ( size == 0 )
 		return( 0L );	/* fail */
 
-	for( curp = *pp; curp; curp = (prevp=curp)->m_nxtp )  {
-		if( curp->m_size >= size )
+	for ( curp = *pp; curp; curp = (prevp=curp)->m_nxtp )  {
+		if ( curp->m_size >= size )
 			break;
 	}
 
-	if( curp == MAP_NULL )
+	if ( curp == MAP_NULL )
 		return(0L);		/* No more space */
 
 	addr = curp->m_addr;
@@ -108,8 +108,8 @@ rt_memalloc(struct mem_map **pp, register unsigned int size)
 
 	/* If the element size goes to zero, put it on the freelist */
 
-	if( (curp->m_size -= size) == 0 )  {
-		if( prevp )
+	if ( (curp->m_size -= size) == 0 )  {
+		if ( prevp )
 			prevp->m_nxtp = curp->m_nxtp;
 		else
 			*pp = curp->m_nxtp;	/* Click list down at start */
@@ -139,27 +139,27 @@ rt_memalloc_nosplit(struct mem_map **pp, register unsigned int size)
 	register struct mem_map *curp;
 	register struct mem_map *best = MAP_NULL, *best_prevp = MAP_NULL;
 
-	if( size == 0 )
+	if ( size == 0 )
 		return MAP_NULL;	/* fail */
 
-	for( curp = *pp; curp; curp = (prevp=curp)->m_nxtp )  {
-		if( curp->m_size < size )  continue;
-		if( curp->m_size == size )  {
+	for ( curp = *pp; curp; curp = (prevp=curp)->m_nxtp )  {
+		if ( curp->m_size < size )  continue;
+		if ( curp->m_size == size )  {
 			best = curp;
 			best_prevp = prevp;
 			break;
 		}
 		/* This element has enough size */
-		if( best == MAP_NULL || curp->m_size < best->m_size )  {
+		if ( best == MAP_NULL || curp->m_size < best->m_size )  {
 			best = curp;
 			best_prevp = prevp;
 		}
 	}
-	if( !best )
+	if ( !best )
 		return MAP_NULL;		/* No space */
 
 	/* Move this element to free list, return it, unsplit */
-	if( best_prevp )
+	if ( best_prevp )
 		best_prevp->m_nxtp = best->m_nxtp;
 	else
 		*pp = best->m_nxtp;	/* Click list down at start */
@@ -187,11 +187,11 @@ rt_memget(struct mem_map **pp, register unsigned int size, unsigned int place)
 	unsigned int addr;
 
 	prevp = MAP_NULL;		/* special for first pass through */
-	if( size == 0 )
+	if ( size == 0 )
 		bu_bomb("rt_memget() size==0\n");
 
 	curp = *pp;
-	while( curp )  {
+	while ( curp )  {
 		/*
 		 * Assumption:  We will always be APPENDING to an existing
 		 * memory allocation, so we search for a free piece of memory
@@ -199,20 +199,20 @@ rt_memget(struct mem_map **pp, register unsigned int size, unsigned int place)
 		 * could begin earlier but be long enough to satisfy this
 		 * request.
 		 */
-		if( curp->m_addr == place && curp->m_size >= size )
+		if ( curp->m_addr == place && curp->m_size >= size )
 			break;
 		curp = (prevp=curp)->m_nxtp;
 	}
 
-	if( curp == MAP_NULL )
+	if ( curp == MAP_NULL )
 		return(0L);		/* No space here */
 
 	addr = curp->m_addr;
 	curp->m_addr += size;
 
 	/* If the element size goes to zero, put it on the freelist */
-	if( (curp->m_size -= size) == 0 )  {
-		if( prevp )
+	if ( (curp->m_size -= size) == 0 )  {
+		if ( prevp )
 			prevp->m_nxtp = curp->m_nxtp;
 		else
 			*pp = curp->m_nxtp;	/* Click list down at start */
@@ -239,11 +239,11 @@ rt_memget_nosplit(struct mem_map **pp, register unsigned int size, unsigned int 
 	register struct mem_map *prevp, *curp;
 
 	prevp = MAP_NULL;		/* special for first pass through */
-	if( size == 0 )
+	if ( size == 0 )
 		bu_bomb("rt_memget_nosplit() size==0\n");
 
 	curp = *pp;
-	while( curp )  {
+	while ( curp )  {
 		/*
 		 * Assumption:  We will always be APPENDING to an existing
 		 * memory allocation, so we search for a free piece of memory
@@ -251,10 +251,10 @@ rt_memget_nosplit(struct mem_map **pp, register unsigned int size, unsigned int 
 		 * could begin earlier but be long enough to satisfy this
 		 * request.
 		 */
-		if( curp->m_addr == place && curp->m_size >= size )  {
+		if ( curp->m_addr == place && curp->m_size >= size )  {
 			size = curp->m_size;
 			/* put this element on the freelist */
-			if( prevp )
+			if ( prevp )
 				prevp->m_nxtp = curp->m_nxtp;
 			else
 				*pp = curp->m_nxtp;	/* Click list down at start */
@@ -288,36 +288,36 @@ rt_memfree(struct mem_map **pp, unsigned int size, long unsigned int addr)
 	long il;
 	struct mem_map *tmap;
 
-	if( size == 0 )
+	if ( size == 0 )
 		return;		/* Nothing to free */
 
 	/* Find the position in the list such that (prevp)<(addr)<(curp) */
-	for( curp = *pp; curp; curp = (prevp=curp)->m_nxtp )
-		if( addr < curp->m_addr )
+	for ( curp = *pp; curp; curp = (prevp=curp)->m_nxtp )
+		if ( addr < curp->m_addr )
 			break;
 
 	/* Make up the `type' variable */
 
-	if( prevp )  {
-		if( (il=prevp->m_addr+prevp->m_size) > addr )
+	if ( prevp )  {
+		if ( (il=prevp->m_addr+prevp->m_size) > addr )
 			type |= M_BOVFL;
-		if( il == addr )
+		if ( il == addr )
 			type |= M_BMTCH;
 	}
-	if( curp )  {
-		if( (il=addr+size) > curp->m_addr )
+	if ( curp )  {
+		if ( (il=addr+size) > curp->m_addr )
 			type |= M_TOVFL;
-		if( il == curp->m_addr )
+		if ( il == curp->m_addr )
 			type |= M_TMTCH;
 	}
 
-	if( type & (M_TOVFL|M_BOVFL) )  {
+	if ( type & (M_TOVFL|M_BOVFL) )  {
 		bu_log("rt_memfree(addr=x%x, size=%d)  ERROR type=0%o\n",
 			addr, size, type );
-		if( prevp )
+		if ( prevp )
 			bu_log("prevp: m_addr=x%x, m_size=%d\n",
 				prevp->m_addr, prevp->m_size );
-		if( curp )
+		if ( curp )
 			bu_log("curp: m_addr=x%x, m_size=%d\n",
 				curp->m_addr, curp->m_size );
 		return;
@@ -330,7 +330,7 @@ rt_memfree(struct mem_map **pp, unsigned int size, long unsigned int addr)
 	 * If there are two matches we will have a free buffer returned.
 	 */
 
-	switch( type & (M_BMTCH|M_TMTCH) )  {
+	switch ( type & (M_BMTCH|M_TMTCH) )  {
 	case M_TMTCH|M_BMTCH:	/* Deallocate top element and expand bottom */
 		prevp->m_size += size + curp->m_size;
 		prevp->m_nxtp = curp->m_nxtp;
@@ -348,12 +348,12 @@ rt_memfree(struct mem_map **pp, unsigned int size, long unsigned int addr)
 		break;
 
 	default:		/* No matches; allocate and insert */
-		if( (tmap=rt_mem_freemap) == MAP_NULL )
+		if ( (tmap=rt_mem_freemap) == MAP_NULL )
 			tmap = (struct mem_map *)bu_malloc(sizeof(struct mem_map), "struct mem_map " BU_FLSTR);
 		else
 			rt_mem_freemap = rt_mem_freemap->m_nxtp;	/* Click one off */
 
-		if( prevp )
+		if ( prevp )
 			prevp->m_nxtp = tmap;
 		else
 			*pp = tmap;
@@ -376,11 +376,11 @@ rt_mempurge(struct mem_map **pp)
 	register struct mem_map *prevp = MAP_NULL;
 	register struct mem_map *curp;
 
-	if( *pp == MAP_NULL )
+	if ( *pp == MAP_NULL )
 		return;
 
 	/* Find the end of the (busy) list */
-	for( curp = *pp; curp; curp = (prevp=curp)->m_nxtp )
+	for ( curp = *pp; curp; curp = (prevp=curp)->m_nxtp )
 		;
 
 	/* Put the whole busy list onto the free list */
@@ -401,7 +401,7 @@ rt_memprint(struct mem_map **pp)
 	register struct mem_map *curp;
 
 	bu_log("rt_memprint(x%x):  address, length\n", *pp);
-	for( curp = *pp; curp; curp = curp->m_nxtp )
+	for ( curp = *pp; curp; curp = curp->m_nxtp )
 		bu_log(" a=x%.8lx, l=%.5d\n", curp->m_addr, curp->m_size );
 }
 
@@ -415,7 +415,7 @@ rt_memclose(void)
 {
 	register struct mem_map *mp;
 
-	while( (mp = rt_mem_freemap) != MAP_NULL )  {
+	while ( (mp = rt_mem_freemap) != MAP_NULL )  {
 		rt_mem_freemap = mp->m_nxtp;
 		bu_free( (char *)mp, "struct mem_map " BU_FLSTR);
 	}

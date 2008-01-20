@@ -37,7 +37,7 @@ register const fastf_t a;
 {
 	register fastf_t b;
 
-	if( a > 0 )
+	if ( a > 0 )
 		b = a;
 	else
 		b = (-a);

@@ -52,7 +52,7 @@ vect_t evect;	/* extrusion vector */
 
 	/* Acquiring Data */
 
-	if( dir[curve]->form > 1 )
+	if ( dir[curve]->form > 1 )
 	{
 		bu_log( "Conic arc for extrusion is not closed:\n" );
 		bu_log( "\textrusion entity D%07d (%s)\n", dir[entityno]->direct ,
@@ -61,7 +61,7 @@ vect_t evect;	/* extrusion vector */
 		return( 0 );
 	}
 
-	if( dir[curve]->param <= pstart )
+	if ( dir[curve]->param <= pstart )
 	{
 		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[curve]->direct, dir[curve]->name );
@@ -94,9 +94,9 @@ vect_t evect;	/* extrusion vector */
 	/* set "a" to 1.0 */
 
 	tmp = fabs( a );
-	if( fabs( b ) < tmp && b != 0.0 )
+	if ( fabs( b ) < tmp && b != 0.0 )
 		tmp = fabs( b );
-	if( fabs( c ) < tmp )
+	if ( fabs( c ) < tmp )
 		tmp = fabs( c );
 	a = a/tmp;
 	b = b/tmp;
@@ -107,7 +107,7 @@ vect_t evect;	/* extrusion vector */
 
 	/* Check for closure */
 
-	if( start[X] != stop[X] || start[Y] != stop[Y] )
+	if ( start[X] != stop[X] || start[Y] != stop[Y] )
 	{
 		bu_log( "Conic arc for extrusion is not closed:\n" );
 		bu_log( "\textrusion entity D%07d (%s)\n", dir[entityno]->direct ,
@@ -120,17 +120,17 @@ vect_t evect;	/* extrusion vector */
 
 	q2 = a*c - b*b/4.0;
 	ellipse = 1;
-	if( q2 <= 0.0 )
+	if ( q2 <= 0.0 )
 		ellipse = 0;
 	else
 	{
 		q3 = a + c;
 		q1 = a*(c*f - e*e/4.0) - 0.5*b*(b*f/2.0 + e*d/4.0) + 0.5*d*(b*e/4.0 - d*c/2.0);
-		if( q1*q3 >= 0.0 )
+		if ( q1*q3 >= 0.0 )
 			ellipse = 0;
 	}
 
-	if( !ellipse )
+	if ( !ellipse )
 	{
 		bu_log( "Conic arc for extrusion is not an elipse:\n" );
 		bu_log( "\textrusion entity D%07d (%s)\n", dir[entityno]->direct ,
@@ -146,7 +146,7 @@ vect_t evect;	/* extrusion vector */
 	center[Z] = start[Z];
 
 	/* calculate rotation about z-axis */
-	if( b == 0.0 )
+	if ( b == 0.0 )
 		theta = 0.0;
 	else
 		theta = 0.5*atan2( b, a-c );

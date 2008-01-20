@@ -78,7 +78,7 @@ cmd_import_body(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 
     CHECK_DBI_NULL;
 
-    if(argc != 4){
+    if (argc != 4){
       struct bu_vls vls;
 
       bu_vls_init(&vls);
@@ -141,7 +141,7 @@ cmd_import_body(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
     /*
      *	How much data do we have to suck in?
      */
-    if( stat( argv[2], &stat_buf ) ) {
+    if ( stat( argv[2], &stat_buf ) ) {
 	bu_vls_init( &vls );
 	bu_vls_printf( &vls, "Cannot get status of file %s\n", argv[2] );
 	Tcl_SetResult(interp, bu_vls_addr( &vls ), TCL_VOLATILE );
@@ -154,7 +154,7 @@ cmd_import_body(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 	bu_log ("File '%s' is %ld bytes long\n", argv[2], (long)stat_buf.st_size);
     }
 
-    if( (fd = open( argv[2], O_RDONLY  )) == -1 ) {
+    if ( (fd = open( argv[2], O_RDONLY  )) == -1 ) {
 	bu_vls_init( &vls );
 	bu_vls_printf( &vls,
 	    "Cannot open file %s for reading\n", argv[2] );
@@ -251,7 +251,7 @@ cmd_export_body(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 
     CHECK_DBI_NULL;
 
-    if(argc != 3){
+    if (argc != 3){
       bu_vls_init(&vls);
       bu_vls_printf(&vls, "help %s", argv[0]);
       Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -262,7 +262,7 @@ cmd_export_body(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
     /*
      *	Find the guy we're told to write
      */
-    if( (dp = db_lookup( dbip, argv[2], LOOKUP_NOISY)) == DIR_NULL ){
+    if ( (dp = db_lookup( dbip, argv[2], LOOKUP_NOISY)) == DIR_NULL ){
 	bu_vls_init( &vls );
 	bu_vls_printf( &vls,
 	    "Cannot find object %s for writing\n", argv[2] );
@@ -289,9 +289,9 @@ cmd_export_body(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
      *	Do the writing
      */
 #ifndef _WIN32
-    if( (fd = creat( argv[1], S_IRWXU | S_IRGRP | S_IROTH  )) == -1 ) {
+    if ( (fd = creat( argv[1], S_IRWXU | S_IRGRP | S_IROTH  )) == -1 ) {
 #else
-		if( (fd = creat( argv[1], _S_IREAD | _S_IWRITE  )) == -1 ) {
+		if ( (fd = creat( argv[1], _S_IREAD | _S_IWRITE  )) == -1 ) {
 #endif
 	bu_free_external( &ext );
 	bu_vls_init( &vls );

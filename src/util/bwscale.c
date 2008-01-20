@@ -78,7 +78,7 @@ get_args(int argc, register char **argv)
     register int c;
 
     while ( (c = bu_getopt( argc, argv, "rhs:w:n:S:W:N:" )) != EOF )  {
-	switch( c )  {
+	switch ( c )  {
 	    case 'r':
 		/* pixel replication */
 		rflag = 1;
@@ -114,9 +114,9 @@ get_args(int argc, register char **argv)
     }
 
     /* XXX - backward compatability hack */
-    if( bu_optind+5 == argc ) {
+    if ( bu_optind+5 == argc ) {
 	file_name = argv[bu_optind++];
-	if( (buffp = fopen(file_name, "r")) == NULL )  {
+	if ( (buffp = fopen(file_name, "r")) == NULL )  {
 	    (void)fprintf( stderr,
 			   "bwscale: cannot open \"%s\" for reading\n",
 			   file_name );
@@ -132,7 +132,7 @@ get_args(int argc, register char **argv)
 	(argv[bu_optind][0] == '-' && argv[bu_optind][1] == '\n')) {
 
 	/* input presumably from standard input */
-	if( isatty(fileno(stdin)) ) {
+	if ( isatty(fileno(stdin)) ) {
 	    return(0);
 	}
 	file_name = "-";
@@ -169,9 +169,9 @@ static void
 fill_buffer(int y)
 {
     buf_start = y - buflines/2;
-    if( buf_start < 0 ) buf_start = 0;
+    if ( buf_start < 0 ) buf_start = 0;
 
-    if( fseek( buffp, buf_start * scanlen, 0 ) < 0 ) {
+    if ( fseek( buffp, buf_start * scanlen, 0 ) < 0 ) {
 	fprintf( stderr, "bwscale: Can't seek to input pixel!\n" );
 	/*		bu_exit ( 3, NULL ); */
     }
@@ -197,7 +197,7 @@ init_buffer(int scanlen)
      * the input file is to decide if we should buffer
      * less than our max.
      */
-    if( max > 4096) max = 4096;
+    if ( max > 4096) max = 4096;
 
     buflines = max;
     buf_start = (-buflines);
@@ -222,21 +222,21 @@ binterp(FILE *ofp, int ix, int iy, int ox, int oy)
     ystep = (double)(iy - 1) / (double)oy - 1.0e-6;
 
     /* For each output pixel */
-    for( j = 0; j < oy; j++ ) {
+    for ( j = 0; j < oy; j++ ) {
 	y = j * ystep;
 	/*
 	 * Make sure we have this row (and the one after it)
 	 * in the buffer
 	 */
 	bufy = (int)y - buf_start;
-	if( bufy < 0 || bufy >= buflines-1 ) {
+	if ( bufy < 0 || bufy >= buflines-1 ) {
 	    fill_buffer( (int)y );
 	    bufy = (int)y - buf_start;
 	}
 
 	op = outbuf;
 
-	for( i = 0; i < ox; i++ ) {
+	for ( i = 0; i < ox; i++ ) {
 	    x = i * xstep;
 	    dx = x - (int)x;
 	    dy = y - (int)y;
@@ -273,21 +273,21 @@ ninterp(FILE *ofp, int ix, int iy, int ox, int oy)
     ystep = (double)(iy - 1) / (double)oy - 1.0e-6;
 
     /* For each output pixel */
-    for( j = 0; j < oy; j++ ) {
+    for ( j = 0; j < oy; j++ ) {
 	y = j * ystep;
 	/*
 	 * Make sure we have this row (and the one after it)
 	 * in the buffer
 	 */
 	bufy = (int)y - buf_start;
-	if( bufy < 0 || bufy >= buflines-1 ) {
+	if ( bufy < 0 || bufy >= buflines-1 ) {
 	    fill_buffer( (int)y );
 	    bufy = (int)y - buf_start;
 	}
 
 	op = outbuf;
 
-	for( i = 0; i < ox; i++ ) {
+	for ( i = 0; i < ox; i++ ) {
 	    x = i * xstep;
 	    lp = &buffer[bufy*scanlen+(int)x];
 	    *op++ = lp[0];
@@ -321,9 +321,9 @@ scale(FILE *ofp, int ix, int iy, int ox, int oy)
 	fprintf( stderr, "bwscale: can't stretch one way and compress another!\n" );
 	return( -1 );
     }
-    if( pxlen < 1.0 || pylen < 1.0 ) {
+    if ( pxlen < 1.0 || pylen < 1.0 ) {
 	/* scale up */
-	if( rflag ) {
+	if ( rflag ) {
 	    /* nearest neighbor interpolate */
 	    ninterp( ofp, ix, iy, ox, oy );
 	} else {
@@ -334,11 +334,11 @@ scale(FILE *ofp, int ix, int iy, int ox, int oy)
     }
 
     /* for each output pixel */
-    for( j = 0; j < oy ; j++ ) {
+    for ( j = 0; j < oy; j++ ) {
 	ystart = j * pylen;
 	yend = ystart + pylen;
 	op = outbuf;
-	for( i = 0; i < ox; i++ ) {
+	for ( i = 0; i < ox; i++ ) {
 	    xstart = i * pxlen;
 	    xend = xstart + pxlen;
 	    sum = 0.0;
@@ -346,24 +346,24 @@ scale(FILE *ofp, int ix, int iy, int ox, int oy)
 	     * For each pixel of the original falling
 	     *  inside this new pixel.
 	     */
-	    for( l = FLOOR(ystart); l < CEILING(yend); l++ ) {
+	    for ( l = FLOOR(ystart); l < CEILING(yend); l++ ) {
 
 		/* Make sure we have this row in the buffer */
 		bufy = l - buf_start;
-		if( bufy < 0 || bufy >= buflines ) {
+		if ( bufy < 0 || bufy >= buflines ) {
 		    fill_buffer( l );
 		    bufy = l - buf_start;
 		}
 
 		/* Compute height of this row */
-		if( (double)l < ystart )
+		if ( (double)l < ystart )
 		    ydist = CEILING(ystart) - ystart;
 		else
 		    ydist = MIN( 1.0, yend - (double)l );
 
-		for( k = FLOOR(xstart); k < CEILING(xend); k++ ) {
+		for ( k = FLOOR(xstart); k < CEILING(xend); k++ ) {
 		    /* Compute width of column */
-		    if( (double)k < xstart )
+		    if ( (double)k < xstart )
 			xdist = CEILING(xstart) - xstart;
 		    else
 			xdist = MIN( 1.0, xend - (double)k );
@@ -393,7 +393,7 @@ main(int argc, char **argv)
 	bu_exit ( 1, NULL );
     }
 
-    if( inx <= 0 || iny <= 0 || outx <= 0 || outy <= 0 ) {
+    if ( inx <= 0 || iny <= 0 || outx <= 0 || outy <= 0 ) {
 	fprintf( stderr, "bwscale: bad size\n" );
 	bu_exit ( 2, NULL );
     }

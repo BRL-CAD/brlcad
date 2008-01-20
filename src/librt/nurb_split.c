@@ -72,8 +72,8 @@ rt_nurb_s_split(struct bu_list *split_hd, const struct face_g_snurb *srf, int di
 	{
 		value = srf->u.knots[(srf->u.k_size -1)/2];
 
-		for( i = 0; i < srf->u.k_size; i++)
-			if( value == srf->u.knots[i] )
+		for ( i = 0; i < srf->u.k_size; i++)
+			if ( value == srf->u.knots[i] )
 			{
 				k_index = i;
 				break;
@@ -129,7 +129,7 @@ rt_nurb_s_split(struct bu_list *split_hd, const struct face_g_snurb *srf, int di
 				RT_NURB_EXTRACT_COORDS( srf2->pt_type),
 				"rt_nurb_s_split: srf2 row mesh control points");
 
-		for( i = 0; i < srf->s_size[0]; i++)
+		for ( i = 0; i < srf->s_size[0]; i++)
 		{
 			fastf_t * old_mesh_ptr;
 			fastf_t * new_mesh_ptr;
@@ -158,8 +158,8 @@ rt_nurb_s_split(struct bu_list *split_hd, const struct face_g_snurb *srf, int di
 	{
 		value = srf->v.knots[(srf->v.k_size -1)/2];
 
-		for( i = 0; i < srf->v.k_size; i++)
-			if( value == srf->v.knots[i] )
+		for ( i = 0; i < srf->v.k_size; i++)
+			if ( value == srf->v.knots[i] )
 			{
 				k_index = i;
 				break;
@@ -215,7 +215,7 @@ rt_nurb_s_split(struct bu_list *split_hd, const struct face_g_snurb *srf, int di
 				RT_NURB_EXTRACT_COORDS( srf2->pt_type),
 				"rt_nurb_s_split: srf2 col mesh control points");
 
-		for( i = 0; i < srf->s_size[1]; i++)
+		for ( i = 0; i < srf->s_size[1]; i++)
 		{
 			fastf_t * old_mesh_ptr;
 			fastf_t * new_mesh_ptr;
@@ -285,8 +285,8 @@ rt_nurb_c_split(struct bu_list *split_hd, const struct edge_g_cnurb *crv)
 
 	value = crv->k.knots[(crv->k.k_size -1)/2];
 
-	for( i = 0; i < crv->k.k_size; i++)
-		if( value == crv->k.knots[i] )
+	for ( i = 0; i < crv->k.k_size; i++)
+		if ( value == crv->k.knots[i] )
 		{
 			k_index = i;
 			break;

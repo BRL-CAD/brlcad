@@ -56,7 +56,7 @@ int entityno;
 	rad2 = 0.0;
 
 	/* Acquiring Data */
-	if( dir[entityno]->param <= pstart )
+	if ( dir[entityno]->param <= pstart )
 	{
 		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[entityno]->direct, dir[entityno]->name );
@@ -74,37 +74,37 @@ int entityno;
 	Readcnv( &y2, "" );
 	Readcnv( &z2, "" );
 
-	if( scale_height <= 0.0 || rad1 < rad2 || rad2 < 0.0 )
+	if ( scale_height <= 0.0 || rad1 < rad2 || rad2 < 0.0 )
 	{
 		bu_log( "Illegal parameters for entity D%07d (%s)\n" ,
 				dir[entityno]->direct, dir[entityno]->name );
-		if( scale_height == 0.0 )
+		if ( scale_height == 0.0 )
 		{
 			bu_log( "\tCone height is zero!!\n" );
 			return( 0 );
 		}
-		if( rad1 == 0.0 && rad2 == 0.0 )
+		if ( rad1 == 0.0 && rad2 == 0.0 )
 		{
 			bu_log( "\tBoth radii for cone are zero!!!\n" );
 			return( 0 );
 		}
-		if( rad1 < 0.0 )
+		if ( rad1 < 0.0 )
 		{
 			bu_log( "\tUsing absloute value of a negative face radius (%f)\n", rad1 );
 			rad1 = (-rad1);
 		}
-		else if( rad1 == 0.0 )
+		else if ( rad1 == 0.0 )
 			rad1 = SMALL_FASTF;
 
-		if( rad2 < 0.0 )
+		if ( rad2 < 0.0 )
 		{
 			bu_log( "\tUsing absloute value of a negative face radius (%f)\n", rad2 );
 			rad2 = (-rad2);
 		}
-		else if( rad2 == 0.0 )
+		else if ( rad2 == 0.0 )
 			rad2 = SMALL_FASTF;
 
-		if(scale_height < 0.0 )
+		if (scale_height < 0.0 )
 		{
 			bu_log( "\tUsing absloute value of a negative height (%f)\n", scale_height );
 			bu_log( "\t\tand reversing height direction\n" );
@@ -128,7 +128,7 @@ int entityno;
 
 	VSET(base, x1, y1, z1);		/* the center pt of base plate */
 	VSET(hdir, x2, y2, z2);
-	if( MAGNITUDE(hdir) <= SQRT_SMALL_FASTF )  {
+	if ( MAGNITUDE(hdir) <= SQRT_SMALL_FASTF )  {
 		bu_log("Illegal height vector %g,%g,%g for entity D%07d (%s)\n",
 			V3ARGS(hdir),
 			dir[entityno]->direct, dir[entityno]->name );
@@ -136,7 +136,7 @@ int entityno;
 	}
 	VUNITIZE(hdir);
 
-	if( mk_cone( fdout, dir[entityno]->name, base, hdir, scale_height, rad1, rad2 ) < 0 )  {
+	if ( mk_cone( fdout, dir[entityno]->name, base, hdir, scale_height, rad1, rad2 ) < 0 )  {
 		bu_log("Unable to write entity D%07d (%s)\n",
 			dir[entityno]->direct, dir[entityno]->name );
 		return(0);

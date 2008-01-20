@@ -92,7 +92,7 @@ grid_set_dirty_flag(void)
   struct dm_list *dmlp;
 
   FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l)
-    if(dmlp->dml_grid_state == grid_state)
+    if (dmlp->dml_grid_state == grid_state)
       dmlp->dml_dirty = 1;
 }
 
@@ -109,13 +109,13 @@ set_grid_draw(void)
   grid_set_dirty_flag();
 
   /* This gets done at most one time. */
-  if(grid_auto_size && grid_state->gr_draw){
+  if (grid_auto_size && grid_state->gr_draw){
     fastf_t res = view_state->vs_vop->vo_size*base2local / 64.0;
 
     grid_state->gr_res_h = res;
     grid_state->gr_res_v = res;
     FOR_ALL_DISPLAYS(dlp, &head_dm_list.l)
-      if(dlp->dml_grid_state == grid_state)
+      if (dlp->dml_grid_state == grid_state)
 	dlp->dml_grid_auto_size = 0;
   }
 }
@@ -127,9 +127,9 @@ set_grid_res(void)
 
   grid_set_dirty_flag();
 
-  if(grid_auto_size)
+  if (grid_auto_size)
     FOR_ALL_DISPLAYS(dlp, &head_dm_list.l)
-      if(dlp->dml_grid_state == grid_state)
+      if (dlp->dml_grid_state == grid_state)
 	dlp->dml_grid_auto_size = 0;
 }
 
@@ -166,7 +166,7 @@ draw_grid(void)
 	{
 		fastf_t pixel_size = 2.0 * sf / dmp->dm_width;
 
-		if( grid_state->gr_res_h < pixel_size || grid_state->gr_res_v < pixel_size )
+		if ( grid_state->gr_res_h < pixel_size || grid_state->gr_res_v < pixel_size )
 		    return;
 	}
 
@@ -262,16 +262,16 @@ snap_to_grid(
   grid_units_h -= nh;		/* now contains only the fraction part */
   grid_units_v -= nv;		/* now contains only the fraction part */
 
-  if(grid_units_h <= -0.5)
+  if (grid_units_h <= -0.5)
     *mx = view_grid_anchor[X] - ((nh - 1) * grid_state->gr_res_h);
-  else if(0.5 <= grid_units_h)
+  else if (0.5 <= grid_units_h)
     *mx = view_grid_anchor[X] - ((nh + 1) * grid_state->gr_res_h);
   else
     *mx = view_grid_anchor[X] - (nh * grid_state->gr_res_h);
 
-  if(grid_units_v <= -0.5)
+  if (grid_units_v <= -0.5)
     *my = view_grid_anchor[Y] - ((nv - 1) * grid_state->gr_res_v);
-  else if(0.5 <= grid_units_v)
+  else if (0.5 <= grid_units_v)
     *my = view_grid_anchor[Y] - ((nv + 1) * grid_state->gr_res_v);
   else
     *my = view_grid_anchor[Y] - (nv  * grid_state->gr_res_v);
@@ -368,16 +368,16 @@ round_to_grid(fastf_t *view_dx, fastf_t *view_dy)
   grid_units_h -= nh;
   grid_units_v -= nv;
 
-  if(grid_units_h <= -0.5)
+  if (grid_units_h <= -0.5)
     *view_dx = (nh - 1) * grid_state->gr_res_h;
-  else if(0.5 <= grid_units_h)
+  else if (0.5 <= grid_units_h)
     *view_dx = (nh + 1) * grid_state->gr_res_h;
   else
     *view_dx = nh * grid_state->gr_res_h;
 
-  if(grid_units_v <= -0.5)
+  if (grid_units_v <= -0.5)
     *view_dy = (nv - 1) * grid_state->gr_res_v;
-  else if(0.5 <= grid_units_v)
+  else if (0.5 <= grid_units_v)
     *view_dy = (nv + 1) * grid_state->gr_res_v;
   else
     *view_dy = nv * grid_state->gr_res_v;
@@ -446,7 +446,7 @@ f_grid_set (ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
   bu_vls_init(&vls);
 
-  if(argc < 1 || 5 < argc){
+  if (argc < 1 || 5 < argc){
     bu_vls_printf(&vls, "help grid_set");
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);

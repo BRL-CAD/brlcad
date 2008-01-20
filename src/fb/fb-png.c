@@ -78,7 +78,7 @@ get_args(int argc, register char **argv)
 	register int c;
 
 	while ( (c = bu_getopt( argc, argv, "chiF:s:w:n:g:#:" )) != EOF )  {
-		switch( c )  {
+		switch ( c )  {
 		case 'c':
 			crunch = 1;
 			break;
@@ -107,7 +107,7 @@ get_args(int argc, register char **argv)
 			break;
 		case '#':
 			pixbytes = atoi(bu_optarg);
-			if( pixbytes != 1 && pixbytes != 3 )
+			if ( pixbytes != 1 && pixbytes != 3 )
 				bu_exit(EXIT_FAILURE, "fb-png: Only able to handle 1 and 3 byte pixels\n");
 			break;
 
@@ -116,14 +116,14 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( bu_optind >= argc )  {
-		if( isatty(fileno(stdout)) )
+	if ( bu_optind >= argc )  {
+		if ( isatty(fileno(stdout)) )
 			return(0);
 		file_name = "-";
 		outfp = stdout;
 	} else {
 		file_name = argv[bu_optind];
-		if( (outfp = fopen(file_name, "wb")) == NULL )  {
+		if ( (outfp = fopen(file_name, "wb")) == NULL )  {
 			(void)fprintf( stderr,
 				"fb-png: cannot open \"%s\" for writing\n",
 				file_name );
@@ -175,19 +175,19 @@ main(int argc, char **argv)
 	}
 
 	/* If actual screen is smaller than requested size, trim down */
-	if( screen_height > fb_getheight(fbp) )
+	if ( screen_height > fb_getheight(fbp) )
 		screen_height = fb_getheight(fbp);
-	if( screen_width > fb_getwidth(fbp) )
+	if ( screen_width > fb_getwidth(fbp) )
 		screen_width = fb_getwidth(fbp);
 
 	scanpix = screen_width;
 	scanbytes = scanpix * sizeof(RGBpixel);
 	scanline = (unsigned char *)bu_malloc( scanbytes, "scanline" );
 
-	if( crunch )  {
-		if( fb_rmap( fbp, &cmap ) == -1 )  {
+	if ( crunch )  {
+		if ( fb_rmap( fbp, &cmap ) == -1 )  {
 			crunch = 0;
-		} else if( fb_is_linear_cmap( &cmap ) ) {
+		} else if ( fb_is_linear_cmap( &cmap ) ) {
 			crunch = 0;
 		}
 	}
@@ -206,12 +206,12 @@ main(int argc, char **argv)
 
 	png_write_info( png_p, info_p );
 
-	if( inverse )
+	if ( inverse )
 	{
 		/*  Read bottom to top */
-		for( y=0; y < screen_height; y++ )
+		for ( y=0; y < screen_height; y++ )
 		{
-			if( pixbytes == 3 )
+			if ( pixbytes == 3 )
 				got = fb_read( fbp, 0, y,
 					scanline, screen_width );
 			else
@@ -219,12 +219,12 @@ main(int argc, char **argv)
 					screen_width, 1,
 					scanline );
 
-			if( got != screen_width )  {
+			if ( got != screen_width )  {
 				fprintf(stderr, "fb-png: Read of scanline %d returned %d, expected %d, aborting.\n",
 					y, got, screen_width);
 				break;
 			}
-			if( crunch )
+			if ( crunch )
 				cmap_crunch( (RGBpixel *)scanline, scanpix, &cmap );
 			png_write_row( png_p, scanline );
 		}
@@ -232,9 +232,9 @@ main(int argc, char **argv)
 	else
 	{
 		/*  Read top to bottom */
-		for( y = screen_height-1; y >= 0; y-- )
+		for ( y = screen_height-1; y >= 0; y-- )
 		{
-			if( pixbytes == 3 )
+			if ( pixbytes == 3 )
 				got = fb_read( fbp, 0, y,
 					scanline, screen_width );
 			else
@@ -242,12 +242,12 @@ main(int argc, char **argv)
 					screen_width, 1,
 					scanline );
 
-			if( got != screen_width )  {
+			if ( got != screen_width )  {
 				fprintf(stderr, "fb-png: Read of scanline %d returned %d, expected %d, aborting.\n",
 					y, got, screen_width);
 				break;
 			}
-			if( crunch )
+			if ( crunch )
 				cmap_crunch( (RGBpixel *)scanline, scanpix, &cmap );
 			png_write_row( png_p, scanline );
 		}

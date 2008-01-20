@@ -92,7 +92,7 @@ editarb( vect_t pos_model )
 	RT_ARB_CK_MAGIC( arb );
 
 	/* set the pointer */
-	switch( es_type ) {
+	switch ( es_type ) {
 
 		case ARB4:
 			edptr = &earb4[es_menu][0];
@@ -102,7 +102,7 @@ editarb( vect_t pos_model )
 		case ARB5:
 			edptr = &earb5[es_menu][0];
 			final = &earb5[es_menu][16];
-			if(es_edflag == PTARB) {
+			if (es_edflag == PTARB) {
 				edptr = &earb5[8][0];
 				final = &earb5[8][16];
 			}
@@ -111,9 +111,9 @@ editarb( vect_t pos_model )
 		case ARB6:
 			edptr = &earb6[es_menu][0];
 			final = &earb6[es_menu][16];
-			if(es_edflag == PTARB) {
+			if (es_edflag == PTARB) {
 				i = 9;
-				if(es_menu == 4)
+				if (es_menu == 4)
 					i = 8;
 				edptr = &earb6[i][0];
 				final = &earb6[i][16];
@@ -123,7 +123,7 @@ editarb( vect_t pos_model )
 		case ARB7:
 			edptr = &earb7[es_menu][0];
 			final = &earb7[es_menu][16];
-			if(es_edflag == PTARB) {
+			if (es_edflag == PTARB) {
 				edptr = &earb7[11][0];
 				final = &earb7[11][16];
 			}
@@ -142,18 +142,18 @@ editarb( vect_t pos_model )
 
 	/* do the arb editing */
 
-	if( es_edflag == PTARB ) {
+	if ( es_edflag == PTARB ) {
 		/* moving a point - not an edge */
 		VMOVE( arb->pt[es_menu], pos_model );
 		edptr += 4;
-	} else if( es_edflag == EARB ) {
+	} else if ( es_edflag == EARB ) {
 		vect_t	edge_dir;
 
 		/* moving an edge */
 		pt1 = *edptr++;
 		pt2 = *edptr++;
 		/* direction of this edge */
-		if( newedge ) {
+		if ( newedge ) {
 			/* edge direction comes from edgedir() in pos_model */
 			VMOVE( edge_dir, pos_model );
 			VMOVE(pos_model, arb->pt[pt1]);
@@ -162,7 +162,7 @@ editarb( vect_t pos_model )
 			/* must calculate edge direction */
 			VSUB2(edge_dir, arb->pt[pt2], arb->pt[pt1]);
 		}
-		if(MAGNITUDE(edge_dir) == 0.0)
+		if (MAGNITUDE(edge_dir) == 0.0)
 			goto err;
 		/* bounding planes bp1, bp2 */
 		bp1 = *edptr++;
@@ -172,7 +172,7 @@ editarb( vect_t pos_model )
 /*
 bu_log("moving edge: %d%d  bound planes: %d %d\n", pt1+1, pt2+1, bp1+1, bp2+1);
 */
-		if( mv_edge(pos_model, bp1, bp2, pt1, pt2, edge_dir) )
+		if ( mv_edge(pos_model, bp1, bp2, pt1, pt2, edge_dir) )
 			goto err;
 	}
 
@@ -180,12 +180,12 @@ bu_log("moving edge: %d%d  bound planes: %d %d\n", pt1+1, pt2+1, bp1+1, bp2+1);
 	/* redo plane eqns that changed */
 	newp = *edptr++; 	/* plane to redo */
 
-	if( newp == 9 )	/* special flag --> redo all the planes */
+	if ( newp == 9 )	/* special flag --> redo all the planes */
 		if (rt_arb_calc_planes(interp, arb, es_type, es_peqn, &mged_tol))
 			goto err;
 
-	if(newp >= 0 && newp < 6) {
-		for(i=0; i<3; i++) {
+	if (newp >= 0 && newp < 6) {
+		for (i=0; i<3; i++) {
 			/* redo this plane (newp), use points p1, p2, p3 */
 			p1 = *edptr++;
 			p2 = *edptr++;
@@ -193,19 +193,19 @@ bu_log("moving edge: %d%d  bound planes: %d %d\n", pt1+1, pt2+1, bp1+1, bp2+1);
 /*
 bu_log("redo plane %d with points %d %d %d\n", newp+1, p1+1, p2+1, p3+1);
 */
-			if( bn_mk_plane_3pts( es_peqn[newp], arb->pt[p1], arb->pt[p2],
+			if ( bn_mk_plane_3pts( es_peqn[newp], arb->pt[p1], arb->pt[p2],
 						arb->pt[p3], &mged_tol ) )
 				goto err;
 
 			/* next plane */
-			if( (newp = *edptr++) == -1 || newp == 8 )
+			if ( (newp = *edptr++) == -1 || newp == 8 )
 				break;
 		}
 	}
-	if(newp == 8) {
+	if (newp == 8) {
 		/* special...redo next planes using pts defined in faces */
-		for(i=0; i<3; i++) {
-			if( (newp = *edptr++) == -1 )
+		for (i=0; i<3; i++) {
+			if ( (newp = *edptr++) == -1 )
 				break;
 			iptr = &rt_arb_faces[es_type-4][4*newp];
 			p1 = *iptr++;
@@ -214,7 +214,7 @@ bu_log("redo plane %d with points %d %d %d\n", newp+1, p1+1, p2+1, p3+1);
 /*
 bu_log("REdo plane %d with points %d %d %d\n", newp+1, p1+1, p2+1, p3+1);
 */
-			if( bn_mk_plane_3pts( es_peqn[newp], arb->pt[p1], arb->pt[p2],
+			if ( bn_mk_plane_3pts( es_peqn[newp], arb->pt[p1], arb->pt[p2],
 					arb->pt[p3], &mged_tol ))
 				goto err;
 		}
@@ -224,30 +224,30 @@ bu_log("REdo plane %d with points %d %d %d\n", newp+1, p1+1, p2+1, p3+1);
 	 *	push necessary points back into the planes
 	 */
 	edptr = final;	/* point to the correct location */
-	for(i=0; i<2; i++) {
-		if( (p1 = *edptr++) == -1 )
+	for (i=0; i<2; i++) {
+		if ( (p1 = *edptr++) == -1 )
 			break;
 		/* intersect proper planes to define vertex p1 */
 /*
 bu_log("intersect: type=%d   point = %d\n", es_type, p1+1);
 */
-		if( rt_arb_3face_intersect( arb->pt[p1], (const plane_t *)es_peqn, es_type, p1*3 ))
+		if ( rt_arb_3face_intersect( arb->pt[p1], (const plane_t *)es_peqn, es_type, p1*3 ))
 			goto err;
 	}
 
 	/* Special case for ARB7: move point 5 .... must
 	 *	recalculate plane 2 = 456
 	 */
-	if(es_type == ARB7 && es_edflag == PTARB) {
+	if (es_type == ARB7 && es_edflag == PTARB) {
 /*
 bu_log("redo plane 2 == 5, 6, 7 for ARB7\n");
 */
-		if(  bn_mk_plane_3pts( es_peqn[2], arb->pt[4], arb->pt[5], arb->pt[6], &mged_tol ))
+		if (  bn_mk_plane_3pts( es_peqn[2], arb->pt[4], arb->pt[5], arb->pt[6], &mged_tol ))
 			goto err;
 	}
 
 	/* carry along any like points */
-	switch( es_type ) {
+	switch ( es_type ) {
 		case ARB8:
 		break;
 
@@ -261,13 +261,13 @@ bu_log("redo plane 2 == 5, 6, 7 for ARB7\n");
 			break;
 
 		case ARB5:
-			for( i=5 ; i<8 ; i++ )
+			for ( i=5; i<8; i++ )
 				VMOVE( arb->pt[i], arb->pt[4] )
 			break;
 
 		case ARB4:
 			VMOVE( arb->pt[3], arb->pt[0] );
-			for( i=5 ; i<8 ; i++ )
+			for ( i=5; i<8; i++ )
 				VMOVE( arb->pt[i], arb->pt[4] )
 		break;
 	}
@@ -308,7 +308,7 @@ mv_edge(
 	struct rt_arb_internal *arb;
 	fastf_t	t1, t2;
 
-	if( bn_isect_line3_plane( &t1, thru, dir, es_peqn[bp1], &mged_tol ) < 0 ||
+	if ( bn_isect_line3_plane( &t1, thru, dir, es_peqn[bp1], &mged_tol ) < 0 ||
 	    bn_isect_line3_plane( &t2, thru, dir, es_peqn[bp2], &mged_tol ) < 0 )  {
 	  Tcl_AppendResult(interp, "edge (direction) parallel to face normal\n", (char *)NULL);
 	  return( 1 );
@@ -337,7 +337,7 @@ f_extrude(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	CHECK_DBI_NULL;
 
-	if(argc < 3 || 3 < argc){
+	if (argc < 3 || 3 < argc){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -347,16 +347,16 @@ f_extrude(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  return TCL_ERROR;
 	}
 
-	if( not_state( ST_S_EDIT, "Extrude" ) )
+	if ( not_state( ST_S_EDIT, "Extrude" ) )
 		return TCL_ERROR;
 
-	if( es_int.idb_type != ID_ARB8 )
+	if ( es_int.idb_type != ID_ARB8 )
 	{
 	  Tcl_AppendResult(interp, "Extrude: solid type must be ARB\n", (char *)NULL);
 	  return TCL_ERROR;
 	}
 
-	if(es_type != ARB8 && es_type != ARB6 && es_type != ARB4) {
+	if (es_type != ARB8 && es_type != ARB6 && es_type != ARB4) {
 	  struct bu_vls tmp_vls;
 
 	  bu_vls_init(&tmp_vls);
@@ -376,7 +376,7 @@ f_extrude(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	memcpy((char *)&larb, (char *)es_int.idb_ptr, sizeof( struct rt_arb_internal ));
 
-	if( (es_type == ARB6 || es_type == ARB4) && face < 1000 ) {
+	if ( (es_type == ARB6 || es_type == ARB4) && face < 1000 ) {
 		/* 3 point face */
 		pt[0] = face / 100;
 		i = face - (pt[0]*100);
@@ -412,21 +412,21 @@ f_extrude(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	 *	 24	    234 for ARB4
 	 */
 	prod = 1;
-	for( i = 0; i <= 3; i++ )  {
+	for ( i = 0; i <= 3; i++ )  {
 		prod *= pt[i];
-		if(es_type == ARB6 && pt[i] == 6)
+		if (es_type == ARB6 && pt[i] == 6)
 			pt[i]++;
-		if(es_type == ARB4 && pt[i] == 4)
+		if (es_type == ARB4 && pt[i] == 4)
 			pt[i]++;
 		pt[i]--;
-		if( pt[i] > 7 )  {
+		if ( pt[i] > 7 )  {
 		  Tcl_AppendResult(interp, "bad face: ", argv[1], "\n", (char *)NULL);
 		  return TCL_ERROR;
 		}
 	}
 
 	/* find plane containing this face */
-	if( bn_mk_plane_3pts( es_peqn[6], larb.pt[pt[0]], larb.pt[pt[1]],
+	if ( bn_mk_plane_3pts( es_peqn[6], larb.pt[pt[0]], larb.pt[pt[1]],
 				larb.pt[pt[2]], &mged_tol ) )
 	{
 	  Tcl_AppendResult(interp, "face: ", argv[1], " is not a plane\n", (char *)NULL);
@@ -434,22 +434,22 @@ f_extrude(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
 
 	/* get normal vector of length == dist */
-	for( i = 0; i < 3; i++ )
+	for ( i = 0; i < 3; i++ )
 		es_peqn[6][i] *= dist;
 
 	/* protrude the selected face */
-	switch( prod )  {
+	switch ( prod )  {
 
 	case 24:   /* protrude face 1234 */
-		if(es_type == ARB6) {
+		if (es_type == ARB6) {
 		  Tcl_AppendResult(interp, "ARB6: extrusion of face ", argv[1],
 				   " not allowed\n", (char *)NULL);
 		  return TCL_ERROR;
 		}
-		if(es_type == ARB4)
+		if (es_type == ARB4)
 			goto a4toa6;	/* extrude face 234 of ARB4 to make ARB6 */
 
-		for( i = 0; i < 4; i++ )  {
+		for ( i = 0; i < 4; i++ )  {
 			j = i + 4;
 			VADD2( larb.pt[j], larb.pt[i], es_peqn[6] );
 		}
@@ -465,7 +465,7 @@ a4toa6:
 	break;
 
 	case 1680:   /* protrude face 5678 */
-		for( i = 0; i < 4; i++ )  {
+		for ( i = 0; i < 4; i++ )  {
 			j = i + 4;
 			VADD2( larb.pt[i], larb.pt[j], es_peqn[6] );
 		}
@@ -545,7 +545,7 @@ f_arbdef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	if(argc < 4 || 4 < argc){
+	if (argc < 4 || 4 < argc){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -555,7 +555,7 @@ f_arbdef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  return TCL_ERROR;
 	}
 
-	if( db_lookup( dbip,  argv[1], LOOKUP_QUIET ) != DIR_NULL )  {
+	if ( db_lookup( dbip,  argv[1], LOOKUP_QUIET ) != DIR_NULL )  {
 	  aexists( argv[1] );
 	  return TCL_ERROR;
 	}
@@ -584,8 +584,8 @@ f_arbdef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	/* find two perpendicular vectors which are perpendicular to norm */
 	j = 0;
-	for( i = 0; i < 3; i++ )  {
-		if( fabs(norm1[i]) < fabs(norm1[j]) )
+	for ( i = 0; i < 3; i++ )  {
+		if ( fabs(norm1[i]) < fabs(norm1[j]) )
 			j = i;
 	}
 	VSET( norm2, 0.0, 0.0, 0.0 );
@@ -600,20 +600,20 @@ f_arbdef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	VJOIN1( arb->pt[1], arb->pt[0], 508.0, norm2 );
 	VJOIN1( arb->pt[3], arb->pt[0], -508.0, norm3 );
 	VJOIN2( arb->pt[2], arb->pt[0], 508.0, norm2, -508.0, norm3 );
-	for( i=0 ; i<4 ; i++ )
+	for ( i=0; i<4; i++ )
 		VJOIN1( arb->pt[i+4], arb->pt[i], -50.8, norm1 );
 
 	/* no interrupts */
 	(void)signal( SIGINT, SIG_IGN );
 
-	if( (dp=db_diradd( dbip, argv[1], -1L, 0, DIR_SOLID, (genptr_t)&internal.idb_type)) == DIR_NULL )
+	if ( (dp=db_diradd( dbip, argv[1], -1L, 0, DIR_SOLID, (genptr_t)&internal.idb_type)) == DIR_NULL )
 	{
 		rt_db_free_internal( &internal, &rt_uniresource );
 		Tcl_AppendResult(interp, "Cannot add ", argv[1], " to directory\n", (char *)NULL );
 		return TCL_ERROR;
 	}
 
-	if( rt_db_put_internal( dp, dbip, &internal, &rt_uniresource ) < 0 )
+	if ( rt_db_put_internal( dp, dbip, &internal, &rt_uniresource ) < 0 )
 	{
 		rt_db_free_internal( &internal, &rt_uniresource );
 		TCL_WRITE_ERR_return;
@@ -644,7 +644,7 @@ f_mirface(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	struct rt_arb_internal *arb;
 	struct rt_arb_internal larb;	/* local copy of solid */
 
-	if(argc < 3 || 3 < argc){
+	if (argc < 3 || 3 < argc){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -654,10 +654,10 @@ f_mirface(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  return TCL_ERROR;
 	}
 
-	if( not_state( ST_S_EDIT, "Mirface" ) )
+	if ( not_state( ST_S_EDIT, "Mirface" ) )
 	  return TCL_ERROR;
 
-	if( es_int.idb_type != ID_ARB8 )
+	if ( es_int.idb_type != ID_ARB8 )
 	{
 	  Tcl_AppendResult(interp, "Mirface: solid type must be ARB\n", (char *)NULL);
 	  return TCL_ERROR;
@@ -666,7 +666,7 @@ f_mirface(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	arb = (struct rt_arb_internal *)es_int.idb_ptr;
 	RT_ARB_CK_MAGIC( arb );
 
-	if(es_type != ARB8 && es_type != ARB6) {
+	if (es_type != ARB8 && es_type != ARB6) {
 	  struct bu_vls tmp_vls;
 
 	  bu_vls_init(&tmp_vls);
@@ -677,19 +677,19 @@ f_mirface(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  return TCL_ERROR;
 	}
 	face = atoi( argv[1] );
-	if( face > 9999 || (face < 1000 && es_type != ARB6) ) {
+	if ( face > 9999 || (face < 1000 && es_type != ARB6) ) {
 	  Tcl_AppendResult(interp, "ERROR: ", argv[1], " bad face\n", (char *)NULL);
 	  return TCL_ERROR;
 	}
 	/* check which axis */
 	k = -1;
-	if( strcmp( argv[2], "x" ) == 0 )
+	if ( strcmp( argv[2], "x" ) == 0 )
 		k = 0;
-	if( strcmp( argv[2], "y" ) == 0 )
+	if ( strcmp( argv[2], "y" ) == 0 )
 		k = 1;
-	if( strcmp( argv[2], "z" ) == 0 )
+	if ( strcmp( argv[2], "z" ) == 0 )
 		k = 2;
-	if( k < 0 ) {
+	if ( k < 0 ) {
 	  Tcl_AppendResult(interp, "axis must be x, y or z\n", (char *)NULL);
 	  return TCL_ERROR;
 	}
@@ -700,7 +700,7 @@ f_mirface(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	/* make local copy of arb */
 	memcpy((char *)&larb, (char *)arb, sizeof( struct rt_arb_internal ));
 
-	if(es_type == ARB6 && face < 1000) { 	/* 3 point face */
+	if (es_type == ARB6 && face < 1000) { 	/* 3 point face */
 		pt[0] = face / 100;
 		i = face - (pt[0]*100);
 		pt[1] = i / 10;
@@ -729,32 +729,32 @@ f_mirface(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	 *	 72	    346 for ARB6
 	 */
 	prod = 1;
-	for( i = 0; i <= 3; i++ )  {
+	for ( i = 0; i <= 3; i++ )  {
 		prod *= pt[i];
 		pt[i]--;
-		if( pt[i] > 7 )  {
+		if ( pt[i] > 7 )  {
 		  Tcl_AppendResult(interp, "bad face: ", argv[1], "\n", (char *)NULL);
 		  return TCL_ERROR;
 		}
 	}
 
 	/* mirror the selected face */
-	switch( prod )  {
+	switch ( prod )  {
 
 	case 24:   /* mirror face 1234 */
-		if(es_type == ARB6) {
+		if (es_type == ARB6) {
 		  Tcl_AppendResult(interp, "ARB6: mirroring of face ", argv[1],
 				   " not allowed\n", (char *)NULL);
 		  return TCL_ERROR;
 		}
-		for( i = 0; i < 4; i++ )  {
+		for ( i = 0; i < 4; i++ )  {
 			j = i + 4;
 			VELMUL( larb.pt[j], larb.pt[i], work );
 		}
 		break;
 
 	case 1680:   /* mirror face 5678 */
-		for( i = 0; i < 4; i++ )  {
+		for ( i = 0; i < 4; i++ )  {
 			j = i + 4;
 			VELMUL( larb.pt[i], larb.pt[j], work );
 		}
@@ -826,7 +826,7 @@ f_edgedir(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	vect_t slope;
 	fastf_t rot, fb;
 
-	if(argc < 3 || 4 < argc){
+	if (argc < 3 || 4 < argc){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -836,15 +836,15 @@ f_edgedir(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  return TCL_ERROR;
 	}
 
-	if( not_state( ST_S_EDIT, "Edgedir" ) )
+	if ( not_state( ST_S_EDIT, "Edgedir" ) )
 	  return TCL_ERROR;
 
-	if( es_edflag != EARB ) {
+	if ( es_edflag != EARB ) {
 	  Tcl_AppendResult(interp, "Not moving an ARB edge\n", (char *)NULL);
 	  return TCL_ERROR;
 	}
 
-	if( es_int.idb_type != ID_ARB8 )
+	if ( es_int.idb_type != ID_ARB8 )
 	{
 	  Tcl_AppendResult(interp, "Edgedir: solid type must be an ARB\n", (char *)NULL);
 	  return TCL_ERROR;
@@ -854,7 +854,7 @@ f_edgedir(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	 *	if 2 values input assume rot, fb used
 	 *	else assume delta_x, delta_y, delta_z
 	 */
-	if( argc == 3 ) {
+	if ( argc == 3 ) {
 		rot = atof( argv[1] ) * degtorad;
 		fb = atof( argv[2] ) * degtorad;
 		slope[0] = cos(fb) * cos(rot);
@@ -862,13 +862,13 @@ f_edgedir(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		slope[2] = sin(fb);
 	}
 	else {
-		for(i=0; i<3; i++) {
+		for (i=0; i<3; i++) {
 			/* put edge slope in slope[] array */
 			slope[i] = atof( argv[i+1] );
 		}
 	}
 
-	if(MAGNITUDE(slope) == 0) {
+	if (MAGNITUDE(slope) == 0) {
 	  Tcl_AppendResult(interp, "BAD slope\n", (char *)NULL);
 	  return TCL_ERROR;
 	}
@@ -908,7 +908,7 @@ ext4to6(int pt1, int pt2, int pt3, register struct rt_arb_internal *arb)
 	VMOVE(pts[7], pts[6]);
 
 	/* copy to the original record */
-	for( i=0 ; i<8 ; i++ )
+	for ( i=0; i<8; i++ )
 		VMOVE(arb->pt[i], pts[i])
 
 }
@@ -1029,7 +1029,7 @@ f_permute(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     CHECK_DBI_NULL;
     CHECK_READ_ONLY;
 
-    if(argc < 2 || 2 < argc){
+    if (argc < 2 || 2 < argc){
       struct bu_vls vls;
 
       bu_vls_init(&vls);
@@ -1042,7 +1042,7 @@ f_permute(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     if (not_state(ST_S_EDIT, "Permute"))
       return TCL_ERROR;
 
-    if( es_int.idb_type != ID_ARB8 )
+    if ( es_int.idb_type != ID_ARB8 )
     {
       Tcl_AppendResult(interp, "Permute: solid type must be an ARB\n", (char *)NULL);
       return TCL_ERROR;
@@ -1111,7 +1111,7 @@ f_permute(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	(es_type == 5) ? perm5[vertex] :
 	(es_type == 6) ? perm6[vertex] :
 	(es_type == 7) ? perm7[vertex] : perm8[vertex];
-    for ( ;; ++p)
+    for (;; ++p)
     {
 	if (*p == 0)
 	{
@@ -1139,7 +1139,7 @@ f_permute(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 #if 0
     bu_log("After collection...\n");
-    for (i = 0; i < 8 ; i++ )
+    for (i = 0; i < 8; i++ )
     {
 	char	string[1024] = {0};
 

@@ -886,7 +886,7 @@ int anim_steer_mat(mat_t  mat, vect_t point, int end)
 	VMOVE(p2, p3);
 	VMOVE(p3, point);
 
-	switch(state) {
+	switch (state) {
 	case ASM_EMPTY:
 		if (end) {
 			state = ASM_EMPTY;

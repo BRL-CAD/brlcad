@@ -54,21 +54,21 @@ static void	temp_To_RGB(unsigned char *rgb, int temp);
 int
 ir_Chk_Table(void)
 {
-	if( ir_table == (RGBpixel *)PIXEL_NULL )
+	if ( ir_table == (RGBpixel *)PIXEL_NULL )
 		{
 		get_Input( input_ln, MAX_LN, "Enter minimum temperature : " );
-		if( sscanf( input_ln, "%d", &ir_min ) != 1 )
+		if ( sscanf( input_ln, "%d", &ir_min ) != 1 )
 			{
 			prnt_Scroll( "Could not read minimum temperature." );
 			return	0;
 			}
 		get_Input( input_ln, MAX_LN, "Enter maximum temperature : " );
-		if( sscanf( input_ln, "%d", &ir_max ) != 1 )
+		if ( sscanf( input_ln, "%d", &ir_max ) != 1 )
 			{
 			prnt_Scroll( "Could not read maximum temperature." );
 			return	0;
 			}
-		if( ! init_Temp_To_RGB() )
+		if ( ! init_Temp_To_RGB() )
 			return	0;
 		}
 	return	1;
@@ -95,24 +95,24 @@ display_Temps(int xmin, int ymin)
 	ymax = ymin + interval;
 
 	/* Initialize ir_table if necessary.				*/
-	if( ! ir_Chk_Table() )
+	if ( ! ir_Chk_Table() )
 		return;
 
-	for( y = ymin; y <= ymax; y++ )
+	for ( y = ymin; y <= ymax; y++ )
 		{
 		x = xmin;
-		if( fb_seek( fbiop, x, y ) == -1 )
+		if ( fb_seek( fbiop, x, y ) == -1 )
 			{
 			bu_log( "\"%s\"(%d) fb_seek to pixel <%d,%d> failed.\n",
 				__FILE__, __LINE__, x, y
 				);
 			return;
 			}
-		for( ; x <= xmax + interval; x++ )
+		for (; x <= xmax + interval; x++ )
 			{	fastf_t	percent;
 				static RGBpixel	*pixel;
 			percent = D_XPOS / xrange;
-			if( D_XPOS % interval == 0 )
+			if ( D_XPOS % interval == 0 )
 				{	int	temp = AMBIENT+percent*RANGE;
 					register int	index = temp - ir_min;
 				pixel = (RGBpixel *) ir_table[Min(index, ir_max_index)];
@@ -127,14 +127,14 @@ display_Temps(int xmin, int ymin)
 				}
 			}
 		}
-	if( ! get_Font( (char *) NULL ) )
+	if ( ! get_Font( (char *) NULL ) )
 		{
 		bu_log( "Could not load font.\n" );
 		fb_flush( fbiop );
 		return;
 		}
 	y = ymin;
-	for( x = xmin; x <= xmax; x += interval )
+	for ( x = xmin; x <= xmax; x += interval )
 		{	char	tempstr[4];
 			fastf_t	percent = D_XPOS / xrange;
 			int	temp = AMBIENT+percent*RANGE;
@@ -153,10 +153,10 @@ display_Temps(int xmin, int ymin)
 static int
 get_IR(int x, int y, int *fahp, FILE *fp)
 {
-	if( fseek( fp, (long)((y*IR_DATA_WID + x) * sizeof(int)), 0 ) != 0 )
+	if ( fseek( fp, (long)((y*IR_DATA_WID + x) * sizeof(int)), 0 ) != 0 )
 		return	0;
 	else
-	if( fread( (char *) fahp, (int) sizeof(int), 1, fp ) != 1 )
+	if ( fread( (char *) fahp, (int) sizeof(int), 1, fp ) != 1 )
 		return	0;
 	else
 		return	1;
@@ -166,7 +166,7 @@ read_IR(FILE *fp)
 {	register int	fy;
 		register int	rx, ry;
 		int		min, max;
-	if(	fread( (char *) &min, (int) sizeof(int), 1, fp ) != 1
+	if (	fread( (char *) &min, (int) sizeof(int), 1, fp ) != 1
 	     ||	fread( (char *) &max, (int) sizeof(int), 1, fp ) != 1
 		)
 		{
@@ -178,7 +178,7 @@ read_IR(FILE *fp)
 		bu_log(	"IR data temperature range is %d to %d\n",
 			min, max
 			);
-		if( ir_min == ABSOLUTE_ZERO )
+		if ( ir_min == ABSOLUTE_ZERO )
 			{ /* Temperature range not set.			*/
 			ir_min = min;
 			ir_max = max;
@@ -193,34 +193,34 @@ read_IR(FILE *fp)
 			}
 		(void) fflush( stdout );
 		}
-	if( ! init_Temp_To_RGB() )
+	if ( ! init_Temp_To_RGB() )
 		{
 		return	0;
 		}
-	for( ry = 0, fy = grid_sz-1; ; ry += ir_aperture, fy-- )
+	for ( ry = 0, fy = grid_sz-1; ; ry += ir_aperture, fy-- )
 		{
-		if( fb_seek( fbiop, 0, fy ) == -1 )
+		if ( fb_seek( fbiop, 0, fy ) == -1 )
 			{
 			bu_log( "\"%s\"(%d) fb_seek to pixel <%d,%d> failed.\n",
 				__FILE__, __LINE__, 0, fy
 				);
 			return	0;
 			}
-		for( rx = 0 ; rx < IR_DATA_WID; rx += ir_aperture )
+		for ( rx = 0; rx < IR_DATA_WID; rx += ir_aperture )
 			{	int	fah;
 				int	sum = 0;
 				register int	i;
 				register int	index;
 				RGBpixel	*pixel;
-			for( i = 0; i < ir_aperture; i++ )
+			for ( i = 0; i < ir_aperture; i++ )
 				{	register int	j;
-				for( j = 0; j < ir_aperture; j++ )
+				for ( j = 0; j < ir_aperture; j++ )
 					{
-					if( get_IR( rx+j, ry+i, &fah, fp ) )
+					if ( get_IR( rx+j, ry+i, &fah, fp ) )
 						sum += fah < ir_min ? ir_min : fah;
 					else	/* EOF */
 						{
-						if( ir_octree.o_temp == ABSOLUTE_ZERO )
+						if ( ir_octree.o_temp == ABSOLUTE_ZERO )
 							ir_octree.o_temp = AMBIENT - 1;
 						display_Temps( grid_sz/8, 0 );
 						return	1;
@@ -228,7 +228,7 @@ read_IR(FILE *fp)
 					}
 				}
 			fah = Avg_Fah( sum );
-			if( (index = fah-ir_min) > ir_max_index || index < 0 )
+			if ( (index = fah-ir_min) > ir_max_index || index < 0 )
 				{
 				bu_log( "temperature out of range (%d)\n",
 					fah
@@ -257,7 +257,7 @@ temp_To_RGB(unsigned char *rgb, int temp)
 		register int	h = (int) hue;	/* integral part	*/
 		register int	f = (int)(256.0 * (hue - (fastf_t)h));
 					/* fractional part * 256	*/
-	if( t == ABSOLUTE_ZERO )
+	if ( t == ABSOLUTE_ZERO )
 		rgb[RED] = rgb[GRN] = rgb[BLU] = 0;
 	else
 	switch ( h )
@@ -311,7 +311,7 @@ int
 init_Temp_To_RGB(void)
 {	register int	temp, i;
 		RGBpixel	rgb;
-	if( (ir_aperture = fb_getwidth( fbiop )/grid_sz) < 1 )
+	if ( (ir_aperture = fb_getwidth( fbiop )/grid_sz) < 1 )
 		{
 		bu_log( "Grid too large for IR application, max. is %d.\n",
 			IR_DATA_WID
@@ -319,7 +319,7 @@ init_Temp_To_RGB(void)
 		return	0;
 		}
 	sample_sz = Sqr( ir_aperture );
-	if( ir_table != (RGBpixel *)RGBPIXEL_NULL )
+	if ( ir_table != (RGBpixel *)RGBPIXEL_NULL )
 		/* Table already initialized presumably from another view,
 			since range may differ we must create a different
 			table of color assignment, so free storage and re-
@@ -327,13 +327,13 @@ init_Temp_To_RGB(void)
 		 */
 		free( (char *) ir_table );
 	ir_table = (RGBpixel *) malloc( (unsigned)(sizeof(RGBpixel)*((ir_max-ir_min)+1)) );
-	if( ir_table == (RGBpixel *)RGBPIXEL_NULL )
+	if ( ir_table == (RGBpixel *)RGBPIXEL_NULL )
 		{
 		Malloc_Bomb(sizeof(RGBpixel)*((ir_max-ir_min)+1));
 		fatal_error = TRUE;
 		return	0;
 		}
-	for( temp = ir_min, i = 0; temp <= ir_max; temp++, i++ )
+	for ( temp = ir_min, i = 0; temp <= ir_max; temp++, i++ )
 		{
 		temp_To_RGB( rgb, temp );
 		COPYRGB( ir_table[i], rgb );
@@ -347,7 +347,7 @@ same_Hue(register RGBpixel (*pixel1p), register RGBpixel (*pixel2p))
 {	fastf_t	rval1, gval1, bval1;
 		fastf_t	rval2, gval2, bval2;
 		fastf_t	rratio, gratio, bratio;
-	if(	(*pixel1p)[RED] == (*pixel2p)[RED]
+	if (	(*pixel1p)[RED] == (*pixel2p)[RED]
 	    &&	(*pixel1p)[GRN] == (*pixel2p)[GRN]
 	    &&	(*pixel1p)[BLU] == (*pixel2p)[BLU]
 		)
@@ -358,77 +358,77 @@ same_Hue(register RGBpixel (*pixel1p), register RGBpixel (*pixel2p))
 	rval2 = (*pixel2p)[RED];
 	gval2 = (*pixel2p)[GRN];
 	bval2 = (*pixel2p)[BLU];
-	if( rval1 == 0.0 )
+	if ( rval1 == 0.0 )
 		{
-		if( rval2 != 0.0 )
+		if ( rval2 != 0.0 )
 			return	0;
 		else /* Both red values are zero. */
 			rratio = 0.0;
 		}
 	else
-	if( rval2 == 0.0 )
+	if ( rval2 == 0.0 )
 		return	0;
 	else /* Neither red value is zero. */
 		rratio = rval1/rval2;
-	if( gval1 == 0.0 )
+	if ( gval1 == 0.0 )
 		{
-		if( gval2 != 0.0 )
+		if ( gval2 != 0.0 )
 			return	0;
 		else /* Both green values are zero. */
 			gratio = 0.0;
 		}
 	else
-	if( gval2 == 0.0 )
+	if ( gval2 == 0.0 )
 		return	0;
 	else /* Neither green value is zero. */
 		gratio = gval1/gval2;
-	if( bval1 == 0.0 )
+	if ( bval1 == 0.0 )
 		{
-		if( bval2 != 0.0 )
+		if ( bval2 != 0.0 )
 			return	0;
 		else /* Both blue values are zero. */
 			bratio = 0.0;
 		}
 	else
-	if( bval2 == 0.0 )
+	if ( bval2 == 0.0 )
 		return	0;
 	else /* Neither blue value is zero. */
 		bratio = bval1/bval2;
-	if( rratio == 0.0 )
+	if ( rratio == 0.0 )
 		{
-		if( gratio == 0.0 )
+		if ( gratio == 0.0 )
 			return	1;
 		else
-		if( bratio == 0.0 )
+		if ( bratio == 0.0 )
 			return	1;
 		else
-		if( AproxEq( gratio, bratio, HUE_TOL ) )
+		if ( AproxEq( gratio, bratio, HUE_TOL ) )
 			return	1;
 		else
 			return	0;
 		}
 	else
-	if( gratio == 0.0 )
+	if ( gratio == 0.0 )
 		{
-		if( bratio == 0.0 )
+		if ( bratio == 0.0 )
 			return	1;
 		else
-		if( AproxEq( bratio, rratio, HUE_TOL ) )
-			return	1;
-		else
-			return	0;
-		}
-	else
-	if( bratio == 0.0 )
-		{
-		if( AproxEq( rratio, gratio, HUE_TOL ) )
+		if ( AproxEq( bratio, rratio, HUE_TOL ) )
 			return	1;
 		else
 			return	0;
 		}
 	else
+	if ( bratio == 0.0 )
 		{
-		if(	AproxEq( rratio, gratio, HUE_TOL )
+		if ( AproxEq( rratio, gratio, HUE_TOL ) )
+			return	1;
+		else
+			return	0;
+		}
+	else
+		{
+		if (	AproxEq( rratio, gratio, HUE_TOL )
 		    &&	AproxEq( gratio, bratio, HUE_TOL )
 			)
 			return	1;
@@ -443,8 +443,8 @@ pixel_To_Temp(register RGBpixel (*pixelp))
     register RGBpixel *p;
     register RGBpixel *q = (RGBpixel *) ir_table[ir_max-ir_min];
     register int	temp = ir_min;
-    for( p = (RGBpixel *) ir_table[0]; p <= q; p++, temp++ ) {
-	if( same_Hue( p, pixelp ) )
+    for ( p = (RGBpixel *) ir_table[0]; p <= q; p++, temp++ ) {
+	if ( same_Hue( p, pixelp ) )
 	    return	temp;
     }
     /*	prnt_Scroll( "Pixel=(%d,%d,%d): not assigned a temperature.\n",
@@ -472,7 +472,7 @@ f_IR_Model(register struct application *ap, Octree *op)
 	octnt_max[Y] = op->o_points->c_point[Y] + delta;
 	octnt_max[Z] = op->o_points->c_point[Z] + delta;
 
-	if( AproxEq( point[X], octnt_min[X], EPSILON ) )
+	if ( AproxEq( point[X], octnt_min[X], EPSILON ) )
 		/* Intersection point lies on plane whose normal is the
 			negative X-axis.
 		 */
@@ -482,7 +482,7 @@ f_IR_Model(register struct application *ap, Octree *op)
 		norml[Z] =  0.0;
 		}
 	else
-	if( AproxEq( point[X], octnt_max[X], EPSILON ) )
+	if ( AproxEq( point[X], octnt_max[X], EPSILON ) )
 		/* Intersection point lies on plane whose normal is the
 			positive X-axis.
 		 */
@@ -492,7 +492,7 @@ f_IR_Model(register struct application *ap, Octree *op)
 		norml[Z] = 0.0;
 		}
 	else
-	if( AproxEq( point[Y], octnt_min[Y], EPSILON ) )
+	if ( AproxEq( point[Y], octnt_min[Y], EPSILON ) )
 		/* Intersection point lies on plane whose normal is the
 			negative Y-axis.
 		 */
@@ -502,7 +502,7 @@ f_IR_Model(register struct application *ap, Octree *op)
 		norml[Z] =  0.0;
 		}
 	else
-	if( AproxEq( point[Y], octnt_max[Y], EPSILON ) )
+	if ( AproxEq( point[Y], octnt_max[Y], EPSILON ) )
 		/* Intersection point lies on plane whose normal is the
 			positive Y-axis.
 		 */
@@ -512,7 +512,7 @@ f_IR_Model(register struct application *ap, Octree *op)
 		norml[Z] = 0.0;
 		}
 	else
-	if( AproxEq( point[Z], octnt_min[Z], EPSILON ) )
+	if ( AproxEq( point[Z], octnt_min[Z], EPSILON ) )
 		/* Intersection point lies on plane whose normal is the
 			negative Z-axis.
 		 */
@@ -522,7 +522,7 @@ f_IR_Model(register struct application *ap, Octree *op)
 		norml[Z] = -1.0;
 		}
 	else
-	if( AproxEq( point[Z], octnt_max[Z], EPSILON ) )
+	if ( AproxEq( point[Z], octnt_max[Z], EPSILON ) )
 		/* Intersection point lies on plane whose normal is the
 			positive Z-axis.
 		 */
@@ -536,12 +536,12 @@ f_IR_Model(register struct application *ap, Octree *op)
 		fastf_t	intensity = Dot( norml, lgts[0].dir );
 		/* Calculate index into false-color table.		*/
 		register int	index = op->o_temp - ir_min;
-	if( index > ir_max_index )
+	if ( index > ir_max_index )
 		{
 		bu_log( "Temperature (%d) above range of data.\n", op->o_temp );
 		return	-1;
 		}
-	if( index < 0 )
+	if ( index < 0 )
 		/* Un-assigned octants get colored grey.		*/
 		ap->a_color[0] = ap->a_color[1] = ap->a_color[2] = intensity;
 	else	/* Lookup false-coloring for octant's temperature.	*/

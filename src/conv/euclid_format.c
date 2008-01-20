@@ -49,21 +49,21 @@ main(void)
 	int old_id=(-1);
 	int face_count=0;
 
-	while( scanf( "%d %d %f %d %d", &ident, &face_type, &tmp_a, &tmp_i, &npts ) != EOF )
+	while ( scanf( "%d %d %f %d %d", &ident, &face_type, &tmp_a, &tmp_i, &npts ) != EOF )
 	{
 		int i;
 
-		if( npts > 0 )
+		if ( npts > 0 )
 			pts = (point_t *)bu_calloc( npts, sizeof( point_t ), "pts" );
 
-		for( i=0 ; i<npts ; i++ )
+		for ( i=0; i<npts; i++ )
 		{
 			int j;
 
-			if( scanf( "%d %f %f %f", &j, &a, &b, &c ) == EOF )
+			if ( scanf( "%d %f %f %f", &j, &a, &b, &c ) == EOF )
 				bu_exit(1, "Unexpected EOF\n");
 
-			if( j != i+1 )
+			if ( j != i+1 )
 			{
 				bu_exit(1, "Points out of order\n");
 			}
@@ -71,14 +71,14 @@ main(void)
 			VSET( pts[i], a, b, c );
 		}
 
-		if( scanf( "%d %f %f %f %f", &face_no, &a, &b, &c, &d ) == EOF )
+		if ( scanf( "%d %f %f %f %f", &face_no, &a, &b, &c, &d ) == EOF )
 			bu_exit(1, "Unexpected EOF\n" );
 		VSET( pl, a, b, c );
 		pl[3] = d;
 
-		if( ident != old_id )
+		if ( ident != old_id )
 		{
-			if( npts > 2 )
+			if ( npts > 2 )
 			{
 				face_count = 1;
 				printf( "%5d%5d%5d    0    %8d      %5.2f               \n" ,
@@ -88,7 +88,7 @@ main(void)
 		}
 		else
 		{
-			if( npts > 2 )
+			if ( npts > 2 )
 			{
 				face_count++;
 				printf( "%5d%5d%5d    0                                              \n" ,
@@ -96,15 +96,15 @@ main(void)
 			}
 		}
 
-		if( npts > 2 )
+		if ( npts > 2 )
 		{
 			printf( "%11.6f%11.6f%11.6f%13.6f\n", V4ARGS( pl ) );
 
-			for( i=0 ; i<npts ; i++ )
+			for ( i=0; i<npts; i++ )
 				printf( "%8f  %8f  %8f  \n", V3ARGS( pts[i] ) );
 		}
 
-		if( npts > 0 )
+		if ( npts > 0 )
 			bu_free( (char *)pts, "pts" );
 	}
 	return 0;

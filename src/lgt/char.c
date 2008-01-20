@@ -50,28 +50,28 @@ do_line(int xpos, int ypos, register char *line)
 {	register int    currx;
 		register int    char_count, char_id;
 		register int	len = strlen( line );
-	if( ffdes == NULL )
+	if ( ffdes == NULL )
 		{
 		bu_log( "ERROR: do_line() called before get_Font().\n" );
 		return;
 		}
 	currx = xpos;
 
-	for( char_count = 0; char_count < len; char_count++ )
+	for ( char_count = 0; char_count < len; char_count++ )
 		{
 		char_id = (int) line[char_count] & 0377;
 
 		/* Since there is no valid space in font, skip to the right
 			using the width of the digit zero.
 		 */
-		if( char_id == ' ' )
+		if ( char_id == ' ' )
 			{
 			currx += (SWABV(dir['0'].width) + 2) / ir_aperture;
 			continue;
 			}
 
 		/* locate the bitmap for the character in the file */
-		if( fseek( ffdes, (long)(SWABV(dir[char_id].addr)+offset), 0 )
+		if ( fseek( ffdes, (long)(SWABV(dir[char_id].addr)+offset), 0 )
 			== EOF
 			)
 			{
@@ -85,7 +85,7 @@ do_line(int xpos, int ypos, register char *line)
 		width = dir[char_id].right + dir[char_id].left;
 		height = dir[char_id].up + dir[char_id].down;
 
-		if( currx + width > fb_getwidth( fbiop ) - 1 )
+		if ( currx + width > fb_getwidth( fbiop ) - 1 )
 			break;		/* won't fit on screen */
 
 		do_char( char_id, currx, ypos );
@@ -107,10 +107,10 @@ do_char(int c, register int xpos, register int ypos)
 		static RGBpixel	pixel;
 		register int    h, i, j;
 		int		k, x;
-	for( k = 0; k < height; k++ )
+	for ( k = 0; k < height; k++ )
 		{
 		/* Read row, rounding width up to nearest byte value. */
-		if( fread( bitbuf[k], width/8+(width % 8 == 0 ? 0 : 1), 1, ffdes )
+		if ( fread( bitbuf[k], width/8+(width % 8 == 0 ? 0 : 1), 1, ffdes )
 			!= 1 )
 			{
 			bu_log( "\"%s\" (%d) read of character from font failed.\n",
@@ -119,25 +119,25 @@ do_char(int c, register int xpos, register int ypos)
 			return;
 			}
 		}
-	for( k = 0; k < height; k += ir_aperture, ypos-- )
+	for ( k = 0; k < height; k += ir_aperture, ypos-- )
 		{
 		x = xpos - left;
-		for( j = 0; j < width; j += ir_aperture, x++ )
+		for ( j = 0; j < width; j += ir_aperture, x++ )
 			{	register int	sum;
 				fastf_t		weight;
 			/* The bitx routine extracts the bit value.
 				Can't just use the j-th bit because
 				the bytes are backwards. */
 			sum = 0;
-			for( i = 0; i < ir_aperture; i++ )
-				for( h = 0; h < ir_aperture; h++ )
+			for ( i = 0; i < ir_aperture; i++ )
+				for ( h = 0; h < ir_aperture; h++ )
 					sum += bitx(	bitbuf[k+i],
 							((j+h)&~7) + (7-((j+h)&7))
 							) != 0;
 			weight = (fastf_t) sum / sample_sz;
-			if( fb_seek( fbiop, x, ypos + up ) == -1 )
+			if ( fb_seek( fbiop, x, ypos + up ) == -1 )
 				continue;
-			if( fb_rpixel( fbiop, (unsigned char *) pixel ) == -1 )
+			if ( fb_rpixel( fbiop, (unsigned char *) pixel ) == -1 )
 				{
 				bu_log( "\"%s\" (%d) read of pixel from <%d,%d> failed.\n",
 					__FILE__, __LINE__, x, ypos
@@ -147,9 +147,9 @@ do_char(int c, register int xpos, register int ypos)
 			pixel[RED] = pixel[RED]*(1.0-weight) + FONTCOLOR_RED*weight;
 			pixel[GRN] = pixel[GRN]*(1.0-weight) + FONTCOLOR_GRN*weight;
 			pixel[BLU] = pixel[BLU]*(1.0-weight) + FONTCOLOR_BLU*weight;
-			if( fb_seek( fbiop, x, ypos + up ) == -1 )
+			if ( fb_seek( fbiop, x, ypos + up ) == -1 )
 				continue;
-			if( fb_wpixel( fbiop, (unsigned char *) pixel ) == -1 )
+			if ( fb_wpixel( fbiop, (unsigned char *) pixel ) == -1 )
 				{
 				bu_log( "\"%s\" (%d) write of pixel to <%d,%d> failed.\n",
 					__FILE__, __LINE__, x, ypos
@@ -174,10 +174,10 @@ bitx(register char *bitstring, register int posn)
 	asm("extzv	r10,$1,(r11), r8");
 	return field;
 #else
-	for( ; posn >= 8; posn -= 8, bitstring++ )
+	for (; posn >= 8; posn -= 8, bitstring++ )
 		;
 #if defined( CANT_DO_ZERO_SHIFT )
-	if( posn == 0 )
+	if ( posn == 0 )
 		return	(int)(*bitstring) & 1;
 	else
 #endif

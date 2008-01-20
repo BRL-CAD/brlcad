@@ -92,7 +92,7 @@ struct points
 	char elbow[NAMESIZE], elbflu[NAMESIZE], cut[NAMESIZE];	/* solid names */
 	char tube_r[NAMESIZE], tubflu_r[NAMESIZE];		/* region names */
 	char elbow_r[NAMESIZE], elbflu_r[NAMESIZE];		/* region names */
-	struct points *next,*prev;
+	struct points *next, *prev;
 };
 
 
@@ -105,12 +105,12 @@ mat_t	identity;
 int torus=0, sphere=0, mitre=0, nothing=0, cable=0;
 
 /*	formats for solid and region names	*/
-char *tor_out="%02d-out.tor",*tor_in="%02d-in.tor";
+char *tor_out="%02d-out.tor", *tor_in="%02d-in.tor";
 char *haf="%02d.haf";
-char *sph_out="%02d-out.sph",*sph_in="%02d-in.sph";
-char *rcc_out="%02d-out.rcc",*rcc_in="%02d-in.rcc";
-char *tub_reg="%02d.tube",*tub_flu="%02d.tubflu";
-char *elb_reg="%02d.elbow",*elb_flu="%02d.elbflu";
+char *sph_out="%02d-out.sph", *sph_in="%02d-in.sph";
+char *rcc_out="%02d-out.rcc", *rcc_in="%02d-in.rcc";
+char *tub_reg="%02d.tube", *tub_flu="%02d.tubflu";
+char *elb_reg="%02d.elbow", *elb_flu="%02d.elbflu";
 char *arb="%02d.arb";
 
 void Usage(void);
@@ -127,7 +127,7 @@ Make_name(char *ptr, const char *form, const char *base, int number)
 	strncpy( ptr, base, NAMESIZE-1 );
 	snprintf( scrat, NAMESIZE, form, number );
 	len = strlen( ptr ) + strlen( scrat );
-	if( len > (NAMESIZE-1) )
+	if ( len > (NAMESIZE-1) )
 		ptr[ (NAMESIZE-1) - strlen( scrat ) ] = '\0';
 	strncat( ptr, scrat, NAMESIZE-strlen(ptr)-1 );
 	ptr[NAMESIZE-1] = '\0'; /* sanity */
@@ -136,7 +136,7 @@ Make_name(char *ptr, const char *form, const char *base, int number)
 void
 Readpoints(void)
 {
-	struct points *ptr,*prev;
+	struct points *ptr, *prev;
 	fastf_t x, y, z;
 
 	ptr = root;
@@ -144,9 +144,9 @@ Readpoints(void)
 
 
 	printf( "X Y Z (^D for end): ");
-	while(scanf("%lf%lf%lf",&x, &y, &z) ==  3 )
+	while (scanf("%lf%lf%lf", &x, &y, &z) ==  3 )
 	{
-		if( ptr == NULL )
+		if ( ptr == NULL )
 		{
 			ptr = (struct points *)bu_malloc( sizeof( struct points ), "ptr" );
 			root = ptr;
@@ -173,57 +173,57 @@ void
 Names(void)
 {
 	struct points *ptr;
-	char *inform=NULL,*outform=NULL,*cutform=NULL;
+	char *inform=NULL, *outform=NULL, *cutform=NULL;
 	int nummer=0;
 
 
-	if( torus )
+	if ( torus )
 	{
 		outform = tor_out;
 		inform = tor_in;
 		cutform = arb;
 	}
-	else if( sphere )
+	else if ( sphere )
 	{
 		outform = sph_out;
 		inform = sph_in;
 	}
-	else if( mitre )
+	else if ( mitre )
 		cutform = haf;
 
 	ptr = root;
-	while( ptr->next != NULL )
+	while ( ptr->next != NULL )
 	{
 		nummer++;
 
 		/* Outer RCC */
 		Make_name( ptr->tube, rcc_out, name, nummer );
 
-		if( !cable ) /* Inner RCC */
+		if ( !cable ) /* Inner RCC */
 			Make_name( ptr->tubflu, rcc_in, name, nummer );
 
-		if( (sphere || torus) && ptr != root )
+		if ( (sphere || torus) && ptr != root )
 		{
 			/* Outer elbow */
 			Make_name( ptr->elbow, outform, name, nummer );
 
-			if( !cable ) /* Inner elbow */
+			if ( !cable ) /* Inner elbow */
 				Make_name( ptr->elbflu, inform, name, nummer );
 		}
-		if( torus || mitre )	/* Make cutting solid name */
+		if ( torus || mitre )	/* Make cutting solid name */
 			Make_name( ptr->cut, cutform, name, nummer );
 
 		/* Make region names */
 		Make_name( ptr->tube_r, tub_reg, name, nummer ); /* tube region */
 
-		if( (torus || sphere) && ptr != root )	/* Make elbow region name */
+		if ( (torus || sphere) && ptr != root )	/* Make elbow region name */
 			Make_name( ptr->elbow_r, elb_reg, name, nummer );
 
-		if( !cable )	/* Make fluid region names */
+		if ( !cable )	/* Make fluid region names */
 		{
 			Make_name( ptr->tubflu_r, tub_flu, name, nummer );
 
-			if( (torus || sphere) && ptr != root )	/* Make elbow fluid region names */
+			if ( (torus || sphere) && ptr != root )	/* Make elbow fluid region names */
 				Make_name( ptr->elbflu_r, elb_flu, name, nummer );
 		}
 
@@ -246,17 +246,17 @@ Normals(void)
 	struct points *ptr;
 
 
-	if( root == NULL )
+	if ( root == NULL )
 		return;
 
 	ptr = root->next;
-	if( ptr == NULL )
+	if ( ptr == NULL )
 		return;
 
 	VSUB2( root->nnext, ptr->p, root->p );
 	VUNITIZE( root->nnext );
 
-	while( ptr->next != NULL )
+	while ( ptr->next != NULL )
 	{
 		VREVERSE( ptr->nprev, ptr->prev->nnext );
 		VSUB2( ptr->nnext, ptr->next->p, ptr->p );
@@ -267,7 +267,7 @@ Normals(void)
 		VUNITIZE( ptr->nmitre );
 		VCROSS( ptr->mnorm, ptr->norm, ptr->nmitre );
 		VUNITIZE( ptr->mnorm );
-		if( VDOT( ptr->mnorm, ptr->nnext ) > 0.0 )
+		if ( VDOT( ptr->mnorm, ptr->nnext ) > 0.0 )
 			VREVERSE( ptr->mnorm, ptr->mnorm );
 		ptr->alpha = acos( VDOT( ptr->nnext, ptr->nprev ) );
 		ptr = ptr->next;
@@ -280,17 +280,17 @@ Adjust(void)
 	fastf_t beta, d, len;
 	struct points *ptr;
 
-	if( root == NULL )
+	if ( root == NULL )
 		return;
 
 	VMOVE( root->p1, root->p );
 	VMOVE( root->p2, root->p );
 
 	ptr = root->next;
-	if( ptr == NULL )
+	if ( ptr == NULL )
 		return;
 
-	if( ptr->next == NULL )
+	if ( ptr->next == NULL )
 	{
 		VMOVE( ptr->p1, ptr->p );
 		VMOVE( ptr->p2, ptr->p );
@@ -298,14 +298,14 @@ Adjust(void)
 	}
 
 
-	while( ptr->next != NULL )
+	while ( ptr->next != NULL )
 	{
-		if( !torus && !mitre )
+		if ( !torus && !mitre )
 		{
 			VMOVE( ptr->p1, ptr->p );
 			VMOVE( ptr->p2, ptr->p );
 		}
-		else if( torus )
+		else if ( torus )
 		{
 /*			beta=.5*( pi-ptr->alpha );
 			d=( MINR+1.0 )*radius*tan( beta ); */ /* dist from new endpts to p2 */
@@ -317,7 +317,7 @@ Adjust(void)
 			d = sqrt( d*d + (MINR+1.0)*(MINR+1.)*radius*radius );
 			VJOIN1( ptr->center, ptr->p, d, ptr->nmitre );
 		}
-		else if( mitre )
+		else if ( mitre )
 		{
 			len = radius/tan(ptr->alpha/2.0);
 			VJOIN1( ptr->p1, ptr->p, -len, ptr->nprev );
@@ -341,10 +341,10 @@ Pipes(void)
 	BU_LIST_INIT(&head.l);
 
 	ptr = root;
-	if( ptr == NULL )
+	if ( ptr == NULL )
 		return;
 
-	while( ptr->next != NULL )
+	while ( ptr->next != NULL )
 	{
 
 		/* Make the basic pipe solids */
@@ -353,14 +353,14 @@ Pipes(void)
 
 		mk_rcc( fdout, ptr->tube, ptr->p2, ht, radius );	/* make a solid record	     */
 
-		if( !cable ) /* make inside solid */
+		if ( !cable ) /* make inside solid */
 			mk_rcc( fdout, ptr->tubflu, ptr->p2, ht, radius-wall );
 
-		if( torus )
+		if ( torus )
 		{
 			/* Make tubing region */
 			mk_addmember( ptr->tube, &head.l, NULL, WMOP_UNION );	/* make 'u' member record	   */
-			if( !cable )
+			if ( !cable )
 			{
 				/* Subtract inside solid */
 				mk_addmember( ptr->tubflu, &head.l, NULL, WMOP_SUBTRACT );	/* make '-' member record	   */
@@ -370,64 +370,64 @@ Pipes(void)
 			}
 			mk_lfcomb( fdout, ptr->tube_r, &head, 1 );
 		}
-		else if( mitre )
+		else if ( mitre )
 		{
-			if( ptr->prev != NULL )
+			if ( ptr->prev != NULL )
 			{
 				len = VDOT( ptr->p, ptr->mnorm );
 				mk_half( fdout, ptr->cut, ptr->mnorm, len );
 			}
 
 			comblen = 4 - cable;
-			if( ptr->next->next == NULL )
+			if ( ptr->next->next == NULL )
 				comblen--;
-			if( ptr->prev == NULL )
+			if ( ptr->prev == NULL )
 				comblen--;
 
 			mk_addmember( ptr->tube, &head.l, NULL, WMOP_UNION );	/* make 'u' member record	   */
 
-			if( !cable )
+			if ( !cable )
 				mk_addmember( ptr->tubflu, &head.l, NULL, WMOP_SUBTRACT );	/* make '-' member record	   */
 
-			if( ptr->next->next != NULL )
+			if ( ptr->next->next != NULL )
 				mk_addmember( ptr->next->cut, &head.l, NULL, WMOP_SUBTRACT );	/* make '+' member record	   */
 
-			if( ptr->prev != NULL )
+			if ( ptr->prev != NULL )
 				mk_addmember( ptr->cut, &head.l, NULL, WMOP_INTERSECT );	/* subtract HAF */
 
 			mk_lfcomb( fdout, ptr->tube_r, &head, 1 );
 
-			if( !cable )
+			if ( !cable )
 			{
 				/* Make fluid region */
 
 				comblen = 3;
-				if( ptr->next->next == NULL )
+				if ( ptr->next->next == NULL )
 					comblen--;
-				if( ptr->prev == NULL )
+				if ( ptr->prev == NULL )
 					comblen--;
 
 				mk_addmember( ptr->tubflu, &head.l, NULL, WMOP_UNION );	/* make 'u' member record	*/
 
-				if( ptr->next->next != NULL )
+				if ( ptr->next->next != NULL )
 					mk_addmember( ptr->next->cut, &head.l, NULL, WMOP_SUBTRACT );	/* make '+' member record	   */
 
-				if( ptr->prev != NULL )
+				if ( ptr->prev != NULL )
 					mk_addmember( ptr->cut, &head.l, NULL, WMOP_INTERSECT );	/* subtract */
 
 				mk_lfcomb( fdout, ptr->tubflu_r, &head, 1 );	/* make REGION comb record	*/
 			}
 		}
-		else if( sphere )
+		else if ( sphere )
 		{
 
 			/* make REGION  comb record for tube */
 			comblen = 2;
-			if( cable )
+			if ( cable )
 				comblen--;
-			if( ptr->next->tube[0] != '\0' )
+			if ( ptr->next->tube[0] != '\0' )
 				comblen++;
-			if( !cable && ptr->prev != NULL )
+			if ( !cable && ptr->prev != NULL )
 				comblen++;
 
 			/* make 'u' member record	   */
@@ -435,17 +435,17 @@ Pipes(void)
 			mk_addmember( ptr->tube, &head.l, NULL, WMOP_UNION );
 
 			/* make '-' member record	   */
-			if( !cable )
+			if ( !cable )
 				mk_addmember( ptr->tubflu, &head.l, NULL, WMOP_SUBTRACT );
 
-			if( ptr->next->tube[0] != '\0' )	/* subtract outside of next tube */
+			if ( ptr->next->tube[0] != '\0' )	/* subtract outside of next tube */
 				mk_addmember( ptr->next->tube, &head.l, NULL, WMOP_SUBTRACT );
-			if( !cable && ptr->prev != NULL ) /* subtract inside of previous tube */
+			if ( !cable && ptr->prev != NULL ) /* subtract inside of previous tube */
 				mk_addmember( ptr->prev->tubflu, &head.l, NULL, WMOP_SUBTRACT );
 
 			mk_lfcomb( fdout, ptr->tube_r, &head, REGION );
 
-			if( !cable )
+			if ( !cable )
 			{
 				/* make REGION for fluid */
 
@@ -453,22 +453,22 @@ Pipes(void)
 
 				mk_addmember( ptr->tubflu, &head.l, NULL, WMOP_UNION );
 
-				if( ptr->next->tubflu[0] != '\0'  )	/* subtract inside of next tube */
+				if ( ptr->next->tubflu[0] != '\0'  )	/* subtract inside of next tube */
 					mk_addmember( ptr->next->tubflu, &head.l, NULL, WMOP_SUBTRACT );
 
 				mk_lfcomb( fdout, ptr->tubflu_r, &head, REGION );
 			}
 		}
-		else if( nothing )
+		else if ( nothing )
 		{
 
 			/* make REGION  comb record for tube */
 			comblen = 2;
-			if( cable )
+			if ( cable )
 				comblen--;
-			if( ptr->next->tube[0] != '\0' )
+			if ( ptr->next->tube[0] != '\0' )
 				comblen++;
-			if( !cable && ptr->prev != NULL )
+			if ( !cable && ptr->prev != NULL )
 				comblen++;
 
 			/* make 'u' member record	   */
@@ -476,17 +476,17 @@ Pipes(void)
 			mk_addmember( ptr->tube, &head.l, NULL, WMOP_UNION );
 
 			/* make '-' member record	   */
-			if( !cable )
+			if ( !cable )
 				mk_addmember( ptr->tubflu, &head.l, NULL, WMOP_SUBTRACT );
 
-			if( ptr->next->tube[0] != '\0' )	/* subtract outside of next tube */
+			if ( ptr->next->tube[0] != '\0' )	/* subtract outside of next tube */
 				mk_addmember( ptr->next->tube, &head.l, NULL, WMOP_SUBTRACT );
-			if( !cable && ptr->prev != NULL ) /* subtract inside of previous tube */
+			if ( !cable && ptr->prev != NULL ) /* subtract inside of previous tube */
 				mk_addmember( ptr->prev->tubflu, &head.l, NULL, WMOP_SUBTRACT );
 
 			mk_lfcomb( fdout, ptr->tube_r, &head, REGION );
 
-			if( !cable )
+			if ( !cable )
 			{
 				/* make REGION for fluid */
 
@@ -494,7 +494,7 @@ Pipes(void)
 
 				mk_addmember( ptr->tubflu, &head.l, NULL, WMOP_UNION );
 
-				if( ptr->next->tubflu[0] != '\0'  )	/* subtract inside of next tube */
+				if ( ptr->next->tubflu[0] != '\0'  )	/* subtract inside of next tube */
 					mk_addmember( ptr->next->tubflu, &head.l, NULL, WMOP_SUBTRACT );
 
 				mk_lfcomb( fdout, ptr->tubflu_r, &head, REGION );
@@ -513,33 +513,33 @@ Elbows(void)	/* make a tubing elbow and fluid elbow */
 	struct points *ptr;
 	struct wmember head;
 
-	if( nothing || mitre )
+	if ( nothing || mitre )
 		return;
 
-	if( root == NULL )
+	if ( root == NULL )
 		return;
 
 	BU_LIST_INIT(&head.l);
 
 	ptr = root->next;
-	while( ptr->next != NULL )
+	while ( ptr->next != NULL )
 	{
 
 		/* Make outside elbow solid */
-		if( torus )
+		if ( torus )
 			mk_tor( fdout, ptr->elbow, ptr->center, ptr->norm, ( MINR+1 )*radius, radius );
-		else if( sphere )
+		else if ( sphere )
 			mk_sph( fdout, ptr->elbow, ptr->p, radius );
 
-		if( !cable ) /* Make inside elbow solid */
+		if ( !cable ) /* Make inside elbow solid */
 		{
-			if( torus )
+			if ( torus )
 				mk_tor( fdout, ptr->elbflu, ptr->center, ptr->norm, ( MINR+1 )*radius, radius-wall );
-			else if( sphere )
+			else if ( sphere )
 				mk_sph( fdout, ptr->elbflu, ptr->p, radius-wall );
 		}
 
-		if( torus )	/* Make ARB8 solid */
+		if ( torus )	/* Make ARB8 solid */
 		{
 			len = ((MINR+2)*radius + delta) / cos( (pi-ptr->alpha)/4.0 );
 				/* vector from center of torus to rcc end */
@@ -563,32 +563,32 @@ Elbows(void)	/* make a tubing elbow and fluid elbow */
 			mk_arb8( fdout, ptr->cut, &pts[0][X] );
 		}
 
-		if( torus )
+		if ( torus )
 		{
 			mk_addmember( ptr->elbow, &head.l, NULL, WMOP_UNION );	/* make 'u' member record	   */
-			if( !cable )
+			if ( !cable )
 				mk_addmember(  ptr->elbflu, &head.l, NULL, WMOP_SUBTRACT );	/* make '-' member record	   */
 			mk_addmember( ptr->cut, &head.l, NULL, WMOP_INTERSECT );
 			mk_lfcomb( fdout, ptr->elbow_r, &head, REGION );	/* make REGION  comb record	   */
 
-			if( !cable )
+			if ( !cable )
 			{
 				mk_addmember( ptr->elbflu, &head.l, NULL, WMOP_UNION );	/* make 'u' member record	*/
 				mk_addmember( ptr->cut, &head.l, NULL, WMOP_INTERSECT );
 				mk_lfcomb( fdout, ptr->elbflu_r, &head, REGION );		/* make REGION comb record	*/
 			}
 		}
-		else if( sphere )
+		else if ( sphere )
 		{
 			mk_addmember( ptr->elbow, &head.l, NULL, WMOP_UNION );	/* make 'u' member record	   */
-			if( !cable )
+			if ( !cable )
 				mk_addmember( ptr->elbflu, &head.l, NULL, WMOP_SUBTRACT );	/* make '-' member record	   */
 			mk_addmember( ptr->tube, &head.l, NULL, WMOP_SUBTRACT );
 			mk_addmember( ptr->prev->tube, &head.l, NULL, WMOP_SUBTRACT );
 
 			mk_lfcomb( fdout, ptr->elbow_r, &head, REGION );	/* make REGION  comb record	   */
 
-			if( !cable )
+			if ( !cable )
 			{
 				mk_addmember( ptr->elbflu, &head.l, NULL, WMOP_UNION );	/* make 'u' member record	*/
 				mk_addmember( ptr->tube, &head.l, NULL, WMOP_SUBTRACT );
@@ -613,19 +613,19 @@ Groups(void)
 	BU_LIST_INIT(&head.l);
 
 	ptr = root;
-	if( ptr == NULL )
+	if ( ptr == NULL )
 		return;
 
-	while( ptr->next != NULL )
+	while ( ptr->next != NULL )
 	{
-		if( !nothing && !mitre && comblen)	/* count elbow sections (except first point) */
+		if ( !nothing && !mitre && comblen)	/* count elbow sections (except first point) */
 			comblen++;
 		comblen++;	/* count pipe sections */
 
 		ptr = ptr->next;
 	}
 
-	if( comblen )
+	if ( comblen )
 	{
 
 		/* Make name for pipe group = "name".pipe */
@@ -633,29 +633,29 @@ Groups(void)
 
 		/* Make group */
 		ptr = root;
-		while( ptr->next != NULL )
+		while ( ptr->next != NULL )
 		{
 			mk_addmember( ptr->tube_r, &head.l, NULL, WMOP_UNION );	/* tube regions */
 
-			if( !nothing && !mitre && ptr != root )
+			if ( !nothing && !mitre && ptr != root )
 				mk_addmember( ptr->elbow_r, &head.l, NULL, WMOP_UNION );	/* elbows */
 
 			ptr = ptr->next;
 		}
 		mk_lfcomb( fdout, tag, &head, 0 );
 
-		if( !cable )
+		if ( !cable )
 		{
 			/* Make name for fluid group = "name".fluid */
 			Make_name( tag, fluid_group, name, 0 );
 
 			/* Make group */
 			ptr = root;
-			while( ptr->next != NULL )
+			while ( ptr->next != NULL )
 			{
 				mk_addmember( ptr->tubflu_r, &head.l, NULL, WMOP_UNION );	/* fluid in tubes */
 
-				if( !nothing && !mitre && ptr != root )
+				if ( !nothing && !mitre && ptr != root )
 					mk_addmember( ptr->elbflu_r, &head.l, NULL, WMOP_UNION ); /* fluid in elbows */
 
 				ptr = ptr->next;
@@ -672,9 +672,9 @@ main(int argc, char **argv)
 	char units[16], fname[80];
 	int optc;
 
-	while( (optc = bu_getopt( argc, argv, "tsmnc" )) != -1)
+	while ( (optc = bu_getopt( argc, argv, "tsmnc" )) != -1)
 	{
-		switch( optc )	/* Set joint type and cable option */
+		switch ( optc )	/* Set joint type and cable option */
 		{
 			case 't':
 				torus = 1;
@@ -700,17 +700,17 @@ main(int argc, char **argv)
 		}
 	}
 
-	if( (torus + sphere + mitre + nothing) > 1 ) /* Too many joint options */
+	if ( (torus + sphere + mitre + nothing) > 1 ) /* Too many joint options */
 	{
 		Usage();
 		fprintf( stderr, "Options t, s, m, n are mutually exclusive\n" );
 		return 1;
 	}
-	else if( (torus + sphere + mitre + nothing) == 0 ) {
+	else if ( (torus + sphere + mitre + nothing) == 0 ) {
 		torus = 1;		/* default */
 	}
 
-	if( (argc - bu_optind) != 2 ) {
+	if ( (argc - bu_optind) != 2 ) {
 		Usage();
 		return 1;
 	}
@@ -718,7 +718,7 @@ main(int argc, char **argv)
 	strncpy( name, argv[bu_optind++], NAMESIZE-1 ); /* Base name for objects */
 
 	fdout = wdb_fopen( argv[bu_optind] );
-	if( fdout == NULL )
+	if ( fdout == NULL )
 	{
 		fprintf( stderr, "Cannot open %s\n", argv[bu_optind] );
 		perror( "Pipe" );
@@ -733,7 +733,7 @@ main(int argc, char **argv)
 	printf( "append %s to your target description using 'concat' in mged\n", argv[bu_optind] );
 
 	k = 0.0;
-	while( k == 0.0 )
+	while ( k == 0.0 )
 	{
 		printf( "UNITS? (ft, in, m, cm, default is millimeters) ");
 		bu_fgets(units, sizeof(units), stdin);
@@ -770,11 +770,11 @@ main(int argc, char **argv)
 	}
 
 	done = 0;
-	while( !done )
+	while ( !done )
 	{
-		if( !cable ) {
+		if ( !cable ) {
 			printf( "radius and wall thickness: ");
-			if (scanf("%lf %lf", &radius,&wall) == EOF )
+			if (scanf("%lf %lf", &radius, &wall) == EOF )
 			    return 1;
 			if (radius > wall)
 				done = 1;
@@ -787,7 +787,7 @@ main(int argc, char **argv)
 		}
 		else {
 			printf( "radius: ");
-			if( scanf("%lf", &radius ) == EOF )
+			if ( scanf("%lf", &radius ) == EOF )
 			    return 1;
 			done=1;
 		}
@@ -806,7 +806,7 @@ main(int argc, char **argv)
 /*	Generate Title */
 
 	strncpy(fname, name, 80-1);
-	if( !cable )
+	if ( !cable )
 		strcat(fname, " pipe and fluid");
 	else
 		strcat(fname, " cable");

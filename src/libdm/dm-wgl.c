@@ -210,7 +210,7 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
   }
 
   BU_GETSTRUCT(dmp, dm);
-  if(dmp == DM_NULL) {
+  if (dmp == DM_NULL) {
       return DM_NULL;
   }
 
@@ -218,13 +218,13 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
   dmp->dm_interp = interp;
 
   dmp->dm_vars.pub_vars = (genptr_t)bu_calloc(1, sizeof(struct dm_xvars), "wgl_open: dm_xvars");
-  if(dmp->dm_vars.pub_vars == (genptr_t)NULL){
+  if (dmp->dm_vars.pub_vars == (genptr_t)NULL){
     bu_free(dmp, "wgl_open: dmp");
     return DM_NULL;
   }
 
   dmp->dm_vars.priv_vars = (genptr_t)bu_calloc(1, sizeof(struct wgl_vars), "wgl_open: wgl_vars");
-  if(dmp->dm_vars.priv_vars == (genptr_t)NULL){
+  if (dmp->dm_vars.priv_vars == (genptr_t)NULL){
     bu_free(dmp->dm_vars.pub_vars, "wgl_open: dmp->dm_vars.pub_vars");
     bu_free(dmp, "wgl_open: dmp");
     return DM_NULL;
@@ -239,20 +239,20 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
 
   dm_processOptions(dmp, &init_proc_vls, --argc, ++argv);
 
-  if(bu_vls_strlen(&dmp->dm_pathName) == 0)
+  if (bu_vls_strlen(&dmp->dm_pathName) == 0)
      bu_vls_printf(&dmp->dm_pathName, ".dm_wgl%d", count);
   ++count;
 
-  if(bu_vls_strlen(&dmp->dm_dName) == 0){
+  if (bu_vls_strlen(&dmp->dm_dName) == 0){
     char *dp;
 
     dp = getenv("DISPLAY");
-    if(dp)
+    if (dp)
       bu_vls_strcpy(&dmp->dm_dName, dp);
     else
       bu_vls_strcpy(&dmp->dm_dName, ":0.0");
   }
-  if(bu_vls_strlen(&init_proc_vls) == 0)
+  if (bu_vls_strlen(&init_proc_vls) == 0)
     bu_vls_strcpy(&init_proc_vls, "bind_dm");
 
   /* initialize dm specific variables */
@@ -276,18 +276,18 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
   /* this is important so that wgl_configureWin knows to set the font */
   ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = NULL;
 
-  if(dmp->dm_width == 0){
+  if (dmp->dm_width == 0){
     dmp->dm_width = GetSystemMetrics(SM_CXSCREEN)- 30;
      ++make_square;
   }
-  if(dmp->dm_height == 0){
+  if (dmp->dm_height == 0){
     dmp->dm_height = GetSystemMetrics(SM_CYSCREEN) - 30;
      ++make_square;
   }
 
-  if(make_square > 0){
+  if (make_square > 0){
     /* Make window square */
-    if(dmp->dm_height <
+    if (dmp->dm_height <
        dmp->dm_width)
       dmp->dm_width =
 	dmp->dm_height;
@@ -296,7 +296,7 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
 	dmp->dm_width;
   }
 
-  if(dmp->dm_top){
+  if (dmp->dm_top){
       /* Make xtkwin a toplevel window */
 #if 1
       Tcl_DString ds;
@@ -325,7 +325,7 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
      char *cp;
 
      cp = strrchr(bu_vls_addr(&dmp->dm_pathName), (int)'.');
-     if(cp == bu_vls_addr(&dmp->dm_pathName)){
+     if (cp == bu_vls_addr(&dmp->dm_pathName)){
        ((struct dm_xvars *)dmp->dm_vars.pub_vars)->top = tkwin;
      }else{
        struct bu_vls top_vls;
@@ -344,7 +344,7 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
 		       cp + 1, (char *)NULL);
   }
 
-  if( ((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin == NULL ) {
+  if ( ((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin == NULL ) {
       bu_log("open_gl: Failed to open %s\n", bu_vls_addr(&dmp->dm_pathName));
       bu_vls_free(&init_proc_vls);
       (void)wgl_close(dmp);
@@ -393,7 +393,7 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
   hdc = GetDC(hwnd);
   ((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc = hdc;
 
-  if((((struct dm_xvars *)dmp->dm_vars.pub_vars)->vip =
+  if ((((struct dm_xvars *)dmp->dm_vars.pub_vars)->vip =
       wgl_choose_visual(dmp,
 			((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin)) == NULL) {
       bu_log("wgl_open: Can't get an appropriate visual.\n");
@@ -662,18 +662,18 @@ HIDDEN int
 wgl_close(dmp)
 struct dm *dmp;
 {
-    if(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy){
-	if(((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc){
+    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy){
+	if (((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc){
 	    wglMakeCurrent( ((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
 			    ((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc);
 	    wglDeleteContext(((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc);
 	}
 
-	if(((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap)
+	if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap)
 	    XFreeColormap(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			  ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap);
 
-	if(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin)
+	if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin)
 	    Tk_DestroyWindow(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin);
     }
 
@@ -798,7 +798,7 @@ struct dm *dmp;
 	bu_vls_init(&tmp_vls);
 	bu_vls_printf(&tmp_vls, "ANY ERRORS?\n");
 
-	while((error = glGetError())!=0){
+	while ((error = glGetError())!=0){
 	    bu_vls_printf(&tmp_vls, "Error: %x\n", error);
 	}
 
@@ -850,7 +850,7 @@ int which_eye;
   GLfloat gtmat[16];
   mat_t	newm;
 
-  if(dmp->dm_debugLevel){
+  if (dmp->dm_debugLevel){
     struct bu_vls tmp_vls;
 
     bu_log("wgl_loadMatrix()\n");
@@ -867,7 +867,7 @@ int which_eye;
     bu_vls_free(&tmp_vls);
   }
 
-  switch(which_eye)  {
+  switch (which_eye)  {
   case 0:
     /* Non-stereo */
     break;
@@ -1078,7 +1078,7 @@ struct dm *dmp;
     glPushMatrix();
     glLoadIdentity();
     ((struct wgl_vars *)dmp->dm_vars.priv_vars)->face_flag = 1;
-    if(((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.cueing_on)
+    if (((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.cueing_on)
       glDisable(GL_FOG);
     if (dmp->dm_light)
       glDisable(GL_LIGHTING);
@@ -1104,7 +1104,7 @@ int use_aspect;
   if (dmp->dm_debugLevel)
     bu_log("wgl_drawString2D()\n");
 
-  if(use_aspect)
+  if (use_aspect)
     glRasterPos2f(x, y * dmp->dm_aspect);
   else
     glRasterPos2f(x, y);
@@ -1130,7 +1130,7 @@ fastf_t x2, y2;
   if (dmp->dm_debugLevel)
     bu_log("wgl_drawLine2D()\n");
 
-  if(dmp->dm_debugLevel){
+  if (dmp->dm_debugLevel){
     GLfloat pmat[16];
 
     glGetFloatv(GL_PROJECTION_MATRIX, pmat);
@@ -1187,7 +1187,7 @@ fastf_t transparency;
   dmp->dm_fg[1] = g;
   dmp->dm_fg[2] = b;
 
-  if(strict){
+  if (strict){
     glColor3ub( (GLubyte)r, (GLubyte)g, (GLubyte)b );
   }else{
     if (dmp->dm_light) {
@@ -1270,7 +1270,7 @@ int style;
 
   glLineWidth((GLfloat) width);
 
-  if(style == DM_DASHED_LINE)
+  if (style == DM_DASHED_LINE)
     glEnable(GL_LINE_STIPPLE);
   else
     glDisable(GL_LINE_STIPPLE);
@@ -1320,7 +1320,7 @@ HIDDEN PIXELFORMATDESCRIPTOR *
 wgl_choose_visual(struct dm *dmp,
 		  Tk_Window tkwin)
 {
-    int iPixelFormat ;
+    int iPixelFormat;
     PIXELFORMATDESCRIPTOR *ppfd, pfd;
     BOOL good;
 
@@ -1398,7 +1398,7 @@ wgl_configureWin_guts(struct dm *dmp,
     }
 
     hwnd = WindowFromDC(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc);
-    GetWindowRect(hwnd,&xwa);
+    GetWindowRect(hwnd, &xwa);
 
     /* nothing to do */
     if (!force &&
@@ -1417,7 +1417,7 @@ wgl_configureWin_guts(struct dm *dmp,
 
     glViewport(0, 0, dmp->dm_width, dmp->dm_height);
 
-    if(dmp->dm_zbuffer)
+    if (dmp->dm_zbuffer)
 	wgl_setZBuffer(dmp, dmp->dm_zbuffer);
 
     wgl_setLight(dmp, dmp->dm_light);
@@ -1464,8 +1464,8 @@ wgl_configureWin_guts(struct dm *dmp,
 	    }
 	}
 
-	oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-	wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256,((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+	oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+	wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
 
 	if (oldfont != NULL)
 	    DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
@@ -1474,7 +1474,7 @@ wgl_configureWin_guts(struct dm *dmp,
     /* Always try to choose a the font that best fits the window size.
      */
 
-    if(!GetObject( ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct, sizeof(LOGFONT), &logfont)) {
+    if (!GetObject( ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct, sizeof(LOGFONT), &logfont)) {
 	logfont.lfHeight = 18;
 	logfont.lfWidth = 0;
 	logfont.lfEscapement = 0;
@@ -1483,9 +1483,9 @@ wgl_configureWin_guts(struct dm *dmp,
 	logfont.lfItalic = FALSE;
 	logfont.lfUnderline = FALSE;
 	logfont.lfStrikeOut = FALSE;
-	logfont.lfCharSet = ANSI_CHARSET ;
+	logfont.lfCharSet = ANSI_CHARSET;
 	logfont.lfOutPrecision = OUT_DEFAULT_PRECIS;
-	logfont.lfClipPrecision =  CLIP_DEFAULT_PRECIS ;
+	logfont.lfClipPrecision =  CLIP_DEFAULT_PRECIS;
 	logfont.lfQuality = DEFAULT_QUALITY;
 	logfont.lfPitchAndFamily = DEFAULT_PITCH | FF_DONTCARE;
 	logfont.lfFaceName[0] = (TCHAR) 0;
@@ -1496,8 +1496,8 @@ wgl_configureWin_guts(struct dm *dmp,
 	    return TCL_ERROR;
 	}
 
-	oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-	wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256,((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+	oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+	wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
 
 	if (oldfont != NULL)
 	    DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
@@ -1511,8 +1511,8 @@ wgl_configureWin_guts(struct dm *dmp,
 	    if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
 
 		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256,((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+		oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+		wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
 
 		if (oldfont != NULL)
 		    DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
@@ -1525,8 +1525,8 @@ wgl_configureWin_guts(struct dm *dmp,
 
 	    if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
 		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256,((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+		oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+		wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
 
 		if (oldfont != NULL)
 		    DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
@@ -1539,8 +1539,8 @@ wgl_configureWin_guts(struct dm *dmp,
 
 	    if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
 		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256,((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+		oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+		wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
 		DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
 	    }
 	}
@@ -1550,8 +1550,8 @@ wgl_configureWin_guts(struct dm *dmp,
 	    logfont.lfWidth = 0;
 	    if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
 		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256,((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+		oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+		wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
 
 		if (oldfont != NULL)
 		    DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
@@ -1563,8 +1563,8 @@ wgl_configureWin_guts(struct dm *dmp,
 	    logfont.lfWidth = 0;
 	    if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
 		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256,((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+		oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+		wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
 
 		if (oldfont != NULL)
 		    DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));

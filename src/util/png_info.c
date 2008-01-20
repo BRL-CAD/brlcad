@@ -66,12 +66,12 @@ main(int argc, char **argv)
 	unsigned char *image;
 	unsigned char **rows;
 
-	if( argc != 2 )
+	if ( argc != 2 )
 	{
 		bu_log( usage, argv[0] );
 		bu_exit( EXIT_FAILURE, "Incorrect numer of arguments!!\n" );
 	} else {
-		if( (fp_in = fopen(argv[1], "rb")) == NULL )  {
+		if ( (fp_in = fopen(argv[1], "rb")) == NULL )  {
 			perror(argv[1]);
 			bu_log(	"png_onfo: cannot open \"%s\" for reading\n",
 				argv[1] );
@@ -79,18 +79,18 @@ main(int argc, char **argv)
 		}
 	}
 
-	if( fread( header, 8, 1, fp_in ) != 1 )
+	if ( fread( header, 8, 1, fp_in ) != 1 )
 		bu_exit( EXIT_FAILURE, "ERROR: Failed while reading file header!!!\n" );
 
-	if( !png_check_sig( (png_bytep)header, 8 ) )
+	if ( !png_check_sig( (png_bytep)header, 8 ) )
 		bu_exit( EXIT_FAILURE, "This is not a PNG file!!!\n" );
 
 	png_p = png_create_read_struct( PNG_LIBPNG_VER_STRING, NULL, NULL, NULL );
-	if( !png_p )
+	if ( !png_p )
 		bu_exit( EXIT_FAILURE, "png_create_read_struct() failed!!\n" );
 
 	info_p = png_create_info_struct( png_p );
-	if( !info_p )
+	if ( !info_p )
 		bu_exit( EXIT_FAILURE, "png_create_info_struct() failed!!\n" );
 
 	png_init_io( png_p, fp_in );
@@ -135,42 +135,42 @@ main(int argc, char **argv)
 
 	/* create rows array */
 	rows = (unsigned char **)bu_calloc( file_height, sizeof( unsigned char *), "rows" );
-	for( i=0 ; i<file_height ; i++ )
+	for ( i=0; i<file_height; i++ )
 		rows[file_height-1-i] = image+(i*file_width*3);
 
 	png_read_image( png_p, rows );
 
-	if( png_get_oFFs( png_p, info_p, &xoff, &yoff, &unit_type ) )
+	if ( png_get_oFFs( png_p, info_p, &xoff, &yoff, &unit_type ) )
 	{
-		if( unit_type == PNG_OFFSET_PIXEL )
+		if ( unit_type == PNG_OFFSET_PIXEL )
 			bu_log( "X Offset: %d pixels\nY Offset: %d pixels\n", xoff, yoff );
-		else if( unit_type == PNG_OFFSET_MICROMETER )
+		else if ( unit_type == PNG_OFFSET_MICROMETER )
 			bu_log( "X Offset: %d um\nY Offset: %d um\n", xoff, yoff );
 	}
 
-	if( png_get_pHYs( png_p, info_p, &xres, &yres, &unit_type ) )
+	if ( png_get_pHYs( png_p, info_p, &xres, &yres, &unit_type ) )
 	{
-		if( unit_type == PNG_RESOLUTION_UNKNOWN )
+		if ( unit_type == PNG_RESOLUTION_UNKNOWN )
 			bu_log( "Aspect ratio: %g (width/height)\n", (double)xres/(double)yres );
-		else if( unit_type == PNG_RESOLUTION_METER )
+		else if ( unit_type == PNG_RESOLUTION_METER )
 			bu_log( "pixel density:\n\t%d pixels/m hroizontal\n\t%d pixels/m vertical\n",
 					xres, yres );
 	}
 
-	if( png_get_interlace_type( png_p, info_p ) == PNG_INTERLACE_NONE )
+	if ( png_get_interlace_type( png_p, info_p ) == PNG_INTERLACE_NONE )
 		bu_log( "not interlaced\n" );
 	else
 		bu_log( "interlaced\n" );
 
-	if( color_type == PNG_COLOR_TYPE_GRAY_ALPHA ||
+	if ( color_type == PNG_COLOR_TYPE_GRAY_ALPHA ||
 			color_type == PNG_COLOR_TYPE_RGB_ALPHA )
-		if( png_get_bKGD( png_p, info_p, &input_backgrd ) )
+		if ( png_get_bKGD( png_p, info_p, &input_backgrd ) )
 			bu_log( "background color: %d %d %d\n", input_backgrd->red, input_backgrd->green, input_backgrd->blue );
 
-	if( png_get_sRGB( png_p, info_p, &rgb_intent ) )
+	if ( png_get_sRGB( png_p, info_p, &rgb_intent ) )
 	{
 		bu_log( "rendering intent: " );
-		switch( rgb_intent )
+		switch ( rgb_intent )
 		{
 			case PNG_sRGB_INTENT_SATURATION:
 				bu_log( "saturation\n" );
@@ -187,11 +187,11 @@ main(int argc, char **argv)
 		}
 	}
 
-	if( png_get_gAMA( png_p, info_p, &gamma ) )
+	if ( png_get_gAMA( png_p, info_p, &gamma ) )
 		bu_log( "gamma: %g\n", gamma );
 
 #if defined(PNG_READ_cHRM_SUPPORTED)
-	if( png_get_cHRM( png_p, info_p, &white_x, &white_y, &red_x, &red_y, &green_x, &green_y, &blue_x, &blue_y ) )
+	if ( png_get_cHRM( png_p, info_p, &white_x, &white_y, &red_x, &red_y, &green_x, &green_y, &blue_x, &blue_y ) )
 	{
 		bu_log( "Chromaticity:\n" );
 		bu_log( "\twhite point\t(%g %g )\n\tred\t(%g %g)\n\tgreen\t(%g %g)\n\tblue\t(%g %g)\n",
@@ -199,11 +199,11 @@ main(int argc, char **argv)
 	}
 #endif
 
-	if( png_get_text( png_p, info_p, &text, &num_text ) )
-		for( i=0 ; i<num_text ; i++ )
+	if ( png_get_text( png_p, info_p, &text, &num_text ) )
+		for ( i=0; i<num_text; i++ )
 			bu_log( "%s: %s\n", text[i].key, text[i].text );
 
-	if( png_get_tIME( png_p, info_p, &mod_time ) )
+	if ( png_get_tIME( png_p, info_p, &mod_time ) )
 		bu_log( "Last modified: %d/%d/%d %d:%d:%d\n", mod_time->month, mod_time->day,
 			mod_time->year, mod_time->hour, mod_time->minute, mod_time->second );
 	return 0;

@@ -53,39 +53,39 @@ main(int argc, char *argv[])
 
 	printf( "$03" );
 
-	while( bu_fgets( str, sizeof(str), stdin ) )
+	while ( bu_fgets( str, sizeof(str), stdin ) )
 	{
 		sscanf( str, "%d %d %d %d %d %f", &face_no, &npts, &face_type, &e, &ident, &a );
 
-		if( ident > 0 )
+		if ( ident > 0 )
 			old_id = ident;
 
-		if( !bu_fgets( str, sizeof(str), stdin ) )
+		if ( !bu_fgets( str, sizeof(str), stdin ) )
 			break;
 
 		sscanf( str, "%f %f %f %f", &a, &b, &c, &d );
 		QSET( pl, a, b, c, d )
 
-		if( npts > 2 )
+		if ( npts > 2 )
 			printf( "%10d%3d%7.0f%5d%5d", old_id, face_type, 0.0, 1, npts );
 
-		for( i=0 ; i<npts ; i++ )
+		for ( i=0; i<npts; i++ )
 		{
-			if( i >= MAX_PTS )
+			if ( i >= MAX_PTS )
 			{
 				fprintf( stderr, "Too many points, MAX is %d\n", MAX_PTS );
 				return 1;
 			}
-			if( !bu_fgets( str, sizeof(str), stdin ) )
+			if ( !bu_fgets( str, sizeof(str), stdin ) )
 			{
 				fprintf( stderr, "Unexpected EOF\n" );
 				break;
 			}
 			sscanf( str, "%f %f %f", &a, &b, &c );
-			if( npts > 2 )
+			if ( npts > 2 )
 				printf( "%10d%8.1f%8.1f%8.1f", i+1, a, b, c );
 		}
-		if( npts > 2 )
+		if ( npts > 2 )
 			printf( "         1%15.5f%15.5f%15.5f%15.5f", V4ARGS( pl ) );
 	}
 	return 0;

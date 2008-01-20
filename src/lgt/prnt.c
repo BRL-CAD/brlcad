@@ -143,12 +143,12 @@ char	screen[TOP_SCROLL_WIN+1][TEMPLATE_COLS+1];
 static void
 pad_Strcpy(register char *des, register char *src, register int len)
 {
-	while( len > 0 && *src != '\0' )
+	while ( len > 0 && *src != '\0' )
 		{
 		*des++ = *src++;
 		len--;
 		}
-	while( len-- > 0 )
+	while ( len-- > 0 )
 		*des++ = ' ';
 	return;
 	}
@@ -157,8 +157,8 @@ pad_Strcpy(register char *des, register char *src, register int len)
 void
 init_Status(void)
 {	register int	row, col;
-	for( row = 0; row <= TOP_SCROLL_WIN; row++ )
-		for( col = 0; col <= TEMPLATE_COLS; col++ )
+	for ( row = 0; row <= TOP_SCROLL_WIN; row++ )
+		for ( col = 0; col <= TEMPLATE_COLS; col++ )
 			screen[row][col] = '\0';
 	return;
 	}
@@ -221,14 +221,14 @@ void
 update_Screen(void)
 {	register int	tem_co, row, col;
 	tem_co = Min( co, TEMPLATE_COLS );
-	for( row = 0; template[row][0] != '\0'; row++ )
+	for ( row = 0; template[row][0] != '\0'; row++ )
 		{	register int	lastcol = -2;
-		if( template[row+1] == NULL )
+		if ( template[row+1] == NULL )
 			(void) SetStandout();
-		for( col = 0; col < tem_co; col++ )
-			if( screen[row][col] != template[row][col] )
+		for ( col = 0; col < tem_co; col++ )
+			if ( screen[row][col] != template[row][col] )
 				{
-				if( col != lastcol+1 )
+				if ( col != lastcol+1 )
 					MvCursor( col+1, row+1 );
 				lastcol = col;
 				(void) putchar( template[row][col] );
@@ -246,17 +246,17 @@ void
 prnt_Paged_Menu(register char **menu)
 {	register int	done = FALSE;
 		int		lines =	(PROMPT_LINE-TOP_SCROLL_WIN);
-	if( ! tty )
+	if ( ! tty )
 		{
-		for( ; *menu != NULL; menu++ )
+		for (; *menu != NULL; menu++ )
 			bu_log( "%s\n", *menu );
 		return;
 		}
-	for( ; *menu != NULL && ! done;  )
+	for (; *menu != NULL && ! done;  )
 		{
-		for( ; lines > 0 && *menu != NULL; menu++, --lines )
+		for (; lines > 0 && *menu != NULL; menu++, --lines )
 			prnt_Scroll( "%-*s\n", co, *menu );
-		if( *menu != NULL )
+		if ( *menu != NULL )
 			done = ! do_More( &lines );
 		prnt_Prompt( "" );
 		}
@@ -267,7 +267,7 @@ prnt_Paged_Menu(register char **menu)
 int
 do_More(int *linesp)
 {	register int	ret = TRUE;
-	if( ! tty )
+	if ( ! tty )
 		return	TRUE;
 	save_Tty( 0 );
 	set_Raw( 0 );
@@ -276,7 +276,7 @@ do_More(int *linesp)
 	prnt_Prompt( "More ? [n|<return>|<space>] " );
 	ClrStandout();
 	(void) fflush( stdout );
-	switch( hm_getchar() )
+	switch ( hm_getchar() )
 		{
 	case 'Q' :
 	case 'q' :
@@ -302,7 +302,7 @@ void
 prnt_Menu(void)
 {
 	prnt_Paged_Menu( lgt_menu );
-	if( ir_mapping )
+	if ( ir_mapping )
 		prnt_Paged_Menu( ir_menu );
 	hmredraw();
 	return;
@@ -312,7 +312,7 @@ prnt_Menu(void)
 void
 prnt_Prompt(char *prompt)
 {
-	if( tty )
+	if ( tty )
 		{
 		PROMPT_MOVE();
 		(void) ClrEOL();
@@ -329,7 +329,7 @@ void
 prnt_Timer(char *eventstr)
 {
 	(void) rt_read_timer( timer, TIMER_LEN-1 );
-	if( tty )
+	if ( tty )
 		{
 		pad_Strcpy( TIMER_PTR, timer, TIMER_LEN-1 );
 		update_Screen();
@@ -344,21 +344,21 @@ void
 prnt_Event(char *s)
 {	static int	lastlen = 0;
 		register int	i;
-	if( ! tty )
+	if ( ! tty )
 		return;
 	EVENT_MOVE();
-	if( s != NULL )
+	if ( s != NULL )
 		{	register int len = strlen( s );
 		(void) fputs( s, stdout );
 		/* Erase last message. */
-		for( i = len; i < lastlen; i++ )
+		for ( i = len; i < lastlen; i++ )
 			(void) putchar( ' ' );
 		lastlen = len;
 		}
 	else
 		{
 		/* Erase last message. */
-		for( i = 0; i < lastlen; i++ )
+		for ( i = 0; i < lastlen; i++ )
 			(void) putchar( ' ' );
 		lastlen = 0;
 		}
@@ -371,7 +371,7 @@ prnt_Event(char *s)
 void
 prnt_Title(char *titleptr)
 {
-	if( ! tty || RT_G_DEBUG )
+	if ( ! tty || RT_G_DEBUG )
 		bu_log( "%s\n", titleptr == NULL ? "(null)" : titleptr );
 	return;
 	}
@@ -382,7 +382,7 @@ prnt_Title(char *titleptr)
 void
 prnt_Usage(void)
 {	register char	**p = usage;
-	while( *p != NULL )
+	while ( *p != NULL )
 		(void) fprintf( stderr, "%s\n", *p++ );
 	return;
 	}
@@ -394,13 +394,13 @@ prnt_Scroll(const char *fmt, ... ) {
     /* We use the same lock as malloc.  Sys-call or mem lock, really */
     bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
     va_start( ap, fmt );
-    if( tty )
+    if ( tty )
 	{ /* Only move cursor and scroll if newline is output.	*/
 	    static int	newline = 1;
-	    if( CS != NULL )
+	    if ( CS != NULL )
 		{
 		    (void) SetScrlReg( TOP_SCROLL_WIN, PROMPT_LINE - 1 );
-		    if( newline )
+		    if ( newline )
 			{
 			    SCROLL_PR_MOVE();
 			    (void) ClrEOL();
@@ -409,9 +409,9 @@ prnt_Scroll(const char *fmt, ... ) {
 		    (void) ResetScrlReg();
 		}
 	    else
-		if( DL != NULL )
+		if ( DL != NULL )
 		    {
-			if( newline )
+			if ( newline )
 			    {
 				SCROLL_DL_MOVE();
 				(void) DeleteLn();

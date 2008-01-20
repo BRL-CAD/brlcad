@@ -53,30 +53,30 @@ char *id;
 	char num[80];
 	char year_str[5];
 
-	if( card[counter] == eof ) /* This is an empty field */
+	if ( card[counter] == eof ) /* This is an empty field */
 	{
 		counter++;
 		return;
 	}
-	else if( card[counter] == eor ) /* Up against the end of record */
+	else if ( card[counter] == eor ) /* Up against the end of record */
 		return;
 
-	if( *id != '\0' )
+	if ( *id != '\0' )
 		bu_log( "%s", id );
 
-	if( card[72] == 'P' )
+	if ( card[72] == 'P' )
 		lencard = PARAMLEN;
 	else
 		lencard = CARDLEN;
 
-	if( counter > lencard )
+	if ( counter > lencard )
 		Readrec( ++currec );
 
-	while( !done )
+	while ( !done )
 	{
-		while( (counter <= lencard) &&
+		while ( (counter <= lencard) &&
 			((num[++i] = card[counter++]) != 'H'));
-		if( counter > lencard )
+		if ( counter > lencard )
 			Readrec( ++currec );
 		else
 			done = 1;
@@ -84,29 +84,29 @@ char *id;
 
 	num[++i] = '\0';
 	length = atoi( num );
-	if( length != 13 && length != 15 )
+	if ( length != 13 && length != 15 )
 	{
 		bu_log( "\tError in time stamp\n" );
 		bu_log( "\tlength of string=%s (should be 13 or 15)\n", num );
 	}
 
-	for( i=0 ; i<length ; i++ )
+	for ( i=0; i<length; i++ )
 	{
-		if( counter > lencard )
+		if ( counter > lencard )
 			Readrec( ++currec );
 		num[i] = card[counter++];
 	}
 
 	year_str[0] = num[0];
 	year_str[1] = num[1];
-	if( length == 13 )
+	if ( length == 13 )
 	{
 		year_str[2] = '\0';
 		year = atoi( year_str );
 		year += 1900;
 		bu_log( "%c%c/%c%c/%d", num[2], num[3], num[4], num[5],
 			year );
-		if( length > 12 && length < 16 )
+		if ( length > 12 && length < 16 )
 		bu_log( " at %c%c:%c%c:%c%c\n", num[7], num[8], num[9],
 			num[10], num[11], num[12] );
 
@@ -123,18 +123,18 @@ char *id;
 			num[12], num[13], num[14] );
 	}
 
-	while( card[counter] != eof && card[counter] != eor )
+	while ( card[counter] != eof && card[counter] != eor )
 	{
-		if( counter < lencard )
+		if ( counter < lencard )
 			counter++;
 		else
 			Readrec( ++currec );
 	}
 
-	if( card[counter] == eof )
+	if ( card[counter] == eof )
 	{
 		counter++;
-		if( counter > lencard )
+		if ( counter > lencard )
 			Readrec( ++ currec );
 	}
 }

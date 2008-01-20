@@ -73,16 +73,16 @@ struct pointstack
 
 bool AproxEqColor(unsigned char a, unsigned char b, int t)
 {	int	c = a-b;
-	if( Abs( c ) > t )
+	if ( Abs( c ) > t )
 		return false;
 	else
 		return true;
 	}
 
 #define AproxPixel(a, b, t) \
-	(AproxEqColor((a)[RED],(b)[RED], t) && \
-	 AproxEqColor((a)[GRN],(b)[GRN], t) && \
-	 AproxEqColor((a)[BLU],(b)[BLU], t))
+	(AproxEqColor((a)[RED], (b)[RED], t) && \
+	 AproxEqColor((a)[GRN], (b)[GRN], t) && \
+	 AproxEqColor((a)[BLU], (b)[BLU], t))
 
 #define Fgets_Bomb() \
 		fb_log( "\%s\"(%d) EOF encountered prematurely.\n", \
@@ -329,20 +329,20 @@ static int cur_width = 512;
 int
 main(int argc, char **argv)
 {
-	if( ! pars_Argv( argc, argv ) )
+	if ( ! pars_Argv( argc, argv ) )
 		{
 		prnt_Usage();
 		return 1;
 		}
 	setbuf( stdout, malloc( BUFSIZ ) );
 	tty = isatty( 1 );
-	if( ! InitTermCap( stdout ) )
+	if ( ! InitTermCap( stdout ) )
 		{
 		(void) fprintf( stderr, "Could not initialize terminal.\n" );
 		return 1;
 		}
 	init_Status();
-	if( fb_Setup() == -1 )
+	if ( fb_Setup() == -1 )
 		return 1;
 	current.r_origin.p_x = 0;
 	current.r_corner.p_x = fb_getwidth(fbp)-1;
@@ -355,7 +355,7 @@ main(int argc, char **argv)
 	get_Font( FONTNAME );
 	{	static char default_macro_file[MAX_LN];
 		char *home;
-	if( (home = getenv( "HOME" )) != NULL )
+	if ( (home = getenv( "HOME" )) != NULL )
 		{
 		(void) strncpy( default_macro_file, home, MAX_LN );
 		home = default_macro_file + strlen( default_macro_file );
@@ -369,26 +369,26 @@ main(int argc, char **argv)
 #define CBREAK_MODE		/* Signals are generated from keyboard. */
 #if defined( CBREAK_MODE )
 	{	register int sig;
-	for( sig = 0; sig < NSIG; sig++ )
-		if( signal( sig, general_Handler ) == SIG_IGN )
+	for ( sig = 0; sig < NSIG; sig++ )
+		if ( signal( sig, general_Handler ) == SIG_IGN )
 			(void) signal( sig, SIG_IGN );
 	}
 #endif
 	(void) fb_flush( fbp );
 	prnt_Prompt( "" );
-	for( cread_buf[0] = NUL; ; )
+	for ( cread_buf[0] = NUL;;)
 		{
 			register int status_change = false;
-		for( ; *cptr != NUL; )
+		for (; *cptr != NUL; )
 			{
 			do_Key_Cmd( (int) *cptr++, 1 );
 			status_change = true;
 			}
-		if( cptr > cread_buf )
+		if ( cptr > cread_buf )
 			*(cptr = cread_buf) = NUL;
 		else
 			{	int c;
-			if( reposition_cursor )
+			if ( reposition_cursor )
 				{
 				(void) fb_cursor(	fbp,
 							1,
@@ -398,9 +398,9 @@ main(int argc, char **argv)
 				status_change = true;
 				reposition_cursor = false;
 				}
-			if( ! empty( tty_fd ) )
+			if ( ! empty( tty_fd ) )
 				{
-				if( (c = get_Char()) != EOF )
+				if ( (c = get_Char()) != EOF )
 					{
 					do_Key_Cmd( c, 1 );
 					status_change = true;
@@ -409,15 +409,15 @@ main(int argc, char **argv)
 					break;
 				}
 			}
-		if(   !	reposition_cursor
+		if (   !	reposition_cursor
 		    &&	(get_Mouse_Pos( &cursor_pos ))
 			!= -1
 			)
 			status_change = true;
-		if( status_change )
+		if ( status_change )
 			{
 			(void) fb_flush( fbp );
-			if( report_status )
+			if ( report_status )
 				prnt_Status();
 			}
 		}
@@ -431,17 +431,17 @@ drawRectangle(Rectangle *rectp, unsigned char *pixelp)
 {	register int x, y;
 	y = rectp->r_origin.p_y;
 	x = rectp->r_origin.p_x;
-	for( ; x < rectp->r_corner.p_x; x++ )
-		if( fb_write( fbp, x, y, pixelp, 1 ) == -1 )
+	for (; x < rectp->r_corner.p_x; x++ )
+		if ( fb_write( fbp, x, y, pixelp, 1 ) == -1 )
 			return false;
-	for( ; y < rectp->r_corner.p_y; y++ )
-		if( fb_write( fbp, x, y, pixelp, 1 ) == -1 )
+	for (; y < rectp->r_corner.p_y; y++ )
+		if ( fb_write( fbp, x, y, pixelp, 1 ) == -1 )
 			return false;
-	for( ; x > rectp->r_origin.p_x; x-- )
-		if( fb_write( fbp, x, y, pixelp, 1 ) == -1 )
+	for (; x > rectp->r_origin.p_x; x-- )
+		if ( fb_write( fbp, x, y, pixelp, 1 ) == -1 )
 			return false;
-	for( ; y > rectp->r_origin.p_y; y-- )
-		if( fb_write( fbp, x, y, pixelp, 1 ) == -1 )
+	for (; y > rectp->r_origin.p_y; y-- )
+		if ( fb_write( fbp, x, y, pixelp, 1 ) == -1 )
 			return false;
 	return true;
 	}
@@ -452,13 +452,13 @@ fillRectangle(register Rectangle *rectp, register RGBpixel (*pixelp))
 		register int top = rectp->r_corner.p_y;
 		register int rgt = rectp->r_corner.p_x;
 		int lft = rectp->r_origin.p_x;
-	if( isSGI )
+	if ( isSGI )
 		{ /* More efficient on IRIS. */
-		if( top - btm < 10 || rgt - lft < 10 )
+		if ( top - btm < 10 || rgt - lft < 10 )
 			{
-			for( ; btm <= top; btm++ )
+			for (; btm <= top; btm++ )
 				{	register int x;
-				for( x = lft; x <= rgt; x++ )
+				for ( x = lft; x <= rgt; x++ )
 					(void) fb_write( fbp, x, btm,
 						(unsigned char *)pixelp, 1 );
 				}
@@ -466,10 +466,10 @@ fillRectangle(register Rectangle *rectp, register RGBpixel (*pixelp))
 		}
 	else
 		{
-		for( ; btm <= top; btm++ )
+		for (; btm <= top; btm++ )
 			{	register int x = lft;
 			(void) fb_seek( fbp, x, btm );
-			for( ; x <= rgt; x++ )
+			for (; x <= rgt; x++ )
 				FB_WPIXEL( fbp, *pixelp );
 			}
 		(void) fb_flush( fbp );
@@ -479,18 +479,18 @@ fillRectangle(register Rectangle *rectp, register RGBpixel (*pixelp))
 STATIC bool
 paintNonBorder(unsigned char *borderpix, Point *pt)
 {	RGBpixel currentpix;
-	if(	pt->p_x < 0 || pt->p_x > fb_getwidth(fbp)
+	if (	pt->p_x < 0 || pt->p_x > fb_getwidth(fbp)
 	    ||	pt->p_y < 0 || pt->p_y > fb_getheight(fbp) )
 		return false; /* outside frame buffer memory */
-	if( fb_read( fbp, pt->p_x, pt->p_y, (unsigned char *) currentpix, 1 ) == -1 )
+	if ( fb_read( fbp, pt->p_x, pt->p_y, (unsigned char *) currentpix, 1 ) == -1 )
 		return false; /* read error */
-	if( EqPixel( currentpix, borderpix ) )
+	if ( EqPixel( currentpix, borderpix ) )
 		return false; /* hit border */
 	else
-	if( EqPixel( currentpix, paint ) )
+	if ( EqPixel( currentpix, paint ) )
 		return false; /* already painted */
 	else
-	if( fb_write( fbp, pt->p_x, pt->p_y, (unsigned char *) paint, 1 ) == -1 )
+	if ( fb_write( fbp, pt->p_x, pt->p_y, (unsigned char *) paint, 1 ) == -1 )
 		return false; /* write error */
 	else
 		return true;
@@ -499,15 +499,15 @@ paintNonBorder(unsigned char *borderpix, Point *pt)
 STATIC bool
 paintSolidRegion(unsigned char *regionpix, Point *pt)
 {	RGBpixel currentpix;
-	if(	pt->p_x < 0 || pt->p_x > fb_getwidth(fbp)
+	if (	pt->p_x < 0 || pt->p_x > fb_getwidth(fbp)
 	    ||	pt->p_y < 0 || pt->p_y > fb_getheight(fbp) )
 		return false; /* outside frame buffer memory */
-	if( fb_read( fbp, pt->p_x, pt->p_y, (unsigned char *) currentpix, 1 ) == -1 )
+	if ( fb_read( fbp, pt->p_x, pt->p_y, (unsigned char *) currentpix, 1 ) == -1 )
 		return false; /* read error */
-	if( ! AproxPixel( currentpix, regionpix, tolerance ) )
+	if ( ! AproxPixel( currentpix, regionpix, tolerance ) )
 		return false; /* hit border */
 	else
-	if( fb_write( fbp, pt->p_x, pt->p_y, (unsigned char *) paint, 1 ) == -1 )
+	if ( fb_write( fbp, pt->p_x, pt->p_y, (unsigned char *) paint, 1 ) == -1 )
 		return false; /* write error */
 	else
 		return true;
@@ -516,7 +516,7 @@ paintSolidRegion(unsigned char *regionpix, Point *pt)
 STATIC void
 pushPoint(Point *pt, PtStack **spp)
 {	register PtStack *new;
-	if( (new = (PtStack *) malloc( sizeof(PtStack) )) == NULL )
+	if ( (new = (PtStack *) malloc( sizeof(PtStack) )) == NULL )
 		{
 		fb_log(	"\"%s\"(%d) Malloc() no more space.\n",
 				__FILE__, __LINE__ );
@@ -530,7 +530,7 @@ pushPoint(Point *pt, PtStack **spp)
 STATIC bool
 popPoint(Point *pt, register PtStack **spp)
 {	register PtStack *next;
-	if( (*spp) == NULL )
+	if ( (*spp) == NULL )
 		return false;
 	*pt = (*spp)->pt;	/* struct copy */
 	next = (*spp)->next;
@@ -547,13 +547,13 @@ init_Try(void)
 {	register int key;
 		register int nop_key = EOF;
 	/* Add all functions except NOP to tree. */
-	for( key = NUL; key <= DEL; key++ )
+	for ( key = NUL; key <= DEL; key++ )
 		{
 		bindings[key] = &func_tab[key];
-		if( bindings[key]->f_func != f_Nop )
+		if ( bindings[key]->f_func != f_Nop )
 			add_Try( bindings[key], bindings[key]->f_name, &try_rootp );
 		else
-		if( nop_key == EOF )
+		if ( nop_key == EOF )
 			/* First key bound to NOP. */
 			nop_key = key;
 		}
@@ -569,7 +569,7 @@ push_Macro(char *buf)
 {
     register int curlen = strlen( cptr );
     register int buflen = strlen( buf );
-    if( curlen + buflen > MACROBUFSZ - 1 ) {
+    if ( curlen + buflen > MACROBUFSZ - 1 ) {
 	fb_log( "Macro buffer would overflow.\n" );
 	return 0;
     }
@@ -584,21 +584,21 @@ void
 do_Key_Cmd(register int key, register int n)
 {
 	last_key = key;
-	if( *cptr == NUL )
+	if ( *cptr == NUL )
 		{
 		/*prnt_Prompt( "" );*/
 		prnt_Event( "" );
 		}
-	if( remembering )
+	if ( remembering )
 		{
-		if( bindings[key]->f_func != f_Exec_Macro )
+		if ( bindings[key]->f_func != f_Exec_Macro )
 			{
 			*macro_ptr++ = key;
 			*macro_ptr = NUL;
 			}
 		}
 	step = gain;
-	while( n-- > 0 )
+	while ( n-- > 0 )
 		{
 		/* For now, ignore return values;
 			-1 for illegal command.
@@ -616,9 +616,9 @@ getColor(unsigned char *pixelp, char *prompt, char *buffer)
 		static int red, grn, blu;
 	(void) snprintf( promptbuf, PROMPT_LEN, "%s [r g b] : ", prompt );
 
-	if( ! get_Input( buffer, CLR_LEN, promptbuf ) )
+	if ( ! get_Input( buffer, CLR_LEN, promptbuf ) )
 		return false;
-	if(	sscanf( buffer, "%d %d %d", &red, &grn, &blu ) == 3
+	if (	sscanf( buffer, "%d %d %d", &red, &grn, &blu ) == 3
 	    &&	red >= 0 && red <= 255
 	    &&	grn >= 0 && grn <= 255
 	    &&	blu >= 0 && blu <= 255
@@ -629,7 +629,7 @@ getColor(unsigned char *pixelp, char *prompt, char *buffer)
 		pixelp[BLU] = blu;
 		}
 	else
-	if( buffer[0] != '@' )
+	if ( buffer[0] != '@' )
 		{
 		fb_log( "You must enter 3 numbers (0..255).\n" );
 		return false;
@@ -641,9 +641,9 @@ STATIC int
 /*ARGSUSED*/
 f_Tolerance(char *buf)
 {	static char tol_str[4];
-	if( ! get_Input( tol_str, 4, "Enter tolerance for color match : " ) )
+	if ( ! get_Input( tol_str, 4, "Enter tolerance for color match : " ) )
 		return 0;
-	if( sscanf( tol_str, "%d", &tolerance ) != 1 )
+	if ( sscanf( tol_str, "%d", &tolerance ) != 1 )
 		tolerance = 0;
 	fb_log( "Tolerance set to %d.\n", tolerance );
 	return 1;
@@ -659,20 +659,20 @@ f_ChngRegionColor(char *buf)
 		PtStack *regionsp = NULL;
 
 	/* Grab pixel color under cursor. */
-	if( fb_read( fbp, cursor_pos.p_x, cursor_pos.p_y,
+	if ( fb_read( fbp, cursor_pos.p_x, cursor_pos.p_y,
 			(unsigned char *) currentpix, 1 ) == -1 )
 		return 0; /* read error */
 	pushPoint( &cursor_pos, &regionsp );
-	if( ! paintSolidRegion( currentpix, &cursor_pos ) )
+	if ( ! paintSolidRegion( currentpix, &cursor_pos ) )
 		return 0;
-	while( popPoint( &pivot, &regionsp ) )
+	while ( popPoint( &pivot, &regionsp ) )
 		{	register int i;
 			register int length = sizeof(xoff1)/sizeof(int);
-		for( i = 0; i < length; i++ )
+		for ( i = 0; i < length; i++ )
 			{	Point neighbor;
 			neighbor.p_x = pivot.p_x + xoff1[i];
 			neighbor.p_y = pivot.p_y + yoff1[i];
-			if( paintSolidRegion( currentpix, &neighbor ) )
+			if ( paintSolidRegion( currentpix, &neighbor ) )
 				pushPoint( &neighbor, &regionsp );
 			}
 		}
@@ -689,19 +689,19 @@ f_FillRegion(char *buf)
 		Point pivot;
 		PtStack *regionsp = NULL;
 
-	if( ! getColor( borderpix, "Enter region border pixel color", buffer ) )
+	if ( ! getColor( borderpix, "Enter region border pixel color", buffer ) )
 		return 0;
 	pushPoint( &cursor_pos, &regionsp );
-	if( ! paintNonBorder( borderpix, &cursor_pos ) )
+	if ( ! paintNonBorder( borderpix, &cursor_pos ) )
 		return 0;
-	while( popPoint( &pivot, &regionsp ) )
+	while ( popPoint( &pivot, &regionsp ) )
 		{	register int i;
 			register int length = sizeof(xoff1)/sizeof(int);
-		for( i = 0; i < length; i++ )
+		for ( i = 0; i < length; i++ )
 			{	Point neighbor;
 			neighbor.p_x = pivot.p_x + xoff1[i];
 			neighbor.p_y = pivot.p_y + yoff1[i];
-			if( paintNonBorder( borderpix, &neighbor ) )
+			if ( paintNonBorder( borderpix, &neighbor ) )
 				pushPoint( &neighbor, &regionsp );
 			}
 		}
@@ -799,7 +799,7 @@ f_Stop(char *buf) /* Stop program. */
 	restore_Tty();
 
 #ifdef HAVE_KILL
-	if( kill( pid, sig ) == -1 ) {
+	if ( kill( pid, sig ) == -1 ) {
 	    extern int errno;
 	    perror( "(fbed.c) kill" );
 	    bu_exit( errno, NULL );
@@ -818,10 +818,10 @@ STATIC int
 f_Exec_Function(char *buf)
 {	Func_Tab	*ftbl;
 		static char name[MAX_LN];
-	if( (ftbl = get_Func_Name( name, MAX_LN, ": " )) == FT_NULL )
+	if ( (ftbl = get_Func_Name( name, MAX_LN, ": " )) == FT_NULL )
 		return 0;
 	else
-	if( strcmp( ftbl->f_name, name ) == 0 )
+	if ( strcmp( ftbl->f_name, name ) == 0 )
 		return (*ftbl->f_func)( ftbl->f_buff );
 	else
 		{
@@ -838,22 +838,22 @@ f_Iterations(char *buf) /* Specify number of iterations of next command. */
 	{	char iterate_buf[MAX_DIGITS+1];
 		int iterate;
 		register int c=0, i;
-	if( remembering )
+	if ( remembering )
 		/* Clobber "f_Iterations()" key-stroke. */
 		*--macro_ptr = NUL;
 	prnt_Prompt( "M-" );
-	for( i = 0; i < MAX_DIGITS && isdigit( c = get_Char() ); i++ )
+	for ( i = 0; i < MAX_DIGITS && isdigit( c = get_Char() ); i++ )
 		{
 		iterate_buf[i] = c;
 		(void) putchar( c );
 		(void) fflush( stdout );
 		}
-	if( i == MAX_DIGITS )
+	if ( i == MAX_DIGITS )
 		c = get_Char();
 	iterate_buf[i] = NUL;
 	(void) putchar( ':' );
 	(void) fflush( stdout );
-	if( sscanf( iterate_buf, "%d", &iterate ) != 1 )
+	if ( sscanf( iterate_buf, "%d", &iterate ) != 1 )
 		{
 		fb_log( "Iterations not set.\n" );
 		return 0;
@@ -875,7 +875,7 @@ STATIC int
 f_Comment(char *buf) /* Print comment. */
 
 	{	static char comment[MAX_LN];
-	if( ! get_Input( comment, MAX_LN, "Enter comment : " ) )
+	if ( ! get_Input( comment, MAX_LN, "Enter comment : " ) )
 		return 0;
 	fb_log( "%s\n", comment );
 	return 1;
@@ -886,7 +886,7 @@ STATIC int
 f_Dec_Brush_Size(char *buf) /* Decrement brush size. */
 
 	{
-	if( brush_sz > 0 )
+	if ( brush_sz > 0 )
 		brush_sz -= 2;
 	return 1;
 	}
@@ -896,7 +896,7 @@ STATIC int
 f_Inc_Brush_Size(char *buf) /* Increment brush size. */
 
 	{
-	if( brush_sz < size_viewport )
+	if ( brush_sz < size_viewport )
 		brush_sz += 2;
 	return 1;
 	}
@@ -908,11 +908,11 @@ f_Menu(char *buf) /* Print menu. */
 	{	register int lines = (PROMPT_LINE-BOTTOM_STATUS_AREA)-1;
 		register int done = false;
 		register int key;
-	for( key = NUL; key <= DEL && ! done; )
+	for ( key = NUL; key <= DEL && ! done; )
 		{	register int j;
-		for( j = 0; key <= DEL && j < lines; key++ )
+		for ( j = 0; key <= DEL && j < lines; key++ )
 			{
-			if( bindings[key]->f_func != f_Nop )
+			if ( bindings[key]->f_func != f_Nop )
 				{
 				prnt_Scroll(	" '%s'\t%s",
 						char_To_String( key ),
@@ -922,15 +922,15 @@ f_Menu(char *buf) /* Print menu. */
 				}
 			}
 		/* See if there is any more output. */
-		for( j = key; j <= DEL && bindings[j]->f_func == f_Nop; j++ )
+		for ( j = key; j <= DEL && bindings[j]->f_func == f_Nop; j++ )
 			;
-		if( j <= DEL )
+		if ( j <= DEL )
 			{
 			SetStandout();
 			prnt_Prompt( "-- More -- " );
 			ClrStandout();
 			(void) fflush( stdout );
-			switch( *cptr != NUL ? *cptr++ : get_Char() )
+			switch ( *cptr != NUL ? *cptr++ : get_Char() )
 				{
 			case 'q' :
 			case 'n' :
@@ -956,7 +956,7 @@ STATIC int
 f_Dec_Step_Size(char *buf) /* Decrement gain on move operations. */
 
 	{
-	if( gain > 1 )
+	if ( gain > 1 )
 		gain--;
 	return 1;
 	}
@@ -966,7 +966,7 @@ STATIC int
 f_Inc_Step_Size(char *buf) /* Increment gain on move operations. */
 
 	{
-	if( gain < size_viewport )
+	if ( gain < size_viewport )
 		gain++;
 	return 1;
 	}
@@ -984,30 +984,30 @@ f_Rd_Macros_From_File(char *buf)
 {	register FILE	*macro_fp;
 		register int nread = 1, room;
 		char scratch[MAX_LN];
-	if( buf != NULL )
+	if ( buf != NULL )
 		{
-		if( (macro_fp = fopen( buf, "r" )) == NULL )
+		if ( (macro_fp = fopen( buf, "r" )) == NULL )
 			return 1;
 		else
 			prnt_Event( "Reading macros from file \"%s\".", buf );
 		}
 	else
 		{
-		if( ! get_Input( scratch, MAX_LN, "Read macros from file : " ) )
+		if ( ! get_Input( scratch, MAX_LN, "Read macros from file : " ) )
 			return 0;
-		if( (macro_fp = fopen( scratch, "r" )) == NULL )
+		if ( (macro_fp = fopen( scratch, "r" )) == NULL )
 			{
 			fb_log( "Can't open \"%s\" for reading.\n", scratch );
 			return 0;
 			}
 		}
 	/* Read and execute functions from file. */
-	for( ; nread > 0 ; )
+	for (; nread > 0; )
 		{
 		room = MACROBUFSZ - strlen( cread_buf );
 		nread = fread( cptr, (int) sizeof(char), room, macro_fp );
 		cread_buf[nread] = NUL;
-		for( cptr = cread_buf; *cptr != NUL; )
+		for ( cptr = cread_buf; *cptr != NUL; )
 			do_Key_Cmd( (int) *cptr++, 1 );
 		*(cptr = cread_buf) = NUL;
 		}
@@ -1020,27 +1020,27 @@ f_Write_Macros_To_File(char *buf)
 {	static char macro_file[MAX_LN];
 		register FILE	*macro_fp;
 		register int key;
-	if( ! get_Input( macro_file, MAX_LN, "Write macros to file : " ) )
+	if ( ! get_Input( macro_file, MAX_LN, "Write macros to file : " ) )
 		return 0;
-	if( (macro_fp = fopen( macro_file, "w" )) == NULL )
+	if ( (macro_fp = fopen( macro_file, "w" )) == NULL )
 		{
 		fb_log( "Can't open \"%s\" for writing.\n", macro_file );
 		return 0;
 		}
-	for( key = NUL+1; key <= DEL; key++ )
+	for ( key = NUL+1; key <= DEL; key++ )
 		{
-		if( bindings[key] != FT_NULL )
+		if ( bindings[key] != FT_NULL )
 			{
-			if( bindings[key]->f_func == f_Nop )
+			if ( bindings[key]->f_func == f_Nop )
 				continue; /* don't save unbound keys */
-			if( bindings[key]->f_func == f_Exec_Macro )
+			if ( bindings[key]->f_func == f_Exec_Macro )
 				{
 				(void) putc( Ctrl('X'), macro_fp );
 				(void) fprintf(	macro_fp,
 						"enter-macro-definition\n"
 						);
 				/* Output macro definition. */
-				for(	macro_ptr = bindings[key]->f_buff;
+				for (	macro_ptr = bindings[key]->f_buff;
 					*macro_ptr != NUL;
 					macro_ptr++
 					)
@@ -1055,18 +1055,18 @@ f_Write_Macros_To_File(char *buf)
 				(void) putc( Ctrl('X'), macro_fp );
 				(void) fprintf( macro_fp, "bind-macro-to-key\n" );
 				/* Output key binding, new-line terminated. */
-				if( key < SP || key == DEL )
+				if ( key < SP || key == DEL )
 					/* Escape control characters. */
 					(void) putc( Ctrl('V'), macro_fp );
 				(void) putc( key, macro_fp );
 				(void) putc( '\n', macro_fp );
 				}
 			/* Write out current key binding. */
-			if( key == Ctrl('X') || key == '@' )
+			if ( key == Ctrl('X') || key == '@' )
 				continue;
 			(void) putc( Ctrl('X'), macro_fp );
 			(void) fprintf( macro_fp, "bind-key-to-name\n" );
-			if( key < SP || key == DEL )
+			if ( key < SP || key == DEL )
 				(void) putc( Ctrl('V'), macro_fp );
 			(void) putc( key, macro_fp );
 			(void) putc( '\n', macro_fp );
@@ -1082,7 +1082,7 @@ STATIC int
 /*ARGSUSED*/
 f_Start_Macro(char *buf)
 {
-	if( remembering )
+	if ( remembering )
 		{
 		fb_log( "I am already remembering.\n" );
 		*--macro_ptr = NUL;
@@ -1098,14 +1098,14 @@ STATIC int
 /*ARGSUSED*/
 f_Bind_Macro_To_Key(char *buf)
 {	char key[2];
-	if( macro_entry == FT_NULL )
+	if ( macro_entry == FT_NULL )
 		{
 		fb_log( "Define macro first.\n" );
 		return 0;
 		}
-	if( ! get_Input( key, 2, "Bind macro to key : " ) )
+	if ( ! get_Input( key, 2, "Bind macro to key : " ) )
 		return 0;
-	if( key[0] == Ctrl('X') || key[0] == '@' )
+	if ( key[0] == Ctrl('X') || key[0] == '@' )
 		{
 		(void) putchar( BEL );
 		fb_log(	"It is not permitted to change '%s' binding.\n",
@@ -1121,15 +1121,15 @@ STATIC int
 /*ARGSUSED*/
 f_Name_Keyboard_Macro(char *buf)
 {	static char macro_name[MAX_LN];
-	if( macro_entry == FT_NULL )
+	if ( macro_entry == FT_NULL )
 		{
 		fb_log( "Define macro first.\n" );
 		return 0;
 		}
-	if( ! get_Input( macro_name, MAX_LN, "Name keyboard macro : " ) )
+	if ( ! get_Input( macro_name, MAX_LN, "Name keyboard macro : " ) )
 		return 0;
 	macro_entry->f_name = malloc( (unsigned) strlen( macro_name )+1 );
-	if( macro_entry->f_name == NULL )
+	if ( macro_entry->f_name == NULL )
 		{
 		Malloc_Bomb();
 		}
@@ -1145,27 +1145,27 @@ f_Crunch_Image(char *buf) /* Average image to half its size. */
 	{	char answer[2];
 		register int x, y;
 		register RGBpixel *p1, *p2;
-	if( ! get_Input( answer, 2, "Crunch image [n=no] ? " ) )
+	if ( ! get_Input( answer, 2, "Crunch image [n=no] ? " ) )
 		return 0;
-	if( answer[0] == 'n' )
+	if ( answer[0] == 'n' )
 		return 1;
-	if( (p1 = (RGBpixel *) malloc( sizeof(RGBpixel) * fb_getwidth(fbp) ))
+	if ( (p1 = (RGBpixel *) malloc( sizeof(RGBpixel) * fb_getwidth(fbp) ))
 		== (RGBpixel *)RGBPIXEL_NULL
 		)
 		{
 		Malloc_Bomb();
 		}
-	if( (p2 = (RGBpixel *) malloc( sizeof(RGBpixel) * fb_getwidth(fbp) ))
+	if ( (p2 = (RGBpixel *) malloc( sizeof(RGBpixel) * fb_getwidth(fbp) ))
 		== (RGBpixel *)RGBPIXEL_NULL
 		)
 		{
 		Malloc_Bomb();
 		}
-	for( y = 0; y < fb_getheight(fbp); y += 2 )
+	for ( y = 0; y < fb_getheight(fbp); y += 2 )
 		{	register RGBpixel *p_avg;
 		fb_read( fbp, 0, y, (unsigned char *)p1, fb_getwidth(fbp));
 		fb_read( fbp, 0, y+1, (unsigned char *)p2, fb_getwidth(fbp) );
-		for( x = 0; x < fb_getwidth(fbp); x +=2 )
+		for ( x = 0; x < fb_getwidth(fbp); x +=2 )
 			{
 			p_avg = pixel_Avg(	p1+x,
 						p1+x+1,
@@ -1203,7 +1203,7 @@ f_DrawLine(char *buf)
 		Second Edition, pages 25-26. */
 	/* Arrange for X coordinate to increase from start point to
 		end point. */
-	if( lineseg.r_origin.p_x > lineseg.r_corner.p_x )
+	if ( lineseg.r_origin.p_x > lineseg.r_corner.p_x )
 		{	Point temp;
 		temp = lineseg.r_origin;
 		lineseg.r_origin = lineseg.r_corner;
@@ -1213,10 +1213,10 @@ f_DrawLine(char *buf)
 	xsign = majdelta ? 1 : 0;
 	mindelta = lineseg.r_corner.p_y - lineseg.r_origin.p_y;
 	ysign = mindelta ? (mindelta > 0 ? 1 : -1) : 0;
-	if( ysign < 0 )
+	if ( ysign < 0 )
 		mindelta = -mindelta;
 	/* If X is not really major, correct the assignments. */
-	if( ! (xmajor = mindelta <= majdelta) )
+	if ( ! (xmajor = mindelta <= majdelta) )
 		{	register int temp = mindelta;
 		mindelta = majdelta;
 		majdelta = temp;
@@ -1224,16 +1224,16 @@ f_DrawLine(char *buf)
 
 	error = majdelta / 2 - mindelta; /* Initial DDA error. */
 	de = majdelta - mindelta;
-	for( x = lineseg.r_origin.p_x; x <= lineseg.r_corner.p_x; )
+	for ( x = lineseg.r_origin.p_x; x <= lineseg.r_corner.p_x; )
 		{
 		(void) fb_write(	fbp,
 					x, lineseg.r_origin.p_y,
 					(unsigned char *) paint,
 					1
 					);
-		if( majdelta-- == 0 ) /* Done! */
+		if ( majdelta-- == 0 ) /* Done! */
 			return 1;
-		if( error < 0 )	 /* Advance major and minor. */
+		if ( error < 0 )	 /* Advance major and minor. */
 			{
 			x += xsign;
 			lineseg.r_origin.p_y += ysign;
@@ -1241,7 +1241,7 @@ f_DrawLine(char *buf)
 			}
 		else
 			{		/* Advance major only. */
-			if( xmajor )	/* X is major direction. */
+			if ( xmajor )	/* X is major direction. */
 				x++;
 			else		/* Y is major direction. */
 				lineseg.r_origin.p_y += ysign;
@@ -1273,9 +1273,9 @@ STATIC int
 f_Bind_Key_To_Key(char *buf) /* Bind new key to same function as old key. */
 
 	{	char old_key[2], new_key[2];
-	if( ! get_Input( new_key, 2, "Bind new key : " ) )
+	if ( ! get_Input( new_key, 2, "Bind new key : " ) )
 		return 0;
-	if( new_key[0] == Ctrl('X') || new_key[0] == '@' )
+	if ( new_key[0] == Ctrl('X') || new_key[0] == '@' )
 		{
 		(void) putchar( BEL );
 		fb_log(	"It is not permitted to change '%s' binding.\n",
@@ -1283,7 +1283,7 @@ f_Bind_Key_To_Key(char *buf) /* Bind new key to same function as old key. */
 				);
 		return 0;
 		}
-	if( ! get_Input( old_key, 2, "To function bound to key : " ) )
+	if ( ! get_Input( old_key, 2, "To function bound to key : " ) )
 		return 0;
 	bindings[(int)new_key[0]] = bindings[(int)old_key[0]];
 	return 1;
@@ -1296,9 +1296,9 @@ f_Bind_Name_To_Key(char *buf) /* Bind key to function or macro. */
 	{	char key[2];
 		static char name[MAX_LN];
 		Func_Tab	*ftbl;
-	if( ! get_Input( key, 2, "Bind key : " ) )
+	if ( ! get_Input( key, 2, "Bind key : " ) )
 		return 0;
-	if( key[0] == Ctrl('X') || key[0] == '@' )
+	if ( key[0] == Ctrl('X') || key[0] == '@' )
 		{
 		(void) putchar( BEL );
 		fb_log(	"It is not permitted to change '%s' binding.\n",
@@ -1306,11 +1306,11 @@ f_Bind_Name_To_Key(char *buf) /* Bind key to function or macro. */
 				);
 		return 0;
 		}
-	if( (ftbl = get_Func_Name( name, MAX_LN, "To function/macro name : " ))
+	if ( (ftbl = get_Func_Name( name, MAX_LN, "To function/macro name : " ))
 		== FT_NULL
 		)
 		return 0;
-	if( strcmp( ftbl->f_name, name ) == 0 )
+	if ( strcmp( ftbl->f_name, name ) == 0 )
 		{
 		/* Key is still bound to this function/macro. */
 		bindings[(int)key[0]] = ftbl;
@@ -1328,9 +1328,9 @@ STATIC int
 f_Erase_Fb(char *buf) /* Erase (clear) framebuffer. */
 
 	{	char answer[2];
-	if( ! get_Input( answer, 2, "Clear framebuffer [n=no] ? " ) )
+	if ( ! get_Input( answer, 2, "Clear framebuffer [n=no] ? " ) )
 		return 0;
-	if( answer[0] != 'n' )
+	if ( answer[0] != 'n' )
 		{
 		(void) fb_clear(fbp, RGBPIXEL_NULL);
 		}
@@ -1344,7 +1344,7 @@ f_Flip_Resolution(char *buf) /* Flip framebuffer resolution. */
 
 	{	char answer[2];
 		int is_hires = fb_getwidth(fbp) > 512;
-	if( ! get_Input(	answer,
+	if ( ! get_Input(	answer,
 				2,
 				is_hires ?
 				"Flip framebuffer to low res [n=no] ? " :
@@ -1352,13 +1352,13 @@ f_Flip_Resolution(char *buf) /* Flip framebuffer resolution. */
 				)
 		)
 		return 0;
-	if( answer[0] == 'n' )
+	if ( answer[0] == 'n' )
 		return 1;
 	(void) fb_cursor( fbp, 0, 0, 0 );	/* off */
-	if( fb_close( fbp ) == -1 )
+	if ( fb_close( fbp ) == -1 )
 		return 0;
 	cur_width = is_hires ? 512 : 1024;
-	if( fb_Setup() == -1 )
+	if ( fb_Setup() == -1 )
 		bu_exit( 1, NULL );
 	reposition_cursor = true;
 	return 1;
@@ -1369,7 +1369,7 @@ STATIC int
 f_Get_Panel(char *buf) /* Grab panel from framebuffer. */
 
 	{
-	if( panel.n_buf != (RGBpixel *) NULL )
+	if ( panel.n_buf != (RGBpixel *) NULL )
 		free( (char *) panel.n_buf );
 	prnt_Rectangle(	"Storing rectangle", &current );
 	panel.n_buf = get_Fb_Panel( &current );
@@ -1384,7 +1384,7 @@ STATIC int
 f_Jump_Lft(char *buf) /* Move cursor left (big steps). */
 
 	{
-	if( cursor_pos.p_x >= JUMP )
+	if ( cursor_pos.p_x >= JUMP )
 		cursor_pos.p_x -= JUMP;
 	else
 		cursor_pos.p_x = 0;
@@ -1397,7 +1397,7 @@ STATIC int
 f_Jump_Dwn(char *buf) /* Move cursor down. */
 
 	{
-	if( cursor_pos.p_y >= JUMP )
+	if ( cursor_pos.p_y >= JUMP )
 		cursor_pos.p_y -= JUMP;
 	else
 		cursor_pos.p_y = 0;
@@ -1410,7 +1410,7 @@ STATIC int
 f_Jump_Up(char *buf) /* Move cursor up. */
 
 	{
-	if( cursor_pos.p_y < fb_getheight(fbp) - JUMP )
+	if ( cursor_pos.p_y < fb_getheight(fbp) - JUMP )
 		cursor_pos.p_y += JUMP;
 	else
 		cursor_pos.p_y = fb_getheight(fbp) - 1;
@@ -1423,7 +1423,7 @@ STATIC int
 f_Jump_Rgt(char *buf) /* Move cursor right. */
 
 	{
-	if( cursor_pos.p_x <= fb_getwidth(fbp) - JUMP )
+	if ( cursor_pos.p_x <= fb_getwidth(fbp) - JUMP )
 		cursor_pos.p_x += JUMP;
 	else
 		cursor_pos.p_x = fb_getwidth(fbp) - 1;
@@ -1436,7 +1436,7 @@ STATIC int
 f_Put_Panel(char *buf) /* Put grabbed panel to framebuffer. */
 
 	{
-	if( panel.n_buf == (RGBpixel *) NULL )
+	if ( panel.n_buf == (RGBpixel *) NULL )
 		{
 		fb_log( "You must use \"get-current-rectangle\" first.\n" );
 		return 0;
@@ -1458,15 +1458,15 @@ f_Restore_RLE(char *buf) /* Restore Run-Length Encoded image. */
 			{
 			"rle-fb", rle_file_nm, NULL
 			};
-	if( ! get_Input( rle_file_nm, MAX_LN, "Enter RLE file name : " ) )
+	if ( ! get_Input( rle_file_nm, MAX_LN, "Enter RLE file name : " ) )
 		return 0;
-	if( rle_file_nm[0] == NUL )
+	if ( rle_file_nm[0] == NUL )
 		{
 		fb_log( "No default.\n" );
 		return 0;
 		}
 	else
-	if( (rle_fp = fopen( rle_file_nm, "r" )) == NULL )
+	if ( (rle_fp = fopen( rle_file_nm, "r" )) == NULL )
 		{
 		fb_log( "Can't open \"%s\".\n", rle_file_nm );
 		return 0;
@@ -1474,13 +1474,13 @@ f_Restore_RLE(char *buf) /* Restore Run-Length Encoded image. */
 	prnt_Event( "Decoding \"%s\".", rle_file_nm );
 	(void) fb_cursor( fbp, 0, 0, 0 );	/* off */
 	reposition_cursor = true;
-	if( fb_close( fbp ) == -1 )
+	if ( fb_close( fbp ) == -1 )
 		{
 		(void) fclose( rle_fp );
 		return 0;
 		}
 	(void) exec_Shell( args );
-	if( fb_Setup() == -1 )
+	if ( fb_Setup() == -1 )
 		bu_exit( 1, NULL );
 	(void) fclose( rle_fp );
 	return 1;
@@ -1495,39 +1495,39 @@ f_Save_RLE(char *buf) /* Save framebuffer image with Run-Length Encoding. */
 			{
 			"fb-rle", rle_file_nm, NULL, NULL
 			};
-	if( fb_getwidth(fbp) == 1024 )
+	if ( fb_getwidth(fbp) == 1024 )
 		{
 		args[1] = "-h";
 		args[2] = rle_file_nm;
 		}
-	if( ! get_Input( rle_file_nm, MAX_LN, "Enter RLE file name : " ) )
+	if ( ! get_Input( rle_file_nm, MAX_LN, "Enter RLE file name : " ) )
 		return 0;
-	if( rle_file_nm[0] == NUL )
+	if ( rle_file_nm[0] == NUL )
 		{
 		fb_log( "No default.\n" );
 		return 0;
 		}
-	if( bu_file_exists( rle_file_nm ) )
+	if ( bu_file_exists( rle_file_nm ) )
 		{	char answer[2];
 			char question[MAX_LN+32];
 			(void) snprintf( question, MAX_LN+32, 
 				"File \"%s\" exists, remove [n=no] ? ",
 				rle_file_nm
 				);
-		if( ! get_Input( answer, 2, question ) )
+		if ( ! get_Input( answer, 2, question ) )
 			return 0;
-		if( answer[0] == 'n' )
+		if ( answer[0] == 'n' )
 			return 0;
 		(void) unlink( rle_file_nm );
 		}
 	prnt_Event( "Encoding \"%s\".", rle_file_nm );
-	if( fb_close( fbp ) == -1 )
+	if ( fb_close( fbp ) == -1 )
 		return 0;
-	if( exec_Shell( args ) == 0 )
+	if ( exec_Shell( args ) == 0 )
 		fb_log( "Image saved in \"%s\".\n", rle_file_nm );
 	else
 		fb_log( "Image not saved.\n" );
-	if( fb_Setup() == -1 )
+	if ( fb_Setup() == -1 )
 		bu_exit( 1, NULL );
 	reposition_cursor = true;
 	return 1;
@@ -1546,18 +1546,18 @@ f_Transliterate(char *buf) /* Transliterate pixels of color1 to target color2.*/
 	rgt = current.r_corner.p_x;
 	top = current.r_origin.p_y;
 	btm = current.r_corner.p_y;
-	if( ! getColor( old, "Enter old pixel color", oldbuf ) )
+	if ( ! getColor( old, "Enter old pixel color", oldbuf ) )
 		return 0;
-	if( ! getColor( new, "Enter new pixel color", newbuf ) )
+	if ( ! getColor( new, "Enter new pixel color", newbuf ) )
 		return 0;
-	for( y = top; y <= btm ; y++ )
+	for ( y = top; y <= btm; y++ )
 		{
 		x = lft;
 		(void) fb_seek( fbp, x, y );
-		for( ; x <= rgt; x++ )
+		for (; x <= rgt; x++ )
 			{
 			(void) fb_rpixel( fbp, (unsigned char *) cur );
-			if( AproxPixel( cur, old, tolerance ) )
+			if ( AproxPixel( cur, old, tolerance ) )
 				{
 				(void) fb_seek( fbp, x, y );
 				FB_WPIXEL( fbp, new );
@@ -1571,7 +1571,7 @@ STATIC int
 /*ARGSUSED*/
 f_Stop_Macro(char *buf)
 {
-	if( ! remembering )
+	if ( ! remembering )
 		{
 		fb_log( "I was not remembering.\n" );
 		return 0;
@@ -1580,19 +1580,19 @@ f_Stop_Macro(char *buf)
 	/* Clobber "f_Stop_Macro()" key-stroke or "f_Exec_Function()
 		followed by "stop-macro-definition".
 	 */
-	if( *--macro_ptr == '\n' )
-		while( *--macro_ptr != Ctrl('X') )
+	if ( *--macro_ptr == '\n' )
+		while ( *--macro_ptr != Ctrl('X') )
 			*macro_ptr = NUL;
 	*macro_ptr = NUL;
 	macro_ptr = macro_buf;
 	macro_entry = (Func_Tab *) malloc( sizeof(Func_Tab) );
-	if( macro_entry == FT_NULL )
+	if ( macro_entry == FT_NULL )
 		{
 		Malloc_Bomb();
 		}
 	macro_entry->f_func = f_Exec_Macro;
 	macro_entry->f_buff = malloc( (unsigned) strlen( macro_buf )+1 );
-	if( macro_entry->f_buff == NULL )
+	if ( macro_entry->f_buff == NULL )
 		{
 		Malloc_Bomb();
 		}
@@ -1607,31 +1607,31 @@ f_Enter_Macro_Definition(char *buf)
 {	register int interactive = *cptr == NUL;
 	macro_ptr = macro_buf;
 	*macro_ptr = NUL;
-	if( interactive )
+	if ( interactive )
 		{
 		prnt_Prompt( "Enter macro definition : " );
-		while( (*macro_ptr++ = get_Char()) != 'Z' )
+		while ( (*macro_ptr++ = get_Char()) != 'Z' )
 			;
 		}
 	else
-		while( (*macro_ptr++ = *cptr++) != 'Z' )
+		while ( (*macro_ptr++ = *cptr++) != 'Z' )
 			;
 	/* Clobber macro terminator. */
 	*--macro_ptr = NUL;
 	macro_ptr = macro_buf;
 	macro_entry = (Func_Tab *) malloc( sizeof(Func_Tab) );
-	if( macro_entry == FT_NULL )
+	if ( macro_entry == FT_NULL )
 		{
 		Malloc_Bomb();
 		}
 	macro_entry->f_func = f_Exec_Macro;
 	macro_entry->f_buff = malloc( (unsigned) strlen( macro_buf )+1 );
-	if( macro_entry->f_buff == NULL )
+	if ( macro_entry->f_buff == NULL )
 		{
 		Malloc_Bomb();
 		}
 	(void) strncpy( macro_entry->f_buff, macro_buf, strlen(macro_buf)+1 );
-	if( interactive )
+	if ( interactive )
 		fb_log( "Keyboard macro defined.\n" );
 	return 1;
 	}
@@ -1660,7 +1660,7 @@ STATIC int
 f_Rd_Font(char *buf) /* Set current font. */
 
 	{	static char fontname[FONTNAMESZ];
-	if( ! get_Input( fontname, FONTNAMESZ, "Enter font name : " ) )
+	if ( ! get_Input( fontname, FONTNAMESZ, "Enter font name : " ) )
 		return 0;
 	get_Font( fontname );
 	return 1;
@@ -1680,7 +1680,7 @@ STATIC int
 f_Move_Lft(char *buf) /* Move cursor left. */
 
 	{
-	if( cursor_pos.p_x >= step )
+	if ( cursor_pos.p_x >= step )
 		cursor_pos.p_x -= step;
 	else
 		cursor_pos.p_x = 0;
@@ -1693,7 +1693,7 @@ STATIC int
 f_Zoom_In(char *buf) /* Halve window size. */
 
 	{
-	if( size_viewport > fb_getwidth(fbp) / 16 )
+	if ( size_viewport > fb_getwidth(fbp) / 16 )
 		{
 		size_viewport /= 2;
 		fb_Wind();
@@ -1707,7 +1707,7 @@ STATIC int
 f_Move_Dwn(char *buf) /* Move cursor down. */
 
 	{
-	if( cursor_pos.p_y >= step )
+	if ( cursor_pos.p_y >= step )
 		cursor_pos.p_y -= step;
 	else
 		cursor_pos.p_y = 0;
@@ -1720,7 +1720,7 @@ STATIC int
 f_Move_Up(char *buf) /* Move cursor up. */
 
 	{
-	if( cursor_pos.p_y <= fb_getheight(fbp) - step )
+	if ( cursor_pos.p_y <= fb_getheight(fbp) - step )
 		cursor_pos.p_y += step;
 	else
 		cursor_pos.p_y = fb_getheight(fbp) - 1;
@@ -1733,7 +1733,7 @@ STATIC int
 f_Move_Rgt(char *buf) /* Move cursor right. */
 
 	{
-	if( cursor_pos.p_x <= fb_getwidth(fbp) - step )
+	if ( cursor_pos.p_x <= fb_getwidth(fbp) - step )
 		cursor_pos.p_x += step;
 	else
 		cursor_pos.p_x = fb_getwidth(fbp) - 1;
@@ -1747,7 +1747,7 @@ f_Status_Monitor(char *buf) /* Toggle status monitoring. */
 
 	{
 	Toggle( report_status );
-	if( report_status )
+	if ( report_status )
 		init_Status();
 	return 1;
 	}
@@ -1757,7 +1757,7 @@ STATIC int
 f_Zoom_Out(char *buf) /* Double window size. */
 
 	{
-	if( size_viewport < fb_getwidth(fbp) )
+	if ( size_viewport < fb_getwidth(fbp) )
 		{
 		size_viewport *= 2;
 		fb_Wind();
@@ -1771,7 +1771,7 @@ STATIC int
 f_Key_Set_Pixel(char *buf) /* User types in paint color. */
 
 	{	static char buffer[CLR_LEN];
-	if( ! getColor( paint, "Enter color", buffer ) )
+	if ( ! getColor( paint, "Enter color", buffer ) )
 		return 0;
 	return 1;
 	}
@@ -1792,15 +1792,15 @@ f_Rd_Fb(char *buf) /* Read frame buffer image from file. */
 
 	{	static char image[MAX_LN];
 		static FBIO *imp;
-	if( ! get_Input( image, MAX_LN, "Enter framebuffer name : " ) )
+	if ( ! get_Input( image, MAX_LN, "Enter framebuffer name : " ) )
 		return 0;
-	if( image[0] == NUL )
+	if ( image[0] == NUL )
 		{
 		fb_log( "No default.\n" );
 		return 0;
 		}
 	else
-	if( (imp = fb_open( image, 512, 512 )) == FBIO_NULL )	/* XXX */
+	if ( (imp = fb_open( image, 512, 512 )) == FBIO_NULL )	/* XXX */
 		{
 		fb_log(	"Can't open \"%s\" for reading.\n", image );
 		return 0;
@@ -1810,19 +1810,19 @@ f_Rd_Fb(char *buf) /* Read frame buffer image from file. */
 	reposition_cursor = true;
 	{	register int y;
 	unsigned char *scanbuf;
-	if( (scanbuf = (unsigned char *)malloc(fb_getwidth(imp)*3)) == RGBPIXEL_NULL )
+	if ( (scanbuf = (unsigned char *)malloc(fb_getwidth(imp)*3)) == RGBPIXEL_NULL )
 		{
 		fb_log(	"malloc failure\n");
 		return 0;
 		}
-	for( y = 0; y < fb_getheight( imp ); y++ )
+	for ( y = 0; y < fb_getheight( imp ); y++ )
 		{
-		if( fb_read( imp, 0, y, scanbuf, fb_getwidth( imp ) ) == -1 )
+		if ( fb_read( imp, 0, y, scanbuf, fb_getwidth( imp ) ) == -1 )
 			{
 			prnt_Scroll( "Read from <0,%d> failed.\n" );
 			return 0;
 			}
-		if( fb_write( fbp, 0, y, scanbuf, fb_getwidth( imp ) ) == -1 )
+		if ( fb_write( fbp, 0, y, scanbuf, fb_getwidth( imp ) ) == -1 )
 			{
 			prnt_Scroll( "Write to <0,%d> failed.\n" );
 			return 0;
@@ -1839,7 +1839,7 @@ STATIC int
 f_String(char *buf) /* Place label on picture. */
 
 	{	static char label[MAX_LN];
-	if( ! get_Input( label, MAX_LN, "Enter text string : " ) )
+	if ( ! get_Input( label, MAX_LN, "Enter text string : " ) )
 		return 0;
 	prnt_Event( "Drawing \"%s\".", label );
 	do_line( cursor_pos.p_x, cursor_pos.p_y, label, (RGBpixel *)NULL );
@@ -1852,9 +1852,9 @@ f_Put_Pixel(char *buf) /* Put pixel. */
 
 	{	register int rectwid = brush_sz / 2;
 	/* If brush size is 2 or more, fill rectangle. */
-	if( rectwid == 0 )
+	if ( rectwid == 0 )
 		{ /* Avoid overhead if only writing one pixel. */
-		if( isSGI )
+		if ( isSGI )
 			(void) fb_write( fbp, cursor_pos.p_x, cursor_pos.p_y,
 					paint, 1 );
 		else
@@ -1876,24 +1876,24 @@ STATIC int
 f_Set_X_Pos(char *buf) /* Move cursor's X location (image space). */
 
 	{	static char x_str[5];
-	if( ! get_Input( x_str, 5, "Enter X coordinate : " ) )
+	if ( ! get_Input( x_str, 5, "Enter X coordinate : " ) )
 		return 0;
-	if( x_str[0] == '+' )	/* relative move (+x) */
+	if ( x_str[0] == '+' )	/* relative move (+x) */
 		{	int increment;
-		if( sscanf( x_str+1, "%d", &increment ) == 1 )
+		if ( sscanf( x_str+1, "%d", &increment ) == 1 )
 			cursor_pos.p_x += increment;
 		}
 	else
-	if( x_str[0] == '-' )	/* relative move (-x) */
+	if ( x_str[0] == '-' )	/* relative move (-x) */
 		{	int decrement;
-		if( sscanf( x_str+1, "%d", &decrement ) == 1 )
+		if ( sscanf( x_str+1, "%d", &decrement ) == 1 )
 			cursor_pos.p_x -= decrement;
 		}
 	else			/* absolute move */
 		(void) sscanf( x_str, "%d", &cursor_pos.p_x );
-	if( cursor_pos.p_x > fb_getwidth(fbp) )
+	if ( cursor_pos.p_x > fb_getwidth(fbp) )
 		cursor_pos.p_x = fb_getwidth(fbp);
-	if( cursor_pos.p_x < 0 )
+	if ( cursor_pos.p_x < 0 )
 		cursor_pos.p_x = 0;
 	reposition_cursor = true;
 	return 1;
@@ -1904,24 +1904,24 @@ STATIC int
 f_Set_Y_Pos(char *buf) /* Move cursor's Y location (image space). */
 
 	{	static char y_str[5];
-	if( ! get_Input( y_str, 5, "Enter Y coordinate : " ) )
+	if ( ! get_Input( y_str, 5, "Enter Y coordinate : " ) )
 		return 0;
-	if( y_str[0] == '+' )	/* relative move (+y) */
+	if ( y_str[0] == '+' )	/* relative move (+y) */
 		{	int increment;
-		if( sscanf( y_str+1, "%d", &increment ) == 1 )
+		if ( sscanf( y_str+1, "%d", &increment ) == 1 )
 			cursor_pos.p_y += increment;
 		}
 	else
-	if( y_str[0] == '-' )	/* relative move (-y) */
+	if ( y_str[0] == '-' )	/* relative move (-y) */
 		{	int decrement;
-		if( sscanf( y_str+1, "%d", &decrement ) == 1 )
+		if ( sscanf( y_str+1, "%d", &decrement ) == 1 )
 			cursor_pos.p_y -= decrement;
 		}
 	else
 		(void) sscanf( y_str, "%d", &cursor_pos.p_y );
-	if( cursor_pos.p_y > fb_getheight(fbp) )
+	if ( cursor_pos.p_y > fb_getheight(fbp) )
 		cursor_pos.p_y = fb_getheight(fbp);
-	if( cursor_pos.p_y < 0 )
+	if ( cursor_pos.p_y < 0 )
 		cursor_pos.p_y = 0;
 	reposition_cursor = true;
 	return 1;
@@ -1934,9 +1934,9 @@ pars_Argv(int argc, register char **argv)
 		extern int bu_optind;
 		extern char *bu_optarg;
 	/* Parse options. */
-	while( (c = bu_getopt( argc, argv, "hp" )) != EOF )
+	while ( (c = bu_getopt( argc, argv, "hp" )) != EOF )
 		{
-		switch( c )
+		switch ( c )
 			{
 		case 'h' :
 			cur_width = 1024;
@@ -1948,7 +1948,7 @@ pars_Argv(int argc, register char **argv)
 			return 0;
 			}
 		}
-	if( argc != bu_optind )
+	if ( argc != bu_optind )
 		{
 		(void) fprintf( stderr, "Too many arguments!\n" );
 		return 0;
@@ -1960,7 +1960,7 @@ pars_Argv(int argc, register char **argv)
 STATIC int
 fb_Setup(void)
 {
-	if( (fbp = fb_open( NULL, cur_width, cur_width )) == FBIO_NULL )
+	if ( (fbp = fb_open( NULL, cur_width, cur_width )) == FBIO_NULL )
 		{
 		fb_log( "Could not open default frame buffer.\n" );
 		return -1;
@@ -1970,7 +1970,7 @@ fb_Setup(void)
 	isSGI = strncmp( fbp->if_name, "/dev/sgi", 8 ) == 0;
 
 	fb_ioinit( fbp );
-	if( fb_setcursor( fbp, cursor.bits, cursor.xbits, cursor.ybits,
+	if ( fb_setcursor( fbp, cursor.bits, cursor.xbits, cursor.ybits,
 	    cursor.xorig, cursor.yorig ) == -1 )
 		{
 		fb_log( "Can't set up cursor.\n" );
@@ -2013,7 +2013,7 @@ fb_Paint(register int x0, register int y0, register int x1, register int y1, RGB
 STATIC void
 general_Handler(int sig)
 {
-	switch( sig )
+	switch ( sig )
 		{
 	case SIGHUP :
 		prnt_Event( "Hangup." );
@@ -2090,9 +2090,9 @@ general_Handler(int sig)
 void
 init_Tty(void)
 {
-	if( pad_flag )
+	if ( pad_flag )
 		{
-		if( pad_open( fb_getwidth(fbp) ) == -1 )
+		if ( pad_open( fb_getwidth(fbp) ) == -1 )
 			pad_flag = false;
 		}
 	save_Tty( tty_fd );
@@ -2101,7 +2101,7 @@ init_Tty(void)
 	clr_Echo( tty_fd );
 	clr_CRNL( tty_fd );
 #if HAS_SGIGL
-	if( isSGI )
+	if ( isSGI )
 		sgi_Init();
 #endif
 	return;
@@ -2113,7 +2113,7 @@ restore_Tty(void)
 {
 	(void) fb_cursor( fbp, 0, 0, 0 );	/* off */
 	MvCursor( 1, LI );
-	if( pad_flag )
+	if ( pad_flag )
 		pad_close();
 	reset_Tty( tty_fd );
 	return;
@@ -2123,7 +2123,7 @@ restore_Tty(void)
 void
 fb_Get_Pixel(unsigned char *pixel)
 {
-	if( isSGI )
+	if ( isSGI )
 		(void) fb_read( fbp, cursor_pos.p_x, cursor_pos.p_y, pixel, 1 );
 	else
 		{
@@ -2147,12 +2147,12 @@ register Rectangle *rectp;
 	rgt = rectp->r_corner.p_x;
 	btm = rectp->r_origin.p_y;
 	top = rectp->r_corner.p_y;
-	if( lft > rgt )
+	if ( lft > rgt )
 		{
 		lft = rgt;
 		rgt = rectp->r_origin.p_x;
 		}
-	if( btm > top )
+	if ( btm > top )
 		{
 		top = btm;
 		btm = rectp->r_origin.p_y;
@@ -2160,7 +2160,7 @@ register Rectangle *rectp;
 	rectwid = rgt-lft + 1;
 	recthgt = top-btm + 1;
 	u = (rectwid*recthgt) * sizeof(RGBpixel);
-	if( (panel = (RGBpixel *) malloc( u )) == (RGBpixel *)RGBPIXEL_NULL )
+	if ( (panel = (RGBpixel *) malloc( u )) == (RGBpixel *)RGBPIXEL_NULL )
 		fb_log(	"\"%s\" (%d), get_Fb_Panel() : malloc %d (%d*%d) failed.\n",
 			__FILE__, __LINE__,
 			u, rectwid, recthgt
@@ -2168,9 +2168,9 @@ register Rectangle *rectp;
 	else
 		{	register int y = btm;
 			RGBpixel *pixelp = panel;
-		for( ; y <= top; y++, pixelp += rectwid )
+		for (; y <= top; y++, pixelp += rectwid )
 			{
-			if( fb_read( fbp, lft, y, (unsigned char *)pixelp, rectwid ) == -1 )
+			if ( fb_read( fbp, lft, y, (unsigned char *)pixelp, rectwid ) == -1 )
 				{
 				fb_log( "Read of %d pixels from <%d,%d> failed.\n",
 					rectwid, lft, y
@@ -2193,9 +2193,9 @@ put_Fb_Panel(register Rectangle *rectp, register RGBpixel (*panel))
 	rgt = rectp->r_corner.p_x;
 	btm = rectp->r_origin.p_y;
 	top = rectp->r_corner.p_y;
-	for( y = btm; y <= top; y++, panel += rectwid )
+	for ( y = btm; y <= top; y++, panel += rectwid )
 		{
-		if( fb_write( fbp, lft, y, (unsigned char *)panel, rgt-lft+1 ) == -1 )
+		if ( fb_write( fbp, lft, y, (unsigned char *)panel, rgt-lft+1 ) == -1 )
 			{
 			fb_log( "Write of %d pixels to <%d,%d> failed.\n",
 				rectwid, lft, btm
@@ -2213,16 +2213,16 @@ get_Point(char *msg, register Point *pointp)
 		register int c = NUL;
 	prnt_Prompt( msg );
 	pointpicked = false;
-	for( ; tag_point != 1 && !pointpicked; )
+	for (; tag_point != 1 && !pointpicked; )
 		{	register int status_change = false;
-		if( *cptr != NUL )
+		if ( *cptr != NUL )
 			{
 			c = *cptr++;
 			do_Key_Cmd( c, 1 );
 			}
 		else
 			{
-			if( reposition_cursor )
+			if ( reposition_cursor )
 				{
 				(void) fb_cursor(	fbp,
 							1,
@@ -2232,9 +2232,9 @@ get_Point(char *msg, register Point *pointp)
 				status_change = true;
 				reposition_cursor = false;
 				}
-			if( ! empty( tty_fd ) )
+			if ( ! empty( tty_fd ) )
 				{
-				if( (c = get_Char()) != EOF )
+				if ( (c = get_Char()) != EOF )
 					{
 					do_Key_Cmd( c, 1 );
 					status_change = true;
@@ -2245,16 +2245,16 @@ get_Point(char *msg, register Point *pointp)
 					return;
 					}
 				}
-			if(   !	reposition_cursor
+			if (   !	reposition_cursor
 			    &&	(tag_point = get_Mouse_Pos( &cursor_pos ))
 				!= -1
 				)
 				status_change = true;
 			}
-		if( status_change )
+		if ( status_change )
 			{
 			(void) fb_flush( fbp );
-			if( report_status )
+			if ( report_status )
 				prnt_Status();
 			}
 		}
@@ -2279,13 +2279,13 @@ get_Rectangle(char *name, register Rectangle *rectp)
 STATIC void
 fix_Rectangle(register Rectangle *rectp)
 {	register int i;
-	if( rectp->r_origin.p_x > rectp->r_corner.p_x )
+	if ( rectp->r_origin.p_x > rectp->r_corner.p_x )
 		{
 		i = rectp->r_origin.p_x;
 		rectp->r_origin.p_x = rectp->r_corner.p_x;
 		rectp->r_corner.p_x = i;
 		}
-	if( rectp->r_origin.p_y > rectp->r_corner.p_y )
+	if ( rectp->r_origin.p_y > rectp->r_corner.p_y )
 		{
 		i = rectp->r_origin.p_y;
 		rectp->r_origin.p_y = rectp->r_corner.p_y;
@@ -2317,20 +2317,20 @@ register RGBpixel *p1, *p2, *p3, *p4;
 char *
 char_To_String(int i)
 {	static char buf[4];
-	if( i >= SP && i < DEL )
+	if ( i >= SP && i < DEL )
 		{
 		buf[0] = i;
 		buf[1] = NUL;
 		}
 	else
-	if( i >= NUL && i < SP )
+	if ( i >= NUL && i < SP )
 		{
 		buf[0] = '^';
 		buf[1] = i + 64;
 		buf[2] = NUL;
 		}
 	else
-	if( i == DEL )
+	if ( i == DEL )
 		return "DL";
 	else
 		return "EOF";
@@ -2339,11 +2339,11 @@ char_To_String(int i)
 int
 get_Mouse_Pos(Point *pointp)
 {
-	if( pad_flag )
+	if ( pad_flag )
 		return do_Bitpad( pointp );
 	else
 #if HAS_SGIGL
-	if( isSGI )
+	if ( isSGI )
 		return sgi_Mouse_Pos( &cursor_pos );
 	else
 #endif
@@ -2354,16 +2354,16 @@ get_Mouse_Pos(Point *pointp)
 STATIC int
 do_Bitpad(register Point *pointp)
 {	int press;
-	if( ! pad_flag )
+	if ( ! pad_flag )
 		return -1;
-	if( (press = getpos( &bitpad )) != -1 )
+	if ( (press = getpos( &bitpad )) != -1 )
 		{
 		pointp->p_x = windo_anchor.p_x +
 				(bitpad.p_x-image_center.p_x)/zoom_factor;
 		pointp->p_y = windo_anchor.p_y +
 				(bitpad.p_y-image_center.p_y)/zoom_factor;
 		(void) fb_cursor( fbp, 1, pointp->p_x, pointp->p_y );
-		if( press == 1 )
+		if ( press == 1 )
 			De_Bounce_Pen();
 		return press;
 		}
@@ -2374,7 +2374,7 @@ int
 get_Char(void)
 {	int c;
 #if 0
-	if( isSGI )
+	if ( isSGI )
 		return (c = sgi_Getchar()) == EOF ? EOF : toascii( c );
 	else
 #endif

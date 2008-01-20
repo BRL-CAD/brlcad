@@ -84,7 +84,7 @@ rt_nurb_par_edge(const struct face_g_snurb *srf, fastf_t epsilon)
 
 	/* Find the maximum value of the 2nd derivative in U */
 
-	for( i = 0; i < uus->s_size[0] * uus->s_size[1]; i++)
+	for ( i = 0; i < uus->s_size[0] * uus->s_size[1]; i++)
 	{
 		fastf_t mag;
 
@@ -100,7 +100,7 @@ rt_nurb_par_edge(const struct face_g_snurb *srf, fastf_t epsilon)
 
 	pt = (fastf_t *) uvs->ctl_points;
 
-	for( i = 0; i < uvs->s_size[0] * uvs->s_size[1]; i++)
+	for ( i = 0; i < uvs->s_size[0] * uvs->s_size[1]; i++)
 	{
 		fastf_t mag;
 
@@ -116,7 +116,7 @@ rt_nurb_par_edge(const struct face_g_snurb *srf, fastf_t epsilon)
 	/* Find the maximum value of the 2nd derivative in V */
 	pt = (fastf_t *) vvs->ctl_points;
 
-	for( i = 0; i < vvs->s_size[0] * vvs->s_size[1]; i++)
+	for ( i = 0; i < vvs->s_size[0] * vvs->s_size[1]; i++)
 	{
 		fastf_t mag;
 
@@ -170,18 +170,18 @@ rt_cnurb_par_edge(const struct edge_g_cnurb *crv, fastf_t epsilon)
 	int num_coords;
 	int i, j;
 
-	if( crv->order < 3)
+	if ( crv->order < 3)
 		return( -1.0 );
 
 	num_coords = RT_NURB_EXTRACT_COORDS( crv->pt_type );
-	if( num_coords > 5 )
+	if ( num_coords > 5 )
 	{
 		bu_log( "ERROR: rt_cnurb_par_edge() cannot handle curves with more than 5 coordinates (curve has %d)\n",
 			num_coords );
 		bu_bomb( "ERROR: rt_cnurb_par_edge() cannot handle curves with more than 5 coordinates\n" );
 	}
 
-	for( i=0 ; i<num_coords ; i++ )
+	for ( i=0; i<num_coords; i++ )
 	{
 		der2[i] = 0.0;
 	}
@@ -194,28 +194,28 @@ rt_cnurb_par_edge(const struct edge_g_cnurb *crv, fastf_t epsilon)
 
 #if 0
 	pt = d1->ctl_points;
-	for( i=0 ; i<d1->c_size ; i++ )
+	for ( i=0; i<d1->c_size; i++ )
 	{
-		for( j=0 ; j<num_coords ; j++ )
+		for ( j=0; j<num_coords; j++ )
 		{
 			fastf_t abs_val;
 
 			abs_val = *pt > 0.0 ? *pt : -(*pt);
-			if( abs_val > der1[j] )
+			if ( abs_val > der1[j] )
 				der1[j] = abs_val;
 			pt++;
 		}
 	}
 #endif
 	pt = d2->ctl_points;
-	for( i=0 ; i<d2->c_size ; i++ )
+	for ( i=0; i<d2->c_size; i++ )
 	{
-		for( j=0 ; j<num_coords ; j++ )
+		for ( j=0; j<num_coords; j++ )
 		{
 			fastf_t abs_val;
 
 			abs_val = *pt > 0.0 ? *pt : -(*pt);
-			if( abs_val > der2[j] )
+			if ( abs_val > der2[j] )
 				der2[j] = abs_val;
 			pt++;
 		}
@@ -224,17 +224,17 @@ rt_cnurb_par_edge(const struct edge_g_cnurb *crv, fastf_t epsilon)
 	rt_nurb_free_cnurb( d1 );
 	rt_nurb_free_cnurb( d2 );
 
-	for( j=0 ; j<num_coords ; j++ )
+	for ( j=0; j<num_coords; j++ )
 	{
-		if( NEAR_ZERO( der2[j], SMALL_FASTF ) )
+		if ( NEAR_ZERO( der2[j], SMALL_FASTF ) )
 			continue;
 
 		t = sqrt( 2.0 * epsilon / (num_coord_factor * der2[j] ) );
-		if( t < final_t )
+		if ( t < final_t )
 			final_t = t;
 	}
 
-	if( final_t == MAX_FASTF )
+	if ( final_t == MAX_FASTF )
 		return( -1.0 );
 	else
 		return( final_t/2.0 );

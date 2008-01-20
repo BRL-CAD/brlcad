@@ -184,7 +184,7 @@ rt_nurb_s_flat(struct face_g_snurb *srf, fastf_t epsilon)
 	VCROSS(nrm, v1, v2);
 
 	nrmln = MAGNITUDE(nrm);
-	if( nrmln < 0.0001 )			/* XXX Why this constant? */
+	if ( nrmln < 0.0001 )			/* XXX Why this constant? */
 		return RT_NURB_SPLIT_FLAT;
 
 	VSUB2(v3, p4, p1);
@@ -244,7 +244,7 @@ rt_nurb_crv_flat(fastf_t *crv, int size, int pt_type)
 	}
 
 
-	if( length >= SQRT_SMALL_FASTF )  {
+	if ( length >= SQRT_SMALL_FASTF )  {
 		VSCALE(ln, ln, 1.0 / length);
 		c_ptr = crv + coords;
 

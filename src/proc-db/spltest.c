@@ -88,14 +88,14 @@ make_face(fastf_t *a, fastf_t *b, fastf_t *c, fastf_t *d, int order)
 	/* Build both knot vectors */
 	cur_kv = 0;		/* current knot value */
 	ki = 0;			/* current knot index */
-	for( i=0; i<order; i++, ki++ )  {
+	for ( i=0; i<order; i++, ki++ )  {
 		srf->u.knots[ki] = srf->v.knots[ki] = cur_kv;
 	}
 	cur_kv++;
-	for( i=0; i<interior_pts; i++, ki++ )  {
+	for ( i=0; i<interior_pts; i++, ki++ )  {
 		srf->u.knots[ki] = srf->v.knots[ki] = cur_kv++;
 	}
-	for( i=0; i<order; i++, ki++ )  {
+	for ( i=0; i<order; i++, ki++ )  {
 		srf->u.knots[ki] = srf->v.knots[ki] = cur_kv;
 	}
 
@@ -107,7 +107,7 @@ make_face(fastf_t *a, fastf_t *b, fastf_t *c, fastf_t *d, int order)
 	/* Head from point A to B */
 #if 0
 	row = 0;
-	for( col=0; col < srf->s_curve[1]; col++ )  {
+	for ( col=0; col < srf->s_curve[1]; col++ )  {
 		fp = &srf->ctl_points[col*srf->s_curve[1]+row];
 		VSET( fp
 	}

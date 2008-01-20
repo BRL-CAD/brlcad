@@ -73,7 +73,7 @@ void texture_bump_work(__TEXTURE_WORK_PROTOTYPE__) {
   MATH_VEC_UNITIZE(n);
 
   MATH_VEC_DOT(d, n, id->norm);
-  if(d < 0)
+  if (d < 0)
     MATH_VEC_MUL_SCALAR(n, n, -1.0);
   id->norm = n;
 }

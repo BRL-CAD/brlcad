@@ -61,7 +61,7 @@ WARNING: rt_bomb() is deprecated and will likely disappear in\n\
 a future release of BRL-CAD.  Applications should utilize\n\
 bu_bomb() instead for fatal errors.\n\
 \n");
-    if(RT_G_DEBUG || rt_g.NMG_debug )
+    if (RT_G_DEBUG || rt_g.NMG_debug )
 	bu_debug |= BU_DEBUG_COREDUMP;
     bu_bomb(s);
 }

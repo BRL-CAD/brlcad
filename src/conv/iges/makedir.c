@@ -47,19 +47,19 @@ Makedir()
 	bu_log( "Reading Directory Section...\n" );
 	bu_log( "Number of entities checked:\n" );
 
-	if( totentities < 1 )
+	if ( totentities < 1 )
 		goto out;
 
 	Readrec( dstart+1 );	/* read first record in directory section */
 
-	while( 1 )
+	while ( 1 )
 	{
-		if( card[72] != 'D' )	/* We are not in the directory section */
+		if ( card[72] != 'D' )	/* We are not in the directory section */
 			break;
 
 		entcount++;	/* increment count of entities */
 
-		if( entcount%100 == 0 )
+		if ( entcount%100 == 0 )
 		{
 			sprintf( str, "\t%d%c", entcount, CR );
 			write( 1, str, strlen( str ) );
@@ -81,18 +81,18 @@ Makedir()
 
 		/* convert it to a file record number */
 		paramptr = atoi( str );
-		if( paramptr == 0 && entcount > 0 )
+		if ( paramptr == 0 && entcount > 0 )
 		{
 			paramguess = 1;
 			dir[entcount]->param = dir[entcount-1]->param + dir[entcount-1]->paramlines;
 		}
-		else if( paramptr > 0 )
+		else if ( paramptr > 0 )
 			dir[entcount]->param = paramptr + pstart;
 		else
 			bu_log( "Entity number %d does not have a correct parameter pointer\n",
 				entcount );
 
-		if( dir[entcount]->type == 422 )
+		if ( dir[entcount]->type == 422 )
 		{
 			/* This is an attribute instance, so get the definition */
 			Readcols( str, 8 );
@@ -126,12 +126,12 @@ Makedir()
 		Readcols( str, 8 );	/* read pointer to color entity */
 		/* if pointer is negative, convert to a 'dir' index */
 		dir[entcount]->colorp = atoi( str );
-		if( dir[entcount]->colorp < 0 )
+		if ( dir[entcount]->colorp < 0 )
 			dir[entcount]->colorp = (dir[entcount]->colorp + 1)/2;
 
 		Readcols( str, 8 );	/* read parameter line count */
 		dir[entcount]->paramlines = atoi( str );
-		if( dir[entcount]->paramlines == 0 )
+		if ( dir[entcount]->paramlines == 0 )
 			dir[entcount]->paramlines = 1;
 		Readcols( str, 8 );	/* read form number */
 		dir[entcount]->form = atoi( str );
@@ -139,27 +139,27 @@ Makedir()
 		/* Look for entity type in list and incrememt that count */
 
 		found = 0;
-		for( i=0 ; i<ntypes ; i++ )
+		for ( i=0; i<ntypes; i++ )
 		{
-			if( typecount[i].type == dir[entcount]->type )
+			if ( typecount[i].type == dir[entcount]->type )
 			{
 				typecount[i].count++;
 				found = 1;
 				break;
 			}
 		}
-		if( !found )
+		if ( !found )
 		{
 			typecount[0].count++;
-			if( dir[entcount]->type > 0 )
+			if ( dir[entcount]->type > 0 )
 				dir[entcount]->type = (-dir[entcount]->type); /* for easy recognition */
 		}
 
 		/* Check if this is a transformation entity */
-		if( dir[entcount]->type == 124 || dir[entcount]->type == 700 )
+		if ( dir[entcount]->type == 124 || dir[entcount]->type == 700 )
 		{
 			/* Read and store the matrix */
-			if( dir[entcount]->param <= pstart )
+			if ( dir[entcount]->param <= pstart )
 			{
 				bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 						dir[entcount]->direct, dir[entcount]->name );
@@ -179,7 +179,7 @@ Makedir()
 
 out:
 	bu_log( "\t%d\n\n", entcount+1 );
-	if( paramguess )
+	if ( paramguess )
 		bu_log( "Some entities did not have proper parameter pointers, so a resonable guess was made\n" );
 }
 

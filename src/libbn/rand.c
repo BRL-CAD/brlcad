@@ -3646,7 +3646,7 @@ bn_mathtab_constant(void)
 {
 	register int i;
 
-	for( i = (sizeof(bn_rand_halftab)/sizeof(bn_rand_halftab[0]))-1; i >= 0; i-- )
+	for ( i = (sizeof(bn_rand_halftab)/sizeof(bn_rand_halftab[0]))-1; i >= 0; i-- )
 		bn_rand_halftab[i] = 0.0;
 }
 

@@ -160,13 +160,13 @@ useThisVertex( int index )
 {
     int i;
 
-    for( i=0 ; i<8 && uvec[i] != -1 ; i++ ) {
-	if( uvec[i] == index ) return 1;
+    for ( i=0; i<8 && uvec[i] != -1; i++ ) {
+	if ( uvec[i] == index ) return 1;
     }
 
-    if( svec[0] != 0 && index == svec[2] ) return 1;
+    if ( svec[0] != 0 && index == svec[2] ) return 1;
 
-    if( svec[1] != 0 && index == svec[2+svec[0]] ) return 1;
+    if ( svec[1] != 0 && index == svec[2+svec[0]] ) return 1;
 
     return 0;
 }
@@ -187,7 +187,7 @@ writesolid(void)
 	fp = fopen(tmpfil, "w");
 
 	/* Print solid parameters, 1 vector or point per line */
-	switch( es_int.idb_type )
+	switch ( es_int.idb_type )
 	{
 		struct rt_tor_internal *tor;
 		struct rt_tgc_internal *tgc;
@@ -233,12 +233,12 @@ writesolid(void)
 			(void)fprintf( fp, "C: %.9f %.9f %.9f%s", V3BASE2LOCAL( ell->c ), eol);
 			break;
 		case ID_ARB8:
-			for( j=0 ; j<8 ; j++ ) uvec[j] = -1;
+			for ( j=0; j<8; j++ ) uvec[j] = -1;
 			arb = (struct rt_arb_internal *)es_int.idb_ptr;
 			numUnique = rt_arb_get_cgtype( &cgtype, arb, &mged_tol, uvec, svec );
 			j = 0;
-			for( i=0 ; i<8 ; i++ ) {
-			    if( useThisVertex( i ) ) {
+			for ( i=0; i<8; i++ ) {
+			    if ( useThisVertex( i ) ) {
 				j++;
 				(void)fprintf( fp, "pt[%d]: %.9f %.9f %.9f%s",
 					       j, V3BASE2LOCAL( arb->pt[i] ), eol);
@@ -323,15 +323,15 @@ Get_next_line(FILE *fp)
 	int i;
 	int len;
 
-	if( bu_fgets( line, sizeof( line ), fp ) == NULL )
+	if ( bu_fgets( line, sizeof( line ), fp ) == NULL )
 		return( (char *)NULL );
 
 	len = strlen( line );
 
 	i = 0;
-	while( i<len && line[i++] != ':' );
+	while ( i<len && line[i++] != ':' );
 
-	if( i == len || line[i] == '\0' )
+	if ( i == len || line[i] == '\0' )
 		return( (char *)NULL );
 
 	return( &line[i] );
@@ -348,12 +348,12 @@ readsolid(void)
 	CHECK_DBI_NULL;
 
 	fp = fopen(tmpfil, "r");
-	if( fp == NULL )  {
+	if ( fp == NULL )  {
 		perror(tmpfil);
 		return 1;	/* FAIL */
 	}
 
-	switch( es_int.idb_type )
+	switch ( es_int.idb_type )
 	{
 		struct rt_tor_internal *tor;
 		struct rt_tgc_internal *tgc;
@@ -377,7 +377,7 @@ readsolid(void)
 		  break;
 		case ID_TOR:
 			tor = (struct rt_tor_internal *)es_int.idb_ptr;
-			if( (str=Get_next_line( fp )) == NULL )
+			if ( (str=Get_next_line( fp )) == NULL )
 			{
 				ret_val = 1;
 				break;
@@ -386,7 +386,7 @@ readsolid(void)
 			VSET( tor->v, a, b, c );
 			VSCALE( tor->v, tor->v, local2base );
 
-			if( (str=Get_next_line( fp )) == NULL )
+			if ( (str=Get_next_line( fp )) == NULL )
 			{
 				ret_val = 1;
 				break;
@@ -395,7 +395,7 @@ readsolid(void)
 			VSET( tor->h, a, b, c );
 			VUNITIZE( tor->h );
 
-			if( (str=Get_next_line( fp )) == NULL )
+			if ( (str=Get_next_line( fp )) == NULL )
 			{
 				ret_val = 1;
 				break;
@@ -403,7 +403,7 @@ readsolid(void)
 			(void)sscanf( str, "%lf", &a );
 			tor->r_a = a * local2base;
 
-			if( (str=Get_next_line( fp )) == NULL )
+			if ( (str=Get_next_line( fp )) == NULL )
 			{
 				ret_val = 1;
 				break;
@@ -414,7 +414,7 @@ readsolid(void)
 		case ID_TGC:
 		case ID_REC:
 			tgc = (struct rt_tgc_internal *)es_int.idb_ptr;
-			if( (str=Get_next_line( fp )) == NULL )
+			if ( (str=Get_next_line( fp )) == NULL )
 			{
 				ret_val = 1;
 				break;
@@ -423,7 +423,7 @@ readsolid(void)
 			VSET( tgc->v, a, b, c );
 			VSCALE( tgc->v, tgc->v, local2base );
 
-			if( (str=Get_next_line( fp )) == NULL )
+			if ( (str=Get_next_line( fp )) == NULL )
 			{
 				ret_val = 1;
 				break;
@@ -432,7 +432,7 @@ readsolid(void)
 			VSET( tgc->h, a, b, c );
 			VSCALE( tgc->h, tgc->h, local2base );
 
-			if( (str=Get_next_line( fp )) == NULL )
+			if ( (str=Get_next_line( fp )) == NULL )
 			{
 				ret_val = 1;
 				break;
@@ -441,7 +441,7 @@ readsolid(void)
 			VSET( tgc->a, a, b, c );
 			VSCALE( tgc->a, tgc->a, local2base );
 
-			if( (str=Get_next_line( fp )) == NULL )
+			if ( (str=Get_next_line( fp )) == NULL )
 			{
 				ret_val = 1;
 				break;
@@ -450,7 +450,7 @@ readsolid(void)
 			VSET( tgc->b, a, b, c );
 			VSCALE( tgc->b, tgc->b, local2base );
 
-			if( (str=Get_next_line( fp )) == NULL )
+			if ( (str=Get_next_line( fp )) == NULL )
 			{
 				ret_val = 1;
 				break;
@@ -459,7 +459,7 @@ readsolid(void)
 			VSET( tgc->c, a, b, c );
 			VSCALE( tgc->c, tgc->c, local2base );
 
-			if( (str=Get_next_line( fp )) == NULL )
+			if ( (str=Get_next_line( fp )) == NULL )
 			{
 				ret_val = 1;
 				break;
@@ -475,7 +475,7 @@ readsolid(void)
 
 			fprintf(stderr, "ID_SPH\n");
 
-			if( (str=Get_next_line( fp )) == NULL )
+			if ( (str=Get_next_line( fp )) == NULL )
 			{
 				ret_val = 1;
 				break;
@@ -484,7 +484,7 @@ readsolid(void)
 			VSET( ell->v, a, b, c );
 			VSCALE( ell->v, ell->v, local2base );
 
-			if( (str=Get_next_line( fp )) == NULL )
+			if ( (str=Get_next_line( fp )) == NULL )
 			{
 				ret_val = 1;
 				break;
@@ -493,7 +493,7 @@ readsolid(void)
 			VSET( ell->a, a, b, c );
 			VSCALE( ell->a, ell->a, local2base );
 
-			if( (str=Get_next_line( fp )) == NULL )
+			if ( (str=Get_next_line( fp )) == NULL )
 			{
 				ret_val = 1;
 				break;
@@ -502,7 +502,7 @@ readsolid(void)
 			VSET( ell->b, a, b, c );
 			VSCALE( ell->b, ell->b, local2base );
 
-			if( (str=Get_next_line( fp )) == NULL )
+			if ( (str=Get_next_line( fp )) == NULL )
 			{
 				ret_val = 1;
 				break;
@@ -513,11 +513,11 @@ readsolid(void)
 			break;
 		case ID_ARB8:
 			arb = (struct rt_arb_internal *)es_int.idb_ptr;
-			for( i=0 ; i<8 ; i++ )
+			for ( i=0; i<8; i++ )
 			{
 			    /* only read vertices that we wrote */
-			    if( useThisVertex( i ) ) {
-				if( (str=Get_next_line( fp )) == NULL )
+			    if ( useThisVertex( i ) ) {
+				if ( (str=Get_next_line( fp )) == NULL )
 				{
 					ret_val = 1;
 					break;
@@ -530,22 +530,22 @@ readsolid(void)
 			/* fill in the duplicate vertices
 			 * (based on rt_arb_get_cgtype called in writesolid)
 			 */
-			if( svec[0] != -1 ) {
-			    for( i=1 ; i<svec[0] ; i++ ) {
+			if ( svec[0] != -1 ) {
+			    for ( i=1; i<svec[0]; i++ ) {
 				int start = 2;
 				VMOVE( arb->pt[svec[start+i]], arb->pt[svec[start]] );
 			    }
 			}
-			if( svec[1] != -1 ) {
+			if ( svec[1] != -1 ) {
 			    int start = 2 + svec[0];
-			    for( i=1 ; i<svec[1] ; i++ ) {
+			    for ( i=1; i<svec[1]; i++ ) {
 				VMOVE( arb->pt[svec[start+i]], arb->pt[svec[start]] );
 			    }
 			}
 			break;
 		case ID_HALF:
 			haf = (struct rt_half_internal *)es_int.idb_ptr;
-			if( (str=Get_next_line( fp )) == NULL )
+			if ( (str=Get_next_line( fp )) == NULL )
 			{
 				ret_val = 1;
 				break;
@@ -556,7 +556,7 @@ readsolid(void)
 			break;
 		case ID_GRIP:
 			grip = (struct rt_grip_internal *)es_int.idb_ptr;
-			if( (str=Get_next_line( fp )) == NULL )
+			if ( (str=Get_next_line( fp )) == NULL )
 			{
 				ret_val = 1;
 				break;
@@ -565,7 +565,7 @@ readsolid(void)
 			VSET( grip->center, a, b, c );
 			VSCALE( grip->center, grip->center, local2base );
 
-			if( (str=Get_next_line( fp )) == NULL )
+			if ( (str=Get_next_line( fp )) == NULL )
 			{
 				ret_val = 1;
 				break;
@@ -576,7 +576,7 @@ readsolid(void)
 		case ID_PARTICLE:
 			part = (struct rt_part_internal *)es_int.idb_ptr;
 
-			if( (str=Get_next_line( fp )) == NULL )
+			if ( (str=Get_next_line( fp )) == NULL )
 			{
 				ret_val = 1;
 				break;
@@ -585,7 +585,7 @@ readsolid(void)
 			VSET( part->part_V, a, b, c );
 			VSCALE( part->part_V, part->part_V, local2base );
 
-			if( (str=Get_next_line( fp )) == NULL )
+			if ( (str=Get_next_line( fp )) == NULL )
 			{
 				ret_val = 1;
 				break;
@@ -594,7 +594,7 @@ readsolid(void)
 			VSET( part->part_H, a, b, c );
 			VSCALE( part->part_H, part->part_H, local2base );
 
-			if( (str=Get_next_line( fp )) == NULL )
+			if ( (str=Get_next_line( fp )) == NULL )
 			{
 				ret_val = 1;
 				break;
@@ -602,7 +602,7 @@ readsolid(void)
 			(void)sscanf( str, "%lf", &a );
 			part->part_vrad = a * local2base;
 
-			if( (str=Get_next_line( fp )) == NULL )
+			if ( (str=Get_next_line( fp )) == NULL )
 			{
 				ret_val = 1;
 				break;
@@ -614,7 +614,7 @@ readsolid(void)
 		case ID_RPC:
 			rpc = (struct rt_rpc_internal *)es_int.idb_ptr;
 
-			if( (str=Get_next_line( fp )) == NULL )
+			if ( (str=Get_next_line( fp )) == NULL )
 			{
 				ret_val = 1;
 				break;
@@ -623,7 +623,7 @@ readsolid(void)
 			VSET( rpc->rpc_V, a, b, c );
 			VSCALE( rpc->rpc_V, rpc->rpc_V, local2base );
 
-			if( (str=Get_next_line( fp )) == NULL )
+			if ( (str=Get_next_line( fp )) == NULL )
 			{
 				ret_val = 1;
 				break;
@@ -632,7 +632,7 @@ readsolid(void)
 			VSET( rpc->rpc_H, a, b, c );
 			VSCALE( rpc->rpc_H, rpc->rpc_H, local2base );
 
-			if( (str=Get_next_line( fp )) == NULL )
+			if ( (str=Get_next_line( fp )) == NULL )
 			{
 				ret_val = 1;
 				break;
@@ -641,7 +641,7 @@ readsolid(void)
 			VSET( rpc->rpc_B, a, b, c );
 			VSCALE( rpc->rpc_B, rpc->rpc_B, local2base );
 
-			if( (str=Get_next_line( fp )) == NULL )
+			if ( (str=Get_next_line( fp )) == NULL )
 			{
 				ret_val = 1;
 				break;
@@ -651,7 +651,7 @@ readsolid(void)
 			break;
 		case ID_RHC:
 			rhc = (struct rt_rhc_internal *)es_int.idb_ptr;
-			if( (str=Get_next_line( fp )) == NULL )
+			if ( (str=Get_next_line( fp )) == NULL )
 			{
 				ret_val = 1;
 				break;
@@ -660,7 +660,7 @@ readsolid(void)
 			VSET( rhc->rhc_V, a, b, c );
 			VSCALE( rhc->rhc_V, rhc->rhc_V, local2base );
 
-			if( (str=Get_next_line( fp )) == NULL )
+			if ( (str=Get_next_line( fp )) == NULL )
 			{
 				ret_val = 1;
 				break;
@@ -669,7 +669,7 @@ readsolid(void)
 			VSET( rhc->rhc_H, a, b, c );
 			VSCALE( rhc->rhc_H, rhc->rhc_H, local2base );
 
-			if( (str=Get_next_line( fp )) == NULL )
+			if ( (str=Get_next_line( fp )) == NULL )
 			{
 				ret_val = 1;
 				break;
@@ -678,7 +678,7 @@ readsolid(void)
 			VSET( rhc->rhc_B, a, b, c );
 			VSCALE( rhc->rhc_B, rhc->rhc_B, local2base );
 
-			if( (str=Get_next_line( fp )) == NULL )
+			if ( (str=Get_next_line( fp )) == NULL )
 			{
 				ret_val = 1;
 				break;
@@ -686,7 +686,7 @@ readsolid(void)
 			(void)sscanf( str, "%lf", &a );
 			rhc->rhc_r = a * local2base;
 
-			if( (str=Get_next_line( fp )) == NULL )
+			if ( (str=Get_next_line( fp )) == NULL )
 			{
 				ret_val = 1;
 				break;
@@ -696,7 +696,7 @@ readsolid(void)
 			break;
 		case ID_EPA:
 			epa = (struct rt_epa_internal *)es_int.idb_ptr;
-			if( (str=Get_next_line( fp )) == NULL )
+			if ( (str=Get_next_line( fp )) == NULL )
 			{
 				ret_val = 1;
 				break;
@@ -705,7 +705,7 @@ readsolid(void)
 			VSET( epa->epa_V, a, b, c );
 			VSCALE( epa->epa_V, epa->epa_V, local2base );
 
-			if( (str=Get_next_line( fp )) == NULL )
+			if ( (str=Get_next_line( fp )) == NULL )
 			{
 				ret_val = 1;
 				break;
@@ -714,7 +714,7 @@ readsolid(void)
 			VSET( epa->epa_H, a, b, c );
 			VSCALE( epa->epa_H, epa->epa_H, local2base );
 
-			if( (str=Get_next_line( fp )) == NULL )
+			if ( (str=Get_next_line( fp )) == NULL )
 			{
 				ret_val = 1;
 				break;
@@ -723,7 +723,7 @@ readsolid(void)
 			VSET( epa->epa_Au, a, b, c );
 			VUNITIZE( epa->epa_Au );
 
-			if( (str=Get_next_line( fp )) == NULL )
+			if ( (str=Get_next_line( fp )) == NULL )
 			{
 				ret_val = 1;
 				break;
@@ -731,7 +731,7 @@ readsolid(void)
 			(void)sscanf( str, "%lf", &a );
 			epa->epa_r1 = a * local2base;
 
-			if( (str=Get_next_line( fp )) == NULL )
+			if ( (str=Get_next_line( fp )) == NULL )
 			{
 				ret_val = 1;
 				break;
@@ -741,7 +741,7 @@ readsolid(void)
 			break;
 		case ID_EHY:
 			ehy = (struct rt_ehy_internal *)es_int.idb_ptr;
-			if( (str=Get_next_line( fp )) == NULL )
+			if ( (str=Get_next_line( fp )) == NULL )
 			{
 				ret_val = 1;
 				break;
@@ -750,7 +750,7 @@ readsolid(void)
 			VSET( ehy->ehy_V, a, b, c );
 			VSCALE( ehy->ehy_V, ehy->ehy_V, local2base );
 
-			if( (str=Get_next_line( fp )) == NULL )
+			if ( (str=Get_next_line( fp )) == NULL )
 			{
 				ret_val = 1;
 				break;
@@ -759,7 +759,7 @@ readsolid(void)
 			VSET( ehy->ehy_H, a, b, c );
 			VSCALE( ehy->ehy_H, ehy->ehy_H, local2base );
 
-			if( (str=Get_next_line( fp )) == NULL )
+			if ( (str=Get_next_line( fp )) == NULL )
 			{
 				ret_val = 1;
 				break;
@@ -768,7 +768,7 @@ readsolid(void)
 			VSET( ehy->ehy_Au, a, b, c );
 			VUNITIZE( ehy->ehy_Au );
 
-			if( (str=Get_next_line( fp )) == NULL )
+			if ( (str=Get_next_line( fp )) == NULL )
 			{
 				ret_val = 1;
 				break;
@@ -776,7 +776,7 @@ readsolid(void)
 			(void)sscanf( str, "%lf", &a );
 			ehy->ehy_r1 = a * local2base;
 
-			if( (str=Get_next_line( fp )) == NULL )
+			if ( (str=Get_next_line( fp )) == NULL )
 			{
 				ret_val = 1;
 				break;
@@ -784,7 +784,7 @@ readsolid(void)
 			(void)sscanf( str, "%lf", &a );
 			ehy->ehy_r2 = a * local2base;
 
-			if( (str=Get_next_line( fp )) == NULL )
+			if ( (str=Get_next_line( fp )) == NULL )
 			{
 				ret_val = 1;
 				break;
@@ -794,7 +794,7 @@ readsolid(void)
 			break;
 		case ID_ETO:
 			eto = (struct rt_eto_internal *)es_int.idb_ptr;
-			if( (str=Get_next_line( fp )) == NULL )
+			if ( (str=Get_next_line( fp )) == NULL )
 			{
 				ret_val = 1;
 				break;
@@ -803,7 +803,7 @@ readsolid(void)
 			VSET( eto->eto_V, a, b, c );
 			VSCALE( eto->eto_V, eto->eto_V, local2base );
 
-			if( (str=Get_next_line( fp )) == NULL )
+			if ( (str=Get_next_line( fp )) == NULL )
 			{
 				ret_val = 1;
 				break;
@@ -812,7 +812,7 @@ readsolid(void)
 			VSET( eto->eto_N, a, b, c );
 			VUNITIZE( eto->eto_N );
 
-			if( (str=Get_next_line( fp )) == NULL )
+			if ( (str=Get_next_line( fp )) == NULL )
 			{
 				ret_val = 1;
 				break;
@@ -821,7 +821,7 @@ readsolid(void)
 			VSET( eto->eto_C, a, b, c );
 			VSCALE( eto->eto_C, eto->eto_C, local2base );
 
-			if( (str=Get_next_line( fp )) == NULL )
+			if ( (str=Get_next_line( fp )) == NULL )
 			{
 				ret_val = 1;
 				break;
@@ -829,7 +829,7 @@ readsolid(void)
 			(void)sscanf( str, "%lf", &a );
 			eto->eto_rd = a * local2base;
 
-			if( (str=Get_next_line( fp )) == NULL )
+			if ( (str=Get_next_line( fp )) == NULL )
 			{
 				ret_val = 1;
 				break;
@@ -842,7 +842,7 @@ readsolid(void)
 
 			fprintf(stderr, "ID_SUPERELL\n");
 
-			if( (str=Get_next_line( fp )) == NULL )
+			if ( (str=Get_next_line( fp )) == NULL )
 			{
 				ret_val = 1;
 				break;
@@ -851,7 +851,7 @@ readsolid(void)
 			VSET( superell->v, a, b, c );
 			VSCALE( superell->v, superell->v, local2base );
 
-			if( (str=Get_next_line( fp )) == NULL )
+			if ( (str=Get_next_line( fp )) == NULL )
 			{
 				ret_val = 1;
 				break;
@@ -860,7 +860,7 @@ readsolid(void)
 			VSET( superell->a, a, b, c );
 			VSCALE( superell->a, superell->a, local2base );
 
-			if( (str=Get_next_line( fp )) == NULL )
+			if ( (str=Get_next_line( fp )) == NULL )
 			{
 				ret_val = 1;
 				break;
@@ -869,7 +869,7 @@ readsolid(void)
 			VSET( superell->b, a, b, c );
 			VSCALE( superell->b, superell->b, local2base );
 
-			if( (str=Get_next_line( fp )) == NULL )
+			if ( (str=Get_next_line( fp )) == NULL )
 			{
 				ret_val = 1;
 				break;
@@ -912,10 +912,10 @@ editit(const char *file)
 	void (*s3)();
 
 	editor = Tcl_GetVar(interp, "editor", TCL_GLOBAL_ONLY);
-	if(!editor || editor[0] == '\0')
+	if (!editor || editor[0] == '\0')
 	    editor = Tcl_GetVar(interp, "EDITOR", TCL_GLOBAL_ONLY);
 
-	if(!editor || editor[0] == '\0')
+	if (!editor || editor[0] == '\0')
 	    editor = getenv("EDITOR");
 
 	/* still unset? try windows */

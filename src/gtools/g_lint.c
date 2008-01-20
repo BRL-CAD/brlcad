@@ -372,7 +372,7 @@ void insert_by_vol (void *v, int depth)
     int			rc;	/* Return code from bu_rb_insert() */
     struct g_lint_ovlp	*op = (struct g_lint_ovlp *) v;
 
-    if( (rc = bu_rb_insert(ovlps_by_vol, (void *) op)))
+    if ( (rc = bu_rb_insert(ovlps_by_vol, (void *) op)))
 	bu_exit (1, "%s:%d: bu_rb_insert() returns %d:  This should not happen\n",
 	    __FILE__, __LINE__, rc);
 }

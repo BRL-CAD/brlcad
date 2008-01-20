@@ -58,7 +58,7 @@ mk_tree_pure( struct rt_comb_internal *comb, struct bu_list *member_hd )
 {
 	register struct wmember *wp;
 
-	for( BU_LIST_FOR( wp, wmember, member_hd ) )  {
+	for ( BU_LIST_FOR( wp, wmember, member_hd ) )  {
 		union tree	*leafp, *nodep;
 
 		WDB_CK_WMEMBER(wp);
@@ -67,18 +67,18 @@ mk_tree_pure( struct rt_comb_internal *comb, struct bu_list *member_hd )
 		leafp->tr_l.magic = RT_TREE_MAGIC;
 		leafp->tr_l.tl_op = OP_DB_LEAF;
 		leafp->tr_l.tl_name = bu_strdup( wp->wm_name );
-		if( !bn_mat_is_identity( wp->wm_mat ) )  {
+		if ( !bn_mat_is_identity( wp->wm_mat ) )  {
 			leafp->tr_l.tl_mat = bn_mat_dup( wp->wm_mat );
 		}
 
-		if( !comb->tree )  {
+		if ( !comb->tree )  {
 			comb->tree = leafp;
 			continue;
 		}
 		/* Build a left-heavy tree */
 		BU_GETUNION( nodep, tree );
 		nodep->tr_b.magic = RT_TREE_MAGIC;
-		switch( wp->wm_op )  {
+		switch ( wp->wm_op )  {
 		case WMOP_UNION:
 			nodep->tr_b.tb_op = OP_UNION;
 			break;
@@ -119,13 +119,13 @@ mk_tree_gift( struct rt_comb_internal *comb, struct bu_list *member_hd )
 	int actual_count;
 	int new_nodes;
 
-	if( (new_nodes = bu_list_len( member_hd )) <= 0 )
+	if ( (new_nodes = bu_list_len( member_hd )) <= 0 )
 		return 0;	/* OK, nothing to do */
 
-	if( comb->tree && db_ck_v4gift_tree( comb->tree ) < 0 )
+	if ( comb->tree && db_ck_v4gift_tree( comb->tree ) < 0 )
 	{
 		db_non_union_push( comb->tree, &rt_uniresource );
-		if( db_ck_v4gift_tree( comb->tree ) < 0 )
+		if ( db_ck_v4gift_tree( comb->tree ) < 0 )
 		{
 			bu_log("mk_tree_gift() Cannot flatten tree for editing\n");
 			return -1;
@@ -133,12 +133,12 @@ mk_tree_gift( struct rt_comb_internal *comb, struct bu_list *member_hd )
 	}
 
 	/* make space for an extra leaf */
-	node_count = db_tree_nleaves( comb->tree ) ;
+	node_count = db_tree_nleaves( comb->tree );
 	tree_list = (struct rt_tree_array *)bu_calloc( node_count + new_nodes,
 		sizeof( struct rt_tree_array ), "tree list" );
 
 	/* flatten tree */
-	if( comb->tree )  {
+	if ( comb->tree )  {
 		/* Release storage for non-leaf nodes, steal leaves */
 		actual_count = (struct rt_tree_array *)db_flatten_tree(
 			tree_list, comb->tree, OP_UNION,
@@ -150,10 +150,10 @@ mk_tree_gift( struct rt_comb_internal *comb, struct bu_list *member_hd )
 	}
 
 	/* Add new members to the array */
-	for( BU_LIST_FOR( wp, wmember, member_hd ) )  {
+	for ( BU_LIST_FOR( wp, wmember, member_hd ) )  {
 		WDB_CK_WMEMBER(wp);
 
-		switch( wp->wm_op )  {
+		switch ( wp->wm_op )  {
 			case WMOP_INTERSECT:
 				tree_list[node_count].tl_op = OP_INTERSECT;
 				break;
@@ -174,7 +174,7 @@ mk_tree_gift( struct rt_comb_internal *comb, struct bu_list *member_hd )
 		tp->tr_l.magic = RT_TREE_MAGIC;
 		tp->tr_l.tl_op = OP_DB_LEAF;
 		tp->tr_l.tl_name = bu_strdup( wp->wm_name );
-		if( !bn_mat_is_identity( wp->wm_mat ) )  {
+		if ( !bn_mat_is_identity( wp->wm_mat ) )  {
 			tp->tr_l.tl_mat = bn_mat_dup( wp->wm_mat );
 		} else {
 			tp->tr_l.tl_mat = (matp_t)NULL;
@@ -214,7 +214,7 @@ mk_addmember(
 	BU_GETSTRUCT( wp, wmember );
 	wp->l.magic = WMEMBER_MAGIC;
 	wp->wm_name = bu_strdup( name );
-	switch( op )  {
+	switch ( op )  {
 	case WMOP_UNION:
 	case WMOP_INTERSECT:
 	case WMOP_SUBTRACT:
@@ -245,7 +245,7 @@ mk_freemembers( struct bu_list *headp )
 {
 	register struct wmember *wp;
 
-	while( BU_LIST_WHILE( wp, wmember, headp ) )  {
+	while ( BU_LIST_WHILE( wp, wmember, headp ) )  {
 		WDB_CK_WMEMBER(wp);
 		BU_LIST_DEQUEUE( &wp->l );
 		bu_free( (char *)wp->wm_name, "wm_name" );
@@ -292,7 +292,7 @@ mk_comb(
 
 	RT_INIT_DB_INTERNAL(&intern);
 
-	if( append_ok &&
+	if ( append_ok &&
 	    wdb_import( wdbp, &intern, combname, (matp_t)NULL ) >= 0 )  {
 		/* We retrieved an existing object, append to it */
 		comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -314,7 +314,7 @@ mk_comb(
 		fresh_combination = 1;
 	}
 
-	if( gift_semantics )
+	if ( gift_semantics )
 		mk_tree_gift( comb, headp );
 	else
 		mk_tree_pure( comb, headp );
@@ -323,10 +323,10 @@ mk_comb(
 	mk_freemembers( headp );
 
 	/* Don't change these things when appending to existing combination */
-	if( fresh_combination )  {
-		if( region_kind )  {
+	if ( fresh_combination )  {
+		if ( region_kind )  {
 			comb->region_flag = 1;
-			switch( region_kind )  {
+			switch ( region_kind )  {
 			case 'P':
 				comb->is_fastgen = REGION_FASTGEN_PLATE;
 				break;
@@ -342,24 +342,24 @@ mk_comb(
 					combname, region_kind, region_kind);
 			}
 		}
-		if( shadername )  bu_vls_strcat( &comb->shader, shadername );
-		if( shaderargs )  {
+		if ( shadername )  bu_vls_strcat( &comb->shader, shadername );
+		if ( shaderargs )  {
 			bu_vls_strcat( &comb->shader, " " );
 			bu_vls_strcat( &comb->shader, shaderargs );
 			/* Convert to Tcl form if necessary.  Use heuristics */
-			if( strchr( shaderargs, '=' ) != NULL &&
+			if ( strchr( shaderargs, '=' ) != NULL &&
 			    strchr( shaderargs, '{' ) == NULL )
 			{
 				struct bu_vls old;
 				bu_vls_init(&old);
 				bu_vls_vlscatzap(&old, &comb->shader);
-				if( bu_shader_to_tcl_list( bu_vls_addr(&old), &comb->shader) )
+				if ( bu_shader_to_tcl_list( bu_vls_addr(&old), &comb->shader) )
 					bu_log("Unable to convert shader string '%s %s'\n", shadername, shaderargs);
 				bu_vls_free(&old);
 			}
 		}
 
-		if( rgb )  {
+		if ( rgb )  {
 			comb->rgb_valid = 1;
 			comb->rgb[0] = rgb[0];
 			comb->rgb[1] = rgb[1];
@@ -392,7 +392,7 @@ mk_comb1( struct rt_wdb *wdbp,
 	struct bu_list	head;
 
 	BU_LIST_INIT( &head );
-	if( mk_addmember( membname, &head, NULL, WMOP_UNION ) == WMEMBER_NULL )
+	if ( mk_addmember( membname, &head, NULL, WMOP_UNION ) == WMEMBER_NULL )
 		return -2;
 	return mk_comb( wdbp, combname, &head, regflag,
 		(char *)NULL, (char *)NULL, (unsigned char *)NULL,
@@ -417,7 +417,7 @@ mk_region1(
 	struct bu_list	head;
 
 	BU_LIST_INIT( &head );
-	if( mk_addmember( membname, &head, NULL, WMOP_UNION ) == WMEMBER_NULL )
+	if ( mk_addmember( membname, &head, NULL, WMOP_UNION ) == WMEMBER_NULL )
 		return -2;
 	return mk_comb( wdbp, combname, &head, 1, shadername, shaderargs,
 		rgb, 0, 0, 0, 0, 0, 0, 0 );

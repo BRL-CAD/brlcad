@@ -45,7 +45,7 @@ void render_depth_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixe
   adrt_mesh_t *mesh;
 
   /* Visualize ray depth, must put ray->depth++ hack into bsp for this to be of any use */
-  if((mesh = (adrt_mesh_t *)tie_work(tie, ray, &id, render_hit, NULL)))
+  if ((mesh = (adrt_mesh_t *)tie_work(tie, ray, &id, render_hit, NULL)))
     pixel->v[0] = 0.0075 * ray->kdtree_depth;
 }
 

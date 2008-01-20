@@ -97,7 +97,7 @@ const struct bu_structparse rt_tgc_parse[] = {
     { "%f", 3, "B", bu_offsetof(struct rt_tgc_internal, b[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "C", bu_offsetof(struct rt_tgc_internal, c[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "D", bu_offsetof(struct rt_tgc_internal, d[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { {'\0','\0','\0','\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
+    { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
 };
 
 
@@ -135,7 +135,7 @@ rt_tgc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	 *  If it takes it, then there is nothing to do, otherwise
 	 *  the solid is a TGC.
 	 */
-	if( rt_rec_prep( stp, ip, rtip ) == 0 )
+	if ( rt_rec_prep( stp, ip, rtip ) == 0 )
 		return(0);		/* OK */
 
 	/* Validate that |H| > 0, compute |A| |B| |C| |D|		*/
@@ -147,27 +147,27 @@ rt_tgc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	prod_ab = mag_a * mag_b;
 	prod_cd = mag_c * mag_d;
 
-	if( NEAR_ZERO( mag_h, RT_LEN_TOL ) ) {
+	if ( NEAR_ZERO( mag_h, RT_LEN_TOL ) ) {
 		bu_log("tgc(%s):  zero length H vector\n", stp->st_name );
 		return(1);		/* BAD */
 	}
 
 	/* Validate that figure is not two-dimensional			*/
-	if( NEAR_ZERO( mag_a, RT_LEN_TOL ) &&
+	if ( NEAR_ZERO( mag_a, RT_LEN_TOL ) &&
 	    NEAR_ZERO( mag_c, RT_LEN_TOL ) ) {
 		bu_log("tgc(%s):  vectors A, C zero length\n", stp->st_name );
 		return (1);
 	}
-	if( NEAR_ZERO( mag_b, RT_LEN_TOL ) &&
+	if ( NEAR_ZERO( mag_b, RT_LEN_TOL ) &&
 	    NEAR_ZERO( mag_d, RT_LEN_TOL ) ) {
 		bu_log("tgc(%s):  vectors B, D zero length\n", stp->st_name );
 		return (1);
 	}
 
 	/* Validate that both ends are not degenerate */
-	if( prod_ab <= SMALL )  {
+	if ( prod_ab <= SMALL )  {
 		/* AB end is degenerate */
-		if( prod_cd <= SMALL )  {
+		if ( prod_cd <= SMALL )  {
 			bu_log("tgc(%s):  Both ends degenerate\n", stp->st_name);
 			return(1);		/* BAD */
 		}
@@ -190,10 +190,10 @@ rt_tgc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 		return(1);		/* BAD */
 	}
 
-	if( prod_ab > SMALL )  {
+	if ( prod_ab > SMALL )  {
 		/* Validate that A.B == 0 */
 		f = VDOT( tip->a, tip->b ) / prod_ab;
-		if( ! NEAR_ZERO(f, RT_DOT_TOL) ) {
+		if ( ! NEAR_ZERO(f, RT_DOT_TOL) ) {
 			bu_log("tgc(%s):  A not perpendicular to B, f=%g\n",
 			    stp->st_name, f);
 			bu_log("tgc: dot=%g / a*b=%g\n",
@@ -201,10 +201,10 @@ rt_tgc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 			return(1);		/* BAD */
 		}
 	}
-	if( prod_cd > SMALL )  {
+	if ( prod_cd > SMALL )  {
 		/* Validate that C.D == 0 */
 		f = VDOT( tip->c, tip->d ) / prod_cd;
-		if( ! NEAR_ZERO(f, RT_DOT_TOL) ) {
+		if ( ! NEAR_ZERO(f, RT_DOT_TOL) ) {
 			bu_log("tgc(%s):  C not perpendicular to D, f=%g\n",
 			    stp->st_name, f);
 			bu_log("tgc: dot=%g / c*d=%g\n",
@@ -213,20 +213,20 @@ rt_tgc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 		}
 	}
 
-	if( mag_a * mag_c > SMALL )  {
+	if ( mag_a * mag_c > SMALL )  {
 		/* Validate that  A || C */
 		f = 1.0 - VDOT( tip->a, tip->c ) / (mag_a * mag_c);
-		if( ! NEAR_ZERO(f, RT_DOT_TOL) ) {
+		if ( ! NEAR_ZERO(f, RT_DOT_TOL) ) {
 			bu_log("tgc(%s):  A not parallel to C, f=%g\n",
 			    stp->st_name, f);
 			return(1);		/* BAD */
 		}
 	}
 
-	if( mag_b * mag_d > SMALL )  {
+	if ( mag_b * mag_d > SMALL )  {
 		/* Validate that  B || D, for parallel planes	*/
 		f = 1.0 - VDOT( tip->b, tip->d ) / (mag_b * mag_d);
-		if( ! NEAR_ZERO(f, RT_DOT_TOL) ) {
+		if ( ! NEAR_ZERO(f, RT_DOT_TOL) ) {
 			bu_log("tgc(%s):  B not parallel to D, f=%g\n",
 			    stp->st_name, f);
 			return(1);		/* BAD */
@@ -243,17 +243,17 @@ rt_tgc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	tgc->tgc_C = mag_c;
 	tgc->tgc_D = mag_d;
 
-	if(RT_G_DEBUG&DEBUG_SOLIDS)
+	if (RT_G_DEBUG&DEBUG_SOLIDS)
 	    bu_log("%s: a is %.20f, b is %.20f, c is %.20f, d is %.20f\n",
 		    stp->st_name, magsq_a, magsq_b, magsq_c, magsq_d);
 
 	/* Part of computing ALPHA() */
-	if( NEAR_ZERO(magsq_c, SMALL) ) {
+	if ( NEAR_ZERO(magsq_c, SMALL) ) {
 		tgc->tgc_AAdCC = VLARGE;
 	} else {
 		tgc->tgc_AAdCC = magsq_a / magsq_c;
 	}
-	if( NEAR_ZERO(magsq_d, SMALL) ) {
+	if ( NEAR_ZERO(magsq_d, SMALL) ) {
 		tgc->tgc_BBdDD = VLARGE;
 	} else {
 		tgc->tgc_BBdDD = magsq_b / magsq_d;
@@ -271,9 +271,9 @@ rt_tgc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
 	tgc->tgc_CdAm1 = tgc->tgc_C/tgc->tgc_A - 1.0;
 	tgc->tgc_DdBm1 = tgc->tgc_D/tgc->tgc_B - 1.0;
-	if( NEAR_ZERO( tgc->tgc_CdAm1, SMALL ) )
+	if ( NEAR_ZERO( tgc->tgc_CdAm1, SMALL ) )
 		tgc->tgc_CdAm1 = 0.0;
-	if( NEAR_ZERO( tgc->tgc_DdBm1, SMALL ) )
+	if ( NEAR_ZERO( tgc->tgc_DdBm1, SMALL ) )
 		tgc->tgc_DdBm1 = 0.0;
 
 	/*
@@ -334,9 +334,9 @@ rt_tgc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 		dx = (stp->st_max[X] - stp->st_min[X])/2;
 		f = dx;
 		dy = (stp->st_max[Y] - stp->st_min[Y])/2;
-		if( dy > f )  f = dy;
+		if ( dy > f )  f = dy;
 		dz = (stp->st_max[Z] - stp->st_min[Z])/2;
-		if( dz > f )  f = dz;
+		if ( dz > f )  f = dz;
 		stp->st_aradius = f;
 		stp->st_bradius = sqrt(dx*dx + dy*dy + dz*dz);
 	}
@@ -425,7 +425,7 @@ rt_tgc_shear(const fastf_t *vect, int axis, fastf_t *Shr, fastf_t *Trn, fastf_t 
 	MAT_IDN( Trn );
 	MAT_IDN( Inv );
 
-	if( NEAR_ZERO( vect[axis], SMALL_FASTF ) )
+	if ( NEAR_ZERO( vect[axis], SMALL_FASTF ) )
 		bu_bomb("rt_tgc_shear() divide by zero\n");
 
 	if ( axis == X ){
@@ -477,7 +477,7 @@ rt_tgc_print(register const struct soltab *stp)
 	bn_mat_print( "Sc o Sh o R", tgc->tgc_ScShR );
 	bn_mat_print( "invR o trnSh o Sc", tgc->tgc_invRtShSc );
 
-	if( tgc->tgc_AD_CB )  {
+	if ( tgc->tgc_AD_CB )  {
 		bu_log( "A*D == C*B.  Equal eccentricities gives quadratic equation.\n");
 	} else {
 		bu_log( "A*D != C*B.  Quartic equation.\n");
@@ -549,7 +549,7 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	 *  proper length after hit points are found.
 	 */
 	t_scale = MAGNITUDE(dprime);
-	if( NEAR_ZERO( t_scale, SMALL_FASTF ) )  {
+	if ( NEAR_ZERO( t_scale, SMALL_FASTF ) )  {
 		bu_log("tgc(%s) dprime=(%g,%g,%g), t_scale=%e, miss.\n",
 		    V3ARGS(dprime), t_scale);
 		return 0;
@@ -557,7 +557,7 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	t_scale = 1/t_scale;
 	VSCALE( dprime, dprime, t_scale );	/* VUNITIZE( dprime ); */
 
-	if( NEAR_ZERO( dprime[Z], RT_PCOEF_TOL ) )  {
+	if ( NEAR_ZERO( dprime[Z], RT_PCOEF_TOL ) )  {
 		dprime[Z] = 0.0;	/* prevent rootfinder heartburn */
 	}
 
@@ -580,13 +580,13 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	 * If these tiny values were left in, then as they get
 	 * squared (below) they will cause difficulties.
 	 */
-	for( i=0; i<3; i++ )  {
+	for ( i=0; i<3; i++ )  {
 		/* Direction cosines */
-		if( NEAR_ZERO( dprime[i], 1e-10 ) ) {
+		if ( NEAR_ZERO( dprime[i], 1e-10 ) ) {
 		    dprime[i] = 0;
 		}
 		/* Position in -1..+1 coordinates */
-		if( NEAR_ZERO( cor_pprime[i], 1e-20 ) ) {
+		if ( NEAR_ZERO( cor_pprime[i], 1e-20 ) ) {
 		    cor_pprime[i] = 0;
 		}
 	}
@@ -642,7 +642,7 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	 *  this can only be done when C.cf[0] is not too small!!!! (JRA)
 	 */
 	C.cf[0] = Xsqr.cf[0] + Ysqr.cf[0] - Rsqr.cf[0];
-	if( tgc->tgc_AD_CB && !NEAR_ZERO( C.cf[0], 1.0e-10 )  ) {
+	if ( tgc->tgc_AD_CB && !NEAR_ZERO( C.cf[0], 1.0e-10 )  ) {
 		fastf_t roots;
 
 		/*
@@ -654,7 +654,7 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 		C.cf[2] = Xsqr.cf[2] + Ysqr.cf[2] - Rsqr.cf[2];
 
 		/* Find the real roots the easy way.  C.dgr==2 */
-		if( (roots = C.cf[1]*C.cf[1] - 4 * C.cf[0] * C.cf[2]) < 0 ) {
+		if ( (roots = C.cf[1]*C.cf[1] - 4 * C.cf[0] * C.cf[2]) < 0 ) {
 			npts = 0;	/* no real roots */
 		} else {
 			register fastf_t	f;
@@ -747,7 +747,7 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	/*
 	 * Reverse above translation by adding distance to all 'k' values.
 	 */
-	for( i = 0; i < npts; ++i )  {
+	for ( i = 0; i < npts; ++i )  {
 		k[i] += cor_proj;
 	}
 
@@ -756,14 +756,14 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	 * Eliminate hits beyond the end planes
 	 */
 	i = 0;
-	while( i < npts ) {
+	while ( i < npts ) {
 		zval = k[i]*dprime[Z] + pprime[Z];
 		/* Height vector is unitized (tgc->tgc_sH == 1.0) */
 		if ( zval >= 1.0 || zval <= 0.0 ){
 			int j;
 			/* drop this hit */
 			npts--;
-			for( j=i ; j<npts ; j++ ) {
+			for ( j=i; j<npts; j++ ) {
 				hit_type[j] = hit_type[j+1];
 				k[j] = k[j+1];
 			}
@@ -777,7 +777,7 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	 */
 	/* bu_log("npts before base is %d; ", npts); */
 	dir = VDOT( tgc->tgc_N, rp->r_dir );
-	if( !NEAR_ZERO( dprime[Z], SMALL_FASTF ) && !NEAR_ZERO( dir, RT_DOT_TOL ) )  {
+	if ( !NEAR_ZERO( dprime[Z], SMALL_FASTF ) && !NEAR_ZERO( dir, RT_DOT_TOL ) )  {
 		b = ( -pprime[Z] )/dprime[Z];
 		/*  Height vector is unitized (tgc->tgc_sH == 1.0) */
 		t = ( 1.0 - pprime[Z] )/dprime[Z];
@@ -815,9 +815,9 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 		register short		lim, n;
 		register int		type;
 
-		for( lim = npts-1; lim > 0; lim-- )  {
-			for( n = 0; n < lim; n++ )  {
-				if( (u=k[n]) < k[n+1] )  {
+		for ( lim = npts-1; lim > 0; lim-- )  {
+			for ( n = 0; n < lim; n++ )  {
+				if ( (u=k[n]) < k[n+1] )  {
 					/* bubble larger towards [0] */
 					type = hit_type[n];
 					hit_type[n] = hit_type[n+1];
@@ -830,22 +830,22 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	}
 	/* Now, k[0] > k[npts-1] */
 
-	if( npts%2 ) {
+	if ( npts%2 ) {
 		/* odd number of hits!!!
 		 * perhaps we got two hits on an edge
 		 * check for duplicate hit distances
 		 */
 
-		for( i=npts-1 ; i>0 ; i-- ) {
+		for ( i=npts-1; i>0; i-- ) {
 			fastf_t diff;
 
 			diff = k[i-1] - k[i];	/* non-negative due to sorting */
-			if( diff < ap->a_rt_i->rti_tol.dist ) {
+			if ( diff < ap->a_rt_i->rti_tol.dist ) {
 				/* remove this duplicate hit */
 				int j;
 
 				npts--;
-				for( j=i ; j<npts ; j++ ) {
+				for ( j=i; j<npts; j++ ) {
 					hit_type[j] = hit_type[j+1];
 					k[j] = k[j+1];
 				}
@@ -862,7 +862,7 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 		bu_log( "\tray: pt = (%g %g %g), dir = (%g %g %g)\n",
 			V3ARGS( ap->a_ray.r_pt ),
 			V3ARGS( ap->a_ray.r_dir ) );
-		for( i=0 ; i<npts ; i++ ) {
+		for ( i=0; i<npts; i++ ) {
 			bu_log( "\t%g", k[i]*t_scale );
 		}
 		bu_log( "\n" );
@@ -870,16 +870,16 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	}
 
 	intersect = 0;
-	for( i=npts-1 ; i>0 ; i -= 2 ) {
+	for ( i=npts-1; i>0; i -= 2 ) {
 		RT_GET_SEG( segp, ap->a_resource );
 		segp->seg_stp = stp;
 
 		segp->seg_in.hit_dist = k[i] * t_scale;
 		segp->seg_in.hit_surfno = hit_type[i];
-		if( segp->seg_in.hit_surfno == TGC_NORM_BODY ) {
+		if ( segp->seg_in.hit_surfno == TGC_NORM_BODY ) {
 			VJOIN1( segp->seg_in.hit_vpriv, pprime, k[i], dprime );
 		} else {
-			if( dir > 0.0 ) {
+			if ( dir > 0.0 ) {
 				segp->seg_in.hit_surfno = TGC_NORM_BOT;
 			} else {
 				segp->seg_in.hit_surfno = TGC_NORM_TOP;
@@ -888,10 +888,10 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
 		segp->seg_out.hit_dist = k[i-1] * t_scale;
 		segp->seg_out.hit_surfno = hit_type[i-1];
-		if( segp->seg_out.hit_surfno == TGC_NORM_BODY ) {
+		if ( segp->seg_out.hit_surfno == TGC_NORM_BODY ) {
 			VJOIN1( segp->seg_out.hit_vpriv, pprime, k[i-1], dprime );
 		} else {
-			if( dir > 0.0 ) {
+			if ( dir > 0.0 ) {
 				segp->seg_out.hit_surfno = TGC_NORM_TOP;
 			} else {
 				segp->seg_out.hit_surfno = TGC_NORM_BOT;
@@ -941,10 +941,10 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 	C = (bn_poly_t *)bu_malloc(n * sizeof(bn_poly_t), "tor bn_poly_t");
 
 	/* Initialize seg_stp to assume hit (zero will then flag miss) */
-	for(ix = 0; ix < n; ix++) segp[ix].seg_stp = stp[ix];
+	for (ix = 0; ix < n; ix++) segp[ix].seg_stp = stp[ix];
 
 	/* for each ray/cone pair */
-	for(ix = 0; ix < n; ix++) {
+	for (ix = 0; ix < n; ix++) {
 		if (segp[ix].seg_stp == 0) continue; /* == 0 signals skip ray */
 
 		tgc = (struct tgc_specific *)stp[ix]->st_specific;
@@ -960,7 +960,7 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 		t_scale = 1/MAGNITUDE( dprime );
 		VSCALE( dprime, dprime, t_scale );	/* VUNITIZE( dprime ); */
 
-		if( NEAR_ZERO( dprime[Z], RT_PCOEF_TOL ) )
+		if ( NEAR_ZERO( dprime[Z], RT_PCOEF_TOL ) )
 			dprime[Z] = 0.0;	/* prevent rootfinder heartburn */
 
 		/* Use segp[ix].seg_in.hit_normal as tmp to hold dprime */
@@ -1089,7 +1089,7 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 	}
 
 	/* It seems impractical to try to vectorize finding and sorting roots. */
-	for(ix = 0; ix < n; ix++){
+	for (ix = 0; ix < n; ix++){
 		if (segp[ix].seg_stp == 0) continue; /* == 0 signals skip ray */
 
 		/* Again, check for the equal eccentricities case. */
@@ -1097,7 +1097,7 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 			fastf_t roots;
 
 			/* Find the real roots the easy way. */
-			if( (roots = C[ix].cf[1]*C[ix].cf[1]-4*C[ix].cf[0]*C[ix].cf[2]
+			if ( (roots = C[ix].cf[1]*C[ix].cf[1]-4*C[ix].cf[0]*C[ix].cf[2]
 			    ) < 0 ) {
 				npts = 0;	/* no real roots */
 			} else {
@@ -1143,7 +1143,7 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 		/*
 	 * Reverse above translation by adding distance to all 'k' values.
 	 */
-		for( i = 0; i < npts; ++i )
+		for ( i = 0; i < npts; ++i )
 			k[i] -= cor_proj;
 
 		if ( npts != 0 && npts != 2 && npts != 4 ){
@@ -1191,7 +1191,7 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 	}
 
 	/* for each ray/cone pair */
-	for(ix = 0; ix < n; ix++) {
+	for (ix = 0; ix < n; ix++) {
 		if (segp[ix].seg_stp == 0) continue; /* Skip */
 
 		tgc = (struct tgc_specific *)stp[ix]->st_specific;
@@ -1226,7 +1226,7 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 		 *  plane (in the standard coordinate system), and test
 		 *  whether this lies within the governing ellipse.
 		 */
-			if( dprime[Z] == 0.0 )  {
+			if ( dprime[Z] == 0.0 )  {
 #if 0
 				bu_log("tgc: dprime[Z] = 0!\n" );
 #endif
@@ -1289,7 +1289,7 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 	 *  so) to the planes, it (obviously) won't intersect
 	 *  either of them.
 	 */
-			if( dprime[Z] == 0.0 ) {
+			if ( dprime[Z] == 0.0 ) {
 				RT_TGC_SEG_MISS(segp[ix]);
 				continue;
 			}
@@ -1355,9 +1355,9 @@ rt_pt_sort(register fastf_t t[], int npts)
 	fastf_t	u;
 	register short	lim, n;
 
-	for( lim = npts-1; lim > 0; lim-- )  {
-		for( n = 0; n < lim; n++ )  {
-			if( (u=t[n]) < t[n+1] )  {
+	for ( lim = npts-1; lim > 0; lim-- )  {
+		for ( n = 0; n < lim; n++ )  {
+			if ( (u=t[n]) < t[n+1] )  {
 				/* bubble larger towards [0] */
 				t[n] = t[n+1];
 				t[n+1] = u;
@@ -1432,7 +1432,7 @@ rt_tgc_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
 
 	/* Hits on the end plates are easy */
-	switch( hitp->hit_surfno )  {
+	switch ( hitp->hit_surfno )  {
 	case TGC_NORM_TOP:
 		VMOVE( hitp->hit_normal, tgc->tgc_N );
 		break;
@@ -1478,7 +1478,7 @@ rt_tgc_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 	VSUB2( work, hitp->hit_point, tgc->tgc_V );
 	MAT4X3VEC( pprime, tgc->tgc_ScShR, work );
 
-	switch( hitp->hit_surfno )  {
+	switch ( hitp->hit_surfno )  {
 	case TGC_NORM_BODY:
 		/* scale coords to unit circle (they are already scaled by bottom plate radii) */
 		pprime[X] *= tgc->tgc_A / (tgc->tgc_A*( 1.0 - pprime[Z]) + tgc->tgc_C*pprime[Z]);
@@ -1503,13 +1503,13 @@ rt_tgc_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 		break;
 	}
 
-	if( uvp->uv_u < 0.0 )
+	if ( uvp->uv_u < 0.0 )
 		uvp->uv_u = 0.0;
-	else if( uvp->uv_u > 1.0 )
+	else if ( uvp->uv_u > 1.0 )
 		uvp->uv_u = 1.0;
-	if( uvp->uv_v < 0.0 )
+	if ( uvp->uv_v < 0.0 )
 		uvp->uv_v = 0.0;
-	else if( uvp->uv_v > 1.0 )
+	else if ( uvp->uv_v > 1.0 )
 		uvp->uv_v = 1.0;
 
 	/* uv_du should be relative to rotation, uv_dv relative to height */
@@ -1552,7 +1552,7 @@ rt_tgc_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 	BU_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
 	/* Check record type */
-	if( rp->u_id != ID_SOLID )  {
+	if ( rp->u_id != ID_SOLID )  {
 		bu_log("rt_tgc_import: defective record\n");
 		return(-1);
 	}
@@ -1590,7 +1590,7 @@ rt_tgc_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 	union record		*rec;
 
 	RT_CK_DB_INTERNAL(ip);
-	if( ip->idb_type != ID_TGC && ip->idb_type != ID_REC )  return(-1);
+	if ( ip->idb_type != ID_TGC && ip->idb_type != ID_REC )  return(-1);
 	tip = (struct rt_tgc_internal *)ip->idb_ptr;
 	RT_TGC_CK_MAGIC(tip);
 
@@ -1663,7 +1663,7 @@ rt_tgc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	fastf_t			vec[3*6];
 
 	RT_CK_DB_INTERNAL(ip);
-	if( ip->idb_type != ID_TGC && ip->idb_type != ID_REC )  return(-1);
+	if ( ip->idb_type != ID_TGC && ip->idb_type != ID_REC )  return(-1);
 	tip = (struct rt_tgc_internal *)ip->idb_ptr;
 	RT_TGC_CK_MAGIC(tip);
 
@@ -1724,7 +1724,7 @@ rt_tgc_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 	    INTCLAMP(tip->h[Z] * mm2local),
 	    INTCLAMP(Hmag * mm2local) );
 	bu_vls_strcat( str, buf );
-	if( Hmag < VDIVIDE_TOL )  {
+	if ( Hmag < VDIVIDE_TOL )  {
 		bu_vls_strcat( str, "H vector is zero!\n");
 	} else {
 		register double	f = 1/Hmag;
@@ -1804,18 +1804,18 @@ rt_tgc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 
 	/* Draw the top */
 	RT_ADD_VLIST( vhead, &top[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
-	for( i=0; i<16; i++ )  {
+	for ( i=0; i<16; i++ )  {
 		RT_ADD_VLIST( vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
 	}
 
 	/* Draw the bottom */
 	RT_ADD_VLIST( vhead, &bottom[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
-	for( i=0; i<16; i++ )  {
+	for ( i=0; i<16; i++ )  {
 		RT_ADD_VLIST( vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
 	}
 
 	/* Draw connections */
-	for( i=0; i<16; i += 4 )  {
+	for ( i=0; i<16; i += 4 )  {
 		RT_ADD_VLIST( vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
 		RT_ADD_VLIST( vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
 	}
@@ -1838,7 +1838,7 @@ rt_tgc_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 	fastf_t	a, b, c, scale;
 	vect_t	vec1, vec2;
 
-	if( hitp->hit_surfno != TGC_NORM_BODY ) {
+	if ( hitp->hit_surfno != TGC_NORM_BODY ) {
 		/* We hit an end plate.  Choose any tangent vector. */
 		bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
 		cvp->crv_c1 = cvp->crv_c2 = 0;
@@ -1923,7 +1923,7 @@ int
 rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
 	struct shell		*s;		/* shell to hold facetted TGC */
-	struct faceuse		*fu,*fu_top,*fu_base;
+	struct faceuse		*fu, *fu_top, *fu_base;
 	struct rt_tgc_internal	*tip;
 	fastf_t			radius;		/* bounding sphere radius */
 	fastf_t			max_radius, min_radius; /* max/min of a, b, c, d */
@@ -1952,7 +1952,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	tip = (struct rt_tgc_internal *)ip->idb_ptr;
 	RT_TGC_CK_MAGIC(tip);
 
-	if( ttol->abs > 0.0 && ttol->abs < tol->dist )
+	if ( ttol->abs > 0.0 && ttol->abs < tol->dist )
 	{
 	    bu_log( "WARNING: tesselation tolerance is %fmm while calculational tolerance is %fmm\n",
 		    ttol->abs, tol->dist );
@@ -1964,45 +1964,45 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 	h = MAGNITUDE( tip->h );
 	a = MAGNITUDE( tip->a );
-	if( 2.0*a <= tol->dist )
+	if ( 2.0*a <= tol->dist )
 		a = 0.0;
 	b = MAGNITUDE( tip->b );
-	if( 2.0*b <= tol->dist )
+	if ( 2.0*b <= tol->dist )
 		b = 0.0;
 	c = MAGNITUDE( tip->c );
-	if( 2.0*c <= tol->dist )
+	if ( 2.0*c <= tol->dist )
 		c = 0.0;
 	d = MAGNITUDE( tip->d );
-	if( 2.0*d <= tol->dist )
+	if ( 2.0*d <= tol->dist )
 		d = 0.0;
 
-	if( a == 0.0 && b == 0.0 && (c == 0.0 || d == 0.0) )
+	if ( a == 0.0 && b == 0.0 && (c == 0.0 || d == 0.0) )
 	{
 		bu_log( "Illegal TGC a, b, and c or d less than tolerance\n" );
 		return( -1);
 	}
-	else if( c == 0.0 && d == 0.0 && (a == 0.0 || b == 0.0 ) )
+	else if ( c == 0.0 && d == 0.0 && (a == 0.0 || b == 0.0 ) )
 	{
 		bu_log( "Illegal TGC c, d, and a or b less than tolerance\n" );
 		return( -1 );
 	}
 
-	if( a > 0.0 )
+	if ( a > 0.0 )
 	{
 		inv_length = 1.0/a;
 		VSCALE( unit_a, tip->a, inv_length );
 	}
-	if( b > 0.0 )
+	if ( b > 0.0 )
 	{
 		inv_length = 1.0/b;
 		VSCALE( unit_b, tip->b, inv_length );
 	}
-	if( c > 0.0 )
+	if ( c > 0.0 )
 	{
 		inv_length = 1.0/c;
 		VSCALE( unit_c, tip->c, inv_length );
 	}
-	if( d > 0.0 )
+	if ( d > 0.0 )
 	{
 		inv_length = 1.0/d;
 		VSCALE( unit_d, tip->d, inv_length );
@@ -2011,46 +2011,46 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	/* get bounding sphere radius for relative tolerance */
 	radius = h/2.0;
 	max_radius = 0.0;
-	if( a > max_radius )
+	if ( a > max_radius )
 		max_radius = a;
-	if( b > max_radius )
+	if ( b > max_radius )
 		max_radius = b;
-	if( c > max_radius )
+	if ( c > max_radius )
 		max_radius = c;
-	if( d > max_radius )
+	if ( d > max_radius )
 		max_radius = d;
 
-	if( max_radius > radius )
+	if ( max_radius > radius )
 		radius = max_radius;
 
 	min_radius = MAX_FASTF;
-	if( a < min_radius && a > 0.0 )
+	if ( a < min_radius && a > 0.0 )
 		min_radius = a;
-	if( b < min_radius && b > 0.0 )
+	if ( b < min_radius && b > 0.0 )
 		min_radius = b;
-	if( c < min_radius && c > 0.0 )
+	if ( c < min_radius && c > 0.0 )
 		min_radius = c;
-	if( d < min_radius && d > 0.0 )
+	if ( d < min_radius && d > 0.0 )
 		min_radius = d;
 
-	if( abs_tol <= 0.0 && ttol->rel <= 0.0 && ttol->norm <= 0.0 )
+	if ( abs_tol <= 0.0 && ttol->rel <= 0.0 && ttol->norm <= 0.0 )
 	{
 		/* no tolerances specified, use 10% relative tolerance */
-		if( (radius * 0.2) < max_radius )
+		if ( (radius * 0.2) < max_radius )
 			alpha_tol = 2.0 * acos( 1.0 - 2.0 * radius * 0.1 / max_radius );
 		else
 			alpha_tol = bn_halfpi;
 	}
 	else
 	{
-		if( abs_tol > 0.0 )
+		if ( abs_tol > 0.0 )
 			abs = 2.0 * acos( 1.0 - abs_tol/max_radius );
 		else
 			abs = bn_halfpi;
 
-		if( ttol->rel > 0.0 )
+		if ( ttol->rel > 0.0 )
 		{
-			if( ttol->rel * 2.0 * radius < max_radius )
+			if ( ttol->rel * 2.0 * radius < max_radius )
 				rel = 2.0 * acos( 1.0 - ttol->rel * 2.0 * radius/max_radius );
 			else
 				rel = bn_halfpi;
@@ -2058,21 +2058,21 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		else
 			rel = bn_halfpi;
 
-		if( ttol->norm > 0.0 )
+		if ( ttol->norm > 0.0 )
 		{
 			fastf_t norm_top, norm_bot;
 
-			if( a<b )
+			if ( a<b )
 				norm_bot = 2.0 * atan( tan( ttol->norm ) * (a/b) );
 			else
 				norm_bot = 2.0 * atan( tan( ttol->norm ) * (b/a) );
 
-			if( c<d )
+			if ( c<d )
 				norm_top = 2.0 * atan( tan( ttol->norm ) * (c/d) );
 			else
 				norm_top = 2.0 * atan( tan( ttol->norm ) * (d/c) );
 
-			if( norm_bot < norm_top )
+			if ( norm_bot < norm_top )
 				norm = norm_bot;
 			else
 				norm = norm_top;
@@ -2080,17 +2080,17 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		else
 			norm = bn_halfpi;
 
-		if( abs < rel )
+		if ( abs < rel )
 			alpha_tol = abs;
 		else
 			alpha_tol = rel;
-		if( norm < alpha_tol )
+		if ( norm < alpha_tol )
 			alpha_tol = norm;
 	}
 
 	/* get number of segments per quadrant */
 	nsegs = (int)(bn_halfpi / alpha_tol + 0.9999);
-	if( nsegs < 2 )
+	if ( nsegs < 2 )
 		nsegs = 2;
 
 	/* and for complete ellipse */
@@ -2126,7 +2126,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 		/* make sure that AxB points in the general direction of H */
 		VCROSS( vtmp, A[0], B[0] );
-		if( VDOT( vtmp, tip->h ) < 0.0 )
+		if ( VDOT( vtmp, tip->h ) < 0.0 )
 		{
 			VMOVE( A[bot_ell], tip->b );
 			VMOVE( A[top_ell], tip->d );
@@ -2145,24 +2145,24 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		len_ha = MAGNITUDE( ha );
 		len_hb = MAGNITUDE( hb );
 
-		while( max_ratio > MAX_RATIO )
+		while ( max_ratio > MAX_RATIO )
 		{
 			fastf_t tri_width;
 
 			len_A = MAGNITUDE( A[bot_ell] );
-			if( 2.0*len_A <= tol->dist )
+			if ( 2.0*len_A <= tol->dist )
 				len_A = 0.0;
 			len_B = MAGNITUDE( B[bot_ell] );
-			if( 2.0*len_B <= tol->dist )
+			if ( 2.0*len_B <= tol->dist )
 				len_B = 0.0;
 			len_C = MAGNITUDE( A[top_ell] );
-			if( 2.0*len_C <= tol->dist )
+			if ( 2.0*len_C <= tol->dist )
 				len_C = 0.0;
 			len_D = MAGNITUDE( B[top_ell] );
-			if( 2.0*len_D <= tol->dist )
+			if ( 2.0*len_D <= tol->dist )
 				len_D = 0.0;
 
-			if( (len_B > 0.0 && len_D > 0.0) ||
+			if ( (len_B > 0.0 && len_D > 0.0) ||
 				(len_B > 0.0 && (len_D == 0.0 && len_C == 0.0 )) )
 			{
 				tri_width = sqrt( cos_m_1_sq*len_A*len_A + sin_sq*len_B*len_B );
@@ -2172,7 +2172,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 			else
 				ratios[0] = 0.0;
 
-			if( (len_A > 0.0 && len_C > 0.0) ||
+			if ( (len_A > 0.0 && len_C > 0.0) ||
 				( len_A > 0.0 && (len_C == 0.0 && len_D == 0.0)) )
 			{
 				tri_width = sqrt( sin_sq*len_A*len_A + cos_m_1_sq*len_B*len_B );
@@ -2182,7 +2182,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 			else
 				ratios[1] = 0.0;
 
-			if( (len_D > 0.0 && len_B > 0.0) ||
+			if ( (len_D > 0.0 && len_B > 0.0) ||
 				(len_D > 0.0 && (len_A == 0.0 && len_B == 0.0)) )
 			{
 				tri_width = sqrt( cos_m_1_sq*len_C*len_C + sin_sq*len_D*len_D );
@@ -2192,7 +2192,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 			else
 				ratios[2] = 0.0;
 
-			if( (len_C > 0.0 && len_A > 0.0) ||
+			if ( (len_C > 0.0 && len_A > 0.0) ||
 				(len_C > 0.0 && (len_A == 0.0 && len_B == 0.0)) )
 			{
 				tri_width = sqrt( sin_sq*len_C*len_C + cos_m_1_sq*len_D*len_D );
@@ -2205,26 +2205,26 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 			which_ratio = -1;
 			max_ratio = 0.0;
 
-			for( i=0 ; i<4 ; i++ )
+			for ( i=0; i<4; i++ )
 			{
-				if( ratios[i] > max_ratio )
+				if ( ratios[i] > max_ratio )
 				{
 					max_ratio = ratios[i];
 					which_ratio = i;
 				}
 			}
 
-			if( len_A == 0.0 && len_B == 0.0 && len_C == 0.0 && len_D == 0.0 )
+			if ( len_A == 0.0 && len_B == 0.0 && len_C == 0.0 && len_D == 0.0 )
 			{
-				if( top_ell == nells - 1 )
+				if ( top_ell == nells - 1 )
 				{
 					VMOVE( A[top_ell-1], A[top_ell] )
 					VMOVE( B[top_ell-1], A[top_ell] )
 					factors[top_ell-1] = factors[top_ell];
 				}
-				else if( bot_ell == 0 )
+				else if ( bot_ell == 0 )
 				{
-					for( i=0 ; i<nells-1 ; i++ )
+					for ( i=0; i<nells-1; i++ )
 					{
 						VMOVE( A[i], A[i+1] )
 						VMOVE( B[i], B[i+1] )
@@ -2236,19 +2236,19 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 				break;
 			}
 
-			if( max_ratio <= MAX_RATIO )
+			if ( max_ratio <= MAX_RATIO )
 				break;
 
-			if( which_ratio == 0 || which_ratio == 1 )
+			if ( which_ratio == 0 || which_ratio == 1 )
 			{
 				new_ratio = MAX_RATIO/max_ratio;
-				if( bot_ell == 0 && new_ratio > 0.5 )
+				if ( bot_ell == 0 && new_ratio > 0.5 )
 					new_ratio = 0.5;
 			}
-			else if( which_ratio == 2 || which_ratio == 3 )
+			else if ( which_ratio == 2 || which_ratio == 3 )
 			{
 				new_ratio = 1.0 - MAX_RATIO/max_ratio;
-				if( top_ell == nells - 1 && new_ratio < 0.5 )
+				if ( top_ell == nells - 1 && new_ratio < 0.5 )
 					new_ratio = 0.5;
 			}
 			else	/* no MAX??? */
@@ -2262,7 +2262,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 			A = (vect_t *)bu_realloc( A, nells*sizeof( vect_t ), "A vectors" );
 			B = (vect_t *)bu_realloc( B, nells*sizeof( vect_t ), "B vectors" );
 
-			for( i=nells-1 ; i>top_ell ; i-- )
+			for ( i=nells-1; i>top_ell; i-- )
 			{
 				factors[i] = factors[i-1];
 				VMOVE( A[i], A[i-1] )
@@ -2272,7 +2272,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 			factors[top_ell] = factors[bot_ell] +
 				new_ratio*(factors[top_ell+1] - factors[bot_ell]);
 
-			if( reversed )
+			if ( reversed )
 			{
 				VBLEND2( A[top_ell], (1.0-factors[top_ell]), tip->b, factors[top_ell], tip->d )
 				VBLEND2( B[top_ell], (1.0-factors[top_ell]), tip->a, factors[top_ell], tip->c )
@@ -2283,7 +2283,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 				VBLEND2( B[top_ell], (1.0-factors[top_ell]), tip->b, factors[top_ell], tip->d )
 			}
 
-			if( which_ratio == 0 || which_ratio == 1 )
+			if ( which_ratio == 0 || which_ratio == 1 )
 			{
 				top_ell++;
 				bot_ell++;
@@ -2295,17 +2295,17 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 	/* get memory for points */
 	pts = (struct tgc_pts **)bu_calloc( nells, sizeof( struct tgc_pts *), "rt_tgc_tess: pts" );
-	for( i=0 ; i<nells ; i++ )
+	for ( i=0; i<nells; i++ )
 		pts[i] = (struct tgc_pts *)bu_calloc( nsegs, sizeof( struct tgc_pts ), "rt_tgc_tess: pts" );
 
 	/* calculate geometry for points */
-	for( i=0 ; i<nells ; i++ )
+	for ( i=0; i<nells; i++ )
 	{
 		fastf_t h_factor;
 		int j;
 
 		h_factor = factors[i];
-		for( j=0 ; j<nsegs ; j++ )
+		for ( j=0; j<nsegs; j++ )
 		{
 			double alpha;
 			double sin_alpha, cos_alpha;
@@ -2315,17 +2315,17 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 			cos_alpha = cos( alpha );
 
 			/* vertex geometry */
-			if( i == 0 && a == 0.0 && b == 0.0 )
+			if ( i == 0 && a == 0.0 && b == 0.0 )
 				VMOVE( pts[i][j].pt, tip->v )
-			else if( i == nells-1 && c == 0.0 && d == 0.0 )
+			else if ( i == nells-1 && c == 0.0 && d == 0.0 )
 				VADD2( pts[i][j].pt, tip->v, tip->h )
 			else
 				VJOIN3( pts[i][j].pt, tip->v, h_factor, tip->h, cos_alpha, A[i], sin_alpha, B[i] )
 
 			/* Storing the tangent here while sines and cosines are available */
-			if( i == 0 && a == 0.0 && b == 0.0 )
+			if ( i == 0 && a == 0.0 && b == 0.0 )
 				VCOMB2( pts[0][j].tan_axb, -sin_alpha, unit_c, cos_alpha, unit_d )
-			else if( i == nells-1 && c == 0.0 && d == 0.0 )
+			else if ( i == nells-1 && c == 0.0 && d == 0.0 )
 				VCOMB2( pts[i][j].tan_axb, -sin_alpha, unit_a, cos_alpha, unit_b )
 			else
 				VCOMB2( pts[i][j].tan_axb, -sin_alpha, A[i], cos_alpha, B[i] )
@@ -2333,25 +2333,25 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	}
 
 	/* make sure no edges will be created with length < tol->dist */
-	for( i=0 ; i<nells ; i++ )
+	for ( i=0; i<nells; i++ )
 	{
 		int j;
 		point_t curr_pt;
 		vect_t edge_vect;
 
-		if( i == 0 && (a == 0.0 || b == 0.0) )
+		if ( i == 0 && (a == 0.0 || b == 0.0) )
 			continue;
-		else if( i == nells-1 && (c == 0.0 || d == 0.0) )
+		else if ( i == nells-1 && (c == 0.0 || d == 0.0) )
 			continue;
 
 		VMOVE( curr_pt, pts[i][0].pt )
-		for( j=1 ; j<nsegs ; j++ )
+		for ( j=1; j<nsegs; j++ )
 		{
 			fastf_t edge_len_sq;
 
 			VSUB2( edge_vect, curr_pt, pts[i][j].pt )
 			edge_len_sq = MAGSQ( edge_vect );
-			if(edge_len_sq > tol->dist_sq )
+			if (edge_len_sq > tol->dist_sq )
 				VMOVE( curr_pt, pts[i][j].pt )
 			else
 			{
@@ -2368,15 +2368,15 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	bu_ptbl_init( &verts, 64, " &verts ");
 	bu_ptbl_init( &faces, 64, " &faces ");
 	/* Make bottom face */
-	if( a > 0.0 && b > 0.0 )
+	if ( a > 0.0 && b > 0.0 )
 	{
-		for( i=nsegs-1 ; i>=0 ; i-- ) /* reverse order to get outward normal */
+		for ( i=nsegs-1; i>=0; i-- ) /* reverse order to get outward normal */
 		{
-			if( !pts[0][i].dont_use )
+			if ( !pts[0][i].dont_use )
 				bu_ptbl_ins( &verts, (long *)&pts[0][i].v );
 		}
 
-		if( BU_PTBL_END( &verts ) > 2 )
+		if ( BU_PTBL_END( &verts ) > 2 )
 		{
 			fu_base = nmg_cmface( s, (struct vertex ***)BU_PTBL_BASEADDR( &verts ), BU_PTBL_END( &verts ) );
 			bu_ptbl_ins( &faces, (long *)fu_base );
@@ -2389,16 +2389,16 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 
 	/* Make top face */
-	if( c > 0.0 && d > 0.0 )
+	if ( c > 0.0 && d > 0.0 )
 	{
 		bu_ptbl_reset( &verts );
-		for( i=0 ; i<nsegs ; i++ )
+		for ( i=0; i<nsegs; i++ )
 		{
-			if( !pts[nells-1][i].dont_use )
+			if ( !pts[nells-1][i].dont_use )
 				bu_ptbl_ins( &verts, (long *)&pts[nells-1][i].v );
 		}
 
-		if( BU_PTBL_END( &verts ) > 2 )
+		if ( BU_PTBL_END( &verts ) > 2 )
 		{
 			fu_top = nmg_cmface( s, (struct vertex ***)BU_PTBL_BASEADDR( &verts ), BU_PTBL_END( &verts ) );
 			bu_ptbl_ins( &faces, (long *)fu_top );
@@ -2413,7 +2413,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	bu_ptbl_free( &verts );
 
 	/* Make triangular faces */
-	for( i=0 ; i<nells-1 ; i++ )
+	for ( i=0; i<nells-1; i++ )
 	{
 		int j;
 		struct vertex **curr_top;
@@ -2421,20 +2421,20 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 		curr_bot = &pts[i][0].v;
 		curr_top = &pts[i+1][0].v;
-		for( j=0 ; j<nsegs ; j++ )
+		for ( j=0; j<nsegs; j++ )
 		{
 			int k;
 
 			k = j+1;
-			if( k == nsegs )
+			if ( k == nsegs )
 				k = 0;
-			if( i != 0 || a > 0.0 || b > 0.0 )
+			if ( i != 0 || a > 0.0 || b > 0.0 )
 			{
-				if( !pts[i][k].dont_use )
+				if ( !pts[i][k].dont_use )
 				{
 					v[0] = curr_bot;
 					v[1] = &pts[i][k].v;
-					if( i+1 == nells-1 && c == 0.0 && d == 0.0 )
+					if ( i+1 == nells-1 && c == 0.0 && d == 0.0 )
 						v[2] = &pts[i+1][0].v;
 					else
 						v[2] = curr_top;
@@ -2444,13 +2444,13 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 				}
 			}
 
-			if( i != nells-2 || c > 0.0 || d > 0.0 )
+			if ( i != nells-2 || c > 0.0 || d > 0.0 )
 			{
-				if( !pts[i+1][k].dont_use )
+				if ( !pts[i+1][k].dont_use )
 				{
 					v[0] = &pts[i+1][k].v;
 					v[1] = curr_top;
-					if( i == 0 && a == 0.0 && b == 0.0 )
+					if ( i == 0 && a == 0.0 && b == 0.0 )
 						v[2] = &pts[i][0].v;
 					else
 						v[2] = curr_bot;
@@ -2463,11 +2463,11 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	}
 
 	/* Assign geometry */
-	for( i=0 ; i<nells ; i++ )
+	for ( i=0; i<nells; i++ )
 	{
 		int j;
 
-		for( j=0 ; j<nsegs ; j++ )
+		for ( j=0; j<nsegs; j++ )
 		{
 			point_t pt_geom;
 			double alpha;
@@ -2478,26 +2478,26 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 			cos_alpha = cos( alpha );
 
 			/* vertex geometry */
-			if( i == 0 && a == 0.0 && b == 0.0 )
+			if ( i == 0 && a == 0.0 && b == 0.0 )
 			{
-				if( j == 0 )
+				if ( j == 0 )
 					nmg_vertex_gv( pts[0][0].v, tip->v );
 			}
-			else if( i == nells-1 && c == 0.0 && d == 0.0 )
+			else if ( i == nells-1 && c == 0.0 && d == 0.0 )
 			{
-				if( j == 0 )
+				if ( j == 0 )
 				{
 					VADD2( pt_geom, tip->v, tip->h );
 					nmg_vertex_gv( pts[i][0].v, pt_geom );
 				}
 			}
-			else if( pts[i][j].v )
+			else if ( pts[i][j].v )
 				nmg_vertex_gv( pts[i][j].v, pts[i][j].pt );
 
 			/* Storing the tangent here while sines and cosines are available */
-			if( i == 0 && a == 0.0 && b == 0.0 )
+			if ( i == 0 && a == 0.0 && b == 0.0 )
 				VCOMB2( pts[0][j].tan_axb, -sin_alpha, unit_c, cos_alpha, unit_d )
-			else if( i == nells-1 && c == 0.0 && d == 0.0 )
+			else if ( i == nells-1 && c == 0.0 && d == 0.0 )
 				VCOMB2( pts[i][j].tan_axb, -sin_alpha, unit_a, cos_alpha, unit_b )
 			else
 				VCOMB2( pts[i][j].tan_axb, -sin_alpha, A[i], cos_alpha, B[i] )
@@ -2505,12 +2505,12 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	}
 
 	/* Associate face plane equations */
-	for( i=0 ; i<BU_PTBL_END( &faces ) ; i++ )
+	for ( i=0; i<BU_PTBL_END( &faces ); i++ )
 	{
 		fu = (struct faceuse *)BU_PTBL_GET( &faces, i );
 		NMG_CK_FACEUSE( fu );
 
-		if( nmg_calc_face_g( fu ) )
+		if ( nmg_calc_face_g( fu ) )
 		{
 			bu_log( "rt_tess_tgc: failed to calculate plane equation\n" );
 			nmg_pr_fu_briefly( fu, "" );
@@ -2520,41 +2520,41 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 
 	/* Calculate vertexuse normals */
-	for( i=0 ; i<nells ; i++ )
+	for ( i=0; i<nells; i++ )
 	{
 		int j, k;
 
 		k = i + 1;
-		if( k == nells )
+		if ( k == nells )
 			k = i - 1;
 
-		for( j=0 ; j<nsegs ; j++ )
+		for ( j=0; j<nsegs; j++ )
 		{
 			vect_t tan_h;		/* vector tangent from one ellipse to next */
 			struct vertexuse *vu;
 
 			/* normal at vertex */
-			if( i == nells - 1 )
+			if ( i == nells - 1 )
 			{
-				if( c == 0.0 && d == 0.0 )
+				if ( c == 0.0 && d == 0.0 )
 					VSUB2( tan_h, pts[i][0].pt, pts[k][j].pt )
-				else if( k == 0 && c == 0.0 && d == 0.0 )
+				else if ( k == 0 && c == 0.0 && d == 0.0 )
 					VSUB2( tan_h, pts[i][j].pt, pts[k][0].pt )
 				else
 					VSUB2( tan_h, pts[i][j].pt, pts[k][j].pt )
 			}
-			else if( i == 0 )
+			else if ( i == 0 )
 			{
-				if( a == 0.0 && b == 0.0 )
+				if ( a == 0.0 && b == 0.0 )
 					VSUB2( tan_h, pts[k][j].pt, pts[i][0].pt )
-				else if( k == nells-1 && c == 0.0 && d == 0.0 )
+				else if ( k == nells-1 && c == 0.0 && d == 0.0 )
 					VSUB2( tan_h, pts[k][0].pt, pts[i][j].pt )
 				else
 					VSUB2( tan_h, pts[k][j].pt, pts[i][j].pt )
 			}
-			else if( k == 0 && a == 0.0 && b == 0.0 )
+			else if ( k == 0 && a == 0.0 && b == 0.0 )
 				VSUB2( tan_h, pts[k][0].pt, pts[i][j].pt )
-			else if( k == nells-1 && c == 0.0 && d == 0.0 )
+			else if ( k == nells-1 && c == 0.0 && d == 0.0 )
 				VSUB2( tan_h, pts[k][0].pt, pts[i][j].pt )
 			else
 				VSUB2( tan_h, pts[k][j].pt, pts[i][j].pt )
@@ -2563,11 +2563,11 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 			VUNITIZE( normal );
 			VREVERSE( rev_norm, normal );
 
-			if( !(i == 0 && a == 0.0 && b == 0.0) &&
+			if ( !(i == 0 && a == 0.0 && b == 0.0) &&
 			    !(i == nells-1 && c == 0.0 && d == 0.0 ) &&
 			      pts[i][j].v )
 			{
-				for( BU_LIST_FOR( vu, vertexuse, &pts[i][j].v->vu_hd ) )
+				for ( BU_LIST_FOR( vu, vertexuse, &pts[i][j].v->vu_hd ) )
 				{
 					NMG_CK_VERTEXUSE( vu );
 
@@ -2575,13 +2575,13 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 					NMG_CK_FACEUSE( fu );
 
 					/* don't need vertexuse normals for faces that are really flat */
-					if( fu == fu_base || fu->fumate_p == fu_base ||
+					if ( fu == fu_base || fu->fumate_p == fu_base ||
 					    fu == fu_top  || fu->fumate_p == fu_top )
 						continue;
 
-					if( fu->orientation == OT_SAME )
+					if ( fu->orientation == OT_SAME )
 						nmg_vertexuse_nv( vu, normal );
-					else if( fu->orientation == OT_OPPOSITE )
+					else if ( fu->orientation == OT_OPPOSITE )
 						nmg_vertexuse_nv( vu, rev_norm );
 				}
 			}
@@ -2592,35 +2592,35 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	bu_free( (char *)factors, "rt_tgc_tess: factors" );
 	bu_free( (char *)A, "rt_tgc_tess: A" );
 	bu_free( (char *)B, "rt_tgc_tess: B" );
-	for( i=0 ; i<nells ; i++ )
+	for ( i=0; i<nells; i++ )
 		bu_free( (char *)pts[i], "rt_tgc_tess: pts[i]" );
 	bu_free( (char *)pts, "rt_tgc_tess: pts" );
 
 	/* mark real edges for top and bottom faces */
-	for( i=0 ; i<2 ; i++ )
+	for ( i=0; i<2; i++ )
 	{
 		struct loopuse *lu;
 
-		if( i == 0 )
+		if ( i == 0 )
 			fu = fu_base;
 		else
 			fu = fu_top;
 
-		if( fu == (struct faceuse *)NULL )
+		if ( fu == (struct faceuse *)NULL )
 			continue;
 
 		NMG_CK_FACEUSE( fu );
 
-		for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+		for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
 		{
 			struct edgeuse *eu;
 
 			NMG_CK_LOOPUSE( lu );
 
-			if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+			if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
 				continue;
 
-			for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+			for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 			{
 				struct edge *e;
 
@@ -2878,7 +2878,7 @@ nmg_tgc_disk(struct faceuse *fu, fastf_t *rmat, fastf_t height, int flip)
 	fg->v.knots[2] = 1.0;
 	fg->v.knots[3] = 1.0;
 
-	if(flip)
+	if (flip)
 	{
 		fg->ctl_points[0] = 1.;
 		fg->ctl_points[1] = -1.;
@@ -2920,7 +2920,7 @@ nmg_tgc_disk(struct faceuse *fu, fastf_t *rmat, fastf_t height, int flip)
 
 	i = fg->s_size[0] * fg->s_size[1];
 
-	for( ; i> 0; i--)
+	for (; i> 0; i--)
 	{
 		MAT4X3PNT(vect, rmat, mptr);
 		mptr[0] = vect[0];
@@ -2935,7 +2935,7 @@ nmg_tgc_disk(struct faceuse *fu, fastf_t *rmat, fastf_t height, int flip)
 	NMG_CK_EDGEUSE(eu);
 
 
-	if(!flip)
+	if (!flip)
 	{
 		rt_nurb_s_eval( fu->f_p->g.snurb_p,
 			nmg_uv_unitcircle[0], nmg_uv_unitcircle[1], point );
@@ -2966,9 +2966,9 @@ nmg_tgc_disk(struct faceuse *fu, fastf_t *rmat, fastf_t height, int flip)
 	eg->k.knots[10] = 1.0;
 	eg->k.knots[11] = 1.0;
 
-	if( !flip )
+	if ( !flip )
 	{
-		for( i = 0; i < 27; i++)
+		for ( i = 0; i < 27; i++)
 			eg->ctl_points[i] = nmg_uv_unitcircle[i];
 	}
 	else
@@ -3035,7 +3035,7 @@ nmg_tgc_nurb_cyl(struct faceuse *fu, fastf_t *top_mat, fastf_t *bot_mat)
 
 	mptr = fg->ctl_points;
 
-	for(i = 0; i < 9; i++)
+	for (i = 0; i < 9; i++)
 	{
 		MAT4X4PNT(vect, top_mat, &nmg_tgc_unitcircle[i*4]);
 		mptr[0] = vect[0];
@@ -3045,7 +3045,7 @@ nmg_tgc_nurb_cyl(struct faceuse *fu, fastf_t *top_mat, fastf_t *bot_mat)
 		mptr += 4;
 	}
 
-	for(i = 0; i < 9; i++)
+	for (i = 0; i < 9; i++)
 	{
 		MAT4X4PNT(vect, bot_mat, &nmg_tgc_unitcircle[i*4]);
 		mptr[0] = vect[0];
@@ -3104,7 +3104,7 @@ nmg_tgc_nurb_cyl(struct faceuse *fu, fastf_t *top_mat, fastf_t *bot_mat)
 	eu = BU_LIST_FIRST( edgeuse, &lu->down_hd);
 	NMG_CK_EDGEUSE(eu);
 
-	for( i = 0; i < 4; i++)
+	for ( i = 0; i < 4; i++)
 	{
 		nmg_edge_g_cnurb_plinear(eu);
 		eu = BU_LIST_NEXT(edgeuse, &eu->l);

@@ -106,7 +106,7 @@ pl_linmod(register FILE *plotfp, register char *s)
 {
     if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	putc( 'f', plotfp );
-	while( *s )
+	while ( *s )
 		putc( *s++, plotfp );
 	putc( '\n', plotfp );
     } else {
@@ -143,7 +143,7 @@ pl_label(register FILE *plotfp, register char *s)
 {
     if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	putc( 't', plotfp );
-	while( *s )
+	while ( *s )
 		putc( *s++, plotfp );
 	putc( '\n', plotfp );
     } else {

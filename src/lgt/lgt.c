@@ -67,9 +67,9 @@ int		key_Frame(void);
 static int
 substr(char *str, char *pattern)
 {
-    if( *str == '\0' )
+    if ( *str == '\0' )
 	return	0;
-    if( *str != *pattern || strncmp( str, pattern, strlen( pattern ) ) )
+    if ( *str != *pattern || strncmp( str, pattern, strlen( pattern ) ) )
 	return	substr( str+1, pattern );
     return	1;
 }
@@ -90,9 +90,9 @@ main(int argc, char **argv)
     bu_log( "\nPress \"Enter\" to continue\n\n" );
     (void)getchar();
     npsw = bu_avail_cpus();
-    if( npsw > MAX_PSW )
+    if ( npsw > MAX_PSW )
 	npsw = MAX_PSW;
-    if( npsw > 1 )
+    if ( npsw > 1 )
 	rt_g.rtg_parallel = 1;
     else
 	rt_g.rtg_parallel = 0;
@@ -100,19 +100,19 @@ main(int argc, char **argv)
 
     init_Lgts();
 
-    if( ! pars_Argv( argc, argv ) )
+    if ( ! pars_Argv( argc, argv ) )
 	{
 	    prnt_Usage();
 	    return	1;
 	}
 
-    for( i = 0; i < NSIG; i++ )
-	switch( i )
+    for ( i = 0; i < NSIG; i++ )
+	switch ( i )
 	    {
 		case SIGINT :
-		    if( (norml_sig = signal( i, SIG_IGN )) == SIG_IGN )
+		    if ( (norml_sig = signal( i, SIG_IGN )) == SIG_IGN )
 			{
-			    if( ! tty )
+			    if ( ! tty )
 				abort_sig = SIG_IGN;
 			    else
 				{ /* MEX windows on IRIS (other than
@@ -151,9 +151,9 @@ int
 interpolate_Frame(int frame)
 {
     fastf_t	rel_frame = (fastf_t) frame / movie.m_noframes;
-    if( movie.m_noframes == 1 )
+    if ( movie.m_noframes == 1 )
 	return	1;
-    if( ! movie.m_fullscreen )
+    if ( ! movie.m_fullscreen )
 	{	register int	frames_across;
 	register int	size;
 	size = MovieSize( movie.m_frame_sz, movie.m_noframes );
@@ -162,7 +162,7 @@ interpolate_Frame(int frame)
 	y_fb_origin = (frame / frames_across) * movie.m_frame_sz;
 	}
     bu_log( "Frame %d:\n", frame );
-    if( movie.m_keys )
+    if ( movie.m_keys )
 	return	key_Frame() == -1 ? 0 : 1;
     lgts[0].azim = movie.m_azim_beg +
 	rel_frame * (movie.m_azim_end - movie.m_azim_beg);
@@ -173,7 +173,7 @@ interpolate_Frame(int frame)
     bu_log( "\tview azimuth\t%g\n", lgts[0].azim*DEGRAD );
     bu_log( "\tview elevation\t%g\n", lgts[0].elev*DEGRAD );
     bu_log( "\tview roll\t%g\n", grid_roll*DEGRAD );
-    if( movie.m_over )
+    if ( movie.m_over )
 	{
 	    lgts[0].over = 1;
 	    lgts[0].dist = movie.m_dist_beg +
@@ -186,7 +186,7 @@ interpolate_Frame(int frame)
     else
 	{
 	    lgts[0].over = 0;
-	    if( movie.m_pers_beg == 0.0 && movie.m_pers_end == 0.0 )
+	    if ( movie.m_pers_beg == 0.0 && movie.m_pers_end == 0.0 )
 		{
 		    rel_perspective = 0.0;
 		    grid_dist = movie.m_grid_beg +
@@ -194,7 +194,7 @@ interpolate_Frame(int frame)
 		    bu_log( "\tgrid distance\t%g\n", grid_dist );
 		}
 	    else
-		if( movie.m_pers_beg >= 0.0 )
+		if ( movie.m_pers_beg >= 0.0 )
 		    rel_perspective = movie.m_pers_beg +
 			rel_frame * (movie.m_pers_end - movie.m_pers_beg);
 	    bu_log( "\tperspective\t%g\n", rel_perspective );
@@ -215,7 +215,7 @@ int
 ready_Output_Device(int frame)
 {
     int size;
-    if( force_cellsz )
+    if ( force_cellsz )
 	{
 	    grid_sz = (int)(view_size / cell_sz);
 	    grid_sz = Max( grid_sz, 1 ); /* must be non-zero */
@@ -223,25 +223,25 @@ ready_Output_Device(int frame)
 	    prnt_Status();
 	}
     /* Calculate size of frame buffer image (pixels across square image). */
-    if( movie.m_noframes > 1 && ! movie.m_fullscreen )
+    if ( movie.m_noframes > 1 && ! movie.m_fullscreen )
 	/* Fit frames of movie. */
 	size = MovieSize( grid_sz, movie.m_noframes );
     else
-	if( force_fbsz && ! DiskFile(fb_file) )
+	if ( force_fbsz && ! DiskFile(fb_file) )
 	    size = fb_size; /* user-specified size */
 	else
 	    size = grid_sz; /* just 1 pixel/ray */
-    if( movie.m_noframes > 1 && movie.m_fullscreen )
+    if ( movie.m_noframes > 1 && movie.m_fullscreen )
 	{	char	framefile[MAX_LN];
 	/* We must be doing full-screen frames. */
 	size = grid_sz;
 	(void) snprintf( framefile, MAX_LN, "%s.%04d", prefix, frame );
-	if( ! fb_Setup( framefile, size ) )
+	if ( ! fb_Setup( framefile, size ) )
 	    return	0;
 	}
     else
 	{
-	    if( frame == movie.m_curframe && ! fb_Setup( fb_file, size ) )
+	    if ( frame == movie.m_curframe && ! fb_Setup( fb_file, size ) )
 		return	0;
 	    fb_Zoom_Window();
 	}
@@ -254,9 +254,9 @@ close_Output_Device(int frame)
 {
     assert( fbiop != FBIO_NULL );
 #if SGI_WINCLOSE_BUG
-    if( strncmp( fbiop->if_name, "/dev/sgi", 8 ) != 0 )
+    if ( strncmp( fbiop->if_name, "/dev/sgi", 8 ) != 0 )
 #endif
-	if(	(movie.m_noframes > 1 && movie.m_fullscreen)
+	if (	(movie.m_noframes > 1 && movie.m_fullscreen)
 		||	frame == movie.m_endframe )
 	    {
 		(void) fb_close( fbiop );

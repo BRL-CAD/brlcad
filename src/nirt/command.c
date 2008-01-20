@@ -81,12 +81,12 @@ bot_minpieces(char *buffer, com_table *ctp )
     
     new_value = atoi( buffer );
     
-    if( new_value < 0 ) {
+    if ( new_value < 0 ) {
 	bu_log( "Error: rt_bot_minpieces cannot be less than 0\n" );
 	return;
     }
     
-    if( new_value != rt_bot_minpieces ) {
+    if ( new_value != rt_bot_minpieces ) {
 	rt_bot_minpieces = new_value;
 	need_prep = 1;
     }
@@ -555,7 +555,7 @@ cm_debug(char *buffer, com_table *ctp)
     register char	*cp = buffer;
 
     /* This is really icky -- should have argc, argv interface */
-    while( *cp && isascii(*cp) && isspace(*cp) )  cp++;
+    while ( *cp && isascii(*cp) && isspace(*cp) )  cp++;
     if (*cp == '\0') {
 	/* display current value */
 	bu_printb( "debug ", nirt_debug, DEBUG_FMT );
@@ -580,7 +580,7 @@ cm_libdebug(char *buffer, com_table *ctp)
 
     /* This is really icky -- should have argc, argv interface */
 
-    while( *cp && isascii(*cp) && isspace(*cp) )
+    while ( *cp && isascii(*cp) && isspace(*cp) )
 	cp++;
 
     if (*cp == '\0') {

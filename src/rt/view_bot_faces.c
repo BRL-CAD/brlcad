@@ -106,7 +106,7 @@ int
 view_init( struct application *ap, char *file, char *obj, int minus_o )
 {
 
-	if( !minus_o )
+	if ( !minus_o )
 		outfp = stdout;
 
 	ap->a_hit = rayhit;
@@ -115,7 +115,7 @@ view_init( struct application *ap, char *file, char *obj, int minus_o )
 
 	output_is_binary = 0;
 
-	if( !rpt_overlap )
+	if ( !rpt_overlap )
 		 ap->a_logoverlap = rt_silent_logoverlap;
 
 	/* initialize hash table */
@@ -139,12 +139,12 @@ view_2init( struct application *ap, char *framename )
 	char line[RT_MAXLINE];
 #endif
 
-	if( outfp == NULL )
+	if ( outfp == NULL )
 		bu_exit(EXIT_FAILURE, "outfp is NULL\n");
 
 #ifdef HAVE_UNIX_IO
 	/* read in any existing data */
-	if( outfp != NULL && stat( framename, &sb ) >= 0 && sb.st_size > 0 )  {
+	if ( outfp != NULL && stat( framename, &sb ) >= 0 && sb.st_size > 0 )  {
 		Tcl_HashEntry *entry;
 		char *bot_name;
 		struct bu_ptbl *faces=NULL;
@@ -152,27 +152,27 @@ view_2init( struct application *ap, char *framename )
 		int i, j;
 
 		/* File exists, with partial results */
-		while( bu_fgets( line, RT_MAXLINE, outfp ) ) {
-			if( !strncmp( line, "BOT:", 4 ) ) {
+		while ( bu_fgets( line, RT_MAXLINE, outfp ) ) {
+			if ( !strncmp( line, "BOT:", 4 ) ) {
 				struct directory *dp;
 
 				/* found a BOT entry, addit to the hash table */
 				i = 4;
-				while( line[i] != '\0' && isspace( line[i] ) ) i++;
-				if( line[i] == '\0' ) {
+				while ( line[i] != '\0' && isspace( line[i] ) ) i++;
+				if ( line[i] == '\0' ) {
 					bu_log( "Unexpected EOF found in partial results (%s)\n", outputfile );
 					bu_exit(EXIT_FAILURE, "Unexpected EOF");
 				}
 				j = i;
-				while( line[j] != '\0' && !isspace( line[j] ) ) j++;
+				while ( line[j] != '\0' && !isspace( line[j] ) ) j++;
 				line[j] = '\0';
-				if( (dp=db_lookup( ap->a_rt_i->rti_dbip, &line[i], LOOKUP_QUIET)) == DIR_NULL ) {
+				if ( (dp=db_lookup( ap->a_rt_i->rti_dbip, &line[i], LOOKUP_QUIET)) == DIR_NULL ) {
 					bot_name = bu_strdup( &line[i] );
 				} else {
 					bot_name = dp->d_namep;
 				}
 				entry = Tcl_CreateHashEntry( &bots, bot_name, &newPtr );
-				if( newPtr ) {
+				if ( newPtr ) {
 					faces = (struct bu_ptbl *)bu_calloc( 1, sizeof( struct bu_ptbl ),
 									       "bot_faces" );
 					bu_ptbl_init( faces, 128, "bot faces" );
@@ -183,7 +183,7 @@ view_2init( struct application *ap, char *framename )
 			} else {
 				long int face_num;
 
-				if( !faces ) {
+				if ( !faces ) {
 					bu_exit( EXIT_FAILURE, "No faces structure while reading partial data!!!\n" );
 				}
 				face_num = atoi( line );
@@ -232,14 +232,14 @@ rayhit( struct application *ap, struct partition *PartHeadp )
 	int newPtr;
 	struct bu_ptbl *faces;
 
-	if( pp == PartHeadp )
+	if ( pp == PartHeadp )
 		return(0);		/* nothing was actually hit?? */
 
-	if( ap->a_rt_i->rti_save_overlaps )
+	if ( ap->a_rt_i->rti_save_overlaps )
 		rt_rebuild_overlaps( PartHeadp, ap, 1 );
 
 	/* did we hit a BOT?? */
-	if( pp->pt_inseg->seg_stp->st_dp->d_major_type != DB5_MAJORTYPE_BRLCAD ||
+	if ( pp->pt_inseg->seg_stp->st_dp->d_major_type != DB5_MAJORTYPE_BRLCAD ||
 	    pp->pt_inseg->seg_stp->st_dp->d_minor_type != DB5_MINORTYPE_BRLCAD_BOT ) {
 		return 0;
 	}
@@ -247,7 +247,7 @@ rayhit( struct application *ap, struct partition *PartHeadp )
 	/* this is a BOT, get the hash tabel entry for it */
 	bu_semaphore_acquire( BU_SEM_LISTS );
 	entry = Tcl_CreateHashEntry( &bots, pp->pt_inseg->seg_stp->st_dp->d_namep, &newPtr );
-	if( newPtr ) {
+	if ( newPtr ) {
 		faces = (struct bu_ptbl *)bu_malloc( sizeof( struct bu_ptbl ), "faces" );
 		bu_ptbl_init( faces, 128, "faces" );
 		Tcl_SetHashValue( entry, (char *)faces );
@@ -289,12 +289,12 @@ view_end()
 
 	entry = Tcl_FirstHashEntry( &bots, &search );
 
-	while( entry ) {
+	while ( entry ) {
 		int i;
 
 		fprintf( outfp, "BOT: %s\n", Tcl_GetHashKey( &bots, entry ) );
 		faces = (struct bu_ptbl *)Tcl_GetHashValue( entry );
-		for( i=0 ; i<BU_PTBL_LEN( faces ) ; i++ ) {
+		for ( i=0; i<BU_PTBL_LEN( faces ); i++ ) {
 			fprintf( outfp, "\t%ld\n", (long int)BU_PTBL_GET( faces, i ) );
 		}
 		entry = Tcl_NextHashEntry( &search );

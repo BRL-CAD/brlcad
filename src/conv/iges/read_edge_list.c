@@ -44,7 +44,7 @@ struct iges_edge_use *edge;
 
 	/* Acquiring Data */
 
-	if( dir[entityno]->param <= pstart )
+	if ( dir[entityno]->param <= pstart )
 	{
 		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[entityno]->direct, dir[entityno]->name );
@@ -53,7 +53,7 @@ struct iges_edge_use *edge;
 
 	Readrec( dir[entityno]->param );
 	Readint( &sol_num, "" );
-	if( sol_num != 504 )
+	if ( sol_num != 504 )
 	{
 		/* this is not an edge list entity */
 		bu_log( "Read_edge_list: entity at DE %d is not an edge list entity\n", edge->edge_de );
@@ -69,7 +69,7 @@ struct iges_edge_use *edge;
 	edge_list->i_edge = (struct iges_edge *)bu_calloc( edge_list->no_of_edges, sizeof( struct iges_edge ) ,
 			"Read_edge_list: iges_edge" );
 
-	for( i=0 ; i<edge_list->no_of_edges ; i++ )
+	for ( i=0; i<edge_list->no_of_edges; i++ )
 	{
 		Readint( &edge_list->i_edge[i].curve_de, "" );
 		Readint( &edge_list->i_edge[i].start_vert_de, "" );

@@ -103,20 +103,20 @@ rt_insert_color( struct mater *newp )
 	register struct mater *mp;
 	register struct mater *zot;
 
-	if( rt_material_head == MATER_NULL || newp->mt_high < rt_material_head->mt_low )  {
+	if ( rt_material_head == MATER_NULL || newp->mt_high < rt_material_head->mt_low )  {
 		/* Insert at head of list */
 		newp->mt_forw = rt_material_head;
 		rt_material_head = newp;
 		return;
 	}
-	if( newp->mt_low < rt_material_head->mt_low )  {
+	if ( newp->mt_low < rt_material_head->mt_low )  {
 		/* Insert at head of list, check for redefinition */
 		newp->mt_forw = rt_material_head;
 		rt_material_head = newp;
 		goto check_overlap;
 	}
-	for( mp = rt_material_head; mp != MATER_NULL; mp = mp->mt_forw )  {
-		if( mp->mt_low == newp->mt_low  &&
+	for ( mp = rt_material_head; mp != MATER_NULL; mp = mp->mt_forw )  {
+		if ( mp->mt_low == newp->mt_low  &&
 		    mp->mt_high <= newp->mt_high )  {
 			bu_log("dropping overwritten region-id based material property entry:\n");
 			newp->mt_forw = mp->mt_forw;
@@ -126,7 +126,7 @@ rt_insert_color( struct mater *newp )
 			newp = mp;
 			goto check_overlap;
 		}
-		if( mp->mt_low  < newp->mt_low  &&
+		if ( mp->mt_low  < newp->mt_low  &&
 		    mp->mt_high > newp->mt_high )  {
 			/* New range entirely contained in old range; split */
 			bu_log("Splitting region-id based material property entry into 3 ranges\n");
@@ -145,7 +145,7 @@ rt_insert_color( struct mater *newp )
 			rt_pr_mater( zot );
 			return;
 		}
-		if( mp->mt_high > newp->mt_low )  {
+		if ( mp->mt_high > newp->mt_low )  {
 			/* Overlap to the left: Shorten preceeding entry */
 			bu_log("Shortening region-id based material property entry lhs range, from:\n");
 			rt_pr_mater( mp );
@@ -157,7 +157,7 @@ rt_insert_color( struct mater *newp )
 			mp->mt_forw = newp;
 			goto check_overlap;
 		}
-		if( mp->mt_forw == MATER_NULL ||
+		if ( mp->mt_forw == MATER_NULL ||
 		    newp->mt_low < mp->mt_forw->mt_low )  {
 			/* Append */
 			newp->mt_forw = mp->mt_forw;
@@ -173,9 +173,9 @@ rt_insert_color( struct mater *newp )
 
 	/* Check for overlap, ie, redefinition of following colors */
 check_overlap:
-	while( newp->mt_forw != MATER_NULL &&
+	while ( newp->mt_forw != MATER_NULL &&
 	       newp->mt_high >= newp->mt_forw->mt_low )  {
-		if( newp->mt_high >= newp->mt_forw->mt_high )  {
+		if ( newp->mt_high >= newp->mt_forw->mt_high )  {
 			/* Drop this mater struct */
 			zot = newp->mt_forw;
 			newp->mt_forw = zot->mt_forw;
@@ -184,7 +184,7 @@ check_overlap:
 			bu_free( (char *)zot, "getstruct mater" );
 			continue;
 		}
-		if( newp->mt_high >= newp->mt_forw->mt_low )  {
+		if ( newp->mt_high >= newp->mt_forw->mt_low )  {
 			/* Shorten this mater struct, then done */
 			bu_log("Shortening region-id based material property entry rhs range, from:\n");
 			rt_pr_mater( newp->mt_forw );
@@ -207,12 +207,12 @@ rt_region_color_map(register struct region *regp)
 {
 	register struct mater *mp;
 
-	if( regp == REGION_NULL )  {
+	if ( regp == REGION_NULL )  {
 		bu_log("color_map(NULL)\n");
 		return;
 	}
-	for( mp = rt_material_head; mp != MATER_NULL; mp = mp->mt_forw )  {
-		if( regp->reg_regionid <= mp->mt_high &&
+	for ( mp = rt_material_head; mp != MATER_NULL; mp = mp->mt_forw )  {
+		if ( regp->reg_regionid <= mp->mt_high &&
 		    regp->reg_regionid >= mp->mt_low ) {
 			regp->reg_mater.ma_color_valid = 1;
 			regp->reg_mater.ma_color[0] =
@@ -237,7 +237,7 @@ rt_color_free(void)
 {
 	register struct mater *mp;
 
-	while( (mp = rt_material_head) != MATER_NULL )  {
+	while ( (mp = rt_material_head) != MATER_NULL )  {
 		rt_material_head = mp->mt_forw;	/* Dequeue 'mp' */
 		/* mt_handle? */
 		bu_free( (char *)mp, "getstruct mater" );

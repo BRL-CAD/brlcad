@@ -49,9 +49,9 @@ int
 dm_limit(i)
 int i;
 {
-  if( i > NOISE )
+  if ( i > NOISE )
     return( i-NOISE );
-  if( i < -NOISE )
+  if ( i < -NOISE )
     return( i+NOISE );
   return(0);
 }
@@ -65,9 +65,9 @@ int
 dm_unlimit(i)
 int i;
 {
-  if( i > 0 )
+  if ( i > 0 )
     return( i + NOISE );
-  if( i < 0 )
+  if ( i < 0 )
     return( i - NOISE );
   return(0);
 }
@@ -86,23 +86,23 @@ fastf_t f;
   fastf_t tmp_f;
 
   /* This way makes no assumption about the size of f */
-  if(f > 1.0){
+  if (f > 1.0){
     tmp_f = (f - 1.0) / 2.0;
     i = tmp_f;
     tmp_f = (tmp_f - i) * 2.0;
 
-    if(tmp_f == 0)
+    if (tmp_f == 0)
       return 1.0;
     else
       return (-1.0 + tmp_f);
   }
 
-  if(f < -1.0){
+  if (f < -1.0){
     tmp_f = (f + 1.0) / 2.0;
     i = tmp_f;
     tmp_f = (tmp_f - i) * 2.0;
 
-    if(tmp_f == 0)
+    if (tmp_f == 0)
       return -1.0;
     else
       return (1.0 + tmp_f);
@@ -110,9 +110,9 @@ fastf_t f;
 
   return f;
 #else
-  if(f > 1.0)
+  if (f > 1.0)
     return(f - 2.0);
-  if(f < -1.0)
+  if (f < -1.0)
     return(f + 2.0);
   return f;
 #endif

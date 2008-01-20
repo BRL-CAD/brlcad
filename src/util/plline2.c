@@ -54,13 +54,13 @@ main(int argc, char **argv)
 	int 	g = 0;
 	int	b = 0;
 
-	if( argc < 5 || isatty(fileno(stdout)) ) {
+	if ( argc < 5 || isatty(fileno(stdout)) ) {
 		bu_exit(1, "%s", usage );
 	}
 
-	if( !isatty(fileno(stdin)) ) {
+	if ( !isatty(fileno(stdin)) ) {
 		/* Permit use in a pipeline -- copy input to output first */
-		while( (c = getchar()) != EOF )
+		while ( (c = getchar()) != EOF )
 			putchar( c );
 	}
 
@@ -69,14 +69,14 @@ main(int argc, char **argv)
 	x2 = atof( argv[3] );
 	y2 = atof( argv[4] );
 
-	if( argc > 5 )
+	if ( argc > 5 )
 		r = atoi( argv[5] );
-	if( argc > 6 )
+	if ( argc > 6 )
 		g = atoi( argv[6] );
-	if( argc > 7 )
+	if ( argc > 7 )
 		b = atoi( argv[7] );
 
-	if( argc > 5 )
+	if ( argc > 5 )
 		pl_color( stdout, r, g, b );
 
 	pd_line( stdout, x1, y1, x2, y2 );

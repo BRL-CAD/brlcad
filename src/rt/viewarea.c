@@ -120,7 +120,7 @@ view_init( register struct application *ap, char *file, char *obj )
     ap->a_miss = raymiss;
     ap->a_onehit = 0;
 
-    if( !rpt_overlap )
+    if ( !rpt_overlap )
 	ap->a_logoverlap = rt_silent_logoverlap;
 
     output_is_binary = 0;		/* output is printable ascii */
@@ -151,7 +151,7 @@ view_2init( struct application *ap )
 
     /* allocate the initial areas and point them all to the same (empty) starting assembly list */
     bu_semaphore_acquire( RT_SEM_RESULTS );
-    for( BU_LIST_FOR( rp, region, &(rtip->HeadRegion) ) )  {
+    for ( BU_LIST_FOR( rp, region, &(rtip->HeadRegion) ) )  {
 	struct area *cell;
 	/* allocate memory first time through */
 	cell = (struct area *)bu_calloc(1, sizeof(struct area), "view_2init area allocation");
@@ -303,7 +303,7 @@ rayhit(struct application *ap, struct partition *PartHeadp, struct seg *segHeadp
     register int l;
 
 
-    if( pp == PartHeadp )
+    if ( pp == PartHeadp )
 	return(0);		/* nothing was actually hit?? */
 
     /* ugh, horrible block */
@@ -312,7 +312,7 @@ rayhit(struct application *ap, struct partition *PartHeadp, struct seg *segHeadp
     hit_count++;
 
     /* clear the list of visited regions */
-    for( BU_LIST_FOR( rp, region, &(rtip->HeadRegion) ) )  {
+    for ( BU_LIST_FOR( rp, region, &(rtip->HeadRegion) ) )  {
 	struct area *cellp;
 	cell = (struct area *)rp->reg_udata;
 	cell->seen = 0;
@@ -421,7 +421,7 @@ print_region_area_list(long int *count, struct rt_i *rtip, area_type_t type)
     listHead->next = (struct area_list *)NULL;
 
     /* sort the cell entries alphabetically */
-    for( BU_LIST_FOR( rp, region, &(rtip->HeadRegion) ) )  {
+    for ( BU_LIST_FOR( rp, region, &(rtip->HeadRegion) ) )  {
 	cell = (struct area *)rp->reg_udata;
 	listp = listHead;
 
@@ -651,7 +651,7 @@ view_end(struct application *ap)
     }
 
     /* free the region areas */
-    for( BU_LIST_FOR( rp, region, &(rtip->HeadRegion) ) )  {
+    for ( BU_LIST_FOR( rp, region, &(rtip->HeadRegion) ) )  {
 	cell = (struct area *)rp->reg_udata;
 
 	if (cell) {

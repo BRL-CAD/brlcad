@@ -146,7 +146,7 @@ int get_args(int argc, char **argv)
     units = DEGREES;
 
     while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
-	switch(c){
+	switch (c){
 	case 'y':
 	    mode = YPR;
 	    break;

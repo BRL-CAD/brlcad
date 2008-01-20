@@ -87,7 +87,7 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
 
     /* get object being mirrored */
     id = rt_db_get_internal(&internal, dp, dbip, NULL, resp);
-    if( id < 0 )  {
+    if ( id < 0 )  {
 	bu_log("ERROR: Unable to load solid [%s]\n", from);
 	return DIR_NULL;
     }
@@ -149,7 +149,7 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
 		arb = (struct rt_arb_internal *)internal.idb_ptr;
 		RT_ARB_CK_MAGIC( arb );
 
-		for( i=0 ; i<8 ; i++ )
+		for ( i=0; i<8; i++ )
 		    arb->pt[i][axis] *= -1.0;
 		break;
 	    }
@@ -188,12 +188,12 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
 		verts = (fastf_t *)bu_calloc( pg->max_npts*3, sizeof( fastf_t ), "rt_mirror: verts" );
 		norms = (fastf_t *)bu_calloc( pg->max_npts*3, sizeof( fastf_t ), "rt_mirror: norms" );
 
-		for( i=0 ; i<pg->npoly ; i++ ) {
+		for ( i=0; i<pg->npoly; i++ ) {
 		    int last;
 
 		    last = (pg->poly[i].npts - 1)*3;
 		    /* mirror coords and temporarily store in reverse order */
-		    for( j=0 ; j<pg->poly[i].npts*3 ; j += 3 ) {
+		    for ( j=0; j<pg->poly[i].npts*3; j += 3 ) {
 			pg->poly[i].verts[j+axis] *= -1.0;
 			VMOVE( &verts[last-j], &pg->poly[i].verts[j] );
 			pg->poly[i].norms[j+axis] *= -1.0;
@@ -201,7 +201,7 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
 		    }
 
 		    /* write back mirrored and reversed face loop */
-		    for( j=0 ; j<pg->poly[i].npts*3 ; j += 3 ) {
+		    for ( j=0; j<pg->poly[i].npts*3; j += 3 ) {
 			VMOVE( &pg->poly[i].norms[j], &norms[j] );
 			VMOVE( &pg->poly[i].verts[j], &verts[j] );
 		    }
@@ -219,7 +219,7 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
 		nurb = (struct rt_nurb_internal *)internal.idb_ptr;
 		RT_NURB_CK_MAGIC( nurb );
 
-		for( i=0 ; i<nurb->nsrf ; i++ ) {
+		for ( i=0; i<nurb->nsrf; i++ ) {
 		    fastf_t *ptr;
 		    int tmp;
 		    int orig_size[2];
@@ -253,15 +253,15 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
 		    ptr = (fastf_t *)bu_calloc( orig_size[0]*orig_size[1]*ncoords, sizeof( fastf_t ), "rt_mirror: ctl mesh ptr" );
 
 		    /* mirror each control point */
-		    for( j=0 ; j<orig_size[0]*orig_size[1] ; j++ ) {
+		    for ( j=0; j<orig_size[0]*orig_size[1]; j++ ) {
 			nurb->srfs[i]->ctl_points[j*ncoords+axis] *= -1.0;
 		    }
 
 		    /* copy mirrored control points into new mesh
 		     * while swaping u and v */
 		    m = 0;
-		    for( j=0 ; j<orig_size[0] ; j++ ) {
-			for( l=0 ; l<orig_size[1] ; l++ ) {
+		    for ( j=0; j<orig_size[0]; j++ ) {
+			for ( l=0; l<orig_size[1]; l++ ) {
 			    VMOVEN( &ptr[(l*orig_size[0]+j)*ncoords], &nurb->srfs[i]->ctl_points[m*ncoords], ncoords );
 			    m++;
 			}
@@ -283,7 +283,7 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
 		arbn = (struct rt_arbn_internal *)internal.idb_ptr;
 		RT_ARBN_CK_MAGIC( arbn );
 
-		for( i=0 ; i<arbn->neqn ; i++ ) {
+		for ( i=0; i<arbn->neqn; i++ ) {
 		    arbn->eqn[i][axis] *= -1.0;
 		}
 
@@ -297,7 +297,7 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
 		pipe = (struct rt_pipe_internal *)internal.idb_ptr;
 		RT_PIPE_CK_MAGIC( pipe );
 
-		for( BU_LIST_FOR( ps, wdb_pipept, &pipe->pipe_segs_head ) ) {
+		for ( BU_LIST_FOR( ps, wdb_pipept, &pipe->pipe_segs_head ) ) {
 		    ps->pp_coord[axis] *= -1.0;
 		}
 
@@ -380,7 +380,7 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
 
 		/* move every vertex */
 		nmg_vertex_tabulate( &table, &m->magic );
-		for( i=0 ; i<BU_PTBL_END( &table ) ; i++ ) {
+		for ( i=0; i<BU_PTBL_END( &table ); i++ ) {
 		    v = (struct vertex *)BU_PTBL_GET( &table, i );
 		    NMG_CK_VERTEX( v );
 
@@ -390,16 +390,16 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
 		bu_ptbl_reset( &table );
 
 		nmg_face_tabulate( &table, &m->magic );
-		for( i=0 ; i<BU_PTBL_END( &table ) ; i++ ) {
+		for ( i=0; i<BU_PTBL_END( &table ); i++ ) {
 		    struct face *f;
 
 		    f = (struct face *)BU_PTBL_GET( &table, i );
 		    NMG_CK_FACE( f );
 
-		    if( !f->g.magic_p )
+		    if ( !f->g.magic_p )
 			continue;
 
-		    if( *f->g.magic_p != NMG_FACE_G_PLANE_MAGIC ) {
+		    if ( *f->g.magic_p != NMG_FACE_G_PLANE_MAGIC ) {
 			bu_log("Sorry, can only mirror NMG solids with planar faces\n");
 			bu_log("Error [%s] has \n", from);
 			bu_ptbl_free( &table );
@@ -408,14 +408,14 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
 		    }
 		}
 
-		for( BU_LIST_FOR( r, nmgregion, &m->r_hd ) ) {
-		    for( BU_LIST_FOR( s, shell, &r->s_hd ) ) {
+		for ( BU_LIST_FOR( r, nmgregion, &m->r_hd ) ) {
+		    for ( BU_LIST_FOR( s, shell, &r->s_hd ) ) {
 			nmg_invert_shell(s);
 		    }
 		}
 
 
-		for( i=0 ; i<BU_PTBL_END( &table ) ; i++ ) {
+		for ( i=0; i<BU_PTBL_END( &table ); i++ ) {
 		    struct face *f;
 		    struct faceuse *fu;
 
@@ -423,17 +423,17 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
 		    NMG_CK_FACE( f );
 
 		    fu = f->fu_p;
-		    if( fu->orientation != OT_SAME ) {
+		    if ( fu->orientation != OT_SAME ) {
 			fu = fu->fumate_p;
 		    }
-		    if( fu->orientation != OT_SAME ) {
+		    if ( fu->orientation != OT_SAME ) {
 			bu_log("Error with orientation of the NMG faces for [%s]\n", from);
 			bu_ptbl_free( &table );
 			rt_db_free_internal( &internal, resp );
 			return DIR_NULL;
 		    }
 
-		    if( nmg_calc_face_g( fu ) ) {
+		    if ( nmg_calc_face_g( fu ) ) {
 			bu_log("Error calculating the NMG faces for [%s]\n", from);
 			bu_ptbl_free( &table );
 			rt_db_free_internal( &internal, resp );
@@ -455,17 +455,17 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
 		RT_ARS_CK_MAGIC( ars );
 
 		/* mirror each vertex */
-		for( i=0 ; i<ars->ncurves ; i++ ) {
-		    for( j=0 ; j<ars->pts_per_curve ; j++ ) {
+		for ( i=0; i<ars->ncurves; i++ ) {
+		    for ( j=0; j<ars->pts_per_curve; j++ ) {
 			ars->curves[i][j*3+axis] *= -1.0;
 		    }
 		}
 
 		/* now reverse order of vertices in each curve */
 		tmp_curve = (fastf_t *)bu_calloc( 3*ars->pts_per_curve, sizeof( fastf_t ), "rt_mirror: tmp_curve" );
-		for( i=0 ; i<ars->ncurves ; i++ ) {
+		for ( i=0; i<ars->ncurves; i++ ) {
 		    /* reverse vertex order */
-		    for( j=0 ; j<ars->pts_per_curve ; j++ ) {
+		    for ( j=0; j<ars->pts_per_curve; j++ ) {
 			VMOVE( &tmp_curve[(ars->pts_per_curve-j-1)*3], &ars->curves[i][j*3] );
 		    }
 
@@ -536,7 +536,7 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
 		comb = (struct rt_comb_internal *)internal.idb_ptr;
 		RT_CK_COMB(comb);
 
-		if( comb->tree ) {
+		if ( comb->tree ) {
 		    db_tree_mul_dbleaf( comb->tree, mirmat );
 		}
 		break;
@@ -548,12 +548,12 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
 		RT_BOT_CK_MAGIC(bot);
 
 		/* mirror each vertex */
-		for( i=0 ; i<bot->num_vertices ; i++ ) {
+		for ( i=0; i<bot->num_vertices; i++ ) {
 		    bot->vertices[(i*3)+axis] *= -1.0;
 		}
 
 		/* fix normals */
-		for( i=0 ; i<bot->num_normals ; i++ ) {
+		for ( i=0; i<bot->num_normals; i++ ) {
 		    bot->normals[(i*3)+axis] *= -1.0;
 		}
 
@@ -569,11 +569,11 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
     }
 
     /* save the mirrored object to disk */
-    if( (dp = db_diradd( dbip, to, -1L, 0, dp->d_flags, (genptr_t)&internal.idb_type)) == DIR_NULL )  {
+    if ( (dp = db_diradd( dbip, to, -1L, 0, dp->d_flags, (genptr_t)&internal.idb_type)) == DIR_NULL )  {
 	bu_log("ERROR: Unable to add [%s] to the database directory", to);
 	return DIR_NULL;
     }
-    if( rt_db_put_internal( dp, dbip, &internal, resp ) < 0 )  {
+    if ( rt_db_put_internal( dp, dbip, &internal, resp ) < 0 )  {
 	bu_log("ERROR: Unable to store [%s] to the database", to);
 	return DIR_NULL;
     }

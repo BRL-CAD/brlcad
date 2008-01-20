@@ -62,7 +62,7 @@ f_eac(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	CHECK_DBI_NULL;
 
-	if(argc < 2){
+	if (argc < 2){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -74,7 +74,7 @@ f_eac(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	bu_vls_init( &v );
 
-	if( setjmp( jmp_env ) == 0 )
+	if ( setjmp( jmp_env ) == 0 )
 	  (void)signal( SIGINT, sig3);  /* allow interupts */
 	else{
 	  bu_vls_free( &v );
@@ -84,23 +84,23 @@ f_eac(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	bu_vls_strcat( &v, "e" );
 	lim = 1;
 
-	for( j=1; j<argc; j++)
+	for ( j=1; j<argc; j++)
 	{
 		item = atoi( argv[j] );
-		if( item < 1 )
+		if ( item < 1 )
 			continue;
 
 		FOR_ALL_DIRECTORY_START(dp, dbip) {
 			struct rt_db_internal intern;
 			struct rt_comb_internal *comb;
 
-			if( !(dp->d_flags & DIR_REGION) )
+			if ( !(dp->d_flags & DIR_REGION) )
 				continue;
 
-			if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )
+			if ( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )
 				TCL_READ_ERR_return;
 			comb = (struct rt_comb_internal *)intern.idb_ptr;
-			if( comb->region_id != 0 ||
+			if ( comb->region_id != 0 ||
 				comb->aircode != item )
 			{
 				rt_comb_ifree( &intern, &rt_uniresource );
@@ -114,7 +114,7 @@ f_eac(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		} FOR_ALL_DIRECTORY_END;
 	}
 
-	if( lim > 1 )
+	if ( lim > 1 )
 	{
 		int retval;
 		char **new_argv;

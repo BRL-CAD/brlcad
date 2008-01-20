@@ -42,7 +42,7 @@ main(int argc, char **argv)
 	int	size;
 	spm_map_t *mp;
 
-	if( argc != 3 ) {
+	if ( argc != 3 ) {
 		bu_exit( 1, "usage: pix-spm file.pix size > file.spm\n" );
 	}
 

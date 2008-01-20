@@ -57,7 +57,8 @@ struct rtrans_specific {
 static struct rtrans_specific rtrans_defaults = {
 	RTRANS_MAGIC,
 	0.5,
-	3 } ;
+	3
+};
 
 #define SHDR_NULL	((struct rtrans_specific *)0)
 #define SHDR_O(m)	bu_offsetof(struct rtrans_specific, m)

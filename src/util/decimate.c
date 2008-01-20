@@ -69,7 +69,7 @@ main(int argc, char **argv)
 	int	dh, dw;
 	int	todo;
 
-	if( argc < 4 )  {
+	if ( argc < 4 )  {
 		fputs( usage, stderr );
 		bu_exit (1, NULL);
 	}
@@ -78,7 +78,7 @@ main(int argc, char **argv)
 	iwidth = atoi(argv[2]);
 	iheight = atoi(argv[3]);
 
-	if( argc >= 6 )  {
+	if ( argc >= 6 )  {
 		owidth = atoi(argv[4]);
 		oheight = atoi(argv[5]);
 	}
@@ -92,7 +92,7 @@ main(int argc, char **argv)
 	dh = nh - 1;
 	dw = nw - 1;
 	discard = dh;
-	if( dw > discard ) discard = dw;
+	if ( dw > discard ) discard = dw;
 
 
 	wpad = owidth - ( iwidth / (discard+1) );
@@ -101,34 +101,34 @@ main(int argc, char **argv)
 	oline = (unsigned char *)bu_calloc( (owidth+1),  nbytes, "oline" );
 
 	todo = iwidth / (discard+1) * (discard+1);
-	if( owidth < todo )  todo = owidth;
-	if( todo > iwidth/(discard+1) )  todo = iwidth/(discard+1);
+	if ( owidth < todo )  todo = owidth;
+	if ( todo > iwidth/(discard+1) )  todo = iwidth/(discard+1);
 #if 0
 	fprintf(stderr, "dh=%d dw=%d, discard=%d\n", dh, dw, discard);
 	fprintf(stderr, "todo=%d\n", todo);
 #endif
 
-	while( !feof(stdin) )  {
+	while ( !feof(stdin) )  {
 		register unsigned char	*ip, *op;
 
 		/* Scrunch down first scanline of input data */
-		if( fread( iline, nbytes, iwidth, stdin ) != iwidth ) break;
+		if ( fread( iline, nbytes, iwidth, stdin ) != iwidth ) break;
 		ip = iline;
 		op = oline;
-		for( i=0; i < todo; i++ )  {
-			for( j=0; j < nbytes; j++ )  {
+		for ( i=0; i < todo; i++ )  {
+			for ( j=0; j < nbytes; j++ )  {
 				*op++ = *ip++;
 			}
 			ip += discard * nbytes;
 		}
-		if( fwrite( oline, nbytes, owidth, stdout ) != owidth )  {
+		if ( fwrite( oline, nbytes, owidth, stdout ) != owidth )  {
 			perror("fwrite");
 			goto out;
 		}
 
 		/* Discard extra scanlines of input data */
-		for( i=0; i < discard; i++ )  {
-			if( fread( iline, nbytes, iwidth, stdin ) != iwidth )  {
+		for ( i=0; i < discard; i++ )  {
+			if ( fread( iline, nbytes, iwidth, stdin ) != iwidth )  {
 			    goto out;
 			}
 		}

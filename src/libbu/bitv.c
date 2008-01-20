@@ -114,15 +114,15 @@ bu_bitv_or(struct bu_bitv *ov, const struct bu_bitv *iv)
     register const bitv_t	*in;
     register int		words;
 
-    if( ov->nbits != iv->nbits )  bu_bomb("bu_bitv_or: length mis-match");
+    if ( ov->nbits != iv->nbits )  bu_bomb("bu_bitv_or: length mis-match");
     out = ov->bits;
     in = iv->bits;
     words = BU_BITS2WORDS(iv->nbits);
 #ifdef VECTORIZE
-    for( --words; words >= 0; words-- )
+    for ( --words; words >= 0; words-- )
 	out[words] |= in[words];
 #else
-    while( words-- > 0 )
+    while ( words-- > 0 )
 	*out++ |= *in++;
 #endif
 }
@@ -137,15 +137,15 @@ bu_bitv_and(struct bu_bitv *ov, const struct bu_bitv *iv)
     register const bitv_t	*in;
     register int		words;
 
-    if( ov->nbits != iv->nbits )  bu_bomb("bu_bitv_and: length mis-match");
+    if ( ov->nbits != iv->nbits )  bu_bomb("bu_bitv_and: length mis-match");
     out = ov->bits;
     in = iv->bits;
     words = BU_BITS2WORDS(iv->nbits);
 #ifdef VECTORIZE
-    for( --words; words >= 0; words-- )
+    for ( --words; words >= 0; words-- )
 	out[words] &= in[words];
 #else
-    while( words-- > 0 )
+    while ( words-- > 0 )
 	*out++ &= *in++;
 #endif
 }
@@ -170,9 +170,9 @@ bu_bitv_vls(struct bu_vls *v, register const struct bu_bitv *bv)
     bu_vls_strcat( v, "(" );
 
     /* Visit all the bits in ascending order */
-    for( i=0; i<len; i++ )  {
-	if( BU_BITTEST(bv, i) == 0 )  continue;
-	if( seen )  bu_vls_strcat( v, ", " );
+    for ( i=0; i<len; i++ )  {
+	if ( BU_BITTEST(bv, i) == 0 )  continue;
+	if ( seen )  bu_vls_strcat( v, ", " );
 	bu_vls_printf( v, "%d", i );
 	seen = 1;
     }
@@ -217,9 +217,9 @@ bu_bitv_to_hex(struct bu_vls *v, register const struct bu_bitv *bv)
     byte_no = sizeof( bitv_t );
 
     bu_vls_extend( v, word_count * (unsigned int)sizeof( bitv_t ) * 2 + 1 );
-    while( word_count-- )
+    while ( word_count-- )
 	{
-	    while( byte_no-- )
+	    while ( byte_no-- )
 		{
 		    bu_vls_printf( v, "%02lx",
 				   ((bv->bits[word_count] & (((bitv_t)0xff)<<(byte_no*8))) >> (byte_no*8)) & (bitv_t)0xff );
@@ -247,17 +247,17 @@ bu_hex_to_bitv(const char *str)
     abyte[2] = '\0';
 
     /* skip over any initial white space */
-    while( isspace( *str ) )
+    while ( isspace( *str ) )
 	str++;
 
     str_start = str;
     /* count hex digits */
-    while( isxdigit( *str ) )
+    while ( isxdigit( *str ) )
 	str++;
 
     len = str - str_start;
 
-    if( len < 2 || len%2 )
+    if ( len < 2 || len%2 )
 	{
 	    /* Must be two digits per byte */
 	    bu_log( "bu_hex_to_bitv: illegal hex bitv (%s)\n", str_start );
@@ -269,15 +269,15 @@ bu_hex_to_bitv(const char *str)
     bu_bitv_clear( bv );
     word_count = bytes/sizeof( bitv_t );
     byte_no = bytes % sizeof( bitv_t );
-    if( !byte_no )
+    if ( !byte_no )
 	byte_no = sizeof( bitv_t );
     else
 	word_count++;
 
     str = str_start;
-    while( word_count-- )
+    while ( word_count-- )
 	{
-	    while( byte_no-- )
+	    while ( byte_no-- )
 		{
 		    /* get next two hex digits from string */
 		    abyte[0] = *str++;

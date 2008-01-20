@@ -82,7 +82,7 @@ get_args(int argc, register char **argv)
 	register int c;
 
 	while ( (c = bu_getopt( argc, argv, "ahs:w:n:" )) != EOF )  {
-		switch( c )  {
+		switch ( c )  {
 		case 'a':
 			autosize = 1;
 			break;
@@ -110,14 +110,14 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( bu_optind >= argc )  {
-		if( isatty(fileno(stdin)) )
+	if ( bu_optind >= argc )  {
+		if ( isatty(fileno(stdin)) )
 			return(0);
 		file_name = "-";
 		infd = fileno(stdin);
 	} else {
 		file_name = argv[bu_optind];
-		if( (infd = open(file_name, 0)) < 0 )  {
+		if ( (infd = open(file_name, 0)) < 0 )  {
 			perror(file_name);
 			(void)fprintf( stderr,
 				"yuv-pix: cannot open \"%s\" for reading\n",
@@ -149,9 +149,9 @@ main(int argc, char **argv)
 	}
 
 	/* autosize input? */
-	if( fileinput && autosize ) {
+	if ( fileinput && autosize ) {
 		unsigned long int	w, h;
-		if( fb_common_file_size(&w, &h, file_name, 2) ) {
+		if ( fb_common_file_size(&w, &h, file_name, 2) ) {
 			file_width = (long)w;
 			file_height = (long)h;
 		} else {
@@ -163,20 +163,20 @@ main(int argc, char **argv)
 	inbuf = bu_malloc( 2*file_width*file_height+8, "inbuf" );
 	outbuf = bu_malloc( 3*file_width*file_height+8, "outbuf" );
 
-	if( bu_mread( infd, inbuf, 2*file_width*file_height ) < 2*file_width*file_height )  {
+	if ( bu_mread( infd, inbuf, 2*file_width*file_height ) < 2*file_width*file_height )  {
 	    perror("READ ERROR");
 	    fprintf(stderr, "yuv-pix: short input file, aborting\n");
 	    bu_exit (1, NULL);
 	}
 
-	for( y = 0; y < file_height; y++ )  {
+	for ( y = 0; y < file_height; y++ )  {
 		ab_yuv_to_rgb(
 			&outbuf[y*file_width*3],
 			&inbuf[(file_height-1-y)*file_width*2],
 			file_width );
 	}
 
-	if( write( 1, (void *)outbuf, 3*file_width*file_height ) < 3*file_width*file_height )  {
+	if ( write( 1, (void *)outbuf, 3*file_width*file_height ) < 3*file_width*file_height )  {
 		perror("stdout");
 		fprintf(stderr, "yuv-pix: output write error, aborting\n");
 		bu_exit (2, NULL);
@@ -208,8 +208,8 @@ main(int argc, char **argv)
 #define	V5DOT(a, b)	(a[0]*b[0]+a[1]*b[1]+a[2]*b[2]+a[3]*b[3]+a[4]*b[4])
 #define	floor(d)	(d>=0?(int)d:((int)d==d?d:(int)(d-1.0)))
 #define	CLIP(out, in)		{ register int t; \
-		if( (t = (in)) < 0 )  (out) = 0; \
-		else if( t >= 255 )  (out) = 255; \
+		if ( (t = (in)) < 0 )  (out) = 0; \
+		else if ( t >= 255 )  (out) = 255; \
 		else (out) = t; }
 
 #define	LINE_LENGTH	720
@@ -237,9 +237,9 @@ ab_rgb_to_yuv(unsigned char *yuv_buf, unsigned char *rgb_buf, long int len)
 	register long int	i;
 	static int	first=1;
 
-	if(first)  {
+	if (first)  {
 		/* SETUP */
-		for( i = 0; i < 5; i++ ) {
+		for ( i = 0; i < 5; i++ ) {
 			y_filter[i] *= 219.0/255.0;
 			u_filter[i] *= 224.0/255.0;
 			v_filter[i] *= 224.0/255.0;
@@ -252,7 +252,7 @@ ab_rgb_to_yuv(unsigned char *yuv_buf, unsigned char *rgb_buf, long int len)
 	up = &ubuf[2];
 	vp = &vbuf[2];
 	cp = rgb_buf;
-	for( i = len; i; i-- ) {
+	for ( i = len; i; i-- ) {
 		*yp++ = VDOT( y_weights, cp );
 		*up++ = VDOT( u_weights, cp );
 		*vp++ = VDOT( v_weights, cp );
@@ -264,7 +264,7 @@ ab_rgb_to_yuv(unsigned char *yuv_buf, unsigned char *rgb_buf, long int len)
 	up = ubuf;
 	vp = vbuf;
 	cp = yuv_buf;
-	for( i = len/2; i; i-- ) {
+	for ( i = len/2; i; i-- ) {
 		*cp++ = V5DOT(u_filter, up) + 128.0;	/* u */
 		*cp++ = V5DOT(y_filter, yp) + 16.0;	/* y */
 		*cp++ = V5DOT(v_filter, vp) + 128.0;	/* v */
@@ -293,9 +293,9 @@ ab_yuv_to_rgb(unsigned char *rgb_buf, unsigned char *yuv_buf, long int len)
 	rgbp = rgb_buf;
 	yuvp = yuv_buf;
 	last = len/2;
-	for( pixel = last; pixel; pixel-- ) {
+	for ( pixel = last; pixel; pixel-- ) {
 		/* even pixel, get y and next v */
-		if( pixel == last ) {
+		if ( pixel == last ) {
 			u = ((double)(((int)*yuvp++) - 128)) * (255.0/224.0);
 		}
 		y = ((double)(((int)*yuvp++) - 16)) * (255.0/219.0);
@@ -307,7 +307,7 @@ ab_yuv_to_rgb(unsigned char *rgb_buf, unsigned char *yuv_buf, long int len)
 
 		/* odd pixel, got v already, get y and next u */
 		y = ((double)(((int)*yuvp++) - 16)) * (255.0/219.0);
-		if( pixel != 1 ) {
+		if ( pixel != 1 ) {
 			u = ((double)(((int)*yuvp++) - 128)) * (255.0/224.0);
 		}
 

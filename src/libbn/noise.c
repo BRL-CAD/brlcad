@@ -89,7 +89,7 @@ filter_args(fastf_t *src, fastf_t *p, fastf_t *f, int *ip)
 	static unsigned long max2x = ~((unsigned long)0);
 	static unsigned long max = (~((unsigned long)0)) >> 1;
 
-	for (i=0 ; i < 3 ; i++) {
+	for (i=0; i < 3; i++) {
 		/* assure values are positive */
 		if (src[i] < 0) dst[i] = -src[i];
 		else dst[i] = src[i];
@@ -287,28 +287,28 @@ bn_noise_perlin(fastf_t *point)
 	 */
 	/* get a repeatable random # 0..4096 & 0xFF*/
 	m = Hash3d( ix, iy, iz ) & 0xFF;
-	sum = INCRSUM(m,(tx*ty*tz),(x-ix),(y-iy),(z-iz));
+	sum = INCRSUM(m, (tx*ty*tz), (x-ix), (y-iy), (z-iz));
 
 	m = Hash3d( jx, iy, iz ) & 0xFF;
-	sum += INCRSUM(m,(sx*ty*tz),(x-jx),(y-iy),(z-iz));
+	sum += INCRSUM(m, (sx*ty*tz), (x-jx), (y-iy), (z-iz));
 
 	m = Hash3d( ix, jy, iz ) & 0xFF;
-	sum += INCRSUM(m,(tx*sy*tz),(x-ix),(y-jy),(z-iz));
+	sum += INCRSUM(m, (tx*sy*tz), (x-ix), (y-jy), (z-iz));
 
 	m = Hash3d( jx, jy, iz ) & 0xFF;
-	sum += INCRSUM(m,(sx*sy*tz),(x-jx),(y-jy),(z-iz));
+	sum += INCRSUM(m, (sx*sy*tz), (x-jx), (y-jy), (z-iz));
 
 	m = Hash3d( ix, iy, jz ) & 0xFF;
-	sum += INCRSUM(m,(tx*ty*sz),(x-ix),(y-iy),(z-jz));
+	sum += INCRSUM(m, (tx*ty*sz), (x-ix), (y-iy), (z-jz));
 
 	m = Hash3d( jx, iy, jz ) & 0xFF;
-	sum += INCRSUM(m,(sx*ty*sz),(x-jx),(y-iy),(z-jz));
+	sum += INCRSUM(m, (sx*ty*sz), (x-jx), (y-iy), (z-jz));
 
 	m = Hash3d( ix, jy, jz ) & 0xFF;
-	sum += INCRSUM(m,(tx*sy*sz),(x-ix),(y-jy),(z-jz));
+	sum += INCRSUM(m, (tx*sy*sz), (x-ix), (y-jy), (z-jz));
 
 	m = Hash3d( jx, jy, jz ) & 0xFF;
-	sum += INCRSUM(m,(sx*sy*sz),(x-jx),(y-jy),(z-jz));
+	sum += INCRSUM(m, (sx*sy*sz), (x-jx), (y-jy), (z-jz));
 
 	return sum;
 
@@ -489,7 +489,7 @@ build_spec_tbl(double h_val, double lacunarity, double octaves)
 		"spectral weights" );
 
 	/* precompute and store spectral weights table */
-	for (frequency = 1.0, i=0 ; i < octaves ; i++) {
+	for (frequency = 1.0, i=0; i < octaves; i++) {
 		/* compute weight for each frequency */
 		spec_wgts[i] = pow(frequency, -h_val);
 		frequency *= lacunarity;
@@ -513,7 +513,7 @@ find_spec_wgt(double h, double l, double o)
 	int i;
 
 
-	for (ep = etbl, i=0 ; i < etbl_next ; i++, ep++) {
+	for (ep = etbl, i=0; i < etbl_next; i++, ep++) {
 		if (ep->magic != MAGIC_fbm_spec_wgt)
 		    bu_bomb("find_spec_wgt");
 		if (ep->lacunarity == l && ep->h_val == h && ep->octaves >= o)
@@ -529,7 +529,7 @@ find_spec_wgt(double h, double l, double o)
 	/* We search the list one more time in case the last process to
 	 * hold the semaphore just created the table we were about to add
 	 */
-	for (ep = etbl, i=0 ; i < etbl_next ; i++, ep++) {
+	for (ep = etbl, i=0; i < etbl_next; i++, ep++) {
 		if (ep->magic != MAGIC_fbm_spec_wgt)
 		    bu_bomb("find_spec_wgt");
 		if (ep->lacunarity == l && ep->h_val == h && ep->octaves >= o)
@@ -593,7 +593,7 @@ bn_noise_fbm(fastf_t *point, double h_val, double lacunarity, double octaves)
 
 	/* inner loop of spectral construction */
 	oct=(int)octaves; /* save repeating double->int cast */
-	for (i=0 ; i < oct ; i++) {
+	for (i=0; i < oct; i++) {
 		value += bn_noise_perlin( pt ) * spec_wgts[i];
 		PSCALE(pt, lacunarity);
 	}
@@ -669,7 +669,7 @@ bn_noise_turb(fastf_t *point, double h_val, double lacunarity, double octaves)
 
 	/* inner loop of spectral construction */
 	oct=(int)octaves; /* save repeating double->int cast */
-	for (i=0 ; i < oct ; i++) {
+	for (i=0; i < oct; i++) {
 		value += fabs(bn_noise_perlin( pt )) * spec_wgts[i];
 		PSCALE(pt, lacunarity);
 	}
@@ -688,7 +688,7 @@ bn_noise_turb(fastf_t *point, double h_val, double lacunarity, double octaves)
 	frequency = 1.0;
 
 	oct=(int)octaves; /* save repeating double->int cast */
-	for (i=0 ; i < oct ; i++) {
+	for (i=0; i < oct; i++) {
 		value += fabs(bn_noise_perlin( pt )) * pow(frequency, -h_val);
 		frequency *= lacunarity;
 		PSCALE(pt, lacunarity);
@@ -751,7 +751,7 @@ bn_noise_ridged(fastf_t *point, double h_val, double lacunarity, double octaves,
 	result = signal;
 	weight = 1.0;
 
-	for (i=1 ; i < octaves ; i++ ) {
+	for (i=1; i < octaves; i++ ) {
 		PSCALE(pt, lacunarity);
 
 		signal = bn_noise_perlin(pt);
@@ -798,7 +798,7 @@ bn_noise_mf(fastf_t *point, double h_val, double lacunarity, double octaves, dou
 	result = (bn_noise_perlin(pt) + offset) * spec_wgts[0];
 	weight = result;
 
-	for (i=1 ; i < octaves ; i++) {
+	for (i=1; i < octaves; i++) {
 		PSCALE(pt, lacunarity);
 
 		if (weight > 1.0) weight = 1.0;

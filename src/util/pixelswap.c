@@ -123,7 +123,7 @@ int main(int ac, char **av)
 
 	/* process stdin */
 	while ((pixels = fread(ibuf, 3, sizeof(ibuf)/3, stdin)) > 0) {
-		for (i = 0 ; i < pixels ; i++ ) {
+		for (i = 0; i < pixels; i++ ) {
 			if (ibuf[i*3] == r &&
 			    ibuf[i*3+1] == g &&
 			    ibuf[i*3+2] == b) {

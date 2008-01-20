@@ -64,15 +64,15 @@ exec_Shell(char **args)
 {
 	register int child_pid;
 
-	if( args[0] == NULL )
+	if ( args[0] == NULL )
 		{ char *arg_sh = getenv( "SHELL" );
 		/* $SHELL, if set, DFL_SHELL otherwise. */
-		if( arg_sh == NULL )
+		if ( arg_sh == NULL )
 			arg_sh = DFL_SHELL;
 		args[0] = arg_sh;
 		args[1] = NULL;
 		}
-	switch( child_pid = fork() )
+	switch ( child_pid = fork() )
 		{
 		case -1 :
 			fb_log( "\"%s\" (%d) could not fork.\n",
@@ -91,21 +91,21 @@ exec_Shell(char **args)
 			istat = signal(SIGINT, SIG_IGN);
 			qstat = signal(SIGQUIT, SIG_IGN);
 			cstat = signal(SIGCLD, SIG_DFL);
-			while(	(pid = wait( &stat_loc )) != -1
+			while (	(pid = wait( &stat_loc )) != -1
 			     && pid != child_pid
 				)
 				;
 			(void) signal(SIGINT, istat);
 			(void) signal(SIGQUIT, qstat);
 			(void) signal(SIGCLD, cstat);
-			if( pid == -1 )
+			if ( pid == -1 )
 				{
 				fb_log( "\"%s\" (%d) wait failed : no children.\n",
 					__FILE__, __LINE__
 					);
 				return -1;
 				}
-			switch( stat_loc & 0377 )
+			switch ( stat_loc & 0377 )
 				{
 				case 0177 : /* Child stopped. */
 					fb_log( "Child stopped.\n" );

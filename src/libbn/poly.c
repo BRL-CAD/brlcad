@@ -63,9 +63,9 @@ static jmp_buf	bn_abort_buf;
 
 HIDDEN void bn_catch_FPE(int sig)
 {
-    if( !bn_expecting_fpe )
+    if ( !bn_expecting_fpe )
 	bu_bomb("bn_catch_FPE() unexpected SIGFPE!");
-    if( !bu_is_parallel() )
+    if ( !bu_is_parallel() )
 	(void)signal(SIGFPE, bn_catch_FPE);	/* Renew handler */
     longjmp(bn_abort_buf, 1);	/* return error code */
 }
@@ -79,7 +79,7 @@ HIDDEN void bn_catch_FPE(int sig)
 struct bn_poly *
 bn_poly_mul(register struct bn_poly *product, register const struct bn_poly *m1, register const struct bn_poly *m2)
 {
-    if( m1->dgr == 1 && m2->dgr == 1 )  {
+    if ( m1->dgr == 1 && m2->dgr == 1 )  {
 	product->dgr = 2;
 	product->cf[0] = m1->cf[0] * m2->cf[0];
 	product->cf[1] = m1->cf[0] * m2->cf[1] +
@@ -87,7 +87,7 @@ bn_poly_mul(register struct bn_poly *product, register const struct bn_poly *m1,
 	product->cf[2] = m1->cf[1] * m2->cf[1];
 	return product;
     }
-    if( m1->dgr == 2 && m2->dgr == 2 )  {
+    if ( m1->dgr == 2 && m2->dgr == 2 )  {
 	product->dgr = 4;
 	product->cf[0] = m1->cf[0] * m2->cf[0];
 	product->cf[1] = m1->cf[0] * m2->cf[1] +
@@ -260,9 +260,9 @@ bn_poly_quadratic_roots(register struct bn_complex *roots, register const struct
     fastf_t discrim, denom, rad;
     const fastf_t small = SMALL_FASTF;
 
-    if( NEAR_ZERO( quadrat->cf[0], small ) )  {
+    if ( NEAR_ZERO( quadrat->cf[0], small ) )  {
 	/* root = -cf[2] / cf[1] */
-	if( NEAR_ZERO( quadrat->cf[1], small ) )  {
+	if ( NEAR_ZERO( quadrat->cf[1], small ) )  {
 	    /* No solution.  Now what? */
 	    /*	    bu_log("bn_poly_quadratic_roots(): ERROR, no solution\n"); */
 	    return 0;
@@ -353,14 +353,14 @@ bn_poly_cubic_roots(register struct bn_complex *roots, register const struct bn_
     register int	i;
     static int	first_time = 1;
 
-    if( !bu_is_parallel() ) {
+    if ( !bu_is_parallel() ) {
 	/* bn_abort_buf is NOT parallel! */
-	if( first_time )  {
+	if ( first_time )  {
 	    first_time = 0;
 	    (void)signal(SIGFPE, bn_catch_FPE);
 	}
 	bn_expecting_fpe = 1;
-	if( setjmp( bn_abort_buf ) )  {
+	if ( setjmp( bn_abort_buf ) )  {
 	    (void)signal(SIGFPE, bn_catch_FPE);
 	    bu_log("bn_poly_cubic_roots() Floating Point Error\n");
 	    return 0;	/* FAIL */
@@ -368,15 +368,15 @@ bn_poly_cubic_roots(register struct bn_complex *roots, register const struct bn_
     }
 
     c1 = eqn->cf[1];
-    if( Abs(c1) > SQRT_MAX_FASTF )  return 0;	/* FAIL */
+    if ( Abs(c1) > SQRT_MAX_FASTF )  return 0;	/* FAIL */
 
     c1_3rd = c1 * THIRD;
     a = eqn->cf[2] - c1*c1_3rd;
-    if( Abs(a) > SQRT_MAX_FASTF )  return 0;	/* FAIL */
+    if ( Abs(a) > SQRT_MAX_FASTF )  return 0;	/* FAIL */
     b = (2.0*c1*c1*c1 - 9.0*c1*eqn->cf[2] + 27.0*eqn->cf[3])*INV_TWENTYSEVEN;
-    if( Abs(b) > SQRT_MAX_FASTF )  return 0;	/* FAIL */
+    if ( Abs(b) > SQRT_MAX_FASTF )  return 0;	/* FAIL */
 
-    if( (delta = a*a) > SQRT_MAX_FASTF ) return 0;	/* FAIL */
+    if ( (delta = a*a) > SQRT_MAX_FASTF ) return 0;	/* FAIL */
     delta = b*b*0.25 + delta*a*INV_TWENTYSEVEN;
 
     if ( delta > 0.0 ){
@@ -405,7 +405,7 @@ bn_poly_cubic_roots(register struct bn_complex *roots, register const struct bn_
 	fastf_t		phi, fact;
 	fastf_t		cs_phi, sn_phi_s3;
 
-	if( a >= 0.0 )  {
+	if ( a >= 0.0 )  {
 	    fact = 0.0;
 	    phi = 0.0;
 	    cs_phi = 1.0;		/* cos( phi ); */
@@ -414,11 +414,11 @@ bn_poly_cubic_roots(register struct bn_complex *roots, register const struct bn_
 	    register fastf_t	f;
 	    a *= -THIRD;
 	    fact = sqrt( a );
-	    if( (f = b * (-0.5) / (a*fact)) >= 1.0 )  {
+	    if ( (f = b * (-0.5) / (a*fact)) >= 1.0 )  {
 		phi = 0.0;
 		cs_phi = 1.0;		/* cos( phi ); */
 		sn_phi_s3 = 0.0;	/* sin( phi ) * SQRT3; */
-	    }  else if( f <= -1.0 )  {
+	    }  else if ( f <= -1.0 )  {
 		phi = PI_DIV_3;
 		cs_phi = cos( phi );
 		sn_phi_s3 = sin( phi ) * SQRT3;
@@ -437,7 +437,7 @@ bn_poly_cubic_roots(register struct bn_complex *roots, register const struct bn_
     for ( i=0; i < 3; ++i )
 	roots[i].re -= c1_3rd;
 
-    if( !bu_is_parallel() )
+    if ( !bu_is_parallel() )
 	bn_expecting_fpe = 0;
 
     return 1;		/* OK */
@@ -554,8 +554,8 @@ bn_pr_poly(const char *title, register const struct bn_poly *eqn)
     exp = eqn->dgr;
     for ( n=0; n<=eqn->dgr; n++, exp-- )  {
 	register double coeff = eqn->cf[n];
-	if( n > 0 )  {
-	    if( coeff < 0 )  {
+	if ( n > 0 )  {
+	    if ( coeff < 0 )  {
 		bu_vls_strcat( &str, " - " );
 		coeff = -coeff;
 	    }  else  {
@@ -563,9 +563,9 @@ bn_pr_poly(const char *title, register const struct bn_poly *eqn)
 	    }
 	}
 	bu_vls_printf( &str, "%g", coeff );
-	if( exp > 1 )  {
+	if ( exp > 1 )  {
 	    bu_vls_printf( &str, " *X^%d", exp );
-	} else if( exp == 1 )  {
+	} else if ( exp == 1 )  {
 
 	    bu_vls_strcat( &str, " *X" );
 	} else {
@@ -588,7 +588,7 @@ bn_pr_roots(const char *title, const struct bn_complex *roots, int n)
     register int	i;
 
     bu_log("%s: %d roots:\n", title, n );
-    for( i=0; i<n; i++ )  {
+    for ( i=0; i<n; i++ )  {
 	bu_log("%4d %e + i * %e\n", i, roots[i].re, roots[i].im );
     }
 }

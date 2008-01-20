@@ -66,7 +66,7 @@ new_Octant(Octree *parentp, Octree **childpp, int bitv, int level)
 		fastf_t	delta = modl_radius / pow_Of_2( level );
 		register float	*origin = parentp->o_points->c_point;
 	/* Create child node, filling in parent's pointer.		*/
-	if( ! NewOctree( *childpp ) )
+	if ( ! NewOctree( *childpp ) )
 		{
 		Malloc_Bomb(sizeof(Octree));
 		fatal_error = TRUE;
@@ -81,7 +81,7 @@ new_Octant(Octree *parentp, Octree **childpp, int bitv, int level)
 	childp->o_child = OCTREE_NULL;	  /* No children yet.		*/
 
 	/* Create list node for origin of leaf octant.			*/
-	if( ! NewPoint( childp->o_points ) )
+	if ( ! NewPoint( childp->o_points ) )
 		{
 		Malloc_Bomb(sizeof(PtList));
 		fatal_error = TRUE;
@@ -89,15 +89,15 @@ new_Octant(Octree *parentp, Octree **childpp, int bitv, int level)
 		}
 	childp->o_points->c_next = PTLIST_NULL; /* End of pt. chain.	*/
 	/* Compute origin relative to parent, based on bit vector.	*/
-	if( bitv & 1<<X )
+	if ( bitv & 1<<X )
 		childp->o_points->c_point[X] = origin[X] + delta;
 	else
 		childp->o_points->c_point[X] = origin[X] - delta;
-	if( bitv & 1<<Y )
+	if ( bitv & 1<<Y )
 		childp->o_points->c_point[Y] = origin[Y] + delta;
 	else
 		childp->o_points->c_point[Y] = origin[Y] - delta;
-	if( bitv & 1<<Z )
+	if ( bitv & 1<<Z )
 		childp->o_points->c_point[Z] = origin[Z] + delta;
 	else
 		childp->o_points->c_point[Z] = origin[Z] - delta;
@@ -112,7 +112,7 @@ new_Octant(Octree *parentp, Octree **childpp, int bitv, int level)
 Octree	*
 find_Octant(register Octree *parentp, register fastf_t *pt, register int *levelp)
 {
-	if( parentp == OCTREE_NULL )
+	if ( parentp == OCTREE_NULL )
 		{
 		bu_log( "find_Octant() parent node is NULL\n" );
 		return	OCTREE_NULL;
@@ -126,12 +126,12 @@ find_Octant(register Octree *parentp, register fastf_t *pt, register int *levelp
 		bitv |= (pt[Y] > origin[Y]) << Y;
 		bitv |= (pt[Z] > origin[Z]) << Z;
 		/* Search linked-list for target bit vector.		*/
-		for(	childpp = &parentp->o_child;
+		for (	childpp = &parentp->o_child;
 			*childpp != OCTREE_NULL && (*childpp)->o_bitv != bitv;
 			childpp = &(*childpp)->o_sibling
 			)
 			;
-		if( *childpp != OCTREE_NULL )
+		if ( *childpp != OCTREE_NULL )
 			{ /* Found target octant, go next level.	*/
 			parentp = *childpp;
 			(*levelp)++;
@@ -139,7 +139,7 @@ find_Octant(register Octree *parentp, register fastf_t *pt, register int *levelp
 		else	/* Target octant doesn't exist yet.		*/
 			return	new_Octant( parentp, childpp, bitv, ++(*levelp) );
 		}
-	while( parentp->o_child != OCTREE_NULL );
+	while ( parentp->o_child != OCTREE_NULL );
 	return	parentp;	/* Returning leaf node.			*/
 	}
 
@@ -147,17 +147,17 @@ Octree	*
 add_Region_Octree(Octree *parentp, fastf_t *pt, Trie *triep, int temp, int level)
 {	Octree	*newp;
 	/* Traverse to octant leaf node containing "pt".		*/
-	if( (newp = find_Octant( parentp, pt, &level )) == OCTREE_NULL )
+	if ( (newp = find_Octant( parentp, pt, &level )) == OCTREE_NULL )
 		{
 		bu_log( "find_Octant() returned NULL!\n" );
 		return	OCTREE_NULL;
 		}
 
 	/* Decide where to put datum.					*/
-	if( newp->o_points->c_next == PTLIST_NULL )
+	if ( newp->o_points->c_next == PTLIST_NULL )
 		{ /* Octant empty, so place region here.		*/
 		newp->o_triep = triep;
-		if( ! NewPoint( newp->o_points->c_next ) )
+		if ( ! NewPoint( newp->o_points->c_next ) )
 			{
 			Malloc_Bomb(sizeof(PtList));
 			fatal_error = TRUE;
@@ -165,35 +165,35 @@ add_Region_Octree(Octree *parentp, fastf_t *pt, Trie *triep, int temp, int level
 			}
 		VMOVE( newp->o_points->c_next->c_point, pt );
 		newp->o_points->c_next->c_next = PTLIST_NULL;
-		if( temp != AMBIENT-1 )
+		if ( temp != AMBIENT-1 )
 			newp->o_temp = temp;
 		return	newp;
 		}
 	else	  /* Octant occupied.					*/
-	if( triep != newp->o_triep )
+	if ( triep != newp->o_triep )
 		{ /* Region collision, must subdivide octant.		*/
-		if( ! subdivide_Octree(	newp, level ))
+		if ( ! subdivide_Octree(	newp, level ))
 			return	OCTREE_NULL;
 		return	add_Region_Octree( newp, pt, triep, temp, level );
 		}
 	else
-	if( temp != AMBIENT-1 )
+	if ( temp != AMBIENT-1 )
 		{
 		/* We are assigning a temperature.			*/
-		if( newp->o_temp < AMBIENT )
+		if ( newp->o_temp < AMBIENT )
 			{ /* Temperature not assigned yet.		*/
 			newp->o_temp = temp;
-			if( ! append_PtList( pt, newp->o_points ) )
+			if ( ! append_PtList( pt, newp->o_points ) )
 				return	OCTREE_NULL;
 			}
 		else
-		if( Abs(newp->o_temp - temp) < ir_noise )
+		if ( Abs(newp->o_temp - temp) < ir_noise )
 			{ /* Temperatures close enough.			*/
-			if( ! append_PtList( pt, newp->o_points ) )
+			if ( ! append_PtList( pt, newp->o_points ) )
 				return	OCTREE_NULL;
 			}
 		else
-		if(	newp->o_points->c_next->c_next == PTLIST_NULL
+		if (	newp->o_points->c_next->c_next == PTLIST_NULL
 		     &&	SamePoint(	newp->o_points->c_next->c_point,
 					pt,
 					F2D_EPSILON
@@ -202,27 +202,27 @@ add_Region_Octree(Octree *parentp, fastf_t *pt, Trie *triep, int temp, int level
 			newp->o_temp = temp;
 		else
 			{ /* Temperature collision, must subdivide.	*/
-			if( ! subdivide_Octree(	newp, level ) )
+			if ( ! subdivide_Octree(	newp, level ) )
 				return	OCTREE_NULL;
 			return	add_Region_Octree( newp, pt, triep, temp, level );
 			}
 		}
 	else	/* Region pointers match, so append coordinate to list.	*/
-	if( ! append_PtList( pt, newp->o_points ) )
+	if ( ! append_PtList( pt, newp->o_points ) )
 		return	OCTREE_NULL;
 	return	newp;
 	}
 int
 append_PtList(fastf_t *pt, PtList *ptlist)
 {
-	for( ; ptlist->c_next != PTLIST_NULL; ptlist = ptlist->c_next )
+	for (; ptlist->c_next != PTLIST_NULL; ptlist = ptlist->c_next )
 		{
-		if( SamePoint( ptlist->c_next->c_point, pt, F2D_EPSILON ) )
+		if ( SamePoint( ptlist->c_next->c_point, pt, F2D_EPSILON ) )
 			{ /* Point already in list.		*/
 			return	1;
 			}
 		}
-	if( ! NewPoint( ptlist->c_next ) )
+	if ( ! NewPoint( ptlist->c_next ) )
 		{
 		Malloc_Bomb(sizeof(PtList));
 		fatal_error = TRUE;
@@ -238,7 +238,7 @@ void
 delete_PtList(PtList **ptlistp)
 {	register PtList	*pp = *ptlistp, *np;
 	*ptlistp = PTLIST_NULL;
-	for( ; pp != PTLIST_NULL; pp = np )
+	for (; pp != PTLIST_NULL; pp = np )
 		{
 		np = pp->c_next;
 		free( (char *) pp );
@@ -253,7 +253,7 @@ subdivide_Octree(register Octree *parentp, int level)
 		Trie		*triep = parentp->o_triep;
 		int		temp = parentp->o_temp;
 	/* Ward against integer overflow in 2^level.			*/
-	if( level > L_MAX_POWER_TWO )
+	if ( level > L_MAX_POWER_TWO )
 		{
 		bu_log( "Can not subdivide, level = %d\n", level );
 		prnt_Octree( &ir_octree, 0 );
@@ -267,11 +267,11 @@ subdivide_Octree(register Octree *parentp, int level)
 	delete_Node_OcList( &triep->l.t_octp, parentp );
 	{	register PtList	*cp;
 	/* Shove data down to sub-levels.				*/
-	for( cp = points; cp != PTLIST_NULL; cp = cp->c_next )
+	for ( cp = points; cp != PTLIST_NULL; cp = cp->c_next )
 		{	fastf_t	c_point[3];
 			Octree	*octreep;
 		VMOVE( c_point, cp->c_point );
-		if(	(octreep =
+		if (	(octreep =
 			add_Region_Octree( parentp, c_point, triep, temp, level )
 			) != OCTREE_NULL
 			)
@@ -287,7 +287,7 @@ subdivide_Octree(register Octree *parentp, int level)
 fastf_t
 pow_Of_2(register int power)
 {	register long	value = 1;
-	for( ; power > 0; power-- )
+	for (; power > 0; power-- )
 		value *= 2;
 	return	(fastf_t) value;
 	}
@@ -308,9 +308,9 @@ prnt_Node_Octree(Octree *parentp, int level)
 		parentp->o_sibling,
 		parentp->o_child
 		);
-	for( ptp = parentp->o_points->c_next; ptp != PTLIST_NULL; ptp = ptp->c_next )
+	for ( ptp = parentp->o_points->c_next; ptp != PTLIST_NULL; ptp = ptp->c_next )
 		{
-		if( RT_G_DEBUG )
+		if ( RT_G_DEBUG )
 			bu_log( "\t%8.3f,%8.3f,%8.3f\n",
 				ptp->c_point[X],
 				ptp->c_point[Y],
@@ -326,13 +326,13 @@ void
 prnt_Octree(Octree *parentp, int level)
 {	register Octree	*siblingp;
 	/* Print each octant at this level.				*/
-	for(	siblingp = parentp;
+	for (	siblingp = parentp;
 		siblingp != OCTREE_NULL;
 		siblingp = siblingp->o_sibling
 		)
 		prnt_Node_Octree( siblingp, level );
 	/* Print each octant at this level.				*/
-	for(	siblingp = parentp;
+	for (	siblingp = parentp;
 		siblingp != OCTREE_NULL;
 		siblingp = siblingp->o_sibling
 		)
@@ -348,16 +348,16 @@ write_Octree(Octree *parentp, FILE *fp)
 	/* Write temperature and bogus number of points for this leaf.	*/
 	hdr_ptlist.f_temp = parentp->o_temp;
 	hdr_ptlist.f_length = 0;
-	if( fwrite( (char *) &hdr_ptlist, sizeof(F_Hdr_Ptlist), 1, fp ) != 1 )
+	if ( fwrite( (char *) &hdr_ptlist, sizeof(F_Hdr_Ptlist), 1, fp ) != 1 )
 		{
 		bu_log( "\"%s\"(%d) Write failed!\n", __FILE__, __LINE__ );
 		return	0;
 		}
 	/* Write out list of points.					*/
-	for( ptp = parentp->o_points->c_next; ptp != PTLIST_NULL; ptp = ptp->c_next )
+	for ( ptp = parentp->o_points->c_next; ptp != PTLIST_NULL; ptp = ptp->c_next )
 		{
 		hdr_ptlist.f_length++;
-		if( fwrite( (char *) ptp->c_point, sizeof(ptp->c_point), 1, fp )
+		if ( fwrite( (char *) ptp->c_point, sizeof(ptp->c_point), 1, fp )
 			!= 1
 			)
 			{
@@ -365,15 +365,15 @@ write_Octree(Octree *parentp, FILE *fp)
 			return	0;
 			}
 		}
-	if( hdr_ptlist.f_length > 0 )
+	if ( hdr_ptlist.f_length > 0 )
 		{
 		/* Go back and fudge point count.			*/
-		if( fseek( fp, addr, 0 ) )
+		if ( fseek( fp, addr, 0 ) )
 			{
 			bu_log( "\"%s\"(%d) Fseek failed.\n", __FILE__, __LINE__ );
 			return	0;
 			}
-		if( fwrite( (char *) &hdr_ptlist, sizeof(hdr_ptlist), 1, fp )
+		if ( fwrite( (char *) &hdr_ptlist, sizeof(hdr_ptlist), 1, fp )
 			!= 1
 			)
 			{
@@ -381,7 +381,7 @@ write_Octree(Octree *parentp, FILE *fp)
 			return	0;
 			}
 		/* Re-position write pointer to end-of-file.		*/
-		if( fseek( fp, 0L, 2 ) )
+		if ( fseek( fp, 0L, 2 ) )
 			{
 			bu_log( "\"%s\"(%d) Fseek failed.\n", __FILE__, __LINE__ );
 			return	0;
@@ -393,7 +393,7 @@ write_Octree(Octree *parentp, FILE *fp)
 static void
 hit_octant(struct application *ap, register Octree *op, register Octree **lpp, fastf_t *inv_dir, int level)
 {
-	for( ; op != OCTREE_NULL; op = op->o_sibling )
+	for (; op != OCTREE_NULL; op = op->o_sibling )
 		{	fastf_t	octnt_min[3], octnt_max[3];
 			fastf_t	delta = modl_radius / pow_Of_2( level );
 		/* See if ray hits the octant RPP.			*/
@@ -403,11 +403,11 @@ hit_octant(struct application *ap, register Octree *op, register Octree **lpp, f
 		octnt_max[X] = op->o_points->c_point[X] + delta;
 		octnt_max[Y] = op->o_points->c_point[Y] + delta;
 		octnt_max[Z] = op->o_points->c_point[Z] + delta;
-		if( rt_in_rpp( &ap->a_ray, inv_dir, octnt_min, octnt_max ) )
+		if ( rt_in_rpp( &ap->a_ray, inv_dir, octnt_min, octnt_max ) )
 			{ /* Hit octant.				*/
-			if( op->o_child == OCTREE_NULL )
+			if ( op->o_child == OCTREE_NULL )
 				{ /* We are at a leaf node.		*/
-				if( ap->a_uvec[0] > ap->a_ray.r_min )
+				if ( ap->a_uvec[0] > ap->a_ray.r_min )
 					{ /* Closest, so far.		*/
 					ap->a_uvec[0] = ap->a_ray.r_min;
 					ap->a_level = level;
@@ -426,11 +426,11 @@ ir_shootray_octree(struct application *ap)
 {	vect_t	inv_dir;	/* Inverses of ap->a_ray.r_dir	*/
 		Octree	*leafp = NULL;	/* Intersected octree leaf.	*/
 	inv_dir[X] = inv_dir[Y] = inv_dir[Z] = INFINITY;
-	if( ap->a_ray.r_dir[X] != 0.0 )
+	if ( ap->a_ray.r_dir[X] != 0.0 )
 		inv_dir[X] = 1.0 / ap->a_ray.r_dir[X];
-	if( ap->a_ray.r_dir[Y] != 0.0 )
+	if ( ap->a_ray.r_dir[Y] != 0.0 )
 		inv_dir[Y] = 1.0 / ap->a_ray.r_dir[Y];
-	if( ap->a_ray.r_dir[Z] != 0.0 )
+	if ( ap->a_ray.r_dir[Z] != 0.0 )
 		inv_dir[Z] = 1.0 / ap->a_ray.r_dir[Z];
 	/* Descend octree from root to find the closest intersected leaf node.
 		Store minimum hit distance in "a_uvec[0]" field of application
@@ -438,7 +438,7 @@ ir_shootray_octree(struct application *ap)
 	 */
 	ap->a_uvec[0] = INFINITY; /* Minimum hit point, safe distance.	*/
 	hit_octant( ap, &ir_octree, &leafp, inv_dir, 0 );
-	if( leafp != OCTREE_NULL )
+	if ( leafp != OCTREE_NULL )
 		/* Hit model.						*/
 		/* a_hit is f_IR_Model(), uses 2nd arg as (Octree *) */
 		return	ap->a_hit( ap, (struct partition *)leafp, RT_SEG_NULL );

@@ -136,14 +136,14 @@ static int sh_stk_dosetup(char *cp, struct region *rp, char **dpp, char **mpp, s
 
 	RT_CK_RTI(rtip);
 
-	if(rdebug&RDEBUG_MATERIAL)
+	if (rdebug&RDEBUG_MATERIAL)
 		bu_log( "...starting \"%s\"\n", cp );
 
 	/* skip leading white space */
-	while( *cp == ' ' || *cp == '\t' )
+	while ( *cp == ' ' || *cp == '\t' )
 		cp++;
 
-	for( i = 0; i < 31 && *cp != '\0'; i++, cp++ ) {
+	for ( i = 0; i < 31 && *cp != '\0'; i++, cp++ ) {
 		if (*cp == ' ' || *cp == '\t' ) {
 			matname[i++] = '\0';
 			break;
@@ -155,7 +155,7 @@ static int sh_stk_dosetup(char *cp, struct region *rp, char **dpp, char **mpp, s
 #ifdef HAVE_DLOPEN
 retry:
 #endif
-	for( mfp = *headp; mfp != MF_NULL; mfp = mfp->mf_forw )  {
+	for ( mfp = *headp; mfp != MF_NULL; mfp = mfp->mf_forw )  {
 		if (matname[0] != mfp->mf_name[0]  ||
 		    strcmp( matname, mfp->mf_name ) != 0 )
 			continue;
@@ -232,12 +232,12 @@ sh_stk_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, str
 
 	/*bu_struct_parse( matparm, sh_stk_parse, (char *)sp );*/
 
-	if(rdebug&RDEBUG_MATERIAL || rdebug&RDEBUG_SHADE)
+	if (rdebug&RDEBUG_MATERIAL || rdebug&RDEBUG_SHADE)
 		bu_log( "sh_stk_setup called with \"%s\"\n", bu_vls_addr(matparm) );
 
 	i = 0;
 	start = cp = bu_vls_addr(matparm);
-	while( *cp != '\0' ) {
+	while ( *cp != '\0' ) {
 		if (*cp == ';' ) {
 			*cp = '\0';
 			if (i >= 16 ) {
@@ -299,7 +299,7 @@ sh_stk_render(struct application *ap, struct partition *pp, struct shadework *sw
 	int	ret_status;
 	char	tmp[128];
 
-	for( i = 0; i < 16 && sp->mfuncs[i] != NULL; i++ ) {
+	for ( i = 0; i < 16 && sp->mfuncs[i] != NULL; i++ ) {
 		if (rdebug&RDEBUG_SHADE)  {
 			snprintf(tmp, 128, "before stacked \"%s\" shader", sp->mfuncs[i]->mf_name);
 
@@ -331,7 +331,7 @@ sh_stk_print(register struct region *rp, char *dp)
 
 	bu_log("~~~~starting stack print\n");
 
-	for( i = 0; i < 16 && sp->mfuncs[i] != NULL; i++ ) {
+	for ( i = 0; i < 16 && sp->mfuncs[i] != NULL; i++ ) {
 		bu_log("~~~~stack entry %d:\n", i);
 		sp->mfuncs[i]->mf_print( rp, sp->udata[i] );
 	}
@@ -349,7 +349,7 @@ sh_stk_free(char *cp)
 		(struct stk_specific *)cp;
 	int	i;
 
-	for( i = 0; i < 16 && sp->mfuncs[i] != NULL; i++ ) {
+	for ( i = 0; i < 16 && sp->mfuncs[i] != NULL; i++ ) {
 		sp->mfuncs[i]->mf_free( sp->udata[i] );
 	}
 

@@ -64,18 +64,18 @@
 int
 fb_ioinit(register FBIO *ifp)
 {
-	if( ifp->if_debug & FB_DEBUG_BIO ) {
+	if ( ifp->if_debug & FB_DEBUG_BIO ) {
 		fb_log( "fb_ioinit( 0x%lx )\n", (unsigned long)ifp );
 	}
 
 	ifp->if_pno = -1;		/* Force _fb_pgin() initially.	*/
 	ifp->if_pixcur = 0L;		/* Initialize pixel number.	*/
-	if( ifp->if_pbase == PIXEL_NULL ) {
+	if ( ifp->if_pbase == PIXEL_NULL ) {
 		/* Only allocate buffer once. */
 		ifp->if_ppixels = PAGE_PIXELS;	/* Pixels/page.	*/
-		if( ifp->if_ppixels > ifp->if_width * ifp->if_height )
+		if ( ifp->if_ppixels > ifp->if_width * ifp->if_height )
 			ifp->if_ppixels = ifp->if_width * ifp->if_height;
-		if( (ifp->if_pbase = (unsigned char *)malloc( ifp->if_ppixels * sizeof(RGBpixel) ))
+		if ( (ifp->if_pbase = (unsigned char *)malloc( ifp->if_ppixels * sizeof(RGBpixel) ))
 			== PIXEL_NULL ) {
 			Malloc_Bomb(ifp->if_ppixels * sizeof(RGBpixel));
 			return	-1;
@@ -92,22 +92,22 @@ fb_seek(register FBIO *ifp, int x, int y)
 	long	pixelnum;
 	long	pagepixel;
 
-	if( ifp->if_debug & FB_DEBUG_BIO ) {
+	if ( ifp->if_debug & FB_DEBUG_BIO ) {
 		fb_log( "fb_seek( 0x%lx, %d, %d )\n",
 			(unsigned long)ifp, x, y );
 	}
 
-	if( x < 0 || y < 0 || x >= ifp->if_width || y >= ifp->if_height ) {
+	if ( x < 0 || y < 0 || x >= ifp->if_width || y >= ifp->if_height ) {
 		fb_log(	"fb_seek: illegal address <%d,%d>.\n", x, y );
 		return	-1;
 	}
 	pixelnum = ((long) y * (long) ifp->if_width) + x;
 	pagepixel = (long) ifp->if_pno * ifp->if_ppixels;
-	if( pixelnum < pagepixel || pixelnum >= (pagepixel + ifp->if_ppixels) ) {
-		if( ifp->if_pdirty )
-			if( _fb_pgout( ifp ) == - 1 )
+	if ( pixelnum < pagepixel || pixelnum >= (pagepixel + ifp->if_ppixels) ) {
+		if ( ifp->if_pdirty )
+			if ( _fb_pgout( ifp ) == - 1 )
 				return	-1;
-		if( _fb_pgin( ifp, (int) (pixelnum / (long) ifp->if_ppixels)) <= -1 )
+		if ( _fb_pgin( ifp, (int) (pixelnum / (long) ifp->if_ppixels)) <= -1 )
 			return	-1;
 	}
 	ifp->if_pixcur = pixelnum;
@@ -123,7 +123,7 @@ fb_tell(register FBIO *ifp, int *xp, int *yp)
 	*yp = (int) (ifp->if_pixcur / ifp->if_width);
 	*xp = (int) (ifp->if_pixcur % ifp->if_width);
 
-	if( ifp->if_debug & FB_DEBUG_BIO ) {
+	if ( ifp->if_debug & FB_DEBUG_BIO ) {
 		fb_log( "fb_tell( 0x%lx, 0x%x, 0x%x ) => (%4d,%4d)\n",
 			(unsigned long)ifp, xp, yp, *xp, *yp );
 	}
@@ -135,23 +135,23 @@ int
 fb_wpixel(register FBIO *ifp, unsigned char *pixelp)
 {
 #ifdef NEVER
-	if( ifp->if_debug & FB_DEBUG_BRW ) {
+	if ( ifp->if_debug & FB_DEBUG_BRW ) {
 		fb_log( "fb_wpixel( 0x%lx, &[%3d,%3d,%3d] )\n",
 			(unsigned long)ifp,
 			(*pixelp)[RED], (*pixelp)[GRN], (*pixelp)[BLU] );
 	}
 #endif /* NEVER */
 
-	if( ifp->if_pno == -1 )
-		if( _fb_pgin( ifp, ifp->if_pixcur / ifp->if_ppixels ) <= -1 )
+	if ( ifp->if_pno == -1 )
+		if ( _fb_pgin( ifp, ifp->if_pixcur / ifp->if_ppixels ) <= -1 )
 			return	-1;
 
 	COPYRGB( (ifp->if_pcurp), pixelp );
 	ifp->if_pcurp += sizeof(RGBpixel);	/* position in page */
 	ifp->if_pixcur++;	/* position in framebuffer */
 	ifp->if_pdirty = 1;	/* page referenced (dirty) */
-	if( ifp->if_pcurp >= ifp->if_pendp ) {
-		if( _fb_pgout( ifp ) <= -1 )
+	if ( ifp->if_pcurp >= ifp->if_pendp ) {
+		if ( _fb_pgout( ifp ) <= -1 )
 			return	-1;
 		ifp->if_pno = -1;
 	}
@@ -161,21 +161,21 @@ fb_wpixel(register FBIO *ifp, unsigned char *pixelp)
 int
 fb_rpixel(register FBIO *ifp, unsigned char *pixelp)
 {
-	if( ifp->if_pno == -1 )
-		if( _fb_pgin( ifp, ifp->if_pixcur / ifp->if_ppixels ) <= -1 )
+	if ( ifp->if_pno == -1 )
+		if ( _fb_pgin( ifp, ifp->if_pixcur / ifp->if_ppixels ) <= -1 )
 			return	-1;
 
 	COPYRGB( pixelp, (ifp->if_pcurp) );
 	ifp->if_pcurp += sizeof(RGBpixel);	/* position in page */
 	ifp->if_pixcur++;	/* position in framebuffer */
-	if( ifp->if_pcurp >= ifp->if_pendp ) {
-		if( _fb_pgout( ifp ) <= -1 )
+	if ( ifp->if_pcurp >= ifp->if_pendp ) {
+		if ( _fb_pgout( ifp ) <= -1 )
 			return	-1;
 		ifp->if_pno = -1;
 	}
 
 #ifdef NEVER
-	if( ifp->if_debug & FB_DEBUG_BRW ) {
+	if ( ifp->if_debug & FB_DEBUG_BRW ) {
 		fb_log( "fb_rpixel( 0x%lx, 0x%lx ) => [%3d,%3d,%3d]\n",
 			(unsigned long)ifp, (unsigned long)pixelp,
 			(*pixelp)[RED], (*pixelp)[GRN], (*pixelp)[BLU] );
@@ -191,7 +191,7 @@ fb_flush(register FBIO *ifp)
 	_fb_pgflush(ifp);
 
 	/* call device specific flush routine */
-	if( (*ifp->if_flush)( ifp ) <= -1 )
+	if ( (*ifp->if_flush)( ifp ) <= -1 )
 		return	-1;
 
 	return	0;
@@ -200,12 +200,12 @@ fb_flush(register FBIO *ifp)
 int
 _fb_pgflush(register FBIO *ifp)
 {
-	if( ifp->if_debug & FB_DEBUG_BIO ) {
+	if ( ifp->if_debug & FB_DEBUG_BIO ) {
 		fb_log( "_fb_pgflush( 0x%lx )\n", (unsigned long)ifp );
 	}
 
-	if( ifp->if_pdirty ) {
-		if( _fb_pgout( ifp ) <= -1 )
+	if ( ifp->if_pdirty ) {
+		if ( _fb_pgout( ifp ) <= -1 )
 			return	-1;
 		ifp->if_pdirty = 0;
 	}
@@ -220,11 +220,11 @@ _fb_pgout(register FBIO *ifp)
 
 	/*fb_log( "_fb_pgout(%d)\n", ifp->if_pno );*/
 
-	if( ifp->if_pno < 0 )	/* Already paged out, return 1.	*/
+	if ( ifp->if_pno < 0 )	/* Already paged out, return 1.	*/
 		return	1;
 
 	first_scan = ifp->if_pno * PAGE_SCANS;
-	if( first_scan + PAGE_SCANS > ifp->if_height )
+	if ( first_scan + PAGE_SCANS > ifp->if_height )
 		scans = ifp->if_height - first_scan;
 	else
 		scans = PAGE_SCANS;
@@ -250,7 +250,7 @@ _fb_pgin(register FBIO *ifp, int pageno)
 	ifp->if_pdirty = 0;
 
 	first_scan = ifp->if_pno * PAGE_SCANS;
-	if( first_scan + PAGE_SCANS > ifp->if_height )
+	if ( first_scan + PAGE_SCANS > ifp->if_height )
 		scans = ifp->if_height - first_scan;
 	else
 		scans = PAGE_SCANS;

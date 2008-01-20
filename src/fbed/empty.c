@@ -41,7 +41,7 @@ int
 empty(int fd)
 {
 #if 0
-	if( isSGI )
+	if ( isSGI )
 		return sgi_Empty();
 	else
 #endif

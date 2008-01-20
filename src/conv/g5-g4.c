@@ -70,36 +70,36 @@ main(int argc, char **argv)
 
 	rt_init_resource( &rt_uniresource, 0, NULL );
 
-	if( argc != 3 )  {
+	if ( argc != 3 )  {
 		bu_log( "Usage: %s v5.g v4.g\n", argv[0]);
 		return 1;
 	}
 
-	if( (dbip = db_open( argv[1], "r" )) == DBI_NULL )  {
+	if ( (dbip = db_open( argv[1], "r" )) == DBI_NULL )  {
 		perror( argv[1] );
 		return 2;
 	}
 
-	if( rt_uniresource.re_magic != RESOURCE_MAGIC )
+	if ( rt_uniresource.re_magic != RESOURCE_MAGIC )
 		rt_init_resource( &rt_uniresource, 0, NULL );
 
-	if( (dbip4 = db_create( argv[2], 4 )) == DBI_NULL ) {
+	if ( (dbip4 = db_create( argv[2], 4 )) == DBI_NULL ) {
 		bu_log( "Failed to create output database (%s)\n", argv[2] );
 		return 3;
 	}
 
-	if( (fp = wdb_dbopen( dbip4, RT_WDB_TYPE_DB_DISK )) == RT_WDB_NULL ) {
+	if ( (fp = wdb_dbopen( dbip4, RT_WDB_TYPE_DB_DISK )) == RT_WDB_NULL ) {
 		bu_log( "db_dbopen() failed for %s\n", argv[2] );
 		return 4;
 	}
 
-	if( dbip->dbi_version != 5 ) {
+	if ( dbip->dbi_version != 5 ) {
 		bu_log( "Input database must be a version 5 database!!!!\n" );
 		return 5;
 	}
 
 	RT_CK_DBI(dbip);
-	if( db_dirbuild( dbip ) )
+	if ( db_dirbuild( dbip ) )
 	    bu_exit(1, "db_dirbuild failed\n" );
 
 	mk_id_units( fp, dbip->dbi_title, bu_units_string( dbip->dbi_local2base ) );
@@ -111,21 +111,21 @@ main(int argc, char **argv)
 		int ret;
 
 		bu_log( "%s\n", dp->d_namep );
-		if( dp->d_major_type != DB5_MAJORTYPE_BRLCAD ) {
+		if ( dp->d_major_type != DB5_MAJORTYPE_BRLCAD ) {
 			bu_log( "\tThis object not supported in version4 databases, not converted\n" );
 			skipped++;
 			continue;
 		}
 
 		id = rt_db_get_internal( &intern, dp, dbip, NULL, &rt_uniresource );
-		if( id < 0 )  {
+		if ( id < 0 )  {
 			bu_log(
 				"%s: rt_db_get_internal(%s) failure, skipping\n",
 				argv[0], dp->d_namep);
 			errors++;
 			continue;
 		}
-		if( id == ID_COMBINATION ) {
+		if ( id == ID_COMBINATION ) {
 			struct rt_comb_internal *comb;
 			char *ptr;
 
@@ -133,7 +133,7 @@ main(int argc, char **argv)
 			RT_CK_COMB( comb );
 
 			/* Convert "plastic" to "phong" in the shader string */
-			while( (ptr=strstr( bu_vls_addr( &comb->shader), "plastic" )) != NULL ) {
+			while ( (ptr=strstr( bu_vls_addr( &comb->shader), "plastic" )) != NULL ) {
 				strncpy( ptr, "phong  ", 7 );
 			}
 		}
@@ -146,9 +146,9 @@ main(int argc, char **argv)
 				continue;
 			}
 		}
-		if( id == ID_POLY)
+		if ( id == ID_POLY)
 		{
-			if( rt_pg_to_bot( &intern, &tol, &rt_uniresource ) )
+			if ( rt_pg_to_bot( &intern, &tol, &rt_uniresource ) )
 			{
 				bu_log( "%s: Conversion from polysolid to BOT failed for solid %s\n",
 					argv[0], dp->d_namep );
@@ -157,7 +157,7 @@ main(int argc, char **argv)
 			}
 		}
 		ret = wdb_put_internal( fp, dp->d_namep, &intern, 1.0 );
-		if( ret < 0 )  {
+		if ( ret < 0 )  {
 			bu_log(
 				"%s: wdb_put_internal(%s) failure, skipping\n",
 				argv[0], dp->d_namep);

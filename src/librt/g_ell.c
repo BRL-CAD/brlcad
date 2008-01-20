@@ -61,7 +61,7 @@ const struct bu_structparse rt_ell_parse[] = {
     { "%f", 3, "A", bu_offsetof(struct rt_ell_internal, a[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "B", bu_offsetof(struct rt_ell_internal, b[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "C", bu_offsetof(struct rt_ell_internal, c[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { {'\0','\0','\0','\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
+    { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
  };
 
 static void  nmg_sphere_face_snurb(struct faceuse *fu, const matp_t m);
@@ -207,7 +207,7 @@ rt_ell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	 *  If it takes it, then there is nothing to do, otherwise
 	 *  the solid is an ELL.
 	 */
-	if( rt_sph_prep( stp, ip, rtip ) == 0 ) {
+	if ( rt_sph_prep( stp, ip, rtip ) == 0 ) {
 	  return(0);		/* OK */
 	}
 
@@ -216,7 +216,7 @@ rt_ell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	magsq_b = MAGSQ( eip->b );
 	magsq_c = MAGSQ( eip->c );
 
-	if( magsq_a < rtip->rti_tol.dist || magsq_b < rtip->rti_tol.dist || magsq_c < rtip->rti_tol.dist ) {
+	if ( magsq_a < rtip->rti_tol.dist || magsq_b < rtip->rti_tol.dist || magsq_c < rtip->rti_tol.dist ) {
 		bu_log("sph(%s):  zero length A(%g), B(%g), or C(%g) vector\n",
 			stp->st_name, magsq_a, magsq_b, magsq_c );
 		return(1);		/* BAD */
@@ -232,17 +232,17 @@ rt_ell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
 	/* Validate that A.B == 0, B.C == 0, A.C == 0 (check dir only) */
 	f = VDOT( Au, Bu );
-	if( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
+	if ( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
 		bu_log("ell(%s):  A not perpendicular to B, f=%f\n", stp->st_name, f);
 		return(1);		/* BAD */
 	}
 	f = VDOT( Bu, Cu );
-	if( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
+	if ( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
 		bu_log("ell(%s):  B not perpendicular to C, f=%f\n", stp->st_name, f);
 		return(1);		/* BAD */
 	}
 	f = VDOT( Au, Cu );
-	if( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
+	if ( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
 		bu_log("ell(%s):  A not perpendicular to C, f=%f\n", stp->st_name, f);
 		return(1);		/* BAD */
 	}
@@ -285,9 +285,9 @@ rt_ell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	/* Compute bounding sphere */
 	VMOVE( stp->st_center, eip->v );
 	f = magsq_a;
-	if( magsq_b > f )
+	if ( magsq_b > f )
 		f = magsq_b;
-	if( magsq_c > f )
+	if ( magsq_c > f )
 		f = magsq_c;
 	stp->st_aradius = stp->st_bradius = sqrt(f);
 
@@ -371,13 +371,13 @@ rt_ell_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	dp = VDOT( dprime, pprime );
 	dd = VDOT( dprime, dprime );
 
-	if( (root = dp*dp - dd * (VDOT(pprime, pprime)-1.0)) < 0 )
+	if ( (root = dp*dp - dd * (VDOT(pprime, pprime)-1.0)) < 0 )
 		return(0);		/* No hit */
 	root = sqrt(root);
 
 	RT_GET_SEG(segp, ap->a_resource);
 	segp->seg_stp = stp;
-	if( (k1=(-dp+root)/dd) <= (k2=(-dp-root)/dd) )  {
+	if ( (k1=(-dp+root)/dd) <= (k2=(-dp-root)/dd) )  {
 		/* k1 is entry, k2 is exit */
 		segp->seg_in.hit_dist = k1;
 		segp->seg_out.hit_dist = k2;
@@ -416,7 +416,7 @@ rt_ell_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	fastf_t	root;		/* root of radical */
 
 	/* for each ray/ellipse pair */
-	for(i = 0; i < n; i++){
+	for (i = 0; i < n; i++){
 		if (stp[i] == 0) continue; /* stp[i] == 0 signals skip ray */
 
 		ell = (struct ell_specific *)stp[i]->st_specific;
@@ -428,7 +428,7 @@ rt_ell_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 		dp = VDOT( dprime, pprime );
 		dd = VDOT( dprime, dprime );
 
-		if( (root = dp*dp - dd * (VDOT(pprime, pprime)-1.0)) < 0 ) {
+		if ( (root = dp*dp - dd * (VDOT(pprime, pprime)-1.0)) < 0 ) {
 			RT_ELL_SEG_MISS(segp[i]);		/* No hit */
 		}
 		else {
@@ -436,7 +436,7 @@ rt_ell_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 
 			segp[i].seg_stp = stp[i];
 
-			if( (k1=(-dp+root)/dd) <= (k2=(-dp-root)/dd) )  {
+			if ( (k1=(-dp+root)/dd) <= (k2=(-dp-root)/dd) )  {
 				/* k1 is entry, k2 is exit */
 				segp[i].seg_in.hit_dist = k1;
 				segp[i].seg_out.hit_dist = k2;
@@ -536,7 +536,7 @@ rt_ell_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 
 	/* U is azimuth, atan() range: -pi to +pi */
 	uvp->uv_u = bn_atan2( pprime[Y], pprime[X] ) * bn_inv2pi;
-	if( uvp->uv_u < 0 )
+	if ( uvp->uv_u < 0 )
 		uvp->uv_u += 1.0;
 	/*
 	 *  V is elevation, atan() range: -pi/2 to +pi/2,
@@ -635,17 +635,17 @@ rt_ell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	rt_ell_16pts( middle, eip->v, eip->a, eip->c );
 
 	RT_ADD_VLIST( vhead, &top[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
-	for( i=0; i<16; i++ )  {
+	for ( i=0; i<16; i++ )  {
 		RT_ADD_VLIST( vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
 	}
 
 	RT_ADD_VLIST( vhead, &bottom[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
-	for( i=0; i<16; i++ )  {
+	for ( i=0; i<16; i++ )  {
 		RT_ADD_VLIST( vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
 	}
 
 	RT_ADD_VLIST( vhead, &middle[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
-	for( i=0; i<16; i++ )  {
+	for ( i=0; i<16; i++ )  {
 		RT_ADD_VLIST( vhead, &middle[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
 	}
 	return(0);
@@ -772,7 +772,7 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	magsq_a = MAGSQ( state.eip->a );
 	magsq_b = MAGSQ( state.eip->b );
 	magsq_c = MAGSQ( state.eip->c );
-	if( magsq_a < tol->dist || magsq_b < tol->dist || magsq_c < tol->dist ) {
+	if ( magsq_a < tol->dist || magsq_b < tol->dist || magsq_c < tol->dist ) {
 		bu_log("rt_ell_tess():  zero length A, B, or C vector\n");
 		return(-2);		/* BAD */
 	}
@@ -787,17 +787,17 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 	/* Validate that A.B == 0, B.C == 0, A.C == 0 (check dir only) */
 	f = VDOT( Au, Bu );
-	if( ! NEAR_ZERO(f, tol->dist) )  {
+	if ( ! NEAR_ZERO(f, tol->dist) )  {
 		bu_log("ell():  A not perpendicular to B, f=%f\n", f);
 		return(-3);		/* BAD */
 	}
 	f = VDOT( Bu, Cu );
-	if( ! NEAR_ZERO(f, tol->dist) )  {
+	if ( ! NEAR_ZERO(f, tol->dist) )  {
 		bu_log("ell():  B not perpendicular to C, f=%f\n", f);
 		return(-3);		/* BAD */
 	}
 	f = VDOT( Au, Cu );
-	if( ! NEAR_ZERO(f, tol->dist) )  {
+	if ( ! NEAR_ZERO(f, tol->dist) )  {
 		bu_log("ell():  A not perpendicular to C, f=%f\n", f);
 		return(-3);		/* BAD */
 	}
@@ -806,7 +806,7 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		vect_t	axb;
 		VCROSS( axb, Au, Bu );
 		f = VDOT( axb, Cu );
-		if( f < 0 )  {
+		if ( f < 0 )  {
 			VREVERSE( Cu, Cu );
 			VREVERSE( state.eip->c, state.eip->c );
 		}
@@ -835,22 +835,22 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 	/* Compute radius of bounding sphere */
 	radius = Alen;
-	if( Blen > radius )
+	if ( Blen > radius )
 		radius = Blen;
-	if( Clen > radius )
+	if ( Clen > radius )
 		radius = Clen;
 
 	/*
 	 *  Establish tolerances
 	 */
-	if( ttol->rel <= 0.0 || ttol->rel >= 1.0 )  {
+	if ( ttol->rel <= 0.0 || ttol->rel >= 1.0 )  {
 		rel = 0.0;		/* none */
 	} else {
 		/* Convert rel to absolute by scaling by radius */
 		rel = ttol->rel * radius;
 	}
-	if( ttol->abs <= 0.0 )  {
-		if( rel <= 0.0 )  {
+	if ( ttol->abs <= 0.0 )  {
+		if ( rel <= 0.0 )  {
 			/* No tolerance given, use a default */
 			rel = 0.10 * radius;	/* 10% */
 		} else {
@@ -858,10 +858,10 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		}
 	} else {
 		/* Absolute tolerance was given, pick smaller */
-		if( ttol->rel <= 0.0 || rel > ttol->abs )
+		if ( ttol->rel <= 0.0 || rel > ttol->abs )
 		{
 			rel = ttol->abs;
-			if( rel > radius )
+			if ( rel > radius )
 				rel = radius;
 		}
 	}
@@ -873,7 +873,7 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	state.theta_tol = 2 * acos( 1.0 - rel / radius );
 
 	/* To ensure normal tolerance, remain below this angle */
-	if( ttol->norm > 0.0 && ttol->norm < state.theta_tol )  {
+	if ( ttol->norm > 0.0 && ttol->norm < state.theta_tol )  {
 		state.theta_tol = ttol->norm;
 	}
 
@@ -882,7 +882,7 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 	/* Find the number of segments to divide 90 degrees worth into */
 	nsegs = (int)(bn_halfpi / state.theta_tol + 0.999);
-	if( nsegs < 2 )  nsegs = 2;
+	if ( nsegs < 2 )  nsegs = 2;
 
 	/*  Find total number of strips of vertices that will be needed.
 	 *  nsegs for each hemisphere, plus the equator.
@@ -906,7 +906,7 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	strips[nsegs].nverts_per_strip = nsegs;
 	strips[nsegs].nfaces = 0;
 
-	for( i=1; i<nsegs; i++ )  {
+	for ( i=1; i<nsegs; i++ )  {
 		strips[i].nverts_per_strip =
 			strips[nstrips-1-i].nverts_per_strip = i;
 		strips[i].nverts =
@@ -915,47 +915,47 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 			strips[nstrips-1-i].nfaces = (2 * i + 1)*4;
 	}
 	/* All strips have vertices and normals */
-	for( i=0; i<nstrips; i++ )  {
+	for ( i=0; i<nstrips; i++ )  {
 		strips[i].vp = (struct vertex **)bu_calloc( strips[i].nverts,
 			sizeof(struct vertex *), "strip vertex[]" );
 		strips[i].norms = (vect_t *)bu_calloc( strips[i].nverts,
 			sizeof( vect_t ), "strip normals[]" );
 	}
 	/* All strips have faces, except for the equator */
-	for( i=0; i < nstrips; i++ )  {
-		if( strips[i].nfaces <= 0 )  continue;
+	for ( i=0; i < nstrips; i++ )  {
+		if ( strips[i].nfaces <= 0 )  continue;
 		strips[i].fu = (struct faceuse **)bu_calloc( strips[i].nfaces,
 			sizeof(struct faceuse *), "strip faceuse[]" );
 	}
 
 	/* First, build the triangular mesh topology */
 	/* Do the top. "toff" in i-1 is UP, towards +B */
-	for( i = 1; i <= nsegs; i++ )  {
+	for ( i = 1; i <= nsegs; i++ )  {
 		faceno = 0;
 		tlim = strips[i-1].nverts;
 		blim = strips[i].nverts;
-		for( stripno=0; stripno<4; stripno++ )  {
+		for ( stripno=0; stripno<4; stripno++ )  {
 			toff = stripno * strips[i-1].nverts_per_strip;
 			boff = stripno * strips[i].nverts_per_strip;
 
 			/* Connect this quarter strip */
-			for( j = 0; j < strips[i].nverts_per_strip; j++ )  {
+			for ( j = 0; j < strips[i].nverts_per_strip; j++ )  {
 
 				/* "Right-side-up" triangle */
 				vertp[0] = &(strips[i].vp[j+boff]);
 				vertp[1] = &(strips[i-1].vp[(j+toff)%tlim]);
 				vertp[2] = &(strips[i].vp[(j+1+boff)%blim]);
-				if( (strips[i-1].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
+				if ( (strips[i-1].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
 					bu_log("rt_ell_tess() nmg_cmface failure\n");
 					goto fail;
 				}
-				if( j+1 >= strips[i].nverts_per_strip )  break;
+				if ( j+1 >= strips[i].nverts_per_strip )  break;
 
 				/* Follow with interior "Up-side-down" triangle */
 				vertp[0] = &(strips[i].vp[(j+1+boff)%blim]);
 				vertp[1] = &(strips[i-1].vp[(j+toff)%tlim]);
 				vertp[2] = &(strips[i-1].vp[(j+1+toff)%tlim]);
-				if( (strips[i-1].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
+				if ( (strips[i-1].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
 					bu_log("rt_ell_tess() nmg_cmface failure\n");
 					goto fail;
 				}
@@ -963,32 +963,32 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		}
 	}
 	/* Do the bottom.  Everything is upside down. "toff" in i+1 is DOWN */
-	for( i = nsegs; i < nstrips; i++ )  {
+	for ( i = nsegs; i < nstrips; i++ )  {
 		faceno = 0;
 		tlim = strips[i+1].nverts;
 		blim = strips[i].nverts;
-		for( stripno=0; stripno<4; stripno++ )  {
+		for ( stripno=0; stripno<4; stripno++ )  {
 			toff = stripno * strips[i+1].nverts_per_strip;
 			boff = stripno * strips[i].nverts_per_strip;
 
 			/* Connect this quarter strip */
-			for( j = 0; j < strips[i].nverts_per_strip; j++ )  {
+			for ( j = 0; j < strips[i].nverts_per_strip; j++ )  {
 
 				/* "Right-side-up" triangle */
 				vertp[0] = &(strips[i].vp[j+boff]);
 				vertp[1] = &(strips[i].vp[(j+1+boff)%blim]);
 				vertp[2] = &(strips[i+1].vp[(j+toff)%tlim]);
-				if( (strips[i+1].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
+				if ( (strips[i+1].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
 					bu_log("rt_ell_tess() nmg_cmface failure\n");
 					goto fail;
 				}
-				if( j+1 >= strips[i].nverts_per_strip )  break;
+				if ( j+1 >= strips[i].nverts_per_strip )  break;
 
 				/* Follow with interior "Up-side-down" triangle */
 				vertp[0] = &(strips[i].vp[(j+1+boff)%blim]);
 				vertp[1] = &(strips[i+1].vp[(j+1+toff)%tlim]);
 				vertp[2] = &(strips[i+1].vp[(j+toff)%tlim]);
-				if( (strips[i+1].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
+				if ( (strips[i+1].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
 					bu_log("rt_ell_tess() nmg_cmface failure\n");
 					goto fail;
 				}
@@ -1000,7 +1000,7 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	 *  Start with the location in the unit sphere, and project back.
 	 *  i=0 is "straight up" along +B.
 	 */
-	for( i=0; i < nstrips; i++ )  {
+	for ( i=0; i < nstrips; i++ )  {
 		double	alpha;		/* decline down from B to A */
 		double	beta;		/* angle around equator (azimuth) */
 		fastf_t		cos_alpha, sin_alpha;
@@ -1011,7 +1011,7 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		alpha = (((double)i) / (nstrips-1));
 		cos_alpha = cos(alpha*bn_pi);
 		sin_alpha = sin(alpha*bn_pi);
-		for( j=0; j < strips[i].nverts; j++ )  {
+		for ( j=0; j < strips[i].nverts; j++ )  {
 
 			beta = ((double)j) / strips[i].nverts;
 			cos_beta = cos(beta*bn_twopi);
@@ -1034,17 +1034,17 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	}
 
 	/* Associate face geometry.  Equator has no faces */
-	for( i=0; i < nstrips; i++ )  {
-		for( j=0; j < strips[i].nfaces; j++ )  {
-			if( nmg_fu_planeeqn( strips[i].fu[j], tol ) < 0 )
+	for ( i=0; i < nstrips; i++ )  {
+		for ( j=0; j < strips[i].nfaces; j++ )  {
+			if ( nmg_fu_planeeqn( strips[i].fu[j], tol ) < 0 )
 				goto fail;
 		}
 	}
 
 	/* Associate normals with vertexuses */
-	for( i=0; i < nstrips; i++ )
+	for ( i=0; i < nstrips; i++ )
 	{
-		for( j=0; j < strips[i].nverts; j++ )
+		for ( j=0; j < strips[i].nverts; j++ )
 		{
 			struct faceuse *fu;
 			struct vertexuse *vu;
@@ -1053,16 +1053,16 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 			NMG_CK_VERTEX( strips[i].vp[j] );
 			VREVERSE( norm_opp, strips[i].norms[j] )
 
-			for( BU_LIST_FOR( vu, vertexuse, &strips[i].vp[j]->vu_hd ) )
+			for ( BU_LIST_FOR( vu, vertexuse, &strips[i].vp[j]->vu_hd ) )
 			{
 				fu = nmg_find_fu_of_vu( vu );
 				NMG_CK_FACEUSE( fu );
 				/* get correct direction of normals depending on
 				 * faceuse orientation
 				 */
-				if( fu->orientation == OT_SAME )
+				if ( fu->orientation == OT_SAME )
 					nmg_vertexuse_nv( vu, strips[i].norms[j] );
-				else if( fu->orientation == OT_OPPOSITE )
+				else if ( fu->orientation == OT_OPPOSITE )
 					nmg_vertexuse_nv( vu, norm_opp );
 			}
 		}
@@ -1073,13 +1073,13 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 	/* Release memory */
 	/* All strips have vertices and normals */
-	for( i=0; i<nstrips; i++ )  {
+	for ( i=0; i<nstrips; i++ )  {
 		bu_free( (char *)strips[i].vp, "strip vertex[]" );
 		bu_free( (char *)strips[i].norms, "strip norms[]" );
 	}
 	/* All strips have faces, except for equator */
-	for( i=0; i < nstrips; i++ )  {
-		if( strips[i].fu == (struct faceuse **)0 )  continue;
+	for ( i=0; i < nstrips; i++ )  {
+		if ( strips[i].fu == (struct faceuse **)0 )  continue;
 		bu_free( (char *)strips[i].fu, "strip faceuse[]" );
 	}
 	bu_free( (char *)strips, "strips[]" );
@@ -1087,13 +1087,13 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 fail:
 	/* Release memory */
 	/* All strips have vertices and normals */
-	for( i=0; i<nstrips; i++ )  {
+	for ( i=0; i<nstrips; i++ )  {
 		bu_free( (char *)strips[i].vp, "strip vertex[]" );
 		bu_free( (char *)strips[i].norms, "strip norms[]" );
 	}
 	/* All strips have faces, except for equator */
-	for( i=0; i < nstrips; i++ )  {
-		if( strips[i].fu == (struct faceuse **)0 )  continue;
+	for ( i=0; i < nstrips; i++ )  {
+		if ( strips[i].fu == (struct faceuse **)0 )  continue;
 		bu_free( (char *)strips[i].fu, "strip faceuse[]" );
 	}
 	bu_free( (char *)strips, "strips[]" );
@@ -1117,7 +1117,7 @@ rt_ell_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 	BU_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
 	/* Check record type */
-	if( rp->u_id != ID_SOLID )  {
+	if ( rp->u_id != ID_SOLID )  {
 		bu_log("rt_ell_import: defective record\n");
 		return(-1);
 	}
@@ -1134,7 +1134,7 @@ rt_ell_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 	rt_fastf_float( vec, rp->s.s_values, 4 );
 
 	/* Apply modeling transformations */
-	if( mat == NULL )  mat = bn_mat_identity;
+	if ( mat == NULL )  mat = bn_mat_identity;
 	MAT4X3PNT( eip->v, mat, &vec[0*3] );
 	MAT4X3VEC( eip->a, mat, &vec[1*3] );
 	MAT4X3VEC( eip->b, mat, &vec[2*3] );
@@ -1153,7 +1153,7 @@ rt_ell_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 	union record		*rec;
 
 	RT_CK_DB_INTERNAL(ip);
-	if( ip->idb_type != ID_ELL && ip->idb_type != ID_SPH )  return(-1);
+	if ( ip->idb_type != ID_ELL && ip->idb_type != ID_SPH )  return(-1);
 	tip = (struct rt_ell_internal *)ip->idb_ptr;
 	RT_ELL_CK_MAGIC(tip);
 
@@ -1204,7 +1204,7 @@ rt_ell_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 	ntohd( (unsigned char *)vec, ep->ext_buf, ELEMENTS_PER_VECT*4 );
 
 	/* Apply modeling transformations */
-	if( mat == NULL )  mat = bn_mat_identity;
+	if ( mat == NULL )  mat = bn_mat_identity;
 	MAT4X3PNT( eip->v, mat, &vec[0*ELEMENTS_PER_VECT] );
 	MAT4X3VEC( eip->a, mat, &vec[1*ELEMENTS_PER_VECT] );
 	MAT4X3VEC( eip->b, mat, &vec[2*ELEMENTS_PER_VECT] );
@@ -1229,7 +1229,7 @@ rt_ell_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	fastf_t			vec[ELEMENTS_PER_VECT*4];
 
 	RT_CK_DB_INTERNAL(ip);
-	if( ip->idb_type != ID_ELL && ip->idb_type != ID_SPH )  return(-1);
+	if ( ip->idb_type != ID_ELL && ip->idb_type != ID_SPH )  return(-1);
 	eip = (struct rt_ell_internal *)ip->idb_ptr;
 	RT_ELL_CK_MAGIC(eip);
 
@@ -1300,7 +1300,7 @@ rt_ell_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 		INTCLAMP(mag_c * mm2local) );
 	bu_vls_strcat( str, buf );
 
-	if( !verbose )  return(0);
+	if ( !verbose )  return(0);
 
 	VSCALE( unitv, tip->a, 1/mag_a );
 	rt_find_fallback_angle( angles, unitv );
@@ -1380,7 +1380,7 @@ rt_ell_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 	magsq_a = MAGSQ( eip->a );
 	magsq_b = MAGSQ( eip->b );
 	magsq_c = MAGSQ( eip->c );
-	if( magsq_a < tol->dist || magsq_b < tol->dist || magsq_c < tol->dist ) {
+	if ( magsq_a < tol->dist || magsq_b < tol->dist || magsq_c < tol->dist ) {
 		bu_log("rt_ell_tess():  zero length A, B, or C vector\n");
 		return(-2);		/* BAD */
 	}
@@ -1395,17 +1395,17 @@ rt_ell_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 
 	/* Validate that A.B == 0, B.C == 0, A.C == 0 (check dir only) */
 	f = VDOT( Au, Bu );
-	if( ! NEAR_ZERO(f, tol->dist) )  {
+	if ( ! NEAR_ZERO(f, tol->dist) )  {
 		bu_log("ell():  A not perpendicular to B, f=%f\n", f);
 		return(-3);		/* BAD */
 	}
 	f = VDOT( Bu, Cu );
-	if( ! NEAR_ZERO(f, tol->dist) )  {
+	if ( ! NEAR_ZERO(f, tol->dist) )  {
 		bu_log("ell():  B not perpendicular to C, f=%f\n", f);
 		return(-3);		/* BAD */
 	}
 	f = VDOT( Au, Cu );
-	if( ! NEAR_ZERO(f, tol->dist) )  {
+	if ( ! NEAR_ZERO(f, tol->dist) )  {
 		bu_log("ell():  A not perpendicular to C, f=%f\n", f);
 		return(-3);		/* BAD */
 	}
@@ -1414,7 +1414,7 @@ rt_ell_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 		vect_t	axb;
 		VCROSS( axb, Au, Bu );
 		f = VDOT( axb, Cu );
-		if( f < 0 )  {
+		if ( f < 0 )  {
 			VREVERSE( Cu, Cu );
 			VREVERSE( eip->c, eip->c );
 		}
@@ -1443,9 +1443,9 @@ rt_ell_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 
 	/* Compute radius of bounding sphere */
 	radius = Alen;
-	if( Blen > radius )
+	if ( Blen > radius )
 		radius = Blen;
-	if( Clen > radius )
+	if ( Clen > radius )
 		radius = Clen;
 
 	MAT_IDN( xlate );
@@ -1462,7 +1462,7 @@ rt_ell_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 	 *
 	 *  Somewhat surprisingly, the U parameter runs from south to north.
 	 */
-	for( i=0; i<8; i++ )  verts[i] = (struct vertex *)0;
+	for ( i=0; i<8; i++ )  verts[i] = (struct vertex *)0;
 
 	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
 	s = BU_LIST_FIRST(shell, &(*r)->s_hd);
@@ -1472,7 +1472,7 @@ rt_ell_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 	vertp[2] = &verts[1];
 	vertp[3] = &verts[1];
 
-	if( (fu = nmg_cmface( s, vertp, 4 )) == 0 )  {
+	if ( (fu = nmg_cmface( s, vertp, 4 )) == 0 )  {
 		bu_log("rt_ell_tnurb(%s): nmg_cmface() fail on face\n");
 		return -1;
 	}
@@ -1484,7 +1484,7 @@ rt_ell_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 	NMG_CK_EDGEUSE(eu);
 
 	/* Loop always has Counter-Clockwise orientation (CCW) */
-	for( i=0; i < 4; i++ )  {
+	for ( i=0; i < 4; i++ )  {
 		nmg_vertexuse_a_cnurb( eu->vu_p, &rt_ell_uvw[i*ELEMENTS_PER_VECT] );
 		nmg_vertexuse_a_cnurb( eu->eumate_p->vu_p, &rt_ell_uvw[(i+1)*ELEMENTS_PER_VECT] );
 		eu = BU_LIST_NEXT( edgeuse, &eu->l );
@@ -1502,7 +1502,7 @@ rt_ell_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 	/* Associate edge geometry (trimming curve) -- linear in param space */
 	eu = BU_LIST_FIRST( edgeuse, &lu->down_hd );
 	NMG_CK_EDGEUSE(eu);
-	for( i=0; i < 4; i++ )  {
+	for ( i=0; i < 4; i++ )  {
 #if 0
 struct snurb sn;
 fastf_t	param[4];

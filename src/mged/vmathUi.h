@@ -374,7 +374,7 @@ proc pnt3x4mat { p m } {\
 		 [expr ([lindex $m 2]*[lindex $p 0] + \
 			[lindex $m 6]*[lindex $p 1] + \
 			[lindex $m 10]*[lindex $p 2] + [lindex $m 14])*$f]];\
-}    ;\
+};\
 \
 proc mat4x4pnt { m h } {\
     return [list [hdot [lrange $m 0 3] $h] \

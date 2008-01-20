@@ -53,23 +53,23 @@ LintoLog(double *in, double *out, int num)
 	 */
 	step = pow( (double)num, 1.0/(double)(num-1) );
 	place = 1.0;
-	for( i = 0; i < num; i++ ) {
+	for ( i = 0; i < num; i++ ) {
 		linpt[i] = place - 1.0;
 		place *= step;
 	}
 #ifdef DEBUG
-	for( i = 0; i < num; i++ ) {
+	for ( i = 0; i < num; i++ ) {
 		printf("linpt[%d] = %f\n", i, linpt[i]);
 	}
 #endif /* DEBUG */
 
-	for( i = 0; i < num; i++ ) {
+	for ( i = 0; i < num; i++ ) {
 		/*
 		 * Compute polynomial to interp with.
 		 */
 		x1 = (int)linpt[i] - 1;
-		if( x1 < 0 ) x1 = 0;
-		if( x1 > num - 4 ) x1 = num - 4;
+		if ( x1 < 0 ) x1 = 0;
+		if ( x1 > num - 4 ) x1 = num - 4;
 		x2 = x1 + 1; x3 = x1 + 2; x4 = x1 + 3;
 
 		x  = linpt[i];

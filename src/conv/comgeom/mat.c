@@ -62,7 +62,7 @@ mat_zero(register matp_t m)
 	register int i = 0;
 
 	/* Clear everything */
-	for(; i<16; i++)
+	for (; i<16; i++)
 		*m++ = 0;
 }
 
@@ -92,7 +92,7 @@ mat_copy(register matp_t om, register matp_t im)
 	register int i = 0;
 
 	/* Copy all elements */
-	for(; i<16; i++)
+	for (; i<16; i++)
 		*om++ = *im++;
 }
 
@@ -112,13 +112,13 @@ mat_mul(register matp_t om, register matp_t im1, register matp_t im2)
 	register int i;			/* For counting */
 
 	/* For each element in the output matrix... */
-	for(; el<16; el++) {
+	for (; el<16; el++) {
 
 		om[el] = 0;		/* Start with zero in output */
 		em1 = (el/4)*4;		/* Element at right of row in im1 */
 		em2 = el%4;		/* Element at top of column in im2 */
 
-		for(i=0; i<4; i++) {
+		for (i=0; i<4; i++) {
 			om[el] += im1[em1] * im2[em2];
 
 			em1++;		/* Next row element in m1 */
@@ -141,12 +141,12 @@ vecXmat(register vectp_t ov, register vectp_t iv, register matp_t im)
 	register int em;		/* Position in input matrix */
 
 	/* For each element in the output array... */
-	for(; el<4; el++) {
+	for (; el<4; el++) {
 
 		ov[el] = 0;		/* Start with zero in output */
 		em = el;		/* Top of column in input matrix */
 
-		for(ev=0; ev<4; ev++) {
+		for (ev=0; ev<4; ev++) {
 			ov[el] += iv[ev] * im[em];
 			em += 4;	/* Next element in column from im */
 		}
@@ -167,11 +167,11 @@ matXvec(register vectp_t ov, register matp_t im, register vectp_t iv)
 	register int ei;		/* Position in input vector */
 
 	/* For each element in the output array... */
-	for(; eo<4; eo++) {
+	for (; eo<4; eo++) {
 
 		ov[eo] = 0;		/* Start with zero in output */
 
-		for(ei=0; ei<4; ei++)
+		for (ei=0; ei<4; ei++)
 			ov[eo] += im[em++] * iv[ei];
 	}
 }
@@ -186,7 +186,7 @@ mat_print(register matp_t m)
 {
 	register int i;
 
-	for(i=0; i<16; i++) {
+	for (i=0; i<16; i++) {
 		printf("%f%c", m[i], ((i+1)%4) ? '\t' : '\n');
 	}
 }
@@ -232,32 +232,32 @@ mat_inv(register matp_t output, matp_t input)
 	mat_copy( output, input );	/* Duplicate */
 
 	/* Initialization */
-	for( j = 0; j < 4; j++ )
+	for ( j = 0; j < 4; j++ )
 		z[j] = j;
 
 	/* Main Loop */
-	for( i = 0; i < 4; i++ )  {
+	for ( i = 0; i < 4; i++ )  {
 		static float y;				/* local temporary */
 
 		k = i;
 		y = output[i*4+i];
-		for( j = i+1; j < 4; j++ )  {
+		for ( j = i+1; j < 4; j++ )  {
 			static float w;			/* local temporary */
 
 			w = output[i*4+j];
-			if( fabs(w) > fabs(y) )  {
+			if ( fabs(w) > fabs(y) )  {
 				k = j;
 				y = w;
 			}
 		}
 
-		if( fabs(y) < EPSILON )  {
+		if ( fabs(y) < EPSILON )  {
 			printf("mat_inv:  error!\n");
 			return;
 		}
 		y = 1.0 / y;
 
-		for( j = 0; j < 4; j++ )  {
+		for ( j = 0; j < 4; j++ )  {
 			static float temp;		/* Local */
 
 			c[j] = output[j*4+k];
@@ -272,21 +272,21 @@ mat_inv(register matp_t output, matp_t input)
 		j = z[i];
 		z[i] = z[k];
 		z[k] = j;
-		for( k = 0; k < 4; k++ )  {
-			if( k == i )  continue;
-			for( j = 0; j < 4; j++ )  {
-				if( j == i )  continue;
+		for ( k = 0; k < 4; k++ )  {
+			if ( k == i )  continue;
+			for ( j = 0; j < 4; j++ )  {
+				if ( j == i )  continue;
 				output[k*4+j] = output[k*4+j] - b[j] * c[k];
 			}
 		}
 	}
 
 	/*  Second Loop */
-	for( i = 0; i < 4; i++ )  {
-		while( (k = z[i]) != i )  {
+	for ( i = 0; i < 4; i++ )  {
+		while ( (k = z[i]) != i )  {
 			static int p;			/* Local temp */
 
-			for( j = 0; j < 4; j++ )  {
+			for ( j = 0; j < 4; j++ )  {
 				static float w;		/* Local temp */
 
 				w = output[i*4+j];
@@ -328,7 +328,7 @@ htov_move(register float *v, register float *h)
 {
 	static float inv;
 
-	if( h[3] == 1 )  {
+	if ( h[3] == 1 )  {
 		*v++ = *h++;
 		*v++ = *h++;
 		*v   = *h;

@@ -69,7 +69,7 @@ get_args(int argc, register char **argv)
 	register int c;
 
 	while ( (c = bu_getopt( argc, argv, "his:w:n:t:a:b:" )) != EOF )  {
-		switch( c )  {
+		switch ( c )  {
 		case 'i':
 			invert = 1;
 			break;
@@ -104,9 +104,9 @@ get_args(int argc, register char **argv)
 		}
 	}
 	/* when bu_optind >= argc, we have run out of args */
-	if( bu_optind+1 >= argc )
+	if ( bu_optind+1 >= argc )
 		return(0);		/* only 0 or 1 args */
-	if( bu_optind+2 == argc )  {
+	if ( bu_optind+2 == argc )  {
 		/* Paramaters are H S */
 		hsv[0] = atof(argv[bu_optind++]);
 		hsv[1] = atof(argv[bu_optind]);
@@ -149,16 +149,16 @@ main(int argc, char **argv)
 	 */
 	line = 0;
 	vp = vert_buf;
-	if( title_height > 0 )  {
+	if ( title_height > 0 )  {
 		/* Make top area with initial HSV */
-		for( ; line<title_height; line++ )  {
+		for (; line<title_height; line++ )  {
 			*vp++ = col[0];
 			*vp++ = col[1];
 			*vp++ = col[2];
 		}
 
 		/* A white stripe, 4 lines high */
-		for( i=0; i<4; i++, line++ )  {
+		for ( i=0; i<4; i++, line++ )  {
 			*vp++ = 250;
 			*vp++ = 250;
 			*vp++ = 250;
@@ -166,11 +166,11 @@ main(int argc, char **argv)
 	}
 
 	/* Do rest with V dropping from start to end values */
-	if( hsv[2] > h_end )  {
+	if ( hsv[2] > h_end )  {
 		/* Go from bright at the top to dim at the bottom */
 		deltav = (hsv[2]-h_end) / (double)(file_height-line);
 
-		for( ; line<file_height; line++ )  {
+		for (; line<file_height; line++ )  {
 			hsv[2] -= deltav;
 			hsvrgb( hsv, col );
 			*vp++ = col[0];
@@ -181,7 +181,7 @@ main(int argc, char **argv)
 		/* Go from dim at the top to bright at the bottom */
 		deltav = (h_end-hsv[2]) / (double)(file_height-line);
 
-		for( ; line<file_height; line++ )  {
+		for (; line<file_height; line++ )  {
 			hsv[2] += deltav;
 			hsvrgb( hsv, col );
 			*vp++ = col[0];
@@ -195,13 +195,13 @@ main(int argc, char **argv)
 	 *  and write the scanline out.  Here we proceed bottom-to-top
 	 *  for pix(5) format.
 	 */
-	if( !invert )  {
-		for( line = file_height-1; line >= 0; line-- )  {
+	if ( !invert )  {
+		for ( line = file_height-1; line >= 0; line-- )  {
 			register unsigned char *op;
 
 			vp = &vert_buf[line*3];
 			op = &horiz_buf[(file_width*3)-1];
-			while( op > horiz_buf )  {
+			while ( op > horiz_buf )  {
 				*op-- = vp[2];
 				*op-- = vp[1];
 				*op-- = *vp;
@@ -210,12 +210,12 @@ main(int argc, char **argv)
 		}
 	} else {
 		/* Inverted:  top-to-bottom.  Good with cat-fb */
-		for( line=0; line < file_height; line++ )  {
+		for ( line=0; line < file_height; line++ )  {
 			register unsigned char *op;
 
 			vp = &vert_buf[line*3];
 			op = &horiz_buf[(file_width*3)-1];
-			while( op > horiz_buf )  {
+			while ( op > horiz_buf )  {
 				*op-- = vp[2];
 				*op-- = vp[1];
 				*op-- = *vp;
@@ -287,7 +287,7 @@ hsvrgb(register double *hsv, register double *rgb)
 	double h, s, v;
 	double f;
 
-	if(hsv[1] != 0)
+	if (hsv[1] != 0)
 	{
 	    s = (double)hsv[1] / 255.;
 	    h = (double)hsv[0] / 42.666;
@@ -296,7 +296,7 @@ hsvrgb(register double *hsv, register double *rgb)
 	    m = (double) (v * (1. - s) + .5);
 	    n = (double) (v * (1. - s*f) + .5);
 	    k = (double) (v * (1. - (s * (1.-f))) + .5);
-	    switch((int) h)
+	    switch ((int) h)
 	    {
 	    case 0:
 		r = hsv[2];

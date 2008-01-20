@@ -67,7 +67,7 @@ show_hist(long int *bin, int sum)
 
 	printf( "Histogram:\n" );
 
-	for( i = 0; i < 256; i++ ) {
+	for ( i = 0; i < 256; i++ ) {
 		printf( "%3d: %10ld (%10f)\n", i, bin[i], (float)bin[i]/sum * 100.0 );
 	}
 }
@@ -86,15 +86,15 @@ main(int argc, char **argv)
 	FILE	*fp;
 
 	/* check for verbose flag */
-	if( argc > 1 && strcmp(argv[1], "-v") == 0 ) {
+	if ( argc > 1 && strcmp(argv[1], "-v") == 0 ) {
 		verbose++;
 		argv++;
 		argc--;
 	}
 
 	/* look for optional input file */
-	if( argc > 1 ) {
-		if( (fp = fopen(argv[1], "r")) == 0 ) {
+	if ( argc > 1 ) {
+		if ( (fp = fopen(argv[1], "r")) == 0 ) {
 			bu_exit(1, "bwstat: can't open \"%s\"\n", argv[1] );
 		}
 		argv++;
@@ -103,7 +103,7 @@ main(int argc, char **argv)
 		fp = stdin;
 
 	/* check usage */
-	if( argc > 1 || isatty(fileno(fp)) ) {
+	if ( argc > 1 || isatty(fileno(fp)) ) {
 		bu_exit(1, "%s", Usage );
 	}
 
@@ -111,10 +111,10 @@ main(int argc, char **argv)
 	 * Build the histogram.
 	 */
 	num_pixels = 0;
-	while( (n = fread(buf, sizeof(*buf), IBUFSIZE, fp)) > 0 ) {
+	while ( (n = fread(buf, sizeof(*buf), IBUFSIZE, fp)) > 0 ) {
 		num_pixels += n;
 		bp = &buf[0];
-		for( i = 0; i < n; i++ )
+		for ( i = 0; i < n; i++ )
 			bin[ *bp++ ]++;
 	}
 
@@ -125,13 +125,13 @@ main(int argc, char **argv)
 	min = 256;
 	max = -1;
 	mode = 0;
-	for( i = 0; i < 256; i++ ) {
+	for ( i = 0; i < 256; i++ ) {
 		sum += i * bin[i];
-		if( i < min && bin[i] != 0 )
+		if ( i < min && bin[i] != 0 )
 			min = i;
-		if( i > max && bin[i] != 0 )
+		if ( i > max && bin[i] != 0 )
 			max = i;
-		if( bin[i] > bin[mode] ) {
+		if ( bin[i] > bin[mode] ) {
 			mode = i;
 		}
 	}
@@ -144,8 +144,8 @@ main(int argc, char **argv)
 	partial_sum = 0;
 	median = 0;
 	var = skew = 0.0;
-	for( i = 0; i < 256; i++ ) {
-		if( partial_sum < sum/2.0 ) {
+	for ( i = 0; i < 256; i++ ) {
+		if ( partial_sum < sum/2.0 ) {
 			partial_sum += i * bin[i];
 			median = i;
 		}
@@ -170,7 +170,7 @@ main(int argc, char **argv)
 	printf( "Var     %14.3f\n", var );
 	printf( "Skew    %14.3f\n", skew );
 
-	if( verbose )
+	if ( verbose )
 		show_hist( bin, sum );
 
 	return 0;

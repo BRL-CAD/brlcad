@@ -44,7 +44,7 @@ main(int argc, char **argv)
 	double	x[4097];
 	int	n, m;
 
-	if( argc != 2 ) {
+	if ( argc != 2 ) {
 		fprintf( stderr, "Usage: fftc length > fftlength.c\n" );
 		return 1;
 	}

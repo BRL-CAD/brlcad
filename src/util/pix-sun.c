@@ -229,7 +229,7 @@ void doit(void)
      * we reverse the order of the scan lines to compensate
      * for differences of origin location in rasterfiles vs. PIX files
      */
-    for (i=ras.ras_height-1 ; i >= 0 ; i--)
+    for (i=ras.ras_height-1; i >= 0; i--)
 	if (fread(&pix[i*ras.ras_width*3], ras.ras_width*3, 1, stdin) != 1) {
 	 (void)fprintf(stderr, "%s: error reading %d x %d pix file scanline %d\n",
 		progname, ras.ras_width, ras.ras_height, i);
@@ -241,8 +241,8 @@ void doit(void)
      * representations of PIX files and Sun pixrects
      */
     if (dither) {
-	for(cy=0 ; cy < ras.ras_height ; cy++)
-	    for(cx=0 ; cx < ras.ras_width ; cx++) {
+	for (cy=0; cy < ras.ras_height; cy++)
+	    for (cx=0; cx < ras.ras_width; cx++) {
 		red = pix[(cx + cy * ras.ras_width)*3];
 		green = pix[1 + (cx + cy * ras.ras_width)*3];
 		blue = pix[2 + (cx + cy * ras.ras_width)*3];
@@ -250,8 +250,8 @@ void doit(void)
 	    }
     }
     else {
-	for(cy=0 ; cy < ras.ras_height ; cy++)
-	    for(cx=0 ; cx < ras.ras_width ; cx++) {
+	for (cy=0; cy < ras.ras_height; cy++)
+	    for (cx=0; cx < ras.ras_width; cx++) {
 		red = pix[(cx + cy * ras.ras_width)*3];
 		green = pix[1 + (cx + cy * ras.ras_width)*3];
 		blue = pix[2 + (cx + cy * ras.ras_width)*3];
@@ -322,7 +322,7 @@ int main(int ac, char **av)
     */
     optlen = strlen(options);
 
-    for (c=0 ; c < optlen ; optflags[c++] = '\0');
+    for (c=0; c < optlen; optflags[c++] = '\0');
 
     /* Turn off bu_getopt's error messages */
     bu_opterr = 0;

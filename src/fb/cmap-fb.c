@@ -56,12 +56,12 @@ main(int argc, char **argv)
 	int	index, ret;
 	char	line[512], buf[512], *str;
 
-	while( argc > 1 ) {
-		if( strcmp(argv[1], "-h") == 0 ) {
+	while ( argc > 1 ) {
+		if ( strcmp(argv[1], "-h") == 0 ) {
 			fbsize = 1024;
-		} else if( strcmp(argv[1], "-o") == 0 ) {
+		} else if ( strcmp(argv[1], "-o") == 0 ) {
 			overlay++;
-		} else if( argv[1][0] == '-' ) {
+		} else if ( argv[1][0] == '-' ) {
 			/* unknown flag */
 			bu_exit(1, "%s", usage );
 		} else
@@ -70,29 +70,29 @@ main(int argc, char **argv)
 		argv++;
 	}
 
-	if( argc > 1 ) {
-		if( (fp = fopen(argv[1], "r")) == NULL ) {
+	if ( argc > 1 ) {
+		if ( (fp = fopen(argv[1], "r")) == NULL ) {
 			fprintf( stderr, "cmap-fb: can't open \"%s\"\n", argv[1] );
 			bu_exit(2, "%s", usage );
 		}
 	} else
 		fp = stdin;
 
-	if( (fbp = fb_open( NULL, fbsize, fbsize )) == FBIO_NULL )
+	if ( (fbp = fb_open( NULL, fbsize, fbsize )) == FBIO_NULL )
 		bu_exit( 3, "Unable to open framebuffer\n" );
 
-	if( overlay )
+	if ( overlay )
 		fb_rmap( fbp, &cm );
 
-	while( bu_fgets(line, 511, fp) != NULL ) {
+	while ( bu_fgets(line, 511, fp) != NULL ) {
 		str = line;
 		str = nextsym( buf, str );
-		if( ! isdigit(buf[0]) ) {
+		if ( ! isdigit(buf[0]) ) {
 			/* spare the 0 entry the garbage */
 			continue;
 		}
 		index = atoi( buf );
-		if( index < 0 || index > 255 ) {
+		if ( index < 0 || index > 255 ) {
 			continue;
 		}
 		str = nextsym( buf, str );
@@ -107,7 +107,7 @@ main(int argc, char **argv)
 
 	ret = fb_wmap( fbp, &cm );
 	fb_close( fbp );
-	if( ret < 0 ) {
+	if ( ret < 0 ) {
 		bu_exit(1, "cmap-fb: couldn't write colormap\n" );
 	}
 
@@ -124,10 +124,10 @@ char *
 nextsym(register char *b, register char *cp)
 {
 	/* skip white */
-	while( isspace(*cp) )
+	while ( isspace(*cp) )
 		cp++;
 
-	while( *cp != '\0' && !isspace(*cp) )
+	while ( *cp != '\0' && !isspace(*cp) )
 		*b++ = *cp++;
 
 	*b = '\0';
@@ -147,13 +147,13 @@ htoi(register char *s)
 
 	i = 0;
 
-	while( *s != '\0' ) {
+	while ( *s != '\0' ) {
 		i <<= 4;	/* times 16 */
-		if( *s == 'x' || *s == 'X' )
+		if ( *s == 'x' || *s == 'X' )
 			i = 0;
-		else if( *s >= 'a' )
+		else if ( *s >= 'a' )
 			i += *s - 'a' + 10;
-		else if( *s >= 'A' )
+		else if ( *s >= 'A' )
 			i += *s - 'A' + 10;
 		else
 			i += *s - '0';

@@ -55,7 +55,7 @@
  * Miscellaneous defines
  */
 #define MEG_WORD(x, y)		(((long)(x)<<16)|((long)(y)&0xFFFFL))
-#define MAKE(x, y, z, color)	MEG_WORD( 0177000, 0010000|((z)&0xFFF)), MEG_WORD( 0100000|((x)&0xFFF),(color<<12)|(y&0xFFF) )
+#define MAKE(x, y, z, color)	MEG_WORD( 0177000, 0010000|((z)&0xFFF)), MEG_WORD( 0100000|((x)&0xFFF), (color<<12)|(y&0xFFF) )
 
 /*
  * MEGATEK Instructions

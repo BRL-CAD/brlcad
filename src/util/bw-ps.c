@@ -72,7 +72,7 @@ get_args(int argc, register char **argv)
 	register int c;
 
 	while ( (c = bu_getopt( argc, argv, "ehcLs:w:n:S:W:N:" )) != EOF )  {
-		switch( c )  {
+		switch ( c )  {
 		case 'e':
 			/* Encapsulated PostScript */
 			encapsulated++;
@@ -113,14 +113,14 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( bu_optind >= argc )  {
-		if( isatty(fileno(stdin)) )
+	if ( bu_optind >= argc )  {
+		if ( isatty(fileno(stdin)) )
 			return(0);
 		file_name = "[stdin]";
 		infp = stdin;
 	} else {
 		file_name = argv[bu_optind];
-		if( (infp = fopen(file_name, "r")) == NULL )  {
+		if ( (infp = fopen(file_name, "r")) == NULL )  {
 			(void)fprintf( stderr,
 				"bw-ps: cannot open \"%s\" for reading\n",
 				file_name );
@@ -150,7 +150,7 @@ main(int argc, char **argv)
 		bu_exit ( 1, NULL );
 	}
 
-	if( encapsulated ) {
+	if ( encapsulated ) {
 		xpoints = width;
 		ypoints = height;
 	} else {
@@ -160,11 +160,11 @@ main(int argc, char **argv)
 	prolog(ofp, file_name, xpoints, ypoints);
 
 	scans_per_patch = MAX_BYTES / width;
-	if( scans_per_patch > height )
+	if ( scans_per_patch > height )
 		scans_per_patch = height;
 	bytes_per_patch = scans_per_patch * width;
 
-	for( y = 0; y < height; y += scans_per_patch ) {
+	for ( y = 0; y < height; y += scans_per_patch ) {
 		/* start a patch */
 		fprintf(ofp, "save\n");
 		fprintf(ofp, "%d %d 8 [%d 0 0 %d 0 %d] {<\n ",
@@ -174,9 +174,9 @@ main(int argc, char **argv)
 
 		/* data */
 		num = 0;
-		while( num < bytes_per_patch ) {
+		while ( num < bytes_per_patch ) {
 			fprintf( ofp, "%02x", getc(infp) );
-			if( (++num % 32) == 0 )
+			if ( (++num % 32) == 0 )
 				fprintf( ofp, "\n " );
 		}
 
@@ -199,7 +199,7 @@ prolog(FILE *fp, char *name, int width, int height)
 
 	ltime = time(0);
 
-	if( encapsulated ) {
+	if ( encapsulated ) {
 		fputs( "%!PS-Adobe-2.0 EPSF-1.2\n", fp );
 		fprintf(fp, "%%%%Title: %s\n", name );
 		fputs( "%%Creator: BRL-CAD bw-ps\n", fp );
@@ -215,7 +215,7 @@ prolog(FILE *fp, char *name, int width, int height)
 	fprintf(fp, "%%%%BoundingBox: 0 0 %d %d\n", width, height );
 	fputs( "%%EndComments\n\n", fp );
 
-	if( !encapsulated && landscape ) {
+	if ( !encapsulated && landscape ) {
 		int	tmp;
 		tmp = pagewidth;
 		pagewidth = pageheight;
@@ -223,7 +223,7 @@ prolog(FILE *fp, char *name, int width, int height)
 		fprintf( fp, "90 rotate\n" );
 		fprintf( fp, "0 -%d translate\n", pageheight );
 	}
-	if( !encapsulated && center ) {
+	if ( !encapsulated && center ) {
 		int	xtrans, ytrans;
 		xtrans = (pagewidth - width)/2.0;
 		ytrans = (pageheight - height)/2.0;
@@ -235,7 +235,7 @@ prolog(FILE *fp, char *name, int width, int height)
 void
 postlog(FILE *fp)
 {
-	if( !encapsulated )
+	if ( !encapsulated )
 		fputs( "%end(plot)\n", fp );
 
 	fputs( "\nshowpage\n", fp );

@@ -108,7 +108,7 @@ int main(int argc, char **argv)
    struct bn_unif *msr = NULL;
 
    /*  Check to see if arguments are implimented correctly.  */
-   if( (argv[1] == NULL) || (argv[2] == NULL) )
+   if ( (argv[1] == NULL) || (argv[2] == NULL) )
    {
 	(void)fprintf(stderr, "\nusage:  %s file.g objects\n\n", *argv);
    }
@@ -144,7 +144,7 @@ int main(int argc, char **argv)
 	(void)fprintf(fpw1, "\n.g file used:  %s\n", argv[1]);
 	(void)fprintf(fpw1, "regions used:\n");
 	i = 2;
-	while(argv[i] != NULL)
+	while (argv[i] != NULL)
 	{
 	   (void)fprintf(fpw, "\t%s\n", argv[i]);
 	   (void)fprintf(fpw1, "\t%s\n", argv[i]);
@@ -170,7 +170,7 @@ int main(int argc, char **argv)
 
 	/*  Load desired objects.  */
 	index = 2;      /*  Set index.  */
-	while(argv[index] != NULL)
+	while (argv[index] != NULL)
 	{
 		rt_gettree(rtip, argv[index]);
 		index += 1;
@@ -184,18 +184,18 @@ int main(int argc, char **argv)
 
 	/*  Malloc everything now that the number of regions is known.  */
 	info = (struct table *)bu_malloc(numreg * sizeof(*info), "info");
-	for(i=0; i<numreg; i++)
+	for (i=0; i<numreg; i++)
 	{
 	   info[i].intrays = (double *)bu_malloc(numreg * sizeof(double), "info[i].intrays");
 	   info[i].sf = (double *)bu_malloc(numreg * sizeof(double), "info[i].sf");
 	}
 
 	/*  Zero all arrays.  */
-	for(i=0; i<numreg; i++)
+	for (i=0; i<numreg; i++)
 	{						/*  START # 110  */
 	   info[i].name = "\0";
 	   info[i].lvrays = 0.;
-	   for(j=0; j<numreg; j++)
+	   for (j=0; j<numreg; j++)
 	   {
 		info[i].intrays[j] = 0.;
 		info[i].sf[j] = 0.;
@@ -247,7 +247,7 @@ int main(int argc, char **argv)
 	/*  Find number of rays to fire.  */
 	(void)printf("Enter the number of rays to be fired.\n\t");
 	(void)fflush(stdout);
-	(void)scanf("%lf",&rayfir);
+	(void)scanf("%lf", &rayfir);
 
 	/*  Write info to files.  */
 	(void)fprintf(fpw, "Min & max for entire region:\n");
@@ -274,7 +274,7 @@ int main(int argc, char **argv)
 
 	/*  Put region names into structure.  */
 	pr = BU_LIST_FIRST(region, &rtip->HeadRegion);
-	for(i=0; i<numreg; i++)
+	for (i=0; i<numreg; i++)
 	{
 	   info[(int)(pr->reg_bit)].name = pr->reg_name;
 	   pr = BU_LIST_FORW(region, &(pr->l) );
@@ -284,9 +284,9 @@ int main(int argc, char **argv)
 	(void)fflush(stdout);
 
 	/*  Write region names to error file.  */
-	for(i=0; i<numreg; i++)
+	for (i=0; i<numreg; i++)
 	{
-	   (void)fprintf(fpw1, "region %d:  %s\n",(i + 1), info[i].name);
+	   (void)fprintf(fpw1, "region %d:  %s\n", (i + 1), info[i].name);
 	   (void)fflush(fpw1);
 	}
 	(void)fprintf(fpw1, "\n");
@@ -297,12 +297,12 @@ int main(int argc, char **argv)
 	(void)printf("Do you wish to enter your own seed (0) or ");
 	(void)printf("use the default of 1 (1)?\n\t");
 	(void)fflush(stdout);
-	(void)scanf("%d",&ians);
-	if(ians == 0)
+	(void)scanf("%d", &ians);
+	if (ians == 0)
 	{
 	   (void)printf("Enter unsigned integer seed.\n\t");
 	   (void)fflush(stdout);
-	   (void)scanf("%ld",&seed);
+	   (void)scanf("%ld", &seed);
 	}
 	msr = bn_unif_init(seed, 0);
 
@@ -324,7 +324,7 @@ int main(int argc, char **argv)
  */
 
 	   /*  Loop through for each ray fired.  */
-	   for(r=0; r<rayfir; r++)
+	   for (r=0; r<rayfir; r++)
 	   {						/*  START # 150  */
 /*
  *		(void)printf("In loop - %f\n", r);
@@ -416,14 +416,14 @@ int main(int argc, char **argv)
  *	   (void)fflush(stdout);
  */
 
-	   for(i=0; i<numreg; i++)
+	   for (i=0; i<numreg; i++)
 	   {						/*  START # 160  */
 	   /*  Write region names to output file.  */
-	   (void)fprintf(fpw, "Region %d:  %s\n",(i+1), info[i].name);
+	   (void)fprintf(fpw, "Region %d:  %s\n", (i+1), info[i].name);
 	   (void)fflush(fpw);
 
 	   /*  Find shape factors & print.  */
-	   if(info[i].lvrays == 0)
+	   if (info[i].lvrays == 0)
 	   {						/*  START # 1060  */
 		(void)fprintf(fpw1, "**  ERROR - # or rays hitting region ");
 		(void)fprintf(fpw1, "%d is 0.  **\n", i);
@@ -434,15 +434,15 @@ int main(int argc, char **argv)
 	   {						/*  START # 1070  */
 		/*  Must divide by 2. since looking forwards & backwards.  */
 		info[i].regarea = info[i].lvrays / rayfir * areaall / 2.;
-		for(j=0; j<numreg; j++)
+		for (j=0; j<numreg; j++)
 		{					/*  START # 1080  */
 			info[i].sf[j] = info[i].intrays[j] / info[i].lvrays;
 			(void)fprintf(fpw, "\t%d   %d   %f\n",
-				(i + 1),(j + 1), info[i].sf[j]);
+				(i + 1), (j + 1), info[i].sf[j]);
 			(void)fflush(fpw);
 
 			(void)fprintf(fpw1, "reg %d - reg %d - rays leave ",
-				(i + 1),(j + 1));
+				(i + 1), (j + 1));
 			(void)fprintf(fpw1, "& int %f - rays leave %f ",
 				info[i].intrays[j], info[i].lvrays);
 			(void)fprintf(fpw1, "- sf %f - area %f\n",
@@ -458,45 +458,45 @@ int main(int argc, char **argv)
 	   (void)fprintf(fpw2, "Number of Regions = %4d\n", numreg);
 	   (void)fprintf(fpw2, "TEMIS\n\n");
 
-	   for(i=0; i<numreg; i++)
+	   for (i=0; i<numreg; i++)
 	   {						/*  START # 1090  */
 		(void)fprintf(fpw2, "Region\tArea\tEmissivity\n");
 		/*  Area is put into square meters.  */
-		(void)fprintf(fpw2, "%d\t%f\n",(i + 1),
+		(void)fprintf(fpw2, "%d\t%f\n", (i + 1),
 			(info[i].regarea / 1000. / 1000.));
 
 		/*  Count the number of shape factors.  */
 		k = 0;
-		for(j=0; j<numreg; j++)
+		for (j=0; j<numreg; j++)
 		{
-		   if(info[i].sf[j] != 0.) k++;
+		   if (info[i].sf[j] != 0.) k++;
 		}
 		(void)fprintf(fpw2, "Bij\t%d\n", k);
 
 		/*  Print shape factors.  */
 		m = 0;
-		for(j=0; j<numreg; j++)
+		for (j=0; j<numreg; j++)
 		{					/*  START # 1100  */
-		   if(info[i].sf[j] != 0.)
+		   if (info[i].sf[j] != 0.)
 		   {					/*  START # 1110  */
-			(void)fprintf(fpw2, "%4d   %.4f   ",(j + 1),
+			(void)fprintf(fpw2, "%4d   %.4f   ", (j + 1),
 				info[i].sf[j]);
 			m++;
-			if(m == 5)
+			if (m == 5)
 			{				/*  START # 1120  */
 			   m = 0;
 			   (void)fprintf(fpw2, "\n");
 			}				/*  END # 1120  */
 		   }					/*  END # 1110  */
 		}					/*  END # 1100  */
-		if(m != 0) (void)fprintf(fpw2, "\n");
+		if (m != 0) (void)fprintf(fpw2, "\n");
 		(void)fprintf(fpw2, " Gnd         Sky\n\n");
 		(void)fflush(fpw2);
 	   }						/*  END # 1090  */
 
 
 	/* free memory */
-	for(i=0; i<numreg; i++)
+	for (i=0; i<numreg; i++)
 	{
 	   bu_free(info[i].intrays, "info[i].intrays");
 	   bu_free(info[i].sf, "info[i].sf");
@@ -549,9 +549,9 @@ hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *
    /*  Set for first region.  */
    pp = PartHeadp->pt_forw;
 
-   for(; pp != PartHeadp; pp=pp->pt_forw)
+   for (; pp != PartHeadp; pp=pp->pt_forw)
    {							/*  START # 1010  */
-	if( (rh1 == (-1)) && (rh2 == (-1)) )
+	if ( (rh1 == (-1)) && (rh2 == (-1)) )
 	{						/*  START # 1020  */
 	   /*  First time through; therefore, find the region hit for  */
 	   /*  the first region.  */
@@ -561,9 +561,9 @@ hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *
 	   /*  Find the leave point of the first region.  */
 	   hitp = pp->pt_outhit;
 	   stp = pp->pt_outseg->seg_stp;
-	   RT_HIT_NORM(hitp, stp,&(ap_p->a_ray));
+	   RT_HIT_NORM(hitp, stp, &(ap_p->a_ray));
 	   /*  Flip normal if needed.  */
-	   if(pp->pt_outflip)
+	   if (pp->pt_outflip)
 	   {
 		VREVERSE(hitp->hit_normal, hitp->hit_normal);
 		pp->pt_outflip = 0;
@@ -586,9 +586,9 @@ hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *
 	   /*  Find the enter point for the second region.  */
 	   hitp = pp->pt_inhit;
 	   stp = pp->pt_inseg->seg_stp;
-	   RT_HIT_NORM(hitp, stp,&(ap_p->a_ray));
+	   RT_HIT_NORM(hitp, stp, &(ap_p->a_ray));
 	   /*  Flip normal if needed.  */
-	   if(pp->pt_inflip)
+	   if (pp->pt_inflip)
 	   {
 		VREVERSE(hitp->hit_normal, hitp->hit_normal);
 		pp->pt_inflip = 0;
@@ -601,11 +601,11 @@ hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *
 	   tol[X] = lvpt[X] - entpt[X];
 	   tol[Y] = lvpt[Y] - entpt[Y];
 	   tol[Z] = lvpt[Z] - entpt[Z];
-	   if(tol[X] < 0.) tol[X] = (-tol[X]);
-	   if(tol[Y] < 0.) tol[Y] = (-tol[Y]);
-	   if(tol[Z] < 0.) tol[Z] = (-tol[Z]);
+	   if (tol[X] < 0.) tol[X] = (-tol[X]);
+	   if (tol[Y] < 0.) tol[Y] = (-tol[Y]);
+	   if (tol[Z] < 0.) tol[Z] = (-tol[Z]);
 
-	   if( (tol[X] < VDIVIDE_TOL) && (tol[Y] < VDIVIDE_TOL) && (tol[Z] < VDIVIDE_TOL) )
+	   if ( (tol[X] < VDIVIDE_TOL) && (tol[Y] < VDIVIDE_TOL) && (tol[Z] < VDIVIDE_TOL) )
 	   {
 		/*  Nothing happens since the points are the same.  */
 	   }
@@ -627,9 +627,9 @@ hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *
 	   /*  Find leaving point.  */
 	   hitp = pp->pt_outhit;
 	   stp = pp->pt_outseg->seg_stp;
-	   RT_HIT_NORM(hitp, stp,&(ap_p->a_ray));
+	   RT_HIT_NORM(hitp, stp, &(ap_p->a_ray));
 	   /*  Flip normal if needed.  */
-	   if(pp->pt_outflip)
+	   if (pp->pt_outflip)
 	   {
 		VREVERSE(hitp->hit_normal, hitp->hit_normal);
 		pp->pt_outflip = 0;

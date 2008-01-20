@@ -219,7 +219,7 @@ bubblesort(void)
 		b = (struct frame *)a->l.forw;
 		if (a->number > b->number) {
 			BU_LIST_DEQUEUE(&b->l);
-			BU_LIST_INSERT(&a->l,&b->l);
+			BU_LIST_INSERT(&a->l, &b->l);
 			if (b->l.back != &head) {
 				a = (struct frame *)b->l.back;
 			};
@@ -247,7 +247,7 @@ void merge(void)
 	register struct frame *cur, *next;
 
 	for (BU_LIST_FOR(cur, frame, &head)) {
-		next = BU_LIST_NEXT(frame,&cur->l);
+		next = BU_LIST_NEXT(frame, &cur->l);
 		if (BU_LIST_IS_HEAD(next, &head)) break;
 		if (cur->number == next->number) {
 			if (next->text) addtext(cur, next->text);
@@ -257,7 +257,7 @@ void merge(void)
 			next->text = NULL;
 			next->l.magic = -1;
 			bu_free(next, "struct frame");
-			cur = BU_LIST_PREV(frame,&cur->l);
+			cur = BU_LIST_PREV(frame, &cur->l);
 		}
 	}
 }
@@ -285,8 +285,8 @@ main(int argc, char **argv)
 
 	if (verbose) fprintf(stderr, "scriptsort: reading.\n");
 
-	while((new=getframe(stdin)) != NULL) {
-		BU_LIST_INSERT(&head,&new->l);
+	while ((new=getframe(stdin)) != NULL) {
+		BU_LIST_INSERT(&head, &new->l);
 	}
 	if (verbose) fprintf(stderr, "scriptsort: sorting.\n");
 	bubblesort();
@@ -394,7 +394,7 @@ int get_args (int argc, char **argv)
 	specify_base = force_shell = suppress_shell = 0;
 	frame_offset = 0;
 	while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
-		switch(c){
+		switch (c){
 		case 'q':
 			verbose = 0;
 			break;

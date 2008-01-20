@@ -242,7 +242,7 @@ struct db_full_path {
 };
 #define DB_FULL_PATH_POP(_pp)	{(_pp)->fp_len--;}
 #define DB_FULL_PATH_CUR_DIR(_pp)	((_pp)->fp_names[(_pp)->fp_len-1])
-#define DB_FULL_PATH_GET(_pp,_i)	((_pp)->fp_names[(_i)])
+#define DB_FULL_PATH_GET(_pp, _i)	((_pp)->fp_names[(_i)])
 #define DB_FULL_PATH_MAGIC	0x64626670
 #define RT_CK_FULL_PATH(_p)	BU_CKMAG(_p, DB_FULL_PATH_MAGIC, "db_full_path")
 
@@ -314,7 +314,7 @@ struct hit {
 	RT_CK_SOLTAB(_stp); \
 	RT_CK_FUNCTAB((_stp)->st_meth); \
 	(_stp)->st_meth->ft_norm(_hitp, _stp, (_hitp)->hit_rayp); \
-	if( _flipflag )  { \
+	if ( _flipflag )  { \
 		VREVERSE( _normal, (_hitp)->hit_normal ); \
 	} else { \
 		VMOVE( _normal, (_hitp)->hit_normal ); \
@@ -355,7 +355,7 @@ struct curvature {
 	RT_CK_SOLTAB(_stp); \
 	RT_CK_FUNCTAB((_stp)->st_meth); \
 	(_stp)->st_meth->ft_curve( _curvp, _hitp, _stp ); \
-	if( _flipflag )  { \
+	if ( _flipflag )  { \
 		(_curvp)->crv_c1 = - (_curvp)->crv_c1; \
 		(_curvp)->crv_c2 = - (_curvp)->crv_c2; \
 	} \
@@ -408,7 +408,7 @@ struct seg {
 #define RT_CK_SEG(_p)		BU_CKMAG(_p, RT_SEG_MAGIC, "struct seg")
 
 #define RT_GET_SEG(p, res)    { \
-	while( !BU_LIST_WHILE((p), seg,&((res)->re_seg)) || !(p) ) \
+	while ( !BU_LIST_WHILE((p), seg, &((res)->re_seg)) || !(p) ) \
 		rt_get_seg(res); \
 	BU_LIST_DEQUEUE( &((p)->l) ); \
 	(p)->l.forw = (p)->l.back = BU_LIST_NULL; \
@@ -427,7 +427,7 @@ struct seg {
  */
 #define RT_FREE_SEG_LIST( _segheadp, _res )	{ \
 	register struct seg *_a; \
-	while( BU_LIST_WHILE( _a, seg, &((_segheadp)->l) ) )  { \
+	while ( BU_LIST_WHILE( _a, seg, &((_segheadp)->l) ) )  { \
 		BU_LIST_DEQUEUE( &(_a->l) ); \
 		RT_FREE_SEG( _a, _res ); \
 	} }
@@ -587,7 +587,7 @@ struct region  {
  *
  *  Not changed to a bu_list for backwards compatability, but
  *  you can iterate the whole list by writing:
- *	for( BU_LIST_FOR( pp, partition, (struct bu_list *)PartHeadp ) )
+ *	for ( BU_LIST_FOR( pp, partition, (struct bu_list *)PartHeadp ) )
  */
 
 struct partition {
@@ -632,7 +632,7 @@ struct partition {
 	memset(((char *) &(p)->RT_PT_MIDDLE_START), 0, RT_PT_MIDDLE_LEN(p)); }
 
 #define GET_PT(ip, p, res)   { \
-	if( BU_LIST_NON_EMPTY_P(p, partition, &res->re_parthead) )  { \
+	if ( BU_LIST_NON_EMPTY_P(p, partition, &res->re_parthead) )  { \
 		BU_LIST_DEQUEUE((struct bu_list *)(p)); \
 		bu_ptbl_reset( &(p)->pt_seglist ); \
 	} else { \
@@ -645,7 +645,7 @@ struct partition {
 
 #define FREE_PT(p, res)  { \
 	BU_LIST_APPEND( &(res->re_parthead), (struct bu_list *)(p) ); \
-	if( (p)->pt_overlap_reg )  { \
+	if ( (p)->pt_overlap_reg )  { \
 		bu_free( (genptr_t)((p)->pt_overlap_reg), "pt_overlap_reg" );\
 		(p)->pt_overlap_reg = NULL; \
 	} \
@@ -653,7 +653,7 @@ struct partition {
 
 #define RT_FREE_PT_LIST( _headp, _res )		{ \
 		register struct partition *_pp, *_zap; \
-		for( _pp = (_headp)->pt_forw; _pp != (_headp);  )  { \
+		for ( _pp = (_headp)->pt_forw; _pp != (_headp);  )  { \
 			_zap = _pp; \
 			_pp = _pp->pt_forw; \
 			BU_LIST_DEQUEUE( (struct bu_list *)(_zap) ); \
@@ -663,10 +663,10 @@ struct partition {
 	}
 
 /** Insert "new" partition in front of "old" partition.  Note order change */
-#define INSERT_PT(_new,_old)	BU_LIST_INSERT((struct bu_list *)_old,(struct bu_list *)_new)
+#define INSERT_PT(_new, _old)	BU_LIST_INSERT((struct bu_list *)_old, (struct bu_list *)_new)
 
 /** Append "new" partition after "old" partition.  Note arg order change */
-#define APPEND_PT(_new,_old)	BU_LIST_APPEND((struct bu_list *)_old,(struct bu_list *)_new)
+#define APPEND_PT(_new, _old)	BU_LIST_APPEND((struct bu_list *)_old, (struct bu_list *)_new)
 
 /** Dequeue "cur" partition from doubly-linked list */
 #define DEQUEUE_PT(_cur)	BU_LIST_DEQUEUE((struct bu_list *)_cur)
@@ -786,9 +786,9 @@ struct db_i  {
 #define DBI_MAGIC	0x57204381
 
 #define RT_CHECK_DBI(_p)		BU_CKMAG(_p, DBI_MAGIC, "struct db_i")
-#define RT_CHECK_DBI_TCL(_interp,_p)	BU_CKMAG_TCL(_interp,_p, DBI_MAGIC, "struct db_i")
+#define RT_CHECK_DBI_TCL(_interp, _p)	BU_CKMAG_TCL(_interp, _p, DBI_MAGIC, "struct db_i")
 #define RT_CK_DBI(_p)			RT_CHECK_DBI(_p)
-#define RT_CK_DBI_TCL(_interp,_p)	RT_CHECK_DBI_TCL(_interp,_p)
+#define RT_CK_DBI_TCL(_interp, _p)	RT_CHECK_DBI_TCL(_interp, _p)
 
 /**
  *			D I R E C T O R Y
@@ -853,14 +853,14 @@ struct directory  {
 #define LOOKUP_NOISY	1
 #define LOOKUP_QUIET	0
 
-#define FOR_ALL_DIRECTORY_START(_dp,_dbip)	{ int _i; \
-	for( _i = RT_DBNHASH-1; _i >= 0; _i-- )  { \
-		for( (_dp) = (_dbip)->dbi_Head[_i]; (_dp); (_dp) = (_dp)->d_forw )  {
+#define FOR_ALL_DIRECTORY_START(_dp, _dbip)	{ int _i; \
+	for ( _i = RT_DBNHASH-1; _i >= 0; _i-- )  { \
+		for ( (_dp) = (_dbip)->dbi_Head[_i]; (_dp); (_dp) = (_dp)->d_forw )  {
 
 #define FOR_ALL_DIRECTORY_END	}}}
 
-#define RT_DIR_SET_NAMEP(_dp,_name)	{ \
-	if( strlen(_name) < sizeof((_dp)->d_shortname) )  {\
+#define RT_DIR_SET_NAMEP(_dp, _name)	{ \
+	if ( strlen(_name) < sizeof((_dp)->d_shortname) )  {\
 		strncpy( (_dp)->d_shortname, (_name), sizeof((_dp)->d_shortname) ); \
 		(_dp)->d_namep = (_dp)->d_shortname; \
 	} else { \
@@ -869,7 +869,7 @@ struct directory  {
 
 /** Use this macro to free the d_namep member, which is sometimes not dynamic. */
 #define RT_DIR_FREE_NAMEP(_dp)	{ \
-	if( (_dp)->d_namep != (_dp)->d_shortname )  \
+	if ( (_dp)->d_namep != (_dp)->d_shortname )  \
 		bu_free((_dp)->d_namep, "d_namep"); \
 	(_dp)->d_namep = NULL; }
 
@@ -878,8 +878,8 @@ struct directory  {
  * allocate and link in a new directory entry to the resource
  * structure's freelist
  */
-#define RT_GET_DIRECTORY(_p,_res)    { \
-	while( ((_p) = (_res)->re_directory_hd) == NULL ) \
+#define RT_GET_DIRECTORY(_p, _res)    { \
+	while ( ((_p) = (_res)->re_directory_hd) == NULL ) \
 		db_get_directory(_res); \
 	(_res)->re_directory_hd = (_p)->d_forw; \
 	(_p)->d_forw = NULL; }
@@ -913,8 +913,8 @@ struct rt_comb_internal  {
 #define RT_COMB_MAGIC	0x436f6d49	/**< @brief "ComI" */
 #define RT_CHECK_COMB(_p)		BU_CKMAG( _p, RT_COMB_MAGIC, "rt_comb_internal" )
 #define RT_CK_COMB(_p)			RT_CHECK_COMB(_p)
-#define RT_CHECK_COMB_TCL(_interp,_p)	BU_CKMAG_TCL(interp,_p, RT_COMB_MAGIC, "rt_comb_internal" )
-#define RT_CK_COMB_TCL(_interp,_p)	RT_CHECK_COMB_TCL(_interp,_p)
+#define RT_CHECK_COMB_TCL(_interp, _p)	BU_CKMAG_TCL(interp, _p, RT_COMB_MAGIC, "rt_comb_internal" )
+#define RT_CK_COMB_TCL(_interp, _p)	RT_CHECK_COMB_TCL(_interp, _p)
 
 /**
  *			R T _ B I N U N I F _ I N T E R N A L
@@ -942,8 +942,8 @@ struct rt_binunif_internal {
 #define RT_BINUNIF_INTERNAL_MAGIC	0x42696e55	/* "BinU" */
 #define RT_CHECK_BINUNIF(_p)		BU_CKMAG( _p, RT_BINUNIF_INTERNAL_MAGIC, "rt_binunif_internal" )
 #define RT_CK_BINUNIF(_p)		RT_CHECK_BINUNIF(_p)
-#define RT_CHECK_BINUNIF_TCL(_interp,_p)	BU_CKMAG_TCL(interp,_p, RT_BINUNIF_MAGIC, "rt_binunif_internal" )
-#define RT_CK_BINUNIF_TCL(_interp,_p)	RT_CHECK_BINUNIF_TCL(_interp,_p)
+#define RT_CHECK_BINUNIF_TCL(_interp, _p)	BU_CKMAG_TCL(interp, _p, RT_BINUNIF_MAGIC, "rt_binunif_internal" )
+#define RT_CK_BINUNIF_TCL(_interp, _p)	RT_CHECK_BINUNIF_TCL(_interp, _p)
 
 /**
  *			D B _ T R E E _ S T A T E
@@ -1158,9 +1158,9 @@ struct rt_wdb  {
 
 #define	RT_WDB_MAGIC			0x5f576462
 #define RT_CHECK_WDB(_p)		BU_CKMAG(_p, RT_WDB_MAGIC, "rt_wdb")
-#define RT_CHECK_WDB_TCL(_interp,_p)	BU_CKMAG_TCL(_interp,_p, RT_WDB_MAGIC, "rt_wdb")
+#define RT_CHECK_WDB_TCL(_interp, _p)	BU_CKMAG_TCL(_interp, _p, RT_WDB_MAGIC, "rt_wdb")
 #define RT_CK_WDB(_p)			RT_CHECK_WDB(_p)
-#define RT_CK_WDB_TCL(_interp,_p)	RT_CHECK_WDB_TCL(_interp,_p)
+#define RT_CK_WDB_TCL(_interp, _p)	RT_CHECK_WDB_TCL(_interp, _p)
 #define RT_WDB_NULL		((struct rt_wdb *)NULL)
 #define RT_WDB_TYPE_DB_DISK			2
 #define RT_WDB_TYPE_DB_DISK_APPEND_ONLY		3
@@ -1488,8 +1488,8 @@ RT_EXPORT extern struct resource	rt_uniresource;	/**< @brief  default.  Defined 
 #define RT_CK_RESOURCE(_p)	BU_CKMAG(_p, RESOURCE_MAGIC, "struct resource")
 
 /** More malloc-efficient replacement for BU_GETUNION(tp, tree) */
-#define RT_GET_TREE(_tp,_res)	{ \
-	if( ((_tp) = (_res)->re_tree_hd) != TREE_NULL )  { \
+#define RT_GET_TREE(_tp, _res)	{ \
+	if ( ((_tp) = (_res)->re_tree_hd) != TREE_NULL )  { \
 		(_res)->re_tree_hd = (_tp)->tr_b.tb_left; \
 		(_tp)->tr_b.tb_left = TREE_NULL; \
 		(_res)->re_tree_get++; \
@@ -1498,7 +1498,7 @@ RT_EXPORT extern struct resource	rt_uniresource;	/**< @brief  default.  Defined 
 		(_res)->re_tree_malloc++; \
 	}\
 	}
-#define RT_FREE_TREE(_tp,_res)  { \
+#define RT_FREE_TREE(_tp, _res)  { \
 		(_tp)->tr_b.tb_left = (_res)->re_tree_hd; \
 		(_tp)->tr_b.tb_right = TREE_NULL; \
 		(_res)->re_tree_hd = (_tp); \
@@ -1553,7 +1553,7 @@ struct pixel_ext {
  *			A P P L I C A T I O N
  *@brief
  *  This structure is the only parameter to rt_shootray().
- *  The entire structure should be zeroed (e.g. by memset(, 0,) ) before it
+ *  The entire structure should be zeroed (e.g. by memset) before it
  *  is used the first time.
  *
  *  When calling rt_shootray(), these fields are mandatory:
@@ -1651,7 +1651,7 @@ struct application  {
 #define RT_AP_MAGIC	0x4170706c	/**< @brief  "Appl" */
 #define RT_CK_AP(_p)	BU_CKMAG(_p, RT_AP_MAGIC, "struct application")
 #define RT_CK_APPLICATION(_p)	BU_CKMAG(_p, RT_AP_MAGIC, "struct application")
-#define RT_CK_AP_TCL(_interp,_p)	BU_CKMAG_TCL(_interp,_p, RT_AP_MAGIC, "struct application")
+#define RT_CK_AP_TCL(_interp, _p)	BU_CKMAG_TCL(_interp, _p, RT_AP_MAGIC, "struct application")
 #define RT_APPLICATION_INIT(_p)	{ \
 		memset((char *)(_p), 0, sizeof(struct application)); \
 		(_p)->a_magic = RT_AP_MAGIC; \
@@ -1811,9 +1811,9 @@ struct rt_i {
 #define RTI_MAGIC	0x99101658	/**< @brief  magic # for integrity check */
 
 #define RT_CHECK_RTI(_p)		BU_CKMAG(_p, RTI_MAGIC, "struct rt_i")
-#define RT_CHECK_RTI_TCL(_interp,_p)	BU_CKMAG_TCL(_interp,_p, RTI_MAGIC, "struct rt_i")
+#define RT_CHECK_RTI_TCL(_interp, _p)	BU_CKMAG_TCL(_interp, _p, RTI_MAGIC, "struct rt_i")
 #define RT_CK_RTI(_p)			RT_CHECK_RTI(_p)
-#define RT_CK_RTI_TCL(_interp,_p)	RT_CHECK_RTI_TCL(_interp,_p)
+#define RT_CK_RTI_TCL(_interp, _p)	RT_CHECK_RTI_TCL(_interp, _p)
 
 #define	RT_PART_NUBSPT	0
 #define RT_PART_NUGRID	1
@@ -1827,8 +1827,8 @@ struct rt_i {
  */
 #define RT_VISIT_ALL_SOLTABS_START(_s, _rti)	{ \
 	register struct bu_list	*_head = &((_rti)->rti_solidheads[0]); \
-	for( ; _head < &((_rti)->rti_solidheads[RT_DBNHASH]); _head++ ) \
-		for( BU_LIST_FOR( _s, soltab, _head ) )  {
+	for (; _head < &((_rti)->rti_solidheads[RT_DBNHASH]); _head++ ) \
+		for ( BU_LIST_FOR( _s, soltab, _head ) )  {
 
 #define RT_VISIT_ALL_SOLTABS_END	} }
 
@@ -2115,18 +2115,18 @@ struct rt_shootray_status {
 	int			box_num;	/**< @brief  which cell along ray */
 };
 
-#define NUGRID_T_SETUP(_ax,_cval,_cno) \
-	if( ssp->rstep[_ax] > 0 ) { \
+#define NUGRID_T_SETUP(_ax, _cval, _cno) \
+	if ( ssp->rstep[_ax] > 0 ) { \
 		ssp->tv[_ax] = t0 + (nu_axis[_ax][_cno].nu_epos - _cval) * \
 					    ssp->inv_dir[_ax]; \
-	} else if( ssp->rstep[_ax] < 0 ) { \
+	} else if ( ssp->rstep[_ax] < 0 ) { \
 		ssp->tv[_ax] = t0 + (nu_axis[_ax][_cno].nu_spos - _cval) * \
 					    ssp->inv_dir[_ax]; \
 	} else { \
 		ssp->tv[_ax] = INFINITY; \
 	}
-#define NUGRID_T_ADV(_ax,_cno) \
-	if( ssp->rstep[_ax] != 0 )  { \
+#define NUGRID_T_ADV(_ax, _cno) \
+	if ( ssp->rstep[_ax] != 0 )  { \
 		ssp->tv[_ax] += nu_axis[_ax][_cno].nu_width * \
 			ssp->abs_inv_dir[_ax]; \
 	}
@@ -2216,11 +2216,11 @@ struct hitmiss {
 	case NMG_RT_MISS_MAGIC: \
 		break; \
 	case NMG_MISS_LIST: \
-		bu_log("%s[%d]: struct hitmiss has  NMG_MISS_LIST magic #\n",\
+		bu_log("%s[%d]: struct hitmiss has  NMG_MISS_LIST magic #\n", \
 			__FILE__, __LINE__); \
 		bu_bomb("NMG_CK_HITMISS: going down in flames\n"); \
 	case NMG_HIT_LIST: \
-		bu_log("%s[%d]: struct hitmiss has  NMG_MISS_LIST magic #\n",\
+		bu_log("%s[%d]: struct hitmiss has  NMG_MISS_LIST magic #\n", \
 			__FILE__, __LINE__); \
 		bu_bomb("NMG_CK_HITMISS: going down in flames\n"); \
 	default: \
@@ -2310,7 +2310,7 @@ struct ray_data {
 #ifdef FAST_NMG
 #define GET_HITMISS(_p, _ap) { \
 	(_p) = BU_LIST_FIRST( hitmiss, &((_ap)->a_resource->re_nmgfree) ); \
-	if( BU_LIST_IS_HEAD( (_p), &((_ap)->a_resource->re_nmgfree ) ) ) \
+	if ( BU_LIST_IS_HEAD( (_p), &((_ap)->a_resource->re_nmgfree ) ) ) \
 		(_p) = (struct hitmiss *)bu_calloc(1, sizeof( struct hitmiss ), "hitmiss" ); \
 	else \
 		BU_LIST_DEQUEUE( &((_p)->l) ); \

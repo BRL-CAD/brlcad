@@ -166,7 +166,7 @@ rt_nmg_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	struct nmg_specific *nmg =
 		(struct nmg_specific *)stp->st_specific;
 
-	if(rt_g.NMG_debug & DEBUG_NMGRT) {
+	if (rt_g.NMG_debug & DEBUG_NMGRT) {
 		bu_log("rt_nmg_shot()\n\t");
 		rt_pr_tol(&ap->a_rt_i->rti_tol);
 	}
@@ -179,19 +179,19 @@ rt_nmg_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 		bu_bomb("end of NMG st_specific structure corrupted\n");
 
 	/* Compute the inverse of the direction cosines */
-	if( !NEAR_ZERO( rp->r_dir[X], SQRT_SMALL_FASTF ) )  {
+	if ( !NEAR_ZERO( rp->r_dir[X], SQRT_SMALL_FASTF ) )  {
 		nmg->nmg_invdir[X]=1.0/rp->r_dir[X];
 	} else {
 		nmg->nmg_invdir[X] = INFINITY;
 		rp->r_dir[X] = 0.0;
 	}
-	if( !NEAR_ZERO( rp->r_dir[Y], SQRT_SMALL_FASTF ) )  {
+	if ( !NEAR_ZERO( rp->r_dir[Y], SQRT_SMALL_FASTF ) )  {
 		nmg->nmg_invdir[Y]=1.0/rp->r_dir[Y];
 	} else {
 		nmg->nmg_invdir[Y] = INFINITY;
 		rp->r_dir[Y] = 0.0;
 	}
-	if( !NEAR_ZERO( rp->r_dir[Z], SQRT_SMALL_FASTF ) )  {
+	if ( !NEAR_ZERO( rp->r_dir[Z], SQRT_SMALL_FASTF ) )  {
 		nmg->nmg_invdir[Z]=1.0/rp->r_dir[Z];
 	} else {
 		nmg->nmg_invdir[Z] = INFINITY;
@@ -360,7 +360,7 @@ rt_nmg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	lm = (struct model *)ip->idb_ptr;
 	NMG_CK_MODEL(lm);
 
-	if( BU_LIST_IS_EMPTY( &(lm->r_hd) ) )  {
+	if ( BU_LIST_IS_EMPTY( &(lm->r_hd) ) )  {
 		/* No regions in imported geometry, can't give valid 'r' */
 		*r = (struct nmgregion *)NULL;
 		return -1;
@@ -370,11 +370,11 @@ rt_nmg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 	*r = BU_LIST_FIRST(nmgregion, &(lm->r_hd) );
 	NMG_CK_REGION(*r);
-	if( BU_LIST_NEXT_NOT_HEAD( *r, &(lm->r_hd) ) )  {
+	if ( BU_LIST_NEXT_NOT_HEAD( *r, &(lm->r_hd) ) )  {
 		struct nmgregion *r2;
 
 		r2 = BU_LIST_PNEXT( nmgregion, &((*r)->l) );
-		while( BU_LIST_NOT_HEAD( &r2->l, &(lm->r_hd) ) )
+		while ( BU_LIST_NOT_HEAD( &r2->l, &(lm->r_hd) ) )
 		{
 			struct nmgregion *next_r;
 
@@ -397,8 +397,8 @@ rt_nmg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	return(0);
 }
 
-#define RT_CK_DISKMAGIC(_cp,_magic)	\
-	if( bu_glong(_cp) != _magic )  { \
+#define RT_CK_DISKMAGIC(_cp, _magic)	\
+	if ( bu_glong(_cp) != _magic )  { \
 		bu_log("RT_CK_DISKMAGIC: magic mis-match, got x%x, s/b x%x, file %s, line %d\n", \
 			bu_glong(_cp), _magic, __FILE__, __LINE__); \
 		bu_bomb("bad magic\n"); \
@@ -718,7 +718,7 @@ const char	rt_nmg_kind_names[NMG_N_KINDS+2][18] = {
 int
 rt_nmg_magic_to_kind(register long int magic)
 {
-	switch(magic)  {
+	switch (magic)  {
 	case NMG_MODEL_MAGIC:
 		return NMG_KIND_MODEL;
 	case NMG_REGION_MAGIC:
@@ -820,26 +820,26 @@ rt_nmg_export_fastf(const fastf_t *fp, int count, int pt_type, double scale)
 {
 	register unsigned char	*cp;
 
-	if( pt_type )
+	if ( pt_type )
 		count *= RT_NURB_EXTRACT_COORDS(pt_type);
 
 	cp = rt_nmg_fastf_p;
 	(void)bu_plong( cp + 0, DISK_DOUBLE_ARRAY_MAGIC );
 	(void)bu_plong( cp + 4, count );
-	if( pt_type == 0 || scale == 1.0 )  {
+	if ( pt_type == 0 || scale == 1.0 )  {
 		htond( cp + (4+4), (unsigned char *)fp, count );
 	} else {
 		fastf_t		*new;
 
 		/* Need to scale data by 'scale' ! */
 		new = (fastf_t *)bu_malloc( count*sizeof(fastf_t), "rt_nmg_export_fastf" );
-		if( RT_NURB_IS_PT_RATIONAL(pt_type) )  {
+		if ( RT_NURB_IS_PT_RATIONAL(pt_type) )  {
 			/* Don't scale the homogeneous (rational) coord */
 			register int	i;
 			int		nelem;	/* # elements per tuple */
 
 			nelem = RT_NURB_EXTRACT_COORDS(pt_type);
-			for( i = 0; i < count; i += nelem )  {
+			for ( i = 0; i < count; i += nelem )  {
 				VSCALEN( &new[i], &fp[i], scale, nelem-1 );
 				new[i+nelem-1] = fp[i+nelem-1];
 			}
@@ -866,7 +866,7 @@ rt_nmg_import_fastf(const unsigned char *base, struct nmg_exp_counts *ecnt, long
 	fastf_t			*ret;
 	fastf_t			*tmp;
 
-	if( ecnt[subscript].byte_offset <= 0 || ecnt[subscript].kind != NMG_KIND_DOUBLE_ARRAY )  {
+	if ( ecnt[subscript].byte_offset <= 0 || ecnt[subscript].kind != NMG_KIND_DOUBLE_ARRAY )  {
 		bu_log("subscript=%d, byte_offset=%d, kind=%d (expected %d)\n",
 			subscript, ecnt[subscript].byte_offset,
 			ecnt[subscript].kind, NMG_KIND_DOUBLE_ARRAY );
@@ -875,7 +875,7 @@ rt_nmg_import_fastf(const unsigned char *base, struct nmg_exp_counts *ecnt, long
 
 
 	cp = base + ecnt[subscript].byte_offset;
-	if( bu_glong( cp ) != DISK_DOUBLE_ARRAY_MAGIC )  {
+	if ( bu_glong( cp ) != DISK_DOUBLE_ARRAY_MAGIC )  {
 		bu_log("magic mis-match, got x%x, s/b x%x, file %s, line %d\n",
 			bu_glong(cp), DISK_DOUBLE_ARRAY_MAGIC, __FILE__, __LINE__);
 		bu_log("subscript=%d, byte_offset=%d\n",
@@ -883,17 +883,17 @@ rt_nmg_import_fastf(const unsigned char *base, struct nmg_exp_counts *ecnt, long
 		bu_bomb("rt_nmg_import_fastf() bad magic\n");
 	}
 
-	if( pt_type )
+	if ( pt_type )
 		len *= RT_NURB_EXTRACT_COORDS(pt_type);
 
 	count = bu_glong( cp + 4 );
-	if( count != len )  {
+	if ( count != len )  {
 		bu_log("rt_nmg_import_fastf() subscript=%d, expected len=%d, got=%d\n",
 			subscript, len, count );
 		bu_bomb("rt_nmg_import_fastf()\n");
 	}
 	ret = (fastf_t *)bu_malloc( count * sizeof(fastf_t), "rt_nmg_import_fastf[]" );
-	if( !mat )  {
+	if ( !mat )  {
 		ntohd( (unsigned char *)ret, cp + (4+4), count );
 		return ret;
 	}
@@ -905,16 +905,16 @@ rt_nmg_import_fastf(const unsigned char *base, struct nmg_exp_counts *ecnt, long
 	 */
 	tmp = (fastf_t *)bu_malloc( count * sizeof(fastf_t), "rt_nmg_import_fastf tmp[]" );
 	ntohd( (unsigned char *)tmp, cp + (4+4), count );
-	switch( RT_NURB_EXTRACT_COORDS(pt_type) )  {
+	switch ( RT_NURB_EXTRACT_COORDS(pt_type) )  {
 	case 3:
-		if( RT_NURB_IS_PT_RATIONAL(pt_type) )  bu_bomb("rt_nmg_import_fastf() Rational 3-tuple?\n");
-		for( count -= 3 ; count >= 0; count -= 3 )  {
+		if ( RT_NURB_IS_PT_RATIONAL(pt_type) )  bu_bomb("rt_nmg_import_fastf() Rational 3-tuple?\n");
+		for ( count -= 3; count >= 0; count -= 3 )  {
 			MAT4X3PNT( &ret[count], mat, &tmp[count] );
 		}
 		break;
 	case 4:
-		if( !RT_NURB_IS_PT_RATIONAL(pt_type) )  bu_bomb("rt_nmg_import_fastf() non-rational 4-tuple?\n");
-		for( count -= 4 ; count >= 0; count -= 4 )  {
+		if ( !RT_NURB_IS_PT_RATIONAL(pt_type) )  bu_bomb("rt_nmg_import_fastf() non-rational 4-tuple?\n");
+		for ( count -= 4; count >= 0; count -= 4 )  {
 			MAT4X4PNT( &ret[count], mat, &tmp[count] );
 		}
 		break;
@@ -942,23 +942,23 @@ rt_nmg_reindex(genptr_t p, struct nmg_exp_counts *ecnt)
 	int	ret=0;	/* zero is NOT the default value, this is just to satisfy cray compilers */
 
 	/* If null pointer, return new subscript of zero */
-	if( p == 0 )  {
+	if ( p == 0 )  {
 		ret = 0;
 		index = 0;	/* sanity */
 	} else {
 		index = nmg_index_of_struct((long *)(p));
-		if( index == -1 )  {
+		if ( index == -1 )  {
 			ret = DISK_INDEX_LISTHEAD; /* FLAG:  special list head */
-		} else if( index < -1 ) {
+		} else if ( index < -1 ) {
 			bu_bomb("rt_nmg_reindex(): unable to obtain struct index\n");
 		} else {
 			ret = ecnt[index].new_subscript;
-			if( ecnt[index].kind < 0 )  {
+			if ( ecnt[index].kind < 0 )  {
 				bu_log("rt_nmg_reindex(p=x%x), p->index=%d, ret=%d, kind=%d\n", p, index, ret, ecnt[index].kind);
 				bu_bomb("rt_nmg_reindex() This index not found in ecnt[]\n");
 			}
 			/* ret == 0 on supressed loop_g ptrs, etc */
-			if( ret < 0 || ret > ecnt[0].byte_offset )  {
+			if ( ret < 0 || ret > ecnt[0].byte_offset )  {
 				bu_log("rt_nmg_reindex(p=x%x) %s, p->index=%d, ret=%d, maxindex=%d\n",
 					p,
 					bu_identify_magic(*(long *)p),
@@ -976,7 +976,7 @@ rt_nmg_reindex(genptr_t p, struct nmg_exp_counts *ecnt)
 	(void)bu_plong(&(o)->elem[0], rt_nmg_reindex((genptr_t)((i)->elem), ecnt))
 #define INDEXL(oo, ii, elem)	{ \
 	register long _f = rt_nmg_reindex((genptr_t)((ii)->elem.forw), ecnt); \
-	if( _f == DISK_INDEX_NULL )  bu_log("Warning rt_nmg_edisk: reindex forw to null?\n"); \
+	if ( _f == DISK_INDEX_NULL )  bu_log("Warning rt_nmg_edisk: reindex forw to null?\n"); \
 	(void)bu_plong( (oo)->elem.forw, _f ); \
 	(void)bu_plong( (oo)->elem.back, rt_nmg_reindex((genptr_t)((ii)->elem.back), ecnt) ); }
 #define PUTMAGIC(_magic)	(void)bu_plong( &d->magic[0], _magic )
@@ -998,7 +998,7 @@ rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int index, d
 	int	oindex;		/* index in op */
 
 	oindex = ecnt[index].per_struct_index;
-	switch(ecnt[index].kind)  {
+	switch (ecnt[index].kind)  {
 	case NMG_KIND_MODEL:
 		{
 			struct model	*m = (struct model *)ip;
@@ -1075,7 +1075,7 @@ rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int index, d
 			NMG_CK_FACEUSE(fu);
 			NMG_CK_FACEUSE(fu->fumate_p);
 			NMG_CK_FACE(fu->f_p);
-			if( fu->f_p != fu->fumate_p->f_p )  bu_log("faceuse export, differing faces\n");
+			if ( fu->f_p != fu->fumate_p->f_p )  bu_log("faceuse export, differing faces\n");
 			PUTMAGIC( DISK_FACEUSE_MAGIC );
 			INDEXL( d, fu, l );
 			INDEX( d, fu, s_p );
@@ -1240,7 +1240,7 @@ rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int index, d
 			bu_plong( d->order, eg->order );
 
 			/* If order is zero, everything else is NULL */
-			if( eg->order == 0 )  return;
+			if ( eg->order == 0 )  return;
 
 			bu_plong( d->k_size, eg->k.k_size );
 			bu_plong( d->knots,
@@ -1272,7 +1272,7 @@ rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int index, d
 			bu_plong( d->up,
 				rt_nmg_reindex((genptr_t)(vu->up.magic_p), ecnt) );
 			INDEX( d, vu, v_p );
-			if(vu->a.magic_p)NMG_CK_VERTEXUSE_A_EITHER(vu->a.magic_p);
+			if (vu->a.magic_p)NMG_CK_VERTEXUSE_A_EITHER(vu->a.magic_p);
 			bu_plong( d->a,
 				rt_nmg_reindex((genptr_t)(vu->a.magic_p), ecnt) );
 		}
@@ -1339,10 +1339,10 @@ rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int index, d
 #define INDEX(o, i, ty, elem)	(i)->elem = (struct ty *)ptrs[bu_glong((o)->elem)]
 #define INDEXL_HD(oo, ii, elem, hd)	{ \
 	register int	sub; \
-	if( (sub = bu_glong((oo)->elem.forw)) < 0 ) \
+	if ( (sub = bu_glong((oo)->elem.forw)) < 0 ) \
 		(ii)->elem.forw = &(hd); \
 	else	(ii)->elem.forw = (struct bu_list *)ptrs[sub]; \
-	if( (sub = bu_glong((oo)->elem.back)) < 0 ) \
+	if ( (sub = bu_glong((oo)->elem.back)) < 0 ) \
 		(ii)->elem.back = &(hd); \
 	else	(ii)->elem.back = (struct bu_list *)ptrs[sub]; }
 
@@ -1351,14 +1351,14 @@ rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int index, d
 #define INDEXL_HD2(oo, ii, elem, hd)	{ \
 	register int	sub; \
 	register struct edgeuse	*eu2; \
-	if( (sub = bu_glong((oo)->elem.forw)) < 0 ) { \
+	if ( (sub = bu_glong((oo)->elem.forw)) < 0 ) { \
 		(ii)->elem.forw = &(hd); \
 	} else { \
 		eu2 = (struct edgeuse *)ptrs[sub]; \
 		NMG_CK_EDGEUSE(eu2); \
 		(ii)->elem.forw = &eu2->l2; \
 	} \
-	if( (sub = bu_glong((oo)->elem.back)) < 0 ) { \
+	if ( (sub = bu_glong((oo)->elem.back)) < 0 ) { \
 		(ii)->elem.back = &(hd); \
 	} else { \
 		eu2 = (struct edgeuse *)ptrs[sub]; \
@@ -1385,7 +1385,7 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int index, l
 	int	iindex;		/* index in ip */
 
 	iindex = 0;
-	switch(ecnt[index].kind)  {
+	switch (ecnt[index].kind)  {
 	case NMG_KIND_MODEL:
 		{
 			struct model	*m = (struct model *)op;
@@ -1546,13 +1546,13 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int index, l
 			lu->orientation = bu_glong( d->orientation );
 			INDEX( d, lu, loop, l_p );
 			up_kind = ecnt[up_index].kind;
-			if( up_kind == NMG_KIND_FACEUSE )  {
+			if ( up_kind == NMG_KIND_FACEUSE )  {
 				INDEXL_HD( d, lu, l, lu->up.fu_p->lu_hd );
-			} else if( up_kind == NMG_KIND_SHELL )  {
+			} else if ( up_kind == NMG_KIND_SHELL )  {
 				INDEXL_HD( d, lu, l, lu->up.s_p->lu_hd );
 			} else bu_log("bad loopuse up, index=%d, kind=%d\n", up_index, up_kind);
 			INDEXL_HD( d, lu, down_hd, lu->down_hd );
-			if( lu->down_hd.forw == BU_LIST_NULL )
+			if ( lu->down_hd.forw == BU_LIST_NULL )
 				bu_bomb("rt_nmg_idisk: null loopuse down_hd.forw\n");
 			NMG_CK_LOOP(lu->l_p);
 		}
@@ -1600,9 +1600,9 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int index, l
 			eu->orientation = bu_glong( d->orientation );
 			INDEX( d, eu, vertexuse, vu_p );
 			up_kind = ecnt[up_index].kind;
-			if( up_kind == NMG_KIND_LOOPUSE )  {
+			if ( up_kind == NMG_KIND_LOOPUSE )  {
 				INDEXL_HD( d, eu, l, eu->up.lu_p->down_hd );
-			} else if( up_kind == NMG_KIND_SHELL )  {
+			} else if ( up_kind == NMG_KIND_SHELL )  {
 				INDEXL_HD( d, eu, l, eu->up.s_p->eu_hd );
 			} else bu_log("bad edgeuse up, index=%d, kind=%d\n", up_index, up_kind);
 			eu->g.magic_p = (long *)ptrs[bu_glong(d->g)];
@@ -1610,7 +1610,7 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int index, l
 			NMG_CK_EDGEUSE(eu->eumate_p);
 			NMG_CK_EDGEUSE(eu->radial_p);
 			NMG_CK_VERTEXUSE(eu->vu_p);
-			if( eu->g.magic_p != NULL )
+			if ( eu->g.magic_p != NULL )
 			{
 				NMG_CK_EDGE_G_EITHER(eu->g.magic_p);
 
@@ -1666,7 +1666,7 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int index, l
 			eg->order = bu_glong( d->order );
 
 			/* If order is zero, so is everything else */
-			if( eg->order == 0 )  return 0;
+			if ( eg->order == 0 )  return 0;
 
 			eg->k.k_size = bu_glong( d->k_size );
 			eg->k.knots = rt_nmg_import_fastf( basep, ecnt,
@@ -1678,7 +1678,7 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int index, l
 			 * The curve's control points are in parameter space.
 			 * They do NOT get transformed!
 			 */
-			if( RT_NURB_EXTRACT_PT_TYPE(eg->pt_type) == RT_NURB_PT_UV )  {
+			if ( RT_NURB_EXTRACT_PT_TYPE(eg->pt_type) == RT_NURB_PT_UV )  {
 				/* UV coords on snurb surface don't get xformed */
 				eg->ctl_points = rt_nmg_import_fastf( basep,
 					ecnt,
@@ -1704,7 +1704,7 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int index, l
 			INDEX( d, vu, vertex, v_p );
 			vu->a.magic_p = (long *)ptrs[bu_glong(d->a)];
 			NMG_CK_VERTEX(vu->v_p);
-			if(vu->a.magic_p)NMG_CK_VERTEXUSE_A_EITHER(vu->a.magic_p);
+			if (vu->a.magic_p)NMG_CK_VERTEXUSE_A_EITHER(vu->a.magic_p);
 			INDEXL_HD( d, vu, l, vu->v_p->vu_hd );
 		}
 		return 0;
@@ -1776,14 +1776,14 @@ rt_nmg_ialloc(long int **ptrs, struct nmg_exp_counts *ecnt, int *kind_counts)
 	int			j;
 
 	subscript = 1;
-	for( kind = 0; kind < NMG_N_KINDS; kind++ )  {
-		if( kind == NMG_KIND_DOUBLE_ARRAY )  continue;
-		for( j = 0; j < kind_counts[kind]; j++ )  {
+	for ( kind = 0; kind < NMG_N_KINDS; kind++ )  {
+		if ( kind == NMG_KIND_DOUBLE_ARRAY )  continue;
+		for ( j = 0; j < kind_counts[kind]; j++ )  {
 			ecnt[subscript].kind = kind;
 			ecnt[subscript].per_struct_index = 0; /* unused on import */
-			switch( kind )  {
+			switch ( kind )  {
 			case NMG_KIND_MODEL:
-				if( m )  bu_bomb("multiple models?");
+				if ( m )  bu_bomb("multiple models?");
 				m = nmg_mm();
 				/* Keep disk indices & new indices equal... */
 				m->maxindex++;
@@ -1997,20 +1997,20 @@ rt_nmg_i2alloc(struct nmg_exp_counts *ecnt, unsigned char *cp, int *kind_counts,
 	int		i;
 
 	nkind = kind_counts[NMG_KIND_DOUBLE_ARRAY];
-	if( nkind <= 0 )  return;
+	if ( nkind <= 0 )  return;
 
 	/* First, find the beginning of the fastf_t arrays */
 	subscript = 1;
 	offset = 0;
-	for( kind = 0; kind < NMG_N_KINDS; kind++ )  {
-		if( kind == NMG_KIND_DOUBLE_ARRAY )  continue;
+	for ( kind = 0; kind < NMG_N_KINDS; kind++ )  {
+		if ( kind == NMG_KIND_DOUBLE_ARRAY )  continue;
 		offset += rt_nmg_disk_sizes[kind] * kind_counts[kind];
 		subscript += kind_counts[kind];
 	}
 
 	/* Should have found the first one now */
 	RT_CK_DISKMAGIC( cp + offset, DISK_DOUBLE_ARRAY_MAGIC );
-	for( i=0; i < nkind; i++ )  {
+	for ( i=0; i < nkind; i++ )  {
 		int	ndouble;
 		RT_CK_DISKMAGIC( cp + offset, DISK_DOUBLE_ARRAY_MAGIC );
 		ndouble = bu_glong( cp + offset + 4 );
@@ -2052,7 +2052,7 @@ rt_nmg_import_internal(struct rt_db_internal *ip, const struct bu_external *ep, 
 	BN_CK_TOL( tol );
 	rp = (union record *)ep->ext_buf;
 	/* Check record type */
-	if( rp->u_id != DBID_NMG )  {
+	if ( rp->u_id != DBID_NMG )  {
 		bu_log("rt_nmg_import: defective record\n");
 		return(-1);
 	}
@@ -2061,7 +2061,7 @@ rt_nmg_import_internal(struct rt_db_internal *ip, const struct bu_external *ep, 
 	 *  Check for proper version.
 	 *  In the future, this will be the backwards-compatability hook.
 	 */
-	if( rp->nmg.N_version != DISK_MODEL_VERSION )  {
+	if ( rp->nmg.N_version != DISK_MODEL_VERSION )  {
 		bu_log("rt_nmg_import:  expected NMG '.g' format version %d, got version %d, aborting.\n",
 			DISK_MODEL_VERSION,
 			rp->nmg.N_version );
@@ -2070,7 +2070,7 @@ rt_nmg_import_internal(struct rt_db_internal *ip, const struct bu_external *ep, 
 
 	/* Obtain counts of each kind of structure */
 	maxindex = 1;
-	for( kind = 0; kind < NMG_N_KINDS; kind++ )  {
+	for ( kind = 0; kind < NMG_N_KINDS; kind++ )  {
 		kind_counts[kind] = bu_glong( rp->nmg.N_structs+4*kind );
 		maxindex += kind_counts[kind];
 	}
@@ -2095,16 +2095,16 @@ rt_nmg_import_internal(struct rt_db_internal *ip, const struct bu_external *ep, 
 	rt_nmg_i2alloc( ecnt, cp, kind_counts, maxindex );
 
 	/* Import each structure, in turn */
-	for( i=1; i < maxindex; i++ )  {
+	for ( i=1; i < maxindex; i++ )  {
 		/* If we made it to the last kind, stop.  Nothing follows */
-		if( ecnt[i].kind == NMG_KIND_DOUBLE_ARRAY )  break;
-		if( rt_nmg_idisk( (genptr_t)(ptrs[i]), (genptr_t)cp,
+		if ( ecnt[i].kind == NMG_KIND_DOUBLE_ARRAY )  break;
+		if ( rt_nmg_idisk( (genptr_t)(ptrs[i]), (genptr_t)cp,
 			ecnt, i, ptrs, mat, (unsigned char *)(rp+1) ) < 0 )
 				return -1;	/* FAIL */
 		cp += rt_nmg_disk_sizes[ecnt[i].kind];
 	}
 
-	if( rebound )  {
+	if ( rebound )  {
 		/* Recompute all bounding boxes in model */
 		nmg_rebound(m, tol);
 	} else {
@@ -2113,8 +2113,8 @@ rt_nmg_import_internal(struct rt_db_internal *ip, const struct bu_external *ep, 
 		 *  Other bounding boxes will exist and be intact if NMG
 		 *  exporter wrote the _a structures.
 		 */
-		for( i=1; i < maxindex; i++ )  {
-			if( ecnt[i].kind != NMG_KIND_FACE )  continue;
+		for ( i=1; i < maxindex; i++ )  {
+			if ( ecnt[i].kind != NMG_KIND_FACE )  continue;
 			nmg_face_bb( (struct face *)ptrs[i], tol );
 		}
 	}
@@ -2191,7 +2191,7 @@ rt_nmg_export_internal(struct bu_external *ep, const struct rt_db_internal *ip, 
 	int				fastf_byte_count;
 
 	RT_CK_DB_INTERNAL(ip);
-	if( ip->idb_type != ID_NMG )  return(-1);
+	if ( ip->idb_type != ID_NMG )  return(-1);
 	m = (struct model *)ip->idb_ptr;
 	NMG_CK_MODEL(m);
 
@@ -2202,13 +2202,13 @@ rt_nmg_export_internal(struct bu_external *ep, const struct rt_db_internal *ip, 
 	/* Collect overall new subscripts, and structure-specific indices */
 	ecnt = (struct nmg_exp_counts *)bu_calloc( m->maxindex+1,
 		sizeof(struct nmg_exp_counts), "ecnt[]" );
-	for( i = 0; i < NMG_N_KINDS; i++ )
+	for ( i = 0; i < NMG_N_KINDS; i++ )
 		kind_counts[i] = 0;
 	subscript = 1;		/* must be larger than DISK_INDEX_NULL */
 	double_count = 0;
 	fastf_byte_count = 0;
-	for( i=0; i < m->maxindex; i++ )  {
-		if( ptrs[i] == (long *)0 )  {
+	for ( i=0; i < m->maxindex; i++ )  {
+		if ( ptrs[i] == (long *)0 )  {
 			ecnt[i].kind = -1;
 			continue;
 		}
@@ -2216,7 +2216,7 @@ rt_nmg_export_internal(struct bu_external *ep, const struct rt_db_internal *ip, 
 		ecnt[i].per_struct_index = kind_counts[kind]++;
 		ecnt[i].kind = kind;
 		/* Handle the variable sized kinds */
-		switch(kind)  {
+		switch (kind)  {
 		case NMG_KIND_FACE_G_SNURB:
 			{
 				struct face_g_snurb	*fg;
@@ -2240,7 +2240,7 @@ rt_nmg_export_internal(struct bu_external *ep, const struct rt_db_internal *ip, 
 				eg = (struct edge_g_cnurb *)ptrs[i];
 				ecnt[i].first_fastf_relpos = kind_counts[NMG_KIND_DOUBLE_ARRAY];
 				/* If order is zero, no knots or ctl_points */
-				if( eg->order == 0 )  break;
+				if ( eg->order == 0 )  break;
 				kind_counts[NMG_KIND_DOUBLE_ARRAY] += 2;
 				ndouble = eg->k.k_size + eg->c_size *
 					RT_NURB_EXTRACT_COORDS(eg->pt_type);
@@ -2251,31 +2251,31 @@ rt_nmg_export_internal(struct bu_external *ep, const struct rt_db_internal *ip, 
 			break;
 		}
 	}
-	if( compact )  {
+	if ( compact )  {
 		kind_counts[NMG_KIND_NMGREGION_A] = 0;
 		kind_counts[NMG_KIND_SHELL_A] = 0;
 		kind_counts[NMG_KIND_LOOP_G] = 0;
 	}
 
 	/* Assign new subscripts to ascending guys of same kind */
-	for( kind = 0; kind < NMG_N_KINDS; kind++ )  {
-		if( compact && ( kind == NMG_KIND_NMGREGION_A ||
+	for ( kind = 0; kind < NMG_N_KINDS; kind++ )  {
+		if ( compact && ( kind == NMG_KIND_NMGREGION_A ||
 		    kind == NMG_KIND_SHELL_A ||
 		    kind == NMG_KIND_LOOP_G ) )  {
 			/*
 			 * Don't assign any new subscripts for them.
 			 * Instead, use DISK_INDEX_NULL, yielding null ptrs.
 			 */
-			for( i=0; i < m->maxindex; i++ )  {
-				if( ptrs[i] == (long *)0 )  continue;
-				if( ecnt[i].kind != kind )  continue;
+			for ( i=0; i < m->maxindex; i++ )  {
+				if ( ptrs[i] == (long *)0 )  continue;
+				if ( ecnt[i].kind != kind )  continue;
 				ecnt[i].new_subscript = DISK_INDEX_NULL;
 			}
 			continue;
 		}
-		for( i=0; i < m->maxindex; i++ )  {
-			if( ptrs[i] == (long *)0 )  continue;
-			if( ecnt[i].kind != kind )  continue;
+		for ( i=0; i < m->maxindex; i++ )  {
+			if ( ptrs[i] == (long *)0 )  continue;
+			if ( ecnt[i].kind != kind )  continue;
 			ecnt[i].new_subscript = subscript++;
 		}
 	}
@@ -2284,13 +2284,13 @@ rt_nmg_export_internal(struct bu_external *ep, const struct rt_db_internal *ip, 
 	subscript += kind_counts[NMG_KIND_DOUBLE_ARRAY];
 
 	/* Sanity checking */
-	for( i=0; i < m->maxindex; i++ )  {
-		if( ptrs[i] == (long *)0 )  continue;
-		if( nmg_index_of_struct(ptrs[i]) != i )  {
+	for ( i=0; i < m->maxindex; i++ )  {
+		if ( ptrs[i] == (long *)0 )  continue;
+		if ( nmg_index_of_struct(ptrs[i]) != i )  {
 			bu_log("***ERROR, ptrs[%d]->index = %d\n",
 				i, nmg_index_of_struct(ptrs[i]) );
 		}
-		if( rt_nmg_magic_to_kind(*ptrs[i]) != ecnt[i].kind )  {
+		if ( rt_nmg_magic_to_kind(*ptrs[i]) != ecnt[i].kind )  {
 			bu_log("@@@ERROR, ptrs[%d] kind(%d) != %d\n",
 				i, rt_nmg_magic_to_kind(*ptrs[i]),
 				ecnt[i].kind);
@@ -2298,8 +2298,8 @@ rt_nmg_export_internal(struct bu_external *ep, const struct rt_db_internal *ip, 
 	}
 
 	tot_size = 0;
-	for( i = 0; i < NMG_N_KINDS; i++ )  {
-		if( kind_counts[i] <= 0 )  {
+	for ( i = 0; i < NMG_N_KINDS; i++ )  {
+		if ( kind_counts[i] <= 0 )  {
 			disk_arrays[i] = GENPTR_NULL;
 			continue;
 		}
@@ -2321,12 +2321,12 @@ rt_nmg_export_internal(struct bu_external *ep, const struct rt_db_internal *ip, 
 	(void)bu_plong( rp->nmg.N_count, additional_grans );
 
 	/* Record counts of each kind of structure */
-	for( kind = 0; kind < NMG_N_KINDS; kind++ )  {
+	for ( kind = 0; kind < NMG_N_KINDS; kind++ )  {
 		(void)bu_plong( rp->nmg.N_structs+4*kind, kind_counts[kind] );
 	}
 
 	cp = (char *)(rp+1);	/* advance one granule */
-	for( i=0; i < NMG_N_KINDS; i++ )  {
+	for ( i=0; i < NMG_N_KINDS; i++ )  {
 		disk_arrays[i] = (genptr_t)cp;
 		cp += kind_counts[i] * rt_nmg_disk_sizes[i];
 	}
@@ -2334,10 +2334,10 @@ rt_nmg_export_internal(struct bu_external *ep, const struct rt_db_internal *ip, 
 	rt_nmg_fastf_p = (unsigned char *)disk_arrays[NMG_KIND_DOUBLE_ARRAY];
 
 	/* Convert all the structures to their disk versions */
-	for( i = m->maxindex-1; i >= 0; i-- )  {
-		if( ptrs[i] == (long *)0 )  continue;
+	for ( i = m->maxindex-1; i >= 0; i-- )  {
+		if ( ptrs[i] == (long *)0 )  continue;
 		kind = ecnt[i].kind;
-		if( kind_counts[kind] <= 0 )  continue;
+		if ( kind_counts[kind] <= 0 )  continue;
 		rt_nmg_edisk( (genptr_t)(disk_arrays[kind]),
 			(genptr_t)(ptrs[i]), ecnt, i, local2mm );
 	}
@@ -2364,7 +2364,7 @@ rt_nmg_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 	BU_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
 	/* Check record type */
-	if( rp->u_id != DBID_NMG )  {
+	if ( rp->u_id != DBID_NMG )  {
 		bu_log("rt_nmg_import: defective record\n");
 		return(-1);
 	}
@@ -2380,13 +2380,13 @@ rt_nmg_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 	tol.perp = 1e-6;
 	tol.para = 1 - tol.perp;
 
-	if( rt_nmg_import_internal( ip, ep, mat, 1, &tol ) < 0 )
+	if ( rt_nmg_import_internal( ip, ep, mat, 1, &tol ) < 0 )
 		return(-1);
 
 	m = (struct model *)ip->idb_ptr;
 	NMG_CK_MODEL(m);
 
-	if( RT_G_DEBUG || rt_g.NMG_debug )
+	if ( RT_G_DEBUG || rt_g.NMG_debug )
 		nmg_vmodel(m);
 
 	return(0);			/* OK */
@@ -2434,7 +2434,7 @@ rt_nmg_import5( struct rt_db_internal	*ip,
 		}
 	}
 	maxindex = 1;
-	for (kind =0 ; kind < NMG_N_KINDS; kind++) {
+	for (kind =0; kind < NMG_N_KINDS; kind++) {
 		kind_counts[kind] = bu_glong( dp );
 		dp+= SIZEOF_NETWORK_LONG;
 		maxindex += kind_counts[kind];
@@ -2498,7 +2498,7 @@ rt_nmg_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 	struct model			*m;
 
 	RT_CK_DB_INTERNAL(ip);
-	if( ip->idb_type != ID_NMG )  return(-1);
+	if ( ip->idb_type != ID_NMG )  return(-1);
 	m = (struct model *)ip->idb_ptr;
 	NMG_CK_MODEL(m);
 
@@ -2698,7 +2698,7 @@ rt_nmg_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 	bu_vls_printf( str, "n-Manifold Geometry solid (NMG) maxindex=%ld\n",
 		(long)m->maxindex);
 
-	if( !verbose )  return(0);
+	if ( !verbose )  return(0);
 
 #if 0
 	{
@@ -2759,7 +2759,7 @@ rt_nmg_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const cha
 	Tcl_DStringInit( &ds );
 	bu_vls_init( &vls );
 
-	if( attr == (char *)NULL )
+	if ( attr == (char *)NULL )
 	{
 		bu_vls_strcpy( &vls, "nmg" );
 		bu_ptbl_init( &verts, 256, "nmg verts" );
@@ -2767,11 +2767,11 @@ rt_nmg_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const cha
 
 		/* first list all the vertices */
 		bu_vls_strcat( &vls, " V {" );
-		for( i=0 ; i<BU_PTBL_LEN( &verts ) ; i++ ) {
+		for ( i=0; i<BU_PTBL_LEN( &verts ); i++ ) {
 			v = (struct vertex *) BU_PTBL_GET( &verts, i );
 			NMG_CK_VERTEX( v );
 			vg = v->vg_p;
-			if( !vg ) {
+			if ( !vg ) {
 				Tcl_SetResult( interp, "Vertex has no geometry\n", TCL_STATIC );
 				bu_ptbl_free( &verts );
 				bu_vls_free( &vls );
@@ -2783,31 +2783,31 @@ rt_nmg_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const cha
 
 		/* use the backwards macros here so that "asc2g" will build the same structures */
 		/* now all the nmgregions */
-		for( BU_LIST_FOR_BACKWARDS( r, nmgregion, &m->r_hd ) ) {
+		for ( BU_LIST_FOR_BACKWARDS( r, nmgregion, &m->r_hd ) ) {
 			/* bu_vls_strcat( &vls, " R {" ); */
 
 			/* and all the shells */
-			for( BU_LIST_FOR_BACKWARDS( s, shell, &r->s_hd ) ) {
+			for ( BU_LIST_FOR_BACKWARDS( s, shell, &r->s_hd ) ) {
 				/* bu_vls_strcat( &vls, " S {" ); */
 
 				/* all the faces */
-				if( BU_LIST_NON_EMPTY( &s->fu_hd ) ) {
-					for( BU_LIST_FOR_BACKWARDS( fu, faceuse, &s->fu_hd ) ) {
-						if( fu->orientation != OT_SAME )
+				if ( BU_LIST_NON_EMPTY( &s->fu_hd ) ) {
+					for ( BU_LIST_FOR_BACKWARDS( fu, faceuse, &s->fu_hd ) ) {
+						if ( fu->orientation != OT_SAME )
 							continue;
 
 						bu_vls_strcat( &vls, " F {" );
 
 						/* all the loops in this face */
-						for( BU_LIST_FOR_BACKWARDS( lu, loopuse, &fu->lu_hd ) ) {
+						for ( BU_LIST_FOR_BACKWARDS( lu, loopuse, &fu->lu_hd ) ) {
 
-							if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC ) {
+							if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC ) {
 								vu = BU_LIST_FIRST( vertexuse, &lu->down_hd );
 								bu_vls_printf( &vls, " %d",
 									bu_ptbl_locate( &verts, (long *)vu->v_p ) );
 							} else {
 								bu_vls_strcat( &vls, " {" );
-								for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) ) {
+								for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) ) {
 									vu = eu->vu_p;
 									bu_vls_printf( &vls, " %d",
 									       bu_ptbl_locate( &verts, (long *)vu->v_p ) );
@@ -2823,19 +2823,19 @@ rt_nmg_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const cha
 				}
 #if 0
 				/* all the wire loopuses */
-				if( BU_LIST_NON_EMPTY( &s->lu_hd ) ) {
-					for( BU_LIST_FOR( lu, loopuse, &s->lu_hd ) ) {
+				if ( BU_LIST_NON_EMPTY( &s->lu_hd ) ) {
+					for ( BU_LIST_FOR( lu, loopuse, &s->lu_hd ) ) {
 					}
 				}
 
 				/* all the wire edges */
-				if( BU_LIST_NON_EMPTY( &s->eu_hd ) ) {
-					for( BU_LIST_FOR( eu, edgeuse, &s->eu_hd ) ) {
+				if ( BU_LIST_NON_EMPTY( &s->eu_hd ) ) {
+					for ( BU_LIST_FOR( eu, edgeuse, &s->eu_hd ) ) {
 					}
 				}
 
 				/* and maybe a single vertexuse */
-				if( s->vu_p ) {
+				if ( s->vu_p ) {
 					bu_vls_printf( &vls, " VU %d", bu_ptbl_locate( &verts, (long *)s->vu_p->v_p ) );
 				}
 
@@ -2847,16 +2847,16 @@ rt_nmg_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const cha
 			/* bu_vls_strcat( &vls, " }" ); */
 		}
 		bu_ptbl_free( &verts );
-	} else if( !strcmp( attr, "V" ) ) {
+	} else if ( !strcmp( attr, "V" ) ) {
 		/* list of vertices */
 
 		bu_ptbl_init( &verts, 256, "nmg verts" );
 		nmg_vertex_tabulate( &verts, &m->magic );
-		for( i=0 ; i<BU_PTBL_LEN( &verts ) ; i++ ) {
+		for ( i=0; i<BU_PTBL_LEN( &verts ); i++ ) {
 			v = (struct vertex *) BU_PTBL_GET( &verts, i );
 			NMG_CK_VERTEX( v );
 			vg = v->vg_p;
-			if( !vg ) {
+			if ( !vg ) {
 				Tcl_SetResult( interp, "Vertex has no geometry\n", TCL_STATIC );
 				bu_ptbl_free( &verts );
 				bu_vls_free( &vls );
@@ -2900,10 +2900,10 @@ rt_nmg_tcladjust( Tcl_Interp *interp, struct rt_db_internal *intern, int argc, c
 	NMG_CK_MODEL( m );
 
 	verts = (struct tmp_v *)NULL;
-	for( i=0 ; i<argc ; i += 2 ) {
-		if( !strcmp( argv[i], "V" ) ) {
+	for ( i=0; i<argc; i += 2 ) {
+		if ( !strcmp( argv[i], "V" ) ) {
 			obj = Tcl_NewStringObj( argv[i+1], -1 );
-			if( Tcl_ListObjGetElements( interp, obj, &num_verts,
+			if ( Tcl_ListObjGetElements( interp, obj, &num_verts,
 						    &obj_array) != TCL_OK) {
 				Tcl_SetResult( interp,
 				     "ERROR: failed to parse vertex list\n",
@@ -2914,10 +2914,10 @@ rt_nmg_tcladjust( Tcl_Interp *interp, struct rt_db_internal *intern, int argc, c
 			verts = (struct tmp_v *)bu_calloc( num_verts,
 							   sizeof( struct tmp_v ),
 							   "verts" );
-			for( j=0 ; j<num_verts ; j++ ) {
+			for ( j=0; j<num_verts; j++ ) {
 				len = 3;
 				tmp = &verts[j].pt[0];
-				if( tcl_obj_to_fastf_array( interp, obj_array[j],
+				if ( tcl_obj_to_fastf_array( interp, obj_array[j],
 					  &tmp, &len ) != 3 ) {
 					Tcl_SetResult( interp,
 					    "ERROR: incorrect number of coordinates for vertex\n",
@@ -2929,21 +2929,21 @@ rt_nmg_tcladjust( Tcl_Interp *interp, struct rt_db_internal *intern, int argc, c
 		}
 	}
 
-	while( argc >= 2 ) {
+	while ( argc >= 2 ) {
 		struct vertex ***face_verts;
 		struct faceuse *fu;
 
-		if( !strcmp( argv[0], "V" ) ) {
+		if ( !strcmp( argv[0], "V" ) ) {
 			/* vertex list handled above */
 			goto cont;
-		} else if( !strcmp( argv[0], "F" ) ) {
-			if( !verts ) {
+		} else if ( !strcmp( argv[0], "F" ) ) {
+			if ( !verts ) {
 				Tcl_SetResult( interp,
 				    "ERROR: cannot set faces without vertices\n",
 				    TCL_STATIC );
 				return( TCL_ERROR );
 			}
-			if( BU_LIST_IS_EMPTY( &m->r_hd ) ) {
+			if ( BU_LIST_IS_EMPTY( &m->r_hd ) ) {
 			  r = nmg_mrsv( m );
 			  s = BU_LIST_FIRST( shell, &r->s_hd );
 			} else {
@@ -2951,7 +2951,7 @@ rt_nmg_tcladjust( Tcl_Interp *interp, struct rt_db_internal *intern, int argc, c
 			  s = BU_LIST_FIRST( shell, &r->s_hd );
 			}
 			obj = Tcl_NewStringObj( argv[1], -1 );
-			if( Tcl_ListObjGetElements( interp, obj, &num_loops,
+			if ( Tcl_ListObjGetElements( interp, obj, &num_loops,
 						    &obj_array) != TCL_OK) {
 				Tcl_SetResult( interp,
 				     "ERROR: failed to parse face list\n",
@@ -2959,31 +2959,31 @@ rt_nmg_tcladjust( Tcl_Interp *interp, struct rt_db_internal *intern, int argc, c
 				Tcl_DecrRefCount( obj );
 				return( TCL_ERROR );
 			}
-			for( i=0, fu=NULL ; i<num_loops ; i++ ) {
+			for ( i=0, fu=NULL; i<num_loops; i++ ) {
 				struct vertex **loop_verts;
 				/* struct faceuse fu is initialized in earlier scope */
 
 				loop_len = 0;
 				(void)tcl_obj_to_int_array( interp, obj_array[i],
 							    &loop, &loop_len);
-				if( !loop_len ) {
+				if ( !loop_len ) {
 					Tcl_SetResult( interp,
 					     "ERROR: unable to parse face list\n",
 					     TCL_STATIC );
 					return( TCL_ERROR );
 				}
-				if( i ) {
+				if ( i ) {
 					loop_verts = (struct vertex **)bu_calloc(
 						      loop_len,
 						      sizeof( struct vertex * ),
 						      "loop_verts" );
-					for( i=0 ; i<loop_len ; i++ ) {
+					for ( i=0; i<loop_len; i++ ) {
 						loop_verts[i] = verts[loop[i]].v;
 					}
 					fu = nmg_add_loop_to_face( s, fu,
 						   loop_verts, loop_len,
 						   OT_OPPOSITE );
-					for( i=0 ; i<loop_len ; i++ ) {
+					for ( i=0; i<loop_len; i++ ) {
 						verts[loop[i]].v = loop_verts[i];
 					}
 				} else {
@@ -2991,7 +2991,7 @@ rt_nmg_tcladjust( Tcl_Interp *interp, struct rt_db_internal *intern, int argc, c
 						 loop_len,
 						 sizeof( struct vertex **),
 						 "face_verts" );
-					for( j=0 ; j<loop_len ; j++ ) {
+					for ( j=0; j<loop_len; j++ ) {
 						face_verts[j] = &verts[loop[j]].v;
 					}
 					fu = nmg_cmface( s, face_verts, loop_len );
@@ -3010,14 +3010,14 @@ rt_nmg_tcladjust( Tcl_Interp *interp, struct rt_db_internal *intern, int argc, c
 	}
 
 	/* assign geometry for entire vertex list (if we have one) */
-	for( i=0 ; i<num_verts ; i++ ) {
-		if( verts[i].v )
+	for ( i=0; i<num_verts; i++ ) {
+		if ( verts[i].v )
 			nmg_vertex_gv( verts[i].v, verts[i].pt );
 	}
 
 	/* assign face geometry */
-	for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) ) {
-		if( fu->orientation != OT_SAME )
+	for ( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) ) {
+		if ( fu->orientation != OT_SAME )
 			continue;
 		nmg_calc_face_g( fu );
 	}

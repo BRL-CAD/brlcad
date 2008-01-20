@@ -63,7 +63,7 @@ static struct bu_cmdtab bu_cmds[] = {
 	{"bu_ck_malloc_ptr",		bu_tcl_ck_malloc_ptr},
 	{"bu_malloc_len_roundup",	bu_tcl_malloc_len_roundup},
 	{"bu_prmem",			bu_tcl_prmem},
-	{"bu_printb",			bu_tcl_printb,},
+	{"bu_printb",			bu_tcl_printb},
 	{"bu_get_all_keyword_values",	bu_get_all_keyword_values},
 	{"bu_get_value_by_keyword",	bu_get_value_by_keyword},
 	{"bu_rgb_to_hsv",		bu_tcl_rgb_to_hsv},
@@ -184,7 +184,7 @@ bu_structparse_get_terse_form(Tcl_Interp			*interp,
  *	@param _cp	- character pointer
  */
 #define BU_SP_SKIP_SEP(_cp)	\
-	{ while( *(_cp) && (*(_cp) == ' ' || *(_cp) == '\n' || \
+	{ while ( *(_cp) && (*(_cp) == ' ' || *(_cp) == '\n' || \
 		*(_cp) == '\t' || *(_cp) == '{' ) )  ++(_cp); }
 
 
@@ -311,7 +311,7 @@ bu_structparse_argv(Tcl_Interp			*interp,
 				register int tmpi;
 				register char const *cp;
 
-				if( argc < 1 ) { /* XXX - when was ii defined */
+				if ( argc < 1 ) { /* XXX - when was ii defined */
 					bu_vls_trunc( &str, 0 );
 					bu_vls_printf( &str,
       "not enough values for \"%s\" argument: should have %ld",
@@ -328,7 +328,7 @@ bu_structparse_argv(Tcl_Interp			*interp,
 						  (char *)NULL );
 
 				/* Special case:  '=!' toggles a boolean */
-				if( argv[0][0] == '!' ) {
+				if ( argv[0][0] == '!' ) {
 					*sh = *sh ? 0 : 1;
 					bu_vls_trunc( &str, 0 );
 					bu_vls_printf( &str, "%hd ", *sh );
@@ -339,8 +339,8 @@ bu_structparse_argv(Tcl_Interp			*interp,
 				}
 				/* Normal case: an integer */
 				cp = *argv;
-				for( ii = 0; ii < sdp->sp_count; ++ii ) {
-					if( *cp == '\0' ) {
+				for ( ii = 0; ii < sdp->sp_count; ++ii ) {
+					if ( *cp == '\0' ) {
 						bu_vls_trunc( &str, 0 );
 						bu_vls_printf( &str,
 		      "not enough values for \"%s\" argument: should have %ld",
@@ -355,15 +355,15 @@ bu_structparse_argv(Tcl_Interp			*interp,
 
 					BU_SP_SKIP_SEP(cp);
 					tmpi = atoi( cp );
-					if( *cp && (*cp == '+' || *cp == '-') )
+					if ( *cp && (*cp == '+' || *cp == '-') )
 						cp++;
-					while( *cp && isdigit(*cp) )
+					while ( *cp && isdigit(*cp) )
 						cp++;
 					/* make sure we actually had an
 					 * integer out there
 					 */
 
-					if( cp == *argv ||
+					if ( cp == *argv ||
 					    (cp == *argv+1 &&
 					     (argv[0][0] == '+' ||
 					      argv[0][0] == '-')) ) {
@@ -395,7 +395,7 @@ bu_structparse_argv(Tcl_Interp			*interp,
 				register int tmpi;
 				register char const *cp;
 
-				if( argc < 1 ) { /* XXX - when was ii defined */
+				if ( argc < 1 ) { /* XXX - when was ii defined */
 					bu_vls_trunc( &str, 0 );
 					bu_vls_printf( &str,
       "not enough values for \"%s\" argument: should have %ld",
@@ -412,7 +412,7 @@ bu_structparse_argv(Tcl_Interp			*interp,
 						  (char *)NULL );
 
 				/* Special case:  '=!' toggles a boolean */
-				if( argv[0][0] == '!' ) {
+				if ( argv[0][0] == '!' ) {
 					*ip = *ip ? 0 : 1;
 					bu_vls_trunc( &str, 0 );
 					bu_vls_printf( &str, "%d ", *ip );
@@ -423,8 +423,8 @@ bu_structparse_argv(Tcl_Interp			*interp,
 				}
 				/* Normal case: an integer */
 				cp = *argv;
-				for( ii = 0; ii < sdp->sp_count; ++ii ) {
-					if( *cp == '\0' ) {
+				for ( ii = 0; ii < sdp->sp_count; ++ii ) {
+					if ( *cp == '\0' ) {
 						bu_vls_trunc( &str, 0 );
 						bu_vls_printf( &str,
 		      "not enough values for \"%s\" argument: should have %ld",
@@ -439,15 +439,15 @@ bu_structparse_argv(Tcl_Interp			*interp,
 
 					BU_SP_SKIP_SEP(cp);
 					tmpi = atoi( cp );
-					if( *cp && (*cp == '+' || *cp == '-') )
+					if ( *cp && (*cp == '+' || *cp == '-') )
 						cp++;
-					while( *cp && isdigit(*cp) )
+					while ( *cp && isdigit(*cp) )
 						cp++;
 					/* make sure we actually had an
 					 * integer out there
 					 */
 
-					if( cp == *argv ||
+					if ( cp == *argv ||
 					    (cp == *argv+1 &&
 					     (argv[0][0] == '+' ||
 					      argv[0][0] == '-')) ) {
@@ -480,7 +480,7 @@ bu_structparse_argv(Tcl_Interp			*interp,
 
 				dp = (double *)loc;
 
-				if( argc < 1 ) {
+				if ( argc < 1 ) {
 					bu_vls_trunc( &str, 0 );
 					bu_vls_printf( &str,
        "not enough values for \"%s\" argument: should have %ld, only %d given",
@@ -497,8 +497,8 @@ bu_structparse_argv(Tcl_Interp			*interp,
 						  (char *)NULL );
 
 				cp = *argv;
-				for( ii = 0; ii < sdp->sp_count; ii++ ) {
-					if( *cp == '\0' ) {
+				for ( ii = 0; ii < sdp->sp_count; ii++ ) {
+					if ( *cp == '\0' ) {
 						bu_vls_trunc( &str, 0 );
 						bu_vls_printf( &str,
        "not enough values for \"%s\" argument: should have %ld, only %d given",
@@ -514,22 +514,22 @@ bu_structparse_argv(Tcl_Interp			*interp,
 
 					BU_SP_SKIP_SEP(cp);
 					numstart = cp;
-					if( *cp == '-' || *cp == '+' ) cp++;
+					if ( *cp == '-' || *cp == '+' ) cp++;
 
 					/* skip matissa */
 					dot_seen = 0;
-					for( ; *cp ; cp++ ) {
-						if( *cp == '.' && !dot_seen ) {
+					for (; *cp; cp++ ) {
+						if ( *cp == '.' && !dot_seen ) {
 							dot_seen = 1;
 							continue;
 						}
-						if( !isdigit(*cp) )
+						if ( !isdigit(*cp) )
 							break;
 					}
 
 					/* If no mantissa seen,
 					   then there is no float here */
-					if( cp == (numstart + dot_seen) ) {
+					if ( cp == (numstart + dot_seen) ) {
 						bu_vls_trunc( &str, 0 );
 						bu_vls_printf( &str,
 				   "value \"%s\" to argument %s isn't a float",
@@ -544,20 +544,20 @@ bu_structparse_argv(Tcl_Interp			*interp,
 
 					/* there was a mantissa,
 					   so we may have an exponent */
-					if( *cp == 'E' || *cp == 'e' ) {
+					if ( *cp == 'E' || *cp == 'e' ) {
 						cp++;
 
 						/* skip exponent sign */
 						if (*cp == '+' || *cp == '-')
 							cp++;
-						while( isdigit(*cp) )
+						while ( isdigit(*cp) )
 							cp++;
 					}
 
 					bu_vls_trunc( &str, 0 );
 					bu_vls_strcpy( &str, numstart );
 					bu_vls_trunc( &str, cp-numstart );
-					if( sscanf(bu_vls_addr(&str),
+					if ( sscanf(bu_vls_addr(&str),
 						   "%lf", &tmp_double) != 1 ) {
 						bu_vls_trunc( &str, 0 );
 						bu_vls_printf( &str,
@@ -598,7 +598,7 @@ bu_structparse_argv(Tcl_Interp			*interp,
 				}
 			}
 
-			if( sdp->sp_hook )  {
+			if ( sdp->sp_hook )  {
 				sdp->sp_hook( sdp, sdp->sp_name, base, *argv);
 
 			}
@@ -610,7 +610,7 @@ bu_structparse_argv(Tcl_Interp			*interp,
 		}
 
 
-		if( sdp->sp_name == NULL ) {
+		if ( sdp->sp_name == NULL ) {
 			bu_vls_trunc( &str, 0 );
 			bu_vls_printf( &str, "invalid attribute %s\n", argv[0] );
 			Tcl_AppendResult( interp, bu_vls_addr(&str),
@@ -670,7 +670,7 @@ bu_tcl_ck_malloc_ptr(ClientData		clientData,
 		     int		argc,
 		     char		**argv)
 {
-	if( argc != 3 )  {
+	if ( argc != 3 )  {
 		Tcl_AppendResult( interp, "Usage: bu_ck_malloc_ptr ascii-ptr description\n");
 		return TCL_ERROR;
 	}
@@ -699,7 +699,7 @@ bu_tcl_malloc_len_roundup(ClientData	clientData,
 {
 	int	val;
 
-	if( argc != 2 )  {
+	if ( argc != 2 )  {
 		Tcl_AppendResult(interp, "Usage: bu_malloc_len_roundup nbytes\n", NULL);
 		return TCL_ERROR;
 	}
@@ -807,7 +807,7 @@ bu_get_value_by_keyword(ClientData	clientData,
 	char	**tofree = (char **)NULL;
 	int	i;
 
-	if( argc < 3 )  {
+	if ( argc < 3 )  {
 		char	buf[TINYBUFSIZ];
 		snprintf(buf, TINYBUFSIZ, "%d", argc);
 		Tcl_AppendResult( interp,
@@ -820,8 +820,8 @@ bu_get_value_by_keyword(ClientData	clientData,
 
 	iwant = argv[1];
 
-	if( argc == 3 )  {
-		if( Tcl_SplitList( interp, argv[2], &listc, (const char ***)&listv ) != TCL_OK )  {
+	if ( argc == 3 )  {
+		if ( Tcl_SplitList( interp, argv[2], &listc, (const char ***)&listv ) != TCL_OK )  {
 			Tcl_AppendResult( interp,
 				"bu_get_value_by_keyword: iwant='", iwant,
 				"', unable to split '",
@@ -835,20 +835,20 @@ bu_get_value_by_keyword(ClientData	clientData,
 		listv = argv + 2;
 	}
 
-	if( (listc & 1) != 0 )  {
+	if ( (listc & 1) != 0 )  {
 		char	buf[TINYBUFSIZ];
 		snprintf(buf, TINYBUFSIZ, "%d", listc);
 		Tcl_AppendResult( interp,
 			"bu_get_value_by_keyword: odd # of items in list (", buf, ").\n",
 			(char *)NULL );
-		if(tofree) free( (char *)tofree );	/* not bu_free() */
+		if (tofree) free( (char *)tofree );	/* not bu_free() */
 		return TCL_ERROR;
 	}
 
-	for( i=0; i < listc; i += 2 )  {
-		if( strcmp( iwant, listv[i] ) == 0 )  {
+	for ( i=0; i < listc; i += 2 )  {
+		if ( strcmp( iwant, listv[i] ) == 0 )  {
 			/* If value is a list, don't nest it in another list */
-			if( listv[i+1][0] == '{' )  {
+			if ( listv[i+1][0] == '{' )  {
 				struct bu_vls	str;
 				bu_vls_init( &str );
 				/* Skip leading { */
@@ -861,7 +861,7 @@ bu_get_value_by_keyword(ClientData	clientData,
 			} else {
 				Tcl_AppendResult( interp, listv[i+1], (char *)NULL );
 			}
-			if(tofree) free( (char *)tofree );	/* not bu_free() */
+			if (tofree) free( (char *)tofree );	/* not bu_free() */
 			return TCL_OK;
 		}
 	}
@@ -869,7 +869,7 @@ bu_get_value_by_keyword(ClientData	clientData,
 	/* Not found */
 	Tcl_AppendResult( interp, "bu_get_value_by_keyword: keyword '",
 		iwant, "' not found in list\n", (char *)NULL );
-	if(tofree) free( (char *)tofree );	/* not bu_free() */
+	if (tofree) free( (char *)tofree );	/* not bu_free() */
 	return TCL_ERROR;
 }
 
@@ -928,7 +928,7 @@ bu_get_all_keyword_values(ClientData	clientData,
 	char	**tofree = (char **)NULL;
 	int	i;
 
-	if( argc < 2 )  {
+	if ( argc < 2 )  {
 		char	buf[TINYBUFSIZ];
 		snprintf(buf, TINYBUFSIZ, "%d", argc);
 		Tcl_AppendResult( interp,
@@ -939,8 +939,8 @@ bu_get_all_keyword_values(ClientData	clientData,
 		return TCL_ERROR;
 	}
 
-	if( argc == 2 )  {
-		if( Tcl_SplitList( interp, argv[1], &listc, (const char ***)&listv ) != TCL_OK )  {
+	if ( argc == 2 )  {
+		if ( Tcl_SplitList( interp, argv[1], &listc, (const char ***)&listv ) != TCL_OK )  {
 			Tcl_AppendResult( interp,
 				"bu_get_all_keyword_values: unable to split '",
 				argv[1], "'\n", (char *)NULL );
@@ -953,25 +953,25 @@ bu_get_all_keyword_values(ClientData	clientData,
 		listv = argv + 1;
 	}
 
-	if( (listc & 1) != 0 )  {
+	if ( (listc & 1) != 0 )  {
 		char	buf[TINYBUFSIZ];
 		snprintf(buf, TINYBUFSIZ, "%d", listc);
 		Tcl_AppendResult( interp,
 			"bu_get_all_keyword_values: odd # of items in list (",
 			buf, "), aborting.\n",
 			(char *)NULL );
-		if(tofree) free( (char *)tofree );	/* not bu_free() */
+		if (tofree) free( (char *)tofree );	/* not bu_free() */
 		return TCL_ERROR;
 	}
 
 
 	/* Process all the pairs */
 	bu_vls_init( &variable );
-	for( i=0; i < listc; i += 2 )  {
+	for ( i=0; i < listc; i += 2 )  {
 		bu_vls_strcpy( &variable, "key_" );
 		bu_vls_strcat( &variable, listv[i] );
 		/* If value is a list, don't nest it in another list */
-		if( listv[i+1][0] == '{' )  {
+		if ( listv[i+1][0] == '{' )  {
 			struct bu_vls	str;
 			bu_vls_init( &str );
 			/* Skip leading { */
@@ -992,7 +992,7 @@ bu_get_all_keyword_values(ClientData	clientData,
 
 	/* All done */
 	bu_vls_free( &variable );
-	if(tofree) free( (char *)tofree );	/* not bu_free() */
+	if (tofree) free( (char *)tofree );	/* not bu_free() */
 	return TCL_OK;
 }
 
@@ -1021,7 +1021,7 @@ bu_tcl_rgb_to_hsv(ClientData	clientData,
 	struct bu_vls	result;
 
 	bu_vls_init(&result);
-	if( argc != 4 )  {
+	if ( argc != 4 )  {
 		Tcl_AppendResult( interp, "Usage: bu_rgb_to_hsv R G B\n",
 		    (char *)NULL );
 		return TCL_ERROR;
@@ -1073,7 +1073,7 @@ bu_tcl_hsv_to_rgb(ClientData	clientData,
 	unsigned char	rgb[3];
 	struct bu_vls	result;
 
-	if( argc != 4 )  {
+	if ( argc != 4 )  {
 		Tcl_AppendResult( interp, "Usage: bu_hsv_to_rgb H S V\n",
 		    (char *)NULL );
 		return TCL_ERROR;
@@ -1122,15 +1122,15 @@ bu_tcl_key_eq_to_key_val(ClientData	clientData,
 
 	bu_vls_init( &vls );
 
-	while( ++i < argc )
+	while ( ++i < argc )
 	{
-		if( bu_key_eq_to_key_val( argv[i], &next, &vls ) )
+		if ( bu_key_eq_to_key_val( argv[i], &next, &vls ) )
 		{
 			bu_vls_free( &vls );
 			return TCL_ERROR;
 		}
 
-		if( i < argc - 1 )
+		if ( i < argc - 1 )
 			Tcl_AppendResult(interp, bu_vls_addr( &vls ), " ", NULL );
 		else
 			Tcl_AppendResult(interp, bu_vls_addr( &vls ), NULL );
@@ -1166,7 +1166,7 @@ bu_tcl_shader_to_key_val(ClientData	clientData,
 
 	bu_vls_init( &vls );
 
-	if( bu_shader_to_tcl_list( argv[1], &vls ) )
+	if ( bu_shader_to_tcl_list( argv[1], &vls ) )
 	{
 		bu_vls_free( &vls );
 		return( TCL_ERROR );
@@ -1201,9 +1201,9 @@ bu_tcl_key_val_to_key_eq(ClientData	clientData,
 {
 	int i=0;
 
-	for( i=1 ; i<argc ; i += 2 )
+	for ( i=1; i<argc; i += 2 )
 	{
-		if( i+1 < argc-1 )
+		if ( i+1 < argc-1 )
 			Tcl_AppendResult(interp, argv[i], "=", argv[i+1], " ", NULL );
 		else
 			Tcl_AppendResult(interp, argv[i], "=", argv[i+1], NULL );
@@ -1237,7 +1237,7 @@ bu_tcl_shader_to_key_eq(ClientData	clientData,
 
 	bu_vls_init( &vls );
 
-	if( bu_shader_to_key_eq( argv[1], &vls ) )
+	if ( bu_shader_to_key_eq( argv[1], &vls ) )
 	{
 		bu_vls_free( &vls );
 		return TCL_ERROR;

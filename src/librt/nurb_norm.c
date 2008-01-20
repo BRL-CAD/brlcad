@@ -57,13 +57,13 @@ rt_nurb_s_norm(struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *norm)
 	int i;
 
 	/* Case (linear, lienar) find the normal from the polygon */
-	if( srf->order[0] == 2 && srf->order[1] == 2 )
+	if ( srf->order[0] == 2 && srf->order[1] == 2 )
 	{
 		/* Find the correct span to get the normal */
 		rt_nurb_s_eval( srf, u, v, se);
 
 		p = 0.0;
-		for( i = 0; i < srf->u.k_size -1; i++)
+		for ( i = 0; i < srf->u.k_size -1; i++)
 		{
 			if ( srf->u.knots[i] <= u
 				&& u < srf->u.knots[i+1] )
@@ -80,7 +80,7 @@ rt_nurb_s_norm(struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *norm)
 		rt_nurb_s_eval( srf, p, v, ue);
 
 		p = 0.0;
-		for( i = 0; i < srf->v.k_size -1; i++)
+		for ( i = 0; i < srf->v.k_size -1; i++)
 		{
 			if ( srf->v.knots[i] < v
 				&& srf->v.knots[i+1] )
@@ -95,7 +95,7 @@ rt_nurb_s_norm(struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *norm)
 
 		rt_nurb_s_eval( srf, u, p, ve);
 
-		if( RT_NURB_IS_PT_RATIONAL(srf->pt_type))
+		if ( RT_NURB_IS_PT_RATIONAL(srf->pt_type))
 		{
 			ue[0] = ue[0] / ue[3];
 			ue[1] = ue[1] / ue[3];
@@ -121,12 +121,12 @@ rt_nurb_s_norm(struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *norm)
 	/* Case (linear, > linear) Use the linear direction to approximate
 	 * the tangent to the surface
 	 */
-	if( srf->order[0] == 2 && srf->order[1] > 2 )
+	if ( srf->order[0] == 2 && srf->order[1] > 2 )
 	{
 		rt_nurb_s_eval( srf, u, v, se);
 
 		p = 0.0;
-		for( i = 0; i < srf->u.k_size -1; i++)
+		for ( i = 0; i < srf->u.k_size -1; i++)
 		{
 			if ( srf->u.knots[i] <= u
 				&& u < srf->u.knots[i+1] )
@@ -146,7 +146,7 @@ rt_nurb_s_norm(struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *norm)
 
 		rt_nurb_s_eval(vsrf, u, v, ve);
 
-		if( RT_NURB_IS_PT_RATIONAL(srf->pt_type) )
+		if ( RT_NURB_IS_PT_RATIONAL(srf->pt_type) )
 		{
 			fastf_t w, inv_w;
 
@@ -179,12 +179,12 @@ rt_nurb_s_norm(struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *norm)
 		rt_nurb_free_snurb(vsrf, (struct resource *)NULL);
 		return;
 	}
-	if( srf->order[1] == 2 && srf->order[0] > 2 )
+	if ( srf->order[1] == 2 && srf->order[0] > 2 )
 	{
 		rt_nurb_s_eval( srf, u, v, se);
 
 		p = 0.0;
-		for( i = 0; i < srf->v.k_size -1; i++)
+		for ( i = 0; i < srf->v.k_size -1; i++)
 		{
 			if ( srf->v.knots[i] <= v
 				&& v < srf->v.knots[i+1] )
@@ -204,7 +204,7 @@ rt_nurb_s_norm(struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *norm)
 
 		rt_nurb_s_eval(usrf, u, v, ue);
 
-		if( RT_NURB_IS_PT_RATIONAL(srf->pt_type) )
+		if ( RT_NURB_IS_PT_RATIONAL(srf->pt_type) )
 		{
 			fastf_t w, inv_w;
 
@@ -239,7 +239,7 @@ rt_nurb_s_norm(struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *norm)
 	}
 
 	/* Case Non Rational (order > 2, order > 2) */
-	if( !RT_NURB_IS_PT_RATIONAL(srf->pt_type))
+	if ( !RT_NURB_IS_PT_RATIONAL(srf->pt_type))
 	{
 
 		usrf = (struct face_g_snurb *) rt_nurb_s_diff( srf, RT_NURB_SPLIT_ROW);
@@ -258,7 +258,7 @@ rt_nurb_s_norm(struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *norm)
 	}
 
 	/* Case Rational (order > 2, order > 2) */
-	if( RT_NURB_IS_PT_RATIONAL(srf->pt_type))
+	if ( RT_NURB_IS_PT_RATIONAL(srf->pt_type))
 	{
 		fastf_t w, inv_w;
 		vect_t unorm, vnorm;
@@ -276,7 +276,7 @@ rt_nurb_s_norm(struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *norm)
 		w = se[3];
 		inv_w = 1.0 / w;
 
-		for(i = 0; i < 3; i++)
+		for (i = 0; i < 3; i++)
 		{
 			unorm[i] = (inv_w * ue[i]) -
 				ue[3] / (w*w) * se[i];

@@ -155,7 +155,7 @@ get_args (int argc, register char **argv)
 
     if (bu_optind >= argc)
     {
-	if(isatty(fileno(stdin)))
+	if (isatty(fileno(stdin)))
 	{
 	    (void) fprintf(stderr, "texturescale: cannot read from tty\n");
 	    return(0);

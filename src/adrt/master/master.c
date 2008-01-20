@@ -180,7 +180,7 @@ master_result (tienet_buffer_t *result)
   TCOPY (uint16_t, result->data, ind, &wid, 0);
   ind += 2;
 
-  switch(op)
+  switch (op)
   {
     case ADRT_WORK_FRAME:
       /* Work unit data */
@@ -480,7 +480,7 @@ master_networking (void *ptr)
             op = master.slave_data[0];
             bcopy (&master.slave_data[1], &wid, 2);
 
-            switch(op)
+            switch (op)
             {
               case ADRT_WORK_FRAME_ATTR:
                 TCOPY(uint16_t, master.slave_data, 3, &master.image_w, 0);

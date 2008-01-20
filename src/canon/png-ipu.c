@@ -124,18 +124,18 @@ main(int ac, char *av[])
     }
 
     /* Read the image */
-    if( fread( header, 8, 1, stdin ) != 1 )
+    if ( fread( header, 8, 1, stdin ) != 1 )
 	bu_exit(1, "png-ipu: ERROR: Failed while reading file header!");
 
-    if( !png_check_sig( (png_bytep)header, 8 ) )
+    if ( !png_check_sig( (png_bytep)header, 8 ) )
 	bu_exit(2, "png-ipu: This is not a valid PNG file\n");
 
     png_p = png_create_read_struct( PNG_LIBPNG_VER_STRING, NULL, NULL, NULL );
-    if( !png_p )
+    if ( !png_p )
 	bu_exit(3, "png_create_read_struct() failed!\n");
 
     info_p = png_create_info_struct( png_p );
-    if( !info_p )
+    if ( !info_p )
 	bu_exit(4, "png_create_info_struct() failed!!\n");
 
     png_init_io( png_p, stdin );
@@ -148,13 +148,13 @@ main(int ac, char *av[])
 
     png_set_expand( png_p );
     bit_depth = png_get_bit_depth( png_p, info_p );
-    if( bit_depth == 16 )
+    if ( bit_depth == 16 )
 	png_set_strip_16( png_p );
 
     file_width = png_get_image_width( png_p, info_p );
     file_height = png_get_image_height( png_p, info_p );
 
-    if( ipu_debug )
+    if ( ipu_debug )
 	{
 	    switch (color_type)
 		{
@@ -180,9 +180,9 @@ main(int ac, char *av[])
 	    bu_log( "Image size: %d X %d\n", file_width, file_height );
 	}
 
-    if( png_get_bKGD( png_p, info_p, &input_backgrd ) )
+    if ( png_get_bKGD( png_p, info_p, &input_backgrd ) )
 	{
-	    if( ipu_debug && (color_type == PNG_COLOR_TYPE_GRAY_ALPHA ||
+	    if ( ipu_debug && (color_type == PNG_COLOR_TYPE_GRAY_ALPHA ||
 			      color_type == PNG_COLOR_TYPE_RGB_ALPHA ) )
 		bu_log( "background color: %d %d %d\n", input_backgrd->red, input_backgrd->green, input_backgrd->blue );
 	    png_set_background( png_p, input_backgrd, PNG_BACKGROUND_GAMMA_FILE, 1, 1.0 );
@@ -190,16 +190,16 @@ main(int ac, char *av[])
     else
 	png_set_background( png_p, &def_backgrd, PNG_BACKGROUND_GAMMA_FILE, 0, 1.0 );
 
-    if( !png_get_gAMA( png_p, info_p, &gamma ) )
+    if ( !png_get_gAMA( png_p, info_p, &gamma ) )
 	gamma = 0.5;
     png_set_gamma( png_p, def_screen_gamma, gamma );
-    if( ipu_debug )
+    if ( ipu_debug )
 	bu_log( "file gamma: %f, additional screen gamma: %f\n",
 		gamma, def_screen_gamma );
 
-    if( ipu_debug )
+    if ( ipu_debug )
 	{
-	    if( png_get_interlace_type( png_p, info_p ) == PNG_INTERLACE_NONE )
+	    if ( png_get_interlace_type( png_p, info_p ) == PNG_INTERLACE_NONE )
 		bu_log( "not interlaced\n" );
 	    else
 		bu_log( "interlaced\n" );
@@ -214,26 +214,26 @@ main(int ac, char *av[])
     scanline = (unsigned char **)bu_calloc( file_height, sizeof( unsigned char *), "scanline" );
 
     /* Change order top-to-bottom */
-    for( i=0 ; i<file_height ; i++ )
+    for ( i=0; i<file_height; i++ )
 	scanline[file_height-1-i] = image+(i*file_width*3);
 
     png_read_image( png_p, scanline );
 
-    if( ipu_debug )
+    if ( ipu_debug )
 	{
 	    png_timep mod_time;
 	    png_textp text;
 	    int num_text;
 
 	    png_read_end(png_p, info_p );
-	    if( png_get_text( png_p, info_p, &text, &num_text ) )
+	    if ( png_get_text( png_p, info_p, &text, &num_text ) )
 		{
 		    int i;
 
-		    for( i=0 ; i<num_text ; i++ )
+		    for ( i=0; i<num_text; i++ )
 			bu_log( "%s: %s\n", text[i].key, text[i].text );
 		}
-	    if( png_get_tIME( png_p, info_p, &mod_time ) )
+	    if ( png_get_tIME( png_p, info_p, &mod_time ) )
 		bu_log( "Last modified: %d/%d/%d %d:%d:%d\n", mod_time->month, mod_time->day,
 			mod_time->year, mod_time->hour, mod_time->minute, mod_time->second );
 	}
@@ -271,7 +271,7 @@ main(int ac, char *av[])
     ipu_print_config(dsp, units, divisor, conv,
 		     mosaic, ipu_gamma, tray);
 
-    if( ipu_filetype == IPU_PALETTE_FILE )
+    if ( ipu_filetype == IPU_PALETTE_FILE )
 	ipu_set_palette(dsp, NULL);
 
     ipu_print_file(dsp, (char)1, copies, 0/*wait*/,

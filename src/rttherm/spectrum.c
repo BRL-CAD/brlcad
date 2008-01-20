@@ -287,7 +287,7 @@ rt_make_ntsc_xyz2rgb(fastf_t *xyz2rgb)
 	mat_t	rgb2xyz;
 	point_t	tst, new;
 
-	if( rt_clr__cspace_to_xyz( rgb_NTSC, rgb2xyz ) == 0 )
+	if ( rt_clr__cspace_to_xyz( rgb_NTSC, rgb2xyz ) == 0 )
 		bu_exit(EXIT_FAILURE, "rt_make_ntsc_xyz2rgb() can't initialize color space\n");
 	bn_mat_inv( xyz2rgb, rgb2xyz );
 
@@ -359,7 +359,7 @@ rt_spect_curve_to_xyz(
 #if 0
 	tab_area = bn_tabdata_area2( tabp );
 	bu_log(" tab_area = %g\n", tab_area);
-	if( fabs(tab_area) < VDIVIDE_TOL )  {
+	if ( fabs(tab_area) < VDIVIDE_TOL )  {
 		bu_log("rt_spect_curve_to_xyz(): Area = 0 (no luminance) in this part of the spectrum\n");
 		VSETALL( xyz, 0 );
 		return;
@@ -425,7 +425,7 @@ bn_table_make_visible_and_uniform(int num, double first, double last, int vis_ns
 	struct bn_table *uniform;
 	struct bn_table	*vis;
 
-	if( vis_nsamp < 10 )  vis_nsamp = 10;
+	if ( vis_nsamp < 10 )  vis_nsamp = 10;
 	uniform = bn_table_make_uniform( num, first, last );
 	vis = bn_table_make_uniform( vis_nsamp, 340.0, 700.0 );
 

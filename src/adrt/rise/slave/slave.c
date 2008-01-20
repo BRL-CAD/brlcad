@@ -90,7 +90,7 @@ void rise_slave_mesg(void *mesg, unsigned int mesg_len) {
 
   memcpy(&op, mesg, sizeof(short));
 
-  switch(op) {
+  switch (op) {
     case RISE_OP_CAMERA:
     {
       TIE_3	pos;

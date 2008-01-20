@@ -50,12 +50,12 @@ rt_nurb_nodes(fastf_t *nodes, const struct knot_vector *knots, int order)
 	int i, j;
 	fastf_t sum;
 
-	for( i = 0; i < knots->k_size -order; i++)
+	for ( i = 0; i < knots->k_size -order; i++)
 	{
 
 		sum = 0.0;
 
-		for( j = 1; j <= order -1; j++)
+		for ( j = 1; j <= order -1; j++)
 		{
 			sum += knots->knots[i+j];
 		}
@@ -71,8 +71,8 @@ rt_nurb_interp_mat(fastf_t *imat, struct knot_vector *knots, fastf_t *nodes, int
 
 	ptr = 0;
 
-	for( i = 0; i < dim; i++)
-	for( j = 0; j < dim; j++)
+	for ( i = 0; i < dim; i++)
+	for ( j = 0; j < dim; j++)
 	{
 		imat[ptr] = rt_nurb_basis_eval( knots, j, order, nodes[i]);
 		ptr++;
@@ -193,13 +193,13 @@ rt_nurb_sinterp(struct face_g_snurb *srf, int order, const fastf_t *data, int ym
 	cpt = &srf->ctl_points[0];
 
 /* _col is X, _row is Y */
-#define NVAL(_col,_row)	data[((_row)*xmax+(_col))*3]
+#define NVAL(_col, _row)	data[((_row)*xmax+(_col))*3]
 
 	crv = (struct edge_g_cnurb *)bu_calloc( sizeof(struct edge_g_cnurb), ymax,
 		"rt_nurb_sinterp() crv[]");
 
 	/* Interpolate the data across the rows, fitting a curve to each. */
-	for( y = 0; y < ymax; y++)  {
+	for ( y = 0; y < ymax; y++)  {
 		crv[y].l.magic = RT_CNURB_MAGIC;
 		/* Build curve from from (0, y) to (xmax-1, y) */
 		rt_nurb_cinterp( &crv[y], order, &NVAL(0, y), xmax );
@@ -208,11 +208,11 @@ rt_nurb_sinterp(struct face_g_snurb *srf, int order, const fastf_t *data, int ym
 
 	tmp = (fastf_t *)bu_malloc( sizeof(fastf_t)*3 * ymax,
 		"rt_nurb_sinterp() tmp[]");
-	for( x = 0; x < xmax; x++)  {
+	for ( x = 0; x < xmax; x++)  {
 		struct edge_g_cnurb	ncrv;
 
 		/* copy the curve ctl points into col major format */
-		for( y = 0; y < ymax; y++)  {
+		for ( y = 0; y < ymax; y++)  {
 			VMOVE( &tmp[y*3], &crv[y].ctl_points[x*3] );
 		}
 
@@ -221,12 +221,12 @@ rt_nurb_sinterp(struct face_g_snurb *srf, int order, const fastf_t *data, int ym
 		rt_nurb_cinterp( &ncrv, order, tmp, ymax);
 
 		/* Move new curve interpolations into snurb ctl_points[] */
-		for( y = 0; y < ymax*3; y++)  {
+		for ( y = 0; y < ymax*3; y++)  {
 			*cpt++ = ncrv.ctl_points[y];
 		}
 		rt_nurb_clean_cnurb( &ncrv );
 	}
-	for( y = 0; y < ymax; y++)  {
+	for ( y = 0; y < ymax; y++)  {
 		rt_nurb_clean_cnurb( &crv[y] );
 	}
 	bu_free( (char *)crv, "crv[]");

@@ -42,7 +42,7 @@
  *
  *	d = rt_dspline4(m, .0, .0, 1.0, 1.0, 0.25);
  *
- *	for (p = 0.0 ; p <= 1.0 ; p += 0.0625 ) {
+ *	for (p = 0.0; p <= 1.0; p += 0.0625 ) {
  *		rt_dspline(v, m, kn, 5, 3, p);
  *		bu_log("%g (%g %g %g)\n", p, V3ARGS(v));
  *	}
@@ -106,7 +106,7 @@ GetBeta(fastf_t *m, const double bias, const double tension)
 	m[ 3] = m[14] = 2.0;
 	m[ 7] = m[11] = m[15] = 0.0;
 
-	for (i=0 ; i < 16; i++) m[i] *= d;
+	for (i=0; i < 16; i++) m[i] *= d;
 }
 
 static void
@@ -194,7 +194,7 @@ rt_dspline4v(double *pt, const fastf_t *m, const double *a, const double *b, con
 	int i;
 	double p0, p1, p2, p3;
 
-	for (i=0 ; i < depth ; i++) {
+	for (i=0; i < depth; i++) {
 		p0 = m[ 0]*a[i] + m[ 1]*b[i] + m[ 2]*c[i] + m[ 3]*d[i];
 		p1 = m[ 4]*a[i] + m[ 5]*b[i] + m[ 6]*c[i] + m[ 7]*d[i];
 		p2 = m[ 8]*a[i] + m[ 9]*b[i] + m[10]*c[i] + m[11]*d[i];
@@ -224,7 +224,7 @@ rt_dspline4v(double *pt, const fastf_t *m, const double *a, const double *b, con
  *
  *		rt_dspline4_matrix(m, "Catmull", (double *)NULL, 0.0);
  *
- *		for (i=0 ; i < knot_count ; i++)
+ *		for (i=0; i < knot_count; i++)
  *			get a knot(knots, i, knot_length);
  *
  *		rt_dspline_n(result, m, knots, knot_count, knot_length, alpha);

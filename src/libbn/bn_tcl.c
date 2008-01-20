@@ -56,11 +56,11 @@
 int
 bn_decode_mat(fastf_t *m, const char *str)
 {
-	if( strcmp( str, "I" ) == 0 )  {
+	if ( strcmp( str, "I" ) == 0 )  {
 		MAT_IDN( m );
 		return 16;
 	}
-	if( *str == '{' )  str++;
+	if ( *str == '{' )  str++;
 
 	return sscanf(str,
 	    "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf",
@@ -71,28 +71,28 @@ bn_decode_mat(fastf_t *m, const char *str)
 int
 bn_decode_quat(fastf_t *q, const char *str)
 {
-	if( *str == '{' )  str++;
+	if ( *str == '{' )  str++;
 	return sscanf(str, "%lf %lf %lf %lf", &q[0], &q[1], &q[2], &q[3]);
 }
 
 int
 bn_decode_vect(fastf_t *v, const char *str)
 {
-	if( *str == '{' )  str++;
+	if ( *str == '{' )  str++;
 	return sscanf(str, "%lf %lf %lf", &v[0], &v[1], &v[2]);
 }
 
 int
 bn_decode_hvect(fastf_t *v, const char *str)
 {
-	if( *str == '{' )  str++;
+	if ( *str == '{' )  str++;
 	return sscanf(str, "%lf %lf %lf %lf", &v[0], &v[1], &v[2], &v[3]);
 }
 
 void
 bn_encode_mat(struct bu_vls *vp, const mat_t m)
 {
-	if( m == NULL )  {
+	if ( m == NULL )  {
 		bu_vls_putc(vp, 'I');
 		return;
 	}
@@ -246,9 +246,9 @@ bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 			bu_vls_printf(&result, "usage: %s pnt scale dir", argv[0]);
 			goto error;
 		}
-		if( bn_decode_vect(b, argv[1]) < 3) goto error;
+		if ( bn_decode_vect(b, argv[1]) < 3) goto error;
 		if (Tcl_GetDouble(interp, argv[2], &c) != TCL_OK) goto error;
-		if( bn_decode_vect(d, argv[3]) < 3) goto error;
+		if ( bn_decode_vect(d, argv[3]) < 3) goto error;
 
 		VJOIN1( o, b, c, d );	/* bn_vjoin1( o, b, c, d ) */
 		bn_encode_vect(&result, o);
@@ -257,15 +257,15 @@ bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		point_t a, c, e;
 		fastf_t b, d;
 
-		if( argc < 5 ) {
+		if ( argc < 5 ) {
 			bu_vls_printf(&result, "usage: %s scale pnt scale pnt", argv[0]);
 			goto error;
 		}
 
-		if( Tcl_GetDouble(interp, argv[1], &b) != TCL_OK) goto error;
-		if( bn_decode_vect( c, argv[2] ) < 3) goto error;
-		if( Tcl_GetDouble(interp, argv[3], &d) != TCL_OK) goto error;
-		if( bn_decode_vect( e, argv[4] ) < 3) goto error;
+		if ( Tcl_GetDouble(interp, argv[1], &b) != TCL_OK) goto error;
+		if ( bn_decode_vect( c, argv[2] ) < 3) goto error;
+		if ( Tcl_GetDouble(interp, argv[3], &d) != TCL_OK) goto error;
+		if ( bn_decode_vect( e, argv[4] ) < 3) goto error;
 
 		VBLEND2( a, b, c, d, e )
 		bn_encode_vect( &result, a );
@@ -782,11 +782,11 @@ bn_cmd_noise_slice(ClientData clientData,
 
 	switch (noise_type) {
 	case NOISE_FBM:
-		for (yval = 0 ; yval < ydim ; yval++) {
+		for (yval = 0; yval < ydim; yval++) {
 
 		    pt[Y] = yval * scale[Y] + delta[Y];
 
-		    for (xval = 0 ; xval < xdim ; xval++) {
+		    for (xval = 0; xval < xdim; xval++) {
 			pt[X] = xval * scale[X] + delta[X];
 
 			val = bn_noise_fbm(pt, h_val, lacunarity, octaves);
@@ -795,11 +795,11 @@ bn_cmd_noise_slice(ClientData clientData,
 		}
 		break;
 	case NOISE_TURB:
-		for (yval = 0 ; yval < ydim ; yval++) {
+		for (yval = 0; yval < ydim; yval++) {
 
 		    pt[Y] = yval * scale[Y] + delta[Y];
 
-		    for (xval = 0 ; xval < xdim ; xval++) {
+		    for (xval = 0; xval < xdim; xval++) {
 			pt[X] = xval * scale[X] + delta[X];
 
 			val = bn_noise_turb(pt, h_val, lacunarity, octaves);

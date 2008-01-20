@@ -77,7 +77,7 @@ static int
 guess_file_format(char *filename, char *trimmedname)
 {
     /* look for the FMT: header */
-#define CMP(name) if(!strncmp(filename,#name":", strlen(#name))){strncpy(trimmedname, filename+strlen(#name)+1, BUFSIZ);return BU_IMAGE_##name; }
+#define CMP(name) if (!strncmp(filename, #name":", strlen(#name))){strncpy(trimmedname, filename+strlen(#name)+1, BUFSIZ);return BU_IMAGE_##name; }
     CMP(PIX);
     CMP(PNG);
     CMP(BMP);
@@ -88,7 +88,7 @@ guess_file_format(char *filename, char *trimmedname)
     strncpy(trimmedname, filename, BUFSIZ);
 
     /* and guess based on extension */
-#define CMP(name, ext) if(!strncmp(filename+strlen(filename)-strlen(#name)-1, "."#ext, strlen(#name)+1)) return BU_IMAGE_##name;
+#define CMP(name, ext) if (!strncmp(filename+strlen(filename)-strlen(#name)-1, "."#ext, strlen(#name)+1)) return BU_IMAGE_##name;
     CMP(PNG, png);
     CMP(BMP, bmp);
     CMP(BW, bw);
@@ -106,16 +106,16 @@ png_save(int fd, char *rgb, int width, int height)
     FILE *fh;
 
     fh = fdopen(fd, "wb");
-    if(fh==NULL) {
+    if (fh==NULL) {
 	perror("fdopen");
 	bu_exit(-1, "png_save trying to get FILE pointer for descriptor\n");
     }
 
     png_ptr = png_create_write_struct (PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-    if(png_ptr == NULL) return 0;
+    if (png_ptr == NULL) return 0;
 
     info_ptr = png_create_info_struct (png_ptr);
-    if(info_ptr == NULL || setjmp (png_jmpbuf (png_ptr))) {
+    if (info_ptr == NULL || setjmp (png_jmpbuf (png_ptr))) {
 	png_destroy_read_struct (&png_ptr, info_ptr ? &info_ptr : NULL, NULL);
 	bu_exit(-1, "Ohs Noes!\n");
     }
@@ -149,11 +149,11 @@ static int
 bw_save(int fd, char *rgb, int size)
 {
     int bwsize = size/3, i;
-    if(bwsize*3 != size) {
+    if (bwsize*3 != size) {
 	bu_exit(-1, "Huh, size=%d is not a multiple of 3.\n", size);
     }
     /* an ugly naïve pixel grey-scale hack. Does not take human color curves. */
-    for(i=0;i<bwsize;++i) rgb[i] = (int)((float)rgb[i*3]+(float)rgb[i*3+1]+(float)rgb[i*3+2]/3.0);
+    for (i=0;i<bwsize;++i) rgb[i] = (int)((float)rgb[i*3]+(float)rgb[i*3+1]+(float)rgb[i*3+2]/3.0);
     write(fd, rgb, bwsize);
     return 2;
 }
@@ -173,9 +173,9 @@ bu_image_save(char *data, int width, int height, int depth, char *filename, int 
 {
     int i;
     struct bu_image_file *bif = bu_image_save_open(filename, filetype, width, height, depth);
-    if(bif==NULL) return -1;
-    for(i=0;i<height;++i) {
-	if(bu_image_save_writeline(bif, i,(unsigned char*)(data+i*width*depth))==-1) {
+    if (bif==NULL) return -1;
+    for (i=0;i<height;++i) {
+	if (bu_image_save_writeline(bif, i, (unsigned char*)(data+i*width*depth))==-1) {
 	    bu_log("Uh?");
 	}
     }
@@ -187,7 +187,7 @@ bu_image_save_open(char *filename, int format, int width, int height, int depth)
 {
     struct bu_image_file *bif = (struct bu_image_file *)bu_malloc(sizeof(struct bu_image_file), "bu_image_save_open");
     bif->magic = BU_IMAGE_FILE_MAGIC;
-    if(format == BU_IMAGE_AUTO) {
+    if (format == BU_IMAGE_AUTO) {
 	char buf[BUFSIZ];
 	bif->format = guess_file_format(filename, buf);
 	bif->filename = strdup(buf);
@@ -199,7 +199,7 @@ bu_image_save_open(char *filename, int format, int width, int height, int depth)
     /* if we want the ability to "continue" a stopped output, this would be
      * where to check for an existing "partial" file. */
     bif->fd = open(bif->filename, O_WRONLY|O_CREAT|O_TRUNC, WRMODE);
-    if(bif->fd < 0) {
+    if (bif->fd < 0) {
 	char buf[BUFSIZ];
 	perror("open");
 	free(bif);
@@ -216,7 +216,7 @@ bu_image_save_open(char *filename, int format, int width, int height, int depth)
 int
 bu_image_save_writeline(struct bu_image_file *bif, int y, unsigned char *data)
 {
-    if(bif==NULL) { printf("trying to write a line with a null bif\n"); return -1; }
+    if (bif==NULL) { printf("trying to write a line with a null bif\n"); return -1; }
     memcpy(bif->data + bif->width*bif->depth*y, data, bif->width*bif->depth);
     return 0;
 }
@@ -225,13 +225,13 @@ int
 bu_image_save_close(struct bu_image_file *bif)
 {
     int r = 0;
-    switch(bif->format) {
+    switch (bif->format) {
 	case BU_IMAGE_BMP: r = bmp_save(bif->fd, bif->data, bif->width, bif->height); break;
 	case BU_IMAGE_PNG: r = png_save(bif->fd, bif->data, bif->width, bif->height); break;
 	case BU_IMAGE_PIX: r = pix_save(bif->fd, bif->data, bif->width*bif->height*bif->depth); break;
 	case BU_IMAGE_BW: r = bw_save(bif->fd, bif->data, bif->width*bif->height*bif->depth); break;
     }
-    switch(r) {
+    switch (r) {
 	case 0: bu_log("Failed to write image\n"); break;
 	/* 1 signals success with no further action needed */
 	case 2: close(bif->fd); break;

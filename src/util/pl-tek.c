@@ -160,10 +160,10 @@ main(int argc, char **argv)
 	register int	c;
 	struct	uplot *up;
 
-	while( argc > 1 ) {
-		if( strcmp(argv[1], "-v") == 0 ) {
+	while ( argc > 1 ) {
+		if ( strcmp(argv[1], "-v") == 0 ) {
 			verbose++;
-		} else if( strcmp( argv[1], "-e" ) == 0 )  {
+		} else if ( strcmp( argv[1], "-e" ) == 0 )  {
 			expand_it = 1;
 		} else {
 			fprintf(stderr, "pl-tek: argument '%s' ignored\n", argv[1]);
@@ -174,7 +174,7 @@ main(int argc, char **argv)
 		argv++;
 	}
 	/* Stdout may be a genuine Tektronix! */
-	if( isatty(fileno(stdin)) ) {
+	if ( isatty(fileno(stdin)) ) {
 		bu_exit(1, "%s", usage );
 	}
 
@@ -188,30 +188,30 @@ main(int argc, char **argv)
 	(void)putc(';', stdout);		/* Miniature typeface */
 	(void)putc(US, stdout);
 
-	while( (c = getchar()) != EOF ) {
+	while ( (c = getchar()) != EOF ) {
 		/* look it up */
-		if( c < 'A' || c > 'z' ) {
+		if ( c < 'A' || c > 'z' ) {
 			up = &uerror;
 		} else {
 			up = &letters[ c - 'A' ];
 		}
 
-		if( up->targ == TBAD ) {
+		if ( up->targ == TBAD ) {
 			fprintf( stderr, "Bad command '%c' (0x%02x)\n", c, c );
 			continue;
 		}
 
-		if( up->narg > 0 )
+		if ( up->narg > 0 )
 			getargs( up );
 
-		if( verbose )  {
+		if ( verbose )  {
 			register int	i;
 			fprintf( stderr, "%s", up->desc );
-			switch( up->targ )  {
+			switch ( up->targ )  {
 			case TCHAR:
 			case TSHORT:
 			case TIEEE:
-				for( i=0; i < up->narg; i++ )
+				for ( i=0; i < up->narg; i++ )
 					fprintf( stderr, " %g", arg[i] );
 				break;
 			case TSTRING:
@@ -222,7 +222,7 @@ main(int argc, char **argv)
 		}
 
 		/* check for space command */
-		switch( c ) {
+		switch ( c ) {
 		case 's':		/* space */
 		case 'w':		/* d_space */
 			sp[0] = arg[0];
@@ -248,7 +248,7 @@ main(int argc, char **argv)
 		}
 
 		/* do it */
-		switch( c ) {
+		switch ( c ) {
 		case 'm':	/* 2-d move */
 		case 'M':	/* 3move */
 		case 'o':	/* d_move */
@@ -322,7 +322,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	if( !seenscale ) {
+	if ( !seenscale ) {
 		fprintf( stderr, "pl-tek: WARNING no space command in file, defaulting to +/-32k\n" );
 	}
 
@@ -340,7 +340,7 @@ getshort(void)
 	v |= (getchar()<<8);	/* order is important! */
 
 	/* worry about sign extension - sigh */
-	if( v <= 0x7FFF )  return(v);
+	if ( v <= 0x7FFF )  return(v);
 	w = -1;
 	w &= ~0x7FFF;
 	return( w | v );
@@ -351,8 +351,8 @@ getargs(struct uplot *up)
 {
 	int	i;
 
-	for( i = 0; i < up->narg; i++ ) {
-		switch( up->targ ) {
+	for ( i = 0; i < up->narg; i++ ) {
+		switch ( up->targ ) {
 			case TSHORT:
 				arg[i] = getshort();
 				break;
@@ -380,7 +380,7 @@ getstring(void)
 	char	*cp;
 
 	cp = strarg;
-	while( (c = getchar()) != '\n' && c != EOF )
+	while ( (c = getchar()) != '\n' && c != EOF )
 		*cp++ = c;
 	*cp = 0;
 }
@@ -416,14 +416,14 @@ doscale(void)
 	dz = (sp[5] - sp[2]);
 
 	max = dx;
-	if( dy > max ) max = dy;
-	if( dz > max ) max = dz;
+	if ( dy > max ) max = dy;
+	if ( dz > max ) max = dz;
 
-	if( expand_it )
+	if ( expand_it )
 		scale = 4096 / max;
 	else
 		scale = (4096-1000) / max;
-	if( verbose )  {
+	if ( verbose )  {
 		fprintf( stderr, "doscale: min=(%g, %g), max=(%g, %g), scale=%g\n",
 			sp[0], sp[1],
 			sp[3], sp[4],
@@ -452,19 +452,19 @@ tekcont(register int x, register int y)
 	int hix, hiy, lox, loy, extra;
 	int n;
 
-	if( verbose ) fprintf(stderr, " tekcont(%d,%d)\n", x, y );
+	if ( verbose ) fprintf(stderr, " tekcont(%d,%d)\n", x, y );
 	hix=(x>>7) & 037;
 	hiy=(y>>7) & 037;
 	lox = (x>>2)&037;
 	loy=(y>>2)&037;
 	extra = (x & 03) + ((y<<2) & 014);
 	n = (abs(hix-ohix) + abs(hiy-ohiy) + 6) / 12;
-	if(hiy != ohiy){
+	if (hiy != ohiy){
 		(void)putc(hiy|040, stdout);
 		ohiy=hiy;
 	}
-	if(hix != ohix) {
-		if(extra != oextra) {
+	if (hix != ohix) {
+		if (extra != oextra) {
 			(void)putc(extra|0140, stdout);
 			oextra=extra;
 		}
@@ -473,18 +473,18 @@ tekcont(register int x, register int y)
 		ohix=hix;
 		oloy=loy;
 	} else {
-		if(extra != oextra) {
+		if (extra != oextra) {
 			(void)putc(extra|0140, stdout);
 			(void)putc(loy|0140, stdout);
 			oextra=extra;
 			oloy=loy;
-		} else if(loy != oloy) {
+		} else if (loy != oloy) {
 			(void)putc(loy|0140, stdout);
 			oloy=loy;
 		}
 	}
 	(void)putc(lox|0100, stdout);
-	while(n--)
+	while (n--)
 		(void)putc(0, stdout);
 }
 
@@ -512,7 +512,7 @@ static void
 teklabel(register char *s)
 {
 	(void)putc(US, stdout);
-	for( ; *s; s++ )
+	for (; *s; s++ )
 		(void)putc(*s, stdout);
 	ohix = ohiy = oloy = oextra = -1;
 }
@@ -523,16 +523,16 @@ teklinemod(register char *s)
 	register int c;				/* DAG -- was char */
 
 	(void)putc(ESC, stdout);
-	switch(s[0]){
+	switch (s[0]){
 	case 'l':
 		c = 'd';
 		break;
 	case 'd':
-		if(s[3] != 'd')c='a';
+		if (s[3] != 'd')c='a';
 		else c='b';
 		break;
 	case 's':
-		if(s[5] != '\0')c='c';
+		if (s[5] != '\0')c='c';
 		else c='`';
 		break;
 	default:			/* DAG -- added support for colors */

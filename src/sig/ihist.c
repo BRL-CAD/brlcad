@@ -46,55 +46,55 @@ int main(int argc, char **argv)
 	int	max, min;
 	long	num, levels=0;
 
-	while( argc > 1 ) {
-		if( strcmp( argv[1], "-v" ) == 0 ) {
+	while ( argc > 1 ) {
+		if ( strcmp( argv[1], "-v" ) == 0 ) {
 			verbose++;
 		} else
 			break;
 		argc--;
 		argv++;
 	}
-	if( argc > 1 || isatty(fileno(stdin)) ) {
+	if ( argc > 1 || isatty(fileno(stdin)) ) {
 		bu_exit(1, "%s", usage );
 	}
 
 	num = 0;
 	zerop = &values[32768];
-	while( (n = fread(ibuf, 2, 1024, stdin)) > 0 ) {
+	while ( (n = fread(ibuf, 2, 1024, stdin)) > 0 ) {
 		num += n;
-		for( i = 0; i < n; i++ ) {
+		for ( i = 0; i < n; i++ ) {
 			zerop[ ibuf[i] ] ++;
 		}
 	}
 	printf( "%ld values\n", num );
 	max = 32767;
-	while( zerop[max] == 0 )
+	while ( zerop[max] == 0 )
 		max--;
 	min = -32768;
-	while( zerop[min] == 0 )
+	while ( zerop[min] == 0 )
 		min++;
 	printf( "Max = %d\n", max );
 	printf( "Min = %d\n", min );
 
 	printf( "Bits\n" );
-	for( i = -32768; i < 32768; i++ ) {
-		if( zerop[i] == 0 )
+	for ( i = -32768; i < 32768; i++ ) {
+		if ( zerop[i] == 0 )
 			continue;
 		levels++;
-		for( bit = 0; bit < 16; bit++ ) {
-			if( i & (1<<bit) )
+		for ( bit = 0; bit < 16; bit++ ) {
+			if ( i & (1<<bit) )
 				bits[ bit ] += zerop[i];
 		}
 	}
-	for( bit = 0; bit < 16; bit++ ) {
+	for ( bit = 0; bit < 16; bit++ ) {
 		printf( "%8ld: %10ld (%f)\n",
 			bit, bits[bit], (double)bits[bit]/(double)num );
 	}
 
 	printf( "%ld levels used (%04.2f %%)\n", levels, levels/65535.0 * 100.0 );
-	if( verbose ) {
-		for( i = -32768; i < 32768; i++ ) {
-			if( zerop[i] ) {
+	if ( verbose ) {
+		for ( i = -32768; i < 32768; i++ ) {
+			if ( zerop[i] ) {
 				printf( "%ld %ld\n", i, zerop[i] );
 			}
 		}

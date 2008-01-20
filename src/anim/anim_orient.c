@@ -90,7 +90,7 @@ main(int argc, char **argv)
     void anim_zyx2mat(fastf_t *, const fastf_t *), anim_ypr2mat(fastf_t *, const fastf_t *), anim_quat2mat(fastf_t *, const fastf_t *), anim_mat_print(FILE *, const fastf_t *, int);
     int anim_mat2ypr(fastf_t *, fastf_t *), anim_mat2zyx(const fastf_t *, fastf_t *), anim_mat2quat(fastf_t *, const fastf_t *);
 
-    if(!parse_args(argc, argv)) {
+    if (!parse_args(argc, argv)) {
 	fprintf(stderr, "Get_args error.\n");
 	bu_exit(0, NULL);
     }
@@ -130,7 +130,7 @@ main(int argc, char **argv)
 	    anim_ypr2mat(matrix, angle);
 	    break;
 	case AET:
-	    anim_y_p_r2mat(matrix, angle[0]+M_PI, -angle[1],-angle[2]);
+	    anim_y_p_r2mat(matrix, angle[0]+M_PI, -angle[1], -angle[2]);
 	    break;
 	case XYZ:
 	    anim_zyx2mat(matrix, angle);

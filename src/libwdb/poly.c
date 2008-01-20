@@ -65,7 +65,7 @@ char	*name;
 	memset((char *)&rec, 0, sizeof(rec));
 	rec.p.p_id = ID_P_HEAD;
 	NAMEMOVE( name, rec.p.p_name );
-	if( fwrite( (char *)&rec, sizeof(rec), 1, fp ) != 1 )
+	if ( fwrite( (char *)&rec, sizeof(rec), 1, fp ) != 1 )
 		return(-1);
 	return(0);
 }
@@ -85,7 +85,7 @@ fastf_t	norms[][3];
 	union record rec;
 	register int i, j;
 
-	if( npts < 3 || npts > 5 )  {
+	if ( npts < 3 || npts > 5 )  {
 		fprintf(stderr, "mk_poly:  npts=%d is bad\n", npts);
 		return(-1);
 	}
@@ -96,13 +96,13 @@ fastf_t	norms[][3];
 	memset((char *)&rec, 0, sizeof(rec));
 	rec.q.q_id = ID_P_DATA;
 	rec.q.q_count = npts;
-	for( i=0; i<npts; i++ )  {
-		for( j=0; j<3; j++ )  {
+	for ( i=0; i<npts; i++ )  {
+		for ( j=0; j<3; j++ )  {
 			rec.q.q_verts[i][j] = verts[i][j] * mk_conv2mm;
 			rec.q.q_norms[i][j] = norms[i][j] * mk_conv2mm;
 		}
 	}
-	if( fwrite( (char *)&rec, sizeof(rec), 1, fp ) != 1)
+	if ( fwrite( (char *)&rec, sizeof(rec), 1, fp ) != 1)
 		return(-1);
 	return(0);
 }
@@ -125,7 +125,7 @@ fastf_t	verts[][3];
 	int	i;
 	vect_t	v1, v2, norms[5];
 
-	if( npts < 3 || npts > 5 )  {
+	if ( npts < 3 || npts > 5 )  {
 		fprintf(stderr, "mk_poly:  npts=%d is bad\n", npts);
 		return(-1);
 	}
@@ -137,7 +137,7 @@ fastf_t	verts[][3];
 	VSUB2( v2, verts[npts-1], verts[0] );
 	VCROSS( norms[0], v1, v2 );
 	VUNITIZE( norms[0] );
-	for( i = 1; i < npts; i++ ) {
+	for ( i = 1; i < npts; i++ ) {
 		VMOVE( norms[i], norms[0] );
 	}
 	return( mk_poly(fp, npts, verts, norms) );

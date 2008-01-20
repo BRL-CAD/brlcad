@@ -39,36 +39,36 @@ imageInit()
 		static char lastfbfile[LNBUFSZ]={0}; /* last fbfile */
 	devwid = 512;
 	devhgt = 512;
-	if( fbfile[0] == NUL )
+	if ( fbfile[0] == NUL )
 		return	1;
 	zoom = devwid / gridsz - 1;
-	while( zoom < 3  && devwid < MAXDEVWID )
+	while ( zoom < 3  && devwid < MAXDEVWID )
 		{
 		devwid *= 2;
 		devhgt *= 2;
 		zoom = devwid / gridsz;
 		}
-	if( zoom * gridsz == devwid )
+	if ( zoom * gridsz == devwid )
 		zoom--;
-	if( zoom < 1 )
+	if ( zoom < 1 )
 		zoom = 1;
 
 	/* Determine whether it is necessary to open fbfile. */
-	if( fbiop == FBIO_NULL || fb_getwidth( fbiop ) != devwid )
+	if ( fbiop == FBIO_NULL || fb_getwidth( fbiop ) != devwid )
 		needopen = 1; /* not currently open or size changed */
 	else
-	if( lastfbfile[0] != NUL && strcmp( fbfile, lastfbfile ) != 0 )
+	if ( lastfbfile[0] != NUL && strcmp( fbfile, lastfbfile ) != 0 )
 		needopen = 1; /* name changed */
 	(void) strncpy( lastfbfile, fbfile, LNBUFSZ );
 
-	if( needopen )
+	if ( needopen )
 		{
-		if( ! openFbDevice( fbfile ) )
+		if ( ! openFbDevice( fbfile ) )
 			return	0;
 		paintGridFb();
 		}
 	else
-	if( !(firemode & FM_SHOT) || (firemode & FM_FILE) )
+	if ( !(firemode & FM_SHOT) || (firemode & FM_FILE) )
 		paintGridFb();
 	return	1;
 	}
@@ -82,13 +82,13 @@ openFbDevice( devname )
 char	*devname;
 	{	boolean	ret = 1;
 	notify( "Opening frame buffer", NOTIFY_APPEND );
-	if( zoom < 1 )
+	if ( zoom < 1 )
 		{
 		prntScr( "Device is too small to display image." );
 		ret = 0;
 		goto	safe_exit;
 		}
-	if(	(	(fbiop != FBIO_NULL && fb_getwidth( fbiop ) != devwid)
+	if (	(	(fbiop != FBIO_NULL && fb_getwidth( fbiop ) != devwid)
 		||	pixgrid == NULL)
 		&&	(pixgrid = (unsigned char *) calloc( devwid*3, sizeof(unsigned char) ))
 				== (unsigned char *) NULL )
@@ -99,10 +99,10 @@ char	*devname;
 			goto	safe_exit;
 		}
 	(void) memset((char *) pixgrid, NUL, sizeof(unsigned char)*devwid*3);
-	if( fbiop != FBIO_NULL )
+	if ( fbiop != FBIO_NULL )
 		{
 #if SGI_WINCLOSE_BUG
-		if( strncmp( fbiop->if_name, "/dev/sgi", 8 ) == 0 )
+		if ( strncmp( fbiop->if_name, "/dev/sgi", 8 ) == 0 )
 			{
 			prntScr( "IRIS can't change window size." );
 			ret = 0;
@@ -110,7 +110,7 @@ char	*devname;
 			}
 		else
 #endif
-		if( ! closFbDevice() )
+		if ( ! closFbDevice() )
 			{
 			ret = 0;
 			goto	safe_exit;
@@ -118,12 +118,12 @@ char	*devname;
 
 		}
 	fbiop = fb_open( devname, devwid, devhgt );
-	if( fbiop == NULL )
+	if ( fbiop == NULL )
 		{
 		ret = 0;
 		goto	safe_exit;
 		}
-	else if( fb_clear( fbiop, pixblack ) == -1
+	else if ( fb_clear( fbiop, pixblack ) == -1
 	    ||	(notify( "Zooming", NOTIFY_APPEND ),
 		 fb_zoom( fbiop, 1, 1 ) == -1)
 	    ||	(notify( "Windowing", NOTIFY_DELETE ),
@@ -141,7 +141,7 @@ boolean
 closFbDevice()
 	{	int	ret;
 	notify( "Closing frame buffer", NOTIFY_APPEND );
-	if( fb_close( fbiop ) == -1 )
+	if ( fb_close( fbiop ) == -1 )
 		ret = 0;
 	else
 		{

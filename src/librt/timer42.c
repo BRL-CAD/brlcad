@@ -99,12 +99,12 @@ rt_get_timer(struct bu_vls *vp, double *elapsed)
 	tvsub( &td, &ru1c.ru_utime, &ru0c.ru_utime );
 	user_cpu_secs += td.tv_sec + ((double)td.tv_usec) / 1000000.0;
 
-	if( user_cpu_secs < 0.00001 )  user_cpu_secs = 0.00001;
-	if( elapsed_secs < 0.00001 )  elapsed_secs = user_cpu_secs;	/* It can't be any less! */
+	if ( user_cpu_secs < 0.00001 )  user_cpu_secs = 0.00001;
+	if ( elapsed_secs < 0.00001 )  elapsed_secs = user_cpu_secs;	/* It can't be any less! */
 
-	if( elapsed )  *elapsed = elapsed_secs;
+	if ( elapsed )  *elapsed = elapsed_secs;
 
-	if( vp )  {
+	if ( vp )  {
 		bu_vls_printf( vp, "cpu = %g sec, elapsed = %g sec\n",
 			user_cpu_secs, elapsed_secs );
 		bu_vls_strcat( vp, "    parent: " );
@@ -137,7 +137,7 @@ prusage(register struct rusage *r0, register struct rusage *r1, struct timeval *
 	for (; *cp; cp++)  {
 		if (*cp != '%')
 			bu_vls_putc( vp, *cp );
-		else if (cp[1]) switch(*++cp) {
+		else if (cp[1]) switch (*++cp) {
 
 		case 'U':
 			tvsub(&tdiff, &r1->ru_utime, &r0->ru_utime);
@@ -255,12 +255,12 @@ rt_read_timer(char *str, int len)
 	double		cpu;
 	int		todo;
 
-	if( !str )  return  rt_get_timer( (struct bu_vls *)0, (double *)0 );
+	if ( !str )  return  rt_get_timer( (struct bu_vls *)0, (double *)0 );
 
 	bu_vls_init( &vls );
 	cpu = rt_get_timer( &vls, (double *)0 );
 	todo = bu_vls_strlen( &vls );
-	if( todo > len )  todo = len-1;
+	if ( todo > len )  todo = len-1;
 	strncpy( str, bu_vls_addr(&vls), todo );
 	str[todo] = '\0';
 	return cpu;

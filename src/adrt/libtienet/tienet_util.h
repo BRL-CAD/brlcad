@@ -53,7 +53,7 @@
 #define TIENET_BUFFER_FREE(_b) free(_b.data);
 
 #define TIENET_BUFFER_SIZE(_b, _s) { \
-	if(_s > _b.size) { \
+	if (_s > _b.size) { \
 	  _b.data = realloc(_b.data, _s); \
 	  _b.size = _s; \
         } }

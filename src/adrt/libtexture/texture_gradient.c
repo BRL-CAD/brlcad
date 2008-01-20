@@ -69,9 +69,9 @@ void texture_gradient_work(__TEXTURE_WORK_PROTOTYPE__) {
   /* Transform the Point */
   MATH_VEC_TRANSFORM(pt, id->pos, ADRT_MESH(mesh)->matinv);
 
-  if(td->axis == 1) {
+  if (td->axis == 1) {
     pixel->v[0] = pixel->v[1] = pixel->v[2] = ADRT_MESH(mesh)->max.v[1] - ADRT_MESH(mesh)->min.v[1] > TIE_PREC ? (pt.v[1] - ADRT_MESH(mesh)->min.v[1]) / (ADRT_MESH(mesh)->max.v[1] - ADRT_MESH(mesh)->min.v[1]) : 0.0;
-  } else if(td->axis == 2) {
+  } else if (td->axis == 2) {
     pixel->v[0] = pixel->v[1] = pixel->v[2] = ADRT_MESH(mesh)->max.v[2] - ADRT_MESH(mesh)->min.v[2] > TIE_PREC ? (pt.v[2] - ADRT_MESH(mesh)->min.v[2]) / (ADRT_MESH(mesh)->max.v[2] - ADRT_MESH(mesh)->min.v[1]) : 0.0;
   } else {
     pixel->v[0] = pixel->v[1] = pixel->v[2] = ADRT_MESH(mesh)->max.v[0] - ADRT_MESH(mesh)->min.v[0] > TIE_PREC ? (pt.v[0] - ADRT_MESH(mesh)->min.v[0]) / (ADRT_MESH(mesh)->max.v[0] - ADRT_MESH(mesh)->min.v[1]) : 0.0;

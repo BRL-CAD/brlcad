@@ -124,16 +124,16 @@ old_frame(FILE *fp)
 	char number[128];
 
 	/* Visible part is from -1 to +1 in view space */
-	if( fscanf( fp, "%128s", number ) != 1 )  return(-1);
+	if ( fscanf( fp, "%128s", number ) != 1 )  return(-1);
 	viewsize = atof(number);
-	if( fscanf( fp, "%128s", number ) != 1 )  return(-1);
+	if ( fscanf( fp, "%128s", number ) != 1 )  return(-1);
 	eye_model[X] = atof(number);
-	if( fscanf( fp, "%128s", number ) != 1 )  return(-1);
+	if ( fscanf( fp, "%128s", number ) != 1 )  return(-1);
 	eye_model[Y] = atof(number);
-	if( fscanf( fp, "%128s", number ) != 1 )  return(-1);
+	if ( fscanf( fp, "%128s", number ) != 1 )  return(-1);
 	eye_model[Z] = atof(number);
-	for( i=0; i < 16; i++ )  {
-		if( fscanf( fp, "%128s", number ) != 1 )
+	for ( i=0; i < 16; i++ )  {
+		if ( fscanf( fp, "%128s", number ) != 1 )
 			return(-1);
 		Viewrotscale[i] = atof(number);
 	}
@@ -156,22 +156,22 @@ old_way(FILE *fp)
 	viewsize = -42.0;
 
 	/* Sneek a peek at the first character, and then put it back */
-	if( (c = fgetc( fp )) == EOF )  {
+	if ( (c = fgetc( fp )) == EOF )  {
 		/* Claim old way, all (ie, nothing) done */
 		return(1);
 	}
-	if( ungetc( c, fp ) != c )
+	if ( ungetc( c, fp ) != c )
 		bu_exit(EXIT_FAILURE, "do.c:old_way() ungetc failure\n");
 
 	/*
 	 * Old format files start immediately with a %.9e format,
 	 * so the very first character should be a digit or '-'.
 	 */
-	if( (c < '0' || c > '9') && c != '-' )  {
+	if ( (c < '0' || c > '9') && c != '-' )  {
 		return( 0 );		/* Not old way */
 	}
 
-	if( old_frame( fp ) < 0 || viewsize <= 0.0 )  {
+	if ( old_frame( fp ) < 0 || viewsize <= 0.0 )  {
 		rewind( fp );
 		return(0);		/* Not old way */
 	}
@@ -181,12 +181,12 @@ old_way(FILE *fp)
 
 	curframe = 0;
 	do {
-		if( finalframe >= 0 && curframe > finalframe )
+		if ( finalframe >= 0 && curframe > finalframe )
 			return(1);
-		if( curframe >= desiredframe )
+		if ( curframe >= desiredframe )
 			do_frame( curframe );
 		curframe++;
-	}  while( old_frame( fp ) >= 0 && viewsize > 0.0 );
+	}  while ( old_frame( fp ) >= 0 && viewsize > 0.0 );
 	return(1);			/* old way, all done */
 }
 
@@ -202,28 +202,28 @@ int cm_start( int argc, char **argv)
 	int	frame;
 
 	frame = atoi(argv[1]);
-	if( finalframe >= 0 && frame > finalframe )
+	if ( finalframe >= 0 && frame > finalframe )
 		return(-1);	/* Indicate EOF -- user declared a halt */
-	if( frame >= desiredframe )  {
+	if ( frame >= desiredframe )  {
 		curframe = frame;
 		return(0);
 	}
 
 	/* Skip over unwanted frames -- find next frame start */
-	while( (buf = rt_read_cmd( stdin )) != (char *)0 )  {
+	while ( (buf = rt_read_cmd( stdin )) != (char *)0 )  {
 		register char *cp;
 
 		cp = buf;
-		while( *cp && isspace(*cp) )  cp++;	/* skip spaces */
-		if( strncmp( cp, "start", 5 ) != 0 )  continue;
-		while( *cp && !isspace(*cp) )  cp++;	/* skip keyword */
-		while( *cp && isspace(*cp) )  cp++;	/* skip spaces */
+		while ( *cp && isspace(*cp) )  cp++;	/* skip spaces */
+		if ( strncmp( cp, "start", 5 ) != 0 )  continue;
+		while ( *cp && !isspace(*cp) )  cp++;	/* skip keyword */
+		while ( *cp && isspace(*cp) )  cp++;	/* skip spaces */
 		frame = atoi(cp);
 		bu_free( buf, "rt_read_cmd command buffer (skipping frames)" );
 		buf = (char *)0;
-		if( finalframe >= 0 && frame > finalframe )
+		if ( finalframe >= 0 && frame > finalframe )
 			return(-1);			/* "EOF" */
-		if( frame >= desiredframe )  {
+		if ( frame >= desiredframe )  {
 			curframe = frame;
 			return(0);
 		}
@@ -241,7 +241,7 @@ int cm_eyept(int argc, char **argv)
 {
 	register int i;
 
-	for( i=0; i<3; i++ )
+	for ( i=0; i<3; i++ )
 		eye_model[i] = atof( argv[i+1] );
 	return(0);
 }
@@ -253,12 +253,12 @@ int cm_lookat_pt(int argc, char **argv)
 	int	yflip = 0;
 	quat_t quat;
 
-	if( argc < 4 )
+	if ( argc < 4 )
 		return(-1);
 	pt[X] = atof(argv[1]);
 	pt[Y] = atof(argv[2]);
 	pt[Z] = atof(argv[3]);
-	if( argc > 4 )
+	if ( argc > 4 )
 		yflip = atoi(argv[4]);
 
 	/*
@@ -282,7 +282,7 @@ int cm_vrot( int argc, char **argv)
 {
 	register int i;
 
-	for( i=0; i<16; i++ )
+	for ( i=0; i<16; i++ )
 		Viewrotscale[i] = atof( argv[i+1] );
 	return(0);
 }
@@ -292,7 +292,7 @@ int cm_orientation(int argc, char **argv)
 	register int	i;
 	quat_t		quat;
 
-	for( i=0; i<4; i++ )
+	for ( i=0; i<4; i++ )
 		quat[i] = atof( argv[i+1] );
 	quat_quat2mat( Viewrotscale, quat );
 	return(0);
@@ -302,15 +302,15 @@ int cm_end(int argc, char **argv)
 {
 	struct rt_i *rtip = ap.a_rt_i;
 
-	if( rtip && BU_LIST_IS_EMPTY( &rtip->HeadRegion ) )  {
+	if ( rtip && BU_LIST_IS_EMPTY( &rtip->HeadRegion ) )  {
 		def_tree( rtip );		/* Load the default trees */
 	}
 
 	/* If no matrix or az/el specified yet, use params from cmd line */
-	if( Viewrotscale[15] <= 0.0 )
+	if ( Viewrotscale[15] <= 0.0 )
 		do_ae( azimuth, elevation );
 
-	if( do_frame( curframe ) < 0 )  return(-1);
+	if ( do_frame( curframe ) < 0 )  return(-1);
 	return(0);
 }
 
@@ -319,14 +319,14 @@ int cm_tree( int argc, const char **argv)
 	register struct rt_i *rtip = ap.a_rt_i;
 	struct bu_vls	times;
 
-	if( argc <= 1 )  {
+	if ( argc <= 1 )  {
 		def_tree( rtip );		/* Load the default trees */
 		return(0);
 	}
 	bu_vls_init( &times );
 
 	rt_prep_timer();
-	if( rt_gettrees(rtip, argc-1, &argv[1], npsw) < 0 )
+	if ( rt_gettrees(rtip, argc-1, &argv[1], npsw) < 0 )
 		bu_log("rt_gettrees(%s) FAILED\n", argv[0]);
 	(void)rt_get_timer( &times, NULL );
 
@@ -351,10 +351,10 @@ int cm_multiview( int argc, char **argv)
 		60, 60, 60, 60, 60, 60, 60
 	};
 
-	if( rtip && BU_LIST_IS_EMPTY( &rtip->HeadRegion ) )  {
+	if ( rtip && BU_LIST_IS_EMPTY( &rtip->HeadRegion ) )  {
 		def_tree( rtip );		/* Load the default trees */
 	}
-	for( i=0; i<(sizeof(a)/sizeof(a[0])); i++ )  {
+	for ( i=0; i<(sizeof(a)/sizeof(a[0])); i++ )  {
 		do_ae( (double)a[i], (double)e[i] );
 		(void)do_frame( curframe++ );
 	}
@@ -371,7 +371,7 @@ int cm_multiview( int argc, char **argv)
 int cm_anim(int argc, const char **argv)
 {
 
-	if( db_parse_anim( ap.a_rt_i->rti_dbip, argc, argv ) < 0 )  {
+	if ( db_parse_anim( ap.a_rt_i->rti_dbip, argc, argv ) < 0 )  {
 		bu_log("cm_anim:  %s %s failed\n", argv[1], argv[2]);
 		return(-1);		/* BAD */
 	}
@@ -390,7 +390,7 @@ int cm_clean(int argc, char **argv)
 
 	rt_clean( ap.a_rt_i );
 
-	if(R_DEBUG&RDEBUG_RTMEM_END)
+	if (R_DEBUG&RDEBUG_RTMEM_END)
 		bu_prmem( "After cm_clean" );
 	return(0);
 }
@@ -431,7 +431,7 @@ struct bu_structparse set_parse[] = {
 	{"%d",  1, "rt_bot_tri_per_piece", bu_byteoffset(rt_bot_tri_per_piece), BU_STRUCTPARSE_FUNC_NULL },
 	{"%f",  1, "rt_cline_radius", bu_byteoffset(rt_cline_radius), BU_STRUCTPARSE_FUNC_NULL },
 	{"%S",  1, "ray_data_file", bu_byteoffset(ray_data_file), BU_STRUCTPARSE_FUNC_NULL },
-	{"i", bu_byteoffset(view_parse[0]),"View_Module-Specific Parameters", 0, BU_STRUCTPARSE_FUNC_NULL },
+	{"i", bu_byteoffset(view_parse[0]), "View_Module-Specific Parameters", 0, BU_STRUCTPARSE_FUNC_NULL },
 #endif
 	{"",	0, (char *)0,	0,				BU_STRUCTPARSE_FUNC_NULL }
 };
@@ -445,14 +445,14 @@ int cm_set(int argc, char **argv)
 {
 	struct bu_vls	str;
 
-	if( argc <= 1 ) {
+	if ( argc <= 1 ) {
 		bu_struct_print( "Generic and Application-Specific Parameter Values",
 			set_parse, (char *)0 );
 		return(0);
 	}
 	bu_vls_init( &str );
 	bu_vls_from_argv( &str, argc-1, (const char **)argv+1 );
-	if( bu_struct_parse( &str, set_parse, (char *)0 ) < 0 )  {
+	if ( bu_struct_parse( &str, set_parse, (char *)0 ) < 0 )  {
 		bu_vls_free( &str );
 		return(-1);
 	}
@@ -479,7 +479,7 @@ int cm_opt(int argc, char **argv)
 {
 	int old_bu_optind=bu_optind;	/* need to restore this value after calling get_args() */
 
-	if( get_args( argc, argv ) <= 0 ) {
+	if ( get_args( argc, argv ) <= 0 ) {
 		bu_optind = old_bu_optind;
 		return(-1);
 	}
@@ -502,7 +502,7 @@ def_tree(register struct rt_i *rtip)
 
 	bu_vls_init( &times );
 	rt_prep_timer();
-	if( rt_gettrees(rtip, nobjs, (const char **)objtab, npsw) < 0 )
+	if ( rt_gettrees(rtip, nobjs, (const char **)objtab, npsw) < 0 )
 		bu_log("rt_gettrees(%s) FAILED\n", objtab[0]);
 	(void)rt_get_timer( &times, NULL );
 
@@ -523,7 +523,7 @@ do_prep(struct rt_i *rtip)
 	struct bu_vls	times;
 
 	RT_CHECK_RTI(rtip);
-	if( rtip->needprep )  {
+	if ( rtip->needprep )  {
 		/* Allow lighting model to set up (e.g. lights, materials, etc) */
 		view_setup(rtip);
 
@@ -590,7 +590,7 @@ do_frame(int framenumber)
 		rt_g.debug = rdebug = 0;
 	}
 
-	if( rtip->nsolids <= 0 )
+	if ( rtip->nsolids <= 0 )
 		bu_exit(3, "rt ERROR: No solids\n");
 
 	if (rt_verbosity & VERBOSE_VIEWDETAIL)
@@ -648,34 +648,34 @@ do_frame(int framenumber)
 	}
 
 	/* Process -b and ??? options now, for this frame */
-	if( pix_start == -1 )  {
+	if ( pix_start == -1 )  {
 		pix_start = 0;
 		pix_end = height * width - 1;
 	}
-	if( string_pix_start )  {
+	if ( string_pix_start )  {
 		int xx, yy;
 		register char *cp = string_pix_start;
 
 		xx = atoi(cp);
-		while( *cp >= '0' && *cp <= '9' )  cp++;
-		while( *cp && (*cp < '0' || *cp > '9') ) cp++;
+		while ( *cp >= '0' && *cp <= '9' )  cp++;
+		while ( *cp && (*cp < '0' || *cp > '9') ) cp++;
 		yy = atoi(cp);
 		bu_log("only pixel %d %d\n", xx, yy);
-		if( xx * yy >= 0 )  {
+		if ( xx * yy >= 0 )  {
 			pix_start = yy * width + xx;
 			pix_end = pix_start;
 		}
 	}
-	if( string_pix_end )  {
+	if ( string_pix_end )  {
 		int xx, yy;
 		register char *cp = string_pix_end;
 
 		xx = atoi(cp);
-		while( *cp >= '0' && *cp <= '9' )  cp++;
-		while( *cp && (*cp < '0' || *cp > '9') ) cp++;
+		while ( *cp >= '0' && *cp <= '9' )  cp++;
+		while ( *cp && (*cp < '0' || *cp > '9') ) cp++;
 		yy = atoi(cp);
 		bu_log("ending pixel %d %d\n", xx, yy);
-		if( xx * yy >= 0 )  {
+		if ( xx * yy >= 0 )  {
 			pix_end = yy * width + xx;
 		}
 	}
@@ -689,7 +689,7 @@ do_frame(int framenumber)
 	 */
 #define MINRATE	65
 	npix = width*height*(hypersample+1);
-	if( (lim = bu_cpulimit_get()) > 0 )  {
+	if ( (lim = bu_cpulimit_get()) > 0 )  {
 		bu_cpulimit_set( lim + npix / MINRATE + 100 );
 	}
 
@@ -702,10 +702,10 @@ do_frame(int framenumber)
 	 *  If this image is unlikely to be for debugging,
 	 *  be gentle to the machine.
 	 */
-	if( !interactive )  {
-		if( npix > 256*256 )
+	if ( !interactive )  {
+		if ( npix > 256*256 )
 			bu_nice_set(10);
-		else if( npix > 512*512 )
+		else if ( npix > 512*512 )
 			bu_nice_set(14);
 	}
 
@@ -713,8 +713,8 @@ do_frame(int framenumber)
 	 *  Determine output file name
 	 *  On UNIX only, check to see if this is a "restart".
 	 */
-	if( outputfile != (char *)0 )  {
-		if( framenumber <= 0 )  {
+	if ( outputfile != (char *)0 )  {
+		if ( framenumber <= 0 )  {
 			snprintf( framename, 128, "%s", outputfile );
 		}  else  {
 			snprintf( framename, 128, "%s.%d", outputfile, framenumber );
@@ -737,20 +737,20 @@ do_frame(int framenumber)
 		 */
 		{
 			struct		stat	sb;
-			if( stat( framename, &sb ) >= 0 &&
+			if ( stat( framename, &sb ) >= 0 &&
 			    sb.st_size > 0 &&
 			    sb.st_size < width*height*sizeof(RGBpixel))  {
 				/* File exists, with partial results */
 				register int	fd;
-				if( (fd = open( framename, 2 )) < 0 ||
+				if ( (fd = open( framename, 2 )) < 0 ||
 				    (outfp = fdopen( fd, "r+" )) == NULL )  {
 					perror( framename );
-					if( matflag )  return(0);	/* OK */
+					if ( matflag )  return(0);	/* OK */
 					return(-1);			/* Bad */
 				}
 				/* Read existing pix data into the frame buffer */
 				if (sb.st_size > 0) {
-					(void)fread(pixmap, 1,(size_t)sb.st_size, outfp);
+					(void)fread(pixmap, 1, (size_t)sb.st_size, outfp);
 				}
 			}
 		}
@@ -758,13 +758,13 @@ do_frame(int framenumber)
 
 		/* Ordinary case for creating output file */
 #if defined(_WIN32) && !defined(__CYGWIN__)
-		if( outfp == NULL && (outfp = fopen( framename, "w+b" )) == NULL )
+		if ( outfp == NULL && (outfp = fopen( framename, "w+b" )) == NULL )
 #else
-		if( outfp == NULL && (outfp = fopen( framename, "w" )) == NULL )
+		if ( outfp == NULL && (outfp = fopen( framename, "w" )) == NULL )
 #endif
 		    {
 			perror( framename );
-			if( matflag )  return(0);	/* OK */
+			if ( matflag )  return(0);	/* OK */
 			return(-1);			/* Bad */
 		    }
 
@@ -777,7 +777,7 @@ do_frame(int framenumber)
 	view_2init( &ap, framename );
 
 	/* Just while doing the ray-tracing */
-	if(R_DEBUG&RDEBUG_RTMEM)
+	if (R_DEBUG&RDEBUG_RTMEM)
 		bu_debug |= (BU_DEBUG_MEM_CHECK|BU_DEBUG_MEM_LOG);
 
 	rtip->nshots = 0;
@@ -799,9 +799,9 @@ do_frame(int framenumber)
 	 */
 	rt_prep_timer();
 
-	if( incr_mode )  {
-		for( incr_level = 1; incr_level <= incr_nlevel; incr_level++ )  {
-			if( incr_level > 1 )
+	if ( incr_mode )  {
+		for ( incr_level = 1; incr_level <= incr_nlevel; incr_level++ )  {
+			if ( incr_level > 1 )
 				view_2init( &ap, framename );
 
 			do_run( 0, (1<<incr_level)*(1<<incr_level)-1 );
@@ -823,7 +823,7 @@ do_frame(int framenumber)
 	view_end( &ap );
 
 	/* Stop memory debug printing until next frame, leave full checking on */
-	if(R_DEBUG&RDEBUG_RTMEM)
+	if (R_DEBUG&RDEBUG_RTMEM)
 		bu_debug &= ~BU_DEBUG_MEM_LOG;
 
 	/*
@@ -836,12 +836,12 @@ do_frame(int framenumber)
 	 *  the same amount of CPU time, regardless of the number of CPUs.
 	 */
 #if !defined(alliant)
-	if( npsw > 1 )  {
+	if ( npsw > 1 )  {
 		int avail_cpus;
 		int ncpus;
 
 		avail_cpus = bu_avail_cpus();
-		if( npsw > avail_cpus ) {
+		if ( npsw > avail_cpus ) {
 			ncpus = avail_cpus;
 		} else {
 			ncpus = npsw;
@@ -886,16 +886,16 @@ do_frame(int framenumber)
 			rtip->rti_nrays,
 			wallclock, ((double)(rtip->rti_nrays))/wallclock );
 	}
-	if( outfp != NULL )  {
+	if ( outfp != NULL )  {
 		/* Protect finished product */
-		if( outputfile != (char *)0 )
+		if ( outputfile != (char *)0 )
 		    (void)bu_fchmod(framename, outfp, 0444);
 
 		(void)fclose(outfp);
 		outfp = NULL;
 	}
 
-	if(R_DEBUG&RDEBUG_STATS)  {
+	if (R_DEBUG&RDEBUG_STATS)  {
 		/* Print additional statistics */
 		res_pr();
 	}
@@ -926,12 +926,12 @@ do_ae(double azim, double elev)
 	mat_t	toEye;
 	struct rt_i *rtip = ap.a_rt_i;
 
-	if( rtip->nsolids <= 0 )
+	if ( rtip->nsolids <= 0 )
 	    bu_exit(EXIT_FAILURE, "do_ae: no solids active\n");
 	if ( rtip->nregions <= 0 )
 	    bu_exit(EXIT_FAILURE, "do_ae: no regions active\n");
 
-	if( rtip->mdl_max[X] >= INFINITY ) {
+	if ( rtip->mdl_max[X] >= INFINITY ) {
 	    bu_log("do_ae: infinite model bounds? setting a unit minimum\n");
 	    VSETALL( rtip->mdl_min, -1 );
 	}
@@ -966,10 +966,10 @@ do_ae(double azim, double elev)
 	/* Fit a sphere to the model RPP, diameter is viewsize,
 	 * unless viewsize command used to override.
 	 */
-	if( viewsize <= 0 ) {
+	if ( viewsize <= 0 ) {
 		VSUB2( diag, rtip->mdl_max, rtip->mdl_min );
 		viewsize = MAGNITUDE( diag );
-		if( aspect > 1 ) {
+		if ( aspect > 1 ) {
 			/* don't clip any of the image when autoscaling */
 			viewsize *= aspect;
 		}
@@ -992,9 +992,9 @@ res_pr(void)
 
 	fprintf(stderr, "\nResource use summary, by processor:\n");
 	res = &resource[0];
-	for( i=0; i<npsw; i++, res++ )  {
+	for ( i=0; i<npsw; i++, res++ )  {
 		fprintf(stderr, "---CPU %d:\n", i);
-		if( res->re_magic != RESOURCE_MAGIC )  {
+		if ( res->re_magic != RESOURCE_MAGIC )  {
 			fprintf(stderr, "Bad magic number!!\n");
 			continue;
 		}

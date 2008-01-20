@@ -284,7 +284,7 @@ rt_xxx_import( struct rt_db_internal *ip, const struct bu_external *ep, const ma
 	BU_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
 	/* Check record type */
-	if( rp->u_id != ID_SOLID )  {
+	if ( rp->u_id != ID_SOLID )  {
 		bu_log("rt_xxx_import: defective record\n");
 		return(-1);
 	}
@@ -315,7 +315,7 @@ rt_xxx_export( struct bu_external *ep, const struct rt_db_internal *ip, double l
 	union record		*rec;
 
 	RT_CK_DB_INTERNAL(ip);
-	if( ip->idb_type != ID_XXX )  return(-1);
+	if ( ip->idb_type != ID_XXX )  return(-1);
 	xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
 	RT_XXX_CK_MAGIC(xxx_ip);
 
@@ -404,7 +404,7 @@ rt_xxx_export5( struct bu_external *ep, const struct rt_db_internal *ip, double 
 	fastf_t			vec[ELEMENTS_PER_VECT];
 
 	RT_CK_DB_INTERNAL(ip);
-	if( ip->idb_type != ID_XXX )  return(-1);
+	if ( ip->idb_type != ID_XXX )  return(-1);
 	xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
 	RT_XXX_CK_MAGIC(xxx_ip);
 

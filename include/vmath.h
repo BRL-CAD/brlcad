@@ -236,63 +236,63 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 #define MDZ	11
 
 /** @brief set translation values of 4x4 matrix with x, y, z values */
-#define MAT_DELTAS(_m,_x,_y,_z)	{ \
+#define MAT_DELTAS(_m, _x, _y, _z)	{ \
 			(_m)[MDX] = (_x); \
 			(_m)[MDY] = (_y); \
 			(_m)[MDZ] = (_z); }
 
 /** @brief set translation values of 4x4 matrix from a vector */
-#define MAT_DELTAS_VEC(_m,_v)	\
+#define MAT_DELTAS_VEC(_m, _v)	\
 			MAT_DELTAS(_m, (_v)[X], (_v)[Y], (_v)[Z] )
 
 /** @brief set translation values of 4x4 matrix from a reversed vector */
-#define MAT_DELTAS_VEC_NEG(_m,_v)	\
-			MAT_DELTAS(_m,-(_v)[X],-(_v)[Y],-(_v)[Z] )
+#define MAT_DELTAS_VEC_NEG(_m, _v)	\
+			MAT_DELTAS(_m, -(_v)[X], -(_v)[Y], -(_v)[Z] )
 
 /** @brief get translation values of 4x4 matrix to a vector */
-#define MAT_DELTAS_GET(_v,_m) { \
+#define MAT_DELTAS_GET(_v, _m) { \
 			(_v)[X] = (_m)[MDX]; \
 			(_v)[Y] = (_m)[MDY]; \
 			(_v)[Z] = (_m)[MDZ]; }
 
 /** @brief get translation values of 4x4 matrix to a vector, reversed */
-#define MAT_DELTAS_GET_NEG(_v,_m) { \
+#define MAT_DELTAS_GET_NEG(_v, _m) { \
 			(_v)[X] = -(_m)[MDX]; \
 			(_v)[Y] = -(_m)[MDY]; \
 			(_v)[Z] = -(_m)[MDZ]; }
 
 /** @brief increment translation elements in a 4x4 matrix with x, y, z values */
-#define MAT_DELTAS_ADD(_m,_x,_y,_z) { \
+#define MAT_DELTAS_ADD(_m, _x, _y, _z) { \
 			(_m)[MDX] += (_x); \
 			(_m)[MDY] += (_y); \
 			(_m)[MDZ] += (_z); }
 
 /** @brief increment translation elements in a 4x4 matrix from a vector */
-#define MAT_DELTAS_ADD_VEC(_m,_v) { \
+#define MAT_DELTAS_ADD_VEC(_m, _v) { \
 			(_m)[MDX] += (_v)[X]; \
 			(_m)[MDY] += (_v)[Y]; \
 			(_m)[MDZ] += (_v)[Z]; }
 
 /** @brief decrement translation elements in a 4x4 matrix with x, y, z values */
-#define MAT_DELTAS_SUB(_m,_x,_y,_z) { \
+#define MAT_DELTAS_SUB(_m, _x, _y, _z) { \
 			(_m)[MDX] -= (_x); \
 			(_m)[MDY] -= (_y); \
 			(_m)[MDZ] -= (_z); }
 
 /** @brief decrement translation elements in a 4x4 matrix from a vector */
-#define MAT_DELTAS_SUB_VEC(_m,_v) { \
+#define MAT_DELTAS_SUB_VEC(_m, _v) { \
 			(_m)[MDX] -= (_v)[X]; \
 			(_m)[MDY] -= (_v)[Y]; \
 			(_m)[MDZ] -= (_v)[Z]; }
 
 /** @brief decrement translation elements in a 4x4 matrix with x, y, z values */
-#define MAT_DELTAS_MUL(_m,_x,_y,_z) { \
+#define MAT_DELTAS_MUL(_m, _x, _y, _z) { \
 			(_m)[MDX] *= (_x); \
 			(_m)[MDY] *= (_y); \
 			(_m)[MDZ] *= (_z); }
 
 /** @brief decrement translation elements in a 4x4 matrix from a vector */
-#define MAT_DELTAS_MUL_VEC(_m,_v) { \
+#define MAT_DELTAS_MUL_VEC(_m, _v) { \
 			(_m)[MDX] *= (_v)[X]; \
 			(_m)[MDY] *= (_v)[Y]; \
 			(_m)[MDZ] *= (_v)[Z]; }
@@ -367,7 +367,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 
 /* # define MAT_ZERO(m)	{\
 	register int _j; \
-	for(_j=0; _j<16; _j++) (m)[_j]=0.0; }
+	for (_j=0; _j<16; _j++) (m)[_j]=0.0; }
   */
 
 /** @brief set matrix to identity */
@@ -378,7 +378,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 	(m)[0] = (m)[5] = (m)[10] = (m)[15] = 1.0;}
 
 /* #define MAT_IDN(m)	{\
-	int _j;	for(_j=0;_j<16;_j++) (m)[_j]=0.0;\
+	int _j;	for (_j=0;_j<16;_j++) (m)[_j]=0.0;\
 	(m)[0] = (m)[5] = (m)[10] = (m)[15] = 1.0;}
   */
 
@@ -426,7 +426,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 /** @brief Transfer vector of length `n' at `b' to vector at `a' */
 #define VMOVEN(a, b, n) \
 	{ register int _vmove; \
-	for(_vmove = 0; _vmove < (n); _vmove++) \
+	for (_vmove = 0; _vmove < (n); _vmove++) \
 		(a)[_vmove] = (b)[_vmove]; \
 	}
 
@@ -470,7 +470,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 /** @brief Add vectors of length `n' at `b' and `c', store result at `a' */
 #define VADD2N(a, b, c, n) \
 	{ register int _vadd2; \
-	for(_vadd2 = 0; _vadd2 < (n); _vadd2++) \
+	for (_vadd2 = 0; _vadd2 < (n); _vadd2++) \
 		(a)[_vadd2] = (b)[_vadd2] + (c)[_vadd2]; \
 	}
 
@@ -491,7 +491,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 /** @brief Subtract `n' length vector at `c' from vector at `b', store result at `a' */
 #define VSUB2N(a, b, c, n) \
 	{ register int _vsub2; \
-	for(_vsub2 = 0; _vsub2 < (n); _vsub2++) \
+	for (_vsub2 = 0; _vsub2 < (n); _vsub2++) \
 		(a)[_vsub2] = (b)[_vsub2] - (c)[_vsub2]; \
 	}
 
@@ -512,7 +512,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 /** @brief Vectors:  A = B - C - D for vectors of length `n' */
 #define VSUB3N(a, b, c, d, n) \
 	{ register int _vsub3; \
-	for(_vsub3 = 0; _vsub3 < (n); _vsub3++) \
+	for (_vsub3 = 0; _vsub3 < (n); _vsub3++) \
 		(a)[_vsub3] = (b)[_vsub3] - (c)[_vsub3] - (d)[_vsub3]; \
 	}
 
@@ -529,7 +529,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 /** @brief Add 3 vectors of length `n' at `b', `c', and `d', store result at `a' */
 #define VADD3N(a, b, c, d, n) \
 	{ register int _vadd3; \
-	for(_vadd3 = 0; _vadd3 < (n); _vadd3++) \
+	for (_vadd3 = 0; _vadd3 < (n); _vadd3++) \
 		(a)[_vadd3] = (b)[_vadd3] + (c)[_vadd3] + (d)[_vadd3]; \
 	}
 
@@ -546,7 +546,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 /** @brief Add 4 `n' length vectors at `b', `c', `d', and `e', store result at `a' */
 #define VADD4N(a, b, c, d, e, n) \
 	{ register int _vadd4; \
-	for(_vadd4 = 0; _vadd4 < (n); _vadd4++) \
+	for (_vadd4 = 0; _vadd4 < (n); _vadd4++) \
 		(a)[_vadd4] = (b)[_vadd4] + (c)[_vadd4] + (d)[_vadd4] + (e)[_vadd4];\
 	}
 
@@ -569,7 +569,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 /** @brief Scale vector of length `n' at `b' by scalar `c', store result at `a' */
 #define VSCALEN(a, b, c, n) \
 	{ register int _vscale; \
-	for(_vscale = 0; _vscale < (n); _vscale++) \
+	for (_vscale = 0; _vscale < (n); _vscale++) \
 		(a)[_vscale] = (b)[_vscale] * (c); \
 	}
 
@@ -584,9 +584,9 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 	register int _vunitize; \
 	if ( ! NEAR_ZERO( _f-1.0, VUNITIZE_TOL ) ) { \
 		_f = sqrt( _f ); \
-		if( _f < VDIVIDE_TOL ) { VSETALL( (a), 0.0 ); } else { \
+		if ( _f < VDIVIDE_TOL ) { VSETALL( (a), 0.0 ); } else { \
 			_f = 1.0/_f; \
-			for(_vunitize = 0; _vunitize < 3; _vunitize++) \
+			for (_vunitize = 0; _vunitize < 3; _vunitize++) \
 				(a)[_vunitize] *= _f; \
 		} \
 	} \
@@ -596,7 +596,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 	register double _f = MAGSQ(a); \
 	if ( ! NEAR_ZERO( _f-1.0, VUNITIZE_TOL ) ) { \
 		_f = sqrt( _f ); \
-		if( _f < VDIVIDE_TOL ) { VSETALL( (a), 0.0 ); } else { \
+		if ( _f < VDIVIDE_TOL ) { VSETALL( (a), 0.0 ); } else { \
 			_f = 1.0/_f; \
 			(a)[X] *= _f; (a)[Y] *= _f; (a)[Z] *= _f; \
 		} \
@@ -607,7 +607,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 /** @brief If vector magnitude is too small, return an error code */
 #define VUNITIZE_RET(a, ret)	{ \
 			register double _f; _f = MAGNITUDE(a); \
-			if( _f < VDIVIDE_TOL ) return(ret); \
+			if ( _f < VDIVIDE_TOL ) return(ret); \
 			_f = 1.0/_f; \
 			(a)[X] *= _f; (a)[Y] *= _f; (a)[Z] *= _f; }
 
@@ -626,7 +626,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 
 #define VADD2SCALEN( o, a, b, n ) \
 	{ register int _vadd2scale; \
-	for( _vadd2scale = 0; _vadd2scale < (n); _vadd2scale++ ) \
+	for ( _vadd2scale = 0; _vadd2scale < (n); _vadd2scale++ ) \
 		(o)[_vadd2scale] = ((a)[_vadd2scale] + (b)[_vadd2scale]) * (s); \
 	}
 
@@ -645,7 +645,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 
 #define VSUB2SCALEN( o, a, b, n ) \
 	{ register int _vsub2scale; \
-	for( _vsub2scale = 0; _vsub2scale < (n); _vsub2scale++ ) \
+	for ( _vsub2scale = 0; _vsub2scale < (n); _vsub2scale++ ) \
 		(o)[_vsub2scale] = ((a)[_vsub2scale] - (b)[_vsub2scale]) * (s); \
 	}
 
@@ -664,7 +664,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 
 #define VCOMB3N(o, a, b, c, d, e, f, n)	{\
 	{ register int _vcomb3; \
-	for(_vcomb3 = 0; _vcomb3 < (n); _vcomb3++) \
+	for (_vcomb3 = 0; _vcomb3 < (n); _vcomb3++) \
 		(o)[_vcomb3] = (a) * (b)[_vcomb3] + (c) * (d)[_vcomb3] + (e) * (f)[_vcomb3]; \
 	} }
 
@@ -679,7 +679,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 
 #define VCOMB2N(o, a, b, c, d, n)	{\
 	{ register int _vcomb2; \
-	for(_vcomb2 = 0; _vcomb2 < (n); _vcomb2++) \
+	for (_vcomb2 = 0; _vcomb2 < (n); _vcomb2++) \
 		(o)[_vcomb2] = (a) * (b)[_vcomb2] + (c) * (d)[_vcomb2]; \
 	} }
 
@@ -709,7 +709,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 
 #define VJOIN2N(a, b, c, d, e, f, n)	\
 	{ register int _vjoin2; \
-	for(_vjoin2 = 0; _vjoin2 < (n); _vjoin2++) \
+	for (_vjoin2 = 0; _vjoin2 < (n); _vjoin2++) \
 		(a)[_vjoin2] = (b)[_vjoin2] + (c) * (d)[_vjoin2] + (e) * (f)[_vjoin2]; \
 	}
 
@@ -724,7 +724,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 
 #define VJOIN1N(a, b, c, d, n) \
 	{ register int _vjoin1; \
-	for(_vjoin1 = 0; _vjoin1 < (n); _vjoin1++) \
+	for (_vjoin1 = 0; _vjoin1 < (n); _vjoin1++) \
 		(a)[_vjoin1] = (b)[_vjoin1] + (c) * (d)[_vjoin1]; \
 	}
 
@@ -754,7 +754,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 
 #define VBLEND2N(a, b, c, d, e, n)	\
 	{ register int _vblend2; \
-	for(_vblend2 = 0; _vblend2 < (n); _vblend2++) \
+	for (_vblend2 = 0; _vblend2 < (n); _vblend2++) \
 		(a)[_vblend2] = (b) * (c)[_vblend2] + (d) * (e)[_vblend2]; \
 	}
 
@@ -773,7 +773,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
  *
  *  If the angle from `b' to `c' goes clockwise, then
  *  the result vector points "into" the plane (inward normal).
- *  Example:  b=(0, 1, 0), c=(1, 0, 0), then bXc=(0, 0,-1).
+ *  Example:  b=(0, 1, 0), c=(1, 0, 0), then bXc=(0, 0, -1).
  *
  *  If the angle from `b' to `c' goes counter-clockwise, then
  *  the result vector points "out" of the plane.
@@ -844,7 +844,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 #ifdef SHORT_VECTORS
 #define VELMUL(a, b, c) \
 	{ register int _velmul; \
-	for(_velmul = 0; _velmul < 3; _velmul++) \
+	for (_velmul = 0; _velmul < 3; _velmul++) \
 		(a)[_velmul] = (b)[_velmul] * (c)[_velmul]; \
 	}
 #else
@@ -857,7 +857,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 #ifdef SHORT_VECTORS
 #define VELMUL3(a, b, c, d) \
 	{ register int _velmul; \
-	for(_velmul = 0; _velmul < 3; _velmul++) \
+	for (_velmul = 0; _velmul < 3; _velmul++) \
 		(a)[_velmul] = (b)[_velmul] * (c)[_velmul] * (d)[_velmul]; \
 	}
 #else
@@ -876,19 +876,19 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 /** @brief Given a direction vector, compute the inverses of each element.
  * When division by zero would have occured, mark inverse as INFINITY. */
 #define VINVDIR( _inv, _dir )	{ \
-	if( (_dir)[X] < -SQRT_SMALL_FASTF || (_dir)[X] > SQRT_SMALL_FASTF )  { \
+	if ( (_dir)[X] < -SQRT_SMALL_FASTF || (_dir)[X] > SQRT_SMALL_FASTF )  { \
 		(_inv)[X]=1.0/(_dir)[X]; \
 	} else { \
 		(_dir)[X] = 0.0; \
 		(_inv)[X] = INFINITY; \
 	} \
-	if( (_dir)[Y] < -SQRT_SMALL_FASTF || (_dir)[Y] > SQRT_SMALL_FASTF )  { \
+	if ( (_dir)[Y] < -SQRT_SMALL_FASTF || (_dir)[Y] > SQRT_SMALL_FASTF )  { \
 		(_inv)[Y]=1.0/(_dir)[Y]; \
 	} else { \
 		(_dir)[Y] = 0.0; \
 		(_inv)[Y] = INFINITY; \
 	} \
-	if( (_dir)[Z] < -SQRT_SMALL_FASTF || (_dir)[Z] > SQRT_SMALL_FASTF )  { \
+	if ( (_dir)[Z] < -SQRT_SMALL_FASTF || (_dir)[Z] > SQRT_SMALL_FASTF )  { \
 		(_inv)[Z]=1.0/(_dir)[Z]; \
 	} else { \
 		(_dir)[Z] = 0.0; \
@@ -902,7 +902,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 #ifdef SHORT_VECTORS
 #define MAT3X3VEC(o, mat, vec) \
 	{ register int _m3x3v; \
-	for(_m3x3v = 0; _m3x3v < 3; _m3x3v++) \
+	for (_m3x3v = 0; _m3x3v < 3; _m3x3v++) \
 		(o)[_m3x3v] = (mat)[4*_m3x3v+0]*(vec)[X] + \
 			  (mat)[4*_m3x3v+1]*(vec)[Y] + \
 			  (mat)[4*_m3x3v+2]*(vec)[Z]; \
@@ -918,7 +918,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 #ifdef SHORT_VECTORS
 #define VEC3X3MAT(o, i, m) \
 	{ register int _v3x3m; \
-	for(_v3x3m = 0; _v3x3m < 3; _v3x3m++) \
+	for (_v3x3m = 0; _v3x3m < 3; _v3x3m++) \
 		(o)[_v3x3m] = (i)[X]*(m)[_v3x3m] + \
 			(i)[Y]*(m)[_v3x3m+4] + \
 			(i)[Z]*(m)[_v3x3m+8]; \
@@ -934,7 +934,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 #ifdef SHORT_VECTORS
 #define MAT3X2VEC(o, mat, vec) \
 	{ register int _m3x2v; \
-	for(_m3x2v = 0; _m3x2v < 3; _m3x2v++) \
+	for (_m3x2v = 0; _m3x2v < 3; _m3x2v++) \
 		(o)[_m3x2v] = (mat)[4*_m3x2v]*(vec)[X] + \
 			(mat)[4*_m3x2v+1]*(vec)[Y]; \
 	}
@@ -949,7 +949,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 #ifdef SHORT_VECTORS
 #define VEC2X3MAT(o, i, m) \
 	{ register int _v2x3m; \
-	for(_v2x3m = 0; _v2x3m < 3; _v2x3m++) \
+	for (_v2x3m = 0; _v2x3m < 3; _v2x3m++) \
 		(o)[_v2x3m] = (i)[X]*(m)[_v2x3m] + (i)[Y]*(m)[2*_v2x3m]; \
 	}
 #else
@@ -965,16 +965,16 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 	{ register double _f; \
 	register int _i_m4x3p, _j_m4x3p; \
 	_f = 0.0; \
-	for(_j_m4x3p = 0; _j_m4x3p < 3; _j_m4x3p++)  \
+	for (_j_m4x3p = 0; _j_m4x3p < 3; _j_m4x3p++)  \
 		_f += (m)[_j_m4x3p+12] * (i)[_j_m4x3p]; \
 	_f = 1.0/(_f + (m)[15]); \
-	for(_i_m4x3p = 0; _i_m4x3p < 3; _i_m4x3p++) \
+	for (_i_m4x3p = 0; _i_m4x3p < 3; _i_m4x3p++) \
 		(o)[_i_m4x3p] = 0.0; \
-	for(_i_m4x3p = 0; _i_m4x3p < 3; _i_m4x3p++)  { \
-		for(_j_m4x3p = 0; _j_m4x3p < 3; _j_m4x3p++) \
+	for (_i_m4x3p = 0; _i_m4x3p < 3; _i_m4x3p++)  { \
+		for (_j_m4x3p = 0; _j_m4x3p < 3; _j_m4x3p++) \
 			(o)[_i_m4x3p] += (m)[_j_m4x3p+4*_i_m4x3p] * (i)[_j_m4x3p]; \
 	} \
-	for(_i_m4x3p = 0; _i_m4x3p < 3; _i_m4x3p++)  { \
+	for (_i_m4x3p = 0; _i_m4x3p < 3; _i_m4x3p++)  { \
 		(o)[_i_m4x3p] = ((o)[_i_m4x3p] + (m)[4*_i_m4x3p+3]) * _f; \
 	} }
 #else
@@ -998,10 +998,10 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 #ifdef SHORT_VECTORS
 #define MAT4X4PNT(o, m, i) \
 	{ register int _i_m4x4p, _j_m4x4p; \
-	for(_i_m4x4p = 0; _i_m4x4p < 4; _i_m4x4p++) \
+	for (_i_m4x4p = 0; _i_m4x4p < 4; _i_m4x4p++) \
 		(o)[_i_m4x4p] = 0.0; \
-	for(_i_m4x4p = 0; _i_m4x4p < 4; _i_m4x4p++) \
-		for(_j_m4x4p = 0; _j_m4x4p < 4; _j_m4x4p++) \
+	for (_i_m4x4p = 0; _i_m4x4p < 4; _i_m4x4p++) \
+		for (_j_m4x4p = 0; _j_m4x4p < 4; _j_m4x4p++) \
 			(o)[_i_m4x4p] += (m)[_j_m4x4p+4*_i_m4x4p] * (i)[_j_m4x4p]; \
 	}
 #else
@@ -1020,13 +1020,13 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 	{ register double _f; \
 	register int _i_m4x3v, _j_m4x3v; \
 	_f = 1.0/((m)[15]); \
-	for(_i_m4x3v = 0; _i_m4x3v < 3; _i_m4x3v++) \
+	for (_i_m4x3v = 0; _i_m4x3v < 3; _i_m4x3v++) \
 		(o)[_i_m4x3v] = 0.0; \
-	for(_i_m4x3v = 0; _i_m4x3v < 3; _i_m4x3v++) { \
-		for(_j_m4x3v = 0; _j_m4x3v < 3; _j_m4x3v++) \
+	for (_i_m4x3v = 0; _i_m4x3v < 3; _i_m4x3v++) { \
+		for (_j_m4x3v = 0; _j_m4x3v < 3; _j_m4x3v++) \
 			(o)[_i_m4x3v] += (m)[_j_m4x3v+4*_i_m4x3v] * (i)[_j_m4x3v]; \
 	} \
-	for(_i_m4x3v = 0; _i_m4x3v < 3; _i_m4x3v++) { \
+	for (_i_m4x3v = 0; _i_m4x3v < 3; _i_m4x3v++) { \
 		(o)[_i_m4x3v] *= _f; \
 	} }
 #else
@@ -1075,17 +1075,17 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 	NEAR_ZERO(v[X], tol) && NEAR_ZERO(v[Y], tol) && NEAR_ZERO(v[Z], tol)  )
 
 /** @brief Macros to update min and max X, Y, Z values to contain a point */
-#define V_MIN(r, s)	if( (s) < (r) ) r = (s)
-#define V_MAX(r, s)	if( (s) > (r) ) r = (s)
-#define VMIN(r, s)	{ V_MIN((r)[X],(s)[X]); V_MIN((r)[Y],(s)[Y]); V_MIN((r)[Z],(s)[Z]); }
-#define VMAX(r, s)	{ V_MAX((r)[X],(s)[X]); V_MAX((r)[Y],(s)[Y]); V_MAX((r)[Z],(s)[Z]); }
+#define V_MIN(r, s)	if ( (s) < (r) ) r = (s)
+#define V_MAX(r, s)	if ( (s) > (r) ) r = (s)
+#define VMIN(r, s)	{ V_MIN((r)[X], (s)[X]); V_MIN((r)[Y], (s)[Y]); V_MIN((r)[Z], (s)[Z]); }
+#define VMAX(r, s)	{ V_MAX((r)[X], (s)[X]); V_MAX((r)[Y], (s)[Y]); V_MAX((r)[Z], (s)[Z]); }
 #define VMINMAX( min, max, pt )	{ VMIN( (min), (pt) ); VMAX( (max), (pt) ); }
 
 /** @brief Divide out homogeneous parameter from hvect_t, creating vect_t */
 #ifdef SHORT_VECTORS
 #define HDIVIDE(a, b)  \
 	{ register int _hdivide; \
-	for(_hdivide = 0; _hdivide < 3; _hdivide++) \
+	for (_hdivide = 0; _hdivide < 3; _hdivide++) \
 		(a)[_hdivide] = (b)[_hdivide] / (b)[H]; \
 	}
 #else
@@ -1193,7 +1193,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 
 /** @brief Normalize quaternion 'a' to be a unit quaternion */
 #define QUNITIZE(a)	{register double _f; _f = QMAGNITUDE(a); \
-			if( _f < VDIVIDE_TOL ) _f = 0.0; else _f = 1.0/_f; \
+			if ( _f < VDIVIDE_TOL ) _f = 0.0; else _f = 1.0/_f; \
 			(a)[X] *= _f; (a)[Y] *= _f; (a)[Z] *= _f; (a)[W] *= _f; }
 
 /** @brief Return scalar magnitude squared of quaternion at `a' */
@@ -1228,7 +1228,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 
 /** @brief Multiplicative inverse quaternion */
 #define QINVERSE(a, b)	{ register double _f = QMAGSQ(b); \
-	if( _f < VDIVIDE_TOL ) _f = 0.0; else _f = 1.0/_f; \
+	if ( _f < VDIVIDE_TOL ) _f = 0.0; else _f = 1.0/_f; \
 	(a)[X] = -(b)[X] * _f; \
 	(a)[Y] = -(b)[Y] * _f; \
 	(a)[Z] = -(b)[Z] * _f; \

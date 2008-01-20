@@ -121,7 +121,7 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
 	RT_SKETCH_CK_MAGIC( skt );
 
 	/* make sure the curve is valid */
-	if( rt_check_curve( &skt->skt_curve, skt, 1 ) )	{
+	if ( rt_check_curve( &skt->skt_curve, skt, 1 ) )	{
 		bu_log( "ERROR: referenced sketch (%s) is bad!!!\n",
 			eip->sketch_name );
 		return( -1 );
@@ -160,24 +160,24 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
 
 	vert_count = skt->vert_count;
 	/* count how many additional vertices we will need for arc centers */
-	for( i=0 ; i<skt->skt_curve.seg_count ; i++ ) {
+	for ( i=0; i<skt->skt_curve.seg_count; i++ ) {
 		struct carc_seg *csg=(struct carc_seg *)skt->skt_curve.segments[i];
 
-		if( csg->magic != CURVE_CARC_MAGIC )
+		if ( csg->magic != CURVE_CARC_MAGIC )
 			continue;
 
-		if( csg->radius <= 0.0 )
+		if ( csg->radius <= 0.0 )
 			continue;
 
 		vert_count++;
 	}
 
 	/* apply the rotation matrix to all the vertices, and start bounding box calculation */
-	if( vert_count )
+	if ( vert_count )
 		extr->verts = (point_t *)bu_calloc( vert_count, sizeof( point_t ), "extr->verts" );
 	VSETALL( stp->st_min, MAX_FASTF );
 	VSETALL( stp->st_max, -MAX_FASTF );
-	for( i=0 ; i<skt->vert_count ; i++ ) {
+	for ( i=0; i<skt->vert_count; i++ ) {
 		VJOIN2( tmp, eip->V, skt->verts[i][0], eip->u_vec, skt->verts[i][1], eip->v_vec );
 		VMINMAX( stp->st_min, stp->st_max, tmp );
 		MAT4X3PNT( extr->verts[i], extr->rot, tmp );
@@ -197,16 +197,16 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
 
 	VSET( tmp, 0, 0, 1 )
 	tmp_f = VDOT( tmp, extr->unit_h );
-	if( tmp_f < 0.0 )
+	if ( tmp_f < 0.0 )
 		tmp_f = -tmp_f;
 	tmp_f -= 1.0;
-	if( NEAR_ZERO( tmp_f, SQRT_SMALL_FASTF ) ) {
+	if ( NEAR_ZERO( tmp_f, SQRT_SMALL_FASTF ) ) {
 		VSET( extr->rot_axis, 1.0, 0.0, 0.0 );
 		VSET( extr->perp, 0.0, 1.0, 0.0 );
 	} else {
 		VCROSS( extr->rot_axis, tmp, extr->unit_h );
 		VUNITIZE( extr->rot_axis );
-		if( MAGNITUDE( extr->rot_axis ) < SQRT_SMALL_FASTF ) {
+		if ( MAGNITUDE( extr->rot_axis ) < SQRT_SMALL_FASTF ) {
 			VSET( extr->rot_axis, 1.0, 0.0, 0.0 );
 			VSET( extr->perp, 0.0, 1.0, 0.0 );
 		} else {
@@ -222,21 +222,21 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
 	VSET( xyz[Y], 0, 1, 0 );
 	VSET( xyz[Z], 0, 0, 1 );
 
-	for( i=X ; i<=Z ; i++ ) {
+	for ( i=X; i<=Z; i++ ) {
 		VCROSS( tmp, extr->unit_h, xyz[i] );
 		ldir[i] = MAGNITUDE( tmp );
 	}
 
 	/* if any part of the curve is a circular arc, the arc may extend beyond the listed vertices */
-	for( i=0 ; i<skt->skt_curve.seg_count ; i++ ) {
+	for ( i=0; i<skt->skt_curve.seg_count; i++ ) {
 		struct carc_seg *csg=(struct carc_seg *)skt->skt_curve.segments[i];
 		struct carc_seg *csg_extr=(struct carc_seg *)extr->crv.segments[i];
 		point_t center;
 
-		if( csg->magic != CURVE_CARC_MAGIC )
+		if ( csg->magic != CURVE_CARC_MAGIC )
 			continue;
 
-		if( csg->radius <= 0.0 ) {	/* full circle */
+		if ( csg->radius <= 0.0 ) {	/* full circle */
 			point_t start;
 			fastf_t radius;
 
@@ -247,7 +247,7 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
 			radius = MAGNITUDE( tmp );
 			csg_extr->radius = -radius;	/* need the correct magnitude for normal calculation */
 
-			for( j=X ; j<=Z ; j++ ) {
+			for ( j=X; j<=Z; j++ ) {
 				tmp_f = radius * ldir[j];
 				VJOIN1( tmp, center, tmp_f, xyz[j] );
 				VMINMAX( stp->st_min, stp->st_max, tmp );
@@ -274,11 +274,11 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
 			VUNITIZE( bisector );
 			magsq_s2m = MAGSQ( s_to_m );
 			csg_extr->radius = csg->radius * extr->uv_scale;
-			if( magsq_s2m > csg_extr->radius*csg_extr->radius ) {
+			if ( magsq_s2m > csg_extr->radius*csg_extr->radius ) {
 				fastf_t max_radius;
 
 				max_radius = sqrt( magsq_s2m );
-				if( NEAR_ZERO( max_radius - csg_extr->radius, RT_LEN_TOL ) ) {
+				if ( NEAR_ZERO( max_radius - csg_extr->radius, RT_LEN_TOL ) ) {
 					csg_extr->radius = max_radius;
 				} else {
 					bu_log( "Impossible radius for circular arc in extrusion (%s), is %g, cannot be more than %g!!!\n",
@@ -290,7 +290,7 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
 			dist = sqrt( csg_extr->radius*csg_extr->radius - magsq_s2m );
 
 			/* save arc center */
-			if( csg->center_is_left )
+			if ( csg->center_is_left )
 				VJOIN1( center, mid, dist, bisector )
 			else
 				VJOIN1( center, mid, -dist, bisector )
@@ -298,7 +298,7 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
 			csg_extr->center = curr_vert;
 			curr_vert++;
 
-			for( j=X ; j<=Z ; j++ ) {
+			for ( j=X; j<=Z; j++ ) {
 				tmp_f = csg_extr->radius * ldir[j];
 				VJOIN1( tmp, center, tmp_f, xyz[j] );
 				VMINMAX( stp->st_min, stp->st_max, tmp );
@@ -336,16 +336,16 @@ get_quadrant(fastf_t *v, fastf_t *local_x, fastf_t *local_y, fastf_t *vx, fastf_
 	*vx = V2DOT( v, local_x );
 	*vy = V2DOT( v, local_y );
 
-	if( *vy >= 0.0 )
+	if ( *vy >= 0.0 )
 	{
-		if( *vx >= 0.0 )
+		if ( *vx >= 0.0 )
 			return( 1 );
 		else
 			return( 2 );
 	}
 	else
 	{
-		if( *vx >= 0.0 )
+		if ( *vx >= 0.0 )
 			return( 4 );
 		else
 			return( 3 );
@@ -370,7 +370,7 @@ isect_line2_ellipse(fastf_t *dist, fastf_t *ray_start, fastf_t *ray_dir, fastf_t
 	ra_4 = ra_sq * ra_sq;
 	rb_sq = V2DOT( rb, rb );
 	rb_4 = rb_sq * rb_sq;
-	if( ra_4 <= SMALL_FASTF || rb_4 <= SMALL_FASTF ) {
+	if ( ra_4 <= SMALL_FASTF || rb_4 <= SMALL_FASTF ) {
 		bu_log( "ray (%g %g %g) -> (%g %g %g), semi-axes  = (%g %g %g) and (%g %g %g), center = (%g %g %g)\n",
 			V3ARGS( ray_start ), V3ARGS( ray_dir ), V3ARGS( ra ), V3ARGS( rb ), V3ARGS( center ) );
 		bu_bomb( "ERROR: isect_line2_ellipse: semi-axis length is too small!!!\n" );
@@ -384,10 +384,10 @@ isect_line2_ellipse(fastf_t *dist, fastf_t *ray_start, fastf_t *ray_dir, fastf_t
 	c = pmcda*pmcda/ra_4 + pmcdb*pmcdb/rb_4 - 1.0;
 
 	disc = b*b - 4.0*a*c;
-	if( disc < 0.0 )
+	if ( disc < 0.0 )
 		return( 0 );
 
-	if( disc <= SMALL_FASTF ) {
+	if ( disc <= SMALL_FASTF ) {
 		dist[0] = -b/(2.0*a);
 		return( 1 );
 	}
@@ -415,10 +415,10 @@ isect_line_earc(fastf_t *dist, fastf_t *ray_start, fastf_t *ray_dir, fastf_t *ce
 
 	dist_count = isect_line2_ellipse( dist, ray_start, ray_dir, center, ra, rb);
 
-	if( dist_count == 0 )
+	if ( dist_count == 0 )
 		return( 0 );
 
-	if( orientation )
+	if ( orientation )
 		VREVERSE( local_z, norm )
 	else
 		VMOVE( local_z, norm )
@@ -433,7 +433,7 @@ isect_line_earc(fastf_t *dist, fastf_t *ray_start, fastf_t *ray_dir, fastf_t *ce
 	quad_start = get_quadrant( to_pt, local_x, local_y, &sx, &sy );
 
 	i = 0;
-	while( i < dist_count )
+	while ( i < dist_count )
 	{
 		int omit;
 
@@ -442,77 +442,77 @@ isect_line_earc(fastf_t *dist, fastf_t *ray_start, fastf_t *ray_dir, fastf_t *ce
 		V2SUB2( to_pt, pt, center );
 		quad_pt = get_quadrant( to_pt, local_x, local_y, &vx, &vy );
 
-		if( quad_start < quad_end )
+		if ( quad_start < quad_end )
 		{
-			if( quad_pt > quad_end )
+			if ( quad_pt > quad_end )
 				omit = 1;
-			else if( quad_pt < quad_start )
+			else if ( quad_pt < quad_start )
 				omit = 1;
-			else if( quad_pt == quad_end )
+			else if ( quad_pt == quad_end )
 			{
-				switch( quad_pt )
+				switch ( quad_pt )
 				{
 					case 1:
 					case 2:
-						if( vx < ex )
+						if ( vx < ex )
 							omit = 1;
 						break;
 					case 3:
 					case 4:
-						if( vx > ex )
+						if ( vx > ex )
 							omit = 1;
 						break;
 				}
 			}
-			else if( quad_pt == quad_start )
+			else if ( quad_pt == quad_start )
 			{
-				switch( quad_pt )
+				switch ( quad_pt )
 				{
 					case 1:
 					case 2:
-						if( vx > sx )
+						if ( vx > sx )
 							omit = 1;
 						break;
 					case 3:
 					case 4:
-						if( vx < sx )
+						if ( vx < sx )
 							omit = 1;
 						break;
 				}
 			}
 		}
-		else if( quad_start > quad_end )
+		else if ( quad_start > quad_end )
 		{
-			if( quad_pt > quad_end && quad_pt < quad_start )
+			if ( quad_pt > quad_end && quad_pt < quad_start )
 				omit = 1;
-			else if( quad_pt == quad_end )
+			else if ( quad_pt == quad_end )
 			{
-				switch( quad_pt )
+				switch ( quad_pt )
 				{
 					case 1:
 					case 2:
-						if( vx < ex )
+						if ( vx < ex )
 							omit = 1;
 						break;
 					case 3:
 					case 4:
-						if( vx > ex )
+						if ( vx > ex )
 							omit = 1;
 						break;
 				}
 			}
-			else if( quad_pt == quad_start )
+			else if ( quad_pt == quad_start )
 			{
-				switch( quad_pt )
+				switch ( quad_pt )
 				{
 					case 1:
 					case 2:
-						if( vx > sx )
+						if ( vx > sx )
 							omit = 1;
 						break;
 					case 3:
 					case 4:
-						if( vx < sx )
+						if ( vx < sx )
 							omit = 1;
 						break;
 				}
@@ -520,28 +520,28 @@ isect_line_earc(fastf_t *dist, fastf_t *ray_start, fastf_t *ray_dir, fastf_t *ce
 		}
 		else		/* quad_start == quad_end */
 		{
-			if( quad_pt != quad_start )
+			if ( quad_pt != quad_start )
 				omit = 1;
 			else
 			{
-				switch( quad_pt )
+				switch ( quad_pt )
 				{
 					case 1:
 					case 2:
-						if( vx < ex || vx > sx )
+						if ( vx < ex || vx > sx )
 							omit = 1;
 						break;
 					case 3:
 					case 4:
-						if( vx > ex || vx < sx )
+						if ( vx > ex || vx < sx )
 							omit = 1;
 						break;
 				}
 			}
 		}
-		if( omit )
+		if ( omit )
 		{
-			if( i == 0 )
+			if ( i == 0 )
 				dist[0] = dist[1];
 			dist_count--;
 		}
@@ -596,13 +596,13 @@ rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application
 
 	/* intersect with top and bottom planes */
 	dot_pl1 = VDOT( rp->r_dir, extr->pl1 );
-	if( NEAR_ZERO( dot_pl1, SMALL_FASTF ) )	{
+	if ( NEAR_ZERO( dot_pl1, SMALL_FASTF ) )	{
 		/* ray is parallel to top and bottom faces */
 		dist_bottom = DIST_PT_PLANE( rp->r_pt, extr->pl1 );
 		dist_top = DIST_PT_PLANE( rp->r_pt, extr->pl2 );
-		if( dist_bottom < 0.0 && dist_top < 0.0 )
+		if ( dist_bottom < 0.0 && dist_top < 0.0 )
 			return( 0 );
-		if( dist_bottom > 0.0 && dist_top > 0.0 )
+		if ( dist_bottom > 0.0 && dist_top > 0.0 )
 			return( 0 );
 		dist_bottom = -MAX_FASTF;
 		dist_top = MAX_FASTF;
@@ -610,7 +610,7 @@ rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application
 		dist_bottom = -DIST_PT_PLANE( rp->r_pt, extr->pl1 )/dot_pl1;
 		to_bottom = dist_bottom;					/* need to remember this */
 		dist_top = -DIST_PT_PLANE( rp->r_pt, extr->pl2 )/dot_pl1;	/* pl1 and pl2 are parallel */
-		if( dist_bottom > dist_top ) {
+		if ( dist_bottom > dist_top ) {
 			fastf_t tmp1;
 
 			tmp1 = dist_bottom;
@@ -626,10 +626,10 @@ rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application
 	MAT4X3VEC( ray_dir, extr->rot, rp->r_dir );
 
 	dir_dot_z = ray_dir[Z];
-	if( dir_dot_z < 0.0 )
+	if ( dir_dot_z < 0.0 )
 		dir_dot_z = -dir_dot_z;
 
-	if( NEAR_ZERO( dir_dot_z - 1.0, SMALL_FASTF ) )	{
+	if ( NEAR_ZERO( dir_dot_z - 1.0, SMALL_FASTF ) )	{
 		/* ray is parallel to extrusion vector
 		 * set mode to just count intersections for Jordan Theorem
 		 */
@@ -644,7 +644,7 @@ rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application
 	}
 
 	/* intersect with projected curve */
-	for( i=0 ; i<crv->seg_count ; i++ ) {
+	for ( i=0; i<crv->seg_count; i++ ) {
 		long *lng=(long *)crv->segments[i];
 		struct line_seg *lsg;
 		struct carc_seg *csg=NULL;
@@ -652,16 +652,16 @@ rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application
 		fastf_t diff;
 
 		free_dists = 0;
-		switch( *lng ) {
+		switch ( *lng ) {
 			case CURVE_LSEG_MAGIC:
 				lsg = (struct line_seg *)lng;
 				VSUB2( tmp, extr->verts[lsg->end], extr->verts[lsg->start] );
 				VMOVE( tmp2, extr->verts[lsg->start] );
 				code = bn_isect_line2_line2( dist, ray_start, ray_dir, tmp2, tmp, &extr_tol );
-				if( code < 1 )
+				if ( code < 1 )
 					continue;
 
-				if( dist[1] > 1.0 || dist[1] < 0.0 )
+				if ( dist[1] > 1.0 || dist[1] < 0.0 )
 					continue;
 
 				dists = dist;
@@ -675,7 +675,7 @@ rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application
 					vect_t ra, rb;
 					fastf_t radius;
 
-					if( csg->radius <= 0.0 ) {
+					if ( csg->radius <= 0.0 ) {
 						/* full circle */
 						radius = -csg->radius;
 
@@ -694,7 +694,7 @@ rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application
 						MAT4X3PNT( tmp, extr->irot, extr->verts[csg->center] ); /* used later in hit->vpriv */
 					}
 				}
-				if( dist_count < 1 )
+				if ( dist_count < 1 )
 					continue;
 
 				dists = dist;
@@ -703,7 +703,7 @@ rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application
 			case CURVE_BEZIER_MAGIC:
 				bsg = (struct bezier_seg *)lng;
 				verts = (point2d_t *)bu_calloc( bsg->degree + 1, sizeof( point2d_t ), "Bezier verts" );
-				for( j=0 ; j<=bsg->degree ; j++ ) {
+				for ( j=0; j<=bsg->degree; j++ ) {
 					V2MOVE( verts[j], extr->verts[bsg->ctl_points[j]] );
 				}
 				V2MOVE( ray_dir_unit, ray_dir );
@@ -715,10 +715,10 @@ rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application
 				ray_perp[Y] = -ray_dir[X];
 				dist_count = FindRoots( verts, bsg->degree, &intercept, &normal, ray_start, ray_dir_unit, ray_perp,
 							0, extr_tol.dist );
-				if( dist_count ) {
+				if ( dist_count ) {
 					free_dists = 1;
 					dists = (fastf_t *)bu_calloc( dist_count, sizeof( fastf_t ), "dists (Bezier)" );
-					for( j=0 ; j<dist_count ; j++ ) {
+					for ( j=0; j<dist_count; j++ ) {
 						point2d_t to_pt;
 						V2SUB2( to_pt, intercept[j], ray_start );
 						dists[j] = V2DOT( to_pt, ray_dir_unit) / diff;
@@ -738,15 +738,15 @@ rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application
 		}
 
 		/* eliminate duplicate hit distances */
-		for( j=0 ; j<hit_count ; j++ ) {
+		for ( j=0; j<hit_count; j++ ) {
 			k = 0;
-			while( k < dist_count ) {
+			while ( k < dist_count ) {
 				diff = dists[k] - hits[j].hit_dist;
-				if( NEAR_ZERO( diff, extr_tol.dist ) ) {
+				if ( NEAR_ZERO( diff, extr_tol.dist ) ) {
 					int n;
-					for( n=k ; n<dist_count-1 ; n++ ) {
+					for ( n=k; n<dist_count-1; n++ ) {
 						dists[n] = dists[n+1];
-						if( *lng == CURVE_BEZIER_MAGIC ) {
+						if ( *lng == CURVE_BEZIER_MAGIC ) {
 							V2MOVE( normal[n], normal[n+1] );
 						}
 					}
@@ -758,16 +758,16 @@ rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application
 		}
 
 		/* eliminate duplicate hits below the bottom plane of the extrusion */
-		for( j=0 ; j<hits_before_bottom ; j++ )	{
+		for ( j=0; j<hits_before_bottom; j++ )	{
 			k = 0;
-			while( k < dist_count )	{
+			while ( k < dist_count )	{
 				diff = dists[k] - dists_before[j];
-				if( NEAR_ZERO( diff, extr_tol.dist ) ) {
+				if ( NEAR_ZERO( diff, extr_tol.dist ) ) {
 					int n;
 
-					for( n=k ; n<dist_count-1 ; n++ ) {
+					for ( n=k; n<dist_count-1; n++ ) {
 						dists[n] = dists[n+1];
-						if( *lng == CURVE_BEZIER_MAGIC ) {
+						if ( *lng == CURVE_BEZIER_MAGIC ) {
 							V2MOVE( normal[n], normal[n+1] );
 						}
 					}
@@ -779,14 +779,14 @@ rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application
 		}
 
 		/* eliminate duplicate hits above the top plane of the extrusion */
-		for( j=0 ; j<hits_after_top ; j++ ) {
+		for ( j=0; j<hits_after_top; j++ ) {
 			k = 0;
-			while( k < dist_count )	{
+			while ( k < dist_count )	{
 				diff = dists[k] - dists_after[j];
-				if( NEAR_ZERO( diff, extr_tol.dist ) ) {
+				if ( NEAR_ZERO( diff, extr_tol.dist ) ) {
 					int n;
 
-					for( n=k ; n<dist_count-1 ; n++ )
+					for ( n=k; n<dist_count-1; n++ )
 						dists[n] = dists[n+1];
 					dist_count--;
 				} else {
@@ -796,18 +796,18 @@ rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application
 		}
 
 		/* if we are just doing the Jordan curve thereom */
-		if( check_inout ) {
-			for( j=0 ; j<dist_count ; j++ ) {
-				if( dists[j] < 0.0 )
+		if ( check_inout ) {
+			for ( j=0; j<dist_count; j++ ) {
+				if ( dists[j] < 0.0 )
 					hit_count++;
 			}
 			continue;
 		}
 
 		/* process remaining distances into hits */
-		for( j=0 ; j<dist_count ; j++ )	{
-			if( dists[j] < dist_bottom ) {
-				if( hits_before_bottom >= MAX_HITS ) {
+		for ( j=0; j<dist_count; j++ )	{
+			if ( dists[j] < dist_bottom ) {
+				if ( hits_before_bottom >= MAX_HITS ) {
 					bu_log( "ERROR: rt_extrude_shot: too many hits before bottom on extrusion (%s), limit is %d\n",
 					stp->st_dp->d_namep, MAX_HITS );
 					bu_bomb( "ERROR: rt_extrude_shot: too many hits before bottom on extrusion\n" );
@@ -816,8 +816,8 @@ rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application
 				hits_before_bottom++;
 				continue;
 			}
-			if( dists[j] > dist_top ) {
-				if( hits_after_top >= MAX_HITS ) {
+			if ( dists[j] > dist_top ) {
+				if ( hits_after_top >= MAX_HITS ) {
 					bu_log( "ERROR: rt_extrude_shot: too many hits after top on extrusion (%s), limit is %d\n",
 					stp->st_dp->d_namep, MAX_HITS );
 					bu_bomb( "ERROR: rt_extrude_shot: too many hits after top on extrusion\n" );
@@ -829,7 +829,7 @@ rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application
 			}
 
 			/* got a hit at distance dists[j] */
-			if( hit_count >= MAX_HITS ) {
+			if ( hit_count >= MAX_HITS ) {
 				bu_log( "Too many hits on extrusion (%s), limit is %d\n",
 					stp->st_dp->d_namep, MAX_HITS );
 				bu_bomb( "Too many hits on extrusion\n" );
@@ -837,7 +837,7 @@ rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application
 			hits[hit_count].hit_magic = RT_HIT_MAGIC;
 			hits[hit_count].hit_dist = dists[j];
 			hits[hit_count].hit_surfno = surfno;
-			switch( *lng ) {
+			switch ( *lng ) {
 				case CURVE_CARC_MAGIC:
 					hits[hit_count].hit_private = (genptr_t)csg;
 					VMOVE( hits[hit_count].hit_vpriv, tmp );
@@ -857,12 +857,12 @@ rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application
 			}
 			hit_count++;
 		}
-		if( free_dists )
+		if ( free_dists )
 			bu_free( (char *)dists, "dists" );
 	}
 
-	if( check_inout ) {
-		if( hit_count&1 ) {
+	if ( check_inout ) {
+		if ( hit_count&1 ) {
 			register struct seg *segp;
 
 			hit_count = 2;
@@ -887,18 +887,18 @@ rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application
 		}
 	}
 
-	if( hit_count ) {
+	if ( hit_count ) {
 		/* Sort hits, Near to Far */
 		rt_hitsort( hits, hit_count );
 	}
 
-	if( hits_before_bottom & 1 ) {
-		if( hit_count >= MAX_HITS ) {
+	if ( hits_before_bottom & 1 ) {
+		if ( hit_count >= MAX_HITS ) {
 			bu_log( "Too many hits on extrusion (%s), limit is %d\n",
 				stp->st_dp->d_namep, MAX_HITS );
 			bu_bomb( "Too many hits on extrusion\n" );
 		}
-		for( i=hit_count-1 ; i>=0 ; i-- )
+		for ( i=hit_count-1; i>=0; i-- )
 			hits[i+1] = hits[i];
 		hits[0].hit_magic = RT_HIT_MAGIC;
 		hits[0].hit_dist = dist_bottom;
@@ -907,8 +907,8 @@ rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application
 		hit_count++;
 	}
 
-	if( hits_after_top & 1 ) {
-		if( hit_count >= MAX_HITS ) {
+	if ( hits_after_top & 1 ) {
+		if ( hit_count >= MAX_HITS ) {
 			bu_log( "Too many hits on extrusion (%s), limit is %d\n",
 				stp->st_dp->d_namep, MAX_HITS );
 			bu_bomb( "Too many hits on extrusion\n" );
@@ -920,10 +920,10 @@ rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application
 		hit_count++;
 	}
 
-	if( hit_count%2 ) {
+	if ( hit_count%2 ) {
 		point_t pt;
 
-		if( hit_count != 1 ) {
+		if ( hit_count != 1 ) {
 			bu_log( "ERROR: rt_extrude_shot(): odd number of hits (%d) (ignoring last hit)\n", hit_count );
 			bu_log( "ray start = (%20.10f %20.10f %20.10f)\n", V3ARGS( rp->r_pt ) );
 			bu_log( "\tray dir = (%20.10f %20.10f %20.10f)", V3ARGS( rp->r_dir ) );
@@ -937,7 +937,7 @@ rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application
 	{
 		register struct seg *segp;
 
-		for( i=0; i < hit_count; i += 2 )  {
+		for ( i=0; i < hit_count; i += 2 )  {
 			RT_GET_SEG(segp, ap->a_resource);
 			segp->seg_stp = stp;
 			segp->seg_in = hits[i];		/* struct copy */
@@ -983,7 +983,7 @@ rt_extrude_norm(register struct hit *hitp, struct soltab *stp, register struct x
 
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
 
-	switch( hitp->hit_surfno )
+	switch ( hitp->hit_surfno )
 	{
 		case LINE_SEG:
 			MAT4X3VEC( tmp, extr->irot, hitp->hit_vpriv );
@@ -1018,14 +1018,14 @@ rt_extrude_norm(register struct hit *hitp, struct soltab *stp, register struct x
 			bu_bomb( "ERROR: rt_extrude_norm(): unrecognized surf_no in hit structure!!!\n" );
 			break;
 	}
-	if( hitp->hit_surfno < 0 )
+	if ( hitp->hit_surfno < 0 )
 	{
-		if( VDOT( hitp->hit_normal, rp->r_dir ) < 0.0 )
+		if ( VDOT( hitp->hit_normal, rp->r_dir ) < 0.0 )
 			VREVERSE( hitp->hit_normal, hitp->hit_normal );
 	}
 	else
 	{
-		if( VDOT( hitp->hit_normal, rp->r_dir ) > 0.0 )
+		if ( VDOT( hitp->hit_normal, rp->r_dir ) > 0.0 )
 			VREVERSE( hitp->hit_normal, hitp->hit_normal );
 	}
 
@@ -1047,7 +1047,7 @@ rt_extrude_curve(register struct curvature *cvp, register struct hit *hitp, stru
 	vect_t diff;
 	vect_t ra, rb;
 
-	switch( hitp->hit_surfno )
+	switch ( hitp->hit_surfno )
 	{
 		case LINE_SEG:
 		case -LINE_SEG:
@@ -1063,7 +1063,7 @@ rt_extrude_curve(register struct curvature *cvp, register struct hit *hitp, stru
 			csg = (struct carc_seg *)hitp->hit_private;
 			VCROSS( cvp->crv_pdir, extr->unit_h, hitp->hit_normal );
 			VSUB2( diff, hitp->hit_point, hitp->hit_vpriv );
-			if( csg->radius < 0.0 )
+			if ( csg->radius < 0.0 )
 				radius = -csg->radius;
 			else
 				radius = csg->radius;
@@ -1079,7 +1079,7 @@ rt_extrude_curve(register struct curvature *cvp, register struct hit *hitp, stru
 			tmp = (a_sq/(b_sq*b_sq))*dotb*dotb + (b_sq/(a_sq*a_sq))*dota*dota;
 			der = sqrt( tmp );
 			curvature = a*b/(der*der*der);
-			if( VDOT( hitp->hit_normal, diff ) > 0.0 )
+			if ( VDOT( hitp->hit_normal, diff ) > 0.0 )
 				cvp->crv_c1 = curvature;
 			else
 				cvp->crv_c1 = -curvature;
@@ -1110,7 +1110,7 @@ rt_extrude_free(register struct soltab *stp)
 	register struct extrude_specific *extrude =
 		(struct extrude_specific *)stp->st_specific;
 
-	if( extrude->verts )
+	if ( extrude->verts )
 		bu_free( (char *)extrude->verts, "extrude->verts" );
 	rt_curve_free( &(extrude->crv) );
 	bu_free( (char *)extrude, "extrude_specific" );
@@ -1142,7 +1142,7 @@ rt_extrude_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
 	extrude_ip = (struct rt_extrude_internal *)ip->idb_ptr;
 	RT_EXTRUDE_CK_MAGIC(extrude_ip);
 
-	if( !extrude_ip->skt )
+	if ( !extrude_ip->skt )
 	{
 		bu_log( "ERROR: no sketch to extrude!\n" );
 		RT_ADD_VLIST( vhead, extrude_ip->V, BN_VLIST_LINE_MOVE );
@@ -1171,7 +1171,7 @@ rt_extrude_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
 	/* plot bottom curve */
 	vp1 = BU_LIST_LAST( bn_vlist, vhead );
 	nused1 = vp1->nused;
-	if( curve_to_vlist( vhead, ttol, extrude_ip->V, extrude_ip->u_vec, extrude_ip->v_vec, sketch_ip, crv ) )
+	if ( curve_to_vlist( vhead, ttol, extrude_ip->V, extrude_ip->u_vec, extrude_ip->v_vec, sketch_ip, crv ) )
 	{
 		bu_log( "ERROR: sketch (%s) references non-existent vertices!\n",
 			extrude_ip->sketch_name );
@@ -1198,18 +1198,18 @@ rt_extrude_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
 	    nused2--;
 	}
 
-	while( vp1 != vp2_start || (i1 < BN_VLIST_CHUNK && i2 < BN_VLIST_CHUNK && i1 != nused2) )
+	while ( vp1 != vp2_start || (i1 < BN_VLIST_CHUNK && i2 < BN_VLIST_CHUNK && i1 != nused2) )
 	{
 		RT_ADD_VLIST( vhead, vp1->pt[i1], BN_VLIST_LINE_MOVE );
 		RT_ADD_VLIST( vhead, vp2->pt[i2], BN_VLIST_LINE_DRAW );
 		i1++;
-		if( i1 >= vp1->nused )
+		if ( i1 >= vp1->nused )
 		{
 			i1 = 0;
 			vp1 = BU_LIST_NEXT( bn_vlist, &vp1->l );
 		}
 		i2++;
-		if( i2 >= vp2->nused )
+		if ( i2 >= vp2->nused )
 		{
 			i2 = 0;
 			vp2 = BU_LIST_NEXT( bn_vlist, &vp2->l );
@@ -1234,7 +1234,7 @@ get_indices( genptr_t seg, int *start, int *end )
 			break;
 		case CURVE_CARC_MAGIC:
 			csg = (struct carc_seg *)seg;
-			if( csg->radius < 0.0 ) {
+			if ( csg->radius < 0.0 ) {
 				*start = csg->start;
 				*end = *start;
 				break;
@@ -1272,7 +1272,7 @@ get_seg_midpoint( genptr_t seg, struct rt_sketch_internal *skt, point2d_t pt )
 
 	lng = (long *)seg;
 
-	switch( *lng )
+	switch ( *lng )
 		{
 		case CURVE_LSEG_MAGIC:
 			lsg = (struct line_seg *)lng;
@@ -1281,7 +1281,7 @@ get_seg_midpoint( genptr_t seg, struct rt_sketch_internal *skt, point2d_t pt )
 			break;
 		case CURVE_CARC_MAGIC:
 			csg = (struct carc_seg *)lng;
-			if( csg->radius < 0.0 ) {
+			if ( csg->radius < 0.0 ) {
 				VMOVE_2D( pt, skt->verts[csg->start] );
 			} else {
 				point2d_t start2d, end2d, mid_pt, s2m, dir, center2d;
@@ -1297,12 +1297,12 @@ get_seg_midpoint( genptr_t seg, struct rt_sketch_internal *skt, point2d_t pt )
 				dir[0] = -s2m[1];
 				dir[1] = s2m[0];
 				s2m_len_sq =  s2m[0]*s2m[0] + s2m[1]*s2m[1];
-				if( s2m_len_sq <= SMALL_FASTF ) {
+				if ( s2m_len_sq <= SMALL_FASTF ) {
 					bu_log( "start and end points are too close together in circular arc of sketch\n" );
 					break;
 				}
 				len_sq = csg->radius*csg->radius - s2m_len_sq;
-				if( len_sq < 0.0 ) {
+				if ( len_sq < 0.0 ) {
 					bu_log( "Impossible radius for specified start and end points in circular arc\n");
 					break;
 				}
@@ -1315,17 +1315,17 @@ get_seg_midpoint( genptr_t seg, struct rt_sketch_internal *skt, point2d_t pt )
 				/* check center location */
 				cross_z = ( end2d[X] - start2d[X] )*( center2d[Y] - start2d[Y] ) -
 					( end2d[Y] - start2d[Y] )*( center2d[X] - start2d[X] );
-				if( !(cross_z > 0.0 && csg->center_is_left) ) {
+				if ( !(cross_z > 0.0 && csg->center_is_left) ) {
 					V2JOIN1( center2d, mid_pt, -tmp_len, dir );
 				}
 				start_ang = atan2( start2d[Y]-center2d[Y], start2d[X]-center2d[X] );
 				end_ang = atan2( end2d[Y]-center2d[Y], end2d[X]-center2d[X] );
-				if( csg->orientation ) { /* clock-wise */
-					while( end_ang > start_ang )
+				if ( csg->orientation ) { /* clock-wise */
+					while ( end_ang > start_ang )
 						end_ang -= 2.0 * M_PI;
 				}
 				else { /* counter-clock-wise */
-					while( end_ang < start_ang )
+					while ( end_ang < start_ang )
 						end_ang += 2.0 * M_PI;
 				}
 
@@ -1349,22 +1349,22 @@ get_seg_midpoint( genptr_t seg, struct rt_sketch_internal *skt, point2d_t pt )
 			coords = 2 + RT_NURB_IS_PT_RATIONAL( nsg->pt_type );
 			eg.pt_type = RT_NURB_MAKE_PT_TYPE( coords, 2, RT_NURB_IS_PT_RATIONAL( nsg->pt_type ) );
 			eg.ctl_points = (fastf_t *)bu_malloc( nsg->c_size * coords * sizeof( fastf_t ), "eg.ctl_points" );
-			if( RT_NURB_IS_PT_RATIONAL( nsg->pt_type ) ) {
-				for( i=0 ; i<nsg->c_size ; i++ ) {
+			if ( RT_NURB_IS_PT_RATIONAL( nsg->pt_type ) ) {
+				for ( i=0; i<nsg->c_size; i++ ) {
 					VMOVE_2D( &eg.ctl_points[i*coords], skt->verts[nsg->ctl_points[i]] );
 					eg.ctl_points[(i+1)*coords - 1] = nsg->weights[i];
 				}
 			}
 			else {
-				for( i=0 ; i<nsg->c_size ; i++ ) {
+				for ( i=0; i<nsg->c_size; i++ ) {
 					VMOVE_2D( &eg.ctl_points[i*coords], skt->verts[nsg->ctl_points[i]] );
 				}
 			}
 			rt_nurb_c_eval( &eg, (nsg->k.knots[nsg->k.k_size-1] - nsg->k.knots[0]) * 0.5, tmp_pt );
-			if( RT_NURB_IS_PT_RATIONAL( nsg->pt_type ) ) {
+			if ( RT_NURB_IS_PT_RATIONAL( nsg->pt_type ) ) {
 				int j;
 
-				for( j=0 ; j<coords-1 ; j++ )
+				for ( j=0; j<coords-1; j++ )
 					pt[j] = tmp_pt[j] / tmp_pt[coords-1];
 			} else {
 				V2MOVE( pt, tmp_pt );
@@ -1374,7 +1374,7 @@ get_seg_midpoint( genptr_t seg, struct rt_sketch_internal *skt, point2d_t pt )
 		case CURVE_BEZIER_MAGIC:
 			bsg = (struct bezier_seg *)lng;
 			V = (point2d_t *)bu_calloc( bsg->degree+1, sizeof( point2d_t ), "Bezier control points" );
-			for( i=0 ; i<= bsg->degree ; i++ ) {
+			for ( i=0; i<= bsg->degree; i++ ) {
 				VMOVE_2D( V[i], skt->verts[bsg->ctl_points[i]] );
 			}
 			Bezier( V, bsg->degree, 0.51, NULL, NULL, pt, NULL );
@@ -1405,7 +1405,7 @@ isect_2D_loop_ray( point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct lo
 	norm[0] = -dir[1];
 	norm[1] = dir[0];
 
-	for( i=0 ; i<BU_PTBL_END( loop ) ; i++ ) {
+	for ( i=0; i<BU_PTBL_END( loop ); i++ ) {
 		long *lng;
 		struct loop_inter *inter;
 		struct line_seg *lsg=NULL;
@@ -1419,14 +1419,14 @@ isect_2D_loop_ray( point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct lo
 		point2d_t *normal;
 
 		lng = BU_PTBL_GET( loop, i );
-		switch( *lng ) {
+		switch ( *lng ) {
 			case CURVE_LSEG_MAGIC:
 				lsg = (struct line_seg *)lng;
 				V2SUB2( d1, ip->verts[lsg->end], ip->verts[lsg->start] );
 				code = bn_isect_line2_lseg2( dist, pta, dir, ip->verts[lsg->start], d1, tol );
-				if( code < 0 )
+				if ( code < 0 )
 					break;
-				if( code == 0 ) {
+				if ( code == 0 ) {
 					/* edge is collinear with ray */
 					/* add two intersections, one at each end vertex */
 					inter = (struct loop_inter *)bu_calloc( sizeof( struct loop_inter ), 1,
@@ -1435,7 +1435,7 @@ isect_2D_loop_ray( point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct lo
 					inter->vert_index = lsg->start;
 					inter->dist = dist[0];
 					inter->next = NULL;
-					if( !(*root) ) {
+					if ( !(*root) ) {
 						(*root) = inter;
 					} else {
 						inter->next = (*root);
@@ -1449,7 +1449,7 @@ isect_2D_loop_ray( point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct lo
 					inter->next = NULL;
 					inter->next = (*root);
 					(*root) = inter;
-				} else if( code == 1 ) {
+				} else if ( code == 1 ) {
 					/* hit at start vertex */
 					inter = (struct loop_inter *)bu_calloc( sizeof( struct loop_inter ), 1,
 										"loop intersection" );
@@ -1457,13 +1457,13 @@ isect_2D_loop_ray( point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct lo
 					inter->vert_index = lsg->start;
 					inter->dist = dist[0];
 					inter->next = NULL;
-					if( !(*root) ) {
+					if ( !(*root) ) {
 						(*root) = inter;
 					} else {
 						inter->next = (*root);
 						(*root) = inter;
 					}
-				} else if( code == 2 ) {
+				} else if ( code == 2 ) {
 					/* hit at end vertex */
 					inter = (struct loop_inter *)bu_calloc( sizeof( struct loop_inter ), 1,
 										"loop intersection" );
@@ -1471,7 +1471,7 @@ isect_2D_loop_ray( point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct lo
 					inter->vert_index = lsg->end;
 					inter->dist = dist[0];
 					inter->next = NULL;
-					if( !(*root) ) {
+					if ( !(*root) ) {
 						(*root) = inter;
 					} else {
 						inter->next = (*root);
@@ -1485,7 +1485,7 @@ isect_2D_loop_ray( point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct lo
 					inter->vert_index = -1;
 					inter->dist = dist[0];
 					inter->next = NULL;
-					if( !(*root) ) {
+					if ( !(*root) ) {
 						(*root) = inter;
 					} else {
 						inter->next = (*root);
@@ -1496,7 +1496,7 @@ isect_2D_loop_ray( point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct lo
 			case CURVE_CARC_MAGIC:
 				csg = (struct carc_seg *)lng;
 				radius = csg->radius;
-				if( csg->radius <= 0.0 ) {
+				if ( csg->radius <= 0.0 ) {
 					point2d_t ra, rb;
 
 					V2SUB2( diff, ip->verts[csg->start], ip->verts[csg->end] );
@@ -1508,16 +1508,16 @@ isect_2D_loop_ray( point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct lo
 					code = isect_line2_ellipse( dist, pta, dir, ip->verts[csg->end],
 								    ra, rb );
 
-					if( code <= 0 )
+					if ( code <= 0 )
 						break;
-					for( j=0 ; j<code ; j++ ) {
+					for ( j=0; j<code; j++ ) {
 						inter = (struct loop_inter *)bu_calloc( sizeof( struct loop_inter ), 1,
 										"loop intersection" );
 						inter->which_loop = which_loop;
 						inter->vert_index = -1;
 						inter->dist = dist[j];
 						inter->next = NULL;
-						if( !(*root) ) {
+						if ( !(*root) ) {
 							(*root) = inter;
 						} else {
 							inter->next = (*root);
@@ -1539,12 +1539,12 @@ isect_2D_loop_ray( point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct lo
 						tmp_dir[0] = -s2m[1];
 					tmp_dir[1] = s2m[0];
 					s2m_len_sq =  s2m[0]*s2m[0] + s2m[1]*s2m[1];
-					if( s2m_len_sq <= SMALL_FASTF )	{
+					if ( s2m_len_sq <= SMALL_FASTF )	{
 							bu_log( "start and end points are too close together in circular arc of sketch\n" );
 							break;
 					}
 					len_sq = radius*radius - s2m_len_sq;
-					if( len_sq < 0.0 ) {
+					if ( len_sq < 0.0 ) {
 							bu_log( "Impossible radius for specified start and end points in circular arc\n");
 							break;
 					}
@@ -1557,7 +1557,7 @@ isect_2D_loop_ray( point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct lo
 						/* check center location */
 						cross_z = ( end2d[X] - start2d[X] )*( center2d[Y] - start2d[Y] ) -
 						( end2d[Y] - start2d[Y] )*( center2d[X] - start2d[X] );
-					if( !(cross_z > 0.0 && csg->center_is_left) )
+					if ( !(cross_z > 0.0 && csg->center_is_left) )
 						V2JOIN1( center2d, mid_pt, -tmp_len, tmp_dir );
 
 					ra[X] = radius;
@@ -1567,16 +1567,16 @@ isect_2D_loop_ray( point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct lo
 					code = isect_line_earc( dist, pta, dir, center2d, ra, rb,
 								norm, ip->verts[csg->start], ip->verts[csg->end],
 								csg->orientation );
-					if( code <= 0 )
+					if ( code <= 0 )
 						break;
-					for( j=0 ; j<code ; j++ ) {
+					for ( j=0; j<code; j++ ) {
 						inter = (struct loop_inter *)bu_calloc( sizeof( struct loop_inter ), 1,
 										"loop intersection" );
 						inter->which_loop = which_loop;
 						inter->vert_index = -1;
 						inter->dist = dist[j];
 						inter->next = NULL;
-						if( !(*root) ) {
+						if ( !(*root) ) {
 							(*root) = inter;
 						} else {
 							inter->next = (*root);
@@ -1590,11 +1590,11 @@ isect_2D_loop_ray( point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct lo
 				intercept = NULL;
 				normal = NULL;
 				verts = (point2d_t *)bu_calloc( bsg->degree + 1, sizeof( point2d_t ), "Bezier verts" );
-				for( j=0 ; j<=bsg->degree ; j++ ) {
+				for ( j=0; j<=bsg->degree; j++ ) {
 					V2MOVE( verts[j], ip->verts[bsg->ctl_points[j]] );
 				}
 				code = FindRoots( verts, bsg->degree, &intercept, &normal, pta, dir, norm, 0, tol->dist );
-				for( j=0 ; j<code ; j++ ) {
+				for ( j=0; j<code; j++ ) {
 					V2SUB2( diff, intercept[j], pta );
 					dist[0] = sqrt( MAG2SQ( diff ) );
 					inter = (struct loop_inter *)bu_calloc( sizeof( struct loop_inter ), 1,
@@ -1603,16 +1603,16 @@ isect_2D_loop_ray( point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct lo
 					inter->vert_index = -1;
 					inter->dist = dist[0];
 					inter->next = NULL;
-					if( !(*root) ) {
+					if ( !(*root) ) {
 						(*root) = inter;
 					} else {
 						inter->next = (*root);
 						(*root) = inter;
 					}
 				}
-				if( (*intercept) )
+				if ( (*intercept) )
 					bu_free( (char *)intercept, "Bezier Intercepts" );
-				if( (*normal) )
+				if ( (*normal) )
 					bu_free( (char *)normal, "Bezier normals" );
 				bu_free( ( char *)verts, "Bezier Ctl points" );
 				break;
@@ -1633,10 +1633,10 @@ sort_intersections( struct loop_inter **root, struct bn_tol *tol )
 
 	/* eliminate any duplicates */
 	ptr = (*root);
-	while( ptr->next ) {
+	while ( ptr->next ) {
 		prev = ptr;
 		ptr = ptr->next;
-		if( ptr->vert_index > -1 && ptr->vert_index == prev->vert_index ) {
+		if ( ptr->vert_index > -1 && ptr->vert_index == prev->vert_index ) {
 			prev->next = ptr->next;
 			bu_free( (char *)ptr, "struct loop_inter" );
 			ptr = prev;
@@ -1644,29 +1644,29 @@ sort_intersections( struct loop_inter **root, struct bn_tol *tol )
 	}
 
 	ptr = (*root);
-	while( ptr->next ) {
+	while ( ptr->next ) {
 		prev = ptr;
 		ptr = ptr->next;
 		diff = fabs( ptr->dist - prev->dist );
-		if( diff < tol->dist ) {
+		if ( diff < tol->dist ) {
 			prev->next = ptr->next;
 			bu_free( (char *)ptr, "struct loop_inter" );
 			ptr = prev;
 		}
 	}
 
-	while( !done ) {
+	while ( !done ) {
 		done = 1;
 		ptr = (*root);
 		prev = NULL;
 		pprev = NULL;
-		while( ptr->next ) {
+		while ( ptr->next ) {
 			pprev = prev;
 			prev = ptr;
 			ptr = ptr->next;
-			if( ptr->dist < prev->dist ) {
+			if ( ptr->dist < prev->dist ) {
 				done = 0;
-				if( pprev ) {
+				if ( pprev ) {
 					prev->next = ptr->next;
 					pprev->next = ptr;
 					ptr->next = prev;
@@ -1720,13 +1720,13 @@ classify_sketch_loops( struct bu_ptbl *loopa, struct bu_ptbl *loopb, struct rt_s
 
 	/* examine intercepts to determine loop relationship */
 	ptr = inter_root;
-	while( ptr ) {
+	while ( ptr ) {
 		tmp = ptr;
-		if( ret == UNKNOWN ) {
-			if( ptr->which_loop == LOOPA ) {
+		if ( ret == UNKNOWN ) {
+			if ( ptr->which_loop == LOOPA ) {
 				loopa_count++;
-				if( loopa_count && loopb_count ) {
-					if( loopb_count % 2 ) {
+				if ( loopa_count && loopb_count ) {
+					if ( loopb_count % 2 ) {
 						ret = A_IN_B;
 					} else {
 						ret = DISJOINT;
@@ -1734,8 +1734,8 @@ classify_sketch_loops( struct bu_ptbl *loopa, struct bu_ptbl *loopb, struct rt_s
 				}
 			} else {
 				loopb_count++;
-				if( loopa_count && loopb_count ) {
-					if( loopa_count % 2 ) {
+				if ( loopa_count && loopb_count ) {
+					if ( loopa_count % 2 ) {
 						ret = B_IN_A;
 					} else {
 						ret = DISJOINT;
@@ -1782,7 +1782,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
 	extrude_ip = (struct rt_extrude_internal *)ip->idb_ptr;
 	RT_EXTRUDE_CK_MAGIC(extrude_ip);
 
-	if( !extrude_ip->skt )
+	if ( !extrude_ip->skt )
 	{
 		bu_log( "rt_extrude_tess: ERROR: no sketch for extrusion!!!!\n" );
 		return( -1 );
@@ -1793,18 +1793,18 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
 
 	crv = &sketch_ip->skt_curve;
 
-	if( crv->seg_count < 1 )
+	if ( crv->seg_count < 1 )
 		return( 0 );
 
 	/* find all the loops */
 	used_seg = (int *)bu_calloc( crv->seg_count, sizeof( int ), "used_seg" );
 	bu_ptbl_init( &loops, 5, "loops" );
-	for( i=0 ; i<crv->seg_count ; i++ ) {
+	for ( i=0; i<crv->seg_count; i++ ) {
 		genptr_t cur_seg;
 		int loop_start, loop_end;
 		int seg_start, seg_end;
 
-		if( used_seg[i] )
+		if ( used_seg[i] )
 			continue;
 
 		aloop = (struct bu_ptbl *)bu_calloc( 1, sizeof( struct bu_ptbl ), "aloop" );
@@ -1815,30 +1815,30 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
 		cur_seg = crv->segments[i];
 		get_indices( cur_seg, &loop_start, &loop_end );
 
-		while( loop_end != loop_start ) {
+		while ( loop_end != loop_start ) {
 			int j;
 			int added_seg;
 
 			added_seg = 0;
-			for( j=0 ; j<crv->seg_count ; j++ ) {
-				if( used_seg[j] )
+			for ( j=0; j<crv->seg_count; j++ ) {
+				if ( used_seg[j] )
 					continue;
 
 				get_indices( crv->segments[j], &seg_start, &seg_end );
-				if( seg_start != seg_end && seg_start == loop_end ) {
+				if ( seg_start != seg_end && seg_start == loop_end ) {
 					added_seg++;
 					bu_ptbl_ins( aloop, (long *)crv->segments[j] );
 					used_seg[j] = 1;
 					loop_end = seg_end;
-					if( loop_start == loop_end )
+					if ( loop_start == loop_end )
 						break;
 				}
 			}
-			if( !added_seg ) {
+			if ( !added_seg ) {
 				bu_log( "rt_extrude_tess: A loop is not closed in sketch %s\n",
 					extrude_ip->sketch_name );
 				bu_log( "\ttessellation failed!!\n" );
-				for( j=0 ; j<BU_PTBL_END( &loops ) ; j++ ) {
+				for ( j=0; j<BU_PTBL_END( &loops ); j++ ) {
 					aloop = (struct bu_ptbl *)BU_PTBL_GET( &loops, j );
 					bu_ptbl_free( aloop );
 					bu_free( (char *)aloop, "aloop" );
@@ -1855,21 +1855,21 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
 	/* sort the loops to find inside/outside relationships */
 	containing_loops = (struct bu_ptbl **)bu_calloc( BU_PTBL_END( &loops ),
 							 sizeof( struct bu_ptbl *), "containing_loops" );
-	for( i=0 ; i<BU_PTBL_END( &loops ) ; i++ ) {
+	for ( i=0; i<BU_PTBL_END( &loops ); i++ ) {
 		containing_loops[i] = (struct bu_ptbl *)bu_calloc( 1, sizeof( struct bu_ptbl ), "containing_loops[i]" );
 		bu_ptbl_init( containing_loops[i], BU_PTBL_END( &loops ), "containing_loops[i]" );
 	}
 
-	for( i=0 ; i<BU_PTBL_END( &loops ) ; i++ ) {
+	for ( i=0; i<BU_PTBL_END( &loops ); i++ ) {
 		struct bu_ptbl *loopa;
 		int j;
 
 		loopa = (struct bu_ptbl *)BU_PTBL_GET( &loops, i );
-		for( j=i+1 ; j<BU_PTBL_END( &loops ) ; j++ ) {
+		for ( j=i+1; j<BU_PTBL_END( &loops ); j++ ) {
 			struct bu_ptbl *loopb;
 
 			loopb = (struct bu_ptbl *)BU_PTBL_GET( &loops, j );
-			switch( classify_sketch_loops( loopa, loopb, sketch_ip ) ) {
+			switch ( classify_sketch_loops( loopa, loopb, sketch_ip ) ) {
 				case A_IN_B:
 					bu_ptbl_ins( containing_loops[i], (long *)loopb );
 					break;
@@ -1889,19 +1889,19 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
 
 	/* find an outermost loop */
 	outer_loop = (struct bu_ptbl *)NULL;
-	for( i=0 ; i<BU_PTBL_END( &loops ) ; i++ ) {
-		if( BU_PTBL_END( containing_loops[i] ) == 0 ) {
+	for ( i=0; i<BU_PTBL_END( &loops ); i++ ) {
+		if ( BU_PTBL_END( containing_loops[i] ) == 0 ) {
 			outer_loop = (struct bu_ptbl *)BU_PTBL_GET( &loops, i );
 			break;
 		}
 	}
 
-	if( !outer_loop ) {
+	if ( !outer_loop ) {
 		bu_log( "No outer loop in sketch %s\n", extrude_ip->sketch_name );
 		bu_log( "\ttessellation failed\n" );
-		for( i=0 ; i<BU_PTBL_END( &loops ) ; i++ ) {
+		for ( i=0; i<BU_PTBL_END( &loops ); i++ ) {
 		}
-		for( i=0 ; i<BU_PTBL_END( &loops ) ; i++ ) {
+		for ( i=0; i<BU_PTBL_END( &loops ); i++ ) {
 			aloop = (struct bu_ptbl *)BU_PTBL_GET( &loops, i );
 			bu_ptbl_free( aloop );
 			bu_free( (char *)aloop, "aloop" );
@@ -1913,22 +1913,22 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
 	}
 
 	BU_LIST_INIT( &vhead );
-	if( BU_LIST_UNINITIALIZED( &rt_g.rtg_vlfree ) ) {
+	if ( BU_LIST_UNINITIALIZED( &rt_g.rtg_vlfree ) ) {
 		BU_LIST_INIT( &rt_g.rtg_vlfree );
 	}
-	for( i=0 ; i<BU_PTBL_END( outer_loop ) ; i++ ) {
+	for ( i=0; i<BU_PTBL_END( outer_loop ); i++ ) {
 		genptr_t seg;
 
 		seg = (genptr_t)BU_PTBL_GET( outer_loop, i );
-		if( seg_to_vlist( &vhead, ttol, extrude_ip->V, extrude_ip->u_vec, extrude_ip->v_vec, sketch_ip, seg ) )
+		if ( seg_to_vlist( &vhead, ttol, extrude_ip->V, extrude_ip->u_vec, extrude_ip->v_vec, sketch_ip, seg ) )
 			goto failed;
 	}
 
 	/* count vertices */
 	vert_count = 0;
-	for( BU_LIST_FOR( vlp, bn_vlist, &vhead ) ) {
-		for( i=0 ; i<vlp->nused ; i++ ) {
-			if( vlp->cmd[i] == BN_VLIST_LINE_DRAW )
+	for ( BU_LIST_FOR( vlp, bn_vlist, &vhead ) ) {
+		for ( i=0; i<vlp->nused; i++ ) {
+			if ( vlp->cmd[i] == BN_VLIST_LINE_DRAW )
 				vert_count++;
 		}
 	}
@@ -1938,15 +1938,15 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
 
 	/* make initial face from outer_loop */
 	verts = (struct vertex ***)bu_calloc( vert_count, sizeof( struct vertex **), "verts" );
-	for( i=0 ; i<vert_count ; i++ ) {
+	for ( i=0; i<vert_count; i++ ) {
 		verts[i] = (struct vertex **)bu_calloc( 1, sizeof( struct vertex *), "verts[i]" );
 	}
 
 	fu = nmg_cmface( s, verts, vert_count );
 	j = 0;
-	for( BU_LIST_FOR( vlp, bn_vlist, &vhead ) ) {
-		for( i=0 ; i<vlp->nused ; i++ ) {
-			if( vlp->cmd[i] == BN_VLIST_LINE_DRAW ) {
+	for ( BU_LIST_FOR( vlp, bn_vlist, &vhead ) ) {
+		for ( i=0; i<vlp->nused; i++ ) {
+			if ( vlp->cmd[i] == BN_VLIST_LINE_DRAW ) {
 				nmg_vertex_gv( *verts[j], vlp->pt[i] );
 				j++;
 			}
@@ -1956,18 +1956,18 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
 
 	/* make sure face normal is in correct direction */
 	bu_free( (char *)verts, "verts" );
-	if( nmg_calc_face_plane( fu, pl ) ) {
+	if ( nmg_calc_face_plane( fu, pl ) ) {
 		bu_log( "Failed to calculate face plane for extrusion\n" );
 		return( -1 );
 	}
 	nmg_face_g( fu, pl );
-	if( VDOT( pl, extrude_ip->h ) > 0.0 ) {
+	if ( VDOT( pl, extrude_ip->h ) > 0.0 ) {
 		nmg_reverse_face( fu );
 		fu = fu->fumate_p;
 	}
 
 	/* add the rest of the loops */
-	for( i=0 ; i<BU_PTBL_END( &loops ) ; i++ ) {
+	for ( i=0; i<BU_PTBL_END( &loops ); i++ ) {
 		int fdir;
 		vect_t cross;
 		fastf_t pt_count=0.0;
@@ -1975,29 +1975,29 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
 		int rev=0;
 
 		aloop = (struct bu_ptbl *)BU_PTBL_GET( &loops, i );
-		if( aloop == outer_loop )
+		if ( aloop == outer_loop )
 			continue;
 
-		if( BU_PTBL_END( containing_loops[i] ) % 2 ) {
+		if ( BU_PTBL_END( containing_loops[i] ) % 2 ) {
 			fdir = OT_OPPOSITE;
 		} else {
 			fdir = OT_SAME;
 		}
 
-		for( j=0 ; j<BU_PTBL_END( aloop ) ; j++ ) {
+		for ( j=0; j<BU_PTBL_END( aloop ); j++ ) {
 			genptr_t seg;
 
 			seg = (genptr_t)BU_PTBL_GET( aloop, j );
-			if( seg_to_vlist( &vhead, ttol, extrude_ip->V,
+			if ( seg_to_vlist( &vhead, ttol, extrude_ip->V,
 					  extrude_ip->u_vec, extrude_ip->v_vec, sketch_ip, seg ) )
 				goto failed;
 		}
 
 		/* calculate plane of this loop */
 		VSETALLN( pl, 0.0, 4 );
-		for( BU_LIST_FOR( vlp, bn_vlist, &vhead ) ) {
-			for( j=1 ; j<vlp->nused ; j++ ) {
-				if( vlp->cmd[j] == BN_VLIST_LINE_DRAW ) {
+		for ( BU_LIST_FOR( vlp, bn_vlist, &vhead ) ) {
+			for ( j=1; j<vlp->nused; j++ ) {
+				if ( vlp->cmd[j] == BN_VLIST_LINE_DRAW ) {
 					VCROSS( cross, vlp->pt[j-1], vlp->pt[j] );
 					VADD2( pl, pl, cross );
 				}
@@ -2006,9 +2006,9 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
 
 		VUNITIZE( pl );
 
-		for( BU_LIST_FOR( vlp, bn_vlist, &vhead ) ) {
-			for( j=1 ; j<vlp->nused ; j++ ) {
-				if( vlp->cmd[j] == BN_VLIST_LINE_DRAW ) {
+		for ( BU_LIST_FOR( vlp, bn_vlist, &vhead ) ) {
+			for ( j=1; j<vlp->nused; j++ ) {
+				if ( vlp->cmd[j] == BN_VLIST_LINE_DRAW ) {
 					pl[3] += VDOT( pl, vlp->pt[j] );
 					pt_count++;
 				}
@@ -2018,9 +2018,9 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
 
 		dot = -VDOT( pl, extrude_ip->h );
 		rev = 0;
-		if( fdir == OT_SAME && dot < 0.0 )
+		if ( fdir == OT_SAME && dot < 0.0 )
 			rev = 1;
-		else if( fdir == OT_OPPOSITE && dot > 0.0 )
+		else if ( fdir == OT_OPPOSITE && dot > 0.0 )
 			rev = 1;
 
 		vertsa = (struct vertex **)bu_calloc((int)pt_count, sizeof( struct vertex *), "verts" );
@@ -2028,10 +2028,10 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
 		fu = nmg_add_loop_to_face( s, fu, vertsa, (int)pt_count, fdir );
 
 		k = 0;
-		for( BU_LIST_FOR( vlp, bn_vlist, &vhead ) ) {
-			for( j=1 ; j<vlp->nused ; j++ ) {
-				if( vlp->cmd[j] == BN_VLIST_LINE_DRAW ) {
-					if( rev ) {
+		for ( BU_LIST_FOR( vlp, bn_vlist, &vhead ) ) {
+			for ( j=1; j<vlp->nused; j++ ) {
+				if ( vlp->cmd[j] == BN_VLIST_LINE_DRAW ) {
+					if ( rev ) {
 						nmg_vertex_gv( vertsa[(int)(pt_count) - k - 1], vlp->pt[j] );
 					} else {
 						nmg_vertex_gv( vertsa[k], vlp->pt[j] );
@@ -2044,7 +2044,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
 	}
 
 	/* extrude this face */
-	if( nmg_extrude_face( fu, extrude_ip->h, tol ) ) {
+	if ( nmg_extrude_face( fu, extrude_ip->h, tol ) ) {
 		bu_log( "Failed to extrude face sketch\n" );
 		return( -1 );
 	}
@@ -2054,7 +2054,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
 	return( 0 );
 
  failed:
-	for( i=0 ; i<BU_PTBL_END( &loops ) ; i++ ) {
+	for ( i=0; i<BU_PTBL_END( &loops ); i++ ) {
 		bu_ptbl_free( containing_loops[i] );
 		bu_free( (char *)containing_loops[i], "containing_loops[i]" );
 	}
@@ -2085,7 +2085,7 @@ rt_extrude_import(struct rt_db_internal *ip, const struct bu_external *ep, regis
 	BU_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
 	/* Check record type */
-	if( rp->u_id != DBID_EXTR )  {
+	if ( rp->u_id != DBID_EXTR )  {
 		bu_log("rt_extrude_import: defective record\n");
 		return(-1);
 	}
@@ -2099,9 +2099,9 @@ rt_extrude_import(struct rt_db_internal *ip, const struct bu_external *ep, regis
 	extrude_ip->magic = RT_EXTRUDE_INTERNAL_MAGIC;
 
 	sketch_name = (char *)rp + sizeof( struct extr_rec );
-	if( !dbip )
+	if ( !dbip )
 		extrude_ip->skt = (struct rt_sketch_internal *)NULL;
-	else if( (dp=db_lookup( dbip, sketch_name, LOOKUP_NOISY)) == DIR_NULL )
+	else if ( (dp=db_lookup( dbip, sketch_name, LOOKUP_NOISY)) == DIR_NULL )
 	{
 		bu_log( "rt_extrude_import: ERROR: Cannot find sketch (%.16s) for extrusion (%.16s)\n",
 			sketch_name, rp->extr.ex_name );
@@ -2109,7 +2109,7 @@ rt_extrude_import(struct rt_db_internal *ip, const struct bu_external *ep, regis
 	}
 	else
 	{
-		if( rt_db_get_internal( &tmp_ip, dp, dbip, bn_mat_identity, resp ) != ID_SKETCH )
+		if ( rt_db_get_internal( &tmp_ip, dp, dbip, bn_mat_identity, resp ) != ID_SKETCH )
 		{
 			bu_log( "rt_extrude_import: ERROR: Cannot import sketch (%.16s) for extrusion (%.16s)\n",
 				sketch_name, rp->extr.ex_name );
@@ -2153,7 +2153,7 @@ rt_extrude_export(struct bu_external *ep, const struct rt_db_internal *ip, doubl
 	unsigned char			*ptr;
 
 	RT_CK_DB_INTERNAL(ip);
-	if( ip->idb_type != ID_EXTRUDE )  return(-1);
+	if ( ip->idb_type != ID_EXTRUDE )  return(-1);
 	extrude_ip = (struct rt_extrude_internal *)ip->idb_ptr;
 	RT_EXTRUDE_CK_MAGIC(extrude_ip);
 
@@ -2198,7 +2198,7 @@ rt_extrude_export5(struct bu_external *ep, const struct rt_db_internal *ip, doub
 	int rem;
 
 	RT_CK_DB_INTERNAL(ip);
-	if( ip->idb_type != ID_EXTRUDE )  return(-1);
+	if ( ip->idb_type != ID_EXTRUDE )  return(-1);
 
 	extrude_ip = (struct rt_extrude_internal *)ip->idb_ptr;
 	RT_EXTRUDE_CK_MAGIC(extrude_ip);
@@ -2264,9 +2264,9 @@ rt_extrude_import5(
 
 	ptr = (unsigned char *)ep->ext_buf;
 	sketch_name = (char *)ptr + ELEMENTS_PER_VECT*4*SIZEOF_NETWORK_DOUBLE + SIZEOF_NETWORK_LONG;
-	if( !dbip )
+	if ( !dbip )
 		extrude_ip->skt = (struct rt_sketch_internal *)NULL;
-	else if( (dp=db_lookup( dbip, sketch_name, LOOKUP_NOISY)) == DIR_NULL )
+	else if ( (dp=db_lookup( dbip, sketch_name, LOOKUP_NOISY)) == DIR_NULL )
 	{
 		bu_log( "rt_extrude_import: ERROR: Cannot find sketch (%s) for extrusion\n",
 			sketch_name );
@@ -2274,7 +2274,7 @@ rt_extrude_import5(
 	}
 	else
 	{
-		if( rt_db_get_internal( &tmp_ip, dp, dbip, bn_mat_identity, resp ) != ID_SKETCH )
+		if ( rt_db_get_internal( &tmp_ip, dp, dbip, bn_mat_identity, resp ) != ID_SKETCH )
 		{
 			bu_log( "rt_extrude_import: ERROR: Cannot import sketch (%s) for extrusion\n",
 				sketch_name );
@@ -2347,7 +2347,7 @@ rt_extrude_ifree(struct rt_db_internal *ip)
 	RT_CK_DB_INTERNAL(ip);
 	extrude_ip = (struct rt_extrude_internal *)ip->idb_ptr;
 	RT_EXTRUDE_CK_MAGIC(extrude_ip);
-	if( extrude_ip->skt )
+	if ( extrude_ip->skt )
 	{
 		RT_INIT_DB_INTERNAL( &tmp_ip );
 		tmp_ip.idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -2380,13 +2380,13 @@ rt_extrude_xform(
 	eip = (struct rt_extrude_internal *)ip->idb_ptr;
 	RT_EXTRUDE_CK_MAGIC( eip );
 
-	if( bu_debug&BU_DEBUG_MEM_CHECK )
+	if ( bu_debug&BU_DEBUG_MEM_CHECK )
 	{
 		bu_log( "Barrier check at start of extrude_xform():\n" );
 		bu_mem_barriercheck();
 	}
 
-	if( op != ip )
+	if ( op != ip )
 	{
 		RT_INIT_DB_INTERNAL( op );
 		eop = (struct rt_extrude_internal *)bu_malloc( sizeof( struct rt_extrude_internal ), "eop" );
@@ -2396,7 +2396,7 @@ rt_extrude_xform(
 		op->idb_meth = &rt_functab[ID_EXTRUDE];
 		op->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		op->idb_type = ID_EXTRUDE;
-		if( ip->idb_avs.magic == BU_AVS_MAGIC ) {
+		if ( ip->idb_avs.magic == BU_AVS_MAGIC ) {
 			bu_avs_init( &op->idb_avs, ip->idb_avs.count, "avs" );
 			bu_avs_merge( &op->idb_avs, &ip->idb_avs );
 		}
@@ -2414,18 +2414,18 @@ rt_extrude_xform(
 	VMOVE( eop->v_vec, tmp_vec );
 	eop->keypoint = eip->keypoint;
 
-	if( free && ip != op )
+	if ( free && ip != op )
 	{
 		eop->skt = eip->skt;
 		eip->skt = (struct rt_sketch_internal *)NULL;
 		rt_db_free_internal( ip, resp );
 	}
-	else if( eip->skt )
+	else if ( eip->skt )
 		eop->skt = rt_copy_sketch( eip->skt );
 	else
 		eop->skt = (struct rt_sketch_internal *)NULL;
 
-	if( bu_debug&BU_DEBUG_MEM_CHECK )
+	if ( bu_debug&BU_DEBUG_MEM_CHECK )
 	{
 		bu_log( "Barrier check at end of extrude_xform():\n" );
 		bu_mem_barriercheck();
@@ -2460,7 +2460,7 @@ rt_extrude_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const
 	bu_vls_init( &vls );
 
 
-	if( attr == (char *)NULL )
+	if ( attr == (char *)NULL )
 	{
 		bu_vls_strcpy( &vls, "extrude" );
 		bu_vls_printf( &vls, " V {%.25g %.25g %.25g}", V3ARGS( extr->V ) );
@@ -2470,17 +2470,17 @@ rt_extrude_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const
 		bu_vls_printf( &vls, " S %s", extr->sketch_name );
 		bu_vls_printf( &vls, " K %d", extr->keypoint );
 	}
-	else if( *attr == 'V' )
+	else if ( *attr == 'V' )
 		bu_vls_printf( &vls, "%.25g %.25g %.25g", V3ARGS( extr->V ) );
-	else if( *attr == 'H' )
+	else if ( *attr == 'H' )
 		bu_vls_printf( &vls, "%.25g %.25g %.25g", V3ARGS( extr->h ) );
-	else if( *attr == 'A' )
+	else if ( *attr == 'A' )
 		bu_vls_printf( &vls, "%.25g %.25g %.25g", V3ARGS( extr->u_vec ) );
-	else if( *attr == 'B' )
+	else if ( *attr == 'B' )
 		bu_vls_printf( &vls, "%.25g %.25g %.25g", V3ARGS( extr->v_vec ) );
-	else if( *attr == 'S' )
+	else if ( *attr == 'S' )
 		bu_vls_printf( &vls, "%s", extr->sketch_name );
-	else if( *attr == 'K' )
+	else if ( *attr == 'K' )
 		bu_vls_printf( &vls, "%d", extr->keypoint );
 	else
 	{
@@ -2506,14 +2506,14 @@ rt_extrude_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc
 	extr = (struct rt_extrude_internal *)intern->idb_ptr;
 	RT_EXTRUDE_CK_MAGIC( extr );
 
-	while( argc >= 2 )
+	while ( argc >= 2 )
 	{
 		int array_len=3;
 
-		if( *argv[0] == 'V' )
+		if ( *argv[0] == 'V' )
 		{
 			new = extr->V;
-			if( tcl_list_to_fastf_array( interp, argv[1], &new, &array_len ) !=
+			if ( tcl_list_to_fastf_array( interp, argv[1], &new, &array_len ) !=
 			    array_len ) {
 				Tcl_SetResult( interp,
 				      "ERROR: incorrect number of coordinates for vertex\n",
@@ -2521,10 +2521,10 @@ rt_extrude_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc
 				return( TCL_ERROR );
 			}
 		}
-		else if( *argv[0] == 'H' )
+		else if ( *argv[0] == 'H' )
 		{
 			new = extr->h;
-			if( tcl_list_to_fastf_array( interp, argv[1], &new, &array_len ) !=
+			if ( tcl_list_to_fastf_array( interp, argv[1], &new, &array_len ) !=
 			    array_len ) {
 				Tcl_SetResult( interp,
 				      "ERROR: incorrect number of coordinates for vector\n",
@@ -2532,10 +2532,10 @@ rt_extrude_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc
 				return( TCL_ERROR );
 			}
 		}
-		else if( *argv[0] == 'A' )
+		else if ( *argv[0] == 'A' )
 		{
 			new = extr->u_vec;
-			if( tcl_list_to_fastf_array( interp, argv[1], &new, &array_len ) !=
+			if ( tcl_list_to_fastf_array( interp, argv[1], &new, &array_len ) !=
 			    array_len ) {
 				Tcl_SetResult( interp,
 				      "ERROR: incorrect number of coordinates for vector\n",
@@ -2548,10 +2548,10 @@ rt_extrude_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc
 			VUNITIZE( extr->v_vec );
 			VSCALE( extr->v_vec, extr->v_vec, len );
 		}
-		else if( *argv[0] == 'B' )
+		else if ( *argv[0] == 'B' )
 		{
 			new = extr->v_vec;
-			if( tcl_list_to_fastf_array( interp, argv[1], &new, &array_len ) !=
+			if ( tcl_list_to_fastf_array( interp, argv[1], &new, &array_len ) !=
 			    array_len ) {
 				Tcl_SetResult( interp,
 				      "ERROR: incorrect number of coordinates for vector\n",
@@ -2563,10 +2563,10 @@ rt_extrude_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc
 			VUNITIZE( extr->u_vec );
 			VSCALE( extr->u_vec, extr->u_vec, len );
 		}
-		else if( *argv[0] =='K' )
+		else if ( *argv[0] =='K' )
 			extr->keypoint = atoi( argv[1] );
-		else if( *argv[0] == 'S' ) {
-			if( extr->sketch_name )
+		else if ( *argv[0] == 'S' ) {
+			if ( extr->sketch_name )
 				bu_free( (char *)extr->sketch_name, "rt_extrude_tcladjust: sketch_name" );
 			extr->sketch_name = bu_strdup( argv[1] );
 		}

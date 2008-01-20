@@ -48,7 +48,7 @@ int shell_orient;
 
 	/* Acquiring Data */
 
-	if( dir[entityno]->param <= pstart )
+	if ( dir[entityno]->param <= pstart )
 	{
 		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[entityno]->direct, dir[entityno]->name );
@@ -63,17 +63,17 @@ int shell_orient;
 	face_orient = (int *)bu_calloc( no_of_faces, sizeof( int ), "Add_inner_shell orients" );
 	fu = (struct faceuse **)bu_calloc( no_of_faces, sizeof( struct faceuse *), "Get_outer_shell faceuses " );
 
-	for( face=0 ; face<no_of_faces ; face++ )
+	for ( face=0; face<no_of_faces; face++ )
 	{
 		Readint( &face_de[face], "" );
 		Readint( &face_orient[face], "" );
 	}
 
 	s = nmg_msv( r );
-	for( face=0 ; face<no_of_faces ; face++ )
+	for ( face=0; face<no_of_faces; face++ )
 	{
 		fu[face_count] = Add_face_to_shell( s, (face_de[face]-1)/2, 1 );
-		if( fu[face_count] != (struct faceuse *)NULL )
+		if ( fu[face_count] != (struct faceuse *)NULL )
 			face_count++;
 	}
 

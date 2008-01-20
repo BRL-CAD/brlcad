@@ -102,7 +102,7 @@ void common_unpack_free(common_db_t *db) {
   int i;
 
   /* Free texture data */
-  for(i = 0; i < texture_num; i++)
+  for (i = 0; i < texture_num; i++)
     texture_list[i].texture->free(texture_list[i].texture);
   free(texture_list);
 
@@ -110,7 +110,7 @@ void common_unpack_free(common_db_t *db) {
     return;
 
   /* Free mesh data */
-  for(i = 0; i < db->mesh_num; i++) {
+  for (i = 0; i < db->mesh_num; i++) {
     /* Free triangle data */
     free(db->mesh_list[i]->tri_list);
     free(db->mesh_list[i]);
@@ -130,12 +130,12 @@ void common_unpack_env(common_db_t *db, int socknum) {
   do {
     tienet_recv(socknum, &block, sizeof(short), tienet_endian);
     ind += sizeof(short);
-    switch(block) {
+    switch (block) {
       case COMMON_PACK_ENV_RM:
 	{
 	  tienet_recv(socknum, &db->env.rm, sizeof(int), tienet_endian);
 	  ind += sizeof(int);
-	  switch(db->env.rm) {
+	  switch (db->env.rm) {
 	    case RENDER_METHOD_FLAT:
 	      render_flat_init(&db->env.render);
 	      break;
@@ -197,7 +197,7 @@ void common_unpack_env(common_db_t *db, int socknum) {
       default:
 	break;
     }
-  } while(ind < size);
+  } while (ind < size);
 }
 
 
@@ -236,7 +236,7 @@ void common_unpack_prop(int socknum) {
   tienet_recv(socknum, &size, sizeof(int), 0);
 
   ind = 0;
-  while(ind < size) {
+  while (ind < size) {
     prop_num++;
     prop_list = (common_unpack_prop_node_t*)realloc(prop_list, sizeof(common_unpack_prop_node_t)*prop_num);
 
@@ -269,11 +269,11 @@ void common_unpack_texture(int socknum) {
 
 
   ind = 0;
-  while(ind < size) {
+  while (ind < size) {
     tienet_recv(socknum, &block, sizeof(short), tienet_endian);
     ind += sizeof(short);
 
-    switch(block) {
+    switch (block) {
       case TEXTURE_STACK:
 	texture_num++;
 	texture_list = (common_unpack_texture_node_t *)realloc(texture_list, sizeof(common_unpack_texture_node_t)*texture_num);
@@ -506,7 +506,7 @@ void common_unpack_mesh(common_db_t *db, int socknum, tie_t *tie) {
   tie_init(tie, num, TIE_KDTREE_FAST);
   ind += sizeof(unsigned int);
 
-  while(ind < size) {
+  while (ind < size) {
     /* Create a Mesh */
     db->mesh_num++;
     db->mesh_list = (common_mesh_t **)realloc(db->mesh_list, sizeof(common_mesh_t *)*db->mesh_num);
@@ -527,7 +527,7 @@ void common_unpack_mesh(common_db_t *db, int socknum, tie_t *tie) {
     /* Vertices */
     tienet_recv(socknum, &vnum, sizeof(int), tienet_endian);
     ind += sizeof(int);
-    if(vnum > vmax) {
+    if (vnum > vmax) {
       vmax = vnum;
       vlist = (TIE_3 *)realloc(vlist, vmax * sizeof(TIE_3));
     }
@@ -539,11 +539,11 @@ void common_unpack_mesh(common_db_t *db, int socknum, tie_t *tie) {
     tienet_recv(socknum, &c, 1, 0);
     ind += 1;
 
-    if(c) {
+    if (c) {
       tienet_recv(socknum, &fnum, sizeof(int), tienet_endian);
       ind += sizeof(int);
 
-      if(fnum > fmax) {
+      if (fnum > fmax) {
 	fmax = fnum;
 	flist = (int *)realloc(flist, fmax * 3 * sizeof(int));
 	tlist = (TIE_3 *)realloc(tlist, fmax * 3 * sizeof(TIE_3));
@@ -558,18 +558,18 @@ void common_unpack_mesh(common_db_t *db, int socknum, tie_t *tie) {
       ind += sizeof(unsigned short);
 
       fnum = sfnum;
-      if(fnum > fmax) {
+      if (fnum > fmax) {
 	fmax = fnum;
 	flist = (int *)realloc(flist, fmax * 3 * sizeof(int));
 	tlist = (TIE_3 *)realloc(tlist, fmax * 3 * sizeof(TIE_3));
       }
 
       i = 0;
-      while(i < fnum) {
+      while (i < fnum) {
 	n = fnum - i > 48 ? 48 : fnum - i;
 	tienet_recv(socknum, &sind, 3 * n * sizeof(unsigned short), 0);
 
-	for(j = 0; j < n; j++) {
+	for (j = 0; j < n; j++) {
 	  flist[3*(i+j) + 0] = sind[3*j + 0];
 	  flist[3*(i+j) + 1] = sind[3*j + 1];
 	  flist[3*(i+j) + 2] = sind[3*j + 2];
@@ -583,14 +583,14 @@ void common_unpack_mesh(common_db_t *db, int socknum, tie_t *tie) {
 
     /* Min and Max */
 #if 0
-    for(j = 0; j < 3; j++)
+    for (j = 0; j < 3; j++)
       tienet_recv(socknum, &(db->mesh_list[db->mesh_num-1]->min.v[j]), sizeof(tfloat), tienet_endian);
-    for(j = 0; j < 3; j++)
+    for (j = 0; j < 3; j++)
       tienet_recv(socknum, &(db->mesh_list[db->mesh_num-1]->max.v[j]), sizeof(tfloat), tienet_endian);
 #endif
 
     /* Matrix */
-    for(i = 0; i < 16; i++)
+    for (i = 0; i < 16; i++)
       tienet_recv(socknum, &(db->mesh_list[db->mesh_num-1]->matrix[i]), sizeof(tfloat), tienet_endian);
     ind += 16 * sizeof(tfloat);
 
@@ -598,7 +598,7 @@ void common_unpack_mesh(common_db_t *db, int socknum, tie_t *tie) {
     math_mat_invert(db->mesh_list[db->mesh_num-1]->matinv, db->mesh_list[db->mesh_num-1]->matrix, 4);
 
     /* Apply Transformation Matrix to Vertices */
-    for(i = 0; i < vnum; i++) {
+    for (i = 0; i < vnum; i++) {
       v[0] = vlist[i];
       MATH_VEC_TRANSFORM(vlist[i], v[0], db->mesh_list[db->mesh_num-1]->matrix);
     }
@@ -612,7 +612,7 @@ void common_unpack_mesh(common_db_t *db, int socknum, tie_t *tie) {
     }
 
     /* Build the triangle list */
-    for(i = 0; i < fnum; i++) {
+    for (i = 0; i < fnum; i++) {
       db->mesh_list[db->mesh_num-1]->tri_list[i].mesh = db->mesh_list[db->mesh_num-1];
       db->mesh_list[db->mesh_num-1]->tri_list[i].normals = NULL;
       tlist[i*3+0] = vlist[flist[3*i+0]];
@@ -638,7 +638,7 @@ void common_unpack_kdtree_cache(int socknum, tie_t *tie) {
   tienet_recv(socknum, &size, sizeof(int), 0);
 
   /* retreive the data */
-  if(size > 0) {
+  if (size > 0) {
     kdcache = malloc(size);
     if (!kdcache) {
 	perror("kdcache");
@@ -663,7 +663,7 @@ void common_unpack_mesh_map(common_db_t *db, int socknum) {
   tienet_recv(socknum, &size, sizeof(unsigned int), 0);
   ind = 0;
 
-  while(ind < size) {
+  while (ind < size) {
     tienet_recv(socknum, &c, 1, 0);
     tienet_recv(socknum, mesh_name, c, 0);
     ind += 1 + c;
@@ -682,9 +682,9 @@ void common_unpack_mesh_link(char *mesh_name, char *prop_name, common_db_t *db) 
   unsigned int i;
 
 
-  for(i = 0; i < db->mesh_num; i++) {
+  for (i = 0; i < db->mesh_num; i++) {
     /* Find Mesh */
-    if(!strcmp(mesh_name, db->mesh_list[i]->name)) {
+    if (!strcmp(mesh_name, db->mesh_list[i]->name)) {
       common_unpack_prop_lookup(prop_name, &(db->mesh_list[i]->prop));
       db->mesh_list[i]->texture = NULL;
       return;
@@ -696,8 +696,8 @@ void common_unpack_mesh_link(char *mesh_name, char *prop_name, common_db_t *db) 
 void common_unpack_prop_lookup(char *name, common_prop_t **prop) {
   unsigned int i;
 
-  for(i = 0; i < prop_num; i++)
-    if(!strcmp(name, prop_list[i].name)) {
+  for (i = 0; i < prop_num; i++)
+    if (!strcmp(name, prop_list[i].name)) {
 /*       printf("*** FOUND FOR: -%s-\n", name); */
       *prop = &prop_list[i].prop;
       return;
@@ -711,8 +711,8 @@ void common_unpack_prop_lookup(char *name, common_prop_t **prop) {
 void common_unpack_texture_lookup(char *name, texture_t **texture) {
   unsigned int i;
 
-  for(i = 0; i < texture_num; i++)
-    if(!strcmp(name, texture_list[i].name)) {
+  for (i = 0; i < texture_num; i++)
+    if (!strcmp(name, texture_list[i].name)) {
       *texture = texture_list[i].texture;
       return;
     }

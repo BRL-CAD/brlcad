@@ -106,7 +106,7 @@ dm_open(Tcl_Interp *interp, int type, int argc, char **argv)
 int
 dm_share_dlist(struct dm *dmp1, struct dm *dmp2)
 {
-  if(dmp1 == DM_NULL)
+  if (dmp1 == DM_NULL)
     return TCL_ERROR;
 
   /*
@@ -115,12 +115,12 @@ dm_share_dlist(struct dm *dmp1, struct dm *dmp2)
    *
    * XXX - need a better way to check if using the same OGL server.
    */
-  if(dmp2 != DM_NULL)
-    if(dmp1->dm_type != dmp2->dm_type ||
+  if (dmp2 != DM_NULL)
+    if (dmp1->dm_type != dmp2->dm_type ||
        bu_vls_strcmp(&dmp1->dm_dName, &dmp2->dm_dName))
       return TCL_ERROR;
 
-  switch(dmp1->dm_type){
+  switch (dmp1->dm_type){
 #ifdef DM_OGL
   case DM_TYPE_OGL:
     return ogl_share_dlist(dmp1, dmp2);
@@ -149,7 +149,7 @@ dm_Normal2Xx(struct dm *dmp, register fastf_t f)
 fastf_t
 dm_Xy2Normal(struct dm *dmp, register int y, int use_aspect)
 {
-  if(use_aspect)
+  if (use_aspect)
     return ((0.5 - y / (fastf_t)dmp->dm_height) / dmp->dm_aspect * 2.0);
   else
     return ((0.5 - y / (fastf_t)dmp->dm_height) * 2.0);
@@ -158,7 +158,7 @@ dm_Xy2Normal(struct dm *dmp, register int y, int use_aspect)
 int
 dm_Normal2Xy(struct dm *dmp, register fastf_t f, int use_aspect)
 {
-  if(use_aspect)
+  if (use_aspect)
     return (0.5 - f * 0.5 * dmp->dm_aspect) * dmp->dm_height;
   else
     return (0.5 - f * 0.5) * dmp->dm_height;
@@ -167,7 +167,7 @@ dm_Normal2Xy(struct dm *dmp, register fastf_t f, int use_aspect)
 void
 dm_fogHint(struct dm *dmp, int fastfog)
 {
-  switch(dmp->dm_type){
+  switch (dmp->dm_type){
 #ifdef DM_OGL
   case DM_TYPE_OGL:
     ogl_fogHint(dmp, fastfog);

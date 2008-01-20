@@ -65,15 +65,15 @@ void
 open_file(FILE **fp, char *name)
 {
 	/* check for special names */
-	if( strcmp( name, "-" ) == 0 ) {
+	if ( strcmp( name, "-" ) == 0 ) {
 		*fp = stdin;
 		return;
-	} else if( strcmp( name, "." ) == 0 ) {
+	} else if ( strcmp( name, "." ) == 0 ) {
 		*fp = fopen( "/dev/null", "r" );
 		return;
 	}
 
-	if( (*fp = fopen( name, "r" )) == NULL ) {
+	if ( (*fp = fopen( name, "r" )) == NULL ) {
 		bu_log(2, "bwdiff: Can't open \"%s\"\n", name );
 	}
 }
@@ -85,18 +85,18 @@ main(int argc, char **argv)
 	register unsigned char *p1, *p2, *op;
 	int	i, n, m;
 
-	while( argc > 3 ) {
-		if( strcmp(argv[1], "-m") == 0 ) {
+	while ( argc > 3 ) {
+		if ( strcmp(argv[1], "-m") == 0 ) {
 			mode = MAG;
-		} else if( strcmp(argv[1], "-g") == 0 ) {
+		} else if ( strcmp(argv[1], "-g") == 0 ) {
 			mode = GREATER;
-		} else if( strcmp(argv[1], "-l") == 0 ) {
+		} else if ( strcmp(argv[1], "-l") == 0 ) {
 			mode = LESS;
-		} else if( strcmp(argv[1], "-e") == 0 ) {
+		} else if ( strcmp(argv[1], "-e") == 0 ) {
 			mode = EQUAL;
-		} else if( strcmp(argv[1], "-n") == 0 ) {
+		} else if ( strcmp(argv[1], "-n") == 0 ) {
 			mode = NEQ;
-		} else if( strcmp(argv[1], "-b") == 0 ) {
+		} else if ( strcmp(argv[1], "-b") == 0 ) {
 			backgnd++;
 		} else
 			break;
@@ -104,48 +104,48 @@ main(int argc, char **argv)
 		argc--;
 	}
 
-	if( argc != 3 || isatty(fileno(stdout)) ) {
+	if ( argc != 3 || isatty(fileno(stdout)) ) {
 		bu_exit(1, "%s", usage);
 	}
 
 	open_file(&fp1, argv[1]);
 	open_file(&fp2, argv[2]);
 
-	while(1) {
+	while (1) {
 		n = fread(ibuf1, 1, 512, fp1);
 		m = fread(ibuf2, 1, 512, fp2);
-		if( (n == 0) && (m == 0))
+		if ( (n == 0) && (m == 0))
 			break;
 		p1 = &ibuf1[0];
 		p2 = &ibuf2[0];
 		op = &obuf[0];
-		if( m < n ) {
+		if ( m < n ) {
 			 memset((char *)(&ibuf2[m]), 0, (n - m));
 		}
-		if( m > n ) {
+		if ( m > n ) {
 			 memset((char *)(&ibuf1[n]), 0, (m - n));
 			 n = m;
 		}
 		/* unrolled for speed */
-		switch( mode ) {
+		switch ( mode ) {
 		case DIFF:
-			for( i = 0; i < n; i++ ) {
+			for ( i = 0; i < n; i++ ) {
 				*op++ = (((int)*p1 - (int)*p2)>>1) + 128;
 				p1++;
 				p2++;
 			}
 			break;
 		case MAG:
-			for( i = 0; i < n; i++ ) {
+			for ( i = 0; i < n; i++ ) {
 				*op++ = abs( (int)*p1++ - (int)*p2++ );
 			}
 			break;
 		case GREATER:
-			for( i = 0; i < n; i++ ) {
-				if( *p1 > *p2++ )
+			for ( i = 0; i < n; i++ ) {
+				if ( *p1 > *p2++ )
 					*op++ = 255;
 				else {
-					if( backgnd )
+					if ( backgnd )
 						*op++ = *p1 >> 2;
 					else
 						*op++ = 0;
@@ -154,11 +154,11 @@ main(int argc, char **argv)
 			}
 			break;
 		case LESS:
-			for( i = 0; i < n; i++ ) {
-				if( *p1 < *p2++ )
+			for ( i = 0; i < n; i++ ) {
+				if ( *p1 < *p2++ )
 					*op++ = 255;
 				else {
-					if( backgnd )
+					if ( backgnd )
 						*op++ = *p1 >> 2;
 					else
 						*op++ = 0;
@@ -167,11 +167,11 @@ main(int argc, char **argv)
 			}
 			break;
 		case EQUAL:
-			for( i = 0; i < n; i++ ) {
-				if( *p1 == *p2++ )
+			for ( i = 0; i < n; i++ ) {
+				if ( *p1 == *p2++ )
 					*op++ = 255;
 				else {
-					if( backgnd )
+					if ( backgnd )
 						*op++ = *p1 >> 2;
 					else
 						*op++ = 0;
@@ -180,11 +180,11 @@ main(int argc, char **argv)
 			}
 			break;
 		case NEQ:
-			for( i = 0; i < n; i++ ) {
-				if( *p1 != *p2++ )
+			for ( i = 0; i < n; i++ ) {
+				if ( *p1 != *p2++ )
 					*op++ = 255;
 				else {
-					if( backgnd )
+					if ( backgnd )
 						*op++ = (*p1) >> 1;
 					else
 						*op++ = 0;

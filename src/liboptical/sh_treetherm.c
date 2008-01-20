@@ -171,7 +171,7 @@ print_thrm_seg(struct thrm_seg *ts)
 	bu_log("Center: (%g %g %g)\n", V3ARGS(ts->pt));
 	bu_log("   dir: (%g %g %g)\n", V3ARGS(ts->dir));
 	bu_log(" Nodes:\n");
-	for (i=0 ; i < NUM_NODES ; i++) {
+	for (i=0; i < NUM_NODES; i++) {
 
 		bu_log("\t(%g %g %g) %17.14e  (%g %g %g)\n",
 			V3ARGS(ts->node[i]),
@@ -346,12 +346,12 @@ tthrm_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
 	sizeof(short) \
 	] ))
 
-	for (tseg = 0 ; tseg < cyl_tot ; tseg++) {
+	for (tseg = 0; tseg < cyl_tot; tseg++) {
 
 		/* compute centerpoint, min/max temperature values */
 		fp = CYL_DATA(tseg);
 		VSETALL(center, 0.0);
-		for (node=0 ; node < NUM_NODES ; node++, fp+=4) {
+		for (node=0; node < NUM_NODES; node++, fp+=4) {
 			/* this is necessary to assure that all float
 			 * values are aligned on 4-byte boundaries
 			 */
@@ -362,7 +362,7 @@ tthrm_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
 					node, fv[0], fv[1], fv[2], fv[3]);
 
 			/* make sure we don't have any "infinity" values */
-			for (i=0 ; i < 4 ; i++) {
+			for (i=0; i < 4; i++) {
 				if (fv[i] > MAX_FASTF || fv[i] < -MAX_FASTF) {
 					bu_log("%s:%d seg %d node %d coord %d out of bounds: %g\n",
 						__FILE__, __LINE__, tseg, node, i, fv[i]);
@@ -392,7 +392,7 @@ tthrm_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
 
 		/* compute vectors from center pt for each node */
 		fp = CYL_DATA(tseg);
-		for (node=0 ; node < NUM_NODES ; node++, fp+=4) {
+		for (node=0; node < NUM_NODES; node++, fp+=4) {
 			/* this is necessary to assure that all float
 			 * values are aligned on 4-byte boundaries
 			 */
@@ -644,7 +644,7 @@ too large.  Probable mis-match between geometry and thermal data\n"
 	best_idx = -1;
 	best_val = -2.0;
 
-	for (node=0 ; node < NUM_NODES ; node++) {
+	for (node=0; node < NUM_NODES; node++) {
 		Vdot = VDOT(pt_v, thrm_seg->vect[node]);
 		if (Vdot > best_val) {
 			best_idx = node;

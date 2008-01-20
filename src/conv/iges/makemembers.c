@@ -45,26 +45,26 @@ struct wmember *head;
 
 	Freestack();
 	ptr = root;
-	while( 1 )
+	while ( 1 )
 	{
-		while( ptr != NULL )
+		while ( ptr != NULL )
 		{
 			Push( (union tree *)ptr );
 			ptr = ptr->left;
 		}
 		ptr = ( struct node *)Pop();
 
-		if( ptr == NULL )
+		if ( ptr == NULL )
 			return;
 
-		if( ptr->op < 0 ) /* this is an operand */
+		if ( ptr->op < 0 ) /* this is an operand */
 		{
 			entno = (-(1+ptr->op)/2); /* entity number */
 
 			/* make the member record */
 			wmem = mk_addmember( dir[entno]->name, &(head->l), NULL, operator[op] );
 			flt = (fastf_t *)dir[entno]->rot;
-			for( i=0 ; i<16 ; i++ )
+			for ( i=0; i<16; i++ )
 			{
 				wmem->wm_mat[i] = (*flt);
 				flt++;

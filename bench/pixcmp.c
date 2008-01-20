@@ -159,7 +159,7 @@ main(int argc, char *argv[])
     argv += optind;
 
     /* validate what is left over */
-    if( argc < 1 || argc > 4)  {
+    if ( argc < 1 || argc > 4)  {
 	fprintf(stderr, "ERROR: incorrect number of arguments provided\n\n");
 	usage(argv[0]);
 	exit(OPTS_ERROR);

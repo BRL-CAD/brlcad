@@ -81,7 +81,7 @@ static void scsi_perror(int val, struct dsreq *dsp)
 	    dsp->ds_ret,
 	    dsp->ds_status,
 	    dsp->ds_msg);
-    switch(dsp->ds_status) {
+    switch (dsp->ds_status) {
     case  0:
 	fprintf(stderr, "scsi cmd finished normally\n");
 	break;
@@ -402,7 +402,7 @@ ipu_put_image_frag(struct dsreq *dsp,
     CMDLEN(dsp) = 12;
 
     nbytes = w * ipu_bytes_per_pixel * h;
-    if( nbytes > (256 * 1024 - 2) )  {
+    if ( nbytes > (256 * 1024 - 2) )  {
 	fprintf(stderr, "ipu_put_image_frag() nbytes=%d exceeds SCSI maximum transfer\n",
 		nbytes);
 	return;
@@ -486,10 +486,10 @@ ipu_put_image(struct dsreq *dsp,
     }
 
     img_line = 0;
-    for (buf_no=0 ; buf_no < fullbuffers ; buf_no++) {
+    for (buf_no=0; buf_no < fullbuffers; buf_no++) {
 	/* fill a full buffer */
-	if( ipu_bytes_per_pixel == 3 )  {
-	    for (buf_line = lines_per_buf ; buf_line-- > 0 ; img_line++) {
+	if ( ipu_bytes_per_pixel == 3 )  {
+	    for (buf_line = lines_per_buf; buf_line-- > 0; img_line++) {
 		/* move img_line to buf_line */
 		scanline = &img[img_line*bytes_per_line];
 
@@ -497,7 +497,7 @@ ipu_put_image(struct dsreq *dsp,
 		g = & grn[buf_line*w];
 		b = & blu[buf_line*w];
 
-		for (pixel=0, ip=0 ; pixel < w ; pixel++ ) {
+		for (pixel=0, ip=0; pixel < w; pixel++ ) {
 		    r[pixel] = scanline[ip++];
 		    g[pixel] = scanline[ip++];
 		    b[pixel] = scanline[ip++];
@@ -505,7 +505,7 @@ ipu_put_image(struct dsreq *dsp,
 	    }
 	} else {
 	    /* Monochrome */
-	    for (buf_line = lines_per_buf ; buf_line-- > 0 ; img_line++) {
+	    for (buf_line = lines_per_buf; buf_line-- > 0; img_line++) {
 		/* move img_line to buf_line */
 		scanline = &img[img_line*bytes_per_line];
 		r = & red[buf_line*w];
@@ -530,14 +530,14 @@ ipu_put_image(struct dsreq *dsp,
 	    fprintf(stderr, "\nDoing %d orphans (img_line %d)\n",
 		    orphan_lines, img_line);
 
-	if( ipu_bytes_per_pixel == 3 )  {
-	    for (buf_line = orphan_lines ; buf_line-- > 0 ; img_line++) {
+	if ( ipu_bytes_per_pixel == 3 )  {
+	    for (buf_line = orphan_lines; buf_line-- > 0; img_line++) {
 		scanline = &img[img_line*bytes_per_line];
 		r = & red[buf_line*w];
 		g = & grn[buf_line*w];
 		b = & blu[buf_line*w];
 
-		for (pixel=0 ; pixel < w ; pixel++ ) {
+		for (pixel=0; pixel < w; pixel++) {
 		    r[pixel] = scanline[pixel*3];
 		    g[pixel] = scanline[pixel*3+1];
 		    b[pixel] = scanline[pixel*3+2];
@@ -545,7 +545,7 @@ ipu_put_image(struct dsreq *dsp,
 	    }
 	}  else  {
 	    /* Monochrome */
-	    for (buf_line = orphan_lines ; buf_line-- > 0 ; img_line++) {
+	    for (buf_line = orphan_lines; buf_line-- > 0; img_line++) {
 		scanline = &img[img_line*bytes_per_line];
 		r = & red[buf_line*w];
 
@@ -881,7 +881,7 @@ ipu_list_files(struct dsreq *dsp)
 	memset(p, 0, file_count*19+1);
     }
 
-    for (i = 8 ; i < len ; i += buf[2]) {
+    for (i = 8; i < len; i += buf[2]) {
 	register char t;
 	if (buf[i+1] == 0) t = 'B';
 	else if (buf[i+1] == 2) t = 'R';
@@ -1116,10 +1116,10 @@ ipu_set_palette( dsp, cmap )
     int		ret;
 
     if (ipu_debug) fprintf(stderr, "ipu_set_palette(cmap=x%lx)\n", (long)cmap);
-    if( cmap == NULL )  {
+    if ( cmap == NULL )  {
 	register int	j;
 	register unsigned char *cp = linear;
-	for( j=0; j < 256; j++ )  {
+	for ( j=0; j < 256; j++ )  {
 	    *cp++ = j;
 	    *cp++ = j;
 	    *cp++ = j;
@@ -1128,7 +1128,7 @@ ipu_set_palette( dsp, cmap )
     }
 
     /* The Palette has to be sent in 4 parts */
-    for( i=0; i < 4; i++ )  {
+    for ( i=0; i < 4; i++ )  {
 	unsigned char	buf[4+2+192];
 
 	memset(p=CMDBUF(dsp), 0, 16);
@@ -1383,7 +1383,7 @@ int parse_args(ac, av)
 	case 'V'	: dsdebug = ! dsdebug;
 	case 'v'	: ipu_debug = !ipu_debug; break;
 	case '#'	: c = atoi(bu_optarg);
-	    switch(c)  {
+	    switch (c)  {
 	    case 3:
 		ipu_filetype = IPU_RGB_FILE;
 		ipu_bytes_per_pixel = 3;

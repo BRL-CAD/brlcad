@@ -79,7 +79,7 @@ nmg_dangling_face(const struct faceuse *fu, register const char *manifolds)
 	if (rt_g.NMG_debug & DEBUG_MANIF)
 		bu_log("nmg_dangling_face(0x%08x 0x%08x)\n", fu, manifolds);
 
-	for(BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
+	for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 	    NMG_CK_LOOPUSE(lu);
 	    BU_LIST_LINK_CHECK( &lu->l );
 
@@ -127,7 +127,7 @@ out:
 		tol.para = 1 - tol.perp;
 
 		bu_log("nmg_dangling_face(fu=x%x, manifolds=x%x) dangling_eu=x%x\n", fu, manifolds, eur);
-		if( eur )  nmg_pr_fu_around_eu( eur, &tol );
+		if ( eur )  nmg_pr_fu_around_eu( eur, &tol );
 	}
 	if ((rt_g.NMG_debug & DEBUG_MANIF) && (eur != (const struct edgeuse *)NULL) )
 		bu_log( "\tdangling eu x%x\n", eur );
@@ -192,7 +192,7 @@ static void paint_face(struct faceuse *fu, char *paint_table, int paint_color, c
 					bu_log( "\t\t\teur=x%x, newfu=x%x\n", eur, newfu );
 			}
 
-			if( newfu == fu->fumate_p )
+			if ( newfu == fu->fumate_p )
 				continue;
 			else if (newfu->orientation == OT_SAME)
 				paint_face(newfu, paint_table, paint_color,

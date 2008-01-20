@@ -83,7 +83,7 @@ bu_file_exists(const char *path)
 	bu_log("Does [%s] exist? ", path);
     }
 
-    if(!path) {
+    if (!path) {
 	if (bu_debug & BU_DEBUG_PATHS) {
 	    bu_log("NO\n");
 	}
@@ -92,7 +92,7 @@ bu_file_exists(const char *path)
     }
 
     /* does it exist as a filesystem entity? */
-    if( stat( path, &sbuf ) == 0 ) {
+    if ( stat( path, &sbuf ) == 0 ) {
 	if (bu_debug & BU_DEBUG_PATHS) {
 	    bu_log("YES\n");
 	}

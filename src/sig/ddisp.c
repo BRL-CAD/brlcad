@@ -56,18 +56,18 @@ int main(int argc, char **argv)
 {
 	int	n, L;
 
-	while( argc > 1 ) {
-		if( strcmp(argv[1], "-v") == 0 ) {
+	while ( argc > 1 ) {
+		if ( strcmp(argv[1], "-v") == 0 ) {
 			mode = VERT;
 			pause_time = 0;
 			Clear = 0;
-		} else if( strcmp(argv[1], "-b") == 0 ) {
+		} else if ( strcmp(argv[1], "-b") == 0 ) {
 			mode = BARS;
-		} else if( strcmp(argv[1], "-p") == 0 ) {
+		} else if ( strcmp(argv[1], "-p") == 0 ) {
 			pause_time = 3;
-		} else if( strcmp(argv[1], "-c") == 0 ) {
+		} else if ( strcmp(argv[1], "-c") == 0 ) {
 			Clear++;
-		} else if( strcmp(argv[1], "-h") == 0 ) {
+		} else if ( strcmp(argv[1], "-h") == 0 ) {
 			fbsize = 1024;
 		} else
 			break;
@@ -75,29 +75,29 @@ int main(int argc, char **argv)
 		argv++;
 	}
 
-	if( isatty(fileno(stdin)) ) {
+	if ( isatty(fileno(stdin)) ) {
 		bu_exit(1, "%s", usage );
 	}
-	if( (fbp = fb_open( NULL, fbsize, fbsize )) == FBIO_NULL ) {
+	if ( (fbp = fb_open( NULL, fbsize, fbsize )) == FBIO_NULL ) {
 		bu_exit(2, "Unable to open framebuffer\n");
 	}
 
 	L = (argc > 1) ? atoi(argv[1]) : 512;
 
-	while( (n = fread(buf, sizeof(*buf), L, stdin)) > 0 ) {
+	while ( (n = fread(buf, sizeof(*buf), L, stdin)) > 0 ) {
 		/* XXX - width hack */
-		if( n > fb_getwidth(fbp) )
+		if ( n > fb_getwidth(fbp) )
 			n = fb_getwidth(fbp);
 
-		if( Clear )
+		if ( Clear )
 			fb_clear( fbp, PIXEL_NULL );
-		if( mode == VERT )
+		if ( mode == VERT )
 			disp_inten( buf, n );
-		else if( mode == BARS )
+		else if ( mode == BARS )
 			disp_bars( buf, n );
 		else
 			lineout( buf, n );
-		if( pause_time )
+		if ( pause_time )
 			sleep( pause_time );
 	}
 	fb_close(fbp);
@@ -112,13 +112,13 @@ lineout(double *dat, int n)
 	int	i, value;
 	RGBpixel lbuf[1024*4];
 
-	if( n > fb_getwidth(fbp) ) n = fb_getwidth(fbp);
+	if ( n > fb_getwidth(fbp) ) n = fb_getwidth(fbp);
 
-	for( i = 0; i < n; i++ ) {
+	for ( i = 0; i < n; i++ ) {
 		/* Magnitude version */
 		value = dat[i] * 255.9;
-		if( value < 0 ) value = 0;
-		else if( value > 255 ) value = 255;
+		if ( value < 0 ) value = 0;
+		else if ( value > 255 ) value = 255;
 		lbuf[i][RED] = lbuf[i][GRN] = lbuf[i][BLU] = value;
 	}
 	fb_write( fbp, 0, y, (unsigned char *)lbuf, n );
@@ -139,9 +139,9 @@ disp_inten(double *buf, int size)
 
 /*	color.red = color.green = color.blue = 255;*/
 
-	if( size > fb_getwidth(fbp) ) size = fb_getwidth(fbp);
+	if ( size > fb_getwidth(fbp) ) size = fb_getwidth(fbp);
 
-	for( x = 0; x < size; x++ ) {
+	for ( x = 0; x < size; x++ ) {
 		y = buf[x] * 128;
 #ifdef OVERLAY
 		fb_read( fbp, x, y+255, color, 1 );
@@ -165,12 +165,12 @@ disp_bars(double *buf, int size)
 
 /*	color.red = color.green = color.blue = 255;*/
 
-	if( size > fb_getwidth(fbp) ) size = fb_getwidth(fbp);
+	if ( size > fb_getwidth(fbp) ) size = fb_getwidth(fbp);
 
-	for( x = 0; x < size; x++ ) {
-		if( buf[x] > 1.0 ) {
+	for ( x = 0; x < size; x++ ) {
+		if ( buf[x] > 1.0 ) {
 			y = 128;
-		} else if( buf[x] < -1.0 ) {
+		} else if ( buf[x] < -1.0 ) {
 			y = -128;
 		} else {
 			y = buf[x] * 128;
@@ -181,13 +181,13 @@ disp_bars(double *buf, int size)
 		color[RED] = color[BLU] = 0;
 #endif
 		color[GRN] = 255;
-		if( y > 0 ) {
-			while( y >= 0 ) {
+		if ( y > 0 ) {
+			while ( y >= 0 ) {
 				fb_write( fbp, x, y+255, color, 1 );
 				y--;
 			}
 		} else {
-			while( y <= 0 ) {
+			while ( y <= 0 ) {
 				fb_write( fbp, x, y+255, color, 1 );
 				y++;
 			}
@@ -197,10 +197,10 @@ disp_bars(double *buf, int size)
 
 #ifdef OLDANDCRUFTY
 	/* Calculate Critical Band filter weights */
-	if( cflag ) {
+	if ( cflag ) {
 		cbweights( &cbfilter[0], window_size, 19 );
 		cbsum = 0.0;
-		for( i = 0; i < 19; i++ )
+		for ( i = 0; i < 19; i++ )
 			cbsum += cbfilter[i];
 	}
 
@@ -222,7 +222,7 @@ int size;
 	double	lin[513], logout[513];
 	RGBpixel mcolor;
 
-	if( size > 1024 ) size = 1024;
+	if ( size > 1024 ) size = 1024;
 
 	/* Put magnitudes in linear buffer */
 /*	lin[0] = buf[0]/256.0;  NO DC ON LOG SCALE! */
@@ -234,7 +234,7 @@ int size;
 		value = hypot( buf[i].re, buf[i].im );
 #endif
 /*printf("mag = %f, ", value );*/
-		if( value < 0.6 )
+		if ( value < 0.6 )
 			value = 0.0;
 		else
 			value = 20.0 * log10( value / 65535.0 ) + 100.0;
@@ -247,29 +247,29 @@ int size;
 	lin[size/2-1] = buf[size/2].re/256.0;
 #endif
 	/* Interp to Log scale */
-	if( lflag ) {
+	if ( lflag ) {
 		LintoLog( lin, logout, size/2 );
 	} else {
-		for( i = 0; i < size/2; i++ )
+		for ( i = 0; i < size/2; i++ )
 			logout[i] = lin[i];	/* yeah, this does suck. */
 	}
 
 	/* Critical Band Filter */
-	if( cflag ) {
-		for( i = 0; i < size/2; i++ )
+	if ( cflag ) {
+		for ( i = 0; i < size/2; i++ )
 			lin[i] = logout[i];	/* Borrow lin */
-		for( i = 0+9; i < size/2-9; i++ ) {
+		for ( i = 0+9; i < size/2-9; i++ ) {
 			sum = 0.0;
-			for( j = -9; j <= 9; j++ )
+			for ( j = -9; j <= 9; j++ )
 				sum += lin[i+j] * cbfilter[j+9];
 			logout[i] = sum / cbsum;
 		}
 	}
 
 	/* Plot log values */
-	for( i = 0; i < size/2 + 1; i++ ) {
+	for ( i = 0; i < size/2 + 1; i++ ) {
 		mag = 2.0*logout[i] + 0.5;	/* 200 point range */
-		if( size > 512 ) x = i;
+		if ( size > 512 ) x = i;
 		else x = 2*i;
 #ifdef OVERLAY
 		fb_read( fbp, x, mag+255, mcolor, 1 );
@@ -278,7 +278,7 @@ int size;
 #endif
 		mcolor[BLU] = 255;
 		fb_write( fbp, x, mag+255, mcolor, 1 );
-		if( size <= 512 ) {
+		if ( size <= 512 ) {
 #ifdef OVERLAY
 			fb_read( fbp, x+1, mag+255, mcolor, 1 );
 #else
@@ -306,7 +306,7 @@ int size;
 	double	angle;
 	RGBpixel mcolor;
 
-	if( size > 1024 ) size = 1024;
+	if ( size > 1024 ) size = 1024;
 
 #ifdef OVERLAY
 	fb_read( fbp, 0, 255, mcolor, 1 );
@@ -317,7 +317,7 @@ int size;
 	fb_write( fbp, 0, 255, mcolor, 1 );
 	for (i = 1; i < size/2; i++) {
 #ifdef FHT
-		if( fabs(buf[i]+buf[size-i]) < 0.0001 )
+		if ( fabs(buf[i]+buf[size-i]) < 0.0001 )
 			angle = PI / 2.0;
 		else
 			angle = atan( (buf[i]-buf[size-i])/
@@ -325,15 +325,15 @@ int size;
 #else
 		/* four quadrant arctan.  THIS NEEDS WORK - XXX */
 /*fprintf( stderr, "%3d: (%10f,%10f) -> ", i, buf[i].re, buf[i].im );*/
-		if( fabs( buf[i].re ) < 1.0e-10 ) {
+		if ( fabs( buf[i].re ) < 1.0e-10 ) {
 			/* XXX - check for im equally small */
-			if( fabs( buf[i].im ) < 1.0e-10 )
+			if ( fabs( buf[i].im ) < 1.0e-10 )
 				angle = 0.0;
 			else
 				angle = (buf[i].im > 0.0) ? PI/2.0 : -PI/2.0;
 		} else {
 			angle = atan( buf[i].im / buf[i].re );
-			if( buf[i].re < 0.0 )
+			if ( buf[i].re < 0.0 )
 				angle += (buf[i].im > 0.0) ? PI : -PI;
 		}
 /*fprintf( stderr, "%10f Deg\n", RtoD(angle) );*/
@@ -343,7 +343,7 @@ int size;
 printf("(%6.3f,%6.3f): angle = %7.3f (%6.2f), mag = %d\n",
 	buf[i].re, buf[i].im, angle, RtoD( angle ), mag );
 #endif /* DEBUG */
-		if( size > 512 ) x = i;
+		if ( size > 512 ) x = i;
 		else x = 2*i;
 #ifdef OVERLAY
 		fb_read( fbp, x, mag+255, mcolor, 1 );
@@ -352,7 +352,7 @@ printf("(%6.3f,%6.3f): angle = %7.3f (%6.2f), mag = %d\n",
 #endif
 		mcolor[RED] = 255;
 		fb_write( fbp, x, mag+255, mcolor, 1 );
-		if( size <= 512 ) {
+		if ( size <= 512 ) {
 #ifdef OVERLAY
 			fb_read( fbp, x+1, mag+255, mcolor, 1 );
 #else

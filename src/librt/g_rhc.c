@@ -195,7 +195,7 @@ const struct bu_structparse rt_rhc_parse[] = {
     { "%f", 3, "B", bu_offsetof(struct rt_rhc_internal, rhc_B[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 1, "r", bu_offsetof(struct rt_rhc_internal, rhc_r),    BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 1, "c", bu_offsetof(struct rt_rhc_internal, rhc_c),    BU_STRUCTPARSE_FUNC_NULL },
-    { {'\0','\0','\0','\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
+    { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
  };
 
 /**
@@ -238,14 +238,14 @@ rt_rhc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	magsq_r = mag_r * mag_r;
 
 	/* Check for |H| > 0, |B| > 0, |R| > 0 */
-	if( NEAR_ZERO(mag_h, RT_LEN_TOL) || NEAR_ZERO(mag_b, RT_LEN_TOL)
+	if ( NEAR_ZERO(mag_h, RT_LEN_TOL) || NEAR_ZERO(mag_b, RT_LEN_TOL)
 	 || NEAR_ZERO(mag_r, RT_LEN_TOL) )  {
 		return(1);		/* BAD, too small */
 	}
 
 	/* Check for B.H == 0 */
 	f = VDOT( xip->rhc_B, xip->rhc_H ) / (mag_b * mag_h);
-	if( ! NEAR_ZERO(f, RT_DOT_TOL) )  {
+	if ( ! NEAR_ZERO(f, RT_DOT_TOL) )  {
 		return(1);		/* BAD */
 	}
 
@@ -393,7 +393,7 @@ rt_rhc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 			 *  See if they fall in range.
 			 */
 			VJOIN1( hitp->hit_vpriv, pprime, k1, dprime );		/* hit' */
-			if( hitp->hit_vpriv[X] >= -1.0
+			if ( hitp->hit_vpriv[X] >= -1.0
 				&& hitp->hit_vpriv[X] <= 0.0
 				&& hitp->hit_vpriv[Z] >= -1.0
 				&& hitp->hit_vpriv[Z] <= 0.0 ) {
@@ -404,7 +404,7 @@ rt_rhc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 			}
 
 			VJOIN1( hitp->hit_vpriv, pprime, k2, dprime );		/* hit' */
-			if( hitp->hit_vpriv[X] >= -1.0
+			if ( hitp->hit_vpriv[X] >= -1.0
 				&& hitp->hit_vpriv[X] <= 0.0
 				&& hitp->hit_vpriv[Z] >= -1.0
 				&& hitp->hit_vpriv[Z] <= 0.0 ) {
@@ -416,7 +416,7 @@ rt_rhc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 		} else if ( !NEAR_ZERO(b, RT_PCOEF_TOL) ) {
 			k1 = -c/b;
 			VJOIN1( hitp->hit_vpriv, pprime, k1, dprime );		/* hit' */
-			if( hitp->hit_vpriv[X] >= -1.0
+			if ( hitp->hit_vpriv[X] >= -1.0
 				&& hitp->hit_vpriv[X] <= 0.0
 				&& hitp->hit_vpriv[Z] >= -1.0
 				&& hitp->hit_vpriv[Z] <= 0.0 ) {
@@ -434,13 +434,13 @@ rt_rhc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	 */
 check_plates:
 	/* check front and back plates */
-	if( hitp < &hits[2]  &&  !NEAR_ZERO(dprime[X], SMALL) )  {
+	if ( hitp < &hits[2]  &&  !NEAR_ZERO(dprime[X], SMALL) )  {
 		/* 0 or 1 hits so far, this is worthwhile */
 		k1 = -pprime[X] / dprime[X];		/* front plate */
 		k2 = (-1.0 - pprime[X]) / dprime[X];	/* back plate */
 
 		VJOIN1( hitp->hit_vpriv, pprime, k1, dprime );	/* hit' */
-		if( (hitp->hit_vpriv[Z] + x + 1.0)
+		if ( (hitp->hit_vpriv[Z] + x + 1.0)
 			* (hitp->hit_vpriv[Z] + x + 1.0)
 			- hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y]
 			* (1.0 + 2*x) >= x*x
@@ -453,7 +453,7 @@ check_plates:
 		}
 
 		VJOIN1( hitp->hit_vpriv, pprime, k2, dprime );	/* hit' */
-		if( (hitp->hit_vpriv[Z] + x + 1.0)
+		if ( (hitp->hit_vpriv[Z] + x + 1.0)
 			* (hitp->hit_vpriv[Z] + x + 1.0)
 			- hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y]
 			* (1.0 + 2*x) >= x*x
@@ -467,12 +467,12 @@ check_plates:
 	}
 
 	/* check top plate */
-	if( hitp == &hits[1]  &&  !NEAR_ZERO(dprime[Z], SMALL) )  {
+	if ( hitp == &hits[1]  &&  !NEAR_ZERO(dprime[Z], SMALL) )  {
 		/* 0 or 1 hits so far, this is worthwhile */
 		k1 = -pprime[Z] / dprime[Z];		/* top plate */
 
 		VJOIN1( hitp->hit_vpriv, pprime, k1, dprime );	/* hit' */
-		if( hitp->hit_vpriv[X] >= -1.0 &&  hitp->hit_vpriv[X] <= 0.0
+		if ( hitp->hit_vpriv[X] >= -1.0 &&  hitp->hit_vpriv[X] <= 0.0
 			&& hitp->hit_vpriv[Y] >= -1.0
 			&& hitp->hit_vpriv[Y] <= 1.0 ) {
 			hitp->hit_magic = RT_HIT_MAGIC;
@@ -482,10 +482,10 @@ check_plates:
 		}
 	}
 
-	if( hitp != &hits[2] )
+	if ( hitp != &hits[2] )
 		return(0);	/* MISS */
 
-	if( hits[0].hit_dist < hits[1].hit_dist )  {
+	if ( hits[0].hit_dist < hits[1].hit_dist )  {
 		/* entry is [0], exit is [1] */
 		register struct seg *segp;
 
@@ -539,7 +539,7 @@ rt_rhc_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 		(struct rhc_specific *)stp->st_specific;
 
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
-	switch( hitp->hit_surfno )  {
+	switch ( hitp->hit_surfno )  {
 	case RHC_NORM_BODY:
 		c = rhc->rhc_cprime;
 		VSET( can_normal,
@@ -577,7 +577,7 @@ rt_rhc_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 	register struct rhc_specific *rhc =
 		(struct rhc_specific *)stp->st_specific;
 
-	switch( hitp->hit_surfno )  {
+	switch ( hitp->hit_surfno )  {
 	case RHC_NORM_BODY:
 		/* most nearly flat direction */
 		VMOVE( cvp->crv_pdir, rhc->rhc_Hunit );
@@ -627,7 +627,7 @@ rt_rhc_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 	VSUB2( work, hitp->hit_point, rhc->rhc_V );
 	MAT4X3VEC( pprime, rhc->rhc_SoR, work );
 
-	switch( hitp->hit_surfno )  {
+	switch ( hitp->hit_surfno )  {
 	case RHC_NORM_BODY:
 		/* Skin.  x, y coordinates define rotation.  radius = 1 */
 		len = sqrt(pprime[Y]*pprime[Y] + pprime[Z]*pprime[Z]);
@@ -699,7 +699,7 @@ rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	c = xip->rhc_c;			/* dist to asympt origin */
 
 	/* Check for |H| > 0, |B| > 0, rh > 0, c > 0 */
-	if( NEAR_ZERO(h, RT_LEN_TOL) || NEAR_ZERO(b, RT_LEN_TOL)
+	if ( NEAR_ZERO(h, RT_LEN_TOL) || NEAR_ZERO(b, RT_LEN_TOL)
 	 || NEAR_ZERO(rh, RT_LEN_TOL) || NEAR_ZERO(c, RT_LEN_TOL))  {
 		bu_log("rt_rhc_plot:  zero length H, B, c, or rh\n");
 		return(-2);		/* BAD */
@@ -707,7 +707,7 @@ rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 
 	/* Check for B.H == 0 */
 	f = VDOT( xip->rhc_B, xip->rhc_H ) / (b * h);
-	if( ! NEAR_ZERO(f, RT_DOT_TOL) )  {
+	if ( ! NEAR_ZERO(f, RT_DOT_TOL) )  {
 		bu_log("rt_rhc_plot: B not perpendicular to H, f=%f\n", f);
 		return(-3);		/* BAD */
 	}
@@ -729,7 +729,7 @@ rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	/*
 	 *  Establish tolerances
 	 */
-	if( ttol->rel <= 0.0 || ttol->rel >= 1.0 )  {
+	if ( ttol->rel <= 0.0 || ttol->rel >= 1.0 )  {
 		dtol = 0.0;		/* none */
 	} else {
 		/* Convert rel to absolute by scaling by smallest side */
@@ -738,8 +738,8 @@ rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 		else
 			dtol = ttol->rel * 2 * b;
 	}
-	if( ttol->abs <= 0.0 )  {
-		if( dtol <= 0.0 )  {
+	if ( ttol->abs <= 0.0 )  {
+		if ( dtol <= 0.0 )  {
 			/* No tolerance given, use a default */
 			if (rh < b)
 				dtol = 2 * 0.10 * rh;	/* 10% */
@@ -750,12 +750,12 @@ rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 		}
 	} else {
 		/* Absolute tolerance was given, pick smaller */
-		if( ttol->rel <= 0.0 || dtol > ttol->abs )
+		if ( ttol->rel <= 0.0 || dtol > ttol->abs )
 			dtol = ttol->abs;
 	}
 
 	/* To ensure normal tolerance, remain below this angle */
-	if( ttol->norm > 0.0 )
+	if ( ttol->norm > 0.0 )
 		ntol = ttol->norm;
 	else
 		/* tolerate everything */
@@ -795,18 +795,18 @@ rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	/* Draw the front */
 	RT_ADD_VLIST( vhead, &front[(n-1)*ELEMENTS_PER_VECT],
 		BN_VLIST_LINE_MOVE );
-	for( i = 0; i < n; i++ )  {
+	for ( i = 0; i < n; i++ )  {
 		RT_ADD_VLIST( vhead, &front[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
 	}
 
 	/* Draw the back */
 	RT_ADD_VLIST( vhead, &back[(n-1)*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
-	for( i = 0; i < n; i++ )  {
+	for ( i = 0; i < n; i++ )  {
 		RT_ADD_VLIST( vhead, &back[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
 	}
 
 	/* Draw connections */
-	for( i = 0; i < n; i++ )  {
+	for ( i = 0; i < n; i++ )  {
 		RT_ADD_VLIST( vhead, &front[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
 		RT_ADD_VLIST( vhead, &back[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
 	}
@@ -927,7 +927,7 @@ rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	c = xip->rhc_c;			/* dist to asympt origin */
 
 	/* Check for |H| > 0, |B| > 0, rh > 0, c > 0 */
-	if( NEAR_ZERO(h, RT_LEN_TOL) || NEAR_ZERO(b, RT_LEN_TOL)
+	if ( NEAR_ZERO(h, RT_LEN_TOL) || NEAR_ZERO(b, RT_LEN_TOL)
 	 || NEAR_ZERO(rh, RT_LEN_TOL) || NEAR_ZERO(c, RT_LEN_TOL))  {
 		bu_log("rt_rhc_tess:  zero length H, B, c, or rh\n");
 		return(-2);		/* BAD */
@@ -935,7 +935,7 @@ rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 	/* Check for B.H == 0 */
 	f = VDOT( xip->rhc_B, xip->rhc_H ) / (b * h);
-	if( ! NEAR_ZERO(f, RT_DOT_TOL) )  {
+	if ( ! NEAR_ZERO(f, RT_DOT_TOL) )  {
 		bu_log("rt_rhc_tess: B not perpendicular to H, f=%f\n", f);
 		return(-3);		/* BAD */
 	}
@@ -957,7 +957,7 @@ rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	/*
 	 *  Establish tolerances
 	 */
-	if( ttol->rel <= 0.0 || ttol->rel >= 1.0 )  {
+	if ( ttol->rel <= 0.0 || ttol->rel >= 1.0 )  {
 		dtol = 0.0;		/* none */
 	} else {
 		/* Convert rel to absolute by scaling by smallest side */
@@ -966,8 +966,8 @@ rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		else
 			dtol = ttol->rel * 2 * b;
 	}
-	if( ttol->abs <= 0.0 )  {
-		if( dtol <= 0.0 )  {
+	if ( ttol->abs <= 0.0 )  {
+		if ( dtol <= 0.0 )  {
 			/* No tolerance given, use a default */
 			if (rh < b)
 				dtol = 2 * 0.10 * rh;	/* 10% */
@@ -978,12 +978,12 @@ rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		}
 	} else {
 		/* Absolute tolerance was given, pick smaller */
-		if( ttol->rel <= 0.0 || dtol > ttol->abs )
+		if ( ttol->rel <= 0.0 || dtol > ttol->abs )
 			dtol = ttol->abs;
 	}
 
 	/* To ensure normal tolerance, remain below this angle */
-	if( ttol->norm > 0.0 )
+	if ( ttol->norm > 0.0 )
 		ntol = ttol->norm;
 	else
 		/* tolerate everything */
@@ -1044,7 +1044,7 @@ rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
 	s = BU_LIST_FIRST(shell, &(*r)->s_hd);
 
-	for( i=0; i<n; i++ )  {
+	for ( i=0; i<n; i++ )  {
 		vfront[i] = vtemp[i] = (struct vertex *)0;
 	}
 
@@ -1055,7 +1055,7 @@ rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 	/* Back face topology.  Verts must go in opposite dir (CW) */
 	outfaceuses[1] = nmg_cface(s, vtemp, n);
-	for( i=0; i<n; i++ )  vback[i] = vtemp[n-1-i];
+	for ( i=0; i<n; i++ )  vback[i] = vtemp[n-1-i];
 
 	(void)nmg_mark_edges_real( &outfaceuses[1]->l.magic );
 
@@ -1067,7 +1067,7 @@ rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	 * connecting the front and back faces.
 	 * increasing indices go towards counter-clockwise (CCW).
 	 */
-	for( i=0; i<n; i++ )  {
+	for ( i=0; i<n; i++ )  {
 		vertlist[0] = vfront[i];	/* from top, */
 		vertlist[1] = vback[i];		/* straight down, */
 		vertlist[2] = vback[i+1];	/* to left, */
@@ -1077,22 +1077,22 @@ rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 	(void)nmg_mark_edges_real( &outfaceuses[n+1]->l.magic );
 
-	for( i=0; i<n; i++ )  {
+	for ( i=0; i<n; i++ )  {
 		NMG_CK_VERTEX(vfront[i]);
 		NMG_CK_VERTEX(vback[i]);
 	}
 
 	/* Associate the vertex geometry, CCW */
-	for( i=0; i<n; i++ )  {
+	for ( i=0; i<n; i++ )  {
 		nmg_vertex_gv( vfront[i], &front[3*(i)] );
 	}
-	for( i=0; i<n; i++ )  {
+	for ( i=0; i<n; i++ )  {
 		nmg_vertex_gv( vback[i], &back[3*(i)] );
 	}
 
 	/* Associate the face geometry */
-	for (i=0 ; i < n+2 ; i++) {
-		if( nmg_fu_planeeqn( outfaceuses[i], tol ) < 0 )
+	for (i=0; i < n+2; i++) {
+		if ( nmg_fu_planeeqn( outfaceuses[i], tol ) < 0 )
 		{
 			failure = (-1);
 			goto fail;
@@ -1100,7 +1100,7 @@ rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	}
 
 	/* Associate vertexuse normals */
-	for( i=0 ; i<n ; i++ )
+	for ( i=0; i<n; i++ )
 	{
 		struct vertexuse *vu;
 		struct faceuse *fu;
@@ -1110,37 +1110,37 @@ rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 		/* do "front" vertices */
 		NMG_CK_VERTEX( vfront[i] );
-		for( BU_LIST_FOR( vu, vertexuse, &vfront[i]->vu_hd ) )
+		for ( BU_LIST_FOR( vu, vertexuse, &vfront[i]->vu_hd ) )
 		{
 			NMG_CK_VERTEXUSE( vu );
 			fu = nmg_find_fu_of_vu( vu );
 			NMG_CK_FACEUSE( fu );
-			if( fu->f_p == outfaceuses[0]->f_p ||
+			if ( fu->f_p == outfaceuses[0]->f_p ||
 			    fu->f_p == outfaceuses[1]->f_p ||
 			    fu->f_p == outfaceuses[n+1]->f_p )
 					continue;	/* skip flat faces */
 
-			if( fu->orientation == OT_SAME )
+			if ( fu->orientation == OT_SAME )
 				nmg_vertexuse_nv( vu, norms[i] );
-			else if( fu->orientation == OT_OPPOSITE )
+			else if ( fu->orientation == OT_OPPOSITE )
 				nmg_vertexuse_nv( vu, rev_norm );
 		}
 
 		/* and "back" vertices */
 		NMG_CK_VERTEX( vback[i] );
-		for( BU_LIST_FOR( vu, vertexuse, &vback[i]->vu_hd ) )
+		for ( BU_LIST_FOR( vu, vertexuse, &vback[i]->vu_hd ) )
 		{
 			NMG_CK_VERTEXUSE( vu );
 			fu = nmg_find_fu_of_vu( vu );
 			NMG_CK_FACEUSE( fu );
-			if( fu->f_p == outfaceuses[0]->f_p ||
+			if ( fu->f_p == outfaceuses[0]->f_p ||
 			    fu->f_p == outfaceuses[1]->f_p ||
 			    fu->f_p == outfaceuses[n+1]->f_p )
 					continue;	/* skip flat faces */
 
-			if( fu->orientation == OT_SAME )
+			if ( fu->orientation == OT_SAME )
 				nmg_vertexuse_nv( vu, norms[i] );
-			else if( fu->orientation == OT_OPPOSITE )
+			else if ( fu->orientation == OT_OPPOSITE )
 				nmg_vertexuse_nv( vu, rev_norm );
 		}
 	}
@@ -1179,7 +1179,7 @@ rt_rhc_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 	BU_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
 	/* Check record type */
-	if( rp->u_id != ID_SOLID )  {
+	if ( rp->u_id != ID_SOLID )  {
 		bu_log("rt_rhc_import: defective record\n");
 		return(-1);
 	}
@@ -1200,7 +1200,7 @@ rt_rhc_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 	xip->rhc_r = rp->s.s_values[3*3] / mat[15];
 	xip->rhc_c = rp->s.s_values[3*3+1] / mat[15];
 
-	if( xip->rhc_r <= SMALL_FASTF || xip->rhc_c <= SMALL_FASTF ) {
+	if ( xip->rhc_r <= SMALL_FASTF || xip->rhc_c <= SMALL_FASTF ) {
 		bu_log( "rt_rhc_import: r or c are zero\n" );
 		bu_free( (char *)ip->idb_ptr, "rt_rhc_import: ip->idb_ptr" );
 		return( -1 );
@@ -1221,7 +1221,7 @@ rt_rhc_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 	union record		*rhc;
 
 	RT_CK_DB_INTERNAL(ip);
-	if( ip->idb_type != ID_RHC )  return(-1);
+	if ( ip->idb_type != ID_RHC )  return(-1);
 	xip = (struct rt_rhc_internal *)ip->idb_ptr;
 	RT_RHC_CK_MAGIC(xip);
 
@@ -1300,7 +1300,7 @@ rt_rhc_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 	xip->rhc_r = vec[3*3] / mat[15];
 	xip->rhc_c = vec[3*3+1] / mat[15];
 
-	if( xip->rhc_r <= SMALL_FASTF || xip->rhc_c <= SMALL_FASTF ) {
+	if ( xip->rhc_r <= SMALL_FASTF || xip->rhc_c <= SMALL_FASTF ) {
 		bu_log( "rt_rhc_import: r or c are zero\n" );
 		bu_free( (char *)ip->idb_ptr, "rt_rhc_import: ip->idb_ptr" );
 		return( -1 );
@@ -1321,7 +1321,7 @@ rt_rhc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	fastf_t			vec[11];
 
 	RT_CK_DB_INTERNAL(ip);
-	if( ip->idb_type != ID_RHC )  return(-1);
+	if ( ip->idb_type != ID_RHC )  return(-1);
 	xip = (struct rt_rhc_internal *)ip->idb_ptr;
 	RT_RHC_CK_MAGIC(xip);
 

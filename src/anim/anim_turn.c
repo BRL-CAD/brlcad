@@ -77,7 +77,7 @@ main(int argc, char **argv)
     VSETALL( back, 0.0 );
     VSETALL( temp1, 0.0 );
     VSETALL( temp2, 0.0 );
-    for( count=0 ; count<ELEMENTS_PER_MAT ; count++ )
+    for ( count=0; count<ELEMENTS_PER_MAT; count++ )
 	m_from_world[count]=m_to_world[count]=0.0;
     length = angle = radius = roll_ang = 0.0;
 
@@ -89,13 +89,13 @@ main(int argc, char **argv)
 	VSCAN(temp1);
 	scanf("%*f%*[^-0123456789]");
 	VSCAN(temp2);
-	angle = bn_atan2( (temp2[1]-temp1[1]),(temp2[0]-temp1[0]) );
+	angle = bn_atan2( (temp2[1]-temp1[1]), (temp2[0]-temp1[0]) );
 	rewind(stdin);
     }
     count = 0;
     while (1) {
 	/* read one line of table */
-	val = scanf("%lf%*[^-0123456789]",&time); /*read time, ignore garbage*/
+	val = scanf("%lf%*[^-0123456789]", &time); /*read time, ignore garbage*/
 	val = scanf("%lf %lf %lf", point, point+1, point +2);
 	if (val < 3) {
 	    break;
@@ -107,7 +107,7 @@ main(int argc, char **argv)
 	    /* calculate matrices corrsponding to last position*/
 	    anim_y_p_r2mat(m_to_world, angle, 0.0, 0.0);
 	    anim_add_trans(m_to_world, front, zero);
-	    anim_y_p_r2mat(m_from_world,-angle, 0.0, 0.0);
+	    anim_y_p_r2mat(m_from_world, -angle, 0.0, 0.0);
 	    VREVERSE(temp1, front);
 	    anim_add_trans(m_from_world, zero, temp1);
 
@@ -162,25 +162,25 @@ int get_args(int argc, char **argv)
 {
     int c;
     while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
-	switch(c){
+	switch (c){
 	case 'l':
-	    sscanf(bu_optarg, "%lf",&length);
+	    sscanf(bu_optarg, "%lf", &length);
 	    break;
 	case 'a':
-	    sscanf(bu_optarg, "%lf",&angle);
+	    sscanf(bu_optarg, "%lf", &angle);
 	    angle *= DTOR; /* degrees to radians */
 	    angle_set = 1;
 	    break;
 	case 'r':
-	    sscanf(bu_optarg, "%lf",&radius);
+	    sscanf(bu_optarg, "%lf", &radius);
 	    turn_wheels = 1;
 	    break;
 	case 'f':
 	    turn_wheels = 1;
-	    sscanf(bu_optarg, "%lf",&factor);
+	    sscanf(bu_optarg, "%lf", &factor);
 	    break;
 	case 'p':
-	    sscanf(bu_optarg, "%d",&print_int);
+	    sscanf(bu_optarg, "%d", &print_int);
 	    break;
 	default:
 	    fprintf(stderr, "Unknown option: -%c\n", c);

@@ -154,7 +154,7 @@ main(int argc, char **argv)
     /* get track information from specified file */
 
     if (!(stream = fopen(*(argv+bu_optind), "r"))){
-	fprintf(stderr, "Anim_hardtrack: Could not open file %s.\n",*(argv+bu_optind));
+	fprintf(stderr, "Anim_hardtrack: Could not open file %s.\n", *(argv+bu_optind));
 	return(0);
     }
     num_wheels = -1;
@@ -179,7 +179,7 @@ main(int argc, char **argv)
 	if (radius)
 	    x[i].w.rad = radius;
 	else
-	    fscanf(stream, "%lf",& x[i].w.rad);
+	    fscanf(stream, "%lf", & x[i].w.rad);
 	MAT4X3PNT(x[i].w.pos, m_rev_axes, temp);
 	if (i==0)
 	    track_y = x[0].w.pos[1];
@@ -205,7 +205,7 @@ main(int argc, char **argv)
     }
     /* main loop */
     distance = 0.0;
-    if(!steer)
+    if (!steer)
 	frame = first_frame;
     else
 	frame = first_frame-1;
@@ -216,8 +216,8 @@ main(int argc, char **argv)
 	VMOVE(p2, p3);
 	scanf("%*f");/*time stamp*/
 	val = scanf("%lf %lf %lf", p3, p3+1, p3 + 2);
-	if(!steer){
-	    scanf("%lf %lf %lf",&yaw,&pitch,&roll);
+	if (!steer){
+	    scanf("%lf %lf %lf", &yaw, &pitch, &roll);
 	    anim_dy_p_r2mat(mat_v, yaw, pitch, roll);
 	    anim_add_trans(mat_v, p3, rcentroid);
 	}
@@ -260,7 +260,7 @@ main(int argc, char **argv)
 	    }
 	    if (print_link) {
 		for (count=0;count<num_links;count++){
-		    (void) get_link(position,&y_rot, distance+tracklen*count/num_links+init_dist);
+		    (void) get_link(position, &y_rot, distance+tracklen*count/num_links+init_dist);
 		    anim_y_p_r2mat(wmat, 0.0, y_rot+r[count].ang, 0.0);
 		    anim_add_trans(wmat, position, r[count].pos);
 		    if ((axes || cent) && links_placed){ /* link moved from vehicle coords */
@@ -273,16 +273,16 @@ main(int argc, char **argv)
 		    }
 		    if (print_mode==TRACK_ANIM) {
 			printf("anim %s.%d matrix %s\n", *(argv+link_nindex), count, link_cmd);
-			anim_mat_printf(stdout, wmat, "%.10g ","\n",";\n");
+			anim_mat_printf(stdout, wmat, "%.10g ", "\n", ";\n");
 		    } else if (print_mode==TRACK_ARCED) {
 			printf("arced %s.%d matrix %s ", *(argv+link_nindex), count, link_cmd);
-			anim_mat_printf(stdout, wmat, "%.10g ","","\n");
+			anim_mat_printf(stdout, wmat, "%.10g ", "", "\n");
 		    }
 		}
 	    }
 	    if (print_wheel){
 		for (count = 0;count<num_wheels;count++){
-		    anim_y_p_r2mat(wmat, 0.0,-distance/x[count].w.rad, 0.0);
+		    anim_y_p_r2mat(wmat, 0.0, -distance/x[count].w.rad, 0.0);
 		    VREVERSE(temp, x[count].w.pos);
 		    anim_add_trans(wmat, x[count].w.pos, temp);
 		    if (axes || cent){
@@ -290,11 +290,11 @@ main(int argc, char **argv)
 			bn_mat_mul(wmat, m_axes, mat_x);
 		    }
 		    if (print_mode==TRACK_ANIM) {
-			printf("anim %s.%d matrix %s\n",*(argv+wheel_nindex), count, wheel_cmd);
-			anim_mat_printf(stdout, wmat, "%.10g ","\n",";\n");
+			printf("anim %s.%d matrix %s\n", *(argv+wheel_nindex), count, wheel_cmd);
+			anim_mat_printf(stdout, wmat, "%.10g ", "\n", ";\n");
 		    } else if (print_mode==TRACK_ARCED) {
-			printf("arced %s.%d matrix %s ",*(argv+wheel_nindex), count, wheel_cmd);
-			anim_mat_printf(stdout, wmat, "%.10g ","","\n");
+			printf("arced %s.%d matrix %s ", *(argv+wheel_nindex), count, wheel_cmd);
+			anim_mat_printf(stdout, wmat, "%.10g ", "", "\n");
 		    }
 		}
 	    }
@@ -362,7 +362,7 @@ int track_prep(void)/*run once at the beginning to establish important track inf
 	/*calculate length and direction*/
 	VSUB2(difference, x[i].t.pos1, x[i].t.pos0);
 	x[i].t.len = MAGNITUDE(difference);
-	VSCALE((x[i].t.dir), difference,(1.0/x[i].t.len));
+	VSCALE((x[i].t.dir), difference, (1.0/x[i].t.len));
 
 	/*calculate arclength and total track length*/
 	tracklen += x[i].t.len;
@@ -373,7 +373,7 @@ int track_prep(void)/*run once at the beginning to establish important track inf
     r = (struct rlink *) bu_calloc(num_links, sizeof(struct rlink), "struct rlink");
     if (links_placed)
 	for (i=0;i<num_links;i++){
-	    get_link(link_cent,&link_angle, init_dist + tracklen*i/num_links);
+	    get_link(link_cent, &link_angle, init_dist + tracklen*i/num_links);
 	    VREVERSE(r[i].pos, link_cent);
 	    r[i].ang = -link_angle;
 	}
@@ -391,7 +391,7 @@ int get_link(fastf_t *pos, fastf_t *angle_p, fastf_t dist)
 	dist += tracklen;
     for (i=0;i<NW;i++){
 	if ( (dist  -= x[i].t.len) < 0 ){
-	    VSCALE(temp,(x[i].t.dir), dist);
+	    VSCALE(temp, (x[i].t.dir), dist);
 	    VADD2(pos, x[i].t.pos1, temp);
 	    *angle_p = atan2(x[i].t.dir[2], x[i].t.dir[0]);
 	    return(2*i);
@@ -422,7 +422,7 @@ int get_args(int argc, char **argv)
     strcpy(wheel_cmd, "lmul");
     while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
 	i=0;
-	switch(c){
+	switch (c){
 	case 'b':
 	    bu_optind -= 1;
 	    sscanf(argv[bu_optind+(i++)], "%lf", &yaw );
@@ -443,16 +443,16 @@ int get_args(int argc, char **argv)
 	    cent = 1;
 	    break;
 	case 'f':
-	    sscanf(bu_optarg, "%d",&first_frame);
+	    sscanf(bu_optarg, "%d", &first_frame);
 	    break;
 	case 'i':
-	    sscanf(bu_optarg, "%lf",&init_dist);
+	    sscanf(bu_optarg, "%lf", &init_dist);
 	    break;
 	case 'p':
 	    links_placed = 1;
 	    break;
 	case 'r':
-	    sscanf(bu_optarg, "%lf",&radius);
+	    sscanf(bu_optarg, "%lf", &radius);
 	    break;
 	case 'w':
 	    wheel_nindex = bu_optind - 1;
@@ -469,7 +469,7 @@ int get_args(int argc, char **argv)
 	    steer = 1;
 	    break;
 	case 'g':
-	    sscanf(bu_optarg, "%d",&arced_frame);
+	    sscanf(bu_optarg, "%d", &arced_frame);
 	    print_mode = TRACK_ARCED;
 	    break;
 	case 'm':
@@ -481,7 +481,7 @@ int get_args(int argc, char **argv)
 		strncpy(wheel_cmd, argv[bu_optind], 10);
 		break;
 	    default:
-		fprintf(stderr, "Unknown option: -m%c\n",*bu_optarg);
+		fprintf(stderr, "Unknown option: -m%c\n", *bu_optarg);
 		return(0);
 	    }
 	    bu_optind += 1;

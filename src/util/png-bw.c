@@ -81,11 +81,11 @@ main(int argc, char **argv)
 	int in, out;
 	double value;
 
-	while( argc > 1 && argv[1][0] == '-' )
+	while ( argc > 1 && argv[1][0] == '-' )
 	{
-		if( strcmp( argv[1], "-v" ) == 0 )
+		if ( strcmp( argv[1], "-v" ) == 0 )
 			verbose = 1;
-		else if( strcmp(argv[1], "-ntsc") == 0 )
+		else if ( strcmp(argv[1], "-ntsc") == 0 )
 		{
 			/* NTSC weights */
 			rweight = 0.30;
@@ -93,7 +93,7 @@ main(int argc, char **argv)
 			bweight = 0.11;
 			red = green = blue = 1;
 		}
-		else if( strcmp(argv[1], "-crt") == 0 )
+		else if ( strcmp(argv[1], "-crt") == 0 )
 		{
 			/* CRT weights */
 			rweight = 0.26;
@@ -101,21 +101,21 @@ main(int argc, char **argv)
 			bweight = 0.08;
 			red = green = blue = 1;
 		}
-		else switch( argv[1][1] )
+		else switch ( argv[1][1] )
 		{
 			case 'R':
 				red++;
-				if( argv[1][2] != '\0' )
+				if ( argv[1][2] != '\0' )
 					rweight = atof( &argv[1][2] );
 				break;
 			case 'G':
 				green++;
-				if( argv[1][2] != '\0' )
+				if ( argv[1][2] != '\0' )
 					gweight = atof( &argv[1][2] );
 				break;
 			case 'B':
 				blue++;
-				if( argv[1][2] != '\0' )
+				if ( argv[1][2] != '\0' )
 					bweight = atof( &argv[1][2] );
 				break;
 			default:
@@ -127,9 +127,9 @@ main(int argc, char **argv)
 		argv++;
 	}
 
-	if( argc < 2 )
+	if ( argc < 2 )
 	{
-		if( isatty(fileno(stdin)) )
+		if ( isatty(fileno(stdin)) )
 		{
 			bu_log( usage, "png-bw" );
 			bu_exit( EXIT_FAILURE, "Are you intending to type in a PNG format file??\n" );
@@ -138,7 +138,7 @@ main(int argc, char **argv)
 	}
 	else
 	{
-		if( (fp_in = fopen(argv[1], "rb")) == NULL )
+		if ( (fp_in = fopen(argv[1], "rb")) == NULL )
 		{
 			perror(argv[1]);
 			bu_log ( "png-bw: cannot open \"%s\" for reading\n", argv[1] );
@@ -146,18 +146,18 @@ main(int argc, char **argv)
 		}
 	}
 
-	if( fread( header, 8, 1, fp_in ) != 1 )
+	if ( fread( header, 8, 1, fp_in ) != 1 )
 		bu_exit( EXIT_FAILURE, "ERROR: Failed while reading file header!!!\n" );
 
-	if( !png_check_sig( (png_bytep)header, 8 ) )
+	if ( !png_check_sig( (png_bytep)header, 8 ) )
 		bu_exit( EXIT_FAILURE, "This is not a PNG file!!!\n" );
 
 	png_p = png_create_read_struct( PNG_LIBPNG_VER_STRING, NULL, NULL, NULL );
-	if( !png_p )
+	if ( !png_p )
 		bu_exit( EXIT_FAILURE, "png_create_read_struct() failed!!\n" );
 
 	info_p = png_create_info_struct( png_p );
-	if( !info_p )
+	if ( !info_p )
 		bu_exit( EXIT_FAILURE, "png_create_info_struct() failed!!\n" );
 
 	png_init_io( png_p, fp_in );
@@ -168,7 +168,7 @@ main(int argc, char **argv)
 
 	color_type = png_get_color_type( png_p, info_p );
 
-	if( color_type != PNG_COLOR_TYPE_GRAY &&
+	if ( color_type != PNG_COLOR_TYPE_GRAY &&
 	    color_type != PNG_COLOR_TYPE_GRAY_ALPHA )
 	{
 		bu_log( "Warning: color image being converted to B/W!!!\n" );
@@ -177,13 +177,13 @@ main(int argc, char **argv)
 
 	png_set_expand( png_p );
 	bit_depth = png_get_bit_depth( png_p, info_p );
-	if( bit_depth == 16 )
+	if ( bit_depth == 16 )
 		png_set_strip_16( png_p );
 
 	file_width = png_get_image_width( png_p, info_p );
 	file_height = png_get_image_height( png_p, info_p );
 
-	if( verbose )
+	if ( verbose )
 	{
 		switch (color_type)
 		{
@@ -209,9 +209,9 @@ main(int argc, char **argv)
 		bu_log( "Image size: %d X %d\n", file_width, file_height );
 	}
 
-	if( png_get_bKGD( png_p, info_p, &input_backgrd ) )
+	if ( png_get_bKGD( png_p, info_p, &input_backgrd ) )
 	{
-		if( verbose && (color_type == PNG_COLOR_TYPE_GRAY_ALPHA ||
+		if ( verbose && (color_type == PNG_COLOR_TYPE_GRAY_ALPHA ||
 				color_type == PNG_COLOR_TYPE_RGB_ALPHA ) )
 			bu_log( "background color: %d %d %d\n", input_backgrd->red, input_backgrd->green, input_backgrd->blue );
 		png_set_background( png_p, input_backgrd, PNG_BACKGROUND_GAMMA_FILE, 1, 1.0 );
@@ -219,16 +219,16 @@ main(int argc, char **argv)
 	else
 		png_set_background( png_p, &def_backgrd, PNG_BACKGROUND_GAMMA_FILE, 0, 1.0 );
 
-	if( png_get_gAMA( png_p, info_p, &gamma ) )
+	if ( png_get_gAMA( png_p, info_p, &gamma ) )
 	{
-		if( verbose )
+		if ( verbose )
 			bu_log( "gamma: %g\n", gamma );
 		png_set_gAMA( png_p, info_p, gamma );
 	}
 
-	if( verbose )
+	if ( verbose )
 	{
-		if( png_get_interlace_type( png_p, info_p ) == PNG_INTERLACE_NONE )
+		if ( png_get_interlace_type( png_p, info_p ) == PNG_INTERLACE_NONE )
 			bu_log( "not interlaced\n" );
 		else
 			bu_log( "interlaced\n" );
@@ -236,14 +236,14 @@ main(int argc, char **argv)
 
 	png_read_update_info( png_p, info_p );
 
-	if( !convert_to_bw )
+	if ( !convert_to_bw )
 	{
 		/* allocate memory for image */
 		image = (unsigned char *)bu_calloc( 1, file_width*file_height, "image" );
 
 		/* create rows array */
 		rows = (unsigned char **)bu_calloc( file_height, sizeof( unsigned char *), "rows" );
-		for( i=0 ; i<file_height ; i++ )
+		for ( i=0; i<file_height; i++ )
 			rows[file_height-1-i] = image+(i*file_width);
 	}
 	else
@@ -253,13 +253,13 @@ main(int argc, char **argv)
 
 		/* create rows array */
 		rows = (unsigned char **)bu_calloc( file_height, sizeof( unsigned char *), "rows" );
-		for( i=0 ; i<file_height ; i++ )
+		for ( i=0; i<file_height; i++ )
 			rows[file_height-1-i] = image+(i*file_width*3);
 	}
 
 	png_read_image( png_p, rows );
 
-	if( !convert_to_bw )
+	if ( !convert_to_bw )
 	{
 		fwrite( image, file_width*file_height, 1, stdout );
 		bu_exit ( 0, NULL );
@@ -270,17 +270,17 @@ main(int argc, char **argv)
 	/* Following code modified from pix-bw.c */
 
 	/* Hack for multiple color planes */
-	if( red + green + blue > 1 || rweight != 0.0 || gweight != 0.0 || bweight != 0.0 )
+	if ( red + green + blue > 1 || rweight != 0.0 || gweight != 0.0 || bweight != 0.0 )
 		multiple_colors = 1;
 	else
 		multiple_colors = 0;
 
 	num_color_planes = red + green + blue;
-	if( red != 0 && rweight == 0.0 )
+	if ( red != 0 && rweight == 0.0 )
 		rweight = 1.0 / (double)num_color_planes;
-	if( green != 0 && gweight == 0.0 )
+	if ( green != 0 && gweight == 0.0 )
 		gweight = 1.0 / (double)num_color_planes;
-	if( blue != 0 && bweight == 0.0 )
+	if ( blue != 0 && bweight == 0.0 )
 		bweight = 1.0 / (double)num_color_planes;
 
 	clip_high = clip_low = 0;
@@ -289,57 +289,57 @@ main(int argc, char **argv)
 	 * The loops are repeated for efficiency...
 	 */
 	num = file_width*file_height*3;
-	if( multiple_colors ) {
-		for( in = out = 0; out < num/3; out++, in += 3 ) {
+	if ( multiple_colors ) {
+		for ( in = out = 0; out < num/3; out++, in += 3 ) {
 			value = rweight*image[in] + gweight*image[in+1] + bweight*image[in+2];
-			if( value > 255.0 ) {
+			if ( value > 255.0 ) {
 				obuf[out] = 255;
 				clip_high++;
-			} else if( value < 0.0 ) {
+			} else if ( value < 0.0 ) {
 				obuf[out] = 0;
 				clip_low++;
 			} else
 				obuf[out] = value;
 		}
-	} else if( red ) {
-		for( in = out = 0; out < num/3; out++, in += 3 )
+	} else if ( red ) {
+		for ( in = out = 0; out < num/3; out++, in += 3 )
 			obuf[out] = image[in];
-	} else if( green ) {
-		for( in = out = 0; out < num/3; out++, in += 3 )
+	} else if ( green ) {
+		for ( in = out = 0; out < num/3; out++, in += 3 )
 			obuf[out] = image[in+1];
-	} else if( blue ) {
-		for( in = out = 0; out < num/3; out++, in += 3 )
+	} else if ( blue ) {
+		for ( in = out = 0; out < num/3; out++, in += 3 )
 			obuf[out] = image[in+2];
 	} else {
 		/* uniform weight */
-		for( in = out = 0; out < num/3; out++, in += 3 )
+		for ( in = out = 0; out < num/3; out++, in += 3 )
 			obuf[out] = ((int)image[in] + (int)image[in+1] +
 				(int)image[in+2]) / 3;
 	}
 
 	fwrite( obuf, sizeof( char ), num/3, stdout );
 
-	if( clip_high != 0 || clip_low != 0 )
+	if ( clip_high != 0 || clip_low != 0 )
 	{
 		fprintf( stderr, "png-bw: clipped %d high, %d, low\n",
 			clip_high, clip_low );
 	}
 
-	if( verbose )
+	if ( verbose )
 	{
 		png_timep mod_time;
 		png_textp text;
 		int num_text;
 
 		png_read_end(png_p, info_p );
-		if( png_get_text( png_p, info_p, &text, &num_text ) )
+		if ( png_get_text( png_p, info_p, &text, &num_text ) )
 		{
 			int i;
 
-			for( i=0 ; i<num_text ; i++ )
+			for ( i=0; i<num_text; i++ )
 				bu_log( "%s: %s\n", text[i].key, text[i].text );
 		}
-		if( png_get_tIME( png_p, info_p, &mod_time ) )
+		if ( png_get_tIME( png_p, info_p, &mod_time ) )
 			bu_log( "Last modified: %d/%d/%d %d:%d:%d\n", mod_time->month, mod_time->day,
 				mod_time->year, mod_time->hour, mod_time->minute, mod_time->second );
 	}

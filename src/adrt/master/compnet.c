@@ -69,11 +69,11 @@ void compnet_connect(char *host, int port) {
   master_compserv_active = 0;
 
   /* If no host name is supplied then do nothing */
-  if(!strlen(host))
+  if (!strlen(host))
     return;
 
   /* server address */
-  if(gethostbyname(host)) {
+  if (gethostbyname(host)) {
     hostent = gethostbyname(host)[0];
   } else {
     fprintf(stderr, "hostname %s unknown, exiting.\n", host);
@@ -81,7 +81,7 @@ void compnet_connect(char *host, int port) {
   }
 
   /* create a socket */
-  if((master_compserv_socket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+  if ((master_compserv_socket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
     fprintf(stderr, "cannot create socket for component server connection, exiting.");
     exit(1);
   }
@@ -95,13 +95,13 @@ void compnet_connect(char *host, int port) {
   memcpy((char*)&compserv.sin_addr.s_addr, hostent.h_addr_list[0], hostent.h_length);
   compserv.sin_port = htons(port);
 
-  if(bind(master_compserv_socket, (struct sockaddr *)&master, sizeof(master)) < 0) {
+  if (bind(master_compserv_socket, (struct sockaddr *)&master, sizeof(master)) < 0) {
     fprintf(stderr, "unable to bind component server connection socket, exiting.\n");
     exit(1);
   }
 
   /* connect to master */
-  if(connect(master_compserv_socket, (struct sockaddr *)&compserv, sizeof(compserv)) < 0) {
+  if (connect(master_compserv_socket, (struct sockaddr *)&compserv, sizeof(compserv)) < 0) {
     fprintf(stderr, "cannot connect to component server, exiting.\n");
     exit(1);
   }
@@ -116,7 +116,7 @@ void compnet_connect(char *host, int port) {
 void compnet_update(char *string, char status) {
   char message[ADRT_NAME_SIZE];
 
-  if(!master_compserv_active)
+  if (!master_compserv_active)
     return;
 
   /* format message */
@@ -130,7 +130,7 @@ void compnet_update(char *string, char status) {
 void compnet_reset() {
   char message;
 
-  if(!master_compserv_active)
+  if (!master_compserv_active)
     return;
 
   message = RESET_BASE_ATTS;

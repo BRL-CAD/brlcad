@@ -62,10 +62,10 @@ bu_dirname(const char *cp)
     int	len;
 
     /* Special cases */
-    if( cp == NULL )  return bu_strdup(".");
-    if( strcmp( cp, "/" ) == 0 )
+    if ( cp == NULL )  return bu_strdup(".");
+    if ( strcmp( cp, "/" ) == 0 )
 	return bu_strdup("/");
-    if( strcmp( cp, "." ) == 0 ||
+    if ( strcmp( cp, "." ) == 0 ||
 	strcmp( cp, ".." ) == 0 ||
 	strrchr(cp, '/') == NULL )
 	return bu_strdup(".");
@@ -75,16 +75,16 @@ bu_dirname(const char *cp)
 
     /* A trailing slash doesn't count */
     len = strlen(ret);
-    if( ret[len-1] == '/' )  ret[len-1] = '\0';
+    if ( ret[len-1] == '/' )  ret[len-1] = '\0';
 
     /* If no slashes remain, return "." */
-    if( (slash = strrchr(ret, '/')) == NULL )  {
+    if ( (slash = strrchr(ret, '/')) == NULL )  {
 	bu_free( ret, "bu_dirname" );
 	return bu_strdup(".");
     }
 
     /* Remove trailing slash, unless it's at front */
-    if( slash == ret )
+    if ( slash == ret )
 	ret[1] = '\0';		/* ret == "/" */
     else
 	*slash = '\0';

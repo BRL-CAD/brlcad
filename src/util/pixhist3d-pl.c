@@ -61,15 +61,15 @@ main(int argc, char **argv)
 	struct pix_element scan[512];
 	unsigned char bmask;
 
-	if( argc > 1 ) {
-		if( (fp = fopen(argv[1], "r")) == NULL ) {
+	if ( argc > 1 ) {
+		if ( (fp = fopen(argv[1], "r")) == NULL ) {
 			fprintf( stderr, "%s", Usage );
 			bu_exit(1, "pixhist3d-pl: can't open \"%s\"\n", argv[1] );
 		}
 	} else
 		fp = stdin;
 
-	if( argc > 2 || isatty(fileno(fp)) ) {
+	if ( argc > 2 || isatty(fileno(fp)) ) {
 		fputs( Usage, stderr );
 		return 2;
 	}
@@ -84,10 +84,10 @@ main(int argc, char **argv)
 	pl_3line( stdout, 0, 0, 0, 0, 0, 127 );
 	pl_color( stdout, 255, 255, 255 );
 
-	while( (n = fread(&scan[0], sizeof(*scan), 512, fp)) > 0 ) {
-		for( x = 0; x < n; x++ ) {
+	while ( (n = fread(&scan[0], sizeof(*scan), 512, fp)) > 0 ) {
+		for ( x = 0; x < n; x++ ) {
 			bmask = 1 << ((scan[x].blue >> 1) & 7);
-			if( (bin[ scan[x].red>>1 ][ scan[x].green>>1 ][ scan[x].blue>>4 ] & bmask) == 0 ) {
+			if ( (bin[ scan[x].red>>1 ][ scan[x].green>>1 ][ scan[x].blue>>4 ] & bmask) == 0 ) {
 				/* New color: plot it and mark it */
 				pl_3point( stdout, scan[x].red>>1, scan[x].green>>1, scan[x].blue>>1 );
 				bin[ scan[x].red>>1 ][ scan[x].green>>1 ][ scan[x].blue>>4 ] |= bmask;

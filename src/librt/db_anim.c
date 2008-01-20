@@ -63,20 +63,20 @@ db_add_anim(struct db_i *dbip, register struct animate *anp, int root)
 
 	RT_CK_ANIMATE(anp);
 	anp->an_forw = ANIM_NULL;
-	if( root )  {
-		if( RT_G_DEBUG&DEBUG_ANIM )
+	if ( root )  {
+		if ( RT_G_DEBUG&DEBUG_ANIM )
 			bu_log("db_add_anim(x%x) root\n", anp);
 		headp = &(dbip->dbi_anroot);
 	} else {
 		dp = DB_FULL_PATH_CUR_DIR(&anp->an_path);
-		if( RT_G_DEBUG&DEBUG_ANIM )
+		if ( RT_G_DEBUG&DEBUG_ANIM )
 			bu_log("db_add_anim(x%x) arc %s\n", anp,
 				dp->d_namep);
 		headp = &(dp->d_animate);
 	}
 
 	/* Append to list */
-	while( *headp != ANIM_NULL ) {
+	while ( *headp != ANIM_NULL ) {
 		RT_CK_ANIMATE(*headp);
 		headp = &((*headp)->an_forw);
 	}
@@ -108,23 +108,23 @@ db_do_anim(register struct animate *anp, mat_t stack, mat_t arc, struct mater_in
 {
 	mat_t	temp;
 
-	if( RT_G_DEBUG&DEBUG_ANIM )
+	if ( RT_G_DEBUG&DEBUG_ANIM )
 		bu_log("db_do_anim(x%x) ", anp);
-	if( RT_G_DEBUG&DEBUG_ANIM && !materp )  bu_log("(null materp) ");
+	if ( RT_G_DEBUG&DEBUG_ANIM && !materp )  bu_log("(null materp) ");
 	RT_CK_ANIMATE(anp);
-	switch( anp->an_type )  {
+	switch ( anp->an_type )  {
 	case RT_AN_MATRIX:
-		if( RT_G_DEBUG&DEBUG_ANIM )  {
+		if ( RT_G_DEBUG&DEBUG_ANIM )  {
 			int	op = anp->an_u.anu_m.anm_op;
-			if( op < 0 )  op = 0;
+			if ( op < 0 )  op = 0;
 			bu_log("matrix, op=%s (%d)\n",
 				db_anim_matrix_strings[op], op);
-			if( RT_G_DEBUG&DEBUG_ANIM_FULL )  {
+			if ( RT_G_DEBUG&DEBUG_ANIM_FULL )  {
 				bn_mat_print("on original arc", arc);
 				bn_mat_print("on original stack", stack);
 			}
 		}
-		switch( anp->an_u.anu_m.anm_op )  {
+		switch ( anp->an_u.anu_m.anm_op )  {
 		case ANM_RSTACK:
 			MAT_COPY( stack, anp->an_u.anu_m.anm_mat );
 			break;
@@ -148,13 +148,13 @@ db_do_anim(register struct animate *anp, mat_t stack, mat_t arc, struct mater_in
 		default:
 			return(-1);		/* BAD */
 		}
-		if( RT_G_DEBUG&DEBUG_ANIM_FULL )  {
+		if ( RT_G_DEBUG&DEBUG_ANIM_FULL )  {
 			bn_mat_print("arc result", arc);
 			bn_mat_print("stack result", stack);
 		}
 		break;
 	case RT_AN_MATERIAL:
-		if( RT_G_DEBUG&DEBUG_ANIM )
+		if ( RT_G_DEBUG&DEBUG_ANIM )
 			bu_log("property\n");
 		/*
 		 * if the caller does not care about property, a null
@@ -167,7 +167,7 @@ db_do_anim(register struct animate *anp, mat_t stack, mat_t arc, struct mater_in
 			break;
 		}
 		if (anp->an_u.anu_p.anp_op == RT_ANP_REPLACE) {
-			if( materp->ma_shader ) bu_free( (genptr_t)materp->ma_shader, "ma_shader" );
+			if ( materp->ma_shader ) bu_free( (genptr_t)materp->ma_shader, "ma_shader" );
 			materp->ma_shader = bu_vls_strdup(&anp->an_u.anu_p.anp_shader);
 		} else if (anp->an_u.anu_p.anp_op == RT_ANP_APPEND) {
 			struct bu_vls	str;
@@ -176,14 +176,14 @@ db_do_anim(register struct animate *anp, mat_t stack, mat_t arc, struct mater_in
 			bu_vls_strcpy( &str, materp->ma_shader );
 			bu_vls_putc( &str, ' ' );
 			bu_vls_vlscat( &str, &anp->an_u.anu_p.anp_shader );
-			if( materp->ma_shader )  bu_free( (genptr_t)materp->ma_shader, "ma_shader" );
+			if ( materp->ma_shader )  bu_free( (genptr_t)materp->ma_shader, "ma_shader" );
 			materp->ma_shader = bu_vls_strgrab( &str );
 			/* bu_vls_free( &str ) is done by bu_vls_strgrab() */
 		} else
 			bu_log("Unknown anp_op=%d\n", anp->an_u.anu_p.anp_op);
 		break;
 	case RT_AN_COLOR:
-		if( RT_G_DEBUG&DEBUG_ANIM )
+		if ( RT_G_DEBUG&DEBUG_ANIM )
 			bu_log("color\n");
 		/*
 		 * if the caller does not care about property, a null
@@ -204,7 +204,7 @@ db_do_anim(register struct animate *anp, mat_t stack, mat_t arc, struct mater_in
 		    (((float)anp->an_u.anu_c.anc_rgb[2])+0.5)*bn_inv255;
 		break;
 	case RT_AN_TEMPERATURE:
-		if( RT_G_DEBUG&DEBUG_ANIM )
+		if ( RT_G_DEBUG&DEBUG_ANIM )
 			bu_log("temperature = %g\n", anp->an_u.anu_t);
 		if (!materp)  {
 			char *sofar = db_path_to_string(&anp->an_path);
@@ -215,7 +215,7 @@ db_do_anim(register struct animate *anp, mat_t stack, mat_t arc, struct mater_in
 		materp->ma_temperature = anp->an_u.anu_t;
 		break;
 	default:
-		if( RT_G_DEBUG&DEBUG_ANIM )
+		if ( RT_G_DEBUG&DEBUG_ANIM )
 			bu_log("unknown op\n");
 		/* Print something here? */
 		return(-1);			/* BAD */
@@ -233,7 +233,7 @@ db_free_1anim( struct animate *anp )
 {
 	RT_CK_ANIMATE( anp );
 
-	switch( anp->an_type )  {
+	switch ( anp->an_type )  {
 	case RT_AN_MATERIAL:
 		bu_vls_free( &anp->an_u.anu_p.anp_shader );
 		break;
@@ -258,7 +258,7 @@ db_free_anim(register struct db_i *dbip)
 	register int		i;
 
 	/* Rooted animations */
-	for( anp = dbip->dbi_anroot; anp != ANIM_NULL; )  {
+	for ( anp = dbip->dbi_anroot; anp != ANIM_NULL; )  {
 		register struct animate *nextanp;
 		RT_CK_ANIMATE(anp);
 		nextanp = anp->an_forw;
@@ -269,10 +269,10 @@ db_free_anim(register struct db_i *dbip)
 	dbip->dbi_anroot = ANIM_NULL;
 
 	/* Node animations */
-	for( i=0; i < RT_DBNHASH; i++ )  {
+	for ( i=0; i < RT_DBNHASH; i++ )  {
 		dp = dbip->dbi_Head[i];
-		for( ; dp != DIR_NULL; dp = dp->d_forw )  {
-			for( anp = dp->d_animate; anp != ANIM_NULL; )  {
+		for (; dp != DIR_NULL; dp = dp->d_forw )  {
+			for ( anp = dp->d_animate; anp != ANIM_NULL; )  {
 				register struct animate *nextanp;
 				RT_CK_ANIMATE(anp);
 				nextanp = anp->an_forw;
@@ -304,20 +304,20 @@ db_parse_1anim(struct db_i *dbip, int argc, const char *argv[])
 
 	db_init_db_tree_state( &ts, dbip, &rt_uniresource );
 	db_full_path_init( &anp->an_path );
-	if( db_follow_path_for_state( &ts, &(anp->an_path), argv[1], LOOKUP_NOISY ) < 0 )
+	if ( db_follow_path_for_state( &ts, &(anp->an_path), argv[1], LOOKUP_NOISY ) < 0 )
 		goto bad;
 
-	if( strcmp( argv[2], "matrix" ) == 0 )  {
+	if ( strcmp( argv[2], "matrix" ) == 0 )  {
 		anp->an_type = RT_AN_MATRIX;
-		if( strcmp( argv[3], "rstack" ) == 0 )
+		if ( strcmp( argv[3], "rstack" ) == 0 )
 			anp->an_u.anu_m.anm_op = ANM_RSTACK;
-		else if( strcmp( argv[3], "rarc" ) == 0 )
+		else if ( strcmp( argv[3], "rarc" ) == 0 )
 			anp->an_u.anu_m.anm_op = ANM_RARC;
-		else if( strcmp( argv[3], "lmul" ) == 0 )
+		else if ( strcmp( argv[3], "lmul" ) == 0 )
 			anp->an_u.anu_m.anm_op = ANM_LMUL;
-		else if( strcmp( argv[3], "rmul" ) == 0 )
+		else if ( strcmp( argv[3], "rmul" ) == 0 )
 			anp->an_u.anu_m.anm_op = ANM_RMUL;
-		else if( strcmp( argv[3], "rboth" ) == 0 )
+		else if ( strcmp( argv[3], "rboth" ) == 0 )
 			anp->an_u.anu_m.anm_op = ANM_RBOTH;
 		else  {
 			bu_log("db_parse_1anim:  Matrix op '%s' unknown\n",
@@ -325,9 +325,9 @@ db_parse_1anim(struct db_i *dbip, int argc, const char *argv[])
 			goto bad;
 		}
 		/* Allow some shorthands for the matrix spec */
-		if( strcmp( argv[4], "translate" ) == 0 ||
+		if ( strcmp( argv[4], "translate" ) == 0 ||
 		    strcmp( argv[4], "xlate" ) == 0 )  {
-			if( argc < 5+2 )  {
+			if ( argc < 5+2 )  {
 				bu_log("db_parse_1anim:  matrix %s translate does not have enough arguments, only %d\n",
 					argv[3], argc );
 				goto bad;
@@ -337,8 +337,8 @@ db_parse_1anim(struct db_i *dbip, int argc, const char *argv[])
 				atof( argv[5+0] ),
 				atof( argv[5+1] ),
 				atof( argv[5+2] ) );
-		} else if( strcmp( argv[4], "rot" ) == 0 )  {
-			if( argc < 5+2 )  {
+		} else if ( strcmp( argv[4], "rot" ) == 0 )  {
+			if ( argc < 5+2 )  {
 				bu_log("db_parse_1anim:  matrix %s rot does not have enough arguments, only %d\n",
 					argv[3], argc );
 				goto bad;
@@ -348,25 +348,25 @@ db_parse_1anim(struct db_i *dbip, int argc, const char *argv[])
 				atof( argv[5+0] ),
 				atof( argv[5+1] ),
 				atof( argv[5+2] ) );
-		} else if( strcmp( argv[4], "scale" ) == 0 )  {
+		} else if ( strcmp( argv[4], "scale" ) == 0 )  {
 			fastf_t	scale;
-			if( argc < 5+0 )  {
+			if ( argc < 5+0 )  {
 				bu_log("db_parse_1anim:  matrix %s scale does not have enough arguments, only %d\n",
 					argv[3], argc );
 				goto bad;
 			}
 			scale = atof( argv[5+3] );
-			if( NEAR_ZERO( scale, SMALL ) )  {
+			if ( NEAR_ZERO( scale, SMALL ) )  {
 				bu_log("db_parse_1anim:  matrix %s scale factor is zero\n",
 					argv[3] );
 				goto bad;
 			}
 			MAT_IDN( anp->an_u.anu_m.anm_mat );
 			anp->an_u.anu_m.anm_mat[15] = 1/scale;
-		} else if( strcmp( argv[4], "scale_about" ) == 0 )  {
+		} else if ( strcmp( argv[4], "scale_about" ) == 0 )  {
 			point_t	pt;
 			fastf_t	scale;
-			if( argc < 5+3 )  {
+			if ( argc < 5+3 )  {
 				bu_log("db_parse_1anim:  matrix %s scale_about does not have enough arguments, only %d\n",
 					argv[3], argc );
 				goto bad;
@@ -376,7 +376,7 @@ db_parse_1anim(struct db_i *dbip, int argc, const char *argv[])
 				atof( argv[5+1] ),
 				atof( argv[5+2] ) );
 			scale = atof( argv[5+3] );
-			if( bn_mat_scale_about_pt( anp->an_u.anu_m.anm_mat,
+			if ( bn_mat_scale_about_pt( anp->an_u.anu_m.anm_mat,
 			    pt, scale ) < 0 )  {
 				bu_log("db_parse_1anim: matrix %s scale_about (%g, %g, %g) scale=%g failed\n",
 					argv[3], V3ARGS(pt), scale );
@@ -384,18 +384,18 @@ db_parse_1anim(struct db_i *dbip, int argc, const char *argv[])
 			}
 		} else {
 			/* No keyword, assume full 4x4 matrix */
-			for( i=0; i<16; i++ )
+			for ( i=0; i<16; i++ )
 				anp->an_u.anu_m.anm_mat[i] = atof( argv[i+4] );
 		}
-	} else if( strcmp( argv[2], "material" ) == 0 )  {
+	} else if ( strcmp( argv[2], "material" ) == 0 )  {
 		anp->an_type = RT_AN_MATERIAL;
 		bu_vls_init( &anp->an_u.anu_p.anp_shader );
-		if( (strcmp( argv[3], "replace" ) == 0) ||
+		if ( (strcmp( argv[3], "replace" ) == 0) ||
 		    (strcmp( argv[3], "rboth" ) == 0) )  {
 			bu_vls_from_argv( &anp->an_u.anu_p.anp_shader,
 				argc-4, (const char **)&argv[4] );
 			anp->an_u.anu_p.anp_op = RT_ANP_REPLACE;
-		} else if( strcmp( argv[3], "append" ) == 0 )  {
+		} else if ( strcmp( argv[3], "append" ) == 0 )  {
 			bu_vls_from_argv( &anp->an_u.anu_p.anp_shader,
 				argc-4, (const char **)&argv[4] );
 			anp->an_u.anu_p.anp_op = RT_ANP_APPEND;
@@ -404,12 +404,12 @@ db_parse_1anim(struct db_i *dbip, int argc, const char *argv[])
 				argv[3]);
 			goto bad;
 		}
-	} else if( strcmp( argv[2], "color" ) == 0 )  {
+	} else if ( strcmp( argv[2], "color" ) == 0 )  {
 		anp->an_type = RT_AN_COLOR;
 		anp->an_u.anu_c.anc_rgb[0] = atoi( argv[3+0] );
 		anp->an_u.anu_c.anc_rgb[1] = atoi( argv[3+1] );
 		anp->an_u.anu_c.anc_rgb[2] = atoi( argv[3+2] );
-	} else if( strcmp( argv[2], "temperature" ) == 0 ||
+	} else if ( strcmp( argv[2], "temperature" ) == 0 ||
 		   strcmp( argv[2], "temp" ) == 0 )  {
 		anp->an_type = RT_AN_TEMPERATURE;
 		anp->an_u.anu_t = atof( argv[3] );
@@ -439,16 +439,16 @@ int db_parse_anim(struct db_i	*dbip,
 	struct animate		*anp;
 	int	at_root = 0;
 
-	if( !(anp = db_parse_1anim( dbip, argc, argv )) )
+	if ( !(anp = db_parse_1anim( dbip, argc, argv )) )
 		return -1;	/* BAD */
 
-	if( argv[1][0] == '/' )
+	if ( argv[1][0] == '/' )
 		at_root = 1;
 
-	if( anp->an_path.fp_len > 1 )
+	if ( anp->an_path.fp_len > 1 )
 		at_root = 0;
 
-	if( db_add_anim( dbip, anp, at_root ) < 0 )  {
+	if ( db_add_anim( dbip, anp, at_root ) < 0 )  {
 		return -1;	/* BAD */
 	}
 	return 0;		/* OK */

@@ -147,10 +147,10 @@ main(int argc, char **argv)
 	register int	c;
 	struct	uplot *up;
 
-	while( argc > 1 ) {
-		if( strcmp(argv[1], "-v") == 0 ) {
+	while ( argc > 1 ) {
+		if ( strcmp(argv[1], "-v") == 0 ) {
 			verbose++;
-		} else if( strcmp(argv[1], "-S") == 0 ) {
+		} else if ( strcmp(argv[1], "-S") == 0 ) {
 			scale = 1;
 		} else
 			break;
@@ -158,34 +158,34 @@ main(int argc, char **argv)
 		argc--;
 		argv++;
 	}
-	if( isatty(fileno(stdin)) ) {
+	if ( isatty(fileno(stdin)) ) {
 		bu_exit(1, "%s", usage );
 	}
 
 	/* Assume default space, in case one is not provided */
 	sp[0] = sp[1] = sp[2] = -32767;
 	sp[3] = sp[4] = sp[5] = 32767;
-	if( scale )
+	if ( scale )
 		doscale();
 
-	while( (c = getchar()) != EOF ) {
+	while ( (c = getchar()) != EOF ) {
 		/* look it up */
-		if( c < 'A' || c > 'z' ) {
+		if ( c < 'A' || c > 'z' ) {
 			up = &uerror;
 		} else {
 			up = &letters[ c - 'A' ];
 		}
 
-		if( up->targ == TBAD ) {
+		if ( up->targ == TBAD ) {
 			fprintf( stderr, "Bad command '%c' (0x%02x)\n", c, c );
 			continue;
 		}
 
-		if( up->narg > 0 )
+		if ( up->narg > 0 )
 			getargs( up );
 
 		/* check for space command */
-		switch( c ) {
+		switch ( c ) {
 		case 's':
 		case 'w':
 			sp[0] = arg[0];
@@ -194,7 +194,7 @@ main(int argc, char **argv)
 			sp[3] = arg[2];
 			sp[4] = arg[3];
 			sp[5] = 0;
-			if( scale )
+			if ( scale )
 				doscale();
 			seenscale++;
 			break;
@@ -206,14 +206,14 @@ main(int argc, char **argv)
 			sp[3] = arg[3];
 			sp[4] = arg[4];
 			sp[5] = arg[5];
-			if( scale )
+			if ( scale )
 				doscale();
 			seenscale++;
 			break;
 		}
 
 		/* do it */
-		switch( c ) {
+		switch ( c ) {
 		case 's':
 		case 'm':
 		case 'n':
@@ -234,14 +234,14 @@ main(int argc, char **argv)
 			break;
 
 		case 'C':
-			if( nocolor == 0 ) {
+			if ( nocolor == 0 ) {
 				putchar( c );
 				putargs( up );
 			}
 			break;
 
 		case 'F':
-			if( noflush == 0 ) {
+			if ( noflush == 0 ) {
 				putchar( c );
 				putargs( up );
 			}
@@ -252,7 +252,7 @@ main(int argc, char **argv)
 		case 'N':
 		case 'P':
 		case 'L':
-			if( no3d )
+			if ( no3d )
 				putchar( c + 'a' - 'A' );
 			else
 				putchar( c );
@@ -267,21 +267,21 @@ main(int argc, char **argv)
 		case 'i':
 		case 'r':
 			/* 2d floating */
-			if( nofloat ) {
+			if ( nofloat ) {
 				/* to 2d integer */
-				if( c == 'w' )
+				if ( c == 'w' )
 					putchar( 's' );
-				else if( c == 'o' )
+				else if ( c == 'o' )
 					putchar( 'm' );
-				else if( c == 'q' )
+				else if ( c == 'q' )
 					putchar( 'n' );
-				else if( c == 'x' )
+				else if ( c == 'x' )
 					putchar( 'p' );
-				else if( c == 'v' )
+				else if ( c == 'v' )
 					putchar( 'l' );
-				else if( c == 'i' )
+				else if ( c == 'i' )
 					putchar( 'c' );
-				else if( c == 'r' )
+				else if ( c == 'r' )
 					putchar( 'a' );
 			} else {
 				putchar( c );
@@ -295,34 +295,34 @@ main(int argc, char **argv)
 		case 'X':
 		case 'V':
 			/* 3d floating */
-			if( nofloat ) {
-				if( no3d ) {
+			if ( nofloat ) {
+				if ( no3d ) {
 					/* to 2d integer */
-					if( c == 'W' )
+					if ( c == 'W' )
 						putchar( 's' );
-					else if( c == 'O' )
+					else if ( c == 'O' )
 						putchar( 'm' );
-					else if( c == 'Q' )
+					else if ( c == 'Q' )
 						putchar( 'n' );
-					else if( c == 'X' )
+					else if ( c == 'X' )
 						putchar( 'p' );
-					else if( c == 'V' )
+					else if ( c == 'V' )
 						putchar( 'l' );
 				} else {
 					/* to 3d integer */
-					if( c == 'W' )
+					if ( c == 'W' )
 						putchar( 'S' );
-					else if( c == 'O' )
+					else if ( c == 'O' )
 						putchar( 'M' );
-					else if( c == 'Q' )
+					else if ( c == 'Q' )
 						putchar( 'N' );
-					else if( c == 'X' )
+					else if ( c == 'X' )
 						putchar( 'P' );
-					else if( c == 'V' )
+					else if ( c == 'V' )
 						putchar( 'L' );
 				}
 			} else {
-				if( no3d ) {
+				if ( no3d ) {
 					/* to 2d floating */
 					putchar( c + 'a' - 'A' );
 				} else {
@@ -334,13 +334,13 @@ main(int argc, char **argv)
 			break;
 		}
 
-		if( verbose )
+		if ( verbose )
 			printf( "%s\n", up->desc );
 	}
 
-	if( scale && !seenscale ) {
+	if ( scale && !seenscale ) {
 		fprintf( stderr, "pl-pl: WARNING no space command in file, defaulting to +/-32k\n" );
-	} else if( !scale && seenscale ) {
+	} else if ( !scale && seenscale ) {
 		fprintf( stderr, "pl-pl: WARNING space command(s) ignored, use -S to apply them.\n" );
 	}
 
@@ -355,7 +355,7 @@ getstring(void)
 	char	*cp;
 
 	cp = strarg;
-	while( (c = getchar()) != '\n' && c != EOF )
+	while ( (c = getchar()) != '\n' && c != EOF )
 		*cp++ = c;
 	*cp = 0;
 }
@@ -369,7 +369,7 @@ getshort(void)
 	v |= (getchar()<<8);	/* order is important! */
 
 	/* worry about sign extension - sigh */
-	if( v <= 0x7FFF )  return(v);
+	if ( v <= 0x7FFF )  return(v);
 	w = -1;
 	w &= ~0x7FFF;
 	return( w | v );
@@ -393,8 +393,8 @@ getargs(struct uplot *up)
 {
 	int	i;
 
-	for( i = 0; i < up->narg; i++ ) {
-		switch( up->targ ) {
+	for ( i = 0; i < up->narg; i++ ) {
+		switch ( up->targ ) {
 			case TSHORT:
 				arg[i] = getshort();
 				break;
@@ -421,35 +421,35 @@ putargs(struct uplot *up)
 {
 	int	i;
 
-	for( i = 0; i < up->narg; i++ ) {
-		if( no3d && ((i % 3) == 2) && up->t3d )
+	for ( i = 0; i < up->narg; i++ ) {
+		if ( no3d && ((i % 3) == 2) && up->t3d )
 			continue;	/* skip z coordinate */
 		/* gag me with a spoon... */
-		if( scale && (up->targ == TSHORT || up->targ == TIEEE) ) {
-			if( up->t3d ) {
-				if( i % 3 == 0 )
+		if ( scale && (up->targ == TSHORT || up->targ == TIEEE) ) {
+			if ( up->t3d ) {
+				if ( i % 3 == 0 )
 					arg[i] = (arg[i] - cx) * scale;
-				else if( i % 3 == 1 )
+				else if ( i % 3 == 1 )
 					arg[i] = (arg[i] - cy) * scale;
 				else
 					arg[i] = (arg[i] - cz) * scale;
 			} else {
-				if( i % 2 == 0 )
+				if ( i % 2 == 0 )
 					arg[i] = (arg[i] - cx) * scale;
 				else
 					arg[i] = (arg[i] - cy) * scale;
 			}
 		}
-		switch( up->targ ) {
+		switch ( up->targ ) {
 			case TSHORT:
-				if( arg[i] > 32767 ) arg[i] = 32767;
-				if( arg[i] < -32767 ) arg[i] = -32767;
+				if ( arg[i] > 32767 ) arg[i] = 32767;
+				if ( arg[i] < -32767 ) arg[i] = -32767;
 				putshort( (short)arg[i] );
 				break;
 			case TIEEE:
-				if( nofloat ) {
-					if( arg[i] > 32767 ) arg[i] = 32767;
-					if( arg[i] < -32767 ) arg[i] = -32767;
+				if ( nofloat ) {
+					if ( arg[i] > 32767 ) arg[i] = 32767;
+					if ( arg[i] < -32767 ) arg[i] = -32767;
 					putshort( (short)arg[i] );
 				} else
 					putieee( arg[i] );
@@ -501,8 +501,8 @@ doscale(void)
 	dz = (sp[5] - sp[2]) / 2.0;
 
 	max = dx;
-	if( dy > max ) max = dy;
-	if( dz > max ) max = dz;
+	if ( dy > max ) max = dy;
+	if ( dz > max ) max = dz;
 
 	scale = 32767.0 / max;
 }

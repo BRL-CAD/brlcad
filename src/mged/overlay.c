@@ -91,7 +91,7 @@ f_labelvert(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	CHECK_DBI_NULL;
 
-	if(argc < 2){
+	if (argc < 2){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -106,13 +106,13 @@ f_labelvert(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	bn_mat_inv(mat, view_state->vs_vop->vo_rotation);
 	scale = view_state->vs_vop->vo_size / 100;		/* divide by # chars/screen */
 
-	for( i=1; i<argc; i++ )  {
+	for ( i=1; i<argc; i++ )  {
 		struct solid	*s;
-		if( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY )) == DIR_NULL )
+		if ( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY )) == DIR_NULL )
 			continue;
 		/* Find uses of this solid in the solid table */
 		FOR_ALL_SOLIDS(s, &dgop->dgo_headSolid)  {
-			if( db_full_path_search( &s->s_fullpath, dp ) )  {
+			if ( db_full_path_search( &s->s_fullpath, dp ) )  {
 				rt_label_vlist_verts( vbp, &s->s_vlist, mat, scale, base2local );
 			}
 		}

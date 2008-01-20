@@ -73,16 +73,16 @@ struct faceuse *fu;
 
 	nmg_triangulate_fu( fu, &tol );
 
-	for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+	for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
 	{
 		struct edgeuse *eu;
 
-		if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+		if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
 			continue;
 
 		fprintf( fp_out, "polygon 3\n" );
 		polygons++;
-		for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+		for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 		{
 			struct vertex_g *vg;
 
@@ -103,13 +103,13 @@ struct model *m;
 
 	NMG_CK_MODEL( m );
 
-	for( BU_LIST_FOR( r, nmgregion, &m->r_hd ) )
+	for ( BU_LIST_FOR( r, nmgregion, &m->r_hd ) )
 	{
-		for( BU_LIST_FOR( s, shell, &r->s_hd ) )
+		for ( BU_LIST_FOR( s, shell, &r->s_hd ) )
 		{
-			for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
+			for ( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
 			{
-				if( fu->orientation != OT_SAME )
+				if ( fu->orientation != OT_SAME )
 					continue;
 
 				write_fu_as_sgp( fu );
@@ -185,17 +185,17 @@ char	*argv[];
 	}
 
 	/* Open BRL-CAD database */
-	if( (dbip = db_open( argv[bu_optind], "r" )) == DBI_NULL )
+	if ( (dbip = db_open( argv[bu_optind], "r" )) == DBI_NULL )
 	{
 		perror(argv[0]);
 		bu_exit(1, "Cannot open %s\n", argv[bu_optind] );
 	}
 
-	if( db_dirbuild( dbip ) ) {
+	if ( db_dirbuild( dbip ) ) {
 	    bu_exit(1, "db_dirbuild failed\n" );
 	}
 
-	if( out_file == NULL )
+	if ( out_file == NULL )
 		fp_out = stdout;
 	else
 	{
@@ -207,23 +207,23 @@ char	*argv[];
 	}
 
 	fprintf( fp_out, "object\n" );
-	while( ++bu_optind < argc )
+	while ( ++bu_optind < argc )
 	{
 		struct directory *dp;
 		struct rt_db_internal ip;
 		int id;
 		struct model *m;
 
-		if( (dp=db_lookup( dbip, argv[bu_optind], LOOKUP_NOISY)) == DIR_NULL )
+		if ( (dp=db_lookup( dbip, argv[bu_optind], LOOKUP_NOISY)) == DIR_NULL )
 			continue;
 
-		if( (id=rt_db_get_internal( &ip, dp, dbip, bn_mat_identity, &rt_uniresource )) < 0 )
+		if ( (id=rt_db_get_internal( &ip, dp, dbip, bn_mat_identity, &rt_uniresource )) < 0 )
 		{
 			bu_log( "Cannot get object (%s).....ignoring\n", dp->d_namep );
 			continue;
 		}
 
-		if( id != ID_NMG )
+		if ( id != ID_NMG )
 		{
 			bu_log( "%s is not an NMG......ignoring\n", dp->d_namep );
 			rt_db_free_internal( &ip, &rt_uniresource );

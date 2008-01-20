@@ -68,11 +68,11 @@ nmg_dangling_handler(long int *longp, genptr_t state, int first)
 		(struct dangling_faceuse_state *)state;
 
 	NMG_CK_FACEUSE(fu);
-	if( fu->orientation != OT_SAME )  return;
+	if ( fu->orientation != OT_SAME )  return;
 	/* If this faceuse has been processed before, do nothing more */
-	if( !NMG_INDEX_FIRST_TIME(sp->visited, fu) )  return;
+	if ( !NMG_INDEX_FIRST_TIME(sp->visited, fu) )  return;
 
-	if( nmg_dangling_face(fu, sp->manifolds ) )  {
+	if ( nmg_dangling_face(fu, sp->manifolds ) )  {
 		sp->count++;
 	}
 }
@@ -132,21 +132,21 @@ nmg_show_each_loop(struct shell *s, long int **classlist, int new, int fancy, co
 
 	NMG_CK_SHELL(s);
 	save = rt_g.NMG_debug;
-	for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )  {
+	for ( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )  {
 		NMG_CK_FACEUSE(fu);
-		if( fu->orientation == OT_OPPOSITE )  continue;
-		for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
+		if ( fu->orientation == OT_OPPOSITE )  continue;
+		for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
 			NMG_CK_LOOPUSE(lu);
-			if( BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC )
+			if ( BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC )
 				continue;
 			/* Display only OT_SAME, and OT_UNSPEC et.al.  */
-			if( lu->orientation == OT_OPPOSITE )  continue;
+			if ( lu->orientation == OT_OPPOSITE )  continue;
 
 			snprintf(buf, 128, "%s=x%lx", str, (unsigned long)lu);
 			nmg_show_broken_classifier_stuff(&lu->l.magic, classlist, new, fancy, buf);
 		}
 	}
-	for( BU_LIST_FOR( lu, loopuse, &s->lu_hd ) )  {
+	for ( BU_LIST_FOR( lu, loopuse, &s->lu_hd ) )  {
 		snprintf(buf, 128, "%s=x%lx (wire)", str, (unsigned long)lu);
 		nmg_show_broken_classifier_stuff(&lu->l.magic, classlist, new, fancy, buf);
 	}
@@ -166,9 +166,9 @@ stash_shell(struct shell *s, char *file_name, char *title, const struct bn_tol *
 	r = nmg_mrsv( m );
 	new_s = BU_LIST_FIRST( shell, &r->s_hd );
 
-	for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
+	for ( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
 	{
-		if( fu->orientation != OT_SAME )
+		if ( fu->orientation != OT_SAME )
 			continue;
 
 		(void)nmg_dup_face( fu, new_s );
@@ -186,14 +186,14 @@ nmg_kill_non_common_cracks(struct shell *sA, struct shell *sB)
 	struct faceuse *fu;
 	struct faceuse *fu_next;
 
-	if( rt_g.NMG_debug & DEBUG_BASIC )
+	if ( rt_g.NMG_debug & DEBUG_BASIC )
 		bu_log( "nmg_kill_non_common_cracks( s=%x and %x )\n", sA, sB );
 
 	NMG_CK_SHELL( sA );
 	NMG_CK_SHELL( sB );
 
 	fu = BU_LIST_FIRST( faceuse, &sA->fu_hd );
-	while( BU_LIST_NOT_HEAD( fu, &sA->fu_hd ) )
+	while ( BU_LIST_NOT_HEAD( fu, &sA->fu_hd ) )
 	{
 		struct loopuse *lu;
 		struct loopuse *lu_next;
@@ -202,12 +202,12 @@ nmg_kill_non_common_cracks(struct shell *sA, struct shell *sB)
 		NMG_CK_FACEUSE( fu );
 
 		fu_next = BU_LIST_PNEXT( faceuse, &fu->l );
-		while( BU_LIST_NOT_HEAD( fu_next, &sA->fu_hd )
+		while ( BU_LIST_NOT_HEAD( fu_next, &sA->fu_hd )
 			&& fu_next == fu->fumate_p )
 				fu_next = BU_LIST_PNEXT( faceuse, &fu_next->l );
 
 		lu = BU_LIST_FIRST( loopuse, &fu->lu_hd );
-		while( BU_LIST_NOT_HEAD( lu, &fu->lu_hd ) )
+		while ( BU_LIST_NOT_HEAD( lu, &fu->lu_hd ) )
 		{
 			struct edgeuse *eu;
 			struct edgeuse *eu_next;
@@ -217,14 +217,14 @@ nmg_kill_non_common_cracks(struct shell *sA, struct shell *sB)
 
 			lu_next = BU_LIST_PNEXT( loopuse, &lu->l );
 
-			if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+			if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
 			{
 				lu = lu_next;
 				continue;
 			}
 
 crack_topA:
-			for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+			for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 			{
 				NMG_CK_EDGEUSE( eu );
 
@@ -232,28 +232,28 @@ crack_topA:
 				NMG_CK_EDGEUSE( eu_next );
 
 				/* check if eu and eu_next form a jaunt */
-				if( eu->vu_p->v_p != eu_next->eumate_p->vu_p->v_p )
+				if ( eu->vu_p->v_p != eu_next->eumate_p->vu_p->v_p )
 					continue;
 
 				/* check if vertex at apex is in other shell
 				 * if so, we need this vertex, can't kill crack
 				 */
-				if( nmg_find_v_in_shell( eu_next->vu_p->v_p, sB, 0 ) )
+				if ( nmg_find_v_in_shell( eu_next->vu_p->v_p, sB, 0 ) )
 					continue;
 
-				if( nmg_keu( eu ) )
+				if ( nmg_keu( eu ) )
 					empty_loop = 1;
-				else if( nmg_keu( eu_next ) )
+				else if ( nmg_keu( eu_next ) )
 					empty_loop = 1;
 
-				if( empty_loop )
+				if ( empty_loop )
 					break;
 
 				goto crack_topA;
 			}
-			if( empty_loop )
+			if ( empty_loop )
 			{
-				if( nmg_klu( lu ) )
+				if ( nmg_klu( lu ) )
 				{
 					empty_face = 1;
 					break;
@@ -261,9 +261,9 @@ crack_topA:
 			}
 			lu = lu_next;
 		}
-		if( empty_face )
+		if ( empty_face )
 		{
-			if( nmg_kfu( fu ) )
+			if ( nmg_kfu( fu ) )
 			{
 				break;
 			}
@@ -272,7 +272,7 @@ crack_topA:
 	}
 
 	fu = BU_LIST_FIRST( faceuse, &sB->fu_hd );
-	while( BU_LIST_NOT_HEAD( fu, &sB->fu_hd ) )
+	while ( BU_LIST_NOT_HEAD( fu, &sB->fu_hd ) )
 	{
 		struct loopuse *lu;
 		struct loopuse *lu_next;
@@ -281,12 +281,12 @@ crack_topA:
 		NMG_CK_FACEUSE( fu );
 
 		fu_next = BU_LIST_PNEXT( faceuse, &fu->l );
-		while( BU_LIST_NOT_HEAD( fu_next, &sB->fu_hd )
+		while ( BU_LIST_NOT_HEAD( fu_next, &sB->fu_hd )
 			&& fu_next == fu->fumate_p )
 				fu_next = BU_LIST_PNEXT( faceuse, &fu_next->l );
 
 		lu = BU_LIST_FIRST( loopuse, &fu->lu_hd );
-		while( BU_LIST_NOT_HEAD( lu, &fu->lu_hd ) )
+		while ( BU_LIST_NOT_HEAD( lu, &fu->lu_hd ) )
 		{
 			struct edgeuse *eu;
 			struct edgeuse *eu_next;
@@ -296,14 +296,14 @@ crack_topA:
 
 			lu_next = BU_LIST_PNEXT( loopuse, &lu->l );
 
-			if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+			if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
 			{
 				lu = lu_next;
 				continue;
 			}
 
 crack_top:
-			for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+			for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 			{
 				NMG_CK_EDGEUSE( eu );
 
@@ -311,26 +311,26 @@ crack_top:
 				NMG_CK_EDGEUSE( eu_next );
 
 				/* check if eu and eu_next form a jaunt */
-				if( eu->vu_p->v_p != eu_next->eumate_p->vu_p->v_p )
+				if ( eu->vu_p->v_p != eu_next->eumate_p->vu_p->v_p )
 					continue;
 
 				/* check if crack apex is in other shell */
-				if( nmg_find_v_in_shell( eu_next->vu_p->v_p, sA, 0 ) )
+				if ( nmg_find_v_in_shell( eu_next->vu_p->v_p, sA, 0 ) )
 					continue;
 
-				if( nmg_keu( eu ) )
+				if ( nmg_keu( eu ) )
 					empty_loop = 1;
-				else if( nmg_keu( eu_next ) )
+				else if ( nmg_keu( eu_next ) )
 					empty_loop = 1;
 
-				if( empty_loop )
+				if ( empty_loop )
 					break;
 
 				goto crack_top;
 			}
-			if( empty_loop )
+			if ( empty_loop )
 			{
-				if( nmg_klu( lu ) )
+				if ( nmg_klu( lu ) )
 				{
 					empty_face = 1;
 					break;
@@ -338,9 +338,9 @@ crack_top:
 			}
 			lu = lu_next;
 		}
-		if( empty_face )
+		if ( empty_face )
 		{
-			if( nmg_kfu( fu ) )
+			if ( nmg_kfu( fu ) )
 			{
 				break;
 			}
@@ -369,7 +369,7 @@ nmg_classify_shared_edges_verts(struct shell *sA, struct shell *sB, long int **c
 	NMG_CK_SHELL( sB );
 
 	nmg_vertex_tabulate( &verts, &sA->l.magic );
-	for( i=0 ; i<BU_PTBL_END( &verts ) ; i++ )
+	for ( i=0; i<BU_PTBL_END( &verts ); i++ )
 	{
 		struct vertex *v;
 		struct vertexuse *vu;
@@ -377,11 +377,11 @@ nmg_classify_shared_edges_verts(struct shell *sA, struct shell *sB, long int **c
 		v = (struct vertex *)BU_PTBL_GET( &verts, i );
 		NMG_CK_VERTEX( v );
 
-		for( BU_LIST_FOR( vu, vertexuse, &v->vu_hd ) )
+		for ( BU_LIST_FOR( vu, vertexuse, &v->vu_hd ) )
 		{
 			NMG_CK_VERTEXUSE( vu );
 
-			if( nmg_find_s_of_vu( vu ) == sB )
+			if ( nmg_find_s_of_vu( vu ) == sB )
 			{
 				/* set classification in both lists */
 				NMG_INDEX_SET(classlist[NMG_CLASS_AonBshared], v );
@@ -397,7 +397,7 @@ nmg_classify_shared_edges_verts(struct shell *sA, struct shell *sB, long int **c
 	bu_ptbl_free( &verts);
 
 	nmg_edge_tabulate( &edges, &sA->l.magic );
-	for( i=0 ; i<BU_PTBL_END( &edges ) ; i++ )
+	for ( i=0; i<BU_PTBL_END( &edges ); i++ )
 	{
 		struct edge *e;
 		struct edgeuse *eu;
@@ -412,7 +412,7 @@ nmg_classify_shared_edges_verts(struct shell *sA, struct shell *sB, long int **c
 		eu = eu_start;
 		do
 		{
-			if( nmg_find_s_of_eu( eu ) == sB )
+			if ( nmg_find_s_of_eu( eu ) == sB )
 			{
 				NMG_INDEX_SET(classlist[NMG_CLASS_AonBshared], e );
 				NMG_INDEX_SET(classlist[4 + NMG_CLASS_AonBshared], e );
@@ -426,7 +426,7 @@ nmg_classify_shared_edges_verts(struct shell *sA, struct shell *sB, long int **c
 			eu = eu->eumate_p->radial_p;
 			NMG_CK_EDGEUSE( eu );
 
-		} while( eu != eu_start && eu->eumate_p != eu_start );
+		} while ( eu != eu_start && eu->eumate_p != eu_start );
 	}
 	bu_ptbl_free( &edges);
 }
@@ -450,25 +450,25 @@ nmg_kill_anti_loops(struct shell *s, const struct bn_tol *tol)
 
 	bu_ptbl_init( &loops, 64, " &loops");
 
-	for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
+	for ( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
 	{
 		NMG_CK_FACEUSE( fu );
 
-		if( fu->orientation != OT_SAME )
+		if ( fu->orientation != OT_SAME )
 			continue;
 
-		for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+		for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
 		{
 			NMG_CK_LOOPUSE( lu );
 
-			if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+			if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
 				continue;
 
 			bu_ptbl_ins( &loops, (long *)lu );
 		}
 	}
 
-	for( i=0 ; i < BU_PTBL_END( &loops ) ; i++ )
+	for ( i=0; i < BU_PTBL_END( &loops ); i++ )
 	{
 		struct loopuse *lu1;
 		struct edgeuse *eu1_start;
@@ -482,13 +482,13 @@ nmg_kill_anti_loops(struct shell *s, const struct bn_tol *tol)
 		v1 = eu1_start->vu_p->v_p;
 		NMG_CK_VERTEX( v1 );
 
-		for( j=i+1 ; j<BU_PTBL_END( &loops ) ; j++ )
+		for ( j=i+1; j<BU_PTBL_END( &loops ); j++ )
 		{
 			struct loopuse *lu2;
 			struct edgeuse *eu1;
 			struct edgeuse *eu2;
 			struct vertexuse *vu2;
-			struct faceuse *fu1,*fu2;
+			struct faceuse *fu1, *fu2;
 			int anti=1;
 
 			lu2 = (struct loopuse *)BU_PTBL_GET( &loops, j );
@@ -497,7 +497,7 @@ nmg_kill_anti_loops(struct shell *s, const struct bn_tol *tol)
 			/* look for v1 in lu2 */
 			vu2 = nmg_find_vertex_in_lu( v1, lu2 );
 
-			if( !vu2 )
+			if ( !vu2 )
 				continue;
 
 			/* found common vertex, now look for the rest */
@@ -509,30 +509,30 @@ nmg_kill_anti_loops(struct shell *s, const struct bn_tol *tol)
 				eu2 = BU_LIST_PNEXT_CIRC( edgeuse, &eu2->l );
 				eu1 = BU_LIST_PPREV_CIRC( edgeuse, &eu1->l );
 
-				if( eu2->vu_p->v_p != eu1->vu_p->v_p )
+				if ( eu2->vu_p->v_p != eu1->vu_p->v_p )
 				{
 					anti = 0;
 					break;
 				}
-			} while( eu1 != eu1_start );
+			} while ( eu1 != eu1_start );
 
-			if( !anti )
+			if ( !anti )
 				continue;
 
 			fu1 = lu1->up.fu_p;
 			fu2 = lu2->up.fu_p;
 
-			if( fu1 == fu2 )
+			if ( fu1 == fu2 )
 				continue;
 
-			if( nmg_klu( lu1 ) )
+			if ( nmg_klu( lu1 ) )
 			{
-				if( nmg_kfu( fu1 ) )
+				if ( nmg_kfu( fu1 ) )
 					goto out;
 			}
-			if( nmg_klu( lu2 ) )
+			if ( nmg_klu( lu2 ) )
 			{
-				if( nmg_kfu( fu2 ) )
+				if ( nmg_kfu( fu2 ) )
 					goto out;
 			}
 
@@ -552,13 +552,13 @@ nmg_kill_wire_edges(struct shell *s)
 	struct loopuse *lu;
 	struct edgeuse *eu;
 
-	while( BU_LIST_NON_EMPTY( &s->lu_hd ) )
+	while ( BU_LIST_NON_EMPTY( &s->lu_hd ) )
 	{
 		lu = BU_LIST_FIRST( loopuse, &s->lu_hd );
 		nmg_klu( lu );
 	}
 
-	while( BU_LIST_NON_EMPTY( &s->eu_hd ) )
+	while ( BU_LIST_NON_EMPTY( &s->eu_hd ) )
 	{
 		eu = BU_LIST_FIRST( edgeuse, &s->eu_hd );
 		nmg_keu( eu );
@@ -595,7 +595,7 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 	NMG_CK_MODEL(m);
 
 	debug_file_count++;
-	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
+	if ( rt_g.NMG_debug & DEBUG_VERIFY )  {
 #if 0
 		nmg_vshell( &rA->s_hd, rA );
 		nmg_vshell( &rB->s_hd, rB );
@@ -671,7 +671,7 @@ nmg_s_radial_check( sB, tol );
 		fclose(fp);
 	}
 
-	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
+	if ( rt_g.NMG_debug & DEBUG_VERIFY )  {
 #if 0
 		nmg_vshell( &rA->s_hd, rA );
 		nmg_vshell( &rB->s_hd, rB );
@@ -733,7 +733,7 @@ nmg_s_radial_check( sB, tol );
 	nelem = (m->maxindex)*4+1;		/* includes extra space */
 	classlist[0] = (long *)bu_calloc( 8 * nelem + 1,
 		sizeof(long), "nmg_bool classlist[8]" );
-	for( i = 1; i < 8; i++ )  {
+	for ( i = 1; i < 8; i++ )  {
 		classlist[i] = classlist[0] + i * nelem;
 	}
 
@@ -764,7 +764,7 @@ nmg_s_radial_check( sB, tol );
 
 	(void)nmg_model_edge_fuse( m, tol );
 
-	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
+	if ( rt_g.NMG_debug & DEBUG_VERIFY )  {
 #if 0
 		nmg_vshell( &rA->s_hd, rA );
 		nmg_vshell( &rB->s_hd, rB );
@@ -781,22 +781,22 @@ nmg_s_radial_check( sB, tol );
 		nmg_pr_s_briefly(sB, 0);
 		bu_log("\n====================\n");
 #endif
-		if( (i = nmg_model_fuse( m, tol )) > 0 )  {
+		if ( (i = nmg_model_fuse( m, tol )) > 0 )  {
 			bu_log("NOTICE: nmg_bool: fused %d entities while cracking shells\n", i);
 			bu_bomb("nmg_bool() entities unfused after nmg_crackshells()\n");
 		}
 	}
 #if 1
 	/* Temporary search */
-	if( nmg_has_dangling_faces( (long *)rA, (char *)NULL ) )
+	if ( nmg_has_dangling_faces( (long *)rA, (char *)NULL ) )
 		bu_log("Dangling faces detected in rA before classification\n");
-	if( nmg_has_dangling_faces( (long *)rB, (char *)NULL ) )
+	if ( nmg_has_dangling_faces( (long *)rB, (char *)NULL ) )
 		bu_log("Dangling faces detected in rB before classification\n");
-	if( nmg_has_dangling_faces( (long *)m, (char *)NULL ) )
+	if ( nmg_has_dangling_faces( (long *)m, (char *)NULL ) )
 		bu_log("Dangling faces detected in model before classification\n");
 #endif
 
-	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
+	if ( rt_g.NMG_debug & DEBUG_VERIFY )  {
 #if 0
 		nmg_vshell( &rA->s_hd, rA );
 		nmg_vshell( &rB->s_hd, rB );
@@ -890,7 +890,7 @@ nmg_s_radial_check( sB, tol );
 	if (nmg_ck_closed_surf(sB, tol))
 		bu_log("nmg_bool() WARNING: sB unclosed before classification.  Boldly pressing on.\n");
 
-	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
+	if ( rt_g.NMG_debug & DEBUG_VERIFY )  {
 #if 0
 		nmg_vshell( &rA->s_hd, rA );
 		nmg_vshell( &rB->s_hd, rB );
@@ -919,7 +919,7 @@ nmg_s_radial_check( sB, tol );
 	nelem = (m->maxindex)*4+1;		/* includes extra space */
 	classlist[0] = (long *)bu_calloc( 8 * nelem + 1,
 		sizeof(long), "nmg_bool classlist[8]" );
-	for( i = 1; i < 8; i++ )  {
+	for ( i = 1; i < 8; i++ )  {
 		classlist[i] = classlist[0] + i * nelem;
 	}
 #endif
@@ -958,7 +958,7 @@ nmg_s_radial_check( sB, tol );
 		nmg_show_broken_classifier_stuff((long *)sB, &classlist[4], 1, 0, "sB classed");
 	}
 #if 1
-	if( rt_g.NMG_debug & DEBUG_BOOL )
+	if ( rt_g.NMG_debug & DEBUG_BOOL )
 	{
 		bu_log( "Just before nmg_evaluate_boolean:\nShell A:\n" );
 		nmg_pr_s_briefly( sA, 0 );
@@ -971,7 +971,7 @@ nmg_s_radial_check( sB, tol );
 	nmg_evaluate_boolean( sA, sB, oper, classlist, tol);
 
 #if 1
-	if( rt_g.NMG_debug & DEBUG_BOOL )
+	if ( rt_g.NMG_debug & DEBUG_BOOL )
 	{
 		bu_log( "Just after nmg_evaluate_boolean:\nShell A:\n" );
 		nmg_pr_s_briefly( sA, 0 );
@@ -980,9 +980,9 @@ nmg_s_radial_check( sB, tol );
 	}
 #endif
 
-	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
+	if ( rt_g.NMG_debug & DEBUG_VERIFY )  {
 		nmg_vmodel(m);
-		if( (i = nmg_model_fuse( m, tol )) > 0 )  {
+		if ( (i = nmg_model_fuse( m, tol )) > 0 )  {
 			bu_log("ERROR: nmg_bool: fused %d entities after BOOLEAN.  Isect bug.\n", i);
 			bu_bomb("nmg_bool() entities unfused after nmg_evaluate_boolean()\n");
 		}
@@ -995,15 +995,15 @@ nmg_s_radial_check( sB, tol );
 	 *  from the region, an operation which can not be accomplished
 	 *  this far down in the subroutine tree.
 	 */
-	if( !nmg_shell_is_empty(sA) )  {
+	if ( !nmg_shell_is_empty(sA) )  {
 nmg_s_radial_check( sA, tol );
 		/* Temporary search */
-		if( nmg_has_dangling_faces( (long *)rA, (char *)NULL ) )
+		if ( nmg_has_dangling_faces( (long *)rA, (char *)NULL ) )
 		bu_log("Dangling faces detected in rA after boolean\n");
-		if( nmg_has_dangling_faces( (long *)rB, (char *)NULL ) )
+		if ( nmg_has_dangling_faces( (long *)rB, (char *)NULL ) )
 			bu_log("Dangling faces detected in rB after boolean\n");
-		if( nmg_has_dangling_faces( (long *)m, (char *)NULL ) )  {
-			if(rt_g.NMG_debug)
+		if ( nmg_has_dangling_faces( (long *)m, (char *)NULL ) )  {
+			if (rt_g.NMG_debug)
 				nmg_stash_model_to_file( "dangle.g", m, "After Boolean" );
 			bu_bomb("nmg_bool() Dangling faces detected after boolean\n");
 		}
@@ -1021,13 +1021,13 @@ nmg_s_radial_check( sA, tol );
 		 *  to reduce the loop/edge count.
 		 */
 		nmg_simplify_shell(sA);
-		if( rt_g.NMG_debug & DEBUG_VERIFY )
+		if ( rt_g.NMG_debug & DEBUG_VERIFY )
 			nmg_vshell( &rA->s_hd, rA );
 
 		(void) nmg_unbreak_region_edges( &sA->l.magic );
 
 #if 1
-	if( rt_g.NMG_debug & DEBUG_BOOL )
+	if ( rt_g.NMG_debug & DEBUG_BOOL )
 	{
 		bu_log( "Just after nmg_simplify_shell:\nShell A:\n" );
 		nmg_pr_s_briefly( sA, 0 );
@@ -1038,15 +1038,15 @@ nmg_s_radial_check( sA, tol );
 		/* Bounding boxes may have changed */
 		nmg_shell_a(sA, tol);
 
-		if( nmg_ck_closed_surf(sA, tol) )  {
-			if( rt_g.NMG_debug )
+		if ( nmg_ck_closed_surf(sA, tol) )  {
+			if ( rt_g.NMG_debug )
 				bu_log("nmg_bool() WARNING: sA unclosed at return, barging on.\n");
 			else
 				bu_bomb("nmg_bool() sA unclosed at return, aborting.\n");
 		}
 nmg_s_radial_check( sA, tol );
 
-		if( rt_g.NMG_debug & DEBUG_BOOL )
+		if ( rt_g.NMG_debug & DEBUG_BOOL )
 		{
 			char tmp_name[256];
 			sprintf( tmp_name, "after_bool_%d.g", debug_file_count );
@@ -1059,7 +1059,7 @@ nmg_s_radial_check( sA, tol );
 	if (rt_g.NMG_debug & DEBUG_BOOL) {
 		bu_log("Returning from NMG_BOOL\n");
 	}
-	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
+	if ( rt_g.NMG_debug & DEBUG_VERIFY )  {
 #if 0
 		nmg_vshell( &rA->s_hd, rA );
 #else
@@ -1106,10 +1106,10 @@ nmg_region_v_unique( rB, tol );
 	NMG_CK_REGION(r);
 
 	/* If shell A became empty, eliminate it from the returned region */
-	if( nmg_shell_is_empty(s) )
+	if ( nmg_shell_is_empty(s) )
 	{
 		nmg_ks(s);
-		if( BU_LIST_NON_EMPTY( &r->s_hd ) )
+		if ( BU_LIST_NON_EMPTY( &r->s_hd ) )
 		{
 			bu_bomb( "nmg_do_bool: Result of Boolean is an empty shell, but region is not empty!!!\n" );
 		}
@@ -1168,7 +1168,7 @@ nmg_booltree_leaf_tess(struct db_tree_state *tsp, struct db_full_path *pathp, st
 	}
 
 	NMG_CK_REGION(r1);
-	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
+	if ( rt_g.NMG_debug & DEBUG_VERIFY )  {
 		nmg_vshell( &r1->s_hd, r1 );
 	}
 
@@ -1226,7 +1226,7 @@ nmg_booltree_leaf_tnurb(struct db_tree_state *tsp, struct db_full_path *pathp, s
 	}
 
 	NMG_CK_REGION(r1);
-	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
+	if ( rt_g.NMG_debug & DEBUG_VERIFY )  {
 		nmg_vshell( &r1->s_hd, r1 );
 	}
 
@@ -1284,12 +1284,12 @@ nmg_booltree_evaluate(register union tree *tp, const struct bn_tol *tol, struct 
 	BN_CK_TOL(tol);
 	RT_CK_RESOURCE(resp);
 
-	switch(tp->tr_op) {
+	switch (tp->tr_op) {
 	case OP_NOP:
 		return(0);
 	case OP_NMG_TESS:
 		/* Hit a tree leaf */
-		if( rt_g.NMG_debug & DEBUG_VERIFY )  {
+		if ( rt_g.NMG_debug & DEBUG_VERIFY )  {
 			nmg_vshell( &tp->tr_d.td_r->s_hd, tp->tr_d.td_r );
 		}
 		return tp;
@@ -1315,7 +1315,7 @@ nmg_booltree_evaluate(register union tree *tp, const struct bn_tol *tol, struct 
 	if (tl == 0 || !tl->tr_d.td_r) {
 		if (tr == 0 || !tr->tr_d.td_r)
 			return 0;
-		if( op == NMG_BOOL_ADD )
+		if ( op == NMG_BOOL_ADD )
 			return tr;
 		/* For sub and intersect, if lhs is 0, result is null */
 		db_free_tree(tr, resp);
@@ -1326,7 +1326,7 @@ nmg_booltree_evaluate(register union tree *tp, const struct bn_tol *tol, struct 
 	if (tr == 0 || !tr->tr_d.td_r) {
 		if (tl == 0 || !tl->tr_d.td_r)
 			return 0;
-		if( op == NMG_BOOL_ISECT )  {
+		if ( op == NMG_BOOL_ISECT )  {
 			db_free_tree(tl, resp);
 			tp->tr_b.tb_left = TREE_NULL;
 			tp->tr_op = OP_NOP;
@@ -1335,10 +1335,10 @@ nmg_booltree_evaluate(register union tree *tp, const struct bn_tol *tol, struct 
 		/* For sub and add, if rhs is 0, result is lhs */
 		return tl;
 	}
-	if( tl->tr_op != OP_NMG_TESS )  bu_bomb("nmg_booltree_evaluate() bad left tree\n");
-	if( tr->tr_op != OP_NMG_TESS )  bu_bomb("nmg_booltree_evaluate() bad right tree\n");
+	if ( tl->tr_op != OP_NMG_TESS )  bu_bomb("nmg_booltree_evaluate() bad left tree\n");
+	if ( tr->tr_op != OP_NMG_TESS )  bu_bomb("nmg_booltree_evaluate() bad right tree\n");
 
-	if( ! nmg_bool_eval_silent )
+	if ( ! nmg_bool_eval_silent )
 	    bu_log(" {%s}%s{%s}\n", tl->tr_d.td_name, op_str, tr->tr_d.td_name );
 
 	NMG_CK_REGION(tr->tr_d.td_r);
@@ -1350,7 +1350,7 @@ nmg_booltree_evaluate(register union tree *tp, const struct bn_tol *tol, struct 
 nmg_r_radial_check( tr->tr_d.td_r, tol );
 nmg_r_radial_check( tl->tr_d.td_r, tol );
 
-	if( rt_g.NMG_debug & DEBUG_BOOL )
+	if ( rt_g.NMG_debug & DEBUG_BOOL )
 	{
 		bu_log( "Before model fuse\nShell A:\n" );
 		nmg_pr_s_briefly( BU_LIST_FIRST( shell, &tl->tr_d.td_r->s_hd ), "" );
@@ -1359,19 +1359,19 @@ nmg_r_radial_check( tl->tr_d.td_r, tol );
 	}
 
 	/* move operands into the same model */
-	if( tr->tr_d.td_r->m_p != tl->tr_d.td_r->m_p )
+	if ( tr->tr_d.td_r->m_p != tl->tr_d.td_r->m_p )
 		nmg_merge_models( tl->tr_d.td_r->m_p, tr->tr_d.td_r->m_p );
 
 	/* input r1 and r2 are destroyed, output is new region */
 	reg = nmg_do_bool(tl->tr_d.td_r, tr->tr_d.td_r, op, tol);
 	tl->tr_d.td_r = NULL;
 	tr->tr_d.td_r = NULL;
-	if( reg )
+	if ( reg )
 	{
 		NMG_CK_REGION(reg);
 		nmg_r_radial_check( reg, tol );
 
-		if( rt_g.NMG_debug & DEBUG_VERIFY )  {
+		if ( rt_g.NMG_debug & DEBUG_VERIFY )  {
 			nmg_vshell( &reg->s_hd, reg );
 		}
 	}
@@ -1438,14 +1438,14 @@ nmg_boolean( union tree *tp, struct model *m, const struct bn_tol *tol, struct r
 	 */
 	result = nmg_booltree_evaluate( tp, tol, resp );
 	RT_CK_TREE( result );
-	if( result != tp )  bu_bomb("nmg_boolean() result of nmg_booltree_evaluate() isn't tp\n");
-	if( tp->tr_op != OP_NMG_TESS )  {
+	if ( result != tp )  bu_bomb("nmg_boolean() result of nmg_booltree_evaluate() isn't tp\n");
+	if ( tp->tr_op != OP_NMG_TESS )  {
 		bu_log("nmg_boolean() result of nmg_booltree_evaluate() op != OP_NMG_TESS\n");
 		rt_pr_tree( tp, 0 );
 		ret = 1;
 		goto out;
 	}
-	if( tp->tr_d.td_r == (struct nmgregion *)NULL )  {
+	if ( tp->tr_d.td_r == (struct nmgregion *)NULL )  {
 		/* Pointers are all OK, but boolean produced null set */
 		ret = 1;
 		goto out;

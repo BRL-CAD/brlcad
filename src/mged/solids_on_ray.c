@@ -288,7 +288,7 @@ rpt_solids(struct application *ap, struct partition *ph, struct seg *finished_se
     /*
      *	Look at each segment that participated in this ray partition.
      */
-    for( index = 0; index < BU_PTBL_END(&pp->pt_seglist); index++ )  {
+    for ( index = 0; index < BU_PTBL_END(&pp->pt_seglist); index++ )  {
 	segp = (struct seg *)BU_PTBL_GET(&pp->pt_seglist, index);
 	RT_CK_SEG(segp);
 	RT_CK_SOLTAB(segp -> seg_stp);
@@ -466,12 +466,12 @@ rpt_hits_mike(struct application *ap, struct partition *PartHeadp, struct seg *s
 	list = (char **)bu_calloc( len, sizeof(char *), "hit list[]");
 
 	i = 0;
-	for( pp = PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )  {
+	for ( pp = PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )  {
 		RT_CK_PT(pp);
 		list[i++] = db_path_to_string( &(pp->pt_inseg->seg_stp->st_path) );
 	}
 	list[i++] = NULL;
-	if( i > len )  bu_exit(EXIT_FAILURE, "rpt_hits_mike: array overflow\n");
+	if ( i > len )  bu_exit(EXIT_FAILURE, "rpt_hits_mike: array overflow\n");
 
 	ap->a_uptr = (genptr_t)list;
 	return len;

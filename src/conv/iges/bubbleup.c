@@ -39,21 +39,21 @@
 Bubbleup( root )
 struct node *root;
 {
-	struct node *Copytree(),*Pop(),*ptr,*ptra,*ptrb,*ptrc,*ptr1,*ptr2;
+	struct node *Copytree(), *Pop(), *ptr, *ptra, *ptrb, *ptrc, *ptr1, *ptr2;
 	int op, retval=1;
 
 	ptr = root;
-	while( 1 )
+	while ( 1 )
 	{
-		while( ptr != NULL )
+		while ( ptr != NULL )
 		{
 			Push( ptr );
 			ptr = ptr->left;
 		}
 		ptr = Pop();
-		if( ptr->right != NULL && ptr->right->op == Union )
+		if ( ptr->right != NULL && ptr->right->op == Union )
 		{
-			if( ptr->op == Subtract )
+			if ( ptr->op == Subtract )
 			{
 			/*	(a-(buc)) => ((a-b)-c)	*/
 				retval = 0;
@@ -70,7 +70,7 @@ struct node *root;
 				ptrb->parent = ptr1;
 				ptrc->parent = ptr;
 			}
-			else if( ptr->op == Intersect )
+			else if ( ptr->op == Intersect )
 			{
 			/*	(a+(buc)) => (a+b)u(a+c)	*/
 				retval = 0;
@@ -92,9 +92,9 @@ struct node *root;
 				ptr2->parent = ptr;
 			}
 		}
-		else if( ptr->left != NULL && ptr->left->op == Union )
+		else if ( ptr->left != NULL && ptr->left->op == Union )
 		{
-			if( ptr->op == Intersect || ptr->op == Subtract )
+			if ( ptr->op == Intersect || ptr->op == Subtract )
 			{
 			/*	((aub)"+ or -"c) => (a"+ or -"c)u(b"+ or -"c)	*/
 				retval = 0;
@@ -117,10 +117,10 @@ struct node *root;
 			}
 		}
 
-		if( ptr == root ) /* entire tree has been looked at */
+		if ( ptr == root ) /* entire tree has been looked at */
 			return( retval );
 
-		if( ptr != ptr->parent->right ) /* we must be at the left node */
+		if ( ptr != ptr->parent->right ) /* we must be at the left node */
 			ptr = ptr->parent->right; /* so push the right node */
 		else				/* we must be at the right node */
 			ptr = NULL;	/* so don't push anything */

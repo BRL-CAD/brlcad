@@ -68,7 +68,7 @@ main(int argc, char **argv)
 	int	m;
 	int	n;
 
-	if( argc < 3 || argc > 5 )  {
+	if ( argc < 3 || argc > 5 )  {
 		fputs( usage, stderr );
 		return 1;
 	}
@@ -76,8 +76,8 @@ main(int argc, char **argv)
 	in_cookie = bu_cv_cookie( argv[1] );
 	out_cookie = bu_cv_cookie( argv[2] );
 
-	if( argc >= 5 )  {
-		if( (outfp = fopen( argv[4], "w" )) == NULL )  {
+	if ( argc >= 5 )  {
+		if ( (outfp = fopen( argv[4], "w" )) == NULL )  {
 			perror(argv[4]);
 			return 2;
 		}
@@ -85,8 +85,8 @@ main(int argc, char **argv)
 		outfp = stdout;
 	}
 
-	if( argc >= 4 )  {
-		if( (infp = fopen( argv[3], "r" )) == NULL )  {
+	if ( argc >= 4 )  {
+		if ( (infp = fopen( argv[3], "r" )) == NULL )  {
 			perror(argv[3]);
 			return 3;
 		}
@@ -94,7 +94,7 @@ main(int argc, char **argv)
 		infp = stdin;
 	}
 
-	if( isatty(fileno(outfp)) )  {
+	if ( isatty(fileno(outfp)) )  {
 		fprintf(stderr, "cv: trying to send binary output to terminal\n");
 		return 5;
 	}
@@ -108,16 +108,16 @@ main(int argc, char **argv)
 	ibuf = (genptr_t)bu_malloc( inbytes, "cv input buffer" );
 	obuf = (genptr_t)bu_malloc( outbytes, "cv output buffer" );
 
-	while( !feof( infp ) )  {
-		if( (n = fread( ibuf, iitem, NITEMS, infp )) <= 0 )
+	while ( !feof( infp ) )  {
+		if ( (n = fread( ibuf, iitem, NITEMS, infp )) <= 0 )
 			break;
 		m = bu_cv_w_cookie( obuf, out_cookie, outbytes, ibuf, in_cookie, n );
-		if( m != n )  {
+		if ( m != n )  {
 			fprintf(stderr, "cv: bu_cv_w_cookie() ret=%d, count=%d\n", m, n );
 			return 4;
 		}
 		m = fwrite( obuf, oitem, n, outfp );
-		if( m != n )  {
+		if ( m != n )  {
 			perror("fwrite");
 			fprintf(stderr, "cv: fwrite() ret=%d, count=%d\n", m, n );
 			return 5;

@@ -55,7 +55,7 @@ int entityno;
 	z2 = 1.0;
 
 	/* Acquiring Data */
-	if( dir[entityno]->param <= pstart )
+	if ( dir[entityno]->param <= pstart )
 	{
 		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[entityno]->direct, dir[entityno]->name );
@@ -72,28 +72,28 @@ int entityno;
 	Readcnv( &y2, "" );
 	Readcnv( &z2, "" );
 
-	if( radius <= 0.0 || scale_height <= 0.0 )
+	if ( radius <= 0.0 || scale_height <= 0.0 )
 	{
 		bu_log( "Illegal parameters for entity D%07d (%s)\n" ,
 				dir[entityno]->direct, dir[entityno]->name );
-		if( radius == 0.0 )
+		if ( radius == 0.0 )
 		{
 			bu_log( "\tradius of cylinder is zero!!!\n" );
 			return( 0 );
 		}
-		if( scale_height == 0.0 )
+		if ( scale_height == 0.0 )
 		{
 			bu_log( "\theight of cylinder is zero!!!\n" );
 			return( 0 );
 		}
 
-		if( radius < 0.0 )
+		if ( radius < 0.0 )
 		{
 			bu_log( "\tUsing the absolute value of a negative radius\n" );
 			radius = (-radius);
 		}
 
-		if( scale_height < 0.0 )
+		if ( scale_height < 0.0 )
 		{
 			bu_log( "\tUsing absolute value of a negative height and reversing axis direction\n" );
 			scale_height = (-scale_height);
@@ -120,7 +120,7 @@ int entityno;
 
 	VSCALE(height, hdir, scale_height);
 
-	if( mk_rcc(fdout, dir[entityno]->name, base, height, radius) < 0 )  {
+	if ( mk_rcc(fdout, dir[entityno]->name, base, height, radius) < 0 )  {
 		bu_log("Unable to write entity D%07d (%s)\n" ,
 			dir[entityno]->direct, dir[entityno]->name );
 		return( 0 );

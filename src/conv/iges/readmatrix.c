@@ -46,32 +46,32 @@ mat_t rot;
 
 	Readrec( xform );
 	Readint( &i, "" );
-	if( i != 124 && i != 700  )
+	if ( i != 124 && i != 700  )
 	{
 		bu_log( "Error in transformation parameter data at P%d\n", xform );
-		for( j=0 ; j<16 ; j++ )
+		for ( j=0; j<16; j++ )
 			rot[j] = (*identity)[j];
 		return;
 	}
-	else if( i == 124 )
+	else if ( i == 124 )
 	{
-		for( i=0 ; i<12 ; i++ )
+		for ( i=0; i<12; i++ )
 		{
-			if( !((i+1)%4) ) /* convert translation */
+			if ( !((i+1)%4) ) /* convert translation */
 				Readcnv( &rot[i], "" );
 			else	/* Don't convert rotations */
 				Readflt( &rot[i], "" );
 		}
-		for( i=12 ; i<15 ; i++ )
+		for ( i=12; i<15; i++ )
 			rot[i] = 0.0;
 		rot[15] = 1.0;
 
 	}
 	else
 	{
-		for( i=0 ; i<15 ; i++ )
+		for ( i=0; i<15; i++ )
 		{
-			if( !((i+1)%4) ) /* convert translation */
+			if ( !((i+1)%4) ) /* convert translation */
 				Readcnv( &rot[i], "" );
 			else	/* Don't convert rotations */
 				Readflt( &rot[i], "" );

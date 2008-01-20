@@ -93,7 +93,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	BU_LIST_INIT(&head);
 
-	if(argc < 1 || 27 < argc){
+	if (argc < 1 || 27 < argc){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -104,7 +104,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
 
 	/* interupts */
-	if( setjmp( jmp_env ) == 0 )
+	if ( setjmp( jmp_env ) == 0 )
 	  (void)signal( SIGINT, sig3);  /* allow interupts */
 	else
 	  return TCL_OK;
@@ -124,7 +124,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	fw[0] = atof( argv[arg] ) * local2base;
 	++arg;
 
-	if( argc < arg+1 ) {
+	if ( argc < arg+1 ) {
 	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter X of the LAST roadwheel: ",
 			   (char *)NULL);
 	  edit_result = TCL_ERROR;
@@ -133,13 +133,13 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	lw[0] = atof( argv[arg] ) * local2base;
 	++arg;
 
-	if( fw[0] <= lw[0] ) {
+	if ( fw[0] <= lw[0] ) {
 	  Tcl_AppendResult(interp, "First wheel after last wheel - STOP\n", (char *)NULL);
 	  edit_result = TCL_ERROR;
 	  goto end;
 	}
 
-	if( argc < arg+1 ) {
+	if ( argc < arg+1 ) {
 	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter Z of the roadwheels: ",
 			   (char *)NULL);
 	  edit_result = TCL_ERROR;
@@ -148,7 +148,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	fw[1] = lw[1] = atof( argv[arg] ) * local2base;
 	++arg;
 
-	if( argc < arg+1 ) {
+	if ( argc < arg+1 ) {
 	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter radius of the roadwheels: ",
 			   (char *)NULL);
 	  edit_result = TCL_ERROR;
@@ -156,7 +156,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
 	fw[2] = lw[2] = atof( argv[arg] ) * local2base;
 	++arg;
-	if( fw[2] <= 0 ) {
+	if ( fw[2] <= 0 ) {
 	  Tcl_AppendResult(interp, "Radius <= 0 - STOP\n", (char *)NULL);
 	  edit_result = TCL_ERROR;
 	  goto end;
@@ -171,13 +171,13 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
 	dw[0] = atof( argv[arg] ) * local2base;
 	++arg;
-	if( dw[0] >= lw[0] ) {
+	if ( dw[0] >= lw[0] ) {
 	  Tcl_AppendResult(interp, "DRIVE wheel not in the rear - STOP \n", (char *)NULL);
 	  edit_result = TCL_ERROR;
 	  goto end;
 	}
 
-	if( argc < arg+1 ) {
+	if ( argc < arg+1 ) {
 	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter Z of the drive (REAR) wheel: ",
 			   (char *)NULL);
 	  edit_result = TCL_ERROR;
@@ -186,7 +186,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	dw[1] = atof( argv[arg] ) * local2base;
 	++arg;
 
-	if( argc < arg+1 ) {
+	if ( argc < arg+1 ) {
 	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter radius of the drive (REAR) wheel: ",
 			   (char *)NULL);
 	  edit_result = TCL_ERROR;
@@ -194,14 +194,14 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
 	dw[2] = atof( argv[arg] ) * local2base;
 	++arg;
-	if( dw[2] <= 0 ) {
+	if ( dw[2] <= 0 ) {
 	  Tcl_AppendResult(interp, "Radius <= 0 - STOP\n", (char *)NULL);
 	  edit_result = TCL_ERROR;
 	  goto end;
 	}
 
 	/* get the idler wheel info */
-	if( argc < arg+1 ) {
+	if ( argc < arg+1 ) {
 	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter X of the idler (FRONT) wheel: ",
 			   (char *)NULL);
 	  edit_result = TCL_ERROR;
@@ -209,13 +209,13 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
 	iw[0] = atof( argv[arg] ) * local2base;
 	++arg;
-	if( iw[0] <= fw[0] ) {
+	if ( iw[0] <= fw[0] ) {
 	  Tcl_AppendResult(interp, "IDLER wheel not in the front - STOP \n", (char *)NULL);
 	  edit_result = TCL_ERROR;
 	  goto end;
 	}
 
-	if( argc < arg+1 ) {
+	if ( argc < arg+1 ) {
 	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter Z of the idler (FRONT) wheel: ",
 			   (char *)NULL);
 	  edit_result = TCL_ERROR;
@@ -224,7 +224,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	iw[1] = atof( argv[arg] ) * local2base;
 	++arg;
 
-	if( argc < arg+1 ) {
+	if ( argc < arg+1 ) {
 	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter radius of the idler (FRONT) wheel: ",
 			   (char *)NULL);
 	  edit_result = TCL_ERROR;
@@ -232,14 +232,14 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
 	iw[2] = atof( argv[arg] ) * local2base;
 	++arg;
-	if( iw[2] <= 0 ) {
+	if ( iw[2] <= 0 ) {
 	  Tcl_AppendResult(interp, "Radius <= 0 - STOP\n", (char *)NULL);
 	  edit_result = TCL_ERROR;
 	  goto end;
 	}
 
 	/* get track info */
-	if( argc < arg+1 ) {
+	if ( argc < arg+1 ) {
 	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter Y-MIN of the track: ",
 			   (char *)NULL);
 	  edit_result = TCL_ERROR;
@@ -248,7 +248,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	tr[2] = tr[0] = atof( argv[arg] ) * local2base;
 	++arg;
 
-	if( argc < arg+1 ) {
+	if ( argc < arg+1 ) {
 	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter Y-MAX of the track: ",
 			   (char *)NULL);
 	  edit_result = TCL_ERROR;
@@ -256,18 +256,18 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
 	tr[1] = atof( argv[arg] ) * local2base;
 	++arg;
-	if( tr[0] == tr[1] ) {
+	if ( tr[0] == tr[1] ) {
 	  Tcl_AppendResult(interp, "MIN == MAX ... STOP\n", (char *)NULL);
 	  edit_result = TCL_ERROR;
 	  goto end;
 	}
-	if( tr[0] > tr[1] ) {
+	if ( tr[0] > tr[1] ) {
 	  Tcl_AppendResult(interp, "MIN > MAX .... will switch\n", (char *)NULL);
 	  tr[1] = tr[0];
 	  tr[0] = tr[2];
 	}
 
-	if( argc < arg+1 ) {
+	if ( argc < arg+1 ) {
 	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter track thickness: ",
 			   (char *)NULL);
 	  edit_result = TCL_ERROR;
@@ -275,7 +275,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
 	tr[2] = atof( argv[arg] ) * local2base;
 	++arg;
-	if( tr[2] <= 0 ) {
+	if ( tr[2] <= 0 ) {
 	  Tcl_AppendResult(interp, "Track thickness <= 0 - STOP\n", (char *)NULL);
 	  edit_result = TCL_ERROR;
 	  goto end;
@@ -315,14 +315,14 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 tryagain:	/* sent here to try next set of names */
 
-	for(i=0; i<11; i++) {
+	for (i=0; i<11; i++) {
 		crname(solname, i, 12);
 		crname(regname, i, 12);
-		if(	(db_lookup( dbip, solname, LOOKUP_QUIET) != DIR_NULL)	||
+		if (	(db_lookup( dbip, solname, LOOKUP_QUIET) != DIR_NULL)	||
 			(db_lookup( dbip, regname, LOOKUP_QUIET) != DIR_NULL)	) {
 			/* name already exists */
 			solname[8] = regname[8] = '\0';
-			if( (Trackpos += 10) > 500 ) {
+			if ( (Trackpos += 10) > 500 ) {
 			  Tcl_AppendResult(interp, "Track: naming error -- STOP\n",
 					   (char *)NULL);
 			  edit_result = TCL_ERROR;
@@ -337,7 +337,7 @@ tryagain:	/* sent here to try next set of names */
 	(void)signal( SIGINT, SIG_IGN );
 
 	/* find the front track slope to the idler */
-	for(i=0; i<24; i++)
+	for (i=0; i<24; i++)
 		sol.s_values[i] = 0.0;
 
 	slope(fw, iw, tr);
@@ -345,19 +345,19 @@ tryagain:	/* sent here to try next set of names */
 	crname(solname, 1, 12);
 	strncpy(sol.s_name, solname, NAMESIZE-1);
 	sol.s_type = ID_ARB8;
-	if( wrobj(solname, DIR_SOLID) )
+	if ( wrobj(solname, DIR_SOLID) )
 	  return TCL_ERROR;
 
 	solname[8] = '\0';
 
 	/* find track around idler */
-	for(i=0; i<24; i++)
+	for (i=0; i<24; i++)
 		sol.s_values[i] = 0.0;
 	sol.s_type = ID_TGC;
 	trcurve(iw, tr);
 	crname(solname, 2, 12);
 	strncpy(sol.s_name, solname, NAMESIZE-1);
-	if( wrobj( solname, DIR_SOLID ) )
+	if ( wrobj( solname, DIR_SOLID ) )
 	  return TCL_ERROR;
 	solname[8] = '\0';
 	/* idler dummy rcc */
@@ -367,40 +367,40 @@ tryagain:	/* sent here to try next set of names */
 	VMOVE(&sol.s_values[15], &sol.s_values[9]);
 	crname(solname, 3, 12);
 	strncpy(sol.s_name, solname, NAMESIZE-1);
-	if( wrobj( solname, DIR_SOLID ) )
+	if ( wrobj( solname, DIR_SOLID ) )
 		return TCL_ERROR;
 	solname[8] = '\0';
 
 	/* find idler track dummy arb8 */
-	for(i=0; i<24; i++)
+	for (i=0; i<24; i++)
 		sol.s_values[i] = 0.0;
 	crname(solname, 4, 12);
 	strncpy(sol.s_name, solname, NAMESIZE-1);
 	sol.s_type = ID_ARB8;
 	crdummy(iw, tr, 1);
-	if( wrobj(solname, DIR_SOLID) )
+	if ( wrobj(solname, DIR_SOLID) )
 	  return TCL_ERROR;
 	solname[8] = '\0';
 
 	/* track slope to drive */
-	for(i=0; i<24; i++)
+	for (i=0; i<24; i++)
 		sol.s_values[i] = 0.0;
 	slope(lw, dw, tr);
 	VMOVE(temp1, &sol.s_values[0]);
 	crname(solname, 5, 12);
 	strncpy(sol.s_name, solname, NAMESIZE-1);
-	if(wrobj(solname, DIR_SOLID))
+	if (wrobj(solname, DIR_SOLID))
 		return TCL_ERROR;
 	solname[8] = '\0';
 
 	/* track around drive */
-	for(i=0; i<24; i++)
+	for (i=0; i<24; i++)
 		sol.s_values[i] = 0.0;
 	sol.s_type = ID_TGC;
 	trcurve(dw, tr);
 	crname(solname, 6, 12);
 	strncpy(sol.s_name, solname, NAMESIZE-1);
-	if( wrobj(solname, DIR_SOLID) )
+	if ( wrobj(solname, DIR_SOLID) )
 		return TCL_ERROR;
 	solname[8] = '\0';
 
@@ -411,18 +411,18 @@ tryagain:	/* sent here to try next set of names */
 	VMOVE(&sol.s_values[15], &sol.s_values[9]);
 	crname(solname, 7, 12);
 	strncpy(sol.s_name, solname, NAMESIZE-1);
-	if( wrobj(solname, DIR_SOLID) )
+	if ( wrobj(solname, DIR_SOLID) )
 		return TCL_ERROR;
 	solname[8] = '\0';
 
 	/* drive dummy arb8 */
-	for(i=0; i<24; i++)
+	for (i=0; i<24; i++)
 		sol.s_name[i] = 0.0;
 	crname(solname, 8, 12);
 	strncpy(sol.s_name, solname, NAMESIZE-1);
 	sol.s_type = ID_ARB8;
 	crdummy(dw, tr, 2);
-	if( wrobj(solname, DIR_SOLID) )
+	if ( wrobj(solname, DIR_SOLID) )
 		return TCL_ERROR;
 	solname[8] = '\0';
 
@@ -431,7 +431,7 @@ tryagain:	/* sent here to try next set of names */
 	bottom(temp1, temp2, tr);
 	crname(solname, 9, 12);
 	strncpy(sol.s_name, solname, NAMESIZE-1);
-	if( wrobj(solname, DIR_SOLID) )
+	if ( wrobj(solname, DIR_SOLID) )
 		return TCL_ERROR;
 	solname[8] = '\0';
 
@@ -444,7 +444,7 @@ tryagain:	/* sent here to try next set of names */
 	top(temp1, temp2, tr);
 	crname(solname, 10, 12);
 	strncpy(sol.s_name, solname, NAMESIZE-1);
-	if( wrobj(solname, DIR_SOLID) )
+	if ( wrobj(solname, DIR_SOLID) )
 		return TCL_ERROR;
 	solname[8] = '\0';
 
@@ -504,17 +504,17 @@ tryagain:	/* sent here to try next set of names */
 
 	/* group all the track regions */
 	j = 1;
-	if( (i = Trackpos / 10 + 1) > 9 )
+	if ( (i = Trackpos / 10 + 1) > 9 )
 		j = 2;
 	itoa(i, temp, j);
 	strncat(grpname, temp, 9-strlen(grpname)-1);
 	grpname[9-1] = '\0'; /* sanity */
-	for(i=1; i<11; i++) {
-		if( i == 3 || i ==4 || i == 7 || i == 8 )
+	for (i=1; i<11; i++) {
+		if ( i == 3 || i ==4 || i == 7 || i == 8 )
 			continue;
 		regname[8] = '\0';
 		crname(regname, i, 12);
-		if( db_lookup( dbip, regname, LOOKUP_QUIET) == DIR_NULL ) {
+		if ( db_lookup( dbip, regname, LOOKUP_QUIET) == DIR_NULL ) {
 		  Tcl_AppendResult(interp, "group: ", grpname, " will skip member: ",
 				   regname, "\n", (char *)NULL);
 		  continue;
@@ -523,7 +523,7 @@ tryagain:	/* sent here to try next set of names */
 	}
 
 	/* Add them all at once */
-	if( mk_comb( wdbp, grpname, &head,
+	if ( mk_comb( wdbp, grpname, &head,
 	    0, NULL, NULL, NULL,
 	    0, 0, 0, 0,
 	    0, 1, 1 ) < 0 )
@@ -563,9 +563,9 @@ crname(char *name, int pos, int maxlen)
 	char temp[4];
 
 	j=1;
-	if( (i = Trackpos + pos) > 9 )
+	if ( (i = Trackpos + pos) > 9 )
 		j = 2;
-	if( i > 99 )
+	if ( i > 99 )
 		j = 3;
 	itoa(i, temp, j);
 	strncat(name, temp, maxlen-strlen(name)-1);
@@ -580,23 +580,23 @@ wrobj( char name[], int flags )
 	struct rt_db_internal intern;
 	int i;
 
-	if(dbip == DBI_NULL)
+	if (dbip == DBI_NULL)
 	  return 0;
 
-	if( db_lookup( dbip, name, LOOKUP_QUIET) != DIR_NULL ) {
+	if ( db_lookup( dbip, name, LOOKUP_QUIET) != DIR_NULL ) {
 	  Tcl_AppendResult(interp, "track naming error: ", name,
 			   " already exists\n", (char *)NULL);
 	  return(-1);
 	}
 
-	if( flags != DIR_SOLID )
+	if ( flags != DIR_SOLID )
 	{
 		Tcl_AppendResult(interp, "wrobj can only write solids, aborting\n" );
 		return( -1 );
 	}
 
 	RT_INIT_DB_INTERNAL( &intern );
-	switch( sol.s_type )
+	switch ( sol.s_type )
 	{
 		case ID_ARB8:
 			{
@@ -607,7 +607,7 @@ wrobj( char name[], int flags )
 				arb->magic = RT_ARB_INTERNAL_MAGIC;
 
 				VMOVE( arb->pt[0], &sol.s_values[0] );
-				for( i=1 ; i<8 ; i++ )
+				for ( i=1; i<8; i++ )
 					VADD2( arb->pt[i], &sol.s_values[i*3], arb->pt[0] )
 
 				intern.idb_ptr = (genptr_t)arb;
@@ -642,14 +642,14 @@ wrobj( char name[], int flags )
 			return( -1 );
 	}
 
-	if( (tdp = db_diradd( dbip, name, -1L, 0, flags, (genptr_t)&intern.idb_type)) == DIR_NULL )
+	if ( (tdp = db_diradd( dbip, name, -1L, 0, flags, (genptr_t)&intern.idb_type)) == DIR_NULL )
 	{
 		rt_db_free_internal( &intern, &rt_uniresource );
 		Tcl_AppendResult(interp, "Cannot add '", name, "' to directory, aborting\n", (char *)NULL );
 		return( -1 );
 	}
 
-	if( rt_db_put_internal( tdp, dbip, &intern, &rt_uniresource ) < 0 )
+	if ( rt_db_put_internal( tdp, dbip, &intern, &rt_uniresource ) < 0 )
 	{
 		rt_db_free_internal( &intern, &rt_uniresource );
 		Tcl_AppendResult(interp, "wrobj(", name, "):  write error\n", (char *)NULL);
@@ -671,7 +671,7 @@ tancir(register fastf_t *cir1, register fastf_t *cir2)
 	work[2] = cir2[1] - cir1[1];
 	work[1] = 0.0;
 	mag = MAGNITUDE( work );
-	if( mag > 1.0e-20 || mag < -1.0e-20 )  {
+	if ( mag > 1.0e-20 || mag < -1.0e-20 )  {
 		f = 1.0/mag;
 	}  else {
 	  Tcl_AppendResult(interp, "tancir():  0-length vector!\n", (char *)NULL);
@@ -679,12 +679,12 @@ tancir(register fastf_t *cir1, register fastf_t *cir2)
 	}
 	VSCALE(work, work, f);
 	temp = acos( work[0] );
-	if( work[2] < 0.0 )
+	if ( work[2] < 0.0 )
 		temp = 6.28318512717958646 - temp;
 	tempp = acos( (cir1[2] - cir2[2]) * f );
 	ang = temp + tempp;
 	angc = temp - tempp;
-	if( (cir1[1] + cir1[2] * sin(ang)) >
+	if ( (cir1[1] + cir1[2] * sin(ang)) >
 	    (cir1[1] + cir1[2] * sin(angc)) )
 		ang = angc;
 	plano[0] = cir1[0] + cir1[2] * cos(ang);
@@ -705,24 +705,24 @@ slope(fastf_t *wh1, fastf_t *wh2, fastf_t *t)
 	vect_t	del, work;
 
 	switchs = 0;
-	if( wh1[2] < wh2[2] ) {
+	if ( wh1[2] < wh2[2] ) {
 		switchs++;
-		for(i=0; i<3; i++) {
+		for (i=0; i<3; i++) {
 			temp = wh1[i];
 			wh1[i] = wh2[i];
 			wh2[i] = temp;
 		}
 	}
 	tancir(wh1, wh2);
-	if( switchs ) {
-		for(i=0; i<3; i++) {
+	if ( switchs ) {
+		for (i=0; i<3; i++) {
 			temp = wh1[i];
 			wh1[i] = wh2[i];
 			wh2[i] = temp;
 		}
 	}
-	if(plano[1] <= plant[1]) {
-		for(i=0; i<2; i++) {
+	if (plano[1] <= plant[1]) {
+		for (i=0; i<2; i++) {
 			temp = plano[i];
 			plano[i] = plant[i];
 			plant[i] = temp;
@@ -733,14 +733,14 @@ slope(fastf_t *wh1, fastf_t *wh2, fastf_t *t)
 	del[2] = plano[1] - plant[1];
 	mag = MAGNITUDE( del );
 	work[0] = -1.0 * t[2] * del[2] / mag;
-	if( del[0] < 0.0 )
+	if ( del[0] < 0.0 )
 		work[0] *= -1.0;
 	work[1] = 0.0;
 	work[2] = t[2] * fabs(del[0]) / mag;
 	b = (plano[1] - work[2]) - (del[2]/del[0]*(plano[0] - work[0]));
 	z = wh1[1];
 	r = wh1[2];
-	if( wh1[1] >= wh2[1] ) {
+	if ( wh1[1] >= wh2[1] ) {
 		z = wh2[1];
 		r = wh2[2];
 	}
@@ -755,7 +755,7 @@ slope(fastf_t *wh1, fastf_t *wh2, fastf_t *t)
 	work[0] = work[2] = 0.0;
 	work[1] = t[1] - t[0];
 	VMOVE(&sol.s_values[12], work);
-	for(i=3; i<=9; i+=3) {
+	for (i=3; i<=9; i+=3) {
 		j = i + 12;
 		VADD2(&sol.s_values[j], &sol.s_values[i], work);
 	}
@@ -771,8 +771,8 @@ crdummy(fastf_t *w, fastf_t *t, int flag)
 	int i, j;
 
 	vec[1] = 0.0;
-	if(plano[1] <= plant[1]) {
-		for(i=0; i<2; i++) {
+	if (plano[1] <= plant[1]) {
+		for (i=0; i<2; i++) {
 			temp = plano[i];
 			plano[i] = plant[i];
 			plant[i] = temp;
@@ -781,9 +781,9 @@ crdummy(fastf_t *w, fastf_t *t, int flag)
 
 	vec[0] = w[2] + t[2] + 1.0;
 	vec[2] = ( (plano[1] - w[1]) * vec[0] ) / (plano[0] - w[0]);
-	if( flag > 1 )
+	if ( flag > 1 )
 		vec[0] *= -1.0;
-	if(vec[2] >= 0.0)
+	if (vec[2] >= 0.0)
 		vec[2] *= -1.0;
 	sol.s_values[0] = w[0];
 	sol.s_values[1] = t[0] -1.0;
@@ -796,7 +796,7 @@ crdummy(fastf_t *w, fastf_t *t, int flag)
 	vec[2] = 0.0;
 	vec[1] = t[1] - t[0] + 2.0;
 	VMOVE(&sol.s_values[12], vec);
-	for(i=3; i<=9; i+=3) {
+	for (i=3; i<=9; i+=3) {
 		j = i + 12;
 		VADD2(&sol.s_values[j], &sol.s_values[i], vec);
 	}
@@ -836,7 +836,7 @@ bottom(fastf_t *vec1, fastf_t *vec2, fastf_t *t)
 	tvec[1] = t[1] - t[0];
 	VMOVE(&sol.s_values[12], tvec);
 
-	for(i=3; i<=9; i+=3) {
+	for (i=3; i<=9; i+=3) {
 		j = i + 12;
 		VADD2(&sol.s_values[j], &sol.s_values[i], tvec);
 	}
@@ -862,13 +862,13 @@ top(fastf_t *vec1, fastf_t *vec2, fastf_t *t)
 	tvec[1] = t[1] - t[0];
 	VCROSS(del, tvec, &sol.s_values[3]);
 	mag = MAGNITUDE( del );
-	if(del[2] < 0)
+	if (del[2] < 0)
 		mag *= -1.0;
 	VSCALE(&sol.s_values[9], del, t[2]/mag);
 	VADD2(&sol.s_values[6], &sol.s_values[3], &sol.s_values[9]);
 	VMOVE(&sol.s_values[12], tvec);
 
-	for(i=3; i<=9; i+=3) {
+	for (i=3; i<=9; i+=3) {
 		j = i + 12;
 		VADD2(&sol.s_values[j], &sol.s_values[i], tvec);
 	}
@@ -880,15 +880,15 @@ crregion(char *region, char *op, int *members, int number, char *solidname, int 
   int i;
   struct bu_list head;
 
-  if(dbip == DBI_NULL)
+  if (dbip == DBI_NULL)
     return;
 
   BU_LIST_INIT(&head);
 
-  for(i=0; i<number; i++) {
+  for (i=0; i<number; i++) {
     solidname[8] = '\0';
     crname(solidname, members[i], maxlen);
-    if( db_lookup( dbip, solidname, LOOKUP_QUIET) == DIR_NULL ) {
+    if ( db_lookup( dbip, solidname, LOOKUP_QUIET) == DIR_NULL ) {
       Tcl_AppendResult(interp, "region: ", region, " will skip member: ",
 		       solidname, "\n", (char *)NULL);
       continue;
@@ -910,20 +910,20 @@ itoa(int n, char *s, int w)
 {
 	int	 c, i, j, sign;
 
-	if( (sign = n) < 0 )	n = -n;
+	if ( (sign = n) < 0 )	n = -n;
 	i = 0;
-	do	s[i++] = n % 10 + '0';	while( (n /= 10) > 0 );
-	if( sign < 0 )	s[i++] = '-';
+	do	s[i++] = n % 10 + '0';	while ( (n /= 10) > 0 );
+	if ( sign < 0 )	s[i++] = '-';
 
 	/* blank fill array
 	 */
-	for( j = i; j < w; j++ )	s[j] = ' ';
-	if( i > w )
+	for ( j = i; j < w; j++ )	s[j] = ' ';
+	if ( i > w )
 	  Tcl_AppendResult(interp, "itoa: field length too small\n", (char *)NULL);
 	s[w] = '\0';
 	/* reverse the array
 	 */
-	for( i = 0, j = w - 1; i < j; i++, j-- ) {
+	for ( i = 0, j = w - 1; i < j; i++, j-- ) {
 		c    = s[i];
 		s[i] = s[j];
 		s[j] =    c;

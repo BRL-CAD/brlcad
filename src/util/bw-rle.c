@@ -76,8 +76,8 @@ get_args(int argc, register char **argv)
 {
 	register int	c;
 
-	while( (c = bu_getopt( argc, argv, "hs:w:n:C:" )) != EOF )  {
-		switch( c )  {
+	while ( (c = bu_getopt( argc, argv, "hs:w:n:C:" )) != EOF )  {
+		switch ( c )  {
 		case 'h':
 			/* high-res */
 			file_height = file_width = 1024;
@@ -98,9 +98,10 @@ get_args(int argc, register char **argv)
 				register int *conp = background;
 
 				/* premature null => atoi gives zeros */
-				for( c=0; c < 3; c++ )  {
+				for ( c=0; c < 3; c++ )  {
 					*conp++ = atoi(cp);
-					while( *cp && *cp++ != '/' ) ;
+					while ( *cp && *cp++ != '/' )
+					    ;
 				}
 			}
 			break;
@@ -109,8 +110,8 @@ get_args(int argc, register char **argv)
 			return	0;
 		}
 	}
-	if( argv[bu_optind] != NULL )  {
-		if( (infp = fopen( (infile=argv[bu_optind]), "r" )) == NULL )  {
+	if ( argv[bu_optind] != NULL )  {
+		if ( (infp = fopen( (infile=argv[bu_optind]), "r" )) == NULL )  {
 			perror(infile);
 			return	0;
 		}
@@ -118,22 +119,22 @@ get_args(int argc, register char **argv)
 	} else {
 		infile = "-";
 	}
-	if( argv[bu_optind] != NULL )  {
+	if ( argv[bu_optind] != NULL )  {
 		if (bu_file_exists(argv[bu_optind]))  {
 			(void) fprintf( stderr,
 				"\"%s\" already exists.\n",
 				argv[bu_optind] );
 			bu_exit( 1, NULL );
 		}
-		if( (outfp = fopen( argv[bu_optind], "w" )) == NULL )  {
+		if ( (outfp = fopen( argv[bu_optind], "w" )) == NULL )  {
 			perror(argv[bu_optind]);
 			return	0;
 		}
 	}
-	if( argc > ++bu_optind )
+	if ( argc > ++bu_optind )
 		(void) fprintf( stderr, "pix-rle: Excess arguments ignored\n" );
 
-	if( isatty(fileno(infp)) || isatty(fileno(outfp)) )
+	if ( isatty(fileno(infp)) || isatty(fileno(outfp)) )
 		return 0;
 	return	1;
 }
@@ -149,7 +150,7 @@ main(int argc, char **argv)
 
 	infp = stdin;
 	outfp = stdout;
-	if( !get_args( argc, argv ) )  {
+	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
 		bu_exit ( 1, NULL );
 	}
@@ -174,11 +175,11 @@ main(int argc, char **argv)
 	now = time(0);
 	sprintf( comment, "converted_date=%24.24s", ctime(&now) );
 	rle_putcom( strdup(comment), &outrle );
-	if( (who = getenv("USER")) != (char *)0 ) {
+	if ( (who = getenv("USER")) != (char *)0 ) {
 		snprintf( comment, 128, "converted_by=%s", who);
 		rle_putcom( strdup(comment), &outrle );
 	} else {
-		if( (who = getenv("LOGNAME")) != (char *)0 ) {
+		if ( (who = getenv("LOGNAME")) != (char *)0 ) {
 			snprintf( comment, 128, "converted_by=%s", who);
 			rle_putcom( strdup(comment), &outrle );
 		}
@@ -193,8 +194,8 @@ main(int argc, char **argv)
 	rle_row_alloc( &outrle, &rows );
 
 	/* Read image a scanline at a time, and encode it */
-	for( y = 0; y < file_height; y++ )  {
-		if( fread( (char *)scan_buf, sizeof(unsigned char), (size_t)file_width, infp ) != file_width)  {
+	for ( y = 0; y < file_height; y++ )  {
+		if ( fread( (char *)scan_buf, sizeof(unsigned char), (size_t)file_width, infp ) != file_width)  {
 			(void) fprintf(	stderr,
 				"pix-rle: read of %d pixels on line %d failed!\n",
 				file_width, y );
@@ -207,7 +208,7 @@ main(int argc, char **argv)
 			register rle_pixel	*rp = rows[0];
 			register int		i;
 
-			for( i=0; i<file_width; i++ )  {
+			for ( i=0; i<file_width; i++ )  {
 				*rp++ = *pp++;
 			}
 		}

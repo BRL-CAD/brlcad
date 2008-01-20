@@ -46,9 +46,9 @@ void render_phong_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixe
   TIE_3			vec;
   tfloat		angle;
 
-  if((mesh = (adrt_mesh_t*)tie_work(tie, ray, &id, render_hit, NULL))) {
+  if ((mesh = (adrt_mesh_t*)tie_work(tie, ray, &id, render_hit, NULL))) {
     *pixel = mesh->attributes->color;
-    if(mesh->texture)
+    if (mesh->texture)
       mesh->texture->work(mesh->texture, mesh, ray, &id, pixel);
   } else {
     return;

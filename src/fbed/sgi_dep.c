@@ -45,9 +45,9 @@ sgi_Empty()
 	{	short	val;
 		long	dev;
 	winattach();
-	if( qtest() )
+	if ( qtest() )
 		{
-		if( (dev = qread( &val )) == KEYBD )
+		if ( (dev = qread( &val )) == KEYBD )
 			{
 			qenter( (short) dev, val );
 			return 0;
@@ -70,9 +70,9 @@ int
 sgi_Getchar()
 	{	short	val;
 	winattach();
-	for( ; ; )
+	for (;;)
 		{	long	dev = qread( &val );
-		switch( dev )
+		switch ( dev )
 			{
 		case KEYBD :
 			return (int) val;
@@ -87,15 +87,15 @@ register Point *pointp;
 		Point image;
 		long	ox, oy;
 		int change_flag = false;
-	if( getbutton( MIDDLEMOUSE ) )
+	if ( getbutton( MIDDLEMOUSE ) )
 		{
-		while( getbutton( MIDDLEMOUSE ) )
+		while ( getbutton( MIDDLEMOUSE ) )
 			; /* Wait for user to let go. */
 		return 1;
 		}
 	image.p_x = getvaluator( MOUSEX );
 	image.p_y = getvaluator( MOUSEY );
-	if( image.p_x != mouse.p_x || image.p_y != mouse.p_y )
+	if ( image.p_x != mouse.p_x || image.p_y != mouse.p_y )
 		mouse = image; /* Only use mouse if position changes. */
 	else
 		return -1;
@@ -106,7 +106,7 @@ register Point *pointp;
 	image.p_y -= oy;
 
 	/* Ignore input if mouse is off of image. */
-	if(	image.p_x < 0 || image.p_x >= fb_getwidth( fbp )
+	if (	image.p_x < 0 || image.p_x >= fb_getwidth( fbp )
 	   ||	image.p_y < 0 || image.p_y >= fb_getheight( fbp )
 		)
 		return -1;
@@ -119,12 +119,12 @@ register Point *pointp;
 
 	/* If position indicated by mouse is different than the current
 		point position, then update current point. */
-	if( image.p_x != pointp->p_x )
+	if ( image.p_x != pointp->p_x )
 		{
 		pointp->p_x = image.p_x;
 		change_flag = true;
 		}
-	if( image.p_y != pointp->p_y )
+	if ( image.p_y != pointp->p_y )
 		{
 		pointp->p_y = image.p_y;
 		change_flag = true;

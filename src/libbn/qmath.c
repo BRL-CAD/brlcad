@@ -89,7 +89,7 @@ quat_mat2quat(register fastf_t *quat, register const fastf_t *mat)
 #define MMM(a, b)		mat[4*(a)+(b)]
 
 	tr = mat[XX] + mat[YY] + mat[ZZ];
-	if( tr > 0.0 )  {
+	if ( tr > 0.0 )  {
 		s = sqrt( tr + 1.0 );
 		quat[W] = s * 0.5;
 		s = 0.5 / s;
@@ -100,8 +100,8 @@ quat_mat2quat(register fastf_t *quat, register const fastf_t *mat)
 	}
 
 	/* Find dominant element of primary diagonal */
-	if( mat[YY] > mat[XX] )  {
-		if( mat[ZZ] > mat[YY] )  {
+	if ( mat[YY] > mat[XX] )  {
+		if ( mat[ZZ] > mat[YY] )  {
 			s = sqrt( MMM(Z, Z) - (MMM(X, X)+MMM(Y, Y)) + 1.0 );
 			quat[Z] = s * 0.5;
 			s = 0.5 / s;
@@ -117,7 +117,7 @@ quat_mat2quat(register fastf_t *quat, register const fastf_t *mat)
 			quat[X] = (MMM(Y, X) + MMM(X, Y)) * s;
 		}
 	} else {
-		if( mat[ZZ] > mat[XX] )  {
+		if ( mat[ZZ] > mat[XX] )  {
 			s = sqrt( MMM(Z, Z) - (MMM(X, X)+MMM(Y, Y)) + 1.0 );
 			quat[Z] = s * 0.5;
 			s = 0.5 / s;
@@ -236,9 +236,9 @@ quat_slerp(fastf_t *qout, const fastf_t *q1, const fastf_t *q2, double f)
 	register double	s1, s2;
 
 	cos_omega = QDOT( q1, q2 );
-	if( (1.0 + cos_omega) > 1.0e-5 )  {
+	if ( (1.0 + cos_omega) > 1.0e-5 )  {
 		/* cos_omega > -0.99999 */
-		if( (1.0 - cos_omega) > 1.0e-5 )  {
+		if ( (1.0 - cos_omega) > 1.0e-5 )  {
 			/* usual case */
 			omega = acos(cos_omega);	/* XXX atan2? */
 			invsin = 1.0 / sin(omega);
@@ -320,7 +320,7 @@ quat_make_nearest(fastf_t *q1, const fastf_t *q2)
 	d2 = quat_distance( qtemp, q2 );
 
 	/* Choose smallest distance */
-	if( d2 < d1 ) {
+	if ( d2 < d1 ) {
 		QMOVE( q1, qtemp );
 	}
 }
@@ -336,7 +336,7 @@ quat_print(const char *title, const fastf_t *quat)
 	vect_t	axis;
 
 	fprintf( stderr, "QUATERNION: %s\n", title );
-	for( i = 0; i < 4; i++ )
+	for ( i = 0; i < 4; i++ )
 		fprintf( stderr, "%8f  ", quat[i] );
 	fprintf( stderr, "\n" );
 
@@ -359,7 +359,7 @@ quat_exp(fastf_t *out, const fastf_t *in)
 	fastf_t	theta;
 	fastf_t	scale;
 
-	if( (theta = MAGNITUDE( in )) > VDIVIDE_TOL )
+	if ( (theta = MAGNITUDE( in )) > VDIVIDE_TOL )
 		scale = sin(theta)/theta;
 	else
 		scale = 1.0;
@@ -380,7 +380,7 @@ quat_log(fastf_t *out, const fastf_t *in)
 	fastf_t	theta;
 	fastf_t	scale;
 
-	if( (scale = MAGNITUDE(in)) > VDIVIDE_TOL )  {
+	if ( (scale = MAGNITUDE(in)) > VDIVIDE_TOL )  {
 		theta = atan2( scale, in[W] );
 		scale = theta/scale;
 	}

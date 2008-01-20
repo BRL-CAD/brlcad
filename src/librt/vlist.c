@@ -72,7 +72,7 @@ bn_vlblock_init(
 	vbp->rgb = (long *)bu_calloc( vbp->max,
 		sizeof(long), "rgb[]" );
 
-	for( i=0; i < vbp->max; i++ )  {
+	for ( i=0; i < vbp->max; i++ )  {
 		vbp->rgb[i] = 0;
 		BU_LIST_INIT( &(vbp->head[i]) );
 	}
@@ -102,10 +102,10 @@ rt_vlblock_free(struct bn_vlblock *vbp)
 	int	i;
 
 	BN_CK_VLBLOCK(vbp);
-	for( i=0; i < vbp->nused; i++ )  {
+	for ( i=0; i < vbp->nused; i++ )  {
 		/* Release any remaining vlist storage */
-		if( vbp->rgb[i] == 0 )  continue;
-		if( BU_LIST_IS_EMPTY( &(vbp->head[i]) ) )  continue;
+		if ( vbp->rgb[i] == 0 )  continue;
+		if ( BU_LIST_IS_EMPTY( &(vbp->head[i]) ) )  continue;
 		BN_FREE_VLIST( vbp->free_vlist_hd, &(vbp->head[i]) );
 	}
 
@@ -128,11 +128,11 @@ rt_vlblock_find(struct bn_vlblock *vbp, int r, int g, int b)
 
 	new = ((r&0xFF)<<16)|((g&0xFF)<<8)|(b&0xFF);
 
-	for( n=0; n < vbp->nused; n++ )  {
-		if( vbp->rgb[n] == new )
+	for ( n=0; n < vbp->nused; n++ )  {
+		if ( vbp->rgb[n] == new )
 			return( &(vbp->head[n]) );
 	}
-	if( vbp->nused < vbp->max )  {
+	if ( vbp->nused < vbp->max )  {
 		/* Allocate empty slot */
 		n = vbp->nused++;
 		vbp->rgb[n] = new;
@@ -213,7 +213,7 @@ rt_ck_vlist( const struct bu_list *vhead )
 	register struct bn_vlist	*vp;
 	int			npts = 0;
 
-	for( BU_LIST_FOR( vp, bn_vlist, vhead ) )  {
+	for ( BU_LIST_FOR( vp, bn_vlist, vhead ) )  {
 		register int	i;
 		register int	nused = vp->nused;
 		register int	*cmd = vp->cmd;
@@ -222,17 +222,17 @@ rt_ck_vlist( const struct bu_list *vhead )
 		BN_CK_VLIST( vp );
 		npts += nused;
 
-		for( i = 0; i < nused; i++, cmd++, pt++ )  {
+		for ( i = 0; i < nused; i++, cmd++, pt++ )  {
 			register int	j;
 
-			for( j=0; j < 3; j++ )  {
+			for ( j=0; j < 3; j++ )  {
 				/*
 				 *  If (*pt)[j] is an IEEE NaN, then all comparisons
 				 *  between it and any genuine number will return
 				 *  FALSE.  This test is formulated so that NaN
 				 *  values will activate the "else" clause.
 				 */
-				if( (*pt)[j] > -INFINITY && (*pt)[j] < INFINITY )  {
+				if ( (*pt)[j] > -INFINITY && (*pt)[j] < INFINITY )  {
 					/* Number is good */
 				} else {
 					bu_log("  %s (%g, %g, %g)\n",
@@ -241,7 +241,7 @@ rt_ck_vlist( const struct bu_list *vhead )
 					bu_bomb("rt_ck_vlist() bad coordinate value\n");
 				}
 				/* XXX Need a define for largest command number */
-				if( *cmd < 0 || *cmd > BN_VLIST_POLY_VERTNORM )  {
+				if ( *cmd < 0 || *cmd > BN_VLIST_POLY_VERTNORM )  {
 					bu_log("cmd = x%x (%d.)\n", *cmd, *cmd);
 					bu_bomb("rt_ck_vlist() bad vlist command\n");
 				}
@@ -262,12 +262,12 @@ rt_vlist_copy( struct bu_list *dest, const struct bu_list *src )
 {
 	struct bn_vlist	*vp;
 
-	for( BU_LIST_FOR( vp, bn_vlist, src ) )  {
+	for ( BU_LIST_FOR( vp, bn_vlist, src ) )  {
 		register int	i;
 		register int	nused = vp->nused;
 		register int	*cmd = vp->cmd;
 		register point_t *pt = vp->pt;
-		for( i = 0; i < nused; i++, cmd++, pt++ )  {
+		for ( i = 0; i < nused; i++, cmd++, pt++ )  {
 			BN_ADD_VLIST( &rt_g.rtg_vlfree, dest, *pt, *cmd );
 		}
 	}
@@ -289,7 +289,7 @@ bn_vlist_cleanup( struct bu_list *hd )
 		return;
 	}
 
-	while( BU_LIST_WHILE( vp, bn_vlist, hd ) )  {
+	while ( BU_LIST_WHILE( vp, bn_vlist, hd ) )  {
 		BN_CK_VLIST( vp );
 		BU_LIST_DEQUEUE( &(vp->l) );
 		bu_free( (char *)vp, "bn_vlist" );
@@ -387,7 +387,7 @@ rt_vlist_export(struct bu_vls *vls, struct bu_list *hp, const char *name)
 
 	/* Count number of element in the vlist */
 	nelem = 0;
-	for( BU_LIST_FOR( vp, bn_vlist, hp ) )  {
+	for ( BU_LIST_FOR( vp, bn_vlist, hp ) )  {
 		nelem += vp->nused;
 	}
 
@@ -404,21 +404,21 @@ rt_vlist_export(struct bu_vls *vls, struct bu_list *hp, const char *name)
 	bp += namelen;
 
 	/* Output cmds, as bytes */
-	for( BU_LIST_FOR( vp, bn_vlist, hp ) )  {
+	for ( BU_LIST_FOR( vp, bn_vlist, hp ) )  {
 		register int	i;
 		register int	nused = vp->nused;
 		register int	*cmd = vp->cmd;
-		for( i = 0; i < nused; i++ )  {
+		for ( i = 0; i < nused; i++ )  {
 			*bp++ = *cmd++;
 		}
 	}
 
 	/* Output points, as three 8-byte doubles */
-	for( BU_LIST_FOR( vp, bn_vlist, hp ) )  {
+	for ( BU_LIST_FOR( vp, bn_vlist, hp ) )  {
 		register int	i;
 		register int	nused = vp->nused;
 		register point_t *pt = vp->pt;
-		for( i = 0; i < nused; i++, pt++ )  {
+		for ( i = 0; i < nused; i++, pt++ )  {
 			htond( bp, (unsigned char *)pt, 3 );
 			bp += 3*8;
 		}
@@ -452,7 +452,7 @@ rt_vlist_import(struct bu_list *hp, struct bu_vls *namevls, const unsigned char 
 
 	pp = bp + nelem*1;
 
-	for( i=0; i < nelem; i++ )  {
+	for ( i=0; i < nelem; i++ )  {
 		int	cmd;
 
 		cmd = *bp++;
@@ -481,9 +481,9 @@ rt_plot_vlblock(FILE *fp, const struct bn_vlblock *vbp)
 
 	BN_CK_VLBLOCK(vbp);
 
-	for( i=0; i < vbp->nused; i++ )  {
-		if( vbp->rgb[i] == 0 )  continue;
-		if( BU_LIST_IS_EMPTY( &(vbp->head[i]) ) )  continue;
+	for ( i=0; i < vbp->nused; i++ )  {
+		if ( vbp->rgb[i] == 0 )  continue;
+		if ( BU_LIST_IS_EMPTY( &(vbp->head[i]) ) )  continue;
 		pl_color( fp,
 			(vbp->rgb[i]>>16) & 0xFF,
 			(vbp->rgb[i]>> 8) & 0xFF,
@@ -504,14 +504,14 @@ rt_vlist_to_uplot(FILE *fp, const struct bu_list *vhead)
 {
 	register struct bn_vlist	*vp;
 
-	for( BU_LIST_FOR( vp, bn_vlist, vhead ) )  {
+	for ( BU_LIST_FOR( vp, bn_vlist, vhead ) )  {
 		register int		i;
 		register int		nused = vp->nused;
 		register const int	*cmd = vp->cmd;
 		register point_t	 *pt = vp->pt;
 
-		for( i = 0; i < nused; i++, cmd++, pt++ )  {
-			switch( *cmd )  {
+		for ( i = 0; i < nused; i++, cmd++, pt++ )  {
+			switch ( *cmd )  {
 			case BN_VLIST_POLY_START:
 				break;
 			case BN_VLIST_POLY_MOVE:
@@ -618,7 +618,7 @@ getshort(FILE *fp)
 	v |= (getc(fp)<<8);	/* order is important! */
 
 	/* worry about sign extension - sigh */
-	if( v <= 0x7FFF )  return(v);
+	if ( v <= 0x7FFF )  return(v);
 	w = -1;
 	w &= ~0x7FFF;
 	return( w | v );
@@ -632,7 +632,7 @@ rt_uplot_get_args(FILE *fp, const struct uplot *up, char *carg, fastf_t *arg )
 	char	inbuf[8];
 
 	for ( i = 0; i < up->narg; i++ ) {
-	    switch( up->targ ) {
+	    switch ( up->targ ) {
 	    case TSHORT:
 		arg[i] = getshort( fp );
 		break;
@@ -709,25 +709,25 @@ rt_process_uplot_value(register struct bu_list **vhead,
 	static int		moved = 0;	/* moved since color change */
 
 	/* look it up */
-	if( c < 'A' || c > 'z' ) {
+	if ( c < 'A' || c > 'z' ) {
 		up = &rt_uplot_error;
 	} else {
 		up = &rt_uplot_letters[ c - 'A' ];
 	}
 
-	if( up->targ == TBAD ) {
+	if ( up->targ == TBAD ) {
 		fprintf( stderr, "Lee : Bad command '%c' (0x%02x)\n", c, c );
 		return(-1);
 	}
 
-	if( up->narg > 0 )  {
+	if ( up->narg > 0 )  {
 	    if (mode == PL_OUTPUT_MODE_BINARY)
 		rt_uplot_get_args( fp, up, carg, arg );
 	    else
 		rt_uplot_get_text_args( fp, up, carg, arg );
 	}
 
-	switch( c ) {
+	switch ( c ) {
 	case 's':
 	case 'w':
 	case 'S':
@@ -818,7 +818,7 @@ rt_process_uplot_value(register struct bu_list **vhead,
 	case 't':
 		/* Text string */
 		MAT_IDN(mat);
-		if( BU_LIST_NON_EMPTY( *vhead ) )  {
+		if ( BU_LIST_NON_EMPTY( *vhead ) )  {
 			struct bn_vlist *vlp;
 			/* Use coordinates of last op */
 			vlp = BU_LIST_LAST( bn_vlist, *vhead );
@@ -849,11 +849,11 @@ rt_uplot_to_vlist(struct bn_vlblock *vbp, register FILE *fp, double char_size, i
 	vhead = rt_vlblock_find( vbp, 0xFF, 0xFF, 0x00 );	/* Yellow */
 
 #if 1
-	while(!feof(fp) && (c=getc(fp)) != EOF ) {
+	while (!feof(fp) && (c=getc(fp)) != EOF ) {
 	    int ret;
 
 #else
-	while( (c = getc(fp)) != EOF ) {
+	while ( (c = getc(fp)) != EOF ) {
 	       int ret;
 #endif
 
@@ -885,12 +885,12 @@ rt_label_vlist_verts(struct bn_vlblock *vbp, struct bu_list *src, fastf_t *mat, 
 
 	vhead = rt_vlblock_find( vbp, 255, 255, 255 );	/* white */
 
-	for( BU_LIST_FOR( vp, bn_vlist, src ) )  {
+	for ( BU_LIST_FOR( vp, bn_vlist, src ) )  {
 		register int	i;
 		register int	nused = vp->nused;
 		register int	*cmd = vp->cmd;
 		register point_t *pt = vp->pt;
-		for( i = 0; i < nused; i++, cmd++, pt++ )  {
+		for ( i = 0; i < nused; i++, cmd++, pt++ )  {
 			/* XXX Skip polygon markers? */
 			sprintf( label, " %g, %g, %g",
 				(*pt)[0]*mm2local, (*pt)[1]*mm2local, (*pt)[2]*mm2local );

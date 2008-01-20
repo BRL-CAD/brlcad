@@ -62,7 +62,7 @@ rt_nurb_crv_in_range(struct edge_g_cnurb *crv, fastf_t u_min, fastf_t u_max, fas
 
 	pts = &crv->ctl_points[0];
 
-	for( i = 0; i < crv->c_size; i++)
+	for ( i = 0; i < crv->c_size; i++)
 	{
 		if (rat)
 		{
@@ -75,10 +75,10 @@ rt_nurb_crv_in_range(struct edge_g_cnurb *crv, fastf_t u_min, fastf_t u_max, fas
 			eval[2] = 1;
 		}
 
-		if( eval[0] < u_min || eval[0] > u_max )
+		if ( eval[0] < u_min || eval[0] > u_max )
 			return 0;
 
-		if( eval[1] < v_min || eval[1] > v_max )
+		if ( eval[1] < v_min || eval[1] > v_max )
 			return 0;
 
 		pts += coords;

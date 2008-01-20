@@ -70,7 +70,7 @@ get_args(int argc, register char **argv)
 	register int c;
 
 	while ( (c = bu_getopt( argc, argv, "hiF:X:Y:s:w:n:" )) != EOF )  {
-		switch( c )  {
+		switch ( c )  {
 		case 'h':
 			/* high-res */
 			height = width = 1024;
@@ -103,14 +103,14 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( bu_optind >= argc ) {
-		if( isatty(fileno(stdout)) )
+	if ( bu_optind >= argc ) {
+		if ( isatty(fileno(stdout)) )
 			return(0);
 		file_name = "-";
 		outfp = stdout;
 	} else {
 		file_name = argv[bu_optind];
-		if( (outfp = fopen(file_name, "w")) == NULL )  {
+		if ( (outfp = fopen(file_name, "w")) == NULL )  {
 			(void)fprintf( stderr,
 				"fb-bw: cannot open \"%s\" for writing\n",
 				file_name );
@@ -145,19 +145,19 @@ main(int argc, char **argv)
 
 	/* determine "reasonable" behavior */
 	xin = fb_getwidth(fbp) - scr_xoff;
-	if( xin < 0 ) xin = 0;
-	if( xin > width ) xin = width;
+	if ( xin < 0 ) xin = 0;
+	if ( xin > width ) xin = width;
 	yin = fb_getheight(fbp) - scr_yoff;
-	if( yin < 0 ) yin = 0;
-	if( yin > height ) yin = height;
+	if ( yin < 0 ) yin = 0;
+	if ( yin > height ) yin = height;
 
-	for( y = scr_yoff; y < scr_yoff + yin; y++ )  {
-	    if( inverse ) {
+	for ( y = scr_yoff; y < scr_yoff + yin; y++ )  {
+	    if ( inverse ) {
 			(void)fb_read( fbp, scr_xoff, fb_getheight(fbp)-1-y, inbuf, xin );
 	    } else {
 			(void)fb_read( fbp, scr_xoff, y, inbuf, xin );
 	    }
-		for( x = 0; x < xin; x++ ) {
+		for ( x = 0; x < xin; x++ ) {
 			obuf[x] = (((int)inbuf[3*x+RED]) + ((int)inbuf[3*x+GRN])
 				+ ((int)inbuf[3*x+BLU])) / 3;
 		}

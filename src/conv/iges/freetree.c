@@ -34,9 +34,9 @@ struct node *root;
 	struct node *ptr;
 
 	ptr = root;
-	while( 1 )
+	while ( 1 )
 	{
-		while( ptr != NULL )
+		while ( ptr != NULL )
 		{
 			Push( (union tree *)ptr );
 			ptr = ptr->left;
@@ -44,10 +44,10 @@ struct node *root;
 		ptr = (struct node *)Pop();
 		bu_free( (char *)ptr, "Freetree: ptr" );
 
-		if( ptr->parent == NULL )
+		if ( ptr->parent == NULL )
 			return;
 
-		if( ptr != ptr->parent->right )
+		if ( ptr != ptr->parent->right )
 			ptr = ptr->parent->right;
 		else
 			ptr = NULL;

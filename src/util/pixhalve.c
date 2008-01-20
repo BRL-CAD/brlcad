@@ -72,7 +72,7 @@ get_args(int argc, register char **argv)
 	register int c;
 
 	while ( (c = bu_getopt( argc, argv, "ahs:w:n:" )) != EOF )  {
-		switch( c )  {
+		switch ( c )  {
 		case 'a':
 			autosize = 1;
 			break;
@@ -99,14 +99,14 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( bu_optind >= argc )  {
-		if( isatty(fileno(stdin)) )
+	if ( bu_optind >= argc )  {
+		if ( isatty(fileno(stdin)) )
 			return(0);
 		file_name = "-";
 		infp = stdin;
 	} else {
 		file_name = argv[bu_optind];
-		if( (infp = fopen(file_name, "r")) == NULL )  {
+		if ( (infp = fopen(file_name, "r")) == NULL )  {
 			perror(file_name);
 			(void)fprintf( stderr,
 				"pixhalve: cannot open \"%s\" for reading\n",
@@ -145,9 +145,9 @@ main(int argc, char **argv)
 	}
 
 	/* autosize input? */
-	if( fileinput && autosize ) {
+	if ( fileinput && autosize ) {
 		unsigned long int	w, h;
-		if( fb_common_file_size(&w, &h, file_name, 3) ) {
+		if ( fb_common_file_size(&w, &h, file_name, 3) ) {
 			file_width = (long)w;
 		} else {
 			fprintf(stderr, "pixhalve: unable to autosize\n");
@@ -161,7 +161,7 @@ main(int argc, char **argv)
 
 	/* Allocate 5 integer arrays for each color */
 	/* each width+2 elements wide */
-	for( i=0; i<5; i++ )  {
+	for ( i=0; i<5; i++ )  {
 		rlines[i] = (int *)bu_calloc( (file_width+4)+1, sizeof(long), "rlines" );
 		glines[i] = (int *)bu_calloc( (file_width+4)+1, sizeof(long), "glines" );
 		blines[i] = (int *)bu_calloc( (file_width+4)+1, sizeof(long), "blines" );
@@ -177,7 +177,7 @@ main(int argc, char **argv)
 	 *  Repeat the bottom most line three times to generate a "fill"
 	 *  line on the bottom.  This will have to be matched on the top.
 	 */
-	if( fread( inbuf, 3, file_width, infp ) != file_width )  {
+	if ( fread( inbuf, 3, file_width, infp ) != file_width )  {
 		perror(file_name);
 		fprintf(stderr, "pixhalve:  fread error\n");
 		bu_exit (1, NULL);
@@ -185,8 +185,8 @@ main(int argc, char **argv)
 	separate( &rlines[0][2], &glines[0][2], &blines[0][2], inbuf, file_width );
 	separate( &rlines[1][2], &glines[1][2], &blines[1][2], inbuf, file_width );
 	separate( &rlines[2][2], &glines[2][2], &blines[2][2], inbuf, file_width );
-	for( i=3; i<5; i++ )  {
-		if( fread( inbuf, 3, file_width, infp ) != file_width )  {
+	for ( i=3; i<5; i++ )  {
+		if ( fread( inbuf, 3, file_width, infp ) != file_width )  {
 			perror(file_name);
 			fprintf(stderr, "pixhalve:  fread error\n");
 			bu_exit (1, NULL);
@@ -196,19 +196,19 @@ main(int argc, char **argv)
 	}
 
 	eof_seen = 0;
-	for(;;)  {
+	for (;;)  {
 		filter3( rout, rlines, out_width );
 		filter5( gout, glines, out_width );
 		filter5( bout, blines, out_width );
 		combine( outbuf, rout, gout, bout, out_width );
-		if( fwrite( (void*)outbuf, 3, out_width, stdout ) != out_width )  {
+		if ( fwrite( (void*)outbuf, 3, out_width, stdout ) != out_width )  {
 			perror("stdout");
 			bu_exit (2, NULL);
 		}
 
 		/* Ripple down two scanlines, and acquire two more */
-		if( fread( inbuf, 3, file_width, infp ) != file_width )  {
-			if( eof_seen >= 2 )  break;
+		if ( fread( inbuf, 3, file_width, infp ) != file_width )  {
+			if ( eof_seen >= 2 )  break;
 			/* EOF, repeat last line 2x for final output line */
 			eof_seen++;
 			/* Fall through */
@@ -219,8 +219,8 @@ main(int argc, char **argv)
 		separate( &rlines[4][2], &glines[4][2], &blines[4][2],
 			inbuf, file_width );
 
-		if( fread( inbuf, 3, file_width, infp ) != file_width )  {
-			if( eof_seen >= 2 )  break;
+		if ( fread( inbuf, 3, file_width, infp ) != file_width )  {
+			if ( eof_seen >= 2 )  break;
 			/* EOF, repeat last line 2x for final output line */
 			eof_seen++;
 			/* Fall through */
@@ -271,7 +271,7 @@ separate(register int *rop, register int *gop, register int *bop, register unsig
 	gop[-1] = gop[-2] = UCONV(r, g, b);
 	bop[-1] = bop[-2] = VCONV(r, g, b);
 
-	for( i = num-1; i >= 0; i-- )  {
+	for ( i = num-1; i >= 0; i-- )  {
 		r = cp[0];
 		g = cp[1];
 		b = cp[2];
@@ -311,7 +311,7 @@ combine(register unsigned char *cp, register int *rip, register int *gip, regist
 
 #define CLIP(_v)	( ((_v) <= 0) ? 0 : (((_v) >= 255) ? 255 : (_v)) )
 
-	for( i = num-1; i >= 0; i-- )  {
+	for ( i = num-1; i >= 0; i-- )  {
 		register int	y, u, v;
 		register int	r, g, b;
 
@@ -343,7 +343,7 @@ ripple(int **array, int num)
 	int		*temp;
 
 	temp = array[0];
-	for( i=0; i < num-1; i++ )
+	for ( i=0; i < num-1; i++ )
 		array[i] = array[i+1];
 	array[num-1] = temp;
 }
@@ -370,7 +370,7 @@ filter5(int *op, int **lines, int num)
 
 #ifdef VECTORIZE
 	/* This version vectorizes */
-	for( i=0; i < num; i++ )  {
+	for ( i=0; i < num; i++ )  {
 		j = i*2;
 		op[i] = (
 			  a[j+0] + 2*a[j+1] + 4*a[j+2] + 2*a[j+3] +   a[j+4] +
@@ -382,7 +382,7 @@ filter5(int *op, int **lines, int num)
 	}
 #else
 	/* This version is better for non-vectorizing machines */
-	for( i=0; i < num; i++ )  {
+	for ( i=0; i < num; i++ )  {
 		op[i] = (
 			  a[0] + 2*a[1] + 4*a[2] + 2*a[3] +   a[4] +
 			2*b[0] + 4*b[1] + 8*b[2] + 4*b[3] + 2*b[4] +
@@ -421,7 +421,7 @@ filter3(int *op, int **lines, int num)
 
 #ifdef VECTORIZE
 	/* This version vectorizes */
-	for( i=0; i < num; i++ )  {
+	for ( i=0; i < num; i++ )  {
 		j = i*2;
 		op[i] = (
 			  b[j+1] + 2*b[j+2] +   b[j+3] +
@@ -431,7 +431,7 @@ filter3(int *op, int **lines, int num)
 	}
 #else
 	/* This version is better for non-vectorizing machines */
-	for( i=0; i < num; i++ )  {
+	for ( i=0; i < num; i++ )  {
 		op[i] = (
 			  b[1] + 2*b[2] +   b[3] +
 			2*c[1] + 4*c[2] + 2*c[3] +

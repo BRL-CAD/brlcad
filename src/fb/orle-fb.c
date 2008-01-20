@@ -81,53 +81,53 @@ main(int argc, char **argv)
 		int		get_flags;
 
 	fp = stdin;
-	if( ! pars_Argv( argc, argv ) || isatty(fileno(fp)) )
+	if ( ! pars_Argv( argc, argv ) || isatty(fileno(fp)) )
 		{
 		prnt_Usage();
 		return	1;
 		}
-	if( bgflag )  {
+	if ( bgflag )  {
 		/* User has supplied his own background */
-		if( rle_rhdr( fp, &get_flags, RGBPIXEL_NULL ) == -1 )
+		if ( rle_rhdr( fp, &get_flags, RGBPIXEL_NULL ) == -1 )
 			return 1;
 	} else {
-		if( rle_rhdr( fp, &get_flags, bgpixel ) == -1 )
+		if ( rle_rhdr( fp, &get_flags, bgpixel ) == -1 )
 		return	1;
 	}
 
 	rle_rlen( &xlen, &ylen );
-	if( xpos < 0 || ypos < 0 )
+	if ( xpos < 0 || ypos < 0 )
 		rle_rpos( &xpos, &ypos );
 	else
 		rle_wpos( xpos, ypos, 0 );
 
 	/* Automatic selection of high res. device.			*/
-	if( xpos + xlen > 512 || ypos + ylen > 512 )
+	if ( xpos + xlen > 512 || ypos + ylen > 512 )
 		width = height = 1024;
-	if( xpos + xlen > width )
+	if ( xpos + xlen > width )
 		xlen = width - xpos;
-	if( ypos + ylen > height )
+	if ( ypos + ylen > height )
 		ylen = height - ypos;
 	rle_wlen( xlen, ylen, 0 );
 
-	if( (fbp = fb_open( fb_file, width, height )) == NULL )  {
+	if ( (fbp = fb_open( fb_file, width, height )) == NULL )  {
 		bu_exit(12, NULL);
 	}
 
-	if( topdown )
+	if ( topdown )
 		pixels_per_buffer = width * height;
 	else
 		pixels_per_buffer = width * 64;
 	scanbuf = RGBPIXEL_NULL;
-	while( scanbuf == RGBPIXEL_NULL && pixels_per_buffer > 0 )  {
+	while ( scanbuf == RGBPIXEL_NULL && pixels_per_buffer > 0 )  {
 		scanbuf = (unsigned char *)malloc(pixels_per_buffer*sizeof(RGBpixel));
-		if( scanbuf == RGBPIXEL_NULL )  {
+		if ( scanbuf == RGBPIXEL_NULL )  {
 			pixels_per_buffer >>= 1;
 			continue;
 		}
 		break;
 	}
-	if( scanbuf == RGBPIXEL_NULL )  {
+	if ( scanbuf == RGBPIXEL_NULL )  {
 		fprintf(stderr, " rle-fb:  unable to malloc pixel buffer\n");
 		return(1);
 	}
@@ -135,50 +135,50 @@ main(int argc, char **argv)
 	lines_per_buffer = pixels_per_buffer / width;	/* # of full scanlines in buffer */
 	pixels_per_buffer = lines_per_buffer * width;
 
-	if( rle_verbose )
+	if ( rle_verbose )
 		(void) fprintf( stderr,
 				"Background is %d %d %d\n",
 				bgpixel[RED], bgpixel[GRN], bgpixel[BLU]
 				);
 
 	/* If color map provided, use it, else go with standard map. */
-	if( ! (get_flags & NO_COLORMAP) )
+	if ( ! (get_flags & NO_COLORMAP) )
 		{
-		if( rle_verbose && ! olflag )
+		if ( rle_verbose && ! olflag )
 			(void) fprintf( stderr,
 					"Loading saved color map from file\n"
 					);
-		if( rle_rmap( fp, &cmap ) == -1 )
+		if ( rle_rmap( fp, &cmap ) == -1 )
 			return	1;
-		if( rle_verbose )
+		if ( rle_verbose )
 			prnt_Cmap( &cmap );
-		if( ! olflag )
+		if ( ! olflag )
 			{
 			/* User-supplied map */
-			if( rle_verbose )
+			if ( rle_verbose )
 				(void) fprintf( stderr,
 					"Writing color map to framebuffer\n"
 						);
-			if( fb_wmap( fbp, &cmap ) == -1 )
+			if ( fb_wmap( fbp, &cmap ) == -1 )
 				return	1;
 			}
 		}
 	else
-	if( ! olflag )
+	if ( ! olflag )
 		{
-		if( rle_verbose )
+		if ( rle_verbose )
 			(void) fprintf( stderr,
 					"Creating standard color map\n"
 					);
-		if( fb_wmap( fbp, COLORMAP_NULL ) == -1 )
+		if ( fb_wmap( fbp, COLORMAP_NULL ) == -1 )
 			return	1;
 		}
 	/* Fill a DMA buffer buffer with background */
-	if( ! olflag && (get_flags & NO_BOX_SAVE) )
+	if ( ! olflag && (get_flags & NO_BOX_SAVE) )
 		{	register int	i;
 			register RGBpixel	*to;
 		to = bg_scan;
-		for( i = 0; i < width; i++, to++ )  {
+		for ( i = 0; i < width; i++, to++ )  {
 			COPYRGB( *to, bgpixel );
 			}
 		}
@@ -188,15 +188,15 @@ main(int argc, char **argv)
 		register int	dirty_flag = 1;
 		int		ymax = ypos + (ylen-1);
 		int		start_y = 0;
-	for( y = 0; y < width; y++ )  {
-		if( page_fault )  {
+	for ( y = 0; y < width; y++ )  {
+		if ( page_fault )  {
 			start_y = y;
-			if( olflag )  {
+			if ( olflag )  {
 				/* Overlay - read cluster from fb.	*/
-				if( fb_read( fbp, 0, y, scanbuf, pixels_per_buffer ) == -1 )
+				if ( fb_read( fbp, 0, y, scanbuf, pixels_per_buffer ) == -1 )
 					return	1;
 			} else
-			if( (get_flags & NO_BOX_SAVE) && dirty_flag )
+			if ( (get_flags & NO_BOX_SAVE) && dirty_flag )
 				fill_Buffer(	(char *) scanbuf,
 						(char *) bg_scan,
 						width*sizeof(RGBpixel),
@@ -205,42 +205,42 @@ main(int argc, char **argv)
 			dirty_flag = 0;
 			page_fault = 0;
 		}
-		if( y >= ypos && y <= ymax )  {
-			if( rle_decode_ln( fp,
+		if ( y >= ypos && y <= ymax )  {
+			if ( rle_decode_ln( fp,
 			    scanbuf[(y%lines_per_buffer)*width*sizeof(RGBpixel)] ) == -1 )
 				break;		/* not return */
 			dirty_flag = 1;
 		}
 		page_fault = ((y%lines_per_buffer)==(lines_per_buffer-1));
-		if( page_fault )  {
-			if( fb_write( fbp, 0, start_y, scanbuf, pixels_per_buffer ) == -1 )
+		if ( page_fault )  {
+			if ( fb_write( fbp, 0, start_y, scanbuf, pixels_per_buffer ) == -1 )
 				return	1;
 		}
 	}
-	if( page_fault == 0 )  {
+	if ( page_fault == 0 )  {
 		/* Write out the residue, a short buffer */
-		if( fb_write( fbp, 0, start_y, scanbuf, (y-start_y)*width ) == -1 )
+		if ( fb_write( fbp, 0, start_y, scanbuf, (y-start_y)*width ) == -1 )
 			return(1);
 	}
 	} /* end block */
 #else
 	/* Simplified version, for testing */
-	for( y = 0; y < height; y++ )  {
-		if( olflag )  {
+	for ( y = 0; y < height; y++ )  {
+		if ( olflag )  {
 			/* Overlay - read cluster from fb.	*/
-			if( fb_read( fbp, 0, y, scanbuf, width ) == -1 )
+			if ( fb_read( fbp, 0, y, scanbuf, width ) == -1 )
 				return	1;
 		} else {
-			if( (get_flags & NO_BOX_SAVE) )
+			if ( (get_flags & NO_BOX_SAVE) )
 				fill_Buffer(	(char *) scanbuf,
 				(char *) bg_scan,
 				width*sizeof(RGBpixel),
 				1 );
 		}
-		if( y <= ypos+ylen && y >= ypos )
-			if( rle_decode_ln( fp, scanbuf ) == -1 )
+		if ( y <= ypos+ylen && y >= ypos )
+			if ( rle_decode_ln( fp, scanbuf ) == -1 )
 				return	1;
-		if( fb_write( fbp, 0, y, scanbuf, width ) == -1 )
+		if ( fb_write( fbp, 0, y, scanbuf, width ) == -1 )
 			return	1;
 	}
 #endif
@@ -258,7 +258,7 @@ main(int argc, char **argv)
 void
 fill_Buffer(register char *dest, register char *src, register int scan_bytes, register int repeat)
 {	register int	i;
-	for( i = 0; i < repeat; ++i )
+	for ( i = 0; i < repeat; ++i )
 		{
 		memcpy(dest, src, scan_bytes);
 		dest += scan_bytes;
@@ -271,9 +271,9 @@ static int
 pars_Argv(int argc, register char **argv)
 {	register int	c;
 	/* Parse options.						*/
-	while( (c = bu_getopt( argc, argv, "tOF:b:dp:v" )) != EOF )
+	while ( (c = bu_getopt( argc, argv, "tOF:b:dp:v" )) != EOF )
 		{
-		switch( c )
+		switch ( c )
 			{
 		case 't':
 			/* Top-down mode */
@@ -284,7 +284,7 @@ pars_Argv(int argc, register char **argv)
 			break;
 		case 'b' : /* User-specified background.		*/
 			bgflag = bu_optarg[0];
-			switch( bgflag )
+			switch ( bgflag )
 				{
 			case 'r':
 				bgpixel[RED] = 255;
@@ -320,7 +320,7 @@ pars_Argv(int argc, register char **argv)
 			rle_debug = 1;
 			break;
 		case 'p' :
-			if( argc - bu_optind < 2 )
+			if ( argc - bu_optind < 2 )
 				{
 				(void) fprintf( stderr,
 				"-p option requires an X and Y argument!\n"
@@ -340,8 +340,8 @@ pars_Argv(int argc, register char **argv)
 			} /* end switch */
 		} /* end while */
 
-	if( argv[bu_optind] != NULL )
-		if( (fp = fopen( argv[bu_optind], "r" )) == NULL )
+	if ( argv[bu_optind] != NULL )
+		if ( (fp = fopen( argv[bu_optind], "r" )) == NULL )
 			{
 			(void) fprintf( stderr,
 					"Can't open %s for reading!\n",
@@ -349,7 +349,7 @@ pars_Argv(int argc, register char **argv)
 					);
 			return	0;
 			}
-	if( argc > ++bu_optind )
+	if ( argc > ++bu_optind )
 		{
 		(void) fprintf( stderr, "Too many arguments!\n" );
 		return	0;
@@ -363,7 +363,7 @@ pars_Argv(int argc, register char **argv)
 static void
 prnt_Usage(void)
 {	register char	**p = usage;
-	while( *p )
+	while ( *p )
 		(void) fprintf( stderr, "%s\n", *p++ );
 	return;
 	}
@@ -374,7 +374,7 @@ prnt_Cmap(ColorMap *cmap)
 		register int	i;
 	(void) fprintf( stderr, "\t\t\t_________ Color map __________\n" );
 	(void) fprintf( stderr, "Red segment :\n" );
-	for( i = 0, cp = cmap->cm_red; i < 16; ++i, cp += 16 )
+	for ( i = 0, cp = cmap->cm_red; i < 16; ++i, cp += 16 )
 		{
 		(void) fprintf( stderr,
 	"%3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d\n",
@@ -398,7 +398,7 @@ prnt_Cmap(ColorMap *cmap)
 				);
 		}
 	(void) fprintf( stderr, "Green segment :\n" );
-	for( i = 0, cp = cmap->cm_green; i < 16; ++i, cp += 16 )
+	for ( i = 0, cp = cmap->cm_green; i < 16; ++i, cp += 16 )
 		{
 		(void) fprintf( stderr,
 	"%3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d\n",
@@ -422,7 +422,7 @@ prnt_Cmap(ColorMap *cmap)
 				);
 		}
 	(void) fprintf( stderr, "Blue segment :\n" );
-	for( i = 0, cp = cmap->cm_blue; i < 16; ++i, cp += 16 )
+	for ( i = 0, cp = cmap->cm_blue; i < 16; ++i, cp += 16 )
 		{
 		(void) fprintf( stderr,
 	"%3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d\n",

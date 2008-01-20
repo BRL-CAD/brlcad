@@ -86,7 +86,7 @@ rt_nurb_s_refine(const struct face_g_snurb *srf, int dir, struct knot_vector *kv
 		oslo = (struct oslo_mat *)
 		      rt_nurb_calc_oslo (srf -> order[RT_NURB_SPLIT_ROW], &srf->u, kv, res);
 
-		for( i = 0; i < nurb_srf->s_size[0]; i++)
+		for ( i = 0; i < nurb_srf->s_size[0]; i++)
 		{
 			fastf_t * old_mesh_ptr;
 			fastf_t * new_mesh_ptr;
@@ -128,7 +128,7 @@ rt_nurb_s_refine(const struct face_g_snurb *srf, int dir, struct knot_vector *kv
 		oslo = (struct oslo_mat *)
 		      rt_nurb_calc_oslo (srf->order[RT_NURB_SPLIT_COL], &srf->v, kv, res);
 
-		for( i = 0; i < nurb_srf->s_size[1]; i++)
+		for ( i = 0; i < nurb_srf->s_size[1]; i++)
 		{
 			fastf_t * old_mesh_ptr;
 			fastf_t * new_mesh_ptr;
@@ -176,7 +176,7 @@ rt_nurb_c_refine(const struct edge_g_cnurb *crv, struct knot_vector *kv)
 
 	new_crv->k.k_size = kv->k_size;
 
-	for( i = 0; i < kv->k_size; i++)
+	for ( i = 0; i < kv->k_size; i++)
 		new_crv->k.knots[i] = kv->knots[i];
 
 	rt_nurb_free_oslo( oslo, (struct resource *)NULL );

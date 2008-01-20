@@ -162,9 +162,9 @@ main (int argc, char **argv)
     time = 0.0;
 
     val = 3;
-    while(1){
+    while (1){
 	if (read_time) {
-	    val=scanf("%lf",&time);
+	    val=scanf("%lf", &time);
 	    if (val < 1) break;
 	}
 	if (read_cen1)
@@ -222,7 +222,7 @@ int get_args(int argc, char **argv)
     cmd_fcen = cmd_fypr = cmd_rcen = cmd_rypr = cmd_acen = cmd_aypr = 0;
     print_time = 1;
     while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
-	switch(c){
+	switch (c){
 	case 'f':
 	    d = *(bu_optarg);
 	    if (d == 'c'){

@@ -31,9 +31,9 @@
 				(C)[Y] = (A)[Y]+(B)[Y]; \
 				(C)[Z] = (A)[Z]+(B)[Z]; }
 #define AproxEq( a, b, e )	(Abs( (a)-(b) ) < (e))
-#define AproxEqVec( A, B, e ) ( AproxEq((A)[X],(B)[X],(e)) && \
-				AproxEq((A)[Y],(B)[Y],(e)) && \
-				AproxEq((A)[Z],(B)[Z],(e)) )
+#define AproxEqVec( A, B, e ) ( AproxEq((A)[X], (B)[X], (e)) && \
+				AproxEq((A)[Y], (B)[Y], (e)) && \
+				AproxEq((A)[Z], (B)[Z], (e)) )
 #define CopyVec( A, B )	      { (A)[X] = (B)[X]; \
 				(A)[Y] = (B)[Y]; \
 				(A)[Z] = (B)[Z]; }
@@ -95,7 +95,7 @@
 /* Scale vector 'a' to have magnitude 'l'.				*/
 #define V_Length( a, l ) \
 		{	double f, m; \
-		if( (m=Mag(a)) == 0.0 ) \
+		if ( (m=Mag(a)) == 0.0 ) \
 			(void) fprintf( stderr, "Magnitude is zero!\n" ); \
 		else \
 			{ \

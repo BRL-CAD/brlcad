@@ -342,7 +342,7 @@ char spectab[128] = {
 	'{',	/*{*/
 	'}',	/*}*/
 	'\'',	/*' acute accent*/
-	'\140',/*` grave accent*/
+	'\140', /*` grave accent*/
 	'^',	/*^*/
 	'#',	/*sharp*/
 	'\036',	/*left hand*/
@@ -390,7 +390,7 @@ get_args(int argc, register char **argv)
 	register int c;
 
 	while ( (c = bu_getopt( argc, argv, "odhcOF:s:S:w:W:n:N:C:" )) != EOF )  {
-		switch( c )  {
+		switch ( c )  {
 		case 'o':
 			output_pix = 1;
 			break;
@@ -428,9 +428,10 @@ get_args(int argc, register char **argv)
 				register unsigned char *conp = writing_color;
 
 				/* premature null => atoi gives zeros */
-				for( c=0; c < 3; c++ )  {
+				for ( c=0; c < 3; c++ )  {
 					*conp++ = atoi(cp);
-					while( *cp && *cp++ != '/' ) ;
+					while ( *cp && *cp++ != '/' )
+					    ;
 				}
 			}
 			break;
@@ -440,9 +441,9 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( bu_optind >= argc )  {
+	if ( bu_optind >= argc )  {
 		/* No file name args */
-		if( isatty(fileno(stdin)) )
+		if ( isatty(fileno(stdin)) )
 			return(0);
 		/* mainline will actually do the processing */
 	}
@@ -459,10 +460,10 @@ main(int argc, char **argv)
 		return 1;
 	}
 
-	if( output_pix && !overlay_from_stdin )
+	if ( output_pix && !overlay_from_stdin )
 		clear = 1;
-	if( !output_pix )  {
-		if( (fbp = fb_open( framebuffer, scr_width, scr_height )) == FBIO_NULL )
+	if ( !output_pix )  {
+		if ( (fbp = fb_open( framebuffer, scr_width, scr_height )) == FBIO_NULL )
 		    return 1;
 		scr_width = fb_getwidth(fbp);
 		scr_height = fb_getheight(fbp);
@@ -475,17 +476,17 @@ main(int argc, char **argv)
 
 	readrailmag();
 
-	if( bu_optind >= argc )  {
+	if ( bu_optind >= argc )  {
 		/* Process one TROFF file from stdin */
-		if( overlay_from_stdin )  {
+		if ( overlay_from_stdin )  {
 			fprintf(stderr, "cat-fb: -O ignored, stdin used for C/A/T code\n");
 			overlay_from_stdin = 0;
 		}
 		ofile(stdin);
 	} else {
-		for( ; bu_optind < argc; bu_optind++ )  {
+		for (; bu_optind < argc; bu_optind++ )  {
 			register FILE *fp;
-			if( (fp = fopen(argv[bu_optind], "r")) == NULL )  {
+			if ( (fp = fopen(argv[bu_optind], "r")) == NULL )  {
 				perror(argv[bu_optind]);
 				continue;
 			}
@@ -494,7 +495,7 @@ main(int argc, char **argv)
 		}
 	}
 	slop_lines(NLINES);		/* Flush bitmap buffer */
-	if( fbp )
+	if ( fbp )
 		fb_close(fbp);
 	bu_free(cp, "cp pixels");
 	return 0;
@@ -551,18 +552,18 @@ ofile(register FILE *fp)
 			continue;
 		if (c & 0200) {
 			esc += (~c) & 0177;
-			if(debug>1)fprintf(stderr, "esc+= %d ", (~c)&0177 );
+			if (debug>1)fprintf(stderr, "esc+= %d ", (~c)&0177 );
 			continue;
 		}
 		if (esc) {
 			if (back)
 				esc = -esc;
-			if(debug>1)fprintf(stderr, "esc=%d, back=%d\n", esc, back);
+			if (debug>1)fprintf(stderr, "esc=%d, back=%d\n", esc, back);
 			col += esc;
 			ypos = CONVERT(col);
 			esc = 0;
 		}
-		if(debug>1)fprintf(stderr, "   0%o v=%d (row=%g) h=%d (col=%g)\n", c, xpos, row, ypos, col);
+		if (debug>1)fprintf(stderr, "   0%o v=%d (row=%g) h=%d (col=%g)\n", c, xpos, row, ypos, col);
 
 		if ((c & 0377) < 0100)	/*  Purely for efficiency  */
 			goto normal_char;
@@ -655,7 +656,7 @@ ofile(register FILE *fp)
 					c = CONVERT(row);
 				}
 				xpos = c;
-				if(debug)fprintf(stderr, "v=%d (row=%g)\n", xpos, row);
+				if (debug)fprintf(stderr, "v=%d (row=%g)\n", xpos, row);
 				continue;
 			}
 			if ((c & 0360) == 0120)	/* size change */ {
@@ -699,7 +700,7 @@ findsize(register int code)
 	if (back)
 		delta = -delta;
 	esc += delta;	/* Compensate for C/A/T hardware shift during size change */
-	if(debug)fprintf(stderr, "findsize: changing escapment by %d, code=0%o, last_ssize=0%o, stupid_code=0%o\n", delta, code, last_ssize, psp->stupid_code);
+	if (debug)fprintf(stderr, "findsize: changing escapment by %d, code=0%o, last_ssize=0%o, stupid_code=0%o\n", delta, code, last_ssize, psp->stupid_code);
 	last_ssize = psp->stupid_code;
 	return (psp->real_code);
 }
@@ -759,7 +760,7 @@ readinfont(void)
 	size = new_pt_size;
 	snprintf(cbuf, BUFSIZ, "%s.%d", fontname[fnum], size);
 
-	if( (vfp = vfont_get( cbuf )) == VFONT_NULL )  {
+	if ( (vfp = vfont_get( cbuf )) == VFONT_NULL )  {
 		/* Ignore font change */
 		fprintf(stderr, "cat-fb:  Unable to acquire font '%s'\n", cbuf);
 		fontwanted = 0;
@@ -771,7 +772,7 @@ readinfont(void)
 	fontdes[cfont].fnum = fnum;
 	fontdes[cfont].psize = fontdes[cfont].psize = size;
 	fontdes[cfont].vfp = vfp;
-	if(debug) fprintf(stderr, "slot %d = %s\n", cfont, cbuf );
+	if (debug) fprintf(stderr, "slot %d = %s\n", cfont, cbuf );
 
 	fontwanted = 0;
 	new_font_num = new_pt_size = -1;
@@ -786,8 +787,8 @@ relfont(void)
 	register int newfont;
 
 	/* First, see if a font table slot happens to be availible */
-	for( newfont = 0; newfont < NFONTS; newfont++ )  {
-		if( fontdes[newfont].psize > 0 )
+	for ( newfont = 0; newfont < NFONTS; newfont++ )  {
+		if ( fontdes[newfont].psize > 0 )
 			continue;
 		return(newfont);
 	}
@@ -804,7 +805,7 @@ relfont(void)
 		if (++newfont>=NFONTS)
 			newfont = 0;
 	lastloaded = newfont;
-	if( fontdes[newfont].vfp != VFONT_NULL )
+	if ( fontdes[newfont].vfp != VFONT_NULL )
 		vfont_free(fontdes[newfont].vfp);
 
 	fontdes[newfont].vfp = VFONT_NULL;
@@ -837,7 +838,7 @@ outc(int code)
 	register int off8;		/* offset + 8 */
 
 	if (fontwanted)  {
-		if( readinfont() < 0 )  return(0);
+		if ( readinfont() < 0 )  return(0);
 	}
 	if (railmag == SPECIALFONT) {
 		c = spectab[code];
@@ -851,14 +852,14 @@ outc(int code)
 
 	/* xpos is vertical (typ. called Y), ypos is horizontal (typ. X)
 	 * like a strip-chart recorder */
-	if(debug)  {
+	if (debug)  {
 		fprintf(stderr, "%c h=%d v=%d  (row=%g col=%g) l=%d r=%d  u=%d d=%d  w=%d\n",
 		c, ypos, xpos,
 		row, col,
 		vdp->vd_left, vdp->vd_right,
 		vdp->vd_up, vdp->vd_down, vdp->vd_width);
 	}
-	if( ypos + vdp->vd_right > bytes_per_line*8 )  {
+	if ( ypos + vdp->vd_right > bytes_per_line*8 )  {
 		fprintf(stderr, "cat-fb: '%c' off right edge of screen\n", c);
 		return(0);
 	}
@@ -933,17 +934,17 @@ writelines(int nlines, register char *buf)
 	register int	lpos;
 	register int	l;
 
-	for(l = 0; l < nlines; l++)  {
-		if(cur_fb_line < 0 )  {
+	for (l = 0; l < nlines; l++)  {
+		if (cur_fb_line < 0 )  {
 			/* Ran off bottom of screen */
-			if( fbp )
+			if ( fbp )
 				fb_close(fbp);
 			bu_exit(0, NULL);
 		}
-		if( clear ) {
+		if ( clear ) {
 			memset((char *)scanline, 0, scr_width*3);
-		} else if( overlay_from_stdin )  {
-			if( fread( (char *)scanline, scr_width*3, 1, stdin ) != 1 )  {
+		} else if ( overlay_from_stdin )  {
+			if ( fread( (char *)scanline, scr_width*3, 1, stdin ) != 1 )  {
 				clear = 1;
 				overlay_from_stdin = 0;
 			}
@@ -951,21 +952,21 @@ writelines(int nlines, register char *buf)
 			(void)fb_read( fbp, 0, cur_fb_line, scanline, scr_width );
 		}
 		pp = scanline;
-		for( lpos = 0; lpos < bytes_per_line; lpos++)  {
-			if( (bufval = *buf) == 0 )  {
+		for ( lpos = 0; lpos < bytes_per_line; lpos++)  {
+			if ( (bufval = *buf) == 0 )  {
 				pp += 8*sizeof(RGBpixel);
 				buf++;
 				continue;
 			}
-			for(bit = 0x80; bit; bit >>= 1)  {
-				if(bufval & bit)  {
+			for (bit = 0x80; bit; bit >>= 1)  {
+				if (bufval & bit)  {
 					COPYRGB( pp, writing_color );
 				}
 				pp += sizeof(RGBpixel);
 			}
 			buf++;
 		}
-		if( output_pix )
+		if ( output_pix )
 			fwrite( scanline, scr_width*3, 1, stdout );
 		else
 			fb_write( fbp, 0, cur_fb_line, scanline, scr_width );

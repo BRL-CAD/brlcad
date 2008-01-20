@@ -93,7 +93,7 @@ void isst_observer(char *host, int port) {
   isst_observer_net_info_t ni;
 
   /* server address */
-  if(gethostbyname(host)) {
+  if (gethostbyname(host)) {
     ni.master = gethostbyname(host)[0];
   } else {
     fprintf(stderr, "hostname %s unknown, exiting.\n", host);
@@ -142,7 +142,7 @@ void* isst_observer_networking(void *ptr) {
   ni = (isst_observer_net_info_t *)ptr;
 
   /* create a socket */
-  if((isst_observer_master_socket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+  if ((isst_observer_master_socket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
     perror("Socket creation error");
     exit(1);
   }
@@ -156,13 +156,13 @@ void* isst_observer_networking(void *ptr) {
   memcpy((char*)&srv_addr.sin_addr.s_addr, ni->master.h_addr_list[0], ni->master.h_length);
   srv_addr.sin_port = htons(ni->port);
 
-  if(bind(isst_observer_master_socket, (struct sockaddr *)&my_addr, sizeof(my_addr)) < 0) {
+  if (bind(isst_observer_master_socket, (struct sockaddr *)&my_addr, sizeof(my_addr)) < 0) {
     fprintf(stderr, "unable to bind socket, exiting.\n");
     exit(1);
   }
 
   /* connect to master */
-  if(connect(isst_observer_master_socket, (struct sockaddr *)&srv_addr, sizeof(srv_addr)) < 0) {
+  if (connect(isst_observer_master_socket, (struct sockaddr *)&srv_addr, sizeof(srv_addr)) < 0) {
     fprintf(stderr, "cannot connect to master, exiting.\n");
     exit(1);
   }
@@ -204,7 +204,7 @@ void* isst_observer_networking(void *ptr) {
   frame_num = 0;
 
 
-  while(1) {
+  while (1) {
     /* Send request for next frame */
     op = ISST_NET_OP_FRAME;
     tienet_send(isst_observer_master_socket, &op, 1, isst_observer_endian);
@@ -212,7 +212,7 @@ void* isst_observer_networking(void *ptr) {
     /* Check whether to quit here or not */
     tienet_recv(isst_observer_master_socket, &op, 1, isst_observer_endian);
 
-    if(op == ISST_NET_OP_QUIT) {
+    if (op == ISST_NET_OP_QUIT) {
       free(frame);
 #if isst_USE_COMPRESSION
       free(comp_buf);
@@ -229,7 +229,7 @@ void* isst_observer_networking(void *ptr) {
     pthread_mutex_lock(&event_mut);
 
     tienet_send(isst_observer_master_socket, &isst_observer_event_queue_size, sizeof(uint8_t), 0);
-    if(isst_observer_event_queue_size)
+    if (isst_observer_event_queue_size)
       tienet_send(isst_observer_master_socket, isst_observer_event_queue, isst_observer_event_queue_size * sizeof(isst_event_t), 0);
     isst_observer_event_queue_size = 0;
 
@@ -253,7 +253,7 @@ void* isst_observer_networking(void *ptr) {
     tienet_recv(isst_observer_master_socket, frame, 3*screen_w*screen_h, 0);
 #endif
 
-    if(isst_observer_display_init) {
+    if (isst_observer_display_init) {
       isst_observer_display_init = 0;
       tienet_sem_post(&isst_observer_splash_sem);
       tienet_sem_wait(&isst_observer_sdlready_sem);
@@ -265,11 +265,11 @@ void* isst_observer_networking(void *ptr) {
       unsigned int x, y;
       unsigned char pixel[6];
 
-      if(isst_observer_magnify == 1) {
+      if (isst_observer_magnify == 1) {
 	memcpy(util_display_buffer->pixels, frame, 3*screen_w*screen_h);
-      } else if(isst_observer_magnify == 2) {
-	for(y = 0; y < screen_h; y++) {
-	  for(x = 0; x < screen_w; x++) {
+      } else if (isst_observer_magnify == 2) {
+	for (y = 0; y < screen_h; y++) {
+	  for (x = 0; x < screen_w; x++) {
 	    memcpy(pixel, &((char *)frame)[3*(y*screen_w+x)], 3);
 	    pixel[3] = pixel[0];
 	    pixel[4] = pixel[1];
@@ -284,7 +284,7 @@ void* isst_observer_networking(void *ptr) {
 
     /* compute frames per second (fps) */
     frame_num++;
-    if(!(frame_num % 7)) {
+    if (!(frame_num % 7)) {
       gettimeofday(&cur, NULL);
       fps = (tfloat)(frame_num) / ((cur.tv_sec + (tfloat)cur.tv_usec/1000000.0) - (start.tv_sec + (tfloat)start.tv_usec/1000000.0)),
       start = cur;
@@ -355,7 +355,7 @@ void isst_observer_process(char *content, char *response) {
 
   /* length of content */
   op = strlen(content);
-  if(strlen(content)) {
+  if (strlen(content)) {
     op += 1;
     tienet_send(isst_observer_master_socket, &op, 1, 0);
 
@@ -387,7 +387,7 @@ void isst_observer_event_loop() {
       perror("console_buffer");
       exit(1);
   }
-  for(i = 0; i < 100; i++) {
+  for (i = 0; i < 100; i++) {
     content_buffer[i] = (char *)malloc(80);
     if (!content_buffer[i]) {
 	perror("content_buffer[i]");
@@ -420,10 +420,10 @@ void isst_observer_event_loop() {
   SDL_WM_SetCaption("ADRT_ISST_Observer", NULL);
   tienet_sem_post(&isst_observer_sdlready_sem);
 
-  while(SDL_WaitEvent(&event) >= 0 && isst_observer_event_loop_alive) {
-    switch(event.type) {
+  while (SDL_WaitEvent(&event) >= 0 && isst_observer_event_loop_alive) {
+    switch (event.type) {
       case SDL_KEYDOWN:
-	switch(event.key.keysym.sym) {
+	switch (event.key.keysym.sym) {
 	  case SDLK_F1: /* screen magnify 1x */
 	    /* Set magnification level */
 	    pthread_mutex_lock(&isst_observer_magnify_mut);
@@ -498,7 +498,7 @@ void isst_observer_event_loop() {
 
     pthread_mutex_lock(&event_mut);
     /* Build up an event queue to send prior to receiving each frame */
-    if(isst_observer_event_queue_size < 64) {
+    if (isst_observer_event_queue_size < 64) {
       isst_observer_event_queue[isst_observer_event_queue_size].type = event.type;
       isst_observer_event_queue[isst_observer_event_queue_size].keysym = event.key.keysym.sym;
       isst_observer_event_queue[isst_observer_event_queue_size].button = event.button.button;
@@ -511,7 +511,7 @@ void isst_observer_event_loop() {
   }
 
 
-  for(i = 0; i < 100; i++) {
+  for (i = 0; i < 100; i++) {
     free(content_buffer[i]);
     free(console_buffer[i]);
   }

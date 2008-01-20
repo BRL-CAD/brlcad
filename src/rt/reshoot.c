@@ -47,7 +47,7 @@
 	       }
 	/InHIT/ { INHIT=$2 }
 	/OutHIT/ { OUTHIT=$2 }
-	/Region/ { printf "\tregion=%s in=%s in%s out=%s out%s\n",$2, PARTIN, INHIT, PARTOUT, OUTHIT}
+	/Region/ { printf "\tregion=%s in=%s in%s out=%s out%s\n", $2, PARTIN, INHIT, PARTOUT, OUTHIT}
 
 @endverbatim
  * If this awk program is stored in the file p.awk then: @verbatim
@@ -177,7 +177,7 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 
     /* examine each partition until we get back to the head */
     rh = BU_LIST_FIRST(reg_hit, &sh->regions);
-    for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )  {
+    for ( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )  {
 
 	bu_vls_trunc(&result, 0);
 
@@ -322,7 +322,7 @@ main(int argc, char **argv)
 
     progname = argv[0];
 
-    if( argc < 3 )  {
+    if ( argc < 3 )  {
 	usage("insufficient args\n");
     }
 
@@ -333,7 +333,7 @@ main(int argc, char **argv)
      *  the database to be ray traced.  It also gives you back the
      *  title string in the header (ID) record.
      */
-    if( (rtip=rt_dirbuild(argv[1], idbuf, sizeof(idbuf))) == RTI_NULL ) {
+    if ( (rtip=rt_dirbuild(argv[1], idbuf, sizeof(idbuf))) == RTI_NULL ) {
 	bu_exit(2, "rtexample: rt_dirbuild failure\n");
     }
 
@@ -346,8 +346,8 @@ main(int argc, char **argv)
      * Here you identify any object trees in the database that you
      * want included in the ray trace.
      */
-    while( argc > 2 )  {
-	if( rt_gettree(rtip, argv[2]) < 0 )
+    while ( argc > 2 )  {
+	if ( rt_gettree(rtip, argv[2]) < 0 )
 	    fprintf(stderr, "rt_gettree(%s) FAILED\n", argv[0]);
 	argc--;
 	argv++;

@@ -75,14 +75,14 @@ Usage: fbzoom [-hT] [-F framebuffer]\n\
 int
 main(int argc, char **argv)
 {
-	if( ! pars_Argv( argc, argv ) ) {
+	if ( ! pars_Argv( argc, argv ) ) {
 		(void)fputs(usage, stderr);
 		bu_exit(1, NULL);
 	}
-	if( (fbp = fb_open( framebuffer, scr_width, scr_height )) == NULL )
+	if ( (fbp = fb_open( framebuffer, scr_width, scr_height )) == NULL )
 		bu_exit(1, NULL);
 
-	if( bu_optind+4 == argc ) {
+	if ( bu_optind+4 == argc ) {
 		xPan = atoi( argv[bu_optind+0] );
 		yPan = atoi( argv[bu_optind+1] );
 		xZoom = atoi( argv[bu_optind+2] );
@@ -105,7 +105,7 @@ main(int argc, char **argv)
 	clr_Echo( 0 );
 
 	PanFactor = fb_getwidth(fbp)/16;
-	if( PanFactor < 2 )  PanFactor = 2;
+	if ( PanFactor < 2 )  PanFactor = 2;
 
 	new_xPan = xPan;
 	new_yPan = yPan;
@@ -120,10 +120,10 @@ main(int argc, char **argv)
 		if (new_xZoom < MinZoom) new_xZoom = MinZoom;
 		if (new_yZoom < MinZoom) new_yZoom = MinZoom;
 
-		if( new_xPan != xPan || new_yPan != yPan
+		if ( new_xPan != xPan || new_yPan != yPan
 		  || new_xZoom != xZoom || new_yZoom != yZoom ) {
 			/* values have changed, write them */
-			if( fb_view(fbp, new_xPan, new_yPan,
+			if ( fb_view(fbp, new_xPan, new_yPan,
 			    new_xZoom, new_yZoom) >= 0 ) {
 				/* good values, save them */
 				xPan = new_xPan;
@@ -150,7 +150,7 @@ main(int argc, char **argv)
 					   : "Pan: window");
 #endif
 		(void) fflush( stdout );
-	}  while( doKeyPad() );
+	}  while ( doKeyPad() );
 
 	reset_Tty( 0 );
 	(void) fb_view( fbp, xPan, yPan, xZoom, yZoom );
@@ -185,10 +185,10 @@ doKeyPad(void)
 {
 	register int ch;
 
-	if( (ch = getchar()) == EOF )
+	if ( (ch = getchar()) == EOF )
 		return	0;		/* done */
 	ch &= ~0x80;			/* strip off parity bit */
-	switch( ch ) {
+	switch ( ch ) {
 	default :
 		(void) fprintf( stdout,
 				"\r\n'%c' bad -- Type ? for help\r\n",
@@ -312,8 +312,8 @@ pars_Argv(int argc, register char **argv)
 {
 	register int	c;
 
-	while( (c = bu_getopt( argc, argv, "hTF:s:S:w:W:n:N:" )) != EOF )  {
-		switch( c )  {
+	while ( (c = bu_getopt( argc, argv, "hTF:s:S:w:W:n:N:" )) != EOF )  {
+		switch ( c )  {
 		case 'h':
 			/* high-res */
 			scr_height = scr_width = 1024;

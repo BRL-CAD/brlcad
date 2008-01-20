@@ -89,7 +89,7 @@ get_args(int argc, register char **argv)
 	register int c;
 
 	while ( (c = bu_getopt( argc, argv, "1m:g:HhicvzF:s:x:y:X:Y:S:W:N:" )) != EOF )  {
-		switch( c )  {
+		switch ( c )  {
 		case '1':
 			one_line_only = 1;
 			break;
@@ -148,14 +148,14 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( bu_optind >= argc )  {
-		if( isatty(fileno(stdin)) )
+	if ( bu_optind >= argc )  {
+		if ( isatty(fileno(stdin)) )
 			return(0);
 		file_name = "-";
 		fp_in = stdin;
 	} else {
 		file_name = argv[bu_optind];
-		if( (fp_in = fopen(file_name, "rb")) == NULL )  {
+		if ( (fp_in = fopen(file_name, "rb")) == NULL )  {
 			perror(file_name);
 			(void)fprintf( stderr,
 				"png-fb: cannot open \"%s\" for reading\n",
@@ -228,7 +228,7 @@ main(int argc, char **argv)
 
 	png_set_expand( png_p );
 	bit_depth = png_get_bit_depth( png_p, info_p );
-	if( bit_depth == 16 )
+	if ( bit_depth == 16 )
 		png_set_strip_16( png_p );
 
 	if (color_type == PNG_COLOR_TYPE_GRAY ||
@@ -238,7 +238,7 @@ main(int argc, char **argv)
 	file_width = png_get_image_width( png_p, info_p );
 	file_height = png_get_image_height( png_p, info_p );
 
-	if( verbose )
+	if ( verbose )
 	{
 		switch (color_type)
 		{
@@ -264,15 +264,15 @@ main(int argc, char **argv)
 		bu_log( "Image size: %d X %d\n", file_width, file_height );
 	}
 
-	if( header_only )  {
+	if ( header_only )  {
 		fprintf(stdout, "WIDTH=%d HEIGHT=%d\n", file_width, file_height);
 		pkg_terminate();
 		bu_exit(0, NULL);
 	}
 
-	if( png_get_bKGD( png_p, info_p, &input_backgrd ) )
+	if ( png_get_bKGD( png_p, info_p, &input_backgrd ) )
 	{
-		if( verbose && (color_type == PNG_COLOR_TYPE_GRAY_ALPHA ||
+		if ( verbose && (color_type == PNG_COLOR_TYPE_GRAY_ALPHA ||
 				color_type == PNG_COLOR_TYPE_RGB_ALPHA ) )
 			bu_log( "background color: %d %d %d\n", input_backgrd->red, input_backgrd->green, input_backgrd->blue );
 		png_set_background( png_p, input_backgrd, PNG_BACKGROUND_GAMMA_FILE, 1, 1.0 );
@@ -280,16 +280,16 @@ main(int argc, char **argv)
 	else
 		png_set_background( png_p, &def_backgrd, PNG_BACKGROUND_GAMMA_FILE, 0, 1.0 );
 
-	if( !png_get_gAMA( png_p, info_p, &gamma ) )
+	if ( !png_get_gAMA( png_p, info_p, &gamma ) )
 		gamma = 0.5;
 	png_set_gamma( png_p, def_screen_gamma, gamma );
-	if( verbose )
+	if ( verbose )
 		bu_log( "file gamma: %f, additional screen gamma: %f\n",
 			gamma, def_screen_gamma );
 
-	if( verbose )
+	if ( verbose )
 	{
-		if( png_get_interlace_type( png_p, info_p ) == PNG_INTERLACE_NONE )
+		if ( png_get_interlace_type( png_p, info_p ) == PNG_INTERLACE_NONE )
 			bu_log( "not interlaced\n" );
 		else
 			bu_log( "interlaced\n" );
@@ -302,37 +302,37 @@ main(int argc, char **argv)
 
 	/* create rows array */
 	scanline = (unsigned char **)bu_calloc( file_height, sizeof( unsigned char *), "scanline" );
-	for( i=0 ; i<file_height ; i++ )
+	for ( i=0; i<file_height; i++ )
 		scanline[i] = image+(i*file_width*3);
 
 	png_read_image( png_p, scanline );
 
-	if( verbose )
+	if ( verbose )
 	{
 		png_timep mod_time;
 		png_textp text;
 		int num_text;
 
 		png_read_end(png_p, info_p );
-		if( png_get_text( png_p, info_p, &text, &num_text ) )
+		if ( png_get_text( png_p, info_p, &text, &num_text ) )
 		{
 			int i;
 
-			for( i=0 ; i<num_text ; i++ )
+			for ( i=0; i<num_text; i++ )
 				bu_log( "%s: %s\n", text[i].key, text[i].text );
 		}
-		if( png_get_tIME( png_p, info_p, &mod_time ) )
+		if ( png_get_tIME( png_p, info_p, &mod_time ) )
 			bu_log( "Last modified: %d/%d/%d %d:%d:%d\n", mod_time->month, mod_time->day,
 				mod_time->year, mod_time->hour, mod_time->minute, mod_time->second );
 	}
 
 	/* If screen size was not set, track the file size */
-	if( scr_width == 0 )
+	if ( scr_width == 0 )
 		scr_width = file_width;
-	if( scr_height == 0 )
+	if ( scr_height == 0 )
 		scr_height = file_height;
 
-	if( (fbp = fb_open( framebuffer, scr_width, scr_height )) == NULL )
+	if ( (fbp = fb_open( framebuffer, scr_width, scr_height )) == NULL )
 		bu_exit(12, NULL);
 
 	/* Get the screen size we were given */
@@ -340,7 +340,7 @@ main(int argc, char **argv)
 	scr_height = fb_getheight(fbp);
 
 	/* compute number of pixels to be output to screen */
-	if( scr_xoff < 0 )
+	if ( scr_xoff < 0 )
 	{
 		xout = scr_width + scr_xoff;
 		xstart = 0;
@@ -351,23 +351,23 @@ main(int argc, char **argv)
 		xstart = scr_xoff;
 	}
 
-	if( xout < 0 )
+	if ( xout < 0 )
 		bu_exit(0, NULL);			/* off screen */
-	if( xout > (file_width-file_xoff) )
+	if ( xout > (file_width-file_xoff) )
 		xout = (file_width-file_xoff);
 	scanpix = xout;				/* # pixels on scanline */
 
-	if( inverse )
+	if ( inverse )
 		scr_yoff = (-scr_yoff);
 
 	yout = scr_height - scr_yoff;
-	if( yout < 0 )
+	if ( yout < 0 )
 		bu_exit(0, NULL);			/* off screen */
-	if( yout > (file_height-file_yoff) )
+	if ( yout > (file_height-file_yoff) )
 		yout = (file_height-file_yoff);
 
 	/* Only in the simplest case use multi-line writes */
-	if( !one_line_only && multiple_lines > 0 && !inverse && !zoom &&
+	if ( !one_line_only && multiple_lines > 0 && !inverse && !zoom &&
 	    xout == file_width && file_xoff == 0 &&
 	    file_width <= scr_width )  {
 		scanpix *= multiple_lines;
@@ -375,15 +375,15 @@ main(int argc, char **argv)
 
 	scanbytes = scanpix * sizeof(RGBpixel);
 
-	if( clear )  {
+	if ( clear )  {
 		fb_clear( fbp, PIXEL_NULL );
 	}
-	if( zoom ) {
+	if ( zoom ) {
 		/* Zoom in, and center the display.  Use square zoom. */
 		int	zoom;
 		zoom = scr_width/xout;
-		if( scr_height/yout < zoom )  zoom = scr_height/yout;
-		if( inverse )  {
+		if ( scr_height/yout < zoom )  zoom = scr_height/yout;
+		if ( inverse )  {
 			fb_view( fbp,
 				scr_xoff+xout/2, scr_height-1-(scr_yoff+yout/2),
 				zoom, zoom );
@@ -394,30 +394,30 @@ main(int argc, char **argv)
 		}
 	}
 
-	if( multiple_lines )  {
+	if ( multiple_lines )  {
 		/* Bottom to top with multi-line reads & writes */
 		int	height=file_height;
-		for( y = scr_yoff; y < scr_yoff + yout; y += multiple_lines )  {
+		for ( y = scr_yoff; y < scr_yoff + yout; y += multiple_lines )  {
 			/* Don't over-write */
-			if( y + height > scr_yoff + yout )
+			if ( y + height > scr_yoff + yout )
 				height = scr_yoff + yout - y;
-			if( height <= 0 )  break;
+			if ( height <= 0 )  break;
 			m = fb_writerect( fbp, scr_xoff, y,
 				file_width, height,
 				scanline[file_yoff++] );
-			if( m != file_width*height )  {
+			if ( m != file_width*height )  {
 				fprintf(stderr,
 					"png-fb: fb_writerect(x=%d, y=%d, w=%d, h=%d) failure, ret=%d, s/b=%d\n",
 					scr_xoff, y,
 					file_width, height, m, scanbytes );
 			}
 		}
-	} else if( !inverse )  {
+	} else if ( !inverse )  {
 		/* Normal way -- bottom to top */
 		int line=file_height-file_yoff-1;
-		for( y = scr_yoff; y < scr_yoff + yout; y++ )  {
+		for ( y = scr_yoff; y < scr_yoff + yout; y++ )  {
 			m = fb_write( fbp, xstart, y, scanline[line--]+(3*file_xoff), xout );
-			if( m != xout )  {
+			if ( m != xout )  {
 				fprintf(stderr,
 					"png-fb: fb_write(x=%d, y=%d, npix=%d) ret=%d, s/b=%d\n",
 					scr_xoff, y, xout,
@@ -427,9 +427,9 @@ main(int argc, char **argv)
 	}  else  {
 		/* Inverse -- top to bottom */
 		int line=file_height-file_yoff-1;
-		for( y = scr_height-1-scr_yoff; y >= scr_height-scr_yoff-yout; y-- )  {
+		for ( y = scr_height-1-scr_yoff; y >= scr_height-scr_yoff-yout; y-- )  {
 			m = fb_write( fbp, xstart, y, scanline[line--]+(3*file_xoff), xout );
-			if( m != xout )  {
+			if ( m != xout )  {
 				fprintf(stderr,
 					"png-fb: fb_write(x=%d, y=%d, npix=%d) ret=%d, s/b=%d\n",
 					scr_xoff, y, xout,
@@ -437,7 +437,7 @@ main(int argc, char **argv)
 			}
 		}
 	}
-	if( fb_close( fbp ) < 0 )  {
+	if ( fb_close( fbp ) < 0 )  {
 		fprintf(stderr, "png-fb: Warning: fb_close() error\n");
 	}
 	pkg_terminate();

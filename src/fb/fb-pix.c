@@ -73,7 +73,7 @@ get_args(int argc, register char **argv)
 	register int c;
 
 	while ( (c = bu_getopt( argc, argv, "chiF:s:w:n:" )) != EOF )  {
-		switch( c )  {
+		switch ( c )  {
 		case 'c':
 			crunch = 1;
 			break;
@@ -103,14 +103,14 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( bu_optind >= argc )  {
-		if( isatty(fileno(stdout)) )
+	if ( bu_optind >= argc )  {
+		if ( isatty(fileno(stdout)) )
 			return(0);
 		file_name = "-";
 		outfp = stdout;
 	} else {
 		file_name = argv[bu_optind];
-		if( (outfp = fopen(file_name, "wb")) == NULL )  {
+		if ( (outfp = fopen(file_name, "wb")) == NULL )  {
 			(void)fprintf( stderr,
 				"fb-pix: cannot open \"%s\" for writing\n",
 				file_name );
@@ -143,7 +143,7 @@ main(int argc, char **argv)
 
 	scanpix = screen_width;
 	scanbytes = scanpix * sizeof(RGBpixel);
-	if( (scanline = (unsigned char *)malloc(scanbytes)) == RGBPIXEL_NULL )  {
+	if ( (scanline = (unsigned char *)malloc(scanbytes)) == RGBPIXEL_NULL )  {
 		fprintf(stderr,
 			"fb-pix:  malloc(%d) failure\n", scanbytes );
 		pkg_terminate();
@@ -155,37 +155,37 @@ main(int argc, char **argv)
 	    bu_exit(12, NULL);
 	}
 
-	if( screen_height > fb_getheight(fbp) )
+	if ( screen_height > fb_getheight(fbp) )
 		screen_height = fb_getheight(fbp);
-	if( screen_width > fb_getwidth(fbp) )
+	if ( screen_width > fb_getwidth(fbp) )
 		screen_width = fb_getwidth(fbp);
 
-	if( crunch )  {
-		if( fb_rmap( fbp, &cmap ) == -1 )  {
+	if ( crunch )  {
+		if ( fb_rmap( fbp, &cmap ) == -1 )  {
 			crunch = 0;
-		} else if( fb_is_linear_cmap( &cmap ) ) {
+		} else if ( fb_is_linear_cmap( &cmap ) ) {
 			crunch = 0;
 		}
 	}
 
-	if( !inverse )  {
+	if ( !inverse )  {
 		/*  Regular -- read bottom to top */
-		for( y=0; y < screen_height; y++ )  {
+		for ( y=0; y < screen_height; y++ )  {
 			fb_read( fbp, 0, y, scanline, screen_width );
-			if( crunch )
+			if ( crunch )
 				cmap_crunch( (RGBpixel *)scanline, scanpix, &cmap );
-			if( fwrite( (char *)scanline, scanbytes, 1, outfp ) != 1 )  {
+			if ( fwrite( (char *)scanline, scanbytes, 1, outfp ) != 1 )  {
 				perror("fwrite");
 				break;
 			}
 		}
 	}  else  {
 		/*  Inverse -- read top to bottom */
-		for( y = screen_height-1; y >= 0; y-- )  {
+		for ( y = screen_height-1; y >= 0; y-- )  {
 			fb_read( fbp, 0, y, scanline, screen_width );
-			if( crunch )
+			if ( crunch )
 				cmap_crunch( (RGBpixel *)scanline, scanpix, &cmap );
-			if( fwrite( (char *)scanline, scanbytes, 1, outfp ) != 1 )  {
+			if ( fwrite( (char *)scanline, scanbytes, 1, outfp ) != 1 )  {
 				perror("fwrite");
 				break;
 			}

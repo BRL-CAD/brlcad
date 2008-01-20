@@ -1513,7 +1513,7 @@ skip_2nd:
 		nhits++;
 		if (nerrors++ < 300 ) {
 			bu_log("rt_hf_shot(%s): %d hit(s)@ %d %d: ", stp->st_name, nhits-1, ap->a_x, ap->a_y);
-			for(i=0; i< nhits; i++) {
+			for (i=0; i< nhits; i++) {
 				bu_log("%f(%d), ", hits[i].hit_dist, hits[i].hit_surfno);
 			}
 			bu_log("\n");
@@ -1704,7 +1704,7 @@ rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tes
 	RT_ADD_VLIST( vhead, xip->v, BN_VLIST_LINE_DRAW );
 	goal -= 5;
 
-#define HF_GET(_p,_x,_y)	((_p)[(_y)*xip->w+(_x)])
+#define HF_GET(_p, _x, _y)	((_p)[(_y)*xip->w+(_x)])
 	/*
 	 *  Draw the four "ridge lines" at full resolution, for edge matching.
 	 */
@@ -1712,7 +1712,7 @@ rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tes
 		/* X direction, Y=0, with edges down to base */
 		RT_ADD_VLIST( vhead, xip->v, BN_VLIST_LINE_MOVE );
 		sp = &HF_GET((unsigned short *)xip->mp->apbuf, 0, 0 );
-		for( x = 0; x < xip->w; x++ )  {
+		for ( x = 0; x < xip->w; x++ )  {
 			VJOIN2( cur, xip->v, x, xbasis, *sp, zbasis );
 			RT_ADD_VLIST(vhead, cur, BN_VLIST_LINE_DRAW );
 			sp++;
@@ -1725,7 +1725,7 @@ rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tes
 		RT_ADD_VLIST( vhead, start, BN_VLIST_LINE_MOVE );
 		sp = &HF_GET((unsigned short *)xip->mp->apbuf, 0, xip->n - 1 );
 		VJOIN1( start, xip->v, xip->ylen, xip->y );
-		for( x = 0; x < xip->w; x++ )  {
+		for ( x = 0; x < xip->w; x++ )  {
 			VJOIN2( cur, start, x, xbasis, *sp, zbasis );
 			RT_ADD_VLIST(vhead, cur, BN_VLIST_LINE_DRAW );
 			sp++;
@@ -1736,7 +1736,7 @@ rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tes
 		/* Y direction, X=0 */
 		cmd = BN_VLIST_LINE_MOVE;
 		sp = &HF_GET((unsigned short *)xip->mp->apbuf, 0, 0 );
-		for( y = 0; y < xip->n; y++ )  {
+		for ( y = 0; y < xip->n; y++ )  {
 			VJOIN2( cur, xip->v, y, ybasis, *sp, zbasis );
 			RT_ADD_VLIST(vhead, cur, cmd );
 			cmd = BN_VLIST_LINE_DRAW;
@@ -1747,7 +1747,7 @@ rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tes
 		cmd = BN_VLIST_LINE_MOVE;
 		sp = &HF_GET((unsigned short *)xip->mp->apbuf, xip->w - 1, 0 );
 		VJOIN1( start, xip->v, xip->xlen, xip->x );
-		for( y = 0; y < xip->n; y++ )  {
+		for ( y = 0; y < xip->n; y++ )  {
 			VJOIN2( cur, start, y, ybasis, *sp, zbasis );
 			RT_ADD_VLIST(vhead, cur, cmd );
 			cmd = BN_VLIST_LINE_DRAW;
@@ -1757,7 +1757,7 @@ rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tes
 		/* X direction, Y=0, with edges down to base */
 		RT_ADD_VLIST( vhead, xip->v, BN_VLIST_LINE_MOVE );
 		dp = &HF_GET((double *)xip->mp->apbuf, 0, 0 );
-		for( x = 0; x < xip->w; x++ )  {
+		for ( x = 0; x < xip->w; x++ )  {
 			VJOIN2( cur, xip->v, x, xbasis, *dp, zbasis );
 			RT_ADD_VLIST(vhead, cur, BN_VLIST_LINE_DRAW );
 			dp++;
@@ -1770,7 +1770,7 @@ rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tes
 		RT_ADD_VLIST( vhead, start, BN_VLIST_LINE_MOVE );
 		dp = &HF_GET((double *)xip->mp->apbuf, 0, xip->n - 1 );
 		VJOIN1( start, xip->v, xip->ylen, xip->y );
-		for( x = 0; x < xip->w; x++ )  {
+		for ( x = 0; x < xip->w; x++ )  {
 			VJOIN2( cur, start, x, xbasis, *dp, zbasis );
 			RT_ADD_VLIST(vhead, cur, BN_VLIST_LINE_DRAW );
 			dp++;
@@ -1781,7 +1781,7 @@ rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tes
 		/* Y direction, X=0 */
 		cmd = BN_VLIST_LINE_MOVE;
 		dp = &HF_GET((double *)xip->mp->apbuf, 0, 0 );
-		for( y = 0; y < xip->n; y++ )  {
+		for ( y = 0; y < xip->n; y++ )  {
 			VJOIN2( cur, xip->v, y, ybasis, *dp, zbasis );
 			RT_ADD_VLIST(vhead, cur, cmd );
 			cmd = BN_VLIST_LINE_DRAW;
@@ -1792,7 +1792,7 @@ rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tes
 		cmd = BN_VLIST_LINE_MOVE;
 		dp = &HF_GET((double *)xip->mp->apbuf, xip->w - 1, 0 );
 		VJOIN1( start, xip->v, xip->xlen, xip->x );
-		for( y = 0; y < xip->n; y++ )  {
+		for ( y = 0; y < xip->n; y++ )  {
 			VJOIN2( cur, start, y, ybasis, *dp, zbasis );
 			RT_ADD_VLIST(vhead, cur, cmd );
 			cmd = BN_VLIST_LINE_DRAW;
@@ -1802,23 +1802,23 @@ rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tes
 	goal -= 4 + 2 * (xip->w + xip->n);
 
 	/* Apply relative tolerance, if specified */
-	if( ttol->rel )  {
+	if ( ttol->rel )  {
 		int	rstep;
 		rstep = xip->w;
 		V_MAX( rstep, xip->n );
 		step = (int)(ttol->rel * rstep);
 	} else {
 		/* No relative tol specified, limit drawing to 'goal' # of vectors */
-		if( goal <= 0 )  return 0;		/* no vectors for interior */
+		if ( goal <= 0 )  return 0;		/* no vectors for interior */
 
 		/* Compute data stride based upon producing no more than 'goal' vectors */
 		step = ceil(sqrt( 2*(xip->w-1)*(xip->n-1) / (double)goal ));
 	}
-	if( step < 1 )  step = 1;
-	if( (half_step = step/2) < 1 )  half_step = 1;
+	if ( step < 1 )  step = 1;
+	if ( (half_step = step/2) < 1 )  half_step = 1;
 
 	/* Draw the contour lines in W (x) direction.  Don't redo ridges. */
-	for( y = half_step; y < xip->n-half_step; y += step )  {
+	for ( y = half_step; y < xip->n-half_step; y += step )  {
 		VJOIN1( start, xip->v, y, ybasis );
 		x = 0;
 		if (xip->shorts) {
@@ -1827,12 +1827,12 @@ rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tes
 			RT_ADD_VLIST(vhead, cur, BN_VLIST_LINE_MOVE );
 			x += half_step;
 			sp = &HF_GET((unsigned short *)xip->mp->apbuf, x, y );
-			for( ; x < xip->w; x += step )  {
+			for (; x < xip->w; x += step )  {
 				VJOIN2( cur, start, x, xbasis, *sp, zbasis );
 				RT_ADD_VLIST(vhead, cur, BN_VLIST_LINE_DRAW );
 				sp += step;
 			}
-			if( x != step+xip->w-1+step )  {
+			if ( x != step+xip->w-1+step )  {
 				x = xip->w - 1;
 				sp = &HF_GET((unsigned short *)xip->mp->apbuf, x, y );
 				VJOIN2( cur, start, x, xbasis, *sp, zbasis );
@@ -1860,19 +1860,19 @@ rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tes
 
 	/* Draw the contour lines in the N (y) direction */
 	if (xip->shorts) {
-		for( x = half_step; x < xip->w-half_step; x += step )  {
+		for ( x = half_step; x < xip->w-half_step; x += step )  {
 			VJOIN1( start, xip->v, x, xbasis );
 			y = 0;
 			sp = &HF_GET((unsigned short *)xip->mp->apbuf, x, y );
 			VJOIN2( cur, start, y, ybasis, *sp, zbasis );
 			RT_ADD_VLIST(vhead, cur, BN_VLIST_LINE_MOVE );
 			y += half_step;
-			for( ; y < xip->n; y += step )  {
+			for (; y < xip->n; y += step )  {
 				sp = &HF_GET((unsigned short *)xip->mp->apbuf, x, y );
 				VJOIN2( cur, start, y, ybasis, *sp, zbasis );
 				RT_ADD_VLIST(vhead, cur, BN_VLIST_LINE_DRAW );
 			}
-			if( y != step+xip->n-1+step )  {
+			if ( y != step+xip->n-1+step )  {
 				y = xip->n - 1;
 				sp = &HF_GET((unsigned short *)xip->mp->apbuf, x, y );
 				VJOIN2( cur, start, y, ybasis, *sp, zbasis );
@@ -1880,19 +1880,19 @@ rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tes
 			}
 		}
 	} else { /* doubles */
-		for( x = half_step; x < xip->w-half_step; x += step )  {
+		for ( x = half_step; x < xip->w-half_step; x += step )  {
 			VJOIN1( start, xip->v, x, xbasis );
 			y = 0;
 			dp = &HF_GET((double *)xip->mp->apbuf, x, y );
 			VJOIN2( cur, start, y, ybasis, *dp, zbasis );
 			RT_ADD_VLIST(vhead, cur, BN_VLIST_LINE_MOVE );
 			y += half_step;
-			for( ; y < xip->n; y += step )  {
+			for (; y < xip->n; y += step )  {
 				dp = &HF_GET((double *)xip->mp->apbuf, x, y );
 				VJOIN2( cur, start, y, ybasis, *dp, zbasis );
 				RT_ADD_VLIST(vhead, cur, BN_VLIST_LINE_DRAW );
 			}
-			if( y != step+xip->n-1+step )  {
+			if ( y != step+xip->n-1+step )  {
 				y = xip->n - 1;
 				dp = &HF_GET((double *)xip->mp->apbuf, x, y );
 				VJOIN2( cur, start, y, ybasis, *dp, zbasis );
@@ -1945,7 +1945,7 @@ rt_hf_import(struct rt_db_internal *ip, const struct bu_external *ep, register c
 	BU_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
 	/* Check record type */
-	if( rp->u_id != DBID_STRSOL )  {
+	if ( rp->u_id != DBID_STRSOL )  {
 		bu_log("rt_hf_import: defective record\n");
 		return(-1);
 	}
@@ -1972,7 +1972,7 @@ rt_hf_import(struct rt_db_internal *ip, const struct bu_external *ep, register c
 	/* Process parameters found in .g file */
 	bu_vls_init( &str );
 	bu_vls_strcpy( &str, rp->ss.ss_args );
-	if( bu_struct_parse( &str, rt_hf_parse, (char *)xip ) < 0 )  {
+	if ( bu_struct_parse( &str, rt_hf_parse, (char *)xip ) < 0 )  {
 		bu_vls_free( &str );
 err1:
 		bu_free( (char *)xip, "rt_hf_import: xip" );
@@ -1983,24 +1983,24 @@ err1:
 	bu_vls_free( &str );
 
 	/* If "cfile" was specified, process parameters from there */
-	if( xip->cfile[0] )  {
+	if ( xip->cfile[0] )  {
 		FILE	*fp;
 
 		bu_semaphore_acquire( BU_SEM_SYSCALL );
 		fp = fopen( xip->cfile, "r" );
 		bu_semaphore_release( BU_SEM_SYSCALL );
-		if( !fp )  {
+		if ( !fp )  {
 			perror(xip->cfile);
 			bu_log("rt_hf_import() unable to open cfile=%s\n", xip->cfile);
 			goto err1;
 		}
 		bu_vls_init( &str );
-		while( bu_vls_gets( &str, fp ) >= 0 )
+		while ( bu_vls_gets( &str, fp ) >= 0 )
 			bu_vls_strcat( &str, " " );
 		bu_semaphore_acquire( BU_SEM_SYSCALL );
 		fclose(fp);
 		bu_semaphore_release( BU_SEM_SYSCALL );
-		if( bu_struct_parse( &str, rt_hf_cparse, (char *)xip ) < 0 )  {
+		if ( bu_struct_parse( &str, rt_hf_cparse, (char *)xip ) < 0 )  {
 			bu_log("rt_hf_import() parse error in cfile input '%s'\n",
 				bu_vls_addr(&str) );
 			bu_vls_free( &str );
@@ -2009,16 +2009,16 @@ err1:
 	}
 
 	/* Check for reasonable values */
-	if( !xip->dfile[0] )  {
+	if ( !xip->dfile[0] )  {
 		/* XXX Should create 2x2 data file instead, for positioning use (FPO) */
 		bu_log("rt_hf_import() no dfile specified\n");
 		goto err1;
 	}
-	if( xip->w < 2 || xip->n < 2 )  {
+	if ( xip->w < 2 || xip->n < 2 )  {
 		bu_log("rt_hf_import() w=%d, n=%d too small\n");
 		goto err1;
 	}
-	if( xip->xlen <= 0 || xip->ylen <= 0 )  {
+	if ( xip->xlen <= 0 || xip->ylen <= 0 )  {
 		bu_log("rt_hf_import() xlen=%g, ylen=%g too small\n", xip->xlen, xip->ylen);
 		goto err1;
 	}
@@ -2039,7 +2039,7 @@ err1:
 	VUNITIZE(xip->y);
 
 	/* Prepare for cracking input file format */
-	if( (in_cookie = bu_cv_cookie( xip->fmt )) == 0 )  {
+	if ( (in_cookie = bu_cv_cookie( xip->fmt )) == 0 )  {
 		bu_log("rt_hf_import() fmt='%s' unknown\n", xip->fmt);
 		goto err1;
 	}
@@ -2048,7 +2048,7 @@ err1:
 	/*
 	 *  Load data file, and transform to internal format
 	 */
-	if( !(mp = bu_open_mapped_file( xip->dfile, "hf" )) )  {
+	if ( !(mp = bu_open_mapped_file( xip->dfile, "hf" )) )  {
 		bu_log("rt_hf_import() unable to open '%s'\n", xip->dfile);
 		goto err1;
 	}
@@ -2056,10 +2056,10 @@ err1:
 	count = mp->buflen / in_len;
 
 	/* If this data has already been mapped, all done */
-	if( mp->apbuf )  return 0;		/* OK */
+	if ( mp->apbuf )  return 0;		/* OK */
 
 	/* Transform external data to internal format -- short or double */
-	if( xip->shorts )  {
+	if ( xip->shorts )  {
 		mp->apbuflen = sizeof(unsigned short) * count;
 		out_cookie = bu_cv_cookie("hus");
 	} else {
@@ -2067,7 +2067,7 @@ err1:
 		out_cookie = bu_cv_cookie("hd");
 	}
 
-	if( bu_cv_optimize(in_cookie) == bu_cv_optimize(out_cookie) )  {
+	if ( bu_cv_optimize(in_cookie) == bu_cv_optimize(out_cookie) )  {
 		/* Don't replicate the data, just re-use the pointer */
 		mp->apbuf = mp->buf;
 		return 0;		/* OK */
@@ -2076,7 +2076,7 @@ err1:
 	mp->apbuf = (genptr_t)bu_malloc( mp->apbuflen, "rt_hf_import apbuf[]" );
 	got = bu_cv_w_cookie( mp->apbuf, out_cookie, mp->apbuflen,
 		mp->buf, in_cookie, count );
-	if( got != count )  {
+	if ( got != count )  {
 		bu_log("rt_hf_import(%s) bu_cv_w_cookie count=%d, got=%d\n",
 			xip->dfile, count, got );
 	}
@@ -2106,7 +2106,7 @@ rt_hf_export(struct bu_external *ep, const struct rt_db_internal *ip, double loc
 	struct bu_vls		str;
 
 	RT_CK_DB_INTERNAL(ip);
-	if( ip->idb_type != ID_HF )  return(-1);
+	if ( ip->idb_type != ID_HF )  return(-1);
 	xip = (struct rt_hf_internal *)ip->idb_ptr;
 	RT_HF_CK_MAGIC(xip);
 
@@ -2192,7 +2192,7 @@ rt_hf_ifree(struct rt_db_internal *ip)
 	RT_HF_CK_MAGIC(xip);
 	xip->magic = 0;			/* sanity */
 
-	if( xip->mp )
+	if ( xip->mp )
 	{
 		BU_CK_MAPPED_FILE(xip->mp);
 		bu_close_mapped_file(xip->mp);

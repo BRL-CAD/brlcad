@@ -50,7 +50,7 @@ int recno;
 
 	currec = recno;
 	offset = (recno - 1) * reclen;
-	if( fseek( fd, offset, 0 ) )
+	if ( fseek( fd, offset, 0 ) )
 	{
 		bu_log( "Error in seek\n" );
 		perror( "Readrec" );
@@ -58,9 +58,9 @@ int recno;
 	}
 	counter = 0;
 
-	for( i=0 ; i<reclen ; i++ )
+	for ( i=0; i<reclen; i++ )
 	{
-		if( (ch=getc( fd )) == EOF )
+		if ( (ch=getc( fd )) == EOF )
 			return( 1 );
 		card[i] = ch;
 	}

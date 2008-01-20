@@ -71,29 +71,29 @@ void render_path_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel
 
   accum.v[0] = accum.v[1] = accum.v[2] = 0;
 
-  for(i = 0; i < rd->samples; i++) {
+  for (i = 0; i < rd->samples; i++) {
     /* Prime variables */
     new_ray = *ray;
     propogate = 1;
 
     /* Terminate if depth is too great. */
-    while(propogate) {
-      if((new_mesh = (adrt_mesh_t *)tie_work(tie, &new_ray, &new_id, render_hit, NULL)) && new_ray.depth < RENDER_MAX_DEPTH) {
-        if(new_mesh->attributes->ior != 1.0) {	/* Refractive Caustic */
+    while (propogate) {
+      if ((new_mesh = (adrt_mesh_t *)tie_work(tie, &new_ray, &new_id, render_hit, NULL)) && new_ray.depth < RENDER_MAX_DEPTH) {
+        if (new_mesh->attributes->ior != 1.0) {	/* Refractive Caustic */
           /* Deal with refractive-fu */
-        } else if(new_mesh->attributes->emission > 0.0) {	/* Emitting Light Source */
+        } else if (new_mesh->attributes->emission > 0.0) {	/* Emitting Light Source */
           T = new_mesh->attributes->color;
           MATH_VEC_MUL_SCALAR(T, T, new_mesh->attributes->emission);
           propogate = 0;
         } else {	/* Diffuse */
-          if(new_mesh->texture) {
+          if (new_mesh->texture) {
             new_mesh->texture->work(new_mesh->texture, new_mesh, &new_ray, &new_id, &T);
           } else {
             T = new_mesh->attributes->color;
           }
         }
 
-        if(new_ray.depth) {
+        if (new_ray.depth) {
           MATH_VEC_MUL(new_pix, new_pix, T);
         } else {
           new_pix = T;
@@ -131,7 +131,7 @@ void render_path_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel
         sin_phi = sin(cos_phi);
         cos_phi = cos(cos_phi);
 
-        for(n = 0; n < 3; n++) {
+        for (n = 0; n < 3; n++) {
           T.v[n] = sin_theta*cos_phi*bax.v[n] + sin_theta*sin_phi*bay.v[n] + cos_theta*T.v[n];
           /* Weigh reflected vector back in */
           new_ray.dir.v[n] = (1.0 - new_mesh->attributes->gloss)*T.v[n] + new_mesh->attributes->gloss * ref.v[n];

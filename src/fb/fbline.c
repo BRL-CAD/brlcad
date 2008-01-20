@@ -97,7 +97,7 @@ get_args(int argc, register char **argv)
 	register int c;
 
 	while ( (c = bu_getopt( argc, argv, "hW:w:N:n:cF:r:g:b:" )) != EOF )  {
-		switch( c )  {
+		switch ( c )  {
 		case 'h':
 			/* high-res */
 			screen_height = screen_width = 1024;
@@ -130,7 +130,7 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( bu_optind+4 > argc )
+	if ( bu_optind+4 > argc )
 		return(0);		/* BAD */
 	fbx1 = atoi( argv[bu_optind++]);
 	fby1 = atoi( argv[bu_optind++]);
@@ -159,10 +159,10 @@ main(int argc, char **argv)
 	if (pkg_init() != 0)
 	    bu_exit(1, NULL);
 
-	if( (fbp = fb_open( framebuffer, screen_width, screen_height )) == NULL )
+	if ( (fbp = fb_open( framebuffer, screen_width, screen_height )) == NULL )
 		bu_exit(12, NULL);
 
-	if( clear ) {
+	if ( clear ) {
 		fb_clear( fbp, PIXEL_NULL);
 	}
 	screen_width = fb_getwidth(fbp);
@@ -189,10 +189,10 @@ main(int argc, char **argv)
 void
 edgelimit(register struct coords *ppos)
 {
-	if( ppos->x >= screen_width )
+	if ( ppos->x >= screen_width )
 		ppos->x = screen_width -1;
 
-	if( ppos->y >= screen_height )
+	if ( ppos->y >= screen_height )
 		ppos->y = screen_height -1;
 }
 

@@ -205,19 +205,19 @@ char *argv[];
   struct dm *dmp;
 
   BU_GETSTRUCT(dmp, dm);
-  if(dmp == DM_NULL)
+  if (dmp == DM_NULL)
     return DM_NULL;
 
   *dmp = dm_glx;  /* struct copy */
 
   /* Only need to do this once for this display manager */
-  if(!count){
+  if (!count){
     memset((void *)&head_glx_vars, 0, sizeof(struct glx_vars));
     BU_LIST_INIT( &head_glx_vars.l );
   }
 
   BU_GETSTRUCT(dmp->dm_vars, glx_vars);
-  if(dmp->dm_vars == (genptr_t)NULL){
+  if (dmp->dm_vars == (genptr_t)NULL){
     bu_free(dmp, "glx_open: dmp");
     return DM_NULL;
   }
@@ -229,21 +229,21 @@ char *argv[];
 
   i = dm_processOptions(dmp, &init_proc_vls, --argc, ++argv);
 
-  if(bu_vls_strlen(&dmp->dm_pathName) == 0)
+  if (bu_vls_strlen(&dmp->dm_pathName) == 0)
      bu_vls_printf(&dmp->dm_pathName, ".dm_glx%d", count);
 
   ++count;
-  if(bu_vls_strlen(&dmp->dm_dName) == 0){
+  if (bu_vls_strlen(&dmp->dm_dName) == 0){
     char *dp;
 
     dp = getenv("DISPLAY");
-    if(dp)
+    if (dp)
       bu_vls_strcpy(&dmp->dm_dName, dp);
     else
       bu_vls_strcpy(&dmp->dm_dName, ":0.0");
   }
 
-  if(bu_vls_strlen(&init_proc_vls) == 0)
+  if (bu_vls_strlen(&init_proc_vls) == 0)
     bu_vls_strcpy(&init_proc_vls, "bind_dm");
 
   /* initialize dm specific variables */
@@ -257,7 +257,7 @@ char *argv[];
 
   BU_LIST_APPEND(&head_glx_vars.l, &((struct glx_vars *)dmp->dm_vars)->l);
 
-  if(dmp->dm_top){
+  if (dmp->dm_top){
     ((struct glx_vars *)dmp->dm_vars)->xtkwin =
       Tk_CreateWindowFromPath(interp, tkwin,
 			      bu_vls_addr(&dmp->dm_pathName),
@@ -267,7 +267,7 @@ char *argv[];
     char *cp;
 
     cp = strrchr(bu_vls_addr(&dmp->dm_pathName), (int)'.');
-    if(cp == bu_vls_addr(&dmp->dm_pathName)){
+    if (cp == bu_vls_addr(&dmp->dm_pathName)){
       ((struct glx_vars *)dmp->dm_vars)->top = tkwin;
     }else{
       struct bu_vls top_vls;
@@ -286,7 +286,7 @@ char *argv[];
 		      cp + 1, (char *)NULL);
   }
 
-  if(((struct glx_vars *)dmp->dm_vars)->xtkwin == NULL){
+  if (((struct glx_vars *)dmp->dm_vars)->xtkwin == NULL){
     Tcl_AppendResult(interp, "dm-X: Failed to open ",
 		     bu_vls_addr(&dmp->dm_pathName),
 		     "\n", (char *)NULL);
@@ -323,7 +323,7 @@ char *argv[];
 		&init_proc_vls,
 		&dmp->dm_pathName);
 
-  if(Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR){
+  if (Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR){
     bu_vls_free(&init_proc_vls);
     bu_vls_free(&str);
     (void)glx_close(dmp);
@@ -343,23 +343,23 @@ char *argv[];
       return DM_NULL;
   }
 
-  if(dmp->dm_width == 0){
+  if (dmp->dm_width == 0){
     dmp->dm_width =
       DisplayWidth(((struct glx_vars *)dmp->dm_vars)->dpy,
 		   DefaultScreen(((struct glx_vars *)dmp->dm_vars)->dpy)) - 30;
     ++make_square;
   }
 
-  if(dmp->dm_height == 0){
+  if (dmp->dm_height == 0){
     dmp->dm_height =
       DisplayHeight(((struct glx_vars *)dmp->dm_vars)->dpy,
 		    DefaultScreen(((struct glx_vars *)dmp->dm_vars)->dpy)) - 30;
     ++make_square;
   }
 
-  if(make_square > 0){
+  if (make_square > 0){
     /* Make window square */
-    if( dmp->dm_height <
+    if ( dmp->dm_height <
 	dmp->dm_width )
       dmp->dm_width = dmp->dm_height;
     else /* we have a funky shaped monitor */
@@ -377,7 +377,7 @@ char *argv[];
   ((struct glx_vars *)dmp->dm_vars)->depth = ((struct glx_vars *)dmp->dm_vars)->vip->depth;
   ((struct glx_vars *)dmp->dm_vars)->cmap = extract_value(GLX_NORMAL, GLX_COLORMAP,
 							   glx_config);
-  if(Tk_SetWindowVisual(((struct glx_vars *)dmp->dm_vars)->xtkwin,
+  if (Tk_SetWindowVisual(((struct glx_vars *)dmp->dm_vars)->xtkwin,
 			((struct glx_vars *)dmp->dm_vars)->vip->visual,
 			((struct glx_vars *)dmp->dm_vars)->depth,
 			((struct glx_vars *)dmp->dm_vars)->cmap) == 0){
@@ -392,7 +392,7 @@ char *argv[];
   set_window(GLX_NORMAL, ((struct glx_vars *)dmp->dm_vars)->win, glx_config);
 
   /* Inform the GL that you intend to render GL into an X window */
-  if(GLXlink(((struct glx_vars *)dmp->dm_vars)->dpy, glx_config) < 0){
+  if (GLXlink(((struct glx_vars *)dmp->dm_vars)->dpy, glx_config) < 0){
     (void)glx_close(dmp);
     return DM_NULL;
   }
@@ -401,26 +401,26 @@ char *argv[];
 	    ((struct glx_vars *)dmp->dm_vars)->win);
 
   /* set configuration variables */
-  for(p = glx_config; p->buffer; ++p){
-    switch(p->buffer){
+  for (p = glx_config; p->buffer; ++p){
+    switch (p->buffer){
     case GLX_NORMAL:
-      switch(p->mode){
+      switch (p->mode){
       case GLX_ZSIZE:
-	if(p->arg)
+	if (p->arg)
 	  ((struct glx_vars *)dmp->dm_vars)->mvars.zbuf = 1;
 	else
 	  ((struct glx_vars *)dmp->dm_vars)->mvars.zbuf = 0;
 
 	break;
       case GLX_RGB:
-	if(p->arg)
+	if (p->arg)
 	  ((struct glx_vars *)dmp->dm_vars)->mvars.rgb = 1;
 	else
 	  ((struct glx_vars *)dmp->dm_vars)->mvars.rgb = 0;
 
 	break;
       case GLX_DOUBLE:
-	if(p->arg)
+	if (p->arg)
 	  ((struct glx_vars *)dmp->dm_vars)->mvars.doublebuffer = 1;
 	else
 	  ((struct glx_vars *)dmp->dm_vars)->mvars.doublebuffer = 0;
@@ -473,7 +473,7 @@ char *argv[];
   ((struct glx_vars *)dmp->dm_vars)->mvars.min_scr_z = getgdesc(GD_ZMIN)+15;
   ((struct glx_vars *)dmp->dm_vars)->mvars.max_scr_z = getgdesc(GD_ZMAX)-15;
 
-  if( ((struct glx_vars *)dmp->dm_vars)->mvars.doublebuffer){
+  if ( ((struct glx_vars *)dmp->dm_vars)->mvars.doublebuffer){
     /* Clear out image from windows underneath */
     frontbuffer(1);
     glx_clearToBlack(dmp);
@@ -496,22 +496,22 @@ char *argv[];
   }
 
   /* IRIX 4.0.5 bug workaround */
-  if( list == (XDeviceInfoPtr)NULL ||
+  if ( list == (XDeviceInfoPtr)NULL ||
       list == (XDeviceInfoPtr)1 )  goto Done;
 
-  for(j = 0; j < ndevices; ++j, list++){
-    if(list->use == IsXExtensionDevice){
-      if(!strcmp(list->name, "dial+buttons")){
-	if((dev = XOpenDevice(((struct glx_vars *)dmp->dm_vars)->dpy,
+  for (j = 0; j < ndevices; ++j, list++){
+    if (list->use == IsXExtensionDevice){
+      if (!strcmp(list->name, "dial+buttons")){
+	if ((dev = XOpenDevice(((struct glx_vars *)dmp->dm_vars)->dpy,
 			      list->id)) == (XDevice *)NULL){
 	  Tcl_AppendResult(interp, "glx_open: Couldn't open the dials+buttons\n",
 			   (char *)NULL);
 	  goto Done;
 	}
 
-	for(cip = dev->classes, k = 0; k < dev->num_classes;
+	for (cip = dev->classes, k = 0; k < dev->num_classes;
 	    ++k, ++cip){
-	  switch(cip->input_class){
+	  switch (cip->input_class){
 #ifdef IR_BUTTONS
 	  case ButtonClass:
 	    DeviceButtonPress(dev, ((struct glx_vars *)dmp->dm_vars)->devbuttonpress,
@@ -574,7 +574,7 @@ struct dm *dmp;
   viewport(0, dmp->dm_width, 0,
 	   dmp->dm_height);
 
-  if( ((struct glx_vars *)dmp->dm_vars)->mvars.zbuf )
+  if ( ((struct glx_vars *)dmp->dm_vars)->mvars.zbuf )
     glx_zbuffer(dmp);
 
   glx_lighting(dmp);
@@ -596,8 +596,8 @@ static int
 glx_close(dmp)
 struct dm *dmp;
 {
-  if(((struct glx_vars *)dmp->dm_vars)->dpy){
-    if(((struct glx_vars *)dmp->dm_vars)->mvars.cueing_on)
+  if (((struct glx_vars *)dmp->dm_vars)->dpy){
+    if (((struct glx_vars *)dmp->dm_vars)->mvars.cueing_on)
       depthcue(0);
 
     lampoff( 0xf );
@@ -617,10 +617,10 @@ struct dm *dmp;
 	      ((struct glx_vars *)dmp->dm_vars)->win);
   }
 
-  if(((struct glx_vars *)dmp->dm_vars)->xtkwin != NULL)
+  if (((struct glx_vars *)dmp->dm_vars)->xtkwin != NULL)
     Tk_DestroyWindow(((struct glx_vars *)dmp->dm_vars)->xtkwin);
 
-  if(((struct glx_vars *)dmp->dm_vars)->l.forw != BU_LIST_NULL)
+  if (((struct glx_vars *)dmp->dm_vars)->l.forw != BU_LIST_NULL)
     BU_LIST_DEQUEUE(&((struct glx_vars *)dmp->dm_vars)->l);
 
   bu_vls_free(&dmp->dm_pathName);
@@ -645,7 +645,7 @@ struct dm *dmp;
   if (((struct glx_vars *)dmp->dm_vars)->mvars.debug)
     Tcl_AppendResult(interp, "glx_drawBegin()\n", (char *)NULL);
 
-  if(GLXwinset(((struct glx_vars *)dmp->dm_vars)->dpy,
+  if (GLXwinset(((struct glx_vars *)dmp->dm_vars)->dpy,
 	       ((struct glx_vars *)dmp->dm_vars)->win) < 0){
     Tcl_AppendResult(interp, "glx_drawBegin: GLXwinset() failed\n", (char *)NULL);
     return TCL_ERROR;
@@ -653,7 +653,7 @@ struct dm *dmp;
 
   ortho( -xlim_view, xlim_view, -ylim_view, ylim_view, -1.0, 1.0 );
 
-  if( !((struct glx_vars *)dmp->dm_vars)->mvars.doublebuffer )
+  if ( !((struct glx_vars *)dmp->dm_vars)->mvars.doublebuffer )
     glx_clearToBlack(dmp);
 
   return TCL_OK;
@@ -678,7 +678,7 @@ struct dm *dmp;
   glx_drawLine2D( dmp, 0, 0, 0, 0, 0 );
   /* End of faceplate */
 
-  if(((struct glx_vars *)dmp->dm_vars)->mvars.doublebuffer){
+  if (((struct glx_vars *)dmp->dm_vars)->mvars.doublebuffer){
     swapbuffers();
     /* give Graphics pipe time to work */
     glx_clearToBlack(dmp);
@@ -742,7 +742,7 @@ int which_eye;
   mat_t	newm;
   int	i;
 
-  if(((struct glx_vars *)dmp->dm_vars)->mvars.debug){
+  if (((struct glx_vars *)dmp->dm_vars)->mvars.debug){
     struct bu_vls tmp_vls;
 
     Tcl_AppendResult(interp, "glx_loadMatrix()\n", (char *)NULL);
@@ -759,7 +759,7 @@ int which_eye;
     bu_vls_free(&tmp_vls);
   }
 
-  switch(which_eye)  {
+  switch (which_eye)  {
   case 0:
     /* Non-stereo */
     break;
@@ -774,7 +774,7 @@ int which_eye;
     break;
   }
 
-  if( ! ((struct glx_vars *)dmp->dm_vars)->mvars.zclipping_on ) {
+  if ( ! ((struct glx_vars *)dmp->dm_vars)->mvars.zclipping_on ) {
     mat_t	nozclip;
 
     MAT_IDN( nozclip );
@@ -858,16 +858,16 @@ register struct bn_vlist *vp;
 
   /* Viewing region is from -1.0 to +1.0 */
   first = 1;
-  for( BU_LIST_FOR( tvp, bn_vlist, &vp->l ) )  {
+  for ( BU_LIST_FOR( tvp, bn_vlist, &vp->l ) )  {
     register int	i;
     register int	nused = tvp->nused;
     register int	*cmd = tvp->cmd;
     register point_t *pt = tvp->pt;
-    for( i = 0; i < nused; i++, cmd++, pt++ )  {
-      switch( *cmd )  {
+    for ( i = 0; i < nused; i++, cmd++, pt++ )  {
+      switch ( *cmd )  {
       case BN_VLIST_LINE_MOVE:
 	/* Move, start line */
-	  if( first == 0 )
+	  if ( first == 0 )
 	    endline();
 	  first = 0;
 	  bgnline();
@@ -879,7 +879,7 @@ register struct bn_vlist *vp;
 	break;
       case BN_VLIST_POLY_START:
 	/* Start poly marker & normal */
-	if( first == 0 )
+	if ( first == 0 )
 	  endline();
 	/* concave(TRUE); */
 	bgnpolygon();
@@ -910,7 +910,7 @@ register struct bn_vlist *vp;
     }
   }
 
-  if( first == 0 )
+  if ( first == 0 )
     endline();
 
   return TCL_OK;
@@ -934,7 +934,7 @@ int use_aspect;
   if (((struct glx_vars *)dmp->dm_vars)->mvars.debug)
     Tcl_AppendResult(interp, "glx_drawString2D()\n", (char *)NULL);
 
-  if(use_aspect)
+  if (use_aspect)
     cmov2( GED2IRIS(x) * dmp->dm_aspect, GED2IRIS(y));
   else
     cmov2( GED2IRIS(x), GED2IRIS(y));
@@ -1003,8 +1003,8 @@ int strict;
    * otherwise it can (and does) fall off the shading ramp.
    */
 
-  if(strict){
-    if(((struct glx_vars *)dmp->dm_vars)->mvars.cueing_on) {
+  if (strict){
+    if (((struct glx_vars *)dmp->dm_vars)->mvars.cueing_on) {
       lRGBrange(r, g, b, r, g, b,
 		((struct glx_vars *)dmp->dm_vars)->mvars.min_scr_z,
 		((struct glx_vars *)dmp->dm_vars)->mvars.max_scr_z );
@@ -1012,11 +1012,11 @@ int strict;
 
     RGBcolor( r, g, b );
   }else{
-    if(((struct glx_vars *)dmp->dm_vars)->mvars.cueing_on)  {
+    if (((struct glx_vars *)dmp->dm_vars)->mvars.cueing_on)  {
       lRGBrange(r/10, g/10, b/10, r, g, b,
 		((struct glx_vars *)dmp->dm_vars)->mvars.min_scr_z,
 		((struct glx_vars *)dmp->dm_vars)->mvars.max_scr_z );
-    } else if(((struct glx_vars *)dmp->dm_vars)->mvars.lighting_on) {
+    } else if (((struct glx_vars *)dmp->dm_vars)->mvars.lighting_on) {
       /* Ambient = .2, Diffuse = .6, Specular = .2 */
 
       /* Ambient */
@@ -1061,7 +1061,7 @@ int style;
 
   linewidth(width);
 
-  if(style == DM_DASHED_LINE)
+  if (style == DM_DASHED_LINE)
     setlinestyle(1);
   else
     setlinestyle(0);
@@ -1109,7 +1109,7 @@ struct dm *dmp;
   if (((struct glx_vars *)dmp->dm_vars)->mvars.debug)
     Tcl_AppendResult(interp, "glx_zbuffer()\n", (char *)NULL);
 
-  if( ((struct glx_vars *)dmp->dm_vars)->mvars.zbuf == 0 )  {
+  if ( ((struct glx_vars *)dmp->dm_vars)->mvars.zbuf == 0 )  {
     Tcl_AppendResult(interp, "dm-glx: This machine has no Zbuffer to enable\n",
 		     (char *)NULL);
     ((struct glx_vars *)dmp->dm_vars)->mvars.zbuffer_on = 0;
@@ -1117,7 +1117,7 @@ struct dm *dmp;
 
   zbuffer( ((struct glx_vars *)dmp->dm_vars)->mvars.zbuffer_on );
 
-  if(((struct glx_vars *)dmp->dm_vars)->mvars.zbuffer_on)  {
+  if (((struct glx_vars *)dmp->dm_vars)->mvars.zbuffer_on)  {
     /* Set screen coords of near and far clipping planes */
     lsetdepth(((struct glx_vars *)dmp->dm_vars)->mvars.min_scr_z,
 	      ((struct glx_vars *)dmp->dm_vars)->mvars.max_scr_z);
@@ -1135,15 +1135,15 @@ struct dm *dmp;
   viewport(0, dmp->dm_width, 0,
 	   dmp->dm_height);
 
-  if( ((struct glx_vars *)dmp->dm_vars)->mvars.zbuffer_on )  {
+  if ( ((struct glx_vars *)dmp->dm_vars)->mvars.zbuffer_on )  {
     zfunction( ZF_LEQUAL );
-    if( ((struct glx_vars *)dmp->dm_vars)->mvars.rgb )  {
+    if ( ((struct glx_vars *)dmp->dm_vars)->mvars.rgb )  {
       czclear( 0x000000, ((struct glx_vars *)dmp->dm_vars)->mvars.max_scr_z );
     } else {
       czclear( BLACK, ((struct glx_vars *)dmp->dm_vars)->mvars.max_scr_z );
     }
   } else {
-    if( ((struct glx_vars *)dmp->dm_vars)->mvars.rgb )  {
+    if ( ((struct glx_vars *)dmp->dm_vars)->mvars.rgb )  {
       RGBcolor( (short)0, (short)0, (short)0 );
     } else {
       color(BLACK);
@@ -1178,7 +1178,7 @@ struct dm *dmp;
   if (((struct glx_vars *)dmp->dm_vars)->mvars.debug)
     Tcl_AppendResult(interp, "glx_lighting()\n", (char *)NULL);
 
-  if( !((struct glx_vars *)dmp->dm_vars)->mvars.lighting_on )  {
+  if ( !((struct glx_vars *)dmp->dm_vars)->mvars.lighting_on )  {
     /* Turn it off */
     mmode(MVIEWING);
     lmbind(MATERIAL, 0);
@@ -1186,7 +1186,7 @@ struct dm *dmp;
     mmode(MSINGLE);
   } else {
     /* Turn it on */
-    if( ((struct glx_vars *)dmp->dm_vars)->mvars.cueing_on )  {
+    if ( ((struct glx_vars *)dmp->dm_vars)->mvars.cueing_on )  {
       /* Has to be off for lighting */
       ((struct glx_vars *)dmp->dm_vars)->mvars.cueing_on = 0;
 #if 0
@@ -1596,14 +1596,14 @@ glx_has_stereo()
 	rw1 = rw_orig ^ DER1_STEREO;	/* Toggle the bit */
 	setvideo(DE_R1, rw1);
 	rw2 = getvideo(DE_R1);
-	if( rw1 != rw2 )  {
+	if ( rw1 != rw2 )  {
 		setvideo(DE_R1, rw_orig);/* Restore original state */
 		return 1;		/* Has stereo */
 	}
 	rw1 = rw1 ^ DER1_STEREO;	/* Toggle the bit, again */
 	setvideo(DE_R1, rw1);
 	rw2 = getvideo(DE_R1);
-	if( rw1 != rw2 )  {
+	if ( rw1 != rw2 )  {
 		setvideo(DE_R1, rw_orig);/* Restore original state */
 		return 1;		/* Has stereo */
 	}
@@ -1729,7 +1729,7 @@ int range;
   if (((struct glx_vars *)dmp->dm_vars)->mvars.debug)
     Tcl_AppendResult(interp, "glx_freeDLists()\n", (char *)NULL);
 
-  for(i = 0; i < range; ++i)
+  for (i = 0; i < range; ++i)
     delobj((Object)(list + i));
 
   return TCL_OK;

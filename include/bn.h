@@ -87,9 +87,9 @@ __BEGIN_DECLS
 		point_t	a, b;
 		vect_t	diff;
 		VSUB2( diff, a, b );
-		if( MAGNITUDE(diff) < tol->dist )	a & b are the same.
+		if ( MAGNITUDE(diff) < tol->dist )	a & b are the same.
 	or, more efficiently:
-		if( MAQSQ(diff) < tol->dist_sq )
+		if ( MAQSQ(diff) < tol->dist_sq )
 @endcode
  *  perp & para establish the angular tolerance.
  *
@@ -99,8 +99,8 @@ __BEGIN_DECLS
  *	For example:
 @code
 		vect_t	a, b;
-		if( fabs(VDOT(a, b)) >= tol->para )	a & b are parallel
-		if( fabs(VDOT(a, b)) <= tol->perp )	a & b are perpendicular
+		if ( fabs(VDOT(a, b)) >= tol->para )	a & b are parallel
+		if ( fabs(VDOT(a, b)) <= tol->perp )	a & b are perpendicular
 @endcode
  *
  *  @note
@@ -117,9 +117,9 @@ struct bn_tol {
 #define BN_TOL_MAGIC	0x98c734bb
 #define BN_CK_TOL(_p)	BU_CKMAG(_p, BN_TOL_MAGIC, "bn_tol")
 
-#define	BN_VECT_ARE_PARALLEL(_dot,_tol)		\
+#define	BN_VECT_ARE_PARALLEL(_dot, _tol)		\
 	(((_dot) < 0) ? ((-(_dot))>=(_tol)->para) : ((_dot) >= (_tol)->para))
-#define BN_VECT_ARE_PERP(_dot,_tol)		\
+#define BN_VECT_ARE_PERP(_dot, _tol)		\
 	(((_dot) < 0) ? ((-(_dot))<=(_tol)->perp) : ((_dot) <= (_tol)->perp))
 
 #define BN_APPROXEQUAL(_a, _b, _tol) (fabs( (_a) - (_b) ) <= _tol->dist)
@@ -371,7 +371,7 @@ BN_EXPORT BU_EXTERN(double bn_atan2,
 	(_d)[14] = (_s)[14];\
 	(_d)[15] = (_s)[15]; }
   /*
-#define bn_mat_copy(_d,_s)	(void)memcpy( (void *)_d, (const void *)(_s), sizeof(mat_t))
+#define bn_mat_copy(_d, _s)	(void)memcpy( (void *)_d, (const void *)(_s), sizeof(mat_t))
   */
 
 
@@ -571,14 +571,14 @@ BN_EXPORT BU_EXTERN(double bn_gauss_fill,
 		(_p)->msr_doubles[--(_p)->msr_double_ptr] : \
 		bn_unif_double_fill(_p))
 
-#define BN_UNIF_CIRCLE(_p,_x,_y,_r) { \
+#define BN_UNIF_CIRCLE(_p, _x, _y, _r) { \
 	do { \
 		(_x) = 2.0*BN_UNIF_DOUBLE((_p)); \
 		(_y) = 2.0*BN_UNIF_DOUBLE((_p)); \
 		(_r) = (_x)*(_x)+(_y)*(_y); \
 	} while ((_r) >= 1.0);  }
 
-#define	BN_UNIF_SPHERE(_p,_x,_y,_z,_r) { \
+#define	BN_UNIF_SPHERE(_p, _x, _y, _z, _r) { \
 	do { \
 		(_x) = 2.0*BN_UNIF_DOUBLE(_p); \
 		(_y) = 2.0*BN_UNIF_DOUBLE(_p); \
@@ -1035,7 +1035,7 @@ BN_EXPORT extern void bn_mathtab_constant();
 /* wavelet.c */
 
 #define CK_POW_2(dimen) { register unsigned long j; register int ok;\
-	for (ok=0, j=0 ; j < sizeof(unsigned long) * 8 ; j++) { \
+	for (ok=0, j=0; j < sizeof(unsigned long) * 8; j++) { \
 		if ( (unsigned long)(1<<j) == dimen) { ok = 1;  break; } \
 	} \
 	if ( ! ok ) { \
@@ -1371,7 +1371,7 @@ struct bn_table {
 /* Gets an bn_table, with x[] having size _nx+1 */
 #ifndef NO_BOMBING_MACROS
 #  define BN_GET_TABLE(_table, _nx)  { \
-	if( (_nx) < 1 )  bu_bomb("RT_GET_TABLE() _nx < 1\n"); \
+	if ( (_nx) < 1 )  bu_bomb("RT_GET_TABLE() _nx < 1\n"); \
 	_table = (struct bn_table *)bu_calloc( 1, \
 		sizeof(struct bn_table) + sizeof(fastf_t)*(_nx), \
 		"struct bn_table" ); \
@@ -1575,12 +1575,12 @@ BN_EXPORT BU_EXTERN(struct bn_tabdata *bn_tabdata_mk_linear_filter,
  *  The head of the doubly linked list can be just a "struct bu_list" head.
  *
  *  To visit all the elements in the vlist:
- *	for( BU_LIST_FOR( vp, rt_vlist, hp ) )  {
+ *	for ( BU_LIST_FOR( vp, rt_vlist, hp ) )  {
  *		register int	i;
  *		register int	nused = vp->nused;
  *		register int	*cmd = vp->cmd;
  *		register point_t *pt = vp->pt;
- *		for( i = 0; i < nused; i++, cmd++, pt++ )  {
+ *		for ( i = 0; i < nused; i++, cmd++, pt++ )  {
  *			access( *cmd, *pt );
  *			access( vp->cmd[i], vp->pt[i] );
  *		}
@@ -1595,7 +1595,7 @@ struct bn_vlist  {
 #define BN_VLIST_NULL	((struct bn_vlist *)0)
 #define BN_VLIST_MAGIC	0x98237474
 #define BN_CK_VLIST(_p) BU_CKMAG((_p), BN_VLIST_MAGIC, "bn_vlist")
-#define BN_CK_VLIST_TCL(_interp,_p) BU_CKMAG_TCL(_interp,(_p), BN_VLIST_MAGIC, "bn_vlist")
+#define BN_CK_VLIST_TCL(_interp, _p) BU_CKMAG_TCL(_interp, (_p), BN_VLIST_MAGIC, "bn_vlist")
 
 /* Values for cmd[] */
 #define BN_VLIST_LINE_MOVE	0
@@ -1615,7 +1615,7 @@ struct bn_vlist  {
  */
 #define BN_GET_VLIST(_free_hd, p) {\
 		(p) = BU_LIST_FIRST( bn_vlist, (_free_hd) ); \
-		if( BU_LIST_IS_HEAD( (p), (_free_hd) ) )  { \
+		if ( BU_LIST_IS_HEAD( (p), (_free_hd) ) )  { \
 			(p) = (struct bn_vlist *)bu_malloc(sizeof(struct bn_vlist), "bn_vlist"); \
 			(p)->l.magic = BN_VLIST_MAGIC; \
 		} else { \
@@ -1630,11 +1630,11 @@ struct bn_vlist  {
 	BU_LIST_APPEND_LIST( (_free_hd), (hd) ); \
 	}
 
-#define BN_ADD_VLIST(_free_hd,_dest_hd, pnt, draw)  { \
+#define BN_ADD_VLIST(_free_hd, _dest_hd, pnt, draw)  { \
 	register struct bn_vlist *_vp; \
 	BU_CK_LIST_HEAD( _dest_hd ); \
 	_vp = BU_LIST_LAST( bn_vlist, (_dest_hd) ); \
-	if( BU_LIST_IS_HEAD( _vp, (_dest_hd) ) || _vp->nused >= BN_VLIST_CHUNK )  { \
+	if ( BU_LIST_IS_HEAD( _vp, (_dest_hd) ) || _vp->nused >= BN_VLIST_CHUNK )  { \
 		BN_GET_VLIST(_free_hd, _vp); \
 		BU_LIST_INSERT( (_dest_hd), &(_vp->l) ); \
 	} \

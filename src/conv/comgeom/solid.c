@@ -90,9 +90,9 @@ getsoldata(double *dp, int num, int solid_num)
 	int	j;
 
 	fp = dp;
-	for( cd=1; num > 0; cd++ )  {
-		if( cd != 1 )  {
-			if( get_line( scard, sizeof(scard), "solid continuation card" ) == EOF )  {
+	for ( cd=1; num > 0; cd++ )  {
+		if ( cd != 1 )  {
+			if ( get_line( scard, sizeof(scard), "solid continuation card" ) == EOF )  {
 				printf("too few cards for solid %d\n",
 					solid_num);
 				return(-1);
@@ -100,7 +100,7 @@ getsoldata(double *dp, int num, int solid_num)
 			/* continuation card
 			 * solid type should be blank
 			 */
-			if( (version==5 && scard[5] != ' ' ) ||
+			if ( (version==5 && scard[5] != ' ' ) ||
 			    (version==4 && scard[3] != ' ' ) )  {
 				printf("solid %d (continuation) card %d non-blank\n",
 					solid_num, cd);
@@ -108,12 +108,12 @@ getsoldata(double *dp, int num, int solid_num)
 			}
 		}
 
-		if( num < 6 )
+		if ( num < 6 )
 			j = num;
 		else
 			j = 6;
 
-		for( i=0; i<j; i++ )  {
+		for ( i=0; i<j; i++ )  {
 			*fp++ = getdouble( scard, 10+i*10, 10 );
 		}
 		num -= j;
@@ -140,17 +140,17 @@ getxsoldata(double *dp, int num, int solid_num)
 	int	j;
 
 	fp = dp;
-	for( cd=1; num > 0; cd++ )  {
-		if( get_line( scard, sizeof(scard), "x solid card" ) == EOF )  {
+	for ( cd=1; num > 0; cd++ )  {
+		if ( get_line( scard, sizeof(scard), "x solid card" ) == EOF )  {
 			printf("too few cards for solid %d\n",
 				solid_num);
 			return(-1);
 		}
-		if( cd != 1 )  {
+		if ( cd != 1 )  {
 			/* continuation card
 			 * solid type should be blank
 			 */
-			if( (version==5 && scard[5] != ' ' ) ||
+			if ( (version==5 && scard[5] != ' ' ) ||
 			    (version==4 && scard[3] != ' ' ) )  {
 				printf("solid %d (continuation) card %d non-blank\n",
 					solid_num, cd);
@@ -158,12 +158,12 @@ getxsoldata(double *dp, int num, int solid_num)
 			}
 		}
 
-		if( num < 6 )
+		if ( num < 6 )
 			j = num;
 		else
 			j = 6;
 
-		for( i=0; i<j; i++ )  {
+		for ( i=0; i<j; i++ )  {
 			*fp++ = getdouble( scard, 10+i*10, 10 );
 		}
 		num -= j;
@@ -180,8 +180,8 @@ trim_trail_spaces(register char *cp)
 	register char	*ep;
 
 	ep = cp + strlen(cp) - 1;
-	while( ep >= cp )  {
-		if( *ep != ' ' )  break;
+	while ( ep >= cp )  {
+		if ( *ep != ' ' )  break;
 		*ep-- = '\0';
 	}
 }
@@ -210,12 +210,12 @@ getsolid(void)
 #define D(_i)	(&(dd[_i*3]))
 #define T(_i)	(&(tmp[_i][0]))
 
-	if( (i = get_line( scard, sizeof(scard), "solid card" )) == EOF )  {
+	if ( (i = get_line( scard, sizeof(scard), "solid card" )) == EOF )  {
 		printf("getsolid: unexpected EOF\n");
 		return( 1 );
 	}
 
-	switch( version )  {
+	switch ( version )  {
 	case 5:
 		strncpy( given_solid_num, scard+0, 5 );
 		given_solid_num[5] = '\0';
@@ -248,8 +248,8 @@ getsolid(void)
 	 * pseudo-hex format in version 4 models (due to 3 column limit).
 	 */
 	sol_work++;
-	if( version == 5 )  {
-		if( (i = getint( scard, 0, 5 )) != sol_work )  {
+	if ( version == 5 )  {
+		if ( (i = getint( scard, 0, 5 )) != sol_work )  {
 			printf("expected solid card %d, got %d, abort\n",
 				sol_work, i );
 			return(1);
@@ -262,10 +262,10 @@ getsolid(void)
 		register char	c;
 
 		cp = solid_type;
-		while( (c = *cp) != '\0' )  {
-			if( !isascii(c) )  {
+		while ( (c = *cp) != '\0' )  {
+			if ( !isascii(c) )  {
 				*cp++ = '?';
-			} else if( isupper(c) )  {
+			} else if ( isupper(c) )  {
 				*cp++ = tolower(c);
 			} else {
 				cp++;
@@ -274,15 +274,15 @@ getsolid(void)
 	}
 
 	namecvt( sol_work, &name, 's' );
-	if(verbose) col_pr( name );
+	if (verbose) col_pr( name );
 
-	if( strcmp( solid_type, "end" ) == 0 )  {
+	if ( strcmp( solid_type, "end" ) == 0 )  {
 		/* DoE/MORSE version 1 format */
 		bu_free( name, "name" );
 		return(1);		/* END */
 	}
 
-	if( strcmp( solid_type, "ars" ) == 0 )  {
+	if ( strcmp( solid_type, "ars" ) == 0 )  {
 		int		ncurves;
 		int		pts_per_curve;
 		double		**curve;
@@ -294,22 +294,22 @@ getsolid(void)
 		curve = (double **)bu_malloc((ncurves+1)*sizeof(double *), "curve");
 
 		/* Allocate space for a curve, and read it in */
-		for( i=0; i<ncurves; i++ )  {
+		for ( i=0; i<ncurves; i++ )  {
 			curve[i] = (double *)bu_malloc((pts_per_curve+1)*3*sizeof(double), "curve[i]" );
 
 			/* Get data for this curve */
-			if( getxsoldata( curve[i], pts_per_curve*3, sol_work ) < 0 )  {
+			if ( getxsoldata( curve[i], pts_per_curve*3, sol_work ) < 0 )  {
 				printf("ARS %d: getxsoldata failed, curve %d\n",
 					sol_work, i);
 				return(-1);
 			}
 		}
-		if( (ret = mk_ars( outfp, name, ncurves, pts_per_curve, curve )) < 0 )  {
+		if ( (ret = mk_ars( outfp, name, ncurves, pts_per_curve, curve )) < 0 )  {
 			printf("mk_ars(%s) failed\n", name );
 			/* Need to free memory; 'ret' is returned below */
 		}
 
-		for( i=0; i<ncurves; i++ )  {
+		for ( i=0; i<ncurves; i++ )  {
 			bu_free( (char *)curve[i], "curve[i]" );
 		}
 		bu_free( (char *)curve, "curve" );
@@ -317,10 +317,10 @@ getsolid(void)
 		return(ret);
 	}
 
-	if( strcmp( solid_type, "rpp" ) == 0 )  {
+	if ( strcmp( solid_type, "rpp" ) == 0 )  {
 		double	min[3], max[3];
 
-		if( getsoldata( dd, 2*3, sol_work ) < 0 )
+		if ( getsoldata( dd, 2*3, sol_work ) < 0 )
 			return(-1);
 		VSET( min, dd[0], dd[2], dd[4] );
 		VSET( max, dd[1], dd[3], dd[5] );
@@ -329,8 +329,8 @@ getsolid(void)
 		return(ret);
 	}
 
-	if( strcmp( solid_type, "box" ) == 0 )  {
-		if( getsoldata( dd, 4*3, sol_work ) < 0 )
+	if ( strcmp( solid_type, "box" ) == 0 )  {
+		if ( getsoldata( dd, 4*3, sol_work ) < 0 )
 			return(-1);
 		VMOVE( T(0), D(0) );
 		VADD2( T(1), D(0), D(2) );
@@ -346,10 +346,10 @@ getsolid(void)
 		return(ret);
 	}
 
-	if( strcmp( solid_type, "raw" ) == 0 ||
+	if ( strcmp( solid_type, "raw" ) == 0 ||
 	    strcmp( solid_type, "wed" ) == 0		/* DoE name */
 	)  {
-		if( getsoldata( dd, 4*3, sol_work ) < 0 )
+		if ( getsoldata( dd, 4*3, sol_work ) < 0 )
 			return(-1);
 		VMOVE( T(0), D(0) );
 		VADD2( T(1), D(0), D(2) );
@@ -365,14 +365,14 @@ getsolid(void)
 		return(ret);
 	}
 
-	if( strcmp( solid_type, "rvw" ) == 0 )  {
+	if ( strcmp( solid_type, "rvw" ) == 0 )  {
 		/* Right Vertical Wedge (Origin: DoE/MORSE) */
 		double	a2, theta, phi, h2;
 		double	a2theta;
 		double	angle1, angle2;
 		vect_t	a, b, c;
 
-		if( getsoldata( dd, 1*3+4, sol_work ) < 0 )
+		if ( getsoldata( dd, 1*3+4, sol_work ) < 0 )
 			return(-1);
 		a2 = dd[3];		/* XY side length */
 		theta = dd[4];
@@ -401,9 +401,9 @@ getsolid(void)
 		return(ret);
 	}
 
-	if( strcmp( solid_type, "arw" ) == 0) {
+	if ( strcmp( solid_type, "arw" ) == 0) {
 		/* ARbitrary Wedge --- ERIM */
-		if( getsoldata( dd, 4*3, sol_work ) < 0)
+		if ( getsoldata( dd, 4*3, sol_work ) < 0)
 			return(-1);
 		VMOVE( T(0), D(0) );
 		VADD2( T(1), D(0), D(2) );
@@ -420,16 +420,16 @@ getsolid(void)
 		return(ret);
 	}
 
-	if( strcmp( solid_type, "arb8" ) == 0 )  {
-		if( getsoldata( dd, 8*3, sol_work ) < 0 )
+	if ( strcmp( solid_type, "arb8" ) == 0 )  {
+		if ( getsoldata( dd, 8*3, sol_work ) < 0 )
 			return(-1);
 		ret = mk_arb8( outfp, name, dd );
 		bu_free( name, "name" );
 		return(ret);
 	}
 
-	if( strcmp( solid_type, "arb7" ) == 0 )  {
-		if( getsoldata( dd, 7*3, sol_work ) < 0 )
+	if ( strcmp( solid_type, "arb7" ) == 0 )  {
+		if ( getsoldata( dd, 7*3, sol_work ) < 0 )
 			return(-1);
 		VMOVE( D(7), D(4) );
 		ret = mk_arb8( outfp, name, dd );
@@ -437,8 +437,8 @@ getsolid(void)
 		return(ret);
 	}
 
-	if( strcmp( solid_type, "arb6" ) == 0 )  {
-		if( getsoldata( dd, 6*3, sol_work ) < 0 )
+	if ( strcmp( solid_type, "arb6" ) == 0 )  {
+		if ( getsoldata( dd, 6*3, sol_work ) < 0 )
 			return(-1);
 		/* Note that the ordering is important, as data is in D(4), D(5) */
 		VMOVE( D(7), D(5) );
@@ -449,8 +449,8 @@ getsolid(void)
 		return(ret);
 	}
 
-	if( strcmp( solid_type, "arb5" ) == 0 )  {
-		if( getsoldata( dd, 5*3, sol_work ) < 0 )
+	if ( strcmp( solid_type, "arb5" ) == 0 )  {
+		if ( getsoldata( dd, 5*3, sol_work ) < 0 )
 			return(-1);
 		VMOVE( D(5), D(4) );
 		VMOVE( D(6), D(4) );
@@ -460,26 +460,26 @@ getsolid(void)
 		return(ret);
 	}
 
-	if( strcmp( solid_type, "arb4" ) == 0 )  {
-		if( getsoldata( dd, 4*3, sol_work ) < 0 )
+	if ( strcmp( solid_type, "arb4" ) == 0 )  {
+		if ( getsoldata( dd, 4*3, sol_work ) < 0 )
 			return(-1);
 		ret = mk_arb4( outfp, name, dd );
 		bu_free( name, "name" );
 		return(ret);
 	}
 
-	if( strcmp( solid_type, "rcc" ) == 0 )  {
+	if ( strcmp( solid_type, "rcc" ) == 0 )  {
 		/* V, H, r */
-		if( getsoldata( dd, 2*3+1, sol_work ) < 0 )
+		if ( getsoldata( dd, 2*3+1, sol_work ) < 0 )
 			return(-1);
 		ret = mk_rcc( outfp, name, D(0), D(1), dd[6] );
 		bu_free( name, "name" );
 		return(ret);
 	}
 
-	if( strcmp( solid_type, "rec" ) == 0 )  {
+	if ( strcmp( solid_type, "rec" ) == 0 )  {
 		/* V, H, A, B */
-		if( getsoldata( dd, 4*3, sol_work ) < 0 )
+		if ( getsoldata( dd, 4*3, sol_work ) < 0 )
 			return(-1);
 		ret = mk_tgc( outfp, name, D(0), D(1),
 			      D(2), D(3), D(2), D(3) );
@@ -487,18 +487,18 @@ getsolid(void)
 		return(ret);
 	}
 
-	if( strcmp( solid_type, "trc" ) == 0 )  {
+	if ( strcmp( solid_type, "trc" ) == 0 )  {
 		/* V, H, r1, r2 */
-		if( getsoldata( dd, 2*3+2, sol_work ) < 0 )
+		if ( getsoldata( dd, 2*3+2, sol_work ) < 0 )
 			return(-1);
 		ret = mk_trc_h( outfp, name, D(0), D(1), dd[6], dd[7] );
 		bu_free( name, "name" );
 		return(ret);
 	}
 
-	if( strcmp( solid_type, "tec" ) == 0 )  {
+	if ( strcmp( solid_type, "tec" ) == 0 )  {
 		/* V, H, A, B, p */
-		if( getsoldata( dd, 4*3+1, sol_work ) < 0 )
+		if ( getsoldata( dd, 4*3+1, sol_work ) < 0 )
 			return(-1);
 		r1 = 1.0/dd[12];	/* P */
 		VSCALE( D(4), D(2), r1 );
@@ -509,9 +509,9 @@ getsolid(void)
 		return(ret);
 	}
 
-	if( strcmp( solid_type, "tgc" ) == 0 )  {
+	if ( strcmp( solid_type, "tgc" ) == 0 )  {
 		/* V, H, A, B, r1, r2 */
-		if( getsoldata( dd, 4*3+2, sol_work ) < 0 )
+		if ( getsoldata( dd, 4*3+2, sol_work ) < 0 )
 			return(-1);
 		r1 = dd[12] / MAGNITUDE( D(2) );	/* A/|A| * C */
 		r2 = dd[13] / MAGNITUDE( D(3) );	/* B/|B| * D */
@@ -523,16 +523,16 @@ getsolid(void)
 		return(ret);
 	}
 
-	if( strcmp( solid_type, "sph" ) == 0 )  {
+	if ( strcmp( solid_type, "sph" ) == 0 )  {
 		/* V, radius */
-		if( getsoldata( dd, 1*3+1, sol_work ) < 0 )
+		if ( getsoldata( dd, 1*3+1, sol_work ) < 0 )
 			return(-1);
 		ret = mk_sph( outfp, name, D(0), dd[3] );
 		bu_free( name, "name" );
 		return(ret);
 	}
 
-	if( strncmp( solid_type, "wir", 3 ) == 0 )  {
+	if ( strncmp( solid_type, "wir", 3 ) == 0 )  {
 		int			numpts;		/* points per wire */
 		int			num;
 		int			i;
@@ -548,7 +548,7 @@ getsolid(void)
 		/* allocate space for the points array */
 		pts = ( double *)bu_malloc(num * sizeof( double), "pts" );
 
-		if( getsoldata( pts, num, sol_work ) < 0 )  {
+		if ( getsoldata( pts, num, sol_work ) < 0 )  {
 			return(-1);
 		}
 		dia = pts[num-1] * 2.0;	/* radius X 2.0 == diameter */
@@ -557,7 +557,7 @@ getsolid(void)
 		 * the appropriate location.
 		 */
 		BU_LIST_INIT( &head );
-		for( i = 0; i < numpts; i++ )  {
+		for ( i = 0; i < numpts; i++ )  {
 			/* malloc a new structure */
 			ps = (struct wdb_pipept *)bu_malloc(sizeof( struct wdb_pipept), "ps");
 
@@ -569,16 +569,16 @@ getsolid(void)
 			BU_LIST_INSERT( &head, &ps->l );
 		}
 
-		if( mk_pipe( outfp, name, &head ) < 0 )
+		if ( mk_pipe( outfp, name, &head ) < 0 )
 			return(-1);
 		mk_pipe_free( &head );
 		bu_free( name, "name" );
 		return(0);		/* OK */
 	}
 
-	if( strcmp( solid_type, "rpc" ) == 0 )  {
+	if ( strcmp( solid_type, "rpc" ) == 0 )  {
 		/* V, H, B, r */
-		if( getsoldata( dd, 3*3+1, sol_work ) < 0 )
+		if ( getsoldata( dd, 3*3+1, sol_work ) < 0 )
 			return(-1);
 		ret = mk_rpc( outfp, name, D(0), D(1),
 			D(2), dd[9] );
@@ -586,9 +586,9 @@ getsolid(void)
 		return(ret);
 	}
 
-	if( strcmp( solid_type, "rhc" ) == 0 )  {
+	if ( strcmp( solid_type, "rhc" ) == 0 )  {
 		/* V, H, B, r, c */
-		if( getsoldata( dd, 3*3+2, sol_work ) < 0 )
+		if ( getsoldata( dd, 3*3+2, sol_work ) < 0 )
 			return(-1);
 		ret = mk_rhc( outfp, name, D(0), D(1),
 			D(2), dd[9], dd[10] );
@@ -596,9 +596,9 @@ getsolid(void)
 		return(ret);
 	}
 
-	if( strcmp( solid_type, "epa" ) == 0 )  {
+	if ( strcmp( solid_type, "epa" ) == 0 )  {
 		/* V, H, Au, r1, r2 */
-		if( getsoldata( dd, 3*3+2, sol_work ) < 0 )
+		if ( getsoldata( dd, 3*3+2, sol_work ) < 0 )
 			return(-1);
 		ret = mk_epa( outfp, name, D(0), D(1),
 			D(2), dd[9], dd[10] );
@@ -606,9 +606,9 @@ getsolid(void)
 		return(ret);
 	}
 
-	if( strcmp( solid_type, "ehy" ) == 0 )  {
+	if ( strcmp( solid_type, "ehy" ) == 0 )  {
 		/* V, H, Au, r1, r2, c */
-		if( getsoldata( dd, 3*3+3, sol_work ) < 0 )
+		if ( getsoldata( dd, 3*3+3, sol_work ) < 0 )
 			return(-1);
 		ret = mk_ehy( outfp, name, D(0), D(1),
 			D(2), dd[9], dd[10], dd[11] );
@@ -616,9 +616,9 @@ getsolid(void)
 		return(ret);
 	}
 
-	if( strcmp( solid_type, "eto" ) == 0 )  {
+	if ( strcmp( solid_type, "eto" ) == 0 )  {
 		/* V, N, C, r, rd */
-		if( getsoldata( dd, 3*3+2, sol_work ) < 0 )
+		if ( getsoldata( dd, 3*3+2, sol_work ) < 0 )
 			return(-1);
 		ret = mk_eto( outfp, name, D(0), D(1),
 			D(2), dd[9], dd[10] );
@@ -627,7 +627,7 @@ getsolid(void)
 	}
 
 
-	if( version <= 4 && strcmp( solid_type, "ell" ) == 0 )  {
+	if ( version <= 4 && strcmp( solid_type, "ell" ) == 0 )  {
 		/* Foci F1, F2, major axis length L */
 		vect_t	v;
 
@@ -637,7 +637,7 @@ getsolid(void)
 		 * Format of ELL is F1, F2, len
 		 * ELL1 format is V, A, r
 		 */
-		if( getsoldata( dd, 2*3+1, sol_work ) < 0 )
+		if ( getsoldata( dd, 2*3+1, sol_work ) < 0 )
 			return(-1);
 		VADD2SCALE( v, D(0), D(1), 0.5 ); /* V is midpoint */
 
@@ -652,11 +652,11 @@ getsolid(void)
 		goto ell1;
 	}
 
-	if( (version == 5 && strcmp( solid_type, "ell" ) == 0)  ||
+	if ( (version == 5 && strcmp( solid_type, "ell" ) == 0)  ||
 	    strcmp( solid_type, "ell1" ) == 0 )  {
 		/* V, A, r */
 		/* GIFT4 name is "ell1", GIFT5 name is "ell" */
-		if( getsoldata( dd, 2*3+1, sol_work ) < 0 )
+		if ( getsoldata( dd, 2*3+1, sol_work ) < 0 )
 			return(-1);
 
 ell1:
@@ -679,34 +679,34 @@ ell1:
 		return(ret);
 	}
 
-	if( strcmp( solid_type, "ellg" ) == 0 )  {
+	if ( strcmp( solid_type, "ellg" ) == 0 )  {
 		/* V, A, B, C */
-		if( getsoldata( dd, 4*3, sol_work ) < 0 )
+		if ( getsoldata( dd, 4*3, sol_work ) < 0 )
 			return(-1);
 		ret = mk_ell( outfp, name, D(0), D(1), D(2), D(3) );
 		bu_free( name, "name" );
 		return(ret);
 	}
 
-	if( strcmp( solid_type, "tor" ) == 0 )  {
+	if ( strcmp( solid_type, "tor" ) == 0 )  {
 		/* V, N, r1, r2 */
-		if( getsoldata( dd, 2*3+2, sol_work ) < 0 )
+		if ( getsoldata( dd, 2*3+2, sol_work ) < 0 )
 			return(-1);
 		ret = mk_tor( outfp, name, D(0), D(1), dd[6], dd[7] );
 		bu_free( name, "name" );
 		return(ret);
 	}
 
-	if( strcmp( solid_type, "haf" ) == 0 )  {
+	if ( strcmp( solid_type, "haf" ) == 0 )  {
 		/* N, d */
-		if( getsoldata( dd, 1*3+1, sol_work ) < 0 )
+		if ( getsoldata( dd, 1*3+1, sol_work ) < 0 )
 			return(-1);
 		ret = mk_half( outfp, name, D(0), -dd[3] );
 		bu_free( name, "name" );
 		return(ret);
 	}
 
-	if( strcmp( solid_type, "arbn" ) == 0 )  {
+	if ( strcmp( solid_type, "arbn" ) == 0 )  {
 		ret = read_arbn( name );
 		bu_free( name, "name" );
 	}
@@ -755,14 +755,14 @@ read_arbn(char *name)
 	nae = getint( scard, 10+3*10, 10 );
 
 	nface = npe + neq + nae;
-	if( npt < 1 )  {
+	if ( npt < 1 )  {
 		/* Having one point is necessary to compute centroid */
 		printf("arbn defined without at least one point\n");
 bad:
-		if(npt>0) eat( (npt+1)/2 );	/* vertex input_points */
-		if(npe>0) eat( (npe+5)/6 );	/* vertex pt index numbers */
-		if(neq>0) eat( neq );		/* plane eqns? */
-		if(nae>0) eat( (nae+1)/2 );	/* az el & vertex index? */
+		if (npt>0) eat( (npt+1)/2 );	/* vertex input_points */
+		if (npe>0) eat( (npe+5)/6 );	/* vertex pt index numbers */
+		if (neq>0) eat( neq );		/* plane eqns? */
+		if (nae>0) eat( (nae+1)/2 );	/* az el & vertex index? */
 		return(-1);
 	}
 
@@ -772,22 +772,22 @@ bad:
 	/* Allocate storage for per-plane use count */
 	used = (int *)bu_malloc(nface*sizeof(int), "used");
 
-	if( npt >= 1 )  {
+	if ( npt >= 1 )  {
 		/* Obtain vertex input_points */
 		input_points = (double *)bu_malloc(npt*3*sizeof(double), "input_points");
 
-		if( getxsoldata( input_points, npt*3, sol_work ) < 0 )
+		if ( getxsoldata( input_points, npt*3, sol_work ) < 0 )
 			goto bad;
 	}
 
 	/* Get planes defined by three points, 6 per card */
-	for( i=0; i<npe; i += 6 )  {
-		if( get_line( scard, sizeof(scard), "arbn vertex point indices" ) == EOF )  {
+	for ( i=0; i<npe; i += 6 )  {
+		if ( get_line( scard, sizeof(scard), "arbn vertex point indices" ) == EOF )  {
 			printf("too few cards for arbn %d\n",
 				sol_work);
 			return(-1);
 		}
-		for( j=0; j<6; j++ )  {
+		for ( j=0; j<6; j++ )  {
 			int	q, r, s;
 			point_t	a, b, c;
 
@@ -795,9 +795,9 @@ bad:
 			r = getint( scard, 10+j*10+4, 3 );
 			s = getint( scard, 10+j*10+7, 3 );
 
-			if( q == 0 || r == 0 || s == 0 ) continue;
+			if ( q == 0 || r == 0 || s == 0 ) continue;
 
-			if( q < 0 )  {
+			if ( q < 0 )  {
 				VMOVE( a, &input_points[((-q)-1)*3] );
 				a[Y] = -a[Y];
 				symm = 1;
@@ -805,7 +805,7 @@ bad:
 				VMOVE( a, &input_points[((q)-1)*3] );
 			}
 
-			if( r < 0 )  {
+			if ( r < 0 )  {
 				VMOVE( b, &input_points[((-r)-1)*3] );
 				b[Y] = -b[Y];
 				symm = 1;
@@ -813,14 +813,14 @@ bad:
 				VMOVE( b, &input_points[((r)-1)*3] );
 			}
 
-			if( s < 0 )  {
+			if ( s < 0 )  {
 				VMOVE( c, &input_points[((-s)-1)*3] );
 				c[Y] = -c[Y];
 				symm = 1;
 			} else {
 				VMOVE( c, &input_points[((s)-1)*3] );
 			}
-			if( bn_mk_plane_3pts( eqn[cur_eq], a, b, c, &tol ) < 0 )  {
+			if ( bn_mk_plane_3pts( eqn[cur_eq], a, b, c, &tol ) < 0 )  {
 				printf("arbn degenerate plane\n");
 				VPRINT("a", a);
 				VPRINT("b", b);
@@ -832,9 +832,9 @@ bad:
 	}
 
 	/* Get planes defined by their equation */
-	for( i=0; i < neq; i++ )  {
+	for ( i=0; i < neq; i++ )  {
 		register double	scale;
-		if( get_line( scard, sizeof(scard), "arbn plane equation card" ) == EOF )  {
+		if ( get_line( scard, sizeof(scard), "arbn plane equation card" ) == EOF )  {
 			printf("too few cards for arbn %d\n",
 				sol_work);
 			return(-1);
@@ -844,7 +844,7 @@ bad:
 		eqn[cur_eq][2] = getdouble( scard, 10+2*10, 10 );
 		eqn[cur_eq][3] = getdouble( scard, 10+3*10, 10 );
 		scale = MAGNITUDE(eqn[cur_eq]);
-		if( scale < SMALL )  {
+		if ( scale < SMALL )  {
 			printf("arbn plane normal too small\n");
 			continue;
 		}
@@ -855,13 +855,13 @@ bad:
 	}
 
 	/* Get planes defined by azimuth, elevation, and pt, 2 per card */
-	for( i=0; i < nae;  i += 2 )  {
-		if( get_line( scard, sizeof(scard), "arbn az/el card" ) == EOF )  {
+	for ( i=0; i < nae;  i += 2 )  {
+		if ( get_line( scard, sizeof(scard), "arbn az/el card" ) == EOF )  {
 			printf("too few cards for arbn %d\n",
 				sol_work);
 			return(-1);
 		}
-		for( j=0; j<2; j++ )  {
+		for ( j=0; j<2; j++ )  {
 			double	az, el;
 			int	vert_no;
 			double	cos_el;
@@ -870,13 +870,13 @@ bad:
 			az = getdouble( scard, 10+j*30+0*10, 10 ) * bn_degtorad;
 			el = getdouble( scard, 10+j*30+1*10, 10 ) * bn_degtorad;
 			vert_no = getint( scard, 10+j*30+2*10, 10 );
-			if( vert_no == 0 )  break;
+			if ( vert_no == 0 )  break;
 			cos_el = cos(el);
 			eqn[cur_eq][X] = cos(az)*cos_el;
 			eqn[cur_eq][Y] = sin(az)*cos_el;
 			eqn[cur_eq][Z] = sin(el);
 
-			if( vert_no < 0 )  {
+			if ( vert_no < 0 )  {
 				VMOVE( pt, &input_points[((-vert_no)-1)*3] );
 				pt[Y] = -pt[Y];
 			} else {
@@ -886,7 +886,7 @@ bad:
 			cur_eq++;
 		}
 	}
-	if( nface != cur_eq )  {
+	if ( nface != cur_eq )  {
 		printf("arbn expected %d faces, got %d\n", nface, cur_eq);
 		return(-1);
 	}
@@ -894,22 +894,22 @@ bad:
 	/* Average all given points together to find centroid */
 	/* This is why there must be at least one (two?) point given */
 	VSETALL(cent, 0);
-	for( i=0; i<npt; i++ )  {
+	for ( i=0; i<npt; i++ )  {
 		VADD2( cent, cent, &input_points[i*3] );
 	}
 	VSCALE( cent, cent, 1.0/npt );
-	if( symm )  cent[Y] = 0;
+	if ( symm )  cent[Y] = 0;
 
 	/* Point normals away from centroid */
-	for( i=0; i<nface; i++ )  {
+	for ( i=0; i<nface; i++ )  {
 		double	dist;
 
 		dist = VDOT( eqn[i], cent ) - eqn[i][3];
 		/* If dist is negative, 'cent' is inside halfspace */
 #define DIST_TOL	(1.0e-8)
 #define DIST_TOL_SQ	(1.0e-10)
-		if( dist < -DIST_TOL )  continue;
-		if( dist > DIST_TOL )  {
+		if ( dist < -DIST_TOL )  continue;
+		if ( dist > DIST_TOL )  {
 			/* Flip halfspace over */
 			VREVERSE( eqn[i], eqn[i] );
 			eqn[i][3] = -eqn[i][3];
@@ -933,35 +933,35 @@ bad:
 	last_vertex = max_vertex = 0;
 
 	/* Zero face use counts */
-	for( i=0; i<nface; i++ )  {
+	for ( i=0; i<nface; i++ )  {
 		used[i] = 0;
 	}
-	for( i=0; i<nface-2; i++ )  {
-		for( j=i+1; j<nface-1; j++ )  {
+	for ( i=0; i<nface-2; i++ )  {
+		for ( j=i+1; j<nface-1; j++ )  {
 			double	dot;
 			int	point_count;	/* # points on this line */
 
 			/* If normals are parallel, no intersection */
 			dot = VDOT( eqn[i], eqn[j] );
-			if( !NEAR_ZERO( dot, 0.999999 ) )  continue;
+			if ( !NEAR_ZERO( dot, 0.999999 ) )  continue;
 
 			point_count = 0;
-			for( k=j+1; k<nface; k++ )  {
+			for ( k=j+1; k<nface; k++ )  {
 				point_t	pt;
 
-				if( bn_mkpoint_3planes( pt, eqn[i], eqn[j], eqn[k] ) < 0 )  continue;
+				if ( bn_mkpoint_3planes( pt, eqn[i], eqn[j], eqn[k] ) < 0 )  continue;
 
 				/* See if point is outside arb */
-				for( m=0; m<nface; m++ )  {
-					if( i==m || j==m || k==m )  continue;
-					if( VDOT(pt, eqn[m])-eqn[m][3] > DIST_TOL )
+				for ( m=0; m<nface; m++ )  {
+					if ( i==m || j==m || k==m )  continue;
+					if ( VDOT(pt, eqn[m])-eqn[m][3] > DIST_TOL )
 						goto next_k;
 				}
 				/* See if vertex already was found */
-				for( m=0; m<last_vertex; m++ )  {
+				for ( m=0; m<last_vertex; m++ )  {
 					vect_t	dist;
 					VSUB2( dist, pt, &vertex[m*3] );
-					if( MAGSQ(dist) < DIST_TOL_SQ )
+					if ( MAGSQ(dist) < DIST_TOL_SQ )
 						goto next_k;
 				}
 
@@ -969,8 +969,8 @@ bad:
 				 *  Add point to vertex array.
 				 *  If more room needed, realloc.
 				 */
-				if( last_vertex >= max_vertex )  {
-					if( max_vertex == 0 )   {
+				if ( last_vertex >= max_vertex )  {
+					if ( max_vertex == 0 )   {
 						max_vertex = 3;
 						vertex = (double *)bu_malloc( max_vertex*3*sizeof(double), "vertex" );
 					} else {
@@ -989,15 +989,15 @@ bad:
 				used[k]++;
 next_k:				;
 			}
-			if( point_count > 2 )  {
+			if ( point_count > 2 )  {
 				printf("arbn: warning, point_count on line=%d\n", point_count);
 			}
 		}
 	}
 
 	/* If any planes were not used, then arbn is not convex */
-	for( i=0; i<nface; i++ )  {
-		if( used[i] != 0 )  continue;	/* face was used */
+	for ( i=0; i<nface; i++ )  {
+		if ( used[i] != 0 )  continue;	/* face was used */
 		printf("arbn face %d unused, solid is not convex\n", i);
 		return(-1);
 	}
@@ -1005,10 +1005,10 @@ next_k:				;
 	/* Write out the solid ! */
 	i = mk_arbn( outfp, name, nface, eqn );
 
-	if( input_points )  bu_free( (char *)input_points, "input_points" );
-	if( vertex )  bu_free( (char *)vertex, "vertex" );
-	if( eqn )  bu_free( (char *)eqn, "eqn" );
-	if( used )  bu_free( (char *)used, "used" );
+	if ( input_points )  bu_free( (char *)input_points, "input_points" );
+	if ( vertex )  bu_free( (char *)vertex, "vertex" );
+	if ( eqn )  bu_free( (char *)eqn, "eqn" );
+	if ( used )  bu_free( (char *)used, "used" );
 
 	return(i);
 }
@@ -1024,7 +1024,7 @@ eat(int count)
 	char	lbuf[132];
 	int	i;
 
-	for( i=0; i<count; i++ )  {
+	for ( i=0; i<count; i++ )  {
 		(void)get_line( lbuf, sizeof(lbuf), "eaten card" );
 	}
 }

@@ -57,7 +57,7 @@ int	_fbsize = 512;
 #define Rat_Cvt( x, y )	x -= _fbsize/2, y -= _fbsize/2
 #define Rat_Write( cmd, buff ) \
 	{	register int	ct, i; \
-	if( write( _fbfd, buff, sizeof(buff) ) == -1 ) \
+	if ( write( _fbfd, buff, sizeof(buff) ) == -1 ) \
 		{ \
 		(void) fprintf( stderr, "%s : write failed!\n", cmd ); \
 		return	0; \
@@ -140,13 +140,13 @@ HIDDEN int
 rat_open(FBIO *ifp, char *file, int width, int height)
 {
 	FB_CK_FBIO(ifp);
-	if( (ifp->if_fd = open( file, O_RDWR, 0 )) == -1)
+	if ( (ifp->if_fd = open( file, O_RDWR, 0 )) == -1)
 		{
 		perror(file);
 		return -1;  }
 	_fbfd = ifp->if_fd;
 	_fbsize = width;
-	if( width == 1024)
+	if ( width == 1024)
 		{ ifp->if_width = width;
 		  ifp->if_height = height; }
 	_rat_init(ifp);
@@ -160,7 +160,7 @@ rat_close(FBIO *ifp)
 	Issue quit command, and close connection.
  */
 {
-	if(  !	quit()
+	if (  !	quit()
 	    ||	close( ifp->if_fd ) == -1
 		)
 		{
@@ -179,8 +179,8 @@ rat_clear(FBIO *ifp, RGBpixel (*pp))
 	Clear the Raster Tech. to the background color.
  */
 {
-	if(	pp != NULL
-	    &&	value(	(*pp)[RED],(*pp)[GRN],(*pp)[BLU] )
+	if (	pp != NULL
+	    &&	value(	(*pp)[RED], (*pp)[GRN], (*pp)[BLU] )
 	    &&	flood()  )
 		return	0;
 	else
@@ -204,27 +204,27 @@ rat_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), int count)
 	int readval;
 
 	/* If first scanline is a partial, input it seperately.		*/
-	if( x > 0 || x + count <= _fbsize )
+	if ( x > 0 || x + count <= _fbsize )
 		{	register int	i;
-		if( ! movabs( x, y ) )
+		if ( ! movabs( x, y ) )
 			return	-1;
 		y++;
-		if( x + count <= _fbsize )
+		if ( x + count <= _fbsize )
 			i = count;	/* Only 1 scanline is involved.	*/
 		else
 			i = _fbsize - x; /* First scan is a partial.	*/
-		if( ! readw( 1, i, 1 ) )
+		if ( ! readw( 1, i, 1 ) )
 			return	-1;
-		for(	bytes = i * 3, p = pix_buf;
+		for (	bytes = i * 3, p = pix_buf;
 			bytes > 0;
 			bytes -= load, p += load
 			) {
-		    if( bytes > MAX_RAT_READ )
+		    if ( bytes > MAX_RAT_READ )
 			load = MAX_RAT_READ;
 		    else
 			load = bytes;
 		    readval = read( ifp->if_fd, p, load );
-		    if( readval < load ) {
+		    if ( readval < load ) {
 			if (readval < 0) {
 			    perror("READ ERROR");
 			}
@@ -232,7 +232,7 @@ rat_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), int count)
 			return -1;
 		    }
 		}
-		for( p = pix_buf; i > 0; i--, pixelp++, count-- )
+		for ( p = pix_buf; i > 0; i--, pixelp++, count-- )
 			{
 			(*pixelp)[RED] = *p++;
 			(*pixelp)[GRN] = *p++;
@@ -240,30 +240,30 @@ rat_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), int count)
 			}
 		}
 	/* Do all full scanlines.					*/
-	while( (nrows = count / _fbsize) != 0 )
+	while ( (nrows = count / _fbsize) != 0 )
 		{	register int	i;
-		if( ! movabs( 0, y ) )
+		if ( ! movabs( 0, y ) )
 			return	-1;
-		if( nrows * _fbsize * 3 > MAX_RAT_BUFF )
+		if ( nrows * _fbsize * 3 > MAX_RAT_BUFF )
 			nrows = MAX_RAT_BUFF / (_fbsize * 3);
 		i = nrows * _fbsize;
 		y += nrows;
-		if( ! readw( nrows, _fbsize, 1 ) )
+		if ( ! readw( nrows, _fbsize, 1 ) )
 			return	-1;
-		for(	bytes = i * 3, p = pix_buf;
+		for (	bytes = i * 3, p = pix_buf;
 			bytes > 0;
 			bytes -= load, p += load
 			) {
-			if( bytes > MAX_RAT_READ )
+			if ( bytes > MAX_RAT_READ )
 				load = MAX_RAT_READ;
 			else
 				load = bytes;
 			{ register int	ii;
-			for( ii = 0; ii < load; ii++ )
+			for ( ii = 0; ii < load; ii++ )
 				p[ii] = 100;
 			}
 			readval = read( ifp->if_fd, p, load );
-			if( readval < load ) {
+			if ( readval < load ) {
 			    if (readval < 0) {
 				perror("READ ERROR");
 			    }
@@ -271,7 +271,7 @@ rat_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), int count)
 			    return -1;
 			}
 		}
-		for(	p = pix_buf;
+		for (	p = pix_buf;
 			i > 0;
 			i--, pixelp++, count--
 			)
@@ -281,27 +281,27 @@ rat_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), int count)
 			(*pixelp)[BLU] = *p++;
 			}
 		}
-	if( count > 0 )
+	if ( count > 0 )
 		{ /* Do partial scanline.				*/
 			register int	i;
 			register u_char	*p = pix_buf;
 
 		/*(void) fprintf( stderr, "doing partial scan at end\n" );*/
-		if(   !	movabs( 0, y )
+		if (   !	movabs( 0, y )
 		   || ! readw( 1, count, 1 )
 			)
 			return	-1;
-		for(	bytes = count * 3, p = pix_buf;
+		for (	bytes = count * 3, p = pix_buf;
 			bytes > 0;
 			bytes -= load, p += load
 			) {
-		    if( bytes > MAX_RAT_READ ) {
+		    if ( bytes > MAX_RAT_READ ) {
 			load = MAX_RAT_READ;
 		    } else {
 			load = bytes;
 		    }
 		    readval = read( ifp->if_fd, p, load );
-		    if( readval < load ) {
+		    if ( readval < load ) {
 			if (readval < 0) {
 			    perror("READ ERROR");
 			}
@@ -309,7 +309,7 @@ rat_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), int count)
 			return -1;
 		    }
 		}
-		for( p = pix_buf; count > 0; pixelp++, count-- )
+		for ( p = pix_buf; count > 0; pixelp++, count-- )
 			{
 			(*pixelp)[RED] = *p++;
 			(*pixelp)[GRN] = *p++;
@@ -331,38 +331,38 @@ rat_write(FBIO *ifp, int x, int y, RGBpixel (*pixelp), int count)
 	static u_char	pix_buf[MAX_RAT_BUFF+1];
 
 	/* If first scanline is a partial, output it separately.	*/
-	if( x > 0 || x + count <= _fbsize )
+	if ( x > 0 || x + count <= _fbsize )
 		{	register int	bytes, i;
 			register u_char	*p = pix_buf;
-		if( ! movabs( x, y ) )
+		if ( ! movabs( x, y ) )
 			return	-1;
-		if( x + count <= _fbsize )
+		if ( x + count <= _fbsize )
 			ncols = i = count;  /* Only 1 scanline is involved.  */
 		else			/* First scan is a partial.	*/
 			ncols = i = _fbsize - x;
 		y++;
-		for( bytes = 0; i > 0; i--, pixelp++, bytes += 3, count-- )
+		for ( bytes = 0; i > 0; i--, pixelp++, bytes += 3, count-- )
 			{
 			*p++ = (*pixelp)[RED];
 			*p++ = (*pixelp)[GRN];
 			*p++ = (*pixelp)[BLU];
 			}
-		if( ! pixels( 1, ncols, pix_buf, bytes, ifp ) )
+		if ( ! pixels( 1, ncols, pix_buf, bytes, ifp ) )
 			return	-1;
 		}
 	/* Do all full scanlines.					*/
-	while( (nrows = count / _fbsize) != 0 )
+	while ( (nrows = count / _fbsize) != 0 )
 		{	register int	bytes, i, j;
-			register u_char	*p = pix_buf,*p1;
-		if( nrows * _fbsize * 3 > MAX_RAT_BUFF )
+			register u_char	*p = pix_buf, *p1;
+		if ( nrows * _fbsize * 3 > MAX_RAT_BUFF )
 			nrows = MAX_RAT_BUFF / (_fbsize * 3);
 		y += nrows;
-		if( ! movabs( 0, y-1 ) )
+		if ( ! movabs( 0, y-1 ) )
 			return	-1;
-		for(	j = nrows, bytes = 0; j > 0; j-- )
+		for (	j = nrows, bytes = 0; j > 0; j-- )
 		    {
 		   p1 = p + ( (j-1)*_fbsize*3 );
-		   for(	i = _fbsize; i > 0;
+		   for (	i = _fbsize; i > 0;
 			i--, pixelp++, bytes += 3, count-- )
 			{
 			*p1++ = (*pixelp)[RED];
@@ -370,23 +370,23 @@ rat_write(FBIO *ifp, int x, int y, RGBpixel (*pixelp), int count)
 			*p1++ = (*pixelp)[BLU];
 			}
 		    }
-		if( ! pixels( nrows, _fbsize, pix_buf, bytes, ifp ) )
+		if ( ! pixels( nrows, _fbsize, pix_buf, bytes, ifp ) )
 			return	-1;
 		}
 	/* If partial scanline remains, finish up.			*/
-	if( count > 0 )
+	if ( count > 0 )
 		{	register int	bytes, i;
 			register u_char	*p = pix_buf;
-		if( ! movabs( 0, y ) )
+		if ( ! movabs( 0, y ) )
 			return	-1;
 		ncols = count;
-		for( bytes = 0; count > 0; pixelp++, bytes += 3, count-- )
+		for ( bytes = 0; count > 0; pixelp++, bytes += 3, count-- )
 			{
 			*p++ = (*pixelp)[RED];
 			*p++ = (*pixelp)[GRN];
 			*p++ = (*pixelp)[BLU];
 			}
-		if( ! pixels( 1, ncols, pix_buf, bytes, ifp ) )
+		if ( ! pixels( 1, ncols, pix_buf, bytes, ifp ) )
 			return	-1;
 		}
 	return	0;
@@ -410,15 +410,15 @@ rat_wmap(FBIO *ifp, ColorMap *cmp)
 	register int	i;
 
 	/* If cmp is NULL, write standard map.				*/
-	if( cmp == (ColorMap *) NULL )
-/*		if( ! lutrmp( 7, 0, 255, 0, 255 ) )       */
+	if ( cmp == (ColorMap *) NULL )
+/*		if ( ! lutrmp( 7, 0, 255, 0, 255 ) )       */
 /*			return	-1;         */
 /*		else                   */
 			return	0;
 	else
 		{
-/*		for( i = 0; i < 256; i++ )
-			if( ! lut8(	i,
+/*		for ( i = 0; i < 256; i++ )
+			if ( ! lut8(	i,
 					cmp->cm_red[i],
 					cmp->cm_green[i],
 					cmp->cm_blue[i]
@@ -487,9 +487,9 @@ rat_cursor(FBIO *ifp, int mode, int x, int y)
 
 {
 	fb_sim_cursor(ifp, mode, x, y);
-/*	if(   !	cload( 5, x, y )  ||  ! xhair( 0, mode ) )
+/*	if (   !	cload( 5, x, y )  ||  ! xhair( 0, mode ) )
 		return	-1;	*/
-	if(   !	cload(17, x, y )  ||  ! cursor( 0, mode ) )
+	if (   !	cload(17, x, y )  ||  ! cursor( 0, mode ) )
 		return	-1;
 	return	0;
 }
@@ -507,7 +507,7 @@ _rat_init(FBIO *ifp)
 		0x48, 0x00,		/* MEMSEL 0		*/
 		0x9D, 0xFF, 0x07, 0x00};	/* WRMASK 255 7		*/
 
-	if( warm()
+	if ( warm()
 	    &&	entergraphics()
 /*	    &&	vidform( 0, 1 )   only if interlace needed  */
 /*	    &&	memsel( 0 )		*/
@@ -677,7 +677,7 @@ pixels(int rows, int cols, register u_char *pix_buf, int bytes, FBIO *ifp)
 	static u_char	buff[MAX_RAT_BUFF+6];
 	register int	i, ct;
 
-	if( rat_debug == 1 )
+	if ( rat_debug == 1 )
 		debug( 0 );
 	ct = bytes & 1 ? 5 + bytes : 6 + bytes; /* Insure even count.	*/
 	buff[0] = 0x28;
@@ -685,16 +685,16 @@ pixels(int rows, int cols, register u_char *pix_buf, int bytes, FBIO *ifp)
 	buff[2] = rows & 0xFF;
 	buff[3] = cols>>8 & 0xFF;
 	buff[4] = cols & 0xFF;
-	for( i = 5; i < ct; i++ )
+	for ( i = 5; i < ct; i++ )
 		buff[i] = *pix_buf++;
-	if( ! (bytes & 1) )
+	if ( ! (bytes & 1) )
 		buff[ct-1] = PAD;
-	if( write( ifp->if_fd, buff, ct ) == -1 )
+	if ( write( ifp->if_fd, buff, ct ) == -1 )
 		{
 		(void) fprintf( stderr, "pixels : write failed!\n" );
 		return	0;
 		}
-	if( rat_debug == 1 )
+	if ( rat_debug == 1 )
 		debug( rat_debug );
 	return	1;
 	}

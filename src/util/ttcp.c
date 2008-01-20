@@ -131,15 +131,15 @@ mread(int		fd,
 
 	do {
 		nread = read(fd, bufp, n-count);
-		if(nread < 0)  {
+		if (nread < 0)  {
 			perror("ttcp_mread");
 			return(-1);
 		}
-		if(nread == 0)
+		if (nread == 0)
 			return((int)count);
 		count += (unsigned)nread;
 		bufp += nread;
-	 } while(count < n);
+	 } while (count < n);
 
 	return((int)count);
 }
@@ -164,8 +164,8 @@ pattern(register char *cp, register int cnt)
 {
 	register char c;
 	c = 0;
-	while( cnt-- > 0 )  {
-		while( !isprint((c&0x7F)) )  c++;
+	while ( cnt-- > 0 )  {
+		while ( !isprint((c&0x7F)) )  c++;
 		*cp++ = (c++&0x7F);
 	}
 }
@@ -219,8 +219,8 @@ read_timer(char *str, int len)
 	(void)times(&tmsnow);
 	cput = tmsnow.tms_utime - tms0.tms_utime;
 	cput /= HZ;
-	if( cput < 0.00001 )  cput = 0.01;
-	if( realt < 0.00001 )  realt = cput;
+	if ( cput < 0.00001 )  cput = 0.01;
+	if ( realt < 0.00001 )  realt = cput;
 	sprintf(line, "%g CPU secs in %g elapsed secs (%g%%)",
 		cput, realt,
 		cput/realt*100 );
@@ -248,7 +248,7 @@ read_timer(char *str, int len)
 	tvadd( &tstart, &ru0.ru_utime, &ru0.ru_stime );
 	tvsub( &td, &tend, &tstart );
 	cput = td.tv_sec + ((double)td.tv_usec) / 1000000;
-	if( cput < 0.00001 )  cput = 0.00001;
+	if ( cput < 0.00001 )  cput = 0.00001;
 	return( cput );
 #endif
 }
@@ -278,7 +278,7 @@ prusage(register struct rusage *r0,
 	for (; *cp; cp++)  {
 		if (*cp != '%')
 			*outp++ = *cp;
-		else if (cp[1]) switch(*++cp) {
+		else if (cp[1]) switch (*++cp) {
 
 		case 'U':
 			tvsub(&tdiff, &r1->ru_utime, &r0->ru_utime);
@@ -414,10 +414,10 @@ Nread(int fd, char *buf, int count )
 	socklen_t len = (socklen_t)sizeof(from);
 	register int cnt;
 
-	if( udp )  {
+	if ( udp )  {
 		cnt = recvfrom( fd, (void *)buf, (size_t)count, 0, (struct sockaddr *)&from, &len );
 	} else {
-		if( b_flag )
+		if ( b_flag )
 			cnt = mread( fd, buf, count );	/* fill buf */
 		else
 			cnt = read( fd, buf, count );
@@ -444,12 +444,12 @@ int
 Nwrite(int fd, char *buf, int count )
 {
 	register int cnt;
-	if( udp )  {
+	if ( udp )  {
 again:
 		cnt = sendto( fd, (const void *)buf, (size_t) count, 0,
 			      (const struct sockaddr *)&sinhim,
 			      sizeof(sinhim) );
-		if( cnt<0 && errno == ENOBUFS )  {
+		if ( cnt<0 && errno == ENOBUFS )  {
 			delay(18000);
 			errno = 0;
 			goto again;
@@ -469,7 +469,7 @@ main(int argc, char **argv)
 	if (argc < 2) goto usage;
 
 	argv++; argc--;
-	while( argc>0 && argv[0][0] == '-' )  {
+	while ( argc>0 && argv[0][0] == '-' )  {
 		switch (argv[0][1]) {
 
 		case 'B':
@@ -504,7 +504,7 @@ main(int argc, char **argv)
 		}
 		argv++; argc--;
 	}
-	if(trans)  {
+	if (trans)  {
 		/* xmitr */
 		if (argc != 1) goto usage;
 		memset((char *)&sinhim, 0, sizeof(sinhim));
@@ -536,7 +536,7 @@ main(int argc, char **argv)
 		sinme.sin_port =  htons(port);
 	}
 
-	if( (buf = (char *)malloc(buflen)) == (char *)NULL)
+	if ( (buf = (char *)malloc(buflen)) == (char *)NULL)
 		err("malloc");
 	fprintf(stderr, "ttcp%s: nbuf=%d, buflen=%d, port=%d\n",
 		trans?"-t":"-r",
@@ -552,15 +552,15 @@ main(int argc, char **argv)
 	if (!udp)  {
 	    if (trans) {
 		/* We are the client if transmitting */
-		if(options)  {
+		if (options)  {
 #ifdef BSD42
-			if( setsockopt(fd, SOL_SOCKET, options, 0, 0) < 0)
+			if ( setsockopt(fd, SOL_SOCKET, options, 0, 0) < 0)
 #else /* BSD43 */
-			if( setsockopt(fd, SOL_SOCKET, options, &one, sizeof(one)) < 0)
+			if ( setsockopt(fd, SOL_SOCKET, options, &one, sizeof(one)) < 0)
 #endif
 				err("setsockopt");
 		}
-		if(connect(fd, (const struct sockaddr *)&sinhim, sizeof(sinhim) ) < 0)
+		if (connect(fd, (const struct sockaddr *)&sinhim, sizeof(sinhim) ) < 0)
 			err("connect");
 		mes("connect");
 	    } else {
@@ -568,17 +568,17 @@ main(int argc, char **argv)
 		 * should listen for the connections
 		 */
 		listen(fd, 0);   /* allow a queue of 0 */
-		if(options)  {
+		if (options)  {
 #ifdef BSD42
-			if( setsockopt(fd, SOL_SOCKET, options, 0, 0) < 0)
+			if ( setsockopt(fd, SOL_SOCKET, options, 0, 0) < 0)
 #else /* BSD43 */
-			if( setsockopt(fd, SOL_SOCKET, options, &one, sizeof(one)) < 0)
+			if ( setsockopt(fd, SOL_SOCKET, options, &one, sizeof(one)) < 0)
 #endif
 				err("setsockopt");
 		}
 		fromlen = (socklen_t)sizeof(frominet);
 		domain = AF_INET;
-		if((fd=accept(fd, (struct sockaddr *)&frominet, &fromlen) ) < 0)
+		if ((fd=accept(fd, (struct sockaddr *)&frominet, &fromlen) ) < 0)
 			err("accept");
 		mes("accept");
 	    }
@@ -589,15 +589,15 @@ main(int argc, char **argv)
 		register int cnt;
 		if (trans)  {
 			pattern( buf, buflen );
-			if(udp)  (void)Nwrite( fd, buf, 4 ); /* rcvr start */
+			if (udp)  (void)Nwrite( fd, buf, 4 ); /* rcvr start */
 			while (nbuf-- && Nwrite(fd, buf, buflen) == buflen)
 				nbytes += buflen;
-			if(udp)  (void)Nwrite( fd, buf, 4 ); /* rcvr end */
+			if (udp)  (void)Nwrite( fd, buf, 4 ); /* rcvr end */
 		} else {
 			while ((cnt=Nread(fd, buf, buflen)) > 0)  {
 				static int going = 0;
-				if( cnt <= 4 )  {
-					if( going )
+				if ( cnt <= 4 )  {
+					if ( going )
 						break;	/* "EOF" */
 					going = 1;
 					prep_timer();
@@ -608,26 +608,26 @@ main(int argc, char **argv)
 	} else {
 		register int cnt;
 		if (trans)  {
-			while((cnt=read(0, buf, buflen)) > 0 &&
+			while ((cnt=read(0, buf, buflen)) > 0 &&
 			    Nwrite(fd, buf, cnt) == cnt)
 				nbytes += cnt;
 		}  else  {
-			while((cnt=Nread(fd, buf, buflen)) > 0 &&
+			while ((cnt=Nread(fd, buf, buflen)) > 0 &&
 			    write(1, buf, cnt) == cnt)
 				nbytes += cnt;
 		}
 	}
-	if(errno) err("IO");
+	if (errno) err("IO");
 	(void)read_timer(stats, sizeof(stats));
-	if(udp&&trans)  {
+	if (udp&&trans)  {
 		(void)Nwrite( fd, buf, 4 ); /* rcvr end */
 		(void)Nwrite( fd, buf, 4 ); /* rcvr end */
 		(void)Nwrite( fd, buf, 4 ); /* rcvr end */
 		(void)Nwrite( fd, buf, 4 ); /* rcvr end */
 	}
 	fprintf(stderr, "ttcp%s: %s\n", trans?"-t":"-r", stats);
-	if( cput <= 0.0 )  cput = 0.001;
-	if( realt <= 0.0 )  realt = 0.001;
+	if ( cput <= 0.0 )  cput = 0.001;
+	if ( realt <= 0.0 )  realt = 0.001;
 	fprintf(stderr, "ttcp%s: %ld bytes processed\n",
 		trans?"-t":"-r", nbytes );
 	fprintf(stderr, "ttcp%s: %9g CPU sec  = %9g KB/cpu sec,  %9g Kbits/cpu sec\n",

@@ -148,7 +148,7 @@ normalizedInput_hook( register const struct bu_structparse *sdp, register const 
 	int ok;
 
 	/* if all the values are in the range [0..1] there's nothing to do */
-	for (ok=1, i=0 ; i < sdp->sp_count ; i++, p++) {
+	for (ok=1, i=0; i < sdp->sp_count; i++, p++) {
 		if ( (*p > 1.0) || (*p < 0.0) ) ok = 0;
 	}
 	if (ok) return;
@@ -157,11 +157,11 @@ normalizedInput_hook( register const struct bu_structparse *sdp, register const 
 	 * map those into [0..1]
 	 */
 	p = (double *)(base+sdp->sp_offset);
-	for (i=0 ; i < sdp->sp_count ; i++, p++) {
+	for (i=0; i < sdp->sp_count; i++, p++) {
 		*p /= 255.0;
 	}
 
-	for (ok=1, i=0 ; i < sdp->sp_count ; i++, p++) {
+	for (ok=1, i=0; i < sdp->sp_count; i++, p++) {
 		if ( (*p > 1.0) || (*p < 0.0) ) ok = 0;
 	}
 	if (ok) bu_log ("User specified values are out of range (0.0 to either 1.0 or 255.0)");

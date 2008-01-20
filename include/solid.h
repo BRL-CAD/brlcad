@@ -69,7 +69,7 @@ struct solid  {
 #define SOLID_NULL	((struct solid *)0)
 
 #define GET_SOLID(p, fp) { \
-	if(BU_LIST_IS_EMPTY(fp)){ \
+	if (BU_LIST_IS_EMPTY(fp)){ \
 		BU_GETSTRUCT(p, solid); \
 		db_full_path_init(&(p)->s_fullpath); \
 	}else{ \
@@ -88,10 +88,10 @@ struct solid  {
 	RT_FREE_VLIST(&((p)->s_vlist)); }
 
 #define FOR_ALL_SOLIDS(p, hp)  \
-	for(BU_LIST_FOR(p, solid, hp))
+	for (BU_LIST_FOR(p, solid, hp))
 
 #define FOR_REST_OF_SOLIDS(p1, p2, hp) \
-	for(BU_LIST_PFOR(p1, p2, solid, hp))
+	for (BU_LIST_PFOR(p1, p2, solid, hp))
 
 #define BU_LIST_PFOR(p1, p2, structure, hp) \
 	(p1)=BU_LIST_PNEXT(structure, p2); \

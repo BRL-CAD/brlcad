@@ -66,7 +66,7 @@ void render_flos_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel
    
   rd = (render_flos_t *)render->data;
 
-  if((mesh = (adrt_mesh_t *)tie_work(tie, ray, &id, render_hit, NULL))) {
+  if ((mesh = (adrt_mesh_t *)tie_work(tie, ray, &id, render_hit, NULL))) {
     MATH_VEC_SET((*pixel), 0.0, 0.5, 0.0);
   } else {
     return;
@@ -81,7 +81,7 @@ void render_flos_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel
   MATH_VEC_SUB(ray->dir, id.pos, rd->frag_pos);
   MATH_VEC_UNITIZE(ray->dir);
 
-  if(tie_work(tie, ray, &tid, render_hit, NULL)) {
+  if (tie_work(tie, ray, &tid, render_hit, NULL)) {
     if (fabs (id.pos.v[0] - tid.pos.v[0]) < TIE_PREC &&
         fabs (id.pos.v[1] - tid.pos.v[1]) < TIE_PREC &&
         fabs (id.pos.v[2] - tid.pos.v[2]) < TIE_PREC)

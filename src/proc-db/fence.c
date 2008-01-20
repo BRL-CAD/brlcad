@@ -1996,7 +1996,7 @@ int main(int argc, char **argv)
 	if (debug) {
 	  fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for fence material\n", verboseinput);
 	}
-	if(strcmp(verboseinput, "") != 0) {
+	if (strcmp(verboseinput, "") != 0) {
 	  strncpy(fenceMaterial, verboseinput, DEFAULT_MAXNAMELENGTH*3);
 	}
       }
@@ -2013,7 +2013,7 @@ int main(int argc, char **argv)
 	if (debug) {
 	  fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for fence material params\n", verboseinput);
 	}
-	if(strcmp(verboseinput, "") != 0) {
+	if (strcmp(verboseinput, "") != 0) {
 	  strncpy(fenceMaterialParams, verboseinput, DEFAULT_MAXNAMELENGTH*3);
 	}
       }
@@ -2030,7 +2030,7 @@ int main(int argc, char **argv)
 	if (debug) {
 	  fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for fence material color\n", verboseinput);
 	}
-	if(strcmp(verboseinput, "") != 0) {
+	if (strcmp(verboseinput, "") != 0) {
 	  sscanf(verboseinput, "%d%d%d", &colorinput[0], &colorinput[1], &colorinput[2]);
 
 	  if ((colorinput[0]<0)|(colorinput[1]<0)|(colorinput[2]<0)) {
@@ -2134,7 +2134,7 @@ int main(int argc, char **argv)
 	if (debug) {
 	  fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for pole material\n", verboseinput);
 	}
-	if(strcmp(verboseinput, "") != 0) {
+	if (strcmp(verboseinput, "") != 0) {
 	  strncpy(poleMaterial, verboseinput, DEFAULT_MAXNAMELENGTH*3);
 	}
       }
@@ -2151,7 +2151,7 @@ int main(int argc, char **argv)
 	if (debug) {
 	  fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for pole material params\n", verboseinput);
 	}
-	if(strcmp(verboseinput, "") != 0) {
+	if (strcmp(verboseinput, "") != 0) {
 	  strncpy(poleMaterialParams, verboseinput, DEFAULT_MAXNAMELENGTH*3);
 	}
       }
@@ -2168,7 +2168,7 @@ int main(int argc, char **argv)
 	if (debug) {
 	  fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for pole material color\n", verboseinput);
 	}
-	if(strcmp(verboseinput, "") != 0) {
+	if (strcmp(verboseinput, "") != 0) {
 	  sscanf(verboseinput, "%d%d%d", &colorinput[0], &colorinput[1], &colorinput[2]);
 
 	  if ((colorinput[0]<0)|(colorinput[1]<0)|(colorinput[2]<0)) {
@@ -2255,7 +2255,7 @@ int main(int argc, char **argv)
 	if (debug) {
 	  fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for mesh material\n", verboseinput);
 	}
-	if(strcmp(verboseinput, "") != 0) {
+	if (strcmp(verboseinput, "") != 0) {
 	  strncpy(meshMaterial, verboseinput, DEFAULT_MAXNAMELENGTH*3);
 	}
       }
@@ -2272,7 +2272,7 @@ int main(int argc, char **argv)
 	if (debug) {
 	  fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for mesh material params\n", verboseinput);
 	}
-	if(strcmp(verboseinput, "") != 0) {
+	if (strcmp(verboseinput, "") != 0) {
 	  strncpy(meshMaterialParams, verboseinput, DEFAULT_MAXNAMELENGTH*3);
 	}
       }
@@ -2289,7 +2289,7 @@ int main(int argc, char **argv)
 	if (debug) {
 	  fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for mesh material color\n", verboseinput);
 	}
-	if(strcmp(verboseinput, "") != 0) {
+	if (strcmp(verboseinput, "") != 0) {
 	  sscanf(verboseinput, "%d%d%d", &colorinput[0], &colorinput[1], &colorinput[2]);
 
 	  if ((colorinput[0]<0)|(colorinput[1]<0)|(colorinput[2]<0)) {
@@ -2376,7 +2376,7 @@ int main(int argc, char **argv)
 	if (debug) {
 	  fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for wire material\n", verboseinput);
 	}
-	if(strcmp(verboseinput, "") != 0) {
+	if (strcmp(verboseinput, "") != 0) {
 	  strncpy(wireMaterial, verboseinput, DEFAULT_MAXNAMELENGTH*3);
 	}
       }
@@ -2393,7 +2393,7 @@ int main(int argc, char **argv)
 	if (debug) {
 	  fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for wire material params\n", verboseinput);
 	}
-	if(strcmp(verboseinput, "") != 0) {
+	if (strcmp(verboseinput, "") != 0) {
 	  strncpy(wireMaterialParams, verboseinput, DEFAULT_MAXNAMELENGTH*3);
 	}
       }
@@ -2410,7 +2410,7 @@ int main(int argc, char **argv)
 	if (debug) {
 	  fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for wire material color\n", verboseinput);
 	}
-	if(strcmp(verboseinput, "") != 0) {
+	if (strcmp(verboseinput, "") != 0) {
 	  sscanf(verboseinput, "%d%d%d", &colorinput[0], &colorinput[1], &colorinput[2]);
 
 	  if ((colorinput[0]<0)|(colorinput[1]<0)|(colorinput[2]<0)) {

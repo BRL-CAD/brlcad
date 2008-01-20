@@ -245,7 +245,7 @@ brdf_render(register struct application *ap, struct partition *pp, struct shadew
 	VREVERSE( to_eye, ap->a_ray.r_dir );
 
 	/* Consider effects of each light source */
-	for( i=ap->a_rt_i->rti_nlights-1; i>=0; i-- )  {
+	for ( i=ap->a_rt_i->rti_nlights-1; i>=0; i-- )  {
 		fastf_t cos_tmp;
 		fastf_t tan_sq;
 		double exponent;

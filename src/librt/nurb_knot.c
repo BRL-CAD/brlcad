@@ -71,7 +71,7 @@ rt_nurb_kvknot(register struct knot_vector *new_knots, int order, fastf_t lower,
 	for ( i = order; i <= (num + order - 1); i++)
 		new_knots->knots[i] = new_knots->knots[i-1] + knot_step;
 
-	for ( i = ( num + order ) ; i < total; i++)
+	for ( i = ( num + order ); i < total; i++)
 		new_knots->knots[i] = upper;
 }
 
@@ -91,7 +91,7 @@ rt_nurb_kvmult(struct knot_vector *new_kv, const struct knot_vector *kv, int num
 	n = rt_nurb_kvcheck( val, kv );
 
 	check.k_size = num - n;
-	if( check.k_size <= 0 )  {
+	if ( check.k_size <= 0 )  {
 		bu_log("rt_nurb_kvmult(new_kv=x%x, kv=x%x, num=%d, val=%g)\n",
 			new_kv, kv, num, val);
 		rt_nurb_pr_kv(kv);
@@ -239,7 +239,7 @@ rt_nurb_kvnorm(register struct knot_vector *kv)
 	register int	i;
 
 	upper = kv->knots[kv->k_size - 1];
-	if( NEAR_ZERO( upper, SMALL ) )
+	if ( NEAR_ZERO( upper, SMALL ) )
 		upper = 0;
 	else
 		upper = 1 / upper;

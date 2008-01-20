@@ -91,7 +91,7 @@ isst_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
   memcpy(result->data, &work->data[0], 3);
   result->ind = ind;
 
-  switch(op) {
+  switch (op) {
     case ADRT_WORK_INIT:
       {
         render_camera_init (&isst_workspace_list[wid].camera, isst_slave_threads);
@@ -277,7 +277,7 @@ printf ("pos: %.3f %.3f %.3f ... dir %.3f %.3f %.3f\n", ray.pos.v[0], ray.pos.v[
 
           isst_workspace_list[wid].camera.render.free (&isst_workspace_list[wid].camera.render);
 
-          switch(rm) {
+          switch (rm) {
             case RENDER_METHOD_DEPTH:
               render_depth_init(&isst_workspace_list[wid].camera.render);
               break;
@@ -417,7 +417,7 @@ void isst_slave_mesg(void *mesg, unsigned int mesg_len)
 
   memcpy(&op, mesg, sizeof(short));
 
-  switch(op) {
+  switch (op) {
     case ADRT_WORK_SHOTLINE:
     {
       int i, n, num, ind;
@@ -425,7 +425,7 @@ void isst_slave_mesg(void *mesg, unsigned int mesg_len)
       unsigned char c;
 
       /* Reset all meshes hit flag */
-      for(i = 0; i < db.mesh_num; i++)
+      for (i = 0; i < db.mesh_num; i++)
 	db.mesh_list[i]->flags &= MESH_SELECT;
 
       /* Read the data */
@@ -434,7 +434,7 @@ void isst_slave_mesg(void *mesg, unsigned int mesg_len)
 
       ind += sizeof(int);
 
-      for(i = 0; i < num; i++) 
+      for (i = 0; i < num; i++) 
       {
 	memcpy(&c, &((unsigned char *)mesg)[ind], 1);
 	ind += 1;
@@ -443,8 +443,8 @@ void isst_slave_mesg(void *mesg, unsigned int mesg_len)
 	ind += c;
 
 	/* set hit flag */
-	for(n = 0; n < db.mesh_num; n++) {
-	  if(!strcmp(db.mesh_list[n]->name, name)) {
+	for (n = 0; n < db.mesh_num; n++) {
+	  if (!strcmp(db.mesh_list[n]->name, name)) {
 	    db.mesh_list[n]->flags |= MESH_HIT;
 	    continue;
 	  }
@@ -467,8 +467,8 @@ void isst_slave_mesg(void *mesg, unsigned int mesg_len)
       memcpy(string, &((uint8_t *)mesg)[4], c);
 
       /* set select flag */
-      for(n = 0; n < db.mesh_num; n++)
-	if(strstr(db.mesh_list[n]->name, string) || c == 1)
+      for (n = 0; n < db.mesh_num; n++)
+	if (strstr(db.mesh_list[n]->name, string) || c == 1)
 	  db.mesh_list[n]->flags = (db.mesh_list[n]->flags & MESH_SELECT) | t<<1;
     }
     break;

@@ -99,10 +99,10 @@ rt_trim_case(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
 	 * portion.
 	 */
 
-	if( rat )
-		for( i = 0; i < trim->c_size; i++)
+	if ( rat )
+		for ( i = 0; i < trim->c_size; i++)
 		{
-			if(pts[0]/pts[2] > u )
+			if (pts[0]/pts[2] > u )
 				quadrant = (pts[1]/pts[2] >= v)? QUAD1:QUAD4;
 			else
 				quadrant = (pts[1]/pts[2] >= v)? QUAD2:QUAD3;
@@ -111,9 +111,9 @@ rt_trim_case(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
 			pts += coords;
 		}
 	else
-		for( i = 0; i < trim->c_size; i++)
+		for ( i = 0; i < trim->c_size; i++)
 		{
-			if(pts[0] > u )
+			if (pts[0] > u )
 				quadrant = (pts[1] >= v)? QUAD1:QUAD4;
 			else
 				quadrant = (pts[1] >= v)? QUAD2:QUAD3;
@@ -143,31 +143,31 @@ rt_process_caseb(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
 
 	pts = trim->ctl_points;
 
-	if( rat)
+	if ( rat)
 	{
-		if( pts[0]/pts[2] > u) q1 = (pts[1]/pts[2] >= v)?QUAD1:QUAD4;
+		if ( pts[0]/pts[2] > u) q1 = (pts[1]/pts[2] >= v)?QUAD1:QUAD4;
 		else 		 q1 = (pts[1]/pts[2] >= v)?QUAD2:QUAD3;
 
 
 		pts = trim->ctl_points + RT_NURB_EXTRACT_COORDS(trim->pt_type) *
 			(trim->c_size -1);
-		if( pts[0]/pts[2] > u) q2 = (pts[1]/pts[2] >= v)?QUAD1:QUAD4;
+		if ( pts[0]/pts[2] > u) q2 = (pts[1]/pts[2] >= v)?QUAD1:QUAD4;
 		else 		 q2 = (pts[1]/pts[2] >= v)?QUAD2:QUAD3;
 
 	} else
 	{
-		if( pts[0] > u) q1 = (pts[1] >= v)?QUAD1:QUAD4;
+		if ( pts[0] > u) q1 = (pts[1] >= v)?QUAD1:QUAD4;
 		else 		 q1 = (pts[1] >= v)?QUAD2:QUAD3;
 
 
 		pts = trim->ctl_points +
 			RT_NURB_EXTRACT_COORDS(trim->pt_type) 	*
 			(trim->c_size -1);
-		if( pts[0] > u) q2 = (pts[1] >= v)?QUAD1:QUAD4;
+		if ( pts[0] > u) q2 = (pts[1] >= v)?QUAD1:QUAD4;
 		else 		 q2 = (pts[1] >= v)?QUAD2:QUAD3;
 	}
 
-	if( q1 != q2 )
+	if ( q1 != q2 )
 		return TRIM_IN;
 	else
 		return TRIM_OUT;
@@ -258,18 +258,18 @@ rt_process_casec(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
 
 	/* determine if the the u, v values are on the curve */
 
-	if( rt_nurb_uv_dist(trim, u, v)  == TRIM_ON) return TRIM_IN;
+	if ( rt_nurb_uv_dist(trim, u, v)  == TRIM_ON) return TRIM_IN;
 
 	jordan_hit = 0;
 
 	BU_LIST_INIT(&plist);
 
-	if( nurb_crv_is_bezier( trim ) )
+	if ( nurb_crv_is_bezier( trim ) )
 		rt_clip_cnurb(&plist, trim, u, v);
 	else
 		nurb_c_to_bezier( &plist, trim );
 
-	while( BU_LIST_WHILE( clip, edge_g_cnurb, &plist ) )
+	while ( BU_LIST_WHILE( clip, edge_g_cnurb, &plist ) )
 	{
 		BU_LIST_DEQUEUE( &clip->l );
 
@@ -277,27 +277,27 @@ rt_process_casec(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
 
 		trim_flag = 0;
 
-		if( caset == CASE_B)
+		if ( caset == CASE_B)
 			trim_flag = rt_process_caseb(clip, u, v);
-		if( caset == CASE_C)
+		if ( caset == CASE_C)
 			trim_flag = rt_process_casec(clip, u, v);
 
 		rt_nurb_free_cnurb( clip );
 
-		if( trim_flag == TRIM_IN) jordan_hit++;
-		if( trim_flag == TRIM_ON) break;
+		if ( trim_flag == TRIM_IN) jordan_hit++;
+		if ( trim_flag == TRIM_ON) break;
 	}
 
-	while( BU_LIST_WHILE( clip, edge_g_cnurb, &plist) )
+	while ( BU_LIST_WHILE( clip, edge_g_cnurb, &plist) )
 	{
 		BU_LIST_DEQUEUE( &clip->l );
 		rt_nurb_free_cnurb( clip );
 	}
 
-	if( trim_flag == TRIM_ON)
+	if ( trim_flag == TRIM_ON)
 		return TRIM_ON;
 
-	else if( jordan_hit & 01 )
+	else if ( jordan_hit & 01 )
 		return TRIM_IN;
 	else
 		return TRIM_OUT;
@@ -322,11 +322,11 @@ rt_uv_in_trim(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
 	quad_case = rt_trim_case( trim, u, v);	/* determine quadrants */
 
 							/* CASE A */
-	if( quad_case == CASE_A )
+	if ( quad_case == CASE_A )
 		return TRIM_OUT;
-	if( quad_case == CASE_B )			/* CASE B */
+	if ( quad_case == CASE_B )			/* CASE B */
 		return rt_process_caseb(trim, u, v);
-	if( quad_case == CASE_C )			/* CASE C */
+	if ( quad_case == CASE_C )			/* CASE C */
 		return rt_process_casec(trim, u, v);
 
 	bu_log( "rt_uv_in_trim: rt_trim_case() returned illegal value %d\n", quad_case );
@@ -348,14 +348,14 @@ rt_trim_line_pt_dist(struct _interior_line *l, fastf_t *pt, int pt_type)
 
 	h_flag = RT_NURB_IS_PT_RATIONAL(pt_type);
 
-	if( l->axis == 0)
+	if ( l->axis == 0)
 	{
-		if( h_flag) h = (pt[1] / pt[2] - l->o_dist) * pt[2]; /* pt[2] is weight */
+		if ( h_flag) h = (pt[1] / pt[2] - l->o_dist) * pt[2]; /* pt[2] is weight */
 		else h = pt[1] - l->o_dist;
 
 	} else
 	{
-		if( h_flag) h = (pt[0] / pt[2] - l->o_dist) * pt[2];
+		if ( h_flag) h = (pt[0] / pt[2] - l->o_dist) * pt[2];
 		else h = pt[0] - l->o_dist;
 
 	}
@@ -414,7 +414,7 @@ rt_clip_cnurb(struct bu_list *plist, struct edge_g_cnurb *crv, fastf_t u, fastf_
 
 	/* determine what axis to clip against */
 
-	for( i = 0; i < crv->c_size; i++, ptr += coords)
+	for ( i = 0; i < crv->c_size; i++, ptr += coords)
 	{
 		ds1 +=
 		    fabs( rt_trim_line_pt_dist( &s_line, ptr, crv->pt_type) );
@@ -422,13 +422,13 @@ rt_clip_cnurb(struct bu_list *plist, struct edge_g_cnurb *crv, fastf_t u, fastf_
 		    fabs( rt_trim_line_pt_dist( &t_line, ptr, crv->pt_type) );
 	}
 
-	if( ds1 >= dt1 ) axis = 0; else axis = 1;
+	if ( ds1 >= dt1 ) axis = 0; else axis = 1;
 
 	ptr = crv->ctl_points;
 
-	for( i = 0; i < crv->c_size; i++)
+	for ( i = 0; i < crv->c_size; i++)
 	{
-		if( axis == 1)
+		if ( axis == 1)
 			dist[i] = rt_trim_line_pt_dist(&t_line, ptr, crv->pt_type);
 		else
 			dist[i] = rt_trim_line_pt_dist(&s_line, ptr, crv->pt_type);
@@ -445,7 +445,7 @@ rt_clip_cnurb(struct bu_list *plist, struct edge_g_cnurb *crv, fastf_t u, fastf_
 	umax = -10e40;
 	zero_changed = 0;
 
-	for( i = 0; i < crv->c_size; i++)
+	for ( i = 0; i < crv->c_size; i++)
 	{
 		fastf_t d1, d2;
 		fastf_t x0, x1, zero;
@@ -464,23 +464,23 @@ rt_clip_cnurb(struct bu_list *plist, struct edge_g_cnurb *crv, fastf_t u, fastf_
 			x1 = (i+1.0) / (crv->c_size - 1);
 		}
 
-		if( _SIGN(d1) != _SIGN(d2) )
+		if ( _SIGN(d1) != _SIGN(d2) )
 		{
 			zero = x0 - d1 * (x1 - x0)/ (d2-d1);
-			if( zero <= umin)
+			if ( zero <= umin)
 				umin = zero * .99;
-			if( zero >= umax)
+			if ( zero >= umax)
 				umax = zero * .99 + .01;
 			zero_changed = 1;
 		}
 	}
 
-	if( !zero_changed)
+	if ( !zero_changed)
 		return;
 
 	/* Clip is not large enough, split in thiords and try again */
 
-	if( umax - umin < .2)
+	if ( umax - umin < .2)
 	{
 		umin = .3; umax = .6;
 	}
@@ -515,20 +515,20 @@ nmg_uv_in_lu(const fastf_t u, const fastf_t v, const struct loopuse *lu)
 
 	NMG_CK_LOOPUSE( lu );
 
-	if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+	if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
 		return( 0 );
 
-	for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+	for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 	{
 		struct edge_g_cnurb *eg;
 
-		if( !eu->g.magic_p )
+		if ( !eu->g.magic_p )
 		{
 			bu_log( "nmg_uv_in_lu: eu (x%x) has no geometry!!!\n", eu );
 			bu_bomb( "nmg_uv_in_lu: eu has no geometry!!!\n" );
 		}
 
-		if( *eu->g.magic_p != NMG_EDGE_G_CNURB_MAGIC )
+		if ( *eu->g.magic_p != NMG_EDGE_G_CNURB_MAGIC )
 		{
 			bu_log( "nmg_uv_in_lu: Called with lu (x%x) containing eu (x%x) that is not CNURB!!!!\n",
 				lu, eu );
@@ -537,7 +537,7 @@ nmg_uv_in_lu(const fastf_t u, const fastf_t v, const struct loopuse *lu)
 
 		eg = eu->g.cnurb_p;
 
-		if( eg->order <= 0 )
+		if ( eg->order <= 0 )
 		{
 			struct vertexuse *vu1, *vu2;
 			struct vertexuse_a_cnurb *vua1, *vua2;
@@ -548,14 +548,14 @@ nmg_uv_in_lu(const fastf_t u, const fastf_t v, const struct loopuse *lu)
 			vu1 = eu->vu_p;
 			vu2 = eu->eumate_p->vu_p;
 
-			if( !vu1->a.magic_p || !vu2->a.magic_p )
+			if ( !vu1->a.magic_p || !vu2->a.magic_p )
 			{
 				bu_log( "nmg_uv_in_lu: Called with lu (x%x) containing vu with no attribute!!!!\n",
 					lu );
 				bu_bomb( "nmg_uv_in_lu: Called with lu containing vu with no attribute!!!\n" );
 			}
 
-			if( *vu1->a.magic_p != NMG_VERTEXUSE_A_CNURB_MAGIC ||
+			if ( *vu1->a.magic_p != NMG_VERTEXUSE_A_CNURB_MAGIC ||
 			    *vu2->a.magic_p != NMG_VERTEXUSE_A_CNURB_MAGIC )
 			{
 				bu_log( "nmg_uv_in_lu: Called with lu (x%x) containing vu that is not CNURB!!!!\n",
@@ -569,7 +569,7 @@ nmg_uv_in_lu(const fastf_t u, const fastf_t v, const struct loopuse *lu)
 			VMOVE( uv1, vua1->param );
 			VMOVE( uv2, vua2->param );
 
-			if( RT_NURB_IS_PT_RATIONAL( eg->pt_type ) )
+			if ( RT_NURB_IS_PT_RATIONAL( eg->pt_type ) )
 			{
 				uv1[0] /= uv1[2];
 				uv1[1] /= uv1[2];
@@ -577,15 +577,15 @@ nmg_uv_in_lu(const fastf_t u, const fastf_t v, const struct loopuse *lu)
 				uv2[1] /= uv2[2];
 			}
 
-			if( uv1[1] < v && uv2[1] < v )
+			if ( uv1[1] < v && uv2[1] < v )
 				continue;
-			if( uv1[1] > v && uv2[1] > v )
+			if ( uv1[1] > v && uv2[1] > v )
 				continue;
-			if( uv1[0] <= u && uv2[0] <= u )
+			if ( uv1[0] <= u && uv2[0] <= u )
 				continue;
-			if( uv1[0] == uv2[0] )
+			if ( uv1[0] == uv2[0] )
 			{
-				if( (uv1[1] <= v && uv2[1] >= v) ||
+				if ( (uv1[1] <= v && uv2[1] >= v) ||
 				    (uv2[1] <= v && uv1[1] >= v) )
 					crossings++;
 
@@ -596,14 +596,14 @@ nmg_uv_in_lu(const fastf_t u, const fastf_t v, const struct loopuse *lu)
 			slope = (uv1[1] - uv2[1])/(uv1[0] - uv2[0]);
 			intersept = uv1[1] - slope * uv1[0];
 			u_on_curve = (v - intersept)/slope;
-			if( u_on_curve > u )
+			if ( u_on_curve > u )
 				crossings++;
 		}
 		else
 			crossings += rt_uv_in_trim( eg, u, v );
 	}
 
-	if( crossings & 01 )
+	if ( crossings & 01 )
 		return( 1 );
 	else
 		return( 0 );

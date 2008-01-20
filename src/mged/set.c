@@ -142,7 +142,7 @@ set_dirty_flag(void)
   struct dm_list *dmlp;
 
   FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l)
-    if(dmlp->dml_mged_variables == mged_variables)
+    if (dmlp->dml_mged_variables == mged_variables)
       dmlp->dml_dirty = 1;
 }
 
@@ -209,7 +209,7 @@ write_var(ClientData clientData, Tcl_Interp *interp, char *name1, char *name2, i
 			  (flags&TCL_GLOBAL_ONLY)|TCL_LEAVE_ERR_MSG);
     bu_vls_init( &str );
     bu_vls_printf( &str, "%s=\"%s\"", name1, newvalue );
-    if( bu_struct_parse( &str, mged_vparse, (char *)mged_variables ) < 0) {
+    if ( bu_struct_parse( &str, mged_vparse, (char *)mged_variables ) < 0) {
       Tcl_AppendResult(interp, "ERROR OCCURED WHEN SETTING ", name1,
 		       " TO ", newvalue, "\n", (char *)NULL);
     }
@@ -231,7 +231,7 @@ unset_var(ClientData clientData, Tcl_Interp *interp, char *name1, char *name2, i
 {
     struct bu_structparse *sp = (struct bu_structparse *)clientData;
 
-    if( flags & TCL_INTERP_DESTROYED )
+    if ( flags & TCL_INTERP_DESTROYED )
 	return NULL;
 
     Tcl_AppendResult(interp, "mged variables cannot be unset\n", (char *)NULL);
@@ -263,7 +263,7 @@ mged_variable_setup(Tcl_Interp *interp)
 {
   register struct bu_structparse *sp;
 
-  for( sp = &mged_vparse[0]; sp->sp_name != NULL; sp++ ) {
+  for ( sp = &mged_vparse[0]; sp->sp_name != NULL; sp++ ) {
     read_var( (ClientData)sp, interp, sp->sp_name, (char *)NULL, 0 );
     Tcl_TraceVar( interp, sp->sp_name, TCL_TRACE_READS|TCL_GLOBAL_ONLY,
 		  (Tcl_VarTraceProc *)read_var, (ClientData)sp );
@@ -281,7 +281,7 @@ f_set(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
   bu_vls_init(&vls);
 
-  if(argc < 1 || 2 < argc){
+  if (argc < 1 || 2 < argc){
     bu_vls_printf(&vls, "help vars");
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
@@ -364,7 +364,7 @@ set_dlist(void)
   /* save current display manager */
   save_dlp = curr_dm_list;
 
-  if(mged_variables->mv_dlist){
+  if (mged_variables->mv_dlist){
     /* create display lists */
 
     /* for each display manager dlp1 that shares its' dml_mged_variables with save_dlp */
@@ -461,7 +461,7 @@ static void
 toggle_perspective(void)
 {
   /* set perspective matrix */
-  if(mged_variables->mv_toggle_perspective > 0)
+  if (mged_variables->mv_toggle_perspective > 0)
     perspective_angle = mged_variables->mv_toggle_perspective <= 4 ?
       mged_variables->mv_toggle_perspective - 1: 3;
   else if (--perspective_angle < 0) /* toggle perspective matrix */
@@ -473,7 +473,7 @@ toggle_perspective(void)
    */
   mged_variables->mv_toggle_perspective = 1;
 
-  if(!mged_variables->mv_perspective_mode)
+  if (!mged_variables->mv_perspective_mode)
     return;
 
   mged_variables->mv_perspective = perspective_table[perspective_angle];

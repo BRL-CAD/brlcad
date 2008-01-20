@@ -83,7 +83,7 @@ vas_open(void)
 {
 
 	/* Open VAS Port */
-	if((vas_fd=open(VAS_PORT, O_RDWR)) < 0){
+	if ((vas_fd=open(VAS_PORT, O_RDWR)) < 0){
 		perror(VAS_PORT);
 		bu_exit(1, NULL);
 	}
@@ -111,13 +111,13 @@ vas_open(void)
 	vtty.c_lflag &= ~ISIG;           /* Signals OFF */
 	vtty.c_lflag &= ~(ECHO|ECHOE|ECHOK);     /* Echo mode OFF */
 
-	if( ioctl(vas_fd, TCSETA, &vtty) < 0 ) {
+	if ( ioctl(vas_fd, TCSETA, &vtty) < 0 ) {
 		perror(VAS_PORT);
 		bu_exit(1, NULL);
 	}
 
 	/* Be certain the FNDELAY is off */
-	if( fcntl(vas_fd, F_SETFL, 0) < 0 )  {
+	if ( fcntl(vas_fd, F_SETFL, 0) < 0 )  {
 		perror(VAS_PORT);
 		bu_exit(2, NULL);
 	}
@@ -128,8 +128,8 @@ vas_open(void)
 	vtty.sg_ispeed = BAUD;
 	vtty.sg_ospeed = BAUD;
 	vtty.sg_flags = RAW|EVENP|ODDP;
-	ioctl(vas_fd, TIOCSETP,&vtty);
-	ioctl(vas_fd, TIOCEXCL,&vtty);	/* exclusive use */
+	ioctl(vas_fd, TIOCSETP, &vtty);
+	ioctl(vas_fd, TIOCEXCL, &vtty);	/* exclusive use */
 
 #  endif /* HAVE_SGTTY_H */
 #endif /* HAVE_TERMIO_H */
@@ -154,13 +154,13 @@ vas_open(void)
 	vtty.c_lflag &= ~ISIG;           /* Signals OFF */
 	vtty.c_lflag &= ~(ECHO|ECHOE|ECHOK);     /* Echo mode OFF */
 
-	if( tcsetattr( vas_fd, TCSAFLUSH, &vtty ) < 0 )  {
+	if ( tcsetattr( vas_fd, TCSAFLUSH, &vtty ) < 0 )  {
 		perror(VAS_PORT);
 		bu_exit(1, NULL);
 	}
 
 	/* Be certain the FNDELAY is off */
-	if( fcntl(vas_fd, F_SETFL, 0) < 0 )  {
+	if ( fcntl(vas_fd, F_SETFL, 0) < 0 )  {
 		perror(VAS_PORT);
 		bu_exit(2, NULL);
 	}
@@ -185,7 +185,7 @@ vas_rawputc(char c)
 		return(got);
 		/* Error recovery?? */
 	}
-	if(debug) fprintf(stderr, "vas_rawputc 0%o '%c'\n", c, c);
+	if (debug) fprintf(stderr, "vas_rawputc 0%o '%c'\n", c, c);
 	return(got);
 }
 
@@ -204,25 +204,25 @@ vas_putc(char c)
 	int	reply;
 	int	count;
 
-	for( count=0; count<20; count++ )  {
+	for ( count=0; count<20; count++ )  {
 		got = write(vas_fd, &c, 1);
 		if (got < 1)  {
 			perror("VAS Write");
 			return(got);
 			/* Error recovery?? */
 		}
-		if(debug) fprintf(stderr, "vas_putc 0%o '%c'\n", c, c);
+		if (debug) fprintf(stderr, "vas_putc 0%o '%c'\n", c, c);
 
 reread:
 		reply=vas_getc();
-		if( reply == 006 )
+		if ( reply == 006 )
 			return(got);		/* ACK */
-		if( reply >= 0x60 && reply <= 0x78 )  {
+		if ( reply >= 0x60 && reply <= 0x78 )  {
 			vas_response(reply);
 			return(got);
 		}
-		if( reply == 007 )  {
-			if(count>4) fprintf(stderr, "retry\n");
+		if ( reply == 007 )  {
+			if (count>4) fprintf(stderr, "retry\n");
 			sleep(1);
 			continue;		/* NACK, please repeat */
 		}
@@ -274,7 +274,7 @@ vas_getc(void)
 	int readval = read(vas_fd, &c, 1);
 
 	if (readval > 0)  {
-	    if(debug)fprintf(stderr, "vas_getc: 0%o %c\n", c&0377, c&0377);
+	    if (debug)fprintf(stderr, "vas_getc: 0%o %c\n", c&0377, c&0377);
 	    return(c & 0377);
 	}
 	if (readval < 0) {
@@ -310,11 +310,11 @@ vas_await(int c, int sec)
 	int	reply;
 	int	count;
 
-	for(count=0; count<20; count++)  {
+	for (count=0; count<20; count++)  {
 		reply = vas_getc();
-		if(debug) vas_response(reply);
-		if( reply == c )  return(0);	/* OK */
-		if(!debug) vas_response(reply);
+		if (debug) vas_response(reply);
+		if ( reply == c )  return(0);	/* OK */
+		if (!debug) vas_response(reply);
 	}
 	return(-1);			/* BAD:  too many bad chars */
 }
@@ -330,7 +330,7 @@ void
 vas_response(char c)
 {
 	fprintf(stderr, "---Got 0%o '%c' ", c, c);
-	switch(c)  {
+	switch (c)  {
 	case 6:
 		fprintf(stderr, "last command accepted\n");
 		break;

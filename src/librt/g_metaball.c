@@ -87,8 +87,8 @@ const char *metaballnames[] =
 int rt_metaball_lookup_type_id(const char *name)
 {
     int i = 0;
-    while(metaballnames[i++])
-	if(!strncmp(metaballnames[i], name, 4))
+    while (metaballnames[i++])
+	if (!strncmp(metaballnames[i], name, 4))
 	    return i;
     return -1;
 }
@@ -109,17 +109,17 @@ fastf_t rt_metaball_get_bounding_sphere(point_t *center, fastf_t threshold, stru
 	int i;
 
 	/* find a bounding box for the POINTS (NOT the surface) */
-	VSETALL(min,+INFINITY);
-	VSETALL(max,-INFINITY);
-	for(BU_LIST_FOR(mbpt, wdb_metaballpt, points))
-		for(i=0;i<3;i++) {
-			if(mbpt->coord[i] < min[i])
+	VSETALL(min, +INFINITY);
+	VSETALL(max, -INFINITY);
+	for (BU_LIST_FOR(mbpt, wdb_metaballpt, points))
+		for (i=0;i<3;i++) {
+			if (mbpt->coord[i] < min[i])
 				min[i] = mbpt->coord[i];
 			if (mbpt->coord[i] > max[i])
 				max[i] = mbpt->coord[i];
 		}
 	/* return -1 if no points are defined. */
-	if(min[X] == +INFINITY)
+	if (min[X] == +INFINITY)
 	    return -1;
 
 	/* compute the center of the generated box, call that the center */
@@ -127,14 +127,14 @@ fastf_t rt_metaball_get_bounding_sphere(point_t *center, fastf_t threshold, stru
 	VSCALE(*center, *center, 0.5);
 
 	/* start looking for the radius... */
-	for(BU_LIST_FOR(mbpt, wdb_metaballpt, points)){
-		VSUB2(d, mbpt->coord,*center);
+	for (BU_LIST_FOR(mbpt, wdb_metaballpt, points)){
+		VSUB2(d, mbpt->coord, *center);
 		/* since the surface is where threshold=fldstr/mag,
 		   mag=fldstr/threshold, so make that the initial value */
 		dist = MAGNITUDE(d) + mbpt->fldstr/threshold;
 		/* and add all the contribution */
-		for(BU_LIST_FOR(mbpt2, wdb_metaballpt, points))
-			if(mbpt2 != mbpt){
+		for (BU_LIST_FOR(mbpt2, wdb_metaballpt, points))
+			if (mbpt2 != mbpt){
 				fastf_t additive;
 				VSUB2(d, mbpt2->coord, mbpt->coord);
 				mag = MAGNITUDE(d) + dist;
@@ -142,7 +142,7 @@ fastf_t rt_metaball_get_bounding_sphere(point_t *center, fastf_t threshold, stru
 				dist += additive;
 			}
 		/* then see if this is a 'defining' point */
-		if(dist > r)
+		if (dist > r)
 			r = dist;
 	}
 	return r;
@@ -172,7 +172,7 @@ rt_metaball_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 	nmb->method = mb->method;
 
 	/* and copy the list of control points */
-	for(BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)) {
+	for (BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)) {
 		nmbpt = (struct wdb_metaballpt *)bu_malloc(sizeof(struct wdb_metaballpt), "rt_metaball_prep: nmbpt");
 		nmbpt->fldstr = mbpt->fldstr;
 		VMOVE(nmbpt->coord, mbpt->coord);
@@ -206,15 +206,15 @@ rt_metaball_print(register const struct soltab *stp)
 	struct rt_metaball_internal *mb;
 	struct wdb_metaballpt *mbpt;
 
-	if(stp==NULL){ bu_log("soltab is null\n"); return; }
+	if (stp==NULL){ bu_log("soltab is null\n"); return; }
 	mb = (struct rt_metaball_internal *)stp->st_specific;
 	RT_METABALL_CK_MAGIC(mb);
-	for( BU_LIST_FOR( mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)) ++metaball_count;
+	for ( BU_LIST_FOR( mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)) ++metaball_count;
 	bu_log( "Metaball with %d points and a threshold of %g (%s rendering", metaball_count, mb->threshold );
-	if( mb->method != METABALL_ISOPOTENTIAL ) bu_log(", blobbyness factor of %g", mb->goo);
+	if ( mb->method != METABALL_ISOPOTENTIAL ) bu_log(", blobbyness factor of %g", mb->goo);
 	bu_log(")\n");
 	metaball_count=0;
-	for( BU_LIST_FOR( mbpt, wdb_metaballpt, &mb->metaball_ctrl_head))
+	for ( BU_LIST_FOR( mbpt, wdb_metaballpt, &mb->metaball_ctrl_head))
 		bu_log("\t%d: %g field strength at (%g, %g, %g)\n", ++metaball_count, mbpt->fldstr, V3ARGS(mbpt->coord));
 	return;
 }
@@ -247,7 +247,7 @@ rt_metaball_point_value_iso(point_t *p, struct bu_list *points)
 	fastf_t ret = 0.0;
 	point_t v;
 
-	for(BU_LIST_FOR(mbpt, wdb_metaballpt, points)) {
+	for (BU_LIST_FOR(mbpt, wdb_metaballpt, points)) {
 		VSUB2(v, mbpt->coord, *p);
 		ret += mbpt->fldstr / MAGSQ(v);	/* f/r^2 */
 	}
@@ -257,7 +257,7 @@ rt_metaball_point_value_iso(point_t *p, struct bu_list *points)
 fastf_t
 rt_metaball_point_value_blob(point_t *p, struct bu_list *points)
 {
-    bu_exit(1,"rt_metaball_point_value_blob() No implemented");
+    bu_exit(1, "rt_metaball_point_value_blob() No implemented");
 }
 
 /* main point evaluation function, to be exposed to the ugly outside world. */
@@ -265,7 +265,7 @@ fastf_t
 rt_metaball_point_value(point_t *p, struct rt_metaball_internal *mb)
 {
     RT_METABALL_CK_MAGIC(mb);
-    switch( mb->method ) {
+    switch ( mb->method ) {
 	case METABALL_METABALL:
 	    break;
 	case METABALL_ISOPOTENTIAL:
@@ -296,29 +296,29 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 /* we hit, but not as fine-grained as we want. So back up one step, cut the
  * step size in half and start over... Note that once we're happily inside, we
  * do NOT change the step size back! */
-#define STEPBACK { distleft += step; VSUB2(p, p, inc); step *= .5; VSCALE(inc, inc,.5); }
+#define STEPBACK { distleft += step; VSUB2(p, p, inc); step *= .5; VSCALE(inc, inc, .5); }
 #define STEPIN(x) { --segsleft; ++retval; VSUB2(delta, p, rp->r_pt); segp->seg_##x.hit_dist = MAGNITUDE(delta); }
-	while( distleft >= 0.0 ) {
+	while ( distleft >= 0.0 ) {
 		distleft -= step;
 		VADD2(p, p, inc);
-		if(stat == 1) {
-			if(rt_metaball_point_value(&p, mb) < mb->threshold )
-				if(step<=finalstep) {
+		if (stat == 1) {
+			if (rt_metaball_point_value(&p, mb) < mb->threshold )
+				if (step<=finalstep) {
 					STEPIN(out);
 					stat = 0;
-					if(segsleft <= 0)
+					if (segsleft <= 0)
 					    return retval;
 				} else
 					STEPBACK
 		} else
-			if(rt_metaball_point_value(&p, mb) > mb->threshold )
-				if(step<=finalstep) {
+			if (rt_metaball_point_value(&p, mb) > mb->threshold )
+				if (step<=finalstep) {
 					RT_GET_SEG(segp, ap->a_resource);
 					segp->seg_stp = stp;
 					STEPIN(in);
 					segp->seg_out.hit_dist = segp->seg_in.hit_dist + .1; /* cope with silliness */
 					BU_LIST_INSERT( &(seghead->l), &(segp->l) );
-					if(segsleft <= 0)	/* exit now if we're one-hit (like visual rendering) */
+					if (segsleft <= 0)	/* exit now if we're one-hit (like visual rendering) */
 						return retval;
 					/* reset the ray-walk shtuff */
 					stat = 1;
@@ -348,11 +348,11 @@ rt_metaball_norm(register struct hit *hitp, struct soltab *stp, register struct 
 
 	VSETALL(hitp->hit_normal, 0.0);
 
-	switch(mb->method) {
+	switch (mb->method) {
 	case METABALL_METABALL: bu_log("strict metaballs not implemented yet\n");
 		break;
 	case METABALL_ISOPOTENTIAL:
-		for(BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)){
+		for (BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)){
 			VSUB2(v, hitp->hit_point, mbpt->coord);
 			a = MAGSQ(v);
 			VJOIN1(hitp->hit_normal, hitp->hit_normal, mbpt->fldstr / (a*a), v);	/* f/r^4 */
@@ -426,11 +426,11 @@ rt_metaball_plot_sph(struct bu_list *vhead, point_t *center, fastf_t radius)
 	rt_ell_16pts( middle, *center, a, c );
 
 	RT_ADD_VLIST( vhead, &top[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
-	for( i=0; i<16; i++ ) RT_ADD_VLIST( vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
+	for ( i=0; i<16; i++ ) RT_ADD_VLIST( vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
 	RT_ADD_VLIST( vhead, &bottom[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
-	for( i=0; i<16; i++ ) RT_ADD_VLIST( vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
+	for ( i=0; i<16; i++ ) RT_ADD_VLIST( vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
 	RT_ADD_VLIST( vhead, &middle[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
-	for( i=0; i<16; i++ ) RT_ADD_VLIST( vhead, &middle[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
+	for ( i=0; i<16; i++ ) RT_ADD_VLIST( vhead, &middle[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
 }
 
 /**
@@ -449,12 +449,12 @@ rt_metaball_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 	RT_METABALL_CK_MAGIC(mb);
 	rad = rt_metaball_get_bounding_sphere(&bsc, mb->threshold, &mb->metaball_ctrl_head);
 	/* cope with the case where 0 points are defined. */
-	if(rad<0)
+	if (rad<0)
 	    return 0;
 #if PLOT_THE_BIG_BOUNDING_SPHERE
 	rt_metaball_plot_sph(vhead, &bsc, rad);
 #endif
-	for(BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head))
+	for (BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head))
 		rt_metaball_plot_sph(vhead, &mbpt->coord, mbpt->fldstr / mb->threshold);
 	return 0;
 }
@@ -502,7 +502,7 @@ rt_metaball_import5(struct rt_db_internal *ip, const struct bu_external *ep, reg
 	mb->threshold = buf[0];
 	BU_LIST_INIT( &mb->metaball_ctrl_head );
 	if (mat == NULL) mat = bn_mat_identity;
-	for(i=1; i<=metaball_count*4 ; i+=4) {
+	for (i=1; i<=metaball_count*4; i+=4) {
 			/* Apply modeling transformations */
 		BU_GETSTRUCT( mbpt, wdb_metaballpt );
 		mbpt->l.magic = WDB_METABALLPT_MAGIC;
@@ -538,19 +538,19 @@ rt_metaball_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
 	fastf_t *buf = NULL;
 
 	RT_CK_DB_INTERNAL(ip);
-	if( ip->idb_type != ID_METABALL )
+	if ( ip->idb_type != ID_METABALL )
 		return(-1);
 	mb = (struct rt_metaball_internal *)ip->idb_ptr;
 	RT_METABALL_CK_MAGIC(mb);
 	if (mb->metaball_ctrl_head.magic == 0) return -1;
 
 	/* Count number of points */
-	for(BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)) metaball_count++;
+	for (BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)) metaball_count++;
 
 	BU_CK_EXTERNAL(ep);
 	ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE*(1+4*metaball_count) + 3*SIZEOF_NETWORK_LONG;
 	ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "metaball external");
-	if(ep->ext_buf == NULL)
+	if (ep->ext_buf == NULL)
 	    bu_bomb("Failed to allocate DB space!\n");
 	bu_plong((unsigned char *)ep->ext_buf, metaball_count);
 	bu_plong((unsigned char *)ep->ext_buf + SIZEOF_NETWORK_LONG, mb->method);
@@ -559,7 +559,7 @@ rt_metaball_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
 	/* pack the point data */
 	buf = (fastf_t *)bu_malloc((metaball_count*4+1)*SIZEOF_NETWORK_DOUBLE, "rt_metaball_export5: buf");
 	buf[0] = mb->threshold;
-	for(BU_LIST_FOR( mbpt, wdb_metaballpt, &mb->metaball_ctrl_head), i+=4){
+	for (BU_LIST_FOR( mbpt, wdb_metaballpt, &mb->metaball_ctrl_head), i+=4){
 		VSCALE(&buf[i], mbpt->coord, local2mm);
 		buf[i+3] = mbpt->fldstr * local2mm;
 	}
@@ -586,18 +586,18 @@ rt_metaball_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ve
 	RT_CK_DB_INTERNAL(ip);
 	mb = (struct rt_metaball_internal *)ip->idb_ptr;
 	RT_METABALL_CK_MAGIC(mb);
-	for(BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)) metaball_count++;
+	for (BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)) metaball_count++;
 
-	if( mb->method == METABALL_ISOPOTENTIAL )
+	if ( mb->method == METABALL_ISOPOTENTIAL )
 	    *buf2 = '\0';
 	else
 	    snprintf( buf2, BUFSIZ, ", blobbyness of %g", mb->goo);
 
 	snprintf(buf, BUFSIZ, "Metaball with %d points and a threshold of %g (%s rendering%s)\n", metaball_count, mb->threshold, rt_metaball_lookup_type_name(mb->method), buf2);
 	bu_vls_strcat(str, buf);
-	if(!verbose)return 0;
+	if (!verbose)return 0;
 	metaball_count=0;
-	for( BU_LIST_FOR( mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)){
+	for ( BU_LIST_FOR( mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)){
 		snprintf(buf, BUFSIZ, "\t%d: %g field strength at (%g, %g, %g)\n",
 			++metaball_count, mbpt->fldstr, V3ARGS(mbpt->coord));
 		bu_vls_strcat(str, buf);
@@ -622,7 +622,7 @@ rt_metaball_ifree(struct rt_db_internal *ip)
 	RT_METABALL_CK_MAGIC(metaball);
 
 	if (metaball->metaball_ctrl_head.magic != 0)
-		while(BU_LIST_WHILE(mbpt, wdb_metaballpt, &metaball->metaball_ctrl_head)) {
+		while (BU_LIST_WHILE(mbpt, wdb_metaballpt, &metaball->metaball_ctrl_head)) {
 			BU_LIST_DEQUEUE(&(mbpt->l));
 			bu_free((char *)mbpt, "wdb_metaballpt");
 		}

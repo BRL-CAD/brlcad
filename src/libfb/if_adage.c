@@ -238,18 +238,19 @@ adage_open(FBIO *ifp, char *file, int width, int height)
 	FB_CK_FBIO(ifp);
 
 	/* Only 512 and 1024 opens are available */
-	if( width > 512 || height > 512 )
+	if ( width > 512 || height > 512 )
 		width = height = 1024;
 	else
 		width = height = 512;
 
 	/* "/dev/ik###" gives unit */
-	for( cp = file; *cp != '\0' && !isdigit(*cp); cp++ ) ;
+	for ( cp = file; *cp != '\0' && !isdigit(*cp); cp++ )
+	    ;
 	unit = 0;
-	if( *cp && isdigit(*cp) )
+	if ( *cp && isdigit(*cp) )
 		(void)sscanf( cp, "%d", &unit );
-	while( *cp != '\0' && isdigit(*cp) )  cp++;	/* skip number */
-	if( *cp != '\0' )  switch( *cp )  {
+	while ( *cp != '\0' && isdigit(*cp) )  cp++;	/* skip number */
+	if ( *cp != '\0' )  switch ( *cp )  {
 		case 'n':
 			noinit = 1;
 			break;
@@ -272,26 +273,26 @@ adage_open(FBIO *ifp, char *file, int width, int height)
 
 	(void)sprintf( ourfile, "/dev/ik%d%c", unit, width>512 ? 'h' : 'l');
 
-	if( (ifp->if_fd = open( ourfile, O_RDWR, 0 )) == -1 )
+	if ( (ifp->if_fd = open( ourfile, O_RDWR, 0 )) == -1 )
 		return	-1;
 
 	/* create a clean ikinfo struct */
-	if( (IKIL(ifp) = (char *)calloc( 1, sizeof(struct ikinfo) )) == NULL ) {
+	if ( (IKIL(ifp) = (char *)calloc( 1, sizeof(struct ikinfo) )) == NULL ) {
 		fb_log( "adage_open: ikinfo malloc failed\n" );
 		return	-1;
 	}
 #if defined( vax )
-	if( ioctl( ifp->if_fd, IKIOGETADDR, &(IKI(ifp)->_ikUBaddr) ) < 0 )
+	if ( ioctl( ifp->if_fd, IKIOGETADDR, &(IKI(ifp)->_ikUBaddr) ) < 0 )
 		fb_log( "adage_open : ioctl(IKIOGETADDR) failed.\n" );
 #endif
 	ifp->if_width = width;
 	ifp->if_height = height;
-	if( ntsc )  {
-		if( ext_sync )
+	if ( ntsc )  {
+		if ( ext_sync )
 			IKI(ifp)->mode = 4;
 		else
 			IKI(ifp)->mode = 3;
-	} else switch( ifp->if_width ) {
+	} else switch ( ifp->if_width ) {
 	case 512:
 		IKI(ifp)->mode = 1;
 		break;
@@ -308,12 +309,12 @@ adage_open(FBIO *ifp, char *file, int width, int height)
 	 * which is needed for the Lyon-Lamb video-tape controller,
 	 * which is unhappy if the frame clock is shut off.
 	 */
-	if( !noinit )  {
-		if( lseek( ifp->if_fd, (off_t)FBC*4L, 0 ) == -1 ) {
+	if ( !noinit )  {
+		if ( lseek( ifp->if_fd, (off_t)FBC*4L, 0 ) == -1 ) {
 			fb_log( "adage_open : lseek failed.\n" );
 			return	-1;
 		}
-		if( write( ifp->if_fd, (char *)&ikfbc_setup[IKI(ifp)->mode],
+		if ( write( ifp->if_fd, (char *)&ikfbc_setup[IKI(ifp)->mode],
 		    sizeof(struct ik_fbc) ) != sizeof(struct ik_fbc) ) {
 			fb_log( "adage_open : write failed.\n" );
 			return	-1;
@@ -321,13 +322,13 @@ adage_open(FBIO *ifp, char *file, int width, int height)
 		IKI(ifp)->ikfbcmem = ikfbc_setup[IKI(ifp)->mode];/* struct copy */
 
 		/* Build an identity for the crossbar switch */
-		for( i=0; i < 34; i++ )
+		for ( i=0; i < 34; i++ )
 			xbsval[i] = (long)i;
-		if( lseek( ifp->if_fd, (off_t)XBS*4L, 0 ) == -1 ) {
+		if ( lseek( ifp->if_fd, (off_t)XBS*4L, 0 ) == -1 ) {
 			fb_log( "adage_open : lseek failed.\n" );
 			return	-1;
 		}
-		if( write( ifp->if_fd, (char *) xbsval, sizeof(xbsval) )
+		if ( write( ifp->if_fd, (char *) xbsval, sizeof(xbsval) )
 		    != sizeof(xbsval) ) {
 			fb_log( "adage_open : write failed.\n" );
 			return	-1;
@@ -335,31 +336,31 @@ adage_open(FBIO *ifp, char *file, int width, int height)
 
 		/* Initialize the LUVO crossbar switch, too */
 		xbsval[0] = 0x24L;		/* 1:1 mapping, magic number */
-		if( lseek( ifp->if_fd, (off_t)LUVOXBS*4L, 0 ) == -1 ) {
+		if ( lseek( ifp->if_fd, (off_t)LUVOXBS*4L, 0 ) == -1 ) {
 			fb_log( "adage_open : lseek failed.\n" );
 			return	-1;
 		}
-		if( write( ifp->if_fd, (char *) xbsval, sizeof(long) )
+		if ( write( ifp->if_fd, (char *) xbsval, sizeof(long) )
 		    != sizeof(long) ) {
 			fb_log( "adage_open : write failed.\n" );
 			return	-1;
 		}
 
 		/* Dump in default cursor. */
-		if( adage_setcursor( ifp, default_cursor.bits,
+		if ( adage_setcursor( ifp, default_cursor.bits,
 		    default_cursor.xbits, default_cursor.ybits,
 		    default_cursor.xorig, default_cursor.yorig ) == -1 )
 			return	-1;
 	}
 
 	/* seek to start of pixels */
-	if( lseek( ifp->if_fd, (off_t)0L, 0 ) == -1 ) {
+	if ( lseek( ifp->if_fd, (off_t)0L, 0 ) == -1 ) {
 		fb_log( "adage_open : lseek failed.\n" );
 		return	-1;
 	}
 	/* Create pixel buffer */
-	if( _pixbuf == NULL ) {
-		if( (_pixbuf = malloc( ADAGE_DMA_BYTES )) == NULL ) {
+	if ( _pixbuf == NULL ) {
+		if ( (_pixbuf = malloc( ADAGE_DMA_BYTES )) == NULL ) {
 			fb_log( "adage_open : pixbuf malloc failed.\n" );
 			return	-1;
 		}
@@ -370,7 +371,7 @@ adage_open(FBIO *ifp, char *file, int width, int height)
 	IKI(ifp)->y_window = 0;
 	/* 12bit 2's complement window setting */
 	i = ikfbc_setup[IKI(ifp)->mode].fbc_ywindow;
-	if( i >= 2048 )
+	if ( i >= 2048 )
 		i = - (4096 - i);
 	IKI(ifp)->y_winoff = i;
 	return	ifp->if_fd;
@@ -380,7 +381,7 @@ HIDDEN int
 adage_close(FBIO *ifp)
 {
 	/* free ikinfo struct */
-	if( IKIL(ifp) != NULL )
+	if ( IKIL(ifp) != NULL )
 		(void) free( IKIL(ifp) );
 
 	return	close( ifp->if_fd );
@@ -394,16 +395,16 @@ adage_clear(FBIO *ifp, RGBpixel (*bgpp))
 	 *  use DMAs to fill the frame buffer since there is no
 	 *  hardware support for this.
 	 */
-	if( bgpp != NULL && ((*bgpp)[RED] != 0 || (*bgpp)[GRN] != 0 || (*bgpp)[BLU] != 0) )
+	if ( bgpp != NULL && ((*bgpp)[RED] != 0 || (*bgpp)[GRN] != 0 || (*bgpp)[BLU] != 0) )
 		return	adage_color_clear( ifp, bgpp );
 
 	IKI(ifp)->ikfbcmem.fbc_Lcontrol |= FBC_AUTOCLEAR;
 
-	if( lseek( ifp->if_fd, (off_t)FBC*4L, 0 ) == -1 ) {
+	if ( lseek( ifp->if_fd, (off_t)FBC*4L, 0 ) == -1 ) {
 		fb_log( "adage_clear : lseek failed.\n" );
 		return	-1;
 	}
-	if( write( ifp->if_fd, &(IKI(ifp)->ikfbcmem), sizeof(struct ik_fbc) )
+	if ( write( ifp->if_fd, &(IKI(ifp)->ikfbcmem), sizeof(struct ik_fbc) )
 	    != sizeof(struct ik_fbc) ) {
 		fb_log( "adage_clear : write failed.\n" );
 		return	-1;
@@ -411,11 +412,11 @@ adage_clear(FBIO *ifp, RGBpixel (*bgpp))
 
 	sleep( 1 );	/* Give the FBC a chance to act */
 	IKI(ifp)->ikfbcmem.fbc_Lcontrol &= ~FBC_AUTOCLEAR;
-	if( lseek( ifp->if_fd, (off_t)FBC*4L, 0 ) == -1 ) {
+	if ( lseek( ifp->if_fd, (off_t)FBC*4L, 0 ) == -1 ) {
 		fb_log( "adage_clear : lseek failed.\n" );
 		return	-1;
 	}
-	if( write( ifp->if_fd, &(IKI(ifp)->ikfbcmem), sizeof(struct ik_fbc) )
+	if ( write( ifp->if_fd, &(IKI(ifp)->ikfbcmem), sizeof(struct ik_fbc) )
 	    !=	sizeof(struct ik_fbc) ) {
 		fb_log( "adage_clear : write failed.\n" );
 		return	-1;
@@ -437,7 +438,7 @@ adage_clear(FBIO *ifp, RGBpixel (*bgpp))
  *		      + start of pixelp buffer.
  */
 
-#define	IKSEEK(x, y)	if(lseek(ifp->if_fd,(off_t)((y)*ifp->if_width+(x))\
+#define	IKSEEK(x, y)	if (lseek(ifp->if_fd, (off_t)((y)*ifp->if_width+(x))\
 			*sizeof(IKONASpixel), 0) == -1) return -1;
 
 HIDDEN int
@@ -450,7 +451,7 @@ adage_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), long int count)
 	int	maxikscans;
 	int	width, pixels, topiky;
 
-	if( count == 1 )
+	if ( count == 1 )
 		return adage_read_pio_pixel( ifp, x, y, pixelp );
 
 	width = ifp->if_width;
@@ -458,12 +459,12 @@ adage_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), long int count)
 
 	topiky = ifp->if_height - 1 - y;	/* 1st quadrant */
 	topiky -= ( x + count - 1 ) / width;	/* first y on screen */
-	if( x + count <= width ) {
+	if ( x + count <= width ) {
 		/* all on one line */
 		headfrag = count;
 		goto headin;
 	}
-	if( x != 0 ) {
+	if ( x != 0 ) {
 		/* doesn't start of beginning of line => headfrag */
 		headfrag = width - x;
 		pixels -= headfrag;
@@ -473,17 +474,17 @@ adage_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), long int count)
 	fullscans = pixels / width;
 	tailfrag = pixels - fullscans * width;	/* remainder */
 
-	if( tailfrag != 0 ) {
+	if ( tailfrag != 0 ) {
 		IKSEEK( 0, topiky );
 		topiky++;
-		if( read( ifp->if_fd, _pixbuf, tailfrag*sizeof(IKONASpixel) )
+		if ( read( ifp->if_fd, _pixbuf, tailfrag*sizeof(IKONASpixel) )
 		    != tailfrag*sizeof(IKONASpixel) ) {
 		    perror("READ_ERROR");
 		    return -1;
 		}
 		out = (char *) &(pixelp[count-tailfrag][RED]);
 		in = _pixbuf;
-		for( i = tailfrag; i > 0; i-- ) {
+		for ( i = tailfrag; i > 0; i-- ) {
 			/* VAX subscripting faster than ++ */
 			*out++ = *in;
 			*out++ = in[1];
@@ -492,22 +493,22 @@ adage_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), long int count)
 		}
 	}
 	/* Do the full scanlines */
-	if( fullscans > 0 ) {
+	if ( fullscans > 0 ) {
 #ifndef GM256
 		maxikscans =  ADAGE_DMA_BYTES / (ifp->if_width*sizeof(IKONASpixel));
 		out = (char *) &(pixelp[count-tailfrag-width][RED]);
 		IKSEEK( 0, topiky );
 		topiky += fullscans;
-		while( fullscans > 0 ) {
+		while ( fullscans > 0 ) {
 			in = _pixbuf;
 			doscans = fullscans > maxikscans ? maxikscans : fullscans;
-			if( read( ifp->if_fd, _pixbuf, doscans*width*sizeof(IKONASpixel) )
+			if ( read( ifp->if_fd, _pixbuf, doscans*width*sizeof(IKONASpixel) )
 			    != doscans*width*sizeof(IKONASpixel) ) {
 			    perror("READ ERROR");
 			    return -1;
 			}
-			for( scan = doscans; scan > 0; scan-- ) {
-				for( i = width; i > 0; i-- ) {
+			for ( scan = doscans; scan > 0; scan-- ) {
+				for ( i = width; i > 0; i-- ) {
 					/* VAX subscripting faster than ++ */
 					*out++ = *in;
 					*out++ = in[1];
@@ -522,15 +523,15 @@ adage_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), long int count)
 		out = (char *) &(pixelp[count-tailfrag-width][RED]);
 		IKSEEK( 0, topiky );
 		topiky += fullscans;
-		while( fullscans > 0 ) {
+		while ( fullscans > 0 ) {
 			in = _pixbuf;
 			/* Read a single scan line */
-			if( read( ifp->if_fd, _pixbuf, width*sizeof(IKONASpixel) )
+			if ( read( ifp->if_fd, _pixbuf, width*sizeof(IKONASpixel) )
 			    != width*sizeof(IKONASpixel) ) {
 			    perror("READ ERROR");
 			    return -1;
 			}
-			for( i = width; i > 0; i-- ) {
+			for ( i = width; i > 0; i-- ) {
 				/* VAX subscripting faster than ++ */
 				*out++ = *in;
 				*out++ = in[1];
@@ -543,16 +544,16 @@ adage_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), long int count)
 #endif
 	}
 headin:
-	if( headfrag != 0 ) {
+	if ( headfrag != 0 ) {
 		IKSEEK( x, topiky );
 		out = (char *) pixelp;
 		in = _pixbuf;
-		if( read( ifp->if_fd, _pixbuf, headfrag*sizeof(IKONASpixel) )
+		if ( read( ifp->if_fd, _pixbuf, headfrag*sizeof(IKONASpixel) )
 		    != headfrag*sizeof(IKONASpixel) ) {
 		    perror("READ ERROR");
 		    return -1;
 		}
-		for( i = headfrag; i > 0; i-- ) {
+		for ( i = headfrag; i > 0; i-- ) {
 			/* VAX subscripting faster than ++ */
 			*out++ = *in;
 			*out++ = in[1];
@@ -573,7 +574,7 @@ adage_write(FBIO *ifp, int x, int y, RGBpixel (*pixelp), long int count)
 	int	maxikscans;
 	int	width, pixels, topiky;
 
-	if( count == 1 )
+	if ( count == 1 )
 		return adage_write_pio_pixel( ifp, x, y, pixelp );
 
 	width = ifp->if_width;
@@ -581,12 +582,12 @@ adage_write(FBIO *ifp, int x, int y, RGBpixel (*pixelp), long int count)
 
 	topiky = ifp->if_height - 1 - y;	/* 1st quadrant */
 	topiky -= ( x + count - 1 ) / width;	/* first y on screen */
-	if( x + count <= width ) {
+	if ( x + count <= width ) {
 		/* all on one line */
 		headfrag = count;
 		goto headout;
 	}
-	if( x != 0 ) {
+	if ( x != 0 ) {
 		/* doesn't start of beginning of line => headfrag */
 		headfrag = width - x;
 		pixels -= headfrag;
@@ -596,34 +597,34 @@ adage_write(FBIO *ifp, int x, int y, RGBpixel (*pixelp), long int count)
 	fullscans = pixels / width;
 	tailfrag = pixels - fullscans * width;	/* remainder */
 
-	if( tailfrag != 0 ) {
+	if ( tailfrag != 0 ) {
 		IKSEEK( 0, topiky );
 		topiky++;
 		in = (char *) &(pixelp[count-tailfrag][RED]);
 		out = _pixbuf;
-		for( i = tailfrag; i > 0; i-- ) {
+		for ( i = tailfrag; i > 0; i-- ) {
 			/* VAX subscripting faster than ++ */
 			*out = *in++;
 			out[1] = *in++;
 			out[2] = *in++;
 			out += sizeof(IKONASpixel);
 		}
-		if( write( ifp->if_fd, _pixbuf, tailfrag*sizeof(IKONASpixel) )
+		if ( write( ifp->if_fd, _pixbuf, tailfrag*sizeof(IKONASpixel) )
 		    != tailfrag*sizeof(IKONASpixel) )
 			return	-1;
 	}
 	/* Do the full scanlines */
-	if( fullscans > 0 ) {
+	if ( fullscans > 0 ) {
 #ifndef GM256
 		maxikscans =  ADAGE_DMA_BYTES / (ifp->if_width*sizeof(IKONASpixel));
 		in = (char *) &(pixelp[count-tailfrag-width][RED]);
 		IKSEEK( 0, topiky );
 		topiky += fullscans;
-		while( fullscans > 0 ) {
+		while ( fullscans > 0 ) {
 			out = _pixbuf;
 			doscans = fullscans > maxikscans ? maxikscans : fullscans;
-			for( scan = doscans; scan > 0; scan-- ) {
-				for( i = width; i > 0; i-- ) {
+			for ( scan = doscans; scan > 0; scan-- ) {
+				for ( i = width; i > 0; i-- ) {
 					/* VAX subscripting faster than ++ */
 					*out = *in++;
 					out[1] = *in++;
@@ -632,7 +633,7 @@ adage_write(FBIO *ifp, int x, int y, RGBpixel (*pixelp), long int count)
 				}
 				in -= (width << 1) * sizeof(RGBpixel);
 			}
-			if( write( ifp->if_fd, _pixbuf, doscans*width*sizeof(IKONASpixel) )
+			if ( write( ifp->if_fd, _pixbuf, doscans*width*sizeof(IKONASpixel) )
 			    != doscans*width*sizeof(IKONASpixel) )
 				return	-1;
 			fullscans -= doscans;
@@ -641,10 +642,10 @@ adage_write(FBIO *ifp, int x, int y, RGBpixel (*pixelp), long int count)
 		in = (char *) &(pixelp[count-tailfrag-width][RED]);
 		IKSEEK( 0, topiky );
 		topiky += fullscans;
-		while( fullscans > 0 ) {
+		while ( fullscans > 0 ) {
 			out = _pixbuf;
 			/* Read a single scan line */
-			for( i = width; i > 0; i-- ) {
+			for ( i = width; i > 0; i-- ) {
 				/* VAX subscripting faster than ++ */
 				*out = *in++;
 				out[1] = *in++;
@@ -652,7 +653,7 @@ adage_write(FBIO *ifp, int x, int y, RGBpixel (*pixelp), long int count)
 				out += sizeof(IKONASpixel);
 			}
 			in -= (width << 1) * sizeof(RGBpixel);
-			if( write( ifp->if_fd, _pixbuf, width*sizeof(IKONASpixel) )
+			if ( write( ifp->if_fd, _pixbuf, width*sizeof(IKONASpixel) )
 			    != width*sizeof(IKONASpixel) )
 				return	-1;
 			fullscans--;
@@ -660,18 +661,18 @@ adage_write(FBIO *ifp, int x, int y, RGBpixel (*pixelp), long int count)
 #endif
 	}
 headout:
-	if( headfrag != 0 ) {
+	if ( headfrag != 0 ) {
 		IKSEEK( x, topiky );
 		in = (char *) pixelp;
 		out = _pixbuf;
-		for( i = headfrag; i > 0; i-- ) {
+		for ( i = headfrag; i > 0; i-- ) {
 			/* VAX subscripting faster than ++ */
 			*out = *in++;
 			out[1] = *in++;
 			out[2] = *in++;
 			out += sizeof(IKONASpixel);
 		}
-		if( write( ifp->if_fd, _pixbuf, headfrag*sizeof(IKONASpixel) )
+		if ( write( ifp->if_fd, _pixbuf, headfrag*sizeof(IKONASpixel) )
 		    != headfrag*sizeof(IKONASpixel) )
 			return	-1;
 	}
@@ -692,13 +693,13 @@ adage_write_pio_pixel(FBIO *ifp, int x, int y, RGBpixel (*datap))
 
 	y = ifp->if_width-1-y;		/* 1st quadrant */
 	i = 10000;
-	while( i-- && !(ikp->ubcomreg & IKREADY) )  /* NULL */ 	;
-	if( i == 0 ) {
+	while ( i-- && !(ikp->ubcomreg & IKREADY) )  /* NULL */ 	;
+	if ( i == 0 ) {
 		fb_log( "IK READY stayed low.\n" );
 		return	-1;
 	}
 
-	if( ifp->if_width == 1024 ) {
+	if ( ifp->if_width == 1024 ) {
 		ikp->ikcomreg = IKPIX | IKWRITE | IKINCR | IKHIRES;
 		ikp->ikloaddr = x;
 		ikp->ikhiaddr = y;
@@ -710,7 +711,7 @@ adage_write_pio_pixel(FBIO *ifp, int x, int y, RGBpixel (*datap))
 	ikp->ubcomreg = 1;			/* GO */
 	ikp->datareg = (u_short)data;
 	ikp->datareg = (u_short)(data>>16);
-	if( ikp->ubcomreg & IKERROR ) {
+	if ( ikp->ubcomreg & IKERROR ) {
 		fb_log( "IK ERROR bit on PIO.\n" );
 		return	-1;
 	}
@@ -727,13 +728,13 @@ adage_read_pio_pixel(FBIO *ifp, int x, int y, RGBpixel (*datap))
 
 	y = ifp->if_width-1-y;		/* 1st quadrant */
 	i = 10000;
-	while( i-- && !(ikp->ubcomreg & IKREADY) )  /* NULL */ 	;
-	if( i == 0 ) {
+	while ( i-- && !(ikp->ubcomreg & IKREADY) )  /* NULL */ 	;
+	if ( i == 0 ) {
 		fb_log( "IK READY stayed low (setup).\n" );
 		return	-1;
 	}
 
-	if( ifp->if_width == 1024 ) {
+	if ( ifp->if_width == 1024 ) {
 		ikp->ikcomreg = IKPIX | IKINCR | IKHIRES;
 		ikp->ikloaddr = x;
 		ikp->ikhiaddr = y;
@@ -745,14 +746,14 @@ adage_read_pio_pixel(FBIO *ifp, int x, int y, RGBpixel (*datap))
 	ikp->ubcomreg = 1;			/* GO */
 
 	i = 10000;
-	while( i-- && !(ikp->ubcomreg & IKREADY) )  /* NULL */ 	;
-	if( i == 0 ) {
+	while ( i-- && !(ikp->ubcomreg & IKREADY) )  /* NULL */ 	;
+	if ( i == 0 ) {
 		fb_log( "IK READY stayed low (after).\n" );
 		return	-1;
 	}
 	data = ikp->datareg;			/* low */
 	data |= (((long)ikp->datareg)<<16);	/* high */
-	if( ikp->ubcomreg & IKERROR ) {
+	if ( ikp->ubcomreg & IKERROR ) {
 		fb_log( "IK ERROR bit on PIO.\n" );
 		return	-1;
 	}
@@ -782,10 +783,10 @@ adage_zoom_set(FBIO *ifp, register int x, register int y)
 	 *  While page 5-6 claims that the zoom range is 1..256:1,
 	 *  testing demonstrates that the actual range is 1..16:1.
 	 */
-	if( x < 1 )  x=1;
-	if( y < 1 )  y=1;
-	if( x > 16 )  x=16;
-	if( y > 16 )  y=16;
+	if ( x < 1 )  x=1;
+	if ( y < 1 )  y=1;
+	if ( x > 16 )  x=16;
+	if ( y > 16 )  y=16;
 
 	ifp->if_xzoom = x;
 	ifp->if_yzoom = y;
@@ -799,16 +800,16 @@ adage_zoom_set(FBIO *ifp, register int x, register int y)
 	 * 2.   Thereafter you can increment the zoom register, while
 	 * 	leaving the pixel clock rate doubled.
 	 */
-	if( IKI(ifp)->mode == 2 )  {
-		if( x > 1 )  {
+	if ( IKI(ifp)->mode == 2 )  {
+		if ( x > 1 )  {
 			/* PIXELCLOCK rate experimentally determined as 41 */
 			IKI(ifp)->ikfbcmem.fbc_Hcontrol =
 				FBCH_PIXELCLOCK(41) | FBCH_DRIVEBPCK;
-			if( x >= 4 )
+			if ( x >= 4 )
 				IKI(ifp)->ikfbcmem.fbc_xzoom = (x>>1)-1;
 			else
 				IKI(ifp)->ikfbcmem.fbc_xzoom = 0;
-			if( x & 1 )  fb_log("Unable to do odd X zooms properly in HIRES\n");
+			if ( x & 1 )  fb_log("Unable to do odd X zooms properly in HIRES\n");
 			IKI(ifp)->ikfbcmem.fbc_xsizeview = 511;
 		} else {
 			IKI(ifp)->ikfbcmem.fbc_Hcontrol =
@@ -818,13 +819,13 @@ adage_zoom_set(FBIO *ifp, register int x, register int y)
 				ikfbc_setup[2].fbc_xsizeview;
 		}
 		/* set pixel clock */
-		if( lseek( ifp->if_fd, (off_t)FBCVC*4L, 0 ) == -1 ||
+		if ( lseek( ifp->if_fd, (off_t)FBCVC*4L, 0 ) == -1 ||
 		    write( ifp->if_fd, &(IKI(ifp)->ikfbcmem.fbc_Lcontrol), 4 ) != 4 ) {
 			fb_log( "adage_zoom_set : FBCVC write failed.\n" );
 			return	-1;
 		}
 		/* set x viewport size */
-		if( lseek( ifp->if_fd, (off_t)FBCVPS*4L, 0 ) == -1 ||
+		if ( lseek( ifp->if_fd, (off_t)FBCVPS*4L, 0 ) == -1 ||
 		    write( ifp->if_fd, &(IKI(ifp)->ikfbcmem.fbc_xsizeview), 4 ) != 4 ) {
 			fb_log( "adage_zoom_set : FBCVPS write failed.\n" );
 			return	-1;
@@ -835,11 +836,11 @@ adage_zoom_set(FBIO *ifp, register int x, register int y)
 	}
 	IKI(ifp)->ikfbcmem.fbc_yzoom = y-1;	/* replication count */
 
-	if( lseek( ifp->if_fd, (off_t)FBCZOOM*4L, 0 ) == -1 ) {
+	if ( lseek( ifp->if_fd, (off_t)FBCZOOM*4L, 0 ) == -1 ) {
 		fb_log( "adage_zoom_set : lseek failed.\n" );
 		return	-1;
 	}
-	if( write( ifp->if_fd, &(IKI(ifp)->ikfbcmem.fbc_xzoom), 4 ) != 4 ) {
+	if ( write( ifp->if_fd, &(IKI(ifp)->ikfbcmem.fbc_xzoom), 4 ) != 4 ) {
 		fb_log( "adage_zoom_set : FBCZOOM write failed.\n" );
 		return	-1;
 	}
@@ -849,7 +850,7 @@ adage_zoom_set(FBIO *ifp, register int x, register int y)
 HIDDEN int
 imax(int a, int b)
 {
-	if( a > b )
+	if ( a > b )
 		return(a);
 	return(b);
 }
@@ -896,7 +897,7 @@ adage_window_set(register FBIO *ifp, int x, int y)
 	first_line = 0;
 	y_viewport = IKI(ifp)->ikfbcmem.fbc_yviewport;
 
-	switch( IKI(ifp)->mode )  {
+	switch ( IKI(ifp)->mode )  {
 	case 0:
 	case 3:
 		top_margin = imax( 35, y_viewport+4 );
@@ -915,24 +916,24 @@ adage_window_set(register FBIO *ifp, int x, int y)
 	y_window /= ifp->if_yzoom;
 
 	/* HACK - XXX */
-	if( ifp->if_xzoom > 1 )
+	if ( ifp->if_xzoom > 1 )
 		ikx--;
-	if( IKI(ifp)->mode == 2 && ifp->if_yzoom > 1 )
+	if ( IKI(ifp)->mode == 2 && ifp->if_yzoom > 1 )
 		iky--;	/* hires zoom */
 
-	if( IKI(ifp)->mode != 2 )
+	if ( IKI(ifp)->mode != 2 )
 		IKI(ifp)->ikfbcmem.fbc_xwindow = ikx << 2;	/* lores */
 	else
 		IKI(ifp)->ikfbcmem.fbc_xwindow = ikx;		/* hires */
 
 	IKI(ifp)->ikfbcmem.fbc_ywindow = iky + y_window;
 
-	if( lseek( ifp->if_fd, (off_t)FBCWL*4L, 0 ) == -1 ) {
+	if ( lseek( ifp->if_fd, (off_t)FBCWL*4L, 0 ) == -1 ) {
 		fb_log( "adage_window_set : lseek failed.\n" );
 		return	-1;
 	}
 
-	if( write( ifp->if_fd, &(IKI(ifp)->ikfbcmem.fbc_xwindow), 4 ) != 4 ) {
+	if ( write( ifp->if_fd, &(IKI(ifp)->ikfbcmem.fbc_xwindow), 4 ) != 4 ) {
 		fb_log( "adage_window_set : write failed.\n" );
 		return	-1;
 	}
@@ -954,14 +955,14 @@ adage_cursor(FBIO *ifp, int mode, int x, int y)
 	y = y - IKI(ifp)->y_window;
 	x = x - IKI(ifp)->x_window;
 /*
-	if( y < 0 )  y = 0;
-	if( x < 0 )  x = 0;
+	if ( y < 0 )  y = 0;
+	if ( x < 0 )  x = 0;
 */
 	y *= ifp->if_yzoom;
 	/* HACK - XXX */
-	if( ifp->if_xzoom > 1 )
+	if ( ifp->if_xzoom > 1 )
 		x++;
-	if( IKI(ifp)->mode == 2 && ifp->if_xzoom > 1 )
+	if ( IKI(ifp)->mode == 2 && ifp->if_xzoom > 1 )
 		x *= (ifp->if_xzoom / 2);
 	else
 		x *= ifp->if_xzoom;
@@ -969,18 +970,18 @@ adage_cursor(FBIO *ifp, int mode, int x, int y)
 	x -= IKI(ifp)->x_corig;
 	y -= IKI(ifp)->y_corig;
 
-	if( mode )
+	if ( mode )
 		IKI(ifp)->ikfbcmem.fbc_Lcontrol |= FBC_CURSOR;
 	else
 		IKI(ifp)->ikfbcmem.fbc_Lcontrol &= ~FBC_CURSOR;
 	IKI(ifp)->ikfbcmem.fbc_xcursor = x&01777;
 	IKI(ifp)->ikfbcmem.fbc_ycursor = y&01777;
 
-	if( lseek( ifp->if_fd, (off_t)FBCVC*4L, 0 ) == -1 ) {
+	if ( lseek( ifp->if_fd, (off_t)FBCVC*4L, 0 ) == -1 ) {
 		fb_log( "adage_cursor : lseek failed.\n" );
 		return	-1;
 	}
-	if( write( ifp->if_fd, &(IKI(ifp)->ikfbcmem.fbc_Lcontrol), 8 ) != 8 ) {
+	if ( write( ifp->if_fd, &(IKI(ifp)->ikfbcmem.fbc_Lcontrol), 8 ) != 8 ) {
 		fb_log( "adage_cursor : write failed.\n" );
 		return	-1;
 	}
@@ -994,7 +995,7 @@ HIDDEN int
 adage_cscreen_addr(FBIO *ifp, int mode, int x, int y)
 {
 	y = ifp->if_width-1-y;		/* 1st quadrant */
-	if( ifp->if_width == 1024 && ifp->if_yzoom == 1 )
+	if ( ifp->if_width == 1024 && ifp->if_yzoom == 1 )
 		y += 30;
 	if (mode)
 		IKI(ifp)->ikfbcmem.fbc_Lcontrol |= FBC_CURSOR;
@@ -1003,11 +1004,11 @@ adage_cscreen_addr(FBIO *ifp, int mode, int x, int y)
 	IKI(ifp)->ikfbcmem.fbc_xcursor = x&01777;
 	IKI(ifp)->ikfbcmem.fbc_ycursor = y&01777;
 
-	if( lseek( ifp->if_fd, (off_t)FBCVC*4L, 0 ) == -1 ) {
+	if ( lseek( ifp->if_fd, (off_t)FBCVC*4L, 0 ) == -1 ) {
 		fb_log( "adage_cscreen_addr : lseek failed.\n" );
 		return	-1;
 	}
-	if( write( ifp->if_fd, &(IKI(ifp)->ikfbcmem.fbc_Lcontrol), 8 ) != 8 ) {
+	if ( write( ifp->if_fd, &(IKI(ifp)->ikfbcmem.fbc_Lcontrol), 8 ) != 8 ) {
 		fb_log( "adage_cscreen_addr : write failed.\n" );
 		return	-1;
 	}
@@ -1024,47 +1025,47 @@ adage_setcursor(FBIO *ifp, unsigned char *bits, int xbits, int ybits, int xorig,
 
 	/* Determine bytes per cursor "scanline" */
 	xbytes = xbits / 8;
-	if( xbytes * 8 != xbits ) xbytes++;
+	if ( xbytes * 8 != xbits ) xbytes++;
 
 	/* check size of cursor */
-	if( ybits > 32 ) ybits = 32;
-	if( ybits < 0 ) return -1;
-	if( xbits > 32 ) xbits = 32;
-	if( xbits < 0 ) return -1;
+	if ( ybits > 32 ) ybits = 32;
+	if ( ybits < 0 ) return -1;
+	if ( xbits > 32 ) xbits = 32;
+	if ( xbits < 0 ) return -1;
 
 	/* Clear it out first */
-	for( x = 0; x < 256; x++ )
+	for ( x = 0; x < 256; x++ )
 		cursor[x] = 0;
 
-	for( y = 0; y < ybits; y++ ) {
+	for ( y = 0; y < ybits; y++ ) {
 		ip = &bits[ y * xbytes ];
 		op = &cursor[ (31-y) * 8 ];
 		imask = 0x80;
 		omask = 1;
-		for( x = 0; x < xbits; x++ ) {
-			if( *ip & imask )
+		for ( x = 0; x < xbits; x++ ) {
+			if ( *ip & imask )
 				*op |= omask;
 			/*
 			 * update bit masks and pointers
 			 */
 			imask >>= 1;
-			if( imask == 0 ) {
+			if ( imask == 0 ) {
 				imask = 0x80;
 				ip++;
 			}
 			omask <<= 1;
-			if( omask == 0x10 ) {
+			if ( omask == 0x10 ) {
 				omask = 1;
 				op++;
 			}
 		}
 	}
 
-	if( lseek( ifp->if_fd, (off_t)FBCCD*4L, 0 ) == -1 ) {
+	if ( lseek( ifp->if_fd, (off_t)FBCCD*4L, 0 ) == -1 ) {
 		fb_log( "adage_setcursor : lseek failed.\n" );
 		return	-1;
 	}
-	if( write( ifp->if_fd, cursor, 1024 ) != 1024 ) {
+	if ( write( ifp->if_fd, cursor, 1024 ) != 1024 ) {
 		fb_log( "adage_setcursor : write failed.\n" );
 		return	-1;
 	}
@@ -1091,7 +1092,7 @@ long	page, offset;
 
 	lp = RGB10( (*cp)[RED]>>6, (*cp)[GRN]>>6, (*cp)[BLU]>>6 );
 	lseek( ifp->if_fd, (off_t)(LUVO + page*256 + offset)*4L, 0);
-	if( write( ifp->if_fd, (char *) &lp, 4 ) != 4 ) {
+	if ( write( ifp->if_fd, (char *) &lp, 4 ) != 4 ) {
 		fb_log( "adage_wmap_entry : write failed.\n" );
 		return	-1;
 	}
@@ -1106,15 +1107,15 @@ adage_wmap(FBIO *ifp, register ColorMap *cp)
 	register int i, j;
 
 	/* Note that RGB10(r, g, b) flips to cmap order (b, g, r). */
-	if( cp == (ColorMap *) NULL )  {
-		for( i=0; i < 256; i++ )  {
+	if ( cp == (ColorMap *) NULL )  {
+		for ( i=0; i < 256; i++ )  {
 			j = i<<2;
 			cmap[i] = RGB10( j, j, j );
 			j = ((i+128)%255)<<2;
 			cmap[i+256] = RGB10( j, j, j );
 		}
 	}  else  {
-		for( i=0; i < 256; i++ )  {
+		for ( i=0; i < 256; i++ )  {
 			cmap[i] = RGB10( cp->cm_red[i]>>6,
 				       cp->cm_green[i]>>6,
 				       cp->cm_blue[i]>>6 );
@@ -1128,14 +1129,14 @@ adage_wmap(FBIO *ifp, register ColorMap *cp)
 	 * Replicate first copy of color map onto second copy,
 	 * and also do the "overlay" portion too.
 	 */
-	for( i=0; i < 256*2; i++ ) {
+	for ( i=0; i < 256*2; i++ ) {
 		cmap[i+512] = cmap[i];
 	}
-	if( lseek( ifp->if_fd, (off_t)LUVO*4L, 0) == -1 ) {
+	if ( lseek( ifp->if_fd, (off_t)LUVO*4L, 0) == -1 ) {
 		fb_log( "adage_wmap : lseek failed.\n" );
 		return	-1;
 	}
-	if( write( ifp->if_fd, cmap, 1024*4 ) != 1024*4 ) {
+	if ( write( ifp->if_fd, cmap, 1024*4 ) != 1024*4 ) {
 		fb_log( "adage_wmap : write failed.\n" );
 		return	-1;
 	}
@@ -1148,16 +1149,16 @@ adage_rmap(FBIO *ifp, register ColorMap *cp)
 	register int i;
 	long cmap[1024] = {0};
 
-	if( lseek( ifp->if_fd, (off_t)LUVO*4L, 0) == -1 ) {
+	if ( lseek( ifp->if_fd, (off_t)LUVO*4L, 0) == -1 ) {
 		fb_log( "adage_rmap : lseek failed.\n" );
 		return	-1;
 	}
-	if( read( ifp->if_fd, cmap, 1024*4 ) != 1024*4 ) {
+	if ( read( ifp->if_fd, cmap, 1024*4 ) != 1024*4 ) {
 	    perror("READ ERROR");
 	    fb_log( "adage_rmap : read failed.\n" );
 	    return -1;
 	}
-	for( i=0; i < 256; i++ ) {
+	for ( i=0; i < 256; i++ ) {
 		cp->cm_red[i] = (cmap[i]<<(6+0))  & 0xFFC0;
 		cp->cm_green[i] = (cmap[i]>>(10-6))  & 0xFFC0;
 		cp->cm_blue[i] = (cmap[i]>>(20-6)) & 0xFFC0;
@@ -1180,23 +1181,23 @@ adage_color_clear(register FBIO *ifp, register RGBpixel (*bpp))
 	int	fd;
 
 	/* Fill buffer with background color. */
-	for( i = ADAGE_DMA_PIXELS, pix_to = (IKONASpixel *)_pixbuf; i > 0; i-- ) {
+	for ( i = ADAGE_DMA_PIXELS, pix_to = (IKONASpixel *)_pixbuf; i > 0; i-- ) {
 		COPYRGB( *pix_to, *bpp );
 		pix_to++;
 	}
 
 	/* Set start of framebuffer */
 	fd = ifp->if_fd;
-	if( lseek( fd, (off_t)0L, 0 ) == -1 ) {
+	if ( lseek( fd, (off_t)0L, 0 ) == -1 ) {
 		fb_log( "adage_color_clear : seek failed.\n" );
 		return	-1;
 	}
 
 	/* Send until frame buffer is full. */
 	pixelstodo = ifp->if_height * ifp->if_width;
-	while( pixelstodo > 0 ) {
+	while ( pixelstodo > 0 ) {
 		i = pixelstodo > ADAGE_DMA_PIXELS ? ADAGE_DMA_PIXELS : pixelstodo;
-		if( write( fd, _pixbuf, i*sizeof(IKONASpixel) ) == -1 )
+		if ( write( fd, _pixbuf, i*sizeof(IKONASpixel) ) == -1 )
 			return	-1;
 		pixelstodo -= i;
 	}

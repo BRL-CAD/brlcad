@@ -246,12 +246,12 @@ print_plant(char *str, const struct plant *plant)
   bu_log("%s: %d blades\n", str, plant->blades);
   bu_log(" root: %g %g %g\n", V3ARGS(plant->root));
 
-  for (blade=0 ; blade < plant->blades ; blade++) {
+  for (blade=0; blade < plant->blades; blade++) {
     bu_log("  blade %d  segs:%d tot_len:%g\n", blade, plant->b[blade].segs, plant->b[blade].tot_len);
     /* this printing is separated in two to avoid a nasty -O bug in gcc 2.95.2 */
     bu_log("    min:%g %g %g", V3ARGS(plant->b[blade].pmin));
     bu_log("    max:%g %g %g\n", V3ARGS(plant->b[blade].pmax));
-    for (seg=0 ; seg < plant->b[blade].segs ; seg++) {
+    for (seg=0; seg < plant->b[blade].segs; seg++) {
     /* this printing is separated in two to avoid a nasty -O bug in gcc 2.95.2 */
       bu_log("    leaf[%d](%g %g %g)", seg, V3ARGS(plant->b[blade].leaf[seg].blade));
       bu_log(" %g\n", plant->b[blade].leaf[seg].len );
@@ -280,7 +280,7 @@ blade_rot(struct blade *o, struct blade *i, fastf_t *m, const fastf_t *root)
 
 	o->segs = i->segs;
 	o->tot_len = 0.0;
-	for (seg=0 ; seg < i->segs ; seg++) {
+	for (seg=0; seg < i->segs; seg++) {
 		o->leaf[seg].magic = i->leaf[seg].magic;
 		MAT4X3VEC(o->leaf[seg].blade, m, i->leaf[seg].blade);
 		MAT4X3VEC(o->leaf[seg].N, m, i->leaf[seg].N);
@@ -299,7 +299,7 @@ plant_rot(struct plant *pl, double a)
 
 	bn_mat_zrot(m, sin(a), cos(a));
 
-	for (blade=0 ; blade < pl->blades ; blade++) {
+	for (blade=0; blade < pl->blades; blade++) {
 		blade_rot(&pl->b[blade], &pl->b[blade], m, pl->root);
 	}
 }
@@ -327,14 +327,14 @@ plant_scale(struct plant *pl, double w)
 		CLAMP(pl->blades, 1, BLADE_LAST);
 	}
 
-	for (blade=0 ; blade < pl->blades ; blade++) {
+	for (blade=0; blade < pl->blades; blade++) {
 		pl->b[blade].tot_len = 0.0;
 		if (blade != BLADE_LAST)
 			pl->b[blade].width *= d;
 		else
 			d *= d;
 
-		for (seg=0; seg < pl->b[blade].segs ; seg++) {
+		for (seg=0; seg < pl->b[blade].segs; seg++) {
 			pl->b[blade].leaf[seg].len *= d;
 
 			pl->b[blade].tot_len += pl->b[blade].leaf[seg].len;
@@ -376,21 +376,19 @@ make_proto(struct grass_specific *grass_sp)
 
   seg_delta_angle = (87.0 / (double)BLADE_SEGS_MAX);
 
-  for (blade=0 ; blade < BLADE_LAST ; blade++) {
+  for (blade=0; blade < BLADE_LAST; blade++) {
     val = (double)blade / (double)(BLADE_LAST);
 
     grass_sp->proto.b[blade].magic = BLADE_MAGIC;
     grass_sp->proto.b[blade].tot_len = 0.0;
     grass_sp->proto.b[blade].width = grass_sp->blade_width;
-    grass_sp->proto.b[blade].segs = BLADE_SEGS_MAX
-	/* - (val*BLADE_SEGS_MAX*.25) */   ;
-
+    grass_sp->proto.b[blade].segs = BLADE_SEGS_MAX; /* - (val*BLADE_SEGS_MAX*.25) */
 
     /* pick a start angle for the first segment */
     start_angle = 55.0 + 30.0 * (1.0-val);
     seg_len = grass_sp->t / grass_sp->proto.b[blade].segs;
 
-    for (seg=0 ; seg < grass_sp->proto.b[blade].segs; seg++) {
+    for (seg=0; seg < grass_sp->proto.b[blade].segs; seg++) {
 	grass_sp->proto.b[blade].leaf[seg].magic = LEAF_MAGIC;
 
 	angle = start_angle - (double)seg * seg_delta_angle;
@@ -436,7 +434,7 @@ make_proto(struct grass_specific *grass_sp)
 
   seg_len = .75 * grass_sp->t / grass_sp->proto.b[blade].segs;
   val = .9;
-  for (seg=0 ; seg < grass_sp->proto.b[blade].segs ; seg++) {
+  for (seg=0; seg < grass_sp->proto.b[blade].segs; seg++) {
     tmp = (double)seg / (double)BLADE_SEGS_MAX;
 
     grass_sp->proto.b[blade].leaf[seg].magic = LEAF_MAGIC;
@@ -558,12 +556,12 @@ plot_bush(struct plant *pl, struct grass_ray *r)
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	pl_color(r->fd, 150, 250, 150);
 
-	for (blade=0 ; blade < pl->blades ; blade++) {
+	for (blade=0; blade < pl->blades; blade++) {
 
 		VMOVE(pt, pl->root);
 		pdv_3move(r->fd, pt);
 
-		for (seg=0 ; seg < pl->b[blade].segs ; seg++ ) {
+		for (seg=0; seg < pl->b[blade].segs; seg++ ) {
 
 			VJOIN1(pt, pt,  pl->b[blade].leaf[seg].len,
 				 pl->b[blade].leaf[seg].blade);
@@ -631,9 +629,9 @@ make_bush(struct plant *pl, double seed, const fastf_t *cell_pos, const struct g
 	plant_rot(pl, BN_RANDOM(idx) * M_PI * 2.0);/* computes bounding box */
 
 	/* set bounding boxes */
-	for (blade=0 ; blade < pl->blades ; blade++) {
+	for (blade=0; blade < pl->blades; blade++) {
 		VMOVE(pt, pl->root);
-		for (seg=0 ; seg < pl->b[blade].segs ; seg++ ) {
+		for (seg=0; seg < pl->b[blade].segs; seg++ ) {
 			VJOIN1(pt, pt, pl->b[blade].leaf[seg].len,
 				pl->b[blade].leaf[seg].blade);
 
@@ -755,7 +753,7 @@ isect_blade(const struct blade *bl, const fastf_t *root, struct grass_ray *r, st
 
 	accum_len = 0.0;
 
-	for (seg=0 ; seg < bl->segs ; accum_len += bl->leaf[seg].len ) {
+	for (seg=0; seg < bl->segs; accum_len += bl->leaf[seg].len ) {
 
 		BU_CKMAG(&bl->leaf[seg].magic, LEAF_MAGIC, "leaf");
 
@@ -872,7 +870,7 @@ isect_plant(const struct plant *pl, struct grass_ray *r, struct shadework *swp, 
 		}
 	}
 
-	for (i=0 ; i < pl->blades ; i++) {
+	for (i=0; i < pl->blades; i++) {
 		isect_blade(&pl->b[i], pl->root, r, swp, grass_sp, i);
 		if (r->occlusion >= 1.0)
 			return;
@@ -1058,7 +1056,7 @@ isect_cell(long int *cell, struct grass_ray *r, struct shadework *swp, double ou
 
 
 	/* intersect the ray with each plant */
-	for (p=0 ;  p < ppc ; p++) {
+	for (p=0;  p < ppc; p++) {
 
 		CK_grass_SP(grass_sp);
 		BU_CKMAG(r, GRASSRAY_MAGIC, "grass_ray");
@@ -1118,8 +1116,8 @@ do_cells(long int *cell_num, struct grass_ray *r, short int flags, struct shadew
 	if (rdebug&RDEBUG_SHADE)
 		bu_log("do_cells(%ld,%ld)\n", V2ARGS(cell_num));
 
-	for (y=-1; y < 2 ; y++) {
-		for (x=-1; x < 2 ; x++) {
+	for (y=-1; y < 2; y++) {
+		for (x=-1; x < 2; x++) {
 
 			if ( ISDONE(x, y, flags) ) continue;
 
@@ -1273,7 +1271,7 @@ grass_render(struct application *ap, struct partition *pp, struct shadework *swp
 	 * a new t[X] from t_orig[X], tD[X], tD_iter[X].  The tD_iter[X] is
 	 * the number of times we've made a full step in the X direction.
 	 */
-	for (n=X ; n < Z ; n++) {
+	for (n=X; n < Z; n++) {
 		char *s;
 		if (n == X) s="X";
 		else s="Y";

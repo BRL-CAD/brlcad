@@ -211,7 +211,7 @@ int
 Dmo_Init(Tcl_Interp *interp)
 {
 	BU_LIST_INIT(&HeadDMObj.l);
-	(void)Tcl_CreateCommand(interp, "dm_open", (Tcl_CmdProc *)dmo_open_tcl,(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+	(void)Tcl_CreateCommand(interp, "dm_open", (Tcl_CmdProc *)dmo_open_tcl, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 
 	return TCL_OK;
 }
@@ -417,7 +417,7 @@ dmo_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	BU_LIST_INIT(&dmop->dmo_observers.l);
 
 	/* append to list of dm_obj's */
-	BU_LIST_APPEND(&HeadDMObj.l,&dmop->l);
+	BU_LIST_APPEND(&HeadDMObj.l, &dmop->l);
 
 	(void)Tcl_CreateCommand(interp,
 				bu_vls_addr(&dmop->dmo_name),
@@ -1668,21 +1668,21 @@ dmo_labelPrimitive(struct dg_obj		*dgop,
 
 	switch (arbType) {
 	case ARB8:
-	    for (i=0 ; i<8 ; i++) {
+	    for (i=0; i<8; i++) {
 		MAT4X3PNT(pos_view, xform, arb->pt[i]);
 		POINT_LABEL(pos_view, i+'1');
 	    }
 
 	    break;
 	case ARB7:
-	    for (i=0 ; i<7 ; i++) {
+	    for (i=0; i<7; i++) {
 		MAT4X3PNT(pos_view, xform, arb->pt[i]);
 		POINT_LABEL(pos_view, i+'1');
 	    }
 
 	    break;
 	case ARB6:
-	    for (i=0 ; i<5 ; i++) {
+	    for (i=0; i<5; i++) {
 		MAT4X3PNT( pos_view, xform, arb->pt[i] );
 		POINT_LABEL( pos_view, i+'1' );
 	    }
@@ -1691,14 +1691,14 @@ dmo_labelPrimitive(struct dg_obj		*dgop,
 
 	    break;
 	case ARB5:
-	    for (i=0 ; i<5 ; i++) {
+	    for (i=0; i<5; i++) {
 		MAT4X3PNT( pos_view, xform, arb->pt[i] );
 		POINT_LABEL( pos_view, i+'1' );
 	    }
 
 	    break;
 	case ARB4:
-	    for (i=0 ; i<3 ; i++) {
+	    for (i=0; i<3; i++) {
 		MAT4X3PNT( pos_view, xform, arb->pt[i] );
 		POINT_LABEL( pos_view, i+'1' );
 	    }
@@ -2156,7 +2156,7 @@ dmo_drawLabels_cmd(struct dm_obj	*dmop,
 		   (unsigned char)labelColor[1],
 		   (unsigned char)labelColor[2],
 		   1, 1.0);
-    for (i=0 ; i<num_lines ; i++)
+    for (i=0; i<num_lines; i++)
 	DM_DRAW_LINE_2D(dmop->dmo_dmp,
 			((int)(lines[i*2][X]*GED_MAX))*INV_GED,
 			((int)(lines[i*2][Y]*GED_MAX))*dmop->dmo_dmp->dm_aspect*INV_GED,
@@ -2906,7 +2906,7 @@ dmo_perspective_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **
 #ifndef _WIN32
 
 #if 1
-#define DM_REVERSE_COLOR_BYTE_ORDER(_shift,_mask) { \
+#define DM_REVERSE_COLOR_BYTE_ORDER(_shift, _mask) { \
 	_shift = 24 - _shift; \
 	switch (_shift) { \
 	case 0: \
@@ -2925,7 +2925,7 @@ dmo_perspective_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **
 }
 #else
 /* Do nothing */
-#define DM_REVERSE_COLOR_BYTE_ORDER(_shift,_mask)
+#define DM_REVERSE_COLOR_BYTE_ORDER(_shift, _mask)
 #endif
 
 static int

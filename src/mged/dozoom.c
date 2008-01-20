@@ -54,7 +54,7 @@ mat_t	identity;
 /* This is a holding place for the current display managers default wireframe color */
 extern unsigned char geometry_default_color[];		/* defined in dodraw.c */
 
-/* Screen coords of actual eye position.  Usually it is at (0, 0,+1),
+/* Screen coords of actual eye position.  Usually it is at (0, 0, +1),
  * but in head-tracking and VR applications, it can move.
  */
 #if 0
@@ -118,7 +118,7 @@ mike_persp_mat(fastf_t *pmat, const fastf_t *eye)
 	point_t	a, b;
 #endif
 
-	if( eye[Z] < SMALL )  {
+	if ( eye[Z] < SMALL )  {
 		VPRINT("mike_persp_mat(): ERROR, z<0, eye", eye);
 		return;
 	}
@@ -129,7 +129,7 @@ mike_persp_mat(fastf_t *pmat, const fastf_t *eye)
 	shear[6] = -eye[Y]/eye[Z];
 
 	MAT4X3VEC( sheared_eye, shear, eye );
-	if( !NEAR_ZERO(sheared_eye[X], .01) || !NEAR_ZERO(sheared_eye[Y], .01) )  {
+	if ( !NEAR_ZERO(sheared_eye[X], .01) || !NEAR_ZERO(sheared_eye[Y], .01) )  {
 		VPRINT("ERROR sheared_eye", sheared_eye);
 		return;
 	}
@@ -261,8 +261,8 @@ drawSolid(register struct solid *sp,
 	  short g,
 	  short b) {
 
-  if(sp->s_cflag){
-    if(!DM_SAME_COLOR(r, g, b,
+  if (sp->s_cflag){
+    if (!DM_SAME_COLOR(r, g, b,
 		      (short)geometry_default_color[0],
 		      (short)geometry_default_color[1],
 		      (short)geometry_default_color[2])){
@@ -278,7 +278,7 @@ drawSolid(register struct solid *sp,
 		    (short)geometry_default_color[2]);
     }
   } else {
-    if(!DM_SAME_COLOR(r, g, b,
+    if (!DM_SAME_COLOR(r, g, b,
 		      (short)sp->s_color[0],
 		      (short)sp->s_color[1],
 		      (short)sp->s_color[2])){
@@ -348,7 +348,7 @@ dozoom(int which_eye)
 	/*
 	 * Draw all solids not involved in an edit.
 	 */
-	if( view_state->vs_vop->vo_perspective <= 0 && view_state->vs_vop->vo_eye_pos[Z] == 1.0 )  {
+	if ( view_state->vs_vop->vo_perspective <= 0 && view_state->vs_vop->vo_eye_pos[Z] == 1.0 )  {
 		mat = view_state->vs_vop->vo_model2view;
 	} else {
 		/*
@@ -372,7 +372,7 @@ dozoom(int which_eye)
 
 		VSET( l, -1.0, -1.0, -1.0 );
 		VSET( h, 1.0, 1.0, 200.0 );
-		if(which_eye) {
+		if (which_eye) {
 		  printf("d=%gscr, d=%gmm, delta=%gscr\n", to_eye_scr, to_eye_scr * SCR_WIDTH_PHYS, eye_delta_scr);
 		  VPRINT("l", l);
 		  VPRINT("h", h);
@@ -383,18 +383,18 @@ dozoom(int which_eye)
 		tmat[11] = -1.0;
 		bn_mat_mul( tvmat, tmat, view_state->vs_model2view );
 #endif
-		switch(which_eye)  {
+		switch (which_eye)  {
 		  case 0:
 		    /* Non-stereo case */
 		    mat = view_state->vs_vop->vo_model2view;
 		    /* XXX hack */
 #define HACK 0
 #if !HACK
-		    if( 1 ) {
+		    if ( 1 ) {
 #else
-		      if( mged_variables->mv_faceplate > 0 )  {
+		      if ( mged_variables->mv_faceplate > 0 )  {
 #endif
-			if( view_state->vs_vop->vo_eye_pos[Z] == 1.0 )  {
+			if ( view_state->vs_vop->vo_eye_pos[Z] == 1.0 )  {
 				/* This way works, with reasonable Z-clipping */
 				persp_mat( perspective_mat, view_state->vs_vop->vo_perspective,
 					(fastf_t)1.0f, (fastf_t)0.01f, (fastf_t)1.0e10f, (fastf_t)1.0f );
@@ -437,7 +437,7 @@ dozoom(int which_eye)
 		    sp->s_flag = DOWN;		/* Not drawn yet */
 
 		    /* If part of object edit, will be drawn below */
-		    if( sp->s_iflag == UP )
+		    if ( sp->s_iflag == UP )
 		      continue;
 
 		    if (sp->s_transparency < 1.0)
@@ -461,7 +461,7 @@ dozoom(int which_eye)
 			continue;
 		    }
 
-		    if(linestyle != sp->s_soldash){
+		    if (linestyle != sp->s_soldash){
 		      linestyle = sp->s_soldash;
 		      DM_SET_LINE_ATTR(dmp, mged_variables->mv_linewidth, linestyle);
 		    }
@@ -476,7 +476,7 @@ dozoom(int which_eye)
 		  FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)  {
 
 		    /* If part of object edit, will be drawn below */
-		    if( sp->s_iflag == UP )
+		    if ( sp->s_iflag == UP )
 		      continue;
 
 		    /* already drawn above */
@@ -501,7 +501,7 @@ dozoom(int which_eye)
 			continue;
 		    }
 
-		    if(linestyle != sp->s_soldash){
+		    if (linestyle != sp->s_soldash){
 		      linestyle = sp->s_soldash;
 		      DM_SET_LINE_ATTR(dmp, mged_variables->mv_linewidth, linestyle);
 		    }
@@ -516,7 +516,7 @@ dozoom(int which_eye)
 		  FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)  {
 		    sp->s_flag = DOWN;		/* Not drawn yet */
 		    /* If part of object edit, will be drawn below */
-		    if( sp->s_iflag == UP )
+		    if ( sp->s_iflag == UP )
 		      continue;
 
 		    /*
@@ -536,7 +536,7 @@ dozoom(int which_eye)
 			continue;
 		    }
 
-		    if(linestyle != sp->s_soldash){
+		    if (linestyle != sp->s_soldash){
 		      linestyle = sp->s_soldash;
 		      DM_SET_LINE_ATTR(dmp, mged_variables->mv_linewidth, linestyle);
 		    }
@@ -553,7 +553,7 @@ dozoom(int which_eye)
 		  curr_dm_list = save_dm_list;
 
 		/* draw predictor vlist */
-		if(mged_variables->mv_predictor){
+		if (mged_variables->mv_predictor){
 		  DM_SET_FGCOLOR(dmp,
 				 color_scheme->cs_predictor[0],
 				 color_scheme->cs_predictor[1],
@@ -565,10 +565,10 @@ dozoom(int which_eye)
 		 *  Draw all solids involved in editing.
 		 *  They may be getting transformed away from the other solids.
 		 */
-		if( state == ST_VIEW )
+		if ( state == ST_VIEW )
 		  return;
 
-		if( view_state->vs_vop->vo_perspective <= 0 )  {
+		if ( view_state->vs_vop->vo_perspective <= 0 )  {
 		  mat = view_state->vs_model2objview;
 		} else {
 		  bn_mat_mul( new, perspective_mat, view_state->vs_model2objview );
@@ -680,9 +680,9 @@ createDListALL(struct solid *sp)
     dlp->dml_dlist_state->dl_flag = 1;
 
   FOR_ALL_DISPLAYS(dlp, &head_dm_list.l){
-    if(dlp->dml_dmp->dm_displaylist &&
+    if (dlp->dml_dmp->dm_displaylist &&
        dlp->dml_mged_variables->mv_dlist){
-      if(dlp->dml_dlist_state->dl_flag){
+      if (dlp->dml_dlist_state->dl_flag){
 	curr_dm_list = dlp;
 	createDList(sp);
       }
@@ -722,9 +722,9 @@ freeDListsAll(unsigned int dlist, int range)
     dlp->dml_dlist_state->dl_flag = 1;
 
   FOR_ALL_DISPLAYS(dlp, &head_dm_list.l){
-    if(dlp->dml_dmp->dm_displaylist &&
+    if (dlp->dml_dmp->dm_displaylist &&
        dlp->dml_mged_variables->mv_dlist){
-      if(dlp->dml_dlist_state->dl_flag)
+      if (dlp->dml_dlist_state->dl_flag)
 	DM_FREEDLISTS(dlp->dml_dmp, dlist, range);
     }
 

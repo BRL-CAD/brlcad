@@ -181,7 +181,7 @@ read_psurf_vertices(FILE *fp, struct vlist *vert)
 
 	/* Read vertices. */
 	for (i = 0; fscanf(fp, "%lf %lf %lf", &x, &y, &z) == 3; i++) {
-		if( i >= MAX_NUM_PTS )
+		if ( i >= MAX_NUM_PTS )
 			bomb = 1;
 		else
 		{
@@ -194,7 +194,7 @@ read_psurf_vertices(FILE *fp, struct vlist *vert)
 	}
 	fscanf(fp, ";;");
 
-	if( bomb )
+	if ( bomb )
 	{
 		bu_exit(1, "ERROR: Dataset contains %d data points, code is dimensioned for %d\n", i, MAX_NUM_PTS );
 	}
@@ -279,7 +279,7 @@ psurf_to_nmg(struct model *m, FILE *fp, char *jfile)
 		plane_t pl;
 
 		lu = BU_LIST_FIRST( loopuse, &outfaceuses[i]->lu_hd );
-		if( nmg_loop_plane_area( lu, pl ) < 0.0 )
+		if ( nmg_loop_plane_area( lu, pl ) < 0.0 )
 		{
 			fail = 1;
 			nmg_kfu( outfaceuses[i] );
@@ -290,7 +290,7 @@ psurf_to_nmg(struct model *m, FILE *fp, char *jfile)
 	if (fail)
 		return(-1);
 
-	if( face )
+	if ( face )
 	{
 		nmg_kill_zero_length_edgeuses( m );
 

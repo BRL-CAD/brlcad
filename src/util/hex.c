@@ -88,7 +88,7 @@ void dump(FILE *fd)
 		printf("%08lx", addr);
 
 		/* produce the hexadecimal dump */
-		for (i=0, p=buf ; i < DUMPLEN ; ++i) {
+		for (i=0, p=buf; i < DUMPLEN; ++i) {
 			if (i < bytes) {
 				if (i%4 == 0) printf("  %02x", *p++ & 0x0ff);
 				else printf(" %02x", *p++ & 0x0ff);
@@ -101,7 +101,7 @@ void dump(FILE *fd)
 
 		/* produce the ASCII dump */
 		printf(" |");
-		for (i=0, p=buf ; i < bytes ; ++i,++p) {
+		for (i=0, p=buf; i < bytes; ++i, ++p) {
 			if (isascii(*p) && isprint(*p)) putchar(*p);
 			else putchar('.');
 		}
@@ -136,7 +136,7 @@ main(int ac, char **av)
 	/* Get # of options & turn all the option flags off */
 	optlen = strlen(options);
 
-	for (c=0 ; c < optlen ; c++)  /* NIL */;
+	for (c=0; c < optlen; c++)  /* NIL */;
 
 	/* Turn off bu_getopt's error messages */
 	bu_opterr = 0;

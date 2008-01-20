@@ -103,7 +103,7 @@ nmg_pr_m(const struct model *m)
 	}
 	bu_log("%ld maxindex\n", m->maxindex);
 
-	for( BU_LIST_FOR( r, nmgregion, &m->r_hd ) )  {
+	for ( BU_LIST_FOR( r, nmgregion, &m->r_hd ) )  {
 		nmg_pr_r(r, (char *)NULL);
 	}
 }
@@ -119,7 +119,7 @@ static char nmg_pr_padstr[128];
  */
 #define MKPAD(_h) { \
 	if (!_h) { _h = nmg_pr_padstr; nmg_pr_padstr[0] = '\0'; } \
-	else if( (_h) < nmg_pr_padstr || (_h) >= nmg_pr_padstr+sizeof(nmg_pr_padstr) )  { \
+	else if ( (_h) < nmg_pr_padstr || (_h) >= nmg_pr_padstr+sizeof(nmg_pr_padstr) )  { \
 		(void)strncpy(nmg_pr_padstr, (_h), sizeof(nmg_pr_padstr)/2); \
 		_h = nmg_pr_padstr; \
 	} else { if (strlen(_h) < sizeof(nmg_pr_padstr)-4) (void)strcat(_h, "   "); } }
@@ -148,7 +148,7 @@ nmg_pr_r(const struct nmgregion *r, char *h)
 	bu_log("%8x l.back\n", r->l.back);
 	bu_log("%8x ra_p\n", r->ra_p);
 
-	for( BU_LIST_FOR( s, shell, &r->s_hd ) )  {
+	for ( BU_LIST_FOR( s, shell, &r->s_hd ) )  {
 		nmg_pr_s(s, h);
 	}
 	Return;
@@ -206,7 +206,7 @@ nmg_pr_fg(const long int *magic, char *h)
 
 	MKPAD(h);
 
-	switch( *magic )  {
+	switch ( *magic )  {
 	case NMG_FACE_G_PLANE_MAGIC:
 		bu_log("%sFACE_G_PLANE %8x\n", h, magic);
 
@@ -218,21 +218,21 @@ nmg_pr_fg(const long int *magic, char *h)
 		bu_log("%sFACE_G_SNURB %8x\n", h, magic);
 		bu_log( "%s  order (%d, %d)\n", h, fgs->order[0], fgs->order[1] );
 		bu_log( "%s  U knots: size=%d", h, fgs->u.k_size );
-		for( i=0 ; i<fgs->u.k_size ; i++ )
+		for ( i=0; i<fgs->u.k_size; i++ )
 			bu_log( " %f", fgs->u.knots[i] );
 		bu_log( "\n%s  V knots: size=%d", h, fgs->v.k_size );
-		for( i=0 ; i<fgs->v.k_size ; i++ )
+		for ( i=0; i<fgs->v.k_size; i++ )
 			bu_log( " %f", fgs->v.knots[i] );
 		bu_log( "\n%s  Mesh size = (%d X %d), pt_type = %d\n", h, fgs->s_size[0], fgs->s_size[1], fgs->pt_type );
 		ncoords = RT_NURB_EXTRACT_COORDS( fgs->pt_type );
 		l = 0;
-		for( i=0 ; i<fgs->s_size[0] ; i++ )
+		for ( i=0; i<fgs->s_size[0]; i++ )
 		{
 			bu_log( "%s  ", h );
-			for( j=0 ; j<fgs->s_size[1] ; j++ )
+			for ( j=0; j<fgs->s_size[1]; j++ )
 			{
 				bu_log( " (", h );
-				for( k=0 ; k<ncoords ; k++ )
+				for ( k=0; k<ncoords; k++ )
 					bu_log( "%f ", fgs->ctl_points[l+k] );
 				bu_log( ")" );
 				l += ncoords;
@@ -272,15 +272,15 @@ nmg_pr_s(const struct shell *s, char *h)
 	if (s->sa_p)
 		nmg_pr_sa(s->sa_p, h);
 
-	for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )  {
+	for ( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )  {
 		nmg_pr_fu(fu, h);
 	}
 
-	for( BU_LIST_FOR( lu, loopuse, &s->lu_hd ) )  {
+	for ( BU_LIST_FOR( lu, loopuse, &s->lu_hd ) )  {
 		nmg_pr_lu(lu, h);
 	}
 
-	for( BU_LIST_FOR( eu, edgeuse, &s->eu_hd ) )  {
+	for ( BU_LIST_FOR( eu, edgeuse, &s->eu_hd ) )  {
 		nmg_pr_eu(eu, h);
 	}
 	if (s->vu_p)
@@ -307,15 +307,15 @@ nmg_pr_s_briefly(const struct shell *s, char *h)
 		Return;
 	}
 
-	for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )  {
+	for ( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )  {
 		nmg_pr_fu_briefly(fu, h);
 	}
 
-	for( BU_LIST_FOR( lu, loopuse, &s->lu_hd ) )  {
+	for ( BU_LIST_FOR( lu, loopuse, &s->lu_hd ) )  {
 		nmg_pr_lu_briefly(lu, h);
 	}
 
-	for( BU_LIST_FOR( eu, edgeuse, &s->eu_hd ) )  {
+	for ( BU_LIST_FOR( eu, edgeuse, &s->eu_hd ) )  {
 		nmg_pr_eu_briefly(eu, h);
 	}
 	if (s->vu_p)
@@ -378,7 +378,7 @@ nmg_pr_fu(const struct faceuse *fu, char *h)
 	if (fu->f_p)
 		nmg_pr_f(fu->f_p, h);
 
-	for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
+	for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
 		nmg_pr_lu(lu, h);
 	}
 	Return;
@@ -397,7 +397,7 @@ nmg_pr_fu_briefly(const struct faceuse *fu, char *h)
 	NMG_CK_FACEUSE(fu);
 	f = fu->f_p;
 
-	if( f->g.magic_p && *f->g.magic_p == NMG_FACE_G_PLANE_MAGIC )
+	if ( f->g.magic_p && *f->g.magic_p == NMG_FACE_G_PLANE_MAGIC )
 	{
 		bu_log("%sFACEUSE %8x (%s) f_p=x%x fg=x%x flip=%d pl= %f %f %f %f\n",
 			h, fu, nmg_orientation(fu->orientation), fu->f_p, f->g.magic_p, fu->f_p->flip, V4ARGS( f->g.plane_p->N ));
@@ -406,7 +406,7 @@ nmg_pr_fu_briefly(const struct faceuse *fu, char *h)
 		bu_log("%sFACEUSE %8x (%s) f_p=x%x\n",
 			h, fu, nmg_orientation(fu->orientation), fu->f_p);
 
-	for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
+	for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
 		nmg_pr_lu_briefly(lu, h);
 	}
 	Return;
@@ -478,7 +478,7 @@ nmg_pr_lu(const struct loopuse *lu, char *h)
 		nmg_pr_vu(vu, h);
 	}
 	else if (magic1 == NMG_EDGEUSE_MAGIC) {
-		for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
+		for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
 			nmg_pr_eu(eu, h);
 		}
 	}
@@ -511,7 +511,7 @@ nmg_pr_lu_briefly(const struct loopuse *lu, char *h)
 		nmg_pr_vu_briefly(vu, h);
 	}
 	else if (magic1 == NMG_EDGEUSE_MAGIC) {
-		for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
+		for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
 			nmg_pr_eu_briefly(eu, h);
 		}
 	}
@@ -533,7 +533,7 @@ nmg_pr_eg(const long int *eg_magic_p, char *h)
 	MKPAD(h);
 	NMG_CK_EDGE_G_EITHER(eg_magic_p);
 
-	switch( *eg_magic_p )
+	switch ( *eg_magic_p )
 	{
 		case NMG_EDGE_G_LSEG_MAGIC:
 		{
@@ -555,16 +555,16 @@ nmg_pr_eg(const long int *eg_magic_p, char *h)
 			bu_log( "%s  order=%d, %d ctl pts, pt_type=%d\n",
 				h, eg_c->order, eg_c->c_size, eg_c->pt_type );
 			bu_log( "%s  knot vector (len=%d):", h, eg_c->k.k_size );
-			for( i=0 ; i<eg_c->k.k_size ; i++ )
+			for ( i=0; i<eg_c->k.k_size; i++ )
 				bu_log( " %f", eg_c->k.knots[i] );
 			bu_log( "\n" );
 			ncoords = RT_NURB_EXTRACT_COORDS( eg_c->pt_type );
 			l = 0;
 			bu_log( "%s  control points: ", h );
-			for( i=0 ; i<eg_c->c_size ; i++ )
+			for ( i=0; i<eg_c->c_size; i++ )
 			{
 				bu_log( "(" );
-				for( j=0 ; j<ncoords ; j++ )
+				for ( j=0; j<ncoords; j++ )
 					bu_log( "%f ", eg_c->ctl_points[l+j] );
 				bu_log( ")" );
 				l += ncoords;
@@ -740,7 +740,7 @@ nmg_pr_vu(const struct vertexuse *vu, char *h)
 	}
 	bu_log("%s%8x l.forw\n", h, vu->l.forw);
 	bu_log("%s%8x l.back\n", h, vu->l.back);
-	if( vu->a.magic_p )  switch( *vu->a.magic_p )  {
+	if ( vu->a.magic_p )  switch ( *vu->a.magic_p )  {
 	case NMG_VERTEXUSE_A_PLANE_MAGIC:
 		bu_log("%s%8x a.plane_p\n", h, vu->a.plane_p);
 		bu_log("%s normal: %f %f %f\n", h, V3ARGS( vu->a.plane_p->N ) );
@@ -751,7 +751,7 @@ nmg_pr_vu(const struct vertexuse *vu, char *h)
 	}
 	bu_log("%s%8x v_p\n", h, vu->v_p);
 	nmg_pr_v(vu->v_p, h);
-	if( vu->a.magic_p )  nmg_pr_vua( vu->a.magic_p, h );
+	if ( vu->a.magic_p )  nmg_pr_vua( vu->a.magic_p, h );
 
 	Return;
 }
@@ -768,7 +768,7 @@ nmg_pr_vu_briefly(const struct vertexuse *vu, char *h)
 	NMG_CK_VERTEXUSE(vu);
 	NMG_CK_VERTEX(vu->v_p);
 
-	if( (vg = vu->v_p->vg_p) )  {
+	if ( (vg = vu->v_p->vg_p) )  {
 		NMG_CK_VERTEX_G(vg);
 		bu_log("%sVERTEXUSE %8x, v=x%x, %f %f %f\n", h, vu, vu->v_p,
 			V3ARGS(vg->coord) );
@@ -793,7 +793,7 @@ nmg_pr_vua(const long int *magic_p, char *h)
 		Return;
 	}
 
-	switch( *magic_p )  {
+	switch ( *magic_p )  {
 	case NMG_VERTEXUSE_A_PLANE_MAGIC:
 		bu_log("%s N=(%g, %g, %g, %g)\n", h,
 			V3ARGS( ((struct vertexuse_a_plane *)magic_p)->N ) );
@@ -847,16 +847,16 @@ nmg_pr_ptbl(const char *title, const struct bu_ptbl *tbl, int verbose)
 	bu_log("%s: bu_ptbl array with %d entries\n",
 		title, tbl->end );
 
-	if( !verbose )  return;
+	if ( !verbose )  return;
 
-	for( lp = (long **)BU_PTBL_BASEADDR(tbl);
+	for ( lp = (long **)BU_PTBL_BASEADDR(tbl);
 	     lp <= (long **)BU_PTBL_LASTADDR(tbl); lp++
 	)  {
-		if( *lp == 0 )  {
+		if ( *lp == 0 )  {
 			bu_log("  %.8x NULL entry\n", *lp);
 			continue;
 		}
-		switch(**lp)  {
+		switch (**lp)  {
 		default:
 			bu_log("  %.8x %s\n", *lp, bu_identify_magic(**lp) );
 			break;
@@ -892,9 +892,9 @@ nmg_pr_ptbl_vert_list(const char *str, const struct bu_ptbl *tbl, const fastf_t 
 	bu_log("nmg_pr_ptbl_vert_list(%s):\n", str);
 
 	vup = (const struct vertexuse **)tbl->buffer;
-	for (i=0 ; i < tbl->end ; ++i) {
+	for (i=0; i < tbl->end; ++i) {
 		vu = vup[i];
-		if( vu->l.magic != NMG_VERTEXUSE_MAGIC )
+		if ( vu->l.magic != NMG_VERTEXUSE_MAGIC )
 		{
 			bu_log( "\tWARNING: vertexuse #%d has bad MAGIC (%x)\n", i, vu->l.magic );
 			continue;
@@ -944,12 +944,12 @@ nmg_pr_one_eu_vecs(const struct edgeuse *eu, const fastf_t *xvec, const fastf_t 
 	fu = (struct faceuse *)NULL;
 	fu_orient = "W";
 	f = (struct face *)NULL;
-	if( *eu->up.magic_p == NMG_LOOPUSE_MAGIC )  {
+	if ( *eu->up.magic_p == NMG_LOOPUSE_MAGIC )  {
 		lu = eu->up.lu_p;
 		NMG_CK_LOOPUSE(lu);
 		/* +3 is to skip the "OT_" prefix */
 		lu_orient = nmg_orientation(lu->orientation)+3;
-		if( *lu->up.magic_p == NMG_FACEUSE_MAGIC )  {
+		if ( *lu->up.magic_p == NMG_FACEUSE_MAGIC )  {
 			fu = lu->up.fu_p;
 			NMG_CK_FACEUSE(fu);
 			fu_orient = nmg_orientation(fu->orientation)+3;
@@ -962,7 +962,7 @@ nmg_pr_one_eu_vecs(const struct edgeuse *eu, const fastf_t *xvec, const fastf_t 
 		s = eu->up.s_p;
 	}
 	NMG_CK_SHELL(s);
-	if( f && *f->g.magic_p == NMG_FACE_G_SNURB_MAGIC )
+	if ( f && *f->g.magic_p == NMG_FACE_G_SNURB_MAGIC )
 	{
 		bu_log(" %8.8x, lu=%8.8x=%1.1s, f=%8.8x, fu=%8.8x=%1.1s, s=%8.8x SNURB\n",
 			eu,
@@ -1011,7 +1011,7 @@ nmg_pr_fu_around_eu_vecs(const struct edgeuse *eu, const fastf_t *xvec, const fa
 
 		/* Now back around to the radial edgeuse */
 		eu1 = eu1->radial_p;
-	} while( eu1 != eu );
+	} while ( eu1 != eu );
 }
 
 /**
@@ -1031,7 +1031,7 @@ nmg_pr_fu_around_eu(const struct edgeuse *eu, const struct bn_tol *tol)
 	BN_CK_TOL(tol);
 	bu_log("nmg_pr_fu_around_eu(x%x)\n", eu);
 
-	if( eu->vu_p->v_p == eu->eumate_p->vu_p->v_p || *eu->g.magic_p == NMG_EDGE_G_CNURB_MAGIC )
+	if ( eu->vu_p->v_p == eu->eumate_p->vu_p->v_p || *eu->g.magic_p == NMG_EDGE_G_CNURB_MAGIC )
 	{
 		VSET( xvec, 1, 0, 0 );
 		VSET( yvec, 0, 1, 0 );
@@ -1065,7 +1065,7 @@ nmg_pl_lu_around_eu(const struct edgeuse *eu)
 	NMG_CK_EDGEUSE(eu);
 
 	sprintf(buf, "eu_vicinity%d.pl", num++);
-	if( (fp = fopen(buf, "w")) == NULL )  {
+	if ( (fp = fopen(buf, "w")) == NULL )  {
 		perror(buf);
 		return;
 	}
@@ -1091,7 +1091,7 @@ nmg_pl_lu_around_eu(const struct edgeuse *eu)
 
 		/* Now back around to the radial edgeuse */
 		eu1 = eu1->radial_p;
-	} while( eu1 != eu );
+	} while ( eu1 != eu );
 
 	bu_free( (char *)b, "nmg_pl_lu_around_eu flag[]" );
 	fclose(fp);
@@ -1111,7 +1111,7 @@ nmg_pr_fus_in_fg(const long int *fg_magic)
 
 	NMG_CK_FACE_G_EITHER(fg_magic);
 	bu_log("nmg_pr_fus_in_fg(x%x):\n", fg_magic);
-	for( BU_LIST_FOR( f, face, &(((struct face_g_plane *)fg_magic)->f_hd) ) )  {
+	for ( BU_LIST_FOR( f, face, &(((struct face_g_plane *)fg_magic)->f_hd) ) )  {
 		NMG_CK_FACE(f);
 		NMG_CK_FACEUSE(f->fu_p);
 		bu_log(" f=x%x, fu=x%x, fumate=x%x\n",

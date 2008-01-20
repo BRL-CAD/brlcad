@@ -71,7 +71,7 @@ static void* bench_ipc(void *ptr) {
 
 
   /* create a socket */
-  if((server_socket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+  if ((server_socket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
     fprintf(stderr, "unable to create socket, exiting.\n");
     exit(1);
   }
@@ -82,7 +82,7 @@ static void* bench_ipc(void *ptr) {
   server.sin_port = htons(LOCAL_PORT);
 
   /* bind socket */
-  if(bind(server_socket, (struct sockaddr *)&server, sizeof(server)) < 0) {
+  if (bind(server_socket, (struct sockaddr *)&server, sizeof(server)) < 0) {
     fprintf(stderr, "socket already bound, exiting.\n");
     exit(1);
   }
@@ -131,7 +131,7 @@ void bench(char *proj, int cache, int image) {
   * Hack the environment settings to make it think there is no cache file
   * if the user is generating one, otherwise it never generates one
   */
-  if(cache)
+  if (cache)
     db.env.kdtree_cache_file[0] = 0;
 
   /* Read the data off disk and pack it */
@@ -142,7 +142,7 @@ void bench(char *proj, int cache, int image) {
 
   /* Parse the data into memory for rendering */
   /* create a socket */
-  if((client_socket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+  if ((client_socket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
     fprintf(stderr, "unable to create socket, exiting.\n");
     exit(1);
   }
@@ -152,13 +152,13 @@ void bench(char *proj, int cache, int image) {
   client.sin_addr.s_addr = htonl(INADDR_ANY);
   client.sin_port = htons(0);
 
-  if(bind(client_socket, (struct sockaddr *)&client, sizeof(client)) < 0) {
+  if (bind(client_socket, (struct sockaddr *)&client, sizeof(client)) < 0) {
     fprintf(stderr, "unable to bind socket, exiting\n");
     exit(1);
   }
 
   /* Establish ipc connection */
-  if(gethostbyname("localhost")) {
+  if (gethostbyname("localhost")) {
     h = gethostbyname("localhost")[0];
   } else {
     fprintf(stderr, "unknown host: %s\n", "localhost");
@@ -170,7 +170,7 @@ void bench(char *proj, int cache, int image) {
   server.sin_port = htons(LOCAL_PORT);
 
   tienet_sem_wait(&bench_net_sem);
-  if(connect(client_socket, (struct sockaddr *)&server, sizeof(server)) < 0) {
+  if (connect(client_socket, (struct sockaddr *)&server, sizeof(server)) < 0) {
     fprintf(stderr, "cannot establish connection, exiting.\n");
     exit(1);
   }
@@ -208,7 +208,7 @@ void bench(char *proj, int cache, int image) {
   t = (tfloat)(ticks3 - ticks2) / (tfloat)CLOCKS_PER_SEC;
   printf("render time: %.3f sec\n", t);
   printf("rays /  sec: %d\n", (int)((db.env.img_w * db.env.img_h) / t));
-  if(image) {
+  if (image) {
     image24 = &((unsigned char *)res_buf)[sizeof(common_work_t)];
     util_image_save_ppm("dump.ppm", image24, db.env.img_w, db.env.img_h);
   }
@@ -220,7 +220,7 @@ void bench(char *proj, int cache, int image) {
   free(bench_frame);
   common_unpack_free(&db);
 
-  if(cache) {
+  if (cache) {
     void *kdcache;
     unsigned int size;
     FILE *fh;

@@ -98,7 +98,7 @@ get_args(int argc, register char **argv)
 	register int c;
 
 	while ( (c = bu_getopt( argc, argv, "clbs:w:n:x:y:X:Y:S:W:N:C:" )) != EOF )  {
-		switch( c )  {
+		switch ( c )  {
 		case 'c':
 			/* Center in output */
 			scr_xoff = (scr_width-file_width)/2;
@@ -149,9 +149,10 @@ get_args(int argc, register char **argv)
 					= (unsigned char *)color;
 
 				/* premature null => atoi gives zeros */
-				for( c=0; c < 3; c++ )  {
+				for ( c=0; c < 3; c++ )  {
 					*conp++ = atoi(cp);
-					while( *cp && *cp++ != '/' ) ;
+					while ( *cp && *cp++ != '/' )
+					    ;
 				}
 			}
 			break;
@@ -161,24 +162,24 @@ get_args(int argc, register char **argv)
 		}
 
 		/* enforce limits */
-		if( file_width > MAC_WIDTH )
+		if ( file_width > MAC_WIDTH )
 			file_width = MAC_WIDTH;
-		if( file_height > MAC_HEIGHT )
+		if ( file_height > MAC_HEIGHT )
 			file_height = MAC_HEIGHT;
-		if( file_xoff < 0 || file_xoff >= MAC_WIDTH )
+		if ( file_xoff < 0 || file_xoff >= MAC_WIDTH )
 			file_xoff = 0;
-		if( file_yoff < 0 || file_yoff >= MAC_HEIGHT )
+		if ( file_yoff < 0 || file_yoff >= MAC_HEIGHT )
 			file_yoff = 0;
 	}
 
-	if( bu_optind >= argc )  {
-		if( isatty(fileno(stdin)) )
+	if ( bu_optind >= argc )  {
+		if ( isatty(fileno(stdin)) )
 			return(0);
 		file_name = "-";
 		infp = stdin;
 	} else {
 		file_name = argv[bu_optind];
-		if( (infp = fopen(file_name, "r")) == NULL )  {
+		if ( (infp = fopen(file_name, "r")) == NULL )  {
 			(void)fprintf( stderr,
 				"mac-pix: cannot open \"%s\" for reading\n",
 				file_name );
@@ -235,9 +236,9 @@ main(int argc, char **argv)
 	}
 
 	/* If screen size was not set, track the file size */
-	if( scr_width == 0 )
+	if ( scr_width == 0 )
 		scr_width = file_width;
-	if( scr_height == 0 )
+	if ( scr_height == 0 )
 		scr_height = file_height;
 
 	fread( (char *)&hdr, sizeof(hdr), 1, infp );
@@ -253,8 +254,8 @@ main(int argc, char **argv)
 
 		cp = &pix[(file_width*y)+x];
 
-		for( mask = 0x80; mask; mask >>= 1 )  {
-			if( c & mask )
+		for ( mask = 0x80; mask; mask >>= 1 )  {
+			if ( c & mask )
 				*cp = 0xFF;
 			else
 				*cp = 0;
@@ -280,58 +281,58 @@ main(int argc, char **argv)
 	 */
 	first_y = file_yoff;		/* always >= 0 */
 	y1 = scr_yoff;
-	if( y1 < 0 )  {
+	if ( y1 < 0 )  {
 		y1 = 0;
 		first_y += -scr_yoff;
 	}
 	y2 = file_height - first_y;
-	if( y1 + y2 > scr_height )
+	if ( y1 + y2 > scr_height )
 		y2 = scr_height - y1;
-	if( first_y >= file_height )
+	if ( first_y >= file_height )
 		y2 = 0;
 	y3 = scr_height - y1 - y2;
 
 	first_x = file_xoff;
 	x1 = scr_xoff;
-	if( x1 < 0 )  {
+	if ( x1 < 0 )  {
 		x1 = 0;
 		first_x += -scr_xoff;
 	}
 	x2 = file_width - first_x;
-	if( x1 + x2 > scr_width )
+	if ( x1 + x2 > scr_width )
 		x2 = scr_width - x1;
-	if( first_x >= file_width )
+	if ( first_x >= file_width )
 		x2 = 0;
 	x3 = scr_width - x1 - x2;
 
-	if( bwflag )  {
-		for( y = 0; y < y1; y++ )
+	if ( bwflag )  {
+		for ( y = 0; y < y1; y++ )
 			fwrite( black, scr_width, 1, stdout );
-		for( y = 0; y < y2; y++ )  {
+		for ( y = 0; y < y2; y++ )  {
 			fwrite( black, x1, 1, stdout );
 			fwrite( &pix[(file_width*(y+first_y))+first_x],
 				x2, 1, stdout );
 			fwrite( black, x3, 1, stdout );
 		}
-		for( y = 0; y < y3; y++ )
+		for ( y = 0; y < y3; y++ )
 			fwrite( black, scr_width, 1, stdout );
 	} else {
-		for( y = 0; y < y1; y++ )
+		for ( y = 0; y < y1; y++ )
 			fwrite( black, scr_width, 3, stdout );
-		for( y = 0; y < y2; y++ )  {
+		for ( y = 0; y < y2; y++ )  {
 			register unsigned char *cp;
 
 			fwrite( black, x1, 3, stdout );
 			cp = &pix[(file_width*(y+first_y))+first_x];
-			for( x = 0; x < x2; x++ )  {
-				if( *cp++ )
+			for ( x = 0; x < x2; x++ )  {
+				if ( *cp++ )
 					fwrite( color, 3, 1, stdout );
 				else
 					fwrite( black, 3, 1, stdout );
 			}
 			fwrite( black, x3, 3, stdout );
 		}
-		for( y = 0; y < y3; y++ )
+		for ( y = 0; y < y3; y++ )
 			fwrite( black, scr_width, 3, stdout );
 	}
 	bu_exit (0, NULL);

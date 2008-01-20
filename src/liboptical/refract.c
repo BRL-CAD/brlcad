@@ -118,7 +118,7 @@ rr_render(register struct application *ap,
 	 *  On the other hand, light visibility rays shouldn't be refracted,
 	 *  it is pointless to shoot at where the light isn't.
 	 */
-	if( swp->sw_xmitonly )  {
+	if ( swp->sw_xmitonly )  {
 		/* Caller wants transmission term only, don't fire reflected rays */
 		transmit = swp->sw_transmit + swp->sw_reflect;	/* Don't loose energy */
 		reflect = 0;
@@ -126,21 +126,21 @@ rr_render(register struct application *ap,
 		reflect = swp->sw_reflect;
 		transmit = swp->sw_transmit;
 	}
-	if(R_DEBUG&RDEBUG_REFRACT) {
+	if (R_DEBUG&RDEBUG_REFRACT) {
 		bu_log("rr_render(%s) START: lvl=%d reflect=%g, transmit=%g, xmitonly=%d\n",
 			pp->pt_regionp->reg_name,
 			ap->a_level,
 			reflect, transmit,
 			swp->sw_xmitonly );
 	}
-	if( reflect <= 0 && transmit <= 0 )
+	if ( reflect <= 0 && transmit <= 0 )
 		goto out;
 
-	if( ap->a_level > max_bounces )  {
+	if ( ap->a_level > max_bounces )  {
 		/* Nothing more to do for this ray */
 		static long count = 0;		/* Not PARALLEL, should be OK */
 
-		if( (R_DEBUG&(RDEBUG_SHOWERR|RDEBUG_REFRACT)) && (
+		if ( (R_DEBUG&(RDEBUG_SHOWERR|RDEBUG_REFRACT)) && (
 			count++ < MSG_PROLOGUE ||
 			(count%MSG_INTERVAL) == 3
 		) )  {
@@ -177,19 +177,19 @@ rr_render(register struct application *ap,
 
 #if 0
 /* XXX temp hack -Mike & JRA */
-	if( R_DEBUG&RDEBUG_RAYPLOT )  {
+	if ( R_DEBUG&RDEBUG_RAYPLOT )  {
 		static int	count = 0;
 		char		name[128];
-		if( plotfp && plotfp != stdout )  fclose(plotfp);
+		if ( plotfp && plotfp != stdout )  fclose(plotfp);
 		sprintf(name, "rr%d.pl", count++);
-		if( (plotfp = fopen( name, "w" )) == NULL )  {
+		if ( (plotfp = fopen( name, "w" )) == NULL )  {
 			perror(name);
 			plotfp = stdout;
 		}
 	}
 #endif
 
-	if( (swp->sw_inputs & (MFI_HIT|MFI_NORMAL)) != (MFI_HIT|MFI_NORMAL) )
+	if ( (swp->sw_inputs & (MFI_HIT|MFI_NORMAL)) != (MFI_HIT|MFI_NORMAL) )
 		shade_inputs( ap, pp, swp, MFI_HIT|MFI_NORMAL );
 
 	/*
@@ -201,7 +201,7 @@ rr_render(register struct application *ap,
 	 *  This is important, eg, for glass gun tubes projecting
 	 *  through a glass armor plate. :-)
 	 */
-	if( NEAR_ZERO( pp->pt_inhit->hit_dist, AIR_GAP_TOL ) &&
+	if ( NEAR_ZERO( pp->pt_inhit->hit_dist, AIR_GAP_TOL ) &&
 	    ap->a_refrac_index == swp->sw_refrac_index )  {
 		transmit += reflect;
 		reflect = 0;
@@ -212,12 +212,12 @@ rr_render(register struct application *ap,
 	 *  contributions from mirror reflection & transparency
 	 */
 	shader_fract = 1 - (reflect + transmit);
-	if( shader_fract < 0 )  {
+	if ( shader_fract < 0 )  {
 		shader_fract = 0;
-	} else if( shader_fract >= 1 )  {
+	} else if ( shader_fract >= 1 )  {
 		goto out;
 	}
-	if(R_DEBUG&RDEBUG_REFRACT) {
+	if (R_DEBUG&RDEBUG_REFRACT) {
 		bu_log("rr_render: lvl=%d start shader=%g, reflect=%g, transmit=%g %s\n",
 			ap->a_level,
 			shader_fract, reflect, transmit,
@@ -235,8 +235,8 @@ rr_render(register struct application *ap,
 	 *  There may be a mirror reflection, which will be handled
 	 *  by the reflection code later
 	 */
-	if( transmit > 0 )  {
-		if(R_DEBUG&RDEBUG_REFRACT) {
+	if ( transmit > 0 )  {
+		if (R_DEBUG&RDEBUG_REFRACT) {
 			bu_log("rr_render: lvl=%d transmit=%g.  Calculate refraction at entrance to %s.\n",
 				ap->a_level, transmit,
 				pp->pt_regionp->reg_name );
@@ -258,10 +258,10 @@ rr_render(register struct application *ap,
 		VMOVE( incident_dir, ap->a_ray.r_dir );
 
 		/* If there is an air gap, reset ray's RI to air */
-		if( pp->pt_inhit->hit_dist > AIR_GAP_TOL )
+		if ( pp->pt_inhit->hit_dist > AIR_GAP_TOL )
 			sub_ap.a_refrac_index = RI_AIR;
 
-		if( sub_ap.a_refrac_index != swp->sw_refrac_index &&
+		if ( sub_ap.a_refrac_index != swp->sw_refrac_index &&
 		    !rr_refract( incident_dir,		/* input direction */
 			swp->sw_hit.hit_normal,		/* exit normal */
 			sub_ap.a_refrac_index,		/* current RI */
@@ -280,14 +280,14 @@ rr_render(register struct application *ap,
 #else
 			VSETALL( transmit_color, 0 );
 #endif
-			if(R_DEBUG&RDEBUG_REFRACT) {
+			if (R_DEBUG&RDEBUG_REFRACT) {
 				bu_log("rr_render: lvl=%d change xmit into reflection %s\n",
 					ap->a_level,
 					pp->pt_regionp->reg_name );
 			}
 			goto do_reflection;
 		}
-		if(R_DEBUG&RDEBUG_REFRACT) {
+		if (R_DEBUG&RDEBUG_REFRACT) {
 			bu_log("rr_render: lvl=%d begin transmission through %s.\n",
 				ap->a_level,
 				pp->pt_regionp->reg_name );
@@ -315,7 +315,7 @@ do_inside:
 		sub_ap.a_onehit = 3;
 		sub_ap.a_rbeam = ap->a_rbeam + swp->sw_hit.hit_dist * ap->a_diverge;
 		sub_ap.a_diverge = 0.0;
-		switch( code = rt_shootray( &sub_ap ) )  {
+		switch ( code = rt_shootray( &sub_ap ) )  {
 		case 3:
 			/* More glass to come.
 			 *  uvec=exit_pt, vvec=N, a_refrac_index = next RI.
@@ -328,7 +328,7 @@ do_inside:
 			break;
 		case 1:
 			/* Treat as escaping ray */
-			if(R_DEBUG&RDEBUG_REFRACT)
+			if (R_DEBUG&RDEBUG_REFRACT)
 				bu_log("rr_refract: Treating as escaping ray\n");
 			goto do_exit;
 		case 0:
@@ -342,7 +342,7 @@ do_inside:
 			goto out;			/* abandon hope */
 		}
 
-		if(R_DEBUG&RDEBUG_REFRACT)  {
+		if (R_DEBUG&RDEBUG_REFRACT)  {
 			bu_log("rr_render: calculating refraction @ exit from %s (green)\n", pp->pt_regionp->reg_name);
 			bu_log("Start point to exit point:\n\
 vdraw open rr;vdraw params c 00ff00; vdraw write n 0 %g %g %g; vdraw wwrite n 1 %g %g %g; vdraw send\n",
@@ -353,13 +353,13 @@ vdraw open rr;vdraw params c 00ff00; vdraw write n 0 %g %g %g; vdraw wwrite n 1 
 		 *  and returns EXIT Normal in sub_ap.a_vvec,
 		 *  and returns next RI in sub_ap.a_refrac_index
 		 */
-		if( R_DEBUG&RDEBUG_RAYWRITE )  {
+		if ( R_DEBUG&RDEBUG_RAYWRITE )  {
 			wraypts( sub_ap.a_ray.r_pt,
 				sub_ap.a_ray.r_dir,
 				sub_ap.a_uvec,
 				2, ap, stdout );	/* 2 = ?? */
 		}
-		if( R_DEBUG&RDEBUG_RAYPLOT )  {
+		if ( R_DEBUG&RDEBUG_RAYPLOT )  {
 			/* plotfp */
 			bu_semaphore_acquire( BU_SEM_SYSCALL );
 			pl_color( stdout, 0, 255, 0 );
@@ -376,7 +376,7 @@ vdraw open rr;vdraw params c 00ff00; vdraw write n 0 %g %g %g; vdraw wwrite n 1 
 		 *  Calculate refraction at exit point.
 		 *  Use "look ahead" RI value from rr_hit.
 		 */
-		if( sub_ap.a_refrac_index != swp->sw_refrac_index &&
+		if ( sub_ap.a_refrac_index != swp->sw_refrac_index &&
 		    !rr_refract( incident_dir,		/* input direction */
 			sub_ap.a_vvec,			/* exit normal */
 			swp->sw_refrac_index,		/* current RI */
@@ -386,7 +386,7 @@ vdraw open rr;vdraw params c 00ff00; vdraw write n 0 %g %g %g; vdraw wwrite n 1 
 			static long count = 0;		/* not PARALLEL, should be OK */
 
 			/* Reflected internally -- keep going */
-			if( (++sub_ap.a_level) <= max_ireflect )  {
+			if ( (++sub_ap.a_level) <= max_ireflect )  {
 				sub_ap.a_purpose = "rr reflected internal ray, probing for glass exit point";
 				sub_ap.a_flag = 0;
 				goto do_inside;
@@ -400,7 +400,7 @@ vdraw open rr;vdraw params c 00ff00; vdraw write n 0 %g %g %g; vdraw wwrite n 1 
 			 *  which is much better than just returning
 			 *  grey or black, as before.
 			 */
-			if( (R_DEBUG&(RDEBUG_SHOWERR|RDEBUG_REFRACT)) && (
+			if ( (R_DEBUG&(RDEBUG_SHOWERR|RDEBUG_REFRACT)) && (
 				count++ < MSG_PROLOGUE ||
 				(count%MSG_INTERVAL) == 3
 			) )  {
@@ -423,7 +423,7 @@ do_exit:
 		 *  per linear meter of glass.  a_cumlen is in mm.
 		 */
 /* XXX extinction should be a spectral curve, not scalor */
-		if( swp->sw_extinction > 0 && sub_ap.a_cumlen > 0 )  {
+		if ( swp->sw_extinction > 0 && sub_ap.a_cumlen > 0 )  {
 			attenuation = pow( 10.0, -1.0e-3 * sub_ap.a_cumlen *
 				swp->sw_extinction );
 		} else {
@@ -443,7 +443,7 @@ do_exit:
 		sub_ap.a_uptr = ap->a_uptr;
 		sub_ap.a_rbeam = ap->a_rbeam + swp->sw_hit.hit_dist * ap->a_diverge;
 		sub_ap.a_diverge = 0.0;
-		if( code == 3 )  {
+		if ( code == 3 )  {
 			sub_ap.a_purpose = "rr recurse on next glass";
 			sub_ap.a_flag = 0;
 		}  else  {
@@ -457,7 +457,7 @@ do_exit:
 		(void) rt_shootray( &sub_ap );
 
 		/* a_user has hit/miss flag! */
-		if( sub_ap.a_user == 0 )  {
+		if ( sub_ap.a_user == 0 )  {
 #ifdef RT_MULTISPECTRAL
 			bn_tabdata_copy( ms_transmit_color, background );
 #else
@@ -477,7 +477,7 @@ do_exit:
 #else
 		VELMUL( transmit_color, filter_color, transmit_color );
 #endif
-		if(R_DEBUG&RDEBUG_REFRACT) {
+		if (R_DEBUG&RDEBUG_REFRACT) {
 			bu_log("rr_render: lvl=%d end of xmit through %s\n",
 				ap->a_level,
 				pp->pt_regionp->reg_name );
@@ -496,16 +496,16 @@ do_exit:
 	 */
 do_reflection:
 #ifdef RT_MULTISPECTRAL
-	if(sub_ap.a_spectrum)  {
+	if (sub_ap.a_spectrum)  {
 		bu_free(sub_ap.a_spectrum, "rr_render: sub_ap.a_spectrum bn_tabdata*");
 		sub_ap.a_spectrum = BN_TABDATA_NULL;
 	}
 #endif
-	if( reflect > 0 )  {
+	if ( reflect > 0 )  {
 		register fastf_t	f;
 
 		/* Mirror reflection */
-		if(R_DEBUG&RDEBUG_REFRACT)
+		if (R_DEBUG&RDEBUG_REFRACT)
 			bu_log("rr_render: calculating mirror reflection off of %s\n", pp->pt_regionp->reg_name);
 		sub_ap = *ap;		/* struct copy */
 #ifdef RT_MULTISPECTRAL
@@ -524,14 +524,14 @@ do_reflection:
 		sub_ap.a_purpose = "rr reflected ray";
 		sub_ap.a_flag = 0;
 
-		if( R_DEBUG&(RDEBUG_RAYPLOT|RDEBUG_REFRACT) )  {
+		if ( R_DEBUG&(RDEBUG_RAYPLOT|RDEBUG_REFRACT) )  {
 			point_t		endpt;
 			/* Plot the surface normal -- green/blue */
 			/* plotfp */
 			f = sub_ap.a_rt_i->rti_radius * 0.02;
 			VJOIN1( endpt, sub_ap.a_ray.r_pt,
 				f, swp->sw_hit.hit_normal );
-			if(R_DEBUG&RDEBUG_RAYPLOT)  {
+			if (R_DEBUG&RDEBUG_RAYPLOT)  {
 				bu_semaphore_acquire( BU_SEM_SYSCALL );
 				pl_color( stdout, 0, 255, 255 );
 				pdv_3line( stdout, sub_ap.a_ray.r_pt, endpt );
@@ -547,7 +547,7 @@ vdraw open rrnorm;vdraw params c 00ffff;vdraw write n 0 %g %g %g;vdraw write n 1
 		(void)rt_shootray( &sub_ap );
 
 		/* a_user has hit/miss flag! */
-		if( sub_ap.a_user == 0 )  {
+		if ( sub_ap.a_user == 0 )  {
 			/* MISS */
 #ifdef RT_MULTISPECTRAL
 			bn_tabdata_copy( ms_reflect_color, background );
@@ -582,7 +582,7 @@ vdraw open rrnorm;vdraw params c 00ffff;vdraw write n 0 %g %g %g;vdraw write n 1
 		reflect, reflect_color,
 		transmit, transmit_color );
 #endif
-	if(R_DEBUG&RDEBUG_REFRACT)  {
+	if (R_DEBUG&RDEBUG_REFRACT)  {
 		bu_log("rr_render: lvl=%d end shader=%g reflect=%g, transmit=%g %s\n",
 			ap->a_level,
 			shader_fract, reflect, transmit,
@@ -606,7 +606,7 @@ vdraw open rrnorm;vdraw params c 00ffff;vdraw write n 0 %g %g %g;vdraw write n 1
 #endif
 	}
 out:
-	if(R_DEBUG&RDEBUG_REFRACT)  {
+	if (R_DEBUG&RDEBUG_REFRACT)  {
 #ifdef RT_MULTISPECTRAL
 		{ struct bu_vls str;
 			bu_vls_init(&str);
@@ -622,10 +622,10 @@ out:
 
 	/* Release all the dynamic spectral curves */
 #ifdef RT_MULTISPECTRAL
-	if(ms_filter_color) bu_free(ms_filter_color, "rr_render: ms_filter_color bn_tabdata*");
-	if(ms_shader_color) bu_free(ms_shader_color, "rr_render: ms_shader_color bn_tabdata*");
-	if(ms_reflect_color) bu_free(ms_reflect_color, "rr_render: ms_reflect_color bn_tabdata*");
-	if(sub_ap.a_spectrum) bu_free(sub_ap.a_spectrum, "rr_render: sub_ap.a_spectrum bn_tabdata*");
+	if (ms_filter_color) bu_free(ms_filter_color, "rr_render: ms_filter_color bn_tabdata*");
+	if (ms_shader_color) bu_free(ms_shader_color, "rr_render: ms_shader_color bn_tabdata*");
+	if (ms_reflect_color) bu_free(ms_reflect_color, "rr_render: ms_reflect_color bn_tabdata*");
+	if (sub_ap.a_spectrum) bu_free(sub_ap.a_spectrum, "rr_render: sub_ap.a_spectrum bn_tabdata*");
 #endif
 
 	return(1);
@@ -675,10 +675,10 @@ rr_hit( struct application *ap, struct partition *PartHeadp )
 
 	RT_APPLICATION_INIT(&appl);
 
-	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
-		if( pp->pt_outhit->hit_dist > 0.0 )  break;
-	if( pp == PartHeadp )  {
-		if(R_DEBUG&(RDEBUG_SHOWERR|RDEBUG_REFRACT))  {
+	for ( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
+		if ( pp->pt_outhit->hit_dist > 0.0 )  break;
+	if ( pp == PartHeadp )  {
+		if (R_DEBUG&(RDEBUG_SHOWERR|RDEBUG_REFRACT))  {
 			bu_log("rr_hit:  %d,%d no hit out front?\n",
 				ap->a_x, ap->a_y );
 			ret = 0;	/* error */
@@ -697,11 +697,11 @@ rr_hit( struct application *ap, struct partition *PartHeadp )
 	 *  region that it started in, although not by much.
 	 */
 	psave = pp;
-	if(R_DEBUG&RDEBUG_REFRACT) bu_log("rr_hit(%s)\n", psave->pt_regionp->reg_name);
-	for( ; pp != PartHeadp; pp = pp->pt_forw )
-		if( pp->pt_regionp == (struct region *)(ap->a_uptr) )  break;
-	if( pp == PartHeadp )  {
-		if(R_DEBUG&(RDEBUG_SHOWERR|RDEBUG_REFRACT))  {
+	if (R_DEBUG&RDEBUG_REFRACT) bu_log("rr_hit(%s)\n", psave->pt_regionp->reg_name);
+	for (; pp != PartHeadp; pp = pp->pt_forw )
+		if ( pp->pt_regionp == (struct region *)(ap->a_uptr) )  break;
+	if ( pp == PartHeadp )  {
+		if (R_DEBUG&(RDEBUG_SHOWERR|RDEBUG_REFRACT))  {
 			bu_log("rr_hit:  %d,%d Ray internal to %s landed unexpectedly in %s\n",
 				ap->a_x, ap->a_y,
 				((struct region *)(ap->a_uptr))->reg_name,
@@ -734,9 +734,9 @@ rr_hit( struct application *ap, struct partition *PartHeadp )
 	 * an escaping ray.
 	 */
 
-	if( pp->pt_inhit->hit_dist > 10 )  {
+	if ( pp->pt_inhit->hit_dist > 10 )  {
 		stp = pp->pt_inseg->seg_stp;
-		if( R_DEBUG&RDEBUG_REFRACT )
+		if ( R_DEBUG&RDEBUG_REFRACT )
 			bu_log("rr_hit: %d,%d %s inhit %g > 10.0! (treating as escaping ray)\n",
 				ap->a_x, ap->a_y,
 				pp->pt_regionp->reg_name,
@@ -754,14 +754,14 @@ rr_hit( struct application *ap, struct partition *PartHeadp )
 	 * here.  If this case is detected, push on, and log it.
 	 * This code is not expected to be needed.
 	 */
-	while( pp->pt_forw != PartHeadp )  {
+	while ( pp->pt_forw != PartHeadp )  {
 		register fastf_t d;
 		d = pp->pt_forw->pt_inhit->hit_dist - pp->pt_outhit->hit_dist;
-		if( !NEAR_ZERO( d, AIR_GAP_TOL ) )
+		if ( !NEAR_ZERO( d, AIR_GAP_TOL ) )
 			break;
-		if( pp->pt_forw->pt_regionp != pp->pt_regionp )
+		if ( pp->pt_forw->pt_regionp != pp->pt_regionp )
 			break;
-		if(R_DEBUG&(RDEBUG_SHOWERR|RDEBUG_REFRACT)) bu_log(
+		if (R_DEBUG&(RDEBUG_SHOWERR|RDEBUG_REFRACT)) bu_log(
 			"rr_hit: %d,%d fusing small crack in glass %s\n",
 			ap->a_x, ap->a_y,
 			pp->pt_regionp->reg_name );
@@ -770,7 +770,7 @@ rr_hit( struct application *ap, struct partition *PartHeadp )
 
 	hitp = pp->pt_outhit;
 	stp = pp->pt_outseg->seg_stp;
-	if( hitp->hit_dist >= INFINITY )  {
+	if ( hitp->hit_dist >= INFINITY )  {
 		bu_log("rr_hit: %d,%d infinite glass (%g,%g) %s\n",
 			ap->a_x, ap->a_y,
 			pp->pt_inhit->hit_dist, hitp->hit_dist,
@@ -794,10 +794,10 @@ rr_hit( struct application *ap, struct partition *PartHeadp )
 	 *  If so, obtain its refractive index, to enable correct
 	 *  calculation of the departing refraction angle.
 	 */
-	if( pp->pt_forw != PartHeadp )  {
+	if ( pp->pt_forw != PartHeadp )  {
 		register fastf_t	d;
 		d = pp->pt_forw->pt_inhit->hit_dist - hitp->hit_dist;
-		if( NEAR_ZERO( d, AIR_GAP_TOL ) )  {
+		if ( NEAR_ZERO( d, AIR_GAP_TOL ) )  {
 			/*
 			 * Make a private copy of the application struct,
 			 * because viewshade() may change various fields.
@@ -837,7 +837,7 @@ rr_hit( struct application *ap, struct partition *PartHeadp )
 			if (R_DEBUG&(RDEBUG_SHADE|RDEBUG_REFRACT))
 				bu_log("rr_hit refractive index = %g\n", sw.sw_refrac_index);
 
-			if( sw.sw_transmit > 0 )  {
+			if ( sw.sw_transmit > 0 )  {
 				ap->a_refrac_index = sw.sw_refrac_index;
 				if (R_DEBUG&RDEBUG_SHADE)  {
 					bu_log("rr_hit a_refrac_index=%g (trans=%g)\n",
@@ -851,7 +851,7 @@ rr_hit( struct application *ap, struct partition *PartHeadp )
 	}
 	ret = 2;				/* OK -- no more glass */
 out:
-	if(R_DEBUG&RDEBUG_REFRACT) bu_log("rr_hit(%s) return=%d\n",
+	if (R_DEBUG&RDEBUG_REFRACT) bu_log("rr_hit(%s) return=%d\n",
 		psave ? psave->pt_regionp->reg_name : "",
 		ret);
 	return ret;
@@ -885,12 +885,12 @@ rr_refract( vect_t v_1, vect_t norml, double ri_1, double ri_2, vect_t v_2 )
 	vect_t	w, u;
 	fastf_t	beta;
 
-	if( NEAR_ZERO(ri_1, 0.0001) || NEAR_ZERO( ri_2, 0.0001 ) )  {
+	if ( NEAR_ZERO(ri_1, 0.0001) || NEAR_ZERO( ri_2, 0.0001 ) )  {
 		bu_log("rr_refract:ri1=%g, ri2=%g\n", ri_1, ri_2 );
 		beta = 1;
 	} else {
 		beta = ri_1/ri_2;		/* temp */
-		if( beta > 10000 )  {
+		if ( beta > 10000 )  {
 			bu_log("rr_refract:  beta=%g\n", beta);
 			beta = 1000;
 		}
@@ -902,11 +902,11 @@ rr_refract( vect_t v_1, vect_t norml, double ri_1, double ri_2, vect_t v_2 )
 	 *	|w X norml| = |w||norml| * sin( theta_1 )
 	 *	        |u| = ri_1/ri_2 * sin( theta_1 ) = sin( theta_2 )
 	 */
-	if( (beta = VDOT( u, u )) > 1.0 )  {
+	if ( (beta = VDOT( u, u )) > 1.0 )  {
 		/*  Past critical angle, total reflection.
 		 *  Calculate reflected (bounced) incident ray.
 		 */
-		if(R_DEBUG&RDEBUG_REFRACT) bu_log("rr_refract: reflected.  ri1=%g ri2=%g beta=%g\n",
+		if (R_DEBUG&RDEBUG_REFRACT) bu_log("rr_refract: reflected.  ri1=%g ri2=%g beta=%g\n",
 			ri_1, ri_2, beta);
 		VREVERSE( u, v_1 );
 		beta = 2 * VDOT( u, norml );
@@ -919,7 +919,7 @@ rr_refract( vect_t v_1, vect_t norml, double ri_1, double ri_2, vect_t v_2 )
 		 *	    = cos( theta_2 )^^2.
 		 *     beta = -1.0 * cos( theta_2 ) - Dot( w, norml ).
 		 */
-		if(R_DEBUG&RDEBUG_REFRACT) bu_log("rr_refract: refracted.  ri1=%g ri2=%g beta=%g\n",
+		if (R_DEBUG&RDEBUG_REFRACT) bu_log("rr_refract: refracted.  ri1=%g ri2=%g beta=%g\n",
 			ri_1, ri_2, beta);
 		beta = -sqrt( 1.0 - beta) - VDOT( w, norml );
 		VSCALE( u, norml, beta );

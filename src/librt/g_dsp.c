@@ -150,7 +150,7 @@ struct dsp_specific {
 
 /* access to the array */
 #ifdef FULL_DSP_DEBUGGING
-#define DSP(_p,_x,_y) dsp_val(_p, _x, _y, __FILE__, __LINE__)
+#define DSP(_p, _x, _y) dsp_val(_p, _x, _y, __FILE__, __LINE__)
 unsigned short
 dsp_val(struct rt_dsp_internal *dsp_i, unsigned x, unsigned y, char *file, int line)
 {
@@ -165,7 +165,7 @@ dsp_val(struct rt_dsp_internal *dsp_i, unsigned x, unsigned y, char *file, int l
     return dsp_i->dsp_buf[ y * dsp_i->dsp_xcnt + x ];
 }
 #else
-# define DSP(_p,_x,_y) ( \
+# define DSP(_p, _x, _y) ( \
 	( \
 	 (unsigned short *) \
 	  ((_p)->dsp_buf) \
@@ -383,7 +383,7 @@ plot_layers(struct dsp_specific *dsp_sp)
     int r, g, b, c;
     struct dsp_bb *d_bb;
 
-    for (l=0 ; l < dsp_sp->layers ; l++) {
+    for (l=0; l < dsp_sp->layers; l++) {
 	bu_semaphore_acquire( BU_SEM_SYSCALL);
 	sprintf(buf, "Dsp_layer%d.pl", l);
 	fp=fopen(buf, "w");
@@ -401,8 +401,8 @@ plot_layers(struct dsp_specific *dsp_sp)
 	g = colors[c][1];
 	b = colors[c][2];
 
-	for (y=0 ; y < dsp_sp->layer[l].dim[Y] ; y+= 2 ) {
-	    for (x=0 ; x < dsp_sp->layer[l].dim[X] ; x+= 2 ) {
+	for (y=0; y < dsp_sp->layer[l].dim[Y]; y+= 2 ) {
+	    for (x=0; x < dsp_sp->layer[l].dim[X]; x+= 2 ) {
 		n = y * dsp_sp->layer[l].dim[X] + x;
 		d_bb = &dsp_sp->layer[l].p[n];
 		plot_dsp_bb(fp, d_bb, dsp_sp, r, g, b, 0);
@@ -498,7 +498,7 @@ plot_cell_top(struct isect_stuff *isect,
 
     /* plot the hit points */
 
-    for (in_seg = 0, i = 0 ; i < 4 ; i++ ) {
+    for (in_seg = 0, i = 0; i < 4; i++ ) {
 	if (hitflags & (1<<i)) {
 	    if (in_seg) {
 		in_seg = 0;
@@ -718,12 +718,12 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
 	dsp_min = 0xffff;
 	dsp_max = 0;
 
-	for (y=0 ; y < YSIZ(dsp) ; y++) {
+	for (y=0; y < YSIZ(dsp); y++) {
 
 		cell_min = 0xffff;
 		cell_max = 0;
 
-		for (x=0 ; x < XSIZ(dsp) ; x++) {
+		for (x=0; x < XSIZ(dsp); x++) {
 
 #if 0
 	    if (RT_G_DEBUG & DEBUG_HF)
@@ -759,7 +759,7 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
 	    /* There are no "children" of a layer 0 element */
 	    dsp_bb->dspb_ch_dim[X] = 0;
 	    dsp_bb->dspb_ch_dim[Y] = 0;
-	    for (k=0 ; k < NUM_BB_CHILDREN ; k++ ) {
+	    for (k=0; k < NUM_BB_CHILDREN; k++ ) {
 				dsp_bb->dspb_children[k] =
 					(struct dsp_bb *)NULL;
 	    }
@@ -786,7 +786,7 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
 	subcell_size = 1;
 
 	/* now we compute successive layers from the initial layer */
-	for (curr_layer = 1 ; curr_layer < dsp->layers ; curr_layer++ ) {
+	for (curr_layer = 1; curr_layer < dsp->layers; curr_layer++ ) {
 		/* compute the number of cells in each direction for this layer */
 
 		xs = dsp->layer[curr_layer-1].dim[X];
@@ -816,8 +816,8 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
 	    bu_log("layer %d  subcell size %d\n", curr_layer, subcell_size);
 
 		/* walk the grid and fill in the values for this layer */
-		for (y=0 ; y < curr->dim[Y] ; y++ ) {
-	    for (x=0 ; x < curr->dim[X] ; x++ ) {
+		for (y=0; y < curr->dim[Y]; y++ ) {
+	    for (x=0; x < curr->dim[X]; x++ ) {
 				int n, xp, yp;
 				/* x, y are in the coordinates in the current
 				 * layer.  xp, yp are the coordinates of the
@@ -847,8 +847,8 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
 						 (x+1) * n, (y+1)*n);
 #endif
 				i=0;
-				for (j=0 ; j<DIM_BB_CHILDREN && (yp+j)<prev->dim[Y] ; j++) {
-					for (i=0 ; i<DIM_BB_CHILDREN && (xp+i)<prev->dim[X]; i++) {
+				for (j=0; j<DIM_BB_CHILDREN && (yp+j)<prev->dim[Y]; j++) {
+					for (i=0; i<DIM_BB_CHILDREN && (xp+i)<prev->dim[X]; i++) {
 
 						idx = (yp+j) * prev->dim[X] + xp+i;
 
@@ -1892,7 +1892,7 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 	bu_log("hitcount: %d flags: 0x%0x\n", hitcount, hitf);
 
 	plot_cell_top(isect, dsp_bb, A, B, C, D, hits, hitf, 1);
-	for (i=0 ; i < 4 ; i++) {
+	for (i=0; i < 4; i++) {
 	    if (hitf & (1<<i)) {
 		double v = VDOT(isect->r.r_dir, hits[i].hit_normal);
 
@@ -1911,7 +1911,7 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
     /* fill out the segment structures */
 
     hitp = 0;
-    for (i = 0 ; i < 4 ; i++ ) {
+    for (i = 0; i < 4; i++ ) {
 	if (hitf & (1<<i)) {
 	    if (hitp) {
 
@@ -2024,25 +2024,25 @@ dsp_in_rpp(struct isect_stuff *isect,
     /* Start with infinite ray, and trim it down */
 
     /* X axis */
-    if( *invdir < 0.0 )  {
+    if ( *invdir < 0.0 )  {
 	/* Heading towards smaller numbers */
-	/* if( *min > *pt )  miss */
-	if(rmax > (sv = (*min - *pt) * *invdir) ) {
+	/* if ( *min > *pt )  miss */
+	if (rmax > (sv = (*min - *pt) * *invdir) ) {
 	    rmax = sv;
 	    dmax = XMIN;
 	}
-	if( rmin < (sv = (*max - *pt) * *invdir) ) {
+	if ( rmin < (sv = (*max - *pt) * *invdir) ) {
 	    rmin = sv;
 	    dmin = XMAX;
 	}
-    }  else if( *invdir > 0.0 )  {
+    }  else if ( *invdir > 0.0 )  {
 	/* Heading towards larger numbers */
-	/* if( *max < *pt )  miss */
+	/* if ( *max < *pt )  miss */
 	if (rmax > (sv = (*max - *pt) * *invdir) ) {
 	    rmax = sv;
 	    dmax = XMAX;
 	}
-	if( rmin < ((sv = (*min - *pt) * *invdir)) ) {
+	if ( rmin < ((sv = (*min - *pt) * *invdir)) ) {
 	    rmin = sv;
 	    dmin = XMIN;
 	}
@@ -2052,13 +2052,13 @@ dsp_in_rpp(struct isect_stuff *isect,
 	 *  which implies that the ray is perpendicular to the axis,
 	 *  so merely check position against the boundaries.
 	 */
-	if( (*min > *pt) || (*max < *pt) )
+	if ( (*min > *pt) || (*max < *pt) )
 	    return(0);	/* MISS */
     }
 
     /* Y axis */
     pt++; invdir++; max++; min++;
-    if( *invdir < 0.0 )  {
+    if ( *invdir < 0.0 )  {
 	if (rmax > (sv = (*min - *pt) * *invdir) ) {
 	    /* towards smaller */
 	    rmax = sv;
@@ -2068,50 +2068,50 @@ dsp_in_rpp(struct isect_stuff *isect,
 	    rmin = sv;
 	    dmin = YMAX;
 	}
-    }  else if( *invdir > 0.0 )  {
+    }  else if ( *invdir > 0.0 )  {
 	/* towards larger */
-	if(rmax > (sv = (*max - *pt) * *invdir) ) {
+	if (rmax > (sv = (*max - *pt) * *invdir) ) {
 	    rmax = sv;
 	    dmax = YMAX;
 	}
-	if( rmin < ((sv = (*min - *pt) * *invdir)) ) {
+	if ( rmin < ((sv = (*min - *pt) * *invdir)) ) {
 	    rmin = sv;
 	    dmin = YMIN;
 	}
     }  else  {
-	if( (*min > *pt) || (*max < *pt) )
+	if ( (*min > *pt) || (*max < *pt) )
 	    return(0);	/* MISS */
     }
 
     /* Z axis */
     pt++; invdir++; max++; min++;
-    if( *invdir < 0.0 )  {
+    if ( *invdir < 0.0 )  {
 	/* towards smaller */
-	if(rmax > (sv = (*min - *pt) * *invdir) ) {
+	if (rmax > (sv = (*min - *pt) * *invdir) ) {
 	    rmax = sv;
 	    dmax = ZMIN;
 	}
-	if( rmin < (sv = (*max - *pt) * *invdir) ) {
+	if ( rmin < (sv = (*max - *pt) * *invdir) ) {
 	    rmin = sv;
 	    dmin = ZMAX;
 	}
-    }  else if( *invdir > 0.0 )  {
+    }  else if ( *invdir > 0.0 )  {
 	/* towards larger */
-	if(rmax > (sv = (*max - *pt) * *invdir) ) {
+	if (rmax > (sv = (*max - *pt) * *invdir) ) {
 	    rmax = sv;
 	    dmax = ZMAX;
 	}
-	if( rmin < ((sv = (*min - *pt) * *invdir)) ) {
+	if ( rmin < ((sv = (*min - *pt) * *invdir)) ) {
 	    rmin = sv;
 	    dmin = ZMIN;
 	}
     }  else  {
-	if( (*min > *pt) || (*max < *pt) )
+	if ( (*min > *pt) || (*max < *pt) )
 	    return(0);	/* MISS */
     }
 
     /* If equal, RPP is actually a plane */
-    if( rmin > rmax )
+    if ( rmin > rmax )
 	return(0);	/* MISS */
 
     /* HIT.  Only now do rp->r_min and rp->r_max have to be written */
@@ -2425,7 +2425,7 @@ isect_ray_dsp_bb(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 	if (RT_G_DEBUG & DEBUG_HF)
 	    bu_log_indent_delta(4);
 
-	for ( ; i >= 0 ; i--)
+	for (; i >= 0; i--)
 	    isect_ray_dsp_bb(isect, dsp_bb->dspb_children[i]);
 
 	if (RT_G_DEBUG & DEBUG_HF)
@@ -3204,11 +3204,11 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
      * This helps edge matching.
      * The inside of the top, we draw somewhat coarser
      */
-    for (y=0 ; y < dsp_ip->dsp_ycnt ; y += ylim ) {
+    for (y=0; y < dsp_ip->dsp_ycnt; y += ylim ) {
 	VSET(s_pt, 0.0, y, DSP(dsp_ip, 0, y));
 	MOVE(s_pt);
 
-	for (x=0 ; x < dsp_ip->dsp_xcnt ; x++) {
+	for (x=0; x < dsp_ip->dsp_xcnt; x++) {
 	    s_pt[X] = x;
 	    s_pt[Z] = DSP(dsp_ip, x, y);
 	    DRAW(s_pt);
@@ -3216,11 +3216,11 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     }
 
 
-    for (x=0 ; x < dsp_ip->dsp_xcnt ; x += xlim ) {
+    for (x=0; x < dsp_ip->dsp_xcnt; x += xlim ) {
 	VSET(s_pt, x, 0.0, DSP(dsp_ip, x, 0));
 	MOVE(s_pt);
 
-	for (y=0 ; y < dsp_ip->dsp_ycnt ; y++) {
+	for (y=0; y < dsp_ip->dsp_ycnt; y++) {
 	    s_pt[Y] = y;
 	    s_pt[Z] = DSP(dsp_ip, x, y);
 	    DRAW(s_pt);
@@ -3249,14 +3249,14 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     if (step < 1 )  step = 1;
 
 
-    xfudge = (dsp_ip->dsp_xcnt % step + step) / 2 ;
-    yfudge = (dsp_ip->dsp_ycnt % step + step) / 2 ;
+    xfudge = (dsp_ip->dsp_xcnt % step + step) / 2;
+    yfudge = (dsp_ip->dsp_ycnt % step + step) / 2;
 
     if (xfudge < 1) xfudge = 1;
     if (yfudge < 1) yfudge = 1;
 
     /* draw the horizontal (y==const) lines */
-    for (y=yfudge ; y < ylim ; y += step ) {
+    for (y=yfudge; y < ylim; y += step ) {
 	VSET(s_pt, 0.0, y, DSP(dsp_ip, 0, y));
 	VMOVE(o_pt, s_pt);
 	if (o_pt[Z]) {
@@ -3266,7 +3266,7 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	    drawing = 0;
 	}
 
-	for (x=xfudge ; x < xlim ; x+=step ) {
+	for (x=xfudge; x < xlim; x+=step ) {
 	    s_pt[X] = x;
 
 	    if ( (s_pt[Z] = DSP(dsp_ip, x, y)) ) {
@@ -3305,7 +3305,7 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 
     }
 
-    for (x=xfudge ; x < xlim ; x += step ) {
+    for (x=xfudge; x < xlim; x += step ) {
 	VSET(s_pt, x, 0.0, DSP(dsp_ip, x, 0));
 	VMOVE(o_pt, s_pt);
 	if (o_pt[Z]) {
@@ -3316,7 +3316,7 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	}
 
 
-	for (y=yfudge ; y < ylim ; y+=step) {
+	for (y=yfudge; y < ylim; y+=step) {
 	    s_pt[Y] = y;
 
 	    if ( (s_pt[Z] = DSP(dsp_ip, x, y)) ) {
@@ -3882,7 +3882,7 @@ rt_dsp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	cp += SIZEOF_NETWORK_SHORT;
 	rem -= SIZEOF_NETWORK_SHORT;
 
-	switch(dsp_ip->dsp_datasrc) {
+	switch (dsp_ip->dsp_datasrc) {
 	case RT_DSP_SRC_V4_FILE:
 	case RT_DSP_SRC_FILE:
 	case RT_DSP_SRC_OBJ:
@@ -3895,7 +3895,7 @@ rt_dsp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	cp++;
 	rem--;
 
-	switch(dsp_ip->dsp_cuttype) {
+	switch (dsp_ip->dsp_cuttype) {
 	case DSP_CUT_DIR_ADAPT:
 	case DSP_CUT_DIR_llUR:
 	case DSP_CUT_DIR_ULlr:
@@ -4085,7 +4085,7 @@ rt_dsp_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const cha
 	bu_vls_init( &str );
 	Tcl_DStringInit( &ds );
 
-	if( attr == (char *)0 ) {
+	if ( attr == (char *)0 ) {
 	    /* Print out solid type and all attributes */
 
 	    Tcl_DStringAppendElement( &ds, "dsp" );
@@ -4101,10 +4101,10 @@ rt_dsp_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const cha
 				break;
 	    }
 
-	    while( sp && sp->sp_name != NULL ) {
+	    while ( sp && sp->sp_name != NULL ) {
 		Tcl_DStringAppendElement( &ds, sp->sp_name );
 		bu_vls_trunc( &str, 0 );
-		bu_vls_struct_item(&str, sp,(char *)dsp_ip,' ');
+		bu_vls_struct_item(&str, sp, (char *)dsp_ip, ' ');
 		Tcl_DStringAppendElement( &ds, bu_vls_addr(&str) );
 		++sp;
 	    }
@@ -4120,7 +4120,7 @@ rt_dsp_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const cha
 			break;
 		}
 
-	    if( bu_vls_struct_item_named( &str, sp, attr,
+	    if ( bu_vls_struct_item_named( &str, sp, attr,
 					  (char *)dsp_ip, ' ') < 0 ) {
 		bu_vls_printf(&str,
 			      "Objects of type %s do not have a %s attribute.",

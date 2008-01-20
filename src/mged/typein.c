@@ -564,7 +564,7 @@ f_in(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	CHECK_DBI_NULL;
 
-	if(argc < 1){
+	if (argc < 1){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -577,8 +577,8 @@ f_in(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	/* Parse options. */
 	bu_optind = 1;		/* re-init bu_getopt() */
 	bu_opterr = 0;          /* suppress bu_getopt()'s error message */
-	while( (c=bu_getopt(argc, argv, "sf")) != EOF )  {
-		switch(c)  {
+	while ( (c=bu_getopt(argc, argv, "sf")) != EOF )  {
+		switch (c)  {
 		case 's':
 			do_solid_edit = 1;
 			break;
@@ -604,15 +604,15 @@ f_in(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	vals = 0;
 
 	/* Get the name of the solid to be created */
-	if( argc < 2 )  {
+	if ( argc < 2 )  {
 	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter name of solid: ", (char *)NULL);
 	  return TCL_ERROR;
 	}
-	if( db_lookup( dbip,  argv[1], LOOKUP_QUIET ) != DIR_NULL )  {
+	if ( db_lookup( dbip,  argv[1], LOOKUP_QUIET ) != DIR_NULL )  {
 	  aexists( argv[1] );
 	  return TCL_ERROR;
 	}
-	if( dbip->dbi_version <= 4 && (int)strlen(argv[1]) >= NAMESIZE )  {
+	if ( dbip->dbi_version <= 4 && (int)strlen(argv[1]) >= NAMESIZE )  {
 	  struct bu_vls tmp_vls;
 
 	  bu_vls_init(&tmp_vls);
@@ -624,7 +624,7 @@ f_in(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	name = argv[1];
 
 	/* Get the solid type to be created and make it */
-	if( argc < 3 )  {
+	if ( argc < 3 )  {
 	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter solid type: ", (char *)NULL);
 	  return TCL_ERROR;
 	}
@@ -636,12 +636,12 @@ f_in(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	 * make name <half|arb[4-8]|sph|ell|ellg|ell1|tor|tgc|tec|
 			rec|trc|rcc|box|raw|rpp|rpc|rhc|epa|ehy|eto|superell>
 	 */
-	if( strcmp( argv[2], "ebm" ) == 0 )  {
+	if ( strcmp( argv[2], "ebm" ) == 0 )  {
 		nvals = 4;
 		menu = p_ebm;
 		fn_in = ebm_in;
-	} else if( strcmp( argv[2], "arbn" ) == 0 ) {
-		switch( arbn_in(argc, argv, &internal, &p_arbn[0]) ) {
+	} else if ( strcmp( argv[2], "arbn" ) == 0 ) {
+		switch ( arbn_in(argc, argv, &internal, &p_arbn[0]) ) {
 		case CMD_BAD:
 		  Tcl_AppendResult(interp, "ERROR, ARBN not made!\n",
 				   (char *)NULL);
@@ -651,8 +651,8 @@ f_in(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		  return TCL_ERROR;
 		}
 		goto do_new_update;
-	} else if( strcmp( argv[2], "bot" ) == 0 ) {
-		switch( bot_in(argc, argv, &internal, &p_bot[0]) ) {
+	} else if ( strcmp( argv[2], "bot" ) == 0 ) {
+		switch ( bot_in(argc, argv, &internal, &p_bot[0]) ) {
 		case CMD_BAD:
 		  Tcl_AppendResult(interp, "ERROR, BOT not made!\n",
 				   (char *)NULL);
@@ -662,15 +662,15 @@ f_in(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		  return TCL_ERROR;
 		}
 		goto do_new_update;
-	} else if( strcmp( argv[2], "submodel" ) == 0 )  {
+	} else if ( strcmp( argv[2], "submodel" ) == 0 )  {
 		nvals = 3;
 		menu = p_submodel;
 		fn_in = submodel_in;
-	} else if( strcmp( argv[2], "vol" ) == 0 )  {
+	} else if ( strcmp( argv[2], "vol" ) == 0 )  {
 		nvals = 9;
 		menu = p_vol;
 		fn_in = vol_in;
-	} else if( strcmp( argv[2], "hf" ) == 0 )  {
+	} else if ( strcmp( argv[2], "hf" ) == 0 )  {
 		if (dbip->dbi_version <= 4) {
 			nvals = 19;
 			menu = p_hf;
@@ -684,7 +684,7 @@ f_in(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		   strcmp(argv[2], "pg") == 0) {
 		Tcl_AppendResult(interp, "in: the polysolid is deprecated and not supported by this command.\nUse the bot primitive.\n", (char *)NULL);
 		return TCL_ERROR;
-	} else if( strcmp( argv[2], "dsp" ) == 0 )  {
+	} else if ( strcmp( argv[2], "dsp" ) == 0 )  {
 		if (dbip->dbi_version <= 4) {
 			nvals = 6;
 			menu = p_dsp_v4;
@@ -695,8 +695,8 @@ f_in(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 			fn_in = dsp_in_v5;
 		}
 
-	} else if( strcmp( argv[2], "pipe" ) == 0 ) {
-		switch( pipe_in(argc, argv, &internal, &p_pipe[0]) ) {
+	} else if ( strcmp( argv[2], "pipe" ) == 0 ) {
+		switch ( pipe_in(argc, argv, &internal, &p_pipe[0]) ) {
 		case CMD_BAD:
 		  Tcl_AppendResult(interp, "ERROR, pipe not made!\n", (char *)NULL);
 		  rt_db_free_internal( &internal, &rt_uniresource );
@@ -705,8 +705,8 @@ f_in(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		  return TCL_ERROR;
 		}
 		goto do_new_update;
-	} else if( strcmp( argv[2], "metaball" ) == 0 ) {
-		switch( metaball_in(argc, argv, &internal, &p_metaball[0]) ) {
+	} else if ( strcmp( argv[2], "metaball" ) == 0 ) {
+		switch ( metaball_in(argc, argv, &internal, &p_metaball[0]) ) {
 		case CMD_BAD:
 		  Tcl_AppendResult(interp, "ERROR, metaball not made!\n", (char *)NULL);
 		  rt_db_free_internal( &internal, &rt_uniresource );
@@ -715,8 +715,8 @@ f_in(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		  return TCL_ERROR;
 		}
 		goto do_new_update;
-	} else if( strcmp( argv[2], "ars" ) == 0 )  {
-		switch( ars_in(argc, argv, &internal, &p_ars[0]) ) {
+	} else if ( strcmp( argv[2], "ars" ) == 0 )  {
+		switch ( ars_in(argc, argv, &internal, &p_ars[0]) ) {
 		case CMD_BAD:
 		  Tcl_AppendResult(interp, "ERROR, ars not made!\n", (char *)NULL);
 		  rt_db_free_internal( &internal, &rt_uniresource );
@@ -725,14 +725,14 @@ f_in(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		  return TCL_ERROR;
 		}
 		goto do_new_update;
-	} else if( strcmp( argv[2], "half" ) == 0 )  {
+	} else if ( strcmp( argv[2], "half" ) == 0 )  {
 		nvals = 3*1 + 1;
 		menu = p_half;
 		fn_in = half_in;
-	} else if( strncmp( argv[2], "arb", 3 ) == 0 )  {
+	} else if ( strncmp( argv[2], "arb", 3 ) == 0 )  {
 		int n = atoi(&argv[2][3]);
 
-		if(n < 4 || 8 < n){
+		if (n < 4 || 8 < n){
 			Tcl_AppendResult(interp, "ERROR: \"", argv[2],
 					 "\" not supported!\n", (char *)0);
 			Tcl_AppendResult(interp, "supported arbs: arb4 arb5 arb6 arb7 arb8\n",
@@ -743,84 +743,84 @@ f_in(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		nvals = 3*n;
 		menu = p_arb;
 		fn_in = arb_in;
-	} else if( strcmp( argv[2], "sph" ) == 0 )  {
+	} else if ( strcmp( argv[2], "sph" ) == 0 )  {
 		nvals = 3*1 + 1;
 		menu = p_sph;
 		fn_in = sph_in;
-	} else if( strcmp( argv[2], "ellg" ) == 0 )  {
+	} else if ( strcmp( argv[2], "ellg" ) == 0 )  {
 		nvals = 3*2 + 1;
 		menu = p_ellg;
 		fn_in = ell_in;
-	} else if( strcmp( argv[2], "ell" ) == 0 )  {
+	} else if ( strcmp( argv[2], "ell" ) == 0 )  {
 		nvals = 3*4;
 		menu = p_ell;
 		fn_in = ell_in;
-	} else if( strcmp( argv[2], "ell1" ) == 0 )  {
+	} else if ( strcmp( argv[2], "ell1" ) == 0 )  {
 		nvals = 3*2 + 1;
 		menu = p_ell1;
 		fn_in = ell_in;
-	} else if( strcmp( argv[2], "tor" ) == 0 )  {
+	} else if ( strcmp( argv[2], "tor" ) == 0 )  {
 		nvals = 3*2 + 2;
 		menu = p_tor;
 		fn_in = tor_in;
-	} else if( strcmp( argv[2], "tgc" ) == 0 ) {
+	} else if ( strcmp( argv[2], "tgc" ) == 0 ) {
 		nvals = 3*4 + 2;
 		menu = p_tgc;
 		fn_in = tgc_in;
-	} else if( strcmp( argv[2], "tec" ) == 0 )  {
+	} else if ( strcmp( argv[2], "tec" ) == 0 )  {
 		nvals = 3*4 + 1;
 		menu = p_tec;
 		fn_in = tec_in;
-	} else if( strcmp( argv[2], "rec" ) == 0 )  {
+	} else if ( strcmp( argv[2], "rec" ) == 0 )  {
 		nvals = 3*4;
 		menu = p_rec;
 		fn_in = rec_in;
-	} else if( strcmp( argv[2], "trc" ) == 0 )  {
+	} else if ( strcmp( argv[2], "trc" ) == 0 )  {
 		nvals = 3*2 + 2;
 		menu = p_trc;
 		fn_in = trc_in;
-	} else if( strcmp( argv[2], "rcc" ) == 0 )  {
+	} else if ( strcmp( argv[2], "rcc" ) == 0 )  {
 		nvals = 3*2 + 1;
 		menu = p_rcc;
 		fn_in = rcc_in;
-	} else if( strcmp( argv[2], "box" ) == 0
+	} else if ( strcmp( argv[2], "box" ) == 0
 		|| strcmp( argv[2], "raw" ) == 0 )  {
 		nvals = 3*4;
 		menu = p_box;
 		fn_in = box_in;
-	} else if( strcmp( argv[2], "rpp" ) == 0 )  {
+	} else if ( strcmp( argv[2], "rpp" ) == 0 )  {
 		nvals = 3*2;
 		menu = p_rpp;
 		fn_in = rpp_in;
-	} else if( strcmp( argv[2], "orpp" ) == 0 )  {
+	} else if ( strcmp( argv[2], "orpp" ) == 0 )  {
 		nvals = 3*1;
 		menu = p_orpp;
 		fn_in = orpp_in;
-	} else if( strcmp( argv[2], "rpc" ) == 0 )  {
+	} else if ( strcmp( argv[2], "rpc" ) == 0 )  {
 		nvals = 3*3 + 1;
 		menu = p_rpc;
 		fn_in = rpc_in;
-	} else if( strcmp( argv[2], "rhc" ) == 0 )  {
+	} else if ( strcmp( argv[2], "rhc" ) == 0 )  {
 		nvals = 3*3 + 2;
 		menu = p_rhc;
 		fn_in = rhc_in;
-	} else if( strcmp( argv[2], "epa" ) == 0 )  {
+	} else if ( strcmp( argv[2], "epa" ) == 0 )  {
 		nvals = 3*3 + 1;
 		menu = p_epa;
 		fn_in = epa_in;
-	} else if( strcmp( argv[2], "ehy" ) == 0 )  {
+	} else if ( strcmp( argv[2], "ehy" ) == 0 )  {
 		nvals = 3*3 + 2;
 		menu = p_ehy;
 		fn_in = ehy_in;
-	} else if( strcmp( argv[2], "eto" ) == 0 )  {
+	} else if ( strcmp( argv[2], "eto" ) == 0 )  {
 		nvals = 3*3 + 2;
 		menu = p_eto;
 		fn_in = eto_in;
-	} else if( strcmp( argv[2], "part" ) == 0 )  {
+	} else if ( strcmp( argv[2], "part" ) == 0 )  {
 		nvals = 2*3 + 2;
 		menu = p_part;
 		fn_in = part_in;
-	} else if( strcmp( argv[2], "binunif" ) == 0 ) {
+	} else if ( strcmp( argv[2], "binunif" ) == 0 ) {
 		if (dbip->dbi_version <= 4) {
 			Tcl_AppendResult(interp, "in: the binunif primitive is not supported by this command when using an old style database", (char *)NULL);
 			return TCL_ERROR;
@@ -839,7 +839,7 @@ f_in(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		nvals = 2*3 + 1;
 		menu = p_grip;
 		fn_in = grip_in;
-	} else if( strcmp( argv[2], "superell" ) == 0 )  {
+	} else if ( strcmp( argv[2], "superell" ) == 0 )  {
 		nvals = 3*4 + 2;
 		menu = p_superell;
 		fn_in = superell_in;
@@ -858,14 +858,14 @@ f_in(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
 
 	/* Read arguments */
-	if( argc < 3+nvals )  {
+	if ( argc < 3+nvals )  {
 	  Tcl_AppendResult(interp, MORE_ARGS_STR, menu[argc-3], (char *)NULL);
 	  return TCL_ERROR;
 	}
 
 	if (fn_in(argv, &internal, name) != 0)  {
 	  Tcl_AppendResult(interp, "ERROR, ", argv[2], " not made!\n", (char *)NULL);
-	  if( internal.idb_ptr ) {
+	  if ( internal.idb_ptr ) {
 		  /* a few input functions do not use the internal pointer
 		   * only free it, if it has been used
 		   */
@@ -876,20 +876,20 @@ f_in(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 do_new_update:
 	/* The function may have already written via LIBWDB */
-	if( internal.idb_ptr != NULL )  {
-		if( (dp=db_diradd( dbip, name, -1L, 0, DIR_SOLID, (genptr_t)&internal.idb_type)) == DIR_NULL )  {
+	if ( internal.idb_ptr != NULL )  {
+		if ( (dp=db_diradd( dbip, name, -1L, 0, DIR_SOLID, (genptr_t)&internal.idb_type)) == DIR_NULL )  {
 			rt_db_free_internal( &internal, &rt_uniresource );
 			Tcl_AppendResult(interp, "Cannot add '", name, "' to directory\n", (char *)NULL );
 			return TCL_ERROR;
 		}
-		if( rt_db_put_internal( dp, dbip, &internal, &rt_uniresource ) < 0 )
+		if ( rt_db_put_internal( dp, dbip, &internal, &rt_uniresource ) < 0 )
 		{
 			rt_db_free_internal( &internal, &rt_uniresource );
 			TCL_WRITE_ERR_return;
 		}
 	}
 
-	if( dont_draw )  return TCL_OK;
+	if ( dont_draw )  return TCL_OK;
 
 	/* draw the newly "made" solid */
 	new_cmd[0] = "e";
@@ -897,7 +897,7 @@ do_new_update:
 	new_cmd[2] = (char *)NULL;
 	(void)cmd_draw( clientData, interp, 2, new_cmd );
 
-	if( do_solid_edit )  {
+	if ( do_solid_edit )  {
 		/* Also kick off solid edit mode */
 		new_cmd[0] = "sed";
 		new_cmd[1] = name;
@@ -916,12 +916,12 @@ binunif_in(char **cmd_argvs, struct rt_db_internal *intern, const char *name)
 
 	intern->idb_ptr = NULL;
 
-	if( strlen( cmd_argvs[3] ) != 1 ) {
+	if ( strlen( cmd_argvs[3] ) != 1 ) {
 		bu_log( "Unrecognized minor type (%s)\n", cmd_argvs[3] );
 		return 1;
 	}
 
-	switch( *cmd_argvs[3] ) {
+	switch ( *cmd_argvs[3] ) {
 		case 'f':
 			minor_type = DB5_MINORTYPE_BINU_FLOAT;
 			break;
@@ -956,7 +956,7 @@ binunif_in(char **cmd_argvs, struct rt_db_internal *intern, const char *name)
 			bu_log( "Unrecognized minor type (%c)\n", *cmd_argvs[3] );
 			return 1;
 	}
-	if( rt_mk_binunif( wdbp, name, cmd_argvs[4], minor_type, atol(cmd_argvs[5]) ) ) {
+	if ( rt_mk_binunif( wdbp, name, cmd_argvs[4], minor_type, atol(cmd_argvs[5]) ) ) {
 		bu_log( "Failed to create binary object %s from file %s\n",
 			name, cmd_argvs[4] );
 		return 1;
@@ -1156,13 +1156,13 @@ hf_in(char **cmd_argvs, struct rt_db_internal *intern)
 	hf->ylen = atof( cmd_argvs[20] ) * local2base;
 	hf->zscale = atof( cmd_argvs[21] );
 
-	if( hf->w < 2 || hf->n < 2 )
+	if ( hf->w < 2 || hf->n < 2 )
 	{
 		Tcl_AppendResult(interp, "ERROR: length or width of fta file is too small\n", (char *)NULL );
 		return( 1 );
 	}
 
-	if( hf->xlen <= 0 || hf->ylen <= 0 )
+	if ( hf->xlen <= 0 || hf->ylen <= 0 )
 	{
 		Tcl_AppendResult(interp, "ERROR: length and width of HF solid must be greater than 0\n", (char *)NULL );
 		return( 1 );
@@ -1170,7 +1170,7 @@ hf_in(char **cmd_argvs, struct rt_db_internal *intern)
 
 	/* XXXX should check for orthogonality of 'x' and 'y' vectors */
 
-	if( !(hf->mp = bu_open_mapped_file( hf->dfile, "hf" )) )
+	if ( !(hf->mp = bu_open_mapped_file( hf->dfile, "hf" )) )
 	{
 		Tcl_AppendResult(interp, "ERROR: cannot open data file\n", (char *)NULL );
 		hf->mp = (struct bu_mapped_file *)NULL;
@@ -1227,41 +1227,41 @@ bot_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt)
 
 	CHECK_DBI_NULL;
 
-	if( argc < 7 ) {
+	if ( argc < 7 ) {
 		Tcl_AppendResult(interp, MORE_ARGS_STR, prompt[argc-3], (char *)NULL);
 		return CMD_MORE;
 	}
 
 	num_verts = atoi( argv[3] );
-	if( num_verts < 3 )
+	if ( num_verts < 3 )
 	{
 		Tcl_AppendResult(interp, "Invalid number of vertices (must be at least 3)\n", (char *)NULL);
 		return CMD_BAD;
 	}
 
 	num_faces = atoi( argv[4] );
-	if( num_faces < 1 )
+	if ( num_faces < 1 )
 	{
 		Tcl_AppendResult(interp, "Invalid number of triangles (must be at least 1)\n", (char *)NULL);
 		return CMD_BAD;
 	}
 
 	mode = atoi( argv[5] );
-	if( mode < 1 || mode > 3 )
+	if ( mode < 1 || mode > 3 )
 	{
 		Tcl_AppendResult(interp, "Invalid mode (must be 1, 2, or 3)\n", (char *)NULL );
 		return CMD_BAD;
 	}
 
 	orientation = atoi( argv[6] );
-	if( orientation < 1 || orientation > 3 )
+	if ( orientation < 1 || orientation > 3 )
 	{
 		Tcl_AppendResult(interp, "Invalid orientation (must be 1, 2, or 3)\n", (char *)NULL );
 		return CMD_BAD;
 	}
 
 	arg_count = argc - 7;
-	if( arg_count < num_verts*3 )
+	if ( arg_count < num_verts*3 )
 	{
 		struct bu_vls tmp_vls;
 
@@ -1275,7 +1275,7 @@ bot_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt)
 	}
 
 	arg_count = argc - 7 - num_verts*3;
-	if( arg_count < num_faces*3 )
+	if ( arg_count < num_faces*3 )
 	{
 		struct bu_vls tmp_vls;
 
@@ -1288,10 +1288,10 @@ bot_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt)
 		return CMD_MORE;
 	}
 
-	if( mode == RT_BOT_PLATE )
+	if ( mode == RT_BOT_PLATE )
 	{
 		arg_count = argc - 7 - num_verts*3 - num_faces*3;
-		if( arg_count < num_faces*2 )
+		if ( arg_count < num_faces*2 )
 		{
 			struct bu_vls tmp_vls;
 
@@ -1320,7 +1320,7 @@ bot_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt)
 	bot->thickness = (fastf_t *)NULL;
 	bot->face_mode = (struct bu_bitv *)NULL;
 
-	for( i=0 ; i<num_verts ; i++ )
+	for ( i=0; i<num_verts; i++ )
 	{
 		bot->vertices[i*3] = atof( argv[7+i*3] ) * local2base;
 		bot->vertices[i*3+1] = atof( argv[8+i*3] ) * local2base;
@@ -1328,27 +1328,27 @@ bot_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt)
 	}
 
 	arg_count = 7 + num_verts*3;
-	for( i=0 ; i<num_faces ; i++ )
+	for ( i=0; i<num_faces; i++ )
 	{
 		bot->faces[i*3] = atoi( argv[arg_count + i*3] );
 		bot->faces[i*3+1] = atoi( argv[arg_count + i*3 + 1] );
 		bot->faces[i*3+2] = atoi( argv[arg_count + i*3 + 2] );
 	}
 
-	if( mode == RT_BOT_PLATE )
+	if ( mode == RT_BOT_PLATE )
 	{
 		arg_count = 7 + num_verts*3 + num_faces*3;
 		bot->thickness = (fastf_t *)bu_calloc( num_faces, sizeof( fastf_t ), "bot thickness" );
 		bot->face_mode = bu_bitv_new( num_faces );
 		bu_bitv_clear( bot->face_mode );
-		for( i=0 ; i<num_faces ; i++ )
+		for ( i=0; i<num_faces; i++ )
 		{
 			int j;
 
 			j = atoi( argv[arg_count + i*2] );
-			if( j == 1 )
+			if ( j == 1 )
 				BU_BITSET( bot->face_mode, i );
-			else if( j != 0 )
+			else if ( j != 0 )
 			{
 				Tcl_AppendResult(interp, "Invalid face mode (must be 0 or 1)\n", (char *)NULL );
 				return CMD_BAD;
@@ -1372,14 +1372,14 @@ arbn_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt)
 
 	CHECK_DBI_NULL;
 
-	if( argc < 4 ) {
+	if ( argc < 4 ) {
 	  Tcl_AppendResult(interp, MORE_ARGS_STR, prompt[argc-3], (char *)NULL);
 	  return CMD_MORE;
 	}
 
 	num_planes = atoi( argv[3] );
 
-	if( argc < num_planes * 4 + 4 ) {
+	if ( argc < num_planes * 4 + 4 ) {
 		struct bu_vls tmp_vls;
 
 		bu_vls_init( &tmp_vls );
@@ -1402,7 +1402,7 @@ arbn_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt)
 	arbn->eqn = (plane_t *)bu_calloc( arbn->neqn, sizeof( plane_t ), "arbn planes" );
 
 	/* Normal is unscaled, should have unit length; d is scaled */
-	for( i=0 ; i<arbn->neqn ; i++ ) {
+	for ( i=0; i<arbn->neqn; i++ ) {
 		arbn->eqn[i][0] = atof( argv[4+i*4] );
 		arbn->eqn[i][1] = atof( argv[4+i*4+1] );
 		arbn->eqn[i][2] = atof( argv[4+i*4+2] );
@@ -1423,25 +1423,25 @@ pipe_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt)
 
 	CHECK_DBI_NULL;
 
-	if( argc < 4 ) {
+	if ( argc < 4 ) {
 	  Tcl_AppendResult(interp, MORE_ARGS_STR, prompt[argc-3], (char *)NULL);
 	  return CMD_MORE;
 	}
 
 	num_points = atoi( argv[3] );
-	if( num_points < 2 )
+	if ( num_points < 2 )
 	{
 		Tcl_AppendResult(interp, "Invalid number of points (must be at least 2)\n", (char *)NULL);
 		return CMD_BAD;
 	}
 
-	if( argc < 10 )
+	if ( argc < 10 )
 	{
 		Tcl_AppendResult(interp, MORE_ARGS_STR, prompt[argc-3], (char *)NULL);
 		return CMD_MORE;
 	}
 
-	if( argc < 4 + num_points*6 )
+	if ( argc < 4 + num_points*6 )
 	{
 		struct bu_vls tmp_vls;
 
@@ -1461,7 +1461,7 @@ pipe_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt)
 	pipe = (struct rt_pipe_internal *)intern->idb_ptr;
 	pipe->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
 	BU_LIST_INIT( &pipe->pipe_segs_head );
-	for( i=4 ; i<argc ; i+= 6 )
+	for ( i=4; i<argc; i+= 6 )
 	{
 		struct wdb_pipept *pipept;
 
@@ -1476,7 +1476,7 @@ pipe_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt)
 		BU_LIST_INSERT( &pipe->pipe_segs_head, &pipept->l );
 	}
 
-	if( rt_pipe_ck(  &pipe->pipe_segs_head ) )
+	if ( rt_pipe_ck(  &pipe->pipe_segs_head ) )
 	{
 		Tcl_AppendResult(interp, "Illegal pipe, solid not made!!\n", (char *)NULL );
 		return CMD_BAD;
@@ -1622,7 +1622,7 @@ ars_in(int argc, char **argv, struct rt_db_internal *intern, char **promp)
 
 	arip->curves = (fastf_t **)bu_malloc(
 		(arip->ncurves+1) * sizeof(fastf_t **), "ars curve ptrs" );
-	for( i=0; i < arip->ncurves+1; i++ )  {
+	for ( i=0; i < arip->ncurves+1; i++ )  {
 		/* Leave room for first point to be repeated */
 		arip->curves[i] = (fastf_t *)bu_malloc(
 		    (arip->pts_per_curve+1) * sizeof(point_t),
@@ -1635,14 +1635,14 @@ ars_in(int argc, char **argv, struct rt_db_internal *intern, char **promp)
 	arip->curves[0][2] = atof(argv[7]) * local2base;
 
 	/* The first point is duplicated across the first curve */
-	for (i=1 ; i < arip->pts_per_curve ; ++i) {
+	for (i=1; i < arip->pts_per_curve; ++i) {
 		VMOVE( arip->curves[0]+3*i, arip->curves[0] );
 	}
 
 	cv = 1;
 	axis = 0;
 	/* scan each of the other points we've already got */
-	for (i=8 ; i < argc && i < total_points * ELEMENTS_PER_PT ; ++i) {
+	for (i=8; i < argc && i < total_points * ELEMENTS_PER_PT; ++i) {
 		arip->curves[cv][axis] = atof(argv[i]) * local2base;
 		if (++axis >= arip->pts_per_curve * ELEMENTS_PER_PT) {
 			axis = 0;
@@ -1651,7 +1651,7 @@ ars_in(int argc, char **argv, struct rt_db_internal *intern, char **promp)
 	}
 
 	/* The first point is duplicated across the last curve */
-	for (i=1 ; i < arip->pts_per_curve ; ++i) {
+	for (i=1; i < arip->pts_per_curve; ++i) {
 		VMOVE( arip->curves[ncurves_minus_one]+3*i,
 			arip->curves[ncurves_minus_one] );
 	}
@@ -1684,7 +1684,7 @@ half_in(char **cmd_argvs, struct rt_db_internal *intern, const char *name)
 	}
 
 	VUNITIZE( norm );
-	if( mk_half( wdbp, name, norm, d ) < 0 )
+	if ( mk_half( wdbp, name, norm, d ) < 0 )
 		return 1;	/* failure */
 	return 0;	/* success */
 }
@@ -1760,7 +1760,7 @@ sph_in(char **cmd_argvs, struct rt_db_internal *intern, const char *name)
 	  return(1);	/* failure */
 	}
 
-	if( mk_sph( wdbp, name, center, r ) < 0 )
+	if ( mk_sph( wdbp, name, center, r ) < 0 )
 		return 1;	/* failure */
 	return 0;	/* success */
 }
@@ -1870,7 +1870,7 @@ tor_in(char **cmd_argvs, struct rt_db_internal *intern)
 	tip->r_a = atof(cmd_argvs[9]) * local2base;
 	tip->r_h = atof(cmd_argvs[10]) * local2base;
 	/* Check for radius 2 >= radius 1 */
-	if( tip->r_a <= tip->r_h )  {
+	if ( tip->r_a <= tip->r_h )  {
 	  Tcl_AppendResult(interp, "ERROR, radius 2 >= radius 1 ....\n", (char *)NULL);
 	  return(1);	/* failure */
 	}
@@ -2212,7 +2212,7 @@ rpp_in(char **cmd_argvs, struct rt_db_internal *intern, const char *name)
 	    return(1);	/* failure */
 	}
 
-	if( mk_rpp( wdbp, name, min, max ) < 0 )
+	if ( mk_rpp( wdbp, name, min, max ) < 0 )
 		return 1;
 	return 0;	/* success */
 }
@@ -2251,7 +2251,7 @@ orpp_in(char **cmd_argvs, struct rt_db_internal *intern, const char *name)
 	  return(1);	/* failure */
 	}
 
-	if( mk_rpp( wdbp, name, min, max ) < 0 )
+	if ( mk_rpp( wdbp, name, min, max ) < 0 )
 		return 1;
 	return 0;	/* success */
 }
@@ -2642,42 +2642,42 @@ metaball_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt)
 
 	CHECK_DBI_NULL;
 
-	if( argc < 4 ) {
+	if ( argc < 4 ) {
 	  Tcl_AppendResult(interp, MORE_ARGS_STR, prompt[argc-3], (char *)NULL);
 	  return CMD_MORE;
 	}
 	method = atof( argv[3] );
 
-	if( argc < 5 ) {
+	if ( argc < 5 ) {
 	  Tcl_AppendResult(interp, MORE_ARGS_STR, prompt[argc-3], (char *)NULL);
 	  return CMD_MORE;
 	}
 	threshold = atof( argv[4] );
 
-	if(threshold < 0.0) {
-		Tcl_AppendResult(interp, "Threshold may not be negative.\n",(char *)NULL);
+	if (threshold < 0.0) {
+		Tcl_AppendResult(interp, "Threshold may not be negative.\n", (char *)NULL);
 		return CMD_BAD;
 	}
 
-	if( argc < 6 ) {
+	if ( argc < 6 ) {
 		Tcl_AppendResult(interp, MORE_ARGS_STR, prompt[argc-3], (char *)NULL);
 		return CMD_MORE;
 	}
 
 	num_points = atoi( argv[5] );
-	if( num_points < 1 )
+	if ( num_points < 1 )
 	{
 		Tcl_AppendResult(interp, "Invalid number of points (must be at least 1)\n", (char *)NULL);
 		return CMD_BAD;
 	}
 
-	if( argc < 10 )
+	if ( argc < 10 )
 	{
 		Tcl_AppendResult(interp, MORE_ARGS_STR, prompt[argc-3], (char *)NULL);
 		return CMD_MORE;
 	}
 
-	if( argc < 6 + num_points*4 )
+	if ( argc < 6 + num_points*4 )
 	{
 		struct bu_vls tmp_vls;
 
@@ -2704,7 +2704,7 @@ metaball_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt)
 	 * MORE points than the value in the num_points field if it's all on one
 	 * line. Is that a bug, or a feature?
 	 */
-	for( i=6 ; i<argc ; i+= 4 )
+	for ( i=6; i<argc; i+= 4 )
 	{
 		struct wdb_metaballpt *metaballpt;
 

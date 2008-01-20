@@ -133,7 +133,7 @@ stxt_read(register struct stxt_specific *stp)
 	rd = 0;
 
 	/* LOOP: through list of basename.n files */
-	for( frame=0; frame <= stp->stx_d-1; frame++ )  {
+	for ( frame=0; frame <= stp->stx_d-1; frame++ )  {
 
 		snprintf(name, 256, "%s.%d", stp->stx_file, frame);
 
@@ -144,7 +144,7 @@ stxt_read(register struct stxt_specific *stp)
 		}
 		linebuf = bu_malloc(stp->stx_fw*3, "texture file line");
 
-		for( i = 0; i < stp->stx_n; i++ )  {
+		for ( i = 0; i < stp->stx_n; i++ )  {
 			if ((rd = fread(linebuf, 1, stp->stx_fw*3, fp)) != stp->stx_fw*3 ) {
 				bu_log("stxt_read: read error on %s\n", name);
 				stp->stx_file[0] = '\0';

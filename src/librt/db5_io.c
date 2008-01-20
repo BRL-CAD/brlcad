@@ -68,34 +68,34 @@ db5_header_is_valid(const unsigned char *hp)
 {
 	const struct db5_ondisk_header *odp = (const struct db5_ondisk_header *)hp;
 
-	if( odp->db5h_magic1 != DB5HDR_MAGIC1 )  return 0;
-	if( hp[7] != DB5HDR_MAGIC2 )  return 0;
+	if ( odp->db5h_magic1 != DB5HDR_MAGIC1 )  return 0;
+	if ( hp[7] != DB5HDR_MAGIC2 )  return 0;
 
 	/* hflags */
-	if( (odp->db5h_hflags & DB5HDR_HFLAGS_DLI_MASK) != DB5HDR_HFLAGS_DLI_HEADER_OBJECT )
+	if ( (odp->db5h_hflags & DB5HDR_HFLAGS_DLI_MASK) != DB5HDR_HFLAGS_DLI_HEADER_OBJECT )
 		return 0;
-	if( (odp->db5h_hflags & DB5HDR_HFLAGS_NAME_PRESENT) )  return 0;
-	if( ((odp->db5h_hflags & DB5HDR_HFLAGS_OBJECT_WIDTH_MASK) >> DB5HDR_HFLAGS_OBJECT_WIDTH_SHIFT)
+	if ( (odp->db5h_hflags & DB5HDR_HFLAGS_NAME_PRESENT) )  return 0;
+	if ( ((odp->db5h_hflags & DB5HDR_HFLAGS_OBJECT_WIDTH_MASK) >> DB5HDR_HFLAGS_OBJECT_WIDTH_SHIFT)
 	    != DB5HDR_WIDTHCODE_8BIT )  return 0;
 
 	/* aflags */
-	if( (odp->db5h_aflags & DB5HDR_AFLAGS_ZZZ_MASK) != DB5_ZZZ_UNCOMPRESSED )  return 0;
-	if( odp->db5h_aflags & DB5HDR_AFLAGS_PRESENT )  return 0;
-	if( ((odp->db5h_aflags & DB5HDR_AFLAGS_WIDTH_MASK) >> DB5HDR_AFLAGS_WIDTH_SHIFT)
+	if ( (odp->db5h_aflags & DB5HDR_AFLAGS_ZZZ_MASK) != DB5_ZZZ_UNCOMPRESSED )  return 0;
+	if ( odp->db5h_aflags & DB5HDR_AFLAGS_PRESENT )  return 0;
+	if ( ((odp->db5h_aflags & DB5HDR_AFLAGS_WIDTH_MASK) >> DB5HDR_AFLAGS_WIDTH_SHIFT)
 	    != DB5HDR_WIDTHCODE_8BIT )  return 0;
 
 	/* bflags */
-	if( (odp->db5h_bflags & DB5HDR_BFLAGS_ZZZ_MASK) != DB5_ZZZ_UNCOMPRESSED )  return 0;
-	if( odp->db5h_bflags & DB5HDR_BFLAGS_PRESENT )  return 0;
-	if( ((odp->db5h_bflags & DB5HDR_BFLAGS_WIDTH_MASK) >> DB5HDR_BFLAGS_WIDTH_SHIFT)
+	if ( (odp->db5h_bflags & DB5HDR_BFLAGS_ZZZ_MASK) != DB5_ZZZ_UNCOMPRESSED )  return 0;
+	if ( odp->db5h_bflags & DB5HDR_BFLAGS_PRESENT )  return 0;
+	if ( ((odp->db5h_bflags & DB5HDR_BFLAGS_WIDTH_MASK) >> DB5HDR_BFLAGS_WIDTH_SHIFT)
 	    != DB5HDR_WIDTHCODE_8BIT )  return 0;
 
 	/* major and minor type */
-	if( odp->db5h_major_type != DB5_MAJORTYPE_RESERVED )  return 0;
-	if( odp->db5h_minor_type != 0 )  return 0;
+	if ( odp->db5h_major_type != DB5_MAJORTYPE_RESERVED )  return 0;
+	if ( odp->db5h_minor_type != 0 )  return 0;
 
 	/* Check length, known to be 8-bit.  Header len=1 8-byte chunk. */
-	if( hp[6] != 1 )  return 0;
+	if ( hp[6] != 1 )  return 0;
 
 	return 1;		/* valid */
 }
@@ -109,9 +109,9 @@ db5_header_is_valid(const unsigned char *hp)
 int
 db5_select_length_encoding(long int len)
 {
-	if( len <= 255 )  return DB5HDR_WIDTHCODE_8BIT;
-	if( len <= 65535 )  return DB5HDR_WIDTHCODE_16BIT;
-	if( len < 0x7ffffffe )  return DB5HDR_WIDTHCODE_32BIT;
+	if ( len <= 255 )  return DB5HDR_WIDTHCODE_8BIT;
+	if ( len <= 65535 )  return DB5HDR_WIDTHCODE_16BIT;
+	if ( len < 0x7ffffffe )  return DB5HDR_WIDTHCODE_32BIT;
 	return DB5HDR_WIDTHCODE_64BIT;
 }
 
@@ -129,7 +129,7 @@ db5_select_length_encoding(long int len)
 int
 db5_decode_length(long int *lenp, const unsigned char *cp, int format)
 {
-	switch( format )  {
+	switch ( format )  {
 	case DB5HDR_WIDTHCODE_8BIT:
 		*lenp = (*cp);
 		return 1;
@@ -141,7 +141,7 @@ db5_decode_length(long int *lenp, const unsigned char *cp, int format)
 		return 4;
 	case DB5HDR_WIDTHCODE_64BIT:
 #if defined(IRIX64)
-		if( sizeof(long) >= 8 )  {
+		if ( sizeof(long) >= 8 )  {
 			*lenp = BU_GLONGLONG(cp);
 			return 8;
 		}
@@ -166,20 +166,20 @@ db5_decode_length(long int *lenp, const unsigned char *cp, int format)
 int
 db5_decode_signed(long int *lenp, const unsigned char *cp, int format)
 {
-	switch( format )  {
+	switch ( format )  {
 	case DB5HDR_WIDTHCODE_8BIT:
-		if( (*lenp = (*cp)) & 0x80 ) *lenp |= (-1L ^ 0xFF);
+		if ( (*lenp = (*cp)) & 0x80 ) *lenp |= (-1L ^ 0xFF);
 		return 1;
 	case DB5HDR_WIDTHCODE_16BIT:
-		if( (*lenp = BU_GSHORT(cp)) & 0x8000 )  *lenp |= (-1L ^ 0xFFFF);
+		if ( (*lenp = BU_GSHORT(cp)) & 0x8000 )  *lenp |= (-1L ^ 0xFFFF);
 		return 2;
 	case DB5HDR_WIDTHCODE_32BIT:
-		if( (*lenp = BU_GLONG(cp)) & 0x80000000 )
+		if ( (*lenp = BU_GLONG(cp)) & 0x80000000 )
 			*lenp |= (-1L ^ 0xFFFFFFFF);
 		return 4;
 	case DB5HDR_WIDTHCODE_64BIT:
 #if defined(IRIX64)
-		if( sizeof(long) >= 8 )  {
+		if ( sizeof(long) >= 8 )  {
 			*lenp = BU_GLONGLONG(cp);
 			return 8;
 		}
@@ -205,7 +205,7 @@ db5_encode_length(
 	long		val,
 	int		format)
 {
-	switch( format )  {
+	switch ( format )  {
 	case DB5HDR_WIDTHCODE_8BIT:
 		*cp = val & 0xFF;
 		return cp+1;
@@ -232,10 +232,10 @@ db5_encode_length(
 int
 db5_crack_disk_header(struct db5_raw_internal *rip, const unsigned char *cp)
 {
-	if( cp[0] != DB5HDR_MAGIC1 )  {
+	if ( cp[0] != DB5HDR_MAGIC1 )  {
 		bu_log("db5_crack_disk_header() bad magic1 -- database has become corrupted\n expected x%x, got x%x\n",
 			DB5HDR_MAGIC1, cp[0]);
-		if( cp[0] == 'I' ) {
+		if ( cp[0] == 'I' ) {
 		  bu_log ("Concatenation of different database versions detected.\n");
 		  bu_log ("Run 'dbupgrade' on all databases before concatenation (cat command).\n");
 		}
@@ -266,7 +266,7 @@ db5_crack_disk_header(struct db5_raw_internal *rip, const unsigned char *cp)
 	rip->major_type = cp[4];
 	rip->minor_type = cp[5];
 
-	if(RT_G_DEBUG&DEBUG_DB) bu_log("db5_crack_disk_header()\n\
+	if (RT_G_DEBUG&DEBUG_DB) bu_log("db5_crack_disk_header()\n\
 	h_dli=%d, h_object_width=%d, h_name_present=%d, h_name_width=%d,\n\
 	a_width=%d, a_present=%d, a_zzz=%d,\n\
 	b_width=%d, b_present=%d, b_zzz=%d, major=%d, minor=%d\n",
@@ -298,20 +298,20 @@ db5_get_raw_internal_ptr( struct db5_raw_internal *rip, const unsigned char *ip)
 {
 	const unsigned char	*cp = ip;
 
-	if( db5_crack_disk_header( rip, cp ) < 0 )  return NULL;
+	if ( db5_crack_disk_header( rip, cp ) < 0 )  return NULL;
 	cp += sizeof(struct db5_ondisk_header);
 
 	cp += db5_decode_length( &rip->object_length, cp, rip->h_object_width );
 	rip->object_length <<= 3;	/* cvt 8-byte chunks to byte count */
 
-	if( rip->object_length < sizeof(struct db5_ondisk_header) )  {
+	if ( rip->object_length < sizeof(struct db5_ondisk_header) )  {
 		bu_log("db5_get_raw_internal_ptr(): object_length=%ld is too short, database is corrupted\n",
 			rip->object_length);
 		return NULL;
 	}
 
 	/* Verify trailing magic number */
-	if( ip[rip->object_length-1] != DB5HDR_MAGIC2 )  {
+	if ( ip[rip->object_length-1] != DB5HDR_MAGIC2 )  {
 		bu_log("db5_get_raw_internal_ptr() bad magic2 -- database has become corrupted.\n expected x%x, got x%x\n",
 			DB5HDR_MAGIC2, ip[rip->object_length-1] );
 		return NULL;
@@ -322,7 +322,7 @@ db5_get_raw_internal_ptr( struct db5_raw_internal *rip, const unsigned char *ip)
 	BU_INIT_EXTERNAL( &rip->attributes );
 
 	/* Grab name, if present */
-	if( rip->h_name_present )  {
+	if ( rip->h_name_present )  {
 		cp += db5_decode_length( &rip->name.ext_nbytes,
 			cp, rip->h_name_width );
 		rip->name.ext_buf = (genptr_t)cp;	/* discard const */
@@ -330,7 +330,7 @@ db5_get_raw_internal_ptr( struct db5_raw_internal *rip, const unsigned char *ip)
 	}
 
 	/* Point to attributes, if present */
-	if( rip->a_present )  {
+	if ( rip->a_present )  {
 		cp += db5_decode_length( &rip->attributes.ext_nbytes,
 			cp, rip->a_width );
 		rip->attributes.ext_buf = (genptr_t)cp;	/* discard const */
@@ -338,7 +338,7 @@ db5_get_raw_internal_ptr( struct db5_raw_internal *rip, const unsigned char *ip)
 	}
 
 	/* Point to body, if present */
-	if( rip->b_present )  {
+	if ( rip->b_present )  {
 		cp += db5_decode_length( &rip->body.ext_nbytes,
 			cp, rip->b_width );
 		rip->body.ext_buf = (genptr_t)cp;	/* discard const */
@@ -368,16 +368,16 @@ db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
 	long				want, got;
 	unsigned char			*cp;
 
-	if( fread( (unsigned char *)&header, sizeof header, 1, fp ) != 1  )  {
-		if( feof(fp) )  return -1;
+	if ( fread( (unsigned char *)&header, sizeof header, 1, fp ) != 1  )  {
+		if ( feof(fp) )  return -1;
 		bu_log("db5_get_raw_internal_fp(): fread header error\n");
 		return -2;
 	}
-	if( db5_crack_disk_header( rip, (unsigned char *)&header ) < 0 )
+	if ( db5_crack_disk_header( rip, (unsigned char *)&header ) < 0 )
 		return -2;
 	used = sizeof(header);
 
-	switch( rip->h_object_width )  {
+	switch ( rip->h_object_width )  {
 	case DB5HDR_WIDTHCODE_8BIT:
 		count = 1;
 		break;
@@ -390,14 +390,14 @@ db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
 	case DB5HDR_WIDTHCODE_64BIT:
 		count = 8;
 	}
-	if( fread( lenbuf, count, 1, fp )  != 1 )  {
+	if ( fread( lenbuf, count, 1, fp )  != 1 )  {
 		bu_log("db5_get_raw_internal_fp(): fread lenbuf error\n");
 		return -2;
 	}
 	used += db5_decode_length( &rip->object_length, lenbuf, rip->h_object_width );
 	rip->object_length <<= 3;	/* cvt 8-byte chunks to byte count */
 
-	if( rip->object_length < sizeof(struct db5_ondisk_header) )  {
+	if ( rip->object_length < sizeof(struct db5_ondisk_header) )  {
 		bu_log("db5_get_raw_internal_fp(): object_length=%ld is too short, database is corrupted\n",
 			rip->object_length);
 		return -1;
@@ -412,14 +412,14 @@ db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
 	cp = rip->buf+used;
 	want = rip->object_length-used;
 	BU_ASSERT_LONG( want, >, 0 );
-	if( (got = fread( cp, 1, want, fp )) != want ) {
+	if ( (got = fread( cp, 1, want, fp )) != want ) {
 		bu_log("db5_get_raw_internal_fp(), want=%ld, got=%ld, database is too short\n",
 			want, got );
 		return -2;
 	}
 
 	/* Verify trailing magic number */
-	if( rip->buf[rip->object_length-1] != DB5HDR_MAGIC2 )  {
+	if ( rip->buf[rip->object_length-1] != DB5HDR_MAGIC2 )  {
 		bu_log("db5_get_raw_internal_fp() bad magic2 -- database has become corrupted.\n expected x%x, got x%x\n",
 			DB5HDR_MAGIC2, rip->buf[rip->object_length-1] );
 		return -2;
@@ -430,7 +430,7 @@ db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
 	BU_INIT_EXTERNAL( &rip->attributes );
 
 	/* Grab name, if present */
-	if( rip->h_name_present )  {
+	if ( rip->h_name_present )  {
 		cp += db5_decode_length( &rip->name.ext_nbytes,
 			cp, rip->h_name_width );
 		rip->name.ext_buf = (genptr_t)cp;	/* discard const */
@@ -438,7 +438,7 @@ db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
 	}
 
 	/* Point to attributes, if present */
-	if( rip->a_present )  {
+	if ( rip->a_present )  {
 		cp += db5_decode_length( &rip->attributes.ext_nbytes,
 			cp, rip->a_width );
 		rip->attributes.ext_buf = (genptr_t)cp;	/* discard const */
@@ -446,7 +446,7 @@ db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
 	}
 
 	/* Point to body, if present */
-	if( rip->b_present )  {
+	if ( rip->b_present )  {
 		cp += db5_decode_length( &rip->body.ext_nbytes,
 			cp, rip->b_width );
 		rip->body.ext_buf = (genptr_t)cp;	/* discard const */
@@ -490,9 +490,9 @@ db5_export_object3(
 	 */
 	need = sizeof(struct db5_ondisk_header);
 	need += 8;	/* for object_length */
-	if( name )  {
+	if ( name )  {
 		namelen = strlen(name) + 1;	/* includes null */
-		if( namelen > 1 )  {
+		if ( namelen > 1 )  {
 			n_width = db5_select_length_encoding(namelen);
 			need += namelen + db5_enc_len[n_width];
 		} else {
@@ -503,9 +503,9 @@ db5_export_object3(
 	} else {
 		n_width = 0;
 	}
-	if( attrib )  {
+	if ( attrib )  {
 		BU_CK_EXTERNAL(attrib);
-		if( attrib->ext_nbytes > 0 )  {
+		if ( attrib->ext_nbytes > 0 )  {
 			a_width = db5_select_length_encoding(attrib->ext_nbytes);
 			need += attrib->ext_nbytes + db5_enc_len[a_width];
 		} else {
@@ -515,9 +515,9 @@ db5_export_object3(
 	} else {
 		a_width = 0;
 	}
-	if( body )  {
+	if ( body )  {
 		BU_CK_EXTERNAL(body);
-		if( body->ext_nbytes > 0 )  {
+		if ( body->ext_nbytes > 0 )  {
 			b_width = db5_select_length_encoding(body->ext_nbytes);
 			need += body->ext_nbytes + db5_enc_len[b_width];
 		} else {
@@ -544,26 +544,26 @@ db5_export_object3(
 	/* hflags */
 	odp->db5h_hflags = (h_width << DB5HDR_HFLAGS_OBJECT_WIDTH_SHIFT) |
 			(dli & DB5HDR_HFLAGS_DLI_MASK);
-	if( name )  {
+	if ( name )  {
 		odp->db5h_hflags |= DB5HDR_HFLAGS_NAME_PRESENT |
 			(n_width << DB5HDR_HFLAGS_NAME_WIDTH_SHIFT);
 
 	}
-	if( hidden ) {
+	if ( hidden ) {
 		odp->db5h_hflags |= DB5HDR_HFLAGS_HIDDEN_OBJECT;
 	}
 
 	/* aflags */
 	odp->db5h_aflags = a_width << DB5HDR_AFLAGS_WIDTH_SHIFT;
-	if( attrib )  odp->db5h_aflags |= DB5HDR_AFLAGS_PRESENT;
+	if ( attrib )  odp->db5h_aflags |= DB5HDR_AFLAGS_PRESENT;
 	odp->db5h_aflags |= a_zzz & DB5HDR_AFLAGS_ZZZ_MASK;
 
 	/* bflags */
 	odp->db5h_bflags = b_width << DB5HDR_BFLAGS_WIDTH_SHIFT;
-	if( body )  odp->db5h_bflags |= DB5HDR_BFLAGS_PRESENT;
+	if ( body )  odp->db5h_bflags |= DB5HDR_BFLAGS_PRESENT;
 	odp->db5h_bflags |= b_zzz & DB5HDR_BFLAGS_ZZZ_MASK;
 
-	if( a_zzz || b_zzz )  bu_bomb("db5_export_object3: compression not supported yet\n");
+	if ( a_zzz || b_zzz )  bu_bomb("db5_export_object3: compression not supported yet\n");
 
 	/* Object_Type */
 	odp->db5h_major_type = major;
@@ -573,13 +573,13 @@ db5_export_object3(
 	cp = ((unsigned char *)out->ext_buf) + sizeof(struct db5_ondisk_header);
 	cp = db5_encode_length( cp, 7L, h_width );	/* will be replaced below */
 
-	if( name )  {
+	if ( name )  {
 		cp = db5_encode_length( cp, namelen, n_width );
 		memcpy(cp, name, namelen);	/* includes null */
 		cp += namelen;
 	}
 
-	if( attrib )  {
+	if ( attrib )  {
 		/* minimum buffer length is a one byte attribute name, followed by a NULL name termination,
 		 * followed by no bytes (for an empty value), followed by a NULL value termination,
 		 * followed by a NULL attribute-value termination. Minimum is 4 bytes
@@ -590,7 +590,7 @@ BU_ASSERT_PTR( attrib->ext_nbytes, >=, 4 );
 		cp += attrib->ext_nbytes;
 	}
 
-	if( body )  {
+	if ( body )  {
 		cp = db5_encode_length( cp, body->ext_nbytes, b_width );
 		memcpy(cp, body->ext_buf, body->ext_nbytes);
 		cp += body->ext_nbytes;
@@ -598,9 +598,9 @@ BU_ASSERT_PTR( attrib->ext_nbytes, >=, 4 );
 
 	togo = cp - ((unsigned char *)out->ext_buf) + 1;
 	togo &= 7;
-	if( togo != 0 )  {
+	if ( togo != 0 )  {
 		togo = 8 - togo;
-		while( togo-- > 0 )  *cp++ = '\0';
+		while ( togo-- > 0 )  *cp++ = '\0';
 	}
 	*cp++ = DB5HDR_MAGIC2;
 
@@ -723,9 +723,9 @@ db5_import_attributes( struct bu_attribute_value_set *avs, const struct bu_exter
 	ep = (const char *)ap->ext_buf+ap->ext_nbytes;
 
 	/* Null "name" string indicates end of attribute list */
-	while( *cp != '\0' )  {
+	while ( *cp != '\0' )  {
 	    const char *name = cp;
-	    if( cp >= ep )  {
+	    if ( cp >= ep )  {
 		bu_log("db5_import_attributes() ran off end of buffer, database is probably corrupted\n");
 		return -1;
 	    }
@@ -753,7 +753,7 @@ db5_import_attributes( struct bu_attribute_value_set *avs, const struct bu_exter
 
 #if AVS_ADD
 	cp = (const char *)ap->ext_buf;
-	while( *cp != '\0' )  {
+	while ( *cp != '\0' )  {
 	    const char *name = cp;  /* name */
 	    cp += strlen(cp)+1; /* value */
 	    bu_avs_add( avs, name, cp );
@@ -764,7 +764,7 @@ db5_import_attributes( struct bu_attribute_value_set *avs, const struct bu_exter
 	/* Signal region of memory that input comes from */
 	cp = (const char *)ap->ext_buf;
 	app = avs->avp;
-	while( *cp != '\0' )  {
+	while ( *cp != '\0' )  {
 	    app->name = cp;  /* name */
 	    cp += strlen(cp)+1;
 	    app->value = cp;  /* value */
@@ -786,7 +786,7 @@ db5_import_attributes( struct bu_attribute_value_set *avs, const struct bu_exter
 	BU_ASSERT_LONG( avs->count, <=, avs->max );
 	BU_ASSERT_LONG( avs->count, ==, count );
 
-	if(bu_debug & BU_DEBUG_AVS) {
+	if (bu_debug & BU_DEBUG_AVS) {
 	    bu_avs_print(avs, "db5_import_attributes");
 	}
 	return avs->count;
@@ -826,7 +826,7 @@ db5_export_attributes( struct bu_external *ext, const struct bu_attribute_value_
 	/* First pass -- determine how much space is required */
 	need = 0;
 	avpp = avs->avp;
-	for( i = 0; i < avs->count; i++, avpp++ )  {
+	for ( i = 0; i < avs->count; i++, avpp++ )  {
 	    if (avpp->name) {
 		need += strlen(avpp->name) + 1; /* include room for NULL */
 	    } else {
@@ -841,7 +841,7 @@ db5_export_attributes( struct bu_external *ext, const struct bu_attribute_value_
 	/* include final null */
 	need += 1;
 
-	if( need <= 1 ) {
+	if ( need <= 1 ) {
 	    /* nothing to do */
 	    return;
 	}
@@ -902,13 +902,13 @@ db5_replace_attributes( struct directory *dp, struct bu_attribute_value_set *avs
 	BU_CK_AVS(avsp);
 	RT_CK_DBI(dbip);
 
-	if(RT_G_DEBUG&DEBUG_DB)  {
+	if (RT_G_DEBUG&DEBUG_DB)  {
 		bu_log("db5_replace_attributes(%s) dbip=x%x\n",
 			dp->d_namep, dbip );
 		bu_avs_print( avsp, "new attributes" );
 	}
 
-	if( dbip->dbi_read_only )  {
+	if ( dbip->dbi_read_only )  {
 		bu_log("db5_replace_attributes(%s):  READ-ONLY file\n",
 			dbip->dbi_filename);
 		return -1;
@@ -916,7 +916,7 @@ db5_replace_attributes( struct directory *dp, struct bu_attribute_value_set *avs
 
 	BU_ASSERT_LONG( dbip->dbi_version, ==, 5 );
 
-	if( db_get_external( &ext, dp, dbip ) < 0 )
+	if ( db_get_external( &ext, dp, dbip ) < 0 )
 		return -2;		/* FAIL */
 
 	if (db5_get_raw_internal_ptr(&raw, ext.ext_buf) == NULL) {
@@ -939,7 +939,7 @@ db5_replace_attributes( struct directory *dp, struct bu_attribute_value_set *avs
 
 	/* Write it */
 	ret = db_put_external5( &ext2, dp, dbip );
-	if( ret < 0 )  bu_log("db5_replace_attributes(%s):  db_put_external5() failure\n",
+	if ( ret < 0 )  bu_log("db5_replace_attributes(%s):  db_put_external5() failure\n",
 		dp->d_namep );
 
 	bu_free_external( &attr );
@@ -976,13 +976,13 @@ db5_update_attributes( struct directory *dp, struct bu_attribute_value_set *avsp
 	BU_CK_AVS(avsp);
 	RT_CK_DBI(dbip);
 
-	if(RT_G_DEBUG&DEBUG_DB)  {
+	if (RT_G_DEBUG&DEBUG_DB)  {
 		bu_log("db5_update_attributes(%s) dbip=x%x\n",
 			dp->d_namep, dbip );
 		bu_avs_print( avsp, "new attributes" );
 	}
 
-	if( dbip->dbi_read_only )  {
+	if ( dbip->dbi_read_only )  {
 		bu_log("db5_update_attributes(%s):  READ-ONLY file\n",
 			dbip->dbi_filename);
 		return -1;
@@ -990,7 +990,7 @@ db5_update_attributes( struct directory *dp, struct bu_attribute_value_set *avsp
 
 	BU_ASSERT_LONG( dbip->dbi_version, ==, 5 );
 
-	if( db_get_external( &ext, dp, dbip ) < 0 )
+	if ( db_get_external( &ext, dp, dbip ) < 0 )
 		return -2;		/* FAIL */
 
 	if (db5_get_raw_internal_ptr(&raw, ext.ext_buf) == NULL) {
@@ -1003,8 +1003,8 @@ db5_update_attributes( struct directory *dp, struct bu_attribute_value_set *avsp
 	/* db5_import_attributes will allocate space */
 	bu_avs_init_empty( &old_avs );
 
-	if( raw.attributes.ext_buf )  {
-		if( db5_import_attributes( &old_avs, &raw.attributes ) < 0 )  {
+	if ( raw.attributes.ext_buf )  {
+		if ( db5_import_attributes( &old_avs, &raw.attributes ) < 0 )  {
 			bu_log("db5_update_attributes(%s):  mal-formed attributes in database\n",
 				dp->d_namep );
 			bu_avs_free( &old_avs );
@@ -1028,7 +1028,7 @@ db5_update_attributes( struct directory *dp, struct bu_attribute_value_set *avsp
 
 	/* Write it */
 	ret = db_put_external5( &ext2, dp, dbip );
-	if( ret < 0 ) {
+	if ( ret < 0 ) {
 	    bu_log("db5_update_attributes(%s):  db_put_external5() failure\n", dp->d_namep );
 	}
 
@@ -1057,7 +1057,7 @@ db5_update_attribute( const char *obj_name, const char *name, const char *value,
 	struct bu_attribute_value_set avs;
 
 	RT_CK_DBI(dbip);
-	if( (dp = db_lookup( dbip, obj_name, LOOKUP_NOISY )) == DIR_NULL )
+	if ( (dp = db_lookup( dbip, obj_name, LOOKUP_NOISY )) == DIR_NULL )
 		return -1;
 
 	bu_avs_init( &avs, 2, "db5_update_attribute" );
@@ -1088,7 +1088,7 @@ int db5_update_ident( struct db_i *dbip, const char *title, double local2mm )
 
 	RT_CK_DBI(dbip);
 
-	if( (dp = db_lookup( dbip, DB5_GLOBAL_OBJECT_NAME, LOOKUP_QUIET )) == DIR_NULL )  {
+	if ( (dp = db_lookup( dbip, DB5_GLOBAL_OBJECT_NAME, LOOKUP_QUIET )) == DIR_NULL )  {
 		struct bu_external	global;
 		unsigned char		minor_type=0;
 
@@ -1104,7 +1104,7 @@ int db5_update_ident( struct db_i *dbip, const char *title, double local2mm )
 
 		dp = db_diradd( dbip, DB5_GLOBAL_OBJECT_NAME, -1L, 0, 0, (genptr_t)&minor_type);
 		dp->d_major_type = DB5_MAJORTYPE_ATTRIBUTE_ONLY;
-		if( db_put_external( &global, dp, dbip ) < 0 )  {
+		if ( db_put_external( &global, dp, dbip ) < 0 )  {
 			bu_log("db5_update_ident() unable to create replacement %s object!\n", DB5_GLOBAL_OBJECT_NAME );
 			bu_free_external(&global);
 			return -1;
@@ -1124,7 +1124,7 @@ int db5_update_ident( struct db_i *dbip, const char *title, double local2mm )
 
 	/* protect from loosing memory and from freeing what we are
 	   about to dup */
-	if(dbip->dbi_title) {
+	if (dbip->dbi_title) {
 	    old_title = dbip->dbi_title;
 	}
 	dbip->dbi_title = bu_strdup(title);
@@ -1166,7 +1166,7 @@ db5_fwrite_ident(FILE *fp, const char *title, double local2mm)
 	struct bu_external	attr;
 	int result;
 
-	if( local2mm <= 0 )  {
+	if ( local2mm <= 0 )  {
 	    bu_log("db5_fwrite_ident(%s, %g) local2mm <= 0\n",
 		   title, local2mm );
 	    return -1;
@@ -1245,14 +1245,14 @@ rt_db_cvt_to_external5(
 	int			minor;
 
 	RT_CK_DB_INTERNAL( ip );
-	if(dbip) RT_CK_DBI(dbip);	/* may be null */
+	if (dbip) RT_CK_DBI(dbip);	/* may be null */
 	RT_CK_RESOURCE(resp);
 	BU_INIT_EXTERNAL( &body );
 
 	minor = ip->idb_type;	/* XXX not necessarily v5 numbers. */
 
 	/* Scale change on export is 1.0 -- no change */
-	if( ip->idb_meth->ft_export5( &body, ip, conv2mm, dbip, resp, minor ) < 0 )  {
+	if ( ip->idb_meth->ft_export5( &body, ip, conv2mm, dbip, resp, minor ) < 0 )  {
 		bu_log("rt_db_cvt_to_external5(%s):  ft_export5 failure\n",
 			name);
 		bu_free_external( &body );
@@ -1262,7 +1262,7 @@ rt_db_cvt_to_external5(
 	BU_CK_EXTERNAL( &body );
 
 	/* If present, convert attributes to on-disk format. */
-	if( ip->idb_avs.magic == BU_AVS_MAGIC )  {
+	if ( ip->idb_avs.magic == BU_AVS_MAGIC )  {
 		db5_export_attributes( &attributes, &ip->idb_avs );
 		BU_CK_EXTERNAL( &attributes );
 	} else {
@@ -1294,7 +1294,7 @@ db_wrap_v5_external( struct bu_external *ep, const char *name )
 	BU_CK_EXTERNAL(ep);
 
 	/* Crack the external form into parts */
-	if( db5_get_raw_internal_ptr( &raw, (unsigned char *)ep->ext_buf ) == NULL )  {
+	if ( db5_get_raw_internal_ptr( &raw, (unsigned char *)ep->ext_buf ) == NULL )  {
 		bu_log("db_put_external5(%s) failure in db5_get_raw_internal_ptr()\n",
 			name);
 		return -1;
@@ -1302,7 +1302,7 @@ db_wrap_v5_external( struct bu_external *ep, const char *name )
 	BU_ASSERT_LONG( raw.h_dli, ==, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT );
 
 	/* See if name needs to be changed */
-	if( raw.name.ext_buf == NULL || strcmp( name, raw.name.ext_buf ) != 0 )  {
+	if ( raw.name.ext_buf == NULL || strcmp( name, raw.name.ext_buf ) != 0 )  {
 		/* Name needs to be changed.  Create new external form.
 		 * Make temporary copy so input isn't smashed
 		 * as new external object is constructed.
@@ -1358,10 +1358,10 @@ db_put_external5(struct bu_external *ep, struct directory *dp, struct db_i *dbip
 	RT_CK_DIR(dp);
 	BU_CK_EXTERNAL(ep);
 
-	if(RT_G_DEBUG&DEBUG_DB) bu_log("db_put_external5(%s) ep=x%x, dbip=x%x, dp=x%x\n",
+	if (RT_G_DEBUG&DEBUG_DB) bu_log("db_put_external5(%s) ep=x%x, dbip=x%x, dp=x%x\n",
 		dp->d_namep, ep, dbip, dp );
 
-	if( dbip->dbi_read_only )  {
+	if ( dbip->dbi_read_only )  {
 		bu_log("db_put_external5(%s):  READ-ONLY file\n",
 			dbip->dbi_filename);
 		return -1;
@@ -1370,27 +1370,27 @@ db_put_external5(struct bu_external *ep, struct directory *dp, struct db_i *dbip
 	BU_ASSERT_LONG( dbip->dbi_version, ==, 5 );
 
 	/* First, change the name. */
-	if( db_wrap_v5_external( ep, dp->d_namep ) < 0 )  {
+	if ( db_wrap_v5_external( ep, dp->d_namep ) < 0 )  {
 		bu_log("db_put_external5(%s) failure in db_wrap_v5_external()\n",
 			dp->d_namep);
 		return -1;
 	}
 
 	/* Second, obtain storage for final object */
-	if( ep->ext_nbytes != dp->d_len || dp->d_addr == -1L )  {
-		if( db5_realloc( dbip, dp, ep ) < 0 )  {
+	if ( ep->ext_nbytes != dp->d_len || dp->d_addr == -1L )  {
+		if ( db5_realloc( dbip, dp, ep ) < 0 )  {
 			bu_log("db_put_external(%s) db_realloc5() failed\n", dp->d_namep);
 			return -5;
 		}
 	}
 	BU_ASSERT_LONG( ep->ext_nbytes, ==, dp->d_len );
 
-	if( dp->d_flags & RT_DIR_INMEM )  {
+	if ( dp->d_flags & RT_DIR_INMEM )  {
 		memcpy(dp->d_un.ptr, (char *)ep->ext_buf, ep->ext_nbytes);
 		return 0;
 	}
 
-	if( db_write( dbip, (char *)ep->ext_buf, ep->ext_nbytes, dp->d_addr ) < 0 )  {
+	if ( db_write( dbip, (char *)ep->ext_buf, ep->ext_nbytes, dp->d_addr ) < 0 )  {
 		return -1;
 	}
 	return 0;
@@ -1429,27 +1429,27 @@ rt_db_put_internal5(
 
 	BU_ASSERT_LONG( dbip->dbi_version, ==, 5 );
 
-	if( rt_db_cvt_to_external5( &ext, dp->d_namep, ip, 1.0, dbip, resp, major ) < 0 )  {
+	if ( rt_db_cvt_to_external5( &ext, dp->d_namep, ip, 1.0, dbip, resp, major ) < 0 )  {
 		bu_log("rt_db_put_internal5(%s):  export failure\n",
 			dp->d_namep);
 		goto fail;
 	}
 	BU_CK_EXTERNAL( &ext );
 
-	if( ext.ext_nbytes != dp->d_len || dp->d_addr == -1L )  {
-		if( db5_realloc( dbip, dp, &ext ) < 0 )  {
+	if ( ext.ext_nbytes != dp->d_len || dp->d_addr == -1L )  {
+		if ( db5_realloc( dbip, dp, &ext ) < 0 )  {
 			bu_log("rt_db_put_internal5(%s) db_realloc5() failed\n", dp->d_namep);
 			goto fail;
 		}
 	}
 	BU_ASSERT_LONG( ext.ext_nbytes, ==, dp->d_len );
 
-	if( dp->d_flags & RT_DIR_INMEM )  {
+	if ( dp->d_flags & RT_DIR_INMEM )  {
 		memcpy((char *)ext.ext_buf, dp->d_un.ptr, ext.ext_nbytes);
 		goto ok;
 	}
 
-	if( db_write( dbip, (char *)ext.ext_buf, ext.ext_nbytes, dp->d_addr ) < 0 )  {
+	if ( db_write( dbip, (char *)ext.ext_buf, ext.ext_nbytes, dp->d_addr ) < 0 )  {
 		goto fail;
 	}
 ok:
@@ -1497,10 +1497,10 @@ rt_db_external5_to_internal5(
 		return -3;
 	}
 
-	if(( raw.major_type == DB5_MAJORTYPE_BRLCAD )
+	if (( raw.major_type == DB5_MAJORTYPE_BRLCAD )
 	 ||( raw.major_type == DB5_MAJORTYPE_BINARY_UNIF)) {
 		/* As a convenience to older ft_import routines */
-		if( mat == NULL )  mat = bn_mat_identity;
+		if ( mat == NULL )  mat = bn_mat_identity;
 	} else {
 		bu_log("rt_db_external5_to_internal5(%s):  unable to import non-BRL-CAD object, major=%d\n",
 			name, raw.major_type );
@@ -1514,15 +1514,15 @@ rt_db_external5_to_internal5(
 	/* If attributes are present in the object, make them available
 	 * in the internal form.
 	 */
-	if( raw.attributes.ext_buf )  {
-		if( db5_import_attributes( &ip->idb_avs, &raw.attributes ) < 0 )  {
+	if ( raw.attributes.ext_buf )  {
+		if ( db5_import_attributes( &ip->idb_avs, &raw.attributes ) < 0 )  {
 			bu_log("rt_db_external5_to_internal5(%s):  mal-formed attributes in database\n",
 				name );
 			return -8;
 		}
 	}
 
-	if( !raw.body.ext_buf )  {
+	if ( !raw.body.ext_buf )  {
 		bu_log("rt_db_external5_to_internal5(%s):  object has no body\n",
 			name );
 		return -4;
@@ -1541,7 +1541,7 @@ rt_db_external5_to_internal5(
 		return -1;
 	}
 	/* ip has already been initialized, and should not be re-initted */
-	if( rt_functab[id].ft_import5( ip, &raw.body, mat, dbip, resp, raw.minor_type ) < 0 )  {
+	if ( rt_functab[id].ft_import5( ip, &raw.body, mat, dbip, resp, raw.minor_type ) < 0 )  {
 		bu_log("rt_db_external5_to_internal5(%s):  import failure\n",
 			name );
 		rt_db_free_internal( ip, resp );
@@ -1586,7 +1586,7 @@ rt_db_get_internal5(
 
 	BU_ASSERT_LONG( dbip->dbi_version, ==, 5 );
 
-	if( db_get_external( &ext, dp, dbip ) < 0 )
+	if ( db_get_external( &ext, dp, dbip ) < 0 )
 		return -2;		/* FAIL */
 
 	ret = rt_db_external5_to_internal5( ip, &ext, dp->d_namep, dbip, mat, resp );
@@ -1605,7 +1605,7 @@ db5_export_color_table( struct bu_vls *ostr, struct db_i *dbip )
 	BU_CK_VLS(ostr);
 	RT_CK_DBI(dbip);
 
-	for( mp = rt_material_head; mp != MATER_NULL; mp = mp->mt_forw )  {
+	for ( mp = rt_material_head; mp != MATER_NULL; mp = mp->mt_forw )  {
 		bu_vls_printf(ostr,
 			"{%d %d %d %d %d} ",
 			mp->mt_low,
@@ -1625,9 +1625,9 @@ db5_import_color_table( char *cp )
 	char	*sp = cp;
 	int	low, high, r, g, b;
 
-	while( (sp = strchr( sp, '{' )) != NULL )  {
+	while ( (sp = strchr( sp, '{' )) != NULL )  {
 		sp++;
-		if( sscanf( sp, "%d %d %d %d %d", &low, &high, &r, &g, &b ) != 5 )  break;
+		if ( sscanf( sp, "%d %d %d %d %d", &low, &high, &r, &g, &b ) != 5 )  break;
 		rt_color_addrec( low, high, r, g, b, -1L );
 	}
 }
@@ -1677,14 +1677,14 @@ db5_get_attributes( const struct db_i *dbip, struct bu_attribute_value_set *avs,
 
 	RT_CK_DBI( dbip );
 
-	if( dbip->dbi_version < 5 )
+	if ( dbip->dbi_version < 5 )
 		return 0;	/* not an error, just no attributes */
 
 	RT_CK_DIR( dp );
 
 	BU_INIT_EXTERNAL(&ext);
 
-	if( db_get_external( &ext, dp, dbip ) < 0 )
+	if ( db_get_external( &ext, dp, dbip ) < 0 )
 		return -1;		/* FAIL */
 
 	if (db5_get_raw_internal_ptr(&raw, ext.ext_buf) == NULL) {
@@ -1692,8 +1692,8 @@ db5_get_attributes( const struct db_i *dbip, struct bu_attribute_value_set *avs,
 		return -2;
 	}
 
-	if( raw.attributes.ext_buf )  {
-		if( db5_import_attributes( avs, &raw.attributes ) < 0 ) {
+	if ( raw.attributes.ext_buf )  {
+		if ( db5_import_attributes( avs, &raw.attributes ) < 0 ) {
 			bu_free_external( &ext );
 			return -3;
 		}

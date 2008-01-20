@@ -45,13 +45,13 @@ register Ids	*idp;
 #if DEBUG_IDENTS
 	brst_log( "findIdents(%d)\n", ident );
 #endif
-	for( idp = idp->i_next ; idp != IDS_NULL; idp = idp->i_next )
+	for ( idp = idp->i_next; idp != IDS_NULL; idp = idp->i_next )
 		{
 #if DEBUG_IDENTS
 		brst_log( "lower=%d, upper=%d\n", (int) idp->i_lower,
 			(int) idp->i_upper );
 #endif
-		if(	ident >= (int) idp->i_lower
+		if (	ident >= (int) idp->i_lower
 		    &&	ident <= (int) idp->i_upper
 			)
 			return	1;
@@ -67,9 +67,9 @@ findColors( ident, colp )
 int ident;
 register Colors	*colp;
 	{
-	for( colp = colp->c_next; colp != COLORS_NULL; colp = colp->c_next )
+	for ( colp = colp->c_next; colp != COLORS_NULL; colp = colp->c_next )
 		{
-		if(	ident >= (int) colp->c_lower
+		if (	ident >= (int) colp->c_lower
 		    &&	ident <= (int) colp->c_upper
 			)
 			return	colp;
@@ -86,7 +86,7 @@ void
 freeIdents( idp )
 register Ids *idp;
 	{
-	if( idp->i_next == NULL )
+	if ( idp->i_next == NULL )
 		return;	/* finished */
 	freeIdents( idp->i_next );
 	free( (char *) idp->i_next );
@@ -100,17 +100,17 @@ FILE *fp;
 		int lower, upper;
 		register Ids *idp;
 	freeIdents( idlist ); /* free old list if it exists */
-	for(	idp = idlist;
+	for (	idp = idlist;
 		bu_fgets( input_buf, BUFSIZ, fp ) != NULL;
 		)
 		{	char *token;
 		token = strtok( input_buf, ",-:; \t" );
-		if( token == NULL || sscanf( token, "%d", &lower ) < 1 )
+		if ( token == NULL || sscanf( token, "%d", &lower ) < 1 )
 			continue;
 		token = strtok( NULL, " \t" );
-		if( token == NULL || sscanf( token, "%d", &upper ) < 1 )
+		if ( token == NULL || sscanf( token, "%d", &upper ) < 1 )
 			upper = lower;
-		if( (idp->i_next = (Ids *) malloc( sizeof(Ids) )) == NULL )
+		if ( (idp->i_next = (Ids *) malloc( sizeof(Ids) )) == NULL )
 			{
 			Malloc_Bomb( sizeof(Ids) );
 			return	0;
@@ -131,18 +131,18 @@ FILE	*fp;
 		int lower, upper;
 		int rgb[3];
 		register Colors	*colp;
-	for(	colp = colorlist;
+	for (	colp = colorlist;
 		bu_fgets( input_buf, BUFSIZ, fp ) != NULL;
 		)
 		{	int items;
-		if( (items =
+		if ( (items =
 			sscanf(	input_buf,
 				"%d %d %d %d %d\n",
 				&lower, &upper, &rgb[0], &rgb[1], &rgb[2]
 				)) < 5
 			)
 			{
-			if( items == EOF )
+			if ( items == EOF )
 				break;
 			else
 				{
@@ -151,7 +151,7 @@ FILE	*fp;
 				continue;
 				}
 			}
-		if( (colp->c_next = (Colors *) malloc( sizeof(Colors) ))
+		if ( (colp->c_next = (Colors *) malloc( sizeof(Colors) ))
 			== NULL )
 			{
 			Malloc_Bomb( sizeof(Colors) );

@@ -439,12 +439,12 @@ phong_render(register struct application *ap, struct partition *pp, struct shade
 	    light_obs(ap, swp, ps->mfp->mf_inputs);
 
 	    /* Consider effects of each light source */
-	    for( i=ap->a_rt_i->rti_nlights-1; i>=0; i-- )  {
+	    for ( i=ap->a_rt_i->rti_nlights-1; i>=0; i-- )  {
 
 		if ((lp = (struct light_specific *)swp->sw_visible[i]) == LIGHT_NULL )
 		    continue;
 
-		if( rdebug & RDEBUG_LIGHT )  {
+		if ( rdebug & RDEBUG_LIGHT )  {
 		    bu_log("phong_render light=%s lightfract=%g\n",
 			   lp->lt_name, swp->sw_lightfract[i] );
 		}
@@ -580,7 +580,7 @@ phg_ipow( d, cnt )
 	return(d);
     }
     result = 1;
-    while( cnt-- > 0 )
+    while ( cnt-- > 0 )
 	result *= input;
     return( result );
 }

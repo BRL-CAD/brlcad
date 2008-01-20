@@ -47,7 +47,7 @@ int	len;
 	while( len-- > 0 )  {
 		fprintf(stderr, "%2.2x ", (*cp++) & 0xFF );
 	}
-	fprintf(stderr,"\n");
+	fprintf(stderr, "\n");
 }
 
 /* Different versions of crypt(3) interpret illegal chars differently.

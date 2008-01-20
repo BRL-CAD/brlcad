@@ -48,7 +48,7 @@ char	*bu_optarg = NULL;	/**< argument associated with option */
 
 #define BADCH	(int)'?'
 #define EMSG	""
-#define tell(s)	if(bu_opterr)  { \
+#define tell(s)	if (bu_opterr)  { \
 		fputs(*nargv, stderr);fputs(s, stderr); \
 		fputc(bu_optopt, stderr);fputc('\n', stderr); \
 	} return(BADCH);
@@ -65,8 +65,8 @@ bu_getopt(int nargc, char *const *nargv, const char *ostr)
     static char	*place = EMSG;	/* option letter processing */
     register char	*oli;		/* option letter list index */
 
-    if(*place=='\0') {			/* update scanning pointer */
-	if(bu_optind >= nargc || *(place = nargv[bu_optind]) != '-' ||
+    if (*place=='\0') {			/* update scanning pointer */
+	if (bu_optind >= nargc || *(place = nargv[bu_optind]) != '-' ||
 	   !*++place)  {
 	    place = EMSG;
 	    return(EOF);
@@ -79,7 +79,7 @@ bu_getopt(int nargc, char *const *nargv, const char *ostr)
     }				/* option letter okay? */
     if ((bu_optopt = (int)*place++) == (int)':' || !(oli = strchr(ostr, bu_optopt))) {
 #if 0
-	if(*place == '\0') {
+	if (*place == '\0') {
 	    ++bu_optind;
 	    place = EMSG;
 	}

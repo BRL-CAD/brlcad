@@ -287,17 +287,17 @@ int get_args(int argc, char **argv)
 
     estimate_f = 0;
     while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
-	switch(c){
+	switch (c){
 	case 'b':
-	    sscanf(bu_optarg, "%lf",&max_bank);
+	    sscanf(bu_optarg, "%lf", &max_bank);
 	    estimate_f = 1;
 	    break;
 	case 'f':
-	    sscanf(bu_optarg, "%lf",&magic_factor);
+	    sscanf(bu_optarg, "%lf", &magic_factor);
 	    magic_factor *= 0.001; /* to put factors in a more reasonable range */
 	    break;
 	case 'p':
-	    sscanf(bu_optarg, "%d",&print_int);
+	    sscanf(bu_optarg, "%d", &print_int);
 	    break;
 	case 'r':
 	    loop = 0;

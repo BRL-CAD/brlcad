@@ -96,7 +96,7 @@ dm_validXType_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
 
 	bu_vls_init(&vls);
 
-	if(argc != 3){
+	if (argc != 3){
 		bu_vls_printf(&vls, "helplib dm_validXType");
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);

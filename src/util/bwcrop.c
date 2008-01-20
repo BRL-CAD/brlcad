@@ -81,7 +81,7 @@ init_buffer(int scanlen)
 	 * the input file is to decide if we should buffer
 	 * less than our max.
 	 */
-	if( max > 512 ) max = 512;
+	if ( max > 512 ) max = 512;
 
 	buflines = max;
 	buffer = (unsigned char *)bu_malloc( buflines * scanlen, "buffer" );
@@ -95,7 +95,7 @@ void
 fill_buffer(int y)
 {
 	buf_start = y - buflines/2;
-	if( buf_start < 0 ) buf_start = 0;
+	if ( buf_start < 0 ) buf_start = 0;
 
 	fseek( ifp, buf_start * scanlen, 0 );
 	fread( buffer, scanlen, buflines, ifp );
@@ -119,7 +119,7 @@ main(int argc, char **argv)
 		bu_exit(3, "bwcrop: can't open %s\n", argv[1] );
 	}
 
-	if( argc == 14 ) {
+	if ( argc == 14 ) {
 		scanlen = atoi( argv[3] );
 		xnum = atoi( argv[4] );
 		ynum = atoi( argv[5] );
@@ -135,7 +135,7 @@ main(int argc, char **argv)
 		/* Get info */
 		printf("Scanline length in input file: ");
 		scanf( "%d", &scanlen );
-		if( scanlen <= 0 ) {
+		if ( scanlen <= 0 ) {
 			bu_exit(4, "bwcrop: scanlen = %d, don't be ridiculous\n", scanlen );
 		}
 		printf("Line Length and Number of scan lines (in new file)?: ");
@@ -154,7 +154,7 @@ main(int argc, char **argv)
 	init_buffer( scanlen );
 
 	/* Check for silly buffer syndrome */
-	if( abs((int)(ury - uly)) > buflines/2 || abs((int)(lry - lly)) > buflines/2 ) {
+	if ( abs((int)(ury - uly)) > buflines/2 || abs((int)(lry - lly)) > buflines/2 ) {
 		fprintf( stderr, "bwcrop: Warning: You are skewing enough in the y direction\n" );
 		fprintf( stderr, "bwcrop: relative to my buffer size that I will exhibit silly\n" );
 		fprintf( stderr, "bwcrop: buffer syndrome (two replacements per scanline).\n" );
@@ -177,7 +177,7 @@ main(int argc, char **argv)
 
 			/* Make sure we are in the buffer */
 			yindex = round(y) - buf_start;
-			if( yindex < 0 || yindex >= buflines ) {
+			if ( yindex < 0 || yindex >= buflines ) {
 				fill_buffer( round(y) );
 				yindex = round(y) - buf_start;
 			}

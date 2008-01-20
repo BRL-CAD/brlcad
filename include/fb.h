@@ -62,27 +62,27 @@
 #define fb_poll(_ifp)			(*_ifp->if_poll)(_ifp)
 #define fb_help(_ifp)			(*_ifp->if_help)(_ifp)
 #define fb_free(_ifp)			(*_ifp->if_free)(_ifp)
-#define fb_clear(_ifp,_pp)		(*_ifp->if_clear)(_ifp,_pp)
-#define fb_read(_ifp,_x,_y,_pp,_ct)	(*_ifp->if_read)(_ifp,_x,_y,_pp,_ct)
-#define fb_write(_ifp,_x,_y,_pp,_ct)	(*_ifp->if_write)(_ifp,_x,_y,_pp,_ct)
-#define fb_rmap(_ifp,_cmap)		(*_ifp->if_rmap)(_ifp,_cmap)
-#define fb_wmap(_ifp,_cmap)		(*_ifp->if_wmap)(_ifp,_cmap)
-#define fb_view(_ifp,_xc,_yc,_xz,_yz)	(*_ifp->if_view)(_ifp,_xc,_yc,_xz,_yz)
-#define fb_getview(_ifp,_xcp,_ycp,_xzp,_yzp) \
-		(*_ifp->if_getview)(_ifp,_xcp,_ycp,_xzp,_yzp)
-#define fb_setcursor(_ifp,_bits,_xb,_yb,_xo,_yo) \
-		(*_ifp->if_setcursor)(_ifp,_bits,_xb,_yb,_xo,_yo)
-#define fb_cursor(_ifp,_mode,_x,_y)	(*_ifp->if_cursor)(_ifp,_mode,_x,_y)
-#define fb_getcursor(_ifp,_modep,_xp,_yp) \
-		(*_ifp->if_getcursor)(_ifp,_modep,_xp,_yp)
-#define fb_readrect(_ifp,_xmin,_ymin,_width,_height,_pp) \
-		(*_ifp->if_readrect)(_ifp,_xmin,_ymin,_width,_height,_pp)
-#define fb_writerect(_ifp,_xmin,_ymin,_width,_height,_pp) \
-		(*_ifp->if_writerect)(_ifp,_xmin,_ymin,_width,_height,_pp)
-#define fb_bwreadrect(_ifp,_xmin,_ymin,_width,_height,_pp) \
-		(*_ifp->if_bwreadrect)(_ifp,_xmin,_ymin,_width,_height,_pp)
-#define fb_bwwriterect(_ifp,_xmin,_ymin,_width,_height,_pp) \
-		(*_ifp->if_bwwriterect)(_ifp,_xmin,_ymin,_width,_height,_pp)
+#define fb_clear(_ifp, _pp)		(*_ifp->if_clear)(_ifp, _pp)
+#define fb_read(_ifp, _x, _y, _pp, _ct)	(*_ifp->if_read)(_ifp, _x, _y, _pp, _ct)
+#define fb_write(_ifp, _x, _y, _pp, _ct)	(*_ifp->if_write)(_ifp, _x, _y, _pp, _ct)
+#define fb_rmap(_ifp, _cmap)		(*_ifp->if_rmap)(_ifp, _cmap)
+#define fb_wmap(_ifp, _cmap)		(*_ifp->if_wmap)(_ifp, _cmap)
+#define fb_view(_ifp, _xc, _yc, _xz, _yz)	(*_ifp->if_view)(_ifp, _xc, _yc, _xz, _yz)
+#define fb_getview(_ifp, _xcp, _ycp, _xzp, _yzp) \
+		(*_ifp->if_getview)(_ifp, _xcp, _ycp, _xzp, _yzp)
+#define fb_setcursor(_ifp, _bits, _xb, _yb, _xo, _yo) \
+		(*_ifp->if_setcursor)(_ifp, _bits, _xb, _yb, _xo, _yo)
+#define fb_cursor(_ifp, _mode, _x, _y)	(*_ifp->if_cursor)(_ifp, _mode, _x, _y)
+#define fb_getcursor(_ifp, _modep, _xp, _yp) \
+		(*_ifp->if_getcursor)(_ifp, _modep, _xp, _yp)
+#define fb_readrect(_ifp, _xmin, _ymin, _width, _height, _pp) \
+		(*_ifp->if_readrect)(_ifp, _xmin, _ymin, _width, _height, _pp)
+#define fb_writerect(_ifp, _xmin, _ymin, _width, _height, _pp) \
+		(*_ifp->if_writerect)(_ifp, _xmin, _ymin, _width, _height, _pp)
+#define fb_bwreadrect(_ifp, _xmin, _ymin, _width, _height, _pp) \
+		(*_ifp->if_bwreadrect)(_ifp, _xmin, _ymin, _width, _height, _pp)
+#define fb_bwwriterect(_ifp, _xmin, _ymin, _width, _height, _pp) \
+		(*_ifp->if_bwwriterect)(_ifp, _xmin, _ymin, _width, _height, _pp)
 
 /* Library entry points which are true functions. */
 FB_EXPORT extern void 	fb_configureWindow(FBIO *, int, int);
@@ -162,7 +162,7 @@ FB_EXPORT extern int wgl_close_existing();
 #define	FB_WPIXEL(ifp, pp) {if((ifp)->if_pno==-1)_fb_pgin((ifp),(ifp)->if_pixcur/(ifp)->if_ppixels);\
 	(*((ifp)->if_pcurp+0))=(pp)[0];(*((ifp)->if_pcurp+1))=(pp)[1];(*((ifp)->if_pcurp+2))=(pp)[2];\
 	(ifp)->if_pcurp+=3;(ifp)->if_pixcur++;(ifp)->if_pdirty=1;\
-	if((ifp)->if_pcurp>=(ifp)->if_pendp){_fb_pgout((ifp));(ifp)->if_pno= -1;}}
+	if ((ifp)->if_pcurp>=(ifp)->if_pendp){_fb_pgout((ifp));(ifp)->if_pno= -1;}}
 
 /* Debug Bitvector Definition */
 #define	FB_DEBUG_BIO	1	/* Buffered io calls (less r/wpixel) */
@@ -171,11 +171,11 @@ FB_EXPORT extern int wgl_close_existing();
 #define	FB_DEBUG_BRW	8	/* Buffered IO rpixel and wpixel */
 
 #define FB_CKMAG(_ptr, _magic, _str)	\
-	if( !(_ptr) )  { \
+	if ( !(_ptr) )  { \
 		fb_log("ERROR: null %s ptr, file %s, line %d\n", \
 			_str, __FILE__, __LINE__ ); \
 		abort(); \
-	} else if( *((long *)(_ptr)) != (_magic) )  { \
+	} else if ( *((long *)(_ptr)) != (_magic) )  { \
 		fb_log("ERROR: bad %s ptr x%x, s/b x%x, was x%x, file %s, line %d\n", \
 			_str, _ptr, _magic, \
 			*((long *)(_ptr)), __FILE__, __LINE__ ); \

@@ -73,9 +73,9 @@ struct fb_texture
 static char	*
 suffix(register char *str)
 {	register char	*p = str + strlen( str ) - 1;
-	while( *p != '.' && p != str )
+	while ( *p != '.' && p != str )
 		p--;
-	if( *p == '.' )
+	if ( *p == '.' )
 		return	p+1;
 	else
 		return	p;
@@ -91,7 +91,7 @@ int	u, v;
 		int	offset = (iconp->hgt-1-v)*iconp->wid/word_sz + u/word_sz;
 		int	bit = (word_sz-1) - (u % word_sz);
 		icon_t	word = iconp->map[offset];
-	if( BIT_TEST( word, bit ) )
+	if ( BIT_TEST( word, bit ) )
 		return	(RGBpixel *) black_pixel;
 	else
 		return	(RGBpixel *) white_pixel;
@@ -104,7 +104,7 @@ init_Icon_Texture(char *file, Mat_Db_Entry *entry)
 		icon_t	*iconmap;
 		int	wid = entry->df_rgb[0] << 3;
 		int	hgt = entry->df_rgb[1] << 3;
-	if( (iconfp = fopen( file, "r" )) == NULL )
+	if ( (iconfp = fopen( file, "r" )) == NULL )
 		{
 		bu_log( "Can't open icon texture \"%s\" for reading.\n",
 			file );
@@ -116,7 +116,7 @@ init_Icon_Texture(char *file, Mat_Db_Entry *entry)
 	bu_log( "%d bytes allocated for texture map.\n",
 		BYTES_WIDE*hgt );
 #endif
-	if( fread( iconmap, sizeof(icon_t), ITEMS_WIDE*hgt, iconfp )
+	if ( fread( iconmap, sizeof(icon_t), ITEMS_WIDE*hgt, iconfp )
 		== -1 )
 		{
 		bu_log( "Read of icon texture map failed.\n" );
@@ -133,8 +133,8 @@ init_Icon_Texture(char *file, Mat_Db_Entry *entry)
 	icons = iconp;
 #if DEBUG_TEXTURE
 	{ register int	u, v;
-	for( v = 0; v < hgt; v++ )
-		for( u = 0; u < wid; u++ )
+	for ( v = 0; v < hgt; v++ )
+		for ( u = 0; u < wid; u++ )
 			{	RGBpixel	*pixel;
 			pixel = icon_Lookup( iconp, u, v );
 			prnt_Pixel( *pixel, u, v );
@@ -152,7 +152,7 @@ init_Fb_Texture(char *file, Mat_Db_Entry *entry)
 		RGBpixel	*fbmap;
 		int		wid = entry->df_rgb[0] << 3;
 		int		hgt = entry->df_rgb[1] << 3;
-	if( (txfbiop = fb_open( file, wid, hgt )) == FBIO_NULL )
+	if ( (txfbiop = fb_open( file, wid, hgt )) == FBIO_NULL )
 		return	NULL;
 	fbmap =	(RGBpixel *) bu_malloc( wid*hgt*sizeof(RGBpixel), "fbmap" );
 #if DEBUG_TEXTURE
@@ -160,7 +160,7 @@ init_Fb_Texture(char *file, Mat_Db_Entry *entry)
 	bu_log( "%d bytes allocated for texture map.\n",
 		wid*hgt*sizeof(RGBpixel) );
 #endif
-	if( fb_read( txfbiop, 0, 0, (unsigned char *)fbmap, wid*hgt ) == -1 )
+	if ( fb_read( txfbiop, 0, 0, (unsigned char *)fbmap, wid*hgt ) == -1 )
 		{
 		bu_log( "Read of frame buffer texture failed.\n" );
 		return	NULL;
@@ -175,8 +175,8 @@ init_Fb_Texture(char *file, Mat_Db_Entry *entry)
 	fbs = fbp;
 #if DEBUG_TEXTURE
 	{ register int	u, v;
-	for( v = 0; v < hgt; v++ )
-		for( u = 0; u < wid; u++ )
+	for ( v = 0; v < hgt; v++ )
+		for ( u = 0; u < wid; u++ )
 			{	RGBpixel	*pixel;
 			pixel = Fb_Lookup( fbp, u, v );
 			prnt_Pixel( pixel, u, v );
@@ -190,10 +190,10 @@ init_Fb_Texture(char *file, Mat_Db_Entry *entry)
 int
 tex_Entry(struct uvcoord *uvp, Mat_Db_Entry *entry)
 {
-	if( strcmp( ICON_SUFFIX, suffix( entry->name ) ) == 0 )
+	if ( strcmp( ICON_SUFFIX, suffix( entry->name ) ) == 0 )
 		return	icon_Entry( uvp, entry );
 	else
-	if( strcmp( FB_SUFFIX, suffix( entry->name ) ) == 0 )
+	if ( strcmp( FB_SUFFIX, suffix( entry->name ) ) == 0 )
 		return	fb_Entry( uvp, entry );
 	else
 		return	0;
@@ -207,16 +207,16 @@ icon_Entry(struct uvcoord *uvp, Mat_Db_Entry *entry)
 		register struct icon_texture	*iconp;
 		char				*file = entry->name + TEX_KEYLEN;
 	bu_semaphore_acquire( RT_SEM_RESULTS );
-	for(	iconp = icons;
+	for (	iconp = icons;
 		iconp != NULL && strcmp( iconp->filenm, file ) != 0;
 		iconp = iconp->next )
 		;
-	if( iconp == NULL )
+	if ( iconp == NULL )
 		iconp = init_Icon_Texture( file, entry );
 	bu_semaphore_release( RT_SEM_RESULTS );
-	if( iconp == NULL )
+	if ( iconp == NULL )
 		return	0;
-	if(	uvp->uv_u > 1.0 || uvp->uv_u < 0.0
+	if (	uvp->uv_u > 1.0 || uvp->uv_u < 0.0
 	     ||	uvp->uv_v > 1.0 || uvp->uv_v < 0.0
 		)
 		{
@@ -243,16 +243,16 @@ fb_Entry(struct uvcoord *uvp, Mat_Db_Entry *entry)
 		register struct fb_texture	*fbp;
 		char				*file = entry->name + TEX_KEYLEN;
 	bu_semaphore_acquire( RT_SEM_RESULTS );
-	for(	fbp = fbs;
-		fbp != NULL && strcmp( fbp->filenm, file ) != 0 ;
+	for (	fbp = fbs;
+		fbp != NULL && strcmp( fbp->filenm, file ) != 0;
 		fbp = fbp->next )
 		;
-	if( fbp == NULL )
+	if ( fbp == NULL )
 		fbp = init_Fb_Texture( file, entry );
 	bu_semaphore_release( RT_SEM_RESULTS );
-	if( fbp == NULL )
+	if ( fbp == NULL )
 		return	0;
-	if(	uvp->uv_u > 1.0 || uvp->uv_u < 0.0
+	if (	uvp->uv_u > 1.0 || uvp->uv_u < 0.0
 	     ||	uvp->uv_v > 1.0 || uvp->uv_v < 0.0
 		)
 		{

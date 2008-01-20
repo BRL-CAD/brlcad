@@ -64,7 +64,7 @@ const struct bu_structparse rt_superell_parse[] = {
     { "%f", 3, "C", bu_offsetof(struct rt_superell_internal, c[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 1, "n", bu_offsetof(struct rt_superell_internal, n), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 1, "e", bu_offsetof(struct rt_superell_internal, e), BU_STRUCTPARSE_FUNC_NULL },
-    { {'\0','\0','\0','\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
+    { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
  };
 
 
@@ -213,7 +213,7 @@ rt_superell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
   magsq_b = MAGSQ( eip->b );
   magsq_c = MAGSQ( eip->c );
 
-  if( magsq_a < rtip->rti_tol.dist || magsq_b < rtip->rti_tol.dist || magsq_c < rtip->rti_tol.dist ) {
+  if ( magsq_a < rtip->rti_tol.dist || magsq_b < rtip->rti_tol.dist || magsq_c < rtip->rti_tol.dist ) {
     bu_log("superell(%s):  near-zero length A(%g), B(%g), or C(%g) vector\n",
 	   stp->st_name, magsq_a, magsq_b, magsq_c );
     return(1);		/* BAD */
@@ -239,17 +239,17 @@ rt_superell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 
   /* Validate that A.B == 0, B.C == 0, A.C == 0 (check dir only) */
   f = VDOT( Au, Bu );
-  if( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
+  if ( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
     bu_log("superell(%s):  A not perpendicular to B, f=%f\n", stp->st_name, f);
     return(1);		/* BAD */
   }
   f = VDOT( Bu, Cu );
-  if( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
+  if ( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
     bu_log("superell(%s):  B not perpendicular to C, f=%f\n", stp->st_name, f);
     return(1);		/* BAD */
   }
   f = VDOT( Au, Cu );
-  if( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
+  if ( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
     bu_log("superell(%s):  A not perpendicular to C, f=%f\n", stp->st_name, f);
     return(1);		/* BAD */
   }
@@ -299,9 +299,9 @@ rt_superell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
   /* Compute bounding sphere */
   VMOVE( stp->st_center, eip->v );
   f = magsq_a;
-  if( magsq_b > f )
+  if ( magsq_b > f )
     f = magsq_b;
-  if( magsq_c > f )
+  if ( magsq_c > f )
     f = magsq_c;
   stp->st_aradius = stp->st_bradius = sqrt(f);
 
@@ -445,17 +445,17 @@ rt_superell_shot(struct soltab *stp, register struct xray *rp, struct applicatio
    *  of 't' for the intersections
    */
   for ( j=0, i=0; j < 2; j++ ){
-    if( NEAR_ZERO( complexRoot[j].im, 0.001 ) )
+    if ( NEAR_ZERO( complexRoot[j].im, 0.001 ) )
       realRoot[i++] = complexRoot[j].re;
   }
 
   /* reverse above translation by adding distance to all 'k' values. */
-  /*  for( j = 0; j < i; ++j )
+  /*  for ( j = 0; j < i; ++j )
       realRoot[j] -= VDOT(newShotPoint, newShotDir);
   */
 
   /* Here, 'i' is number of points found */
-  switch( i )  {
+  switch ( i )  {
   case 0:
     return(0);		/* No hit */
 
@@ -468,7 +468,7 @@ rt_superell_shot(struct soltab *stp, register struct xray *rp, struct applicatio
     {
       /* Sort most distant to least distant. */
       fastf_t	u;
-      if( (u=realRoot[0]) < realRoot[1] )  {
+      if ( (u=realRoot[0]) < realRoot[1] )  {
 	/* bubble larger towards [0] */
 	realRoot[0] = realRoot[1];
 	realRoot[1] = u;
@@ -481,10 +481,10 @@ rt_superell_shot(struct soltab *stp, register struct xray *rp, struct applicatio
       register short	lim;
 
       /*  Inline rt_pt_sort().  Sorts realRoot[] into descending order. */
-      for( lim = i-1; lim > 0; lim-- )  {
-	for( n = 0; n < lim; n++ )  {
+      for ( lim = i-1; lim > 0; lim-- )  {
+	for ( n = 0; n < lim; n++ )  {
 	  fastf_t	u;
-	  if( (u=realRoot[n]) < realRoot[n+1] )  {
+	  if ( (u=realRoot[n]) < realRoot[n+1] )  {
 	    /* bubble larger towards [0] */
 	    realRoot[n] = realRoot[n+1];
 	    realRoot[n+1] = u;
@@ -513,7 +513,7 @@ rt_superell_shot(struct soltab *stp, register struct xray *rp, struct applicatio
   /*  VJOIN1( segp->seg_out.hit_vpriv, newShotPoint, realRoot[0], newShotDir ); */
   BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 
-  if( i == 2 ) {
+  if ( i == 2 ) {
     return(2);			/* HIT */
   }
 
@@ -695,17 +695,17 @@ rt_superell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 	rt_superell_16pts( middle, eip->v, eip->a, eip->c );
 
 	RT_ADD_VLIST( vhead, &top[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
-	for( i=0; i<16; i++ )  {
+	for ( i=0; i<16; i++ )  {
 		RT_ADD_VLIST( vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
 	}
 
 	RT_ADD_VLIST( vhead, &bottom[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
-	for( i=0; i<16; i++ )  {
+	for ( i=0; i<16; i++ )  {
 		RT_ADD_VLIST( vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
 	}
 
 	RT_ADD_VLIST( vhead, &middle[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
-	for( i=0; i<16; i++ )  {
+	for ( i=0; i<16; i++ )  {
 		RT_ADD_VLIST( vhead, &middle[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
 	}
 	return(0);
@@ -820,7 +820,7 @@ rt_superell_import(struct rt_db_internal *ip, const struct bu_external *ep, regi
 	BU_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
 	/* Check record type */
-	if( rp->u_id != ID_SOLID )  {
+	if ( rp->u_id != ID_SOLID )  {
 		bu_log("rt_superell_import: defective record\n");
 		return(-1);
 	}
@@ -858,7 +858,7 @@ rt_superell_export(struct bu_external *ep, const struct rt_db_internal *ip, doub
 	union record		*rec;
 
 	RT_CK_DB_INTERNAL(ip);
-	if( ip->idb_type != ID_SUPERELL )  return(-1);
+	if ( ip->idb_type != ID_SUPERELL )  return(-1);
 	tip = (struct rt_superell_internal *)ip->idb_ptr;
 	RT_SUPERELL_CK_MAGIC(tip);
 
@@ -941,7 +941,7 @@ rt_superell_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
 	fastf_t			vec[ELEMENTS_PER_VECT*4 + 2];
 
 	RT_CK_DB_INTERNAL(ip);
-	if( ip->idb_type != ID_SUPERELL )  return(-1);
+	if ( ip->idb_type != ID_SUPERELL )  return(-1);
 	eip = (struct rt_superell_internal *)ip->idb_ptr;
 	RT_SUPERELL_CK_MAGIC(eip);
 
@@ -1018,7 +1018,7 @@ rt_superell_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ve
 	sprintf(buf, "\t<n, e> (%g, %g)\n", INTCLAMP(tip->n), INTCLAMP(tip->e));
 	bu_vls_strcat(str, buf);
 
-	if( !verbose )  return(0);
+	if ( !verbose )  return(0);
 
 	VSCALE( unitv, tip->a, 1/mag_a );
 	rt_find_fallback_angle( angles, unitv );

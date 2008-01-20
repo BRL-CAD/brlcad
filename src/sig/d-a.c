@@ -39,26 +39,26 @@ int main(int argc, char **argv)
 {
 	double	d;
 
-	while( argc > 1 ) {
-		if( strcmp( argv[1], "-n" ) == 0 )
+	while ( argc > 1 ) {
+		if ( strcmp( argv[1], "-n" ) == 0 )
 			nflag++;
 		else
 			break;
 		argc--;
 		argv++;
 	}
-	if( argc > 1 || isatty(fileno(stdin)) ) {
+	if ( argc > 1 || isatty(fileno(stdin)) ) {
 		bu_exit(1, "%s", usage );
 	}
 
-	if( nflag ) {
+	if ( nflag ) {
 		long	n;
 		n = 0;
-		while( fread(&d, sizeof(d), 1, stdin) == 1 ) {
+		while ( fread(&d, sizeof(d), 1, stdin) == 1 ) {
 			printf( "%ld %9g\n", n++, d );
 		}
 	} else {
-		while( fread(&d, sizeof(d), 1, stdin) == 1 ) {
+		while ( fread(&d, sizeof(d), 1, stdin) == 1 ) {
 			printf( "%9g\n", d );
 		}
 	}

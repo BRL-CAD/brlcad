@@ -42,8 +42,8 @@ static char	*all_title[12] = {
 lock_pr()
 {
 	register int i;
-	for( i=0; i<3; i++ )  {
-		if(lock_tab[i] == 0)  continue;
+	for ( i=0; i<3; i++ )  {
+		if (lock_tab[i] == 0)  continue;
 		(void) fprintf( stderr, "%10d %s\n", lock_tab[i], all_title[i] );
 	}
 }
@@ -57,7 +57,7 @@ res_pr()
 	register int i;
 
 	res = &resource[0];
-	for( i=0; i<npsw; i++, res++ )  {
+	for ( i=0; i<npsw; i++, res++ )  {
 		(void) fprintf( stderr, "cpu%d seg  len=%10d get=%10d free=%10d\n",
 			i,
 			res->re_seglen, res->re_segget, res->re_segfree );

@@ -122,7 +122,7 @@ static int dgo_shaded_mode_tcl();
 
 #include "./debug.h"
 
-#define DGO_CHECK_WDBP_NULL(_dgop,_interp) \
+#define DGO_CHECK_WDBP_NULL(_dgop, _interp) \
 	if (_dgop->dgo_wdbp == RT_WDB_NULL) \
 	{ \
 		Tcl_AppendResult(_interp, "Not associated with a database!\n", (char *)NULL); \
@@ -313,7 +313,7 @@ dgo_open_cmd(char		*oname,
 	dgo_init_qray(dgop);
 
 	/* append to list of dg_obj's */
-	BU_LIST_APPEND(&HeadDGObj.l,&dgop->l);
+	BU_LIST_APPEND(&HeadDGObj.l, &dgop->l);
 
 	return dgop;
 }
@@ -1477,7 +1477,7 @@ dgo_zap_cmd(struct dg_obj	*dgop,
 
 		nsp = BU_LIST_PNEXT(solid, sp);
 		BU_LIST_DEQUEUE(&sp->l);
-		FREE_SOLID(sp,&FreeSolid.l);
+		FREE_SOLID(sp, &FreeSolid.l);
 		sp = nsp;
 	}
 }
@@ -1758,7 +1758,7 @@ dgo_rtcheck_output_handler(ClientData clientData, int mask)
 
     /* Get textual output from rtcheck */
     if (Tcl_Eof(rtcop->chan) ||
-	(!ReadFile(rtcop->fd, line, RT_MAXLINE,&count, 0))) {
+	(!ReadFile(rtcop->fd, line, RT_MAXLINE, &count, 0))) {
 
 	Tcl_DeleteChannelHandler(rtcop->chan,
 				 dgo_rtcheck_output_handler,
@@ -2026,7 +2026,7 @@ dgo_rtcheck_cmd(struct dg_obj	*dgop,
 	(void)CloseHandle(e_pipe[1]);
 
 	/* As parent, send view information down pipe */
-	fp = _fdopen(_open_osfhandle((HFILE)pipe_oDup,_O_TEXT), "wb");
+	fp = _fdopen(_open_osfhandle((HFILE)pipe_oDup, _O_TEXT), "wb");
 	_setmode(_fileno(fp), _O_BINARY);
 
 #if 1
@@ -2042,7 +2042,7 @@ dgo_rtcheck_cmd(struct dg_obj	*dgop,
 
 	/* initialize the rtcheck struct */
 	rtcp->fd = pipe_iDup;
-	rtcp->fp = _fdopen( _open_osfhandle((HFILE)pipe_iDup,_O_TEXT), "rb" );
+	rtcp->fp = _fdopen( _open_osfhandle((HFILE)pipe_iDup, _O_TEXT), "rb" );
 	_setmode(_fileno(rtcp->fp), _O_BINARY);
 	rtcp->hProcess = pi.hProcess;
 	rtcp->pid = pi.dwProcessId;
@@ -2847,7 +2847,7 @@ dgo_nmg_region_end(register struct db_tree_state *tsp, struct db_full_path *path
 
 	BU_LIST_INIT( &vhead );
 
-	if(RT_G_DEBUG&DEBUG_TREEWALK)  {
+	if (RT_G_DEBUG&DEBUG_TREEWALK)  {
 	  char	*sofar = db_path_to_string(pathp);
 
 	  Tcl_AppendResult(dgcdp->interp, "dgo_nmg_region_end() path='", sofar,
@@ -2860,10 +2860,10 @@ dgo_nmg_region_end(register struct db_tree_state *tsp, struct db_full_path *path
 	  bu_free((genptr_t)sofar, "path string");
 	}
 
-	if( curtree->tr_op == OP_NOP )  return  curtree;
+	if ( curtree->tr_op == OP_NOP )  return  curtree;
 
 	if ( !dgcdp->draw_nmg_only ) {
-		if( BU_SETJUMP )
+		if ( BU_SETJUMP )
 		{
 			char  *sofar = db_path_to_string(pathp);
 
@@ -2872,18 +2872,18 @@ dgo_nmg_region_end(register struct db_tree_state *tsp, struct db_full_path *path
 			Tcl_AppendResult(dgcdp->interp, "WARNING: Boolean evaluation of ", sofar,
 				" failed!!!\n", (char *)NULL );
 			bu_free((genptr_t)sofar, "path string");
-			if( curtree )
+			if ( curtree )
 				db_free_tree( curtree, tsp->ts_resp );
 			return (union tree *)NULL;
 		}
 		failed = nmg_boolean( curtree, *tsp->ts_m, tsp->ts_tol, tsp->ts_resp );
 		BU_UNSETJUMP;
-		if( failed )  {
+		if ( failed )  {
 			db_free_tree( curtree, tsp->ts_resp );
 			return (union tree *)NULL;
 		}
 	}
-	else if( curtree->tr_op != OP_NMG_TESS )
+	else if ( curtree->tr_op != OP_NMG_TESS )
 	{
 	  Tcl_AppendResult(dgcdp->interp, "Cannot use '-d' option when Boolean evaluation is required\n", (char *)NULL);
 	  db_free_tree( curtree, tsp->ts_resp );
@@ -2892,7 +2892,7 @@ dgo_nmg_region_end(register struct db_tree_state *tsp, struct db_full_path *path
 	r = curtree->tr_d.td_r;
 	NMG_CK_REGION(r);
 
-	if( dgcdp->do_not_draw_nmg_solids_during_debugging && r )  {
+	if ( dgcdp->do_not_draw_nmg_solids_during_debugging && r )  {
 		db_free_tree( curtree, tsp->ts_resp );
 		return (union tree *)NULL;
 	}
@@ -2906,7 +2906,7 @@ dgo_nmg_region_end(register struct db_tree_state *tsp, struct db_full_path *path
 			Tcl_AppendResult(dgcdp->interp, "WARNING: Triangulation of ", sofar,
 				" failed!!!\n", (char *)NULL );
 			bu_free((genptr_t)sofar, "path string");
-			if( curtree )
+			if ( curtree )
 				db_free_tree( curtree, tsp->ts_resp );
 			return (union tree *)NULL;
 		}
@@ -2914,7 +2914,7 @@ dgo_nmg_region_end(register struct db_tree_state *tsp, struct db_full_path *path
 		BU_UNSETJUMP;
 	}
 
-	if( r != 0 )  {
+	if ( r != 0 )  {
 		int	style;
 		/* Convert NMG to vlist */
 		NMG_CK_REGION(r);
@@ -3063,16 +3063,16 @@ dgo_drawtrees(struct dg_obj *dgop, Tcl_Interp *interp, int argc, char **argv, in
 	    register char	*cp = bu_optarg;
 
 	    r = atoi(cp);
-	    while( (*cp >= '0' && *cp <= '9') )  cp++;
-	    while( *cp && (*cp < '0' || *cp > '9') ) cp++;
+	    while ( (*cp >= '0' && *cp <= '9') )  cp++;
+	    while ( *cp && (*cp < '0' || *cp > '9') ) cp++;
 	    g = atoi(cp);
-	    while( (*cp >= '0' && *cp <= '9') )  cp++;
-	    while( *cp && (*cp < '0' || *cp > '9') ) cp++;
+	    while ( (*cp >= '0' && *cp <= '9') )  cp++;
+	    while ( *cp && (*cp < '0' || *cp > '9') ) cp++;
 	    b = atoi(cp);
 
-	    if( r < 0 || r > 255 )  r = 255;
-	    if( g < 0 || g > 255 )  g = 255;
-	    if( b < 0 || b > 255 )  b = 255;
+	    if ( r < 0 || r > 255 )  r = 255;
+	    if ( g < 0 || g > 255 )  g = 255;
+	    if ( b < 0 || b > 255 )  b = 255;
 
 	    dgcdp->wireframe_color_override = 1;
 	    dgcdp->wireframe_color[0] = r;
@@ -3249,7 +3249,7 @@ dgo_cvt_vlblock_to_solids(struct dg_obj *dgop, Tcl_Interp *interp, struct bn_vlb
 	strncpy(shortname, name, 16-6);
 	shortname[16-6] = '\0';
 
-	for( i=0; i < vbp->nused; i++ )  {
+	for ( i=0; i < vbp->nused; i++ )  {
 		if (BU_LIST_IS_EMPTY(&(vbp->head[i])))
 			continue;
 
@@ -3303,7 +3303,7 @@ dgo_invent_solid(struct dg_obj	*dgop,
 	dp = db_diradd(dgop->dgo_wdbp->dbip,  name, RT_DIR_PHONY_ADDR, 0, DIR_SOLID, (genptr_t)&type);
 
 	/* Obtain a fresh solid structure, and fill it in */
-	GET_SOLID(sp,&FreeSolid.l);
+	GET_SOLID(sp, &FreeSolid.l);
 
 	if (copy) {
 		BU_LIST_INIT( &(sp->s_vlist) );
@@ -3639,7 +3639,7 @@ dgo_eraseobjall(struct dg_obj			*dgop,
 	register struct solid *nsp;
 	struct db_full_path	subpath;
 
-	if(dgop->dgo_wdbp->dbip == DBI_NULL)
+	if (dgop->dgo_wdbp->dbip == DBI_NULL)
 		return;
 
 	if (*dpp == DIR_NULL)
@@ -3654,7 +3654,7 @@ dgo_eraseobjall(struct dg_obj			*dgop,
 	sp = BU_LIST_NEXT(solid, &dgop->dgo_headSolid);
 	while (BU_LIST_NOT_HEAD(sp, &dgop->dgo_headSolid)) {
 		nsp = BU_LIST_PNEXT(solid, sp);
-		if( db_full_path_subset( &sp->s_fullpath, &subpath ) )  {
+		if ( db_full_path_subset( &sp->s_fullpath, &subpath ) )  {
 			BU_LIST_DEQUEUE(&sp->l);
 			FREE_SOLID(sp, &FreeSolid.l);
 		}
@@ -3691,7 +3691,7 @@ dgo_eraseobj(struct dg_obj		*dgop,
 	register struct solid *nsp;
 	register int i;
 
-	if(dgop->dgo_wdbp->dbip == DBI_NULL)
+	if (dgop->dgo_wdbp->dbip == DBI_NULL)
 		return;
 
 	if (*dpp == DIR_NULL)
@@ -3729,7 +3729,7 @@ dgo_eraseobj(struct dg_obj		*dgop,
 	register struct solid *nsp;
 	struct db_full_path	subpath;
 
-	if(dgop->dgo_wdbp->dbip == DBI_NULL)
+	if (dgop->dgo_wdbp->dbip == DBI_NULL)
 		return;
 
 	if (*dpp == DIR_NULL)
@@ -3744,7 +3744,7 @@ dgo_eraseobj(struct dg_obj		*dgop,
 	sp = BU_LIST_FIRST(solid, &dgop->dgo_headSolid);
 	while (BU_LIST_NOT_HEAD(sp, &dgop->dgo_headSolid)) {
 		nsp = BU_LIST_PNEXT(solid, sp);
-		if( db_full_path_subset( &sp->s_fullpath, &subpath ) )  {
+		if ( db_full_path_subset( &sp->s_fullpath, &subpath ) )  {
 			BU_LIST_DEQUEUE(&sp->l);
 			FREE_SOLID(sp, &FreeSolid.l);
 		}
@@ -4012,7 +4012,7 @@ dgo_rt_output_handler(ClientData	clientData,
 
     /* Get data from rt */
     if (Tcl_Eof(run_rtp->chan) ||
-	(!ReadFile(run_rtp->fd, line, 10240,&count, 0))) {
+	(!ReadFile(run_rtp->fd, line, 10240, &count, 0))) {
 	int aborted;
 
 	Tcl_DeleteChannelHandler(run_rtp->chan,
@@ -4029,7 +4029,7 @@ dgo_rt_output_handler(ClientData	clientData,
 	 *	WaitForSingleObject( run_rtp->hProcess, INFINITE );
 	 */
 
-	if(GetLastError() == ERROR_PROCESS_ABORTED) {
+	if (GetLastError() == ERROR_PROCESS_ABORTED) {
 	    run_rtp->aborted = 1;
 	}
 
@@ -4267,7 +4267,7 @@ dgo_run_rt(struct dg_obj *dgop,
 	si.hStdError   = pipe_err[1];
 
 	snprintf(line, 2048, "%s ", dgop->dgo_rt_cmd[0]);
-	for(i=1;i<dgop->dgo_rt_cmd_len;i++) {
+	for (i=1;i<dgop->dgo_rt_cmd_len;i++) {
 	    snprintf(name, 256, "%s ", dgop->dgo_rt_cmd[i]);
 	    strncat(line, name, 2048-strlen(line)-1);
 	    line[2048-1] = '\0'; /* sanity */
@@ -4282,7 +4282,7 @@ dgo_run_rt(struct dg_obj *dgop,
 	CloseHandle(pipe_err[1]);
 
 	/* As parent, send view information down pipe */
-	fp_in = _fdopen( _open_osfhandle((HFILE)pipe_inDup,_O_TEXT), "wb" );
+	fp_in = _fdopen( _open_osfhandle((HFILE)pipe_inDup, _O_TEXT), "wb" );
 
 	dgo_rt_set_eye_model(dgop, vop, eye_model);
 	dgo_rt_write(dgop, vop, fp_in, eye_model);
@@ -4689,7 +4689,7 @@ dgo_tree_cmd(struct dg_obj	*dgop,
 		    cflag = 1;
 			break;
 		case 'o':
-		    if( (fdout = fopen( bu_optarg, "w+" )) == NULL ) {
+		    if ( (fdout = fopen( bu_optarg, "w+" )) == NULL ) {
 			Tcl_SetErrno( errno );
 			Tcl_AppendResult( interp, "Failed to open output file, ",
 					  strerror( errno ), (char *)NULL );
@@ -4741,7 +4741,7 @@ dgo_tree_cmd(struct dg_obj	*dgop,
 	    buffer = NULL;
 	}
 
-	if( fdout != NULL ) {
+	if ( fdout != NULL ) {
 	    fprintf( fdout, "%s", Tcl_GetStringResult( interp ) );
 	    Tcl_ResetResult( interp );
 	    fclose( fdout );

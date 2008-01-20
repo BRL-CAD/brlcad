@@ -72,7 +72,7 @@ get_args(int argc, register char **argv)
 	register int c;
 
 	while ( (c = bu_getopt( argc, argv, "a#:s:w:n:" )) != EOF )  {
-		switch( c )  {
+		switch ( c )  {
 		case '#':
 			pixbytes = atoi(bu_optarg);
 			break;
@@ -98,14 +98,14 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( bu_optind >= argc )  {
-		if( isatty(fileno(stdin)) )
+	if ( bu_optind >= argc )  {
+		if ( isatty(fileno(stdin)) )
 			return(0);
 		file_name = "-";
 		infp = stdin;
 	} else {
 		file_name = argv[bu_optind];
-		if( (infp = fopen(file_name, "r")) == NULL )  {
+		if ( (infp = fopen(file_name, "r")) == NULL )  {
 			perror(file_name);
 			(void)fprintf( stderr,
 				"pix-ppm: cannot open \"%s\" for reading\n",
@@ -134,9 +134,9 @@ main(int argc, char **argv)
 	}
 
 	/* autosize input? */
-	if( fileinput && autosize ) {
+	if ( fileinput && autosize ) {
 		unsigned long int	w, h;
-		if( fb_common_file_size(&w, &h, file_name, pixbytes) ) {
+		if ( fb_common_file_size(&w, &h, file_name, pixbytes) ) {
 			file_width = (long)w;
 			file_height = (long)h;
 		} else {
@@ -154,7 +154,7 @@ main(int argc, char **argv)
 		bu_exit (1, NULL);
 	}
 
-	if( pixbytes == 1 )  {
+	if ( pixbytes == 1 )  {
 		/* PGM magic number */
 		printf("P2\n");
 	} else {

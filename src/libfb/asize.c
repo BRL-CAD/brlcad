@@ -106,22 +106,22 @@ fb_common_file_size(unsigned long int *widthp, unsigned long int *heightp, const
 	    return 0;
 	}
 
-	if( filename == NULL || *filename == '\0' ) {
+	if ( filename == NULL || *filename == '\0' ) {
 	    return 0;
 	}
 
 	/* Skip over directory names, if any */
 	cp = strchr( filename, '/' );
-	if( cp ) {
+	if ( cp ) {
 	    cp++;			/* skip over slash */
 	} else {
 	    cp = filename;		/* no slash */
 	}
 
-	if( fb_common_name_size( widthp, heightp, cp ) )
+	if ( fb_common_name_size( widthp, heightp, cp ) )
 		return 1;
 
-	if( stat( filename, &sbuf ) < 0 )
+	if ( stat( filename, &sbuf ) < 0 )
 		return	0;
 
 	size = (unsigned long int)(sbuf.st_size / pixel_size);
@@ -150,10 +150,10 @@ fb_common_name_size(unsigned long int *widthp, unsigned long int *heightp, const
     register const char *cp = name;
 
     /* File name may have several minus signs in it.  Try repeatedly */
-    while( *cp )  {
+    while ( *cp )  {
 	cp = strchr( cp, '-' );		/* Find a minus sign */
-	if( cp == NULL )  break;
-	if( sscanf(cp, "-w%lu-n%lu", widthp, heightp ) == 2 )
+	if ( cp == NULL )  break;
+	if ( sscanf(cp, "-w%lu-n%lu", widthp, heightp ) == 2 )
 	    return 1;
 	cp++;				/* skip over the minus */
     }
@@ -183,12 +183,12 @@ fb_common_image_size(unsigned long int *widthp, unsigned long int *heightp, regi
 	register struct	sizes	*sp;
 	long int		root;
 
-	if( npixels <= 0 )
+	if ( npixels <= 0 )
 		return	0;
 
 	sp = fb_common_sizes;
-	while( sp->width != 0 ) {
-		if( npixels == sp->width * sp->height ) {
+	while ( sp->width != 0 ) {
+		if ( npixels == sp->width * sp->height ) {
 			*widthp = sp->width;
 			*heightp = sp->height;
 			return	1;
@@ -198,7 +198,7 @@ fb_common_image_size(unsigned long int *widthp, unsigned long int *heightp, regi
 
 	/* If the size is a perfect square, then use that. */
 	root = (long int)(sqrt((double)npixels)+0.999);
-	if( root*root == npixels )  {
+	if ( root*root == npixels )  {
 		*widthp = root;
 		*heightp = root;
 		return	1;

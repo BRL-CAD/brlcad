@@ -70,7 +70,7 @@ void doit(FILE *fd)
 
 	count = 0;
 	while ((bytes=fread(pixbuf, 3, PIXELS, fd)) > 0) {
-		for (i=(bytes-1)*3 ; i >= 0 ; i -= 3) {
+		for (i=(bytes-1)*3; i >= 0; i -= 3) {
 			pixel = pixbuf[i] +
 				(pixbuf[i+1] << 8) +
 				(pixbuf[i+2] << 16);
@@ -84,7 +84,7 @@ void doit(FILE *fd)
 	}
 	(void) printf("%lu\n", count);
 	if (verbose)
-		for (i=0 ; i < 1<<24 ; ++i)
+		for (i=0; i < 1<<24; ++i)
 			if ( (vals[i>>3] & (1<<(i & 0x07))) )
 				(void) printf("%3d %3d %3d\n",
 					i & 0x0ff,

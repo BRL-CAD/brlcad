@@ -52,7 +52,7 @@ main(int argc, char **argv)
 {
 	int depth;
 
-	if( argc != 2 )  {
+	if ( argc != 2 )  {
 		fprintf(stderr, "Usage:  pyramid recursion\n");
 		return 1;
 	}
@@ -104,7 +104,7 @@ char	*name;
 	VSET( pt[3], 50, 100*sin60/3, 100*sin60 );
 
 	VMOVE( centroid, pt[0] );
-	for( i=1; i<4; i++ )  {
+	for ( i=1; i<4; i++ )  {
 		VADD2( centroid, centroid, pt[i] );
 	}
 	VSCALE( centroid, centroid, 0.25 );
@@ -156,12 +156,12 @@ pnorms(fastf_t (*norms)[3], fastf_t (*verts)[3], fastf_t *centroid, int npts)
 
 	/* If normal points inwards (towards centroid), flip it */
 	VSUB2( out, verts[0], centroid );
-	if( VDOT( n, out ) < 0 )  {
+	if ( VDOT( n, out ) < 0 )  {
 		VREVERSE( n, n );
 	}
 
 	/* Use same normal for all vertices (flat shading) */
-	for( i=0; i<npts; i++ )  {
+	for ( i=0; i<npts; i++ )  {
 		VMOVE( norms[i], n );
 	}
 }
@@ -178,13 +178,13 @@ do_tree(char *name, char *lname, int level)
 
 	BU_LIST_INIT(&head.l);
 
-	if( level <= 1 )
+	if ( level <= 1 )
 		leafp = lname;
 	else
 		leafp = nm;
 
 	scale = 100;
-	for( i=1; i<level; i++ )
+	for ( i=1; i<level; i++ )
 		scale *= 2;
 
 	snprintf(nm, 64, "%sL", name);
@@ -207,9 +207,9 @@ do_tree(char *name, char *lname, int level)
 	mk_lcomb( outfp, name, &head, level<=1, NULL, NULL, NULL, 0 );
 
 	/* Loop for children if level > 1 */
-	if( level <= 1 )
+	if ( level <= 1 )
 		return;
-	for( i=0; i<4; i++ )  {
+	for ( i=0; i<4; i++ )  {
 		snprintf(nm, 64, "%s%c", name, "LRBTx"[i] );
 		do_tree( nm, lname, level-1 );
 	}

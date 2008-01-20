@@ -315,7 +315,7 @@ void tienet_master_connect_slaves(fd_set *readfds)
   fh = fopen(tienet_master_list, "r");
   if (fh)
   {
-    while(!feof(fh))
+    while (!feof(fh))
     {
       fgets(host, 64, fh);
       if (host[0])
@@ -471,7 +471,7 @@ void* tienet_master_listener(void *ptr)
   tienet_master_connect_slaves(&readfds);
 
   /* Handle Network Communications */
-  while(1)
+  while (1)
   {
     select(tienet_master_highest_fd+1, &readfds, NULL, NULL, NULL);
 
@@ -580,7 +580,7 @@ void* tienet_master_listener(void *ptr)
             /*
             * Slave Op Instructions
             */
-            switch(op)
+            switch (op)
             {
               case TN_OP_REQWORK:
                 tienet_master_send_work(sock);

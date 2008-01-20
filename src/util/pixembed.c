@@ -70,7 +70,7 @@ get_args(int argc, register char **argv)
 	register int c;
 
 	while ( (c = bu_getopt( argc, argv, "b:hs:w:n:S:W:N:" )) != EOF )  {
-		switch( c )  {
+		switch ( c )  {
 		case 'b':
 			border_inset = atoi(bu_optarg);
 			break;
@@ -104,14 +104,14 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( bu_optind >= argc )  {
-		if( isatty(fileno(stdin)) )
+	if ( bu_optind >= argc )  {
+		if ( isatty(fileno(stdin)) )
 			return(0);
 		file_name = "-";
 		buffp = stdin;
 	} else {
 		file_name = argv[bu_optind];
-		if( (buffp = fopen(file_name, "r")) == NULL )  {
+		if ( (buffp = fopen(file_name, "r")) == NULL )  {
 			(void)fprintf( stderr,
 				"pixembed: cannot open \"%s\" for reading\n",
 				file_name );
@@ -140,16 +140,16 @@ main(int argc, char **argv)
 		bu_exit ( 1, NULL );
 	}
 
-	if( xin <= 0 || yin <= 0 || xout <= 0 || yout <= 0 ) {
+	if ( xin <= 0 || yin <= 0 || xout <= 0 || yout <= 0 ) {
 		fprintf( stderr, "pixembed: sizes must be positive\n" );
 		bu_exit ( 2, NULL );
 	}
-	if( xout < xin || yout < yin )  {
+	if ( xout < xin || yout < yin )  {
 		fprintf( stderr, "pixembed: output size must exceed input size\n");
 		bu_exit (3, NULL);
 	}
 
-	if( border_inset < 0 || border_inset >= xin )  {
+	if ( border_inset < 0 || border_inset >= xin )  {
 		fprintf(stderr, "pixembed: border inset out of range\n");
 		bu_exit (4, NULL);
 	}
@@ -159,20 +159,20 @@ main(int argc, char **argv)
 	obuf = (unsigned char *)bu_malloc( scanlen, "obuf" );
 
 	/* Pre-fetch the first line (after skipping) */
-	for( i= -1; i<border_inset; i++ )  load_buffer();
+	for ( i= -1; i<border_inset; i++ )  load_buffer();
 
 	/* Write out duplicates at bottom, including real copy of 1st line */
 	ydup = (yout - yin) / 2 + border_inset + 1;
-	for( y = 0; y < ydup; y++ )  write_buffer();
+	for ( y = 0; y < ydup; y++ )  write_buffer();
 
 	/* Read and write the remaining lines */
-	for( ; i < yin-border_inset; i++, y++ )  {
+	for (; i < yin-border_inset; i++, y++ )  {
 		load_buffer();
 		write_buffer();
 	}
 
 	/* Write out duplicates at the top, until all done */
-	for( ; y < yout; y++ )  write_buffer();
+	for (; y < yout; y++ )  write_buffer();
 
 	bu_free(obuf, "obuf");
 
@@ -195,7 +195,7 @@ load_buffer(void)
 
 	inbase = (xout - xin) / 2;
 
-	if( fread( obuf + inbase*3, 3, xin, buffp ) != xin )  {
+	if ( fread( obuf + inbase*3, 3, xin, buffp ) != xin )  {
 		perror("pixembed fread");
 		bu_exit (7, NULL);
 	}
@@ -204,7 +204,7 @@ load_buffer(void)
 	b = obuf[(inbase+border_inset)*3+2];
 
 	cp = obuf;
-	for( i=0; i<inbase+border_inset; i++ )  {
+	for ( i=0; i<inbase+border_inset; i++ )  {
 		*cp++ = r;
 		*cp++ = g;
 		*cp++ = b;
@@ -214,7 +214,7 @@ load_buffer(void)
 	g = obuf[(xin+inbase-1-border_inset)*3+1];
 	b = obuf[(xin+inbase-1-border_inset)*3+2];
 	cp = &obuf[(xin+inbase+0-border_inset)*3+0];
-	for( i=xin+inbase-border_inset; i<xout; i++ )  {
+	for ( i=xin+inbase-border_inset; i<xout; i++ )  {
 		*cp++ = r;
 		*cp++ = g;
 		*cp++ = b;
@@ -230,7 +230,7 @@ load_buffer(void)
 void
 write_buffer(void)
 {
-	if( fwrite( obuf, 3, xout, stdout ) != xout )  {
+	if ( fwrite( obuf, 3, xout, stdout ) != xout )  {
 		perror("pixembed stdout fwrite");
 		bu_exit (8, NULL);
 	}

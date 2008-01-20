@@ -52,16 +52,16 @@ main(void)
    (void)printf("\t1 - raytrace, store, & showtherm file\n");
    (void)printf("\t2 - showtherm file\n");
    (void)fflush(stdout);
-   (void)scanf("%d",&ichoice);
+   (void)scanf("%d", &ichoice);
 
-   while( (ichoice !=0 ) && (ichoice != 1) &&(ichoice != 2) )
+   while ( (ichoice !=0 ) && (ichoice != 1) &&(ichoice != 2) )
    {
 	(void)printf("Your choice was not 0, 1, or 2, enter again!!\n");
 	(void)fflush(stdout);
-	(void)scanf("%d",&ichoice);
+	(void)scanf("%d", &ichoice);
    }
 
-   if( (ichoice == 0) || (ichoice == 1) )
+   if ( (ichoice == 0) || (ichoice == 1) )
    {
 	/*  Start setting showtherm variable.  */
 	showtherm[0] = 's';
@@ -82,16 +82,16 @@ main(void)
 	/*  Find number of groups to be raytraced.  */
 	(void)printf("Enter the number of groups to be raytraced.\n\t");
 	(void)fflush(stdout);
-	(void)scanf("%d",&ngrp);
+	(void)scanf("%d", &ngrp);
 	/*  Read each group & put it in the variable showtherm.  */
 	j = 0;
-	while( (gfile[j] != '\0') && (i < 123) )
+	while ( (gfile[j] != '\0') && (i < 123) )
 	{
 	   showtherm[i] = gfile[j];
 	   i++;
 	   j++;
 	}
-	for(j=0; j<ngrp; j++)
+	for (j=0; j<ngrp; j++)
 	{
 	   (void)printf("Enter group %d (25 char max).\n\t", j);
 	   (void)fflush(stdout);
@@ -99,7 +99,7 @@ main(void)
 	   showtherm[i] = ' ';
 	   i++;
 	   k = 0;
-	   while( (group[k] != '\0') && (i < 123) )
+	   while ( (group[k] != '\0') && (i < 123) )
 	   {
 		showtherm[i] = group[k];
 		i++;
@@ -107,7 +107,7 @@ main(void)
 	   }
 	}
 	showtherm[i] = '\0';
-	if(i >= 123)
+	if (i >= 123)
 	{
 	   (void)printf("There are too many characters for showtherm,\n");
 	   (void)printf("please revise pictx.\n");
@@ -122,7 +122,7 @@ main(void)
 	system(showtherm);
    }
 
-   if( (ichoice == 1) || (ichoice == 2) )
+   if ( (ichoice == 1) || (ichoice == 2) )
    {
 	/*  Call the program ir-sgi so that a file that has been raytraced  */
 	/*  may be displayed using X-Windows.  */

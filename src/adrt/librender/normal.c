@@ -49,7 +49,7 @@ void render_normal_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pix
   tie_id_t	id;
   adrt_mesh_t	*m;
 
-  if((m = (adrt_mesh_t *)tie_work(tie, ray, &id, normal_hit, NULL))) {
+  if ((m = (adrt_mesh_t *)tie_work(tie, ray, &id, normal_hit, NULL))) {
     pixel->v[0] = (id.norm.v[0]+1) * 0.5;
     pixel->v[1] = (id.norm.v[1]+1) * 0.5;
     pixel->v[2] = (id.norm.v[2]+1) * 0.5;

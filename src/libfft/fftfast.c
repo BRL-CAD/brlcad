@@ -68,8 +68,8 @@ void
 cfft(COMPLEX *dat, int num)
 {
 	/* Check for trig table initialization */
-	if( num != _init_size ) {
-		if( init_sintab( num ) == 0 ) {
+	if ( num != _init_size ) {
+		if ( init_sintab( num ) == 0 ) {
 			/* Can't do requested size */
 			return;
 		}
@@ -86,8 +86,8 @@ void
 icfft(COMPLEX *dat, int num)
 {
 	/* Check for trig table initialization */
-	if( num != _init_size ) {
-		if( init_sintab( num ) == 0 ) {
+	if ( num != _init_size ) {
+		if ( init_sintab( num ) == 0 ) {
 			/* Can't do requested size */
 			return;
 		}
@@ -135,22 +135,22 @@ init_sintab(int size)
 	 * Check whether the requested size is within our compiled
 	 *  limit and make sure it's a power of two.
 	 */
-	if( size > MAXSIZE ) {
+	if ( size > MAXSIZE ) {
 		fprintf( stderr, "fft: Only compiled for max size of %d\n", MAXSIZE );
 		fprintf( stderr, "fft: Can't do the requested %d\n", size );
 		return( 0 );
 	}
-	for( m = size; (m & 1) == 0; m >>= 1 )
+	for ( m = size; (m & 1) == 0; m >>= 1 )
 		;
-	if( m != 1 ) {
+	if ( m != 1 ) {
 		fprintf( stderr, "fft: Can only do powers of two, not %d\n", size );
 		fprintf( stderr, "fft: What do you think this is, a Winograd transform?\n" );
 		return( 0 );
 	}
 
 	/* Get some buffer space */
-	if( sintab != NULL ) free( sintab );
-	if( costab != NULL ) free( costab );
+	if ( sintab != NULL ) free( sintab );
+	if ( costab != NULL ) free( costab );
 	/* should not use bu_calloc() as libfft is not dependant upon libbu */
 	sintab = (double *)calloc( sizeof(*sintab), size );
 	costab = (double *)calloc( sizeof(*costab), size );
@@ -158,8 +158,8 @@ init_sintab(int size)
 	/*
 	 * Size is okay.  Set up tables.
 	 */
-	for( col = 1; col < size; col <<= 1 ) {
-		for( m = 0; m < col; m++ ) {
+	for ( col = 1; col < size; col <<= 1 ) {
+		for ( m = 0; m < col; m++ ) {
 			theta = PI * (double)m / (double)col;
 			sintab[ m + col ] = sin( theta );
 			costab[ m + col ] = cos( theta );
@@ -194,8 +194,8 @@ scramble(int numpoints, COMPLEX *dat)
 	COMPLEX	temp;
 
 	j = 0;
-	for( i = 0; i < numpoints; i++, j += m ) {
-		if( i < j ) {
+	for ( i = 0; i < numpoints; i++, j += m ) {
+		if ( i < j ) {
 			/* Switch nodes i and j */
 			temp.re = dat[j].re;
 			temp.im = dat[j].im;
@@ -205,7 +205,7 @@ scramble(int numpoints, COMPLEX *dat)
 			dat[i].im = temp.im;
 		}
 		m = numpoints/2;
-		while( m-1 < j ) {
+		while ( m-1 < j ) {
 			j -= m;
 			m = (m + 1) / 2;
 		}
@@ -222,12 +222,12 @@ butterflies(int numpoints, int inverse, COMPLEX *dat)
 	/*
 	 * For each column of the butterfly
 	 */
-	for( column = 1; column < numpoints; column = step ) {
+	for ( column = 1; column < numpoints; column = step ) {
 		step = 2 * column;	/* step is size of "cross-hatch" */
 		/*
 		 * For each principle value of W  (roots on units).
 		 */
-		for( m = 0; m < column; m++ ) {
+		for ( m = 0; m < column; m++ ) {
 			/*
 			 * Do these by table lookup:
 			 *	theta = PI*(inverse*m)/column;
@@ -237,7 +237,7 @@ butterflies(int numpoints, int inverse, COMPLEX *dat)
 			w.re = costab[ column + m ];
 			w.im = sintab[ column + m ] * inverse;
 			/* Do all pairs of nodes */
-			for( node1 = &dat[m]; node1 < &dat[numpoints]; node1 += step ) {
+			for ( node1 = &dat[m]; node1 < &dat[numpoints]; node1 += step ) {
 				node2 = node1 + column;
 				/*
 				 * Want to compute:
@@ -270,8 +270,8 @@ butterflies(int numpoints, int inverse, COMPLEX *dat)
 	 * other forms of analysis, e.g. cepstrum.
 	 *   **** We Now Do It The Canonical Way! ****
 	 */
-	if( inverse > 0 ) {
-		for( node1 = &dat[0]; node1 < &dat[numpoints]; node1++ ) {
+	if ( inverse > 0 ) {
+		for ( node1 = &dat[0]; node1 < &dat[numpoints]; node1++ ) {
 			/* cdiv( &dat[i], &const, &dat[i] ); */
 			node1->re /= (double)numpoints;
 			node1->im /= (double)numpoints;

@@ -80,17 +80,17 @@ rt_mk_binunif(struct rt_wdb *wdbp, const char *obj_name, const char *file_name, 
 	struct bu_external bin_ext;
 	struct directory *dp;
 
-	if( (item_length=db5_type_sizeof_h_binu( minor_type ) ) <= 0 ) {
+	if ( (item_length=db5_type_sizeof_h_binu( minor_type ) ) <= 0 ) {
 		bu_log( "Unrecognized minor type!!!\n" );
 		return -1;
 	}
 
-	if( stat( file_name, &st ) ) {
+	if ( stat( file_name, &st ) ) {
 		bu_log( "Cannot stat input file(%s)", file_name );
 		return -1;
 	}
 
-	if( (bu_fd=bu_open_mapped_file( file_name, NULL)) == NULL ) {
+	if ( (bu_fd=bu_open_mapped_file( file_name, NULL)) == NULL ) {
 		bu_log( "Cannot open input file(%s) for reading",
 			      file_name );
 		return -1;
@@ -130,7 +130,7 @@ rt_mk_binunif(struct rt_wdb *wdbp, const char *obj_name, const char *file_name, 
 	intern.idb_meth = &rt_functab[ID_BINUNIF];
 
 	/* create body portion of external form */
-	if( intern.idb_meth->ft_export5( &body, &intern, 1.0, wdbp->dbip, wdbp->wdb_resp, intern.idb_minor_type ) ) {
+	if ( intern.idb_meth->ft_export5( &body, &intern, 1.0, wdbp->dbip, wdbp->wdb_resp, intern.idb_minor_type ) ) {
 
 		bu_log( "Error while attemptimg to export %s\n", obj_name );
 		rt_db_free_internal( &intern, wdbp->wdb_resp );
@@ -147,7 +147,7 @@ rt_mk_binunif(struct rt_wdb *wdbp, const char *obj_name, const char *file_name, 
 	bu_free_external( &body );
 
 	/* add this object to the directory */
-	if( (dp=db_diradd5( wdbp->dbip, obj_name, -1, major_type,
+	if ( (dp=db_diradd5( wdbp->dbip, obj_name, -1, major_type,
 			    minor_type, 0, 0, NULL )) == DIR_NULL ) {
 		bu_log( "Error while attemptimg to add new name (%s) to the database",
 			obj_name );
@@ -156,7 +156,7 @@ rt_mk_binunif(struct rt_wdb *wdbp, const char *obj_name, const char *file_name, 
 	}
 
 	/* and write it to the database */
-	if( db_put_external5( &bin_ext, dp, wdbp->dbip ) ) {
+	if ( db_put_external5( &bin_ext, dp, wdbp->dbip ) ) {
 		bu_log( "Error while adding new binary object (%s) to the database",
 			obj_name );
 		bu_free_external( &bin_ext );

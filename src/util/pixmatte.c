@@ -104,16 +104,17 @@ usage(char *s, int n)
 int
 open_file(int i, char *name)
 {
-	if( name[0] == '=' )  {
+	if ( name[0] == '=' )  {
 		/* Parse constant */
 		register char		*cp = name+1;
 		register unsigned char	*conp = &f_const[i][0];
 		register int		j;
 
 		/* premature null => atoi gives zeros */
-		for( j=0; j < width; j++ )  {
+		for ( j=0; j < width; j++ )  {
 			*conp++ = atoi(cp);
-			while( *cp && *cp++ != '/' ) ;
+			while ( *cp && *cp++ != '/' )
+			    ;
 		}
 
 		file_name[i] = name+1;	/* skip '=' */
@@ -123,19 +124,19 @@ open_file(int i, char *name)
 	}
 
 	file_name[i] = name;
-	if( strcmp( name, "-" ) == 0 )  {
+	if ( strcmp( name, "-" ) == 0 )  {
 		fp[i] = stdin;
-		if( isatty(fileno(stdin)) )
+		if ( isatty(fileno(stdin)) )
 			return(-1);	/* FAIL */
 		/* XXX No checking for multiple uses of stdin */
-	}  else if( (fp[i] = fopen(name, "r")) == NULL )  {
+	}  else if ( (fp[i] = fopen(name, "r")) == NULL )  {
 		perror(name);
 		bu_log("pixmatte: cannot open \"%s\" for reading\n", name );
 		return(-1);		/* FAIL */
 	}
 
 	/* Obtain buffer */
-	if( (buf[i] = (char *)malloc( width*CHUNK )) == (char *)0 )  {
+	if ( (buf[i] = (char *)malloc( width*CHUNK )) == (char *)0 )  {
 		bu_exit (3, "pixmatte:  input buffer malloc failure\n");
 	}
 
@@ -153,7 +154,7 @@ get_args(int argc, register char **argv)
 	register int	i;
 
 	while ( (c = bu_getopt( argc, argv, "glenaw:" )) != EOF )  {
-		switch( c )  {
+		switch ( c )  {
 		case 'g':
 			wanted |= GT;
 			seen_formula = 1;
@@ -176,7 +177,7 @@ get_args(int argc, register char **argv)
 			break;
 		case 'w':
 			c = atoi(bu_optarg);
-			if( c >= 1 && c < EL_WIDTH )
+			if ( c >= 1 && c < EL_WIDTH )
 				width = c;
 			else
 				usage("Illegal width specified\n", 1);
@@ -187,16 +188,16 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( !seen_formula )
+	if ( !seen_formula )
 		usage("No formula specified\n", 1);
 
 
-	if( bu_optind+NFILES > argc )
+	if ( bu_optind+NFILES > argc )
 		usage("insufficient number of input/output channels\n", 1);
 
 
-	for( i=0; i < NFILES; i++ )  {
-		if( open_file( i, argv[bu_optind++] ) < 0 )
+	for ( i=0; i < NFILES; i++ )  {
+		if ( open_file( i, argv[bu_optind++] ) < 0 )
 			usage((char *)NULL, 1);
 	}
 
@@ -216,34 +217,34 @@ main(int argc, char **argv)
 
 
 	bu_log("pixmatte:\tif( %s ", file_name[0] );
-	if( wanted & LT )  {
-		if( wanted & EQ )
+	if ( wanted & LT )  {
+		if ( wanted & EQ )
 			fputs( "<=", stderr );
 		else
 			fputs( "<", stderr );
 	}
-	if( wanted & GT )  {
-		if( wanted & EQ )
+	if ( wanted & GT )  {
+		if ( wanted & EQ )
 			fputs( ">=", stderr );
 		else
 			fputs( ">", stderr );
 	}
-	if( wanted & APPROX )  {
-		if( wanted & EQ )  fputs( "~~==", stderr );
-		if( wanted & NE )  fputs( "~~!=", stderr );
+	if ( wanted & APPROX )  {
+		if ( wanted & EQ )  fputs( "~~==", stderr );
+		if ( wanted & NE )  fputs( "~~!=", stderr );
 	} else {
-		if( wanted & EQ )  fputs( "==", stderr );
-		if( wanted & NE )  fputs( "!=", stderr );
+		if ( wanted & EQ )  fputs( "==", stderr );
+		if ( wanted & NE )  fputs( "!=", stderr );
 	}
 	bu_log(" %s )\n", file_name[1] );
 	bu_log("pixmatte:\t\tthen output %s\n", file_name[2] );
 	bu_log("pixmatte:\t\telse output %s\n", file_name[3] );
 
-	if( (obuf = (char *)malloc( width*CHUNK )) == (char *)0 ) {
+	if ( (obuf = (char *)malloc( width*CHUNK )) == (char *)0 ) {
 		bu_exit (3, "pixmatte:  obuf malloc failure\n");
 	}
 
-	while(1)  {
+	while (1)  {
 		unsigned char	*cb0, *cb1;	/* current input buf ptrs */
 		unsigned char	*cb2, *cb3;
 		register unsigned char	*obp; 	/* current output buf ptr */
@@ -252,14 +253,14 @@ main(int argc, char **argv)
 		register int	i;
 
 		len = CHUNK;
-		for( i=0; i<NFILES; i++ )  {
+		for ( i=0; i<NFILES; i++ )  {
 			register int	got;
 
-			if( fp[i] == NULL )  continue;
+			if ( fp[i] == NULL )  continue;
 			got = fread( buf[i], width, CHUNK, fp[i] );
-			if( got < len )  len = got;
+			if ( got < len )  len = got;
 		}
-		if( len <= 0 )
+		if ( len <= 0 )
 			break;
 
 		cb0 = (unsigned char *)buf[0];
@@ -268,7 +269,7 @@ main(int argc, char **argv)
 		cb3 = (unsigned char *)buf[3];
 		obp = (unsigned char *)obuf;
 		ebuf = cb0 + width*len;
-		for( ; cb0 < ebuf;
+		for (; cb0 < ebuf;
 		    cb0 += width, cb1 += width, cb2 += width, cb3 += width )  {
 			/*
 			 * Stated condition must hold for all input bytes
@@ -277,77 +278,77 @@ main(int argc, char **argv)
 			register unsigned char	*ap, *bp;
 			register unsigned char	*ep;		/* end ptr */
 
-			if( buf[0] != NULL )
+			if ( buf[0] != NULL )
 				ap = cb0;
 			else
 				ap = &f_const[0][0];
 
-			if( buf[1] != NULL )
+			if ( buf[1] != NULL )
 				bp = cb1;
 			else
 				bp = &f_const[1][0];
 
-			if( wanted == NE )  {
-				for( ep = ap+width; ap < ep; )  {
-					if( *ap++ != *bp++ )
+			if ( wanted == NE )  {
+				for ( ep = ap+width; ap < ep; )  {
+					if ( *ap++ != *bp++ )
 						goto success;
 				}
 				goto fail;
-			} else if( wanted & APPROX )  {
-				if( wanted & NE )  {
+			} else if ( wanted & APPROX )  {
+				if ( wanted & NE )  {
 					/* Want not even approx equal */
-					for( ep = ap+width; ap < ep; )  {
-						if( (i= *ap++ - *bp++) < -1 ||
+					for ( ep = ap+width; ap < ep; )  {
+						if ( (i= *ap++ - *bp++) < -1 ||
 						    i > 1 )
 							goto success;
 					}
 					goto fail;
 				} else {
 					/* Want approx equal */
-					for( ep = ap+width; ap < ep; )  {
-						if( (i= *ap++ - *bp++) < -1 ||
+					for ( ep = ap+width; ap < ep; )  {
+						if ( (i= *ap++ - *bp++) < -1 ||
 						    i > 1 )
 							goto fail;
 					}
 					goto success;
 				}
 			} else {
-				for( ep = ap+width; ap < ep; ap++, bp++ )  {
-					if( *ap > *bp )  {
-						if( !(GT & wanted) )
+				for ( ep = ap+width; ap < ep; ap++, bp++ )  {
+					if ( *ap > *bp )  {
+						if ( !(GT & wanted) )
 							goto fail;
-					} else if( *ap == *bp )  {
-						if( !(EQ & wanted) )
+					} else if ( *ap == *bp )  {
+						if ( !(EQ & wanted) )
 							goto fail;
 					} else  {
-						if( !(LT & wanted) )
+						if ( !(LT & wanted) )
 							goto fail;
 					}
 				}
 			}
 success:
-			if( buf[2] != NULL )
+			if ( buf[2] != NULL )
 				ap = cb2;
 			else
 				ap = &f_const[2][0];
 
-			for( i=0; i<width; i++ )
+			for ( i=0; i<width; i++ )
 				*obp++ = *ap++;
 
 			true_cnt++;
 			continue;
 fail:
-			if( buf[3] != NULL )
+			if ( buf[3] != NULL )
 				bp = cb3;
 			else
 				bp = &f_const[3][0];
 
-			for( i=0; i<width; i++ )
+			for ( i=0; i<width; i++ )
 				*obp++ = *bp++;
 
 			false_cnt++;
 		}
-		if( fwrite( obuf, width, len, stdout ) != len )  {
+		if ( fwrite( obuf, width, len, stdout ) != len )  {
 			perror("fwrite");
 			bu_exit (1, "pixmatte:  write error\n");
 		}

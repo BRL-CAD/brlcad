@@ -307,7 +307,7 @@ main(int argc, char **argv)
 		row++;
 	}
 
-	while(row < base_y) {
+	while (row < base_y) {
 		result = fread(inbuf, num_bytes, org_width, input);
 		row++;
 	}
@@ -317,7 +317,7 @@ main(int argc, char **argv)
 	while (row < finish && row < org_height) {
 		result = fread(inbuf, num_bytes, org_width, input);
 		if (result != org_width) {
-			for (cp=inbuf+result*num_bytes; result < org_width; cp+=num_bytes,++result) {
+			for (cp=inbuf+result*num_bytes; result < org_width; cp+=num_bytes, ++result) {
 				register long int jj;
 				for (jj=0; jj<num_bytes && jj<SIZEBACK; jj++) {
 					cp[jj] = background[jj];

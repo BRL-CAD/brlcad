@@ -85,14 +85,14 @@ int
 main(int argc, char **argv)
 {
 	register int c;
-	FILE *coords,*elems;		/* input file pointers */
+	FILE *coords, *elems;		/* input file pointers */
 	struct rt_wdb *out_fp;		/* output file pointers */
 	char *output_file = "viewpoint.g";
 	char *base_name;		/* title and top level group name */
 	char coords_name[LINELEN] = {0};	/* input coordinates file name */
 	char elems_name[LINELEN] = {0};		/* input elements file name */
 	float x, y, z, nx, ny, nz;		/* vertex and normal coords */
-	char *ptr1,*ptr2;
+	char *ptr1, *ptr2;
 	int name_len;
 	struct bn_tol tol;
 	int done=0;
@@ -120,13 +120,13 @@ main(int argc, char **argv)
 	coords = NULL;
 	elems = NULL;
 
-	if( argc < 2 )
+	if ( argc < 2 )
 		bu_exit( EXIT_FAILURE,  usage );
 
 	/* get command line arguments */
 	while ((c = bu_getopt(argc, argv, "t:c:e:o:")) != EOF)
 	{
-		switch( c )
+		switch ( c )
 		{
 			case 't': /* tolerance */
 				tol.dist = atof( bu_optarg );
@@ -134,7 +134,7 @@ main(int argc, char **argv)
 				break;
 			case 'c': /* input coordinates file name */
 				strncpy( coords_name, bu_optarg, LINELEN );
-				if( (coords = fopen( coords_name, "r" )) == NULL )
+				if ( (coords = fopen( coords_name, "r" )) == NULL )
 				{
 					bu_log( "Cannot open %s\n", coords_name );
 					perror( "viewpoint-g" );
@@ -143,7 +143,7 @@ main(int argc, char **argv)
 				break;
 			case 'e': /* input elements file name */
 				strncpy( elems_name, bu_optarg, LINELEN );
-				if( (elems = fopen( elems_name, "r" )) == NULL )
+				if ( (elems = fopen( elems_name, "r" )) == NULL )
 				{
 					bu_log( "Cannot open %s\n", elems_name );
 					perror( "viewpoint-g" );
@@ -158,7 +158,7 @@ main(int argc, char **argv)
 				break;
 		}
 	}
-	if( (out_fp = wdb_fopen( output_file )) == NULL )
+	if ( (out_fp = wdb_fopen( output_file )) == NULL )
 	{
 		perror( output_file );
 		bu_log( "tankill-g: Cannot open %s\n", output_file );
@@ -166,7 +166,7 @@ main(int argc, char **argv)
 	}
 
 	/* Must have some input */
-	if( coords == NULL || elems == NULL )
+	if ( coords == NULL || elems == NULL )
 		bu_exit( EXIT_FAILURE,  usage );
 
 	/* build a title for the BRL-CAD database */
@@ -176,13 +176,13 @@ main(int argc, char **argv)
 	}
 
 	ptr1 = strrchr( coords_name, '/' );
-	if( ptr1 == NULL )
+	if ( ptr1 == NULL )
 		ptr1 = coords_name;
 	else
 		ptr1++;
 	ptr2 = strchr( ptr1, '.' );
 
-	if( ptr2 == NULL )
+	if ( ptr2 == NULL )
 		name_len = strlen( ptr1 );
 	else
 		name_len = ptr2 - ptr1;
@@ -195,7 +195,7 @@ main(int argc, char **argv)
 
 	/* count vertices */
 	no_of_verts = 1;
-	while( bu_fgets( line, LINELEN, coords ) != NULL )
+	while ( bu_fgets( line, LINELEN, coords ) != NULL )
 		no_of_verts++;
 
 	/* allocate memory to store vertex coordinates and normal coordinates and a pointer to
@@ -204,17 +204,17 @@ main(int argc, char **argv)
 
 	/* Now read the vertices again and store them */
 	rewind( coords );
-	while( bu_fgets( line, LINELEN, coords ) != NULL )
+	while ( bu_fgets( line, LINELEN, coords ) != NULL )
 	{
 		int number_scanned;
 		number_scanned = sscanf( line, "%d,%f,%f,%f,%f,%f,%f", &i, &x, &z, &y, &nx, &ny, &nz );
-		if( number_scanned < 4 )
+		if ( number_scanned < 4 )
 			break;
-		if( i >= no_of_verts )
+		if ( i >= no_of_verts )
 			bu_log( "vertex number too high (%d) only allowed for %d\n", i, no_of_verts );
 		VSET( verts[i].coord, x, y, z );
 
-		if( number_scanned == 7 ) /* we get normals too!!! */
+		if ( number_scanned == 7 ) /* we get normals too!!! */
 		{
 			VSET( verts[i].norm, nx, ny, nz );
 			verts[i].has_norm = 1;
@@ -229,19 +229,19 @@ main(int argc, char **argv)
 	bu_ptbl_init( &faces, 64, " &faces ");
 	bu_ptbl_init( &names, 64, " &names ");
 
-	while( !done )
+	while ( !done )
 	{
-		char *name,*ptr;
+		char *name, *ptr;
 		char curr_name[LINELEN] = {0};
 		int eof=0;
 
 		/* Find an element name that has not already been processed */
 		done = 1;
-		while( bu_fgets( line, LINELEN, elems ) != NULL )
+		while ( bu_fgets( line, LINELEN, elems ) != NULL )
 		{
 			line[strlen(line)-1] = '\0';
 			name = strtok( line, tok_sep );
-			if( BU_PTBL_END( &names ) == 0 )
+			if ( BU_PTBL_END( &names ) == 0 )
 			{
 				/* this is the first element processed */
 				strncpy( curr_name, name, LINELEN );
@@ -256,16 +256,16 @@ main(int argc, char **argv)
 				int found=0;
 
 				/* check the list to see if this name is already there */
-				for( i=0 ; i<BU_PTBL_END( &names ) ; i++ )
+				for ( i=0; i<BU_PTBL_END( &names ); i++ )
 				{
-					if( !strcmp( (char *)BU_PTBL_GET( &names, i ), name ) )
+					if ( !strcmp( (char *)BU_PTBL_GET( &names, i ), name ) )
 					{
 						/* found it, so go back and read the next line */
 						found = 1;
 						break;
 					}
 				}
-				if( !found )
+				if ( !found )
 				{
 					/* didn't find name, so this becomes the current name */
 					strncpy( curr_name, name, LINELEN );
@@ -279,7 +279,7 @@ main(int argc, char **argv)
 		}
 
 		/* if no current name, then we are done */
-		if( curr_name[0] == 0 )
+		if ( curr_name[0] == 0 )
 			break;
 
 		/* Hopefully, the user is still around */
@@ -291,23 +291,23 @@ main(int argc, char **argv)
 		s = BU_LIST_FIRST( shell, &r->s_hd );
 
 		/* set all vertex pointers to NULL so that different models don't share vertices */
-		for( i=0 ; i<no_of_verts ; i++ )
+		for ( i=0; i<no_of_verts; i++ )
 			verts[i].vp = (struct vertex *)NULL;
 
 		/* read elements file and make faces */
-		while( !eof )
+		while ( !eof )
 		{
 			/* loop through vertex numbers */
-			while( (ptr = strtok( (char *)NULL, tok_sep ) ) != NULL )
+			while ( (ptr = strtok( (char *)NULL, tok_sep ) ) != NULL )
 			{
 				i = atoi( ptr );
-				if( i >= no_of_verts )
+				if ( i >= no_of_verts )
 					bu_log( "vertex number (%d) too high in element, only allowed for %d\n", i, no_of_verts );
 
 				bu_ptbl_ins( &vertices, (long *)(&verts[i].vp) );
 			}
 
-			if( BU_PTBL_END( &vertices ) > 2 )
+			if ( BU_PTBL_END( &vertices ) > 2 )
 			{
 				/* make face */
 				fu = nmg_cmface( s, (struct vertex ***)BU_PTBL_BASEADDR( &vertices ), BU_PTBL_END( &vertices ) );
@@ -327,10 +327,10 @@ main(int argc, char **argv)
 
 			/* skip elements with the wrong name */
 			name = NULL;
-			while( name == NULL || strcmp( name, curr_name ) )
+			while ( name == NULL || strcmp( name, curr_name ) )
 			{
 				/* check for enf of file */
-				if( bu_fgets( line, LINELEN, elems ) == NULL )
+				if ( bu_fgets( line, LINELEN, elems ) == NULL )
 				{
 					eof = 1;
 					break;
@@ -344,20 +344,20 @@ main(int argc, char **argv)
 		}
 
 		/* assign geometry */
-		for( i=0 ; i<no_of_verts ; i++ )
+		for ( i=0; i<no_of_verts; i++ )
 		{
-			if( verts[i].vp )
+			if ( verts[i].vp )
 			{
 				NMG_CK_VERTEX( verts[i].vp );
 				nmg_vertex_gv( verts[i].vp, verts[i].coord );
 
 				/* check if a vertex normal exists */
-				if( verts[i].has_norm )
+				if ( verts[i].has_norm )
 				{
 					struct vertexuse *vu;
 
 					/* assign this normal to all uses of this vertex */
-					for( BU_LIST_FOR( vu, vertexuse, &verts[i].vp->vu_hd ) )
+					for ( BU_LIST_FOR( vu, vertexuse, &verts[i].vp->vu_hd ) )
 					{
 						NMG_CK_VERTEXUSE( vu );
 						nmg_vertexuse_nv( vu, verts[i].norm );
@@ -371,7 +371,7 @@ main(int argc, char **argv)
 		/* calculate plane equations for faces */
 		    NMG_CK_SHELL( s );
 		    fu = BU_LIST_FIRST( faceuse, &s->fu_hd );
-		    while( BU_LIST_NOT_HEAD( fu, &s->fu_hd))
+		    while ( BU_LIST_NOT_HEAD( fu, &s->fu_hd))
 		    {
 			struct faceuse *kill_fu=(struct faceuse *)NULL;
 			struct faceuse *next_fu;
@@ -379,7 +379,7 @@ main(int argc, char **argv)
 			NMG_CK_FACEUSE( fu );
 
 			next_fu = BU_LIST_NEXT( faceuse, &fu->l );
-			if( fu->orientation == OT_SAME )
+			if ( fu->orientation == OT_SAME )
 			{
 				struct loopuse *lu;
 				struct edgeuse *eu;
@@ -388,16 +388,16 @@ main(int argc, char **argv)
 
 				lu = BU_LIST_FIRST( loopuse, &fu->lu_hd );
 				NMG_CK_LOOPUSE( lu );
-				for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+				for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 				{
 					NMG_CK_EDGEUSE( eu );
-					if( eu->vu_p->v_p == eu->eumate_p->vu_p->v_p )
+					if ( eu->vu_p->v_p == eu->eumate_p->vu_p->v_p )
 						kill_fu = fu;
 				}
-				if( !kill_fu )
+				if ( !kill_fu )
 				{
 					area = nmg_loop_plane_area( lu, pl );
-					if( area <= 0.0 )
+					if ( area <= 0.0 )
 					{
 
 						bu_log( "ERROR: Can't get plane for face\n" );
@@ -405,9 +405,9 @@ main(int argc, char **argv)
 						kill_fu = fu;
 					}
 				}
-				if( kill_fu )
+				if ( kill_fu )
 				{
-					if( next_fu == kill_fu->fumate_p )
+					if ( next_fu == kill_fu->fumate_p )
 						next_fu = BU_LIST_NEXT( faceuse, &next_fu->l );
 					bu_ptbl_rm( &faces, (long *)kill_fu );
 					nmg_kfu( kill_fu );
@@ -418,7 +418,7 @@ main(int argc, char **argv)
 			fu = next_fu;
 		    }
 
-		if( BU_PTBL_END( &faces ) )
+		if ( BU_PTBL_END( &faces ) )
 		{
 			/* glue faces together */
 			nmg_gluefaces( (struct faceuse **)BU_PTBL_BASEADDR( &faces), BU_PTBL_END( &faces ), &tol );
@@ -450,12 +450,12 @@ main(int argc, char **argv)
 
 	/* make a top level group with all the objects as members */
 	BU_LIST_INIT( &reg_head.l );
-	for( i=0 ; i<BU_PTBL_END( &names ) ; i++ )
-		if( mk_addmember( (char *)BU_PTBL_GET( &names, i ), &reg_head.l, NULL, WMOP_UNION ) == WMEMBER_NULL )
+	for ( i=0; i<BU_PTBL_END( &names ); i++ )
+		if ( mk_addmember( (char *)BU_PTBL_GET( &names, i ), &reg_head.l, NULL, WMOP_UNION ) == WMEMBER_NULL )
 			bu_exit( 1, "Cannot make top level group\n" );
 
 	fprintf( stderr, "Making top level group (%s)\n", base_name );
-	if( mk_lcomb( out_fp, base_name, &reg_head, 0, (char *)0, (char *)0, (unsigned char *)0, 0 ) )
+	if ( mk_lcomb( out_fp, base_name, &reg_head, 0, (char *)0, (char *)0, (unsigned char *)0, 0 ) )
 		bu_log( "viewpoint-g: Error in making top level group" );
 
 	bu_free(base_name, "base_name");

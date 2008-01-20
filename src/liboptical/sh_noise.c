@@ -268,7 +268,7 @@ noise_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
 		return(-1);
 
 	/* figure out which shader is really being called */
-	for (i = 0 ; noise_mfuncs[i].mf_name ; i++ ) {
+	for (i = 0; noise_mfuncs[i].mf_name; i++ ) {
 		if (!strcmp(noise_mfuncs[i].mf_name, mfp->mf_name))
 			goto found;
 	}

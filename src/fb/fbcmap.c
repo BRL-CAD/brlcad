@@ -86,7 +86,7 @@ main(int argc, char **argv)
 	register ColorMap	*cp = &cmap;
 	FBIO *fbp;
 
-	if( ! pars_Argv( argc, argv ) ) {
+	if ( ! pars_Argv( argc, argv ) ) {
 		usage( NULL );
 		return	1;
 	}
@@ -94,10 +94,10 @@ main(int argc, char **argv)
 	if (pkg_init() != 0)
 	    bu_exit(1, NULL);
 
-	if( (fbp = fb_open( framebuffer, scr_width, scr_height )) == NULL )
+	if ( (fbp = fb_open( framebuffer, scr_width, scr_height )) == NULL )
 		return	1;
 
-	switch( flavor )  {
+	switch ( flavor )  {
 
 	case 0 : /* Standard - Linear color map */
 		(void) fprintf( stderr, "Color map #0, linear (standard).\n" );
@@ -106,7 +106,7 @@ main(int argc, char **argv)
 
 	case 1 : /* Reverse linear color map */
 		(void) fprintf( stderr, "Color map #1, reverse-linear (negative).\n" );
-		for( i = 0; i < 256; i++ ) {
+		for ( i = 0; i < 256; i++ ) {
 			cp->cm_red[255-i] =
 			cp->cm_green[255-i] =
 			cp->cm_blue[255-i] = i << 8;
@@ -120,15 +120,15 @@ main(int argc, char **argv)
 		/* First entry black */
 #define BOOST(point, bias) \
 	((int)((bias)+((float)(point)/256.*(255-(bias)))))
-		for( i = 1; i < 256; i++ )  {
+		for ( i = 1; i < 256; i++ )  {
 			fudge = BOOST(i, 70);
 			cp->cm_red[i] = fudge << 8;		/* B */
 		}
-		for( i = 1; i < 256; i++ )  {
+		for ( i = 1; i < 256; i++ )  {
 			fudge = i;
 			cp->cm_green[i] = fudge << 8;	/* G */
 		}
-		for( i = 1; i < 256; i++ )  {
+		for ( i = 1; i < 256; i++ )  {
 			fudge = BOOST( i, 30 );
 			cp->cm_blue[i] = fudge << 8;	/* R */
 		}
@@ -136,7 +136,7 @@ main(int argc, char **argv)
 
 	case 3 : /* Standard, with low intensities set to black */
 		(void) fprintf( stderr, "Color map #3, low 100 entries black.\n" );
-		for( i = 100; i < 256; i++ )  {
+		for ( i = 100; i < 256; i++ )  {
 			cp->cm_red[i] =
 			cp->cm_green[i] =
 			cp->cm_blue[i] = i << 8;
@@ -148,13 +148,13 @@ main(int argc, char **argv)
 		(void) fprintf( stderr,
 			"Color map #4, amplify middle range to boost dim pictures.\n" );
 		/* First entry black */
-		for( i = 1; i< 256-UPSHIFT; i++ )  {
+		for ( i = 1; i< 256-UPSHIFT; i++ )  {
 			register int j = i + UPSHIFT;
 			cp->cm_red[i] =
 			cp->cm_green[i] =
 			cp->cm_blue[i] = j << 8;
 		}
-		for( i = 256-UPSHIFT; i < 256; i++ )  {
+		for ( i = 256-UPSHIFT; i < 256; i++ )  {
 			cp->cm_red[i] =
 			cp->cm_green[i] =
 			cp->cm_blue[i] = 255 << 8;	/* Full Scale */
@@ -164,7 +164,7 @@ main(int argc, char **argv)
 	case 5 : /* University of Utah's color map */
 		(void) fprintf( stderr,
 			"Color map #5, University of Utah's gamma correcting map.\n" );
-		for( i = 0; i < 256; i++ )
+		for ( i = 0; i < 256; i++ )
 			cp->cm_red[i] =
 			cp->cm_green[i] =
 			cp->cm_blue[i] = utah_cmap[i] << 8;
@@ -195,7 +195,7 @@ main(int argc, char **argv)
 
 	case 8:
 		(void) fprintf( stderr, "Color map #8, Ikcmap 8.\n" );
-		for( i = 0; i < 256; i++ ) {
+		for ( i = 0; i < 256; i++ ) {
 			cp->cm_red[i] = utah8[3*i] << 8;
 			cp->cm_green[i] = utah8[3*i+1] << 8;
 			cp->cm_blue[i] = utah8[3*i+2] << 8;
@@ -204,7 +204,7 @@ main(int argc, char **argv)
 
 	case 9:
 		(void) fprintf( stderr, "Color map #9, Ikcmap 9.\n" );
-		for( i = 0; i < 256; i++ ) {
+		for ( i = 0; i < 256; i++ ) {
 			cp->cm_red[i] = utah9[3*i] << 8;
 			cp->cm_green[i] = utah9[3*i+1] << 8;
 			cp->cm_blue[i] = utah9[3*i+2] << 8;
@@ -217,7 +217,7 @@ main(int argc, char **argv)
 
 	case 11:	/* White */
 		(void) fprintf( stderr, "Color map #11, solid white.\n" );
-		for( i = 0; i < 256; i++ )  {
+		for ( i = 0; i < 256; i++ )  {
 			cp->cm_red[i] =
 			cp->cm_green[i] =
 			cp->cm_blue[i] = 255 << 8;
@@ -226,7 +226,7 @@ main(int argc, char **argv)
 
 	case 12:	/* 18% Grey */
 		(void) fprintf( stderr, "Color map #12, 18%% neutral grey.\n" );
-		for( i = 0; i < 256; i++ )  {
+		for ( i = 0; i < 256; i++ )  {
 			cp->cm_red[i] =
 			cp->cm_green[i] =
 			cp->cm_blue[i] = 46 << 8;
@@ -252,8 +252,8 @@ pars_Argv(int argc, register char **argv)
 	register int	c;
 	extern int	bu_optind;
 
-	while( (c = bu_getopt( argc, argv, "hF:s:S:w:W:n:N:" )) != EOF ) {
-		switch( c ) {
+	while ( (c = bu_getopt( argc, argv, "hF:s:S:w:W:n:N:" )) != EOF ) {
+		switch ( c ) {
 		case 'h' :
 			scr_width = scr_height = 1024;
 			break;
@@ -277,7 +277,7 @@ pars_Argv(int argc, register char **argv)
 			return	0;
 		}
 	}
-	if( argv[bu_optind] != NULL )
+	if ( argv[bu_optind] != NULL )
 		flavor = atoi( argv[bu_optind] );
 	return	1;
 }

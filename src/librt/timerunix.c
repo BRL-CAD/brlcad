@@ -105,12 +105,12 @@ rt_get_timer(struct bu_vls *vp, double *elapsed)
 	sys_cpu_secs = (tmsnow.tms_stime + tmsnow.tms_cstime) -
 		(tms0.tms_stime + tms0.tms_cstime );
 	sys_cpu_secs /= HZ;
-	if( user_cpu_secs < 0.00001 )  user_cpu_secs = 0.00001;
-	if( elapsed_secs < 0.00001 )  elapsed_secs = user_cpu_secs;	/* It can't be any less! */
+	if ( user_cpu_secs < 0.00001 )  user_cpu_secs = 0.00001;
+	if ( elapsed_secs < 0.00001 )  elapsed_secs = user_cpu_secs;	/* It can't be any less! */
 
-	if( elapsed )  *elapsed = elapsed_secs;
+	if ( elapsed )  *elapsed = elapsed_secs;
 
-	if( vp )  {
+	if ( vp )  {
 		percent = user_cpu_secs/elapsed_secs*100.0;
 		BU_CK_VLS(vp);
 #ifdef DEFAULT_HZ
@@ -138,12 +138,12 @@ rt_read_timer(char *str, int len)
 	double		cpu;
 	int		todo;
 
-	if( !str )  return  rt_get_timer( (struct bu_vls *)0, (double *)0 );
+	if ( !str )  return  rt_get_timer( (struct bu_vls *)0, (double *)0 );
 
 	bu_vls_init( &vls );
 	cpu = rt_get_timer( &vls, (double *)0 );
 	todo = bu_vls_strlen( &vls );
-	if( todo > len )  todo = len-1;
+	if ( todo > len )  todo = len-1;
 	strncpy( str, bu_vls_addr(&vls), todo );
 	str[todo] = '\0';
 	return cpu;

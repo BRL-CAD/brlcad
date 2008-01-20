@@ -125,7 +125,7 @@ main(int argc, char **argv)
 	size = 4000;	/* separation between centers */
 	quant = 5;	/* pairs */
 	VSET( lwh, 400, 400, 1000 );
-	for( ix=quant-1; ix>=0; ix-- )  {
+	for ( ix=quant-1; ix>=0; ix-- )  {
 		x = 10000 + ix*size;
 		VSET( pbase, x, 10000*.25, r1min[Z] );
 		make_pillar( "Pil", ix, 0, pbase, lwh, &head );
@@ -208,22 +208,22 @@ make_walls(char *rname, fastf_t *imin, fastf_t *imax, fastf_t *thickness, int bi
 	 */
 	VMOVE( omin, imin );
 	VMOVE( omax, imax );
-	if( bits & EAST )
+	if ( bits & EAST )
 		omax[X] += thickness[X];
-	if( bits & WEST )
+	if ( bits & WEST )
 		omin[X] -= thickness[X];
-	if( bits & NORTH )
+	if ( bits & NORTH )
 		omax[Y] += thickness[Y];
-	if( bits & SOUTH )
+	if ( bits & SOUTH )
 		omin[Y] -= thickness[Y];
 
-	for( mask=8; mask > 0; mask >>= 1 )  {
-		if( (bits & mask) == 0 )  continue;
+	for ( mask=8; mask > 0; mask >>= 1 )  {
+		if ( (bits & mask) == 0 )  continue;
 
 		VMOVE( wmin, omin );
 		VMOVE( wmax, omax );
 
-		switch( mask )  {
+		switch ( mask )  {
 		case SOUTH:
 			/* South (-Y) wall */
 			snprintf( name, 32, "S%s", rname );

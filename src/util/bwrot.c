@@ -87,7 +87,7 @@ get_args(int argc, register char **argv)
 	register int c;
 
 	while ( (c = bu_getopt( argc, argv, "fbrihs:w:n:S:W:N:a:" )) != EOF )  {
-		switch( c )  {
+		switch ( c )  {
 		case 'f':
 			minus90++;
 			break;
@@ -127,18 +127,18 @@ get_args(int argc, register char **argv)
 	}
 
 	/* XXX - backward compatability hack */
-	if( bu_optind+2 == argc ) {
+	if ( bu_optind+2 == argc ) {
 		nxin = atoi(argv[bu_optind++]);
 		nyin = atoi(argv[bu_optind++]);
 	}
-	if( bu_optind >= argc )  {
-		if( isatty(fileno(stdin)) )
+	if ( bu_optind >= argc )  {
+		if ( isatty(fileno(stdin)) )
 			return(0);
 		file_name = "-";
 		ifp = stdin;
 	} else {
 		file_name = argv[bu_optind];
-		if( (ifp = fopen(file_name, "r")) == NULL )  {
+		if ( (ifp = fopen(file_name, "r")) == NULL )  {
 			(void)fprintf( stderr,
 				"bwrot: cannot open \"%s\" for reading\n",
 				file_name );
@@ -167,14 +167,14 @@ main(int argc, char **argv)
 
 	scanbytes = nxin;
 	buflines = MAXBUFBYTES / scanbytes;
-	if( buflines <= 0 ) {
+	if ( buflines <= 0 ) {
 		fprintf( stderr, "bwrot: I'm not compiled to do a scanline that long!\n" );
 		bu_exit ( 1, NULL );
 	}
-	if( buflines > nyin ) buflines = nyin;
+	if ( buflines > nyin ) buflines = nyin;
 	buffer = (unsigned char *)malloc( buflines * scanbytes );
 	obuf = (unsigned char *)malloc( (nyin > nxin) ? nyin : nxin );
-	if( buffer == (unsigned char *)0 || obuf == (unsigned char *)0 ) {
+	if ( buffer == (unsigned char *)0 || obuf == (unsigned char *)0 ) {
 		fprintf( stderr, "bwrot: malloc failed\n" );
 		bu_exit ( 3, NULL );
 	}
@@ -182,7 +182,7 @@ main(int argc, char **argv)
 	/*
 	 * Break out to added arbitrary angle routine
 	 */
-	if( angle ) {
+	if ( angle ) {
 		arbrot( angle );
 		bu_exit ( 0, NULL );
 	}
@@ -195,26 +195,26 @@ main(int argc, char **argv)
 	outplace = 0;
 
 	yin = 0;
-	while( yin < nyin ) {
+	while ( yin < nyin ) {
 		/* Fill buffer */
 		fill_buffer();
-		if( !buflines )
+		if ( !buflines )
 			break;
-		if( reverse )
+		if ( reverse )
 			reverse_buffer();
-		if( plus90 ) {
-			for( x = 0; x < nxin; x++ ) {
+		if ( plus90 ) {
+			for ( x = 0; x < nxin; x++ ) {
 				obp = obuf;
 				bp = &buffer[ (lasty-firsty)*scanbytes + x ];
-				for( y = lasty; y >= yin; y-- ) { /* firsty? */
+				for ( y = lasty; y >= yin; y-- ) { /* firsty? */
 					*obp++ = *bp;
 					bp -= scanbytes;
 				}
 				yout = x;
 				xout = (nyin - 1) - lasty;
 				outbyte = ((yout * nyin) + xout);
-				if( outplace != outbyte ) {
-					if( fseek( ofp, outbyte, 0 ) < 0 ) {
+				if ( outplace != outbyte ) {
+					if ( fseek( ofp, outbyte, 0 ) < 0 ) {
 						fprintf( stderr, "bwrot: Can't seek on output, yet I need to!\n" );
 						bu_exit ( 3, NULL );
 					}
@@ -223,19 +223,19 @@ main(int argc, char **argv)
 				fwrite( obuf, 1, buflines, ofp );
 				outplace += buflines;
 			}
-		} else if( minus90 ) {
-			for( x = nxin-1; x >= 0; x-- ) {
+		} else if ( minus90 ) {
+			for ( x = nxin-1; x >= 0; x-- ) {
 				obp = obuf;
 				bp = &buffer[ x ];
-				for( y = firsty; y <= lasty; y++ ) {
+				for ( y = firsty; y <= lasty; y++ ) {
 					*obp++ = *bp;
 					bp += scanbytes;
 				}
 				yout = (nxin - 1) - x;
 				xout = yin;
 				outbyte = ((yout * nyin) + xout);
-				if( outplace != outbyte ) {
-					if( fseek( ofp, outbyte, 0 ) < 0 ) {
+				if ( outplace != outbyte ) {
+					if ( fseek( ofp, outbyte, 0 ) < 0 ) {
 						fprintf( stderr, "bwrot: Can't seek on output, yet I need to!\n" );
 						bu_exit ( 3, NULL );
 					}
@@ -244,12 +244,12 @@ main(int argc, char **argv)
 				fwrite( obuf, 1, buflines, ofp );
 				outplace += buflines;
 			}
-		} else if( invert ) {
-			for( y = lasty; y >= firsty; y-- ) {
+		} else if ( invert ) {
+			for ( y = lasty; y >= firsty; y-- ) {
 				yout = (nyin - 1) - y;
 				outbyte = yout * scanbytes;
-				if( outplace != outbyte ) {
-					if( fseek( ofp, outbyte, 0 ) < 0 ) {
+				if ( outplace != outbyte ) {
+					if ( fseek( ofp, outbyte, 0 ) < 0 ) {
 						fprintf( stderr, "bwrot: Can't seek on output, yet I need to!\n" );
 						bu_exit ( 3, NULL );
 					}
@@ -260,7 +260,7 @@ main(int argc, char **argv)
 			}
 		} else {
 			/* Reverse only */
-			for( y = 0; y < buflines; y++ ) {
+			for ( y = 0; y < buflines; y++ ) {
 				fwrite( &buffer[y*scanbytes], 1, scanbytes, ofp );
 			}
 		}
@@ -285,10 +285,10 @@ reverse_buffer(void)
 	int	i;
 	unsigned char *p1, *p2, temp;
 
-	for( i = 0; i < buflines; i++ ) {
+	for ( i = 0; i < buflines; i++ ) {
 		p1 = &buffer[ i * scanbytes ];
 		p2 = p1 + (scanbytes - 1);
-		while( p1 < p2 ) {
+		while ( p1 < p2 ) {
 			temp = *p1;
 			*p1++ = *p2;
 			*p2-- = temp;
@@ -334,12 +334,12 @@ arbrot(double a)
 	double	x_goop, y_goop;
 	double	sina, cosa;
 
-	if( buflines != nyin ) {
+	if ( buflines != nyin ) {
 		/* I won't all fit in the buffer */
 		fprintf(stderr, "bwrot: Sorry but I can't do an arbitrary rotate of an image this large\n");
 		bu_exit (1, NULL);
 	}
-	if( buflines > nyin ) buflines = nyin;
+	if ( buflines > nyin ) buflines = nyin;
 	fill_buffer();
 
 	/*
@@ -363,12 +363,12 @@ arbrot(double a)
 	x_max = nxin;
 	y_max = nyin;
 
-	for( y = y_min; y < y_max; y++ ) {
+	for ( y = y_min; y < y_max; y++ ) {
 		x2 = x_min * cosa - y * sina + x_goop;
 		y2 = x_min * sina + y * cosa + y_goop;
-		for( x = x_min; x < x_max; x++ ) {
+		for ( x = x_min; x < x_max; x++ ) {
 			/* check for in bounds */
-			if( x2 >= 0 && x2 < nxin && y2 >= 0 && y2 < nyin )
+			if ( x2 >= 0 && x2 < nxin && y2 >= 0 && y2 < nyin )
 				putchar(buffer[(int)y2*nyin + (int)x2]);
 			else
 				putchar(0);	/* XXX - setable color? */

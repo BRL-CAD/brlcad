@@ -107,10 +107,10 @@ bu_units_conversion(const char *str)
 
 	/* Copy the given string, making it lower case */
 	ip = ubuf;
-	while( (c = *ip) )  {
-		if( !isascii(c) )
+	while ( (c = *ip) )  {
+		if ( !isascii(c) )
 			*ip++ = '_';
-		else if( isupper(c) )
+		else if ( isupper(c) )
 			*ip++ = tolower(c);
 		else
 			ip++;
@@ -118,12 +118,12 @@ bu_units_conversion(const char *str)
 
 	/* Remove any trailing "s" (plural) */
 	len = strlen(ubuf);
-	if( ubuf[len-1] == 's' )  ubuf[len-1] = '\0';
+	if ( ubuf[len-1] == 's' )  ubuf[len-1] = '\0';
 
 	/* Search for this string in the table */
-	for( tp=bu_units_tab; tp->name[0]; tp++ )  {
-		if( ubuf[0] != tp->name[0] )  continue;
-		if( strcmp( ubuf, tp->name ) != 0 )  continue;
+	for ( tp=bu_units_tab; tp->name[0]; tp++ )  {
+		if ( ubuf[0] != tp->name[0] )  continue;
+		if ( strcmp( ubuf, tp->name ) != 0 )  continue;
 		return( tp->val );
 	}
 	return(0.0);		/* Unable to find it */
@@ -146,15 +146,15 @@ bu_units_string(register const double mm)
 {
 	register const struct cvt_tab	*tp;
 
-	if( mm <= 0 )  return (char *)NULL;
+	if ( mm <= 0 )  return (char *)NULL;
 
 	/* Search for this string in the table */
-	for( tp=bu_units_tab; tp->name[0]; tp++ )  {
+	for ( tp=bu_units_tab; tp->name[0]; tp++ )  {
 		fastf_t	diff, bigger;
-		if( mm == tp->val )  return tp->name;
+		if ( mm == tp->val )  return tp->name;
 
 		/* Check for near-miss */
-		if( mm > tp->val )  {
+		if ( mm > tp->val )  {
 			bigger = mm;
 			diff = mm - tp->val;
 		}  else  {
@@ -163,10 +163,10 @@ bu_units_string(register const double mm)
 		}
 
 		/* Absolute difference less than 0.1 angstrom */
-		if( diff < 1.0e-8 )  return tp->name;
+		if ( diff < 1.0e-8 )  return tp->name;
 
 		/* Relative difference less than 1 part per billion */
-		if( diff < 0.000000001 * bigger )  return tp->name;
+		if ( diff < 0.000000001 * bigger )  return tp->name;
 	}
 	return (char *)NULL;
 }
@@ -201,8 +201,8 @@ bu_mm_value(const char *s)
 	}
 
 	for (tp=bu_units_tab; tp->name[0]; tp++ )  {
-		if( *ptr != tp->name[0] )  continue;
-		if( strcmp( ptr, tp->name ) == 0 ) {
+		if ( *ptr != tp->name[0] )  continue;
+		if ( strcmp( ptr, tp->name ) == 0 ) {
 			v *= tp->val;
 			return v;
 		}

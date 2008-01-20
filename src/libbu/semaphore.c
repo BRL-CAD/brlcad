@@ -187,8 +187,8 @@ bu_semaphore_sgi_init()
     /* Now, set up the lock arena */
     fp = bu_temp_file(bu_lockfile, MAXPATHLEN);
     
-    if( bu_debug & BU_DEBUG_PARALLEL )  {
-	if( usconfig( CONF_LOCKTYPE, _USDEBUGPLUS ) == -1 )
+    if ( bu_debug & BU_DEBUG_PARALLEL )  {
+	if ( usconfig( CONF_LOCKTYPE, _USDEBUGPLUS ) == -1 )
 	    perror("usconfig CONF_LOCKTYPE");
     }
     /*
@@ -202,7 +202,7 @@ bu_semaphore_sgi_init()
     /* Set maximum number of procs that can share this arena */
     usconfig(CONF_INITUSERS, bu_avail_cpus()+1);
     
-    if( bu_debug & BU_DEBUG_PARALLEL )  {
+    if ( bu_debug & BU_DEBUG_PARALLEL )  {
 	/* This is a big performance hit, but may find bugs */
 	usconfig(CONF_LOCKTYPE, US_DEBUG);
     } else {
@@ -256,9 +256,9 @@ bu_semaphore_init(unsigned int nsemaphores)
 #else
 	unsigned int	i;
 
-	if( bu_nsemaphores != 0 )  return;	/* Already called */
+	if ( bu_nsemaphores != 0 )  return;	/* Already called */
 	bu_semaphores = (struct bu_semaphores *)calloc(nsemaphores, sizeof(struct bu_semaphores) );
-	if( !bu_semaphores )  {
+	if ( !bu_semaphores )  {
 		fprintf(stderr, "bu_semaphore_init(): could not allocate space for %d semaphores of len %ld\n",
 			nsemaphores, (long)sizeof(struct bu_semaphores));
 		exit(2); /* cannot call bu_exit() here */
@@ -269,28 +269,28 @@ bu_semaphore_init(unsigned int nsemaphores)
 	 */
 
 #	if defined(alliant)
-	for( i=0; i < nsemaphores; i++ )  {
+	for ( i=0; i < nsemaphores; i++ )  {
 		bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
 		(void) initialize_lock( &bu_semaphores[i].c );
 	}
 #	endif
 
 #	ifdef ardent
-	for( i=0; i < nsemaphores; i++ )  {
+	for ( i=0; i < nsemaphores; i++ )  {
 		bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
 		bu_semaphores[i].sem = 1;	/* mark as released */
 	}
 #	endif
 
 #	if defined(convex) || defined(__convex__)
-	for( i=0; i < nsemaphores; i++ )  {
+	for ( i=0; i < nsemaphores; i++ )  {
 		bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
 		bu_semaphores[i].sem = 0;	/* mark as released */
 	}
 #	endif
 
 #	ifdef CRAY
-	for( i=0; i < nsemaphores; i++ )  {
+	for ( i=0; i < nsemaphores; i++ )  {
 		bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
 		LOCKASGN( &bu_semaphores[i].p );
 	}
@@ -304,7 +304,7 @@ bu_semaphore_init(unsigned int nsemaphores)
 	 *  out that the library support for that simply malloc()s a 1-byte
 	 *  area to contain the lock, and sets it to PAR_UNLOCKED.
 	 */
-	for( i=0; i < nsemaphores; i++ )  {
+	for ( i=0; i < nsemaphores; i++ )  {
 		bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
 		bu_semaphores[i].sem = PAR_UNLOCKED;
 	}
@@ -312,9 +312,9 @@ bu_semaphore_init(unsigned int nsemaphores)
 
 #	ifdef SGI_4D
 	bu_semaphore_sgi_init();
-	for( i=0; i < nsemaphores; i++ )  {
+	for ( i=0; i < nsemaphores; i++ )  {
 		bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
-		if( (bu_semaphores[i].ltp = usnewlock(bu_lockstuff)) == NULL )  {
+		if ( (bu_semaphores[i].ltp = usnewlock(bu_lockstuff)) == NULL )  {
 			perror("usnewlock");
 			fprintf(stderr, "bu_semaphore_init: usnewlock() failed, unable to allocate lock [%d]\n", i);
 			bu_bomb("fatal semaphore initialization failure");
@@ -323,7 +323,7 @@ bu_semaphore_init(unsigned int nsemaphores)
 #	endif
 
 #	if SUNOS
-	for( i=0; i < nsemaphores; i++ )  {
+	for ( i=0; i < nsemaphores; i++ )  {
 		bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
 		if (mutex_init( &bu_semaphores[i].mu, USYNC_THREAD, NULL)) {
 			fprintf(stderr, "bu_semaphore_init(): mutex_init() failed on [%d]\n", i);
@@ -333,7 +333,7 @@ bu_semaphore_init(unsigned int nsemaphores)
 	}
 #	endif
 #	if defined(HAVE_PTHREAD_H) && !defined(sgi)
-	for( i=0; i < nsemaphores; i++ )  {
+	for ( i=0; i < nsemaphores; i++ )  {
 		bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
 		if (pthread_mutex_init( &bu_semaphores[i].mu,  NULL)) {
 			fprintf(stderr, "bu_semaphore_init(): pthread_mutex_init() failed on [%d]\n", i);
@@ -386,7 +386,7 @@ bu_semaphore_acquire(unsigned int i)
 #	ifdef ardent
 	{
 		register long	*p = &bu_semaphores[i].sem;
-		while( SYNCH_Adr = p, !SYNCH_Val )  while( !*p );
+		while ( SYNCH_Adr = p, !SYNCH_Val )  while ( !*p );
 	}
 #	endif
 
@@ -431,14 +431,14 @@ bu_semaphore_release(unsigned int i)
 #if !defined(PARALLEL) && !defined(DEFINED_BU_SEMAPHORES)
 	return;					/* No support on this hardware */
 #else
-	if( bu_semaphores == NULL )  {
+	if ( bu_semaphores == NULL )  {
 		/* Semaphores not initialized yet.  Must be non-parallel */
 		return;
 	}
 
 	BU_CKMAG(bu_semaphores, BU_SEMAPHORE_MAGIC, "bu_semaphore");
 
-	if( i >= bu_nsemaphores )  {
+	if ( i >= bu_nsemaphores )  {
 		fprintf(stderr, "bu_semaphore_release(%d): semaphore # exceeds max of %d\n",
 			i, bu_nsemaphores - 1);
 		exit(3); /* cannot call bu_exit() here */
@@ -475,13 +475,13 @@ bu_semaphore_release(unsigned int i)
 #	endif
 
 #	if SUNOS
-	if( mutex_unlock( &bu_semaphores[i].mu ) )  {
+	if ( mutex_unlock( &bu_semaphores[i].mu ) )  {
 		fprintf(stderr, "bu_semaphore_acquire(): mutex_unlock() failed on [%d]\n", i);
 		bu_bomb("fatal semaphore acquisition failure");
 	}
 #	endif
 #	if defined(HAVE_PTHREAD_H) && !defined (sgi)
-	if( pthread_mutex_unlock( &bu_semaphores[i].mu ) )  {
+	if ( pthread_mutex_unlock( &bu_semaphores[i].mu ) )  {
 		fprintf(stderr, "bu_semaphore_acquire(): pthread_mutex_unlock() failed on [%d]\n", i);
 		bu_bomb("fatal semaphore acquisition failure");
 	}

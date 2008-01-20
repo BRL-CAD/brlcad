@@ -47,8 +47,8 @@
 #define HmDEBUG		0
 
 #ifndef Max
-#  define Max(_a,_b)	((_a)<(_b)?(_b):(_a))
-#  define Min(_a,_b)	((_a)>(_b)?(_b):(_a))
+#  define Max(_a, _b)	((_a)<(_b)?(_b):(_a))
+#  define Min(_a, _b)	((_a)>(_b)?(_b):(_a))
 #endif
 
 #define HmRingbell()	(void) putchar( '\07' ),  (void) fflush( stdout )
@@ -74,11 +74,11 @@
 #define P_ON		(1)
 #define P_FORCE		(1<<1)
 
-#define  PutMenuChar(_c,_co,_ro,_map,_bit)\
+#define  PutMenuChar(_c, _co, _ro, _map, _bit)\
 		{	static int	lro = -1, lco = -1;\
-		if( (_map) & (_bit) || (_bit) == 0 )\
+		if ( (_map) & (_bit) || (_bit) == 0 )\
 			{\
-			if( lco++ != (_co)-1 || lro != (_ro) )\
+			if ( lco++ != (_co)-1 || lro != (_ro) )\
 				{\
 				(void) ScMvCursor( _co, _ro );\
 				lco = _co;\
@@ -118,17 +118,17 @@ HmBanner( char *pgmname, int borderchr )
 #define HmBUFLEN	81
 		static char     HmPgmName[HmBUFLEN] = "No name";
 		static int      HmBorderChr = '_';
-	if( pgmname != NULL )
+	if ( pgmname != NULL )
 		{
 		(void) strncpy( HmPgmName, pgmname, HmBUFLEN );
 		HmBorderChr = borderchr;
 		}
 	(void) ScMvCursor( HmLftMenu, HmYBORDER );
-	for( co = 1; co <= 3; co++ )
+	for ( co = 1; co <= 3; co++ )
 		(void) putc( HmBorderChr, stdout );
-	for( p = HmPgmName; co <= ScCO && *p != '\0'; co++, p++ )
+	for ( p = HmPgmName; co <= ScCO && *p != '\0'; co++, p++ )
 		(void) putc( (int)(*p), stdout );
-	for( ; co <= ScCO; co++ )
+	for (; co <= ScCO; co++ )
 		(void) putc( HmBorderChr, stdout );
 	return;
 	}
@@ -142,7 +142,7 @@ static void
 HmPrntItem( HmItem *itemp )
 {
 	(void) ErLog( "\t\tHmPrntItem(0x%x)\n", itemp );
-	for( ; itemp->text != (char *) NULL; itemp++ )
+	for (; itemp->text != (char *) NULL; itemp++ )
 		{
 		(void) ErLog( "\t\t\ttext=\"%s\"\n", itemp->text );
 		(void) ErLog( "\t\t\thelp=\"%s\"\n", itemp->help == (char *) NULL ? "(null)" : itemp->help );
@@ -184,7 +184,7 @@ HmPrntWindows( void )
 {
     register HmWindow	*win;
 	(void) ErLog( "HmPrntWindows()\n" );
-	for( win = windows; win != (HmWindow *) NULL; win = win->next )
+	for ( win = windows; win != (HmWindow *) NULL; win = win->next )
 		{
 		(void) ErLog( "\twin=0x%x\n", win );
 		(void) ErLog( "\tmenup=0x%x\n", win->menup );
@@ -207,7 +207,7 @@ HmPrntWindows( void )
 static void
 HmPrntLList( HmLList *listp )
 {
-	if( listp == (HmLList *) NULL )
+	if ( listp == (HmLList *) NULL )
 		return;
 	HmPrntItem( listp->itemp );
 	HmPrntLList( listp->next );
@@ -224,13 +224,13 @@ HmFreeItems( HmItem *itemp )
 {
     register HmItem	*citemp;
     register int	count;
-	for(	citemp = itemp, count = 1;
+	for (	citemp = itemp, count = 1;
 		citemp->text != (char *) NULL;
 		citemp++, count++
 		)
 		{
 		MmStrFree( citemp->text );
-		if( citemp->help != (char *) NULL )
+		if ( citemp->help != (char *) NULL )
 			MmStrFree( citemp->help );
 		}
 	MmVFree( count, HmItem, itemp );
@@ -247,7 +247,7 @@ static void
 HmFreeLList( HmLList *listp )
 {
     register HmLList	*tp;
-    for( ; listp != (HmLList *) NULL; listp = tp )
+    for (; listp != (HmLList *) NULL; listp = tp )
 		{
 		MmFree( HmItem, listp->itemp );
 		tp = listp->next;
@@ -284,45 +284,45 @@ HmPutItem( register HmWindow *win, register HmItem *itemp, int flag )
 				/*	~0 : win->dirty[HmENTRY+1];*/
 		register int	bit = 1;
 		register int	writemask = 0;
-	if( bitmap == 0 )
+	if ( bitmap == 0 )
 		return;
-	if( itemp->text[0] & 0200 )	/* right-justified */
+	if ( itemp->text[0] & 0200 )	/* right-justified */
 		{	register int	i;
 		label_len--;
-		for( i = 0; i < width - label_len; i++ )
+		for ( i = 0; i < width - label_len; i++ )
 			*p++ = itemp->text[0] & 0177;
-		for( i = 1; itemp->text[i] != '\0'; i++ )
+		for ( i = 1; itemp->text[i] != '\0'; i++ )
 			*p++ = itemp->text[i];
 		}
 	else				/* left-justified */
-	if( itemp->text[label_len-1] & 0200 )
+	if ( itemp->text[label_len-1] & 0200 )
 		{	register int	i;
 		label_len--;
-		for( i = 0; !(itemp->text[i] & 0200); i++ )
+		for ( i = 0; !(itemp->text[i] & 0200); i++ )
 			*p++ = itemp->text[i];
-		for( ; i < width; i++ )
+		for (; i < width; i++ )
 			*p++ = itemp->text[label_len] & 0177;
 		}
 	else				/* centered */
 		{	register int	i, j;
-		for( i = 0; i < (width - label_len)/2; i++ )
+		for ( i = 0; i < (width - label_len)/2; i++ )
 			*p++ = ' ';
-		for( j = 0; itemp->text[j] != '\0'; j++ )
+		for ( j = 0; itemp->text[j] != '\0'; j++ )
 			*p++ = itemp->text[j];
-		for( i += j; i < width; i++ )
+		for ( i += j; i < width; i++ )
 			*p++ = ' ';
 		}
 	*p = '\0';
 
 	PutMenuChar( '|', col, row, bitmap, bit );
-	if( flag & P_ON )
+	if ( flag & P_ON )
 		(void) ScSetStandout();
 	else
 		(void) ScClrStandout();
 
 	/* Optimized printing of entry.				*/
 	{
-	if( bitmap == ~0 )
+	if ( bitmap == ~0 )
 		{
 		(void) fputs( buf, stdout );
 		col += p-buf;
@@ -330,16 +330,16 @@ HmPutItem( register HmWindow *win, register HmItem *itemp, int flag )
 		}
 	else
 		{	register int	i;
-		for( i = 0; i < p-buf; i++ )
+		for ( i = 0; i < p-buf; i++ )
 			writemask |= 1<<(i+1);
-		for( i = 0; i < p-buf; i++ )
+		for ( i = 0; i < p-buf; i++ )
 			{
-			if( (bitmap & writemask) == writemask )
+			if ( (bitmap & writemask) == writemask )
 				break;
 			writemask &= ~bit;
 			PutMenuChar( buf[i], col, row, bitmap, bit );
 			}
-		if( i < p-buf )
+		if ( i < p-buf )
 			{
 			(void) ScMvCursor( col, row );
 			(void) fputs( &buf[i], stdout );
@@ -349,7 +349,7 @@ HmPutItem( register HmWindow *win, register HmItem *itemp, int flag )
 		}
 	}
 
-	if( flag & P_ON )
+	if ( flag & P_ON )
 		(void) ScClrStandout();
 	PutMenuChar( '|', col, row, bitmap, bit );
 	return;
@@ -370,21 +370,21 @@ HmPutBorder( register HmWindow *win, register int row, char mark )
 		register int	bitmap = win->dirty[row - win->menuy];
 		static char	buf[HmMAXLINE];
 		register char	*p = buf;
-	if( bitmap == 0 )
+	if ( bitmap == 0 )
 		return; /* No dirty bits. */
 	*p++ = mark;
-	for( i = 0; i < win->width; i++ )
+	for ( i = 0; i < win->width; i++ )
 		*p++ = '-';
 	*p++ = mark;
 	*p = '\0';
-	if( bitmap == ~0 )
+	if ( bitmap == ~0 )
 		{	/* All bits dirty. */
 		(void) ScMvCursor( col, row );
 		(void) fputs( buf, stdout );
 		}
 	else
 		{
-		for( i = 0; i < p - buf; i++ )
+		for ( i = 0; i < p - buf; i++ )
 			PutMenuChar( buf[i], col, row, bitmap, bit );
 		}
 	return;
@@ -426,7 +426,7 @@ HmClrmap( HmWindow *win )
 {
     register int	row;
     register int	height = HmHEIGHT;
-	for( row = 0; row <= height+1; row++ )
+	for ( row = 0; row <= height+1; row++ )
 		win->dirty[row] = 0;
 	return;
 	}
@@ -441,7 +441,7 @@ HmSetmap( HmWindow *win )
 {
     register int	row;
     register int	height = HmHEIGHT;
-	for( row = 0; row <= height+1; row++ )
+	for ( row = 0; row <= height+1; row++ )
 		win->dirty[row] = ~0; /* 0xffff... */
 	return;
 	}
@@ -457,16 +457,16 @@ static HmWindow	*
 HmInWin( register int x, register int y, register HmWindow *win )
 {
 #if HmDEBUG && 0
-	if( win != (HmWindow *) NULL )
+	if ( win != (HmWindow *) NULL )
 		(void) ErLog(	"HmInWin:x=%d y=%d win{<%d,%d>,<%d,%d>}\r\n",
 				x, y,
 				win->menux, win->menux+win->width+1,
 				win->menuy, win->menuy+HmHEIGHT+1
 				);
 #endif
-	for( ; win != (HmWindow *) NULL; win = win->next )
+	for (; win != (HmWindow *) NULL; win = win->next )
 		{	register int	height = HmHEIGHT;
-		if( !	(x < win->menux || x > win->menux + win->width + 1 ||
+		if ( !	(x < win->menux || x > win->menux + win->width + 1 ||
 			 y < win->menuy || y > win->menuy + height + 1)
 			)
 			return	win;
@@ -492,12 +492,12 @@ HmDrawWin( register HmWindow *win )
 			win->menuy, win->menuy+HmHEIGHT+1
 			);
 	{	register int	i;
-	for( i = 0; i <= HmHEIGHT+1; i++ )
+	for ( i = 0; i <= HmHEIGHT+1; i++ )
 		(void) ErLog( "\tdirty[%d]=0x%x\r\n", i, win->dirty[i] );
 	}
 #endif
 	HmPutBorder( win, win->menuy, win->menup->prevtop > 0 ? '^' : '+' );
-	for(	itemp = win->menup->item + win->menup->prevtop;
+	for (	itemp = win->menup->item + win->menup->prevtop;
 		HmENTRY-win->menup->prevtop < HmMaxVis && itemp->text != (char *) NULL;
 		itemp++
 		)
@@ -567,11 +567,11 @@ HmLiftWin( register HmWindow *win )
 			win->menuy, win->menuy+HmHEIGHT+1
 			);
 #endif
-	for( row = win->menuy; row < endrow; row++ )
+	for ( row = win->menuy; row < endrow; row++ )
 		{
-		for( col = win->menux; col < endcol; col++ )
+		for ( col = win->menux; col < endcol; col++ )
 			{	register HmWindow	*olwin;
-			if( (olwin = HmInWin( col, row, win->next ))
+			if ( (olwin = HmInWin( col, row, win->next ))
 				!= (HmWindow *) NULL
 				)
 				{
@@ -580,7 +580,7 @@ HmLiftWin( register HmWindow *win )
 				}
 			else
 				{
-				if( lastcol != col-1 || lastrow != row )
+				if ( lastcol != col-1 || lastrow != row )
 					(void) ScMvCursor( col, row );
 				lastcol = col; lastrow = row;
 				(void) putchar( ' ' );
@@ -624,7 +624,7 @@ HmPopWin( HmWindow *win )
 static void
 HmRefreshWin( HmWindow *win )
 {
-	if( win == (HmWindow *) NULL )
+	if ( win == (HmWindow *) NULL )
 		{
 		HmDirty = 0;
 		return;
@@ -650,14 +650,14 @@ HmRedraw( void )
 	(void) ScClrText();	/* clear entire screen */
 
 	/* See if we changed the maximum items displayed parameter. */
-	if( HmMaxVis != HmLastMaxVis )
+	if ( HmMaxVis != HmLastMaxVis )
 		reset = 1;
-	for( win = windows; win != (HmWindow *) NULL; win = win->next )
+	for ( win = windows; win != (HmWindow *) NULL; win = win->next )
 		{
-		if( reset ) /* Correct window to reflect new maximum. */
+		if ( reset ) /* Correct window to reflect new maximum. */
 			{
 			/* Reset scrolling state-info in each window. */
-			if( win->menup->prevhit >= HmMaxVis )
+			if ( win->menup->prevhit >= HmMaxVis )
 				win->menup->prevtop = win->menup->prevhit -
 							HmMaxVis + 1;
 			else
@@ -665,7 +665,7 @@ HmRedraw( void )
 			/* Must reallocate "dirty" bit map to fit new size. */
 			MmVFree( Min(win->height, HmLastMaxVis)+HmHGTBORDER,
 				 int, win->dirty );
-			if(	(win->dirty =
+			if (	(win->dirty =
 				MmVAllo( HmHEIGHT+HmHGTBORDER, int )
 				) == NULL )
 				{
@@ -691,7 +691,7 @@ HmTtySet( void )
 	set_Cbreak( HmTtyFd );
 	clr_Echo( HmTtyFd );
 	clr_Tabs( HmTtyFd );
-	if( HmMyxflag )
+	if ( HmMyxflag )
 		{
 		/* Send escape codes to push current toggle settings,
 			and turn on "editor ptr". */
@@ -710,7 +710,7 @@ HmTtySet( void )
 void
 HmTtyReset( void )
 {
-	if( HmMyxflag )
+	if ( HmMyxflag )
 		{
 		/* Send escape codes to pop old toggle settings. */
 		(void) fputs( "\033[?1;3Z", stdout );
@@ -732,7 +732,7 @@ HmTtyReset( void )
 boolean
 HmInit( int x, int y, int maxvis )
 {
-	if(	(HmTtyFd = open( "/dev/tty", O_RDONLY )) == (-1)
+	if (	(HmTtyFd = open( "/dev/tty", O_RDONLY )) == (-1)
 	    ||	(HmTtyFp = fdopen( HmTtyFd, "r" )) == NULL
 		)
 		{
@@ -759,11 +759,11 @@ HmWidHgtMenu( register HmWindow *win )
     register HmItem	*itemp;
     
     /* Determine width of menu, allowing for border.		*/
-    for( itemp = win->menup->item; itemp->text != (char *) NULL; itemp++ ) {
+    for ( itemp = win->menup->item; itemp->text != (char *) NULL; itemp++ ) {
 	register int	len = 0;
 	register int	i;
-	for( i = 0; itemp->text[i] != '\0' ; i++ ) {
-	    if( ! (itemp->text[i] & 0200) )
+	for ( i = 0; itemp->text[i] != '\0'; i++ ) {
+	    if ( ! (itemp->text[i] & 0200) )
 		len++;
 	}
 	win->width = Max( win->width, len );
@@ -781,14 +781,14 @@ HmWidHgtMenu( register HmWindow *win )
 static boolean
 HmFitMenu( register HmWindow *nwin, register HmWindow *cwin  )
 {
-	if( cwin == (HmWindow *) NULL )
+	if ( cwin == (HmWindow *) NULL )
 		return	0;
 	else
-	if( HmFitMenu( nwin, cwin->next ) )
+	if ( HmFitMenu( nwin, cwin->next ) )
 		return	1;
 	else
 	/* Look for space underneath this menu.				*/
-	if(	cwin->menux + nwin->width + 1 <= ScCO
+	if (	cwin->menux + nwin->width + 1 <= ScCO
 	    &&	cwin->menuy + cwin->height + nwin->height + HmHGTBORDER
 			< HmMaxVis + HmTopMenu
 		)
@@ -812,13 +812,13 @@ static void
 HmPosMenu( register HmWindow *win )
 {
 	/* Determine origin (top-left corner) of menu.			*/
-	if( win->next != (HmWindow *) NULL )
+	if ( win->next != (HmWindow *) NULL )
 		{
 		win->menux = win->next->menux + win->next->width + 1;
 		win->menuy = win->next->menuy;
-		if( win->menux + win->width + 2 > ScCO )
+		if ( win->menux + win->width + 2 > ScCO )
 			{
-			if( ! HmFitMenu( win, win->next ) )
+			if ( ! HmFitMenu( win, win->next ) )
 				{
 				/* No space, so overlap top-level menu.	*/
 				win->menux = HmLftMenu;
@@ -846,7 +846,7 @@ HmMyxMouse( register int *x, register int *y )
     register int	c;
 
     c = HmGetchar();
-    switch( c )
+    switch ( c )
 		{
 	case Ctrl('A') :
 		*x = HmGetchar() - ' ' + 96;
@@ -859,7 +859,7 @@ HmMyxMouse( register int *x, register int *y )
 		break;
 		}
 	c = HmGetchar();
-	switch( c )
+	switch ( c )
 		{
 	case Ctrl('A') :
 		*y = HmGetchar() - ' ' + 96;
@@ -896,42 +896,42 @@ HmHit( HmMenu *menup )
 #if HmDEBUG
 	ErLog( "HmHit(0x%x)\n", menup );
 #endif
-	if( HmPkgInit == 0 )
+	if ( HmPkgInit == 0 )
 		{
 		HmInit( HmLftMenu, HmTopMenu, HmMaxVis );
 		HmPkgInit = 1;
 		}
-	if( ++HmLevel == 1 )
+	if ( ++HmLevel == 1 )
 		HmTtySet();
 
 	/* If generator function is provided, dynamically allocate the
 		menu items.
 	 */
-	if( (dynamic = (menup->item == (HmItem *) NULL) ))
+	if ( (dynamic = (menup->item == (HmItem *) NULL) ))
 		{	register int	i;
 			register HmItem	*gitemp;
 			HmLList	llhead, **listp;
-		for(	i = 0, listp = &llhead.next;
+		for (	i = 0, listp = &llhead.next;
 			;
 			i++,   listp = &(*listp)->next
 			)
 			{
-			if(	(*listp = MmAllo( HmLList )) == NULL
+			if (	(*listp = MmAllo( HmLList )) == NULL
 			     ||	((*listp)->itemp = MmAllo( HmItem )) == NULL
 				)
 				{
 				goto	clean_exit;
 				}
 			itemp = (*listp)->itemp;
-			if( (gitemp = (*menup->generator)( i )) == (HmItem *) NULL )
+			if ( (gitemp = (*menup->generator)( i )) == (HmItem *) NULL )
 				{
 				itemp->text = (char *) NULL;
 				(*listp)->next = (HmLList *) NULL;
 				break;
 				}
-			if( gitemp->text != (char *) NULL )
+			if ( gitemp->text != (char *) NULL )
 				{
-				if( (itemp->text = MmStrDup( gitemp->text ))
+				if ( (itemp->text = MmStrDup( gitemp->text ))
 					== (char *) NULL
 					)
 					{
@@ -940,9 +940,9 @@ HmHit( HmMenu *menup )
 				}
 			else
 				itemp->text = (char *) NULL;
-			if( gitemp->help != (char *) NULL )
+			if ( gitemp->help != (char *) NULL )
 				{
-				if( (itemp->help = MmStrDup( gitemp->help ))
+				if ( (itemp->help = MmStrDup( gitemp->help ))
 					== (char *) NULL
 					)
 					{
@@ -966,24 +966,24 @@ HmHit( HmMenu *menup )
 		/* Steal the field that the user isn't using temporarily to
 			emulate the static allocation of menu items.
 		 */
-		if( i > 0 )
+		if ( i > 0 )
 			{	register int		ii;
 				register HmLList	*lp;
-			if( (menup->item = MmVAllo( i+1, HmItem )) == NULL )
+			if ( (menup->item = MmVAllo( i+1, HmItem )) == NULL )
 				{
 				goto	clean_exit;
 				}
-			for(	ii = 0, lp = llhead.next;
+			for (	ii = 0, lp = llhead.next;
 				lp != (HmLList *) NULL;
 				ii++,   lp = lp->next
 				)
 				menup->item[ii] = *lp->itemp;
 			}
 		HmFreeLList( llhead.next );
-		if( i == 0 ) /* Zero items, so return NULL */
+		if ( i == 0 ) /* Zero items, so return NULL */
 			goto	clean_exit;
 		}
-	if( (win = MmAllo( HmWindow )) == NULL )
+	if ( (win = MmAllo( HmWindow )) == NULL )
 		{
 #if HmDEBUG
 		ErLog( "HmHit, BUG: memory pool possibly corrupted.\n" );
@@ -996,21 +996,21 @@ HmHit( HmMenu *menup )
 	HmWidHgtMenu( win );
 	HmPosMenu( win );
 
-	if( menup->prevhit < 0 || menup->prevhit >= win->height )
+	if ( menup->prevhit < 0 || menup->prevhit >= win->height )
 		menup->prevhit = 0;
 	itemp = &menup->item[menup->prevhit];
 
-	if( (win->dirty = MmVAllo( HmHEIGHT+HmHGTBORDER, int )) == NULL )
+	if ( (win->dirty = MmVAllo( HmHEIGHT+HmHGTBORDER, int )) == NULL )
 		{
 		goto	clean_exit;
 		}
-	if( HmDirty )
+	if ( HmDirty )
 		HmRefreshWin( windows );
 	HmSetmap( win );
 	HmDrawWin( win );
-	while( ! done )
+	while ( ! done )
 		{	int	c;
-		if( HmDirty )
+		if ( HmDirty )
 			HmRefreshWin( windows );
 		(void) ScMvCursor( HmXPROMPT, HmYPROMPT );
 		(void) ScClrEOL();
@@ -1020,18 +1020,18 @@ HmHit( HmMenu *menup )
 		c = HmGetchar();
 		(void) ScMvCursor( HmLftMenu, HmYCOMMO );
 		(void) ScClrEOL();
-		switch( c )
+		switch ( c )
 			{
 		case M_UP :
 		case A_UP :
-			if( HmENTRY == 0 )
+			if ( HmENTRY == 0 )
 				HmRingbell();
 			else
 				{
 				HmPutItem( win, itemp, P_OFF | P_FORCE );
 				itemp--;
 				menup->prevhit = HmENTRY;
-				if( HmENTRY < win->menup->prevtop )
+				if ( HmENTRY < win->menup->prevtop )
 					{
 					win->menup->prevtop -=
 						HmENTRY > HmMaxVis/2 ?
@@ -1045,14 +1045,14 @@ HmHit( HmMenu *menup )
 			break;
 		case M_DOWN :
 		case A_DOWN :
-			if( HmENTRY >= win->height-1 )
+			if ( HmENTRY >= win->height-1 )
 				HmRingbell();
 			else
 				{
 				HmPutItem( win, itemp, P_OFF | P_FORCE );
 				itemp++;
 				menup->prevhit = HmENTRY;
-				if( HmENTRY - win->menup->prevtop >= HmMaxVis )
+				if ( HmENTRY - win->menup->prevtop >= HmMaxVis )
 					{
 					win->menup->prevtop +=
 						win->height-HmENTRY > HmMaxVis/2 ?
@@ -1067,19 +1067,19 @@ HmHit( HmMenu *menup )
 		case M_MYXMOUSE :
 			{	static int	mousex, mousey;
 				register HmItem	*lastitemp;
-			if( HmGetchar() != Ctrl('_') || HmGetchar() != '1' )
+			if ( HmGetchar() != Ctrl('_') || HmGetchar() != '1' )
 				goto	m_badinput;
 			HmMyxMouse( &mousex, &mousey );
-			if( HmInWin( mousex, mousey, win ) != win )
+			if ( HmInWin( mousex, mousey, win ) != win )
 				{ /* Mouse cursor outside of menu. */
 				HmRingbell();
 				break;
 				}
-			if( mousey == win->menuy && win->menup->prevtop == 0 )
+			if ( mousey == win->menuy && win->menup->prevtop == 0 )
 				{ /* Top border of menu and can't scroll. */
 				goto	m_noselect;
 				}
-			if(	mousey == win->menuy + HmHEIGHT + 1
+			if (	mousey == win->menuy + HmHEIGHT + 1
 			    &&	win->height <= HmMaxVis + win->menup->prevtop
 				)
 				{ /* Bottom border of menu and can't scroll. */
@@ -1090,12 +1090,12 @@ HmHit( HmMenu *menup )
 			itemp = win->menup->item +
 					win->menup->prevtop +
 					(mousey - (win->menuy + 1));
-			if( itemp == lastitemp )
+			if ( itemp == lastitemp )
 				/* User hit item twice in a row, so select it. */
 				goto	m_select;
 			HmPutItem( win, lastitemp, P_OFF | P_FORCE );
 			menup->prevhit = HmENTRY;
-			if( HmENTRY - win->menup->prevtop >= HmMaxVis )
+			if ( HmENTRY - win->menup->prevtop >= HmMaxVis )
 				{
 				win->menup->prevtop +=
 					win->height-HmENTRY > HmMaxVis/2 ?
@@ -1104,7 +1104,7 @@ HmHit( HmMenu *menup )
 				HmDrawWin( win );
 				}
 			else
-			if( HmENTRY < win->menup->prevtop )
+			if ( HmENTRY < win->menup->prevtop )
 				{
 				win->menup->prevtop -=
 					HmENTRY > HmMaxVis/2 ?
@@ -1124,9 +1124,9 @@ HmHit( HmMenu *menup )
 			break;
 		m_select :
 		case M_SELECT :
-			if( itemp->next != (HmMenu *) NULL )
+			if ( itemp->next != (HmMenu *) NULL )
 				{	HmItem	*subitemp;
-				if( itemp->dfn != (void (*)()) NULL )
+				if ( itemp->dfn != (void (*)()) NULL )
 					{	int	level = HmLevel;
 					HmTtyReset();
 					HmLevel = 0;
@@ -1135,7 +1135,7 @@ HmHit( HmMenu *menup )
 					HmTtySet();
 					}
 				subitemp = HmHit( itemp->next );
-				if( itemp->bfn != (void (*)()) NULL )
+				if ( itemp->bfn != (void (*)()) NULL )
 					{	int	level = HmLevel;
 					HmTtyReset();
 					HmLevel = 0;
@@ -1143,7 +1143,7 @@ HmHit( HmMenu *menup )
 					HmLevel = level;
 					HmTtySet();
 					}
-				if( subitemp != (HmItem *) NULL )
+				if ( subitemp != (HmItem *) NULL )
 					{
 					retitemp = subitemp;
 					done = ! menup->sticky;
@@ -1152,7 +1152,7 @@ HmHit( HmMenu *menup )
 			else
 				{
 				retitemp = itemp;
-				if( itemp->hfn != (void (*)()) NULL )
+				if ( itemp->hfn != (void (*)()) NULL )
 					{	int	level = HmLevel;
 					HmTtyReset();
 					HmLevel = 0;
@@ -1181,9 +1181,9 @@ HmHit( HmMenu *menup )
 		(void) fflush( stdout );
 		}
 	/* Free storage of dynamic menu.				*/
-	if( dynamic )
+	if ( dynamic )
 		{
-		if( retitemp != (HmItem *) NULL )
+		if ( retitemp != (HmItem *) NULL )
 			{ /* Must make copy of item we are returning. */
 				static HmItem	dynitem;
 			dynitem = *retitemp;
@@ -1198,7 +1198,7 @@ HmHit( HmMenu *menup )
 	MmVFree( HmHEIGHT+HmHGTBORDER, int, win->dirty );
 	MmFree( HmWindow, win );
 clean_exit :
-	if( HmLevel-- == 1 )
+	if ( HmLevel-- == 1 )
 		HmTtyReset();
 	return	retitemp;
 	}

@@ -71,11 +71,11 @@ main(int argc, char **argv)
 {
 	register int i;
 
-	if( ! pars_Argv( argc, argv ) )  {
+	if ( ! pars_Argv( argc, argv ) )  {
 		(void)fputs(usage, stderr);
 		return	1;
 	}
-	if( (fbp = fb_open( framebuffer, scr_width, scr_height )) == FBIO_NULL )  {
+	if ( (fbp = fb_open( framebuffer, scr_width, scr_height )) == FBIO_NULL )  {
 		fprintf(stderr, "fbcolor:  fb_open(%s) failure\n", framebuffer);
 		return	1;
 	}
@@ -91,32 +91,32 @@ main(int argc, char **argv)
 
 	/* Note that color 0, 0, 0 is special;  use 1, 1, 1 for black */
 	/* Red */
-	for( i=0; i<255; i++)  {
+	for ( i=0; i<255; i++)  {
 		buf[3*i+RED] = i;
 		buf[3*i+GRN] = 1;
 		buf[3*i+BLU] = 1;
 	}
-	for( i=0; i<99; i++ )
+	for ( i=0; i<99; i++ )
 		fb_write( fbp, 0, i, buf, 256 );
 
 	/* Green */
 	memset((char *)buf, 0, sizeof(buf));
-	for( i=0; i<255; i++) {
+	for ( i=0; i<255; i++) {
 		buf[3*i+RED] = 1;
 		buf[3*i+GRN] = i;
 		buf[3*i+BLU] = 1;
 	}
-	for( i=100; i<199; i++ )
+	for ( i=100; i<199; i++ )
 		fb_write( fbp, 0, i, buf, 256 );
 
 	/* Blue */
 	memset((char *)buf, 0, sizeof(buf));
-	for( i=0; i<255; i++)  {
+	for ( i=0; i<255; i++)  {
 		buf[3*i+RED] = 1;
 		buf[3*i+GRN] = 1;
 		buf[3*i+BLU] = i;
 	}
-	for( i=200; i<299; i++ )
+	for ( i=200; i<299; i++ )
 		fb_write( fbp, 0, i, buf, 256 );
 
 	/* Set RAW mode */
@@ -127,19 +127,19 @@ main(int argc, char **argv)
 	do  {
 		/* Build color map for current value */
 		memset((char *)&cm, 0, sizeof(cm));
-		for( i=0; i<col[RED]; i++ )
+		for ( i=0; i<col[RED]; i++ )
 			cm.cm_red[i] = 0xFFFF;
-		for( ; i<255; i++ )
+		for (; i<255; i++ )
 			cm.cm_red[i] = 0;
 
-		for( i=0; i<col[GRN]; i++ )
+		for ( i=0; i<col[GRN]; i++ )
 			cm.cm_green[i] = 0xFFFF;
-		for( ; i<255; i++ )
+		for (; i<255; i++ )
 			cm.cm_green[i] = 0;
 
-		for( i=0; i<col[BLU]; i++ )
+		for ( i=0; i<col[BLU]; i++ )
 			cm.cm_blue[i] = 0xFFFF;
-		for( ; i<255; i++ )
+		for (; i<255; i++ )
 			cm.cm_blue[i] = 0;
 
 		/* 0, 0, 0 is color chosen */
@@ -160,7 +160,7 @@ main(int argc, char **argv)
 				col[0], col[1], col[2],
 				col[3], col[4], col[5]	);
 		(void) fflush( stdout );
-	} while( doKeyPad() );
+	} while ( doKeyPad() );
 
 	fb_wmap( fbp, &old_map );
 	reset_Tty( 0 );
@@ -187,10 +187,10 @@ doKeyPad(void)
 {
 	register int ch;
 
-	if( (ch = getchar()) == EOF )
+	if ( (ch = getchar()) == EOF )
 		return	0;		/* done */
 
-	switch( ch )  {
+	switch ( ch )  {
 	default :
 		(void) fprintf( stdout,
 				"\r\n'%c' bad -- Type ? for help\r\n",
@@ -227,7 +227,7 @@ doKeyPad(void)
 		curchan = 5;
 		break;
 	case '/':
-		if( ++curchan >= 6 )  curchan = 0;
+		if ( ++curchan >= 6 )  curchan = 0;
 		break;
 
 	/* unit changes with -+ or ,. */
@@ -258,10 +258,10 @@ doKeyPad(void)
 void
 new_rgb(void) {
 	/* Wrap values to stay in range 0..255 */
-	if( col[curchan] < 0 ) col[curchan] = 255;
-	if( col[curchan] > 255 ) col[curchan] = 0;
+	if ( col[curchan] < 0 ) col[curchan] = 255;
+	if ( col[curchan] > 255 ) col[curchan] = 0;
 	/* recompute either rgb or hsv from the other */
-	if( curchan < 3 )
+	if ( curchan < 3 )
 		rgbhsv( col, &col[3] );
 	else
 		hsvrgb( &col[3], col );
@@ -273,8 +273,8 @@ int
 pars_Argv(int argc, register char **argv)
 {
 	register int	c;
-	while( (c = bu_getopt( argc, argv, "F:s:S:w:W:n:N:h" )) != EOF )  {
-		switch( c )  {
+	while ( (c = bu_getopt( argc, argv, "F:s:S:w:W:n:N:h" )) != EOF )  {
+		switch ( c )  {
 		case 'F':
 			framebuffer = bu_optarg;
 			break;
@@ -366,7 +366,7 @@ hsvrgb(register int *hsv, register int *rgb)
 	double h, s, v, foo;
 	double f;
 
-	if(hsv[1] != 0)
+	if (hsv[1] != 0)
 	{
 	    s = (double)hsv[1] / 255.;
 	    h = (double)hsv[0] / 42.666;
@@ -375,7 +375,7 @@ hsvrgb(register int *hsv, register int *rgb)
 	    m = (int) (v * (1. - s) + .5);
 	    n = (int) (v * (1. - s*f) + .5);
 	    k = (int) (v * (1. - (s * (1.-f))) + .5);
-	    switch((int) h)
+	    switch ((int) h)
 	    {
 	    case 0:
 		r = hsv[2];

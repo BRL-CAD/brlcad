@@ -46,58 +46,58 @@ lgt_Print_Db(int id)
 {	register Lgt_Source	*entry;
 		register int		stop;
 		int			lines =	(PROMPT_LINE-TOP_SCROLL_WIN);
-	if( id >= lgt_db_size )
+	if ( id >= lgt_db_size )
 		return	0;
 	else
-	if( id < 0 )
+	if ( id < 0 )
 		{
 		stop = lgt_db_size - 1;
 		id = 0;
 		}
 	else
 		stop = id;
-	for( ; id <= stop; id++, lines-- )
+	for (; id <= stop; id++, lines-- )
 		{
 		entry = &lgts[id];
-		if( lines <= 0 && ! do_More( &lines ) )
+		if ( lines <= 0 && ! do_More( &lines ) )
 			break;
 		prnt_Scroll( "\n" );
-		if( --lines <= 0 && ! do_More( &lines ) )
+		if ( --lines <= 0 && ! do_More( &lines ) )
 			break;
 		prnt_Scroll( "LIGHT SOURCE [%d] %s\n", id, entry->name );
-		if( --lines <= 0 && ! do_More( &lines ) )
+		if ( --lines <= 0 && ! do_More( &lines ) )
 			break;
 		prnt_Scroll( "       manual override\t(%s)\n", entry->over ? "ON" : "OFF" );
-		if( entry->stp == SOLTAB_NULL || entry->over )
+		if ( entry->stp == SOLTAB_NULL || entry->over )
 			{
-			if( --lines <= 0 && ! do_More( &lines ) )
+			if ( --lines <= 0 && ! do_More( &lines ) )
 				break;
 			prnt_Scroll( "       azimuth\t\t(%g)\n", entry->azim*DEGRAD );
-			if( --lines <= 0 && ! do_More( &lines ) )
+			if ( --lines <= 0 && ! do_More( &lines ) )
 				break;
 			prnt_Scroll( "       elevation\t(%g)\n", entry->elev*DEGRAD );
 			}
-		if( --lines <= 0 && ! do_More( &lines ) )
+		if ( --lines <= 0 && ! do_More( &lines ) )
 			break;
 		prnt_Scroll( "       distance\t\t(%g)\n", entry->dist );
-		if( --lines <= 0 && ! do_More( &lines ) )
+		if ( --lines <= 0 && ! do_More( &lines ) )
 			break;
 		prnt_Scroll( "       location\t\t<%g,%g,%g>\n",
 				entry->loc[X], entry->loc[Y], entry->loc[Z]
 				);
-		if( --lines <= 0 && ! do_More( &lines ) )
+		if ( --lines <= 0 && ! do_More( &lines ) )
 			break;
 		prnt_Scroll( "       gaussian beam\t(%s)\n", entry->beam ? "ON" : "OFF" );
-		if( entry->beam )
+		if ( entry->beam )
 			{
-			if( --lines <= 0 && ! do_More( &lines ) )
+			if ( --lines <= 0 && ! do_More( &lines ) )
 				break;
 			prnt_Scroll( "       beam radius\t(%g)\n", entry->radius );
 			}
-		if( --lines <= 0 && ! do_More( &lines ) )
+		if ( --lines <= 0 && ! do_More( &lines ) )
 			break;
 		prnt_Scroll( "       intensity\t(%g)\n", entry->energy );
-		if( --lines <= 0 && ! do_More( &lines ) )
+		if ( --lines <= 0 && ! do_More( &lines ) )
 			break;
 		prnt_Scroll( "       color\t\t(%d %d %d)\n",
 				entry->rgb[0], entry->rgb[1], entry->rgb[2]
@@ -115,10 +115,10 @@ int
 lgt_Rd_Db(char *file)
 {	register Lgt_Source	*entry;
 		register FILE		*fp;
-	if( (fp = fopen( file, "r" )) == NULL )
+	if ( (fp = fopen( file, "r" )) == NULL )
 		return	0;
 	lgt_db_size = 0;
-	for(	entry = lgts;
+	for (	entry = lgts;
 		entry < &lgts[MAX_LGTS]
 	     && get_Lgt_Entry( entry, fp );
 		++entry
@@ -138,17 +138,17 @@ lgt_Save_Db(char *file)
 	register Lgt_Source	*entry;
 	register FILE		*fp;
 
-	if( (fp = fopen( file, "w" )) == NULL )
+	if ( (fp = fopen( file, "w" )) == NULL )
 		return	0;
 	setbuf( fp, bu_malloc( BUFSIZ, "buffer" ) );
-	for(	entry = lgts;
+	for (	entry = lgts;
 		entry < &lgts[lgt_db_size]
 	     && put_Lgt_Entry( entry, fp );
 		++entry
 		)
 		;
 	(void) fclose( fp );
-	if( entry != &lgts[lgt_db_size] )
+	if ( entry != &lgts[lgt_db_size] )
 		return	0;
 	return	1;
 	}
@@ -162,58 +162,58 @@ lgt_Edit_Db_Entry(int id)
 		char			input_buf[MAX_LN];
 		char			prompt[MAX_LN];
 		int			red, grn, blu;
-	if( id < 0 || id >= MAX_LGTS )
+	if ( id < 0 || id >= MAX_LGTS )
 		return	-1;
 	lgt_db_size = Max( lgt_db_size, id+1 );
 	entry = &lgts[id];
 	(void) snprintf( prompt, MAX_LN, "light source name ? (%s) ", entry->name );
-	if( get_Input( input_buf, MAX_LN, prompt ) != NULL )
+	if ( get_Input( input_buf, MAX_LN, prompt ) != NULL )
 		(void) strncpy( entry->name, input_buf, MAX_LGT_NM-1 );
 	(void) sprintf( prompt, "manual override ? [y|n](%c) ",
 			entry->over ? 'y' : 'n' );
-	if( get_Input( input_buf, MAX_LN, prompt ) != NULL )
+	if ( get_Input( input_buf, MAX_LN, prompt ) != NULL )
 		entry->over = input_buf[0] != 'n';
-	if( entry->over || entry->stp == SOLTAB_NULL )
+	if ( entry->over || entry->stp == SOLTAB_NULL )
 		{
 		(void) sprintf( prompt, "azimuth ? (%g) ",
 				entry->azim*DEGRAD );
-		if( get_Input( input_buf, MAX_LN, prompt ) != NULL )
+		if ( get_Input( input_buf, MAX_LN, prompt ) != NULL )
 			{
 			(void) sscanf( input_buf, "%lf", &entry->azim );
 			entry->azim /= DEGRAD;
 			}
 		(void) sprintf( prompt, "elevation ? (%g) ",
 				entry->elev*DEGRAD );
-		if( get_Input( input_buf, MAX_LN, prompt ) != NULL )
+		if ( get_Input( input_buf, MAX_LN, prompt ) != NULL )
 			{
 			(void) sscanf( input_buf, "%lf", &entry->elev );
 			entry->elev /= DEGRAD;
 			}
 		(void) sprintf( prompt, "distance ? (%g) ", entry->dist );
-		if( get_Input( input_buf, MAX_LN, prompt ) != NULL )
+		if ( get_Input( input_buf, MAX_LN, prompt ) != NULL )
 			(void) sscanf( input_buf, "%lf", &entry->dist );
 		}
 	(void) sprintf( prompt, "gaussian beam ? [y|n](%c) ",
 			entry->beam ? 'y' : 'n' );
-	if( get_Input( input_buf, MAX_LN, prompt ) != NULL )
+	if ( get_Input( input_buf, MAX_LN, prompt ) != NULL )
 		entry->beam = input_buf[0] != 'n';
-	if( entry->beam )
+	if ( entry->beam )
 		{
 		(void) sprintf( prompt, "radius of beam ? (%g) ",
 				entry->radius );
-		if( get_Input( input_buf, MAX_LN, prompt ) != NULL )
+		if ( get_Input( input_buf, MAX_LN, prompt ) != NULL )
 			(void) sscanf( input_buf, "%lf", &entry->radius );
 		}
 	(void) sprintf( prompt, "intensity ? [0.0 to 1.0](%g) ",
 			entry->energy );
-	if( get_Input( input_buf, MAX_LN, prompt ) != NULL )
+	if ( get_Input( input_buf, MAX_LN, prompt ) != NULL )
 		(void) sscanf( input_buf, "%lf", &entry->energy );
 	(void) sprintf( prompt, "color ? [0 to 255](%d %d %d) ",
 			entry->rgb[RED],
 			entry->rgb[GRN],
 			entry->rgb[BLU]
 			);
-	if(	get_Input( input_buf, MAX_LN, prompt ) != NULL
+	if (	get_Input( input_buf, MAX_LN, prompt ) != NULL
 	     &&	sscanf( input_buf, "%d %d %d", &red, &grn, &blu ) == 3
 		)
 		{
@@ -228,23 +228,23 @@ static int
 get_Lgt_Entry(register Lgt_Source *entry, FILE *fp)
 {	register char	*ptr;
 		int		red, grn, blu;
-	if( bu_fgets( entry->name, MAX_LGT_NM, fp ) == NULL )
+	if ( bu_fgets( entry->name, MAX_LGT_NM, fp ) == NULL )
 		return	0;
 	ptr = &entry->name[strlen(entry->name) - 1];
-	if( *ptr == '\n' )
+	if ( *ptr == '\n' )
 		/* Read entire line.					*/
 		*ptr = '\0';
 	else	/* Skip rest of line.					*/
-		while( getc( fp ) != '\n' )
+		while ( getc( fp ) != '\n' )
 			;
-	if( fscanf( fp, "%d %d", &entry->beam, &entry->over ) != 2 )
+	if ( fscanf( fp, "%d %d", &entry->beam, &entry->over ) != 2 )
 		return	0;
-	if( fscanf( fp, "%d %d %d", &red, &grn, &blu ) != 3 )
+	if ( fscanf( fp, "%d %d %d", &red, &grn, &blu ) != 3 )
 		return	0;
 	entry->rgb[0] = red;
 	entry->rgb[1] = grn;
 	entry->rgb[2] = blu;
-	if(	fscanf(	fp,
+	if (	fscanf(	fp,
 			"%lf %lf %lf %lf %lf",
 			&entry->azim,
 			&entry->elev,
@@ -254,7 +254,7 @@ get_Lgt_Entry(register Lgt_Source *entry, FILE *fp)
 			) != 5
 		)
 		return	0;
-	while( getc( fp ) != '\n' )
+	while ( getc( fp ) != '\n' )
 		; /* Gobble rest of line.				*/
 	return	1;
 	}

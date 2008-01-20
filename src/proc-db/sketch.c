@@ -79,7 +79,7 @@ main(int argc, char **argv)
 	VMOVE( skt->v_vec, v_vec );
 	skt->vert_count = 10;
 	skt->verts = (point2d_t *)bu_calloc( skt->vert_count, sizeof( point2d_t ), "verts" );
-	for( i=0 ; i<skt->vert_count ; i++ ) {
+	for ( i=0; i<skt->vert_count; i++ ) {
 		V2MOVE( skt->verts[i], verts[i] );
 	}
 

@@ -151,7 +151,7 @@ const struct bu_structparse rt_eto_parse[] = {
     { "%f", 3, "C",   bu_offsetof(struct rt_eto_internal, eto_C[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 1, "r",   bu_offsetof(struct rt_eto_internal, eto_r),    BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 1, "r_d", bu_offsetof(struct rt_eto_internal, eto_rd),   BU_STRUCTPARSE_FUNC_NULL },
-    { {'\0','\0','\0','\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
+    { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
  };
 
 /**
@@ -442,7 +442,7 @@ rt_eto_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	 *  if the root finder returns other than 4 roots, error.
 	 */
 	if ( (i = rt_poly_roots( &C, val, stp->st_dp->d_namep )) != 4 ){
-		if( i > 0 )  {
+		if ( i > 0 )  {
 			bu_log("eto:  rt_poly_roots() 4!=%d\n", i);
 			bn_pr_roots( stp->st_name, val, i );
 		} else if (i < 0) {
@@ -465,16 +465,16 @@ rt_eto_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	 *  of 't' for the intersections
 	 */
 	for ( j=0, i=0; j < 4; j++ ){
-		if( NEAR_ZERO( val[j].im, 0.0001 ) )
+		if ( NEAR_ZERO( val[j].im, 0.0001 ) )
 			k[i++] = val[j].re;
 	}
 
 	/* reverse above translation by adding distance to all 'k' values. */
-	for( j = 0; j < i; ++j )
+	for ( j = 0; j < i; ++j )
 		k[j] -= cor_proj;
 
 	/* Here, 'i' is number of points found */
-	switch( i )  {
+	switch ( i )  {
 	case 0:
 		return(0);		/* No hit */
 
@@ -487,7 +487,7 @@ rt_eto_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 		{
 			/* Sort most distant to least distant. */
 			fastf_t	u;
-			if( (u=k[0]) < k[1] )  {
+			if ( (u=k[0]) < k[1] )  {
 				/* bubble larger towards [0] */
 				k[0] = k[1];
 				k[1] = u;
@@ -500,10 +500,10 @@ rt_eto_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 			register short	lim;
 
 			/*  Inline rt_pt_sort().  Sorts k[] into descending order. */
-			for( lim = i-1; lim > 0; lim-- )  {
-				for( n = 0; n < lim; n++ )  {
+			for ( lim = i-1; lim > 0; lim-- )  {
+				for ( n = 0; n < lim; n++ )  {
 					fastf_t	u;
-					if( (u=k[n]) < k[n+1] )  {
+					if ( (u=k[n]) < k[n+1] )  {
 						/* bubble larger towards [0] */
 						k[n] = k[n+1];
 						k[n+1] = u;
@@ -525,7 +525,7 @@ rt_eto_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	VJOIN1( segp->seg_out.hit_vpriv, pprime, k[0], dprime );
 	BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 
-	if( i == 2 )
+	if ( i == 2 )
 		return(2);			/* HIT */
 
 	/* 4 points */
@@ -773,7 +773,7 @@ rt_eto_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	}
 
 	/* Establish tolerances */
-	if( ttol->rel <= 0.0 || ttol->rel >= 1.0 )  {
+	if ( ttol->rel <= 0.0 || ttol->rel >= 1.0 )  {
 		dtol = 0.0;		/* none */
 	} else {
 		/*
@@ -785,8 +785,8 @@ rt_eto_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 		else
 			dtol = ttol->rel * 2 * b;
 	}
-	if( ttol->abs <= 0.0 )  {
-		if( dtol <= 0.0 )  {
+	if ( ttol->abs <= 0.0 )  {
+		if ( dtol <= 0.0 )  {
 			/* No tolerance given, use a default */
 			if (tip->eto_r < b)
 				dtol = 2 * 0.10 * tip->eto_r;	/* 10% */
@@ -797,11 +797,11 @@ rt_eto_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 		}
 	} else {
 		/* Absolute tolerance was given, pick smaller */
-		if( ttol->rel <= 0.0 || dtol > ttol->abs )
+		if ( ttol->rel <= 0.0 || dtol > ttol->abs )
 			dtol = ttol->abs;
 	}
 	/* To ensure normal tolerance, remain below this angle */
-	if( ttol->norm > 0.0 )
+	if ( ttol->norm > 0.0 )
 		ntol = ttol->norm;
 	else
 		/* tolerate everything */
@@ -864,14 +864,14 @@ rt_eto_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	/* draw ellipses */
 	for (i = 0; i < nells; i++) {
 		RT_ADD_VLIST( vhead, ETO_PTA(i, npts-1), BN_VLIST_LINE_MOVE );
-		for( j = 0; j < npts; j++ )
+		for ( j = 0; j < npts; j++ )
 			RT_ADD_VLIST( vhead, ETO_PTA(i, j), BN_VLIST_LINE_DRAW );
 	}
 
 	/* draw connecting circles */
 	for (i = 0; i < npts; i++) {
 		RT_ADD_VLIST( vhead, ETO_PTA(nells-1, i), BN_VLIST_LINE_MOVE );
-		for( j = 0; j < nells; j++ )
+		for ( j = 0; j < nells; j++ )
 			RT_ADD_VLIST( vhead, ETO_PTA(j, i), BN_VLIST_LINE_DRAW );
 	}
 
@@ -1029,7 +1029,7 @@ rt_eto_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	}
 
 	/* Establish tolerances */
-	if( ttol->rel <= 0.0 || ttol->rel >= 1.0 )  {
+	if ( ttol->rel <= 0.0 || ttol->rel >= 1.0 )  {
 		dtol = 0.0;		/* none */
 	} else {
 		/*
@@ -1041,8 +1041,8 @@ rt_eto_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		else
 			dtol = ttol->rel * 2 * b;
 	}
-	if( ttol->abs <= 0.0 )  {
-		if( dtol <= 0.0 )  {
+	if ( ttol->abs <= 0.0 )  {
+		if ( dtol <= 0.0 )  {
 			/* No tolerance given, use a default */
 			if (tip->eto_r < b)
 				dtol = 2 * 0.10 * tip->eto_r;	/* 10% */
@@ -1053,11 +1053,11 @@ rt_eto_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		}
 	} else {
 		/* Absolute tolerance was given, pick smaller */
-		if( ttol->rel <= 0.0 || dtol > ttol->abs )
+		if ( ttol->rel <= 0.0 || dtol > ttol->abs )
 			dtol = ttol->abs;
 	}
 	/* To ensure normal tolerance, remain below this angle */
-	if( ttol->norm > 0.0 )
+	if ( ttol->norm > 0.0 )
 		ntol = ttol->norm;
 	else
 		/* tolerate everything */
@@ -1126,13 +1126,13 @@ rt_eto_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 	/* Build the topology of the eto */
 	nfaces = 0;
-	for( i = 0; i < nells; i++ )  {
-		for( j = 0; j < npts; j++ )  {
+	for ( i = 0; i < nells; i++ )  {
+		for ( j = 0; j < npts; j++ )  {
 			vertp[0] = &verts[ ETO_PT(i+0, j+0) ];
 			vertp[1] = &verts[ ETO_PT(i+0, j+1) ];
 			vertp[2] = &verts[ ETO_PT(i+1, j+1) ];
 			vertp[3] = &verts[ ETO_PT(i+1, j+0) ];
-			if( (faces[nfaces++] = nmg_cmface( s, vertp, 4 )) == (struct faceuse *)0 )  {
+			if ( (faces[nfaces++] = nmg_cmface( s, vertp, 4 )) == (struct faceuse *)0 )  {
 				bu_log("rt_eto_tess() nmg_cmface failed, i=%d/%d, j=%d/%d\n",
 					i, nells, j, npts );
 				nfaces--;
@@ -1141,15 +1141,15 @@ rt_eto_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	}
 
 	/* Associate vertex geometry */
-	for( i = 0; i < nells; i++ )  {
-		for( j = 0; j < npts; j++ )  {
+	for ( i = 0; i < nells; i++ )  {
+		for ( j = 0; j < npts; j++ )  {
 			nmg_vertex_gv( verts[ETO_PT(i, j)], ETO_PTA(i, j) );
 		}
 	}
 
 	/* Associate face geometry */
-	for( i=0; i < nfaces; i++ )  {
-		if( nmg_fu_planeeqn( faces[i], tol ) < 0 )
+	for ( i=0; i < nfaces; i++ )  {
+		if ( nmg_fu_planeeqn( faces[i], tol ) < 0 )
 		{
 			fail = (-1);
 			goto failure;
@@ -1157,9 +1157,9 @@ rt_eto_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	}
 
 	/* associate vertexuse normals */
-	for( i=0 ; i<nells ; i++ )
+	for ( i=0; i<nells; i++ )
 	{
-		for( j=0 ; j<npts ; j++ )
+		for ( j=0; j<npts; j++ )
 		{
 			struct vertexuse *vu;
 			vect_t rev_norm;
@@ -1168,7 +1168,7 @@ rt_eto_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 			NMG_CK_VERTEX( verts[ETO_PT(i, j)] );
 
-			for( BU_LIST_FOR( vu, vertexuse, &verts[ETO_PT(i, j)]->vu_hd ) )
+			for ( BU_LIST_FOR( vu, vertexuse, &verts[ETO_PT(i, j)]->vu_hd ) )
 			{
 				struct faceuse *fu;
 
@@ -1177,9 +1177,9 @@ rt_eto_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 				fu = nmg_find_fu_of_vu( vu );
 				NMG_CK_FACEUSE( fu );
 
-				if( fu->orientation == OT_SAME )
+				if ( fu->orientation == OT_SAME )
 					nmg_vertexuse_nv( vu, ETO_NMA(i, j) );
-				else if( fu->orientation == OT_OPPOSITE )
+				else if ( fu->orientation == OT_OPPOSITE )
 					nmg_vertexuse_nv( vu, rev_norm );
 			}
 		}
@@ -1213,7 +1213,7 @@ rt_eto_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 	BU_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
 	/* Check record type */
-	if( rp->u_id != ID_SOLID )  {
+	if ( rp->u_id != ID_SOLID )  {
 		bu_log("rt_eto_import: defective record\n");
 		return(-1);
 	}
@@ -1234,7 +1234,7 @@ rt_eto_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 	tip->eto_r  = rp->s.s_values[3*3] / mat[15];
 	tip->eto_rd = rp->s.s_values[3*3+1] / mat[15];
 
-	if( tip->eto_r <= SMALL || tip->eto_rd <= SMALL )  {
+	if ( tip->eto_r <= SMALL || tip->eto_rd <= SMALL )  {
 		bu_log("rt_eto_import:  zero length R or Rd vector\n");
 		return(-1);
 	}
@@ -1254,7 +1254,7 @@ rt_eto_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 	union record		*eto;
 
 	RT_CK_DB_INTERNAL(ip);
-	if( ip->idb_type != ID_ETO )  return(-1);
+	if ( ip->idb_type != ID_ETO )  return(-1);
 	tip = (struct rt_eto_internal *)ip->idb_ptr;
 	RT_ETO_CK_MAGIC(tip);
 
@@ -1325,7 +1325,7 @@ rt_eto_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 	tip->eto_r  = vec[3*3] / mat[15];
 	tip->eto_rd = vec[3*3+1] / mat[15];
 
-	if( tip->eto_r <= SMALL || tip->eto_rd <= SMALL )  {
+	if ( tip->eto_r <= SMALL || tip->eto_rd <= SMALL )  {
 		bu_log("rt_eto_import:  zero length R or Rd vector\n");
 		return(-1);
 	}
@@ -1345,7 +1345,7 @@ rt_eto_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	fastf_t			vec[11];
 
 	RT_CK_DB_INTERNAL(ip);
-	if( ip->idb_type != ID_ETO )  return(-1);
+	if ( ip->idb_type != ID_ETO )  return(-1);
 	tip = (struct rt_eto_internal *)ip->idb_ptr;
 	RT_ETO_CK_MAGIC(tip);
 

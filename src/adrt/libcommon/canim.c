@@ -46,7 +46,7 @@ int common_anim_read(common_anim_t *anim, const char *frames_file) {
   char line[256], *token;
 
   fh = fopen(frames_file, "r");
-  if(!fh) {
+  if (!fh) {
     printf("Frames file: %s does not exist, exiting...\n", frames_file);
     exit(1);
   }
@@ -55,17 +55,17 @@ int common_anim_read(common_anim_t *anim, const char *frames_file) {
   anim->frame_list = NULL;
 
 
-  while(fgets(line, 256, fh)) {
+  while (fgets(line, 256, fh)) {
     token = strtok(line, ",");
 
-    if(!strcmp("frame", token)) {
+    if (!strcmp("frame", token)) {
 
       anim->frame_num++;
       anim->frame_list = (common_anim_frame_t *)realloc(anim->frame_list, sizeof(common_anim_frame_t) * (anim->frame_num+1));
       anim->frame_list[anim->frame_num].tnum = 0;
       anim->frame_list[anim->frame_num].tlist = NULL;
 
-    } else if(!strcmp("camera", token)) {
+    } else if (!strcmp("camera", token)) {
 
       /* Position */
       token = strtok(NULL, ",");
@@ -95,7 +95,7 @@ int common_anim_read(common_anim_t *anim, const char *frames_file) {
       token = strtok(NULL, ",");
       anim->frame_list[anim->frame_num].dof = atof(token);
 
-    } else if(!strcmp("transform_mesh", token)) {
+    } else if (!strcmp("transform_mesh", token)) {
 
       int i;
 
@@ -108,7 +108,7 @@ int common_anim_read(common_anim_t *anim, const char *frames_file) {
 
 
       /* Matrix */
-      for(i = 0; i < 16; i++) {
+      for (i = 0; i < 16; i++) {
 	token = strtok(NULL, ",");
 	anim->frame_list[anim->frame_num].tlist[anim->frame_list[anim->frame_num].tnum].matrix[i] = atof(token);
       }

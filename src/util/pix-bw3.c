@@ -53,7 +53,7 @@ main(int argc, char **argv)
 	FILE	*rfp, *bfp, *gfp;
 	register unsigned char *ibufp;
 
-	if( argc != 4 || isatty(fileno(stdin)) ) {
+	if ( argc != 4 || isatty(fileno(stdin)) ) {
 		bu_exit(1, "usage: pix-bw3 redout greenout blueout < file.pix\n");
 	}
 
@@ -61,13 +61,13 @@ main(int argc, char **argv)
 	gfp = fopen( argv[2], "w" );
 	bfp = fopen( argv[3], "w" );
 
-	if( rfp == NULL || gfp == NULL || bfp == NULL ) {
+	if ( rfp == NULL || gfp == NULL || bfp == NULL ) {
 		bu_exit(2, "pix-bw3: Can't open output files\n" );
 	}
 
-	while( (num = fread( ibuf, sizeof( char ), 3*1024, stdin )) > 0 ) {
+	while ( (num = fread( ibuf, sizeof( char ), 3*1024, stdin )) > 0 ) {
 		ibufp = &ibuf[0];
-		for( i = 0; i < num/3; i++ ) {
+		for ( i = 0; i < num/3; i++ ) {
 			red[i] = *ibufp++;
 			green[i] = *ibufp++;
 			blue[i] = *ibufp++;

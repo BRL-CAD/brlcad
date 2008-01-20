@@ -111,9 +111,9 @@ make_hole( struct rt_wdb *wdbp,		/* datbase to be modified */
 	RT_CHECK_WDB( wdbp );
 
 	/* make sure we are only making holes in combinations, they do not have to be regions */
-	for( i=0 ; i<num_objs ; i++ ) {
+	for ( i=0; i<num_objs; i++ ) {
 		RT_CK_DIR( dp[i] );
-		if( !(dp[i]->d_flags & DIR_COMB) ) {
+		if ( !(dp[i]->d_flags & DIR_COMB) ) {
 			bu_log( "make_hole(): can only make holes in combinations\n" );
 			bu_log( "\t%s is not a combination\n", dp[i]->d_namep );
 			return 4;
@@ -125,27 +125,27 @@ make_hole( struct rt_wdb *wdbp,		/* datbase to be modified */
 	bu_vls_strcat( &tmp_name, "make_hole_" );
 	base_len = bu_vls_strlen( &tmp_name );
 	bu_vls_strcat( &tmp_name, "0" );
-	while( (dp_tmp=db_lookup( wdbp->dbip, bu_vls_addr( &tmp_name ), LOOKUP_QUIET ) ) != DIR_NULL ) {
+	while ( (dp_tmp=db_lookup( wdbp->dbip, bu_vls_addr( &tmp_name ), LOOKUP_QUIET ) ) != DIR_NULL ) {
 		count++;
 		bu_vls_trunc( &tmp_name, base_len );
 		bu_vls_printf( &tmp_name, "%d", count );
 	}
 
 	/* build the RCC based on parameters passed in */
-	if( mk_rcc( wdbp, bu_vls_addr( &tmp_name ), hole_start, hole_depth, hole_radius ) ) {
+	if ( mk_rcc( wdbp, bu_vls_addr( &tmp_name ), hole_start, hole_depth, hole_radius ) ) {
 		bu_log( "Failed to create hole cylinder!!!\n" );
 		bu_vls_free( &tmp_name );
 		return 2;
 	}
 
 	/* subtract this RCC from each combination in the list passed in */
-	for( i=0 ; i<num_objs ; i++ ) {
+	for ( i=0; i<num_objs; i++ ) {
 		struct rt_db_internal intern;
 		struct rt_comb_internal *comb;
 		union tree *tree;
 
 		/* get the internal form of the combination */
-		if( rt_db_get_internal( &intern, dp[i], wdbp->dbip, NULL, wdbp->wdb_resp ) < 0 ) {
+		if ( rt_db_get_internal( &intern, dp[i], wdbp->dbip, NULL, wdbp->wdb_resp ) < 0 ) {
 			bu_log( "Failed to get %s\n", dp[i]->d_namep );
 			bu_vls_free( &tmp_name );
 			return 3;
@@ -219,28 +219,28 @@ make_hole_in_prepped_regions( struct rt_wdb *wdbp,	/* database to be modified */
 	bu_vls_strcat( &tmp_name, "make_hole_" );
 	base_len = bu_vls_strlen( &tmp_name );
 	bu_vls_strcat( &tmp_name, "0" );
-	while( (dp=db_lookup( wdbp->dbip, bu_vls_addr( &tmp_name ), LOOKUP_QUIET ) ) != DIR_NULL ) {
+	while ( (dp=db_lookup( wdbp->dbip, bu_vls_addr( &tmp_name ), LOOKUP_QUIET ) ) != DIR_NULL ) {
 		count++;
 		bu_vls_trunc( &tmp_name, base_len );
 		bu_vls_printf( &tmp_name, "%d", count );
 	}
 
 	/* build the RCC based on parameters passed in */
-	if( mk_rcc( wdbp, bu_vls_addr( &tmp_name ), hole_start, hole_depth, radius ) ) {
+	if ( mk_rcc( wdbp, bu_vls_addr( &tmp_name ), hole_start, hole_depth, radius ) ) {
 		bu_log( "Failed to create hole cylinder!!!\n" );
 		bu_vls_free( &tmp_name );
 		return 2;
 	}
 
 	/* lookup the newly created RCC */
-	if( (dp=db_lookup( wdbp->dbip, bu_vls_addr( &tmp_name ), LOOKUP_QUIET ) ) == DIR_NULL ) {
+	if ( (dp=db_lookup( wdbp->dbip, bu_vls_addr( &tmp_name ), LOOKUP_QUIET ) ) == DIR_NULL ) {
 		bu_log( "Failed to lookup RCC (%s) just made by make_hole_in_prepped_regions()!!!\n",
 			bu_vls_addr( &tmp_name ) );
 		bu_bomb( "Failed to lookup RCC just made by make_hole_in_prepped_regions()!!!\n" );
 	}
 
 	/* get the internal form of the new RCC */
-	if( rt_db_get_internal( &intern, dp, wdbp->dbip, NULL, wdbp->wdb_resp ) < 0 ) {
+	if ( rt_db_get_internal( &intern, dp, wdbp->dbip, NULL, wdbp->wdb_resp ) < 0 ) {
 		bu_log( "Failed to get internal form of RCC (%s) just made by make_hole_in_prepped_regions()!!!\n",
 			bu_vls_addr( &tmp_name ) );
 		bu_bomb( "Failed to get internal form of RCC just made by make_hole_in_prepped_regions()!!!\n" );
@@ -261,7 +261,7 @@ make_hole_in_prepped_regions( struct rt_wdb *wdbp,	/* database to be modified */
 	rtip->rti_Solids[stp->st_bit] = stp;
 
 	/* actually prep the new RCC */
-	if( intern.idb_meth->ft_prep( stp, &intern, rtip ) ) {
+	if ( intern.idb_meth->ft_prep( stp, &intern, rtip ) ) {
 		bu_log( "Failed to prep RCC (%s) just made by make_hole_in_prepped_regions()!!!\n",
 			bu_vls_addr( &tmp_name ) );
 		bu_bomb( "Failed to prep RCC just made by make_hole_in_prepped_regions()!!!\n" );
@@ -271,7 +271,7 @@ make_hole_in_prepped_regions( struct rt_wdb *wdbp,	/* database to be modified */
 	bu_ptbl_init( &stp->st_regions, BU_PTBL_LEN( regions ), "stp->st_regions" );
 
 	/* Subtract the new RCC from each region structure in the list provided */
-	for( i=0 ; i<BU_PTBL_LEN( regions ) ; i++ ) {
+	for ( i=0; i<BU_PTBL_LEN( regions ); i++ ) {
 		struct region *rp;
 		union tree *treep;
 

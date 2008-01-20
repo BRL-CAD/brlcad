@@ -63,36 +63,36 @@ int file_count;
 
 
 	/* Get End-of-field delimiter */
-	if( card[counter] != ',' )
+	if ( card[counter] != ',' )
 	{
 		counter--;
-		while( card[++counter] == ' ' );
-		if( card[counter] != '1' || card[counter+1] != 'H' )
+		while ( card[++counter] == ' ' );
+		if ( card[counter] != '1' || card[counter+1] != 'H' )
 		{
 			bu_log( "Error in new delimiter\n" );
 			bu_log( "%s\n", card );
-			for( i=0 ; i<counter-1 ; i++ )
+			for ( i=0; i<counter-1; i++ )
 				bu_log( "%c", ' ' );
 			bu_exit( 1, "^\n" );
 		}
 		counter++;
 		eof = card[++counter];
-		while( card[++counter] != eof );
+		while ( card[++counter] != eof );
 	}
 	else
 		eof = ',';
 
 
 	/* Get End-of-record delimiter */
-	if( card[++counter] != eof )
+	if ( card[++counter] != eof )
 	{
 		counter--;
-		while( card[++counter] == ' ' );
-		if( card[counter] != '1' || card[counter+1] != 'H' )
+		while ( card[++counter] == ' ' );
+		if ( card[counter] != '1' || card[counter+1] != 'H' )
 			bu_exit( 1, "Error in new record delimiter\n" );
 		counter++;
 		eor = card[++counter];
-		while( card[++counter] != eof );
+		while ( card[++counter] != eof );
 	}
 	else
 		eor = ';';
@@ -100,20 +100,20 @@ int file_count;
 
 	/* Read all the fields in the Global Section */
 	counter++;
-	while( field < 23 )
+	while ( field < 23 )
 	{
-	   if( card[counter-1] == eor )
+	   if ( card[counter-1] == eor )
 	   {
 		Readrec( ++currec );
 		break;
 	   }
 
-	   switch( ++field )
+	   switch ( ++field )
 		{
 		case 3:		Readname( &name, "Product ID: ");
-				if( !file_count )
+				if ( !file_count )
 				{
-					if( name != NULL )
+					if ( name != NULL )
 					{
 						mk_id( fdout, name );
 						bu_free( name, "Readglobal: name" );
@@ -141,12 +141,12 @@ int file_count;
 		case 12:	Readstrg( "Product ID: ");
 				break;
 		case 13:	Readflt( &scale, "Scale: " );
-				if( scale == 0.0 )
+				if ( scale == 0.0 )
 					scale = 1.0;
 				inv_scale = 1.0/scale;
 				break;
 		case 14:	Readint( &units, "Units: " );
-				if( units == 0 || units == 3 || units > 11 )
+				if ( units == 0 || units == 3 || units > 11 )
 				{
 					bu_log( "Unrecognized units, assuming 'mm'\n" );
 					conv_factor = 1.0;
@@ -174,7 +174,7 @@ int file_count;
 		case 22:	Readstrg( "Organization: " );
 				break;
 		case 23:	Readint( &i, "" );
-				if( i<1 || i>=NO_OF_VERSIONS )
+				if ( i<1 || i>=NO_OF_VERSIONS )
 					bu_log( "Unrecognized IGES version\n" );
 				else
 					bu_log( "IGES version: %s\n", iges_version[i] );

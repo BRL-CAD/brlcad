@@ -163,7 +163,7 @@ tree_solids(union tree *tp, struct tree_bark *tb, int op, struct resource *resp)
 {
 	RT_CK_TREE(tp);
 
-	switch( tp->tr_op )  {
+	switch ( tp->tr_op )  {
 	case OP_NOP:
 		return;
 
@@ -467,7 +467,7 @@ eval_seg(struct application *ap, struct reg_db_internals *dbint, struct seg *seg
 
 	}
 #if 1
-	for (dist=seg_p->seg_in.hit_dist ; dist < seg_p->seg_out.hit_dist ; dist += step_dist ) {
+	for (dist=seg_p->seg_in.hit_dist; dist < seg_p->seg_out.hit_dist; dist += step_dist ) {
 		VJOIN1(pt, ap->a_ray.r_pt, dist, ap->a_ray.r_dir);
 		optical_density += gauss_eval(pt, ell_p->v, dbint->one_sigma);
 	}

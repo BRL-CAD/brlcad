@@ -461,7 +461,7 @@ dgo_init_qray(struct dg_obj	*dgop)
 	dgop->dgo_qray_overlap_color = def_qray_overlap_color;
 
 	/* count the number of default format types */
-	for(qfdp = def_qray_fmt_data; qfdp->fmt != (char *)NULL; ++qfdp)
+	for (qfdp = def_qray_fmt_data; qfdp->fmt != (char *)NULL; ++qfdp)
 		++n;
 
 	dgop->dgo_qray_fmts = (struct dg_qray_fmt *)bu_malloc(sizeof(struct dg_qray_fmt) * n + 1, "qray_fmts");
@@ -506,7 +506,7 @@ dgo_qray_data_to_vlist(struct dg_obj		*dgop,
 						dgop->dgo_qray_overlap_color.r,
 						dgop->dgo_qray_overlap_color.g,
 						dgop->dgo_qray_overlap_color.b);
-		else if(i % 2)
+		else if (i % 2)
 			vhead = rt_vlblock_find(vbp,
 						dgop->dgo_qray_odd_color.r,
 						dgop->dgo_qray_odd_color.g,

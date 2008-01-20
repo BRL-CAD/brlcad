@@ -70,7 +70,7 @@ main(int argc, char **argv)
 	register int	y;
 	register int	y_end;
 
-	if( ! parsArgv( argc, argv ) )
+	if ( ! parsArgv( argc, argv ) )
 	{
 		prntUsage();
 		return	1;
@@ -81,7 +81,7 @@ main(int argc, char **argv)
 	rle_wlen( xlen, ylen, 1 );
 	rle_wpos( xpos, ypos, 1 );
 
-	if( (fbp = fb_open( fb_file, width, width )) == NULL )  {
+	if ( (fbp = fb_open( fb_file, width, width )) == NULL )  {
 		fprintf(stderr, "fb_open failed\n");
 		bu_exit(12, NULL);
 	}
@@ -108,21 +108,21 @@ main(int argc, char **argv)
 	}
 
 	/* Write RLE header */
-	if( rle_whdr( fp, ncolors, bgflag, cmflag, bgpixel ) == -1 ) {
+	if ( rle_whdr( fp, ncolors, bgflag, cmflag, bgpixel ) == -1 ) {
 	    return 1;
 	}
 
 	/* Follow RLE header with colormap */
-	if( cmflag )  {
-	    if( rle_wmap( fp, &cmap ) == -1 ) {
+	if ( cmflag )  {
+	    if ( rle_wmap( fp, &cmap ) == -1 ) {
 		return 1;
 	    }
-	    if( rle_debug ) {
+	    if ( rle_debug ) {
 		fprintf(stderr, "Color map saved.\n");
 	    }
 	}
 
-	if( ncolors == 0 ) {
+	if ( ncolors == 0 ) {
 	    /* Only save colormap, so we are finished. */
 	    return 0;
 	}
@@ -130,7 +130,7 @@ main(int argc, char **argv)
 	/* Get image from framebuffer and encode it */
 	y_end = ypos + ylen;
 
-	for( y = ypos; y < y_end; y++ )  {
+	for ( y = ypos; y < y_end; y++ )  {
 		if (rle_debug) {
 		    fprintf(stderr, "line %d\n", y);
 		}
@@ -159,9 +159,9 @@ parsArgv(int argc, register char **argv)
 	extern char	*bu_optarg;
 
 	/* Parse options.						*/
-	while( (c = bu_getopt( argc, argv, "CF:Scdhl:p:vw" )) != EOF )
+	while ( (c = bu_getopt( argc, argv, "CF:Scdhl:p:vw" )) != EOF )
 	{
-		switch( c )
+		switch ( c )
 		{
 		case 'C' : /* Crunch color map.				*/
 			crunch = 1;
@@ -180,7 +180,7 @@ parsArgv(int argc, register char **argv)
 			width = 1024;
 			break;
 		case 'l' : /* Length in x and y.			*/
-			if( argc - bu_optind < 1 )
+			if ( argc - bu_optind < 1 )
 			{
 				(void) fprintf( stderr,
 				"-l option requires an X and Y argument!\n"
@@ -191,7 +191,7 @@ parsArgv(int argc, register char **argv)
 			ylen = atoi( argv[bu_optind++] );
 			break;
 		case 'p' : /* Position of bottom-left corner.		*/
-			if( argc - bu_optind < 1 )
+			if ( argc - bu_optind < 1 )
 			{
 				(void) fprintf( stderr,
 				"-p option requires an X and Y argument!\n"
@@ -213,9 +213,9 @@ parsArgv(int argc, register char **argv)
 			return	0;
 		}
 	}
-	if( argv[bu_optind] != NULL )
+	if ( argv[bu_optind] != NULL )
 	{
-		if(bu_file_exists(argv[bu_optind]))
+		if (bu_file_exists(argv[bu_optind]))
 		{
 			(void) fprintf( stderr,
 			"\"%s\" already exists.\n",
@@ -223,22 +223,22 @@ parsArgv(int argc, register char **argv)
 			    );
 			bu_exit( 1, NULL );
 		}
-		if( (fp = fopen( argv[bu_optind], "w" )) == NULL )
+		if ( (fp = fopen( argv[bu_optind], "w" )) == NULL )
 		{
 			perror(argv[bu_optind]);
 			return	0;
 		}
 	}
-	if( argc > ++bu_optind )
+	if ( argc > ++bu_optind )
 	{
 		(void) fprintf( stderr, "Too many arguments!\n" );
 		return	0;
 	}
-	if( isatty(fileno(fp)) )
+	if ( isatty(fileno(fp)) )
 		return 0;
-	if( xlen == 0 )
+	if ( xlen == 0 )
 		xlen = width;
-	if( ylen == 0 )
+	if ( ylen == 0 )
 		ylen = width;
 	return	1;
 }
@@ -251,7 +251,7 @@ prntUsage(void)
 {
 	register char	**p = usage;
 
-	while( *p )
+	while ( *p )
 	{
 		(void) fprintf( stderr, "%s\n", *p++ );
 	}

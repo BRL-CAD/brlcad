@@ -245,19 +245,19 @@ getspectrum(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
 	bu_vls_init(&vls);
 	Tcl_ResetResult(interp);
 
-	if( argc <= 1 )  {
+	if ( argc <= 1 )  {
 	    bu_vls_printf(&vls, "%d", spectrum->nx);
 	    Tcl_SetResult(interp, bu_vls_addr(&vls), TCL_VOLATILE);
 	    bu_vls_free(&vls);
 	    return TCL_OK;
 	}
-	if( argc != 2 )  {
+	if ( argc != 2 )  {
 	    Tcl_AppendResult(interp, "Usage: getspectrum [wl]", (char *)NULL);
 	    return TCL_ERROR;
 	}
 	wl = atoi(argv[2]);
 
-	if( wl < 0 || wl > spectrum->nx )  {
+	if ( wl < 0 || wl > spectrum->nx )  {
 	    bu_vls_printf(&vls, "getspectrum: wavelength %d out of range 0..%d", wl, spectrum->nx);
 	    Tcl_SetResult(interp, bu_vls_addr(&vls), TCL_VOLATILE);
 	    bu_vls_free(&vls);
@@ -281,7 +281,7 @@ getspectval(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
 
 	Tcl_ResetResult(interp);
 
-	if( argc != 4 )  {
+	if ( argc != 4 )  {
 	    Tcl_AppendResult(interp, "Usage: getspect x y wl", (char *)NULL);
 	    return TCL_ERROR;
 	}
@@ -291,20 +291,20 @@ getspectval(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
 
 	BN_CK_TABLE(spectrum);
 
-	if( x < 0 || x >= width )  {
+	if ( x < 0 || x >= width )  {
 	    Tcl_AppendResult(interp, "x out of range", (char *)NULL);
 	    return TCL_ERROR;
 	}
-	if( y < 0 || y >= height )  {
+	if ( y < 0 || y >= height )  {
 	    Tcl_AppendResult(interp, "y out of range", (char *)NULL);
 	    return TCL_ERROR;
 	}
-	if( wl < 0 || wl >= spectrum->nx )  {
+	if ( wl < 0 || wl >= spectrum->nx )  {
 	    Tcl_AppendResult(interp, "wavelength index out of range", (char *)NULL);
 	    return TCL_ERROR;
 	}
 
-	if( !data )  {
+	if ( !data )  {
 	    Tcl_AppendResult(interp, "pixel data table not loaded yet", (char *)NULL);
 	    return TCL_ERROR;
 	}
@@ -314,7 +314,7 @@ getspectval(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
 	sp = (struct bn_tabdata *)cp;
 	BN_CK_TABDATA(sp);
 	val = sp->y[wl];
-	if( use_atmosphere )
+	if ( use_atmosphere )
 		val *= atmosphere->y[wl];
 
 	bu_vls_init(&vls);
@@ -340,7 +340,7 @@ getspectxy(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
 
 	Tcl_ResetResult(interp);
 
-	if( argc != 3 )  {
+	if ( argc != 3 )  {
 	    Tcl_AppendResult(interp, "Usage: getspectxy x y", (char *)NULL);
 	    return TCL_ERROR;
 	}
@@ -349,12 +349,12 @@ getspectxy(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
 
 	BN_CK_TABLE(spectrum);
 
-	if( x < 0 || x >= width || y < 0 || y >= height )  {
+	if ( x < 0 || x >= width || y < 0 || y >= height )  {
 	    Tcl_AppendResult(interp, "x or y out of range", (char *)NULL);
 	    return TCL_ERROR;
 	}
 
-	if( !data )  {
+	if ( !data )  {
 	    Tcl_AppendResult(interp, "pixel data table not loaded yet", (char *)NULL);
 	    return TCL_ERROR;
 	}
@@ -383,7 +383,7 @@ tcl_fb_cursor(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
 
 	Tcl_ResetResult(interp);
 
-	if( argc != 5 )  {
+	if ( argc != 5 )  {
 	    Tcl_AppendResult(interp, "Usage: fb_cursor fbp mode x y", (char *)NULL);
 	    return TCL_ERROR;
 	}
@@ -395,7 +395,7 @@ tcl_fb_cursor(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
 	ifp = fbp;	/* XXX hack, ignore tcl arg. */
 
 	FB_CK_FBIO(ifp);
-	if( fb_cursor( ifp, mode, x, y ) < 0 )  {
+	if ( fb_cursor( ifp, mode, x, y ) < 0 )  {
 	    Tcl_AppendResult(interp, "fb_cursor got error from library", (char *)NULL);
 	    return TCL_ERROR;
 	}
@@ -415,7 +415,7 @@ tcl_fb_readpixel(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
 
 	Tcl_ResetResult(interp);
 
-	if( argc != 4 )  {
+	if ( argc != 4 )  {
 	    Tcl_AppendResult(interp, "Usage: fb_readpixel fbp x y", (char *)NULL);
 	    return TCL_ERROR;
 	}
@@ -426,7 +426,7 @@ tcl_fb_readpixel(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
 	ifp = fbp;	/* XXX hack, ignore tcl arg. */
 
 	FB_CK_FBIO(ifp);
-	if( fb_read( ifp, x, y, pixel, 1 ) < 0 )  {
+	if ( fb_read( ifp, x, y, pixel, 1 ) < 0 )  {
 	    Tcl_AppendResult(interp, "fb_readpixel got error from library", (char *)NULL);
 	    return TCL_ERROR;
 	}
@@ -442,12 +442,12 @@ int
 tcl_appinit(Tcl_Interp *inter)
 {
 	interp = inter;	/* set global var */
-	if( Tcl_Init(interp) == TCL_ERROR )  {
+	if ( Tcl_Init(interp) == TCL_ERROR )  {
 		return TCL_ERROR;
 	}
 
 	/* Run tk.tcl script */
-	if( Tk_Init(interp) == TCL_ERROR )  return TCL_ERROR;
+	if ( Tk_Init(interp) == TCL_ERROR )  return TCL_ERROR;
 
 	/* Add commands offered by the libraries */
 	bu_tcl_setup(interp);
@@ -589,7 +589,7 @@ get_args(int argc, register char **argv)
 	register int c;
 
 	while ( (c = bu_getopt( argc, argv, "ts:w:n:" )) != EOF )  {
-		switch( c )  {
+		switch ( c )  {
 		case 't':
 			fprintf(stderr, "ssampview: conducting library tests\n");
 			conduct_tests();
@@ -615,7 +615,7 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( bu_optind >= argc )  return 0;
+	if ( bu_optind >= argc )  return 0;
 	return 1;	/* OK */
 }
 
@@ -636,14 +636,14 @@ main(int argc, char **argv)
 		bu_exit( 1, NULL );
 	}
 
-	if( argc > 1 && strcmp(argv[1], "-t") == 0 )  {
+	if ( argc > 1 && strcmp(argv[1], "-t") == 0 )  {
 	}
 
 	datafile_basename = argv[bu_optind];
 
 	first_command = "doit1 42";
 
-	if( (fbp = fb_open( NULL, width, height )) == FBIO_NULL )  {
+	if ( (fbp = fb_open( NULL, width, height )) == FBIO_NULL )  {
 		bu_exit(EXIT_FAILURE, "Unable to open fb\n");
 	}
 	fb_view( fbp, width/2, height/2, fb_getwidth(fbp)/width, fb_getheight(fbp)/height );
@@ -651,7 +651,7 @@ main(int argc, char **argv)
 	/* Read spectrum definition */
 	snprintf( spectrum_name, 100, "%s.spect", datafile_basename );
 	spectrum = (struct bn_table *)bn_table_read( spectrum_name );
-	if( spectrum == NULL )  {
+	if ( spectrum == NULL )  {
 		bu_exit(EXIT_FAILURE, "Unable to read spectrum\n");
 	}
 	BN_CK_TABLE(spectrum);
@@ -665,7 +665,7 @@ main(int argc, char **argv)
 
 	/* Allocate and read 2-D spectrum array */
 	data = bn_tabdata_binary_read( datafile_basename, width*height, spectrum );
-	if( !data )  bu_exit(EXIT_FAILURE, "bn_tabdata_binary_read() of datafile_basename failed\n");
+	if ( !data )  bu_exit(EXIT_FAILURE, "bn_tabdata_binary_read() of datafile_basename failed\n");
 
 	/* Allocate framebuffer image buffer */
 	pixels = (unsigned char *)bu_malloc( width * height * 3, "pixels[]" );
@@ -685,7 +685,7 @@ doit(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
 	int	wl;
 	char	cmd[96];
 
-	for( wl = 0; wl < spectrum->nx; wl++ )  {
+	for ( wl = 0; wl < spectrum->nx; wl++ )  {
 		sprintf( cmd, "doit1 %d", wl );
 		Tcl_Eval( interp, cmd );
 	}
@@ -701,17 +701,17 @@ doit1(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
 
 	Tcl_ResetResult(interp);
 
-	if( argc != 2 )  {
+	if ( argc != 2 )  {
 	    Tcl_AppendResult(interp, "Usage: doit1 wavel#", (char *)NULL);
 	    return TCL_ERROR;
 	}
 	wl = atoi(argv[1]);
-	if( wl < 0 || wl >= spectrum->nx )  {
+	if ( wl < 0 || wl >= spectrum->nx )  {
 	    Tcl_AppendResult(interp, "Wavelength number out of range", (char *)NULL);
 	    return TCL_ERROR;
 	}
 
-	if( !data )  {
+	if ( !data )  {
 	    Tcl_AppendResult(interp, "pixel data table not loaded yet", (char *)NULL);
 	    return TCL_ERROR;
 	}
@@ -720,7 +720,7 @@ doit1(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
 		wl,
 		spectrum->x[wl] * 0.001,
 		spectrum->x[wl+1] * 0.001 );
-	if( use_cie_xyz )
+	if ( use_cie_xyz )
 		show_color(wl);
 	else
 		rescale(wl);
@@ -754,15 +754,15 @@ find_minmax(void)
 	max = -INFINITY;
 	min =  INFINITY;
 
-	for( todo = width * height; todo > 0; todo--, cp += nbytes )  {
+	for ( todo = width * height; todo > 0; todo--, cp += nbytes )  {
 		struct bn_tabdata	*sp;
 		sp = (struct bn_tabdata *)cp;
 		BN_CK_TABDATA(sp);
-		for( j = 0; j < spectrum->nx; j++ )  {
+		for ( j = 0; j < spectrum->nx; j++ )  {
 			register fastf_t	v;
 
-			if( (v = sp->y[j]) > max )  max = v;
-			if( v < min )  min = v;
+			if ( (v = sp->y[j]) > max )  max = v;
+			if ( v < min )  min = v;
 		}
 	}
 	maxval = max;
@@ -792,12 +792,12 @@ rescale(int wav)
 
 	scale = 255 / (maxval - minval);
 
-	if( use_atmosphere )
+	if ( use_atmosphere )
 		atmos_scale = atmosphere->y[wav];
 	else
 		atmos_scale = 1;
 
-	for( todo = width * height; todo > 0; todo--, cp += nbytes, pp += 3 )  {
+	for ( todo = width * height; todo > 0; todo--, cp += nbytes, pp += 3 )  {
 		struct bn_tabdata	*sp;
 		register int		val;
 
@@ -805,8 +805,8 @@ rescale(int wav)
 		BN_CK_TABDATA(sp);
 
 		val = (sp->y[wav] * atmos_scale - minval) * scale;
-		if( val > 255 )  val = 255;
-		else if( val < 0 ) val = 0;
+		if ( val > 255 )  val = 255;
+		else if ( val < 0 ) val = 0;
 		pp[0] = pp[1] = pp[2] = val;
 	}
 }
@@ -837,12 +837,12 @@ show_color(int off)
 	scale = 255 / (maxval - minval);
 
 	/* Build CIE curves */
-	if( cie_x->magic == 0 )
+	if ( cie_x->magic == 0 )
 		rt_spect_make_CIE_XYZ( &cie_x, &cie_y, &cie_z, spectrum );
 
 	BN_GET_TABDATA(new, spectrum);
 
-	for( todo = width * height; todo > 0; todo--, cp += nbytes, pp += 3 )  {
+	for ( todo = width * height; todo > 0; todo--, cp += nbytes, pp += 3 )  {
 		struct bn_tabdata	*sp;
 		point_t			xyz;
 		point_t			rgb;
@@ -851,7 +851,7 @@ show_color(int off)
 		sp = (struct bn_tabdata *)cp;
 		BN_CK_TABDATA(sp);
 
-		if( use_atmosphere )  {
+		if ( use_atmosphere )  {
 			bn_tabdata_mul( new, sp, atmosphere );
 			bn_tabdata_freq_shift( new, new, spectrum->x[off] - 380.0 );
 		} else {
@@ -859,7 +859,7 @@ show_color(int off)
 		}
 
 #if 0
-		if( todo == (width/2)*(height/2) )  {
+		if ( todo == (width/2)*(height/2) )  {
 			struct bu_vls str;
 			bu_vls_init(&str);
 
@@ -882,18 +882,18 @@ show_color(int off)
 		MAT3X3VEC( rgb, xyz2rgb, xyz );
 
 		val = (rgb[RED] - minval) * scale;
-		if( val > 255 )  val = 255;
-		else if( val < 0 ) val = 0;
+		if ( val > 255 )  val = 255;
+		else if ( val < 0 ) val = 0;
 		pp[RED] = val;
 
 		val = (rgb[GRN] - minval) * scale;
-		if( val > 255 )  val = 255;
-		else if( val < 0 ) val = 0;
+		if ( val > 255 )  val = 255;
+		else if ( val < 0 ) val = 0;
 		pp[GRN] = val;
 
 		val = (rgb[BLU] - minval) * scale;
-		if( val > 255 )  val = 255;
-		else if( val < 0 ) val = 0;
+		if ( val > 255 )  val = 255;
+		else if ( val < 0 ) val = 0;
 		pp[BLU] = val;
 	}
 

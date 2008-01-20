@@ -195,7 +195,7 @@ main(int argc, char **argv)
 		register bool_t	errors = 0;
 
 		while ( (c = bu_getopt( argc, argv, OPTSTR )) != EOF )
-			switch( c )
+			switch ( c )
 				{
 			default:	/* '?': invalid option */
 				errors = 1;
@@ -451,7 +451,7 @@ main(int argc, char **argv)
 
 			/* Clear out top margin. */
 
-			for ( ; dst_y < dst_height; ++dst_y )
+			for (; dst_y < dst_height; ++dst_y )
 				if ( fb_write( dst_fbp, 0, dst_y,
 					       (unsigned char *)Dst( 0, 0 ),
 					       dst_width
@@ -678,7 +678,7 @@ main(int argc, char **argv)
 
 			/* Clear out top margin. */
 
-			for ( ; dst_y < dst_height; ++dst_y )
+			for (; dst_y < dst_height; ++dst_y )
 				if ( fb_write( dst_fbp, 0, dst_y,
 					       (unsigned char *)Dst( 0, 0 ),
 					       dst_width

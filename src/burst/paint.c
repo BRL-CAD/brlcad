@@ -72,7 +72,7 @@ paintGridFb()
 		int		fxfin, fyfin;
 		int		fxorg, fyorg;
 		int		fgridwid;
-	if( fb_clear( fbiop, pixbkgr ) == -1 )
+	if ( fb_clear( fbiop, pixbkgr ) == -1 )
 		return;
 	gridxmargin = (devwid - (gridwidth*zoom)) / 2.0;
 	gridymargin = (devhgt - (gridheight*zoom)) / 2.0;
@@ -81,7 +81,7 @@ paintGridFb()
 	gridToFb( 0, 0, &fxorg, &fyorg );
 	CenterCell( fxorg ); /* center of cell */
 	CenterCell( fyorg );
-	if( zoom == 1 )
+	if ( zoom == 1 )
 		{
 		fgridwid = gridwidth + 2;
 		fxfin++;
@@ -90,21 +90,21 @@ paintGridFb()
 		fgridwid = gridwidth * zoom + 1;
 
 	/* draw vertical lines */
-	for( fx = 1; fx < fgridwid; fx++ )
+	for ( fx = 1; fx < fgridwid; fx++ )
 		COPYRGB( &pixbuf[fx][0], pixbkgr );
-	for( fx = fxbeg; fx <= fxfin; fx += zoom )
+	for ( fx = fxbeg; fx <= fxfin; fx += zoom )
 		COPYRGB( &pixbuf[fx-fxbeg][0], &pixgrid[0] );
-	for( fy = fybeg; fy <= fyfin; fy++ )
+	for ( fy = fybeg; fy <= fyfin; fy++ )
 		(void) fb_write( fbiop, fxbeg, fy, (unsigned char *)pixbuf, fgridwid );
-	for( fy = 0; fy < devwid; fy++ )
+	for ( fy = 0; fy < devwid; fy++ )
 		(void) fb_write( fbiop, fxorg, fy, pixaxis, 1 );
 
 	/* draw horizontal lines */
-	if( zoom > 1 )
-		for( fy = fybeg; fy <= fyfin; fy += zoom )
+	if ( zoom > 1 )
+		for ( fy = fybeg; fy <= fyfin; fy += zoom )
 			(void) fb_write( fbiop,
 					 fxbeg, fy, pixgrid, fgridwid );
-		for( fx = 0; fx < devwid; fx++ )
+		for ( fx = 0; fx < devwid; fx++ )
 			COPYRGB( &pixbuf[fx][0], pixaxis );
 	(void) fb_write( fbiop, 0, fyorg, (unsigned char *)pixbuf, devwid );
 	return;
@@ -132,16 +132,16 @@ unsigned char			*pixexpendable;
 	gxfin = zoom == 1 ? gx+zoom+1 : gx+zoom;
 	gyfin = zoom == 1 ? gy+zoom+1 : gy+zoom;
 	cnt = gxfin - gxorg;
-	for( y = gyorg; y < gyfin; y++ )
+	for ( y = gyorg; y < gyfin; y++ )
 		{
-		if( zoom != 1 && (y - gy) % zoom == 0 )
+		if ( zoom != 1 && (y - gy) % zoom == 0 )
 			continue;
 		bu_semaphore_acquire( RT_SEM_STATS );
 		(void) fb_read( fbiop, gxorg, y, (unsigned char *)pixbuf, cnt );
 		bu_semaphore_release( RT_SEM_STATS );
-		for( x = gxorg; x < gxfin; x++ )
+		for ( x = gxorg; x < gxfin; x++ )
 			{
-			if( SAMERGB( &pixbuf[x-gxorg][0], pixexpendable )
+			if ( SAMERGB( &pixbuf[x-gxorg][0], pixexpendable )
 				)
 				{
 #if DEBUG_CELLFB
@@ -206,7 +206,7 @@ register struct application	*ap;
 		(int) pixel[BLU]
 		);
 #endif
-	if( err == -1 )
+	if ( err == -1 )
 		brst_log( "Write failed to pixel <%d,%d> from cell <%d,%d>.\n",
 			x, y, ap->a_x, ap->a_y );
 	return;

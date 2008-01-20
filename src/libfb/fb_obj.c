@@ -243,7 +243,7 @@ fbo_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	fbop->fbo_fbs.fbs_listener.fbsl_port = -1;
 
 	/* append to list of fb_obj's */
-	BU_LIST_APPEND(&HeadFBObj.l,&fbop->l);
+	BU_LIST_APPEND(&HeadFBObj.l, &fbop->l);
 
 	(void)Tcl_CreateCommand(interp,
 				bu_vls_addr(&fbop->fbo_name),
@@ -300,7 +300,7 @@ fbo_clear_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	status = fb_clear(fbop->fbo_fbs.fbs_fbp, ms);
 
-	if(status < 0)
+	if (status < 0)
 		return TCL_ERROR;
 
 	return TCL_OK;

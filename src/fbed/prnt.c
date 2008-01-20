@@ -70,7 +70,7 @@ void prnt_Rectangle(char *str, register Rectangle *rectp);
 void
 prnt_Status(void)
 {	RGBpixel pixel;
-	if( ! tty )
+	if ( ! tty )
 		return;
 	fb_Get_Pixel( pixel );
 	PIXEL_MOVE();
@@ -107,11 +107,11 @@ init_Status(void)
 		char buf[MAX_LN];
 		extern int CO;
 	template_co = Min( CO, MAX_LN );
-	if( ! tty )
+	if ( ! tty )
 		return;
 	(void) ClrText();
 	(void) HmCursor();
-	while( *(p+1) )
+	while ( *(p+1) )
 		{
 		(void) strncpy( buf, *p++, template_co );
 		buf[template_co-1] = '\0';
@@ -133,7 +133,7 @@ init_Status(void)
 void
 prnt_Usage(void)
 {	register char **p = usage;
-	while( *p )
+	while ( *p )
 		(void) fprintf( stderr, "%s\n", *p++ );
 	return;
 	}
@@ -163,9 +163,9 @@ fb_log (const char *fmt, ...)	/* de-macro'd due to fmt now being const */
 {
 	extern char *DL, *CS;
 	Va_Start();
-	if( tty )
+	if ( tty )
 		{
-		if( DL != NULL )
+		if ( DL != NULL )
 			{
 			SCROLL_DL_MOVE();
 			DeleteLn();
@@ -174,7 +174,7 @@ fb_log (const char *fmt, ...)	/* de-macro'd due to fmt now being const */
 			Va_Print( stdout );
 			}
 		else
-		if( CS != NULL )
+		if ( CS != NULL )
 			{ /* This scrolling region stuff doesn't work
 				correctly (XXX). */
 			SetScrlReg( TOP_SCROLL_WIN, PROMPT_LINE - 1 );
@@ -201,9 +201,9 @@ void
 Va_Decl( prnt_Scroll )
 	{	extern char *DL, *CS;
 	Va_Start();
-	if( tty )
+	if ( tty )
 		{
-		if( DL != NULL )
+		if ( DL != NULL )
 			{
 			SCROLL_DL_MOVE();
 			DeleteLn();
@@ -212,7 +212,7 @@ Va_Decl( prnt_Scroll )
 			Va_Print( stdout );
 			}
 		else
-		if( CS != NULL )
+		if ( CS != NULL )
 			{ /* This scrolling region stuff doesn't work
 				correctly (XXX). */
 			SetScrlReg( TOP_SCROLL_WIN, PROMPT_LINE - 1 );
@@ -239,7 +239,7 @@ void
 Va_Decl( prnt_Debug )
 	{
 	Va_Start();
-	if( tty )
+	if ( tty )
 		{
 		ERROR_MOVE();
 		ClrEOL();
@@ -262,7 +262,7 @@ void
 Va_Decl( prnt_Event )
 	{
 	Va_Start();
-	if( tty )
+	if ( tty )
 		{
 		ERROR_MOVE();
 		ClrEOL();
@@ -330,9 +330,9 @@ void
 prnt_Macro(register char *bufp)
 {	char prnt_buf[BUFSIZ];
 		register char *p;
-	for( p = prnt_buf; *bufp != '\0'; bufp++ )
+	for ( p = prnt_buf; *bufp != '\0'; bufp++ )
 		{
-		switch( *bufp )
+		switch ( *bufp )
 			{
 		case ESC :
 			*p++ = 'M';

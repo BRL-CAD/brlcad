@@ -43,7 +43,7 @@ status(void)
 
 	/* Print appropropriate message */
 	/* See page c-6 */
-	switch(c) {
+	switch (c) {
 		case '`':
 			M("Power-on condition; no recording programmed (%c)\n", c);
 			break;

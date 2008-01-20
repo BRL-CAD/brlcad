@@ -108,7 +108,7 @@ main(int argc, char **argv)
 	 * usage message.
 	 */
 
-	if(argc != 3)  {
+	if (argc != 3)  {
 		fputs(usage, stderr);
 		return 1;
 	}
@@ -121,31 +121,31 @@ main(int argc, char **argv)
 	 */
 
 	fp = fopen(argv[1], "r");
-	if( fp == NULL )  {
+	if ( fp == NULL )  {
 		perror(argv[1]);
 		return 1;
 	}
 
 	ret = read_rt_file(fp, argv[1], mod2view1);
-	if(ret < 0)  {
+	if (ret < 0)  {
 	    return 2;
 	}
 	fclose(fp);		/* clean up */
 
 	fp = fopen(argv[2], "r");
-	if( fp == NULL )  {
+	if ( fp == NULL )  {
 		perror(argv[2]);
 		return 2;
 	}
 
 	ret = read_rt_file(fp, argv[2], mod2view2);
-	if(ret < 0)  {
+	if (ret < 0)  {
 	    return 2;
 	}
 
 	fclose(fp);
 
-	if(verbose)  {
+	if (verbose)  {
 		bn_mat_inv(view2model, mod2view1);
 		bn_mat_print("mod2view1-plot.log", mod2view1);
 		bn_mat_print("mod2view2-pix.log", mod2view2);
@@ -156,7 +156,7 @@ main(int argc, char **argv)
 	/* Now build the registration matrix for the two files. */
 
 	ret = mat_build(mod2view1, mod2view2, regismat);
-	if(ret == FALSE)  {
+	if (ret == FALSE)  {
 		fprintf(stderr, "regis: can't build registration matrix!\n");
 		return 3;
 	}
@@ -235,7 +235,7 @@ print_info(fastf_t *mat)
 	int	i;
 
 	fprintf(stdout, "plrot -m\"");
-	for( i = 0; i < 15; i++ )  {
+	for ( i = 0; i < 15; i++ )  {
 		fprintf(stdout, "%.6f ", mat[i]);
 	}
 	fprintf(stdout, "%g\" -S\"-1 -1 -1 1 1 1\"\n", mat[15]);

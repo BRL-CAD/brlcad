@@ -169,12 +169,12 @@ bu_cv_fmt_cookie( char * buf, size_t buflen, int cookie )
 	register char *cp = buf;
 	unsigned int	len;
 
-	if( buflen == 0 )	{
+	if ( buflen == 0 )	{
 		fprintf( stderr, "bu_cv_pr_cookie:  call me with a bigger buffer\n");
 		return;
 	}
 	buflen--;
-	if( cookie == 0 )  {
+	if ( cookie == 0 )  {
 		strncpy( cp, "bogus!", buflen );
 		return;
 	}
@@ -182,18 +182,18 @@ bu_cv_fmt_cookie( char * buf, size_t buflen, int cookie )
 	snprintf( cp, buflen, "%d", cookie & CV_CHANNEL_MASK );
 	len = strlen(cp);
 	cp += len;
-	if( buflen < len )
+	if ( buflen < len )
 	{
 		fprintf( stderr, "bu_cv_pr_cookie:  call me with a bigger buffer\n");
 		return;
 	}
 	buflen -= len;
 
-	if( buflen == 0 )	{
+	if ( buflen == 0 )	{
 		fprintf( stderr, "bu_cv_pr_cookie:  call me with a bigger buffer\n");
 		return;
 	}
-	if( cookie & CV_HOST_MASK )  {
+	if ( cookie & CV_HOST_MASK )  {
 		*cp++ = 'h';
 		buflen--;
 	} else {
@@ -201,11 +201,11 @@ bu_cv_fmt_cookie( char * buf, size_t buflen, int cookie )
 		buflen--;
 	}
 
-	if( buflen == 0 )	{
+	if ( buflen == 0 )	{
 		fprintf( stderr, "bu_cv_pr_cookie:  call me with a bigger buffer\n");
 		return;
 	}
-	if( cookie & CV_SIGNED_MASK )  {
+	if ( cookie & CV_SIGNED_MASK )  {
 		*cp++ = 's';
 		buflen--;
 	} else {
@@ -213,11 +213,11 @@ bu_cv_fmt_cookie( char * buf, size_t buflen, int cookie )
 		buflen--;
 	}
 
-	if( buflen == 0 )	{
+	if ( buflen == 0 )	{
 		fprintf( stderr, "bu_cv_pr_cookie:  call me with a bigger buffer\n");
 		return;
 	}
-	switch( cookie & CV_TYPE_MASK )  {
+	switch ( cookie & CV_TYPE_MASK )  {
 	case CV_8:
 		*cp++ = '8';
 		buflen--;
@@ -247,11 +247,11 @@ bu_cv_fmt_cookie( char * buf, size_t buflen, int cookie )
 		break;
 	}
 
-	if( buflen == 0 )	{
+	if ( buflen == 0 )	{
 		fprintf( stderr, "bu_cv_pr_cookie:  call me with a bigger buffer\n");
 		return;
 	}
-	switch( cookie & CV_CONVERT_MASK )  {
+	switch ( cookie & CV_CONVERT_MASK )  {
 	case CV_CLIP:
 		*cp++ = 'C';
 		buflen -= 1;
@@ -320,7 +320,7 @@ bu_cv_optimize(register int cookie)
 	static int Endian = END_NOTSET;
 	int	fmt;
 
-	if( cookie & CV_HOST_MASK )
+	if ( cookie & CV_HOST_MASK )
 		return cookie;		/* already in most efficient form */
 
 	/* This is a network format request */
@@ -353,7 +353,7 @@ bu_cv_optimize(register int cookie)
 		}
 	}
 
-	switch(fmt)  {
+	switch (fmt)  {
 	case CV_D:
 #		if IEEE_FLOAT
 			cookie |= CV_HOST_MASK;	/* host uses network fmt */
@@ -365,7 +365,7 @@ bu_cv_optimize(register int cookie)
 	case CV_32:
 	case CV_64:
 		/* host is big-endian, so is network */
-		if( Endian == END_BIG )
+		if ( Endian == END_BIG )
 			cookie |= CV_HOST_MASK;
 		return cookie;
 	}
@@ -386,7 +386,7 @@ bu_cv_itemlen(register int cookie)
 																	 sizeof(long int), sizeof(double)};
 	static int net_size_table[8] = {0, 1, 2, 4, 8, 8};
 
-	if( cookie & CV_HOST_MASK )
+	if ( cookie & CV_HOST_MASK )
 		return host_size_table[fmt];
 	return net_size_table[fmt];
 }
@@ -512,7 +512,7 @@ bu_cv_htonss(genptr_t out, size_t size, register short int *in, int count)
 	register int	val;
 
 	limit = size / 2;
-	if( count > limit )  count = limit;
+	if ( count > limit )  count = limit;
 
 	for (i=0; i<count; i++) {
 		*cp++ = (val = *in++)>>8;
@@ -533,7 +533,7 @@ bu_cv_htonus(genptr_t out, size_t size, register short unsigned int *in, int cou
 	register int	val;
 
 	limit = size / 2;
-	if( count > limit )  count = limit;
+	if ( count > limit )  count = limit;
 
 	for (i=0; i<count; i++) {
 		*cp++ = (val = *in++)>>8;
@@ -554,7 +554,7 @@ bu_cv_htonsl(genptr_t out, size_t size, register long int *in, int count)
 	register long	val;
 
 	limit = size / 4;
-	if( count > limit )  count = limit;
+	if ( count > limit )  count = limit;
 
 	for (i=0; i<count; i++) {
 		*cp++ = (val = *in++)>>24;
@@ -577,7 +577,7 @@ bu_cv_htonul(genptr_t out, size_t size, register long unsigned int *in, int coun
 	register long	val;
 
 	limit = size / 4;
-	if( count > limit ) {
+	if ( count > limit ) {
 		count = limit;
 	}
 
@@ -757,7 +757,7 @@ bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incoo
 			 */
 
 		} else if (inIsHost != CV_HOST_MASK) { /* net format */
-			switch(incookie & (CV_SIGNED_MASK | CV_TYPE_MASK)) {
+			switch (incookie & (CV_SIGNED_MASK | CV_TYPE_MASK)) {
 			case CV_SIGNED_MASK | CV_16:
 		    return(	bu_cv_ntohss((signed short *)out, size, in, count));
 			case CV_16:
@@ -776,7 +776,7 @@ bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incoo
 			 * be in net format.  call the correct subroutine to do the conversion.
 			 */
 		} else {
-			switch(incookie & (CV_SIGNED_MASK | CV_TYPE_MASK)) {
+			switch (incookie & (CV_SIGNED_MASK | CV_TYPE_MASK)) {
 			case CV_SIGNED_MASK | CV_16:
 		    return(	bu_cv_htonss(out, size, (short *)in, count));
 			case CV_16:
@@ -857,7 +857,7 @@ bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incoo
 		 * if the input is in net format.  (from net to host then at least one cast)
 		 */
 		if (inIsHost != CV_HOST_MASK) { /* net format */
-			switch(incookie & (CV_SIGNED_MASK | CV_TYPE_MASK)) {
+			switch (incookie & (CV_SIGNED_MASK | CV_TYPE_MASK)) {
 			case CV_SIGNED_MASK | CV_16:
 				(void) bu_cv_ntohss((short *)t1, bufsize, from, work_count);
 				break;
@@ -905,7 +905,7 @@ bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incoo
 			/*
 			 * Cast the input format to double.
 			 */
-			switch(incookie & (CV_SIGNED_MASK | CV_TYPE_MASK)) {
+			switch (incookie & (CV_SIGNED_MASK | CV_TYPE_MASK)) {
 			case CV_SIGNED_MASK | CV_8:
 		    for (i=0; i< work_count; i++) {
 					*((double *)to) = *((signed char *)from);
@@ -914,7 +914,7 @@ bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incoo
 		    }
 		    break;
 			case CV_8:
-		    for(i=0; i < work_count; i++) {
+		    for (i=0; i < work_count; i++) {
 					*((double *)to) = *((unsigned char *)from);
 					to = (genptr_t)(((double *)to) + 1);
 					from = (genptr_t)(((unsigned char *)from) + 1);

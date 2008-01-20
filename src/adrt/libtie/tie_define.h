@@ -66,7 +66,7 @@
 #define _MAX(a, b) (a)>(b)?(a):(b)
 #define	MATH_MIN3(_a, _b, _c, _d) _a = _MIN((_b), _MIN((_c), (_d)))
 #define MATH_MAX3(_a, _b, _c, _d) _a = _MAX((_b), _MAX((_c), (_d)))
-#define	MATH_VEC_SET(_a, _b, _c, _d) VSET(_a.v,_b,_c,_d)
+#define	MATH_VEC_SET(_a, _b, _c, _d) VSET(_a.v, _b, _c, _d)
 #define MATH_VEC_MIN(_a, _b) VMIN(_a.v, _b.v)
 #define MATH_VEC_MAX(_a, _b) VMAX(_a.v, _b.v)
 #define MATH_VEC_CROSS(_a, _b, _c) VCROSS(_a.v, _b.v, _c.v)

@@ -143,9 +143,9 @@ bu_bomb(const char *str)
 	bu_call_hook(&bu_bomb_hook_list, (genptr_t)str);
     }
 
-    if( bu_setjmp_valid )  {
+    if ( bu_setjmp_valid )  {
 	/* Application is catching fatal errors */
-	if( bu_is_parallel() )  {
+	if ( bu_is_parallel() )  {
 	    fprintf(stderr, "bu_bomb(): in parallel mode, could not longjmp up to application handler\n");
 	} else {
 	    /* Application is non-parallel, so this is safe */
@@ -203,7 +203,7 @@ bu_bomb(const char *str)
     bu_kill_parallel();
 
     /* try to save a core dump */
-    if( bu_debug & BU_DEBUG_COREDUMP )  {
+    if ( bu_debug & BU_DEBUG_COREDUMP )  {
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
 	fputs("Causing intentional core dump due to debug flag\n", stdout);
 	fputs("Causing intentional core dump due to debug flag\n", stderr);

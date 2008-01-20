@@ -485,7 +485,7 @@ struct termios	*tio_ptr;
 	(void) fprintf( stderr, "\tc_cflag=0x%x\n\r", tio_ptr->c_cflag );
 	(void) fprintf( stderr, "\tc_lflag=0x%x\n\r", tio_ptr->c_lflag );
 	(void) fprintf( stderr, "\tc_line=%c\n\r", tio_ptr->c_line );
-	for( i = 0; i < NCC; ++i )
+	for ( i = 0; i < NCC; ++i )
 		{
 		(void) fprintf( stderr,
 				"\tc_cc[%d]=0%o\n\r",
@@ -500,7 +500,7 @@ struct termios	*tio_ptr;
 	(void) fprintf( stderr, "\tc_oflag=0x%x\n\r", (unsigned int)tio_ptr->c_oflag );
 	(void) fprintf( stderr, "\tc_cflag=0x%x\n\r", (unsigned int)tio_ptr->c_cflag );
 	(void) fprintf( stderr, "\tc_lflag=0x%x\n\r", (unsigned int)tio_ptr->c_lflag );
-	for( i = 0; i < NCCS; ++i )
+	for ( i = 0; i < NCCS; ++i )
 		{
 		(void) fprintf( stderr,
 				"\tc_cc[%d]=0%o\n\r",

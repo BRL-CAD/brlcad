@@ -77,7 +77,7 @@ gettime(fastf_t dist, fastf_t a, fastf_t b, fastf_t c, fastf_t init)
 
     old = init;
     success = 0;
-    while(countdown-->0){
+    while (countdown-->0){
 	temp = (3.0*a*old+2.0*b)*old+c;
 	if (temp<DIVIDE_TOL){
 	    new = 0.75*old;
@@ -131,13 +131,13 @@ main(int argc, char **argv)
     }
     l[0] = 0.0;
 
-    while(plen<maxlines){
+    while (plen<maxlines){
 	i = (verbose) ? plen : plen%2;
 	j = (verbose) ? (plen-1) : (plen+1)%2;
-	num = scanf("%lf %lf %lf %lf",&end, x+i, y+i, z+i);
+	num = scanf("%lf %lf %lf %lf", &end, x+i, y+i, z+i);
 	if (num<4)
 	    break;
-	if(plen){
+	if (plen){
 	    temp0 = x[i]-x[j];
 	    temp1 = y[i]-y[j];
 	    temp2 = z[i]-z[j];
@@ -245,17 +245,17 @@ int get_args(int argc, char **argv)
     int c;
 
     while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
-	switch(c){
+	switch (c){
 	case 's':
-	    sscanf(bu_optarg, "%lf",&inv0);
+	    sscanf(bu_optarg, "%lf", &inv0);
 	    v0_set = TIME_ABSOLUTE;
 	    break;
 	case 'e':
-	    sscanf(bu_optarg, "%lf",&inv1);
+	    sscanf(bu_optarg, "%lf", &inv1);
 	    v1_set = TIME_ABSOLUTE;
 	    break;
 	case 'i':
-	    sscanf(bu_optarg, "%lf",&inv0);
+	    sscanf(bu_optarg, "%lf", &inv0);
 	    v0_set = TIME_RELATIVE;
 	    if ((inv0>3.0)||(inv0<0.0)) {
 		fprintf(stderr, "anim_time: -i argument must lie between 0.0 and 3.0\n");
@@ -263,7 +263,7 @@ int get_args(int argc, char **argv)
 	    }
 	    break;
 	case 'f':
-	    sscanf(bu_optarg, "%lf",&inv1);
+	    sscanf(bu_optarg, "%lf", &inv1);
 	    v1_set = TIME_RELATIVE;
 	    if ((inv1>3.0)||(inv1<0.0)) {
 		fprintf(stderr, "anim_time: -f argument must lie between 0.0 and 3.0\n");
@@ -274,7 +274,7 @@ int get_args(int argc, char **argv)
 	    query = 1;
 	    break;
 	case 'm':
-	    sscanf(bu_optarg, "%d",&maxlines);
+	    sscanf(bu_optarg, "%d", &maxlines);
 	    domem = 1;
 	    break;
 	case 'v':

@@ -107,9 +107,9 @@ HIDDEN int
 null_open(FBIO *ifp, char *file, int width, int height)
 {
 	FB_CK_FBIO(ifp);
-	if( width > 0 )
+	if ( width > 0 )
 		ifp->if_width = width;
-	if( height > 0 )
+	if ( height > 0 )
 		ifp->if_height = height;
 
 	return(0);

@@ -44,7 +44,7 @@ static fastf_t v_translation=0.0;
 
 #define UV_TOL  1.0e-6
 
-#define CTL_INDEX(_i,_j)	((_i * n_cols + _j) * ncoords)
+#define CTL_INDEX(_i, _j)	((_i * n_cols + _j) * ncoords)
 
 struct snurb_hit
 {
@@ -73,7 +73,7 @@ struct model *m;
 
 	/* Acquiring Data */
 
-	if( dir[entityno]->param <= pstart )
+	if ( dir[entityno]->param <= pstart )
 	{
 		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[entityno]->direct, dir[entityno]->name );
@@ -82,7 +82,7 @@ struct model *m;
 
 	Readrec( dir[entityno]->param );
 	Readint( &entity_type, "" );
-	if( entity_type != 128 )
+	if ( entity_type != 128 )
 	{
 		bu_log( "Only B-Spline surfaces allowed for faces (found type %d)\n", entity_type );
 		return( (struct face_g_snurb *)NULL );
@@ -107,7 +107,7 @@ struct model *m;
 
 	n_u = n_cols+u_order;
 	n_v = n_rows+v_order;
-	if( !m )
+	if ( !m )
 		srf = rt_nurb_new_snurb( u_order, v_order, n_u, n_v, n_rows, n_cols, pt_type, (struct resource *)NULL );
 	else
 	{
@@ -141,59 +141,59 @@ struct model *m;
 	NMG_CK_FACE_G_SNURB( srf );
 
 	/* Read knot vectors */
-	for( i=0 ; i<n_u ; i++ )
+	for ( i=0; i<n_u; i++ )
 	{
 		Readdbl( &a, "" );
 		srf->u.knots[i] = a;
 	}
-	for( i=0 ; i<n_v ; i++ )
+	for ( i=0; i<n_v; i++ )
 	{
 		Readdbl( &a, "" );
 		srf->v.knots[i] = a;
 	}
 
 	/* Insure that knot values are non-negative */
-	if( srf->v.knots[0] < 0.0 )
+	if ( srf->v.knots[0] < 0.0 )
 	{
 		v_translation = (-srf->v.knots[0]);
-		for( i=0 ; i<n_v ; i++ )
+		for ( i=0; i<n_v; i++ )
 			srf->v.knots[i] += v_translation;
 	}
 	else
 		v_translation = 0.0;
 
-	if( srf->u.knots[0] < 0.0 )
+	if ( srf->u.knots[0] < 0.0 )
 	{
 		u_translation = (-srf->u.knots[0]);
-		for( i=0 ; i<n_u ; i++ )
+		for ( i=0; i<n_u; i++ )
 			srf->u.knots[i] += u_translation;
 	}
 	else
 		u_translation = 0.0;
 
 	/* Read weights */
-	for( i=0 ; i<n_cols*n_rows ; i++ )
+	for ( i=0; i<n_cols*n_rows; i++ )
 	{
 		Readdbl( &a, "" );
-		if( rational )
+		if ( rational )
 			srf->ctl_points[i*ncoords + 3] = a;
 	}
 
 	/* Read control points */
-	for( i=0 ; i<n_cols*n_rows ; i++ )
+	for ( i=0; i<n_cols*n_rows; i++ )
 	{
 			Readcnv( &a, "" );
-			if( rational )
+			if ( rational )
 				pt[X] = a*srf->ctl_points[i*ncoords+3];
 			else
 				pt[X] = a;
 			Readcnv( &a, "" );
-			if( rational )
+			if ( rational )
 				pt[Y] = a*srf->ctl_points[i*ncoords+3];
 			else
 				pt[Y] = a;
 			Readcnv( &a, "" );
-			if( rational )
+			if ( rational )
 				pt[Z] = a*srf->ctl_points[i*ncoords+3];
 			else
 				pt[Z] = a;
@@ -228,13 +228,13 @@ struct edge_g_cnurb *crv;
 	ctl_points = (fastf_t *)bu_calloc( ncoords*crv->c_size, sizeof( fastf_t ),
 			"Assign_cnurb_to_eu: ctl_points" );
 
-	for( i=0 ; i<crv->c_size ; i++ )
+	for ( i=0; i<crv->c_size; i++ )
 		VMOVEN( &ctl_points[i*ncoords], &crv->ctl_points[i*ncoords], ncoords )
 
 	knots = (fastf_t *)bu_calloc( crv->k.k_size, sizeof( fastf_t ),
 			"Assign_cnurb_to_eu: knots" );
 
-	for( i=0 ; i<crv->k.k_size; i++ )
+	for ( i=0; i<crv->k.k_size; i++ )
 		knots[i] = crv->k.knots[i];
 
 	nmg_edge_g_cnurb( eu, crv->order, crv->k.k_size, knots, crv->c_size,
@@ -258,7 +258,7 @@ int entity_no;
 	double a;
 	double x, y, z;
 
-	if( dir[entity_no]->param <= pstart )
+	if ( dir[entity_no]->param <= pstart )
 	{
 		bu_log( "Get_cnurb: Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[entity_no]->direct, dir[entity_no]->name );
@@ -268,7 +268,7 @@ int entity_no;
 	Readrec( dir[entity_no]->param );
 	Readint( &entity_type, "" );
 
-	if( entity_type != 126 )
+	if ( entity_type != 126 )
 	{
 		bu_log( "Get_cnurb: Was expecting spline curve, got type %d\n", entity_type );
 		return( (struct edge_g_cnurb *)NULL );
@@ -285,7 +285,7 @@ int entity_no;
 	rational = !i;
 	Readint( &i, "" );	/* periodic */
 
-	if( rational )
+	if ( rational )
 	{
 		ncoords = 3;
 		pt_type = RT_NURB_MAKE_PT_TYPE( ncoords, RT_NURB_PT_UV, RT_NURB_PT_RATIONAL );
@@ -298,24 +298,24 @@ int entity_no;
 
 	crv = rt_nurb_new_cnurb( degree+1, num_pts+degree+1, num_pts, pt_type );
 	/* knot vector */
-	for( i=0 ; i<num_pts+degree+1 ; i++ )
+	for ( i=0; i<num_pts+degree+1; i++ )
 	{
 		Readdbl( &a, "" );
 		crv->k.knots[i] = a;
 	}
 
 	/* weights */
-	for( i=0 ; i<num_pts ; i++ )
+	for ( i=0; i<num_pts; i++ )
 	{
 		Readdbl( &a, "" );
-		if( rational )
+		if ( rational )
 			crv->ctl_points[i*ncoords+2] = a;
 	}
 
 	/* control points */
-	for( i=0 ; i<num_pts ; i++ )
+	for ( i=0; i<num_pts; i++ )
 	{
-		if( dir[entity_no]->status & 500 )
+		if ( dir[entity_no]->status & 500 )
 		{
 			Readdbl( &x, "" );
 			Readdbl( &y, "" );
@@ -327,7 +327,7 @@ int entity_no;
 			Readcnv( &y, "" );
 			Readcnv( &z, "" );
 		}
-		if( rational )
+		if ( rational )
 		{
 			pt[X] = (x + u_translation) * crv->ctl_points[i*ncoords+2];
 			pt[Y] = (y + v_translation) * crv->ctl_points[i*ncoords+2];
@@ -363,7 +363,7 @@ struct face_g_snurb *srf;
 
 	VSETALLN( pt_on_srf, 0.0, 4 )
 
-	if( u < srf->u.knots[0] || v < srf->v.knots[0] ||
+	if ( u < srf->u.knots[0] || v < srf->v.knots[0] ||
 		u > srf->u.knots[srf->u.k_size-1] || v > srf->v.knots[srf->v.k_size-1] )
 	{
 		bu_log( "WARNING: UV point outside of domain of surface!:\n" );
@@ -372,27 +372,27 @@ struct face_g_snurb *srf;
 			srf->u.knots[0], srf->v.knots[0],
 			srf->u.knots[srf->u.k_size-1], srf->v.knots[srf->v.k_size-1] );
 
-		if( u < srf->u.knots[0] )
+		if ( u < srf->u.knots[0] )
 			u = srf->u.knots[0];
-		if( v < srf->v.knots[0] )
+		if ( v < srf->v.knots[0] )
 			v = srf->v.knots[0];
-		if( u > srf->u.knots[srf->u.k_size-1] )
+		if ( u > srf->u.knots[srf->u.k_size-1] )
 			u = srf->u.knots[srf->u.k_size-1];
-		if( v > srf->v.knots[srf->v.k_size-1] )
+		if ( v > srf->v.knots[srf->v.k_size-1] )
 			v = srf->v.knots[srf->v.k_size-1];
 
 		moved = 1;
 	}
 
 	rt_nurb_s_eval( srf, u, v, pt_on_srf );
-	if( RT_NURB_IS_PT_RATIONAL( srf->pt_type ) )
+	if ( RT_NURB_IS_PT_RATIONAL( srf->pt_type ) )
 	{
 		fastf_t scale;
 
 		scale = 1.0/pt_on_srf[3];
 		VSCALE( pt_on_srf, pt_on_srf, scale );
 	}
-	if( moved )
+	if ( moved )
 	{
 		bu_log( "\tMoving VU geom to (%g %g %g) new UV = (%g %g)\n",
 			V3ARGS( pt_on_srf ), u, v );
@@ -402,7 +402,7 @@ struct face_g_snurb *srf;
 	/* XXXXX Need w coord! */
 	VSET( uvw, u, v, 1.0 );
 
-	for( BU_LIST_FOR( vu1, vertexuse, &vu->v_p->vu_hd ) )
+	for ( BU_LIST_FOR( vu1, vertexuse, &vu->v_p->vu_hd ) )
 		nmg_vertexuse_a_cnurb( vu1, uvw );
 }
 
@@ -425,7 +425,7 @@ struct face_g_snurb *srf;
 	NMG_CK_LOOPUSE( lu );
 	NMG_CK_SNURB( srf );
 
-	if( dir[entity_no]->param <= pstart )
+	if ( dir[entity_no]->param <= pstart )
 	{
 		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[entity_no]->direct, dir[entity_no]->name );
@@ -435,7 +435,7 @@ struct face_g_snurb *srf;
 	Readrec( dir[entity_no]->param );
 	Readint( &entity_type, "" );
 
-	switch( entity_type )
+	switch ( entity_type )
 	{
 		case 102:	/* composite curve */
 			{
@@ -446,10 +446,10 @@ struct face_g_snurb *srf;
 				curve_list = (int *)bu_calloc( curve_count, sizeof( int ),
 						"Add_trim_curve: curve_list" );
 
-				for( i=0 ; i<curve_count ; i++ )
+				for ( i=0; i<curve_count; i++ )
 					Readint( &curve_list[i], "" );
 
-				for( i=0 ; i<curve_count ; i++ )
+				for ( i=0; i<curve_count; i++ )
 					Add_trim_curve( (curve_list[i]-1)/2, lu, srf );
 
 				bu_free( (char *)curve_list, "Add_trim_curve: curve_list" );
@@ -471,7 +471,7 @@ struct face_g_snurb *srf;
 			vp = eu->vu_p->v_p;
 
 			/* if old edge doesn't have vertex geometry, assign some */
-			if( !vp->vg_p )
+			if ( !vp->vg_p )
 				Assign_vu_geom( eu->vu_p, pt2[X], pt2[Y], srf );
 
 			/* read terminate point */
@@ -511,7 +511,7 @@ struct face_g_snurb *srf;
 				crv = rt_arc2d_to_cnurb( center, start, end, RT_NURB_PT_UV, &tol );
 
 				/* apply transformation to control points */
-				for( i=0 ; i<crv->c_size ; i++ )
+				for ( i=0; i<crv->c_size; i++ )
 				{
 					V2MOVE( pt2, &crv->ctl_points[i*3] )
 					pt2[Z] = z;
@@ -525,7 +525,7 @@ struct face_g_snurb *srf;
 				vp = eu->vu_p->v_p;
 
 				/* if old edge doesn't have vertex geometry, assign some */
-				if( !vp->vg_p )
+				if ( !vp->vg_p )
 					Assign_vu_geom( eu->vu_p,
 						crv->ctl_points[0], crv->ctl_points[1], srf );
 
@@ -558,7 +558,7 @@ struct face_g_snurb *srf;
 			vp = eu->vu_p->v_p;
 
 			/* if old edge doesn't have vertex geometry, assign some */
-			if( !vp->vg_p )
+			if ( !vp->vg_p )
 			{
 				Assign_vu_geom( eu->vu_p, crv->ctl_points[0],
 					crv->ctl_points[1], srf );
@@ -600,7 +600,7 @@ struct faceuse *fu;
 	NMG_CK_SNURB( srf );
 	NMG_CK_FACEUSE( fu );
 
-	if( dir[entity_no]->param <= pstart )
+	if ( dir[entity_no]->param <= pstart )
 	{
 		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[entity_no]->direct, dir[entity_no]->name );
@@ -614,7 +614,7 @@ struct faceuse *fu;
 	vu = BU_LIST_FIRST(vertexuse, &lu->down_hd);
 	eu = nmg_meonvu(vu);
 
-	switch( entity_type )
+	switch ( entity_type )
 	{
 		case 102:	/* composite curve */
 			{
@@ -625,17 +625,17 @@ struct faceuse *fu;
 				curve_list = (int *)bu_calloc( curve_count, sizeof( int ),
 						"Make_trim_loop: curve_list" );
 
-				for( i=0 ; i<curve_count ; i++ )
+				for ( i=0; i<curve_count; i++ )
 					Readint( &curve_list[i], "" );
 
-				for( i=0 ; i<curve_count ; i++ )
+				for ( i=0; i<curve_count; i++ )
 					Add_trim_curve( (curve_list[i]-1)/2, lu, srf );
 
 				bu_free( (char *)curve_list, "Make_trim_loop: curve_list" );
 
 				/* if last EU is zero length, kill it */
 				eu = BU_LIST_LAST( edgeuse, &lu->down_hd );
-				if( bn_dist_pt3_pt3( eu->vu_p->v_p->vg_p->coord, eu->eumate_p->vu_p->v_p->vg_p->coord ) < tol.dist )
+				if ( bn_dist_pt3_pt3( eu->vu_p->v_p->vg_p->coord, eu->eumate_p->vu_p->v_p->vg_p->coord ) < tol.dist )
 					nmg_keu( eu );
 				else
 				{
@@ -649,7 +649,7 @@ struct faceuse *fu;
 		case 100:	/* circular arc (must be full cirle here) */
 			{
 				struct edge_g_cnurb *crv;
-				struct edge_g_cnurb *crv1,*crv2;
+				struct edge_g_cnurb *crv1, *crv2;
 				point_t center, start, end;
 				struct bu_list curv_hd;
 
@@ -682,7 +682,7 @@ struct faceuse *fu;
 				vp = eu->vu_p->v_p;
 
 				/* if old edge doesn't have vertex geometry, assign some */
-				if( !vp->vg_p )
+				if ( !vp->vg_p )
 				{
 					u = crv1->ctl_points[0]/crv1->ctl_points[2];
 					v = crv1->ctl_points[1]/crv1->ctl_points[2];
@@ -690,7 +690,7 @@ struct faceuse *fu;
 				}
 
 				vp = new_eu->vu_p->v_p;
-				if( !vp->vg_p )
+				if ( !vp->vg_p )
 				{
 					/* Assign geometry to new_eu vertex */
 					u = crv2->ctl_points[0]/crv2->ctl_points[2];
@@ -715,7 +715,7 @@ struct faceuse *fu;
 		case 126:	/* spline curve (must be closed loop) */
 			{
 				struct edge_g_cnurb *crv;
-				struct edge_g_cnurb *crv1,*crv2;
+				struct edge_g_cnurb *crv1, *crv2;
 				struct bu_list curv_hd;
 
 				/* Get spline curve */
@@ -734,10 +734,10 @@ struct faceuse *fu;
 				vp = eu->vu_p->v_p;
 
 				/* if old edge doesn't have vertex geometry, assign some */
-				if( !vp->vg_p )
+				if ( !vp->vg_p )
 				{
 					/* XXX Don't divied out rational coord */
-					if( RT_NURB_IS_PT_RATIONAL( crv1->pt_type ) )
+					if ( RT_NURB_IS_PT_RATIONAL( crv1->pt_type ) )
 					{
 						u = crv1->ctl_points[0]/crv1->ctl_points[ncoords-1];
 						v = crv1->ctl_points[1]/crv1->ctl_points[ncoords-1];
@@ -752,9 +752,9 @@ struct faceuse *fu;
 
 				/* Assign geometry to new_eu vertex */
 				vp = new_eu->vu_p->v_p;
-				if( !vp->vg_p )
+				if ( !vp->vg_p )
 				{
-					if( RT_NURB_IS_PT_RATIONAL( crv2->pt_type ) )
+					if ( RT_NURB_IS_PT_RATIONAL( crv2->pt_type ) )
 					{
 						u = crv2->ctl_points[0]/crv2->ctl_points[ncoords-1];
 						v = crv2->ctl_points[1]/crv2->ctl_points[ncoords-1];
@@ -800,7 +800,7 @@ struct faceuse *fu;
 	NMG_CK_FACEUSE( fu );
 
 	/* Acquiring Data */
-	if( dir[entity_no]->param <= pstart )
+	if ( dir[entity_no]->param <= pstart )
 	{
 		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[entity_no]->direct, dir[entity_no]->name );
@@ -809,14 +809,14 @@ struct faceuse *fu;
 
 	Readrec( dir[entity_no]->param );
 	Readint( &entity_type, "" );
-	if( entity_type != 142 )
+	if ( entity_type != 142 )
 	{
 		bu_log( "Expected Curve on a Parametric Surface, found %s\n", iges_type( entity_type ) );
 		return( 0 );
 	}
 	Readint( &i, "" );
 	Readint( &surf_de, "" );
-	if( surf_de != on_surf_de )
+	if ( surf_de != on_surf_de )
 		bu_log( "Curve is on surface at DE %d, should be on surface at DE %d\n", surf_de, on_surf_de );
 
 	Readint( &param_curve_de, "" );
@@ -850,25 +850,25 @@ struct faceuse *fu;
 	pt_type = RT_NURB_MAKE_PT_TYPE( 2, RT_NURB_PT_UV, RT_NURB_PT_NONRAT );
 	ncoords = RT_NURB_EXTRACT_COORDS( srf->pt_type );
 
-	if( srf->order[0] < 3 && srf->order[1] < 3 )
+	if ( srf->order[0] < 3 && srf->order[1] < 3 )
 		planar = 1;
 
 	lu = nmg_mlv( &fu->l.magic, (struct vertex *)NULL, OT_SAME );
 	vu = BU_LIST_FIRST(vertexuse, &lu->down_hd);
 	eu = nmg_meonvu(vu);
-	for( i=0 ; i<3 ; i++ )
+	for ( i=0; i<3; i++ )
 		(void)nmg_eusplit( (struct vertex *)NULL, eu, 0 );
 
 
 	/* assign vertex geometry */
-	for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+	for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 	{
 		int u_index=0, v_index=0;
 
 		NMG_CK_EDGEUSE( eu );
 		vu = eu->vu_p;
 		NMG_CK_VERTEXUSE( vu );
-		switch( edge_no )
+		switch ( edge_no )
 		{
 			case 0:
 				u_index = 0;
@@ -902,17 +902,17 @@ struct faceuse *fu;
 
 	/* assign edge geometry */
 	edge_no = 0;
-	for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+	for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 	{
 		NMG_CK_EDGEUSE( eu );
 		vu = eu->vu_p;
 		NMG_CK_VERTEXUSE( vu );
-		if( planar )
+		if ( planar )
 			nmg_edge_g( eu );
 		else
 		{
 			ctl_points = (fastf_t *)bu_calloc( sizeof( fastf_t ), 4, "ctl_points" );
-			switch( edge_no )
+			switch ( edge_no )
 			{
 				case 0:
 					ctl_points[0] = 0.0;
@@ -965,7 +965,7 @@ struct face_g_snurb *srf;
 	f = fu->f_p;
 	NMG_CK_FACE( f );
 
-	if( f->g.snurb_p )
+	if ( f->g.snurb_p )
 		bu_exit(1, "Assign_surface_to_fu: fu already has geometry\n" );
 
 	fu->orientation = OT_SAME;
@@ -999,14 +999,14 @@ struct shell *s;
 	m = nmg_find_model( &s->l.magic );
 	NMG_CK_MODEL( m );
 
-	if( bu_debug & BU_DEBUG_MEM_CHECK )
+	if ( bu_debug & BU_DEBUG_MEM_CHECK )
 	{
 		bu_log( "barriercheck at start of trim_surf():\n" );
 		bu_mem_barriercheck();
 	}
 
 	/* Acquiring Data */
-	if( dir[entityno]->param <= pstart )
+	if ( dir[entityno]->param <= pstart )
 	{
 		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[entityno]->direct, dir[entityno]->name );
@@ -1015,7 +1015,7 @@ struct shell *s;
 
 	Readrec( dir[entityno]->param );
 	Readint( &entity_type, "" );
-	if( entity_type != 144 )
+	if ( entity_type != 144 )
 	{
 		bu_log( "Expected Trimmed Surface Entity found type %d\n" );
 		return( (struct faceuse *)NULL );
@@ -1024,16 +1024,16 @@ struct shell *s;
 	Readint( &has_outer_boundary, "" );
 	Readint( &inner_loop_count, "" );
 	Readint( &outer_loop, "" );
-	if( inner_loop_count )
+	if ( inner_loop_count )
 	{
 		inner_loop = (int *)bu_calloc( inner_loop_count, sizeof( int ), "trim_surf: innerloop" );
-		for( i=0 ; i<inner_loop_count ; i++ )
+		for ( i=0; i<inner_loop_count; i++ )
 			Readint( &inner_loop[i], "" );
 	}
 
-	if( (srf=Get_nurb_surf( (surf_de-1)/2, m )) == (struct face_g_snurb *)NULL )
+	if ( (srf=Get_nurb_surf( (surf_de-1)/2, m )) == (struct face_g_snurb *)NULL )
 	{
-		if( inner_loop_count )
+		if ( inner_loop_count )
 			bu_free( (char *)inner_loop, "trim_surf: inner_loop" );
 		return( (struct faceuse *)NULL );
 	}
@@ -1042,10 +1042,10 @@ struct shell *s;
 	 * because loop routines insist that face and face geometry
 	 * must already be assigned
 	 */
-	for( i=0 ; i<3 ; i++ )
+	for ( i=0; i<3; i++ )
 		verts[i] = (struct vertex *)NULL;
 
-	if( bu_debug & BU_DEBUG_MEM_CHECK )
+	if ( bu_debug & BU_DEBUG_MEM_CHECK )
 	{
 		bu_log( "barriercheck before making face:\n" );
 		bu_mem_barriercheck();
@@ -1056,9 +1056,9 @@ struct shell *s;
 
 	kill_lu = BU_LIST_FIRST( loopuse, &fu->lu_hd );
 
-	if( !has_outer_boundary )
+	if ( !has_outer_boundary )
 	{
-		if( bu_debug & BU_DEBUG_MEM_CHECK )
+		if ( bu_debug & BU_DEBUG_MEM_CHECK )
 		{
 			bu_log( "barriercheck before making default loop():\n" );
 			bu_mem_barriercheck();
@@ -1068,7 +1068,7 @@ struct shell *s;
 	}
 	else
 	{
-		if( bu_debug & BU_DEBUG_MEM_CHECK )
+		if ( bu_debug & BU_DEBUG_MEM_CHECK )
 		{
 			bu_log( "barriercheck before Make_loop():\n" );
 			bu_mem_barriercheck();
@@ -1077,7 +1077,7 @@ struct shell *s;
 		lu = Make_loop( (outer_loop-1)/2, OT_SAME, surf_de, srf, fu );
 	}
 
-	if( bu_debug & BU_DEBUG_MEM_CHECK )
+	if ( bu_debug & BU_DEBUG_MEM_CHECK )
 	{
 		bu_log( "barriercheck after making loop:\n" );
 		bu_mem_barriercheck();
@@ -1087,7 +1087,7 @@ struct shell *s;
 	(void)nmg_klu( kill_lu );
 
 	/* first loop is an outer loop, orientation must be OT_SAME */
-	if( bu_debug & BU_DEBUG_MEM_CHECK )
+	if ( bu_debug & BU_DEBUG_MEM_CHECK )
 	{
 		bu_log( "barriercheck before nmg_snurb_calc_lu_uv_orient(():\n" );
 		bu_mem_barriercheck();
@@ -1095,12 +1095,12 @@ struct shell *s;
 	}
 
 	lu_uv_orient = nmg_snurb_calc_lu_uv_orient( lu );
-	if( bu_debug & BU_DEBUG_MEM_CHECK )
+	if ( bu_debug & BU_DEBUG_MEM_CHECK )
 	{
 		bu_log( "barriercheck after nmg_snurb_calc_lu_uv_orient(():\n" );
 		bu_mem_barriercheck();
 	}
-	if( lu_uv_orient == OT_SAME )
+	if ( lu_uv_orient == OT_SAME )
 		nmg_set_lu_orientation( lu, 0 );
 	else
 	{
@@ -1108,13 +1108,13 @@ struct shell *s;
 		nmg_set_lu_orientation( lu, 0 );
 	}
 
-	for( i=0 ; i<inner_loop_count ; i++ )
+	for ( i=0; i<inner_loop_count; i++ )
 	{
 		lu = Make_loop( (inner_loop[i]-1)/2, OT_OPPOSITE, surf_de, srf, fu );
 
 		/* These loops must all be OT_OPPOSITE */
 		lu_uv_orient = nmg_snurb_calc_lu_uv_orient( lu );
-		if( (lu_uv_orient == OT_OPPOSITE && !fu->f_p->flip) ||
+		if ( (lu_uv_orient == OT_OPPOSITE && !fu->f_p->flip) ||
 		    (lu_uv_orient == OT_SAME && fu->f_p->flip) )
 				continue;
 
@@ -1127,7 +1127,7 @@ struct shell *s;
 		lu->up.fu_p = fu->fumate_p;
 	}
 
-	if( inner_loop_count )
+	if ( inner_loop_count )
 		bu_free( (char *)inner_loop, "trim_surf: inner_loop" );
 
 	NMG_CK_FACE_G_SNURB( fu->f_p->g.snurb_p );
@@ -1147,14 +1147,14 @@ struct faceuse *fu;
 	ot_sames = 0;
 	ot_opps = 0;
 
-	for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+	for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
 	{
-		if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+		if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
 			continue;
 
-		if( lu->orientation == OT_SAME )
+		if ( lu->orientation == OT_SAME )
 			ot_sames += nmg_uv_in_lu( u, v, lu );
-		else if( lu->orientation == OT_OPPOSITE )
+		else if ( lu->orientation == OT_OPPOSITE )
 			ot_opps += nmg_uv_in_lu( u, v, lu );
 		else
 		{
@@ -1164,7 +1164,7 @@ struct faceuse *fu;
 		}
 	}
 
-	if( ot_sames == 0 || ot_opps == ot_sames )
+	if ( ot_sames == 0 || ot_opps == ot_sames )
 	{
 		/* not a hit */
 		return( 0 );
@@ -1195,7 +1195,7 @@ struct bu_list *hit_list;
 
 	f = fu->f_p;
 
-	if( *f->g.magic_p != NMG_FACE_G_SNURB_MAGIC )
+	if ( *f->g.magic_p != NMG_FACE_G_SNURB_MAGIC )
 		bu_exit(1, "ERROR: find_intersections(): face is not a TNURB surface!\n" );
 
 	fg = f->g.snurb_p;
@@ -1208,7 +1208,7 @@ struct bu_list *hit_list;
 	BU_LIST_INIT( &bezier );
 
 	rt_nurb_bezier( &bezier, fg, (struct resource *)NULL );
-	while( BU_LIST_NON_EMPTY( &bezier ) )
+	while ( BU_LIST_NON_EMPTY( &bezier ) )
 	{
 		struct face_g_snurb *srf;
 		struct rt_nurb_uv_hit *hp;
@@ -1218,7 +1218,7 @@ struct bu_list *hit_list;
 
 		hp = rt_nurb_intersect( srf, pl1, pl2, UV_TOL, (struct resource *)NULL );
 		/* process each hit point */
-		while( hp != (struct rt_nurb_uv_hit *)NULL )
+		while ( hp != (struct rt_nurb_uv_hit *)NULL )
 		{
 			struct rt_nurb_uv_hit *next;
 			struct snurb_hit *myhit;
@@ -1231,7 +1231,7 @@ struct bu_list *hit_list;
 				bu_log( "\tintersect snurb surface at uv=(%g %g)\n", hp->u, hp->v );
 
 			/* check if point is in face (trimming curves) */
-			if( !uv_in_fu( hp->u, hp->v, fu ) )
+			if ( !uv_in_fu( hp->u, hp->v, fu ) )
 			{
 				/* not a hit */
 
@@ -1248,7 +1248,7 @@ struct bu_list *hit_list;
 
 			/* calculate actual hit point (x y z) */
 			rt_nurb_s_eval( srf, hp->u, hp->v, homo_hit );
-			if( RT_NURB_IS_PT_RATIONAL( srf->pt_type ) )
+			if ( RT_NURB_IS_PT_RATIONAL( srf->pt_type ) )
 			{
 				fastf_t inv_homo;
 
@@ -1265,25 +1265,25 @@ struct bu_list *hit_list;
 			rt_nurb_s_norm( srf, hp->u, hp->v, myhit->norm );
 
 			/* may need to reverse it */
-			if( f->flip )
+			if ( f->flip )
 				VREVERSE( myhit->norm, myhit->norm )
 
 			/* add hit to list */
-			if( BU_LIST_IS_EMPTY( hit_list ) )
+			if ( BU_LIST_IS_EMPTY( hit_list ) )
 				BU_LIST_APPEND( hit_list, &myhit->l )
 			else
 			{
 				struct snurb_hit *tmp;
 
-				for( BU_LIST_FOR( tmp, snurb_hit, hit_list ) )
+				for ( BU_LIST_FOR( tmp, snurb_hit, hit_list ) )
 				{
-					if( tmp->dist >= myhit->dist )
+					if ( tmp->dist >= myhit->dist )
 					{
 						BU_LIST_INSERT( &tmp->l, &myhit->l );
 						break;
 					}
 				}
-				if( myhit->l.forw == (struct bu_list *)0 )
+				if ( myhit->l.forw == (struct bu_list *)0 )
 					BU_LIST_INSERT( hit_list, &myhit->l )
 			}
 
@@ -1304,24 +1304,24 @@ vect_t ray_dir;
 	int enter=0;
 	fastf_t prev_dist=(-MAX_FASTF);
 
-	for( BU_LIST_FOR( hit, snurb_hit, hit_list ) )
+	for ( BU_LIST_FOR( hit, snurb_hit, hit_list ) )
 	{
 		fastf_t dot;
 
-		if( !NEAR_ZERO( hit->dist - prev_dist, tol.dist ) )
+		if ( !NEAR_ZERO( hit->dist - prev_dist, tol.dist ) )
 			enter = !enter;
 
 		dot = VDOT( hit->norm, ray_dir );
 
-		if( (enter && dot > 0.0) || (!enter && dot < 0.0) )
+		if ( (enter && dot > 0.0) || (!enter && dot < 0.0) )
 		{
 			struct snurb_hit *tmp;
 
 			/* reverse this face */
 			hit->f->flip = !(hit->f->flip);
-			for( BU_LIST_FOR( tmp, snurb_hit, hit_list ) )
+			for ( BU_LIST_FOR( tmp, snurb_hit, hit_list ) )
 			{
-				if( tmp->f == hit->f )
+				if ( tmp->f == hit->f )
 				{
 					VREVERSE( tmp->norm, tmp->norm )
 				}
@@ -1349,7 +1349,7 @@ struct faceuse *fu;
 
 	f = fu->f_p;
 
-	if( *f->g.magic_p != NMG_FACE_G_SNURB_MAGIC )
+	if ( *f->g.magic_p != NMG_FACE_G_SNURB_MAGIC )
 		return( 1 );
 
 	fg = f->g.snurb_p;
@@ -1363,7 +1363,7 @@ struct faceuse *fu;
 	u = (umin + umax)/2.0;
 	v = (vmin + vmax)/2.0;
 
-	if( uv_in_fu( u, v, fu ) )
+	if ( uv_in_fu( u, v, fu ) )
 	{
 		*u_in = u;
 		*v_in = v;
@@ -1371,12 +1371,12 @@ struct faceuse *fu;
 	}
 
 	/* no luck, try a few points along the diagonals of the UV plane */
-	for( i=0 ; i<10 ; i++ )
+	for ( i=0; i<10; i++ )
 	{
 		u = umin + (umax - umin)*(double)(i + 1)/11.0;
 		v = vmin + (vmax - vmin)*(double)(i + 1)/11.0;
 
-		if( uv_in_fu( u, v, fu ) )
+		if ( uv_in_fu( u, v, fu ) )
 		{
 			*u_in = u;
 			*v_in = v;
@@ -1385,12 +1385,12 @@ struct faceuse *fu;
 	}
 
 	/* try other diagonal */
-	for( i=0 ; i<10 ; i++ )
+	for ( i=0; i<10; i++ )
 	{
 		u = umin + (umax - umin)*(double)(i + 1)/11.0;
 		v = vmax - (vmax - vmin)*(double)(i + 1)/11.0;
 
-		if( uv_in_fu( u, v, fu ) )
+		if ( uv_in_fu( u, v, fu ) )
 		{
 			*u_in = u;
 			*v_in = v;
@@ -1399,23 +1399,23 @@ struct faceuse *fu;
 	}
 
 	/* last resort, look at loops */
-	for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+	for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
 	{
 		struct edgeuse *eu;
 
-		if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+		if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
 			continue;
 
-		for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+		for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 		{
 			struct edge_g_cnurb *eg;
 
-			if( *eu->g.magic_p != NMG_EDGE_G_CNURB_MAGIC )
+			if ( *eu->g.magic_p != NMG_EDGE_G_CNURB_MAGIC )
 				continue;
 
 			eg = eu->g.cnurb_p;
 
-			if(RT_NURB_IS_PT_RATIONAL( eg->pt_type ) )
+			if (RT_NURB_IS_PT_RATIONAL( eg->pt_type ) )
 			{
 				u = eu->vu_p->a.cnurb_p->param[0] / eu->vu_p->a.cnurb_p->param[2];
 				v = eu->vu_p->a.cnurb_p->param[1] / eu->vu_p->a.cnurb_p->param[2];
@@ -1426,7 +1426,7 @@ struct faceuse *fu;
 				v = eu->vu_p->a.cnurb_p->param[1];
 			}
 
-			if( uv_in_fu( u, v, fu ) )
+			if ( uv_in_fu( u, v, fu ) )
 			{
 				*u_in = u;
 				*v_in = v;
@@ -1457,17 +1457,17 @@ struct bu_list *hit_list;
 
 	f = fu->f_p;
 
-	if( *f->g.magic_p != NMG_FACE_G_SNURB_MAGIC )
+	if ( *f->g.magic_p != NMG_FACE_G_SNURB_MAGIC )
 		return( 1 );
 
 	fg = f->g.snurb_p;
 
-	if( Find_uv_in_fu( &u, &v, fu ) )
+	if ( Find_uv_in_fu( &u, &v, fu ) )
 		return( 1 );
 
 	/* calculate actual hit point (x y z) */
 	rt_nurb_s_eval( fg, u, v, homo_hit );
-	if( RT_NURB_IS_PT_RATIONAL( fg->pt_type ) )
+	if ( RT_NURB_IS_PT_RATIONAL( fg->pt_type ) )
 	{
 		fastf_t inv_homo;
 
@@ -1481,7 +1481,7 @@ struct bu_list *hit_list;
 	rt_nurb_s_norm( fg, u, v, norm );
 
 	/* may need to reverse it */
-	if( f->flip )
+	if ( f->flip )
 		VREVERSE( norm, norm )
 
 	return( 0 );
@@ -1500,28 +1500,28 @@ Convtrimsurfs()
 
 	bu_log( "\n\nConverting Trimmed Surface entities:\n" );
 
-	if( RT_G_DEBUG & DEBUG_MEM_FULL )
+	if ( RT_G_DEBUG & DEBUG_MEM_FULL )
 		bu_mem_barriercheck();
 
 	m = nmg_mm();
 	r = nmg_mrsv( m );
 	s = BU_LIST_FIRST( shell, &r->s_hd );
 
-	for( i=0 ; i<totentities ; i++ )
+	for ( i=0; i<totentities; i++ )
 	{
-		if( dir[i]->type == 144 )
+		if ( dir[i]->type == 144 )
 		{
-			if( RT_G_DEBUG & DEBUG_MEM_FULL )
+			if ( RT_G_DEBUG & DEBUG_MEM_FULL )
 				bu_mem_barriercheck();
 
 			totsurfs++;
 			fu = trim_surf( i, s );
-			if( fu )
+			if ( fu )
 			{
 				nmg_face_bb( fu->f_p, &tol );
 				convsurf++;
 			}
-			if( RT_G_DEBUG & DEBUG_MEM_FULL )
+			if ( RT_G_DEBUG & DEBUG_MEM_FULL )
 				bu_mem_barriercheck();
 
 		}
@@ -1532,17 +1532,17 @@ Convtrimsurfs()
 	bu_log( "\n\t%d surfaces converted, adusting surface normals....\n", convsurf );
 
 	/* do some raytracing to get face orientations correct */
-	for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
+	for ( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
 	{
 		struct faceuse *fu2;
 		point_t mid_pt;
 		vect_t ray_dir;
 
-		if( fu->orientation != OT_SAME )
+		if ( fu->orientation != OT_SAME )
 			continue;
 
 		BU_LIST_INIT( &hit_list );
-		if( Find_pt_in_fu( fu, mid_pt, ray_dir/* !!! fourth param missing */ ) )
+		if ( Find_pt_in_fu( fu, mid_pt, ray_dir/* !!! fourth param missing */ ) )
 		{
 			bu_log( "Convtrimsurfs: Cannot find a point in fu (x%x)\n", fu );
 			nmg_pr_fu( fu, " " );
@@ -1553,9 +1553,9 @@ Convtrimsurfs()
 		 * must include current fu since there
 		 * may be more than one intersection
 		 */
-		for( BU_LIST_FOR( fu2, faceuse, &s->fu_hd ) )
+		for ( BU_LIST_FOR( fu2, faceuse, &s->fu_hd ) )
 		{
-			if( fu2->orientation != OT_SAME )
+			if ( fu2->orientation != OT_SAME )
 				continue;
 
 			find_intersections( fu2, mid_pt, ray_dir, &hit_list );
@@ -1563,7 +1563,7 @@ Convtrimsurfs()
 
 		adjust_flips( &hit_list, ray_dir );
 
-		while( BU_LIST_NON_EMPTY( &hit_list ) )
+		while ( BU_LIST_NON_EMPTY( &hit_list ) )
 		{
 			struct snurb_hit *myhit;
 
@@ -1577,26 +1577,26 @@ Convtrimsurfs()
 
 	bu_log( "Converted %d Trimmed Sufaces successfully out of %d total Trimmed Sufaces\n", convsurf, totsurfs );
 
-	if( RT_G_DEBUG & DEBUG_MEM_FULL )
+	if ( RT_G_DEBUG & DEBUG_MEM_FULL )
 		bu_mem_barriercheck();
 
-	if( convsurf )
+	if ( convsurf )
 	{
 		(void)nmg_model_vertex_fuse( m, &tol );
 
-		if( curr_file->obj_name )
+		if ( curr_file->obj_name )
 			mk_nmg( fdout, curr_file->obj_name, m );
 		else
 			mk_nmg( fdout, "Trimmed_surf", m );
 	}
-	if( RT_G_DEBUG & DEBUG_MEM_FULL )
+	if ( RT_G_DEBUG & DEBUG_MEM_FULL )
 		bu_mem_barriercheck();
 
-	if( !convsurf ) {
+	if ( !convsurf ) {
 	    nmg_km( m );
 	}
 
-	if( RT_G_DEBUG & DEBUG_MEM_FULL )
+	if ( RT_G_DEBUG & DEBUG_MEM_FULL )
 		bu_mem_barriercheck();
 
 }

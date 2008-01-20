@@ -100,7 +100,7 @@ static bool
 tryGetOrigin( xp, yp )
 long *xp, *yp;
 	{	char *fbtype = fb_gettype( fbiop );
-	if( strcmp( fbtype, "Remote Device Interface" ) == 0 )	/* trouble */
+	if ( strcmp( fbtype, "Remote Device Interface" ) == 0 )	/* trouble */
 		{
 		prnt_Scroll( "Can't get window origin from remote device.\n" );
 		return false;
@@ -225,10 +225,10 @@ mips_IR_Paint( flag )
 int	flag;
 	{
 	ir_doing_paint = flag;
-	if( ir_doing_paint )
+	if ( ir_doing_paint )
 		{
 		get_Input( input_ln, MAX_LN, "Enter temperature : " );
-		if( sscanf( input_ln, "%d", &ir_paint ) != 1 )
+		if ( sscanf( input_ln, "%d", &ir_paint ) != 1 )
 			ir_doing_paint = FALSE;
 		}
 	return	'#'; /* For backward compatibility with SGI menu interface. */
@@ -238,7 +238,7 @@ static int
 mips_Mat_Print( flag )
 int	flag;
 	{
-	if( flag != -1 )
+	if ( flag != -1 )
 		(void) mat_Print_Db( flag );
 	return	'#'; /* For backward compatibility with SGI menu interface. */
 	}
@@ -247,7 +247,7 @@ static int
 mips_Max_Ray( flag )
 int	flag;
 	{
-	if( ir_mapping )
+	if ( ir_mapping )
 		bu_log( "Multiple bounces disallowed during IR mapping.\n" );
 	else
 		max_bounce = flag;
@@ -290,10 +290,10 @@ static int
 mips_Debugging( flag )
 int	flag;
 	{
-	if( flag > 0 )
+	if ( flag > 0 )
 		rt_g.debug |= flag;
 	else
-	if( flag == 0 )
+	if ( flag == 0 )
 		rt_g.debug = 0;
 	return	'#'; /* For backward compatibility with SGI menu interface. */
 	}
@@ -315,7 +315,7 @@ sgi_Pup_Strs()
 	color( CYAN );
 	clear();
 	color( BLACK );
-	for( i = 0; i < MAXSTRS && pupstr[i] != NULL; i++, ypos -= CHARHGT )
+	for ( i = 0; i < MAXSTRS && pupstr[i] != NULL; i++, ypos -= CHARHGT )
 		{
 		cmov2i( 10, ypos );
 		charstr( pupstr[i] );
@@ -329,11 +329,11 @@ register int	x, y, *xp, *yp, *originp;
 	{	char		*args[3];
 		char		buf1[5], buf2[5];
 		long		xwin, ywin;
-	if( ! tryGetOrigin( &xwin, &ywin ) )
+	if ( ! tryGetOrigin( &xwin, &ywin ) )
 		return; /* XXX */
 	args[1] = buf1;
 	args[2] = buf2;
-	if( *originp )
+	if ( *originp )
 		{
 		*xp = x;
 		*yp = y;
@@ -348,11 +348,11 @@ register int	x, y, *xp, *yp, *originp;
 		{	int	x_fin, y_fin;
 		x_fin = SGI_XCVT( x ) + x_fb_origin;
 		y_fin = SGI_YCVT( y ) + y_fb_origin;
-		if( x_fin < grid_x_org )
+		if ( x_fin < grid_x_org )
 			{
 			Swap_Integers( x_fin, grid_x_org );
 			}
-		if( y_fin < grid_y_org )
+		if ( y_fin < grid_y_org )
 			{
 			Swap_Integers( y_fin, grid_y_org );
 			}
@@ -387,21 +387,21 @@ int	origin, x, y, x0, y0;
 	qdevice( MOUSEX );
 	qdevice( MOUSEY );
 	qdevice( MIDDLEMOUSE );
-	if( ! tryGetOrigin( &xwin, &ywin ) )
+	if ( ! tryGetOrigin( &xwin, &ywin ) )
 		return -1; /* XXX */
 	(void) fb_setcursor( fbiop, target1, 16, 16, 8, 8 );
 	(void) fb_cursor( fbiop, 1, x, y );
 	pupstr = tagpupstr;
 	sgi_Pup_Strs();
-	for( ; ; )
+	for (;;)
 		{
-		if( ! qtest() )
+		if ( ! qtest() )
 			continue;
-		switch( qread( &val ) )
+		switch ( qread( &val ) )
 			{
 		case MENUBUTTON :
 			/* Wait for user to let go.			*/
-			for( ; ! qtest() || qread( &val ) != MENUBUTTON; )
+			for (; ! qtest() || qread( &val ) != MENUBUTTON; )
 				;
 			unqdevice( MOUSEX );
 			unqdevice( MOUSEY );
@@ -411,7 +411,7 @@ int	origin, x, y, x0, y0;
 			return	1;
 		case MIDDLEMOUSE :
 			/* Wait for user to let go.			*/
-			for( ; ! qtest() || qread( &val ) != MIDDLEMOUSE; )
+			for (; ! qtest() || qread( &val ) != MIDDLEMOUSE; )
 				;
 			sgi_Pt_Select( x, y, &x0, &y0, &origin );
 			sgi_Pt_Select( x, y, &x0, &y0, &origin );
@@ -446,7 +446,7 @@ sgi_Sweep_Rect( origin, x, y, x0, y0 )
 int	origin, x, y, x0, y0;
 	{	short	val;
 		long	xwin, ywin;
-	if( ! tryGetOrigin( &xwin, &ywin ) )
+	if ( ! tryGetOrigin( &xwin, &ywin ) )
 		return -1; /* XXX */
 	qdevice( MOUSEX );
 	qdevice( MOUSEY );
@@ -460,15 +460,15 @@ int	origin, x, y, x0, y0;
 	pupstr = sweepupstr;
 	sgi_Pup_Strs();
 	sgi_OL_Start();
-	for( ; ; )
+	for (;;)
 		{
-		if( ! qtest() )
+		if ( ! qtest() )
 			continue;
-		switch( qread( &val ) )
+		switch ( qread( &val ) )
 			{
 		case MENUBUTTON :
 			/* Wait for user to let go.	*/
-			for(	;
+			for (	;
 			      !	qtest()
 			    ||	qread( &val ) != MENUBUTTON;
 				)
@@ -481,7 +481,7 @@ int	origin, x, y, x0, y0;
 			return	1;
 		case MIDDLEMOUSE :
 			sgi_Pt_Select( x, y, &x0, &y0, &origin );
-			if( origin )
+			if ( origin )
 				/* Done sweeping.	*/
 				(void) fb_setcursor( fbiop, target1, 16, 16, 8, 8 );
 			else
@@ -491,7 +491,7 @@ int	origin, x, y, x0, y0;
 				}
 			break;
 		case MOUSEX :
-			if( ! origin )
+			if ( ! origin )
 				{
 				sgi_OL_Erase();
 				x = val;
@@ -502,7 +502,7 @@ int	origin, x, y, x0, y0;
 				x = val;
 			break;
 		case MOUSEY :
-			if( ! origin )
+			if ( ! origin )
 				{
 				sgi_OL_Erase();
 				y = val;
@@ -535,7 +535,7 @@ int	origin, x, y, x0, y0, out_flag;
 		double		relscale;
 		double		x_translate, y_translate;
 		long		xwin, ywin;
-	if( ! tryGetOrigin( &xwin, &ywin ) )
+	if ( ! tryGetOrigin( &xwin, &ywin ) )
 		return -1; /* XXX */
 	qdevice( MOUSEX );
 	qdevice( MOUSEY );
@@ -549,15 +549,15 @@ int	origin, x, y, x0, y0, out_flag;
 	pupstr = winpupstr;
 	sgi_Pup_Strs();
 	sgi_OL_Start();
-	for( ; ; )
+	for (;;)
 		{
-		if( ! qtest() )
+		if ( ! qtest() )
 			continue;
-		switch( qread( &val ) )
+		switch ( qread( &val ) )
 			{
 		case MENUBUTTON :
 			/* Wait for user to let go.	*/
-			for(	;
+			for (	;
 			      !	qtest()
 			    ||	qread( &val ) != MENUBUTTON;
 				)
@@ -565,7 +565,7 @@ int	origin, x, y, x0, y0, out_flag;
 #define Pixel2Grid(x_) ((x_)/((double)fb_getwidth(fbiop)/grid_sz))
 #define Grid2Model(x_) ((x_)*cell_sz)
 			relscale = Pixel2Grid( dw*2.0 )/ (double)(grid_sz);
-			if( out_flag )
+			if ( out_flag )
 				relscale = 1.0 / relscale;
 			x_translate = (x0-xwin) - (fb_getwidth(fbiop)/2);
 			x_translate = Pixel2Grid( x_translate );
@@ -573,7 +573,7 @@ int	origin, x, y, x0, y0, out_flag;
 			y_translate = (y0-ywin) - (fb_getheight(fbiop)/2);
 			y_translate = Pixel2Grid( y_translate );
 			y_translate = Grid2Model( y_translate );
-			if( out_flag )
+			if ( out_flag )
 				{
 				x_grid_offset -= x_translate;
 				y_grid_offset -= y_translate;
@@ -593,7 +593,7 @@ int	origin, x, y, x0, y0, out_flag;
 			return	1;
 		case MIDDLEMOUSE :
 			Toggle( origin );
-			if( origin )
+			if ( origin )
 				{ /* Done framing window. */
 				(void) fb_setcursor( fbiop, target1, 16, 16, 8, 8 );
 				}
@@ -606,7 +606,7 @@ int	origin, x, y, x0, y0, out_flag;
 				}
 			break;
 		case MOUSEX :
-			if( ! origin )
+			if ( ! origin )
 				{
 				sgi_OL_Erase();
 				x = val;
@@ -620,7 +620,7 @@ int	origin, x, y, x0, y0, out_flag;
 				x = val;
 			break;
 		case MOUSEY :
-			if( ! origin )
+			if ( ! origin )
 				{
 				sgi_OL_Erase();
 				y = val;
@@ -653,15 +653,15 @@ sgi_User_Input( args )
 char	**args;
 	{
 	prnt_Status();
-	for( ; ; )
+	for (;;)
 		{
-		if( qtest() )
+		if ( qtest() )
 			{	short	val;
 				long	dev = qread( &val );
-			switch( dev )
+			switch ( dev )
 				{
 			case MENUBUTTON :
-				if( ! user_Pop( dopup( main_menu ) ) )
+				if ( ! user_Pop( dopup( main_menu ) ) )
 					return 0;
 				prnt_Event( "" );
 				prnt_Prompt( "" );
@@ -698,23 +698,23 @@ int	origin;
 	{
 	winset( (long) fbiop->if_fd );
 	(void) winattach();
-	for( ; ; )
+	for (;;)
 		{
 		(void) fb_setcursor( fbiop, menucursor, 16, 16, 0, 0 );
-		if( qtest() )
+		if ( qtest() )
 			{	short	val;
 				long	dev = qread( &val );
 				int	ret;
-			switch( dev )
+			switch ( dev )
 				{
 			case MENUBUTTON :
 				(void) fb_setcursor( fbiop, arrowcursor, 16, 16, 0, 0 );
-				switch( dopup( cursorect_menu ) )
+				switch ( dopup( cursorect_menu ) )
 					{
 				case C_TAGPIXEL : /* Tag pixel. */
 					*mxp = XSCR2MEM( x );
 					*myp = YSCR2MEM( y );
-					if( sgi_Tag_Pixel( origin, *mxp, *myp, xx0, yy0 ) )
+					if ( sgi_Tag_Pixel( origin, *mxp, *myp, xx0, yy0 ) )
 						goto	hit_menubutton;
 					else
 						ret = 2;
@@ -722,7 +722,7 @@ int	origin;
 				case C_SWEEPREC : /* Sweep rectangle. */
 					*mxp = XSCR2MEM( x );
 					*myp = YSCR2MEM( y );
-					if( sgi_Sweep_Rect( origin, *mxp, *myp, xx0, yy0 ) )
+					if ( sgi_Sweep_Rect( origin, *mxp, *myp, xx0, yy0 ) )
 						goto	hit_menubutton;
 					else
 						ret = 2;
@@ -730,13 +730,13 @@ int	origin;
 				case C_I_WINDOW : /* Window in. */
 					*mxp = XSCR2MEM( x );
 					*myp = YSCR2MEM( y );
-					if( rel_perspective > 0.0 )
+					if ( rel_perspective > 0.0 )
 						{
 						prnt_Scroll( "Windowing does not yet work WITH perspective.\n" );
 						prnt_Scroll( "Set perspective to zero or negative.\n" );
 						}
 					else
-					if( sgi_Window_In( origin, *mxp, *myp, xx0, yy0, 0 ) )
+					if ( sgi_Window_In( origin, *mxp, *myp, xx0, yy0, 0 ) )
 						goto	hit_menubutton;
 					else
 						ret = 2;
@@ -744,13 +744,13 @@ int	origin;
 				case C_O_WINDOW : /* Window out. */
 					*mxp = XSCR2MEM( x );
 					*myp = YSCR2MEM( y );
-					if( rel_perspective > 0.0 )
+					if ( rel_perspective > 0.0 )
 						{
 						prnt_Scroll( "Windowing does not yet work WITH perspective.\n" );
 						prnt_Scroll( "Set perspective to zero or negative.\n" );
 						}
 					else
-					if( sgi_Window_In( origin, *mxp, *myp, xx0, yy0, 1 ) )
+					if ( sgi_Window_In( origin, *mxp, *myp, xx0, yy0, 1 ) )
 						goto	hit_menubutton;
 					else
 						ret = 2;
@@ -759,7 +759,7 @@ int	origin;
 					*mxp = XSCR2MEM( x );
 					*myp = YSCR2MEM( y );
 					Toggle( query_region );
-					if( sgi_Tag_Pixel( origin, *mxp, *myp, xx0, yy0 ) )
+					if ( sgi_Tag_Pixel( origin, *mxp, *myp, xx0, yy0 ) )
 						goto	hit_menubutton;
 					else
 						ret = 2;
@@ -837,7 +837,7 @@ sgi_Init_Popup_Menu()
 		long	nineties_menu;
 	prefsize( PUPWID, PUPHGT );
 	foreground();
-	if( (popup_gid = winopen( "pop up menus" )) == -1 )
+	if ( (popup_gid = winopen( "pop up menus" )) == -1 )
 		{
 		fb_log( "No more graphics ports available.\n" );
 		return	-1;
@@ -1015,13 +1015,13 @@ int	fps;
 		static long	movie_gid = -1;
 		long		xwin, ywin, xsiz, ysiz;
 		long		movie_xwin, movie_ywin;
-	if( fps < 1 )
+	if ( fps < 1 )
 		fps = 1;
-	if( fps > HZ )
+	if ( fps > HZ )
 		fps = HZ;
 
 	/* Get origin of frame buffer window (source). */
-	if( ! tryGetOrigin( &xwin, &ywin ) )
+	if ( ! tryGetOrigin( &xwin, &ywin ) )
 		return; /* XXX */
 
 	/* Get size of frame buffer window (source). */
@@ -1032,28 +1032,28 @@ int	fps;
 	wid = xsiz / framesz;
 	xpos = ypos = xsiz / 2;
 	zoom = 1;
-	if( fb_zoom( fbiop, zoom, zoom ) == -1 )
+	if ( fb_zoom( fbiop, zoom, zoom ) == -1 )
 		bu_log( "Can not set zoom <%d,%d>.\n", zoom, zoom );
-	if( fb_viewport( fbiop, 0, 0, xsiz, ysiz ) == -1 )
+	if ( fb_viewport( fbiop, 0, 0, xsiz, ysiz ) == -1 )
 		bu_log( "Can not set viewport {<%d,%d>,<%d,%d>}.\n",
 			0, 0, xsiz, ysiz
 			);
-	if( fb_window( fbiop, xpos, ypos ) == -1 )
+	if ( fb_window( fbiop, xpos, ypos ) == -1 )
 		bu_log( "Can not set window <%d,%d>.\n", xpos, ypos );
 
 	/* Create destination window for movie, with user positioning. */
 	prefsize( framesz, framesz );
-	if( (movie_gid = winopen( "movie" )) == -1 )
+	if ( (movie_gid = winopen( "movie" )) == -1 )
 		{
 		fb_log( "No more graphics ports available.\n" );
 		return;
 		}
 	/* Adjust window position optimally for fast "rectcopy()". */
-	if( ! tryGetOrigin( &movie_xwin, &movie_ywin ) )
+	if ( ! tryGetOrigin( &movie_xwin, &movie_ywin ) )
 		return; /* XXX */
-	if( ((xwin - movie_xwin) % 16) != 0 )
+	if ( ((xwin - movie_xwin) % 16) != 0 )
 		movie_xwin += (xwin - movie_xwin) % 16;
-	while( movie_xwin > XMAXSCREEN - framesz )
+	while ( movie_xwin > XMAXSCREEN - framesz )
 		movie_xwin -= 16;
 	winmove( movie_xwin, movie_ywin );
 
@@ -1062,19 +1062,19 @@ int	fps;
 	gconfig();
 
 	qdevice( MIDDLEMOUSE );
-	for( ; ; )
-	for( i = 0; i < wid; i++ )
+	for (;;)
+	for ( i = 0; i < wid; i++ )
 		{
-		for( j = 0; j < wid; j++ )
+		for ( j = 0; j < wid; j++ )
 			{
 			sginap( HZ/(long)fps );
-			if( qtest() )
+			if ( qtest() )
 				{	short	val;
-				switch( qread( &val ) )
+				switch ( qread( &val ) )
 					{
 				case MENUBUTTON :
 					/* Wait for user to let go.	*/
-					for(	;
+					for (	;
 					      !	qtest()
 					    ||	qread( &val ) != MENUBUTTON;
 						)
@@ -1082,7 +1082,7 @@ int	fps;
 					break;
 				case MIDDLEMOUSE :
 					/* Wait for user to let go.	*/
-					for(	;
+					for (	;
 					      !	qtest()
 					    ||	qread( &val ) != MIDDLEMOUSE;
 						)
@@ -1118,20 +1118,20 @@ char	*msg;
 	do
 		{		(void) fflush( stdout );
 		c = hm_getchar();
-		switch( c )
+		switch ( c )
 			{
 		case Ctrl('A') : /* Cursor to beginning of line.	*/
-			if( p == buffer )
+			if ( p == buffer )
 				{
 				ring_Bell();
 				break;
 				}
-			for( ; p > buffer; p-- )
+			for (; p > buffer; p-- )
 				(void) putchar( BS );
 			break;
 		case Ctrl('B') :
 		case BS : /* Move cursor back one character.		*/
-			if( p == buffer )
+			if ( p == buffer )
 				{
 				ring_Bell();
 				break;
@@ -1141,22 +1141,22 @@ char	*msg;
 			break;
 		case Ctrl('D') : /* Delete character under cursor.	*/
 			{	register char	*q = p;
-			if( *p == NUL )
+			if ( *p == NUL )
 				{
 				ring_Bell();
 				break;
 				}
-			for( ; *q != NUL; ++q )
+			for (; *q != NUL; ++q )
 				{
 				*q = *(q+1);
 				(void) putchar( *q != NUL ? *q : SP );
 				}
-			for( ; q > p; --q )
+			for (; q > p; --q )
 				(void) putchar( BS );
 			break;
 			}
 		case Ctrl('E') : /* Cursor to end of line.		*/
-			if( *p == NUL )
+			if ( *p == NUL )
 				{
 				ring_Bell();
 				break;
@@ -1165,7 +1165,7 @@ char	*msg;
 			p += strlen( p );
 			break;
 		case Ctrl('F') : /* Cursor forward one character.	*/
-			if( *p == NUL || p-buffer >= bufsz-2 )
+			if ( *p == NUL || p-buffer >= bufsz-2 )
 				{
 				ring_Bell();
 				break;
@@ -1178,7 +1178,7 @@ char	*msg;
 			prnt_Prompt( "" );
 			return	NULL;
 		case Ctrl('K') : /* Erase from cursor to end of line.	*/
-			if( *p == NUL )
+			if ( *p == NUL )
 				{
 				ring_Bell();
 				break;
@@ -1188,7 +1188,7 @@ char	*msg;
 			break;
 		case Ctrl('P') : /* Yank previous contents of "inbuf".	*/
 			{	register int	len = strlen( inbuf );
-			if( (p + len) - buffer >= BUFSIZ )
+			if ( (p + len) - buffer >= BUFSIZ )
 				{
 				ring_Bell();
 				break;
@@ -1199,48 +1199,48 @@ char	*msg;
 			break;
 			}
 		case Ctrl('U') : /* Erase from start of line to cursor.	*/
-			if( p == buffer )
+			if ( p == buffer )
 				{
 				ring_Bell();
 				break;
 				}
-			for( ; p > buffer; --p )
+			for (; p > buffer; --p )
 				{	register char	*q = p;
 				(void) putchar( BS );
-				for( ; *(q-1) != NUL; ++q )
+				for (; *(q-1) != NUL; ++q )
 					{
 					*(q-1) = *q;
 					(void) putchar( *q != NUL ? *q : SP );
 					}
-				for( ; q > p; --q )
+				for (; q > p; --q )
 					(void) putchar( BS );
 				}
 			break;
 		case Ctrl('R') : /* Print line, cursor doesn't move.	*/
 			{	register int	i;
-			if( buffer[0] == NUL )
+			if ( buffer[0] == NUL )
 				break;
-			for( i = p - buffer; i > 0; i-- )
+			for ( i = p - buffer; i > 0; i-- )
 				(void) putchar( BS );
 			(void) printf( "%s", buffer );
-			for( i = strlen( buffer ) - (p - buffer); i > 0; i-- )
+			for ( i = strlen( buffer ) - (p - buffer); i > 0; i-- )
 				(void) putchar( BS );
 			break;
 			}
 		case DEL : /* Delete character behind cursor.		*/
 			{	register char	*q = p;
-			if( p == buffer )
+			if ( p == buffer )
 				{
 				ring_Bell();
 				break;
 				}
 			(void) putchar( BS );
-			for( ; *(q-1) != NUL; ++q )
+			for (; *(q-1) != NUL; ++q )
 				{
 				*(q-1) = *q;
 				(void) putchar( *q != NUL ? *q : SP );
 				}
-			for( ; q > p; --q )
+			for (; q > p; --q )
 				(void) putchar( BS );
 			p--;
 			break;
@@ -1250,7 +1250,7 @@ char	*msg;
 		case EOF :
 			(void) strncpy( inbuf, buffer, bufsz );
 			prnt_Prompt( "" );
-			if( inbuf[0] == '\0' )
+			if ( inbuf[0] == '\0' )
 				return	NULL;
 			else
 				return	inbuf;
@@ -1262,14 +1262,14 @@ char	*msg;
 			{	register char	*q = p;
 				register int	len = strlen( p );
 			/* Print control characters as strings.		*/
-			if( c >= NUL && c < SP )
+			if ( c >= NUL && c < SP )
 				(void) printf( "%s", char_To_String( c ) );
 			else
 				(void) putchar( c );
 			/* Scroll characters forward.			*/
-			for( ; len >= 0; len--, q++ )
+			for (; len >= 0; len--, q++ )
 				(void) putchar( *q == NUL ? SP : *q );
-			for( ; q > p; q-- )
+			for (; q > p; q-- )
 				{
 				(void) putchar( BS );
 				*q = *(q-1);
@@ -1279,7 +1279,7 @@ char	*msg;
 			}
 			} /* End switch. */
 		}
-	while( strlen( buffer ) < BUFSIZ );
+	while ( strlen( buffer ) < BUFSIZ );
 	(void) strncpy( inbuf, buffer, bufsz );
 	ring_Bell();
 	prnt_Event( "Buffer full." );
@@ -1293,13 +1293,13 @@ char	**args;
 	{	register int	i;
 		register char	*eof_flag;
 	(void) get_Input( input_ln, BUFSIZ, ": " );
-	if( (args[0] = strtok( input_ln, " \t" )) == NULL )
+	if ( (args[0] = strtok( input_ln, " \t" )) == NULL )
 		{
 		args[0] = "#";
 		args[1] = NULL;
 		return;
 		}
-	for( i = 1; args[i-1] != NULL ; ++i )
+	for ( i = 1; args[i-1] != NULL; ++i )
 		args[i] = strtok( (char *) NULL, " \t" );
 	return;
 	}
@@ -1308,7 +1308,7 @@ int
 sgi_Getchar()
 	{	short	val;
 	(void) winattach();
-	while( ! qtest() || qread( &val ) != KEYBD )
+	while ( ! qtest() || qread( &val ) != KEYBD )
 		;
 	return	(int) val;
 	}

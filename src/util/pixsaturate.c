@@ -70,7 +70,7 @@ main(int argc, char **argv)
 	int	nby;
 	register unsigned char	*cp;
 
-	if( argc != 2 )  {
+	if ( argc != 2 )  {
 		bu_exit(1, "Usage: pixsaturate saturation\n");
 	}
 	sat = atof(argv[1]);
@@ -79,9 +79,9 @@ main(int argc, char **argv)
 	gwgt = GINTLUM*(1.0-sat);
 	bwgt = BINTLUM*(1.0-sat);
 
-	while( (nby = fread( buf, 1, sizeof(buf), stdin )) > 0 )  {
+	while ( (nby = fread( buf, 1, sizeof(buf), stdin )) > 0 )  {
 		cp = (unsigned char *)buf;
-		for( n = nby ; n > 0; n -= 3 )  {
+		for ( n = nby; n > 0; n -= 3 )  {
 			rt = cp[0];
 			gt = cp[1];
 			bt = cp[2];
@@ -89,14 +89,14 @@ main(int argc, char **argv)
 			rt = bw+sat*rt;
 			gt = bw+sat*gt;
 			bt = bw+sat*bt;
-			if(rt<0) rt = 0; else if(rt>255) rt=255;
-			if(gt<0) gt = 0; else if(gt>255) gt=255;
-			if(bt<0) bt = 0; else if(bt>255) bt=255;
+			if (rt<0) rt = 0; else if (rt>255) rt=255;
+			if (gt<0) gt = 0; else if (gt>255) gt=255;
+			if (bt<0) bt = 0; else if (bt>255) bt=255;
 			*cp++ = rt;
 			*cp++ = gt;
 			*cp++ = bt;
 		}
-		if( fwrite( buf, 1, nby, stdout ) != nby )  {
+		if ( fwrite( buf, 1, nby, stdout ) != nby )  {
 			perror("fwrite");
 			return 1;
 		}

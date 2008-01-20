@@ -139,7 +139,7 @@ InitTermCap(FILE *fp)
 #ifdef TIOCGWINSZ
 	fd_stdout = fileno( out_fp );
 #endif
-	if( (term = getenv( "TERM" )) == NULL )
+	if ( (term = getenv( "TERM" )) == NULL )
 		{
 		(void) fprintf( stderr, "TERM not set or exported!\n" );
 		return	0;
@@ -150,7 +150,7 @@ InitTermCap(FILE *fp)
 		}
 
 	/* Get terminal entry.						*/
-	switch( tgetent( termCapBuf, term ) )
+	switch ( tgetent( termCapBuf, term ) )
 		{
 	case -1 :
 		(void) fprintf( stderr, "Can't open termcap file!\n" );
@@ -180,7 +180,7 @@ LoadTP(void)
 	/* Get window size for DMD layers support.			*/
 	struct _winsize		window;
 
-	if(	ioctl( fd_stdout, TIOCGWINSZ, &window ) == 0
+	if (	ioctl( fd_stdout, TIOCGWINSZ, &window ) == 0
 	    &&	window.ws_row != 0 && window.ws_col != 0
 		)
 		{
@@ -224,7 +224,7 @@ LoadTCS(void)
 int
 HmCursor(void)
 {
-	if( HO != NULL )
+	if ( HO != NULL )
 		{
 		tputs( HO, 1, PutChr );
 		return	1;
@@ -239,7 +239,7 @@ HmCursor(void)
 int
 ScrollUp(void)
 {
-	if( SF != NULL )
+	if ( SF != NULL )
 		{
 		tputs( SF, 1, PutChr );
 		return	1;
@@ -254,7 +254,7 @@ ScrollUp(void)
 int
 ScrollDn(void)
 {
-	if( SR != NULL )
+	if ( SR != NULL )
 		{
 		tputs( SR, 1, PutChr );
 		return	1;
@@ -269,7 +269,7 @@ ScrollDn(void)
 int
 DeleteLn(void)
 {
-	if( DL != NULL )
+	if ( DL != NULL )
 		{
 		tputs( DL, 1, PutChr );
 		return	1;
@@ -285,7 +285,7 @@ int
 MvCursor(int x, int y)
 {
 	--x; --y; /* Tgoto() adds 1 to each coordinate!?		*/
-	if( CM != NULL )
+	if ( CM != NULL )
 		{
 		tputs( tgoto( CM, x, y ), 1, PutChr );
 		return	1;
@@ -300,7 +300,7 @@ MvCursor(int x, int y)
 int
 ClrEOL(void)
 {
-	if( CE != NULL )
+	if ( CE != NULL )
 		{
 		tputs( CE, 1, PutChr );
 		return	1;
@@ -315,7 +315,7 @@ ClrEOL(void)
 int
 ClrText(void)
 {
-	if( CL != NULL )
+	if ( CL != NULL )
 		{
 		tputs( CL, LI, PutChr );
 		return	1;
@@ -330,7 +330,7 @@ ClrText(void)
 int
 SetScrlReg(int top, int btm)
 {
-	if( CS != NULL )
+	if ( CS != NULL )
 		{
 		tputs( tgoto( CS, btm-1, top-1 ), 1, PutChr );
 		return	1;
@@ -345,7 +345,7 @@ SetScrlReg(int top, int btm)
 int
 ResetScrlReg(void)
 {
-	if( CS != NULL )
+	if ( CS != NULL )
 		{
 		tputs( tgoto( CS, LI-1, 0 ), 1, PutChr );
 		return	1;
@@ -360,7 +360,7 @@ ResetScrlReg(void)
 int
 ClrStandout(void)
 {
-	if( SE != NULL )
+	if ( SE != NULL )
 		{
 		tputs( SE, 1, PutChr );
 		return	1;
@@ -375,7 +375,7 @@ ClrStandout(void)
 int
 SetStandout(void)
 {
-	if( SO != NULL )
+	if ( SO != NULL )
 		{
 		tputs( SO, 1, PutChr );
 		return	1;

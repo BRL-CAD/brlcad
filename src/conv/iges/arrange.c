@@ -35,21 +35,21 @@
 Arrange( root )
 struct node *root;
 {
-	struct node *Copytree(),*Pop(),*ptr,*ptra,*ptrb,*ptrc,*ptrd,*ptr1,*ptr2;
+	struct node *Copytree(), *Pop(), *ptr, *ptra, *ptrb, *ptrc, *ptrd, *ptr1, *ptr2;
 	int retval=1;
 
 	ptr = root;
-	while( 1 )
+	while ( 1 )
 	{
-		while( ptr != NULL )
+		while ( ptr != NULL )
 		{
 			Push( ptr );
 			ptr = ptr->left;
 		}
 		ptr = Pop();
-		if( ptr->op == Subtract )
+		if ( ptr->op == Subtract )
 		{
-			if( ptr->right->op == Subtract || ptr->right->op == Intersect )
+			if ( ptr->right->op == Subtract || ptr->right->op == Intersect )
 			{
 			/*	(a-(b"+ or-"c)) => ((a-b)u(a"+ or -"c))	*/
 				retval = 0;
@@ -63,7 +63,7 @@ struct node *root;
 				ptr2->left = Copytree( ptra, ptr2 );
 				ptr2->right = ptrb;
 				ptr->op = Union;
-				if( ptr1->op == Intersect )
+				if ( ptr1->op == Intersect )
 					ptr1->op = Subtract;
 				else
 					ptr1->op = Intersect;
@@ -73,7 +73,7 @@ struct node *root;
 				ptra->parent = ptr1;
 			}
 		}
-		if( ptr->op == Intersect && ptr->left->op > Union && ptr->right->op > Union )
+		if ( ptr->op == Intersect && ptr->left->op > Union && ptr->right->op > Union )
 		{
 		/*	(a"+ or -"b)+(c"+ or -"d) => (((a+c)"+ or -"b)"+ or -"d)	*/
 			retval = 0;
@@ -96,9 +96,9 @@ struct node *root;
 			ptrc->parent = ptr1;
 			ptrd->parent = ptr;
 		}
-		else if( ptr->op == Intersect )
+		else if ( ptr->op == Intersect )
 		{
-			if( ptr->right->op > Union )
+			if ( ptr->right->op > Union )
 			{
 			/*	(a+(b"+ or -"c)) => ((b"+ or -"c)+a)	*/
 				retval = 0;
@@ -108,10 +108,10 @@ struct node *root;
 			}
 		}
 
-		if( ptr == root )
+		if ( ptr == root )
 			return( retval );
 
-		if( ptr != ptr->parent->right )
+		if ( ptr != ptr->parent->right )
 			ptr = ptr->parent->right;
 		else
 			ptr = NULL;

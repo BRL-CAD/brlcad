@@ -47,15 +47,15 @@ struct loop_list *lptr;
 	struct loopuse *lu;
 
 	/* find all loops contained in lptr->lu */
-	for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+	for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
 	{
-		if( lu == lptr->lu )
+		if ( lu == lptr->lu )
 			continue;
 
-		if( nmg_classify_lu_lu( lu, lptr->lu, &tol ) == NMG_CLASS_AinB )
+		if ( nmg_classify_lu_lu( lu, lptr->lu, &tol ) == NMG_CLASS_AinB )
 		{
 
-			if( lptr->inner_loops == (struct loop_list *)NULL )
+			if ( lptr->inner_loops == (struct loop_list *)NULL )
 			{
 				lptr->inner_loops = (struct loop_list *)bu_malloc( sizeof( struct loop_list ),
 					"Find_inner_loops: lptr->inner_loops" );
@@ -64,7 +64,7 @@ struct loop_list *lptr;
 			else
 			{
 				inner = lptr->inner_loops;
-				while( inner->next != (struct loop_list *)NULL )
+				while ( inner->next != (struct loop_list *)NULL )
 					inner = inner->next;
 				inner->next = (struct loop_list *)bu_malloc( sizeof( struct loop_list ),
 					"Find_inner_loops: inner->next" );
@@ -78,19 +78,19 @@ struct loop_list *lptr;
 
 	/* now eliminate those inner loops that are contained in other inner loops */
 	inner = lptr->inner_loops;
-	while( inner )
+	while ( inner )
 	{
-		struct loop_list *inner1,*prev;
+		struct loop_list *inner1, *prev;
 		int deleted;
 
 		deleted = 0;
 		inner1 = lptr->inner_loops;
 		prev = (struct loop_list *)NULL;
-		while( inner1 )
+		while ( inner1 )
 		{
-			if( inner->lu != inner1->lu )
+			if ( inner->lu != inner1->lu )
 			{
-				if( nmg_classify_lu_lu( inner1->lu, inner->lu, &tol ) == NMG_CLASS_AinB )
+				if ( nmg_classify_lu_lu( inner1->lu, inner->lu, &tol ) == NMG_CLASS_AinB )
 				{
 					struct loop_list *tmp;
 
@@ -98,7 +98,7 @@ struct loop_list *lptr;
 					 * so delete inner1->lu
 					 */
 					tmp = inner1;
-					if( prev )
+					if ( prev )
 						prev->next = inner1->next;
 					else
 						lptr->inner_loops = inner1->next;
@@ -108,7 +108,7 @@ struct loop_list *lptr;
 					deleted = 1;
 				}
 			}
-			if( !deleted )
+			if ( !deleted )
 			{
 				prev = inner1;
 				inner1 = inner1->next;
@@ -119,7 +119,7 @@ struct loop_list *lptr;
 
 	/* Now find inner loops for all these inner loops */
 	inner = lptr->inner_loops;
-	while( inner )
+	while ( inner )
 	{
 		Find_inner_loops( fu, inner );
 		inner = inner->next;
@@ -136,9 +136,9 @@ struct faceuse *fu;
 	int orient=OT_SAME;
 
 	NMG_CK_FACEUSE( fu );
-	if( fu->orientation != OT_SAME )
+	if ( fu->orientation != OT_SAME )
 		fu = fu->fumate_p;
-	if( fu->orientation != OT_SAME )
+	if ( fu->orientation != OT_SAME )
 	{
 		bu_log( "Orient_face_loops: fu x%x has orient %s and mate (x%x) has orient %s (no OT_SAME)\n",
 			fu, nmg_orientation(fu->orientation), fu->fumate_p, nmg_orientation( fu->fumate_p->orientation ) );
@@ -148,25 +148,25 @@ struct faceuse *fu;
 	loop_root = (struct loop_list *)NULL;
 
 	nmg_face_bb( fu->f_p, &tol );
-	for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+	for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
 	{
 		int outer;
 		struct loopuse *lu1;
 
 		/* check if there are any other loops containing this loop */
 		outer = 1;
-		for( BU_LIST_FOR( lu1, loopuse, &fu->lu_hd ) )
+		for ( BU_LIST_FOR( lu1, loopuse, &fu->lu_hd ) )
 		{
-			if( lu1 == lu )
+			if ( lu1 == lu )
 				continue;
-			if( nmg_classify_lu_lu( lu, lu1, &tol ) == NMG_CLASS_AinB )
+			if ( nmg_classify_lu_lu( lu, lu1, &tol ) == NMG_CLASS_AinB )
 			{
 				outer = 0;
 				break;
 			}
 		}
 
-		if( outer )
+		if ( outer )
 		{
 			lu_outer = lu;
 			break;
@@ -187,14 +187,14 @@ struct faceuse *fu;
 	 * OT_SAME and OT_OPPOSITE
 	 */
 	lptr = loop_root;
-	while( lptr )
+	while ( lptr )
 	{
 		struct loop_list *lptr1;
 
 		lptr1 = lptr;
-		while( lptr1 )
+		while ( lptr1 )
 		{
-			if( lptr1->lu->orientation != orient )
+			if ( lptr1->lu->orientation != orient )
 			{
 				/* exchange lu and lu_mate */
 				BU_LIST_DEQUEUE( &lptr1->lu->l );
@@ -212,7 +212,7 @@ struct faceuse *fu;
 		lptr = lptr->inner_loops;
 
 		/* loop orientation must reverse */
-		if( orient == OT_SAME )
+		if ( orient == OT_SAME )
 			orient = OT_OPPOSITE;
 		else
 			orient = OT_SAME;
@@ -234,17 +234,17 @@ struct faceuse *fu;
 	NMG_CK_FACE( f );
 	flipped = f->flip;
 
-	if( *f->g.magic_p != NMG_FACE_G_SNURB_MAGIC )
+	if ( *f->g.magic_p != NMG_FACE_G_SNURB_MAGIC )
 		bu_exit(1, "Orient_nurb_face_loops: called with non-nurb faceuse\n" );
 
 	fg = f->g.snurb_p;
 	NMG_CK_FACE_G_SNURB( fg );
 
-	for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+	for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
 	{
 		int loop_uv_orient;
 
-		if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )
+		if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )
 		{
 			lu->orientation = OT_SAME;
 			lu->lumate_p->orientation = OT_SAME;
@@ -257,13 +257,13 @@ struct faceuse *fu;
 		 * and must be OT_SAME. if area is in -Z-direction, loop encloses
 		 * area in clockwise direction nad must be OT_OPPOOSITE
 		 */
-		if( (loop_uv_orient == OT_SAME && !flipped) ||
+		if ( (loop_uv_orient == OT_SAME && !flipped) ||
 		    (loop_uv_orient == OT_OPPOSITE && flipped) )
 		{
 			lu->orientation = OT_SAME;
 			lu->lumate_p->orientation = OT_SAME;
 		}
-		else if( (loop_uv_orient == OT_OPPOSITE && !flipped) ||
+		else if ( (loop_uv_orient == OT_OPPOSITE && !flipped) ||
 			 (loop_uv_orient == OT_SAME && flipped) )
 		{
 			lu->orientation = OT_OPPOSITE;
@@ -283,30 +283,30 @@ struct nmgregion *r;
 
 	NMG_CK_REGION( r );
 
-	for( BU_LIST_FOR( s, shell, &r->s_hd ) )
+	for ( BU_LIST_FOR( s, shell, &r->s_hd ) )
 	{
 		struct faceuse *fu;
 
 		NMG_CK_SHELL( s );
 
-		for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
+		for ( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
 		{
 			struct face *f;
 
 			NMG_CK_FACEUSE( fu );
 
-			if( fu->orientation != OT_SAME )
+			if ( fu->orientation != OT_SAME )
 				continue;
 
 			f = fu->f_p;
 			NMG_CK_FACE( f );
 
-			if( !f->g.magic_p )
+			if ( !f->g.magic_p )
 				bu_exit(1, "Face has no geometry!\n" );
 
-			if( *f->g.magic_p == NMG_FACE_G_PLANE_MAGIC )
+			if ( *f->g.magic_p == NMG_FACE_G_PLANE_MAGIC )
 				Orient_face_loops( fu );
-			else if( *f->g.magic_p == NMG_FACE_G_SNURB_MAGIC )
+			else if ( *f->g.magic_p == NMG_FACE_G_SNURB_MAGIC )
 				Orient_nurb_face_loops( fu );
 			else
 				bu_exit(1, "Face has unrecognized geometry type\n" );

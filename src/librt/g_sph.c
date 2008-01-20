@@ -108,14 +108,14 @@ rt_sph_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	magsq_a = MAGSQ( eip->a );
 	magsq_b = MAGSQ( eip->b );
 	magsq_c = MAGSQ( eip->c );
-	if( magsq_a < rtip->rti_tol.dist || magsq_b < rtip->rti_tol.dist || magsq_c < rtip->rti_tol.dist ) {
+	if ( magsq_a < rtip->rti_tol.dist || magsq_b < rtip->rti_tol.dist || magsq_c < rtip->rti_tol.dist ) {
 		bu_log("sph(%s):  zero length A(%g), B(%g), or C(%g) vector\n",
 			stp->st_name, magsq_a, magsq_b, magsq_c );
 		return(1);		/* BAD */
 	}
 
 	/* Validate that |A|, |B|, and |C| are nearly equal */
-	if( fabs(magsq_a - magsq_b) > 0.0001
+	if ( fabs(magsq_a - magsq_b) > 0.0001
 	    || fabs(magsq_a - magsq_c) > 0.0001 ) {
 #if 0
 		/* Ordinarily, don't say anything here, will handle as ELL */
@@ -135,17 +135,17 @@ rt_sph_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
 	/* Validate that A.B == 0, B.C == 0, A.C == 0 (check dir only) */
 	f = VDOT( Au, Bu );
-	if( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
+	if ( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
 		bu_log("sph(%s):  A not perpendicular to B, f=%f\n", stp->st_name, f);
 		return(1);		/* BAD */
 	}
 	f = VDOT( Bu, Cu );
-	if( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
+	if ( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
 		bu_log("sph(%s):  B not perpendicular to C, f=%f\n", stp->st_name, f);
 		return(1);		/* BAD */
 	}
 	f = VDOT( Au, Cu );
-	if( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
+	if ( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
 		bu_log("sph(%s):  A not perpendicular to C, f=%f\n", stp->st_name, f);
 		return(1);		/* BAD */
 	}
@@ -244,14 +244,14 @@ rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	b = VDOT( rp->r_dir, ov );
 	magsq_ov = MAGSQ(ov);
 
-	if( magsq_ov >= sph->sph_radsq ) {
+	if ( magsq_ov >= sph->sph_radsq ) {
 		/* ray origin is outside of sphere */
-		if( b < 0 ) {
+		if ( b < 0 ) {
 			/* ray direction is away from sphere */
 			return(0);		/* No hit */
 		}
 		root = b*b - magsq_ov + sph->sph_radsq;
-		if( root <= 0 ) {
+		if ( root <= 0 ) {
 			/* no real roots */
 			return(0);		/* No hit */
 		}
@@ -293,7 +293,7 @@ rt_sph_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	fastf_t	root;		/* root of radical */
 
 	/* for each ray/sphere pair */
-	for(i = 0; i < n; i++){
+	for (i = 0; i < n; i++){
 		if (stp[i] == 0) continue; /* stp[i] == 0 signals skip ray */
 
 		sph = (struct sph_specific *)stp[i]->st_specific;
@@ -301,15 +301,15 @@ rt_sph_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 		b = VDOT( rp[i]->r_dir, ov );
 		magsq_ov = MAGSQ(ov);
 
-		if( magsq_ov >= sph->sph_radsq ) {
+		if ( magsq_ov >= sph->sph_radsq ) {
 			/* ray origin is outside of sphere */
-			if( b < 0 ) {
+			if ( b < 0 ) {
 				/* ray direction is away from sphere */
 				SEG_MISS(segp[i]);		/* No hit */
 				continue;
 			}
 			root = b*b - magsq_ov + sph->sph_radsq;
-			if( root <= 0 ) {
+			if ( root <= 0 ) {
 				/* no real roots */
 				SEG_MISS(segp[i]);		/* No hit */
 				continue;
@@ -387,7 +387,7 @@ rt_sph_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 
 	/* U is azimuth, atan() range: -pi to +pi */
 	uvp->uv_u = bn_atan2( pprime[Y], pprime[X] ) * bn_inv2pi;
-	if( uvp->uv_u < 0 )
+	if ( uvp->uv_u < 0 )
 		uvp->uv_u += 1.0;
 	/*
 	 *  V is elevation, atan() range: -pi/2 to +pi/2,
@@ -477,7 +477,7 @@ const struct db_i		*dbip;
 	union record		*rec;
 
 	RT_CK_DB_INTERNAL(ip);
-	if( ip->idb_type != ID_ELL )  return(-1);
+	if ( ip->idb_type != ID_ELL )  return(-1);
 	tip = (struct rt_sph_internal *)ip->idb_ptr;
 	RT_ELL_CK_MAGIC(tip);
 

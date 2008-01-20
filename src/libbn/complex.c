@@ -68,7 +68,7 @@ bn_cx_div(register bn_complex_t *ap, register const bn_complex_t *bp)
 	r = bp->re;
 	s = bp->im;
 	if ( ABS( r ) >= ABS( s ) )  {
-		if( NEAR_ZERO( r, SQRT_SMALL_FASTF ) )
+		if ( NEAR_ZERO( r, SQRT_SMALL_FASTF ) )
 			goto err;
 		r = s / r;			/* <= 1 */
 		s = 1.0 / (bp->re + r * s);
@@ -77,7 +77,7 @@ bn_cx_div(register bn_complex_t *ap, register const bn_complex_t *bp)
 		return;
 	}  else  {
 		/* ABS( s ) > ABS( r ) */
-		if( NEAR_ZERO( s, SQRT_SMALL_FASTF ) )
+		if ( NEAR_ZERO( s, SQRT_SMALL_FASTF ) )
 			goto err;
 		r = r / s;			/* < 1 */
 		s = 1.0 / (s + r * bp->re);
@@ -111,7 +111,7 @@ bn_cx_sqrt(bn_complex_t *op, register const bn_complex_t *ip)
 
 	/* special cases are not necessary; they are here for speed */
 	im_sign = SIGN( ip->im );
-	if( (re_sign = SIGN(ip->re))  == 0 )  {
+	if ( (re_sign = SIGN(ip->re))  == 0 )  {
 		if ( im_sign == 0 )
 			op->re = op->im = 0;
 		else if ( im_sign > 0 )
@@ -129,7 +129,7 @@ bn_cx_sqrt(bn_complex_t *op, register const bn_complex_t *ip)
 	}  else  {
 		/* no shortcuts */
 		ampl = bn_cx_ampl( ip );
-		if( (temp = (ampl - ip->re) * 0.5) < 0.0 )  {
+		if ( (temp = (ampl - ip->re) * 0.5) < 0.0 )  {
 			/* This case happens rather often, when the
 			 *  hypot() in bn_cx_ampl() returns an ampl ever so
 			 *  slightly smaller than ip->re.  This can easily
@@ -140,10 +140,10 @@ bn_cx_sqrt(bn_complex_t *op, register const bn_complex_t *ip)
 		} else
 			op->im = sqrt( temp );
 
-		if( (temp = (ampl + ip->re) * 0.5) < 0.0 )  {
+		if ( (temp = (ampl + ip->re) * 0.5) < 0.0 )  {
 			op->re = 0.0;
 		} else {
-			if( im_sign > 0 )
+			if ( im_sign > 0 )
 				op->re = sqrt(temp);
 			else			/* im_sign < 0 */
 				op->re = -sqrt(temp);

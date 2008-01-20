@@ -317,7 +317,7 @@ proc HMtag_img {win param text} {\
 		};\
 		bind ismap <ButtonRelease-1> \"HMlink_callback $win $link?%x,%y\";\
 		bindtags $label \"ismap [bindtags $label]\";\
-	} ;\
+	};\
 \
 	set src \"\";\
 	HMextract_param $param src;\
@@ -452,7 +452,7 @@ proc HMmap_esc {text} {\
 	if {![regexp & $text]} {return $text;};\
 	regsub -all {([][$\\\\])} $text {\\\\\\1} new;\
 	regsub -all {&#([0-9][0-9][0-9]?);?} \
-		$new {[format %c \\1]} new ;\
+		$new {[format %c \\1]} new;\
 	regsub -all {&([^ ;]+);?} $new {[HMdo_map \\1]} new;\
 	return [subst $new];\
 };\

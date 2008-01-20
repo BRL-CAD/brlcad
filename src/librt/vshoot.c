@@ -108,13 +108,13 @@ rt_shootray( struct application *ap )
 #define BACKING_DIST	(-2.0)		/* mm to look behind start point */
 	rtip = ap->a_rt_i;
 	RT_AP_CHECK(ap);
-	if( ap->a_resource == RESOURCE_NULL )  {
+	if ( ap->a_resource == RESOURCE_NULL )  {
 		ap->a_resource = &rt_uniresource;
 		rt_uniresource.re_magic = RESOURCE_MAGIC;
 	}
 	RT_CK_RESOURCE(ap->a_resource);
 
-	if(RT_G_DEBUG&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION)) {
+	if (RT_G_DEBUG&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION)) {
 		rt_g.rtg_logindent += 2;
 		bu_log("\n**********mshootray cpu=%d  %d,%d lvl=%d (%s)\n",
 			ap->a_resource->re_cpu,
@@ -126,7 +126,7 @@ rt_shootray( struct application *ap )
 	}
 
 	rtip->rti_nrays++;
-	if( rtip->needprep )
+	if ( rtip->needprep )
 		rt_prep(rtip);
 
 	/* Allocate dynamic memory */
@@ -151,19 +151,19 @@ rt_shootray( struct application *ap )
 		2+RT_BITV_BITS2WORDS(ap->a_rt_i->nsolids)];
 
 	/* Compute the inverse of the direction cosines */
-	if( !NEAR_ZERO( ap->a_ray.r_dir[X], SQRT_SMALL_FASTF ) )  {
+	if ( !NEAR_ZERO( ap->a_ray.r_dir[X], SQRT_SMALL_FASTF ) )  {
 		inv_dir[X]=1.0/ap->a_ray.r_dir[X];
 	} else {
 		inv_dir[X] = INFINITY;
 		ap->a_ray.r_dir[X] = 0.0;
 	}
-	if( !NEAR_ZERO( ap->a_ray.r_dir[Y], SQRT_SMALL_FASTF ) )  {
+	if ( !NEAR_ZERO( ap->a_ray.r_dir[Y], SQRT_SMALL_FASTF ) )  {
 		inv_dir[Y]=1.0/ap->a_ray.r_dir[Y];
 	} else {
 		inv_dir[Y] = INFINITY;
 		ap->a_ray.r_dir[Y] = 0.0;
 	}
-	if( !NEAR_ZERO( ap->a_ray.r_dir[Z], SQRT_SMALL_FASTF ) )  {
+	if ( !NEAR_ZERO( ap->a_ray.r_dir[Z], SQRT_SMALL_FASTF ) )  {
 		inv_dir[Z]=1.0/ap->a_ray.r_dir[Z];
 	} else {
 		inv_dir[Z] = INFINITY;
@@ -178,7 +178,7 @@ rt_shootray( struct application *ap )
 	 *  If ray does not enter the model RPP, skip on.
 	 *  If ray ends exactly at the model RPP, trace it.
 	 */
-	if( !rt_in_rpp( &ap->a_ray, inv_dir, rtip->mdl_min, rtip->mdl_max )  ||
+	if ( !rt_in_rpp( &ap->a_ray, inv_dir, rtip->mdl_min, rtip->mdl_max )  ||
 	    ap->a_ray.r_max < 0.0 )  {
 		rtip->nmiss_model++;
 		ret = ap->a_miss( ap );
@@ -187,13 +187,13 @@ rt_shootray( struct application *ap )
 	}
 
 	/* For each type of solid to be shot at, assemble the vectors */
-	for( id = 1; id <= ID_MAX_SOLID; id++ )  {
+	for ( id = 1; id <= ID_MAX_SOLID; id++ )  {
 		register int	nsol;
 
-		if( (nsol = rtip->rti_nsol_by_type[id]) <= 0 )  continue;
+		if ( (nsol = rtip->rti_nsol_by_type[id]) <= 0 )  continue;
 
 		/* For each instance of this solid type */
-		for( i = nsol-1; i >= 0; i-- )  {
+		for ( i = nsol-1; i >= 0; i-- )  {
 			ary_stp[i] = rtip->rti_sol_by_type[id][i];
 			ary_rp[i] = &(ap->a_ray);	/* XXX, sb [ray] */
 			ary_seg[i].seg_stp = SOLTAB_NULL;
@@ -210,10 +210,10 @@ rt_shootray( struct application *ap )
 		/* set bits for all solids shot at for each ray */
 
 		/* append resulting seg list to input for boolweave */
-		for( i = nsol-1; i >= 0; i-- )  {
+		for ( i = nsol-1; i >= 0; i-- )  {
 			register struct seg	*seg2;
 
-			if( ary_seg[i].seg_stp == SOLTAB_NULL )  {
+			if ( ary_seg[i].seg_stp == SOLTAB_NULL )  {
 				/* MISS */
 				ap->a_rt_i->nmiss++;
 				continue;
@@ -229,7 +229,7 @@ rt_shootray( struct application *ap )
 			/* Add seg chain to list of used segs awaiting reclaim */
 			{
 				register struct seg *seg3 = seg2;
-				while( seg3->seg_next != SEG_NULL )
+				while ( seg3->seg_next != SEG_NULL )
 					seg3 = seg3->seg_next;
 				seg3->seg_next = HeadSeg;
 				HeadSeg = seg2;
@@ -237,13 +237,13 @@ rt_shootray( struct application *ap )
 		}
 
 		/* OR in regionbits */
-		for( i = nsol-1; i >= 0; i-- )  {
+		for ( i = nsol-1; i >= 0; i-- )  {
 			register int words;
 			register bitv_t *in = ary_stp[i]->st_regions;
 			register bitv_t *out = regionbits;	/* XXX sb [ray] */
 
 			words = RT_BITV_BITS2WORDS(ary_stp[i]->st_maxreg);
-			for( --words; words >= 0; words-- )
+			for ( --words; words >= 0; words-- )
 				regionbits[words] |= in[words];
 		}
 	}
@@ -251,7 +251,7 @@ rt_shootray( struct application *ap )
 	/*
 	 *  Ray has finally left known space.
 	 */
-	if( InitialPart.pt_forw == &InitialPart )  {
+	if ( InitialPart.pt_forw == &InitialPart )  {
 		ret = ap->a_miss( ap );
 		status = "MISSed all primitives";
 		goto freeup;
@@ -265,7 +265,7 @@ rt_shootray( struct application *ap )
 		INFINITY,
 		regionbits, ap);
 
-	if( FinalPart.pt_forw == &FinalPart )  {
+	if ( FinalPart.pt_forw == &FinalPart )  {
 		ret = ap->a_miss( ap );
 		status = "MISS bool";
 		goto freeup;
@@ -284,7 +284,7 @@ rt_shootray( struct application *ap )
 	 *  VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
 	 */
 hitit:
-	if(RT_G_DEBUG&DEBUG_SHOOT)  rt_pr_partitions(rtip,&FinalPart, "a_hit()");
+	if (RT_G_DEBUG&DEBUG_SHOOT)  rt_pr_partitions(rtip, &FinalPart, "a_hit()");
 
 	ret = ap->a_hit( ap, &FinalPart );
 	status = "HIT";
@@ -297,14 +297,14 @@ freeup:
 		register struct partition *pp;
 
 		/* Free up initial partition list */
-		for( pp = InitialPart.pt_forw; pp != &InitialPart;  )  {
+		for ( pp = InitialPart.pt_forw; pp != &InitialPart;  )  {
 			register struct partition *newpp;
 			newpp = pp;
 			pp = pp->pt_forw;
 			FREE_PT(newpp, ap->a_resource);
 		}
 		/* Free up final partition list */
-		for( pp = FinalPart.pt_forw; pp != &FinalPart;  )  {
+		for ( pp = FinalPart.pt_forw; pp != &FinalPart;  )  {
 			register struct partition *newpp;
 			newpp = pp;
 			pp = pp->pt_forw;
@@ -315,7 +315,7 @@ freeup:
 	{
 		register struct seg *segp;
 
-		while( HeadSeg != SEG_NULL )  {
+		while ( HeadSeg != SEG_NULL )  {
 			segp = HeadSeg->seg_next;
 			FREE_SEG( HeadSeg, ap->a_resource );
 			HeadSeg = segp;
@@ -327,11 +327,11 @@ out:
 	bu_free( (char *)ary_rp, "*ary_rp[]" );
 	bu_free( (char *)ary_seg, "ary_seg[]" );
 
-	if( solidbits != BITV_NULL)  {
+	if ( solidbits != BITV_NULL)  {
 		FREE_BITV( solidbits, ap->a_resource );
 	}
-	if(RT_G_DEBUG&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION))  {
-		if( rt_g.rtg_logindent > 0 )
+	if (RT_G_DEBUG&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION))  {
+		if ( rt_g.rtg_logindent > 0 )
 			rt_g.rtg_logindent -= 2;
 		else
 			rt_g.rtg_logindent = 0;
@@ -413,23 +413,23 @@ rt_in_rpp( struct xray *rp, fastf_t *invdir, fastf_t *min, fastf_t *max )
 	rp->r_max = INFINITY;
 
 	/* X axis */
-	if( rp->r_dir[X] < 0.0 )  {
+	if ( rp->r_dir[X] < 0.0 )  {
 		/* Heading towards smaller numbers */
-		/* if( *min > *pt )  miss */
-		if( (sv = (*min - *pt) * *invdir) < 0.0 )
+		/* if ( *min > *pt )  miss */
+		if ( (sv = (*min - *pt) * *invdir) < 0.0 )
 			return(0);	/* MISS */
-		if(rp->r_max > sv)
+		if (rp->r_max > sv)
 			rp->r_max = sv;
-		if( rp->r_min < (st = (*max - *pt) * *invdir) )
+		if ( rp->r_min < (st = (*max - *pt) * *invdir) )
 			rp->r_min = st;
-	}  else if( rp->r_dir[X] > 0.0 )  {
+	}  else if ( rp->r_dir[X] > 0.0 )  {
 		/* Heading towards larger numbers */
-		/* if( *max < *pt )  miss */
-		if( (st = (*max - *pt) * *invdir) < 0.0 )
+		/* if ( *max < *pt )  miss */
+		if ( (st = (*max - *pt) * *invdir) < 0.0 )
 			return(0);	/* MISS */
-		if(rp->r_max > st)
+		if (rp->r_max > st)
 			rp->r_max = st;
-		if( rp->r_min < ((sv = (*min - *pt) * *invdir)) )
+		if ( rp->r_min < ((sv = (*min - *pt) * *invdir)) )
 			rp->r_min = sv;
 	}  else  {
 		/*
@@ -437,54 +437,54 @@ rt_in_rpp( struct xray *rp, fastf_t *invdir, fastf_t *min, fastf_t *max )
 		 *  which implies that the ray is perpendicular to the axis,
 		 *  so merely check position against the boundaries.
 		 */
-		if( (*min > *pt) || (*max < *pt) )
+		if ( (*min > *pt) || (*max < *pt) )
 			return(0);	/* MISS */
 	}
 
 	/* Y axis */
 	pt++; invdir++; max++; min++;
-	if( rp->r_dir[Y] < 0.0 )  {
-		if( (sv = (*min - *pt) * *invdir) < 0.0 )
+	if ( rp->r_dir[Y] < 0.0 )  {
+		if ( (sv = (*min - *pt) * *invdir) < 0.0 )
 			return(0);	/* MISS */
-		if(rp->r_max > sv)
+		if (rp->r_max > sv)
 			rp->r_max = sv;
-		if( rp->r_min < (st = (*max - *pt) * *invdir) )
+		if ( rp->r_min < (st = (*max - *pt) * *invdir) )
 			rp->r_min = st;
-	}  else if( rp->r_dir[Y] > 0.0 )  {
-		if( (st = (*max - *pt) * *invdir) < 0.0 )
+	}  else if ( rp->r_dir[Y] > 0.0 )  {
+		if ( (st = (*max - *pt) * *invdir) < 0.0 )
 			return(0);	/* MISS */
-		if(rp->r_max > st)
+		if (rp->r_max > st)
 			rp->r_max = st;
-		if( rp->r_min < ((sv = (*min - *pt) * *invdir)) )
+		if ( rp->r_min < ((sv = (*min - *pt) * *invdir)) )
 			rp->r_min = sv;
 	}  else  {
-		if( (*min > *pt) || (*max < *pt) )
+		if ( (*min > *pt) || (*max < *pt) )
 			return(0);	/* MISS */
 	}
 
 	/* Z axis */
 	pt++; invdir++; max++; min++;
-	if( rp->r_dir[Z] < 0.0 )  {
-		if( (sv = (*min - *pt) * *invdir) < 0.0 )
+	if ( rp->r_dir[Z] < 0.0 )  {
+		if ( (sv = (*min - *pt) * *invdir) < 0.0 )
 			return(0);	/* MISS */
-		if(rp->r_max > sv)
+		if (rp->r_max > sv)
 			rp->r_max = sv;
-		if( rp->r_min < (st = (*max - *pt) * *invdir) )
+		if ( rp->r_min < (st = (*max - *pt) * *invdir) )
 			rp->r_min = st;
-	}  else if( rp->r_dir[Z] > 0.0 )  {
-		if( (st = (*max - *pt) * *invdir) < 0.0 )
+	}  else if ( rp->r_dir[Z] > 0.0 )  {
+		if ( (st = (*max - *pt) * *invdir) < 0.0 )
 			return(0);	/* MISS */
-		if(rp->r_max > st)
+		if (rp->r_max > st)
 			rp->r_max = st;
-		if( rp->r_min < ((sv = (*min - *pt) * *invdir)) )
+		if ( rp->r_min < ((sv = (*min - *pt) * *invdir)) )
 			rp->r_min = sv;
 	}  else  {
-		if( (*min > *pt) || (*max < *pt) )
+		if ( (*min > *pt) || (*max < *pt) )
 			return(0);	/* MISS */
 	}
 
 	/* If equal, RPP is actually a plane */
-	if( rp->r_min > rp->r_max )
+	if ( rp->r_min > rp->r_max )
 		return(0);	/* MISS */
 	return(1);		/* HIT */
 }
@@ -499,10 +499,10 @@ rt_bitv_or( bitv_t *out, bitv_t *in, int nbits )
 
 	words = RT_BITV_BITS2WORDS(nbits);
 #ifdef VECTORIZE
-	for( --words; words >= 0; words-- )
+	for ( --words; words >= 0; words-- )
 		out[words] |= in[words];
 #else
-	while( words-- > 0 )
+	while ( words-- > 0 )
 		*out++ |= *in++;
 #endif
 }
@@ -530,7 +530,7 @@ rt_get_bitv(struct rt_i *rtip, struct resource *res)
 	size = (size+sizeof(long)-1) & ~(sizeof(long)-1);
 	bytes = bu_malloc_len_roundup(16*size);
 	cp = bu_malloc(bytes, "rt_get_bitv");
-	while( bytes >= size )  {
+	while ( bytes >= size )  {
 		((union bitv_elem *)cp)->be_next = res->re_bitv;
 		res->re_bitv = (union bitv_elem *)cp;
 		res->re_bitvlen++;

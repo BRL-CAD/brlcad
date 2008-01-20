@@ -79,7 +79,7 @@ rt_nurb_s_eval(const struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *fi
 	c_ptr = diff_curve;
 
 	k_index = rt_nurb_knot_index( &srf->u, u, srf->order[RT_NURB_SPLIT_ROW] );
-	if( k_index < 0 )
+	if ( k_index < 0 )
 	{
 		bu_log( "rt_nurb_s_eval: u value outside parameter range\n");
 		bu_log( "\tUV = (%g %g )\n", u, v );

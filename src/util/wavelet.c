@@ -196,7 +196,7 @@ wlt_decompose_1d(void)
 			value_size, channels, width, height, limit);
 
 
-	for (i=0 ; i < height ; i++) {
+	for (i=0; i < height; i++) {
 
 		n = fread(buf, sample_size, width, stdin);
 		if (n  != width ) {
@@ -315,7 +315,7 @@ wlt_reconstruct_1d(void)
 			value_size, channels, width, height, limit);
 
 
-	for (i=0 ; i < height ; i++) {
+	for (i=0; i < height; i++) {
 
 
 		n = fread(buf, sample_size, width, stdin);

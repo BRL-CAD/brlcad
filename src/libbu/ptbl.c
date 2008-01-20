@@ -63,7 +63,7 @@ bu_ptbl_init(struct bu_ptbl *b, int len, const char *str)
 		bu_log("bu_ptbl_init(%8x, len=%d, %s)\n", b, len, str);
 	BU_LIST_INIT(&b->l);
 	b->l.magic = BU_PTBL_MAGIC;
-	if( len <= 0 )  len = 64;
+	if ( len <= 0 )  len = 64;
 	b->blen = len;
 	b->buffer = (long **)bu_calloc(b->blen, sizeof(long *), str);
 	b->end = 0;
@@ -135,7 +135,7 @@ bu_ptbl_locate(const struct bu_ptbl *b, const long int *p)
 
 	BU_CK_PTBL(b);
 	pp = (const long **)b->buffer;
-	for( k = b->end-1; k >= 0; k-- )
+	for ( k = b->end-1; k >= 0; k-- )
 		if (pp[k] == p) return(k);
 
 	return(-1);
@@ -156,7 +156,7 @@ bu_ptbl_zero(struct bu_ptbl *b, const long int *p)
 
 	BU_CK_PTBL(b);
 	pp = (const long **)b->buffer;
-	for( k = b->end-1; k >= 0; k-- )
+	for ( k = b->end-1; k >= 0; k-- )
 		if (pp[k] == p) pp[k] = (long *)0;
 }
 
@@ -183,7 +183,7 @@ bu_ptbl_ins_unique(struct bu_ptbl *b, long int *p)
 	BU_CK_PTBL(b);
 
 	/* search for existing */
-	for( k = b->end-1; k >= 0; k-- )
+	for ( k = b->end-1; k >= 0; k-- )
 		if (pp[k] == p) return(k);
 
 	if (bu_debug & BU_DEBUG_PTBL)
@@ -223,7 +223,7 @@ bu_ptbl_rm(struct bu_ptbl *b, const long int *p)
 	int	ndel = 0;
 
 	BU_CK_PTBL(b);
-	for (l = b->end-1 ; l >= 0 ; --l)  {
+	for (l = b->end-1; l >= 0; --l)  {
 		if (pp[l] == p){
 			/* delete consecutive occurrence(s) of p */
 			ndel++;
@@ -233,7 +233,7 @@ bu_ptbl_rm(struct bu_ptbl *b, const long int *p)
 			/* pp[l] through pp[j-1] match p */
 
 			end -= j - l;
-			for(k=l ; j < b->end ;)
+			for (k=l; j < b->end;)
 				b->buffer[k++] = b->buffer[j++];
 			b->end = end;
 		}
@@ -293,7 +293,7 @@ bu_ptbl_cat_uniq(struct bu_ptbl *dest, const struct bu_ptbl *src)
 			sizeof(long *)*(dest->blen += src->blen + 8),
 			"bu_ptbl.buffer[] (cat_uniq)");
 	}
-	for( BU_PTBL_FOR( p, (long **), src ) )  {
+	for ( BU_PTBL_FOR( p, (long **), src ) )  {
 		bu_ptbl_ins_unique( dest, *p );
 	}
 }
@@ -336,7 +336,7 @@ bu_ptbl(struct bu_ptbl *b, int func, long int *p)
 		return bu_ptbl_ins(b, p);
 	} else if (func == BU_PTBL_LOC) {
 		return bu_ptbl_locate(b, p);
-	} else if( func == BU_PTBL_ZERO ) {
+	} else if ( func == BU_PTBL_ZERO ) {
 		bu_ptbl_zero(b, p);
 		return( 0 );
 	} else if (func == BU_PTBL_INS_UNIQUE) {
@@ -372,13 +372,13 @@ bu_pr_ptbl(const char *title, const struct bu_ptbl *tbl, int verbose)
 	bu_log("%s: bu_ptbl array with %d entries\n",
 		title, tbl->end );
 
-	if( !verbose )  return;
+	if ( !verbose )  return;
 
 	/* Go in ascending order */
-	for( lp = (long **)BU_PTBL_BASEADDR(tbl);
+	for ( lp = (long **)BU_PTBL_BASEADDR(tbl);
 	     lp <= (long **)BU_PTBL_LASTADDR(tbl); lp++
 	)  {
-		if( *lp == 0 )  {
+		if ( *lp == 0 )  {
 			bu_log("  %.8x NULL entry\n", *lp);
 			continue;
 		}
@@ -397,7 +397,7 @@ bu_ptbl_trunc(struct bu_ptbl *tbl, int end)
 {
 	BU_CK_PTBL(tbl);
 
-	if( tbl->end <= end )
+	if ( tbl->end <= end )
 		return;
 
 	tbl->end = end;

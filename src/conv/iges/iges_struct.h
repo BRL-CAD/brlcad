@@ -111,7 +111,7 @@ struct node
 {
 	int op; /* if positive, this is an operator (Union, Intersect, or Subtract)
 		   if negative, this is a directory entry sequence number (operand) */
-	struct node *left,*right,*parent;
+	struct node *left, *right, *parent;
 };
 
 /* structure for storing atributes */
@@ -132,7 +132,7 @@ struct brlcad_att
 struct ptlist
 {
 	point_t pt;
-	struct ptlist *next,*prev;
+	struct ptlist *next, *prev;
 };
 
 /* Structures for Parametric Splines */
@@ -210,9 +210,9 @@ struct iges_edge_list
 	struct iges_edge_list *next;
 };
 
-#define MEMCHECK if( bu_debug & BU_DEBUG_MEM_CHECK ) {\
-		if( bu_mem_barriercheck() ) {\
-			bu_log( "memory corruption found in file %s at line %d\n",\
+#define MEMCHECK if ( bu_debug & BU_DEBUG_MEM_CHECK ) {\
+		if ( bu_mem_barriercheck() ) {\
+			bu_log( "memory corruption found in file %s at line %d\n", \
 				__FILE__, __LINE__ );\
 		}\
 	}

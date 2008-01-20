@@ -52,7 +52,7 @@ Showtree( root )
 struct node *root;
 {
 	struct node *ptr;
-	char *opa,*opb,*tmp, oper[4];
+	char *opa, *opb, *tmp, oper[4];
 
 	strcpy( oper, "   " );
 
@@ -61,16 +61,16 @@ struct node *root;
 	Initsstack();
 
 	ptr = root;
-	while( 1 )
+	while ( 1 )
 	{
-		while( ptr != NULL )
+		while ( ptr != NULL )
 		{
 			Spush( ptr );
 			ptr = ptr->left;
 		}
 		ptr = Spop();
 
-		if( ptr == NULL )
+		if ( ptr == NULL )
 		{
 			bu_log( "Error in Showtree: Popped a null pointer\n" );
 			Afreestack();
@@ -78,7 +78,7 @@ struct node *root;
 			return;
 		}
 
-		if( ptr->op < 0 ) /* this is an operand, push it's name */
+		if ( ptr->op < 0 ) /* this is an operand, push it's name */
 			Apush( dir[-(1+ptr->op)/2]->name );
 		else	/* this is an operator */
 		{
@@ -91,7 +91,7 @@ struct node *root;
 
 			/* construct the character string (opa ptr->op opb) */
 			tmp = (char *)bu_malloc( size, "Showtree: tmp" );
-			if( ptr->parent )
+			if ( ptr->parent )
 				strcpy( tmp, "(" );
 			else
 				*tmp = '\0';
@@ -99,7 +99,7 @@ struct node *root;
 			oper[1] = operator[ptr->op];
 			strncat( tmp, oper, size - strlen(tmp) - 1 );
 			strncat( tmp, opb, size - strlen(tmp) - 1 );
-			if( ptr->parent )
+			if ( ptr->parent )
 				strcat( tmp, ")" );
 			tmp[size-1] = '\0'; /* sanity */
 
@@ -107,7 +107,7 @@ struct node *root;
 			Apush( tmp );
 		}
 
-		if( ptr == root )	/* done! */
+		if ( ptr == root )	/* done! */
 		{
 			bu_log( "%s\n", Apop() ); /* print the result */
 
@@ -117,7 +117,7 @@ struct node *root;
 			return;
 		}
 
-		if( ptr != ptr->parent->right )
+		if ( ptr != ptr->parent->right )
 			ptr = ptr->parent->right;
 		else
 			ptr = NULL;
@@ -134,13 +134,13 @@ Initastack()
 	jtop = (-1);
 	stklen = STKBLK;
 	stk = (char **)bu_malloc( stklen*sizeof( char * ), "Initastack: stk" );
-	if( stk == NULL )
+	if ( stk == NULL )
 	{
 		bu_log( "Cannot allocate stack space\n" );
 		perror( "Initastack" );
 		bu_exit( 1, NULL );
 	}
-	for( i=0 ; i<stklen ; i++ )
+	for ( i=0; i<stklen; i++ )
 		stk[i] = NULL;
 }
 
@@ -153,17 +153,17 @@ char *ptr;
 	int i;
 
 	jtop++;
-	if( jtop == stklen )
+	if ( jtop == stklen )
 	{
 		stklen += STKBLK;
 		stk = (char **)bu_realloc( (char *)stk, stklen*sizeof( char *), "Apush: stk" );
-		if( stk == NULL )
+		if ( stk == NULL )
 		{
 			bu_log( "Cannot reallocate stack space\n" );
 			perror( "Apush" );
 			bu_exit( 1, NULL );
 		}
-		for( i=jtop ; i<stklen ; i++ )
+		for ( i=jtop; i<stklen; i++ )
 			stk[i] = NULL;
 	}
 	stk[jtop] = ptr;
@@ -178,7 +178,7 @@ Apop()
 {
 	char *ptr;
 
-	if( jtop == (-1) )
+	if ( jtop == (-1) )
 		ptr=NULL;
 	else
 	{
@@ -209,7 +209,7 @@ Initsstack() /* initialize the stack */
 	sjtop = (-1);
 	sstklen = STKBLK;
 	sstk_p = (struct node **)bu_malloc( sstklen*sizeof( struct node * ), "Initsstack: sstk_p" );
-	if( sstk_p == NULL )
+	if ( sstk_p == NULL )
 	{
 		bu_log( "Cannot allocate stack space\n" );
 		perror( "Initsstack" );
@@ -225,11 +225,11 @@ struct node *ptr;
 {
 
 	sjtop++;
-	if( sjtop == sstklen )
+	if ( sjtop == sstklen )
 	{
 		sstklen += STKBLK;
 		sstk_p = (struct node **)bu_realloc( (char *)sstk_p, sstklen*sizeof( struct node *), "Spush: sstk_p" );
-		if( sstk_p == NULL )
+		if ( sstk_p == NULL )
 		{
 			bu_log( "Cannot reallocate stack space\n" );
 			perror( "Spush" );
@@ -248,7 +248,7 @@ Spop()
 {
 	struct node *ptr;
 
-	if( sjtop == (-1) )
+	if ( sjtop == (-1) )
 		ptr=NULL;
 	else
 	{

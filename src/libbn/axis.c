@@ -89,12 +89,12 @@ tp_3axis(FILE *fp,
 	char	str[64];
 
 	/* Determine direction for ticks */
-	if( ccw )
+	if ( ccw )
 		ccw = -1;			/* counter clockwise */
 	else
 		ccw = 1;			/* clockwise */
 
-	if( NEAR_ZERO(tick_separation, SMALL) )  tick_separation = 1;
+	if ( NEAR_ZERO(tick_separation, SMALL) )  tick_separation = 1;
 
 	/*
 	 *  The point "origin" will be the center of the axis rotation.
@@ -131,7 +131,7 @@ tp_3axis(FILE *fp,
 
 	nticks = length/tick_separation+0.5;
 	pdv_3move( fp, cur_point );
-	for( i=0; i<=nticks; i++) {
+	for ( i=0; i<=nticks; i++) {
 		/*
 		 *  First, draw a tick.
 		 *  Then, if room, draw a numeric label.
@@ -144,7 +144,7 @@ tp_3axis(FILE *fp,
 		    bu_bomb("ERROR: Number of digits exceeds available buffer space");
 		}
 
-		if( ndigits > 0 )  {
+		if ( ndigits > 0 )  {
 			double f;
 			snprintf( fmt, 32, "%%%dg", ndigits);
 			snprintf( str, 64, fmt, label_start );
@@ -155,13 +155,13 @@ tp_3axis(FILE *fp,
 			 * overlap with the previous number.
 			 */
 			VSUB2( diff, num_start, num_last_end );
-			if( VDOT( diff, axis_dir ) >= 0 )  {
+			if ( VDOT( diff, axis_dir ) >= 0 )  {
 				tp_3symbol( fp, str, num_start, rot, char_width );
 				VJOIN1( num_last_end, num_center, f, axis_dir );
 			}
 		}
 
-		if( i == nticks )  break;
+		if ( i == nticks )  break;
 
 		/* Advance, and draw next axis segment */
 		pdv_3move( fp, cur_point );
@@ -180,7 +180,7 @@ PL_FORTRAN(f3axis, F3AXIS)(fp, string, x, y, z, length, theta, ccw,
 	ndigits, label_start, label_incr, tick_separation, char_width )
 FILE		**fp;
 char		*string;	/* label for axis */
-float		*x,*y,*z;		/* start coordinates for axis */
+float		*x, *y, *z;		/* start coordinates for axis */
 float		*length;	/* length of axis */
 float		*theta;		/* rotation off X-axis, in degrees */
 int		*ccw;

@@ -130,7 +130,7 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
 void
 view_2init(struct application *ap)
 {
-	if( outfp == NULL )
+	if ( outfp == NULL )
 		bu_exit(EXIT_FAILURE, "outfp is NULL\n");
 
 	/*
@@ -138,7 +138,7 @@ view_2init(struct application *ap)
 	 *  However, not dropping out of parallel mode until here permits
 	 *  tree walking and database prepping to still be done in parallel.
 	 */
-	if( npsw >= 1 )  {
+	if ( npsw >= 1 )  {
 		bu_log("Note: changing from %d cpus to 1 cpu\n", npsw );
 		npsw = 1;		/* Disable parallel processing */
 	}
@@ -189,7 +189,7 @@ raymiss(register struct application *ap)
 	struct	cell	*posp;		/* store the current cell position */
 
 	/* Getting defensive.... just in case. */
-	if(ap->a_x > width)  {
+	if (ap->a_x > width)  {
 		bu_exit(EXIT_FAILURE, "raymiss: pixels exceed width\n");
 	}
 
@@ -235,12 +235,12 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 	struct	cell	*posp;		/* stores current cell position */
 
 
-	if( pp == PartHeadp )
+	if ( pp == PartHeadp )
 		return(0);		/* nothing was actually hit?? */
 
 
 	/* Getting defensive.... just in case. */
-	if(ap->a_x > width)  {
+	if (ap->a_x > width)  {
 		bu_exit(EXIT_FAILURE, "rayhit: pixels exceed width\n");
 	}
 
@@ -295,12 +295,12 @@ void	view_eol(struct application *ap)
 
 	pdv_3move( outfp, posp->c_hit );
 
-	for( i = 0; i < width-1; i++, posp++ )  {
-		if( posp->c_dist == (posp+1)->c_dist )  {
+	for ( i = 0; i < width-1; i++, posp++ )  {
+		if ( posp->c_dist == (posp+1)->c_dist )  {
 			cont = 1;
 			continue;
 		} else  {
-			if(cont)  {
+			if (cont)  {
 				pdv_3cont(outfp, posp->c_hit);
 				cont = 0;
 			}

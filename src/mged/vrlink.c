@@ -77,7 +77,7 @@ struct bu_vls	*vp;
 struct pkg_conn	*pc;
 {
 	BU_CK_VLS(vp);
-	if(!pc)  {
+	if (!pc)  {
 		bu_log("pkg_send_vls:  NULL pointer\n");
 		return -1;
 	}
@@ -96,12 +96,12 @@ vr_event_hook(struct bu_vls *vp)
 {
 	BU_CK_VLS(vp);
 
-	if( vrmgr == PKC_NULL )  {
+	if ( vrmgr == PKC_NULL )  {
 		cmdline_hook = 0;	/* Relinquish this hook */
 		return 1;
 	}
 
-	if( pkg_send_vls( VRMSG_EVENT, vp, vrmgr ) < 0 )  {
+	if ( pkg_send_vls( VRMSG_EVENT, vp, vrmgr ) < 0 )  {
 		bu_log("event: pkg_send VRMSG_EVENT failed, disconnecting\n");
 		pkg_close(vrmgr);
 		vrmgr = PKC_NULL;
@@ -119,18 +119,18 @@ vr_input_hook(void)
 	int	val;
 
 	val = pkg_suckin(vrmgr);
-	if( val < 0 ) {
+	if ( val < 0 ) {
 		bu_log("pkg_suckin() error\n");
-	} else if( val == 0 )  {
+	} else if ( val == 0 )  {
 		bu_log("vrmgr sent us an EOF\n");
 	}
-	if( val <= 0 )  {
+	if ( val <= 0 )  {
 		Tcl_DeleteFileHandler(vrmgr->pkc_fd);
 		pkg_close(vrmgr);
 		vrmgr = PKC_NULL;
 		return;
 	}
-	if( pkg_process( vrmgr ) < 0 )
+	if ( pkg_process( vrmgr ) < 0 )
 		bu_log("vrmgr:  pkg_process error encountered\n");
 }
 
@@ -144,7 +144,7 @@ vr_viewpoint_hook(void)
 	static struct bu_vls	old_str;
 	quat_t		orient;
 
-	if( vrmgr == PKC_NULL )  {
+	if ( vrmgr == PKC_NULL )  {
 		cmdline_hook = 0;	/* Relinquish this hook */
 		return;
 	}
@@ -166,12 +166,12 @@ vr_viewpoint_hook(void)
 		      V3ARGS(view_state->vs_vop->vo_eye_pos),
 		      view_state->vs_vop->vo_perspective);
 
-	if( bu_vls_strcmp( &old_str, &str ) == 0 )  {
+	if ( bu_vls_strcmp( &old_str, &str ) == 0 )  {
 		bu_vls_free( &str );
 		return;
 	}
 
-	if( pkg_send_vls( VRMSG_POV, &str, vrmgr ) < 0 )  {
+	if ( pkg_send_vls( VRMSG_POV, &str, vrmgr ) < 0 )  {
 		bu_log("viewpoint: pkg_send VRMSG_POV failed, disconnecting\n");
 		pkg_close(vrmgr);
 		vrmgr = PKC_NULL;
@@ -196,7 +196,7 @@ f_vrmgr(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	struct bu_vls	str;
 	char		*role;
 
-	if(argc < 3){
+	if (argc < 3){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -208,7 +208,7 @@ f_vrmgr(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	bu_vls_init(&str);
 
-	if( vrmgr != PKC_NULL )  {
+	if ( vrmgr != PKC_NULL )  {
 	  Tcl_AppendResult(interp, "Closing link to VRmgr ",
 			   vr_host, "\n", (char *)NULL);
 		pkg_close( vrmgr );
@@ -219,9 +219,9 @@ f_vrmgr(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	vr_host = bu_strdup(argv[1]);
 	role = argv[2];
 
-	if( strcmp( role, "master" ) == 0 )  {
-	} else if( strcmp( role, "slave" ) == 0 )  {
-	} else if( strcmp( role, "overview" ) == 0 )  {
+	if ( strcmp( role, "master" ) == 0 )  {
+	} else if ( strcmp( role, "slave" ) == 0 )  {
+	} else if ( strcmp( role, "overview" ) == 0 )  {
 	} else {
 	   Tcl_AppendResult(interp, "role '", role, "' unknown, must be master/slave/overview\n",
 			    (char *)NULL);
@@ -230,7 +230,7 @@ f_vrmgr(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	vrmgr = pkg_open( vr_host, tcp_port, "tcp", "", "",
 		pkgswitch, NULL );
-	if( vrmgr == PKC_ERROR )  {
+	if ( vrmgr == PKC_ERROR )  {
 	  Tcl_AppendResult(interp, "mged/f_vrmgr: unable to contact ", vr_host,
 			   ", port ", tcp_port, "\n", (char *)NULL);
 	  vrmgr = PKC_NULL;
@@ -240,7 +240,7 @@ f_vrmgr(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	bu_vls_from_argv( &str, argc-2, (const char **)argv+2 );
 
 	/* Send initial message declaring our role */
-	if( pkg_send_vls( VRMSG_ROLE, &str, vrmgr ) < 0 )  {
+	if ( pkg_send_vls( VRMSG_ROLE, &str, vrmgr ) < 0 )  {
 	  Tcl_AppendResult(interp, "pkg_send VRMSG_ROLE failed, disconnecting\n", (char *)NULL);
 	  pkg_close(vrmgr);
 	  vrmgr = NULL;
@@ -248,11 +248,11 @@ f_vrmgr(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
 
 	/* Establish appropriate hooks */
-	if( strcmp( role, "master" ) == 0 )  {
+	if ( strcmp( role, "master" ) == 0 )  {
 		viewpoint_hook = vr_viewpoint_hook;
-	} else if( strcmp( role, "slave" ) == 0 )  {
+	} else if ( strcmp( role, "slave" ) == 0 )  {
 		cmdline_hook = vr_event_hook;
-	} else if( strcmp( role, "overview" ) == 0 )  {
+	} else if ( strcmp( role, "overview" ) == 0 )  {
 		/* No hooks required, just listen */
 	}
 	Tcl_CreateFileHandler(vrmgr->pkc_fd, TCL_READABLE,
@@ -281,7 +281,7 @@ ph_cmd(register struct pkg_conn *pc, char *buf)
 
 	snprintf(buffer, CMD_BUFSIZE, "%s", result);
 
-	if( pkg_2send( VRMSG_CMD_REPLY,
+	if ( pkg_2send( VRMSG_CMD_REPLY,
 		(status == TCL_OK) ? "Y" : "N", 1,
 		buffer, CMD_BUFSIZE, pc ) < 0 )  {
 		bu_log("ph_cmd: pkg_2send reply to vrmgr failed, disconnecting\n");
@@ -289,7 +289,7 @@ ph_cmd(register struct pkg_conn *pc, char *buf)
 		vrmgr = PKC_NULL;
 		cmdline_hook = 0;	/* Relinquish this hook */
 	}
-	if(buf) (void)free(buf);
+	if (buf) (void)free(buf);
 }
 
 /*
@@ -313,7 +313,7 @@ ph_vlist(register struct pkg_conn *pc, char *buf)
 	invent_solid( bu_vls_addr(&name), &vhead, 0x0000FF00L, 0 );
 
 	bu_vls_free( &name );
-	if(buf) (void)free(buf);
+	if (buf) (void)free(buf);
 }
 
 /*

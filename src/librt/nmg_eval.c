@@ -110,11 +110,11 @@ nmg_ck_lu_orientation(struct loopuse *lu, const struct bn_tol *tolp)
 
 	dot = VDOT( fu_peqn, lu_peqn );
 
-	if( dot == 0.0 )
+	if ( dot == 0.0 )
 		return;		/* can't determine geometric orientation */
 
 
-	if( dot < 0.0 )
+	if ( dot < 0.0 )
 	{
 		bu_log("nmg_ck_lu_orientation() lu=x%x, dot=%g, fu_orient=%s, lu_orient=%s\n", lu,
 			dot,
@@ -134,8 +134,8 @@ nmg_ck_lu_orientation(struct loopuse *lu, const struct bn_tol *tolp)
 const char *
 nmg_class_name(int class)
 {
-	if( class == NMG_CLASS_Unknown )  return "Unknown";
-	if( class < 0 || class > NMG_CLASS_BAD )  class = NMG_CLASS_BAD;
+	if ( class == NMG_CLASS_Unknown )  return "Unknown";
+	if ( class < 0 || class > NMG_CLASS_BAD )  class = NMG_CLASS_BAD;
 	return nmg_class_names[class];
 }
 
@@ -213,7 +213,7 @@ nmg_evaluate_boolean(struct shell *sA, struct shell *sB, int op, long int **clas
 			sA, sB, op );
 	}
 
-	switch( op )  {
+	switch ( op )  {
 	case NMG_BOOL_SUB:
 		actions = subtraction_actions;
 		nmg_invert_shell(sB);	/* FLIP all faceuse normals */
@@ -293,23 +293,23 @@ nmg_eval_action(long int *ptr, register struct nmg_bool_state *bs)
 	BN_CK_TOL(bs->bs_tol);
 
 	index = nmg_index_of_struct(ptr);
-	if( bs->bs_isA )  {
-		if( NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_AinB], index) )  {
+	if ( bs->bs_isA )  {
+		if ( NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_AinB], index) )  {
 			class = NMG_CLASS_AinB;
 			ret = bs->bs_actions[NMG_CLASS_AinB];
 			goto out;
 		}
-		if( NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_AonBshared], index) )  {
+		if ( NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_AonBshared], index) )  {
 			class = NMG_CLASS_AonBshared;
 			ret = bs->bs_actions[NMG_CLASS_AonBshared];
 			goto out;
 		}
-		if( NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_AonBanti], index) )  {
+		if ( NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_AonBanti], index) )  {
 			class = NMG_CLASS_AonBanti;
 			ret = bs->bs_actions[NMG_CLASS_AonBanti];
 			goto out;
 		}
-		if( NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_AoutB], index) )  {
+		if ( NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_AoutB], index) )  {
 			class = NMG_CLASS_AoutB;
 			ret = bs->bs_actions[NMG_CLASS_AoutB];
 			goto out;
@@ -322,22 +322,22 @@ nmg_eval_action(long int *ptr, register struct nmg_bool_state *bs)
 	}
 
 	/* is B */
-	if( NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_BinA], index) )  {
+	if ( NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_BinA], index) )  {
 		class = NMG_CLASS_BinA;
 		ret = bs->bs_actions[NMG_CLASS_BinA];
 		goto out;
 	}
-	if( NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_BonAshared], index) )  {
+	if ( NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_BonAshared], index) )  {
 		class = NMG_CLASS_BonAshared;
 		ret = bs->bs_actions[NMG_CLASS_BonAshared];
 		goto out;
 	}
-	if( NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_BonAanti], index) )  {
+	if ( NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_BonAanti], index) )  {
 		class = NMG_CLASS_BonAanti;
 		ret = bs->bs_actions[NMG_CLASS_BonAanti];
 		goto out;
 	}
-	if( NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_BoutA], index) )  {
+	if ( NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_BoutA], index) )  {
 		class = NMG_CLASS_BoutA;
 		ret = bs->bs_actions[NMG_CLASS_BoutA];
 		goto out;
@@ -382,7 +382,7 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
 	NMG_CK_SHELL(s);
 	BN_CK_TOL(bs->bs_tol);
 
-	if( rt_g.NMG_debug & DEBUG_VERIFY )
+	if ( rt_g.NMG_debug & DEBUG_VERIFY )
 		nmg_vshell( &s->r_p->s_hd, s->r_p );
 
 	/*
@@ -391,16 +391,16 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
 	 */
 	nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
 	fu = BU_LIST_FIRST( faceuse, &s->fu_hd );
-	while( BU_LIST_NOT_HEAD( fu, &s->fu_hd ) )  {
+	while ( BU_LIST_NOT_HEAD( fu, &s->fu_hd ) )  {
 		NMG_CK_FACEUSE(fu);
 		nextfu = BU_LIST_PNEXT( faceuse, fu );
 
 		/* Faceuse mates will be handled at same time as OT_SAME fu */
-		if( fu->orientation != OT_SAME )  {
+		if ( fu->orientation != OT_SAME )  {
 			fu = nextfu;
 			continue;
 		}
-		if( fu->fumate_p == nextfu )
+		if ( fu->fumate_p == nextfu )
 			nextfu = BU_LIST_PNEXT( faceuse, nextfu );
 
 		/* Consider this face */
@@ -408,10 +408,10 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
 
 		loops_retained = 0;
 		lu = BU_LIST_FIRST( loopuse, &fu->lu_hd );
-		while( BU_LIST_NOT_HEAD( lu, &fu->lu_hd ) )  {
+		while ( BU_LIST_NOT_HEAD( lu, &fu->lu_hd ) )  {
 			NMG_CK_LOOPUSE(lu);
 			nextlu = BU_LIST_PNEXT( loopuse, lu );
-			if( lu->lumate_p == nextlu )
+			if ( lu->lumate_p == nextlu )
 				nextlu = BU_LIST_PNEXT( loopuse, nextlu );
 
 			NMG_CK_LOOP( lu->l_p );
@@ -421,13 +421,13 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
 			{
 				nmg_ck_lu_orientation( lu, bs->bs_tol );
 			}
-			switch( nmg_eval_action( &lu->l_p->magic, bs ) )  {
+			switch ( nmg_eval_action( &lu->l_p->magic, bs ) )  {
 			case BACTION_KILL:
 				/* Kill by demoting loop to edges */
-				if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )  {
+				if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )  {
 					/* loop of single vertex */
 					(void)nmg_klu( lu );
-				} else if( nmg_demote_lu( lu ) == 0 )  {
+				} else if ( nmg_demote_lu( lu ) == 0 )  {
 					nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
 				}
 				lu = nextlu;
@@ -444,7 +444,7 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
 		if (rt_g.NMG_debug & DEBUG_BOOLEVAL)
 			bu_log("faceuse x%x loops retained=%d\n",
 				fu, loops_retained);
-		if( rt_g.NMG_debug & DEBUG_VERIFY )
+		if ( rt_g.NMG_debug & DEBUG_VERIFY )
 			nmg_vshell( &s->r_p->s_hd, s->r_p );
 
 		/*
@@ -452,26 +452,26 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
 		 *  Decide the fate of the face;  if the face dies,
 		 *  then any remaining loops, edges, etc, will die too.
 		 */
-		if( BU_LIST_IS_EMPTY( &fu->lu_hd ) )  {
-			if( loops_retained )  bu_bomb("nmg_eval_shell() empty faceuse with retained loops?\n");
+		if ( BU_LIST_IS_EMPTY( &fu->lu_hd ) )  {
+			if ( loops_retained )  bu_bomb("nmg_eval_shell() empty faceuse with retained loops?\n");
 			/* faceuse is empty, face & mate die */
 			if (rt_g.NMG_debug & DEBUG_BOOLEVAL)
 				bu_log("faceuse x%x empty, kill\n", fu);
 			nmg_kfu( fu );	/* kill face & mate, dequeue from shell */
-			if( rt_g.NMG_debug & DEBUG_VERIFY )
+			if ( rt_g.NMG_debug & DEBUG_VERIFY )
 				nmg_vshell( &s->r_p->s_hd, s->r_p );
 			nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
 			fu = nextfu;
 			continue;
 		}
 
-		if( loops_retained <= 0 )  {
+		if ( loops_retained <= 0 )  {
 			nmg_pr_fu(fu, (char *)NULL);
 			bu_bomb("nmg_eval_shell() non-empty faceuse, no loops retained?\n");
 		}
 		fu = nextfu;
 	}
-	if( rt_g.NMG_debug & DEBUG_VERIFY )
+	if ( rt_g.NMG_debug & DEBUG_VERIFY )
 		nmg_vshell( &s->r_p->s_hd, s->r_p );
 
 	/*
@@ -481,23 +481,23 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
 	 */
 	nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
 	lu = BU_LIST_FIRST( loopuse, &s->lu_hd );
-	while( BU_LIST_NOT_HEAD( lu, &s->lu_hd ) )  {
+	while ( BU_LIST_NOT_HEAD( lu, &s->lu_hd ) )  {
 		NMG_CK_LOOPUSE(lu);
 		nextlu = BU_LIST_PNEXT( loopuse, lu );
-		if( lu->lumate_p == nextlu )
+		if ( lu->lumate_p == nextlu )
 			nextlu = BU_LIST_PNEXT( loopuse, nextlu );
 
-		if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )  {
+		if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )  {
 			/* ignore vertex-with-self-loop */
 			lu = nextlu;
 			continue;
 		}
 		NMG_CK_LOOP( lu->l_p );
-		switch( nmg_eval_action( &lu->l_p->magic, bs ) )  {
+		switch ( nmg_eval_action( &lu->l_p->magic, bs ) )  {
 		case BACTION_KILL:
 			/* Demote the loopuse into wire edges */
 			/* kill loop & mate */
-			if( nmg_demote_lu( lu ) == 0 )
+			if ( nmg_demote_lu( lu ) == 0 )
 				nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
 			lu = nextlu;
 			continue;
@@ -508,7 +508,7 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
 		}
 		lu = nextlu;
 	}
-	if( rt_g.NMG_debug & DEBUG_VERIFY )
+	if ( rt_g.NMG_debug & DEBUG_VERIFY )
 		nmg_vshell( &s->r_p->s_hd, s->r_p );
 
 	/*
@@ -516,18 +516,18 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
 	 */
 	nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
 	eu = BU_LIST_FIRST( edgeuse, &s->eu_hd );
-	while( BU_LIST_NOT_HEAD( eu, &s->eu_hd ) )  {
+	while ( BU_LIST_NOT_HEAD( eu, &s->eu_hd ) )  {
 		NMG_CK_EDGEUSE(eu);
 		nexteu = BU_LIST_PNEXT( edgeuse, eu );	/* may be head */
-		if( eu->eumate_p == nexteu )
+		if ( eu->eumate_p == nexteu )
 			nexteu = BU_LIST_PNEXT( edgeuse, nexteu );
 
 		/* Consider this edge */
 		NMG_CK_EDGE( eu->e_p );
-		switch( nmg_eval_action( &eu->e_p->magic, bs ) )  {
+		switch ( nmg_eval_action( &eu->e_p->magic, bs ) )  {
 		case BACTION_KILL:
 			/* Demote the edegeuse (and mate) into vertices */
-			if( nmg_demote_eu( eu ) == 0 )
+			if ( nmg_demote_eu( eu ) == 0 )
 				nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
 			eu = nexteu;
 			continue;
@@ -553,21 +553,21 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
 	 */
 	nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
 	lu = BU_LIST_FIRST( loopuse, &s->lu_hd );
-	while( BU_LIST_NOT_HEAD( lu, &s->lu_hd ) )  {
+	while ( BU_LIST_NOT_HEAD( lu, &s->lu_hd ) )  {
 		NMG_CK_LOOPUSE(lu);
 		nextlu = BU_LIST_PNEXT( loopuse, lu );
 
-		if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_VERTEXUSE_MAGIC )  {
+		if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_VERTEXUSE_MAGIC )  {
 			/* ignore any remaining wire-loops */
 			lu = nextlu;
 			continue;
 		}
-		if( nextlu == lu->lumate_p )
+		if ( nextlu == lu->lumate_p )
 			nextlu = BU_LIST_PNEXT(loopuse, nextlu);
 		vu = BU_LIST_PNEXT( vertexuse, &lu->down_hd );
 		NMG_CK_VERTEXUSE( vu );
 		NMG_CK_VERTEX( vu->v_p );
-		switch( nmg_eval_action( &vu->v_p->magic, bs ) )  {
+		switch ( nmg_eval_action( &vu->v_p->magic, bs ) )  {
 		case BACTION_KILL:
 			/* Eliminate the loopuse, and mate */
 			nmg_klu( lu );
@@ -580,16 +580,16 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
 		}
 		lu = nextlu;
 	}
-	if( rt_g.NMG_debug & DEBUG_VERIFY )
+	if ( rt_g.NMG_debug & DEBUG_VERIFY )
 		nmg_vshell( &s->r_p->s_hd, s->r_p );
 
 	/*
 	 * Final case:  shell of a single vertexuse
 	 */
-	if( (vu = s->vu_p) )  {
+	if ( (vu = s->vu_p) )  {
 		NMG_CK_VERTEXUSE( vu );
 		NMG_CK_VERTEX( vu->v_p );
-		switch( nmg_eval_action( &vu->v_p->magic, bs ) )  {
+		switch ( nmg_eval_action( &vu->v_p->magic, bs ) )  {
 		case BACTION_KILL:
 			nmg_kvu( vu );
 			nmg_eval_plot( bs, nmg_eval_count++, 0 );	/* debug */
@@ -601,7 +601,7 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
 			bu_bomb("nmg_eval_shell() bad BACTION\n");
 		}
 	}
-	if( rt_g.NMG_debug & DEBUG_VERIFY )
+	if ( rt_g.NMG_debug & DEBUG_VERIFY )
 		nmg_vshell( &s->r_p->s_hd, s->r_p );
 	nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
 }
@@ -624,15 +624,15 @@ nmg_eval_plot(struct nmg_bool_state *bs, int num, int delay)
 
 	if (rt_g.NMG_debug & DEBUG_BOOLEVAL && rt_g.NMG_debug & DEBUG_PLOTEM)
 		do_plot = 1;
-	if( rt_g.NMG_debug & DEBUG_PL_ANIM )  do_anim = 1;
+	if ( rt_g.NMG_debug & DEBUG_PL_ANIM )  do_anim = 1;
 
-	if( !do_plot && !do_anim )  return;
+	if ( !do_plot && !do_anim )  return;
 
 	BN_CK_TOL(bs->bs_tol);
 
-	if( do_plot )  {
+	if ( do_plot )  {
 		sprintf(fname, "nmg_eval%d.pl", num);
-		if( (fp = fopen(fname, "w")) == NULL )  {
+		if ( (fp = fopen(fname, "w")) == NULL )  {
 			perror(fname);
 			return;
 		}
@@ -644,7 +644,7 @@ nmg_eval_plot(struct nmg_bool_state *bs, int num, int delay)
 		fclose(fp);
 	}
 
-	if( do_anim )  {
+	if ( do_anim )  {
 		extern void (*nmg_vlblock_anim_upcall)();
 		struct bn_vlblock	*vbp;
 
@@ -654,7 +654,7 @@ nmg_eval_plot(struct nmg_bool_state *bs, int num, int delay)
 		nmg_vlblock_s( vbp, bs->bs_src, 0 );
 
 		/* Cause animation of boolean operation as it proceeds! */
-		if( nmg_vlblock_anim_upcall )  {
+		if ( nmg_vlblock_anim_upcall )  {
 			/* if requested, delay 1/4 second */
 			(*nmg_vlblock_anim_upcall)( vbp,
 				(rt_g.NMG_debug&DEBUG_PL_SLOW) ? 250000 : 0,

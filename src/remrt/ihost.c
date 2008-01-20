@@ -103,14 +103,14 @@ host_lookup_by_hostent(struct hostent *addr, int enter)
 	struct hostent	*addr3;
 
 	addr2 = gethostbyname(addr->h_name);
-	if( addr != addr2 )  {
+	if ( addr != addr2 )  {
 		bu_log("host_lookup_by_hostent(%s) got %s?\n",
 			addr->h_name, addr2 ? addr2->h_name : "NULL" );
 		return IHOST_NULL;
 	}
 	addr3 = gethostbyaddr(addr2->h_addr_list[0],
 	    sizeof(struct in_addr), addr2->h_addrtype);
-	if( addr != addr3 )  {
+	if ( addr != addr3 )  {
 		bu_log("host_lookup_by_hostent(%s) got %s?\n",
 			addr->h_name, addr3 ? addr3->h_name : "NULL" );
 		return IHOST_NULL;
@@ -118,14 +118,14 @@ host_lookup_by_hostent(struct hostent *addr, int enter)
 	/* Now addr->h_name points to the "formal" name of the host */
 
 	/* Search list for existing instance */
-	for( BU_LIST_FOR( ihp, ihost, &HostHead ) )  {
+	for ( BU_LIST_FOR( ihp, ihost, &HostHead ) )  {
 		CK_IHOST(ihp);
 
-		if( strcmp( ihp->ht_name, addr->h_name ) != 0 )
+		if ( strcmp( ihp->ht_name, addr->h_name ) != 0 )
 			continue;
 		return( ihp );
 	}
-	if( enter == 0 )
+	if ( enter == 0 )
 		return( IHOST_NULL );
 
 	/* If not found and enter==1, enter in host table w/defaults */
@@ -177,9 +177,9 @@ host_lookup_by_addr(struct sockaddr_in *from, int enter)
 	addr_tmp = from->sin_addr.s_addr;
 	addr = gethostbyaddr( (char *)&from->sin_addr, sizeof (struct in_addr),
 		from->sin_family);
-	if( addr != NULL )  {
+	if ( addr != NULL )  {
 		ihp = host_lookup_by_hostent( addr, enter );
-		if( ihp )  return ihp;
+		if ( ihp )  return ihp;
 	}
 
 	/* Host name is not known */
@@ -189,15 +189,15 @@ host_lookup_by_addr(struct sockaddr_in *from, int enter)
 		(addr_tmp>>16) & 0xff,
 		(addr_tmp>> 8) & 0xff,
 		(addr_tmp    ) & 0xff );
-	if( enter == 0 )  {
+	if ( enter == 0 )  {
 		bu_log("%s: unknown host\n", name);
 		return( IHOST_NULL );
 	}
 
 	/* See if this host has been previously entered by number */
-	for( BU_LIST_FOR( ihp, ihost, &HostHead ) )  {
+	for ( BU_LIST_FOR( ihp, ihost, &HostHead ) )  {
 		CK_IHOST(ihp);
-		if( strcmp( ihp->ht_name, name ) == 0 )
+		if ( strcmp( ihp->ht_name, name ) == 0 )
 			return( ihp );
 	}
 
@@ -215,7 +215,7 @@ host_lookup_by_name(char *name, int enter)
 	struct hostent		*addr;
 
 	/* Determine name to be found */
-	if( isdigit( *name ) )  {
+	if ( isdigit( *name ) )  {
 		/* Numeric */
 		sockhim.sin_family = AF_INET;
 		sockhim.sin_addr.s_addr = inet_addr(name);
@@ -223,7 +223,7 @@ host_lookup_by_name(char *name, int enter)
 	} else {
 		addr = gethostbyname(name);
 	}
-	if( addr == NULL )  {
+	if ( addr == NULL )  {
 		bu_log("%s:  bad host\n", name);
 		return( IHOST_NULL );
 	}

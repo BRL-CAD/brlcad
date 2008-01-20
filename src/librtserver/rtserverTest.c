@@ -99,8 +99,8 @@ main( int argc, char *argv[] )
 	rts_resource_init();
 
 	/* process command line args */
-	while( (c=bu_getopt( argc, argv, "w:vs:t:q:o:" ) ) != -1 ) {
-		switch( c ) {
+	while ( (c=bu_getopt( argc, argv, "w:vs:t:q:o:" ) ) != -1 ) {
+		switch ( c ) {
 		case 'w':	/* number of worker threads */
 			worker_count = atoi( bu_optarg );
 			break;
@@ -125,23 +125,23 @@ main( int argc, char *argv[] )
 	}
 
 	/* load geometry */
-	if( BU_PTBL_LEN( &objs ) > 0 ) {
+	if ( BU_PTBL_LEN( &objs ) > 0 ) {
 		char **objects;
 
 		objects = (char **)bu_malloc( BU_PTBL_LEN( &objs ) * sizeof( char *), "objects" );
-		for( i=0 ; i<BU_PTBL_LEN( &objs ) ; i++ ) {
+		for ( i=0; i<BU_PTBL_LEN( &objs ); i++ ) {
 			objects[i] = (char *)BU_PTBL_GET( &objs, i );
 		}
 		my_session_id = rts_load_geometry( argv[bu_optind], 0, BU_PTBL_LEN( &objs ), objects, thread_count );
 	} else {
-		if( bu_optind >= argc ) {
+		if ( bu_optind >= argc ) {
 			fprintf( stderr, "No BRL-CAD model specified\n" );
 			bu_exit(1, usage, argv[0] );
 		}
 		my_session_id = rts_load_geometry( argv[bu_optind], 0, 0, (char **)NULL, thread_count );
 	}
 
-	if( my_session_id < 0 ) {
+	if ( my_session_id < 0 ) {
 		bu_exit(2, "Failed to load geometry from file (%s)\n", argv[bu_optind] );
 	}
 
@@ -149,7 +149,7 @@ main( int argc, char *argv[] )
 	my_session_id = rts_open_session();
 	rts_close_session( my_session_id );
 	my_session_id = rts_open_session();
-	if( my_session_id < 0 ) {
+	if ( my_session_id < 0 ) {
 		bu_exit(2, "Failed to open session\n" );
 	} else {
 		fprintf( stderr, "Using session id %d\n", my_session_id );
@@ -159,11 +159,11 @@ main( int argc, char *argv[] )
 	rts_start_server_threads( thread_count, queue_count );
 
 	worker_thread = (pthread_t *)realloc( worker_thread, worker_count * sizeof( pthread_t ) );
-	for( k=0 ; k<worker_count ; k++ ) {
+	for ( k=0; k<worker_count; k++ ) {
 		pthread_create( &worker_thread[k], NULL, workerThread, (void *)grid_size );
 	}
 
-	for( k=0 ; k<worker_count ; k++ ) {
+	for ( k=0; k<worker_count; k++ ) {
 		pthread_join( worker_thread[k], NULL );
 	}
 }
@@ -190,9 +190,9 @@ workerThread( void *gsize )
 	VSUB2( model_size, max, min );
 	cell_size = model_size[X] / grid_size;
 
-	while( 1 ) {
-	for( i=0 ; i<grid_size ; i++ ) {
-		for( j=0 ; j<grid_size ; j++ ) {
+	while ( 1 ) {
+	for ( i=0; i<grid_size; i++ ) {
+		for ( j=0; j<grid_size; j++ ) {
 			/* RTS_GET_RTSERVER_JOB( ajob ); */
 			ajob = rts_get_rtserver_job();
 			ajob->rtjob_id = (grid_size - i - 1)*1000 + j;

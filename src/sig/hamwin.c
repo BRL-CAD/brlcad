@@ -50,15 +50,15 @@ hamwin(double *data, int length)
 	int	i;
 
 	/* Check for window table initialization */
-	if( length != _init_length ) {
-		if( init_hamwintab( length ) == 0 ) {
+	if ( length != _init_length ) {
+		if ( init_hamwintab( length ) == 0 ) {
 			/* Can't do requested size */
 			return;
 		}
 	}
 
 	/* Do window - could use pointers here... */
-	for( i = 0; i < length; i++ ) {
+	for ( i = 0; i < length; i++ ) {
 		data[i] *= hamwintab[i];
 	}
 }
@@ -72,15 +72,15 @@ chamwin(bn_complex_t *data, int length)
 	int	i;
 
 	/* Check for window table initialization */
-	if( length != _init_length ) {
-		if( init_hamwintab( length ) == 0 ) {
+	if ( length != _init_length ) {
+		if ( init_hamwintab( length ) == 0 ) {
 			/* Can't do requested size */
 			return;
 		}
 	}
 
 	/* Do window - could use pointers here... */
-	for( i = 0; i < length; i++ ) {
+	for ( i = 0; i < length; i++ ) {
 		data[i].re *= hamwintab[i];
 	}
 }
@@ -98,12 +98,12 @@ init_hamwintab(int size)
 	int	i;
 	double	theta;
 
-	if( size > maxinitlen ) {
-		if( hamwintab != NULL ) {
+	if ( size > maxinitlen ) {
+		if ( hamwintab != NULL ) {
 			free( hamwintab );
 			maxinitlen = 0;
 		}
-		if( (hamwintab = (double *)malloc(size*sizeof(double))) == NULL ) {
+		if ( (hamwintab = (double *)malloc(size*sizeof(double))) == NULL ) {
 			fprintf( stderr, "coswin: couldn't malloc space for %d elements\n", size );
 			return( 0 );
 		}
@@ -115,7 +115,7 @@ init_hamwintab(int size)
 	/*
 	 * Size is okay.  Set up tables.
 	 */
-	for( i = 0; i < size; i++ ) {
+	for ( i = 0; i < size; i++ ) {
 		theta = 2 * M_PI * i / (double)(size);
 		hamwintab[ i ] = 0.54 - 0.46 * cos( theta );
 	}

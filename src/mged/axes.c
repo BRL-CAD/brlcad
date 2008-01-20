@@ -98,7 +98,7 @@ ax_set_dirty_flag()
   struct dm_list *dmlp;
 
   FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l)
-    if(dmlp->dml_axes_state == axes_state)
+    if (dmlp->dml_axes_state == axes_state)
       dmlp->dml_dirty = 1;
 }
 
@@ -112,7 +112,7 @@ draw_e_axes()
 	if (state == ST_S_EDIT) {
 		MAT4X3PNT(v_ap1, view_state->vs_vop->vo_model2view, e_axes_pos);
 		MAT4X3PNT(v_ap2, view_state->vs_vop->vo_model2view, curr_e_axes_pos);
-	} else if(state == ST_O_EDIT) {
+	} else if (state == ST_O_EDIT) {
 		point_t m_ap2;
 
 		MAT4X3PNT(v_ap1, view_state->vs_vop->vo_model2view, es_keypoint);

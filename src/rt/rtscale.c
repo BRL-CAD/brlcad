@@ -122,7 +122,7 @@ main(int argc, char **argv)
 	 * usage message.
 	 */
 
-	if(argc < 5)  {
+	if (argc < 5)  {
 		fputs(usage, stderr);
 		bu_exit(-1, NULL);
 	}
@@ -130,7 +130,7 @@ main(int argc, char **argv)
 	/* Open an incoming file for reading */
 
 	fp = fopen( argv[4], "r");
-	if( fp == NULL )  {
+	if ( fp == NULL )  {
 		perror(argv[4]);
 		bu_exit(-1, NULL);
 	}
@@ -147,7 +147,7 @@ main(int argc, char **argv)
 	strncpy(name, argv[4], BUFF_LEN-1);
 	name[BUFF_LEN-1] = '\0'; /* sanity */
 
-	if( argc == 6 )  {
+	if ( argc == 6 )  {
 		strncpy( descript, argv[5], BUFF_LEN-1 );
 		descript[BUFF_LEN-1] = '\0'; /* sanity */
 		SEEN_DESCRIPT = 1;
@@ -158,7 +158,7 @@ main(int argc, char **argv)
 	m_len = atof(argv[1]) * bu_units_conversion(argv[2]);
 
 	/* Check to make sure there has been a valid conversion. */
-	if(m_len <= 0)  {
+	if (m_len <= 0)  {
 		fprintf(stderr, "Invalid length =%.6f\n", m_len);
 		fputs(usage, stderr);
 		bu_exit(-1, NULL);
@@ -173,13 +173,13 @@ main(int argc, char **argv)
 	 */
 
 	ret = read_rt_file(fp, name,  model2view);
-	if(ret < 0)  {
+	if (ret < 0)  {
 		bu_exit(-1, NULL);
 	}
 
 	bn_mat_inv(view2model, model2view);
 
-	if(verbose)  {
+	if (verbose)  {
 		fprintf(stderr, "label=%s\n", label);
 		bn_mat_print("view2model", view2model);
 	}
@@ -188,11 +188,11 @@ main(int argc, char **argv)
 	make_bounding_rpp(stdout, view2model);
 
 	ret = layout_n_plot(stdout, label, view2model, model2view, intervals, m_len, descript);
-	if(ret < 0)  {
+	if (ret < 0)  {
 		bu_exit(-1, NULL);
 	}
 
-	if(border)  {
+	if (border)  {
 		/* For diagnostic purposes, a border can be put out. */
 		make_border(stdout, view2model);
 	}
@@ -260,7 +260,7 @@ layout_n_plot(FILE *outfp, char *label, fastf_t *v2mod, fastf_t *m2view, int int
 	nticks =  intervals - 1;
 	v_tick_hgt = 0.05;
 
-	if(verbose)  {
+	if (verbose)  {
 		fprintf(stderr, "plot: nticks=%d,\n", nticks);
 	}
 
@@ -279,7 +279,7 @@ layout_n_plot(FILE *outfp, char *label, fastf_t *v2mod, fastf_t *m2view, int int
 	 * height wise.
 	 */
 
-	if(SEEN_DESCRIPT)  {
+	if (SEEN_DESCRIPT)  {
 		VSET(v_startpt, -0.9, -0.7, 0.0);
 	} else {
 		VSET(v_startpt, -0.9, -0.8, 0.0);
@@ -298,7 +298,7 @@ layout_n_plot(FILE *outfp, char *label, fastf_t *v2mod, fastf_t *m2view, int int
 	MAT4X3PNT(m_startpt, v2mod, v_startpt);
 	m_tick_hgt = v_tick_hgt / v2mod[15];		/* scale tick_hgt */
 
-	if(verbose)  {
+	if (verbose)  {
 		fprintf(stderr, "layout: m_tick_hgt=%.6f, v_tick_hgt=%.6f\n",
 			m_tick_hgt, v_tick_hgt);
 	}
@@ -352,27 +352,27 @@ layout_n_plot(FILE *outfp, char *label, fastf_t *v2mod, fastf_t *m2view, int int
 	 */
 
 	ret = drawscale(outfp, m_startpt, m_len, m_tick_hgt, m_lenv, m_hgtv, m_inv_hgtv);
-	if( ret < 0 )  {
+	if ( ret < 0 )  {
 		fprintf(stderr, "Layout: drawscale failed\n");
 		return(-1);
 	}
 
-	if(nticks >  0 )  {
+	if (nticks >  0 )  {
 
 		/* Now make the ticks within the basic scale.  The ticks should
 		 * be half the height of the end ticks to be distinguishable.
 		 */
 
-		for( tickno = 1; tickno < nticks; tickno++ )  {
+		for ( tickno = 1; tickno < nticks; tickno++ )  {
 
 			VJOIN1(centerpt, m_startpt, m_len * tickno/nticks, m_lenv);
 
-			if(verbose)  {
+			if (verbose)  {
 				VPRINT("centerpt", centerpt);
 			}
 
 			ret = drawticks(outfp, centerpt, m_hgtv, m_tick_hgt * 0.5, m_inv_hgtv );
-			if( ret < 0 )  {
+			if ( ret < 0 )  {
 				fprintf(stderr, "layout: drawtick skipping tickno %d\n",
 					tickno);
 			}
@@ -380,7 +380,7 @@ layout_n_plot(FILE *outfp, char *label, fastf_t *v2mod, fastf_t *m2view, int int
 
 	}
 
-	if(verbose)  {
+	if (verbose)  {
 		fprintf(stderr, "Now calling tp_3symbol( outfp, %s, m_lable_st= %.6f, %.6f, %.6f, m_char_width=%.6f\n",
 			label, V3ARGS(m_label_st), m_char_width);
 		bn_mat_print("v2symbol", v2symbol);
@@ -418,7 +418,7 @@ drawscale(FILE *outfp, fastf_t *startpt, fastf_t len, fastf_t hgt, fastf_t *lenv
 	pdv_3move(outfp, startpt);
 	pdv_3cont(outfp, endpt);
 
-	if(verbose)  {
+	if (verbose)  {
 		fprintf(stderr, "drawscale invoked drawticks\n");
 		VPRINT("startpt", startpt);
 		VPRINT("endpt", endpt);
@@ -446,14 +446,14 @@ drawticks(FILE *outfp, fastf_t *centerpt, fastf_t *hgtv, fastf_t hgt, fastf_t *i
 	point_t		top;		/* top of tick mark */
 	point_t		bot;		/* bottom of tick mark */
 
-	if(verbose)  {
+	if (verbose)  {
 		VPRINT("hgtv", hgtv);
 	}
 
 	VJOIN1(top, centerpt, hgt, hgtv);
 	VJOIN1(bot, centerpt, hgt, inv_hgtv);
 
-	if(verbose)  {
+	if (verbose)  {
 		VPRINT("top", top);
 		VPRINT("bot", bot);
 		fprintf(stderr, "drawticks now using top, bot to plot\n");

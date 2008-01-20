@@ -155,20 +155,20 @@ int vclip( vect_t a, vect_t b, register fastf_t *min, register fastf_t *max )
 	maxdist = CLIP_DISTANCE;
 	VSUB2( diff, b, a );
 
-	for( i=0; i < 3; i++, pt++, dir++, max++, min++ )  {
-		if( *dir < -EPSILON )  {
-			if( (sv = (*min - *pt) / *dir) < 0.0 )
+	for ( i=0; i < 3; i++, pt++, dir++, max++, min++ )  {
+		if ( *dir < -EPSILON )  {
+			if ( (sv = (*min - *pt) / *dir) < 0.0 )
 				return(0);	/* MISS */
-			if(maxdist > sv)
+			if (maxdist > sv)
 				maxdist = sv;
-			if( mindist < (st = (*max - *pt) / *dir) )
+			if ( mindist < (st = (*max - *pt) / *dir) )
 				mindist = st;
-		}  else if( *dir > EPSILON )  {
-			if( (st = (*max - *pt) / *dir) < 0.0 )
+		}  else if ( *dir > EPSILON )  {
+			if ( (st = (*max - *pt) / *dir) < 0.0 )
 				return(0);	/* MISS */
-			if(maxdist > st)
+			if (maxdist > st)
 				maxdist = st;
-			if( mindist < ((sv = (*min - *pt) / *dir)) )
+			if ( mindist < ((sv = (*min - *pt) / *dir)) )
 				mindist = sv;
 		}  else  {
 			/*
@@ -176,23 +176,23 @@ int vclip( vect_t a, vect_t b, register fastf_t *min, register fastf_t *max )
 			 *  (ie, this ray is aligned with this axis),
 			 *  merely check against the boundaries.
 			 */
-			if( (*min > *pt) || (*max < *pt) )
+			if ( (*min > *pt) || (*max < *pt) )
 				return(0);	/* MISS */;
 		}
 	}
-	if( mindist >= maxdist )
+	if ( mindist >= maxdist )
 		return(0);	/* MISS */
 
-	if( mindist > 1 || maxdist < 0 )
+	if ( mindist > 1 || maxdist < 0 )
 		return(0);	/* MISS */
 
-	if( mindist <= 0 && maxdist >= 1 )
+	if ( mindist <= 0 && maxdist >= 1 )
 		return(1);	/* HIT, no clipping needed */
 
 	/* Don't grow one end of a contained segment */
-	if( mindist < 0 )
+	if ( mindist < 0 )
 		mindist = 0;
-	if( maxdist > 1 )
+	if ( maxdist > 1 )
 		maxdist = 1;
 
 	/* Compute actual intercept points */

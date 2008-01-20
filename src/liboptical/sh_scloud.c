@@ -168,7 +168,7 @@ scloud_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, str
 		/* bad thing */
 		bu_bomb("db_string_to_path() error");
 	}
-	if(! db_path_to_mat(rtip->rti_dbip, &full_path, region_to_model, 0, &rt_uniresource)) {
+	if (! db_path_to_mat(rtip->rti_dbip, &full_path, region_to_model, 0, &rt_uniresource)) {
 		/* bad thing */
 		bu_bomb("db_path_to_mat() error");
 	}
@@ -326,7 +326,7 @@ scloud_render(struct application *ap, struct partition *pp, struct shadework *sw
 	sub_sw = *swp; /* struct copy */
 	sub_sw.sw_inputs = MFI_HIT;
 
-	for (i=0 ; i < steps ; i++ ) {
+	for (i=0; i < steps; i++ ) {
 		/* compute the next point in the cloud space */
 		VJOIN1(pt, in_pt, i*step_delta, v_cloud);
 
@@ -351,7 +351,7 @@ scloud_render(struct application *ap, struct partition *pp, struct shadework *sw
 		/* now we know how much light has arrived from each
 		 * light source to this point
 		 */
-		for (i=ap->a_rt_i->rti_nlights-1  ; i >= 0 ; i--) {
+		for (i=ap->a_rt_i->rti_nlights-1; i >= 0; i--) {
 			lp = (struct light_specific *)swp->sw_visible[i];
 			if (lp == LIGHT_NULL ) continue;
 
@@ -389,7 +389,7 @@ scloud_render(struct application *ap, struct partition *pp, struct shadework *sw
 	swp->sw_inputs |= MFI_HIT | MFI_NORMAL;
 	light_obs( ap, swp, swp->sw_inputs );
 	VSETALL(incident_light, 0 );
-	for( i=ap->a_rt_i->rti_nlights-1; i>=0; i-- )  {
+	for ( i=ap->a_rt_i->rti_nlights-1; i>=0; i-- )  {
 		struct light_specific	*lp;
 		if ((lp = (struct light_specific *)swp->sw_visible[i]) == LIGHT_NULL )
 			continue;

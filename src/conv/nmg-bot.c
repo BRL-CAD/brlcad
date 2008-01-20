@@ -62,11 +62,11 @@ nmg_conv(struct rt_db_internal *intern, const char *name )
 	m = (struct model *)intern->idb_ptr;
 	NMG_CK_MODEL( m );
 	r = BU_LIST_FIRST( nmgregion, &m->r_hd );
-	if(r && BU_LIST_NEXT( nmgregion, &r->l ) !=  (struct nmgregion *)&m->r_hd )
+	if (r && BU_LIST_NEXT( nmgregion, &r->l ) !=  (struct nmgregion *)&m->r_hd )
 		bu_exit(1, "ERROR: this code works only for NMG models with one region!\n" );
 
 	s = BU_LIST_FIRST( shell, &r->s_hd );
-	if(s && BU_LIST_NEXT( shell, &s->l) != (struct shell *)&r->s_hd )
+	if (s && BU_LIST_NEXT( shell, &s->l) != (struct shell *)&r->s_hd )
 		bu_exit(1, "ERROR: this code works only for NMG models with one shell!\n" );
 
 	if (BU_SETJUMP) {
@@ -79,7 +79,7 @@ nmg_conv(struct rt_db_internal *intern, const char *name )
 	    mk_bot_from_nmg( fdout, name, s);
 	}
 	BU_UNSETJUMP;
-	if(verbose) bu_log("Converted %s to a Bot solid\n", name);
+	if (verbose) bu_log("Converted %s to a Bot solid\n", name);
 	rt_db_free_internal( intern, &rt_uniresource );
 }
 
@@ -88,14 +88,14 @@ main(int argc, char **argv)
 {
 	struct directory *dp;
 
-	if( argc != 3 && argc != 4 )
+	if ( argc != 3 && argc != 4 )
 	{
 		bu_exit(1, "Usage:\n\t%s [-v] input.g output.g\n", argv[0] );
 	}
 
-	if( argc == 4 )
+	if ( argc == 4 )
 	{
-		if( !strcmp( argv[1], "-v" ) )
+		if ( !strcmp( argv[1], "-v" ) )
 			verbose = 1;
 		else
 		{
@@ -107,18 +107,18 @@ main(int argc, char **argv)
 	rt_init_resource( &rt_uniresource, 0, NULL );
 
 	dbip = db_open( argv[argc-2], "r" );
-	if( dbip == DBI_NULL )
+	if ( dbip == DBI_NULL )
 	{
 		perror( argv[0] );
 		bu_exit(1, "Cannot open file (%s)\n", argv[argc-2] );
 	}
 
-	if( (fdout=wdb_fopen( argv[argc-1] )) == NULL )
+	if ( (fdout=wdb_fopen( argv[argc-1] )) == NULL )
 	{
 		perror( argv[0] );
 		bu_exit(1, "Cannot open file (%s)\n", argv[argc-1] );
 	}
-	if( db_dirbuild( dbip ) ) {
+	if ( db_dirbuild( dbip ) ) {
 	    bu_exit(1, "db_dirbuild failed\n" );
 	}
 
@@ -130,7 +130,7 @@ main(int argc, char **argv)
 		int id;
 		int ret;
 		id = rt_db_get_internal( &intern, dp, dbip, NULL, &rt_uniresource );
-		if( id < 0 )  {
+		if ( id < 0 )  {
 			fprintf(stderr,
 				"%s: rt_db_get_internal(%s) failure, skipping\n",
 				argv[0], dp->d_namep);
@@ -140,7 +140,7 @@ main(int argc, char **argv)
 			nmg_conv( &intern, dp->d_namep );
 		} else {
 			ret = wdb_put_internal( fdout, dp->d_namep, &intern, 1.0 );
-			if( ret < 0 )  {
+			if ( ret < 0 )  {
 				fprintf(stderr,
 					"%s: wdb_put_internal(%s) failure, skipping\n",
 					argv[0], dp->d_namep);

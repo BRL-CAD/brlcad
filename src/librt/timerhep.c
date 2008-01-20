@@ -59,7 +59,7 @@ rt_read_timer(char *str, int len)
 	(void)stats_(htime);
 	(void)time(&now);
 	usert = ((double)htime[0]) / 10000000.0;
-	if( usert < 0.00001 )  usert = 0.00001;
+	if ( usert < 0.00001 )  usert = 0.00001;
 	sprintf(line, "%f secs: %ld wave, %ld fp, %ld dmem, %ld other",
 		usert,
 		htime[0], htime[1], htime[2], htime[3], htime[4] );

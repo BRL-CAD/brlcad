@@ -148,7 +148,7 @@ rt_mk_bot_w_normals(
 	struct rt_bot_internal *bot;
 	int i;
 
-	if( (num_normals > 0) && (fp->dbip->dbi_version < 5 ) ) {
+	if ( (num_normals > 0) && (fp->dbip->dbi_version < 5 ) ) {
 		bu_log( "You are using an old database format which does not support surface normals for BOT primitives\n" );
 		bu_log( "You are attempting to create a BOT primitive named \"%s\" with surface normals\n" );
 		bu_log( "The surface normals will not be saved\n" );
@@ -163,15 +163,15 @@ rt_mk_bot_w_normals(
 	bot->num_vertices = num_vertices;
 	bot->num_faces = num_faces;
 	bot->vertices = (fastf_t *)bu_calloc( num_vertices * 3, sizeof( fastf_t ), "bot->vertices" );
-	for( i=0 ; i<num_vertices*3 ; i++ )
+	for ( i=0; i<num_vertices*3; i++ )
 		bot->vertices[i] = vertices[i];
 	bot->faces = (int *)bu_calloc( num_faces * 3, sizeof( int ), "bot->faces" );
-	for( i=0 ; i<num_faces*3 ; i++ )
+	for ( i=0; i<num_faces*3; i++ )
 		bot->faces[i] = faces[i];
-	if( mode == RT_BOT_PLATE )
+	if ( mode == RT_BOT_PLATE )
 	{
 		bot->thickness = (fastf_t *)bu_calloc( num_faces, sizeof( fastf_t ), "bot->thickness" );
-		for( i=0 ; i<num_faces ; i++ )
+		for ( i=0; i<num_faces; i++ )
 			bot->thickness[i] = thickness[i];
 		bot->face_mode = bu_bitv_dup( face_mode );
 	}
@@ -181,7 +181,7 @@ rt_mk_bot_w_normals(
 		bot->face_mode = (struct bu_bitv *)NULL;
 	}
 
-	if( (num_normals > 0) && (fp->dbip->dbi_version >= 5 ) ) {
+	if ( (num_normals > 0) && (fp->dbip->dbi_version >= 5 ) ) {
 		bot->num_normals = num_normals;
 		bot->num_face_normals = bot->num_faces;
 		bot->normals = (fastf_t *)bu_calloc( bot->num_normals * 3, sizeof( fastf_t ), "BOT normals" );
@@ -229,13 +229,13 @@ do_grid(char *line)
 	int grid_no;
 	fastf_t x, y, z;
 
-	if( RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+	if ( RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
 		bu_log( "ERROR: bu_mem_barriercheck failed at start of do_grid\n" );
 
 	strncpy( field, &line[8], 8 );
 	grid_no = atoi( field );
 
-	if( grid_no < 1 )
+	if ( grid_no < 1 )
 	{
 		bu_log( "ERROR: grid id number = %d\n", grid_no );
 		bu_bomb( "BAD GRID ID NUMBER\n" );
@@ -250,7 +250,7 @@ do_grid(char *line)
 	strncpy( field, &line[40], 8 );
 	z = atof( field );
 
-	while( grid_no > grid_size - 1 )
+	while ( grid_no > grid_size - 1 )
 	{
 		grid_size += GRID_BLOCK;
 		grid_pts = (point_t *)bu_realloc( (char *)grid_pts, grid_size * sizeof( point_t ), "fast4-g: grid_pts" );
@@ -258,9 +258,9 @@ do_grid(char *line)
 
 	VSET( grid_pts[grid_no], x*25.4, y*25.4, z*25.4 );
 
-	if( grid_no > max_grid_no )
+	if ( grid_no > max_grid_no )
 		max_grid_no = grid_no;
-	if( RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+	if ( RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
 		bu_log( "ERROR: bu_mem_barriercheck failed at end of do_grid\n" );
 }
 
@@ -268,33 +268,33 @@ void
 Add_bot_face(int pt1, int pt2, int pt3, fastf_t thick, int pos)
 {
 
-	if( pt1 == pt2 || pt2 == pt3 || pt1 == pt3 )
+	if ( pt1 == pt2 || pt2 == pt3 || pt1 == pt3 )
 	{
 		bu_log( "Add_bot_face: ignoring degenerate triangle in group %d component %d\n", group_id, comp_id );
 		return;
 	}
 
-	if( pos == 0 )	/* use default */
+	if ( pos == 0 )	/* use default */
 		pos = POS_FRONT;
 
-	if( mode == PLATE_MODE )
+	if ( mode == PLATE_MODE )
 	{
-		if( pos != POS_CENTER && pos != POS_FRONT )
+		if ( pos != POS_CENTER && pos != POS_FRONT )
 		{
 			bu_log( "Add_bot_face: illegal postion parameter (%d), must be one or two (ignoring face for group %d component %d)\n", pos, group_id, comp_id );
 			return;
 		}
 	}
 
-	if( face_count >= face_size )
+	if ( face_count >= face_size )
 	{
 		face_size += GRID_BLOCK;
-		if(bu_debug&BU_DEBUG_MEM_CHECK &&  bu_mem_barriercheck() )
+		if (bu_debug&BU_DEBUG_MEM_CHECK &&  bu_mem_barriercheck() )
 			bu_log( "memory corrupted before realloc of faces, thickness, and facemode\n" );
 		faces = (int *)bu_realloc( (void *)faces,  face_size*3*sizeof( int ), "faces" );
 		thickness = (fastf_t *)bu_realloc( (void *)thickness, face_size*sizeof( fastf_t ), "thickness" );
 		facemode = (char *)bu_realloc( (void *)facemode, face_size*sizeof( char ), "facemode" );
-		if(bu_debug&BU_DEBUG_MEM_CHECK &&  bu_mem_barriercheck() )
+		if (bu_debug&BU_DEBUG_MEM_CHECK &&  bu_mem_barriercheck() )
 			bu_log( "memory corrupted after realloc of faces, thickness, and facemode\n" );
 	}
 
@@ -302,7 +302,7 @@ Add_bot_face(int pt1, int pt2, int pt3, fastf_t thick, int pos)
 	faces[face_count*3+1] = pt2;
 	faces[face_count*3+2] = pt3;
 
-	if( mode == PLATE_MODE )
+	if ( mode == PLATE_MODE )
 	{
 		thickness[face_count] = thick;
 		facemode[face_count] = pos;
@@ -315,7 +315,7 @@ Add_bot_face(int pt1, int pt2, int pt3, fastf_t thick, int pos)
 
 	face_count++;
 
-	if(bu_debug&BU_DEBUG_MEM_CHECK &&  bu_mem_barriercheck() )
+	if (bu_debug&BU_DEBUG_MEM_CHECK &&  bu_mem_barriercheck() )
 		bu_log( "memory corrupted at end of Add_bot_face()\n" );
 }
 
@@ -327,25 +327,25 @@ do_tri(char *line)
 	fastf_t thick;
 	int pos;
 
-	if( debug )
+	if ( debug )
 		bu_log( "do_tri: %s\n", line );
 
 	strncpy( field, &line[8], 8 );
 	element_id = atoi( field );
 
-	if( !bot )
+	if ( !bot )
 		bot = element_id;
 
-	if( faces == NULL )
+	if ( faces == NULL )
 	{
-		if(bu_debug&BU_DEBUG_MEM_CHECK &&  bu_mem_barriercheck() )
+		if (bu_debug&BU_DEBUG_MEM_CHECK &&  bu_mem_barriercheck() )
 			bu_log( "memory corrupted before malloc of faces\n" );
 		faces = (int *)bu_malloc( GRID_BLOCK*3*sizeof( int ), "faces" );
 		thickness = (fastf_t *)bu_malloc( GRID_BLOCK*sizeof( fastf_t ), "thickness" );
 		facemode = (char *)bu_malloc( GRID_BLOCK*sizeof( char ), "facemode" );
 		face_size = GRID_BLOCK;
 		face_count = 0;
-		if(bu_debug&BU_DEBUG_MEM_CHECK &&  bu_mem_barriercheck() )
+		if (bu_debug&BU_DEBUG_MEM_CHECK &&  bu_mem_barriercheck() )
 			bu_log( "memory corrupted after malloc of faces, thickness, and facemode\n" );
 	}
 
@@ -361,27 +361,27 @@ do_tri(char *line)
 	thick = 0.0;
 	pos = 0;
 
-	if( mode == PLATE_MODE )
+	if ( mode == PLATE_MODE )
 	{
 		strncpy( field, &line[56], 8 );
 		thick = atof( field ) * 25.4;
 
 		strncpy( field, &line[64], 8 );
 		pos = atoi( field );
-		if( pos == 0 )
+		if ( pos == 0 )
 			pos = POS_FRONT;
 
-		if( debug )
+		if ( debug )
 			bu_log( "\tplate mode: thickness = %f\n", thick );
 
 	}
 
-	if(bu_debug&BU_DEBUG_MEM_CHECK &&  bu_mem_barriercheck() )
+	if (bu_debug&BU_DEBUG_MEM_CHECK &&  bu_mem_barriercheck() )
 		bu_log( "memory corrupted before call to Add_bot_face()\n" );
 
 	Add_bot_face( pt1, pt2, pt3, thick, pos );
 
-	if(bu_debug&BU_DEBUG_MEM_CHECK &&  bu_mem_barriercheck() )
+	if (bu_debug&BU_DEBUG_MEM_CHECK &&  bu_mem_barriercheck() )
 		bu_log( "memory corrupted after call to Add_bot_face()\n" );
 }
 
@@ -396,13 +396,13 @@ do_quad(char *line)
 	strncpy( field, &line[8], 8 );
 	element_id = atoi( field );
 
-	if( debug )
+	if ( debug )
 		bu_log( "do_quad: %s\n", line );
 
-	if( !bot )
+	if ( !bot )
 		bot = element_id;
 
-	if( faces == NULL )
+	if ( faces == NULL )
 	{
 		faces = (int *)bu_malloc( GRID_BLOCK*3*sizeof( int ), "faces" );
 		thickness = (fastf_t *)bu_malloc( GRID_BLOCK*sizeof( fastf_t ), "thickness" );
@@ -423,7 +423,7 @@ do_quad(char *line)
 	strncpy( field, &line[48], 8 );
 	pt4 = atoi( field );
 
-	if( mode == PLATE_MODE )
+	if ( mode == PLATE_MODE )
 	{
 		strncpy( field, &line[56], 8 );
 		thick = atof( field ) * 25.4;
@@ -431,10 +431,10 @@ do_quad(char *line)
 		strncpy( field, &line[64], 8 );
 		pos = atoi( field );
 
-		if( pos == 0 )	/* use default */
+		if ( pos == 0 )	/* use default */
 			pos = POS_FRONT;
 
-		if( pos != POS_CENTER && pos != POS_FRONT )
+		if ( pos != POS_CENTER && pos != POS_FRONT )
 		{
 			bu_log( "do_quad: illegal postion parameter (%d), must be one or two\n", pos );
 			bu_log( "\telement %d, component %d, group %d\n", element_id, comp_id, group_id );
@@ -460,7 +460,7 @@ make_bot_object(char		*name,
 	struct rt_bot_internal bot_ip;
 
 	bot_ip.magic = RT_BOT_INTERNAL_MAGIC;
-	for( i=0 ; i<face_count ; i++ )
+	for ( i=0; i<face_count; i++ )
 	{
 		V_MIN( min_pt, faces[i*3] );
 		V_MAX( max_pt, faces[i*3] );
@@ -473,31 +473,31 @@ make_bot_object(char		*name,
 	num_vertices = max_pt - min_pt + 1;
 	bot_ip.num_vertices = num_vertices;
 	bot_ip.vertices = (fastf_t *)bu_calloc( num_vertices*3, sizeof( fastf_t ), "BOT vertices" );
-	for( i=0 ; i<num_vertices ; i++ )
+	for ( i=0; i<num_vertices; i++ )
 		VMOVE( &bot_ip.vertices[i*3], grid_pts[min_pt+i] )
 
-	for( i=0 ; i<face_count*3 ; i++ )
+	for ( i=0; i<face_count*3; i++ )
 		faces[i] -= min_pt;
 	bot_ip.num_faces = face_count;
 	bot_ip.faces = bu_calloc( face_count*3, sizeof( int ), "BOT faces" );
-	for( i=0 ; i<face_count*3 ; i++ )
+	for ( i=0; i<face_count*3; i++ )
 		bot_ip.faces[i] = faces[i];
 
 	bot_ip.face_mode = (struct bu_bitv *)NULL;
 	bot_ip.thickness = (fastf_t *)NULL;
-	if( mode == PLATE_MODE )
+	if ( mode == PLATE_MODE )
 	{
 		bot_mode = RT_BOT_PLATE;
 		bv = bu_bitv_new( face_count );
 		bu_bitv_clear( bv );
-		for( i=0 ; i<face_count ; i++ )
+		for ( i=0; i<face_count; i++ )
 		{
-			if( facemode[i] == POS_FRONT )
+			if ( facemode[i] == POS_FRONT )
 				BU_BITSET( bv, i );
 		}
 		bot_ip.face_mode = bv;
 		bot_ip.thickness = (fastf_t *)bu_calloc( face_count, sizeof( fastf_t ), "BOT thickness" );
-		for( i=0 ; i<face_count ; i++ )
+		for ( i=0; i<face_count; i++ )
 			bot_ip.thickness[i] = thickness[i];
 	}
 	else
@@ -508,18 +508,18 @@ make_bot_object(char		*name,
 	bot_ip.bot_flags = 0;
 
 	count = rt_bot_vertex_fuse( &bot_ip );
-	if( count )
+	if ( count )
 		(void)rt_bot_condense( &bot_ip );
 
 	count = rt_bot_face_fuse( &bot_ip );
-	if( count )
+	if ( count )
 		bu_log( "WARNING: %d duplicate faces eliminated from group %d component %d\n", count, group_id, comp_id );
 
 	rt_mk_bot(wdbp, name, bot_mode, RT_BOT_UNORIENTED, 0,
 	       bot_ip.num_vertices, bot_ip.num_faces, bot_ip.vertices,
 	       bot_ip.faces, bot_ip.thickness, bot_ip.face_mode);
 
-	if( mode == PLATE_MODE )
+	if ( mode == PLATE_MODE )
 	{
 		bu_free( (char *)bot_ip.thickness, "BOT thickness" );
 		bu_free( (char *)bot_ip.face_mode, "BOT face_mode" );
@@ -531,7 +531,7 @@ make_bot_object(char		*name,
 
 /*************************** Start of new code. ***************************/
 
-#define FIND_NEWLINE(_cp,_eosFlag) \
+#define FIND_NEWLINE(_cp, _eosFlag) \
     while (*(_cp) != '\0' && \
 	   *(_cp) != '\n') \
 	++(_cp); \

@@ -77,7 +77,7 @@ f_memprint(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
   CHECK_DBI_NULL;
 
-  if(argc < 1 || 1 < argc){
+  if (argc < 1 || 1 < argc){
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -123,7 +123,7 @@ cmd_glob(int *argcp, char **argv, int maxargs)
 	int escaped = 0;
 	int orig_numargs = *argcp;
 
-	if(dbip == DBI_NULL)
+	if (dbip == DBI_NULL)
 	  return 0;
 
 	strncpy( word, argv[*argcp], sizeof(word)-1 );
@@ -132,18 +132,18 @@ cmd_glob(int *argcp, char **argv, int maxargs)
 	/* If * ? [ or \ are present, this is a regular expression */
 	pattern = word;
 	do {
-		if( *pattern == '\0' )
+		if ( *pattern == '\0' )
 			return(0);		/* nothing to do */
-		if( *pattern == '*' ||
+		if ( *pattern == '*' ||
 		    *pattern == '?' ||
 		    *pattern == '[' ||
 		    *pattern == '\\' )
 			break;
-	} while( *pattern++);
+	} while ( *pattern++);
 
 	/* Note if there are any escapes */
-	for( pattern = word; *pattern; pattern++)
-		if( *pattern == '\\') {
+	for ( pattern = word; *pattern; pattern++)
+		if ( *pattern == '\\') {
 			escaped++;
 			break;
 		}
@@ -158,11 +158,11 @@ cmd_glob(int *argcp, char **argv, int maxargs)
 	 */
 
 	FOR_ALL_DIRECTORY_START(dp, dbip) {
-		if( !db_regexp_match( word, dp->d_namep ) )
+		if ( !db_regexp_match( word, dp->d_namep ) )
 			continue;
 		/* Successful match */
 		/* See if already over the limit */
-		if( *argcp >= maxargs )  {
+		if ( *argcp >= maxargs )  {
 			bu_log("%s: expansion stopped after %d matches (%d args)\n",
 				word, *argcp-orig_numargs, maxargs);
 			break;
@@ -173,25 +173,25 @@ cmd_glob(int *argcp, char **argv, int maxargs)
 	/* If one or matches occurred, decrement final argc,
 	 * otherwise, do escape processing if needed.
 	 */
-	if( *argcp > orig_numargs )  {
+	if ( *argcp > orig_numargs )  {
 		(*argcp)--;
 		return(1);
-	} else if(escaped) {
+	} else if (escaped) {
 		char *temp;
 		temp = pattern = argv[*argcp];
 		do {
-			if(*pattern != '\\') {
+			if (*pattern != '\\') {
 				*temp = *pattern;
 				temp++;
-			} else if(*(pattern + 1) == '\\') {
+			} else if (*(pattern + 1) == '\\') {
 				*temp = *pattern;
 				pattern++;
 				temp++;
 			}
-		} while(*pattern++);
+		} while (*pattern++);
 
 		/* Elide the rare pattern which becomes null ("\<NULL>") */
-		if(*(argv[*argcp]) == '\0')
+		if (*(argv[*argcp]) == '\0')
 			(*argcp)--;
 	}
 	return(0);		/* found nothing */
@@ -200,7 +200,7 @@ cmd_glob(int *argcp, char **argv, int maxargs)
 HIDDEN void
 Do_prefix(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_leaf, genptr_t prefix_ptr, genptr_t obj_ptr, genptr_t user_ptr3)
 {
-	char *prefix,*obj;
+	char *prefix, *obj;
 	char tempstring_v4[NAMESIZE+2];
 	int len = NAMESIZE+2;
 
@@ -210,11 +210,11 @@ Do_prefix(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_lea
 	prefix = (char *)prefix_ptr;
 	obj = (char *)obj_ptr;
 
-	if( strcmp( comb_leaf->tr_l.tl_name, obj ) )
+	if ( strcmp( comb_leaf->tr_l.tl_name, obj ) )
 		return;
 
 	bu_free( comb_leaf->tr_l.tl_name, "comb_leaf->tr_l.tl_name" );
-	if( dbip->dbi_version < 5 ) {
+	if ( dbip->dbi_version < 5 ) {
 		strncpy( tempstring_v4, prefix, len-1);
 		strncat( tempstring_v4, obj, len-strlen(prefix)-1);
 		tempstring_v4[len-1] = '\0'; /* sanity */
@@ -249,7 +249,7 @@ f_prefix(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	if(argc < 3){
+	if (argc < 3){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -262,13 +262,13 @@ f_prefix(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	bu_vls_init( &tempstring_v5 );
 
 	/* First, check validity, and change node names */
-	for( i = 2; i < argc; i++) {
-		if( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY )) == DIR_NULL) {
+	for ( i = 2; i < argc; i++) {
+		if ( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY )) == DIR_NULL) {
 			argv[i] = "";
 			continue;
 		}
 
-		if( dbip->dbi_version < 5 && (int)(strlen(argv[1]) + strlen(argv[i])) > NAMESIZE) {
+		if ( dbip->dbi_version < 5 && (int)(strlen(argv[1]) + strlen(argv[i])) > NAMESIZE) {
 		  struct bu_vls tmp_vls;
 
 		  bu_vls_init(&tmp_vls);
@@ -281,7 +281,7 @@ f_prefix(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		  continue;
 		}
 
-		if( dbip->dbi_version < 5 ) {
+		if ( dbip->dbi_version < 5 ) {
 			strncpy( tempstring_v4, argv[1], len-1);
 			strncat( tempstring_v4, argv[i], len-strlen(argv[1])-1);
 			tempstring_v4[len-1] = '\0'; /* sanity */
@@ -293,13 +293,13 @@ f_prefix(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 			tempstring = bu_vls_addr( &tempstring_v5 );
 		}
 
-		if( db_lookup( dbip, tempstring, LOOKUP_QUIET ) != DIR_NULL ) {
+		if ( db_lookup( dbip, tempstring, LOOKUP_QUIET ) != DIR_NULL ) {
 			aexists( tempstring );
 			argv[i] = "";
 			continue;
 		}
 		/*  Change object name in the directory. */
-		if( db_rename( dbip, dp, tempstring ) < 0 )  {
+		if ( db_rename( dbip, dp, tempstring ) < 0 )  {
 			bu_vls_free( &tempstring_v5 );
 		  Tcl_AppendResult(interp, "error in rename to ", tempstring,
 				   ", aborting\n", (char *)NULL);
@@ -312,17 +312,17 @@ f_prefix(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	/* Examine all COMB nodes */
 	FOR_ALL_DIRECTORY_START(dp, dbip) {
-		if( !(dp->d_flags & DIR_COMB) )
+		if ( !(dp->d_flags & DIR_COMB) )
 			continue;
 
-		if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )
+		if ( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )
 			TCL_READ_ERR_return;
 		comb = (struct rt_comb_internal *)intern.idb_ptr;
 
-		for( k=2; k<argc; k++ )
+		for ( k=2; k<argc; k++ )
 			db_tree_funcleaf( dbip, comb, comb->tree, Do_prefix,
 				(genptr_t)argv[1], (genptr_t)argv[k], (genptr_t)NULL );
-		if( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) )
+		if ( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) )
 			TCL_WRITE_ERR_return;
 	} FOR_ALL_DIRECTORY_END;
 	return TCL_OK;
@@ -339,7 +339,7 @@ Change_name(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_l
 	old_name = (char *)old_ptr;
 	new_name = (char *)new_ptr;
 
-	if( strcmp( comb_leaf->tr_l.tl_name, old_name ) )
+	if ( strcmp( comb_leaf->tr_l.tl_name, old_name ) )
 		return;
 
 	bu_free( comb_leaf->tr_l.tl_name, "comb_leaf->tr_l.tl_name" );
@@ -373,7 +373,7 @@ cmd_killall(ClientData	clientData,
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	if(argc < 2){
+	if (argc < 2){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -383,7 +383,7 @@ cmd_killall(ClientData	clientData,
 	  return TCL_ERROR;
 	}
 
-	if( setjmp( jmp_env ) == 0 )
+	if ( setjmp( jmp_env ) == 0 )
 		(void)signal( SIGINT, sig3);  /* allow interupts */
 	else{
 		/* Free intern? */
@@ -394,10 +394,10 @@ cmd_killall(ClientData	clientData,
 
 	/* Examine all COMB nodes */
 	FOR_ALL_DIRECTORY_START(dp, dbip) {
-		if( !(dp->d_flags & DIR_COMB) )
+		if ( !(dp->d_flags & DIR_COMB) )
 			continue;
 
-		if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )  {
+		if ( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )  {
 			Tcl_AppendResult(interp, "rt_db_get_internal(", dp->d_namep,
 				") failure", (char *)NULL );
 			ret = TCL_ERROR;
@@ -406,13 +406,13 @@ cmd_killall(ClientData	clientData,
 		comb = (struct rt_comb_internal *)intern.idb_ptr;
 		RT_CK_COMB(comb);
 
-		for( k=1; k<argc; k++ )  {
+		for ( k=1; k<argc; k++ )  {
 			int	code;
 
 			code = db_tree_del_dbleaf( &(comb->tree), argv[k], &rt_uniresource );
-			if( code == -1 )  continue;	/* not found */
-			if( code == -2 )  continue;	/* empty tree */
-			if( code < 0 )  {
+			if ( code == -1 )  continue;	/* not found */
+			if ( code == -2 )  continue;	/* empty tree */
+			if ( code < 0 )  {
 				Tcl_AppendResult(interp, "  ERROR_deleting ",
 					dp->d_namep, "/", argv[k],
 					"\n", (char *)NULL);
@@ -424,14 +424,14 @@ cmd_killall(ClientData	clientData,
 			}
 		}
 
-		if( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )  {
+		if ( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )  {
 			Tcl_AppendResult(interp, "ERROR: Unable to write new combination into database.\n", (char *)NULL);
 			ret = TCL_ERROR;
 			continue;
 		}
 	} FOR_ALL_DIRECTORY_END;
 
-	if( ret != TCL_OK )  {
+	if ( ret != TCL_OK )  {
 		Tcl_AppendResult(interp, "KILL skipped because of earlier errors.\n", (char *)NULL);
 		return ret;
 	}
@@ -467,7 +467,7 @@ cmd_killtree(ClientData	clientData,
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	if(argc < 2){
+	if (argc < 2){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -477,13 +477,13 @@ cmd_killtree(ClientData	clientData,
 	  return TCL_ERROR;
 	}
 
-	if( setjmp( jmp_env ) == 0 )
+	if ( setjmp( jmp_env ) == 0 )
 	  (void)signal( SIGINT, sig3);  /* allow interupts */
 	      else
 	  return TCL_OK;
 
-	for(i=1; i<argc; i++) {
-		if( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY) ) == DIR_NULL )
+	for (i=1; i<argc; i++) {
+		if ( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY) ) == DIR_NULL )
 			continue;
 		db_functree( dbip, dp, killtree, killtree, &rt_uniresource, (genptr_t)interp );
 	}
@@ -522,7 +522,7 @@ f_debugdir(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
   CHECK_DBI_NULL;
 
-  if(argc < 1 || 1 < argc){
+  if (argc < 1 || 1 < argc){
     struct bu_vls vls;
 
     bu_vls_init(&vls);

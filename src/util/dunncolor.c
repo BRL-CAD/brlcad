@@ -57,17 +57,17 @@ main(int argc, char **argv)
 
 	dunnopen();
 
-	if(!ready(5)) {
+	if (!ready(5)) {
 		bu_exit(50, "dunncolor:  camera not ready\n");
 	}
 
-	if( argc > 2 && strcmp( argv[1], "-p" ) == 0 )  {
+	if ( argc > 2 && strcmp( argv[1], "-p" ) == 0 )  {
 		/* Polaroid rather than external camera */
 		polaroid = 1;
 		argc--; argv++;
 	}
 	getexposure("old");
-	if(!ready(5)) {
+	if (!ready(5)) {
 		bu_exit(50, "dunncolor:  camera not ready\n");
 	}
 
@@ -83,7 +83,7 @@ main(int argc, char **argv)
 
 	getexposure("new");
 
-	if(!ready(5)) {
+	if (!ready(5)) {
 		bu_exit(50, "dunncolor:  camera not ready\n");
 	}
 

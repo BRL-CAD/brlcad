@@ -74,27 +74,27 @@ do_file(void)
 	FILE	*ifp, *ofp;
 	int	i;
 
-	if( (ifp = fopen( input_file, "r" )) == NULL )  {
+	if ( (ifp = fopen( input_file, "r" )) == NULL )  {
 		perror(input_file);
 		bu_exit(1, NULL);
 	}
 	output_file = (char *)bu_malloc( strlen(input_file)+10, "output_file" );
 	snprintf(output_file, strlen(input_file)+9, "MOD_%s", input_file);
 
-	if( (ofp = fopen( output_file, "w" )) == NULL )  {
+	if ( (ofp = fopen( output_file, "w" )) == NULL )  {
 		perror(output_file);
 		bu_exit(2, NULL);
 	}
 	bu_free(output_file, "output_file");
 
 	/* Shift cmap to be more useful */
-	for( i=0; i<256; i++ )  {
+	for ( i=0; i<256; i++ )  {
 		map.cm_red[i] >>= 8;
 		map.cm_green[i] >>= 8;
 		map.cm_blue[i] >>= 8;
 	}
 
-	while( !feof(ifp) )  {
+	while ( !feof(ifp) )  {
 		i = map.cm_red[getc(ifp)];
 		putc( i, ofp );
 
@@ -117,10 +117,10 @@ do_fb(void)
 	if (pkg_init() != 0)
 	    bu_exit(1, NULL);
 
-	if( (fbp = fb_open( framebuffer, 0, 0 )) == FBIO_NULL ) {
+	if ( (fbp = fb_open( framebuffer, 0, 0 )) == FBIO_NULL ) {
 		bu_exit( 2, "Unable to open framebuffer\n" );
 	}
-	if( fb_wmap( fbp, &map ) < 0 )
+	if ( fb_wmap( fbp, &map ) < 0 )
 		fprintf( stderr, "fbgammamod: unable to write color map\n");
 	fb_close(fbp);
 }
@@ -140,7 +140,7 @@ main(int argc, char **argv)
 	/* check for flags */
 	bu_opterr = 0;
 	while ((i=bu_getopt(argc, argv, options)) != EOF) {
-		switch(i) {
+		switch (i) {
 		case 'v':
 			verbose++;
 			break;
@@ -156,7 +156,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	if( bu_optind != argc - 13 )  {
+	if ( bu_optind != argc - 13 )  {
 		bu_exit(1, "%s", usage );
 	}
 
@@ -178,7 +178,7 @@ main(int argc, char **argv)
 	mul = atof( argv[bu_optind+11] );
 	post_gam = atof( argv[bu_optind+12] );
 
-	if( verbose )  {
+	if ( verbose )  {
 		fprintf(stderr, "r+ = %g, r* = %g, r gam=%g\n", ra, rm, rg);
 		fprintf(stderr, "g+ = %g, g* = %g, g gam=%g\n", ga, gm, gg);
 		fprintf(stderr, "b+ = %g, b* = %g, b gam=%g\n", ba, bm, bg);
@@ -200,42 +200,42 @@ main(int argc, char **argv)
 	gmul = gm * mul;
 	bmul = bm * mul;
 
-	for( i=0; i<256; i++ )  {
+	for ( i=0; i<256; i++ )  {
 		register double	t;
 		register int	val;
 
-		if( (t = (pow( i/255.0, pre_exp) + radd) * rmul) < 0 )
+		if ( (t = (pow( i/255.0, pre_exp) + radd) * rmul) < 0 )
 			t = 0;
-		else if( t > 1 )
+		else if ( t > 1 )
 			t = 1;
-		if( (val = (int)(65535 * pow( t, rexp ))) < 0 )
+		if ( (val = (int)(65535 * pow( t, rexp ))) < 0 )
 			val = 0;
-		else if( val > 65535 )
+		else if ( val > 65535 )
 			val = 65535;
 		map.cm_red[i] = val;
 
-		if( (t = (pow( i/255.0, pre_exp) + gadd) * gmul) < 0 )
+		if ( (t = (pow( i/255.0, pre_exp) + gadd) * gmul) < 0 )
 			t = 0;
-		else if( t > 1 )
+		else if ( t > 1 )
 			t = 1;
-		if( (val = (int)(65535 * pow( t, gexp ))) < 0 )
+		if ( (val = (int)(65535 * pow( t, gexp ))) < 0 )
 			val = 0;
-		else if( val > 65535 )
+		else if ( val > 65535 )
 			val = 65535;
 		map.cm_green[i] = val;
 
-		if( (t = (pow( i/255.0, pre_exp) + badd) * bmul) < 0 )
+		if ( (t = (pow( i/255.0, pre_exp) + badd) * bmul) < 0 )
 			t = 0;
-		else if( t > 1 )
+		else if ( t > 1 )
 			t = 1;
-		if( (val = (int)(65535 * pow( t, bexp ))) < 0 )
+		if ( (val = (int)(65535 * pow( t, bexp ))) < 0 )
 			val = 0;
-		else if( val > 65535 )
+		else if ( val > 65535 )
 			val = 65535;
 		map.cm_blue[i] = val;
 
 		/* use cmap-fb format */
-		if( verbose )
+		if ( verbose )
 			fprintf(stderr, "%d	%4x %4x %4x\n", i,
 				map.cm_red[i], map.cm_green[i], map.cm_blue[i] );
 	}

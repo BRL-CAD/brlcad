@@ -50,20 +50,20 @@ fastf_t values[];	/* knot values */
 {
 	int i;
 
-	if( n < 2 )
+	if ( n < 2 )
 	{
 		bu_log( "Knot: ERROR %d knot values\n", n );
 		bu_exit(1, "Knot: cannot have less than 2 knot values\n" );
 	}
 
-	if( numknots )
+	if ( numknots )
 		bu_free( (char *)knots, "Knot: knots" );
 
 	knots = (fastf_t *)bu_calloc( n, sizeof( fastf_t ), "Knot: knots" );
 
 	numknots = n;
 
-	for( i=0 ; i<n ; i++ )
+	for ( i=0; i<n; i++ )
 		knots[i] = values[i];
 
 }
@@ -85,16 +85,16 @@ int k;		/* degree of basis function */
 {
 	fastf_t denom1, denom2, retval=0.0;
 
-	if( (i+1) > (numknots-1) )
+	if ( (i+1) > (numknots-1) )
 	{
 		bu_log( "Error in evaluation of a B-spline Curve\n" );
 		bu_log( "attempt to access knots out of range: numknots=%d i=%d, k=%d\n", numknots, i, k );
 		return( 0.0 );
 	}
 
-	if( k == 1 )
+	if ( k == 1 )
 	{
-		if( t >= knots[i] && t < knots[i+1] )
+		if ( t >= knots[i] && t < knots[i+1] )
 			return( 1.0 );
 		else
 			return( 0.0 );
@@ -104,10 +104,10 @@ int k;		/* degree of basis function */
 		denom1 = knots[i+k-1] - knots[i];
 		denom2 = knots[i+k] - knots[i+1];
 
-		if(denom1 != 0.0 )
+		if (denom1 != 0.0 )
 			retval += (t - knots[i])*Basis( i, k-1, t )/denom1;
 
-		if( denom2 != 0.0 )
+		if ( denom2 != 0.0 )
 			retval += (knots[i+k] - t)*Basis( i+1, k-1, t )/denom2;
 
 		return( retval );
@@ -128,18 +128,18 @@ point_t pt;	/* Evaluated point on spline */
 	fastf_t tmp, numer[3], denom=0.0;
 	int i, j;
 
-	for( j=0 ; j<3 ; j++ )
+	for ( j=0; j<3; j++ )
 		numer[j] = 0.0;
 
-	for( i=0 ; i<=m ; i++ )
+	for ( i=0; i<=m; i++ )
 	{
 		tmp = W[i]*Basis( i, k, t );
 		denom += tmp;
-		for( j=0 ; j<3 ; j++ )
+		for ( j=0; j<3; j++ )
 			numer[j] += P[i][j]*tmp;
 	}
 
-	for( j=0 ; j<3 ; j++ )
+	for ( j=0; j<3; j++ )
 		pt[j] = numer[j]/denom;
 }
 

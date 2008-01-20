@@ -157,17 +157,17 @@ reset_input(void)
 	int i;
 	char *tmp;
 
-	for( i=0 ; i < 20 ; i++ )
+	for ( i=0; i < 20; i++ )
 		prev_rec[i][0] = '\0';
 
 	fseek( fpin, start_off, SEEK_SET );
 	line_count = bulk_data_start_line;
 
 	tmp = bu_fgets( next_line, MAXLINELEN, fpin );
-	while( tmp && *tmp == '$' )
+	while ( tmp && *tmp == '$' )
 		tmp = bu_fgets( next_line, MAXLINELEN, fpin );
 
-	if( tmp != (char *)NULL )
+	if ( tmp != (char *)NULL )
 		input_status = INPUT_OK;
 	else
 		input_status = INPUT_NULL;
@@ -178,17 +178,17 @@ write_fields(void)
 {
 	int i, j;
 
-	for( i=0 ; i<NO_OF_FIELDS ; i++ )
+	for ( i=0; i<NO_OF_FIELDS; i++ )
 	{
 		/* eliminate trailing blanks */
 		j = strlen( curr_rec[i] ) - 1;
-		while( j && ( isspace( curr_rec[i][j] ) || curr_rec[i][j] == '\012' || curr_rec[i][j] == '\015' ) )
+		while ( j && ( isspace( curr_rec[i][j] ) || curr_rec[i][j] == '\012' || curr_rec[i][j] == '\015' ) )
 			j--;
 		curr_rec[i][++j] = '\0';
 
 		/* skip leading blanks */
 		j = 0;
-		while( curr_rec[i][j] != '\0' && isspace( curr_rec[i][j] ) )
+		while ( curr_rec[i][j] != '\0' && isspace( curr_rec[i][j] ) )
 			j++;
 		fprintf( fptmp, "%s,", &curr_rec[i][j] );
 	}
@@ -200,27 +200,27 @@ do_silly_nastran_shortcuts(void)
 {
 	int field_no;
 
-	for( field_no=0 ; field_no < NO_OF_FIELDS ; field_no++ )
+	for ( field_no=0; field_no < NO_OF_FIELDS; field_no++ )
 	{
-		if( !strcmp( curr_rec[field_no], "=" ) )
+		if ( !strcmp( curr_rec[field_no], "=" ) )
 		{
 			strncpy( curr_rec[field_no], prev_rec[field_no], FIELD_LENGTH );
 		}
-		else if( !strcmp( curr_rec[field_no], "==" ) )
+		else if ( !strcmp( curr_rec[field_no], "==" ) )
 		{
-			while( field_no < NO_OF_FIELDS )
+			while ( field_no < NO_OF_FIELDS )
 			{
 				strncpy( curr_rec[field_no], prev_rec[field_no], FIELD_LENGTH );
 				field_no++;
 			}
 		}
-		else if( curr_rec[field_no][0] == '*' )
+		else if ( curr_rec[field_no][0] == '*' )
 		{
 			int i=0;
 
-			while( curr_rec[field_no][++i] == '(' );
+			while ( curr_rec[field_no][++i] == '(' );
 
-			if( strchr( prev_rec[field_no], '.' ) )
+			if ( strchr( prev_rec[field_no], '.' ) )
 			{
 				fastf_t a, b;
 
@@ -253,18 +253,18 @@ get_large_field_input(FILE *fp, int write_flag)
 	prev_rec = curr_rec;
 	curr_rec = tmp_rec;
 
-	for( field_no=0 ; field_no < NO_OF_FIELDS ; field_no ++ )
+	for ( field_no=0; field_no < NO_OF_FIELDS; field_no ++ )
 		curr_rec[field_no][0] = '\0';
 
 	card_len = strlen( line );
 	last_field = (card_len - 8)/16 + 1;
-	if( ((last_field - 1) * 16 + 8) < card_len )
+	if ( ((last_field - 1) * 16 + 8) < card_len )
 		last_field++;
-	if( last_field > 5 )
+	if ( last_field > 5 )
 		last_field = 5;
 	strncpy( curr_rec[0], line, 8 );
 	curr_rec[0][8] = '\0';
-	for( field_no=1 ; field_no < last_field ; field_no++ )
+	for ( field_no=1; field_no < last_field; field_no++ )
 	{
 		strncpy( curr_rec[field_no], &line[field_no*16 - 8], 16 );
 		curr_rec[field_no][16] = '\0';
@@ -272,32 +272,32 @@ get_large_field_input(FILE *fp, int write_flag)
 
 	/* remove the newline from the end of the last field */
 	i = strlen( curr_rec[last_field-1] ) - 1;
-	while( isspace( curr_rec[last_field-1][i] ) || curr_rec[last_field-1][i] == '\012' || curr_rec[last_field-1][i] == '\015' )
+	while ( isspace( curr_rec[last_field-1][i] ) || curr_rec[last_field-1][i] == '\012' || curr_rec[last_field-1][i] == '\015' )
 		i--;
 	curr_rec[last_field-1][++i] = '\0';
 
-	if( next_line[0] == '*' )
+	if ( next_line[0] == '*' )
 	{
-		if( !get_next_record( fp, 0, 0 ) )
+		if ( !get_next_record( fp, 0, 0 ) )
 		{
 			bu_exit(1, "unexpected end of INPUT at line #%d\n", line_count );
 		}
 
 		card_len = strlen( line );
 		last_field = (card_len - 8)/16 + 1;
-		if( ((last_field - 1) * 16 + 8) < card_len )
+		if ( ((last_field - 1) * 16 + 8) < card_len )
 			last_field++;
-		if( last_field > 5 )
+		if ( last_field > 5 )
 			last_field = 5;
 		last_field += 4;
-		for( field_no=5 ; field_no < last_field ; field_no++ )
+		for ( field_no=5; field_no < last_field; field_no++ )
 		{
 			strncpy( curr_rec[field_no], &line[(field_no-4)*16 - 8], 16 );
 			curr_rec[field_no][16] = '\0';
 		}
 	}
 
-	if( write_flag )
+	if ( write_flag )
 		write_fields();
 }
 
@@ -313,45 +313,45 @@ get_small_field_input(FILE *fp, int write_flag)
 	prev_rec = curr_rec;
 	curr_rec = tmp_rec;
 
-	for( field_no=0 ; field_no < NO_OF_FIELDS ; field_no ++ )
+	for ( field_no=0; field_no < NO_OF_FIELDS; field_no ++ )
 		curr_rec[field_no][0] = '\0';
 
 	card_len = strlen( line );
 	last_field = card_len/8 + 1;
-	if( (last_field * 8) < card_len )
+	if ( (last_field * 8) < card_len )
 		last_field++;
-	if( last_field > 9 )
+	if ( last_field > 9 )
 		last_field = 9;
 	strncpy( curr_rec[0], line, 8 );
 	curr_rec[0][8] = '\0';
-	for( field_no=2 ; field_no < last_field+1 ; field_no++ )
+	for ( field_no=2; field_no < last_field+1; field_no++ )
 	{
 		strncpy( curr_rec[field_no-1], &line[(field_no-1)*8], 8 );
 		curr_rec[field_no-1][8] = '\0';
 	}
 
-	if( next_line[0] == '+' )
+	if ( next_line[0] == '+' )
 	{
-		if( !get_next_record( fp, 0, 0 ) )
+		if ( !get_next_record( fp, 0, 0 ) )
 		{
 			bu_exit(1, "unexpected end of INPUT at line #%d\n", line_count );
 		}
 
 		card_len = strlen( line );
 		last_field = card_len/8 + 1;
-		if( (last_field * 8) < card_len )
+		if ( (last_field * 8) < card_len )
 			last_field++;
-		if( last_field > 9 )
+		if ( last_field > 9 )
 			last_field = 9;
 		last_field += 9;
-		for( field_no=10 ; field_no < last_field+1 ; field_no++ )
+		for ( field_no=10; field_no < last_field+1; field_no++ )
 		{
 			strncpy( curr_rec[field_no-1], &line[(field_no-9)*8], 8 );
 			curr_rec[field_no-1][8] = '\0';
 		}
 	}
 
-	if( write_flag )
+	if ( write_flag )
 		write_fields();
 }
 
@@ -363,16 +363,16 @@ get_free_form_input(FILE *fp, int write_flag)
 	int i, j;
 
 	i = (-1);
-	while( isspace( line[++i] ) );
-	if( line[i] == '=' && isdigit( line[i+1] ) )
+	while ( isspace( line[++i] ) );
+	if ( line[i] == '=' && isdigit( line[i+1] ) )
 	{
 		int count;
 
 		count = atoi( &line[i+1] );
 
 		i = (-1);
-		while( isspace( prev_line[++i] ) );
-		if( prev_line[i] == '=' && isdigit( prev_line[i+1] ) )
+		while ( isspace( prev_line[++i] ) );
+		if ( prev_line[i] == '=' && isdigit( prev_line[i+1] ) )
 		{
 			bu_log( "Cannot use consecutive replication cards:\n" );
 			bu_log( "%s", prev_line );
@@ -380,7 +380,7 @@ get_free_form_input(FILE *fp, int write_flag)
 			bu_exit(1, "ERROR: Cannot use consecutive replication cards\n" );
 		}
 
-		for( i=0 ; i<count ; i++ )
+		for ( i=0; i<count; i++ )
 		{
 			strncpy( line, prev_line, MAXLINELEN );
 			get_free_form_input( fp, write_flag );
@@ -393,41 +393,41 @@ get_free_form_input(FILE *fp, int write_flag)
 		prev_rec = curr_rec;
 		curr_rec = tmp_rec;
 
-		for( field_no=0 ; field_no < NO_OF_FIELDS ; field_no ++ )
+		for ( field_no=0; field_no < NO_OF_FIELDS; field_no ++ )
 			curr_rec[field_no][0] = '\0';
 
 		field_no = (-1);
 		i = 0;
-		while( ++field_no < NO_OF_FIELDS && line[i] != '\0' )
+		while ( ++field_no < NO_OF_FIELDS && line[i] != '\0' )
 		{
-			while( line[i] != '\0' && isspace( line[i] ) )
+			while ( line[i] != '\0' && isspace( line[i] ) )
 				i++;
 			j = (-1);
-			while( line[i] != '\0' && line[i] != ',' && !isspace( line[i] ) )
+			while ( line[i] != '\0' && line[i] != ',' && !isspace( line[i] ) )
 				curr_rec[field_no][++j] = line[i++];
 			curr_rec[field_no][++j] = '\0';
-			if( line[i] == ',' )
+			if ( line[i] == ',' )
 				i++;
 		}
 
-		if( strchr( curr_rec[9], '+' ) )
+		if ( strchr( curr_rec[9], '+' ) )
 		{
 			/* continuation card */
-			if( !get_next_record( fp, 0, 0 ) )
+			if ( !get_next_record( fp, 0, 0 ) )
 			{
 				bu_exit(1, "unexpected end of INPUT at line #%d\n", line_count );
 			}
 
 			i = 0;
-			while( ++field_no < NO_OF_FIELDS && line[i] != '\0' )
+			while ( ++field_no < NO_OF_FIELDS && line[i] != '\0' )
 			{
-				while( line[i] != '\0' && isspace( line[i] ) )
+				while ( line[i] != '\0' && isspace( line[i] ) )
 					i++;
 				j = (-1);
-				while( line[i] != '\0' && line[i] != ',' && !isspace( line[i] ) )
+				while ( line[i] != '\0' && line[i] != ',' && !isspace( line[i] ) )
 					curr_rec[field_no][++j] = line[i++];
 				curr_rec[field_no][++j] = '\0';
-				if( line[i] == ',' )
+				if ( line[i] == ',' )
 					i++;
 			}
 		}
@@ -435,7 +435,7 @@ get_free_form_input(FILE *fp, int write_flag)
 
 	do_silly_nastran_shortcuts();
 
-	if( write_flag )
+	if ( write_flag )
 		write_fields();
 
 }
@@ -450,26 +450,26 @@ get_next_record( FILE *fp, int call_input, int write_flag )
 	form = UNKNOWN;
 
 	/* read next line of input, skipping comments */
-	while( 1 )
+	while ( 1 )
 	{
 		line_count++;
 		tmp = bu_fgets( prev_line, MAXLINELEN, fp );
-		if( !tmp || prev_line[0] != '$' )
+		if ( !tmp || prev_line[0] != '$' )
 			break;
 	}
 
 	/* Convert to all UPPER case */
 	i = (-1);
-	while( prev_line[++i] != '\0' )
+	while ( prev_line[++i] != '\0' )
 	{
-		if( isalpha( prev_line[i] ) )
+		if ( isalpha( prev_line[i] ) )
 			prev_line[i] = toupper( prev_line[i] );
 	}
 
-	if( tmp == (char *)NULL )
+	if ( tmp == (char *)NULL )
 	{
 		/* encountered end of input file */
-		if( input_status != INPUT_NULL )
+		if ( input_status != INPUT_NULL )
 		{
 			/* still have "next_line" to process */
 			tmp = prev_line;
@@ -494,22 +494,22 @@ get_next_record( FILE *fp, int call_input, int write_flag )
 		next_line = tmp;
 	}
 
-	if( !call_input )
+	if ( !call_input )
 		return( 1 );
 
 	/* check which format is being used */
 	tmp = strchr( line, ',' );
-	if( tmp && tmp - line < 10 )
+	if ( tmp && tmp - line < 10 )
 		form = FREE_FIELD;
 	else
 	{
 		tmp = strchr( line, '=' );
-		if( tmp && tmp - line < 10 )
+		if ( tmp && tmp - line < 10 )
 			form = FREE_FIELD;
 	}
 
 	/* if this is FREE_FIELD, call approporiate processor */
-	if( form == FREE_FIELD )
+	if ( form == FREE_FIELD )
 	{
 		get_free_form_input( fp, write_flag );
 		return( 1 );
@@ -517,11 +517,11 @@ get_next_record( FILE *fp, int call_input, int write_flag )
 
 	/* not FREE_FIELD, check for LARGE_FIELD */
 	i = (-1);
-	while( ++i < 8 && (isalpha( line[i] ) || isspace( line[i] )) );
-	if( i < 8 && line[i] == '*' )
+	while ( ++i < 8 && (isalpha( line[i] ) || isspace( line[i] )) );
+	if ( i < 8 && line[i] == '*' )
 		form = LARGE_FIELD;
 
-	if( form == LARGE_FIELD )
+	if ( form == LARGE_FIELD )
 	{
 		get_large_field_input( fp, write_flag );
 		return( 1 );
@@ -540,8 +540,8 @@ log_line(char *str)
 	int i;
 
 	i = (-1);
-	while( ++i < MAXLINELEN && line[i] != '\n' )
-		if( line[i] == '\0' )
+	while ( ++i < MAXLINELEN && line[i] != '\n' )
+		if ( line[i] == '\0' )
 			line[i] = ' ';
 	bu_log( "%s:\n", str );
 	bu_log( "%s", line );
@@ -554,7 +554,7 @@ convert_input(void)
 
 	reset_input();
 
-	while( get_next_record( fpin, 1, 1 ) );
+	while ( get_next_record( fpin, 1, 1 ) );
 }
 
 HIDDEN int
@@ -563,28 +563,28 @@ convert_cs(struct coord_sys *cs)
 	struct coord_sys *cs2;
 	point_t tmp_orig, tmp_pt1, tmp_pt2;
 
-	if( !cs->rid )
+	if ( !cs->rid )
 		return( 0 );
 
-	for( BU_LIST_FOR( cs2, coord_sys, &coord_head.l ) )
+	for ( BU_LIST_FOR( cs2, coord_sys, &coord_head.l ) )
 	{
-		if( cs2->cid != cs->rid )
+		if ( cs2->cid != cs->rid )
 			continue;
 		break;
 	}
 
-	if( BU_LIST_IS_HEAD( &cs2->l, &coord_head.l ) )
+	if ( BU_LIST_IS_HEAD( &cs2->l, &coord_head.l ) )
 	{
 		bu_exit(1, "A coordinate system is defined in terms of a non-existent coordinate system!!!\n" );
 	}
 
-	if( convert_pt( cs->origin, cs2, tmp_orig ) )
+	if ( convert_pt( cs->origin, cs2, tmp_orig ) )
 		return( 1 );
 
-	if( convert_pt( cs->v1, cs2, tmp_pt1 ) )
+	if ( convert_pt( cs->v1, cs2, tmp_pt1 ) )
 		return( 1 );
 
-	if( convert_pt( cs->v2, cs2, tmp_pt2 ) )
+	if ( convert_pt( cs->v2, cs2, tmp_pt2 ) )
 		return( 1 );
 
 	VMOVE( cs->origin, tmp_orig );
@@ -604,13 +604,13 @@ convert_pt( const point_t pt, struct coord_sys *cs, point_t out_pt )
 	point_t tmp_pt;
 	fastf_t c1, c2, c3, c4;
 
-	if( cs->rid )
+	if ( cs->rid )
 	{
-		if( convert_cs( cs ) )
+		if ( convert_cs( cs ) )
 			return( 1 );
 	}
 
-	switch( cs->type )
+	switch ( cs->type )
 	{
 		case CORD_CYL:
 			c1 = pt[X] * cos( pt[Y] * bn_degtorad );
@@ -653,22 +653,22 @@ convert_grid(int index)
 	struct coord_sys *cs;
 	point_t tmp_pt;
 
-	if( !g_pts[index].cid )
+	if ( !g_pts[index].cid )
 		return( 0 );
 
-	for( BU_LIST_FOR( cs, coord_sys, &coord_head.l ) )
+	for ( BU_LIST_FOR( cs, coord_sys, &coord_head.l ) )
 	{
-		if( cs->cid != g_pts[index].cid )
+		if ( cs->cid != g_pts[index].cid )
 			continue;
 		break;
 	}
 
-	if( BU_LIST_IS_HEAD( &cs->l, &coord_head.l ) )
+	if ( BU_LIST_IS_HEAD( &cs->l, &coord_head.l ) )
 	{
 		bu_exit(1, "No coordinate system defined for grid point #%d!\n", g_pts[index].gid );
 	}
 
-	if( convert_pt( g_pts[index].pt, cs, tmp_pt ) )
+	if ( convert_pt( g_pts[index].pt, cs, tmp_pt ) )
 		return( 1 );
 
 	VMOVE( g_pts[index].pt, tmp_pt );
@@ -683,23 +683,23 @@ get_gridi(int gid)
 	int i;
 	int found=(-1);
 
-	for( i=0 ; i<grid_used ; i++ )
+	for ( i=0; i<grid_used; i++ )
 	{
-		if( g_pts[i].gid != gid )
+		if ( g_pts[i].gid != gid )
 			continue;
 
 		found = i;
 		break;
 	}
 
-	if( found < 0 )
+	if ( found < 0 )
 	{
 		bu_exit(1, "Grid point %d is not defined!\n", gid );
 	}
 
-	if( g_pts[found].cid )
+	if ( g_pts[found].cid )
 	{
-		if( !convert_grid( found ) )
+		if ( !convert_grid( found ) )
 		{
 			bu_exit(1, "Could not convert grid point #%d to BRL-CAD!\n", gid );
 		}
@@ -714,23 +714,23 @@ get_grid(int gid, fastf_t *pt)
 	int i;
 	int found=(-1);
 
-	for( i=0 ; i<grid_used ; i++ )
+	for ( i=0; i<grid_used; i++ )
 	{
-		if( g_pts[i].gid != gid )
+		if ( g_pts[i].gid != gid )
 			continue;
 
 		found = i;
 		break;
 	}
 
-	if( found < 0 )
+	if ( found < 0 )
 	{
 		bu_exit(1, "Grid point %d is not defined!\n", gid );
 	}
 
-	if( g_pts[found].cid )
+	if ( g_pts[found].cid )
 	{
-		if( !convert_grid( found ) )
+		if ( !convert_grid( found ) )
 		{
 			bu_exit(1, "Could not convert grid point #%d to BRL-CAD!\n", gid );
 		}
@@ -751,7 +751,7 @@ get_coord_sys(void)
 	point_t tmp_pt;
 
 	form = atoi( &curr_rec[0][4] );
-	if( form != 1 && form != 2 )
+	if ( form != 1 && form != 2 )
 	{
 		bu_log( "unrecognized form for coordinate system definition (%d):\n", form );
 		bu_log( "%s\n", line );
@@ -759,7 +759,7 @@ get_coord_sys(void)
 	}
 	type = curr_rec[0][5];
 
-	if( type != CORD_CYL && type != CORD_RECT && type != CORD_SPH )
+	if ( type != CORD_CYL && type != CORD_RECT && type != CORD_SPH )
 	{
 		bu_log( "unrecognized coordinate system type (%c):\n", type );
 		bu_log( "%s\n", line );
@@ -768,7 +768,7 @@ get_coord_sys(void)
 
 	ptr = strtok( line, delims );
 	ptr = strtok( (char *)NULL, delims );
-	if( !ptr )
+	if ( !ptr )
 	{
 		log_line( "Incomplete coordinate system definition" );
 		return;
@@ -776,7 +776,7 @@ get_coord_sys(void)
 
 	BU_GETSTRUCT( cs, coord_sys );
 
-	switch( form )
+	switch ( form )
 	{
 		case 1:
 			cs->type = type;
@@ -795,7 +795,7 @@ get_coord_sys(void)
 			VCROSS( cs->v1, cs->v2, cs->v3 );
 			BU_LIST_INSERT( &coord_head.l, &cs->l );
 
-			if( !strlen( curr_rec[5] ) )
+			if ( !strlen( curr_rec[5] ) )
 				break;
 
 			BU_GETSTRUCT( cs, coord_sys );
@@ -820,17 +820,17 @@ get_coord_sys(void)
 			cs->type = type;
 			cs->cid = atoi( curr_rec[1] );
 			cs->rid = atoi( curr_rec[2] );
-			for( i=0 ; i<3 ; i++ )
+			for ( i=0; i<3; i++ )
 				tmp[i] = atof( curr_rec[3+i] );
 			VMOVE( cs->origin, tmp );
-			for( i=0 ; i<3 ; i++ )
+			for ( i=0; i<3; i++ )
 				tmp[i] = atof( curr_rec[6+i] );
 			VMOVE( cs->v1, tmp );
-			for( i=0 ; i<3 ; i++ )
+			for ( i=0; i<3; i++ )
 				tmp[i] = atof( curr_rec[9+i] );
 			VMOVE( cs->v2, tmp );
 
-			if( !cs->rid )
+			if ( !cs->rid )
 			{
 				point_t tmp_pt1, tmp_pt2;
 
@@ -857,9 +857,9 @@ convert_all_cs(void)
 	int ret=0;
 	struct coord_sys *cs;
 
-	for( BU_LIST_FOR( cs, coord_sys, &coord_head.l ) )
+	for ( BU_LIST_FOR( cs, coord_sys, &coord_head.l ) )
 	{
-		if( convert_cs( cs ) )
+		if ( convert_cs( cs ) )
 			ret = 1;
 	}
 
@@ -872,9 +872,9 @@ convert_all_pts(void)
 	int i;
 	int ret=0;
 
-	for( i=0 ; i<grid_used ; i++ )
+	for ( i=0; i<grid_used; i++ )
 	{
-		if( convert_grid( i ) )
+		if ( convert_grid( i ) )
 			ret = 1;
 	}
 
@@ -887,13 +887,13 @@ get_pid_index(int pid)
 	struct pshell *psh;
 	int index=0;
 
-	if( pid == 0 )
+	if ( pid == 0 )
 		return( 0 );
 
-	for( BU_LIST_FOR( psh, pshell, &pshell_head.l ) )
+	for ( BU_LIST_FOR( psh, pshell, &pshell_head.l ) )
 	{
 		index++;
-		if( psh->pid == pid )
+		if ( psh->pid == pid )
 			return( index );
 	}
 
@@ -934,7 +934,7 @@ get_cquad4(void)
 	VSCALE( pt3, g_pts[gin3].pt, conv[units] );
 	VSCALE( pt4, g_pts[gin4].pt, conv[units] );
 
-	if( !nmg_model && !pid )
+	if ( !nmg_model && !pid )
 	{
 		struct nmgregion *r;
 
@@ -943,7 +943,7 @@ get_cquad4(void)
 		nmg_shell = BU_LIST_FIRST( shell, &r->s_hd );
 	}
 
-	if( !pid )
+	if ( !pid )
 		s = nmg_shell;
 	else
 	{
@@ -951,23 +951,23 @@ get_cquad4(void)
 		int found=0;
 
 		/* find pshell entry for this pid */
-		for( BU_LIST_FOR( psh, pshell, &pshell_head.l ) )
+		for ( BU_LIST_FOR( psh, pshell, &pshell_head.l ) )
 		{
-			if( psh->pid == pid )
+			if ( psh->pid == pid )
 			{
 				found = 1;
 				break;
 			}
 		}
 
-		if( !found )
+		if ( !found )
 		{
 			bu_log( "Cannot find PSHELL entry for a CQUAD4 element (ignoring)!\n" );
 			write_fields();
 			return;
 		}
 
-		if( psh->s )
+		if ( psh->s )
 			s = psh->s;
 		else
 		{
@@ -987,11 +987,11 @@ get_cquad4(void)
 
 	fu = nmg_cmface( s, v, 3 );
 
-	if( !g_pts[gin1].v[pid_index]->vg_p )
+	if ( !g_pts[gin1].v[pid_index]->vg_p )
 		nmg_vertex_gv( g_pts[gin1].v[pid_index], pt1 );
-	if( !g_pts[gin2].v[pid_index]->vg_p )
+	if ( !g_pts[gin2].v[pid_index]->vg_p )
 		nmg_vertex_gv( g_pts[gin2].v[pid_index], pt2 );
-	if( !g_pts[gin3].v[pid_index]->vg_p )
+	if ( !g_pts[gin3].v[pid_index]->vg_p )
 		nmg_vertex_gv( g_pts[gin3].v[pid_index], pt3 );
 	nmg_calc_face_g( fu );
 
@@ -1001,7 +1001,7 @@ get_cquad4(void)
 
 	fu = nmg_cmface( s, v, 3 );
 
-	if( !g_pts[gin4].v[pid_index]->vg_p )
+	if ( !g_pts[gin4].v[pid_index]->vg_p )
 		nmg_vertex_gv( g_pts[gin4].v[pid_index], pt4 );
 	nmg_calc_face_g( fu );
 }
@@ -1041,7 +1041,7 @@ get_ctria3(void)
 	VSCALE( pt2, g_pts[gin2].pt, conv[units] );
 	VSCALE( pt3, g_pts[gin3].pt, conv[units] );
 
-	if( !nmg_model && !pid )
+	if ( !nmg_model && !pid )
 	{
 		struct nmgregion *r;
 
@@ -1050,30 +1050,30 @@ get_ctria3(void)
 		nmg_shell = BU_LIST_FIRST( shell, &r->s_hd );
 	}
 
-	if( !pid )
+	if ( !pid )
 		s = nmg_shell;
 	else
 	{
 		int found=0;
 
 		/* find pshell entry for this pid */
-		for( BU_LIST_FOR( psh, pshell, &pshell_head.l ) )
+		for ( BU_LIST_FOR( psh, pshell, &pshell_head.l ) )
 		{
-			if( psh->pid == pid )
+			if ( psh->pid == pid )
 			{
 				found = 1;
 				break;
 			}
 		}
 
-		if( !found )
+		if ( !found )
 		{
 			bu_log( "Cannot find PSHELL entry for a CTRIA3 element (ignoring)!\n" );
 			write_fields();
 			return;
 		}
 
-		if( psh->s )
+		if ( psh->s )
 			s = psh->s;
 		else
 		{
@@ -1089,11 +1089,11 @@ get_ctria3(void)
 
 	fu = nmg_cmface( s, v, 3 );
 
-	if( !g_pts[gin1].v[pid_index]->vg_p )
+	if ( !g_pts[gin1].v[pid_index]->vg_p )
 		nmg_vertex_gv( g_pts[gin1].v[pid_index], pt1 );
-	if( !g_pts[gin2].v[pid_index]->vg_p )
+	if ( !g_pts[gin2].v[pid_index]->vg_p )
 		nmg_vertex_gv( g_pts[gin2].v[pid_index], pt2 );
-	if( !g_pts[gin3].v[pid_index]->vg_p )
+	if ( !g_pts[gin3].v[pid_index]->vg_p )
 		nmg_vertex_gv( g_pts[gin3].v[pid_index], pt3 );
 
 	nmg_calc_face_g( fu );
@@ -1113,9 +1113,9 @@ get_cbar(void)
 	eid = atoi( curr_rec[1] );
 
 	pid = atoi( curr_rec[2] );
-	if( !pid )
+	if ( !pid )
 	{
-		if( bar_def_pid )
+		if ( bar_def_pid )
 			pid = bar_def_pid;
 		else
 			pid = eid;
@@ -1128,13 +1128,13 @@ get_cbar(void)
 	get_grid( g1, pt1 );
 	get_grid( g2, pt2 );
 
-	for( BU_LIST_FOR( pb, pbar, &pbar_head.l ) )
+	for ( BU_LIST_FOR( pb, pbar, &pbar_head.l ) )
 	{
-		if( pb->pid == pid )
+		if ( pb->pid == pid )
 			break;
 	}
 
-	if( BU_LIST_IS_HEAD( &pb->l, &pbar_head.l ) )
+	if ( BU_LIST_IS_HEAD( &pb->l, &pbar_head.l ) )
 	{
 		log_line( "Non-existent PID referenced in CBAR" );
 		return;
@@ -1176,9 +1176,9 @@ main(int argc, char **argv)
 	tol.perp = 1e-6;
 	tol.para = 1 - tol.perp;
 
-	while( (c=bu_getopt( argc, argv, "x:X:t:ni:o:m")) != EOF )
+	while ( (c=bu_getopt( argc, argv, "x:X:t:ni:o:m")) != EOF )
 	{
-		switch( c )
+		switch ( c )
 		{
 			case 'x':
 				sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
@@ -1202,7 +1202,7 @@ main(int argc, char **argv)
 			case 'i':
 				nastran_file = bu_optarg;
 				fpin = fopen( bu_optarg, "r" );
-				if( fpin == (FILE *)NULL )
+				if ( fpin == (FILE *)NULL )
 				{
 					bu_log( "Cannot open NASTRAN file (%s) for reading!\n", bu_optarg );
 					bu_exit(1, Usage, argv[0] );
@@ -1215,13 +1215,13 @@ main(int argc, char **argv)
 	}
 
 	fpout = wdb_fopen( output_file );
-	if( fpout == NULL )
+	if ( fpout == NULL )
 	{
 		bu_log( "Cannot open BRL-CAD file (%s) for writing!\n", output_file );
 		bu_exit(1, Usage, argv[0] );
 	}
 
-	if( !fpin || !fpout )
+	if ( !fpin || !fpout )
 	{
 		bu_exit(1, Usage, argv[0] );
 	}
@@ -1230,26 +1230,26 @@ main(int argc, char **argv)
 	next_line = (char *)bu_malloc( MAXLINELEN, "next_line" );
 	prev_line = (char *)bu_malloc( MAXLINELEN, "prev_line" );
 	curr_rec = (char **)bu_calloc( NO_OF_FIELDS, sizeof( char *), "curr_rec" );
-	for( i=0 ; i<NO_OF_FIELDS ; i++ )
+	for ( i=0; i<NO_OF_FIELDS; i++ )
 		curr_rec[i] = (char *)bu_malloc( sizeof( char )*FIELD_LENGTH, "curr_rec[i]" );
 	prev_rec = (char **)bu_calloc( NO_OF_FIELDS, sizeof( char *), "prev_rec" );
-	for( i=0 ; i<NO_OF_FIELDS ; i++ )
+	for ( i=0; i<NO_OF_FIELDS; i++ )
 		prev_rec[i] = (char *)bu_malloc( sizeof( char )*FIELD_LENGTH, "prev_rec[i]" );
 
 	/* first pass, find start of NASTRAN "bulk data" */
 	start_off = (-1);
 	bulk_data_start_line = 0;
-	while( bu_fgets( line, MAXLINELEN, fpin ) )
+	while ( bu_fgets( line, MAXLINELEN, fpin ) )
 	{
 		bulk_data_start_line++;
-		if( strncmp( line, "BEGIN BULK", 10 ) )
+		if ( strncmp( line, "BEGIN BULK", 10 ) )
 			continue;
 
 		start_off = ftell( fpin );
 		break;
 	}
 
-	if( start_off < 0 )
+	if ( start_off < 0 )
 	{
 		bu_log( "Cannot find start of bulk data in NASTRAN file!\n" );
 		bu_exit(1, Usage, argv[0] );
@@ -1257,7 +1257,7 @@ main(int argc, char **argv)
 
 	/* convert BULK data deck into something reasonable */
 	fptmp = bu_temp_file(NULL, 0);
-	if( fptmp == NULL )
+	if ( fptmp == NULL )
 	{
 		perror( argv[0] );
 		bu_exit(1, "Cannot open temporary file\n" );
@@ -1274,26 +1274,26 @@ main(int argc, char **argv)
 
 	/* count grid points */
 	fseek( fptmp, 0, SEEK_SET );
-	while( bu_fgets( line, MAXLINELEN, fptmp  ) )
+	while ( bu_fgets( line, MAXLINELEN, fptmp  ) )
 	{
-		if( !strncmp( line, "GRID", 4 ) )
+		if ( !strncmp( line, "GRID", 4 ) )
 			grid_count++;
 	}
-	if( !grid_count )
+	if ( !grid_count )
 	{
 		bu_exit(1, "No geometry in this NASTRAN file!\n" );
 	}
 
 	/* get default values and properties */
 	fseek( fptmp, 0, SEEK_SET );
-	while( get_next_record( fptmp, 1, 0 ) )
+	while ( get_next_record( fptmp, 1, 0 ) )
 	{
-		if( !strncmp( curr_rec[0], "BAROR", 5 ) )
+		if ( !strncmp( curr_rec[0], "BAROR", 5 ) )
 		{
 			/* get BAR defaults */
 			bar_def_pid = atoi( curr_rec[2] );
 		}
-		else if( !strncmp( curr_rec[0], "PBAR", 4 ) )
+		else if ( !strncmp( curr_rec[0], "PBAR", 4 ) )
 		{
 			struct pbar *pb;
 
@@ -1307,7 +1307,7 @@ main(int argc, char **argv)
 
 			BU_LIST_INSERT( &pbar_head.l, &pb->l );
 		}
-		else if( !strncmp( curr_rec[0], "PSHELL", 6 ) )
+		else if ( !strncmp( curr_rec[0], "PSHELL", 6 ) )
 		{
 			BU_GETSTRUCT( psh, pshell );
 
@@ -1325,19 +1325,19 @@ main(int argc, char **argv)
 
 	/* get all grid points */
 	fseek( fptmp, 0, SEEK_SET );
-	while( get_next_record( fptmp, 1, 0 ) )
+	while ( get_next_record( fptmp, 1, 0 ) )
 	{
 		int gid;
 		int cid;
 		double tmp[3];
 
-		if( strncmp( curr_rec[0], "GRID", 4 ) )
+		if ( strncmp( curr_rec[0], "GRID", 4 ) )
 			continue;
 
 		gid = atoi( curr_rec[1] );
 		cid = atoi( curr_rec[2] );
 
-		for( i=0 ; i<3 ; i++ )
+		for ( i=0; i<3; i++ )
 		{
 			tmp[i] = atof( curr_rec[i+3] );
 		}
@@ -1352,23 +1352,23 @@ main(int argc, char **argv)
 
 	/* find coordinate systems */
 	fseek( fptmp, 0, SEEK_SET );
-	while( get_next_record( fptmp, 1, 0 ) )
+	while ( get_next_record( fptmp, 1, 0 ) )
 	{
-		if( strncmp( curr_rec[0], "CORD", 4 ) )
+		if ( strncmp( curr_rec[0], "CORD", 4 ) )
 			continue;
 
 		get_coord_sys();
 	}
 #if 0
 	bu_log( "Original grid:\n" );
-	for( i=0 ; i<grid_used ; i++ )
+	for ( i=0; i<grid_used; i++ )
 	{
 		bu_log( "Grid point: gid=%d, cid=%d, (%g %g %g)\n", g_pts[i].gid,
 			g_pts[i].cid, V3ARGS( g_pts[i].pt ) );
 	}
 
 	bu_log( "\nOriginal coordinate systems:\n" );
-	for( BU_LIST_FOR( cs, coord_sys, &coord_head.l ) )
+	for ( BU_LIST_FOR( cs, coord_sys, &coord_head.l ) )
 	{
 		bu_log( "cid=%d, type=%c, rid=%d\n", cs->cid, cs->type, cs->rid );
 		bu_log( "\torigin=(%g %g %g)\n", V3ARGS( cs->origin ) );
@@ -1379,10 +1379,10 @@ main(int argc, char **argv)
 #endif
 	/* convert everything to BRL-CAD coordinate system */
 	i = 0;
-	while( convert_all_cs() || convert_all_pts() )
+	while ( convert_all_cs() || convert_all_pts() )
 	{
 		i++;
-		if( i > 10 )
+		if ( i > 10 )
 		{
 			bu_exit(1, "Cannot convert to default coordinate system, check for circular definition\n" );
 		}
@@ -1390,14 +1390,14 @@ main(int argc, char **argv)
 
 #if 0
 	bu_log( "Converted grid:\n" );
-	for( i=0 ; i<grid_used ; i++ )
+	for ( i=0; i<grid_used; i++ )
 	{
 		bu_log( "Grid point: gid=%d, cid=%d, (%g %g %g)\n", g_pts[i].gid,
 			g_pts[i].cid, V3ARGS( g_pts[i].pt ) );
 	}
 
 	bu_log( "\nConverted coordinate systems:\n" );
-	for( BU_LIST_FOR( cs, coord_sys, &coord_head.l ) )
+	for ( BU_LIST_FOR( cs, coord_sys, &coord_head.l ) )
 	{
 		bu_log( "cid=%d, type=%c, rid=%d\n", cs->cid, cs->type, cs->rid );
 		bu_log( "\torigin=(%g %g %g)\n", V3ARGS( cs->origin ) );
@@ -1411,64 +1411,64 @@ main(int argc, char **argv)
 
 	/* get elements */
 	fseek( fptmp, 0, SEEK_SET );
-	while( get_next_record( fptmp, 1, 0 ) )
+	while ( get_next_record( fptmp, 1, 0 ) )
 	{
-		if( !strncmp( curr_rec[0], "CBAR", 4 ) )
+		if ( !strncmp( curr_rec[0], "CBAR", 4 ) )
 			get_cbar();
-		else if( !strncmp( curr_rec[0], "CROD", 4 ) )
+		else if ( !strncmp( curr_rec[0], "CROD", 4 ) )
 			get_cbar();
-		else if( !strncmp( curr_rec[0], "CTRIA3", 6 ) )
+		else if ( !strncmp( curr_rec[0], "CTRIA3", 6 ) )
 			get_ctria3();
-		else if( !strncmp( curr_rec[0], "CQUAD4", 6 ) )
+		else if ( !strncmp( curr_rec[0], "CQUAD4", 6 ) )
 			get_cquad4();
 	}
 
-	if( nmg_model )
+	if ( nmg_model )
 	{
 		nmg_rebound( nmg_model, &tol );
-		if( polysolids )
+		if ( polysolids )
 			write_shell_as_polysolid( fpout, "pshell.0", nmg_shell );
 		else
 			mk_nmg( fpout, "pshell.0", nmg_model );
 	}
 
 	BU_LIST_INIT( &head.l );
-	for( BU_LIST_FOR( psh, pshell, &pshell_head.l ) )
+	for ( BU_LIST_FOR( psh, pshell, &pshell_head.l ) )
 	{
 		struct model *m;
 		char name[NAMESIZE];
 
-		if( !psh->s )
+		if ( !psh->s )
 			continue;
 
 		m = nmg_find_model( &psh->s->l.magic );
 		nmg_rebound( m, &tol );
 		nmg_fix_normals( psh->s, &tol );
-		if( psh->thick > tol.dist )
+		if ( psh->thick > tol.dist )
 		{
 			nmg_model_face_fuse( m, &tol );
 			nmg_hollow_shell( psh->s, psh->thick*conv[units], 1, &tol );
 		}
 		sprintf( name, "pshell.%d", psh->pid );
-		if( polysolids )
+		if ( polysolids )
 			write_shell_as_polysolid( fpout, name, psh->s );
 		else
 			mk_nmg( fpout, name, m );
 
 		mk_addmember( name, &head.l, NULL, WMOP_UNION );
 	}
-	if( BU_LIST_NON_EMPTY( &head.l ) )
+	if ( BU_LIST_NON_EMPTY( &head.l ) )
 	{
 		mk_lfcomb( fpout, "shells", &head, 0 );
 		mk_addmember( "shells", &all_head.l, NULL, WMOP_UNION );
 	}
 
 	BU_LIST_INIT( &head.l );
-	for( BU_LIST_FOR( pb, pbar, &pbar_head.l ) )
+	for ( BU_LIST_FOR( pb, pbar, &pbar_head.l ) )
 	{
 		char name[NAMESIZE];
 
-		if( BU_LIST_IS_EMPTY( &pb->head.l ) )
+		if ( BU_LIST_IS_EMPTY( &pb->head.l ) )
 			continue;
 
 		sprintf( name, "pbar_group.%d", pb->pid );
@@ -1476,13 +1476,13 @@ main(int argc, char **argv)
 
 		mk_addmember( name, &head.l, NULL, WMOP_UNION );
 	}
-	if( BU_LIST_NON_EMPTY( &head.l ) )
+	if ( BU_LIST_NON_EMPTY( &head.l ) )
 	{
 		mk_lfcomb( fpout, "pbars", &head, 0 );
 		mk_addmember( "pbars", &all_head.l, NULL, WMOP_UNION );
 	}
 
-	if( BU_LIST_NON_EMPTY( &all_head.l ) )
+	if ( BU_LIST_NON_EMPTY( &all_head.l ) )
 	{
 		mk_lfcomb( fpout, "all", &all_head, 0 );
 	}

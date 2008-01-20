@@ -124,35 +124,35 @@ tp_scale(int *idata,
 	idoublep = (double *)idata;
 	/* Find the maximum and minimum data values */
 	xmax = xmin = 0.0;
-	for( i=0; i<elements; i++ )  {
+	for ( i=0; i<elements; i++ )  {
 		x = (mode=='f')
 			? ifloatp[i]
 			: ( (mode=='d')
 				? idoublep[i]
 				: idata[i]
 			);
-		if( x > xmax )
+		if ( x > xmax )
 			xmax = x;
-		if( x < xmin )
+		if ( x < xmin )
 			xmin = x;
 	}
 
 	/* Split initial DX into integral and fractional exponents of 10 */
-	if( log_10 <= 0.0 )
+	if ( log_10 <= 0.0 )
 		log_10 = log(10.0);
 
 	fractional = log( (xmax-xmin)/length ) / log_10;	/* LOG10(DX) */
 	integral = fractional;			/* truncate! */
 	fractional -= integral;			/* leave only fract */
 
-	if( fractional < 0.0 )  {
+	if ( fractional < 0.0 )  {
 		fractional += 1.0;		/* ?? */
 		integral -= 1;
 	}
 
 	fractional = pow( 10.0, fractional );
 	i = fractional - 0.01;
-	switch( i )  {
+	switch ( i )  {
 
 	case 1:
 		fractional = 2.0;
@@ -183,11 +183,11 @@ tp_scale(int *idata,
 	workdx = pow( 10.0, (double)integral ) * fractional;
 
 	/* Apply the MIN and DX values to the users input data */
-	for( i=0; i<elements; i++ )  {
-		if( mode == 'f' )
+	for ( i=0; i<elements; i++ )  {
+		if ( mode == 'f' )
 			odata[i] = (ifloatp[i] - xmin) / workdx;
 		else
-			if( mode == 'd' )
+			if ( mode == 'd' )
 				odata[i] = (idoublep[i] - xmin) / workdx;
 			else
 				odata[i] = (idata[i] - xmin) / workdx;

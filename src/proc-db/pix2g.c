@@ -118,9 +118,9 @@ void computeScanline( int pid, genptr_t arg ) {
 			struct wmember wm_hd; /* defined in wdb.h */
 			BU_LIST_INIT(&wm_hd.l);
 
-			/*			bu_log("[%f:%f]", (float)i*cellSize,(float)j*cellSize);*/
+			/*			bu_log("[%f:%f]", (float)i*cellSize, (float)j*cellSize);*/
 
-			VSET(p1,(float)i*cellSize, (float)j*cellSize, 0.0);
+			VSET(p1, (float)i*cellSize, (float)j*cellSize, 0.0);
 
 			/* make the primitive */
 			/* we do not need to make a bazillion objects if they are not going to

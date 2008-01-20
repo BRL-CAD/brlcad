@@ -52,11 +52,11 @@ get_Input(char *inbuf, int bufsz, char *msg)
 {	static char buffer[BUFSIZ];
 		register char *p = buffer;
 		register int c;
-	if( *cptr != NUL && *cptr != '@' )
+	if ( *cptr != NUL && *cptr != '@' )
 		{
-		for( ; *cptr != NUL && *cptr != CR && *cptr != LF; cptr++ )
+		for (; *cptr != NUL && *cptr != CR && *cptr != LF; cptr++ )
 			{
-			if( p - buffer >= BUFSIZ )
+			if ( p - buffer >= BUFSIZ )
 				{
 				ring_Bell();
 				fb_log( "get_Input() over-ran internal buffer.\n" );
@@ -64,12 +64,12 @@ get_Input(char *inbuf, int bufsz, char *msg)
 				buffer[BUFSIZ-1] = NUL;
 				return 0;
 				}
-			if( *cptr != Ctrl('V') )
+			if ( *cptr != Ctrl('V') )
 				*p++ = *cptr;
 			else
 				*p++ = *++cptr;
 			}
-		if( *cptr == CR || *cptr == LF )
+		if ( *cptr == CR || *cptr == LF )
 			cptr++;
 		*p = NUL;
 		(void) strncpy( inbuf, buffer, bufsz );
@@ -77,7 +77,7 @@ get_Input(char *inbuf, int bufsz, char *msg)
 		}
 	else
 	/* Skip over '@' and LF, which means "prompt user". */
-	if( *cptr == '@' )
+	if ( *cptr == '@' )
 		cptr += 2;
 	prnt_Prompt( msg );
 	*p = NUL;
@@ -85,25 +85,25 @@ get_Input(char *inbuf, int bufsz, char *msg)
 		{
 		(void) fflush( stdout );
 		c = get_Char();
-		if( remembering )
+		if ( remembering )
 			{
 			*macro_ptr++ = c;
 			*macro_ptr = NUL;
 			}
-		switch( c )
+		switch ( c )
 			{
 		case Ctrl('A') : /* Cursor to beginning of line. */
-			if( p == buffer )
+			if ( p == buffer )
 				{
 				ring_Bell();
 				break;
 				}
-			for( ; p > buffer; p-- )
+			for (; p > buffer; p-- )
 				(void) putchar( BS );
 			break;
 		case Ctrl('B') :
 		case BS : /* Move cursor back one character. */
-			if( p == buffer )
+			if ( p == buffer )
 				{
 				ring_Bell();
 				break;
@@ -113,22 +113,22 @@ get_Input(char *inbuf, int bufsz, char *msg)
 			break;
 		case Ctrl('D') : /* Delete character under cursor. */
 			{	register char *q = p;
-			if( *p == NUL )
+			if ( *p == NUL )
 				{
 				ring_Bell();
 				break;
 				}
-			for( ; *q != NUL; ++q )
+			for (; *q != NUL; ++q )
 				{
 				*q = *(q+1);
 				(void) putchar( *q != NUL ? *q : SP );
 				}
-			for( ; q > p; --q )
+			for (; q > p; --q )
 				(void) putchar( BS );
 			break;
 			}
 		case Ctrl('E') : /* Cursor to end of line. */
-			if( *p == NUL )
+			if ( *p == NUL )
 				{
 				ring_Bell();
 				break;
@@ -137,7 +137,7 @@ get_Input(char *inbuf, int bufsz, char *msg)
 			p += strlen( p );
 			break;
 		case Ctrl('F') : /* Cursor forward one character. */
-			if( *p == NUL || p-buffer >= bufsz-2 )
+			if ( *p == NUL || p-buffer >= bufsz-2 )
 				{
 				ring_Bell();
 				break;
@@ -150,7 +150,7 @@ get_Input(char *inbuf, int bufsz, char *msg)
 			prnt_Prompt( "" );
 			return 0;
 		case Ctrl('K') : /* Erase from cursor to end of line. */
-			if( *p == NUL )
+			if ( *p == NUL )
 				{
 				ring_Bell();
 				break;
@@ -160,7 +160,7 @@ get_Input(char *inbuf, int bufsz, char *msg)
 			break;
 		case Ctrl('P') : /* Yank previous contents of "inbuf". */
 			{	register int len = strlen( inbuf );
-			if( (p + len) - buffer >= BUFSIZ )
+			if ( (p + len) - buffer >= BUFSIZ )
 				{
 				ring_Bell();
 				break;
@@ -171,48 +171,48 @@ get_Input(char *inbuf, int bufsz, char *msg)
 			break;
 			}
 		case Ctrl('U') : /* Erase from start of line to cursor. */
-			if( p == buffer )
+			if ( p == buffer )
 				{
 				ring_Bell();
 				break;
 				}
-			for( ; p > buffer; --p )
+			for (; p > buffer; --p )
 				{	register char *q = p;
 				(void) putchar( BS );
-				for( ; *(q-1) != NUL; ++q )
+				for (; *(q-1) != NUL; ++q )
 					{
 					*(q-1) = *q;
 					(void) putchar( *q != NUL ? *q : SP );
 					}
-				for( ; q > p; --q )
+				for (; q > p; --q )
 					(void) putchar( BS );
 				}
 			break;
 		case Ctrl('R') : /* Print line, cursor doesn't move. */
 			{	register int i;
-			if( buffer[0] == NUL )
+			if ( buffer[0] == NUL )
 				break;
-			for( i = p - buffer; i > 0; i-- )
+			for ( i = p - buffer; i > 0; i-- )
 				(void) putchar( BS );
 			(void) printf( "%s", buffer );
-			for( i = strlen( buffer ) - (p - buffer); i > 0; i-- )
+			for ( i = strlen( buffer ) - (p - buffer); i > 0; i-- )
 				(void) putchar( BS );
 			break;
 			}
 		case DEL : /* Delete character behind cursor. */
 			{	register char *q = p;
-			if( p == buffer )
+			if ( p == buffer )
 				{
 				ring_Bell();
 				break;
 				}
 			(void) putchar( BS );
-			for( ; *(q-1) != NUL; ++q )
+			for (; *(q-1) != NUL; ++q )
 				{
 				*(q-1) = *q;
 				(void) putchar( *q != NUL ? *q : SP );
 				}
-			for( ; q > p; --q )
+			for (; q > p; --q )
 				(void) putchar( BS );
 			p--;
 			break;
@@ -226,7 +226,7 @@ get_Input(char *inbuf, int bufsz, char *msg)
 		case Ctrl('V') :
 			/* Escape character, do not process next char. */
 			c = get_Char();
-			if( remembering )
+			if ( remembering )
 				{
 				*macro_ptr++ = c;
 				*macro_ptr = NUL;
@@ -236,14 +236,14 @@ get_Input(char *inbuf, int bufsz, char *msg)
 			{	register char *q = p;
 				register int len = strlen( p );
 			/* Print control characters as strings. */
-			if( c >= NUL && c < SP )
+			if ( c >= NUL && c < SP )
 				(void) printf( "%s", char_To_String( c ) );
 			else
 				(void) putchar( c );
 			/* Scroll characters forward. */
-			for( ; len >= 0; len--, q++ )
+			for (; len >= 0; len--, q++ )
 				(void) putchar( *q == NUL ? SP : *q );
-			for( ; q > p; q-- )
+			for (; q > p; q-- )
 				{
 				(void) putchar( BS );
 				*q = *(q-1);
@@ -253,7 +253,7 @@ get_Input(char *inbuf, int bufsz, char *msg)
 			}
 			} /* End switch. */
 		}
-	while( strlen( buffer ) < BUFSIZ );
+	while ( strlen( buffer ) < BUFSIZ );
 	(void) strncpy( inbuf, buffer, bufsz );
 	ring_Bell();
 	fb_log( "Buffer full.\n" );
@@ -272,11 +272,11 @@ get_Func_Name(char *inbuf, int bufsz, char *msg)
 		register char *p = buffer;
 		register int c;
 		Func_Tab	*ftbl = FT_NULL;
-	if( *cptr != NUL && *cptr != '@' )
+	if ( *cptr != NUL && *cptr != '@' )
 		{
-		for( ; *cptr != NUL && *cptr != CR && *cptr != LF; cptr++ )
+		for (; *cptr != NUL && *cptr != CR && *cptr != LF; cptr++ )
 			{
-			if( p - buffer >= BUFSIZ )
+			if ( p - buffer >= BUFSIZ )
 				{
 				ring_Bell();
 				fb_log( "get_Func_Name() over-ran internal buffer.\n" );
@@ -284,15 +284,15 @@ get_Func_Name(char *inbuf, int bufsz, char *msg)
 				buffer[BUFSIZ-1] = NUL;
 				return 0;
 				}
-			if( *cptr != Ctrl('V') )
+			if ( *cptr != Ctrl('V') )
 				*p++ = *cptr;
 			else
 				*p++ = *++cptr;
 			}
-		if( *cptr == CR || *cptr == LF )
+		if ( *cptr == CR || *cptr == LF )
 			cptr++;
 		*p = NUL;
-		if( (ftbl = get_Try( buffer, try_rootp )) == FT_NULL )
+		if ( (ftbl = get_Try( buffer, try_rootp )) == FT_NULL )
 			(void) putchar( BEL );
 		else
 			(void) strncpy( inbuf, buffer, bufsz );
@@ -300,7 +300,7 @@ get_Func_Name(char *inbuf, int bufsz, char *msg)
 		}
 	else
 	/* Skip over '@' and LF, which means "prompt user". */
-	if( *cptr == '@' )
+	if ( *cptr == '@' )
 		cptr += 2;
 	prnt_Prompt( msg );
 	*p = NUL;
@@ -308,18 +308,18 @@ get_Func_Name(char *inbuf, int bufsz, char *msg)
 		{
 		(void) fflush( stdout );
 		c = get_Char();
-		if( remembering )
+		if ( remembering )
 			{
 			*macro_ptr++ = c;
 			*macro_ptr = NUL;
 			}
-		switch( c )
+		switch ( c )
 			{
 		case SP :
 			{
-			if( (ftbl = get_Try( buffer, try_rootp )) == FT_NULL )
+			if ( (ftbl = get_Try( buffer, try_rootp )) == FT_NULL )
 				(void) putchar( BEL );
-			for( ; p > buffer; p-- )
+			for (; p > buffer; p-- )
 				(void) putchar( BS );
 			(void) printf( "%s", buffer );
 			(void) ClrEOL();
@@ -328,17 +328,17 @@ get_Func_Name(char *inbuf, int bufsz, char *msg)
 			break;
 			}
 		case Ctrl('A') : /* Cursor to beginning of line. */
-			if( p == buffer )
+			if ( p == buffer )
 				{
 				ring_Bell();
 				break;
 				}
-			for( ; p > buffer; p-- )
+			for (; p > buffer; p-- )
 				(void) putchar( BS );
 			break;
 		case Ctrl('B') :
 		case BS : /* Move cursor back one character. */
-			if( p == buffer )
+			if ( p == buffer )
 				{
 				ring_Bell();
 				break;
@@ -348,22 +348,22 @@ get_Func_Name(char *inbuf, int bufsz, char *msg)
 			break;
 		case Ctrl('D') : /* Delete character under cursor. */
 			{	register char *q = p;
-			if( *p == NUL )
+			if ( *p == NUL )
 				{
 				ring_Bell();
 				break;
 				}
-			for( ; *q != NUL; ++q )
+			for (; *q != NUL; ++q )
 				{
 				*q = *(q+1);
 				(void) putchar( *q != NUL ? *q : SP );
 				}
-			for( ; q > p; --q )
+			for (; q > p; --q )
 				(void) putchar( BS );
 			break;
 			}
 		case Ctrl('E') : /* Cursor to end of line. */
-			if( *p == NUL )
+			if ( *p == NUL )
 				{
 				ring_Bell();
 				break;
@@ -372,7 +372,7 @@ get_Func_Name(char *inbuf, int bufsz, char *msg)
 			p += strlen( p );
 			break;
 		case Ctrl('F') : /* Cursor forward one character. */
-			if( *p == NUL || p-buffer >= bufsz-2 )
+			if ( *p == NUL || p-buffer >= bufsz-2 )
 				{
 				ring_Bell();
 				break;
@@ -385,7 +385,7 @@ get_Func_Name(char *inbuf, int bufsz, char *msg)
 			prnt_Prompt( "" );
 			return ftbl;
 		case Ctrl('K') : /* Erase from cursor to end of line. */
-			if( *p == NUL )
+			if ( *p == NUL )
 				{
 				ring_Bell();
 				break;
@@ -395,7 +395,7 @@ get_Func_Name(char *inbuf, int bufsz, char *msg)
 			break;
 		case Ctrl('P') : /* Yank previous contents of "inbuf". */
 			{	register int len = strlen( inbuf );
-			if( (p + len) - buffer >= BUFSIZ )
+			if ( (p + len) - buffer >= BUFSIZ )
 				{
 				ring_Bell();
 				break;
@@ -406,48 +406,48 @@ get_Func_Name(char *inbuf, int bufsz, char *msg)
 			break;
 			}
 		case Ctrl('U') : /* Erase from start of line to cursor. */
-			if( p == buffer )
+			if ( p == buffer )
 				{
 				ring_Bell();
 				break;
 				}
-			for( ; p > buffer; --p )
+			for (; p > buffer; --p )
 				{	register char *q = p;
 				(void) putchar( BS );
-				for( ; *(q-1) != NUL; ++q )
+				for (; *(q-1) != NUL; ++q )
 					{
 					*(q-1) = *q;
 					(void) putchar( *q != NUL ? *q : SP );
 					}
-				for( ; q > p; --q )
+				for (; q > p; --q )
 					(void) putchar( BS );
 				}
 			break;
 		case Ctrl('R') : /* Print line, cursor doesn't move. */
 			{	register int i;
-			if( buffer[0] == NUL )
+			if ( buffer[0] == NUL )
 				break;
-			for( i = p - buffer; i > 0; i-- )
+			for ( i = p - buffer; i > 0; i-- )
 				(void) putchar( BS );
 			(void) printf( "%s", buffer );
-			for( i = strlen( buffer ) - (p - buffer); i > 0; i-- )
+			for ( i = strlen( buffer ) - (p - buffer); i > 0; i-- )
 				(void) putchar( BS );
 			break;
 			}
 		case DEL : /* Delete character behind cursor. */
 			{	register char *q = p;
-			if( p == buffer )
+			if ( p == buffer )
 				{
 				ring_Bell();
 				break;
 				}
 			(void) putchar( BS );
-			for( ; *(q-1) != NUL; ++q )
+			for (; *(q-1) != NUL; ++q )
 				{
 				*(q-1) = *q;
 				(void) putchar( *q != NUL ? *q : SP );
 				}
-			for( ; q > p; --q )
+			for (; q > p; --q )
 				(void) putchar( BS );
 			p--;
 			break;
@@ -455,7 +455,7 @@ get_Func_Name(char *inbuf, int bufsz, char *msg)
 		case CR :
 		case LF :
 		case EOF :
-			if( (ftbl = get_Try( buffer, try_rootp )) == FT_NULL )
+			if ( (ftbl = get_Try( buffer, try_rootp )) == FT_NULL )
 				{
 				(void) putchar( BEL );
 				break;
@@ -470,7 +470,7 @@ get_Func_Name(char *inbuf, int bufsz, char *msg)
 		case Ctrl('V') :
 			/* Escape character, do not process next char. */
 			c = get_Char();
-			if( remembering )
+			if ( remembering )
 				{
 				*macro_ptr++ = c;
 				*macro_ptr = NUL;
@@ -480,13 +480,13 @@ get_Func_Name(char *inbuf, int bufsz, char *msg)
 			{	register char *q = p;
 				register int len = strlen( p );
 			/* Scroll characters forward. */
-			if( c >= NUL && c < SP )
+			if ( c >= NUL && c < SP )
 				(void) printf( "%s", char_To_String( c ) );
 			else
 				(void) putchar( c );
-			for( ; len >= 0; len--, q++ )
+			for (; len >= 0; len--, q++ )
 				(void) putchar( *q == NUL ? SP : *q );
-			for( ; q > p; q-- )
+			for (; q > p; q-- )
 				{
 				(void) putchar( BS );
 				*q = *(q-1);
@@ -496,7 +496,7 @@ get_Func_Name(char *inbuf, int bufsz, char *msg)
 			}
 			} /* End switch. */
 		}
-	while( strlen( buffer ) < BUFSIZ);
+	while ( strlen( buffer ) < BUFSIZ);
 	ring_Bell();
 	fb_log( "Buffer full.\n" );
 	prnt_Prompt( "" );

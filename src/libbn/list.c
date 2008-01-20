@@ -54,11 +54,11 @@ tp_i2list(register FILE *fp, register int *x, register int *y, register int npoi
 					/* array of points */
 
 {
-	if( npoints <= 0 )
+	if ( npoints <= 0 )
 		return;
 
 	pl_move( fp, *x++, *y++ );
-	while( --npoints > 0 )
+	while ( --npoints > 0 )
 		pl_cont( fp, *x++, *y++ );
 }
 
@@ -77,11 +77,11 @@ tp_2list(register FILE *fp, register double *x, register double *y, register int
 					/* array of points */
 
 {
-	if( npoints <= 0 )
+	if ( npoints <= 0 )
 		return;
 
 	pd_move( fp, *x++, *y++ );
-	while( --npoints > 0 )
+	while ( --npoints > 0 )
 		pd_cont( fp, *x++, *y++ );
 }
 
@@ -95,11 +95,11 @@ int		*n;
 	register int npoints = *n-1;	/* FORTRAN uses 1-based subscripts */
 	register FILE	*fp = *fpp;
 
-	if( npoints <= 0 )
+	if ( npoints <= 0 )
 		return;
 
 	pd_move( fp, *x++, *y++ );
-	while( --npoints > 0 )
+	while ( --npoints > 0 )
 		pd_cont( fp, *x++, *y++ );
 }
 
@@ -109,11 +109,11 @@ int		*n;
 void
 tp_3list(FILE *fp, register double *x, register double *y, register double *z, register int npoints)
 {
-	if( npoints <= 0 )
+	if ( npoints <= 0 )
 		return;
 
 	pd_3move( fp, *x++, *y++, *z++ );
-	while( --npoints > 0 )
+	while ( --npoints > 0 )
 		pd_3cont( fp, *x++, *y++, *z++ );
 }
 
@@ -128,11 +128,11 @@ int		*n;
 	register int npoints = *n-1;	/* FORTRAN uses 1-based subscripts */
 	register FILE	*fp = *fpp;
 
-	if( npoints <= 0 )
+	if ( npoints <= 0 )
 		return;
 
 	pd_3move( fp, *x++, *y++, *z++ );
-	while( --npoints > 0 )
+	while ( --npoints > 0 )
 		pd_3cont( fp, *x++, *y++, *z++ );
 }
 
@@ -172,16 +172,16 @@ tp_2mlist(FILE *fp, register double *x, register double *y, int npoints, int fla
 	register int i;			/* index variable */
 	register int counter;		/* interval counter */
 
-	if( npoints <= 0 )
+	if ( npoints <= 0 )
 		return;
 
-	if( flag & TP_LINE )
+	if ( flag & TP_LINE )
 		tp_2list( fp, x, y, npoints );
-	if( flag & TP_MARK )  {
+	if ( flag & TP_MARK )  {
 		tp_2marker( fp, mark, *x++, *y++, size );
 		counter = 1;		/* Already plotted one */
-		for( i=1; i<npoints; i++ )  {
-			if( counter >= interval )  {
+		for ( i=1; i<npoints; i++ )  {
+			if ( counter >= interval )  {
 				tp_2marker( fp, mark, *x, *y, size );
 				counter = 0;	/* We made a mark */
 			}
@@ -209,16 +209,16 @@ float	*size;
 	register int counter;		/* interval counter */
 	register int npoints = *np-1;
 
-	if( npoints <= 0 )
+	if ( npoints <= 0 )
 		return;
 
-	if( *flag & TP_LINE )
+	if ( *flag & TP_LINE )
 		PL_FORTRAN(f2list, F2LIST)( fp, x, y, np );
-	if( *flag & TP_MARK )  {
+	if ( *flag & TP_MARK )  {
 		tp_2marker( *fp, *mark, *x++, *y++, *size );
 		counter = 1;			/* We already plotted one */
-		for( i=1; i<npoints; i++ )  {
-			if( counter >= *interval )  {
+		for ( i=1; i<npoints; i++ )  {
+			if ( counter >= *interval )  {
 				tp_2marker( *fp, *mark, *x, *y, *size );
 				counter = 0;	/* Made a mark */
 			}

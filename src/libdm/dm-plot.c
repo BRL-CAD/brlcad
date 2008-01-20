@@ -218,7 +218,7 @@ plot_open(Tcl_Interp *interp, int argc, char **argv)
 
 	if (argv[0][0] == '|') {
 		bu_vls_strcpy(&((struct plot_vars *)dmp->dm_vars.priv_vars)->vls, &argv[0][1]);
-		while( (++argv)[0] != (char *)0 ) {
+		while ( (++argv)[0] != (char *)0 ) {
 			bu_vls_strcat( &((struct plot_vars *)dmp->dm_vars.priv_vars)->vls, " " );
 			bu_vls_strcat( &((struct plot_vars *)dmp->dm_vars.priv_vars)->vls, argv[0] );
 		}

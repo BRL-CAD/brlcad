@@ -64,7 +64,7 @@ get_args(int argc, register char **argv)
 	register int c;
 
 	while ( (c = bu_getopt( argc, argv, "hi:" )) != EOF )  {
-		switch( c )  {
+		switch ( c )  {
 		case 'h':
 			/* high-res */
 			size = 1024;
@@ -79,12 +79,12 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( bu_optind >= argc )  {
+	if ( bu_optind >= argc )  {
 		/* no fps specified */
 		fps = 0;
 	} else {
 		fps = atof(argv[bu_optind]);
-		if( fps == 0 )
+		if ( fps == 0 )
 			onestep++;
 	}
 
@@ -105,12 +105,12 @@ main(int argc, char **argv)
 		bu_exit( 1, NULL );
 	}
 
-	if( fps > 0.0 ) {
+	if ( fps > 0.0 ) {
 		tv.tv_sec = (long) (1.0 / fps);
 		tv.tv_usec = (long) (((1.0 / fps) - tv.tv_sec) * 1000000);
 	}
 
-	if( (fbp = fb_open( NULL, size, size)) == FBIO_NULL )  {
+	if ( (fbp = fb_open( NULL, size, size)) == FBIO_NULL )  {
 		fprintf(stderr, "fbcmrot:  fb_open failed\n");
 		return	1;
 	}
@@ -119,15 +119,15 @@ main(int argc, char **argv)
 	local_outp = &cm2;
 	fb_rmap( fbp, local_inp );
 
-	while(1)  {
+	while (1)  {
 		register int from;
 		ColorMap *tp;
 
 		/* Build color map for current value */
-		for( i=0, from = increment; i < 256; i++, from++ ) {
-			if( from < 0 )
+		for ( i=0, from = increment; i < 256; i++, from++ ) {
+			if ( from < 0 )
 				from += 256;
-			else if( from > 255 )
+			else if ( from > 255 )
 				from -= 256;
 			local_outp->cm_red[i]   = local_inp->cm_red[from];
 			local_outp->cm_green[i] = local_inp->cm_green[from];
@@ -139,14 +139,14 @@ main(int argc, char **argv)
 		local_outp = local_inp;
 		local_inp = tp;
 
-		if( fps > 0.0 )  {
+		if ( fps > 0.0 )  {
 			fd_set readfds;
 
 			FD_ZERO(&readfds);
 			FD_SET(fileno(stdin), &readfds);
 			select(fileno(stdin)+1, &readfds, (fd_set *)0, (fd_set *)0, &tv);
 		}
-		if( onestep )
+		if ( onestep )
 			break;
 	}
 	fb_close( fbp );

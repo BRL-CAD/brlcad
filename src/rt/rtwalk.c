@@ -106,8 +106,8 @@ get_args(int argc, register char **argv)
 {
     register int c;
 
-    while( (c=bu_getopt( argc, argv, "x:X:n:v:" )) != EOF )  {
-	switch( c )  {
+    while ( (c=bu_getopt( argc, argv, "x:X:n:v:" )) != EOF )  {
+	switch ( c )  {
 	    case 'x':
 		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
 		fprintf(stderr, "librt rt_g.debug=x%x\n", rt_g.debug);
@@ -153,7 +153,7 @@ main(int argc, char **argv)
 	(void)fputs(usage, stderr);
 	bu_exit(1, NULL);
     }
-    if( bu_optind+7 >= argc )  {
+    if ( bu_optind+7 >= argc )  {
 	(void)fputs(usage, stderr);
 	bu_exit(1, NULL);
     }
@@ -182,7 +182,7 @@ main(int argc, char **argv)
 
     /* Load database */
     title_file = argv[bu_optind++];
-    if( (rtip=rt_dirbuild(title_file, idbuf, sizeof(idbuf))) == RTI_NULL ) {
+    if ( (rtip=rt_dirbuild(title_file, idbuf, sizeof(idbuf))) == RTI_NULL ) {
 	fprintf(stderr, "rtwalk:  rt_dirbuild failure\n");
 	bu_exit(2, NULL);
     }
@@ -190,8 +190,8 @@ main(int argc, char **argv)
     fprintf(stderr, "db title:  %s\n", idbuf);
 
     /* Walk trees */
-    for( i=bu_optind; i < argc; i++ )  {
-	if( rt_gettree(rtip, argv[bu_optind]) < 0 )
+    for ( i=bu_optind; i < argc; i++ )  {
+	if ( rt_gettree(rtip, argv[bu_optind]) < 0 )
 	    fprintf(stderr, "rt_gettree(%s) FAILED\n", argv[bu_optind]);
 	bu_optind++;
     }
@@ -203,20 +203,20 @@ main(int argc, char **argv)
      *  With stdout for the plot file, and stderr for
      *  remarks, the output must go into a file.
      */
-    if( (outfp=fopen("rtwalk.mats", "w")) == NULL )  {
+    if ( (outfp=fopen("rtwalk.mats", "w")) == NULL )  {
 	perror("rtwalk.mats");
 	bu_exit(1, NULL);
     }
     plotfp = stdout;
 
     /* Plot all of the solids */
-    if( R_DEBUG > 0 )  {
+    if ( R_DEBUG > 0 )  {
 	pl_color( plotfp, 150, 150, 150 );
 	rt_plot_all_solids( plotfp, rtip, &rt_uniresource );
     }
 
     /* Take a walk */
-    for( curstep = 0; curstep < nsteps*4; curstep++ )  {
+    for ( curstep = 0; curstep < nsteps*4; curstep++ )  {
 	mat_t	mat;
 	int	failed_try;
 
@@ -226,12 +226,12 @@ main(int argc, char **argv)
 	 *  the results of the last iteration.
 	 *  The first and last iterations result in no output
 	 */
-	if(R_DEBUG>=3) {
+	if (R_DEBUG>=3) {
 	    VPRINT("pos", ap.a_ray.r_pt);
 	}
-	if( curstep > 0 )  {
-	    if( R_DEBUG > 0 )  {
-		if( curstep&1 )
+	if ( curstep > 0 )  {
+	    if ( R_DEBUG > 0 )  {
+		if ( curstep&1 )
 		    pl_color( plotfp, 0, 255, 0 );
 		else
 		    pl_color( plotfp, 0, 0, 255 );
@@ -246,7 +246,7 @@ main(int argc, char **argv)
 
 	/* See if goal has been reached */
 	VSUB2( first_dir, goal_point, ap.a_ray.r_pt );
-	if( (max_dist_togo=MAGNITUDE(first_dir)) < 1.0 )  {
+	if ( (max_dist_togo=MAGNITUDE(first_dir)) < 1.0 )  {
 	    fprintf(stderr, "Complete in %d steps\n", curstep);
 	    bu_exit(0, NULL);
 	}
@@ -254,9 +254,9 @@ main(int argc, char **argv)
 	/*  See if there is significant clear space ahead
 	 *  Avoid taking small steps.
 	 */
-	if( clear_dist < incr_dist * 0.25 )
+	if ( clear_dist < incr_dist * 0.25 )
 	    clear_dist = 0.0;
-	if( clear_dist > 0.0 )
+	if ( clear_dist > 0.0 )
 	    goto advance;
 
 	/*
@@ -265,23 +265,23 @@ main(int argc, char **argv)
 	VUNITIZE( first_dir );
 	VMOVE( ap.a_ray.r_dir, first_dir );
 
-	for( failed_try=0; failed_try<100; failed_try++ )  {
+	for ( failed_try=0; failed_try<100; failed_try++ )  {
 	    vect_t	out;
 	    int	i;
 
 	    /* Shoot Ray */
-	    if(R_DEBUG>=3)fprintf(stderr, "try=%d, maxtogo=%g  ",
+	    if (R_DEBUG>=3)fprintf(stderr, "try=%d, maxtogo=%g  ",
 				  failed_try, max_dist_togo);
 	    ap.a_hit = hit;
 	    ap.a_miss = miss;
 	    ap.a_onehit = 1;
-	    if( rt_shootray( &ap ) == 0 )  {
+	    if ( rt_shootray( &ap ) == 0 )  {
 		/* A miss, the way is clear all the way */
 		clear_dist = max_dist_togo*2;
 		break;
 	    }
 	    /* Hit, check distance to closest obstacle */
-	    if( clear_dist >= incr_dist )  {
+	    if ( clear_dist >= incr_dist )  {
 		/* Clear for at least one more step.
 		 * Zap memory of prev normal --
 		 * this probe ahead does not count.
@@ -295,7 +295,7 @@ main(int argc, char **argv)
 	     * Failed, try another direction
 	     */
 
-	    if(R_DEBUG > 2 )   {
+	    if (R_DEBUG > 2 )   {
 		/* Log attempted ray in Red */
 		VJOIN1( out, ap.a_ray.r_pt,
 			incr_dist*4, ap.a_ray.r_dir );
@@ -305,30 +305,30 @@ main(int argc, char **argv)
 	    }
 
 	    /* Initial try was in direction of goal, it failed. */
-	    if( failed_try == 0 )  {
+	    if ( failed_try == 0 )  {
 		/*  First recovery attempt.
 		 *  If hit normal has not changed, continue
 		 *  the direction of the last step.
 		 *  Otherwise, head on tangent plane.
 		 */
-		if( VEQUAL( norm_cur_try, norm_prev_step ) )  {
-		    if(R_DEBUG>=3)fprintf(stderr,
+		if ( VEQUAL( norm_cur_try, norm_prev_step ) )  {
+		    if (R_DEBUG>=3)fprintf(stderr,
 					  "Try prev dir\n");
 		    VMOVE( ap.a_ray.r_dir, dir_prev_step );
 		    continue;
 		}
-		if(R_DEBUG>=3)fprintf(stderr, "Try tangent\n");
+		if (R_DEBUG>=3)fprintf(stderr, "Try tangent\n");
 		proj_goal(&ap);
 		continue;
-	    } else if( failed_try <= 7 )  {
+	    } else if ( failed_try <= 7 )  {
 		/* Try 7 azimuthal escapes, 1..7 */
 		i = failed_try-1+1;	/*  1..7 */
-		if(R_DEBUG>=3)fprintf(stderr, "Try az %d\n", i);
+		if (R_DEBUG>=3)fprintf(stderr, "Try az %d\n", i);
 		bn_mat_ae( mat, i*45.0, 0.0 );
-	    } else if( failed_try <= 14 ) {
+	    } else if ( failed_try <= 14 ) {
 		/* Try 7 Elevations to escape, 8..14 */
 		i = failed_try-8+1;	/*     1..7 */
-		if(R_DEBUG>=3)fprintf(stderr, "Try el %d\n", i);
+		if (R_DEBUG>=3)fprintf(stderr, "Try el %d\n", i);
 		bn_mat_ae( mat, 0.0, i*45.0 );
 	    } else {
 		fprintf(stderr, "trapped, giving up on escape\n");
@@ -341,30 +341,30 @@ main(int argc, char **argv)
 	     *  the tangent plane, it is doomed to failure;
 	     *  pick any tangent and use that instead.
 	     */
-	    if( (VDOT( ap.a_ray.r_dir, norm_cur_try )) < -0.9995 )  {
+	    if ( (VDOT( ap.a_ray.r_dir, norm_cur_try )) < -0.9995 )  {
 		vect_t	olddir;
 
 		VMOVE( olddir, ap.a_ray.r_dir );
 		VCROSS( ap.a_ray.r_dir, olddir, norm_cur_try );
 	    }
 	}
-	if( failed_try > 0 )  {
+	if ( failed_try > 0 )  {
 	    /* Extra trys were required, prevent runaways */
-	    if( clear_dist > incr_dist )
+	    if ( clear_dist > incr_dist )
 		clear_dist = incr_dist;
 	}
 
 	/* One simple attempt at not overshooting the goal.
 	 * Really should measure distance point-to-line
 	 */
-	if( clear_dist > max_dist_togo )
+	if ( clear_dist > max_dist_togo )
 	    clear_dist = max_dist_togo;
 
 	/* Advance position along ray */
     advance:	;
-	if( clear_dist > 0.0 )  {
+	if ( clear_dist > 0.0 )  {
 	    fastf_t	step;
-	    if( clear_dist < incr_dist )
+	    if ( clear_dist < incr_dist )
 		step = clear_dist;
 	    else
 		step = incr_dist;
@@ -386,9 +386,9 @@ int hit(register struct application *ap, struct partition *PartHeadp, struct seg
     register struct soltab *stp;
     register struct hit *hitp;
 
-    for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
-	if( pp->pt_outhit->hit_dist >= 0.0 )  break;
-    if( pp == PartHeadp )  {
+    for ( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
+	if ( pp->pt_outhit->hit_dist >= 0.0 )  break;
+    if ( pp == PartHeadp )  {
 	bu_log("hit:  no hit out front?\n");
 	return(0);
     }
@@ -427,7 +427,7 @@ proj_goal(struct application *ap)
     vect_t	newdir;
     fastf_t	k;
 
-    if( VDOT( ap->a_ray.r_dir, norm_cur_try ) < -0.9995 )  {
+    if ( VDOT( ap->a_ray.r_dir, norm_cur_try ) < -0.9995 )  {
 	/* Projected goal will be right where we are now.
 	 * Pick any tangent at all.
 	 * Use principle dir of curvature.

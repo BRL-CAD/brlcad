@@ -67,54 +67,54 @@ const double		dist_tol;	/* distance tolerance */
 	svec[0] = svec[1] = 0;
 	si = 2;
 
-	for(i=0; i<7; i++) {
+	for (i=0; i<7; i++) {
 		unique = YES;
-		if(done == NO)
+		if (done == NO)
 			svec[si] = i;
-		for(j=i+1; j<8; j++) {
-			if( VAPPROXEQUAL( gp->pt[i], gp->pt[j], dist_tol ) )  {
-				if( done == NO ) svec[++si] = j;
+		for (j=i+1; j<8; j++) {
+			if ( VAPPROXEQUAL( gp->pt[i], gp->pt[j], dist_tol ) )  {
+				if ( done == NO ) svec[++si] = j;
 				unique = NO;
 			}
 		}
-		if( unique == NO ) {  	/* point i not unique */
-			if( si > 2 && si < 6 ) {
+		if ( unique == NO ) {  	/* point i not unique */
+			if ( si > 2 && si < 6 ) {
 				svec[0] = si - 1;
-				if(si == 5 && svec[5] >= 6)
+				if (si == 5 && svec[5] >= 6)
 					done = YES;
 				si = 6;
 			}
-			if( si > 6 ) {
+			if ( si > 6 ) {
 				svec[1] = si - 5;
 				done = YES;
 			}
 		}
 	}
-	if( si > 2 && si < 6 )
+	if ( si > 2 && si < 6 )
 		svec[0] = si - 1;
-	if( si > 6 )
+	if ( si > 6 )
 		svec[1] = si - 5;
-	for(i=1; i<=svec[1]; i++)
+	for (i=1; i<=svec[1]; i++)
 		svec[svec[0]+1+i] = svec[5+i];
-	for(i=svec[0]+svec[1]+2; i<11; i++)
+	for (i=svec[0]+svec[1]+2; i<11; i++)
 		svec[i] = -1;
 
 	/* find the unique points */
 	numuniq = 0;
-	for(j=0; j<8; j++) {
+	for (j=0; j<8; j++) {
 		unique = YES;
-		for(i=2; i<svec[0]+svec[1]+2; i++) {
-			if( j == svec[i] ) {
+		for (i=2; i<svec[0]+svec[1]+2; i++) {
+			if ( j == svec[i] ) {
 				unique = NO;
 				break;
 			}
 		}
-		if( unique == YES )
+		if ( unique == YES )
 			uniq[numuniq++] = j;
 	}
 
 	/* put comgeom solid typpe into s_cgtype */
-	switch( numuniq ) {
+	switch ( numuniq ) {
 	case 8:
 		*cgtype = 8;  /* ARB8 */
 		break;
@@ -122,7 +122,7 @@ const double		dist_tol;	/* distance tolerance */
 		*cgtype = 7;	/* ARB7 */
 		break;
 	case 4:
-		if(svec[0] == 2)
+		if (svec[0] == 2)
 			*cgtype = 6;	/* ARB6 */
 		else
 			*cgtype = 5;	/* ARB5 */
@@ -185,37 +185,37 @@ const int	cgtype;
 	int		prod;
 
 	/* For all the cases that don't require shuffling, duplicate first */
-	for( i=0; i<8; i++ )  {
+	for ( i=0; i<8; i++ )  {
 		VMOVE( pts[i], gp->pt[i] );
 	}
 
 	/* cgtype indicates which kind of ARB it is */
-	switch( cgtype ) {
+	switch ( cgtype ) {
 	case 8:
 		break;
 
 	case 7:
 		/* arb7 vectors: 0 1 2 3 4 5 6 4 */
-		switch( svec[2] ) {
+		switch ( svec[2] ) {
 		case 0:			/* 0 = 1, 3, or 4 */
-			if(svec[3] == 1)	arb_mv(pts, gp, 4, 7, 6, 5, 1, 4, 3, 1);
-			if(svec[3] == 3)	arb_mv(pts, gp, 4, 5, 6, 7, 0, 1, 2, 0);
-			if(svec[3] == 4)	arb_mv(pts, gp, 1, 2, 6, 5, 0, 3, 7, 0);
+			if (svec[3] == 1)	arb_mv(pts, gp, 4, 7, 6, 5, 1, 4, 3, 1);
+			if (svec[3] == 3)	arb_mv(pts, gp, 4, 5, 6, 7, 0, 1, 2, 0);
+			if (svec[3] == 4)	arb_mv(pts, gp, 1, 2, 6, 5, 0, 3, 7, 0);
 			break;
 		case 1:			/* 1 = 2 or 5 */
-			if(svec[3] == 2)	arb_mv(pts, gp, 0, 4, 7, 3, 1, 5, 6, 1);
-			if(svec[3] == 5)	arb_mv(pts, gp, 0, 3, 7, 4, 1, 2, 6, 1);
+			if (svec[3] == 2)	arb_mv(pts, gp, 0, 4, 7, 3, 1, 5, 6, 1);
+			if (svec[3] == 5)	arb_mv(pts, gp, 0, 3, 7, 4, 1, 2, 6, 1);
 			break;
 		case 2:			/* 2 = 3 or 6 */
-			if(svec[3] == 3)	arb_mv(pts, gp, 6, 5, 4, 7, 2, 1, 0, 2);
-			if(svec[3] == 6)	arb_mv(pts, gp, 3, 0, 4, 7, 2, 1, 5, 2);
+			if (svec[3] == 3)	arb_mv(pts, gp, 6, 5, 4, 7, 2, 1, 0, 2);
+			if (svec[3] == 6)	arb_mv(pts, gp, 3, 0, 4, 7, 2, 1, 5, 2);
 			break;
 		case 3:			/* 3 = 7 */
 			arb_mv(pts, gp, 2, 1, 5, 6, 3, 0, 4, 3);
 			break;
 		case 4:			/* 4 = 5 */
 			/* if 4 = 7  do nothing */
-			if(svec[3] == 5)	arb_mv(pts, gp, 1, 2, 3, 0, 5, 6, 7, 5);
+			if (svec[3] == 5)	arb_mv(pts, gp, 1, 2, 3, 0, 5, 6, 7, 5);
 			break;
 		case 5:			/* 5 = 6 */
 			arb_mv(pts, gp, 2, 3, 0, 1, 6, 7, 4, 6);
@@ -232,37 +232,37 @@ const int	cgtype;
 	case 6:
 		/* arb6 vectors:  0 1 2 3 4 4 6 6 */
 		prod = 1;
-		for(i=0; i<numvec; i++)
+		for (i=0; i<numvec; i++)
 			prod = prod * (uniq[i] + 1);
-		switch( prod ) {
+		switch ( prod ) {
 		case 24:	/* 0123 unique */
 			/* 4=7 and 5=6  OR  4=5 and 6=7 */
-			if(svec[3] == 7)	arb_mv(pts, gp, 3, 0, 1, 2, 4, 4, 5, 5);
+			if (svec[3] == 7)	arb_mv(pts, gp, 3, 0, 1, 2, 4, 4, 5, 5);
 			else	arb_mv(pts, gp, 0, 1, 2, 3, 4, 4, 6, 6);
 			break;
 		case 1680:	/* 4567 unique */
 			/* 0=3 and 1=2  OR  0=1 and 2=3 */
-			if(svec[3] == 3)	arb_mv(pts, gp, 7, 4, 5, 6, 0, 0, 1, 1);
+			if (svec[3] == 3)	arb_mv(pts, gp, 7, 4, 5, 6, 0, 0, 1, 1);
 			else	arb_mv(pts, gp, 4, 5, 6, 7, 0, 0, 2, 2);
 			break;
 		case 160:	/* 0473 unique */
 			/* 1=2 and 5=6  OR  1=5 and 2=6 */
-			if(svec[3] == 2)	arb_mv(pts, gp, 0, 3, 7, 4, 1, 1, 5, 5);
+			if (svec[3] == 2)	arb_mv(pts, gp, 0, 3, 7, 4, 1, 1, 5, 5);
 			else	arb_mv(pts, gp, 4, 0, 3, 7, 1, 1, 2, 2);
 			break;
 		case 672:	/* 3267 unique */
 			/* 0=1 and 4=5  OR  0=4 and 1=5 */
-			if(svec[3] == 1)	arb_mv(pts, gp, 3, 2, 6, 7, 0, 0, 4, 4);
+			if (svec[3] == 1)	arb_mv(pts, gp, 3, 2, 6, 7, 0, 0, 4, 4);
 			else	arb_mv(pts, gp, 7, 3, 2, 6, 0, 0, 1, 1);
 			break;
 		case 252:	/* 1256 unique */
 			/* 0=3 and 4=7  OR 0=4 and 3=7 */
-			if(svec[3] == 3)	arb_mv(pts, gp, 1, 2, 6, 5, 0, 0, 4, 4);
+			if (svec[3] == 3)	arb_mv(pts, gp, 1, 2, 6, 5, 0, 0, 4, 4);
 			else	arb_mv(pts, gp, 5, 1, 2, 6, 0, 0, 3, 3);
 			break;
 		case 60:	/* 0154 unique */
 			/* 2=3 and 6=7  OR  2=6 and 3=7 */
-			if(svec[3] == 3)	arb_mv(pts, gp, 0, 1, 5, 4, 2, 2, 6, 6);
+			if (svec[3] == 3)	arb_mv(pts, gp, 0, 1, 5, 4, 2, 2, 6, 6);
 			else	arb_mv(pts, gp, 5, 1, 0, 4, 2, 2, 3, 3);
 			break;
 		default:
@@ -274,9 +274,9 @@ const int	cgtype;
 	case 5:
 		/* arb5 vectors:  0 1 2 3 4 4 4 4 */
 		prod = 1;
-		for(i=2; i<6; i++)
+		for (i=2; i<6; i++)
 			prod = prod * (svec[i] + 1);
-		switch( prod ) {
+		switch ( prod ) {
 		case 24:	/* 0=1=2=3 */
 			arb_mv(pts, gp, 4, 5, 6, 7, 0, 0, 0, 0);
 			break;
@@ -304,7 +304,7 @@ const int	cgtype;
 	case 4:
 		/* arb4 vectors:  0 1 2 0 4 4 4 4 */
 		j = svec[6];
-		if( svec[0] == 2 )	j = svec[4];
+		if ( svec[0] == 2 )	j = svec[4];
 		arb_mv(pts, gp, uniq[0], uniq[1], svec[2], uniq[0], j, j, j, j);
 		break;
 	default:

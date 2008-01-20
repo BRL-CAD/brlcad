@@ -77,13 +77,13 @@ int
 mat_Rd_Db(char *file)
 {	register Mat_Db_Entry	*entry;
 		register FILE		*fp;
-	if( (fp = fopen( file, "r" )) == NULL )
+	if ( (fp = fopen( file, "r" )) == NULL )
 		return	0;
 	/* Mark all entries as NULL.					*/
-	for( entry = mat_db_table; entry < &mat_db_table[MAX_MAT_DB]; entry++ )
+	for ( entry = mat_db_table; entry < &mat_db_table[MAX_MAT_DB]; entry++ )
 		entry->mode_flag = MF_NULL;
 	mat_db_size = 0;
-	for(	entry = mat_db_table;
+	for (	entry = mat_db_table;
 		entry < &mat_db_table[MAX_MAT_DB]
 	     && get_Mat_Entry( entry, fp );
 		++entry
@@ -102,7 +102,7 @@ mat_Print_Db(int material_id)
 		register int		stop;
 		register int		success = 0;
 		int			lines =	(PROMPT_LINE-TOP_SCROLL_WIN);
-	if( material_id >= MAX_MAT_DB )
+	if ( material_id >= MAX_MAT_DB )
 		{
 		bu_log( "Material data base only has %d entries.\n",
 			MAX_MAT_DB
@@ -111,49 +111,49 @@ mat_Print_Db(int material_id)
 		return	success;
 		}
 	else
-	if( material_id < 0 )
+	if ( material_id < 0 )
 		{
 		stop = MAX_MAT_DB - 1;
 		material_id = 0;
 		}
 	else
 		stop = material_id;
-	for( ; material_id <= stop; material_id++, lines-- )
+	for (; material_id <= stop; material_id++, lines-- )
 		{
 		entry = &mat_db_table[material_id];
-		if( entry->mode_flag == MF_NULL )
+		if ( entry->mode_flag == MF_NULL )
 			continue;
 		success = 1;
-		if( lines <= 0 && ! do_More( &lines ) )
+		if ( lines <= 0 && ! do_More( &lines ) )
 			break;
 		prnt_Scroll( "\n" );
-		if( --lines <= 0 && ! do_More( &lines ) )
+		if ( --lines <= 0 && ! do_More( &lines ) )
 			break;
 		prnt_Scroll( "MATERIAL [%d] %s\n",
 				material_id,
 				entry->name[0] == '\0' ? "(untitled)" : entry->name
 				);
-		if( --lines <= 0 && ! do_More( &lines ) )
+		if ( --lines <= 0 && ! do_More( &lines ) )
 			break;
 		prnt_Scroll( "        shininess\t\t(%d)\n", entry->shine );
-		if( --lines <= 0 && ! do_More( &lines ) )
+		if ( --lines <= 0 && ! do_More( &lines ) )
 			break;
 		prnt_Scroll( "        specular weight\t\t(%g)\n", entry->wgt_specular );
-		if( --lines <= 0 && ! do_More( &lines ) )
+		if ( --lines <= 0 && ! do_More( &lines ) )
 			break;
 		prnt_Scroll( "        diffuse weight\t\t(%g)\n", entry->wgt_diffuse );
-		if( --lines <= 0 && ! do_More( &lines ) )
+		if ( --lines <= 0 && ! do_More( &lines ) )
 			break;
 		prnt_Scroll( "        transparency\t\t(%g)\n", entry->transparency );
-		if( --lines <= 0 && ! do_More( &lines ) )
+		if ( --lines <= 0 && ! do_More( &lines ) )
 			break;
 		prnt_Scroll( "        reflectivity\t\t(%g)\n", entry->reflectivity );
-		if( --lines <= 0 && ! do_More( &lines ) )
+		if ( --lines <= 0 && ! do_More( &lines ) )
 			break;
 		prnt_Scroll( "        refractive index\t(%g)\n", entry->refrac_index );
-		if( --lines <= 0 && ! do_More( &lines ) )
+		if ( --lines <= 0 && ! do_More( &lines ) )
 			break;
-		if( strncmp( TEX_KEYWORD, entry->name, TEX_KEYLEN ) != 0 )
+		if ( strncmp( TEX_KEYWORD, entry->name, TEX_KEYLEN ) != 0 )
 			prnt_Scroll( "        diffuse color\t\t(%d %d %d)\n",
 					entry->df_rgb[0],
 					entry->df_rgb[1],
@@ -176,17 +176,17 @@ int
 mat_Save_Db(char *file)
 {	register Mat_Db_Entry	*entry;
 		register FILE		*fp;
-	if( (fp = fopen( file, "w" )) == NULL )
+	if ( (fp = fopen( file, "w" )) == NULL )
 		return	0;
 	setbuf( fp, bu_malloc( BUFSIZ, "buffer" ) );
-	for(	entry = mat_db_table;
+	for (	entry = mat_db_table;
 		entry < &mat_db_table[mat_db_size]
 	     && put_Mat_Entry( entry, fp );
 		++entry
 		)
 		;
 	(void) fclose( fp );
-	if( entry != &mat_db_table[mat_db_size] )
+	if ( entry != &mat_db_table[mat_db_size] )
 		return	0;
 	return	1;
 	}
@@ -201,9 +201,9 @@ mat_Edit_Db_Entry(int id)
 		char			input_buf[MAX_LN];
 		char			prompt[MAX_LN];
 		int			red, grn, blu;
-	if( id < 0 )
+	if ( id < 0 )
 		return	-1;
-	if( id < MAX_MAT_DB )
+	if ( id < MAX_MAT_DB )
 		{
 		entry = &mat_db_table[id];
 		entry->id = id;
@@ -214,40 +214,40 @@ mat_Edit_Db_Entry(int id)
 		return	0;
 		}
 	(void) snprintf( prompt, MAX_LN, "material name ? (%s) ", entry->name );
-	if( get_Input( input_buf, MAX_LN, prompt ) != NULL )
+	if ( get_Input( input_buf, MAX_LN, prompt ) != NULL )
 		(void) strncpy( entry->name, input_buf, MAX_MAT_NM );
 	(void) sprintf( prompt, "shine ? [1 to n](%d) ", entry->shine );
-	if( get_Input( input_buf, MAX_LN, prompt ) != NULL )
+	if ( get_Input( input_buf, MAX_LN, prompt ) != NULL )
 		(void) sscanf( input_buf, "%d", &entry->shine );
 	(void) sprintf( prompt, "specular weighting ? [0.0 to 1.0](%g) ",
 			entry->wgt_specular );
-	if( get_Input( input_buf, MAX_LN, prompt  ) != NULL )
+	if ( get_Input( input_buf, MAX_LN, prompt  ) != NULL )
 		(void) sscanf( input_buf, "%lf", &entry->wgt_specular );
 	(void) sprintf( prompt, "diffuse weighting ? [0.0 to 1.0](%g) ",
 			entry->wgt_diffuse );
-	if( get_Input( input_buf, MAX_LN, prompt ) != NULL )
+	if ( get_Input( input_buf, MAX_LN, prompt ) != NULL )
 		(void) sscanf( input_buf, "%lf", &entry->wgt_diffuse );
 	(void) sprintf( prompt, "transparency ? [0.0 to 1.0](%g) ",
 			entry->transparency );
-	if( get_Input( input_buf, MAX_LN, prompt ) != NULL )
+	if ( get_Input( input_buf, MAX_LN, prompt ) != NULL )
 		(void) sscanf( input_buf, "%lf", &entry->transparency );
 	(void) sprintf( prompt, "reflectivity ? [0.0 to 1.0](%g) ",
 			entry->reflectivity );
-	if( get_Input( input_buf, MAX_LN, prompt ) != NULL )
+	if ( get_Input( input_buf, MAX_LN, prompt ) != NULL )
 		(void) sscanf( input_buf, "%lf", &entry->reflectivity );
 	(void) sprintf( prompt, "refractive index ? [0.9 to 5.0](%g) ",
 			entry->refrac_index );
-	if( get_Input( input_buf, MAX_LN, prompt ) != NULL )
+	if ( get_Input( input_buf, MAX_LN, prompt ) != NULL )
 		(void) sscanf( input_buf, "%lf", &entry->refrac_index );
 
-	if( strncmp( TEX_KEYWORD, entry->name, TEX_KEYLEN ) != 0 )
+	if ( strncmp( TEX_KEYWORD, entry->name, TEX_KEYLEN ) != 0 )
 		{
 		(void) sprintf( prompt, "diffuse RGB values ? [0 to 255](%d %d %d) ",
 				entry->df_rgb[RED],
 				entry->df_rgb[GRN],
 				entry->df_rgb[BLU]
 				);
-		if(	get_Input( input_buf, MAX_LN, prompt ) != NULL
+		if (	get_Input( input_buf, MAX_LN, prompt ) != NULL
 		     &&	sscanf( input_buf, "%d %d %d", &red, &grn, &blu ) == 3
 			)
 			{
@@ -262,7 +262,7 @@ mat_Edit_Db_Entry(int id)
 				entry->df_rgb[0]<<3,
 				entry->df_rgb[1]<<3
 				);
-		if(	get_Input( input_buf, MAX_LN, prompt ) != NULL
+		if (	get_Input( input_buf, MAX_LN, prompt ) != NULL
 		    &&	sscanf( input_buf, "%d %d", &red, &grn ) == 2
 			)
 			{
@@ -281,9 +281,9 @@ mat_Edit_Db_Entry(int id)
 Mat_Db_Entry *
 mat_Get_Db_Entry(int id)
 {
-	if( id < 0 )
+	if ( id < 0 )
 		return	MAT_DB_NULL;
-	if( id < mat_db_size )
+	if ( id < mat_db_size )
 		return	&mat_db_table[id];
 	else
 		return	MAT_DB_NULL;
@@ -294,21 +294,21 @@ get_Mat_Entry(register Mat_Db_Entry *entry, FILE *fp)
 {	register char	*ptr;
 		int		items;
 		int		red, grn, blu, mode;
-	if( bu_fgets( entry->name, MAX_MAT_NM, fp ) == NULL )
+	if ( bu_fgets( entry->name, MAX_MAT_NM, fp ) == NULL )
 		return	0;
 	ptr = &entry->name[strlen(entry->name) - 1];
-	if( *ptr == '\n' )
+	if ( *ptr == '\n' )
 		/* Read entire line.					*/
 		*ptr = '\0';
 	else	/* Skip rest of line.					*/
-		while( getc( fp ) != '\n' )
+		while ( getc( fp ) != '\n' )
 			;
-	if( (items = fscanf( fp, "%d %d", &entry->id, &entry->shine )) != 2 )
+	if ( (items = fscanf( fp, "%d %d", &entry->id, &entry->shine )) != 2 )
 		{
 		(void) fprintf( stderr, "Could not read integers (%d read)!\n", items );
 		return	0;
 		}
-	if(	fscanf(	fp,
+	if (	fscanf(	fp,
 			"%lf %lf %lf %lf %lf",
 			&entry->wgt_specular,
 			&entry->wgt_diffuse,
@@ -321,7 +321,7 @@ get_Mat_Entry(register Mat_Db_Entry *entry, FILE *fp)
 		(void) fprintf( stderr, "Could not read floats!\n" );
 		return	0;
 		}
-	if( fscanf( fp, "%d %d %d", &red, &grn, &blu ) != 3 )
+	if ( fscanf( fp, "%d %d %d", &red, &grn, &blu ) != 3 )
 		{
 		(void) fprintf( stderr, "Could not read chars!\n" );
 		return	0;
@@ -329,7 +329,7 @@ get_Mat_Entry(register Mat_Db_Entry *entry, FILE *fp)
 	entry->df_rgb[0] = red;
 	entry->df_rgb[1] = grn;
 	entry->df_rgb[2] = blu;
-	if( fscanf( fp, "%d", &mode ) != 1 )
+	if ( fscanf( fp, "%d", &mode ) != 1 )
 		{
 		(void) fprintf( stderr,
 				"get_Mat_Entry(): Could not read mode_flag!\n"
@@ -337,7 +337,7 @@ get_Mat_Entry(register Mat_Db_Entry *entry, FILE *fp)
 		return	0;
 		}
 	entry->mode_flag = mode;
-	while( getc( fp ) != '\n' )
+	while ( getc( fp ) != '\n' )
 		; /* Gobble rest of line.				*/
 	return	1;
 	}
@@ -345,7 +345,7 @@ get_Mat_Entry(register Mat_Db_Entry *entry, FILE *fp)
 static int
 put_Mat_Entry(register Mat_Db_Entry *entry, register FILE *fp)
 {
-	if( entry->mode_flag == MF_NULL )
+	if ( entry->mode_flag == MF_NULL )
 		entry = &mat_nul_entry;
 	(void) fprintf( fp, "%s\n", entry->name );
 	(void) fprintf( fp, "%d\n%d\n", entry->id, entry->shine );

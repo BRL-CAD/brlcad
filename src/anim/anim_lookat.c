@@ -84,7 +84,7 @@ main(int argc, char **argv)
 
     VSET(norm, 0.0, 1.0, 0.0);
     while (!feof(stdin)){
-	val=scanf("%lf %lf %lf %lf %lf %lf %lf",&time, eye, eye+1, eye+2, look, look+1, look+2);
+	val=scanf("%lf %lf %lf %lf %lf %lf %lf", &time, eye, eye+1, eye+2, look, look+1, look+2);
 	if (val < 7){
 	    break;
 	}
@@ -143,9 +143,9 @@ int get_args(int argc, char **argv)
 {
     int c;
     while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
-	switch(c){
+	switch (c){
 	case 'f':
-	    sscanf(bu_optarg, "%d",&frame);
+	    sscanf(bu_optarg, "%d", &frame);
 	    break;
 	case 'y':
 	    print_mode = LOOKAT_YPR;

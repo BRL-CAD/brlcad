@@ -93,7 +93,7 @@ int read_point (FILE *fp, fastf_t *c_p, int c_len, int normalize, struct bu_vls 
     static int		line_nm = 0;
     struct bu_vls	*bp;
 
-    for (bp = bu_vls_vlsinit(); ; bu_vls_trunc(bp, 0))
+    for (bp = bu_vls_vlsinit();; bu_vls_trunc(bp, 0))
     {
 	if (bu_vls_gets(bp, fp) == -1)
 	{

@@ -67,13 +67,13 @@ void render_surfel_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pix
 
   d = (render_surfel_t *)render->data;
 
-  if((mesh = (adrt_mesh_t *)tie_work(tie, ray, &id, render_hit, NULL))) {
-    for(i = 0; i < d->num; i++) {
+  if ((mesh = (adrt_mesh_t *)tie_work(tie, ray, &id, render_hit, NULL))) {
+    for (i = 0; i < d->num; i++) {
       dist_sq = (d->list[i].pos.v[0]-id.pos.v[0]) * (d->list[i].pos.v[0]-id.pos.v[0]) +
                 (d->list[i].pos.v[1]-id.pos.v[1]) * (d->list[i].pos.v[1]-id.pos.v[1]) +
                 (d->list[i].pos.v[2]-id.pos.v[2]) * (d->list[i].pos.v[2]-id.pos.v[2]);
 
-      if(dist_sq < d->list[i].radius*d->list[i].radius) {
+      if (dist_sq < d->list[i].radius*d->list[i].radius) {
         *pixel = d->list[i].color;
         break;
       }

@@ -135,8 +135,8 @@ main(int argc, char **argv)
 	struct	uplot *up;
 	int	i;
 
-	while( argc > 1 ) {
-		if( strcmp(argv[1], "-v") == 0 ) {
+	while ( argc > 1 ) {
+		if ( strcmp(argv[1], "-v") == 0 ) {
 			verbose++;
 		} else
 			break;
@@ -144,39 +144,39 @@ main(int argc, char **argv)
 		argc--;
 		argv++;
 	}
-	if( argc == 2 ) {
-		if( (fp = fopen(argv[1], "r")) == NULL ) {
+	if ( argc == 2 ) {
+		if ( (fp = fopen(argv[1], "r")) == NULL ) {
 			perror( "pl-asc" );
 			return 1;
 		}
 	} else {
 		fp = stdin;
-		if( argc > 1 || isatty(fileno(stdin)) ) {
+		if ( argc > 1 || isatty(fileno(stdin)) ) {
 			bu_exit(1, "%s", usage );
 		}
 	}
 
-	while( (c = getc(fp)) != EOF ) {
+	while ( (c = getc(fp)) != EOF ) {
 		/* look it up */
-		if( c < 'A' || c > 'z' ) {
+		if ( c < 'A' || c > 'z' ) {
 			up = &uerror;
 		} else {
 			up = &letters[ c - 'A' ];
 		}
 
-		if( up->targ == TBAD ) {
+		if ( up->targ == TBAD ) {
 			fprintf( stderr, "Bad command '%c' (0x%02x)\n", c, c );
 			continue;
 		}
-		if( verbose ) {
+		if ( verbose ) {
 			counts[ c - 'A' ]++;
 			printf( "%s\t", up->desc );
 		} else {
 			printf( "%c\t", c );
 		}
 
-		if( up->narg > 0 ) {
-			switch( up->targ ) {
+		if ( up->narg > 0 ) {
+			switch ( up->targ ) {
 			case TNONE:
 				break;
 			case TSHORT:
@@ -197,10 +197,10 @@ main(int argc, char **argv)
 		putchar( '\n' );
 	}
 
-	if( verbose ) {
+	if ( verbose ) {
 		/* write command usage summary */
-		for( i = 0; i < 'z'-'A'+1; i++ ) {
-			if( counts[i] != 0 ) {
+		for ( i = 0; i < 'z'-'A'+1; i++ ) {
+			if ( counts[i] != 0 ) {
 				fprintf( stderr, "%s %ld\n", letters[i].desc, counts[i] );
 			}
 		}
@@ -213,8 +213,8 @@ outchar(int n)
 {
 	int	i, c;
 
-	for( i = 0; i < n; i++ ) {
-		if( i != 0 )
+	for ( i = 0; i < n; i++ ) {
+		if ( i != 0 )
 			putchar(' ');
 		c = getc(fp);
 		printf("%3d", c );
@@ -227,7 +227,7 @@ outstring(int n)
 	int	c;
 
 	putchar('"');
-	while( (c = getc(fp)) != '\n' && c != EOF )
+	while ( (c = getc(fp)) != '\n' && c != EOF )
 		putchar(c);
 	putchar('"');
 }
@@ -241,7 +241,7 @@ getshort(void)
 	v |= (getc(fp)<<8);	/* order is important! */
 
 	/* worry about sign extension - sigh */
-	if( v <= 0x7FFF )  return(v);
+	if ( v <= 0x7FFF )  return(v);
 	w = -1;
 	w &= ~0x7FFF;
 	return( w | v );
@@ -253,8 +253,8 @@ outshort(int n)
 	int	i;
 	short	s;
 
-	for( i = 0; i < n; i++ ) {
-		if( i != 0 )
+	for ( i = 0; i < n; i++ ) {
+		if ( i != 0 )
 			putchar(' ');
 		s = getshort();
 		printf("%d", s );
@@ -271,8 +271,8 @@ outfloat(int n)
 	fread( in, 8, n, fp );
 	ntohd( (unsigned char *)out, (unsigned char *)in, n );
 
-	for( i = 0; i < n; i++ ) {
-		if( i != 0 )
+	for ( i = 0; i < n; i++ ) {
+		if ( i != 0 )
 			putchar(' ');
 		printf("%g", out[i] );
 	}

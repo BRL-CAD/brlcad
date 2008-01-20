@@ -387,7 +387,7 @@ TIE_FUNC(void tie_push, tie_t *tie, TIE_3 **tlist, int tnum, void *plist, int ps
   }
 
   for (i = 0; i < tnum; i++) {
-    if(tie_check_degenerate) {
+    if (tie_check_degenerate) {
       TIE_3 u, v, w;
 
       MATH_VEC_SUB(u, (*tlist[i*3+1]), (*tlist[i*3+0]));

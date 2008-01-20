@@ -160,7 +160,7 @@ curve_attach(register struct application *ap)
 	RT_AP_CHECK(ap);
 	RT_CK_RTI(ap->a_rt_i);
 
-	if( ap->a_spectrum )  {
+	if ( ap->a_spectrum )  {
 		BN_CK_TABDATA( ap->a_spectrum );
 		return;
 	}
@@ -168,7 +168,7 @@ curve_attach(register struct application *ap)
 	/* If scanline buffer has not yet been allocated, do so now */
 	slp = &scanline[ap->a_y];
 	bu_semaphore_acquire( RT_SEM_RESULTS );
-	if( slp->sl_buf == (char *)0 )  {
+	if ( slp->sl_buf == (char *)0 )  {
 		slp->sl_buf = (char *)bn_tabdata_malloc_array( spectrum, width );
 	}
 	bu_semaphore_release( RT_SEM_RESULTS );
@@ -222,39 +222,39 @@ view_pixel(register struct application *ap)
 	RT_AP_CHECK(ap);
 	RT_CK_RTI(ap->a_rt_i);
 
-	if( ap->a_user == 0 )  {
+	if ( ap->a_user == 0 )  {
 		/* Shot missed the model */
 		background_radiation(ap);
 	} else {
-		if( !ap->a_spectrum )
+		if ( !ap->a_spectrum )
 			bu_exit(EXIT_FAILURE, "view_pixel called with no spectral curve associated\n");
 		BN_CK_TABDATA(ap->a_spectrum);
 	}
 
 	slp = &scanline[ap->a_y];
 	bu_semaphore_acquire( RT_SEM_RESULTS );
-	if( --(slp->sl_left) <= 0 )
+	if ( --(slp->sl_left) <= 0 )
 		do_eol = 1;
 	bu_semaphore_release( RT_SEM_RESULTS );
 
-	if( !do_eol )  return;
+	if ( !do_eol )  return;
 
-	if( outfp != NULL )  {
+	if ( outfp != NULL )  {
 		int	count;
 
 		/* XXX This writes an array of structures out, including magic */
 		/* XXX in machine-specific format */
 		bu_semaphore_acquire( BU_SEM_SYSCALL );
-		if( fseek( outfp, ap->a_y*(long)width*BN_SIZEOF_TABDATA(spectrum), 0 ) != 0 )
+		if ( fseek( outfp, ap->a_y*(long)width*BN_SIZEOF_TABDATA(spectrum), 0 ) != 0 )
 			bu_log("fseek error\n");
 		count = fwrite( scanline[ap->a_y].sl_buf,
 			BN_SIZEOF_TABDATA(spectrum), width, outfp );
 		bu_semaphore_release( BU_SEM_SYSCALL );
-		if( count != width )
+		if ( count != width )
 			bu_exit(EXIT_FAILURE, "view_pixel:  fwrite failure\n");
 	}
 #ifdef MSWISS
-	if( fbp != FBIO_NULL ) {
+	if ( fbp != FBIO_NULL ) {
 		/* MSWISS -- real-time multi-spectral case */
 		unsigned char obuf[4096];
 		int i;
@@ -270,12 +270,12 @@ view_pixel(register struct application *ap)
 #if 1
 {
 double lo = INFINITY, hi = -INFINITY;
-	for( i=0; i<width; i++ )  {
+	for ( i=0; i<width; i++ )  {
 		register double tmp;
 		sp = (struct bn_tabdata *)(line + i * BN_SIZEOF_TABDATA(spectrum));
 		tmp = sp->y[filter_freq_index];
-		if( tmp < lo ) lo = tmp;
-		if( tmp > hi ) hi = tmp;
+		if ( tmp < lo ) lo = tmp;
+		if ( tmp > hi ) hi = tmp;
 	}
 	filter_bias = lo;
 	filter_gain = 255/(hi-lo);
@@ -285,13 +285,13 @@ double lo = INFINITY, hi = -INFINITY;
 		BN_CK_TABDATA(line);
 		BU_ASSERT( width < sizeof(obuf) );
 		/* A variety of filters could be used here, eventually */
-		for( i=0; i<width; i++ )  {
+		for ( i=0; i<width; i++ )  {
 			register double tmp;
 			sp = (struct bn_tabdata *)(line + i * BN_SIZEOF_TABDATA(spectrum));
 			tmp = filter_gain *
 				(sp->y[filter_freq_index] - filter_bias);
-			if( tmp <= 0 )  obuf[i] = 0;
-			else if( tmp >= 255 )  obuf[i] = 255;
+			if ( tmp <= 0 )  obuf[i] = 0;
+			else if ( tmp >= 255 )  obuf[i] = 255;
 			else obuf[i] = (unsigned char)tmp;
 		}
 
@@ -347,14 +347,14 @@ view_setup(struct rt_i *rtip)
 	 *  may be clear how to repackage this operation.
 	 */
 	regp = BU_LIST_FIRST( region, &rtip->HeadRegion );
-	while( BU_LIST_NOT_HEAD( regp, &rtip->HeadRegion ) )  {
-		switch( mlib_setup( &mfHead, regp, rtip ) )  {
+	while ( BU_LIST_NOT_HEAD( regp, &rtip->HeadRegion ) )  {
+		switch ( mlib_setup( &mfHead, regp, rtip ) )  {
 		case -1:
 		default:
 			bu_log("mlib_setup failure on %s\n", regp->reg_name);
 			break;
 		case 0:
-			if(rdebug&RDEBUG_MATERIAL)
+			if (rdebug&RDEBUG_MATERIAL)
 				bu_log("mlib_setup: drop region %s\n", regp->reg_name);
 			{
 				struct region *r = BU_LIST_NEXT( region, &regp->l );
@@ -365,7 +365,7 @@ view_setup(struct rt_i *rtip)
 			}
 		case 1:
 			/* Full success */
-			if( rdebug&RDEBUG_MATERIAL &&
+			if ( rdebug&RDEBUG_MATERIAL &&
 			    ((struct mfuncs *)(regp->reg_mfuncs))->mf_print )  {
 				((struct mfuncs *)(regp->reg_mfuncs))->
 					mf_print( regp, regp->reg_udata );
@@ -389,10 +389,10 @@ view_cleanup(struct rt_i *rtip)
 
 	RT_CHECK_RTI(rtip);
 
-	for( BU_LIST_FOR( regp, region, &(rtip->HeadRegion) ) )  {
+	for ( BU_LIST_FOR( regp, region, &(rtip->HeadRegion) ) )  {
 		mlib_free( regp );
 	}
-	if( env_region.reg_mfuncs )  {
+	if ( env_region.reg_mfuncs )  {
 		bu_free( (char *)env_region.reg_name, "env_region.reg_name" );
 		env_region.reg_name = (char *)0;
 		mlib_free( &env_region );
@@ -411,7 +411,7 @@ view_cleanup(struct rt_i *rtip)
 static int
 hit_nothing(register struct application *ap)
 {
-	if( rdebug&RDEBUG_MISSPLOT )  {
+	if ( rdebug&RDEBUG_MISSPLOT )  {
 		vect_t	out;
 
 		/* XXX length should be 1 model diameter */
@@ -421,7 +421,7 @@ hit_nothing(register struct application *ap)
 		pdv_3line( stdout, ap->a_ray.r_pt, out );
 	}
 
-	if( env_region.reg_mfuncs )  {
+	if ( env_region.reg_mfuncs )  {
 		struct gunk {
 			struct partition part;
 			struct hit	hit;
@@ -447,7 +447,7 @@ hit_nothing(register struct application *ap)
 		/* U is azimuth, atan() range: -pi to +pi */
 		u.sw.sw_uv.uv_u = bn_atan2( ap->a_ray.r_dir[Y],
 			ap->a_ray.r_dir[X] ) * bn_inv2pi;
-		if( u.sw.sw_uv.uv_u < 0 )
+		if ( u.sw.sw_uv.uv_u < 0 )
 			u.sw.sw_uv.uv_u += 1.0;
 		/*
 		 *  V is elevation, atan() range: -pi/2 to +pi/2,
@@ -493,22 +493,22 @@ colorview(register struct application *ap, struct partition *PartHeadp, struct s
 
 	sw.msw_color = BN_TABDATA_NULL;
 
-	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
-		if( pp->pt_outhit->hit_dist >= 0.0 )  break;
-	if( pp == PartHeadp )  {
+	for ( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
+		if ( pp->pt_outhit->hit_dist >= 0.0 )  break;
+	if ( pp == PartHeadp )  {
 		bu_log("colorview:  no hit out front?\n");
 		return(0);
 	}
 	hitp = pp->pt_inhit;
 	ap->a_uptr = (genptr_t)pp->pt_regionp;	/* note which region was shaded */
 
-	if(rdebug&RDEBUG_HITS)  {
+	if (rdebug&RDEBUG_HITS)  {
 		bu_log("colorview: lvl=%d coloring %s\n",
 			ap->a_level,
 			pp->pt_regionp->reg_name);
 		rt_pr_pt( ap->a_rt_i, pp );
 	}
-	if( hitp->hit_dist >= INFINITY )  {
+	if ( hitp->hit_dist >= INFINITY )  {
 		bu_log("colorview:  entry beyond infinity\n");
 		background_radiation(ap);	/* was VSET( ap->a_color, .5, 0, 0 ); */
 		ap->a_user = 1;		/* Signal view_pixel:  HIT */
@@ -520,11 +520,11 @@ colorview(register struct application *ap, struct partition *PartHeadp, struct s
 	/* It might only be worthwhile doing all this in perspective mode */
 	/* XXX Note that hit_dist can be faintly negative, e.g. -1e-13 */
 
-	if( hitp->hit_dist < 0.0 && pp->pt_regionp->reg_aircode == 0 ) {
+	if ( hitp->hit_dist < 0.0 && pp->pt_regionp->reg_aircode == 0 ) {
 		struct application sub_ap;
 		fastf_t f;
 
-		if( pp->pt_outhit->hit_dist >= INFINITY ||
+		if ( pp->pt_outhit->hit_dist >= INFINITY ||
 		    ap->a_level > max_bounces )  {
 			bu_log("colorview:  eye inside %s (x=%d, y=%d, lvl=%d)\n",
 				pp->pt_regionp->reg_name,
@@ -558,9 +558,9 @@ colorview(register struct application *ap, struct partition *PartHeadp, struct s
 		goto out;
 	}
 
-	if( rdebug&RDEBUG_RAYWRITE )  {
+	if ( rdebug&RDEBUG_RAYWRITE )  {
 		/* Record the approach path */
-		if( hitp->hit_dist > 0.0001 )  {
+		if ( hitp->hit_dist > 0.0001 )  {
 			VJOIN1( hitp->hit_point, ap->a_ray.r_pt,
 				hitp->hit_dist, ap->a_ray.r_dir );
 			wraypts( ap->a_ray.r_pt,
@@ -569,19 +569,19 @@ colorview(register struct application *ap, struct partition *PartHeadp, struct s
 				-1, ap, stdout );	/* -1 = air */
 		}
 	}
-	if( rdebug&RDEBUG_RAYPLOT )  {
+	if ( rdebug&RDEBUG_RAYPLOT )  {
 		/*  There are two parts to plot here.
 		 *  Ray start to inhit (purple),
 		 *  and inhit to outhit (grey).
 		 */
-		if( hitp->hit_dist > 0.0001 )  {
+		if ( hitp->hit_dist > 0.0001 )  {
 			register int i, lvl;
 			fastf_t out;
 			vect_t inhit, outhit;
 
 			lvl = ap->a_level % 100;
-			if( lvl < 0 )  lvl = 0;
-			else if( lvl > 3 )  lvl = 3;
+			if ( lvl < 0 )  lvl = 0;
+			else if ( lvl > 3 )  lvl = 3;
 			i = 255 - lvl * (128/4);
 
 			VJOIN1( inhit, ap->a_ray.r_pt,
@@ -589,7 +589,7 @@ colorview(register struct application *ap, struct partition *PartHeadp, struct s
 			pl_color( stdout, i, 0, i );
 			pdv_3line( stdout, ap->a_ray.r_pt, inhit );
 
-			if( (out = pp->pt_outhit->hit_dist) >= INFINITY )
+			if ( (out = pp->pt_outhit->hit_dist) >= INFINITY )
 				out = 10000;	/* to imply the direction */
 			VJOIN1( outhit,
 				ap->a_ray.r_pt, out,
@@ -599,7 +599,7 @@ colorview(register struct application *ap, struct partition *PartHeadp, struct s
 		}
 	}
 
-	if( !ap->a_spectrum )  curve_attach(ap);
+	if ( !ap->a_spectrum )  curve_attach(ap);
 /* XXX This is the right way to do this, but isn't quite ready yet. */
 	memset((void *)&sw, 0, sizeof(sw));
 	sw.sw_transmit = sw.sw_reflect = 0.0;
@@ -611,7 +611,7 @@ colorview(register struct application *ap, struct partition *PartHeadp, struct s
 	sw.sw_pixeltime = sw.sw_frametime = curframe * frame_delta_t;
 	sw.msw_color = bn_tabdata_get_constval( 1.0, spectrum );
 	sw.msw_basecolor = bn_tabdata_get_constval( 1.0, spectrum );
-	if( pp->pt_regionp->reg_mater.ma_temperature > 0 )
+	if ( pp->pt_regionp->reg_mater.ma_temperature > 0 )
 		sw.sw_temperature = pp->pt_regionp->reg_mater.ma_temperature;
 	else
 		sw.sw_temperature = bg_temp;
@@ -640,7 +640,7 @@ if (rdebug&RDEBUG_SHADE) pr_shadework( "shadework after viewshade", &sw);
 
 out:
 	RT_CK_REGION(ap->a_uptr);
-	if(rdebug&RDEBUG_HITS)  {
+	if (rdebug&RDEBUG_HITS)  {
 		bu_log("colorview: lvl=%d ret a_user=%d %s\n",
 			ap->a_level,
 			ap->a_user,
@@ -655,8 +655,8 @@ free_scanlines(void)
 {
 	register int	y;
 
-	for( y=0; y<height; y++ )  {
-		if( scanline[y].sl_buf )  {
+	for ( y=0; y<height; y++ )  {
+		if ( scanline[y].sl_buf )  {
 			bu_free( scanline[y].sl_buf, "sl_buf scanline buffer" );
 			scanline[y].sl_buf = (char *)0;
 		}
@@ -679,7 +679,7 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
 
 	bu_struct_print( "rttherm variables", view_parse, NULL );
 
-	if( !minus_o )   {
+	if ( !minus_o )   {
 		bu_exit(EXIT_FAILURE, "rttherm: No -o flag specified, can't write to framebuffer, aborting\n");
 		bu_exit(2, NULL);
 	}
@@ -720,9 +720,9 @@ view_2init(register struct application *ap, char *framename)
 	/* Always allocate the scanline[] array
 	 * (unless we already have one in incremental mode)
 	 */
-	if( !incr_mode || !scanline )
+	if ( !incr_mode || !scanline )
 	{
-		if( scanline )  free_scanlines();
+		if ( scanline )  free_scanlines();
 		scanline = (struct scanline *)bu_calloc(
 			height, sizeof(struct scanline),
 			"struct scanline[height]" );
@@ -738,16 +738,16 @@ view_2init(register struct application *ap, char *framename)
 	/* Check for existing file and checkpoint-restart? */
 
 	bu_log("Dynamic scanline buffering\n");
-	for( i=0; i<height; i++ )
+	for ( i=0; i<height; i++ )
 		scanline[i].sl_left = width;
 
-	switch( lightmodel )  {
+	switch ( lightmodel )  {
 	case 0:
 		ap->a_hit = colorview;
 		/* If present, use user-specified light solids */
-		if( BU_LIST_IS_EMPTY( &(LightHead.l) )  ||
+		if ( BU_LIST_IS_EMPTY( &(LightHead.l) )  ||
 		    BU_LIST_UNINITIALIZED( &(LightHead.l ) ) )  {
-		    if(rdebug&RDEBUG_SHOWERR) {
+		    if (rdebug&RDEBUG_SHOWERR) {
 			bu_log("No explicit light\n");
 		    }
 		    light_maker(1, view2model);
@@ -799,7 +799,7 @@ rt_pixel_footprint(const struct application *ap, const struct hit *hitp, const s
 	/*  If surface normal is nearly perpendicular to ray,
 	 *  (i.e. ray is parallel to surface), abort
 	 */
-	if( fabs(VDOT(ap->a_ray.r_dir, normal)) <= 1.0e-10 )  {
+	if ( fabs(VDOT(ap->a_ray.r_dir, normal)) <= 1.0e-10 )  {
 parallel:
 		bu_log("rt_pixel_footprint() ray parallel to surface\n");	/* debug */
 		return 0;
@@ -834,22 +834,22 @@ parallel:
 	 *  replace corner point with new point on tangent plane.
 	 */
 	norm_dist = DIST_PT_PLANE( ap->a_ray.r_pt, surf_tan );
-	for( i=0; i<4; i++ )  {
+	for ( i=0; i<4; i++ )  {
 		fastf_t		slant_factor;	/* Direction dot Normal */
 		vect_t		dir;
 		fastf_t		dist;
 
 		/* XXX sanity check */
 		dist = DIST_PT_PT( corners[i], segp->seg_stp->st_center );
-		if( dist > segp->seg_stp->st_bradius )
+		if ( dist > segp->seg_stp->st_bradius )
 			bu_log(" rt_pixel_footprint() dist = %g > radius = %g\n", dist, segp->seg_stp->st_bradius );
 
 		VSUB2( dir, corners[i], ap->a_ray.r_pt );
 		VUNITIZE(dir);
-		if( (slant_factor = -VDOT( surf_tan, dir )) < -1.0e-10 ||
+		if ( (slant_factor = -VDOT( surf_tan, dir )) < -1.0e-10 ||
 		     slant_factor > 1.0e-10 )  {
 			dist = norm_dist / slant_factor;
-			if( !NEAR_ZERO(dist, INFINITY) )
+			if ( !NEAR_ZERO(dist, INFINITY) )
 				goto parallel;
 		} else {
 			goto parallel;

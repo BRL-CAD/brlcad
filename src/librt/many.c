@@ -75,7 +75,7 @@ rt_shoot_many_rays_worker(int cpu, genptr_t arg)
 	struct application app;
 	struct rt_many_internal *rmip = (struct rt_many_internal *)arg;
 
-	if( cpu >= MAX_PSW )  {
+	if ( cpu >= MAX_PSW )  {
 		bu_log("rt_shoot_many_rays_worker() cpu %d > MAX_PSW %d, array overrun\n", cpu, MAX_PSW);
 		bu_bomb("rt_shoot_many_rays_worker() cpu > MAX_PSW, array overrun\n");
 	}
@@ -87,11 +87,11 @@ rt_shoot_many_rays_worker(int cpu, genptr_t arg)
 	app = *rmip->proto_ap;			/* struct copy */
 	app.a_resource = &rmip->resources[cpu];
 
-	while(1)  {
+	while (1)  {
 		register long	index;
 		register long	lim;
 
-		if( rmip->stop_worker )  break;
+		if ( rmip->stop_worker )  break;
 
 		bu_semaphore_acquire( RT_SEM_WORKER );
 		index = rmip->cur_index;
@@ -99,8 +99,8 @@ rt_shoot_many_rays_worker(int cpu, genptr_t arg)
 		bu_semaphore_release( RT_SEM_WORKER );
 
 		lim = index + rmip->sem_chunk;
-		for( ; index < lim; index++ )  {
-			if( index >= rmip->max_index )  return;
+		for (; index < lim; index++ )  {
+			if ( index >= rmip->max_index )  return;
 
 			/*
 			 * a_x is set here to get differentiated LIBRT
@@ -110,7 +110,7 @@ rt_shoot_many_rays_worker(int cpu, genptr_t arg)
 			app.a_x = index;
 
 			/* Allow our user to do per-ray init of application struct */
-			if( (*rmip->callback)( &app, index ) < 0 )  {
+			if ( (*rmip->callback)( &app, index ) < 0 )  {
 				rmip->stop_worker = 1;
 				break;
 			}
@@ -164,7 +164,7 @@ rt_shoot_many_rays(const struct application *proto_ap, int (*callback) (struct a
 	int	i;
 
 	RT_CK_APPLICATION(proto_ap);
-	for( i=0; i < ncpus; i++ )  {
+	for ( i=0; i < ncpus; i++ )  {
 		RT_CK_RESOURCE( &resources[i] );
 	}
 	rmi.resources = resources;
@@ -177,7 +177,7 @@ rt_shoot_many_rays(const struct application *proto_ap, int (*callback) (struct a
 	rmi.callback = callback;
 	rmi.sem_chunk = ncpus;
 
-	if( !rt_g.rtg_parallel || ncpus <= 1 )  {
+	if ( !rt_g.rtg_parallel || ncpus <= 1 )  {
 		/* The 1-cpu case is supported for testing & generality. */
 		rt_shoot_many_rays_worker( 0, (genptr_t)&rmi );
 	} else {

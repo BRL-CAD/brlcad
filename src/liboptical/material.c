@@ -69,7 +69,7 @@ struct mfuncs *mfp1;
 	register struct mfuncs *mfp;
 
 	RT_CK_MF(mfp1);
-	for( mfp = mfp1; mfp->mf_name != (char *)0; mfp++ )  {
+	for ( mfp = mfp1; mfp->mf_name != (char *)0; mfp++ )  {
 		RT_CK_MF(mfp);
 		mfp->mf_forw = *headp;
 		*headp = mfp;
@@ -124,7 +124,7 @@ found:
 		bu_log("%s_mfuncs table found\n", shader_name);
 
 	/* make sure the shader we were looking for is in the mfuncs table */
-	for (mfp = shader_mfuncs ; mfp->mf_name != (char *)NULL; mfp++) {
+	for (mfp = shader_mfuncs; mfp->mf_name != (char *)NULL; mfp++) {
 		RT_CK_MF(mfp);
 
 		if ( ! strcmp(mfp->mf_name, shader_name))
@@ -241,19 +241,19 @@ mlib_setup( struct mfuncs **headp,
 	RT_CK_REGION(rp);
 	RT_CK_RTI(rtip);
 
-	if( rp->reg_mfuncs != (char *)0 )  {
+	if ( rp->reg_mfuncs != (char *)0 )  {
 		bu_log("mlib_setup:  region %s already setup\n", rp->reg_name );
 		return(-1);
 	}
 	bu_vls_init( &param );
 	material = rp->reg_mater.ma_shader;
-	if( material == NULL || material[0] == '\0' )  {
+	if ( material == NULL || material[0] == '\0' )  {
 		material = mdefault;
 		mlen = strlen(mdefault);
 	} else {
 		char	*endp;
 		endp = strchr( material, ' ' );
-		if( endp )  {
+		if ( endp )  {
 			mlen = endp - material;
 			bu_vls_strcpy( &param, rp->reg_mater.ma_shader+mlen+1 );
 		} else {
@@ -261,7 +261,7 @@ mlib_setup( struct mfuncs **headp,
 		}
 	}
 retry:
-	for( mfp = *headp; mfp != MF_NULL; mfp = mfp->mf_forw )  {
+	for ( mfp = *headp; mfp != MF_NULL; mfp = mfp->mf_forw )  {
 	    if (material[0] != mfp->mf_name[0] ||
 		strncmp(material, mfp->mf_name, strlen(mfp->mf_name)))
 		continue;
@@ -294,7 +294,7 @@ retry:
 
 	bu_log("*ERROR mlib_setup('%s'):  material not known, default assumed %s\n\n",
 		material, rp->reg_name );
-	if( material != mdefault )  {
+	if ( material != mdefault )  {
 		material = mdefault;
 		mlen = strlen(mdefault);
 		bu_vls_trunc( &param, 0 );
@@ -306,12 +306,12 @@ found:
 	rp->reg_mfuncs = (char *)mfp;
 	rp->reg_udata = (char *)0;
 
-	if(R_DEBUG&RDEBUG_MATERIAL)
+	if (R_DEBUG&RDEBUG_MATERIAL)
 		bu_log("mlib_setup(%s) shader=%s\n", rp->reg_name, mfp->mf_name);
-	if( (ret = mfp->mf_setup( rp, &param, &rp->reg_udata, mfp, rtip, headp )) < 0 )  {
+	if ( (ret = mfp->mf_setup( rp, &param, &rp->reg_udata, mfp, rtip, headp )) < 0 )  {
 		bu_log("ERROR mlib_setup(%s) failed. Material='%s', param='%s'.\n",
 			rp->reg_name, material, bu_vls_addr(&param) );
-		if( material != mdefault )  {
+		if ( material != mdefault )  {
 			/* If not default material, change to default & retry */
 			bu_log("\tChanging %s material to default and retrying.\n", rp->reg_name);
 			material = mdefault;
@@ -335,17 +335,17 @@ mlib_free( register struct region *rp )
 {
 	register const struct mfuncs *mfp = (struct mfuncs *)rp->reg_mfuncs;
 
-	if( mfp == MF_NULL )  {
+	if ( mfp == MF_NULL )  {
 		bu_log("mlib_free(%s):  reg_mfuncs NULL\n", rp->reg_name);
 		return;
 	}
-	if( mfp->mf_magic != MF_MAGIC )  {
+	if ( mfp->mf_magic != MF_MAGIC )  {
 		bu_log("mlib_free(%s):  reg_mfuncs bad magic, %x != %x\n",
 			rp->reg_name,
 			mfp->mf_magic, MF_MAGIC );
 		return;
 	}
-	if( mfp->mf_free ) mfp->mf_free( rp->reg_udata );
+	if ( mfp->mf_free ) mfp->mf_free( rp->reg_udata );
 	rp->reg_mfuncs = (char *)0;
 	rp->reg_udata = (char *)0;
 }

@@ -55,10 +55,10 @@ fr_string_c2f(register char *fstr, register char *cstr, register int flen)
 {
 	register int	i;
 
-	for( i=0; i < flen; i++ )  {
-		if( (fstr[i] = cstr[i]) == '\0' )  break;
+	for ( i=0; i < flen; i++ )  {
+		if ( (fstr[i] = cstr[i]) == '\0' )  break;
 	}
-	for( ; i < flen; i++ )
+	for (; i < flen; i++ )
 		fstr[i] = ' ';
 }
 
@@ -76,13 +76,13 @@ fr_string_f2c(char *str, int maxlen)
 	int	i;
 
 	len = sizeof(buf)-1;
-	if( maxlen < len )  len = maxlen;
+	if ( maxlen < len )  len = maxlen;
 	strncpy( buf, str, len );
 	buf[len] = '\0';
 
 	/* Remove any trailing blanks */
-	for( i=strlen(buf)-1; i >= 0; i-- )  {
-		if( buf[i] != ' ' && buf[i] != '\n' )  break;
+	for ( i=strlen(buf)-1; i >= 0; i-- )  {
+		if ( buf[i] != ' ' && buf[i] != '\n' )  break;
 		buf[i] = '\0';
 	}
 	return(buf);
@@ -169,7 +169,7 @@ BU_FORTRAN(frshot, FRSHOT)(int			*nloc,		/* input & output */
 
 	RT_CHECK_RTI(*rtip);
 
-	if( *nloc <= 0 )  {
+	if ( *nloc <= 0 )  {
 		bu_log("ERROR frshot: nloc=%d\n", *nloc);
 		*nloc = 0;
 		return;
@@ -206,7 +206,7 @@ BU_FORTRAN(frshot, FRSHOT)(int			*nloc,		/* input & output */
 	 */
 	ret = rt_shootray( &ap );
 
-	if( ret <= 0 )  {
+	if ( ret <= 0 )  {
 		/* Signal no hits */
 		*nloc = 0;
 		return;
@@ -214,14 +214,14 @@ BU_FORTRAN(frshot, FRSHOT)(int			*nloc,		/* input & output */
 
 	/* Copy hit information from linked list to argument arrays */
 	pp = fr_global_head.pt_forw;
-	if( pp == &fr_global_head )  {
+	if ( pp == &fr_global_head )  {
 		*nloc = 0;
 		return;
 	}
-	for( i=0 ; i < *nloc; i++, pp=pp->pt_forw )  {
+	for ( i=0; i < *nloc; i++, pp=pp->pt_forw )  {
 		register struct context	*ctp;
 
-		if( pp == &fr_global_head )  break;
+		if ( pp == &fr_global_head )  break;
 		indist[i] = pp->pt_inhit->hit_dist;
 		outdist[i] = pp->pt_outhit->hit_dist;
 		/* This might instead be reg_regionid ?? */
@@ -235,7 +235,7 @@ BU_FORTRAN(frshot, FRSHOT)(int			*nloc,		/* input & output */
 	*nloc = i;	/* Will have been incremented above, if successful */
 
 	/* Free linked list storage */
-	for( pp = fr_global_head.pt_forw; pp != &fr_global_head;  )  {
+	for ( pp = fr_global_head.pt_forw; pp != &fr_global_head;  )  {
 		register struct partition *newpp;
 
 		newpp = pp;
@@ -247,7 +247,7 @@ BU_FORTRAN(frshot, FRSHOT)(int			*nloc,		/* input & output */
 int
 fr_hit(struct application *ap, struct partition *headp, struct seg *segp)
 {
-	if( headp->pt_forw == headp )  return(0);
+	if ( headp->pt_forw == headp )  return(0);
 
 	/* Steal the linked list, hang it off a global header */
 	fr_global_head.pt_forw = headp->pt_forw;
@@ -352,22 +352,22 @@ BU_FORTRAN(frname, FRNAME)(char		*fbuf,
 	char	buf[512];
 
 	rnum = *region_num-1;
-	if( rnum < 0 || rnum > (*rtip)->nregions )  {
+	if ( rnum < 0 || rnum > (*rtip)->nregions )  {
 		sprintf( buf, "Region id %d out of range, max=%ld",
 			*region_num, (long)((*rtip)->nregions) );
 		fr_string_c2f( fbuf, buf, fbuflen );
 		return;
 	}
-	for( BU_LIST_FOR( rp, region, &((*rtip)->HeadRegion) ) )  {
-		if( rp->reg_bit != rnum )  continue;
+	for ( BU_LIST_FOR( rp, region, &((*rtip)->HeadRegion) ) )  {
+		if ( rp->reg_bit != rnum )  continue;
 		len = strlen( rp->reg_name );
 		offset = 0;
-		if( len >= fbuflen )  {
+		if ( len >= fbuflen )  {
 			offset = len-(fbuflen+1);
 			len -= (fbuflen+1);
 		}
 		strncpy( fbuf, rp->reg_name+offset, len );
-		for( i=offset+len; i < fbuflen; i++ )
+		for ( i=offset+len; i < fbuflen; i++ )
 			fbuf[i] = ' ';
 		return;
 	}

@@ -567,7 +567,7 @@ cmd_tk(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	int status;
 
-	if(argc < 1 || 2 < argc){
+	if (argc < 1 || 2 < argc){
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
@@ -577,7 +577,7 @@ cmd_tk(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		return TCL_ERROR;
 	}
 
-	if(argc == 1)
+	if (argc == 1)
 		status = gui_setup((char *)NULL);
 	else
 		status = gui_setup(argv[1]);
@@ -597,7 +597,7 @@ cmd_output_hook(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 	struct bu_vls infocommand;
 	int status;
 
-	if(argc < 1 || 2 < argc){
+	if (argc < 1 || 2 < argc){
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
@@ -711,7 +711,7 @@ cmd_setup(void)
 	    int i;
 	    strcat(pathname, "/");
 	    for (i=0;i<strlen(pathname);i++) {
-		if(pathname[i]=='\\')
+		if (pathname[i]=='\\')
 		    pathname[i]='/'; }
 
 	    bu_vls_init(&vls);
@@ -748,18 +748,18 @@ cmd_cmd_win(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	bu_vls_init(&vls);
 
-	if(argc < 2){
+	if (argc < 2){
 		bu_vls_printf(&vls, "helpdevel cmd_win");
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
 	}
 
-	if(strcmp(argv[1], "open") == 0){
+	if (strcmp(argv[1], "open") == 0){
 		struct cmd_list *clp;
 		int name_not_used = 1;
 
-		if(argc != 3){
+		if (argc != 3){
 			bu_vls_printf(&vls, "helpdevel cmd_win");
 			Tcl_Eval(interp, bu_vls_addr(&vls));
 			bu_vls_free(&vls);
@@ -767,13 +767,13 @@ cmd_cmd_win(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		}
 
 		/* Search to see if there exists a command window with this name */
-		for( BU_LIST_FOR(clp, cmd_list, &head_cmd_list.l) )
-			if(!strcmp(argv[2], bu_vls_addr(&clp->cl_name))){
+		for ( BU_LIST_FOR(clp, cmd_list, &head_cmd_list.l) )
+			if (!strcmp(argv[2], bu_vls_addr(&clp->cl_name))){
 				name_not_used = 0;
 				break;
 			}
 
-		if(name_not_used){
+		if (name_not_used){
 			clp = (struct cmd_list *)bu_malloc(sizeof(struct cmd_list), "cmd_list");
 			memset((void *)clp, 0, sizeof(struct cmd_list));
 			BU_LIST_APPEND(&head_cmd_list.l, &clp->l);
@@ -787,10 +787,10 @@ cmd_cmd_win(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		return TCL_OK;
 	}
 
-	if(strcmp(argv[1], "close") == 0){
+	if (strcmp(argv[1], "close") == 0){
 		struct cmd_list *clp;
 
-		if(argc != 3){
+		if (argc != 3){
 			bu_vls_printf(&vls, "helpdevel cmd_win");
 			Tcl_Eval(interp, bu_vls_addr(&vls));
 			bu_vls_free(&vls);
@@ -799,12 +799,12 @@ cmd_cmd_win(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 		/* First, search to see if there exists a command window with the name
 		   in argv[2] */
-		for( BU_LIST_FOR(clp, cmd_list, &head_cmd_list.l) )
-			if(!strcmp(argv[2], bu_vls_addr(&clp->cl_name)))
+		for ( BU_LIST_FOR(clp, cmd_list, &head_cmd_list.l) )
+			if (!strcmp(argv[2], bu_vls_addr(&clp->cl_name)))
 				break;
 
-		if(clp == &head_cmd_list){
-			if(!strcmp(argv[2], "mged"))
+		if (clp == &head_cmd_list){
+			if (!strcmp(argv[2], "mged"))
 				Tcl_AppendResult(interp, "cmd_close: not allowed to close \"mged\"",
 								(char *)NULL);
 			else
@@ -813,11 +813,11 @@ cmd_cmd_win(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 			return TCL_ERROR;
 		}
 
-		if(clp == curr_cmd_list)
+		if (clp == curr_cmd_list)
 			curr_cmd_list = &head_cmd_list;
 
 		BU_LIST_DEQUEUE( &clp->l );
-		if(clp->cl_tie != NULL)
+		if (clp->cl_tie != NULL)
 			clp->cl_tie->dml_tie = CMD_LIST_NULL;
 		bu_vls_free(&clp->cl_more_default);
 		bu_vls_free(&clp->cl_name);
@@ -827,8 +827,8 @@ cmd_cmd_win(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		return TCL_OK;
 	}
 
-	if(strcmp(argv[1], "get") == 0){
-		if(argc != 2){
+	if (strcmp(argv[1], "get") == 0){
+		if (argc != 2){
 			bu_vls_printf(&vls, "helpdevel cmd_win");
 			Tcl_Eval(interp, bu_vls_addr(&vls));
 			bu_vls_free(&vls);
@@ -842,22 +842,22 @@ cmd_cmd_win(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		return TCL_OK;
 	}
 
-	if(strcmp(argv[1], "set") == 0){
-		if(argc != 3){
+	if (strcmp(argv[1], "set") == 0){
+		if (argc != 3){
 			bu_vls_printf(&vls, "helpdevel cmd_win");
 			Tcl_Eval(interp, bu_vls_addr(&vls));
 			bu_vls_free(&vls);
 			return TCL_ERROR;
 		}
 
-		for( BU_LIST_FOR(curr_cmd_list, cmd_list, &head_cmd_list.l) ){
-			if(strcmp(bu_vls_addr(&curr_cmd_list->cl_name), argv[2]))
+		for ( BU_LIST_FOR(curr_cmd_list, cmd_list, &head_cmd_list.l) ){
+			if (strcmp(bu_vls_addr(&curr_cmd_list->cl_name), argv[2]))
 				continue;
 
 			break;
 		}
 
-		if(curr_cmd_list->cl_tie)
+		if (curr_cmd_list->cl_tie)
 			curr_dm_list = curr_cmd_list->cl_tie;
 
 		bu_vls_trunc(&curr_cmd_list->cl_more_default, 0);
@@ -884,7 +884,7 @@ cmd_get(clientData, interp, argc, argv)
 	struct bu_vls vls;
 	int first = 1;
 
-	if(argc != 1){
+	if (argc != 1){
 		bu_vls_init(&vls);
 		bu_vls_printf(&vls, "helpdevel cmd_get");
 		Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -895,8 +895,8 @@ cmd_get(clientData, interp, argc, argv)
 	save_clp = curr_cmd_list;
 	bu_vls_init(&vls);
 
-	if(!curr_cmd_list->cl_tie){
-		if(curr_dm_list->dml_tie){
+	if (!curr_cmd_list->cl_tie){
+		if (curr_dm_list->dml_tie){
 			Tcl_AppendElement(interp, bu_vls_addr(&curr_dm_list->dml_tie->cl_name));
 			curr_cmd_list = curr_dm_list->dml_tie;
 			Tcl_AppendElement(interp, bu_vls_addr(&pathName));
@@ -916,10 +916,10 @@ cmd_get(clientData, interp, argc, argv)
 	FOR_ALL_DISPLAYS(p, &head_dm_list.l){
 		/* The display manager tied to the current command window shares
 		   information with display manager p */
-		if(curr_cmd_list->cl_tie->dml_view_state == p->dml_view_state)
+		if (curr_cmd_list->cl_tie->dml_view_state == p->dml_view_state)
 			/* This display manager is tied to a command window */
-			if(p->dml_tie)
-				if(first){
+			if (p->dml_tie)
+				if (first){
 					bu_vls_printf(&vls, "%S", &p->dml_tie->cl_name);
 					first = 0;
 				} else
@@ -936,7 +936,7 @@ cmd_get(clientData, interp, argc, argv)
 int
 cmd_get_more_default(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-	if(argc != 1){
+	if (argc != 1){
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
@@ -953,7 +953,7 @@ cmd_get_more_default(ClientData clientData, Tcl_Interp *interp, int argc, char *
 int
 cmd_set_more_default(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-	if(argc != 2){
+	if (argc != 2){
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
@@ -1005,10 +1005,10 @@ debackslash(struct bu_vls *dest, struct bu_vls *src)
 	char *ptr;
 
 	ptr = bu_vls_addr(src);
-	while( *ptr ) {
-		if( *ptr == '\\' )
+	while ( *ptr ) {
+		if ( *ptr == '\\' )
 			++ptr;
-		if( *ptr == '\0' )
+		if ( *ptr == '\0' )
 			break;
 		bu_vls_putc( dest, *ptr++ );
 	}
@@ -1022,17 +1022,17 @@ backslash_specials(struct bu_vls *dest, struct bu_vls *src)
 
 	buf[1] = '\0';
 	backslashed = 0;
-	for( ptr = bu_vls_addr( src ); *ptr; ptr++ ) {
-		if( *ptr == '[' && !backslashed )
+	for ( ptr = bu_vls_addr( src ); *ptr; ptr++ ) {
+		if ( *ptr == '[' && !backslashed )
 			bu_vls_strcat( dest, "\\[" );
-		else if( *ptr == ']' && !backslashed )
+		else if ( *ptr == ']' && !backslashed )
 			bu_vls_strcat( dest, "\\]" );
-		else if( backslashed ) {
+		else if ( backslashed ) {
 			bu_vls_strcat( dest, "\\" );
 			buf[0] = *ptr;
 			bu_vls_strcat( dest, buf );
 			backslashed = 0;
-		} else if( *ptr == '\\' )
+		} else if ( *ptr == '\\' )
 			backslashed = 1;
 		else {
 			buf[0] = *ptr;
@@ -1058,7 +1058,7 @@ mged_compat(struct bu_vls *dest, struct bu_vls *src, int use_first)
 	struct bu_vls word;         /* Current word being processed */
 	struct bu_vls temp;
 
-	if(dbip == DBI_NULL){
+	if (dbip == DBI_NULL){
 	  bu_vls_vlscat(dest, src);
 	  return;
 	}
@@ -1068,20 +1068,20 @@ mged_compat(struct bu_vls *dest, struct bu_vls *src, int use_first)
 
 	start = end = bu_vls_addr( src );
 	firstword = 1;
-	while( *end != '\0' ) {            /* Run through entire string */
+	while ( *end != '\0' ) {            /* Run through entire string */
 
 		/* First, pass along leading whitespace. */
 
 		start = end;                   /* Begin where last word ended */
-		while( *start != '\0' ) {
-			if( *start == ' '  ||
+		while ( *start != '\0' ) {
+			if ( *start == ' '  ||
 			    *start == '\t' ||
 			    *start == '\n' )
 				bu_vls_putc( dest, *start++ );
 			else
 				break;
 		}
-		if( *start == '\0' )
+		if ( *start == '\0' )
 			break;
 
 		/* Next, advance "end" pointer to the end of the word, while adding
@@ -1092,29 +1092,29 @@ mged_compat(struct bu_vls *dest, struct bu_vls *src, int use_first)
 		bu_vls_trunc( &word, 0 );
 		regexp = 0;
 		backslashed = 0;
-		while( *end != '\0' ) {
-			if( *end == ' '  ||
+		while ( *end != '\0' ) {
+			if ( *end == ' '  ||
 			    *end == '\t' ||
 			    *end == '\n' )
 				break;
-			if( (*end == '*' || *end == '?' || *end == '[') && !backslashed )
+			if ( (*end == '*' || *end == '?' || *end == '[') && !backslashed )
 				regexp = 1;
-			if( *end == '\\' && !backslashed )
+			if ( *end == '\\' && !backslashed )
 				backslashed = 1;
 			else
 				backslashed = 0;
 			bu_vls_putc( &word, *end++ );
 		}
 
-		if( firstword && !use_first )
+		if ( firstword && !use_first )
 			regexp = 0;
 
 		/* Now, if the word was suspected of being a wildcard, try to match
 		   it to the database. */
 
-		if( regexp ) {
+		if ( regexp ) {
 			bu_vls_trunc( &temp, 0 );
-			if( db_regexp_match_all( &temp, dbip,
+			if ( db_regexp_match_all( &temp, dbip,
 						 bu_vls_addr(&word) ) == 0 ) {
 				debackslash( &temp, &word );
 				backslash_specials( dest, &temp );
@@ -1206,7 +1206,7 @@ cmdline( struct bu_vls *vp, int record )
 	switch (status) {
 	case TCL_RETURN:
 	case TCL_OK:
-		if( setjmp( jmp_env ) == 0 ){
+		if ( setjmp( jmp_env ) == 0 ){
 			len = strlen(result);
 
 			/* If the command had something to say, print it out. */
@@ -1228,7 +1228,7 @@ cmdline( struct bu_vls *vp, int record )
 				Tcl_SetResult(interp, "", TCL_STATIC);
 			}
 
-			if(record)
+			if (record)
 				history_record(&save_vp, &start, &finish, CMD_OK);
 
 		}else{
@@ -1247,7 +1247,7 @@ cmdline( struct bu_vls *vp, int record )
 		/* First check to see if it's a secret message. */
 
 		if ((cp = strstr(result, MORE_ARGS_STR)) != NULL) {
-			if(cp == result){
+			if (cp == result){
 				bu_vls_trunc(&mged_prompt, 0);
 				bu_vls_printf(&mged_prompt, "\r%s",
 					      result+sizeof(MORE_ARGS_STR)-1);
@@ -1354,7 +1354,7 @@ mged_cmd(
 		return CMD_OK;	/* No command entered, that's fine */
 
 	/* if no function table is provided, use the default mged function table */
-	if( in_functions == (struct funtab *)NULL )
+	if ( in_functions == (struct funtab *)NULL )
 	{
 		bu_log("mged_cmd: failed to supply function table!\n");
 		return CMD_BAD;
@@ -1411,7 +1411,7 @@ f_comm(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	register int pid, rpid;
 	int retcode;
 
-	if(argc != 1 || !classic_mged || curr_cmd_list != &head_cmd_list){
+	if (argc != 1 || !classic_mged || curr_cmd_list != &head_cmd_list){
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
@@ -1424,7 +1424,7 @@ f_comm(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	(void)signal( SIGINT, SIG_IGN );
 	if ( ( pid = fork()) == 0 )  {
 		(void)signal( SIGINT, SIG_DFL );
-		(void)execl("/bin/sh","-",(char *)NULL);
+		(void)execl("/bin/sh", "-", (char *)NULL);
 		perror("/bin/sh");
 		mged_finish( 11 );
 	}
@@ -1449,7 +1449,7 @@ f_quit(
 	int	argc,
 	char	**argv)
 {
-	if(argc < 1 || 1 < argc){
+	if (argc < 1 || 1 < argc){
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
@@ -1459,7 +1459,7 @@ f_quit(
 		return TCL_ERROR;
 	}
 
-	if( state != ST_VIEW )
+	if ( state != ST_VIEW )
 		button( BE_REJECT );
 
 	quit();			/* Exiting time */
@@ -1474,7 +1474,7 @@ int
 f_sync(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 
-	if(argc < 1 || 1 < argc){
+	if (argc < 1 || 1 < argc){
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
@@ -1484,7 +1484,7 @@ f_sync(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		return TCL_ERROR;
 	}
 
-	if(dbip != DBI_NULL){
+	if (dbip != DBI_NULL){
 	    db_sync(dbip);
 	}
 
@@ -1505,16 +1505,16 @@ helpcomm(int argc, char **argv, struct funtab *functions)
 	bad = 0;
 
 	/* Help command(s) */
-	for( i=1; i<argc; i++ )  {
-		for( ftp = functions+1; ftp->ft_name; ftp++ )  {
-			if( strcmp( ftp->ft_name, argv[i] ) != 0 )
+	for ( i=1; i<argc; i++ )  {
+		for ( ftp = functions+1; ftp->ft_name; ftp++ )  {
+			if ( strcmp( ftp->ft_name, argv[i] ) != 0 )
 				continue;
 
 			Tcl_AppendResult(interp, "Usage: ", functions->ft_name, ftp->ft_name,
 					 " ", ftp->ft_parms, "\n\t(", ftp->ft_comment, ")\n", (char *)NULL);
 			break;
 		}
-		if( !ftp->ft_name ) {
+		if ( !ftp->ft_name ) {
 			Tcl_AppendResult(interp, functions->ft_name, argv[i],
 					 ": no such command, type '", functions->ft_name,
 					 "?' for help\n", (char *)NULL);
@@ -1536,9 +1536,9 @@ f_help2(int argc, char **argv, struct funtab *functions)
 {
 	register struct funtab *ftp;
 
-	if( argc <= 1 )  {
+	if ( argc <= 1 )  {
 		Tcl_AppendResult(interp, "The following commands are available:\n", (char *)NULL);
-		for( ftp = functions+1; ftp->ft_name; ftp++ )  {
+		for ( ftp = functions+1; ftp->ft_name; ftp++ )  {
 			Tcl_AppendResult(interp,  functions->ft_name, ftp->ft_name, " ",
 					 ftp->ft_parms, "\n\t(", ftp->ft_comment, ")\n", (char *)NULL);
 		}
@@ -1553,11 +1553,11 @@ f_fhelp2(int argc, char **argv, struct funtab *functions)
 	register struct funtab *ftp;
 	struct bu_vls		str;
 
-	if( argc <= 1 )  {
+	if ( argc <= 1 )  {
 		bu_vls_init(&str);
 		Tcl_AppendResult(interp, "The following ", functions->ft_name,
 				 " commands are available:\n", (char *)NULL);
-		for( ftp = functions+1; ftp->ft_name; ftp++ )  {
+		for ( ftp = functions+1; ftp->ft_name; ftp++ )  {
 			vls_col_item( &str, ftp->ft_name);
 		}
 		vls_col_eol( &str );
@@ -1586,7 +1586,7 @@ cmd_echo(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	register int i;
 
-	if(argc < 1){
+	if (argc < 1){
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
@@ -1596,7 +1596,7 @@ cmd_echo(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		return TCL_ERROR;
 	}
 
-	for( i=1; i < argc; i++ )  {
+	for ( i=1; i < argc; i++ )  {
 		Tcl_AppendResult(interp, i==1 ? "" : " ", argv[i], (char *)NULL);
 	}
 
@@ -1619,14 +1619,14 @@ f_savedit(argc, argv)
 	o_illump = illump;
 	bu_vls_init(&str);
 
-	if(state == ST_S_EDIT){
+	if (state == ST_S_EDIT){
 		bu_vls_strcpy( &str, "press accept\npress sill\n" );
 		cmdline(&str, 0);
 		illump = o_illump;
 		bu_vls_strcpy( &str, "M 1 0 0\n");
 		cmdline(&str, 0);
 		return CMD_OK;
-	}else if(state == ST_O_EDIT){
+	}else if (state == ST_O_EDIT){
 		o_ipathpos = ipathpos;
 		bu_vls_strcpy( &str, "press accept\npress oill\n" );
 		cmdline(&str, 0);
@@ -1671,17 +1671,17 @@ f_tie(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	bu_vls_init(&vls);
 
-	if(argc < 1 || 3 < argc){
+	if (argc < 1 || 3 < argc){
 		bu_vls_printf(&vls, "helpdevel tie");
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
 	}
 
-	if(argc == 1){
-		for( BU_LIST_FOR(clp, cmd_list, &head_cmd_list.l) ){
+	if (argc == 1){
+		for ( BU_LIST_FOR(clp, cmd_list, &head_cmd_list.l) ){
 			bu_vls_trunc(&vls, 0);
-			if(clp->cl_tie){
+			if (clp->cl_tie){
 				bu_vls_printf(&vls, "%S %S", &clp->cl_name,
 						&clp->cl_tie->dml_dmp->dm_pathName);
 				Tcl_AppendElement(interp, bu_vls_addr(&vls));
@@ -1692,7 +1692,7 @@ f_tie(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		}
 
 		bu_vls_trunc(&vls, 0);
-		if(clp->cl_tie){
+		if (clp->cl_tie){
 			bu_vls_printf(&vls, "%S %S", &clp->cl_name,
 						&clp->cl_tie->dml_dmp->dm_pathName);
 			Tcl_AppendElement(interp, bu_vls_addr(&vls));
@@ -1705,24 +1705,24 @@ f_tie(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		return TCL_OK;
 	}
 
-	if(argv[1][0] == '-' && argv[1][1] == 'u'){
+	if (argv[1][0] == '-' && argv[1][1] == 'u'){
 		uflag = 1;
 		--argc;
 		++argv;
 	}
 
-	if(argc < 2){
+	if (argc < 2){
 		bu_vls_printf(&vls, "help tie");
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
 	}
 
-	for( BU_LIST_FOR(clp, cmd_list, &head_cmd_list.l) )
-		if(!strcmp(bu_vls_addr(&clp->cl_name), argv[1]))
+	for ( BU_LIST_FOR(clp, cmd_list, &head_cmd_list.l) )
+		if (!strcmp(bu_vls_addr(&clp->cl_name), argv[1]))
 			break;
 
-	if(clp == &head_cmd_list &&
+	if (clp == &head_cmd_list &&
 	   (strcmp(bu_vls_addr(&head_cmd_list.cl_name), argv[1]))){
 		Tcl_AppendResult(interp, "f_tie: unrecognized command_window - ", argv[1],
 				 "\n", (char *)NULL);
@@ -1730,8 +1730,8 @@ f_tie(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		return TCL_ERROR;
 	}
 
-	if(uflag){
-		if(clp->cl_tie)
+	if (uflag){
+		if (clp->cl_tie)
 			clp->cl_tie->dml_tie = (struct cmd_list *)NULL;
 
 		clp->cl_tie = (struct dm_list *)NULL;
@@ -1741,8 +1741,8 @@ f_tie(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
 
 	/* print out the display manager that we're tied to */
-	if(argc == 2){
-		if(clp->cl_tie)
+	if (argc == 2){
+		if (clp->cl_tie)
 			Tcl_AppendElement(interp, bu_vls_addr(&clp->cl_tie->dml_dmp->dm_pathName));
 		else
 			Tcl_AppendElement(interp, "");
@@ -1751,16 +1751,16 @@ f_tie(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		return TCL_OK;
 	}
 
-	if(*argv[2] != '.')
+	if (*argv[2] != '.')
 		bu_vls_printf(&vls, ".%s", argv[2]);
 	else
 		bu_vls_strcpy(&vls, argv[2]);
 
 	FOR_ALL_DISPLAYS(dlp, &head_dm_list.l)
-		if(!bu_vls_strcmp(&vls, &dlp->dml_dmp->dm_pathName))
+		if (!bu_vls_strcmp(&vls, &dlp->dml_dmp->dm_pathName))
 			break;
 
-	if(dlp == &head_dm_list){
+	if (dlp == &head_dm_list){
 		Tcl_AppendResult(interp, "f_tie: unrecognized pathName - ",
 				 bu_vls_addr(&vls), "\n", (char *)NULL);
 		bu_vls_free(&vls);
@@ -1768,13 +1768,13 @@ f_tie(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
 
 	/* already tied */
-	if(clp->cl_tie)
+	if (clp->cl_tie)
 		clp->cl_tie->dml_tie = (struct cmd_list *)NULL;
 
 	clp->cl_tie = dlp;
 
 	/* already tied */
-	if(dlp->dml_tie)
+	if (dlp->dml_tie)
 		dlp->dml_tie->cl_tie = (struct dm_list *)NULL;
 
 	dlp->dml_tie = clp;
@@ -1803,7 +1803,7 @@ f_ps(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	dml = curr_dm_list;
 	status = mged_attach(&which_dm[DM_PS_INDEX], argc, argv);
-	if(status == TCL_ERROR)
+	if (status == TCL_ERROR)
 		return TCL_ERROR;
 
 	vsp = view_state;  /* save state info pointer */
@@ -1840,7 +1840,7 @@ f_pl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	struct dm_list *dml;
 	struct _view_state *vsp;
 
-	if(argc < 2){
+	if (argc < 2){
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
@@ -1852,7 +1852,7 @@ f_pl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	dml = curr_dm_list;
 	status = mged_attach(&which_dm[DM_PLOT_INDEX], argc, argv);
-	if(status == TCL_ERROR)
+	if (status == TCL_ERROR)
 		return TCL_ERROR;
 
 	vsp = view_state;  /* save state info pointer */
@@ -1884,7 +1884,7 @@ f_winset(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	register struct dm_list *p;
 
-	if(argc < 1 || 2 < argc){
+	if (argc < 1 || 2 < argc){
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
@@ -1895,17 +1895,17 @@ f_winset(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
 
 	/* print pathname of drawing window with primary focus */
-	if( argc == 1 ){
+	if ( argc == 1 ){
 		Tcl_AppendResult(interp, bu_vls_addr(&pathName), (char *)NULL);
 		return TCL_OK;
 	}
 
 	/* change primary focus to window argv[1] */
 	FOR_ALL_DISPLAYS(p, &head_dm_list.l){
-		if( !strcmp( argv[1], bu_vls_addr( &p->dml_dmp->dm_pathName ) ) ){
+		if ( !strcmp( argv[1], bu_vls_addr( &p->dml_dmp->dm_pathName ) ) ){
 			curr_dm_list = p;
 
-			if(curr_dm_list->dml_tie)
+			if (curr_dm_list->dml_tie)
 				curr_cmd_list = curr_dm_list->dml_tie;
 			else
 				curr_cmd_list = &head_cmd_list;
@@ -1955,7 +1955,7 @@ f_bot_split(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	struct rt_bot_internal **bots;
 	struct rt_bot_internal *bot;
 	int bot_count = 256;
-	int edge, e, f ;
+	int edge, e, f;
 	int * edges;
 	int face;
 
@@ -1975,13 +1975,13 @@ f_bot_split(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    return TCL_ERROR;
 	}
 
-	if( rt_db_get_internal( &intern, dp, dbip, bn_mat_identity, &rt_uniresource ) < 0 ) {
+	if ( rt_db_get_internal( &intern, dp, dbip, bn_mat_identity, &rt_uniresource ) < 0 ) {
 	    Tcl_AppendResult(interp, "rt_db_get_internal(", argv[1], ") error\n", (char *)NULL);
 	    return TCL_ERROR;
 
 	}
 
-	if( intern.idb_type != ID_BOT ) 	{
+	if ( intern.idb_type != ID_BOT ) 	{
 	    Tcl_AppendResult(interp, argv[1], " is not a BOT solid!!!  skipping\n", (char *)NULL );
 	    return TCL_ERROR;
 	}
@@ -1990,15 +1990,15 @@ f_bot_split(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	edges = bu_calloc(bot->num_faces, 3, "num_edges");
 
 
-	for (face=0 ; face < bot->num_faces ; face++) {
+	for (face=0; face < bot->num_faces; face++) {
 	    int *faceptr = &bot->faces[face*3];
 
-	    for (edge=0 ; edge < 3 ; edge++) {
+	    for (edge=0; edge < 3; edge++) {
 
-		for (f=face+1 ; f < bot->num_faces ; f++) {
+		for (f=face+1; f < bot->num_faces; f++) {
 		    int *fptr = &bot->faces[f*3];
 
-		    for (e=0 ; e < 3 ; e++) {
+		    for (e=0; e < 3; e++) {
 			/* does e match edge? */
 
 			if ( (fptr[e] == faceptr[edge] && fptr[ (e+1) % 3 ] == faceptr[ (edge+1) % 3 ]) ||
@@ -2059,18 +2059,18 @@ f_bot_merge(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 
 	/* read in all the bots */
-	for (idx=1, i=2 ; i < argc ; i++ ) {
+	for (idx=1, i=2; i < argc; i++ ) {
 	    if ((dp = db_lookup(dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL) {
 		continue;
 	    }
 
-	    if( rt_db_get_internal( &intern, dp, dbip, bn_mat_identity, &rt_uniresource ) < 0 ) {
+	    if ( rt_db_get_internal( &intern, dp, dbip, bn_mat_identity, &rt_uniresource ) < 0 ) {
 		Tcl_AppendResult(interp, "rt_db_get_internal(", argv[i], ") error\n", (char *)NULL);
 		retval = TCL_ERROR;
 		continue;
 	    }
 
-	    if( intern.idb_type != ID_BOT ) 	{
+	    if ( intern.idb_type != ID_BOT ) 	{
 		Tcl_AppendResult(interp, argv[i], " is not a BOT solid!!!  skipping\n", (char *)NULL );
 		retval = TCL_ERROR;
 		continue;
@@ -2091,7 +2091,7 @@ f_bot_merge(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	if (idx == 1) return TCL_ERROR;
 
 
-	for (i=1 ; i < idx ; i++ ) {
+	for (i=1; i < idx; i++ ) {
 	    /* check for surface normals */
 	    if (bots[0]->mode) {
 		if (bots[0]->mode != bots[i]->mode) {
@@ -2124,14 +2124,14 @@ f_bot_merge(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	avail_face = 0;
 
 
-	for (i=1 ; i < idx ; i++ ) {
+	for (i=1; i < idx; i++ ) {
 	    /* copy the vertices */
 	    memcpy(&bots[0]->vertices[3*avail_vert], bots[i]->vertices, bots[i]->num_vertices*3*sizeof(fastf_t));
 
 	    /* copy/convert the faces, potentially maintaining a common orientation */
 	    if (bots[0]->orientation != RT_BOT_UNORIENTED && bots[i]->magic != RT_BOT_INTERNAL_MAGIC) {
 		/* copy and reverse */
-		for (face=0 ; face < bots[i]->num_faces ; face++) {
+		for (face=0; face < bots[i]->num_faces; face++) {
 		    /* copy the 3 verts of this face and convert to new index */
 		    bots[0]->faces[avail_face*3+face*3+2] = bots[i]->faces[face*3  ] + avail_vert;
 		    bots[0]->faces[avail_face*3+face*3+1] = bots[i]->faces[face*3+1] + avail_vert;
@@ -2139,7 +2139,7 @@ f_bot_merge(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		}
 	    } else {
 		/* just copy */
-		for (face=0 ; face < bots[i]->num_faces ; face++) {
+		for (face=0; face < bots[i]->num_faces; face++) {
 		    /* copy the 3 verts of this face and convert to new index */
 		    bots[0]->faces[avail_face*3+face*3  ] = bots[i]->faces[face*3  ] + avail_vert;
 		    bots[0]->faces[avail_face*3+face*3+1] = bots[i]->faces[face*3+1] + avail_vert;
@@ -2167,13 +2167,13 @@ f_bot_merge(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	intern.idb_meth = &rt_functab[ID_BOT];
 	intern.idb_ptr = (genptr_t)bots[0];
 
-	if( (new_dp=db_diradd( dbip, argv[1], -1L, 0, DIR_SOLID, (genptr_t)&intern.idb_type)) == DIR_NULL )
+	if ( (new_dp=db_diradd( dbip, argv[1], -1L, 0, DIR_SOLID, (genptr_t)&intern.idb_type)) == DIR_NULL )
 	{
 		Tcl_AppendResult(interp, "Cannot add ", argv[1], " to directory\n", (char *)NULL );
 		return TCL_ERROR;
 	}
 
-	if( rt_db_put_internal( new_dp, dbip, &intern, &rt_uniresource ) < 0 )
+	if ( rt_db_put_internal( new_dp, dbip, &intern, &rt_uniresource ) < 0 )
 	{
 		rt_db_free_internal( &intern, &rt_uniresource );
 		TCL_WRITE_ERR_return;
@@ -2193,21 +2193,21 @@ f_bot_face_fuse(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	if(argc != 3){
+	if (argc != 3){
 	  Tcl_AppendResult(interp, "Usage:\nbot_face_fuse new_bot_solid old_bot_solid\n", (char *)NULL );
 	  return TCL_ERROR;
 	}
 
-	if( (old_dp = db_lookup( dbip, argv[2], LOOKUP_NOISY )) == DIR_NULL )
+	if ( (old_dp = db_lookup( dbip, argv[2], LOOKUP_NOISY )) == DIR_NULL )
 		return TCL_ERROR;
 
-	if( rt_db_get_internal( &intern, old_dp, dbip, bn_mat_identity, &rt_uniresource ) < 0 )
+	if ( rt_db_get_internal( &intern, old_dp, dbip, bn_mat_identity, &rt_uniresource ) < 0 )
 	{
 	  Tcl_AppendResult(interp, "rt_db_get_internal() error\n", (char *)NULL);
 	  return TCL_ERROR;
 	}
 
-	if( intern.idb_type != ID_BOT )
+	if ( intern.idb_type != ID_BOT )
 	{
 		Tcl_AppendResult(interp, argv[2], " is not a BOT solid!!!\n", (char *)NULL );
 		return TCL_ERROR;
@@ -2218,13 +2218,13 @@ f_bot_face_fuse(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 
 	(void) rt_bot_face_fuse( bot );
 
-	if( (new_dp=db_diradd( dbip, argv[1], -1L, 0, DIR_SOLID, (genptr_t)&intern.idb_type)) == DIR_NULL )
+	if ( (new_dp=db_diradd( dbip, argv[1], -1L, 0, DIR_SOLID, (genptr_t)&intern.idb_type)) == DIR_NULL )
 	{
 		Tcl_AppendResult(interp, "Cannot add ", argv[1], " to directory\n", (char *)NULL );
 		return TCL_ERROR;
 	}
 
-	if( rt_db_put_internal( new_dp, dbip, &intern, &rt_uniresource ) < 0 )
+	if ( rt_db_put_internal( new_dp, dbip, &intern, &rt_uniresource ) < 0 )
 	{
 		rt_db_free_internal( &intern, &rt_uniresource );
 		TCL_WRITE_ERR_return;
@@ -2243,21 +2243,21 @@ f_bot_fuse(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	if(argc != 3){
+	if (argc != 3){
 	  Tcl_AppendResult(interp, "Usage:\nbot_fuse new_bot_solid old_bot_solid\n", (char *)NULL );
 	  return TCL_ERROR;
 	}
 
-	if( (old_dp = db_lookup( dbip, argv[2], LOOKUP_NOISY )) == DIR_NULL )
+	if ( (old_dp = db_lookup( dbip, argv[2], LOOKUP_NOISY )) == DIR_NULL )
 		return TCL_ERROR;
 
-	if( rt_db_get_internal( &intern, old_dp, dbip, bn_mat_identity, &rt_uniresource ) < 0 )
+	if ( rt_db_get_internal( &intern, old_dp, dbip, bn_mat_identity, &rt_uniresource ) < 0 )
 	{
 	  Tcl_AppendResult(interp, "rt_db_get_internal() error\n", (char *)NULL);
 	  return TCL_ERROR;
 	}
 
-	if( intern.idb_type != ID_BOT )
+	if ( intern.idb_type != ID_BOT )
 	{
 		Tcl_AppendResult(interp, argv[2], " is not a BOT solid!!!\n", (char *)NULL );
 		return TCL_ERROR;
@@ -2267,16 +2267,16 @@ f_bot_fuse(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	RT_BOT_CK_MAGIC( bot );
 
 	count1 = rt_bot_vertex_fuse( bot );
-	if( count1 )
+	if ( count1 )
 		(void)rt_bot_condense( bot );
 
-	if( (new_dp=db_diradd( dbip, argv[1], -1L, 0, DIR_SOLID, (genptr_t)&intern.idb_type)) == DIR_NULL )
+	if ( (new_dp=db_diradd( dbip, argv[1], -1L, 0, DIR_SOLID, (genptr_t)&intern.idb_type)) == DIR_NULL )
 	{
 		Tcl_AppendResult(interp, "Cannot add ", argv[1], " to directory\n", (char *)NULL );
 		return TCL_ERROR;
 	}
 
-	if( rt_db_put_internal( new_dp, dbip, &intern, &rt_uniresource ) < 0 )
+	if ( rt_db_put_internal( new_dp, dbip, &intern, &rt_uniresource ) < 0 )
 	{
 		rt_db_free_internal( &intern, &rt_uniresource );
 		TCL_WRITE_ERR_return;
@@ -2296,21 +2296,21 @@ f_bot_condense(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	if(argc != 3){
+	if (argc != 3){
 	  Tcl_AppendResult(interp, "Usage:\nbot_condense new_bot_solid old_bot_solid\n", (char *)NULL );
 	  return TCL_ERROR;
 	}
 
-	if( (old_dp = db_lookup( dbip, argv[2], LOOKUP_NOISY )) == DIR_NULL )
+	if ( (old_dp = db_lookup( dbip, argv[2], LOOKUP_NOISY )) == DIR_NULL )
 		return TCL_ERROR;
 
-	if( rt_db_get_internal( &intern, old_dp, dbip, bn_mat_identity, &rt_uniresource ) < 0 )
+	if ( rt_db_get_internal( &intern, old_dp, dbip, bn_mat_identity, &rt_uniresource ) < 0 )
 	{
 	  Tcl_AppendResult(interp, "rt_db_get_internal() error\n", (char *)NULL);
 	  return TCL_ERROR;
 	}
 
-	if( intern.idb_type != ID_BOT )
+	if ( intern.idb_type != ID_BOT )
 	{
 		Tcl_AppendResult(interp, argv[2], " is not a BOT solid!!!\n", (char *)NULL );
 		return TCL_ERROR;
@@ -2323,13 +2323,13 @@ f_bot_condense(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	sprintf( count_str, "%d", count2 );
 	Tcl_AppendResult(interp, count_str, " dead vertices eliminated\n", (char *)NULL );
 
-	if( (new_dp=db_diradd( dbip, argv[1], -1L, 0, DIR_SOLID, (genptr_t)&intern.idb_type)) == DIR_NULL )
+	if ( (new_dp=db_diradd( dbip, argv[1], -1L, 0, DIR_SOLID, (genptr_t)&intern.idb_type)) == DIR_NULL )
 	{
 		Tcl_AppendResult(interp, "Cannot add ", argv[1], " to directory\n", (char *)NULL );
 		return TCL_ERROR;
 	}
 
-	if( rt_db_put_internal( new_dp, dbip, &intern, &rt_uniresource ) < 0 )
+	if ( rt_db_put_internal( new_dp, dbip, &intern, &rt_uniresource ) < 0 )
 	{
 		rt_db_free_internal( &intern, &rt_uniresource );
 		TCL_WRITE_ERR_return;
@@ -3155,7 +3155,7 @@ cmd_list(ClientData	clientData,
 			db_path_to_vls( &vls, &illump->s_fullpath );
 		else if (state == ST_O_EDIT) {
 			register int	i;
-			for( i=0; i < ipathpos; i++ ) {
+			for ( i=0; i < ipathpos; i++ ) {
 				bu_vls_printf(&vls, "/%s",
 					      DB_FULL_PATH_GET(&illump->s_fullpath, i)->d_namep );
 			}
@@ -3206,8 +3206,8 @@ cmd_lm(ClientData	clientData,
 
 	bu_vls_init( &vls );
 	bu_vls_strcat( &vls, argv[0] );
-	for( i=1 ; i<argc ; i++ ) {
-		if( *argv[i] == '-' ) {
+	for ( i=1; i<argc; i++ ) {
+		if ( *argv[i] == '-' ) {
 			bu_vls_putc( &vls, ' ' );
 			bu_vls_strcat( &vls, argv[i] );
 			last_opt = i;
@@ -3218,12 +3218,12 @@ cmd_lm(ClientData	clientData,
 	}
 
 	bu_avs_init( &avs, argc - last_opt, "cmd_lm avs" );
-	for( i=last_opt+1 ; i<argc ; i++ ) {
+	for ( i=last_opt+1; i<argc; i++ ) {
 		bu_avs_add_nonunique( &avs, "MUVES_Component", argv[i] );
 	}
 
 	tbl = db_lookup_by_attr( dbip, DIR_REGION, &avs, 2 );
-	if( !tbl ) {
+	if ( !tbl ) {
 		/* Error!!! */
 		Tcl_AppendResult( interp, "Error: db_lookup_by_attr() failed!!\n", (char *)NULL );
 		bu_vls_free( &vls );
@@ -3231,7 +3231,7 @@ cmd_lm(ClientData	clientData,
 		return TCL_ERROR;
 	}
 
-	if( BU_PTBL_LEN( tbl ) == 0 ) {
+	if ( BU_PTBL_LEN( tbl ) == 0 ) {
 		/* no matches */
 		bu_vls_free( &vls );
 		bu_avs_free( &avs );
@@ -3240,7 +3240,7 @@ cmd_lm(ClientData	clientData,
 		return TCL_OK;
 	}
 
-	for( i=0 ; i<BU_PTBL_LEN( tbl ) ; i++ ) {
+	for ( i=0; i<BU_PTBL_LEN( tbl ); i++ ) {
 		dp = (struct directory *)BU_PTBL_GET( tbl, i );
 		bu_vls_putc( &vls, ' ' );
 		bu_vls_strcat( &vls, dp->d_namep );
@@ -3331,7 +3331,7 @@ cmd_blast(ClientData	clientData,
 	if (cmd_zap(clientData, interp, 1, av) == TCL_ERROR)
 		return TCL_ERROR;
         
-        if( argc == 1 ) /* "B" alone is same as "Z" */
+        if ( argc == 1 ) /* "B" alone is same as "Z" */
             return TCL_OK;
 
 	return edit_com(argc, argv, 1, 1);

@@ -89,7 +89,7 @@ char *str;
 	(void)strncpy( str, line, len );
 	tvsub( &td, &ru1.ru_utime, &ru0.ru_utime );
 	usert = td.tv_sec + ((double)td.tv_usec) / 1000000;
-	if( usert < 0.00001 )  usert = 0.00001;
+	if ( usert < 0.00001 )  usert = 0.00001;
 	return( usert );
 }
 
@@ -140,7 +140,7 @@ prusage(r0, r1, e, b, outp)
 	for (; *cp; cp++)  {
 		if (*cp != '%')
 			*outp++ = *cp;
-		else if (cp[1]) switch(*++cp) {
+		else if (cp[1]) switch (*++cp) {
 
 		case 'U':
 			tvsub(&tdiff, &r1->ru_utime, &r0->ru_utime);

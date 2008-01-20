@@ -89,7 +89,7 @@ main(int argc, char **argv) 			/* really has no arguments */
 	surfaces = (struct face_g_snurb **)bu_calloc( PATCH_COUNT+2,
 			       sizeof( struct face_g_snurb *), "surfaces" );
 
-	for( i = 0; i < PATCH_COUNT; i++)
+	for ( i = 0; i < PATCH_COUNT; i++)
 	{
 		dump_patch( &surfaces[i], patches[i] );
 	}
@@ -142,8 +142,8 @@ dump_patch( struct face_g_snurb **surfp, pt patch )
 
 	mesh_pointer = b_patch->ctl_points;
 
-	for( i = 0; i< 4; i++)
-	for( j = 0; j < 4; j++)
+	for ( i = 0; i< 4; i++)
+	for ( j = 0; j < 4; j++)
 	{
 		*mesh_pointer = ducks[patch[i][j]-1].x * 1000;
 		*(mesh_pointer+1) = ducks[patch[i][j]-1].y * 1000;

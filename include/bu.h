@@ -203,9 +203,9 @@ __BEGIN_DECLS
  * @def BU_GETUNION(ptr, union_type)
  * Allocate storage for a union
 */
-#define BU_GETSTRUCT(_p,_str) \
+#define BU_GETSTRUCT(_p, _str) \
 	_p = (struct _str *)bu_calloc(1, sizeof(struct _str), #_str " (getstruct)" BU_FLSTR)
-#define BU_GETUNION(_p,_unn) \
+#define BU_GETUNION(_p, _unn) \
 	_p = (union _unn *)bu_calloc(1, sizeof(union _unn), #_unn " (getunion)" BU_FLSTR)
 
 
@@ -216,7 +216,7 @@ __BEGIN_DECLS
  * Equivalent to BU_GETSTRUCT, except without the 'struct' Useful
  * for typedef'ed objects.
  */
-#define BU_GETTYPE(_p,_type) \
+#define BU_GETTYPE(_p, _type) \
 	_p = (_type *)bu_calloc(1, sizeof(_type), #_type " (gettype)" )
 
 
@@ -233,12 +233,12 @@ __BEGIN_DECLS
 #  define BU_CKMAG_TCL(_interp, _ptr, _magic, _str)
 #else
 #  define BU_CKMAG(_ptr, _magic, _str)	\
-	if( !(_ptr) || ( ((long)(_ptr)) & (sizeof(long)-1) ) || \
+	if ( !(_ptr) || ( ((long)(_ptr)) & (sizeof(long)-1) ) || \
 	    *((unsigned long *)(_ptr)) != (unsigned long)(_magic) )  { \
 		bu_badmagic( (long *)(_ptr), (unsigned long)_magic, _str, __FILE__, __LINE__ ); \
 	}
 #  define BU_CKMAG_TCL(_interp, _ptr, _magic, _str)	\
-	if( !(_ptr) || ( ((long)(_ptr)) & (sizeof(long)-1) ) || \
+	if ( !(_ptr) || ( ((long)(_ptr)) & (sizeof(long)-1) ) || \
 	     *((long *)(_ptr)) != (_magic) )  { \
 		bu_badmagic_tcl( (_interp), (long *)(_ptr), (unsigned long)_magic, _str, __FILE__, __LINE__ ); \
 		return TCL_ERROR; \
@@ -268,7 +268,7 @@ __BEGIN_DECLS
 #  define BU_ASSERT(_equation)
 #else
 #  define BU_ASSERT(_equation)	\
-	if( !(_equation) )  { \
+	if ( !(_equation) )  { \
 		bu_log("BU_ASSERT( " #_equation " ) failed, file %s, line %d\n", \
 			__FILE__, __LINE__ ); \
 		bu_bomb("BU_ASSERT failure\n"); \
@@ -276,12 +276,12 @@ __BEGIN_DECLS
 #endif
 
 #ifdef NO_BOMBING_MACROS
-#  define BU_ASSERT_PTR(_lhs,_relation,_rhs)
+#  define BU_ASSERT_PTR(_lhs, _relation, _rhs)
 #else
-#  define BU_ASSERT_PTR(_lhs,_relation,_rhs)	\
-	if( !((_lhs) _relation (_rhs)) )  { \
+#  define BU_ASSERT_PTR(_lhs, _relation, _rhs)	\
+	if ( !((_lhs) _relation (_rhs)) )  { \
 		bu_log("BU_ASSERT_PTR( " #_lhs #_relation #_rhs " ) failed, lhs=x%lx, rhs=x%lx, file %s, line %d\n", \
-			(long)(_lhs), (long)(_rhs),\
+			(long)(_lhs), (long)(_rhs), \
 			__FILE__, __LINE__ ); \
 		bu_bomb("BU_ASSERT_PTR failure\n"); \
 	}
@@ -289,12 +289,12 @@ __BEGIN_DECLS
 
 
 #ifdef NO_BOMBING_MACROS
-#  define BU_ASSERT_LONG(_lhs,_relation,_rhs)
+#  define BU_ASSERT_LONG(_lhs, _relation, _rhs)
 #else
-#  define BU_ASSERT_LONG(_lhs,_relation,_rhs)	\
-	if( !((_lhs) _relation (_rhs)) )  { \
+#  define BU_ASSERT_LONG(_lhs, _relation, _rhs)	\
+	if ( !((_lhs) _relation (_rhs)) )  { \
 		bu_log("BU_ASSERT_LONG( " #_lhs #_relation #_rhs " ) failed, lhs=%ld, rhs=%ld, file %s, line %d\n", \
-			(long)(_lhs), (long)(_rhs),\
+			(long)(_lhs), (long)(_rhs), \
 			__FILE__, __LINE__ ); \
 		bu_bomb("BU_ASSERT_LONG failure\n"); \
 	}
@@ -302,12 +302,12 @@ __BEGIN_DECLS
 
 
 #ifdef NO_BOMBING_MACROS
-#  define BU_ASSERT_DOUBLE(_lhs,_relation,_rhs)
+#  define BU_ASSERT_DOUBLE(_lhs, _relation, _rhs)
 #else
-#  define BU_ASSERT_DOUBLE(_lhs,_relation,_rhs)	\
-	if( !((_lhs) _relation (_rhs)) )  { \
+#  define BU_ASSERT_DOUBLE(_lhs, _relation, _rhs)	\
+	if ( !((_lhs) _relation (_rhs)) )  { \
 		bu_log("BU_ASSERT_DOUBLE( " #_lhs #_relation #_rhs " ) failed, lhs=%lf, rhs=%lf, file %s, line %d\n", \
-			(double)(_lhs), (double)(_rhs),\
+			(double)(_lhs), (double)(_rhs), \
 			__FILE__, __LINE__ ); \
 		bu_bomb("BU_ASSERT_DOUBLE failure\n"); \
 	}
@@ -508,7 +508,7 @@ BU_EXPORT BU_EXTERN(struct bu_list *bu_list_pop, (struct bu_list *hp));
 
 #define BU_LIST_CLOSE( hp ) { \
 	BU_ASSERT( (hp) != NULL ); \
-	if( (hp) == NULL ) \
+	if ( (hp) == NULL ) \
 		return; \
 	BU_ASSERT( BU_LIST_IS_EMPTY( (hp) ) ); \
 	bu_list_free( (hp) ); \
@@ -597,7 +597,7 @@ BU_EXPORT BU_EXTERN(struct bu_list *bu_list_pop, (struct bu_list *hp));
  *  BU_LIST_APPEND_LIST places src_hd elements at end of dest_hd list.
  */
 #define BU_LIST_INSERT_LIST(dest_hp, src_hp) \
-	if( BU_LIST_NON_EMPTY(src_hp) )  { \
+	if ( BU_LIST_NON_EMPTY(src_hp) )  { \
 		register struct bu_list	*_first = (src_hp)->forw; \
 		register struct bu_list	*_last = (src_hp)->back; \
 		(dest_hp)->forw->back = _last; \
@@ -608,7 +608,7 @@ BU_EXPORT BU_EXTERN(struct bu_list *bu_list_pop, (struct bu_list *hp));
 	}
 
 #define BU_LIST_APPEND_LIST(dest_hp, src_hp) \
-	if( BU_LIST_NON_EMPTY(src_hp) )  {\
+	if ( BU_LIST_NON_EMPTY(src_hp) )  {\
 		register struct bu_list	*_first = (src_hp)->forw; \
 		register struct bu_list	*_last = (src_hp)->back; \
 		_first->back = (dest_hp)->back; \
@@ -673,23 +673,23 @@ BU_EXPORT BU_EXTERN(struct bu_list *bu_list_pop, (struct bu_list *hp));
 	(((struct bu_list *)(p))->forw != (hp))
 
 #define BU_LIST_EACH( hp, p, type ) \
-	 for( (p)=(type *)BU_LIST_FIRST(bu_list, hp); \
+	 for ( (p)=(type *)BU_LIST_FIRST(bu_list, hp); \
 	      (p) && BU_LIST_NOT_HEAD(p, hp); \
 	      (p)=(type *)BU_LIST_PNEXT(bu_list, p) ) \
 
 #define BU_LIST_REVEACH( hp, p, type ) \
-	 for( (p)=(type *)BU_LIST_LAST(bu_list, hp); \
+	 for ( (p)=(type *)BU_LIST_LAST(bu_list, hp); \
 	      (p) && BU_LIST_NOT_HEAD(p, hp); \
-	      (p)=(type *)BU_LIST_PREV(bu_list,((struct bu_list *)(p))) ) \
+	      (p)=(type *)BU_LIST_PREV(bu_list, ((struct bu_list *)(p))) ) \
 
 #define BU_LIST_TAIL( hp, start, p, type ) \
-	 for( (p)=(type *)start ; \
+	 for ( (p)=(type *)start; \
 	      (p) && BU_LIST_NOT_HEAD(p, hp); \
-	      (p)=(type *)BU_LIST_PNEXT(bu_list,(p)) )
+	      (p)=(type *)BU_LIST_PNEXT(bu_list, (p)) )
 
 /**
- *  Intended as innards for a for() loop to visit all nodes on list, e.g.:
- *	for( BU_LIST_FOR( p, structure, hp ) )  {
+ *  Intended as innards for a for loop to visit all nodes on list, e.g.:
+ *	for ( BU_LIST_FOR( p, structure, hp ) )  {
  *		work_on( p );
  *	}
  */
@@ -713,7 +713,7 @@ BU_EXPORT BU_EXTERN(struct bu_list *bu_list_pop, (struct bu_list *hp));
 	(p)=BU_LIST_PNEXT_CIRC(structure, p)
 
 /*
- *  Intended as innards for a for() loop to visit elements of two lists
+ *  Intended as innards for a for loop to visit elements of two lists
  *	in tandem, e.g.:
  *	    for (BU_LIST_FOR2(p1, p2, structure, hp1, hp2) ) {
  *		    process( p1, p2 );
@@ -722,15 +722,15 @@ BU_EXPORT BU_EXTERN(struct bu_list *bu_list_pop, (struct bu_list *hp));
 #define	BU_LIST_FOR2(p1, p2, structure, hp1, hp2)				\
 		(p1)=BU_LIST_FIRST(structure, hp1),			\
 		(p2)=BU_LIST_FIRST(structure, hp2);			\
-		(p1) && BU_LIST_NOT_HEAD((struct bu_list *)(p1),(hp1)) &&	\
-		(p2) && BU_LIST_NOT_HEAD((struct bu_list *)(p2),(hp2));		\
-		(p1)=BU_LIST_NEXT(structure,(struct bu_list *)(p1)),	\
-		(p2)=BU_LIST_NEXT(structure,(struct bu_list *)(p2))
+		(p1) && BU_LIST_NOT_HEAD((struct bu_list *)(p1), (hp1)) &&	\
+		(p2) && BU_LIST_NOT_HEAD((struct bu_list *)(p2), (hp2));		\
+		(p1)=BU_LIST_NEXT(structure, (struct bu_list *)(p1)),	\
+		(p2)=BU_LIST_NEXT(structure, (struct bu_list *)(p2))
 
 /**
- *  Innards for a while() loop that constantly picks off the first element.
+ *  Innards for a while loop that constantly picks off the first element.
  *  Useful mostly for a loop that will dequeue every list element, e.g.:
- *	while( BU_LIST_WHILE(p, structure, hp) )  {
+ *	while ( BU_LIST_WHILE(p, structure, hp) )  {
  *@n		BU_LIST_DEQUEUE( &(p->l) );
  *@n		free( (char *)p );
  *@n	}
@@ -761,13 +761,13 @@ BU_EXPORT BU_EXTERN(struct bu_list *bu_list_pop, (struct bu_list *hp));
 /** Return pointer to circular next element; ie, ignoring the list head */
 #define BU_LIST_PNEXT_CIRC(structure, p)	\
 	((BU_LIST_FIRST_MAGIC((struct bu_list *)(p)) == BU_LIST_HEAD_MAGIC) ? \
-		BU_LIST_PNEXT_PNEXT(structure,(struct bu_list *)(p)) : \
+		BU_LIST_PNEXT_PNEXT(structure, (struct bu_list *)(p)) : \
 		BU_LIST_PNEXT(structure, p) )
 
 /** Return pointer to circular last element; ie, ignoring the list head */
 #define BU_LIST_PPREV_CIRC(structure, p)	\
 	((BU_LIST_LAST_MAGIC((struct bu_list *)(p)) == BU_LIST_HEAD_MAGIC) ? \
-		BU_LIST_PLAST_PLAST(structure,(struct bu_list *)(p)) : \
+		BU_LIST_PLAST_PLAST(structure, (struct bu_list *)(p)) : \
 		BU_LIST_PLAST(structure, p) )
 
 /**
@@ -841,7 +841,7 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
 	__asm__ __volatile__(
 		"btl %2,%1\n\tsbbl %0,%0"
 		:"=r" (oldbit)
-		:"m" (addr),"Ir" (nr));
+		:"m" (addr), "Ir" (nr));
 	return oldbit;
 }
 #endif
@@ -855,10 +855,10 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
 
 /* This is not done by default for performance reasons */
 #ifdef NO_BOMBING_MACROS
-#  define BU_BITV_BITNUM_CHECK(_bv,_bit)
+#  define BU_BITV_BITNUM_CHECK(_bv, _bit)
 #else
-#  define BU_BITV_BITNUM_CHECK(_bv,_bit)	/* Validate bit number */ \
-	if( ((unsigned)(_bit)) >= (_bv)->nbits )  {\
+#  define BU_BITV_BITNUM_CHECK(_bv, _bit)	/* Validate bit number */ \
+	if ( ((unsigned)(_bit)) >= (_bv)->nbits )  {\
 		bu_log("BU_BITV_BITNUM_CHECK bit number (%u) out of range (0..%u)\n", \
 			((unsigned)(_bit)), (_bv)->nbits); \
 		bu_bomb("process self-terminating\n");\
@@ -866,10 +866,10 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
 #endif
 
 #ifdef NO_BOMBING_MACROS
-#  define BU_BITV_NBITS_CHECK(_bv,_nbits)
+#  define BU_BITV_NBITS_CHECK(_bv, _nbits)
 #else
-#  define BU_BITV_NBITS_CHECK(_bv,_nbits)	/* Validate number of bits */ \
-	if( ((unsigned)(_nbits)) > (_bv)->nbits )  {\
+#  define BU_BITV_NBITS_CHECK(_bv, _nbits)	/* Validate number of bits */ \
+	if ( ((unsigned)(_nbits)) > (_bv)->nbits )  {\
 		bu_log("BU_BITV_NBITS_CHECK number of bits (%u) out of range (> %u)", \
 			((unsigned)(_nbits)), (_bv)->nbits ); \
 		bu_bomb("process self-terminating"); \
@@ -894,12 +894,12 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
 { \
 	register int		_wd;	/* Current word number */  \
 	BU_CK_BITV(_bv); \
-	for( _wd=BU_BITS2WORDS((_bv)->nbits)-1; _wd>=0; _wd-- )  {  \
+	for ( _wd=BU_BITS2WORDS((_bv)->nbits)-1; _wd>=0; _wd-- )  {  \
 		register int	_b;	/* Current bit-in-word number */  \
 		register bitv_t	_val;	/* Current word value */  \
-		if((_val = (_bv)->bits[_wd])==0) continue;  \
-		for(_b=0; _b < BITV_MASK+1; _b++, _val >>= 1 ) { \
-			if( !(_val & 1) )  continue;
+		if ((_val = (_bv)->bits[_wd])==0) continue;  \
+		for (_b=0; _b < BITV_MASK+1; _b++, _val >>= 1 ) { \
+			if ( !(_val & 1) )  continue;
 
 /**
  *  This macro is valid only between a BU_BITV_LOOP_START/LOOP_END pair,
@@ -908,8 +908,8 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
 #define BU_BITV_LOOP_INDEX	((_wd << BITV_SHIFT) | _b)
 
 #define BU_BITV_LOOP_END	\
-		} /* end for(_b) */ \
-	} /* end for(_wd) */ \
+		} /* end for (_b) */ \
+	} /* end for (_wd) */ \
 } /* end block */
 /** @} */
 
@@ -937,9 +937,9 @@ struct bu_hist  {
 #define BU_CK_HIST(_p)	BU_CKMAG(_p, BU_HIST_MAGIC, "struct bu_hist")
 
 #define BU_HIST_TALLY( _hp, _val )	{ \
-	if( (_val) <= (_hp)->hg_min )  { \
+	if ( (_val) <= (_hp)->hg_min )  { \
 		(_hp)->hg_bins[0]++; \
-	} else if( (_val) >= (_hp)->hg_max )  { \
+	} else if ( (_val) >= (_hp)->hg_max )  { \
 		(_hp)->hg_bins[(_hp)->hg_nbins]++; \
 	} else { \
 		(_hp)->hg_bins[(int)(((_val)-(_hp)->hg_min)/(_hp)->hg_clumpsize)]++; \
@@ -948,9 +948,9 @@ struct bu_hist  {
 
 #define BU_HIST_TALLY_MULTIPLE( _hp, _val, _count )	{ \
 	register int	__count = (_count); \
-	if( (_val) <= (_hp)->hg_min )  { \
+	if ( (_val) <= (_hp)->hg_min )  { \
 		(_hp)->hg_bins[0] += __count; \
-	} else if( (_val) >= (_hp)->hg_max )  { \
+	} else if ( (_val) >= (_hp)->hg_max )  { \
 		(_hp)->hg_bins[(_hp)->hg_nbins] += __count; \
 	} else { \
 		(_hp)->hg_bins[(int)(((_val)-(_hp)->hg_min)/(_hp)->hg_clumpsize)] += __count; \
@@ -1002,12 +1002,12 @@ struct bu_ptbl {
  *  A handy way to visit all the elements of the table is:
  *
  *	struct edgeuse **eup;
- *	for( eup = (struct edgeuse **)BU_PTBL_LASTADDR(&eutab);
+ *	for ( eup = (struct edgeuse **)BU_PTBL_LASTADDR(&eutab);
  *	     eup >= (struct edgeuse **)BU_PTBL_BASEADDR(&eutab); eup-- )  {
  *		NMG_CK_EDGEUSE(*eup);
  *	}
  *  or
- *	for( BU_PTBL_FOR( eup, (struct edgeuse **), &eutab ) )  {
+ *	for ( BU_PTBL_FOR( eup, (struct edgeuse **), &eutab ) )  {
  *		NMG_CK_EDGEUSE(*eup);
  *	}
  */

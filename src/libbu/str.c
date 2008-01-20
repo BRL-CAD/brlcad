@@ -180,7 +180,7 @@ bu_strdupm(register const char *cp, const char *label)
 	len = strlen( cp )+1;
 	base = bu_malloc( len, label);
 
-	if(bu_debug&BU_DEBUG_MEM_LOG) {
+	if (bu_debug&BU_DEBUG_MEM_LOG) {
 		bu_semaphore_acquire(BU_SEM_SYSCALL);
 		fprintf(stderr, "%8lx strdup%7ld \"%s\"\n", (long)base, (long)len, cp );
 		bu_semaphore_release(BU_SEM_SYSCALL);

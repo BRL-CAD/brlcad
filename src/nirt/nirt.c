@@ -161,7 +161,7 @@ attrib_print(void)
 {
     int i;
 
-    for (i=0 ; i < a_tab.attrib_use ; i++) {
+    for (i=0; i < a_tab.attrib_use; i++) {
 	bu_log("\"%s\"\n", a_tab.attrib[i]);
     }
 }
@@ -176,7 +176,7 @@ attrib_flush(void)
     int i;
 
     a_tab.attrib_use = 0;
-    for (i=0 ; i < a_tab.attrib_use; i++ )
+    for (i=0; i < a_tab.attrib_use; i++ )
 	bu_free(a_tab.attrib[i], "strdup");
 }
 
@@ -549,7 +549,7 @@ main (int argc, char **argv)
     base2local = rtip->rti_dbip->dbi_base2local;
     local2base = rtip->rti_dbip->dbi_local2base;
     tmp_str = bu_units_string(local2base);
-    if( tmp_str ) {
+    if ( tmp_str ) {
 	    strncpy(local_u_name, bu_units_string(local2base), 64);
 	    local_u_name[64] = '\0'; /* just in case, buf is 65 */
     } else {
@@ -618,7 +618,7 @@ do_rt_gettrees (struct rt_i *rtip, char **object_name, int nm_objects)
 	bu_exit (1, "rt_gettrees() failed\n");
     }
 
-    if( need_prep ) {
+    if ( need_prep ) {
 	if (silent_flag != SILENT_YES) {
 	    printf("\nPrepping the geometry...");
 	    fflush(stdout);

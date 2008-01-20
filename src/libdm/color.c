@@ -45,7 +45,7 @@ dm_get_pixel(unsigned char r, unsigned char g, unsigned char b, long unsigned in
   int rf, gf, bf;
   int index;
 
-  if(r == 0 && g == 0 && b == 0)
+  if (r == 0 && g == 0 && b == 0)
     return pixels[0];
 
   f = cd >> 8;
@@ -55,14 +55,14 @@ dm_get_pixel(unsigned char r, unsigned char g, unsigned char b, long unsigned in
 
   index = rf * cd * cd + gf * cd + bf;
 
-  if(index == 0){
-    if(r != 0)
+  if (index == 0){
+    if (r != 0)
       index = cd * cd;
 
-    if(g != 0)
+    if (g != 0)
       index += cd;
 
-    if(b != 0)
+    if (b != 0)
       index += 1;
   }
 
@@ -82,14 +82,14 @@ dm_copy_cmap(Display *dpy, Colormap dest, Colormap src, int low, int hi, int sto
   ncolors = hi - low;
   colors = (XColor *)bu_malloc(sizeof(XColor) * ncolors, "dm_load_cmap: colors");
 
-  for(i = low; i < hi; ++i)
+  for (i = low; i < hi; ++i)
     colors[i].pixel = i;
   XQueryColors(dpy, src, colors, ncolors);
 
-  if(store){
+  if (store){
     XStoreColors(dpy, dest, colors, ncolors);
   }else{
-    for(i = 0; i < ncolors; ++i){
+    for (i = 0; i < ncolors; ++i){
       XAllocColor(dpy, dest, &colors[i]);
     }
   }
@@ -123,14 +123,14 @@ dm_allocate_color_cube(Display *dpy, Colormap cmap, long unsigned int *pixels, i
   incr = 65535 / (cd - 1);
 
   /* store color cube at cmap_base and above */
-  for(i = r = 0; r < 65536; r = r + incr)
-    for(g = 0; g < 65536; g = g + incr)
-      for(b = 0; b < 65536; b = b + incr, ++i){
+  for (i = r = 0; r < 65536; r = r + incr)
+    for (g = 0; g < 65536; g = g + incr)
+      for (b = 0; b < 65536; b = b + incr, ++i){
 	color.red = (unsigned short)r;
 	color.green = (unsigned short)g;
 	color.blue = (unsigned short)b;
 
-	if(store){
+	if (store){
 	  color.flags = DoRed|DoGreen|DoBlue;
 	  pixels[i] = color.pixel = i + cmap_base;
 	  XStoreColor(dpy, cmap, &color);

@@ -147,7 +147,7 @@ char *argv[];
   static int count = 0;
 
   /* Only need to do this once for this display manager */
-  if(!count)
+  if (!count)
     Pex_load_startup(dmp);
 
   bu_vls_init(&dmp->dm_pathName);
@@ -159,12 +159,12 @@ char *argv[];
   /* initialize the modifiable variables */
   ((struct pex_vars *)dmp->dmr_vars)->mvars.dummy_perspective = 1;
 
-  if(BU_LIST_IS_EMPTY(&head_pex_vars.l))
+  if (BU_LIST_IS_EMPTY(&head_pex_vars.l))
     Tk_CreateGenericHandler(dmp->dmr_eventhandler, (ClientData)DM_TYPE_PEX);
 
   BU_LIST_APPEND(&head_pex_vars.l, &((struct pex_vars *)dmp->dmr_vars)->l);
 
-  if(dmp->dmr_vars)
+  if (dmp->dmr_vars)
 	return TCL_OK;
 
   return TCL_ERROR;
@@ -207,7 +207,7 @@ Pex_open(struct dm *dmp)
   bu_vls_strcpy(&str, "init_x ");
   bu_vls_printf(&str, "%s\n", bu_vls_addr(&dmp->dmr_pathName));
 
-  if(Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR){
+  if (Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR){
     bu_vls_free(&str);
     (void)pex_close(dmp);
     return TCL_ERROR;
@@ -231,7 +231,7 @@ Pex_open(struct dm *dmp)
 		  DefaultScreen(((struct pex_vars *)dmp->dmr_vars)->dpy)) - 20;
 
   /* Make window square */
-  if(((struct pex_vars *)dmp->dmr_vars)->height < ((struct pex_vars *)dmp->dmr_vars)->width)
+  if (((struct pex_vars *)dmp->dmr_vars)->height < ((struct pex_vars *)dmp->dmr_vars)->width)
     ((struct pex_vars *)dmp->dmr_vars)->width = ((struct pex_vars *)dmp->dmr_vars)->height;
   else
     ((struct pex_vars *)dmp->dmr_vars)->height = ((struct pex_vars *)dmp->dmr_vars)->width;
@@ -318,7 +318,7 @@ Pex_open(struct dm *dmp)
     /* Select border, background, foreground colors,
      * and border width.
      */
-    if( a_visual->class == GrayScale || a_visual->class == StaticGray ) {
+    if ( a_visual->class == GrayScale || a_visual->class == StaticGray ) {
 	((struct pex_vars *)dmp->dmr_vars)->is_monochrome = 1;
 	((struct pex_vars *)dmp->dmr_vars)->bd = BlackPixel( ((struct pex_vars *)dmp->dmr_vars)->dpy, a_screen );
 	((struct pex_vars *)dmp->dmr_vars)->bg = WhitePixel( ((struct pex_vars *)dmp->dmr_vars)->dpy, a_screen );
@@ -331,7 +331,7 @@ Pex_open(struct dm *dmp)
 	((struct pex_vars *)dmp->dmr_vars)->fg = WhitePixel( ((struct pex_vars *)dmp->dmr_vars)->dpy, a_screen );
     }
 
-    if( !((struct pex_vars *)dmp->dmr_vars)->is_monochrome &&
+    if ( !((struct pex_vars *)dmp->dmr_vars)->is_monochrome &&
 	((struct pex_vars *)dmp->dmr_vars)->fg != ((struct pex_vars *)dmp->dmr_vars)->red &&
 	((struct pex_vars *)dmp->dmr_vars)->red != ((struct pex_vars *)dmp->dmr_vars)->black )
       ((struct pex_vars *)dmp->dmr_vars)->fg = ((struct pex_vars *)dmp->dmr_vars)->red;
@@ -356,14 +356,14 @@ Pex_open(struct dm *dmp)
 						&gcv);
 
 /* Begin PEX stuff. */
-    if(PEXInitialize(((struct pex_vars *)dmp->dmr_vars)->dpy,
+    if (PEXInitialize(((struct pex_vars *)dmp->dmr_vars)->dpy,
 		     &pex_info, 80, pex_err) != 0){
       bu_vls_free(&str);
       bu_log("Pex_setup: %s\n", pex_err);
       return TCL_ERROR;
     }
 
-    if(!IMMED_MODE_SPT(pex_info)){
+    if (!IMMED_MODE_SPT(pex_info)){
       bu_vls_free(&str);
       bu_log("Pex_setup: Immediate mode is not supported.\n");
       return TCL_ERROR;
@@ -397,23 +397,23 @@ static void
 Pex_close(dmp)
 struct dm *dmp;
 {
-  if(((struct pex_vars *)dmp->dmr_vars)->gc != 0)
+  if (((struct pex_vars *)dmp->dmr_vars)->gc != 0)
     XFreeGC(((struct pex_vars *)dmp->dmr_vars)->dpy, ((struct pex_vars *)dmp->dmr_vars)->gc);
 
 #ifdef DOUBLE_BUFFERING_WITH_PIXMAPS
-  if(((struct pex_vars *)dmp->dmr_vars)->pix != 0)
+  if (((struct pex_vars *)dmp->dmr_vars)->pix != 0)
      Tk_FreePixmap(((struct pex_vars *)dmp->dmr_vars)->dpy, ((struct pex_vars *)dmp->dmr_vars)->pix);
 #endif
 
-  if(((struct pex_vars *)dmp->dmr_vars)->xtkwin != 0)
+  if (((struct pex_vars *)dmp->dmr_vars)->xtkwin != 0)
     Tk_DestroyWindow(((struct pex_vars *)dmp->dmr_vars)->xtkwin);
 
-  if(((struct pex_vars *)dmp->dmr_vars)->l.forw != BU_LIST_NULL)
+  if (((struct pex_vars *)dmp->dmr_vars)->l.forw != BU_LIST_NULL)
     BU_LIST_DEQUEUE(&((struct pex_vars *)dmp->dmr_vars)->l);
 
   bu_free(dmp->dmr_vars, "Pex_close: dmp->dmr_vars");
 
-  if(BU_LIST_IS_EMPTY(&head_pex_vars.l))
+  if (BU_LIST_IS_EMPTY(&head_pex_vars.l))
     Tk_DeleteGenericHandler(dmp->dmr_eventhandler, (ClientData)DM_TYPE_PEX);
 }
 
@@ -491,7 +491,7 @@ mat_t mat;
   static PEXVector vuv = { 0.0, 1.0, 0.0 };
   static PEXCoord vrp = { 0.0, 0.0, 0.0 };
 
-  if((err = PEXViewOrientationMatrix(&vrp, &vpn, &vuv, view.orientation)) != 0){
+  if ((err = PEXViewOrientationMatrix(&vrp, &vpn, &vuv, view.orientation)) != 0){
     bu_log("Pex_newrot: bad PEXViewOrientationMatrix return - %d\n", err);
     return;
   }
@@ -507,7 +507,7 @@ mat_t mat;
 #endif
 
   perspective = 0;
-  if((err = PEXViewMappingMatrix(view_win, &viewport, perspective,
+  if ((err = PEXViewMappingMatrix(view_win, &viewport, perspective,
 				 &prp, view_plane, back, front,
 				 view.mapping)) != 0){
     bu_log("Pex_newrot: bad PEXViewMappingMatrix return - %d\n", err);
@@ -566,7 +566,7 @@ register short r, g, b;
 		    ((struct pex_vars *)dmp->dmr_vars)->renderer);
   {
 #if 0
-    if( illum ){
+    if ( illum ){
       SET_COLOR( 0.9, 0.9, 0.9, color );
     }else{
       SET_COLOR( r / 255.0, g / 255.0,
@@ -584,7 +584,7 @@ register short r, g, b;
 		    ((struct pex_vars *)dmp->dmr_vars)->renderer,
 		    PEXOCRender, 1.0);
 
-    if( linestyle )
+    if ( linestyle )
       PEXSetLineType(((struct pex_vars *)dmp->dmr_vars)->dpy,
 		     ((struct pex_vars *)dmp->dmr_vars)->renderer,
 		     PEXOCRender, PEXLineTypeDashed);
@@ -596,7 +596,7 @@ register short r, g, b;
     ncoord = 0;
     cp = coord_buf;
     first = 1;
-    for( BU_LIST_FOR( tvp, bn_vlist, &vp->l ) )  {
+    for ( BU_LIST_FOR( tvp, bn_vlist, &vp->l ) )  {
       register int	i;
       register int	nused = tvp->nused;
       register int	*cmd = tvp->cmd;
@@ -605,14 +605,14 @@ register short r, g, b;
       /* Viewing region is from -1.0 to +1.0 */
       /* 2^31 ~= 2e9 -- dynamic range of a long int */
       /* 2^(31-11) = 2^20 ~= 1e6 */
-      for( i = 0; i < nused; i++, cmd++, pt++ )  {
-	switch( *cmd )  {
+      for ( i = 0; i < nused; i++, cmd++, pt++ )  {
+	switch ( *cmd )  {
 	case BN_VLIST_POLY_START:
 	case BN_VLIST_POLY_VERTNORM:
 	  break;
 	case BN_VLIST_LINE_MOVE:
 	  /* Move, start line */
-	  if( first == 0 ){
+	  if ( first == 0 ){
 	    PEXPolyline(((struct pex_vars *)dmp->dmr_vars)->dpy,
 			((struct pex_vars *)dmp->dmr_vars)->renderer,
 			PEXOCRender, ncoord, coord_buf);
@@ -649,7 +649,7 @@ register short r, g, b;
       }
     }
 
-    if( first == 0)
+    if ( first == 0)
       PEXPolyline(((struct pex_vars *)dmp->dmr_vars)->dpy,
 		  ((struct pex_vars *)dmp->dmr_vars)->renderer,
 		  PEXOCRender, ncoord, coord_buf);
@@ -710,7 +710,7 @@ register short r, g, b;
 #if 0
 	unsigned long fg;
 
-	switch( color )  {
+	switch ( color )  {
 	case DM_BLACK:
 		fg = ((struct pex_vars *)dmp->dmr_vars)->black;
 		break;
@@ -774,7 +774,7 @@ register short r, g, b;
 		    ((struct pex_vars *)dmp->dmr_vars)->renderer,
 		    PEXOCRender, 1.0);
 
-    if( dashed ){
+    if ( dashed ){
       PEXSetLineType(((struct pex_vars *)dmp->dmr_vars)->dpy,
 		     ((struct pex_vars *)dmp->dmr_vars)->renderer,
 		     PEXOCRender, PEXLineTypeDashed);
@@ -797,7 +797,7 @@ register short r, g, b;
 
     gcv.foreground = ((struct pex_vars *)dmp->dmr_vars)->yellow;
     XChangeGC( ((struct pex_vars *)dmp->dmr_vars)->dpy, ((struct pex_vars *)dmp->dmr_vars)->gc, GCForeground, &gcv );
-    if( dashed ) {
+    if ( dashed ) {
 	XSetLineAttributes(((struct pex_vars *)dmp->dmr_vars)->dpy, ((struct pex_vars *)dmp->dmr_vars)->gc, 1, LineOnOffDash, CapButt, JoinMiter );
     } else {
 	XSetLineAttributes(((struct pex_vars *)dmp->dmr_vars)->dpy, ((struct pex_vars *)dmp->dmr_vars)->gc, 1, LineSolid, CapButt, JoinMiter );
@@ -879,7 +879,7 @@ struct dm *dmp;
 #if TRY_DEPTHCUE
   PEXDepthCueEntry cue_entry;
 
-  if(((struct pex_vars *)dmp->dmr_vars)->mvars.cue)
+  if (((struct pex_vars *)dmp->dmr_vars)->mvars.cue)
     cue_entry.mode = PEXOn;
   else
     cue_entry.mode = PEXOff;
@@ -938,7 +938,7 @@ int	x2, y2;		/* to point */
   sx2 = GED_TO_Xx( dmp, x2 );
   sy2 = GED_TO_Xy( dmp, y2 );
 
-  if( sx1 == sx2 && sy1 == sy2 )
+  if ( sx1 == sx2 && sy1 == sy2 )
     XDrawPoint( ((struct pex_vars *)dmp->dmr_vars)->dpy,
 #ifdef DOUBLE_BUFFERING_WITH_PIXMAPS
 		((struct pex_vars *)dmp->dmr_vars)->pix,
@@ -1004,7 +1004,7 @@ struct dm *dmp;
   ((struct pex_vars *)dmp->dmr_vars)->width = xwa.width;
 
 #ifdef DOUBLE_BUFFERING_WITH_PIXMAPS
-    if(((struct pex_vars *)dmp->dmr_vars)->height != ((struct pex_vars *)dmp->dmr_vars)->pix_height ||
+    if (((struct pex_vars *)dmp->dmr_vars)->height != ((struct pex_vars *)dmp->dmr_vars)->pix_height ||
        ((struct pex_vars *)dmp->dmr_vars)->width != ((struct pex_vars *)dmp->dmr_vars)->pix_width){
       Tk_FreePixmap( ((struct pex_vars *)dmp->dmr_vars)->dpy, ((struct pex_vars *)dmp->dmr_vars)->pix );
 
@@ -1120,13 +1120,13 @@ Pex_set_perspective(dmp)
 struct dm *dmp;
 {
   /* set perspective matrix */
-  if(((struct pex_vars *)dmp->dmr_vars)->mvars.dummy_perspective > 0)
+  if (((struct pex_vars *)dmp->dmr_vars)->mvars.dummy_perspective > 0)
     ((struct pex_vars *)dmp->dmr_vars)->perspective_angle = ((struct pex_vars *)dmp->dmr_vars)->mvars.dummy_perspective <= 4 ?
     ((struct pex_vars *)dmp->dmr_vars)->mvars.dummy_perspective - 1: 3;
   else if (--((struct pex_vars *)dmp->dmr_vars)->perspective_angle < 0) /* toggle perspective matrix */
     ((struct pex_vars *)dmp->dmr_vars)->perspective_angle = 3;
 
-  if(((struct pex_vars *)dmp->dmr_vars)->mvars.perspective_mode){
+  if (((struct pex_vars *)dmp->dmr_vars)->mvars.perspective_mode){
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -1157,7 +1157,7 @@ struct dm *dmp;
   memset((void *)&head_pex_vars, 0, sizeof(struct pex_vars));
   BU_LIST_INIT( &head_pex_vars.l );
 
-  if((filename = getenv("DM_PEX_RCFILE")) != (char *)NULL )
+  if ((filename = getenv("DM_PEX_RCFILE")) != (char *)NULL )
     Tcl_EvalFile(interp, filename);
 }
 
@@ -1213,13 +1213,13 @@ register const mat_t	src;
   /* Copy all elements */
 #if 1
   /* regular copy */
-  for( i=0; i<4; ++i)
-    for( j=0; j<4; ++j)
+  for ( i=0; i<4; ++i)
+    for ( j=0; j<4; ++j)
       dest[i][j] = src[k++];
 #else
   /* transpose copy */
-  for( i=0; i<4; ++i)
-    for( j=0; j<4; ++j)
+  for ( i=0; i<4; ++i)
+    for ( j=0; j<4; ++j)
       dest[j][i] = src[k++];
 #endif
 }

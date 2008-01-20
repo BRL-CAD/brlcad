@@ -123,7 +123,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 	regions_tried++;
 
 	/* Begin bomb protection */
-	if( BU_SETJUMP ) {
+	if ( BU_SETJUMP ) {
 		/* Error, bail out */
 		BU_UNSETJUMP;		/* Relinquish the protection */
 
@@ -143,7 +143,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 		db_free_tree(curtree, &rt_uniresource);	/* Does an nmg_kr() */
 
 		/* Get rid of (m)any other intermediate structures */
-		if( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC ) {
+		if ( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC ) {
 			nmg_km(*tsp->ts_m);
 		} else {
 			bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
@@ -155,9 +155,9 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 	}
 	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);	/* librt/nmg_bool.c */
 
-	if( ret_tree ) {
+	if ( ret_tree ) {
 		r = ret_tree->tr_d.td_r;
-		if( do_bots && r ) {
+		if ( do_bots && r ) {
 		    bot = nmg_bot( BU_LIST_FIRST( shell, &r->s_hd ), tsp->ts_tol );
 		}
 	} else {
@@ -179,10 +179,10 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 	}
 
 	bu_vls_init( &shader_params );
-	if( matparm ) {
+	if ( matparm ) {
 		bu_vls_strcpy( &shader_params, matparm );
 		matparm = strtok( (char *)NULL, tok_sep );
-		while( matparm ) {
+		while ( matparm ) {
 			bu_vls_putc( &shader_params, ' ' );
 			bu_vls_strcat( &shader_params, matparm );
 			matparm = strtok( (char *)NULL, tok_sep );
@@ -195,12 +195,12 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 
 		/* Kill cracks */
 		s = BU_LIST_FIRST( shell, &r->s_hd );
-		while( BU_LIST_NOT_HEAD( &s->l, &r->s_hd ) ) {
+		while ( BU_LIST_NOT_HEAD( &s->l, &r->s_hd ) ) {
 			struct shell *next_s;
 
 			next_s = BU_LIST_PNEXT( shell, &s->l );
-			if( nmg_kill_cracks( s ) ) {
-				if( nmg_ks( s ) ) {
+			if ( nmg_kill_cracks( s ) ) {
+				if ( nmg_ks( s ) ) {
 					empty_region = 1;
 					break;
 				}
@@ -209,16 +209,16 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 		}
 
 		/* kill zero length edgeuses */
-		if( !empty_region ) {
+		if ( !empty_region ) {
 			 empty_model = nmg_kill_zero_length_edgeuses( *tsp->ts_m );
 		}
 
-		if( !empty_region && !empty_model ) {
+		if ( !empty_region && !empty_model ) {
 			/* Write the nmgregion to the output file */
 			nmg_count++;
 			sprintf( nmg_name, "nmg.%d", nmg_count );
 
-			if( do_bots ) {
+			if ( do_bots ) {
 				wdb_export( fp_out, nmg_name, (genptr_t)bot, ID_BOT, 1.0 );
 			} else {
 				mk_nmg( fp_out, nmg_name, r->m_p );
@@ -226,7 +226,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 		}
 
 		/* Now make a normal brlcad region */
-		if( tsp->ts_mater.ma_color_valid ) {
+		if ( tsp->ts_mater.ma_color_valid ) {
 			rgb[0] = (int)(tsp->ts_mater.ma_color[0] * 255.0);
 			rgb[1] = (int)(tsp->ts_mater.ma_color[1] * 255.0);
 			rgb[2] = (int)(tsp->ts_mater.ma_color[2] * 255.0);
@@ -237,7 +237,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 
 		BU_LIST_INIT( &headp.l );
 		(void)mk_addmember( nmg_name, &headp.l, NULL, WMOP_UNION );
-		if( mk_lrcomb( fp_out,
+		if ( mk_lrcomb( fp_out,
 		    pathp->fp_names[pathp->fp_len-1]->d_namep, &headp, 1,
 		    shader, bu_vls_addr( &shader_params ), color,
 		    tsp->ts_regionid, tsp->ts_aircode, tsp->ts_gmater,
@@ -246,7 +246,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 		}
 	} else {
 		BU_LIST_INIT( &headp.l );
-		if( mk_lrcomb( fp_out,
+		if ( mk_lrcomb( fp_out,
 		    pathp->fp_names[pathp->fp_len-1]->d_namep, &headp, 1,
 		    shader, bu_vls_addr( &shader_params ), color,
 		    tsp->ts_regionid, tsp->ts_aircode, tsp->ts_gmater,
@@ -267,7 +267,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 
 out:
 
-	if( RT_G_DEBUG&DEBUG_MEM_FULL )
+	if ( RT_G_DEBUG&DEBUG_MEM_FULL )
 		bu_prmem( "At end of do_region_end()" );
 
 	BU_GETUNION(curtree, tree);
@@ -293,12 +293,12 @@ csg_comb_func(struct db_i *dbip, struct directory *dp, genptr_t ptr)
 	char matname[32];
 	char matparm[60];
 
-	if( dp->d_uses < 0 )
+	if ( dp->d_uses < 0 )
 		return;
 
 	dp->d_uses = (-1);
 
-	if( dp->d_flags & DIR_REGION ) {
+	if ( dp->d_flags & DIR_REGION ) {
 		char **name;
 
 		/* convert a region to NMG's */
@@ -327,25 +327,25 @@ csg_comb_func(struct db_i *dbip, struct directory *dp, genptr_t ptr)
 
 	/* have a combination that is not a region */
 
-	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 ) {
+	if ( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 ) {
 		bu_log( "Cannot get internal form of combination (%s)\n", dp->d_namep );
 		return;
 	}
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 	RT_CK_COMB( comb );
 
-	if( verbose )
+	if ( verbose )
 		bu_log( "Combination - %s\n", dp->d_namep );
 
-	if( comb->tree && db_ck_v4gift_tree( comb->tree ) < 0 )	{
+	if ( comb->tree && db_ck_v4gift_tree( comb->tree ) < 0 )	{
 		db_non_union_push( comb->tree, &rt_uniresource );
-		if( db_ck_v4gift_tree( comb->tree ) < 0 ) {
+		if ( db_ck_v4gift_tree( comb->tree ) < 0 ) {
 			bu_log( "Cannot flatten tree (%s) for editing\n", dp->d_namep );
 			return;
 		}
 	}
 	node_count = db_tree_nleaves( comb->tree );
-	if( node_count > 0 ) {
+	if ( node_count > 0 ) {
 		tree_list = (struct rt_tree_array *)bu_calloc( node_count,
 			sizeof( struct rt_tree_array ), "tree list" );
 		actual_count = (struct rt_tree_array *)db_flatten_tree( tree_list,
@@ -357,7 +357,7 @@ csg_comb_func(struct db_i *dbip, struct directory *dp, genptr_t ptr)
 		actual_count = 0;
 	}
 
-	if( actual_count < 1 ) {
+	if ( actual_count < 1 ) {
 		bu_log( "Warning: empty combination (%s)\n", dp->d_namep );
 		dp->d_uses = 0;
 		rt_db_free_internal( &intern, &rt_uniresource);
@@ -366,10 +366,10 @@ csg_comb_func(struct db_i *dbip, struct directory *dp, genptr_t ptr)
 
 	BU_LIST_INIT( &headp.l );
 
-	for( i=0 ; i<actual_count ; i++ ) {
+	for ( i=0; i<actual_count; i++ ) {
 		char op;
 
-		switch( tree_list[i].tl_op ) {
+		switch ( tree_list[i].tl_op ) {
 			case OP_UNION:
 				op = 'u';
 				break;
@@ -386,19 +386,19 @@ csg_comb_func(struct db_i *dbip, struct directory *dp, genptr_t ptr)
 				return;
 		}
 		wm = mk_addmember( tree_list[i].tl_tree->tr_l.tl_name, &headp.l, NULL, op );
-		if( tree_list[i].tl_tree->tr_l.tl_mat )
+		if ( tree_list[i].tl_tree->tr_l.tl_mat )
 			MAT_COPY( wm->wm_mat, tree_list[i].tl_tree->tr_l.tl_mat );
 	}
 
-	if( comb->rgb_valid  )
+	if ( comb->rgb_valid  )
 		color = comb->rgb;
 	else
 		color = (unsigned char *)NULL;
 
 	endp = strchr( bu_vls_addr(&comb->shader), ' ' );
-	if( endp ) {
+	if ( endp ) {
 		len = endp - bu_vls_addr(&comb->shader);
-		if( len > 32 ) len = 32;
+		if ( len > 32 ) len = 32;
 		strncpy( matname, bu_vls_addr(&comb->shader), len );
 		strncpy( matparm, endp+1, 60 );
 	}
@@ -407,7 +407,7 @@ csg_comb_func(struct db_i *dbip, struct directory *dp, genptr_t ptr)
 		matparm[0] = '\0';
 	}
 
-	if( mk_lrcomb( fp_out, dp->d_namep, &headp, comb->region_flag,
+	if ( mk_lrcomb( fp_out, dp->d_namep, &headp, comb->region_flag,
 	    matname, matparm,
 	    color, comb->region_id,
 	    comb->aircode, comb->GIFTmater, comb->los,
@@ -503,7 +503,7 @@ main(int argc, char **argv)
 		perror(argv[0]);
 		bu_exit(1, "Cannot open %s\n", argv[bu_optind]);
 	}
-	if( db_dirbuild( dbip ) ) {
+	if ( db_dirbuild( dbip ) ) {
 	    bu_exit(1, "db_dirbuild failed\n");
 	}
 
@@ -517,11 +517,11 @@ main(int argc, char **argv)
 	mk_id_editunits( fp_out, dbip->dbi_title, dbip->dbi_local2base );
 
 	/* Walk the trees outputting regions and combinations */
-	for( i=bu_optind ; i<argc ; i++ ) {
+	for ( i=bu_optind; i<argc; i++ ) {
 		struct directory *dp;
 
 		dp = db_lookup( dbip, argv[i], 0 );
-		if( dp == DIR_NULL ) {
+		if ( dp == DIR_NULL ) {
 			bu_log( "WARNING: Could not find %s, skipping\n", argv[i] );
 			continue;
 		}
@@ -539,7 +539,7 @@ main(int argc, char **argv)
 #endif
 
 	percent = 100;
-	if( regions_tried > 0 )
+	if ( regions_tried > 0 )
 		percent = ((double)regions_converted * 100) / regions_tried;
 
 	printf( "Tried %d regions, %d converted successfully.  %g%%\n",

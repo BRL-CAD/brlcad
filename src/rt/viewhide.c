@@ -159,7 +159,7 @@ void
 view_2init(struct application *ap)
 {
 
-	if( outfp == NULL )
+	if ( outfp == NULL )
 		bu_exit(EXIT_FAILURE, "outfp is NULL\n");
 
 	/*
@@ -167,7 +167,7 @@ view_2init(struct application *ap)
 	 *  However, not dropping out of parallel mode until here permits
 	 *  tree walking and database prepping to still be done in parallel.
 	 */
-	if( npsw >= 1 )  {
+	if ( npsw >= 1 )  {
 		bu_log("Note: changing from %d cpus to 1 cpu\n", npsw );
 		npsw = 1;		/* Disable parallel processing */
 	}
@@ -208,7 +208,7 @@ view_2init(struct application *ap)
 	 * range for light intensity is 0 -> 1.
 	 */
 
-	if( AmbientIntensity <= 0.5 )  {
+	if ( AmbientIntensity <= 0.5 )  {
 		maxangle = cos( 5.0 * bn_degtorad);
 	} else {
 		maxangle = cos( AmbientIntensity * bn_degtorad);
@@ -250,7 +250,7 @@ raymiss(register struct application *ap)
 	struct	cell	*posp;		/* store the current cell position */
 
 	/* Getting defensive.... just in case. */
-	if(ap->a_x > width)  {
+	if (ap->a_x > width)  {
 		bu_exit(EXIT_FAILURE, "raymiss: pixels exceed width\n");
 	}
 
@@ -307,21 +307,21 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 	struct	cell	*posp;			/* stores current cell position */
 	register struct hit	*hitp;		/* which hit */
 
-	if( pp == PartHeadp )
+	if ( pp == PartHeadp )
 		return(0);		/* nothing was actually hit?? */
 
 
 	/* Getting defensive.... just in case. */
-	if(ap->a_x > width)  {
+	if (ap->a_x > width)  {
 		bu_exit(EXIT_FAILURE, "rayhit: pixels exceed width\n");
 	}
 
 	posp = &(topp[ap->a_x + 1]);
 
 	/* Ensure that inhit is in front of emanation plane */
-	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
-		if( pp->pt_inhit->hit_dist >= 0.0 )  break;
-	if( pp == PartHeadp )  {
+	for ( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
+		if ( pp->pt_inhit->hit_dist >= 0.0 )  break;
+	if ( pp == PartHeadp )  {
 		bu_log("rthide/rayhit:  no hit out front? x%d y%d lvl%d\n",
 			ap->a_x, ap->a_y, ap->a_level);
 		return(0);
@@ -359,7 +359,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 	/* make sure that if there is a hit, the region_id is not the
 	 * same as the background.  If it is, set to 1.
 	 */
-	if(posp->c_id == ID_BACKGROUND)
+	if (posp->c_id == ID_BACKGROUND)
 		posp->c_id = 1;
 	return(0);
 }
@@ -464,7 +464,7 @@ horiz_cmp(struct cell *botp, int mem_width, int y)
 		 * This test prevents the background from being shaded in.
 		 * Furthermore, it is necessary to select the hit_point.
 		 * Check for pits and pendula.  The below if statement can
-		 * be translated as follows: if(ids don't match ||
+		 * be translated as follows: if (ids don't match ||
 		 * (cur_id is not 0 && ( (there's a pit) || (there's a mtn) ).
 		 */
 
@@ -493,7 +493,7 @@ horiz_cmp(struct cell *botp, int mem_width, int y)
 			 * cell left; and to end, move right and up one half cell.
 			 */
 
-			if(botp == cellp)  {
+			if (botp == cellp)  {
 				VJOIN2(start, cellp->c_hit, 0.5, dx_model, -0.5, dy_model);
 				VJOIN2(stop, cellp->c_hit, 0.5, dx_model, 0.5, dy_model);
 			} else {
@@ -554,7 +554,7 @@ vert_cmp(struct cell *botp, struct cell *topp, int mem_width, int y)
 		     ((botp->c_dist + pit_depth < topp->c_dist) ||
 		      (topp->c_dist + pit_depth < botp->c_dist) ||
 		      (VDOT(botp->c_normal, topp->c_normal) < maxangle))))  {
-			if( state == FOUND_START_PT ) {
+			if ( state == FOUND_START_PT ) {
 				continue;
 			} else {
 				/* find the correct cell. */
@@ -564,7 +564,7 @@ vert_cmp(struct cell *botp, struct cell *topp, int mem_width, int y)
 				 * is botp, then move left and up half a cell.
 				 */
 
-				if(botp == start_cellp)  {
+				if (botp == start_cellp)  {
 					VJOIN2(start, start_cellp->c_hit, -0.5, dx_model, 0.5, dy_model);
 				} else  {
 					VJOIN2(start, start_cellp->c_hit, -0.5, dx_model, -0.5, dy_model);
@@ -595,7 +595,7 @@ vert_cmp(struct cell *botp, struct cell *topp, int mem_width, int y)
 				 * by half a cell.
 				 */
 
-				if( (botp-1) == cellp)  {
+				if ( (botp-1) == cellp)  {
 					VJOIN2(stop, cellp->c_hit, 0.5, dx_model, 0.5, dy_model);
 				} else {
 					VJOIN2(stop, cellp->c_hit, 0.5, dx_model, -0.5, dy_model);
@@ -629,7 +629,7 @@ vert_cmp(struct cell *botp, struct cell *topp, int mem_width, int y)
 			 * by half a cell.
 			 */
 
-		if( (botp-1) == cellp)  {
+		if ( (botp-1) == cellp)  {
 			VJOIN2(stop, cellp->c_hit, 0.5, dx_model, 0.5, dy_model);
 		} else {
 			VJOIN2(stop, cellp->c_hit, 0.5, dx_model, -0.5, dy_model);
@@ -716,7 +716,7 @@ cleanline(struct cell *inbuffp, int file_width)
 
 	int	i;
 
-	for(i = 0; i < file_width + 2; i++, inbuffp++)  {
+	for (i = 0; i < file_width + 2; i++, inbuffp++)  {
 		inbuffp->c_id = ID_BACKGROUND;
 		inbuffp->c_dist = 0;
 		VSET(inbuffp->c_hit, 0, 0, 0);

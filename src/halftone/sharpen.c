@@ -67,7 +67,7 @@ extern double Beta;
 int
 sharpen(unsigned char *buf, int size, int num, FILE *file, unsigned char *Map)
 {
-	static unsigned char *last,*cur=0,*next;
+	static unsigned char *last, *cur=0, *next;
 	static int linelen;
 	int result;
 	register int newvalue;

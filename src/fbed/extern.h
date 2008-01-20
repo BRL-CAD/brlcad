@@ -28,7 +28,7 @@
 
 #define MAX_LN			81
 #define Toggle(f)		(f) = ! (f)
-#define De_Bounce_Pen()		while( do_Bitpad( &cursor_pos ) ) ;
+#define De_Bounce_Pen()		while ( do_Bitpad( &cursor_pos ) ) ;
 #define BOTTOM_STATUS_AREA	2
 #define TOP_SCROLL_WIN		(BOTTOM_STATUS_AREA-1)
 #define PROMPT_LINE		(LI-2)

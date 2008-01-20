@@ -135,7 +135,7 @@ tris_are_planar_quad(struct rt_bot_internal *bot, int faceidx, int vidx[4])
 
     if (debug&DEBUG_QUAD) {
 	fprintf(stderr, "tris_are_planar_quad()\n");
-	for (i=0 ; i < 6 ;i++) {
+	for (i=0; i < 6;i++) {
 	    fprintf(stderr, "%d: %d   %7g %7g %7g\n", i, vnum[i],
 		    V3ARGS(&v[3* vnum[i]]));
 	}
@@ -194,7 +194,7 @@ tris_are_planar_quad(struct rt_bot_internal *bot, int faceidx, int vidx[4])
 
     /* find adjacent/matching verticies */
 
-    for (i=0 ; i < 18 ; i++) {
+    for (i=0; i < 18; i++) {
 	int *t;
 
 	t = &tbl[i][0];
@@ -211,7 +211,7 @@ tris_are_planar_quad(struct rt_bot_internal *bot, int faceidx, int vidx[4])
 	    vidx[3] = vnum[t[7]];
 	    if (debug&DEBUG_QUAD) {
 		fprintf(stderr, "%d %d %d %d\n", V4ARGS(vidx));
-		for (tmp=0 ; tmp < 4 ; tmp++)
+		for (tmp=0; tmp < 4; tmp++)
 		    fprintf(stderr, "%d vidx:%d %7g %7g %7g\n", tmp, vidx[tmp],
 			    V3ARGS(&v[3*vidx[tmp]]));
 	    }
@@ -227,7 +227,7 @@ int count_quad_faces(struct rt_bot_internal *bot)
     int count = 0;
     int vidx[4];
 
-    for (i=0 ; i < bot->num_faces ; i++) {
+    for (i=0; i < bot->num_faces; i++) {
 	if (tris_are_planar_quad(bot, i, vidx))
 	    ++count;
     }
@@ -400,7 +400,7 @@ int r_start (
     int i;
     if (debug&DEBUG_NAMES) {
 	bu_log("r_start %d ", ((struct rt_bot_internal *)client_data)->num_vertices);
-	for (i=0 ; i < pathp->fp_len ; i++) {
+	for (i=0; i < pathp->fp_len; i++) {
 	    if (pathp->fp_len - (i+1)) {
 		bu_log("%s/", pathp->fp_names[i]->d_namep);
 	    } else {
@@ -420,7 +420,7 @@ union tree *r_end (
     int i;
     if (debug&DEBUG_NAMES) {
 	bu_log("r_end %d ", ((struct rt_bot_internal *)client_data)->num_vertices);
-	for (i=0 ; i < pathp->fp_len ; i++) {
+	for (i=0; i < pathp->fp_len; i++) {
 	    if (pathp->fp_len - (i+1)) {
 		bu_log("%s/", pathp->fp_names[i]->d_namep);
 	    } else {
@@ -464,7 +464,7 @@ void add_bots(struct rt_bot_internal *bot_dest,
      */
     limit = bot_src->num_faces * 3;
     ptr = &bot_src->faces[limit];
-    for (i=0 ; i < limit ; i++)
+    for (i=0; i < limit; i++)
 	ptr[i] = bot_src->faces[i] + bot_dest->num_vertices;
 
     bot_dest->num_vertices += bot_src->num_vertices;
@@ -485,7 +485,7 @@ union tree * l_func (
     struct rt_bot_internal *bot;
 
     if (debug&DEBUG_NAMES) {
-	for (i=0 ; i < pathp->fp_len ; i++) {
+	for (i=0; i < pathp->fp_len; i++) {
 	    if (pathp->fp_len - (i+1)) {
 		bu_log("%s/", pathp->fp_names[i]->d_namep);
 	    } else {
@@ -545,7 +545,7 @@ int main(int ac, char *av[])
     if (arg_count < ac) {
 	struct directory *dirp;
 
-	for ( ; arg_count < ac ; arg_count++ ) {
+	for (; arg_count < ac; arg_count++ ) {
 	    printf("current: %s\n", av[arg_count]);
 
 	    if (!rt_db_lookup_internal(rtip->rti_dbip, av[arg_count],
@@ -603,7 +603,7 @@ int main(int ac, char *av[])
 	    fprintf(stderr, "%s\n", dp->d_namep);
 
 	/* get the internal form */
-	i=rt_db_get_internal(&intern, dp, rtip->rti_dbip, mat,&rt_uniresource);
+	i=rt_db_get_internal(&intern, dp, rtip->rti_dbip, mat, &rt_uniresource);
 
 	if (i < 0) {
 	    fprintf(stderr, "rt_get_internal failure %d on %s\n", i, dp->d_namep);

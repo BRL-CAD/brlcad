@@ -102,7 +102,7 @@ Free_muves_sys(struct bu_list *hp)
 {
 	struct muves_sys *sys;
 
-	while( BU_LIST_NON_EMPTY( hp ) )
+	while ( BU_LIST_NON_EMPTY( hp ) )
 	{
 		sys = BU_LIST_FIRST( muves_sys, hp );
 		bu_free( sys->muves_name, "muves_sys.muves_name" );
@@ -115,7 +115,7 @@ void
 Free_cad_list(struct bu_list *hp)
 {
 
-	while( BU_LIST_NON_EMPTY( hp ) )
+	while ( BU_LIST_NON_EMPTY( hp ) )
 	{
 		struct cad_comp_list *cad;
 
@@ -130,7 +130,7 @@ Free_muves_comp(struct bu_list *hp)
 {
 	struct muves_comp *comp;
 
-	while( BU_LIST_NON_EMPTY( hp ) )
+	while ( BU_LIST_NON_EMPTY( hp ) )
 	{
 		comp = BU_LIST_FIRST( muves_comp, hp );
 		bu_free( comp->muves_name, "muves_comp.muves_name" );
@@ -162,7 +162,7 @@ f_read_muves(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	CHECK_DBI_NULL;
 
-	if( argc < 2 || argc > 3 )
+	if ( argc < 2 || argc > 3 )
 	{
 		struct bu_vls vls;
 
@@ -173,21 +173,21 @@ f_read_muves(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		return TCL_ERROR;
 	}
 
-	if( (muves_in=fopen( argv[1], "r" )) == NULL )
+	if ( (muves_in=fopen( argv[1], "r" )) == NULL )
 	{
 		Tcl_AppendResult(interp, "Cannot open input file: ", argv[1], " aborting\n", (char *)NULL );
 		return TCL_ERROR;
 	}
 
-	if( BU_LIST_NON_EMPTY( &muves_sys_head.l ) )
+	if ( BU_LIST_NON_EMPTY( &muves_sys_head.l ) )
 		Free_muves_sys( &muves_sys_head.l );
 
-	if( BU_LIST_NON_EMPTY( &muves_comp_head.l ) )
+	if ( BU_LIST_NON_EMPTY( &muves_comp_head.l ) )
 		Free_muves_comp( &muves_comp_head.l );
 
 	/* count the number of regions in the model */
 	FOR_ALL_DIRECTORY_START(dp, dbip) {
-		if( !(dp->d_flags & DIR_REGION) )
+		if ( !(dp->d_flags & DIR_REGION) )
 			continue;
 		reg_count++;
 	} FOR_ALL_DIRECTORY_END;
@@ -199,10 +199,10 @@ f_read_muves(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	reg_count =  0;
 
 	FOR_ALL_DIRECTORY_START(dp, dbip) {
-		if( !(dp->d_flags & DIR_REGION) )
+		if ( !(dp->d_flags & DIR_REGION) )
 			continue;
 
-		if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )
+		if ( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )
 		{
 			(void)signal( SIGINT, SIG_IGN );
 			TCL_READ_ERR_return;
@@ -218,7 +218,7 @@ f_read_muves(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	/* read lines of region map file */
 	new_comp = (struct muves_comp *)NULL;
-	while( bu_fgets( line, MUVES_LINE_LEN, muves_in ) != NULL )
+	while ( bu_fgets( line, MUVES_LINE_LEN, muves_in ) != NULL )
 	{
 		char *ptr;
 
@@ -227,13 +227,13 @@ f_read_muves(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		ptr = strtok( line, regionmap_delims );
 
 		/* check for comment */
-		if( *ptr == '#' )
+		if ( *ptr == '#' )
 			continue;
 
-		if( *ptr == '"' )
+		if ( *ptr == '"' )
 		{
 			/* continuation of previous component */
-			if( !new_comp )
+			if ( !new_comp )
 			{
 				char str[32];
 
@@ -252,27 +252,27 @@ f_read_muves(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 			/* check for component name */
 
 			c = ptr;
-			while( *c != '\0' )
+			while ( *c != '\0' )
 			{
-				if( isalpha( *c ) )
+				if ( isalpha( *c ) )
 				{
 					int length;
 
 					/* found a new component name, save the old one */
-					if( new_comp && BU_LIST_IS_EMPTY( &new_comp->l ) )
+					if ( new_comp && BU_LIST_IS_EMPTY( &new_comp->l ) )
 					{
 						BU_LIST_INSERT( &muves_comp_head.l, &new_comp->l )
 					}
 
 					/* check if this component name already exists */
-					for( BU_LIST_FOR( new_comp, muves_comp, &muves_comp_head.l ) )
+					for ( BU_LIST_FOR( new_comp, muves_comp, &muves_comp_head.l ) )
 					{
-						if( !strcmp( ptr, new_comp->muves_name ) )
+						if ( !strcmp( ptr, new_comp->muves_name ) )
 							break;
 					}
 
 					/* if name doesn't exist, create a new list */
-					if( BU_LIST_IS_HEAD( &new_comp->l, &muves_comp_head.l ) )
+					if ( BU_LIST_IS_HEAD( &new_comp->l, &muves_comp_head.l ) )
 					{
 						new_comp = (struct muves_comp *)bu_malloc( sizeof( struct muves_comp ), "new_comp" );
 						BU_LIST_INIT( &new_comp->l );
@@ -290,15 +290,15 @@ f_read_muves(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 		/* get next token */
 		ptr = strtok( (char *)NULL, regionmap_delims );
-		while( ptr )
+		while ( ptr )
 		{
 			char *ptr2;
 			int id1, id2;
 
-			if( *ptr == '#' )
+			if ( *ptr == '#' )
 				break;
 
-			if( (ptr2 = strchr( ptr, ':' ) ) )
+			if ( (ptr2 = strchr( ptr, ':' ) ) )
 			{
 				/* this is a range of idents */
 
@@ -314,11 +314,11 @@ f_read_muves(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 			}
 
 			/* search through all regions for these idents */
-			for( i = 0; i < reg_count; i++ )
+			for ( i = 0; i < reg_count; i++ )
 			{
 				struct cad_comp_list *comp;
 
-				if( regions[i].region_id < id1 || regions[i].region_id > id2 )
+				if ( regions[i].region_id < id1 || regions[i].region_id > id2 )
 					continue;
 
 				/* this region is part of the current MUVES component */
@@ -333,18 +333,18 @@ f_read_muves(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	bu_free( (char *)regions, "regions" );
 
-	if( new_comp )
+	if ( new_comp )
 	{
 		BU_LIST_INSERT( &muves_comp_head.l, &new_comp->l )
 	}
 
 	fclose( muves_in );
 
-	if( argc < 3 )
+	if ( argc < 3 )
 		return TCL_OK;
 
 	/* open sysdef file */
-	if( (muves_in=fopen( argv[2], "r" )) == NULL )
+	if ( (muves_in=fopen( argv[2], "r" )) == NULL )
 	{
 		Tcl_AppendResult(interp, "Cannot open input file: ", argv[2], " aborting\n", (char *)NULL );
 		return TCL_ERROR;
@@ -353,7 +353,7 @@ f_read_muves(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	new_sys = (struct muves_sys *)NULL;
 
 	/* read sysdef file */
-	while( bu_fgets( line, MUVES_LINE_LEN, muves_in ) != NULL )
+	while ( bu_fgets( line, MUVES_LINE_LEN, muves_in ) != NULL )
 	{
 		char *ptr;
 		char *c;
@@ -364,19 +364,19 @@ f_read_muves(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		char *equal_sign=(char *)NULL;
 
 		i = 0;
-		while( isspace( line[i] ) && line[i] != '\0' )
+		while ( isspace( line[i] ) && line[i] != '\0' )
 			i++;
-		if( line[i] == '#' )	/* comment */
+		if ( line[i] == '#' )	/* comment */
 			continue;
 
 		equal_sign = strchr( line, '=' );
-		if( equal_sign )
+		if ( equal_sign )
 		{
 			struct muves_sys *sys;
 			int j;
 
 			*equal_sign = '\0';
-			if( strchr( line, '(' ) )	/* function definition */
+			if ( strchr( line, '(' ) )	/* function definition */
 			{
 				is_def = 0;
 				new_sys = (struct muves_sys *)NULL;
@@ -388,20 +388,20 @@ f_read_muves(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 			/* get rid of anything in square brackets (and the brackets) */
 			ptr = strchr( line, '[' );
-			if( ptr )
+			if ( ptr )
 				*ptr = '\0';
 
 			/* mark end of system name */
 			j = i;
-			while( line[j] != '\0' && !isspace( line[j] )  )
+			while ( line[j] != '\0' && !isspace( line[j] )  )
 				j++;
 			line[j] = '\0';
 
 			/* look for system name in existing list */
 			new_sys = (struct muves_sys *)NULL;
-			for( BU_LIST_FOR( sys, muves_sys, &muves_sys_head.l ) )
+			for ( BU_LIST_FOR( sys, muves_sys, &muves_sys_head.l ) )
 			{
-				if( !strcmp( &line[i], sys->muves_name ) )
+				if ( !strcmp( &line[i], sys->muves_name ) )
 				{
 					/* found system already existing */
 					new_sys = sys;
@@ -409,7 +409,7 @@ f_read_muves(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 				}
 			}
 
-			if( !new_sys )
+			if ( !new_sys )
 			{
 				int length;
 
@@ -428,23 +428,23 @@ f_read_muves(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		else
 			ptr = line;
 
-		if( !is_def )
+		if ( !is_def )
 			continue;
 
 		/* eliminate square brackets and contents */
 		in_subscript = 0;
 		c = ptr;
-		while( *c != '\0' )
+		while ( *c != '\0' )
 		{
-			if( *c == '[' )
+			if ( *c == '[' )
 				in_subscript++;
-			else if( *c == ']' )
+			else if ( *c == ']' )
 			{
 				*c = ' ';
 				in_subscript--;
 			}
 
-			if( in_subscript )
+			if ( in_subscript )
 				*c = ' ';
 
 			c++;
@@ -453,21 +453,21 @@ f_read_muves(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		/* process remaining tokens on RHS */
 		ptr = strtok( ptr, sysdef_delims );
 
-		while( ptr )
+		while ( ptr )
 		{
 			struct member_list *member;
 			struct muves_comp *comp;
 			struct muves_sys *sys;
 			int already_member;
 
-			if( *ptr == '#' )	/* comment */
+			if ( *ptr == '#' )	/* comment */
 				break;
 
 			c = ptr;
 			is_constant = 1;
-			while( *c != '\0' )
+			while ( *c != '\0' )
 			{
-				if( isalpha( *c ) )
+				if ( isalpha( *c ) )
 				{
 					is_constant = 0;
 					break;
@@ -475,7 +475,7 @@ f_read_muves(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 				c++;
 			}
 
-			if( is_constant )	/* ignore numerical constants */
+			if ( is_constant )	/* ignore numerical constants */
 			{
 				ptr = strtok( (char *)NULL, sysdef_delims );
 				continue;
@@ -485,16 +485,16 @@ f_read_muves(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 			/* check if this is already a member of the current system */
 			already_member = 0;
-			for( BU_LIST_FOR( member, member_list, &new_sys->member_head.l ) )
+			for ( BU_LIST_FOR( member, member_list, &new_sys->member_head.l ) )
 			{
-				switch( member->object_type )
+				switch ( member->object_type )
 				{
 					case MUVES_COMPONENT:   /* component */
-						if( !strcmp( ptr, member->mem.comp->muves_name ) )
+						if ( !strcmp( ptr, member->mem.comp->muves_name ) )
 							already_member = 1;
 						break;
 					case MUVES_SYSTEM:      /* system */
-						if( !strcmp( ptr, member->mem.sys->muves_name ) )
+						if ( !strcmp( ptr, member->mem.sys->muves_name ) )
 							already_member = 1;
 						break;
 					default:
@@ -502,10 +502,10 @@ f_read_muves(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 							"ERROR: Unrecognized type of system member\n", (char *)NULL );
 						break;
 				}
-				if( already_member )
+				if ( already_member )
 					break;
 			}
-			if( already_member )
+			if ( already_member )
 			{
 				ptr = strtok( (char *)NULL, sysdef_delims );
 				continue;
@@ -513,9 +513,9 @@ f_read_muves(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 			member = (struct member_list *)bu_malloc( sizeof( struct member_list ), "member" );
 			member->object_type = MUVES_TYPE_UNKNOWN;
-			for( BU_LIST_FOR( sys, muves_sys, &muves_sys_head.l ) )
+			for ( BU_LIST_FOR( sys, muves_sys, &muves_sys_head.l ) )
 			{
-				if( !strcmp( ptr, sys->muves_name ) )
+				if ( !strcmp( ptr, sys->muves_name ) )
 				{
 					/* found a matching system name */
 					member->object_type = MUVES_SYSTEM;
@@ -524,12 +524,12 @@ f_read_muves(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 				}
 			}
 
-			if( member->object_type == MUVES_TYPE_UNKNOWN )
+			if ( member->object_type == MUVES_TYPE_UNKNOWN )
 			{
 				/* look for a matching component */
-				for( BU_LIST_FOR( comp, muves_comp, &muves_comp_head.l ) )
+				for ( BU_LIST_FOR( comp, muves_comp, &muves_comp_head.l ) )
 				{
-					if( !strcmp( ptr, comp->muves_name ) )
+					if ( !strcmp( ptr, comp->muves_name ) )
 					{
 						/* found a matching component */
 						member->object_type = MUVES_COMPONENT;
@@ -539,7 +539,7 @@ f_read_muves(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 				}
 			}
 
-			if( member->object_type == MUVES_TYPE_UNKNOWN )
+			if ( member->object_type == MUVES_TYPE_UNKNOWN )
 			{
 				/* didn't find system or component */
 				Tcl_AppendResult(interp, "WARNING: Could not find member ", ptr, " while building system ", new_sys->muves_name, "\n", (char *)NULL );
@@ -560,10 +560,10 @@ Display_muves_comp(struct muves_comp *comp, int *e_argc, char ***e_argv, int *e_
 {
 	struct cad_comp_list *cad;
 
-	for( BU_LIST_FOR( cad, cad_comp_list, &comp->comp_head.l ) )
+	for ( BU_LIST_FOR( cad, cad_comp_list, &comp->comp_head.l ) )
 	{
 		(*e_argc)++;
-		if( *e_argc >= *e_argv_len )
+		if ( *e_argc >= *e_argv_len )
 		{
 			(*e_argv_len) += E_ARGV_BLOCK_LEN;
 			(*e_argv) = (char **)bu_realloc( *e_argv, sizeof( char *) * (*e_argv_len), "e_argv");
@@ -579,9 +579,9 @@ Display_muves_sys(struct muves_sys *sys, int *e_argc, char ***e_argv, int *e_arg
 {
 	struct member_list *member;
 
-	for( BU_LIST_FOR( member, member_list, &sys->member_head.l ) )
+	for ( BU_LIST_FOR( member, member_list, &sys->member_head.l ) )
 	{
-		switch( member->object_type )
+		switch ( member->object_type )
 		{
 			case MUVES_COMPONENT:		/* component */
 				Display_muves_comp( member->mem.comp, e_argc, e_argv, e_argv_len );
@@ -622,26 +622,26 @@ f_e_muves(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	e_argc = 1;
 
 	/* loop through args (each should be a MUVES component or system */
-	for( i=1 ; i<argc ; i++ )
+	for ( i=1; i<argc; i++ )
 	{
 		/* look in list of MUVES components */
-		for( BU_LIST_FOR( comp, muves_comp, &muves_comp_head.l ) )
+		for ( BU_LIST_FOR( comp, muves_comp, &muves_comp_head.l ) )
 		{
-			if( !strcmp( argv[i], comp->muves_name ) )
+			if ( !strcmp( argv[i], comp->muves_name ) )
 				Display_muves_comp( comp,
 					&e_argc, &e_argv, &e_argv_len  );
 		}
 
 		/* look in list of MUVES systems */
-		for( BU_LIST_FOR( sys, muves_sys, &muves_sys_head.l ) )
+		for ( BU_LIST_FOR( sys, muves_sys, &muves_sys_head.l ) )
 		{
-			if( !strcmp( argv[i], sys->muves_name ) )
+			if ( !strcmp( argv[i], sys->muves_name ) )
 				Display_muves_sys( sys,
 					&e_argc, &e_argv, &e_argv_len  );
 		}
 	}
 
-	if( e_argc > 1 )
+	if ( e_argc > 1 )
 		return( edit_com( e_argc, e_argv, 1, 0 ) );
 
 	bu_free( (char *)e_argv, "e_argv" );
@@ -658,56 +658,56 @@ f_l_muves(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	int i;
 
-	if( BU_LIST_IS_EMPTY( &muves_comp_head.l ) && BU_LIST_IS_EMPTY( &muves_sys_head.l ) )
+	if ( BU_LIST_IS_EMPTY( &muves_comp_head.l ) && BU_LIST_IS_EMPTY( &muves_sys_head.l ) )
 	{
 		Tcl_AppendResult(interp, "No MUVES components known, use 'read_muves' command\n", (char *)NULL );
 		return TCL_ERROR;
 	}
 
-	for( i=1 ; i<argc ; i++ )
+	for ( i=1; i<argc; i++ )
 	{
 		struct muves_comp *comp;
 		struct muves_sys *sys;
 
-		for( BU_LIST_FOR( comp, muves_comp, &muves_comp_head.l ) )
+		for ( BU_LIST_FOR( comp, muves_comp, &muves_comp_head.l ) )
 		{
-			if( !strcmp( argv[i], comp->muves_name ) )
+			if ( !strcmp( argv[i], comp->muves_name ) )
 			{
 				struct cad_comp_list *cad;
 				int member_count;
 				char count_str[32];
 
 				member_count = 0;
-				for( BU_LIST_FOR( cad, cad_comp_list, &comp->comp_head.l ) )
+				for ( BU_LIST_FOR( cad, cad_comp_list, &comp->comp_head.l ) )
 					member_count++;
 
 				sprintf( count_str, "%d members:\n", member_count );
 				Tcl_AppendResult(interp, comp->muves_name, " (component) ", count_str, (char *)NULL );
 
-				for( BU_LIST_FOR( cad, cad_comp_list, &comp->comp_head.l ) )
+				for ( BU_LIST_FOR( cad, cad_comp_list, &comp->comp_head.l ) )
 					Tcl_AppendResult(interp, "\t", cad->dp->d_namep, "\n", (char *)NULL );
 			}
 		}
 
-		for( BU_LIST_FOR( sys, muves_sys, &muves_sys_head.l ) )
+		for ( BU_LIST_FOR( sys, muves_sys, &muves_sys_head.l ) )
 		{
-			if( !strcmp( argv[i], sys->muves_name ) )
+			if ( !strcmp( argv[i], sys->muves_name ) )
 			{
 				struct member_list *member;
 				int member_count;
 				char count_str[32];
 
 				member_count = 0;
-				for( BU_LIST_FOR( member, member_list, &sys->member_head.l ) )
+				for ( BU_LIST_FOR( member, member_list, &sys->member_head.l ) )
 					member_count++;
 
 				sprintf( count_str, "%d members:\n", member_count );
 
 				Tcl_AppendResult(interp, sys->muves_name, " (system) ", count_str, (char *)NULL );
 
-				for( BU_LIST_FOR( member, member_list, &sys->member_head.l ) )
+				for ( BU_LIST_FOR( member, member_list, &sys->member_head.l ) )
 				{
-					switch( member->object_type )
+					switch ( member->object_type )
 					{
 						case MUVES_COMPONENT:	/* component */
 							Tcl_AppendResult(interp, "\t",
@@ -740,10 +740,10 @@ f_t_muves(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	struct muves_comp *comp;
 	struct muves_sys *sys;
 
-	for( BU_LIST_FOR( comp, muves_comp, &muves_comp_head.l ) )
+	for ( BU_LIST_FOR( comp, muves_comp, &muves_comp_head.l ) )
 		Tcl_AppendResult(interp, "\t", comp->muves_name, " (component)\n", (char *)NULL );
 
-	for( BU_LIST_FOR( sys, muves_sys, &muves_sys_head.l ) )
+	for ( BU_LIST_FOR( sys, muves_sys, &muves_sys_head.l ) )
 		Tcl_AppendResult(interp, "\t", sys->muves_name, " (system)\n", (char *)NULL );
 
 	return TCL_OK;

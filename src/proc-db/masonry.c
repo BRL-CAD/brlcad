@@ -325,7 +325,7 @@ int parse_args(int ac, char **av)
 			perror("wall.log");
 			bu_exit(-1, NULL);
 		}
-		for (R=0 ; R < ac ; R++)
+		for (R=0; R < ac; R++)
 			(void)fprintf(logfile, "%s ", av[R]);
 		(void)putc('\n', logfile);
 		(void)fclose(logfile);
@@ -425,7 +425,7 @@ h_segs(double sz, double ez, struct boardseg *seglist, double sx, double ex)
 	BU_LIST_APPEND(&(seglist->l), &(seg->l));
 
 
-	for(BU_LIST_FOR(op, opening, &ol_hd.l) ) {
+	for (BU_LIST_FOR(op, opening, &ol_hd.l) ) {
 
 	    if ((op->sz >= sz && op->sz <= ez) ||
 		(op->ez >= sz && op->ez <= ez) ||
@@ -636,7 +636,7 @@ frame_opening(struct rt_wdb *fd, struct wmember *wm_hd, struct opening *op)
 						studs, dx / unit_conv,
 						span / unit_conv);
 
-				for(pos=op->sx+dx ; studs ; pos+=dx, studs--) {
+				for (pos=op->sx+dx; studs; pos+=dx, studs--) {
 					if (debug)
 						bu_log("making xtra stud @ %g\n",
 						pos / unit_conv);
@@ -697,7 +697,7 @@ frame_opening(struct rt_wdb *fd, struct wmember *wm_hd, struct opening *op)
 			studs = (int) (span/stud_spacing);
 			dx = span / ((double)studs+1.0);
 
-			for(pos=op->sx+dx ; studs-- ; pos += dx) {
+			for (pos=op->sx+dx; studs--; pos += dx) {
 				mk_v_rpp(fd, wm_hd,
 					pos, pos+bd_thin,
 					0.0, bd_thick,
@@ -806,7 +806,7 @@ frame(struct rt_wdb *fd)
 	/* put in the vertical stud boards that are not a part of an
 	 * opening for a window or a door.
 	 */
-	for (pos = 0.0 ; pos <= WALL_WIDTH-bd_thin ; pos += stud_spacing) {
+	for (pos = 0.0; pos <= WALL_WIDTH-bd_thin; pos += stud_spacing) {
 		register int mk_stud_flag;
 
 		if (pos > WALL_WIDTH-bd_thin*2.0)

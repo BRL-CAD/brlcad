@@ -110,17 +110,17 @@ Add_face( int face[3] )
 {
 	long i;
 
-	if( debug) {
+	if ( debug) {
 		bu_log( "Adding face %d %d %d\n", V3ARGS( face ) );
-		for( i=0 ; i<3 ; i++ ) {
+		for ( i=0; i<3; i++ ) {
 			bu_log( "\t( %g %g %g )\n", V3ARGS( &verts->the_array[ face[i]*3 ] ) );
 		}
 	}
 
-	for( i=0 ; i<num_faces*3 ; i+=3 ) {
-		if( faces[i] == face[0] ) {
-			if( faces[i+1] == face[1] && faces[i+2] == face[2] ) {
-				if( debug ) {
+	for ( i=0; i<num_faces*3; i+=3 ) {
+		if ( faces[i] == face[0] ) {
+			if ( faces[i+1] == face[1] && faces[i+2] == face[2] ) {
+				if ( debug ) {
 					bu_log( "Duplicate face ignored\n" );
 				}
 				return;
@@ -128,7 +128,7 @@ Add_face( int face[3] )
 		}
 	}
 
-	if( num_faces >= max_faces ) {
+	if ( num_faces >= max_faces ) {
 		max_faces += FACES_BLOCK;
 		faces = (long *)bu_realloc( (genptr_t)faces, max_faces*3*sizeof(long), "faces array" );
 	}
@@ -150,7 +150,7 @@ hit( struct application *ap, struct partition *part, struct seg *seg )
 	struct bot_specific *bot;
 
 
-	if( debug ) {
+	if ( debug ) {
 		bu_log( "got a hit\n" );
 	}
 
@@ -158,26 +158,26 @@ hit( struct application *ap, struct partition *part, struct seg *seg )
 	p = part->pt_forw;
 	surfno = p->pt_inhit->hit_surfno;
 	stp = p->pt_inseg->seg_stp;
-	if( stp->st_id != ID_BOT ) {
-		if( debug ) {
+	if ( stp->st_id != ID_BOT ) {
+		if ( debug ) {
 			bu_log( "hit a non-BOT primitive (ignoring)\n" );
 		}
-		if( ap->a_onehit != 0 ) {
+		if ( ap->a_onehit != 0 ) {
 			return 0;
 		}
 	} else {
 		bot = (struct bot_specific *)stp->st_specific;
-		if( bot->bot_facearray ) {
+		if ( bot->bot_facearray ) {
 			tri = bot->bot_facearray[surfno];
 		} else {
 			i = bot->bot_ntri - 1;
 			tri = bot->bot_facelist;
-			while( i != surfno ) {
+			while ( i != surfno ) {
 				i--;
 				tri = tri->tri_forw;
 			}
 		}
-		if( debug ) {
+		if ( debug ) {
 			bu_log( "\thit at (%g %g %g) on %s surfno = %d\n",
 				V3ARGS( p->pt_inhit->hit_point ), stp->st_dp->d_namep, surfno );
 		}
@@ -187,7 +187,7 @@ hit( struct application *ap, struct partition *part, struct seg *seg )
 		x = tri->tri_A[X];
 		y = tri->tri_A[Y];
 		z = tri->tri_A[Z];
-		if( tri->tri_normals ) {
+		if ( tri->tri_normals ) {
 			nx = tri->tri_normals[X];
 			ny = tri->tri_normals[Y];
 			nz = tri->tri_normals[Z];
@@ -198,12 +198,12 @@ hit( struct application *ap, struct partition *part, struct seg *seg )
 		}
 
 		/* add this vertex to the vertex tree */
-		if( use_normals ) {
+		if ( use_normals ) {
 			face[0] = Add_vert_and_norm( x, y, z, nx, ny, nz, verts, tol.dist_sq );
 		} else {
 			face[0] = Add_vert( x, y, z, verts, tol.dist_sq );
 		}
-		if( debug ) {
+		if ( debug ) {
 			bu_log( "\tvertex %d = ( %g %g %g ), norm = (%g %g %g )\n",
 				face[0], x, y, z, nx, ny, nz );
 		}
@@ -212,7 +212,7 @@ hit( struct application *ap, struct partition *part, struct seg *seg )
 		x = tri->tri_A[X] + tri->tri_BA[X];
 		y = tri->tri_A[Y] + tri->tri_BA[Y];
 		z = tri->tri_A[Z] + tri->tri_BA[Z];
-		if( tri->tri_normals ) {
+		if ( tri->tri_normals ) {
 			nx = tri->tri_normals[X+3];
 			ny = tri->tri_normals[Y+3];
 			nz = tri->tri_normals[Z+3];
@@ -223,12 +223,12 @@ hit( struct application *ap, struct partition *part, struct seg *seg )
 		}
 
 		/* add this vertex to the vertex tree */
-		if( use_normals ) {
+		if ( use_normals ) {
 			face[1] = Add_vert_and_norm( x, y, z, nx, ny, nz, verts, tol.dist_sq );
 		} else {
 			face[1] = Add_vert( x, y, z, verts, tol.dist_sq );
 		}
-		if( debug ) {
+		if ( debug ) {
 			bu_log( "\tvertex %d = ( %g %g %g ), norm = (%g %g %g )\n",
 				face[1], x, y, z, nx, ny, nz );
 		}
@@ -237,7 +237,7 @@ hit( struct application *ap, struct partition *part, struct seg *seg )
 		x = tri->tri_A[X] + tri->tri_CA[X];
 		y = tri->tri_A[Y] + tri->tri_CA[Y];
 		z = tri->tri_A[Z] + tri->tri_CA[Z];
-		if( tri->tri_normals ) {
+		if ( tri->tri_normals ) {
 			nx = tri->tri_normals[X+6];
 			ny = tri->tri_normals[Y+6];
 			nz = tri->tri_normals[Z+6];
@@ -248,12 +248,12 @@ hit( struct application *ap, struct partition *part, struct seg *seg )
 		}
 
 		/* add this vertex to the vertex tree */
-		if( use_normals ) {
+		if ( use_normals ) {
 			face[2] = Add_vert_and_norm( x, y, z, nx, ny, nz, verts, tol.dist_sq );
 		} else {
 			face[2] = Add_vert( x, y, z, verts, tol.dist_sq );
 		}
-		if( debug ) {
+		if ( debug ) {
 			bu_log( "\tvertex %d = ( %g %g %g ), norm = (%g %g %g )\n",
 				face[2], x, y, z, nx, ny, nz );
 		}
@@ -263,35 +263,35 @@ hit( struct application *ap, struct partition *part, struct seg *seg )
 	}
 
 
-	if( ap->a_onehit != 0 ) {
+	if ( ap->a_onehit != 0 ) {
 		return 1;
 	}
 
 	/* get the last hit */
 	p = part->pt_back;
-	if( p == part->pt_forw ) {
+	if ( p == part->pt_forw ) {
 		return 1;
 	}
 	surfno = p->pt_outhit->hit_surfno;
 	stp = p->pt_outseg->seg_stp;
-	if( stp->st_id != ID_BOT ) {
-		if( debug ) {
+	if ( stp->st_id != ID_BOT ) {
+		if ( debug ) {
 			bu_log( "hit a non-BOT primitive (ignoring)\n" );
 		}
 		return 0;
 	}
 	bot = (struct bot_specific *)stp->st_specific;
-	if( bot->bot_facearray ) {
+	if ( bot->bot_facearray ) {
 		tri = bot->bot_facearray[surfno];
 	} else {
 		i = bot->bot_ntri - 1;
 		tri = bot->bot_facelist;
-		while( i != surfno ) {
+		while ( i != surfno ) {
 			i--;
 			tri = tri->tri_forw;
 		}
 	}
-	if( debug ) {
+	if ( debug ) {
 		bu_log( "\thit at (%g %g %g) on %s surfno = %d\n",
 			V3ARGS( p->pt_inhit->hit_point ), stp->st_dp->d_namep, surfno );
 	}
@@ -301,7 +301,7 @@ hit( struct application *ap, struct partition *part, struct seg *seg )
 	x = tri->tri_A[X];
 	y = tri->tri_A[Y];
 	z = tri->tri_A[Z];
-	if( tri->tri_normals ) {
+	if ( tri->tri_normals ) {
 		nx = tri->tri_normals[X];
 		ny = tri->tri_normals[Y];
 		nz = tri->tri_normals[Z];
@@ -312,12 +312,12 @@ hit( struct application *ap, struct partition *part, struct seg *seg )
 	}
 
 	/* add this vertex to the vertex tree */
-	if( use_normals ) {
+	if ( use_normals ) {
 		face[0] = Add_vert_and_norm( x, y, z, nx, ny, nz, verts, tol.dist_sq );
 	} else {
 		face[0] = Add_vert( x, y, z, verts, tol.dist_sq );
 	}
-	if( debug ) {
+	if ( debug ) {
 		bu_log( "\tvertex %d = ( %g %g %g ), norm = (%g %g %g )\n",
 			face[0], x, y, z, nx, ny, nz );
 	}
@@ -326,7 +326,7 @@ hit( struct application *ap, struct partition *part, struct seg *seg )
 	x = tri->tri_A[X] + tri->tri_BA[X];
 	y = tri->tri_A[Y] + tri->tri_BA[Y];
 	z = tri->tri_A[Z] + tri->tri_BA[Z];
-	if( tri->tri_normals ) {
+	if ( tri->tri_normals ) {
 		nx = tri->tri_normals[X+3];
 		ny = tri->tri_normals[Y+3];
 		nz = tri->tri_normals[Z+3];
@@ -337,12 +337,12 @@ hit( struct application *ap, struct partition *part, struct seg *seg )
 	}
 
 	/* add this vertex to the vertex tree */
-	if( use_normals ) {
+	if ( use_normals ) {
 		face[1] = Add_vert_and_norm( x, y, z, nx, ny, nz, verts, tol.dist_sq );
 	} else {
 		face[1] = Add_vert( x, y, z, verts, tol.dist_sq );
 	}
-	if( debug ) {
+	if ( debug ) {
 		bu_log( "\tvertex %d = ( %g %g %g ), norm = (%g %g %g )\n",
 			face[1], x, y, z, nx, ny, nz );
 	}
@@ -351,7 +351,7 @@ hit( struct application *ap, struct partition *part, struct seg *seg )
 	x = tri->tri_A[X] + tri->tri_CA[X];
 	y = tri->tri_A[Y] + tri->tri_CA[Y];
 	z = tri->tri_A[Z] + tri->tri_CA[Z];
-	if( tri->tri_normals ) {
+	if ( tri->tri_normals ) {
 		nx = tri->tri_normals[X+6];
 		ny = tri->tri_normals[Y+6];
 		nz = tri->tri_normals[Z+6];
@@ -362,12 +362,12 @@ hit( struct application *ap, struct partition *part, struct seg *seg )
 	}
 
 	/* add this vertex to the vertex tree */
-	if( use_normals ) {
+	if ( use_normals ) {
 		face[2] = Add_vert_and_norm( x, y, z, nx, ny, nz, verts, tol.dist_sq );
 	} else {
 		face[2] = Add_vert( x, y, z, verts, tol.dist_sq );
 	}
-	if( debug ) {
+	if ( debug ) {
 		bu_log( "\tvertex %d = ( %g %g %g ), norm = (%g %g %g )\n",
 			face[2], x, y, z, nx, ny, nz );
 	}
@@ -389,7 +389,7 @@ char *argv[];
 	long i;
 	int database_index;
 
-	if( debug ) {
+	if ( debug ) {
 		bu_debug = BU_DEBUG_COREDUMP;
 	}
 
@@ -405,9 +405,9 @@ char *argv[];
 	/* Get command line arguments. */
 	memset(&ap, 0, sizeof( struct application ));
 	ap.a_onehit = 1;
-	while( (c=bu_getopt( argc, argv, "nmd:g:o:")) != EOF)
+	while ( (c=bu_getopt( argc, argv, "nmd:g:o:")) != EOF)
 	{
-		switch( c )
+		switch ( c )
 		{
 			case 'd':	/* debug level */
 				debug = atoi( bu_optarg );
@@ -417,7 +417,7 @@ char *argv[];
 				break;
 			case 'g':	/* cell size */
 				cell_size = atof( bu_optarg );
-				if( cell_size < tol.dist ) {
+				if ( cell_size < tol.dist ) {
 					bu_exit(1, "Cell size too small! (%g)\n", cell_size );
 				}
 				break;
@@ -435,9 +435,9 @@ char *argv[];
 		bu_exit(1, usage, argv[0]);
 	}
 
-	if( output_file )
+	if ( output_file )
 	{
-		if( (fd_out=fopen( output_file, "w" )) == NULL )
+		if ( (fd_out=fopen( output_file, "w" )) == NULL )
 		{
 			perror( argv[0] );
 			bu_exit(1, "Cannot open output file (%s)\n", output_file);
@@ -461,37 +461,37 @@ char *argv[];
 	ap.a_overlap = a_overlap;
 	ap.a_logoverlap = rt_silent_logoverlap;
 
-	while( ++bu_optind < argc )
+	while ( ++bu_optind < argc )
 	{
-		if( rt_gettree( rtip, argv[bu_optind] ) < 0 )
+		if ( rt_gettree( rtip, argv[bu_optind] ) < 0 )
 			bu_log( "rt_gettree failed on %s\n", argv[bu_optind] );
 	}
 
 	rt_prep( rtip );
 
 	/* create vertex tree */
-	if( use_normals ) {
+	if ( use_normals ) {
 		verts = create_vert_tree_w_norms();
 	} else {
 		verts = create_vert_tree();
 	}
 
-	if( cell_size != 0.0 ) {
+	if ( cell_size != 0.0 ) {
 		/* do a grid of shots */
 
 		ap.a_onehit = 0;
-		for( dir=X ; dir<=Z ; dir++ ) {
+		for ( dir=X; dir<=Z; dir++ ) {
 			int grid_dir1, grid_dir2;
 
-			if( debug ) {
+			if ( debug ) {
 				bu_log( "************** Process direction %d\n", dir );
 			}
 			grid_dir1 = X;
-			if( grid_dir1 == dir ) {
+			if ( grid_dir1 == dir ) {
 				grid_dir1++;
 			}
 			grid_dir2 = grid_dir1 + 1;
-			if( grid_dir2 == dir ) {
+			if ( grid_dir2 == dir ) {
 				grid_dir2++;
 			}
 			VSETALL( ap.a_ray.r_dir, 0.0 );
@@ -504,12 +504,12 @@ char *argv[];
 			ap.a_ray.r_pt[grid_dir1] = rtip->mdl_min[grid_dir1] + tol.dist;
 
 			/* now fire a grid of rays spaced at "cell_size" distance */
-			while( ap.a_ray.r_pt[grid_dir1] <= rtip->mdl_max[grid_dir1] ) {
+			while ( ap.a_ray.r_pt[grid_dir1] <= rtip->mdl_max[grid_dir1] ) {
 				ap.a_ray.r_pt[grid_dir2] = rtip->mdl_min[grid_dir2] + tol.dist;
-				while( ap.a_ray.r_pt[grid_dir2] <= rtip->mdl_max[grid_dir2] ) {
+				while ( ap.a_ray.r_pt[grid_dir2] <= rtip->mdl_max[grid_dir2] ) {
 
 					/* shoot a ray */
-					if( debug ) {
+					if ( debug ) {
 						bu_log( "Shooting a ray from (%g %g %g) in direction (%g %g %g)\n",
 							V3ARGS( ap.a_ray.r_pt ), V3ARGS( ap.a_ray.r_dir ) );
 					}
@@ -526,15 +526,15 @@ char *argv[];
 		vect_t inv_dir;
 
 		/* shoot at every triangle */
-		for( i=0 ; i<rtip->nsolids ; i++ ) {
+		for ( i=0; i<rtip->nsolids; i++ ) {
 			stp = rtip->rti_Solids[i];
-			if( stp->st_id != ID_BOT ) {
+			if ( stp->st_id != ID_BOT ) {
 				continue;
 			}
 
 			bot = (struct bot_specific *)stp->st_specific;
 			tri = bot->bot_facelist;
-			while( tri ) {
+			while ( tri ) {
 				point_t p2, p3, sum;
 
 				VADD2( p2, tri->tri_A, tri->tri_BA );
@@ -546,14 +546,14 @@ char *argv[];
 				VSCALE( ap.a_ray.r_pt, sum, 1.0/3.0 );
 				VREVERSE( ap.a_ray.r_dir, tri->tri_N );
 				VINVDIR( inv_dir, ap.a_ray.r_dir );
-				if( rt_in_rpp( &ap.a_ray, inv_dir, rtip->mdl_min, rtip->mdl_max ) == 0 ) {
+				if ( rt_in_rpp( &ap.a_ray, inv_dir, rtip->mdl_min, rtip->mdl_max ) == 0 ) {
 					tri = tri->tri_forw;
 					continue;
 				}
 				VJOIN1( ap.a_ray.r_pt, ap.a_ray.r_pt, (ap.a_ray.r_min - 1000.0), ap.a_ray.r_dir );
 
 				/* shoot a ray */
-				if( debug ) {
+				if ( debug ) {
 					point_t B, C;
 
 					VADD2( B, tri->tri_A, tri->tri_BA );
@@ -570,33 +570,33 @@ char *argv[];
 }
 
 	/* now write out the results */
-	if( debug ) {
+	if ( debug ) {
 		bu_log( "Writing output (%ld vertices and %d faces)\n", verts->curr_vert, num_faces );
 	}
 	fprintf( fd_out, "# vtk DataFile Version 1.0\n" );
 	fprintf( fd_out, "%s", argv[database_index] );
 	database_index++;
-	while( database_index < argc ) {
+	while ( database_index < argc ) {
 		fprintf( fd_out, " %s", argv[database_index] );
 		database_index++;
 	}
 	fprintf( fd_out, "\nASCII\n\nDATASET POLYDATA\n" );
 	fprintf( fd_out, "POINTS %ld float\n", verts->curr_vert );
-	for( i=0 ; i<verts->curr_vert ; i++ ) {
-		if( use_normals ) {
+	for ( i=0; i<verts->curr_vert; i++ ) {
+		if ( use_normals ) {
 			fprintf( fd_out, "%g %g %g\n", V3ARGS( &verts->the_array[i*6] ) );
 		} else {
 			fprintf( fd_out, "%g %g %g\n", V3ARGS( &verts->the_array[i*3] ) );
 		}
 	}
 	fprintf( fd_out, "POLYGONS %ld %ld\n", num_faces, num_faces*4 );
-	for( i=0 ; i<num_faces ; i++ ) {
+	for ( i=0; i<num_faces; i++ ) {
 		fprintf( fd_out, "3 %ld %ld %ld\n", V3ARGS( &faces[i*3] ) );
 	}
-	if( use_normals ) {
+	if ( use_normals ) {
 		fprintf( fd_out, "POINT_DATA %ld\n", verts->curr_vert );
 		fprintf( fd_out, "NORMALS default float\n" );
-		for( i=0 ; i<verts->curr_vert ; i++ ) {
+		for ( i=0; i<verts->curr_vert; i++ ) {
 			fprintf( fd_out, "%g %g %g\n", V3ARGS( &verts->the_array[i*6+3] ) );
 		}
 	}

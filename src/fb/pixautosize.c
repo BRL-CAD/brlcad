@@ -62,7 +62,7 @@ get_args(int argc, register char **argv)
 	register int c;
 
 	while ( (c = bu_getopt( argc, argv, "b:f:l:" )) != EOF )  {
-		switch( c )  {
+		switch ( c )  {
 		case 'b':
 			bytes_per_sample = atoi(bu_optarg);
 			break;
@@ -99,14 +99,14 @@ main(int argc, char **argv)
 		return 1;
 	}
 
-	if( file_name ) {
-		if( !fb_common_file_size(&width, &height, file_name, bytes_per_sample) ) {
+	if ( file_name ) {
+		if ( !fb_common_file_size(&width, &height, file_name, bytes_per_sample) ) {
 			fprintf(stderr, "pixautosize: unable to autosize file '%s'\n", file_name);
 			ret = 1;		/* ERROR */
 		}
 	} else {
 		nsamp = file_length/bytes_per_sample;
-		if( !fb_common_image_size(&width, &height, nsamp) ) {
+		if ( !fb_common_image_size(&width, &height, nsamp) ) {
 			fprintf(stderr, "pixautosize: unable to autosize nsamples=%d\n", nsamp);
 			ret = 2;		/* ERROR */
 		}

@@ -87,7 +87,7 @@ Add_lists(uf_list_p_t dest, uf_list_p_t src)
 
     UF_MODL_ask_list_count(src, &count);
 
-    for (i=count-1 ; i >= 0 ; i--) {
+    for (i=count-1; i >= 0; i--) {
 	UF_MODL_ask_list_item(src, i, &obj);
 	UF_MODL_delete_list_item(&src, obj);
 
@@ -178,7 +178,7 @@ open_part(char *p_name, int level)
 		error_status.failed,
 		error_status.user_abort,
 		error_status.n_parts);
-	for (e_part = 0 ; e_part < error_status.n_parts ; e_part++) {
+	for (e_part = 0; e_part < error_status.n_parts; e_part++) {
 	    dprintf("%*sPart %s status %d\n",
 		    level, "",
 		    error_status.file_names[e_part],
@@ -283,7 +283,7 @@ Lee_open_part(char *p_name, int level)
 		error_status.failed,
 		error_status.user_abort,
 		error_status.n_parts);
-	for (e_part = 0 ; e_part < error_status.n_parts ; e_part++) {
+	for (e_part = 0; e_part < error_status.n_parts; e_part++) {
 	    dprintf("%*sPart %s status %d\n",
 		    level, "",
 		    error_status.file_names[e_part],
@@ -1002,7 +1002,7 @@ lookup_ug_type(int t, char **comment)
 {
     int i;
 
-    for (i=0 ; ug_typelist[i].name != (char *)NULL ; i++ ) {
+    for (i=0; ug_typelist[i].name != (char *)NULL; i++ ) {
 	if ( ug_typelist[i].value == t) {
 	    goto found;
 	}
@@ -1022,7 +1022,7 @@ lookup_ug_subtype(int t, char **comment)
 {
     int i;
 
-    for (i=0 ; ug_subtypelist[i].name != (char *)NULL ; i++ ) {
+    for (i=0; ug_subtypelist[i].name != (char *)NULL; i++ ) {
 	if ( ug_subtypelist[i].value == t ) {
 	    goto found;
 	}

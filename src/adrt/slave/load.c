@@ -172,7 +172,7 @@ slave_load_geom (uint32_t pid, tie_t *tie)
       gind += 3 * f16num * sizeof(uint16_t);
 
       tlist = (TIE_3 **)malloc(3 * f16num * sizeof(TIE_3 *));
-      for(i = 0; i < 3*f16num; i++)
+      for (i = 0; i < 3*f16num; i++)
         tlist[i] = &vlist[f16list[i]];
 
       /* assign the current mesh to group of triangles */
@@ -187,7 +187,7 @@ slave_load_geom (uint32_t pid, tie_t *tie)
   mysql_free_result (res);
 
   /* Query the mesh attributes map for the attribute id */
-  for(i = 0; i < slave_load_mesh_num; i++)
+  for (i = 0; i < slave_load_mesh_num; i++)
   {
     snprintf (query, 256, "select attr from meshattrmap where mesh='%s' and gid=%d", slave_load_mesh_list[i].name, gid);
     if (!mysql_query (&slave_load_mysql_db, query))

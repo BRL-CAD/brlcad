@@ -61,7 +61,7 @@ bu_bomb(const char *str)
 	bu_log( "%s (librt.a) : Fatal error, aborting!\n", str );
 	(void) fflush( stdout );
 	prnt_Timer( "DUMP" );
-	if( pix_buffered == B_PAGE )
+	if ( pix_buffered == B_PAGE )
 		(void) fb_flush( fbiop ); /* Write out buffered image.	*/
 	(void) abort();			  /* Should dump.		*/
 	bu_exit(12, NULL);
@@ -74,20 +74,20 @@ fb_log( const char *fmt, ... )
 	/* We use the same lock as malloc.  Sys-call or mem lock, really */
 	bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
 	va_start( ap, fmt );
-	if( tty && (err_file[0] == '\0' || ! strcmp( err_file, "/dev/tty" )) ) {
+	if ( tty && (err_file[0] == '\0' || ! strcmp( err_file, "/dev/tty" )) ) {
 	    /* Only move cursor and scroll if newline is output.	*/
 	    static int	newline = 1;
-	    if( CS != NULL ) {
+	    if ( CS != NULL ) {
 		(void) SetScrlReg( TOP_SCROLL_WIN, PROMPT_LINE - 1 );
-		if( newline ) {
+		if ( newline ) {
 		    SCROLL_PR_MOVE();
 		    (void) ClrEOL();
 		}
 		(void) vfprintf( stdout, fmt, ap );
 		(void) ResetScrlReg();
 	    } else
-		if( DL != NULL ) {
-		    if( newline ) {
+		if ( DL != NULL ) {
+		    if ( newline ) {
 			SCROLL_DL_MOVE();
 			(void) DeleteLn();
 			SCROLL_PR_MOVE();

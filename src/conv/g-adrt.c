@@ -87,8 +87,8 @@ struct bu_vls*	region_name_from_path(struct db_full_path *pathp);
 void regmap_lookup(char *name, int id) {
   int i;
 
-  for(i = 0; i < regmap_num; i++) {
-    if(id == regmap_list[i].id) {
+  for (i = 0; i < regmap_num; i++) {
+    if (id == regmap_list[i].id) {
       strncpy(name, regmap_list[i].name, 256);
       continue;
     }
@@ -109,7 +109,7 @@ struct bu_vls* region_name_from_path(struct db_full_path *pathp) {
     struct bu_vls *vls;
 
     /* walk up the path from the bottom looking for the region */
-    for (i=pathp->fp_len-1 ; i >= 0 ; i--) {
+    for (i=pathp->fp_len-1; i >= 0; i--) {
 	if (pathp->fp_names[i]->d_flags & DIR_REGION) {
 	    goto found_region;
 	}
@@ -123,7 +123,7 @@ struct bu_vls* region_name_from_path(struct db_full_path *pathp) {
     vls = bu_malloc(sizeof(struct bu_vls), "region name");
     bu_vls_init( vls );
 
-    for(j = 0; j <= i; j++) {
+    for (j = 0; j <= i; j++) {
       bu_vls_strcat(vls, "/");
       bu_vls_strcat(vls, pathp->fp_names[j]->d_namep);
     }
@@ -158,7 +158,7 @@ static int reg_start_func(struct db_tree_state *tsp,
   color[1] = combp->rgb[1];
   color[2] = combp->rgb[2];
 
-  if(color[0]+color[1]+color[2] == 0) {
+  if (color[0]+color[1]+color[2] == 0) {
     color[0] = 192;
     color[1] = 192;
     color[2] = 192;
@@ -168,28 +168,28 @@ static int reg_start_func(struct db_tree_state *tsp,
   strncpy(name, pathp->fp_names[pathp->fp_len-1]->d_namep, 256);
 
   /* If name is null, skip it */
-  if(!strlen(name))
+  if (!strlen(name))
     return(0);
 
   /* replace the BRL-CAD name with the regmap name */
-  if(use_regmap)
+  if (use_regmap)
     regmap_lookup(name, tsp->ts_regionid);
 
   found = 0;
-  for(i = 0; i < prop_num; i++) {
-    if(!strcmp(prop_list[i].name, name)) {
+  for (i = 0; i < prop_num; i++) {
+    if (!strcmp(prop_list[i].name, name)) {
       found = 1;
       continue;
     }
   }
 
-  if(!found) {
+  if (!found) {
     prop_list = (property_t *)bu_realloc(prop_list, sizeof(property_t) * (prop_num + 1), "prop_list");
     strncpy(prop_list[prop_num].name, name, 256);
     prop_list[prop_num].color[0] = color[0] / 255.0;
     prop_list[prop_num].color[1] = color[1] / 255.0;
     prop_list[prop_num].color[2] = color[2] / 255.0;
-    if(strstr(bu_vls_strgrab((struct bu_vls *)&(combp->shader)), "light")) {
+    if (strstr(bu_vls_strgrab((struct bu_vls *)&(combp->shader)), "light")) {
       prop_list[prop_num].emission = 1.0;
     } else {
       prop_list[prop_num].emission = 0.0;
@@ -255,10 +255,10 @@ static union tree *leaf_func(struct db_tree_state *tsp,
     dp = DB_FULL_PATH_CUR_DIR(pathp);
 
 
-    if(ip->idb_minor_type != ID_BOT) {
+    if (ip->idb_minor_type != ID_BOT) {
 #if DEBUG
 	fprintf(stderr, "\"%s\" should be a BOT ", pathp->fp_names[pathp->fp_len-1]->d_namep);
-	for (i=pathp->fp_len-1; i >= 0 ; i--) {
+	for (i=pathp->fp_len-1; i >= 0; i--) {
 	    if (pathp->fp_names[i]->d_flags & DIR_REGION) {
 		fprintf(stderr, "fix region %s\n", pathp->fp_names[i]->d_namep);
 		goto found;
@@ -284,7 +284,7 @@ static union tree *leaf_func(struct db_tree_state *tsp,
     prop_name[0] = 0;
 
 
-    if(use_regmap) {
+    if (use_regmap) {
       vlsp = region_name_from_path(pathp);
       strncpy(mesh_name, bu_vls_strgrab(vlsp), 256);
       regmap_lookup(mesh_name, tsp->ts_regionid);
@@ -299,16 +299,16 @@ static union tree *leaf_func(struct db_tree_state *tsp,
     bu_free(vlsp, "vls");
 
     /* if name is null, assign default property */
-    if(!strlen(prop_name))
+    if (!strlen(prop_name))
       strcpy(prop_name, "default");
 
     /* Grab the chars from the end till the '/' */
     i = strlen(prop_name)-1;
-    if(i >= 0)
-      while(prop_name[i] != '/' && i > 0)
+    if (i >= 0)
+      while (prop_name[i] != '/' && i > 0)
 	i--;
 
-    if(i != strlen(prop_name))
+    if (i != strlen(prop_name))
       strncpy(prop_name, &prop_name[i+1], 256);
 
     /* Display Status */
@@ -320,7 +320,7 @@ static union tree *leaf_func(struct db_tree_state *tsp,
     VSETALL(stp->st_min, HUGE);
     VSETALL(stp->st_max, -HUGE);
 
-    for(vp = &bot->vertices[bot->num_vertices-1]; vp >= bot->vertices; vp -= 3) {
+    for (vp = &bot->vertices[bot->num_vertices-1]; vp >= bot->vertices; vp -= 3) {
 	VMINMAX(stp->st_min, stp->st_max, vp);
     }
     VMINMAX(rtip->mdl_min, rtip->mdl_max, stp->st_min);
@@ -342,7 +342,7 @@ static union tree *leaf_func(struct db_tree_state *tsp,
     /* Pack number of vertices */
     fwrite(&bot->num_vertices, sizeof(int), 1, adrt_fh);
 
-    for(i = 0; i < bot->num_vertices; i++) {
+    for (i = 0; i < bot->num_vertices; i++) {
       /* Change scale from mm to meters */
       vec[0] = bot->vertices[3*i+0] * 0.001;
       vec[1] = bot->vertices[3*i+1] * 0.001;
@@ -353,7 +353,7 @@ static union tree *leaf_func(struct db_tree_state *tsp,
     /* Add to total number of triangles */
     total_tri_num += bot->num_faces;
 
-    if(bot->num_faces < 1<<16) {
+    if (bot->num_faces < 1<<16) {
       unsigned short ind;
 
       c = 0; /* using unsigned shorts */
@@ -362,7 +362,7 @@ static union tree *leaf_func(struct db_tree_state *tsp,
       /* Pack number of faces */
       ind = bot->num_faces;
       fwrite(&ind, sizeof(unsigned short), 1, adrt_fh);
-      for(i = 0; i < 3 * bot->num_faces; i++) {
+      for (i = 0; i < 3 * bot->num_faces; i++) {
 	ind = bot->faces[i];
 	fwrite(&ind, sizeof(unsigned short), 1, adrt_fh);
       }
@@ -414,14 +414,14 @@ void load_regmap(char *filename) {
   regmap_list = NULL;
 
   fh = fopen(filename, "r");
-  if(!fh) {
+  if (!fh) {
     printf("region map file \"%s\" not found.\n", filename);
     return;
   } else {
     printf("using region map: %s\n", bu_optarg);
   }
 
-  while(!feof(fh)) {
+  while (!feof(fh)) {
     /* read in the line */
     bu_fgets(line, 256, fh);
 
@@ -429,51 +429,51 @@ void load_regmap(char *filename) {
     line[strlen(line)-1] = 0;
 
     /* replace any tabs with spaces */
-    for(i = 0; i < strlen(line); i++)
-      if(line[i] == '\t')
+    for (i = 0; i < strlen(line); i++)
+      if (line[i] == '\t')
 	line[i] = ' ';
 
     /* advance to the first non-space */
     ind = 0;
-    while(line[ind] == ' ')
+    while (line[ind] == ' ')
       ind++;
 
     /* If there is a '#' comment here then continue */
-    if(line[ind] == '#')
+    if (line[ind] == '#')
       continue;
 
     /* advance to the first space while reading the name */
     i = 0;
-    while(i < 256 && line[ind] != ' ' && ind < strlen(line))
+    while (i < 256 && line[ind] != ' ' && ind < strlen(line))
       name[i++] = line[ind++];
     name[i] = 0;
 
     /* skip any lines that are empty */
-    if(!strlen(name))
+    if (!strlen(name))
       continue;
 
     /* begin parsing the id's */
-    while(ind < strlen(line)) {
+    while (ind < strlen(line)) {
       /* advance to the first id */
-      while(line[ind] == ' ')
+      while (line[ind] == ' ')
 	ind++;
 
       /* check for comment */
-      if(line[ind] == '#')
+      if (line[ind] == '#')
 	break;
 
       /* advance to the first space while reading the id string */
       i = 0;
-      while(i < 256 && line[ind] != ' ' && ind < strlen(line))
+      while (i < 256 && line[ind] != ' ' && ind < strlen(line))
 	idstr[i++] = line[ind++];
       idstr[i] = 0;
 
       /* chesk that there were no spaces after the last id */
-      if(!strlen(idstr))
+      if (!strlen(idstr))
 	break;
 
       /* if the id string contains a ':' then it's a range */
-      if(strstr(idstr, ":")) {
+      if (strstr(idstr, ":")) {
 	int hi, lo;
 
 	ptr = strchr(idstr, ':');
@@ -483,7 +483,7 @@ void load_regmap(char *filename) {
 	lo = atoi(idstr);
 
 	/* insert an entry for the whole range */
-	for(i = 0; i <= hi-lo; i++) {
+	for (i = 0; i <= hi-lo; i++) {
 	  /* Insert one entry into the regmap_list */
 	  regmap_list = (regmap_t *)bu_realloc(regmap_list, sizeof(regmap_t) * (regmap_num + 1), "regmap_list");
 	  strncpy(regmap_list[regmap_num].name, name, 256);
@@ -512,15 +512,15 @@ int main(int argc, char *argv[]) {
   unsigned short s;
 
 
-  if(argc <= 3) {
+  if (argc <= 3) {
     printf("Usage: g-adrt [-r region.map] file.g adrt_project_name [region list]\n");
     bu_exit(1, NULL);
   }
 
   /* Process command line arguments */
   use_regmap = 0;
-  while((c = bu_getopt(argc, argv, shortopts)) != -1) {
-    switch(c) {
+  while ((c = bu_getopt(argc, argv, shortopts)) != -1) {
+    switch (c) {
       case 'r':
 	use_regmap = 1;
 	load_regmap(bu_optarg);
@@ -567,7 +567,7 @@ int main(int argc, char *argv[]) {
   * title string in the header (ID) record.
   */
 
-  if((rtip = rt_dirbuild(argv[0], idbuf, sizeof(idbuf))) == RTI_NULL) {
+  if ((rtip = rt_dirbuild(argv[0], idbuf, sizeof(idbuf))) == RTI_NULL) {
     fprintf(stderr, "rtexample: rt_dirbuild failure\n");
     bu_exit(2, NULL);
   }
@@ -618,10 +618,10 @@ int main(int argc, char *argv[]) {
   fprintf(adrt_fh, "properties,default\n");
   fprintf(adrt_fh, "color,0.8,0.8,0.8\n");
   fprintf(adrt_fh, "gloss,0.2\n");
-  for(i = 0; i < prop_num; i++) {
+  for (i = 0; i < prop_num; i++) {
     fprintf(adrt_fh, "properties,%s\n", prop_list[i].name);
     fprintf(adrt_fh, "color,%f,%f,%f\n", prop_list[i].color[0], prop_list[i].color[1], prop_list[i].color[2]);
-    if(prop_list[i].emission > 0.0)
+    if (prop_list[i].emission > 0.0)
       fprintf(adrt_fh, "emission,%f\n", prop_list[i].emission);
   }
   fclose(adrt_fh);
@@ -644,7 +644,7 @@ int main(int argc, char *argv[]) {
   filename[256-1] = '\0';
 
   adrt_fh = fopen(filename, "wb");
-  for(i = 0; i < mesh_map_ind; i++) {
+  for (i = 0; i < mesh_map_ind; i++) {
     len = strlen(mesh_map[i].mesh) + 1;
     fwrite(&len, 1, 1, adrt_fh);
     fwrite(mesh_map[i].mesh, 1, len, adrt_fh);

@@ -49,7 +49,7 @@ int common_db_load(common_db_t *db, char *path) {
   strncpy(proj_path, path, ADRT_NAME_SIZE);
 
   path_ptr = strrchr(proj_path, '/');
-  if(path_ptr) {
+  if (path_ptr) {
     path_ptr[0] = 0;
     chdir(proj_path);
   }

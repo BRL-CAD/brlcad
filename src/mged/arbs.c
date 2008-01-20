@@ -85,7 +85,7 @@ f_3ptarb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	if(argc < 1 || 27 < argc){
+	if (argc < 1 || 27 < argc){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -96,57 +96,57 @@ f_3ptarb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
 
 	/* get the arb name */
-	if( argc < 2 ) {
+	if ( argc < 2 ) {
 	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter name for this arb: ", (char *)NULL);
 	  return TCL_ERROR;
 	}
 
-	if( db_lookup( dbip, argv[1], LOOKUP_QUIET) != DIR_NULL ) {
+	if ( db_lookup( dbip, argv[1], LOOKUP_QUIET) != DIR_NULL ) {
 	  Tcl_AppendResult(interp, argv[1], ":  already exists\n", (char *)NULL);
 	  return TCL_ERROR;
 	}
 
 	/* read the three points */
 	promp = &p_arb3pt[0];
-	if( argc < 11 ) {
+	if ( argc < 11 ) {
 	  Tcl_AppendResult(interp, MORE_ARGS_STR, promp[argc-2], (char *)NULL);
 	  return TCL_ERROR;
 	}
 
 	/* preliminary calculations to check input so far */
-	for(i=0; i<3; i++) {
+	for (i=0; i<3; i++) {
 		vec1[i] = atof(argv[i+2]) - atof(argv[i+5]);
 		vec2[i] = atof(argv[i+2]) - atof(argv[i+8]);
 	}
 	VCROSS(norm, vec1, vec2);
 	length = MAGNITUDE( norm );
-	if(length == 0.0) {
+	if (length == 0.0) {
 	  Tcl_AppendResult(interp, "points are colinear\n", (char *)NULL);
 	  return TCL_ERROR;
 	}
 	VSCALE(norm, norm, 1.0/length);
 
-	if( argc < 12 ) {
+	if ( argc < 12 ) {
 	  Tcl_AppendResult(interp, MORE_ARGS_STR,
 			   "Enter coordinate to solve for (x, y, or z): ", (char *)NULL);
 	  return TCL_ERROR;
 	}
 
-	switch( argv[11][0] ) {
+	switch ( argv[11][0] ) {
 
 	case 'x':
-		if(norm[0] == 0.0) {
+		if (norm[0] == 0.0) {
 		  Tcl_AppendResult(interp, "X not unique in this face\n", (char *)NULL);
 		  return TCL_ERROR;
 		}
 		solve = X;
 
-		if( argc < 13 ) {
+		if ( argc < 13 ) {
 		  Tcl_AppendResult(interp, MORE_ARGS_STR,
 				   "Enter the Y, Z coordinate values: ", (char *)NULL);
 		  return TCL_ERROR;
 		}
-		if( argc < 14 ) {
+		if ( argc < 14 ) {
 		  Tcl_AppendResult(interp, MORE_ARGS_STR,
 				   "Enter the Z coordinate value: ", (char *)NULL);
 		  return TCL_ERROR;
@@ -156,7 +156,7 @@ f_3ptarb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		break;
 
 	case 'y':
-		if(norm[1] == 0.0) {
+		if (norm[1] == 0.0) {
 		  Tcl_AppendResult(interp, "Y not unique in this face\n", (char *)NULL);
 		  return TCL_ERROR;
 		}
@@ -178,7 +178,7 @@ f_3ptarb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		break;
 
 	case 'z':
-		if(norm[2] == 0.0) {
+		if (norm[2] == 0.0) {
 		  Tcl_AppendResult(interp, "Z not unique in this face\n", (char *)NULL);
 		  return TCL_ERROR;
 		}
@@ -210,7 +210,7 @@ f_3ptarb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  return TCL_ERROR;
 	}
 
-	if( (thick = (atof( argv[14] ))) == 0.0 ) {
+	if ( (thick = (atof( argv[14] ))) == 0.0 ) {
 	  Tcl_AppendResult(interp, "thickness = 0.0\n", (char *)NULL);
 	  return TCL_ERROR;
 	}
@@ -223,11 +223,11 @@ f_3ptarb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	aip = (struct rt_arb_internal *)internal.idb_ptr;
 	aip->magic = RT_ARB_INTERNAL_MAGIC;
 
-	for(i=0; i<8; i++) {
+	for (i=0; i<8; i++) {
 		VSET( aip->pt[i], 0.0, 0.0, 0.0 );
 	}
 
-	for(i=0; i<3; i++) {
+	for (i=0; i<3; i++) {
 		/* the three given vertices */
 		VSET( aip->pt[i], atof( argv[i*3+2] )*local2base, atof( argv[i*3+3] )*local2base, atof( argv[i*3+4] )*local2base );
 	}
@@ -236,7 +236,7 @@ f_3ptarb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	ndotv = VDOT( aip->pt[0], norm );
 
-	switch( solve ) {
+	switch ( solve ) {
 
 		case X:
 			/* solve for x-coord of 4th point */
@@ -274,17 +274,17 @@ f_3ptarb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
 
 	/* calculate the remaining 4 vertices */
-	for(i=0; i<4; i++) {
+	for (i=0; i<4; i++) {
 		VJOIN1( aip->pt[i+4], aip->pt[i], thick, norm );
 	}
 
-	if( (dp = db_diradd( dbip, argv[1], -1L, 0, DIR_SOLID, (genptr_t)&internal.idb_type)) == DIR_NULL )
+	if ( (dp = db_diradd( dbip, argv[1], -1L, 0, DIR_SOLID, (genptr_t)&internal.idb_type)) == DIR_NULL )
 	{
 		Tcl_AppendResult(interp, "Cannot add ", argv[1], " to the directory\n", (char *)NULL );
 		return TCL_ERROR;
 	}
 
-	if( rt_db_put_internal( dp, dbip, &internal, &rt_uniresource ) < 0 )
+	if ( rt_db_put_internal( dp, dbip, &internal, &rt_uniresource ) < 0 )
 	{
 		rt_db_free_internal( &internal, &rt_uniresource );
 		TCL_WRITE_ERR_return;
@@ -332,7 +332,7 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	if(argc < 1 || 27 < argc){
+	if (argc < 1 || 27 < argc){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -343,11 +343,11 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
 
 	/* get the arb name */
-	if( argc < 2 ) {
+	if ( argc < 2 ) {
 	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter name for this arb: ", (char *)NULL);
 	  return TCL_ERROR;
 	}
-	if( db_lookup( dbip, argv[1], LOOKUP_QUIET) != DIR_NULL ) {
+	if ( db_lookup( dbip, argv[1], LOOKUP_QUIET) != DIR_NULL ) {
 	  Tcl_AppendResult(interp, argv[1], ":  already exists\n", (char *)NULL);
 	  return TCL_ERROR;
 	}
@@ -355,7 +355,7 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	/* read the known point */
 	promp = &p_rfin[0];
-	if( argc < 5 ) {
+	if ( argc < 5 ) {
 	  Tcl_AppendResult(interp, MORE_ARGS_STR, promp[argc-2], (char *)NULL);
 	  return TCL_ERROR;
 	}
@@ -379,8 +379,8 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	norm[1] = cos(fba) * sin(rota);
 	norm[2] = sin(fba);
 
-	for(i=0; i<3; i++) {
-	  if( argc < 8+3*i ) {
+	for (i=0; i<3; i++) {
+	  if ( argc < 8+3*i ) {
 	    struct bu_vls tmp_vls;
 
 	    bu_vls_init(&tmp_vls);
@@ -390,20 +390,20 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    return TCL_ERROR;
 	  }
 
-	  switch( argv[7+3*i][0] ) {
+	  switch ( argv[7+3*i][0] ) {
 		case 'x':
-			if(norm[0] == 0.0) {
+			if (norm[0] == 0.0) {
 			  Tcl_AppendResult(interp, "X not unique in this face\n", (char *)NULL);
 			  return TCL_ERROR;
 			}
 			solve[i] = X;
 
-			if( argc < 7+3*i+2 ) {
+			if ( argc < 7+3*i+2 ) {
 			  Tcl_AppendResult(interp, MORE_ARGS_STR,
 					   "Enter the Y, Z coordinate values: ", (char *)NULL);
 			  return TCL_ERROR;
 			}
-			if( argc < 7+3*i+3 ) {
+			if ( argc < 7+3*i+3 ) {
 			  Tcl_AppendResult(interp, MORE_ARGS_STR,
 					   "Enter the Z coordinate value: ", (char *)NULL);
 			  return TCL_ERROR;
@@ -413,18 +413,18 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 			break;
 
 		case 'y':
-			if(norm[1] == 0.0) {
+			if (norm[1] == 0.0) {
 			  Tcl_AppendResult(interp, "Y not unique in this face\n", (char *)NULL);
 			  return TCL_ERROR;
 			}
 			solve[i] = Y;
 
-			if( argc < 7+3*i+2 ) {
+			if ( argc < 7+3*i+2 ) {
 			  Tcl_AppendResult(interp, MORE_ARGS_STR,
 					   "Enter the X, Z coordinate values: ", (char *)NULL);
 			  return TCL_ERROR;
 			}
-			if( argc < 7+3*i+3 ) {
+			if ( argc < 7+3*i+3 ) {
 			  Tcl_AppendResult(interp, MORE_ARGS_STR,
 					   "Enter the Z coordinate value: ", (char *)NULL);
 			  return TCL_ERROR;
@@ -434,18 +434,18 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 			break;
 
 		case 'z':
-			if(norm[2] == 0.0) {
+			if (norm[2] == 0.0) {
 			  Tcl_AppendResult(interp, "Z not unique in this face\n", (char *)NULL);
 			  return TCL_ERROR;
 			}
 			solve[i] = Z;
 
-			if( argc < 7+3*i+2 ) {
+			if ( argc < 7+3*i+2 ) {
 			  Tcl_AppendResult(interp, MORE_ARGS_STR,
 					   "Enter the X, Y coordinate values: ", (char *)NULL);
 			  return TCL_ERROR;
 			}
-			if( argc < 7+3*i+3 ) {
+			if ( argc < 7+3*i+3 ) {
 			  Tcl_AppendResult(interp, MORE_ARGS_STR,
 					   "Enter the Y coordinate value: ", (char *)NULL);
 			  return TCL_ERROR;
@@ -460,12 +460,12 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		}
 	}
 
-	if( argc < 8+3*3 ) {
+	if ( argc < 8+3*3 ) {
 	  Tcl_AppendResult(interp, MORE_ARGS_STR,
 			   "Enter thickness for this arb: ", (char *)NULL);
 	  return TCL_ERROR;
 	}
-	if( (thick = (atof( argv[7+3*3] ))) == 0.0 ) {
+	if ( (thick = (atof( argv[7+3*3] ))) == 0.0 ) {
 	  Tcl_AppendResult(interp, "thickness = 0.0\n", (char *)NULL);
 	  return TCL_ERROR;
 	}
@@ -479,7 +479,7 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	aip = (struct rt_arb_internal *)internal.idb_ptr;
 	aip->magic = RT_ARB_INTERNAL_MAGIC;
 
-	for(i=0; i<8; i++) {
+	for (i=0; i<8; i++) {
 		VSET( aip->pt[i], 0.0, 0.0, 0.0 );
 	}
 
@@ -488,11 +488,11 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	ndotv = VDOT( aip->pt[0], norm );
 
 	/* calculate the unknown coordinate for points 2, 3, 4 */
-	for(i=0; i<3; i++) {
+	for (i=0; i<3; i++) {
 		int j;
 		j = i+1;
 
-		switch( solve[i] ) {
+		switch ( solve[i] ) {
 			case X:
 				aip->pt[j][Y] = pt[i][0];
 				aip->pt[j][Z] = pt[i][1];
@@ -524,20 +524,20 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
 
 	/* calculate the remaining 4 vertices */
-	for(i=0; i<4; i++) {
+	for (i=0; i<4; i++) {
 		VJOIN1( aip->pt[i+4], aip->pt[i], thick, norm );
 	}
 
 	/* no interuprts */
 	(void)signal( SIGINT, SIG_IGN );
 
-	if( (dp = db_diradd( dbip, argv[1], -1L, 0, DIR_SOLID, (genptr_t)&internal.idb_type)) == DIR_NULL )
+	if ( (dp = db_diradd( dbip, argv[1], -1L, 0, DIR_SOLID, (genptr_t)&internal.idb_type)) == DIR_NULL )
 	{
 		Tcl_AppendResult(interp, "Cannot add ", argv[1], " to the directory\n", (char *)NULL );
 		return TCL_ERROR;
 	}
 
-	if( rt_db_put_internal( dp, dbip, &internal, &rt_uniresource ) < 0 )
+	if ( rt_db_put_internal( dp, dbip, &internal, &rt_uniresource ) < 0 )
 	{
 		rt_db_free_internal( &internal, &rt_uniresource );
 		TCL_WRITE_ERR_return;

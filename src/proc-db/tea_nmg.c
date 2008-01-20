@@ -111,7 +111,7 @@ main(int argc, char **argv) 			/* really has no arguments */
 	 * representing the patch then dump them out.
 	 */
 
-	for( i = 0; i < PATCH_COUNT; i++)
+	for ( i = 0; i < PATCH_COUNT; i++)
 	{
 		dump_patch( patches[i] );
 	}
@@ -128,7 +128,7 @@ main(int argc, char **argv) 			/* really has no arguments */
 	nmg_m_to_vlist( &vhead, m, 0 );
 
 	/* Make a UNIX plot file from this vlist */
-	if( (fp=fopen( uplot_name, "w" )) == NULL )
+	if ( (fp=fopen( uplot_name, "w" )) == NULL )
 	{
 		bu_log( "Cannot open plot file: %s\n", uplot_name );
 		perror( "teapot_nmg" );
@@ -162,20 +162,20 @@ dump_patch(int (*patch)[4])
 	 * point size is 3
 	 */
 
-	for( i=0 ; i<4 ; i++ )
+	for ( i=0; i<4; i++ )
 		verts[i] = (struct vertex *)NULL;
 
 	fu = nmg_cface( s, verts, 4 );
 	NMG_CK_FACEUSE( fu );
 
-	for( i=0 ; i<4 ; i++ )
+	for ( i=0; i<4; i++ )
 	{
 		struct vertexuse *vu;
 		vect_t uvw;
 		point_t pnt;
 		int k, j;
 
-		switch( i )
+		switch ( i )
 		{
 			default:
 			case 0:
@@ -206,7 +206,7 @@ dump_patch(int (*patch)[4])
 			ducks[patch[k][j]-1].z * 1000 );
 		nmg_vertex_gv( verts[i], pnt );
 
-		for( BU_LIST_FOR( vu, vertexuse, &verts[i]->vu_hd ) )
+		for ( BU_LIST_FOR( vu, vertexuse, &verts[i]->vu_hd ) )
 			nmg_vertexuse_a_cnurb( vu, uvw );
 	}
 
@@ -220,8 +220,8 @@ dump_patch(int (*patch)[4])
 
 	/* Copy the control points */
 
-	for( i = 0; i< 4; i++)
-	for( j = 0; j < 4; j++)
+	for ( i = 0; i< 4; i++)
+	for ( j = 0; j < 4; j++)
 	{
 		*mesh = ducks[patch[i][j]-1].x * 1000;
 		*(mesh+1) = ducks[patch[i][j]-1].y * 1000;
@@ -233,12 +233,12 @@ dump_patch(int (*patch)[4])
 	ukv = fu->f_p->g.snurb_p->u.knots;
 	vkv = fu->f_p->g.snurb_p->v.knots;
 	/* set the knot vectors */
-	for( i=0 ; i<4 ; i++ )
+	for ( i=0; i<4; i++ )
 	{
 		*(ukv+i) = 0.0;
 		*(vkv+i) = 0.0;
 	}
-	for( i=0 ; i<4 ; i++ )
+	for ( i=0; i<4; i++ )
 	{
 		*(ukv+4+i) = 1.0;
 		*(vkv+4+i) = 1.0;
@@ -248,7 +248,7 @@ dump_patch(int (*patch)[4])
 	pt_type = RT_NURB_MAKE_PT_TYPE(2, RT_NURB_PT_UV, 0); /* see nurb.h for details */
 	lu = BU_LIST_FIRST( loopuse, &fu->lu_hd );
 	NMG_CK_LOOPUSE( lu );
-	for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+	for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 	{
 #if 0
 		nmg_edge_g_cnurb( eu, 2, 0, (fastf_t *)NULL, 2 ,

@@ -68,7 +68,7 @@ sh_directchange_rgb(ClientData clientData, Tcl_Interp *interp, int argc, const c
 	struct directory *dp;
 	float		r, g, b;
 
-	if( argc != 6 )  {
+	if ( argc != 6 )  {
 		Tcl_AppendResult(interp, "Usage: sh_directchange_rgb $rtip comb r g b\n", NULL);
 		return TCL_ERROR;
 	}
@@ -80,26 +80,26 @@ sh_directchange_rgb(ClientData clientData, Tcl_Interp *interp, int argc, const c
 	rtip = (struct rt_i *)atol(argv[1]);
 	RT_CK_RTI_TCL(interp, rtip);
 
-	if( rtip->needprep )  {
+	if ( rtip->needprep )  {
 		Tcl_AppendResult(interp, "rt_prep() hasn't been called yet, error.\n", NULL);
 		return TCL_ERROR;
 	}
 
-	if( (dp = db_lookup( rtip->rti_dbip, argv[2], LOOKUP_NOISY)) == DIR_NULL )  {
+	if ( (dp = db_lookup( rtip->rti_dbip, argv[2], LOOKUP_NOISY)) == DIR_NULL )  {
 		Tcl_AppendResult(interp, argv[2], ": not found\n", NULL);
 		return TCL_ERROR;
 	}
 
 	/* Find all region names which match /comb/ pattern */
-	for( BU_LIST_FOR( regp, region, &rtip->HeadRegion ) )  {
-		if( dp->d_flags & DIR_REGION )  {
+	for ( BU_LIST_FOR( regp, region, &rtip->HeadRegion ) )  {
+		if ( dp->d_flags & DIR_REGION )  {
 			/* name will occur at end of region string w/leading slash */
 		} else {
 			/* name will occur anywhere, bracked by slashes */
 		}
 
 		/* XXX quick hack */
-		if( strstr( regp->reg_name, argv[2] ) == NULL )  continue;
+		if ( strstr( regp->reg_name, argv[2] ) == NULL )  continue;
 
 		/* Modify the region's color */
 		bu_log("sh_directchange_rgb() changing %s\n", regp->reg_name);
@@ -107,7 +107,7 @@ sh_directchange_rgb(ClientData clientData, Tcl_Interp *interp, int argc, const c
 
 		/* Update the shader */
 		mlib_free(regp);
-		if( mlib_setup( &mfHead, regp, rtip ) != 1 )  {
+		if ( mlib_setup( &mfHead, regp, rtip ) != 1 )  {
 			Tcl_AppendResult(interp, regp->reg_name, ": mlib_setup() failure\n", NULL);
 		}
 	}
@@ -131,7 +131,7 @@ sh_directchange_shader(ClientData clientData, Tcl_Interp *interp, int argc, cons
 	struct directory *dp;
 	struct bu_vls	shader;
 
-	if( argc < 4 )  {
+	if ( argc < 4 )  {
 		Tcl_AppendResult(interp, "Usage: sh_directchange_shader $rtip comb shader_arg(s)\n", NULL);
 		return TCL_ERROR;
 	}
@@ -139,12 +139,12 @@ sh_directchange_shader(ClientData clientData, Tcl_Interp *interp, int argc, cons
 	rtip = (struct rt_i *)atol(argv[1]);
 	RT_CK_RTI_TCL(interp, rtip);
 
-	if( rtip->needprep )  {
+	if ( rtip->needprep )  {
 		Tcl_AppendResult(interp, "rt_prep() hasn't been called yet, error.\n", NULL);
 		return TCL_ERROR;
 	}
 
-	if( (dp = db_lookup( rtip->rti_dbip, argv[2], LOOKUP_NOISY)) == DIR_NULL )  {
+	if ( (dp = db_lookup( rtip->rti_dbip, argv[2], LOOKUP_NOISY)) == DIR_NULL )  {
 		Tcl_AppendResult(interp, argv[2], ": not found\n", NULL);
 		return TCL_ERROR;
 	}
@@ -154,25 +154,25 @@ sh_directchange_shader(ClientData clientData, Tcl_Interp *interp, int argc, cons
 	bu_vls_trimspace(&shader);
 
 	/* Find all region names which match /comb/ pattern */
-	for( BU_LIST_FOR( regp, region, &rtip->HeadRegion ) )  {
-		if( dp->d_flags & DIR_REGION )  {
+	for ( BU_LIST_FOR( regp, region, &rtip->HeadRegion ) )  {
+		if ( dp->d_flags & DIR_REGION )  {
 			/* name will occur at end of region string w/leading slash */
 		} else {
 			/* name will occur anywhere, bracked by slashes */
 		}
 
 		/* XXX quick hack */
-		if( strstr( regp->reg_name, argv[2] ) == NULL )  continue;
+		if ( strstr( regp->reg_name, argv[2] ) == NULL )  continue;
 
 		/* Modify the region's shader string */
 		bu_log("sh_directchange_shader() changing %s\n", regp->reg_name);
-		if( regp->reg_mater.ma_shader )
+		if ( regp->reg_mater.ma_shader )
 			bu_free( (genptr_t)regp->reg_mater.ma_shader, "reg_mater.ma_shader");
 		regp->reg_mater.ma_shader = bu_vls_strdup(&shader);
 
 		/* Update the shader */
 		mlib_free(regp);
-		if( mlib_setup( &mfHead, regp, rtip ) != 1 )  {
+		if ( mlib_setup( &mfHead, regp, rtip ) != 1 )  {
 			Tcl_AppendResult(interp, regp->reg_name, ": mlib_setup() failure\n", NULL);
 		}
 	}
@@ -188,11 +188,11 @@ sh_directchange_shader(ClientData clientData, Tcl_Interp *interp, int argc, cons
  */
 sh_opt(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
-	if( argc < 2 )  {
+	if ( argc < 2 )  {
 		Tcl_AppendResult(interp, "Usage: sh_opt command_line_option(s)\n", NULL);
 		return TCL_ERROR;
 	}
-	if( get_args( argc, argv ) <= 0 )
+	if ( get_args( argc, argv ) <= 0 )
 		return TCL_ERROR;
 	return TCL_OK;
 }

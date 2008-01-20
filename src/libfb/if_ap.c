@@ -85,7 +85,7 @@ FBIO ap_interface =  {
 	fb_null,			/* flush */
 	fb_null,			/* free */
 	ap_help,			/* help message		*/
-	"Apollo General Primitive Resource",/* device description	*/
+	"Apollo General Primitive Resource", /* device description	*/
 	1280,				/* max width		*/
 	1024,				/* max height		*/
 	"/dev/shortname",		/* short device name	*/
@@ -123,7 +123,7 @@ RGBpixel	*pixelp;
 int	count;
 {
 	{	register RGBpixel *memp;
-	for( 	memp = (RGBpixel *)
+	for ( 	memp = (RGBpixel *)
 			(&ifp->if_mem[(y*ifp->if_width+x)*sizeof(RGBpixel)]);
 		count > 0;
 		memp++, p++, count--)
@@ -199,7 +199,7 @@ RGBpixel	*pixelp;
 int	count;
 {
 	{	register RGBpixel *memp;
-	for( 	memp = (RGBpixel *)
+	for ( 	memp = (RGBpixel *)
 			(&ifp->if_mem[(y*ifp->if_width+x)*sizeof(RGBpixel)]);
 		count > 0;
 		memp++, p++, count--)

@@ -431,7 +431,7 @@ report(int outcom_type)
 		outcom_type);
 	return;
     }
-    if( outf == (FILE *)NULL )
+    if ( outf == (FILE *)NULL )
 	outf = stdout;
 
     for (oip = oi_list[outcom_type]; oip != OUTITEM_NULL; oip = oip->next) {
@@ -554,7 +554,7 @@ check_conv_spec (outitem *oip)
     int		oi_type;
     int		warnings = 0;
 
-    for ( ; oip != OUTITEM_NULL; oip = oip->next) {
+    for (; oip != OUTITEM_NULL; oip = oip->next) {
 	for (cp = oip->format; *cp != '\0'; ++cp) {
 	    if (*cp == '%') {
 		if (*(cp + 1) == '%') {

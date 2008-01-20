@@ -438,7 +438,7 @@ fire_render(struct application *ap, struct partition *pp, struct shadework *swp,
 	shader_dist_per_sample = shader_r_thick / samples;
 
 	lumens = 0.0;
-	for (i = 0 ; i < samples ; i++) {
+	for (i = 0; i < samples; i++) {
 		dist = (double)i * shader_dist_per_sample;
 		VJOIN1(shader_pt, sh_i_pt, dist, shader_r_dir);
 

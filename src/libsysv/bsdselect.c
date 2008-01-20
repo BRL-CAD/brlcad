@@ -55,13 +55,13 @@ bsdselect(long readfds, int sec, int us)
     tv.tv_sec = sec;
     tv.tv_usec = us;
 
-    if( (width = getdtablesize()) <= 0 )
+    if ( (width = getdtablesize()) <= 0 )
 	width = 32;
     FD_ZERO( &fdset );
     fdset.fds_bits[0] = readfds;	/* peek inside! */
 
-    if( (ret = select( width, &fdset, (fd_set *)0, (fd_set *)0, &tv )) <= 0 )  {
-	if( ret < 0 )  perror("bsdselect/select");
+    if ( (ret = select( width, &fdset, (fd_set *)0, (fd_set *)0, &tv )) <= 0 )  {
+	if ( ret < 0 )  perror("bsdselect/select");
 	return(0);		/* no bits ready */
     }
 

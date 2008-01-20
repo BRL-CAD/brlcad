@@ -370,7 +370,7 @@ static long read_Cell_Data(void)
 		state = STATE_IN_HEADER;
 	    else if (state == STATE_IN_DATA)
 		state = STATE_BEYOND_DATA;
-	    if(feof(filep) || bu_fgets(lbp, MAX_LINE, filep) == NULL)
+	    if (feof(filep) || bu_fgets(lbp, MAX_LINE, filep) == NULL)
 		return (gp - grid);
 	}
 	/*
@@ -513,8 +513,8 @@ static bool display_Cells (long int ncells)
 		if (debug_flag & CFB_DBG_GRID)
 		    bu_log("%g = V2SCRY(%g)\n", V2SCRY(lasty), lasty);
 		y0 = V2SCRY(lasty);
-		if( y0 >= 0 && y0 < fb_height )  {
-			for(y1 = y0 + hgt; y0 < y1; y0++)
+		if ( y0 >= 0 && y0 < fb_height )  {
+			for (y1 = y0 + hgt; y0 < y1; y0++)
 			    if (fb_write(fbiop, 0, y0, buf, fb_width) == -1)
 			    {
 				bu_log("Couldn't write to <%d,%d>\n", 0, y0);
@@ -546,7 +546,7 @@ static bool display_Cells (long int ncells)
 	val_To_RGB(gp->c_val, pixel);
 	/* Be careful only to write color within bounds of the screen */
 	x0 = H2SCRX(gp->c_x);
-	if( x0 >= 0 && x0 <= fb_width - wid )  {
+	if ( x0 >= 0 && x0 <= fb_width - wid )  {
 		for (x1 = x0 + wid; x0 < x1;  x0++)
 		{
 		    COPYRGB(&buf[3*x0], pixel);
@@ -588,10 +588,10 @@ static bool display_Cells (long int ncells)
 	 */
 	scr_min = H2SCRX(xmin);
 	scr_max = H2SCRX(xmax);
-	if( scr_min < 0 )  scr_min = 0;
-	if( scr_min > fb_width )  scr_min = fb_width;
-	if( scr_max < 0 )  scr_max = 0;
-	if( scr_max > fb_width )  scr_max = fb_width;
+	if ( scr_min < 0 )  scr_min = 0;
+	if ( scr_min > fb_width )  scr_min = fb_width;
+	if ( scr_max < 0 )  scr_max = 0;
+	if ( scr_max > fb_width )  scr_max = fb_width;
 	scr_center = (scr_max + scr_min)/2;
 	if ((center_cell = VPX2CX(SCRX2VPX(scr_center))) < 5)
 	    center_cell = 5;

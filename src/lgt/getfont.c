@@ -52,24 +52,24 @@ get_Font(char *fontname)
 {	FILE		*newff;
 		struct header	lochdr;
 		static char	fname[FONTNAMESZ];
-	if( fontname == NULL )
+	if ( fontname == NULL )
 		fontname = FONTNAME;
-	if( fontname[0] != '/' )		/* absolute path */
+	if ( fontname[0] != '/' )		/* absolute path */
 		(void) snprintf( fname, FONTNAMESZ, "%s/%s", FONTDIR, fontname );
 	else
 		(void) strncpy( fname, fontname, FONTNAMESZ );
 
 	/* Open the file and read in the header information. */
-	if( (newff = fopen( fname, "r" )) == NULL )
+	if ( (newff = fopen( fname, "r" )) == NULL )
 		{
 		bu_log( "Error opening font file '%s'\n", fname );
 		ffdes = NULL;
 		return	0;
 		}
-	if( ffdes != NULL )
+	if ( ffdes != NULL )
 		(void) fclose(ffdes);
 	ffdes = newff;
-	if( fread( (char *) &lochdr, (int) sizeof(struct header), 1, ffdes ) != 1 )
+	if ( fread( (char *) &lochdr, (int) sizeof(struct header), 1, ffdes ) != 1 )
 		{
 		bu_log( "get_Font() read failed!\n" );
 		ffdes = NULL;
@@ -81,7 +81,7 @@ get_Font(char *fontname)
 	SWAB( lochdr.maxy );
 	SWAB( lochdr.xtend );
 
-	if( lochdr.magic != 0436 )
+	if ( lochdr.magic != 0436 )
 		{
 		bu_log( "Not a font file \"%s\": magic=0%o\n",
 			fname, (int) lochdr.magic
@@ -92,7 +92,7 @@ get_Font(char *fontname)
 	hdr = lochdr;
 
 	/* Read in the directory for the font. */
-	if( fread( (char *) dir, (int) sizeof(struct dispatch), 256, ffdes ) != 256 )
+	if ( fread( (char *) dir, (int) sizeof(struct dispatch), 256, ffdes ) != 256 )
 		{
 		bu_log( "get_Font() read failed!\n" );
 		ffdes = NULL;

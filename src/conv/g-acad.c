@@ -178,12 +178,12 @@ main(int argc, char **argv)
 		bu_exit(1, usage, argv[0]);
 	}
 
-	if( !output_file )
+	if ( !output_file )
 		fp = stdout;
 	else
 	{
 		/* Open output file */
-		if( (fp=fopen( output_file, "w+" )) == NULL )
+		if ( (fp=fopen( output_file, "w+" )) == NULL )
 		{
 			perror( argv[0] );
 			bu_exit(1, "Cannot open output file (%s) for writing\n", output_file );
@@ -191,10 +191,10 @@ main(int argc, char **argv)
 	}
 
 	/* Open g-acad error log file */
-	if( !error_file)
+	if ( !error_file)
 		fpe = stderr;
 	else
-	if( (fpe=fopen( error_file, "w" )) == NULL )
+	if ( (fpe=fopen( error_file, "w" )) == NULL )
 	{
 		perror( argv[0] );
 		bu_exit(1, "Cannot open output file (%s) for writing\n", error_file );
@@ -207,7 +207,7 @@ main(int argc, char **argv)
 		perror(argv[0]);
 		bu_exit(1, "Cannot open geometry file (%s) for reading\n", argv[0]);
 	}
-	if( db_dirbuild( dbip ) ) {
+	if ( db_dirbuild( dbip ) ) {
 	    bu_exit(1, "db_dirbuild failed\n" );
 	}
 
@@ -216,7 +216,7 @@ main(int argc, char **argv)
 
 	fprintf( fpe, "Model: %s\n", argv[0] );
 	fprintf( fpe, "Objects:" );
-	for( i=1 ; i<argc ; i++ )
+	for ( i=1; i<argc; i++ )
 		fprintf( fpe, " %s", argv[i] );
 	fprintf( fpe, "\nTesselation tolerances:\n\tabs = %g mm\n\trel = %g\n\tnorm = %g\n",
 		tree_state.ts_ttol->abs, tree_state.ts_ttol->rel, tree_state.ts_ttol->norm );
@@ -225,7 +225,7 @@ main(int argc, char **argv)
 
 	bu_log( "Model: %s\n", argv[0] );
 	bu_log( "Objects:" );
-	for( i=1 ; i<argc ; i++ )
+	for ( i=1; i<argc; i++ )
 		bu_log( " %s", argv[i] );
 	bu_log( "\nTesselation tolerances:\n\tabs = %g mm\n\trel = %g\n\tnorm = %g\n",
 		tree_state.ts_ttol->abs, tree_state.ts_ttol->rel, tree_state.ts_ttol->norm );
@@ -252,14 +252,14 @@ main(int argc, char **argv)
 		(genptr_t)NULL);	/* in librt/nmg_bool.c */
 
 	percent = 0;
-	if(regions_tried>0){
+	if (regions_tried>0){
 		percent = ((double)regions_converted * 100) / regions_tried;
 		printf("Tried %d regions, %d converted to NMG's successfully.  %g%%\n",
 			regions_tried, regions_converted, percent);
 	}
 	percent = 0;
 
-	if( regions_tried > 0 ){
+	if ( regions_tried > 0 ){
 		percent = ((double)regions_written * 100) / regions_tried;
 	printf( "                  %d triangulated successfully. %g%%\n",
 		regions_written, percent );
@@ -322,40 +322,40 @@ nmg_to_acad(struct nmgregion *r, struct db_full_path *pathp, int region_id, int 
 /* BEGIN CHECK SECTION */
 /* Check vertices */
 
-	for( i=0 ; i<numverts ; i++ )
+	for ( i=0; i<numverts; i++ )
 	{
 		v = (struct vertex *)BU_PTBL_GET( &verts, i );
 		NMG_CK_VERTEX( v );
 	}
 
 /* Check triangles */
-	for( BU_LIST_FOR( s, shell, &r->s_hd ) )
+	for ( BU_LIST_FOR( s, shell, &r->s_hd ) )
 	{
 		struct faceuse *fu;
 
 		NMG_CK_SHELL( s );
 
-		for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
+		for ( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
 		{
 			struct loopuse *lu;
 
 			NMG_CK_FACEUSE( fu );
 
-			if( fu->orientation != OT_SAME )
+			if ( fu->orientation != OT_SAME )
 				continue;
 
-			for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+			for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
 			{
 				struct edgeuse *eu;
 				int vert_count=0;
 
 				NMG_CK_LOOPUSE( lu );
 
-				if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+				if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
 					continue;
 
 				/* check vertex numbers for each triangle */
-				for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+				for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 				{
 					NMG_CK_EDGEUSE( eu );
 
@@ -364,7 +364,7 @@ nmg_to_acad(struct nmgregion *r, struct db_full_path *pathp, int region_id, int 
 
 					vert_count++;
 					i = bu_ptbl_locate( &verts, (long *)v );
-					if( i < 0 )
+					if ( i < 0 )
 					{
 		/*XXX*/				bu_ptbl_free( &verts);
 		/*XXX*/				bu_free( region_name, "region name" );
@@ -372,14 +372,14 @@ nmg_to_acad(struct nmgregion *r, struct db_full_path *pathp, int region_id, int 
 						bu_exit(1, "ERROR: Triangle vertex was not located\n");
 					}
 				}
-				if( vert_count > 3 )
+				if ( vert_count > 3 )
 				{
 		/*XXX*/			bu_ptbl_free( &verts);
 		/*XXX*/			bu_free( region_name, "region name" );
 					bu_log( "lu x%x has too many (%d) vertices!\n", lu, vert_count );
 					bu_exit(1, "ERROR: LU is not a triangle\n");
 				}
-				else if( vert_count < 3 )
+				else if ( vert_count < 3 )
 					continue;
 				numtri++;
 			}
@@ -398,7 +398,7 @@ nmg_to_acad(struct nmgregion *r, struct db_full_path *pathp, int region_id, int 
 
 	/* Write numverts, then vertices */
 
-	for( i=0 ; i<numverts ; i++ )
+	for ( i=0; i<numverts; i++ )
 	{
 		v = (struct vertex *)BU_PTBL_GET( &verts, i );
 		NMG_CK_VERTEX( v );
@@ -416,33 +416,33 @@ nmg_to_acad(struct nmgregion *r, struct db_full_path *pathp, int region_id, int 
 	fprintf( fp, "%d       %d\n", numtri, 3);
 
 	/* output triangles */
-	for( BU_LIST_FOR( s, shell, &r->s_hd ) )
+	for ( BU_LIST_FOR( s, shell, &r->s_hd ) )
 	{
 		struct faceuse *fu;
 
 		NMG_CK_SHELL( s );
 
-		for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
+		for ( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
 		{
 			struct loopuse *lu;
 
 			NMG_CK_FACEUSE( fu );
 
-			if( fu->orientation != OT_SAME )
+			if ( fu->orientation != OT_SAME )
 				continue;
 
-			for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+			for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
 			{
 				struct edgeuse *eu;
 				int vert_count=0;
 
 				NMG_CK_LOOPUSE( lu );
 
-				if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+				if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
 					continue;
 
 				/* list vertex numbers for each triangle */
-				for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+				for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 				{
 					NMG_CK_EDGEUSE( eu );
 
@@ -451,7 +451,7 @@ nmg_to_acad(struct nmgregion *r, struct db_full_path *pathp, int region_id, int 
 
 					vert_count++;
 					i = bu_ptbl_locate( &verts, (long *)v );
-					if( i < 0 )
+					if ( i < 0 )
 					{
 						bu_ptbl_free( &verts);
 						bu_log( "Vertex from eu x%x is not in nmgregion x%x\n", eu, r );
@@ -467,14 +467,14 @@ nmg_to_acad(struct nmgregion *r, struct db_full_path *pathp, int region_id, int 
 
 				fprintf( fp, " %d    %d    %d\n", 0, region_id, ++tricount);
 
-				if( vert_count > 3 )
+				if ( vert_count > 3 )
 				{
 					bu_ptbl_free( &verts);
 					bu_free( region_name, "region name" );
 					bu_log( "lu x%x has %d vertices!\n", lu, vert_count );
 					bu_exit(1, "ERROR: LU is not a triangle\n");
 				}
-				else if( vert_count < 3 )
+				else if ( vert_count < 3 )
 					continue;
 				tot_polygons++;
 			}
@@ -525,8 +525,8 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 	regions_tried++;
 
 	/* Begin bomb protection */
-	if( ncpu == 1 ) {
-		if( BU_SETJUMP )  {
+	if ( ncpu == 1 ) {
+		if ( BU_SETJUMP )  {
 			/* Error, bail out */
 			char *sofar;
 			BU_UNSETJUMP;		/* Relinquish the protection */
@@ -549,7 +549,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 /*XXX*/			/* db_free_tree(curtree);*/		/* Does an nmg_kr() */
 
 			/* Get rid of (m)any other intermediate structures */
-			if( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC )  {
+			if ( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC )  {
 				nmg_km(*tsp->ts_m);
 			} else {
 				bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
@@ -564,7 +564,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 	fflush(stdout);
 	ret_tree = nmg_booltree_evaluate( curtree, tsp->ts_tol, &rt_uniresource );	/* librt/nmg_bool.c */
 
-	if( ret_tree )
+	if ( ret_tree )
 		r = ret_tree->tr_d.td_r;
 	else
 	{
@@ -590,14 +590,14 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 
 		/* Kill cracks */
 		s = BU_LIST_FIRST( shell, &r->s_hd );
-		while( BU_LIST_NOT_HEAD( &s->l, &r->s_hd ) )
+		while ( BU_LIST_NOT_HEAD( &s->l, &r->s_hd ) )
 		{
 			struct shell *next_s;
 
 			next_s = BU_LIST_PNEXT( shell, &s->l );
-			if( nmg_kill_cracks( s ) )
+			if ( nmg_kill_cracks( s ) )
 			{
-				if( nmg_ks( s ) )
+				if ( nmg_ks( s ) )
 				{
 					empty_region = 1;
 					break;
@@ -607,14 +607,14 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 		}
 
 		/* kill zero length edgeuses */
-		if( !empty_region )
+		if ( !empty_region )
 		{
 			 empty_model = nmg_kill_zero_length_edgeuses( *tsp->ts_m );
 		}
 
-		if( !empty_region && !empty_model )
+		if ( !empty_region && !empty_model )
 		{
-			if( BU_SETJUMP )
+			if ( BU_SETJUMP )
 			{
 				char *sofar;
 
@@ -635,7 +635,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 				nmg_isect2d_final_cleanup();
 
 				/* Get rid of (m)any other intermediate structures */
-				if( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC )
+				if ( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC )
 				{
 					nmg_km(*tsp->ts_m);
 				}
@@ -656,7 +656,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 			BU_UNSETJUMP;
 		}
 
-		if( !empty_model )
+		if ( !empty_model )
 			nmg_kr( r );
 	}
 
@@ -670,7 +670,7 @@ out:
 	 */
 
 
-	if(regions_tried>0){
+	if (regions_tried>0){
 		float npercent, tpercent;
 
 		npercent = (float)(regions_converted * 100) / regions_tried;

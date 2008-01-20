@@ -64,7 +64,7 @@ void math_rand_seed(unsigned long seed) {
    *    Vol. 2 (2nd Ed.), pp102]
    */
   mt[0] = seed & 0xffffffff;
-  for(mti = 1; mti<N; mti++)
+  for (mti = 1; mti<N; mti++)
     mt[mti] = (69069 * mt[mti-1]) & 0xffffffff;
 }
 
@@ -74,19 +74,19 @@ double math_rand() {
   static unsigned long mag01[2]={0x0, MATRIX_A};
 
   /* generate N words at one time */
-  if(mti >= N) {
+  if (mti >= N) {
     int kk;
 
     /* if sgenrand() has not been called, a default initial seed is used */
-    if(mti == N+1)
+    if (mti == N+1)
       math_rand_seed(4357);
 
-    for(kk = 0; kk < N-M; kk++) {
+    for (kk = 0; kk < N-M; kk++) {
       y = (mt[kk]&UPPER_MASK)|(mt[kk+1]&LOWER_MASK);
       mt[kk] = mt[kk+M] ^ (y >> 1) ^ mag01[y & 0x1];
     }
 
-    for(; kk < N-1; kk++) {
+    for (; kk < N-1; kk++) {
       y = (mt[kk]&UPPER_MASK)|(mt[kk+1]&LOWER_MASK);
       mt[kk] = mt[kk+(M-N)] ^ (y >> 1) ^ mag01[y & 0x1];
     }

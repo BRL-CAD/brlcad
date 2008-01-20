@@ -74,21 +74,21 @@ db_read(const struct db_i *dbip, genptr_t addr, long int count, long int offset)
 #endif
 
 	RT_CK_DBI(dbip);
-	if(RT_G_DEBUG&DEBUG_DB)  {
+	if (RT_G_DEBUG&DEBUG_DB)  {
 		bu_log("db_read(dbip=x%x, addr=x%x, count=%d., offset=x%x)\n",
 			dbip, addr, count, offset );
 	}
-	if( count <= 0 || offset < 0 )  {
+	if ( count <= 0 || offset < 0 )  {
 		return(-1);
 	}
-	if( offset+count > dbip->dbi_eof )  {
+	if ( offset+count > dbip->dbi_eof )  {
 	    /* Attempt to read off the end of the file */
 	    bu_log("db_read(%s) ERROR offset=%d, count=%d, dbi_eof=%d\n",
 		   dbip->dbi_filename,
 		   offset, count, dbip->dbi_eof );
 	    return -1;
 	}
-	if( dbip->dbi_inmem )  {
+	if ( dbip->dbi_inmem )  {
 		memcpy(addr, ((char *)dbip->dbi_inmem) + offset, count);
 		return(0);
 	}
@@ -106,7 +106,7 @@ db_read(const struct db_i *dbip, genptr_t addr, long int count, long int offset)
 #endif
 	bu_semaphore_release( BU_SEM_SYSCALL );
 
-	if( got != count )  {
+	if ( got != count )  {
 	    if (got < 0) {
 		perror(dbip->dbi_filename);
 	    }
@@ -139,26 +139,26 @@ db_getmrec(const struct db_i *dbip, const struct directory *dp)
 	RT_CK_DBI(dbip);
 	RT_CK_DIR(dp);
 
-	if( dbip->dbi_version >= 5 ) {
+	if ( dbip->dbi_version >= 5 ) {
 	    /* can't get an mrec on a v5 */
 	    return (union record *)NULL;
 	}
 
-	if(RT_G_DEBUG&DEBUG_DB) bu_log("db_getmrec(%s) x%x, x%x\n",
+	if (RT_G_DEBUG&DEBUG_DB) bu_log("db_getmrec(%s) x%x, x%x\n",
 		dp->d_namep, dbip, dp );
 
-	if( dp->d_addr < 0 )
+	if ( dp->d_addr < 0 )
 		return( (union record *)0 );	/* was dummy DB entry */
 	where = (union record *)bu_malloc(
 		dp->d_len * sizeof(union record),
 		"db_getmrec record[]");
 
-	if( dp->d_flags & RT_DIR_INMEM )  {
+	if ( dp->d_flags & RT_DIR_INMEM )  {
 		memcpy((char *)where, dp->d_un.ptr, dp->d_len * sizeof(union record));
 		return where;
 	}
 
-	if( db_read( dbip, (char *)where,
+	if ( db_read( dbip, (char *)where,
 	    (long)dp->d_len * sizeof(union record),
 	    dp->d_addr ) < 0 )  {
 		bu_free( (genptr_t)where, "db_getmrec record[]" );
@@ -183,28 +183,28 @@ db_get(const struct db_i *dbip, const struct directory *dp, union record *where,
 
 	RT_CK_DBI(dbip);
 	RT_CK_DIR(dp);
-	if(RT_G_DEBUG&DEBUG_DB) bu_log("db_get(%s) x%x, x%x x%x off=%d len=%d\n",
+	if (RT_G_DEBUG&DEBUG_DB) bu_log("db_get(%s) x%x, x%x x%x off=%d len=%d\n",
 		dp->d_namep, dbip, dp, where, offset, len );
 
-	if( dp->d_addr < 0 )  {
+	if ( dp->d_addr < 0 )  {
 		where->u_id = '\0';	/* undefined id */
 		return(-1);
 	}
-	if( offset < 0 || offset+len > dp->d_len )  {
+	if ( offset < 0 || offset+len > dp->d_len )  {
 		bu_log("db_get(%s):  xfer %d..%x exceeds 0..%d\n",
 			dp->d_namep, offset, offset+len, dp->d_len );
 		where->u_id = '\0';	/* undefined id */
 		return(-1);
 	}
 
-	if( dp->d_flags & RT_DIR_INMEM )  {
+	if ( dp->d_flags & RT_DIR_INMEM )  {
 	    memcpy((char *)where,
 		   ((char *)dp->d_un.ptr) + offset * sizeof(union record),
 		   len * sizeof(union record) );
 	    return 0;		/* OK */
 	}
 
-	if( db_read( dbip, (char *)where, (long)len * sizeof(union record),
+	if ( db_read( dbip, (char *)where, (long)len * sizeof(union record),
 	    dp->d_addr + offset * sizeof(union record) ) < 0 )  {
 		where->u_id = '\0';	/* undefined id */
 		return(-1);
@@ -230,19 +230,19 @@ db_write(struct db_i *dbip, const genptr_t addr, long int count, long int offset
 	register int	got;
 
 	RT_CK_DBI(dbip);
-	if(RT_G_DEBUG&DEBUG_DB)  {
+	if (RT_G_DEBUG&DEBUG_DB)  {
 		bu_log("db_write(dbip=x%x, addr=x%x, count=%d., offset=x%x)\n",
 			dbip, addr, count, offset );
 	}
-	if( dbip->dbi_read_only )  {
+	if ( dbip->dbi_read_only )  {
 		bu_log("db_write(%s):  READ-ONLY file\n",
 			dbip->dbi_filename);
 		return(-1);
 	}
-	if( count <= 0 || offset < 0 )  {
+	if ( count <= 0 || offset < 0 )  {
 		return(-1);
 	}
-	if( dbip->dbi_inmem )  {
+	if ( dbip->dbi_inmem )  {
 		bu_log("db_write() in memory?\n");
 		return(-1);
 	}
@@ -256,7 +256,7 @@ db_write(struct db_i *dbip, const genptr_t addr, long int count, long int offset
 	fflush(dbip->dbi_fp);
 #endif
 	bu_semaphore_release( BU_SEM_SYSCALL );
-	if( got != count )  {
+	if ( got != count )  {
 		perror("db_write");
 		bu_log("db_write(%s):  write error.  Wanted %d, got %d bytes.\nFile forced read-only.\n",
 			dbip->dbi_filename, count, got );
@@ -282,29 +282,29 @@ db_put(struct db_i *dbip, const struct directory *dp, union record *where, int o
 
 	RT_CK_DBI(dbip);
 	RT_CK_DIR(dp);
-	if(RT_G_DEBUG&DEBUG_DB) bu_log("db_put(%s) x%x, x%x x%x off=%d len=%d\n",
+	if (RT_G_DEBUG&DEBUG_DB) bu_log("db_put(%s) x%x, x%x x%x off=%d len=%d\n",
 		dp->d_namep, dbip, dp, where, offset, len );
 
-	if( offset < 0 || offset+len > dp->d_len )  {
+	if ( offset < 0 || offset+len > dp->d_len )  {
 		bu_log("db_put(%s):  xfer %d..%x exceeds 0..%d\n",
 			dp->d_namep, offset, offset+len, dp->d_len );
 		return(-1);
 	}
 
-	if( dp->d_flags & RT_DIR_INMEM )  {
+	if ( dp->d_flags & RT_DIR_INMEM )  {
 	    memcpy(((char *)dp->d_un.ptr) + offset * sizeof(union record),
 		   (char *)where,
 		   len * sizeof(union record) );
 	    return 0;		/* OK */
 	}
 
-	if( dbip->dbi_read_only )  {
+	if ( dbip->dbi_read_only )  {
 		bu_log("db_put(%s):  READ-ONLY file\n",
 			dbip->dbi_filename);
 		return(-1);
 	}
 
-	if( db_write( dbip, (char *)where, (long)len * sizeof(union record),
+	if ( db_write( dbip, (char *)where, (long)len * sizeof(union record),
 	    dp->d_addr + offset * sizeof(union record) ) < 0 )  {
 		return(-1);
 	}
@@ -331,25 +331,25 @@ db_get_external(register struct bu_external *ep, const struct directory *dp, con
 {
 	RT_CK_DBI(dbip);
 	RT_CK_DIR(dp);
-	if(RT_G_DEBUG&DEBUG_DB) bu_log("db_get_external(%s) ep=x%x, dbip=x%x, dp=x%x\n",
+	if (RT_G_DEBUG&DEBUG_DB) bu_log("db_get_external(%s) ep=x%x, dbip=x%x, dp=x%x\n",
 		dp->d_namep, ep, dbip, dp );
 
-	if( (dp->d_flags & RT_DIR_INMEM) == 0 && dp->d_addr < 0 )
+	if ( (dp->d_flags & RT_DIR_INMEM) == 0 && dp->d_addr < 0 )
 		return( -1 );		/* was dummy DB entry */
 
 	BU_INIT_EXTERNAL(ep);
-	if( dbip->dbi_version <= 4 )
+	if ( dbip->dbi_version <= 4 )
 		ep->ext_nbytes = dp->d_len * sizeof(union record);
 	else
 		ep->ext_nbytes = dp->d_len;
 	ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "db_get_ext ext_buf");
 
-	if( dp->d_flags & RT_DIR_INMEM )  {
+	if ( dp->d_flags & RT_DIR_INMEM )  {
 		memcpy((char *)ep->ext_buf, dp->d_un.ptr, ep->ext_nbytes);
 		return 0;
 	}
 
-	if( db_read( dbip, (char *)ep->ext_buf,
+	if ( db_read( dbip, (char *)ep->ext_buf,
 	    (long)ep->ext_nbytes, dp->d_addr ) < 0 )  {
 		bu_free( ep->ext_buf, "db_get_ext ext_buf" );
 		ep->ext_buf = (genptr_t)NULL;
@@ -386,34 +386,34 @@ db_put_external(struct bu_external *ep, struct directory *dp, struct db_i *dbip)
 	RT_CK_DBI(dbip);
 	RT_CK_DIR(dp);
 	BU_CK_EXTERNAL(ep);
-	if(RT_G_DEBUG&DEBUG_DB) bu_log("db_put_external(%s) ep=x%x, dbip=x%x, dp=x%x\n",
+	if (RT_G_DEBUG&DEBUG_DB) bu_log("db_put_external(%s) ep=x%x, dbip=x%x, dp=x%x\n",
 		dp->d_namep, ep, dbip, dp );
 
 
-	if( dbip->dbi_read_only )  {
+	if ( dbip->dbi_read_only )  {
 		bu_log("db_put_external(%s):  READ-ONLY file\n",
 			dbip->dbi_filename);
 		return(-1);
 	}
 
-	if( dbip->dbi_version == 5 )
+	if ( dbip->dbi_version == 5 )
 		return db_put_external5( ep, dp, dbip );
 
-	if( dbip->dbi_version <= 4 )  {
+	if ( dbip->dbi_version <= 4 )  {
 		int	ngran;
 
 		ngran = (ep->ext_nbytes+sizeof(union record)-1)/sizeof(union record);
-		if( ngran != dp->d_len )  {
-			if( dp->d_addr != -1L )  {
-				if( db_delete( dbip, dp ) < 0 )
+		if ( ngran != dp->d_len )  {
+			if ( dp->d_addr != -1L )  {
+				if ( db_delete( dbip, dp ) < 0 )
 					return -2;
 			}
-			if( db_alloc( dbip, dp, ngran ) < 0 )  {
+			if ( db_alloc( dbip, dp, ngran ) < 0 )  {
 				return -3;
 			}
 		}
 		/* Sanity check */
-		if( ngran != dp->d_len )  {
+		if ( ngran != dp->d_len )  {
 			bu_log("db_put_external(%s) ngran=%d != dp->d_len %d\n",
 				dp->d_namep, ngran, dp->d_len );
 			bu_bomb("db_io.c: db_put_external()");
@@ -423,12 +423,12 @@ db_put_external(struct bu_external *ep, struct directory *dp, struct db_i *dbip)
 	} else
 		bu_bomb("db_put_external(): unknown dbi_version\n");
 
-	if( dp->d_flags & RT_DIR_INMEM )  {
+	if ( dp->d_flags & RT_DIR_INMEM )  {
 		memcpy(dp->d_un.ptr, (char *)ep->ext_buf, ep->ext_nbytes);
 		return 0;
 	}
 
-	if( db_write( dbip, (char *)ep->ext_buf, ep->ext_nbytes, dp->d_addr ) < 0 )  {
+	if ( db_write( dbip, (char *)ep->ext_buf, ep->ext_nbytes, dp->d_addr ) < 0 )  {
 		return(-1);
 	}
 	return(0);
@@ -461,7 +461,7 @@ db_fwrite_external(FILE *fp, const char *name, struct bu_external *ep)
 						/* can't be const */
 {
 
-	if(RT_G_DEBUG&DEBUG_DB) bu_log("db_fwrite_external(%s) ep=x%x\n",
+	if (RT_G_DEBUG&DEBUG_DB) bu_log("db_fwrite_external(%s) ep=x%x\n",
 		name, ep);
 
 	BU_CK_EXTERNAL(ep);

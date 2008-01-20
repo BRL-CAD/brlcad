@@ -387,17 +387,17 @@ processChar(char ch)
 	    curr = start + input_str_index - 1;
 
 	    /* skip spaces */
-	    while(curr > start && *curr == ' ')
+	    while (curr > start && *curr == ' ')
 		--curr;
 
 	    /* find next space */
-	    while(curr > start && *curr != ' ')
+	    while (curr > start && *curr != ' ')
 		--curr;
 
 	    bu_vls_init(&temp);
 	    bu_vls_strcat(&temp, start+input_str_index);
 
-	    if(curr == start)
+	    if (curr == start)
 		input_str_index = 0;
 	    else
 		input_str_index = curr - start + 1;
@@ -424,11 +424,11 @@ processChar(char ch)
 	    curr = start + input_str_index;
 
 	    /* skip spaces */
-	    while(*curr != '\0' && *curr == ' ')
+	    while (*curr != '\0' && *curr == ' ')
 		++curr;
 
 	    /* find next space */
-	    while(*curr != '\0' && *curr != ' ')
+	    while (*curr != '\0' && *curr != ' ')
 		++curr;
 
 	    i = curr - start;
@@ -455,11 +455,11 @@ processChar(char ch)
 	    curr = start + input_str_index;
 
 	    /* skip spaces */
-	    while(*curr != '\0' && *curr == ' ')
+	    while (*curr != '\0' && *curr == ' ')
 		++curr;
 
 	    /* find next space */
-	    while(*curr != '\0' && *curr != ' ')
+	    while (*curr != '\0' && *curr != ' ')
 		++curr;
 
 	    input_str_index = curr - start;
@@ -484,14 +484,14 @@ processChar(char ch)
 	    curr = start + input_str_index - 1;
 
 	    /* skip spaces */
-	    while(curr > start && *curr == ' ')
+	    while (curr > start && *curr == ' ')
 		--curr;
 
 	    /* find next space */
-	    while(curr > start && *curr != ' ')
+	    while (curr > start && *curr != ' ')
 		--curr;
 
-	    if(curr == start)
+	    if (curr == start)
 		input_str_index = 0;
 	    else
 		input_str_index = curr - start + 1;

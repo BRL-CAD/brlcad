@@ -43,9 +43,9 @@ char *
 strchr(register char *sp, register char c)
 {
     do {
-	if( *sp == c )
+	if ( *sp == c )
 	    return( sp );
-    }  while( *sp++ );
+    }  while ( *sp++ );
     return( (char *)0 );
 }
 

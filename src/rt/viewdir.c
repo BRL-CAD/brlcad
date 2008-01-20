@@ -111,7 +111,7 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
 void
 view_2init(struct application *ap)
 {
-	if( outfp == NULL )
+	if ( outfp == NULL )
 		bu_exit(EXIT_FAILURE, "outfp is NULL\n");
 
 	/*
@@ -119,7 +119,7 @@ view_2init(struct application *ap)
 	 *  However, not dropping out of parallel mode here permits
 	 *  tree walking and database prepping to still be done in parallel.
 	 */
-	if( npsw >= 1 )  {
+	if ( npsw >= 1 )  {
 		bu_log("Note: changing from %d cpus to 1 cpu\n", npsw );
 		npsw = 1;		/* Disable parallel processing */
 	}
@@ -142,7 +142,7 @@ raymiss(register struct application *ap)
 	struct	cell	*posp;		/* store the current cell position */
 
 	/* Getting defensive.... just in case. */
-	if(ap->a_x > width)  {
+	if (ap->a_x > width)  {
 		bu_exit(EXIT_FAILURE, "raymiss: pixels exceed width\n");
 	}
 
@@ -180,12 +180,12 @@ rayhit(struct application *ap, register struct partition *PartHeadp)
 {
 	register struct partition *pp = PartHeadp->pt_forw;
 
-	if( pp == PartHeadp )
+	if ( pp == PartHeadp )
 		return(0);		/* nothing was actually hit?? */
 
 
 	/* Getting defensive.... just in case. */
-	if(ap->a_x > width)  {
+	if (ap->a_x > width)  {
 		bu_exit(EXIT_FAILURE, "rayhit: pixels exceed width\n");
 	}
 

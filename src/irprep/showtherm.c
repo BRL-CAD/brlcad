@@ -132,7 +132,7 @@ int main(int argc, char **argv)
   double cbeta, sbeta;	/*  Cosine & sine of beta.  */
 
   /*  Check to see if arguments implemented correctly.  */
-  if(argv[1]==NULL || argv[2]==NULL)
+  if (argv[1]==NULL || argv[2]==NULL)
     {
       (void)fprintf(stderr, "\nusage:  showtherm file.g objects\n\n");
     }
@@ -146,10 +146,10 @@ int main(int argc, char **argv)
       /*  Ask type of temperature file to be used.  */
       (void)fprintf(stderr, "Type of output file to be read 0=>PRISM, ");
       (void)fprintf(stderr, "1=>generic.\n\t");
-      (void)scanf("%d",&itype);
-      if(itype != 1) itype = 0;
+      (void)scanf("%d", &itype);
+      if (itype != 1) itype = 0;
 
-      if(itype == 0)	/*  Read info about (name & # regions) PRISM file.  */
+      if (itype == 0)	/*  Read info about (name & # regions) PRISM file.  */
 	{
 	  (void)fprintf(stderr, "Enter name of the PRISM output ");
 	  (void)fprintf(stderr, "file to be read (%d char max).\n\t", MAXFIL);
@@ -159,7 +159,7 @@ int main(int argc, char **argv)
 	  (void)fprintf(stderr, "Enter the number of regions in the PRISM ");
 	  (void)fprintf(stderr, "file, must be more\n");
 	  (void)fprintf(stderr, "than eight (not including the background).\n\t");
-	  (void)scanf("%d",&numreg);
+	  (void)scanf("%d", &numreg);
 	}
       else			/*  Read info about (name) generic file.  */
 	{
@@ -180,14 +180,14 @@ int main(int argc, char **argv)
       /*  Find elasped time to create graphical representation of.  */
       (void)fprintf(stderr, "Enter the elapsed time to create graphical ");
       (void)fprintf(stderr, "representation of.\n\t");
-      (void)scanf("%lf",&eltim);
+      (void)scanf("%lf", &eltim);
 
       /*  Open generic file and read number of regions if necessary.  */
-      if(itype == 1)
+      if (itype == 1)
 	{
 	  fpr = fopen(filetmp, "r");
 	  (void)bu_fgets(line, 150, fpr);
-	  (void)sscanf(line, "%d",&numreg);
+	  (void)sscanf(line, "%d", &numreg);
 	}
 
       /*  Add one to number of regions to include background.  */
@@ -201,23 +201,23 @@ int main(int argc, char **argv)
       info = (struct table *)bu_malloc( numreg * sizeof (struct table), "info" );
 
       /*  Zero all arrays.  */
-      for(i=0; i<numreg; i++)
+      for (i=0; i<numreg; i++)
 	{
 	  info[i].temp = 0.;
-	  for(j=0; j<150; j++)
+	  for (j=0; j<150; j++)
 	    {
 	      info[i].regname[j] = ' ';
 	    }
 	}
 
       /*  Now read the temperature file.  */
-      if(itype == 0)	/*  PRISM file.  */
+      if (itype == 0)	/*  PRISM file.  */
 	{							/*  START # 2  */
 	  fpr = fopen(filetmp, "r");
 
 	  /*  Read date and print out.  */
 	  (void)bu_fgets(line, 150, fpr);
-	  (void)sscanf(line, "%d %d %d %f %f",&mon,&day,&yr,&hr,&min);
+	  (void)sscanf(line, "%d %d %d %f %f", &mon, &day, &yr, &hr, &min);
 	  (void)printf("%d/%d/%d ", mon, day, yr);
 	  (void)printf(" %f:%f\n", hr, min);
 	  (void)fflush(stdout);
@@ -236,8 +236,8 @@ int main(int argc, char **argv)
 
 	  /*  Read first line & check if correct ellasped time.  */
 	  (void)bu_fgets(line, 150, fpr);
-	  (void)sscanf(line, "%lf %lf %lf %lf %lf %lf %lf %lf",&eltim_read,
-		       &r[0],&r[1],&r[2],&r[3],&r[4],&r[5],&r[6]);
+	  (void)sscanf(line, "%lf %lf %lf %lf %lf %lf %lf %lf", &eltim_read,
+		       &r[0], &r[1], &r[2], &r[3], &r[4], &r[5], &r[6]);
 
 	  /*
 	   *	while ( eltim_read != eltim)
@@ -245,30 +245,30 @@ int main(int argc, char **argv)
 	  while ( (eltim_read < (eltim - VUNITIZE_TOL)) || ((eltim + VUNITIZE_TOL) < eltim_read) )
 	    /*  Page through to end of data.  */
 	    {
-	      for(i=0; i<(full_line + 1); i++)
+	      for (i=0; i<(full_line + 1); i++)
 		{
 		  (void)bu_fgets(line, 150, fpr);
 		}
 	      /*  Read next elapsed time.  */
 	      (void)bu_fgets(line, 150, fpr);
-	      (void)sscanf(line, "%lf %lf %lf %lf %lf %lf %lf %lf",&eltim_read,
-			   &r[0],&r[1],&r[2],&r[3],&r[4],&r[5],&r[6]);
+	      (void)sscanf(line, "%lf %lf %lf %lf %lf %lf %lf %lf", &eltim_read,
+			   &r[0], &r[1], &r[2], &r[3], &r[4], &r[5], &r[6]);
 	    }
 
 	  /*  When correct ellasped time is found, read data.  */
 	  /*  Read first line of data.  */
-	  for(i=0; i<frst_line; i++)
+	  for (i=0; i<frst_line; i++)
 	    {
 	      info[i].temp = r[i];
 	    }
 	  k = frst_line;	/*  Next region number of temperature to be read.  */
 	  /*  Read full lines of data.  */
-	  for(i=0; i<full_line; i++)
+	  for (i=0; i<full_line; i++)
 	    {
 	      (void)bu_fgets(line, 150, fpr);
 	      (void)sscanf(line, "%lf %lf %lf %lf %lf %lf %lf %lf",
-			   &r[0],&r[1],&r[2],&r[3],&r[4],&r[5],&r[6],&r[7]);
-	      for(j=0; j<(frst_line + 1); j++)
+			   &r[0], &r[1], &r[2], &r[3], &r[4], &r[5], &r[6], &r[7]);
+	      for (j=0; j<(frst_line + 1); j++)
 		{
 		  info[k].temp = r[j];
 		  k++;
@@ -276,22 +276,22 @@ int main(int argc, char **argv)
 	    }
 	  /*  Read last line of data.  */
 	  (void)bu_fgets(line, 150, fpr);
-	  if(last_line == 1) (void)sscanf(line, "%lf",&r[0]);
-	  if(last_line == 2) (void)sscanf(line, "%lf %lf",&r[0],&r[1]);
-	  if(last_line == 3) (void)sscanf(line, "%lf %lf %lf",&r[0],&r[1],&r[2]);
-	  if(last_line == 4) (void)sscanf(line, "%lf %lf %lf %lf",&r[0],&r[1],&r[2],
+	  if (last_line == 1) (void)sscanf(line, "%lf", &r[0]);
+	  if (last_line == 2) (void)sscanf(line, "%lf %lf", &r[0], &r[1]);
+	  if (last_line == 3) (void)sscanf(line, "%lf %lf %lf", &r[0], &r[1], &r[2]);
+	  if (last_line == 4) (void)sscanf(line, "%lf %lf %lf %lf", &r[0], &r[1], &r[2],
 					  &r[3]);
-	  if(last_line == 5) (void)sscanf(line, "%lf %lf %lf %lf %lf",
-					  &r[0],&r[1],&r[2],&r[3],&r[4]);
-	  if(last_line == 6) (void)sscanf(line, "%lf %lf %lf %lf %lf %lf",
-					  &r[0],&r[1],&r[2],&r[3],&r[4],&r[5]);
-	  if(last_line == 7) (void)sscanf(line, "%lf %lf %lf %lf %lf %lf %lf",
-					  &r[0],&r[1],&r[2],&r[3],&r[4],&r[5],&r[6]);
-	  if(last_line == 8) (void)sscanf(line, "%lf %lf %lf %lf %lf %lf %lf %lf",
-					  &r[0],&r[1],&r[2],&r[3],&r[4],&r[5],&r[6],&r[7]);
-	  if(last_line != 0)
+	  if (last_line == 5) (void)sscanf(line, "%lf %lf %lf %lf %lf",
+					  &r[0], &r[1], &r[2], &r[3], &r[4]);
+	  if (last_line == 6) (void)sscanf(line, "%lf %lf %lf %lf %lf %lf",
+					  &r[0], &r[1], &r[2], &r[3], &r[4], &r[5]);
+	  if (last_line == 7) (void)sscanf(line, "%lf %lf %lf %lf %lf %lf %lf",
+					  &r[0], &r[1], &r[2], &r[3], &r[4], &r[5], &r[6]);
+	  if (last_line == 8) (void)sscanf(line, "%lf %lf %lf %lf %lf %lf %lf %lf",
+					  &r[0], &r[1], &r[2], &r[3], &r[4], &r[5], &r[6], &r[7]);
+	  if (last_line != 0)
 	    {
-	      for(j=0; j<last_line; j++)
+	      for (j=0; j<last_line; j++)
 		{
 		  info[k].temp = r[j];
 		  k++;
@@ -307,23 +307,23 @@ int main(int argc, char **argv)
 	  /*  File is alread open.  */
 	  /*  Read elapsed time.  */
 	  (void)bu_fgets(line, 150, fpr);
-	  (void)sscanf(line, "%lf",&eltim_read);
+	  (void)sscanf(line, "%lf", &eltim_read);
 
-	  while(eltim_read != eltim)	/*  Page through to end of data.  */
+	  while (eltim_read != eltim)	/*  Page through to end of data.  */
 	    {
-	      for(i=0; i<numreg; i++)
+	      for (i=0; i<numreg; i++)
 		{
 		  (void)bu_fgets(line, 150, fpr);
 		}
 	      (void)bu_fgets(line, 150, fpr);
-	      (void)sscanf(line, "%lf",&eltim_read);
+	      (void)sscanf(line, "%lf", &eltim_read);
 	    }
 
 	  /*  When correct ellasped time is found, read data.  */
-	  for(i=0; i<numreg; i++)
+	  for (i=0; i<numreg; i++)
 	    {
 	      (void)bu_fgets(line, 150, fpr);
-	      (void)sscanf(line, "%lf",&r[0]);
+	      (void)sscanf(line, "%lf", &r[0]);
 	      info[i].temp = r[0];
 	    }
 	}							/*  END # 3  */
@@ -337,12 +337,12 @@ int main(int argc, char **argv)
       (void)fflush(stdout);
       numreg_read = 1;
       c = getc(fpr);
-      while( (c != EOF) && (numreg_read < numreg) )
+      while ( (c != EOF) && (numreg_read < numreg) )
 	{
 	  (void)ungetc(c, fpr);
 	  (void)bu_fgets(line, 150, fpr);
 	  (void)sscanf(line, "%*d%149s", tmpstrng);
-	  for(i=0; i<150; i++)
+	  for (i=0; i<150; i++)
 	    {
 	      info[numreg_read].regname[i] = tmpstrng[i];
 	    }
@@ -355,19 +355,19 @@ int main(int argc, char **argv)
       /*  Check if the number of regions read from the output file is  */
       /*  the same as the number of regions read from the region # &  */
       /*  name file.  */
-      if(numreg_read == numreg)
+      if (numreg_read == numreg)
 	{
 	  (void)printf("The number of regions read from the output file ");
 	  (void)printf("and the region # & name\n");
-	  (void)printf("file was the same, %d (does not ",(numreg-1));
+	  (void)printf("file was the same, %d (does not ", (numreg-1));
 	  (void)printf("include background in number).\n");
 	  (void)fflush(stdout);
 	}
-      if(numreg_read != numreg)
+      if (numreg_read != numreg)
 	{
 	  (void)printf("The number of regions read from the output file ");
 	  (void)printf("and the region # & name\n");
-	  (void)printf("file was not the same, %d vs %d.\n",(numreg-1),
+	  (void)printf("file was not the same, %d vs %d.\n", (numreg-1),
 		       (numreg_read-1));
 	  (void)printf("This is an ERROR.\n\n");
 	  (void)fflush(stdout);
@@ -375,9 +375,9 @@ int main(int argc, char **argv)
 
       /*  Print out data for check.  */
       /*
-       * for(i=0; i<numreg; i++)
+       * for (i=0; i<numreg; i++)
        * {
-       *	if(i==0)(void)printf("reg = %d\tname = background\ttemp = %f\n",
+       *	if (i==0)(void)printf("reg = %d\tname = background\ttemp = %f\n",
        *		i, info[i].temp);
        *	else (void)printf("reg = %d\tname = %s\ttemp = %f\n",
        *		i, info[i].regname, info[i].temp);
@@ -401,7 +401,7 @@ int main(int argc, char **argv)
 
       /*  Load desired objects.  */
       index = 2;		/*  Set index for rt_gettree.  */
-      while(argv[index] != NULL)
+      while (argv[index] != NULL)
 	{
 	  rt_gettree(rtip, argv[index]);
 	  (void)printf("\t%s loaded.\n", argv[index]);
@@ -413,7 +413,7 @@ int main(int argc, char **argv)
       /*  for background.  */
       numreg_g = (int)rtip->nregions + 1;
 
-      if( (numreg == numreg_read) && (numreg_read == numreg_g) )
+      if ( (numreg == numreg_read) && (numreg_read == numreg_g) )
 	{
 	  (void)printf("The number of regions read from the output\n");
 	  (void)printf("file, the region # & name file, and the .g\n");
@@ -464,7 +464,7 @@ int main(int argc, char **argv)
       (void)printf("Radius of bounding sphere:  %f\n", radius);
       (void)printf("Enter multiplication factor for radius.\n\t");
       (void)fflush(stdout);
-      (void)scanf("%lf",&multi);
+      (void)scanf("%lf", &multi);
       /*  Multiply radius by multiplication factor.  */
       radius = radius * multi;
 
@@ -483,12 +483,12 @@ int main(int argc, char **argv)
 
       /*  User enters grid size.  */
       (void)fprintf(stderr, "Enter grid size.\n\t");
-      (void)scanf("%d",&wide);
+      (void)scanf("%d", &wide);
       high = wide;
 
       /*  User enters azimuth & elevation for viewing.  */
       (void)fprintf(stderr, "Enter azimuth & elevation.\n\t");
-      (void)scanf("%lf %lf",&az,&el);
+      (void)scanf("%lf %lf", &az, &el);
       alpha = az * M_PI / 180.;
       beta = (-el) * M_PI / 180.;
       calpha = cos(alpha);
@@ -533,11 +533,11 @@ int main(int argc, char **argv)
       /*  Set starting point.  */
       vec[X] = center[X] + radius;
 
-      for(i=0; i<high; i++)
+      for (i=0; i<high; i++)
 	{
 	  vec[Z] = center[Z] + radius - (float)i * deltah;
 
-	  for(j=0; j<wide; j++)
+	  for (j=0; j<wide; j++)
 	    {
 	      vec[Y] = center[Y] - radius + (float)j * deltaw;
 	      /*  Rotate starting point.  */

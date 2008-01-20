@@ -126,7 +126,7 @@ rt_poly_findroot(register bn_poly_t *eqn, /* polynomial */
     int	n;
     register int	i;		/* iteration counter		*/
 
-    for( i=0; i < 20; i++ ) {
+    for ( i=0; i < 20; i++ ) {
 	cZ = *nxZ;
 	rt_poly_eval_w_2derivatives( &cZ, eqn, &p0, &p1, &p2 );
 
@@ -169,11 +169,11 @@ rt_poly_findroot(register bn_poly_t *eqn, /* polynomial */
 	 */
 	b = bn_cx_amplsq( nxZ );
 	diff = bn_cx_amplsq( &p0 );
-	if( b < diff )
+	if ( b < diff )
 	    continue;
-	if( (b-diff) == b )
+	if ( (b-diff) == b )
 	    return(i);		/* OK -- can't do better */
-	if( diff > (b - diff)*1.0e-5 )
+	if ( diff > (b - diff)*1.0e-5 )
 	    continue;
 	return(i);			/* OK */
     }
@@ -302,7 +302,7 @@ rt_poly_roots(register bn_poly_t	*eqn,	/* equation to be solved */
     /* Remove leading coefficients which are too close to zero,
      * to prevent the polynomial factoring from blowing up, below.
      */
-    while( NEAR_ZERO( eqn->cf[0], SMALL ) )  {
+    while ( NEAR_ZERO( eqn->cf[0], SMALL ) )  {
 	for ( n=0; n <= eqn->dgr; n++ ){
 	    eqn->cf[n] = eqn->cf[n+1];
 	}
@@ -320,7 +320,7 @@ rt_poly_roots(register bn_poly_t	*eqn,	/* equation to be solved */
     /* A trailing coefficient of zero indicates that zero
      * is a root of the equation.
      */
-    while( NEAR_ZERO( eqn->cf[eqn->dgr], SMALL ) )  {
+    while ( NEAR_ZERO( eqn->cf[eqn->dgr], SMALL ) )  {
 	roots[n].re = roots[n].im = 0.0;
 	--eqn->dgr;
 	++n;
@@ -328,13 +328,13 @@ rt_poly_roots(register bn_poly_t	*eqn,	/* equation to be solved */
 
     while ( eqn->dgr > 2 ){
 	if ( eqn->dgr == 4 )  {
-	    if( bn_poly_quartic_roots(&roots[n], eqn) )  {
-		if( rt_poly_checkroots( eqn, &roots[n], 4 ) == 0 )  {
+	    if ( bn_poly_quartic_roots(&roots[n], eqn) )  {
+		if ( rt_poly_checkroots( eqn, &roots[n], 4 ) == 0 )  {
 		    return( n+4 );
 		}
 	    }
 	} else if ( eqn->dgr == 3 )  {
-	    if( bn_poly_cubic_roots( &roots[n], eqn ) )  {
+	    if ( bn_poly_cubic_roots( &roots[n], eqn ) )  {
 		if ( rt_poly_checkroots( eqn, &roots[n], 3 ) == 0 )  {
 		    return ( n+3 );
 		}

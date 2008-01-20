@@ -105,7 +105,7 @@ bn_mat_print_guts(const char	*title,
 			cp += strlen(cp);
 			if (i == 15) {
 				break;
-			} else if((i&3) == 3) {
+			} else if ((i&3) == 3) {
 				*cp++ = '\n';
 				*cp++ = ' ';
 				*cp++ = ' ';
@@ -137,10 +137,10 @@ bn_mat_print(const char		*title,
 double
 bn_atan2(double y, double x)
 {
-	if( x > -1.0e-20 && x < 1.0e-20 )  {
+	if ( x > -1.0e-20 && x < 1.0e-20 )  {
 		/* X is equal to zero, check Y */
-		if( y < -1.0e-20 )  return( -3.14159265358979323/2 );
-		if( y >  1.0e-20 )  return(  3.14159265358979323/2 );
+		if ( y < -1.0e-20 )  return( -3.14159265358979323/2 );
+		if ( y >  1.0e-20 )  return(  3.14159265358979323/2 );
 		return(0.0);
 	}
 	return( atan2( y, x ) );
@@ -245,11 +245,11 @@ bn_matXvec(register vect_t ov, register const mat_t im, register const vect_t iv
 	register int ei;		/* Position in input vector */
 
 	/* For each element in the output array... */
-	for(; eo<4; eo++) {
+	for (; eo<4; eo++) {
 
 		ov[eo] = 0;		/* Start with zero in output */
 
-		for(ei=0; ei<4; ei++)
+		for (ei=0; ei<4; ei++)
 			ov[eo] += im[em++] * iv[ei];
 	}
 }
@@ -266,7 +266,7 @@ bn_matXvec(register vect_t ov, register const mat_t im, register const vect_t iv
 void
 bn_mat_inv(register mat_t output, const mat_t input)
 {
-	if(bn_mat_inverse(output, input) == 0)  {
+	if (bn_mat_inverse(output, input) == 0)  {
 		bu_log("bn_mat_inv:  error!");
 		bn_mat_print("singular matrix", input);
 		bu_bomb("bn_mat_inv: singular matrix\n");
@@ -301,32 +301,32 @@ bn_mat_inverse(register mat_t output, const mat_t input)
 	MAT_COPY( output, input );	/* Duplicate */
 
 	/* Initialization */
-	for( j = 0; j < 4; j++ )
+	for ( j = 0; j < 4; j++ )
 		z[j] = j;
 
 	/* Main Loop */
-	for( i = 0; i < 4; i++ )  {
+	for ( i = 0; i < 4; i++ )  {
 		register fastf_t y;				/* local temporary */
 
 		k = i;
 		y = output[i*4+i];
-		for( j = i+1; j < 4; j++ )  {
+		for ( j = i+1; j < 4; j++ )  {
 			register fastf_t w;			/* local temporary */
 
 			w = output[i*4+j];
-			if( fabs(w) > fabs(y) )  {
+			if ( fabs(w) > fabs(y) )  {
 				k = j;
 				y = w;
 			}
 		}
 
-		if( fabs(y) < SQRT_SMALL_FASTF )  {
+		if ( fabs(y) < SQRT_SMALL_FASTF )  {
 			return 0;
 			/* NOTREACHED */
 		}
 		y = 1.0 / y;
 
-		for( j = 0; j < 4; j++ )  {
+		for ( j = 0; j < 4; j++ )  {
 			register fastf_t temp;		/* Local */
 
 			c[j] = output[j*4+k];
@@ -341,21 +341,21 @@ bn_mat_inverse(register mat_t output, const mat_t input)
 		j = z[i];
 		z[i] = z[k];
 		z[k] = j;
-		for( k = 0; k < 4; k++ )  {
-			if( k == i )  continue;
-			for( j = 0; j < 4; j++ )  {
-				if( j == i )  continue;
+		for ( k = 0; k < 4; k++ )  {
+			if ( k == i )  continue;
+			for ( j = 0; j < 4; j++ )  {
+				if ( j == i )  continue;
 				output[k*4+j] = output[k*4+j] - b[j] * c[k];
 			}
 		}
 	}
 
 	/*  Second Loop */
-	for( i = 0; i < 4; i++ )  {
-		while( (k = z[i]) != i )  {
+	for ( i = 0; i < 4; i++ )  {
+		while ( (k = z[i]) != i )  {
 			int p;			/* Local temp */
 
-			for( j = 0; j < 4; j++ )  {
+			for ( j = 0; j < 4; j++ )  {
 				register fastf_t w;		/* Local temp */
 
 				w = output[i*4+j];
@@ -399,12 +399,12 @@ bn_htov_move(register vect_t v, register const vect_t h)
 {
 	register fastf_t inv;
 
-	if( h[3] == 1.0 )  {
+	if ( h[3] == 1.0 )  {
 		v[X] = h[X];
 		v[Y] = h[Y];
 		v[Z] = h[Z];
 	}  else  {
-		if( h[W] == SMALL_FASTF )  {
+		if ( h[W] == SMALL_FASTF )  {
 			bu_log("bn_htov_move: divide by %f!\n", h[W]);
 			return;
 		}
@@ -498,9 +498,9 @@ bn_ae_vec(fastf_t *azp, fastf_t *elp, const vect_t v)
 {
 	register fastf_t	az;
 
-	if( (az = bn_atan2( v[Y], v[X] ) * bn_radtodeg) < 0 )  {
+	if ( (az = bn_atan2( v[Y], v[X] ) * bn_radtodeg) < 0 )  {
 		*azp = 360 + az;
-	} else if( az >= 360 ) {
+	} else if ( az >= 360 ) {
 		*azp = az - 360;
 	} else {
 		*azp = az;
@@ -528,11 +528,11 @@ bn_aet_vec(fastf_t *az, fastf_t *el, fastf_t *twist, fastf_t *vec_ae, fastf_t *v
 
 	/* stabilize fluctuation bewteen 0 and 360
 	 * change azimuth near 360 to 0 */
-	if( NEAR_ZERO( *az - 360.0, accuracy ) )
+	if ( NEAR_ZERO( *az - 360.0, accuracy ) )
 		*az = 0.0;
 
 	/* if elevation is +/-90 set twist to zero and calculate azimuth */
-	if( NEAR_ZERO( *el - 90.0, accuracy ) || NEAR_ZERO( *el + 90.0, accuracy ) )
+	if ( NEAR_ZERO( *el - 90.0, accuracy ) || NEAR_ZERO( *el + 90.0, accuracy ) )
 	{
 		*twist = 0.0;
 		*az = bn_atan2( -vec_twist[X], vec_twist[Y] ) * bn_radtodeg;
@@ -549,7 +549,7 @@ bn_aet_vec(fastf_t *az, fastf_t *el, fastf_t *twist, fastf_t *vec_ae, fastf_t *v
 		*twist = bn_atan2( VDOT( vec_twist, ninety_twist ), VDOT( vec_twist, zero_twist ) ) * bn_radtodeg;
 
 		/* stabilize flutter between +/- 180 */
-		if( NEAR_ZERO( *twist + 180.0, accuracy ) )
+		if ( NEAR_ZERO( *twist + 180.0, accuracy ) )
 			*twist = 180.0;
 	}
 }
@@ -572,7 +572,7 @@ bn_mat_angles(register fastf_t *mat, double alpha_in, double beta_in, double gga
 	double calpha, cbeta, cgamma;
 	double salpha, sbeta, sgamma;
 
-	if( alpha_in == 0.0 && beta_in == 0.0 && ggamma_in == 0.0 )  {
+	if ( alpha_in == 0.0 && beta_in == 0.0 && ggamma_in == 0.0 )  {
 		MAT_IDN( mat );
 		return;
 	}
@@ -590,17 +590,17 @@ bn_mat_angles(register fastf_t *mat, double alpha_in, double beta_in, double gga
 	 * convert this back to azimuth and elevation.
 	 * do_frame() uses this technique!!!
 	 */
-	if( alpha_in == 180.0 )
+	if ( alpha_in == 180.0 )
 		salpha = 0.0;
 	else
 		salpha = sin( alpha );
 
-	if( beta_in == 180.0 )
+	if ( beta_in == 180.0 )
 		sbeta = 0.0;
 	else
 		sbeta = sin( beta );
 
-	if( ggamma_in == 180.0 )
+	if ( ggamma_in == 180.0 )
 		sgamma = 0.0;
 	else
 		sgamma = sin( ggamma );
@@ -693,9 +693,9 @@ bn_eigen2x2(fastf_t *val1, fastf_t *val2, fastf_t *vec1, fastf_t *vec2, fastf_t 
 	d = 0.5 * (c - a);
 
 	/* Check for diagonal matrix */
-	if( NEAR_ZERO(b, 1.0e-10) ) {
+	if ( NEAR_ZERO(b, 1.0e-10) ) {
 		/* smaller mag first */
-		if( fabs(c) < fabs(a) ) {
+		if ( fabs(c) < fabs(a) ) {
 			*val1 = c;
 			VSET( vec1, 0.0, 1.0, 0.0 );
 			*val2 = a;
@@ -714,7 +714,7 @@ bn_eigen2x2(fastf_t *val1, fastf_t *val2, fastf_t *vec1, fastf_t *vec2, fastf_t 
 	v2 = 0.5 * (c + a) + root;
 
 	/* smaller mag first */
-	if( fabs(v1) < fabs(v2) ) {
+	if ( fabs(v1) < fabs(v2) ) {
 		*val1 = v1;
 		*val2 = v2;
 		VSET( vec1, b, d - root, 0.0 );
@@ -740,11 +740,11 @@ bn_vec_perp(vect_t new, const vect_t old)
 	vect_t another;	/* Another vector, different */
 
 	i = X;
-	if( fabs(old[Y])<fabs(old[i]) )  i=Y;
-	if( fabs(old[Z])<fabs(old[i]) )  i=Z;
+	if ( fabs(old[Y])<fabs(old[i]) )  i=Y;
+	if ( fabs(old[Z])<fabs(old[i]) )  i=Z;
 	VSETALL( another, 0 );
 	another[i] = 1.0;
-	if( old[X] == 0 && old[Y] == 0 && old[Z] == 0 )  {
+	if ( old[X] == 0 && old[Y] == 0 && old[Z] == 0 )  {
 		VMOVE( new, another );
 	} else {
 		VCROSS( new, another, old );
@@ -790,12 +790,12 @@ bn_mat_fromto(mat_t m, const vect_t from, const vect_t to)
 	 *  asin(0.00001) = 0.0005729 degrees (1/2000 degree)
 	 */
 	dot = VDOT(unit_from, unit_to);
-	if( dot > 1.0-0.00001 )  {
+	if ( dot > 1.0-0.00001 )  {
 		/* dot == 1, return identity matrix */
 		MAT_IDN(m);
 		return;
 	}
-	if( dot < -1.0+0.00001 )  {
+	if ( dot < -1.0+0.00001 )  {
 		/* dot == -1, select random perpendicular N vector */
 		bn_vec_perp( N, unit_from );
 	} else {
@@ -827,7 +827,7 @@ bn_mat_fromto(mat_t m, const vect_t from, const vect_t to)
 	/* Verify that it worked */
 	MAT4X3VEC( test_to, m, unit_from );
 	dot = VDOT( unit_to, test_to );
-	if( dot < 0.98 || dot > 1.02 )  {
+	if ( dot < 0.98 || dot > 1.02 )  {
 		bu_log("bn_mat_fromto() ERROR!  from (%g,%g,%g) to (%g,%g,%g) went to (%g,%g,%g), dot=%g?\n",
 			V3ARGS(from),
 			V3ARGS(to),
@@ -964,7 +964,7 @@ bn_mat_lookat(mat_t rot, const vect_t dir, int yflip)
 	VSET( x, 1, 0, 0 );
 	MAT4X3VEC( xproj, prod12, x );
 	hypot_xy = hypot( xproj[X], xproj[Y] );
-	if( hypot_xy < 1.0e-10 )  {
+	if ( hypot_xy < 1.0e-10 )  {
 		bu_log("Warning: bn_mat_lookat:  unable to twist correct, hypot=%g\n", hypot_xy);
 		VPRINT( "xproj", xproj );
 		MAT_COPY( rot, prod12 );
@@ -973,11 +973,11 @@ bn_mat_lookat(mat_t rot, const vect_t dir, int yflip)
 	bn_mat_zrot( third, -xproj[Y] / hypot_xy, xproj[X] / hypot_xy );
 	bn_mat_mul( rot, third, prod12 );
 
-	if( yflip )  {
+	if ( yflip )  {
 		VSET( z, 0, 0, 1 );
 		MAT4X3VEC( zproj, rot, z );
 		/* If original Z inverts sign, flip sign on resulting Y */
-		if( zproj[Y] < 0.0 )  {
+		if ( zproj[Y] < 0.0 )  {
 			MAT_COPY( prod12, rot );
 			MAT_IDN( third );
 			third[5] = -1;
@@ -987,7 +987,7 @@ bn_mat_lookat(mat_t rot, const vect_t dir, int yflip)
 
 	/* Check the final results */
 	MAT4X3VEC( t1, rot, dir );
-	if( t1[Z] > -0.98 )  {
+	if ( t1[Z] > -0.98 )  {
 		bu_log("Error:  bn_mat_lookat final= (%g, %g, %g)\n", t1[X], t1[Y], t1[Z] );
 	}
 }
@@ -1006,7 +1006,7 @@ bn_vec_ortho(register vect_t out, register const vect_t in)
 	register fastf_t f;
 	register int i;
 
-	if( NEAR_ZERO(in[X], 0.0001) && NEAR_ZERO(in[Y], 0.0001) &&
+	if ( NEAR_ZERO(in[X], 0.0001) && NEAR_ZERO(in[Y], 0.0001) &&
 	    NEAR_ZERO(in[Z], 0.0001) )  {
 		VSETALL( out, 0 );
 		VPRINT("bn_vec_ortho: zero-length input", in);
@@ -1018,19 +1018,19 @@ bn_vec_ortho(register vect_t out, register const vect_t in)
 	i = X;
 	j = Y;
 	k = Z;
-	if( fabs(in[Y]) < f )  {
+	if ( fabs(in[Y]) < f )  {
 		f = fabs(in[Y]);
 		i = Y;
 		j = Z;
 		k = X;
 	}
-	if( fabs(in[Z]) < f )  {
+	if ( fabs(in[Z]) < f )  {
 		i = Z;
 		j = X;
 		k = Y;
 	}
 	f = hypot( in[j], in[k] );
-	if( NEAR_ZERO( f, SMALL ) ) {
+	if ( NEAR_ZERO( f, SMALL ) ) {
 		VPRINT("bn_vec_ortho: zero hypot on", in);
 		VSETALL( out, 0 );
 		return;
@@ -1062,7 +1062,7 @@ bn_mat_scale_about_pt(mat_t mat, const point_t pt, const double scale)
 	MAT_DELTAS_VEC_NEG( xlate, pt );
 
 	MAT_IDN( s );
-	if( NEAR_ZERO( scale, SMALL ) )  {
+	if ( NEAR_ZERO( scale, SMALL ) )  {
 		MAT_ZERO( mat );
 		return -1;			/* ERROR */
 	}
@@ -1184,7 +1184,7 @@ bn_mat_arb_rot(mat_t m, const point_t pt, const vect_t dir, const fastf_t ang)
 	double n1_sq, n2_sq, n3_sq;
 	double n1_n2, n1_n3, n2_n3;
 
-	if( ang == 0.0 )
+	if ( ang == 0.0 )
 	{
 		MAT_IDN( m );
 		return;
@@ -1263,7 +1263,7 @@ bn_mat_ck(const char *title, const mat_t m)
 	vect_t	A, B, C;
 	fastf_t	fx, fy, fz;
 
-	if( !m )  return 0;		/* implies identity matrix */
+	if ( !m )  return 0;		/* implies identity matrix */
 
 	/*
 	 * Validate that matrix preserves perpendicularity of axis
@@ -1282,7 +1282,7 @@ bn_mat_ck(const char *title, const mat_t m)
 	fx = VDOT( A, B );
 	fy = VDOT( B, C );
 	fz = VDOT( A, C );
-	if( ! NEAR_ZERO(fx, 0.0001) ||
+	if ( ! NEAR_ZERO(fx, 0.0001) ||
 	    ! NEAR_ZERO(fy, 0.0001) ||
 	    ! NEAR_ZERO(fz, 0.0001) ||
 	    NEAR_ZERO( m[15], VDIVIDE_TOL )
@@ -1291,7 +1291,7 @@ bn_mat_ck(const char *title, const mat_t m)
 			title, fx, fy, fz, m[15] );
 		bn_mat_print("bn_mat_ck() bad matrix", m);
 
-		if( bu_debug & (BU_DEBUG_MATH | BU_DEBUG_COREDUMP) )  {
+		if ( bu_debug & (BU_DEBUG_MATH | BU_DEBUG_COREDUMP) )  {
 			bu_debug |= BU_DEBUG_COREDUMP;
 			bu_bomb("bn_mat_ck() bad matrix\n");
 		}

@@ -99,7 +99,7 @@ main(int argc, char **argv)
    grpnam[4] = '\0';
 
    /*  If there are no arguments ask questions.  */
-   if(argc == 1)
+   if (argc == 1)
    {							/*  START # 3  */
 
    /*  Print info about the window.  */
@@ -116,15 +116,15 @@ main(int argc, char **argv)
    /*  Find the number of windows to create.  */
    (void)printf("Enter the number of windows to create (26 max).\n\t");
    (void)fflush(stdout);
-   (void)scanf("%d",&numwin);
+   (void)scanf("%d", &numwin);
 
    /*  Find the dimensions of the windows.  */
    (void)printf("Enter the height, width, and depth of the window.\n\t");
    (void)fflush(stdout);
-   (void)scanf("%lf %lf %lf",&hgt,&wid,&dpt);
+   (void)scanf("%lf %lf %lf", &hgt, &wid, &dpt);
    (void)printf("Enter the radius of the corner.\n\t");
    (void)fflush(stdout);
-   (void)scanf("%lf",&rds);
+   (void)scanf("%lf", &rds);
 
    }							/*  END # 3  */
 
@@ -139,17 +139,17 @@ main(int argc, char **argv)
 	/*	-d# - # = depth of window in mm.  */
 	/*	-r# - # = radius of window corner in mm.  */
 
-	for(i=1; i<argc; i++)
+	for (i=1; i<argc; i++)
 	{						/*  START # 5  */
 	   /*  Put argument in temporary character string.  */
 	   temp = argv[i];
 
 	   /*  -f - mged file.  */
-	   if(temp[1] == 'f')
+	   if (temp[1] == 'f')
 	   {						/*  START # 6  */
 		j = 2;
 		k = 0;
-		while( (temp[j] != '\0') && (k < 25) )
+		while ( (temp[j] != '\0') && (k < 25) )
 		{					/*  START # 7  */
 		   filemged[k] = temp[j];
 		   j++;
@@ -164,22 +164,22 @@ main(int argc, char **argv)
 		/*  Set up temporary character string.  */
 		j = 2;
 		k = 0;
-		while( (temp[j] != '\0') && (k < 15) )
+		while ( (temp[j] != '\0') && (k < 15) )
 		{					/*  START # 9  */
 		   temp1[k] = temp[j];
 		   j++;
 		   k++;
 		}					/*  END # 9  */
 		temp1[k] = '\0';
-		if(temp[1] == 'n')
+		if (temp[1] == 'n')
 		{
-		   (void)sscanf(temp1, "%d",&numwin);
-		   if(numwin > 26) numwin = 26;
+		   (void)sscanf(temp1, "%d", &numwin);
+		   if (numwin > 26) numwin = 26;
 		}
-		else if(temp[1] == 'h') (void)sscanf(temp1, "%lf",&hgt);
-		else if(temp[1] == 'w') (void)sscanf(temp1, "%lf",&wid);
-		else if(temp[1] == 'd') (void)sscanf(temp1, "%lf",&dpt);
-		else if(temp[1] == 'r') (void)sscanf(temp1, "%lf",&rds);
+		else if (temp[1] == 'h') (void)sscanf(temp1, "%lf", &hgt);
+		else if (temp[1] == 'w') (void)sscanf(temp1, "%lf", &wid);
+		else if (temp[1] == 'd') (void)sscanf(temp1, "%lf", &dpt);
+		else if (temp[1] == 'r') (void)sscanf(temp1, "%lf", &rds);
 	   }						/*  END # 8  */
 	}						/*  END # 5  */
    }							/*  END # 4  */
@@ -199,7 +199,7 @@ main(int argc, char **argv)
    /*  Write ident record.  */
    mk_id(fpw, "windows");
 
-   for(i=0; i<numwin; i++)
+   for (i=0; i<numwin; i++)
    {							/*  START # 2  */
 	/*  Create first arb8.  */
 	pts[0][0] = (fastf_t)0.;
@@ -282,52 +282,52 @@ main(int argc, char **argv)
 	BU_LIST_INIT(&comb.l);
 
 	solnam[6] = '1';
-	(void)mk_addmember(solnam,&comb.l, NULL, WMOP_INTERSECT);
+	(void)mk_addmember(solnam, &comb.l, NULL, WMOP_INTERSECT);
 	solnam[6] = '2';
-	(void)mk_addmember(solnam,&comb.l, NULL, WMOP_SUBTRACT);
+	(void)mk_addmember(solnam, &comb.l, NULL, WMOP_SUBTRACT);
 	regnam[5] = 97 + i;
 	regnam[6] = '1';
-	mk_lfcomb(fpw, regnam,&comb, 1);
+	mk_lfcomb(fpw, regnam, &comb, 1);
 
-	(void)mk_addmember(solnam,&comb.l, NULL, WMOP_INTERSECT);
+	(void)mk_addmember(solnam, &comb.l, NULL, WMOP_INTERSECT);
 	regnam[6] = '2';
-	mk_lfcomb(fpw, regnam,&comb, 1);
+	mk_lfcomb(fpw, regnam, &comb, 1);
 
 	solnam[6] = '3';
-	(void)mk_addmember(solnam,&comb.l, NULL, WMOP_INTERSECT);
+	(void)mk_addmember(solnam, &comb.l, NULL, WMOP_INTERSECT);
 	solnam[6] = '1';
-	(void)mk_addmember(solnam,&comb.l, NULL, WMOP_SUBTRACT);
+	(void)mk_addmember(solnam, &comb.l, NULL, WMOP_SUBTRACT);
 	solnam[6] = '2';
-	(void)mk_addmember(solnam,&comb.l, NULL, WMOP_SUBTRACT);
+	(void)mk_addmember(solnam, &comb.l, NULL, WMOP_SUBTRACT);
 	regnam[6] = '3';
-	mk_lfcomb(fpw, regnam,&comb, 1);
+	mk_lfcomb(fpw, regnam, &comb, 1);
 
 	solnam[6] = '4';
-	(void)mk_addmember(solnam,&comb.l, NULL, WMOP_INTERSECT);
+	(void)mk_addmember(solnam, &comb.l, NULL, WMOP_INTERSECT);
 	solnam[6] = '1';
-	(void)mk_addmember(solnam,&comb.l, NULL, WMOP_SUBTRACT);
+	(void)mk_addmember(solnam, &comb.l, NULL, WMOP_SUBTRACT);
 	solnam[6] = '2';
-	(void)mk_addmember(solnam,&comb.l, NULL, WMOP_SUBTRACT);
+	(void)mk_addmember(solnam, &comb.l, NULL, WMOP_SUBTRACT);
 	regnam[6] = '4';
-	mk_lfcomb(fpw, regnam,&comb, 1);
+	mk_lfcomb(fpw, regnam, &comb, 1);
 
 	solnam[6] = '5';
-	(void)mk_addmember(solnam,&comb.l, NULL, WMOP_INTERSECT);
+	(void)mk_addmember(solnam, &comb.l, NULL, WMOP_INTERSECT);
 	solnam[6] = '1';
-	(void)mk_addmember(solnam,&comb.l, NULL, WMOP_SUBTRACT);
+	(void)mk_addmember(solnam, &comb.l, NULL, WMOP_SUBTRACT);
 	solnam[6] = '2';
-	(void)mk_addmember(solnam,&comb.l, NULL, WMOP_SUBTRACT);
+	(void)mk_addmember(solnam, &comb.l, NULL, WMOP_SUBTRACT);
 	regnam[6] = '5';
-	mk_lfcomb(fpw, regnam,&comb, 1);
+	mk_lfcomb(fpw, regnam, &comb, 1);
 
 	solnam[6] = '6';
-	(void)mk_addmember(solnam,&comb.l, NULL, WMOP_INTERSECT);
+	(void)mk_addmember(solnam, &comb.l, NULL, WMOP_INTERSECT);
 	solnam[6] = '1';
-	(void)mk_addmember(solnam,&comb.l, NULL, WMOP_SUBTRACT);
+	(void)mk_addmember(solnam, &comb.l, NULL, WMOP_SUBTRACT);
 	solnam[6] = '2';
-	(void)mk_addmember(solnam,&comb.l, NULL, WMOP_SUBTRACT);
+	(void)mk_addmember(solnam, &comb.l, NULL, WMOP_SUBTRACT);
 	regnam[6] = '6';
-	mk_lfcomb(fpw, regnam,&comb, 1);
+	mk_lfcomb(fpw, regnam, &comb, 1);
 
 	/*  Create group.  */
 
@@ -335,20 +335,20 @@ main(int argc, char **argv)
 	BU_LIST_INIT(&comb1.l);
 
 	regnam[6] = '1';
-	(void)mk_addmember(regnam,&comb1.l, NULL, WMOP_UNION);
+	(void)mk_addmember(regnam, &comb1.l, NULL, WMOP_UNION);
 	regnam[6] = '2';
-	(void)mk_addmember(regnam,&comb1.l, NULL, WMOP_UNION);
+	(void)mk_addmember(regnam, &comb1.l, NULL, WMOP_UNION);
 	regnam[6] = '3';
-	(void)mk_addmember(regnam,&comb1.l, NULL, WMOP_UNION);
+	(void)mk_addmember(regnam, &comb1.l, NULL, WMOP_UNION);
 	regnam[6] = '4';
-	(void)mk_addmember(regnam,&comb1.l, NULL, WMOP_UNION);
+	(void)mk_addmember(regnam, &comb1.l, NULL, WMOP_UNION);
 	regnam[6] = '5';
-	(void)mk_addmember(regnam,&comb1.l, NULL, WMOP_UNION);
+	(void)mk_addmember(regnam, &comb1.l, NULL, WMOP_UNION);
 	regnam[6] = '6';
-	(void)mk_addmember(regnam,&comb1.l, NULL, WMOP_UNION);
+	(void)mk_addmember(regnam, &comb1.l, NULL, WMOP_UNION);
 
 	grpnam[3] = 97 + i;
-	mk_lfcomb(fpw, grpnam,&comb1, 0);
+	mk_lfcomb(fpw, grpnam, &comb1, 0);
    }							/*  START # 2  */
 
    /*  Close file.  */

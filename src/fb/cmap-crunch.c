@@ -43,7 +43,7 @@ cmap_crunch(register RGBpixel (*scan_buf), register int pixel_ct, ColorMap *cmap
 	register unsigned short	*bp = cmap->cm_blue;
 
 	/* noalias ? */
-	for( ; pixel_ct > 0; pixel_ct--, scan_buf++ )  {
+	for (; pixel_ct > 0; pixel_ct--, scan_buf++ )  {
 		(*scan_buf)[RED] = rp[(*scan_buf)[RED]] >> 8;
 		(*scan_buf)[GRN] = gp[(*scan_buf)[GRN]] >> 8;
 		(*scan_buf)[BLU] = bp[(*scan_buf)[BLU]] >> 8;

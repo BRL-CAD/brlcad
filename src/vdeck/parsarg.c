@@ -46,9 +46,9 @@ parsArg(int argc, char **argv)
 { 	register int	i, c, arg_cnt;
 		extern int	bu_optind;
 
-	while( (c = bu_getopt( argc, argv, "d" )) != EOF )
+	while ( (c = bu_getopt( argc, argv, "d" )) != EOF )
 		{
-		switch( c )
+		switch ( c )
 			{
 		case 'd' :
 			debug = 1;
@@ -57,20 +57,20 @@ parsArg(int argc, char **argv)
 			return	0;
 			}
 		}
-	if( bu_optind >= argc )
+	if ( bu_optind >= argc )
 		{
 		(void) fprintf( stderr, "Missing name of input file!\n" );
 		return	0;
 		}
 	else
 		objfile = argv[bu_optind++];
-	if( (dbip = db_open( objfile, "r" )) == DBI_NULL )  {
+	if ( (dbip = db_open( objfile, "r" )) == DBI_NULL )  {
 		perror(objfile);
 		return( 0 );		/* FAIL */
 	}
 
 	arg_list[0] = argv[0]; /* Program name goes in first.	*/
-	for( i = bu_optind, arg_cnt = 1; i < argc; i++, arg_cnt++ )
+	for ( i = bu_optind, arg_cnt = 1; i < argc; i++, arg_cnt++ )
 		/* Insert objects.	*/
 		arg_list[arg_cnt] = argv[i];
 	return	1;

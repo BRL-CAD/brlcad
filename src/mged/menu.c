@@ -152,7 +152,7 @@ mmenu_set(int index, struct menu_item *value)
     bu_vls_free(&menu_string);
 
     FOR_ALL_DISPLAYS(dlp, &head_dm_list.l){
-      if(menu_state == dlp->dml_menu_state &&
+      if (menu_state == dlp->dml_menu_state &&
 	 dlp->dml_mged_variables->mv_faceplate &&
 	 dlp->dml_mged_variables->mv_orig_gui)
 	dlp->dml_dirty = 1;
@@ -169,7 +169,7 @@ mmenu_set_all(int index, struct menu_item *value)
   save_cmd_list = curr_cmd_list;
   save_dm_list = curr_dm_list;
   FOR_ALL_DISPLAYS(p, &head_dm_list.l){
-    if(p->dml_tie)
+    if (p->dml_tie)
       curr_cmd_list = p->dml_tie;
 
     curr_dm_list = p;
@@ -183,9 +183,9 @@ mmenu_set_all(int index, struct menu_item *value)
 void
 mged_highlight_menu_item(struct menu_item *mptr, int y)
 {
-  switch(mptr->menu_arg){
+  switch (mptr->menu_arg){
   case BV_RATE_TOGGLE:
-    if(mged_variables->mv_rateknobs){
+    if (mged_variables->mv_rateknobs){
       DM_SET_FGCOLOR(dmp,
 		     color_scheme->cs_menu_text1[0],
 		     color_scheme->cs_menu_text1[1],
@@ -247,24 +247,24 @@ mmenu_display(int y_top)
 		  GED2PM1(MENUXLIM), GED2PM1(menu_state->ms_top),
 		  GED2PM1(XMIN), GED2PM1(menu_state->ms_top));
 
-  for( menu=0, m = menu_state->ms_menus; m - menu_state->ms_menus < NMENU; m++, menu++ )  {
-    if( *m == MENU_NULL )  continue;
-    for( item=0, mptr = *m;
+  for ( menu=0, m = menu_state->ms_menus; m - menu_state->ms_menus < NMENU; m++, menu++ )  {
+    if ( *m == MENU_NULL )  continue;
+    for ( item=0, mptr = *m;
 	 mptr->menu_string[0] != '\0' && y > TITLE_YBASE;
 	 mptr++, y += MENU_DY, item++ )  {
 #if 0
-      if((*m == (struct menu_item *)second_menu && (mptr->menu_arg == BV_RATE_TOGGLE ||
+      if ((*m == (struct menu_item *)second_menu && (mptr->menu_arg == BV_RATE_TOGGLE ||
 				  mptr->menu_arg == BV_EDIT_TOGGLE))
 	  || (*m == (struct menu_item *)sed_menu && mptr->menu_arg == BE_S_CONTEXT))
 #else
-      if((*m == (struct menu_item *)second_menu &&
+      if ((*m == (struct menu_item *)second_menu &&
 	  (mptr->menu_arg == BV_RATE_TOGGLE ||
 	   mptr->menu_arg == BV_EDIT_TOGGLE ||
 	   mptr->menu_arg == BV_EYEROT_TOGGLE)))
 #endif
 	mged_highlight_menu_item(mptr, y);
       else{
-	if(mptr == *m)
+	if (mptr == *m)
 	  DM_SET_FGCOLOR(dmp,
 			 color_scheme->cs_menu_title[0],
 			 color_scheme->cs_menu_title[1],
@@ -284,7 +284,7 @@ mmenu_display(int y_top)
       DM_DRAW_LINE_2D(dmp,
 		      GED2PM1(MENUXLIM), GED2PM1(y+(MENU_DY/2)),
 		      GED2PM1(XMIN), GED2PM1(y+(MENU_DY/2)));
-      if( menu_state->ms_cur_item == item && menu_state->ms_cur_menu == menu && menu_state->ms_flag )  {
+      if ( menu_state->ms_cur_item == item && menu_state->ms_cur_menu == menu && menu_state->ms_flag )  {
 	/* prefix item selected with "==>" */
 	DM_SET_FGCOLOR(dmp,
 		       color_scheme->cs_menu_arrow[0],
@@ -296,7 +296,7 @@ mmenu_display(int y_top)
     }
   }
 
-  if( y == y_top )
+  if ( y == y_top )
     return;	/* no active menus */
 
   DM_SET_FGCOLOR(dmp,
@@ -330,7 +330,7 @@ mmenu_select( int pen_y, int do_func )
 	register struct menu_item	*mptr;
 	register int			yy;
 
-	if( pen_y > menu_state->ms_top )
+	if ( pen_y > menu_state->ms_top )
 		return(-1);	/* pen above menu area */
 
 	/*
@@ -339,20 +339,20 @@ mmenu_select( int pen_y, int do_func )
 	 */
 	yy = menu_state->ms_top;
 
-	for( menu=0, m=menu_state->ms_menus; m - menu_state->ms_menus < NMENU; m++, menu++ )  {
-		if( *m == MENU_NULL )  continue;
-		for( item=0, mptr = *m;
+	for ( menu=0, m=menu_state->ms_menus; m - menu_state->ms_menus < NMENU; m++, menu++ )  {
+		if ( *m == MENU_NULL )  continue;
+		for ( item=0, mptr = *m;
 		     mptr->menu_string[0] != '\0';
 		     mptr++, item++ )  {
 			yy += MENU_DY;
-			if( pen_y <= yy )
+			if ( pen_y <= yy )
 				continue;	/* pen is below this item */
 			menu_state->ms_cur_item = item;
 			menu_state->ms_cur_menu = menu;
 			menu_state->ms_flag = 1;
 			/* It's up to the menu_func to set menu_state->ms_flag=0
 			 * if no arrow is desired */
-			if( do_func && mptr->menu_func != ((void (*)())0) )
+			if ( do_func && mptr->menu_func != ((void (*)())0) )
 				(*(mptr->menu_func))(mptr->menu_arg, menu, item);
 
 			return( 1 );		/* menu claims pen value */
@@ -373,7 +373,7 @@ mmenu_pntr(int menu, int item)
 {
 	menu_state->ms_cur_menu = menu;
 	menu_state->ms_cur_item = item;
-	if( menu_state->ms_cur_menu >= 0 )
+	if ( menu_state->ms_cur_menu >= 0 )
 		menu_state->ms_flag = 1;
 }
 

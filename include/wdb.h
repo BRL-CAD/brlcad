@@ -392,9 +392,9 @@ WDB_EXPORT WDB_EXTERN (struct wmember *mk_addmember,
 			mat_t		mat,
 			int		op));
 
-#define mk_lcomb(_fp,_name,_headp,_rf,_shadername,_shaderargs,_rgb,_inh)	\
-	mk_comb(_fp,_name,&((_headp)->l),_rf,_shadername,_shaderargs,\
-		_rgb, 0, 0, 0, 0,_inh, 0, 0)
+#define mk_lcomb(_fp, _name, _headp, _rf, _shadername, _shaderargs, _rgb, _inh)	\
+	mk_comb(_fp, _name, &((_headp)->l), _rf, _shadername, _shaderargs, \
+		_rgb, 0, 0, 0, 0, _inh, 0, 0)
 
 /* mk_lrcomb() would not append, and did not have GIFT semantics */
 /* mk_lrcomb() had (struct wmember *) head, need (struct bu_list *) */
@@ -433,7 +433,7 @@ mk_region1(
 	const unsigned char *rgb );
 
 #define mk_fastgen_region(fp, name, headp, mode, shadername, shaderargs, rgb, id, air, material, los, inherit)	\
-	mk_comb(fp, name, headp, mode, shadername, shaderargs, rgb, id, air,\
+	mk_comb(fp, name, headp, mode, shadername, shaderargs, rgb, id, air, \
 		material, los, inherit, 0, 0)
 
 

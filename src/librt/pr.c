@@ -52,7 +52,7 @@ rt_pr_soltab(register const struct soltab *stp)
 {
 	register int	id = stp->st_id;
 
-	if( id <= 0 || id > ID_MAX_SOLID )  {
+	if ( id <= 0 || id > ID_MAX_SOLID )  {
 		bu_log("stp=x%x, id=%d.\n", stp, id);
 		bu_bomb("rt_pr_soltab:  bad id");
 	}
@@ -83,19 +83,19 @@ rt_pr_region(register const struct region *rp)
 		rp->reg_instnum,
 		rp->reg_regionid, rp->reg_aircode,
 		rp->reg_gmater, rp->reg_los );
-	if( rp->reg_is_fastgen != REGION_NON_FASTGEN )  {
+	if ( rp->reg_is_fastgen != REGION_NON_FASTGEN )  {
 		bu_log("reg_is_fastgen = %s mode\n",
 			rp->reg_is_fastgen == REGION_FASTGEN_PLATE ?
 				"plate" : "volume" );
 	}
-	if( rp->reg_mater.ma_color_valid )
+	if ( rp->reg_mater.ma_color_valid )
 		bu_log("Color %d %d %d\n",
 			(int)rp->reg_mater.ma_color[0]*255.,
 			(int)rp->reg_mater.ma_color[1]*255.,
 			(int)rp->reg_mater.ma_color[2]*255. );
-	if( rp->reg_mater.ma_temperature > 0 )
+	if ( rp->reg_mater.ma_temperature > 0 )
 		bu_log("Temperature %g degrees K\n", INTCLAMP(rp->reg_mater.ma_temperature) );
-	if( rp->reg_mater.ma_shader && rp->reg_mater.ma_shader[0] != '\0' )
+	if ( rp->reg_mater.ma_shader && rp->reg_mater.ma_shader[0] != '\0' )
 		bu_log("Shader '%s'\n", rp->reg_mater.ma_shader );
 
 	bu_vls_init(&v);
@@ -124,7 +124,7 @@ rt_pr_partitions(const struct rt_i *rtip, register const struct partition *phead
 	bu_vls_strcat( &v, "\n" );
 	bu_log_indent_delta( 2 );
 
-	for( pp = phead->pt_forw; pp != phead; pp = pp->pt_forw ) {
+	for ( pp = phead->pt_forw; pp != phead; pp = pp->pt_forw ) {
 		RT_CHECK_PT(pp);
 		rt_pr_pt_vls( &v, rtip, pp );
 	}
@@ -166,15 +166,15 @@ rt_pr_pt_vls(struct bu_vls *v, const struct rt_i *rtip, register const struct pa
 
 	bu_vls_printf(v, "(%g,%g)",
 		pp->pt_inhit->hit_dist, pp->pt_outhit->hit_dist );
-	if( pp->pt_inflip )  bu_vls_strcat( v, " Iflip" );
-	if( pp->pt_outflip )  bu_vls_strcat( v, " Oflip" );
+	if ( pp->pt_inflip )  bu_vls_strcat( v, " Iflip" );
+	if ( pp->pt_outflip )  bu_vls_strcat( v, " Oflip" );
 	bu_vls_strcat( v, "\n");
 
 	rt_pr_hit_vls( v, "  In", pp->pt_inhit );
 	rt_pr_hit_vls( v, " Out", pp->pt_outhit );
 	bu_log_indent_vls( v );
 	bu_vls_strcat( v, "  Primitives: " );
-	for( BU_PTBL_FOR( segpp, (struct seg **), &pp->pt_seglist ) )  {
+	for ( BU_PTBL_FOR( segpp, (struct seg **), &pp->pt_seglist ) )  {
 		stp = (*segpp)->seg_stp;
 		RT_CK_SOLTAB(stp);
 		bu_vls_strcat( v, stp->st_dp->d_namep );
@@ -185,13 +185,13 @@ rt_pr_pt_vls(struct bu_vls *v, const struct rt_i *rtip, register const struct pa
 	bu_log_indent_vls( v );
 	bu_vls_strcat( v, "  Untrimmed Segments spanning this interval:\n" );
 	bu_log_indent_delta( 4 );
-	for( BU_PTBL_FOR( segpp, (struct seg **), &pp->pt_seglist ) )  {
+	for ( BU_PTBL_FOR( segpp, (struct seg **), &pp->pt_seglist ) )  {
 		RT_CK_SEG(*segpp)
 		rt_pr_seg_vls( v, *segpp );
 	}
 	bu_log_indent_delta( -4 );
 
-	if( pp->pt_regionp )  {
+	if ( pp->pt_regionp )  {
 		RT_CK_REGION( pp->pt_regionp );
 		bu_log_indent_vls( v );
 		bu_vls_printf( v, "  Region: %s\n", pp->pt_regionp->reg_name );
@@ -296,7 +296,7 @@ rt_pr_hitarray_vls(struct bu_vls *v, const char *str, register const struct hit 
 	bu_log_indent_vls( v );
 	bu_vls_strcat( v, str );
 
-	for( i=0; i<count; i++, hitp++ )  {
+	for ( i=0; i<count; i++, hitp++ )  {
 		bu_vls_printf(v, "HIT%d dist=%g (surf %d)\n", i,
 			hitp->hit_dist, hitp->hit_surfno );
 	}
@@ -320,15 +320,15 @@ rt_pr_tree(register const union tree *tp, int lvl)
 	RT_CK_TREE(tp);
 
 	bu_log("%.8x ", tp);
-	for( i=lvl; i>0; i-- )
+	for ( i=lvl; i>0; i-- )
 		bu_log("  ");
 
-	if( tp == TREE_NULL )  {
+	if ( tp == TREE_NULL )  {
 		bu_log("Null???\n");
 		return;
 	}
 
-	switch( tp->tr_op )  {
+	switch ( tp->tr_op )  {
 
 	case OP_NOP:
 		bu_log("NOP\n");
@@ -372,7 +372,7 @@ rt_pr_tree(register const union tree *tp, int lvl)
 		break;
 	}
 
-	switch( tp->tr_op )  {
+	switch ( tp->tr_op )  {
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
@@ -403,12 +403,12 @@ rt_pr_tree_vls(struct bu_vls *vls, register const union tree *tp)
 {
 	char		*str;
 
-	if( tp == TREE_NULL )  {
+	if ( tp == TREE_NULL )  {
 		bu_vls_strcat( vls, "??NULL_tree??" );
 		return;
 	}
 
-	switch( tp->tr_op )  {
+	switch ( tp->tr_op )  {
 
 	case OP_NOP:
 		bu_vls_strcat( vls, "NOP");
@@ -495,21 +495,21 @@ rt_pr_tree_vls(struct bu_vls *vls, register const union tree *tp)
 char *
 rt_pr_tree_str(const union tree *tree)
 {
-	char *left,*right;
+	char *left, *right;
 	char *return_str;
 	char op = OP_GUARD;
 	int return_length;
 
-	if( tree == NULL )
+	if ( tree == NULL )
 		return bu_strdup("NULL_ptr");
 	RT_CK_TREE(tree);
-	if( tree->tr_op == OP_UNION || tree->tr_op == OP_SUBTRACT || tree->tr_op == OP_INTERSECT )
+	if ( tree->tr_op == OP_UNION || tree->tr_op == OP_SUBTRACT || tree->tr_op == OP_INTERSECT )
 	{
-		char *blankl,*blankr;
+		char *blankl, *blankr;
 
 		left = rt_pr_tree_str( tree->tr_b.tb_left );
 		right = rt_pr_tree_str( tree->tr_b.tb_right );
-		switch( tree->tr_op )
+		switch ( tree->tr_op )
 		{
 			case OP_UNION:
 				op = 'u';
@@ -526,26 +526,26 @@ rt_pr_tree_str(const union tree *tree)
 
 		blankl = strchr( left, ' ' );
 		blankr = strchr( right, ' ' );
-		if( blankl && blankr )
+		if ( blankl && blankr )
 			snprintf( return_str, return_length, "(%s) %c (%s)", left, op, right );
-		else if( blankl && !blankr )
+		else if ( blankl && !blankr )
 			snprintf( return_str, return_length, "(%s) %c %s", left, op, right );
-		else if( !blankl && blankr )
+		else if ( !blankl && blankr )
 			snprintf( return_str, return_length, "%s %c (%s)", left, op, right );
 		else
 			snprintf( return_str, return_length, "%s %c %s", left, op, right );
 
-		if( tree->tr_b.tb_left->tr_op != OP_DB_LEAF )
+		if ( tree->tr_b.tb_left->tr_op != OP_DB_LEAF )
 			bu_free( (genptr_t)left, "rt_pr_tree_str: left string" );
-		if( tree->tr_b.tb_right->tr_op != OP_DB_LEAF )
+		if ( tree->tr_b.tb_right->tr_op != OP_DB_LEAF )
 			bu_free( (genptr_t)right, "rt_pr_tree_str: right string" );
 		return  return_str;
 	}
-	else if( tree->tr_op == OP_DB_LEAF )
-		return bu_strdup(tree->tr_l.tl_name) ;
-	else if( tree->tr_op == OP_REGION )
+	else if ( tree->tr_op == OP_DB_LEAF )
+		return bu_strdup(tree->tr_l.tl_name);
+	else if ( tree->tr_op == OP_REGION )
 		return( db_path_to_string( &tree->tr_c.tc_ctsp->cts_p ) );
-	else if( tree->tr_op == OP_SOLID )  {
+	else if ( tree->tr_op == OP_SOLID )  {
 		RT_CK_SOLTAB(tree->tr_a.tu_stp);
 		return bu_strdup(tree->tr_a.tu_stp->st_dp->d_namep);
 	}
@@ -572,8 +572,8 @@ rt_pr_tree_val(register const union tree *tp, const struct partition *partp, int
 					/* Recursion level */
 {
 
-	if( lvl == 0 )  {
-		switch( pr_name )  {
+	if ( lvl == 0 )  {
+		switch ( pr_name )  {
 		default:
 			bu_log("tree val: ");
 			break;
@@ -586,24 +586,24 @@ rt_pr_tree_val(register const union tree *tp, const struct partition *partp, int
 		}
 	}
 
-	if( tp == TREE_NULL )  {
+	if ( tp == TREE_NULL )  {
 		bu_log("Null???\n");
 		return;
 	}
 
-	switch( tp->tr_op )  {
+	switch ( tp->tr_op )  {
 	default:
 		bu_log("Unknown_op=x%x", tp->tr_op );
 		break;
 
 	case OP_SOLID:
-		switch( pr_name )  {
+		switch ( pr_name )  {
 		case 0:
 			{
 				register struct soltab *seek_stp = tp->tr_a.tu_stp;
 				register struct seg **segpp;
-				for( BU_PTBL_FOR( segpp, (struct seg **), &partp->pt_seglist ) )  {
-					if( (*segpp)->seg_stp == seek_stp )  {
+				for ( BU_PTBL_FOR( segpp, (struct seg **), &partp->pt_seglist ) )  {
+					if ( (*segpp)->seg_stp == seek_stp )  {
 						bu_log("1");
 						goto out;
 					}
@@ -661,7 +661,7 @@ rt_pr_tree_val(register const union tree *tp, const struct partition *partp, int
 	}
 
 out:
-	if( lvl == 0 )  bu_log("\n");
+	if ( lvl == 0 )  bu_log("\n");
 }
 
 /*
@@ -691,35 +691,35 @@ rt_find_fallback_angle(double *angles, const fastf_t *vec)
 	double		asinZ;
 
 	/* convert direction cosines into axis angles */
-	if( vec[X] <= -1.0 )  {
+	if ( vec[X] <= -1.0 )  {
 		angles[X] = 180.0;
-	} else if( vec[X] >= 1.0 )  {
+	} else if ( vec[X] >= 1.0 )  {
 		angles[X] = 0.0;
 	} else {
 		angles[X] = acos( vec[X] ) * bn_radtodeg;
 	}
 
-	if( vec[Y] <= -1.0 )  {
+	if ( vec[Y] <= -1.0 )  {
 		angles[Y] = 180.0;
-	} else if( vec[Y] >= 1.0 )  {
+	} else if ( vec[Y] >= 1.0 )  {
 		angles[Y] = 0.0;
 	} else {
 		angles[Y] = acos( vec[Y] ) * bn_radtodeg;
 	}
 
-	if( vec[Z] <= -1.0 )  {
+	if ( vec[Z] <= -1.0 )  {
 		angles[Z] = 180.0;
-	} else if( vec[Z] >= 1.0 )  {
+	} else if ( vec[Z] >= 1.0 )  {
 		angles[Z] = 0.0;
 	} else {
 		angles[Z] = acos( vec[Z] ) * bn_radtodeg;
 	}
 
 	/* fallback angle */
-	if( vec[Z] <= -1.0 )  {
+	if ( vec[Z] <= -1.0 )  {
 		/* 270 degrees:  3/2 pi */
 		asinZ = bn_halfpi * 3;
-	} else if( vec[Z] >= 1.0 )  {
+	} else if ( vec[Z] >= 1.0 )  {
 		/* +90 degrees: 1/2 pi */
 		asinZ = bn_halfpi;
 	} else {
@@ -732,11 +732,11 @@ rt_find_fallback_angle(double *angles, const fastf_t *vec)
 	 * with an epsilon of +/- 1.0e-17, so the tolerance below was
 	 * substituted for the original +/- 1.0e-20.
 	 */
-	if((f = cos(asinZ)) > 1.0e-16 || f < -1.0e-16 )  {
+	if ((f = cos(asinZ)) > 1.0e-16 || f < -1.0e-16 )  {
 		f = vec[X]/f;
-		if( f <= -1.0 )  {
+		if ( f <= -1.0 )  {
 			angles[3] = 180;
-		} else if( f >= 1.0 ) {
+		} else if ( f >= 1.0 ) {
 			angles[3] = 0;
 		} else {
 			angles[3] = bn_radtodeg * acos( f );
@@ -744,7 +744,7 @@ rt_find_fallback_angle(double *angles, const fastf_t *vec)
 	}  else  {
 		angles[3] = 0.0;
 	}
-	if( vec[Y] < 0 ) {
+	if ( vec[Y] < 0 ) {
 		angles[3] = 360.0 - angles[3];
 	}
 }

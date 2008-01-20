@@ -204,7 +204,7 @@ rt_rec_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	magsq_d = MAGSQ( tip->d );
 
 	/* Check for |H| > 0, |A| > 0, |B| > 0 */
-	if( NEAR_ZERO(mag_h, RT_LEN_TOL) || NEAR_ZERO(mag_a, RT_LEN_TOL)
+	if ( NEAR_ZERO(mag_h, RT_LEN_TOL) || NEAR_ZERO(mag_a, RT_LEN_TOL)
 	 || NEAR_ZERO(mag_b, RT_LEN_TOL) )  {
 		return(1);		/* BAD, too small */
 	}
@@ -212,26 +212,26 @@ rt_rec_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	/* Make sure that A == C, B == D */
 	VSUB2( work, tip->a, tip->c );
 	f = MAGNITUDE( work );
-	if( ! NEAR_ZERO(f, RT_LEN_TOL) )  {
+	if ( ! NEAR_ZERO(f, RT_LEN_TOL) )  {
 		return(1);		/* BAD, !cylinder */
 	}
 	VSUB2( work, tip->b, tip->d );
 	f = MAGNITUDE( work );
-	if( ! NEAR_ZERO(f, RT_LEN_TOL) )  {
+	if ( ! NEAR_ZERO(f, RT_LEN_TOL) )  {
 		return(1);		/* BAD, !cylinder */
 	}
 
 	/* Check for A.B == 0, H.A == 0 and H.B == 0 */
 	f = VDOT( tip->a, tip->b ) / (mag_a * mag_b);
-	if( ! NEAR_ZERO(f, RT_DOT_TOL) )  {
+	if ( ! NEAR_ZERO(f, RT_DOT_TOL) )  {
 		return(1);		/* BAD */
 	}
 	f = VDOT( tip->h, tip->a ) / (mag_h * mag_a);
-	if( ! NEAR_ZERO(f, RT_DOT_TOL) )  {
+	if ( ! NEAR_ZERO(f, RT_DOT_TOL) )  {
 		return(1);		/* BAD */
 	}
 	f = VDOT( tip->h, tip->b ) / (mag_h * mag_b);
-	if( ! NEAR_ZERO(f, RT_DOT_TOL) )  {
+	if ( ! NEAR_ZERO(f, RT_DOT_TOL) )  {
 		return(1);		/* BAD */
 	}
 
@@ -286,7 +286,7 @@ rt_rec_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 		MAT3X3VEC( w1, R, P );		/* map plane into local coord syst */
 		/* 1st end ellipse (no Z part) */
 		tmp = magsq_a * w1[X] * w1[X] + magsq_b * w1[Y] * w1[Y];
-		if( tmp > SMALL )
+		if ( tmp > SMALL )
 			f = sqrt(tmp);		/* XY part */
 		else
 			f = 0;
@@ -295,13 +295,13 @@ rt_rec_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 		/* 2nd end ellipse */
 		z = w1[Z] * mag_h;		/* Z part */
 		tmp = magsq_c * w1[X] * w1[X] + magsq_d * w1[Y] * w1[Y];
-		if( tmp > SMALL )
+		if ( tmp > SMALL )
 			f = sqrt(tmp);		/* XY part */
 		else
 			f = 0;
-		if( rec->rec_V[X] - f + z < stp->st_min[X] )
+		if ( rec->rec_V[X] - f + z < stp->st_min[X] )
 			stp->st_min[X] = rec->rec_V[X] - f + z;
-		if( rec->rec_V[X] + f + z > stp->st_max[X] )
+		if ( rec->rec_V[X] + f + z > stp->st_max[X] )
 			stp->st_max[X] = rec->rec_V[X] + f + z;
 
 		/* Y */
@@ -309,7 +309,7 @@ rt_rec_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 		MAT3X3VEC( w1, R, P );		/* map plane into local coord syst */
 		/* 1st end ellipse (no Z part) */
 		tmp = magsq_a * w1[X] * w1[X] + magsq_b * w1[Y] * w1[Y];
-		if( tmp > SMALL )
+		if ( tmp > SMALL )
 			f = sqrt(tmp);		/* XY part */
 		else
 			f = 0;
@@ -318,13 +318,13 @@ rt_rec_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 		/* 2nd end ellipse */
 		z = w1[Z] * mag_h;		/* Z part */
 		tmp = magsq_c * w1[X] * w1[X] + magsq_d * w1[Y] * w1[Y];
-		if( tmp > SMALL )
+		if ( tmp > SMALL )
 			f = sqrt(tmp);		/* XY part */
 		else
 			f = 0;
-		if( rec->rec_V[Y] - f + z < stp->st_min[Y] )
+		if ( rec->rec_V[Y] - f + z < stp->st_min[Y] )
 			stp->st_min[Y] = rec->rec_V[Y] - f + z;
-		if( rec->rec_V[Y] + f + z > stp->st_max[Y] )
+		if ( rec->rec_V[Y] + f + z > stp->st_max[Y] )
 			stp->st_max[Y] = rec->rec_V[Y] + f + z;
 
 		/* Z */
@@ -332,7 +332,7 @@ rt_rec_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 		MAT3X3VEC( w1, R, P );		/* map plane into local coord syst */
 		/* 1st end ellipse (no Z part) */
 		tmp = magsq_a * w1[X] * w1[X] + magsq_b * w1[Y] * w1[Y];
-		if( tmp > SMALL )
+		if ( tmp > SMALL )
 			f = sqrt(tmp);		/* XY part */
 		else
 			f = 0;
@@ -341,13 +341,13 @@ rt_rec_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 		/* 2nd end ellipse */
 		z = w1[Z] * mag_h;		/* Z part */
 		tmp = magsq_c * w1[X] * w1[X] + magsq_d * w1[Y] * w1[Y];
-		if( tmp > SMALL )
+		if ( tmp > SMALL )
 			f = sqrt(tmp);		/* XY part */
 		else
 			f = 0;
-		if( rec->rec_V[Z] - f + z < stp->st_min[Z] )
+		if ( rec->rec_V[Z] - f + z < stp->st_min[Z] )
 			stp->st_min[Z] = rec->rec_V[Z] - f + z;
-		if( rec->rec_V[Z] + f + z > stp->st_max[Z] )
+		if ( rec->rec_V[Z] + f + z > stp->st_max[Z] )
 			stp->st_max[Z] = rec->rec_V[Z] + f + z;
 
 		VSET( stp->st_center,
@@ -358,9 +358,9 @@ rt_rec_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 		dx = (stp->st_max[X] - stp->st_min[X])/2;
 		f = dx;
 		dy = (stp->st_max[Y] - stp->st_min[Y])/2;
-		if( dy > f )  f = dy;
+		if ( dy > f )  f = dy;
 		dz = (stp->st_max[Z] - stp->st_min[Z])/2;
-		if( dz > f )  f = dz;
+		if ( dz > f )  f = dz;
 		stp->st_aradius = f;
 		stp->st_bradius = sqrt(dx*dx + dy*dy + dz*dz);
 	}
@@ -419,7 +419,7 @@ rt_rec_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	VSUB2( xlated, rp->r_pt, rec->rec_V );
 	MAT4X3VEC( pprime, rec->rec_SoR, xlated );
 
-	if( NEAR_ZERO(dprime[X], SMALL) && NEAR_ZERO(dprime[Y], SMALL) )
+	if ( NEAR_ZERO(dprime[X], SMALL) && NEAR_ZERO(dprime[Y], SMALL) )
 		goto check_plates;
 
 	/* Find roots of the equation, using forumla for quadratic w/ a=1 */
@@ -430,7 +430,7 @@ rt_rec_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
 		b = 2 * ( dprime[X]*pprime[X] + dprime[Y]*pprime[Y] ) *
 		   (dx2dy2 = 1 / (dprime[X]*dprime[X] + dprime[Y]*dprime[Y]));
-		if( (root = b*b - 4 * dx2dy2 *
+		if ( (root = b*b - 4 * dx2dy2 *
 		    (pprime[X]*pprime[X] + pprime[Y]*pprime[Y] - 1)) <= 0 )
 			goto check_plates;
 		root = sqrt(root);
@@ -444,7 +444,7 @@ rt_rec_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	 *  See if they fall in range.
 	 */
 	VJOIN1( hitp->hit_vpriv, pprime, k1, dprime );		/* hit' */
-	if( hitp->hit_vpriv[Z] >= 0.0 && hitp->hit_vpriv[Z] <= 1.0 ) {
+	if ( hitp->hit_vpriv[Z] >= 0.0 && hitp->hit_vpriv[Z] <= 1.0 ) {
 		hitp->hit_magic = RT_HIT_MAGIC;
 		hitp->hit_dist = k1;
 		hitp->hit_surfno = REC_NORM_BODY;	/* compute N */
@@ -452,7 +452,7 @@ rt_rec_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	}
 
 	VJOIN1( hitp->hit_vpriv, pprime, k2, dprime );		/* hit' */
-	if( hitp->hit_vpriv[Z] >= 0.0 && hitp->hit_vpriv[Z] <= 1.0 )  {
+	if ( hitp->hit_vpriv[Z] >= 0.0 && hitp->hit_vpriv[Z] <= 1.0 )  {
 		hitp->hit_magic = RT_HIT_MAGIC;
 		hitp->hit_dist = k2;
 		hitp->hit_surfno = REC_NORM_BODY;	/* compute N */
@@ -463,13 +463,13 @@ rt_rec_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	 * Check for hitting the end plates.
 	 */
 check_plates:
-	if( nhits < 2  &&  !NEAR_ZERO(dprime[Z], SMALL) )  {
+	if ( nhits < 2  &&  !NEAR_ZERO(dprime[Z], SMALL) )  {
 		/* 0 or 1 hits so far, this is worthwhile */
 		k1 = -pprime[Z] / dprime[Z];		/* bottom plate */
 		k2 = (1.0 - pprime[Z]) / dprime[Z];	/* top plate */
 
 		VJOIN1( hitp->hit_vpriv, pprime, k1, dprime );	/* hit' */
-		if( hitp->hit_vpriv[X] * hitp->hit_vpriv[X] +
+		if ( hitp->hit_vpriv[X] * hitp->hit_vpriv[X] +
 		    hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y] <= 1.0 )  {
 			hitp->hit_magic = RT_HIT_MAGIC;
 			hitp->hit_dist = k1;
@@ -478,7 +478,7 @@ check_plates:
 		}
 
 		VJOIN1( hitp->hit_vpriv, pprime, k2, dprime );	/* hit' */
-		if( hitp->hit_vpriv[X] * hitp->hit_vpriv[X] +
+		if ( hitp->hit_vpriv[X] * hitp->hit_vpriv[X] +
 		    hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y] <= 1.0 )  {
 			hitp->hit_magic = RT_HIT_MAGIC;
 			hitp->hit_dist = k2;
@@ -486,10 +486,10 @@ check_plates:
 			hitp++; nhits++;
 		}
 	}
-	if( nhits == 0 )  return 0;	/* MISS */
-	if( nhits == 2 )  {
+	if ( nhits == 0 )  return 0;	/* MISS */
+	if ( nhits == 2 )  {
 hit:
-		if( hits[0].hit_dist < hits[1].hit_dist )  {
+		if ( hits[0].hit_dist < hits[1].hit_dist )  {
 			/* entry is [0], exit is [1] */
 			register struct seg *segp;
 
@@ -510,8 +510,8 @@ hit:
 		}
 		return 2;			/* HIT */
 	}
-	if( nhits == 1 )  {
-		if( hits[0].hit_surfno != REC_NORM_BODY )
+	if ( nhits == 1 )  {
+		if ( hits[0].hit_surfno != REC_NORM_BODY )
 			bu_log("rt_rec_shot(%s): 1 intersection with end plate?\n", stp->st_name );
 		/*
 		 *  Ray is tangent to body of cylinder,
@@ -523,28 +523,28 @@ hit:
 		nhits++;
 		goto hit;
 	}
-	if( nhits == 3 )  {
+	if ( nhits == 3 )  {
 		fastf_t tol_dist = ap->a_rt_i->rti_tol.dist;
 		/*
 		 *  Check for case where two of the three hits
 		 *  have the same distance, e.g. hitting at the rim.
 		 */
 		k1 = hits[0].hit_dist - hits[1].hit_dist;
-		if( NEAR_ZERO( k1, tol_dist ) )  {
-			if(RT_G_DEBUG&DEBUG_ARB8)bu_log("rt_rec_shot(%s): 3 hits, collapsing 0&1\n", stp->st_name);
+		if ( NEAR_ZERO( k1, tol_dist ) )  {
+			if (RT_G_DEBUG&DEBUG_ARB8)bu_log("rt_rec_shot(%s): 3 hits, collapsing 0&1\n", stp->st_name);
 			hits[1] = hits[2];	/* struct copy */
 			nhits--;
 			goto hit;
 		}
 		k1 = hits[1].hit_dist - hits[2].hit_dist;
-		if( NEAR_ZERO( k1, tol_dist ) )  {
-			if(RT_G_DEBUG&DEBUG_ARB8)bu_log("rt_rec_shot(%s): 3 hits, collapsing 1&2\n", stp->st_name);
+		if ( NEAR_ZERO( k1, tol_dist ) )  {
+			if (RT_G_DEBUG&DEBUG_ARB8)bu_log("rt_rec_shot(%s): 3 hits, collapsing 1&2\n", stp->st_name);
 			nhits--;
 			goto hit;
 		}
 		k1 = hits[0].hit_dist - hits[2].hit_dist;
-		if( NEAR_ZERO( k1, tol_dist ) )  {
-			if(RT_G_DEBUG&DEBUG_ARB8)bu_log("rt_rec_shot(%s): 3 hits, collapsing 1&2\n", stp->st_name);
+		if ( NEAR_ZERO( k1, tol_dist ) )  {
+			if (RT_G_DEBUG&DEBUG_ARB8)bu_log("rt_rec_shot(%s): 3 hits, collapsing 1&2\n", stp->st_name);
 			nhits--;
 			goto hit;
 		}
@@ -588,7 +588,7 @@ rt_rec_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	fastf_t	dx2dy2;
 
 	/* for each ray/right_eliptical_cylinder pair */
-	for(i = 0; i < n; i++){
+	for (i = 0; i < n; i++){
 		if (stp[i] == 0) continue; /* stp[i] == 0 signals skip ray */
 
 		rec = (struct rec_specific *)stp[i]->st_specific;
@@ -599,13 +599,13 @@ rt_rec_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 		VSUB2( xlated, rp[i]->r_pt, rec->rec_V );
 		MAT4X3VEC( pprime, rec->rec_SoR, xlated );
 
-		if( NEAR_ZERO(dprime[X], SMALL) && NEAR_ZERO(dprime[Y], SMALL) )
+		if ( NEAR_ZERO(dprime[X], SMALL) && NEAR_ZERO(dprime[Y], SMALL) )
 			goto check_plates;
 
 		/* Find roots of eqn, using forumla for quadratic w/ a=1 */
 		b = 2 * ( dprime[X]*pprime[X] + dprime[Y]*pprime[Y] ) *
 		   (dx2dy2 = 1 / (dprime[X]*dprime[X] + dprime[Y]*dprime[Y]));
-		if( (root = b*b - 4 * dx2dy2 *
+		if ( (root = b*b - 4 * dx2dy2 *
 		    (pprime[X]*pprime[X] + pprime[Y]*pprime[Y] - 1)) <= 0 )
 			goto check_plates;
 
@@ -618,14 +618,14 @@ rt_rec_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 		 *  See if they fall in range.
 		 */
 		VJOIN1( hitp->hit_vpriv, pprime, k1, dprime );	/* hit' */
-		if( hitp->hit_vpriv[Z] >= 0.0 && hitp->hit_vpriv[Z] <= 1.0 ) {
+		if ( hitp->hit_vpriv[Z] >= 0.0 && hitp->hit_vpriv[Z] <= 1.0 ) {
 			hitp->hit_dist = k1;
 			hitp->hit_surfno = REC_NORM_BODY;	/* compute N */
 			hitp++;
 		}
 
 		VJOIN1( hitp->hit_vpriv, pprime, k2, dprime );		/* hit' */
-		if( hitp->hit_vpriv[Z] >= 0.0 && hitp->hit_vpriv[Z] <= 1.0 )  {
+		if ( hitp->hit_vpriv[Z] >= 0.0 && hitp->hit_vpriv[Z] <= 1.0 )  {
 			hitp->hit_dist = k2;
 			hitp->hit_surfno = REC_NORM_BODY;	/* compute N */
 			hitp++;
@@ -635,13 +635,13 @@ rt_rec_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 		 * Check for hitting the end plates.
 		 */
 check_plates:
-		if( hitp < &hits[2]  &&  !NEAR_ZERO(dprime[Z], SMALL) )  {
+		if ( hitp < &hits[2]  &&  !NEAR_ZERO(dprime[Z], SMALL) )  {
 			/* 0 or 1 hits so far, this is worthwhile */
 			k1 = -pprime[Z] / dprime[Z];	/* bottom plate */
 			k2 = (1.0 - pprime[Z]) / dprime[Z];	/* top plate */
 
 			VJOIN1( hitp->hit_vpriv, pprime, k1, dprime );/* hit' */
-			if( hitp->hit_vpriv[X] * hitp->hit_vpriv[X] +
+			if ( hitp->hit_vpriv[X] * hitp->hit_vpriv[X] +
 			    hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y] <= 1.0 )  {
 				hitp->hit_dist = k1;
 				hitp->hit_surfno = REC_NORM_BOT;	/* -H */
@@ -649,7 +649,7 @@ check_plates:
 			}
 
 			VJOIN1( hitp->hit_vpriv, pprime, k2, dprime );/* hit' */
-			if( hitp->hit_vpriv[X] * hitp->hit_vpriv[X] +
+			if ( hitp->hit_vpriv[X] * hitp->hit_vpriv[X] +
 			    hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y] <= 1.0 )  {
 				hitp->hit_dist = k2;
 				hitp->hit_surfno = REC_NORM_TOP;	/* +H */
@@ -657,12 +657,12 @@ check_plates:
 			}
 		}
 
-		if( hitp != &hits[2] ) {
+		if ( hitp != &hits[2] ) {
 			SEG_MISS(segp[i]);		/* MISS */
 		} else {
 			segp[i].seg_stp = stp[i];
 
-			if( hits[0].hit_dist < hits[1].hit_dist )  {
+			if ( hits[0].hit_dist < hits[1].hit_dist )  {
 				/* entry is [0], exit is [1] */
 				VMOVE(segp[i].seg_in.hit_vpriv, hits[0].hit_vpriv);
 				segp[i].seg_in.hit_dist = hits[0].hit_dist;
@@ -696,7 +696,7 @@ rt_rec_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 		(struct rec_specific *)stp->st_specific;
 
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
-	switch( hitp->hit_surfno )  {
+	switch ( hitp->hit_surfno )  {
 	case REC_NORM_BODY:
 		/* compute it */
 		hitp->hit_vpriv[Z] = 0.0;
@@ -732,7 +732,7 @@ rt_rec_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 	vect_t	uu;
 	fastf_t	ax, bx, q;
 
-	switch( hitp->hit_surfno )  {
+	switch ( hitp->hit_surfno )  {
 	case REC_NORM_BODY:
 		/* This could almost certainly be simpler if we used
 		 * inverse A rather than inverse A squared, right Ed?
@@ -782,13 +782,13 @@ rt_rec_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 	VSUB2( work, hitp->hit_point, rec->rec_V );
 	MAT4X3VEC( pprime, rec->rec_SoR, work );
 
-	switch( hitp->hit_surfno )  {
+	switch ( hitp->hit_surfno )  {
 	case REC_NORM_BODY:
 		/* Skin.  x, y coordinates define rotation.  radius = 1 */
 		ratio = pprime[Y];
-		if( ratio > 1.0 )
+		if ( ratio > 1.0 )
 			ratio = 1.0;
-		if( ratio < -1.0 )
+		if ( ratio < -1.0 )
 			ratio = -1.0;
 		uvp->uv_u = acos(ratio) * bn_inv2pi;
 		uvp->uv_v = pprime[Z];		/* height */
@@ -797,9 +797,9 @@ rt_rec_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 		/* top plate */
 		len = sqrt(pprime[X]*pprime[X]+pprime[Y]*pprime[Y]);
 		ratio = pprime[Y]/len;
-		if( ratio > 1.0 )
+		if ( ratio > 1.0 )
 			ratio = 1.0;
-		if( ratio < -1.0 )
+		if ( ratio < -1.0 )
 			ratio = -1.0;
 		uvp->uv_u = acos(ratio) * bn_inv2pi;
 		uvp->uv_v = len;		/* rim v = 1 */
@@ -808,22 +808,22 @@ rt_rec_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 		/* bottom plate */
 		len = sqrt(pprime[X]*pprime[X]+pprime[Y]*pprime[Y]);
 		ratio = pprime[Y]/len;
-		if( ratio > 1.0 )
+		if ( ratio > 1.0 )
 			ratio = 1.0;
-		if( ratio < -1.0 )
+		if ( ratio < -1.0 )
 			ratio = -1.0;
 		uvp->uv_u = acos(ratio) * bn_inv2pi;
 		uvp->uv_v = 1 - len;	/* rim v = 0 */
 		break;
 	}
 	/* Handle other half of acos() domain */
-	if( pprime[X] < 0 )
+	if ( pprime[X] < 0 )
 		uvp->uv_u = 1.0 - uvp->uv_u;
 
-	if( uvp->uv_u < 0 )  uvp->uv_u = 0;
-	else if( uvp->uv_u > 1 )  uvp->uv_u = 1;
-	if( uvp->uv_v < 0 )  uvp->uv_v = 0;
-	else if( uvp->uv_v > 1 )  uvp->uv_v = 1;
+	if ( uvp->uv_u < 0 )  uvp->uv_u = 0;
+	else if ( uvp->uv_u > 1 )  uvp->uv_u = 1;
+	if ( uvp->uv_v < 0 )  uvp->uv_v = 0;
+	else if ( uvp->uv_v > 1 )  uvp->uv_v = 1;
 
 	/* XXX uv_du should be relative to rotation, uv_dv relative to height */
 	uvp->uv_du = uvp->uv_dv = 0;

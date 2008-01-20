@@ -164,8 +164,8 @@ int get_args( int argc, register char **argv )
 #define GETOPT_STR	\
 	".:,:@:a:b:c:d:e:f:g:h:ij:l:n:o:p:q:rs:tv:w:x:A:BC:D:E:F:G:H:IJ:K:MN:O:P:Q:RST:U:V:WX:!:+:"
 
-	while( (c=bu_getopt( argc, argv, GETOPT_STR )) != EOF )  {
-		switch( c )  {
+	while ( (c=bu_getopt( argc, argv, GETOPT_STR )) != EOF )  {
+		switch ( c )  {
 		case 'q':
 			i = atoi(bu_optarg);
 			if (i <= 0) {
@@ -189,20 +189,20 @@ int get_args( int argc, register char **argv )
 				register char	*cp = bu_optarg;
 
 				sub_xmin = atoi(cp);
-				while( (*cp >= '0' && *cp <= '9') )  cp++;
-				while( *cp && (*cp < '0' || *cp > '9') ) cp++;
+				while ( (*cp >= '0' && *cp <= '9') )  cp++;
+				while ( *cp && (*cp < '0' || *cp > '9') ) cp++;
 				sub_ymin = atoi(cp);
-				while( (*cp >= '0' && *cp <= '9') )  cp++;
-				while( *cp && (*cp < '0' || *cp > '9') ) cp++;
+				while ( (*cp >= '0' && *cp <= '9') )  cp++;
+				while ( *cp && (*cp < '0' || *cp > '9') ) cp++;
 				sub_xmax = atoi(cp);
-				while( (*cp >= '0' && *cp <= '9') )  cp++;
-				while( *cp && (*cp < '0' || *cp > '9') ) cp++;
+				while ( (*cp >= '0' && *cp <= '9') )  cp++;
+				while ( *cp && (*cp < '0' || *cp > '9') ) cp++;
 				sub_ymax = atoi(cp);
 
 				bu_log("Sub-rectangle: (%d,%d) (%d,%d)\n",
 					sub_xmin, sub_ymin,
 					sub_xmax, sub_ymax );
-				if( sub_xmin >= 0 && sub_xmin < sub_xmax &&
+				if ( sub_xmin >= 0 && sub_xmin < sub_xmax &&
 				    sub_ymin >= 0 && sub_ymin < sub_ymax )  {
 					sub_grid_mode = 1;
 				} else {
@@ -230,16 +230,16 @@ int get_args( int argc, register char **argv )
 				register char	*cp = bu_optarg;
 
 				r = atoi(cp);
-				while( (*cp >= '0' && *cp <= '9') )  cp++;
-				while( *cp && (*cp < '0' || *cp > '9') ) cp++;
+				while ( (*cp >= '0' && *cp <= '9') )  cp++;
+				while ( *cp && (*cp < '0' || *cp > '9') ) cp++;
 				g = atoi(cp);
-				while( (*cp >= '0' && *cp <= '9') )  cp++;
-				while( *cp && (*cp < '0' || *cp > '9') ) cp++;
+				while ( (*cp >= '0' && *cp <= '9') )  cp++;
+				while ( *cp && (*cp < '0' || *cp > '9') ) cp++;
 				b = atoi(cp);
 
-				if( r < 0 || r > 255 )  r = 255;
-				if( g < 0 || g > 255 )  g = 255;
-				if( b < 0 || b > 255 )  b = 255;
+				if ( r < 0 || r > 255 )  r = 255;
+				if ( g < 0 || g > 255 )  g = 255;
+				if ( b < 0 || b > 255 )  b = 255;
 
 #if defined(_WIN32)
 				if (r == 0)
@@ -267,15 +267,15 @@ int get_args( int argc, register char **argv )
 				double		f;
 				char		*cp;
 				f = 0;
-				if( sscanf( bu_optarg, "%lf", &f ) == 1 )  {
-					if( f > 0 )
+				if ( sscanf( bu_optarg, "%lf", &f ) == 1 )  {
+					if ( f > 0 )
 						rt_dist_tol = f;
 				}
 				f = 0;
-				if( (cp = strchr(bu_optarg, '/')) ||
+				if ( (cp = strchr(bu_optarg, '/')) ||
 				    (cp = strchr(bu_optarg, ',')) )  {
-					if( sscanf( cp+1, "%lf", &f ) == 1 )  {
-						if( f > 0 && f < 1 )
+					if ( sscanf( cp+1, "%lf", &f ) == 1 )  {
+						if ( f > 0 && f < 1 )
 							rt_perp_tol = f;
 					}
 				}
@@ -299,7 +299,7 @@ int get_args( int argc, register char **argv )
 			break;
 		case 'H':
 			hypersample = atoi( bu_optarg );
-			if( hypersample > 0 )
+			if ( hypersample > 0 )
 				jitter = 1;
 			break;
 		case 'F':
@@ -334,14 +334,14 @@ int get_args( int argc, register char **argv )
 		case 's':
 			/* Square size */
 			i = atoi( bu_optarg );
-			if( i < 2 || i > MAX_WIDTH )
+			if ( i < 2 || i > MAX_WIDTH )
 				fprintf(stderr, "squaresize=%d out of range\n", i);
 			else
 				width = height = i;
 			break;
 		case 'n':
 			i = atoi( bu_optarg );
-			if( i < 2 || i > MAX_WIDTH )
+			if ( i < 2 || i > MAX_WIDTH )
 				fprintf(stderr, "height=%d out of range\n", i);
 			else
 				height = i;
@@ -352,7 +352,7 @@ int get_args( int argc, register char **argv )
 			break;
 		case 'w':
 			i = atoi( bu_optarg );
-			if( i < 2 || i > MAX_WIDTH )
+			if ( i < 2 || i > MAX_WIDTH )
 				fprintf(stderr, "width=%d out of range\n", i);
 			else
 				width = i;
@@ -422,7 +422,7 @@ int get_args( int argc, register char **argv )
 			break;
 		case 'p':
 			rt_perspective = atof( bu_optarg );
-			if( rt_perspective < 0 || rt_perspective > 179 ) {
+			if ( rt_perspective < 0 || rt_perspective > 179 ) {
 				fprintf(stderr, "persp=%g out of range\n", rt_perspective);
 				rt_perspective = 0;
 			}
@@ -458,7 +458,7 @@ int get_args( int argc, register char **argv )
 					    npsw = avail_cpus;
 					}
 				}
-				if( npsw == 0 || npsw < -MAX_PSW || npsw > MAX_PSW )  {
+				if ( npsw == 0 || npsw < -MAX_PSW || npsw > MAX_PSW )  {
 				    fprintf(stderr, "Numer of requested cpus (%d) is out of range 1..%d", npsw, MAX_PSW);
 
 				    if ((bu_debug & BU_DEBUG_PARALLEL) ||
@@ -514,15 +514,15 @@ int get_args( int argc, register char **argv )
 				register char *cp = bu_optarg;
 
 				xx = atof(cp);
-				while( (*cp >= '0' && *cp <= '9')
+				while ( (*cp >= '0' && *cp <= '9')
 					|| *cp == '.' )  cp++;
-				while( *cp && (*cp < '0' || *cp > '9') ) cp++;
+				while ( *cp && (*cp < '0' || *cp > '9') ) cp++;
 				yy = atof(cp);
-				if( yy == 0 )
+				if ( yy == 0 )
 					aspect = xx;
 				else
 					aspect = xx/yy;
-				if( aspect <= 0.0 ) {
+				if ( aspect <= 0.0 ) {
 					fprintf(stderr, "Bogus aspect %g, using 1.0\n", aspect);
 					aspect = 1.0;
 				}
@@ -559,7 +559,7 @@ int get_args( int argc, register char **argv )
 	}
 
 	/* sanity checks for sane values */
-	if( aspect <= 0.0 ) {
+	if ( aspect <= 0.0 ) {
 	    aspect = 1.0;
 	}
 

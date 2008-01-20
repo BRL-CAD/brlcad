@@ -135,11 +135,11 @@ main(int argc, char **argv)
 
 	/* Make a piece of pipe */
 	BU_LIST_INIT( &head );
-	for( i=0; i<pipe1_npts ; i++ )  {
+	for ( i=0; i<pipe1_npts; i++ )  {
 		BU_LIST_INSERT( &head, &pipe1[i].l );
 	}
 	pr_pipe( "pipe1", (struct wdb_pipept *)&head );
-	if( (i = mk_pipe( outfp, "pipe1", &head )) < 0 )
+	if ( (i = mk_pipe( outfp, "pipe1", &head )) < 0 )
 		fprintf(stderr, "mk_pipe(%s) returns %d\n", "pipe1", i);
 
 	do_bending( outfp, "pipe2", pipe2, pipe2_npts, 0.1, 0.05 );
@@ -154,13 +154,13 @@ do_bending(struct rt_wdb *fp, char *name, point_t (*pts), int npts, double bend,
 
 	mk_pipe_init( &head );
 
-	for( i=0; i < npts; i++ )  {
+	for ( i=0; i < npts; i++ )  {
 		mk_add_pipe_pt( &head, pts[i], od, 0.0, bend );
 	}
 
 	pr_pipe( name, (struct wdb_pipept *)&head );
 
-	if( ( i = mk_pipe( fp, name, &head ) ) < 0 )
+	if ( ( i = mk_pipe( fp, name, &head ) ) < 0 )
 		fprintf(stderr, "mk_pipe(%s) error %d\n", name, i );
 
 	/* free the storage */
@@ -174,7 +174,7 @@ pr_pipe(const char *name, struct wdb_pipept *head)
 	register struct wdb_pipept	*psp;
 
 	fprintf(stderr, "\n--- %s:\n", name);
-	for( BU_LIST_FOR( psp, wdb_pipept, &head->l ) )
+	for ( BU_LIST_FOR( psp, wdb_pipept, &head->l ) )
 	{
 		fprintf(stderr, "id=%g od=%g, coord=(%g,%g,%g), bend radius=%g\n",
 			psp->pp_id, psp->pp_od,

@@ -102,7 +102,7 @@ int main(int argc, char **argv)
     /* First we need to build a directory (or table of contents) for
      * the objects in the database file.  That is the job of rt_dirbuild()
      */
-    if( (rtip=rt_dirbuild(argv[1], (char *)NULL, 0)) == RTI_NULL ) {
+    if ( (rtip=rt_dirbuild(argv[1], (char *)NULL, 0)) == RTI_NULL ) {
 	fprintf(stderr, "rt_dirbuild failure\n");
 	return 2;
     }
@@ -116,7 +116,7 @@ int main(int argc, char **argv)
     /* Add objects to the "active set".  These are the objects we are
      * interested in intersecting our ray with.
      */
-    if( rt_gettrees_and_attrs( rtip, (const char **)NULL,
+    if ( rt_gettrees_and_attrs( rtip, (const char **)NULL,
 			       argc, (const char **)argv, 1 ) ) {
 	fprintf(stderr, "rt_gettrees FAILED\n");
 	return 1;
@@ -157,7 +157,7 @@ int hit(struct application *ap,		/* application struct from main() */
 
     fprintf(stderr, "hit\n");
 
-    for (pp=PartHeadp->pt_forw ; pp != PartHeadp ; pp = pp->pt_forw ) {
+    for (pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw ) {
 
 	/* construct the actual hit-point from the ray and the distance
 	 * to the intersection point

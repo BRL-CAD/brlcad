@@ -56,7 +56,7 @@ port_setlinebuf(FILE *fp)
 WARNING: port_setlinebuf is deprecated and will be removed in a\n\
 future release of BRL-CAD.  Use bu_setlinebuf instead.\n");
     bu_setlinebuf(fp);
-    return ;
+    return;
 }
 
 void

@@ -533,7 +533,7 @@ prj_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
 	prj_sp->prj_images.i_binunifp = GENPTR_NULL;
 	prj_sp->prj_images.i_img = GENPTR_NULL;
 
-	if(bu_struct_parse( &parameter_data, img_parse_tab,
+	if (bu_struct_parse( &parameter_data, img_parse_tab,
 			    (char *)&prj_sp->prj_images) < 0) {
 	  bu_log("ERROR: Unable to properly parse projection shader parameters\n");
 	  return -1;
@@ -653,7 +653,7 @@ project_antialiased(point_t sh_color,
 	struct pixel_ext	pe;
 
 	/* project hit plane corner points into image space */
-	for (i=0 ; i < CORNER_PTS ; i++) {
+	for (i=0; i < CORNER_PTS; i++) {
 		MAT4X3PNT(sh_pts[i], img_sp->i_sh_to_img,
 			pe.corner[i].r_pt);
 		/* compute image coordinates */
@@ -783,7 +783,7 @@ prj_render(struct application *ap, struct partition *pp, struct shadework *swp, 
 		 */
 
 		/* compute region coordinates for pixel extent */
-		for ( i=0 ; i < CORNER_PTS ; i++) {
+		for ( i=0; i < CORNER_PTS; i++) {
 			MAT4X3PNT(r_pe.corner[i].r_pt,
 				prj_sp->prj_m_to_sh,
 				ap->a_pixelext->corner[i].r_pt);
@@ -797,7 +797,7 @@ prj_render(struct application *ap, struct partition *pp, struct shadework *swp, 
 		r_N[H] = VDOT(r_N, r_pt);
 
 		/* project corner points into plane of hit point */
-		for (i=0 ; i < CORNER_PTS ; i++) {
+		for (i=0; i < CORNER_PTS; i++) {
 			dist = 0.0;
 			status = bn_isect_line3_plane(
 				&dist,

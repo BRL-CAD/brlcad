@@ -91,7 +91,7 @@ get_args(int argc, register char **argv)
 	register int c;
 
 	while ( (c = bu_getopt( argc, argv, "hs:w:n:S:W:N:o:f:p:rzv" )) != EOF )  {
-		switch( c )  {
+		switch ( c )  {
 		case 'h':
 			/* high-res */
 			screen_height = screen_width = 1024;
@@ -123,7 +123,7 @@ get_args(int argc, register char **argv)
 			break;
 		case 'p':
 			passes = atoi(bu_optarg);
-			if(passes<1)  passes=1;
+			if (passes<1)  passes=1;
 			break;
 		case 'r':
 			rocking = 1;
@@ -139,7 +139,7 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( bu_optind >= argc )  {
+	if ( bu_optind >= argc )  {
 		fprintf(stderr, "pixflip-fb: basename or filename(s) missing\n");
 		return(0);	/* Bad */
 	}
@@ -162,24 +162,24 @@ main(int argc, char **argv)
 	FD_ZERO(&readfds);
 	FD_SET(fileno(stdin), &readfds);
 
-	if( !get_args( argc, argv ) )  {
+	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
 		bu_exit( 1, NULL);
 	}
 
-	if( bu_optind+1 == argc )  {
+	if ( bu_optind+1 == argc )  {
 		input_basename = argv[bu_optind];
 		islist = 0;
 	} else {
 		islist = 1;
 	}
 
-	if( file_width < 1 ) {
+	if ( file_width < 1 ) {
 		fprintf(stderr, "pixflip-fb: width of %d out of range\n", file_width);
 		bu_exit(12, NULL);
 	}
 
-	if( (fbp = fb_open( NULL, screen_width, screen_height )) == FBIO_NULL )  {
+	if ( (fbp = fb_open( NULL, screen_width, screen_height )) == FBIO_NULL )  {
 		fprintf(stderr, "pixflip-fb: fb_open failed\n");
 		bu_exit(12, NULL);
 	}
@@ -196,7 +196,7 @@ main(int argc, char **argv)
 			screen_height/file_height);
 	}
 
-	if( fps <= 1 )  {
+	if ( fps <= 1 )  {
 		tv.tv_sec = fps ? 1L : 4L;
 		tv.tv_usec = 0L;
 	} else {
@@ -206,9 +206,9 @@ main(int argc, char **argv)
 
 	scanbytes = file_width * file_height * sizeof(RGBpixel);
 
-	for( maxframe = 0; maxframe < MAXFRAMES;  )  {
+	for ( maxframe = 0; maxframe < MAXFRAMES;  )  {
 
-		if( (obuf = (unsigned char *)malloc( scanbytes )) == (unsigned char *)0 )  {
+		if ( (obuf = (unsigned char *)malloc( scanbytes )) == (unsigned char *)0 )  {
 			(void)fprintf(stderr, "pixflip-fb:  malloc %d failure\n", scanbytes );
 			break;
 		}
@@ -216,24 +216,24 @@ main(int argc, char **argv)
 		frames[maxframe] = obuf;
 
 		fprintf(stderr, "%d ", framenumber);  fflush(stdout);
-		if( islist )  {
+		if ( islist )  {
 			/* See if we read all the files */
-			if( bu_optind >= argc )
+			if ( bu_optind >= argc )
 				goto done;
 			strncpy(name, argv[bu_optind++], 256);
 		} else {
 			snprintf(name, 256, "%s.%d", input_basename, framenumber);
 		}
-		if( (fd=open(name, 0))<0 )  {
+		if ( (fd=open(name, 0))<0 )  {
 			perror(name);
 			goto done;
 		}
 
 		/* Read in .pix file.  Bottom to top */
 		i = read( fd, obuf, scanbytes );
-		if( i <= 0 )  {
+		if ( i <= 0 )  {
 			perror(name);
-		} else if( i != scanbytes ) {
+		} else if ( i != scanbytes ) {
 			fprintf(stderr, "\npixflip-fb:  %s wanted %d got %d\n",
 				name, scanbytes, i );
 		}
@@ -244,22 +244,22 @@ main(int argc, char **argv)
 		framenumber++;
 	}
 done:
-	while(passes-- > 0)  {
-		if( !rocking )  {
+	while (passes-- > 0)  {
+		if ( !rocking )  {
 			/* Play from start to finish, over and over */
-			for( i=0; i<maxframe; i++ )  {
+			for ( i=0; i<maxframe; i++ )  {
 				showframe(i);
 				select( fileno(stdin)+1, &readfds,
 					(fd_set *)0, (fd_set *)0, &tv );
 			}
 		} else {
 			/* Play from start to finish and back */
-			for( i=0; i<maxframe; i++ )  {
+			for ( i=0; i<maxframe; i++ )  {
 				showframe(i);
 				select( fileno(stdin)+1, &readfds,
 					(fd_set *)0, (fd_set *)0, &tv );
 			}
-			while(i-->0)  {
+			while (i-->0)  {
 				showframe(i);
 				select( fileno(stdin)+1, &readfds,
 					(fd_set *)0, (fd_set *)0, &tv );
@@ -275,19 +275,19 @@ done:
 void
 showframe(register int i)
 {
-	if( verbose )  {
+	if ( verbose )  {
 		fprintf(stderr, " %d", i);
 		fflush( stderr );
 	}
 
-	if( i < 0 || i > maxframe )  {
+	if ( i < 0 || i > maxframe )  {
 		fprintf(stderr, "pixflip-fb:  %d out of range\n", i);
 		return;
 	}
 
 	fb_writerect( fbp, 0, 0, file_width, file_height, frames[i] );
 
-	if( verbose )  {
+	if ( verbose )  {
 		fprintf(stderr, ",");
 		fflush( stderr );
 	}

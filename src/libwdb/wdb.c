@@ -218,7 +218,7 @@ mk_arb8(struct rt_wdb *wdbp, const char *name, const fastf_t *pts)
 
 	BU_GETSTRUCT( arb, rt_arb_internal );
 	arb->magic = RT_ARB_INTERNAL_MAGIC;
-	for( i=0; i < 8; i++ )  {
+	for ( i=0; i < 8; i++ )  {
 		VMOVE( arb->pt[i], &pts[i*3] );
 	}
 
@@ -300,7 +300,7 @@ mk_rcc(struct rt_wdb *wdbp, const char *name, const fastf_t *base, const fastf_t
 	vect_t	cross1, cross2;
 	vect_t	a, b;
 
-	if( MAGSQ(height) <= SQRT_SMALL_FASTF )
+	if ( MAGSQ(height) <= SQRT_SMALL_FASTF )
 		return -2;
 
 	/* Create two mutually perpendicular vectors, perpendicular to H */
@@ -354,7 +354,7 @@ mk_cone(struct rt_wdb *wdbp, const char *name, const fastf_t *base, const fastf_
 	vect_t		hgtv;		/* height vector */
 	fastf_t		f;
 
-	if( (f = MAGNITUDE(dirv)) <= SQRT_SMALL_FASTF )
+	if ( (f = MAGNITUDE(dirv)) <= SQRT_SMALL_FASTF )
 		return -2;
 	f = 1/f;
 	VSCALE( h_unitv, dirv, f );
@@ -388,7 +388,7 @@ mk_trc_h(struct rt_wdb *wdbp, const char *name, const fastf_t *base, const fastf
 	vect_t	cross1, cross2;
 	vect_t	a, b, c, d;
 
-	if( MAGSQ(height) <= SQRT_SMALL_FASTF )
+	if ( MAGSQ(height) <= SQRT_SMALL_FASTF )
 		return -2;
 
 	/* Create two mutually perpendicular vectors, perpendicular to H */

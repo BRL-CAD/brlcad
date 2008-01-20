@@ -221,7 +221,7 @@ struct rt_pm_res *pmem;
 	    bucket++
 	) {
 		register struct rt_qelem *b;
-		for(b = bucket->q_forw; b != bucket; b = b->q_forw) {
+		for (b = bucket->q_forw; b != bucket; b = b->q_forw) {
 			p = FROMBUK(b);
 			ASSERT(p->ov_magic == MAGIC_FREE,
 "\nrt_pmalloc: Entry not marked FREE found on Free List!\n")
@@ -246,7 +246,7 @@ struct rt_pm_res *pmem;
 		ret = (long)BRK(((char *)p) + nbytes);
 		bu_semaphore_release( BU_SEM_SYSCALL );
 
-		if( ret )
+		if ( ret )
 			bu_bomb( "rt_pmalloc: brk() failure. Insufficient memory available!\n" );
 
 		p->ov_length = nbytes;
@@ -275,7 +275,7 @@ foundit:
 		rt_pm_insque(TOADJ(q), TOADJ(p));
 
 		/* add surplus into bucket chain */
-		rt_pm_insque(TOBUK(q),&pmem->buckets[mlindx(surplus)]);
+		rt_pm_insque(TOBUK(q), &pmem->buckets[mlindx(surplus)]);
 	}
 
 	p->ov_magic = MAGIC_BUSY;
@@ -312,14 +312,14 @@ register Size n;
 {
 	register Size index=0, shifter;
 
-	if( n >= mlsizes[RT_PM_NBUCKETS-1] )
+	if ( n >= mlsizes[RT_PM_NBUCKETS-1] )
 		index = RT_PM_NBUCKETS-1;
-	else if( n < mlsizes[1] )
+	else if ( n < mlsizes[1] )
 		index = 0;
 	else
 	{
 		shifter = n >> 6;
-		while( shifter )
+		while ( shifter )
 		{
 			index++;
 			shifter = shifter >> 1;
@@ -451,7 +451,7 @@ register struct rt_pm_res *pmem;
 	p->ov_magic = MAGIC_FREE;
 
 	/* place in bucket chain */
-	rt_pm_insque(TOBUK(p),&pmem->buckets[mlindx(p->ov_length)]);
+	rt_pm_insque(TOBUK(p), &pmem->buckets[mlindx(p->ov_length)]);
 
 	if (endfree)
 		mlfree_end( pmem );
@@ -466,7 +466,7 @@ register struct rt_pm_res *pmem;
 	register struct overhead *p;
 
 	p = FROMADJ(pmem->adjhead.q_back);
-	if( p->ov_magic != MAGIC_FREE )
+	if ( p->ov_magic != MAGIC_FREE )
 		return;
 
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
@@ -513,7 +513,7 @@ register struct rt_pm_res *pmem;
 		return(rt_pmalloc((long)nbytes, pmem));
 
 	/* if beyond current arena it has to be bad */
-	if(mem > (char*)FROMADJ(pmem->adjhead.q_back) + sizeof(struct overhead))
+	if (mem > (char*)FROMADJ(pmem->adjhead.q_back) + sizeof(struct overhead))
 		return(NULL);
 
 	p = (struct overhead *)(mem - sizeof(struct overhead));
@@ -531,7 +531,7 @@ register struct rt_pm_res *pmem;
 		endfree = oendfree;
 	}
 
-	if(  p->ov_magic == MAGIC_FREE
+	if (  p->ov_magic == MAGIC_FREE
 	 && (surplus = length - nbytes - sizeof(struct overhead)) >= 0
 	) {
 		/* shrink area in place */
@@ -541,7 +541,7 @@ register struct rt_pm_res *pmem;
 			q->ov_length = surplus;
 			q->ov_magic = MAGIC_FREE;
 			rt_pm_insque(TOADJ(q), TOADJ(p));
-			rt_pm_insque(TOBUK(q),&pmem->buckets[mlindx(surplus)]);
+			rt_pm_insque(TOBUK(q), &pmem->buckets[mlindx(surplus)]);
 			p->ov_length -= surplus;
 		}
 		/* declare it to be busy */
@@ -668,7 +668,7 @@ struct rt_pm_res *pmem;
 			p->ov_length += l;
 			if (p->ov_magic == MAGIC_FREE) {
 				rt_pm_remque(TOBUK(p));
-				rt_pm_insque(TOBUK(p),&pmem->buckets[mlindx(p->ov_length)]);
+				rt_pm_insque(TOBUK(p), &pmem->buckets[mlindx(p->ov_length)]);
 			}
 		}
 	}

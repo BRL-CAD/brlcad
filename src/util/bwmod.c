@@ -83,7 +83,7 @@ get_args(int argc, register char **argv)
 
 	while ( (c = bu_getopt( argc, argv, "a:s:m:d:Ae:r:cS:O:M:X:t:" )) != EOF )
 	{
-		switch( c )  {
+		switch ( c )  {
 		case 'a':
 			op[ numop ] = ADD;
 			val[ numop++ ] = atof(bu_optarg);
@@ -100,7 +100,7 @@ get_args(int argc, register char **argv)
 			op[ numop ] = MULT;
 			d = atof(bu_optarg);
 
-			if( d == 0.0 ) {
+			if ( d == 0.0 ) {
 				(void)fprintf( stderr, "bwmod: divide by zero!\n" );
 				bu_exit ( 2, NULL );
 			}
@@ -117,7 +117,7 @@ get_args(int argc, register char **argv)
 		case 'r':
 			op[ numop ] = POW;
 			d = atof(bu_optarg);
-			if( d == 0.0 ) {
+			if ( d == 0.0 ) {
 				(void)fprintf( stderr, "bwmod: zero root!\n" );
 				bu_exit ( 2, NULL );
 			}
@@ -150,13 +150,13 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( bu_optind >= argc )  {
-		if( isatty((int)fileno(stdin)) )
+	if ( bu_optind >= argc )  {
+		if ( isatty((int)fileno(stdin)) )
 			return(0);
 		file_name = "-";
 	} else {
 		file_name = argv[bu_optind];
-		if( freopen(file_name, "r", stdin) == NULL )  {
+		if ( freopen(file_name, "r", stdin) == NULL )  {
 			(void)fprintf( stderr,
 				"bwmod: cannot open \"%s\" for reading\n",
 				file_name );
@@ -176,9 +176,9 @@ void mk_trans_tbl(void)
 	register double d;
 
 	/* create translation map */
-	for (j = 0; j < MAPBUFLEN ; ++j) {
+	for (j = 0; j < MAPBUFLEN; ++j) {
 		d = j;
-		for (i=0 ; i < numop ; i++) {
+		for (i=0; i < numop; i++) {
 			switch (op[i]) {
 			case ADD : d += val[i]; break;
 			case MULT: d *= val[i]; break;
@@ -208,9 +208,9 @@ void mk_char_trans_tbl(void)
 	register signed char d;
 
 	/* create translation map */
-	for (j = 0; j < MAPBUFLEN ; ++j) {
+	for (j = 0; j < MAPBUFLEN; ++j) {
 		d = j;
-		for (i=0 ; i < numop ; i++) {
+		for (i=0; i < numop; i++) {
 			switch (op[i]) {
 			case ADD : d += val[i]; break;
 			case MULT: d *= val[i]; break;
@@ -238,7 +238,7 @@ int main(int argc, char **argv)
 
 	progname = *argv;
 
-	if( !get_args( argc, argv ) || isatty((int)fileno(stdin))
+	if ( !get_args( argc, argv ) || isatty((int)fileno(stdin))
 	    || isatty((int)fileno(stdout)) ) {
 		(void)fputs(usage, stderr);
 		bu_exit ( 1, NULL );
@@ -252,7 +252,7 @@ int main(int argc, char **argv)
 	clip_high = clip_low = 0L;
 	while ( (n=read(0, (void *)ibuf, (unsigned)sizeof(ibuf))) > 0) {
 		/* translate */
-		for (p = ibuf, q = &ibuf[n] ; p < q ; ++p) {
+		for (p = ibuf, q = &ibuf[n]; p < q; ++p) {
 			tmp = mapbuf[*p];
 			if (tmp > 255) { ++clip_high; *p = 255; }
 			else if (tmp < 0) { ++clip_low; *p = 0; }
@@ -269,7 +269,7 @@ int main(int argc, char **argv)
 	    perror("READ ERROR");
 	}
 
-	if( clip_high != 0 || clip_low != 0 ) {
+	if ( clip_high != 0 || clip_low != 0 ) {
 		(void)fprintf( stderr, "bwmod: clipped %lu high, %lu low\n",
 			clip_high, clip_low );
 	}

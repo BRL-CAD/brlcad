@@ -49,7 +49,7 @@ squash(register int *buf0, register int *buf1, register int *buf2, register floa
 	fb_log( "squash: buf0=0x%x buf1=0x%x buf2=0x%x ret_buf=0x%x n=%d\n",
 		buf0, buf1, buf2, ret_buf, n );
 #endif
-	for( j = 1; j < n - 1; j++ )
+	for ( j = 1; j < n - 1; j++ )
 		{
 		ret_buf[j] =
 			(

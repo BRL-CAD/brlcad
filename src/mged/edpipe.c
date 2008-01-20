@@ -63,27 +63,27 @@ pipe_scale_od( struct rt_db_internal *db_int, fastf_t scale)
 	RT_PIPE_CK_MAGIC( pipe );
 
 	/* check that this can be done */
-	for( BU_LIST_FOR( ps, wdb_pipept, &pipe->pipe_segs_head ) )
+	for ( BU_LIST_FOR( ps, wdb_pipept, &pipe->pipe_segs_head ) )
 	{
 		fastf_t tmp_od;
 
-		if( scale < 0.0 )
+		if ( scale < 0.0 )
 			tmp_od = (-scale );
 		else
 			tmp_od = ps->pp_od*scale;
-		if( ps->pp_id > tmp_od )
+		if ( ps->pp_id > tmp_od )
 		{
 		  Tcl_AppendResult(interp, "Cannot make OD less than ID\n", (char *)NULL);
 		  return;
 		}
-		if( tmp_od > 2.0*ps->pp_bendradius )
+		if ( tmp_od > 2.0*ps->pp_bendradius )
 		{
 		  Tcl_AppendResult(interp, "Cannot make outer radius greater than bend radius\n", (char *)NULL);
 		  return;
 		}
 	}
 
-	for( BU_LIST_FOR( ps, wdb_pipept, &pipe->pipe_segs_head ) )
+	for ( BU_LIST_FOR( ps, wdb_pipept, &pipe->pipe_segs_head ) )
 		ps->pp_od *= scale;
 }
 
@@ -97,27 +97,27 @@ pipe_scale_id( struct rt_db_internal *db_int, fastf_t scale )
 	RT_PIPE_CK_MAGIC( pipe );
 
 	/* check that this can be done */
-	for( BU_LIST_FOR( ps, wdb_pipept, &pipe->pipe_segs_head ) )
+	for ( BU_LIST_FOR( ps, wdb_pipept, &pipe->pipe_segs_head ) )
 	{
-		if( scale > 0.0 )
+		if ( scale > 0.0 )
 			tmp_id = ps->pp_id*scale;
 		else
 			tmp_id = (-scale);
-		if( ps->pp_od < tmp_id )
+		if ( ps->pp_od < tmp_id )
 		{
 		  Tcl_AppendResult(interp, "Cannot make ID greater than OD\n", (char *)NULL);
 		  return;
 		}
-		if( tmp_id > 2.0*ps->pp_bendradius )
+		if ( tmp_id > 2.0*ps->pp_bendradius )
 		{
 		  Tcl_AppendResult(interp, "Cannot make inner radius greater than bend radius\n", (char *)NULL);
 		  return;
 		}
 	}
 
-	for( BU_LIST_FOR( ps, wdb_pipept, &pipe->pipe_segs_head ) )
+	for ( BU_LIST_FOR( ps, wdb_pipept, &pipe->pipe_segs_head ) )
 	{
-		if( scale > 0.0 )
+		if ( scale > 0.0 )
 			ps->pp_id *= scale;
 		else
 			ps->pp_id = (-scale);
@@ -134,22 +134,22 @@ pipe_seg_scale_od( struct wdb_pipept *ps, fastf_t scale )
 	/* need to check that the new OD is not less than ID
 	 * of any affected segment.
 	 */
-	if( scale < 0.0 )
+	if ( scale < 0.0 )
 		tmp_od = (-scale);
 	else
 		tmp_od = scale*ps->pp_od;
-	if( ps->pp_id > tmp_od )
+	if ( ps->pp_id > tmp_od )
 	{
 	  Tcl_AppendResult(interp, "Cannot make OD smaller than ID\n", (char *)NULL);
 	  return;
 	}
-	if( tmp_od > 2.0*ps->pp_bendradius )
+	if ( tmp_od > 2.0*ps->pp_bendradius )
 	{
 	  Tcl_AppendResult(interp, "Cannot make outer radius greater than bend radius\n", (char *)NULL);
 	  return;
 	}
 
-	if( scale > 0.0 )
+	if ( scale > 0.0 )
 		ps->pp_od *= scale;
 	else
 		ps->pp_od = (-scale);
@@ -163,22 +163,22 @@ pipe_seg_scale_id( struct wdb_pipept *ps, fastf_t scale )
 	BU_CKMAG( ps, WDB_PIPESEG_MAGIC, "pipe segment" );
 
 	/* need to check that the new ID is not greater than OD */
-	if( scale > 0.0 )
+	if ( scale > 0.0 )
 		tmp_id = scale*ps->pp_id;
 	else
 		tmp_id = (-scale);
-	if( ps->pp_od < tmp_id )
+	if ( ps->pp_od < tmp_id )
 	{
 	  Tcl_AppendResult(interp, "Cannot make ID greater than OD\n", (char *)NULL);
 	  return;
 	}
-	if( tmp_id > 2.0*ps->pp_bendradius )
+	if ( tmp_id > 2.0*ps->pp_bendradius )
 	{
 	  Tcl_AppendResult(interp, "Cannot make inner radius greater than bend radius\n", (char *)NULL);
 	  return;
 	}
 
-	if( scale > 0.0 )
+	if ( scale > 0.0 )
 		ps->pp_id *= scale;
 	else
 		ps->pp_id = (-scale);
@@ -193,24 +193,24 @@ pipe_seg_scale_radius( struct wdb_pipept *ps, fastf_t scale )
 	BU_CKMAG( ps, WDB_PIPESEG_MAGIC, "pipe point" );
 
 	head = ps;
-	while( head->l.magic != BU_LIST_HEAD_MAGIC )
+	while ( head->l.magic != BU_LIST_HEAD_MAGIC )
 		head = BU_LIST_NEXT( wdb_pipept, &head->l );
 
 	/* make sure we can make this change */
 	old_radius = ps->pp_bendradius;
-	if( scale > 0.0 )
+	if ( scale > 0.0 )
 		ps->pp_bendradius *= scale;
 	else
 		ps->pp_bendradius = (-scale);
 
-	if( ps->pp_bendradius < ps->pp_od * 0.5 )
+	if ( ps->pp_bendradius < ps->pp_od * 0.5 )
 	{
 	  Tcl_AppendResult(interp, "Cannot make bend radius less than pipe outer radius\n", (char *)NULL);
 	  ps->pp_bendradius = old_radius;
 	  return;
 	}
 
-	if( rt_pipe_ck( &head->l ) )
+	if ( rt_pipe_ck( &head->l ) )
 	{
 		/* won't work, go back to original radius */
 		ps->pp_bendradius = old_radius;
@@ -223,18 +223,18 @@ void
 pipe_scale_radius( struct rt_db_internal *db_int, fastf_t scale )
 {
 	struct bu_list head;
-	struct wdb_pipept *old_ps,*new_ps;
+	struct wdb_pipept *old_ps, *new_ps;
 	struct rt_pipe_internal *pipe=(struct rt_pipe_internal *)db_int->idb_ptr;
 
 	RT_CK_DB_INTERNAL( db_int );
 	RT_PIPE_CK_MAGIC( pipe );
 
 	/* make a quick check for minimum bend radius */
-	for( BU_LIST_FOR( old_ps, wdb_pipept, &pipe->pipe_segs_head ) )
+	for ( BU_LIST_FOR( old_ps, wdb_pipept, &pipe->pipe_segs_head ) )
 	{
-		if( scale < 0.0 )
+		if ( scale < 0.0 )
 		{
-			if( (-scale) < old_ps->pp_od * 0.5 )
+			if ( (-scale) < old_ps->pp_od * 0.5 )
 			{
 			  Tcl_AppendResult(interp, "Cannot make bend radius less than pipe outer radius\n", (char *)NULL);
 			  return;
@@ -242,7 +242,7 @@ pipe_scale_radius( struct rt_db_internal *db_int, fastf_t scale )
 		}
 		else
 		{
-			if( old_ps->pp_bendradius * scale < old_ps->pp_od * 0.5 )
+			if ( old_ps->pp_bendradius * scale < old_ps->pp_od * 0.5 )
 			{
 			  Tcl_AppendResult(interp, "Cannot make bend radius less than pipe outer radius\n", (char *)NULL);
 			  return;
@@ -252,7 +252,7 @@ pipe_scale_radius( struct rt_db_internal *db_int, fastf_t scale )
 
 	/* make temporary copy of this pipe solid */
 	BU_LIST_INIT( &head );
-	for( BU_LIST_FOR( old_ps, wdb_pipept, &pipe->pipe_segs_head ) )
+	for ( BU_LIST_FOR( old_ps, wdb_pipept, &pipe->pipe_segs_head ) )
 	{
 		BU_GETSTRUCT( new_ps, wdb_pipept );
 		*new_ps = (*old_ps);
@@ -260,19 +260,19 @@ pipe_scale_radius( struct rt_db_internal *db_int, fastf_t scale )
 	}
 
 	/* make the desired editing changes to the copy */
-	for( BU_LIST_FOR( new_ps, wdb_pipept, &head ) )
+	for ( BU_LIST_FOR( new_ps, wdb_pipept, &head ) )
 	{
-		if( scale < 0.0 )
+		if ( scale < 0.0 )
 			new_ps->pp_bendradius = (-scale);
 		else
 			new_ps->pp_bendradius *= scale;
 	}
 
 	/* check if the copy is O.K. */
-	if( rt_pipe_ck( &head ) )
+	if ( rt_pipe_ck( &head ) )
 	{
 		/* won't work, go back to original */
-		while( BU_LIST_NON_EMPTY( &head ) )
+		while ( BU_LIST_NON_EMPTY( &head ) )
 		{
 			new_ps = BU_LIST_FIRST( wdb_pipept, &head );
 			BU_LIST_DEQUEUE( &new_ps->l );
@@ -282,7 +282,7 @@ pipe_scale_radius( struct rt_db_internal *db_int, fastf_t scale )
 	}
 
 	/* free temporary pipe solid */
-	while( BU_LIST_NON_EMPTY( &head ) )
+	while ( BU_LIST_NON_EMPTY( &head ) )
 	{
 		new_ps = BU_LIST_FIRST( wdb_pipept, &head );
 		BU_LIST_DEQUEUE( &new_ps->l );
@@ -290,9 +290,9 @@ pipe_scale_radius( struct rt_db_internal *db_int, fastf_t scale )
 	}
 
 	/* make changes to the original */
-	for( BU_LIST_FOR( old_ps, wdb_pipept, &pipe->pipe_segs_head ) )
+	for ( BU_LIST_FOR( old_ps, wdb_pipept, &pipe->pipe_segs_head ) )
 	{
-		if( scale < 0.0 )
+		if ( scale < 0.0 )
 			old_ps->pp_bendradius = (-scale);
 		else
 			old_ps->pp_bendradius *= scale;
@@ -320,12 +320,12 @@ find_pipept_nearest_pt( const struct bu_list *pipe_hd, const point_t pt )
 	VSET( work, 0.0, 0.0, 1.0 )
 	MAT4X3VEC(dir, view_state->vs_vop->vo_view2model, work)
 
-	for( BU_LIST_FOR( ps, wdb_pipept, pipe_hd ) )
+	for ( BU_LIST_FOR( ps, wdb_pipept, pipe_hd ) )
 	{
 		fastf_t dist;
 
 		dist = bn_dist_line3_pt3( pt, dir, ps->pp_coord );
-		if( dist < min_dist )
+		if ( dist < min_dist )
 		{
 			min_dist = dist;
 			nearest = ps;
@@ -341,16 +341,16 @@ add_pipept( struct rt_pipe_internal *pipe, struct wdb_pipept *pp, const point_t 
 	struct wdb_pipept *new;
 
 	RT_PIPE_CK_MAGIC( pipe );
-	if( pp )
+	if ( pp )
 		BU_CKMAG( pp, WDB_PIPESEG_MAGIC, "pipe point" );
 
-	if( pp )
+	if ( pp )
 		last = pp;
 	else
 	{
 		/* add new point to end of pipe solid */
 		last = BU_LIST_LAST( wdb_pipept, &pipe->pipe_segs_head );
-		if( last->l.magic == BU_LIST_HEAD_MAGIC )
+		if ( last->l.magic == BU_LIST_HEAD_MAGIC )
 		{
 			BU_GETSTRUCT( new, wdb_pipept );
 			new->l.magic = WDB_PIPESEG_MAGIC;
@@ -371,12 +371,12 @@ add_pipept( struct rt_pipe_internal *pipe, struct wdb_pipept *pp, const point_t 
 	new->pp_bendradius = last->pp_bendradius;
 	VMOVE( new->pp_coord, new_pt );
 
-	if( !pp )	/* add to end of pipe solid */
+	if ( !pp )	/* add to end of pipe solid */
 		BU_LIST_INSERT( &pipe->pipe_segs_head, &new->l )
 	else		/* append after current point */
 		BU_LIST_APPEND( &pp->l, &new->l )
 
-	if( rt_pipe_ck( &pipe->pipe_segs_head ) )
+	if ( rt_pipe_ck( &pipe->pipe_segs_head ) )
 	{
 		/* won't work here, so refuse to do it */
 		BU_LIST_DEQUEUE( &new->l );
@@ -395,16 +395,16 @@ ins_pipept( struct rt_pipe_internal *pipe, struct wdb_pipept *pp, const point_t 
 	struct wdb_pipept *new;
 
 	RT_PIPE_CK_MAGIC( pipe );
-	if( pp )
+	if ( pp )
 		BU_CKMAG( pp, WDB_PIPESEG_MAGIC, "pipe point" );
 
-	if( pp )
+	if ( pp )
 		first = pp;
 	else
 	{
 		/* insert new point at start of pipe solid */
 		first = BU_LIST_FIRST( wdb_pipept, &pipe->pipe_segs_head );
-		if( first->l.magic == BU_LIST_HEAD_MAGIC )
+		if ( first->l.magic == BU_LIST_HEAD_MAGIC )
 		{
 			BU_GETSTRUCT( new, wdb_pipept );
 			new->l.magic = WDB_PIPESEG_MAGIC;
@@ -425,12 +425,12 @@ ins_pipept( struct rt_pipe_internal *pipe, struct wdb_pipept *pp, const point_t 
 	new->pp_bendradius = first->pp_bendradius;
 	VMOVE( new->pp_coord, new_pt );
 
-	if( !pp )	/* add to start of pipe */
+	if ( !pp )	/* add to start of pipe */
 		BU_LIST_APPEND( &pipe->pipe_segs_head, &new->l )
 	else		/* insert before current point */
 		BU_LIST_INSERT( &pp->l, &new->l )
 
-	if( rt_pipe_ck( &pipe->pipe_segs_head ) )
+	if ( rt_pipe_ck( &pipe->pipe_segs_head ) )
 	{
 		/* won't work here, so refuse to do it */
 		BU_LIST_DEQUEUE( &new->l );
@@ -448,18 +448,18 @@ del_pipept( struct wdb_pipept *ps )
 	BU_CKMAG( ps, WDB_PIPESEG_MAGIC, "pipe segment" );
 
 	head = ps;
-	while( head->l.magic != BU_LIST_HEAD_MAGIC )
+	while ( head->l.magic != BU_LIST_HEAD_MAGIC )
 		head = BU_LIST_NEXT( wdb_pipept, &head->l );
 
 	next = BU_LIST_NEXT( wdb_pipept, &ps->l );
-	if( next->l.magic == BU_LIST_HEAD_MAGIC )
+	if ( next->l.magic == BU_LIST_HEAD_MAGIC )
 		next = (struct wdb_pipept *)NULL;
 
 	prev = BU_LIST_PREV( wdb_pipept, &ps->l );
-	if( prev->l.magic == BU_LIST_HEAD_MAGIC )
+	if ( prev->l.magic == BU_LIST_HEAD_MAGIC )
 		prev = (struct wdb_pipept *)NULL;
 
-	if( !prev && !next )
+	if ( !prev && !next )
 	{
 	  Tcl_AppendResult(interp, "Cannot delete last point in pipe\n", (char *)NULL);
 	  return( ps );
@@ -467,12 +467,12 @@ del_pipept( struct wdb_pipept *ps )
 
 	BU_LIST_DEQUEUE( &ps->l );
 
-	if( rt_pipe_ck( &head->l ) )
+	if ( rt_pipe_ck( &head->l ) )
 	{
 	  Tcl_AppendResult(interp, "Cannot delete this point, it will result in an illegal pipe\n", (char *)NULL);
-		if( next )
+		if ( next )
 			BU_LIST_INSERT( &next->l, &ps->l )
-		else if( prev )
+		else if ( prev )
 			BU_LIST_APPEND( &prev->l, &ps->l )
 		else
 			BU_LIST_INSERT( &head->l, &ps->l )
@@ -482,7 +482,7 @@ del_pipept( struct wdb_pipept *ps )
 	else
 		bu_free( (genptr_t)ps, "del_pipept: ps" );
 
-	if( prev )
+	if ( prev )
 		return( prev );
 	else
 		return( next );
@@ -500,7 +500,7 @@ move_pipept( struct rt_pipe_internal *pipe, struct wdb_pipept *ps, const point_t
 	VMOVE( old_pt, ps->pp_coord );
 
 	VMOVE( ps->pp_coord, new_pt );
-	if( rt_pipe_ck( &pipe->pipe_segs_head ) )
+	if ( rt_pipe_ck( &pipe->pipe_segs_head ) )
 	{
 	  Tcl_AppendResult(interp, "Cannot move point there\n", (char *)NULL);
 	  VMOVE( ps->pp_coord, old_pt );

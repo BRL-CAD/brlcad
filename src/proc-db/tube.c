@@ -132,7 +132,7 @@ main(int argc, char **argv)
 	rt_uniresource.re_magic = RESOURCE_MAGIC;
 
 	outfp = wdb_fopen("tube.g");
-	if( (pos_fp = fopen( "pos.dat", "r" )) == NULL )
+	if ( (pos_fp = fopen( "pos.dat", "r" )) == NULL )
 		perror( "pos.dat" );	/* Just warn */
 
 	mk_id( outfp, "Procedural Gun Tube with Projectile" );
@@ -165,12 +165,12 @@ main(int argc, char **argv)
 	fprintf(stderr, "nframes=%d\n", nframes);
 #endif
 
-	for( frame=0;; frame++ )  {
+	for ( frame=0;; frame++ )  {
 		cur_time = frame * delta_t;
 #ifdef never
 		/* Generate some dummy sample data */
-		if( frame < 16 ) break;
-		for( i=0; i<nsamples; i++ )  {
+		if ( frame < 16 ) break;
+		for ( i=0; i<nsamples; i++ )  {
 			sample[i][X] = i * spacing;
 			sample[i][Y] = 0;
 			sample[i][Z] = 4 * oradius * sin(
@@ -180,8 +180,8 @@ main(int argc, char **argv)
 		projectile_pos = ((double)frame)/nframes *
 			(sample[nsamples-1][X] - sample[0][X]); /* length */
 #else
-		if( read_frame(stdin) < 0 )  break;
-		if( pos_fp != NULL )  read_pos(pos_fp);
+		if ( read_frame(stdin) < 0 )  break;
+		if ( pos_fp != NULL )  read_pos(pos_fp);
 #endif
 
 #define build_spline build_cyl
@@ -266,18 +266,18 @@ build_spline(char *name, int npts, double radius)
 		&rt_uniresource);
 
 	/*  Build the U knots */
-	for( i=0; i<N_CIRCLE_KNOTS; i++ )
+	for ( i=0; i<N_CIRCLE_KNOTS; i++ )
 		bp->u.knots[i] = circle_knots[i];
 
 	/* Build the V knots */
 	cur_kv = 0;		/* current knot value */
 	nv = 0;			/* current knot subscript */
-	for( i=0; i<4; i++ )
+	for ( i=0; i<4; i++ )
 		bp->v.knots[nv++] = cur_kv;
 	cur_kv++;
-	for( i=4; i<(npts+4-2); i++ )
+	for ( i=4; i<(npts+4-2); i++ )
 		bp->v.knots[nv++] = cur_kv++;
-	for( i=0; i<4; i++ )
+	for ( i=0; i<4; i++ )
 		bp->v.knots[nv++] = cur_kv;
 
 	/*
@@ -291,7 +291,7 @@ build_spline(char *name, int npts, double radius)
 	meshp = bp->ctl_points;
 
 	/* Row 0 */
-	for( col=0; col<9; col++ )  {
+	for ( col=0; col<9; col++ )  {
 		*meshp++ = sample[0][X];
 		*meshp++ = sample[0][Y];
 		*meshp++ = sample[0][Z];
@@ -299,10 +299,10 @@ build_spline(char *name, int npts, double radius)
 	}
 
 	/* Rows 1..npts */
-	for( i=0; i<npts; i++ )  {
+	for ( i=0; i<npts; i++ )  {
 		/* row = i; */
 		VMOVE( point, sample[i] );
-		for( col=0; col<9; col++ )  {
+		for ( col=0; col<9; col++ )  {
 			register fastf_t h;
 
 			h = polyline[col*4+H];
@@ -314,7 +314,7 @@ build_spline(char *name, int npts, double radius)
 	}
 
 	/* Row npts+1 */
-	for( col=0; col<9; col++ )  {
+	for ( col=0; col<9; col++ )  {
 		*meshp++ = sample[npts-1][X];
 		*meshp++ = sample[npts-1][Y];
 		*meshp++ = sample[npts-1][Z];
@@ -340,19 +340,19 @@ read_frame( FILE *fp )
 	static float	last_read_time = -5;
 	double	dx = 0.0;
 
-	if( feof(fp) )
+	if ( feof(fp) )
 		return(-1);
 
 #ifdef never
 	/* Phils format */
-	for( nsamples=0;;nsamples++)  {
-		if( bu_fgets( buf, sizeof(buf), fp ) == NULL )  return(-1);
-		if( buf[0] == '\0' || buf[0] == '\n' )
+	for ( nsamples=0;;nsamples++)  {
+		if ( bu_fgets( buf, sizeof(buf), fp ) == NULL )  return(-1);
+		if ( buf[0] == '\0' || buf[0] == '\n' )
 			/* Blank line, marks break in implicit connection */
 			fprintf(stderr, "implicit break unimplemented\n");
 			continue;
 		}
-		if( buf[0] == '=' )  {
+		if ( buf[0] == '=' )  {
 			/* End of frame */
 			break;
 		}
@@ -360,7 +360,7 @@ read_frame( FILE *fp )
 			&sample[nsamples][X],
 			&sample[nsamples][Y],
 			&sample[nsamples][Z] );
-		if( i != 3 )  {
+		if ( i != 3 )  {
 			fprintf(stderr, "input line didn't have 3 numbers: %s\n", buf);
 			break;
 		}
@@ -371,46 +371,46 @@ read_frame( FILE *fp )
 	}
 #else
 	/* Kurt's / Kathy's format, in inches */
-	if( cur_time <= 0 )  {
+	if ( cur_time <= 0 )  {
 		/* Really should use Y and Z initial conditions, too */
-		for( nsamples=0; nsamples < (sizeof(dxtab)/sizeof(dxtab[0])); nsamples++ )  {
+		for ( nsamples=0; nsamples < (sizeof(dxtab)/sizeof(dxtab[0])); nsamples++ )  {
 			sample[nsamples][X] = dxtab[nsamples];
 			sample[nsamples][Y] = sample[nsamples][Z] = 0;
 		}
 		return(0);		/* OK */
 	}
-	if( last_read_time > cur_time )
+	if ( last_read_time > cur_time )
 		return(0);		/* OK, reuse last step's data */
 	/* Ferret out next time marker */
-	while(1)  {
-		if( bu_fgets( buf, sizeof(buf), fp ) == NULL )  {
+	while (1)  {
+		if ( bu_fgets( buf, sizeof(buf), fp ) == NULL )  {
 			fprintf(stderr, "EOF?\n");
 			return(-1);
 		}
-		if( strncmp(buf, "TIME", strlen("TIME")) != 0 )  continue;
-		if( sscanf(buf, "TIME %f", &last_read_time ) < 1 )  {
+		if ( strncmp(buf, "TIME", strlen("TIME")) != 0 )  continue;
+		if ( sscanf(buf, "TIME %f", &last_read_time ) < 1 )  {
 			fprintf(stderr, "bad TIME\n");
 			return(-1);
 		}
 		break;
 	}
 
-	for( nsamples=0;;nsamples++)  {
+	for ( nsamples=0;;nsamples++)  {
 		int	nmass;
 		float	kx, ky, kz;
 
 		buf[0] = '\0';
-		if( bu_fgets( buf, sizeof(buf), fp ) == NULL )  return(-1);
+		if ( bu_fgets( buf, sizeof(buf), fp ) == NULL )  return(-1);
 		/* center of mass #, +X, +Z, -Y (chg of coordinates) */
-		if( buf[0] == '\0' || buf[0] == '\n' )
+		if ( buf[0] == '\0' || buf[0] == '\n' )
 			break;		/* stop at a blank line */
 		i = sscanf( buf, "%d %f %f %f",
 			&nmass, &kx, &ky, &kz );
-		if( i != 4 )  {
+		if ( i != 4 )  {
 			fprintf( stderr, "input line in error: %s\n", buf );
 			return(-1);
 		}
-		if( nmass-1 != nsamples )  {
+		if ( nmass-1 != nsamples )  {
 			fprintf( stderr, "nmass %d / nsamples %d mismatch\n",
 				nmass, nsamples );
 			return(-1);
@@ -431,7 +431,7 @@ read_frame( FILE *fp )
 	sample[nsamples][Z] = sample[nsamples-1][Z] * 2 - sample[nsamples-2][Z];
 	nsamples++;
 #endif
-	if( nsamples <= 4 )  {
+	if ( nsamples <= 4 )  {
 		fprintf(stderr, "insufficient samples\n");
 		return(-1);
 	}
@@ -445,8 +445,8 @@ read_pos(FILE *fp)
 	static float	pos = 0;
 
 	/* Skip over needless intermediate time steps */
-	while( last_read_time < cur_time )  {
-		if( feof(fp) )
+	while ( last_read_time < cur_time )  {
+		if ( feof(fp) )
 			break;
 		fscanf( fp, "%f %f", &last_read_time, &pos );
 		/* HACK:  tmax[kathy]=6.155ms, tmax[kurt]=9.17 */
@@ -468,7 +468,7 @@ build_cyl(char *cname, int npts, double radius)
 
 	BU_LIST_INIT( &head.l );
 
-	for( i=0; i<npts-1; i++ )  {
+	for ( i=0; i<npts-1; i++ )  {
 		VMOVE( v, sample[i] );
 		VSUB2( h, sample[i+1], v );
 		VSET( a, 0, radius, 0 );
@@ -491,10 +491,10 @@ xfinddir(fastf_t *dir, double x, fastf_t *loc)
 	register int i;
 	fastf_t	ratio;
 
-	for( i=0; i<nsamples-1; i++ )  {
-		if( x < sample[i][X] )
+	for ( i=0; i<nsamples-1; i++ )  {
+		if ( x < sample[i][X] )
 			break;
-		if( x >= sample[i+1][X] )
+		if ( x >= sample[i+1][X] )
 			continue;
 		goto out;
 	}

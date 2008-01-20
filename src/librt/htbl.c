@@ -56,7 +56,7 @@ rt_htbl_init(struct rt_htbl *b, int len, const char *str)
 		bu_log("rt_htbl_init(%8x, len=%d, %s)\n", b, len, str);
 	BU_LIST_INIT(&b->l);
 	b->l.magic = RT_HTBL_MAGIC;
-	if( len <= 0 )  len = 64;
+	if ( len <= 0 )  len = 64;
 	b->blen = len;
 	b->hits = (struct hit *)bu_calloc(b->blen, sizeof(struct hit), str);
 	b->end = 0;
@@ -104,7 +104,7 @@ rt_htbl_get(struct rt_htbl *b)
 {
 	RT_CK_HTBL(b);
 
-	if( b->end >= b->blen )  {
+	if ( b->end >= b->blen )  {
 		/* Increase size of array */
 		b->hits = (struct hit *)bu_realloc( (char *)b->hits,
 			sizeof(struct hit) * (b->blen *= 4),

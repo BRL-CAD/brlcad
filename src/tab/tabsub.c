@@ -80,7 +80,7 @@ main(int argc, char **argv)
     FILE	*table;
     char	table_file[256] = {0};
 
-    if( argc < 2 || argc > 3 )  {
+    if ( argc < 2 || argc > 3 )  {
 	fprintf(stderr, "Usage:  tabsub prototype_file [table_file]\n");
 	bu_exit(12, NULL);
     }
@@ -89,11 +89,11 @@ main(int argc, char **argv)
     /* Acquire in-core copy of prototype file */
     get_proto( &prototype, proto_file );
 
-    if( argc < 3 )  {
+    if ( argc < 3 )  {
 	table = stdin;
     } else {
 	strncpy(table_file, argv[2], 255);
-	if( (table = fopen( table_file, "r" )) == NULL )  {
+	if ( (table = fopen( table_file, "r" )) == NULL )  {
 	    perror( table_file );
 	    bu_exit(3, NULL);
 	}
@@ -124,7 +124,7 @@ get_proto(char **buffer, char *file)
 	bu_exit(1, NULL);
     }
 
-    if( sb.st_size == 0 )  {
+    if ( sb.st_size == 0 )  {
 	fprintf(stderr, "tabsub:  %s is empty\n", file );
 	bu_exit(1, NULL);
     }
@@ -161,19 +161,19 @@ do_lines(FILE *fp, char *buffer)
 	register char	*tp;
 	int	i;
 
-	for( line=0; /*NIL*/; line++ )  {
+	for ( line=0; /*NIL*/; line++ )  {
 		linebuf[0] = '\0';
 		(void)bu_fgets( linebuf, sizeof(linebuf), fp );
-		if( feof(fp) )
+		if ( feof(fp) )
 			break;
 
 		/* Skip blank or commented out lines */
-		if( linebuf[0] == '\0' ||
+		if ( linebuf[0] == '\0' ||
 		    linebuf[0] == '#' ||
 		    linebuf[0] == '\n' )
 			continue;
 
-		if(debug)  {
+		if (debug)  {
 			fprintf(stderr, "Prototype=\n%s", buffer);
 			fprintf(stderr, "Line %d='%s'\n", line, linebuf);
 		}
@@ -181,17 +181,17 @@ do_lines(FILE *fp, char *buffer)
 		/* Here, there is no way to check for too many words */
 		nwords = rt_split_cmd( chanwords, NCHANS+1, linebuf );
 
-		for( cp=buffer; *cp != '\0'; )  {
-			if(debug) fputc( *cp, stderr );
+		for ( cp=buffer; *cp != '\0'; )  {
+			if (debug) fputc( *cp, stderr );
 			/* Copy all plain text, verbatim */
-			if( *cp != '@' )  {
+			if ( *cp != '@' )  {
 				putc( *cp++, stdout );
 				continue;
 			}
 
 			/* An '@' sign has been seen, slurp up a token */
 			cp++;			/* skip '@' */
-			if( *cp == '@' )  {
+			if ( *cp == '@' )  {
 				/* Double '@' is escape for single one
 				 * (just like ARPANET TACs)
 				 */
@@ -199,17 +199,17 @@ do_lines(FILE *fp, char *buffer)
 				cp++;		/* skip '@' */
 				continue;
 			}
-			if( *cp == '(' )  {
+			if ( *cp == '(' )  {
 				cp++;		/* skip '(' */
 				tp = token;
-				while( *cp && *cp != ')' && tp<&token[TOKLEN-1])  {
+				while ( *cp && *cp != ')' && tp<&token[TOKLEN-1])  {
 					*tp++ = *cp++;
 				}
 				*tp++ = '\0';
 				cp++;		/* skip ')' */
-			} else if( isdigit( *cp ) )  {
+			} else if ( isdigit( *cp ) )  {
 				tp = token;
-				while( isdigit( *cp ) && tp<&token[TOKLEN-1] )  {
+				while ( isdigit( *cp ) && tp<&token[TOKLEN-1] )  {
 					*tp++ = *cp++;
 				}
 				*tp++ = '\0';
@@ -218,18 +218,18 @@ do_lines(FILE *fp, char *buffer)
 				fprintf( stdout, "@%c", *cp++ );
 				continue;
 			}
-			if(debug) fprintf(stderr, "token='%s'\n", token);
+			if (debug) fprintf(stderr, "token='%s'\n", token);
 
-			if( isdigit( token[0] ) )  {
+			if ( isdigit( token[0] ) )  {
 				fputs( chanwords[str2chan_index(token)],
 					stdout );
 				continue;
 			}
-			if( strcmp( token, "line" ) == 0 )  {
+			if ( strcmp( token, "line" ) == 0 )  {
 				fprintf(stdout, "%d", line );
 				continue;
 			}
-			if( strcmp( token, "time" ) == 0 )  {
+			if ( strcmp( token, "time" ) == 0 )  {
 				fputs( chanwords[0], stdout );
 				continue;
 			}
@@ -242,19 +242,19 @@ do_lines(FILE *fp, char *buffer)
 			 *  signifies substituting the value of the
 			 *  indicated channel.  Otherwise the word is literal.
 			 */
-			for( i=1; i<ntokenwords; i++ )  {
+			for ( i=1; i<ntokenwords; i++ )  {
 				char	c;
 				int	chan;
 				c = tokenwords[i][0];
-				if( c != '@' && c != '%' )  continue;
+				if ( c != '@' && c != '%' )  continue;
 				chan = str2chan_index( &tokenwords[i][1] );
 				tokenwords[i] = chanwords[chan];
 			}
 
-			if( (i=multi_words( tokenwords, ntokenwords )) >= 0 )
+			if ( (i=multi_words( tokenwords, ntokenwords )) >= 0 )
 				continue;
 
-			if( i == -1 )  {
+			if ( i == -1 )  {
 				fprintf(stderr,
 					"Line %d: keyword @(%s) encountered error\n",
 					line, token);
@@ -267,7 +267,7 @@ do_lines(FILE *fp, char *buffer)
 				fprintf(stdout,
 					"@(%s)", token );
 			}
-			for( i=0; i<ntokenwords; i++ )  {
+			for ( i=0; i<ntokenwords; i++ )  {
 				fprintf( stderr,
 					"word[%2d] = '%s'\n",
 					i, tokenwords[i] );
@@ -286,11 +286,11 @@ int
 multi_words( char *words[], int	nwords )
 {
 
-	if( strcmp( words[0], "rot" ) == 0 )  {
+	if ( strcmp( words[0], "rot" ) == 0 )  {
 		mat_t	mat;
 
 		/* Expects rotations rx, ry, rz, in degrees */
-		if( nwords < 4 )  return(-1);
+		if ( nwords < 4 )  return(-1);
 		MAT_IDN( mat );
 		bn_mat_angles( mat,
 		    atof( words[1] ),
@@ -299,10 +299,10 @@ multi_words( char *words[], int	nwords )
 		out_mat( mat, stdout );
 		return(0);
 	}
-	if( strcmp( words[0], "xlate" ) == 0 )  {
+	if ( strcmp( words[0], "xlate" ) == 0 )  {
 		mat_t	mat;
 
-		if( nwords < 4 )  return(-1);
+		if ( nwords < 4 )  return(-1);
 		/* Expects translations tx, ty, tz */
 		MAT_IDN( mat );
 		MAT_DELTAS( mat,
@@ -312,18 +312,18 @@ multi_words( char *words[], int	nwords )
 		out_mat( mat, stdout );
 		return(0);
 	}
-	if( strcmp( words[0], "rot_at" ) == 0 )  {
+	if ( strcmp( words[0], "rot_at" ) == 0 )  {
 		mat_t	mat;
 		mat_t	mat1;
 		mat_t	mat2;
 		mat_t	mat3;
 
 		/* JG - Expects x, y, z, rx, ry, rz               */
-		/* Translation back to the origin by (-x,-y,-z)   */
+		/* Translation back to the origin by (-x, -y, -z)   */
 		/* is done first, then the rotation, and finally  */
-		/* back into the original position by (+x,+y,+z). */
+		/* back into the original position by (+x, +y, +z). */
 
-		if( nwords < 7 )  return(-1);
+		if ( nwords < 7 )  return(-1);
 
 		MAT_IDN( mat1 );
 		MAT_IDN( mat2 );
@@ -350,7 +350,7 @@ multi_words( char *words[], int	nwords )
 		out_mat( mat, stdout );
 		return(0);
 	}
-	if( strcmp( words[0], "orient" ) == 0 )  {
+	if ( strcmp( words[0], "orient" ) == 0 )  {
 		register int i;
 		mat_t	mat;
 		double	args[8];
@@ -358,16 +358,16 @@ multi_words( char *words[], int	nwords )
 		/* Expects tx, ty, tz, rx, ry, rz, [scale]. */
 		/* All rotation is done first, then translation */
 		/* Note: word[0] and args[0] are the keyword */
-		if( nwords < 6+1 )  return(-1);
-		for( i=1; i<6+1; i++ )
+		if ( nwords < 6+1 )  return(-1);
+		for ( i=1; i<6+1; i++ )
 			args[i] = 0;
 		args[7] = 1.0;	/* optional arg, default to 1 */
-		for( i=1; i<nwords; i++ )
+		for ( i=1; i<nwords; i++ )
 			args[i] = atof( words[i] );
 		MAT_IDN( mat );
 		bn_mat_angles( mat, args[4], args[5], args[6] );
 		MAT_DELTAS( mat, args[1], args[2], args[3] );
-		if( NEAR_ZERO( args[7], VDIVIDE_TOL ) )  {
+		if ( NEAR_ZERO( args[7], VDIVIDE_TOL ) )  {
 			/* Nearly zero, signal error */
 			fprintf(stderr, "Orient scale arg is near zero ('%s')\n",
 				words[7] );
@@ -378,16 +378,16 @@ multi_words( char *words[], int	nwords )
 		out_mat( mat, stdout );
 		return(0);
 	}
-	if( strcmp( words[0], "ae" ) == 0 )  {
+	if ( strcmp( words[0], "ae" ) == 0 )  {
 		mat_t	mat;
 		fastf_t	az, el;
 
-		if( nwords < 3 )  return(-1);
+		if ( nwords < 3 )  return(-1);
 		/* Expects azimuth, elev, optional twist */
 		az = atof(words[1]);
 		el = atof(words[2]);
 #if 0
-		if( nwords == 3 )
+		if ( nwords == 3 )
 			twist = 0.0;
 		else
 			twist = atof(words[3]);
@@ -398,13 +398,13 @@ multi_words( char *words[], int	nwords )
 		out_mat( mat, stdout );
 		return(0);
 	}
-	if( strcmp( words[0], "arb_rot_pt" ) == 0 )  {
+	if ( strcmp( words[0], "arb_rot_pt" ) == 0 )  {
 		mat_t	mat;
 		point_t	pt1, pt2;
 		vect_t	dir;
 		fastf_t	ang;
 
-		if( nwords < 1+3+3+1 )  return(-1);
+		if ( nwords < 1+3+3+1 )  return(-1);
 		/* Expects point1, point2, angle */
 		VSET( pt1, atof(words[1]), atof(words[2]), atof(words[3]) );
 		VSET( pt2, atof(words[4]), atof(words[5]), atof(words[6]) );
@@ -416,13 +416,13 @@ multi_words( char *words[], int	nwords )
 		out_mat( mat, stdout );
 		return(0);
 	}
-	if( strcmp( words[0], "arb_rot_dir" ) == 0 )  {
+	if ( strcmp( words[0], "arb_rot_dir" ) == 0 )  {
 		mat_t	mat;
 		point_t	pt1;
 		vect_t	dir;
 		fastf_t	ang;
 
-		if( nwords < 1+3+3+1 )  return(-1);
+		if ( nwords < 1+3+3+1 )  return(-1);
 		/* Expects point1, dir, angle */
 		VSET( pt1, atof(words[1]), atof(words[2]), atof(words[3]) );
 		VSET( dir, atof(words[4]), atof(words[5]), atof(words[6]) );
@@ -433,12 +433,12 @@ multi_words( char *words[], int	nwords )
 		out_mat( mat, stdout );
 		return(0);
 	}
-	if( strcmp( words[0], "quat" ) == 0 )  {
+	if ( strcmp( words[0], "quat" ) == 0 )  {
 		mat_t	mat;
 		quat_t	quat;
 
 		/* Usage: quat x, y, z, w */
-		if( nwords < 5 ) return -1;
+		if ( nwords < 5 ) return -1;
 		QSET( quat, atof(words[1]), atof(words[2]),
 			atof(words[3]), atof(words[4]) );
 
@@ -446,7 +446,7 @@ multi_words( char *words[], int	nwords )
 		out_mat( mat, stdout);
 		return 0;
 	}
-	if( strcmp( words[0], "fromto" ) == 0 )  {
+	if ( strcmp( words[0], "fromto" ) == 0 )  {
 		mat_t	mat;
 		point_t	cur;
 		point_t	next;
@@ -454,18 +454,18 @@ multi_words( char *words[], int	nwords )
 		vect_t	to;
 
 		/* Usage: fromto +Z cur_xyz next_xyz */
-		if( nwords < 8 )  return -1;
-		if( strcmp( words[1], "+X" ) == 0 )  {
+		if ( nwords < 8 )  return -1;
+		if ( strcmp( words[1], "+X" ) == 0 )  {
 			VSET( from, 1, 0, 0 );
-		} else if( strcmp( words[1], "-X" ) == 0 )  {
+		} else if ( strcmp( words[1], "-X" ) == 0 )  {
 			VSET( from, -1, 0, 0 );
-		} else if( strcmp( words[1], "+Y" ) == 0 )  {
+		} else if ( strcmp( words[1], "+Y" ) == 0 )  {
 			VSET( from, 0, 1, 0 );
-		} else if( strcmp( words[1], "-Y" ) == 0 )  {
+		} else if ( strcmp( words[1], "-Y" ) == 0 )  {
 			VSET( from, 0, -1, 0 );
-		} else if( strcmp( words[1], "+Z" ) == 0 )  {
+		} else if ( strcmp( words[1], "+Z" ) == 0 )  {
 			VSET( from, 0, 0, 1 );
-		} else if( strcmp( words[1], "-Z" ) == 0 )  {
+		} else if ( strcmp( words[1], "-Z" ) == 0 )  {
 			VSET( from, 0, 0, -1 );
 		} else {
 			fprintf(stderr, "fromto '%s' is not +/-XYZ\n", words[1]);
@@ -481,7 +481,7 @@ multi_words( char *words[], int	nwords )
 			vect_t	got;
 
 			MAT4X3VEC( got, mat, from );
-			if( VDOT( got, to ) < 0.9 )  {
+			if ( VDOT( got, to ) < 0.9 )  {
 				bu_log("\ntabsub ERROR: At t=%s, bn_mat_fromto failed!\n", chanwords[0] );
 				VPRINT("\tfrom", from);
 				VPRINT("\tto", to);
@@ -511,7 +511,7 @@ str2chan_index( char *s )
 	int	chan;
 
 	chan = atoi( s );
-	if( chan < 0 || chan > nwords-2 )  {
+	if ( chan < 0 || chan > nwords-2 )  {
 		fprintf(stderr, "Line %d:  chan %d out of range 0..%d\n", line, chan, nwords-2 );
 		return(0);		/* Flag [0]:  time channel */
 	}

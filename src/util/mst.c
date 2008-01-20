@@ -467,7 +467,7 @@ int get_edge (FILE *fp, long int *index, char **label, double *w, int numeric)
     struct bu_vls	buf;
 
     bu_vls_init_if_uninit(&buf);
-    for ( ; ; )
+    for (;;)
     {
 	++line_nm;
 	bu_vls_trunc(&buf, 0);

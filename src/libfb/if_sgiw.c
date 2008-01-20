@@ -73,7 +73,7 @@ union gepipe {
 #define GE	0x60001000
 #endif
 #define GEP_END(_p)	((union gepipe *)(((char *)(_p))-0x1000))	/* 68000 efficient 0xFd4000 */
-#define CMOV2S(_p,_x,_y) { \
+#define CMOV2S(_p, _x, _y) { \
 		(_p)->l = 0x0008001A; \
 		(_p)->s = 0x0912; \
 		(_p)->s = (_x); \
@@ -161,22 +161,22 @@ register RGBpixel	*pixelp;
 
 	/* Find best fit in existing table */
 	best = 0;
-	for( i = 0, sp = rgb_table; i < rgb_ct; sp++, i++ ) {
+	for ( i = 0, sp = rgb_table; i < rgb_ct; sp++, i++ ) {
 		register int	diff;
 		register int	d;
 
 		d = ((int)((*pixelp)[RED])) - ((int)(*sp)[RED]);
-		if( (diff = Abs(d)) >= min_diff )
+		if ( (diff = Abs(d)) >= min_diff )
 			continue;
 		d = ((int)((*pixelp)[GRN])) - ((int)(*sp)[GRN]);
-		if( (diff += Abs(d)) >= min_diff )
+		if ( (diff += Abs(d)) >= min_diff )
 			continue;
 		d = ((int)((*pixelp)[BLU])) - ((int)(*sp)[BLU]);
-		if( (diff += Abs(d)) >= min_diff )
+		if ( (diff += Abs(d)) >= min_diff )
 			continue;
 
 		/* [i]'th element is the best so far... */
-		if( (min_diff = diff) <= 2 )  {
+		if ( (min_diff = diff) <= 2 )  {
 			/* Great match */
 			return( (Colorindex)i );
 		}
@@ -184,11 +184,11 @@ register RGBpixel	*pixelp;
 	}
 
 	/* Match found to within tolerance? */
-	if( min_diff < MAP_TOL )
+	if ( min_diff < MAP_TOL )
 		return	(Colorindex)best;
 
 	/* Allocate new entry in color table if there's room.		*/
-	if( i < MAP_SIZE )  {
+	if ( i < MAP_SIZE )  {
 		COPYRGB( rgb_table[rgb_ct], *pixelp);
 		mapcolor(	(Colorindex)rgb_ct,
 				(short) (*pixelp)[RED],
@@ -199,7 +199,7 @@ register RGBpixel	*pixelp;
 	}
 
 	/* No room to add, use best we found */
-	if( !groused )  {
+	if ( !groused )  {
 		groused = 1;
 		fb_log( "Color table now full, will use closest matches.\n" );
 	}
@@ -220,10 +220,11 @@ char	*file;
 int	width, height;
 {	register Colorindex i;
 
-	if( file != NULL )  {
+	if ( file != NULL )  {
 		register char *cp;
 		/* "/dev/sgiw###" gives optional mode */
-		for( cp = file; *cp != NULL && !isdigit(*cp); cp++ ) ;
+		for ( cp = file; *cp != NULL && !isdigit(*cp); cp++ )
+		    ;
 		sscanf( cp, "%d", &ifp->if_mode );
 	}
 	if ( width > ifp->if_max_width - 2 * MARGIN)
@@ -235,12 +236,12 @@ int	width, height;
 	ifp->if_width = width;
 	ifp->if_height = height;
 
-	if( ismex() )
+	if ( ismex() )
 		{
 #if 0
 		prefposition( WIN_L, WIN_R, WIN_B, WIN_T );
 		foreground();
-		if( (ifp->if_fd = winopen( "Frame buffer" )) == -1 )
+		if ( (ifp->if_fd = winopen( "Frame buffer" )) == -1 )
 			{
 			fb_log( "No more graphics ports available.\n" );
 			return	-1;
@@ -262,10 +263,10 @@ int	width, height;
 	SET( 7, 255, 255, 255 );	/* WHITE */
 
 	/* Mode 0 builds color map on the fly */
-	if( ifp->if_mode )
+	if ( ifp->if_mode )
 		{
 		/* Mode 1 uses fixed color map */
-		for( i = 0; i < MAP_SIZE-MAP_RESERVED; i++ )
+		for ( i = 0; i < MAP_SIZE-MAP_RESERVED; i++ )
 			mapcolor( 	i+MAP_RESERVED,
 					(short)((i % 10) + 1) * 25,
 					(short)(((i / 10) % 10) + 1) * 25,
@@ -288,7 +289,7 @@ HIDDEN int
 sgw_dclose( ifp )
 FBIO	*ifp;
 {
-	if( ismex() )
+	if ( ismex() )
 		; /* winclose( ifp->if_fd ); */
 	else
 		{
@@ -338,13 +339,13 @@ int	count;
 	register int i;
 
 	x *= xzoom;
-	while( count > 0 )
+	while ( count > 0 )
 		{	register short	ypos = y*yzoom;
 		if ( count >= ifp->if_width )
 			scan_count = ifp->if_width;
 		else
 			scan_count = count;
-		if( (xzoom == 1 && yzoom == 1) || special_zoom )
+		if ( (xzoom == 1 && yzoom == 1) || special_zoom )
 			{ /* No pixel replication, so read scan of pixels. */
 			CMOV2S( hole, x, ypos );
 			readpixels( scan_count, colors );
@@ -352,16 +353,16 @@ int	count;
 		else
 			{ /* We are sampling from rectangles
 				(replicated pixels). */
-			for( i = 0; i < scan_count; i++ )
+			for ( i = 0; i < scan_count; i++ )
 				{
 				CMOV2S( hole, x, ypos );
 				x += xzoom;
 				readpixels( 1, &colors[i] );
 				}
 			}
-		for( i = 0; i < scan_count; i++, pixelp++)
+		for ( i = 0; i < scan_count; i++, pixelp++)
 			{
-			if( ifp->if_mode )
+			if ( ifp->if_mode )
 				{
 				colors[i] -= MAP_RESERVED;
 				(*pixelp)[RED] =   (colors[i] % 10 + 1) * 25;
@@ -373,7 +374,7 @@ int	count;
 			else
 				{
 				register int	ci = colors[i];
-				if( ci < rgb_ct )
+				if ( ci < rgb_ct )
 					{
 					COPYRGB( *pixelp, rgb_table[ci]);
 					}
@@ -400,27 +401,27 @@ int	count;
 
 	writemask( 0x3FF );
 	x *= xzoom;
-	while( count > 0 )
+	while ( count > 0 )
 		{	register short	ypos = y*yzoom;
 		if ( count >= ifp->if_width )
 			scan_count = ifp->if_width;
 		else
 			scan_count = count;
-		if( (xzoom == 1 && yzoom == 1) || special_zoom )
+		if ( (xzoom == 1 && yzoom == 1) || special_zoom )
 			{	register Colorindex	colori;
 			CMOV2S( hole, x, ypos );
-			for( i = scan_count; i > 0; )
+			for ( i = scan_count; i > 0; )
 				{	register int	chunk;
-				if( i <= 127 )
+				if ( i <= 127 )
 					chunk = i;
 				else
 					chunk = 127;
 				hole->s = (chunk<<8)|8; /* GEpassthru */
 				hole->s = 0xD;		 /* FBCdrawpixels */
 				i -= chunk;
-				for( ; chunk > 0; chunk--, pixelp++ )
+				for (; chunk > 0; chunk--, pixelp++ )
 					{
-					if( ifp->if_mode )
+					if ( ifp->if_mode )
 						{
 						colori =  MAP_RESERVED +
 							((*pixelp)[RED]/26);
@@ -435,12 +436,12 @@ int	count;
 			GEP_END(hole)->s = (0xFF<<8)|8;	/* im_last_passthru(0) */
 			}
 		else
-			for( i = 0; i < scan_count; i++, pixelp++ )
+			for ( i = 0; i < scan_count; i++, pixelp++ )
 				{	register Colorindex	col;
 					register Coord	r = x + xzoom - 1,
 							t = ypos + yzoom - 1;
 				CMOV2S( hole, x, ypos );
-				if( ifp->if_mode )
+				if ( ifp->if_mode )
 					{
 					col =  MAP_RESERVED +
 						((*pixelp)[RED]/26);
@@ -484,7 +485,7 @@ register ColorMap	*cmp;
 	register int i;
 
 	/* Just parrot back the stored colormap */
-	for( i = 0; i < 255; i++)
+	for ( i = 0; i < 255; i++)
 	{
 		cmp->cm_red[i] = _sgw_cmap.cm_red[i]<<8;
 		cmp->cm_green[i] = _sgw_cmap.cm_green[i]<<8;
@@ -501,7 +502,7 @@ register ColorMap	*cmp;
 	register int i;
 
 	if ( cmp == COLORMAP_NULL)  {
-		for( i = 0; i < 255; i++)  {
+		for ( i = 0; i < 255; i++)  {
 			_sgw_cmap.cm_red[i] = i;
 			_sgw_cmap.cm_green[i] = i;
 			_sgw_cmap.cm_blue[i] = i;
@@ -510,7 +511,7 @@ register ColorMap	*cmp;
 		return	0;
 	}
 
-	for(i = 0; i < 255; i++)  {
+	for (i = 0; i < 255; i++)  {
 		_sgw_cmap.cm_red[i] = cmp -> cm_red[i]>>8;
 		_sgw_cmap.cm_green[i] = cmp-> cm_green[i]>>8;
 		_sgw_cmap.cm_blue[i] = cmp-> cm_blue[i]>>8;
@@ -525,9 +526,9 @@ sgw_zoom_set( ifp, x, y )
 FBIO	*ifp;
 int	x, y;
 	{
-	if( x == 0 )  x = 1;
-	if( y == 0 )  y = 1;
-	if( x < 0 || y < 0 )
+	if ( x == 0 )  x = 1;
+	if ( y == 0 )  y = 1;
+	if ( x < 0 || y < 0 )
 		{
 		special_zoom = 1;
 		x = y = 1;
@@ -549,20 +550,20 @@ int		xorig, yorig;
 		register int	xbytes;
 		Cursor		newcursor;
 	/* Check size of cursor.					*/
-	if( xbits < 0 )
+	if ( xbits < 0 )
 		return	-1;
-	if( xbits > 16 )
+	if ( xbits > 16 )
 		xbits = 16;
-	if( ybits < 0 )
+	if ( ybits < 0 )
 		return	-1;
-	if( ybits > 16 )
+	if ( ybits > 16 )
 		ybits = 16;
-	if( (xbytes = xbits / 8) * 8 != xbits )
+	if ( (xbytes = xbits / 8) * 8 != xbits )
 		xbytes++;
-	for( y = 0; y < ybits; y++ )
+	for ( y = 0; y < ybits; y++ )
 		{
 		newcursor[y] = bits[(y*xbytes)+0] << 8 & 0xFF00;
-		if( xbytes == 2 )
+		if ( xbytes == 2 )
 			newcursor[y] |= bits[(y*xbytes)+1] & 0x00FF;
 		}
 	defcursor( 1, newcursor );
@@ -577,7 +578,7 @@ int	mode;
 int	x, y;
 	{	static Colorindex	cursor_color = YELLOW;
 			/* Color and bitmask ignored under MEX.	*/
-	if( ! mode )
+	if ( ! mode )
 		{
 		cursoff();
 		setcursor( 0, 1, 0x2000 );

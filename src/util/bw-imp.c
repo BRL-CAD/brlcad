@@ -114,7 +114,7 @@ get_args(int argc, register char **argv)
 	register int	c;
 
 	while ( (c = bu_getopt( argc, argv, "hDs:n:w:t:X:Y:" )) != EOF )  {
-		switch( c )  {
+		switch ( c )  {
 		case 'h':
 			/* high-res */
 			height = width = 1024;
@@ -148,14 +148,14 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( bu_optind >= argc )  {
-		if( isatty(fileno(stdin)) )
+	if ( bu_optind >= argc )  {
+		if ( isatty(fileno(stdin)) )
 			return(false);
 		file_name = "-";
 		infp = stdin;
 	} else {
 		file_name = argv[bu_optind];
-		if( (infp = fopen(file_name, "r")) == NULL )  {
+		if ( (infp = fopen(file_name, "r")) == NULL )  {
 			(void)fprintf( stderr,
 				"bw-imp: cannot open \"%s\" for reading\n",
 				file_name );
@@ -181,19 +181,19 @@ main(int argc, char **argv)
 		return 1;
 	}
 
-	if( thresh >= 0 )  {
+	if ( thresh >= 0 )  {
 		/* Each pixel in gives one bit out, depending on thresh */
 		im_mag = 1;
 	} else {
-		if( width > 512 )  im_mag = 2;
-		else if( width > 256 )  im_mag = 4;
-		else if( width > 128 )  im_mag = 8;
+		if ( width > 512 )  im_mag = 2;
+		else if ( width > 256 )  im_mag = 4;
+		else if ( width > 128 )  im_mag = 8;
 		else im_mag = 16;
 	}
 	im_width  = (width * im_mag) & (~31);
 	im_wpatches = (im_width+31) / 32;
 	im_hpatches = ((height * im_mag)+31) / 32;
-	if( im_wpatches*32 > 2560 )  {
+	if ( im_wpatches*32 > 2560 )  {
 		fprintf(stderr, "bw-imp:  output %d too wide, limit is 2560\n",
 			im_wpatches*32);
 		return(1);
@@ -202,8 +202,8 @@ main(int argc, char **argv)
 	if ( !im_header() )
 		return 1;
 
-	for( y = 0; y < height; y += 32/im_mag )  {
-		if( feof(infp) )
+	for ( y = 0; y < height; y += 32/im_mag )  {
+		if ( feof(infp) )
 			return 1;
 		im_write(y);
 	}
@@ -255,7 +255,7 @@ im_write(int y)
 		int x;
 
 		/* Obtain a single line of 8-bit pixels */
-		if( fread( line, 1, width, infp ) != width )  {
+		if ( fread( line, 1, width, infp ) != width )  {
 			memset((void *)line, 0, width);
 		}
 
@@ -272,9 +272,9 @@ im_write(int y)
 					    line[width-1-((x + x1) / im_mag)];
 					register int mx;
 
-					if( im_mag <= 1 )  {
+					if ( im_mag <= 1 )  {
 						b <<= 1;
-						if( level < thresh )
+						if ( level < thresh )
 							b |= 1L;
 						continue;
 					}
@@ -286,11 +286,11 @@ im_write(int y)
 						pgx = x + x1 + mx;
 						pgy = y + y1 + my;
 						/* ameliorate grid regularity */
-						if( pattern == halftone &&
+						if ( pattern == halftone &&
 						    (pgy % 16) >= 8 )
 							pgx += 4;
 
-						if( level < pattern[pgx % 8][pgy % 8] )
+						if ( level < pattern[pgx % 8][pgy % 8] )
 							b |= 1L;
 					}
 				}

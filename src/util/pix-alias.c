@@ -91,7 +91,7 @@ void doit(void)
 		bu_exit (-2, NULL);
 	}
 	/* read in the image (reverse the order of the scanlines) */
-	for (n=y-1 ; n >= 0 ; --n)
+	for (n=y-1; n >= 0; --n)
 		if (fread(&image[n*x*3], x*3, 1, stdin) != 1) {
 			(void) fprintf(stderr, "Error reading image at scanline %u\n", n);
 			bu_exit (-2, NULL);
@@ -119,7 +119,7 @@ void doit(void)
 	(void) putchar(0);
 	(void) putchar(24);
 
-	for (idx=0 ; idx < bufsize ; ) {
+	for (idx=0; idx < bufsize; ) {
 		cpix = idx; cnt=0;
 		while (cnt < 0x0ff && idx < bufsize-2 &&
 			image[idx] == image[cpix] &&
@@ -156,7 +156,7 @@ main(int ac, char **av)
 	 */
 	optlen = strlen(options);
 
-	for (c=0 ; c < optlen ; optflags[c++] = '\0');
+	for (c=0; c < optlen; optflags[c++] = '\0');
 
 	/* Turn off bu_getopt's error messages */
 	bu_opterr = 0;

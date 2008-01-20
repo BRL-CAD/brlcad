@@ -40,7 +40,7 @@
 void
 plotInit()
 	{	int	x1, y1, z1, x2, y2, z2;
-	if( plotfp == NULL )
+	if ( plotfp == NULL )
 		return;
 	x1 = (int) rtip->mdl_min[X] - 1;
 	y1 = (int) rtip->mdl_min[Y] - 1;
@@ -56,7 +56,7 @@ void
 plotGrid( r_pt )
 register fastf_t	*r_pt;
 	{
-	if( plotfp == NULL )
+	if ( plotfp == NULL )
 		return;
 	pl_color( plotfp, R_GRID, G_GRID, B_GRID );
 	pl_3point( plotfp, (int) r_pt[X], (int) r_pt[Y], (int) r_pt[Z] );
@@ -67,7 +67,7 @@ void
 plotRay( rayp )
 register struct xray	*rayp;
 	{	int	endpoint[3];
-	if( plotfp == NULL )
+	if ( plotfp == NULL )
 		return;
 	VJOIN1( endpoint, rayp->r_pt, cellsz, rayp->r_dir );
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
@@ -91,11 +91,11 @@ register struct xray	*rayp;
 void
 plotPartition( ihitp, ohitp, rayp, regp )
 struct hit		*ihitp;
-register struct hit	*ohitp ;
+register struct hit	*ohitp;
 register struct xray	*rayp;
 struct region		*regp;
 	{
-	if( plotfp == NULL )
+	if ( plotfp == NULL )
 		return;
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
 	pl_3line(	plotfp,

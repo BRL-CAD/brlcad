@@ -155,7 +155,7 @@ tcl_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
 	}
 #endif
 
-	for (cpu=0 ; cpu < MAX_PSW ; cpu++) {
+	for (cpu=0; cpu < MAX_PSW; cpu++) {
 		tcl_sp->tcl_interp[cpu] = Tcl_CreateInterp();
 		Tcl_Init(tcl_sp->tcl_interp[cpu]);
 	}

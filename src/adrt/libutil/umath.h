@@ -59,7 +59,7 @@
 #define MATH_VEC_MAG(_a, _b) { \
 	_a = sqrt(_b.v[0]*_b.v[0] + _b.v[1]*_b.v[1] + _b.v[2]*_b.v[2]); }
 
-#define MATH_SWAP(_a,_b) { \
+#define MATH_SWAP(_a, _b) { \
 	tfloat	_c; \
 	_c = _b; \
 	_b = _a; \

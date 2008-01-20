@@ -66,15 +66,15 @@ main(int argc, char **argv)
 	static int i;
 	double factor = 1.0;
 
-	if( argc != 3 )  {
+	if ( argc != 3 )  {
 		printf("Usage: conv-vg2g file.vg file.g\n");
 		return 11;
 	}
-	if( (ifd = open( argv[1], 0 )) < 0 )  {
+	if ( (ifd = open( argv[1], 0 )) < 0 )  {
 		perror(argv[1]);
 		return 12;
 	}
-	if( (ofd = creat(argv[2], 0664)) < 0 )  {
+	if ( (ofd = creat(argv[2], 0664)) < 0 )  {
 		perror(argv[2]);
 		return 13;
 	}
@@ -86,9 +86,9 @@ main(int argc, char **argv)
 	    return 14;
 	}
 
-	if(rec.u_id == ID_IDENT) {
+	if (rec.u_id == ID_IDENT) {
 		/* have an mged type file - check its version */
-		if( strcmp(rec.i.i_version, ID_VERSION) == 0 ) {
+		if ( strcmp(rec.i.i_version, ID_VERSION) == 0 ) {
 			(void)printf("%s: NO conversion necessary\n", argv[1]);
 			(void)putchar(7);
 			return 0;
@@ -121,7 +121,7 @@ main(int argc, char **argv)
 		rec.i.i_id = ID_IDENT;
 		strncpy( rec.i.i_version, ID_VERSION, 7 );
 		rec.i.i_units = 100;
-		while( rec.i.i_units < ID_MM_UNIT || rec.i.i_units > ID_FT_UNIT )  {
+		while ( rec.i.i_units < ID_MM_UNIT || rec.i.i_units > ID_FT_UNIT )  {
 			printf("Units: 1=mm, 2=cm, 3=meters, 4=inches, 5=feet\nUnits? ");
 			bu_fgets( line, sizeof(line), stdin );
 			sscanf( line, "%d", &units );
@@ -140,7 +140,7 @@ main(int argc, char **argv)
 	count = 1;
 
 	/* find the units scale factor */
-	switch( units ) {
+	switch ( units ) {
 
 	case ID_MM_UNIT:
 		factor = 1.0;			/* from MM to MM */
@@ -166,9 +166,9 @@ main(int argc, char **argv)
 	}
 
 top:
-	while( read( ifd, &rec, sizeof rec ) == sizeof rec )  {
+	while ( read( ifd, &rec, sizeof rec ) == sizeof rec )  {
 after_read:
-		switch( rec.u_id )  {
+		switch ( rec.u_id )  {
 
 		case ID_IDENT:
 			printf("Unexpected ID record encountered in input\n");
@@ -177,13 +177,13 @@ after_read:
 		case ID_FREE:
 			goto top;
 		case ID_SOLID:
-			if( rec.s.s_name[0] == '\0' )
+			if ( rec.s.s_name[0] == '\0' )
 				goto top;
-			for(i=0; i<24; i++)
+			for (i=0; i<24; i++)
 				rec.s.s_values[i] *= factor;
 			break;
 		case ID_COMB:
-			if( rec.c.c_name[0] == '\0' )  {
+			if ( rec.c.c_name[0] == '\0' )  {
 				/* This is an old-style flag for a deleted combination */
 				/* Skip any folowing member records */
 				do  {
@@ -191,16 +191,16 @@ after_read:
 					perror("READ ERROR");
 					break;
 				    }
-				} while( rec.u_id == ID_MEMB );
+				} while ( rec.u_id == ID_MEMB );
 				goto after_read;
 			}
 			break;
 		case ID_ARS_B:
-			for(i=0; i<24; i++)
+			for (i=0; i<24; i++)
 				rec.b.b_values[i] *= factor;
 			break;
 		case ID_ARS_A:
-			if( rec.a.a_name[0] == '\0' )  {
+			if ( rec.a.a_name[0] == '\0' )  {
 				/* Skip deleted junk */
 				lseek( ifd, (off_t)(rec.a.a_totlen) *
 					(long)(sizeof rec), 1 );
@@ -241,9 +241,9 @@ mat_pr(char *title, float *mp)
 	register int i;
 
 	printf("MATRIX %s:\n  ", title);
-	for(i=0; i<16; i++)  {
+	for (i=0; i<16; i++)  {
 		printf(" %8.3f", mp[i]);
-		if( (i&3) == 3 ) printf("\n  ");
+		if ( (i&3) == 3 ) printf("\n  ");
 	}
 }
 

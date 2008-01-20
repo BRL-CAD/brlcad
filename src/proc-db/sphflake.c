@@ -108,15 +108,15 @@ struct wmember *wmemberArray;
 
 /* the vector directions, in which the flakes will be drawn */
 /* theta, phi */
-int dir[9][2] = {  {0,-90},
-		   {60,-90},
-		   {120,-90},
-		   {180,-90},
-		   {240,-90},
-		   {300,-90},
-		   {120,-30},
-		   {240,-30},
-		   {360,-30} };
+int dir[9][2] = {  {0, -90},
+		   {60, -90},
+		   {120, -90},
+		   {180, -90},
+		   {240, -90},
+		   {300, -90},
+		   {120, -30},
+		   {240, -30},
+		   {360, -30} };
 
 /****** Function Prototypes ******/
 BU_EXTERN(void initializeInfo, (params_t *p, int inter, char *name, int depth));

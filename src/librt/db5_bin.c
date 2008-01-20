@@ -356,14 +356,14 @@ rt_binunif_export5( struct bu_external		*ep,
 	int				gotten;
 
 	RT_CK_DB_INTERNAL(ip);
-	if( ip->idb_minor_type != minor_type ) {
+	if ( ip->idb_minor_type != minor_type ) {
 		bu_log("ip->idb_minor_type(%d) != minor_type(%d)\n",
 		       ip->idb_minor_type, minor_type );
 		return -1;
 	}
 	bip = (struct rt_binunif_internal *)ip->idb_ptr;
 	RT_CK_BINUNIF(bip);
-	if( bip->type != minor_type ) {
+	if ( bip->type != minor_type ) {
 		bu_log("bip->type(%d) != minor_type(%d)\n",
 		       bip->type, minor_type );
 		return -1;
@@ -545,7 +545,7 @@ rt_retrieve_binunif(struct rt_db_internal *intern,
 	/*
 	 *	Find the guy we're told to write
 	 */
-	if( (dp = db_lookup( dbip, name, LOOKUP_NOISY)) == DIR_NULL )
+	if ( (dp = db_lookup( dbip, name, LOOKUP_NOISY)) == DIR_NULL )
 		return -1;
 
 	RT_INIT_DB_INTERNAL(intern);
@@ -658,18 +658,18 @@ rt_binunif_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const
 	Tcl_DStringInit( &ds );
 	bu_vls_init( &vls );
 
-	if( attr == (char *)NULL )
+	if ( attr == (char *)NULL )
 	{
 		/* export the object to get machine independent form */
-		if( rt_binunif_export5( &ext, intern, 1.0, NULL, NULL, intern->idb_minor_type ) ) {
+		if ( rt_binunif_export5( &ext, intern, 1.0, NULL, NULL, intern->idb_minor_type ) ) {
 			bu_vls_strcpy( &vls, "Failed to export binary object!!\n" );
 			status = TCL_ERROR;
 		} else {
 			bu_vls_strcpy( &vls, "binunif" );
 			bu_vls_printf( &vls, " T %d D {", bip->type );
 			c = ext.ext_buf;
-			for( i=0 ; i<ext.ext_nbytes ; i++, c++ ) {
-				if( i%40 == 0 ) bu_vls_strcat( &vls, "\n" );
+			for ( i=0; i<ext.ext_nbytes; i++, c++ ) {
+				if ( i%40 == 0 ) bu_vls_strcat( &vls, "\n" );
 				bu_vls_printf( &vls, "%2.2x", *c );
 			}
 			bu_vls_strcat( &vls, "}" );
@@ -677,18 +677,18 @@ rt_binunif_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const
 		}
 
 	} else {
-		if( !strcmp( attr, "T" ) ) {
+		if ( !strcmp( attr, "T" ) ) {
 			bu_vls_printf( &vls, "%d", bip->type );
-		} else if( !strcmp( attr, "D" ) ) {
+		} else if ( !strcmp( attr, "D" ) ) {
 			/* export the object to get machine independent form */
-			if( rt_binunif_export5( &ext, intern, 1.0, NULL, NULL,
+			if ( rt_binunif_export5( &ext, intern, 1.0, NULL, NULL,
 						intern->idb_minor_type ) ) {
 				bu_vls_strcpy( &vls, "Failed to export binary object!!\n" );
 				status = TCL_ERROR;
 			} else {
 				c = ext.ext_buf;
-				for( i=0 ; i<ext.ext_nbytes ; i++, c++ ) {
-					if( i != 0 && i%40 == 0 ) bu_vls_strcat( &vls, "\n" );
+				for ( i=0; i<ext.ext_nbytes; i++, c++ ) {
+					if ( i != 0 && i%40 == 0 ) bu_vls_strcat( &vls, "\n" );
 					bu_vls_printf( &vls, "%2.2x", *c );
 				}
 				bu_free_external( &ext );
@@ -717,32 +717,32 @@ rt_binunif_tcladjust( Tcl_Interp *interp, struct rt_db_internal *intern, int arg
 	bip = (struct rt_binunif_internal *)intern->idb_ptr;
 	RT_CHECK_BINUNIF( bip );
 
-	while( argc >= 2 ) {
-		if( !strcmp( argv[0], "T" ) ) {
+	while ( argc >= 2 ) {
+		if ( !strcmp( argv[0], "T" ) ) {
 			int new_type=-1;
 			char *c;
 			int type_is_digit=1;
 
 			c = argv[1];
-			while( *c != '\0' ) {
-				if( !isdigit( *c ) ) {
+			while ( *c != '\0' ) {
+				if ( !isdigit( *c ) ) {
 					type_is_digit = 0;
 					break;
 				}
 				c++;
 			}
 
-			if( type_is_digit ) {
+			if ( type_is_digit ) {
 				new_type = atoi( argv[1] );
 			} else {
-				if( argv[1][1] != '\0' ) {
+				if ( argv[1][1] != '\0' ) {
 					Tcl_AppendResult( interp, "Illegal type: ",
 					   argv[1],
 					   ", must be 'f', 'd', 'c', 'i', 'l', 'C', 'S', 'I', or 'L'",
 					   (char *)NULL );
 					return TCL_ERROR;
 				}
-				switch( argv[1][0] ) {
+				switch ( argv[1][0] ) {
 					case 'f':
 						new_type = 2;
 						break;
@@ -775,7 +775,7 @@ rt_binunif_tcladjust( Tcl_Interp *interp, struct rt_db_internal *intern, int arg
 						break;
 				}
 			}
-			if( new_type < 0 ||
+			if ( new_type < 0 ||
 			    new_type > DB5_MINORTYPE_BINU_64BITINT ||
 			    binu_types[new_type] == NULL ) {
 				/* Illegal value for type */
@@ -783,7 +783,7 @@ rt_binunif_tcladjust( Tcl_Interp *interp, struct rt_db_internal *intern, int arg
 						  (char *)NULL );
 				return TCL_ERROR;
 			} else {
-				if( bip->u.uint8 ) {
+				if ( bip->u.uint8 ) {
 					int new_count;
 					int old_byte_count, new_byte_count;
 					int remainder;
@@ -791,19 +791,19 @@ rt_binunif_tcladjust( Tcl_Interp *interp, struct rt_db_internal *intern, int arg
 					old_byte_count = bip->count * binu_sizes[bip->type];
 					new_count = old_byte_count / binu_sizes[new_type];
 					remainder = old_byte_count % binu_sizes[new_type];
-					if( remainder ) {
+					if ( remainder ) {
 						new_count++;
 						new_byte_count = new_count * binu_sizes[new_type];
 					} else {
 						new_byte_count = old_byte_count;
 					}
 
-					if( new_byte_count != old_byte_count ) {
+					if ( new_byte_count != old_byte_count ) {
 						bip->u.uint8 = bu_realloc( bip->u.uint8,
 									   new_byte_count,
 									   "new bytes for binunif" );
 						/* zero out the new bytes */
-						for( i=old_byte_count ; i<new_byte_count ; i++ ) {
+						for ( i=old_byte_count; i<new_byte_count; i++ ) {
 							bip->u.uint8[i] = 0;
 						}
 					}
@@ -812,7 +812,7 @@ rt_binunif_tcladjust( Tcl_Interp *interp, struct rt_db_internal *intern, int arg
 				bip->type = new_type;
 				intern->idb_type = new_type;
 			}
-		} else if( !strcmp( argv[0], "D" ) ) {
+		} else if ( !strcmp( argv[0], "D" ) ) {
 			Tcl_Obj *obj, *list, **obj_array;
 			int list_len;
 			unsigned char *buf, *d;
@@ -826,11 +826,11 @@ rt_binunif_tcladjust( Tcl_Interp *interp, struct rt_db_internal *intern, int arg
 			(void)Tcl_ListObjGetElements( interp, list, &list_len, &obj_array );
 
 			hexlen = 0;
-			for( i=0 ; i<list_len ; i++ ) {
+			for ( i=0; i<list_len; i++ ) {
 				hexlen += Tcl_GetCharLength( obj_array[i] );
 			}
 
-			if( hexlen % 2 ) {
+			if ( hexlen % 2 ) {
 				Tcl_AppendResult( interp,
 				    "Hex form of binary data must have an even number of hex digits",
 				    (char *)NULL );
@@ -839,9 +839,9 @@ rt_binunif_tcladjust( Tcl_Interp *interp, struct rt_db_internal *intern, int arg
 
 			buf = (unsigned char *)bu_malloc( hexlen / 2, "tcladjust binary data" );
 			d = buf;
-			for( i=0 ; i<list_len ; i++ ) {
+			for ( i=0; i<list_len; i++ ) {
 				s = Tcl_GetString( obj_array[i] );
-				while( *s ) {
+				while ( *s ) {
 					sscanf( s, "%2x", &h );
 					*d++ = h;
 					s += 2;
@@ -849,7 +849,7 @@ rt_binunif_tcladjust( Tcl_Interp *interp, struct rt_db_internal *intern, int arg
 			}
 			Tcl_DecrRefCount( list );
 
-			if( bip->u.uint8 ) {
+			if ( bip->u.uint8 ) {
 				bu_free( bip->u.uint8, "binary data" );
 			}
 			bip->u.uint8 = buf;

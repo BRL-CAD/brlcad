@@ -68,11 +68,11 @@
 #if FLIPPED_NORMALS_BUG
 #define Check_Iflip( _pp, _normal, _rdir, _stp )\
 	{ fastf_t	f = Dot( _rdir, _normal );\
-	if( f >= 0.0 )\
+	if ( f >= 0.0 )\
 		{\
-		if( ! _pp->pt_inflip && (RT_G_DEBUG&DEBUG_NORML) )\
+		if ( ! _pp->pt_inflip && (RT_G_DEBUG&DEBUG_NORML) )\
 			{\
-			V_Print( "Fixed flipped entry normal, was",\
+			V_Print( "Fixed flipped entry normal, was", \
 				_normal, bu_log );\
 			bu_log( "Primitive type %d\n", _stp->st_id );\
 			}\
@@ -86,11 +86,11 @@
 #if FLIPPED_NORMALS_BUG
 #define Check_Oflip( _pp, _normal, _rdir, _stp )\
 	{	fastf_t	f = Dot( _rdir, _normal );\
-	if( f <= 0.0 )\
+	if ( f <= 0.0 )\
 		{\
-		if( ! _pp->pt_outflip && (RT_G_DEBUG&DEBUG_NORML) )\
+		if ( ! _pp->pt_outflip && (RT_G_DEBUG&DEBUG_NORML) )\
 			{\
-			V_Print( "Fixed flipped exit normal, was",\
+			V_Print( "Fixed flipped exit normal, was", \
 				_normal, bu_log );\
 			bu_log( "Primitive type %d\n", _stp->st_id );\
 			}\
@@ -139,10 +139,10 @@ static struct application ag;	/* global application structure */
 #endif
 #define HL_BITVBITS		(sizeof(bitv_t)*BITSPERBYTE)
 #define HL_BITVMASK(_x)	((_x) == 0 ? 1 : 1L<<(_x)%HL_BITVBITS)
-#define HL_BITVWORD(_x,_y)	hl_bits[_y][(_x)/HL_BITVBITS]
-#define HL_SETBIT(_x,_y)	HL_BITVWORD(_x,_y) |= HL_BITVMASK(_x)
-#define HL_CLRBIT(_x,_y)	HL_BITVWORD(_x,_y) &= ~HL_BITVMASK(_x)
-#define HL_TSTBIT(_x,_y)	(HL_BITVWORD(_x,_y) & HL_BITVMASK(_x))
+#define HL_BITVWORD(_x, _y)	hl_bits[_y][(_x)/HL_BITVBITS]
+#define HL_SETBIT(_x, _y)	HL_BITVWORD(_x, _y) |= HL_BITVMASK(_x)
+#define HL_CLRBIT(_x, _y)	HL_BITVWORD(_x, _y) &= ~HL_BITVMASK(_x)
+#define HL_TSTBIT(_x, _y)	(HL_BITVWORD(_x, _y) & HL_BITVMASK(_x))
 #define ZeroPixel(_p)		((_p)[RED]==0 && (_p)[GRN]==0 && (_p)[BLU]==0)
 static bitv_t hl_bits[MAX_HL_SIZE][MAX_HL_SIZE/HL_BITVBITS];
 static RGBpixel *hl_normap = NULL;
@@ -167,7 +167,7 @@ static unsigned short *hl_dstmap = NULL;
 
 #define Get_Partition( ap, pp, pt_headp, func )\
 	{	int failure;\
-	for(	pp = pt_headp->pt_forw;\
+	for (	pp = pt_headp->pt_forw;\
 		(failure=PT_EMPTY, pp != pt_headp)\
 	    &&	(failure=PT_OHIT, pp->pt_outhit != (struct hit *) NULL)\
 	    && ((failure=PT_BEHIND, pp->pt_outhit->hit_dist < BEHIND_ME_TOL)\
@@ -181,14 +181,14 @@ static unsigned short *hl_dstmap = NULL;
 		FREE_PT( pp, ap->a_resource );\
 		pp = pt_back;\
 		}\
-	switch( failure )\
+	switch ( failure )\
 		{\
 	case PT_EMPTY :\
 		return	ap->a_miss( ap );\
 	case PT_OHIT :\
-		bu_log( "BUG:%s: Bad partition returned by rt_shootray!\n",\
+		bu_log( "BUG:%s: Bad partition returned by rt_shootray!\n", \
 			func );\
-		bu_log( "\tlevel=%d grid=<%d,%d>\n",\
+		bu_log( "\tlevel=%d grid=<%d,%d>\n", \
 			ap->a_level, ap->a_x, ap->a_y );\
 		return	ap->a_miss( ap );\
 	case PT_BEHIND :\
@@ -239,9 +239,9 @@ void render_Scan(int cpu, genptr_t arg);
 static void
 getCellSize(int gsize)
 {
-	if( save_view_flag )
+	if ( save_view_flag )
 		{ /* Saved view from GED, match view size. */
-		if( rel_perspective != 0.0 )
+		if ( rel_perspective != 0.0 )
 			/* Animation sequence, perspective gridding. */
 			cell_sz = EYE_SIZE / (fastf_t) gsize;
 		else
@@ -259,7 +259,7 @@ getCellSize(int gsize)
 static int
 getCenter(void)
 {
-	switch( type_grid )
+	switch ( type_grid )
 		{
 	case GT_RPP_CENTERED :
 		modl_cntr[X] = (rt_ip->mdl_max[X] + rt_ip->mdl_min[X]) / 2.0;
@@ -283,20 +283,20 @@ void
 render_Model(int frame)
 {
 	(void) signal( SIGINT, abort_sig );
-	if( npsw > 1 )
+	if ( npsw > 1 )
 		pix_buffered = B_LINE;
 
-	if( aperture_sz < 1 )
+	if ( aperture_sz < 1 )
 		aperture_sz = 1;
 	a_gridsz = anti_aliasing ? grid_sz * aperture_sz : grid_sz;
 
-	if( ir_mapping & IR_OCTREE )
+	if ( ir_mapping & IR_OCTREE )
 		{
 		ag.a_hit = f_IR_Model;
 		ag.a_miss = f_IR_Backgr;
 		}
 	else
-	if( query_region )
+	if ( query_region )
 		{
 		ag.a_hit = f_Region;
 		ag.a_miss = f_R_Miss;
@@ -305,9 +305,9 @@ render_Model(int frame)
 		ag.a_onehit = false;
 		}
 	else
-	if( hiddenln_draw )
+	if ( hiddenln_draw )
 		{
-		if( a_gridsz > MAX_HL_SIZE )
+		if ( a_gridsz > MAX_HL_SIZE )
 			{
 			bu_log( "%s is %dx%d pixels.\n",
 				"Max. size for hidden-line images",
@@ -341,11 +341,11 @@ render_Model(int frame)
 	ag.a_diverge = 0.0;
 
 	/* Compute center of view. */
-	if( ! getCenter() )
+	if ( ! getCenter() )
 		return;
 
 	/* Compute light source positions. */
-	if( ! setup_Lgts( frame ) )
+	if ( ! setup_Lgts( frame ) )
 		{
 		(void) signal( SIGINT, norml_sig );
 		return;
@@ -353,7 +353,7 @@ render_Model(int frame)
 	/* Compute grid vectors of magnitude of one cell.
 		These will be the delta vectors between adjacent cells.
 	 */
-	if( force_cellsz )
+	if ( force_cellsz )
 		a_cellsz = anti_aliasing ? cell_sz / aperture_sz : cell_sz;
 	else
 		{
@@ -361,7 +361,7 @@ render_Model(int frame)
 		a_cellsz = cell_sz;
 		}
 
-	if( RT_G_DEBUG & DEBUG_CELLSIZE )
+	if ( RT_G_DEBUG & DEBUG_CELLSIZE )
 		bu_log( "Cell size is %g mm.\n", cell_sz );
 	Scale2Vec( grid_hor, a_cellsz, grid_dh );
 	Scale2Vec( grid_ver, a_cellsz, grid_dv );
@@ -378,14 +378,14 @@ render_Model(int frame)
 	fatal_error = false;
 
 	/* Get starting and ending scan line number. */
-	if( grid_x_fin >= fb_getwidth( fbiop ) )
+	if ( grid_x_fin >= fb_getwidth( fbiop ) )
 		grid_x_fin = fb_getwidth( fbiop ) - 1;
-	if( grid_y_fin >= fb_getheight( fbiop ) )
+	if ( grid_y_fin >= fb_getheight( fbiop ) )
 		grid_y_fin = fb_getheight( fbiop ) - 1;
 	curr_scan = grid_y_org;
 	last_scan = grid_y_fin;
 
-	if( tty )
+	if ( tty )
 		{
 		rt_prep_timer();
 		(void) sprintf( FRAME_NO_PTR, "%04d", frame_no );
@@ -393,7 +393,7 @@ render_Model(int frame)
 		SCROLL_DL_MOVE();
 		(void) fflush( stdout );
 		}
-	if( ! rt_g.rtg_parallel )
+	if ( ! rt_g.rtg_parallel )
 		{
 		/*
 		 * SERIAL case -- one CPU does all the work.
@@ -425,17 +425,17 @@ render_Scan(int cpu, genptr_t arg)
 
 	resource[cpu].re_cpu = cpu;
 #ifdef RESOURCE_MAGIC
-	if( BU_LIST_UNINITIALIZED( &resource[cpu].re_parthead ) )
+	if ( BU_LIST_UNINITIALIZED( &resource[cpu].re_parthead ) )
 		rt_init_resource( &resource[cpu], cpu, rt_ip );
 #endif
 
-	for( ; ! user_interrupt; )
+	for (; ! user_interrupt; )
 		{
 		bu_semaphore_acquire( RT_SEM_WORKER );
 		com = curr_scan++;
 		bu_semaphore_release( RT_SEM_WORKER );
 
-		if( com > last_scan )
+		if ( com > last_scan )
 			break;
 		a = ag; /* Eeek, look out for those struct copy bugs. */
 		assert( a.a_hit == ag.a_hit );
@@ -449,12 +449,12 @@ render_Scan(int cpu, genptr_t arg)
 		a.a_onehit = false;
 		a.a_resource = &resource[cpu];
 		a.a_purpose = "render_Scan";
-		if( anti_aliasing )
+		if ( anti_aliasing )
 			{
 			a.a_x *= aperture_sz;
 			a.a_y *= aperture_sz;
 			}
-		for(	;
+		for (	;
 			! user_interrupt
 		     &&	a.a_y < (com+1) * aperture_sz;
 			view_eol( &a, (RGBpixel *) scanbuf ), a.a_y++
@@ -466,13 +466,13 @@ render_Scan(int cpu, genptr_t arg)
 				of grid. */
 			Scale2Vec( grid_dv, (fastf_t)(-a_gridsz/2)+a.a_y, grid_y_inc );
 			Scale2Vec( grid_dh, (fastf_t)(-a_gridsz/2)+a.a_x, grid_x_inc );
-			for(	;
+			for (	;
 				! user_interrupt
 			     &&	a.a_x < (grid_x_fin+1) * aperture_sz;
 				view_pix( &a, scanbuf, aliasbuf ), a.a_x++
 				)
 				{	fastf_t aim_pt[3];
-				if( rel_perspective == 0.0 )
+				if ( rel_perspective == 0.0 )
 					{
 					/* Parallel rays emanating from grid. */
 					Add2Vec( grid_loc, grid_y_inc, aim_pt );
@@ -501,9 +501,9 @@ render_Scan(int cpu, genptr_t arg)
 					a.a_ray.r_dir[Y],
 					a.a_ray.r_dir[Z] );
 #endif
-				if( ir_mapping & IR_OCTREE )
+				if ( ir_mapping & IR_OCTREE )
 					{
-					if( ir_shootray_octree( &a ) == -1 )
+					if ( ir_shootray_octree( &a ) == -1 )
 						{
 						/* Fatal error in application
 							routine. */
@@ -513,7 +513,7 @@ render_Scan(int cpu, genptr_t arg)
 						}
 					}
 				else
-				if( rt_shootray( &a ) == -1 && fatal_error )
+				if ( rt_shootray( &a ) == -1 && fatal_error )
 					{
 					/* Fatal error in application
 						routine. */
@@ -549,7 +549,7 @@ f_Region(register struct application *ap, struct partition *pt_headp, struct seg
 	stp = pp->pt_inseg->seg_stp;
 	rp = &ap->a_ray;
 	ihitp = pp->pt_inhit;
-	if( ihitp->hit_dist < BEHIND_ME_TOL )
+	if ( ihitp->hit_dist < BEHIND_ME_TOL )
 		{ /* We are inside a solid, so slice it. */
 		VJOIN1( ihitp->hit_point, rp->r_pt, ihitp->hit_dist,
 			rp->r_dir );
@@ -576,12 +576,12 @@ f_Region(register struct application *ap, struct partition *pt_headp, struct seg
 			regp->reg_gmater,
 			regp->reg_los
 			);
-	if( regp->reg_mater.ma_shader && regp->reg_mater.ma_shader[0] != '\0' )
+	if ( regp->reg_mater.ma_shader && regp->reg_mater.ma_shader[0] != '\0' )
 		{
 		prnt_Scroll(	"\tmaterial info \"%s\"\n",
 				regp->reg_mater.ma_shader
 				);
-		if( regp->reg_mater.ma_color_valid )
+		if ( regp->reg_mater.ma_color_valid )
 			prnt_Scroll(	"\t\t\tcolor: {%5.2f,%5.2f,%5.2f}\n",
 					regp->reg_mater.ma_color[0],
 					regp->reg_mater.ma_color[1],
@@ -595,15 +595,15 @@ static int
 f_HL_Miss(register struct application *ap)
 {
 	VSETALL( ap->a_color, 0.0 );
-	if( hl_normap != NULL )
+	if ( hl_normap != NULL )
 		{
 		hl_normap[ap->a_y*a_gridsz+ap->a_x][RED] = 0;
 		hl_normap[ap->a_y*a_gridsz+ap->a_x][GRN] = 0;
 		hl_normap[ap->a_y*a_gridsz+ap->a_x][BLU] = 0;
 		}
-	if( hl_regmap != NULL )
+	if ( hl_regmap != NULL )
 		hl_regmap[ap->a_y*a_gridsz+ap->a_x] = 0;
-	if( hl_dstmap != NULL )
+	if ( hl_dstmap != NULL )
 		hl_dstmap[ap->a_y*a_gridsz+ap->a_x] = 0;
 	return	0;
 	}
@@ -621,12 +621,12 @@ f_HL_Hit(register struct application *ap, struct partition *pt_headp, struct seg
 	ap->a_color[RED] = (normal[X] + 1.0) / 2.0;
 	ap->a_color[GRN] = (normal[Y] + 1.0) / 2.0;
 	ap->a_color[BLU] = (normal[Z] + 1.0) / 2.0;
-	if( RT_G_DEBUG )
+	if ( RT_G_DEBUG )
 		{
 		V_Print( "normal", normal, bu_log );
 		V_Print( "acolor", ap->a_color, bu_log );
 		}
-	if( hl_normap != NULL )
+	if ( hl_normap != NULL )
 		{
 		hl_normap[ap->a_y*a_gridsz+ap->a_x][RED] =
 			ap->a_color[RED] * 255;
@@ -635,10 +635,10 @@ f_HL_Hit(register struct application *ap, struct partition *pt_headp, struct seg
 		hl_normap[ap->a_y*a_gridsz+ap->a_x][BLU] =
 			ap->a_color[BLU] * 255;
 		}
-	if( hl_regmap != NULL )
+	if ( hl_regmap != NULL )
 		hl_regmap[ap->a_y*a_gridsz+ap->a_x] =
 			pp->pt_regionp->reg_regionid;
-	if( hl_dstmap != NULL )
+	if ( hl_dstmap != NULL )
 		hl_dstmap[ap->a_y*a_gridsz+ap->a_x] =
 			(unsigned short) ihitp->hit_dist;
 	return	1;
@@ -664,9 +664,9 @@ getMaMID(struct mater_info *map, int *id)
 		int i;
 		int mid_len;
 
-	if( !map->ma_shader )
+	if ( !map->ma_shader )
 		return false;
-	if( map->ma_shader && map->ma_shader[0] == '\0' )
+	if ( map->ma_shader && map->ma_shader[0] == '\0' )
 		return	false;
 	/* copy parameter string to scratch buffer and null terminate */
 	copy = bu_strdup( map->ma_shader );
@@ -674,31 +674,31 @@ getMaMID(struct mater_info *map, int *id)
 	mid_len = strlen( MA_MID );
 	p = copy;
 	len = strlen( copy );
-	while( *p != '\0' )
+	while ( *p != '\0' )
 	{
-		if( strchr( MA_WHITESP, *p ) )
+		if ( strchr( MA_WHITESP, *p ) )
 			*p = '\0';
 		p++;
 	}
 	i = 0;
 	p = copy;
-	while( i < len )
+	while ( i < len )
 	{
-		if( p[i] == '\0' )
+		if ( p[i] == '\0' )
 			i++;
 		else
 		{
-			if( strncmp( &p[i], MA_MID, mid_len ) )
+			if ( strncmp( &p[i], MA_MID, mid_len ) )
 			{
-				while( ++i < len && p[i] != '\0' );
+				while ( ++i < len && p[i] != '\0' );
 			}
 			else
 			{
 				/* found MA_MID */
 				/* find '=' */
 				i += (mid_len - 1);
-				while( ++i < len && p[i] != '=' );
-				if( p[i] != '=' )
+				while ( ++i < len && p[i] != '=' );
+				if ( p[i] != '=' )
 				{
 					/* cannot find '=' */
 					bu_free( (genptr_t)copy, "getMaMID" );
@@ -706,8 +706,8 @@ getMaMID(struct mater_info *map, int *id)
 				}
 
 				/* found '=', now get value */
-				while( ++i < len && p[i] == '\0' );
-				if( p[i] == '\0' )
+				while ( ++i < len && p[i] == '\0' );
+				if ( p[i] == '\0' )
 				{
 					/* cannot find value */
 					bu_free( (genptr_t)copy, "getMaMID" );
@@ -747,7 +747,7 @@ f_Model(register struct application *ap, struct partition *pt_headp, struct seg 
 	Get_Partition( ap, pp, pt_headp, "f_Model" );
 	stp = pp->pt_inseg->seg_stp;
 	ihitp = pp->pt_inhit;
-	if( ihitp->hit_dist < BEHIND_ME_TOL )
+	if ( ihitp->hit_dist < BEHIND_ME_TOL )
 		{ /* We are inside a solid, so slice it. */
 		VJOIN1( ihitp->hit_point, rp->r_pt, ihitp->hit_dist,
 			rp->r_dir );
@@ -760,12 +760,12 @@ f_Model(register struct application *ap, struct partition *pt_headp, struct seg 
 
 	/* See if we hit a light source. */
 	{	register int i;
-	for(	i = 1;
+	for (	i = 1;
 		i < lgt_db_size && stp != lgts[i].stp;
 		i++
 		)
 		;
-	if( i < lgt_db_size && lgts[i].energy > 0.0 )
+	if ( i < lgt_db_size && lgts[i].energy > 0.0 )
 		{ /* Maximum light coming from light source. */
 		ap->a_color[0] = lgts[i].rgb[0];
 		ap->a_color[1] = lgts[i].rgb[1];
@@ -775,22 +775,22 @@ f_Model(register struct application *ap, struct partition *pt_headp, struct seg 
 	}
 
 	/* Get material id as index into material database. */
-	if( ! getMaMID( &pp->pt_regionp->reg_mater, &material_id ) )
+	if ( ! getMaMID( &pp->pt_regionp->reg_mater, &material_id ) )
 		material_id = (int)(pp->pt_regionp->reg_gmater);
 
 	/* Get material database entry. */
-	if( ir_mapping )
+	if ( ir_mapping )
 		{ /* We are mapping temperatures into an octree. */
 			Trie *triep;
 			Octree *octreep=NULL;
 			int fahrenheit;
-		if( ! ir_Chk_Table() )
+		if ( ! ir_Chk_Table() )
 			{
 			fatal_error = true;
 			return	-1;
 			}
 		entry = &mat_tmp_entry;
-		if( ir_mapping & IR_READONLY )
+		if ( ir_mapping & IR_READONLY )
 			{	int ir_level = 0;
 			bu_semaphore_acquire( RT_SEM_WORKER );
 			octreep = find_Octant(	&ir_octree,
@@ -800,16 +800,16 @@ f_Model(register struct application *ap, struct partition *pt_headp, struct seg 
 			bu_semaphore_release( RT_SEM_WORKER );
 			}
 		else
-		if( ir_mapping & IR_EDIT )
+		if ( ir_mapping & IR_EDIT )
 			{
-			if( ir_offset )
+			if ( ir_offset )
 				{	RGBpixel pixel;
 					int x = ap->a_x + x_fb_origin - ir_mapx;
 					int y = ap->a_y + y_fb_origin - ir_mapy;
 				/* Map temperature from IR image using
 					offsets. */
 				bu_semaphore_acquire( RT_SEM_STATS );
-				if(	x < 0 || y < 0
+				if (	x < 0 || y < 0
 				    ||	fb_read( fbiop, x, y, pixel, 1 ) == -1
 					)
 					fahrenheit = AMBIENT-1;
@@ -819,7 +819,7 @@ f_Model(register struct application *ap, struct partition *pt_headp, struct seg 
 				bu_semaphore_release( RT_SEM_STATS );
 				}
 			else
-			if( ir_doing_paint )
+			if ( ir_doing_paint )
 				/* User specified temp. of current rectangle. */
 				fahrenheit = ir_paint;
 			else
@@ -835,17 +835,17 @@ f_Model(register struct application *ap, struct partition *pt_headp, struct seg 
 							fahrenheit,
 							0
 							);
-			if( octreep != OCTREE_NULL )
+			if ( octreep != OCTREE_NULL )
 				append_Octp( triep, octreep );
 			else
-			if( fatal_error )
+			if ( fatal_error )
 				{
 				bu_semaphore_release( RT_SEM_WORKER );
 				return	-1;
 				}
 			bu_semaphore_release( RT_SEM_WORKER );
 			}
-		if( octreep != OCTREE_NULL )
+		if ( octreep != OCTREE_NULL )
 			{	register int index;
 			index = octreep->o_temp - ir_min;
 			index = index < 0 ? 0 : index;
@@ -854,21 +854,21 @@ f_Model(register struct application *ap, struct partition *pt_headp, struct seg 
 		}
 	else
 	/* Get material attributes from database. */
-	if(	(entry = mat_Get_Db_Entry( material_id )) == MAT_DB_NULL
+	if (	(entry = mat_Get_Db_Entry( material_id )) == MAT_DB_NULL
 	   || ! (entry->mode_flag & MF_USED)
 		)
 		entry = &mat_dfl_entry;
 	/* If texture mapping replace color with texture map look up. */
-	if( strncmp( TEX_KEYWORD, entry->name, TEX_KEYLEN ) == 0 )
+	if ( strncmp( TEX_KEYWORD, entry->name, TEX_KEYLEN ) == 0 )
 		{	struct uvcoord uv;
 			Mat_Db_Entry loc_entry;
 		/* Solid has a frame buffer image map. */
 		rt_functab[stp->st_id].ft_uv( ap, stp, ihitp, &uv );
 		loc_entry = *entry;
-		if( tex_Entry( &uv, &loc_entry ) )
+		if ( tex_Entry( &uv, &loc_entry ) )
 			entry = &loc_entry;
 		}
-	if( lgts[0].energy < 0.0 )
+	if ( lgts[0].energy < 0.0 )
 		{	fastf_t	f = RGB_INVERSE;
 			/* Scale RGB values to coeffs (0.0 .. 1.0 ) */
 		/* Negative intensity on ambient light is a flag meaning
@@ -890,11 +890,11 @@ f_Model(register struct application *ap, struct partition *pt_headp, struct seg 
 	VREVERSE( view_dir, ap->a_ray.r_dir );
 
 	rgb_coefs[0] = rgb_coefs[1] = rgb_coefs[2] = 0.0;
-	if( (f = 1.0 - (entry->reflectivity + entry->transparency)) > 0.0 )
+	if ( (f = 1.0 - (entry->reflectivity + entry->transparency)) > 0.0 )
 		{
-		for( i = 0; i < lgt_db_size; i++ )
+		for ( i = 0; i < lgt_db_size; i++ )
 			{ /* All light sources. */
-			if( lgts[i].energy > 0.0 )
+			if ( lgts[i].energy > 0.0 )
 				{
 				ap->a_user = i;
 				model_Reflectance( ap, pp, entry, &lgts[i],
@@ -902,7 +902,7 @@ f_Model(register struct application *ap, struct partition *pt_headp, struct seg 
 							normal
 							);
 				VJOIN1(	rgb_coefs, rgb_coefs, f, ap->a_color );
-				if( RT_G_DEBUG & DEBUG_SHADOW )
+				if ( RT_G_DEBUG & DEBUG_SHADOW )
 					{
 					bu_log( "\t\tcontribution from light %d:\n", i );
 					V_Print( "\t\treflectance coeffs", ap->a_color, bu_log );
@@ -917,10 +917,10 @@ f_Model(register struct application *ap, struct partition *pt_headp, struct seg 
 		and transparency.  The level of recursion is stored in
 		'a_level' and is controlled via the variable 'max_bounce'.
 	 */
-	if( ap->a_level + 1 <= max_bounce )
+	if ( ap->a_level + 1 <= max_bounce )
 		{
 		ap->a_user = material_id;
-		if( entry->reflectivity > 0.0 )
+		if ( entry->reflectivity > 0.0 )
 			{	fastf_t mirror_coefs[3];
 			mirror_Reflect( ap, pp, mirror_coefs, normal );
 
@@ -930,13 +930,13 @@ f_Model(register struct application *ap, struct partition *pt_headp, struct seg 
 				entry->reflectivity,
 				mirror_coefs
 				);
-			if( RT_G_DEBUG & DEBUG_RGB )
+			if ( RT_G_DEBUG & DEBUG_RGB )
 				{
 				V_Print( "mirror", mirror_coefs, bu_log );
 				V_Print( "rgb_coefs", rgb_coefs, bu_log );
 				}
 			}
-		if( entry->transparency > 0.0 )
+		if ( entry->transparency > 0.0 )
 			{
 			glass_Refract( ap, pp, entry, normal );
 			/* Compute transmission through glass. */
@@ -945,7 +945,7 @@ f_Model(register struct application *ap, struct partition *pt_headp, struct seg 
 				entry->transparency,
 				ap->a_color
 				);
-			if( RT_G_DEBUG & DEBUG_RGB )
+			if ( RT_G_DEBUG & DEBUG_RGB )
 				{
 				V_Print( "glass", ap->a_color, bu_log );
 				V_Print( "rgb_coefs", rgb_coefs, bu_log );
@@ -954,7 +954,7 @@ f_Model(register struct application *ap, struct partition *pt_headp, struct seg 
 		}
 	/* Pass result in application struct. */
 	VMOVE( ap->a_color, rgb_coefs );
-	if( RT_G_DEBUG & DEBUG_RGB )
+	if ( RT_G_DEBUG & DEBUG_RGB )
 		{
 		V_Print( "ap->a_color", ap->a_color, bu_log );
 		}
@@ -973,13 +973,13 @@ static fastf_t
 correct_Lgt(register struct application *ap, register struct partition *pp, register Lgt_Source *lgt_entry)
 {	fastf_t	energy_attenuation = 1.0;
 		fastf_t	lgt_dir[3];
-	if( ! shadowing && ! lgt_entry->beam )
+	if ( ! shadowing && ! lgt_entry->beam )
 		return	lgt_entry->energy;
 
 	/* Vector to light src from surface contact pt. */
 	Diff2Vec( lgt_entry->loc, pp->pt_inhit->hit_point, lgt_dir );
 	VUNITIZE( lgt_dir );
-	if( shadowing )
+	if ( shadowing )
 		{	struct application ap_hit;
 		/* Set up appl. struct for 'rt_shootray()' to light src. */
 		ap_hit = *ap; /* Watch out for struct copy bugs. */
@@ -990,7 +990,7 @@ correct_Lgt(register struct application *ap, register struct partition *pp, regi
 		ap_hit.a_miss = f_Lit;   /* Handle illuminated pixels. */
 		ap_hit.a_level++;	 /* Increment recursion level. */
 
-		if( RT_G_DEBUG & DEBUG_SHADOW )
+		if ( RT_G_DEBUG & DEBUG_SHADOW )
 			{
 			bu_log( "\tcorrect_Lgt()\n" );
 			V_Print( "\t\tlgt source location",
@@ -1006,7 +1006,7 @@ correct_Lgt(register struct application *ap, register struct partition *pp, regi
 		ap_hit.a_cumlen =
 			Dist3d( pp->pt_inhit->hit_point, lgt_entry->loc );
 
-		if( RT_G_DEBUG & DEBUG_SHADOW )
+		if ( RT_G_DEBUG & DEBUG_SHADOW )
 			{
 			V_Print( "\t\tdir. of ray to light",
 				ap_hit.a_ray.r_dir, bu_log );
@@ -1016,20 +1016,20 @@ correct_Lgt(register struct application *ap, register struct partition *pp, regi
 		/* Fetch attenuated lgt intensity into "ap_hit.a_diverge". */
 		(void) rt_shootray( &ap_hit );
 		energy_attenuation = ap_hit.a_diverge;
-		if( energy_attenuation == 0.0 )
+		if ( energy_attenuation == 0.0 )
 			/* Shadowed by opaque object(s). */
 			return	energy_attenuation;
 		}
 
 	/* Light is either full intensity or attenuated by transparent
 		object(s). */
-	if( lgt_entry->beam )
+	if ( lgt_entry->beam )
 		/* Apply gaussian intensity distribution. */
 		{	fastf_t lgt_cntr[3];
 			fastf_t ang_dist, rel_radius;
 			fastf_t	cos_angl;
 			fastf_t	gauss_Wgt_Func(fastf_t R);
-		if( lgt_entry->stp == SOLTAB_NULL )
+		if ( lgt_entry->stp == SOLTAB_NULL )
 			cons_Vector( lgt_cntr, lgt_entry->azim, lgt_entry->elev );
 		else
 			{
@@ -1037,12 +1037,12 @@ correct_Lgt(register struct application *ap, register struct partition *pp, regi
 			VUNITIZE( lgt_cntr );
 			}
 		cos_angl = Dot( lgt_cntr, lgt_dir );
-		if( NEAR_ZERO( cos_angl, EPSILON ) )
+		if ( NEAR_ZERO( cos_angl, EPSILON ) )
 			/* Negligable intensity. */
 			return	0.0;
 		ang_dist = sqrt( 1.0 - Sqr( cos_angl ) );
 		rel_radius = lgt_entry->radius / pp->pt_inhit->hit_dist;
-		if( RT_G_DEBUG & DEBUG_RGB )
+		if ( RT_G_DEBUG & DEBUG_RGB )
 			{
 			bu_log( "\t\tcos. of angle to lgt center = %g\n", cos_angl );
 			bu_log( "\t\t	   angular distance = %g\n", ang_dist );
@@ -1070,7 +1070,7 @@ mirror_Reflect(register struct application *ap, register struct partition *pp, r
 	ap_hit.a_onehit = false;
 	ap_hit.a_level++;	/* Increment recursion level. */
 
-	if( RT_G_DEBUG & DEBUG_RGB )
+	if ( RT_G_DEBUG & DEBUG_RGB )
 		{
 		bu_log( "\tmirror_Reflect: level %d grid <%d,%d>\n",
 			ap_hit.a_level, ap_hit.a_x, ap_hit.a_y
@@ -1116,7 +1116,7 @@ glass_Refract(register struct application *ap, register struct partition *pp, re
 	ap_hit.a_onehit = false;
 	ap_hit.a_level++;
 
-	if( RT_G_DEBUG & DEBUG_REFRACT )
+	if ( RT_G_DEBUG & DEBUG_REFRACT )
 		{
 		bu_log( "\tEntering glass_Refract(), level %d grid <%d,%d>\n",
 			ap->a_level, ap->a_x, ap->a_y
@@ -1127,13 +1127,13 @@ glass_Refract(register struct application *ap, register struct partition *pp, re
 	refrac_total++;
 
 	/* Guard against zero refractive index. */
-	if( entry->refrac_index < 0.001 )
+	if ( entry->refrac_index < 0.001 )
 		entry->refrac_index = 1.0;
 
-	if( entry->refrac_index == RI_AIR )
+	if ( entry->refrac_index == RI_AIR )
 		{ /* No refraction necessary. */
 			struct partition *pt_headp = pp->pt_back;
-		if( RT_G_DEBUG & DEBUG_REFRACT )
+		if ( RT_G_DEBUG & DEBUG_REFRACT )
 			bu_log( "\t\tNo refraction on entry.\n" );
 		/* Ray direction stays the same, and so does ray origin,
 			because we are using existing partitions with
@@ -1141,7 +1141,7 @@ glass_Refract(register struct application *ap, register struct partition *pp, re
 		 */
 		VMOVE( ap_hit.a_ray.r_dir, ap->a_ray.r_dir );
 		VMOVE( ap_hit.a_ray.r_pt, ap->a_ray.r_pt );
-		if( pp->pt_forw != pt_headp )
+		if ( pp->pt_forw != pt_headp )
 			{
 			/* We have more partitions, so use them, but first
 				toss out the current one because we must
@@ -1153,7 +1153,7 @@ glass_Refract(register struct application *ap, register struct partition *pp, re
 			FREE_PT( pp, ap->a_resource );
 			f_Model( &ap_hit, pt_headp, NULL );
 			VMOVE( ap->a_color, ap_hit.a_color );
-			if( RT_G_DEBUG & DEBUG_REFRACT )
+			if ( RT_G_DEBUG & DEBUG_REFRACT )
 				{
 				V_Print( "\t\tf_Model returned coeffs",
 					ap->a_color, bu_log );
@@ -1164,7 +1164,7 @@ glass_Refract(register struct application *ap, register struct partition *pp, re
 			{
 			f_Backgr( &ap_hit );
 			VMOVE( ap->a_color, ap_hit.a_color );
-			if( RT_G_DEBUG & DEBUG_REFRACT )
+			if ( RT_G_DEBUG & DEBUG_REFRACT )
 				{
 				bu_log( "\t\tOne hit flag is %s\n",
 					ap->a_onehit ? "ON" : "OFF" );
@@ -1177,15 +1177,15 @@ glass_Refract(register struct application *ap, register struct partition *pp, re
 	else
 		/* Set up ray-trace to find new exit point. */
 		{ /* Calculate refraction at entrance. */
-		if( pp->pt_inhit->hit_dist < 0.0 )
+		if ( pp->pt_inhit->hit_dist < 0.0 )
 			{
-			if( RT_G_DEBUG & DEBUG_REFRACT )
+			if ( RT_G_DEBUG & DEBUG_REFRACT )
 				bu_log( "\t\tRefracting inside solid.\n" );
 			VMOVE( ap_ref.a_ray.r_pt, ap->a_ray.r_pt );
 			VMOVE( ap_ref.a_ray.r_dir, ap->a_ray.r_dir );
 			goto	inside_ray;
 			}
-		if( ! refract(	ap->a_ray.r_dir,   /* Incident ray. */
+		if ( ! refract(	ap->a_ray.r_dir,   /* Incident ray. */
 				normal,
 				RI_AIR,		   /* Air ref. index. */
 				entry->refrac_index,
@@ -1195,7 +1195,7 @@ glass_Refract(register struct application *ap, register struct partition *pp, re
 			{ /* Past critical angle, reflected back out. */
 			VMOVE( ap_hit.a_ray.r_pt, pp->pt_inhit->hit_point );
 			VMOVE( ap_hit.a_ray.r_dir, ap_ref.a_ray.r_dir );
-			if( RT_G_DEBUG & DEBUG_REFRACT )
+			if ( RT_G_DEBUG & DEBUG_REFRACT )
 				bu_log( "\t\tPast critical angle on entry!\n" );
 			goto	exiting_ray;
 			}
@@ -1207,11 +1207,11 @@ inside_ray :
 	/* Find exit of refracted ray, exit normal (reversed) returned in
 		ap_ref.a_uvec, and exit point returned in ap_ref.a_color.
 	 */
-	if( ! rt_shootray( &ap_ref ) )
+	if ( ! rt_shootray( &ap_ref ) )
 		{ /* Refracted ray missed, solid!  This should not occur,
 			but if it does we will skip the refraction.
 		   */
-		if( RT_G_DEBUG & DEBUG_REFRACT )
+		if ( RT_G_DEBUG & DEBUG_REFRACT )
 			{
 			bu_log( "\t\tRefracted ray missed:\n" );
 			V_Print( "\t\trefracted ray pnt", ap_ref.a_ray.r_pt, bu_log );
@@ -1224,15 +1224,15 @@ inside_ray :
 		}
 	else
 		{
-		if( RT_G_DEBUG & DEBUG_REFRACT )
+		if ( RT_G_DEBUG & DEBUG_REFRACT )
 			bu_log( "\t\tRefracted ray hit.\n" );
 		}
 
 	/* Calculate refraction at exit. */
-	if( ap_ref.a_level <= max_bounce )
+	if ( ap_ref.a_level <= max_bounce )
 		{
 		/* Reversed exit normal in a_uvec. */
-		if( ! refract(	ap_ref.a_ray.r_dir,
+		if ( ! refract(	ap_ref.a_ray.r_dir,
 				ap_ref.a_uvec,
 				entry->refrac_index,
 				RI_AIR,
@@ -1240,7 +1240,7 @@ inside_ray :
 				)
 			)
 			{ /* Past critical angle, internal reflection. */
-			if( RT_G_DEBUG & DEBUG_REFRACT )
+			if ( RT_G_DEBUG & DEBUG_REFRACT )
 				bu_log( "\t\tInternal reflection, recursion level (%d)\n", ap_ref.a_level );
 			ap_ref.a_level++;
 			VMOVE( ap_ref.a_ray.r_dir, ap_hit.a_ray.r_dir );
@@ -1252,7 +1252,7 @@ inside_ray :
 	else
 		{ /* Exceeded max bounces, total absorbtion of light. */
 		VSETALL( ap->a_color, 0.0 );
-		if( RT_G_DEBUG & DEBUG_REFRACT )
+		if ( RT_G_DEBUG & DEBUG_REFRACT )
 			bu_log( "\t\tExceeded max bounces with internal reflections, recursion level (%d)\n", ap_ref.a_level );
 		refrac_inside++;
 		return;
@@ -1262,7 +1262,7 @@ inside_ray :
 
 exiting_ray :
 	/* Shoot from exit point in direction of refracted ray. */
-	if( RT_G_DEBUG & DEBUG_REFRACT )
+	if ( RT_G_DEBUG & DEBUG_REFRACT )
 		{
 		bu_log( "\t\tExiting ray from glass.\n" );
 		V_Print( "\t\t   ray origin", ap_hit.a_ray.r_pt, bu_log );
@@ -1286,29 +1286,29 @@ f_Backgr(register struct application *ap)
 	/* Base-line color is same as background. */
 	VMOVE( ap->a_color, bg_coefs );
 
-	if( RT_G_DEBUG & DEBUG_RGB )
+	if ( RT_G_DEBUG & DEBUG_RGB )
 		{
 		bu_log( "\tRay missed model.\n" );
 		V_Print( "\tbackground coeffs", ap->a_color, bu_log );
 		}
 
 	/* If this is a reflection, we may see each light source. */
-	if( ap->a_level )
+	if ( ap->a_level )
 		{	Mat_Db_Entry *mdb_entry;
-		if( (mdb_entry = mat_Get_Db_Entry( ap->a_user ))
+		if ( (mdb_entry = mat_Get_Db_Entry( ap->a_user ))
 			== MAT_DB_NULL
 		   || ! (mdb_entry->mode_flag & MF_USED)
 			)
 			mdb_entry = &mat_dfl_entry;
-		for( i = 1; i < lgt_db_size; i++ )
+		for ( i = 1; i < lgt_db_size; i++ )
 			{	auto fastf_t real_l_1[3];
 				register fastf_t specular;
 				fastf_t cos_s;
-			if( lgts[i].energy <= 0.0 )
+			if ( lgts[i].energy <= 0.0 )
 				continue;
 			Diff2Vec( lgts[i].loc, ap->a_ray.r_pt, real_l_1 );
 			VUNITIZE( real_l_1 );
-			if(	(cos_s = Dot( ap->a_ray.r_dir, real_l_1 ))
+			if (	(cos_s = Dot( ap->a_ray.r_dir, real_l_1 ))
 				> 0.0
 			    &&	cos_s <= 1.0
 				)
@@ -1324,7 +1324,7 @@ f_Backgr(register struct application *ap)
 				}
 			}
 		}
-	if( RT_G_DEBUG & DEBUG_RGB )
+	if ( RT_G_DEBUG & DEBUG_RGB )
 		{
 		V_Print( "coeffs returned from background", ap->a_color, bu_log );
 		}
@@ -1338,7 +1338,7 @@ f_Backgr(register struct application *ap)
 static int
 f_Error(register struct application *ap)
 {
-	if( RT_G_DEBUG & DEBUG_RGB )
+	if ( RT_G_DEBUG & DEBUG_RGB )
 		bu_log( "f_Error()\n" );
 	return	0;
 	}
@@ -1352,7 +1352,7 @@ f_Error(register struct application *ap)
 static int
 f_Lit(register struct application *ap)
 {
-	if( RT_G_DEBUG & DEBUG_SHADOW )
+	if ( RT_G_DEBUG & DEBUG_SHADOW )
 		bu_log( "\t\tSurface is illuminated.\n" );
 	ap->a_diverge = 1.0;
 	hits_lit++;
@@ -1368,7 +1368,7 @@ f_Probe(register struct application *ap, struct partition *pt_headp, struct seg 
 {	register struct partition *pp;
 		register struct hit *hitp;
 		register struct soltab *stp;
-	if( RT_G_DEBUG & DEBUG_RGB )
+	if ( RT_G_DEBUG & DEBUG_RGB )
 		bu_log( "f_Probe()\n" );
 	Get_Partition( ap, pp, pt_headp, "f_Probe" );
 	stp = pp->pt_outseg->seg_stp;
@@ -1403,14 +1403,14 @@ static int
 refract(register fastf_t *v_1, register fastf_t *norml, fastf_t ri_1, fastf_t ri_2, register fastf_t *v_2)
 {	fastf_t	w[3], u[3];	/* Intermediate vectors. */
 		fastf_t	beta;		/* Intermediate scalar. */
-	if( RT_G_DEBUG & DEBUG_REFRACT )
+	if ( RT_G_DEBUG & DEBUG_REFRACT )
 		{
 		V_Print( "\tEntering refract(), incident ray", v_1, bu_log );
 		V_Print( "\t\tentrance normal", norml, bu_log );
 		bu_log( "\t\trefractive indices leaving:%g, entering:%g\n",
 			ri_1, ri_2 );
 		}
-	if( ri_2 < 0.001 || ri_1 < 0.001 )
+	if ( ri_2 < 0.001 || ri_1 < 0.001 )
 		{ /* User probably forgot to specify refractive index. */
 		bu_log( "\tBUG: Zero or negative refractive index, should have been caught earlier.\n" );
 		VMOVE( v_2, v_1 ); /* Just return ray unchanged. */
@@ -1422,7 +1422,7 @@ refract(register fastf_t *v_1, register fastf_t *norml, fastf_t ri_1, fastf_t ri
 	/*	|w X norml| = |w||norml| * sin( theta_1 )
 			|u| = ri_1/ri_2 * sin( theta_1 ) = sin( theta_2 )
 	 */
-	if( (beta = Dot( u, u )) > 1.0 ) /* beta = sin( theta_2 )^^2. */
+	if ( (beta = Dot( u, u )) > 1.0 ) /* beta = sin( theta_2 )^^2. */
 		{ /* Past critical angle, total reflection.
 			Calculate reflected (bounced) incident ray.
 		   */
@@ -1430,7 +1430,7 @@ refract(register fastf_t *v_1, register fastf_t *norml, fastf_t ri_1, fastf_t ri
 		beta = 2.0 * Dot( u, norml );
 		Scale2Vec( norml, beta, w );
 		Diff2Vec( w, u, v_2 );
-		if( RT_G_DEBUG & DEBUG_REFRACT )
+		if ( RT_G_DEBUG & DEBUG_REFRACT )
 			{
 			V_Print( "\tdeflected refracted ray", v_2, bu_log );
 			}
@@ -1445,7 +1445,7 @@ refract(register fastf_t *v_1, register fastf_t *norml, fastf_t ri_1, fastf_t ri
 		beta = -sqrt( 1.0 - beta ) - Dot( w, norml );
 		Scale2Vec( norml, beta, u );
 		Add2Vec( w, u, v_2 );
-		if( RT_G_DEBUG & DEBUG_REFRACT )
+		if ( RT_G_DEBUG & DEBUG_REFRACT )
 			{
 			V_Print( "\trefracted ray", v_2, bu_log );
 			}
@@ -1467,7 +1467,7 @@ f_Shadow(register struct application *ap, struct partition *pt_headp, struct seg
 {	register struct partition *pp;
 		register Mat_Db_Entry *entry;
 	Get_Partition( ap, pp, pt_headp, "f_Shadow" );
-	if( RT_G_DEBUG & DEBUG_SHADOW )
+	if ( RT_G_DEBUG & DEBUG_SHADOW )
 		{	register struct hit *ihitp, *ohitp;
 			register struct soltab *istp;
 			point_t inormal;
@@ -1484,45 +1484,45 @@ f_Shadow(register struct application *ap, struct partition *pt_headp, struct seg
 		bu_log( "solid name (%s)\n", pp->pt_inseg->seg_stp->st_name );
 		}
 	ap->a_diverge = 1.0;
-	if( pp->pt_inseg->seg_stp == lgts[ap->a_user].stp )
+	if ( pp->pt_inseg->seg_stp == lgts[ap->a_user].stp )
 		{ /* Have hit the EXPLICIT light source, no shadow. */
-		if( RT_G_DEBUG & DEBUG_SHADOW )
+		if ( RT_G_DEBUG & DEBUG_SHADOW )
 			bu_log( "Unobstructed path to explicit light.\n" );
 		return	ap->a_miss( ap );
 		}
-	for( ; pp != pt_headp; pp = pp->pt_forw )
+	for (; pp != pt_headp; pp = pp->pt_forw )
 		{
-		if( pp->pt_inseg->seg_stp == lgts[ap->a_user].stp )
+		if ( pp->pt_inseg->seg_stp == lgts[ap->a_user].stp )
 			/* Have hit the EXPLICIT light source. */
 			break;
 		else
-		if( pp->pt_inhit->hit_dist > ap->a_cumlen )
+		if ( pp->pt_inhit->hit_dist > ap->a_cumlen )
 			/* Don't look beyond the light source. */
 			break;
-		if(	(entry =
+		if (	(entry =
 			mat_Get_Db_Entry( (int)(pp->pt_regionp->reg_gmater) ))
 				== MAT_DB_NULL
 		   || ! (entry->mode_flag & MF_USED)
 			)
 			entry = &mat_dfl_entry;
-		if( (ap->a_diverge -= 1.0 - entry->transparency) <= 0.0 )
+		if ( (ap->a_diverge -= 1.0 - entry->transparency) <= 0.0 )
 			/* Light is totally eclipsed. */
 			{
 			ap->a_diverge = 0.0;
 			break;
 			}
 		}
-	if( ap->a_diverge != 1.0 )
+	if ( ap->a_diverge != 1.0 )
 		/* Light source is obstructed, object shadowed. */
 		{
-		if( RT_G_DEBUG & DEBUG_SHADOW )
+		if ( RT_G_DEBUG & DEBUG_SHADOW )
 			bu_log( "Lgt source obstructed, object shadowed\n" );
 		hits_shadowed++;
 		return	1;
 		}
 	else	/* Full intensity of light source. */
 		{
-		if( RT_G_DEBUG & DEBUG_SHADOW )
+		if ( RT_G_DEBUG & DEBUG_SHADOW )
 			bu_log( "Full intensity of light source, no shadow\n" );
 		return	ap->a_miss( ap );
 		}
@@ -1571,12 +1571,12 @@ model_Reflectance(register struct application *ap, struct partition *pp, Mat_Db_
 		fastf_t cos_il; 	/* cosine incident angle */
 		auto fastf_t lgt_dir[3];
 
-	if( RT_G_DEBUG & DEBUG_RGB )
+	if ( RT_G_DEBUG & DEBUG_RGB )
 		bu_log( "\nmodel_Reflectance(): level %d grid <%d,%d>\n",
 			ap->a_level, ap->a_x, ap->a_y
 			);
 
-	if( ap->a_user == 0 )		/* Ambient lighting. */
+	if ( ap->a_user == 0 )		/* Ambient lighting. */
 		{
 		lgt_energy = lgt_entry->energy;
 		VMOVE( lgt_dir, view_dir );
@@ -1584,7 +1584,7 @@ model_Reflectance(register struct application *ap, struct partition *pp, Mat_Db_
 	else
 		{
 		/* Compute attenuated light intensity due to shadowing. */
-		if( (lgt_energy = correct_Lgt( ap, pp, lgt_entry )) == 0.0 )
+		if ( (lgt_energy = correct_Lgt( ap, pp, lgt_entry )) == 0.0 )
 			{
 			/* Shadowed by an opaque object. */
 			VSETALL( ap->a_color, 0.0 );
@@ -1596,13 +1596,13 @@ model_Reflectance(register struct application *ap, struct partition *pp, Mat_Db_
 		}
 
 	/* Calculate diffuse reflectance from light source. */
-	if( (cos_il = Dot( norml, lgt_dir )) < 0.0 )
+	if ( (cos_il = Dot( norml, lgt_dir )) < 0.0 )
 		cos_il = 0.0;
 	/* Facter in light source intensity and diffuse weighting. */
 	ff = cos_il * lgt_energy * mdb_entry->wgt_diffuse;
 	/* Facter in light source color. */
 	Scale2Vec( lgt_entry->coef, ff, ap->a_color );
-	if( RT_G_DEBUG & DEBUG_RGB )
+	if ( RT_G_DEBUG & DEBUG_RGB )
 		{
 		bu_log( "\tDiffuse reflectance:\n" );
 		V_Print( "\tsurface normal", norml, bu_log );
@@ -1619,7 +1619,7 @@ model_Reflectance(register struct application *ap, struct partition *pp, Mat_Db_
 	ap->a_color[1] *= mdb_entry->df_rgb[1] * ff;
 	ap->a_color[2] *= mdb_entry->df_rgb[2] * ff;
 
-	if( ap->a_user != 0 )
+	if ( ap->a_user != 0 )
 		/* Calculate specular reflectance, if not ambient light.
 			Reflected ray = (2 * cos(i) * Normal) - Incident ray.
 			Cos(s) = dot product of Reflected ray with Incident ray.
@@ -1630,13 +1630,13 @@ model_Reflectance(register struct application *ap, struct partition *pp, Mat_Db_
 		ff = 2.0 * cos_il;
 		Scale2Vec( norml, ff, tmp_dir );
 		Diff2Vec( tmp_dir, lgt_dir, lgt_reflect );
-		if( RT_G_DEBUG & DEBUG_RGB )
+		if ( RT_G_DEBUG & DEBUG_RGB )
 			{
 			bu_log( "\tSpecular reflectance:\n" );
 			V_Print( "\t           dir of eye", view_dir, bu_log );
 			V_Print( "\tdir reflected lgt ray", lgt_reflect, bu_log );
 			}
-		if(	(cos_s = Dot( view_dir, lgt_reflect )) > 0.0
+		if (	(cos_s = Dot( view_dir, lgt_reflect )) > 0.0
 		    &&	cos_s <= 1.0
 			)
 			{ /* We have a significant specular component. */
@@ -1644,7 +1644,7 @@ model_Reflectance(register struct application *ap, struct partition *pp, Mat_Db_
 					myIpow( cos_s, mdb_entry->shine );
 			/* Add specular component. */
 			VJOIN1( ap->a_color, ap->a_color, specular, lgt_entry->coef );
-			if( RT_G_DEBUG & DEBUG_RGB )
+			if ( RT_G_DEBUG & DEBUG_RGB )
 				{
 				bu_log( "\tcosine of specular angle = %g\n",
 					cos_s );
@@ -1654,7 +1654,7 @@ model_Reflectance(register struct application *ap, struct partition *pp, Mat_Db_
 				}
 			}
 		else
-		if( cos_s > 1.0 )
+		if ( cos_s > 1.0 )
 			{	struct soltab *stp = pp->pt_inseg->seg_stp;
 			bu_log( "\"%s\"(%d) : solid \"%s\" type %d cos(s)=%g grid <%d,%d>!\n",
 				__FILE__, __LINE__, stp->st_name, stp->st_id,
@@ -1706,9 +1706,9 @@ abort_RT(int sig)
 static fastf_t
 myIpow(register fastf_t d, register int n)
 {	register fastf_t result = 1.0;
-	if( d == 0.0 )
+	if ( d == 0.0 )
 		return	0.0;
-	while( n-- > 0 )
+	while ( n-- > 0 )
 		result *= d;
 	return	result;
 	}
@@ -1728,15 +1728,15 @@ int
 hl_Norm_Diff(register RGBpixel (*pix1), register RGBpixel (*pix2))
 {	fastf_t	dir1[3], dir2[3];
 		static fastf_t conv = 2.0/255.0;
-	if( ZeroPixel( *pix1 ) )
+	if ( ZeroPixel( *pix1 ) )
 		{
-		if( ZeroPixel( *pix2 ) )
+		if ( ZeroPixel( *pix2 ) )
 			return	0;
 		else
 			return	1;
 		}
 	else
-	if( ZeroPixel( *pix2 ) )
+	if ( ZeroPixel( *pix2 ) )
 		return	1;
 	dir1[X] = (*pix1)[RED] * conv;
 	dir1[Y] = (*pix1)[GRN] * conv;
@@ -1770,7 +1770,7 @@ static bool
 hi_Obliq(RGBpixel (*pix))
 {	fastf_t	dir[3];
 		static fastf_t conv = 2.0/255.0;
-	if( ZeroPixel( *pix ) )
+	if ( ZeroPixel( *pix ) )
 		return false;
 	dir[X] = (*pix)[RED] * conv;
 	dir[Y] = (*pix)[GRN] * conv;
@@ -1788,25 +1788,25 @@ hl_Postprocess(void)
 		unsigned short maxdist = (cell_sz*ARCTAN_87)+2;
 	prnt_Event( "Making hidden-line drawing..." );
 	/* Build bitmap from normal, region and distance maps. */
-	for(	yi = 0;
+	for (	yi = 0;
 		yi < a_gridsz && ! user_interrupt;
 		yi++ )
 		{
-		for(	xi = 0;
+		for (	xi = 0;
 			xi < a_gridsz && ! user_interrupt;
 			xi++ )
 			{
-			if( xi == 0 )
+			if ( xi == 0 )
 				HL_CLRBIT( xi, yi );
 			else
-			if( yi == 0 )
-				if( hl_Norm_Diff( (RGBpixel *)&hl_normap[xi][0],
+			if ( yi == 0 )
+				if ( hl_Norm_Diff( (RGBpixel *)&hl_normap[xi][0],
 							(RGBpixel *)&hl_normap[xi-1][0] ) )
 					HL_SETBIT( xi, yi );
 				else
 					HL_CLRBIT( xi, yi );
 			else
-			if(  (hl_regmap != NULL &&
+			if (  (hl_regmap != NULL &&
 				(hl_Reg_Diff( xi, yi, xi-1, yi )
 			     ||	 hl_Reg_Diff( xi, yi, xi, yi-1 )))
 			  ||	hl_Norm_Diff( (RGBpixel *)&hl_normap[yi*a_gridsz+xi][0],
@@ -1824,7 +1824,7 @@ hl_Postprocess(void)
 			}
 		}
 	/* Translate bitmap to frame buffer image and display it. */
-	for(	yi = 0, yc = y_fb_origin;
+	for (	yi = 0, yc = y_fb_origin;
 		yi < grid_sz && ! user_interrupt;
 		yi++, yc++ )
 		{	static RGBpixel black_pixel = { 0, 0, 0 };
@@ -1835,22 +1835,22 @@ hl_Postprocess(void)
 				(reverse_video ? white_pixel : black_pixel);
 
 		(void) fb_seek( fbiop, x_fb_origin, yc );
-		for(	xi = 0;
+		for (	xi = 0;
 			xi < grid_sz && ! user_interrupt;
 			xi++ )
 			{	register bool on = false;
 			/* Output pixel based on bitmap value.  If bit is
 				ON, pixel should be ON. */
-			if( anti_aliasing )
+			if ( anti_aliasing )
 				{ /* NOTE: the 3030 compiler barfs on
 				     HL_TSTBIT if we use registers here. */
 					register int xa, ya, xn, yn;
 				/* Anti-aliasing, map square matrix to pixel.
 					If one bit is ON, turn pixel ON. */
-				for(	ya = 0, yn = yi*aperture_sz;
+				for (	ya = 0, yn = yi*aperture_sz;
 					!on && ya < aperture_sz;
 					ya++, yn++ )
-					for(	xa = 0, xn = xi*aperture_sz;
+					for (	xa = 0, xn = xi*aperture_sz;
 						!on && xa < aperture_sz;
 						xa++, xn++ )
 						on = HL_TSTBIT( xn, yn ) != 0;
@@ -1858,7 +1858,7 @@ hl_Postprocess(void)
 			else	/* no anti-aliasing */
 				on = HL_TSTBIT( xi, yi ) != 0;
 			/* Output foreground or background pixel. */
-			if( on )
+			if ( on )
 				{
 				FB_WPIXEL( fbiop, *fgp );
 				}
@@ -1880,7 +1880,7 @@ view_pix(register struct application *ap, RGBpixel (*scanbuf), vect_t (*aliasbuf
 {	RGBpixel pixel;
 		int x;
 		int y;
-	if( RT_G_DEBUG && tty )
+	if ( RT_G_DEBUG && tty )
 		{
 		bu_semaphore_acquire( BU_SEM_SYSCALL );
 		(void) sprintf( GRID_PIX_PTR, " [%04d-", ap->a_x/aperture_sz );
@@ -1889,10 +1889,10 @@ view_pix(register struct application *ap, RGBpixel (*scanbuf), vect_t (*aliasbuf
 		(void) fflush( stdout );
 		bu_semaphore_release( BU_SEM_SYSCALL );
 		}
-	if( hiddenln_draw )
+	if ( hiddenln_draw )
 		return;
 
-	if( anti_aliasing )
+	if ( anti_aliasing )
 		{	int xmod = ap->a_x % aperture_sz;
 			int ymod = ap->a_y % aperture_sz;
 			register vectp_t aliasp;
@@ -1903,7 +1903,7 @@ view_pix(register struct application *ap, RGBpixel (*scanbuf), vect_t (*aliasbuf
 		/* offset into alias buffer */
 		aliasp = aliasbuf[x];
 
-		if( xmod == 0 && ymod == 0 )
+		if ( xmod == 0 && ymod == 0 )
 			{ /* First hit on this pixel. */
 			VMOVE( aliasp, ap->a_color );
 			return;
@@ -1911,7 +1911,7 @@ view_pix(register struct application *ap, RGBpixel (*scanbuf), vect_t (*aliasbuf
 		else
 			{ /* Add to pixel value. */
 			VADD2( aliasp, aliasp, ap->a_color );
-			if( xmod == aperture_sz - 1 && ymod == aperture_sz - 1 )
+			if ( xmod == aperture_sz - 1 && ymod == aperture_sz - 1 )
 				{
 				/* Finish up this pixel. */
 				ap->a_color[RED] = aliasp[RED]/sample_sz;
@@ -1927,7 +1927,7 @@ view_pix(register struct application *ap, RGBpixel (*scanbuf), vect_t (*aliasbuf
 	x = ap->a_x/aperture_sz + x_fb_origin;
 	y = ap->a_y/aperture_sz + y_fb_origin;
 	/* Image translation can necessitate clipping. */
-	if( x < 0 || y < 0 )
+	if ( x < 0 || y < 0 )
 		goto failed;
 
 	/* Clip relative intensity on each gun to range 0.0 to 1.0;
@@ -1939,22 +1939,22 @@ view_pix(register struct application *ap, RGBpixel (*scanbuf), vect_t (*aliasbuf
 	pixel[BLU] = ap->a_color[BLU] > 1.0 ? 255 :
 			(ap->a_color[BLU] < 0.0 ? 0 : ap->a_color[BLU] * 255);
 	/* Write out pixel, depending on buffering scheme. */
-	if( query_region )
+	if ( query_region )
 		return;
-	switch( pix_buffered )
+	switch ( pix_buffered )
 		{
 	case B_PIO :	/* Programmed I/O to frame buffer (if possible).*/
 		/* Image translation can necessitate clipping. */
-		if( x >= fb_getwidth( fbiop ) || y >= fb_getheight( fbiop ) )
+		if ( x >= fb_getwidth( fbiop ) || y >= fb_getheight( fbiop ) )
 			goto failed;
-		if( fb_write( fbiop, x, y, pixel, 1 ) != -1 )
+		if ( fb_write( fbiop, x, y, pixel, 1 ) != -1 )
 			return;
 		break;
 	case B_PAGE :	/* Buffered writes to frame buffer. */
 		/* Image translation can necessitate clipping. */
-		if( x >= fb_getwidth( fbiop ) || y >= fb_getheight( fbiop ) )
+		if ( x >= fb_getwidth( fbiop ) || y >= fb_getheight( fbiop ) )
 			goto failed;
-		if( fb_seek( fbiop, x, y ) != -1 )
+		if ( fb_seek( fbiop, x, y ) != -1 )
 			{ /* WARNING: no error checking. */
 			FB_WPIXEL( fbiop, pixel );
 			return;
@@ -1962,7 +1962,7 @@ view_pix(register struct application *ap, RGBpixel (*scanbuf), vect_t (*aliasbuf
 		break;
 	case B_LINE :	/* Line buffering. */
 		/* Image translation can necessitate clipping. */
-		if( x >= MAX_SCANSIZE )
+		if ( x >= MAX_SCANSIZE )
 			goto failed;
 		COPYRGB( scanbuf[x], pixel );
 		return;
@@ -1985,13 +1985,13 @@ static void
 view_bol(register struct application *ap)
 {	int x = grid_x_org + x_fb_origin;
 		int y = ap->a_y/aperture_sz + y_fb_origin;
-	if( tracking_cursor )
+	if ( tracking_cursor )
 		{
 		bu_semaphore_acquire( RT_SEM_STATS );
 		(void) fb_cursor( fbiop, 1, x, y );
 		bu_semaphore_release( RT_SEM_STATS );
 		}
-	if( tty )
+	if ( tty )
 		{
 		bu_semaphore_acquire( RT_SEM_STATS );
 		(void) sprintf( GRID_SCN_PTR, "%04d-", ap->a_y/aperture_sz );
@@ -2011,11 +2011,11 @@ view_eol(register struct application *ap, RGBpixel (*scanbuf))
 		int y = ap->a_y/aperture_sz + y_fb_origin;
 		int ct = (ap->a_x - grid_x_org)/aperture_sz;
 	/* Clip image, necessary due to image translation command. */
-	if( y < 0 )
+	if ( y < 0 )
 		return;
-	if( x < 0 )
+	if ( x < 0 )
 		{
-		if( (ct += x) <= 0 )
+		if ( (ct += x) <= 0 )
 			return;
 		x = 0;
 		}
@@ -2023,7 +2023,7 @@ view_eol(register struct application *ap, RGBpixel (*scanbuf))
 	/* Reset horizontal pixel position. */
 	ap->a_x = grid_x_org * aperture_sz;
 
-	if( tty )
+	if ( tty )
 		{
 		bu_semaphore_acquire( RT_SEM_STATS );
 		prnt_Timer( (char *) NULL );
@@ -2038,19 +2038,19 @@ view_eol(register struct application *ap, RGBpixel (*scanbuf))
 		prnt_Timer( grid_y );
 		bu_semaphore_release( RT_SEM_STATS );
 		}
-	if( query_region )
+	if ( query_region )
 		return;
-	if( hiddenln_draw )
+	if ( hiddenln_draw )
 		return;
-	if( anti_aliasing && ap->a_y % aperture_sz != aperture_sz - 1 )
+	if ( anti_aliasing && ap->a_y % aperture_sz != aperture_sz - 1 )
 		return;
-	if( pix_buffered == B_LINE )
+	if ( pix_buffered == B_LINE )
 		{
 		bu_semaphore_acquire( RT_SEM_STATS );
-		if( strcmp( fb_file, "/dev/remote" ) == 0 )
+		if ( strcmp( fb_file, "/dev/remote" ) == 0 )
 			{	char ystr[5];
 			(void) sprintf( ystr, "%04d", ap->a_y );
-			if(	write( 1, ystr, 4 ) != 4
+			if (	write( 1, ystr, 4 ) != 4
 			    ||	write(	1,
 					(char *)(scanbuf+x),
 					ct*sizeof(RGBpixel)
@@ -2063,7 +2063,7 @@ view_eol(register struct application *ap, RGBpixel (*scanbuf))
 				}
 			}
 		else
-		if( fb_write( fbiop, x, y, (unsigned char *)(scanbuf+x), ct ) == -1 )
+		if ( fb_write( fbiop, x, y, (unsigned char *)(scanbuf+x), ct ) == -1 )
 			bu_log( "Write of scan line (%d) failed.\n", ap->a_y );
 		bu_semaphore_release( RT_SEM_STATS );
 		}
@@ -2076,33 +2076,33 @@ view_eol(register struct application *ap, RGBpixel (*scanbuf))
 static void
 view_end(void)
 {
-	if( pix_buffered == B_PAGE )
+	if ( pix_buffered == B_PAGE )
 		fb_flush( fbiop );
-	if( RT_G_DEBUG & DEBUG_REFRACT )
+	if ( RT_G_DEBUG & DEBUG_REFRACT )
 		bu_log( "%s : hits=%d misses=%d inside=%d total=%d\n",
 			"Refraction stats",
 			refrac_total-(refrac_missed+refrac_inside),
 			refrac_missed, refrac_inside, refrac_total
 			);
-	if( RT_G_DEBUG & DEBUG_SHADOW )
+	if ( RT_G_DEBUG & DEBUG_SHADOW )
 		bu_log( "Shadowing stats : lit=%d shadowed=%d total=%d\n",
 			hits_lit, hits_shadowed, hits_lit+hits_shadowed
 			);
-	if( hiddenln_draw )
+	if ( hiddenln_draw )
 		{
-		if( ! user_interrupt )
+		if ( ! user_interrupt )
 			hl_Postprocess();
-		if( hl_normap != NULL )
+		if ( hl_normap != NULL )
 			{
 			free( (char *) hl_normap );
 			hl_normap = NULL;
 			}
-		if( hl_regmap != NULL )
+		if ( hl_regmap != NULL )
 			{
 			free( (char *) hl_regmap );
 			hl_regmap = NULL;
 			}
-		if( hl_dstmap != NULL )
+		if ( hl_dstmap != NULL )
 			{
 			free( (char *) hl_dstmap );
 			hl_dstmap = NULL;
@@ -2141,7 +2141,7 @@ static int
 f_Overlap(register struct application *ap, register struct partition *pp, struct region *reg1, struct region *reg2, struct partition *hp)
 {	point_t	pt;
 		fastf_t	depth = pp->pt_outhit->hit_dist-pp->pt_inhit->hit_dist;
-	if( depth < OVERLAPTOL )
+	if ( depth < OVERLAPTOL )
 		return	1;
 	VJOIN1( pt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist,
 		ap->a_ray.r_dir );

@@ -72,9 +72,9 @@ main(int argc, char **argv)
 	size = 10;	/* mm */
 	quant = 18;
 	base = -size*(quant/2);
-	for( ix=quant-1; ix>=0; ix-- )  {
+	for ( ix=quant-1; ix>=0; ix-- )  {
 		x = base + ix*size;
-		for( iy=quant-1; iy>=0; iy-- )  {
+		for ( iy=quant-1; iy>=0; iy-- )  {
 			y = base + iy*size;
 			do_cell( &val[ix][iy], x, y );
 		}
@@ -83,8 +83,8 @@ main(int argc, char **argv)
 /* XXX This should be a height field / DSP solid! */
 #if 0
 	mk_polysolid( outfp, "kurt" );
-	for( ix=quant-2; ix>=0; ix-- )  {
-		for( iy=quant-2; iy>=0; iy-- )  {
+	for ( ix=quant-2; ix>=0; ix-- )  {
+		for ( iy=quant-2; iy>=0; iy-- )  {
 			draw_rect( &val[ix][iy],
 				   &val[ix+1][iy],
 				   &val[ix][iy+1],
@@ -110,8 +110,8 @@ main(int argc, char **argv)
 	/* Build the overall combination */
 	mk_fcomb( outfp, "clut", quant*quant+1+4, 0 );
 	mk_memb( outfp, "plane.r", identity, UNION );
-	for( ix=quant-1; ix>=0; ix-- )  {
-		for( iy=quant-1; iy>=0; iy-- )  {
+	for ( ix=quant-1; ix>=0; ix-- )  {
+		for ( iy=quant-1; iy>=0; iy-- )  {
 			sprintf( name, "x%dy%d", ix, iy );
 			mk_memb( outfp, name, identity, UNION );
 		}
@@ -144,7 +144,7 @@ do_cell(struct val *vp, double xc, double yc)
 	vp->v_x = xc;
 	vp->v_y = yc;
 	nroots = rt_poly_roots( &polynom, roots, "" );
-	if( nroots < 0 || (nroots & 1) == 0 )  {
+	if ( nroots < 0 || (nroots & 1) == 0 )  {
 		fprintf(stderr, "%d roots?\n", nroots);
 		return;
 	}
@@ -153,10 +153,10 @@ do_cell(struct val *vp, double xc, double yc)
 			vp->v_z[vp->v_n++] = roots[l].re;
 	}
 	/* Sort in increasing Z */
-	for( lim = nroots-1; lim > 0; lim-- )  {
-		for( l=0; l < lim; l++ )  {
+	for ( lim = nroots-1; lim > 0; lim-- )  {
+		for ( l=0; l < lim; l++ )  {
 			register double t;
-			if( (t=vp->v_z[l]) > vp->v_z[l+1] )  {
+			if ( (t=vp->v_z[l]) > vp->v_z[l+1] )  {
 				vp->v_z[l] = vp->v_z[l+1];
 				vp->v_z[l+1] = t;
 			}
@@ -177,19 +177,19 @@ draw_rect(struct val *a, struct val *b, struct val *c, struct val *d)
 
 	/* Find min and max # of points at the 4 vertices */
 	max = a->v_n;
-	if( b->v_n > max )  max = b->v_n;
-	if( c->v_n > max )  max = c->v_n;
-	if( d->v_n > max )  max = d->v_n;
+	if ( b->v_n > max )  max = b->v_n;
+	if ( c->v_n > max )  max = c->v_n;
+	if ( d->v_n > max )  max = d->v_n;
 	min = a->v_n;
-	if( b->v_n < min )  min = b->v_n;
-	if( c->v_n < min )  min = c->v_n;
-	if( d->v_n < min )  min = d->v_n;
+	if ( b->v_n < min )  min = b->v_n;
+	if ( c->v_n < min )  min = c->v_n;
+	if ( d->v_n < min )  min = d->v_n;
 
 	ndiff = 0;
-	if( a->v_n > min )  vp[ndiff++] = a;
-	if( b->v_n > min )  vp[ndiff++] = b;
-	if( c->v_n > min )  vp[ndiff++] = c;
-	if( d->v_n > min )  vp[ndiff++] = d;
+	if ( a->v_n > min )  vp[ndiff++] = a;
+	if ( b->v_n > min )  vp[ndiff++] = b;
+	if ( c->v_n > min )  vp[ndiff++] = c;
+	if ( d->v_n > min )  vp[ndiff++] = d;
 
 
 	VSET( work, a->v_x, a->v_y, a->v_z[0] );
@@ -206,7 +206,7 @@ draw_rect(struct val *a, struct val *b, struct val *c, struct val *d)
 	 * are stacked plates.  Do them now, then worry about oddities.
 	 * For general functions, this may be dangerous, but works fine here.
 	 */
-	for( i=0; i<min; i++ )  {
+	for ( i=0; i<min; i++ )  {
 #if 0
 		VSET( verts[0], a->v_x, a->v_y, a->v_z[i] );
 		VSET( verts[1], b->v_x, b->v_y, b->v_z[i] );
@@ -224,9 +224,9 @@ draw_rect(struct val *a, struct val *b, struct val *c, struct val *d)
 #endif
 	}
 	/* If 0 or 1 corners have something above them, nothing needs drawn */
-	if( ndiff == 0 || ndiff == 1 )  return;
+	if ( ndiff == 0 || ndiff == 1 )  return;
 	/* Harder case:  handle different depths on corners */
-	if( ndiff == 2 &&
+	if ( ndiff == 2 &&
 	    vp[0]->v_x != vp[1]->v_x &&
 	    vp[0]->v_y != vp[1]->v_y )  {
 		fprintf(stderr, "2 corners on diagonal differ?\n");
@@ -234,11 +234,11 @@ draw_rect(struct val *a, struct val *b, struct val *c, struct val *d)
 	}
 
 	/* Draw 1 or 2 extra faces to close off each new upper zone */
-	for( lvl = min; lvl < max; lvl += 2 )  {
-		for( i=0; i<ndiff-1; i++ )  {
-			for( j=i; j<ndiff; j++ )  {
+	for ( lvl = min; lvl < max; lvl += 2 )  {
+		for ( i=0; i<ndiff-1; i++ )  {
+			for ( j=i; j<ndiff; j++ )  {
 				/* Reject diagonals */
-				if( vp[i]->v_x != vp[j]->v_x &&
+				if ( vp[i]->v_x != vp[j]->v_x &&
 				    vp[i]->v_y != vp[j]->v_y )
 					continue;
 
@@ -299,12 +299,12 @@ pnorms(fastf_t (*norms)[3], fastf_t (*verts)[3], fastf_t *out, int npts)
 	VUNITIZE( n );
 
 	/* If normal points inwards, flip it */
-	if( VDOT( n, out ) < 0 )  {
+	if ( VDOT( n, out ) < 0 )  {
 		VREVERSE( n, n );
 	}
 
 	/* Use same normal for all vertices (flat shading) */
-	for( i=0; i<npts; i++ )  {
+	for ( i=0; i<npts; i++ )  {
 		VMOVE( norms[i], n );
 	}
 }
@@ -326,7 +326,7 @@ do_light(char *name, fastf_t *pos, fastf_t *dir_at, int da_flag, double r, unsig
 	vect_t	from;
 	vect_t	dir;
 
-	if( da_flag )  {
+	if ( da_flag )  {
 		VSUB2( dir, dir_at, pos );
 		VUNITIZE( dir );
 	} else {
@@ -338,7 +338,7 @@ do_light(char *name, fastf_t *pos, fastf_t *dir_at, int da_flag, double r, unsig
 	mk_sph( outfp, nbuf, center, r );
 
 	/*
-	 * Need to rotate from 0, 0,-1 to vect "dir",
+	 * Need to rotate from 0, 0, -1 to vect "dir",
 	 * then xlate to final position.
 	 */
 	VSET( from, 0, 0, -1 );

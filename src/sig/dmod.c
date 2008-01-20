@@ -67,7 +67,7 @@ get_args(int argc, register char **argv)
     double	d;
 
     while ( (c = bu_getopt( argc, argv, "a:s:m:d:Ae:r:" )) != EOF )  {
-	switch( c )  {
+	switch ( c )  {
 	    case 'a':
 		op[ numop ] = ADD;
 		val[ numop++ ] = atof(bu_optarg);
@@ -83,7 +83,7 @@ get_args(int argc, register char **argv)
 	    case 'd':
 		op[ numop ] = MULT;
 		d = atof(bu_optarg);
-		if( d == 0.0 ) {
+		if ( d == 0.0 ) {
 		    bu_exit(2, "dmod: divide by zero!\n" );
 		}
 		val[ numop++ ] = 1.0 / d;
@@ -99,7 +99,7 @@ get_args(int argc, register char **argv)
 	    case 'r':
 		op[ numop ] = POW;
 		d = atof(bu_optarg);
-		if( d == 0.0 ) {
+		if ( d == 0.0 ) {
 		    bu_exit(2, "dmod: zero root!\n" );
 		}
 		val[ numop++ ] = 1.0 / d;
@@ -110,14 +110,14 @@ get_args(int argc, register char **argv)
 	}
     }
 
-    if( bu_optind >= argc )  {
-	if( isatty(fileno(stdin)) )
+    if ( bu_optind >= argc )  {
+	if ( isatty(fileno(stdin)) )
 	    return(0);
 	file_name = "-";
 	infp = stdin;
     } else {
 	file_name = argv[bu_optind];
-	if( (infp = fopen(file_name, "r")) == NULL )  {
+	if ( (infp = fopen(file_name, "r")) == NULL )  {
 	    (void)fprintf( stderr,
 			   "dmod: cannot open \"%s\" for reading\n",
 			   file_name );
@@ -142,37 +142,37 @@ int main(int argc, char **argv)
     register double	arg;
     register int j;
 
-    if( !get_args( argc, argv ) || isatty(fileno(infp))
+    if ( !get_args( argc, argv ) || isatty(fileno(infp))
 	|| isatty(fileno(stdout)) ) {
 	bu_exit(1, "Usage: dmod {-a add -s sub -m mult -d div -A(abs) -e exp -r root} [doubles]\n");
     }
 
-    while( (n = fread(buf, sizeof(*buf), BUFLEN, infp)) > 0 ) {
-	for( i = 0; i < numop; i++ ) {
+    while ( (n = fread(buf, sizeof(*buf), BUFLEN, infp)) > 0 ) {
+	for ( i = 0; i < numop; i++ ) {
 	    arg = val[ i ];
-	    switch( op[i] ) {
+	    switch ( op[i] ) {
 		case ADD:
 		    bp = &buf[0];
-		    for( j = n; j > 0; j-- ) {
+		    for ( j = n; j > 0; j-- ) {
 			*bp++ += arg;
 		    }
 		    break;
 		case MULT:
 		    bp = &buf[0];
-		    for( j = n; j > 0; j-- ) {
+		    for ( j = n; j > 0; j-- ) {
 			*bp++ *= arg;
 		    }
 		    break;
 		case POW:
 		    bp = &buf[0];
-		    for( j = n; j > 0; j-- ) {
+		    for ( j = n; j > 0; j-- ) {
 			*bp++ = pow( *bp, arg );
 		    }
 		    break;
 		case ABS:
 		    bp = &buf[0];
-		    for( j = n; j > 0; j-- ) {
-			if( *bp < 0.0 )
+		    for ( j = n; j > 0; j-- ) {
+			if ( *bp < 0.0 )
 			    *bp = - *bp;
 			bp++;
 		    }

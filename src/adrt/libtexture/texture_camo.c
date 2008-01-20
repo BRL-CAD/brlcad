@@ -79,7 +79,7 @@ void texture_camo_work(__TEXTURE_WORK_PROTOTYPE__) {
 
   /* Transform the Point */
   MATH_VEC_TRANSFORM(pt, id->pos, ADRT_MESH(mesh)->matinv);
-  if(td->absolute) {
+  if (td->absolute) {
     p = id->pos;
   } else {
     p.v[0] = ADRT_MESH(mesh)->max.v[0] - ADRT_MESH(mesh)->min.v[0] > TIE_PREC ? (pt.v[0] - ADRT_MESH(mesh)->min.v[0]) / (ADRT_MESH(mesh)->max.v[0] - ADRT_MESH(mesh)->min.v[0]) : 0.0;
@@ -90,13 +90,13 @@ void texture_camo_work(__TEXTURE_WORK_PROTOTYPE__) {
   sum1 = fabs(texture_perlin_noise3(&td->perlin, p, td->size*1.0, td->octaves));
   sum2 = fabs(texture_perlin_noise3(&td->perlin, p, td->size*0.8, td->octaves+1));
 
-  if(sum1 < 0.3) {
+  if (sum1 < 0.3) {
     *pixel = td->color1;
   } else {
     *pixel = td->color2;
   }
 
-  if(sum2 < 0.3)
+  if (sum2 < 0.3)
     *pixel = td->color3;
 }
 

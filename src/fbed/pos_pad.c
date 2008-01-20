@@ -60,7 +60,7 @@ static	int npoints;
 int
 pad_open(int n)
 {
-    if( (pfd = open(padfile, 2)) < 0 ) {
+    if ( (pfd = open(padfile, 2)) < 0 ) {
 	perror( padfile );
 	return -1;
     }
@@ -90,7 +90,7 @@ getpos(Point *pos)
     register char *cend = (char *)NULL;
     char *last = (char *)NULL;
 
-    while( nread < 9 ) {
+    while ( nread < 9 ) {
 	if (empty(pfd)) {
 	    return -1;
 	}
@@ -107,7 +107,7 @@ getpos(Point *pos)
 
     cend = str + nread - 4;
     nread = 0;
-    for( cp = str; cp < cend; cp++ ) {
+    for ( cp = str; cp < cend; cp++ ) {
 	if (!(cp[0] & P_FLAG)) {
 	    continue;
 	}
@@ -117,7 +117,7 @@ getpos(Point *pos)
 	}
     }
 
-    if( last == NULL ) {
+    if ( last == NULL ) {
 	return buttons;	/* no position parsed */
     }
     last++;

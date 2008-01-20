@@ -149,8 +149,8 @@ main(int argc, char **argv)
 		}
 	}
 
-	if( bu_optind >= argc )  {
-		if( isatty(fileno(stdin)) ) {
+	if ( bu_optind >= argc )  {
+		if ( isatty(fileno(stdin)) ) {
 			(void) fprintf(stderr, "%s: No input file.\n", argv[0]);
 			usage(argv);
 			bu_exit(1, NULL);
@@ -159,7 +159,7 @@ main(int argc, char **argv)
 		fp = stdin;
 	} else {
 		file_name = argv[bu_optind];
-		if( (fp = fopen(file_name, "r")) == NULL )  {
+		if ( (fp = fopen(file_name, "r")) == NULL )  {
 			(void)fprintf( stderr,
 			    "%s: cannot open \"%s\" for reading\n", argv[0],
 			    file_name );
@@ -411,7 +411,7 @@ int getByte(FILE *inp)
 #define	PREFIX	0
 #define SUFIX	1
 	static int	table[2][1<<12];
-	static int	stack[1<<13],*sp;
+	static int	stack[1<<13], *sp;
 
 	int i;
 

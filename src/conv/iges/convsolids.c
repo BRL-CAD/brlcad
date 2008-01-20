@@ -41,9 +41,9 @@ Convsolids()
 
 	bu_log( "\n\nConverting solid entities:\n" );
 
-	for( i=0 ; i<totentities ; i++ )
+	for ( i=0; i<totentities; i++ )
 	{
-		switch( dir[i]->type )
+		switch ( dir[i]->type )
 		{
 			case 150:
 				totsolids++;

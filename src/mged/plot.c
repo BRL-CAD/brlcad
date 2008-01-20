@@ -81,7 +81,7 @@ f_plot(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	int floating;			/* 3-D floating point plot */
 	int	is_pipe = 0;
 
-	if(argc < 2){
+	if (argc < 2){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -91,15 +91,15 @@ f_plot(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  return TCL_ERROR;
 	}
 
-	if( not_state( ST_VIEW, "UNIX Plot of view" ) )
+	if ( not_state( ST_VIEW, "UNIX Plot of view" ) )
 	  return TCL_ERROR;
 
 	/* Process any options */
 	Three_D = 1;				/* 3-D w/color, by default */
 	Z_clip = 0;				/* NO Z clipping, by default*/
 	floating = 0;
-	while( argv[1] != (char *)0 && argv[1][0] == '-' )  {
-		switch( argv[1][1] )  {
+	while ( argv[1] != (char *)0 && argv[1][0] == '-' )  {
+		switch ( argv[1][1] )  {
 		case 'f':
 			floating = 1;
 			break;
@@ -125,19 +125,19 @@ f_plot(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		}
 		argv++;
 	}
-	if( argv[1] == (char *)0 )  {
+	if ( argv[1] == (char *)0 )  {
 	  Tcl_AppendResult(interp, "no filename or filter specified\n", (char *)NULL);
 	  return TCL_ERROR;
 	}
-	if( argv[1][0] == '|' )  {
+	if ( argv[1][0] == '|' )  {
 		struct bu_vls	str;
 		bu_vls_init( &str );
 		bu_vls_strcpy( &str, &argv[1][1] );
-		while( (++argv)[1] != (char *)0 )  {
+		while ( (++argv)[1] != (char *)0 )  {
 			bu_vls_strcat( &str, " " );
 			bu_vls_strcat( &str, argv[1] );
 		}
-		if( (fp = popen( bu_vls_addr( &str ), "w" ) ) == NULL )  {
+		if ( (fp = popen( bu_vls_addr( &str ), "w" ) ) == NULL )  {
 			perror( bu_vls_addr( &str ) );
 			return TCL_ERROR;
 		}
@@ -147,7 +147,7 @@ f_plot(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		bu_vls_free( &str );
 		is_pipe = 1;
 	}  else  {
-		if( (fp = fopen( argv[1], "w" )) == NULL )  {
+		if ( (fp = fopen( argv[1], "w" )) == NULL )  {
 		  perror( argv[1] );
 		  return TCL_ERROR;
 		}
@@ -156,7 +156,7 @@ f_plot(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		is_pipe = 0;
 	}
 
-	if( floating )  {
+	if ( floating )  {
 		pd_3space( fp,
 			-view_state->vs_vop->vo_center[MDX] - view_state->vs_vop->vo_scale,
 			-view_state->vs_vop->vo_center[MDY] - view_state->vs_vop->vo_scale,
@@ -172,8 +172,8 @@ f_plot(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 				sp->s_color[0],
 				sp->s_color[1],
 				sp->s_color[2] );
-			if( Dashing != sp->s_soldash )  {
-				if( sp->s_soldash )
+			if ( Dashing != sp->s_soldash )  {
+				if ( sp->s_soldash )
 					pl_linmod( fp, "dotdashed");
 				else
 					pl_linmod( fp, "solid");
@@ -194,7 +194,7 @@ f_plot(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	clipmax[X] =  1.0;
 	clipmin[Y] = -1.0;
 	clipmax[Y] =  1.0;
-	if( Z_clip )  {
+	if ( Z_clip )  {
 		clipmin[Z] = -1.0;
 		clipmax[Z] =  1.0;
 	} else {
@@ -202,7 +202,7 @@ f_plot(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		clipmax[Z] =  1.0e20;
 	}
 
-	if( Three_D )
+	if ( Three_D )
 		pl_3space( fp, (int)GED_MIN, (int)GED_MIN, (int)GED_MIN, (int)GED_MAX, (int)GED_MAX, (int)GED_MAX );
 	else
 		pl_space( fp, (int)GED_MIN, (int)GED_MIN, (int)GED_MAX, (int)GED_MAX );
@@ -210,20 +210,20 @@ f_plot(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	Dashing = 0;
 	pl_linmod( fp, "solid");
 	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)  {
-		if( Dashing != sp->s_soldash )  {
-			if( sp->s_soldash )
+		if ( Dashing != sp->s_soldash )  {
+			if ( sp->s_soldash )
 				pl_linmod( fp, "dotdashed");
 			else
 				pl_linmod( fp, "solid");
 			Dashing = sp->s_soldash;
 		}
-		for( BU_LIST_FOR( vp, bn_vlist, &(sp->s_vlist) ) )  {
+		for ( BU_LIST_FOR( vp, bn_vlist, &(sp->s_vlist) ) )  {
 			register int	i;
 			register int	nused = vp->nused;
 			register int	*cmd = vp->cmd;
 			register point_t *pt = vp->pt;
-			for( i = 0; i < nused; i++, cmd++, pt++ )  {
-				switch( *cmd )  {
+			for ( i = 0; i < nused; i++, cmd++, pt++ )  {
+				switch ( *cmd )  {
 				case BN_VLIST_POLY_START:
 				case BN_VLIST_POLY_VERTNORM:
 					continue;
@@ -241,11 +241,11 @@ f_plot(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 					VMOVE( last, fin );
 					break;
 				}
-				if(
+				if (
 					vclip( start, fin, clipmin, clipmax ) == 0
 				)  continue;
 
-				if( Three_D )  {
+				if ( Three_D )  {
 					/* Could check for differences from last color */
 					pl_color( fp,
 						sp->s_color[0],
@@ -269,7 +269,7 @@ f_plot(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		}
 	}
 out:
-	if( is_pipe )
+	if ( is_pipe )
 		(void)pclose( fp );
 	else
 		(void)fclose( fp );
@@ -302,7 +302,7 @@ f_area(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	CHECK_DBI_NULL;
 
-	if(argc < 1 || 2 < argc){
+	if (argc < 1 || 2 < argc){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -312,16 +312,16 @@ f_area(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  return TCL_ERROR;
 	}
 
-	if( not_state( ST_VIEW, "Presented Area Calculation" ) == TCL_ERROR )
+	if ( not_state( ST_VIEW, "Presented Area Calculation" ) == TCL_ERROR )
 		return TCL_ERROR;
 
-	if( BU_LIST_IS_EMPTY( &dgop->dgo_headSolid ) ) {
+	if ( BU_LIST_IS_EMPTY( &dgop->dgo_headSolid ) ) {
 		Tcl_AppendResult(interp, "No objects displayed!!!\n", (char *)NULL );
 		return TCL_ERROR;
 	}
 
 	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)  {
-	  if( !sp->s_Eflag && sp->s_soldash != 0 )  {
+	  if ( !sp->s_Eflag && sp->s_soldash != 0 )  {
 	    struct bu_vls vls;
 
 	    bu_vls_init(&vls);
@@ -332,7 +332,7 @@ f_area(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  }
 	}
 
-	if(argc == 2){
+	if (argc == 2){
 	  Tcl_AppendResult(interp, "Tolerance is ", argv[1], "\n", (char *)NULL);
 	  tol_ptr = argv[1];
 	}else{
@@ -347,17 +347,17 @@ f_area(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  bu_vls_free(&tmp_vls);
 	}
 
-	if(pipe(fd1) != 0){
+	if (pipe(fd1) != 0){
 	  perror("f_area");
 	  return TCL_ERROR;
 	}
 
-	if(pipe(fd2) != 0){
+	if (pipe(fd2) != 0){
 	  perror("f_area");
 	  return TCL_ERROR;
 	}
 
-	if(pipe(fd3) != 0){
+	if (pipe(fd3) != 0){
 	  perror("f_area");
 	  return TCL_ERROR;
 	}
@@ -403,13 +403,13 @@ f_area(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	 * and unscaled vectors
 	 */
 	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)  {
-	  for( BU_LIST_FOR( vp, bn_vlist, &(sp->s_vlist) ) )  {
+	  for ( BU_LIST_FOR( vp, bn_vlist, &(sp->s_vlist) ) )  {
 	    register int	i;
 	    register int	nused = vp->nused;
 	    register int	*cmd = vp->cmd;
 	    register point_t *pt = vp->pt;
-	    for( i = 0; i < nused; i++, cmd++, pt++ )  {
-	      switch( *cmd )  {
+	    for ( i = 0; i < nused; i++, cmd++, pt++ )  {
+	      switch ( *cmd )  {
 	      case BN_VLIST_POLY_START:
 	      case BN_VLIST_POLY_VERTNORM:
 		continue;

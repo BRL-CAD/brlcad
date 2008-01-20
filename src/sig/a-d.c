@@ -43,13 +43,13 @@ int main(int argc, char **argv)
 	double	d;
 	int	i;
 
-	if( isatty(fileno(stdout)) ) {
+	if ( isatty(fileno(stdout)) ) {
 	    bu_exit(1, "Usage: a-d [values] < ascii > doubles\n");
 	}
 
-	if( argc > 1 ) {
+	if ( argc > 1 ) {
 		/* get them from the command line */
-		for( i = 1; i < argc; i++ ) {
+		for ( i = 1; i < argc; i++ ) {
 			d = atof( argv[i] );
 			fwrite( &d, sizeof(d), 1, stdout );
 		}
@@ -57,7 +57,7 @@ int main(int argc, char **argv)
 		/* get them from stdin */
 #if 0
 		char	s[80];
-		while( bu_fgets(s, 80, stdin) != NULL ) {
+		while ( bu_fgets(s, 80, stdin) != NULL ) {
 			d = atof( s );
 #else
 		/* XXX This one is slower but allows more than 1 per line */

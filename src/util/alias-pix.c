@@ -115,7 +115,7 @@ main(int ac, char **av)
 	/* read and "unpack" the image */
 	p = image;
 	while ((pixcnt=fread(buf, sizeof(struct pixel), BUFCNT, stdin)) > 0) {
-		for (i=0 ; i < pixcnt ; ++i)
+		for (i=0; i < pixcnt; ++i)
 			do {
 				*p++ = buf[i].r;
 				*p++ = buf[i].g;
@@ -125,7 +125,7 @@ main(int ac, char **av)
 
 	/* write out the image scanlines, correcting for different origin */
 
-	for(i=hdr.y-1 ; i >= 0 ; --i) {
+	for (i=hdr.y-1; i >= 0; --i) {
 		if (fwrite(&image[i*hdr.x*3], hdr.x*3, 1, stdout) != 1) {
 			bu_exit(-1, "%s: Error writing image\n", *av);
 		}

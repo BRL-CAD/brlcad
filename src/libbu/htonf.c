@@ -61,7 +61,7 @@ htonf(register unsigned char *out, register const unsigned char *in, int count)
 #if	defined(REVERSE_IEEE)
 	/* This machine uses IEEE, but in little-endian byte order */
 	register int	i;
-	for( i=count-1; i >= 0; i-- )  {
+	for ( i=count-1; i >= 0; i-- )  {
 		*out++ = in[3];
 		*out++ = in[2];
 		*out++ = in[1];
@@ -94,7 +94,7 @@ ntohf(register unsigned char *out, register const unsigned char *in, int count)
 	 *  IEEE format internally, using big-endian order.
 	 *  These are the lucky ones.
 	 */
-	if( sizeof(float) != SIZEOF_NETWORK_FLOAT )
+	if ( sizeof(float) != SIZEOF_NETWORK_FLOAT )
 		bu_bomb("ntohf:  sizeof(float) != SIZEOF_NETWORK_FLOAT\n");
 	memcpy(out, in, count*SIZEOF_NETWORK_FLOAT);
 	return;
@@ -103,7 +103,7 @@ ntohf(register unsigned char *out, register const unsigned char *in, int count)
 #if	defined(REVERSE_IEEE)
 	/* This machine uses IEEE, but in little-endian byte order */
 	register int	i;
-	for( i=count-1; i >= 0; i-- )  {
+	for ( i=count-1; i >= 0; i-- )  {
 		*out++ = in[3];
 		*out++ = in[2];
 		*out++ = in[1];

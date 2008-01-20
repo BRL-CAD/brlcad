@@ -320,7 +320,7 @@ cook_render(register struct application *ap, struct partition *pp, struct shadew
 	}
 
 	/* Consider effects of each light source */
-	for( i=ap->a_rt_i->rti_nlights-1; i >= 0; i-- )  {
+	for ( i=ap->a_rt_i->rti_nlights-1; i >= 0; i-- )  {
 
 		if ((lp = (struct light_specific *)swp->sw_visible[i]) == LIGHT_NULL )
 			continue;	/* shadowed */

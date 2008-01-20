@@ -122,7 +122,7 @@ int read_faces(struct model *m, FILE *fgeom)
 		plane_t pl;
 
 		fprintf(stderr, "planeeqning face %d.\n", i);
-		if( nmg_loop_plane_area( BU_LIST_FIRST( loopuse, &outfaceuses[i]->lu_hd ), pl ) < 0.0 )
+		if ( nmg_loop_plane_area( BU_LIST_FIRST( loopuse, &outfaceuses[i]->lu_hd ), pl ) < 0.0 )
 			fail = 1;
 		else
 			nmg_face_g( outfaceuses[i], pl );

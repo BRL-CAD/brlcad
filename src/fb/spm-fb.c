@@ -63,7 +63,7 @@ get_args(int argc, register char **argv)
 	register int c;
 
 	while ( (c = bu_getopt( argc, argv, "hF:sS:W:N:" )) != EOF )  {
-		switch( c )  {
+		switch ( c )  {
 		case 'h':
 			/* high-res */
 			scr_height = scr_width = 1024;
@@ -89,12 +89,12 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( bu_optind >= argc )
+	if ( bu_optind >= argc )
 		return(0);		/* missing positional arg */
 	vsize = atoi( argv[bu_optind++] );
 
-	if( bu_optind >= argc )  {
-		if( isatty(fileno(stdin)) )
+	if ( bu_optind >= argc )  {
+		if ( isatty(fileno(stdin)) )
 			return(0);
 		file_name = "-";
 	} else {
@@ -120,18 +120,18 @@ main(int argc, char **argv)
 		bu_exit( 1, NULL );
 	}
 
-	if( (fbp = fb_open( framebuffer, scr_width, scr_height )) == FBIO_NULL )
+	if ( (fbp = fb_open( framebuffer, scr_width, scr_height )) == FBIO_NULL )
 		bu_exit(12, NULL);
 	scr_width = fb_getwidth(fbp);
 	scr_height = fb_getheight(fbp);
 
 	mp = spm_init( vsize, sizeof(RGBpixel) );
-	if( mp == SPM_NULL || fbp == FBIO_NULL )
+	if ( mp == SPM_NULL || fbp == FBIO_NULL )
 		bu_exit( 1, NULL );
 
 	spm_load( mp, file_name );
 
-	if( square )
+	if ( square )
 		spm_square( mp );
 	else
 		spm_fb( mp );
@@ -151,10 +151,10 @@ spm_fb(spm_map_t *mapp)
 {
 	register int	j;
 
-	for( j = 0; j < mapp->ny; j++ ) {
+	for ( j = 0; j < mapp->ny; j++ ) {
 		fb_write( fbp, 0, j, mapp->xbin[j], mapp->nx[j] );
 #ifdef NEVER
-		for( i = 0; i < mapp->nx[j]; i++ ) {
+		for ( i = 0; i < mapp->nx[j]; i++ ) {
 			rgb[RED] = mapp->xbin[j][i*3];
 			rgb[GRN] = mapp->xbin[j][i*3+1];
 			rgb[BLU] = mapp->xbin[j][i*3+2];
@@ -177,13 +177,13 @@ spm_square(register spm_map_t *mapp)
 
 	scanline = (unsigned char *)malloc( scr_width * sizeof(RGBpixel) );
 
-	for( y = 0; y < scr_height; y++ ) {
-		for( x = 0; x < scr_width; x++ ) {
+	for ( y = 0; y < scr_height; y++ ) {
+		for ( x = 0; x < scr_width; x++ ) {
 			spm_read( mapp, scanline[x],
 				(double)x/(double)scr_width,
 				(double)y/(double)scr_height );
 		}
-		if( fb_write( fbp, 0, y, scanline, scr_width ) != scr_width )  break;
+		if ( fb_write( fbp, 0, y, scanline, scr_width ) != scr_width )  break;
 	}
 }
 

@@ -174,14 +174,14 @@ void do_pixel(int cpu,
     a = ap;				/* struct copy */
     a.a_resource = &resource[cpu];
 
-    if( incr_mode )  {
+    if ( incr_mode )  {
 	register int i = 1<<incr_level;
 	a.a_y = pixelnum/i;
 	a.a_x = pixelnum - (a.a_y * i);
 	/*	a.a_x = pixelnum%i; */
-	if( incr_level != 0 )  {
+	if ( incr_level != 0 )  {
 	    /* See if already done last pass */
-	    if( ((a.a_x & 1) == 0 ) &&
+	    if ( ((a.a_x & 1) == 0 ) &&
 		((a.a_y & 1) == 0 ) )
 		return;
 	}
@@ -202,16 +202,16 @@ void do_pixel(int cpu,
 	}
     }
 
-    if( sub_grid_mode )  {
-	if( a.a_x < sub_xmin || a.a_x > sub_xmax )
+    if ( sub_grid_mode )  {
+	if ( a.a_x < sub_xmin || a.a_x > sub_xmax )
 	    return;
-	if( a.a_y < sub_ymin || a.a_y > sub_ymax )
+	if ( a.a_y < sub_ymin || a.a_y > sub_ymax )
 	    return;
     }
-    if( fullfloat_mode )  {
+    if ( fullfloat_mode )  {
 	register struct floatpixel	*fp;
 	fp = &curr_float_frame[a.a_y*width + a.a_x];
-	if( fp->ff_frame >= 0 )  {
+	if ( fp->ff_frame >= 0 )  {
 	    return;	/* pixel was reprojected */
 	}
     }
@@ -229,7 +229,7 @@ void do_pixel(int cpu,
 
 	    /* we're done */
 	    view_pixel( &a );
-	    if( a.a_x == width-1 ) {
+	    if ( a.a_x == width-1 ) {
 		view_eol( &a );		/* End of scan line */
 	    }
 	    return;
@@ -270,7 +270,7 @@ void do_pixel(int cpu,
 	    a.a_pixelext = &pe;
 	}
 
-	if( rt_perspective > 0.0 )  {
+	if ( rt_perspective > 0.0 )  {
 	    VSUB2( a.a_ray.r_dir, point, eye_model );
 	    VUNITIZE( a.a_ray.r_dir );
 	    VMOVE( a.a_ray.r_pt, eye_model );
@@ -291,7 +291,7 @@ void do_pixel(int cpu,
 		VMOVE(pe.corner[3].r_dir, a.a_ray.r_dir);
 	    }
 	}
-	if( report_progress )  {
+	if ( report_progress )  {
 	    report_progress = 0;
 	    bu_log("\tframe %d, xy=%d,%d on cpu %d, samp=%d\n", curframe, a.a_x, a.a_y, cpu, samplenum );
 	}
@@ -300,13 +300,13 @@ void do_pixel(int cpu,
 	a.a_purpose = "main ray";
 	(void)rt_shootray( &a );
 
-	if( stereo )  {
+	if ( stereo )  {
 	    fastf_t right, left;
 
 	    right = CRT_BLEND(a.a_color);
 
 	    VSUB2( stereo_point, point, left_eye_delta );
-	    if( rt_perspective > 0.0 )  {
+	    if ( rt_perspective > 0.0 )  {
 		VSUB2( a.a_ray.r_dir, stereo_point, eye_model );
 		VUNITIZE( a.a_ray.r_dir );
 		VADD2( a.a_ray.r_pt, eye_model, left_eye_delta );
@@ -329,7 +329,7 @@ void do_pixel(int cpu,
     } else {
 	/* hypersampling, so iterate */
 
-	for( samplenum=0; samplenum<=hypersample; samplenum++ )  {
+	for ( samplenum=0; samplenum<=hypersample; samplenum++ )  {
 	    /* shoot at a point based on the jitter pattern number */
 
 	    /**********************/
@@ -350,7 +350,7 @@ void do_pixel(int cpu,
 		a.a_pixelext = &pe;
 	    }
 
-	    if( rt_perspective > 0.0 )  {
+	    if ( rt_perspective > 0.0 )  {
 		VSUB2( a.a_ray.r_dir, point, eye_model );
 		VUNITIZE( a.a_ray.r_dir );
 		VMOVE( a.a_ray.r_pt, eye_model );
@@ -371,7 +371,7 @@ void do_pixel(int cpu,
 		    VMOVE(pe.corner[3].r_dir, a.a_ray.r_dir);
 		}
 	    }
-	    if( report_progress )  {
+	    if ( report_progress )  {
 		report_progress = 0;
 		bu_log("\tframe %d, xy=%d,%d on cpu %d, samp=%d\n", curframe, a.a_x, a.a_y, cpu, samplenum );
 	    }
@@ -380,13 +380,13 @@ void do_pixel(int cpu,
 	    a.a_purpose = "main ray";
 	    (void)rt_shootray( &a );
 
-	    if( stereo )  {
+	    if ( stereo )  {
 		fastf_t right, left;
 
 		right = CRT_BLEND(a.a_color);
 
 		VSUB2( stereo_point, point, left_eye_delta );
-		if( rt_perspective > 0.0 )  {
+		if ( rt_perspective > 0.0 )  {
 		    VSUB2( a.a_ray.r_dir, stereo_point, eye_model );
 		    VUNITIZE( a.a_ray.r_dir );
 		    VADD2( a.a_ray.r_pt, eye_model, left_eye_delta );
@@ -419,7 +419,7 @@ void do_pixel(int cpu,
 
     /* we're done */
     view_pixel( &a );
-    if( a.a_x == width-1 ) {
+    if ( a.a_x == width-1 ) {
 	view_eol( &a );		/* End of scan line */
     }
     return;
@@ -446,9 +446,9 @@ worker(int cpu, genptr_t arg)
 	int	pat_num = -1;
 
 	/* The more CPUs at work, the bigger the bites we take */
-	if( per_processor_chunk <= 0 )  per_processor_chunk = npsw;
+	if ( per_processor_chunk <= 0 )  per_processor_chunk = npsw;
 
-	if( cpu >= MAX_PSW )  {
+	if ( cpu >= MAX_PSW )  {
 		bu_log("rt/worker() cpu %d > MAX_PSW %d, array overrun\n", cpu, MAX_PSW);
 		bu_exit(EXIT_FAILURE, "rt/worker() cpu > MAX_PSW, array overrun\n");
 	}
@@ -459,7 +459,7 @@ worker(int cpu, genptr_t arg)
 		int i, ray_samples;
 
 		ray_samples = hypersample + 1;
-		for (i=0 ; pt_pats[i].num_samples != 0 ; i++) {
+		for (i=0; pt_pats[i].num_samples != 0; i++) {
 			if (pt_pats[i].num_samples == ray_samples) {
 				pat_num = i;
 				goto pat_found;
@@ -531,7 +531,7 @@ grid_setup(void)
 	vect_t temp;
 	mat_t toEye;
 
-	if( viewsize <= 0.0 )
+	if ( viewsize <= 0.0 )
 		bu_exit(EXIT_FAILURE, "viewsize <= 0");
 	/* model2view takes us to eye_model location & orientation */
 	MAT_IDN( toEye );
@@ -541,9 +541,9 @@ grid_setup(void)
 	bn_mat_inv( view2model, model2view );
 
 	/* Determine grid cell size and number of pixels */
-	if( cell_newsize ) {
-		if( cell_width <= 0.0 ) cell_width = cell_height;
-		if( cell_height <= 0.0 ) cell_height = cell_width;
+	if ( cell_newsize ) {
+		if ( cell_width <= 0.0 ) cell_width = cell_height;
+		if ( cell_height <= 0.0 ) cell_height = cell_width;
 		width = (viewsize / cell_width) + 0.99;
 		height = (viewsize / (cell_height*aspect)) + 0.99;
 		cell_newsize = 0;
@@ -558,7 +558,7 @@ grid_setup(void)
 	 *  Round coordinates of lower left corner to fall on integer-
 	 *  valued coordinates, in "gift_grid_rounding" units.
 	 */
-	if( gift_grid_rounding > 0.0 )  {
+	if ( gift_grid_rounding > 0.0 )  {
 		point_t		v_ll;		/* view, lower left */
 		point_t		m_ll;		/* model, lower left */
 		point_t		hv_ll;		/* hv, lower left*/
@@ -595,7 +595,7 @@ grid_setup(void)
 	MAT3X3VEC( dy_unit, view2model, temp );	/* rotate only */
 	VSCALE( dy_model, dy_unit, cell_height );
 
-	if( stereo )  {
+	if ( stereo )  {
 		/* Move left 2.5 inches (63.5mm) */
 		VSET( temp, -63.5*2.0/viewsize, 0, 0 );
 		bu_log("red eye: moving %f relative screen (left)\n", temp[X]);
@@ -604,7 +604,7 @@ grid_setup(void)
 	}
 
 	/* "Lower left" corner of viewing plane */
-	if( rt_perspective > 0.0 )  {
+	if ( rt_perspective > 0.0 )  {
 		fastf_t	zoomout;
 		zoomout = 1.0 / tan( bn_degtorad * rt_perspective / 2.0 );
 		VSET( temp, -1, -1/aspect, -zoomout );	/* viewing plane */
@@ -626,11 +626,11 @@ grid_setup(void)
 		ap.a_rbeam = 0.5 * viewsize / width;
 		ap.a_diverge = 0;
 	}
-	if( NEAR_ZERO(ap.a_rbeam, SMALL) && NEAR_ZERO(ap.a_diverge, SMALL) )
+	if ( NEAR_ZERO(ap.a_rbeam, SMALL) && NEAR_ZERO(ap.a_diverge, SMALL) )
 		bu_exit(EXIT_FAILURE, "zero-radius beam");
 	MAT4X3PNT( viewbase_model, view2model, temp );
 
-	if( jitter & JITTER_FRAME )  {
+	if ( jitter & JITTER_FRAME )  {
 		/* Move the frame in a smooth circular rotation in the plane */
 		fastf_t		ang;	/* radians */
 		fastf_t		dx, dy;
@@ -643,13 +643,13 @@ grid_setup(void)
 			dy, dy_model );
 	}
 
-	if( cell_width <= 0 || cell_width >= INFINITY ||
+	if ( cell_width <= 0 || cell_width >= INFINITY ||
 	    cell_height <= 0 || cell_height >= INFINITY )  {
 		bu_log("grid_setup: cell size ERROR (%g, %g) mm\n",
 			cell_width, cell_height );
 		bu_exit(EXIT_FAILURE, "cell size");
 	}
-	if( width <= 0 || height <= 0 )  {
+	if ( width <= 0 || height <= 0 )  {
 		bu_log("grid_setup: ERROR bad image size (%d, %d)\n",
 			width, height );
 		bu_exit(EXIT_FAILURE, "bad size");
@@ -675,7 +675,7 @@ void do_run( int a, int b )
 	int p[2] = {0, 0};
 	struct resource *tmp_res;
 
-	if( rt_g.rtg_parallel ) {
+	if ( rt_g.rtg_parallel ) {
 		buffer = bu_calloc(npsw, sizeof(resource[0]), "buffer");
 		if (pipe(p) == -1) {
 			perror("pipe failed");
@@ -686,7 +686,7 @@ void do_run( int a, int b )
 	cur_pixel = a;
 	last_pixel = b;
 
-	if( !rt_g.rtg_parallel )  {
+	if ( !rt_g.rtg_parallel )  {
 		/*
 		 * SERIAL case -- one CPU does all the work.
 		 */
@@ -749,12 +749,12 @@ void do_run( int a, int b )
 	} /* end parallel case */
 
 #  ifdef USE_FORKED_THREADS
-	if( rt_g.rtg_parallel ) {
+	if ( rt_g.rtg_parallel ) {
 		tmp_res = (struct resource *)buffer;
 	} else {
 		tmp_res = resource;
 	}
-	for( cpu=0; cpu < npsw; cpu++ ) {
+	for ( cpu=0; cpu < npsw; cpu++ ) {
 		if ( tmp_res[cpu].re_magic != RESOURCE_MAGIC )  {
 			bu_log("ERROR: CPU %d resources corrupted, statistics bad\n", cpu);
 			continue;

@@ -183,7 +183,7 @@ void gen_mortar(int horiz_bricks, int vert_bricks, double horiz_spacing, double 
 			return;
 		}
 
-	for (row=0 ; row < vert_bricks ; ++row) {
+	for (row=0; row < vert_bricks; ++row) {
 
 	    if (vert_spacing > tol) {
 		if (row % 2) xstart = brick_depth;
@@ -206,7 +206,7 @@ void gen_mortar(int horiz_bricks, int vert_bricks, double horiz_spacing, double 
 	    if (horiz_spacing > tol) {
 		/* generate mortar between bricks */
 
-		for(i=0 ; i < horiz_bricks ; ++i) {
+		for (i=0; i < horiz_bricks; ++i) {
 			if (row %2)
 				xstart = brick_depth + (brick_width+horiz_spacing)*i;
 			else
@@ -255,13 +255,13 @@ void gen_bricks(int horiz_bricks, int vert_bricks, double horiz_spacing, double 
 
 	(void)fprintf(stdout, "\n\n");
 
-	for (row=0 ; row < vert_bricks ; ++row) {
+	for (row=0; row < vert_bricks; ++row) {
 
 		if (row % 2) offset = brick_depth + horiz_spacing;
 		else offset = 0.0;
 
 
-		for (brick=0 ; brick < horiz_bricks ; ++ brick) {
+		for (brick=0; brick < horiz_bricks; ++ brick) {
 			xstart = brick * brick_width +
 				 brick * horiz_spacing + offset;
 			zstart = row * brick_height + row * vert_spacing;

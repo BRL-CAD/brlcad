@@ -62,7 +62,7 @@
 const char *
 bu_identify_magic(register long int magic)
 {
-	switch(magic)  {
+	switch (magic)  {
 	case 0:
 		return "Zero_Magic_Number";
 	default:

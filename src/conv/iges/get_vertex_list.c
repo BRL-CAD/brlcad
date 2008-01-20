@@ -37,10 +37,10 @@ int vert_de;
 {
 	struct iges_vertex_list *v_list;
 
-	if( vertex_root == NULL )
+	if ( vertex_root == NULL )
 	{
 		vertex_root = Read_vertex_list( vert_de );
-		if( vertex_root != NULL )
+		if ( vertex_root != NULL )
 		{
 			vertex_root->next = NULL;
 			return( vertex_root );
@@ -51,15 +51,15 @@ int vert_de;
 	else
 	{
 		v_list = vertex_root;
-		while( v_list->next != NULL && v_list->vert_de != vert_de )
+		while ( v_list->next != NULL && v_list->vert_de != vert_de )
 			v_list = v_list->next;
 	}
 
-	if( v_list->vert_de == vert_de )
+	if ( v_list->vert_de == vert_de )
 		return( v_list );
 
 	v_list->next = Read_vertex_list( vert_de );
-	if( v_list->next == NULL )
+	if ( v_list->next == NULL )
 		return( (struct iges_vertex_list *)NULL );
 	else
 		return( v_list->next );

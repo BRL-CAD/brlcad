@@ -72,7 +72,7 @@ void rise_observer(char *host, int port) {
   rise_observer_net_info_t ni;
 
   /* server address */
-  if(gethostbyname(host)) {
+  if (gethostbyname(host)) {
     ni.master = gethostbyname(host)[0];
   } else {
     fprintf(stderr, "hostname %s unknown, exiting.\n", host);
@@ -118,7 +118,7 @@ void* rise_observer_networking(void *ptr) {
   ni = (rise_observer_net_info_t *)ptr;
 
   /* create a socket */
-  if((sockd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+  if ((sockd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
     perror("Socket creation error");
     exit(1);
   }
@@ -132,13 +132,13 @@ void* rise_observer_networking(void *ptr) {
   memcpy((char*)&srv_addr.sin_addr.s_addr, ni->master.h_addr_list[0], ni->master.h_length);
   srv_addr.sin_port = htons(ni->port);
 
-  if(bind(sockd, (struct sockaddr *)&my_addr, sizeof(my_addr)) < 0) {
+  if (bind(sockd, (struct sockaddr *)&my_addr, sizeof(my_addr)) < 0) {
     fprintf(stderr, "unable to bind socket, exiting.\n");
     exit(1);
   }
 
   /* connect to master */
-  if(connect(sockd, (struct sockaddr *)&srv_addr, sizeof(srv_addr)) < 0) {
+  if (connect(sockd, (struct sockaddr *)&srv_addr, sizeof(srv_addr)) < 0) {
     fprintf(stderr, "cannot connect to master, exiting.\n");
     exit(1);
   }
@@ -175,8 +175,8 @@ void* rise_observer_networking(void *ptr) {
   frame_num = 0;
   gettimeofday(&start, NULL);
 
-  while(rise_observer_alive) {
-    if(rise_observer_master_shutdown) {
+  while (rise_observer_alive) {
+    if (rise_observer_master_shutdown) {
       op = RISE_NET_OP_SHUTDOWN;
       tienet_send(sockd, &op, 1, rise_observer_endian);
       rise_observer_alive = 0;
@@ -240,11 +240,11 @@ void rise_observer_event_loop() {
   tienet_sem_post(&rise_observer_sdlready_sem);
 
   /* Loop waiting for ESC+Mouse_Button */
-  while(SDL_WaitEvent(&event) >= 0) {
+  while (SDL_WaitEvent(&event) >= 0) {
     pthread_mutex_lock(&event_mut);
-    switch(event.type) {
+    switch (event.type) {
       case SDL_KEYDOWN:
-	switch(event.key.keysym.sym) {
+	switch (event.key.keysym.sym) {
 	  case SDLK_q: /* quit */
 	    printf("Detaching from master and exiting.\n");
 	    rise_observer_alive = 0;
@@ -267,7 +267,7 @@ void rise_observer_event_loop() {
 	break;
 
       case SDL_MOUSEMOTION:
-	if(event.motion.state) {
+	if (event.motion.state) {
 	}
 	break;
 

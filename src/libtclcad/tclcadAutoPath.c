@@ -425,7 +425,7 @@ tclcad_auto_path(Tcl_Interp *interp)
 		/* these doesn't seem to do what one might expect
 		 * here, but call it anyways.
 		 */
-		Tcl_Obj *newpath = Tcl_NewStringObj(srcpath,-1);
+		Tcl_Obj *newpath = Tcl_NewStringObj(srcpath, -1);
 		Tcl_IncrRefCount(newpath);
 		TclSetLibraryPath(newpath);
 		Tcl_DecrRefCount(newpath);

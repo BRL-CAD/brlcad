@@ -50,10 +50,10 @@ main(int argc, char **argv)
 	int	fbsize = 512;
 	int	i;
 
-	while( argc > 1 ) {
-		if( strcmp(argv[1], "-h") == 0 ) {
+	while ( argc > 1 ) {
+		if ( strcmp(argv[1], "-h") == 0 ) {
 			fbsize = 1024;
-		} else if( argv[1][0] == '-' ) {
+		} else if ( argv[1][0] == '-' ) {
 			/* unknown flag */
 			bu_exit(1, "%s", usage );
 		} else
@@ -62,24 +62,24 @@ main(int argc, char **argv)
 		argv++;
 	}
 
-	if( argc > 1 ) {
-		if( (fp = fopen(argv[1], "w")) == NULL ) {
+	if ( argc > 1 ) {
+		if ( (fp = fopen(argv[1], "w")) == NULL ) {
 			fprintf( stderr, "fb-cmap: can't open \"%s\"\n", argv[1] );
 			bu_exit(2, "%s", usage );
 		}
 	} else
 		fp = stdout;
 
-	if( (fbp = fb_open( NULL, fbsize, fbsize )) == FBIO_NULL )
+	if ( (fbp = fb_open( NULL, fbsize, fbsize )) == FBIO_NULL )
 		bu_exit( 2, "Unable to open framebuffer\n" );
 
 	i = fb_rmap( fbp, &cm );
 	fb_close( fbp );
-	if( i < 0 ) {
+	if ( i < 0 ) {
 		bu_exit(3, "fb-cmap: can't read colormap\n" );
 	}
 
-	for( i = 0; i <= 255; i++ ) {
+	for ( i = 0; i <= 255; i++ ) {
 		fprintf( fp, "%d\t%04x %04x %04x\n", i,
 			cm.cm_red[i], cm.cm_green[i], cm.cm_blue[i] );
 	}

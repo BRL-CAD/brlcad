@@ -330,7 +330,7 @@ An error has occured while adding a new object to the database.\n", (char *)NULL
 
 /* For errors from db_delete() or db_dirdelete() */
 #define TCL_DELETE_ERR(_name){ \
-	Tcl_AppendResult(interp, "An error has occurred while deleting '", _name,\
+	Tcl_AppendResult(interp, "An error has occurred while deleting '", _name, \
 	"' from the database.\n", (char *)NULL);\
 	TCL_ERROR_RECOVERY_SUGGESTION; }
 
@@ -400,7 +400,7 @@ you should exit MGED now, and resolve the I/O problem, before continuing.\n")
 
 /* Check if database pointer is NULL */
 #define CHECK_DBI_NULL \
-	if( dbip == DBI_NULL ) \
+	if ( dbip == DBI_NULL ) \
 	{ \
 		Tcl_AppendResult(interp, "A database is not open!\n", (char *)NULL); \
 		return TCL_ERROR; \
@@ -408,7 +408,7 @@ you should exit MGED now, and resolve the I/O problem, before continuing.\n")
 
 /* Check if the database is read only, and if so return TCL_ERROR */
 #define	CHECK_READ_ONLY	\
-	if( dbip->dbi_read_only) \
+	if ( dbip->dbi_read_only) \
 	{ \
 		Tcl_AppendResult(interp, "Sorry, this database is READ-ONLY\n", (char *)NULL ); \
 		return TCL_ERROR; \

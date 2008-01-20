@@ -214,7 +214,7 @@ vo_open_cmd(const char	*oname)
 	vop->vo_callback = (void (*)())0;
 
 	/* append to list of view_obj's */
-	BU_LIST_APPEND(&HeadViewObj.l,&vop->l);
+	BU_LIST_APPEND(&HeadViewObj.l, &vop->l);
 
 	return vop;
 }
@@ -934,7 +934,7 @@ vo_eye_cmd(struct view_obj	*vop,
 	vo_update(vop, interp, 0);
 
 	/*  Second step:  put eye at view 0, 0, 1.
-	 *  For eye to be at 0, 0, 1, the old 0, 0,-1 needs to become 0, 0, 0.
+	 *  For eye to be at 0, 0, 1, the old 0, 0, -1 needs to become 0, 0, 0.
 	 */
 	VSET(xlate, 0.0, 0.0, -1.0);	/* correction factor */
 	MAT4X3PNT(new_cent, vop->vo_view2model, xlate);
@@ -2860,12 +2860,12 @@ vo_update(struct view_obj	*vop,
 		   temp, temp1, (fastf_t)0.005);
 
 	/* Force azimuth range to be [0, 360] */
-	if ((NEAR_ZERO(vop->vo_aet[1] - 90.0,(fastf_t)0.005) ||
-	     NEAR_ZERO(vop->vo_aet[1] + 90.0,(fastf_t)0.005)) &&
+	if ((NEAR_ZERO(vop->vo_aet[1] - 90.0, (fastf_t)0.005) ||
+	     NEAR_ZERO(vop->vo_aet[1] + 90.0, (fastf_t)0.005)) &&
 	    vop->vo_aet[0] < 0 &&
-	    !NEAR_ZERO(vop->vo_aet[0],(fastf_t)0.005))
+	    !NEAR_ZERO(vop->vo_aet[0], (fastf_t)0.005))
 		vop->vo_aet[0] += 360.0;
-	else if (NEAR_ZERO(vop->vo_aet[0],(fastf_t)0.005))
+	else if (NEAR_ZERO(vop->vo_aet[0], (fastf_t)0.005))
 		vop->vo_aet[0] = 0.0;
 
 	/* apply the perspective angle to model2view */
@@ -2954,7 +2954,7 @@ vo_mike_persp_mat(mat_t		pmat,
 	mat_t	t1, t2;
 	point_t	sheared_eye;
 
-	if( eye[Z] <= SMALL )  {
+	if ( eye[Z] <= SMALL )  {
 		VPRINT("mike_persp_mat(): ERROR, z<0, eye", eye);
 		return;
 	}
@@ -2965,7 +2965,7 @@ vo_mike_persp_mat(mat_t		pmat,
 	shear[6] = -eye[Y]/eye[Z];
 
 	MAT4X3VEC( sheared_eye, shear, eye );
-	if( !NEAR_ZERO(sheared_eye[X], .01) || !NEAR_ZERO(sheared_eye[Y], .01) )  {
+	if ( !NEAR_ZERO(sheared_eye[X], .01) || !NEAR_ZERO(sheared_eye[Y], .01) )  {
 		VPRINT("ERROR sheared_eye", sheared_eye);
 		return;
 	}

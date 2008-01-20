@@ -65,16 +65,16 @@ main(int argc, char **argv)
 	double		m;			/* slope */
 	double		b;			/* intercept */
 
-	if( argc < 2 )  {
+	if ( argc < 2 )  {
 		bu_exit(1, "Usage: dpix-pix file.dpix > file.pix\n");
 	}
 
-	if( (fd = open(argv[1], 0)) < 0 )  {
+	if ( (fd = open(argv[1], 0)) < 0 )  {
 		perror(argv[1]);
 		exit(1);
 	}
 
-	if( isatty(fileno(stdout)) )  {
+	if ( isatty(fileno(stdout)) )  {
 		bu_exit(2, "dpix-pix:  binary output directed to terminal, aborting\n");
 	}
 
@@ -90,9 +90,9 @@ main(int argc, char **argv)
 		min = 1.0e20;
 		max = -1.0e20;
 
-		while(1)  {
+		while (1)  {
 			got = read( fd, (char *)&doub[0], NUM*sizeof(doub[0]) );
-			if( got <= 0 ) {
+			if ( got <= 0 ) {
 			    if (got < 0) {
 				perror("dpix-pix READ ERROR");
 			    }
@@ -100,9 +100,9 @@ main(int argc, char **argv)
 			}
 			count = got / sizeof(doub[0]);
 			ep = &doub[count];
-			for(dp = &doub[0]; dp < ep;)  {
+			for (dp = &doub[0]; dp < ep;)  {
 				register double val;
-				if( (val = *dp++) < min )
+				if ( (val = *dp++) < min )
 					min = val;
 				else if ( val > max )
 					max = val;
@@ -143,13 +143,13 @@ main(int argc, char **argv)
 		count = got / sizeof(doub[0]);
 		ep = &doub[count];
 		cp = (char *)&cha[0];
-		for(dp = &doub[0]; dp < ep;)  {
+		for (dp = &doub[0]; dp < ep;)  {
 			*cp++ = mm * (*dp++) + bb;
 		}
 
 		/* fd 1 is stdout */
 		got = write( 1, (char *)&cha[0], count*sizeof(cha[0]) );
-		if( got != count*sizeof(cha[0]) )  {
+		if ( got != count*sizeof(cha[0]) )  {
 			perror("write");
 			exit(2);
 		}

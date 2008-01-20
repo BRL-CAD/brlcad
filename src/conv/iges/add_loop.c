@@ -42,9 +42,9 @@ int face_orient;
 
 	NMG_CK_SHELL( s );
 	NMG_CK_FACEUSE( fu );
-	if( fu->orientation != OT_SAME )
+	if ( fu->orientation != OT_SAME )
 		fu = fu->fumate_p;
-	if( fu->orientation != OT_SAME )
+	if ( fu->orientation != OT_SAME )
 	{
 		bu_log( "fu x%x (%s) and mate x%x (%s) have no OT_SAME use\n" ,
 			fu, nmg_orientation( fu->orientation ) ,
@@ -56,12 +56,12 @@ int face_orient;
 	/* first make a new face from the loop */
 	fu_tmp = Make_planar_face( s, entityno, face_orient );
 
-	if( !fu_tmp )
+	if ( !fu_tmp )
 		return( 0 );
 
-	if( fu_tmp->orientation != OT_SAME )
+	if ( fu_tmp->orientation != OT_SAME )
 		fu_tmp = fu_tmp->fumate_p;
-	if( fu_tmp->orientation != OT_SAME )
+	if ( fu_tmp->orientation != OT_SAME )
 	{
 		bu_log( "fu_tmp x%x (%s) nad mate x%x (%s) have no OT_SAME use\n" ,
 			fu_tmp, nmg_orientation( fu_tmp->orientation ) ,
@@ -74,7 +74,7 @@ int face_orient;
 	/* make sure OT_SAME use of this face is same direction as fu */
 	NMG_GET_FU_PLANE( pl_fu, fu );
 	NMG_GET_FU_PLANE( pl_fu_tmp, fu_tmp );
-	if( VDOT( pl_fu, pl_fu_tmp ) < 0.0 )
+	if ( VDOT( pl_fu, pl_fu_tmp ) < 0.0 )
 		nmg_reverse_face( fu_tmp );
 
 	/* join this temporary face to the existing face */

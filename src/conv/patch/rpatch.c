@@ -58,7 +58,7 @@ get_ftn_float(char *str, unsigned int start_col, char *format)
 
 	/* Check that format is legal for floating point or double */
 	ptr = format;
-	if( *ptr != 'F' && *ptr != 'f' && *ptr != 'E' && *ptr != 'e' && *ptr != 'D' && *ptr != 'd' )
+	if ( *ptr != 'F' && *ptr != 'f' && *ptr != 'E' && *ptr != 'e' && *ptr != 'D' && *ptr != 'd' )
 	{
 		fprintf( stderr, "Get_ftn_float( str=%s\n, start_col=%d, format=%s )\n",
 				str, start_col, ptr );
@@ -67,7 +67,7 @@ get_ftn_float(char *str, unsigned int start_col, char *format)
 	}
 
 	/* if start column is beyond end of input string, return zero */
-	if( start_col >= strlen( str ) )
+	if ( start_col >= strlen( str ) )
 		return( (double)0.0 );
 
 	/* get width from format spec */
@@ -75,7 +75,7 @@ get_ftn_float(char *str, unsigned int start_col, char *format)
 	width = atoi( ptr );
 
 	/* make sure input string will fit in tmp_str (minus trailing NULL and a decimal point) */
-	if( width > MAXLINELEN-2 )
+	if ( width > MAXLINELEN-2 )
 	{
 		fprintf( stderr, "Get_ftn_float( str=%s\n, start_col=%d, format=%s )\n",
 				str, start_col, ptr );
@@ -87,16 +87,16 @@ get_ftn_float(char *str, unsigned int start_col, char *format)
 	/* copy the input string to tmp_str, converting
 	 * imbedded blanks to zeros and 'D' or 'd' to 'e'
 	 */
-	for( i=0 ; i<width ; i++ )
+	for ( i=0; i<width; i++ )
 	{
-		if( isspace( str[start_col+i] ) )
+		if ( isspace( str[start_col+i] ) )
 		{
-			if( leading_spaces )
+			if ( leading_spaces )
 				tmp_str[i] = ' ';
 			else
 				tmp_str[i] = '0';
 		}
-		else if( str[start_col+i] == 'D' || str[start_col+i] == 'd' )
+		else if ( str[start_col+i] == 'D' || str[start_col+i] == 'd' )
 		{
 			leading_spaces = 0;
 			tmp_str[i] = 'e';
@@ -111,17 +111,17 @@ get_ftn_float(char *str, unsigned int start_col, char *format)
 
 	/* get precision from format spec */
 	ptr = strchr( ptr, '.' );
-	if( ptr )
+	if ( ptr )
 		precision = atoi( ++ptr );
 	else
 		precision = 0;
 
 
 	/* if there is a decimal point, let atof handle the rest (including exponent) */
-	if( !strchr( tmp_str, '.' ) && precision > 0 )
+	if ( !strchr( tmp_str, '.' ) && precision > 0 )
 	{
 		/* insert a decimal point where needed */
-		for( i=0 ; i<precision ; i++ )
+		for ( i=0; i<precision; i++ )
 			tmp_str[width-i] = tmp_str[width-i-1];
 		tmp_str[width-precision] = '.';
 		tmp_str[width+1] = '\0';
@@ -143,7 +143,7 @@ get_ftn_int(char *str, unsigned int start_col, char *format)
 
 	/* check that format id for an integer */
 	ptr = format;
-	if( *ptr != 'I' && *ptr != 'i' )
+	if ( *ptr != 'I' && *ptr != 'i' )
 	{
 		fprintf( stderr, "Get_ftn_int( str=%s\n, start_col=%d, format=%s )\n",
 				str, start_col, ptr );
@@ -152,7 +152,7 @@ get_ftn_int(char *str, unsigned int start_col, char *format)
 	}
 
 	/* if start column is beyond end of input string, return zero */
-	if( start_col >= strlen( str ) )
+	if ( start_col >= strlen( str ) )
 		return( 0 );
 
 	/* get width from format spec */
@@ -160,7 +160,7 @@ get_ftn_int(char *str, unsigned int start_col, char *format)
 	width = atoi( ptr );
 
 	/* make sure input string will fit in tmp_str */
-	if( width > MAXLINELEN-1 )
+	if ( width > MAXLINELEN-1 )
 	{
 		fprintf( stderr, "Get_ftn_int( str=%s\n, start_col=%d, format=%s )\n",
 				str, start_col, ptr );
@@ -171,11 +171,11 @@ get_ftn_int(char *str, unsigned int start_col, char *format)
 
 	/* copy the input string to tmp_str, converting
 	 * imbedded blanks to zeros */
-	for( i=0 ; i<width ; i++ )
+	for ( i=0; i<width; i++ )
 	{
-		if( isspace( str[start_col+i] ) )
+		if ( isspace( str[start_col+i] ) )
 		{
-			if( leading_spaces )
+			if ( leading_spaces )
 				tmp_str[i] = ' ';
 			else
 				tmp_str[i] = '0';
@@ -203,7 +203,7 @@ main(int argc, char **argv)
 	int c;
 
 	fast3 = 0;
-	if( argc > 2 )
+	if ( argc > 2 )
 	{
 		bu_exit(1, "%s", usage );
 	}
@@ -226,13 +226,13 @@ main(int argc, char **argv)
 		}
 	}
 
-	while( bu_fgets(line, sizeof(line), stdin) )
+	while ( bu_fgets(line, sizeof(line), stdin) )
 	{
-		if( strlen( line ) <= 1 )
+		if ( strlen( line ) <= 1 )
 			continue;
 		line[strlen(line)-1] = '\0';	/* eliminate \n */
 
-		if( fast3 )
+		if ( fast3 )
 		{
 			x = get_ftn_float( line, 0, "f10.3" );
 			y = get_ftn_float( line, 10, "f10.3" );
@@ -241,7 +241,7 @@ main(int argc, char **argv)
 			cc = get_ftn_int( line, 36, "i4" );
 			isq[0] = get_ftn_int( line, 40, "i10" );
 
-			for( i=1 ; i<8 ; i++ )
+			for ( i=1; i<8; i++ )
 				isq[i] = get_ftn_int( line, 50 + (i-1)*4, "i4" );
 
 			m = get_ftn_int( line, 74, "i3" );
@@ -256,7 +256,7 @@ main(int argc, char **argv)
 			cc = get_ftn_int( line, 31, "i4" );
 			isq[0] = get_ftn_int( line, 35, "i11" );
 
-			for( i=1 ; i<8 ; i++ )
+			for ( i=1; i<8; i++ )
 				isq[i] = get_ftn_int( line, 46 + (i-1)*4, "i4" );
 
 			m = get_ftn_int( line, 74, "i3" );
@@ -265,7 +265,7 @@ main(int argc, char **argv)
 
 		/* get plate mode flag */
 		minus = '+';
-		if( tmp < 0 )
+		if ( tmp < 0 )
 		{
 			tmp = (-tmp);
 			minus = '-';
@@ -276,9 +276,9 @@ main(int argc, char **argv)
 		work = hold * 10.0;
 		ity = work;
 		hold = work - ity;
-		if( ity == 4 )
+		if ( ity == 4 )
 			ity = 8;
-		else if( ity == 3 && type3_is_donut )
+		else if ( ity == 3 && type3_is_donut )
 			ity = 4;
 
 		/* get thickness */
@@ -294,7 +294,7 @@ main(int argc, char **argv)
 		/* write output */
 		printf( "%8.3f %8.3f %9.3f %c %2d %2d %1d %4d %11d ",
 			x, y, z, minus, ity, ico, ity1, cc, isq[0] );
-		for( i=1 ; i<8 ; i++ )
+		for ( i=1; i<8; i++ )
 			printf( "%5d", isq[i] );
 		printf( " %3d %3d\n", m, n );
 

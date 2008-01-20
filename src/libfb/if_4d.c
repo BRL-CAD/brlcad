@@ -375,13 +375,13 @@ FBIO	*ifp;
 	char	*sp;
 	int	new = 0;
 
-	if( sizeof(struct sgi_pixel) != sizeof(long) )  {
+	if ( sizeof(struct sgi_pixel) != sizeof(long) )  {
 		fb_log("Warning, sgi_pixel=%d, long=%d bytes\n",
 			sizeof(struct sgi_pixel), sizeof(long) );
 	}
 	errno = 0;
 
-	if( (ifp->if_mode & MODE_1MASK) == MODE_1MALLOC )  {
+	if ( (ifp->if_mode & MODE_1MASK) == MODE_1MALLOC )  {
 		/*
 		 *  In this mode, only malloc as much memory as is needed.
 		 */
@@ -390,7 +390,7 @@ FBIO	*ifp;
 		size = pixsize + sizeof(struct sgi_cmap);
 
 		sp = malloc( size );
-		if( sp == 0 )  {
+		if ( sp == 0 )  {
 			fb_log("sgi_getmem: frame buffer memory malloc failed\n");
 			goto fail;
 		}
@@ -414,9 +414,9 @@ FBIO	*ifp;
 	size = (size + getpagesize()-1) & ~(getpagesize()-1);
 
 	/* First try to attach to an existing one */
-	if( (SGI(ifp)->mi_shmid = shmget( SHMEM_KEY, size, 0 )) < 0 )  {
+	if ( (SGI(ifp)->mi_shmid = shmget( SHMEM_KEY, size, 0 )) < 0 )  {
 		/* No existing one, create a new one */
-		if( (SGI(ifp)->mi_shmid = shmget(
+		if ( (SGI(ifp)->mi_shmid = shmget(
 		    SHMEM_KEY, size, IPC_CREAT|0666 )) < 0 )  {
 			fb_log("sgi_getmem: shmget failed, errno=%d\n", errno);
 			goto fail;
@@ -428,29 +428,29 @@ FBIO	*ifp;
 	/* Move up the existing break, to leave room for later malloc()s */
 	old_brk = sbrk(0);
 	new_brk = (char *)(6 * (XMAXSCREEN+1) * 1024L);
-	if( new_brk <= old_brk )
+	if ( new_brk <= old_brk )
 		new_brk = old_brk + (XMAXSCREEN+1) * 1024;
 	new_brk = (char *)((((long)new_brk) + getpagesize()-1) & ~(getpagesize()-1));
-	if( brk( new_brk ) < 0 )  {
+	if ( brk( new_brk ) < 0 )  {
 		fb_log("sgi_getmem: new brk(x%x) failure, errno=%d\n", new_brk, errno);
 		goto fail;
 	}
 
 	/* Open the segment Read/Write, near the current break */
-	if( (sp = shmat( SGI(ifp)->mi_shmid, 0, 0 )) == (char *)(-1L) )  {
+	if ( (sp = shmat( SGI(ifp)->mi_shmid, 0, 0 )) == (char *)(-1L) )  {
 		fb_log("sgi_getmem: shmat returned x%x, errno=%d\n", sp, errno );
 		goto fail;
 	}
 
 	/* Restore the old break */
-	if( brk( old_brk ) < 0 )  {
+	if ( brk( old_brk ) < 0 )  {
 		fb_log("sgi_getmem: restore brk(x%x) failure, errno=%d\n", old_brk, errno);
 		/* Take the memory and run */
 	}
 #else
 	/* Open the segment Read/Write */
 	/* On Irix 5, this gets mapped in at a high address, no problem. */
-	if( (sp = shmat( SGI(ifp)->mi_shmid, 0, 0 )) == (char *)(-1L) )  {
+	if ( (sp = shmat( SGI(ifp)->mi_shmid, 0, 0 )) == (char *)(-1L) )  {
 		fb_log("sgi_getmem: shmat returned x%x, errno=%d\n", sp, errno );
 		goto fail;
 	}
@@ -463,12 +463,12 @@ success:
 	CMB(ifp)[255] = i;
 
 	/* Provide non-black colormap on creation of new shared mem */
-	if(new)
+	if (new)
 		sgi_cminit( ifp );
 	return(0);
 fail:
 	fb_log("sgi_getmem:  Unable to attach to shared memory.\n");
-	if( (sp = malloc( size )) == NULL )  {
+	if ( (sp = malloc( size )) == NULL )  {
 		fb_log("sgi_getmem:  malloc failure\n");
 		return(-1);
 	}
@@ -485,13 +485,13 @@ sgi_zapmem()
 	int shmid;
 	int i;
 
-	if( (shmid = shmget( SHMEM_KEY, 0, 0 )) < 0 )  {
+	if ( (shmid = shmget( SHMEM_KEY, 0, 0 )) < 0 )  {
 		fb_log("sgi_zapmem shmget failed, errno=%d\n", errno);
 		return;
 	}
 
 	i = shmctl( shmid, IPC_RMID, 0 );
-	if( i < 0 )  {
+	if ( i < 0 )  {
 		fb_log("sgi_zapmem shmctl failed, errno=%d\n", errno);
 		return;
 	}
@@ -535,14 +535,14 @@ int		npix;
 	int		sw_cmap;	/* !0 => needs software color map */
 	int		sw_zoom;	/* !0 => needs software zoom/pan */
 
-	if( nlines > 1 )  {
+	if ( nlines > 1 )  {
 		xbase = 0;
 		npix = ifp->if_width;
 	}
 
 	winset(ifp->if_fd);
 
-	if( SGI(ifp)->mi_is_gt )  {
+	if ( SGI(ifp)->mi_is_gt )  {
 		/* Enable writing pixels into the Z buffer */
 		/* Always send full unzoomed image into Z buffer */
 		rectzoom( 1.0, 1.0 );
@@ -559,19 +559,19 @@ int		npix;
 		sw_zoom = 0;
 	} else {
 		/* Single buffered, direct to screen */
-		if( ifp->if_zoomflag )  {
+		if ( ifp->if_zoomflag )  {
 			sw_zoom = 1;
 		} else {
 			sw_zoom = 0;
 		}
-		if( ifp->if_xcenter != ifp->if_width/2 ||
+		if ( ifp->if_xcenter != ifp->if_width/2 ||
 		    ifp->if_ycenter != ifp->if_height/2 )  {
 			sw_zoom = 1;
 		}
 		sgi_clipper( ifp, &clip );
 	}
 
-	if( (ifp->if_mode & MODE_7MASK) == MODE_7SWCMAP  &&
+	if ( (ifp->if_mode & MODE_7MASK) == MODE_7SWCMAP  &&
 	    SGI(ifp)->mi_cmap_flag )  {
 		sw_cmap = 1;
 	} else {
@@ -580,14 +580,14 @@ int		npix;
 
 	/* Simplest case, nothing fancy */
 	y = ybase;
-	if( !sw_zoom && !sw_cmap )  {
-		if( nlines == 1 )  {
+	if ( !sw_zoom && !sw_cmap )  {
+		if ( nlines == 1 )  {
 			/*
 			 *  Only a single line is being written,
 			 *  and perhaps only part of the line width.
 			 *  Just send it off.
 			 */
-			if( SGI(ifp)->mi_is_gt)
+			if ( SGI(ifp)->mi_is_gt)
 				lrectwrite(
 					SGI(ifp)->mi_xoff+xbase,
 					SGI(ifp)->mi_yoff+y,
@@ -622,11 +622,11 @@ int		npix;
 		 *  better accomplished with pixmode(PM_STRIDE, wds/scanline),
 		 *  but no earlier models have this subroutine, sigh.
 		 */
-		if( npix > 32 && ifp->if_width == SGI(ifp)->mi_memwidth)  {
+		if ( npix > 32 && ifp->if_width == SGI(ifp)->mi_memwidth)  {
 			/* Multiple line case, wide lines, matching sizes,
 			 * send full lines
 			 */
-			if( SGI(ifp)->mi_is_gt)
+			if ( SGI(ifp)->mi_is_gt)
 				lrectwrite(
 					SGI(ifp)->mi_xoff+0,
 					SGI(ifp)->mi_yoff+y,
@@ -646,7 +646,7 @@ int		npix;
 			return;
 		}
 		/* Narrow width lines case */
-		for( n=nlines; n>0; n--, y++ )  {
+		for ( n=nlines; n>0; n--, y++ )  {
 			/*
 			 *  GTX is limited to about 1000 lrectwrites/sec,
 			 *  when sending wide spans,
@@ -654,7 +654,7 @@ int		npix;
 			 *  are done with DMA.  The sys-call & interrupt
 			 *  processing burns 60% of the CPU in sys-time!
 			 */
-			if( SGI(ifp)->mi_is_gt )
+			if ( SGI(ifp)->mi_is_gt )
 				lrectwrite(
 					SGI(ifp)->mi_xoff+xbase,
 					SGI(ifp)->mi_yoff+y,
@@ -677,23 +677,23 @@ int		npix;
 		return;
 	}
 
-	if( !sw_zoom && sw_cmap )  {
+	if ( !sw_zoom && sw_cmap )  {
 		register int	x;
 		register struct sgi_pixel	*sgip;
 		register struct sgi_pixel	*op;
 
 		/* Perform software color mapping into temp scanline */
 		op = SGI(ifp)->mi_scanline;
-		for( n=nlines; n>0; n--, y++ )  {
+		for ( n=nlines; n>0; n--, y++ )  {
 			sgip = (struct sgi_pixel *)&ifp->if_mem[
 				(y*SGI(ifp)->mi_memwidth)*
 				sizeof(struct sgi_pixel) ];
-			for( x=ifp->if_width-1; x>=0; x-- )  {
+			for ( x=ifp->if_width-1; x>=0; x-- )  {
 				op[x].red   = CMR(ifp)[sgip[x].red];
 				op[x].green = CMG(ifp)[sgip[x].green];
 				op[x].blue  = CMB(ifp)[sgip[x].blue];
 			}
-			if( SGI(ifp)->mi_is_gt )
+			if ( SGI(ifp)->mi_is_gt )
 				lrectwrite(
 					SGI(ifp)->mi_xoff+0,
 					SGI(ifp)->mi_yoff+y,
@@ -717,28 +717,28 @@ int		npix;
 
 	/* Blank out area left of image */
 	RGBcolor( 0, 0, 0 );
-	if( clip.xscroff > 0 )  rectfs(
+	if ( clip.xscroff > 0 )  rectfs(
 		0,
 		0,
 		(Scoord) clip.xscroff-1,
 		(Scoord) ifp->if_height-1 );
 
 	/* Blank out area below image */
-	if( clip.yscroff > 0 )  rectfs(
+	if ( clip.yscroff > 0 )  rectfs(
 		0,
 		0,
 		(Scoord) ifp->if_width-1,
 		(Scoord) clip.yscroff-1 );
 
 	/* Blank out area right of image */
-	if( clip.xscrpad > 0 )  rectfs(
+	if ( clip.xscrpad > 0 )  rectfs(
 		(Scoord) ifp->if_width-clip.xscrpad-1,
 		0,
 		(Scoord) ifp->if_width-1,
 		(Scoord) ifp->if_height-1 );
 
 	/* Blank out area above image */
-	if( clip.yscrpad > 0 )  rectfs(
+	if ( clip.yscrpad > 0 )  rectfs(
 		0,
 		(Scoord) ifp->if_height-clip.yscrpad-1,
 		(Scoord) ifp->if_width-1,
@@ -760,27 +760,27 @@ int		npix;
 		yscr = SGI(ifp)->mi_yoff + clip.yscroff + y * ifp->if_yzoom;
 		xscrmin = SGI(ifp)->mi_xoff+clip.xscroff;
 		xscrmax = SGI(ifp)->mi_xoff+ifp->if_width-1-clip.xscrpad;
-		for( n=nlines; n>0; n--, y++ )  {
+		for ( n=nlines; n>0; n--, y++ )  {
 			register int	x;
 
-			if( y < clip.ymin )  continue;
-			if( y > clip.ymax )  continue;
+			if ( y < clip.ymin )  continue;
+			if ( y > clip.ymax )  continue;
 
 			/* widen this line */
 			sgip = (struct sgi_pixel *)&ifp->if_mem[
 				(y*SGI(ifp)->mi_memwidth+clip.xmin)*
 				sizeof(struct sgi_pixel)];
 			op = SGI(ifp)->mi_scanline;
-			for( x=clip.xmin; x<=clip.xmax; x++ )  {
-				for( rep=0; rep<ifp->if_xzoom; rep++ )  {
+			for ( x=clip.xmin; x<=clip.xmax; x++ )  {
+				for ( rep=0; rep<ifp->if_xzoom; rep++ )  {
 					*op++ = *sgip;	/* struct copy */
 				}
 				sgip++;
 				}
-			if( sw_cmap )  {
+			if ( sw_cmap )  {
 				x=(clip.xmax-clip.xmin)*ifp->if_xzoom;
 				op = SGI(ifp)->mi_scanline;
-				for( ; x>=0; x-- )  {
+				for (; x>=0; x-- )  {
 					op[x].red   = CMR(ifp)[op[x].red];
 					op[x].green = CMG(ifp)[op[x].green];
 					op[x].blue  = CMB(ifp)[op[x].blue];
@@ -789,8 +789,8 @@ int		npix;
 			/* X direction replication is handled above,
 			 * Y direction replication is done by this loop.
 			 */
-			for( rep=0; rep<ifp->if_yzoom; rep++ )  {
-				if( SGI(ifp)->mi_is_gt )
+			for ( rep=0; rep<ifp->if_yzoom; rep++ )  {
+				if ( SGI(ifp)->mi_is_gt )
 					lrectwrite(
 						xscrmin, yscr,
 						xscrmax, yscr,
@@ -850,7 +850,7 @@ int	width, height;
 	 */
 	mode = MODE1_LINGERING;
 
-	if( file != NULL )  {
+	if ( file != NULL )  {
 		register char *cp;
 		char	modebuf[80];
 		char	*mp;
@@ -865,30 +865,30 @@ int	width, height;
 			alpha = 0;
 			mp = &modebuf[0];
 			cp = &file[8];
-			while( *cp != '\0' && !isspace(*cp) ) {
+			while ( *cp != '\0' && !isspace(*cp) ) {
 				*mp++ = *cp;	/* copy it to buffer */
-				if( isdigit(*cp) ) {
+				if ( isdigit(*cp) ) {
 					cp++;
 					continue;
 				}
 				alpha++;
-				for( mfp = modeflags; mfp->c != '\0'; mfp++ ) {
-					if( mfp->c == *cp ) {
+				for ( mfp = modeflags; mfp->c != '\0'; mfp++ ) {
+					if ( mfp->c == *cp ) {
 						mode = (mode&~mfp->mask)|mfp->value;
 						break;
 					}
 				}
-				if( mfp->c == '\0' && *cp != '-' ) {
+				if ( mfp->c == '\0' && *cp != '-' ) {
 					fb_log( "if_4d: unknown option '%c' ignored\n", *cp );
 				}
 				cp++;
 			}
 			*mp = '\0';
-			if( !alpha )
+			if ( !alpha )
 				mode |= atoi( modebuf );
 		}
 
-		if( (mode & MODE_15MASK) == MODE_15ZAP ) {
+		if ( (mode & MODE_15MASK) == MODE_15ZAP ) {
 			/* Only task: Attempt to release shared memory segment */
 			sgi_zapmem();
 			return(-1);
@@ -900,7 +900,7 @@ int	width, height;
 	 *  Allocate extension memory section,
 	 *  addressed by SGI(ifp)->mi_xxx
 	 */
-	if( (SGIL(ifp) = (char *)calloc( 1, sizeof(struct sgiinfo) )) == NULL )  {
+	if ( (SGIL(ifp) = (char *)calloc( 1, sizeof(struct sgiinfo) )) == NULL )  {
 		fb_log("sgi_open:  sgiinfo malloc failed\n");
 		return(-1);
 	}
@@ -916,16 +916,16 @@ int	width, height;
 	 * as well as allow the frame buffer window to remain around
 	 * until killed by the menu subsystem.
 	 */
-	if( (ifp->if_mode & MODE_2MASK) == MODE_2LINGERING )  {
+	if ( (ifp->if_mode & MODE_2MASK) == MODE_2LINGERING )  {
 		/* save parent pid for later signalling */
 		SGI(ifp)->mi_parent = bu_process_id();
 
 		signal( SIGUSR1, sigkid);
 
-		if( (f = fork()) > 0 )  {
+		if ( (f = fork()) > 0 )  {
 			/* Parent process */
 			int k;
-			for(k=0; k< 20; k++)  {
+			for (k=0; k< 20; k++)  {
 				(void) close(k);
 			}
 
@@ -934,12 +934,12 @@ int	width, height;
 			 *  or until the child kills us.
 			 *  Pretty vicious, this computer society.
 			 */
-			while( (k = wait(&status)) != -1 && k != f )
-				/* NULL */ ;
+			while ( (k = wait(&status)) != -1 && k != f )
+			    ; /* NULL */
 
 			exit(0);
 			/* NOTREACHED */
-		} else if( f < 0 )  {
+		} else if ( f < 0 )  {
 			fb_log("sgi_open:  linger-mode fork failure\n");
 			return(-1);
 		}
@@ -949,9 +949,9 @@ int	width, height;
 	/*
 	 *  Take inventory of the hardware
 	 */
-	while( (inv = getinvent()) != (inventory_t *)0 )  {
-		if( inv->class != INV_GRAPHICS )  continue;
-		switch( inv->type )  {
+	while ( (inv = getinvent()) != (inventory_t *)0 )  {
+		if ( inv->class != INV_GRAPHICS )  continue;
+		switch ( inv->type )  {
 		case INV_GMDEV:
 			SGI(ifp)->mi_is_gt = 1;
 			break;
@@ -961,23 +961,23 @@ int	width, height;
 		}
 	}
 	endinvent();		/* frees internal inventory memory */
-	if( (ifp->if_mode & MODE_8MASK) == MODE_8NOGT )  {
+	if ( (ifp->if_mode & MODE_8MASK) == MODE_8NOGT )  {
 		SGI(ifp)->mi_is_gt = 0;
 	}
 
-	if( (ifp->if_mode & MODE_5MASK) == MODE_5NTSC )  {
+	if ( (ifp->if_mode & MODE_5MASK) == MODE_5NTSC )  {
 		/* NTSC, see below */
 		ifp->if_width = ifp->if_max_width = XMAX170+1;	/* 646 */
 		ifp->if_height = ifp->if_max_height = YMAX170+1; /* 485 */
-	} else if( (ifp->if_mode & MODE_3MASK) == MODE_3FULLSCR )  {
+	} else if ( (ifp->if_mode & MODE_3MASK) == MODE_3FULLSCR )  {
 		/* Bump default size up to full screen, since we have it all */
 		ifp->if_width = XMAXSCREEN+1;		/* 1280 */
 		ifp->if_height = YMAXSCREEN+1;		/* 1024 */
 	}
 
-	if( width <= 0 )
+	if ( width <= 0 )
 		width = ifp->if_width;
-	if( height <= 0 )
+	if ( height <= 0 )
 		height = ifp->if_height;
 	if ( width > ifp->if_max_width )
 		width = ifp->if_max_width;
@@ -992,7 +992,7 @@ int	width, height;
 #endif
 	foreground();		/* Direct focus here, don't detach */
 
-	if( (ifp->if_mode & MODE_5MASK) == MODE_5NTSC )  {
+	if ( (ifp->if_mode & MODE_5MASK) == MODE_5NTSC )  {
 		noborder();
 #if defined(__sgi) && defined(__mips)
 		/* Deal with Irix 4.0 bug:  (+2,+21) offset due to title */
@@ -1001,8 +1001,8 @@ int	width, height;
 		prefposition( 0, XMAX170, 0, YMAX170 );
 #endif
 		SGI(ifp)->mi_curs_on = 0;	/* cursoff() happens below */
-	} else if( (ifp->if_mode & MODE_3MASK) == MODE_3WINDOW )  {
-		if( sgi_nwindows == 0 ) {
+	} else if ( (ifp->if_mode & MODE_3MASK) == MODE_3WINDOW )  {
+		if ( sgi_nwindows == 0 ) {
 			prefposition( WIN_L, WIN_R, WIN_B, WIN_T );
 		} else {
 			prefsize( (long)width, (long)height );
@@ -1026,7 +1026,7 @@ int	width, height;
 	 *  the "graphics id" that identifies this window.
 	 *  winset(gr_id) is used to select a window for drawing in.
 	 */
-	if( (ifp->if_fd = winopen( "Frame buffer" )) == -1 )  {
+	if ( (ifp->if_fd = winopen( "Frame buffer" )) == -1 )  {
 		fb_log( "winopen() failed, no more windows available.\n" );
 		return(-1);
 	}
@@ -1039,27 +1039,27 @@ int	width, height;
 	 *  on GENLOCK operation, valid NTSC sync pulses must be present
 	 *  for downstream equipment;  user should run "Set60" when done.
 	 */
-	if( (ifp->if_mode & MODE_4MASK) == MODE_4HZ30 )  {
+	if ( (ifp->if_mode & MODE_4MASK) == MODE_4HZ30 )  {
 		SGI(ifp)->mi_der1 = getvideo(DE_R1);
-		if( (ifp->if_mode & MODE_10MASK) == MODE_10SYNC_ON_GREEN )  {
+		if ( (ifp->if_mode & MODE_10MASK) == MODE_10SYNC_ON_GREEN )  {
 			/* 3-wire */
 			setvideo( DE_R1, DER1_30HZ|DER1_UNBLANK|DER1_SYNCG );
 		} else {
 			/* 4-wire RS-343 */
 			setvideo( DE_R1, DER1_30HZ|DER1_UNBLANK);
 		}
-	} else if( (ifp->if_mode & MODE_5MASK) == MODE_5NTSC )  {
+	} else if ( (ifp->if_mode & MODE_5MASK) == MODE_5NTSC )  {
 		int	new_der1;
 
 		SGI(ifp)->mi_der1 = getvideo(DE_R1);
-		if( (SGI(ifp)->mi_der1 & DER1_VMASK) == DER1_170 )  {
+		if ( (SGI(ifp)->mi_der1 & DER1_VMASK) == DER1_170 )  {
 			/*
 			 *  Current mode is DE3 board internal NTSC sync.
 			 *  Doing a setmonitor(NTSC) again will cause the
 			 *  sync generator to drop out for a moment.
 			 *  So, in this case, do nothing.
 			 */
-		} else if( getvideo(CG_MODE) != -1 )  {
+		} else if ( getvideo(CG_MODE) != -1 )  {
 			/*
 			 *  Optional CG2 GENLOCK board is installed.
 			 *
@@ -1088,7 +1088,7 @@ int	width, height;
 			 *  Therefore, it is necessary to use an outboard
 			 *  RS-170 to NTSC encoder to get useful results.
 			 */
-			if( (ifp->if_mode & MODE_6MASK) == MODE_6EXTSYNC )  {
+			if ( (ifp->if_mode & MODE_6MASK) == MODE_6EXTSYNC )  {
 				/* external sync via GENLOCK board REM IN */
 				setvideo(CG_MODE, CG2_M_MODE3);
 				new_der1 = DER1_G_170;
@@ -1109,7 +1109,7 @@ int	width, height;
 			 */
 			new_der1 = DER1_170;
 		}
-		if( (ifp->if_mode & MODE_10MASK) == MODE_10SYNC_ON_GREEN )
+		if ( (ifp->if_mode & MODE_10MASK) == MODE_10SYNC_ON_GREEN )
 			new_der1 |= DER1_SYNCG;
 		setvideo( DE_R1, new_der1|DER1_UNBLANK );
 	}
@@ -1127,10 +1127,10 @@ int	width, height;
 	/*
 	 *  Set the operating mode for the newly created window.
 	 */
-	if( (ifp->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH )
+	if ( (ifp->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH )
 		SGI(ifp)->mi_is_gt = 0;
-	if( SGI(ifp)->mi_is_gt )  {
-		if( (ifp->if_mode & MODE_9MASK) == MODE_9SINGLEBUF )  {
+	if ( SGI(ifp)->mi_is_gt )  {
+		if ( (ifp->if_mode & MODE_9MASK) == MODE_9SINGLEBUF )  {
 			singlebuffer();
 			SGI(ifp)->mi_doublebuffer = 0;
 		} else {
@@ -1147,7 +1147,7 @@ int	width, height;
 	/* Clean out images that might remain from windows underneath */
 	RGBcolor( (short)0, (short)0, (short)0 );
 	clear();
-	if( SGI(ifp)->mi_doublebuffer == 1 )  {
+	if ( SGI(ifp)->mi_doublebuffer == 1 )  {
 		swapbuffers();
 		clear();
 	}
@@ -1173,7 +1173,7 @@ int	width, height;
 	 *  than with viewport/ortho2 calls, because lrectwrite()
 	 *  uses window-relative, NOT viewport-relative addresses.
 	 */
-	if( (ifp->if_mode & MODE_3MASK) == MODE_3FULLSCR )  {
+	if ( (ifp->if_mode & MODE_3MASK) == MODE_3FULLSCR )  {
 		int	xleft, ybot;
 
 		xleft = (ifp->if_max_width)/2 - ifp->if_width/2;
@@ -1192,13 +1192,13 @@ int	width, height;
 	}
 
 	/* Attach to shared memory, potentially with a screen repaint */
-	if( sgi_getmem(ifp) < 0 )
+	if ( sgi_getmem(ifp) < 0 )
 		return(-1);
 
 	/* Must call "is_linear_cmap" AFTER "sgi_getmem" which allocates
 		space for the color map.				*/
 	SGI(ifp)->mi_cmap_flag = !is_linear_cmap(ifp);
-	if( (ifp->if_mode & MODE_7MASK) != MODE_7SWCMAP  &&
+	if ( (ifp->if_mode & MODE_7MASK) != MODE_7SWCMAP  &&
 	    SGI(ifp)->mi_cmap_flag )  {
 		/* Send color map to hardware -- affects whole screen */
 		gammaramp( CMR(ifp), CMG(ifp), CMB(ifp) );
@@ -1213,7 +1213,7 @@ int	width, height;
 	drawmode( NORMALDRAW );
 	setcursor(1, 1, 0);
 
-	if( SGI(ifp)->mi_curs_on == 0 )  {
+	if ( SGI(ifp)->mi_curs_on == 0 )  {
 		setcursor( 2, 1, 0 );		/* nilcursor */
 		cursoff();
 	}
@@ -1222,16 +1222,16 @@ int	width, height;
 	 *  Display the existing contents of the memory segment.
 	 *  Make no assumptions about the state of the window.
 	 */
-	if( (ifp->if_mode & MODE_12MASK) != MODE_12DELAY_WRITES_TILL_FLUSH )  {
+	if ( (ifp->if_mode & MODE_12MASK) != MODE_12DELAY_WRITES_TILL_FLUSH )  {
 		sgi_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
-		if( SGI(ifp)->mi_is_gt )  {
+		if ( SGI(ifp)->mi_is_gt )  {
 			gt_zbuf_to_screen( ifp, -1 );
 		}
 	}
 
 	/* Make the file descriptor available for selecting on */
 	ifp->if_selfd = qgetfd();
-	if( ifp->if_selfd < 0 )
+	if ( ifp->if_selfd < 0 )
 		ifp->if_selfd = -1;	/* in case of errors */
 
 	return	0;
@@ -1268,7 +1268,7 @@ FBIO	*ifp;
 #endif
 
 	/* Restore initial operation mode, if this was 30Hz */
-	if( (ifp->if_mode & MODE_4MASK) == MODE_4HZ30 )
+	if ( (ifp->if_mode & MODE_4MASK) == MODE_4HZ30 )
 		setvideo( DE_R1, SGI(ifp)->mi_der1 );
 
 	/*
@@ -1280,18 +1280,18 @@ FBIO	*ifp;
 	 */
 
 	/* Always leave cursor on when done */
-	if( SGI(ifp)->mi_curs_on == 0 )  {
+	if ( SGI(ifp)->mi_curs_on == 0 )  {
 		setcursor( 0, 1, 0 );		/* system default cursor */
 		curson();
 	}
 
 	winclose( ifp->if_fd );		/* close window */
 
-	if( SGIL(ifp) != NULL ) {
+	if ( SGIL(ifp) != NULL ) {
 		/* free up memory associated with image */
-		if( SGI(ifp)->mi_shmid != -1 ) {
+		if ( SGI(ifp)->mi_shmid != -1 ) {
 			/* detach from shared memory */
-			if( shmdt( ifp->if_mem ) == -1 ) {
+			if ( shmdt( ifp->if_mem ) == -1 ) {
 				fb_log("sgi_close shmdt failed, errno=%d\n", errno);
 				return -1;
 			}
@@ -1317,7 +1317,7 @@ HIDDEN int
 sgi_poll( ifp )
 FBIO	*ifp;
 {
-	while( qtest() )
+	while ( qtest() )
 		sgi_inqueue(ifp);
 	return 0;
 }
@@ -1336,7 +1336,7 @@ FBIO	*ifp;
 	/* Close the framebuffer */
 	ret = sgi_final_close( ifp );
 
-	if( (ifp->if_mode & MODE_1MASK) == MODE_1SHARED ) {
+	if ( (ifp->if_mode & MODE_1MASK) == MODE_1SHARED ) {
 		/* If shared mem, release the shared memory segment */
 		sgi_zapmem();
 	}
@@ -1359,7 +1359,7 @@ FBIO	*ifp;
 
 	sgi_flush(ifp);
 
-	if( sgi_nwindows > 1 ||
+	if ( sgi_nwindows > 1 ||
 	    (ifp->if_mode & MODE_2MASK) == MODE_2TRANSIENT )
 		return sgi_final_close( ifp );
 
@@ -1404,10 +1404,10 @@ FBIO	*ifp;
 	qdevice(RIGHTMOUSE);
 	qdevice(REDRAW);
 
-	while(1)  {
+	while (1)  {
 		val = 0;
 		dev = qread( &val );
-		switch( dev )  {
+		switch ( dev )  {
 
 		case NULLDEV:
 			/* don't process a null device */
@@ -1423,7 +1423,7 @@ FBIO	*ifp;
 			reshapeviewport();
 			sgi_xmit_scanlines(ifp, 0, ifp->if_height,
 				0, ifp->if_width);
-			if( SGI(ifp)->mi_is_gt )  {
+			if ( SGI(ifp)->mi_is_gt )  {
 				gt_zbuf_to_screen(ifp, -1);
 			}
 			break;
@@ -1436,7 +1436,7 @@ FBIO	*ifp;
 
 		case QREADERROR:
 			/* These are fatal errors, bail out */
-			if( fp ) fprintf(fp, "libfb/sgi_close: qreaderror, aborting\n");
+			if ( fp ) fprintf(fp, "libfb/sgi_close: qreaderror, aborting\n");
 			goto out;
 
 		default:
@@ -1447,12 +1447,12 @@ FBIO	*ifp;
 			 *  unexpected things.  But, lots show up.
 			 *  At least this gives visibility.
 			 */
-			if( fp ) fprintf(fp, "libfb/sgi_close: qread %d, val %d\r\n", dev, val );
+			if ( fp ) fprintf(fp, "libfb/sgi_close: qread %d, val %d\r\n", dev, val );
 			break;
 		}
 	}
 out:
-	if( fp ) fclose(fp);		/* close our "complaints window" */
+	if ( fp ) fclose(fp);		/* close our "complaints window" */
 
 	return sgi_final_close( ifp );
 }
@@ -1472,7 +1472,7 @@ register unsigned char	*pp;
 
 	winset(ifp->if_fd);
 
-	if( qtest() )
+	if ( qtest() )
 		sgi_inqueue(ifp);
 
 	if ( pp != RGBPIXEL_NULL)  {
@@ -1490,15 +1490,15 @@ register unsigned char	*pp;
 	}
 
 	/* Flood rectangle in shared memory */
-	for( y=0; y < ifp->if_height; y++ )  {
+	for ( y=0; y < ifp->if_height; y++ )  {
 		sgip = (struct sgi_pixel *)&ifp->if_mem[
 		    (y*SGI(ifp)->mi_memwidth+0)*sizeof(struct sgi_pixel) ];
-		for( cnt=ifp->if_width-1; cnt >= 0; cnt-- )  {
+		for ( cnt=ifp->if_width-1; cnt >= 0; cnt-- )  {
 			*sgip++ = bg;	/* struct copy */
 		}
 	}
 
-	if( SGI(ifp)->mi_is_gt )  {
+	if ( SGI(ifp)->mi_is_gt )  {
 		sgi_xmit_scanlines( ifp, 0, ifp->if_height,
 			0, ifp->if_width );
 		gt_zbuf_to_screen(ifp, -1);
@@ -1520,20 +1520,20 @@ int	xzoom, yzoom;
 
 	winset(ifp->if_fd);
 
-	if( qtest() )
+	if ( qtest() )
 		sgi_inqueue(ifp);
 
-	if( xzoom < 1 ) xzoom = 1;
-	if( yzoom < 1 ) yzoom = 1;
-	if( ifp->if_xcenter == xcenter && ifp->if_ycenter == ycenter
+	if ( xzoom < 1 ) xzoom = 1;
+	if ( yzoom < 1 ) yzoom = 1;
+	if ( ifp->if_xcenter == xcenter && ifp->if_ycenter == ycenter
 	  && ifp->if_xzoom == xzoom && ifp->if_yzoom == yzoom )
 		return(0);
 
-	if( xcenter < 0 || xcenter >= ifp->if_width )
+	if ( xcenter < 0 || xcenter >= ifp->if_width )
 		return(-1);
-	if( ycenter < 0 || ycenter >= ifp->if_height )
+	if ( ycenter < 0 || ycenter >= ifp->if_height )
 		return(-1);
-	if( xzoom >= ifp->if_width || yzoom >= ifp->if_height )
+	if ( xzoom >= ifp->if_width || yzoom >= ifp->if_height )
 		return(-1);
 
 	ifp->if_xcenter = xcenter;
@@ -1541,11 +1541,11 @@ int	xzoom, yzoom;
 	ifp->if_xzoom = xzoom;
 	ifp->if_yzoom = yzoom;
 
-	if( ifp->if_xzoom > 1 || ifp->if_yzoom > 1 )
+	if ( ifp->if_xzoom > 1 || ifp->if_yzoom > 1 )
 		ifp->if_zoomflag = 1;
 	else	ifp->if_zoomflag = 0;
 
-	if( SGI(ifp)->mi_is_gt )  {
+	if ( SGI(ifp)->mi_is_gt )  {
 		/* Transmitting the Zbuffer is all that is needed */
 		gt_zbuf_to_screen( ifp, -1 );
 	} else {
@@ -1566,7 +1566,7 @@ int	*xzoom, *yzoom;
 
 	winset(ifp->if_fd);
 
-	if( qtest() )
+	if ( qtest() )
 		sgi_inqueue(ifp);
 
 	*xcenter = ifp->if_xcenter;
@@ -1596,15 +1596,15 @@ int	count;
 	register unsigned int	n;
 	register struct sgi_pixel	*sgip;
 
-	if( x < 0 || x >= ifp->if_width ||
+	if ( x < 0 || x >= ifp->if_width ||
 	    y < 0 || y >= ifp->if_height)
 		return(-1);
 
 	ret = 0;
 	cp = (unsigned char *)(pixelp);
 
-	while( count )  {
-		if( y >= ifp->if_height )
+	while ( count )  {
+		if ( y >= ifp->if_height )
 			break;
 
 		if ( count >= ifp->if_width-x )
@@ -1616,7 +1616,7 @@ int	count;
 		    (y*SGI(ifp)->mi_memwidth+x)*sizeof(struct sgi_pixel) ];
 
 		n = scan_count;
-		while( n )  {
+		while ( n )  {
 			cp[RED] = sgip->red;
 			cp[GRN] = sgip->green;
 			cp[BLU] = sgip->blue;
@@ -1628,7 +1628,7 @@ int	count;
 		count -= scan_count;
 		x = 0;
 		/* Advance upwards */
-		if( ++y >= ifp->if_height )
+		if ( ++y >= ifp->if_height )
 			break;
 	}
 	return(ret);
@@ -1658,26 +1658,26 @@ int		count;
 	register int		y;
 
 	/* lrectwrite dies on 0 count */
-	if( (pix_count = count) == 0 )
+	if ( (pix_count = count) == 0 )
 		return 0;	/* OK, no pixels transferred */
-	if( pix_count < 0 )
+	if ( pix_count < 0 )
 		return -1;	/* ERROR */
 
 	x = xstart;
 	ybase = y = ystart;
 
-	if( x < 0 || x >= ifp->if_width ||
+	if ( x < 0 || x >= ifp->if_width ||
 	    y < 0 || y >= ifp->if_height)
 		return(-1);
 
 	ret = 0;
 	cp = (unsigned char *)(pixelp);
 
-	while( pix_count )  {
+	while ( pix_count )  {
 		register unsigned int n;
 		register struct sgi_pixel	*sgip;
 
-		if( y >= ifp->if_height )
+		if ( y >= ifp->if_height )
 			break;
 
 		if ( pix_count >= ifp->if_width-x )
@@ -1689,9 +1689,9 @@ int		count;
 		    (y*SGI(ifp)->mi_memwidth+x)*sizeof(struct sgi_pixel) ];
 
 		n = scan_count;
-		if( (n & 3) != 0 )  {
+		if ( (n & 3) != 0 )  {
 			/* This code uses 60% of all CPU time */
-			while( n )  {
+			while ( n )  {
 				/* alpha channel is always zero */
 				sgip->red   = cp[RED];
 				sgip->green = cp[GRN];
@@ -1701,7 +1701,7 @@ int		count;
 				n--;
 			}
 		} else {
-			while( n )  {
+			while ( n )  {
 				/* alpha channel is always zero */
 				sgip[0].red   = cp[RED+0*3];
 				sgip[0].green = cp[GRN+0*3];
@@ -1723,7 +1723,7 @@ int		count;
 		ret += scan_count;
 		pix_count -= scan_count;
 		x = 0;
-		if( ++y >= ifp->if_height )
+		if ( ++y >= ifp->if_height )
 			break;
 	}
 
@@ -1733,28 +1733,28 @@ int		count;
 	 */
 	winset(ifp->if_fd);
 
-	if( qtest() )
+	if ( qtest() )
 		sgi_inqueue(ifp);
 
-	if( (ifp->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH )
+	if ( (ifp->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH )
 		return ret;
 
-	if( xstart + count <= ifp->if_width  )  {
+	if ( xstart + count <= ifp->if_width  )  {
 		/* "Fast path" case for writes of less than one scanline */
-		if( SGI(ifp)->mi_doublebuffer )  {
+		if ( SGI(ifp)->mi_doublebuffer )  {
 			singlebuffer();
 			SGI(ifp)->mi_doublebuffer = 0;
 			gconfig();
 		}
 		sgi_xmit_scanlines( ifp, ybase, 1, xstart, count );
-		if( SGI(ifp)->mi_is_gt )  {
+		if ( SGI(ifp)->mi_is_gt )  {
 			/* repaint one scanline from Z buffer */
 			gt_zbuf_to_screen( ifp, ybase );
 		}
 	} else {
 		/* Normal case -- multi-pixel write */
 		sgi_xmit_scanlines( ifp, ybase, y-ybase, 0, ifp->if_width );
-		if( SGI(ifp)->mi_is_gt )  {
+		if ( SGI(ifp)->mi_is_gt )  {
 			/* repaint whole screen from Z buffer */
 			gt_zbuf_to_screen( ifp, -1 );
 		}
@@ -1781,17 +1781,17 @@ const unsigned char	*pp;
 	register unsigned char	*cp;
 	register struct sgi_pixel	*sgip;
 
-	if( width <= 0 || height <= 0 )
+	if ( width <= 0 || height <= 0 )
 		return(0);
-	if( xmin < 0 || xmin+width > ifp->if_width ||
+	if ( xmin < 0 || xmin+width > ifp->if_width ||
 	    ymin < 0 || ymin+height > ifp->if_height )
 		return(-1);
 
 	cp = (unsigned char *)(pp);
-	for( y = ymin; y < ymin+height; y++ )  {
+	for ( y = ymin; y < ymin+height; y++ )  {
 		sgip = (struct sgi_pixel *)&ifp->if_mem[
 		    (y*SGI(ifp)->mi_memwidth+xmin)*sizeof(struct sgi_pixel) ];
-		for( x = xmin; x < xmin+width; x++ )  {
+		for ( x = xmin; x < xmin+width; x++ )  {
 			/* alpha channel is always zero */
 			sgip->red   = cp[RED];
 			sgip->green = cp[GRN];
@@ -1807,12 +1807,12 @@ const unsigned char	*pp;
 	 */
 	winset(ifp->if_fd);
 
-	if( qtest() )
+	if ( qtest() )
 		sgi_inqueue(ifp);
 
-	if( (ifp->if_mode & MODE_12MASK) != MODE_12DELAY_WRITES_TILL_FLUSH )  {
+	if ( (ifp->if_mode & MODE_12MASK) != MODE_12DELAY_WRITES_TILL_FLUSH )  {
 		sgi_xmit_scanlines( ifp, ymin, height, 0, ifp->if_width );
-		if( SGI(ifp)->mi_is_gt )  {
+		if ( SGI(ifp)->mi_is_gt )  {
 			/* repaint screen from Z buffer */
 			gt_zbuf_to_screen( ifp, -1 );
 		}
@@ -1833,7 +1833,7 @@ register ColorMap	*cmp;
 	register int i;
 
 	/* Just parrot back the stored colormap */
-	for( i = 0; i < 256; i++)  {
+	for ( i = 0; i < 256; i++)  {
 		cmp->cm_red[i]   = CMR(ifp)[i]<<8;
 		cmp->cm_green[i] = CMG(ifp)[i]<<8;
 		cmp->cm_blue[i]  = CMB(ifp)[i]<<8;
@@ -1854,10 +1854,10 @@ register FBIO	*ifp;
 {
 	register int i;
 
-	for( i=0; i<256; i++ )  {
-		if( CMR(ifp)[i] != i )  return(0);
-		if( CMG(ifp)[i] != i )  return(0);
-		if( CMB(ifp)[i] != i )  return(0);
+	for ( i=0; i<256; i++ )  {
+		if ( CMR(ifp)[i] != i )  return(0);
+		if ( CMG(ifp)[i] != i )  return(0);
+		if ( CMB(ifp)[i] != i )  return(0);
 	}
 	return(1);
 }
@@ -1871,7 +1871,7 @@ register FBIO	*ifp;
 {
 	register int	i;
 
-	for( i = 0; i < 256; i++)  {
+	for ( i = 0; i < 256; i++)  {
 		CMR(ifp)[i] = i;
 		CMG(ifp)[i] = i;
 		CMB(ifp)[i] = i;
@@ -1891,14 +1891,14 @@ register const ColorMap	*cmp;
 
 	winset(ifp->if_fd);
 
-	if( qtest() )
+	if ( qtest() )
 		sgi_inqueue(ifp);
 
 	prev = SGI(ifp)->mi_cmap_flag;
 	if ( cmp == COLORMAP_NULL)  {
 		sgi_cminit( ifp );
 	} else {
-		for(i = 0; i < 256; i++)  {
+		for (i = 0; i < 256; i++)  {
 			CMR(ifp)[i] = cmp-> cm_red[i]>>8;
 			CMG(ifp)[i] = cmp-> cm_green[i]>>8;
 			CMB(ifp)[i] = cmp-> cm_blue[i]>>8;
@@ -1906,11 +1906,11 @@ register const ColorMap	*cmp;
 	}
 	SGI(ifp)->mi_cmap_flag = !is_linear_cmap(ifp);
 
-	if( (ifp->if_mode & MODE_7MASK) == MODE_7SWCMAP )  {
-		if( SGI(ifp)->mi_cmap_flag == 0 && prev == 0 )  return(0);
+	if ( (ifp->if_mode & MODE_7MASK) == MODE_7SWCMAP )  {
+		if ( SGI(ifp)->mi_cmap_flag == 0 && prev == 0 )  return(0);
 		/* Software color mapping, trigger a repaint */
 		sgi_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
-		if( SGI(ifp)->mi_is_gt )  {
+		if ( SGI(ifp)->mi_is_gt )  {
 			gt_zbuf_to_screen( ifp, -1 );
 		}
 	} else {
@@ -1936,23 +1936,23 @@ int		xorig, yorig;
 
 	winset(ifp->if_fd);
 
-	if( qtest() )
+	if ( qtest() )
 		sgi_inqueue(ifp);
 
 	/* Check size of cursor.					*/
-	if( xbits < 0 )
+	if ( xbits < 0 )
 		return	-1;
-	if( xbits > 16 )
+	if ( xbits > 16 )
 		xbits = 16;
-	if( ybits < 0 )
+	if ( ybits < 0 )
 		return	-1;
-	if( ybits > 16 )
+	if ( ybits > 16 )
 		ybits = 16;
-	if( (xbytes = xbits / 8) * 8 != xbits )
+	if ( (xbytes = xbits / 8) * 8 != xbits )
 		xbytes++;
-	for( y = 0; y < ybits; y++ )  {
+	for ( y = 0; y < ybits; y++ )  {
 		newcursor[y] = bits[(y*xbytes)+0] << 8 & 0xFF00;
-		if( xbytes == 2 )
+		if ( xbytes == 2 )
 			newcursor[y] |= bits[(y*xbytes)+1] & 0x00FF;
 	}
 	defcursor( 1, newcursor );
@@ -1977,13 +1977,13 @@ int	x, y;
 
 	winset(ifp->if_fd);
 
-	if( qtest() )
+	if ( qtest() )
 		sgi_inqueue(ifp);
 
 	fb_sim_cursor(ifp, mode, x, y);
 
 	SGI(ifp)->mi_curs_on = mode;
-	if( ! mode )  {
+	if ( ! mode )  {
 		setcursor( 2, 1, 0 );		/* nilcursor */
 		cursoff();
 		return	0;
@@ -2026,8 +2026,8 @@ register FBIO *ifp;
 
 	winset(ifp->if_fd);
 
-	while( qtest() )  {
-		switch( ev = qread(&val) )  {
+	while ( qtest() )  {
+		switch ( ev = qread(&val) )  {
 		case REDRAW:
 			/* should check val -vs- ifp->if_fd !! */
 			redraw = 1;
@@ -2052,10 +2052,10 @@ register FBIO *ifp;
 	 * Now that all the events have been removed from the input
 	 * queue, handle any actions that need to be done.
 	 */
-	if( redraw )  {
+	if ( redraw )  {
 		reshapeviewport();
 		sgi_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
-		if( SGI(ifp)->mi_is_gt )  {
+		if ( SGI(ifp)->mi_is_gt )  {
 			gt_zbuf_to_screen( ifp, -1 );
 		}
 		redraw = 0;
@@ -2080,7 +2080,7 @@ FBIO	*ifp;
 		ifp->if_width,
 		ifp->if_height );
 	fb_log( "Usage: /dev/sgi[option letters]\n" );
-	for( mfp = modeflags; mfp->c != '\0'; mfp++ ) {
+	for ( mfp = modeflags; mfp->c != '\0'; mfp++ ) {
 		fb_log( "%c  %c   %s\n",
 			((ifp->if_mode & mfp->mask) == mfp->value) ? 'Y' : ' ',
 			mfp->c, mfp->help );
@@ -2104,14 +2104,14 @@ HIDDEN int
 sgi_flush( ifp )
 FBIO	*ifp;
 {
-	if( (ifp->if_mode & MODE_12MASK) != MODE_12DELAY_WRITES_TILL_FLUSH )
+	if ( (ifp->if_mode & MODE_12MASK) != MODE_12DELAY_WRITES_TILL_FLUSH )
 		return 0;
 
 	winset(ifp->if_fd);
 
 	/* Send entire in-memory buffer to the screen, all at once */
 	sgi_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
-	if( SGI(ifp)->mi_is_gt )  {
+	if ( SGI(ifp)->mi_is_gt )  {
 		/* repaint screen from Z buffer */
 		gt_zbuf_to_screen( ifp, -1 );
 	}
@@ -2145,7 +2145,7 @@ int		one_y;
 	readsource(SRC_ZBUFFER);	/* source for rectcopy() */
 	zdraw(FALSE);
 	/* dest for rectcopy() */
-	if( SGI(ifp)->mi_doublebuffer )  {
+	if ( SGI(ifp)->mi_doublebuffer )  {
 		backbuffer(TRUE);
 		frontbuffer(FALSE);
 	} else {
@@ -2154,9 +2154,9 @@ int		one_y;
 	}
 
 	sgi_clipper( ifp, &clip );
-	if( SGI(ifp)->mi_doublebuffer == 0 && one_y >= 0 )  {
+	if ( SGI(ifp)->mi_doublebuffer == 0 && one_y >= 0 )  {
 		/* Do only one scanline, not entire image */
-		if( one_y < clip.ymin || one_y > clip.ymax )
+		if ( one_y < clip.ymin || one_y > clip.ymax )
 			return;
 		/* This scanline is in bounds */
 		clip.yscroff += (one_y - clip.ymin) * ifp->if_yzoom;
@@ -2166,7 +2166,7 @@ int		one_y;
 	/* rectzoom only works on GT and PI machines */
 	rectzoom( (double) ifp->if_xzoom, (double) ifp->if_yzoom);
 
-	if( SGI(ifp)->mi_doublebuffer )  {
+	if ( SGI(ifp)->mi_doublebuffer )  {
 		/*
 		 *  This clear could be somewhat of a performance problem,
 		 *  but it prevents having crud on the borders when
@@ -2188,7 +2188,7 @@ int		one_y;
 		clip.xscroff+SGI(ifp)->mi_xoff,
 		clip.yscroff+SGI(ifp)->mi_yoff );
 
-	if( SGI(ifp)->mi_doublebuffer )  {
+	if ( SGI(ifp)->mi_doublebuffer )  {
 		swapbuffers();
 	}
 	rectzoom( 1.0, 1.0 );
@@ -2220,21 +2220,21 @@ register struct sgi_clip	*clp;
 	clp->ymin = ifp->if_ycenter - i;
 	clp->ymax = ifp->if_ycenter + i - 1;
 
-	if( clp->xmin < 0 )  {
+	if ( clp->xmin < 0 )  {
 		clp->xscroff = -(clp->xmin * ifp->if_xzoom);
 		clp->xmin = 0;
 	}
-	if( clp->ymin < 0 )  {
+	if ( clp->ymin < 0 )  {
 		clp->yscroff = -(clp->ymin * ifp->if_yzoom);
 		clp->ymin = 0;
 	}
 
-	if( clp->xmax > ifp->if_width-1 )  {
+	if ( clp->xmax > ifp->if_width-1 )  {
 		clp->xscrpad = (clp->xmax - (ifp->if_width-1)) * ifp->if_xzoom;
 		clp->xmax = ifp->if_width-1;
 	}
 
-	if( clp->ymax > ifp->if_height-1 )  {
+	if ( clp->ymax > ifp->if_height-1 )  {
 		clp->yscrpad = (clp->ymax - (ifp->if_height-1)) * ifp->if_yzoom;
 		clp->ymax = ifp->if_height-1;
 	}
@@ -2275,7 +2275,7 @@ register struct sgi_pixel * pixels;
 
 	p = pixels;
 	n = x2  - x1 + 1;
-	for( scan = y1; scan <= y2; scan++)  {
+	for ( scan = y1; scan <= y2; scan++)  {
 		for ( i = 0; i < n; i++)  {
 			Red_pixels[i] =   p->red;
 			Green_pixels[i] = p->green;

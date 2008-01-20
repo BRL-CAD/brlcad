@@ -129,8 +129,8 @@ main(int argc, char **argv)
 	int	desired_frame = 0;
 	int	current_frame = 0;
 
-	while( argc > 1 ) {
-		if( strcmp(argv[1], "-v") == 0 ) {
+	while ( argc > 1 ) {
+		if ( strcmp(argv[1], "-v") == 0 ) {
 			verbose++;
 		} else
 			break;
@@ -138,40 +138,40 @@ main(int argc, char **argv)
 		argc--;
 		argv++;
 	}
-	if( argc < 2 || isatty(fileno(stdin)) ) {
+	if ( argc < 2 || isatty(fileno(stdin)) ) {
 		bu_exit(1, "Usage: plgetframe [-v] desired_frame < unix_plot\n" );
 	}
 	desired_frame = atoi(argv[1]);
 	current_frame = 0;
 
-	while( (c = getchar()) != EOF ) {
+	while ( (c = getchar()) != EOF ) {
 		/* look it up */
-		if( c < 'A' || c > 'z' ) {
+		if ( c < 'A' || c > 'z' ) {
 			up = &uerror;
 		} else {
 			up = &letters[ c - 'A' ];
 		}
-		if( c == 'e' )  {
+		if ( c == 'e' )  {
 			current_frame++;
-			if(verbose)  {
+			if (verbose)  {
 				bu_log("%d, ", current_frame);
 			}
-			if( current_frame > desired_frame )
+			if ( current_frame > desired_frame )
 				break;
 			continue;
 		}
 
-		if( up->targ == TBAD ) {
+		if ( up->targ == TBAD ) {
 			bu_log( "Bad command '%c' (0x%02x)\n", c, c );
 			continue;
 		}
 
-		if( current_frame == desired_frame )  {
+		if ( current_frame == desired_frame )  {
 			/* Duplicate input as output */
 			putchar( c );
-			if( up->narg <= 0 )  continue;
+			if ( up->narg <= 0 )  continue;
 
-			switch( up->targ ) {
+			switch ( up->targ ) {
 			case TNONE:
 				break;
 			case TCHAR:
@@ -187,16 +187,16 @@ main(int argc, char **argv)
 				fwrite( buf, 8, up->narg, stdout );
 				break;
 			case TSTRING:
-				while( (c = getchar()) != '\n' && c != EOF )
+				while ( (c = getchar()) != '\n' && c != EOF )
 					putchar(c);
 				putchar('\n');
 				break;
 			}
 		} else {
 			/* Silently discard input */
-			if( up->narg <= 0 )  continue;
+			if ( up->narg <= 0 )  continue;
 
-			switch( up->targ ) {
+			switch ( up->targ ) {
 			case TNONE:
 				break;
 			case TCHAR:
@@ -209,8 +209,8 @@ main(int argc, char **argv)
 				fread( buf, 8, up->narg, stdin );
 				break;
 			case TSTRING:
-				while( (c = getchar()) != '\n' && c != EOF )
-					/* NULL */ ;
+				while ( (c = getchar()) != '\n' && c != EOF )
+				    ; /* NULL */
 			}
 		}
 	}

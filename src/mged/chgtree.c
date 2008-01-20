@@ -106,7 +106,7 @@ cmd_kill(ClientData	clientData,
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	if(argc < 2){
+	if (argc < 2){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -116,18 +116,18 @@ cmd_kill(ClientData	clientData,
 	  return TCL_ERROR;
 	}
 
-	if( argc > 1 && strcmp( argv[1], "-f" ) == 0 )  {
+	if ( argc > 1 && strcmp( argv[1], "-f" ) == 0 )  {
 		verbose = LOOKUP_QUIET;
 		force = 1;
 		argc--;
 		argv++;
 	}
 
-	for( i = 1; i < argc; i++ )  {
-		if( (dp = db_lookup( dbip,  argv[i], verbose )) != DIR_NULL )  {
-			if( !force && dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY && dp->d_minor_type == 0 ) {
+	for ( i = 1; i < argc; i++ )  {
+		if ( (dp = db_lookup( dbip,  argv[i], verbose )) != DIR_NULL )  {
+			if ( !force && dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY && dp->d_minor_type == 0 ) {
 				/* kill the _GLOBAL object?? */
-				if( classic_mged || tkwin == NULL ) {
+				if ( classic_mged || tkwin == NULL ) {
 					/* Tk is not available */
 					bu_log( "You attempted to delete the _GLOBAL object.\n" );
 					bu_log( "\tIf you delete the \"_GLOBAL\" object you will be losing some important information\n" );
@@ -137,10 +137,10 @@ cmd_kill(ClientData	clientData,
 				} else {
 					/* Use tk_messageBox to question user */
 					Tcl_ResetResult( interp );
-					if( Tcl_Eval( interp, really_delete ) != TCL_OK ) {
+					if ( Tcl_Eval( interp, really_delete ) != TCL_OK ) {
 						bu_exit(EXIT_FAILURE,  "Tcl_Eval() failed!!!\n" );
 					}
-					if( strcmp( Tcl_GetStringResult( interp ), "yes" ) ) {
+					if ( strcmp( Tcl_GetStringResult( interp ), "yes" ) ) {
 						Tcl_ResetResult( interp );
 						continue;
 					}
@@ -151,9 +151,9 @@ cmd_kill(ClientData	clientData,
 			dpp[0] = dp;
 			eraseobjall(dpp);
 			/* eraseobjall() does db_dirdelete() on phony entries, don't re-do. */
-			if( is_phony )  continue;
+			if ( is_phony )  continue;
 
-			if( db_delete( dbip, dp ) < 0 ||
+			if ( db_delete( dbip, dp ) < 0 ||
 			    db_dirdelete( dbip, dp ) < 0 )  {
 			  /* Abort kill processing on first error */
 			  TCL_DELETE_ERR_return(argv[i]);
@@ -184,7 +184,7 @@ f_copy_inv(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	if(argc < 3 || 3 < argc){
+	if (argc < 3 || 3 < argc){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -194,19 +194,19 @@ f_copy_inv(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  return TCL_ERROR;
 	}
 
-	if( (proto = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
+	if ( (proto = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
 	  return TCL_ERROR;
 
-	if( db_lookup( dbip,  argv[2], LOOKUP_QUIET ) != DIR_NULL )  {
+	if ( db_lookup( dbip,  argv[2], LOOKUP_QUIET ) != DIR_NULL )  {
 	  aexists( argv[2] );
 	  return TCL_ERROR;
 	}
 
-	if( (id = rt_db_get_internal( &internal, proto, dbip, (fastf_t *)NULL, &rt_uniresource )) < 0 )  {
+	if ( (id = rt_db_get_internal( &internal, proto, dbip, (fastf_t *)NULL, &rt_uniresource )) < 0 )  {
 		TCL_READ_ERR_return;
 	}
 	/* make sure it is a TGC */
-	if( id != ID_TGC )
+	if ( id != ID_TGC )
 	{
 	  Tcl_AppendResult(interp, "f_copy_inv: ", argv[1],
 			   " is not a cylinder\n", (char *)NULL);
@@ -221,11 +221,11 @@ f_copy_inv(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	/* no interuprts */
 	(void)signal( SIGINT, SIG_IGN );
 
-	if( (dp = db_diradd( dbip, argv[2], -1L, 0, proto->d_flags, &proto->d_minor_type)) == DIR_NULL )  {
+	if ( (dp = db_diradd( dbip, argv[2], -1L, 0, proto->d_flags, &proto->d_minor_type)) == DIR_NULL )  {
 		TCL_ALLOC_ERR_return;
 	}
 
-	if( rt_db_put_internal( dp, dbip, &internal, &rt_uniresource ) < 0 )  {
+	if ( rt_db_put_internal( dp, dbip, &internal, &rt_uniresource ) < 0 )  {
 		TCL_WRITE_ERR_return;
 	}
 
@@ -240,7 +240,7 @@ f_copy_inv(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  (void)cmd_draw( clientData, interp, 2, av );
 	}
 
-	if(state == ST_VIEW) {
+	if (state == ST_VIEW) {
 	  char *av[3];
 
 	  av[0] = "sed";
@@ -280,7 +280,7 @@ f_arced(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	if(argc < 3){
+	if (argc < 3){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -290,23 +290,23 @@ f_arced(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  return TCL_ERROR;
 	}
 
-	if( not_state( ST_VIEW, "Arc edit" ) )  return TCL_ERROR;
+	if ( not_state( ST_VIEW, "Arc edit" ) )  return TCL_ERROR;
 
-	if( !strchr( argv[1], '/' ) )  {
+	if ( !strchr( argv[1], '/' ) )  {
 	  Tcl_AppendResult(interp, "arced: bad path specification '", argv[1],
 			   "'\n", (char *)NULL);
 	  return TCL_ERROR;
 	}
-	if( !(anp = db_parse_1anim( dbip, argc, (const char **)argv ) ) )  {
+	if ( !(anp = db_parse_1anim( dbip, argc, (const char **)argv ) ) )  {
 	  Tcl_AppendResult(interp, "arced: unable to parse command\n", (char *)NULL);
 	  return TCL_ERROR;
 	}
-	if( anp->an_path.fp_len < 2 )  {
+	if ( anp->an_path.fp_len < 2 )  {
 		Tcl_AppendResult(interp, "arced: path spec has insufficient elements\n", (char *)NULL);
 		return TCL_ERROR;
 	}
 #if 0
-	if( anp->an_path.fp_len != 2 )  {
+	if ( anp->an_path.fp_len != 2 )  {
 		char	*thepath = db_path_to_string( &(anp->an_path) );
 		bu_log("arced: '%s' is not a 2-element path spec\n");
 		bu_free( thepath, "path" );
@@ -325,23 +325,23 @@ f_arced(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	/* Load the combination into memory */
 	dp = anp->an_path.fp_names[anp->an_path.fp_len-2];
 	RT_CK_DIR(dp);
-	if( (dp->d_flags & DIR_COMB) == 0 )  {
+	if ( (dp->d_flags & DIR_COMB) == 0 )  {
 	  Tcl_AppendResult(interp, dp->d_namep, ": not a combination\n", (char *)NULL);
 	  return TCL_ERROR;
 	}
-	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )  {
+	if ( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )  {
 		db_free_1anim( anp );
 		TCL_READ_ERR_return;
 	}
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 	RT_CK_COMB(comb);
-	if( !comb->tree )  {
+	if ( !comb->tree )  {
 		Tcl_AppendResult(interp, dp->d_namep, ": empty combination\n", (char *)NULL);
 		goto fail;
 	}
 
 	/* Search for first mention of arc */
-	if( (tp = db_find_named_leaf( comb->tree, anp->an_path.fp_names[anp->an_path.fp_len-1]->d_namep )) == TREE_NULL )  {
+	if ( (tp = db_find_named_leaf( comb->tree, anp->an_path.fp_names[anp->an_path.fp_len-1]->d_namep )) == TREE_NULL )  {
 		Tcl_AppendResult(interp, "Unable to find instance of '",
 			anp->an_path.fp_names[anp->an_path.fp_len-1]->d_namep,
 			"' in combination '",
@@ -351,19 +351,19 @@ f_arced(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
 
 	/* Found match.  Update tl_mat in place. */
-	if( !tp->tr_l.tl_mat )
+	if ( !tp->tr_l.tl_mat )
 		tp->tr_l.tl_mat = bn_mat_dup( bn_mat_identity );
 
-	if( db_do_anim( anp, stack, tp->tr_l.tl_mat, NULL ) < 0 )  {
+	if ( db_do_anim( anp, stack, tp->tr_l.tl_mat, NULL ) < 0 )  {
 		goto fail;
 	}
 
-	if( bn_mat_is_identity( tp->tr_l.tl_mat ) )  {
+	if ( bn_mat_is_identity( tp->tr_l.tl_mat ) )  {
 		bu_free( (genptr_t)tp->tr_l.tl_mat, "tl_mat" );
 		tp->tr_l.tl_mat = (matp_t)NULL;
 	}
 
-	if( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )  {
+	if ( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )  {
 		TCL_WRITE_ERR;
 		goto fail;
 	}
@@ -408,13 +408,13 @@ find_solid_with_path(register struct db_full_path *pathp)
 	RT_CK_FULL_PATH(pathp);
 
 	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)  {
-		if( !db_identical_full_paths( pathp, &sp->s_fullpath ) )  continue;
+		if ( !db_identical_full_paths( pathp, &sp->s_fullpath ) )  continue;
 
 		/* Paths are the same */
 		ret = sp;
 		count++;
 	}
-	if( count > 1 ){
+	if ( count > 1 ){
 	  struct bu_vls tmp_vls;
 
 	  bu_vls_init(&tmp_vls);
@@ -448,7 +448,7 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	CHECK_DBI_NULL;
 
-	if(argc < 3 || 3 < argc){
+	if (argc < 3 || 3 < argc){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -458,24 +458,24 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  return TCL_ERROR;
 	}
 
-	if( not_state( ST_VIEW, "Object Illuminate" ) )  {
+	if ( not_state( ST_VIEW, "Object Illuminate" ) )  {
 		return TCL_ERROR;
 	}
-	if(BU_LIST_IS_EMPTY(&dgop->dgo_headSolid)) {
+	if (BU_LIST_IS_EMPTY(&dgop->dgo_headSolid)) {
 		Tcl_AppendResult(interp, "no solids in view", (char *)NULL);
 		return TCL_ERROR;
 	}
 
-	if( db_string_to_path( &lhs, dbip, argv[1] ) < 0 )  {
+	if ( db_string_to_path( &lhs, dbip, argv[1] ) < 0 )  {
 		Tcl_AppendResult(interp, "bad lhs path", (char *)NULL);
 		return TCL_ERROR;
 	}
-	if( db_string_to_path( &rhs, dbip, argv[2] ) < 0 )  {
+	if ( db_string_to_path( &rhs, dbip, argv[2] ) < 0 )  {
 		db_free_full_path( &lhs );
 		Tcl_AppendResult(interp, "bad rhs path", (char *)NULL);
 		return TCL_ERROR;
 	}
-	if( rhs.fp_len <= 0 )  {
+	if ( rhs.fp_len <= 0 )  {
 		db_free_full_path( &lhs );
 		db_free_full_path( &rhs );
 		Tcl_AppendResult(interp, "rhs must not be null", (char *)NULL);
@@ -503,7 +503,7 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	/* Find the one solid, set s_iflag UP, point illump at it */
 	illump = find_solid_with_path( &both );
-	if( !illump )  {
+	if ( !illump )  {
 		db_free_full_path( &lhs );
 		db_free_full_path( &rhs );
 		db_free_full_path( &both );
@@ -522,14 +522,14 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	new_argv[0] = "matpick";
 	new_argv[1] = number;
 	new_argv[2] = NULL;
-	if( f_matpick( clientData, interp, 2, new_argv ) != TCL_OK )  {
+	if ( f_matpick( clientData, interp, 2, new_argv ) != TCL_OK )  {
 		db_free_full_path( &lhs );
 		db_free_full_path( &rhs );
 		db_free_full_path( &both );
 		Tcl_AppendResult(interp, "error detected inside f_matpick", (char *)NULL);
 		return TCL_ERROR;
 	}
-	if( not_state( ST_O_EDIT, "Object EDIT" ) )  {
+	if ( not_state( ST_O_EDIT, "Object EDIT" ) )  {
 		db_free_full_path( &lhs );
 		db_free_full_path( &rhs );
 		db_free_full_path( &both );
@@ -576,7 +576,7 @@ f_putmat (ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     CHECK_DBI_NULL;
     CHECK_READ_ONLY;
 
-    if(argc < 3 || 18 < argc){
+    if (argc < 3 || 18 < argc){
       struct bu_vls vls;
 
       bu_vls_init(&vls);
@@ -625,7 +625,7 @@ f_putmat (ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     /* 16+1 allows space for final NULL entry in argv[] */
     got = bu_argv_from_string( &newargv[4], 16+1, bu_vls_addr(avp) );
-    if( got != 16 )  {
+    if ( got != 16 )  {
 	  struct bu_vls tmp_vls;
 
 	  bu_vls_init(&tmp_vls);
@@ -668,7 +668,7 @@ f_copymat(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     CHECK_DBI_NULL;
     CHECK_READ_ONLY;
 
-    if(argc < 3 || 3 < argc){
+    if (argc < 3 || 3 < argc){
       struct bu_vls vls;
 
       bu_vls_init(&vls);

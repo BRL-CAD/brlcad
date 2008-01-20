@@ -144,7 +144,7 @@ writephysrec(FILE *fp)
 	/* Pad out the record if not full */
 	memset((char *)&skiprec, 0, sizeof(skiprec));
 	skiprec.p.pad[16] = -1;
-	while( precindex < 256 ) {
+	while ( precindex < 256 ) {
 		memcpy(&physrec[precindex*sizeof(union radrec)], &skiprec, sizeof(skiprec));
 		precindex++;
 		buf++;
@@ -152,7 +152,7 @@ writephysrec(FILE *fp)
 
 	length = sizeof(physrec);
 	fwrite( &length, sizeof(length), 1, fp );
-	if( fwrite( physrec, sizeof(physrec), 1, fp ) != 1 ) {
+	if ( fwrite( physrec, sizeof(physrec), 1, fp ) != 1 ) {
 		bu_log( "writephysrec: error writing physical record\n" );
 		return( 0 );
 	}
@@ -176,8 +176,8 @@ writephysrec(FILE *fp)
 int
 writerec(union radrec *rp, FILE *fp)
 {
-	if( precindex >= 256 ) {
-		if( writephysrec( fp ) == 0 )
+	if ( precindex >= 256 ) {
+		if ( writephysrec( fp ) == 0 )
 			return( 0 );
 	}
 	memcpy(&physrec[precindex*sizeof(*rp)], rp, sizeof(*rp));
@@ -185,8 +185,8 @@ writerec(union radrec *rp, FILE *fp)
 	precindex++;
 	recnum++;
 
-	if( precindex >= 256 ) {
-		if( writephysrec( fp ) == 0 )
+	if ( precindex >= 256 ) {
+		if ( writephysrec( fp ) == 0 )
 			return( 0 );
 	}
 	return( 1 );
@@ -200,7 +200,7 @@ view_2init(struct application *ap)
 	vect_t temp, aimpt;
 	union radrec r;
 
-	if( numreflect > MAXREFLECT ) {
+	if ( numreflect > MAXREFLECT ) {
 		bu_log("Warning: maxreflect too large (%d), using %d\n",
 			numreflect, MAXREFLECT );
 		numreflect = MAXREFLECT;
@@ -254,7 +254,7 @@ void
 view_end(void)
 {
 	/* flush any partial output record */
-	if( precindex > 0 ) {
+	if ( precindex > 0 ) {
 		writephysrec( outfp );
 	}
 
@@ -272,27 +272,27 @@ radhit(register struct application *ap, struct partition *PartHeadp, struct seg 
 	vect_t	to_eye, work;
 	int	depth;
 
-	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
-		if( pp->pt_outhit->hit_dist >= 0.0 )  break;
-	if( pp == PartHeadp )  {
+	for ( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
+		if ( pp->pt_outhit->hit_dist >= 0.0 )  break;
+	if ( pp == PartHeadp )  {
 		bu_log("radhit:  no hit out front?\n");
 		return(0);
 	}
 
-	if(R_DEBUG&RDEBUG_HITS)  {
+	if (R_DEBUG&RDEBUG_HITS)  {
 		rt_pr_pt( ap->a_rt_i, pp );
 	}
 
 	hitp = pp->pt_inhit;
-	if( hitp->hit_dist >= INFINITY )  {
+	if ( hitp->hit_dist >= INFINITY )  {
 		bu_log("radhit:  entry beyond infinity\n");
 		return(1);
 	}
 	/* Check to see if eye is "inside" the solid */
-	if( hitp->hit_dist < 0 )  {
+	if ( hitp->hit_dist < 0 )  {
 		/* XXX */
 		bu_log("radhit:  GAK, eye inside solid (%g)\n", hitp->hit_dist );
-		for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
+		for ( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
 			rt_pr_pt( ap->a_rt_i, pp );
 		return(0);
 	}
@@ -301,7 +301,7 @@ radhit(register struct application *ap, struct partition *PartHeadp, struct seg 
 
 	RT_HIT_NORMAL( rayp->norm, hitp, pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip );
 
-	if(R_DEBUG&RDEBUG_HITS)  {
+	if (R_DEBUG&RDEBUG_HITS)  {
 		rt_pr_hit( " In", hitp );
 	}
 
@@ -310,7 +310,7 @@ radhit(register struct application *ap, struct partition *PartHeadp, struct seg 
 	rayp->sol = pp->pt_inseg->seg_stp->st_id;
 	rayp->surf = hitp->hit_surfno;
 	RT_CURVATURE( &(rayp->curvature), hitp, pp->pt_inflip, pp->pt_inseg->seg_stp );
-	if( VDOT( rayp->norm, ap->a_ray.r_dir ) < 0 ) {
+	if ( VDOT( rayp->norm, ap->a_ray.r_dir ) < 0 ) {
 		bu_log(" debug: flipping curvature\n");
 		rayp->curvature.crv_c1 = - rayp->curvature.crv_c1;
 		rayp->curvature.crv_c2 = - rayp->curvature.crv_c2;
@@ -325,7 +325,7 @@ radhit(register struct application *ap, struct partition *PartHeadp, struct seg 
 	VSUB2( rayp->spec, work, to_eye );
 
 	/* Save info for 1st ray */
-	if( ap->a_level == 0 ) {
+	if ( ap->a_level == 0 ) {
 		firstray = ap->a_ray;	/* struct copy */
 		rayp->sight = 1;	/* the 1st intersect is always visible */
 	} else {
@@ -336,7 +336,7 @@ radhit(register struct application *ap, struct partition *PartHeadp, struct seg 
 	/*
 	 * Shoot another ray in the specular direction.
 	 */
-	if( ap->a_level < numreflect-1 ) {
+	if ( ap->a_level < numreflect-1 ) {
 		sub_ap = *ap;	/* struct copy */
 		sub_ap.a_level = ap->a_level+1;
 		VMOVE( sub_ap.a_ray.r_pt, hitp->hit_point );
@@ -348,7 +348,7 @@ radhit(register struct application *ap, struct partition *PartHeadp, struct seg 
 		depth = 0;
 	}
 
-	if( ap->a_level == 0 ) {
+	if ( ap->a_level == 0 ) {
 		/* We're the 1st ray, output the raylist */
 		dumpall( ap, depth+1 );
 	}
@@ -374,14 +374,14 @@ hiteye(struct application *ap, struct partition *PartHeadp, struct seg *segHeadp
 	register struct hit *hitp;
 	vect_t work;
 
-	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
-		if( pp->pt_outhit->hit_dist > 0 )  break;
-	if( pp == PartHeadp )  {
+	for ( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
+		if ( pp->pt_outhit->hit_dist > 0 )  break;
+	if ( pp == PartHeadp )  {
 		bu_log("hiteye:  no hit out front?\n");
 		return(1);
 	}
 	hitp = pp->pt_inhit;
-	if( hitp->hit_dist >= INFINITY )  {
+	if ( hitp->hit_dist >= INFINITY )  {
 		bu_log("hiteye:  entry beyond infinity\n");
 		return(1);
 	}
@@ -389,22 +389,22 @@ hiteye(struct application *ap, struct partition *PartHeadp, struct seg *segHeadp
 	 * find out where it went in.
 	 * Check to see if eye is "inside" of the solid.
 	 */
-	if( hitp->hit_dist < -1.0e-10 )  {
+	if ( hitp->hit_dist < -1.0e-10 )  {
 		/*
 		 * If we are under 1.0 units inside of a solid, we pushed
 		 * into it ourselves in trying to get away from the surface.
 		 * Otherwise, its hard to tell how we got in here!
 		 */
-		if( hitp->hit_dist < -1.001 ) {
+		if ( hitp->hit_dist < -1.001 ) {
 			bu_log("hiteye: *** GAK2, eye inside solid (%g) ***\n", hitp->hit_dist );
-			for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
+			for ( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
 				rt_pr_pt( ap->a_rt_i, pp );
 		}
 		return(0);
 	}
 
 	VSUB2( work, firstray.r_pt, ap->a_ray.r_pt );
-	if( hitp->hit_dist * hitp->hit_dist > MAGSQ(work) )
+	if ( hitp->hit_dist * hitp->hit_dist > MAGSQ(work) )
 		return(1);
 	else
 		return(0);
@@ -439,7 +439,7 @@ isvisible(struct application *ap, struct hit *hitp, const fastf_t *norm)
 	/* compute the ray direction */
 	VSUB2( rdir, firstray.r_pt, hitp->hit_point );
 	VUNITIZE( rdir );
-	if( VDOT(rdir, norm) < 0 )
+	if ( VDOT(rdir, norm) < 0 )
 		return( 0 );	/* backfacing */
 
 	sub_ap = *ap;	/* struct copy */
@@ -464,7 +464,7 @@ dumpall(struct application *ap, int depth)
 	int	i;
 	union radrec r;
 
-	if( depth > numreflect ) {
+	if ( depth > numreflect ) {
 		bu_log( "dumpall: %d reflections!\n", depth );
 	}
 
@@ -482,9 +482,9 @@ dumpall(struct application *ap, int depth)
 	 * the physical record.
 	 */
 	i = 1 + depth;
-	if( depth < numreflect )
+	if ( depth < numreflect )
 		i++;	/* escape */
-	if( precindex + i > 256 )
+	if ( precindex + i > 256 )
 		writephysrec( outfp );
 
 	r.f.irf = i-1;			/* num recs in ray, not counting fire */
@@ -497,11 +497,11 @@ dumpall(struct application *ap, int depth)
 	r.f.iv = ap->a_y + 1;
 	writerec( &r, outfp );
 
-	for( i = 0; i < depth; i++ ) {
+	for ( i = 0; i < depth; i++ ) {
 		dumpray( &rayinfo[i] );
 	}
 
-	if( depth == numreflect )
+	if ( depth == numreflect )
 		return;			/* no escape */
 
 	/* Escape record */

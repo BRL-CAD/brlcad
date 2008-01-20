@@ -77,7 +77,7 @@ static struct funtab joint_tab[] = {
 	f_jdebug, 1, 2, FALSE},
 {"help", "[commands]", "give usage message for given joint commands",
 	f_jhelp, 0, MAXARGS, FALSE},
-{"holds","[names]", "list constraints",
+{"holds", "[names]", "list constraints",
 	f_jhold, 1, MAXARGS, FALSE},
 {"list", "[names]", "list joints.",
 	f_jlist, 1, MAXARGS, FALSE},
@@ -131,7 +131,7 @@ f_joint(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
   int status;
 
-  if(argc < 1){
+  if (argc < 1){
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -146,7 +146,7 @@ f_joint(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
   status = mged_cmd(argc, argv, &joint_tab[0]);
 
-  if(status == CMD_OK)
+  if (status == CMD_OK)
     return TCL_OK;
 
   return TCL_ERROR;
@@ -159,7 +159,7 @@ f_jfhelp(int argc, char **argv)
 
   status = f_fhelp2(argc, argv, &joint_tab[0]);
 
-  if(status == TCL_OK)
+  if (status == TCL_OK)
     return CMD_OK;
   else
     return CMD_BAD;
@@ -172,7 +172,7 @@ f_jhelp(int argc, char **argv)
 
   status = f_help2(argc, argv, &joint_tab[0]);
 
-  if(status == TCL_OK)
+  if (status == TCL_OK)
     return CMD_OK;
   else
     return CMD_BAD;
@@ -1043,7 +1043,7 @@ parse_trans(struct joint *jp, int index, FILE *fip, struct bu_vls *str)
 
 	if (index >= 3) {
 		parse_error(str, "parse_trans: To many translations for this joint.");
-		if (!gobble_token(BU_LEX_SYMBOL, SYM_OP_GROUP, fip, str)) return 0 ;
+		if (!gobble_token(BU_LEX_SYMBOL, SYM_OP_GROUP, fip, str)) return 0;
 		skip_group(fip, str);
 		return 0;
 	}
@@ -1201,7 +1201,7 @@ parse_rots(struct joint *jp, int index, FILE *fip, struct bu_vls *str)
 
 	if (index >= 3) {
 		parse_error(str, "parse_rot: To many rotations for this joint.");
-		if (!gobble_token(BU_LEX_SYMBOL, SYM_OP_GROUP, fip, str)) return 0 ;
+		if (!gobble_token(BU_LEX_SYMBOL, SYM_OP_GROUP, fip, str)) return 0;
 		skip_group(fip, str);
 		return 0;
 	}
@@ -1383,7 +1383,7 @@ parse_joint(FILE *fip, struct bu_vls *str)
 	arcfound = 0;
 	locfound = 0;
 	rots = trans = 0;
-	for(;;) {
+	for (;;) {
 		if (get_token(&token, fip, str, keys, syms) == EOF) {
 			parse_error(str, "parse_joint: Unexpected EOF getting joint contents.");
 			skip_group(fip, str);
@@ -1410,12 +1410,12 @@ parse_joint(FILE *fip, struct bu_vls *str)
 				free_joint(jp);
 				return 0;
 			}
-			for(;trans<3;trans++) {
+			for (;trans<3;trans++) {
 				jp->dirs[trans].lower = -1.0;
 				jp->dirs[trans].upper = -2.0;
 				jp->dirs[trans].current = 0.0;
 			}
-			for(;rots<3;rots++) {
+			for (;rots<3;rots++) {
 				jp->rots[rots].lower = -1.0;
 				jp->rots[rots].upper = -2.0;
 				jp->rots[rots].current = 0.0;
@@ -1511,7 +1511,7 @@ parse_jset(struct hold *hp, FILE *fip, struct bu_vls *str)
 	union bu_lex_token token;
 	int jointfound=0, listfound=0, arcfound=0, pathfound=0;
 
-	if(joint_debug & DEBUG_J_PARSE) {
+	if (joint_debug & DEBUG_J_PARSE) {
 	  Tcl_AppendResult(interp, "parse_jset: open\n", (char *)NULL);
 	}
 
@@ -1529,7 +1529,7 @@ parse_jset(struct hold *hp, FILE *fip, struct bu_vls *str)
 				parse_error(str, "parse_jset: no list/arc/path given.");
 				return 0;
 			}
-			if(joint_debug & DEBUG_J_PARSE) {
+			if (joint_debug & DEBUG_J_PARSE) {
 			  Tcl_AppendResult(interp, "parse_jset: close\n", (char *)NULL);
 			}
 			return 1;
@@ -1601,7 +1601,7 @@ parse_solid(struct hold_point *pp, FILE *fip, struct bu_vls *str)
 	int vertexfound = 0, arcfound = 0;
 	double vertex;
 
-	if(joint_debug & DEBUG_J_PARSE) {
+	if (joint_debug & DEBUG_J_PARSE) {
 	  Tcl_AppendResult(interp, "parse_solid: open\n", (char *)NULL);
 	}
 
@@ -1619,7 +1619,7 @@ parse_solid(struct hold_point *pp, FILE *fip, struct bu_vls *str)
 				return 0;
 			}
 			if (!vertexfound) pp->vertex_number = 1;
-			if(joint_debug & DEBUG_J_PARSE) {
+			if (joint_debug & DEBUG_J_PARSE) {
 			  Tcl_AppendResult(interp, "parse_solid: close\n", (char *)NULL);
 			}
 
@@ -1651,7 +1651,7 @@ parse_solid(struct hold_point *pp, FILE *fip, struct bu_vls *str)
 				skip_group(fip, str);
 				return 0;
 			}
-			arcfound =1 ;
+			arcfound =1;
 			break;
 		default:
 			parse_error(str, "parse_solid: syntax error.");
@@ -2054,7 +2054,7 @@ f_jsave(int argc, char **argv)
 		/* } for jove */
 		if (jp->path.type == ARC_PATH) {
 			fprintf(fop, "\tpath = %s", jp->path.arc[0]);
-			for(i=1;i<jp->path.arc_last;i++) {
+			for (i=1;i<jp->path.arc_last;i++) {
 				fprintf(fop, "/%s", jp->path.arc[i]);
 			}
 			fprintf(fop, "-%s;\n", jp->path.arc[i]);
@@ -2066,7 +2066,7 @@ f_jsave(int argc, char **argv)
 			fprintf(fop, "-%s;\n", jp->path.original[i]);
 		} else { /* ARC_ARC */
 			fprintf(fop, "\tarc = %s", jp->path.arc[0]);
-			for(i=1;i<jp->path.arc_last;i++) {
+			for (i=1;i<jp->path.arc_last;i++) {
 				fprintf(fop, "/%s", jp->path.arc[i]);
 			}
 			fprintf(fop, "/%s;\n", jp->path.arc[i]);
@@ -2124,7 +2124,7 @@ f_jaccept(int argc, char **argv)
 			}
 			if (i>=argc) continue;
 		}
-		for(i=0; i<3; i++) {
+		for (i=0; i<3; i++) {
 			jp->dirs[i].accepted = jp->dirs[i].current;
 			jp->rots[i].accepted = jp->rots[i].current;
 		}
@@ -2177,7 +2177,7 @@ hold_point_location(fastf_t *loc, struct hold_point *hp)
 	struct rt_grip_internal *gip;
 	struct rt_db_internal	intern;
 
-	if(dbip == DBI_NULL)
+	if (dbip == DBI_NULL)
 	  return 1;
 
 	VSETALL(loc, 0.0);	/* default is the origin. */
@@ -2192,11 +2192,11 @@ hold_point_location(fastf_t *loc, struct hold_point *hp)
 			return 1;
 		}
 
-		if( rt_db_get_internal( &intern, hp->path.fp_names[hp->path.fp_len-1], dbip, NULL, &rt_uniresource ) < 0 )
+		if ( rt_db_get_internal( &intern, hp->path.fp_names[hp->path.fp_len-1], dbip, NULL, &rt_uniresource ) < 0 )
 			return 0;
 
 		RT_CK_DB_INTERNAL(&intern);
-		if( intern.idb_type != ID_GRIP )  return 0;
+		if ( intern.idb_type != ID_GRIP )  return 0;
 		gip = (struct rt_grip_internal *)intern.idb_ptr;
 		VMOVE(hp->point, gip->center);
 		hp->flag |= HOLD_PT_GOOD;
@@ -2310,7 +2310,7 @@ part_solve(struct hold *hp, double limits, double tol)
 		  Tcl_AppendResult(interp, "part_solve: looking for joints on arc.\n",
 				   (char *)NULL);
 		}
-		for(BU_LIST_FOR(jp, joint,&joint_head)) {
+		for (BU_LIST_FOR(jp, joint, &joint_head)) {
 			if (hp->j_set.path.type == ARC_LIST) {
 				for (i=0; i<= hp->j_set.path.arc_last; i++) {
 					if (strcmp(jp->name, hp->j_set.path.arc[i]) == 0) {
@@ -2671,7 +2671,7 @@ system_solve(int pri, double delta, double epsilon)
 	if (pri < 0) return 1;
 
 	for (i=0; i<=pri; i++) 	pri_weights[i]=0.0;
-	for (BU_LIST_FOR(hp, hold,&hold_head)) {
+	for (BU_LIST_FOR(hp, hold, &hold_head)) {
 		hp->eval = hold_eval(hp);
 		pri_weights[hp->priority] += hp->eval;
 	}
@@ -2701,7 +2701,7 @@ system_solve(int pri, double delta, double epsilon)
 		    ((tmp->priority == hp->priority) &&
 		     (tmp->eval > hp->eval))) {
 			BU_LIST_DEQUEUE(&tmp->l);
-			BU_LIST_INSERT(&hp->l,&tmp->l);
+			BU_LIST_INSERT(&hp->l, &tmp->l);
 			if (tmp->l.back != &hold_head) {
 				hp = (struct hold*)tmp->l.back;
 			}
@@ -2720,7 +2720,7 @@ Middle:
 		}
 		return 1;	/* solved */
 	}
-	for (BU_LIST_FOR(hp, hold,&hold_head)) {
+	for (BU_LIST_FOR(hp, hold, &hold_head)) {
 		if (hp->priority != pri) continue;
 		if (hp->flag & HOLD_FLAG_TRIED) continue;
 		if (part_solve(hp, delta, epsilon)==0) continue;
@@ -2746,7 +2746,7 @@ Middle:
 	 * we'll know that in a little bit.
 	 */
 	new_eval = 0.0;
-	for (BU_LIST_FOR(hp, hold,&hold_head)) {
+	for (BU_LIST_FOR(hp, hold, &hold_head)) {
 		if (hp->priority != pri) continue;
 		new_eval += hold_eval(hp);
 	}
@@ -2916,7 +2916,7 @@ f_jsolve(int argc, char **argv)
 	found = -1;
 	while (argc) {
 	  found = 0;
-	  for(BU_LIST_FOR(hp, hold,&hold_head)) {
+	  for (BU_LIST_FOR(hp, hold, &hold_head)) {
 	    if (strcmp(*argv, hp->name)==0) {
 	      found = 1;
 	      for (count=0; count<loops; count++) {
@@ -2966,7 +2966,7 @@ f_jsolve(int argc, char **argv)
 		/*
 		 * Clear all constrain flags.
 		 */
-		for (BU_LIST_FOR(hp, hold,&hold_head)) {
+		for (BU_LIST_FOR(hp, hold, &hold_head)) {
 			register struct jointH *jh;
 			hp->flag &= ~HOLD_FLAG_TRIED;
 			hp->eval = hold_eval(hp);
@@ -2997,11 +2997,11 @@ f_jsolve(int argc, char **argv)
 		}
 	}
 	if (count < loops) {
-		for(count = 0; count < loops; count++) {
+		for (count = 0; count < loops; count++) {
 			/*
 			 * Clear all constrain flags.
 			 */
-			for (BU_LIST_FOR(hp, hold,&hold_head)) {
+			for (BU_LIST_FOR(hp, hold, &hold_head)) {
 				register struct jointH *jh;
 				hp->flag &= ~HOLD_FLAG_TRIED;
 				hp->eval = hold_eval(hp);
@@ -3142,7 +3142,7 @@ joint_move(struct joint *jp)
 	quat_t	q1;
 	int i;
 
-	if(dbip == DBI_NULL)
+	if (dbip == DBI_NULL)
 	  return;
 
 	/*
@@ -3276,7 +3276,7 @@ f_jmove(int argc, char **argv)
 	int i;
 	double tmp;
 
-	if(dbip == DBI_NULL)
+	if (dbip == DBI_NULL)
 	  return CMD_OK;
 
 	/*
@@ -3542,10 +3542,10 @@ f_jmesh(int argc, char **argv)
 	char			*topv[2000];
 	int			topc;
 
-	if(dbip == DBI_NULL)
+	if (dbip == DBI_NULL)
 	  return CMD_OK;
 
-	if( argc <= 2) {
+	if ( argc <= 2) {
 		name = "_ANIM_";
 	} else {
 		name = argv[2];

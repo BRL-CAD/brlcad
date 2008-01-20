@@ -61,9 +61,9 @@ rt_nurb_plot_snurb(FILE *fp, const struct face_g_snurb *srf)
 
 	NMG_CK_SNURB(srf);
 
-	for( i = 0; i < srf->s_size[0]; i++)
+	for ( i = 0; i < srf->s_size[0]; i++)
 	{
-		for( j = 0; j < srf->s_size[1]; j++)
+		for ( j = 0; j < srf->s_size[1]; j++)
 		{
 		       if ( rat )
 			{
@@ -78,7 +78,7 @@ rt_nurb_plot_snurb(FILE *fp, const struct face_g_snurb *srf)
 
 			}
 
-			if( j == 0)
+			if ( j == 0)
 			{
 				pdv_3move( fp, pt );
 			} else
@@ -88,12 +88,12 @@ rt_nurb_plot_snurb(FILE *fp, const struct face_g_snurb *srf)
 		}
 	}
 
-	for( j = 0; j < srf->s_size[1]; j++)
+	for ( j = 0; j < srf->s_size[1]; j++)
 	{
 		int stride;
 		stride = srf->s_size[1] * evp;
 		m_ptr = &srf->ctl_points[j * evp];
-		for( i = 0; i < srf->s_size[0]; i++)
+		for ( i = 0; i < srf->s_size[0]; i++)
 		{
 			if ( rat )
 			{
@@ -109,7 +109,7 @@ rt_nurb_plot_snurb(FILE *fp, const struct face_g_snurb *srf)
 			}
 
 
-			if( i == 0)
+			if ( i == 0)
 				pdv_3move( fp, pt );
 			else
 				pdv_3cont( fp, pt );
@@ -131,19 +131,19 @@ rt_nurb_plot_cnurb(FILE *fp, const struct edge_g_cnurb *crv)
 	int rat = RT_NURB_IS_PT_RATIONAL( crv->pt_type);
 	point_t ptr;
 
-	for( i = 0; i < crv->c_size; i++)  {
-		if( rat )
+	for ( i = 0; i < crv->c_size; i++)  {
+		if ( rat )
 		{
-			for(k = 0; k < evp; k++)
+			for (k = 0; k < evp; k++)
 				ptr[k] = m_ptr[k] / m_ptr[evp-1];
 
 		} else
 		{
-			for(k = 0; k < evp; k++)
+			for (k = 0; k < evp; k++)
 				ptr[k] = m_ptr[k];
 
 		}
-		if( i == 0 )
+		if ( i == 0 )
 			pdv_3move( fp, ptr );
 		else
 			pdv_3cont( fp, ptr );

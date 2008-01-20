@@ -53,28 +53,28 @@ main(void)
 	register int	i;
 
 	/* Init map */
-	for(i=0;i<256;i++) rmap[i] = -1;		/* Unused entries */
-	for(i=0; i<10; i++)  rmap['0'+i] = i;
-	for(i=10; i<16; i++)  rmap['A'-10+i] = i;
-	for(i=10; i<16; i++)  rmap['a'-10+i] = i;
-	for(i=0;i<256;i++) {
-		if( rmap[i] >= 0 )
+	for (i=0;i<256;i++) rmap[i] = -1;		/* Unused entries */
+	for (i=0; i<10; i++)  rmap['0'+i] = i;
+	for (i=10; i<16; i++)  rmap['A'-10+i] = i;
+	for (i=10; i<16; i++)  rmap['a'-10+i] = i;
+	for (i=0;i<256;i++) {
+		if ( rmap[i] >= 0 )
 			lmap[i] = rmap[i]<<4;
 		else
 			lmap[i] = -1;
 	}
 
-	for(;;)  {
+	for (;;)  {
 		do {
-			if( (a = getchar()) == EOF || a > 255 )  goto out;
-		} while( (i = lmap[a]) < 0 );
+			if ( (a = getchar()) == EOF || a > 255 )  goto out;
+		} while ( (i = lmap[a]) < 0 );
 
-		if( (b = getchar()) == EOF || b > 255 )  {
+		if ( (b = getchar()) == EOF || b > 255 )  {
 			fprintf(stderr, "asc2pix: unexpected EOF in middle of hex number\n");
 			return 1;
 		}
 
-		if( (b = rmap[b]) < 0 )  {
+		if ( (b = rmap[b]) < 0 )  {
 			fprintf(stderr, "asc2pix: illegal hex code in file, aborting\n");
 			return 1;
 		}

@@ -48,9 +48,9 @@ addTrie( name, triepp )
 register char *name;
 register Trie **triepp;
 	{	register Trie *curp;
-	if( *name == NUL )
+	if ( *name == NUL )
 		{ /* End of name, see if name already exists. */
-		if( *triepp == TRIE_NULL )
+		if ( *triepp == TRIE_NULL )
 			{ /* Name does not exist, make leaf node. */
 			NewTrie( *triepp );
 			(*triepp)->l.t_altr = (*triepp)->l.t_next
@@ -58,19 +58,19 @@ register Trie **triepp;
 			(*triepp)->l.t_func = NULL_FUNC;
 			}
 		else
-		if( (*triepp)->n.t_next != TRIE_NULL )
+		if ( (*triepp)->n.t_next != TRIE_NULL )
 			/* Name is subset of another name. */
 			return	addTrie( name, &(*triepp)->n.t_altr );
 		/* else -- Name already inserted, so do nothing. */
 		return	*triepp;
 		}
 	/* Find matching letter, this level.  */
-	for(	curp = *triepp;
+	for (	curp = *triepp;
 		curp != TRIE_NULL && *name != curp->n.t_char;
 		curp = curp->n.t_altr
 		)
 		;
-	if( curp == TRIE_NULL )
+	if ( curp == TRIE_NULL )
 		{ /* No Match, this level, so create new alternate. */
 		curp = *triepp;
 		NewTrie( *triepp );
@@ -92,12 +92,12 @@ register Trie	*triep;
 	assert( triep != TRIE_NULL );
 
 	/* Traverse next links to end of region name. */
-	for( ; triep != TRIE_NULL; triep = triep->n.t_next )
+	for (; triep != TRIE_NULL; triep = triep->n.t_next )
 		{
 		curp = triep;
-		if( *name == NUL )
+		if ( *name == NUL )
 			{ /* End of user-typed name. */
-			if( triep->n.t_altr != TRIE_NULL )
+			if ( triep->n.t_altr != TRIE_NULL )
 				/* Ambiguous at this point. */
 				return	NULL_FUNC;
 			else	  /* Complete next character. */
@@ -107,19 +107,19 @@ register Trie	*triep;
 				}
 			}
 		else
-		if( *name == '*' )
+		if ( *name == '*' )
 			return	matchTrie( triep );
 		else	/* Not at end of user-typed name yet, traverse
 				alternate list to find current letter.
 			  */
 			{
-			for(	;
+			for (	;
 				triep != TRIE_NULL
 			    &&	*name != triep->n.t_char;
 				triep = triep->n.t_altr
 				)
 				;
-			if( triep == TRIE_NULL )
+			if ( triep == TRIE_NULL )
 				/* Non-existant name, truncate bad part. */
 				{
 				*name = NUL;
@@ -142,13 +142,13 @@ static Func	*
 matchTrie( triep )
 register Trie	*triep;
 	{	Func	*func;
-	if( triep == TRIE_NULL )
+	if ( triep == TRIE_NULL )
 		func = NULL_FUNC;
 	else
-	if( triep->n.t_altr != TRIE_NULL )
+	if ( triep->n.t_altr != TRIE_NULL )
 		func = NULL_FUNC;	/* Ambiguous root, no match.  */
 	else
-	if( triep->n.t_next == TRIE_NULL )
+	if ( triep->n.t_next == TRIE_NULL )
 		func = triep->l.t_func;	/* At leaf node, return datum.  */
 	else				/* Keep going to leaf.  */
 		func = matchTrie( triep->n.t_next );
@@ -164,14 +164,14 @@ int	level;
 #if DEBUG_TRIE
 	brst_log( "prntTrie(triep=0x%x, level=%d)\n", triep, level );
 #endif
-	if( tp == TRIE_NULL )
+	if ( tp == TRIE_NULL )
 		return;
-	if( tp->n.t_altr != TRIE_NULL )
+	if ( tp->n.t_altr != TRIE_NULL )
 		prntTrie( tp->n.t_altr, level );
-	if( level == 0 )
+	if ( level == 0 )
 		namep = name_buf;
 	*namep = tp->n.t_char;
-	if( tp->n.t_next == TRIE_NULL )
+	if ( tp->n.t_next == TRIE_NULL )
 		{
 		/* At end of name, so print it out. */
 		*namep = NUL;
@@ -193,14 +193,14 @@ int	level;
 FILE	*fp;
 	{	register Trie	*tp = triep;
 		static char	name_buf[MAX_TRIE_LEVEL+1], *namep;
-	if( tp == TRIE_NULL )
+	if ( tp == TRIE_NULL )
 		return	1;
-	if( tp->n.t_altr != TRIE_NULL )
+	if ( tp->n.t_altr != TRIE_NULL )
 		(void) writeTrie( tp->n.t_altr, level, fp );
-	if( level == 0 )
+	if ( level == 0 )
 		namep = name_buf;
 	*namep = tp->n.t_char;
-	if( tp->n.t_next == TRIE_NULL )
+	if ( tp->n.t_next == TRIE_NULL )
 		{
 		/* At end of name, so print it out. */
 		*namep = NUL;
@@ -220,7 +220,7 @@ readTrie( fp, triepp )
 FILE	*fp;
 Trie	**triepp;
 	{	static char	name_buf[MAX_TRIE_LEVEL+1];
-	while( bu_fgets( name_buf, MAX_TRIE_LEVEL, fp ) != NULL )
+	while ( bu_fgets( name_buf, MAX_TRIE_LEVEL, fp ) != NULL )
 		{
 		name_buf[strlen(name_buf)-1] = '\0'; /* Clobber new-line. */
 		(void) addTrie( name_buf, triepp );
@@ -239,20 +239,20 @@ char	*
 char_To_String( i )
 int	i;
 	{	static char	buf[4];
-	if( i >= SP && i < DEL )
+	if ( i >= SP && i < DEL )
 		{
 		buf[0] = i;
 		buf[1] = NUL;
 		}
 	else
-	if( i >= NUL && i < SP )
+	if ( i >= NUL && i < SP )
 		{
 		buf[0] = '^';
 		buf[1] = i + 64;
 		buf[2] = NUL;
 		}
 	else
-	if( i == DEL )
+	if ( i == DEL )
 		return	"DL";
 	else
 		return	"EOF";
@@ -275,7 +275,7 @@ Trie	**triepp;
 		register char	*p = buffer;
 		register int	c;
 		Func		*funcp;
-	if( tty )
+	if ( tty )
 		{
 		save_Tty( 0 );
 		set_Raw( 0 );
@@ -287,16 +287,16 @@ Trie	**triepp;
 		{
 		(void) fflush( stdout );
 		c = hm_getchar();
-		switch( c )
+		switch ( c )
 			{
 		case SP :
 			{
-			if(	*triepp == TRIE_NULL
+			if (	*triepp == TRIE_NULL
 			    ||	(funcp = getTrie( buffer, *triepp ))
 				== NULL_FUNC
 				)
 				(void) putchar( BEL );
-			for( ; p > buffer; p-- )
+			for (; p > buffer; p-- )
 				(void) putchar( BS );
 			(void) printf( "%s", buffer );
 			(void) ClrEOL();
@@ -305,17 +305,17 @@ Trie	**triepp;
 			break;
 			}
 		case Ctrl('A') : /* Cursor to beginning of line. */
-			if( p == buffer )
+			if ( p == buffer )
 				{
 				ring_Bell();
 				break;
 				}
-			for( ; p > buffer; p-- )
+			for (; p > buffer; p-- )
 				(void) putchar( BS );
 			break;
 		case Ctrl('B') :
 		case BS : /* Move cursor back one character. */
-			if( p == buffer )
+			if ( p == buffer )
 				{
 				ring_Bell();
 				break;
@@ -325,22 +325,22 @@ Trie	**triepp;
 			break;
 		case Ctrl('D') : /* Delete character under cursor. */
 			{	register char	*q = p;
-			if( *p == NUL )
+			if ( *p == NUL )
 				{
 				ring_Bell();
 				break;
 				}
-			for( ; *q != NUL; ++q )
+			for (; *q != NUL; ++q )
 				{
 				*q = *(q+1);
 				(void) putchar( *q != NUL ? *q : SP );
 				}
-			for( ; q > p; --q )
+			for (; q > p; --q )
 				(void) putchar( BS );
 			break;
 			}
 		case Ctrl('E') : /* Cursor to end of line. */
-			if( *p == NUL )
+			if ( *p == NUL )
 				{
 				ring_Bell();
 				break;
@@ -349,7 +349,7 @@ Trie	**triepp;
 			p += strlen( p );
 			break;
 		case Ctrl('F') : /* Cursor forward one character. */
-			if( *p == NUL || p-buffer >= bufsz-2 )
+			if ( *p == NUL || p-buffer >= bufsz-2 )
 				{
 				ring_Bell();
 				break;
@@ -361,7 +361,7 @@ Trie	**triepp;
 			notify( "Aborted.", NOTIFY_APPEND );
 			goto	clean_return;
 		case Ctrl('K') : /* Erase from cursor to end of line. */
-			if( *p == NUL )
+			if ( *p == NUL )
 				{
 				ring_Bell();
 				break;
@@ -371,7 +371,7 @@ Trie	**triepp;
 			break;
 		case Ctrl('P') : /* Yank previous contents of "inbuf". */
 			{	register int	len = strlen( inbuf );
-			if( (p + len) - buffer >= BUFSIZ )
+			if ( (p + len) - buffer >= BUFSIZ )
 				{
 				ring_Bell();
 				break;
@@ -382,48 +382,48 @@ Trie	**triepp;
 			break;
 			}
 		case Ctrl('U') : /* Erase from start of line to cursor. */
-			if( p == buffer )
+			if ( p == buffer )
 				{
 				ring_Bell();
 				break;
 				}
-			for( ; p > buffer; --p )
+			for (; p > buffer; --p )
 				{	register char	*q = p;
 				(void) putchar( BS );
-				for( ; *(q-1) != NUL; ++q )
+				for (; *(q-1) != NUL; ++q )
 					{
 					*(q-1) = *q;
 					(void) putchar( *q != NUL ? *q : SP );
 					}
-				for( ; q > p; --q )
+				for (; q > p; --q )
 					(void) putchar( BS );
 				}
 			break;
 		case Ctrl('R') : /* Print line, cursor doesn't move. */
 			{	register int	i;
-			if( buffer[0] == NUL )
+			if ( buffer[0] == NUL )
 				break;
-			for( i = p - buffer; i > 0; i-- )
+			for ( i = p - buffer; i > 0; i-- )
 				(void) putchar( BS );
 			(void) printf( "%s", buffer );
-			for( i = strlen( buffer ) - (p - buffer); i > 0; i-- )
+			for ( i = strlen( buffer ) - (p - buffer); i > 0; i-- )
 				(void) putchar( BS );
 			break;
 			}
 		case DEL : /* Delete character behind cursor. */
 			{	register char	*q = p;
-			if( p == buffer )
+			if ( p == buffer )
 				{
 				ring_Bell();
 				break;
 				}
 			(void) putchar( BS );
-			for( ; *(q-1) != NUL; ++q )
+			for (; *(q-1) != NUL; ++q )
 				{
 				*(q-1) = *q;
 				(void) putchar( *q != NUL ? *q : SP );
 				}
-			for( ; q > p; --q )
+			for (; q > p; --q )
 				(void) putchar( BS );
 			p--;
 			break;
@@ -431,7 +431,7 @@ Trie	**triepp;
 		case CR :
 		case LF :
 		case EOF :
-			if(	*triepp == TRIE_NULL
+			if (	*triepp == TRIE_NULL
 			    ||	(funcp = getTrie( buffer, *triepp ))
 				== NULL_FUNC
 				)
@@ -453,13 +453,13 @@ Trie	**triepp;
 			{	register char	*q = p;
 				register int	len = strlen( p );
 			/* Scroll characters forward. */
-			if( c >= NUL && c < SP )
+			if ( c >= NUL && c < SP )
 				(void) printf( "%s", char_To_String( c ) );
 			else
 				(void) putchar( c );
-			for( ; len >= 0; len--, q++ )
+			for (; len >= 0; len--, q++ )
 				(void) putchar( *q == NUL ? SP : *q );
-			for( ; q > p; q-- )
+			for (; q > p; q-- )
 				{
 				(void) putchar( BS );
 				*q = *(q-1);
@@ -469,12 +469,12 @@ Trie	**triepp;
 			}
 			} /* End switch.  */
 		}
-	while( strlen( buffer ) < BUFSIZ);
+	while ( strlen( buffer ) < BUFSIZ);
 	ring_Bell();
 	notify( "Buffer full.", NOTIFY_APPEND );
 clean_return :
 	prompt( "" );
-	if( tty )
+	if ( tty )
 		reset_Tty( 0 );
 	return	funcp;
 	}

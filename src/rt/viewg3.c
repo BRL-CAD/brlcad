@@ -134,14 +134,14 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
 {
 	line_num = 1;
 
-	if( !minus_o )
+	if ( !minus_o )
 		outfp = stdout;
 
 	save_file = file;
 	save_obj = obj;
 
-	if( ray_data_file.vls_magic == BU_VLS_MAGIC ) {
-		if( (shot_fp=fopen( bu_vls_addr( &ray_data_file ), "w" )) == NULL ) {
+	if ( ray_data_file.vls_magic == BU_VLS_MAGIC ) {
+		if ( (shot_fp=fopen( bu_vls_addr( &ray_data_file ), "w" )) == NULL ) {
 			perror( "RTG3" );
 			bu_log( "Cannot open ray data output file %s\n", bu_vls_addr( &ray_data_file ) );
 			bu_exit( EXIT_FAILURE, "Cannot open ray data output file\n" );
@@ -152,9 +152,9 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
 	 *  Cause grid_setup() to align the grid on one inch boundaries,
 	 *  or cell_width boundaries, if it is given.
 	 */
-	if( cell_width > 0 )
+	if ( cell_width > 0 )
 		gift_grid_rounding = cell_width;
-	else if( cell_height > 0 )
+	else if ( cell_height > 0 )
 		gift_grid_rounding = cell_height;
 	else
 		gift_grid_rounding = 25.4;		/* one inch */
@@ -163,14 +163,14 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
 	ap->a_miss = raymiss;
 	ap->a_onehit = 0;
 
-	if( !rpt_overlap )
+	if ( !rpt_overlap )
 		 ap->a_logoverlap = rt_silent_logoverlap;
 
 	output_is_binary = 0;		/* output is printable ascii */
 
-	if(R_DEBUG & RDEBUG_RAYPLOT) {
+	if (R_DEBUG & RDEBUG_RAYPLOT) {
 		plotfp = fopen("rtg3.pl", "w");
-		if( npsw > 1 )  {
+		if ( npsw > 1 )  {
 			bu_log("Note: writing rtg3.pl file can only be done using only 1 processor\n");
 			npsw = 1;
 		}
@@ -189,7 +189,7 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
 void
 view_2init(struct application *ap)
 {
-	if( outfp == NULL )
+	if ( outfp == NULL )
 		bu_exit(EXIT_FAILURE, "outfp is NULL\n");
 
 	/*
@@ -296,21 +296,21 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 	point_t			first_hit;
 	int			first;
 
-	if( pp == PartHeadp )
+	if ( pp == PartHeadp )
 		return(0);		/* nothing was actually hit?? */
 
-	if( ap->a_rt_i->rti_save_overlaps )
+	if ( ap->a_rt_i->rti_save_overlaps )
 		rt_rebuild_overlaps( PartHeadp, ap, 1 );
 
 	part_compact(ap, PartHeadp, TOL);
 
 	/* count components in partitions */
 	comp_count = 0;
-	for( pp=PartHeadp->pt_forw; pp!=PartHeadp; pp=pp->pt_forw )  {
-		if( pp->pt_regionp->reg_regionid > 0 ) {
+	for ( pp=PartHeadp->pt_forw; pp!=PartHeadp; pp=pp->pt_forw )  {
+		if ( pp->pt_regionp->reg_regionid > 0 ) {
 			prev_id = pp->pt_regionp->reg_regionid;
 			comp_count++;
-		} else if( prev_id <= 0 ) {
+		} else if ( prev_id <= 0 ) {
 			/* normally air would be output along with a solid partition, but this will require a '111' partition */
 			prev_id = pp->pt_regionp->reg_regionid;
 			comp_count++;
@@ -318,9 +318,9 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 			prev_id = pp->pt_regionp->reg_regionid;
 	}
 	pp = PartHeadp->pt_back;
-	if( pp!=PartHeadp && pp->pt_regionp->reg_regionid <= 0 )
+	if ( pp!=PartHeadp && pp->pt_regionp->reg_regionid <= 0 )
 		comp_count++;  /* a trailing '111' ident */
-	if( comp_count == 0 )
+	if ( comp_count == 0 )
 		return( 0 );
 
 	/* Set up variable length string, to buffer this shotline in.
@@ -368,7 +368,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 		vect_t	tmp;
 		vect_t	viewZdir;
 
-		if( trip_count == 0) {
+		if ( trip_count == 0) {
 
 			VSET( tmp, 0, 0, -1 );		/* viewing direction */
 			MAT4X3VEC( viewZdir, view2model, tmp );
@@ -391,7 +391,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 	dlast = -(PartHeadp->pt_back->pt_outhit->hit_dist + dcorrection);
 #if 0
 	/* This code is to note any occurances of negative distances. */
-		if( PartHeadp->pt_forw->pt_inhit->hit_dist < 0)  {
+		if ( PartHeadp->pt_forw->pt_inhit->hit_dist < 0)  {
 			bu_log("ERROR: dfirst=%g at partition x%x\n", dfirst, PartHeadp->pt_forw );
 			bu_log("\tdcorrection = %f\n", dcorrection );
 			bu_log("\tray start point is ( %f %f %f ) in direction ( %f %f %f )\n", V3ARGS( ap->a_ray.r_pt ), V3ARGS( ap->a_ray.r_dir ) );
@@ -410,7 +410,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 
 #define	SHOT_FMT	"%7.1f%7.1f%9.3f%9.3f%3d%8.2f%8.2f A%6.1f E%6.1f"
 
-	if( rt_perspective > 0 )  {
+	if ( rt_perspective > 0 )  {
 		bn_ae_vec( &azimuth, &elevation, ap->a_ray.r_dir );
 	}
 
@@ -431,7 +431,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 	 *  The easy way to activate this is with the harmless -!1 option
 	 *  when running RTG3.
 	 */
-	if( R_DEBUG || bu_debug || RT_G_DEBUG )  {
+	if ( R_DEBUG || bu_debug || RT_G_DEBUG )  {
 		bu_vls_printf( &str, "   -b%d,%d -p %26.20e %26.20e %26.20e -d %26.20e %26.20e %26.20e\n",
 			ap->a_x, ap->a_y,
 			V3ARGS(ap->a_ray.r_pt),
@@ -444,12 +444,12 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 	card_count = 0;
 	prev_id = -1;
 	first = 1;
-	for( pp=PartHeadp->pt_forw; pp!=PartHeadp; pp=pp->pt_forw )  {
+	for ( pp=PartHeadp->pt_forw; pp!=PartHeadp; pp=pp->pt_forw )  {
 		/*
 		 *  The GIFT statements that would have produced
 		 *  this output are:
 		 *	do 632 i=icomp, iend
-		 *	if(clos(icomp).gt.999.99.or.slos(i).gt.999.9) goto 635
+		 *	if (clos(icomp).gt.999.99.or.slos(i).gt.999.9) goto 635
 		 * 632	continue
 		 * 	write(1, 633)(item(i), clos(i), cangi(i), cango(i),
 		 * &			kspac(i), slos(i), i=icomp, iend)
@@ -471,7 +471,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 
 		region_id = pp->pt_regionp->reg_regionid;
 
-		if( region_id <= 0 && prev_id > 0 )
+		if ( region_id <= 0 && prev_id > 0 )
 		{
 			/* air region output with previous partition */
 			prev_id = region_id;
@@ -485,7 +485,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 		 * but the condition has been seen.
 		 */
 #if 0
-		if( comp_thickness <= 0 )  {
+		if ( comp_thickness <= 0 )  {
 			VJOIN1( pp->pt_inhit->hit_point, ap->a_ray.r_pt, pp->pt_inhit->hit_dist, ap->a_ray.r_dir );
 			VJOIN1( pp->pt_outhit->hit_point, ap->a_ray.r_pt, pp->pt_outhit->hit_dist, ap->a_ray.r_dir );
 			bu_log("ERROR: comp_thickness=%g for region id = %d at h=%g, v=%g (x=%d, y=%d), partition at x%x\n",
@@ -500,8 +500,8 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 		}
 #endif
 
-		if( nextpp == PartHeadp )  {
-			if( region_id <= 0 ) {
+		if ( nextpp == PartHeadp )  {
+			if ( region_id <= 0 ) {
 				/* last partition is air, need a 111 'phantom armor' before AND after */
 				bu_log( "WARNING: adding 'phantom armor' (id=111) with zero thickness before and after air region %s\n",
 					 pp->pt_regionp->reg_name );
@@ -514,7 +514,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 				air_id = 9;
 				air_thickness = 0.0;
 			}
-		} else if( region_id <= 0 ) {
+		} else if ( region_id <= 0 ) {
 			/* air region, need a 111 'phantom armor' */
 			bu_log( "WARNING: adding 'phantom armor' (id=111) with zero thickness before air region %s\n",
 				 pp->pt_regionp->reg_name );
@@ -523,7 +523,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 			air_id = pp->pt_regionp->reg_aircode;
 			air_thickness = comp_thickness;
 			comp_thickness = 0.0;
-		} else if( nextpp->pt_regionp->reg_regionid <= 0 &&
+		} else if ( nextpp->pt_regionp->reg_regionid <= 0 &&
 			nextpp->pt_regionp->reg_aircode != 0 )  {
 			/* Next partition is air region */
 			air_id = nextpp->pt_regionp->reg_aircode;
@@ -535,11 +535,11 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 			air_id = 0;
 			air_thickness = nextpp->pt_inhit->hit_dist -
 				pp->pt_outhit->hit_dist;
-			if( air_thickness < 0.0 )
+			if ( air_thickness < 0.0 )
 				air_thickness = 0.0;
-			if( !NEAR_ZERO( air_thickness, 0.1 ) )  {
+			if ( !NEAR_ZERO( air_thickness, 0.1 ) )  {
 				air_id = 1;	/* air gap */
-				if( R_DEBUG & RDEBUG_HITS )
+				if ( R_DEBUG & RDEBUG_HITS )
 					bu_log("air gap added\n");
 			} else {
 				air_thickness = 0.0;
@@ -557,25 +557,25 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 		 *  XXX this should probably be done with atan2()
 		 */
 
-		if( first ) {
+		if ( first ) {
 			first = 0;
 			VJOIN1( first_hit, ap->a_ray.r_pt, pp->pt_inhit->hit_dist, ap->a_ray.r_dir );
 		}
 out:
 		RT_HIT_NORMAL( normal, pp->pt_inhit, pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip );
 		dot_prod = VDOT( ap->a_ray.r_dir, normal );
-		if( dot_prod > 1.0 )
+		if ( dot_prod > 1.0 )
 			dot_prod = 1.0;
-		if( dot_prod < -1.0 )
+		if ( dot_prod < -1.0 )
 			dot_prod = (-1.0);
 
 		in_obliq = acos( -dot_prod ) *
 			bn_radtodeg;
 		RT_HIT_NORMAL( normal, pp->pt_outhit, pp->pt_outseg->seg_stp, &(ap->a_ray), pp->pt_outflip );
 		dot_prod = VDOT( ap->a_ray.r_dir, normal );
-		if( dot_prod > 1.0 )
+		if ( dot_prod > 1.0 )
 			dot_prod = 1.0;
-		if( dot_prod < -1.0 )
+		if ( dot_prod < -1.0 )
 			dot_prod = (-1.0);
 
 		out_obliq = acos( dot_prod ) *
@@ -583,11 +583,11 @@ out:
 
 		/* Check for exit obliquties greater than 90 degrees. */
 #if 0
-		if( in_obliq > 90 || in_obliq < 0 )  {
+		if ( in_obliq > 90 || in_obliq < 0 )  {
 			bu_log("ERROR: in_obliquity=%g\n", in_obliq);
 			rt_pr_partitions(ap->a_rt_i, PartHeadp, "Defective partion:");
 		}
-		if( out_obliq > 90 || out_obliq < 0 )  {
+		if ( out_obliq > 90 || out_obliq < 0 )  {
 			bu_log("ERROR: out_obliquity=%g\n", out_obliq);
 			VPRINT(" r_dir", ap->a_ray.r_dir);
 			VPRINT("normal", normal);
@@ -601,25 +601,25 @@ out:
 		}
 #endif
 
-		if( in_obliq > 90.0 )
+		if ( in_obliq > 90.0 )
 			in_obliq = 90.0;
-		if( in_obliq < 0.0 )
+		if ( in_obliq < 0.0 )
 			in_obliq = 0.0;
-		if( out_obliq > 90.0 )
+		if ( out_obliq > 90.0 )
 			out_obliq = 90.0;
-		if( out_obliq < 0.0 )
+		if ( out_obliq < 0.0 )
 			out_obliq = 0.0;
 
 		/*
 		 *  Handle 3-components per card output format, with
 		 *  a leading space in front of the first component.
 		 */
-		if( card_count == 0 )  {
+		if ( card_count == 0 )  {
 			bu_vls_strcat( &str, " " );
 		}
 		comp_thickness *= MM2IN;
 		/* Check thickness fields for format overflow */
-		if( comp_thickness > 999.99 || air_thickness*MM2IN > 999.9 )
+		if ( comp_thickness > 999.99 || air_thickness*MM2IN > 999.9 )
 			fmt = "%4d%6.1f%5.1f%5.1f%1d%5.0f";
 		else
 			fmt = "%4d%6.2f%5.1f%5.1f%1d%5.1f";
@@ -636,7 +636,7 @@ out:
 #endif
 		bu_vls_strcat( &str, buf );
 		card_count++;
-		if( card_count >= 3 )  {
+		if ( card_count >= 3 )  {
 			bu_vls_strcat( &str, "\n" );
 			card_count = 0;
 		}
@@ -650,7 +650,7 @@ out:
 		 * This will always be done single CPU,
 		 * to prevent output garbling.  (See view_init).
 		 */
-		if(R_DEBUG & RDEBUG_RAYPLOT) {
+		if (R_DEBUG & RDEBUG_RAYPLOT) {
 			vect_t     inpt;
 			vect_t     outpt;
 			VJOIN1(inpt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist,
@@ -660,7 +660,7 @@ out:
 				pl_color(plotfp, 0, 255, 0);	/* green */
 			pdv_3line(plotfp, inpt, outpt);
 
-			if(air_thickness > 0) {
+			if (air_thickness > 0) {
 				vect_t     air_end;
 				VJOIN1(air_end, ap->a_ray.r_pt,
 					pp->pt_outhit->hit_dist + air_thickness,
@@ -669,7 +669,7 @@ out:
 				pdv_3cont(plotfp, air_end);
 			}
 		}
-		if( nextpp == PartHeadp && air_id != 9 ) {
+		if ( nextpp == PartHeadp && air_id != 9 ) {
 			/* need to output a 111 'phantom armor' at end of shotline */
 			air_id = 9;
 			air_thickness = 0.0;
@@ -680,7 +680,7 @@ out:
 	}
 
 	/* If partway through building the line, add a newline */
-	if( card_count > 0 )  {
+	if ( card_count > 0 )  {
 		/*
 		 *  Note that GIFT zero-fills the unused component slots,
 		 *  but neither COVART II nor COVART III require it,
@@ -698,14 +698,14 @@ out:
 
 	fputs( bu_vls_addr( &str ), outfp );
 
-	if( shot_fp )
+	if ( shot_fp )
 	{
 		fprintf( shot_fp, "%.5f %.5f %.5f %.5f %.5f %.5f %.5f %.5f %ld %.5f %.5f %.5f\n",
 			azimuth, elevation, V3ARGS( ap->a_ray.r_pt ), V3ARGS( ap->a_ray.r_dir ),
 			 line_num, V3ARGS( first_hit) );
 
 		line_num +=  1 + (comp_count / 3 );
-		if( comp_count % 3 )
+		if ( comp_count % 3 )
 			line_num++;
 	}
 
@@ -783,13 +783,13 @@ part_compact(register struct application *ap, register struct partition *PartHea
 
 	/* first eliminate zero thickness partitions */
 	pp = PartHeadp->pt_forw;
-	while( pp != PartHeadp )
+	while ( pp != PartHeadp )
 	{
 		fastf_t comp_thickness;
 
 		nextpp = pp->pt_forw;
 		comp_thickness = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
-		if( comp_thickness <= 0.0 )
+		if ( comp_thickness <= 0.0 )
 		{
 			DEQUEUE_PT( pp );
 			FREE_PT( pp, ap->a_resource);
@@ -797,17 +797,17 @@ part_compact(register struct application *ap, register struct partition *PartHea
 		pp = nextpp;
 	}
 
-	for(pp = PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw)  {
+	for (pp = PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw)  {
 top:		nextpp = pp->pt_forw;
-		if(nextpp == PartHeadp)  {
+		if (nextpp == PartHeadp)  {
 			break;
 		}
-		if( pp->pt_regionp->reg_regionid > 0 && nextpp->pt_regionp->reg_regionid > 0 ) {
-			if(pp->pt_regionp->reg_regionid != nextpp->pt_regionp->reg_regionid)  {
+		if ( pp->pt_regionp->reg_regionid > 0 && nextpp->pt_regionp->reg_regionid > 0 ) {
+			if (pp->pt_regionp->reg_regionid != nextpp->pt_regionp->reg_regionid)  {
 				continue;
 			}
-		} else if( pp->pt_regionp->reg_regionid <= 0 && nextpp->pt_regionp->reg_regionid <= 0 ) {
-			if( pp->pt_regionp->reg_aircode != nextpp->pt_regionp->reg_aircode ) {
+		} else if ( pp->pt_regionp->reg_regionid <= 0 && nextpp->pt_regionp->reg_regionid <= 0 ) {
+			if ( pp->pt_regionp->reg_aircode != nextpp->pt_regionp->reg_aircode ) {
 				continue;
 			}
 		} else
@@ -819,7 +819,7 @@ top:		nextpp = pp->pt_forw;
 		 * bu_log("gap=%e\n", gap);
 		 */
 
-		if(gap > tolerance)  {
+		if (gap > tolerance)  {
 			continue;
 		}
 

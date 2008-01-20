@@ -169,7 +169,7 @@ char **argv;
 	char result_string[90];
 	point_t pos;
 
-	if(argc < 1 || 1 < argc){
+	if (argc < 1 || 1 < argc){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -195,7 +195,7 @@ char **argv;
 {
 	char result_string[90];
 
-	if(argc < 1 || 1 < argc){
+	if (argc < 1 || 1 < argc){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -224,7 +224,7 @@ char **argv;
 	mat_t mymat;
 	char c;
 
-	if(argc < 2 || 2 < argc){
+	if (argc < 2 || 2 < argc){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -236,7 +236,7 @@ char **argv;
 
 	/* center, size, eye, ypr */
 	c = argv[1][0];
-	switch(	c ) {
+	switch (	c ) {
 	case 'c': 	/*center*/
 		MAT_DELTAS_GET_NEG(pos, view_state->vs_toViewcenter);
 		sprintf(result_string, "%.12g %.12g %.12g", pos[0], pos[1], pos[2]);
@@ -312,7 +312,7 @@ char **argv;
 	vect_t dir, norm, temp;
 	mat_t mymat;
 
-	if(argc < 3){
+	if (argc < 3){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -324,8 +324,8 @@ char **argv;
 
 	in_quat = in_center = in_eye = in_ypr = in_aet = in_size = 0.0;
 	i = 1;
-	while(i < argc) {
-		switch( argv[i][0] ) {
+	while (i < argc) {
+		switch ( argv[i][0] ) {
 		case 'q':	/* quaternion */
 			if (i+4 >= argc) {
 				Tcl_AppendResult(interp, "viewset: quat options requires four parameters", (char *)NULL);
@@ -407,7 +407,7 @@ char **argv;
 				Tcl_AppendResult(interp, "viewset: size option requires a parameter", (char *)NULL);
 				return TCL_ERROR;
 			}
-			res = sscanf(argv[i+1], "%lf",&size);
+			res = sscanf(argv[i+1], "%lf", &size);
 			if (res<1) {
 				Tcl_AppendResult(interp, "viewset: size option requires a parameter", (char *)NULL);
 				return TCL_ERROR;

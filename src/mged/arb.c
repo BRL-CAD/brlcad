@@ -47,9 +47,9 @@ dbpr_arb(struct solidrec *sp, register struct directory *dp)
 	int i;
 	char *s;
 
-	if( (i=sp->s_cgtype) < 0 )
+	if ( (i=sp->s_cgtype) < 0 )
 		i = -i;
-	switch( i )  {
+	switch ( i )  {
 	case ARB4:
 		s="ARB4";
 		break;

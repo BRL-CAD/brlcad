@@ -126,21 +126,21 @@ main(int argc, char *argv[])
 		struct edgeuse *eu;
 		point_t pt;
 
-		if( fread( &rec2, sizeof( union record ), 1, stdin ) != 1 )
+		if ( fread( &rec2, sizeof( union record ), 1, stdin ) != 1 )
 		    done = 1;
-		if( rec2.u_id != ID_P_DATA )
+		if ( rec2.u_id != ID_P_DATA )
 		    done = 2;
 
-		if( done )
+		if ( done )
 		    break;
 
-		for( i=0 ; i<5 ; i++ )
+		for ( i=0; i<5; i++ )
 		    verts[i] = (struct vertex *)NULL;
 
 		fu = nmg_cface( s, verts, rec2.q.q_count );
 		lu = BU_LIST_FIRST( loopuse, &fu->lu_hd );
 		eu = BU_LIST_FIRST( edgeuse, &lu->down_hd );
-		for (i=0 ; i<rec2.q.q_count ; i++) {
+		for (i=0; i<rec2.q.q_count; i++) {
 		    VMOVE( pt, rec2.q.q_verts[i] );
 		    nmg_vertex_gv( eu->vu_p->v_p, pt );
 		    eu = BU_LIST_NEXT( edgeuse, &eu->l );

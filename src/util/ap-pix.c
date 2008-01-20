@@ -57,18 +57,18 @@ main(int argc, char **argv)
 	int	i, bit;
 	int	line;
 
-	if( argc > 1 && strcmp(argv[1], "-v") == 0 ) {
+	if ( argc > 1 && strcmp(argv[1], "-v") == 0 ) {
 		verbose++;
 		argc--;
 		argv++;
 	}
 
-	if( argc != 2 ) {
+	if ( argc != 2 ) {
 	    bu_exit( 1, "usage: ap-pix [-v] file.ap > file.pix (3456 x ?)\n" );
 	}
 
 	magfp = fopen( argv[1], "r" );
-	if( magfp == NULL ) {
+	if ( magfp == NULL ) {
 	    bu_exit(2, "ap-pix: can't open \"%s\"\n", argv[1] );
 	}
 	yelfp = fopen( argv[1], "r" );
@@ -77,20 +77,20 @@ main(int argc, char **argv)
 	fseek( cyafp, (long)(100*sizeof(cyaline)), 0 );
 
 	line = 0;
-	while( (int)fread( &cyaline, sizeof( cyaline ), 1, cyafp ) > 0 ) {
+	while ( (int)fread( &cyaline, sizeof( cyaline ), 1, cyafp ) > 0 ) {
 		fread( &magline, sizeof( magline ), 1, magfp );
 		fread( &yelline, sizeof( yelline ), 1, yelfp );
 		line++;
 
-		for( i = 0; i < 432; i++ ) {
-			for( bit = 7; bit >= 0; bit-- ) {
+		for ( i = 0; i < 432; i++ ) {
+			for ( bit = 7; bit >= 0; bit-- ) {
 				out.red = ((cyaline.cl[i]>>bit)&1) ? 0 : 255;
 				out.green = ((magline.ml[i]>>bit)&1) ? 0 : 255;
 				out.blue = ((yelline.yl[i]>>bit)&1) ? 0 : 255;
 				fwrite( &out, sizeof( out ), 1, stdout );
 			}
 		}
-		if( verbose )
+		if ( verbose )
 			fprintf( stderr, "wrote line %d\n", line );
 	}
 	return 0;

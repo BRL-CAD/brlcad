@@ -396,7 +396,7 @@ int main(int argc, char *argv[])
 
     /* process command line arguments */
     while ( (c = bu_getopt(argc, argv, "vo:ys:f") ) != EOF ) {
-	switch(c) {
+	switch (c) {
 	    case 'v':
 		verbose++;
 		break;

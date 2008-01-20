@@ -67,7 +67,7 @@ vls_col_item(
 	register const char	*cp)
 {
 	/* Output newline if last column printed. */
-	if( col_count >= COLUMNS || (col_len+NAMESIZE-1) >= TERMINAL_WIDTH )  {
+	if ( col_count >= COLUMNS || (col_len+NAMESIZE-1) >= TERMINAL_WIDTH )  {
 		/* line now full */
 		bu_vls_putc( str, '\n' );
 		col_count = 0;
@@ -142,15 +142,15 @@ vls_col_pr4v(struct bu_vls *vls, struct directory **list_of_names, int num_in_li
    * will be one.
    */
   maxnamelen = 0;
-  for( k=0; k < num_in_list; k++) {
+  for ( k=0; k < num_in_list; k++) {
     namelen = strlen(list_of_names[k]->d_namep);
-    if(namelen > maxnamelen)
+    if (namelen > maxnamelen)
       maxnamelen = namelen;
   }
-  if(maxnamelen <= 16)
+  if (maxnamelen <= 16)
     maxnamelen = 16;
   cwidth = maxnamelen + 4;
-  if(cwidth > 80)
+  if (cwidth > 80)
     cwidth = 80;
   numcol = TERMINAL_WIDTH / cwidth;
 
@@ -159,8 +159,8 @@ vls_col_pr4v(struct bu_vls *vls, struct directory **list_of_names, int num_in_li
    * print in vertical format.
    */
   lines = (num_in_list + (numcol - 1)) / numcol;
-  for( i=0; i < lines; i++) {
-    for(j=0; j < numcol; j++) {
+  for ( i=0; i < lines; i++) {
+    for (j=0; j < numcol; j++) {
       this_one = j * lines + i;
       bu_vls_printf(vls, "%s", list_of_names[this_one]->d_namep);
       namelen = strlen( list_of_names[this_one]->d_namep);
@@ -171,11 +171,11 @@ vls_col_pr4v(struct bu_vls *vls, struct directory **list_of_names, int num_in_li
        * be delayed until now.  There is no way to make the
        * decision on where to place them before now.
        */
-      if(list_of_names[this_one]->d_flags & DIR_COMB) {
+      if (list_of_names[this_one]->d_flags & DIR_COMB) {
 	bu_vls_putc(vls, '/');
 	namelen++;
       }
-      if(list_of_names[this_one]->d_flags & DIR_REGION) {
+      if (list_of_names[this_one]->d_flags & DIR_REGION) {
 	bu_vls_putc(vls, 'R');
 	namelen++;
       }
@@ -184,7 +184,7 @@ vls_col_pr4v(struct bu_vls *vls, struct directory **list_of_names, int num_in_li
        * Note that this will catch the end of the lines
        * that are full too.
        */
-      if( this_one + lines >= num_in_list) {
+      if ( this_one + lines >= num_in_list) {
 	bu_vls_putc(vls, '\n');
 	break;
       } else {
@@ -192,7 +192,7 @@ vls_col_pr4v(struct bu_vls *vls, struct directory **list_of_names, int num_in_li
 	 * Pad to next boundary as there will be
 	 * another entry to the right of this one.
 	 */
-	while( namelen++ < cwidth)
+	while ( namelen++ < cwidth)
 	  bu_vls_putc(vls, ' ');
       }
     }
@@ -221,24 +221,24 @@ vls_long_dpp(
 	 (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
 	 (int (*)())cmpdirname);
 
-  for( i=0 ; i<num_in_list ; i++ ) {
+  for ( i=0; i<num_in_list; i++ ) {
 	  int len;
 
 	  dp = list_of_names[i];
 	  len = strlen( dp->d_namep );
-	  if( len > max_nam_len )
+	  if ( len > max_nam_len )
 		  max_nam_len = len;
 
-	  if( dp->d_flags & DIR_REGION )
+	  if ( dp->d_flags & DIR_REGION )
 		  len = 6;
-	  else if( dp->d_flags & DIR_COMB )
+	  else if ( dp->d_flags & DIR_COMB )
 		  len = 4;
-	  else if( dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY )
+	  else if ( dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY )
 		  len = 6;
 	  else
 		  len = strlen( rt_functab[dp->d_minor_type].ft_label );
 
-	  if( len > max_type_len )
+	  if ( len > max_type_len )
 		  max_type_len = len;
   }
   /*
@@ -262,7 +262,7 @@ vls_long_dpp(
       type = rt_functab[list_of_names[i]->d_minor_type].ft_label;
     }
 
-    if( list_of_names[i]->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY ) {
+    if ( list_of_names[i]->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY ) {
 	    isSolid = 0;
 	    type = "global";
     }

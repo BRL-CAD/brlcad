@@ -132,7 +132,7 @@ main(int argc, char **argv)
 
 	printf("GIFT-PRETTY File painted on Generic Framebuffer\n");
 /* check invocation */
-	if(argc<2){
+	if (argc<2){
 		printf("Usage: pp-fb [options] PPfilename\n");
 		printf("(See BRL-CAD Package Documentation for more info)\n");
 		printf("Options:\n");
@@ -142,8 +142,8 @@ main(int argc, char **argv)
 		printf("  -N screen_height\n");
 		bu_exit(10, NULL);
 	}
-	for(i=1;i<argc;i++){
-		if(strcmp("-F", argv[i])==0){
+	for (i=1;i<argc;i++){
+		if (strcmp("-F", argv[i])==0){
 #if 0
 			argv[++i];
 #else
@@ -153,18 +153,18 @@ main(int argc, char **argv)
 			 */
 			++i;
 #endif
-		} else if(strcmp("-W", argv[i])==0){
-			sscanf(argv[++i], "%d",&scr_w);
+		} else if (strcmp("-W", argv[i])==0){
+			sscanf(argv[++i], "%d", &scr_w);
 			scr_set=1;
-		} else if(strcmp("-N", argv[i])==0){
-			sscanf(argv[++i], "%d",&scr_h);
+		} else if (strcmp("-N", argv[i])==0){
+			sscanf(argv[++i], "%d", &scr_h);
 			scr_set=1;
-		} else if(strncmp("-", argv[i], 1)==0){
+		} else if (strncmp("-", argv[i], 1)==0){
 			printf("Unknown option: %s\n", argv[i]);
 			bu_exit(10, NULL);
 /* get plot file */
 		} else {
-			if((ifd=open(argv[i], 2)) == -1){
+			if ((ifd=open(argv[i], 2)) == -1){
 				perror(argv[i]);
 				bu_exit(10, NULL);
 			}
@@ -180,19 +180,19 @@ main(int argc, char **argv)
 /* print data on first two lines of view in plot file */
 
 view:	printf("Title: ");
-	for(i=0;i<64;i++){
+	for (i=0;i<64;i++){
 		c=gc();
 		putchar(c);
 	}
 	printf("\nDate :");
-	while((c=gc())!='\n') putchar(c);
+	while ((c=gc())!='\n') putchar(c);
 	printf("\nView:");
-	for(i=0;i<20;i++) putchar(gc());
+	for (i=0;i<20;i++) putchar(gc());
 	grid_w=ctoi();
 	grid_h=ctoi();
 	printf("\nHorz, Vert: %4d %4d\n", grid_w, grid_h);
-	if((grid_w > 512 || grid_h > 512) && scr_set==0){
-		if(grid_w>1024 || grid_h>1024){
+	if ((grid_w > 512 || grid_h > 512) && scr_set==0){
+		if (grid_w>1024 || grid_h>1024){
 			printf("Number of pixels gt 1024\n");
 			bu_exit(10, NULL);
 		}
@@ -201,7 +201,7 @@ view:	printf("Title: ");
 		printf("High resolution set\n");
 	}
 /*		open frame buffer */
-	if((fbp=fb_open(NULL, scr_w, scr_h))==NULL){
+	if ((fbp=fb_open(NULL, scr_w, scr_h))==NULL){
 		printf("No device opened\n");
 		bu_exit(10, NULL);
 	}
@@ -216,27 +216,27 @@ view:	printf("Title: ");
 /*	printf("min_w %d min_h %d\n", min_w, min_h); */
 
 /* find item - color table (default color = silver) */
-	while((c=gc())!='/') if(c==0) bu_exit(1, NULL);
+	while ((c=gc())!='/') if (c==0) bu_exit(1, NULL);
 	gc();
 	loci=loct;
-	for(ni=0;;ni++) {
-		if(ni>=500){
+	for (ni=0;;ni++) {
+		if (ni>=500){
 			printf("Not enough room to store item colors\n");
 			bu_exit(10, NULL);
 		}
 		itm[ni]=ctoi();
-		if(itm[ni]<0) break;
-		for(i=0;i<3;i++) cs[i]=gc();
-		if((itmc[ni]=cclr(cs))<0) itmc[ni]=15;
-		while(gc()!='\n');
+		if (itm[ni]<0) break;
+		for (i=0;i<3;i++) cs[i]=gc();
+		if ((itmc[ni]=cclr(cs))<0) itmc[ni]=15;
+		while (gc()!='\n');
 	}
 	loce=loct;
-	while(1){
+	while (1){
 		printf("Option (?=menu)? ");
 
-		if( (c=getchar()) == EOF )  break;
+		if ( (c=getchar()) == EOF )  break;
 
-		switch(c){
+		switch (c){
 		case '\n':
 			continue;
 
@@ -258,26 +258,26 @@ view:	printf("Title: ");
 			printf("Old color? ");
 			scanf("%3s", cs);
 			iclr=cclr(cs);
-			if(iclr<0){
+			if (iclr<0){
 				prtclr(0);
 				break;
 			}
 			printf("New color? ");
 			scanf("%3s", cs);
 			jclr=cclr(cs);
-			if(jclr<0){
+			if (jclr<0){
 				prtclr(0);
 				break;
 			}
 			ichg=1;
-			lseek(ifd,(off_t)loci, 0);
+			lseek(ifd, (off_t)loci, 0);
 			loct=loci;
 			ic=0;
-			for(i=0;i<ni;i++){
-				for(j=0;j<10;j++) gc();
-				for(k=0;(c=gc())!='\n';) strg[k++]=c;
+			for (i=0;i<ni;i++){
+				for (j=0;j<10;j++) gc();
+				for (k=0;(c=gc())!='\n';) strg[k++]=c;
 				strg[k]='\0';
-				if(itmc[i]!=iclr) continue;
+				if (itmc[i]!=iclr) continue;
 				printf("%5ld %-7s  %s\n", itm[i],
 					colortab[jclr].name, strg);
 				itmc[i]=jclr;
@@ -287,7 +287,7 @@ view:	printf("Title: ");
 			printf("%s background changed to ", colortab[ibc].name);
 			scanf("%3s", cs);
 			ibc=cclr(cs);
-			if(ibc<0){
+			if (ibc<0){
 				ibc=0;
 				prtclr(0);
 			}
@@ -297,7 +297,7 @@ view:	printf("Title: ");
 				colortab[itc].name);
 			scanf("%3s", cs);
 			itc=cclr(cs);
-			if(itc<0){
+			if (itc<0){
 				prtclr(0);
 				itc=3;
 			}
@@ -308,27 +308,27 @@ view:	printf("Title: ");
 		case 'l':
 			printf("Background color is %s\n", colortab[ibc].name);
 			printf("Transparent color is %s\n\n", colortab[itc].name);
-			lseek(ifd,(off_t)loci, 0);
+			lseek(ifd, (off_t)loci, 0);
 			loct=loci;
 			ic=0;
-			for(i=0;i<ni;i++){
-				for(j=0;j<10;j++) gc();
+			for (i=0;i<ni;i++){
+				for (j=0;j<10;j++) gc();
 				printf("%5ld %-7s  ", itm[i],
 					colortab[itmc[i]].name);
-				while((c=gc())!='\n') putchar(c);
+				while ((c=gc())!='\n') putchar(c);
 				putchar('\n');
-				if((i%20)==19){
+				if ((i%20)==19){
 					char cbuf[16];
 					printf("(c)ontine,(s)top? ");
 					scanf("%1s", cbuf);
 					c = cbuf[0];
-					if(c=='s') break;
+					if (c=='s') break;
 				}
 			}
 			break;
 		case 'o':
 			opq= ++opq&1;
-			if(opq){
+			if (opq){
 				printf("Transparent items now opaque\n");
 			} else{
 				printf("Transparent items restored\n");
@@ -340,49 +340,49 @@ view:	printf("Title: ");
 		case 'q':
 			iquit=1;
 		case 'v':
-			if(ichg!=0){
-				for(i=0;i<ni;i++){
+			if (ichg!=0){
+				for (i=0;i<ni;i++){
 					loci+=6;
-					lseek(ifd,(off_t)loci, 0);
+					lseek(ifd, (off_t)loci, 0);
 					ic=0;
-					for(j=0, cp=colortab[itmc[i]].name;j<3;
+					for (j=0, cp=colortab[itmc[i]].name;j<3;
 							cp++, j++){
 						loci++;
 						write(ifd, cp, 1);
 					}
-					lseek(ifd,(off_t)++loci, 0);
-					while((c=gc())!='\n') loci++;
+					lseek(ifd, (off_t)++loci, 0);
+					while ((c=gc())!='\n') loci++;
 					loci++;
 				}
 			ichg=0;
 			}
-			if(iquit!=0) bu_exit(0, NULL);
+			if (iquit!=0) bu_exit(0, NULL);
 			loct=loce;
-			lseek(ifd,(off_t)loce, 0);
+			lseek(ifd, (off_t)loce, 0);
 			ic=0;
 			fb_close(fbp);
 			goto view;
 		case 'r':
 			printf("Lower limit? ");
-			scanf("%d",&il);
+			scanf("%d", &il);
 			printf("Upper limit? ");
-			scanf("%d",&iu);
+			scanf("%d", &iu);
 			printf("Color? ");
 			scanf("%3s", cs);
 			iclr=cclr(cs);
-			if(iclr<0){
+			if (iclr<0){
 				prtclr(0);
 				break;
 }
 			ichg=1;
-			lseek(ifd,(off_t)loci, 0);
+			lseek(ifd, (off_t)loci, 0);
 			loct=loci;
 			ic=0;
-			for(i=0;i<ni;i++){
-				for(j=0;j<10;j++) gc();
-				for(k=0;(c=gc())!='\n';) strg[k++]=c;
+			for (i=0;i<ni;i++){
+				for (j=0;j<10;j++) gc();
+				for (k=0;(c=gc())!='\n';) strg[k++]=c;
 				strg[k]='\0';
-				if(itm[i]<il || itm[i]>iu) continue;
+				if (itm[i]<il || itm[i]>iu) continue;
 				printf("%5ld %-7s  %s\n", itm[i],
 					colortab[iclr].name, strg);
 				itmc[i]=iclr;
@@ -391,45 +391,45 @@ view:	printf("Title: ");
 		case 's':
 			prtsmu(0);
 			ichg=1;
-			lseek(ifd,(off_t)loci, 0);
+			lseek(ifd, (off_t)loci, 0);
 			loct=loci;
 			ic=0;
 			iskp=0;
 			set_Raw(0);		/* set raw mode */
 			lclr=15;
-			for(i=0;i<ni;i++){
-back:				for(j=0;j<10;j++) gc();
-				for(k=0;(c=gc())!='\n';) strg[k++]=c;
+			for (i=0;i<ni;i++){
+back:				for (j=0;j<10;j++) gc();
+				for (k=0;(c=gc())!='\n';) strg[k++]=c;
 				strg[k]='\0';
 again:				printf("      %-7s  %s%c%5ld ",
 					colortab[itmc[i]].name, strg, 13, itm[i]);
-				if(iskp>0){
+				if (iskp>0){
 					iskp--;
 					printf("\015\n");
 					continue;
 				}
-				if((k=gclr())>=0){
+				if ((k=gclr())>=0){
 					itmc[i]=k;
 /* ctrl b - backup one line */
-				}else if(k==-2){
+				}else if (k==-2){
 					printf("\015\n");
-					if(bsp()==0) goto again;
-					if(bsp()==0) goto again;
+					if (bsp()==0) goto again;
+					if (bsp()==0) goto again;
 					i--;
 					goto back;
 /* ctrl c - stop */
-				}else if(k==-3){
+				}else if (k==-3){
 					printf("%c\n", 13);
 					break;
 /* ctrl v - skip 20 lines */
-				}else if(k==-22){
+				}else if (k==-22){
 					iskp=20;
 					continue;
 /*space - same as last color */
-				}else if(k==-32){
+				}else if (k==-32){
 					itmc[i]=lclr;
 /* ? - print menu and colors */
-				}else if(k==-63){
+				}else if (k==-63){
 					prtsmu(1);
 					prtclr(1);
 					goto again;
@@ -465,7 +465,7 @@ paint(void)
 	tp[GRN]=colortab[itc].c_pixel[GRN];
 	tp[BLU]=colortab[itc].c_pixel[BLU];
 	fb_clear(fbp, bp);
-	lseek(ifd,(off_t)locd, 0);
+	lseek(ifd, (off_t)locd, 0);
 	loct=locd;
 	ic=0;
 	nc=0;
@@ -476,25 +476,25 @@ paint(void)
 	fb_p=pix_buf;
 	iwih=(iw+ih)&1;
 	flop=1;
-	while((c=g())!='/'){
+	while ((c=g())!='/'){
 		io=c-32;
-noread:		if(io>31){
+noread:		if (io>31){
 /*	ignore one of pair of intensities if trnf=4 */
-			if(flop) iwih= ++iwih&1;
+			if (flop) iwih= ++iwih&1;
 			inten=(io&31)+inten_high;
-			if(trnf==4){
+			if (trnf==4){
 				flop= ++flop&1;
-				if(opq&&flop) continue;
-				if(opq==0&&flop!=iwih) continue;
+				if (opq&&flop) continue;
+				if (opq==0&&flop!=iwih) continue;
 			}
 /*		compute intensity */
 			iw++;
-			if(trnf==0||(trnf==4&&iwih&&opq==0)){
+			if (trnf==0||(trnf==4&&iwih&&opq==0)){
 				ocl[RED]= ((int)pmix[RED]*inten)>>8;
 				ocl[GRN]= ((int)pmix[GRN]*inten)>>8;
 				ocl[BLU]= ((int)pmix[BLU]*inten)>>8;
 				FBWPIXEL(ocl);
-			}else if(trnf==2&&iwih&&opq==0){
+			}else if (trnf==2&&iwih&&opq==0){
 				FBWPIXEL(bp);
 			}else{
 				tcl[RED]= ((int)tp[RED]*inten)>>8;
@@ -503,14 +503,14 @@ noread:		if(io>31){
 				FBWPIXEL(tcl);
 			}
 /* high order intensity */
-		}else if(io>15){
+		}else if (io>15){
 			inten_high=(io-16)<<5;
 /* control character */
-		}else switch(io){
+		}else switch (io){
 /* miss target (<sp>)*/
 		case 0:
 			lj=numb();
-			for(li=0;li<lj;li++, iw++) FBWPIXEL(bp);
+			for (li=0;li<lj;li++, iw++) FBWPIXEL(bp);
 			trnf=0;
 			flop=1;
 			iwih=(iw+ih)&1;
@@ -522,7 +522,7 @@ noread:		if(io>31){
 		case 2:
 /* transparent outside - opaque inside ($)*/
 		case 4:
-			if(io==trnf){
+			if (io==trnf){
 				trnf=0;
 			}else{
 				flop=1;
@@ -532,7 +532,7 @@ noread:		if(io>31){
 /* opaque item (#) */
 		case 3:
 			lj=numb();
-			if((i=lookup(lj, itm, ni))<0){
+			if ((i=lookup(lj, itm, ni))<0){
 				printf("Item %ld not in table\n", lj);
 				j=15;
 			} else {
@@ -548,7 +548,7 @@ noread:		if(io>31){
 /* repeat intensity (*) */
 		case 10:
 			lj=numb();
-			if(trnf!=0){
+			if (trnf!=0){
 				ocl[RED]= ((int)pmix[RED]*inten)>>8;
 				ocl[GRN]= ((int)pmix[GRN]*inten)>>8;
 				ocl[BLU]= ((int)pmix[BLU]*inten)>>8;
@@ -556,29 +556,29 @@ noread:		if(io>31){
 				tcl[GRN]= ((int)tp[GRN]*inten)>>8;
 				tcl[BLU]= ((int)tp[BLU]*inten)>>8;
 			}
-			for(li=0;li<lj;li++, iw++){
-				if(flop) iwih= ++iwih&1;
-				if(trnf==4){
+			for (li=0;li<lj;li++, iw++){
+				if (flop) iwih= ++iwih&1;
+				if (trnf==4){
 					flop= ++flop&1;
-					if((opq&&flop)||(flop!=iwih&&opq==0)){
+					if ((opq&&flop)||(flop!=iwih&&opq==0)){
 						iw--;
 						continue;
 					}
 				}
-				if(trnf==0||(trnf==4&&iwih&&opq==0)){
+				if (trnf==0||(trnf==4&&iwih&&opq==0)){
 					FBWPIXEL(ocl);
-				}else if(trnf==2&&iwih&&opq==0){
+				}else if (trnf==2&&iwih&&opq==0){
 					FBWPIXEL(bp);
 				}else {
 					FBWPIXEL(tcl);
 				}
 			}
-			if(io!=10) goto noread;
+			if (io!=10) goto noread;
 			break;
 /* end of line (.)*/
 		case 14:
-			if(iw>min_w){
-				fb_write(fbp, min_w, ih, pix_buf,(iw-min_w));
+			if (iw>min_w){
+				fb_write(fbp, min_w, ih, pix_buf, (iw-min_w));
 				iw=min_w;
 				fb_p=pix_buf;
 			}
@@ -596,7 +596,7 @@ long numb(void)
 	register int shift;
 	n=0;
 	shift=0;
-	while((io=g()-32)>31){
+	while ((io=g()-32)>31){
 		n+=((long)(io&31))<<shift;
 		shift += 5;
 	}
@@ -608,10 +608,10 @@ int cclr(char *pc)
 {
 	char *cp;
 	int i;
-	for(i=0;i<20;i++){
+	for (i=0;i<20;i++){
 		cp=colortab[i].name;
-		if(*cp== *pc&&*(cp+1)== *(pc+1)&&*(cp+2)==*(pc+2)) return(i);
-		else if(*cp> *pc) return(-1);
+		if (*cp== *pc&&*(cp+1)== *(pc+1)&&*(cp+2)==*(pc+2)) return(i);
+		else if (*cp> *pc) return(-1);
 	}
 	return(-1);
 }
@@ -622,12 +622,12 @@ long ctoi(void)
 	char cc;
 	num=0;
 	neg=1;
-	while((cc=gc())==' ');
-	if(cc=='-'){
+	while ((cc=gc())==' ');
+	if (cc=='-'){
 		neg= -1;
 		cc=gc();
 	}
-	while(cc>='0'&&cc<='9'){
+	while (cc>='0'&&cc<='9'){
 		num=10*num+cc-'0';
 		cc=gc();
 	}
@@ -637,14 +637,14 @@ char g(void)
 /* get char from plot file - check for 75 columns and discard rest */
 {
 	static char c;
-	if((c=gc())!='\n'){
-		if((++nc)>75){
-			while((c=gc())!='\n');
+	if ((c=gc())!='\n'){
+		if ((++nc)>75){
+			while ((c=gc())!='\n');
 			nc=1;
 			return(gc());
 		}
 		return(c);
-	}else if(nc==75){
+	}else if (nc==75){
 		nc=1;
 		return(gc());
 	}else{
@@ -659,10 +659,10 @@ int bsp(void)
 	int kloct, kib;
 	kloct=loct;
 	kib=ib;
-	while(ibuf[--ib]!='\n'){
+	while (ibuf[--ib]!='\n'){
 		loct--;
-		if(ib<=0){
-			if(loct<=loci){
+		if (ib<=0){
+			if (loct<=loci){
 				loct=loci;
 				ib=0;
 				return(1);
@@ -678,13 +678,13 @@ char gc(void)
 /* get char from plot file buff */
 {
 	loct++;
-	if((++ib)>=ic){
+	if ((++ib)>=ic){
 		ic=read(ifd, ibuf, 1024);
 		ib=0;
-		if(ic<=0) return(0);
+		if (ic<=0) return(0);
 	}
-	if(ibuf[ib]=='>') ibuf[ib]='^';
-	if(ibuf[ib]=='?') ibuf[ib]='@';
+	if (ibuf[ib]=='>') ibuf[ib]='^';
+	if (ibuf[ib]=='?') ibuf[ib]='@';
 /*	printf("GC: ibuf[ib], ib, ic %c %d %d \n", ibuf[ib], ib, ic);*/
 /*	putchar(ibuf[ib]); */
 	return(ibuf[ib]);
@@ -693,14 +693,14 @@ int gclr(void)
 {
 	char c, cs[3];
 	int i;
-	for(i=0;i<3;i++){
-		while((c=getchar())<97||c>122){
-			if(c==2) return(-2);
-			if(c==3) return(-3);
-			if(c==13) return(-13);
-			if(c==22) return(-22);
-			if(c==32) return(-32);
-			if(c=='?') return(-63);
+	for (i=0;i<3;i++){
+		while ((c=getchar())<97||c>122){
+			if (c==2) return(-2);
+			if (c==3) return(-3);
+			if (c==13) return(-13);
+			if (c==22) return(-22);
+			if (c==32) return(-32);
+			if (c=='?') return(-63);
 	}
 	cs[i]=c;
 	}
@@ -711,12 +711,12 @@ int lookup(long int ix, long int *jx, int n)
 	int i, ia, ib;
 	ia= -1;
 	ib=n;
-	while(1){
+	while (1){
 		i=(ia+ib)/2;
 /*printf("LOOKUP: ix, jx, ia, ib, i %d %d %d %d %d\n", ix,*(jx+i), ia, ib, i);*/
-		if(ix== *(jx+i)) return(i);
-		if(i<=ia) return(-1);
-		if(ix> *(jx+i)) ia=i;
+		if (ix== *(jx+i)) return(i);
+		if (i<=ia) return(-1);
+		if (ix> *(jx+i)) ia=i;
 		else ib=i;
 		}
 }
@@ -725,38 +725,38 @@ prtclr(char raw)
 {
 	int i;
 	printf("Available Colors\n");
-	if(raw)	putchar('\015');
-	for(i=0;i<20;i++){
+	if (raw)	putchar('\015');
+	for (i=0;i<20;i++){
 		printf("%-8s", colortab[i].name);
-		if((i%7)==6){
-			if(raw) putchar('\015');
+		if ((i%7)==6){
+			if (raw) putchar('\015');
 			putchar('\n');
 		}
 	}
-	if(raw) putchar('\015');
+	if (raw) putchar('\015');
 	putchar('\n');
 	return;
 }
 void
 prtsmu(char raw)
 {
-	if(raw)	printf("\015\n");
+	if (raw)	printf("\015\n");
 	printf("Menu\n");
-	if(raw)	putchar('\015');
+	if (raw)	putchar('\015');
 	printf("   ?  = Color list + this Menu\n");
-	if(raw)	putchar('\015');
+	if (raw)	putchar('\015');
 	printf(" <^b> = Backup one line\n");
-	if(raw)	putchar('\015');
+	if (raw)	putchar('\015');
 	printf(" <^c> = Quit\n");
-	if(raw)	putchar('\015');
+	if (raw)	putchar('\015');
 	printf(" <^v> = Skip 20 lines\n");
-	if(raw)	putchar('\015');
+	if (raw)	putchar('\015');
 	printf(" <cr> = No change in color\n");
-	if(raw)	putchar('\015');
+	if (raw)	putchar('\015');
 	printf(" <sp> = Same color as previous item\n");
-	if(raw)	putchar('\015');
+	if (raw)	putchar('\015');
 	printf("  ccc = 3 character color code\n\n");
-	if(raw)	putchar('\015');
+	if (raw)	putchar('\015');
 	return;
 }
 

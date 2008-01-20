@@ -50,7 +50,7 @@ int entityno;
 
 	/* Acquiring Data */
 
-	if( dir[entityno]->param <= pstart )
+	if ( dir[entityno]->param <= pstart )
 	{
 		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[entityno]->direct, dir[entityno]->name );
@@ -63,12 +63,12 @@ int entityno;
 	Readint( &orient, "" );
 	Readint( &num_of_voids, "" );
 
-	if( num_of_voids )
+	if ( num_of_voids )
 	{
 		void_shell_de = (int *)bu_calloc( num_of_voids, sizeof( int ), "BREP: void shell DE's" );
 		void_orient = (int *)bu_calloc( num_of_voids, sizeof( int ), "BREP: void shell orients" );
 		void_shells = (struct shell **)bu_calloc( num_of_voids, sizeof( struct shell *), "BREP: void shell pointers" );
-		for( i=0 ; i<num_of_voids ; i++ )
+		for ( i=0; i<num_of_voids; i++ )
 		{
 			Readint( &void_shell_de[i], "" );
 			Readint( &void_orient[i], "" );
@@ -85,13 +85,13 @@ int entityno;
 	r = BU_LIST_FIRST( nmgregion, &m->r_hd );
 
 	/* Put outer shell in region */
-	if( (s_outer=Get_outer_shell( r, (shell_de - 1)/2, orient )) == (struct shell *)NULL )
+	if ( (s_outer=Get_outer_shell( r, (shell_de - 1)/2, orient )) == (struct shell *)NULL )
 		goto err;
 
 	/* Put voids in */
-	for( i=0 ; i<num_of_voids ; i++ )
+	for ( i=0; i<num_of_voids; i++ )
 	{
-		if( (void_shells[i]=Add_inner_shell( r, (void_shell_de[i] - 1)/2, void_orient[i] ))
+		if ( (void_shells[i]=Add_inner_shell( r, (void_shell_de[i] - 1)/2, void_orient[i] ))
 			== (struct shell *)NULL )
 				goto err;
 	}
@@ -101,20 +101,20 @@ int entityno;
 
 	/* orient shells */
 	nmg_fix_normals( s_outer, &tol );
-	for( i=0 ; i<num_of_voids ; i++ )
+	for ( i=0; i<num_of_voids; i++ )
 	{
 		nmg_fix_normals( void_shells[i], &tol );
 		nmg_invert_shell( void_shells[i] );
 	}
 
-	if( do_bots )
+	if ( do_bots )
 	{
 		/* Merge all shells into one */
-		for( i=0 ; i<num_of_voids ; i++ )
+		for ( i=0; i<num_of_voids; i++ )
 			nmg_js( s_outer, void_shells[i], &tol );
 
 		/* write out BOT */
-		if( mk_bot_from_nmg( fdout, dir[entityno]->name, s_outer ) )
+		if ( mk_bot_from_nmg( fdout, dir[entityno]->name, s_outer ) )
 			goto err;
 	}
 	else
@@ -123,11 +123,11 @@ int entityno;
 		nmg_region_a( r, &tol );
 
 		/* Write NMG solid */
-		if( mk_nmg( fdout, dir[entityno]->name, m ) )
+		if ( mk_nmg( fdout, dir[entityno]->name, m ) )
 			goto err;
 	}
 
-	if( num_of_voids )
+	if ( num_of_voids )
 	{
 		bu_free( (char *)void_shell_de, "BREP: void shell DE's" );
 		bu_free( (char *)void_orient, "BREP: void shell orients" );
@@ -135,7 +135,7 @@ int entityno;
 	}
 
 	v_list = vertex_root;
-	while( v_list != NULL )
+	while ( v_list != NULL )
 	{
 		bu_free( (char *)v_list->i_verts, "brep: iges_vertex" );
 		bu_free( (char *)v_list, "brep: vertex list" );
@@ -144,7 +144,7 @@ int entityno;
 	vertex_root = NULL;
 
 	e_list = edge_root;
-	while( e_list != NULL )
+	while ( e_list != NULL )
 	{
 		bu_free( (char *)e_list->i_edge, "brep:iges_edge" );
 		bu_free( (char *)e_list, "brep: edge list" );
@@ -154,7 +154,7 @@ int entityno;
 	return( 1 );
 
  err :
-	if( num_of_voids )
+	if ( num_of_voids )
 	{
 		bu_free( (char *)void_shell_de, "BREP: void shell DE's" );
 		bu_free( (char *)void_orient, "BREP: void shell orients" );

@@ -47,8 +47,8 @@ void math_mat_invert(tfloat *D, tfloat *M, int S);
 void math_mat_ident(tfloat *M, int S) {
   int	i, j;
 
-  for(i = 0; i < S; i++)
-    for(j = 0; j < S; j++)
+  for (i = 0; i < S; i++)
+    for (j = 0; j < S; j++)
       M[i*S+j] = (i == j) ? 1 : 0;
 }
 
@@ -57,7 +57,7 @@ void math_mat_mult(tfloat *A, int Ar, int Ac, tfloat *B, int Br, int Bc, tfloat 
   int		i, j, k;
   tfloat	*M;
 
-  if(Ac == Br) {
+  if (Ac == Br) {
     M = (tfloat*)malloc(sizeof(tfloat)*Ar*Bc);
     if (!M) {
 	perror("malloc");
@@ -100,35 +100,35 @@ void math_mat_invert(tfloat *D, tfloat *M, int S) {
   maxval = M[0];
   maxrow = 0;
 
-  for(i = 0; i < 4; i++) {
+  for (i = 0; i < 4; i++) {
     /* Find row with largest value at the diagonal */
     maxval = M[i*4 + i];
     maxrow = i;
 
-    for(j = i+1; j < 4; j++) {
+    for (j = i+1; j < 4; j++) {
       val = M[j*4 + i];
-      if(fabs(val) > fabs(maxval)) {
+      if (fabs(val) > fabs(maxval)) {
 	maxval = val;
 	maxrow = j;
       }
     }
 
     /* Swap the row with largest value with current row */
-    if(maxrow != i) {
+    if (maxrow != i) {
       MATH_SWAP_rows(M, i, maxrow);
       MATH_SWAP_rows(D, i, maxrow);
     }
 
     /* Divide the entire current row with maxval to get a 1 on the diagonal */
-    for(k = 0; k<4; k++) {
+    for (k = 0; k<4; k++) {
       M[i*4 + k] /= maxval;
       D[i*4 + k] /= maxval;
     }
 
     /* Subtract current row from all other rows so their values before the diagonal go zero */
-    for(j = i+1; j < 4; j++) {
+    for (j = i+1; j < 4; j++) {
       val = M[j*4 + i];
-      for(k = 0; k < 4; k++) {
+      for (k = 0; k < 4; k++) {
 	M[j*4 + k] -= M[i*4 + k] * val;
 	D[j*4 + k] -= D[i*4 + k] * val;
       }
@@ -136,10 +136,10 @@ void math_mat_invert(tfloat *D, tfloat *M, int S) {
   }
 
   /* Finally substract values so that the original matrix becomes identity */
-  for(i = 3; i >= 0; i--) {
-    for(j = i-1; j >= 0; j--) {
+  for (i = 3; i >= 0; i--) {
+    for (j = i-1; j >= 0; j--) {
       val = M[j*4 + i];
-      for(k = 0; k < 4; k++) {
+      for (k = 0; k < 4; k++) {
 	M[j*4 + k] -= M[i*4 + k] * val;
 	D[j*4 + k] -= D[i*4 + k] * val;
       }

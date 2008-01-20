@@ -43,12 +43,12 @@
 
 #define VSUBUNIT(a, b, c) {VSUB2(a, b, c);\
 			VUNITIZE(a);}
-#define FVSCAN(f, a)	fscanf(f, "%lf %lf %lf", (a),(a)+1,(a)+2)
-#define FMATSCAN(f, m)	{FVSCAN(f,(m)); FVSCAN(f,(m)+4);\
-			 FVSCAN(f,(m)+8); FVSCAN(f,(m)+12);}
-#define VSCAN(a)	scanf("%lf %lf %lf", (a),(a)+1,(a)+2)
-#define VPRINTS(t, a)	printf("%s %f %f %f ", t,(a)[0],(a)[1],(a)[2])
-#define VPRINTN(t, a)	printf("%s %f %f %f\n", t,(a)[0],(a)[1],(a)[2])
+#define FVSCAN(f, a)	fscanf(f, "%lf %lf %lf", (a), (a)+1, (a)+2)
+#define FMATSCAN(f, m)	{FVSCAN(f, (m)); FVSCAN(f, (m)+4);\
+			 FVSCAN(f, (m)+8); FVSCAN(f, (m)+12);}
+#define VSCAN(a)	scanf("%lf %lf %lf", (a), (a)+1, (a)+2)
+#define VPRINTS(t, a)	printf("%s %f %f %f ", t, (a)[0], (a)[1], (a)[2])
+#define VPRINTN(t, a)	printf("%s %f %f %f\n", t, (a)[0], (a)[1], (a)[2])
 
 #define MAT_MOVE(m, n)	MAT_COPY(m, n)
 
@@ -57,10 +57,10 @@
 typedef fastf_t  mat3_t[9];
 
 #define MAT3ZERO(m) 	{\
-	int _j;	for(_j=0;_j<9;_j++) m[_j]=0.0;}
+	int _j;	for (_j=0;_j<9;_j++) m[_j]=0.0;}
 
 #define MAT3IDN(m)	{\
-	int _j;	for(_j=0;_j<9;_j++) m[_j]=0.0;\
+	int _j;	for (_j=0;_j<9;_j++) m[_j]=0.0;\
 	m[0] = m[4] = m[8] = 1.0;}
 
 #define MAT3MUL(o, a, b)	{\
@@ -75,16 +75,16 @@ typedef fastf_t  mat3_t[9];
 	(o)[8] = (a)[6]*(b)[2] + (a)[7]*(b)[5] + (a)[8]*(b)[8];}
 
 #define MAT3SUM(o, a, b)	{\
-	int _j; for(_j=0;_j<9;_j++) (o)[_j]=(a)[_j]+(b)[_j];}
+	int _j; for (_j=0;_j<9;_j++) (o)[_j]=(a)[_j]+(b)[_j];}
 
 #define MAT3DIF(o, a, b)	{\
-	int _j; for(_j=0;_j<9;_j++) (o)[_j]=(a)[_j]-(b)[_j];}
+	int _j; for (_j=0;_j<9;_j++) (o)[_j]=(a)[_j]-(b)[_j];}
 
 #define MAT3SCALE(o, a, s)	{\
-	int _j; for(_j=0;_j<9;_j++) (o)[_j]=(a)[_j] * (s);}
+	int _j; for (_j=0;_j<9;_j++) (o)[_j]=(a)[_j] * (s);}
 
 #define MAT3MOVE(o, a)	{\
-	int _j; for(_j=0;_j<9;_j++) (o)[_j] = (a)[_j];}
+	int _j; for (_j=0;_j<9;_j++) (o)[_j] = (a)[_j];}
 
 #define MAT3XVEC(u, m, v)	{\
 	(u)[0] = (m)[0]*(v)[0] + (m)[1]*(v)[1] + (m)[2]*(v)[2];\

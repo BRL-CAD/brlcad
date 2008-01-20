@@ -68,27 +68,27 @@ db5_scan(
     long			addr;
 
     RT_CK_DBI(dbip);
-    if(RT_G_DEBUG&DEBUG_DB) bu_log("db5_scan( x%x, x%x )\n", dbip, handler);
+    if (RT_G_DEBUG&DEBUG_DB) bu_log("db5_scan( x%x, x%x )\n", dbip, handler);
 
     raw.magic = DB5_RAW_INTERNAL_MAGIC;
     nrec = 0L;
 
     /* Fast-path when file is already memory-mapped */
-    if( dbip->dbi_mf )  {
+    if ( dbip->dbi_mf )  {
 	const unsigned char	*cp = (const unsigned char *)dbip->dbi_inmem;
 	long	eof;
 
 	BU_CK_MAPPED_FILE(dbip->dbi_mf);
 	eof = dbip->dbi_mf->buflen;
 
-	if( db5_header_is_valid( cp ) == 0 )  {
+	if ( db5_header_is_valid( cp ) == 0 )  {
 	    bu_log("db5_scan ERROR:  %s is lacking a proper BRL-CAD v5 database header\n", dbip->dbi_filename);
 	    goto fatal;
 	}
 	cp += sizeof(header);
 	addr = sizeof(header);
-	while( addr < eof )  {
-	    if( (cp = db5_get_raw_internal_ptr( &raw, cp )) == NULL )  {
+	while ( addr < eof )  {
+	    if ( (cp = db5_get_raw_internal_ptr( &raw, cp )) == NULL )  {
 		goto fatal;
 	    }
 	    (*handler)(dbip, &raw, addr, client_data);
@@ -100,20 +100,20 @@ db5_scan(
     }  else  {
 	/* In a totally portable way, read the database with stdio */
 	rewind( dbip->dbi_fp );
-	if( fread( header, sizeof header, 1, dbip->dbi_fp ) != 1  ||
+	if ( fread( header, sizeof header, 1, dbip->dbi_fp ) != 1  ||
 	    db5_header_is_valid( header ) == 0 )  {
 	    bu_log("db5_scan ERROR:  %s is lacking a proper BRL-CAD v5 database header\n", dbip->dbi_filename);
 	    goto fatal;
 	}
-	for(;;)  {
+	for (;;)  {
 	    addr = ftell( dbip->dbi_fp );
-	    if( (got = db5_get_raw_internal_fp( &raw, dbip->dbi_fp )) < 0 )  {
-		if( got == -1 )  break;		/* EOF */
+	    if ( (got = db5_get_raw_internal_fp( &raw, dbip->dbi_fp )) < 0 )  {
+		if ( got == -1 )  break;		/* EOF */
 		goto fatal;
 	    }
 	    (*handler)(dbip, &raw, addr, client_data);
 	    nrec++;
-	    if(raw.buf)  {
+	    if (raw.buf)  {
 		bu_free(raw.buf, "raw v5 object");
 		raw.buf = NULL;
 	    }
@@ -155,7 +155,7 @@ db_diradd5(
 	return DIR_NULL;
     }
 
-    if( rt_uniresource.re_magic == 0 )
+    if ( rt_uniresource.re_magic == 0 )
 	rt_init_resource( &rt_uniresource, 0, NULL );
 
     /* Duplicates the guts of db_diradd() */
@@ -168,16 +168,16 @@ db_diradd5(
     dp->d_un.file_offset = laddr;
     dp->d_major_type = major_type;
     dp->d_minor_type = minor_type;
-    switch( major_type )  {
+    switch ( major_type )  {
 	case DB5_MAJORTYPE_BRLCAD:
-	    if( minor_type == ID_COMBINATION )  {
+	    if ( minor_type == ID_COMBINATION )  {
 
 		dp->d_flags = DIR_COMB;
-		if( !avs || avs->count == 0 )  break;
+		if ( !avs || avs->count == 0 )  break;
 		/*
 		 *  check for the "region=" attribute.
 		 */
-		if( bu_avs_get( avs, "region" ) != NULL )
+		if ( bu_avs_get( avs, "region" ) != NULL )
 		    dp->d_flags = DIR_COMB|DIR_REGION;
 	    } else {
 		dp->d_flags = DIR_SOLID;
@@ -192,7 +192,7 @@ db_diradd5(
 	case DB5_MAJORTYPE_ATTRIBUTE_ONLY:
 	    dp->d_flags = 0;
     }
-    if( name_hidden )
+    if ( name_hidden )
 	dp->d_flags |= DIR_HIDDEN;
     dp->d_len = object_length;		/* in bytes */
     BU_LIST_INIT( &dp->d_use_hd );
@@ -225,7 +225,7 @@ db5_diradd(struct db_i			*dbip,
 	return DIR_NULL;
     }
 
-    if( rt_uniresource.re_magic == 0 )
+    if ( rt_uniresource.re_magic == 0 )
 	rt_init_resource( &rt_uniresource, 0, NULL );
 
     /* Duplicates the guts of db_diradd() */
@@ -237,25 +237,25 @@ db5_diradd(struct db_i			*dbip,
     dp->d_un.file_offset = laddr;
     dp->d_major_type = rip->major_type;
     dp->d_minor_type = rip->minor_type;
-    switch( rip->major_type )  {
+    switch ( rip->major_type )  {
 	case DB5_MAJORTYPE_BRLCAD:
-	    if( rip->minor_type == ID_COMBINATION )  {
+	    if ( rip->minor_type == ID_COMBINATION )  {
 		struct bu_attribute_value_set	avs;
 
 		bu_avs_init_empty(&avs);
 
 		dp->d_flags = DIR_COMB;
-		if( rip->attributes.ext_nbytes == 0 )  break;
+		if ( rip->attributes.ext_nbytes == 0 )  break;
 		/*
 		 *  Crack open the attributes to
 		 *  check for the "region=" attribute.
 		 */
-		if( db5_import_attributes( &avs, &rip->attributes ) < 0 )  {
+		if ( db5_import_attributes( &avs, &rip->attributes ) < 0 )  {
 		    bu_log("db5_diradd_handler: Bad attributes on combination '%s'\n",
 			   rip->name);
 		    break;
 		}
-		if( bu_avs_get( &avs, "region" ) != NULL )
+		if ( bu_avs_get( &avs, "region" ) != NULL )
 		    dp->d_flags = DIR_COMB|DIR_REGION;
 		bu_avs_free( &avs );
 	    } else {
@@ -271,7 +271,7 @@ db5_diradd(struct db_i			*dbip,
 	case DB5_MAJORTYPE_ATTRIBUTE_ONLY:
 	    dp->d_flags = 0;
     }
-    if( rip->h_name_hidden )
+    if ( rip->h_name_hidden )
 	dp->d_flags |= DIR_HIDDEN;
     dp->d_len = rip->object_length;		/* in bytes */
     BU_LIST_INIT( &dp->d_use_hd );
@@ -299,17 +299,17 @@ db5_diradd_handler(
 {
     RT_CK_DBI(dbip);
 
-    if( rip->h_dli == DB5HDR_HFLAGS_DLI_HEADER_OBJECT )  return;
-    if( rip->h_dli == DB5HDR_HFLAGS_DLI_FREE_STORAGE )  {
+    if ( rip->h_dli == DB5HDR_HFLAGS_DLI_HEADER_OBJECT )  return;
+    if ( rip->h_dli == DB5HDR_HFLAGS_DLI_FREE_STORAGE )  {
 	/* Record available free storage */
 	rt_memfree( &(dbip->dbi_freep), rip->object_length, laddr );
 	return;
     }
 
     /* If somehow it doesn't have a name, ignore it */
-    if( rip->name.ext_buf == NULL )  return;
+    if ( rip->name.ext_buf == NULL )  return;
 
-    if(RT_G_DEBUG&DEBUG_DB)  {
+    if (RT_G_DEBUG&DEBUG_DB)  {
 	bu_log("db5_diradd_handler(dbip=x%x, name='%s', addr=x%x, len=%d)\n",
 	       dbip, rip->name, laddr, rip->object_length );
     }

@@ -48,15 +48,15 @@ void
 open_file(FILE **fp, char *name)
 {
 	/* check for special names */
-	if( strcmp( name, "-" ) == 0 ) {
+	if ( strcmp( name, "-" ) == 0 ) {
 		*fp = stdin;
 		return;
-	} else if( strcmp( name, "." ) == 0 ) {
+	} else if ( strcmp( name, "." ) == 0 ) {
 		*fp = fopen( "/dev/null", "r" );
 		return;
 	}
 
-	if( (*fp = fopen( name, "r" )) == NULL ) {
+	if ( (*fp = fopen( name, "r" )) == NULL ) {
 		bu_exit(2, "bw3-pix: Can't open \"%s\"\n", name );
 	}
 }
@@ -70,7 +70,7 @@ main(int argc, char **argv)
 	register unsigned char *obufp;
 	FILE	*rfp, *bfp, *gfp;
 
-	if( argc != 4 || isatty(fileno(stdout)) ) {
+	if ( argc != 4 || isatty(fileno(stdout)) ) {
 		bu_exit( 1, "usage: bw3-pix redin greenin bluein > file.pix (- stdin, . skip)\n" );
 	}
 
@@ -78,25 +78,25 @@ main(int argc, char **argv)
 	open_file( &gfp, argv[2] );
 	open_file( &bfp, argv[3] );
 
-	while( 1 ) {
+	while ( 1 ) {
 		nr = fread( red, sizeof( char ), 1024, rfp );
 		ng = fread( green, sizeof( char ), 1024, gfp );
 		nb = fread( blue, sizeof( char ), 1024, bfp );
-		if( nr <= 0 && ng <= 0 && nb <= 0 )
+		if ( nr <= 0 && ng <= 0 && nb <= 0 )
 			break;
 
 		/* find max */
 		num = (nr > ng) ? nr : ng;
-		if( nb > num ) num = nb;
-		if( nr < num )
+		if ( nb > num ) num = nb;
+		if ( nr < num )
 			memset((char *)&red[nr], 0, num-nr);
-		if( ng < num )
+		if ( ng < num )
 			memset((char *)&green[ng], 0, num-ng);
-		if( nb < num )
+		if ( nb < num )
 			memset((char *)&blue[nb], 0, num-nb);
 
 		obufp = &obuf[0];
-		for( i = 0; i < num; i++ ) {
+		for ( i = 0; i < num; i++ ) {
 			*obufp++ = red[i];
 			*obufp++ = green[i];
 			*obufp++ = blue[i];

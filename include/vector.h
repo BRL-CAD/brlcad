@@ -80,7 +80,7 @@ extern "C++" {
     dvec(const vec_internal<LEN>& d);
   };
 
-  //#define DVEC4(V, t, a, b, c, d) double v#t[4] VEC_ALIGN = {(a),(b),(c),(d)}; V(v#t)
+  //#define DVEC4(V, t, a, b, c, d) double v#t[4] VEC_ALIGN = {(a), (b), (c), (d)}; V(v#t)
 
   // use this to create 16-byte aligned memory on platforms that support it
 #define VEC_ALIGN
@@ -115,7 +115,7 @@ extern "C++" {
     fastf_t det = c.foldr(0, dvec<2>::sub());
     if (NEAR_ZERO(det, VUNITIZE_TOL)) return false;
     fastf_t scale = 1.0 / det;
-    double tmp[4] VEC_ALIGN = {m[3],-m[1],-m[2], m[0]};
+    double tmp[4] VEC_ALIGN = {m[3], -m[1], -m[2], m[0]};
     dvec<4> iv(tmp);
     dvec<4> sv(scale);
     dvec<4> r = iv * sv;

@@ -218,10 +218,10 @@ dgo_nirt_cmd(struct dg_obj	*dgop,
 			val = bu_vls_addr(&dgop->dgo_qray_fmts[0].fmt);
 
 			/* find first '"' */
-			while(*val != '"' && *val != '\0')
+			while (*val != '"' && *val != '\0')
 				++val;
 
-			if(*val == '\0')
+			if (*val == '\0')
 				goto done;
 			else
 				++val;	    /* skip first '"' */
@@ -233,7 +233,7 @@ dgo_nirt_cmd(struct dg_obj	*dgop,
 				count = cp - val;
 
 done:
-			if(*val == '\0')
+			if (*val == '\0')
 			    bu_vls_printf(&o_vls, " fmt r \"\\n\" ");
 			else{
 			    bu_vls_printf(&o_vls, " fmt r \"\\n%*s\" ", count, val);
@@ -255,7 +255,7 @@ done:
 		bu_vls_init(&t_vls);
 
 		/* load vp with formats for printing */
-		for(; dgop->dgo_qray_fmts[i].type != (char)0; ++i)
+		for (; dgop->dgo_qray_fmts[i].type != (char)0; ++i)
 			bu_vls_printf(&t_vls, "fmt %c %s; ",
 				      dgop->dgo_qray_fmts[i].type,
 				      bu_vls_addr(&dgop->dgo_qray_fmts[i].fmt));
@@ -435,7 +435,7 @@ done:
 
 	/* use fp_in to feed view info to nirt */
 	CloseHandle(pipe_in[0]);
-	fp_in = _fdopen(_open_osfhandle((HFILE)pipe_inDup,_O_TEXT), "wb");
+	fp_in = _fdopen(_open_osfhandle((HFILE)pipe_inDup, _O_TEXT), "wb");
 	_setmode(_fileno(fp_in), _O_BINARY);
 
 	/* send commands down the pipe */
@@ -445,12 +445,12 @@ done:
 
 	/* use fp_out to read back the result */
 	CloseHandle(pipe_out[1]);
-	fp_out = _fdopen(_open_osfhandle((HFILE)pipe_outDup,_O_TEXT), "rb");
+	fp_out = _fdopen(_open_osfhandle((HFILE)pipe_outDup, _O_TEXT), "rb");
 	_setmode(_fileno(fp_out), _O_BINARY);
 
 	/* use fp_err to read any error messages */
 	CloseHandle(pipe_err[1]);
-	fp_err = _fdopen(_open_osfhandle((HFILE)pipe_errDup,_O_TEXT), "rb");
+	fp_err = _fdopen(_open_osfhandle((HFILE)pipe_errDup, _O_TEXT), "rb");
 	_setmode(_fileno(fp_err), _O_BINARY);
 
 	/* send quit command to nirt */
@@ -536,7 +536,7 @@ done:
 	while ((rpid = wait(&retcode)) != pid && rpid != -1)
 		;	/* NULL */
 
-	if( retcode != 0 )
+	if ( retcode != 0 )
 		dgo_pr_wait_status(interp, retcode);
 #else
 	/* Wait for program to finish */
@@ -584,7 +584,7 @@ dgo_vnirt_cmd(struct dg_obj	*dgop,
      * converted to local units before being handed to nirt. All other
      * arguments are passed straight through to nirt.
      */
-    if(sscanf(argv[argc-2], "%lf", &view_ray_orig[X]) != 1 ||
+    if (sscanf(argv[argc-2], "%lf", &view_ray_orig[X]) != 1 ||
        sscanf(argv[argc-1], "%lf", &view_ray_orig[Y]) != 1){
 	return TCL_ERROR;
     }
@@ -607,7 +607,7 @@ dgo_vnirt_cmd(struct dg_obj	*dgop,
 
     /* pass remaining arguments to nirt */
     av[0] = "nirt";
-    for(i = 1; i < argc; ++i)
+    for (i = 1; i < argc; ++i)
 	av[i] = argv[i];
 
     /* pass modified coordinates to nirt */

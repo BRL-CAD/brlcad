@@ -62,11 +62,11 @@
 
 #define CKMEM( _len )	{  \
 	register int	offset; \
-	if( (offset = (ep - cp) - (_len)) < 0 )  { \
+	if ( (offset = (ep - cp) - (_len)) < 0 )  { \
 		do  { \
 			offset += ext->ext_nbytes;	/* decr by new growth */ \
 			ext->ext_nbytes <<= 1; \
-		} while( offset < 0 ); \
+		} while ( offset < 0 ); \
 		offset = cp - (char *)ext->ext_buf; \
 		ext->ext_buf = (genptr_t)bu_realloc( (char *) ext->ext_buf, \
 		     ext->ext_nbytes, "bu_struct_export" ); \
@@ -81,7 +81,7 @@
 	((unsigned char *) _p->ext_buf)[1] = (BU_GETPUT_MAGIC_1 & 0xFF); \
 	((unsigned char *) _p->ext_buf)[0] = (BU_GETPUT_MAGIC_1 >> 8) & 0xFF; \
 	}
-#define BU_INIT_GETPUT_2(_p,_l)	{\
+#define BU_INIT_GETPUT_2(_p, _l)	{\
 	BU_CK_EXTERNAL(_p); \
 	((unsigned char *) _p->ext_buf)[_l-1] = (BU_GETPUT_MAGIC_2 & 0xFF); \
 	((unsigned char *) _p->ext_buf)[_l-2] = (BU_GETPUT_MAGIC_2 >> 8) & 0xFF; \
@@ -151,11 +151,11 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
 	cp = (char *) ext->ext_buf + 6; /* skip magic and length */
 	ep = cp + ext->ext_nbytes;
 
-	for( ip = imp; ip->sp_fmt[0] != '\0'; ip++ )  {
+	for ( ip = imp; ip->sp_fmt[0] != '\0'; ip++ )  {
 
 		loc = ((char *)base) + ip->sp_offset;
 
-		switch( ip->sp_fmt[0] )  {
+		switch ( ip->sp_fmt[0] )  {
 		case 'i':
 			/* Indirect to another structure */
 			/* deferred */
@@ -170,7 +170,7 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
 			return( 0 );
 		}
 		/* [0] == '%', use printf-like format char */
-		switch( ip->sp_fmt[1] )  {
+		switch ( ip->sp_fmt[1] )  {
 		case 'f':
 			/* Double-precision floating point */
 			len = ip->sp_count * 8;
@@ -183,7 +183,7 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
 			CKMEM( ip->sp_count * 4 );
 			{
 				register unsigned long	l;
-				for( i = ip->sp_count-1; i >= 0; i-- )  {
+				for ( i = ip->sp_count-1; i >= 0; i-- )  {
 					l = *((int *)loc);
 					cp[3] = l;
 					cp[2] = l >> 8;
@@ -199,7 +199,7 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
 			CKMEM( ip->sp_count * 2 );
 			{
 				register unsigned short	s;
-				for( i = ip->sp_count-1; i >= 0; i-- )  {
+				for ( i = ip->sp_count-1; i >= 0; i-- )  {
 					s = *((int *)loc);
 					cp[1] = s;
 					cp[0] = s >> 8;
@@ -294,11 +294,11 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
 
 	cp = (unsigned char *)ext->ext_buf+6;
 	bytes_used = 0;
-	for( ip = imp; ip->sp_fmt[0] != '\0'; ip++ )  {
+	for ( ip = imp; ip->sp_fmt[0] != '\0'; ip++ )  {
 
 		loc = ((char *)base) + ip->sp_offset;
 
-		switch( ip->sp_fmt[0] )  {
+		switch ( ip->sp_fmt[0] )  {
 		case 'i':
 			/* Indirect to another structure */
 			/* deferred */
@@ -311,7 +311,7 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
 			return( -1 );
 		}
 		/* [0] == '%', use printf-like format char */
-		switch( ip->sp_fmt[1] )  {
+		switch ( ip->sp_fmt[1] )  {
 		case 'f':
 			/* Double-precision floating point */
 			len = ip->sp_count * 8;
@@ -323,7 +323,7 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
 			/* 32-bit network integer, from "int" */
 			{
 				register long	l;
-				for( i = ip->sp_count-1; i >= 0; i-- )  {
+				for ( i = ip->sp_count-1; i >= 0; i-- )  {
 					l =	(cp[0] << 24) |
 						(cp[1] << 16) |
 						(cp[2] <<  8) |
@@ -337,7 +337,7 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
 			break;
 		case 'i':
 			/* 16-bit integer, from "int" */
-			for( i = ip->sp_count-1; i >= 0; i-- )  {
+			for ( i = ip->sp_count-1; i >= 0; i-- )  {
 				*(int *)loc =	(cp[0] <<  8) |
 						 cp[1];
 				loc += sizeof(int); /* XXX */
@@ -534,7 +534,7 @@ bu_parse_double(const char *str, long int count, double *loc)
 	char	buf[128];
 	int	len;
 
-	for (i=0 ; i < count && *str ; ++i){
+	for (i=0; i < count && *str; ++i){
 		numstart = str;
 
 		/* skip sign */
@@ -542,7 +542,7 @@ bu_parse_double(const char *str, long int count, double *loc)
 
 		/* skip matissa */
 		dot_seen = 0;
-		for ( ; *str ; str++ ) {
+		for (; *str; str++ ) {
 			if (*str == '.' && !dot_seen) {
 				dot_seen = 1;
 				continue;
@@ -567,11 +567,11 @@ bu_parse_double(const char *str, long int count, double *loc)
 		}
 
 		len = str - numstart;
-		if( len > sizeof(buf)-1 )  len = sizeof(buf)-1;
+		if ( len > sizeof(buf)-1 )  len = sizeof(buf)-1;
 		strncpy( buf, numstart, len );
 		buf[len] = '\0';
 
-		if( sscanf( buf, "%lf", &tmp_double ) != 1 )
+		if ( sscanf( buf, "%lf", &tmp_double ) != 1 )
 			return -1;
 
 		*loc++ = tmp_double;
@@ -600,9 +600,9 @@ bu_struct_lookup(register const struct bu_structparse *sdp, register const char 
 	register char *loc;
 	int i, retval = 0;
 
-	for( ; sdp->sp_name != (char *)0; sdp++ )  {
+	for (; sdp->sp_name != (char *)0; sdp++ )  {
 
-		if( strcmp( sdp->sp_name, name ) != 0	/* no name match */
+		if ( strcmp( sdp->sp_name, name ) != 0	/* no name match */
 		    && sdp->sp_fmt[0] != 'i' )		/* no include desc */
 
 		    continue;
@@ -615,7 +615,7 @@ bu_struct_lookup(register const struct bu_structparse *sdp, register const char 
 
 		if (sdp->sp_fmt[0] == 'i') {
 			/* Indirect to another structure */
-			if( bu_struct_lookup(
+			if ( bu_struct_lookup(
 				(struct bu_structparse *)sdp->sp_count,
 				name, base, value )
 			    == 0 )
@@ -629,7 +629,7 @@ bu_struct_lookup(register const struct bu_structparse *sdp, register const char 
 			return(-1);
 		}
 
-		switch( sdp->sp_fmt[1] )  {
+		switch ( sdp->sp_fmt[1] )  {
 		case 'c':
 		case 's':
 			{	register int i, j;
@@ -637,8 +637,8 @@ bu_struct_lookup(register const struct bu_structparse *sdp, register const char 
 				/* copy the string, converting escaped
 				 * double quotes to just double quotes
 				 */
-				for(i=j=0 ;
-				    j < sdp->sp_count && value[i] != '\0' ;
+				for (i=j=0;
+				    j < sdp->sp_count && value[i] != '\0';
 				    loc[j++] = value[i++])
 					if (value[i] == '\\' &&
 					    value[i+1] == '"')
@@ -647,7 +647,7 @@ bu_struct_lookup(register const struct bu_structparse *sdp, register const char 
 				/* Don't null terminate chars, only strings */
 				if (sdp->sp_count > 1)  {
 					/* OK, it's a string */
-					if( j < sdp->sp_count-1 )
+					if ( j < sdp->sp_count-1 )
 						loc[j] = '\0';
 					else
 						loc[sdp->sp_count-1] = '\0';
@@ -666,7 +666,7 @@ bu_struct_lookup(register const struct bu_structparse *sdp, register const char 
 				register const char *cp;
 				register const char *pv = value;
 
-				for (i=0 ; i < sdp->sp_count && *pv ; ++i){
+				for (i=0; i < sdp->sp_count && *pv; ++i){
 					tmpi = atoi( pv );
 
 					cp = pv;
@@ -700,13 +700,13 @@ bu_struct_lookup(register const struct bu_structparse *sdp, register const char 
 				register const char *pv = value;
 
 				/* Special case:  '=!' toggles a boolean */
-				if( *pv == '!' )  {
+				if ( *pv == '!' )  {
 					*ip = *ip ? 0 : 1;
 					pv++;
 					break;
 				}
 				/* Normal case: an integer */
-				for (i=0 ; i < sdp->sp_count && *pv ; ++i){
+				for (i=0; i < sdp->sp_count && *pv; ++i){
 					tmpi = atoi( pv );
 
 					cp = pv;
@@ -742,7 +742,7 @@ bu_struct_lookup(register const struct bu_structparse *sdp, register const char 
 				name, sdp->sp_fmt );
 			return(-1);
 		}
-		if( sdp->sp_hook )  {
+		if ( sdp->sp_hook )  {
 			sdp->sp_hook( sdp, name, base, value );
 		}
 		return(retval);		/* OK or parse error */
@@ -783,11 +783,11 @@ bu_struct_parse(const struct bu_vls *in_vls, const struct bu_structparse *desc, 
 	bu_vls_vlscat( &vls, in_vls );
 	cp = bu_vls_addr( &vls );
 
-	while( *cp )  {
+	while ( *cp )  {
 		/* NAME = VALUE white-space-separator */
 
 		/* skip any leading whitespace */
-		while( *cp != '\0' && isascii(*cp) && isspace(*cp) )
+		while ( *cp != '\0' && isascii(*cp) && isspace(*cp) )
 			cp++;
 
 		/* Find equal sign */
@@ -795,8 +795,8 @@ bu_struct_parse(const struct bu_vls *in_vls, const struct bu_structparse *desc, 
 		while ( *cp != '\0' && *cp != '=' )
 			cp++;
 
-		if( *cp == '\0' )  {
-			if( name == cp ) break;
+		if ( *cp == '\0' )  {
+			if ( name == cp ) break;
 
 			/* end of string in middle of arg */
 			bu_log("bu_structparse: input keyword '%s' is not followed by '=' in '%s'\nInput must be in keyword=value format.\n",
@@ -813,7 +813,7 @@ bu_struct_parse(const struct bu_vls *in_vls, const struct bu_structparse *desc, 
 			 * skip leading " & find terminating "
 			 * while skipping escaped quotes (\")
 			 */
-			for (value = ++cp ; *cp != '\0' ; ++cp)
+			for (value = ++cp; *cp != '\0'; ++cp)
 				if (*cp == '"' &&
 				    (cp == value || *(cp-1) != '\\') )
 					break;
@@ -827,20 +827,20 @@ bu_struct_parse(const struct bu_vls *in_vls, const struct bu_structparse *desc, 
 		} else {
 			/* non-strings are white-space delimited */
 			value = cp;
-			while( *cp != '\0' && isascii(*cp) && !isspace(*cp) )
+			while ( *cp != '\0' && isascii(*cp) && !isspace(*cp) )
 				cp++;
 		}
 
-		if( *cp != '\0' )
+		if ( *cp != '\0' )
 			*cp++ = '\0';
 
 		/* Lookup name in desc table and modify */
 		retval = bu_struct_lookup( desc, name, base, value );
-		if( retval == -1 ) {
+		if ( retval == -1 ) {
 		    bu_log("bu_structparse:  '%s=%s', keyword not found in:\n",
 			   name, value);
 		    bu_struct_print( "troublesome one", desc, base );
-		} else if( retval == -2 ) {
+		} else if ( retval == -2 ) {
 		    bu_vls_free( &vls );
 		    return -2;
 		}
@@ -943,7 +943,7 @@ bu_vls_struct_item(struct bu_vls *vp, const struct bu_structparse *sdp, const ch
 	return;
     }
 
-    switch( sdp->sp_fmt[1] )  {
+    switch ( sdp->sp_fmt[1] )  {
     case 'c':
     case 's':
 	if (sdp->sp_count < 1)
@@ -963,28 +963,28 @@ bu_vls_struct_item(struct bu_vls *vp, const struct bu_structparse *sdp, const ch
 	register short *sp = (short *)loc;
 
 	bu_vls_printf( vp, "%d", *sp++ );
-	while( --i > 0 ) bu_vls_printf( vp, "%c%d", sep_char, *sp++ ); }
+	while ( --i > 0 ) bu_vls_printf( vp, "%c%d", sep_char, *sp++ ); }
 	break;
     case 'd': {
 	register int i = sdp->sp_count;
 	register int *dp = (int *)loc;
 
 	bu_vls_printf( vp, "%d", *dp++ );
-	while( --i > 0 ) bu_vls_printf( vp, "%c%d", sep_char, *dp++ ); }
+	while ( --i > 0 ) bu_vls_printf( vp, "%c%d", sep_char, *dp++ ); }
 	break;
     case 'f': {
 	register int i = sdp->sp_count;
 	register double *dp = (double *)loc;
 
 	bu_vls_printf( vp, "%.25G", *dp++ );
-	while( --i > 0 ) bu_vls_printf( vp, "%c%.25G", sep_char, *dp++ ); }
+	while ( --i > 0 ) bu_vls_printf( vp, "%c%.25G", sep_char, *dp++ ); }
 	break;
     case 'x': {
 	register int i = sdp->sp_count;
 	register int *dp = (int *)loc;
 
 	bu_vls_printf( vp, "%08x", *dp++ );
-	while( --i > 0 ) bu_vls_printf( vp, "%c%08x", sep_char, *dp++ );  }
+	while ( --i > 0 ) bu_vls_printf( vp, "%c%08x", sep_char, *dp++ );  }
 	break;
     default:
 	break;
@@ -1003,8 +1003,8 @@ bu_vls_struct_item_named(struct bu_vls *vp, const struct bu_structparse *parseta
 {
     register const struct bu_structparse *sdp;
 
-    for( sdp = parsetab; sdp->sp_name != NULL; sdp++ )
-	if( strcmp(sdp->sp_name, name) == 0 ) {
+    for ( sdp = parsetab; sdp->sp_name != NULL; sdp++ )
+	if ( strcmp(sdp->sp_name, name) == 0 ) {
 	    bu_vls_struct_item( vp, sdp, base, sep_char );
 	    return 0;
 	}
@@ -1031,10 +1031,10 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 		bu_log( "Null \"struct bu_structparse\" pointer\n");
 		return;
 	}
-	for( sdp = parsetab; sdp->sp_name != (char *)0; sdp++ )  {
+	for ( sdp = parsetab; sdp->sp_name != (char *)0; sdp++ )  {
 
 		/* Skip alternate keywords for same value */
-		if( lastoff == sdp->sp_offset )
+		if ( lastoff == sdp->sp_offset )
 			continue;
 		lastoff = sdp->sp_offset;
 
@@ -1057,7 +1057,7 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 		bu_vls_struct_item( &vls, sdp, base, ',' );
 		bu_log( " %s=%s\n", sdp->sp_name, bu_vls_addr(&vls) );
 #else
-		switch( sdp->sp_fmt[1] )  {
+		switch ( sdp->sp_fmt[1] )  {
 		case 'c':
 		case 's':
 			if (sdp->sp_count < 1)
@@ -1202,10 +1202,10 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 		return;
 	}
 
-	for ( ; sdp->sp_name != (char*)NULL ; sdp++) {
+	for (; sdp->sp_name != (char*)NULL; sdp++) {
 		/* Skip alternate keywords for same value */
 
-		if( lastoff == sdp->sp_offset )
+		if ( lastoff == sdp->sp_offset )
 			continue;
 		lastoff = sdp->sp_offset;
 
@@ -1230,7 +1230,7 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 			break;
 		}
 
-		switch( sdp->sp_fmt[1] )  {
+		switch ( sdp->sp_fmt[1] )  {
 		case 'c':
 		case 's':
 			if (sdp->sp_count < 1)
@@ -1400,7 +1400,7 @@ bu_vls_struct_print2(struct bu_vls			*vls_out,
 			continue;
 		}
 
-		switch( sdp->sp_fmt[1] )  {
+		switch ( sdp->sp_fmt[1] )  {
 		case 'c':
 		case 's':
 			if (sdp->sp_count < 1)
@@ -1542,17 +1542,17 @@ bu_key_eq_to_key_val(char *in, char **next, struct bu_vls *vls)
 	{
 		char *prev='\0';
 
-		switch( state )
+		switch ( state )
 		{
 			case STATE_IN_KEYWORD:
 				/* skip leading white space */
-				while( isspace( *iptr ) )
+				while ( isspace( *iptr ) )
 					iptr++;
 
-				if( !(*iptr) )
+				if ( !(*iptr) )
 					break;
 
-				if( *iptr == ';' )
+				if ( *iptr == ';' )
 				{
 					/* found end of a stack element */
 					*next = iptr+1;
@@ -1561,7 +1561,7 @@ bu_key_eq_to_key_val(char *in, char **next, struct bu_vls *vls)
 
 				/* copy keyword up to '=' */
 				start = iptr;
-				while( *iptr && *iptr != '=' )
+				while ( *iptr && *iptr != '=' )
 					iptr++;
 
 				bu_vls_strncat( vls, start, iptr - start );
@@ -1569,7 +1569,7 @@ bu_key_eq_to_key_val(char *in, char **next, struct bu_vls *vls)
 				/* add a single space after keyword */
 				bu_vls_putc( vls, ' ' );
 
-				if( !*iptr )
+				if ( !*iptr )
 					break;
 
 				/* skip over '=' in input */
@@ -1581,11 +1581,11 @@ bu_key_eq_to_key_val(char *in, char **next, struct bu_vls *vls)
 				break;
 			case STATE_IN_VALUE:
 				/* skip excess white space */
-				while( isspace( *iptr ) )
+				while ( isspace( *iptr ) )
 					iptr++;
 
 				/* check for quoted value */
-				if( *iptr == '"' )
+				if ( *iptr == '"' )
 				{
 					/* switch to quoted value state */
 					state = STATE_IN_QUOTED_VALUE;
@@ -1598,12 +1598,12 @@ bu_key_eq_to_key_val(char *in, char **next, struct bu_vls *vls)
 
 				/* copy value up to next white space or end of string */
 				start = iptr;
-				while( *iptr && *iptr != ';' && !isspace( *iptr ) )
+				while ( *iptr && *iptr != ';' && !isspace( *iptr ) )
 					iptr++;
 
 				bu_vls_strncat( vls, start, iptr - start );
 
-				if( *iptr ) /* more to come */
+				if ( *iptr ) /* more to come */
 				{
 					bu_vls_putc( vls, ' ' );
 
@@ -1617,9 +1617,9 @@ bu_key_eq_to_key_val(char *in, char **next, struct bu_vls *vls)
 				 * replace quotes with '{' '}' */
 
 				bu_vls_strcat( vls, " {" );
-				while( 1 )
+				while ( 1 )
 				{
-					if( *iptr == '"' && *prev != '\\' )
+					if ( *iptr == '"' && *prev != '\\' )
 					{
 						bu_vls_putc( vls, '}' );
 						iptr++;
@@ -1629,7 +1629,7 @@ bu_key_eq_to_key_val(char *in, char **next, struct bu_vls *vls)
 					prev = iptr++;
 				}
 
-				if( *iptr && *iptr != ';' ) /* more to come */
+				if ( *iptr && *iptr != ';' ) /* more to come */
 					bu_vls_putc( vls, ' ' );
 
 				/* switch back to keyword state */
@@ -1674,97 +1674,97 @@ bu_shader_to_tcl_list(char *in, struct bu_vls *vls)
 
 	BU_CK_VLS( vls );
 
-	while( next )
+	while ( next )
 	{
 		iptr = next;
 
 		/* skip over white space */
-		while( isspace( *iptr ) )
+		while ( isspace( *iptr ) )
 			iptr++;
 
 		/* this is start of shader name */
 		shader = iptr;
 
 		/* find end of shader name */
-		while( *iptr && !isspace( *iptr ) && *iptr != ';' )
+		while ( *iptr && !isspace( *iptr ) && *iptr != ';' )
 			iptr++;
 		shader_name_len = iptr - shader;
 
-		if( !strncmp( shader, "stack", 5 ) )
+		if ( !strncmp( shader, "stack", 5 ) )
 		{
 			/* stack shader, loop through all shaders in stack */
 			int done=0;
 
 			bu_vls_strcat( vls, "stack {" );
 
-			while( !done )
+			while ( !done )
 			{
 				char *shade1;
 
-				while( isspace( *iptr ) )
+				while ( isspace( *iptr ) )
 					iptr++;
-				if( *iptr == '\0' )
+				if ( *iptr == '\0' )
 					break;
 				shade1 = iptr;
-				while( *iptr && *iptr != ';' )
+				while ( *iptr && *iptr != ';' )
 					iptr++;
-				if( *iptr == '\0' )
+				if ( *iptr == '\0' )
 					done = 1;
 				*iptr = '\0';
 
 				bu_vls_putc( vls, '{' );
 
-				if( bu_shader_to_tcl_list( shade1, vls ) )
+				if ( bu_shader_to_tcl_list( shade1, vls ) )
 					return( 1 );
 
 				bu_vls_strcat( vls, "} " );
 
-				if( !done )
+				if ( !done )
 					iptr++;
 			}
 			bu_vls_putc( vls, '}' );
 			return( 0 );
 		}
-		else if( !strncmp( shader, "envmap", 6 ) )
+		else if ( !strncmp( shader, "envmap", 6 ) )
 		{
 			bu_vls_strcat( vls, "envmap {" );
-			if( bu_shader_to_tcl_list( iptr, vls ) )
+			if ( bu_shader_to_tcl_list( iptr, vls ) )
 				return( 1 );
 			bu_vls_putc( vls, '}' );
 			return( 0 );
 		}
 
-		if( is_stack )
+		if ( is_stack )
 			bu_vls_strcat( vls, " {" );
 
 		bu_vls_strncat( vls, shader, shader_name_len );
 
 		/* skip more white space */
-		while( *iptr && isspace( *iptr ) )
+		while ( *iptr && isspace( *iptr ) )
 			iptr++;
 
 		/* iptr now points at start of parameters, if any */
-		if( *iptr && *iptr != ';' )
+		if ( *iptr && *iptr != ';' )
 		{
 			bu_vls_strcat( vls, " {" );
 			len = bu_vls_strlen( vls );
-			if( bu_key_eq_to_key_val( iptr, &next, vls ) )
+			if ( bu_key_eq_to_key_val( iptr, &next, vls ) )
 				return( 1 );
-			if( bu_vls_strlen( vls ) > len )
+			if ( bu_vls_strlen( vls ) > len )
 				bu_vls_putc( vls, '}' );
 			else
 				bu_vls_trunc( vls, len-2 );
 		}
-		else if( *iptr && *iptr == ';' )
+		else if ( *iptr && *iptr == ';' )
 			next = ++iptr;
 		else
 			next = (char *)NULL;
 
-		if( is_stack )
+		if ( is_stack )
 			bu_vls_putc( vls, '}' );
 	}
 
-	if( is_stack )
+	if ( is_stack )
 		bu_vls_putc( vls, '}' );
 
 	return( 0 );
@@ -1791,33 +1791,33 @@ bu_list_elem( const char *in, int index )
 	const char *end=NULL;
 	char *out=NULL;
 
-	while( *ptr )
+	while ( *ptr )
 	{
 		/* skip leading white space */
-		while( *ptr && isspace( *ptr ) )
+		while ( *ptr && isspace( *ptr ) )
 		{
 			prev = ptr;
 			ptr++;
 		}
 
-		if( !*ptr )
+		if ( !*ptr )
 			break;
 
-		if( depth == 0 && count == index )
+		if ( depth == 0 && count == index )
 			start = ptr;
 
-		if( *ptr == '{' )
+		if ( *ptr == '{' )
 		{
 			depth++;
 			prev = ptr;
 			ptr++;
 		}
-		else if( *ptr == '}' )
+		else if ( *ptr == '}' )
 		{
 			depth--;
-			if( depth == 0 )
+			if ( depth == 0 )
 				count++;
-			if( start && depth == 0 )
+			if ( start && depth == 0 )
 			{
 				end = ptr;
 				break;
@@ -1827,7 +1827,7 @@ bu_list_elem( const char *in, int index )
 		}
 		else
 		{
-			while( *ptr &&
+			while ( *ptr &&
 				(!isspace( *ptr ) || *prev == '\\') &&
 				(*ptr != '}' || *prev == '\\') &&
 				(*ptr != '{' || *prev == '\\') )
@@ -1835,10 +1835,10 @@ bu_list_elem( const char *in, int index )
 				prev = ptr;
 				ptr++;
 			}
-			if( depth == 0 )
+			if ( depth == 0 )
 				count++;
 
-			if( start && depth == 0 )
+			if ( start && depth == 0 )
 			{
 				end = ptr-1;
 				break;
@@ -1846,12 +1846,12 @@ bu_list_elem( const char *in, int index )
 		}
 	}
 
-	if( !start )
+	if ( !start )
 		return( (char *)NULL );
 
-	if( *start == '{' )
+	if ( *start == '{' )
 	{
-		if( !end || *end != '}' )
+		if ( !end || *end != '}' )
 		{
 			bu_log( "Error in list (uneven braces?): %s\n", in );
 			return( (char *)NULL );
@@ -1859,14 +1859,14 @@ bu_list_elem( const char *in, int index )
 
 		/* remove enclosing braces */
 		start++;
-		while( start < end && isspace( *start ) )
+		while ( start < end && isspace( *start ) )
 			start++;
 
 		end--;
-		while( end > start && isspace( *end ) && *(end-1) != '\\' )
+		while ( end > start && isspace( *end ) && *(end-1) != '\\' )
 			end--;
 
-		if( start == end )
+		if ( start == end )
 			return( (char *)NULL );
 	}
 
@@ -1891,27 +1891,27 @@ bu_tcl_list_length( const char *in )
 	const char *ptr=in;
 	const char *prev=NULL;
 
-	while( *ptr )
+	while ( *ptr )
 	{
 		/* skip leading white space */
-		while( *ptr && isspace( *ptr ) )
+		while ( *ptr && isspace( *ptr ) )
 		{
 			prev = ptr;
 			ptr++;
 		}
 
-		if( !*ptr )
+		if ( !*ptr )
 			break;
 
-		if( *ptr == '{' )
+		if ( *ptr == '{' )
 		{
-			if( depth == 0 )
+			if ( depth == 0 )
 				count++;
 			depth++;
 			prev = ptr;
 			ptr++;
 		}
-		else if( *ptr == '}' )
+		else if ( *ptr == '}' )
 		{
 			depth--;
 			prev = ptr;
@@ -1919,10 +1919,10 @@ bu_tcl_list_length( const char *in )
 		}
 		else
 		{
-			if( depth == 0 )
+			if ( depth == 0 )
 				count++;
 
-			while( *ptr &&
+			while ( *ptr &&
 				(!isspace( *ptr ) || *prev == '\\') &&
 				(*ptr != '}' || *prev == '\\') &&
 				(*ptr != '{' || *prev == '\\') )
@@ -1947,20 +1947,20 @@ bu_key_val_to_vls(struct bu_vls *vls, char *params)
 
 	len = bu_tcl_list_length( params );
 
-	if( len == 1 )
+	if ( len == 1 )
 	{
 		bu_vls_putc( vls, ' ' );
 		bu_vls_strcat( vls, params );
 		return( 0 );
 	}
 
-	if( len%2 )
+	if ( len%2 )
 	{
 		bu_log( "bu_key_val_to_vls: Error: shader parameters must be even numbered!!\n\t%s\n", params );
 		return( 1 );
 	}
 
-	for( j=0 ; j<len ; j += 2 )
+	for ( j=0; j<len; j += 2 )
 	{
 		char *keyword;
 		char *value;
@@ -1971,7 +1971,7 @@ bu_key_val_to_vls(struct bu_vls *vls, char *params)
 		bu_vls_putc( vls, ' ' );
 		bu_vls_strcat( vls, keyword );
 		bu_vls_putc( vls, '=' );
-		if( bu_tcl_list_length( value ) > 1  )
+		if ( bu_tcl_list_length( value ) > 1  )
 		{
 			bu_vls_putc( vls, '"' );
 			bu_vls_strcat( vls, value );
@@ -2002,19 +2002,19 @@ bu_shader_to_key_eq(char *in, struct bu_vls *vls)
 
 	len = bu_tcl_list_length( in );
 
-	if( len == 0 )
+	if ( len == 0 )
 		return( 0 );
 
-	if( len == 1 )
+	if ( len == 1 )
 	{
 		/* shader with no parameters */
-		if( bu_vls_strlen( vls ) )
+		if ( bu_vls_strlen( vls ) )
 			bu_vls_putc( vls, ' ' );
 		bu_vls_strcat( vls, in );
 		return( 0 );
 	}
 
-	if( len != 2 )
+	if ( len != 2 )
 	{
 		bu_log( "bu_shader_to_key_eq: Error: shader must have two elements (not %d)!!\n\t%s\n", len, in );
 		return 1;
@@ -2023,23 +2023,23 @@ bu_shader_to_key_eq(char *in, struct bu_vls *vls)
 	shader = bu_list_elem( in, 0 );
 	params = bu_list_elem( in, 1 );
 
-	if( !strcmp( shader, "envmap" ) )
+	if ( !strcmp( shader, "envmap" ) )
 	{
 		/* environment map */
 
-		if( bu_vls_strlen( vls ) )
+		if ( bu_vls_strlen( vls ) )
 			bu_vls_putc( vls, ' ' );
 		bu_vls_strcat( vls, "envmap" );
 
 		bu_shader_to_key_eq( params, vls );
 	}
-	else if( !strcmp( shader, "stack" ) )
+	else if ( !strcmp( shader, "stack" ) )
 	{
 		/* stacked shaders */
 
 		int i;
 
-		if( bu_vls_strlen( vls ) )
+		if ( bu_vls_strlen( vls ) )
 			bu_vls_putc( vls, ' ' );
 		bu_vls_strcat( vls, "stack" );
 
@@ -2047,14 +2047,14 @@ bu_shader_to_key_eq(char *in, struct bu_vls *vls)
 		len = bu_tcl_list_length( params );
 
 		/* process each shader in the stack */
-		for( i=0 ; i<len ; i++ )
+		for ( i=0; i<len; i++ )
 		{
 			char *shader1;
 
 			/* each parameter must be a shader specification in itself */
 			shader1 = bu_list_elem( params, i );
 
-			if( i > 0 )
+			if ( i > 0 )
 				bu_vls_putc( vls, ';' );
 			bu_shader_to_key_eq( shader1, vls );
 			bu_free( shader1, "shader1" );
@@ -2062,7 +2062,7 @@ bu_shader_to_key_eq(char *in, struct bu_vls *vls)
 	}
 	else
 	{
-		if( bu_vls_strlen( vls ) )
+		if ( bu_vls_strlen( vls ) )
 			bu_vls_putc( vls, ' ' );
 		bu_vls_strcat( vls, shader );
 		ret = bu_key_val_to_vls( vls, params );
@@ -2094,7 +2094,7 @@ bu_fwrite_external( FILE *fp, const struct bu_external *ep )
 
 	BU_CK_EXTERNAL(ep);
 
-	if( (got = fwrite( ep->ext_buf, 1, ep->ext_nbytes, fp )) != ep->ext_nbytes )  {
+	if ( (got = fwrite( ep->ext_buf, 1, ep->ext_nbytes, fp )) != ep->ext_nbytes )  {
 		perror("fwrite");
 		bu_log("bu_fwrite_external() attempted to write %ld, got %ld\n", (long)ep->ext_nbytes, (long)got );
 		return -1;
@@ -2115,16 +2115,16 @@ bu_hexdump_external( FILE *fp, const struct bu_external *ep, const char *str)
 	BU_CK_EXTERNAL(ep);
 
 	fprintf(fp, "%s:\n", str);
-	if( ep->ext_nbytes <= 0 )  fprintf(fp, "\tWarning: 0 length external buffer\n");
+	if ( ep->ext_nbytes <= 0 )  fprintf(fp, "\tWarning: 0 length external buffer\n");
 
 	cp = ep->ext_buf;
 	endp = cp + ep->ext_nbytes;
-	for( i=0; i < ep->ext_nbytes; i += 16 )  {
+	for ( i=0; i < ep->ext_nbytes; i += 16 )  {
 		const unsigned char	*sp = cp;
 
-		for( j=0; j < 4; j++ )  {
-			for( k=0; k < 4; k++ )  {
-				if( cp >= endp )
+		for ( j=0; j < 4; j++ )  {
+			for ( k=0; k < 4; k++ )  {
+				if ( cp >= endp )
 					fprintf(fp, "   ");
 				else
 					fprintf(fp, "%2.2x ", *cp++ );
@@ -2133,9 +2133,9 @@ bu_hexdump_external( FILE *fp, const struct bu_external *ep, const char *str)
 		}
 		fprintf(fp, " |");
 
-		for( j=0; j < 16; j++, sp++ )  {
-			if( sp >= endp )  break;
-			if( isprint(*sp) )
+		for ( j=0; j < 16; j++, sp++ )  {
+			if ( sp >= endp )  break;
+			if ( isprint(*sp) )
 				putc(*sp, fp);
 			else
 				putc('.', fp);
@@ -2152,7 +2152,7 @@ void
 bu_free_external( register struct bu_external *ep)
 {
 	BU_CK_EXTERNAL(ep);
-	if( ep->ext_buf )  {
+	if ( ep->ext_buf )  {
 		bu_free( ep->ext_buf, "bu_external ext_buf" );
 		ep->ext_buf = GENPTR_NULL;
 	}
@@ -2167,7 +2167,7 @@ bu_copy_external(struct bu_external *op, const struct bu_external *ip)
 	BU_CK_EXTERNAL(ip);
 	BU_INIT_EXTERNAL(op);
 
-	if( op == ip )  return;
+	if ( op == ip )  return;
 
 	op->ext_nbytes = ip->ext_nbytes;
 	op->ext_buf = bu_malloc( ip->ext_nbytes, "bu_copy_external" );
@@ -2186,9 +2186,9 @@ bu_next_token( char *str )
   char *ret;
 
   ret = str;
-  while( !isspace( *ret ) && *ret !='\0' )
+  while ( !isspace( *ret ) && *ret !='\0' )
     ret++;
-  while( isspace( *ret ) )
+  while ( isspace( *ret ) )
     ret++;
 
   return( ret );

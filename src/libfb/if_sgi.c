@@ -90,7 +90,7 @@ union gepipe {
 #define GEPIPE	((union gepipe *)GE)
 #define GEP_END(p)	((union gepipe *)(((char *)p)-0x1000))	/* 68000 efficient 0xFd4000 */
 
-#define CMOV2S(_p,_x,_y) { \
+#define CMOV2S(_p, _x, _y) { \
 		PASSCMD( _p, 0, FBCcharposnabs ); \
 		(_p)->s = GEpoint | GEPA_2S; \
 		(_p)->s = (_x); \
@@ -273,9 +273,9 @@ FBIO	*ifp;
 	size = pixsize + sizeof(struct sgi_cmap);
 	size = (size + 4096-1) & ~(4096-1);
 	/* First try to attach to an existing one */
-	if( (SGI(ifp)->si_shmid = shmget( SHMEM_KEY, size, 0 )) < 0 )  {
+	if ( (SGI(ifp)->si_shmid = shmget( SHMEM_KEY, size, 0 )) < 0 )  {
 		/* No existing one, create a new one */
-		if( (SGI(ifp)->si_shmid = shmget(
+		if ( (SGI(ifp)->si_shmid = shmget(
 		    SHMEM_KEY, size, IPC_CREAT|0666 )) < 0 )  {
 			fb_log("if_sgi: shmget failed, errno=%d\n", errno);
 			goto fail;
@@ -286,22 +286,22 @@ FBIO	*ifp;
 	/* Move up the existing break, to leave room for later malloc()s */
 	old_brk = sbrk(0);
 	new_brk = (char *)(6 * 1024 * 1024);
-	if( new_brk <= old_brk )
+	if ( new_brk <= old_brk )
 		new_brk = old_brk + 1024 * 1024;
 	new_brk = (char *)((((int)new_brk) + 4096-1) & ~(4096-1));
-	if( brk( new_brk ) < 0 )  {
+	if ( brk( new_brk ) < 0 )  {
 		fb_log("new brk(x%x) failure, errno=%d\n", new_brk, errno);
 		goto fail;
 	}
 
 	/* Open the segment Read/Write, near the current break */
-	if( (sp = shmat( SGI(ifp)->si_shmid, 0, 0 )) == (char *)(-1) )  {
+	if ( (sp = shmat( SGI(ifp)->si_shmid, 0, 0 )) == (char *)(-1) )  {
 		fb_log("shmat returned x%x, errno=%d\n", sp, errno );
 		goto fail;
 	}
 
 	/* Restore the old break */
-	if( brk( old_brk ) < 0 )  {
+	if ( brk( old_brk ) < 0 )  {
 		fb_log("restore brk(x%x) failure, errno=%d\n", old_brk, errno);
 		/* Take the memory and run */
 	}
@@ -311,12 +311,12 @@ success:
 	ifp->if_cmap = sp + pixsize;	/* cmap at end of area */
 
 	/* Provide non-black colormap on creation of new shared mem */
-	if(new)
+	if (new)
 		sgi_wmap( ifp, COLORMAP_NULL );
 	return(0);
 fail:
 	fb_log("sgi_getmem:  Unable to attach to shared memory.\n");
-	if( (sp = malloc( size )) == NULL )  {
+	if ( (sp = malloc( size )) == NULL )  {
 		fb_log("sgi_getmem:  malloc failure\n");
 		return(-1);
 	}
@@ -333,13 +333,13 @@ sgi_zapmem()
 	int shmid;
 	int i;
 
-	if( (shmid = shmget( SHMEM_KEY, 0, 0 )) < 0 )  {
+	if ( (shmid = shmget( SHMEM_KEY, 0, 0 )) < 0 )  {
 		fb_log("sgi_zapmem shmget failed, errno=%d\n", errno);
 		return;
 	}
 
 	i = shmctl( shmid, IPC_RMID, 0 );
-	if( i < 0 )  {
+	if ( i < 0 )  {
 		fb_log("sgi_zapmem shmctl failed, errno=%d\n", errno);
 		return;
 	}
@@ -367,7 +367,7 @@ register FBIO	*ifp;
 	short xwidth;
 	static RGBpixel black = { 0, 0, 0 };
 
-	if( SGI(ifp)->si_curs_on )
+	if ( SGI(ifp)->si_curs_on )
 		cursoff();		/* Cursor interferes with drawing */
 
 	xscroff = yscroff = 0;
@@ -379,39 +379,39 @@ register FBIO	*ifp;
 	i = (ifp->if_height/2)/ifp->if_yzoom;
 	ymin = ifp->if_ycenter - i;
 	ymax = ifp->if_ycenter + i - 1;
-	if( xmin < 0 )  {
+	if ( xmin < 0 )  {
 		xscroff = -xmin * ifp->if_xzoom;
 		xmin = 0;
 	}
-	if( ymin < 0 )  {
+	if ( ymin < 0 )  {
 		yscroff = -ymin * ifp->if_yzoom;
 		ymin = 0;
 	}
-	if( xmax > ifp->if_width-1 )  {
+	if ( xmax > ifp->if_width-1 )  {
 		xscrpad = (xmax-(ifp->if_width-1))*ifp->if_xzoom;
 		xmax = ifp->if_width-1;
 	}
-	if( ymax > ifp->if_height-1 )  {
+	if ( ymax > ifp->if_height-1 )  {
 		yscrpad = (ymax-(ifp->if_height-1))*ifp->if_yzoom;
 		ymax = ifp->if_height-1;
 	}
 
 	/* Blank out area left of image.			*/
-	if( xscroff > 0 )
+	if ( xscroff > 0 )
 		sgi_rectf_pix(	ifp,
 				0, 0,
 				(Scoord) xscroff-1, (Scoord) ifp->if_height-1,
 				(RGBpixel *) black
 				);
 	/* Blank out area below image.			*/
-	if( yscroff > 0 )
+	if ( yscroff > 0 )
 		sgi_rectf_pix(	ifp,
 				0, 0,
 				(Scoord) ifp->if_width-1, (Scoord) yscroff-1,
 				(RGBpixel *) black
 				);
 	/* Blank out area right of image.			*/
-	if( xscrpad > 0 )
+	if ( xscrpad > 0 )
 		sgi_rectf_pix(	ifp,
 				(Scoord) ifp->if_width-xscrpad,
 				0,
@@ -420,7 +420,7 @@ register FBIO	*ifp;
 				(RGBpixel *) black
 				);
 	/* Blank out area above image.			*/
-	if( yscrpad > 0 )
+	if ( yscrpad > 0 )
 		sgi_rectf_pix(	ifp,
 				0,
 				(Scoord) ifp->if_height-yscrpad,
@@ -428,20 +428,20 @@ register FBIO	*ifp;
 				(Scoord) ifp->if_height-1,
 				(RGBpixel *) black
 				);
-	for( y = ymin; y <= ymax; y++ )  {
+	for ( y = ymin; y <= ymax; y++ )  {
 
 		ip = (unsigned char *)
 			&ifp->if_mem[(y*1024+xmin)*sizeof(RGBpixel)];
 
-		if( ifp->if_zoomflag )  {
+		if ( ifp->if_zoomflag )  {
 			register Scoord l, b, r, t;
 
 			l = xscroff;
 			b = yscroff + (y-ymin)*ifp->if_yzoom;
 			t = b + ifp->if_yzoom - 1;
 			if ( SGI(ifp)->si_cmap_flag == FALSE )  {
-				for( i=xwidth; i > 0; i--)  {
-					switch( ifp->if_mode ) {
+				for ( i=xwidth; i > 0; i--)  {
+					switch ( ifp->if_mode ) {
 					case MODE_RGB:
 						PASSCMD(hole, 3, FBCrgbcolor);
 						hole->s = (ip[RED]);
@@ -477,10 +477,10 @@ register FBIO	*ifp;
 				}
 				continue;
 			} else {
-				for( i=xwidth; i > 0; i--)  {
+				for ( i=xwidth; i > 0; i--)  {
 					static RGBpixel new;
 
-					switch( ifp->if_mode ) {
+					switch ( ifp->if_mode ) {
 					case MODE_RGB:
 						PASSCMD(hole, 3, FBCrgbcolor);
 						hole->s = CMR(ifp)[ip[RED]];
@@ -527,35 +527,35 @@ register FBIO	*ifp;
 		/* Non-zoomed case */
 		CMOV2S( hole, xscroff, yscroff + (y-ymin) );
 
-		switch( ifp->if_mode )  {
+		switch ( ifp->if_mode )  {
 		case MODE_RGB:
 			if ( SGI(ifp)->si_cmap_flag == FALSE )  {
-				for( i=xwidth; i > 0; )  {
+				for ( i=xwidth; i > 0; )  {
 					register short chunk;
 
-					if( i <= (127/3) )
+					if ( i <= (127/3) )
 						chunk = i;
 					else
 						chunk = 127/3;
 					PASSCMD(hole, chunk*3, FBCdrawpixels);
 					i -= chunk;
-					for( ; chunk>0; chunk--)  {
+					for (; chunk>0; chunk--)  {
 						hole->us = *ip++;
 						hole->us = *ip++;
 						hole->us = *ip++;
 					}
 				}
 			} else {
-				for( i=xwidth; i > 0; )  {
+				for ( i=xwidth; i > 0; )  {
 					register short chunk;
 
-					if( i <= (127/3) )
+					if ( i <= (127/3) )
 						chunk = i;
 					else
 						chunk = 127/3;
 					PASSCMD(hole, chunk*3, FBCdrawpixels);
 					i -= chunk;
-					for( ; chunk>0; chunk--)  {
+					for (; chunk>0; chunk--)  {
 						hole->s = CMR(ifp)[*ip++];
 						hole->s = CMG(ifp)[*ip++];
 						hole->s = CMB(ifp)[*ip++];
@@ -565,30 +565,30 @@ register FBIO	*ifp;
 			break;
 		case MODE_FIT:
 			if ( SGI(ifp)->si_cmap_flag == FALSE )  {
-				for( i=xwidth; i > 0; )  {
+				for ( i=xwidth; i > 0; )  {
 					register short chunk;
 
-					if( i <= 127 )
+					if ( i <= 127 )
 						chunk = i;
 					else
 						chunk = 127;
 					PASSCMD(hole, chunk, FBCdrawpixels);
 					i -= chunk;
-					for( ; chunk > 0; chunk--, ip += sizeof(RGBpixel) )  {
+					for (; chunk > 0; chunk--, ip += sizeof(RGBpixel) )  {
 						hole->s = get_Color_Index( ifp, ip );
 					}
 				}
 			} else {
-				for( i=xwidth; i > 0; )  {
+				for ( i=xwidth; i > 0; )  {
 					register short chunk;
 
-					if( i <= 127 )
+					if ( i <= 127 )
 						chunk = i;
 					else
 						chunk = 127;
 					PASSCMD(hole, chunk, FBCdrawpixels);
 					i -= chunk;
-					for( ; chunk > 0; chunk-- )  {
+					for (; chunk > 0; chunk-- )  {
 						static RGBpixel new;
 						new[RED] = CMR(ifp)[*ip++];
 						new[GRN] = CMG(ifp)[*ip++];
@@ -600,30 +600,30 @@ register FBIO	*ifp;
 			break;
 		case MODE_APPROX:
 			if ( SGI(ifp)->si_cmap_flag == FALSE )  {
-				for( i=xwidth; i > 0; )  {
+				for ( i=xwidth; i > 0; )  {
 					register short chunk;
 
-					if( i <= 127 )
+					if ( i <= 127 )
 						chunk = i;
 					else
 						chunk = 127;
 					PASSCMD(hole, chunk, FBCdrawpixels);
 					i -= chunk;
-					for( ; chunk > 0; chunk--, ip += sizeof(RGBpixel) )  {
+					for (; chunk > 0; chunk--, ip += sizeof(RGBpixel) )  {
 						hole->s = COLOR_APPROX(ip);
 					}
 				}
 			} else {
-				for( i=xwidth; i > 0; )  {
+				for ( i=xwidth; i > 0; )  {
 					register short chunk;
 
-					if( i <= 127 )
+					if ( i <= 127 )
 						chunk = i;
 					else
 						chunk = 127;
 					PASSCMD(hole, chunk, FBCdrawpixels);
 					i -= chunk;
-					for( ; chunk > 0; chunk-- )  {
+					for (; chunk > 0; chunk-- )  {
 						static RGBpixel new;
 						new[RED] = CMR(ifp)[*ip++];
 						new[GRN] = CMG(ifp)[*ip++];
@@ -636,7 +636,7 @@ register FBIO	*ifp;
 		}
 	}
 	GEP_END(hole)->s = (0xFF<<8)|8;	/* im_last_passthru(0) */
-	if( SGI(ifp)->si_curs_on )
+	if ( SGI(ifp)->si_curs_on )
 		curson();		/* Cursor interferes with reading! */
 }
 
@@ -654,31 +654,32 @@ int	width, height;
 
 	FB_CK_FBIO(ifp);
 
-	if( file != NULL )  {
+	if ( file != NULL )  {
 		register char *cp;
 		int mode;
 
 		/* "/dev/sgi###" gives optional mode */
-		for( cp = file; *cp != '\0' && !isdigit(*cp); cp++ ) ;
+		for ( cp = file; *cp != '\0' && !isdigit(*cp); cp++ )
+		    ;
 		mode = 0;
-		if( *cp && isdigit(*cp) )
+		if ( *cp && isdigit(*cp) )
 			(void)sscanf( cp, "%d", &mode );
-		if( mode >= 99 )  {
+		if ( mode >= 99 )  {
 			/* Attempt to release shared memory segment */
 			sgi_zapmem();
 			return(-1);
 		}
-		if( mode != 0 )
+		if ( mode != 0 )
 			return( sgw_dopen( ifp, file, width, height ) );
 	}
 
-	if( ismex() )  {
+	if ( ismex() )  {
 		return( sgw_dopen( ifp, file, width, height ) );
 	}
 	gbegin();		/* not ginit() */
 	RGBmode();
 	gconfig();
-	if( getplanes() < 24 )  {
+	if ( getplanes() < 24 )  {
 		singlebuffer();
 		gconfig();
 		return( sgw_dopen( ifp, file, width, height ) );
@@ -688,9 +689,9 @@ int	width, height;
 
 	blanktime( 67 * 60 * 60L );	/* 1 hour blanking when fb open */
 
-	if( width <= 0 )
+	if ( width <= 0 )
 		width = ifp->if_width;
-	if( height <= 0 )
+	if ( height <= 0 )
 		height = ifp->if_height;
 	if ( width > ifp->if_max_width)
 		width = ifp->if_max_width;
@@ -701,7 +702,7 @@ int	width, height;
 	ifp->if_width = width;
 	ifp->if_height = height;
 
-	if( (SGIL(ifp) = (char *)calloc( 1, sizeof(struct sgiinfo) )) == NULL )  {
+	if ( (SGIL(ifp) = (char *)calloc( 1, sizeof(struct sgiinfo) )) == NULL )  {
 		fb_log("sgi_open:  sgiinfo malloc failed\n");
 		return(-1);
 	}
@@ -718,7 +719,7 @@ int	width, height;
 	ifp->if_ycenter = height/2;
 	ifp->if_mode = MODE_RGB;
 
-	if( sgi_getmem(ifp) < 0 )
+	if ( sgi_getmem(ifp) < 0 )
 		return(-1);
 
 	/* Must call "is_linear_cmap" AFTER "sgi_getmem" which allocates
@@ -753,13 +754,13 @@ FBIO	*ifp;
 {
 	blanktime( 67 * 60 * 20L );	/* 20 minute blanking when fb closed */
 
-	switch( ifp->if_mode )  {
+	switch ( ifp->if_mode )  {
 	case MODE_RGB:
 		gexit();
 		break;
 	case MODE_FIT:
 	case MODE_APPROX:
-		if( ismex() )  {
+		if ( ismex() )  {
 			winclose( ifp->if_fd );
 			curson();	/* Leave mex's cursor on */
 		}  else  {
@@ -770,11 +771,11 @@ FBIO	*ifp;
 		}
 		break;
 	}
-	if( SGIL(ifp) != NULL ) {
+	if ( SGIL(ifp) != NULL ) {
 		/* free up memory associated with image */
-		if( SGI(ifp)->si_shmid != -1 ) {
+		if ( SGI(ifp)->si_shmid != -1 ) {
 			/* detach from shared memory */
-			if( shmdt( ifp->if_mem ) == -1 ) {
+			if ( shmdt( ifp->if_mem ) == -1 ) {
 				fb_log("sgi_close shmdt failed, errno=%d\n", errno);
 				return -1;
 			}
@@ -799,7 +800,7 @@ FBIO	*ifp;
 register RGBpixel	*pp;
 {
 
-	if( qtest() )
+	if ( qtest() )
 		sgw_inqueue(ifp);
 
 	if ( pp != RGBPIXEL_NULL)  {
@@ -807,13 +808,13 @@ register RGBpixel	*pp;
 		register int cnt;
 
 		/* Slightly simplistic -- runover to right border */
-		for( cnt=1024*ifp->if_height-1; cnt > 0; cnt-- )  {
+		for ( cnt=1024*ifp->if_height-1; cnt > 0; cnt-- )  {
 			*op++ = (*pp)[RED];
 			*op++ = (*pp)[GRN];
 			*op++ = (*pp)[BLU];
 		}
 
-		switch( ifp->if_mode )  {
+		switch ( ifp->if_mode )  {
 		case MODE_RGB:
 			RGBcolor((short)((*pp)[RED]), (short)((*pp)[GRN]), (short)((*pp)[BLU]));
 			break;
@@ -827,7 +828,7 @@ register RGBpixel	*pp;
 			break;
 		}
 	} else {
-		switch( ifp->if_mode )  {
+		switch ( ifp->if_mode )  {
 		case MODE_RGB:
 			RGBcolor( (short) 0, (short) 0, (short) 0);
 			break;
@@ -846,7 +847,7 @@ HIDDEN int
 sgi_poll(ifp)
 FBIO	*ifp;
 {
-	if( qtest() )
+	if ( qtest() )
 		sgw_inqueue(ifp);
 }
 
@@ -856,20 +857,20 @@ FBIO	*ifp;
 int	xcenter, ycenter;
 int	xzoom, yzoom;
 {
-	if( qtest() )
+	if ( qtest() )
 		sgw_inqueue(ifp);
 
-	if( xzoom < 1 ) xzoom = 1;
-	if( yzoom < 1 ) yzoom = 1;
-	if( ifp->if_xcenter == xcenter && ifp->if_ycenter == ycenter
+	if ( xzoom < 1 ) xzoom = 1;
+	if ( yzoom < 1 ) yzoom = 1;
+	if ( ifp->if_xcenter == xcenter && ifp->if_ycenter == ycenter
 	 && ifp->if_xzoom == xzoom && ifp->if_yzoom == yzoom )
 		return(0);
 
-	if( xcenter < 0 || xcenter >= ifp->if_width )
+	if ( xcenter < 0 || xcenter >= ifp->if_width )
 		return(-1);
-	if( ycenter < 0 || ycenter >= ifp->if_height )
+	if ( ycenter < 0 || ycenter >= ifp->if_height )
 		return(-1);
-	if( xzoom >= ifp->if_width || yzoom >= ifp->if_height )
+	if ( xzoom >= ifp->if_width || yzoom >= ifp->if_height )
 		return(-1);
 
 	ifp->if_xcenter = xcenter;
@@ -877,7 +878,7 @@ int	xzoom, yzoom;
 	ifp->if_xzoom = xzoom;
 	ifp->if_yzoom = yzoom;
 
-	if( ifp->if_xzoom > 1 || ifp->if_yzoom > 1 )
+	if ( ifp->if_xzoom > 1 || ifp->if_yzoom > 1 )
 		ifp->if_zoomflag = 1;
 	else	ifp->if_zoomflag = 0;
 
@@ -900,17 +901,17 @@ int	count;
 	register char *ip;
 	int ret;
 
-	if( qtest() )
+	if ( qtest() )
 		sgw_inqueue(ifp);
 
-	if( x < 0 || x > ifp->if_width ||
+	if ( x < 0 || x > ifp->if_width ||
 	    y < 0 || y > ifp->if_height )
 		return(-1);
 	ret = 0;
 	xpos = x;
 	ypos = y;
 
-	while( count > 0 )  {
+	while ( count > 0 )  {
 		ip = &ifp->if_mem[(ypos*1024+xpos)*sizeof(RGBpixel)];
 
 		if ( count >= ifp->if_width-xpos )  {
@@ -925,7 +926,7 @@ int	count;
 		ret += scan_count;
 		xpos = 0;
 		/* Advance upwards */
-		if( ++ypos >= ifp->if_height )
+		if ( ++ypos >= ifp->if_height )
 			break;
 	}
 	return(ret);
@@ -951,20 +952,20 @@ int	count;
 	int hfwidth = (ifp->if_width/ifp->if_xzoom)/2;
 	int hfheight = (ifp->if_height/ifp->if_yzoom)/2;
 
-	if( qtest() )
+	if ( qtest() )
 		sgw_inqueue(ifp);
-	if( xmem < 0 || xmem > ifp->if_width ||
+	if ( xmem < 0 || xmem > ifp->if_width ||
 	    ymem < 0 || ymem > ifp->if_height)
 		return(-1);
-	if( SGI(ifp)->si_curs_on )
+	if ( SGI(ifp)->si_curs_on )
 		cursoff();		/* Cursor interferes with writing */
 
 	ret = 0;
 	xscr = (xmem - (ifp->if_xcenter-hfwidth)) * ifp->if_xzoom;
 	yscr = (ymem - (ifp->if_ycenter-hfheight)) * ifp->if_yzoom;
 	cp = (unsigned char *)(*pixelp);
-	while( count > 0 )  {
-		if( yscr >= ifp->if_height )
+	while ( count > 0 )  {
+		if ( yscr >= ifp->if_height )
 			break;
 		if ( count >= ifp->if_width-xmem )
 			scan_count = ifp->if_width-xmem;
@@ -973,20 +974,20 @@ int	count;
 
 		op = (unsigned char *)&ifp->if_mem[(ymem*1024+xmem)*sizeof(RGBpixel)];
 
-		if( ifp->if_zoomflag )  {
+		if ( ifp->if_zoomflag )  {
 			register Scoord l, b, r, t;
 			int todraw = (ifp->if_width-xscr)/ifp->if_xzoom;
 			int tocopy;
 
-			if( todraw > scan_count )  todraw = scan_count;
+			if ( todraw > scan_count )  todraw = scan_count;
 			tocopy = scan_count - todraw;
 
 			l = xscr;
 			b = yscr;
 			t = b + ifp->if_yzoom - 1;
-			for( i = todraw; i > 0; i-- )  {
+			for ( i = todraw; i > 0; i-- )  {
 
-				switch( ifp->if_mode )  {
+				switch ( ifp->if_mode )  {
 				case MODE_RGB:
 					PASSCMD(hole, 3, FBCrgbcolor);
 					if ( SGI(ifp)->si_cmap_flag == FALSE ) {
@@ -1046,7 +1047,7 @@ int	count;
 				*op++ = *cp++;
 				*op++ = *cp++;
 			}
-			for( i = tocopy; i > 0; i-- )  {
+			for ( i = tocopy; i > 0; i-- )  {
 				*op++ = *cp++;
 				*op++ = *cp++;
 				*op++ = *cp++;
@@ -1063,35 +1064,35 @@ int	count;
 		/* Non-zoomed case */
 		CMOV2S( hole, xscr, yscr );
 
-		switch( ifp->if_mode )  {
+		switch ( ifp->if_mode )  {
 		case MODE_RGB:
 			if ( SGI(ifp)->si_cmap_flag == FALSE )  {
-				for( i=scan_count; i > 0; )  {
+				for ( i=scan_count; i > 0; )  {
 					register short chunk;
 
-					if( i <= (127/3) )
+					if ( i <= (127/3) )
 						chunk = i;
 					else
 						chunk = 127/3;
 					PASSCMD(hole, chunk*3, FBCdrawpixels);
 					i -= chunk;
-					for( ; chunk>0; chunk--)  {
+					for (; chunk>0; chunk--)  {
 						hole->us = (*op++ = *cp++);
 						hole->us = (*op++ = *cp++);
 						hole->us = (*op++ = *cp++);
 					}
 				}
 			} else {
-				for( i=scan_count; i > 0; )  {
+				for ( i=scan_count; i > 0; )  {
 					register short chunk;
 
-					if( i <= (127/3) )
+					if ( i <= (127/3) )
 						chunk = i;
 					else
 						chunk = 127/3;
 					PASSCMD(hole, chunk*3, FBCdrawpixels);
 					i -= chunk;
-					for( ; chunk>0; chunk-- )  {
+					for (; chunk>0; chunk-- )  {
 						hole->s = CMR(ifp)[
 							*op++ = *cp++];
 						hole->s = CMG(ifp)[
@@ -1104,15 +1105,15 @@ int	count;
 			break;
 		case MODE_FIT:
 			if ( SGI(ifp)->si_cmap_flag == FALSE )  {
-				for( i = scan_count; i > 0; )  {
+				for ( i = scan_count; i > 0; )  {
 					register short	chunk;
-					if( i <= 127 )
+					if ( i <= 127 )
 						chunk = i;
 					else
 						chunk = 127;
 					PASSCMD(hole, chunk, FBCdrawpixels);
 					i -= chunk;
-					for( ; chunk > 0; chunk--, pixelp++ )  {
+					for (; chunk > 0; chunk--, pixelp++ )  {
 						hole->s = get_Color_Index( ifp, pixelp );
 						*op++ = (*pixelp)[RED];
 						*op++ = (*pixelp)[GRN];
@@ -1120,15 +1121,15 @@ int	count;
 					}
 				}
 			} else {
-				for( i = scan_count; i > 0; )  {
+				for ( i = scan_count; i > 0; )  {
 					register short	chunk;
-					if( i <= 127 )
+					if ( i <= 127 )
 						chunk = i;
 					else
 						chunk = 127;
 					PASSCMD(hole, chunk, FBCdrawpixels);
 					i -= chunk;
-					for( ; chunk > 0; chunk--, pixelp++ )  {
+					for (; chunk > 0; chunk--, pixelp++ )  {
 						static RGBpixel new;
 						new[RED] = CMR(ifp)[
 							*op++ = (*pixelp)[RED]];
@@ -1142,15 +1143,15 @@ int	count;
 			}
 		case MODE_APPROX:
 			if ( SGI(ifp)->si_cmap_flag == FALSE )  {
-				for( i = scan_count; i > 0; )  {
+				for ( i = scan_count; i > 0; )  {
 					register short	chunk;
-					if( i <= 127 )
+					if ( i <= 127 )
 						chunk = i;
 					else
 						chunk = 127;
 					PASSCMD(hole, chunk, FBCdrawpixels);
 					i -= chunk;
-					for( ; chunk > 0; chunk--, pixelp++ )  {
+					for (; chunk > 0; chunk--, pixelp++ )  {
 						hole->s = COLOR_APPROX(*pixelp);
 						*op++ = (*pixelp)[RED];
 						*op++ = (*pixelp)[GRN];
@@ -1158,15 +1159,15 @@ int	count;
 					}
 				}
 			} else {
-				for( i = scan_count; i > 0; )  {
+				for ( i = scan_count; i > 0; )  {
 					register short	chunk;
-					if( i <= 127 )
+					if ( i <= 127 )
 						chunk = i;
 					else
 						chunk = 127;
 					PASSCMD(hole, chunk, FBCdrawpixels);
 					i -= chunk;
-					for( ; chunk > 0; chunk--, pixelp++ )  {
+					for (; chunk > 0; chunk--, pixelp++ )  {
 						static RGBpixel new;
 						new[RED] = CMR(ifp)[
 							*op++ = (*pixelp)[RED]];
@@ -1188,7 +1189,7 @@ int	count;
 		yscr++;
 	}
 	GEP_END(hole)->s = (0xFF<<8)|8;	/* im_last_passthru(0) */
-	if( SGI(ifp)->si_curs_on )
+	if ( SGI(ifp)->si_curs_on )
 		curson();		/* Cursor interferes with writing */
 	return(ret);
 }
@@ -1203,11 +1204,11 @@ register ColorMap	*cmp;
 {
 	register int i;
 
-	if( qtest() )
+	if ( qtest() )
 		sgw_inqueue(ifp);
 
 	/* Just parrot back the stored colormap */
-	for( i = 0; i < 256; i++)
+	for ( i = 0; i < 256; i++)
 	{
 		cmp->cm_red[i] = CMR(ifp)[i]<<8;
 		cmp->cm_green[i] = CMG(ifp)[i]<<8;
@@ -1229,10 +1230,10 @@ register FBIO	*ifp;
 {
 	register int i;
 
-	for( i=0; i<256; i++ )  {
-		if( CMR(ifp)[i] != i )  return(0);
-		if( CMG(ifp)[i] != i )  return(0);
-		if( CMB(ifp)[i] != i )  return(0);
+	for ( i=0; i<256; i++ )  {
+		if ( CMR(ifp)[i] != i )  return(0);
+		if ( CMG(ifp)[i] != i )  return(0);
+		if ( CMB(ifp)[i] != i )  return(0);
 	}
 	return(1);
 }
@@ -1247,16 +1248,16 @@ register ColorMap	*cmp;
 {
 	register int i;
 
-	if( qtest() )
+	if ( qtest() )
 		sgw_inqueue(ifp);
 
 	if ( cmp == COLORMAP_NULL)  {
-		for( i = 0; i < 256; i++)  {
+		for ( i = 0; i < 256; i++)  {
 			CMR(ifp)[i] = i;
 			CMG(ifp)[i] = i;
 			CMB(ifp)[i] = i;
 		}
-		if( SGI(ifp)->si_cmap_flag ) {
+		if ( SGI(ifp)->si_cmap_flag ) {
 			SGI(ifp)->si_cmap_flag = FALSE;
 			sgi_repaint( ifp );
 		}
@@ -1264,7 +1265,7 @@ register ColorMap	*cmp;
 		return(0);
 	}
 
-	for(i = 0; i < 256; i++)  {
+	for (i = 0; i < 256; i++)  {
 		CMR(ifp)[i] = cmp-> cm_red[i]>>8;
 		CMG(ifp)[i] = cmp-> cm_green[i]>>8;
 		CMB(ifp)[i] = cmp-> cm_blue[i]>>8;
@@ -1289,23 +1290,23 @@ int		xorig, yorig;
 	register int	xbytes;
 	Cursor		newcursor;
 
-	if( qtest() )
+	if ( qtest() )
 		sgw_inqueue(ifp);
 
 	/* Check size of cursor.					*/
-	if( xbits < 0 )
+	if ( xbits < 0 )
 		return	-1;
-	if( xbits > 16 )
+	if ( xbits > 16 )
 		xbits = 16;
-	if( ybits < 0 )
+	if ( ybits < 0 )
 		return	-1;
-	if( ybits > 16 )
+	if ( ybits > 16 )
 		ybits = 16;
-	if( (xbytes = xbits / 8) * 8 != xbits )
+	if ( (xbytes = xbits / 8) * 8 != xbits )
 		xbytes++;
-	for( y = 0; y < ybits; y++ )  {
+	for ( y = 0; y < ybits; y++ )  {
 		newcursor[y] = bits[(y*xbytes)+0] << 8 & 0xFF00;
-		if( xbytes == 2 )
+		if ( xbytes == 2 )
 			newcursor[y] |= bits[(y*xbytes)+1] & 0x00FF;
 	}
 	defcursor( 1, newcursor );
@@ -1326,12 +1327,12 @@ int	x, y;
 	register short	i;
 	short	xwidth;
 
-	if( qtest() )
+	if ( qtest() )
 		sgw_inqueue(ifp);
 
 	fb_sim_cursor(ifp, mode, x, y);
 	SGI(ifp)->si_curs_on = mode;
-	if( ! mode )  {
+	if ( ! mode )  {
 		cursoff();
 		return	0;
 	}
@@ -1345,7 +1346,7 @@ int	x, y;
 	x *= ifp->if_xzoom;
 	y *= ifp->if_yzoom;
 	curson();
-	switch( ifp->if_mode )  {
+	switch ( ifp->if_mode )  {
 	case MODE_RGB:
 		RGBcursor( 1, 255, 255, 0, 0xFF, 0xFF, 0xFF );
 		setvaluator( MOUSEX, x, 0, 1023 );
@@ -1383,24 +1384,24 @@ register RGBpixel	*pixelp;
 
 	/* Find best fit in existing table */
 	best = 0;
-	for(	i = MAP_RESERVED, sp = (RGBpixel *)rgb_table[MAP_RESERVED];
+	for (	i = MAP_RESERVED, sp = (RGBpixel *)rgb_table[MAP_RESERVED];
 		i < SGI(ifp)->si_rgb_ct;
 		sp++, i++ ) {
 		register int	diff;
 		register int	d;
 
 		d = ((int)((*pixelp)[RED])) - ((int)(*sp)[RED]);
-		if( (diff = Abs(d)) >= min_diff )
+		if ( (diff = Abs(d)) >= min_diff )
 			continue;
 		d = ((int)((*pixelp)[GRN])) - ((int)(*sp)[GRN]);
-		if( (diff += Abs(d)) >= min_diff )
+		if ( (diff += Abs(d)) >= min_diff )
 			continue;
 		d = ((int)((*pixelp)[BLU])) - ((int)(*sp)[BLU]);
-		if( (diff += Abs(d)) >= min_diff )
+		if ( (diff += Abs(d)) >= min_diff )
 			continue;
 
 		/* [i]'th element is the best so far... */
-		if( (min_diff = diff) <= 2 )  {
+		if ( (min_diff = diff) <= 2 )  {
 			/* Great match */
 			return( (Colorindex)i );
 		}
@@ -1408,11 +1409,11 @@ register RGBpixel	*pixelp;
 	}
 
 	/* Match found to within tolerance? */
-	if( min_diff < MAP_TOL )
+	if ( min_diff < MAP_TOL )
 		return	(Colorindex)best;
 
 	/* Allocate new entry in color table if there's room.		*/
-	if( i < map_size )  {
+	if ( i < map_size )  {
 		COPYRGB( rgb_table[SGI(ifp)->si_rgb_ct], *pixelp);
 		mapcolor(	(Colorindex)SGI(ifp)->si_rgb_ct,
 				(short) (*pixelp)[RED],
@@ -1423,7 +1424,7 @@ register RGBpixel	*pixelp;
 	}
 
 	/* No room to add, use best we found */
-	if( !groused )  {
+	if ( !groused )  {
 		groused = 1;
 		fb_log( "Color table now full, will use closest matches.\n" );
 	}
@@ -1446,34 +1447,35 @@ char	*file;
 int	width, height;
 {	register Colorindex i;
 
-	if( (SGIL(ifp) = (char *)calloc( 1, sizeof(struct sgiinfo) )) == NULL )  {
+	if ( (SGIL(ifp) = (char *)calloc( 1, sizeof(struct sgiinfo) )) == NULL )  {
 		fb_log("sgw_dopen:  sgiinfo malloc failed\n");
 		return(-1);
 	}
 
 	ifp->if_mode = MODE_APPROX;
-	if( file != NULL )  {
+	if ( file != NULL )  {
 		register char *cp;
 		int mode;
 		/* "/dev/sgi###" gives optional mode */
-		for( cp = file; *cp != '\0' && !isdigit(*cp); cp++ ) ;
+		for ( cp = file; *cp != '\0' && !isdigit(*cp); cp++ )
+		    ;
 		mode = MODE_APPROX;
-		if( isdigit(*cp) )
+		if ( isdigit(*cp) )
 			(void)sscanf( cp, "%d", &mode );
-		if( mode >= 99 )  {
+		if ( mode >= 99 )  {
 			/* Attempt to release shared memory segment */
 			sgi_zapmem();
 			return(-1);
 		}
-		if( mode < MODE_APPROX || mode > MODE_FIT )
+		if ( mode < MODE_APPROX || mode > MODE_FIT )
 			mode = MODE_APPROX;
 		ifp->if_mode = mode;
 	}
 
 	/* By default, pop up a 512x512 MEX window, rather than fullsize */
-	if( width <= 0 )
+	if ( width <= 0 )
 		width = 512;
-	if( height <= 0 )
+	if ( height <= 0 )
 		height = 512;
 	if ( width > ifp->if_max_width)
 		width = ifp->if_max_width;
@@ -1483,10 +1485,10 @@ int	width, height;
 	ifp->if_width = width;
 	ifp->if_height = height;
 
-	if( ismex() )  {
+	if ( ismex() )  {
 		prefposition( WIN_L, WIN_R, WIN_B, WIN_T );
 		foreground();		/* Direct focus here, don't detach */
-		if( (ifp->if_fd = winopen( "Frame buffer" )) == -1 )
+		if ( (ifp->if_fd = winopen( "Frame buffer" )) == -1 )
 			{
 			fb_log( "No more graphics ports available.\n" );
 			return	-1;
@@ -1518,7 +1520,7 @@ int	width, height;
 	ifp->if_xcenter = width/2;
 	ifp->if_ycenter = height/2;
 
-	if( sgi_getmem(ifp) < 0 )
+	if ( sgi_getmem(ifp) < 0 )
 		return(-1);
 
 	/* Must call "is_linear_cmap" AFTER "sgi_getmem" which allocates
@@ -1541,9 +1543,9 @@ int	width, height;
 	SET( 7, 255, 255, 255 );	/* WHITE */
 
 	SGI(ifp)->si_rgb_ct = MAP_RESERVED;
-	if( ifp->if_mode == MODE_APPROX )  {
+	if ( ifp->if_mode == MODE_APPROX )  {
 		/* Use fixed color map with 10x10x10 color cube */
-		for( i = 0; i < map_size-MAP_RESERVED; i++ )
+		for ( i = 0; i < map_size-MAP_RESERVED; i++ )
 			mapcolor( 	i+MAP_RESERVED,
 					(short)((i % 10) + 1) * 25,
 					(short)(((i / 10) % 10) + 1) * 25,
@@ -1575,8 +1577,8 @@ register FBIO *ifp;
 	int redraw = 0;
 	register int ev;
 
-	while( qtest() )  {
-		switch( ev = qread(&val) )  {
+	while ( qtest() )  {
+		switch ( ev = qread(&val) )  {
 		case REDRAW:
 			redraw = 1;
 			break;
@@ -1600,7 +1602,7 @@ register FBIO *ifp;
 	 * Now that all the events have been removed from the input
 	 * queue, handle any actions that need to be done.
 	 */
-	if( redraw )  {
+	if ( redraw )  {
 		sgi_repaint( ifp );
 		redraw = 0;
 	}
@@ -1614,7 +1616,7 @@ RGBpixel	*pixelp;
 {
 	register union gepipe *hole = GEPIPE;
 
-	switch( ifp->if_mode ) {
+	switch ( ifp->if_mode ) {
 	case MODE_RGB:
 		PASSCMD(hole, 3, FBCrgbcolor);
 		hole->s = (*pixelp)[RED];

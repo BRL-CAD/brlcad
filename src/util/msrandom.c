@@ -65,7 +65,7 @@ main(int argc, char **argv)
 	int c;
 
 	while ((c = bu_getopt(argc, argv, "vugs:c:")) != EOF ) {
-		switch(c) {
+		switch (c) {
 		case 's':
 			seed = atoi(bu_optarg);
 			break;

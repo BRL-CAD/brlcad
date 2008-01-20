@@ -38,7 +38,7 @@ char map[18] = "0123456789ABCDEFx";
 int
 main(void)
 {
-	while( !feof(stdin) &&
+	while ( !feof(stdin) &&
 	    fread( (char *)pix, sizeof(pix), 1, stdin) == 1 )  {
 		putc( map[pix[0]>>4], stdout );
 		putc( map[pix[0]&0xF], stdout );

@@ -145,7 +145,7 @@ view_2init( struct application *ap )
     fastf_t backoff;
 
 
-    if( numreflect > MAXREFLECT ) {
+    if ( numreflect > MAXREFLECT ) {
 	bu_log("Warning: maxreflect too large (%d), using %d\n",
 	       numreflect, MAXREFLECT );
 	numreflect = MAXREFLECT;
@@ -231,29 +231,29 @@ radhit( struct application *ap, struct partition *PartHeadp )
     int	cpu_num;
 
 
-    for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
-	if( pp->pt_outhit->hit_dist >= 0.0 )  break;
-    if( pp == PartHeadp )  {
+    for ( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
+	if ( pp->pt_outhit->hit_dist >= 0.0 )  break;
+    if ( pp == PartHeadp )  {
 	bu_log("radhit:  no hit out front?\n");
 	return(0);
     }
 
-    if(R_DEBUG&RDEBUG_HITS)  {
+    if (R_DEBUG&RDEBUG_HITS)  {
 	rt_pr_pt( ap->a_rt_i, pp );
     }
 
     hitp = pp->pt_inhit;
-    if( hitp->hit_dist >= INFINITY )  {
+    if ( hitp->hit_dist >= INFINITY )  {
 	bu_log("radhit:  entry beyond infinity\n");
 	return(1);
     }
     /* Check to see if eye is "inside" the solid */
-    if( hitp->hit_dist < 0 )  {
+    if ( hitp->hit_dist < 0 )  {
 	/* XXX */
 	return(0);
     }
 
-    if(R_DEBUG&RDEBUG_HITS)  {
+    if (R_DEBUG&RDEBUG_HITS)  {
 	rt_pr_hit( " In", hitp );
     }
 
@@ -271,7 +271,7 @@ radhit( struct application *ap, struct partition *PartHeadp )
     rayp->surf = hitp->hit_surfno;
     RT_HIT_NORMAL( rayp->norm, hitp, pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip );
     RT_CURVATURE( &(rayp->curvature), hitp, pp->pt_inflip, pp->pt_inseg->seg_stp );
-    if( VDOT( hitp->hit_normal, ap->a_ray.r_dir ) < 0 ) {
+    if ( VDOT( hitp->hit_normal, ap->a_ray.r_dir ) < 0 ) {
 	bu_log(" debug: curvature flip\n");
 	rayp->curvature.crv_c1 = - rayp->curvature.crv_c1;
 	rayp->curvature.crv_c2 = - rayp->curvature.crv_c2;
@@ -288,7 +288,7 @@ radhit( struct application *ap, struct partition *PartHeadp )
     VUNITIZE( rayp->spec );
 
     /* Save info for 1st ray */
-    if( ap->a_level == 0 ) {
+    if ( ap->a_level == 0 ) {
 	firstray[cpu_num] = ap->a_ray;	/* struct copy */
 	rayp->sight = 1;	/* the 1st intersect is always visible */
     } else {
@@ -299,7 +299,7 @@ radhit( struct application *ap, struct partition *PartHeadp )
     /*
      * Shoot another ray in the specular direction.
      */
-    if( ap->a_level < numreflect-1 ) {
+    if ( ap->a_level < numreflect-1 ) {
 	sub_ap = *ap;	/* struct copy */
 	sub_ap.a_level = ap->a_level+1;
 	sub_ap.a_purpose = "secondary ray";
@@ -310,7 +310,7 @@ radhit( struct application *ap, struct partition *PartHeadp )
 	depth = 0;
     }
 
-    if( ap->a_level == 0 ) {
+    if ( ap->a_level == 0 ) {
 	rayinfo[cpu_num][0].x = ap->a_x;
 	rayinfo[cpu_num][0].y = ap->a_y;
 	rayinfo[cpu_num][0].surf = depth+1;
@@ -346,14 +346,14 @@ hiteye( struct application *ap, struct partition *PartHeadp )
     vect_t work;
     int cpu_num;
 
-    for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
-	if( pp->pt_outhit->hit_dist > 0 )  break;
-    if( pp == PartHeadp )  {
+    for ( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
+	if ( pp->pt_outhit->hit_dist > 0 )  break;
+    if ( pp == PartHeadp )  {
 	bu_log("hiteye:  no hit out front?\n");
 	return(1);
     }
     hitp = pp->pt_inhit;
-    if( hitp->hit_dist >= INFINITY )  {
+    if ( hitp->hit_dist >= INFINITY )  {
 	bu_log("hiteye:  entry beyond infinity\n");
 	return(1);
     }
@@ -361,7 +361,7 @@ hiteye( struct application *ap, struct partition *PartHeadp )
      * find out where it went in.
      * Check to see if eye is "inside" of the solid.
      */
-    if( hitp->hit_dist < -1.0e-10 )  {
+    if ( hitp->hit_dist < -1.0e-10 )  {
 	return(0);
     }
 
@@ -371,7 +371,7 @@ hiteye( struct application *ap, struct partition *PartHeadp )
 	cpu_num = ap->a_resource->re_cpu;
 
     VSUB2( work, firstray[cpu_num].r_pt, ap->a_ray.r_pt );
-    if( hitp->hit_dist * hitp->hit_dist > MAGSQ(work) )
+    if ( hitp->hit_dist * hitp->hit_dist > MAGSQ(work) )
 	return(1);
     else
 	return(0);
@@ -412,7 +412,7 @@ isvisible( struct application *ap, struct hit *hitp, const vect_t norm )
     /* compute the ray direction */
     VSUB2( rdir, firstray[cpu_num].r_pt, hitp->hit_point );
     VUNITIZE( rdir );
-    if( VDOT(rdir, norm) < 0 )
+    if ( VDOT(rdir, norm) < 0 )
 	return( 0 );	/* backfacing */
 
     sub_ap = *ap;	/* struct copy */

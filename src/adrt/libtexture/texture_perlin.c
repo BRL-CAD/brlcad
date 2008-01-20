@@ -78,13 +78,13 @@ void texture_perlin_init(texture_perlin_t *P) {
   }
 
   /* Permute Indices into Vector List G */
-  for(i = 0; i < B; i++) {
+  for (i = 0; i < B; i++) {
     k = P->PV[i];
     P->PV[i] = P->PV[j = PRAND % B];
     P->PV[j] = k;
   }
 
-  for(i = 0; i < B + 2; i++) {
+  for (i = 0; i < B + 2; i++) {
     P->PV[B+i] = P->PV[i];
     P->RV[B+i] = P->RV[i];
   }
@@ -102,7 +102,7 @@ tfloat texture_perlin_noise3(texture_perlin_t *P, TIE_3 V, tfloat Size, int Dept
   tfloat sum;
 
   sum = 0;
-  for(i = 0; i < Depth; i++) {
+  for (i = 0; i < Depth; i++) {
     sum += texture_perlin_omega(P, V);
     MATH_VEC_MUL_SCALAR(V, V, Size);
   }
@@ -118,7 +118,7 @@ tfloat texture_perlin_omega(texture_perlin_t *P, TIE_3 V) {
   int		i, j;
 
 
-  for(i = 0; i < 3; i++) {
+  for (i = 0; i < 3; i++) {
     t = V.v[i] + N;
     b0[i] = ((int)t) & BM;
     b1[i] = (b0[i]+1) & BM;

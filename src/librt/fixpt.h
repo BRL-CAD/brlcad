@@ -59,21 +59,21 @@ struct fixpt  {
 #define FLOAT_FIXPT( fp )  ( fp.i + ((double)fp.f)/FIXPT_SCALE )
 
 #define FIXPT_NORMALIZE(fp)	{ \
-	if( fp.f < 0 )  { \
+	if ( fp.f < 0 )  { \
 		do {  \
 			fp.i--; \
 			fp.f += FIXPT_SCALE; \
-		} while( fp.f < 0 ); \
-	} else if( fp.f >= FIXPT_SCALE )  { \
+		} while ( fp.f < 0 ); \
+	} else if ( fp.f >= FIXPT_SCALE )  { \
 		do { \
 			fp.i++; \
 			fp.f -= FIXPT_SCALE; \
-		} while( fp.f >= FIXPT_SCALE ); \
+		} while ( fp.f >= FIXPT_SCALE ); \
 	} }
 
 #define FIXPT_ROUND(fp)		{ \
-	if( fp.f > FIXPT_SCALE/2 )  { \
-		if( fp.i >= 0 ) fp.i++; \
+	if ( fp.f > FIXPT_SCALE/2 )  { \
+		if ( fp.i >= 0 ) fp.i++; \
 		else fp.i--; \
 	}  fp.f = 0; }
 

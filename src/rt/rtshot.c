@@ -115,7 +115,7 @@ main(int argc, char **argv)
     int attr_count=0, i;
     char **attrs = (char **)NULL;
 
-    if( argc < 3 )  {
+    if ( argc < 3 )  {
 	bu_exit(1, usage);
     }
 
@@ -123,7 +123,7 @@ main(int argc, char **argv)
 
     argc--;
     argv++;
-    while( argv[0][0] == '-' ) switch( argv[0][1] )  {
+    while ( argv[0][0] == '-' ) switch ( argv[0][1] )  {
 	case 'R':
 	    bundle_radius = atof( argv[1] );
 	    argc -= 2;
@@ -142,16 +142,16 @@ main(int argc, char **argv)
 	case 'v':
 	    /* count the number of attribute names provided */
 	    ptr = argv[1];
-	    while( *ptr ) {
-		while( *ptr && isspace( *ptr ) )
+	    while ( *ptr ) {
+		while ( *ptr && isspace( *ptr ) )
 		    ptr++;
-		if( *ptr )
+		if ( *ptr )
 		    attr_count++;
-		while( *ptr && !isspace( *ptr ) )
+		while ( *ptr && !isspace( *ptr ) )
 		    ptr++;
 	    }
 
-	    if( attr_count == 0 ) {
+	    if ( attr_count == 0 ) {
 		bu_log( "missing list of attribute names!\n" );
 		bu_exit( 1, usage );
 	    }
@@ -162,7 +162,7 @@ main(int argc, char **argv)
 	    /* use strtok to actually grab the names */
 	    i = 0;
 	    ptr = strtok( argv[1], "\t " );
-	    while( ptr && i < attr_count ) {
+	    while ( ptr && i < attr_count ) {
 		attrs[i] = bu_strdup( ptr );
 		ptr = strtok( (char *)NULL, "\t " );
 		i++;
@@ -225,7 +225,7 @@ main(int argc, char **argv)
 	    argv += 2;
 	    break;
 	case 'd':
-	    if( argc < 4 )  goto err;
+	    if ( argc < 4 )  goto err;
 	    ap.a_ray.r_dir[X] = atof( argv[1] );
 	    ap.a_ray.r_dir[Y] = atof( argv[2] );
 	    ap.a_ray.r_dir[Z] = atof( argv[3] );
@@ -235,7 +235,7 @@ main(int argc, char **argv)
 	    continue;
 
 	case 'p':
-	    if( argc < 4 )  goto err;
+	    if ( argc < 4 )  goto err;
 	    ap.a_ray.r_pt[X] = atof( argv[1] );
 	    ap.a_ray.r_pt[Y] = atof( argv[2] );
 	    ap.a_ray.r_pt[Z] = atof( argv[3] );
@@ -245,7 +245,7 @@ main(int argc, char **argv)
 	    continue;
 
 	case 'a':
-	    if( argc < 4 )  goto err;
+	    if ( argc < 4 )  goto err;
 	    at_vect[X] = atof( argv[1] );
 	    at_vect[Y] = atof( argv[2] );
 	    at_vect[Z] = atof( argv[3] );
@@ -256,13 +256,13 @@ main(int argc, char **argv)
 
 	case 'O':
 	    {
-		if( !strcmp( argv[1], "resolve" ) || !strcmp( argv[1], "0") )
+		if ( !strcmp( argv[1], "resolve" ) || !strcmp( argv[1], "0") )
 		    overlap_claimant_handling = 0;
-		else if( !strcmp( argv[1], "rebuild_fastgen" ) || !strcmp( argv[1], "1") )
+		else if ( !strcmp( argv[1], "rebuild_fastgen" ) || !strcmp( argv[1], "1") )
 		    overlap_claimant_handling = 1;
-		else if( !strcmp( argv[1], "rebuild_all" ) || !strcmp( argv[1], "2") )
+		else if ( !strcmp( argv[1], "rebuild_all" ) || !strcmp( argv[1], "2") )
 		    overlap_claimant_handling = 2;
-		else if( !strcmp( argv[1], "retain" ) || !strcmp( argv[1], "3") )
+		else if ( !strcmp( argv[1], "retain" ) || !strcmp( argv[1], "3") )
 		    overlap_claimant_handling = 3;
 		else
 		    {
@@ -282,15 +282,15 @@ main(int argc, char **argv)
     err:
 	    bu_exit(1, usage);
     }
-    if( argc < 2 )  {
+    if ( argc < 2 )  {
 	(void)fputs(usage, stderr);
 	bu_exit(1, "rtshot: MGED database not specified\n");
     }
 
-    if( set_dir + set_pt + set_at != 2 )  goto err;
+    if ( set_dir + set_pt + set_at != 2 )  goto err;
 
-    if( num_rings != 0 || rays_per_ring != 0 || bundle_radius != 0.0 ) {
-	if( num_rings <= 0 || rays_per_ring <= 0 || bundle_radius <= 0.0 ) {
+    if ( num_rings != 0 || rays_per_ring != 0 || bundle_radius != 0.0 ) {
+	if ( num_rings <= 0 || rays_per_ring <= 0 || bundle_radius <= 0.0 ) {
 	    fprintf( stderr, "Must have all of \"-R\", \"-n\", and \"-c\" set\n" );
 	    goto err;
 	}
@@ -300,11 +300,11 @@ main(int argc, char **argv)
     title_file = argv[0];
     argv++;
     argc--;
-    if( (rtip=rt_dirbuild(title_file, idbuf, sizeof(idbuf))) == RTI_NULL ) {
+    if ( (rtip=rt_dirbuild(title_file, idbuf, sizeof(idbuf))) == RTI_NULL ) {
 	bu_exit(2, "rtshot:  rt_dirbuild failure\n");
     }
 
-    if( overlap_claimant_handling )
+    if ( overlap_claimant_handling )
 	rtip->rti_save_overlaps = 1;
 
     ap.a_rt_i = rtip;
@@ -312,15 +312,15 @@ main(int argc, char **argv)
     rtip->useair = use_air;
 
     /* Walk trees */
-    if( rt_gettrees_and_attrs( rtip, (const char **)attrs, argc, (const char **)argv, 1 ) ) {
+    if ( rt_gettrees_and_attrs( rtip, (const char **)attrs, argc, (const char **)argv, 1 ) ) {
 	bu_exit(1, "rt_gettrees FAILED\n");
     }
     ap.attrs = attrs;
 
     rt_prep(rtip);
 
-    if( R_DEBUG&RDEBUG_RAYPLOT )  {
-	if( (plotfp = fopen("rtshot.plot", "w")) == NULL )  {
+    if ( R_DEBUG&RDEBUG_RAYPLOT )  {
+	if ( (plotfp = fopen("rtshot.plot", "w")) == NULL )  {
 	    perror("rtshot.plot");
 	    bu_exit(1, NULL);
 	}
@@ -328,8 +328,8 @@ main(int argc, char **argv)
     }
 
     /* Compute r_dir and r_pt from the inputs */
-    if( set_at )  {
-	if( set_dir ) {
+    if ( set_at )  {
+	if ( set_dir ) {
 	    vect_t	diag;
 	    fastf_t	viewsize;
 	    VSUB2( diag, rtip->mdl_max, rtip->mdl_min );
@@ -343,18 +343,18 @@ main(int argc, char **argv)
     }
     VUNITIZE( ap.a_ray.r_dir );
 
-    if( rays_per_ring ) {
+    if ( rays_per_ring ) {
 	bu_log( "Central Ray:\n" );
     }
     VPRINT( "Pnt", ap.a_ray.r_pt );
     VPRINT( "Dir", ap.a_ray.r_dir );
 
-    if( set_onehit )
+    if ( set_onehit )
 	ap.a_onehit = set_onehit;
     else
 	ap.a_onehit = 0;
 
-    if( set_ray_length > 0.0 )
+    if ( set_ray_length > 0.0 )
 	ap.a_ray_length = set_ray_length;
     else
 	ap.a_ray_length = 0.0;
@@ -364,7 +364,7 @@ main(int argc, char **argv)
     ap.a_hit = hit;
     ap.a_miss = miss;
 
-    if( rays_per_ring ) {
+    if ( rays_per_ring ) {
 	vect_t avec, bvec;
 	struct xray *rp;
 
@@ -396,24 +396,24 @@ int hit(register struct application *ap, struct partition *PartHeadp, struct seg
     point_t inpt, outpt;
     vect_t	inormal, onormal;
 
-    if( (pp=PartHeadp->pt_forw) == PartHeadp )
+    if ( (pp=PartHeadp->pt_forw) == PartHeadp )
 	return(0);		/* Nothing hit?? */
 
-    if( overlap_claimant_handling == 1 )
+    if ( overlap_claimant_handling == 1 )
 	rt_rebuild_overlaps( PartHeadp, ap, 1 );
-    else if( overlap_claimant_handling == 2 )
+    else if ( overlap_claimant_handling == 2 )
 	rt_rebuild_overlaps( PartHeadp, ap, 0 );
 
     /* First, plot ray start to inhit */
-    if( R_DEBUG&RDEBUG_RAYPLOT )  {
-	if( pp->pt_inhit->hit_dist > 0.0001 )  {
+    if ( R_DEBUG&RDEBUG_RAYPLOT )  {
+	if ( pp->pt_inhit->hit_dist > 0.0001 )  {
 	    VJOIN1( inpt, ap->a_ray.r_pt,
 		    pp->pt_inhit->hit_dist, ap->a_ray.r_dir );
 	    pl_color( plotfp, 0, 0, 255 );
 	    pdv_3line( plotfp, ap->a_ray.r_pt, inpt );
 	}
     }
-    for( ; pp != PartHeadp; pp = pp->pt_forw )  {
+    for (; pp != PartHeadp; pp = pp->pt_forw )  {
 	matp_t inv_mat;
 	Tcl_HashEntry *entry;
 
@@ -425,7 +425,7 @@ int hit(register struct application *ap, struct partition *PartHeadp, struct seg
 
 	entry = Tcl_FindHashEntry( (Tcl_HashTable *)ap->a_rt_i->Orca_hash_tbl,
 			       (const char *)(size_t)pp->pt_regionp->reg_bit );
-	if( !entry ) {
+	if ( !entry ) {
 	    inv_mat = (matp_t)NULL;
 	}
 	else {
@@ -433,13 +433,13 @@ int hit(register struct application *ap, struct partition *PartHeadp, struct seg
 	    bn_mat_print( "inv_mat", inv_mat );
 	}
 
-	if( pp->pt_overlap_reg )
+	if ( pp->pt_overlap_reg )
 	    {
 		struct region *pp_reg;
 		int j=-1;
 
 		bu_log( "    Claiming regions:\n" );
-		while( (pp_reg=pp->pt_overlap_reg[++j]) )
+		while ( (pp_reg=pp->pt_overlap_reg[++j]) )
 		    bu_log( "        %s\n", pp_reg->reg_name );
 	    }
 
@@ -455,7 +455,7 @@ int hit(register struct application *ap, struct partition *PartHeadp, struct seg
 	bu_log(    "   PDir (%g, %g, %g) c1=%g, c2=%g\n",
 		   V3ARGS(cur.crv_pdir), cur.crv_c1, cur.crv_c2);
 
-	if( inv_mat ) {
+	if ( inv_mat ) {
 	    point_t in_trans;
 
 	    MAT4X3PNT( in_trans, inv_mat, inpt );
@@ -474,7 +474,7 @@ int hit(register struct application *ap, struct partition *PartHeadp, struct seg
 	bu_log(    "   PDir (%g, %g, %g) c1=%g, c2=%g\n",
 		   V3ARGS(cur.crv_pdir), cur.crv_c1, cur.crv_c2);
 
-	if( inv_mat ) {
+	if ( inv_mat ) {
 	    point_t out_trans;
 	    vect_t dir_trans;
 
@@ -486,8 +486,8 @@ int hit(register struct application *ap, struct partition *PartHeadp, struct seg
 	}
 
 	/* Plot inhit to outhit */
-	if( R_DEBUG&RDEBUG_RAYPLOT )  {
-	    if( (out = pp->pt_outhit->hit_dist) >= INFINITY )
+	if ( R_DEBUG&RDEBUG_RAYPLOT )  {
+	    if ( (out = pp->pt_outhit->hit_dist) >= INFINITY )
 		out = 10000;	/* to imply the direction */
 
 	    VJOIN1( outpt,
@@ -501,10 +501,10 @@ int hit(register struct application *ap, struct partition *PartHeadp, struct seg
 	    struct region *regp = pp->pt_regionp;
 	    int i;
 
-	    if( ap->attrs ) {
+	    if ( ap->attrs ) {
 		bu_log( "\tattribute values:\n" );
 		i = 0;
-		while( ap->attrs[i] && regp->attr_values[i] ) {
+		while ( ap->attrs[i] && regp->attr_values[i] ) {
 		    bu_log( "\t\t%s:\n", ap->attrs[i] );
 		    bu_log( "\t\t\tstring rep = %s\n",
 			    BU_MRO_GETSTRING(regp->attr_values[i]));
@@ -523,7 +523,7 @@ int hit(register struct application *ap, struct partition *PartHeadp, struct seg
 int miss(register struct application *ap)
 {
     bu_log("missed\n");
-    if( R_DEBUG&RDEBUG_RAYPLOT )  {
+    if ( R_DEBUG&RDEBUG_RAYPLOT )  {
 	vect_t	out;
 
 	VJOIN1( out, ap->a_ray.r_pt,

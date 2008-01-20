@@ -152,7 +152,7 @@ getstring(void)
 	char	*cp;
 
 	cp = strarg;
-	while( (c = getchar()) != '\n' && c != '\r' && c != EOF )
+	while ( (c = getchar()) != '\n' && c != '\r' && c != EOF )
 		*cp++ = c;
 	*cp = 0;
 }
@@ -166,7 +166,7 @@ getshort(void)
 	v |= (getchar()<<8);	/* order is important! */
 
 	/* worry about sign extension - sigh */
-	if( v <= 0x7FFF )  return(v);
+	if ( v <= 0x7FFF )  return(v);
 	w = -1;
 	w &= ~0x7FFF;
 	return( w | v );
@@ -189,8 +189,8 @@ getargs(struct uplot *up)
 {
 	int	i;
 
-	for( i = 0; i < up->narg; i++ ) {
-		switch( up->targ ){
+	for ( i = 0; i < up->narg; i++ ) {
+		switch ( up->targ ){
 			case TSHORT:
 				arg[i] = getshort();
 				break;
@@ -223,7 +223,7 @@ draw(double x1, double y1, double z1, double x2, double y2, double z2)
 	sx2 = (x2 - sp[0]) / (sp[3] - sp[0]) * width;
 	sy2 = height - (y2 - sp[1]) / (sp[4] - sp[1]) * height;
 
-	if( sx1 == sx2 && sy1 == sy2 )
+	if ( sx1 == sx2 && sy1 == sy2 )
 		XDrawPoint( dpy, win, gc, sx1, sy1 );
 	else
 		XDrawLine( dpy, win, gc, sx1, sy1, sx2, sy2 );
@@ -259,7 +259,7 @@ xsetup(int argc, char **argv)
 
 	width = height = 512;
 
-	if( (envp = getenv("DISPLAY")) == NULL ) {
+	if ( (envp = getenv("DISPLAY")) == NULL ) {
 		/* Env not set, use local host */
 		gethostname( hostname, 80 );
 		snprintf( display, 81, "%s:0", hostname );
@@ -267,12 +267,12 @@ xsetup(int argc, char **argv)
 	}
 
 	/* Open the display - XXX see what NULL does now */
-	if( (dpy = XOpenDisplay( envp )) == NULL ) {
+	if ( (dpy = XOpenDisplay( envp )) == NULL ) {
 		bu_exit(2, "pl-X: Can't open X display\n");
 	}
 
 	/* Load the font to use */
-	if( (fontstruct = XLoadQueryFont(dpy, FONT)) == NULL ) {
+	if ( (fontstruct = XLoadQueryFont(dpy, FONT)) == NULL ) {
 		bu_exit(4, "pl-X: Can't open font\n" );
 	}
 
@@ -295,7 +295,7 @@ xsetup(int argc, char **argv)
 	win = XCreateSimpleWindow( dpy, DefaultRootWindow(dpy),
 		xsh.x, xsh.y, xsh.width, xsh.height,
 		bw, bd, bg );
-	if( win == 0 ) {
+	if ( win == 0 ) {
 		bu_exit(3, "pl-X: Can't create window\n" );
 	}
 
@@ -312,15 +312,16 @@ xsetup(int argc, char **argv)
 	XSelectInput( dpy, win, ExposureMask | ButtonPressMask | KeyPressMask);
 	XMapWindow( dpy, win ); /* show the window */
 
-	while( 1 ) {
+	while ( 1 ) {
 		XNextEvent( dpy, &event );
-		if( event.type == Expose && event.xexpose.count == 0 ) {
+		if ( event.type == Expose && event.xexpose.count == 0 ) {
 			XWindowAttributes xwa;
 
 			/* remove other exposure events */
-			while( XCheckTypedEvent(dpy, Expose, &event) ) ;
+			while ( XCheckTypedEvent(dpy, Expose, &event) )
+			    ;
 
-			if( XGetWindowAttributes( dpy, win, &xwa ) == 0 )
+			if ( XGetWindowAttributes( dpy, win, &xwa ) == 0 )
 				break;
 
 			width = xwa.width;
@@ -342,8 +343,8 @@ main(int argc, char **argv)
 	int erase = 0;
 	int waiting = 1;
 
-	while( argc > 1 ) {
-		if( strcmp(argv[1], "-v") == 0 ) {
+	while ( argc > 1 ) {
+		if ( strcmp(argv[1], "-v") == 0 ) {
 			verbose++;
 		} else
 			break;
@@ -351,24 +352,24 @@ main(int argc, char **argv)
 		argc--;
 		argv++;
 	}
-	if( isatty(fileno(stdin)) ) {
+	if ( isatty(fileno(stdin)) ) {
 		bu_exit(1, "Usage: pl-X [-v] < unix_plot\n");
 	}
 	xsetup( argc, argv );
 
-	while( (c = getchar()) != EOF ) {
+	while ( (c = getchar()) != EOF ) {
 		/* look it up */
 
 		if (c == '\n' || c == '\r') {
 		    /* ignore blank lines */
 		    continue;
-		} else if( c < 'A' || c > 'z' ) {
+		} else if ( c < 'A' || c > 'z' ) {
 		    up = &uerror;
 		} else {
 		    up = &letters[ c - 'A' ];
 		}
 
-		if( up->targ == TBAD ) {
+		if ( up->targ == TBAD ) {
 			bu_log("Bad command '%c' (0x%02x)\n", c, c );
 			continue;
 		}
@@ -379,10 +380,10 @@ main(int argc, char **argv)
 		    erase = 0;
 		}
 
-		if( up->narg > 0 )
+		if ( up->narg > 0 )
 			getargs( up );
 
-		switch( c ) {
+		switch ( c ) {
 		case 's':
 		case 'w':
 			sp[0] = arg[0];

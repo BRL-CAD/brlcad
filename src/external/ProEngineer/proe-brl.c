@@ -57,7 +57,7 @@
 #include "bu.h"
 #include "bn.h"
 
-static wchar_t  MSGFIL[] = {'u','s','e','r','m','s','g','.','t','x','t','\0'};
+static wchar_t  MSGFIL[] = {'u', 's', 'e', 'r', 'm', 's', 'g', '.', 't', 'x', 't', '\0'};
 
 static double proe_to_brl_conv=25.4;	/* inches to mm */
 
@@ -198,12 +198,12 @@ do_initialize()
 	ProStringToWstring( part_ext, "prt" );
 
 	csg_root = NULL;
-	for( i=0 ; i<NUM_OBJ_TYPES ; i++ ) {
+	for ( i=0; i<NUM_OBJ_TYPES; i++ ) {
 		obj_type_count[i] = 0;
 		obj_type[i] = NULL;
 	}
 
-	for( i=0 ; i<NUM_FEAT_TYPES ; i++ ) {
+	for ( i=0; i<NUM_FEAT_TYPES; i++ ) {
 		feat_type_count[i] = 0;
 		feat_type[i] = NULL;
 	}
@@ -515,7 +515,7 @@ lower_case( char *name )
 	unsigned char *c;
 
 	c = (unsigned char *)name;
-	while( *c ) {
+	while ( *c ) {
 		(*c) = tolower( *c );
 		c++;
 	}
@@ -527,10 +527,10 @@ make_legal( char *name )
 	unsigned char *c;
 
 	c = (unsigned char *)name;
-	while( *c ) {
-		if( *c <= ' ' || *c == '/' || *c == '[' || *c == ']' ) {
+	while ( *c ) {
+		if ( *c <= ' ' || *c == '/' || *c == '[' || *c == ']' ) {
 			*c = '_';
-		} else if( *c > '~' ) {
+		} else if ( *c > '~' ) {
 			*c = '_';
 		}
 		c++;
@@ -545,13 +545,13 @@ create_unique_name( char *name )
 	int initial_length=0;
 	int count=0;
 
-	if( logger ) {
+	if ( logger ) {
 		fprintf( logger, "create_unique_name( %s )\n", name );
 	}
 
 	/* if we do not already have a brlcad name tree, create one here */
-	if( !brlcad_names ) {
-		if( logger ) {
+	if ( !brlcad_names ) {
+		if ( logger ) {
 			fprintf( logger, "\tCreating rb tree for brlcad names\n" );
 		}
 		brlcad_names = bu_rb_create1( "BRL-CAD names", strcmp );
@@ -564,10 +564,10 @@ create_unique_name( char *name )
 	lower_case( bu_vls_addr( &tmp_name ) );
 	make_legal( bu_vls_addr( &tmp_name ) );
 	initial_length = bu_vls_strlen( &tmp_name );
-	while( bu_rb_insert( brlcad_names, bu_vls_addr( &tmp_name ) ) < 0 ) {
+	while ( bu_rb_insert( brlcad_names, bu_vls_addr( &tmp_name ) ) < 0 ) {
 		char *data;
-		if( (data=(char *)bu_rb_search1( brlcad_names, bu_vls_addr( &tmp_name ) ) ) != NULL ) {
-			if( logger ) {
+		if ( (data=(char *)bu_rb_search1( brlcad_names, bu_vls_addr( &tmp_name ) ) ) != NULL ) {
+			if ( logger ) {
 				fprintf( logger, "\t\tfound duplicate (%s)\n", data );
 				fflush( logger );
 			}
@@ -575,12 +575,12 @@ create_unique_name( char *name )
 		bu_vls_trunc( &tmp_name, initial_length );
 		count++;
 		bu_vls_printf( &tmp_name, "_%d", count );
-		if( logger ) {
+		if ( logger ) {
 			fprintf( logger, "\tTrying %s\n", bu_vls_addr( &tmp_name ) );
 		}
 	}
 
-	if( logger ) {
+	if ( logger ) {
 		fprintf( logger, "\tnew name for %s is %s\n", name, bu_vls_addr( &tmp_name ) );
 	}
 	return( bu_vls_strgrab( &tmp_name ) );
@@ -598,15 +598,15 @@ get_brlcad_name( char *part_name )
 	name_copy = bu_strdup( part_name );
 	lower_case( name_copy );
 
-	if( logger ) {
+	if ( logger ) {
 		fprintf( logger, "get_brlcad_name( %s )\n", name_copy );
 	}
 
 	/* find name for this part in hash table */
 	entry = bu_find_hash_entry( name_hash, (unsigned char *)name_copy, strlen( name_copy ), &prev, &index );
 
-	if( entry ) {
-		if( logger ) {
+	if ( entry ) {
+		if ( logger ) {
 			fprintf( logger, "\treturning %s\n", (char *)bu_get_hash_value( entry ) );
 		}
 		bu_free( name_copy, "name_copy" );
@@ -617,7 +617,7 @@ get_brlcad_name( char *part_name )
 		brlcad_name = create_unique_name( name_copy );
 		entry = bu_hash_add_entry( name_hash, (unsigned char *)name_copy, strlen( name_copy ), &new_entry );
 		bu_set_hash_value( entry, (unsigned char *)brlcad_name );
-		if( logger ) {
+		if ( logger ) {
 			fprintf( logger, "\tCreating new brlcad name (%s) for part (%s)\n", brlcad_name, name_copy );
 		}
 		bu_free( name_copy, "name_copy" );
@@ -633,16 +633,16 @@ model_units( ProMdl model )
 	double proe_conv;
 
 	/* get units, and adjust conversion factor */
-	if( prodb_get_model_units( model, LENGTH_UNIT, &unit_subtype,
+	if ( prodb_get_model_units( model, LENGTH_UNIT, &unit_subtype,
 				   unit_name, &proe_conv ) ) {
-		if( unit_subtype == UNIT_MM )
+		if ( unit_subtype == UNIT_MM )
 			proe_to_brl_conv = 1.0;
 		else
 			proe_to_brl_conv = proe_conv * 25.4;
 	} else {
 		ProMessageDisplay(MSGFIL, "USER_NO_UNITS" );
 		ProMessageClear();
-		if( logger ) {
+		if ( logger ) {
 			fprintf( logger, "No units specified, assuming inches\n" );
 		}
 		fprintf( stderr, "No units specified, assuming inches\n" );
@@ -654,7 +654,7 @@ model_units( ProMdl model )
 	local_tol = tol_dist / proe_to_brl_conv;
 	local_tol_sq = local_tol * local_tol;
 
-	if( logger ) {
+	if ( logger ) {
 		fprintf( logger, "Units: %s, proe_to_brl_conv = %g\n",
 			 ProWstringToString( astr, unit_name ),
 			 proe_to_brl_conv );
@@ -669,7 +669,7 @@ free_csg_ops()
 
 	ptr1 = csg_root;
 
-	while( ptr1 ) {
+	while ( ptr1 ) {
 		ptr2 = ptr1->next;
 		bu_vls_free( &ptr1->name );
 		bu_vls_free( &ptr1->dbput );
@@ -688,11 +688,11 @@ add_to_done_part( wchar_t *name )
 {
 	wchar_t *name_copy;
 
-	if( logger ) {
+	if ( logger ) {
 		fprintf( logger, "Added %s to list of done parts\n", ProWstringToString( astr, name ) );
 	}
 
-	if( !done_list_part ) {
+	if ( !done_list_part ) {
 		done_list_part = bu_rb_create1( "Names of Parts already Processed",
 					   wcscmp );
 		bu_rb_uniq_all_on( done_list_part );
@@ -702,7 +702,7 @@ add_to_done_part( wchar_t *name )
 					   "part name for done list" );
 	wcslcpy( name_copy, name, wcslen(name)+1 );
 
-	if( bu_rb_insert( done_list_part, name_copy ) < 0 ) {
+	if ( bu_rb_insert( done_list_part, name_copy ) < 0 ) {
 		bu_free( (char *)name_copy, "part name for done list" );
 	}
 }
@@ -712,11 +712,11 @@ already_done_part( wchar_t *name )
 {
 	char *found=NULL;
 
-	if( !done_list_part )
+	if ( !done_list_part )
 		return( 0 );
 
 	found = bu_rb_search1( done_list_part, (void *)name );
-	if( !found ) {
+	if ( !found ) {
 		return( 0 );
 	} else {
 		return( 1 );
@@ -729,11 +729,11 @@ add_to_done_asm( wchar_t *name )
 {
 	wchar_t *name_copy;
 
-	if( logger ) {
+	if ( logger ) {
 		fprintf( logger, "Added %s to list of done assemblies\n", ProWstringToString( astr, name ) );
 	}
 
-	if( !done_list_asm ) {
+	if ( !done_list_asm ) {
 		done_list_asm = bu_rb_create1( "Names of Asms already Processed",
 					   wcscmp );
 		bu_rb_uniq_all_on( done_list_asm );
@@ -743,7 +743,7 @@ add_to_done_asm( wchar_t *name )
 					   "asm name for done list" );
 	wcslcpy( name_copy, name, wcslen(name)+1 );
 
-	if( bu_rb_insert( done_list_asm, name_copy ) < 0 ) {
+	if ( bu_rb_insert( done_list_asm, name_copy ) < 0 ) {
 		bu_free( (char *)name_copy, "asm name for done list" );
 	}
 }
@@ -753,11 +753,11 @@ already_done_asm( wchar_t *name )
 {
 	char *found=NULL;
 
-	if( !done_list_asm )
+	if ( !done_list_asm )
 		return( 0 );
 
 	found = bu_rb_search1(done_list_asm, (void *)name );
-	if( !found ) {
+	if ( !found ) {
 		return( 0 );
 	} else {
 		return( 1 );
@@ -770,24 +770,24 @@ add_to_empty_list( char *name )
 	struct empty_parts *ptr;
 	int found=0;
 
-	if( logger ) {
+	if ( logger ) {
 		fprintf( logger, "Adding %s to list of empty parts\n", name );
 	}
 
-	if( empty_parts_root == NULL ) {
+	if ( empty_parts_root == NULL ) {
 		empty_parts_root = (struct empty_parts *)bu_malloc( sizeof( struct empty_parts ),
 								    "empty parts root");
 		ptr = empty_parts_root;
 	} else {
 		ptr = empty_parts_root;
-		while( !found && ptr->next ) {
-			if( !strcmp( name, ptr->name ) ) {
+		while ( !found && ptr->next ) {
+			if ( !strcmp( name, ptr->name ) ) {
 				found = 1;
 				break;
 			}
 			ptr = ptr->next;
 		}
-		if( !found ) {
+		if ( !found ) {
 			ptr->next = (struct empty_parts *)bu_malloc( sizeof( struct empty_parts ),
 								     "empty parts node");
 			ptr = ptr->next;
@@ -803,13 +803,13 @@ kill_empty_parts()
 {
 	struct empty_parts *ptr;
 
-	if( logger ) {
+	if ( logger ) {
 		fprintf( logger, "Adding code to remove empty parts:\n" );
 	}
 
 	ptr = empty_parts_root;
-	while( ptr ) {
-		if( logger ) {
+	while ( ptr ) {
+		if ( logger ) {
 			fprintf( logger, "\t%s\n", ptr->name );
 		}
 		fprintf( outfp, "set combs [find %s]\n", ptr->name );
@@ -823,12 +823,12 @@ free_empty_parts()
 {
 	struct empty_parts *ptr, *prev;
 
-	if( logger ) {
+	if ( logger ) {
 		fprintf( logger, "Free empty parts list\n" );
 	}
 
 	ptr = empty_parts_root;
-	while( ptr ) {
+	while ( ptr ) {
 		prev = ptr;
 		ptr = ptr->next;
 		bu_free( prev->name, "empty part node name" );
@@ -837,7 +837,7 @@ free_empty_parts()
 
 	empty_parts_root = NULL;
 
-	if( logger ) {
+	if ( logger ) {
 		fprintf( logger, "Free empty parts list done\n" );
 	}
 }
@@ -852,36 +852,36 @@ bad_triangle( int v1, int v2, int v3 )
 	double coord;
 	int i;
 
-	if( v1 == v2 || v2 == v3 || v1 == v3 )
+	if ( v1 == v2 || v2 == v3 || v1 == v3 )
 		return( 1 );
 
 	dist = 0;
-	for( i=0 ; i<3 ; i++ ) {
+	for ( i=0; i<3; i++ ) {
 		coord = vert_tree_root->the_array[v1*3+i] - vert_tree_root->the_array[v2*3+i];
 		dist += coord * coord;
 	}
 	dist = sqrt( dist );
-	if( dist < local_tol ) {
+	if ( dist < local_tol ) {
 		return( 1 );
 	}
 
 	dist = 0;
-	for( i=0 ; i<3 ; i++ ) {
+	for ( i=0; i<3; i++ ) {
 		coord = vert_tree_root->the_array[v2*3+i] - vert_tree_root->the_array[v3*3+i];
 		dist += coord * coord;
 	}
 	dist = sqrt( dist );
-	if( dist < local_tol ) {
+	if ( dist < local_tol ) {
 		return( 1 );
 	}
 
 	dist = 0;
-	for( i=0 ; i<3 ; i++ ) {
+	for ( i=0; i<3; i++ ) {
 		coord = vert_tree_root->the_array[v1*3+i] - vert_tree_root->the_array[v3*3+i];
 		dist += coord * coord;
 	}
 	dist = sqrt( dist );
-	if( dist < local_tol ) {
+	if ( dist < local_tol ) {
 		return( 1 );
 	}
 
@@ -892,12 +892,12 @@ bad_triangle( int v1, int v2, int v3 )
 void
 add_triangle_and_normal( int v1, int v2, int v3, int n1, int n2, int n3 )
 {
-	if( curr_tri >= max_tri ) {
+	if ( curr_tri >= max_tri ) {
 		/* allocate more memory for triangles and normals */
 		max_tri += TRI_BLOCK;
 		part_tris = (ProTriangle *)bu_realloc( part_tris, sizeof( ProTriangle ) * max_tri,
 						       "part triangles");
-		if( !part_tris ) {
+		if ( !part_tris ) {
 			(void)ProMessageDisplay(MSGFIL, "USER_ERROR",
 						"Failed to allocate memory for part triangles" );
 			fprintf( stderr, "Failed to allocate memory for part triangles\n" );
@@ -926,12 +926,12 @@ add_triangle_and_normal( int v1, int v2, int v3, int n1, int n2, int n3 )
 void
 add_triangle( int v1, int v2, int v3 )
 {
-	if( curr_tri >= max_tri ) {
+	if ( curr_tri >= max_tri ) {
 		/* allocate more memory for triangles */
 		max_tri += TRI_BLOCK;
 		part_tris = (ProTriangle *)bu_realloc( part_tris, sizeof( ProTriangle ) * max_tri,
 						       "part rtiangles");
-		if( !part_tris ) {
+		if ( !part_tris ) {
 			(void)ProMessageDisplay(MSGFIL, "USER_ERROR",
 						"Failed to allocate memory for part triangles" );
 			fprintf( stderr, "Failed to allocate memory for part triangles\n" );
@@ -956,14 +956,14 @@ check_dimension( ProDimension *dim, ProError status, ProAppData data )
 	ProError ret;
 	double tmp;
 
-	if( (ret=ProDimensionTypeGet( dim, &dim_type ) ) != PRO_TK_NO_ERROR ) {
+	if ( (ret=ProDimensionTypeGet( dim, &dim_type ) ) != PRO_TK_NO_ERROR ) {
 		fprintf( stderr, "ProDimensionTypeGet Failed for %s\n", curr_part_name );
 		return ret;
 	}
 
-	switch( dim_type ) {
+	switch ( dim_type ) {
 		case PRODIMTYPE_RADIUS:
-			if( (ret=ProDimensionValueGet( dim, &radius ) ) != PRO_TK_NO_ERROR ) {
+			if ( (ret=ProDimensionValueGet( dim, &radius ) ) != PRO_TK_NO_ERROR ) {
 				fprintf( stderr, "ProDimensionValueGet Failed for %s\n", curr_part_name );
 				return ret;
 			}
@@ -971,7 +971,7 @@ check_dimension( ProDimension *dim, ProError status, ProAppData data )
 			got_diameter = 1;
 			break;
 		case PRODIMTYPE_DIAMETER:
-			if( (ret=ProDimensionValueGet( dim, &diameter ) ) != PRO_TK_NO_ERROR ) {
+			if ( (ret=ProDimensionValueGet( dim, &diameter ) ) != PRO_TK_NO_ERROR ) {
 				fprintf( stderr, "ProDimensionValueGet Failed for %s\n", curr_part_name );
 				return ret;
 			}
@@ -979,11 +979,11 @@ check_dimension( ProDimension *dim, ProError status, ProAppData data )
 			got_diameter = 1;
 			break;
 		case PRODIMTYPE_LINEAR:
-			if( (ret=ProDimensionValueGet( dim, &tmp ) ) != PRO_TK_NO_ERROR ) {
+			if ( (ret=ProDimensionValueGet( dim, &tmp ) ) != PRO_TK_NO_ERROR ) {
 				fprintf( stderr, "ProDimensionValueGet Failed for %s\n", curr_part_name );
 				return ret;
 			}
-			if( got_distance1 ) {
+			if ( got_distance1 ) {
 				distance2 = tmp;
 			} else {
 				got_distance1 = 1;
@@ -1003,7 +1003,7 @@ dimension_filter( ProDimension *dim, ProAppData data ) {
 void
 Add_to_feature_delete_list( int id )
 {
-	if( feat_id_count >= feat_id_len ) {
+	if ( feat_id_count >= feat_id_len ) {
 		feat_id_len += FEAT_ID_BLOCK;
 		feat_ids_to_delete = (int *)bu_realloc( (char *)feat_ids_to_delete,
 						     feat_id_len * sizeof( int ),
@@ -1012,7 +1012,7 @@ Add_to_feature_delete_list( int id )
 	}
 	feat_ids_to_delete[feat_id_count++] = id;
 
-	if( logger ) {
+	if ( logger ) {
 		fprintf( logger, "Adding feature %d to list of features to delete (list length = %d)\n",
 			 id, feat_id_count );
 	}
@@ -1025,14 +1025,14 @@ geomitem_visit( ProGeomitem *item, ProError status, ProAppData data )
 	ProCurvedata *crv;
 	ProError ret;
 
-	if( (ret=ProGeomitemdataGet( item, &geom )) != PRO_TK_NO_ERROR ) {
+	if ( (ret=ProGeomitemdataGet( item, &geom )) != PRO_TK_NO_ERROR ) {
 		fprintf( stderr, "Failed to get geomitem for type %d\n",
 			 item->type );
 		return ret;
 	}
 
 	crv = PRO_CURVE_DATA( geom );
-	if( (ret=ProLinedataGet( crv, end1, end2 ) ) != PRO_TK_NO_ERROR ) {
+	if ( (ret=ProLinedataGet( crv, end1, end2 ) ) != PRO_TK_NO_ERROR ) {
 		fprintf( stderr, "Failed to get line data for axis\n" );
 		return ret;
 	}
@@ -1054,29 +1054,29 @@ hole_elem_visit( ProElement elem_tree, ProElement elem, ProElempath elem_path, P
 	ProValue val_junk;
 	ProValueData val;
 
-	if( (ret=ProElementIdGet( elem, &elem_id ) ) != PRO_TK_NO_ERROR ) {
+	if ( (ret=ProElementIdGet( elem, &elem_id ) ) != PRO_TK_NO_ERROR ) {
 		fprintf( stderr, "Failed to get element id!!!\n" );
 		return ret;
 	}
 
-	switch( elem_id ) {
+	switch ( elem_id ) {
 		case PRO_E_HLE_ADD_CBORE:
-			if( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
+			if ( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
 				fprintf( stderr, "Failed to get value\n" );
 				return ret;
 			}
-			if( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
+			if ( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
 				fprintf( stderr, "Failed to get value data\n" );
 				return ret;
 			}
 			add_cbore = val.v.i;
 			break;
 		case PRO_E_HLE_ADD_CSINK:
-			if( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
+			if ( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
 				fprintf( stderr, "Failed to get value\n" );
 				return ret;
 			}
-			if( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
+			if ( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
 				fprintf( stderr, "Failed to get value data\n" );
 				return ret;
 			}
@@ -1084,11 +1084,11 @@ hole_elem_visit( ProElement elem_tree, ProElement elem, ProElempath elem_path, P
 			break;
 		case PRO_E_DIAMETER:
 			/* diameter of straight hole */
-			if( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
+			if ( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
 				fprintf( stderr, "Failed to get value\n" );
 				return ret;
 			}
-			if( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
+			if ( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
 				fprintf( stderr, "Failed to get value data\n" );
 				return ret;
 			}
@@ -1096,11 +1096,11 @@ hole_elem_visit( ProElement elem_tree, ProElement elem, ProElempath elem_path, P
 			break;
 		case PRO_E_HLE_HOLEDIAM:
 			/* diameter of main portion of standard drilled hole */
-			if( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
+			if ( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
 				fprintf( stderr, "Failed to get value\n" );
 				return ret;
 			}
-			if( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
+			if ( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
 				fprintf( stderr, "Failed to get value data\n" );
 				return ret;
 			}
@@ -1108,11 +1108,11 @@ hole_elem_visit( ProElement elem_tree, ProElement elem, ProElempath elem_path, P
 			break;
 		case PRO_E_HLE_CBOREDEPTH:
 			/* depth of counterbore */
-			if( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
+			if ( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
 				fprintf( stderr, "Failed to get value\n" );
 				return ret;
 			}
-			if( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
+			if ( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
 				fprintf( stderr, "Failed to get value data\n" );
 				return ret;
 			}
@@ -1120,11 +1120,11 @@ hole_elem_visit( ProElement elem_tree, ProElement elem, ProElempath elem_path, P
 			break;
 		case PRO_E_HLE_CBOREDIAM:
 			/* diameter of counterbore */
-			if( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
+			if ( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
 				fprintf( stderr, "Failed to get value\n" );
 				return ret;
 			}
-			if( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
+			if ( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
 				fprintf( stderr, "Failed to get value data\n" );
 				return ret;
 			}
@@ -1132,11 +1132,11 @@ hole_elem_visit( ProElement elem_tree, ProElement elem, ProElempath elem_path, P
 			break;
 		case PRO_E_HLE_CSINKANGLE:
 			/* angle of countersink (degrees ) */
-			if( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
+			if ( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
 				fprintf( stderr, "Failed to get value\n" );
 				return ret;
 			}
-			if( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
+			if ( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
 				fprintf( stderr, "Failed to get value data\n" );
 				return ret;
 			}
@@ -1144,11 +1144,11 @@ hole_elem_visit( ProElement elem_tree, ProElement elem, ProElempath elem_path, P
 			break;
 		case PRO_E_HLE_CSINKDIAM:
 			/* diameter of countersink */
-			if( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
+			if ( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
 				fprintf( stderr, "Failed to get value\n" );
 				return ret;
 			}
-			if( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
+			if ( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
 				fprintf( stderr, "Failed to get value data\n" );
 				return ret;
 			}
@@ -1156,11 +1156,11 @@ hole_elem_visit( ProElement elem_tree, ProElement elem, ProElempath elem_path, P
 			break;
 		case PRO_E_HLE_DRILLDEPTH:
 			/* overall depth of standard drilled hole without drill tip */
-			if( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
+			if ( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
 				fprintf( stderr, "Failed to get value\n" );
 				return ret;
 			}
-			if( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
+			if ( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
 				fprintf( stderr, "Failed to get value data\n" );
 				return ret;
 			}
@@ -1168,114 +1168,114 @@ hole_elem_visit( ProElement elem_tree, ProElement elem, ProElempath elem_path, P
 			break;
 		case PRO_E_HLE_DRILLANGLE:
 			/* drill tip angle (degrees) */
-			if( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
+			if ( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
 				fprintf( stderr, "Failed to get value\n" );
 				return ret;
 			}
-			if( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
+			if ( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
 				fprintf( stderr, "Failed to get value data\n" );
 				return ret;
 			}
 			drill_angle = val.v.d;
 			break;
 		case PRO_E_HLE_DEPTH:
-			if( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
+			if ( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
 				fprintf( stderr, "Failed to get value\n" );
 				return ret;
 			}
-			if( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
+			if ( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
 				fprintf( stderr, "Failed to get value data\n" );
 				return ret;
 			}
 			hole_depth_type = val.v.i;
 			break;
 		case PRO_E_HLE_TYPE_NEW:
-			if( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
+			if ( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
 				fprintf( stderr, "Failed to get value\n" );
 				return ret;
 			}
-			if( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
+			if ( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
 				fprintf( stderr, "Failed to get value data\n" );
 				return ret;
 			}
 			hole_type = val.v.i;
 			break;
 		case PRO_E_HLE_STAN_TYPE:
-			if( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
+			if ( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
 				fprintf( stderr, "Failed to get value\n" );
 				return ret;
 			}
-			if( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
+			if ( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
 				fprintf( stderr, "Failed to get value data\n" );
 				return ret;
 			}
 			break;
 		case PRO_E_STD_EDGE_CHAMF_DIM1:
-			if( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
+			if ( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
 				fprintf( stderr, "Failed to get value\n" );
 				return ret;
 			}
-			if( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
+			if ( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
 				fprintf( stderr, "Failed to get value data\n" );
 				return ret;
 			}
 			break;
 		case PRO_E_STD_EDGE_CHAMF_DIM2:
-			if( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
+			if ( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
 				fprintf( stderr, "Failed to get value\n" );
 				return ret;
 			}
-			if( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
+			if ( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
 				fprintf( stderr, "Failed to get value data\n" );
 				return ret;
 			}
 			break;
 		case PRO_E_STD_EDGE_CHAMF_ANGLE:
-			if( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
+			if ( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
 				fprintf( stderr, "Failed to get value\n" );
 				return ret;
 			}
-			if( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
+			if ( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
 				fprintf( stderr, "Failed to get value data\n" );
 				return ret;
 			}
 			break;
 		case PRO_E_STD_EDGE_CHAMF_DIM:
-			if( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
+			if ( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
 				fprintf( stderr, "Failed to get value\n" );
 				return ret;
 			}
-			if( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
+			if ( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
 				fprintf( stderr, "Failed to get value data\n" );
 				return ret;
 			}
 			break;
 		case PRO_E_STD_EDGE_CHAMF_SCHEME:
-			if( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
+			if ( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
 				fprintf( stderr, "Failed to get value\n" );
 				return ret;
 			}
-			if( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
+			if ( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
 				fprintf( stderr, "Failed to get value data\n" );
 				return ret;
 			}
 			break;
 		case PRO_E_EXT_DEPTH_FROM_VALUE:
-			if( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
+			if ( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
 				fprintf( stderr, "Failed to get value\n" );
 				return ret;
 			}
-			if( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
+			if ( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
 				fprintf( stderr, "Failed to get value data\n" );
 				return ret;
 			}
 			break;
 		case PRO_E_EXT_DEPTH_TO_VALUE:
-			if( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
+			if ( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
 				fprintf( stderr, "Failed to get value\n" );
 				return ret;
 			}
-			if( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
+			if ( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
 				fprintf( stderr, "Failed to get value data\n" );
 				return ret;
 			}
@@ -1304,24 +1304,24 @@ Subtract_hole()
 	struct csg_ops *csg;
 	vect_t a, b, c, d, h;
 
-	if( do_facets_only ) {
-		if( diameter < min_hole_diameter )
+	if ( do_facets_only ) {
+		if ( diameter < min_hole_diameter )
 			return 1;
 		else
 			return 0;
 	}
 
-	if( logger ) {
+	if ( logger ) {
 		fprintf( logger, "Doing a CSG hole subtraction\n" );
 	}
 
 	/* make a replacement hole using CSG */
-	if( hole_type == PRO_HLE_NEW_TYPE_STRAIGHT ) {
+	if ( hole_type == PRO_HLE_NEW_TYPE_STRAIGHT ) {
 		/* plain old striaght hole */
 
-		if( diameter < min_hole_diameter )
+		if ( diameter < min_hole_diameter )
 			return 1;
-		if( !csg_root ) {
+		if ( !csg_root ) {
 			csg_root = (struct csg_ops *)bu_malloc( sizeof( struct csg_ops ), "csg root" );
 			csg = csg_root;
 			csg->next = NULL;
@@ -1351,7 +1351,7 @@ Subtract_hole()
 			       V3ARGS( b ),
 			       V3ARGS( a ),
 			       V3ARGS( b ) );
-	} else if( hole_type == PRO_HLE_NEW_TYPE_STANDARD ) {
+	} else if ( hole_type == PRO_HLE_NEW_TYPE_STANDARD ) {
 		/* drilled hole with possible countersink and counterbore */
 		point_t start;
 		vect_t dir;
@@ -1359,7 +1359,7 @@ Subtract_hole()
 		double accum_depth=0.0;
 		double hole_radius=hole_diam / 2.0;
 
-		if( hole_diam < min_hole_diameter )
+		if ( hole_diam < min_hole_diameter )
 			return 1;
 
 		VSUB2( dir, end1, end2 );
@@ -1368,9 +1368,9 @@ Subtract_hole()
 		VMOVE( start, end2 );
 		VSCALE( start, start, proe_to_brl_conv );
 
-		if( add_cbore == PRO_HLE_ADD_CBORE ) {
+		if ( add_cbore == PRO_HLE_ADD_CBORE ) {
 
-			if( !csg_root ) {
+			if ( !csg_root ) {
 				csg_root = (struct csg_ops *)bu_malloc( sizeof( struct csg_ops ), "csg root" );
 				csg = csg_root;
 				csg->next = NULL;
@@ -1404,11 +1404,11 @@ Subtract_hole()
 			cb_diam = 0.0;
 			cb_depth = 0.0;
 		}
-		if( add_csink == PRO_HLE_ADD_CSINK ) {
+		if ( add_csink == PRO_HLE_ADD_CSINK ) {
 			double cs_depth;
 			double cs_radius=cs_diam / 2.0;
 
-			if( !csg_root ) {
+			if ( !csg_root ) {
 				csg_root = (struct csg_ops *)bu_malloc( sizeof( struct csg_ops ), "csg root" );
 				csg = csg_root;
 				csg->next = NULL;
@@ -1447,7 +1447,7 @@ Subtract_hole()
 			cs_angle = 0.0;
 		}
 
-		if( !csg_root ) {
+		if ( !csg_root ) {
 			csg_root = (struct csg_ops *)bu_malloc( sizeof( struct csg_ops ), "csg root" );
 			csg = csg_root;
 			csg->next = NULL;
@@ -1482,10 +1482,10 @@ Subtract_hole()
 		VADD2( start, start, h );
 		hole_diam = 0.0;
 		hole_depth = 0.0;
-		if( hole_depth_type == PRO_HLE_STD_VAR_DEPTH ) {
+		if ( hole_depth_type == PRO_HLE_STD_VAR_DEPTH ) {
 			double tip_depth;
 
-			if( !csg_root ) {
+			if ( !csg_root ) {
 				csg_root = (struct csg_ops *)bu_malloc( sizeof( struct csg_ops ), "csg root" );
 				csg = csg_root;
 				csg->next = NULL;
@@ -1535,18 +1535,18 @@ do_feature_visit( ProFeature *feat, ProError status, ProAppData data )
 	ProElement elem_tree;
 	ProElempath elem_path=NULL;
 
-	if( (ret=ProFeatureElemtreeCreate( feat, &elem_tree ) ) == PRO_TK_NO_ERROR ) {
-		if( (ret=ProElemtreeElementVisit( elem_tree, elem_path,
+	if ( (ret=ProFeatureElemtreeCreate( feat, &elem_tree ) ) == PRO_TK_NO_ERROR ) {
+		if ( (ret=ProElemtreeElementVisit( elem_tree, elem_path,
 						  hole_elem_filter, hole_elem_visit,
 						  data ) ) != PRO_TK_NO_ERROR ) {
 			fprintf( stderr, "Element visit failed for feature (%d) of %s\n",
 				 feat->id, curr_part_name );
-			if( ProElementFree( &elem_tree ) != PRO_TK_NO_ERROR ) {
+			if ( ProElementFree( &elem_tree ) != PRO_TK_NO_ERROR ) {
 				fprintf( stderr, "Error freeing element tree\n" );
 			}
 			return ret;
 		}
-		if( ProElementFree( &elem_tree ) != PRO_TK_NO_ERROR ) {
+		if ( ProElementFree( &elem_tree ) != PRO_TK_NO_ERROR ) {
 			fprintf( stderr, "Error freeing element tree\n" );
 		}
 	}
@@ -1558,31 +1558,31 @@ do_feature_visit( ProFeature *feat, ProError status, ProAppData data )
 	got_diameter = 0;
 	got_distance1 = 0;
 
-	if( (ret=ProFeatureDimensionVisit( feat, check_dimension, dimension_filter, data ) ) !=
+	if ( (ret=ProFeatureDimensionVisit( feat, check_dimension, dimension_filter, data ) ) !=
 	    PRO_TK_NO_ERROR ) {
 		return( ret );
 	}
 
-	if( curr_feat_type == PRO_FEAT_HOLE ) {
+	if ( curr_feat_type == PRO_FEAT_HOLE ) {
 		/* need more info to recreate holes */
-		if( (ret=ProFeatureGeomitemVisit( feat, PRO_AXIS, geomitem_visit,
+		if ( (ret=ProFeatureGeomitemVisit( feat, PRO_AXIS, geomitem_visit,
 				    geomitem_filter, data ) ) != PRO_TK_NO_ERROR ) {
 			return ret;
 		}
 	}
 
-	switch( curr_feat_type ) {
+	switch ( curr_feat_type ) {
 		case PRO_FEAT_HOLE:
-			if( Subtract_hole() )
+			if ( Subtract_hole() )
 				Add_to_feature_delete_list( feat->id );
 			break;
 		case PRO_FEAT_ROUND:
-			if( got_diameter && radius < min_round_radius ) {
+			if ( got_diameter && radius < min_round_radius ) {
 				Add_to_feature_delete_list( feat->id );
 			}
 			break;
 		case PRO_FEAT_CHAMFER:
-			if( got_distance1 && distance1 < min_chamfer_dim &&
+			if ( got_distance1 && distance1 < min_chamfer_dim &&
 			    distance2 < min_chamfer_dim ) {
 				Add_to_feature_delete_list( feat->id );
 			}
@@ -1596,11 +1596,11 @@ do_feature_visit( ProFeature *feat, ProError status, ProAppData data )
 int
 feat_adds_material( ProFeattype feat_type )
 {
-	if( feat_type >= PRO_FEAT_UDF_THREAD ) {
+	if ( feat_type >= PRO_FEAT_UDF_THREAD ) {
 		return( 1 );
 	}
 
-	switch( feat_type ) {
+	switch ( feat_type ) {
 	case PRO_FEAT_SHAFT:
 	case PRO_FEAT_PROTRUSION:
 	case PRO_FEAT_NECK:
@@ -1637,42 +1637,42 @@ remove_holes_from_id_list( ProMdl model )
 	ProError status;
 	ProFeattype type;
 
-	if( logger ) {
+	if ( logger ) {
 		fprintf( logger, "Removing any holes from CSG list and from features to delete\n" );
 	}
 
 	free_csg_ops();		/* these are only holes */
-	for( i=0 ; i<feat_id_count ; i++ ) {
+	for ( i=0; i<feat_id_count; i++ ) {
 		status = ProFeatureInit( ProMdlToSolid(model),
 					 feat_ids_to_delete[i],
 					 &feat );
-		if( status != PRO_TK_NO_ERROR ) {
+		if ( status != PRO_TK_NO_ERROR ) {
 			fprintf( stderr, "Failed to get handle for id %d\n",
 				 feat_ids_to_delete[i] );
-			if( logger ) {
+			if ( logger ) {
 				fprintf( logger, "Failed to get handle for id %d\n",
 					 feat_ids_to_delete[i] );
 			}
 		}
 		status = ProFeatureTypeGet( &feat, &type );
-		if( status != PRO_TK_NO_ERROR ) {
+		if ( status != PRO_TK_NO_ERROR ) {
 			fprintf( stderr, "Failed to get feature type for id %d\n",
 				 feat_ids_to_delete[i] );
-			if( logger ) {
+			if ( logger ) {
 				fprintf( logger, "Failed to get feature type for id %d\n",
 					 feat_ids_to_delete[i] );
 			}
 		}
-		if( type == PRO_FEAT_HOLE ) {
+		if ( type == PRO_FEAT_HOLE ) {
 			/* remove this from the list */
 			int j;
 
-			if( logger ) {
+			if ( logger ) {
 				fprintf( logger, "\tRemoving feature id %d from deltion list\n",
 					 feat_ids_to_delete[i] );
 			}
 			feat_id_count--;
-			for( j=i ; j<feat_id_count ; j++ ) {
+			for ( j=i; j<feat_id_count; j++ ) {
 				feat_ids_to_delete[j] = feat_ids_to_delete[j+1];
 			}
 			i--;
@@ -1690,19 +1690,19 @@ feature_filter( ProFeature *feat, ProAppData data )
 	ProError ret;
 	ProMdl model = (ProMdl)data;
 
-	if( (ret=ProFeatureTypeGet( feat, &curr_feat_type )) != PRO_TK_NO_ERROR ) {
+	if ( (ret=ProFeatureTypeGet( feat, &curr_feat_type )) != PRO_TK_NO_ERROR ) {
 
 		fprintf( stderr, "ProFeatureTypeGet Failed for %s!!\n", curr_part_name );
 		return ret;
 	}
-	if( curr_feat_type > 0 ) {
+	if ( curr_feat_type > 0 ) {
 		feat_type_count[curr_feat_type - FEAT_TYPE_OFFSET]++;
-	} else if( curr_feat_type == 0 ) {
+	} else if ( curr_feat_type == 0 ) {
 		feat_type_count[0]++;
 	}
 
 	/* handle holes, chamfers, and rounds only */
-	if( curr_feat_type == PRO_FEAT_HOLE ||
+	if ( curr_feat_type == PRO_FEAT_HOLE ||
 	    curr_feat_type == PRO_FEAT_CHAMFER ||
 	    curr_feat_type == PRO_FEAT_ROUND ) {
 		return PRO_TK_NO_ERROR;
@@ -1711,7 +1711,7 @@ feature_filter( ProFeature *feat, ProAppData data )
 	/* if we encounter a protrusion (or any feature that adds material) after a hole,
 	 * we cannot convert previous holes to CSG
 	 */
-	if( feat_adds_material( curr_feat_type ) ) {
+	if ( feat_adds_material( curr_feat_type ) ) {
 		/* any holes must be removed from the list */
 		remove_holes_from_id_list( model );
 	}
@@ -1725,11 +1725,11 @@ build_tree( char *sol_name, struct bu_vls *tree )
 {
 	struct csg_ops *ptr;
 
-	if( logger ) {
+	if ( logger ) {
 		fprintf( logger, "Building CSG tree for %s\n", sol_name );
 	}
 	ptr = csg_root;
-	while( ptr ) {
+	while ( ptr ) {
 		bu_vls_printf( tree, "{%c ", ptr->operator );
 		ptr = ptr->next;
 	}
@@ -1738,15 +1738,15 @@ build_tree( char *sol_name, struct bu_vls *tree )
 	bu_vls_strcat( tree, sol_name );
 	bu_vls_strcat( tree, "} }" );
 	ptr = csg_root;
-	while( ptr ) {
-		if( logger ) {
+	while ( ptr ) {
+		if ( logger ) {
 			fprintf( logger, "Adding %c %s\n", ptr->operator, bu_vls_addr( &ptr->name ) );
 		}
 		bu_vls_printf( tree, " {l {%s}}}", bu_vls_addr( &ptr->name ) );
 		ptr = ptr->next;
 	}
 
-	if( logger ) {
+	if ( logger ) {
 		fprintf( logger, "Final tree: %s\n", bu_vls_addr( tree ) );
 	}
 }
@@ -1758,8 +1758,8 @@ output_csg_prims()
 
 	ptr = csg_root;
 
-	while( ptr ) {
-		if( logger ) {
+	while ( ptr ) {
+		if ( logger ) {
 			fprintf( logger, "Creating primitive: %s %s\n",
 				 bu_vls_addr( &ptr->name ), bu_vls_addr( &ptr->dbput ) );
 		}
@@ -1807,18 +1807,18 @@ output_part( ProMdl model )
 	wchar_t werr_mess[512];
 
 	/* if this part has already been output, do not do it again */
-	if( ProMdlNameGet( model, part_name ) != PRO_TK_NO_ERROR ) {
+	if ( ProMdlNameGet( model, part_name ) != PRO_TK_NO_ERROR ) {
 		fprintf( stderr, "Failed to get name for a part\n" );
 		return( 1 );
 	}
-	if( already_done_part( part_name ) )
+	if ( already_done_part( part_name ) )
 		return( 0 );
 
-	if( logger ) {
+	if ( logger ) {
 		fprintf( logger, "Processing %s:\n", ProWstringToString( astr, part_name ) );
 	}
 
-	if( ProMdlTypeGet( model, &type ) != PRO_TK_NO_ERROR ) {
+	if ( ProMdlTypeGet( model, &type ) != PRO_TK_NO_ERROR ) {
 		fprintf( stderr, "Failed to get part type\n" );
 	} else {
 		obj_type_count[type]++;
@@ -1826,29 +1826,29 @@ output_part( ProMdl model )
 	/* let user know we are doing something */
 
 	status = ProUILabelTextSet( "proe_brl", "curr_proc", part_name );
-	if( status != PRO_TK_NO_ERROR ) {
+	if ( status != PRO_TK_NO_ERROR ) {
 		fprintf( stderr, "Failed to update dialog label for currently processed part\n" );
 		return( 1 );
 	}
 	status = ProUIDialogActivate( "proe_brl", &ret_status );
-	if( status != PRO_TK_NO_ERROR ) {
+	if ( status != PRO_TK_NO_ERROR ) {
 		fprintf( stderr, "Error in proe-brl Dialog, error = %d\n",
 			 status );
 		fprintf( stderr, "\t dialog returned %d\n", ret_status );
 	}
 
-	if( !do_facets_only || do_elims ) {
+	if ( !do_facets_only || do_elims ) {
 		free_csg_ops();
 		ProSolidFeatVisit( ProMdlToSolid(model), do_feature_visit,
 				   feature_filter, (ProAppData)model );
 
-		if( feat_id_count ) {
+		if ( feat_id_count ) {
 			int i;
 
-			if( logger ) {
+			if ( logger ) {
 				fprintf( logger, "suppressing %d features of %s:\n",
 					 feat_id_count, curr_part_name );
-				for( i=0 ; i<feat_id_count ; i++ ) {
+				for ( i=0; i<feat_id_count; i++ ) {
 					fprintf( logger, "\t%d\n", feat_ids_to_delete[i] );
 				}
 			}
@@ -1856,44 +1856,44 @@ output_part( ProMdl model )
 			ret = ProFeatureSuppress( ProMdlToSolid(model),
 						  feat_ids_to_delete, feat_id_count,
 						  NULL, 0 );
-			if( ret != PRO_TK_NO_ERROR ) {
+			if ( ret != PRO_TK_NO_ERROR ) {
 				ProFeatureResumeOptions resume_opts[1];
 				ProFeatStatus feat_stat;
 				ProFeature feat;
 
 				resume_opts[0] = PRO_FEAT_RESUME_INCLUDE_PARENTS;
 
-				if( logger ) {
+				if ( logger ) {
 					fprintf( logger, "Failed to suppress features!!!\n" );
 				}
 				fprintf( stderr, "Failed to delete %d features from %s\n",
 					 feat_id_count, curr_part_name );
 
-				for( i=0 ; i<feat_id_count ; i++ ) {
+				for ( i=0; i<feat_id_count; i++ ) {
 					status = ProFeatureInit( ProMdlToSolid(model),
 								 feat_ids_to_delete[i],
 								 &feat );
-					if( status != PRO_TK_NO_ERROR ) {
+					if ( status != PRO_TK_NO_ERROR ) {
 						fprintf( stderr, "Failed to get handle for id %d\n",
 								 feat_ids_to_delete[i] );
-						if( logger ) {
+						if ( logger ) {
 							fprintf( logger, "Failed to get handle for id %d\n",
 								 feat_ids_to_delete[i] );
 						}
 					} else {
 						status = ProFeatureStatusGet( &feat, &feat_stat );
-						if( status != PRO_TK_NO_ERROR ) {
+						if ( status != PRO_TK_NO_ERROR ) {
 							fprintf( stderr,
 								 "Failed to get status for feature %d\n",
 								 feat_ids_to_delete[i] );
-							if( logger ) {
+							if ( logger ) {
 								fprintf( logger,
 									 "Failed to get status for feature %d\n",
 									 feat_ids_to_delete[i] );
 							}
 						} else {
-							if( logger ) {
-								if( feat_stat < 0 ) {
+							if ( logger ) {
+								if ( feat_stat < 0 ) {
 									fprintf( logger,
 										 "invalid feature (%d)\n",
 										 feat_ids_to_delete[i] );
@@ -1903,9 +1903,9 @@ output_part( ProMdl model )
 										 feat_status[ feat_stat ] );
 								}
 							}
-							if( feat_stat == PRO_FEAT_SUPPRESSED ) {
+							if ( feat_stat == PRO_FEAT_SUPPRESSED ) {
 								/* unsuppress this one */
-								if( logger ) {
+								if ( logger ) {
 									fprintf( logger,
 										 "Unsuppressing feature %d\n",
 										  feat_ids_to_delete[i] );
@@ -1913,12 +1913,12 @@ output_part( ProMdl model )
 								status = ProFeatureResume( ProMdlToSolid(model),
 											   &feat_ids_to_delete[i],
 											   1, resume_opts, 1 );
-								if( logger ) {
-									if( status == PRO_TK_NO_ERROR ) {
+								if ( logger ) {
+									if ( status == PRO_TK_NO_ERROR ) {
 										fprintf( logger,
 											 "\tfeature id %d unsuppressed\n",
 											 feat_ids_to_delete[i] );
-									} else if( status == PRO_TK_SUPP_PARENTS ) {
+									} else if ( status == PRO_TK_SUPP_PARENTS ) {
 										fprintf( logger,
 											 "\tsuppressed parents for feature %d not found\n",
 											 feat_ids_to_delete[i] );
@@ -1947,16 +1947,16 @@ output_part( ProMdl model )
 	 */
 
 	/* tessellate part */
-	if( logger ) {
+	if ( logger ) {
 		fprintf( logger, "Tessellate part (%s)\n", curr_part_name );
 	}
 
 	status = ProPartTessellate( ProMdlToPart(model), max_error/proe_to_brl_conv,
 			   angle_cntrl, PRO_B_TRUE, &tess  );
-	if( status != PRO_TK_NO_ERROR ) {
+	if ( status != PRO_TK_NO_ERROR ) {
 		/* Failed!!! */
 
-		if( logger ) {
+		if ( logger ) {
 			fprintf( logger, "Failed to tessellate %s!!!\n", curr_part_name );
 		}
 		snprintf( astr, sizeof(astr), "Failed to tessellate part (%s)", curr_part_name );
@@ -1965,10 +1965,10 @@ output_part( ProMdl model )
 		fprintf( stderr, "%s\n", astr );
 		(void)ProWindowRefresh( PRO_VALUE_UNUSED );
 		ret = 1;
-	} else if( !tess ) {
+	} else if ( !tess ) {
 		/* not a failure, just an empty part */
 
-		if( logger ) {
+		if ( logger ) {
 			fprintf( logger, "part (%s) is empty\n", curr_part_name );
 		}
 		snprintf( astr, sizeof(astr), "%s has no surfaces, ignoring", curr_part_name );
@@ -1983,14 +1983,14 @@ output_part( ProMdl model )
 		int surface_count;
 
 		status = ProArraySizeGet( (ProArray)tess, &surface_count );
-		if( status != PRO_TK_NO_ERROR ) {
+		if ( status != PRO_TK_NO_ERROR ) {
 			(void)ProMessageDisplay(MSGFIL, "USER_ERROR", "Failed to get array size" );
 			ProMessageClear();
 			fprintf( stderr, "Failed to get array size\n" );
 			(void)ProWindowRefresh( PRO_VALUE_UNUSED );
 			ret = 1;
-		} else if( surface_count < 1 ) {
-			if( logger ) {
+		} else if ( surface_count < 1 ) {
+			if ( logger ) {
 				fprintf( logger, "part (%s) has no surfaces\n", curr_part_name );
 			}
 			snprintf( astr, sizeof(astr), "%s has no surfaces, ignoring", curr_part_name );
@@ -2017,11 +2017,11 @@ output_part( ProMdl model )
 			clean_vert_tree(norm_tree_root);
 
 			/* add all vertices and triangles to our lists */
-			if( logger ) {
+			if ( logger ) {
 				fprintf( logger, "Processing surfaces of part %s\n", curr_part_name );
 			}
-			for( surfno=0 ; surfno<surface_count ; surfno++ ) {
-				for( i=0 ; i<tess[surfno].n_facets ; i++ ) {
+			for ( surfno=0; surfno<surface_count; surfno++ ) {
+				for ( i=0; i<tess[surfno].n_facets; i++ ) {
 					/* grab the triangle */
 					vert_no = tess[surfno].facets[i][0];
 					v1 = Add_vert( tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
@@ -2032,11 +2032,11 @@ output_part( ProMdl model )
 					vert_no = tess[surfno].facets[i][2];
 					v3 = Add_vert( tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
 						       tess[surfno].vertices[vert_no][2], vert_tree_root, local_tol_sq );
-					if( bad_triangle( v1, v2, v3 ) ) {
+					if ( bad_triangle( v1, v2, v3 ) ) {
 						continue;
 					}
 
-					if( !get_normals ) {
+					if ( !get_normals ) {
 						add_triangle( v1, v2, v3 );
 						continue;
 					}
@@ -2064,36 +2064,36 @@ output_part( ProMdl model )
 			brl_name = get_brlcad_name( curr_part_name );
 			sol_name = (char *)bu_malloc( strlen( brl_name ) + 3, "aol_name" );
 			snprintf( sol_name, strlen(brl_name)+3, "s.%s", brl_name );
-			if( logger ) {
+			if ( logger ) {
 				fprintf( logger, "Creating bot primitive (%s) for part %s\n",
 					 sol_name, brl_name );
 			}
 			fprintf( outfp, "put {%s} bot mode volume orient no V { ", sol_name );
-			for( i=0 ; i<vert_tree_root->curr_vert ; i++ ) {
+			for ( i=0; i<vert_tree_root->curr_vert; i++ ) {
 				fprintf( outfp, " {%.12e %.12e %.12e}",
 					 vert_tree_root->the_array[i*3] * proe_to_brl_conv,
 					 vert_tree_root->the_array[i*3+1] * proe_to_brl_conv,
 					 vert_tree_root->the_array[i*3+2] * proe_to_brl_conv );
 			}
 			fprintf( outfp, " } F {" );
-			for( i=0 ; i<curr_tri ; i++ ) {
+			for ( i=0; i<curr_tri; i++ ) {
 				fprintf( outfp, " {%d %d %d}", part_tris[i][0],
 					 part_tris[i][1], part_tris[i][2] );
 			}
-			if( get_normals ) {
-				if( logger ) {
+			if ( get_normals ) {
+				if ( logger ) {
 					fprintf( logger, "Getting vertex normals for part %s\n",
 						 curr_part_name );
 				}
 				fprintf( outfp, " } flags { has_normals use_normals } N {" );
-				for( i=0 ; i<norm_tree_root->curr_vert ; i++ ) {
+				for ( i=0; i<norm_tree_root->curr_vert; i++ ) {
 				fprintf( outfp, " {%.12e %.12e %.12e}",
 					 norm_tree_root->the_array[i*3] * proe_to_brl_conv,
 					 norm_tree_root->the_array[i*3+1] * proe_to_brl_conv,
 					 norm_tree_root->the_array[i*3+2] * proe_to_brl_conv );
 				}
 				fprintf( outfp, " } fn {" );
-				for( i=0 ; i<curr_tri ; i++ ) {
+				for ( i=0; i<curr_tri; i++ ) {
 					fprintf( outfp, " {%d %d %d}", part_norms[i*3],
 						 part_norms[i*3+1], part_norms[i*3+2] );
 				}
@@ -2109,16 +2109,16 @@ output_part( ProMdl model )
 			/* get the surface properties for the part
 			 * and create a region using the actual part name
 			 */
-			if( logger ) {
+			if ( logger ) {
 				fprintf( logger, "Creating region for part %s\n", curr_part_name );
 			}
 			stat = prodb_get_surface_props( model, SEL_3D_PART, -1, 0, &props );
-			if( stat == PRODEV_SURF_PROPS_NOT_SET ) {
+			if ( stat == PRODEV_SURF_PROPS_NOT_SET ) {
 				/* no surface properties */
 				fprintf( outfp,
 				   "put {%s} comb region yes id %d los 100 GIFTmater 1 tree %s\n",
 					 get_brlcad_name( curr_part_name ), reg_id, bu_vls_addr( &tree) );
-			} else if( stat == PRODEV_SURF_PROPS_SET ) {
+			} else if ( stat == PRODEV_SURF_PROPS_SET ) {
 				/* use the colors, ... that was set in Pro/E */
 				fprintf( outfp,
 				    "put {%s} comb region yes id %d los 100 GIFTmater 1 rgb {%d %d %d} shader {plastic {",
@@ -2127,16 +2127,16 @@ output_part( ProMdl model )
 					 (int)(props.color_rgb[0]*255.0),
 					 (int)(props.color_rgb[1]*255.0),
 					 (int)(props.color_rgb[2]*255.0) );
-				if( props.transparency != 0.0 ) {
+				if ( props.transparency != 0.0 ) {
 					fprintf( outfp, " tr %g", props.transparency );
 				}
-				if( props.shininess != 1.0 ) {
+				if ( props.shininess != 1.0 ) {
 					fprintf( outfp, " sh %d", (int)(props.shininess * 18 + 2.0) );
 				}
-				if( props.diffuse != 0.3 ) {
+				if ( props.diffuse != 0.3 ) {
 					fprintf( outfp, " di %g", props.diffuse );
 				}
-				if( props.highlite != 0.7 ) {
+				if ( props.highlite != 0.7 ) {
 					fprintf( outfp, " sp %g", props.highlite );
 				}
 				fprintf( outfp, "} }" );
@@ -2152,14 +2152,14 @@ output_part( ProMdl model )
 			/* if the part has a material, add it as an attribute */
 			got_density = 0;
 			status = ProPartMaterialNameGet( ProMdlToPart(model), material );
-			if( status == PRO_TK_NO_ERROR ) {
+			if ( status == PRO_TK_NO_ERROR ) {
 				fprintf( outfp, "attr set {%s} material_name {%s}\n",
 					 get_brlcad_name( curr_part_name ),
 					 ProWstringToString( str, material ) );
 
 				/* get the density for this material */
 				status = ProPartMaterialdataGet( ProMdlToPart(model), material, &material_props );
-				if( status == PRO_TK_NO_ERROR ) {
+				if ( status == PRO_TK_NO_ERROR ) {
 					got_density = 1;
 					fprintf( outfp, "attr set {%s} density %g\n",
 						 get_brlcad_name( curr_part_name ),
@@ -2169,20 +2169,20 @@ output_part( ProMdl model )
 
 			/* calculate mass properties */
 			status = ProSolidMassPropertyGet( ProMdlToSolid( model ), NULL, &mass_prop );
-			if( status == PRO_TK_NO_ERROR ) {
-				if( !got_density ) {
-					if( mass_prop.density > 0.0 ) {
+			if ( status == PRO_TK_NO_ERROR ) {
+				if ( !got_density ) {
+					if ( mass_prop.density > 0.0 ) {
 						fprintf( outfp, "attr set {%s} density %g\n",
 							 get_brlcad_name( curr_part_name ),
 							 mass_prop.density );
 					}
 				}
-				if( mass_prop.mass > 0.0 ) {
+				if ( mass_prop.mass > 0.0 ) {
 					fprintf( outfp, "attr set {%s} mass %g\n",
 						 get_brlcad_name( curr_part_name ),
 						 mass_prop.mass );
 				}
-				if( mass_prop.volume > 0.0 ) {
+				if ( mass_prop.volume > 0.0 ) {
 					fprintf( outfp, "attr set {%s} volume %g\n",
 						 get_brlcad_name( curr_part_name ),
 						 mass_prop.volume );
@@ -2206,12 +2206,12 @@ output_part( ProMdl model )
 	add_to_done_part( part_name );
 
 	/* unsuppress anything we suppressed */
-	if( feat_id_count ) {
-		if( logger ) {
+	if ( feat_id_count ) {
+		if ( logger ) {
 			fprintf( logger, "Unsuppressing %d features\n", feat_id_count );
 		}
 		fprintf( stderr, "Unsuppressing %d features\n", feat_id_count );
-		if( (ret=ProFeatureResume( ProMdlToSolid(model),
+		if ( (ret=ProFeatureResume( ProMdlToSolid(model),
 					     feat_ids_to_delete, feat_id_count,
 					     NULL, 0 )) != PRO_TK_NO_ERROR) {
 
@@ -2220,7 +2220,7 @@ output_part( ProMdl model )
 
 			/* use UI dialog */
 			status = ProUIDialogCreate( "proe_brl_error", "proe_brl_error" );
-			if( status != PRO_TK_NO_ERROR ) {
+			if ( status != PRO_TK_NO_ERROR ) {
 				fprintf( stderr, "Failed to create dialog box for proe-brl, error = %d\n", status );
 				return( 0 );
 			}
@@ -2234,13 +2234,13 @@ output_part( ProMdl model )
 
 			(void)ProStringToWstring( werr_mess, err_mess );
 			status = ProUITextareaValueSet( "proe_brl_error", "the_message", werr_mess );
-			if( status != PRO_TK_NO_ERROR ) {
+			if ( status != PRO_TK_NO_ERROR ) {
 				fprintf( stderr, "Failed to create dialog box for proe-brl, error = %d\n", status );
 				return( 0 );
 			}
 			(void)ProUIPushbuttonActivateActionSet( "proe_brl_error", "ok", kill_error_dialog, NULL );
 			status = ProUIDialogActivate( "proe_brl_error", &ret_status );
-			if( status != PRO_TK_NO_ERROR ) {
+			if ( status != PRO_TK_NO_ERROR ) {
 				fprintf( stderr, "Error in proe-brl error Dialog, error = %d\n",
 					 status );
 				fprintf( stderr, "\t dialog returned %d\n", ret_status );
@@ -2262,12 +2262,12 @@ free_assem( struct asm_head *curr_assem )
 {
 	struct asm_member *ptr, *tmp;
 
-	if( logger ) {
+	if ( logger ) {
 		fprintf( logger, "Freeing assembly info\n" );
 	}
 
 	ptr = curr_assem->members;
-	while( ptr ) {
+	while ( ptr ) {
 		tmp = ptr;
 		ptr = ptr->next;
 		bu_free( (char *)tmp, "asm member" );
@@ -2282,7 +2282,7 @@ list_assem( struct asm_head *curr_asm )
 
 	fprintf( stderr, "Assembly %s:\n", curr_asm->name );
 	ptr = curr_asm->members;
-	while( ptr ) {
+	while ( ptr ) {
 		fprintf( stderr, "\t%s\n", ptr->name );
 		ptr = ptr->next;
 	}
@@ -2305,28 +2305,28 @@ output_assembly( ProMdl model )
 	int i, j, k;
 	int ret_status=0;
 
-	if( ProMdlNameGet( model, asm_name ) != PRO_TK_NO_ERROR ) {
+	if ( ProMdlNameGet( model, asm_name ) != PRO_TK_NO_ERROR ) {
 		fprintf( stderr, "Failed to get model name for an assembly\n" );
 		return;
 	}
 
 	/* do not output this assembly more than once */
-	if( already_done_asm( asm_name ) )
+	if ( already_done_asm( asm_name ) )
 		return;
 
-	if( logger ) {
+	if ( logger ) {
 		fprintf( logger, "Processing assembly %s:\n", ProWstringToString( astr, asm_name ) );
 	}
 
 	/* let the user know we are doing something */
 
 	status = ProUILabelTextSet( "proe_brl", "curr_proc", asm_name );
-	if( status != PRO_TK_NO_ERROR ) {
+	if ( status != PRO_TK_NO_ERROR ) {
 		fprintf( stderr, "Failed to update dialog label for currently processed assembly\n" );
 		return;
 	}
 	status = ProUIDialogActivate( "proe_brl", &ret_status );
-	if( status != PRO_TK_NO_ERROR ) {
+	if ( status != PRO_TK_NO_ERROR ) {
 		fprintf( stderr, "Error in proe-brl Dialog, error = %d\n",
 			 status );
 		fprintf( stderr, "\t dialog returned %d\n", ret_status );
@@ -2345,20 +2345,20 @@ output_assembly( ProMdl model )
 	 */
 
 	status = ProAssemblyIsExploded( model, &is_exploded );
-	if( status != PRO_TK_NO_ERROR ) {
+	if ( status != PRO_TK_NO_ERROR ) {
 		fprintf( stderr, "Failed to get explode status of %s\n", curr_assem.name );
-		if( logger ) {
+		if ( logger ) {
 			fprintf( logger, "Failed to get explode status of %s\n", curr_assem.name );
 		}
 	}
 
-	if( is_exploded ) {
+	if ( is_exploded ) {
 		/* unexplode this assembly !!!! */
 		status = ProAssemblyUnexplode( model );
-		if( status != PRO_TK_NO_ERROR ) {
+		if ( status != PRO_TK_NO_ERROR ) {
 			fprintf( stderr, "Failed to un-explode assembly %s\n", curr_assem.name );
 			fprintf( stderr, "\tcomponents will be incorrectly positioned\n" );
-			if( logger ) {
+			if ( logger ) {
 				fprintf( logger, "Failed to un-explode assembly %s\n", curr_assem.name );
 				fprintf( logger, "\tcomponents will be incorrectly positioned\n" );
 			}
@@ -2378,36 +2378,36 @@ output_assembly( ProMdl model )
 
 	/* count number of members */
 	member = curr_assem.members;
-	while( member ) {
+	while ( member ) {
 		member_count++;
 		member = member->next;
 	}
 
-	if( logger ) {
+	if ( logger ) {
 		fprintf( logger, "Output %d members of assembly\n", member_count );
 	}
 
 	/* output the "tree" */
-	for( i=1 ; i<member_count ; i++ ) {
+	for ( i=1; i<member_count; i++ ) {
 		fprintf( outfp, "{u ");
 	}
 
 	member = curr_assem.members;
 	i = 0;
-	while( member ) {
+	while ( member ) {
 		/* output the member name */
-		if( member->type == PRO_MDL_ASSEMBLY ) {
+		if ( member->type == PRO_MDL_ASSEMBLY ) {
 			fprintf( outfp, "{l {%s.c}", get_brlcad_name( member->name ) );
 		} else {
 			fprintf( outfp, "{l {%s}", get_brlcad_name( member->name ) );
 		}
 
 		/* if there is an xform matrix, put it here */
-		if( is_non_identity( member->xform ) ) {
+		if ( is_non_identity( member->xform ) ) {
 			fprintf( outfp, " {" );
-			for( j=0 ; j<4 ; j++ ) {
-				for( k=0 ; k<4 ; k++ ) {
-					if( k == 3 && j < 3 ) {
+			for ( j=0; j<4; j++ ) {
+				for ( k=0; k<4; k++ ) {
+					if ( k == 3 && j < 3 ) {
 						fprintf( outfp, " %.12e",
 						     member->xform[k][j] * proe_to_brl_conv );
 					} else {
@@ -2418,7 +2418,7 @@ output_assembly( ProMdl model )
 			}
 			fprintf( outfp, "}" );
 		}
-		if( i ) {
+		if ( i ) {
 			fprintf( outfp, "}} " );
 		} else {
 			fprintf( outfp, "} " );
@@ -2429,23 +2429,23 @@ output_assembly( ProMdl model )
 	fprintf( outfp, "\n" );
 
 	/* calculate mass properties */
-	if( logger ) {
+	if ( logger ) {
 		fprintf( logger, "Getting mass properties for this assmebly\n" );
 	}
 
 	status = ProSolidMassPropertyGet( ProMdlToSolid( model ), NULL, &mass_prop );
-	if( status == PRO_TK_NO_ERROR ) {
-		if( mass_prop.density > 0.0 ) {
+	if ( status == PRO_TK_NO_ERROR ) {
+		if ( mass_prop.density > 0.0 ) {
 			fprintf( outfp, "attr set {%s.c} density %g\n",
 				 get_brlcad_name( curr_asm_name ),
 				 mass_prop.density );
 		}
-		if( mass_prop.mass > 0.0 ) {
+		if ( mass_prop.mass > 0.0 ) {
 			fprintf( outfp, "attr set {%s.c} mass %g\n",
 				 get_brlcad_name( curr_asm_name ),
 				 mass_prop.mass );
 		}
-		if( mass_prop.volume > 0.0 ) {
+		if ( mass_prop.volume > 0.0 ) {
 			fprintf( outfp, "attr set {%s.c} volume %g\n",
 				 get_brlcad_name( curr_asm_name ),
 				 mass_prop.volume );
@@ -2475,12 +2475,12 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
 	int i, j;
 
 	status = ProAsmcompMdlNameGet( feat, &type, name );
-	if( status != PRO_TK_NO_ERROR ) {
+	if ( status != PRO_TK_NO_ERROR ) {
 		fprintf( stderr, "ProAsmcompMdlNameGet() failed\n" );
 		return status;
 	}
 	(void)ProWstringToString( curr_part_name, name );
-	if( logger ) {
+	if ( logger ) {
 		fprintf( logger, "Processing assembly member %s\n", curr_part_name );
 	}
 
@@ -2491,7 +2491,7 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
 	 */
 	id_table[0] = feat->id;
 	status = ProAsmcomppathInit( (ProSolid)curr_assem->model, id_table, 1, &comp_path );
-	if( status != PRO_TK_NO_ERROR ) {
+	if ( status != PRO_TK_NO_ERROR ) {
 		snprintf( astr, sizeof(astr), "Failed to get path from %s to %s (aborting)", curr_asm_name,
 			 curr_part_name );
 		(void)ProMessageDisplay(MSGFIL, "USER_ERROR", astr );
@@ -2503,7 +2503,7 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
 
 	/* this call accumulates the xform matrix along the path created above */
 	status = ProAsmcomppathTrfGet( &comp_path, PRO_B_TRUE, xform );
-	if( status != PRO_TK_NO_ERROR ) {
+	if ( status != PRO_TK_NO_ERROR ) {
 		snprintf( astr, sizeof(astr), "Failed to get transformation matrix %s/%s, error = %d, id = %d",
 			 curr_asm_name, curr_part_name, status, feat->id );
 		(void)ProMessageDisplay(MSGFIL, "USER_ERROR", astr );
@@ -2516,8 +2516,8 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
 	/* add this member to our assembly info */
 	prev = NULL;
 	member = curr_assem->members;
-	if( member ) {
-		while( member->next ) {
+	if ( member ) {
+		while ( member->next ) {
 			prev = member;
 			member = member->next;
 		}
@@ -2531,7 +2531,7 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
 		member = curr_assem->members;
 	}
 
-	if( !member ) {
+	if ( !member ) {
 		(void)ProMessageDisplay(MSGFIL, "USER_ERROR",
 					"memory allocation for member failed" );
 		ProMessageClear();
@@ -2545,15 +2545,15 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
 	(void)ProWstringToString( member->name, name );
 
 	/* copy xform matrix */
-	for( i=0 ; i<4 ; i++ ) {
-		for( j=0 ; j<4 ; j++ ) {
+	for ( i=0; i<4; i++ ) {
+		for ( j=0; j<4; j++ ) {
 			member->xform[i][j] = xform[i][j];
 		}
 	}
 
 	/* get the model for this member */
 	status = ProAsmcompMdlGet( feat, &model );
-	if( status != PRO_TK_NO_ERROR ) {
+	if ( status != PRO_TK_NO_ERROR ) {
 		snprintf( astr, sizeof(astr), "Failed to get model for component %s",
 			 curr_part_name );
 		(void)ProMessageDisplay(MSGFIL, "USER_ERROR", astr );
@@ -2565,7 +2565,7 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
 
 	/* get its type (part or assembly are the only ones that should make it here) */
 	status = ProMdlTypeGet( model, &type );
-	if( status != PRO_TK_NO_ERROR ) {
+	if ( status != PRO_TK_NO_ERROR ) {
 		snprintf( astr, sizeof(astr), "Failed to get type for component %s",
 			 curr_part_name );
 		(void)ProMessageDisplay(MSGFIL, "USER_ERROR", astr );
@@ -2579,14 +2579,14 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
 	member->type = type;
 
 	/* output this member */
-	switch( type ) {
+	switch ( type ) {
 	case PRO_MDL_ASSEMBLY:
 		output_assembly( model );
 		break;
 	case PRO_MDL_PART:
-		if( output_part( model ) == 2 ) {
+		if ( output_part( model ) == 2 ) {
 			/* part had no solid parts, eliminate from the assembly */
-			if( prev ) {
+			if ( prev ) {
 				prev->next = NULL;
 			} else {
 				curr_assem->members = NULL;
@@ -2610,7 +2610,7 @@ assembly_filter( ProFeature *feat, ProAppData *data )
 	ProError status;
 
 	status = ProFeatureTypeGet( feat, &type );
-	if( status != PRO_TK_NO_ERROR ) {
+	if ( status != PRO_TK_NO_ERROR ) {
 		sprintf( astr, "In assembly_filter, cannot get feature type for feature %d",
 			 feat->id );
 		(void)ProMessageDisplay(MSGFIL, "USER_ERROR", astr );
@@ -2620,12 +2620,12 @@ assembly_filter( ProFeature *feat, ProAppData *data )
 		return( PRO_TK_CONTINUE );
 	}
 
-	if( type != PRO_FEAT_COMPONENT ) {
+	if ( type != PRO_FEAT_COMPONENT ) {
 		return( PRO_TK_CONTINUE );
 	}
 
 	status = ProFeatureStatusGet( feat, &feat_status );
-	if( status != PRO_TK_NO_ERROR ) {
+	if ( status != PRO_TK_NO_ERROR ) {
 		sprintf( astr, "In assembly_filter, cannot get feature status for feature %d",
 			 feat->id );
 		(void)ProMessageDisplay(MSGFIL, "USER_ERROR", astr );
@@ -2635,7 +2635,7 @@ assembly_filter( ProFeature *feat, ProAppData *data )
 		return( PRO_TK_CONTINUE );
 	}
 
-	if( feat_status != PRO_FEAT_ACTIVE ) {
+	if ( feat_status != PRO_FEAT_ACTIVE ) {
 		return( PRO_TK_CONTINUE );
 	}
 
@@ -2647,9 +2647,9 @@ set_identity( ProMatrix xform )
 {
 	int i, j;
 
-	for( i=0 ; i<4 ; i++ ) {
-		for( j=0 ; j<4 ; j++ ) {
-			if( i == j ) {
+	for ( i=0; i<4; i++ ) {
+		for ( j=0; j<4; j++ ) {
+			if ( i == j ) {
 				xform[i][j] = 1.0;
 			} else {
 				xform[i][j] = 0.0;
@@ -2664,13 +2664,13 @@ is_non_identity( ProMatrix xform )
 {
 	int i, j;
 
-	for( i=0 ; i<4 ; i++ ) {
-		for( j=0 ; j<4 ; j++ ) {
-			if( i == j ) {
-				if( xform[i][j] != 1.0 )
+	for ( i=0; i<4; i++ ) {
+		for ( j=0; j<4; j++ ) {
+			if ( i == j ) {
+				if ( xform[i][j] != 1.0 )
 					return( 1 );
 			} else {
-				if( xform[i][j] != 0.0 )
+				if ( xform[i][j] != 0.0 )
 					return( 1 );
 			}
 		}
@@ -2688,7 +2688,7 @@ output_top_level_object( ProMdl model, ProMdlType type )
 	char buffer[1024] = {0};
 
 	/* get its name */
-	if( ProMdlNameGet( model, name ) != PRO_TK_NO_ERROR ) {
+	if ( ProMdlNameGet( model, name ) != PRO_TK_NO_ERROR ) {
 		(void)ProMessageDisplay(MSGFIL, "USER_ERROR",
 					"Could not get name for part!!" );
 		ProMessageClear();
@@ -2702,15 +2702,15 @@ output_top_level_object( ProMdl model, ProMdlType type )
 	/* save name */
 	strlcpy( top_level, curr_part_name, sizeof(top_level) );
 
-	if( logger ) {
+	if ( logger ) {
 		fprintf( logger, "Output top level object (%s)\n", top_level );
 	}
 
 	/* output the object */
-	if( type == PRO_MDL_PART ) {
+	if ( type == PRO_MDL_PART ) {
 		/* tessellate part and output triangles */
 		output_part( model );
-	} else if( type == PRO_MDL_ASSEMBLY ) {
+	} else if ( type == PRO_MDL_ASSEMBLY ) {
 		/* visit all members of assembly */
 		output_assembly( model );
 	} else {
@@ -2722,7 +2722,7 @@ output_top_level_object( ProMdl model, ProMdlType type )
 		(void)ProWindowRefresh( PRO_VALUE_UNUSED );
 	}
 
-	if( type == PRO_MDL_ASSEMBLY ) {
+	if ( type == PRO_MDL_ASSEMBLY ) {
 	    snprintf(buffer, 1024, "put $topname comb region no tree {l %s.c {0 0 1 0 1 0 0 0 0 1 0 0 0 0 0 1}}", get_brlcad_name(top_level) );
 	} else {
 	    snprintf(buffer, 1024, "put $topname comb region no tree {l %s {0 0 1 0 1 0 0 0 0 1 0 0 0 0 0 1}}", get_brlcad_name(top_level) );
@@ -2769,27 +2769,27 @@ create_temp_directory()
 #if 1
 	/* use UI dialog */
 	status = ProUIDialogCreate( "proe_brl", "proe_brl" );
-	if( status != PRO_TK_NO_ERROR ) {
+	if ( status != PRO_TK_NO_ERROR ) {
 		fprintf( stderr, "Failed to create dialog box for proe-brl, error = %d\n", status );
 		return( 0 );
 	}
 
 	status = ProUIPushbuttonActivateActionSet( "proe_brl", "doit", doit, NULL );
-	if( status != PRO_TK_NO_ERROR ) {
+	if ( status != PRO_TK_NO_ERROR ) {
 		fprintf( stderr, "Failed to set action for 'Go' button\n" );
 		ProUIDialogDestroy( "proe_brl" );
 		return( 0 );
 	}
 
 	status = ProUIPushbuttonActivateActionSet( "proe_brl", "quit", do_quit, NULL );
-	if( status != PRO_TK_NO_ERROR ) {
+	if ( status != PRO_TK_NO_ERROR ) {
 		fprintf( stderr, "Failed to set action for 'Go' button\n" );
 		ProUIDialogDestroy( "proe_brl" );
 		return( 0 );
 	}
 
 	status = ProUIDialogActivate( "proe_brl", &ret_status );
-	if( status != PRO_TK_NO_ERROR ) {
+	if ( status != PRO_TK_NO_ERROR ) {
 		fprintf( stderr, "Error in proe-brl Dialog, error = %d\n",
 			 status );
 		fprintf( stderr, "\t dialog returned %d\n", ret_status );
@@ -2806,7 +2806,7 @@ create_temp_directory()
 	range[0] = 0.0;
 	range[1] = 1.0;
 	status = ProMessageDoubleRead( range, &angle_cntrl );
-	if( status == PRO_TK_MSG_USER_QUIT ) {
+	if ( status == PRO_TK_MSG_USER_QUIT ) {
 		return( 0 );
 	}
 #endif
@@ -2821,7 +2821,7 @@ free_hash_values( struct bu_hash_tbl *htbl )
 
 	entry = bu_hash_tbl_first( htbl, &rec );
 
-	while( entry ) {
+	while ( entry ) {
 		bu_free( bu_get_hash_value( entry ), "hash entry" );
 		entry = bu_hash_tbl_next( &rec );
 	}
@@ -2838,19 +2838,19 @@ create_name_hash( FILE *name_fd )
 
 	htbl = bu_create_hash_tbl( NUM_HASH_TABLE_BINS );
 
-	if( logger ) {
+	if ( logger ) {
 		fprintf( logger, "name hash created, now filling it:\n" );
 	}
-	while( bu_fgets( line, MAX_LINE_LEN, name_fd ) ) {
+	while ( bu_fgets( line, MAX_LINE_LEN, name_fd ) ) {
 		char *part_no, *part_name, *ptr;
 		line_no++;
 
-		if( logger ) {
+		if ( logger ) {
 			fprintf( logger, "line %ld: %s", line_no, line );
 		}
 
 		ptr = strtok( line, " \t\n" );
-		if( !ptr ) {
+		if ( !ptr ) {
 			bu_log( "Warning: unrecognizable line in part name file (bad part number):\n\t%s\n", line );
 			bu_log( "\tIgnoring\n" );
 			continue;
@@ -2860,14 +2860,14 @@ create_name_hash( FILE *name_fd )
 		
 		/* match up to the EOL, everything up to it minus surrounding ws is the name */
 		ptr = strtok( (char *)NULL, "\n" );
-		if( !ptr ) {
+		if ( !ptr ) {
 			bu_log( "Warning: unrecognizable line in part name file (bad part name):\n\t%s\n", line );
 			bu_log( "\tIgnoring\n" );
 			continue;
 		}
 		entry = bu_hash_add_entry( htbl, (unsigned char *)part_no, strlen( part_no ), &new_entry );
-		if( !new_entry ) {
-			if( logger ) {
+		if ( !new_entry ) {
+			if ( logger ) {
 				fprintf( logger, "\t\t\tHash table entry already exists for part number (%s)\n", part_no );
 			}
 			bu_free( part_no, "part_no" );
@@ -2893,12 +2893,12 @@ create_name_hash( FILE *name_fd )
 		lower_case( part_name );
 		part_name = create_unique_name( part_name );
 
-		if( logger ) {
+		if ( logger ) {
 			fprintf( logger, "\t\tpart_no = %s, part name = %s\n", part_no, part_name );
 		}
 
 
-		if( logger ) {
+		if ( logger ) {
 			fprintf( logger, "\t\t\tCreating new hash tabel entry for above names\n" );
 		}
 		bu_set_hash_value( entry, (unsigned char *)part_name );
@@ -2930,11 +2930,11 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 
 	ProStringToWstring( tmp_line, "Not processing" );
 	status = ProUILabelTextSet( "proe_brl", "curr_proc", tmp_line );
-	if( status != PRO_TK_NO_ERROR ) {
+	if ( status != PRO_TK_NO_ERROR ) {
 		fprintf( stderr, "Failed to update dialog label for currently processed part\n" );
 	}
 	status = ProUIDialogActivate( "proe_brl", &ret_status );
-	if( status != PRO_TK_NO_ERROR ) {
+	if ( status != PRO_TK_NO_ERROR ) {
 		fprintf( stderr, "Error in proe-brl Dialog, error = %d\n",
 			 status );
 		fprintf( stderr, "\t dialog returned %d\n", ret_status );
@@ -2942,7 +2942,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 
 	/* get the name of the log file */
 	status = ProUIInputpanelValueGet( "proe_brl", "log_file", &tmp_str );
-	if( status != PRO_TK_NO_ERROR ) {
+	if ( status != PRO_TK_NO_ERROR ) {
 		fprintf( stderr, "Failed to get log file name\n" );
 		ProUIDialogDestroy( "proe_brl" );
 		return;
@@ -2952,7 +2952,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 
 	/* get the name of the output file */
 	status = ProUIInputpanelValueGet( "proe_brl", "output_file", &w_output_file );
-	if( status != PRO_TK_NO_ERROR ) {
+	if ( status != PRO_TK_NO_ERROR ) {
 		fprintf( stderr, "Failed to get output file name\n" );
 		ProUIDialogDestroy( "proe_brl" );
 		return;
@@ -2962,7 +2962,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 
 	/* get the name of the part number to part name mapping file */
 	status = ProUIInputpanelValueGet( "proe_brl", "name_file", &w_name_file );
-	if( status != PRO_TK_NO_ERROR ) {
+	if ( status != PRO_TK_NO_ERROR ) {
 		fprintf( stderr, "Failed to get name of part number to part name mapping file\n" );
 		ProUIDialogDestroy( "proe_brl" );
 		return;
@@ -2972,7 +2972,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 
 	/* get starting ident */
 	status = ProUIInputpanelValueGet( "proe_brl", "starting_ident", &tmp_str );
-	if( status != PRO_TK_NO_ERROR ) {
+	if ( status != PRO_TK_NO_ERROR ) {
 		fprintf( stderr, "Failed to get starting ident\n" );
 		ProUIDialogDestroy( "proe_brl" );
 		return;
@@ -2981,12 +2981,12 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	ProWstringToString( astr, tmp_str );
 	ProWstringFree( tmp_str );
 	reg_id = atoi( astr );
-	if( reg_id < 1 )
+	if ( reg_id < 1 )
 		reg_id = 1;
 
 	/* get max error */
 	status = ProUIInputpanelValueGet( "proe_brl", "max_error", &tmp_str );
-	if( status != PRO_TK_NO_ERROR ) {
+	if ( status != PRO_TK_NO_ERROR ) {
 		fprintf( stderr, "Failed to get max tesellation error\n" );
 		ProUIDialogDestroy( "proe_brl" );
 		return;
@@ -2998,7 +2998,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 
 	/* get the angle control */
 	status = ProUIInputpanelValueGet( "proe_brl", "angle_ctrl", &tmp_str );
-	if( status != PRO_TK_NO_ERROR ) {
+	if ( status != PRO_TK_NO_ERROR ) {
 		fprintf( stderr, "Failed to get angle control\n" );
 		ProUIDialogDestroy( "proe_brl" );
 		return;
@@ -3010,7 +3010,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 
 	/* check if user wants to do any CSG */
 	status = ProUICheckbuttonGetState( "proe_brl", "facets_only", &do_facets_only );
-	if( status != PRO_TK_NO_ERROR ) {
+	if ( status != PRO_TK_NO_ERROR ) {
 		fprintf( stderr, "Failed to get checkbutton setting (facetize only)\n" );
 		ProUIDialogDestroy( "proe_brl" );
 		return;
@@ -3018,7 +3018,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 
 	/* check if user wants to eliminate small features */
 	status = ProUICheckbuttonGetState( "proe_brl", "elim_small", &do_elims );
-	if( status != PRO_TK_NO_ERROR ) {
+	if ( status != PRO_TK_NO_ERROR ) {
 		fprintf( stderr, "Failed to get checkbutton setting (eliminate small features)\n" );
 		ProUIDialogDestroy( "proe_brl" );
 		return;
@@ -3026,17 +3026,17 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 
 	/* check if user wants surface normals in the BOT's */
 	status = ProUICheckbuttonGetState( "proe_brl", "get_normals", &get_normals );
-	if( status != PRO_TK_NO_ERROR ) {
+	if ( status != PRO_TK_NO_ERROR ) {
 		fprintf( stderr, "Failed to get checkbutton setting (extract surface normals)\n" );
 		ProUIDialogDestroy( "proe_brl" );
 		return;
 	}
 
-	if( do_elims ) {
+	if ( do_elims ) {
 
 		/* get the minimum hole diameter */
 		status = ProUIInputpanelValueGet( "proe_brl", "min_hole", &tmp_str );
-		if( status != PRO_TK_NO_ERROR ) {
+		if ( status != PRO_TK_NO_ERROR ) {
 			fprintf( stderr, "Failed to get minimum hole diameter\n" );
 			ProUIDialogDestroy( "proe_brl" );
 			return;
@@ -3045,12 +3045,12 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 		ProWstringToString( astr, tmp_str );
 		ProWstringFree( tmp_str );
 		min_hole_diameter = atof( astr );
-		if( min_hole_diameter < 0.0 )
+		if ( min_hole_diameter < 0.0 )
 			min_hole_diameter = 0.0;
 
 		/* get the minimum chamfer dimension */
 		status = ProUIInputpanelValueGet( "proe_brl", "min_chamfer", &tmp_str );
-		if( status != PRO_TK_NO_ERROR ) {
+		if ( status != PRO_TK_NO_ERROR ) {
 			fprintf( stderr, "Failed to get minimum chamfer dimension\n" );
 			ProUIDialogDestroy( "proe_brl" );
 			return;
@@ -3059,12 +3059,12 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 		ProWstringToString( astr, tmp_str );
 		ProWstringFree( tmp_str );
 		min_chamfer_dim = atof( astr );
-		if( min_chamfer_dim < 0.0 )
+		if ( min_chamfer_dim < 0.0 )
 			min_chamfer_dim = 0.0;
 
 		/* get the minimum round radius */
 		status = ProUIInputpanelValueGet( "proe_brl", "min_round", &tmp_str );
-		if( status != PRO_TK_NO_ERROR ) {
+		if ( status != PRO_TK_NO_ERROR ) {
 			fprintf( stderr, "Failed to get minimum round radius\n" );
 			ProUIDialogDestroy( "proe_brl" );
 			return;
@@ -3074,7 +3074,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 		ProWstringFree( tmp_str );
 		min_round_radius = atof( astr );
 
-		if( min_round_radius < 0.0 )
+		if ( min_round_radius < 0.0 )
 			min_round_radius = 0.0;
 	} else {
 		min_hole_diameter = 0.0;
@@ -3083,7 +3083,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	}
 
 	/* open output file */
-	if( (outfp=fopen( output_file, "w" ) ) == NULL ) {
+	if ( (outfp=fopen( output_file, "w" ) ) == NULL ) {
 		(void)ProMessageDisplay(MSGFIL, "USER_ERROR", "Cannot open output file" );
 		ProMessageClear();
 		fprintf( stderr, "Cannot open output file\n" );
@@ -3093,10 +3093,10 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	}
 
 	/* open log file, if a name was provided */
-	if( strlen( log_file ) > 0 ) {
-		if( strcmp( log_file, "stderr" ) == 0 ) {
+	if ( strlen( log_file ) > 0 ) {
+		if ( strcmp( log_file, "stderr" ) == 0 ) {
 			logger = stderr;
-		} else if( (logger=fopen( log_file, "w" ) ) == NULL ) {
+		} else if ( (logger=fopen( log_file, "w" ) ) == NULL ) {
 			(void)ProMessageDisplay(MSGFIL, "USER_ERROR", "Cannot open log file" );
 			ProMessageClear();
 			fprintf( stderr, "Cannot open log file\n" );
@@ -3109,19 +3109,19 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	}
 
 	/* open part name mapper file, if a name was provided */
-	if( strlen( name_file ) > 0 ) {
+	if ( strlen( name_file ) > 0 ) {
 		FILE *name_fd;
 
-		if( logger ) {
+		if ( logger ) {
 			fprintf( logger, "Opening part name map file (%s)\n", name_file );
 		}
 
-		if( (name_fd=fopen( name_file, "r" ) ) == NULL ) {
+		if ( (name_fd=fopen( name_file, "r" ) ) == NULL ) {
 			struct bu_vls error_msg;
 			int dialog_return=0;
 			wchar_t w_error_msg[512];
 
-			if( logger ) {
+			if ( logger ) {
 				fprintf( logger, "Failed to open part name map file (%s)\n", name_file );
 				fprintf( logger, "%s\n", strerror( errno ) );
 			}
@@ -3132,7 +3132,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 			fprintf( stderr, "Cannot open part name file\n" );
 			perror( name_file );
 			status = ProUIDialogCreate( "proe_brl_gen_error", "proe_brl_gen_error" );
-			if( status != PRO_TK_NO_ERROR ) {
+			if ( status != PRO_TK_NO_ERROR ) {
 				fprintf( stderr, "Failed to create error dialog (%d)\n", status );
 			}
 			(void)ProUIPushbuttonActivateActionSet( "proe_brl_gen_error",
@@ -3143,12 +3143,12 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 			bu_vls_strcat( &error_msg, strerror( errno ) );
 			ProStringToWstring( w_error_msg, bu_vls_addr( &error_msg ) );
 			status = ProUITextareaValueSet( "proe_brl_gen_error", "error_message", w_error_msg );
-			if( status != PRO_TK_NO_ERROR ) {
+			if ( status != PRO_TK_NO_ERROR ) {
 				fprintf( stderr, "Failed to set message for error dialog (%d)\n", status );
 			}
 			bu_vls_free( &error_msg );
 			status = ProUIDialogActivate( "proe_brl_gen_error", &dialog_return );
-			if( status != PRO_TK_NO_ERROR ) {
+			if ( status != PRO_TK_NO_ERROR ) {
 				fprintf( stderr, "Failed to activate error dialog (%d)\n", status );
 			}
 			ProUIDialogDestroy( "proe_brl" );
@@ -3156,17 +3156,17 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 		}
 
 		/* create a hash table of part numbers to part names */
-		if( logger ) {
+		if ( logger ) {
 			fprintf( logger, "Creating name hash\n" );
 		}
 
 		ProStringToWstring( tmp_line, "Processing part name file" );
 		status = ProUILabelTextSet( "proe_brl", "curr_proc", tmp_line );
-		if( status != PRO_TK_NO_ERROR ) {
+		if ( status != PRO_TK_NO_ERROR ) {
 			fprintf( stderr, "Failed to update dialog label for currently processed part\n" );
 		}
 		status = ProUIDialogActivate( "proe_brl", &ret_status );
-		if( status != PRO_TK_NO_ERROR ) {
+		if ( status != PRO_TK_NO_ERROR ) {
 			fprintf( stderr, "Error in proe-brl Dialog, error = %d\n",
 				 status );
 			fprintf( stderr, "\t dialog returned %d\n", ret_status );
@@ -3176,7 +3176,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 		fclose( name_fd );
 
 	} else {
-		if( logger ) {
+		if ( logger ) {
 			fprintf( logger, "No name hash used\n" );
 		}
 		/* create an empty hash table */
@@ -3185,13 +3185,13 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 
 	/* get the curently displayed model in Pro/E */
 	status = ProMdlCurrentGet( &model );
-	if( status == PRO_TK_BAD_CONTEXT ) {
+	if ( status == PRO_TK_BAD_CONTEXT ) {
 		(void)ProMessageDisplay(MSGFIL, "USER_NO_MODEL" );
 		ProMessageClear();
 		fprintf( stderr, "No model is displayed!!\n" );
 		(void)ProWindowRefresh( PRO_VALUE_UNUSED );
 		ProUIDialogDestroy( "proe_brl" );
-		if( name_hash ) {
+		if ( name_hash ) {
 			free_hash_values( name_hash );
 			bu_hash_tbl_free( name_hash );
 			name_hash = (struct bu_hash_tbl *)NULL;
@@ -3201,13 +3201,13 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 
 	/* get its type */
 	status = ProMdlTypeGet( model, &type );
-	if( status == PRO_TK_BAD_INPUTS ) {
+	if ( status == PRO_TK_BAD_INPUTS ) {
 		(void)ProMessageDisplay(MSGFIL, "USER_NO_TYPE" );
 		ProMessageClear();
 		fprintf( stderr, "Cannot get type of current model\n" );
 		(void)ProWindowRefresh( PRO_VALUE_UNUSED );
 		ProUIDialogDestroy( "proe_brl" );
-		if( name_hash ) {
+		if ( name_hash ) {
 			free_hash_values( name_hash );
 			bu_hash_tbl_free( name_hash );
 			name_hash = (struct bu_hash_tbl *)NULL;
@@ -3216,13 +3216,13 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	}
 
 	/* can only do parts and assemblies, no drawings, etc */
-	if( type != PRO_MDL_ASSEMBLY && type != PRO_MDL_PART ) {
+	if ( type != PRO_MDL_ASSEMBLY && type != PRO_MDL_PART ) {
 		(void)ProMessageDisplay(MSGFIL, "USER_TYPE_NOT_SOLID" );
 		ProMessageClear();
 		fprintf( stderr, "Current model is not a solid object\n" );
 		(void)ProWindowRefresh( PRO_VALUE_UNUSED );
 		ProUIDialogDestroy( "proe_brl" );
-		if( name_hash ) {
+		if ( name_hash ) {
 			free_hash_values( name_hash );
 			bu_hash_tbl_free( name_hash );
 			name_hash = (struct bu_hash_tbl *)NULL;
@@ -3232,7 +3232,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 #if 0
 	/* skeleton models have no solid parts, but Pro/E will not let you recognize skeletons unless you buy the module */
 	status = ProMdlIsSkeleton( model, &is_skeleton );
-	if( status != PRO_TK_NO_ERROR ) {
+	if ( status != PRO_TK_NO_ERROR ) {
 		(void)ProMessageDisplay(MSGFIL, "USER_ERROR", "Failed to determine if model is a skeleton" );
 		ProMessageClear();
 		fprintf( stderr, "Failed to determine if model is a skeleton, error = %d\n", status );
@@ -3241,7 +3241,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 		return;
 	}
 
-	if( is_skeleton ) {
+	if ( is_skeleton ) {
 		(void)ProMessageDisplay(MSGFIL, "USER_SKELETON" );
 		ProMessageClear();
 		fprintf( stderr, "current model is a skeleton, cannot convert skeletons\n" );
@@ -3251,9 +3251,9 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	}
 #endif
 	/* get units, and adjust conversion factor */
-	if( prodb_get_model_units( model, LENGTH_UNIT, &unit_subtype,
+	if ( prodb_get_model_units( model, LENGTH_UNIT, &unit_subtype,
 				   unit_name, &proe_conv ) ) {
-		if( unit_subtype == UNIT_MM )
+		if ( unit_subtype == UNIT_MM )
 			proe_to_brl_conv = 1.0;
 		else
 			proe_to_brl_conv = proe_conv * 25.4;
@@ -3285,22 +3285,22 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	ProUILabelTextSet( "proe_brl", "curr_proc", tmp_line );
 
 	/* free a bunch of stuff */
-	if( done_list_part ) {
+	if ( done_list_part ) {
 		bu_rb_free( done_list_part, free_rb_data );
 		done_list_part = NULL;
 	}
 
-	if( done_list_asm ) {
+	if ( done_list_asm ) {
 		bu_rb_free( done_list_asm, free_rb_data );
 		done_list_asm = NULL;
 	}
 
-	if( part_tris ) {
+	if ( part_tris ) {
 		bu_free( (char *)part_tris, "part triangles" );
 		part_tris = NULL;
 	}
 
-	if( part_norms ) {
+	if ( part_norms ) {
 		bu_free( (char *)part_norms, "part normals" );
 		part_norms = NULL;
 	}
@@ -3314,14 +3314,14 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 
 	free_empty_parts();
 
-	if( logger ) {
+	if ( logger ) {
 		fprintf( logger, "Closing output file\n" );
 	}
 
 	fclose( outfp );
 
-	if( name_hash ) {
-		if( logger ) {
+	if ( name_hash ) {
+		if ( logger ) {
 			fprintf( logger, "freeing name hash\n" );
 		}
 		free_hash_values( name_hash );
@@ -3329,15 +3329,15 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 		name_hash = (struct bu_hash_tbl *)NULL;
 	}
 
-	if( brlcad_names ) {
-		if( logger ) {
+	if ( brlcad_names ) {
+		if ( logger ) {
 			fprintf( logger, "freeing name rb_tree\n" );
 		}
 		bu_rb_free( brlcad_names, NULL );	/* data was already freed by free_hash_values() */
 		brlcad_names = (bu_rb_tree *)NULL;
 	}
 
-	if( logger ) {
+	if ( logger ) {
 		fprintf( logger, "Closing logger file\n" );
 		fclose( logger );
 		logger = (FILE *)NULL;
@@ -3353,40 +3353,40 @@ elim_small_activate( char *dialog_name, char *button_name, ProAppData data )
 	ProError status;
 
 	status = ProUICheckbuttonGetState( dialog_name, button_name, &state );
-	if( status != PRO_TK_NO_ERROR ) {
+	if ( status != PRO_TK_NO_ERROR ) {
 		fprintf( stderr, "checkbutton activate routine: failed to get state\n" );
 		return;
 	}
 
-	if( state ) {
+	if ( state ) {
 		status = ProUIInputpanelEditable( dialog_name, "min_hole" );
-		if( status != PRO_TK_NO_ERROR ) {
+		if ( status != PRO_TK_NO_ERROR ) {
 			fprintf( stderr, "Failed to activate \"minimum hole diameter\"\n" );
 			return;
 		}
 		status = ProUIInputpanelEditable( dialog_name, "min_chamfer" );
-		if( status != PRO_TK_NO_ERROR ) {
+		if ( status != PRO_TK_NO_ERROR ) {
 			fprintf( stderr, "Failed to activate \"minimum chamfer dimension\"\n" );
 			return;
 		}
 		status = ProUIInputpanelEditable( dialog_name, "min_round" );
-		if( status != PRO_TK_NO_ERROR ) {
+		if ( status != PRO_TK_NO_ERROR ) {
 			fprintf( stderr, "Failed to activate \"minimum round radius\"\n" );
 			return;
 		}
 	} else {
 		status = ProUIInputpanelReadOnly( dialog_name, "min_hole" );
-		if( status != PRO_TK_NO_ERROR ) {
+		if ( status != PRO_TK_NO_ERROR ) {
 			fprintf( stderr, "Failed to de-activate \"minimum hole diameter\"\n" );
 			return;
 		}
 		status = ProUIInputpanelReadOnly( dialog_name, "min_chamfer" );
-		if( status != PRO_TK_NO_ERROR ) {
+		if ( status != PRO_TK_NO_ERROR ) {
 			fprintf( stderr, "Failed to de-activate \"minimum chamfer dimension\"\n" );
 			return;
 		}
 		status = ProUIInputpanelReadOnly( dialog_name, "min_round" );
-		if( status != PRO_TK_NO_ERROR ) {
+		if ( status != PRO_TK_NO_ERROR ) {
 			fprintf( stderr, "Failed to de-activate \"minimum round radius\"\n" );
 			return;
 		}
@@ -3404,33 +3404,33 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 #if 1
 	/* use UI dialog */
 	status = ProUIDialogCreate( "proe_brl", "proe_brl" );
-	if( status != PRO_TK_NO_ERROR ) {
+	if ( status != PRO_TK_NO_ERROR ) {
 		fprintf( stderr, "Failed to create dialog box for proe-brl, error = %d\n", status );
 		return( 0 );
 	}
 
 	status = ProUICheckbuttonActivateActionSet( "proe_brl", "elim_small", elim_small_activate, NULL );
-	if( status != PRO_TK_NO_ERROR ) {
+	if ( status != PRO_TK_NO_ERROR ) {
 		fprintf( stderr, "Failed to set action for \"eliminate small features\" checkbutton, error = %d\n", status );
 		return( 0 );
 	}
 
 	status = ProUIPushbuttonActivateActionSet( "proe_brl", "doit", doit, NULL );
-	if( status != PRO_TK_NO_ERROR ) {
+	if ( status != PRO_TK_NO_ERROR ) {
 		fprintf( stderr, "Failed to set action for 'Go' button\n" );
 		ProUIDialogDestroy( "proe_brl" );
 		return( 0 );
 	}
 
 	status = ProUIPushbuttonActivateActionSet( "proe_brl", "quit", do_quit, NULL );
-	if( status != PRO_TK_NO_ERROR ) {
+	if ( status != PRO_TK_NO_ERROR ) {
 		fprintf( stderr, "Failed to set action for 'Go' button\n" );
 		ProUIDialogDestroy( "proe_brl" );
 		return( 0 );
 	}
 
 	status = ProUIDialogActivate( "proe_brl", &ret_status );
-	if( status != PRO_TK_NO_ERROR ) {
+	if ( status != PRO_TK_NO_ERROR ) {
 		fprintf( stderr, "Error in proe-brl Dialog, error = %d\n",
 			 status );
 		fprintf( stderr, "\t dialog returned %d\n", ret_status );
@@ -3439,7 +3439,7 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 #else
 	/* get the curently displayed model in Pro/E */
 	status = ProMdlCurrentGet( &model );
-	if( status == PRO_TK_BAD_CONTEXT ) {
+	if ( status == PRO_TK_BAD_CONTEXT ) {
 		ProName dialog_label;
 		ProLine w_answer;
 		char answer[PRO_LINE_SIZE];
@@ -3450,7 +3450,7 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 		status = ProFileOpen( dialog_label, dialog_filter, (ProPath *)NULL,
 				      (ProName *)NULL, NULL,
 				      NULL, file_to_open );
-		if( status != PRO_TK_NO_ERROR )
+		if ( status != PRO_TK_NO_ERROR )
 			return status;
 
 		(void)ProWstringToString( file_name, file_to_open );
@@ -3464,9 +3464,9 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 				 "Enter name of file to receive output: ",
 				 output_file );
 	status = ProMessageStringRead( 127, w_output_file );
-	if( status == PRO_TK_NO_ERROR ) {
+	if ( status == PRO_TK_NO_ERROR ) {
 		(void)ProWstringToString( output_file, w_output_file );
-	} else if( status == PRO_TK_MSG_USER_QUIT) {
+	} else if ( status == PRO_TK_MSG_USER_QUIT) {
 		return( 0 );
 	}
 
@@ -3475,7 +3475,7 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 				 "Enter starting ident number: ",
 				 &reg_id );
 	status = ProMessageIntegerRead( NULL, &reg_id );
-	if( status == PRO_TK_MSG_USER_QUIT ) {
+	if ( status == PRO_TK_MSG_USER_QUIT ) {
 		return( 0 );
 	}
 
@@ -3486,7 +3486,7 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 	range[0] = 0.0;
 	range[1] = 500.0;
 	status = ProMessageDoubleRead( range, &max_error );
-	if( status == PRO_TK_MSG_USER_QUIT ) {
+	if ( status == PRO_TK_MSG_USER_QUIT ) {
 		return( 0 );
 	}
 
@@ -3497,7 +3497,7 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 	range[0] = 0.0;
 	range[1] = 1.0;
 	status = ProMessageDoubleRead( range, &angle_cntrl );
-	if( status == PRO_TK_MSG_USER_QUIT ) {
+	if ( status == PRO_TK_MSG_USER_QUIT ) {
 		return( 0 );
 	}
 
@@ -3506,10 +3506,10 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 				  "Enter the minimum allowed hole diameter (smaller holes will be deleted): ",
 				  &min_hole_diameter );
 	status = ProMessageDoubleRead( NULL, &min_hole_diameter );
-	if( status == PRO_TK_MSG_USER_QUIT ) {
+	if ( status == PRO_TK_MSG_USER_QUIT ) {
 		return( 0 );
 	}
-	if( min_hole_diameter < 0.0 ) {
+	if ( min_hole_diameter < 0.0 ) {
 		min_hole_diameter = 0.0;
 	}
 
@@ -3518,10 +3518,10 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 				  "Enter the minimum allowed round radius (smaller rounds will be deleted): ",
 				  &min_round_radius );
 	status = ProMessageDoubleRead( NULL, &min_round_radius );
-	if( status == PRO_TK_MSG_USER_QUIT ) {
+	if ( status == PRO_TK_MSG_USER_QUIT ) {
 		return( 0 );
 	}
-	if( min_round_radius < 0.0 ) {
+	if ( min_round_radius < 0.0 ) {
 		min_round_radius = 0.0;
 	}
 
@@ -3530,10 +3530,10 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 				  "Enter the minimum allowed chamfer dimension (smaller chamfers will be deleted): ",
 				  &min_chamfer_dim );
 	status = ProMessageDoubleRead( NULL, &min_chamfer_dim );
-	if( status == PRO_TK_MSG_USER_QUIT ) {
+	if ( status == PRO_TK_MSG_USER_QUIT ) {
 		return( 0 );
 	}
-	if( min_chamfer_dim < 0.0 ) {
+	if ( min_chamfer_dim < 0.0 ) {
 		min_chamfer_dim = 0.0;
 	}
 
@@ -3542,7 +3542,7 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 
 	/* open output file */
 	mode = create_for_writing;
-	if( (outfp=fopen( output_file, mode ) ) == NULL ) {
+	if ( (outfp=fopen( output_file, mode ) ) == NULL ) {
 		(void)ProMessageDisplay(MSGFIL, "USER_ERROR", "Cannot open output file" );
 		ProMessageClear();
 		fprintf( stderr, "Cannot open output file\n" );
@@ -3552,7 +3552,7 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 
 	/* get model type */
 	status = ProMdlTypeGet( model, &type );
-	if( status == PRO_TK_BAD_INPUTS ) {
+	if ( status == PRO_TK_BAD_INPUTS ) {
 		(void)ProMessageDisplay(MSGFIL, "USER_NO_TYPE" );
 		ProMessageClear();
 		fprintf( stderr, "Cannot get type of current model\n" );
@@ -3561,7 +3561,7 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 	}
 
 	/* can only do parts and assemblies, no drawings, etc */
-	if( type != PRO_MDL_ASSEMBLY && type != PRO_MDL_PART ) {
+	if ( type != PRO_MDL_ASSEMBLY && type != PRO_MDL_PART ) {
 		(void)ProMessageDisplay(MSGFIL, "USER_TYPE_NOT_SOLID" );
 		ProMessageClear();
 		fprintf( stderr, "Current model is not a solid object\n" );
@@ -3592,30 +3592,30 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 	ProUILabelTextSet( "proe_brl", "curr_proc", tmp_line );
 
 	/* free a bunch of stuff */
-	if( done_list_part ) {
+	if ( done_list_part ) {
 		bu_rb_free( done_list_part, free_rb_data );
 		done_list_part = NULL;
 	}
 
-	if( done_list_asm ) {
+	if ( done_list_asm ) {
 		bu_rb_free( done_list_asm, free_rb_data );
 		done_list_asm = NULL;
 	}
 
 	/* free a bunch of stuff */
-	if( done ) {
+	if ( done ) {
 		bu_free( (char *)done, "done" );
 	}
 	done = NULL;
 	max_done = 0;
 	curr_done = 0;
 
-	for( i=0 ; i<BU_PTBL_LEN( &search_path_list ) ; i++ ) {
+	for ( i=0; i<BU_PTBL_LEN( &search_path_list ); i++ ) {
 		bu_free( (char *)BU_PTBL_GET( &search_path_list, i ), "search_path entry" );
 	}
 	bu_ptbl_free( &search_path_list );
 
-	if( part_tris ) {
+	if ( part_tris ) {
 		bu_free( (char *)part_tris, "part triangles" );
 	}
 	part_tris = NULL;
@@ -3630,14 +3630,14 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 
 	/* list summary of objects and feature type seen */
 	fprintf( stderr, "Object types encountered:\n" );
-	for( i=0 ; i<NUM_OBJ_TYPES ; i++ ) {
-		if( !obj_type_count[i] )
+	for ( i=0; i<NUM_OBJ_TYPES; i++ ) {
+		if ( !obj_type_count[i] )
 			continue;
 		fprintf( stderr, "\t%s\t%d\n", obj_type[i], obj_type_count[i] );
 	}
 	fprintf( stderr, "Feature types encountered:\n" );
-	for( i=0 ; i<NUM_FEAT_TYPES ; i++ ) {
-		if( !feat_type_count[i] )
+	for ( i=0; i<NUM_FEAT_TYPES; i++ ) {
+		if ( !feat_type_count[i] )
 			continue;
 		fprintf( stderr, "\t%s\t%d\n", feat_type[i], feat_type_count[i] );
 	}
@@ -3665,7 +3665,7 @@ proe_brl_access( uiCmdAccessMode access_mode )
 	}
 
 	/* only allow our menu item to be used when parts or assemblies are displayed */
-	if( mode == PRO_MODE_ASSEMBLY || mode == PRO_MODE_PART ) {
+	if ( mode == PRO_MODE_ASSEMBLY || mode == PRO_MODE_PART ) {
 		return( ACCESS_AVAILABLE );
 	} else {
 		return( ACCESS_UNAVAILABLE );
@@ -3696,7 +3696,7 @@ user_initialize( int argc, char *argv[], char *version, char *build, wchar_t err
 	/* add a command that calls our proe-brl routine */
 	status = ProCmdActionAdd( "Proe-BRL", (uiCmdCmdActFn)proe_brl, uiProe2ndImmediate,
 				  proe_brl_access, PRO_B_FALSE, PRO_B_FALSE, &cmd_id );
-	if( status != PRO_TK_NO_ERROR ) {
+	if ( status != PRO_TK_NO_ERROR ) {
 		sprintf( astr, "Failed to add proe-brl action" );
 		fprintf( stderr, "%s\n", astr);
 		ProMessageDisplay(MSGFIL, "USER_ERROR", astr);
@@ -3708,7 +3708,7 @@ user_initialize( int argc, char *argv[], char *version, char *build, wchar_t err
 	/* add a menu item that runs the new command */
 	status = ProMenubarmenuPushbuttonAdd( "File", "Proe-BRL", "Proe-BRL", "Proe-BRL-HELP",
 					      "File.psh_exit", PRO_B_FALSE, cmd_id, MSGFIL );
-	if( status != PRO_TK_NO_ERROR ) {
+	if ( status != PRO_TK_NO_ERROR ) {
 		sprintf( astr, "Failed to add proe-brl menu button" );
 		fprintf( stderr, "%s\n", astr);
 		ProMessageDisplay(MSGFIL, "USER_ERROR", astr);

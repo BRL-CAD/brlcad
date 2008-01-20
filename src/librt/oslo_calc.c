@@ -199,7 +199,7 @@ rt_nurb_pr_oslo(struct oslo_mat *om)
 	struct oslo_mat * omp;
 	int j;
 
-	for( omp = om; omp!= ( struct oslo_mat *) 0; omp = omp->next)
+	for ( omp = om; omp!= ( struct oslo_mat *) 0; omp = omp->next)
 	{
 		fprintf(stderr, "%lx offset %d osize %d next %lx\n",
 			(unsigned long)omp,  omp->offset,  omp->osize,
@@ -222,7 +222,7 @@ rt_nurb_free_oslo(struct oslo_mat *om, struct resource *res)
 {
 	register struct oslo_mat * omp;
 
-	while( om != (struct oslo_mat *) 0 )
+	while ( om != (struct oslo_mat *) 0 )
 	{
 		omp = om;
 		om = om->next;

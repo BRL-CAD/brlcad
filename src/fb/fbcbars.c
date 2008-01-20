@@ -174,7 +174,7 @@ get_args(int argc, register char **argv)
 	register int c;
 
 	while ( (c = bu_getopt( argc, argv, "efshF:S:W:N:" )) != EOF )  {
-		switch( c )  {
+		switch ( c )  {
 		case 'e':
 			mode = M_EIA;
 			break;
@@ -223,7 +223,7 @@ main(int argc, char **argv)
 		bu_exit( 1, NULL );
 	}
 
-	if( (fbp = fb_open( framebuffer, scr_width, scr_height )) == NULL )
+	if ( (fbp = fb_open( framebuffer, scr_width, scr_height )) == NULL )
 		bu_exit(12, NULL);
 
 	/* Get the screen size we were actually given */
@@ -233,12 +233,12 @@ main(int argc, char **argv)
 	/*
 	 *  Operation is bottom-to-top.
 	 */
-	switch(mode)  {
+	switch (mode)  {
 	case M_FCC:
-		for( x=0; x<scr_width; x++) {
+		for ( x=0; x<scr_width; x++) {
 			COPYRGB( &scanline[3*x], fcc_all[x*8/scr_width] );
 		}
-		for( y=0; y<scr_height; y++)
+		for ( y=0; y<scr_height; y++)
 			fb_write( fbp, 0, y, scanline, scr_width );
 		break;
 
@@ -247,16 +247,16 @@ main(int argc, char **argv)
 		 *  Build bottom line, and send it for 1/4th of the screen,
 		 *  then build the top line, and fill the rest of the screen.
 		 */
-		for( x=0; x<scr_width; x++) {
+		for ( x=0; x<scr_width; x++) {
 			COPYRGB( &scanline[3*x], botpart[x*5/scr_width] );
 		}
-		for( y=0; y<(scr_height/4); y++)
+		for ( y=0; y<(scr_height/4); y++)
 			fb_write( fbp, 0, y, scanline, scr_width );
 
-		for( x=0; x<scr_width; x++)  {
+		for ( x=0; x<scr_width; x++)  {
 			COPYRGB( &scanline[3*x], eia_top[x*7/scr_width] );
 		}
-		for( ; y<scr_height; y++)
+		for (; y<scr_height; y++)
 			fb_write( fbp, 0, y, scanline, scr_width );
 		break;
 
@@ -267,22 +267,22 @@ main(int argc, char **argv)
 		 *  then build the top line, and fill the rest of the screen.
 		 *  (Convert upper 1/4 of EIA -I white Q black to smpte)
 		 */
-		for( x=0; x<scr_width; x++) {
+		for ( x=0; x<scr_width; x++) {
 			COPYRGB( &scanline[3*x], botpart[x*5/scr_width] );
 		}
-		for( y=0; y<(scr_height*3/16); y++)
+		for ( y=0; y<(scr_height*3/16); y++)
 			fb_write( fbp, 0, y, scanline, scr_width );
 
-		for( x=0; x<scr_width; x++) {
+		for ( x=0; x<scr_width; x++) {
 			COPYRGB( &scanline[3*x], smpte_middle[x*7/scr_width] );
 		}
-		for( ; y<(scr_height*4/16); y++)
+		for (; y<(scr_height*4/16); y++)
 			fb_write( fbp, 0, y, scanline, scr_width );
 
-		for( x=0; x<scr_width; x++)  {
+		for ( x=0; x<scr_width; x++)  {
 			COPYRGB( &scanline[3*x], eia_top[x*7/scr_width] );
 		}
-		for( ; y<scr_height; y++)
+		for (; y<scr_height; y++)
 			fb_write( fbp, 0, y, scanline, scr_width );
 		break;
 	}

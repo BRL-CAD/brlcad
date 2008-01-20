@@ -65,10 +65,10 @@ int	common_pack_trinum;
 
 
 void common_pack_write(void **dest, int *ind, void *src, int size) {
-  if((int)(*ind + size) > (int)common_pack_app_size)
+  if ((int)(*ind + size) > (int)common_pack_app_size)
     common_pack_app_size = *ind + size;
 
-  if(common_pack_app_size > common_pack_app_mem) {
+  if (common_pack_app_size > common_pack_app_mem) {
     common_pack_app_mem = common_pack_app_size + (16 M);
     *dest = realloc(*dest, common_pack_app_mem);
   }
@@ -153,7 +153,7 @@ void common_pack_env(common_db_t *db, void **app_data, int *app_ind) {
   common_pack_write(app_data, app_ind, &s, sizeof(short));
   common_pack_write(app_data, app_ind, &db->env.rm, sizeof(unsigned int));
 
-  switch(db->env.rm) {
+  switch (db->env.rm) {
     case RENDER_METHOD_NORMAL:
       break;
 
@@ -198,17 +198,17 @@ void common_pack_prop(void **app_data, int *app_ind, char *filename) {
   *app_ind += sizeof(unsigned int);
 
   fh = fopen(filename, "r");
-  if(!fh) {
+  if (!fh) {
     fprintf(stderr, "error: Properties file %s doesn't exist, exiting.\n", filename);
     exit(1);
   }
 
   prop_num = 0;
-  while(fgets(line, ADRT_NAME_SIZE, fh)) {
+  while (fgets(line, ADRT_NAME_SIZE, fh)) {
     token = strtok(line, ",");
-    if(!strcmp("properties", token)) {
+    if (!strcmp("properties", token)) {
 
-      if(prop_num) {
+      if (prop_num) {
 	/* pack name */
 	c = strlen(name) + 1;
 	common_pack_write(app_data, app_ind, &c, sizeof(char));
@@ -219,7 +219,7 @@ void common_pack_prop(void **app_data, int *app_ind, char *filename) {
 
       token = strtok(NULL, ",");
       /* strip off newline */
-      if(token[strlen(token)-1] == '\n') token[strlen(token)-1] = 0;
+      if (token[strlen(token)-1] == '\n') token[strlen(token)-1] = 0;
       strncpy(name, token, ADRT_NAME_SIZE);
 
       /* set defaults */
@@ -233,7 +233,7 @@ void common_pack_prop(void **app_data, int *app_ind, char *filename) {
 
       prop_num++;
 
-    } else if(!strcmp("color", token)) {
+    } else if (!strcmp("color", token)) {
 
       token = strtok(NULL, ",");
       def_prop.color.v[0] = atof(token);
@@ -242,22 +242,22 @@ void common_pack_prop(void **app_data, int *app_ind, char *filename) {
       token = strtok(NULL, ",");
       def_prop.color.v[2] = atof(token);
 
-    } else if(!strcmp("density", token)) {
+    } else if (!strcmp("density", token)) {
 
       token = strtok(NULL, ",");
       def_prop.density = atof(token);
 
-    } else if(!strcmp("gloss", token)) {
+    } else if (!strcmp("gloss", token)) {
 
       token = strtok(NULL, ",");
       def_prop.gloss = atof(token);
 
-    } else if(!strcmp("emission", token)) {
+    } else if (!strcmp("emission", token)) {
 
       token = strtok(NULL, ",");
       def_prop.emission = atof(token);
 
-    } else if(!strcmp("ior", token)) {
+    } else if (!strcmp("ior", token)) {
 
       token = strtok(NULL, ",");
       def_prop.ior = atof(token);
@@ -265,7 +265,7 @@ void common_pack_prop(void **app_data, int *app_ind, char *filename) {
     }
   }
 
-  if(prop_num) {
+  if (prop_num) {
     /* pack name */
     c = strlen(name) + 1;
     common_pack_write(app_data, app_ind, &c, sizeof(char));
@@ -292,28 +292,28 @@ void common_pack_texture(void **app_data, int *app_ind, char *filename) {
   *app_ind += sizeof(unsigned int);
 
   fh = fopen(filename, "r");
-  if(!fh) {
+  if (!fh) {
     fprintf(stderr, "error: Textures file %s doesn't exist, exiting.\n", filename);
     exit(1);
   }
 
 
-  while(fgets(line, 256, fh)) {
+  while (fgets(line, 256, fh)) {
     token = strtok(line, ",");
-    if(!strcmp("texture", token)) {
+    if (!strcmp("texture", token)) {
       token = strtok(NULL, ",");
-      if(!strcmp("stack", token)) {
+      if (!strcmp("stack", token)) {
 	s = TEXTURE_STACK;
 	common_pack_write(app_data, app_ind, &s, sizeof(short));
 
 	/* name */
 	token = strtok(NULL, ",");
-	if(token[strlen(token)-1] == '\n') token[strlen(token)-1] = 0;
+	if (token[strlen(token)-1] == '\n') token[strlen(token)-1] = 0;
 
 	c = strlen(token) + 1;
 	common_pack_write(app_data, app_ind, &c, sizeof(char));
 	common_pack_write(app_data, app_ind, token, c);
-      } else if(!strcmp("mix", token)) {
+      } else if (!strcmp("mix", token)) {
 	tfloat coef;
 
 	s = TEXTURE_MIX;
@@ -345,11 +345,11 @@ void common_pack_texture(void **app_data, int *app_ind, char *filename) {
 
 	/* coefficient */
 	token = strtok(NULL, ",");
-	if(token[strlen(token)-1] == '\n') token[strlen(token)-1] = 0;
+	if (token[strlen(token)-1] == '\n') token[strlen(token)-1] = 0;
 	coef = atof(token);
 	common_pack_write(app_data, app_ind, &coef, sizeof(tfloat));
       }
-    } else if(!strcmp("blend", token)) {
+    } else if (!strcmp("blend", token)) {
       TIE_3 color1, color2;
 
       s = TEXTURE_BLEND;
@@ -369,12 +369,12 @@ void common_pack_texture(void **app_data, int *app_ind, char *filename) {
       token = strtok(NULL, ",");
       color2.v[1] = atof(token);
       token = strtok(NULL, ",");
-      if(token[strlen(token)-1] == '\n') token[strlen(token)-1] = 0;
+      if (token[strlen(token)-1] == '\n') token[strlen(token)-1] = 0;
       color2.v[2] = atof(token);
 
       common_pack_write(app_data, app_ind, &color1, sizeof(TIE_3));
       common_pack_write(app_data, app_ind, &color2, sizeof(TIE_3));
-    } else if(!strcmp("bump", token)) {
+    } else if (!strcmp("bump", token)) {
       TIE_3 coef;
 
       s = TEXTURE_BUMP;
@@ -386,11 +386,11 @@ void common_pack_texture(void **app_data, int *app_ind, char *filename) {
       token = strtok(NULL, ",");
       coef.v[1] = atof(token);
       token = strtok(NULL, ",");
-      if(token[strlen(token)-1] == '\n') token[strlen(token)-1] = 0;
+      if (token[strlen(token)-1] == '\n') token[strlen(token)-1] = 0;
       coef.v[2] = atof(token);
 
       common_pack_write(app_data, app_ind, &coef, sizeof(TIE_3));
-    } else if(!strcmp("checker", token)) {
+    } else if (!strcmp("checker", token)) {
       int tile;
 
       s = TEXTURE_CHECKER;
@@ -398,11 +398,11 @@ void common_pack_texture(void **app_data, int *app_ind, char *filename) {
 
       /* tile */
       token = strtok(NULL, ",");
-      if(token[strlen(token)-1] == '\n') token[strlen(token)-1] = 0;
+      if (token[strlen(token)-1] == '\n') token[strlen(token)-1] = 0;
       tile = atoi(token);
 
       common_pack_write(app_data, app_ind, &tile, sizeof(unsigned int));
-    } else if(!strcmp("camo", token)) {
+    } else if (!strcmp("camo", token)) {
       tfloat size;
       int octaves, absolute;
       TIE_3 color1, color2, color3;
@@ -444,7 +444,7 @@ void common_pack_texture(void **app_data, int *app_ind, char *filename) {
       token = strtok(NULL, ",");
       color3.v[1] = atof(token);
       token = strtok(NULL, ",");
-      if(token[strlen(token)-1] == '\n') token[strlen(token)-1] = 0;
+      if (token[strlen(token)-1] == '\n') token[strlen(token)-1] = 0;
       color3.v[2] = atof(token);
 
       common_pack_write(app_data, app_ind, &size, sizeof(tfloat));
@@ -453,7 +453,7 @@ void common_pack_texture(void **app_data, int *app_ind, char *filename) {
       common_pack_write(app_data, app_ind, &color1, sizeof(TIE_3));
       common_pack_write(app_data, app_ind, &color2, sizeof(TIE_3));
       common_pack_write(app_data, app_ind, &color3, sizeof(TIE_3));
-    } else if(!strcmp("clouds", token)) {
+    } else if (!strcmp("clouds", token)) {
       tfloat size;
       int octaves, absolute;
       TIE_3 scale, translate;
@@ -487,7 +487,7 @@ void common_pack_texture(void **app_data, int *app_ind, char *filename) {
       token = strtok(NULL, ",");
       translate.v[1] = atof(token);
       token = strtok(NULL, ",");
-      if(token[strlen(token)-1] == '\n') token[strlen(token)-1] = 0;
+      if (token[strlen(token)-1] == '\n') token[strlen(token)-1] = 0;
       translate.v[2] = atof(token);
 
       common_pack_write(app_data, app_ind, &size, sizeof(tfloat));
@@ -495,11 +495,11 @@ void common_pack_texture(void **app_data, int *app_ind, char *filename) {
       common_pack_write(app_data, app_ind, &absolute, sizeof(int));
       common_pack_write(app_data, app_ind, &scale, sizeof(TIE_3));
       common_pack_write(app_data, app_ind, &translate, sizeof(TIE_3));
-    } else if(!strcmp("image", token)) {
+    } else if (!strcmp("image", token)) {
 /*
       char file[64];
       image = SDL_LoadBMP(file);
-      if(image) {
+      if (image) {
 	s = TEXTURE_IMAGE;
 	common_pack_write(app_data, app_ind, &s, sizeof(short));
 	common_pack_write(app_data, app_ind, &(image->w), sizeof(short));
@@ -507,7 +507,7 @@ void common_pack_texture(void **app_data, int *app_ind, char *filename) {
 	common_pack_write(app_data, app_ind, image->pixels, 3*image->w*image->h);
       }
 */
-    } else if(!strcmp("gradient", token)) {
+    } else if (!strcmp("gradient", token)) {
       int axis;
 
       s = TEXTURE_GRADIENT;
@@ -515,7 +515,7 @@ void common_pack_texture(void **app_data, int *app_ind, char *filename) {
 
       /* axis */
       token = strtok(NULL, ",");
-      if(token[strlen(token)-1] == '\n') token[strlen(token)-1] = 0;
+      if (token[strlen(token)-1] == '\n') token[strlen(token)-1] = 0;
       axis = atoi(token);
 
       common_pack_write(app_data, app_ind, &axis, sizeof(int));
@@ -547,7 +547,7 @@ void common_pack_mesh_adrt(common_db_t *db, void **app_data, int *app_ind, char 
 
 
   fh = fopen(filename, "rb");
-  if(!fh) {
+  if (!fh) {
     fprintf(stderr, "error: ADRT geometry file %s doesn't exist, exiting.\n", filename);
     exit(1);
   }
@@ -572,7 +572,7 @@ void common_pack_mesh_adrt(common_db_t *db, void **app_data, int *app_ind, char 
   fread(&total_tri_num, sizeof(unsigned int), 1, fh);
   common_pack_write(app_data, app_ind, &total_tri_num, sizeof(unsigned int));
 
-  while(ftell(fh) != end) {
+  while (ftell(fh) != end) {
     /* Mesh Name */
     fread(&c, sizeof(char), 1, fh);
     fread(meshname, sizeof(char), c, fh);
@@ -581,12 +581,12 @@ void common_pack_mesh_adrt(common_db_t *db, void **app_data, int *app_ind, char 
 
     /* Pack Number of Vertices */
     fread(&num, sizeof(unsigned int), 1, fh);
-    if(endian) tienet_flip(&num, &num, sizeof(unsigned int));
+    if (endian) tienet_flip(&num, &num, sizeof(unsigned int));
     common_pack_write(app_data, app_ind, &num, sizeof(unsigned int));
 
     /* Read and Pack Vertices */
     n = 0;
-    for(i = 0; i < num; i += n) {
+    for (i = 0; i < num; i += n) {
       n = i+48 < num ? 48 : num - i;
       fread(v, sizeof(TIE_3), n, fh);
       common_pack_write(app_data, app_ind, &v, n * sizeof(TIE_3));
@@ -598,15 +598,15 @@ void common_pack_mesh_adrt(common_db_t *db, void **app_data, int *app_ind, char 
     fread(&c, 1, 1, fh);
     common_pack_write(app_data, app_ind, &c, 1);
 
-    if(c) {
+    if (c) {
       fread(&num, sizeof(unsigned int), 1, fh);
-      if(endian) tienet_flip(&num, &num, sizeof(unsigned int));
+      if (endian) tienet_flip(&num, &num, sizeof(unsigned int));
       common_pack_write(app_data, app_ind, &num, sizeof(unsigned int));
       common_pack_trinum += num;
 
       /* Pack Faces */
       i = 0;
-      while(i < num) {
+      while (i < num) {
 	n = num - i > 48 ? 48 : num - i;
 	fread(face, 3*sizeof(unsigned int), n, fh);
 	common_pack_write(app_data, app_ind, face, 3 * n * sizeof(unsigned int));
@@ -616,13 +616,13 @@ void common_pack_mesh_adrt(common_db_t *db, void **app_data, int *app_ind, char 
       unsigned short snum, sface[144];
 
       fread(&snum, sizeof(unsigned short), 1, fh);
-      if(endian) tienet_flip(&snum, &snum, sizeof(unsigned short));
+      if (endian) tienet_flip(&snum, &snum, sizeof(unsigned short));
       common_pack_write(app_data, app_ind, &snum, sizeof(unsigned short));
       common_pack_trinum += snum;
 
       /* Pack Faces */
       i = 0;
-      while(i < snum) {
+      while (i < snum) {
 	n = snum - i > 48 ? 48 : snum - i;
 	fread(sface, 3*sizeof(unsigned short), n, fh);
 	common_pack_write(app_data, app_ind, sface, 3 * n * sizeof(unsigned short));
@@ -632,12 +632,12 @@ void common_pack_mesh_adrt(common_db_t *db, void **app_data, int *app_ind, char 
 
     /* Determine if Mesh has a Transformation Matrix assigned to it */
     matrixind = -1;
-    for(n = 0; n < db->anim.frame_list[0].tnum; n++)
-      if(!strcmp(meshname, db->anim.frame_list[0].tlist[n].mesh_name))
+    for (n = 0; n < db->anim.frame_list[0].tnum; n++)
+      if (!strcmp(meshname, db->anim.frame_list[0].tlist[n].mesh_name))
 	matrixind = n;
 
     /* Write Matrix */
-    if(matrixind >= 0) {
+    if (matrixind >= 0) {
       common_pack_write(app_data, app_ind, db->anim.frame_list[0].tlist[matrixind].matrix, sizeof(tfloat)*16);
     } else{
       tfloat matrix[16];
@@ -664,11 +664,11 @@ void common_pack_kdtree_cache(common_db_t *db, void **app_data, int *app_ind, ch
   marker = *app_ind;
   *app_ind += sizeof(unsigned int);
 
-  if(!filename)
+  if (!filename)
     return;
 
   fh = fopen(filename, "rb");
-  if(!fh) {
+  if (!fh) {
     size = *app_ind - marker - sizeof(unsigned int);
     common_pack_write(app_data, &marker, &size, sizeof(unsigned int));
     *app_ind = marker + size;
@@ -706,7 +706,7 @@ void common_pack_mesh_map(void **app_data, int *app_ind, char *filename) {
   *app_ind += sizeof(unsigned int);
 
   fh = fopen(filename, "rb");
-  if(!fh) {
+  if (!fh) {
     fprintf(stderr, "error: Mesh Map file %s doesn't exist, exiting.\n", filename);
     exit(1);
   }

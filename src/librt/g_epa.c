@@ -180,7 +180,7 @@ const struct bu_structparse rt_epa_parse[] = {
     { "%f", 3, "A",   bu_offsetof(struct rt_epa_internal, epa_Au[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 1, "r_1", bu_offsetof(struct rt_epa_internal, epa_r1),    BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 1, "r_2", bu_offsetof(struct rt_epa_internal, epa_r2),    BU_STRUCTPARSE_FUNC_NULL },
-    { {'\0','\0','\0','\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
+    { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
 };
 
 /**
@@ -226,7 +226,7 @@ rt_epa_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	r1 = xip->epa_r1;
 	r2 = xip->epa_r2;
 	/* Check for |H| > 0, |A| == 1, r1 >  0, r2 > 0 */
-	if( NEAR_ZERO(mag_h, RT_LEN_TOL)
+	if ( NEAR_ZERO(mag_h, RT_LEN_TOL)
 		|| !NEAR_ZERO(mag_a - 1.0, RT_LEN_TOL)
 		|| r1 < 0.0 || r2 < 0.0 )  {
 		return(1);		/* BAD, too small */
@@ -234,7 +234,7 @@ rt_epa_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
 	/* Check for A.H == 0 */
 	f = VDOT( xip->epa_Au, xip->epa_H ) / mag_h;
-	if( ! NEAR_ZERO(f, RT_DOT_TOL) )  {
+	if ( ! NEAR_ZERO(f, RT_DOT_TOL) )  {
 		return(1);		/* BAD */
 	}
 
@@ -370,7 +370,7 @@ rt_epa_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 			 *  with side.  See if they fall in range.
 			 */
 			VJOIN1( hitp->hit_vpriv, pprime, k1, dprime );	/* hit' */
-			if( hitp->hit_vpriv[Z] <= 0.0 ) {
+			if ( hitp->hit_vpriv[Z] <= 0.0 ) {
 				hitp->hit_magic = RT_HIT_MAGIC;
 				hitp->hit_dist = k1;
 				hitp->hit_surfno = EPA_NORM_BODY;	/* compute N */
@@ -378,7 +378,7 @@ rt_epa_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 			}
 
 			VJOIN1( hitp->hit_vpriv, pprime, k2, dprime );	/* hit' */
-			if( hitp->hit_vpriv[Z] <= 0.0 ) {
+			if ( hitp->hit_vpriv[Z] <= 0.0 ) {
 				hitp->hit_magic = RT_HIT_MAGIC;
 				hitp->hit_dist = k2;
 				hitp->hit_surfno = EPA_NORM_BODY;	/* compute N */
@@ -387,7 +387,7 @@ rt_epa_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 		} else if ( !NEAR_ZERO(b, RT_PCOEF_TOL) ) {
 			k1 = -c/b;
 			VJOIN1( hitp->hit_vpriv, pprime, k1, dprime );	/* hit' */
-			if( hitp->hit_vpriv[Z] <= 0.0 ) {
+			if ( hitp->hit_vpriv[Z] <= 0.0 ) {
 				hitp->hit_magic = RT_HIT_MAGIC;
 				hitp->hit_dist = k1;
 				hitp->hit_surfno = EPA_NORM_BODY;	/* compute N */
@@ -402,12 +402,12 @@ rt_epa_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	 */
 check_plates:
 	/* check top plate */
-	if( hitp == &hits[1]  &&  !NEAR_ZERO(dprime[Z], SMALL) )  {
+	if ( hitp == &hits[1]  &&  !NEAR_ZERO(dprime[Z], SMALL) )  {
 		/* 1 hit so far, this is worthwhile */
 		k1 = -pprime[Z] / dprime[Z];		/* top plate */
 
 		VJOIN1( hitp->hit_vpriv, pprime, k1, dprime );	/* hit' */
-		if( hitp->hit_vpriv[X] * hitp->hit_vpriv[X] +
+		if ( hitp->hit_vpriv[X] * hitp->hit_vpriv[X] +
 			hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y] <= 1.0 ) {
 			hitp->hit_magic = RT_HIT_MAGIC;
 			hitp->hit_dist = k1;
@@ -416,10 +416,10 @@ check_plates:
 		}
 	}
 
-	if( hitp != &hits[2] )
+	if ( hitp != &hits[2] )
 		return(0);	/* MISS */
 
-	if( hits[0].hit_dist < hits[1].hit_dist )  {
+	if ( hits[0].hit_dist < hits[1].hit_dist )  {
 		/* entry is [0], exit is [1] */
 		register struct seg *segp;
 
@@ -473,7 +473,7 @@ rt_epa_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 		(struct epa_specific *)stp->st_specific;
 
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
-	switch( hitp->hit_surfno )  {
+	switch ( hitp->hit_surfno )  {
 	case EPA_NORM_BODY:
 		VSET( can_normal,
 			hitp->hit_vpriv[X],
@@ -511,7 +511,7 @@ rt_epa_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 	vect_t	vec1, vec2;		/* eigen vectors */
 	vect_t	tmp;
 
-	switch( hitp->hit_surfno )  {
+	switch ( hitp->hit_surfno )  {
 	case EPA_NORM_BODY:
 		/*
 		 * choose a tangent plane coordinate system
@@ -573,7 +573,7 @@ rt_epa_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 	VSUB2( work, hitp->hit_point, epa->epa_V );
 	MAT4X3VEC( pprime, epa->epa_SoR, work );
 
-	switch( hitp->hit_surfno )  {
+	switch ( hitp->hit_surfno )  {
 	case EPA_NORM_BODY:
 		/* top plate, polar coords */
 		if (pprime[Z] == -1.0) {	/* bottom pt of body */
@@ -592,7 +592,7 @@ rt_epa_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 		break;
 	}
 	/* Handle other half of acos() domain */
-	if( pprime[Y] < 0 )
+	if ( pprime[Y] < 0 )
 		uvp->uv_u = 1.0 - uvp->uv_u;
 
 	/* uv_du should be relative to rotation, uv_dv relative to height */
@@ -655,7 +655,7 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	r1 = xip->epa_r1;
 	r2 = xip->epa_r2;
 	/* Check for |H| > 0, |A| == 1, r1 > 0, r2 > 0 */
-	if( NEAR_ZERO(mag_h, RT_LEN_TOL)
+	if ( NEAR_ZERO(mag_h, RT_LEN_TOL)
 		|| !NEAR_ZERO(mag_a - 1.0, RT_LEN_TOL)
 		|| r1 <= 0.0 || r2 <= 0.0 )  {
 		return(-2);		/* BAD */
@@ -663,7 +663,7 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 
 	/* Check for A.H == 0 */
 	f = VDOT( xip->epa_Au, xip->epa_H ) / mag_h;
-	if( ! NEAR_ZERO(f, RT_DOT_TOL) )  {
+	if ( ! NEAR_ZERO(f, RT_DOT_TOL) )  {
 		return(-2);		/* BAD */
 	}
 
@@ -683,13 +683,13 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	/*
 	 *  Establish tolerances
 	 */
-	if( ttol->rel <= 0.0 || ttol->rel >= 1.0 )
+	if ( ttol->rel <= 0.0 || ttol->rel >= 1.0 )
 		dtol = 0.0;		/* none */
 	else
 		/* Convert rel to absolute by scaling by smallest side */
 		dtol = ttol->rel * 2 * r2;
-	if( ttol->abs <= 0.0 )  {
-		if( dtol <= 0.0 )
+	if ( ttol->abs <= 0.0 )  {
+		if ( dtol <= 0.0 )
 			/* No tolerance given, use a default */
 			dtol = 2 * 0.10 * r2;	/* 10% */
 		else
@@ -697,12 +697,12 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 			;
 	} else {
 		/* Absolute tolerance was given, pick smaller */
-		if( ttol->rel <= 0.0 || dtol > ttol->abs )
+		if ( ttol->rel <= 0.0 || dtol > ttol->abs )
 			dtol = ttol->abs;
 	}
 
 	/* To ensure normal tolerance, remain below this angle */
-	if( ttol->norm > 0.0 )
+	if ( ttol->norm > 0.0 )
 		ntol = ttol->norm;
 	else
 		/* tolerate everything */
@@ -829,7 +829,7 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	RT_ADD_VLIST( vhead,
 		&ellipses[nell-1][(nseg-1)*ELEMENTS_PER_VECT],
 		BN_VLIST_LINE_MOVE );
-	for( i = 0; i < nseg; i++ )  {
+	for ( i = 0; i < nseg; i++ )  {
 		RT_ADD_VLIST( vhead,
 			&ellipses[nell-1][i*ELEMENTS_PER_VECT],
 			BN_VLIST_LINE_DRAW );
@@ -848,7 +848,7 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 		RT_ADD_VLIST( vhead,
 			&ellipses[bottom][(nseg-1)*ELEMENTS_PER_VECT],
 			BN_VLIST_LINE_MOVE );
-		for( j = 0; j < nseg; j++ )  {
+		for ( j = 0; j < nseg; j++ )  {
 			RT_ADD_VLIST( vhead,
 				&ellipses[bottom][j*ELEMENTS_PER_VECT],
 				BN_VLIST_LINE_DRAW );
@@ -898,7 +898,7 @@ rt_ell_norms(register fastf_t *ov, fastf_t *A, fastf_t *B, fastf_t *h_vec, fastf
 	vect_t partial_t, partial_ang;
 
 	sqrt_1mt = sqrt( 1.0 - t );
-	if( sqrt_1mt <= SMALL_FASTF )
+	if ( sqrt_1mt <= SMALL_FASTF )
 		bu_bomb( "rt_epa_tess: rt_ell_norms: sqrt( 1.0 -t ) is zero\n" );
 	theta = 2 * bn_pi / sides;
 	ang = 0.;
@@ -1024,7 +1024,7 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	r1 = xip->epa_r1;
 	r2 = xip->epa_r2;
 	/* Check for |H| > 0, |A| == 1, r1 > 0, r2 > 0 */
-	if( NEAR_ZERO(mag_h, RT_LEN_TOL)
+	if ( NEAR_ZERO(mag_h, RT_LEN_TOL)
 		|| !NEAR_ZERO(mag_a - 1.0, RT_LEN_TOL)
 		|| r1 <= 0.0 || r2 <= 0.0 )  {
 		return(-2);		/* BAD */
@@ -1032,7 +1032,7 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 	/* Check for A.H == 0 */
 	f = VDOT( xip->epa_Au, xip->epa_H ) / mag_h;
-	if( ! NEAR_ZERO(f, RT_DOT_TOL) )  {
+	if ( ! NEAR_ZERO(f, RT_DOT_TOL) )  {
 		return(-2);		/* BAD */
 	}
 
@@ -1055,13 +1055,13 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	/*
 	 *  Establish tolerances
 	 */
-	if( ttol->rel <= 0.0 || ttol->rel >= 1.0 )
+	if ( ttol->rel <= 0.0 || ttol->rel >= 1.0 )
 		dtol = 0.0;		/* none */
 	else
 		/* Convert rel to absolute by scaling by smallest side */
 		dtol = ttol->rel * 2 * r2;
-	if( ttol->abs <= 0.0 )  {
-		if( dtol <= 0.0 )
+	if ( ttol->abs <= 0.0 )  {
+		if ( dtol <= 0.0 )
 			/* No tolerance given, use a default */
 			dtol = 2 * 0.10 * r2;	/* 10% */
 		else
@@ -1069,12 +1069,12 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 			;
 	} else {
 		/* Absolute tolerance was given, pick smaller */
-		if( ttol->rel <= 0.0 || dtol > ttol->abs )
+		if ( ttol->rel <= 0.0 || dtol > ttol->abs )
 			dtol = ttol->abs;
 	}
 
 	/* To ensure normal tolerance, remain below this angle */
-	if( ttol->norm > 0.0 )
+	if ( ttol->norm > 0.0 )
 		ntol = ttol->norm;
 	else
 		/* tolerate everything */
@@ -1362,29 +1362,29 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	}
 
 	/* Associate the face geometry */
-	for (i=0 ; i < face ; i++) {
-		if( nmg_fu_planeeqn( outfaceuses[i], tol ) < 0 )
+	for (i=0; i < face; i++) {
+		if ( nmg_fu_planeeqn( outfaceuses[i], tol ) < 0 )
 			goto fail;
 	}
 
 	/* Associate vertexuse normals */
-	for( i=0 ; i<nell ; i++ )
+	for ( i=0; i<nell; i++ )
 	{
-		for( j=0 ; j<segs_per_ell[i] ; j++ )
+		for ( j=0; j<segs_per_ell[i]; j++ )
 		{
 			VREVERSE( rev_norm, &normals[i][j*3] );
-			for( BU_LIST_FOR( vu, vertexuse, &vells[i][j]->vu_hd ) )
+			for ( BU_LIST_FOR( vu, vertexuse, &vells[i][j]->vu_hd ) )
 			{
 
 				fu = nmg_find_fu_of_vu( vu );
 				NMG_CK_FACEUSE( fu );
 
-				if( fu == outfaceuses[0] || fu->fumate_p == outfaceuses[0] )
+				if ( fu == outfaceuses[0] || fu->fumate_p == outfaceuses[0] )
 					continue;	/* don't assign normals to top faceuse (flat) */
 
-				if( fu->orientation == OT_SAME )
+				if ( fu->orientation == OT_SAME )
 					nmg_vertexuse_nv( vu, &normals[i][j*3] );
-				else if( fu->orientation == OT_OPPOSITE )
+				else if ( fu->orientation == OT_OPPOSITE )
 					nmg_vertexuse_nv( vu, rev_norm );
 			}
 		}
@@ -1393,14 +1393,14 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	VMOVE( apex_norm, xip->epa_H );
 	VUNITIZE( apex_norm );
 	VREVERSE( rev_norm, apex_norm );
-	for( BU_LIST_FOR( vu, vertexuse, &apex_v->vu_hd ) )
+	for ( BU_LIST_FOR( vu, vertexuse, &apex_v->vu_hd ) )
 	{
 		NMG_CK_VERTEXUSE( vu );
 		fu = nmg_find_fu_of_vu( vu );
 		NMG_CK_FACEUSE( fu );
-		if( fu->orientation == OT_SAME )
+		if ( fu->orientation == OT_SAME )
 			nmg_vertexuse_nv( vu, apex_norm );
-		else if( fu->orientation == OT_OPPOSITE )
+		else if ( fu->orientation == OT_OPPOSITE )
 			nmg_vertexuse_nv( vu, rev_norm );
 	}
 
@@ -1454,7 +1454,7 @@ rt_epa_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 	BU_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
 	/* Check record type */
-	if( rp->u_id != ID_SOLID )  {
+	if ( rp->u_id != ID_SOLID )  {
 		bu_log("rt_epa_import: defective record\n");
 		return(-1);
 	}
@@ -1476,7 +1476,7 @@ rt_epa_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 	xip->epa_r1 = rp->s.s_values[3*3] / mat[15];
 	xip->epa_r2 = rp->s.s_values[3*3+1] / mat[15];
 
-	if( xip->epa_r1 <= SMALL_FASTF || xip->epa_r2 <= SMALL_FASTF ) {
+	if ( xip->epa_r1 <= SMALL_FASTF || xip->epa_r2 <= SMALL_FASTF ) {
 		bu_log( "rt_epa_import: r1 or r2 are zero\n" );
 		bu_free( (char *)ip->idb_ptr, "rt_epa_import: ip->idb_ptr" );
 		return( -1 );
@@ -1498,7 +1498,7 @@ rt_epa_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 	fastf_t			mag_h;
 
 	RT_CK_DB_INTERNAL(ip);
-	if( ip->idb_type != ID_EPA )  return(-1);
+	if ( ip->idb_type != ID_EPA )  return(-1);
 	xip = (struct rt_epa_internal *)ip->idb_ptr;
 	RT_EPA_CK_MAGIC(xip);
 
@@ -1581,7 +1581,7 @@ rt_epa_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 	xip->epa_r1 = vec[3*3] / mat[15];
 	xip->epa_r2 = vec[3*3+1] / mat[15];
 
-	if( xip->epa_r1 <= SMALL_FASTF || xip->epa_r2 <= SMALL_FASTF ) {
+	if ( xip->epa_r1 <= SMALL_FASTF || xip->epa_r2 <= SMALL_FASTF ) {
 		bu_log( "rt_epa_import: r1 or r2 are zero\n" );
 		bu_free( (char *)ip->idb_ptr, "rt_epa_import: ip->idb_ptr" );
 		return( -1 );
@@ -1603,7 +1603,7 @@ rt_epa_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	fastf_t			mag_h;
 
 	RT_CK_DB_INTERNAL(ip);
-	if( ip->idb_type != ID_EPA )  return(-1);
+	if ( ip->idb_type != ID_EPA )  return(-1);
 	xip = (struct rt_epa_internal *)ip->idb_ptr;
 	RT_EPA_CK_MAGIC(xip);
 

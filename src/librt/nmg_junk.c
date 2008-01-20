@@ -211,13 +211,13 @@ const struct bn_tol	*tol;
 			"vertices");
 
 	/* build the vertices */
-	for (i = 0 ; i < num_pts ; ++i) {
+	for (i = 0; i < num_pts; ++i) {
 		GET_VERTEX(v[i], m);
 		v[i]->magic = NMG_VERTEX_MAGIC;
 	}
 
 	/* read in the coordinates of the vertices */
-	for (i=0 ; i < num_pts ; ++i) {
+	for (i=0; i < num_pts; ++i) {
 		if (fscanf(fp, "%lg %lg %lg", &p[0], &p[1], &p[2]) != 3)
 			bu_bomb("polytonmg() Error reading point");
 		else
@@ -231,7 +231,7 @@ const struct bn_tol	*tol;
 	vl = (struct vertex **)bu_calloc(vl_len=8, sizeof (struct vertex *),
 		"vertex parameter list");
 
-	for (facet = 0 ; facet < num_facets ; ++facet) {
+	for (facet = 0; facet < num_facets; ++facet) {
 		if (fscanf(fp, "%d", &pts_this_face) != 1)
 			bu_bomb("polytonmg() error getting pt count for this face");
 
@@ -246,7 +246,7 @@ const struct bn_tol	*tol;
 				"vertex parameter list (realloc)");
 		}
 
-		for (i=0 ; i < pts_this_face ; ++i) {
+		for (i=0; i < pts_this_face; ++i) {
 			if (fscanf(fp, "%d", &j) != 1)
 				bu_bomb("polytonmg() error getting point index for v in f");
 			vl[i] = v[j-1];
@@ -267,8 +267,8 @@ const struct bn_tol	*tol;
 		else nmg_face_g(fu, plane);
 	}
 
-	for (i=0 ; i < num_pts ; ++i) {
-		if( BU_LIST_IS_EMPTY( &v[i]->vu_hd ) )  continue;
+	for (i=0; i < num_pts; ++i) {
+		if ( BU_LIST_IS_EMPTY( &v[i]->vu_hd ) )  continue;
 		FREE_VERTEX(v[i]);
 	}
 	bu_free( (char *)v, "vertex array");
@@ -437,15 +437,15 @@ struct shell	*s2;
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
 		bu_log("nmg_isect_face3p_shell_int(, fu1=x%x, s2=x%x) START\n", fu1, s2 );
 
-	for( BU_LIST_FOR( lu1, loopuse, &fu1->lu_hd ) )  {
+	for ( BU_LIST_FOR( lu1, loopuse, &fu1->lu_hd ) )  {
 		NMG_CK_LOOPUSE(lu1);
-		if( BU_LIST_FIRST_MAGIC( &lu1->down_hd ) == NMG_VERTEXUSE_MAGIC)
+		if ( BU_LIST_FIRST_MAGIC( &lu1->down_hd ) == NMG_VERTEXUSE_MAGIC)
 			continue;
-		for( BU_LIST_FOR( eu1, edgeuse, &lu1->down_hd ) )  {
+		for ( BU_LIST_FOR( eu1, edgeuse, &lu1->down_hd ) )  {
 			struct edgeuse		*eu2;
 
 			eu2 = nmg_find_matching_eu_in_s( eu1, s2 );
-			if( eu2	)  {
+			if ( eu2	)  {
 bu_log("nmg_isect_face3p_shell_int() eu1=x%x, e1=x%x, eu2=x%x, e2=x%x (nothing to do)\n", eu1, eu1->e_p, eu2, eu2->e_p);
 				/*  Whether the edgeuse is in a face, or a
 				 *  wire edgeuse, the other guys will isect it.

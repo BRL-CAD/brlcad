@@ -94,7 +94,7 @@ cloud_texture(register fastf_t x, register fastf_t y, fastf_t Contrast, fastf_t 
 	Py = bn_halfpi * bn_tab_sin( 0.5 * Fx * x );
 	C = 1.0;	/* ??? */
 
-	for( i = 0; i < NUMSINES; i++ ) {
+	for ( i = 0; i < NUMSINES; i++ ) {
 		/*
 		 * Compute one term of each summation.
 		 */

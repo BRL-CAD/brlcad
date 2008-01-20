@@ -80,14 +80,14 @@ tp_setup(void)
 	p = tp_ctable;		/* pointer to stroke list */
 
 	/* Store start addrs of each stroke list */
-	for( i=040-NUM_SYMBOLS; i<128; i++)  {
+	for ( i=040-NUM_SYMBOLS; i<128; i++)  {
 		tp_cindex[i+128] = tp_cindex[i] = p;
-		while( (*p++) != LAST );
+		while ( (*p++) != LAST );
 	}
-	for( i=1; i<=NUM_SYMBOLS; i++ )  {
+	for ( i=1; i<=NUM_SYMBOLS; i++ )  {
 		tp_cindex[i+128] = tp_cindex[i] = tp_cindex[040-NUM_SYMBOLS-1+i];
 	}
-	for( i=NUM_SYMBOLS+1; i<040; i++ )  {
+	for ( i=NUM_SYMBOLS+1; i<040; i++ )  {
 		tp_cindex[i+128] = tp_cindex[i] = tp_cindex['?'];
 	}
 }

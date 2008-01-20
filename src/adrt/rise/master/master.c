@@ -110,13 +110,13 @@ void rise_master(int port, int obs_port, char *proj, char *list, char *exec, int
   memset(rise_master_frame, 0, 4 * sizeof(tfloat) * db.env.img_w * db.env.img_h);
 
   /* Launch a thread to handle networking */
-  pthread_create(&rise_master_networking_thread, NULL, rise_master_networking,&obs_port);
+  pthread_create(&rise_master_networking_thread, NULL, rise_master_networking, &obs_port);
 
   /* Initialize the work dispatcher */
   rise_dispatcher_init();
 
   /* Render Frame */
-  for(i = 0; i < db.anim.frame_num && rise_master_alive; i++) {
+  for (i = 0; i < db.anim.frame_num && rise_master_alive; i++) {
     printf("Preparing frame #%d of %d\n", i+1, db.anim.frame_num);
 
     /* Parse and pack the application data */
@@ -180,7 +180,7 @@ void rise_master_result(void *res_buf, int res_len) {
   rgb_data = &((unsigned char *)res_buf)[sizeof(common_work_t)];
 
   ind = 0;
-  for(i = work.orig_y; i < work.orig_y + work.size_y; i++) {
+  for (i = work.orig_y; i < work.orig_y + work.size_y; i++) {
     memcpy(&((char *)rise_master_frame)[4 * sizeof(tfloat) * (work.orig_x + i * db.env.img_w)], &rgb_data[ind], 4*sizeof(tfloat)*work.size_x);
     ind += 4 * sizeof(tfloat) * work.size_x;
   }
@@ -191,15 +191,15 @@ void rise_master_result(void *res_buf, int res_len) {
 /*printf("result: %d %d\n", work.orig_x, work.orig_y); */
 
   /* post update to all nodes that a tile has come in */
-  for(sock = rise_master_socklist; sock; sock = sock->next) {
-    if(sock->next) {
-      if(!sock->update_sem.val)
+  for (sock = rise_master_socklist; sock; sock = sock->next) {
+    if (sock->next) {
+      if (!sock->update_sem.val)
 	tienet_sem_post(&(sock->update_sem));
     }
   }
 
   /* Draw the frame to the screen */
-  if(rise_master_work_ind == rise_master_tile_num) {
+  if (rise_master_work_ind == rise_master_tile_num) {
     /* Save image to disk */
     tienet_sem_post(&rise_master_frame_sem);
 
@@ -240,7 +240,7 @@ void* rise_master_networking(void *ptr) {
 #endif
 
   /* create a socket */
-  if((master_socket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+  if ((master_socket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
     fprintf(stderr, "unable to create socket, exiting.\n");
     exit(1);
   }
@@ -264,7 +264,7 @@ void* rise_master_networking(void *ptr) {
   master.sin_port = htons(port);
 
   /* bind socket */
-  if(bind(master_socket, (struct sockaddr *)&master, sizeof(master)) < 0) {
+  if (bind(master_socket, (struct sockaddr *)&master, sizeof(master)) < 0) {
     fprintf(stderr, "socket already bound, exiting.\n");
     exit(1);
   }
@@ -278,17 +278,17 @@ void* rise_master_networking(void *ptr) {
   addrlen = sizeof(observer);
   rise_master_active_connections = 0;
 
-  while(rise_master_alive) {
+  while (rise_master_alive) {
     /* wait for some network activity */
     select(highest_fd+1, &readfds, NULL, NULL, NULL);
     /* cycle through each socket and address the activity */
-    for(sock = rise_master_socklist; sock; sock = sock->next) {
+    for (sock = rise_master_socklist; sock; sock = sock->next) {
       /* check if activity was on this socket */
-      if(FD_ISSET(sock->num, &readfds)) {
-	if(sock->num == master_socket) {
+      if (FD_ISSET(sock->num, &readfds)) {
+	if (sock->num == master_socket) {
 	  /* new connection */
 	  new_socket = accept(master_socket, (struct sockaddr *)&observer, &addrlen);
-	  if(new_socket >= 0) {
+	  if (new_socket >= 0) {
 	    tmp = rise_master_socklist;
 	    rise_master_socklist = (rise_master_socket_t *)malloc(sizeof(rise_master_socket_t));
 	    if (!rise_master_socklist) {
@@ -300,7 +300,7 @@ void* rise_master_networking(void *ptr) {
 	    rise_master_socklist->prev = NULL;
 	    tienet_sem_init(&(rise_master_socklist->update_sem), 0);
 	    tmp->prev = rise_master_socklist;
-	    if(new_socket > highest_fd)
+	    if (new_socket > highest_fd)
 	      highest_fd = new_socket;
 	    rise_master_active_connections++;
 	  }
@@ -309,20 +309,20 @@ void* rise_master_networking(void *ptr) {
 	  /* observer communication */
 	  error = tienet_recv(sock->num, &op, 1, 0);
 	  /* remove socket from pool if there's an error, i.e slave disconnected */
-	  if(error || op == RISE_NET_OP_QUIT) {
+	  if (error || op == RISE_NET_OP_QUIT) {
 	    tmp = sock;
-	    if(sock->prev)
+	    if (sock->prev)
 	      sock->prev->next = sock->next;
 	    /* master is always last, no need to check for sock->next next */
 	    sock->next->prev = sock->prev;
-	    if(sock == rise_master_socklist)
+	    if (sock == rise_master_socklist)
 	      rise_master_socklist = rise_master_socklist->next;
 	    close(sock->num);
 	    sock = sock->next;
 	    free(tmp);
 	    rise_master_active_connections--;
 	  } else {
-	    switch(op) {
+	    switch (op) {
 	      case RISE_NET_OP_INIT:
 		/* Send screen width and height */
 		endian = 1;
@@ -372,8 +372,8 @@ void* rise_master_networking(void *ptr) {
 
     /* Rebuild select list for next select call */
     highest_fd = 0;
-    for(sock = rise_master_socklist; sock; sock = sock->next) {
-      if(sock->num > highest_fd)
+    for (sock = rise_master_socklist; sock; sock = sock->next) {
+      if (sock->num > highest_fd)
 	highest_fd = sock->num;
       FD_SET(sock->num, &readfds);
     }
@@ -385,7 +385,7 @@ void* rise_master_networking(void *ptr) {
 
 
   /* free rise_master_socklist */
-  for(sock = rise_master_socklist->next; sock; sock = sock->next)
+  for (sock = rise_master_socklist->next; sock; sock = sock->next)
     free(sock->prev);
 
   free(frame24);

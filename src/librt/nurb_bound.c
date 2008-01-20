@@ -158,7 +158,7 @@ rt_nurb_s_check(register struct face_g_snurb *srf)
 	i = srf->s_size[RT_NURB_SPLIT_ROW] *
 	    srf->s_size[RT_NURB_SPLIT_COL] *
 	    srf->pt_type;
-	for ( ; i > 0; i--, mp++)  {
+	for (; i > 0; i--, mp++)  {
 		/* Sanity checking */
 		if ( !NEAR_ZERO( *mp, INFINITY ) )  {
 			bu_log("nurb_s_check:  bad mesh found\n");
@@ -184,7 +184,7 @@ rt_nurb_c_check(register struct edge_g_cnurb *crv)
 	mp = crv->ctl_points;
 	i = crv->c_size *
 	    crv->pt_type;
-	for ( ; i > 0; i--, mp++)  {
+	for (; i > 0; i--, mp++)  {
 		/* Sanity checking */
 		if ( !NEAR_ZERO( *mp, INFINITY ) )  {
 			bu_log("nurb_c_check:  bad mesh found\n");

@@ -58,15 +58,15 @@ int main(int argc, char *args[]) {
   bay.v[2] = n.v[0]*bax.v[1] - n.v[1]*bax.v[0];
 
 
-  if(argc < 3) {
+  if (argc < 3) {
     printf("[Options] type unitize\n");
     exit(1);
   }
 
 
-  for(j = 1; j <= atoi(args[1]); j++) {
-    for(k = 1; k <= atoi(args[1]); k++) {
-    switch(atoi(args[2])) {
+  for (j = 1; j <= atoi(args[1]); j++) {
+    for (k = 1; k <= atoi(args[1]); k++) {
+    switch (atoi(args[2])) {
       case 1:
 	foo = drand48();
 	sin_theta = sqrt(1-foo*foo);
@@ -100,9 +100,9 @@ int main(int argc, char *args[]) {
     sin_phi = sin(cos_phi);
     cos_phi = cos(cos_phi);
 
-    for(i = 0; i < 3; i++)
+    for (i = 0; i < 3; i++)
       T.v[i] = sin_theta*cos_phi*bax.v[i] + sin_theta*sin_phi*bay.v[i] + cos_theta*n.v[i];
-    if(atoi(args[3]))
+    if (atoi(args[3]))
       UNITIZE(T);
     printf("%f %f %f\n", T.v[0], T.v[1], T.v[2]);
   }

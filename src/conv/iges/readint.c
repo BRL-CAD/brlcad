@@ -46,38 +46,38 @@ int *inum;
 	int i=(-1), done=0, lencard;
 	char num[80];
 
-	if( card[counter] == eof ) /* This is an empty field */
+	if ( card[counter] == eof ) /* This is an empty field */
 	{
 		counter++;
 		return;
 	}
-	else if( card[counter] == eor ) /* Up against the end of record */
+	else if ( card[counter] == eor ) /* Up against the end of record */
 		return;
 
-	if( card[72] == 'P' )
+	if ( card[72] == 'P' )
 		lencard = PARAMLEN;
 	else
 		lencard = CARDLEN;
 
-	if( counter >= lencard )
+	if ( counter >= lencard )
 		Readrec( ++currec );
 
-	while( !done )
+	while ( !done )
 	{
-		while( (num[++i] = card[counter++]) != eof && num[i] != eor &&
+		while ( (num[++i] = card[counter++]) != eof && num[i] != eor &&
 			counter <= lencard );
-		if( counter > lencard && num[i] != eor && num[i] != eof )
+		if ( counter > lencard && num[i] != eor && num[i] != eof )
 			Readrec( ++currec );
 		else
 			done = 1;
 	}
 
-	if( num[i] == eor )
+	if ( num[i] == eor )
 		counter--;
 
 	num[++i] = '\0';
 	*inum = atoi( num );
-	if( *id != '\0' )
+	if ( *id != '\0' )
 		bu_log( "%s%d\n", id, *inum );
 }
 

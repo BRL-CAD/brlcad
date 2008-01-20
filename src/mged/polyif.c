@@ -101,7 +101,7 @@ f_polybinout(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	int	need_normal = 0;
 	struct	bu_external	obuf;
 
-	if(argc < 2 || 2 < argc){
+	if (argc < 2 || 2 < argc){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -111,20 +111,20 @@ f_polybinout(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  return TCL_ERROR;
 	}
 
-	if( (fp = fopen( argv[1], "w" )) == NULL )  {
+	if ( (fp = fopen( argv[1], "w" )) == NULL )  {
 	  perror(argv[1]);
 	  return TCL_ERROR;
 	}
 
 	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)  {
-		for( BU_LIST_FOR( vp, bn_vlist, &(sp->s_vlist) ) )  {
+		for ( BU_LIST_FOR( vp, bn_vlist, &(sp->s_vlist) ) )  {
 			register int	i;
 			register int	nused = vp->nused;
 			register int	*cmd = vp->cmd;
 			register point_t *pt = vp->pt;
-			for( i = 0; i < nused; i++, cmd++, pt++ )  {
+			for ( i = 0; i < nused; i++, cmd++, pt++ )  {
 				/* For each polygon, spit it out.  Ignore vectors */
-				switch( *cmd )  {
+				switch ( *cmd )  {
 				case BN_VLIST_LINE_MOVE:
 					/* Move, start line */
 					break;
@@ -150,7 +150,7 @@ f_polybinout(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 					/* fall through to... */
 				case BN_VLIST_POLY_DRAW:
 					/* Polygon Draw */
-					if( ph.npts >= MAX_VERTS )  {
+					if ( ph.npts >= MAX_VERTS )  {
 					  Tcl_AppendResult(interp, "excess vertex skipped\n",
 							   (char *)NULL);
 					  break;
@@ -165,7 +165,7 @@ f_polybinout(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 				   * XXX note:  if poly_markers was not set,
 				   * XXX poly will end with next POLY_MOVE.
 				   */
-				  if( ph.npts < 3 )  {
+				  if ( ph.npts < 3 )  {
 				    struct bu_vls tmp_vls;
 
 				    bu_vls_init(&tmp_vls);
@@ -175,13 +175,13 @@ f_polybinout(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 				    bu_vls_free(&tmp_vls);
 				    break;
 				  }
-					if( need_normal )  {
+					if ( need_normal )  {
 						vect_t	e1, e2;
 						VSUB2( e1, verts[0], verts[1] );
 						VSUB2( e2, verts[0], verts[2] );
 						VCROSS( ph.normal, e1, e2 );
 					}
-					if( bu_struct_export( &obuf, (genptr_t)&ph, polygon_desc ) < 0 )  {
+					if ( bu_struct_export( &obuf, (genptr_t)&ph, polygon_desc ) < 0 )  {
 					  Tcl_AppendResult(interp, "header export error\n", (char *)NULL);
 					  break;
 					}
@@ -192,11 +192,11 @@ f_polybinout(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 					db_free_external( &obuf );
 					/* Now export the vertices */
 					vertex_desc[0].sp_count = ph.npts * 3;
-					if( bu_struct_export( &obuf, (genptr_t)verts, vertex_desc ) < 0 )  {
+					if ( bu_struct_export( &obuf, (genptr_t)verts, vertex_desc ) < 0 )  {
 					  Tcl_AppendResult(interp, "vertex export error\n", (char *)NULL);
 					  break;
 					}
-					if( bu_struct_put( fp, &obuf ) != obuf.ext_nbytes )  {
+					if ( bu_struct_put( fp, &obuf ) != obuf.ext_nbytes )  {
 						perror("bu_struct_wrap_buf");
 						break;
 					}

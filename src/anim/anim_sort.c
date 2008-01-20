@@ -75,13 +75,13 @@ main(int argc, char **argv)
     }
 
     /* read the frame number of the first "start" command */
-    sscanf( strpbrk(line, "0123456789"),"%d", &frame_number);
+    sscanf( strpbrk(line, "0123456789"), "%d", &frame_number);
 
     /* find the highest frame number in the file */
     maxnum = 0;
-    while(bu_fgets(line, MAXLEN, stdin)!=NULL){
-	if(!strncmp(line, "start", 5)){
-	    sscanf(strpbrk(line, "0123456789"),"%d",&number);
+    while (bu_fgets(line, MAXLEN, stdin)!=NULL){
+	if (!strncmp(line, "start", 5)){
+	    sscanf(strpbrk(line, "0123456789"), "%d", &number);
 	    maxnum = (maxnum>number)?maxnum:number;
 	}
     }
@@ -114,7 +114,7 @@ main(int argc, char **argv)
 	    /*read to next "start" command*/
 	    while (bu_fgets(line, MAXLEN, stdin)!=NULL){
 		if (!strncmp(line, "start", 5)){
-		    sscanf( strpbrk(line, "0123456789"),"%d", &number);
+		    sscanf( strpbrk(line, "0123456789"), "%d", &number);
 		    break;
 		}
 	    }
@@ -134,7 +134,7 @@ main(int argc, char **argv)
 		}
 		/* save contents until next "start" */
 		while (bu_fgets(line, MAXLEN, stdin)!=NULL){
-		    if(!strncmp(line, "start", 5))
+		    if (!strncmp(line, "start", 5))
 			break;
 		    else {
 			reserve -= strlen(line);
@@ -178,7 +178,7 @@ int get_args(int argc, char **argv)
     suppressed = 0;
 
     while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
-	switch(c){
+	switch (c){
 	case 'c':
 	    suppressed = 1;
 	    break;

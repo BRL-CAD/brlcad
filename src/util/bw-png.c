@@ -66,7 +66,7 @@ get_args(int argc, register char **argv)
 	register int c;
 
 	while ( (c = bu_getopt( argc, argv, "as:w:n:" )) != EOF )  {
-		switch( c )  {
+		switch ( c )  {
 		case 'a':
 			autosize = 1;
 			break;
@@ -89,14 +89,14 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( bu_optind >= argc )  {
-		if( isatty(fileno(stdin)) )
+	if ( bu_optind >= argc )  {
+		if ( isatty(fileno(stdin)) )
 			return(0);
 		file_name = "-";
 		infp = stdin;
 	} else {
 		file_name = argv[bu_optind];
-		if( (infp = fopen(file_name, "r")) == NULL )  {
+		if ( (infp = fopen(file_name, "r")) == NULL )  {
 			perror(file_name);
 			(void)fprintf( stderr,
 				"bw-png: cannot open \"%s\" for reading\n",
@@ -127,9 +127,9 @@ main(int argc, char **argv)
 	}
 
 	/* autosize input? */
-	if( fileinput && autosize ) {
+	if ( fileinput && autosize ) {
 		unsigned long int	w, h;
-		if( fb_common_file_size(&w, &h, file_name, 1) ) {
+		if ( fb_common_file_size(&w, &h, file_name, 1) ) {
 			file_width = (long)w;
 			file_height = (long)h;
 		} else {
@@ -138,11 +138,11 @@ main(int argc, char **argv)
 	}
 
 	png_p = png_create_write_struct( PNG_LIBPNG_VER_STRING, NULL, NULL, NULL );
-	if( !png_p )
+	if ( !png_p )
 		bu_exit( EXIT_FAILURE, "Could not create PNG write structure\n" );
 
 	info_p = png_create_info_struct( png_p );
-	if( !info_p )
+	if ( !info_p )
 		bu_exit( EXIT_FAILURE, "Could not create PNG info structure\n" );
 
 	/* allocate space for the image */
@@ -150,11 +150,11 @@ main(int argc, char **argv)
 
 	/* create array of pointers to rows for libpng */
 	rows = (unsigned char **)bu_calloc( file_height, sizeof( unsigned char *), "rows" );
-	for( i=0 ; i<file_height ; i++ )
+	for ( i=0; i<file_height; i++ )
 		rows[i] = scanbuf + ((file_height-i-1)*ROWSIZE);
 
 	/* read the bw file */
-	if( fread( scanbuf, SIZE, 1, infp ) != 1 )
+	if ( fread( scanbuf, SIZE, 1, infp ) != 1 )
 		bu_exit( EXIT_FAILURE, "bw-png: Short read\n");
 
 	png_init_io( png_p, stdout );

@@ -65,14 +65,14 @@ find_nearest_ars_pt(
 	RT_ARS_CK_MAGIC( ars );
 
 	pt_no = 0;
-	for( i=0 ; i<ars->ncurves ; i++ )
+	for ( i=0; i<ars->ncurves; i++ )
 	{
-		for( j=0 ; j<ars->pts_per_curve ; j++ )
+		for ( j=0; j<ars->pts_per_curve; j++ )
 		{
 			fastf_t dist_sq;
 
 			dist_sq = bn_distsq_line3_pt3( pick_pt, dir, &ars->curves[i][j*3] );
-			if( dist_sq < min_dist_sq )
+			if ( dist_sq < min_dist_sq )
 			{
 				min_dist_sq = dist_sq;
 				closest_i = i;

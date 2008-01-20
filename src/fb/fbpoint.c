@@ -80,12 +80,12 @@ SimpleInput(void)	/* ==== get keyboard input.	*/
 	register char ch;
 	static char c;
 
-	if( read( 0, &c, 1) <= 0 ) {
+	if ( read( 0, &c, 1) <= 0 ) {
 		Run = 0;
 		return;
 	}
 	ch = c & ~0x80;		/* strip off parity bit */
-	switch( ch ) {
+	switch ( ch ) {
 	default:
 		fprintf( stderr,
 		"Unknown command(%c:0%o). Type '?' for help!           \r\n",
@@ -146,15 +146,15 @@ main(int argc, char **argv)
 	width = height = 0;
 	curX = curY = -1;
 
-	while( argc > 1 ) {
-		if( strcmp( argv[1], "-h" ) == 0 ) {
+	while ( argc > 1 ) {
+		if ( strcmp( argv[1], "-h" ) == 0 ) {
 			width = height = 1024;
-		} else if( strncmp( argv[1], "-x", 2 ) == 0 ) {
-			if( xflag++ != 0 )
+		} else if ( strncmp( argv[1], "-x", 2 ) == 0 ) {
+			if ( xflag++ != 0 )
 				break;
 			xprefix = &argv[1][2];
-		} else if( strncmp( argv[1], "-y", 2 ) == 0 ) {
-			if( yflag++ != 0 )
+		} else if ( strncmp( argv[1], "-y", 2 ) == 0 ) {
+			if ( yflag++ != 0 )
 				break;
 			yprefix = &argv[1][2];
 		} else
@@ -166,35 +166,35 @@ main(int argc, char **argv)
 	 * Check for optional starting coordinate.
 	 * Test for bad flags while we're at it.
 	 */
-	if( argc > 1 && argv[1][0] != '-' ) {
+	if ( argc > 1 && argv[1][0] != '-' ) {
 		curX = atoi( argv[1] );
 		argc--;
 		argv++;
 	}
-	if( argc > 1 && argv[1][0] != '-' ) {
+	if ( argc > 1 && argv[1][0] != '-' ) {
 		curY = atoi( argv[1] );
 		argc--;
 		argv++;
 	}
-	if( argc > 1 ) {
+	if ( argc > 1 ) {
 		bu_exit(1, "%s", usage );
 	}
 
 	/* fix up pointers for printf */
-	if( xprefix == NULL )
+	if ( xprefix == NULL )
 		xprefix = &null_str;
-	if( yprefix == NULL )
+	if ( yprefix == NULL )
 		yprefix = &null_str;
 
-	if( (fbp = fb_open( NULL, width, height )) == NULL )
+	if ( (fbp = fb_open( NULL, width, height )) == NULL )
 		bu_exit(12, "Unable to open framebuffer\n");
 
 	JumpSpeed = fb_getwidth(fbp)/16;
-	if( JumpSpeed < 2 )  JumpSpeed = 2;
+	if ( JumpSpeed < 2 )  JumpSpeed = 2;
 	/* check for default starting positions */
-	if( curX < 0 )
+	if ( curX < 0 )
 		curX = fb_getwidth(fbp)/2;
-	if( curY < 0 )
+	if ( curY < 0 )
 		curY = fb_getheight(fbp)/2;
 	oldX = oldY = -1;
 
@@ -203,17 +203,17 @@ main(int argc, char **argv)
 	set_Raw( 0 );
 	clr_Echo( 0 );
 
-	while( Run )  {
-		if( curX < 0 )
+	while ( Run )  {
+		if ( curX < 0 )
 			curX = 0;
-		if( curX >= fb_getwidth(fbp) )
+		if ( curX >= fb_getwidth(fbp) )
 			curX = fb_getwidth(fbp) -1;
-		if( curY < 0 )
+		if ( curY < 0 )
 			curY = 0;
-		if( curY >= fb_getheight(fbp) )
+		if ( curY >= fb_getheight(fbp) )
 			curY = fb_getheight(fbp) -1;
 
-		if( oldX != curX || oldY != curY ) {
+		if ( oldX != curX || oldY != curY ) {
 			/* get pixel value, move cursor */
 			fb_read( fbp, curX, curY, curPix, 1 );
 			fb_cursor( fbp, 1, curX, curY );
@@ -235,9 +235,9 @@ main(int argc, char **argv)
 	reset_Tty( 0 );
 
 	/* write final location on stdout */
-	if( xflag != 0 && yflag == 0 )
+	if ( xflag != 0 && yflag == 0 )
 		printf( "%s%d\n", xprefix, curX );
-	else if( yflag != 0 && xflag == 0 )
+	else if ( yflag != 0 && xflag == 0 )
 		printf( "%s%d\n", yprefix, curY );
 	else
 		printf( "%s%d %s%d\n", xprefix, curX, yprefix, curY );

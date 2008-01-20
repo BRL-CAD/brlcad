@@ -72,28 +72,28 @@ main(int argc, char **argv)
 
 	rt_init_resource( &rt_uniresource, 0, NULL );
 
-	if( argc != 3 )  {
+	if ( argc != 3 )  {
 		fprintf(stderr, "Usage: %s v4.g v5.g\n", argv[0]);
 		return 1;
 	}
 
-	if( (dbip = db_open( argv[1], "r" )) == DBI_NULL )  {
+	if ( (dbip = db_open( argv[1], "r" )) == DBI_NULL )  {
 		perror( argv[1] );
 		return 2;
 	}
 
-	if( (fp = wdb_fopen( argv[2] )) == NULL )  {
+	if ( (fp = wdb_fopen( argv[2] )) == NULL )  {
 		perror( argv[2] );
 		return 3;
 	}
 
-	if( dbip->dbi_version != 4 ) {
+	if ( dbip->dbi_version != 4 ) {
 		bu_log( "Input database must be a version 4 datbase!!!!\n" );
 		return 4;
 	}
 
 	RT_CK_DBI(dbip);
-	if( db_dirbuild( dbip ) )
+	if ( db_dirbuild( dbip ) )
 	    bu_exit(1, "db_dirbuild failed\n" );
 
 	db_update_ident( fp->dbip, dbip->dbi_title, dbip->dbi_local2base );
@@ -107,14 +107,14 @@ main(int argc, char **argv)
 		fprintf(stderr, "%.16s\n", dp->d_namep );
 
 		id = rt_db_get_internal( &intern, dp, dbip, NULL, &rt_uniresource );
-		if( id < 0 )  {
+		if ( id < 0 )  {
 			fprintf(stderr,
 				"%s: rt_db_get_internal(%s) failure, skipping\n",
 				argv[0], dp->d_namep);
 			errors++;
 			continue;
 		}
-		if( id == ID_COMBINATION ) {
+		if ( id == ID_COMBINATION ) {
 			struct rt_comb_internal *comb;
 			char *ptr;
 
@@ -122,7 +122,7 @@ main(int argc, char **argv)
 			RT_CK_COMB( comb );
 
 			/* Convert "plastic" to "phong" in the shader string */
-			while( (ptr=strstr( bu_vls_addr( &comb->shader), "plastic" )) != NULL ) {
+			while ( (ptr=strstr( bu_vls_addr( &comb->shader), "plastic" )) != NULL ) {
 				strncpy( ptr, "phong  ", 7 );
 			}
 		}
@@ -135,9 +135,9 @@ main(int argc, char **argv)
 				continue;
 			}
 		}
-		if( id == ID_POLY)
+		if ( id == ID_POLY)
 		{
-			if( rt_pg_to_bot( &intern, &tol, &rt_uniresource ) )
+			if ( rt_pg_to_bot( &intern, &tol, &rt_uniresource ) )
 			{
 				fprintf( stderr, "%s: Conversion from polysolid to BOT failed for solid %s\n",
 					argv[0], dp->d_namep );
@@ -149,7 +149,7 @@ main(int argc, char **argv)
 		/* to insure null termination */
 		strncpy( name, dp->d_namep, 16 );
 		ret = wdb_put_internal( fp, name, &intern, 1.0 );
-		if( ret < 0 )  {
+		if ( ret < 0 )  {
 			fprintf(stderr,
 				"%s: wdb_put_internal(%s) failure, skipping\n",
 				argv[0], dp->d_namep);

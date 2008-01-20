@@ -185,7 +185,7 @@ get_args( int argc, char *argv[] )
 	register int c;
 
 	while ( (c = bu_getopt( argc, argv, "aft:ns:S:1" )) != EOF )  {
-		switch( c )  {
+		switch ( c )  {
 		case 'a':
 			axis++;
 			break;
@@ -213,8 +213,8 @@ get_args( int argc, char *argv[] )
 		}
 	}
 
-	if( bu_optind >= argc )  {
-		if( isatty(fileno(stdin)) )
+	if ( bu_optind >= argc )  {
+		if ( isatty(fileno(stdin)) )
 			return(0);
 	}
 
@@ -229,30 +229,30 @@ init_display()
 	short	r, g, b;
 	int map_size;		/* # of color map slots available */
 
-	if( ismex() ) {
-		if( fullscreen )  {
+	if ( ismex() ) {
+		if ( fullscreen )  {
 			prefposition( 0, XMAXSCREEN, 0, YMAXSCREEN );
-		} else if( ntsc )  {
+		} else if ( ntsc )  {
 			prefposition( 0, XMAX170, 0, YMAX170 );
 		} else {
 			prefposition( WIN_L, WIN_R, WIN_B, WIN_T );
 		}
 		foreground();
-		if( winopen( "UNIX plot display" ) == -1 ) {
+		if ( winopen( "UNIX plot display" ) == -1 ) {
 			printf( "No more graphics ports available.\n" );
 			return	1;
 		}
 		wintitle( "UNIX plot display" );
 		winattach();
 
-		if( ntsc )  {
+		if ( ntsc )  {
 			setmonitor(NTSC);
 		}
 
 		/* Free window of position constraint.			*/
 		winconstraints();
 		tpoff();
-		if( !onebuffer )
+		if ( !onebuffer )
 			doublebuffer();
 #ifdef mips
 		if (getplanes() > 8) {
@@ -270,7 +270,7 @@ init_display()
 		 */
 		map_size = 1<<getplanes(); /* 10 or 12, depending on ismex() */
 		map_size -= MAP_RESERVED;	/* MEX's share */
-		if( map_size > 1000 )
+		if ( map_size > 1000 )
 			map_size = 1000;	/* all we are asking for */
 
 		/* The first 8 entries of the colormap are "known" colors */
@@ -284,7 +284,7 @@ init_display()
 		mapcolor( 7, 255, 255, 255 );	/* WHITE */
 
 		/* Use fixed color map with 10x10x10 color cube */
-		for( i = 0; i < map_size; i++ ) {
+		for ( i = 0; i < map_size; i++ ) {
 			mapcolor( i+MAP_RESERVED,
 				  (short)((i % 10) + 1) * 25,
 				  (short)(((i / 10) % 10) + 1) * 25,
@@ -294,14 +294,14 @@ init_display()
 		/* not mex => 3030 with 12 planes/buffer */
 		ginit();
 		tpoff();
-		if( !onebuffer )
+		if ( !onebuffer )
 			doublebuffer();
 		onemap();
 		gconfig();
 
-		for( b = 0; b < 16; b++ ) {
-			for( g = 0; g < 16; g++ ) {
-				for( r = 0; r < 16; r++ ) {
+		for ( b = 0; b < 16; b++ ) {
+			for ( g = 0; g < 16; g++ ) {
+				for ( r = 0; r < 16; r++ ) {
 					mapcolor( b*256+g*16+r, r<<4, g<<4, b<<4 );
 				}
 			}
@@ -320,7 +320,7 @@ init_display()
 	qdevice(RIGHTMOUSE);
 
 	/* enable all buttons */
-	for( i = 0; i < 32; i++ )
+	for ( i = 0; i < 32; i++ )
 		qdevice(i+SWBASE);
 
 	/* enable all dials */
@@ -396,7 +396,7 @@ draw_axis()
 	p1 = 0.12 * viewsize / g_scal[0];
 	p2 = 0.14 * viewsize / g_scal[0];
 
-	if( cmap_mode ) {
+	if ( cmap_mode ) {
 		color( MAGENTA );
 	} else {
 		RGBcolor(255, 0, 255);
@@ -485,7 +485,7 @@ domenu( int n )
 	long	video;
 #endif
 
-	switch( n ) {
+	switch ( n ) {
 	case MENU_CENTER:
 		x = getvaluator(CURSORX);
 		y = getvaluator(CURSORY);
@@ -498,14 +498,14 @@ domenu( int n )
 		redisplay = 1;
 		break;
 	case MENU_AXIS:
-		if( axis == 0 )
+		if ( axis == 0 )
 			axis = 1;
 		else
 			axis = 0;
 		redisplay = 1;
 		break;
 	case MENU_INFO:
-		if( info == 0 ) {
+		if ( info == 0 ) {
 			info = 1;
 			print_info();
 		} else
@@ -526,7 +526,7 @@ domenu( int n )
 		system("Set60");
 #endif
 		curson();
-		if( ret ) {
+		if ( ret ) {
 			fprintf( stderr, "pl-sgi: Snap failed. Out of film?\n" );
 			ringbell();
 		}
@@ -612,7 +612,7 @@ process_input()
 		break;
 #endif
 	case ROTX:
-		if( val ) {
+		if ( val ) {
 			fval *= 10.0;
 			rotate( (Angle) fval, 'x' );
 			setvaluator(ROTX, 0, -360, 360);
@@ -620,7 +620,7 @@ process_input()
 		}
 		break;
 	case ROTY:
-		if( val ) {
+		if ( val ) {
 			fval *= 10.0;
 			rotate( (Angle) fval, 'y' );
 			setvaluator(ROTY, 0, -360, 360);
@@ -628,7 +628,7 @@ process_input()
 		}
 		break;
 	case ROTZ:
-		if( val ) {
+		if ( val ) {
 			fval *= 10.0;
 			rotate( (Angle) fval, 'z' );
 			setvaluator(ROTZ, 0, -360, 360);
@@ -636,7 +636,7 @@ process_input()
 		}
 		break;
 	case TRANX:
-		if( val ) {
+		if ( val ) {
 			fval *= viewsize / 300.0;
 			d_tran[0] += fval / g_scal[0];
 			setvaluator(TRANX, 0, -50, 50);
@@ -644,7 +644,7 @@ process_input()
 		}
 		break;
 	case TRANY:
-		if( val ) {
+		if ( val ) {
 			fval *= viewsize / 300.0;
 			d_tran[1] += fval / g_scal[1];
 			setvaluator(TRANY, 0, -50, 50);
@@ -652,7 +652,7 @@ process_input()
 		}
 		break;
 	case TRANZ:
-		if( val ) {
+		if ( val ) {
 			fval *= viewsize / 300.0;
 			d_tran[2] += fval / g_scal[2];
 			setvaluator(TRANZ, 0, -50, 50);
@@ -660,7 +660,7 @@ process_input()
 		}
 		break;
 	case ZOOM:
-		if( val ) {
+		if ( val ) {
 			fval = 1.0 + fval / 1100.0;
 			d_scal[0] *= fval;
 			d_scal[1] *= fval;
@@ -670,7 +670,7 @@ process_input()
 		}
 		break;
 	case LEFTMOUSE:
-		if( val ) {
+		if ( val ) {
 			fval = 0.5;
 			d_scal[0] *= fval;
 			d_scal[1] *= fval;
@@ -680,9 +680,9 @@ process_input()
 		break;
 	case RIGHTMOUSE:
 	/*case MIDDLEMOUSE:*/
-		if( val ) {
+		if ( val ) {
 			menuval = dopup( menu );
-			if( menuval == MENU_EXIT )
+			if ( menuval == MENU_EXIT )
 				done = 1;
 			else
 				domenu( menuval );
@@ -690,7 +690,7 @@ process_input()
 		break;
 	case MIDDLEMOUSE:
 	/*case RIGHTMOUSE:*/
-		if( val ) {
+		if ( val ) {
 			fval = 2.0;
 			d_scal[0] *= fval;
 			d_scal[1] *= fval;
@@ -699,19 +699,19 @@ process_input()
 		}
 		break;
 	case ORTHO:
-		if( val ) {
+		if ( val ) {
 			viewmat = (Matrix *)viewortho;
 			redisplay = 1;
 		}
 		break;
 	case PERSP:
-		if( val ) {
+		if ( val ) {
 			viewmat = (Matrix *)viewpersp;
 			redisplay = 1;
 		}
 		break;
 	case RESET:
-		if( val ) {
+		if ( val ) {
 			/* reset */
 			loadmatrix( centermat );
 			getmatrix( g_rot );
@@ -720,49 +720,49 @@ process_input()
 		}
 		break;
 	case BOTTOM:
-		if( val ) {
+		if ( val ) {
 			setview( g_rot, 180, 0, 0 );
 			redisplay = 1;
 		}
 		break;
 	case TOP:
-		if( val ) {
+		if ( val ) {
 			setview( g_rot, 0, 0, 0 );
 			redisplay = 1;
 		}
 		break;
 	case REAR:
-		if( val ) {
+		if ( val ) {
 			setview( g_rot, 270, 0, 90 );
 			redisplay = 1;
 		}
 		break;
 	case V4545:
-		if( val ) {
+		if ( val ) {
 			setview( g_rot, 270+45, 0, 270-45 );
 			redisplay = 1;
 		}
 		break;
 	case RIGHT:
-		if( val ) {
+		if ( val ) {
 			setview( g_rot, 270, 0, 0 );
 			redisplay = 1;
 		}
 		break;
 	case FRONT:
-		if( val ) {
+		if ( val ) {
 			setview( g_rot, 270, 0, 270 );
 			redisplay = 1;
 		}
 		break;
 	case LEFT:
-		if( val ) {
+		if ( val ) {
 			setview( g_rot, 270, 0, 180 );
 			redisplay = 1;
 		}
 		break;
 	case V3525:
-		if( val ) {
+		if ( val ) {
 			setview( g_rot, 270+25, 0, 270-35 );
 			redisplay = 1;
 		}
@@ -783,7 +783,7 @@ get_string( FILE *fp, char *s )
 {
 	int	c;
 
-	while( (c = getc(fp)) != '\n' && c != EOF )
+	while ( (c = getc(fp)) != '\n' && c != EOF )
 		*s++ = c;
 	*s = NULL;
 }
@@ -823,14 +823,14 @@ uplot( FILE *fp, Coord max[3], Coord min[3] )
 	double	xp, yp, zp;
 
 	xp = yp = zp = 0;
-	while( (c = getc(fp)) != EOF ) {
-		switch( c ) {
+	while ( (c = getc(fp)) != EOF ) {
+		switch ( c ) {
 		/* One of a kind functions */
 		case 'e':
-			if( !file_input ) {
+			if ( !file_input ) {
 				/* remove any objects, start a new one */
 				closeobj();
-				for( o = minobj; o <= maxobj; o++ )
+				for ( o = minobj; o <= maxobj; o++ )
 					delobj( o );
 				minobj = maxobj;
 				makeobj( maxobj );
@@ -838,20 +838,20 @@ uplot( FILE *fp, Coord max[3], Coord min[3] )
 			break;
 		case 'F':
 			/* display everything up to here */
-			if( !file_input )
+			if ( !file_input )
 				return;
 			break;
 		case 'f':
 			get_string( fp, str );
-			if( strcmp(str, "solid") == 0 )
+			if ( strcmp(str, "solid") == 0 )
 				setlinestyle( 0 );
-			else if( strcmp(str, "dotted") == 0 )
+			else if ( strcmp(str, "dotted") == 0 )
 				setlinestyle( 1 );
-			else if( strcmp(str, "longdashed") == 0 )
+			else if ( strcmp(str, "longdashed") == 0 )
 				setlinestyle( 2 );
-			else if( strcmp(str, "shortdashed") == 0 )
+			else if ( strcmp(str, "shortdashed") == 0 )
 				setlinestyle( 3 );
-			else if( strcmp(str, "dotdashed") == 0 )
+			else if ( strcmp(str, "dotdashed") == 0 )
 				setlinestyle( 4 );
 			else {
 				fprintf(stderr, "pl-sgi: unknown linestyle \"%s\"\n", str);
@@ -963,8 +963,8 @@ uplot( FILE *fp, Coord max[3], Coord min[3] )
 			r = getb(fp);
 			g = getb(fp);
 			b = getb(fp);
-			if( cmap_mode ) {
-				if( ismex() )
+			if ( cmap_mode ) {
+				if ( ismex() )
 					color( COLOR_APPROX(r, g, b) );
 				else
 					color( (b&0xf0)<<4 | (g&0xf0) | (r>>4) );
@@ -1063,9 +1063,9 @@ view_loop()
 	 *  After inputs, g_rot = oldm * stack.
 	 *  The stack is then replaced by g_rot*viewmat for drawing.
 	 */
-	while( !done ) {
+	while ( !done ) {
 
-		if( redisplay ) {
+		if ( redisplay ) {
 			/* Setup current view */
 			loadmatrix( (*viewmat) );
 			scale( g_scal[0], g_scal[1], g_scal[2] );
@@ -1073,19 +1073,19 @@ view_loop()
 
 			/* draw the object(s) */
 			cursoff();
-			if( cmap_mode ) {
+			if ( cmap_mode ) {
 				color(BLACK);
 			} else {
 				RGBcolor(0, 0, 0);
 			}
 			clear();
-			if( axis )
+			if ( axis )
 				draw_axis();
 			/* draw all objects */
-			for( o = minobj; o < maxobj; o++ ) {
+			for ( o = minobj; o < maxobj; o++ ) {
 				/* set the default drawing color to white */
-				if( cmap_mode ) {
-					if( ismex() )
+				if ( cmap_mode ) {
+					if ( ismex() )
 						color( COLOR_APPROX(255, 255, 255) );
 					else
 						color( (255&0xf0)<<4 | (255&0xf0) | (255>>4) );
@@ -1094,26 +1094,26 @@ view_loop()
 				}
 				callobj( o );
 			}
-			if( !onebuffer )
+			if ( !onebuffer )
 				swapbuffers();
-			if( shellcmd != NULL && shellexit ) {
+			if ( shellcmd != NULL && shellexit ) {
 				system(shellcmd);
 				bu_exit (0, NULL);
 			}
 			curson();
-			if( info )
+			if ( info )
 				print_info();
 			redisplay = 0;
 		}
 
 		do {
 			done = process_input();
-		} while(qtest());
+		} while (qtest());
 #ifdef SPACEBALL
 		sbprompt();
 #endif
 		/* Check for more objects to be read */
-		if( !file_input && !feof(stdin) /* && select()*/ ) {
+		if ( !file_input && !feof(stdin) /* && select()*/ ) {
 			double	max[3], min[3];
 			makeobj( maxobj++ );
 			uplot( stdin, max, min );
@@ -1146,14 +1146,14 @@ main(int argc, char *argv[])
 
 	init_display();
 
-	if( bu_optind >= argc ) {
+	if ( bu_optind >= argc ) {
 		makeobj( maxobj++ );
 		uplot( stdin, max, min );
 		closeobj();
 	}
-	while( bu_optind < argc ) {
+	while ( bu_optind < argc ) {
 		file = argv[bu_optind];
-		if( (fp = fopen(file, "r")) == NULL ) {
+		if ( (fp = fopen(file, "r")) == NULL ) {
 			fprintf(stderr, "pl-sgi: can't open \"%s\"\n", file);
 			bu_exit ( 3, NULL );
 		}
@@ -1174,8 +1174,8 @@ main(int argc, char *argv[])
 	viewsize /= 2.0;
 
 	/* set up and save the viewing projection matrix */
-	if( ismex() ) {
-		if( fullscreen ) {
+	if ( ismex() ) {
+		if ( fullscreen ) {
 			/* Compensate for the rectangular display surface */
 #ifdef mips
 			ortho( -1.25*viewsize, 1.25*viewsize,
@@ -1219,7 +1219,7 @@ main(int argc, char *argv[])
 	menu = defpup( menustring );
 
 	/* set up line thickness/styles */
-	if( thickness > 0 )
+	if ( thickness > 0 )
 		linewidth( thickness );
 	deflinestyle( 1, 0x8888 );	/* dotted */
 	deflinestyle( 2, 0xF8F8 );	/* longdashed */

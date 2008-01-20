@@ -50,7 +50,7 @@ int	height = DEFAULT_WIDTH;
 int	verbose = 0;
 
 char	*file_name;
-FILE	*fldonefp,*fldtwofp;
+FILE	*fldonefp, *fldtwofp;
 
 char	usage[] = "\
 Usage: pixfields [-v]\n\
@@ -63,7 +63,7 @@ get_args(int argc, register char **argv)
 	register int c;
 
 	while ( (c = bu_getopt( argc, argv, "vw:n:s:" )) != EOF )  {
-		switch( c )  {
+		switch ( c )  {
 		case 'v':
 			verbose++;
 			break;
@@ -81,20 +81,20 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( bu_optind >= argc + 1 )  {
+	if ( bu_optind >= argc + 1 )  {
 		(void) fprintf( stderr,
 		    "pixfields: must supply two file names\n");
 		return(0);
 	} else {
 
-		if( (fldonefp = fopen(argv[bu_optind], "r")) == NULL )  {
+		if ( (fldonefp = fopen(argv[bu_optind], "r")) == NULL )  {
 			(void)fprintf( stderr,
 				"pixfields: cannot open \"%s\" for reading\n",
 				argv[bu_optind] );
 			return(0);
 		}
 
-		if( (fldtwofp = fopen(argv[++bu_optind], "r")) == NULL )  {
+		if ( (fldtwofp = fopen(argv[++bu_optind], "r")) == NULL )  {
 			(void)fprintf( stderr,
 				"pixfields: cannot open \"%s\" for reading\n",
 				argv[bu_optind] );
@@ -103,7 +103,7 @@ get_args(int argc, register char **argv)
 
 	}
 
-	if( isatty(fileno(stdout)) )
+	if ( isatty(fileno(stdout)) )
 		return(0);
 
 	if ( argc > ++bu_optind )
@@ -128,20 +128,20 @@ main(int argc, char **argv)
 	line2 = (char *) malloc(width*3+1);
 
 	line_number = 0;
-	for(;;)  {
-		if( fread( line1, 3*sizeof(char), width, fldonefp ) != width )
+	for (;;)  {
+		if ( fread( line1, 3*sizeof(char), width, fldonefp ) != width )
 			break;
-		if( fread( line2, 3*sizeof(char), width, fldtwofp ) != width )  {
+		if ( fread( line2, 3*sizeof(char), width, fldtwofp ) != width )  {
 			fprintf(stderr, "pixfields: premature EOF on 2nd file?\n");
 			bu_exit (2, NULL);
 		}
 		if ( (line_number & 1) == 0 )  {
-			if( fwrite( line1, 3*sizeof(char), width, stdout ) != width )  {
+			if ( fwrite( line1, 3*sizeof(char), width, stdout ) != width )  {
 				perror("fwrite line1");
 				bu_exit (1, NULL);
 			}
 		} else {
-			if( fwrite( line2, 3*sizeof(char), width, stdout ) != width )  {
+			if ( fwrite( line2, 3*sizeof(char), width, stdout ) != width )  {
 				perror("fwrite line2");
 				bu_exit (1, NULL);
 			}

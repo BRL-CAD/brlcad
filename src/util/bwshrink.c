@@ -62,16 +62,16 @@ shrink_image(int w, int h, unsigned char *buffer, int Factor)
 	facsq = Factor * Factor;
 	finalpixel = buffer;
 
-	for (y=0 ; y < h ; y += Factor)
-		for (x=0 ; x < w ; x += Factor) {
+	for (y=0; y < h; y += Factor)
+		for (x=0; x < w; x += Factor) {
 
 			/* average factor by factor grid of pixels */
 
 			p = 0;
-			for (py = 0 ; py < Factor ; py++) {
+			for (py = 0; py < Factor; py++) {
 
 				/* add pixels from scanline to average */
-				for (px = 0 ; px < Factor ; px++) {
+				for (px = 0; px < Factor; px++) {
 					p += buffer[y*w + x+px];
 				}
 			}
@@ -92,8 +92,8 @@ usample_image(int w, int h, unsigned char *buffer, int Factor)
 
 	p = buffer;
 
-	for (y=0 ; y < h ; y += Factor)
-		for (x=0 ; x < w ; x += Factor, p++) {
+	for (y=0; y < h; y += Factor)
+		for (x=0; x < w; x += Factor, p++) {
 			p[0] = buffer[x + y * w];
 		}
 }
@@ -213,7 +213,7 @@ int main(int ac, char **av)
 	default: return(-1);
 	}
 
-	for (t=0 ; t < size && (c=write(1, (char *)&buffer[t], size-t)) >= 0 ;
+	for (t=0; t < size && (c=write(1, (char *)&buffer[t], size-t)) >= 0;
 		t += c);
 
 	if (c < 0) {

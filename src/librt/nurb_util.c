@@ -187,18 +187,18 @@ rt_nurb_c_print(const struct edge_g_cnurb *crv)
 	bu_log("\tOrder = %d\n", crv->order);
 	bu_log("\tKnot Vector = {\n\t\t");
 
-	for( i = 0; i < crv->k.k_size; i++)
+	for ( i = 0; i < crv->k.k_size; i++)
 		bu_log("%10.8f ", crv->k.knots[i]);
 
 	bu_log("\n\t}\n");
 	bu_log("\t");
 	rt_nurb_print_pt_type(crv->pt_type);
 	bu_log("\tmesh = {\n");
-	for( ptr = &crv->ctl_points[0], i= 0;
+	for ( ptr = &crv->ctl_points[0], i= 0;
 		i < crv->c_size; i++, ptr += RT_NURB_EXTRACT_COORDS(crv->pt_type))
 	{
 		bu_log("\t\t");
-		for(j = 0; j < RT_NURB_EXTRACT_COORDS(crv->pt_type); j++)
+		for (j = 0; j < RT_NURB_EXTRACT_COORDS(crv->pt_type); j++)
 			bu_log("%4.5f\t", ptr[j]);
 		bu_log("\n");
 
@@ -237,7 +237,7 @@ rt_nurb_pr_kv(const struct knot_vector *kv)
     bu_log("[%d]\t", kv->k_size );
 
 
-    for( i = 0; i < kv->k_size; i++)
+    for ( i = 0; i < kv->k_size; i++)
     {
 	bu_log("%2.5f  ", *ptr++);
     }
@@ -255,13 +255,13 @@ rt_nurb_pr_mesh(const struct face_g_snurb *m)
 
 	bu_log("\t[%d] [%d]\n", m->s_size[0], m->s_size[1] );
 
-	for( i = 0; i < m->s_size[0]; i++)
+	for ( i = 0; i < m->s_size[0]; i++)
 	{
-		for( j =0; j < m->s_size[1]; j++)
+		for ( j =0; j < m->s_size[1]; j++)
 		{
 			bu_log("\t");
 
-			for(k = 0; k < evp; k++)
+			for (k = 0; k < evp; k++)
 				bu_log("%f    ", m_ptr[k]);
 
 			bu_log("\n");
@@ -278,16 +278,16 @@ rt_nurb_print_pt_type(int c)
 
 	rat = RT_NURB_IS_PT_RATIONAL(c);
 
-	if( RT_NURB_EXTRACT_PT_TYPE(c) == RT_NURB_PT_XY)
+	if ( RT_NURB_EXTRACT_PT_TYPE(c) == RT_NURB_PT_XY)
 		bu_log("Point Type = RT_NURB_PT_XY");
 	else
-	if( RT_NURB_EXTRACT_PT_TYPE(c) == RT_NURB_PT_XYZ)
+	if ( RT_NURB_EXTRACT_PT_TYPE(c) == RT_NURB_PT_XYZ)
 		bu_log("Point Type = RT_NURB_PT_XYX");
 	else
-	if( RT_NURB_EXTRACT_PT_TYPE(c) == RT_NURB_PT_UV)
+	if ( RT_NURB_EXTRACT_PT_TYPE(c) == RT_NURB_PT_UV)
 		bu_log("Point Type = RT_NURB_PT_UV");
 
-	if( rat )
+	if ( rat )
 		bu_log("W\n");
 	else
 		bu_log("\n");

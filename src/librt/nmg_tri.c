@@ -62,11 +62,11 @@
 #define	NMG_CK_PT2D(_p)	NMG_CKMAG(_p, NMG_PT2D_MAGIC, "pt2d")
 #define	NMG_CK_TRAP(_p)	{NMG_CKMAG(_p, NMG_TRAP_MAGIC, "trap");\
 	if ( ! BU_LIST_PREV(bu_list, &(_p)->l) ) {\
-		bu_log("%s %d bad prev pointer of trapezoid 0x%08x\n",\
+		bu_log("%s %d bad prev pointer of trapezoid 0x%08x\n", \
 			__FILE__, __LINE__, &(_p)->l);\
 		bu_bomb("NMG_CK_TRAP: aborting");\
 	} else if (! BU_LIST_NEXT(bu_list, &(_p)->l) ) {\
-		bu_log("%s %d bad next pointer of trapezoid 0x%08x\n",\
+		bu_log("%s %d bad next pointer of trapezoid 0x%08x\n", \
 			__FILE__, __LINE__, &(_p)->l);\
 		bu_bomb("NMG_CL_TRAP: aborting");\
 	}}
@@ -376,7 +376,7 @@ map_vu_to_2d(struct vertexuse *vu, struct bu_list *tbl2d, fastf_t *mat, struct f
 		if (vu_p == vu) continue;
 
 		fu_of_vu = nmg_find_fu_of_vu(vu_p);
-		if( !fu_of_vu )  continue;	/* skip vu's of wire edges */
+		if ( !fu_of_vu )  continue;	/* skip vu's of wire edges */
 		NMG_CK_FACEUSE(fu_of_vu);
 		if (fu_of_vu != fu) continue;
 
@@ -1063,7 +1063,7 @@ nmg_trap_face(struct bu_list *tbl2d, struct bu_list *tlist, const struct bn_tol 
 
 	for (BU_LIST_FOR(pt, pt2d, tbl2d)) {
 		NMG_CK_PT2D(pt);
-		switch(vtype2d(pt, tbl2d, tol)) {
+		switch (vtype2d(pt, tbl2d, tol)) {
 		case POLY_SIDE:
 			poly_side_vertex(pt, (struct pt2d *)tbl2d, tlist);
 			break;
@@ -1674,7 +1674,7 @@ cut_mapped_loop(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const i
 
 	if (p1->vu_p->up.eu_p->up.lu_p != p2->vu_p->up.eu_p->up.lu_p) {
 		if (void_ok) {
-			if(rt_g.NMG_debug)
+			if (rt_g.NMG_debug)
 				bu_log("cut_mapped_loop() parent loops are not the same %s %d, trying join\n", __FILE__, __LINE__);
 			join_mapped_loops(tbl2d, p1, p2, color, tol);
 			return (struct pt2d *)NULL;
@@ -1742,7 +1742,7 @@ cut_mapped_loop(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const i
 	/* if the original vertexuses had normals,
 	 * copy them to the new vertexuses.
 	 */
-	if( p1->vu_p->a.magic_p && *p1->vu_p->a.magic_p == NMG_VERTEXUSE_A_PLANE_MAGIC )
+	if ( p1->vu_p->a.magic_p && *p1->vu_p->a.magic_p == NMG_VERTEXUSE_A_PLANE_MAGIC )
 	{
 		struct vertexuse *vu;
 		struct faceuse *fu;
@@ -1754,31 +1754,31 @@ cut_mapped_loop(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const i
 		VMOVE( ot_same_normal, p1->vu_p->a.plane_p->N );
 		fu = nmg_find_fu_of_vu( p1->vu_p );
 		NMG_CK_FACEUSE( fu );
-		if( fu->orientation == OT_OPPOSITE )
+		if ( fu->orientation == OT_OPPOSITE )
 			VREVERSE( ot_same_normal, ot_same_normal )
 
 		VREVERSE( ot_opposite_normal, ot_same_normal );
 
 		/* look for new vertexuses in new_lu and old_lu */
-		for( BU_LIST_FOR( vu, vertexuse, &p1->vu_p->v_p->vu_hd ) )
+		for ( BU_LIST_FOR( vu, vertexuse, &p1->vu_p->v_p->vu_hd ) )
 		{
-			if( vu->a.magic_p )
+			if ( vu->a.magic_p )
 				continue;
 
 			lu = nmg_find_lu_of_vu( vu );
-			if( lu != old_lu && lu != old_lu->lumate_p &&
+			if ( lu != old_lu && lu != old_lu->lumate_p &&
 			    lu != new_lu && lu != new_lu->lumate_p )
 				continue;
 
 			/* assign appropriate normal */
 			fu = nmg_find_fu_of_vu( vu );
-			if( fu->orientation == OT_SAME )
+			if ( fu->orientation == OT_SAME )
 				nmg_vertexuse_nv( vu, ot_same_normal );
-			else if( fu->orientation == OT_OPPOSITE )
+			else if ( fu->orientation == OT_OPPOSITE )
 				nmg_vertexuse_nv( vu, ot_opposite_normal );
 		}
 	}
-	if( p2->vu_p->a.magic_p && *p2->vu_p->a.magic_p == NMG_VERTEXUSE_A_PLANE_MAGIC )
+	if ( p2->vu_p->a.magic_p && *p2->vu_p->a.magic_p == NMG_VERTEXUSE_A_PLANE_MAGIC )
 	{
 		struct vertexuse *vu;
 		struct faceuse *fu;
@@ -1790,27 +1790,27 @@ cut_mapped_loop(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const i
 		VMOVE( ot_same_normal, p2->vu_p->a.plane_p->N );
 		fu = nmg_find_fu_of_vu( p2->vu_p );
 		NMG_CK_FACEUSE( fu );
-		if( fu->orientation == OT_OPPOSITE )
+		if ( fu->orientation == OT_OPPOSITE )
 			VREVERSE( ot_same_normal, ot_same_normal )
 
 		VREVERSE( ot_opposite_normal, ot_same_normal );
 
 		/* look for new vertexuses in new_lu and old_lu */
-		for( BU_LIST_FOR( vu, vertexuse, &p2->vu_p->v_p->vu_hd ) )
+		for ( BU_LIST_FOR( vu, vertexuse, &p2->vu_p->v_p->vu_hd ) )
 		{
-			if( vu->a.magic_p )
+			if ( vu->a.magic_p )
 				continue;
 
 			lu = nmg_find_lu_of_vu( vu );
-			if( lu != old_lu && lu != old_lu->lumate_p &&
+			if ( lu != old_lu && lu != old_lu->lumate_p &&
 			    lu != new_lu && lu != new_lu->lumate_p )
 				continue;
 
 			/* assign appropriate normal */
 			fu = nmg_find_fu_of_vu( vu );
-			if( fu->orientation == OT_SAME )
+			if ( fu->orientation == OT_SAME )
 				nmg_vertexuse_nv( vu, ot_same_normal );
-			else if( fu->orientation == OT_OPPOSITE )
+			else if ( fu->orientation == OT_OPPOSITE )
 				nmg_vertexuse_nv( vu, ot_opposite_normal );
 		}
 	}
@@ -2061,15 +2061,15 @@ cut_diagonals(struct bu_list *tbl2d, struct bu_list *tlist, const struct faceuse
 		/* If the edge already exists in the face, don't bother
 		 * to add it.
 		 */
-		if( !tp->top || !tp->bot )
+		if ( !tp->top || !tp->bot )
 		{
 			bu_log( "tp->top and/or tp->bot is/are NULL!!!!!!!\n" );
 			if (rt_g.NMG_debug & DEBUG_TRI)
 			{
 				nmg_pr_fu_briefly( fu, "" );
-				if( tp->top )
+				if ( tp->top )
 					bu_log( "tp->top is (%g %g %g)\n", V3ARGS( tp->top->vu_p->v_p->vg_p->coord ) );
-				if( tp->bot )
+				if ( tp->bot )
 					bu_log( "tp->bot is (%g %g %g)\n", V3ARGS( tp->bot->vu_p->v_p->vg_p->coord ) );
 			}
 			bu_bomb( "tp->top and/or tp->bot is/are NULL" );
@@ -2123,12 +2123,12 @@ cut_diagonals(struct bu_list *tbl2d, struct bu_list *tlist, const struct faceuse
 
 				eu1_prev = BU_LIST_PPREV_CIRC( edgeuse, &eu1->l );
 				eu2_prev = BU_LIST_PPREV_CIRC( edgeuse, &eu2->l );
-				if( NMG_ARE_EUS_ADJACENT( eu1, eu1_prev ) )
+				if ( NMG_ARE_EUS_ADJACENT( eu1, eu1_prev ) )
 					touching_jaunt = 1;
-				else if( NMG_ARE_EUS_ADJACENT( eu2, eu2_prev ) )
+				else if ( NMG_ARE_EUS_ADJACENT( eu2, eu2_prev ) )
 					touching_jaunt = 1;
 
-				if( touching_jaunt )
+				if ( touching_jaunt )
 				{
 					if (rt_g.NMG_debug & DEBUG_TRI)
 						bu_log("splitting self-touching jaunt loop at (%g %g %g)\n",
@@ -2322,7 +2322,7 @@ cut_unimonotone(struct bu_list *tbl2d, struct bu_list *tlist, struct loopuse *lu
 	while (verts > 3) {
 
 		loop_count++;
-		if( loop_count > vert_count_sq )
+		if ( loop_count > vert_count_sq )
 		{
 			bu_log( "Cut_unimontone is in an infinite loop!!!\n" );
 			bu_bomb( "Cut_unimontone is in an infinite loop" );
@@ -2538,7 +2538,7 @@ triangulate:
 		pt1 = BU_LIST_FIRST( pt2d, tbl2d );
 		pt2 = BU_LIST_PNEXT( pt2d, &pt1->l );
 
-		if( vtype2d( pt1, tbl2d, tol ) == HOLE_START &&
+		if ( vtype2d( pt1, tbl2d, tol ) == HOLE_START &&
 		    pt1->vu_p->v_p == pt2->vu_p->v_p )
 		{
 			/* swap first and second points */

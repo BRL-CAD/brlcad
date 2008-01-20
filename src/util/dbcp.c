@@ -92,7 +92,7 @@ main(int argc, char **argv)
     int	c;
 
     while ( (c = bu_getopt( argc, argv, "v" )) != EOF )  {
-	switch( c )  {
+	switch ( c )  {
 	    case 'v':
 		verbose++;
 		break;
@@ -164,7 +164,7 @@ main(int argc, char **argv)
 	    break;
 	}
 	if (nread == 0) {
-	    if(verbose) {
+	    if (verbose) {
 		bu_log("dbcp: (%s) ", pid ? "PARENT" : "CHILD");
 		bu_log("EOF on input\n");
 	    }

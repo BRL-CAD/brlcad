@@ -462,8 +462,8 @@ do_ray_image(struct application	*ap,
     tot = (uhi - ulo + 1) * (vhi - vlo + 1); /* total # of pixels */
     color_count = 0; /* */
     VSETALL(cum_color, 0.0);
-    for (v = vlo ; v <= vhi ; v++) {
-	for (u = ulo ; u <= uhi ; u++) {
+    for (v = vlo; v <= vhi; v++) {
+	for (u = ulo; u <= uhi; u++) {
 	    color = &pixels[v*bi->img_width*3 + u*3];
 	    val = color[0]+color[1]+color[2];
 	    if (val > bbd_sp->img_threshold) {
@@ -574,7 +574,7 @@ bbd_render( struct application *ap, struct partition *pp, struct shadework *swp,
 
     qsort(id, bbd_sp->img_count, sizeof(id[0]), &imgdist_compare);
 
-    for (i=0 ; i < bbd_sp->img_count && swp->sw_transmit > 0.0 ; i++) {
+    for (i=0; i < bbd_sp->img_count && swp->sw_transmit > 0.0; i++) {
 	if (id[i].status > 0) do_ray_image(ap, pp, swp, bbd_sp, id[i].bi, id[i].dist);
     }
     if (rdebug&RDEBUG_SHADE) {

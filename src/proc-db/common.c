@@ -70,7 +70,7 @@ void
 get_rgb( unsigned char *rgb )
 {
 	register struct colors *cp;
-	if( ++curcolor >= ncolors )  curcolor = 0;
+	if ( ++curcolor >= ncolors )  curcolor = 0;
 	cp = &colortab[curcolor];
 	rgb[0] = cp->c_pixel[0];
 	rgb[1] = cp->c_pixel[1];
@@ -95,7 +95,7 @@ do_light(char *name, fastf_t *pos, fastf_t *dir_at, int da_flag, double r, unsig
 	vect_t	from;
 	vect_t	dir;
 
-	if( da_flag )  {
+	if ( da_flag )  {
 		VSUB2( dir, dir_at, pos );
 		VUNITIZE( dir );
 	} else {
@@ -107,7 +107,7 @@ do_light(char *name, fastf_t *pos, fastf_t *dir_at, int da_flag, double r, unsig
 	mk_sph( outfp, nbuf, center, r );
 
 	/*
-	 * Need to rotate from 0, 0,-1 to vect "dir",
+	 * Need to rotate from 0, 0, -1 to vect "dir",
 	 * then xlate to final position.
 	 */
 	VSET( from, 0, 0, -1 );

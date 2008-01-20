@@ -104,7 +104,7 @@ rt_nurb_project_srf(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *pl
 
 		if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 		{
-			if( rational )
+			if ( rational )
 				bu_log( "\tmesh pt (%g %g %g %g), becomes (%g %g)\n", V4ARGS( mp1 ), mp2[0], mp2[1] );
 			else
 				bu_log( "\tmesh pt (%g %g %g), becomes (%g %g)\n", V3ARGS( mp1 ), mp2[0], mp2[1] );
@@ -190,9 +190,9 @@ rt_nurb_clip_srf(const struct face_g_snurb *srf, int dir, fastf_t *min, fastf_t 
 	*min = 1.0e8;
 	*max = -1.0e8;
 
-	if( dir == RT_NURB_SPLIT_ROW)
+	if ( dir == RT_NURB_SPLIT_ROW)
 	{
-		for( i = 0; i < col_size; i++)
+		for ( i = 0; i < col_size; i++)
 		{
 			ch[i].param = (fastf_t) i / (col_size - 1.0);
 			ch[i].min = 1.0e8;
@@ -201,21 +201,21 @@ rt_nurb_clip_srf(const struct face_g_snurb *srf, int dir, fastf_t *min, fastf_t 
 
 		mp1 = srf->ctl_points;
 
-		for( i = 0; i < row_size; i++)
+		for ( i = 0; i < row_size; i++)
 		{
-			for( j = 0; j < col_size; j++)
+			for ( j = 0; j < col_size; j++)
 			{
 				value = - (mp1[0] * l1.a + mp1[1] * l1.b);
-				if( value <= ch[j].min)
+				if ( value <= ch[j].min)
 					ch[j].min = value;
-				if( value >= ch[j].max)
+				if ( value >= ch[j].max)
 					ch[j].max = value;
 				mp1 += coords;
 			}
 		}
 
-		for( k = 0; k < col_size - 1; k++)
-		for( j = k+1; j < col_size; j++)
+		for ( k = 0; k < col_size - 1; k++)
+		for ( j = k+1; j < col_size; j++)
 		{
 			fastf_t d;
 			fastf_t param1, param2;
@@ -224,12 +224,12 @@ rt_nurb_clip_srf(const struct face_g_snurb *srf, int dir, fastf_t *min, fastf_t 
 			param2 = ch[j].param;
 
 			d = FINDZERO( param1, param2, ch[k].max, ch[j].max);
-			if( d <= *min ) *min = d * .99;
-			if( d >= *max ) *max = d * .99 + .01;
+			if ( d <= *min ) *min = d * .99;
+			if ( d >= *max ) *max = d * .99 + .01;
 
 			d = FINDZERO( param1, param2, ch[k].min, ch[j].min);
-			if( d <= *min ) *min = d * .99;
-			if( d >= *max ) *max = d * .99 + .01;
+			if ( d <= *min ) *min = d * .99;
+			if ( d >= *max ) *max = d * .99 + .01;
 		}
 
 		if (*min <= 0.0)
@@ -244,7 +244,7 @@ rt_nurb_clip_srf(const struct face_g_snurb *srf, int dir, fastf_t *min, fastf_t 
 			*max = 1.0;
 	} else
 	{
-		for( i = 0; i < row_size; i++)
+		for ( i = 0; i < row_size; i++)
 		{
 			ch[i].param = (fastf_t) i / (row_size - 1.0);
 			ch[i].min = 1.0e8;
@@ -252,26 +252,26 @@ rt_nurb_clip_srf(const struct face_g_snurb *srf, int dir, fastf_t *min, fastf_t 
 		}
 
 
-		for( i = 0; i < col_size; i++)
+		for ( i = 0; i < col_size; i++)
 		{
 			int stride;
 
 			stride = coords * col_size;
 
 			mp1 = srf->ctl_points + i * coords;
-			for( j = 0; j < row_size; j++)
+			for ( j = 0; j < row_size; j++)
 			{
 				value = - (mp1[0] * l1.a + mp1[1] * l1.b);
-				if( value <= ch[j].min)
+				if ( value <= ch[j].min)
 					ch[j].min = value;
-				if( value >= ch[j].max)
+				if ( value >= ch[j].max)
 					ch[j].max = value;
 				mp1 += stride;
 			}
 		}
 
-		for( k = 0; k < row_size - 1; k++)
-		for( j = k+1; j < row_size; j++)
+		for ( k = 0; k < row_size - 1; k++)
+		for ( j = k+1; j < row_size; j++)
 		{
 			fastf_t d;
 			fastf_t param1, param2;
@@ -280,12 +280,12 @@ rt_nurb_clip_srf(const struct face_g_snurb *srf, int dir, fastf_t *min, fastf_t 
 			param2 = ch[j].param;
 
 			d = FINDZERO( param1, param2, ch[k].max, ch[j].max);
-			if( d <= *min ) *min = d * .99;
-			if( d >= *max ) *max = d * .99 + .01;
+			if ( d <= *min ) *min = d * .99;
+			if ( d >= *max ) *max = d * .99 + .01;
 
 			d = FINDZERO( param1, param2, ch[k].min, ch[j].min);
-			if( d <= *min ) *min = d * .99;
-			if( d >= *max ) *max = d * .99 + .01;
+			if ( d <= *min ) *min = d * .99;
+			if ( d >= *max ) *max = d * .99 + .01;
 		}
 		if (*min <= 0.0)
 			*min = 0.0;
@@ -331,7 +331,7 @@ rt_nurb_region_from_srf(const struct face_g_snurb *srf, int dir, fastf_t param1,
 		}
 
 	}
-	if( new_knots.k_size >= 40 )  bu_bomb("rt_nurb_region_from_srf() local kv overflow\n");
+	if ( new_knots.k_size >= 40 )  bu_bomb("rt_nurb_region_from_srf() local kv overflow\n");
 
 	region = rt_nurb_s_refine( srf, dir, &new_knots, res);
 
@@ -367,14 +367,14 @@ rt_nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *plan
 	psrf->dir = 1;
 	BU_LIST_APPEND( &plist, &psrf->l );
 
-	if( RT_G_DEBUG & DEBUG_SPLINE )
+	if ( RT_G_DEBUG & DEBUG_SPLINE )
 		rt_nurb_s_print("srf", psrf);
 
 	/* This list starts out with only a single snurb,
 	 * but more may be added on as work progresses.
 	 */
 top:
-	while( BU_LIST_WHILE( psrf, face_g_snurb, &plist ) )  {
+	while ( BU_LIST_WHILE( psrf, face_g_snurb, &plist ) )  {
 		int flat;
 
 		BU_LIST_DEQUEUE( &psrf->l );
@@ -383,23 +383,23 @@ top:
 		flat = 0;
 		dir = psrf->dir;
 
-		while(!flat)
+		while (!flat)
 		{
 			fastf_t smin, smax;
 
 			sub++;
 			dir = (dir == 0)?1:0;	/* change direction */
 
-			if( RT_G_DEBUG & DEBUG_SPLINE )
+			if ( RT_G_DEBUG & DEBUG_SPLINE )
 				rt_nurb_s_print("psrf", psrf);
 
 			rt_nurb_pbound( psrf, vmin, vmax);
 
 			/* Check for origin to be included in the bounding box */
-			if( !(vmin[0] <= 0.0 && vmin[1] <= 0.0 &&
+			if ( !(vmin[0] <= 0.0 && vmin[1] <= 0.0 &&
 				vmax[0] >= 0.0 && vmax[1] >= 0.0 ))
 			{
-				if( RT_G_DEBUG & DEBUG_SPLINE )
+				if ( RT_G_DEBUG & DEBUG_SPLINE )
 					bu_log( "this srf doesn't include the origin\n" );
 				flat = 1;
 				rt_nurb_free_snurb( psrf, res );
@@ -408,18 +408,18 @@ top:
 
 			rt_nurb_clip_srf( psrf, dir, &smin, &smax);
 
-			if( (smax - smin) > .8)  {
+			if ( (smax - smin) > .8)  {
 				/* Split surf, requeue both sub-surfs at head */
 				/* New surfs will have same dir as arg, here */
-				if( RT_G_DEBUG & DEBUG_SPLINE )
+				if ( RT_G_DEBUG & DEBUG_SPLINE )
 					bu_log( "splitting this surface\n" );
 				rt_nurb_s_split( &plist, psrf, dir, res );
 				rt_nurb_free_snurb( psrf, res );
 				goto top;
 			}
-			if( smin > 1.0 || smax < 0.0 )
+			if ( smin > 1.0 || smax < 0.0 )
 			{
-				if( RT_G_DEBUG & DEBUG_SPLINE )
+				if ( RT_G_DEBUG & DEBUG_SPLINE )
 					bu_log( "eliminating this surface (smin=%g, smax=%g)\n", smin, smax );
 				flat = 1;
 				rt_nurb_free_snurb( psrf, res );
@@ -450,7 +450,7 @@ top:
 			psrf->dir = dir;
 			rt_nurb_free_snurb(osrf, res);
 
-			if( RT_G_DEBUG & DEBUG_SPLINE )
+			if ( RT_G_DEBUG & DEBUG_SPLINE )
 			{
 				bu_log( "After call to rt_nurb_region_from_srf() (smin=%g, smax=%g)\n", smin, smax );
 				rt_nurb_s_print("psrf", psrf);
@@ -462,11 +462,11 @@ top:
 			v[0] = psrf->v.knots[0];
 			v[1] = psrf->v.knots[psrf->v.k_size -1];
 
-			if( (u[1] - u[0]) < uv_tol && (v[1] - v[0]) < uv_tol)
+			if ( (u[1] - u[0]) < uv_tol && (v[1] - v[0]) < uv_tol)
 			{
 				struct rt_nurb_uv_hit * hit;
 
-				if( RT_G_DEBUG & DEBUG_SPLINE )
+				if ( RT_G_DEBUG & DEBUG_SPLINE )
 				{
 					fastf_t p1[4], p2[4];
 					int coords;
@@ -476,7 +476,7 @@ top:
 					rt_nurb_s_eval( srf, u[0], v[0], p1 );
 					rt_nurb_s_eval( srf, u[1], v[1], p2 );
 
-					if( RT_NURB_IS_PT_RATIONAL( srf->pt_type ) )
+					if ( RT_NURB_IS_PT_RATIONAL( srf->pt_type ) )
 					{
 						fastf_t inv_w;
 
@@ -500,7 +500,7 @@ top:
 				hit->u = (u[0] + u[1])/2.0;
 				hit->v = (v[0] + v[1])/2.0;
 
-				if( h == (struct rt_nurb_uv_hit *)0)
+				if ( h == (struct rt_nurb_uv_hit *)0)
 					h = hit;
 				else
 				{
@@ -510,7 +510,7 @@ top:
 				flat = 1;
 				rt_nurb_free_snurb( psrf, res );
 			}
-			if( (u[1] - u[0]) > (v[1] - v[0]) )
+			if ( (u[1] - u[0]) > (v[1] - v[0]) )
 				dir = 1;
 			else dir = 0;
 		}
@@ -533,7 +533,7 @@ rt_nurb_pbound(struct face_g_snurb *srf, fastf_t *vmin, fastf_t *vmax)
 
 	coords = RT_NURB_EXTRACT_COORDS(srf->pt_type);
 
-	for( i = (srf->s_size[RT_NURB_SPLIT_ROW] *
+	for ( i = (srf->s_size[RT_NURB_SPLIT_ROW] *
 	    srf->s_size[RT_NURB_SPLIT_COL] ); i > 0; i--)
 	{
 		V_MIN( (vmin[0]), (ptr[0]));

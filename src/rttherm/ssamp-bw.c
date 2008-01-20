@@ -91,7 +91,7 @@ get_args(int argc, register char **argv)
 	register int c;
 
 	while ( (c = bu_getopt( argc, argv, "vs:w:n:l:u:m:M:" )) != EOF )  {
-		switch( c )  {
+		switch ( c )  {
 		case 'v':
 			verbose++;
 			break;
@@ -123,7 +123,7 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( bu_optind >= argc )  return 0;
+	if ( bu_optind >= argc )  return 0;
 	return 1;	/* OK */
 }
 
@@ -139,11 +139,11 @@ find_minmax(void)
 	max = -INFINITY;
 	min =  INFINITY;
 
-	for( i = width * height - 1; i >= 0; i-- )  {
+	for ( i = width * height - 1; i >= 0; i-- )  {
 		register fastf_t	v;
 
-		if( (v = pixels[i]) > max )  max = v;
-		if( v < min )  min = v;
+		if ( (v = pixels[i]) > max )  max = v;
+		if ( v < min )  min = v;
 	}
 	computed_maxval = max;
 	computed_minval = min;
@@ -163,31 +163,31 @@ main(int argc, char **argv)
 		return 1;
 	}
 
-	if(verbose)	bu_debug = BU_DEBUG_COREDUMP;
+	if (verbose)	bu_debug = BU_DEBUG_COREDUMP;
 
 	datafile_basename = argv[bu_optind];
 
 	/* Read spectrum definition */
 	snprintf( spectrum_name, 100, "%s.spect", datafile_basename );
 	spectrum = (struct bn_table *)bn_table_read( spectrum_name );
-	if( spectrum == NULL )  {
+	if ( spectrum == NULL )  {
 		bu_exit(EXIT_FAILURE, "ssamp-bw: Unable to read spectrum\n");
 	}
 	BN_CK_TABLE(spectrum);
-	if(verbose) bu_log("%s defines %d spectral samples\n", datafile_basename, spectrum->nx);
+	if (verbose) bu_log("%s defines %d spectral samples\n", datafile_basename, spectrum->nx);
 	nwave = spectrum->nx;	/* shared with Tcl */
 
 	/* Allocate and read 2-D spectral samples array */
 	data = bn_tabdata_binary_read( datafile_basename, width*height, spectrum );
-	if( !data )  bu_exit(EXIT_FAILURE, "bn_tabdata_binary_read() of datafile_basename failed\n");
+	if ( !data )  bu_exit(EXIT_FAILURE, "bn_tabdata_binary_read() of datafile_basename failed\n");
 
-	if( lower_wavelen <= 0 )  lower_wavelen = spectrum->x[0];
-	if( upper_wavelen <= 0 )  upper_wavelen = spectrum->x[spectrum->nx];
+	if ( lower_wavelen <= 0 )  lower_wavelen = spectrum->x[0];
+	if ( upper_wavelen <= 0 )  upper_wavelen = spectrum->x[spectrum->nx];
 
 	/* Build filter to obtain portion of spectrum user wants */
 	filt = bn_tabdata_mk_linear_filter( spectrum, lower_wavelen, upper_wavelen );
-	if( !filt )  bu_exit(EXIT_FAILURE, "bn_tabdata_mk_linear_filter() failed\n");
-	if( verbose )  {
+	if ( !filt )  bu_exit(EXIT_FAILURE, "bn_tabdata_mk_linear_filter() failed\n");
+	if ( verbose )  {
 		bn_pr_table( "spectrum", spectrum );
 		bn_pr_tabdata( "filter", filt );
 	}
@@ -195,7 +195,7 @@ main(int argc, char **argv)
 	/* Convert each of the spectral sample curves into scalor values */
 	pixels = bu_malloc( sizeof(fastf_t) * width * height, "fastf_t pixels" );
 
-	for( i = width*height-1; i >= 0; i-- )  {
+	for ( i = width*height-1; i >= 0; i-- )  {
 		struct bn_tabdata	*sp;
 		/* Filter spectral data into a single power level */
 		sp = (struct bn_tabdata *)
@@ -209,23 +209,23 @@ main(int argc, char **argv)
 	find_minmax();
 	bu_log("computed min = %g, max=%g\n", computed_minval, computed_maxval );
 
-	if( forced_minval < 0 )  forced_minval = computed_minval;
-	if( forced_maxval < 0 )  forced_maxval = computed_maxval;
+	if ( forced_minval < 0 )  forced_minval = computed_minval;
+	if ( forced_maxval < 0 )  forced_maxval = computed_maxval;
 	bu_log("rescale  min = %g, max=%g\n", forced_minval, forced_maxval );
 	BU_ASSERT( forced_minval < forced_maxval );
 
-	if( isatty(fileno(stdout)) )  {
+	if ( isatty(fileno(stdout)) )  {
 		bu_log("ssamp-bw: Attempting to send binary output to the terminal, aborting\n");
 		return 1;
 	}
 
 	/* Convert to 0..255 range and output */
 	scale = 255 / (forced_maxval - forced_minval);
-	for( i = 0; i < width*height; i++ )  {
+	for ( i = 0; i < width*height; i++ )  {
 		register int	val;
 		val = (int)( (pixels[i] - forced_minval) * scale );
-		if( val > 255 )  val = 255;
-		else if( val < 0 ) val = 0;
+		if ( val > 255 )  val = 255;
+		else if ( val < 0 ) val = 0;
 		putc( val, stdout );
 	}
 	return 0;

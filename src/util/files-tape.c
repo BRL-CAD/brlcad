@@ -87,7 +87,7 @@ get_args(int argc, register char **argv)
 	register int c;
 
 	while ( (c = bu_getopt( argc, argv, "b:k:" )) != EOF )  {
-		switch( c )  {
+		switch ( c )  {
 		case 'b':
 			bufsize = atoi( bu_optarg );	/* bytes */
 			break;
@@ -100,7 +100,7 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( isatty(fileno(stdout)) )
+	if ( isatty(fileno(stdout)) )
 		return(0);		/* BAD */
 
 	return(1);			/* OK */
@@ -120,20 +120,20 @@ main(int argc, char **argv)
 	}
 
 	/* Obtain output buffer */
-	if( (buf = (char *)malloc( bufsize )) == NULL )  {
+	if ( (buf = (char *)malloc( bufsize )) == NULL )  {
 		perror("malloc");
 		bu_exit (1, NULL);
 	}
 
-	if( bu_optind >= argc )  {
+	if ( bu_optind >= argc )  {
 		/* Perform operation once, from stdin */
 		fileout( 0, "-" );
 		bu_exit (0, NULL);
 	}
 
 	/* Perform operation on each argument */
-	for( ; bu_optind < argc; bu_optind++ )  {
-		if( (fd = open( argv[bu_optind], 0 )) < 0 )  {
+	for (; bu_optind < argc; bu_optind++ )  {
+		if ( (fd = open( argv[bu_optind], 0 )) < 0 )  {
 			perror( argv[bu_optind] );
 			/*
 			 *  It is unclear whether an exiting,
@@ -160,21 +160,21 @@ fileout(register int fd, char *name)
 {
 	register int	count, out;
 
-	while( (count = bu_mread( fd, buf, bufsize )) > 0 )  {
-		if( count < bufsize )  {
+	while ( (count = bu_mread( fd, buf, bufsize )) > 0 )  {
+		if ( count < bufsize )  {
 			/* Short read, zero rest of buffer */
 			memset(buf+count, 0, bufsize-count);
 		}
-		if( (out = write( 1, buf, bufsize )) != bufsize )  {
+		if ( (out = write( 1, buf, bufsize )) != bufsize )  {
 			perror("files-tape: write");
 			fprintf(stderr, "files-tape:  %s, write ret=%d\n", name, out);
 			bu_exit (1, NULL);
 		}
-		if( byteswritten < TSIZE && byteswritten+bufsize > TSIZE )
+		if ( byteswritten < TSIZE && byteswritten+bufsize > TSIZE )
 			fprintf(stderr, "files-tape: WARNING:  Tape capacity reached in file %s\n", name);
 		byteswritten += bufsize;
 	}
-	if( count == 0 )
+	if ( count == 0 )
 	    return;
 
 	perror("READ ERROR");

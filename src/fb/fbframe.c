@@ -65,7 +65,7 @@ main(int argc, char **argv)
 
 	xsize = ysize = 0;
 	while ( (c = bu_getopt( argc, argv, "ahF:s:w:n:S:W:N:" )) != EOF )  {
-		switch( c )  {
+		switch ( c )  {
 		case 'h':
 			/* high-res */
 			xsize = ysize = 1024;
@@ -102,7 +102,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	if( (fbp = fb_open( framebuffer, xsize, ysize )) == FBIO_NULL )
+	if ( (fbp = fb_open( framebuffer, xsize, ysize )) == FBIO_NULL )
 		bu_exit( 1, NULL );
 
 	if (xsize <= 0)
@@ -112,12 +112,12 @@ main(int argc, char **argv)
 
 	/* malloc buffer for pixel lines */
 	len = (xsize > ysize) ? xsize : ysize;
-	if( (line = (unsigned char *)malloc(len*sizeof(RGBpixel))) == RGBPIXEL_NULL )  {
+	if ( (line = (unsigned char *)malloc(len*sizeof(RGBpixel))) == RGBPIXEL_NULL )  {
 		fprintf(stderr, "fbframe:  malloc failure\n");
 		return(1);
 	}
 
-#define FLOOD(col)	{ for( x=len-1; x >= 0; x-- ) {COPYRGB(&line[3*x], col);} }
+#define FLOOD(col)	{ for ( x=len-1; x >= 0; x-- ) {COPYRGB(&line[3*x], col);} }
 
 	/*
 	 * Red:		(   0 -> 510,   0	 )

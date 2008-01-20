@@ -114,15 +114,15 @@ ptty_open(FBIO *ifp, char *ptty_name, int width, int height)
 	FB_CK_FBIO(ifp);
 
 	/* Check for default size */
-	if( width == 0 )
+	if ( width == 0 )
 		width = ifp->if_width;
-	if( height == 0 )
+	if ( height == 0 )
 		height = ifp->if_height;
 
 	ifp->if_width = width;
 	ifp->if_height = height;
 	over_sampl = ifp->if_width / MAX_DIMENSION;
-	if( (ifp->if_fd = open( ptty_name, O_RDWR, 0 )) == -1 )
+	if ( (ifp->if_fd = open( ptty_name, O_RDWR, 0 )) == -1 )
 		return	-1;
 	(void) ptty_setsize( ifp, width, height );
 	return	ifp->if_fd;
@@ -150,15 +150,15 @@ ptty_write(register FBIO *ifp, int x, int y, RGBpixel (*pixelp), long int ct)
 
 /*	y = ifp->if_width-1-y;		/* 1st quadrant */
 	(void) sprintf( ptty_buf, "%c%04d%04d", PT_SEEK, CVT2DMD( x ), CVT2DMD( y ));
-	if( write( ifp->if_fd, ptty_buf, 9 ) < 9 )
+	if ( write( ifp->if_fd, ptty_buf, 9 ) < 9 )
 		return	-1;
-	for( ; ct > 0; pixelp += scan_ct, x = 0 )
+	for (; ct > 0; pixelp += scan_ct, x = 0 )
 		{
-		if( ct > ifp->if_width - x )
+		if ( ct > ifp->if_width - x )
 			scan_ct = ifp->if_width - x;
 		else
 			scan_ct = ct;
-		if( output_Scan( ifp, pixelp, scan_ct ) == -1 )
+		if ( output_Scan( ifp, pixelp, scan_ct ) == -1 )
 			return	-1;
 		ct -= scan_ct;
 		}
@@ -170,7 +170,7 @@ ptty_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), long int ct)
 {
 /*	y = ifp->if_width-1-y;		/* 1st quadrant */
 #if 0 /* Not yet implemented. */
-	if( read( ifp->if_fd, (char *) pixelp, (int)(sizeof(RGBpixel)*ct) ) < sizeof(RGBpixel)*ct)
+	if ( read( ifp->if_fd, (char *) pixelp, (int)(sizeof(RGBpixel)*ct) ) < sizeof(RGBpixel)*ct)
 	    return -1;
 #endif
 	return	0;
@@ -260,19 +260,19 @@ output_Scan(FBIO *ifp, register RGBpixel (*pixels), int ct)
 	static int	line_ct = 1;
 
 	/* Reduce image through pixel averaging to 256 x 256.		*/
-	for( i = 0; i < ct; i += over_sampl, p++ ) {
+	for ( i = 0; i < ct; i += over_sampl, p++ ) {
 		register int	val;
-		for( j = 0, val = 0; j < over_sampl; j++, pixels++ )
+		for ( j = 0, val = 0; j < over_sampl; j++, pixels++ )
 			val += rgb_To_Dither_Val( pixels );
 		val /= over_sampl;	/* Avg. horizontal summation.	*/
-		if( line_ct == 1 )
+		if ( line_ct == 1 )
 			*p = val;
 		else
 			*p += val;
-		if( line_ct == over_sampl )
+		if ( line_ct == over_sampl )
 			*p /= over_sampl;	/* Avg. vertical sum.	*/
 	}
-	if( line_ct < over_sampl ) {
+	if ( line_ct < over_sampl ) {
 		line_ct++;
 		return	0;
 	}
@@ -283,16 +283,16 @@ output_Scan(FBIO *ifp, register RGBpixel (*pixels), int ct)
 	/* Output buffer as run-length encoded byte stream.		*/
 	{
 	register int	byte_ct;
-	for( i = 0, p = output_buf, byte_ct = 1; i < 256; i++, p++ ) {
-		if( *p == *(p+1) )
+	for ( i = 0, p = output_buf, byte_ct = 1; i < 256; i++, p++ ) {
+		if ( *p == *(p+1) )
 			byte_ct++;
 		else {
-			if( put_Run( ifp, byte_ct, (int) *p ) == -1 )
+			if ( put_Run( ifp, byte_ct, (int) *p ) == -1 )
 				return	-1;
 			byte_ct = 1;
 		}
 	}
-	if( byte_ct > 1 && put_Run( ifp, byte_ct, (int) p[-1] ) == -1 )
+	if ( byte_ct > 1 && put_Run( ifp, byte_ct, (int) p[-1] ) == -1 )
 		return	-1;
 	}
 	return	write( ifp->if_fd, "\n", 1 );
@@ -303,13 +303,13 @@ put_Run(register FBIO *ifp, register int ct, int val)
 {
 	static char	ptty_buf[4];
 /*	(void) fprintf( stderr, "put_Run( %d, %d )\n", ct, val ); */
-	while( ct > 0 ) {
+	while ( ct > 0 ) {
 		(void) sprintf(	ptty_buf,
 				"%c%c%c",
 				PT_WRITE, (ct >= 64 ? 64 : ct ) + ' ',
 				val+'0'
 				);
-		if( write( ifp->if_fd, ptty_buf, 3 ) < 3 )
+		if ( write( ifp->if_fd, ptty_buf, 3 ) < 3 )
 			return	-1;
 		ct -= 64;
 	}

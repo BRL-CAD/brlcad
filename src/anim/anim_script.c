@@ -102,14 +102,14 @@ main(int argc, char **argv)
 	/* read one line of table */
 	val = scanf("%*f"); /*ignore time */
 	if (readview)
-	    scanf("%lf",&viewsize);
-	if(translate)
+	    scanf("%lf", &viewsize);
+	if (translate)
 	    val=scanf("%lf %lf %lf", point, point+1, point+2);
-	if(rotate&&quaternion){
+	if (rotate&&quaternion){
 	    val = scanf("%lf %lf %lf %lf", quat, quat+1, quat+2, quat+3);
 	    val -= 1;
 	} else if (rotate) {
-	    val=scanf("%lf %lf %lf",&yaw,&pitch,&roll);
+	    val=scanf("%lf %lf %lf", &yaw, &pitch, &roll);
 	}
 
 	if (val < 3){ /* ie. scanf not completely successful */
@@ -126,7 +126,7 @@ main(int argc, char **argv)
 	    anim_quat2mat(a, quat);
 	    go = 1;
 	} else {
-	    anim_dx_y_z2mat(a, roll,-pitch, yaw);/* make ypr matrix */
+	    anim_dx_y_z2mat(a, roll, -pitch, yaw);/* make ypr matrix */
 	    go = 1;
 	}
 
@@ -158,9 +158,9 @@ main(int argc, char **argv)
 		printf("viewsize %.10g;\n", viewsize);
 	    printf("eye_pt %.10g %.10g %.10g;\n", a[3], a[7], a[11]);
 	    /* implicit anim_v_permute */
-	    printf("viewrot %.10g %.10g %.10g 0\n",-a[1],-a[5],-a[9]);
+	    printf("viewrot %.10g %.10g %.10g 0\n", -a[1], -a[5], -a[9]);
 	    printf("%.10g %.10g %.10g 0\n", a[2], a[6], a[10]);
-	    printf("%.10g %.10g %.10g 0\n", -a[0], -a[4],-a[8]);
+	    printf("%.10g %.10g %.10g 0\n", -a[0], -a[4], -a[8]);
 	    printf("0 0 0 1;\n");
 	    printf("end;\n");
 	}
@@ -189,7 +189,7 @@ int get_args(int argc, char **argv)
     strcpy(mat_cmd, "lmul");
     while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
 	i=0;
-	switch(c){
+	switch (c){
 	case 'a':
 	    bu_optind -= 1;
 	    sscanf(argv[bu_optind+(i++)], "%lf", &yaw );
@@ -231,7 +231,7 @@ int get_args(int argc, char **argv)
 	    relative_c = 0;
 	    break;
 	case 'f':
-	    sscanf(bu_optarg, "%d",&first_frame);
+	    sscanf(bu_optarg, "%d", &first_frame);
 	    break;
 	case 'm':
 	    strncpy(mat_cmd, bu_optarg, 10);
@@ -257,7 +257,7 @@ int get_args(int argc, char **argv)
 	    rotate = 0;
 	    break;
 	case 'v':
-	    yes = sscanf(bu_optarg, "%lf",&viewsize);
+	    yes = sscanf(bu_optarg, "%lf", &viewsize);
 	    if (!yes) viewsize = 0.0;
 	    if (viewsize < 0.0)
 		readview = 1;

@@ -75,7 +75,7 @@ get_args(int argc, register char **argv)
 	register int c;
 
 	while ( (c = bu_getopt( argc, argv, "t:r:vl" )) != EOF )  {
-		switch( c )  {
+		switch ( c )  {
 		case 't':
 			Timeout = atoi(bu_optarg);
 			break;
@@ -116,7 +116,7 @@ main(int argc, char **argv)
 	(void) signal(SIGALRM, handler);
 	Done = 0;
 
-	for(;;) {
+	for (;;) {
 		(void) signal(SIGALRM, handler);
 		if (Verbose) {
 			if (Timeout) {

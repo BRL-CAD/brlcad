@@ -67,7 +67,7 @@ static int	bu_log_indent_cur_level = 0; /* formerly rt_g.rtg_logindent */
 void
 bu_log_indent_delta(int delta)
 {
-	if( (bu_log_indent_cur_level += delta) < 0 )
+	if ( (bu_log_indent_cur_level += delta) < 0 )
 		bu_log_indent_cur_level = 0;
 }
 
@@ -366,11 +366,11 @@ bu_flog(FILE *fp, char *fmt, ...)
 	size_t len;
 
 	len = bu_vls_strlen(&output);
-	if(len){
+	if (len){
 	  bu_semaphore_acquire(BU_SEM_SYSCALL);
 	  ret = fwrite( bu_vls_addr(&output), len, 1, fp );
 	  bu_semaphore_release(BU_SEM_SYSCALL);
-	  if( ret != 1 )  bu_bomb("bu_flog: write error");
+	  if ( ret != 1 )  bu_bomb("bu_flog: write error");
 	}
 
     } else {

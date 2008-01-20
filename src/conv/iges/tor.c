@@ -54,7 +54,7 @@ int entityno;
 
 	/* Acquiring Data */
 
-	if( dir[entityno]->param <= pstart )
+	if ( dir[entityno]->param <= pstart )
 	{
 		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[entityno]->direct, dir[entityno]->name );
@@ -71,7 +71,7 @@ int entityno;
 	Readcnv( &y2, "" );
 	Readcnv( &z2, "" );
 
-	if( rad <= 0.0 || rad2 <= 0.0 )
+	if ( rad <= 0.0 || rad2 <= 0.0 )
 	{
 		bu_log( "Illegal parameters for entity D%07d (%s)\n" ,
 				dir[entityno]->direct, dir[entityno]->name );

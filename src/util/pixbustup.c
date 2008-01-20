@@ -60,7 +60,7 @@ main(int argc, char **argv)
 	char *base_name;
 	char name[128];
 
-	if( argc < 3 )  {
+	if ( argc < 3 )  {
 		bu_exit(1, "Usage: pixbustup basename width [image_offset] [first_number] <input.pix\n");
 	}
 
@@ -71,27 +71,27 @@ main(int argc, char **argv)
 	scanbytes = nlines * pix_line * 3;
 	in1 = (unsigned char  *) malloc( scanbytes );
 
-	if( argc == 4 )  {
+	if ( argc == 4 )  {
 		image_offset = atoi(argv[3]);
 		lseek(0, image_offset*scanbytes, 0);
 	}
-	if( argc == 5 )
+	if ( argc == 5 )
 		framenumber = atoi(argv[4]);
 	else
 		framenumber = 0;
 
-	for( ; ; framenumber++ )  {
+	for (;; framenumber++ )  {
 		int fd;
 		int rwval = read( 0, in1, scanbytes );
 
-		if( rwval != scanbytes ) {
+		if ( rwval != scanbytes ) {
 		    if (rwval < 0) {
 			perror("pixbustup READ ERROR");
 		    }
 		    break;
 		}
 		snprintf(name, 128, "%s.%d", base_name, framenumber);
-		if( (fd=creat(name, 0444))<0 )  {
+		if ( (fd=creat(name, 0444))<0 )  {
 			perror(name);
 			continue;
 		}

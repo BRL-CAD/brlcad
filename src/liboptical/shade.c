@@ -97,8 +97,8 @@ register const struct shadework *swp;
 	bu_log( " sw_dudv  %f %f\n", swp->sw_uv.uv_du, swp->sw_uv.uv_dv );
 	bu_log( " sw_xmitonly %d\n", swp->sw_xmitonly );
 	bu_log( "\n");
-	if( swp->sw_inputs & MFI_LIGHT ) for( i=0; i < SW_NLIGHTS; i++ )  {
-		if( swp->sw_visible[i] == (struct light_specific *)NULL )  continue;
+	if ( swp->sw_inputs & MFI_LIGHT ) for ( i=0; i < SW_NLIGHTS; i++ )  {
+		if ( swp->sw_visible[i] == (struct light_specific *)NULL )  continue;
 		RT_CK_LIGHT( swp->sw_visible[i] );
 #ifdef RT_MULTISPECTRAL
 		bu_log("   light %d visible, dir=(%g,%g,%g)\n",
@@ -138,20 +138,20 @@ shade_inputs( struct application *ap, const struct partition *pp, struct shadewo
 	RT_CK_RAY( swp->sw_hit.hit_rayp );
 
 	/* These calcuations all have MFI_HIT as a pre-requisite */
-	if( want & (MFI_NORMAL|MFI_LIGHT|MFI_UV) )
+	if ( want & (MFI_NORMAL|MFI_LIGHT|MFI_UV) )
 		want |= MFI_HIT;
 
 	have = swp->sw_inputs;
 	want &= ~have;		/* we don't want what we already have */
 
-	if( want & MFI_HIT )  {
+	if ( want & MFI_HIT )  {
 		VJOIN1( swp->sw_hit.hit_point, ap->a_ray.r_pt,
 			swp->sw_hit.hit_dist, ap->a_ray.r_dir );
 		have |= MFI_HIT;
 	}
 
-	if( want & MFI_NORMAL )  {
-		if( pp->pt_inhit->hit_dist < 0.0 )  {
+	if ( want & MFI_NORMAL )  {
+		if ( pp->pt_inhit->hit_dist < 0.0 )  {
 			/* Eye inside solid, orthoview */
 			VREVERSE( swp->sw_hit.hit_normal, ap->a_ray.r_dir );
 		} else {
@@ -161,7 +161,7 @@ shade_inputs( struct application *ap, const struct partition *pp, struct shadewo
 			RT_HIT_NORMAL( swp->sw_hit.hit_normal, &(swp->sw_hit), pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip );
 
 #ifdef never
-			if( swp->sw_hit.hit_normal[X] < -1.01 || swp->sw_hit.hit_normal[X] > 1.01 ||
+			if ( swp->sw_hit.hit_normal[X] < -1.01 || swp->sw_hit.hit_normal[X] > 1.01 ||
 			    swp->sw_hit.hit_normal[Y] < -1.01 || swp->sw_hit.hit_normal[Y] > 1.01 ||
 			    swp->sw_hit.hit_normal[Z] < -1.01 || swp->sw_hit.hit_normal[Z] > 1.01 )  {
 				VPRINT("shade_inputs: N", swp->sw_hit.hit_normal);
@@ -186,7 +186,7 @@ shade_inputs( struct application *ap, const struct partition *pp, struct shadewo
 					   pp->pt_inseg->seg_stp->st_name);
 				}
 			    }
-			    if( R_DEBUG&RDEBUG_SHADE ) {
+			    if ( R_DEBUG&RDEBUG_SHADE ) {
 				VPRINT("Dir ", ap->a_ray.r_dir);
 				VPRINT("Norm", swp->sw_hit.hit_normal);
 			    }
@@ -194,7 +194,7 @@ shade_inputs( struct application *ap, const struct partition *pp, struct shadewo
 			    VREVERSE(swp->sw_hit.hit_normal, swp->sw_hit.hit_normal);
 			}
 		}
-		if( R_DEBUG&(RDEBUG_RAYPLOT|RDEBUG_SHADE) )  {
+		if ( R_DEBUG&(RDEBUG_RAYPLOT|RDEBUG_SHADE) )  {
 			point_t		endpt;
 			fastf_t		f;
 			/* Plot the surface normal -- green/blue */
@@ -202,7 +202,7 @@ shade_inputs( struct application *ap, const struct partition *pp, struct shadewo
 			f = ap->a_rt_i->rti_radius * 0.02;
 			VJOIN1( endpt, swp->sw_hit.hit_point,
 				f, swp->sw_hit.hit_normal );
-			if(R_DEBUG&RDEBUG_RAYPLOT)  {
+			if (R_DEBUG&RDEBUG_RAYPLOT)  {
 				bu_semaphore_acquire( BU_SEM_SYSCALL );
 				pl_color( stdout, 0, 255, 255 );
 				pdv_3line( stdout, swp->sw_hit.hit_point, endpt );
@@ -216,8 +216,8 @@ hit pt: %g %g %g end pt: %g %g %g\n",
 		}
 		have |= MFI_NORMAL;
 	}
-	if( want & MFI_UV )  {
-		if( pp->pt_inhit->hit_dist < 0.0 )  {
+	if ( want & MFI_UV )  {
+		if ( pp->pt_inhit->hit_dist < 0.0 )  {
 			/* Eye inside solid, orthoview */
 			swp->sw_uv.uv_u = swp->sw_uv.uv_v = 0.5;
 			swp->sw_uv.uv_du = swp->sw_uv.uv_dv = 0;
@@ -225,7 +225,7 @@ hit pt: %g %g %g end pt: %g %g %g\n",
 			RT_HIT_UVCOORD(	ap, pp->pt_inseg->seg_stp,
 				&(swp->sw_hit), &(swp->sw_uv) );
 		}
-		if( swp->sw_uv.uv_u < 0 || swp->sw_uv.uv_u > 1 ||
+		if ( swp->sw_uv.uv_u < 0 || swp->sw_uv.uv_u > 1 ||
 		    swp->sw_uv.uv_v < 0 || swp->sw_uv.uv_v > 1 )  {
 			bu_log("shade_inputs:  bad u, v=%e,%e du, dv=%g,%g seg=%s %s surf=%d. xy=%d,%d Making green.\n",
 				swp->sw_uv.uv_u, swp->sw_uv.uv_v,
@@ -249,7 +249,7 @@ hit pt: %g %g %g end pt: %g %g %g\n",
 	}
 	/* NOTE:  Lee has changed the shaders to do light themselves now. */
 	/* This isn't where light visibility is determined any more. */
-	if( want & MFI_LIGHT )  {
+	if ( want & MFI_LIGHT )  {
 	light_obs(ap, swp, have);
 		have |= MFI_LIGHT;
 	}
@@ -257,7 +257,7 @@ hit pt: %g %g %g end pt: %g %g %g\n",
 	/* Record which fields were filled in */
 	swp->sw_inputs = have;
 
-	if( (want & have) != want )
+	if ( (want & have) != want )
 		bu_log("shade_inputs:  unable to satisfy request for x%x\n", want);
 }
 
@@ -294,7 +294,7 @@ viewshade( struct application *ap, const struct partition *pp, struct shadework 
 
 	want = mfp->mf_inputs;
 
-	if( R_DEBUG&RDEBUG_SHADE ) {
+	if ( R_DEBUG&RDEBUG_SHADE ) {
 		bu_log("viewshade(%s)\n Using \"%s\" shader, ",
 			rp->reg_name, mfp->mf_name);
 		bu_printb( "mfp_inputs", want, MFI_FORMAT );
@@ -307,19 +307,19 @@ viewshade( struct application *ap, const struct partition *pp, struct shadework 
 	/* XXX where does region get reflectance?  Default temperature? */
 	BN_CK_TABDATA(swp->msw_color);
 	BN_CK_TABDATA(swp->msw_basecolor);
-	if( rp->reg_mater.ma_color_valid )  {
+	if ( rp->reg_mater.ma_color_valid )  {
 		rt_spect_reflectance_rgb( swp->msw_color, rp->reg_mater.ma_color );
 	}
 	bn_tabdata_copy(swp->msw_basecolor, swp->msw_color);
 #else
 	/* Default color is white (uncolored) */
-	if( rp->reg_mater.ma_color_valid )  {
+	if ( rp->reg_mater.ma_color_valid )  {
 		VMOVE( swp->sw_color, rp->reg_mater.ma_color );
 	}
 	VMOVE( swp->sw_basecolor, swp->sw_color );
 #endif
 
-	if( swp->sw_hit.hit_dist < 0.0 )
+	if ( swp->sw_hit.hit_dist < 0.0 )
 		swp->sw_hit.hit_dist = 0.0;	/* Eye inside solid */
 	ap->a_cumlen += swp->sw_hit.hit_dist;
 
@@ -327,39 +327,39 @@ viewshade( struct application *ap, const struct partition *pp, struct shadework 
 	 * array to "safe" values,
 	 * and claim that the light is visible, in case they are used.
 	 */
-	if( swp->sw_xmitonly )  want &= ~MFI_LIGHT;
-	if( !(want & MFI_LIGHT) )  {
+	if ( swp->sw_xmitonly )  want &= ~MFI_LIGHT;
+	if ( !(want & MFI_LIGHT) )  {
 		register int	i;
 
 		/* sanity */
 		i=0;
-		for( BU_LIST_FOR( lp, light_specific, &(LightHead.l) ) )  {
+		for ( BU_LIST_FOR( lp, light_specific, &(LightHead.l) ) )  {
 			RT_CK_LIGHT(lp);
 			swp->sw_visible[i++] = lp;
 		}
-		for( ; i < SW_NLIGHTS; i++ )  {
+		for (; i < SW_NLIGHTS; i++ )  {
 			swp->sw_visible[i] = (struct light_specific *)NULL;
 		}
 	}
 
 	/* If optional inputs are required, have them computed */
-	if( want & (MFI_HIT|MFI_NORMAL|MFI_LIGHT|MFI_UV) )  {
+	if ( want & (MFI_HIT|MFI_NORMAL|MFI_LIGHT|MFI_UV) )  {
 		VJOIN1( swp->sw_hit.hit_point, ap->a_ray.r_pt,
 			swp->sw_hit.hit_dist, ap->a_ray.r_dir );
 		swp->sw_inputs |= MFI_HIT;
 	}
-	if( (swp->sw_inputs & want) != want )  {
+	if ( (swp->sw_inputs & want) != want )  {
 		shade_inputs( ap, pp, swp, want );
-	} else if( !(want & MFI_LIGHT) )  {
+	} else if ( !(want & MFI_LIGHT) )  {
 		register int	i;
 
 		/* sanity */
-		for( i = SW_NLIGHTS-1; i >= 0; i-- )  {
+		for ( i = SW_NLIGHTS-1; i >= 0; i-- )  {
 			swp->sw_visible[i] = (struct light_specific *)NULL;
 		}
 	}
 
-	if( R_DEBUG&RDEBUG_SHADE ) {
+	if ( R_DEBUG&RDEBUG_SHADE ) {
 		pr_shadework( "before mf_render", swp );
 	}
 
@@ -367,7 +367,7 @@ viewshade( struct application *ap, const struct partition *pp, struct shadework 
 	/* Invoke the actual shader (may be a tree of them) */
 	(void)mfp->mf_render( ap, pp, swp, rp->reg_udata );
 
-	if( R_DEBUG&RDEBUG_SHADE ) {
+	if ( R_DEBUG&RDEBUG_SHADE ) {
 		pr_shadework( "after mf_render", swp );
 		bu_log("\n");
 	}

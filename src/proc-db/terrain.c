@@ -105,8 +105,8 @@ main(int argc, char **argv)
 
 	mk_id( outfp, id_name);
 
-	for( i = 0; i < 10; i++)
-		for( j = 0; j < 10; j++)
+	for ( i = 0; i < 10; i++)
+		for ( j = 0; j < 10; j++)
 		{
 			fastf_t		v;
 			fastf_t		drand48(void);

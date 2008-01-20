@@ -87,7 +87,7 @@ f_analyze(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	CHECK_DBI_NULL;
 
-	if(argc < 1){
+	if (argc < 1){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -99,19 +99,19 @@ f_analyze(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	bu_vls_init(&v);
 
-	if( argc == 1 ) {
+	if ( argc == 1 ) {
 		/* use the solid being edited */
 		if (illump == SOLID_NULL) {
 		  state_err( "Default SOLID Analyze" );
 		  return TCL_ERROR;
 		}
 		ndp = LAST_SOLID(illump);
-		if(illump->s_Eflag) {
+		if (illump->s_Eflag) {
 		  Tcl_AppendResult(interp, "analyze: cannot analyze evaluated region containing ",
 				   ndp->d_namep, "\n", (char *)NULL);
 		  return TCL_ERROR;
 		}
-		switch( state ) {
+		switch ( state ) {
 		case ST_S_EDIT:
 		  /* Use already modified version. "new way" */
 		  do_anal(&v, &es_int);
@@ -129,7 +129,7 @@ f_analyze(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		}
 		bn_mat_mul(new_mat, modelchanges, es_mat);
 
-		if( rt_db_get_internal( &intern, ndp, dbip, new_mat, &rt_uniresource ) < 0 )  {
+		if ( rt_db_get_internal( &intern, ndp, dbip, new_mat, &rt_uniresource ) < 0 )  {
 		  Tcl_AppendResult(interp, "rt_db_get_internal() error\n", (char *)NULL);
 		  return TCL_ERROR;
 		}
@@ -142,11 +142,11 @@ f_analyze(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
 
 	/* use the names that were input */
-	for( i = 1; i < argc; i++ )  {
-		if( (ndp = db_lookup( dbip,  argv[i], LOOKUP_NOISY )) == DIR_NULL )
+	for ( i = 1; i < argc; i++ )  {
+		if ( (ndp = db_lookup( dbip,  argv[i], LOOKUP_NOISY )) == DIR_NULL )
 			continue;
 
-		if( rt_db_get_internal( &intern, ndp, dbip, bn_mat_identity, &rt_uniresource ) < 0 )  {
+		if ( rt_db_get_internal( &intern, ndp, dbip, bn_mat_identity, &rt_uniresource ) < 0 )  {
 		  Tcl_AppendResult(interp, "rt_db_get_internal() error\n", (char *)NULL);
 		  return TCL_ERROR;
 		}
@@ -172,7 +172,7 @@ do_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 {
 	/* XXX Could give solid name, and current units, here */
 
-	switch( ip->idb_type ) {
+	switch ( ip->idb_type ) {
 
 	case ID_ARS:
 		ars_anal(vp, ip);
@@ -241,11 +241,11 @@ arb_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 	int		cgtype;		/* COMGEOM arb type: # of vertices */
 	int		type;
 
-	if(dbip == DBI_NULL)
+	if (dbip == DBI_NULL)
 	  return;
 
 	/* find the specific arb type, in GIFT order. */
-	if( (cgtype = rt_arb_std_type( ip, &mged_tol )) == 0 ) {
+	if ( (cgtype = rt_arb_std_type( ip, &mged_tol )) == 0 ) {
 		bu_vls_printf(vp, "arb_anal: bad ARB\n");
 		return;
 	}
@@ -260,7 +260,7 @@ arb_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 	bu_vls_printf(vp, "|------|---------------|----------------------------------|------------------|\n");
 	rt_arb_centroid( center_pt, arb, cgtype );
 
-	for(i=0; i<6; i++)
+	for (i=0; i<6; i++)
 		tot_area += anal_face( vp, i, center_pt, arb, type, &mged_tol );
 
 	bu_vls_printf(vp, "------------------------------------------------------------------------------\n");
@@ -274,21 +274,21 @@ arb_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 		struct rt_arb_internal	earb;
 
 		earb = *arb;		/* struct copy */
-		if( cgtype == 4 ) {
+		if ( cgtype == 4 ) {
 			VMOVE(earb.pt[3], earb.pt[4]);
-		} else if( cgtype == 6 ) {
+		} else if ( cgtype == 6 ) {
 			VMOVE(earb.pt[5], earb.pt[6]);
 		}
-		for(i=0; i<12; i++) {
+		for (i=0; i<12; i++) {
 			anal_edge( vp, i, &earb, type );
-			if( nedge[type][i*2] == -1 )
+			if ( nedge[type][i*2] == -1 )
 				break;
 		}
 	}
 	bu_vls_printf(vp, "  ---------------------------------------------------------------------\n");
 
 	/* find the volume - break arb8 into 6 arb4s */
-	for(i=0; i<6; i++)
+	for (i=0; i<6; i++)
 		tot_vol += find_vol( i, arb, &mged_tol );
 
 	bu_vls_printf(vp, "      | Volume = %18.8f    Surface Area = %15.8f |\n",
@@ -331,21 +331,21 @@ findang(register fastf_t *angles, register fastf_t *unitv)
 	fastf_t f;
 
 	/* convert direction cosines into axis angles */
-	if( unitv[X] <= -1.0 )  angles[X] = -90.0;
-	else if( unitv[X] >= 1.0 )  angles[X] = 90.0;
+	if ( unitv[X] <= -1.0 )  angles[X] = -90.0;
+	else if ( unitv[X] >= 1.0 )  angles[X] = 90.0;
 	else angles[X] = acos( unitv[X] ) * radtodeg;
 
-	if( unitv[Y] <= -1.0 )  angles[Y] = -90.0;
-	else if( unitv[Y] >= 1.0 )  angles[Y] = 90.0;
+	if ( unitv[Y] <= -1.0 )  angles[Y] = -90.0;
+	else if ( unitv[Y] >= 1.0 )  angles[Y] = 90.0;
 	else angles[Y] = acos( unitv[Y] ) * radtodeg;
 
-	if( unitv[Z] <= -1.0 )  angles[Z] = -90.0;
-	else if( unitv[Z] >= 1.0 )  angles[Z] = 90.0;
+	if ( unitv[Z] <= -1.0 )  angles[Z] = -90.0;
+	else if ( unitv[Z] >= 1.0 )  angles[Z] = 90.0;
 	else angles[Z] = acos( unitv[Z] ) * radtodeg;
 
 	/* fallback angle */
-	if( unitv[Z] <= -1.0 )  unitv[Z] = -1.0;
-	else if( unitv[Z] >= 1.0 )  unitv[Z] = 1.0;
+	if ( unitv[Z] <= -1.0 )  unitv[Z] = -1.0;
+	else if ( unitv[Z] >= 1.0 )  unitv[Z] = 1.0;
 	angles[4] = asin(unitv[Z]);
 
 	/* rotation angle */
@@ -353,17 +353,17 @@ findang(register fastf_t *angles, register fastf_t *unitv)
 	 * with an epsilon of +/- 1.0e-17, so the tolerance below was
 	 * substituted for the original +/- 1.0e-20.
 	 */
-	if((f = cos(angles[4])) > 1.0e-16 || f < -1.0e-16 )  {
+	if ((f = cos(angles[4])) > 1.0e-16 || f < -1.0e-16 )  {
 		f = unitv[X]/f;
-		if( f <= -1.0 )
+		if ( f <= -1.0 )
 			angles[3] = 180;
-		else if( f >= 1.0 )
+		else if ( f >= 1.0 )
 			angles[3] = 0;
 		else
 			angles[3] = radtodeg * acos( f );
 	}  else
 		angles[3] = 0.0;
-	if( unitv[Y] < 0 )
+	if ( unitv[Y] < 0 )
 		angles[3] = 360.0 - angles[3];
 
 	angles[4] *= radtodeg;
@@ -388,7 +388,7 @@ anal_face(struct bu_vls *vp, int face, fastf_t *center_pt, const struct rt_arb_i
 	plane_t	plane;
 	double	face_area = 0;
 
-	if(dbip == DBI_NULL)
+	if (dbip == DBI_NULL)
 	  return 0;
 
 	a = rt_arb_faces[type][face*4+0];
@@ -396,11 +396,11 @@ anal_face(struct bu_vls *vp, int face, fastf_t *center_pt, const struct rt_arb_i
 	c = rt_arb_faces[type][face*4+2];
 	d = rt_arb_faces[type][face*4+3];
 
-	if(a == -1)
+	if (a == -1)
 		return 0;
 
 	/* find plane eqn for this face */
-	if( bn_mk_plane_3pts( plane, arb->pt[a], arb->pt[b],
+	if ( bn_mk_plane_3pts( plane, arb->pt[a], arb->pt[b],
 	    arb->pt[c], tol ) < 0 )  {
 		bu_vls_printf(vp, "| %d%d%d%d |         ***NOT A PLANE***                                          |\n",
 				a+1, b+1, c+1, d+1);
@@ -414,8 +414,8 @@ anal_face(struct bu_vls *vp, int face, fastf_t *center_pt, const struct rt_arb_i
 	 * fallback angles so that they always give the outward
 	 * pointing normal vector.
 	 */
-	if( (plane[3] - VDOT(center_pt, &plane[0])) < 0.0 ){
-		for( i=0; i<4 ; i++ )
+	if ( (plane[3] - VDOT(center_pt, &plane[0])) < 0.0 ){
+		for ( i=0; i<4; i++ )
 			plane[i] *= -1.0;
 	}
 
@@ -425,7 +425,7 @@ anal_face(struct bu_vls *vp, int face, fastf_t *center_pt, const struct rt_arb_i
 	findang( angles, &plane[0] );
 
 	/* find the surface area of this face */
-	for(i=0; i<3; i++) {
+	for (i=0; i<3; i++) {
 		j = rt_arb_faces[type][face*4+i];
 		k = rt_arb_faces[type][face*4+i+1];
 		VSUB2(v_temp, arb->pt[k], arb->pt[j]);
@@ -433,14 +433,14 @@ anal_face(struct bu_vls *vp, int face, fastf_t *center_pt, const struct rt_arb_i
 	}
 	len[4] = len[2];
 	j = rt_arb_faces[type][face*4+0];
-	for(i=2; i<4; i++) {
+	for (i=2; i<4; i++) {
 		k = rt_arb_faces[type][face*4+i];
 		VSUB2(v_temp, arb->pt[k], arb->pt[j]);
 		len[((i*2)-1)] = MAGNITUDE( v_temp );
 	}
 	len[2] = len[3];
 
-	for(i=0; i<2; i++) {
+	for (i=0; i<2; i++) {
 		j = i*3;
 		temp = .5 * (len[j] + len[j+1] + len[j+2]);
 		area[i] = sqrt(temp * (temp - len[j]) * (temp - len[j+1]) * (temp - len[j+2]));
@@ -464,21 +464,21 @@ anal_edge(struct bu_vls *vp, int edge, const struct rt_arb_internal *arb, int ty
 	register int a, b;
 	static vect_t v_temp;
 
-	if(dbip == DBI_NULL)
+	if (dbip == DBI_NULL)
 	  return;
 
 	a = nedge[type][edge*2];
 	b = nedge[type][edge*2+1];
 
-	if( b == -1 ) {
+	if ( b == -1 ) {
 		/* fill out the line */
-		if( (a = edge%4) == 0 )
+		if ( (a = edge%4) == 0 )
 			return;
-		if( a == 1 ) {
+		if ( a == 1 ) {
 			bu_vls_printf(vp, "  |                |                |                |\n  ");
 			return;
 		}
-		if( a == 2 ) {
+		if ( a == 2 ) {
 			bu_vls_printf(vp, "  |                |                |\n  ");
 			return;
 		}
@@ -490,7 +490,7 @@ anal_edge(struct bu_vls *vp, int edge, const struct rt_arb_internal *arb, int ty
 	bu_vls_printf(vp, "  |  %d%d %9.8f",
 		a+1, b+1, MAGNITUDE(v_temp)*base2local);
 
-	if( ++edge%4 == 0 )
+	if ( ++edge%4 == 0 )
 		bu_vls_printf(vp, "  |\n  ");
 }
 
@@ -512,7 +512,7 @@ find_vol(int loc, struct rt_arb_internal *arb, struct bn_tol *tol)
 	/* d = "top" point of arb4 */
 	d = farb4[loc][3];
 
-	if( bn_mk_plane_3pts( plane, arb->pt[a], arb->pt[b],
+	if ( bn_mk_plane_3pts( plane, arb->pt[a], arb->pt[b],
 	    arb->pt[c], tol ) < 0 )
 		return 0.0;
 
@@ -540,7 +540,7 @@ tor_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 	struct rt_tor_internal	*tor = (struct rt_tor_internal *)ip->idb_ptr;
 	fastf_t r1, r2, vol, sur_area;
 
-	if(dbip == DBI_NULL)
+	if (dbip == DBI_NULL)
 	  return;
 
 	RT_TOR_CK_MAGIC( tor );
@@ -578,7 +578,7 @@ ell_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 	fastf_t vol, sur_area;
 	int	type;
 
-	if(dbip == DBI_NULL)
+	if (dbip == DBI_NULL)
 	  return;
 
 	RT_ELL_CK_MAGIC( ell );
@@ -594,16 +594,16 @@ ell_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 		vol*base2local*base2local*base2local,
 		vol/GALLONS_TO_MM3);
 
-	if( fabs(ma-mb) < .00001 && fabs(mb-mc) < .00001 ) {
+	if ( fabs(ma-mb) < .00001 && fabs(mb-mc) < .00001 ) {
 		/* have a sphere */
 		sur_area = 4.0 * pi * ma * ma;
 		bu_vls_printf(vp, "   Surface Area = %.8f\n",
 				sur_area*base2local*base2local);
 		return;
 	}
-	if( fabs(ma-mb) < .00001 ) {
+	if ( fabs(ma-mb) < .00001 ) {
 		/* A == B */
-		if( mc > ma ) {
+		if ( mc > ma ) {
 			/* oblate spheroid */
 			type = OBLATE;
 			major = mc;
@@ -617,9 +617,9 @@ ell_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 		}
 	}
 	else
-	if( fabs(ma-mc) < .00001 ) {
+	if ( fabs(ma-mc) < .00001 ) {
 		/* A == C */
-		if( mb > ma ) {
+		if ( mb > ma ) {
 			/* oblate spheroid */
 			type = OBLATE;
 			major = mb;
@@ -633,9 +633,9 @@ ell_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 		}
 	}
 	else
-	if( fabs(mb-mc) < .00001 ) {
+	if ( fabs(mb-mc) < .00001 ) {
 		/* B == C */
-		if( ma > mb ) {
+		if ( ma > mb ) {
 			/* oblate spheroid */
 			type = OBLATE;
 			major = ma;
@@ -653,10 +653,10 @@ ell_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 		return;
 	}
 	ecc = sqrt(major*major - minor*minor) / major;
-	if( type == PROLATE ) {
+	if ( type == PROLATE ) {
 		sur_area = 2.0 * pi * minor * minor +
 			(2.0 * pi * (major*minor/ecc) * asin(ecc));
-	} else if( type == OBLATE ) {
+	} else if ( type == OBLATE ) {
 		sur_area = 2.0 * pi * major * major +
 			(pi * (minor*minor/ecc) * log( (1.0+ecc)/(1.0-ecc) ));
 	} else {
@@ -684,7 +684,7 @@ superell_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 	fastf_t vol, sur_area;
 	int	type;
 
-	if(dbip == DBI_NULL)
+	if (dbip == DBI_NULL)
 	  return;
 
 	RT_SUPERELL_CK_MAGIC( superell );
@@ -700,16 +700,16 @@ superell_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 		vol*base2local*base2local*base2local,
 		vol/GALLONS_TO_MM3);
 
-	if( fabs(ma-mb) < .00001 && fabs(mb-mc) < .00001 ) {
+	if ( fabs(ma-mb) < .00001 && fabs(mb-mc) < .00001 ) {
 		/* have a sphere */
 		sur_area = 4.0 * pi * ma * ma;
 		bu_vls_printf(vp, "   Surface Area = %.8f\n",
 				sur_area*base2local*base2local);
 		return;
 	}
-	if( fabs(ma-mb) < .00001 ) {
+	if ( fabs(ma-mb) < .00001 ) {
 		/* A == B */
-		if( mc > ma ) {
+		if ( mc > ma ) {
 			/* oblate spheroid */
 			type = OBLATE;
 			major = mc;
@@ -723,9 +723,9 @@ superell_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 		}
 	}
 	else
-	if( fabs(ma-mc) < .00001 ) {
+	if ( fabs(ma-mc) < .00001 ) {
 		/* A == C */
-		if( mb > ma ) {
+		if ( mb > ma ) {
 			/* oblate spheroid */
 			type = OBLATE;
 			major = mb;
@@ -739,9 +739,9 @@ superell_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 		}
 	}
 	else
-	if( fabs(mb-mc) < .00001 ) {
+	if ( fabs(mb-mc) < .00001 ) {
 		/* B == C */
-		if( ma > mb ) {
+		if ( ma > mb ) {
 			/* oblate spheroid */
 			type = OBLATE;
 			major = ma;
@@ -759,10 +759,10 @@ superell_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 		return;
 	}
 	ecc = sqrt(major*major - minor*minor) / major;
-	if( type == PROLATE ) {
+	if ( type == PROLATE ) {
 		sur_area = 2.0 * pi * minor * minor +
 			(2.0 * pi * (major*minor/ecc) * asin(ecc));
-	} else if( type == OBLATE ) {
+	} else if ( type == OBLATE ) {
 		sur_area = 2.0 * pi * major * major +
 			(pi * (minor*minor/ecc) * log( (1.0+ecc)/(1.0-ecc) ));
 	} else {
@@ -787,7 +787,7 @@ tgc_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 	vect_t axb;
 	int cgtype = 0;
 
-	if(dbip == DBI_NULL)
+	if (dbip == DBI_NULL)
 	  return;
 
 	RT_TGC_CK_MAGIC( tgc );
@@ -801,13 +801,13 @@ tgc_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 	mh = MAGNITUDE( tgc->h );
 
 	/* check for right cylinder */
-	if( fabs(fabs(VDOT(tgc->h, axb)) - (mh*maxb)) < .00001 ) {
+	if ( fabs(fabs(VDOT(tgc->h, axb)) - (mh*maxb)) < .00001 ) {
 		/* have a right cylinder */
-		if(fabs(ma-mb) < .00001) {
+		if (fabs(ma-mb) < .00001) {
 			/* have a circular base */
-			if(fabs(mc-md) < .00001) {
+			if (fabs(mc-md) < .00001) {
 				/* have a circular top */
-				if(fabs(ma-mc) < .00001)
+				if (fabs(ma-mc) < .00001)
 					cgtype = MGED_ANAL_RCC;
 				else
 					cgtype = MGED_ANAL_TRC;
@@ -815,12 +815,12 @@ tgc_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 		}
 		else {
 			/* have an elliptical base */
-			if(fabs(ma-mc) < .00001 && fabs(mb-md) < .00001)
+			if (fabs(ma-mc) < .00001 && fabs(mb-md) < .00001)
 				cgtype = MGED_ANAL_REC;
 		}
 	}
 
-	switch( cgtype ) {
+	switch ( cgtype ) {
 
 		case MGED_ANAL_RCC:
 			area_base = pi * ma * ma;
@@ -899,7 +899,7 @@ rpc_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 	fastf_t	area_parab, area_body, b, h, r, vol_parab;
 	struct rt_rpc_internal	*rpc = (struct rt_rpc_internal *)ip->idb_ptr;
 
-	if(dbip == DBI_NULL)
+	if (dbip == DBI_NULL)
 	  return;
 
 	RT_RPC_CK_MAGIC( rpc );
@@ -935,7 +935,7 @@ rhc_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 	fastf_t	area_hyperb, area_body, b, c, h, r, vol_hyperb,	work1;
 	struct rt_rhc_internal	*rhc = (struct rt_rhc_internal *)ip->idb_ptr;
 
-	if(dbip == DBI_NULL)
+	if (dbip == DBI_NULL)
 	  return;
 
 	RT_RHC_CK_MAGIC( rhc );

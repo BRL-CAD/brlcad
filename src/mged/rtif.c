@@ -211,7 +211,7 @@ pr_wait_status(int status)
     int	ret = status >> 8;
     struct bu_vls tmp_vls;
 
-    if( status == 0 )  {
+    if ( status == 0 )  {
 	Tcl_AppendResult(interp, "Normal exit\n", (char *)NULL);
 	return;
     }
@@ -219,10 +219,10 @@ pr_wait_status(int status)
     bu_vls_init(&tmp_vls);
     bu_vls_printf(&tmp_vls, "Abnormal exit x%x", status);
 
-    if( core )
+    if ( core )
 	bu_vls_printf(&tmp_vls, ", core dumped");
 
-    if( sig )
+    if ( sig )
 	bu_vls_printf(&tmp_vls, ", terminating signal = %d", sig );
     else
 	bu_vls_printf(&tmp_vls, ", return (exit) code = %d", ret );
@@ -249,9 +249,9 @@ rt_oldwrite(FILE *fp, fastf_t *eye_model)
     (void)fprintf(fp, "%.9e\n", view_state->vs_vop->vo_size);
     (void)fprintf(fp, "%.9e %.9e %.9e\n",
 		  eye_model[X], eye_model[Y], eye_model[Z] );
-    for( i=0; i < 16; i++ )  {
+    for ( i=0; i < 16; i++ )  {
 	(void)fprintf(fp, "%.9e ", view_state->vs_vop->vo_rotation[i]);
-	if( (i%4) == 3 )
+	if ( (i%4) == 3 )
 	    (void)fprintf(fp, "\n");
     }
     (void)fprintf(fp, "\n");
@@ -320,16 +320,16 @@ rt_read(FILE *fp, fastf_t *scale, fastf_t *eye, fastf_t *mat)
     register int i;
     double d;
 
-    if( fscanf( fp, "%lf", &d ) != 1 )  return(-1);
+    if ( fscanf( fp, "%lf", &d ) != 1 )  return(-1);
     *scale = d*0.5;
-    if( fscanf( fp, "%lf", &d ) != 1 )  return(-1);
+    if ( fscanf( fp, "%lf", &d ) != 1 )  return(-1);
     eye[X] = d;
-    if( fscanf( fp, "%lf", &d ) != 1 )  return(-1);
+    if ( fscanf( fp, "%lf", &d ) != 1 )  return(-1);
     eye[Y] = d;
-    if( fscanf( fp, "%lf", &d ) != 1 )  return(-1);
+    if ( fscanf( fp, "%lf", &d ) != 1 )  return(-1);
     eye[Z] = d;
-    for( i=0; i < 16; i++ )  {
-	if( fscanf( fp, "%lf", &d ) != 1 )
+    for ( i=0; i < 16; i++ )  {
+	if ( fscanf( fp, "%lf", &d ) != 1 )
 	    return(-1);
 	mat[i] = d;
     }
@@ -359,11 +359,11 @@ build_tops(char **start, char **end)
 	register struct solid *forw;
 	struct directory *dp = FIRST_SOLID(sp);
 
-	if( sp->s_wflag == UP )
+	if ( sp->s_wflag == UP )
 	    continue;
-	if( dp->d_addr == RT_DIR_PHONY_ADDR )
+	if ( dp->d_addr == RT_DIR_PHONY_ADDR )
 	    continue;	/* Ignore overlays, predictor, etc */
-	if( vp < end )
+	if ( vp < end )
 	    *vp++ = dp->d_namep;
 	else  {
 	    Tcl_AppendResult(interp, "mged: ran out of comand vector space at ",
@@ -371,8 +371,8 @@ build_tops(char **start, char **end)
 	    break;
 	}
 	sp->s_wflag = UP;
-	for(BU_LIST_PFOR(forw, sp, solid, &dgop->dgo_headSolid)){
-	    if( FIRST_SOLID(forw) == dp )
+	for (BU_LIST_PFOR(forw, sp, solid, &dgop->dgo_headSolid)){
+	    if ( FIRST_SOLID(forw) == dp )
 		forw->s_wflag = UP;
 	}
     }
@@ -397,10 +397,10 @@ setup_rt(register char **vp, int printcmd)
     rt_cmd_vec_len = vp - rt_cmd_vec;
     rt_cmd_vec_len += build_tops(vp, &rt_cmd_vec[MAXARGS]);
 
-    if(printcmd){
+    if (printcmd){
 	/* Print out the command we are about to run */
 	vp = &rt_cmd_vec[0];
-	while( *vp )
+	while ( *vp )
 	    Tcl_AppendResult(interp, *vp++, " ", (char *)NULL);
 
 	Tcl_AppendResult(interp, "\n", (char *)NULL);
@@ -460,7 +460,7 @@ rt_output_handler(ClientData clientData, int mask)
 #ifndef _WIN32
     count = read((int)run_rtp->fd, line, RT_MAXLINE);
 #else
-    count = ReadFile(run_rtp->fd, line, 5120,&count, 0);
+    count = ReadFile(run_rtp->fd, line, 5120, &count, 0);
 #endif
 
     if (count <= 0) {
@@ -475,7 +475,7 @@ rt_output_handler(ClientData clientData, int mask)
 	Tcl_DeleteFileHandler(run_rtp->fd);
 	close(run_rtp->fd);
 #else
-	Tcl_DeleteChannelHandler(run_rtp->chan, rt_output_handler,(ClientData)run_rtp);
+	Tcl_DeleteChannelHandler(run_rtp->chan, rt_output_handler, (ClientData)run_rtp);
 	CloseHandle(run_rtp->fd);
 #endif
 
@@ -486,7 +486,7 @@ rt_output_handler(ClientData clientData, int mask)
 	    pr_wait_status(retcode);
 #else
 	WaitForSingleObject( run_rtp->hProcess, INFINITE );
-	if(GetLastError() == ERROR_PROCESS_ABORTED) {
+	if (GetLastError() == ERROR_PROCESS_ABORTED) {
 	    run_rtp->aborted = 1;
 	}
 #endif
@@ -514,7 +514,7 @@ rt_output_handler(ClientData clientData, int mask)
 static void
 rt_set_eye_model(fastf_t *eye_model)
 {
-    if(dmp->dm_zclip || mged_variables->mv_perspective_mode){
+    if (dmp->dm_zclip || mged_variables->mv_perspective_mode){
 	vect_t temp;
 
 	VSET( temp, 0.0, 0.0, 1.0 );
@@ -547,7 +547,7 @@ rt_set_eye_model(fastf_t *eye_model)
 	}
 	VMOVEN(direction, view_state->vs_vop->vo_rotation + 8, 3);
 	VSCALE(direction, direction, -1.0);
-	for(i = 0; i < 3; ++i)
+	for (i = 0; i < 3; ++i)
 	    if (NEAR_ZERO(direction[i], 1e-10))
 		direction[i] = 0.0;
 	if ((eye_model[X] >= extremum[0][X]) &&
@@ -557,7 +557,7 @@ rt_set_eye_model(fastf_t *eye_model)
 	    (eye_model[Z] >= extremum[0][Z]) &&
 	    (eye_model[Z] <= extremum[1][Z])){
 	    t_in = -INFINITY;
-	    for(i = 0; i < 6; ++i){
+	    for (i = 0; i < 6; ++i){
 		if (direction[i%3] == 0)
 		    continue;
 		t = (extremum[i/3][i%3] - eye_model[i%3]) /
@@ -610,7 +610,7 @@ run_rt(void)
 	(void)close(pipe_err[0]);
 	(void)close(pipe_err[1]);
 
-	for( i=3; i < 20; i++ )
+	for ( i=3; i < 20; i++ )
 	    (void)close(i);
 
 	(void)signal( SIGINT, SIG_DFL );
@@ -717,14 +717,14 @@ run_rt(void)
 
 
     snprintf(line, RT_MAXLINE+1, "%s ", rt_cmd_vec[0]);
-    for(i=1;i<rt_cmd_vec_len;i++) {
+    for (i=1;i<rt_cmd_vec_len;i++) {
 	snprintf(name, 2048, "%s ", rt_cmd_vec[i]);
 	strncat(line, name, RT_MAXLINE-strlen(line));
 	line[2048-1] = '\0'; /* sanity */
     }
 
 
-    if(CreateProcess( NULL,
+    if (CreateProcess( NULL,
 		      line,
 		      NULL,
 		      NULL,
@@ -742,7 +742,7 @@ run_rt(void)
 
     /* As parent, send view information down pipe */
     CloseHandle(pipe_in[0]);
-    fp_in = _fdopen( _open_osfhandle((HFILE)pipe_inDup,_O_TEXT), "w" );
+    fp_in = _fdopen( _open_osfhandle((HFILE)pipe_inDup, _O_TEXT), "w" );
     CloseHandle(pipe_err[1]);
 
 
@@ -816,7 +816,7 @@ cmd_rrt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     CHECK_DBI_NULL;
 
-    if(argc < 2 || MAXARGS < argc){
+    if (argc < 2 || MAXARGS < argc){
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -826,11 +826,11 @@ cmd_rrt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
-    if( not_state( ST_VIEW, "Ray-trace of current view" ) )
+    if ( not_state( ST_VIEW, "Ray-trace of current view" ) )
 	return TCL_ERROR;
 
     vp = &rt_cmd_vec[0];
-    for( i=1; i < argc; i++ )
+    for ( i=1; i < argc; i++ )
 	*vp++ = argv[i];
     *vp++ = dbip->dbi_filename;
 
@@ -1033,10 +1033,10 @@ basename_without_suffix(register char *p1, register char *suff)
 	if (*p1++ == '/')
 	    p2 = p1;
     }
-    for(p3=suff; *p3; p3++)
+    for (p3=suff; *p3; p3++)
 	;
-    while(p1>p2 && p3>suff)
-	if(*--p3 != *--p1)
+    while (p1>p2 && p3>suff)
+	if (*--p3 != *--p1)
 	    return(p2);
     strncpy( buf, p2, p1-p2 );
     return(buf);
@@ -1060,7 +1060,7 @@ f_saveview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     CHECK_DBI_NULL;
 
-    if(argc < 2){
+    if (argc < 2){
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -1070,7 +1070,7 @@ f_saveview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
-    if( (fp = fopen( argv[1], "a")) == NULL )  {
+    if ( (fp = fopen( argv[1], "a")) == NULL )  {
 	perror(argv[1]);
 	return TCL_ERROR;
     }
@@ -1090,9 +1090,9 @@ f_saveview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     /* Do not specify -v option to rt; batch jobs must print everything. -Mike */
     (void)fprintf(fp, "#!/bin/sh\nrt -M ");
-    if( view_state->vs_vop->vo_perspective > 0 )
+    if ( view_state->vs_vop->vo_perspective > 0 )
 	(void)fprintf(fp, "-p%g ", view_state->vs_vop->vo_perspective);
-    for( i=2; i < argc; i++ )
+    for ( i=2; i < argc; i++ )
 	(void)fprintf(fp, "%s ", argv[i]);
     (void)fprintf(fp, "\\\n -o %s.pix\\\n $*\\\n", base);
     (void)fprintf(fp, " %s\\\n ", dbip->dbi_filename);
@@ -1106,13 +1106,13 @@ f_saveview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	register struct solid *forw;	/* XXX */
 	struct directory *dp = FIRST_SOLID(sp);
 
-	if( sp->s_wflag == UP )
+	if ( sp->s_wflag == UP )
 	    continue;
 	if (dp->d_addr == RT_DIR_PHONY_ADDR) continue;
 	(void)fprintf(fp, "'%s' ", dp->d_namep);
 	sp->s_wflag = UP;
-	for(BU_LIST_PFOR(forw, sp, solid, &dgop->dgo_headSolid)){
-	    if( FIRST_SOLID(forw) == dp )
+	for (BU_LIST_PFOR(forw, sp, solid, &dgop->dgo_headSolid)){
+	    if ( FIRST_SOLID(forw) == dp )
 		forw->s_wflag = UP;
 	}
     }
@@ -1179,7 +1179,7 @@ f_loadview(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
      */
     /*	CHECK_DBI_NULL; */
 
-    if(argc < 2){
+    if (argc < 2){
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -1354,7 +1354,7 @@ f_loadview(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 
     /* XXX not sure why the correction factor is needed, but it works -- csm */
     /*  Second step:  put eye at view 0, 0, 1.
-     *  For eye to be at 0, 0, 1, the old 0, 0,-1 needs to become 0, 0, 0.
+     *  For eye to be at 0, 0, 1, the old 0, 0, -1 needs to become 0, 0, 0.
      VSET(xlate, 0.0, 0.0, -1.0);
      MAT4X3PNT(new_cent, view_state->vs_vop->vo_view2model, xlate);
      MAT_DELTAS_VEC_NEG(view_state->vs_vop->vo_center, new_cent);
@@ -1395,7 +1395,7 @@ f_rmats(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     CHECK_DBI_NULL;
 
-    if(argc < 2 || 3 < argc){
+    if (argc < 2 || 3 < argc){
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -1405,10 +1405,10 @@ f_rmats(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
-    if( not_state( ST_VIEW, "animate from matrix file") )
+    if ( not_state( ST_VIEW, "animate from matrix file") )
 	return TCL_ERROR;
 
-    if( (fp = fopen(argv[1], "r")) == NULL )  {
+    if ( (fp = fopen(argv[1], "r")) == NULL )  {
 	perror(argv[1]);
 	return TCL_ERROR;
     }
@@ -1416,17 +1416,17 @@ f_rmats(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     sp = SOLID_NULL;
 
     mode = -1;
-    if( argc > 2 )
+    if ( argc > 2 )
 	mode = atoi(argv[2]);
-    switch(mode)  {
+    switch (mode)  {
 	case 1:
-	    if( (dp = db_lookup(dbip, "EYE", LOOKUP_NOISY)) == DIR_NULL )  {
+	    if ( (dp = db_lookup(dbip, "EYE", LOOKUP_NOISY)) == DIR_NULL )  {
 		mode = -1;
 		break;
 	    }
 	    FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)  {
-		if( LAST_SOLID(sp) != dp )  continue;
-		if( BU_LIST_IS_EMPTY( &(sp->s_vlist) ) )  continue;
+		if ( LAST_SOLID(sp) != dp )  continue;
+		if ( BU_LIST_IS_EMPTY( &(sp->s_vlist) ) )  continue;
 		vp = BU_LIST_LAST( bn_vlist, &(sp->s_vlist) );
 		VMOVE( sav_start, vp->pt[vp->nused-1] );
 		VMOVE( sav_center, sp->s_center );
@@ -1448,14 +1448,14 @@ f_rmats(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     /* If user hits ^C, this will stop, but will leave hanging filedes */
     (void)signal(SIGINT, cur_sigint);
 #else
-    if( setjmp( jmp_env ) == 0 )
+    if ( setjmp( jmp_env ) == 0 )
 	(void)signal( SIGINT, sig3);  /* allow interupts */
     else
 	return TCL_OK;
 #endif
-    while( !feof( fp ) &&
+    while ( !feof( fp ) &&
 	   rt_read( fp, &scale, eye_model, rot ) >= 0 )  {
-	switch(mode)  {
+	switch (mode)  {
 	    case -1:
 		/* First step:  put eye in center */
 		view_state->vs_vop->vo_scale = scale;
@@ -1479,16 +1479,16 @@ f_rmats(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		VMOVE( sp->s_center, eye_model );
 
 		/* Adjust vector list for non-dl devices */
-		if( BU_LIST_IS_EMPTY( &(sp->s_vlist) ) )  break;
+		if ( BU_LIST_IS_EMPTY( &(sp->s_vlist) ) )  break;
 		vp = BU_LIST_LAST( bn_vlist, &(sp->s_vlist) );
 		VSUB2( xlate, eye_model, vp->pt[vp->nused-1] );
-		for( BU_LIST_FOR( vp, bn_vlist, &(sp->s_vlist) ) )  {
+		for ( BU_LIST_FOR( vp, bn_vlist, &(sp->s_vlist) ) )  {
 		    register int	i;
 		    register int	nused = vp->nused;
 		    register int	*cmd = vp->cmd;
 		    register point_t *pt = vp->pt;
-		    for( i = 0; i < nused; i++, cmd++, pt++ )  {
-			switch( *cmd )  {
+		    for ( i = 0; i < nused; i++, cmd++, pt++ )  {
+			switch ( *cmd )  {
 			    case BN_VLIST_POLY_START:
 			    case BN_VLIST_POLY_VERTNORM:
 				break;
@@ -1507,18 +1507,18 @@ f_rmats(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	view_state->vs_flag = 1;
 	refresh();	/* Draw new display */
     }
-    if( mode == 1 )  {
+    if ( mode == 1 )  {
 	VMOVE( sp->s_center, sav_center );
-	if( BU_LIST_NON_EMPTY( &(sp->s_vlist) ) )  {
+	if ( BU_LIST_NON_EMPTY( &(sp->s_vlist) ) )  {
 	    vp = BU_LIST_LAST( bn_vlist, &(sp->s_vlist) );
 	    VSUB2( xlate, sav_start, vp->pt[vp->nused-1] );
-	    for( BU_LIST_FOR( vp, bn_vlist, &(sp->s_vlist) ) )  {
+	    for ( BU_LIST_FOR( vp, bn_vlist, &(sp->s_vlist) ) )  {
 		register int	i;
 		register int	nused = vp->nused;
 		register int	*cmd = vp->cmd;
 		register point_t *pt = vp->pt;
-		for( i = 0; i < nused; i++, cmd++, pt++ )  {
-		    switch( *cmd )  {
+		for ( i = 0; i < nused; i++, cmd++, pt++ )  {
+		    switch ( *cmd )  {
 			case BN_VLIST_POLY_START:
 			case BN_VLIST_POLY_VERTNORM:
 			    break;
@@ -1554,7 +1554,7 @@ f_savekey(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     vect_t	eye_model;
     vect_t temp;
 
-    if(argc < 2 || 3 < argc){
+    if (argc < 2 || 3 < argc){
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -1564,11 +1564,11 @@ f_savekey(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
-    if( (fp = fopen( argv[1], "a")) == NULL )  {
+    if ( (fp = fopen( argv[1], "a")) == NULL )  {
 	perror(argv[1]);
 	return TCL_ERROR;
     }
-    if( argc > 2 ) {
+    if ( argc > 2 ) {
 	time = atof( argv[2] );
 	(void)fprintf(fp, "%f\n", time);
     }
@@ -1646,7 +1646,7 @@ static struct command_tab cmdtab[] = {
 static void
 rtif_sigint(int num)
 {
-    if(dbip == DBI_NULL)
+    if (dbip == DBI_NULL)
 	return;
 
     write( 2, "rtif_sigint\n", 12);
@@ -1654,7 +1654,7 @@ rtif_sigint(int num)
     /* Restore state variables */
     *mged_variables = rtif_saved_state;	/* struct copy */
 
-    if(rtif_vbp)  {
+    if (rtif_vbp)  {
 	rt_vlblock_free(rtif_vbp);
 	rtif_vbp = (struct bn_vlblock *)NULL;
     }
@@ -1686,7 +1686,7 @@ f_preview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     CHECK_DBI_NULL;
 
-    if(argc < 2){
+    if (argc < 2){
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -1696,7 +1696,7 @@ f_preview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
-    if( not_state( ST_VIEW, "animate viewpoint from new RT file") )
+    if ( not_state( ST_VIEW, "animate viewpoint from new RT file") )
 	return TCL_ERROR;
 
     /* Save any state variables we plan on changing */
@@ -1710,8 +1710,8 @@ f_preview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     /* Parse options */
     bu_optind = 1;			/* re-init bu_getopt() */
-    while( (c=bu_getopt(argc, argv, "d:vD:K:")) != EOF )  {
-	switch(c)  {
+    while ( (c=bu_getopt(argc, argv, "d:vD:K:")) != EOF )  {
+	switch (c)  {
 	    case 'd':
 		rtif_delay = atof(bu_optarg);
 		break;
@@ -1745,8 +1745,8 @@ f_preview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     argv += bu_optind-1;
 
     /* If file is still open from last cmd getting SIGINT, close it */
-    if(rtif_fp)  fclose(rtif_fp);
-    if( (rtif_fp = fopen(argv[1], "r")) == NULL )  {
+    if (rtif_fp)  fclose(rtif_fp);
+    if ( (rtif_fp = fopen(argv[1], "r")) == NULL )  {
 	perror(argv[1]);
 	return TCL_ERROR;
     }
@@ -1767,22 +1767,22 @@ f_preview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     VSET(temp, 0.0, 0.0, 1.0);
     MAT4X3PNT(rtif_eye_model, view_state->vs_vop->vo_view2model, temp);
 
-    if( setjmp( jmp_env ) == 0 )
+    if ( setjmp( jmp_env ) == 0 )
 	/* If user hits ^C, preview will stop, and clean up */
 	(void)signal(SIGINT, rtif_sigint);
     else
 	return TCL_OK;
 
-    while( ( cmd = rt_read_cmd( rtif_fp )) != NULL )  {
+    while ( ( cmd = rt_read_cmd( rtif_fp )) != NULL )  {
 	/* Hack to prevent running framedone scripts prematurely */
-	if( cmd[0] == '!' )  {
-	    if( rtif_currentframe < rtif_desiredframe ||
+	if ( cmd[0] == '!' )  {
+	    if ( rtif_currentframe < rtif_desiredframe ||
 		(rtif_finalframe && rtif_currentframe > rtif_finalframe) )  {
 		bu_free( (genptr_t)cmd, "preview ! cmd" );
 		continue;
 	    }
 	}
-	if( rt_do_cmd( (struct rt_i *)0, cmd, cmdtab ) < 0 )
+	if ( rt_do_cmd( (struct rt_i *)0, cmd, cmdtab ) < 0 )
 	    Tcl_AppendResult(interp, "command failed: ", cmd,
 			     "\n", (char *)NULL);
 	bu_free( (genptr_t)cmd, "preview cmd" );
@@ -1791,7 +1791,7 @@ f_preview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     rtif_fp = NULL;
 
     cvt_vlblock_to_solids( rtif_vbp, "EYE_PATH", 0 );
-    if(rtif_vbp)  {
+    if (rtif_vbp)  {
 	rt_vlblock_free(rtif_vbp);
 	rtif_vbp = (struct bn_vlblock *)NULL;
     }
@@ -1872,7 +1872,7 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     CHECK_DBI_NULL;
 
-    if(argc < 1 || MAXARGS < argc){
+    if (argc < 1 || MAXARGS < argc){
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -1898,31 +1898,31 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     *vp++ = argv[0];
 
     /* swipe x, y, z off the end if present */
-    if(argc > 3){
-	if(sscanf(argv[argc-3], "%lf", &center_model[X]) == 1 &&
+    if (argc > 3){
+	if (sscanf(argv[argc-3], "%lf", &center_model[X]) == 1 &&
 	   sscanf(argv[argc-2], "%lf", &center_model[Y]) == 1 &&
 	   sscanf(argv[argc-1], "%lf", &center_model[Z]) == 1){
 	    use_input_orig = 1;
 	    argc -= 3;
 	    VSCALE(center_model, center_model, local2base);
-	}else if(adc_state->adc_draw)
+	}else if (adc_state->adc_draw)
 	    *vp++ = "-b";
-    }else if(adc_state->adc_draw)
+    }else if (adc_state->adc_draw)
 	*vp++ = "-b";
 
-    if(mged_variables->mv_use_air){
+    if (mged_variables->mv_use_air){
 	*vp++ = "-u";
 	*vp++ = "1";
     }
 
     /* Calculate point from which to fire ray */
-    if(!use_input_orig && adc_state->adc_draw){
+    if (!use_input_orig && adc_state->adc_draw){
 	vect_t  view_ray_orig;
 
 	VSET(view_ray_orig, (fastf_t)adc_state->adc_dv_x, (fastf_t)adc_state->adc_dv_y, GED_MAX);
 	VSCALE(view_ray_orig, view_ray_orig, INV_GED);
 	MAT4X3PNT(center_model, view_state->vs_vop->vo_view2model, view_ray_orig);
-    }else if(!use_input_orig){
+    }else if (!use_input_orig){
 	VSET(center_model, -view_state->vs_vop->vo_center[MDX],
 	     -view_state->vs_vop->vo_center[MDY], -view_state->vs_vop->vo_center[MDZ]);
     }
@@ -1955,7 +1955,7 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		  dir[X], dir[Y], dir[Z]);
 
     i = 0;
-    if(QRAY_GRAPHICS){
+    if (QRAY_GRAPHICS){
 
 	*vp++ = "-e";
 	*vp++ = QRAY_FORMAT_NULL;
@@ -1976,7 +1976,7 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	*vp++ = "-e";
 	*vp++ = bu_vls_addr(&p_vls);
 
-	if(QRAY_TEXT){
+	if (QRAY_TEXT){
 	    char *cp;
 	    int count = 0;
 
@@ -1986,10 +1986,10 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    val = bu_vls_addr(&qray_fmts[0].fmt);
 
 	    /* find first '"' */
-	    while(*val != '"' && *val != '\0')
+	    while (*val != '"' && *val != '\0')
 		++val;
 
-	    if(*val == '\0')
+	    if (*val == '\0')
 		goto done;
 	    else
 		++val;	    /* skip first '"' */
@@ -1997,11 +1997,11 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    /* find last '"' */
 	    cp = (char *)strrchr(val, '"');
 
-	    if(cp != (char *)NULL) /* found it */
+	    if (cp != (char *)NULL) /* found it */
 		count = cp - val;
 
 	done:
-	    if(*val == '\0') {
+	    if (*val == '\0') {
 #ifndef _WIN32
 		bu_vls_printf(&o_vls, " fmt r \"\\n\" ");
 #else
@@ -2013,7 +2013,7 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 #else
 		bu_vls_printf(&o_vls, " fmt r \\\"\\\\n%*s\\\" ", count, val);
 #endif
-		if(count)
+		if (count)
 		    val += count + 1;
 		bu_vls_printf(&o_vls, "%s", val);
 	    }
@@ -2025,12 +2025,12 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
     }
 
-    if(QRAY_TEXT){
+    if (QRAY_TEXT){
 
 	bu_vls_init(&t_vls);
 
 	/* load vp with formats for printing */
-	for(; qray_fmts[i].type != (char)NULL; ++i)
+	for (; qray_fmts[i].type != (char)NULL; ++i)
 	    bu_vls_printf(&t_vls, "fmt %c %s; ",
 			  qray_fmts[i].type,
 			  bu_vls_addr(&qray_fmts[i].fmt));
@@ -2051,7 +2051,7 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     *vp++ = "-e";
     *vp++ = bu_vls_addr(&p_vls);
 
-    for( i=1; i < argc; i++ )
+    for ( i=1; i < argc; i++ )
 	*vp++ = argv[i];
 #ifdef _WIN32
     {
@@ -2066,13 +2066,13 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     setup_rt( vp, qray_cmd_echo );
 
-    if(use_input_orig){
+    if (use_input_orig){
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "\nFiring from (%lf, %lf, %lf)...\n",
 		      center_model[X], center_model[Y], center_model[Z]);
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
-    } else if(adc_state->adc_draw) {
+    } else if (adc_state->adc_draw) {
 	Tcl_AppendResult(interp, "\nFiring through angle/distance cursor...\n",
 			 (char *)NULL);
     } else {
@@ -2100,7 +2100,7 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	(void)close(pipe_out[1]);
 	(void)close(pipe_err[0]);
 	(void)close(pipe_err[1]);
-	for( i=3; i < 20; i++ )
+	for ( i=3; i < 20; i++ )
 	    (void)close(i);
 	(void)signal( SIGINT, SIG_DFL );
 	(void)execvp( rt_cmd_vec[0], rt_cmd_vec );
@@ -2197,11 +2197,11 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 
     snprintf(line1, 2048, "%s ", rt_cmd_vec[0]);
-    for(i=1;i<rt_cmd_vec_len;i++) {
+    for (i=1;i<rt_cmd_vec_len;i++) {
 	snprintf(name, 1024, "%s ", rt_cmd_vec[i]);
 	strncat(line1, name, 2048-strlen(line1)-1);
 	line1[1024-1] = '\0'; /* sanity */
-	if(strstr(name, "-e") != NULL) {
+	if (strstr(name, "-e") != NULL) {
 	    i++;
 	    snprintf(name, 1024, "\"%s\" ", rt_cmd_vec[i]);
 	    name[1024-1] = '\0'; /* sanity */
@@ -2210,7 +2210,7 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
     }
 
-    if(CreateProcess( NULL, line1, NULL, NULL, TRUE, DETACHED_PROCESS, NULL, NULL, &si, &pi )) {
+    if (CreateProcess( NULL, line1, NULL, NULL, TRUE, DETACHED_PROCESS, NULL, NULL, &si, &pi )) {
 	SetStdHandle(STD_INPUT_HANDLE, hSaveStdin);
 	SetStdHandle(STD_OUTPUT_HANDLE, hSaveStdout);
 	SetStdHandle(STD_ERROR_HANDLE, hSaveStderr);
@@ -2218,18 +2218,18 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     /* use fp_in to feed view info to nirt */
     CloseHandle( pipe_in[0] );
-    fp_in = _fdopen( _open_osfhandle((HFILE)pipe_inDup,_O_TEXT), "w" );
+    fp_in = _fdopen( _open_osfhandle((HFILE)pipe_inDup, _O_TEXT), "w" );
     /*fp_in = fdopen( pipe_in[1], "w" ); */
 
     /* use fp_out to read back the result */
     CloseHandle( pipe_out[1] );
     /*fp_out = fdopen( pipe_out[0], "r" ); */
-    fp_out = _fdopen( _open_osfhandle((HFILE)pipe_outDup,_O_TEXT), "r" );
+    fp_out = _fdopen( _open_osfhandle((HFILE)pipe_outDup, _O_TEXT), "r" );
 
     /* use fp_err to read any error messages */
     CloseHandle(pipe_err[1]);
     /*fp_err = fdopen( pipe_err[0], "r" ); */
-    fp_err = _fdopen( _open_osfhandle((HFILE)pipe_errDup,_O_TEXT), "r" );
+    fp_err = _fdopen( _open_osfhandle((HFILE)pipe_errDup, _O_TEXT), "r" );
 
     /* send quit command to nirt */
     fwrite( "q\n", 1, 2, fp_in );
@@ -2237,16 +2237,16 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 #endif
 
     bu_vls_free(&p_vls);   /* use to form "partition" part of nirt command above */
-    if(QRAY_GRAPHICS){
+    if (QRAY_GRAPHICS){
 
-	if(QRAY_TEXT)
+	if (QRAY_TEXT)
 	    bu_vls_free(&o_vls); /* used to form "overlap" part of nirt command above */
 
 	BU_LIST_INIT(&HeadQRayData.l);
 
 	/* handle partitions */
-	while(bu_fgets(line, RT_MAXLINE, fp_out) != (char *)NULL){
-	    if(line[0] == '\n'){
+	while (bu_fgets(line, RT_MAXLINE, fp_out) != (char *)NULL){
+	    if (line[0] == '\n'){
 		Tcl_AppendResult(interp, line+1, (char *)NULL);
 		break;
 	    }
@@ -2254,7 +2254,7 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    BU_GETSTRUCT(ndlp, qray_dataList);
 	    BU_LIST_APPEND(HeadQRayData.l.back, &ndlp->l);
 
-	    if(sscanf(line, "%le %le %le %le",
+	    if (sscanf(line, "%le %le %le %le",
 		      &ndlp->x_in, &ndlp->y_in, &ndlp->z_in, &ndlp->los) != 4)
 		break;
 	}
@@ -2266,8 +2266,8 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	rt_vlblock_free(vbp);
 
 	/* handle overlaps */
-	while(bu_fgets(line, RT_MAXLINE, fp_out) != (char *)NULL){
-	    if(line[0] == '\n'){
+	while (bu_fgets(line, RT_MAXLINE, fp_out) != (char *)NULL){
+	    if (line[0] == '\n'){
 		Tcl_AppendResult(interp, line+1, (char *)NULL);
 		break;
 	    }
@@ -2275,7 +2275,7 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    BU_GETSTRUCT(ndlp, qray_dataList);
 	    BU_LIST_APPEND(HeadQRayData.l.back, &ndlp->l);
 
-	    if(sscanf(line, "%le %le %le %le",
+	    if (sscanf(line, "%le %le %le %le",
 		      &ndlp->x_in, &ndlp->y_in, &ndlp->z_in, &ndlp->los) != 4)
 		break;
 	}
@@ -2288,16 +2288,16 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	update_views = 1;
     }
 
-    if(QRAY_TEXT){
+    if (QRAY_TEXT){
 	bu_vls_free(&t_vls);
 
-	while(bu_fgets(line, RT_MAXLINE, fp_out) != (char *)NULL)
+	while (bu_fgets(line, RT_MAXLINE, fp_out) != (char *)NULL)
 	    Tcl_AppendResult(interp, line, (char *)NULL);
     }
 
     (void)fclose(fp_out);
 
-    while(bu_fgets(line, RT_MAXLINE, fp_err) != (char *)NULL)
+    while (bu_fgets(line, RT_MAXLINE, fp_err) != (char *)NULL)
 	Tcl_AppendResult(interp, line, (char *)NULL);
     (void)fclose(fp_err);
 
@@ -2307,7 +2307,7 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     while ((rpid = wait(&retcode)) != pid && rpid != -1)
 	;	/* NULL */
 
-    if( retcode != 0 )
+    if ( retcode != 0 )
 	pr_wait_status( retcode );
 #else
     /* Wait for program to finish */
@@ -2360,7 +2360,7 @@ f_vnirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     CHECK_DBI_NULL;
 
-    if(argc < 3){
+    if (argc < 3){
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -2376,7 +2376,7 @@ f_vnirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
      * converted to local units before being handed to nirt. All other
      * arguments are passed straight through to nirt.
      */
-    if(sscanf(argv[argc-2], "%lf", &view_ray_orig[X]) != 1 ||
+    if (sscanf(argv[argc-2], "%lf", &view_ray_orig[X]) != 1 ||
        sscanf(argv[argc-1], "%lf", &view_ray_orig[Y]) != 1){
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help %s", argv[0]);
@@ -2404,7 +2404,7 @@ f_vnirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     /* pass remaining arguments to nirt */
     av[0] = "nirt";
-    for(i = 1; i < argc; ++i)
+    for (i = 1; i < argc; ++i)
 	av[i] = argv[i];
 
     /* pass modified coordinates to nirt */
@@ -2428,7 +2428,7 @@ f_vnirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 int
 cm_start(int argc, char **argv)
 {
-    if( argc < 2 )
+    if ( argc < 2 )
 	return(-1);
     rtif_currentframe = atoi(argv[1]);
     tree_walk_needed = 0;
@@ -2439,7 +2439,7 @@ cm_start(int argc, char **argv)
 int
 cm_vsize(int argc, char **argv)
 {
-    if( argc < 2 )
+    if ( argc < 2 )
 	return(-1);
     /* for some reason, scale is supposed to be half of size... */
     view_state->vs_vop->vo_size = atof(argv[1]);
@@ -2452,7 +2452,7 @@ cm_vsize(int argc, char **argv)
 int
 cm_eyept(int argc, char **argv)
 {
-    if( argc < 4 )
+    if ( argc < 4 )
 	return(-1);
     rtif_eye_model[X] = atof(argv[1]);
     rtif_eye_model[Y] = atof(argv[2]);
@@ -2468,7 +2468,7 @@ cm_lookat_pt(int argc, char **argv)
     point_t	pt;
     vect_t	dir;
 
-    if( argc < 4 )
+    if ( argc < 4 )
 	return(-1);
     pt[X] = atof(argv[1]);
     pt[Y] = atof(argv[2]);
@@ -2504,9 +2504,9 @@ cm_vrot(int argc, char **argv)
 {
     register int	i;
 
-    if( argc < 17 )
+    if ( argc < 17 )
 	return(-1);
-    for( i=0; i<16; i++ )
+    for ( i=0; i<16; i++ )
 	rtif_viewrot[i] = atof(argv[i+1]);
     /* Processing is deferred until cm_end() */
     return(0);
@@ -2519,7 +2519,7 @@ cm_orientation(int argc, char **argv)
     register int	i;
     quat_t		quat;
 
-    for( i=0; i<4; i++ )
+    for ( i=0; i<4; i++ )
 	quat[i] = atof( argv[i+1] );
     quat_quat2mat( rtif_viewrot, quat );
     return(0);
@@ -2539,11 +2539,11 @@ cm_end(int argc, char **argv)
     struct bu_list		*vhead = &rtif_vbp->head[0];
 
     /* Only display the frames the user is interested in */
-    if( rtif_currentframe < rtif_desiredframe )  return 0;
-    if( rtif_finalframe && rtif_currentframe > rtif_finalframe )  return 0;
+    if ( rtif_currentframe < rtif_desiredframe )  return 0;
+    if ( rtif_finalframe && rtif_currentframe > rtif_finalframe )  return 0;
 
     /* Record eye path as a polyline.  Move, then draws */
-    if( BU_LIST_IS_EMPTY( vhead ) )  {
+    if ( BU_LIST_IS_EMPTY( vhead ) )  {
 	RT_ADD_VLIST( vhead, rtif_eye_model, BN_VLIST_LINE_MOVE );
     } else {
 	RT_ADD_VLIST( vhead, rtif_eye_model, BN_VLIST_LINE_DRAW );
@@ -2568,7 +2568,7 @@ cm_end(int argc, char **argv)
     RT_ADD_VLIST(vhead, rtif_eye_model, BN_VLIST_LINE_MOVE);
 
     /*  Second step:  put eye at view 0, 0, 1.
-     *  For eye to be at 0, 0, 1, the old 0, 0,-1 needs to become 0, 0, 0.
+     *  For eye to be at 0, 0, 1, the old 0, 0, -1 needs to become 0, 0, 0.
      */
     VSET(xlate, 0.0, 0.0, -1.0);	/* correction factor */
     MAT4X3PNT(new_cent, view_state->vs_vop->vo_view2model, xlate);
@@ -2576,7 +2576,7 @@ cm_end(int argc, char **argv)
     new_mats();
 
     /* If new treewalk is needed, get new objects into view. */
-    if( tree_walk_needed )  {
+    if ( tree_walk_needed )  {
 	char *av[2];
 
 	av[0] = "Z";
@@ -2589,7 +2589,7 @@ cm_end(int argc, char **argv)
     view_state->vs_flag = 1;
     refresh();	/* Draw new display */
     view_state->vs_flag = 1;
-    if( rtif_delay > 0 )  {
+    if ( rtif_delay > 0 )  {
 	struct timeval tv;
 	fd_set readfds;
 
@@ -2619,10 +2619,10 @@ int
 cm_anim(int argc, char **argv)
 {
 
-    if(dbip == DBI_NULL)
+    if (dbip == DBI_NULL)
 	return 0;
 
-    if( db_parse_anim( dbip, argc, (const char **)argv ) < 0 )  {
+    if ( db_parse_anim( dbip, argc, (const char **)argv ) < 0 )  {
 	Tcl_AppendResult(interp, "cm_anim:  ", argv[1], " ", argv[2], " failed\n", (char *)NULL);
 	return(-1);		/* BAD */
     }
@@ -2644,7 +2644,7 @@ cm_tree(int argc, char **argv)
     register int	i = 1;
     char *cp = rt_cmd_storage;
 
-    for( i = 1;  i < argc && i < MAXARGS; i++ )  {
+    for ( i = 1;  i < argc && i < MAXARGS; i++ )  {
 	strncpy(cp, argv[i], (MAXARGS*9)-1);
 	rt_cmd_vec[i] = cp;
 	cp += strlen(cp) + 1;
@@ -2666,7 +2666,7 @@ cm_tree(int argc, char **argv)
 int
 cm_clean(int argc, char **argv)
 {
-    if(dbip == DBI_NULL)
+    if (dbip == DBI_NULL)
 	return 0;
 
     /*f_zap( (ClientData)NULL, interp, 0, (char **)0 );*/
@@ -2703,7 +2703,7 @@ cmd_solids_on_ray (ClientData clientData, Tcl_Interp *interp, int argc, char **a
     point_t			minus, plus;	/* vrts of solid's bnding bx */
     vect_t			unit_H, unit_V;
 
-    if(argc < 1 || 3 < argc){
+    if (argc < 1 || 3 < argc){
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);

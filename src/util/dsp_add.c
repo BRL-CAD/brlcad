@@ -98,7 +98,7 @@ swap_bytes(unsigned short *buf, unsigned long count)
 {
 	register unsigned short *p;
 
-	for (p = &buf[count-1] ; p >= buf ; p--)
+	for (p = &buf[count-1]; p >= buf; p--)
 		*p = ((*p << 8) & 0x0ff00) | (*p >> 8);
 }
 
@@ -123,7 +123,7 @@ add_float(unsigned short *buf1, unsigned short *buf2, unsigned long count)
 	e = &buf1[count];
 
 	/* add everything, keeping track of the min/max values found */
-	for (d=dbuf, p=buf1, q=buf2 ; p < e ; p++, q++, d++) {
+	for (d=dbuf, p=buf1, q=buf2; p < e; p++, q++, d++) {
 		*d = *p + *q;
 		if (*d > max) max = *d;
 		if (*d < min) min = *d;
@@ -135,7 +135,7 @@ add_float(unsigned short *buf1, unsigned short *buf2, unsigned long count)
 
 	bu_log("min: %g scale: %g\n", min - k, k);
 
-	for (d=dbuf, p=buf1, q=buf2 ; p < e ; p++, q++, d++)
+	for (d=dbuf, p=buf1, q=buf2; p < e; p++, q++, d++)
 		*p = (unsigned short)  ((*d - min) * k) + 1;
 
 	bu_free(dbuf, "buffer of double");
@@ -156,7 +156,7 @@ add_int(unsigned short *buf1, unsigned short *buf2, unsigned long count)
 	int i;
 	unsigned short s;
 
-	for (i=0; i < count ; i++) {
+	for (i=0; i < count; i++) {
 		int_value = buf1[i] + buf2[i];
 		s = (unsigned short)int_value;
 

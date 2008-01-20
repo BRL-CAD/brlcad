@@ -236,7 +236,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
     }
 
     BU_GETSTRUCT(dmp, dm);
-    if(dmp == DM_NULL) {
+    if (dmp == DM_NULL) {
 	return DM_NULL;
     }
 
@@ -244,14 +244,14 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
     dmp->dm_interp = interp;
 
     dmp->dm_vars.pub_vars = (genptr_t)bu_calloc(1, sizeof(struct dm_xvars), "X_open_dm: dm_xvars");
-    if(dmp->dm_vars.pub_vars == (genptr_t)NULL){
+    if (dmp->dm_vars.pub_vars == (genptr_t)NULL){
 	bu_free((genptr_t)dmp, "X_open_dm: dmp");
 	return DM_NULL;
     }
     pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
 
     dmp->dm_vars.priv_vars = (genptr_t)bu_calloc(1, sizeof(struct x_vars), "X_open_dm: x_vars");
-    if(dmp->dm_vars.priv_vars == (genptr_t)NULL){
+    if (dmp->dm_vars.priv_vars == (genptr_t)NULL){
 	bu_free((genptr_t)dmp->dm_vars.pub_vars, "X_open_dm: dmp->dm_vars.pub_vars");
 	bu_free((genptr_t)dmp, "X_open_dm: dmp");
 	return DM_NULL;
@@ -265,20 +265,20 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 
     dm_processOptions(dmp, &init_proc_vls, --argc, ++argv);
 
-    if(bu_vls_strlen(&dmp->dm_pathName) == 0)
+    if (bu_vls_strlen(&dmp->dm_pathName) == 0)
 	bu_vls_printf(&dmp->dm_pathName, ".dm_X%d", count);
 
     ++count;
-    if(bu_vls_strlen(&dmp->dm_dName) == 0){
+    if (bu_vls_strlen(&dmp->dm_dName) == 0){
 	char *dp;
 
 	dp = getenv("DISPLAY");
-	if(dp)
+	if (dp)
 	    bu_vls_strcpy(&dmp->dm_dName, dp);
 	else
 	    bu_vls_strcpy(&dmp->dm_dName, ":0.0");
     }
-    if(bu_vls_strlen(&init_proc_vls) == 0)
+    if (bu_vls_strlen(&init_proc_vls) == 0)
 	bu_vls_strcpy(&init_proc_vls, "bind_dm");
 
     /* initialize dm specific variables */
@@ -289,7 +289,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 
     pubvars->fontstruct = NULL;
 
-    if(dmp->dm_top){
+    if (dmp->dm_top){
 	/* Make xtkwin a toplevel window */
 	pubvars->xtkwin = Tk_CreateWindowFromPath(interp, tkwin,
 						  bu_vls_addr(&dmp->dm_pathName),
@@ -299,7 +299,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 	char *cp;
 
 	cp = strrchr(bu_vls_addr(&dmp->dm_pathName), (int)'.');
-	if(cp == bu_vls_addr(&dmp->dm_pathName)){
+	if (cp == bu_vls_addr(&dmp->dm_pathName)){
 	    pubvars->top = tkwin;
 	}else{
 	    struct bu_vls top_vls;
@@ -318,7 +318,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 			    cp + 1, (char *)NULL);
     }
 
-    if(pubvars->xtkwin == NULL){
+    if (pubvars->xtkwin == NULL){
 	bu_log("X_open_dm: Failed to open %s\n", bu_vls_addr(&dmp->dm_pathName));
 	(void)X_close_dm(dmp);
 	return DM_NULL;
@@ -332,7 +332,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 		  &init_proc_vls,
 		  &dmp->dm_pathName);
 
-    if(Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR){
+    if (Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR){
 	bu_vls_free(&str);
 	(void)X_close_dm(dmp);
 	return DM_NULL;
@@ -349,23 +349,23 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 	return DM_NULL;
     }
 
-    if(dmp->dm_width == 0){
+    if (dmp->dm_width == 0){
 	dmp->dm_width =
 	    DisplayWidth(pubvars->dpy,
 			 DefaultScreen(pubvars->dpy)) - 30;
 	++make_square;
     }
 
-    if(dmp->dm_height == 0){
+    if (dmp->dm_height == 0){
 	dmp->dm_height =
 	    DisplayHeight(pubvars->dpy,
 			  DefaultScreen(pubvars->dpy)) - 30;
 	++make_square;
     }
 
-    if(make_square > 0){
+    if (make_square > 0){
 	/* Make window square */
-	if(dmp->dm_height <
+	if (dmp->dm_height <
 	   dmp->dm_width)
 	    dmp->dm_width = dmp->dm_height;
 	else
@@ -382,7 +382,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 #endif
 
     /* must do this before MakeExist */
-    if((pubvars->vip = X_choose_visual(dmp)) == NULL){
+    if ((pubvars->vip = X_choose_visual(dmp)) == NULL){
 	bu_log("X_open_dm: Can't get an appropriate visual.\n");
 	(void)X_close_dm(dmp);
 	return DM_NULL;
@@ -400,7 +400,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 		     dmp->dm_height,
 		     Tk_Depth(pubvars->xtkwin));
 
-    if(privars->is_trueColor){
+    if (privars->is_trueColor){
 	XColor fg, bg;
 
 	fg.red = 65535;
@@ -445,7 +445,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
     {
 	int return_val;
 
-	if(!XQueryExtension(pubvars->dpy,
+	if (!XQueryExtension(pubvars->dpy,
 			    "XInputExtension", &return_val, &return_val, &return_val))
 	    goto Skip_dials;
     }
@@ -459,21 +459,21 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 	olist = list = (XDeviceInfoPtr)XListInputDevices(pubvars->dpy, &ndevices);
     }
 
-    if( list == (XDeviceInfoPtr)NULL ||
+    if ( list == (XDeviceInfoPtr)NULL ||
 	list == (XDeviceInfoPtr)1 )  goto Done;
 
-    for(j = 0; j < ndevices; ++j, list++){
-	if(list->use == IsXExtensionDevice){
-	    if(!strcmp(list->name, "dial+buttons")){
-		if((dev = XOpenDevice(pubvars->dpy,
+    for (j = 0; j < ndevices; ++j, list++){
+	if (list->use == IsXExtensionDevice){
+	    if (!strcmp(list->name, "dial+buttons")){
+		if ((dev = XOpenDevice(pubvars->dpy,
 				      list->id)) == (XDevice *)NULL){
 		    bu_log("X_open_dm: Couldn't open the dials+buttons\n");
 		    goto Done;
 		}
 
-		for(cip = dev->classes, k = 0; k < dev->num_classes;
+		for (cip = dev->classes, k = 0; k < dev->num_classes;
 		    ++k, ++cip){
-		    switch(cip->input_class){
+		    switch (cip->input_class){
 #ifdef IR_BUTTONS
 			case ButtonClass:
 			    DeviceButtonPress(dev, pubvars->devbuttonpress,
@@ -529,12 +529,12 @@ X_close_dm(struct dm *dmp)
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
     struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
 
-    if(pubvars->dpy){
-	if(privars->gc)
+    if (pubvars->dpy){
+	if (privars->gc)
 	    XFreeGC(pubvars->dpy,
 		    privars->gc);
 
-	if(privars->pix)
+	if (privars->pix)
 	    Tk_FreePixmap(pubvars->dpy,
 			  privars->pix);
 
@@ -543,7 +543,7 @@ X_close_dm(struct dm *dmp)
 	    XFreeColormap(pubvars->dpy,
 			  pubvars->cmap);
 
-	if(pubvars->xtkwin)
+	if (pubvars->xtkwin)
 	    Tk_DestroyWindow(pubvars->xtkwin);
 
 #if 0
@@ -631,7 +631,7 @@ X_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 {
     struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
 
-    if(dmp->dm_debugLevel){
+    if (dmp->dm_debugLevel){
 	bu_log("X_loadMatrix()\n");
 
 	bu_log("which eye = %d\t", which_eye);
@@ -925,7 +925,7 @@ X_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int siz
 	bu_log("\tx - %g\n", x);
 	bu_log("\ty - %g\n", y);
 	bu_log("\tsize - %d\n", size);
-	if(use_aspect){
+	if (use_aspect){
 	    bu_log("\tuse_aspect - %d\t\taspect ratio - %g\n", use_aspect, dmp->dm_aspect);
 	}else
 	    bu_log("\tuse_aspect - 0");
@@ -1007,7 +1007,7 @@ X_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, 
     dmp->dm_fg[1] = g;
     dmp->dm_fg[2] = b;
 
-    if(privars->is_trueColor){
+    if (privars->is_trueColor){
 	XColor color;
 
 	color.red = r << 8;
@@ -1046,7 +1046,7 @@ X_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
     dmp->dm_bg[1] = g;
     dmp->dm_bg[2] = b;
 
-    if(privars->is_trueColor){
+    if (privars->is_trueColor){
 
 	XColor color;
 
@@ -1079,10 +1079,10 @@ X_setLineAttr(struct dm *dmp, int width, int style)
     dmp->dm_lineWidth = width;
     dmp->dm_lineStyle = style;
 
-    if(width <= 1)
+    if (width <= 1)
 	width = 0;
 
-    if(style == DM_DASHED_LINE)
+    if (style == DM_DASHED_LINE)
 	linestyle = LineOnOffDash;
     else
 	linestyle = LineSolid;
@@ -1308,7 +1308,7 @@ X_choose_visual(struct dm *dmp)
 	}
 
 	baddepth = 1000;
-	for(tries = 0; tries < j; ++tries) {
+	for (tries = 0; tries < j; ++tries) {
 	    maxvip = vibase + good[0];
 	    for (i=1; i<j; i++) {
 		vip = vibase + good[i];
@@ -1318,7 +1318,7 @@ X_choose_visual(struct dm *dmp)
 	    }
 
 	    /* make sure Tk handles it */
-	    if(desire_trueColor){
+	    if (desire_trueColor){
 		pubvars->cmap =
 		    XCreateColormap(pubvars->dpy,
 				    RootWindow(pubvars->dpy,
@@ -1348,7 +1348,7 @@ X_choose_visual(struct dm *dmp)
 	    }
 	}
 
-	if(desire_trueColor)
+	if (desire_trueColor)
 	    desire_trueColor = 0;
 	else
 	    return (XVisualInfo *)NULL; /* failure */

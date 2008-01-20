@@ -43,7 +43,7 @@ struct brlcad_att *att;
 	int			entityno;
 	int			i;
 
-	if( att_de == 0 )
+	if ( att_de == 0 )
 	{
 		/* fill structure with default info */
 		att->material_name = (char *)NULL;
@@ -62,7 +62,7 @@ struct brlcad_att *att;
 
 	entityno = (att_de-1)/2;
 
-	if( dir[entityno]->param <= pstart )
+	if ( dir[entityno]->param <= pstart )
 	{
 		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[entityno]->direct, dir[entityno]->name );
@@ -71,7 +71,7 @@ struct brlcad_att *att;
 
 	Readrec( dir[entityno]->param );
 	Readint( &i, "" );
-	if( i != 422 )
+	if ( i != 422 )
 	{
 		bu_log( "Read_att: Expecting attribute instance, found type %d\n", i );
 		return;

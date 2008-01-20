@@ -198,7 +198,7 @@ descr_to_nmg(struct shell *s, FILE *fp, fastf_t *Ext)
 		vert_num;	/* Current vertex in ascii file. */
 	fastf_t	pts[3*MAXV] = {(fastf_t)0};	/* Points in current loop. */
 	struct faceuse *fu;	/* Face created. */
-	struct vertex	*cur_loop[MAXV],/* Vertices in current loop. */
+	struct vertex	*cur_loop[MAXV], /* Vertices in current loop. */
 			*verts[MAXV];	/* Vertices in all loops. */
 
 	n = 0;			/* No vertices read in yet. */

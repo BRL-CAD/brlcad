@@ -125,7 +125,7 @@ register struct UG_PARAM *pp;
 	fprintf(stderr, "buf_ctl = %d\n", pp->buf_ctl);
 	fprintf(stderr, "link = x%x\n\n", pp->link);
 
-	for( tp = pp->link; tp; tp = tp->link )  {
+	for ( tp = pp->link; tp; tp = tp->link )  {
 		fprintf(stderr, "addr = x%x\n", tp->addr);
 		fprintf(stderr, "tx = %d\n", tp->tx);
 		fprintf(stderr, "ty = %d\n", tp->ty);
@@ -156,9 +156,9 @@ int	width, height;
 	ug_param.buf_ctl = NULL;
 	ug_param.link = NULL;
 
-	if( width <= 0 )
+	if ( width <= 0 )
 		width = ifp->if_width;
-	if( height <= 0 )
+	if ( height <= 0 )
 		height = ifp->if_height;
 	if ( width > ifp->if_max_width)
 		width = ifp->if_max_width;
@@ -170,11 +170,11 @@ int	width, height;
 	x_window = 0;
 	y_window = 0;
 
-	if( (ugbuf = malloc( width*height*4 )) == NULL )  {
+	if ( (ugbuf = malloc( width*height*4 )) == NULL )  {
 		fprintf(stderr, "ug_open: malloc failure\n");
 		return(-1);
 	}
-	if( (ugbuf2 = malloc( width*height*4 )) == NULL )  {
+	if ( (ugbuf2 = malloc( width*height*4 )) == NULL )  {
 		fprintf(stderr, "ug_open: malloc 2 failure\n");
 		return(-1);
 	}
@@ -190,7 +190,7 @@ int	width, height;
 		return(-1);
 	}
 
-	if( (fp = fopen(FBSAVE, "r")) != NULL ) {
+	if ( (fp = fopen(FBSAVE, "r")) != NULL ) {
 		fread( ugbuf, 4, height*width, fp );
 		fclose( fp );
 		unlink(FBSAVE);
@@ -207,7 +207,7 @@ FBIO	*ifp;
 	FILE	*fp;
 
 	/* save image to file */
-	if( (fp = fopen(FBSAVE, "w")) != NULL ) {
+	if ( (fp = fopen(FBSAVE, "w")) != NULL ) {
 		fwrite( ugbuf, 4, ifp->if_height*ifp->if_width, fp );
 		fclose( fp );
 	} else {
@@ -235,14 +235,14 @@ ug_clear( ifp, pp )
 FBIO	*ifp;
 RGBpixel	*pp;
 {
-	if( pp == RGBPIXEL_NULL )  {
+	if ( pp == RGBPIXEL_NULL )  {
 		memset(ugbuf, 0, ifp->if_width * ifp->if_height * 4);
 	} else {
 		register char *cp;
 		register int todo;
 
 		cp = &ugbuf[0];
-		for( todo = ifp->if_width * ifp->if_height; todo > 0; todo-- )  {
+		for ( todo = ifp->if_width * ifp->if_height; todo > 0; todo-- )  {
 			cp++;
 			*cp++ = (*pp)[BLU];
 			*cp++ = (*pp)[GRN];
@@ -313,8 +313,8 @@ int	count;
 	y = ifp->if_height-1 - y;
 	start_y = y;
 	cp = &ugbuf[ ((y * ifp->if_width) + x)*4 ];
-	for( todo = count; todo > 0; todo--, pixelp+=3 )  {
-		if( ++x > ifp->if_width )  {
+	for ( todo = count; todo > 0; todo--, pixelp+=3 )  {
+		if ( ++x > ifp->if_width )  {
 			y--;	/* 1st quadrant now */
 			x = 0;
 			cp = &ugbuf[ ((y * ifp->if_width) + x)*4 ];
@@ -326,7 +326,7 @@ int	count;
 	}
 
 	/* check for special zoom/window display */
-	if( x_zoom != 1 || y_zoom != 1 || x_window != 0 || y_window != 0 ) {
+	if ( x_zoom != 1 || y_zoom != 1 || x_window != 0 || y_window != 0 ) {
 		zandw( ifp );
 		return( count );
 	}
@@ -383,10 +383,10 @@ int	xzoom, yzoom;
 	y_window = ugy;
 
 	/* Window needs to be set as well XXX */
-	if( xzoom < 1 )  xzoom=1;
-	if( yzoom < 1 )  yzoom=1;
-	if( xzoom > 256 )  xzoom=256;
-	if( yzoom > 256 )  yzoom=256;
+	if ( xzoom < 1 )  xzoom=1;
+	if ( yzoom < 1 )  yzoom=1;
+	if ( xzoom > 256 )  xzoom=256;
+	if ( yzoom > 256 )  yzoom=256;
 
 	x_zoom = xzoom;
 	y_zoom = yzoom;
@@ -427,7 +427,7 @@ int	x, y;
 	/* build a cursor */
 	cp = &ugcurs[0];
 
-	for(i = 0; i <= 16 * 16; i++) {
+	for (i = 0; i <= 16 * 16; i++) {
 		cp++;
 		*cp++ = 255;
 		*cp++ = 255;
@@ -462,8 +462,8 @@ FBIO *ifp;
 /*	return;*/
 
 	/* bound the window parameters - XXX */
-	if( x_window < 0 ) x_window = 0;
-	if( y_window < 0 ) y_window = 0;
+	if ( x_window < 0 ) x_window = 0;
+	if ( y_window < 0 ) y_window = 0;
 
 	memset(ugbuf2, 0, ifp->if_width*ifp->if_height*4);	/*XXX*/
 
@@ -472,11 +472,11 @@ FBIO *ifp;
 
 fprintf( stderr, "numx, y= %d, %d; zoomx, y= %d, %d; windowx, y= %d, %d\n", numx, numy, x_zoom, y_zoom, x_window, y_window );
 
-	for( y = 0; y < numy; y++ ) {
-		for( yz = 0; yz < y_zoom; yz++ ) {
-			for( x = 0; x < numx; x++ ) {
+	for ( y = 0; y < numy; y++ ) {
+		for ( yz = 0; yz < y_zoom; yz++ ) {
+			for ( x = 0; x < numx; x++ ) {
 				ip = &ugbuf[ ((y+y_window)*ifp->if_width+(x+x_window))*4 ];
-				for( xz = 0; xz < x_zoom; xz++ ) {
+				for ( xz = 0; xz < x_zoom; xz++ ) {
 					op = &ugbuf2[ ((y*y_zoom+yz)*ifp->if_width
 					      + (x*x_zoom+xz))*4 ];
 					*op++ = *ip;

@@ -43,12 +43,12 @@ int main(int argc, char **argv)
 {
 	int	i, num, onum;
 
-	if( argc <= 1 || isatty(fileno(stdin)) ) {
+	if ( argc <= 1 || isatty(fileno(stdin)) ) {
 		bu_exit(1, "%s", usage );
 	}
 
-	while( argc > 1 && argv[1][0] == '-' )  {
-		switch( argv[1][1] )  {
+	while ( argc > 1 && argv[1][0] == '-' )  {
+		switch ( argv[1][1] )  {
 		case 'r':
 			rflag++;
 			break;
@@ -69,11 +69,11 @@ int main(int argc, char **argv)
 		argv++;
 	}
 
-	while( (num = fread( &ibuf[0], sizeof( ibuf[0] ), 512, stdin)) > 0 ) {
+	while ( (num = fread( &ibuf[0], sizeof( ibuf[0] ), 512, stdin)) > 0 ) {
 		onum = 0;
 		obp = obuf;
-		for( i = 0; i < num; i += 2 ) {
-			if( rflag ) {
+		for ( i = 0; i < num; i += 2 ) {
+			if ( rflag ) {
 				*obp++ = ibuf[i];
 				onum++;
 			}
@@ -81,18 +81,18 @@ int main(int argc, char **argv)
 				*obp++ = ibuf[i+1];
 				onum++;
 			}
-			if( mflag ) {
+			if ( mflag ) {
 				*obp++ = hypot( ibuf[i], ibuf[i+1] );
 				onum++;
 			}
-			if( pflag ) {
-				if( ibuf[i] == 0 && ibuf[i+1] == 0 )
+			if ( pflag ) {
+				if ( ibuf[i] == 0 && ibuf[i+1] == 0 )
 					*obp++ = 0;
 				else
 					*obp++ = atan2( ibuf[i], ibuf[i+1] );
 				onum++;
 			}
-			if( zflag ) {
+			if ( zflag ) {
 				*obp++ = 0.0;
 				onum++;
 			}

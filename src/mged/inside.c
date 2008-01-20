@@ -173,7 +173,7 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	CHECK_DBI_NULL;
 
-	if(argc < 1){
+	if (argc < 1){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -183,7 +183,7 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  return TCL_ERROR;
 	}
 
-	if( setjmp( jmp_env ) == 0 )
+	if ( setjmp( jmp_env ) == 0 )
 	  (void)signal( SIGINT, sig3);  /* allow interupts */
 	else
 	  return TCL_OK;
@@ -194,20 +194,20 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	 *	else get solid name to use
 	 */
 
-	if( state == ST_S_EDIT ) {
+	if ( state == ST_S_EDIT ) {
 	  /* solid edit mode */
 	  /* apply es_mat editing to parameters */
 	  transform_editing_solid( &intern, es_mat, &es_int, 0 );
 	  outdp = LAST_SOLID(illump);
 
-	  if( argc < arg+1 ) {
+	  if ( argc < arg+1 ) {
 		  Tcl_AppendResult(interp, "You are in Prim Edit mode, using edited primitive as outside primitive: ", (char *)NULL);
 		  add_solid_path_to_result( interp, illump );
 		  Tcl_AppendResult(interp, "\n", (char *)NULL);
 	  }
-	}  else if( state == ST_O_EDIT ) {
+	}  else if ( state == ST_O_EDIT ) {
 	  /* object edit mode */
-	  if( illump->s_Eflag ) {
+	  if ( illump->s_Eflag ) {
 	     Tcl_AppendResult(interp, "Cannot find inside of a processed (E'd) region\n",
 			      (char *)NULL);
 	     status = TCL_ERROR;
@@ -218,36 +218,36 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  bn_mat_mul(newmat, modelchanges, es_mat);
 	  transform_editing_solid( &intern, newmat, &es_int, 0 );
 	  outdp = LAST_SOLID(illump);
-	  if( argc < arg+1 ) {
+	  if ( argc < arg+1 ) {
 		  Tcl_AppendResult(interp, "You are in Object Edit mode, using key solid as outside solid: ", (char *)NULL);
 		  add_solid_path_to_result( interp, illump );
 		  Tcl_AppendResult(interp, "\n", (char *)NULL);
 	  }
 	} else {
 	  /* Not doing any editing....ask for outside solid */
-	  if( argc < arg+1 ) {
+	  if ( argc < arg+1 ) {
 	    Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter name of outside solid: ",
 			     (char *)NULL);
 	    status = TCL_ERROR;
 	    goto end;
 	  }
-	  if( (outdp = db_lookup( dbip,  argv[arg], LOOKUP_NOISY )) == DIR_NULL ){
+	  if ( (outdp = db_lookup( dbip,  argv[arg], LOOKUP_NOISY )) == DIR_NULL ){
 	    status = TCL_ERROR;
 	    goto end;
 	  }
 	  ++arg;
 
-	  if( rt_db_get_internal( &intern, outdp, dbip, bn_mat_identity, &rt_uniresource ) < 0 ) {
+	  if ( rt_db_get_internal( &intern, outdp, dbip, bn_mat_identity, &rt_uniresource ) < 0 ) {
 	    (void)signal( SIGINT, SIG_IGN );
 	    TCL_READ_ERR_return;
 	  }
 	}
 
-	if( intern.idb_type == ID_ARB8 )  {
+	if ( intern.idb_type == ID_ARB8 )  {
 	  /* find the comgeom arb type, & reorganize */
 	  int uvec[8], svec[11];
 
-	  if( rt_arb_get_cgtype( &cgtype, intern.idb_ptr, &mged_tol, uvec, svec ) == 0 ) {
+	  if ( rt_arb_get_cgtype( &cgtype, intern.idb_ptr, &mged_tol, uvec, svec ) == 0 ) {
 	    Tcl_AppendResult(interp, outdp->d_namep, ": BAD ARB\n", (char *)NULL);
 	    status = TCL_ERROR;
 	    goto end;
@@ -266,20 +266,20 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	/* "intern" is now loaded with the outside solid data */
 
 	/* get the inside solid name */
-	if( argc < arg+1 ) {
+	if ( argc < arg+1 ) {
 	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter name of the inside solid: ",
 			   (char *)NULL);
 	  status = TCL_ERROR;
 	  goto end;
 	}
-	if( db_lookup( dbip, argv[arg], LOOKUP_QUIET ) != DIR_NULL ) {
+	if ( db_lookup( dbip, argv[arg], LOOKUP_QUIET ) != DIR_NULL ) {
 	  Tcl_AppendResult(interp, "you are attempting to use ", argv[arg],
 		" as the inside solid.\n", "(Note that if you are in an edit mode",
 		" the outside solid will be the solid you are editing)\n", (char *)NULL );
 	  status = TCL_ERROR;
 	  goto end;
 	}
-	if( dbip->dbi_version < 5 && (int)strlen(argv[arg]) >= NAMESIZE )  {
+	if ( dbip->dbi_version < 5 && (int)strlen(argv[arg]) >= NAMESIZE )  {
 	  struct bu_vls tmp_vls;
 
 	  bu_vls_init(&tmp_vls);
@@ -293,7 +293,7 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	++arg;
 
 	/* get thicknesses and calculate parameters for newrec */
-	switch( intern.idb_type )  {
+	switch ( intern.idb_type )  {
 
 	case ID_ARB8:
 	    {
@@ -302,7 +302,7 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 		nface = 6;
 
-		switch( cgtype ) {
+		switch ( cgtype ) {
 		case 8:
 			promp = p_arb8;
 			break;
@@ -329,8 +329,8 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 			break;
 		}
 
-		for(i=0; i<nface; i++) {
-		  if( argc < arg+1 ) {
+		for (i=0; i<nface; i++) {
+		  if ( argc < arg+1 ) {
 		    Tcl_AppendResult(interp, MORE_ARGS_STR, promp[i], (char *)NULL);
 		    status = TCL_ERROR;
 		    goto end;
@@ -339,7 +339,7 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		  ++arg;
 		}
 
-		if( arbin(&intern, thick, nface, cgtype, planes) ){
+		if ( arbin(&intern, thick, nface, cgtype, planes) ){
 		  status = TCL_ERROR;
 		  goto end;
 		}
@@ -348,8 +348,8 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	case ID_TGC:
 	  promp = p_tgcin;
-	  for(i=0; i<3; i++) {
-	    if( argc < arg+1 ) {
+	  for (i=0; i<3; i++) {
+	    if ( argc < arg+1 ) {
 	      Tcl_AppendResult(interp, MORE_ARGS_STR, promp[i], (char *)NULL);
 	      status = TCL_ERROR;
 	      goto end;
@@ -358,14 +358,14 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    ++arg;
 	  }
 
-	  if( tgcin(&intern, thick) ){
+	  if ( tgcin(&intern, thick) ){
 	    status = TCL_ERROR;
 	    goto end;
 	  }
 	  break;
 
 	case ID_ELL:
-	  if( argc < arg+1 ) {
+	  if ( argc < arg+1 ) {
 	    Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter desired thickness: ", (char *)NULL);
 	    status = TCL_ERROR;
 	    goto end;
@@ -373,14 +373,14 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  thick[0] = atof( argv[arg] ) * local2base;
 	  ++arg;
 
-	  if( ellgin(&intern, thick) ){
+	  if ( ellgin(&intern, thick) ){
 	    status = TCL_ERROR;
 	    goto end;
 	  }
 	  break;
 
 	case ID_TOR:
-	  if( argc < arg+1 ) {
+	  if ( argc < arg+1 ) {
 	    Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter desired thickness: ", (char *)NULL);
 	    status = TCL_ERROR;
 	    goto end;
@@ -388,7 +388,7 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  thick[0] = atof( argv[arg] ) * local2base;
 	  ++arg;
 
-	  if( torin(&intern, thick) ){
+	  if ( torin(&intern, thick) ){
 	    status = TCL_ERROR;
 	    goto end;
 	  }
@@ -397,7 +397,7 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	case ID_PARTICLE:
 	  promp = p_partin;
 	  for (i = 0; i < 1; i++) {
-	    if( argc < arg+1 ) {
+	    if ( argc < arg+1 ) {
 	      Tcl_AppendResult(interp, MORE_ARGS_STR, promp[i], (char *)NULL);
 	      status = TCL_ERROR;
 	      goto end;
@@ -406,7 +406,7 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    ++arg;
 	  }
 
-	  if( partin(&intern, thick) ){
+	  if ( partin(&intern, thick) ){
 	    status = TCL_ERROR;
 	    goto end;
 	  }
@@ -415,7 +415,7 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	case ID_RPC:
 	  promp = p_rpcin;
 	  for (i = 0; i < 4; i++) {
-	    if( argc < arg+1 ) {
+	    if ( argc < arg+1 ) {
 	      Tcl_AppendResult(interp, MORE_ARGS_STR, promp[i], (char *)NULL);
 	      status = TCL_ERROR;
 	      goto end;
@@ -424,7 +424,7 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    ++arg;
 	  }
 
-	  if( rpcin(&intern, thick) ){
+	  if ( rpcin(&intern, thick) ){
 	    status = TCL_ERROR;
 	    goto end;
 	  }
@@ -433,7 +433,7 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	case ID_RHC:
 	  promp = p_rhcin;
 	  for (i = 0; i < 4; i++) {
-	    if( argc < arg+1 ) {
+	    if ( argc < arg+1 ) {
 	      Tcl_AppendResult(interp, MORE_ARGS_STR, promp[i], (char *)NULL);
 	      status = TCL_ERROR;
 	      goto end;
@@ -442,7 +442,7 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    ++arg;
 	  }
 
-	  if( rhcin(&intern, thick) ){
+	  if ( rhcin(&intern, thick) ){
 	    status = TCL_ERROR;
 	    goto end;
 	  }
@@ -451,7 +451,7 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	case ID_EPA:
 	  promp = p_epain;
 	  for (i = 0; i < 2; i++) {
-	    if( argc < arg+1 ) {
+	    if ( argc < arg+1 ) {
 	      Tcl_AppendResult(interp, MORE_ARGS_STR, promp[i], (char *)NULL);
 	      status = TCL_ERROR;
 	      goto end;
@@ -460,7 +460,7 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    ++arg;
 	  }
 
-	  if( epain(&intern, thick) ){
+	  if ( epain(&intern, thick) ){
 	    status = TCL_ERROR;
 	    goto end;
 	  }
@@ -469,7 +469,7 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	case ID_EHY:
 	  promp = p_ehyin;
 	  for (i = 0; i < 2; i++) {
-	    if( argc < arg+1 ) {
+	    if ( argc < arg+1 ) {
 	      Tcl_AppendResult(interp, MORE_ARGS_STR, promp[i], (char *)NULL);
 	      status = TCL_ERROR;
 	      goto end;
@@ -478,7 +478,7 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    ++arg;
 	  }
 
-	  if( ehyin(&intern, thick) ){
+	  if ( ehyin(&intern, thick) ){
 	    status = TCL_ERROR;
 	    goto end;
 	  }
@@ -487,7 +487,7 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	case ID_ETO:
 	  promp = p_etoin;
 	  for (i = 0; i < 1; i++) {
-	    if( argc < arg+1 ) {
+	    if ( argc < arg+1 ) {
 	      Tcl_AppendResult(interp, MORE_ARGS_STR, promp[i], (char *)NULL);
 	      status = TCL_ERROR;
 	      goto end;
@@ -496,7 +496,7 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    ++arg;
 	  }
 
-	  if( etoin(&intern, thick) ){
+	  if ( etoin(&intern, thick) ){
 	    status = TCL_ERROR;
 	    goto end;
 	  }
@@ -504,14 +504,14 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	case ID_NMG:
 	  promp = p_nmgin;
-	  if( argc < arg+1 ) {
+	  if ( argc < arg+1 ) {
 	    Tcl_AppendResult(interp, MORE_ARGS_STR, promp[0], (char *)NULL);
 	    status = TCL_ERROR;
 	    goto end;
 	  }
 	  thick[0] = atof( argv[arg] ) * local2base;
 	  ++arg;
-	  if( nmgin( &intern, thick[0] ) ){
+	  if ( nmgin( &intern, thick[0] ) ){
 	    status = TCL_ERROR;
 	    goto end;
 	  }
@@ -528,11 +528,11 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	(void)signal( SIGINT, SIG_IGN);
 
 	/* Add to in-core directory */
-	if( (dp = db_diradd( dbip,  newname, -1, 0, DIR_SOLID, (genptr_t)&intern.idb_type )) == DIR_NULL )  {
+	if ( (dp = db_diradd( dbip,  newname, -1, 0, DIR_SOLID, (genptr_t)&intern.idb_type )) == DIR_NULL )  {
 	  (void)signal( SIGINT, SIG_IGN );
 	  TCL_ALLOC_ERR_return;
 	}
-	if( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 ) {
+	if ( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 ) {
 	  (void)signal( SIGINT, SIG_IGN );
 	  TCL_WRITE_ERR_return;
 	}
@@ -572,23 +572,23 @@ arbin(
 
 	/* move new face planes for the desired thicknesses
 	 * don't do this yet for an arb7 */
-	if( cgtype != 7 )
+	if ( cgtype != 7 )
 	{
-		for(i=0; i<nface; i++) {
-			if( (planes[i][3] - VDOT(center_pt, &planes[i][0])) > 0.0 )
+		for (i=0; i<nface; i++) {
+			if ( (planes[i][3] - VDOT(center_pt, &planes[i][0])) > 0.0 )
 				thick[i] *= -1.0;
 			planes[i][3] += thick[i];
 		}
 	}
 
-	if( cgtype == 5 )
+	if ( cgtype == 5 )
 		num_pts = 4;	/* use rt_arb_3face_intersect for first 4 points */
-	else if( cgtype == 7 )
+	else if ( cgtype == 7 )
 		num_pts = 0;	/* don't use rt_arb_3face_intersect for any points */
 
 	/* find the new vertices by intersecting the new face planes */
-	for(i=0; i<num_pts; i++) {
-	  if( rt_arb_3face_intersect( arb->pt[i], (const plane_t *)planes, cgtype, i*3 ) < 0 )  {
+	for (i=0; i<num_pts; i++) {
+	  if ( rt_arb_3face_intersect( arb->pt[i], (const plane_t *)planes, cgtype, i*3 ) < 0 )  {
 	    Tcl_AppendResult(interp, "cannot find inside arb\n", (char *)NULL);
 	    return(1);
 	  }
@@ -598,7 +598,7 @@ arbin(
 	 * These arbs have a vertex that is the intersection of four planes, and
 	 * the inside solid may have a single vertex or an edge replacing this vertex
 	 */
-	if( cgtype == 5 )
+	if ( cgtype == 5 )
 	{
 	  /* Here we are only concerned with the one vertex where 4 planes intersect
 	   * in the original solid
@@ -610,7 +610,7 @@ arbin(
 	  bu_vls_init(&tmp_vls);
 
 	  /* calculate the four possible intersect points */
-	  if( bn_mkpoint_3planes( pt[0], planes[1], planes[2], planes[3] ) )
+	  if ( bn_mkpoint_3planes( pt[0], planes[1], planes[2], planes[3] ) )
 	    {
 	      bu_vls_printf(&tmp_vls, "Cannot find inside arb5\n" );
 	      bu_vls_printf(&tmp_vls, "Cannot find intersection of three planes for point 0:\n" );
@@ -621,7 +621,7 @@ arbin(
 	      bu_vls_free(&tmp_vls);
 	      return( 1 );
 	    }
-	  if( bn_mkpoint_3planes( pt[1], planes[2], planes[3], planes[4] ) )
+	  if ( bn_mkpoint_3planes( pt[1], planes[2], planes[3], planes[4] ) )
 	    {
 	      bu_vls_printf(&tmp_vls, "Cannot find inside arb5\n" );
 	      bu_vls_printf(&tmp_vls, "Cannot find intersection of three planes for point 1:\n" );
@@ -632,7 +632,7 @@ arbin(
 	      bu_vls_free(&tmp_vls);
 	      return( 1 );
 	    }
-	  if( bn_mkpoint_3planes( pt[2], planes[3], planes[4], planes[1] ) )
+	  if ( bn_mkpoint_3planes( pt[2], planes[3], planes[4], planes[1] ) )
 	    {
 	      bu_vls_printf(&tmp_vls, "Cannot find inside arb5\n" );
 	      bu_vls_printf(&tmp_vls, "Cannot find intersection of three planes for point 2:\n" );
@@ -643,7 +643,7 @@ arbin(
 	      bu_vls_free(&tmp_vls);
 	      return( 1 );
 	    }
-	  if( bn_mkpoint_3planes( pt[3], planes[4], planes[1], planes[2] ) )
+	  if ( bn_mkpoint_3planes( pt[3], planes[4], planes[1], planes[2] ) )
 	    {
 	      bu_vls_printf(&tmp_vls, "Cannot find inside arb5\n" );
 	      bu_vls_printf(&tmp_vls, "Cannot find intersection of three planes for point 3:\n" );
@@ -655,12 +655,12 @@ arbin(
 	      return( 1 );
 	    }
 
-		if( bn_pt3_pt3_equal( pt[0], pt[1], &mged_tol ) )
+		if ( bn_pt3_pt3_equal( pt[0], pt[1], &mged_tol ) )
 		{
 			/* if any two of the calculates intersection points are equal,
 			 * then all four must be equal
 			 */
-			for( i=4 ; i<8 ; i++ )
+			for ( i=4; i<8; i++ )
 				VMOVE( arb->pt[i], pt[0] );
 
 			return( 0 );
@@ -675,14 +675,14 @@ arbin(
 		 */
 
 		dist0 = DIST_PT_PLANE( pt[0], planes[0] );
-		if( dist0 < 0.0 )
+		if ( dist0 < 0.0 )
 			dist0 = (-dist0);
 
 		dist1 = DIST_PT_PLANE( pt[1], planes[0] );
-		if( dist1 < 0.0 )
+		if ( dist1 < 0.0 )
 			dist1 = (-dist1);
 
-		if( dist0 < dist1 )
+		if ( dist0 < dist1 )
 		{
 			VMOVE( arb->pt[5], pt[0] );
 			VMOVE( arb->pt[6], pt[0] );
@@ -697,7 +697,7 @@ arbin(
 			VMOVE( arb->pt[7], pt[1] );
 		}
 	}
-	else if( cgtype == 7 )
+	else if ( cgtype == 7 )
 	{
 		struct model *m;
 		struct nmgregion *r;
@@ -716,7 +716,7 @@ arbin(
 		m = nmg_mm();
 
 		/* get an NMG version of this arb7 */
-		if( rt_functab[ip->idb_type].ft_tessellate( &r, m, ip, &ttol, &mged_tol ) )
+		if ( rt_functab[ip->idb_type].ft_tessellate( &r, m, ip, &ttol, &mged_tol ) )
 		{
 		  Tcl_AppendResult(interp, "Cannot tessellate arb7\n", (char *)NULL);
 		  rt_db_free_internal( ip, &rt_uniresource );
@@ -724,23 +724,23 @@ arbin(
 		}
 
 		/* move face planes */
-		for( i=0 ; i<nface ; i++ )
+		for ( i=0; i<nface; i++ )
 		{
 			int found=0;
 
 			/* look for the face plane with the same geometry as the arb7 planes */
 			s = BU_LIST_FIRST( shell, &r->s_hd );
-			for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
+			for ( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
 			{
 				struct face_g_plane *fg;
 				plane_t pl;
 
 				NMG_CK_FACEUSE( fu );
-				if( fu->orientation != OT_SAME )
+				if ( fu->orientation != OT_SAME )
 					continue;
 
 				NMG_GET_FU_PLANE( pl, fu );
-				if( bn_coplanar( planes[i], pl, &mged_tol ) > 0 )
+				if ( bn_coplanar( planes[i], pl, &mged_tol ) > 0 )
 				{
 					/* found the NMG face geometry that matches arb face i */
 					found = 1;
@@ -748,7 +748,7 @@ arbin(
 					NMG_CK_FACE_G_PLANE( fg );
 
 					/* move the face by distance "thick[i]" */
-					if( fu->f_p->flip )
+					if ( fu->f_p->flip )
 						fg->N[3] += thick[i];
 					else
 						fg->N[3] -= thick[i];
@@ -756,7 +756,7 @@ arbin(
 					break;
 				}
 			}
-			if( !found )
+			if ( !found )
 			{
 			  struct bu_vls tmp_vls;
 
@@ -775,14 +775,14 @@ arbin(
 		 */
 		bu_ptbl( &vert_tab, BU_PTBL_INIT, (long *)NULL );
 		nmg_vertex_tabulate( &vert_tab, &m->magic );
-		for( i=0 ; i<BU_PTBL_END( &vert_tab ) ; i++ )
+		for ( i=0; i<BU_PTBL_END( &vert_tab ); i++ )
 		{
 			struct vertex *v;
 
 			v = (struct vertex *)BU_PTBL_GET( &vert_tab, i );
 			NMG_CK_VERTEX( v );
 
-			if( nmg_in_vert( v, 0, &mged_tol ) )
+			if ( nmg_in_vert( v, 0, &mged_tol ) )
 			{
 			  Tcl_AppendResult(interp, "Could not find coordinates for inside arb7\n",
 					   (char *)NULL);
@@ -840,13 +840,13 @@ tgcin(struct rt_db_internal *ip, fastf_t thick[6])
 	VUNITIZE( norm )
 
 	normal_height = VDOT( norm, tgc->h );
-	if( normal_height < 0.0 )
+	if ( normal_height < 0.0 )
 	{
 		normal_height = (-normal_height);
 		VREVERSE( norm, norm )
 	}
 
-	if( (thick[0] + thick[1]) >= normal_height )
+	if ( (thick[0] + thick[1]) >= normal_height )
 	{
 		Tcl_AppendResult(interp, "TGC shorter than base and top thicknesses\n", (char *)NULL);
 		return( 1 );
@@ -857,35 +857,35 @@ tgcin(struct rt_db_internal *ip, fastf_t thick[6])
 	mag_c = MAGNITUDE( tgc->c );
 	mag_d = MAGNITUDE( tgc->d );
 
-	if(( mag_a < VDIVIDE_TOL && mag_c < VDIVIDE_TOL ) ||
+	if (( mag_a < VDIVIDE_TOL && mag_c < VDIVIDE_TOL ) ||
 	   ( mag_b < VDIVIDE_TOL && mag_d < VDIVIDE_TOL ) )
 	{
 		Tcl_AppendResult(interp, "TGC is too small too create inside solid", (char *)NULL );
 		return( 1 );
 	}
 
-	if( mag_a >= VDIVIDE_TOL )
+	if ( mag_a >= VDIVIDE_TOL )
 		VSCALE( unit_a, tgc->a, 1.0/mag_a )
-	else if( mag_c >= VDIVIDE_TOL )
+	else if ( mag_c >= VDIVIDE_TOL )
 		VSCALE( unit_a, tgc->c, 1.0/mag_c )
 
-	if( mag_c >= VDIVIDE_TOL )
+	if ( mag_c >= VDIVIDE_TOL )
 		VSCALE( unit_c, tgc->c, 1.0/mag_c )
-	else if( mag_a >= VDIVIDE_TOL )
+	else if ( mag_a >= VDIVIDE_TOL )
 		VSCALE( unit_c, tgc->a, 1.0/mag_a )
 
-	if( mag_b >= VDIVIDE_TOL )
+	if ( mag_b >= VDIVIDE_TOL )
 		VSCALE( unit_b, tgc->b, 1.0/mag_b )
-	else if( mag_d >= VDIVIDE_TOL )
+	else if ( mag_d >= VDIVIDE_TOL )
 		VSCALE( unit_b, tgc->d, 1.0/mag_d )
 
-	if( mag_d >= VDIVIDE_TOL )
+	if ( mag_d >= VDIVIDE_TOL )
 		VSCALE( unit_d, tgc->d, 1.0/mag_d )
-	else if( mag_c >= VDIVIDE_TOL )
+	else if ( mag_c >= VDIVIDE_TOL )
 		VSCALE( unit_d, tgc->b, 1.0/mag_b )
 
 	/* Calculate new vertex from base thickness */
-	if( thick[0] != 0.0 )
+	if ( thick[0] != 0.0 )
 	{
 		/* calculate new vertex using similar triangles */
 		ratio = thick[0]/normal_height;
@@ -903,7 +903,7 @@ tgcin(struct rt_db_internal *ip, fastf_t thick[6])
 	}
 
 	/* calculate new height vector */
-	if( thick[1] != 0.0 )
+	if ( thick[1] != 0.0 )
 	{
 		/* calculate new height vector using simialr triangles */
 		ratio = thick[1]/normal_height;
@@ -923,7 +923,7 @@ tgcin(struct rt_db_internal *ip, fastf_t thick[6])
 	/* calculate new height vector based on new vertex and top */
 	VSUB2( h, top, v )
 
-	if( thick[2] != 0.0 )	/* ther is a side thickness */
+	if ( thick[2] != 0.0 )	/* ther is a side thickness */
 	{
 		vect_t ctoa;	/* unit vector from tip of C to tip of A */
 		vect_t dtob;	/* unit vector from tip of D to tip of B */
@@ -932,7 +932,7 @@ tgcin(struct rt_db_internal *ip, fastf_t thick[6])
 		fastf_t dot;	/* dot product */
 		fastf_t ratio1, ratio2;
 
-		if( (thick[2] >= new_mag_a || thick[2] >= new_mag_b) &&
+		if ( (thick[2] >= new_mag_a || thick[2] >= new_mag_b) &&
 		    (thick[2] >= new_mag_c || thick[2] >= new_mag_d) )
 		{
 			/* can't make a small enough TGC */
@@ -970,7 +970,7 @@ tgcin(struct rt_db_internal *ip, fastf_t thick[6])
 		dot = VDOT( dtob, unit_b );
 		delta_bd = thick[2]/sqrt( 1.0 - dot*dot );
 
-		if( (delta_ac > new_mag_a || delta_bd > new_mag_b) &&
+		if ( (delta_ac > new_mag_a || delta_bd > new_mag_b) &&
 		    (delta_ac > new_mag_c || delta_bd > new_mag_d) )
 		{
 			/* Can't make TGC small enough */
@@ -979,28 +979,28 @@ tgcin(struct rt_db_internal *ip, fastf_t thick[6])
 		}
 
 		/* Check if changes will make vectors a or d lengths negative */
-		if( delta_ac >= new_mag_c || delta_bd >= new_mag_d )
+		if ( delta_ac >= new_mag_c || delta_bd >= new_mag_d )
 		{
 			/* top vertex (height) must move. Calculate similar triangle ratios */
-			if( delta_ac >= new_mag_c )
+			if ( delta_ac >= new_mag_c )
 				ratio1 = (new_mag_a - delta_ac)/(new_mag_a - new_mag_c);
 			else
 				ratio1 = 1.0;
 
-			if( delta_bd >= new_mag_d )
+			if ( delta_bd >= new_mag_d )
 				ratio2 = (new_mag_b - delta_bd)/(new_mag_b - new_mag_d);
 			else
 				ratio2 = 1.0;
 
 			/* choose the smallest similar triangle for setting new top vertex */
-			if( ratio1 < ratio2 )
+			if ( ratio1 < ratio2 )
 				ratio = ratio1;
 			else
 				ratio = ratio2;
 
-			if( ratio1 == ratio && ratio1 < 1.0 ) /* c vector must go to zero */
+			if ( ratio1 == ratio && ratio1 < 1.0 ) /* c vector must go to zero */
 				new_mag_c = SQRT_SMALL_FASTF;
-			else if( ratio1 > ratio && ratio < 1.0 )
+			else if ( ratio1 > ratio && ratio < 1.0 )
 			{
 				/* vector d will go to zero, but vector c will not */
 
@@ -1013,9 +1013,9 @@ tgcin(struct rt_db_internal *ip, fastf_t thick[6])
 			else /* just change c vector length by delta */
 				new_mag_c -= delta_ac;
 
-			if( ratio2 == ratio && ratio2 < 1.0 ) /* vector d must go to zero */
+			if ( ratio2 == ratio && ratio2 < 1.0 ) /* vector d must go to zero */
 				new_mag_d = SQRT_SMALL_FASTF;
-			else if( ratio2 > ratio && ratio < 1.0 )
+			else if ( ratio2 > ratio && ratio < 1.0 )
 			{
 				/* calculate vector length at new top vertex */
 				new_mag_d = new_mag_d + (new_mag_b - new_mag_d)*(1.0 - ratio);
@@ -1030,30 +1030,30 @@ tgcin(struct rt_db_internal *ip, fastf_t thick[6])
 			new_mag_a -= delta_ac;
 			new_mag_b -= delta_bd;
 		}
-		else if( delta_ac >= new_mag_a || delta_bd >= new_mag_b)
+		else if ( delta_ac >= new_mag_a || delta_bd >= new_mag_b)
 		{
 			/* base vertex (v) must move */
 
 			/* Calculate similar triangle ratios */
-			if( delta_ac >= new_mag_a )
+			if ( delta_ac >= new_mag_a )
 				ratio1 = (new_mag_c - delta_ac)/(new_mag_c - new_mag_a);
 			else
 				ratio1 = 1.0;
 
-			if( delta_bd >= new_mag_b )
+			if ( delta_bd >= new_mag_b )
 				ratio2 = (new_mag_d - delta_bd)/(new_mag_d - new_mag_b);
 			else
 				ratio2 = 1.0;
 
 			/* select smallest triangle to set new base vertex */
-			if( ratio1 < ratio2 )
+			if ( ratio1 < ratio2 )
 				ratio = ratio1;
 			else
 				ratio = ratio2;
 
-			if( ratio1 == ratio && ratio1 < 1.0 ) /* vector a must go to zero */
+			if ( ratio1 == ratio && ratio1 < 1.0 ) /* vector a must go to zero */
 				new_mag_a = SQRT_SMALL_FASTF;
-			else if( ratio1 > ratio && ratio < 1.0 )
+			else if ( ratio1 > ratio && ratio < 1.0 )
 			{
 				/* calculate length of vector a if it were at new base location */
 				new_mag_a = new_mag_c + (new_mag_a - new_mag_c)*ratio;
@@ -1064,9 +1064,9 @@ tgcin(struct rt_db_internal *ip, fastf_t thick[6])
 			else /* just subtract delta */
 				new_mag_a -= delta_ac;
 
-			if( ratio2 == ratio && ratio2 < 1.0 ) /* vector b must go to zero */
+			if ( ratio2 == ratio && ratio2 < 1.0 ) /* vector b must go to zero */
 				new_mag_b = SQRT_SMALL_FASTF;
-			else if( ratio2 > ratio && ratio < 1.0 )
+			else if ( ratio2 > ratio && ratio < 1.0 )
 			{
 				/* Calculate length of b if it were at new base vector */
 				new_mag_b = new_mag_d + (new_mag_b - new_mag_d)*ratio;
@@ -1110,16 +1110,16 @@ torin(struct rt_db_internal *ip, fastf_t thick[6] )
 	struct rt_tor_internal	*tor = (struct rt_tor_internal *)ip->idb_ptr;
 
 	RT_TOR_CK_MAGIC(tor);
-	if( thick[0] == 0.0 )
+	if ( thick[0] == 0.0 )
 		return(0);
 
-	if( thick[0] < 0 ) {
-	  if( (tor->r_h - thick[0]) > (tor->r_a + .01) ) {
+	if ( thick[0] < 0 ) {
+	  if ( (tor->r_h - thick[0]) > (tor->r_a + .01) ) {
 	    Tcl_AppendResult(interp, "cannot do: r2 > r1\n", (char *)NULL);
 	    return(1);
 	  }
 	}
-	if( thick[0] >= tor->r_h ) {
+	if ( thick[0] >= tor->r_h ) {
 	  Tcl_AppendResult(interp, "cannot do: r2 <= 0\n", (char *)NULL);
 	  return(1);
 	}
@@ -1138,7 +1138,7 @@ ellgin(struct rt_db_internal *ip, fastf_t thick[6])
 	fastf_t mag[3], nmag[3];
 	fastf_t ratio;
 
-	if( thick[0] <= 0.0 )
+	if ( thick[0] <= 0.0 )
 		return(0);
 	thick[2] = thick[1] = thick[0];	/* uniform thickness */
 
@@ -1147,25 +1147,25 @@ ellgin(struct rt_db_internal *ip, fastf_t thick[6])
 	mag[1] = MAGNITUDE(ell->b);
 	mag[2] = MAGNITUDE(ell->c);
 
-	for(i=0; i<3; i++) {
+	for (i=0; i<3; i++) {
 		order[i] = i;
 	}
 
-	for(i=0; i<2; i++) {
+	for (i=0; i<2; i++) {
 		k = i + 1;
-		for(j=k; j<3; j++) {
-			if(mag[i] < mag[j])
+		for (j=k; j<3; j++) {
+			if (mag[i] < mag[j])
 				order[i] = j;
 		}
 	}
 
-	if( (ratio = mag[order[1]] / mag[order[0]]) < .8 )
-		thick[order[1]] = thick[order[1]]/(1.016447*pow(ratio,.071834));
-	if( (ratio = mag[order[2]] / mag[order[1]]) < .8 )
-		thick[order[2]] = thick[order[2]]/(1.016447*pow(ratio,.071834));
+	if ( (ratio = mag[order[1]] / mag[order[0]]) < .8 )
+		thick[order[1]] = thick[order[1]]/(1.016447*pow(ratio, .071834));
+	if ( (ratio = mag[order[2]] / mag[order[1]]) < .8 )
+		thick[order[2]] = thick[order[2]]/(1.016447*pow(ratio, .071834));
 
-	for(i=0; i<3; i++) {
-	  if( (nmag[i] = mag[i] - thick[i]) <= 0.0 ){
+	for (i=0; i<3; i++) {
+	  if ( (nmag[i] = mag[i] - thick[i]) <= 0.0 ){
 	    struct bu_vls tmp_vls;
 
 	    bu_vls_init(&tmp_vls);
@@ -1188,7 +1188,7 @@ partin(struct rt_db_internal *ip, fastf_t *thick )
 
 	RT_PART_CK_MAGIC( part );
 
-	if(*thick >= part->part_vrad || *thick >= part->part_hrad)
+	if (*thick >= part->part_vrad || *thick >= part->part_hrad)
 	  return(1);    /* BAD */
 
 	part->part_vrad -= *thick;
@@ -1327,14 +1327,14 @@ nmgin( struct rt_db_internal *ip, fastf_t thick )
 	struct model *m;
 	struct nmgregion *r;
 
-	if( ip->idb_type != ID_NMG )
+	if ( ip->idb_type != ID_NMG )
 		return( 1 );
 
 	m = (struct model *)ip->idb_ptr;
 	NMG_CK_MODEL( m );
 
 	r = BU_LIST_FIRST( nmgregion, &m->r_hd );
-	while( BU_LIST_NOT_HEAD( r, &m->r_hd ) )
+	while ( BU_LIST_NOT_HEAD( r, &m->r_hd ) )
 	{
 		struct nmgregion *next_r;
 		struct shell *s;
@@ -1344,26 +1344,26 @@ nmgin( struct rt_db_internal *ip, fastf_t thick )
 		next_r = BU_LIST_PNEXT( nmgregion, &r->l );
 
 		s = BU_LIST_FIRST( shell, &r->s_hd );
-		while( BU_LIST_NOT_HEAD( s, &r->s_hd ) )
+		while ( BU_LIST_NOT_HEAD( s, &r->s_hd ) )
 		{
 			struct shell *next_s;
 
 			next_s = BU_LIST_PNEXT( shell, &s->l );
 
 			nmg_shell_coplanar_face_merge( s, &mged_tol, 1 );
-			if( !nmg_kill_cracks( s ) )
+			if ( !nmg_kill_cracks( s ) )
 				(void)nmg_extrude_shell( s, thick, 0, 0, &mged_tol );
 
 			s = next_s;
 		}
 
-		if( BU_LIST_IS_EMPTY( &r->s_hd ) )
+		if ( BU_LIST_IS_EMPTY( &r->s_hd ) )
 			nmg_kr( r );
 
 		r = next_r;
 	}
 
-	if( BU_LIST_IS_EMPTY( &m->r_hd ) )
+	if ( BU_LIST_IS_EMPTY( &m->r_hd ) )
 	{
 	  Tcl_AppendResult(interp, "No inside created\n", (char *)NULL);
 	  nmg_km( m );

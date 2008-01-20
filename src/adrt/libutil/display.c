@@ -69,8 +69,8 @@ void util_display_init(int w, int h) {
 
 
   /* Initialize the SDL library */
-  if(!SDL_WasInit(SDL_INIT_VIDEO))
-    if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_NOPARACHUTE) < 0) {
+  if (!SDL_WasInit(SDL_INIT_VIDEO))
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_NOPARACHUTE) < 0) {
       fprintf(stderr, "Couldn't initialize SDL: %s\n", SDL_GetError());
       exit(1);
     }
@@ -97,7 +97,7 @@ if(modes == (SDL_Rect **)-1){
 } else{
   /* Print valid modes */
   printf("Available Modes\n");
-  for(i=0;modes[i];++i)
+  for (i=0;modes[i];++i)
     printf("  %d x %d\n", modes[i]->w, modes[i]->h);
 }
 }
@@ -124,7 +124,7 @@ if(modes == (SDL_Rect **)-1){
   util_display_rect.w = util_display_screen_w;
   util_display_rect.h = util_display_screen_h;
 
-  if(util_display_screen == NULL) {
+  if (util_display_screen == NULL) {
     fprintf(stderr, "Couldn't set video mode: %s\n", SDL_GetError());
     exit(1);
   }
@@ -165,19 +165,19 @@ void util_display_text(char *text, int x, int y, int jh, int jv) {
   SDL_Rect font, dest;
   int i, loc_x, loc_y;
 
-  if(jh == UTIL_JUSTIFY_LEFT) {
+  if (jh == UTIL_JUSTIFY_LEFT) {
     loc_x = 0 + x*UTIL_DISPLAY_FONT_WIDTH;
   } else {
     loc_x = util_display_screen_w - x - UTIL_DISPLAY_FONT_WIDTH*strlen(text);
   }
 
-  if(jv == UTIL_JUSTIFY_TOP) {
+  if (jv == UTIL_JUSTIFY_TOP) {
     loc_y = 0 + y*UTIL_DISPLAY_FONT_HEIGHT;
   } else {
     loc_y = util_display_screen_h - (y+1)*UTIL_DISPLAY_FONT_HEIGHT;
   }
 
-  for(i = 0; i < strlen(text); i++) {
+  for (i = 0; i < strlen(text); i++) {
     font.x = UTIL_DISPLAY_FONT_WIDTH*text[i];
     font.y = 0;
     font.w = UTIL_DISPLAY_FONT_WIDTH;
@@ -202,9 +202,9 @@ void util_display_cross() {
   int i, n, ind;
 
   /* Horizontal */
-  for(n = -1; n <= 1; n++) {
+  for (n = -1; n <= 1; n++) {
     ind = 4*(util_display_screen_w * (util_display_screen_h / 2) + (util_display_screen_w - 32) / 2 + n*util_display_screen_w);
-    for(i = 0; i < 33; i++) {
+    for (i = 0; i < 33; i++) {
       ((unsigned char *)util_display_screen->pixels)[ind+4*i+0] = 255 - ((unsigned char *)util_display_screen->pixels)[ind+4*i+0];
       ((unsigned char *)util_display_screen->pixels)[ind+4*i+1] = 255 - ((unsigned char *)util_display_screen->pixels)[ind+4*i+1];
       ((unsigned char *)util_display_screen->pixels)[ind+4*i+2] = 255 - ((unsigned char *)util_display_screen->pixels)[ind+4*i+2];
@@ -213,9 +213,9 @@ void util_display_cross() {
   }
 
   /* Vertical */
-  for(n = -1; n <= 1; n++) {
+  for (n = -1; n <= 1; n++) {
     ind = 4*(util_display_screen_w * ((util_display_screen_h - 32) / 2) + (util_display_screen_w / 2) + n);
-    for(i = 0; i < 33; i++) {
+    for (i = 0; i < 33; i++) {
       ((unsigned char *)util_display_screen->pixels)[ind+4*i*util_display_screen_w+0] = 255 - ((unsigned char *)util_display_screen->pixels)[ind+4*i+0];
       ((unsigned char *)util_display_screen->pixels)[ind+4*i*util_display_screen_w+1] = 255 - ((unsigned char *)util_display_screen->pixels)[ind+4*i+1];
       ((unsigned char *)util_display_screen->pixels)[ind+4*i*util_display_screen_w+2] = 255 - ((unsigned char *)util_display_screen->pixels)[ind+4*i+2];
@@ -243,7 +243,7 @@ void util_display_editor(char **content_buffer, int *content_lines, char **conso
   console_y = (2 * (util_display_screen_h / UTIL_DISPLAY_FONT_HEIGHT)) / 3 + 1;
 
   /* Keyboard handling */
-  while(SDL_WaitEvent(&event) >= 0) {
+  while (SDL_WaitEvent(&event) >= 0) {
     /* Draw Content Window Blue */
     rect.x = 0;
     rect.y = 0;
@@ -260,19 +260,19 @@ void util_display_editor(char **content_buffer, int *content_lines, char **conso
 
     /* Content */
     util_display_text("[Content]", 0, 0, UTIL_JUSTIFY_LEFT, UTIL_JUSTIFY_TOP);
-    for(i = 0; i <= *content_lines; i++)
+    for (i = 0; i <= *content_lines; i++)
       util_display_text(content_buffer[i], 1, i + 1, UTIL_JUSTIFY_LEFT, UTIL_JUSTIFY_TOP);
 
     /* Console */
     util_display_text("[Console]", 0, console_y, UTIL_JUSTIFY_LEFT, UTIL_JUSTIFY_TOP);
-    for(i = 0; i < *console_lines; i++)
+    for (i = 0; i < *console_lines; i++)
       util_display_text(console_buffer[i], 1, i + console_y + 1, UTIL_JUSTIFY_LEFT, UTIL_JUSTIFY_TOP);
 
     SDL_Flip(util_display_screen);
 
-    switch(event.type) {
+    switch (event.type) {
       case SDL_KEYDOWN:
-	switch(event.key.keysym.sym) {
+	switch (event.key.keysym.sym) {
 	  case SDLK_BACKQUOTE:
 	    return;
 	    break;
@@ -294,48 +294,48 @@ void util_display_editor(char **content_buffer, int *content_lines, char **conso
 	    break;
 
 	  case SDLK_LEFT:
-	    if(h_ind)
+	    if (h_ind)
 	      h_ind--;
 	    break;
 
 	  case SDLK_RIGHT:
-	    if(h_ind < strlen(content_buffer[v_ind]))
+	    if (h_ind < strlen(content_buffer[v_ind]))
 	      h_ind++;
 	    break;
 
 	  case SDLK_DOWN:
-	    if(v_ind < *content_lines)
+	    if (v_ind < *content_lines)
 	      v_ind++;
 
-	    if(h_ind > strlen(content_buffer[v_ind]))
+	    if (h_ind > strlen(content_buffer[v_ind]))
 	      h_ind = strlen(content_buffer[v_ind]);
 	    break;
 
 	  case SDLK_UP:
-	    if(v_ind)
+	    if (v_ind)
 	      v_ind--;
 
-	    if(h_ind > strlen(content_buffer[v_ind]))
+	    if (h_ind > strlen(content_buffer[v_ind]))
 	      h_ind = strlen(content_buffer[v_ind]);
 	    break;
 
 	  case SDLK_BACKSPACE:
-	    if(h_ind) {
-	      for(i = h_ind-1; i < strlen(content_buffer[v_ind]); i++)
+	    if (h_ind) {
+	      for (i = h_ind-1; i < strlen(content_buffer[v_ind]); i++)
 		content_buffer[v_ind][i] = content_buffer[v_ind][i+1];
 	      h_ind--;
 	    }
 	    break;
 
 	  case SDLK_DELETE:
-	    for(i = h_ind; i < strlen(content_buffer[v_ind]); i++)
+	    for (i = h_ind; i < strlen(content_buffer[v_ind]); i++)
 	      content_buffer[v_ind][i] = content_buffer[v_ind][i+1];
 	    break;
 
 	  case SDLK_RETURN:
 	    {
 	      h_ind = 0;
-	      if(v_ind == *content_lines) {
+	      if (v_ind == *content_lines) {
 		(*content_lines)++;
 		content_buffer[*content_lines][0] = 0;
 	      }
@@ -345,8 +345,8 @@ void util_display_editor(char **content_buffer, int *content_lines, char **conso
 
 	  default:
 	    /* First check for any special commands */
-	    if(event.key.keysym.mod & KMOD_CTRL) {
-	      switch(event.key.keysym.sym) {
+	    if (event.key.keysym.mod & KMOD_CTRL) {
+	      switch (event.key.keysym.sym) {
 		case SDLK_p: /* process code */
 		  {
 		    char *code, response[1024];
@@ -360,18 +360,18 @@ void util_display_editor(char **content_buffer, int *content_lines, char **conso
 		    }
 
 		    code[0] = 0;
-		    for(i = 0; i <= *content_lines; i++) {
+		    for (i = 0; i <= *content_lines; i++) {
 			snprintf(code, size, "%s\n", content_buffer[i]);
 		    }
 		    fcb_process(code, response);
 
 		    i = 0;
 		    n = 0;
-		    while(i < strlen(response)) {
+		    while (i < strlen(response)) {
 		      console_buffer[*console_lines][n] = response[i];
 		      console_buffer[*console_lines][n+1] = 0;
 		      n++;
-		      if(response[i] == '\n') {
+		      if (response[i] == '\n') {
 			(*console_lines)++;
 			n = 0;
 		      }
@@ -393,9 +393,9 @@ void util_display_editor(char **content_buffer, int *content_lines, char **conso
 
 		case SDLK_x: /* cut */
 		  strncpy(paste, content_buffer[v_ind], 80);
-		  for(i = v_ind; i < *content_lines; i++)
+		  for (i = v_ind; i < *content_lines; i++)
 		    strncpy(content_buffer[i], content_buffer[i+1], 80);
-		  if(*content_lines) {
+		  if (*content_lines) {
 		    (*content_lines)--;
 		  } else {
 		    content_buffer[0][0] = 0;
@@ -404,7 +404,7 @@ void util_display_editor(char **content_buffer, int *content_lines, char **conso
 		  break;
 
 		case SDLK_v: /* paste */
-		  for(i = *content_lines; i >= v_ind; i--)
+		  for (i = *content_lines; i >= v_ind; i--)
 		    strncpy(content_buffer[i+1], content_buffer[i], 80);
 		  strncpy(content_buffer[v_ind], paste, 80);
 		  (*content_lines)++;
@@ -413,9 +413,9 @@ void util_display_editor(char **content_buffer, int *content_lines, char **conso
 
 	      }
 	    } else {
-	      if(h_ind < 80)
-		if(event.key.keysym.unicode & 0x7F) {
-		  for(i = strlen(content_buffer[v_ind]); i >= h_ind; i--)
+	      if (h_ind < 80)
+		if (event.key.keysym.unicode & 0x7F) {
+		  for (i = strlen(content_buffer[v_ind]); i >= h_ind; i--)
 		    content_buffer[v_ind][i+1] = content_buffer[v_ind][i];
 		  content_buffer[v_ind][h_ind++] = event.key.keysym.unicode & 0x7F;
 		}

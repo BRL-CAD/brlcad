@@ -68,9 +68,9 @@ static void
 push_trail(struct trail *tp, fastf_t *pt)
 {
 	VMOVE( tp->t_pt[tp->t_cur_index], pt );
-	if( tp->t_cur_index >= tp->t_nused )  tp->t_nused++;
+	if ( tp->t_cur_index >= tp->t_nused )  tp->t_nused++;
 	tp->t_cur_index++;
-	if( tp->t_cur_index >= MAX_TRAIL )  tp->t_cur_index = 0;
+	if ( tp->t_cur_index >= MAX_TRAIL )  tp->t_cur_index = 0;
 }
 
 #if 0
@@ -88,15 +88,15 @@ struct trail	*tp;
 	int	todo = tp->t_nused;
 
 	BU_LIST_INIT( vhead );
-	if( tp->t_nused <= 0 )  return;
-	if( (i = tp->t_cur_index-1) < 0 )  i = tp->t_nused-1;
-	for( ; todo > 0; todo-- )  {
-		if( todo == tp->t_nused )  {
+	if ( tp->t_nused <= 0 )  return;
+	if ( (i = tp->t_cur_index-1) < 0 )  i = tp->t_nused-1;
+	for (; todo > 0; todo-- )  {
+		if ( todo == tp->t_nused )  {
 			RT_ADD_VLIST( vhead, tp->t_pt[i], BN_VLIST_LINE_MOVE );
 		}  else  {
 			RT_ADD_VLIST( vhead, tp->t_pt[i], BN_VLIST_LINE_DRAW );
 		}
-		if( (--i) < 0 )  i = tp->t_nused-1;
+		if ( (--i) < 0 )  i = tp->t_nused-1;
 	}
 }
 #endif
@@ -117,22 +117,22 @@ poly_trail(struct bu_list *vhead, struct trail *t1, struct trail *t2)
 	vect_t	right, up;
 	vect_t	norm;
 
-	if( t2->t_nused < todo )  todo = t2->t_nused;
+	if ( t2->t_nused < todo )  todo = t2->t_nused;
 
 	BU_LIST_INIT( vhead );
-	if( t1->t_nused <= 0 || t1->t_nused <= 0 )  return;
+	if ( t1->t_nused <= 0 || t1->t_nused <= 0 )  return;
 
-	if( (i1 = t1->t_cur_index-1) < 0 )  i1 = t1->t_nused-1;
-	if( (i2 = t2->t_cur_index-1) < 0 )  i2 = t2->t_nused-1;
+	if ( (i1 = t1->t_cur_index-1) < 0 )  i1 = t1->t_nused-1;
+	if ( (i2 = t2->t_cur_index-1) < 0 )  i2 = t2->t_nused-1;
 
 	/* Get starting points, next to frame. */
 	s1 = t1->t_pt[i1];
 	s2 = t2->t_pt[i2];
-	if( (--i1) < 0 )  i1 = t1->t_nused-1;
-	if( (--i2) < 0 )  i2 = t2->t_nused-1;
+	if ( (--i1) < 0 )  i1 = t1->t_nused-1;
+	if ( (--i2) < 0 )  i2 = t2->t_nused-1;
 	todo--;
 
-	for( ; todo > 0; todo-- )  {
+	for (; todo > 0; todo-- )  {
 		/* Go from s1 to s2 to t2->t_pt[i2] to t1->t_pt[i1] */
 		VSUB2( up, s1, s2 );
 		VSUB2( right, t1->t_pt[i1], s1 );
@@ -148,8 +148,8 @@ poly_trail(struct bu_list *vhead, struct trail *t1, struct trail *t2)
 		s1 = t1->t_pt[i1];
 		s2 = t2->t_pt[i2];
 
-		if( (--i1) < 0 )  i1 = t1->t_nused-1;
-		if( (--i2) < 0 )  i2 = t2->t_nused-1;
+		if ( (--i1) < 0 )  i1 = t1->t_nused-1;
+		if ( (--i2) < 0 )  i2 = t2->t_nused-1;
 	}
 }
 
@@ -158,7 +158,7 @@ predictor_init(void)
 {
   register int i;
 
-  for(i = 0; i < NUM_TRAILS; ++i)
+  for (i = 0; i < NUM_TRAILS; ++i)
     init_trail(&curr_dm_list->dml_trails[i]);
 }
 
@@ -218,7 +218,7 @@ predictor_frame(void)
 	vect_t	right, up;
 	vect_t	norm;
 
-	if( view_state->vs_rateflag_rotate == 0 &&
+	if ( view_state->vs_rateflag_rotate == 0 &&
 	    view_state->vs_rateflag_tran == 0 &&
 	    view_state->vs_rateflag_scale == 0 ){
 	  predictor_kill();
@@ -229,11 +229,11 @@ predictor_frame(void)
 
 	/* Advance into the future */
 	nframes = (int)(mged_variables->mv_predictor_advance / frametime);
-	if( nframes < 1 )  nframes = 1;
+	if ( nframes < 1 )  nframes = 1;
 
 	/* Build view2model matrix for the future time */
 	MAT_IDN( predictor );
-	for( i=0; i < nframes; i++ )  {
+	for ( i=0; i < nframes; i++ )  {
 		bn_mat_mul2( view_state->vs_ModelDelta, predictor );
 	}
 	bn_mat_mul(predictorXv2m, predictor, view_state->vs_vop->vo_view2model);
@@ -358,7 +358,7 @@ predictor_frame(void)
 void
 predictor_hook(void)
 {
-  if(mged_variables->mv_predictor > 0)
+  if (mged_variables->mv_predictor > 0)
     predictor_init();
   else
     predictor_kill();

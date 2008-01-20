@@ -256,7 +256,7 @@ cs_set_dirty_flag(void)
   struct dm_list *dmlp;
 
   FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l)
-    if(dmlp->dml_color_scheme == color_scheme)
+    if (dmlp->dml_color_scheme == color_scheme)
       dmlp->dml_dirty = 1;
 }
 

@@ -150,14 +150,14 @@ mem_open(FBIO *ifp, char *file, int width, int height)
 	 */
 	mode = 0;
 
-	if( file != NULL )  {
+	if ( file != NULL )  {
 		register char *cp;
 		char	modebuf[80];
 		char	*mp;
 		int	alpha;
 		struct	modeflags *mfp;
 
-		if( strncmp(file, "/dev/mem", 8) ) {
+		if ( strncmp(file, "/dev/mem", 8) ) {
 			/* How did this happen?? */
 			mode = 0;
 		}
@@ -166,44 +166,44 @@ mem_open(FBIO *ifp, char *file, int width, int height)
 			alpha = 0;
 			mp = &modebuf[0];
 			cp = &file[8];
-			while( *cp != '\0' && !isspace(*cp) ) {
+			while ( *cp != '\0' && !isspace(*cp) ) {
 				*mp++ = *cp;	/* copy it to buffer */
-				if( isdigit(*cp) ) {
+				if ( isdigit(*cp) ) {
 					cp++;
 					continue;
 				}
 				alpha++;
-				for( mfp = modeflags; mfp->c != '\0'; mfp++ ) {
-					if( mfp->c == *cp ) {
+				for ( mfp = modeflags; mfp->c != '\0'; mfp++ ) {
+					if ( mfp->c == *cp ) {
 						mode = (mode&~mfp->mask)|mfp->value;
 						break;
 					}
 				}
-				if( mfp->c == '\0' && *cp != '-' ) {
+				if ( mfp->c == '\0' && *cp != '-' ) {
 					fb_log( "if_mem: unknown option '%c' ignored\n", *cp );
 				}
 				cp++;
 			}
 			*mp = '\0';
-			if( !alpha )
+			if ( !alpha )
 				mode = atoi( modebuf );
 		}
 	}
 
 	/* build a local static info struct */
-	if( (MIL(ifp) = (char *)calloc( 1, sizeof(struct meminfo) )) == NULL )  {
+	if ( (MIL(ifp) = (char *)calloc( 1, sizeof(struct meminfo) )) == NULL )  {
 		fb_log("mem_open:  meminfo malloc failed\n");
 		return(-1);
 	}
 	cp = &file[strlen("/dev/mem")];
-	while( *cp != '\0' && *cp != ' ' && *cp != '\t' )
+	while ( *cp != '\0' && *cp != ' ' && *cp != '\t' )
 		cp++;	/* skip suffix */
-	while( *cp != '\0' && (*cp == ' ' || *cp == '\t' || *cp == ';') )
+	while ( *cp != '\0' && (*cp == ' ' || *cp == '\t' || *cp == ';') )
 		cp++;	/* skip blanks and separators */
 
-	if( *cp ) {
+	if ( *cp ) {
 		/* frame buffer device specified */
-		if( (fbp = fb_open(cp, width, height)) == FBIO_NULL ) {
+		if ( (fbp = fb_open(cp, width, height)) == FBIO_NULL ) {
 			free( MIL(ifp) );
 			return( -1 );
 		}
@@ -211,32 +211,32 @@ mem_open(FBIO *ifp, char *file, int width, int height)
 		ifp->if_width = fbp->if_width;
 		ifp->if_height = fbp->if_height;
 		ifp->if_selfd = fbp->if_selfd;
-		if( (mode & MODE_1MASK) == MODE_1IMMEDIATE )
+		if ( (mode & MODE_1MASK) == MODE_1IMMEDIATE )
 			MI(ifp)->write_thru = 1;
 	} else {
 		/* no frame buffer specified */
-		if( width > 0 )
+		if ( width > 0 )
 			ifp->if_width = width;
-		if( height > 0 )
+		if ( height > 0 )
 			ifp->if_height = height;
 	}
-	if( (MI(ifp)->mem = (unsigned char *)calloc( ifp->if_width*ifp->if_height, 3 )) == NULL ) {
+	if ( (MI(ifp)->mem = (unsigned char *)calloc( ifp->if_width*ifp->if_height, 3 )) == NULL ) {
 		fb_log("mem_open:  memory buffer malloc failed\n");
 		(void)free( MIL(ifp) );
 		return(-1);
 	}
-	if( (MI(ifp)->fbp != FBIO_NULL)
+	if ( (MI(ifp)->fbp != FBIO_NULL)
 	 && (mode & MODE_2MASK) == MODE_2PREREAD ) {
 		/* Pre read all of the image data and cmap */
 		int got;
 		got = fb_readrect( MI(ifp)->fbp, 0, 0,
 			ifp->if_width, ifp->if_height,
 			(unsigned char *)MI(ifp)->mem );
-		if( got != ifp->if_width * ifp->if_height )  {
+		if ( got != ifp->if_width * ifp->if_height )  {
 			fb_log("if_mem:  WARNING: pre-read of %d only got %d, your image is truncated.\n",
 				ifp->if_width * ifp->if_height, got );
 		}
-		if( fb_rmap( MI(ifp)->fbp, &(MI(ifp)->cmap) ) < 0 )
+		if ( fb_rmap( MI(ifp)->fbp, &(MI(ifp)->cmap) ) < 0 )
 			fb_make_linear_cmap( &(MI(ifp)->cmap) );
 	} else {
 		/* Image data begins black, colormap linear */
@@ -252,11 +252,11 @@ mem_close(FBIO *ifp)
 	/*
 	 * Flush memory/cmap to attached frame buffer if any
 	 */
-	if( MI(ifp)->fbp != FBIO_NULL ) {
-		if( MI(ifp)->cmap_dirty ) {
+	if ( MI(ifp)->fbp != FBIO_NULL ) {
+		if ( MI(ifp)->cmap_dirty ) {
 			fb_wmap( MI(ifp)->fbp, &(MI(ifp)->cmap) );
 		}
-		if( MI(ifp)->mem_dirty ) {
+		if ( MI(ifp)->mem_dirty ) {
 			fb_writerect( MI(ifp)->fbp, 0, 0,
 				ifp->if_width, ifp->if_height, (unsigned char *)MI(ifp)->mem );
 		}
@@ -276,7 +276,7 @@ mem_clear(FBIO *ifp, unsigned char *pp)
 	register int n;
 	register unsigned char *cp;
 
-	if( pp == RGBPIXEL_NULL ) {
+	if ( pp == RGBPIXEL_NULL ) {
 		v[RED] = v[GRN] = v[BLU] = 0;
 	} else {
 		v[RED] = (pp)[RED];
@@ -285,20 +285,20 @@ mem_clear(FBIO *ifp, unsigned char *pp)
 	}
 
 	cp = MI(ifp)->mem;
-	if( v[RED] == v[GRN] && v[RED] == v[BLU] ) {
+	if ( v[RED] == v[GRN] && v[RED] == v[BLU] ) {
 		int	bytes = ifp->if_width*ifp->if_height*3;
-		if( v[RED] == 0 )
+		if ( v[RED] == 0 )
 			memset((char *)cp, 0, bytes);	/* all black */
 		else
 			memset(cp, v[RED], bytes);	/* all grey */
 	} else {
-		for( n = ifp->if_width*ifp->if_height; n; n-- ) {
+		for ( n = ifp->if_width*ifp->if_height; n; n-- ) {
 			*cp++ = v[RED];
 			*cp++ = v[GRN];
 			*cp++ = v[BLU];
 		}
 	}
-	if( MI(ifp)->write_thru ) {
+	if ( MI(ifp)->write_thru ) {
 		return fb_clear( MI(ifp)->fbp, pp );
 	} else {
 		MI(ifp)->mem_dirty = 1;
@@ -311,12 +311,12 @@ mem_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
 {
 	int	pixels_to_end;
 
-	if( x < 0 || x >= ifp->if_width || y < 0 || y >= ifp->if_height )
+	if ( x < 0 || x >= ifp->if_width || y < 0 || y >= ifp->if_height )
 		return( -1 );
 
 	/* make sure we don't run off the end of the buffer */
 	pixels_to_end = ifp->if_width*ifp->if_height - (y*ifp->if_width + x);
-	if( pixels_to_end < count )
+	if ( pixels_to_end < count )
 		count = pixels_to_end;
 
 	memcpy((char *)pixelp, &(MI(ifp)->mem[(y*ifp->if_width + x)*3]), count*3);
@@ -329,17 +329,17 @@ mem_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
 {
 	int	pixels_to_end;
 
-	if( x < 0 || x >= ifp->if_width || y < 0 || y >= ifp->if_height )
+	if ( x < 0 || x >= ifp->if_width || y < 0 || y >= ifp->if_height )
 		return( -1 );
 
 	/* make sure we don't run off the end of the buffer */
 	pixels_to_end = ifp->if_width*ifp->if_height - (y*ifp->if_width + x);
-	if( pixels_to_end < count )
+	if ( pixels_to_end < count )
 		count = pixels_to_end;
 
 	memcpy(&(MI(ifp)->mem[(y*ifp->if_width + x)*3]), (char *)pixelp, count*3);
 
-	if( MI(ifp)->write_thru ) {
+	if ( MI(ifp)->write_thru ) {
 		return fb_write( MI(ifp)->fbp, x, y, pixelp, count );
 	} else {
 		MI(ifp)->mem_dirty = 1;
@@ -357,13 +357,13 @@ mem_rmap(FBIO *ifp, ColorMap *cmp)
 HIDDEN int
 mem_wmap(FBIO *ifp, const ColorMap *cmp)
 {
-	if( cmp == COLORMAP_NULL )  {
+	if ( cmp == COLORMAP_NULL )  {
 		fb_make_linear_cmap( &(MI(ifp)->cmap) );
 	} else {
 		MI(ifp)->cmap = *cmp;		/* struct copy */
 	}
 
-	if( MI(ifp)->write_thru ) {
+	if ( MI(ifp)->write_thru ) {
 		return fb_wmap( MI(ifp)->fbp, cmp );
 	} else {
 		MI(ifp)->cmap_dirty = 1;
@@ -375,7 +375,7 @@ HIDDEN int
 mem_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
 	fb_sim_view( ifp, xcenter, ycenter, xzoom, yzoom );
-	if( MI(ifp)->write_thru ) {
+	if ( MI(ifp)->write_thru ) {
 		return fb_view( MI(ifp)->fbp, xcenter, ycenter,
 			xzoom, yzoom );
 	}
@@ -385,7 +385,7 @@ mem_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 HIDDEN int
 mem_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
-	if( MI(ifp)->write_thru ) {
+	if ( MI(ifp)->write_thru ) {
 		return fb_getview( MI(ifp)->fbp, xcenter, ycenter,
 			xzoom, yzoom );
 	}
@@ -396,7 +396,7 @@ mem_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 HIDDEN int
 mem_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
 {
-	if( MI(ifp)->write_thru ) {
+	if ( MI(ifp)->write_thru ) {
 		return fb_setcursor( MI(ifp)->fbp,
 			bits, xbits, ybits, xorig, yorig );
 	}
@@ -407,7 +407,7 @@ HIDDEN int
 mem_cursor(FBIO *ifp, int mode, int x, int y)
 {
 	fb_sim_cursor( ifp, mode, x, y );
-	if( MI(ifp)->write_thru ) {
+	if ( MI(ifp)->write_thru ) {
 		return fb_cursor( MI(ifp)->fbp, mode, x, y );
 	}
 	return(0);
@@ -416,7 +416,7 @@ mem_cursor(FBIO *ifp, int mode, int x, int y)
 HIDDEN int
 mem_getcursor(FBIO *ifp, int *mode, int *x, int *y)
 {
-	if( MI(ifp)->write_thru ) {
+	if ( MI(ifp)->write_thru ) {
 		return fb_getcursor( MI(ifp)->fbp, mode, x, y );
 	}
 	fb_sim_getcursor( ifp, mode, x, y );
@@ -426,7 +426,7 @@ mem_getcursor(FBIO *ifp, int *mode, int *x, int *y)
 HIDDEN int
 mem_poll(FBIO *ifp)
 {
-	if( MI(ifp)->write_thru ) {
+	if ( MI(ifp)->write_thru ) {
 		return fb_poll( MI(ifp)->fbp );
 	}
 	return(0);
@@ -438,12 +438,12 @@ mem_flush(FBIO *ifp)
 	/*
 	 * Flush memory/cmap to attached frame buffer if any
 	 */
-	if( MI(ifp)->fbp != FBIO_NULL ) {
-		if( MI(ifp)->cmap_dirty ) {
+	if ( MI(ifp)->fbp != FBIO_NULL ) {
+		if ( MI(ifp)->cmap_dirty ) {
 			fb_wmap( MI(ifp)->fbp, &(MI(ifp)->cmap) );
 			MI(ifp)->cmap_dirty = 0;
 		}
-		if( MI(ifp)->mem_dirty ) {
+		if ( MI(ifp)->mem_dirty ) {
 			fb_writerect( MI(ifp)->fbp, 0, 0,
 				ifp->if_width, ifp->if_height, (unsigned char *)MI(ifp)->mem );
 			MI(ifp)->mem_dirty = 0;
@@ -470,7 +470,7 @@ mem_help(FBIO *ifp)
 		memory_interface.if_width,
 		memory_interface.if_height );
 	fb_log( "Usage: /dev/mem[options] [attached_framebuffer]\n" );
-	for( mfp = modeflags; mfp->c != '\0'; mfp++ ) {
+	for ( mfp = modeflags; mfp->c != '\0'; mfp++ ) {
 		fb_log( "   %c   %s\n", mfp->c, mfp->help );
 	}
 	return(0);

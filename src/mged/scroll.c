@@ -113,12 +113,12 @@ void
 set_scroll(void)
 {
   if (mged_variables->mv_sliders) {
-    if(mged_variables->mv_rateknobs)
+    if (mged_variables->mv_rateknobs)
       scroll_array[0] = sl_menu;
     else
       scroll_array[0] = sl_abs_menu;
 
-    if(adc_state->adc_draw)
+    if (adc_state->adc_draw)
       scroll_array[1] = sl_adc_menu;
     else
       scroll_array[1] = SCROLL_NULL;
@@ -171,9 +171,9 @@ sl_tol(register struct scroll_item *mptr, double val)
 {
   struct bu_vls vls;
 
-  if( val < -SL_TOL )   {
+  if ( val < -SL_TOL )   {
     val += SL_TOL;
-  } else if( val > SL_TOL )   {
+  } else if ( val > SL_TOL )   {
     val -= SL_TOL;
   } else {
     val = 0.0;
@@ -193,9 +193,9 @@ sl_atol(register struct scroll_item *mptr, double val)
   if (dbip == DBI_NULL)
 	  return;
 
-  if( val < -SL_TOL )   {
+  if ( val < -SL_TOL )   {
     val += SL_TOL;
-  } else if( val > SL_TOL )   {
+  } else if ( val > SL_TOL )   {
     val -= SL_TOL;
   } else {
     val = 0.0;
@@ -212,9 +212,9 @@ sl_rrtol(register struct scroll_item *mptr, double val)
 {
   struct bu_vls vls;
 
-  if( val < -SL_TOL )   {
+  if ( val < -SL_TOL )   {
     val += SL_TOL;
-  } else if( val > SL_TOL )   {
+  } else if ( val > SL_TOL )   {
     val -= SL_TOL;
   } else {
     val = 0.0;
@@ -232,9 +232,9 @@ sl_artol(register struct scroll_item *mptr, double val)
 {
   struct bu_vls vls;
 
-  if( val < -SL_TOL )   {
+  if ( val < -SL_TOL )   {
     val += SL_TOL;
-  } else if( val > SL_TOL )   {
+  } else if ( val > SL_TOL )   {
     val -= SL_TOL;
   } else {
     val = 0.0;
@@ -252,9 +252,9 @@ sl_adctol(register struct scroll_item *mptr, double val)
 {
   struct bu_vls vls;
 
-  if( val < -SL_TOL )   {
+  if ( val < -SL_TOL )   {
     val += SL_TOL;
-  } else if( val > SL_TOL )   {
+  } else if ( val > SL_TOL )   {
     val -= SL_TOL;
   } else {
     val = 0.0;
@@ -272,9 +272,9 @@ sl_itol(register struct scroll_item *mptr, double val)
 {
   struct bu_vls vls;
 
-  if( val < -SL_TOL )   {
+  if ( val < -SL_TOL )   {
     val += SL_TOL;
-  } else if( val > SL_TOL )   {
+  } else if ( val > SL_TOL )   {
     val -= SL_TOL;
   } else {
     val = 0.0;
@@ -319,12 +319,12 @@ scroll_display( int y_top )
   DM_SET_LINE_ATTR(dmp, 1, 0);  /* linewidth - 1, not dashed */
 #endif
 
-  for( m = &scroll_array[0]; *m != SCROLL_NULL; m++ )  {
+  for ( m = &scroll_array[0]; *m != SCROLL_NULL; m++ )  {
     ++second_menu;
-    for( mptr = *m; mptr->scroll_string[0] != '\0'; mptr++ )  {
+    for ( mptr = *m; mptr->scroll_string[0] != '\0'; mptr++ )  {
       y += SCROLL_DY;		/* y is now bottom line pos */
 
-      switch(mptr->scroll_val){
+      switch (mptr->scroll_val){
       case 0:
 	if (second_menu) {
 	  f = (double)adc_state->adc_dv_x * INV_GED;
@@ -334,18 +334,18 @@ scroll_display( int y_top )
 			 color_scheme->cs_slider_text2[1],
 			 color_scheme->cs_slider_text2[2], 1, 1.0);
 	} else {
-	  if(EDIT_TRAN && mged_variables->mv_transform == 'e'){
-	    switch(mged_variables->mv_coords){
+	  if (EDIT_TRAN && mged_variables->mv_transform == 'e'){
+	    switch (mged_variables->mv_coords){
 	    case 'm':
 	    case 'o':
-	      if(mged_variables->mv_rateknobs)
+	      if (mged_variables->mv_rateknobs)
 		f = edit_rate_model_tran[X];
 	      else
 		f = edit_absolute_model_tran[X];
 	      break;
 	    case 'v':
 	    default:
-	      if(mged_variables->mv_rateknobs)
+	      if (mged_variables->mv_rateknobs)
 		f = edit_rate_view_tran[X];
 	      else
 		f = edit_absolute_view_tran[X];
@@ -357,13 +357,13 @@ scroll_display( int y_top )
 			   color_scheme->cs_slider_text1[1],
 			   color_scheme->cs_slider_text1[2], 1, 1.0);
 	  }else{
-	    if(mged_variables->mv_rateknobs){
-	      if(mged_variables->mv_coords == 'm')
+	    if (mged_variables->mv_rateknobs){
+	      if (mged_variables->mv_coords == 'm')
 		f = view_state->vs_rate_model_tran[X];
 	      else
 		f = view_state->vs_rate_tran[X];
 	    }else{
-	      if(mged_variables->mv_coords == 'm')
+	      if (mged_variables->mv_coords == 'm')
 		f = view_state->vs_absolute_model_tran[X];
 	      else
 		f = view_state->vs_absolute_tran[X];
@@ -385,17 +385,17 @@ scroll_display( int y_top )
 			 color_scheme->cs_slider_text2[1],
 			 color_scheme->cs_slider_text2[2], 1, 1.0);
 	} else {
-	  if(EDIT_TRAN && mged_variables->mv_transform == 'e'){
-	    switch(mged_variables->mv_coords){
+	  if (EDIT_TRAN && mged_variables->mv_transform == 'e'){
+	    switch (mged_variables->mv_coords){
 	    case 'm':
 	    case 'o':
-	      if(mged_variables->mv_rateknobs)
+	      if (mged_variables->mv_rateknobs)
 		f = edit_rate_model_tran[Y];
 	      else
 		f = edit_absolute_model_tran[Y];
 	      break;
 	    case 'v':
-	      if(mged_variables->mv_rateknobs)
+	      if (mged_variables->mv_rateknobs)
 		f = edit_rate_view_tran[Y];
 	      else
 		f = edit_absolute_view_tran[Y];
@@ -407,13 +407,13 @@ scroll_display( int y_top )
 			   color_scheme->cs_slider_text1[1],
 			   color_scheme->cs_slider_text1[2], 1, 1.0);
 	  }else{
-	    if(mged_variables->mv_rateknobs){
-	      if(mged_variables->mv_coords == 'm')
+	    if (mged_variables->mv_rateknobs){
+	      if (mged_variables->mv_coords == 'm')
 		f = view_state->vs_rate_model_tran[Y];
 	      else
 		f = view_state->vs_rate_tran[Y];
 	    }else{
-	      if(mged_variables->mv_coords == 'm')
+	      if (mged_variables->mv_coords == 'm')
 		f = view_state->vs_absolute_model_tran[Y];
 	      else
 		f = view_state->vs_absolute_tran[Y];
@@ -435,17 +435,17 @@ scroll_display( int y_top )
 			 color_scheme->cs_slider_text2[1],
 			 color_scheme->cs_slider_text2[2], 1, 1.0);
 	} else {
-	  if(EDIT_TRAN && mged_variables->mv_transform == 'e'){
-	    switch(mged_variables->mv_coords){
+	  if (EDIT_TRAN && mged_variables->mv_transform == 'e'){
+	    switch (mged_variables->mv_coords){
 	    case 'm':
 	    case 'o':
-	      if(mged_variables->mv_rateknobs)
+	      if (mged_variables->mv_rateknobs)
 		f = edit_rate_model_tran[Z];
 	      else
 		f = edit_absolute_model_tran[Z];
 	      break;
 	    case 'v':
-	      if(mged_variables->mv_rateknobs)
+	      if (mged_variables->mv_rateknobs)
 		f = edit_rate_view_tran[Z];
 	      else
 		f = edit_absolute_view_tran[Z];
@@ -457,13 +457,13 @@ scroll_display( int y_top )
 			   color_scheme->cs_slider_text1[1],
 			   color_scheme->cs_slider_text1[2], 1, 1.0);
 	  }else{
-	    if(mged_variables->mv_rateknobs){
-	      if(mged_variables->mv_coords == 'm')
+	    if (mged_variables->mv_rateknobs){
+	      if (mged_variables->mv_coords == 'm')
 		f = view_state->vs_rate_model_tran[Z];
 	      else
 		f = view_state->vs_rate_tran[Z];
 	    }else{
-	      if(mged_variables->mv_coords == 'm')
+	      if (mged_variables->mv_coords == 'm')
 		f = view_state->vs_absolute_model_tran[Z];
 	      else
 		f = view_state->vs_absolute_tran[Z];
@@ -485,8 +485,8 @@ scroll_display( int y_top )
 			 color_scheme->cs_slider_text2[1],
 			 color_scheme->cs_slider_text2[2], 1, 1.0);
 	} else {
-	  if(EDIT_SCALE && mged_variables->mv_transform == 'e'){
-	    if(mged_variables->mv_rateknobs)
+	  if (EDIT_SCALE && mged_variables->mv_transform == 'e'){
+	    if (mged_variables->mv_rateknobs)
 	      f = edit_rate_scale;
 	    else
 	      f = edit_absolute_scale;
@@ -496,7 +496,7 @@ scroll_display( int y_top )
 			   color_scheme->cs_slider_text1[1],
 			   color_scheme->cs_slider_text1[2], 1, 1.0);
 	  }else{
-	    if(mged_variables->mv_rateknobs)
+	    if (mged_variables->mv_rateknobs)
 	      f = view_state->vs_rate_scale;
 	    else
 	      f = view_state->vs_absolute_scale;
@@ -517,23 +517,23 @@ scroll_display( int y_top )
 			 color_scheme->cs_slider_text2[1],
 			 color_scheme->cs_slider_text2[2], 1, 1.0);
 	} else {
-	  if(EDIT_ROTATE && mged_variables->mv_transform == 'e'){
-	    switch(mged_variables->mv_coords){
+	  if (EDIT_ROTATE && mged_variables->mv_transform == 'e'){
+	    switch (mged_variables->mv_coords){
 	    case 'm':
-	      if(mged_variables->mv_rateknobs)
+	      if (mged_variables->mv_rateknobs)
 		f = edit_rate_model_rotate[X] / RATE_ROT_FACTOR;
 	      else
 		f = edit_absolute_model_rotate[X] / ABS_ROT_FACTOR;
 	      break;
 	    case 'o':
-	      if(mged_variables->mv_rateknobs)
+	      if (mged_variables->mv_rateknobs)
 		f = edit_rate_object_rotate[X] / RATE_ROT_FACTOR;
 	      else
 		f = edit_absolute_object_rotate[X] / ABS_ROT_FACTOR;
 	      break;
 	    case 'v':
 	    default:
-	      if(mged_variables->mv_rateknobs)
+	      if (mged_variables->mv_rateknobs)
 		f = edit_rate_view_rotate[X] / RATE_ROT_FACTOR;
 	      else
 		f = edit_absolute_view_rotate[X] / ABS_ROT_FACTOR;
@@ -545,13 +545,13 @@ scroll_display( int y_top )
 			   color_scheme->cs_slider_text1[1],
 			   color_scheme->cs_slider_text1[2], 1, 1.0);
 	  }else{
-	    if(mged_variables->mv_rateknobs){
-	      if(mged_variables->mv_coords == 'm')
+	    if (mged_variables->mv_rateknobs){
+	      if (mged_variables->mv_coords == 'm')
 		f = view_state->vs_rate_model_rotate[X] / RATE_ROT_FACTOR;
 	      else
 		f = view_state->vs_rate_rotate[X] / RATE_ROT_FACTOR;
 	    }else{
-	      if(mged_variables->mv_coords == 'm')
+	      if (mged_variables->mv_coords == 'm')
 		f = view_state->vs_absolute_model_rotate[X] / ABS_ROT_FACTOR;
 	      else
 		f = view_state->vs_absolute_rotate[X] / ABS_ROT_FACTOR;
@@ -565,27 +565,27 @@ scroll_display( int y_top )
 	}
 	break;
       case 5:
-	if(second_menu)
+	if (second_menu)
 	  Tcl_AppendResult(interp, "scroll_display: 2nd scroll menu is hosed\n",
 			   (char *)NULL);
 	else {
-	  if(EDIT_ROTATE && mged_variables->mv_transform == 'e'){
-	    switch(mged_variables->mv_coords){
+	  if (EDIT_ROTATE && mged_variables->mv_transform == 'e'){
+	    switch (mged_variables->mv_coords){
 	    case 'm':
-	      if(mged_variables->mv_rateknobs)
+	      if (mged_variables->mv_rateknobs)
 		f = edit_rate_model_rotate[Y] / RATE_ROT_FACTOR;
 	      else
 		f = edit_absolute_model_rotate[Y] / ABS_ROT_FACTOR;
 	      break;
 	    case 'o':
-	      if(mged_variables->mv_rateknobs)
+	      if (mged_variables->mv_rateknobs)
 		f = edit_rate_object_rotate[Y] / RATE_ROT_FACTOR;
 	      else
 		f = edit_absolute_object_rotate[Y] / ABS_ROT_FACTOR;
 	      break;
 	    case 'v':
 	    default:
-	      if(mged_variables->mv_rateknobs)
+	      if (mged_variables->mv_rateknobs)
 		f = edit_rate_view_rotate[Y] / RATE_ROT_FACTOR;
 	      else
 		f = edit_absolute_view_rotate[Y] / ABS_ROT_FACTOR;
@@ -597,13 +597,13 @@ scroll_display( int y_top )
 			   color_scheme->cs_slider_text1[1],
 			   color_scheme->cs_slider_text1[2], 1, 1.0);
 	  }else{
-	    if(mged_variables->mv_rateknobs){
-	      if(mged_variables->mv_coords == 'm')
+	    if (mged_variables->mv_rateknobs){
+	      if (mged_variables->mv_coords == 'm')
 		f = view_state->vs_rate_model_rotate[Y] / RATE_ROT_FACTOR;
 	      else
 		f = view_state->vs_rate_rotate[Y] / RATE_ROT_FACTOR;
 	    }else{
-	      if(mged_variables->mv_coords == 'm')
+	      if (mged_variables->mv_coords == 'm')
 		f = view_state->vs_absolute_model_rotate[Y] / ABS_ROT_FACTOR;
 	      else
 		f = view_state->vs_absolute_rotate[Y] / ABS_ROT_FACTOR;
@@ -617,27 +617,27 @@ scroll_display( int y_top )
 	}
 	break;
       case 6:
-	if(second_menu)
+	if (second_menu)
 	  Tcl_AppendResult(interp, "scroll_display: 2nd scroll menu is hosed\n",
 			   (char *)NULL);
 	else {
-	  if(EDIT_ROTATE && mged_variables->mv_transform == 'e'){
-	    switch(mged_variables->mv_coords){
+	  if (EDIT_ROTATE && mged_variables->mv_transform == 'e'){
+	    switch (mged_variables->mv_coords){
 	    case 'm':
-	      if(mged_variables->mv_rateknobs)
+	      if (mged_variables->mv_rateknobs)
 		f = edit_rate_model_rotate[Z] / RATE_ROT_FACTOR;
 	      else
 		f = edit_absolute_model_rotate[Z] / ABS_ROT_FACTOR;
 	      break;
 	    case 'o':
-	      if(mged_variables->mv_rateknobs)
+	      if (mged_variables->mv_rateknobs)
 		f = edit_rate_object_rotate[Z] / RATE_ROT_FACTOR;
 	      else
 		f = edit_absolute_object_rotate[Z] / ABS_ROT_FACTOR;
 	      break;
 	    case 'v':
 	    default:
-	      if(mged_variables->mv_rateknobs)
+	      if (mged_variables->mv_rateknobs)
 		f = edit_rate_view_rotate[Z] / RATE_ROT_FACTOR;
 	      else
 		f = edit_absolute_view_rotate[Z] / ABS_ROT_FACTOR;
@@ -649,13 +649,13 @@ scroll_display( int y_top )
 			   color_scheme->cs_slider_text1[1],
 			   color_scheme->cs_slider_text1[2], 1, 1.0);
 	  }else{
-	    if(mged_variables->mv_rateknobs){
-	      if(mged_variables->mv_coords == 'm')
+	    if (mged_variables->mv_rateknobs){
+	      if (mged_variables->mv_coords == 'm')
 		f = view_state->vs_rate_model_rotate[Z] / RATE_ROT_FACTOR;
 	      else
 		f = view_state->vs_rate_rotate[Z] / RATE_ROT_FACTOR;
 	    }else{
-	      if(mged_variables->mv_coords == 'm')
+	      if (mged_variables->mv_coords == 'm')
 		f = view_state->vs_absolute_model_rotate[Z] / ABS_ROT_FACTOR;
 	      else
 		f = view_state->vs_absolute_rotate[Z] / ABS_ROT_FACTOR;
@@ -669,7 +669,7 @@ scroll_display( int y_top )
 	}
 	break;
       default:
-	if(second_menu)
+	if (second_menu)
 	  Tcl_AppendResult(interp, "scroll_display: 2nd scroll menu is hosed\n",
 			   (char *)NULL);
 	else
@@ -677,9 +677,9 @@ scroll_display( int y_top )
 			   (char *)NULL);
       }
 
-      if(f > 0)
+      if (f > 0)
 	xpos = (f + SL_TOL) * GED_MAX;
-      else if(f < 0)
+      else if (f < 0)
 	xpos = (f - SL_TOL) * -MENUXLIM;
       else
 	xpos = 0;
@@ -696,7 +696,7 @@ scroll_display( int y_top )
     }
   }
 
-  if( y != y_top )  {
+  if ( y != y_top )  {
     /* Sliders were drawn, so make left vert edge */
     DM_SET_FGCOLOR(dmp,
 		   color_scheme->cs_slider_line[0],
@@ -725,9 +725,9 @@ scroll_select( int pen_x, int pen_y, int do_func )
 	struct scroll_item	**m;
 	register struct scroll_item     *mptr;
 
-	if( !mged_variables->mv_sliders )  return(0);	/* not enabled */
+	if ( !mged_variables->mv_sliders )  return(0);	/* not enabled */
 
-	if( pen_y > scroll_top )
+	if ( pen_y > scroll_top )
 		return(-1);	/* pen above menu area */
 
 	/*
@@ -735,11 +735,11 @@ scroll_select( int pen_x, int pen_y, int do_func )
 	 * above here.
 	 */
 	yy = scroll_top;
-	for( m = &scroll_array[0]; *m != SCROLL_NULL; m++ )  {
-		for( mptr = *m; mptr->scroll_string[0] != '\0'; mptr++ )  {
+	for ( m = &scroll_array[0]; *m != SCROLL_NULL; m++ )  {
+		for ( mptr = *m; mptr->scroll_string[0] != '\0'; mptr++ )  {
 			fastf_t	val;
 			yy += SCROLL_DY;	/* bottom line pos */
-			if( pen_y < yy )
+			if ( pen_y < yy )
 				continue;	/* pen below this item */
 
 			/*
@@ -748,16 +748,16 @@ scroll_select( int pen_x, int pen_y, int do_func )
 			 *  the right side, due to the presence of the
 			 *  menu text area on the left.
 			 */
-			if( pen_x >= 0 )  {
+			if ( pen_x >= 0 )  {
 				val = pen_x * INV_GED;
 			} else {
 				val = pen_x/(double)(-MENUXLIM);
 			}
 
 			/* See if hooked function has been specified */
-			if( mptr->scroll_func == ((void (*)())0) )  continue;
+			if ( mptr->scroll_func == ((void (*)())0) )  continue;
 
-			if(do_func)
+			if (do_func)
 			  (*(mptr->scroll_func))(mptr, val);
 
 			return( 1 );		/* scroll claims pen value */

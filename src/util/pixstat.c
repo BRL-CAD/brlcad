@@ -76,7 +76,7 @@ show_hist(void)
 
 	printf( "Histogram:\n" );
 
-	for( i = 0; i < 256; i++ ) {
+	for ( i = 0; i < 256; i++ ) {
 		printf( "%3d: %10ld %10ld %10ld\n",
 			i, r.bin[i], g.bin[i], b.bin[i] );
 	}
@@ -93,15 +93,15 @@ main(int argc, char **argv)
 	FILE	*fp;
 
 	/* check for verbose flag */
-	if( argc > 1 && strcmp(argv[1], "-v") == 0 ) {
+	if ( argc > 1 && strcmp(argv[1], "-v") == 0 ) {
 		verbose++;
 		argv++;
 		argc--;
 	}
 
 	/* check for optional input file */
-	if( argc > 1 ) {
-		if( (fp = fopen(argv[1], "r")) == 0 ) {
+	if ( argc > 1 ) {
+		if ( (fp = fopen(argv[1], "r")) == 0 ) {
 			bu_exit(1, "pixstat: can't open \"%s\"\n", argv[1] );
 		}
 		argv++;
@@ -110,7 +110,7 @@ main(int argc, char **argv)
 		fp = stdin;
 
 	/* check usage */
-	if( argc > 1 || isatty(fileno(fp)) ) {
+	if ( argc > 1 || isatty(fileno(fp)) ) {
 		bu_exit( 1, "usage: pixstat [-v] [file.pix]\n" );
 	}
 
@@ -118,11 +118,11 @@ main(int argc, char **argv)
 	 * Build the histogram.
 	 */
 	num_pixels = 0;
-	while( (n = fread(&buf[0], sizeof(*buf), IBUFSIZE, fp)) > 0 ) {
+	while ( (n = fread(&buf[0], sizeof(*buf), IBUFSIZE, fp)) > 0 ) {
 		num = n/3;
 		num_pixels += num;
 		bp = &buf[0];
-		for( i = 0; i < num; i++ ) {
+		for ( i = 0; i < num; i++ ) {
 			r.bin[ *bp++ ]++;
 			g.bin[ *bp++ ]++;
 			b.bin[ *bp++ ]++;
@@ -136,31 +136,31 @@ main(int argc, char **argv)
 	r.min = g.min = b.min = 256;
 	r.max = g.max = b.max = -1;
 	r.mode = g.mode = b.mode = 0;
-	for( i = 0; i < 256; i++ ) {
+	for ( i = 0; i < 256; i++ ) {
 		/* sum */
 		r.sum += i * r.bin[i];
 		g.sum += i * g.bin[i];
 		b.sum += i * b.bin[i];
 		/* min */
-		if( i < r.min && r.bin[i] != 0 )
+		if ( i < r.min && r.bin[i] != 0 )
 			r.min = i;
-		if( i < g.min && g.bin[i] != 0 )
+		if ( i < g.min && g.bin[i] != 0 )
 			g.min = i;
-		if( i < b.min && b.bin[i] != 0 )
+		if ( i < b.min && b.bin[i] != 0 )
 			b.min = i;
 		/* max */
-		if( i > r.max && r.bin[i] != 0 )
+		if ( i > r.max && r.bin[i] != 0 )
 			r.max = i;
-		if( i > g.max && g.bin[i] != 0 )
+		if ( i > g.max && g.bin[i] != 0 )
 			g.max = i;
-		if( i > b.max && b.bin[i] != 0 )
+		if ( i > b.max && b.bin[i] != 0 )
 			b.max = i;
 		/* mode */
-		if( r.bin[i] > r.bin[r.mode] )
+		if ( r.bin[i] > r.bin[r.mode] )
 			r.mode = i;
-		if( g.bin[i] > g.bin[g.mode] )
+		if ( g.bin[i] > g.bin[g.mode] )
 			g.mode = i;
-		if( b.bin[i] > b.bin[b.mode] )
+		if ( b.bin[i] > b.bin[b.mode] )
 			b.mode = i;
 	}
 	r.mean = (double)r.sum/(double)num_pixels;
@@ -171,17 +171,17 @@ main(int argc, char **argv)
 	 * Now do a second pass to compute median,
 	 *  variance and skew.
 	 */
-	for( i = 0; i < 256; i++ ) {
+	for ( i = 0; i < 256; i++ ) {
 		/* median */
-		if( r.partial_sum < r.sum/2.0 ) {
+		if ( r.partial_sum < r.sum/2.0 ) {
 			r.partial_sum += i * r.bin[i];
 			r.median = i;
 		}
-		if( g.partial_sum < g.sum/2.0 ) {
+		if ( g.partial_sum < g.sum/2.0 ) {
 			g.partial_sum += i * g.bin[i];
 			g.median = i;
 		}
-		if( b.partial_sum < b.sum/2.0 ) {
+		if ( b.partial_sum < b.sum/2.0 ) {
 			b.partial_sum += i * b.bin[i];
 			b.median = i;
 		}
@@ -218,7 +218,7 @@ main(int argc, char **argv)
 	printf( "Var     %14.3f%14.3f%14.3f\n", r.var, g.var, b.var );
 	printf( "Skew    %14.3f%14.3f%14.3f\n", r.skew, g.skew, b.skew );
 
-	if( verbose )
+	if ( verbose )
 		show_hist();
 	return 0;
 }

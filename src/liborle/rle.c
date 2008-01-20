@@ -38,10 +38,10 @@
 #include "fb.h"
 #include "orle.h"
 
-#define PRNT_A1_DEBUG(_op,_n) \
-	if(rle_debug) (void)fprintf(stderr, "%s(%d)\n",_op,_n)
-#define PRNT_A2_DEBUG(_op,_n,_c) \
-	if(rle_debug) (void)fprintf(stderr, "%s(%ld,%d)\n",_op,(long)(_n),_c)
+#define PRNT_A1_DEBUG(_op, _n) \
+	if (rle_debug) (void)fprintf(stderr, "%s(%d)\n", _op, _n)
+#define PRNT_A2_DEBUG(_op, _n, _c) \
+	if (rle_debug) (void)fprintf(stderr, "%s(%ld,%d)\n", _op, (long)(_n), _c)
 #define CUR	RED		/* Must be rightmost part of Pixel.		*/
 
 /*	States for run detection					*/
@@ -88,26 +88,26 @@
 #define SetColor(c)		RSetColor( _bw_flag ? 0 : c )
 
 /* Skip a run of background.						*/
-#define SkipPixels(nskip)	if( (nskip) > 0 ) RSkipPixels(nskip)
+#define SkipPixels(nskip)	if ( (nskip) > 0 ) RSkipPixels(nskip)
 
 /* Output an enumerated set of intensities for current color channel.	*/
 #define PutRun(color, num)	RRunData(num-1, color)
 
 /* Opcode definitions.							*/
 #define	RSkipLines(_n) \
-	{PRNT_A1_DEBUG("Skip-Lines",_n); mk_inst_1(RSkipLinesOp,(_n))}
+	{PRNT_A1_DEBUG("Skip-Lines", _n); mk_inst_1(RSkipLinesOp, (_n))}
 
 #define	RSetColor(_c) \
-	{PRNT_A1_DEBUG("Set-Color",_c); mk_short_1(RSetColorOp,(_c))}
+	{PRNT_A1_DEBUG("Set-Color", _c); mk_short_1(RSetColorOp, (_c))}
 
 #define	RSkipPixels(_n) \
-	{PRNT_A1_DEBUG("Skip-Pixels",_n); mk_inst_1(RSkipPixelsOp,(_n))}
+	{PRNT_A1_DEBUG("Skip-Pixels", _n); mk_inst_1(RSkipPixelsOp, (_n))}
 
 #define	RByteData(_n) \
-	{PRNT_A1_DEBUG("Byte-Data",_n); mk_inst_1(RByteDataOp,_n)}
+	{PRNT_A1_DEBUG("Byte-Data", _n); mk_inst_1(RByteDataOp, _n)}
 
-#define	RRunData(_n,_c) \
-	{PRNT_A2_DEBUG("Run-Data",_n,_c); mk_inst_2(RRunDataOp,(_n),(_c))}
+#define	RRunData(_n, _c) \
+	{PRNT_A2_DEBUG("Run-Data", _n, _c); mk_inst_2(RRunDataOp, (_n), (_c))}
 
 #define NSEG	1024/3		/* Number of run segments of storage */
 static struct runs
@@ -146,7 +146,7 @@ void
 rle_wlen(int xlen, int ylen, int mode)
 {
 	
-    if( mode == 0 )		/* Read mode.				*/
+    if ( mode == 0 )		/* Read mode.				*/
     {
 	r_setup.h_xlen = xlen;
 	r_setup.h_ylen = ylen;
@@ -170,7 +170,7 @@ rle_rpos(int *xpos, int *ypos)
 void
 rle_wpos(int xpos, int ypos, int mode)
 {
-    if( mode == 0 )		/* Read mode.				*/
+    if ( mode == 0 )		/* Read mode.				*/
     {
 	r_setup.h_xpos = xpos;
 	r_setup.h_ypos = ypos;
@@ -194,7 +194,7 @@ _get_Old_Inst(register FILE *fp, register int *op, register int *dat)
     *p++ = getc( fp );
     *p++ = getc( fp );
     SWAB( *((short *)&instruction) );
-    if( feof( fp ) )
+    if ( feof( fp ) )
 	return	EOF;
     /* These only work on machines where sizeof(short) == 2 */
     *op = instruction.opcode;
@@ -210,7 +210,7 @@ _get_New_Inst(register FILE *fp, register int *opcode, register int *datum)
 
     *opcode = getc( fp );
     *datum = getc( fp );
-    if( *opcode & LONG )
+    if ( *opcode & LONG )
     {
 	register char	*p = (char *) &long_data;
 	*opcode &= ~LONG;
@@ -219,7 +219,7 @@ _get_New_Inst(register FILE *fp, register int *opcode, register int *datum)
 	SWAB( long_data );
 	*datum = long_data;
     }
-    if( feof( fp ) )
+    if ( feof( fp ) )
 	return	EOF;
     return	1;
 }
@@ -259,20 +259,20 @@ rle_rhdr(FILE *fp, int *flags, register unsigned char *bgpixel)
 {
     static short x_magic;
 
-    if( fp != stdin && fseek( fp, 0L, 0 ) == -1 )
+    if ( fp != stdin && fseek( fp, 0L, 0 ) == -1 )
     {
 	(void) fprintf( stderr, "Seek to RLE header failed!\n" );
 	return	-1;
     }
-    if( fread( (char *)&x_magic, sizeof(short), 1, fp ) != 1 )
+    if ( fread( (char *)&x_magic, sizeof(short), 1, fp ) != 1 )
     {
 	(void) fprintf( stderr, "Read of magic word failed!\n" );
 	return	-1;
     }
     SWAB( x_magic );
-    if( x_magic != XtndRMAGIC )
+    if ( x_magic != XtndRMAGIC )
     { Old_Rle_Header	setup;
-    if( fread( (char *) &setup, sizeof(setup), 1, fp ) != 1 )
+    if ( fread( (char *) &setup, sizeof(setup), 1, fp ) != 1 )
     {
 	(void) fprintf( stderr, "Read of Old RLE header failed!\n" );
 	return	-1;
@@ -285,14 +285,14 @@ rle_rhdr(FILE *fp, int *flags, register unsigned char *bgpixel)
     r_setup.h_ypos = setup.ypos;
     r_setup.h_xlen = setup.xsize;
     r_setup.h_ylen = setup.ysize;
-    switch( x_magic & ~0xff) {
+    switch ( x_magic & ~0xff) {
 	case RMAGIC :
-	    if( rle_verbose )
+	    if ( rle_verbose )
 		(void) fprintf( stderr,	"Frame buffer image saved in Old Run Length Encoded form\n");
 	    r_setup.h_ncolors = 3;
 	    break;
 	case WMAGIC :
-	    if( rle_verbose )
+	    if ( rle_verbose )
 		(void) fprintf( stderr, "Frame buffer image saved in Old B&W RLE form\n");
 	    r_setup.h_ncolors = 1;
 	    break;
@@ -300,7 +300,7 @@ rle_rhdr(FILE *fp, int *flags, register unsigned char *bgpixel)
 	    (void) fprintf(	stderr, "File not in RLE format, can't display (magic=0x%x)\n", x_magic & ~0xff);
 	    return	-1;
     } /* End switch */
-    switch( x_magic & 0xFF ) {
+    switch ( x_magic & 0xFF ) {
 	case 'B' : /* Background given.				*/
 	    r_setup.h_flags = H_CLEARFIRST;
 	    r_setup.h_background[0] = setup.bg_r;
@@ -312,7 +312,7 @@ rle_rhdr(FILE *fp, int *flags, register unsigned char *bgpixel)
 	    r_setup.h_background[0] = 0;
 	    r_setup.h_background[1] = 0;
 	    r_setup.h_background[2] = 0;
-	    if( rle_verbose )
+	    if ( rle_verbose )
 		(void) fprintf( stderr, "Saved as a straight box image\n");
 	    break;
     } /* End switch */
@@ -323,7 +323,7 @@ rle_rhdr(FILE *fp, int *flags, register unsigned char *bgpixel)
     } /* End if */
     else
     {
-	if( fread( (char *)&r_setup, sizeof(Xtnd_Rle_Header), 1, fp )
+	if ( fread( (char *)&r_setup, sizeof(Xtnd_Rle_Header), 1, fp )
 	    != 1
 	    )
 	{
@@ -336,21 +336,21 @@ rle_rhdr(FILE *fp, int *flags, register unsigned char *bgpixel)
 	SWAB( r_setup.h_ylen );
 	_func_Get_Inst = _get_New_Inst;
     }
-    if( rle_verbose )
+    if ( rle_verbose )
 	(void) fprintf( stderr,
 			"Positioned at (%d, %d), size (%d %d)\n",
 			r_setup.h_xpos,
 			r_setup.h_ypos,
 			r_setup.h_xlen,
 			r_setup.h_ylen );
-    if( r_setup.h_flags == H_CLEARFIRST )
+    if ( r_setup.h_flags == H_CLEARFIRST )
     {
-	if( rle_verbose )
+	if ( rle_verbose )
 	    (void) fprintf( stderr,	"Saved with background color %d %d %d\n",
 			    r_setup.h_background[0],
 			    r_setup.h_background[1],
 			    r_setup.h_background[2] );
-	if( bgpixel != RGBPIXEL_NULL )
+	if ( bgpixel != RGBPIXEL_NULL )
 	{
 	    /* No command-line backgr., use saved values.	*/
 	    _bg_pixel[RED] = r_setup.h_background[0];
@@ -360,15 +360,15 @@ rle_rhdr(FILE *fp, int *flags, register unsigned char *bgpixel)
 	}
     }
     _bw_flag = r_setup.h_ncolors == 1;
-    if( r_setup.h_flags & H_CLEARFIRST )
+    if ( r_setup.h_flags & H_CLEARFIRST )
 	*flags = NO_BOX_SAVE;
     else
 	*flags = 0;
-    if( r_setup.h_ncmap == 0 )
+    if ( r_setup.h_ncmap == 0 )
 	*flags |= NO_COLORMAP;
-    if( r_setup.h_ncolors == 0 )
+    if ( r_setup.h_ncolors == 0 )
 	*flags |= NO_IMAGE;
-    if( rle_debug )
+    if ( rle_debug )
     {
 	(void) fprintf( stderr, "Magic=0x%x\n", x_magic );
 	prnt_XSetup( "Setup structure read", &r_setup );
@@ -391,14 +391,14 @@ rle_whdr(FILE *fp, int ncolors, int bgflag, int cmflag, unsigned char *bgpixel)
     static RGBpixel	black = { 0, 0, 0 };
 
     /* safty check */
-    if( bgpixel == NULL )
+    if ( bgpixel == NULL )
 	bgpixel = black;
 
     /* If black and white mode, compute NTSC value of background.	*/
-    if( ncolors == 1 )
+    if ( ncolors == 1 )
     {
 	register int	bbw;
-	if( rle_verbose )
+	if ( rle_verbose )
 	    (void) fprintf( stderr, "Image being saved as monochrome.\n" );
 	bbw = 0.35 * bgpixel[RED] +
 	    0.55 * bgpixel[GRN] +
@@ -417,13 +417,13 @@ rle_whdr(FILE *fp, int ncolors, int bgflag, int cmflag, unsigned char *bgpixel)
     w_setup.h_ncmap = cmflag ? _ncmap : 0;
     w_setup.h_cmaplen = _cmaplen;
 
-    if( fp != stdout && fseek( fp, 0L, 0 ) == -1 )
+    if ( fp != stdout && fseek( fp, 0L, 0 ) == -1 )
     {
 	(void) fprintf( stderr, "Seek to RLE header failed!\n" );
 	return	-1;
     }
     SWAB( x_magic );
-    if( fwrite( (char *) &x_magic, sizeof(short), 1, fp ) != 1 )
+    if ( fwrite( (char *) &x_magic, sizeof(short), 1, fp ) != 1 )
     {
 	(void) fprintf( stderr, "Write of magic number failed!\n" );
 	return	-1;
@@ -432,7 +432,7 @@ rle_whdr(FILE *fp, int ncolors, int bgflag, int cmflag, unsigned char *bgpixel)
     SWAB( w_setup.h_ypos );
     SWAB( w_setup.h_xlen );
     SWAB( w_setup.h_ylen );
-    if( fwrite( (char *) &w_setup, sizeof w_setup, 1, fp ) != 1 )
+    if ( fwrite( (char *) &w_setup, sizeof w_setup, 1, fp ) != 1 )
     {
 	(void) fprintf( stderr, "Write of RLE header failed!\n" );
 	return	-1;
@@ -441,7 +441,7 @@ rle_whdr(FILE *fp, int ncolors, int bgflag, int cmflag, unsigned char *bgpixel)
     SWAB( w_setup.h_ypos );
     SWAB( w_setup.h_xlen );
     SWAB( w_setup.h_ylen );
-    if( rle_debug )
+    if ( rle_debug )
     {
 	(void) fprintf( stderr, "Magic=0x%x\n", x_magic );
 	prnt_XSetup( "Setup structure written", &w_setup );
@@ -465,12 +465,12 @@ _get_Color_Map_Seg(FILE *fp, register short unsigned int *cmap_seg)
     static unsigned short	rle_cmap[256];
     register unsigned short	*cm = rle_cmap;
     register int	i;
-    if( fread( (char *) rle_cmap, sizeof(rle_cmap), 1, fp ) != 1 )
+    if ( fread( (char *) rle_cmap, sizeof(rle_cmap), 1, fp ) != 1 )
     {
 	(void) fprintf( stderr,	"Failed to read color map!\n" );
 	return	-1;
     }
-    for( i = 0; i < 256; i++, cm++ )
+    for ( i = 0; i < 256; i++, cm++ )
     {
 	SWAB( *cm );
 	*cmap_seg++ = (*cm) << 8;
@@ -485,9 +485,9 @@ _get_Color_Map_Seg(FILE *fp, register short unsigned int *cmap_seg)
 int
 rle_rmap(FILE *fp, ColorMap *cmap)
 {
-    if( rle_verbose )
+    if ( rle_verbose )
 	(void) fprintf( stderr, "Reading color map\n");
-    if(	_get_Color_Map_Seg( fp, cmap->cm_red ) == -1
+    if (	_get_Color_Map_Seg( fp, cmap->cm_red ) == -1
 	||	_get_Color_Map_Seg( fp, cmap->cm_green ) == -1
 	||	_get_Color_Map_Seg( fp, cmap->cm_blue ) == -1
 	)
@@ -505,12 +505,12 @@ _put_Color_Map_Seg(FILE *fp, register short unsigned int *cmap_seg)
     static unsigned short	rle_cmap[256];
     register unsigned short	*cm = rle_cmap;
     register int	i;
-    for( i = 0; i < 256; i++, cm++ )
+    for ( i = 0; i < 256; i++, cm++ )
     {
 	*cm = *cmap_seg++ >> 8;
 	SWAB( *cm );
     }
-    if( fwrite( (char *) rle_cmap, sizeof(rle_cmap), 1, fp ) != 1 )
+    if ( fwrite( (char *) rle_cmap, sizeof(rle_cmap), 1, fp ) != 1 )
     {
 	(void) fprintf(	stderr, "Write of color map segment failed!\n" );
 	return	-1;
@@ -527,13 +527,13 @@ _put_Std_Map(FILE *fp)
     static unsigned short	rle_cmap[256*3];
     register unsigned short	*cm = rle_cmap;
     register int	i, segment;
-    for( segment = 0; segment < 3; segment++ )
-	for( i = 0; i < 256; i++, cm++ )
+    for ( segment = 0; segment < 3; segment++ )
+	for ( i = 0; i < 256; i++, cm++ )
 	{
 	    *cm = i;
 	    SWAB( *cm );
 	}
-    if( fwrite( (char *) rle_cmap, sizeof(rle_cmap), 1, fp ) != 1 )
+    if ( fwrite( (char *) rle_cmap, sizeof(rle_cmap), 1, fp ) != 1 )
     {
 	(void) fprintf(	stderr, "Write of standard color map failed!\n" );
 	return	-1;
@@ -548,19 +548,19 @@ _put_Std_Map(FILE *fp)
 int
 rle_wmap(FILE *fp, ColorMap *cmap)
 {
-    if( w_setup.h_ncmap == 0 )
+    if ( w_setup.h_ncmap == 0 )
     {
 	(void) fprintf( stderr, "Writing color map conflicts with header information!\n" );
 	(void) fprintf( stderr, "rle_whdr(arg 2 == 0) No map written.\n" );
 	return	-1;
     }
-    if( rle_verbose )
+    if ( rle_verbose )
 	(void) fprintf( stderr, "Writing color map\n" );
-    if( cmap == (ColorMap *) NULL )
+    if ( cmap == (ColorMap *) NULL )
     {
 	return _put_Std_Map( fp );
     }
-    if(	_put_Color_Map_Seg( fp, cmap->cm_red ) == -1
+    if (	_put_Color_Map_Seg( fp, cmap->cm_red ) == -1
 	||	_put_Color_Map_Seg( fp, cmap->cm_green ) == -1
 	||	_put_Color_Map_Seg( fp, cmap->cm_blue ) == -1
 	)
@@ -586,20 +586,20 @@ rle_decode_ln(register FILE *fp, RGBpixel (*scan_buf))
     register unsigned char	*pp;
     register int	dirty_flag = 0;
 
-    if( lines_to_skip > 0 )
+    if ( lines_to_skip > 0 )
     {
 	lines_to_skip--;
 	return	dirty_flag;
     }
     pp = &(scan_buf[r_setup.h_xpos][RED]); /* Pointer into pixel. */
-    while( (*_func_Get_Inst)( fp, &opcode, &datum ) != EOF )
+    while ( (*_func_Get_Inst)( fp, &opcode, &datum ) != EOF )
     {
-	switch( opcode )
+	switch ( opcode )
 	{
 	    case RSkipLinesOp :
 		lines_to_skip = datum;
 		PRNT_A1_DEBUG( "Skip-Lines", lines_to_skip );
-		if( lines_to_skip-- < 1 )
+		if ( lines_to_skip-- < 1 )
 		    return	-1;
 		return	dirty_flag;
 	    case RSetColorOp:
@@ -612,10 +612,10 @@ rle_decode_ln(register FILE *fp, RGBpixel (*scan_buf))
 		   Data will ignore strides below.
 		*/
 		PRNT_A1_DEBUG( "Set-Color", datum );
-		if( (n = _bw_flag ? 0 : datum) > 2 )
+		if ( (n = _bw_flag ? 0 : datum) > 2 )
 		{
 		    (void) fprintf( stderr,	"Bad color %d\n", n );
-		    if( ! rle_debug )
+		    if ( ! rle_debug )
 			return	-1;
 		}
 		pp = &(scan_buf[r_setup.h_xpos][n]);
@@ -628,9 +628,9 @@ rle_decode_ln(register FILE *fp, RGBpixel (*scan_buf))
 	    case RByteDataOp:
 		n = datum + 1;
 		PRNT_A1_DEBUG( "Byte-Data", n );
-		if( ! _bw_flag )
+		if ( ! _bw_flag )
 		{
-		    while( n-- > 0 )
+		    while ( n-- > 0 )
 		    {
 			*pp = getc(fp);
 			pp += STRIDE;
@@ -640,7 +640,7 @@ rle_decode_ln(register FILE *fp, RGBpixel (*scan_buf))
 		{
 		    /* Ugh, black & white.		*/
 		    register unsigned char c;
-		    while( n-- > 0 )
+		    while ( n-- > 0 )
 		    {
 			/* Implicit knowledge of sizeof(RGBpixel) */
 			*pp++ = c = getc( fp );
@@ -648,7 +648,7 @@ rle_decode_ln(register FILE *fp, RGBpixel (*scan_buf))
 			*pp++ = c;
 		    }
 		}
-		if( (datum + 1) & 1 )
+		if ( (datum + 1) & 1 )
 		{
 		    /* word align file ptr		*/
 		    (void) getc( fp );
@@ -664,10 +664,10 @@ rle_decode_ln(register FILE *fp, RGBpixel (*scan_buf))
 		    SWAB( word );
 		}
 		PRNT_A2_DEBUG( "Run-Data", (long)n,	word );
-		if( ! _bw_flag )
+		if ( ! _bw_flag )
 		{
 		    register unsigned char inten = (unsigned char)word;
-		    while( n-- > 0 )
+		    while ( n-- > 0 )
 		    {
 			*pp = inten;
 			pp += STRIDE;
@@ -676,7 +676,7 @@ rle_decode_ln(register FILE *fp, RGBpixel (*scan_buf))
 		else
 		{
 		    /* Ugh, black & white.		*/
-		    while( n-- > 0 )
+		    while ( n-- > 0 )
 		    {
 			/* Implicit knowledge of sizeof(RGBpixel) */
 			*pp++ = (unsigned char) word;
@@ -688,7 +688,7 @@ rle_decode_ln(register FILE *fp, RGBpixel (*scan_buf))
 		break;
 	    default:
 		(void) fprintf( stderr, "Unrecognized opcode: %d (x%x x%x)\n", opcode, opcode, datum );
-		if( ! rle_debug )
+		if ( ! rle_debug )
 		    return	-1;
 	}
     }
@@ -704,12 +704,12 @@ _put_Data(register FILE *fp, register unsigned char *cp, int n)
     register int	count = n;
     RByteData(n-1);
 
-    while( count-- > 0 )
+    while ( count-- > 0 )
     {
 	(void) putc( (int) *cp, fp );
 	cp += STRIDE;
     }
-    if( n & 1 )
+    if ( n & 1 )
 	(void) putc( 0, fp );	/* short align output */
     return;
 }
@@ -724,12 +724,12 @@ _enc_Segment(FILE *fp, register RGBpixel (*data_p), register RGBpixel (*last_p))
     register RGBpixel	*runs_p = data_p;
     register int	state = DATA;
     register unsigned char	runval = (*data_p)[CUR];
-    for( pixelp = data_p + 1; pixelp <= last_p; pixelp++ )
+    for ( pixelp = data_p + 1; pixelp <= last_p; pixelp++ )
     {
-	switch( state )
+	switch ( state )
 	{
 	    case DATA :
-		if( runval == (*pixelp)[CUR] )
+		if ( runval == (*pixelp)[CUR] )
 		    /* 2 in a row, may be a run.		*/
 		    state = RUN2;
 		else
@@ -742,14 +742,14 @@ _enc_Segment(FILE *fp, register RGBpixel (*data_p), register RGBpixel (*last_p))
 		}
 		break;
 	    case RUN2:
-		if( runval == (*pixelp)[CUR] )
+		if ( runval == (*pixelp)[CUR] )
 		{
 		    /* 3 in a row is a run.			*/
 		    state = INRUN;
 		    /* Flush out data sequence encountered
 		       before this run
 		    */
-		    if( runs_p > data_p )
+		    if ( runs_p > data_p )
 			_put_Data(fp, &((*data_p)[CUR]), runs_p-data_p);
 		}
 		else
@@ -761,7 +761,7 @@ _enc_Segment(FILE *fp, register RGBpixel (*data_p), register RGBpixel (*last_p))
 		}
 		break;
 	    case INRUN:
-		if( runval != (*pixelp)[CUR] )
+		if ( runval != (*pixelp)[CUR] )
 		{
 		    /* If run out				*/
 		    state = DATA;
@@ -776,12 +776,12 @@ _enc_Segment(FILE *fp, register RGBpixel (*data_p), register RGBpixel (*last_p))
 	} /* end switch */
     } /* end for */
     /* Write out last portion of section being encoded.	*/
-    if( state == INRUN )
+    if ( state == INRUN )
     {
 	PutRun( runval, pixelp - runs_p );
     }
     else
-	if( pixelp > data_p )
+	if ( pixelp > data_p )
 	    _put_Data( fp, &(*data_p)[CUR], pixelp - data_p );
     return;
 }
@@ -812,9 +812,9 @@ _bg_Get_Runs(register RGBpixel (*pixelp), register RGBpixel (*endpix))
 {
     /* find non-background runs */
     register int	nseg = 0;
-    while( pixelp <= endpix && nseg < NSEG )
+    while ( pixelp <= endpix && nseg < NSEG )
     {
-	if(	(*pixelp)[RED] != _bg_pixel[RED]
+	if (	(*pixelp)[RED] != _bg_pixel[RED]
 		||	(*pixelp)[GRN] != _bg_pixel[GRN]
 		||	(*pixelp)[BLU] != _bg_pixel[BLU]
 	    )
@@ -823,7 +823,7 @@ _bg_Get_Runs(register RGBpixel (*pixelp), register RGBpixel (*endpix))
 	    runs[nseg].first = pixelp++;
 
 	    /* find the end of this run */
-	    while(	pixelp <= endpix
+	    while (	pixelp <= endpix
 			&&	 (	(*pixelp)[RED] != _bg_pixel[RED]
 					||	(*pixelp)[GRN] != _bg_pixel[GRN]
 					||	(*pixelp)[BLU] != _bg_pixel[BLU]
@@ -835,7 +835,7 @@ _bg_Get_Runs(register RGBpixel (*pixelp), register RGBpixel (*endpix))
 	}
 	pixelp++;
     }
-    if( nseg >= NSEG )
+    if ( nseg >= NSEG )
     {
 	(void) fprintf( stderr, "Encoding incomplete, segment array 'runs[%d]' is full!\n", NSEG );
 	return	-1;
@@ -858,11 +858,11 @@ rle_encode_ln(register FILE *fp, RGBpixel (*scan_buf))
 
     scan_p = (RGBpixel *)&(scan_buf[w_setup.h_xpos][RED]);
     last_p = (RGBpixel *)&(scan_buf[w_setup.h_xpos+(w_setup.h_xlen-1)][RED]);
-    if( _bg_flag )
+    if ( _bg_flag )
     {
-	if( (nseg = _bg_Get_Runs( scan_p, last_p )) == -1 )
+	if ( (nseg = _bg_Get_Runs( scan_p, last_p )) == -1 )
 	    return	-1;
-	if( nseg <= 0 )
+	if ( nseg <= 0 )
 	{
 	    RSkipLines( 1 );
 	    return	0;
@@ -874,28 +874,28 @@ rle_encode_ln(register FILE *fp, RGBpixel (*scan_buf))
 	runs[0].last = last_p;
 	nseg = 1;
     }
-    if( _bw_flag )
+    if ( _bw_flag )
     {
 	register RGBpixel *pixelp;
 	/* Compute NTSC Black & White in blue row.		*/
-	for( pixelp=scan_p; pixelp <= last_p; pixelp++ )
+	for ( pixelp=scan_p; pixelp <= last_p; pixelp++ )
 	    (*pixelp)[BLU] =  .35 * (*pixelp)[RED] +
 		.55 * (*pixelp)[GRN] +
 		.10 * (*pixelp)[BLU];
     }
 
     /* do all 3 colors */
-    for( color = 0; color < 3; color++ )
+    for ( color = 0; color < 3; color++ )
     {
-	if( _bw_flag && color != 2 )
+	if ( _bw_flag && color != 2 )
 	    continue;
 	SetColor( color );
-	if( runs[0].first != scan_p )
+	if ( runs[0].first != scan_p )
 	{	
 	    register int	runlen = runs[0].first-scan_p;
 	    SkipPixels( runlen );
 	}
-	for( i = 0; i < nseg; i++ )
+	for ( i = 0; i < nseg; i++ )
 	{
 	    register int	runlen = (runs[i+1].first-1) -
 		runs[i].last;
@@ -903,7 +903,7 @@ rle_encode_ln(register FILE *fp, RGBpixel (*scan_buf))
 	    /* Move along to next segment for encoding,
 	       if this was not the last segment.
 	    */
-	    if( i < nseg-1 )
+	    if ( i < nseg-1 )
 		SkipPixels( runlen );
 	}
     }

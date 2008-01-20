@@ -56,15 +56,15 @@ int main(int argc, char **argv)
 	FILE	*fp;
 
 	/* check for verbose flag */
-	if( argc > 1 && strcmp(argv[1], "-v") == 0 ) {
+	if ( argc > 1 && strcmp(argv[1], "-v") == 0 ) {
 		verbose++;
 		argv++;
 		argc--;
 	}
 
 	/* look for optional input file */
-	if( argc > 1 ) {
-		if( (fp = fopen(argv[1], "r")) == 0 ) {
+	if ( argc > 1 ) {
+		if ( (fp = fopen(argv[1], "r")) == 0 ) {
 			bu_exit(1, "dstat: can't open \"%s\"\n", argv[1] );
 		}
 		argv++;
@@ -73,7 +73,7 @@ int main(int argc, char **argv)
 		fp = stdin;
 
 	/* check usage */
-	if( argc > 1 || isatty(fileno(fp)) ) {
+	if ( argc > 1 || isatty(fileno(fp)) ) {
 		bu_exit(1, "Usage: dstat [-v] [file.doubles]\n");
 	}
 
@@ -89,15 +89,15 @@ int main(int argc, char **argv)
 	min = HUGE;
 	max = -HUGE;
 #endif
-	while( (n = fread(buf, sizeof(*buf), IBUFSIZE, fp)) > 0 ) {
+	while ( (n = fread(buf, sizeof(*buf), IBUFSIZE, fp)) > 0 ) {
 		num_values += n;
 		bp = &buf[0];
-		for( i = 0; i < n; i++ ) {
+		for ( i = 0; i < n; i++ ) {
 			sum += *bp;
 			sum2 += *bp * *bp;
-			if( *bp < min )
+			if ( *bp < min )
 				min = *bp;
-			if( *bp > max )
+			if ( *bp > max )
 				max = *bp;
 			bp++;
 		}

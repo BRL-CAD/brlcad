@@ -94,7 +94,7 @@ cbweights(double *filter, int window, int points)
 
 	filter[center] = butter( 1.0 );
 	w = 1;
-	for( i = 1; i <= points/2; i++ ) {
+	for ( i = 1; i <= points/2; i++ ) {
 		w *= step;
 		/* w = pow( step, (double)i ); */
 		filter[center+i] = filter[center-i] = butter( w );
@@ -110,7 +110,7 @@ int main()
 
 	step = pow( N, 1.0/(N-1) );
 
-	for( offset = -15; offset <= 15; offset++ ) {
+	for ( offset = -15; offset <= 15; offset++ ) {
 		wr = pow( step, (double)offset );
 		mag = butter( wr );
 		printf( "%4d: %f, %f, %f\n", offset, wr, mag, 20.0*log10( mag ) );

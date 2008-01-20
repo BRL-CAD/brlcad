@@ -58,11 +58,11 @@ getCommand( char *name, char *buf, int len, FILE *fp )
     assert( name != NULL );
     assert( buf != NULL );
     assert( fp != NULL );
-    while( bu_fgets( buf, len, fp ) != NULL )
+    while ( bu_fgets( buf, len, fp ) != NULL )
 	{
-	    if( buf[0] != CHAR_COMMENT )
+	    if ( buf[0] != CHAR_COMMENT )
 		{
-		    if( sscanf( buf, "%1330s", name ) == 1 ) /* LNBUFSZ */
+		    if ( sscanf( buf, "%1330s", name ) == 1 ) /* LNBUFSZ */
 			{
 			    buf[strlen(buf)-1] = NUL; /* clobber newline */
 			    return	1;
@@ -89,11 +89,11 @@ static void
 setupSigs( void )
 {
     register int i;
-    for( i = 0; i < NSIG; i++ )
-	switch( i )
+    for ( i = 0; i < NSIG; i++ )
+	switch ( i )
 	    {
 		case SIGINT :
-		    if( (norml_sig = signal( i, SIG_IGN )) == SIG_IGN )
+		    if ( (norml_sig = signal( i, SIG_IGN )) == SIG_IGN )
 			abort_sig = SIG_IGN;
 		    else
 			{
@@ -124,9 +124,9 @@ static int
 parsArgv( int argc, char **argv )
 {	register int c;
 /* Parse options.						*/
- while( (c = bu_getopt( argc, argv, "b" )) != EOF )
+ while ( (c = bu_getopt( argc, argv, "b" )) != EOF )
      {
-	 switch( c )
+	 switch ( c )
 	     {
 		 case 'b' :
 		     tty = 0;
@@ -148,19 +148,19 @@ readBatchInput( FILE *fp )
 {
     assert( fp != (FILE *) NULL );
     batchmode = 1;
-    while( getCommand( cmdname, cmdbuf, LNBUFSZ, fp ) )
+    while ( getCommand( cmdname, cmdbuf, LNBUFSZ, fp ) )
 	{	Func	*cmdfunc;
-	if( (cmdfunc = getTrie( cmdname, cmdtrie )) == NULL )
+	if ( (cmdfunc = getTrie( cmdname, cmdtrie )) == NULL )
 	    {	register int i, len = strlen( cmdname );
 	    brst_log( "ERROR -- command syntax:\n" );
 	    brst_log( "\t%s\n", cmdbuf );
 	    brst_log( "\t" );
-	    for( i = 0; i < len; i++ )
+	    for ( i = 0; i < len; i++ )
 		brst_log( " " );
 	    brst_log( "^\n" );
 	    }
 	else
-	    if( strcmp( cmdname, CMD_COMMENT ) == 0 )
+	    if ( strcmp( cmdname, CMD_COMMENT ) == 0 )
 		{ /* special handling for comments */
 		    cmdptr = cmdbuf;
 		    cmdbuf[strlen(cmdbuf)-1] = '\0'; /* clobber newline */
@@ -185,7 +185,7 @@ main( int argc, char *argv[] )
 {
     bu_setlinebuf(stderr);
 
-    if(	tmpnam( tmpfname ) == NULL
+    if (	tmpnam( tmpfname ) == NULL
 	||	(tmpfp = fopen( tmpfname, "w" )) == (FILE *) NULL
 	)
 	{
@@ -195,14 +195,14 @@ main( int argc, char *argv[] )
 			    tmpfname );
 	    goto	death;
 	}
-    if( ! parsArgv( argc, argv ) )
+    if ( ! parsArgv( argc, argv ) )
 	{
 	    prntUsage();
 	    goto	clean;
 	}
 
     setupSigs();
-    if( ! initUi() ) /* must be called before any output is produced */
+    if ( ! initUi() ) /* must be called before any output is produced */
 	goto	clean;
 
 #if DEBUG_BURST
@@ -212,9 +212,9 @@ main( int argc, char *argv[] )
     assert( armorids.i_next == NULL );
     assert( critids.i_next == NULL );
 
-    if( ! isatty( 0 ) || ! tty )
+    if ( ! isatty( 0 ) || ! tty )
 	readBatchInput( stdin );
-    if( tty )
+    if ( tty )
 	(void) HmHit( mainhmenu );
     exitCleanly( EXIT_SUCCESS );
  clean:
@@ -231,10 +231,10 @@ main( int argc, char *argv[] )
 void
 exitCleanly( int code )
 {
-    if( tty )
+    if ( tty )
 	closeUi(); /* keep screen straight */
     (void) fclose( tmpfp );
-    if( unlink( tmpfname ) == -1 )
+    if ( unlink( tmpfname ) == -1 )
 	locPerror( tmpfname );
     exit( code );
 }

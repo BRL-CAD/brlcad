@@ -69,7 +69,7 @@ mult(double *o, double *b, int n)
 	o[0] *= b[0];
 	o[n/2] *= b[n/2];
 
-	for( i = 1; i < n/2; i++ ) {
+	for ( i = 1; i < n/2; i++ ) {
 		r = o[i] * b[i] - o[n-i] * b[n-i];
 		o[n-i] = o[i] * b[n-i] + o[n-i] * b[i];
 		o[i] = r;
@@ -87,7 +87,7 @@ int main(int argc, char **argv)
 	N = 2*M;	/* input sub-section length (fft size) */
 	L = N - M + 1;	/* number of "good" points per section */
 
-	if( argc != 2 || isatty(fileno(stdin)) || isatty(fileno(stdout)) ) {
+	if ( argc != 2 || isatty(fileno(stdin)) || isatty(fileno(stdout)) ) {
 		bu_exit(1, "Usage: dconv filter < doubles > doubles\nXXX Warning: kernal size must be 2^i - 1\n" );
 	}
 
@@ -96,22 +96,22 @@ int main(int argc, char **argv)
 	/* this is either the direct complex response,
 	 *  or the FT(impulse resp)
 	 */
-	for( i = 0; i < N; i++ ) {
-		if( i <= N/2 )
+	for ( i = 0; i < N; i++ ) {
+		if ( i <= N/2 )
 			ibuf[i] = 1.0;	/* Real part */
 		else
 			ibuf[i] = 0.0;	/* Imag part */
 	}
 #endif /* never */
 
-	if( (fp = fopen( argv[1], "r" )) == NULL ) {
+	if ( (fp = fopen( argv[1], "r" )) == NULL ) {
 		bu_exit(2, "dconv: can't open \"%s\"\n", argv[1] );
 	}
-	if( (M = fread( ibuf, sizeof(*ibuf), 2*MAXM, fp )) == 0 ) {
+	if ( (M = fread( ibuf, sizeof(*ibuf), 2*MAXM, fp )) == 0 ) {
 		bu_exit(3, "dconv: problem reading filter file\n" );
 	}
 	fclose( fp );
-	if( M > MAXM ) {
+	if ( M > MAXM ) {
 		bu_exit(4, "dconv: only compiled for up to %d sized filter kernels\n", MAXM );
 	}
 /*XXX HACK HACK HACK HACK XXX*/
@@ -120,13 +120,13 @@ M += 1;
 	N = 2*M;	/* input sub-section length (fft size) */
 	L = N - M + 1;	/* number of "good" points per section */
 
-	if( N == 256 )
+	if ( N == 256 )
 		rfft256( ibuf );
 	else
 		rfft( ibuf, N );
 
-	while( (i = fread(&xbuf[M-1], sizeof(*xbuf), L, stdin)) > 0 ) {
-		if( i < L ) {
+	while ( (i = fread(&xbuf[M-1], sizeof(*xbuf), L, stdin)) > 0 ) {
+		if ( i < L ) {
 			/* pad the end with zero's */
 			memset((char *)&xbuf[M-1+i], 0, (L-i)*sizeof(*savebuffer));
 		}
@@ -134,7 +134,7 @@ M += 1;
 		memcpy(savebuffer, &xbuf[L], (M-1)*sizeof(*savebuffer));
 
 		/*xform( xbuf, N );*/
-		if( N == 256 )
+		if ( N == 256 )
 			rfft256( xbuf );
 		else
 			rfft( xbuf, N );
@@ -143,7 +143,7 @@ M += 1;
 		mult( xbuf, ibuf, N );
 
 		/*invxform( xbuf, N );*/
-		if( N == 256 )
+		if ( N == 256 )
 			irfft256( xbuf );
 		else
 			irfft( xbuf, N );

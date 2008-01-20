@@ -64,7 +64,7 @@ adc_set_dirty_flag(void)
   struct dm_list *dmlp;
 
   FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l)
-    if(dmlp->dml_adc_state == adc_state)
+    if (dmlp->dml_adc_state == adc_state)
       dmlp->dml_dirty = 1;
 }
 
@@ -77,7 +77,7 @@ adc_set_scroll(void)
   save_dmlp = curr_dm_list;
 
   FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l)
-    if(dmlp->dml_adc_state == adc_state){
+    if (dmlp->dml_adc_state == adc_state){
       curr_dm_list = dmlp;
       set_scroll();
       dirty = 1;
@@ -121,10 +121,10 @@ adc_view_To_adc_grid(void)
 static void
 calc_adc_pos(void)
 {
-  if(adc_state->adc_anchor_pos == 1){
+  if (adc_state->adc_anchor_pos == 1){
     adc_model_To_adc_view();
     adc_view_To_adc_grid();
-  }else if(adc_state->adc_anchor_pos == 2){
+  }else if (adc_state->adc_anchor_pos == 2){
     adc_grid_To_adc_view();
     MAT4X3PNT(adc_state->adc_pos_model, view_state->vs_vop->vo_view2model, adc_state->adc_pos_view);
   }else{
@@ -136,7 +136,7 @@ calc_adc_pos(void)
 static void
 calc_adc_a1(void)
 {
-  if(adc_state->adc_anchor_a1){
+  if (adc_state->adc_anchor_a1){
     fastf_t dx, dy;
     point_t view_pt;
 
@@ -144,7 +144,7 @@ calc_adc_a1(void)
     dx = view_pt[X] * GED_MAX - adc_state->adc_dv_x;
     dy = view_pt[Y] * GED_MAX - adc_state->adc_dv_y;
 
-    if(dx != 0.0 || dy != 0.0){
+    if (dx != 0.0 || dy != 0.0){
       adc_state->adc_a1 = RAD2DEG*atan2(dy, dx);
       adc_state->adc_dv_a1 = (1.0 - (adc_state->adc_a1 / 45.0)) * GED_MAX;
     }
@@ -154,7 +154,7 @@ calc_adc_a1(void)
 static void
 calc_adc_a2(void)
 {
-  if(adc_state->adc_anchor_a2){
+  if (adc_state->adc_anchor_a2){
     fastf_t dx, dy;
     point_t view_pt;
 
@@ -162,7 +162,7 @@ calc_adc_a2(void)
     dx = view_pt[X] * GED_MAX - adc_state->adc_dv_x;
     dy = view_pt[Y] * GED_MAX - adc_state->adc_dv_y;
 
-    if(dx != 0.0 || dy != 0.0){
+    if (dx != 0.0 || dy != 0.0){
       adc_state->adc_a2 = RAD2DEG*atan2(dy, dx);
       adc_state->adc_dv_a2 = (1.0 - (adc_state->adc_a2 / 45.0)) * GED_MAX;
     }
@@ -172,7 +172,7 @@ calc_adc_a2(void)
 static void
 calc_adc_dst(void)
 {
-  if(adc_state->adc_anchor_dst){
+  if (adc_state->adc_anchor_dst){
     fastf_t dist;
     fastf_t dx, dy;
     point_t view_pt;
@@ -214,7 +214,7 @@ draw_ticks(fastf_t angle)
   Y1 = adc_state->adc_dv_y + d2 - t2;
   x2 = adc_state->adc_dv_x + d1 -t1;
   y2 = adc_state->adc_dv_y + d2 + t2;
-  if(clip(&x1, &Y1, &x2, &y2) == 0){
+  if (clip(&x1, &Y1, &x2, &y2) == 0){
     DM_DRAW_LINE_2D(dmp,
 		    GED2PM1(x1), GED2PM1(Y1) * dmp->dm_aspect,
 		    GED2PM1(x2), GED2PM1(y2) * dmp->dm_aspect);
@@ -225,7 +225,7 @@ draw_ticks(fastf_t angle)
   Y1 = adc_state->adc_dv_y + d1 + t1;
   x2 = adc_state->adc_dv_x - d2 - t2;
   y2 = adc_state->adc_dv_y + d1 - t1;
-  if(clip (&x1, &Y1, &x2, &y2) == 0){
+  if (clip (&x1, &Y1, &x2, &y2) == 0){
     DM_DRAW_LINE_2D(dmp,
 		    GED2PM1(x1), GED2PM1(Y1) * dmp->dm_aspect,
 		    GED2PM1(x2), GED2PM1(y2) * dmp->dm_aspect);
@@ -236,7 +236,7 @@ draw_ticks(fastf_t angle)
   Y1 = adc_state->adc_dv_y - d2 + t2;
   x2 = adc_state->adc_dv_x - d1 + t1;
   y2 = adc_state->adc_dv_y - d2 - t2;
-  if(clip (&x1, &Y1, &x2, &y2) == 0){
+  if (clip (&x1, &Y1, &x2, &y2) == 0){
     DM_DRAW_LINE_2D(dmp,
 		    GED2PM1(x1), GED2PM1(Y1) * dmp->dm_aspect,
 		    GED2PM1(x2), GED2PM1(y2) * dmp->dm_aspect);
@@ -247,7 +247,7 @@ draw_ticks(fastf_t angle)
   Y1 = adc_state->adc_dv_y - d1 - t1;
   x2 = adc_state->adc_dv_x + d2 + t2;
   y2 = adc_state->adc_dv_y - d1 + t1;
-  if(clip (&x1, &Y1, &x2, &y2) == 0){
+  if (clip (&x1, &Y1, &x2, &y2) == 0){
     DM_DRAW_LINE_2D(dmp,
 		    GED2PM1(x1), GED2PM1(Y1) * dmp->dm_aspect,
 		    GED2PM1(x2), GED2PM1(y2) * dmp->dm_aspect);
@@ -416,7 +416,7 @@ f_adc (
 
   CHECK_DBI_NULL;
 
-  if(6 < argc){
+  if (6 < argc){
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "help adc");
     Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -425,13 +425,13 @@ f_adc (
     return TCL_ERROR;
   }
 
-  if(argc == 1){
-    if(adc_state->adc_draw)
+  if (argc == 1){
+    if (adc_state->adc_draw)
       adc_state->adc_draw = 0;
     else
       adc_state->adc_draw = 1;
 
-    if(adc_auto){
+    if (adc_auto){
       adc_reset();
       adc_auto = 0;
     }
@@ -465,18 +465,18 @@ f_adc (
   for (i = 0; i < argc; ++i)
     user_pt[i] = atof(argp[i]);
 
-  if(strcmp(parameter, "draw") == 0){
-    if(argc == 0){
+  if (strcmp(parameter, "draw") == 0){
+    if (argc == 0){
       bu_vls_init(&vls);
       bu_vls_printf(&vls, "%d", adc_state->adc_draw);
       Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
       bu_vls_free(&vls);
 
       return TCL_OK;
-    }else if(argc == 1){
+    }else if (argc == 1){
       i = (int)user_pt[X];
 
-      if(i)
+      if (i)
 	adc_state->adc_draw = 1;
       else
 	adc_state->adc_draw = 0;
@@ -490,17 +490,17 @@ f_adc (
     return TCL_ERROR;
   }
 
-  if(strcmp(parameter, "a1") == 0){
-    if(argc == 0){
+  if (strcmp(parameter, "a1") == 0){
+    if (argc == 0){
       bu_vls_init(&vls);
       bu_vls_printf(&vls, "%.15e", adc_state->adc_a1);
       Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
       bu_vls_free(&vls);
 
       return TCL_OK;
-    }else if(argc == 1){
-      if(!adc_state->adc_anchor_a1){
-	if(incr_flag)
+    }else if (argc == 1){
+      if (!adc_state->adc_anchor_a1){
+	if (incr_flag)
 	  adc_state->adc_a1 += user_pt[0];
 	else
 	  adc_state->adc_a1 = user_pt[0];
@@ -516,17 +516,17 @@ f_adc (
     return TCL_ERROR;
   }
 
-  if(strcmp(parameter, "a2") == 0){
-    if(argc == 0){
+  if (strcmp(parameter, "a2") == 0){
+    if (argc == 0){
       bu_vls_init(&vls);
       bu_vls_printf(&vls, "%.15e", adc_state->adc_a2);
       Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
       bu_vls_free(&vls);
 
       return TCL_OK;
-    }else if(argc == 1){
-      if(!adc_state->adc_anchor_a2){
-	if(incr_flag)
+    }else if (argc == 1){
+      if (!adc_state->adc_anchor_a2){
+	if (incr_flag)
 	  adc_state->adc_a2 += user_pt[0];
 	else
 	  adc_state->adc_a2 = user_pt[0];
@@ -542,17 +542,17 @@ f_adc (
     return TCL_ERROR;
   }
 
-  if(strcmp(parameter, "dst") == 0){
-    if(argc == 0){
+  if (strcmp(parameter, "dst") == 0){
+    if (argc == 0){
       bu_vls_init(&vls);
       bu_vls_printf(&vls, "%.15e", adc_state->adc_dst * view_state->vs_vop->vo_scale * base2local);
       Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
       bu_vls_free(&vls);
 
       return TCL_OK;
-    }else if(argc == 1){
-      if(!adc_state->adc_anchor_dst){
-	if(incr_flag)
+    }else if (argc == 1){
+      if (!adc_state->adc_anchor_dst){
+	if (incr_flag)
 	  adc_state->adc_dst += user_pt[0] / (view_state->vs_vop->vo_scale * base2local);
 	else
 	  adc_state->adc_dst = user_pt[0] / (view_state->vs_vop->vo_scale * base2local);
@@ -569,17 +569,17 @@ f_adc (
     return TCL_ERROR;
   }
 
-  if(strcmp(parameter, "odst") == 0){
-    if(argc == 0){
+  if (strcmp(parameter, "odst") == 0){
+    if (argc == 0){
       bu_vls_init(&vls);
       bu_vls_printf(&vls, "%d", adc_state->adc_dv_dist);
       Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
       bu_vls_free(&vls);
 
       return TCL_OK;
-    }else if(argc == 1){
-      if(!adc_state->adc_anchor_dst){
-	if(incr_flag)
+    }else if (argc == 1){
+      if (!adc_state->adc_anchor_dst){
+	if (incr_flag)
 	  adc_state->adc_dv_dist += user_pt[0];
 	else
 	  adc_state->adc_dv_dist = user_pt[0];
@@ -595,9 +595,9 @@ f_adc (
     return TCL_ERROR;
   }
 
-  if(strcmp(parameter, "dh") == 0){
-    if(argc == 1){
-      if(!adc_state->adc_anchor_pos){
+  if (strcmp(parameter, "dh") == 0){
+    if (argc == 1){
+      if (!adc_state->adc_anchor_pos){
 	adc_state->adc_pos_grid[X] += user_pt[0] / (view_state->vs_vop->vo_scale * base2local);
 	adc_grid_To_adc_view();
 	MAT4X3PNT(adc_state->adc_pos_model, view_state->vs_vop->vo_view2model, adc_state->adc_pos_view);
@@ -612,9 +612,9 @@ f_adc (
     return TCL_ERROR;
   }
 
-  if(strcmp(parameter, "dv") == 0){
-    if(argc == 1){
-      if(!adc_state->adc_anchor_pos){
+  if (strcmp(parameter, "dv") == 0){
+    if (argc == 1){
+      if (!adc_state->adc_anchor_pos){
 	adc_state->adc_pos_grid[Y] += user_pt[0] / (view_state->vs_vop->vo_scale * base2local);
 	adc_grid_To_adc_view();
 	MAT4X3PNT(adc_state->adc_pos_model, view_state->vs_vop->vo_view2model, adc_state->adc_pos_view);
@@ -629,8 +629,8 @@ f_adc (
     return TCL_ERROR;
   }
 
-  if(strcmp(parameter, "hv") == 0){
-    if(argc == 0){
+  if (strcmp(parameter, "hv") == 0){
+    if (argc == 0){
       bu_vls_init(&vls);
       bu_vls_printf(&vls, "%.15e %.15e",
 		    adc_state->adc_pos_grid[X] * view_state->vs_vop->vo_scale * base2local,
@@ -639,9 +639,9 @@ f_adc (
       bu_vls_free(&vls);
 
       return TCL_OK;
-    }else if(argc == 2){
-      if(!adc_state->adc_anchor_pos){
-	if(incr_flag){
+    }else if (argc == 2){
+      if (!adc_state->adc_anchor_pos){
+	if (incr_flag){
 	  adc_state->adc_pos_grid[X] += user_pt[X] / (view_state->vs_vop->vo_scale * base2local);
 	  adc_state->adc_pos_grid[Y] += user_pt[Y] / (view_state->vs_vop->vo_scale * base2local);
 	}else{
@@ -663,9 +663,9 @@ f_adc (
     return TCL_ERROR;
   }
 
-  if(strcmp(parameter, "dx") == 0){
-    if(argc == 1){
-      if(!adc_state->adc_anchor_pos){
+  if (strcmp(parameter, "dx") == 0){
+    if (argc == 1){
+      if (!adc_state->adc_anchor_pos){
 	adc_state->adc_pos_model[X] += user_pt[0] * local2base;
 	adc_model_To_adc_view();
 	adc_view_To_adc_grid();
@@ -680,9 +680,9 @@ f_adc (
     return TCL_ERROR;
   }
 
-  if(strcmp(parameter, "dy") == 0){
-    if(argc == 1){
-      if(!adc_state->adc_anchor_pos){
+  if (strcmp(parameter, "dy") == 0){
+    if (argc == 1){
+      if (!adc_state->adc_anchor_pos){
 	adc_state->adc_pos_model[Y] += user_pt[0] * local2base;
 	adc_model_To_adc_view();
 	adc_view_To_adc_grid();
@@ -697,9 +697,9 @@ f_adc (
     return TCL_ERROR;
   }
 
-  if(strcmp(parameter, "dz") == 0){
-    if(argc == 1){
-      if(!adc_state->adc_anchor_pos){
+  if (strcmp(parameter, "dz") == 0){
+    if (argc == 1){
+      if (!adc_state->adc_anchor_pos){
 	adc_state->adc_pos_model[Z] += user_pt[0] * local2base;
 	adc_model_To_adc_view();
 	adc_view_To_adc_grid();
@@ -714,8 +714,8 @@ f_adc (
     return TCL_ERROR;
   }
 
-  if(strcmp(parameter, "xyz") == 0){
-    if(argc == 0){
+  if (strcmp(parameter, "xyz") == 0){
+    if (argc == 0){
       VSCALE(scaled_pos, adc_state->adc_pos_model, base2local);
 
       bu_vls_init(&vls);
@@ -724,10 +724,10 @@ f_adc (
       bu_vls_free(&vls);
 
       return TCL_OK;
-    }else if(argc == 3) {
+    }else if (argc == 3) {
       VSCALE(user_pt, user_pt, local2base);
 
-      if(incr_flag){
+      if (incr_flag){
 	VADD2(adc_state->adc_pos_model, adc_state->adc_pos_model, user_pt);
       }else{
 	VMOVE(adc_state->adc_pos_model, user_pt);
@@ -745,17 +745,17 @@ f_adc (
     return TCL_ERROR;
   }
 
-  if(strcmp(parameter, "x") == 0){
-    if(argc == 0){
+  if (strcmp(parameter, "x") == 0){
+    if (argc == 0){
       bu_vls_init(&vls);
       bu_vls_printf(&vls, "%d", adc_state->adc_dv_x);
       Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
       bu_vls_free(&vls);
 
       return TCL_OK;
-    }else if(argc == 1) {
-      if(!adc_state->adc_anchor_pos){
-	if(incr_flag){
+    }else if (argc == 1) {
+      if (!adc_state->adc_anchor_pos){
+	if (incr_flag){
 	  adc_state->adc_dv_x += user_pt[0];
 	}else{
 	  adc_state->adc_dv_x = user_pt[0];
@@ -776,17 +776,17 @@ f_adc (
     return TCL_ERROR;
   }
 
-  if(strcmp(parameter, "y") == 0){
-    if(argc == 0){
+  if (strcmp(parameter, "y") == 0){
+    if (argc == 0){
       bu_vls_init(&vls);
       bu_vls_printf(&vls, "%d", adc_state->adc_dv_y);
       Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
       bu_vls_free(&vls);
 
       return TCL_OK;
-    }else if(argc == 1) {
-      if(!adc_state->adc_anchor_pos){
-	if(incr_flag){
+    }else if (argc == 1) {
+      if (!adc_state->adc_anchor_pos){
+	if (incr_flag){
 	  adc_state->adc_dv_y += user_pt[0];
 	}else{
 	  adc_state->adc_dv_y = user_pt[0];
@@ -807,18 +807,18 @@ f_adc (
     return TCL_ERROR;
   }
 
-  if(strcmp(parameter, "anchor_pos") == 0){
-    if(argc == 0){
+  if (strcmp(parameter, "anchor_pos") == 0){
+    if (argc == 0){
       bu_vls_init(&vls);
       bu_vls_printf(&vls, "%d", adc_state->adc_anchor_pos);
       Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
       bu_vls_free(&vls);
 
       return TCL_OK;
-    }else if(argc == 1){
+    }else if (argc == 1){
       i = (int)user_pt[X];
 
-      if(i < 0 || 2 < i){
+      if (i < 0 || 2 < i){
 	Tcl_AppendResult(interp, "The 'adc anchor_pos parameter accepts values of 0, 1, or 2.",
 			 (char *)NULL);
 	return TCL_ERROR;
@@ -836,18 +836,18 @@ f_adc (
     return TCL_ERROR;
   }
 
-  if(strcmp(parameter, "anchor_a1") == 0){
-    if(argc == 0){
+  if (strcmp(parameter, "anchor_a1") == 0){
+    if (argc == 0){
       bu_vls_init(&vls);
       bu_vls_printf(&vls, "%d", adc_state->adc_anchor_a1);
       Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
       bu_vls_free(&vls);
 
       return TCL_OK;
-    }else if(argc == 1){
+    }else if (argc == 1){
       i = (int)user_pt[X];
 
-      if(i)
+      if (i)
 	adc_state->adc_anchor_a1 = 1;
       else
 	adc_state->adc_anchor_a1 = 0;
@@ -862,8 +862,8 @@ f_adc (
     return TCL_ERROR;
   }
 
-  if(strcmp(parameter, "anchorpoint_a1") == 0){
-    if(argc == 0){
+  if (strcmp(parameter, "anchorpoint_a1") == 0){
+    if (argc == 0){
       VSCALE(scaled_pos, adc_state->adc_anchor_pt_a1, base2local);
 
       bu_vls_init(&vls);
@@ -872,10 +872,10 @@ f_adc (
       bu_vls_free(&vls);
 
       return TCL_OK;
-    }else if(argc == 3){
+    }else if (argc == 3){
       VSCALE(user_pt, user_pt, local2base);
 
-      if(incr_flag){
+      if (incr_flag){
 	VADD2(adc_state->adc_anchor_pt_a1, adc_state->adc_anchor_pt_a1, user_pt);
       }else{
 	VMOVE(adc_state->adc_anchor_pt_a1, user_pt);
@@ -891,18 +891,18 @@ f_adc (
     return TCL_ERROR;
   }
 
-  if(strcmp(parameter, "anchor_a2") == 0){
-    if(argc == 0){
+  if (strcmp(parameter, "anchor_a2") == 0){
+    if (argc == 0){
       bu_vls_init(&vls);
       bu_vls_printf(&vls, "%d", adc_state->adc_anchor_a2);
       Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
       bu_vls_free(&vls);
 
       return TCL_OK;
-    }else if(argc == 1){
+    }else if (argc == 1){
       i = (int)user_pt[X];
 
-      if(i)
+      if (i)
 	adc_state->adc_anchor_a2 = 1;
       else
 	adc_state->adc_anchor_a2 = 0;
@@ -917,8 +917,8 @@ f_adc (
     return TCL_ERROR;
   }
 
-  if(strcmp(parameter, "anchorpoint_a2") == 0){
-    if(argc == 0){
+  if (strcmp(parameter, "anchorpoint_a2") == 0){
+    if (argc == 0){
       VSCALE(scaled_pos, adc_state->adc_anchor_pt_a2, base2local);
 
       bu_vls_init(&vls);
@@ -927,10 +927,10 @@ f_adc (
       bu_vls_free(&vls);
 
       return TCL_OK;
-    }else if(argc == 3){
+    }else if (argc == 3){
       VSCALE(user_pt, user_pt, local2base);
 
-      if(incr_flag){
+      if (incr_flag){
 	VADD2(adc_state->adc_anchor_pt_a2, adc_state->adc_anchor_pt_a2, user_pt);
       }else{
 	VMOVE(adc_state->adc_anchor_pt_a2, user_pt);
@@ -946,18 +946,18 @@ f_adc (
     return TCL_ERROR;
   }
 
-  if(strcmp(parameter, "anchor_dst") == 0){
-    if(argc == 0){
+  if (strcmp(parameter, "anchor_dst") == 0){
+    if (argc == 0){
       bu_vls_init(&vls);
       bu_vls_printf(&vls, "%d", adc_state->adc_anchor_dst);
       Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
       bu_vls_free(&vls);
 
       return TCL_OK;
-    }else if(argc == 1){
+    }else if (argc == 1){
       i = (int)user_pt[X];
 
-      if(i){
+      if (i){
 	adc_state->adc_anchor_dst = 1;
       }else
 	adc_state->adc_anchor_dst = 0;
@@ -972,8 +972,8 @@ f_adc (
     return TCL_ERROR;
   }
 
-  if(strcmp(parameter, "anchorpoint_dst") == 0){
-    if(argc == 0){
+  if (strcmp(parameter, "anchorpoint_dst") == 0){
+    if (argc == 0){
       VSCALE(scaled_pos, adc_state->adc_anchor_pt_dst, base2local);
 
       bu_vls_init(&vls);
@@ -982,10 +982,10 @@ f_adc (
       bu_vls_free(&vls);
 
       return TCL_OK;
-    }else if(argc == 3){
+    }else if (argc == 3){
       VSCALE(user_pt, user_pt, local2base);
 
-      if(incr_flag){
+      if (incr_flag){
 	VADD2(adc_state->adc_anchor_pt_dst, adc_state->adc_anchor_pt_dst, user_pt);
       }else{
 	VMOVE(adc_state->adc_anchor_pt_dst, user_pt);
@@ -1001,7 +1001,7 @@ f_adc (
     return TCL_ERROR;
   }
 
-  if(strcmp(parameter, "reset") == 0){
+  if (strcmp(parameter, "reset") == 0){
     if (argc == 0) {
       adc_reset();
 
@@ -1013,12 +1013,12 @@ f_adc (
     return TCL_ERROR;
   }
 
-  if(strcmp(parameter, "vars") == 0){
+  if (strcmp(parameter, "vars") == 0){
     adc_print_vars();
     return TCL_OK;
   }
 
-  if(strcmp(parameter, "help") == 0){
+  if (strcmp(parameter, "help") == 0){
     Tcl_AppendResult(interp, "Usage:\n", adc_syntax, (char *)NULL);
     return TCL_OK;
   }

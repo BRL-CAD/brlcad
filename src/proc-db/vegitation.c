@@ -231,7 +231,7 @@ static segmentList_t *findIntersectors(const growthSegment_t * const segment, co
     /* skip segments that are in exemption list */
     if (exemptList != NULL) {
 
-      for (skip = j = 0; (j < exemptList->count) && (skip == 0) ; j++) {
+      for (skip = j = 0; (j < exemptList->count) && (skip == 0); j++) {
 	if (structure->segment[i]->id == exemptList->segment[j]->id) {
 	  /*	  printf("Found exempt segment with id %ld\n", exemptList->segment[j]->id); */
 	  skip = 1;

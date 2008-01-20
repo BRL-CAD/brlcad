@@ -36,12 +36,12 @@ Readstart()
 
 	int i=0, done=0;
 
-	while( !done )
+	while ( !done )
 	{
-		if( Readrec( ++i ) )
+		if ( Readrec( ++i ) )
 			bu_exit( 1, "End of file encountered\n" );
 
-		if( card[72] != 'S' )
+		if ( card[72] != 'S' )
 		{
 			done = 1;
 			break;

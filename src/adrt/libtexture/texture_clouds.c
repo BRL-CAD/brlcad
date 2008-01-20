@@ -77,7 +77,7 @@ void texture_clouds_work(__TEXTURE_WORK_PROTOTYPE__) {
   td = (texture_clouds_t*)texture->data;
 
   /* Transform the Point */
-  if(td->absolute) {
+  if (td->absolute) {
     p.v[0] = id->pos.v[0] * td->scale.v[0] + td->translate.v[0];
     p.v[1] = id->pos.v[1] * td->scale.v[1] + td->translate.v[1];
     p.v[2] = id->pos.v[2] * td->scale.v[2] + td->translate.v[2];

@@ -65,7 +65,7 @@ void util_image_load_raw(char *filename, void *image, int *w, int *h) {
 
 
   fh = fopen(filename, "rb");
-  if(fh) {
+  if (fh) {
     fread(w, sizeof(int), 1, fh);
     fread(h, sizeof(int), 1, fh);
 
@@ -134,7 +134,7 @@ void util_image_save_raw(char *filename, void *image, int w, int h) {
 void util_image_convert_128to24(void *image24, void *image128, int w, int h) {
   int i;
 
-  for(i = 0; i < w * h; i++) {
+  for (i = 0; i < w * h; i++) {
     ((unsigned char *)image24)[3*i+0] = (unsigned char)(255.0 * ((tfloat *)image128)[4*i+0]);
     ((unsigned char *)image24)[3*i+1] = (unsigned char)(255.0 * ((tfloat *)image128)[4*i+1]);
     ((unsigned char *)image24)[3*i+2] = (unsigned char)(255.0 * ((tfloat *)image128)[4*i+2]);
@@ -145,8 +145,8 @@ void util_image_convert_128to24(void *image24, void *image128, int w, int h) {
 void util_image_convert_32to24(void *image24, void *image32, int w, int h, int endian) {
   int i;
 
-  for(i = 0; i < w * h; i++) {
-    if(endian) {
+  for (i = 0; i < w * h; i++) {
+    if (endian) {
       ((unsigned char *)image24)[3*i+0] = ((unsigned char *)image32)[4*i+0];
       ((unsigned char *)image24)[3*i+1] = ((unsigned char *)image32)[4*i+1];
       ((unsigned char *)image24)[3*i+2] = ((unsigned char *)image32)[4*i+2];

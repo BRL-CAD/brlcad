@@ -126,7 +126,7 @@ bu_cmdhist_history(ClientData clientData, Tcl_Interp *interp, int argc, char **a
 	while (argc >= 3)  {
 		if (strcmp(argv[2], "-delays") == 0)
 			with_delays = 1;
-		else if( strcmp(argv[2], "-outfile") == 0 ) {
+		else if ( strcmp(argv[2], "-outfile") == 0 ) {
 			if (fp != NULL) {
 				fclose(fp);
 				Tcl_AppendResult(interp, "history: -outfile option given more than once\n",
@@ -192,7 +192,7 @@ bu_cmdhist_add(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	struct bu_vls vls;
 	struct timeval zero;
 
-	if(argc != 3){
+	if (argc != 3){
 		bu_vls_init(&vls);
 		bu_vls_printf(&vls, "helplib cmdhist_add");
 		Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -321,7 +321,7 @@ f_delay(clientData, interp, argc, argv)
 {
 	struct timeval tv;
 
-	if(argc < 3 || 3 < argc){
+	if (argc < 3 || 3 < argc){
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);

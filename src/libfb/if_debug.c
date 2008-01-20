@@ -105,7 +105,7 @@ HIDDEN int
 deb_open(FBIO *ifp, char *file, int width, int height)
 {
 	FB_CK_FBIO(ifp);
-	if( file == (char *)NULL )
+	if ( file == (char *)NULL )
 		fb_log( "fb_open( 0x%lx, NULL, %d, %d )\n",
 			(unsigned long)ifp, width, height );
 	else
@@ -113,15 +113,16 @@ deb_open(FBIO *ifp, char *file, int width, int height)
 			(unsigned long)ifp, file, width, height );
 
 	/* check for default size */
-	if( width <= 0 )
+	if ( width <= 0 )
 		width = ifp->if_width;
-	if( height <= 0 )
+	if ( height <= 0 )
 		height = ifp->if_height;
 
 	/* set debug bit vector */
-	if( file != NULL ) {
+	if ( file != NULL ) {
 		char *cp;
-		for( cp = file; *cp != '\0' && !isdigit(*cp); cp++ ) ;
+		for ( cp = file; *cp != '\0' && !isdigit(*cp); cp++ )
+		    ;
 		sscanf( cp, "%d", &ifp->if_debug );
 	} else {
 		ifp->if_debug = 0;
@@ -146,7 +147,7 @@ HIDDEN int
 deb_clear(FBIO *ifp, unsigned char *pp)
 {
 	FB_CK_FBIO(ifp);
-	if( pp == 0 )
+	if ( pp == 0 )
 		fb_log( "fb_clear( 0x%lx, NULL )\n", (unsigned long)ifp );
 	else
 		fb_log( "fb_clear( 0x%lx, &[%d %d %d] )\n",
@@ -177,16 +178,16 @@ deb_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
 		(unsigned long)pixelp, count );
 
 	/* write them out, four per line */
-	if( ifp->if_debug & FB_DEBUG_RW ) {
-		for( i = 0; i < count; i++ ) {
-			if( i % 4 == 0 )
+	if ( ifp->if_debug & FB_DEBUG_RW ) {
+		for ( i = 0; i < count; i++ ) {
+			if ( i % 4 == 0 )
 				fb_log( "%4d:", i );
 			fb_log( "  [%3d,%3d,%3d]", *(pixelp+(i*3)+RED),
 				*(pixelp+(i*3)+GRN), *(pixelp+(i*3)+BLU) );
-			if( i % 4 == 3 )
+			if ( i % 4 == 3 )
 				fb_log( "\n" );
 		}
-		if( i % 4 != 0 )
+		if ( i % 4 != 0 )
 			fb_log( "\n" );
 	}
 
@@ -208,15 +209,15 @@ deb_wmap(FBIO *ifp, const ColorMap *cmp)
 	int	i;
 
 	FB_CK_FBIO(ifp);
-	if( cmp == NULL )
+	if ( cmp == NULL )
 		fb_log( "fb_wmap( 0x%lx, NULL )\n",
 			(unsigned long)ifp );
 	else
 		fb_log( "fb_wmap( 0x%lx, 0x%lx )\n",
 			(unsigned long)ifp, (unsigned long)cmp );
 
-	if( ifp->if_debug & FB_DEBUG_CMAP && cmp != NULL ) {
-		for( i = 0; i < 256; i++ ) {
+	if ( ifp->if_debug & FB_DEBUG_CMAP && cmp != NULL ) {
+		for ( i = 0; i < 256; i++ ) {
 			fb_log( "%3d: [ 0x%4lx, 0x%4lx, 0x%4lx ]\n",
 				i,
 				(unsigned long)cmp->cm_red[i],

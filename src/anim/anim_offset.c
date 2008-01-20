@@ -70,7 +70,7 @@ main(int argc, char **argv)
 
     while (1) {
 	/*read line from table */
-	val = scanf("%lf%*[^-0123456789]",&time); /*read time, ignore garbage*/
+	val = scanf("%lf%*[^-0123456789]", &time); /*read time, ignore garbage*/
 	val = scanf("%lf %lf %lf", point, point+1, point +2);
 	val = scanf("%lf %lf %lf", &yaw, &pitch, &roll);
 	if (val < 3) {
@@ -95,7 +95,7 @@ int get_args(int argc, char **argv)
 {
     int c;
     while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
-	switch(c){
+	switch (c){
 	case 'r':
 	    full_print = 1;
 	    break;

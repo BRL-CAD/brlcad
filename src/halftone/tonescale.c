@@ -188,7 +188,7 @@ void
 cubic_init(int n, int *x, int *y)
 {
 	int i;
-	double *h,*alpha,*mi,*z,*l;
+	double *h, *alpha, *mi, *z, *l;
 
 	h = (double *) malloc(n*sizeof(double));
 	alpha = (double *) malloc(n*sizeof(double));
@@ -238,7 +238,7 @@ cubic_init(int n, int *x, int *y)
 	free(z);
 	free(l);
 	if (Debug>1) {
-		for(i=0;i<n;i++) {
+		for (i=0;i<n;i++) {
 			fprintf(stderr, "x=%g, A=%g, B=%g, C=%g, D=%g\n",
 			EqCubics[i].x, EqCubics[i].A, EqCubics[i].B,
 			EqCubics[i].C, EqCubics[i].D);

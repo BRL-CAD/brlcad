@@ -103,7 +103,7 @@ int
 model_rpp(const fastf_t *min, const fastf_t *max)
 {
 
-	if( space_set )  {
+	if ( space_set )  {
 		fprintf(stderr, "plrot:  additional SPACE command ignored\n");
 		fprintf(stderr, "got: space (%g, %g, %g) (%g, %g, %g)\n",
 			V3ARGS(min), V3ARGS(max) );
@@ -112,7 +112,7 @@ model_rpp(const fastf_t *min, const fastf_t *max)
 		return 0;
 	}
 
-	if( rpp )  {
+	if ( rpp )  {
 		point_t	rot_center;		/* center of rotation */
 		mat_t	xlate;
 		mat_t	resize;
@@ -128,11 +128,11 @@ model_rpp(const fastf_t *min, const fastf_t *max)
 		bn_mat_mul( t1, resize, xlate );
 		bn_mat_mul( t2, rmat, t1 );
 		MAT_COPY( rmat, t2 );
-		if( verbose )  {
+		if ( verbose )  {
 			bn_mat_print("rmat", rmat);
 		}
 
-		if( Mflag )  {
+		if ( Mflag )  {
 			/*  Don't rebound, just expand size of space
 			 *  around center point.
 			 *  Has advantage of the output space() not being
@@ -159,14 +159,14 @@ model_rpp(const fastf_t *min, const fastf_t *max)
 		space_set = 1;
 	}
 
-	if( forced_space )  {
+	if ( forced_space )  {
 		/* Put forced space back */
 		VMOVE( space_min, forced_space_min );
 		VMOVE( space_max, forced_space_max );
 		space_set = 1;
 	}
 
-	if( verbose )  {
+	if ( verbose )  {
 		fprintf(stderr, "got: space (%g, %g, %g) (%g, %g, %g)\n",
 			V3ARGS(min), V3ARGS(max) );
 		fprintf(stderr, "put: space (%g, %g, %g) (%g, %g, %g)\n",
@@ -186,7 +186,7 @@ getshort(FILE *fp)
 	v |= (getc(fp)<<8);	/* order is important! */
 
 	/* worry about sign extension - sigh */
-	if( v <= 0x7FFF )  return(v);
+	if ( v <= 0x7FFF )  return(v);
 	w = -1;
 	w &= ~0x7FFF;
 	return( w | v );
@@ -205,7 +205,7 @@ get_args(int argc, register char **argv)
 	scale = 1.0;
 
 	while ( (c = bu_getopt( argc, argv, "S:m:vMga:e:x:y:z:X:Y:Z:s:" )) != EOF )  {
-		switch( c )  {
+		switch ( c )  {
 		case 'M':
 			/* take model RPP from space() command */
 			rpp++;
@@ -250,13 +250,13 @@ get_args(int argc, register char **argv)
 				&mtmp[8], &mtmp[9], &mtmp[10], &mtmp[11],
 				&mtmp[12], &mtmp[13], &mtmp[14], &mtmp[15]);
 
-			if( num != 16)  {
+			if ( num != 16)  {
 				fprintf(stderr, "Num of arguments to -m only %d, should be 16\n", num);
 				bu_exit (1, NULL);
 			}
 
 			/* Now copy the array of doubles into mat. */
-			for(i=0; i < 16; i++ )  {
+			for (i=0; i < 16; i++ )  {
 				rmat[i] = mtmp[i];
 			}
 			break;
@@ -287,7 +287,7 @@ get_args(int argc, register char **argv)
 			 *  Otherwise, do it here, in the sequence
 			 *  seen in the arg list.
 			 */
-			if( !rpp )  {
+			if ( !rpp )  {
 				MAT_IDN( tmp );
 				tmp[15] = 1/scale;
 				MAT_COPY( m, rmat );
@@ -315,7 +315,7 @@ get_args(int argc, register char **argv)
 	}
 
 
-	if( isatty(fileno(stdout))
+	if ( isatty(fileno(stdout))
 	  || (isatty(fileno(stdin)) && (bu_optind >= argc)) )  {
 		return(0);	/* Bad */
 	}
@@ -332,22 +332,22 @@ main(int argc, char **argv)
 {
 	FILE	*fp=NULL;
 
-	if( !get_args( argc, argv ) )  {
+	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
 		bu_exit (1, NULL);
 	}
 
-	if( verbose )  {
+	if ( verbose )  {
 		bn_mat_print("rmat", rmat);
 	}
 
-	if( bu_optind < argc ) {
-		while( bu_optind < argc ) {
-			if( fp != NULL && fp != stdin )
+	if ( bu_optind < argc ) {
+		while ( bu_optind < argc ) {
+			if ( fp != NULL && fp != stdin )
 				fclose( fp );
-			if( strcmp(argv[bu_optind], "-") == 0 )
+			if ( strcmp(argv[bu_optind], "-") == 0 )
 				fp = stdin;
-			else if( (fp = fopen(argv[bu_optind], "r")) == NULL ) {
+			else if ( (fp = fopen(argv[bu_optind], "r")) == NULL ) {
 				fprintf( stderr, "plrot: can't open \"%s\"\n", argv[bu_optind] );
 				continue;
 			}
@@ -368,8 +368,8 @@ dofile(FILE *fp)
 {
 	register int	c;
 
-	while( (c = getc(fp)) != EOF ) {
-		switch( c ) {
+	while ( (c = getc(fp)) != EOF ) {
+		switch ( c ) {
 		/* One of a kind functions */
 		case 'e':
 		case 'F':
@@ -439,10 +439,10 @@ dofile(FILE *fp)
 				miny = (long)floor( space_min[Y] );
 				maxx = (long)ceil( space_max[X] );
 				maxy = (long)ceil( space_max[Y] );
-				if( minx < -32768 )  minx = -32768;
-				if( miny < -32768 )  miny = -32768;
-				if( maxx > 32767 )  maxx = 32767;
-				if( maxy > 32767 )  maxy = 32767;
+				if ( minx < -32768 )  minx = -32768;
+				if ( miny < -32768 )  miny = -32768;
+				if ( maxx > 32767 )  maxx = 32767;
+				if ( maxy > 32767 )  maxy = 32767;
 
 				pl_space( stdout, minx, miny, maxx, maxy );
 			}
@@ -550,7 +550,7 @@ copy_string(FILE *fp)
 {
 	int	c;
 
-	while( (c = putchar(getc(fp))) != '\n' && c != EOF )
+	while ( (c = putchar(getc(fp))) != '\n' && c != EOF )
 		;
 }
 

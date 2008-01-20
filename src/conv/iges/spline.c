@@ -52,7 +52,7 @@ struct face_g_snurb **b_patch;
 
 	/* Acquiring Data */
 
-	if( dir[entityno]->param <= pstart )
+	if ( dir[entityno]->param <= pstart )
 	{
 		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[entityno]->direct, dir[entityno]->name );
@@ -93,11 +93,11 @@ struct face_g_snurb **b_patch;
 	for (i = 0; i <= n1+2*m1; i++)
 	{
 		Readdbl( &(*b_patch)->u.knots[i], "" );
-		if( (*b_patch)->u.knots[i] < min_knot )
+		if ( (*b_patch)->u.knots[i] < min_knot )
 			min_knot = (*b_patch)->u.knots[i];
 	}
 
-	if( min_knot < 0.0 )
+	if ( min_knot < 0.0 )
 	{
 		for (i = 0; i <= n1+2*m1; i++)
 		{
@@ -110,10 +110,10 @@ struct face_g_snurb **b_patch;
 	for (i = 0; i <= n2+2*m2; i++)
 	{
 		Readdbl( &(*b_patch)->v.knots[i], "" );
-		if( (*b_patch)->v.knots[i] < min_knot )
+		if ( (*b_patch)->v.knots[i] < min_knot )
 			min_knot = (*b_patch)->v.knots[i];
 	}
-	if( min_knot < 0.0 )
+	if ( min_knot < 0.0 )
 	{
 		for (i = 0; i <= n1+2*m1; i++)
 		{
@@ -125,12 +125,12 @@ struct face_g_snurb **b_patch;
 	/* weights */
 	max_wt = 0.0;
 	count = 0;
-	for( i=0 ; i<=k2 ; i++ )
+	for ( i=0; i<=k2; i++ )
 	{
-		for( j=0 ; j<= k1 ; j++ )
+		for ( j=0; j<= k1; j++ )
 		{
 			Readdbl( &(*b_patch)->ctl_points[ count*4 + 3 ], "" );
-			if( (*b_patch)->ctl_points[ count*4 + 3 ] > max_wt )
+			if ( (*b_patch)->ctl_points[ count*4 + 3 ] > max_wt )
 				max_wt = (*b_patch)->ctl_points[ count*4 + 3 ];
 			count++;
 		}
@@ -155,7 +155,7 @@ struct face_g_snurb **b_patch;
 	{
 		for (j = 0; j <= k1; j++)
 		{
-			for( k=0 ; k<3 ; k++ )
+			for ( k=0; k<3; k++ )
 				(*b_patch)->ctl_points[ count*4 + k ] *= (*b_patch)->ctl_points[ count*4 + 3];
 			count++;
 		}

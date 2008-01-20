@@ -80,17 +80,17 @@ savescreen(FILE *ofp, int xorg, int yorg, int xsize, int ysize)
 #    if !defined(mips)
     /* 3D only */
     viewport(0, 1023, 0, 767);
-    ortho2(-0.5, 1023.5,-0.5, 767.5);
+    ortho2(-0.5, 1023.5, -0.5, 767.5);
 #    endif
 
-    for(y=0; y<ysize; y++) {
+    for (y=0; y<ysize; y++) {
 #    ifdef mips
 	/* Note that gl_readscreen() can only do 256 pixels! */
 	togo = xsize;
 	pos = 0;
-	while(togo) {
+	while (togo) {
 	    n = togo;
-	    if(n>256)
+	    if (n>256)
 		n = 256;
 	    cmov2i(xorg+pos, yorg+y);
 	    gl_readscreen(n, rbuf+pos, gbuf+pos, bbuf+pos);
@@ -101,12 +101,12 @@ savescreen(FILE *ofp, int xorg, int yorg, int xsize, int ysize)
 	cmov2i(xorg, yorg+y);
 	readRGB(n, rbuf, gbuf, bbuf);
 #    endif
-	for( i = 0; i < xsize; i++ ) {
+	for ( i = 0; i < xsize; i++ ) {
 	    obuf[3*i] = rbuf[i];
 	    obuf[3*i+1] = gbuf[i];
 	    obuf[3*i+2] = bbuf[i];
 	}
-	if( fwrite(obuf, 3, xsize, ofp) != xsize )  {
+	if ( fwrite(obuf, 3, xsize, ofp) != xsize )  {
 	    perror("fwrite");
 	    exit(2);
 	}
@@ -122,16 +122,16 @@ cmap_savescreen(FILE *ofp, int xorg, int yorg, int xsize, int ysize)
 
     screenspace();
 
-    for(y=0; y<ysize; y++) {
+    for (y=0; y<ysize; y++) {
 	cmov2i(xorg, yorg+y);
 	readpixels(xsize, buff);
 
-	for( i = 0; i < xsize; i++ ) {
+	for ( i = 0; i < xsize; i++ ) {
 	    obuf[i*3] = cmap[buff[i]].red;
 	    obuf[i*3+1] = cmap[buff[i]].grn;
 	    obuf[i*3+2] = cmap[buff[i]].blu;
 	}
-	if( fwrite(obuf, 3, xsize, ofp) != xsize )  {
+	if ( fwrite(obuf, 3, xsize, ofp) != xsize )  {
 	    perror("fwrite");
 	    exit(2);
 	}
@@ -162,27 +162,27 @@ savescreen(FILE *ofp, int xorg, int yorg, int xsize, int ysize)
 
     npix = (xsize+1)*(ysize+1);		/* conservative */
     lbuf = (unsigned long *)malloc( sizeof(long) * npix );
-    if( lbuf == (unsigned long *)NULL )  {
+    if ( lbuf == (unsigned long *)NULL )  {
 	bu_exit(1, "sgi-pix:  malloc error\n");
     }
 
     npix = (xsize)*(ysize);			/* exact */
     got = readdisplay( xorg, yorg, xorg+xsize-1, yorg+ysize-1,
 		       lbuf, RD_FREEZE );
-    if( got != npix )  {
+    if ( got != npix )  {
 	bu_log("sgi-pix: readdisplay() wanted %d, got %d\n", npix, got );
     }
     lp = lbuf;
-    for( y=0; y<ysize; y++ )  {
+    for ( y=0; y<ysize; y++ )  {
 	register unsigned long	w;
 	op = (unsigned char *)obuf;
-	for( x=0; x<xsize; x++ )  {
+	for ( x=0; x<xsize; x++ )  {
 	    w = *lp++;
 	    *op++ = (w    ) & 0xFF;
 	    *op++ = (w>> 8) & 0xFF;
 	    *op++ = (w>>16) & 0xFF;
 	}
-	if( fwrite(obuf, 3, xsize, ofp) != xsize )  {
+	if ( fwrite(obuf, 3, xsize, ofp) != xsize )  {
 	    perror("fwrite");
 	    exit(2);
 	}
@@ -202,10 +202,10 @@ main(int argc, char *argv[])
     int mode, planes;
 #  endif
 
-    if(!(argc==1 || argc==2 || argc==5 || argc==6)) {
+    if (!(argc==1 || argc==2 || argc==5 || argc==6)) {
 	bu_exit(1, "%s", usage);
     }
-    if( argc > 4 ) {
+    if ( argc > 4 ) {
 	x1 = atoi(argv[1]);
 	x2 = atoi(argv[2]);
 	y1 = atoi(argv[3]);
@@ -216,20 +216,20 @@ main(int argc, char *argv[])
 	y1 = 0;
 	y2 = YMAXSCREEN;
     }
-    if( argc == 2 ) {
+    if ( argc == 2 ) {
 	fname = argv[1];
 	ofp = fopen(fname, "w");
-    } else if( argc == 6 ) {
+    } else if ( argc == 6 ) {
 	fname = argv[5];
 	ofp = fopen(fname, "w");
     } else {
 	fname = "-";
 	ofp = stdout;
     }
-    if( ofp == NULL ) {
+    if ( ofp == NULL ) {
 	bu_exit(2, "sgi-pix: can't open \"%s\"\n", fname);
     }
-    if( isatty(fileno(ofp)) ) {
+    if ( isatty(fileno(ofp)) ) {
 	bu_log("%s", usage);
 	bu_exit(1, "sgi-pix: refuse to send binary output to terminal\n");
     }
@@ -237,15 +237,15 @@ main(int argc, char *argv[])
     /* Convert rectangle edges to origin and size */
     xorg = MIN(x1, x2);
     yorg = MIN(y1, y2);
-    if(xorg<0)
+    if (xorg<0)
 	xorg = 0;
-    if(yorg<0)
+    if (yorg<0)
 	yorg = 0;
     xsize = ABS(x2-x1);
     ysize = ABS(y2-y1);
-    if((xorg+xsize)>XMAXSCREEN)
+    if ((xorg+xsize)>XMAXSCREEN)
 	xsize = XMAXSCREEN-xorg;
-    if((yorg+ysize)>YMAXSCREEN)
+    if ((yorg+ysize)>YMAXSCREEN)
 	ysize = YMAXSCREEN-yorg;
     xsize++;
     ysize++;
@@ -263,12 +263,12 @@ main(int argc, char *argv[])
     winopen("sgi-pix");
     cursoff();
 
-    if((mode = getdisplaymode()) == 0) {
+    if ((mode = getdisplaymode()) == 0) {
 	/* RGB mode */
 	bu_log("RGB mode\n");
 	savescreen(ofp, xorg, yorg, xsize, ysize);
     } else {
-	if( mode == 1 )
+	if ( mode == 1 )
 	    bu_log("CMAP mode (single buffered)\n");
 	else  {
 	    bu_log("CMAP mode (double buffered)\n");
@@ -276,7 +276,7 @@ main(int argc, char *argv[])
 	}
 	planes = getplanes();
 	bu_log("%d planes\n", planes);
-	for( i = 0; i < 4096; i++ ) {
+	for ( i = 0; i < 4096; i++ ) {
 	    short r, g, b;
 	    getmcolor( i, &r, &g, &b );
 	    cmap[i].red = r;
@@ -284,7 +284,7 @@ main(int argc, char *argv[])
 	    cmap[i].blu = b;
 	}
 	cmap_savescreen(ofp, x1, x2, y1, y2);
-	if( mode != 1 )  {
+	if ( mode != 1 )  {
 	    /* Double buffered mode, swap 'em back */
 	    swapbuffers();
 	}

@@ -90,7 +90,7 @@ f_edcolor(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	if(argc < 1 || 1 < argc){
+	if (argc < 1 || 1 < argc){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -106,7 +106,7 @@ f_edcolor(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
 
 	fprintf( fp, "%s", hdr );
-	for( mp = rt_material_head; mp != MATER_NULL; mp = mp->mt_forw )  {
+	for ( mp = rt_material_head; mp != MATER_NULL; mp = mp->mt_forw )  {
 		(void)fprintf( fp, "%d\t%d\t%3d\t%3d\t%3d",
 			mp->mt_low, mp->mt_high,
 			mp->mt_r, mp->mt_g, mp->mt_b );
@@ -114,13 +114,13 @@ f_edcolor(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
 	(void)fclose(fp);
 
-	if( !editit( tmpfil ) )  {
+	if ( !editit( tmpfil ) )  {
 	  Tcl_AppendResult(interp, "Editor returned bad status.  Aborted\n", (char *)NULL);
 	  return TCL_ERROR;
 	}
 
 	/* Read file and process it */
-	if( (fp = fopen( tmpfil, "r")) == NULL )  {
+	if ( (fp = fopen( tmpfil, "r")) == NULL )  {
 	  perror( tmpfil );
 	  return TCL_ERROR;
 	}
@@ -209,10 +209,10 @@ color_putrec(register struct mater *mp)
 	struct directory dir;
 	union record rec;
 
-	if(dbip == DBI_NULL)
+	if (dbip == DBI_NULL)
 	  return;
 
-	if( dbip->dbi_read_only )
+	if ( dbip->dbi_read_only )
 		return;
 
 	if (dbip->dbi_version >= 5) {
@@ -231,15 +231,15 @@ color_putrec(register struct mater *mp)
 	dir.d_namep = "color_putrec";
 	dir.d_magic = RT_DIR_MAGIC;
 	dir.d_flags = 0;
-	if( mp->mt_daddr == MATER_NO_ADDR )  {
+	if ( mp->mt_daddr == MATER_NO_ADDR )  {
 		/* Need to allocate new database space */
-		if( db_alloc( dbip, &dir, 1 ) < 0 )  ALLOC_ERR_return;
+		if ( db_alloc( dbip, &dir, 1 ) < 0 )  ALLOC_ERR_return;
 		mp->mt_daddr = dir.d_addr;
 	} else {
 		dir.d_addr = mp->mt_daddr;
 		dir.d_len = 1;
 	}
-	if( db_put( dbip, &dir, &rec, 0, 1 ) < 0 )  WRITE_ERR_return;
+	if ( db_put( dbip, &dir, &rec, 0, 1 ) < 0 )  WRITE_ERR_return;
 }
 
 /*
@@ -252,17 +252,17 @@ color_zaprec(register struct mater *mp)
 {
 	struct directory dir;
 
-	if(dbip == DBI_NULL)
+	if (dbip == DBI_NULL)
 	  return;
 
-	if( dbip->dbi_read_only || mp->mt_daddr == MATER_NO_ADDR )
+	if ( dbip->dbi_read_only || mp->mt_daddr == MATER_NO_ADDR )
 		return;
 	dir.d_magic = RT_DIR_MAGIC;
 	dir.d_namep = "color_zaprec";
 	dir.d_len = 1;
 	dir.d_addr = mp->mt_daddr;
 	dir.d_flags = 0;
-	if( db_delete( dbip, &dir ) < 0 )  DELETE_ERR_return("color_zaprec");
+	if ( db_delete( dbip, &dir ) < 0 )  DELETE_ERR_return("color_zaprec");
 	mp->mt_daddr = MATER_NO_ADDR;
 }
 
@@ -282,15 +282,15 @@ color_soltab(void)
 		sp->s_cflag = 0;
 
 		/* the user specified the color, so use it */
-		if( sp->s_uflag ) {
+		if ( sp->s_uflag ) {
 			sp->s_color[0] = sp->s_basecolor[0];
 			sp->s_color[1] = sp->s_basecolor[1];
 			sp->s_color[2] = sp->s_basecolor[2];
 			goto done;
 		}
 
-		for( mp = rt_material_head; mp != MATER_NULL; mp = mp->mt_forw )  {
-			if( sp->s_regionid <= mp->mt_high &&
+		for ( mp = rt_material_head; mp != MATER_NULL; mp = mp->mt_forw )  {
+			if ( sp->s_regionid <= mp->mt_high &&
 			    sp->s_regionid >= mp->mt_low ) {
 				sp->s_color[0] = mp->mt_r;
 				sp->s_color[1] = mp->mt_g;

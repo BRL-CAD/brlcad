@@ -89,7 +89,7 @@ read_rt_file(FILE *infp, char *name, fastf_t *model2view)
 	/* Open the incoming file for reading */
 
 	fp = fopen(name, "r");
-	if( fp == NULL )  {
+	if ( fp == NULL )  {
 		perror(name);
 		bu_exit(EXIT_FAILURE, "unable to open file for reading");
 	}
@@ -101,28 +101,28 @@ read_rt_file(FILE *infp, char *name, fastf_t *model2view)
 	seen_eye_pos = FALSE;
 	seen_size = FALSE;
 
-	if(verbose)  {
+	if (verbose)  {
 		fprintf(stderr, "set flags: view:%d, orient:%d, eye_pos:%d, size:%d\n",
 		seen_view, seen_orientation, seen_eye_pos, seen_size);
 	}
 
 	/* feof returns 1 on failure */
 
-	while( feof(infp) == 0 )  {
+	while ( feof(infp) == 0 )  {
 
 		/* clear the buffer */
-		for( i = 0; i < BUFF_LEN; i++ )  {
+		for ( i = 0; i < BUFF_LEN; i++ )  {
 			string[i] = '\0';
 		}
 		ret = bu_fgets(string, BUFF_LEN, infp);
 
-		if( ret == NULL )  {
+		if ( ret == NULL )  {
 			/* There are two times when NULL might be seen:
 			 * at the end of the file (handled above) and
 			 * when the process dies horriblely and unexpectedly.
 			 */
 
-			if( feof(infp) )
+			if ( feof(infp) )
 				break;
 
 			/* This needs to be seen only if there is an
@@ -147,20 +147,20 @@ read_rt_file(FILE *infp, char *name, fastf_t *model2view)
 
 		arg_ptr = NULL;
 
-		for( i = 0; i < BUFF_LEN; i++ )  {
+		for ( i = 0; i < BUFF_LEN; i++ )  {
 			/* Check to make sure the first char. is not a NULL;
 			 * if it is, go back for a new line.
 			 */
-			if( string[i] == '\0' )  {
+			if ( string[i] == '\0' )  {
 				break;
 			}
-			if( string[i] == ':')  {
+			if ( string[i] == ':')  {
 				/* If a colon is found, set arg_ptr to the
 				 * address of the colon, and break: no need to
 				 * look for more colons on this line.
 				 */
 
-				if(verbose)  {
+				if (verbose)  {
 					fprintf(stderr, "found colon\n");
 				}
 
@@ -174,7 +174,7 @@ read_rt_file(FILE *infp, char *name, fastf_t *model2view)
 		 * input line.
 		 */
 
-		if( arg_ptr == NULL )  {
+		if ( arg_ptr == NULL )  {
 			continue;
 		}
 
@@ -195,36 +195,36 @@ read_rt_file(FILE *infp, char *name, fastf_t *model2view)
 		 * the address of the location must be provided: &eye_pos[0].
 		 */
 
-		if(strcmp(string, "View") == 0)  {
+		if (strcmp(string, "View") == 0)  {
 			num = sscanf(arg_ptr, "%lf %9s %lf", &azimuth, forget_it, &elevation);
-			if( num != 3)  {
+			if ( num != 3)  {
 				fprintf(stderr, "View= %.6f %s %.6f elevation\n", azimuth, forget_it, elevation);
 				return(-1);
 			}
 			seen_view = TRUE;
-		} else if(strcmp(string, "Orientation") == 0)  {
+		} else if (strcmp(string, "Orientation") == 0)  {
 			num = sscanf(arg_ptr, "%lf, %lf, %lf, %lf",
 				&orientation[0], &orientation[1], &orientation[2],
 				&orientation[3]);
 
-			if(num != 4)  {
+			if (num != 4)  {
 				fprintf(stderr, "Orientation= %.6f, %.6f, %.6f, %.6f\n",
 					V4ARGS(orientation) );
 				return(-1);
 			}
 			seen_orientation = TRUE;
-		} else if(strcmp(string, "Eye_pos") == 0)  {
+		} else if (strcmp(string, "Eye_pos") == 0)  {
 			num = sscanf(arg_ptr, "%lf, %lf, %lf", &eye_pos[0],
 				&eye_pos[1], &eye_pos[2]);
-			if( num != 3)  {
+			if ( num != 3)  {
 				fprintf(stderr, "Eye_pos= %.6f, %.6f, %.6f\n",
 					V3ARGS(eye_pos) );
 				return(-1);
 			}
 			seen_eye_pos = TRUE;
-		} else if(strcmp(string, "Size") == 0)  {
+		} else if (strcmp(string, "Size") == 0)  {
 			num = sscanf(arg_ptr, "%lf", &m_size);
-			if(num != 1)  {
+			if (num != 1)  {
 				fprintf(stderr, "Size=%.6f\n", m_size);
 				return(-1);
 			}
@@ -234,17 +234,17 @@ read_rt_file(FILE *infp, char *name, fastf_t *model2view)
 
 	/* Check that all the information to proceed is available */
 
-	if( seen_view != TRUE )  {
+	if ( seen_view != TRUE )  {
 		fprintf(stderr, "View not read for %s!\n", name);
 		return(-1);
 	}
 
-	if( seen_orientation != TRUE )  {
+	if ( seen_orientation != TRUE )  {
 		fprintf(stderr, "Orientation not read for %s!\n", name);
 		return(-1);
 	}
 
-	if( seen_eye_pos != TRUE )  {
+	if ( seen_eye_pos != TRUE )  {
 		fprintf(stderr, "Eye_pos not read for %s!\n", name);
 		return(-1);
 	}
@@ -254,7 +254,7 @@ read_rt_file(FILE *infp, char *name, fastf_t *model2view)
 		return(-1);
 	}
 
-	if( verbose )  {
+	if ( verbose )  {
 		/* Take your chances on the %g with the orientation: it is difficult
 		 * to say how many figures it will take to print the orientation back,
 		 * and it is disconcerting to have it come back as 0.
@@ -275,7 +275,7 @@ read_rt_file(FILE *infp, char *name, fastf_t *model2view)
 	MAT_DELTAS_VEC_NEG( xlate, eye_pos);
 	bn_mat_mul( model2view, rotate, xlate );
 
-	if(verbose)  {
+	if (verbose)  {
 		 bn_mat_print("model2view", model2view);
 	}
 

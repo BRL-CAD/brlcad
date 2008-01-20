@@ -293,27 +293,27 @@ main(int argc, char *argv[])
 	}
 
 	/* Scan the database */
-	if( db_dirbuild( dbip ) ) {
+	if ( db_dirbuild( dbip ) ) {
 	    bu_exit(1, "db_dirbuild failed\n" );
 	}
 
-	if( !multi_file )
+	if ( !multi_file )
 	{
 		/* let the IGES routines know the selected tolerances and the database pointer */
 		iges_init( &tol, &ttol, verbose, dbip );
 
 		/* Open the output file */
-		if( output_file == NULL )
+		if ( output_file == NULL )
 			fp_dir = stdout;
 		else {
-			if( (fp_dir=fopen( output_file, "wb" )) == NULL ) {
+			if ( (fp_dir=fopen( output_file, "wb" )) == NULL ) {
 				perror( output_file );
 				bu_exit(1, "Cannot open output file: %s\n", output_file );
 			}
 		}
 
 		/* Open the temporary file for the parameter section */
-		if( (fp_param=bu_temp_file(NULL, 0)) == NULL ) {
+		if ( (fp_param=bu_temp_file(NULL, 0)) == NULL ) {
 			perror( "g-iges" );
 			bu_exit(1, "Cannot open temporary file\n" );
 		}
@@ -325,20 +325,20 @@ main(int argc, char *argv[])
 	{
 		struct stat stat_ptr;
 
-		if( stat( output_file, &stat_ptr ) )
+		if ( stat( output_file, &stat_ptr ) )
 		{
 			perror( prog_name );
 			bu_exit(1, "Cannot determine status of %s\n", output_file );
 		}
 
-		if( !(stat_ptr.st_mode & S_IFDIR) )
+		if ( !(stat_ptr.st_mode & S_IFDIR) )
 		{
 			bu_exit(1, "-o option must provide a directory, %s is not a directory\n", output_file );
 		}
 	}
 
 	/* Count object references */
-/*	for( i=1 ; i<argc ; i++ )
+/*	for ( i=1; i<argc; i++ )
 	{
 		dp = db_lookup( dbip, argv[i], 1 );
 		db_functree( dbip, dp, count_refs, 0, NULL );
@@ -348,7 +348,7 @@ main(int argc, char *argv[])
 	independent = (argv+1);
 	no_of_indeps = argc-1;
 
-	if( mode == FACET_MODE )
+	if ( mode == FACET_MODE )
 	{
 		/* Walk indicated tree(s).  Each region will be output
 		 * as a single manifold solid BREP object */
@@ -361,18 +361,18 @@ main(int argc, char *argv[])
 			nmg_booltree_leaf_tess,
 			(genptr_t)NULL);	/* in librt/nmg_bool.c */
 
-		if( ret )
+		if ( ret )
 			bu_exit(1, "g-iges: Could not facetize anything!" );
 
-		if( !multi_file )
+		if ( !multi_file )
 		{
 			/* Now walk the same trees again, but only output groups */
-			for( i=1 ; i<argc ; i++ )
+			for ( i=1; i<argc; i++ )
 			{
 				char *ptr;
 
 				ptr = strrchr( argv[i], '/' );
-				if( ptr != NULL ) {
+				if ( ptr != NULL ) {
 					ptr++;
 				} else {
 					ptr = argv[i];
@@ -386,13 +386,13 @@ main(int argc, char *argv[])
 			}
 		}
 	}
-	else if( mode == CSG_MODE )
+	else if ( mode == CSG_MODE )
 	{
 		/* Walk indicated tree(s). Each combination and solid will be output
 		 * as a CSG object, unless there is no IGES equivalent (then the
 		 * solid will be tessellated and output as a BREP object) */
 
-		for( i=1 ; i<argc ; i++ )
+		for ( i=1; i<argc; i++ )
 		{
 			dp = db_lookup( dbip, argv[i], 1 );
 			if (!dp) {
@@ -402,7 +402,7 @@ main(int argc, char *argv[])
 			db_functree( dbip, dp, csg_comb_func, csg_leaf_func, &rt_uniresource, NULL );
 		}
 	}
-	else if( mode == TRIMMED_SURF_MODE )
+	else if ( mode == TRIMMED_SURF_MODE )
 	{
 		/* Walk the indicated tree(s). Each region is output as a collection
 		 * of trimmed NURBS */
@@ -415,21 +415,21 @@ main(int argc, char *argv[])
 			nmg_booltree_leaf_tess,
 			(genptr_t)NULL);	/* in librt/nmg_bool.c */
 
-		if( ret )
+		if ( ret )
 			bu_exit(1, "g-iges: Could not facetize anything!" );
 
 	}
 
-	if( !multi_file )
+	if ( !multi_file )
 	{
 		/* Copy the parameter section from the temporary file to the output file */
-		if( (fseek( fp_param, (long) 0, 0 )) ) {
+		if ( (fseek( fp_param, (long) 0, 0 )) ) {
 			perror( "g-iges" );
 			bu_exit(1, "Cannot seek to start of temporary file\n" );
 		}
 
-		while( (i=fread( copy_buffer, 1, CP_BUF_SIZE, fp_param )) )
-			if( fwrite( copy_buffer, 1, i, fp_dir ) != i ) {
+		while ( (i=fread( copy_buffer, 1, CP_BUF_SIZE, fp_param )) )
+			if ( fwrite( copy_buffer, 1, i, fp_dir ) != i ) {
 				perror( "g-iges" );
 				bu_exit(1, "Error in copying parameter data to %s\n", output_file );
 			}
@@ -442,22 +442,22 @@ main(int argc, char *argv[])
 	Print_stats( stdout );
 
 	/* report on the success rate for facetizing regions */
-	if( mode == FACET_MODE || mode == TRIMMED_SURF_MODE )
+	if ( mode == FACET_MODE || mode == TRIMMED_SURF_MODE )
 	{
 		percent = 0;
-		if(regions_tried>0)  percent = ((double)regions_done * 100) / regions_tried;
+		if (regions_tried>0)  percent = ((double)regions_done * 100) / regions_tried;
 		bu_log("Tried %d regions, %d converted to nmg's successfully.  %g%%\n",
 			regions_tried, regions_done, percent);
 	}
 
 	/* re-iterate warnings */
-	if( scale_error || solid_error || comb_error )
+	if ( scale_error || solid_error || comb_error )
 		bu_log( "WARNING: the IGES file produced has errors:\n" );
-	if( scale_error )
+	if ( scale_error )
 		bu_log( "\t%d scaled objects found, written to IGES file without being scaled\n", scale_error );
-	if( solid_error )
+	if ( solid_error )
 		bu_log( "\t%d solids were not converted to IGES format\n", solid_error );
-	if( comb_error )
+	if ( comb_error )
 		bu_log( "\t%d combinations were not converted to IGES format\n", comb_error );
 
 	return( 0 );
@@ -505,7 +505,7 @@ genptr_t		client_data;
 	regions_tried++;
 
 	/* Begin bomb protection */
-	if( BU_SETJUMP )  {
+	if ( BU_SETJUMP )  {
 		char *sofar;
 
 		/* Error, bail out */
@@ -524,24 +524,24 @@ genptr_t		client_data;
 		db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
 
 		/* Get rid of (m)any other intermediate structures */
-		if( (*tsp->ts_m)->magic != -1L )
+		if ( (*tsp->ts_m)->magic != -1L )
 			nmg_km(*tsp->ts_m);
 
 		/* Now, make a new, clean model structure for next pass. */
 		*tsp->ts_m = nmg_mm();
 		goto out;
 	}
-	if( verbose )
+	if ( verbose )
 		bu_log( "\ndoing boolean tree evaluate...\n" );
 	(void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
 	result = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);	/* librt/nmg_bool.c */
 
-	if( result )
+	if ( result )
 		r = result->tr_d.td_r;
 	else
 		r = (struct nmgregion *)NULL;
 
-	if( verbose )
+	if ( verbose )
 		bu_log( "\nfinished boolean tree evaluate...\n" );
 	BU_UNSETJUMP;		/* Relinquish the protection */
 	regions_done++;
@@ -549,10 +549,10 @@ genptr_t		client_data;
 
 		dp = DB_FULL_PATH_CUR_DIR(pathp);
 
-		if( multi_file )
+		if ( multi_file )
 		{
 			/* Open the output file */
-			if( output_file == NULL )
+			if ( output_file == NULL )
 				fp_dir = stdout;
 			else {
 				char *multi_name;
@@ -567,11 +567,11 @@ genptr_t		client_data;
 				snprintf(multi_name, len, "%s/%s.igs", output_file, dp->d_namep);
 				strcpy( suffix, "a" );
 				suffix[0]--;
-				while( !unique )
+				while ( !unique )
 				{
 					int i;
 
-					if( stat( multi_name, &stat_ptr ) )
+					if ( stat( multi_name, &stat_ptr ) )
 					{
 						unique = 1;
 						break;
@@ -581,33 +581,33 @@ genptr_t		client_data;
 					len = strlen( suffix );
 					i = len - 1;;
 					suffix[i]++;
-					while( suffix[i] > 'z' && i > 0 )
+					while ( suffix[i] > 'z' && i > 0 )
 					{
 						suffix[i] = 'a';
 						i--;
 						suffix[i]++;
 					}
 
-					if( suffix[0] > 'z' && len < SUFFIX_LEN )
+					if ( suffix[0] > 'z' && len < SUFFIX_LEN )
 					{
-						for( i=0 ; i<=len ; i++ )
+						for ( i=0; i<=len; i++ )
 							suffix[i] = 'a';
 					}
-					else if( suffix[0] > 'z' && len >= SUFFIX_LEN )
+					else if ( suffix[0] > 'z' && len >= SUFFIX_LEN )
 					{
 						bu_log( "too many files with the same name (%s)\n", dp->d_namep );
 						bu_exit(1, "Cannot create a unique filename,\n" );
 					}
 					snprintf(multi_name, len, "%s/%s%s.igs", output_file, dp->d_namep, suffix);
 				}
-				if( (fp_dir=fopen( multi_name, "wb" )) == NULL ) {
+				if ( (fp_dir=fopen( multi_name, "wb" )) == NULL ) {
 					perror( "g-iges" );
 					bu_exit(1, "Cannot open output file: %s\n", multi_name );
 				}
 			}
 
 			/* Open the temporary file for the parameter section */
-			if( (fp_param=bu_temp_file(NULL, 0)) == NULL ) {
+			if ( (fp_param=bu_temp_file(NULL, 0)) == NULL ) {
 				perror( "g-iges" );
 				bu_exit(1, "Cannot open temporary file\n" );
 			}
@@ -619,12 +619,12 @@ genptr_t		client_data;
 			w_start_global( fp_dir, fp_param, db_name, prog_name, output_file, RCSid, RCSrev );
 		}
 
-		if( mode == FACET_MODE )
+		if ( mode == FACET_MODE )
 		{
 			dependent = 1;
-			for( i=0 ; i<no_of_indeps ; i++ )
+			for ( i=0; i<no_of_indeps; i++ )
 			{
-				if( !strncmp( dp->d_namep, independent[i], NAMESIZE ) )
+				if ( !strncmp( dp->d_namep, independent[i], NAMESIZE ) )
 				{
 					dependent = 0;
 					break;
@@ -633,24 +633,24 @@ genptr_t		client_data;
 
 			dp->d_uses = (-nmgregion_to_iges( dp->d_namep, r, dependent, fp_dir, fp_param ));
 		}
-		else if( mode == TRIMMED_SURF_MODE )
+		else if ( mode == TRIMMED_SURF_MODE )
 			dp->d_uses = (-nmgregion_to_tsurf( dp->d_namep, r, fp_dir, fp_param ));
 
 		/* NMG region is no longer necessary */
 		nmg_kr(r);
 
-		if( multi_file )
+		if ( multi_file )
 		{
 			char copy_buffer[CP_BUF_SIZE] = {0};
 
 			/* Copy the parameter section from the temporary file to the output file */
-			if( (fseek( fp_param, (long) 0, 0 )) ) {
+			if ( (fseek( fp_param, (long) 0, 0 )) ) {
 				perror( "g-iges" );
 				bu_exit(1, "Cannot seek to start of temporary file\n" );
 			}
 
-			while( (i=fread( copy_buffer, 1, CP_BUF_SIZE, fp_param )) )
-				if( fwrite( copy_buffer, 1, i, fp_dir ) != i ) {
+			while ( (i=fread( copy_buffer, 1, CP_BUF_SIZE, fp_param )) )
+				if ( fwrite( copy_buffer, 1, i, fp_dir ) != i ) {
 					perror( "g-iges" );
 					bu_exit(1, "Error in copying parameter data to %s\n", output_file );
 				}
@@ -689,7 +689,7 @@ int *de_pointers;
 	RT_CK_TREE( tp );
 	RT_CK_DIR( dp );
 
-	switch( tp->tr_op )
+	switch ( tp->tr_op )
 	{
 		case OP_UNION:
 		case OP_SUBTRACT:
@@ -702,22 +702,22 @@ int *de_pointers;
 			struct directory *dp_M;
 
 			dp_M = db_lookup( dbip, tp->tr_l.tl_name, LOOKUP_NOISY );
-			if( dp_M == DIR_NULL )
+			if ( dp_M == DIR_NULL )
 				return( 1 );
 
-			if( dp_M->d_uses >= 0 )
+			if ( dp_M->d_uses >= 0 )
 			{
 				bu_log( "g-iges: member (%s) in combination (%s) has not been written to iges file\n", dp_M->d_namep, dp->d_namep );
 				de_pointers[de_pointer_number++] = 0;
 				return( 1 );
 			}
 
-			if( tp->tr_l.tl_mat && !bn_mat_is_identity( tp->tr_l.tl_mat ) )
+			if ( tp->tr_l.tl_mat && !bn_mat_is_identity( tp->tr_l.tl_mat ) )
 			{
 				/* write a solid instance entity for this member
 					with a pointer to the new matrix */
 
-				if( !NEAR_ZERO( tp->tr_l.tl_mat[15] - 1.0, tol.dist ) )
+				if ( !NEAR_ZERO( tp->tr_l.tl_mat[15] - 1.0, tol.dist ) )
 				{
 					/* scale factor is not 1.0, IGES can't handle it.
 					   go ahead and write the solid instance anyway,
@@ -729,7 +729,7 @@ int *de_pointers;
 			}
 			else
 				de_pointers[de_pointer_number++] = (-dp_M->d_uses);
-			if( dp_M->d_nref )
+			if ( dp_M->d_nref )
 				comb_form = 1;
 			}
 			break;
@@ -756,16 +756,16 @@ genptr_t	ptr;
 	int id;
 
 	/* when this is called in facet mode, we only want groups */
-	if( mode == FACET_MODE && (dp->d_flags & DIR_REGION ) )
+	if ( mode == FACET_MODE && (dp->d_flags & DIR_REGION ) )
 		return;
 
 	/* check if already written */
-	if( dp->d_uses < 0 )
+	if ( dp->d_uses < 0 )
 		return;
 
-	for( i=0 ; i<no_of_indeps ; i++ )
+	for ( i=0; i<no_of_indeps; i++ )
 	{
-		if( !strncmp( dp->d_namep, independent[i], NAMESIZE ) )
+		if ( !strncmp( dp->d_namep, independent[i], NAMESIZE ) )
 		{
 			dependent = 0;
 			break;
@@ -773,9 +773,9 @@ genptr_t	ptr;
 	}
 
 	id = rt_db_get_internal( &intern, dp, dbip, (matp_t)NULL, &rt_uniresource);
-	if( id < 0 )
+	if ( id < 0 )
 		return;
-	if( id != ID_COMBINATION )
+	if ( id != ID_COMBINATION )
 	{
 		bu_log( "Directory/Database mismatch! is %s a combination or not?\n", dp->d_namep );
 		return;
@@ -784,10 +784,10 @@ genptr_t	ptr;
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 	RT_CK_COMB( comb );
 
-	if( verbose )
+	if ( verbose )
 		bu_log( "Combination - %s\n", dp->d_namep );
 
-	if( !comb->tree )
+	if ( !comb->tree )
 	{
 		bu_log( "Warning: empty combination (%s)\n", dp->d_namep );
 		dp->d_uses = 0;
@@ -799,7 +799,7 @@ genptr_t	ptr;
 	comb_form = 0;
 
 	de_pointer_number = 0;
-	if( get_de_pointers( comb->tree, dp, comb_len, de_pointers ) )
+	if ( get_de_pointers( comb->tree, dp, comb_len, de_pointers ) )
 	{
 		bu_log( "Error in combination %s\n", dp->d_namep );
 		bu_free( (char *)de_pointers, "csg_comb_func de_pointers" );
@@ -822,7 +822,7 @@ genptr_t	ptr;
 
 	dp->d_uses = (-comb_to_iges( comb, comb_len, dependent, &props, de_pointers, fp_dir, fp_param ) );
 
-	if( !dp->d_uses )
+	if ( !dp->d_uses )
 	{
 		comb_error++;
 		bu_log( "g-iges: combination (%s) not written to iges file\n", dp->d_namep );
@@ -842,25 +842,25 @@ genptr_t ptr;
 	struct rt_db_internal	ip;
 
 	/* if this solid has already been output, don't do it again */
-	if( dp->d_uses < 0 )
+	if ( dp->d_uses < 0 )
 		return;
 
-	if( verbose )
+	if ( verbose )
 		bu_log( "solid - %s\n", dp->d_namep );
 
-	if( rt_db_get_internal( &ip, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )
+	if ( rt_db_get_internal( &ip, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )
 		bu_log( "Error in import" );
 
 	solid_is_brep = 0;
 	dp->d_uses = (-iges_write[ip.idb_type].do_iges_write( &ip, dp->d_namep, fp_dir, fp_param ));
 
-	if( !dp->d_uses )
+	if ( !dp->d_uses )
 	{
 		bu_log( "g-iges: failed to translate %s to IGES format\n", dp->d_namep );
 		solid_error++;
 	}
 
-	if( solid_is_brep )
+	if ( solid_is_brep )
 		dp->d_nref = 1;
 	else
 		dp->d_nref = 0;
@@ -881,7 +881,7 @@ genptr_t		user_ptr1, user_ptr2, user_ptr3;
 	RT_CK_DBI( dbip );
 	RT_CK_TREE( tp );
 
-	if( (dp=db_lookup( dbip, tp->tr_l.tl_name, LOOKUP_NOISY )) == DIR_NULL )
+	if ( (dp=db_lookup( dbip, tp->tr_l.tl_name, LOOKUP_NOISY )) == DIR_NULL )
 		return;
 
 	dp->d_nref++;
@@ -897,11 +897,11 @@ genptr_t ptr;
 	struct rt_comb_internal *comb;
 	int id;
 
-	if( !(dp->d_flags & DIR_COMB) )
+	if ( !(dp->d_flags & DIR_COMB) )
 		return;
 
 	id = rt_db_get_internal( &intern, dp, dbip, (matp_t)NULL, &rt_uniresource);
-	if( id < 0 )
+	if ( id < 0 )
 	{
 		bu_log( "Cannot get internal form of %s\n", dp->d_namep );
 		return;
@@ -910,7 +910,7 @@ genptr_t ptr;
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 	RT_CK_COMB( comb );
 
-	if( !comb->tree )
+	if ( !comb->tree )
 	{
 		bu_log( "Warning: empty combination (%s)\n", dp->d_namep );
 		dp->d_uses = 0;

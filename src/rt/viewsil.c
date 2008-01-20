@@ -136,10 +136,10 @@ void
 view_eol(register struct application *ap)
 {
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
-	if( outfp != NULL )
+	if ( outfp != NULL )
 		fwrite( scanbuf, 1, width, outfp );
 #if 0
-	else if( fbp != FBIO_NULL )
+	else if ( fbp != FBIO_NULL )
 		fb_write( fbp, 0, ap->a_y, scanbuf, width );
 #endif
 	bu_semaphore_release( BU_SEM_SYSCALL );

@@ -75,12 +75,12 @@ main(int argc, char **argv)
     Word *arrayd;
 
     i=j=icount = ocount = maxlength = 0;
-    for(i=1;i<argc;i++){
-	if( !strncmp(argv[i], ihead, 2) ){
+    for (i=1;i<argc;i++){
+	if ( !strncmp(argv[i], ihead, 2) ){
 	    j=0;
 	    icount++;
 	}
-	else if( !strncmp(argv[i], ohead, 2) ){
+	else if ( !strncmp(argv[i], ohead, 2) ){
 	    j=0;
 	    ocount++;
 	}
@@ -90,8 +90,8 @@ main(int argc, char **argv)
 
     y = (struct unit *) bu_calloc(icount+ocount, sizeof(struct unit), "struct unit");
     x = y - 1;
-    for(i=1;i<argc;i++){
-	if( !strncmp(argv[i], "-", 1) ){
+    for (i=1;i<argc;i++){
+	if ( !strncmp(argv[i], "-", 1) ){
 	    j=0;
 	    x++;
 	    x->list = (short *) bu_calloc(maxlength, sizeof(short), "short array");
@@ -123,20 +123,20 @@ main(int argc, char **argv)
     }
     arrayd = (Word *) bu_calloc(argc, sizeof(Word), "Word"); /*may use more memory than absolutely necessary*/
     num_done = 0;
-    while(num_done < icount ){ /* go until all in files are done */
+    while (num_done < icount ){ /* go until all in files are done */
 	num_done = 0;
 	for (x=y;x<y+ocount+icount;x++){ /* do one line */
-	    if(num_done >= icount)
+	    if (num_done >= icount)
 		;/*chill - all in files done */
 	    else if (x->i_o == 1){
-		if(feof(x->file))
+		if (feof(x->file))
 		    num_done += 1;
 		else
-		    for(j=0;j<x->channels;j++)
+		    for (j=0;j<x->channels;j++)
 			fscanf(x->file, "%40s ", arrayd[x->list[j]]);
 	    }
 	    else if (x->i_o == 0){
-		for(j=0;j<x->channels;j++)
+		for (j=0;j<x->channels;j++)
 		    fprintf(x->file, "%s\t", arrayd[x->list[j]]);
 		fprintf(x->file, "\n");
 	    }

@@ -183,7 +183,7 @@ if_hit(struct application *ap, struct partition *part_head, struct seg *finished
 	/* format up the attribute strings into a single string */
 	bu_vls_init(&attr_vls);
 	attr_values = part->pt_regionp->attr_values;
-	for (i=0 ; i < a_tab.attrib_use ; i++) {
+	for (i=0; i < a_tab.attrib_use; i++) {
 
 	    BU_CK_MRO(attr_values[i]);
 	    vls = &attr_values[i]->string_rep;
@@ -246,7 +246,7 @@ if_hit(struct application *ap, struct partition *part_head, struct seg *finished
     if (ovlp_list.forw != &ovlp_list) {
 	fprintf(stderr, "Previously unreported overlaps.  Shouldn't happen\n");
 	ovp = ovlp_list.forw;
-	while( ovp != &ovlp_list ) {
+	while ( ovp != &ovlp_list ) {
 		bu_log( " OVERLAP:\n\t%s %s (%g %g %g) %g\n", ovp -> reg1 -> reg_name, ovp -> reg2 -> reg_name, V3ARGS( ovp->in_point ), ovp->out_dist - ovp->in_dist );
 	    ovp = ovp->forw;
 	}

@@ -57,8 +57,8 @@ bu_basename(const char *str)
 	return NULL;
     }
 
-    while( *p != '\0' )
-	if( *p++ == '/' )
+    while ( *p != '\0' )
+	if ( *p++ == '/' )
 	    str = p;
 
     return str;

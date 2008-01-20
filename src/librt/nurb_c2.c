@@ -78,9 +78,9 @@ rt_nurb_curvature(struct curvature *cvp, const struct face_g_snurb *srf, fastf_t
 	rt_nurb_free_snurb( vvs, (struct resource *)NULL);
 	rt_nurb_free_snurb( uvs, (struct resource *)NULL);
 
-	if( RT_NURB_IS_PT_RATIONAL( srf->pt_type ))
+	if ( RT_NURB_IS_PT_RATIONAL( srf->pt_type ))
 	{
-		for( i = 0; i < 3; i++)
+		for ( i = 0; i < 3; i++)
 		{
 			ue[i] = (1.0 / se[3] * ue[i]) -
 				(ue[3]/se[3]) * se[0]/se[3];
@@ -93,7 +93,7 @@ rt_nurb_curvature(struct curvature *cvp, const struct face_g_snurb *srf, fastf_t
 		F = VDOT( ue, ve);
 		G = VDOT( ve, ve);
 
-		for( i = 0; i < 3; i++)
+		for ( i = 0; i < 3; i++)
 		{
 			uue[i] = (1.0 / se[3] * uue[i]) -
 				2 * (uue[3]/se[3]) * uue[i] -
@@ -128,7 +128,7 @@ rt_nurb_curvature(struct curvature *cvp, const struct face_g_snurb *srf, fastf_t
 		N = VDOT( norm, vve);
 	}
 
-	if( srf->order[0] <= 2 && srf->order[1] <= 2)
+	if ( srf->order[0] <= 2 && srf->order[1] <= 2)
 	{
 		cvp->crv_c1 = cvp->crv_c2 = 0;
 		bn_vec_ortho(cvp->crv_pdir, norm);
@@ -143,7 +143,7 @@ rt_nurb_curvature(struct curvature *cvp, const struct face_g_snurb *srf, fastf_t
 	cvp->crv_c1 = mean - discrim;
 	cvp->crv_c2 = mean + discrim;
 
-	if( fabs( E*G - F*F) < 0.0001 )		/* XXX */
+	if ( fabs( E*G - F*F) < 0.0001 )		/* XXX */
 	{
 		bu_log("rt_nurb_curvature: first fundamental form is singular E = %g F= %g G = %g\n",
 			E, F, G);
@@ -156,13 +156,13 @@ rt_nurb_curvature(struct curvature *cvp, const struct face_g_snurb *srf, fastf_t
 	wein[2] = ( (E * M) - (F * L))/ (denom);
 	wein[3] = ( (E * N) - (F * M))/ (denom);
 
-	if( fabs(wein[1]) < 0.0001 && fabs( wein[3] - cvp->crv_c1 ) < 0.0001 )
+	if ( fabs(wein[1]) < 0.0001 && fabs( wein[3] - cvp->crv_c1 ) < 0.0001 )
 	{
 		evec[0] = 0.0; evec[1] = 1.0;
 	} else
 	{
 		evec[0] = 1.0;
-		if( fabs( wein[1] ) > fabs( wein[3] - cvp->crv_c1) )
+		if ( fabs( wein[1] ) > fabs( wein[3] - cvp->crv_c1) )
 		{
 			evec[1] = (cvp->crv_c1 - wein[0]) / wein[1];
 		} else

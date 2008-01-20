@@ -49,27 +49,27 @@ char	*argv[];
 	int	i;
 	int	first = 1;
 
-	if( argc > 1 )  debug = 1;
+	if ( argc > 1 )  debug = 1;
 
-	for(;;)  {
+	for (;;)  {
 		t = xyz[0] = xyz[1] = xyz[2] = 0.0;
 
 		buf[0] = '\0';
 		bu_fgets( buf, sizeof(buf), stdin );
-		if( feof(stdin) )  break;
+		if ( feof(stdin) )  break;
 
-		if( buf[0] == '#' )  continue;
+		if ( buf[0] == '#' )  continue;
 
 		i = sscanf( buf, "%lf %lf %lf %lf",
 			&t, &xyz[0], &xyz[1], &xyz[2] );
-		if(debug)  {
+		if (debug)  {
 			fprintf(stderr, "buf=%s", buf);
 			fprintf(stderr, "%d: %f\t%f\t%f\t%f\n",
 				i, t, xyz[0], xyz[1], xyz[2] );
 		}
-		if( i <= 0 )
+		if ( i <= 0 )
 			break;
-		if( first )  {
+		if ( first )  {
 			first = 0;
 			pdv_3move( stdout, xyz );
 		} else {

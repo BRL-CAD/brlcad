@@ -86,7 +86,7 @@ pl_strncpy(register char *out, register char *in, register int sz)
 {
 	register int c = '\0';
 
-	while( --sz > 0 && (c = *in++) != '\0' && c != '$' )
+	while ( --sz > 0 && (c = *in++) != '\0' && c != '$' )
 		*out++ = c;
 	*out++ = '\0';
 }
@@ -116,7 +116,7 @@ F(ifdopn, IFDOPN)( plotfp, fd )
 FILE	**plotfp;
 int	*fd;
 {
-	if( (*plotfp = fdopen(*fd, "w")) == NULL )
+	if ( (*plotfp = fdopen(*fd, "w")) == NULL )
 		perror("IFDOPN/fdopen");
 }
 
@@ -133,7 +133,7 @@ char	*name;
 	char	buf[128];
 
 	pl_strncpy( buf, name, (int)sizeof(buf) );
-	if( (*plotfp = fopen(buf, "w")) == NULL )
+	if ( (*plotfp = fopen(buf, "w")) == NULL )
 		perror(buf);
 }
 

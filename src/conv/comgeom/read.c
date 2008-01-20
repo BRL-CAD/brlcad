@@ -55,21 +55,21 @@ get_line(register char *cp, int buflen, char *title)
 	register int	c;
 	register int	count = buflen;
 
-	while( (c = fgetc(infp)) == '\n' ) /* Skip blank lines.		*/
+	while ( (c = fgetc(infp)) == '\n' ) /* Skip blank lines.		*/
 		;
-	while( c != EOF && c != '\n' )  {
+	while ( c != EOF && c != '\n' )  {
 		*cp++ = c;
 		count--;
-		if( count <= 0 )  {
+		if ( count <= 0 )  {
 			printf("get_line(x%lx, %d) input record overflows buffer for %s\n",
 			       (unsigned long)cp, buflen, title);
 			break;
 		}
 		c = fgetc(infp);
 	}
-	if( c == EOF )
+	if ( c == EOF )
 		return	EOF;
-	while( count-- > 0 )
+	while ( count-- > 0 )
 		*cp++ = 0;
 	return	c;
 }
@@ -82,7 +82,7 @@ getint(char *cp, int start, int len)
 {
 	char	buf[128];
 
-	if( len >= sizeof(buf) )  len = sizeof(buf)-1;
+	if ( len >= sizeof(buf) )  len = sizeof(buf)-1;
 
 	strncpy( buf, cp+start, len );
 	buf[len] = '\0';
@@ -97,7 +97,7 @@ getdouble(char *cp, int start, int len)
 {
 	char	buf[128];
 
-	if( len >= sizeof(buf) )  len = sizeof(buf)-1;
+	if ( len >= sizeof(buf) )  len = sizeof(buf)-1;
 
 	strncpy( buf, cp+start, len );
 	buf[len] = '\0';

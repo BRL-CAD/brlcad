@@ -41,22 +41,22 @@ char *name;
 
 	/* replace white space */
 	namelen = strlen( name );
-	if( namelen > NAMESIZE)
+	if ( namelen > NAMESIZE)
 	{
 		namelen = NAMESIZE;
 		name[namelen] = '\0';
 	}
-	for( i=0 ; i<namelen ; i++ )
+	for ( i=0; i<namelen; i++ )
 	{
-		if( isspace( name[i] ) || name[i] == '/' )
+		if ( isspace( name[i] ) || name[i] == '/' )
 			name[i] = '_';
 	}
 
 	/* Check if name already in list */
 	ptr = name_root;
-	while( ptr )
+	while ( ptr )
 	{
-		if( !strncmp( ptr->name, name, NAMESIZE ) )
+		if ( !strncmp( ptr->name, name, NAMESIZE ) )
 			return( ptr->name );
 		ptr = ptr->next;
 	}
@@ -82,18 +82,18 @@ char *name;
 
 	/* replace white space */
 	namelen = strlen( name );
-	for( i=0 ; i<namelen ; i++ )
+	for ( i=0; i<namelen; i++ )
 	{
-		if( isspace( name[i] ) || name[i] == '/' )
+		if ( isspace( name[i] ) || name[i] == '/' )
 			name[i] = '_';
 	}
 
 	/* check if name is already unique */
 	found = 0;
 	ptr = name_root;
-	while( ptr )
+	while ( ptr )
 	{
-		if( !strncmp( ptr->name, name, NAMESIZE ) )
+		if ( !strncmp( ptr->name, name, NAMESIZE ) )
 		{
 			found = 1;
 			break;
@@ -101,25 +101,25 @@ char *name;
 		ptr = ptr->next;
 	}
 
-	if( !found )
+	if ( !found )
 		return( Add_brl_name( name ) );
 
 	/* name is not unique, make it unique with a single character suffix */
-	if( namelen < NAMESIZE )
+	if ( namelen < NAMESIZE )
 		char_ptr = namelen;
 	else
 		char_ptr = NAMESIZE - 1;
 
 	i = 0;
-	while( found && 'A'+i <= 'z' )
+	while ( found && 'A'+i <= 'z' )
 	{
 		name[char_ptr] = 'A' + i;
 		name[char_ptr+1] = '\0';
 		found = 0;
 		ptr = name_root;
-		while( ptr )
+		while ( ptr )
 		{
-			if( !strncmp( ptr->name, name, NAMESIZE ) )
+			if ( !strncmp( ptr->name, name, NAMESIZE ) )
 			{
 				found = 1;
 				break;
@@ -127,11 +127,11 @@ char *name;
 			ptr = ptr->next;
 		}
 		i++;
-		if( 'A'+i == '[' )
+		if ( 'A'+i == '[' )
 			i = 'a' - 'A';
 	}
 
-	if( !found )
+	if ( !found )
 		return( Add_brl_name( name ) );
 
 
@@ -139,16 +139,16 @@ char *name;
 	char_ptr--;
 	i = 0;
 	j = 0;
-	while( found && 'A'+i <= 'z' && 'A'+j <= 'z' )
+	while ( found && 'A'+i <= 'z' && 'A'+j <= 'z' )
 	{
 		name[char_ptr] = 'A'+i;
 		name[char_ptr+1] = 'A'+j;
 		name[char_ptr+2] = '\0';
 		found = 0;
 		ptr = name_root;
-		while( ptr )
+		while ( ptr )
 		{
-			if( !strncmp( ptr->name, name, NAMESIZE ) )
+			if ( !strncmp( ptr->name, name, NAMESIZE ) )
 			{
 				found = 1;
 				break;
@@ -156,20 +156,20 @@ char *name;
 			ptr = ptr->next;
 		}
 		j++;
-		if( 'A'+j == '[' )
+		if ( 'A'+j == '[' )
 			j = 'a' - 'A';
 
-		if( 'A'+j > 'z' )
+		if ( 'A'+j > 'z' )
 		{
 			j = 0;
 			i++;
 		}
 
-		if( 'A'+i == '[' )
+		if ( 'A'+i == '[' )
 			i = 'a' - 'A';
 	}
 
-	if( !found )
+	if ( !found )
 	{
 		/* not likely */
 		bu_exit(1, "Could not make name unique: (%s)\n", name );
@@ -186,33 +186,33 @@ Skip_field()
 	int		done=0;
 	int		lencard;
 
-	if( card[counter] == eof ) /* This is an empty field */
+	if ( card[counter] == eof ) /* This is an empty field */
 	{
 		counter++;
 		return;
 	}
-	else if( card[counter] == eor ) /* Up against the end of record */
+	else if ( card[counter] == eor ) /* Up against the end of record */
 		return;
 
-	if( card[72] == 'P' )
+	if ( card[72] == 'P' )
 		lencard = PARAMLEN;
 	else
 		lencard = CARDLEN;
 
-	if( counter >= lencard )
+	if ( counter >= lencard )
 		Readrec( ++currec );
 
-	while( !done )
+	while ( !done )
 	{
-		while( card[counter++] != eof && card[counter] != eor &&
+		while ( card[counter++] != eof && card[counter] != eor &&
 			counter <= lencard );
-		if( counter > lencard && card[counter] != eor && card[counter] != eof )
+		if ( counter > lencard && card[counter] != eor && card[counter] != eof )
 			Readrec( ++currec );
 		else
 			done = 1;
 	}
 
-	if( card[counter] == eor )
+	if ( card[counter] == eor )
 		counter--;
 }
 
@@ -228,7 +228,7 @@ int skip;
 	int			name_de=0;
 	char			*name;
 
-	if( dir[entityno]->param <= pstart )
+	if ( dir[entityno]->param <= pstart )
 	{
 		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[entityno]->direct, dir[entityno]->name );
@@ -237,21 +237,21 @@ int skip;
 
 	Readrec( dir[entityno]->param );
 	Readint( &sol_num, "" );
-	for( i=0 ; i<skip ; i++ )
+	for ( i=0; i<skip; i++ )
 		Skip_field();
 
 	/* skip over the associativities */
 	Readint( &no_of_assoc, "" );
-	for( k=0 ; k<no_of_assoc ; k++ )
+	for ( k=0; k<no_of_assoc; k++ )
 		Readint( &j, "" );
 
 	/* get property entity DE's */
 	Readint( &no_of_props, "" );
-	for( k=0 ; k<no_of_props ; k++ )
+	for ( k=0; k<no_of_props; k++ )
 	{
 		j = 0;
 		Readint( &j, "" );
-		if( dir[(j-1)/2]->type == 406 &&
+		if ( dir[(j-1)/2]->type == 406 &&
 		    dir[(j-1)/2]->form == 15 )
 		{
 			/* this is a name */
@@ -260,12 +260,12 @@ int skip;
 		}
 	}
 
-	if( !name_de )
+	if ( !name_de )
 		return;
 
 	Readrec( dir[(name_de-1)/2]->param );
 	Readint( &sol_num, "" );
-	if( sol_num != 406 )
+	if ( sol_num != 406 )
 	{
 		/* this is not a property entity */
 		bu_log( "Check_names: entity at DE %d is not a property entity\n", name_de );
@@ -273,7 +273,7 @@ int skip;
 	}
 
 	Readint( &i, "" );
-	if( i != 1 )
+	if ( i != 1 )
 	{
 		bu_log( "Bad property entity, form 15 (name) should have only one value, not %d\n", i );
 		return;
@@ -298,7 +298,7 @@ int entityno;
 	int name_de=0;
 	char *name;
 
-	if( dir[entityno]->param <= pstart )
+	if ( dir[entityno]->param <= pstart )
 	{
 		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[entityno]->direct, dir[entityno]->name );
@@ -307,34 +307,34 @@ int entityno;
 
 	Readrec( dir[entityno]->param );
 	Readint( &entity_type, "" );
-	if( entity_type != 404 )
+	if ( entity_type != 404 )
 	{
 		bu_log( "Get_drawing_name: entity at P%07d (type %d) is not a drawing entity\n", dir[entityno]->param, entity_type );
 		return;
 	}
 
 	Readint( &no_of_views, "" );
-	for( i=0 ; i<no_of_views ; i++ )
+	for ( i=0; i<no_of_views; i++ )
 	{
-		for( j=0 ; j<3 ; j++ )
+		for ( j=0; j<3; j++ )
 			Skip_field();
 	}
 
 	Readint( &no_of_annot, "" );
-	for( i=0 ; i<no_of_annot ; i++ )
+	for ( i=0; i<no_of_annot; i++ )
 		Skip_field();
 	/* skip over the associativities */
 	Readint( &no_of_assoc, "" );
-	for( k=0 ; k<no_of_assoc ; k++ )
+	for ( k=0; k<no_of_assoc; k++ )
 		Readint( &j, "" );
 
 	/* get property entity DE's */
 	Readint( &no_of_props, "" );
-	for( k=0 ; k<no_of_props ; k++ )
+	for ( k=0; k<no_of_props; k++ )
 	{
 		j = 0;
 		Readint( &j, "" );
-		if( dir[(j-1)/2]->type == 406 &&
+		if ( dir[(j-1)/2]->type == 406 &&
 		    dir[(j-1)/2]->form == 15 )
 		{
 			/* this is a name */
@@ -343,12 +343,12 @@ int entityno;
 		}
 	}
 
-	if( !name_de )
+	if ( !name_de )
 		return;
 
 	Readrec( dir[(name_de-1)/2]->param );
 	Readint( &entity_type, "" );
-	if( entity_type != 406 )
+	if ( entity_type != 406 )
 	{
 		/* this is not a property entity */
 		bu_log( "Get_drawing_name: entity at DE %d is not a property entity\n", name_de );
@@ -356,7 +356,7 @@ int entityno;
 	}
 
 	Readint( &i, "" );
-	if( i != 1 )
+	if ( i != 1 )
 	{
 		bu_log( "Bad property entity, form 15 (name) should have only one value, not %d\n", i );
 		return;
@@ -380,7 +380,7 @@ int entityno;
 	int			name_de=0;
 	char			*name;
 
-	if( dir[entityno]->param <= pstart )
+	if ( dir[entityno]->param <= pstart )
 	{
 		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[entityno]->direct, dir[entityno]->name );
@@ -390,9 +390,9 @@ int entityno;
 	Readrec( dir[entityno]->param );
 	Readint( &sol_num, "" );
 	Readint( &num, "" );
-	if( sol_num == 180 )
+	if ( sol_num == 180 )
 		skip = num;
-	else if( sol_num == 184 )
+	else if ( sol_num == 184 )
 		skip = 2*num;
 	else
 	{
@@ -400,21 +400,21 @@ int entityno;
 		return;
 	}
 
-	for( i=0 ; i<skip ; i++ )
+	for ( i=0; i<skip; i++ )
 		Skip_field();
 
 	/* skip over the associativities */
 	Readint( &no_of_assoc, "" );
-	for( k=0 ; k<no_of_assoc ; k++ )
+	for ( k=0; k<no_of_assoc; k++ )
 		Readint( &j, "" );
 
 	/* get property entity DE's */
 	Readint( &no_of_props, "" );
-	for( k=0 ; k<no_of_props ; k++ )
+	for ( k=0; k<no_of_props; k++ )
 	{
 		j = 0;
 		Readint( &j, "" );
-		if( dir[(j-1)/2]->type == 406 &&
+		if ( dir[(j-1)/2]->type == 406 &&
 		    dir[(j-1)/2]->form == 15 )
 		{
 			/* this is a name */
@@ -423,12 +423,12 @@ int entityno;
 		}
 	}
 
-	if( !name_de )
+	if ( !name_de )
 		return;
 
 	Readrec( dir[(name_de-1)/2]->param );
 	Readint( &sol_num, "" );
-	if( sol_num != 406 )
+	if ( sol_num != 406 )
 	{
 		/* this is not a property entity */
 		bu_log( "Check_names: entity at DE %d is not a property entity\n", name_de );
@@ -436,7 +436,7 @@ int entityno;
 	}
 
 	Readint( &i, "" );
-	if( i != 1 )
+	if ( i != 1 )
 	{
 		bu_log( "Bad property entity, form 15 (name) should have only one value, not %d\n", i );
 		return;
@@ -461,7 +461,7 @@ int entityno;
 	int			name_de=0;
 	char			*name;
 
-	if( dir[entityno]->param <= pstart )
+	if ( dir[entityno]->param <= pstart )
 	{
 		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[entityno]->direct, dir[entityno]->name );
@@ -470,7 +470,7 @@ int entityno;
 
 	Readrec( dir[entityno]->param );
 	Readint( &sol_num, "" );
-	if( sol_num != 186 )
+	if ( sol_num != 186 )
 	{
 		bu_log( "Get_brep_name: Entity (type %d) is not a BREP\n", sol_num );
 		return;
@@ -480,21 +480,21 @@ int entityno;
 	Readint( &num, "" );
 	skip = 2*num;
 
-	for( i=0 ; i<skip ; i++ )
+	for ( i=0; i<skip; i++ )
 		Skip_field();
 
 	/* skip over the associativities */
 	Readint( &no_of_assoc, "" );
-	for( k=0 ; k<no_of_assoc ; k++ )
+	for ( k=0; k<no_of_assoc; k++ )
 		Readint( &j, "" );
 
 	/* get property entity DE's */
 	Readint( &no_of_props, "" );
-	for( k=0 ; k<no_of_props ; k++ )
+	for ( k=0; k<no_of_props; k++ )
 	{
 		j = 0;
 		Readint( &j, "" );
-		if( dir[(j-1)/2]->type == 406 &&
+		if ( dir[(j-1)/2]->type == 406 &&
 		    dir[(j-1)/2]->form == 15 )
 		{
 			/* this is a name */
@@ -503,12 +503,12 @@ int entityno;
 		}
 	}
 
-	if( !name_de )
+	if ( !name_de )
 		return;
 
 	Readrec( dir[(name_de-1)/2]->param );
 	Readint( &sol_num, "" );
-	if( sol_num != 406 )
+	if ( sol_num != 406 )
 	{
 		/* this is not a property entity */
 		bu_log( "Check_names: entity at DE %d is not a property entity\n", name_de );
@@ -516,7 +516,7 @@ int entityno;
 	}
 
 	Readint( &i, "" );
-	if( i != 1 )
+	if ( i != 1 )
 	{
 		bu_log( "Bad property entity, form 15 (name) should have only one value, not %d\n", i );
 		return;
@@ -535,16 +535,16 @@ int entityno;
 	int entity_type;
 	char *name;
 
-	if( entityno >= totentities )
+	if ( entityno >= totentities )
 		bu_exit(1, "Get_subfig_name: entityno too big!\n" );
 
-	if( dir[entityno]->type != 308 )
+	if ( dir[entityno]->type != 308 )
 	{
 		bu_exit(1, "Get_subfig_name called with entity type %s, should be Subfigure Definition\n",
 			iges_type( dir[entityno]->type  ) );
 	}
 
-	if( dir[entityno]->param <= pstart )
+	if ( dir[entityno]->param <= pstart )
 	{
 		bu_exit(1, "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[entityno]->direct, dir[entityno]->name );
@@ -553,7 +553,7 @@ int entityno;
 	Readrec( dir[entityno]->param );
 
 	Readint( &entity_type, "" );
-	if( entity_type != 308 )
+	if ( entity_type != 308 )
 	{
 		bu_exit(1, "Get_subfig_name: Read entity type %s, should be Subfigure Definition\n",
 			iges_type( dir[entityno]->type  ) );
@@ -573,9 +573,9 @@ Check_names()
 	int i;
 
 	bu_log( "Looking for Name Entities...\n" );
-	for( i=0 ; i < totentities ; i++ )
+	for ( i=0; i < totentities; i++ )
 	{
-		switch( dir[i]->type )
+		switch ( dir[i]->type )
 		{
 			case 152:
 				Get_name( i, 13 );
@@ -612,9 +612,9 @@ Check_names()
 				Get_drawing_name( i );
 				break;
 			case 410:
-				if( dir[i]->form == 0 )
+				if ( dir[i]->form == 0 )
 					Get_name( i, 8 );
-				else if( dir[i]->form == 1 )
+				else if ( dir[i]->form == 1 )
 					Get_name( i, 22 );
 				break;
 			case 430:
@@ -626,13 +626,13 @@ Check_names()
 	}
 
 	bu_log( "Assigning names to entities without names...\n" );
-	for( i=0 ; i < totentities ; i++ )
+	for ( i=0; i < totentities; i++ )
 	{
 		char tmp_name[NAMESIZE + 1];
 
-		if( dir[i]->name == (char *)NULL )
+		if ( dir[i]->name == (char *)NULL )
 		{
-			switch( dir[i]->type )
+			switch ( dir[i]->type )
 			{
 				case 150:
 					sprintf( tmp_name, "block.%d", i );

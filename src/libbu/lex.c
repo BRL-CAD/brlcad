@@ -57,7 +57,7 @@ bu_lex_getone(int *used, struct bu_vls *rtstr)
 	cp = bu_vls_addr(rtstr);
 top:
 	if (bu_lex_reading_comment) {
-		for(;;) {
+		for (;;) {
 			register char tc;
 			tc = *cp; cp++;
 			if (!tc) {
@@ -149,7 +149,7 @@ top:
 	*used = cp - sp -1;
 	if (*used == 0) *used = 1;
 	unit = (char *)bu_malloc(*used+1, "unit token");
-	strncpy(unit, sp,*used);
+	strncpy(unit, sp, *used);
 	unit[*used] = '\0';
 	*used = sp-bu_vls_addr(rtstr) + *used;
 	if (*used == 0) *used = 1;
@@ -213,10 +213,10 @@ bu_lex(
 			 */
 			cp=unit+1;
 			if (*cp == 'x' || *cp == 'X') {
-				for(;*cp && isxdigit(*cp);cp++);
+				for (;*cp && isxdigit(*cp);cp++);
 				if (!*cp) {
 					token->type = BU_LEX_INT;
-					sscanf(unit, "%x",(unsigned int *)&token->t_int.value);
+					sscanf(unit, "%x", (unsigned int *)&token->t_int.value);
 					bu_free(unit, "unit token");
 					return used;
 				}
@@ -241,10 +241,10 @@ bu_lex(
 		 * *cp should be a '.'
 		 */
 		if (*cp == '.') {
-			for(cp++;*cp &&isdigit(*cp);cp++);
+			for (cp++;*cp &&isdigit(*cp);cp++);
 			if (*cp == 'e' || *cp == 'E') cp++;
 			if (*cp == '+' || *cp == '-') cp++;
-			for(;*cp &&isdigit(*cp);cp++);
+			for (;*cp &&isdigit(*cp);cp++);
 			if (!*cp) {
 				token->type = BU_LEX_DOUBLE;
 				sscanf(unit, "%lg", &token->t_dbl.value);

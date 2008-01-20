@@ -227,7 +227,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
   }
 
   BU_GETSTRUCT(dmp, dm);
-  if(dmp == DM_NULL) {
+  if (dmp == DM_NULL) {
       return DM_NULL;
   }
 
@@ -235,13 +235,13 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
   dmp->dm_interp = interp;
 
   dmp->dm_vars.pub_vars = (genptr_t)bu_calloc(1, sizeof(struct dm_xvars), "ogl_open: dm_xvars");
-  if(dmp->dm_vars.pub_vars == (genptr_t)NULL){
+  if (dmp->dm_vars.pub_vars == (genptr_t)NULL){
     bu_free(dmp, "ogl_open: dmp");
     return DM_NULL;
   }
 
   dmp->dm_vars.priv_vars = (genptr_t)bu_calloc(1, sizeof(struct ogl_vars), "ogl_open: ogl_vars");
-  if(dmp->dm_vars.priv_vars == (genptr_t)NULL){
+  if (dmp->dm_vars.priv_vars == (genptr_t)NULL){
     bu_free(dmp->dm_vars.pub_vars, "ogl_open: dmp->dm_vars.pub_vars");
     bu_free(dmp, "ogl_open: dmp");
     return DM_NULL;
@@ -256,19 +256,19 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
 
   dm_processOptions(dmp, &init_proc_vls, --argc, ++argv);
 
-  if(bu_vls_strlen(&dmp->dm_pathName) == 0)
+  if (bu_vls_strlen(&dmp->dm_pathName) == 0)
      bu_vls_printf(&dmp->dm_pathName, ".dm_ogl%d", count);
   ++count;
-  if(bu_vls_strlen(&dmp->dm_dName) == 0){
+  if (bu_vls_strlen(&dmp->dm_dName) == 0){
     char *dp;
 
     dp = getenv("DISPLAY");
-    if(dp)
+    if (dp)
       bu_vls_strcpy(&dmp->dm_dName, dp);
     else
       bu_vls_strcpy(&dmp->dm_dName, ":0.0");
   }
-  if(bu_vls_strlen(&init_proc_vls) == 0)
+  if (bu_vls_strlen(&init_proc_vls) == 0)
     bu_vls_strcpy(&init_proc_vls, "bind_dm");
 
   /* initialize dm specific variables */
@@ -292,7 +292,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
   /* this is important so that ogl_configureWin knows to set the font */
   ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = NULL;
 
-  if((tmp_dpy = XOpenDisplay(bu_vls_addr(&dmp->dm_dName))) == NULL){
+  if ((tmp_dpy = XOpenDisplay(bu_vls_addr(&dmp->dm_dName))) == NULL){
     bu_vls_free(&init_proc_vls);
     (void)ogl_close(dmp);
     return DM_NULL;
@@ -302,7 +302,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
   {
     int return_val;
 
-    if(!XQueryExtension(tmp_dpy, "GLX", &return_val, &return_val, &return_val)){
+    if (!XQueryExtension(tmp_dpy, "GLX", &return_val, &return_val, &return_val)){
       bu_vls_free(&init_proc_vls);
       (void)ogl_close(dmp);
       return DM_NULL;
@@ -310,20 +310,20 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
   }
 #endif
 
-  if(dmp->dm_width == 0){
+  if (dmp->dm_width == 0){
     dmp->dm_width =
       DisplayWidth(tmp_dpy, DefaultScreen(tmp_dpy)) - 30;
      ++make_square;
   }
-  if(dmp->dm_height == 0){
+  if (dmp->dm_height == 0){
     dmp->dm_height =
       DisplayHeight(tmp_dpy, DefaultScreen(tmp_dpy)) - 30;
      ++make_square;
   }
 
-  if(make_square > 0){
+  if (make_square > 0){
     /* Make window square */
-    if(dmp->dm_height <
+    if (dmp->dm_height <
        dmp->dm_width)
       dmp->dm_width =
 	dmp->dm_height;
@@ -334,7 +334,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
 
   XCloseDisplay(tmp_dpy);
 
-  if(dmp->dm_top){
+  if (dmp->dm_top){
     /* Make xtkwin a toplevel window */
     ((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin =
       Tk_CreateWindowFromPath(interp,
@@ -346,7 +346,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
      char *cp;
 
      cp = strrchr(bu_vls_addr(&dmp->dm_pathName), (int)'.');
-     if(cp == bu_vls_addr(&dmp->dm_pathName)){
+     if (cp == bu_vls_addr(&dmp->dm_pathName)){
        ((struct dm_xvars *)dmp->dm_vars.pub_vars)->top = tkwin;
      }else{
        struct bu_vls top_vls;
@@ -365,7 +365,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
 		       cp + 1, (char *)NULL);
   }
 
-  if( ((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin == NULL ) {
+  if ( ((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin == NULL ) {
     bu_log("dm-Ogl: Failed to open %s\n", bu_vls_addr(&dmp->dm_pathName));
     bu_vls_free(&init_proc_vls);
     (void)ogl_close(dmp);
@@ -380,7 +380,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
 		&init_proc_vls,
 		&dmp->dm_pathName);
 
-  if(Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR){
+  if (Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR){
     bu_vls_free(&init_proc_vls);
     bu_vls_free(&str);
     (void)ogl_close(dmp);
@@ -406,7 +406,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
 		     dmp->dm_height);
 
   /* must do this before MakeExist */
-  if((((struct dm_xvars *)dmp->dm_vars.pub_vars)->vip=ogl_choose_visual(dmp,
+  if ((((struct dm_xvars *)dmp->dm_vars.pub_vars)->vip=ogl_choose_visual(dmp,
 				    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin)) == NULL){
     bu_log("ogl_open: Can't get an appropriate visual.\n");
     (void)ogl_close(dmp);
@@ -447,21 +447,21 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
   }
 
   /* IRIX 4.0.5 bug workaround */
-  if( list == (XDeviceInfoPtr)NULL ||
+  if ( list == (XDeviceInfoPtr)NULL ||
       list == (XDeviceInfoPtr)1 )  goto Done;
 
-  for(j = 0; j < ndevices; ++j, list++){
-    if(list->use == IsXExtensionDevice){
-      if(!strcmp(list->name, "dial+buttons")){
-	if((dev = XOpenDevice(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+  for (j = 0; j < ndevices; ++j, list++){
+    if (list->use == IsXExtensionDevice){
+      if (!strcmp(list->name, "dial+buttons")){
+	if ((dev = XOpenDevice(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			      list->id)) == (XDevice *)NULL){
 	  bu_log("ogl_open: Couldn't open the dials+buttons\n");
 	  goto Done;
 	}
 
-	for(cip = dev->classes, k = 0; k < dev->num_classes;
+	for (cip = dev->classes, k = 0; k < dev->num_classes;
 	    ++k, ++cip){
-	  switch(cip->input_class){
+	  switch (cip->input_class){
 #ifdef IR_BUTTONS
 	  case ButtonClass:
 	    DeviceButtonPress(dev, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->devbuttonpress,
@@ -728,18 +728,18 @@ ogl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 HIDDEN int
 ogl_close(struct dm *dmp)
 {
-  if(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy){
-    if(((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc){
+  if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy){
+    if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc){
       glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy, None, NULL);
       glXDestroyContext(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc);
     }
 
-    if(((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap)
+    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap)
       XFreeColormap(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap);
 
-    if(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin)
+    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin)
       Tk_DestroyWindow(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin);
 
 #if 0
@@ -854,7 +854,7 @@ ogl_drawEnd(struct dm *dmp)
     bu_vls_init(&tmp_vls);
     bu_vls_printf(&tmp_vls, "ANY ERRORS?\n");
 
-    while((error = glGetError())!=0){
+    while ((error = glGetError())!=0){
       bu_vls_printf(&tmp_vls, "Error: %x\n", error);
     }
 
@@ -884,7 +884,7 @@ ogl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
   GLfloat gtmat[16];
   mat_t	newm;
 
-  if(dmp->dm_debugLevel){
+  if (dmp->dm_debugLevel){
     struct bu_vls tmp_vls;
 
     bu_log("ogl_loadMatrix()\n");
@@ -901,7 +901,7 @@ ogl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
     bu_vls_free(&tmp_vls);
   }
 
-  switch(which_eye)  {
+  switch (which_eye)  {
   case 0:
     /* Non-stereo */
     break;
@@ -1100,7 +1100,7 @@ ogl_normal(struct dm *dmp)
     glPushMatrix();
     glLoadIdentity();
     ((struct ogl_vars *)dmp->dm_vars.priv_vars)->face_flag = 1;
-    if(((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.cueing_on)
+    if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.cueing_on)
       glDisable(GL_FOG);
     if (dmp->dm_light)
       glDisable(GL_LIGHTING);
@@ -1121,7 +1121,7 @@ ogl_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int s
   if (dmp->dm_debugLevel)
     bu_log("ogl_drawString2D()\n");
 
-  if(use_aspect)
+  if (use_aspect)
     glRasterPos2f(x, y * dmp->dm_aspect);
   else
     glRasterPos2f(x, y);
@@ -1144,7 +1144,7 @@ ogl_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
   if (dmp->dm_debugLevel)
     bu_log("ogl_drawLine2D()\n");
 
-  if(dmp->dm_debugLevel){
+  if (dmp->dm_debugLevel){
     GLfloat pmat[16];
 
     glGetFloatv(GL_PROJECTION_MATRIX, pmat);
@@ -1195,7 +1195,7 @@ ogl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b
   dmp->dm_fg[1] = g;
   dmp->dm_fg[2] = b;
 
-  if(strict){
+  if (strict){
     glColor3ub( (GLubyte)r, (GLubyte)g, (GLubyte)b );
   }else{
 
@@ -1251,7 +1251,7 @@ ogl_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b
   ((struct ogl_vars *)dmp->dm_vars.priv_vars)->g = g / 255.0;
   ((struct ogl_vars *)dmp->dm_vars.priv_vars)->b = b / 255.0;
 
-  if(((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.doublebuffer){
+  if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.doublebuffer){
     if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
 			((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)){
@@ -1282,7 +1282,7 @@ ogl_setLineAttr(struct dm *dmp, int width, int style)
 
   glLineWidth((GLfloat) width);
 
-  if(style == DM_DASHED_LINE)
+  if (style == DM_DASHED_LINE)
     glEnable(GL_LINE_STIPPLE);
   else
     glDisable(GL_LINE_STIPPLE);
@@ -1347,7 +1347,7 @@ ogl_choose_visual(struct dm *dmp, Tk_Window tkwin)
   int stereo;
 
   /*XXX Need to do something with this */
-  if( dmp->dm_stereo )  {
+  if ( dmp->dm_stereo )  {
     m_stereo = 1;
   } else {
     m_stereo = 0;
@@ -1375,14 +1375,14 @@ ogl_choose_visual(struct dm *dmp, Tk_Window tkwin)
 	continue;
 
       fail = glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-		     vip, GLX_DOUBLEBUFFER,&dbfr);
+		     vip, GLX_DOUBLEBUFFER, &dbfr);
       if (fail || !dbfr)
 	continue;
 
       /* desires */
       if ( m_zbuffer ) {
 	fail = glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			    vip, GLX_DEPTH_SIZE,&zbuffer);
+			    vip, GLX_DEPTH_SIZE, &zbuffer);
 	if (fail || !zbuffer)
 	  continue;
       }
@@ -1399,7 +1399,7 @@ ogl_choose_visual(struct dm *dmp, Tk_Window tkwin)
 #endif
 
       /* this visual meets criteria */
-      if(j >= NGOOD){
+      if (j >= NGOOD){
 	bu_log("ogl_choose_visual: More than %d candidate visuals!\n", NGOOD);
 	break;
       }
@@ -1409,7 +1409,7 @@ ogl_choose_visual(struct dm *dmp, Tk_Window tkwin)
     /* j = number of acceptable visuals under consideration */
     if (j >= 1){
       baddepth = 1000;
-      for(tries = 0; tries < j; ++tries) {
+      for (tries = 0; tries < j; ++tries) {
 	maxvip = vibase + good[0];
 	for (i=1; i<j; i++) {
 	  vip = vibase + good[i];
@@ -1513,7 +1513,7 @@ ogl_configureWin_guts(struct dm *dmp, int force)
 	    (dmp->dm_height)+1);
 #endif
 
-  if(dmp->dm_zbuffer)
+  if (dmp->dm_zbuffer)
     ogl_setZBuffer(dmp, dmp->dm_zbuffer);
 
   ogl_setLight(dmp, dmp->dm_light);

@@ -153,7 +153,7 @@ static int	bot=0;
 #define	MAKE_FACE( _ep0, _ep1, _ep2, _s )	{\
 	struct faceuse *_fu; \
 	struct vertex **_v[3]; \
-	if( debug > 3 ) \
+	if ( debug > 3 ) \
 	{ \
 		bu_log( "\t\tMaking face:\n" ); \
 		bu_log( "\t\t\tx%x (%g %g %g)\n", _ep0, V3ARGS( _ep0->pt ) ); \
@@ -164,29 +164,29 @@ static int	bot=0;
 	_v[1] = &_ep1->v; \
 	_v[2] = &_ep2->v; \
 	_fu = nmg_cmface( _s, _v, 3 ); \
-	if( !(*_v[0])->vg_p ) \
+	if ( !(*_v[0])->vg_p ) \
 		nmg_vertex_gv( *_v[0], _ep0->pt ); \
-	if( !(*_v[1])->vg_p ) \
+	if ( !(*_v[1])->vg_p ) \
 		nmg_vertex_gv( *_v[1], _ep1->pt ); \
-	if( !(*_v[2])->vg_p ) \
+	if ( !(*_v[2])->vg_p ) \
 		nmg_vertex_gv( *_v[2], _ep2->pt ); \
-	if( nmg_calc_face_g( _fu ) ) \
+	if ( nmg_calc_face_g( _fu ) ) \
 	{ \
-		if( debug > 3 ) \
+		if ( debug > 3 ) \
 			bu_log( "Killing degenerate face\n" ); \
 		(void)nmg_kfu( _fu ); \
-		if( (*_v[0])->vg_p->magic != NMG_VERTEX_G_MAGIC ) \
+		if ( (*_v[0])->vg_p->magic != NMG_VERTEX_G_MAGIC ) \
 			(*_v[0])->vg_p = (struct vertex_g *)NULL; \
-		if( (*_v[1])->vg_p->magic != NMG_VERTEX_G_MAGIC ) \
+		if ( (*_v[1])->vg_p->magic != NMG_VERTEX_G_MAGIC ) \
 			(*_v[1])->vg_p = (struct vertex_g *)NULL; \
-		if( (*_v[2])->vg_p->magic != NMG_VERTEX_G_MAGIC ) \
+		if ( (*_v[2])->vg_p->magic != NMG_VERTEX_G_MAGIC ) \
 			(*_v[2])->vg_p = (struct vertex_g *)NULL; \
 	} \
 }
 #define	MAKE_FACE_R( _ep0, _ep1, _ep2, _ep3, _s )	{\
 	struct faceuse *_fu; \
 	struct vertex **_v[4]; \
-	if( debug > 3 ) \
+	if ( debug > 3 ) \
 	{ \
 		bu_log( "\t\tMaking face:\n" ); \
 		bu_log( "\t\t\tx%x (%g %g %g)\n", _ep0, V3ARGS( _ep0->pt ) ); \
@@ -199,26 +199,26 @@ static int	bot=0;
 	_v[2] = &_ep2->v; \
 	_v[3] = &_ep3->v; \
 	_fu = nmg_cmface( _s, _v, 4 ); \
-	if( !(*_v[0])->vg_p ) \
+	if ( !(*_v[0])->vg_p ) \
 		nmg_vertex_gv( *_v[0], _ep0->pt ); \
-	if( !(*_v[1])->vg_p ) \
+	if ( !(*_v[1])->vg_p ) \
 		nmg_vertex_gv( *_v[1], _ep1->pt ); \
-	if( !(*_v[2])->vg_p ) \
+	if ( !(*_v[2])->vg_p ) \
 		nmg_vertex_gv( *_v[2], _ep2->pt ); \
-	if( !(*_v[3])->vg_p ) \
+	if ( !(*_v[3])->vg_p ) \
 		nmg_vertex_gv( *_v[3], _ep3->pt ); \
-	if( nmg_calc_face_g( _fu ) ) \
+	if ( nmg_calc_face_g( _fu ) ) \
 	{ \
-		if( debug > 3 ) \
+		if ( debug > 3 ) \
 			bu_log( "Killing degenerate face\n" ); \
 		(void)nmg_kfu( _fu ); \
-		if( (*_v[0])->vg_p->magic != NMG_VERTEX_G_MAGIC ) \
+		if ( (*_v[0])->vg_p->magic != NMG_VERTEX_G_MAGIC ) \
 			(*_v[0])->vg_p = (struct vertex_g *)NULL; \
-		if( (*_v[1])->vg_p->magic != NMG_VERTEX_G_MAGIC ) \
+		if ( (*_v[1])->vg_p->magic != NMG_VERTEX_G_MAGIC ) \
 			(*_v[1])->vg_p = (struct vertex_g *)NULL; \
-		if( (*_v[2])->vg_p->magic != NMG_VERTEX_G_MAGIC ) \
+		if ( (*_v[2])->vg_p->magic != NMG_VERTEX_G_MAGIC ) \
 			(*_v[2])->vg_p = (struct vertex_g *)NULL; \
-		if( (*_v[3])->vg_p->magic != NMG_VERTEX_G_MAGIC ) \
+		if ( (*_v[3])->vg_p->magic != NMG_VERTEX_G_MAGIC ) \
 			(*_v[3])->vg_p = (struct vertex_g *)NULL; \
 	} \
 }
@@ -249,21 +249,21 @@ static void
 pr_part(struct local_part *ptr)
 {
 	bu_log( "local_part: x%x\n", ptr );
-	if( !ptr )
+	if ( !ptr )
 		return;
-	if( ptr->is_void == YES )
+	if ( ptr->is_void == YES )
 		bu_log( "\tVOID: in_coord=%g, out_coord=%g\n", ptr->in_coord, ptr->out_coord );
-	else if( ptr->is_void == NO )
+	else if ( ptr->is_void == NO )
 		bu_log( "\tSOLID: in_coord=%g, out_coord=%g\n", ptr->in_coord, ptr->out_coord );
-	else if( ptr->is_void == UNKNOWN )
+	else if ( ptr->is_void == UNKNOWN )
 		bu_log( "\tUNKNOWN: in_coord=%g, out_coord=%g\n", ptr->in_coord, ptr->out_coord );
 	else
 		bu_log( "\tERROR: in_coord=%g, out_coord=%g\n", ptr->in_coord, ptr->out_coord );
-	if( ptr->in )
+	if ( ptr->in )
 		bu_log( "\tin = x%x (%g %g %g), v=x%x\n", ptr->in, V3ARGS( ptr->in->pt ), ptr->in->v );
 	else
 		bu_log( "\tin = NULL\n" );
-	if( ptr->out )
+	if ( ptr->out )
 		bu_log( "\tout = x%x (%g %g %g), v=x%x\n", ptr->out, V3ARGS( ptr->out->pt ), ptr->out->v );
 	else
 		bu_log( "\tout = NULL\n" );
@@ -277,7 +277,7 @@ Make_simple_faces(struct shell *s, int status, struct local_part **lpart)
 	int max_diff;
 	int i;
 
-	switch( status )
+	switch ( status )
 	{
 		case 3:		/* bottom faces */
 #if MAKE_TRIANGLES
@@ -353,21 +353,21 @@ Make_simple_faces(struct shell *s, int status, struct local_part **lpart)
 			break;
 		case 15:	/* front and back faces */
 				ave_y = 0;
-				for( i=0 ; i<4 ; i++ )
+				for ( i=0; i<4; i++ )
 					ave_y += lpart[i]->in->pt[Y];
 				ave_y /= 4.0;
-				for( i=0 ; i<4 ; i++ )
+				for ( i=0; i<4; i++ )
 				{
 					diff[i] = lpart[i]->in->pt[Y] - ave_y;
 					diff[i] = ABS( diff[i] );
 				}
 				max_diff = 0;
-				for( i=1 ; i<4 ; i++ )
+				for ( i=1; i<4; i++ )
 				{
-					if( diff[i] > diff[max_diff] )
+					if ( diff[i] > diff[max_diff] )
 						max_diff = i;
 				}
-				if( max_diff == 1 || max_diff == 3 )
+				if ( max_diff == 1 || max_diff == 3 )
 				{
 					MAKE_FACE( lpart[0]->in, lpart[1]->in, lpart[2]->in, s )
 					MAKE_FACE( lpart[0]->in, lpart[2]->in, lpart[3]->in, s )
@@ -379,21 +379,21 @@ Make_simple_faces(struct shell *s, int status, struct local_part **lpart)
 				}
 
 				ave_y = 0;
-				for( i=0 ; i<4 ; i++ )
+				for ( i=0; i<4; i++ )
 					ave_y += lpart[i]->out->pt[Y];
 				ave_y /= 4.0;
-				for( i=0 ; i<4 ; i++ )
+				for ( i=0; i<4; i++ )
 				{
 					diff[i] = lpart[i]->out->pt[Y] - ave_y;
 					diff[i] = ABS( diff[i] );
 				}
 				max_diff = 0;
-				for( i=1 ; i<4 ; i++ )
+				for ( i=1; i<4; i++ )
 				{
-					if( diff[i] > diff[max_diff] )
+					if ( diff[i] > diff[max_diff] )
 						max_diff = i;
 				}
-				if( max_diff == 1 || max_diff == 3 )
+				if ( max_diff == 1 || max_diff == 3 )
 				{
 					MAKE_FACE( lpart[2]->out, lpart[1]->out, lpart[0]->out, s )
 					MAKE_FACE( lpart[2]->out, lpart[0]->out, lpart[3]->out, s )
@@ -435,19 +435,19 @@ Get_extremes(struct shell *s, struct application *ap, struct hitmiss **hitmiss, 
 	rd.seghead = &seghead;
 
 	/* Compute the inverse of the direction cosines */
-	if( !NEAR_ZERO( rp->r_dir[X], SQRT_SMALL_FASTF ) )  {
+	if ( !NEAR_ZERO( rp->r_dir[X], SQRT_SMALL_FASTF ) )  {
 		rd.rd_invdir[X]=1.0/rp->r_dir[X];
 	} else {
 		rd.rd_invdir[X] = INFINITY;
 		rp->r_dir[X] = 0.0;
 	}
-	if( !NEAR_ZERO( rp->r_dir[Y], SQRT_SMALL_FASTF ) )  {
+	if ( !NEAR_ZERO( rp->r_dir[Y], SQRT_SMALL_FASTF ) )  {
 		rd.rd_invdir[Y]=1.0/rp->r_dir[Y];
 	} else {
 		rd.rd_invdir[Y] = INFINITY;
 		rp->r_dir[Y] = 0.0;
 	}
-	if( !NEAR_ZERO( rp->r_dir[Z], SQRT_SMALL_FASTF ) )  {
+	if ( !NEAR_ZERO( rp->r_dir[Z], SQRT_SMALL_FASTF ) )  {
 		rd.rd_invdir[Z]=1.0/rp->r_dir[Z];
 	} else {
 		rd.rd_invdir[Z] = INFINITY;
@@ -457,7 +457,7 @@ Get_extremes(struct shell *s, struct application *ap, struct hitmiss **hitmiss, 
 
 	nmg_isect_ray_model(&rd);
 
-	if( BU_LIST_IS_EMPTY( &rd.rd_hit ) )
+	if ( BU_LIST_IS_EMPTY( &rd.rd_hit ) )
 		ret = 0;
 	else
 	{
@@ -521,28 +521,28 @@ shrink_hit(register struct application *ap, struct partition *PartHeadp, struct 
 	extreme_dist2 = -MAX_FASTF;
 
 	/* find hit vertex */
-	for( i=0 ; i<BU_PTBL_END( &verts ) ; i++ )
+	for ( i=0; i<BU_PTBL_END( &verts ); i++ )
 	{
 		struct vertex *v;
 		struct vertex_g *vg;
 		fastf_t dist;
 
 		v = (struct vertex *)BU_PTBL_GET( &verts, i );
-		if( !v )
+		if ( !v )
 			continue;
 		vg = v->vg_p;
 
-		if( (ap->a_user == X || NEAR_ZERO( ap->a_ray.r_pt[X] - vg->coord[X], tol.dist )) &&
+		if ( (ap->a_user == X || NEAR_ZERO( ap->a_ray.r_pt[X] - vg->coord[X], tol.dist )) &&
 		    (ap->a_user == Y || NEAR_ZERO( ap->a_ray.r_pt[Y] - vg->coord[Y], tol.dist )) &&
 		    (ap->a_user == Z || NEAR_ZERO( ap->a_ray.r_pt[Z] - vg->coord[Z], tol.dist )) )
 		{
 			dist = vg->coord[ap->a_user] - ap->a_ray.r_pt[ap->a_user];
-			if( dist < extreme_dist1 )
+			if ( dist < extreme_dist1 )
 			{
 				extreme_dist1 = dist;
 				hit1_v = v;
 			}
-			if( dist > extreme_dist2 )
+			if ( dist > extreme_dist2 )
 			{
 				extreme_dist2 = dist;
 				hit2_v = v;
@@ -550,14 +550,14 @@ shrink_hit(register struct application *ap, struct partition *PartHeadp, struct 
 		}
 	}
 
-	if( hit1_v || hit2_v )
+	if ( hit1_v || hit2_v )
 	{
 		vect_t diff1, diff2;
 		fastf_t len1_sq, len2_sq;
 
 		(void)Get_extremes( s, &ap2, sd->hitmiss, sd->manifolds, hit1, hit2 );
 
-		if( debug )
+		if ( debug )
 		{
 			bu_log( "shrink_hit:\n\thit1_v=(%g %g %g), hit2_v=(%g %g %g)\n",
 				V3ARGS( hit1_v->vg_p->coord ),
@@ -576,43 +576,43 @@ shrink_hit(register struct application *ap, struct partition *PartHeadp, struct 
 		len1_sq = MAGSQ( diff1 );
 		len2_sq = MAGSQ( diff2 );
 
-		if( !NEAR_ZERO( len1_sq, tol.dist_sq ) )
+		if ( !NEAR_ZERO( len1_sq, tol.dist_sq ) )
 			hit1_v = (struct vertex *)NULL;
 
-		if( !NEAR_ZERO( len2_sq, tol.dist_sq ) )
+		if ( !NEAR_ZERO( len2_sq, tol.dist_sq ) )
 			hit2_v = (struct vertex *)NULL;
 	}
 
-	if( hit1_v && hit1_v == hit2_v )
+	if ( hit1_v && hit1_v == hit2_v )
 	{
 		/* only one vertex found, which is it?? */
 		fastf_t dist1, dist2;
 
-		if( debug )
+		if ( debug )
 			bu_log( "hit1_v == hit2_v (still) (%g %g %g)\n", V3ARGS( hit1_v->vg_p->coord ) );
 
 		dist1 = hit1_v->vg_p->coord[ap->a_user] - mhit1[ap->a_user];
-		if( dist1 < 0.0 )
+		if ( dist1 < 0.0 )
 			dist1 = -dist1;
 		dist2 = hit2_v->vg_p->coord[ap->a_user] - mhit2[ap->a_user];
-		if( dist2 < 0.0 )
+		if ( dist2 < 0.0 )
 			dist2 = -dist2;
 
-		if( debug )
+		if ( debug )
 		{
 			bu_log( "\tmhit1=(%g %g %g) mhit2=(%g %g %g)\n", V3ARGS( mhit1 ), V3ARGS( mhit2 ) );
 			bu_log( "\tdist1=%g dist2=%g\n", dist1, dist2 );
 		}
 
-		if( dist2 >= dist1 )
+		if ( dist2 >= dist1 )
 		{
-			if( debug )
+			if ( debug )
 				bu_log( "\t\teliminating hit2_v\n" );
 			hit2_v = (struct vertex *)NULL;
 		}
 		else
 		{
-			if( debug )
+			if ( debug )
 				bu_log( "\t\teliminating hit1_v\n" );
 			hit1_v = (struct vertex *)NULL;
 		}
@@ -621,7 +621,7 @@ shrink_hit(register struct application *ap, struct partition *PartHeadp, struct 
 	/* Don't allow moving the vertex normalward more than a cell width.
 	 * If the point should have been there, the original rays should have caught it.
 	 */
-	if( hit1_v )
+	if ( hit1_v )
 	{
 		vect_t v1;
 		struct vertexuse *vu;
@@ -630,21 +630,21 @@ shrink_hit(register struct application *ap, struct partition *PartHeadp, struct 
 		VSUB2( v1, mhit1, hit1_v->vg_p->coord );
 		dist_sq = MAGSQ( v1 );
 
-		if( dist_sq > cell_size_sq )
+		if ( dist_sq > cell_size_sq )
 		{
 
-			for( BU_LIST_FOR( vu, vertexuse, &hit1_v->vu_hd ) )
+			for ( BU_LIST_FOR( vu, vertexuse, &hit1_v->vu_hd ) )
 			{
 				struct faceuse *fu;
 				vect_t norm;
 
 				fu = nmg_find_fu_of_vu( vu );
-				if( fu->orientation != OT_SAME )
+				if ( fu->orientation != OT_SAME )
 					continue;
 
 				NMG_GET_FU_NORMAL( norm, fu );
 
-				if( VDOT( norm, v1 ) > 0.0 )
+				if ( VDOT( norm, v1 ) > 0.0 )
 				{
 					hit1_v = (struct vertex *)NULL;
 					break;
@@ -652,7 +652,7 @@ shrink_hit(register struct application *ap, struct partition *PartHeadp, struct 
 			}
 		}
 	}
-	if( hit2_v )
+	if ( hit2_v )
 	{
 		vect_t v2;
 		struct vertexuse *vu;
@@ -661,21 +661,21 @@ shrink_hit(register struct application *ap, struct partition *PartHeadp, struct 
 		VSUB2( v2, mhit2, hit2_v->vg_p->coord );
 		dist_sq = MAGSQ( v2 );
 
-		if( dist_sq > cell_size_sq )
+		if ( dist_sq > cell_size_sq )
 		{
 
-			for( BU_LIST_FOR( vu, vertexuse, &hit2_v->vu_hd ) )
+			for ( BU_LIST_FOR( vu, vertexuse, &hit2_v->vu_hd ) )
 			{
 				struct faceuse *fu;
 				vect_t norm;
 
 				fu = nmg_find_fu_of_vu( vu );
-				if( fu->orientation != OT_SAME )
+				if ( fu->orientation != OT_SAME )
 					continue;
 
 				NMG_GET_FU_NORMAL( norm, fu );
 
-				if( VDOT( norm, v2 ) > 0.0 )
+				if ( VDOT( norm, v2 ) > 0.0 )
 				{
 					hit2_v = (struct vertex *)NULL;
 					break;
@@ -684,15 +684,15 @@ shrink_hit(register struct application *ap, struct partition *PartHeadp, struct 
 		}
 	}
 
-	if( hit1_v )
+	if ( hit1_v )
 	{
 		struct vertexuse *vu;
 
-		if( debug )
+		if ( debug )
 			bu_log( "Moving first hit vg x%x from (%g %g %g) to (%g %g %g)\n", hit1_v->vg_p,
 				V3ARGS( hit1_v->vg_p->coord ), V3ARGS( mhit1 ) );
 		VMOVE( hit1_v->vg_p->coord, mhit1 )
-		for( BU_LIST_FOR( vu, vertexuse, &hit1_v->vu_hd ) )
+		for ( BU_LIST_FOR( vu, vertexuse, &hit1_v->vu_hd ) )
 		{
 			struct faceuse *fu;
 			struct face *f;
@@ -700,7 +700,7 @@ shrink_hit(register struct application *ap, struct partition *PartHeadp, struct 
 			struct edge_g_lseg *eg;
 			pointp_t pt;
 
-			if( *vu->up.magic_p != NMG_EDGEUSE_MAGIC )
+			if ( *vu->up.magic_p != NMG_EDGEUSE_MAGIC )
 				continue;
 
 			eu = vu->up.eu_p;
@@ -711,9 +711,9 @@ shrink_hit(register struct application *ap, struct partition *PartHeadp, struct 
 			VSUB2(eg->e_dir, eg->e_pt, pt);
 
 			fu = nmg_find_fu_of_eu( eu );
-			if( !fu )
+			if ( !fu )
 				continue;
-			if( fu->orientation != OT_SAME )
+			if ( fu->orientation != OT_SAME )
 				continue;
 
 			nmg_calc_face_g( fu );
@@ -730,15 +730,15 @@ shrink_hit(register struct application *ap, struct partition *PartHeadp, struct 
 		bu_ptbl_zero( &verts, (long *)hit1_v );
 	}
 
-	if( hit2_v )
+	if ( hit2_v )
 	{
 		struct vertexuse *vu;
 
-		if( debug )
+		if ( debug )
 			bu_log( "Moving last hit vg x%x from (%g %g %g) to (%g %g %g)\n", hit2_v->vg_p,
 				V3ARGS( hit2_v->vg_p->coord ), V3ARGS( mhit2 ) );
 		VMOVE( hit2_v->vg_p->coord, mhit2 )
-		for( BU_LIST_FOR( vu, vertexuse, &hit2_v->vu_hd ) )
+		for ( BU_LIST_FOR( vu, vertexuse, &hit2_v->vu_hd ) )
 		{
 			struct faceuse *fu;
 			struct face *f;
@@ -746,7 +746,7 @@ shrink_hit(register struct application *ap, struct partition *PartHeadp, struct 
 			struct edge_g_lseg *eg;
 			pointp_t pt;
 
-			if( *vu->up.magic_p != NMG_EDGEUSE_MAGIC )
+			if ( *vu->up.magic_p != NMG_EDGEUSE_MAGIC )
 				continue;
 
 			eu = vu->up.eu_p;
@@ -757,9 +757,9 @@ shrink_hit(register struct application *ap, struct partition *PartHeadp, struct 
 			VSUB2(eg->e_dir, eg->e_pt, pt);
 
 			fu = nmg_find_fu_of_eu( eu );
-			if( !fu )
+			if ( !fu )
 				continue;
-			if( fu->orientation != OT_SAME )
+			if ( fu->orientation != OT_SAME )
 				continue;
 
 			nmg_calc_face_g( fu );
@@ -792,22 +792,22 @@ Split_side_faces(struct shell *s, struct bu_ptbl *tab)
 
 	bu_ptbl_init( &faces, 128, "faces" );
 
-	for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
+	for ( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
 	{
 		int count=0;
 
-		if( fu->orientation != OT_SAME )
+		if ( fu->orientation != OT_SAME )
 			continue;
 
 		lu = BU_LIST_FIRST( loopuse, &fu->lu_hd );
 
-		for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+		for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 			count++;
 
-		if( count == 3 )
+		if ( count == 3 )
 			continue;
 
-		if( count != 4 )
+		if ( count != 4 )
 		{
 			bu_log( "Found a loop with %d edge! (should be 3 or 4)\n", count );
 			nmg_pr_fu_briefly( fu, "" );
@@ -817,7 +817,7 @@ Split_side_faces(struct shell *s, struct bu_ptbl *tab)
 		bu_ptbl_ins( &faces, (long *)fu );
 	}
 
-	for( face_no=0 ; face_no<BU_PTBL_END( &faces ) ; face_no++ )
+	for ( face_no=0; face_no<BU_PTBL_END( &faces ); face_no++ )
 	{
 		struct edgeuse *eu1=(struct edgeuse *)NULL, *eu2=(struct edgeuse *)NULL;
 		fastf_t min_coord1=MAX_FASTF, min_coord2=MAX_FASTF;
@@ -827,7 +827,7 @@ Split_side_faces(struct shell *s, struct bu_ptbl *tab)
 		fu = (struct faceuse *)BU_PTBL_GET( &faces, face_no );
 		lu = BU_LIST_FIRST( loopuse, &fu->lu_hd );
 
-		for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+		for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 		{
 			vect_t edge_dir;
 			struct vertex_g *vga, *vgb;
@@ -837,14 +837,14 @@ Split_side_faces(struct shell *s, struct bu_ptbl *tab)
 
 			VSUB2( edge_dir, vgb->coord, vga->coord );
 
-			if( (cur_dir == X && (edge_dir[Y] != 0.0 || edge_dir[Z] != 0.0) ) ||
+			if ( (cur_dir == X && (edge_dir[Y] != 0.0 || edge_dir[Z] != 0.0) ) ||
 			    (cur_dir == Y && (edge_dir[X] != 0.0 || edge_dir[Z] != 0.0) ) ||
 			    (cur_dir == Z && (edge_dir[Y] != 0.0 || edge_dir[X] != 0.0) ) )
 				continue;
 
-			if( edge_dir[cur_dir] > 0.0 )
+			if ( edge_dir[cur_dir] > 0.0 )
 			{
-				if( vga->coord[cur_dir] < min_coord1 )
+				if ( vga->coord[cur_dir] < min_coord1 )
 				{
 					min_coord1 = vga->coord[cur_dir];
 					eu1 = eu;
@@ -852,7 +852,7 @@ Split_side_faces(struct shell *s, struct bu_ptbl *tab)
 			}
 			else
 			{
-				if( vgb->coord[cur_dir] < min_coord2 )
+				if ( vgb->coord[cur_dir] < min_coord2 )
 				{
 					min_coord2 = vgb->coord[cur_dir];
 					eu2 = eu->eumate_p;
@@ -860,7 +860,7 @@ Split_side_faces(struct shell *s, struct bu_ptbl *tab)
 			}
 		}
 
-		if( !eu1 || !eu2 )
+		if ( !eu1 || !eu2 )
 		{
 			bu_log( "Could not find edges to split in loop:\n" );
 			nmg_pr_fu_briefly( fu, "" );
@@ -868,14 +868,14 @@ Split_side_faces(struct shell *s, struct bu_ptbl *tab)
 		}
 
 		/* split the parallel edges and cut the loop */
-		for( cell_no=0 ; cell_no<cell_count[cur_dir] ; cell_no++ )
+		for ( cell_no=0; cell_no<cell_count[cur_dir]; cell_no++ )
 		{
 			struct loopuse *new_lu;
 			struct vertexuse *vu_cut;
 			fastf_t cut_value = -1;
 			struct vertexuse *vu1_cut, *vu2_cut;
 
-			switch( cur_dir )
+			switch ( cur_dir )
 			{
 				case X:
 					cut_value = xy_rays[XY_CELL(cell_no, 0)].r_pt[cur_dir];
@@ -893,7 +893,7 @@ Split_side_faces(struct shell *s, struct bu_ptbl *tab)
 			vg2a = eu2->vu_p->v_p->vg_p;
 			vg2b = eu2->eumate_p->vu_p->v_p->vg_p;
 
-			while( vg1b->coord[cur_dir] < cut_value )
+			while ( vg1b->coord[cur_dir] < cut_value )
 			{
 				struct edgeuse *eu_tmp;
 				struct vertex_g *vg_tmp;
@@ -902,7 +902,7 @@ Split_side_faces(struct shell *s, struct bu_ptbl *tab)
 				eu_tmp = BU_LIST_PNEXT_CIRC( edgeuse, &eu1->l );
 				vg_tmp = eu_tmp->eumate_p->vu_p->v_p->vg_p;
 
-				if( (cur_dir == X && (vg_tmp->coord[Y] == vg1b->coord[Y] && vg_tmp->coord[Z] == vg1b->coord[Z]) ) ||
+				if ( (cur_dir == X && (vg_tmp->coord[Y] == vg1b->coord[Y] && vg_tmp->coord[Z] == vg1b->coord[Z]) ) ||
 				    (cur_dir == Y && (vg_tmp->coord[X] == vg1b->coord[X] && vg_tmp->coord[Z] == vg1b->coord[Z]) ) ||
 				    (cur_dir == Z && (vg_tmp->coord[X] == vg1b->coord[X] && vg_tmp->coord[Y] == vg1b->coord[Y]) ) )
 				{
@@ -914,7 +914,7 @@ Split_side_faces(struct shell *s, struct bu_ptbl *tab)
 					break;
 			}
 
-			while( vg2b->coord[cur_dir] < cut_value )
+			while ( vg2b->coord[cur_dir] < cut_value )
 			{
 				struct edgeuse *eu_tmp;
 				struct vertex_g *vg_tmp;
@@ -923,7 +923,7 @@ Split_side_faces(struct shell *s, struct bu_ptbl *tab)
 				eu_tmp = BU_LIST_PNEXT_CIRC( edgeuse, &eu2->l );
 				vg_tmp = eu_tmp->eumate_p->vu_p->v_p->vg_p;
 
-				if( (cur_dir == X && (vg_tmp->coord[Y] == vg2b->coord[Y] && vg_tmp->coord[Z] == vg2b->coord[Z]) ) ||
+				if ( (cur_dir == X && (vg_tmp->coord[Y] == vg2b->coord[Y] && vg_tmp->coord[Z] == vg2b->coord[Z]) ) ||
 				    (cur_dir == Y && (vg_tmp->coord[X] == vg2b->coord[X] && vg_tmp->coord[Z] == vg2b->coord[Z]) ) ||
 				    (cur_dir == Z && (vg_tmp->coord[X] == vg2b->coord[X] && vg_tmp->coord[Y] == vg2b->coord[Y]) ) )
 				{
@@ -938,7 +938,7 @@ Split_side_faces(struct shell *s, struct bu_ptbl *tab)
 			vu1_cut = (struct vertexuse *)NULL;
 			vu2_cut = (struct vertexuse *)NULL;
 
-			if( IN_SEG( cut_value, vg1a->coord[cur_dir], vg1b->coord[cur_dir] ) )
+			if ( IN_SEG( cut_value, vg1a->coord[cur_dir], vg1b->coord[cur_dir] ) )
 			{
 				point_t cut_pt;
 
@@ -951,12 +951,12 @@ Split_side_faces(struct shell *s, struct bu_ptbl *tab)
 				vg1a = eu1->vu_p->v_p->vg_p;
 				vu1_cut = eu1->vu_p;
 			}
-			else if( vg1a->coord[cur_dir] == cut_value )
+			else if ( vg1a->coord[cur_dir] == cut_value )
 				vu1_cut = eu1->vu_p;
-			else if( vg1b->coord[cur_dir] == cut_value )
+			else if ( vg1b->coord[cur_dir] == cut_value )
 				vu1_cut = BU_LIST_PNEXT_CIRC( edgeuse, &eu1->l )->vu_p;
 
-			if( IN_SEG( cut_value, vg2a->coord[cur_dir], vg2b->coord[cur_dir] ) )
+			if ( IN_SEG( cut_value, vg2a->coord[cur_dir], vg2b->coord[cur_dir] ) )
 			{
 				point_t cut_pt;
 
@@ -968,33 +968,33 @@ Split_side_faces(struct shell *s, struct bu_ptbl *tab)
 				bu_ptbl_ins( tab, (long *)eu2->vu_p->v_p );
 				vg2a = eu2->vu_p->v_p->vg_p;
 				vu_cut = (struct vertexuse *)NULL;
-				for( BU_LIST_FOR( vu_cut, vertexuse, &eu2->vu_p->v_p->vu_hd ) )
+				for ( BU_LIST_FOR( vu_cut, vertexuse, &eu2->vu_p->v_p->vu_hd ) )
 				{
-					if( nmg_find_lu_of_vu( vu_cut ) == lu )
+					if ( nmg_find_lu_of_vu( vu_cut ) == lu )
 					{
 						vu2_cut = vu_cut;
 						break;
 					}
 				}
 			}
-			else if( vg2a->coord[cur_dir] == cut_value )
+			else if ( vg2a->coord[cur_dir] == cut_value )
 			{
 				vu_cut = (struct vertexuse *)NULL;
-				for( BU_LIST_FOR( vu_cut, vertexuse, &eu2->vu_p->v_p->vu_hd ) )
+				for ( BU_LIST_FOR( vu_cut, vertexuse, &eu2->vu_p->v_p->vu_hd ) )
 				{
-					if( nmg_find_lu_of_vu( vu_cut ) == lu )
+					if ( nmg_find_lu_of_vu( vu_cut ) == lu )
 					{
 						vu2_cut = vu_cut;
 						break;
 					}
 				}
 			}
-			else if( vg2b->coord[cur_dir] == cut_value )
+			else if ( vg2b->coord[cur_dir] == cut_value )
 			{
 				vu_cut = (struct vertexuse *)NULL;
-				for( BU_LIST_FOR( vu_cut, vertexuse, &eu2->eumate_p->vu_p->v_p->vu_hd ) )
+				for ( BU_LIST_FOR( vu_cut, vertexuse, &eu2->eumate_p->vu_p->v_p->vu_hd ) )
 				{
-					if( nmg_find_lu_of_vu( vu_cut ) == lu )
+					if ( nmg_find_lu_of_vu( vu_cut ) == lu )
 					{
 						vu2_cut = vu_cut;
 						break;
@@ -1002,12 +1002,12 @@ Split_side_faces(struct shell *s, struct bu_ptbl *tab)
 				}
 			}
 
-			if( vu1_cut && vu2_cut )
+			if ( vu1_cut && vu2_cut )
 			{
 				/* need to set new eu1 and eu2 before cut, because they may up in new_lu */
-				if( vu2_cut->v_p == eu2->eumate_p->vu_p->v_p )
+				if ( vu2_cut->v_p == eu2->eumate_p->vu_p->v_p )
 					eu2 = BU_LIST_PNEXT_CIRC( edgeuse, &eu2->l );
-				if( vu1_cut->v_p == eu1->eumate_p->vu_p->v_p )
+				if ( vu1_cut->v_p == eu1->eumate_p->vu_p->v_p )
 					eu1 = BU_LIST_PNEXT_CIRC( edgeuse, &eu1->l );
 				/* cut loop */
 				new_lu = nmg_cut_loop( vu1_cut, vu2_cut );
@@ -1043,9 +1043,9 @@ shrink_wrap(struct shell *s)
 	bu_ptbl_init( &verts, 128, "verts" );
 	Split_side_faces( s, &verts );
 
-	for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
+	for ( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
 	{
-		if( fu->orientation == OT_SAME )
+		if ( fu->orientation == OT_SAME )
 			nmg_triangulate_fu( fu, &tol );
 	}
 
@@ -1064,19 +1064,19 @@ shrink_wrap(struct shell *s)
 	ap.a_onehit = 0;
 	ap.a_hit = shrink_hit;
 
-	for( dirs=0 ; dirs<2 ; dirs++ )
+	for ( dirs=0; dirs<2; dirs++ )
 	{
 		cur_dir++;
-		if( cur_dir == 3 )
+		if ( cur_dir == 3 )
 			cur_dir = 0;
 		bu_log( "Shooting refining rays in %c-direction...\n", dir_ch[cur_dir] );
 		ap.a_user = cur_dir;
-		switch( cur_dir )
+		switch ( cur_dir )
 		{
 			case X:
-				for( i=0 ; i<cell_count[Y] ; i++ )
+				for ( i=0; i<cell_count[Y]; i++ )
 				{
-					for( j=0 ; j<cell_count[Z] ; j++ )
+					for ( j=0; j<cell_count[Z]; j++ )
 					{
 						VMOVE( ap.a_ray.r_pt, yz_rays[YZ_CELL(i, j)].r_pt )
 						VMOVE( ap.a_ray.r_dir, yz_rays[YZ_CELL(i, j)].r_dir )
@@ -1085,9 +1085,9 @@ shrink_wrap(struct shell *s)
 				}
 				break;
 			case Y:
-				for( i=0 ; i<cell_count[X] ; i++ )
+				for ( i=0; i<cell_count[X]; i++ )
 				{
-					for( j=0 ; j<cell_count[Z] ; j++ )
+					for ( j=0; j<cell_count[Z]; j++ )
 					{
 						VMOVE( ap.a_ray.r_pt, xz_rays[XZ_CELL(i, j)].r_pt )
 						VMOVE( ap.a_ray.r_dir, xz_rays[XZ_CELL(i, j)].r_dir )
@@ -1096,9 +1096,9 @@ shrink_wrap(struct shell *s)
 				}
 				break;
 			case Z:
-				for( i=0 ; i<cell_count[X] ; i++ )
+				for ( i=0; i<cell_count[X]; i++ )
 				{
-					for( j=0 ; j<cell_count[Y] ; j++ )
+					for ( j=0; j<cell_count[Y]; j++ )
 					{
 						VMOVE( ap.a_ray.r_pt, xy_rays[XY_CELL(i, j)].r_pt )
 						VMOVE( ap.a_ray.r_dir, xy_rays[XY_CELL(i, j)].r_dir )
@@ -1109,7 +1109,7 @@ shrink_wrap(struct shell *s)
 		}
 	}
 
-	for( vert_no=0 ; vert_no<BU_PTBL_END( &extra_verts ) ; vert_no++ )
+	for ( vert_no=0; vert_no<BU_PTBL_END( &extra_verts ); vert_no++ )
 	{
 		struct vertex *v;
 		struct faceuse *fu;
@@ -1120,12 +1120,12 @@ shrink_wrap(struct shell *s)
 
 		v = (struct vertex *)BU_PTBL_GET( &extra_verts, vert_no );
 		VSETALL( dir, 0.0 );
-		for( BU_LIST_FOR( vu, vertexuse, &v->vu_hd ) )
+		for ( BU_LIST_FOR( vu, vertexuse, &v->vu_hd ) )
 		{
 			vect_t norm;
 
 			fu = nmg_find_fu_of_vu( vu );
-			if( fu->orientation != OT_SAME )
+			if ( fu->orientation != OT_SAME )
 				continue;
 
 			NMG_GET_FU_NORMAL( norm, fu );
@@ -1140,9 +1140,9 @@ shrink_wrap(struct shell *s)
 		abs_dir[Z] = ABS( dir[Z] );
 
 		dir_index = X;
-		if( abs_dir[Y] > abs_dir[dir_index] )
+		if ( abs_dir[Y] > abs_dir[dir_index] )
 			dir_index = Y;
-		if( abs_dir[Z] > abs_dir[dir_index] )
+		if ( abs_dir[Z] > abs_dir[dir_index] )
 			dir_index = Z;
 
 		ap.a_user = dir_index;
@@ -1174,54 +1174,54 @@ refine_hit(register struct application *ap, struct partition *PartHeadp, struct 
 	fastf_t use_tolerance=edge_tol;
 	struct refine_rpp *rpp;
 
-	if( debug )
+	if ( debug )
 		bu_log( "hit\n" );
 
 	ref_data = (struct refine_data *)ap->a_uptr;
 	pp = PartHeadp->pt_forw;
 	VJOIN1( hit_pt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist, ap->a_ray.r_dir );
 
-	for( BU_LIST_FOR( rpp, refine_rpp, &add_rpp_head ) )
+	for ( BU_LIST_FOR( rpp, refine_rpp, &add_rpp_head ) )
 	{
-		if( V3PT_IN_RPP( hit_pt, rpp->min, rpp->max ) )
+		if ( V3PT_IN_RPP( hit_pt, rpp->min, rpp->max ) )
 		{
-			if( rpp->tolerance < use_tolerance )
+			if ( rpp->tolerance < use_tolerance )
 				use_tolerance = rpp->tolerance;
 		}
 	}
 
 	VSUB2( diff, hit_pt, ref_data->mid_pt );
 	dist = MAGNITUDE( diff );
-	if( dist <= use_tolerance || dist > 1.4142 * cell_size )
+	if ( dist <= use_tolerance || dist > 1.4142 * cell_size )
 		return( 0 );
 
-	if( fd_plot )
+	if ( fd_plot )
 	{
 		struct loopuse *lu;
 		struct vertex_g *vg;
 
 		fprintf( fd_plot, "-----\n" );
 		fprintf( fd_plot, "vdraw params color 00ff00\n" );
-		for( BU_LIST_FOR( lu, loopuse, &ref_data->fu1->lu_hd ) )
+		for ( BU_LIST_FOR( lu, loopuse, &ref_data->fu1->lu_hd ) )
 		{
 			eu = BU_LIST_LAST( edgeuse, &lu->down_hd );
 			vg = eu->vu_p->v_p->vg_p;
 			fprintf( fd_plot, "vdraw write 0 %g %g %g\n", V3ARGS( vg->coord ) );
 
-			for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+			for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 			{
 				vg = eu->vu_p->v_p->vg_p;
 				fprintf( fd_plot, "vdraw write 1 %g %g %g\n", V3ARGS( vg->coord ) );
 			}
 		}
 
-		for( BU_LIST_FOR( lu, loopuse, &ref_data->fu2->lu_hd ) )
+		for ( BU_LIST_FOR( lu, loopuse, &ref_data->fu2->lu_hd ) )
 		{
 			eu = BU_LIST_LAST( edgeuse, &lu->down_hd );
 			vg = eu->vu_p->v_p->vg_p;
 			fprintf( fd_plot, "vdraw write 0 %g %g %g\n", V3ARGS( vg->coord ) );
 
-			for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+			for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 			{
 				vg = eu->vu_p->v_p->vg_p;
 				fprintf( fd_plot, "vdraw write 1 %g %g %g\n", V3ARGS( vg->coord ) );
@@ -1240,28 +1240,28 @@ refine_hit(register struct application *ap, struct partition *PartHeadp, struct 
 
 	/* find new vu in lu1 */
 	new_vu1 = (struct vertexuse *)NULL;
-	for( BU_LIST_FOR( vu, vertexuse, &new_vu->v_p->vu_hd ) )
+	for ( BU_LIST_FOR( vu, vertexuse, &new_vu->v_p->vu_hd ) )
 	{
-		if( nmg_find_lu_of_vu( vu ) == ref_data->lu1 )
+		if ( nmg_find_lu_of_vu( vu ) == ref_data->lu1 )
 		{
 			new_vu1 = vu;
 			break;
 		}
 	}
-	if( !new_vu1 )
+	if ( !new_vu1 )
 		bu_exit(1, "ERROR: Cannot find VU in lu1\n" );
 
 	/* find new vu in lu2 */
 	new_vu2 = (struct vertexuse *)NULL;
-	for( BU_LIST_FOR( vu, vertexuse, &new_vu->v_p->vu_hd ) )
+	for ( BU_LIST_FOR( vu, vertexuse, &new_vu->v_p->vu_hd ) )
 	{
-		if( nmg_find_lu_of_vu( vu ) == ref_data->lu2 )
+		if ( nmg_find_lu_of_vu( vu ) == ref_data->lu2 )
 		{
 			new_vu2 = vu;
 			break;
 		}
 	}
-	if( !new_vu2 )
+	if ( !new_vu2 )
 		bu_exit(1, "ERROR: Cannot find VU in lu2\n" );
 	new_lu1 = nmg_cut_loop( new_vu1, vu1 );
 	new_lu2 = nmg_cut_loop( new_vu2, vu2 );
@@ -1274,37 +1274,37 @@ refine_hit(register struct application *ap, struct partition *PartHeadp, struct 
 	new_lu1->lumate_p->orientation = OT_SAME;
 	new_lu2->lumate_p->orientation = OT_SAME;
 
-	if( debug )
+	if ( debug )
 		bu_log( "\tmoving to (%g %g %g)\n", V3ARGS( hit_pt ) );
 	nmg_vertex_gv( new_vu->v_p, hit_pt );
 
-	if( fd_plot )
+	if ( fd_plot )
 	{
 		struct loopuse *lu;
 		struct vertex_g *vg;
 
 		fprintf( fd_plot, "xxxxx\n" );
 		fprintf( fd_plot, "vdraw params color 0000ff\n" );
-		for( BU_LIST_FOR( lu, loopuse, &ref_data->fu1->lu_hd ) )
+		for ( BU_LIST_FOR( lu, loopuse, &ref_data->fu1->lu_hd ) )
 		{
 			eu = BU_LIST_LAST( edgeuse, &lu->down_hd );
 			vg = eu->vu_p->v_p->vg_p;
 			fprintf( fd_plot, "vdraw write 0 %g %g %g\n", V3ARGS( vg->coord ) );
 
-			for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+			for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 			{
 				vg = eu->vu_p->v_p->vg_p;
 				fprintf( fd_plot, "vdraw write 1 %g %g %g\n", V3ARGS( vg->coord ) );
 			}
 		}
 
-		for( BU_LIST_FOR( lu, loopuse, &ref_data->fu2->lu_hd ) )
+		for ( BU_LIST_FOR( lu, loopuse, &ref_data->fu2->lu_hd ) )
 		{
 			eu = BU_LIST_LAST( edgeuse, &lu->down_hd );
 			vg = eu->vu_p->v_p->vg_p;
 			fprintf( fd_plot, "vdraw write 0 %g %g %g\n", V3ARGS( vg->coord ) );
 
-			for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+			for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 			{
 				vg = eu->vu_p->v_p->vg_p;
 				fprintf( fd_plot, "vdraw write 1 %g %g %g\n", V3ARGS( vg->coord ) );
@@ -1315,20 +1315,20 @@ refine_hit(register struct application *ap, struct partition *PartHeadp, struct 
 	(void) nmg_split_loops_into_faces( &ref_data->fu1->l.magic, &tol );
 	(void) nmg_split_loops_into_faces( &ref_data->fu2->l.magic, &tol );
 
-	for( BU_LIST_FOR( vu, vertexuse, &new_vu->v_p->vu_hd ) )
+	for ( BU_LIST_FOR( vu, vertexuse, &new_vu->v_p->vu_hd ) )
 	{
 		struct faceuse *fu;
 
-		if( *vu->up.magic_p != NMG_EDGEUSE_MAGIC )
+		if ( *vu->up.magic_p != NMG_EDGEUSE_MAGIC )
 			continue;
 
 		eu = vu->up.eu_p;
 
 		fu = nmg_find_fu_of_vu ( vu );
-		if( !fu )
+		if ( !fu )
 			continue;
 
-		if( fu->orientation != OT_SAME )
+		if ( fu->orientation != OT_SAME )
 			continue;
 
 		bu_ptbl_ins( ref_data->new_edges, (long *)eu->e_p );
@@ -1368,21 +1368,21 @@ refine_edges(struct shell *s)
 	ap.a_onehit = 0;
 	ap.a_hit = refine_hit;
 
-	if( debug )
+	if ( debug )
 	{
 		nmg_rebound( m, &tol );
 		mk_nmg( fd_out, "break.0", m );
 	}
 
 	breaks = 1;
-	while( breaks && loop_count < 6 )
+	while ( breaks && loop_count < 6 )
 	{
 		struct refine_data ref_data;
 
 		breaks = 0;
 		ref_data.new_edges = next;
 
-		for( i=0 ; i<BU_PTBL_END( cur ) ; i++ )
+		for ( i=0; i<BU_PTBL_END( cur ); i++ )
 		{
 			vect_t v1, v2, v3, v4;
 			fastf_t alpha, cosa, sina;
@@ -1399,47 +1399,47 @@ refine_edges(struct shell *s)
 			NMG_CK_EDGE( e );
 
 			eu1 = e->eu_p;
-			if( *eu1->up.magic_p != NMG_LOOPUSE_MAGIC )
+			if ( *eu1->up.magic_p != NMG_LOOPUSE_MAGIC )
 				continue;
 			lu1 = eu1->up.lu_p;
-			if( *lu1->up.magic_p != NMG_FACEUSE_MAGIC )
+			if ( *lu1->up.magic_p != NMG_FACEUSE_MAGIC )
 				continue;
 			fu1 = lu1->up.fu_p;
 
-			if( fu1->orientation != OT_SAME )
+			if ( fu1->orientation != OT_SAME )
 			{
 				eu1 = eu1->eumate_p;
-				if( *eu1->up.magic_p != NMG_LOOPUSE_MAGIC )
+				if ( *eu1->up.magic_p != NMG_LOOPUSE_MAGIC )
 					continue;
 				lu1 = eu1->up.lu_p;
-				if( *lu1->up.magic_p != NMG_FACEUSE_MAGIC )
+				if ( *lu1->up.magic_p != NMG_FACEUSE_MAGIC )
 					continue;
 				fu1 = lu1->up.fu_p;
 			}
 
-			if( fu1->orientation != OT_SAME )
+			if ( fu1->orientation != OT_SAME )
 				bu_exit(1, "ERROR: Cannot find OT_SAME side of face\n" );
 
 			eu2 = eu1->radial_p;
-			if( *eu2->up.magic_p != NMG_LOOPUSE_MAGIC )
+			if ( *eu2->up.magic_p != NMG_LOOPUSE_MAGIC )
 				continue;
 			lu2 = eu2->up.lu_p;
-			if( *lu2->up.magic_p != NMG_FACEUSE_MAGIC )
+			if ( *lu2->up.magic_p != NMG_FACEUSE_MAGIC )
 				continue;
 			fu2 = lu2->up.fu_p;
 
-			if( fu2->orientation != OT_SAME )
+			if ( fu2->orientation != OT_SAME )
 			{
 				eu2 = eu2->eumate_p;
-				if( *eu2->up.magic_p != NMG_LOOPUSE_MAGIC )
+				if ( *eu2->up.magic_p != NMG_LOOPUSE_MAGIC )
 					continue;
 				lu2 = eu2->up.lu_p;
-				if( *lu2->up.magic_p != NMG_FACEUSE_MAGIC )
+				if ( *lu2->up.magic_p != NMG_FACEUSE_MAGIC )
 					continue;
 				fu2 = lu2->up.fu_p;
 			}
 
-			if( fu2->orientation != OT_SAME )
+			if ( fu2->orientation != OT_SAME )
 				bu_exit(1, "ERROR: Cannot find OT_SAME side of face\n" );
 
 			NMG_GET_FU_NORMAL( norm1, fu1 );
@@ -1455,7 +1455,7 @@ refine_edges(struct shell *s)
 			VUNITIZE( v1 )
 			VCROSS( v4, v3, norm2 )
 			alpha = atan2( VDOT( v4, v2 ), VDOT( v4, v1 ) );
-			if( alpha < 0.0 )
+			if ( alpha < 0.0 )
 				alpha += bn_twopi;
 			alpha = alpha / 2.0;
 			cosa = cos( alpha );
@@ -1474,7 +1474,7 @@ refine_edges(struct shell *s)
 			ref_data.mid_pt = mid_pt;
 			ap.a_uptr = (genptr_t)&ref_data;
 
-			if( debug )
+			if ( debug )
 			{
 				bu_log( "norm1=(%g %g %g), norm2=(%g %g %g), alpha=%g, ave_norm=(%g %g %g)\n",
 					V3ARGS( norm1 ), V3ARGS( norm2 ), alpha, V3ARGS( ave_norm ) );
@@ -1485,7 +1485,7 @@ refine_edges(struct shell *s)
 		}
 
 		bu_log( "\tBroke %d edges\n", breaks );
-		if( debug )
+		if ( debug )
 		{
 			char name[16];
 
@@ -1530,34 +1530,34 @@ Make_shell(void)
 	switch (cur_dir )
 	{
 		case X:
-			for( y_index=1 ; y_index < cell_count[Y] ; y_index++ )
+			for ( y_index=1; y_index < cell_count[Y]; y_index++ )
 			{
-				for( z_index=0 ; z_index < cell_count[Z] - 1 ; z_index++ )
+				for ( z_index=0; z_index < cell_count[Z] - 1; z_index++ )
 				{
 					cell_no[0] = YZ_CELL(y_index, z_index);
 					cell_no[1] = YZ_CELL(y_index-1, z_index);
 					cell_no[2] = YZ_CELL(y_index-1, z_index+1);
 					cell_no[3] = YZ_CELL(y_index, z_index+1);
 
-					for( i=0 ; i<4 ; i++ )
+					for ( i=0; i<4; i++ )
 					{
-						if( BU_LIST_IS_EMPTY( &yz_parts[cell_no[i]].l ) )
+						if ( BU_LIST_IS_EMPTY( &yz_parts[cell_no[i]].l ) )
 							lpart[i] = (struct local_part *)NULL;
 						else
 							lpart[i] = BU_LIST_FIRST( local_part, &yz_parts[cell_no[i]].l );
 					}
 
 					status = 0;
-					for( i=0 ; i<4 ; i++ )
+					for ( i=0; i<4; i++ )
 					{
-						if( lpart[i] && lpart[i]->is_void == NO )
+						if ( lpart[i] && lpart[i]->is_void == NO )
 							status += vert_ids[i];
 					}
 
-					if( debug > 3 )
+					if ( debug > 3 )
 					{
 						bu_log( "Making faces for y_index=%d, z_index=%d\n", y_index, z_index );
-						for( i=0 ; i<4 ; i++ )
+						for ( i=0; i<4; i++ )
 						{
 							bu_log( "part #%d:\n", i );
 							bu_log( "\tray start is (%g %g %g)\n", V3ARGS( yz_rays[cell_no[i]].r_pt ) );
@@ -1570,34 +1570,34 @@ Make_shell(void)
 			}
 			break;
 		case Y:
-			for( x_index=0 ; x_index < cell_count[X] - 1 ; x_index++ )
+			for ( x_index=0; x_index < cell_count[X] - 1; x_index++ )
 			{
-				for( z_index=0 ; z_index < cell_count[Z] - 1 ; z_index++ )
+				for ( z_index=0; z_index < cell_count[Z] - 1; z_index++ )
 				{
 					cell_no[0] = XZ_CELL(x_index, z_index);
 					cell_no[1] = XZ_CELL(x_index+1, z_index);
 					cell_no[2] = XZ_CELL(x_index+1, z_index+1);
 					cell_no[3] = XZ_CELL(x_index, z_index+1);
 
-					for( i=0 ; i<4 ; i++ )
+					for ( i=0; i<4; i++ )
 					{
-						if( BU_LIST_IS_EMPTY( &xz_parts[cell_no[i]].l ) )
+						if ( BU_LIST_IS_EMPTY( &xz_parts[cell_no[i]].l ) )
 							lpart[i] = (struct local_part *)NULL;
 						else
 							lpart[i] = BU_LIST_FIRST( local_part, &xz_parts[cell_no[i]].l );
 					}
 
 					status = 0;
-					for( i=0 ; i<4 ; i++ )
+					for ( i=0; i<4; i++ )
 					{
-						if( lpart[i] && lpart[i]->is_void == NO )
+						if ( lpart[i] && lpart[i]->is_void == NO )
 							status += vert_ids[i];
 					}
 
-					if( debug > 3 )
+					if ( debug > 3 )
 					{
 						bu_log( "Making faces for x_index=%d, z_index=%d\n", x_index, z_index );
-						for( i=0 ; i<4 ; i++ )
+						for ( i=0; i<4; i++ )
 						{
 							bu_log( "part #%d:\n", i );
 							bu_log( "\tray start is (%g %g %g)\n", V3ARGS( xz_rays[cell_no[i]].r_pt ) );
@@ -1610,34 +1610,34 @@ Make_shell(void)
 			}
 			break;
 		case Z:
-			for( x_index=1 ; x_index < cell_count[X] ; x_index++ )
+			for ( x_index=1; x_index < cell_count[X]; x_index++ )
 			{
-				for( y_index=0 ; y_index < cell_count[Y] - 1 ; y_index++ )
+				for ( y_index=0; y_index < cell_count[Y] - 1; y_index++ )
 				{
 					cell_no[0] = XY_CELL(x_index, y_index);
 					cell_no[1] = XY_CELL(x_index-1, y_index);
 					cell_no[2] = XY_CELL(x_index-1, y_index+1);
 					cell_no[3] = XY_CELL(x_index, y_index+1);
 
-					for( i=0 ; i<4 ; i++ )
+					for ( i=0; i<4; i++ )
 					{
-						if( BU_LIST_IS_EMPTY( &xy_parts[cell_no[i]].l ) )
+						if ( BU_LIST_IS_EMPTY( &xy_parts[cell_no[i]].l ) )
 							lpart[i] = (struct local_part *)NULL;
 						else
 							lpart[i] = BU_LIST_FIRST( local_part, &xy_parts[cell_no[i]].l );
 					}
 
 					status = 0;
-					for( i=0 ; i<4 ; i++ )
+					for ( i=0; i<4; i++ )
 					{
-						if( lpart[i] && lpart[i]->is_void == NO )
+						if ( lpart[i] && lpart[i]->is_void == NO )
 							status += vert_ids[i];
 					}
 
-					if( debug > 3 )
+					if ( debug > 3 )
 					{
 						bu_log( "Making faces for x_index=%d, y_index=%d\n", x_index, y_index );
-						for( i=0 ; i<4 ; i++ )
+						for ( i=0; i<4; i++ )
 						{
 							bu_log( "part #%d:\n", i );
 							bu_log( "\tray start is (%g %g %g)\n", V3ARGS( xy_rays[cell_no[i]].r_pt ) );
@@ -1653,12 +1653,12 @@ Make_shell(void)
 
 	nmg_rebound( m, &tol );
 
-	if( do_extra_rays )
+	if ( do_extra_rays )
 		shrink_wrap( s );
 
-	if( edge_tol > 0.0 )
+	if ( edge_tol > 0.0 )
 	{
-		if( debug )
+		if ( debug )
 		{
 			nmg_rebound( m, &tol );
 			mk_nmg( fd_out, "break.0", m );
@@ -1668,18 +1668,18 @@ Make_shell(void)
 		refine_edges( s );
 	}
 
-	if( decimation_tol > 0.0 )
+	if ( decimation_tol > 0.0 )
 	{
 		bu_log( "%d edges eliminated by decimation to tolerance of %gmm\n",
 			nmg_edge_collapse( m, &tol, decimation_tol, min_angle ), decimation_tol );
 	}
 
-	if( do_extra_rays || edge_tol > 0.0 || decimation_tol > 0.0 )
+	if ( do_extra_rays || edge_tol > 0.0 || decimation_tol > 0.0 )
 		nmg_rebound( m, &tol );
 
-	for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
+	for ( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
 	{
-		if( fu->orientation != OT_SAME )
+		if ( fu->orientation != OT_SAME )
 			continue;
 		face_count++;
 	}
@@ -1687,7 +1687,7 @@ Make_shell(void)
 	bu_log( "Bounding box of output: (%g %g %g) <-> (%g %g %g)\n", V3ARGS( r->ra_p->min_pt ), V3ARGS( r->ra_p->max_pt ) );
 	bu_log( "%d facets\n", face_count );
 
-	if( bot )
+	if ( bot )
 		mk_bot_from_nmg( fd_out, "shell", s );
 	else
 		mk_nmg( fd_out, "shell", m );
@@ -1705,7 +1705,7 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 	last_pp = PartHeadp->pt_back;
 
 	part_len = last_pp->pt_outhit->hit_dist - first_pp->pt_inhit->hit_dist;
-	if( NEAR_ZERO( part_len, tol.dist ) )
+	if ( NEAR_ZERO( part_len, tol.dist ) )
 		return( 0 );
 
 	lpart = GET_PART;
@@ -1714,7 +1714,7 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 	lpart->is_void = NO;
 	lpart->in->v = (struct vertex *)NULL;
 
-	switch( cur_dir )
+	switch ( cur_dir )
 	{
 		case X:
 			VSET( lpart->in->pt,
@@ -1785,12 +1785,12 @@ main(int argc, char **argv)
 	BU_LIST_INIT( &subtract_rpp_head );
 
 	/* Get command line arguments. */
-	while( (c=bu_getopt( argc, argv, "bi:a:s:nR:g:o:d:p:X:")) != EOF)
+	while ( (c=bu_getopt( argc, argv, "bi:a:s:nR:g:o:d:p:X:")) != EOF)
 	{
-		switch( c )
+		switch ( c )
 		{
 			case 'i':	/* set initial ray direction */
-					switch( *bu_optarg )
+					switch ( *bu_optarg )
 					{
 						case 'x':
 						case 'X':
@@ -1819,7 +1819,7 @@ main(int argc, char **argv)
 
 					rpp = ( struct refine_rpp *)bu_malloc( sizeof( struct refine_rpp ), "add refine rpp" );
 					ptr = strtok( bu_optarg, token_seps );
-					if( !ptr )
+					if ( !ptr )
 					{
 						bu_log( "Bad -a option '%s'\n", bu_optarg );
 						bu_free( (char *) rpp, "rpp" );
@@ -1827,7 +1827,7 @@ main(int argc, char **argv)
 					}
 
 					rpp->tolerance = atof( ptr );
-					if( rpp->tolerance <= 0.0 )
+					if ( rpp->tolerance <= 0.0 )
 					{
 						bu_log( "Illegal tolerance in -a option (%s)\n", ptr );
 						bu_free( (char *) rpp, "rpp" );
@@ -1835,10 +1835,10 @@ main(int argc, char **argv)
 					}
 
 					/* get minimum */
-					for( i=0 ; i<3 ; i++ )
+					for ( i=0; i<3; i++ )
 					{
 						ptr = strtok( (char *)NULL, token_seps );
-						if( !ptr )
+						if ( !ptr )
 						{
 							bu_log( "Unexpected end of option args for -a\n" );
 							bad_opt = 1;
@@ -1846,17 +1846,17 @@ main(int argc, char **argv)
 						}
 						rpp->min[i] = atof( ptr );
 					}
-					if( bad_opt )
+					if ( bad_opt )
 					{
 						bu_free( (char *) rpp, "rpp" );
 						break;
 					}
 
 					/* get maximum */
-					for( i=0 ; i<3 ; i++ )
+					for ( i=0; i<3; i++ )
 					{
 						ptr = strtok( (char *)NULL, token_seps );
-						if( !ptr )
+						if ( !ptr )
 						{
 							bu_log( "Unexpected end of option args for -a\n" );
 							bad_opt = 1;
@@ -1864,7 +1864,7 @@ main(int argc, char **argv)
 						}
 						rpp->max[i] = atof( ptr );
 					}
-					if( bad_opt )
+					if ( bad_opt )
 					{
 						bu_free( (char *) rpp, "rpp" );
 						break;
@@ -1907,9 +1907,9 @@ main(int argc, char **argv)
 		bu_exit(1, usage, argv[0] );
 	}
 
-	if( output_file )
+	if ( output_file )
 	{
-		if( (fd_out=wdb_fopen( output_file )) == NULL )
+		if ( (fd_out=wdb_fopen( output_file )) == NULL )
 		{
 			perror( argv[0] );
 			bu_exit(1, "ERROR: Cannot open output file (%s)\n", output_file );
@@ -1919,9 +1919,9 @@ main(int argc, char **argv)
 	else
 		bu_exit(1, "ERROR: Output file must be specified!\n" );
 
-	if( plotfile )
+	if ( plotfile )
 	{
-		if( (fd_plot=fopen( plotfile, "w")) == NULL )
+		if ( (fd_plot=fopen( plotfile, "w")) == NULL )
 		{
 			perror( argv[0] );
 			bu_exit(1, "ERROR: Cannot open plot file (%s)\n", plotfile );
@@ -1944,15 +1944,15 @@ main(int argc, char **argv)
 	ap.a_logoverlap = rt_silent_logoverlap;
 	ap.a_onehit = 0;
 
-	while( ++bu_optind < argc )
+	while ( ++bu_optind < argc )
 	{
-		if( rt_gettree( rtip, argv[bu_optind] ) < 0 )
+		if ( rt_gettree( rtip, argv[bu_optind] ) < 0 )
 			bu_log( "rt_gettree failed on %s\n", argv[bu_optind] );
 	}
 
 	rt_prep( rtip );
 
-	if( initial_ray_dir == -1 )
+	if ( initial_ray_dir == -1 )
 	{
 		bb_area[X] = (rtip->mdl_max[Y] - rtip->mdl_min[Y]) *
 			     (rtip->mdl_max[Z] - rtip->mdl_min[Z]);
@@ -1964,9 +1964,9 @@ main(int argc, char **argv)
 			     (rtip->mdl_max[X] - rtip->mdl_min[X]);
 
 		cur_dir = X;
-		if( bb_area[Y] > bb_area[cur_dir] )
+		if ( bb_area[Y] > bb_area[cur_dir] )
 			cur_dir = Y;
-		if( bb_area[Z] > bb_area[cur_dir] )
+		if ( bb_area[Z] > bb_area[cur_dir] )
 			cur_dir = Z;
 	}
 	else
@@ -1990,9 +1990,9 @@ main(int argc, char **argv)
 	xz_rays = (struct xray *)bu_calloc( cell_count[X] * cell_count[Z], sizeof( struct xray ), "xz_rays" );
 	yz_rays = (struct xray *)bu_calloc( cell_count[Y] * cell_count[Z], sizeof( struct xray ), "yz_rays" );
 
-	for( i=0 ; i<cell_count[Y] ; i++ )
+	for ( i=0; i<cell_count[Y]; i++ )
 	{
-		for( j=0 ; j<cell_count[Z] ; j++ )
+		for ( j=0; j<cell_count[Z]; j++ )
 		{
 			VSET( yz_rays[YZ_CELL(i, j)].r_dir, 1.0, 0.0, 0.0 )
 			VSET( yz_rays[YZ_CELL(i, j)].r_pt,
@@ -2008,9 +2008,9 @@ main(int argc, char **argv)
 		}
 	}
 
-	for( i=0 ; i<cell_count[X] ; i++ )
+	for ( i=0; i<cell_count[X]; i++ )
 	{
-		for( j=0 ; j<cell_count[Y] ; j++ )
+		for ( j=0; j<cell_count[Y]; j++ )
 		{
 			VSET( xy_rays[XY_CELL(i, j)].r_dir, 0.0, 0.0, 1.0 )
 			VSET( xy_rays[XY_CELL(i, j)].r_pt,
@@ -2025,7 +2025,7 @@ main(int argc, char **argv)
 			BU_LIST_INIT( &xy_parts[XY_CELL(i, j)].l );
 		}
 
-		for( j=0 ; j<cell_count[Z] ; j++ )
+		for ( j=0; j<cell_count[Z]; j++ )
 		{
 			VSET( xz_rays[XZ_CELL(i, j)].r_dir, 0.0, 1.0, 0.0 )
 			VSET( xz_rays[XZ_CELL(i, j)].r_pt,
@@ -2043,12 +2043,12 @@ main(int argc, char **argv)
 
 	bu_log( "Bounding box of BRL-CAD model: (%g %g %g) <-> (%g %g %g)\n", V3ARGS( rtip->mdl_min ), V3ARGS( rtip->mdl_max ) );
 	bu_log( "Shooting rays in %c-direction...\n", dir_ch[cur_dir] );
-	switch( cur_dir )
+	switch ( cur_dir )
 	{
 		case X:
-			for( i=0 ; i<cell_count[Y] ; i++ )
+			for ( i=0; i<cell_count[Y]; i++ )
 			{
-				for( j=0 ; j<cell_count[Z] ; j++ )
+				for ( j=0; j<cell_count[Z]; j++ )
 				{
 					ap.a_x = i;
 					ap.a_y = j;
@@ -2060,9 +2060,9 @@ main(int argc, char **argv)
 			}
 			break;
 		case Y:
-			for( i=0 ; i<cell_count[X] ; i++ )
+			for ( i=0; i<cell_count[X]; i++ )
 			{
-				for( j=0 ; j<cell_count[Z] ; j++ )
+				for ( j=0; j<cell_count[Z]; j++ )
 				{
 					ap.a_x = i;
 					ap.a_y = j;
@@ -2074,9 +2074,9 @@ main(int argc, char **argv)
 			}
 			break;
 		case Z:
-			for( i=0 ; i<cell_count[X] ; i++ )
+			for ( i=0; i<cell_count[X]; i++ )
 			{
-				for( j=0 ; j<cell_count[Y] ; j++ )
+				for ( j=0; j<cell_count[Y]; j++ )
 				{
 					ap.a_x = i;
 					ap.a_y = j;

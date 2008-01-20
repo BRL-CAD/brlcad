@@ -479,7 +479,7 @@ main(int argc, char **argv)
 		register bool_t	errors = 0;
 
 		while ( (c = bu_getopt( argc, argv, OPTSTR )) != EOF )
-			switch( c )
+			switch ( c )
 				{
 			default:	/* '?': invalid option */
 				errors = 1;
@@ -708,12 +708,12 @@ main(int argc, char **argv)
 			       );
 
 		write_width = width;
-		if( write_width > wt )  write_width = wt;
+		if ( write_width > wt )  write_width = wt;
 
 		zoom = fb_getwidth(fbp)/width;
-		if( fb_getheight(fbp)/height < zoom )
+		if ( fb_getheight(fbp)/height < zoom )
 			zoom = fb_getheight(fbp)/height;
-		if( do_zoom && zoom > 1 )  {
+		if ( do_zoom && zoom > 1 )  {
 			(void)fb_view( fbp, width/2, height/2,
 				zoom, zoom );
 		} else {
@@ -734,14 +734,14 @@ main(int argc, char **argv)
 	/* Fill scanline buffer with background color too */
 	{
 		register int i;
-		for( i=0 ; i < width; i++ )  {
+		for ( i=0; i < width; i++ )  {
 			COPYRGB(&pixbuf[i*3], g_cmap[background]);
 		}
 	}
 
 	/* Convert images.  GIF spec says no pauses between them. */
 
-	for ( ; ; )
+	for (;;)
 		{
 		register int	c;
 
@@ -750,7 +750,7 @@ main(int argc, char **argv)
 			break;
 		}
 
-		switch( c )
+		switch ( c )
 			{
 		default:
 			Message( "Warning: unknown separator 0x%2.2x", c );

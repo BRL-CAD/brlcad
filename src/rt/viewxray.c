@@ -112,8 +112,8 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o, i
 		bu_log("rtxray: Can't do parallel yet, using one CPU\n");
 	}
 
-	if( lightmodel == LGT_BW ) {
-		if( minus_o )
+	if ( lightmodel == LGT_BW ) {
+		if ( minus_o )
 			pixsize = 1;		/* BW file */
 		else
 			pixsize = 3;		/* Frame buffer */
@@ -121,14 +121,14 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o, i
 		/* XXX - Floating output uses no buffer */
 		pixsize = 0;
 	}
-	if( pixsize ) {
+	if ( pixsize ) {
 		scanbuf = (unsigned char *)
 			bu_malloc( width*pixsize, "scanline buffer" );
 	}
 
-	if( minus_F || (!minus_o && !minus_F) ) {
+	if ( minus_F || (!minus_o && !minus_F) ) {
 	    /* open a framebuffer? */
-	    if( lightmodel == LGT_FLOAT ) {
+	    if ( lightmodel == LGT_FLOAT ) {
 		bu_log("rtxray: Can't do floating point mode to frame buffer, use -o\n");
 		return 0;
 	    }
@@ -171,8 +171,8 @@ view_eol(register struct application *ap)
     int i;
     unsigned char *buf = (unsigned char *)NULL;
 
-    if( lightmodel == LGT_BW ) {
-	if( outfp != NULL ) {
+    if ( lightmodel == LGT_BW ) {
+	if ( outfp != NULL ) {
 	    if (rt_g.rtg_parallel) {
 		bu_semaphore_acquire( BU_SEM_SYSCALL );
 	    }
@@ -180,7 +180,7 @@ view_eol(register struct application *ap)
 	    if (rt_g.rtg_parallel) {
 		bu_semaphore_release( BU_SEM_SYSCALL );
 	    }
-	    if( fbp != FBIO_NULL ) {
+	    if ( fbp != FBIO_NULL ) {
 		if (!buf) {
 		    buf = (unsigned char *)bu_malloc(sizeof(RGBpixel)*width, "allocating temporary buffer in viewxray");
 		}
@@ -236,27 +236,27 @@ xrayhit(register struct application *ap, struct partition *PartHeadp, struct seg
 	fastf_t	fvalue;
 	unsigned char value;
 
-	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
-		if( pp->pt_outhit->hit_dist >= 0.0 )  break;
-	if( pp == PartHeadp )  {
+	for ( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
+		if ( pp->pt_outhit->hit_dist >= 0.0 )  break;
+	if ( pp == PartHeadp )  {
 		bu_log("xrayhit:  no hit out front?\n");
 		return(0);
 	}
 
-	if(R_DEBUG&RDEBUG_HITS)  {
+	if (R_DEBUG&RDEBUG_HITS)  {
 		rt_pr_pt( ap->a_rt_i, pp );
 	}
 
 	hitp = pp->pt_inhit;
-	if( hitp->hit_dist >= INFINITY )  {
+	if ( hitp->hit_dist >= INFINITY )  {
 		bu_log("xrayhit:  entry beyond infinity\n");
 		return(1);
 	}
 	/* Check to see if eye is "inside" the solid */
-	if( hitp->hit_dist < 0.0 )  {
+	if ( hitp->hit_dist < 0.0 )  {
 		/* XXX */
 		bu_log("xrayhit:  Eye inside solid (%g)\n", hitp->hit_dist );
-		for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
+		for ( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
 			rt_pr_pt( ap->a_rt_i, pp );
 		return(0);
 	}
@@ -265,7 +265,7 @@ xrayhit(register struct application *ap, struct partition *PartHeadp, struct seg
 
 	/* Compute the total thickness */
 	totdist = 0;
-	while( pp != PartHeadp ) {
+	while ( pp != PartHeadp ) {
 		double	dist;
 
 		dist = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
@@ -274,7 +274,7 @@ xrayhit(register struct application *ap, struct partition *PartHeadp, struct seg
 		pp = pp->pt_forw;
 	}
 
-	switch( lightmodel ) {
+	switch ( lightmodel ) {
 	case LGT_FLOAT:
 		bu_semaphore_acquire( BU_SEM_SYSCALL );
 		fwrite( &totdist, sizeof(totdist), 1, outfp );
@@ -282,11 +282,11 @@ xrayhit(register struct application *ap, struct partition *PartHeadp, struct seg
 		break;
 	case LGT_BW:
 		fvalue = 1.0 - contrast_boost*totdist/viewsize;
-		if( fvalue > 1.0 ) fvalue = 1.0;
-		else if( fvalue <= 0.0 ) fvalue = 0.0;
+		if ( fvalue > 1.0 ) fvalue = 1.0;
+		else if ( fvalue <= 0.0 ) fvalue = 0.0;
 		value = 1.0 + 254.99 * fvalue;
 		bu_semaphore_acquire( RT_SEM_RESULTS );
-		if( pixsize == 1 ) {
+		if ( pixsize == 1 ) {
 			scanbuf[ap->a_x] = value;
 		} else {
 			scanbuf[ap->a_x*3+RED] = value;
@@ -305,10 +305,10 @@ xraymiss(register struct application *ap)
 {
 	static	double	zero = 0;
 
-	switch( lightmodel ) {
+	switch ( lightmodel ) {
 	case LGT_BW:
 		bu_semaphore_acquire( RT_SEM_RESULTS );
-		if( pixsize == 1 ) {
+		if ( pixsize == 1 ) {
 			scanbuf[ap->a_x] = 0;
 		} else {
 			scanbuf[ap->a_x*3+RED] = 0;

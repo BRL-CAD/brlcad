@@ -64,14 +64,14 @@ printf("register double X[];\n\
 printf("/* bit reverse */\n");
 	j = 1;
 	ni = N - 1;
-	for( i = 1; i <= ni; i++ ) {
-		if( i < j ) {
+	for ( i = 1; i <= ni; i++ ) {
+		if ( i < j ) {
 printf("t0 = X[%d];\n", j-1 );
 printf("X[%d] = X[%d];\n", j-1, i-1 );
 printf("X[%d] = t0;\n", i-1 );
 		}
 		k = N/2;
-		while( k < j ) {
+		while ( k < j ) {
 			j -= k;
 			k /= 2;
 		}
@@ -80,8 +80,8 @@ printf("X[%d] = t0;\n", i-1 );
 
 	/* length two transforms */
 printf("/* length two xforms */\n");
-	for( s = 1, d = 4; s < N; s = 2*d-1, d *= 4 ) {
-		for( i0 = s; i0 <= N; i0 += d ) {
+	for ( s = 1, d = 4; s < N; s = 2*d-1, d *= 4 ) {
+		for ( i0 = s; i0 <= N; i0 += d ) {
 			i1 = i0 + 1;
 printf("t0 = X[%d];\n", i0-1 );
 printf("X[%d] += X[%d];\n", i0-1, i1-1 );
@@ -93,13 +93,13 @@ rfft_adds += 2;
 	/* other butterflies */
 printf("/* other butterflies */\n");
 	n2 = 2;
-	for( k = 2; k <= M; k++ ) {
+	for ( k = 2; k <= M; k++ ) {
 		n2 *= 2;
 		n4 = n2/4;
 
 		/* without mult */
-		for( s = 1, d = 2*n2; s < N; s = 2*d-n2+1, d *= 4 ) {
-			for( i0 = s; i0 < N; i0 += d ) {
+		for ( s = 1, d = 2*n2; s < N; s = 2*d-n2+1, d *= 4 ) {
+			for ( i0 = s; i0 < N; i0 += d ) {
 				i1 = i0 + n4;
 				i2 = i1 + n4;
 				i3 = i2 + n4;
@@ -110,10 +110,10 @@ printf("X[%d] += t0;\n", i0-1 );
 rfft_adds += 4;
 			}
 		}
-		if( n4 < 2 ) continue;
+		if ( n4 < 2 ) continue;
 		/* with 2 real mult */
-		for( s = n4/2+1, d = 2*n2; s < N; s = 2*d-n2+n4/2+1, d *= 4 ) {
-			for( i0 = s; i0 < N; i0 += d ) {
+		for ( s = n4/2+1, d = 2*n2; s < N; s = 2*d-n2+n4/2+1, d *= 4 ) {
+			for ( i0 = s; i0 < N; i0 += d ) {
 				i1 = i0 + n4;
 				i2 = i1 + n4;
 				i3 = i2 + n4;
@@ -128,8 +128,8 @@ rfft_mults += 2; rfft_adds += 6;
 		}
 		e = 2.0*M_PI/n2;
 		a = e;
-		if( n4 < 4 ) continue;
-		for( j = 2; j <= n4/2; j++ ) {
+		if ( n4 < 4 ) continue;
+		for ( j = 2; j <= n4/2; j++ ) {
 			aa3 = 3*a;
 			cc1 = cos(a);
 			ss1 = sin(a);
@@ -137,8 +137,8 @@ rfft_mults += 2; rfft_adds += 6;
 			ss3 = sin(aa3);
 			a = j * e;
 			/* with 6 real mult */
-			for( s = j, d = 2*n2; s < N; s = 2*d-n2+j, d *= 4 ) {
-				for( a0 = s; a0 < N; a0 += d ) {
+			for ( s = j, d = 2*n2; s < N; s = 2*d-n2+j, d *= 4 ) {
+				for ( a0 = s; a0 < N; a0 += d ) {
 					b1 = a0 + n4;
 					a1 = b1-j-j+2;
 					b0 = a1 + n4;

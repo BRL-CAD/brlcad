@@ -110,20 +110,20 @@ itoa(Tcl_Interp *interp,
      int w) {
   int	 c, i, j, sign;
 
-	if( (sign = n) < 0 )	n = -n;
+	if ( (sign = n) < 0 )	n = -n;
 	i = 0;
-	do	s[i++] = n % 10 + '0';	while( (n /= 10) > 0 );
-	if( sign < 0 )	s[i++] = '-';
+	do	s[i++] = n % 10 + '0';	while ( (n /= 10) > 0 );
+	if ( sign < 0 )	s[i++] = '-';
 
 	/* blank fill array
 	 */
-	for( j = i; j < w; j++ )	s[j] = ' ';
-	if( i > w )
+	for ( j = i; j < w; j++ )	s[j] = ' ';
+	if ( i > w )
 	  Tcl_AppendResult(interp, "itoa: field length too small\n", (char *)NULL);
 	s[w] = '\0';
 	/* reverse the array
 	 */
-	for( i = 0, j = w - 1; i < j; i++, j-- ) {
+	for ( i = 0, j = w - 1; i < j; i++, j-- ) {
 		c    = s[i];
 		s[i] = s[j];
 		s[j] =    c;
@@ -159,15 +159,15 @@ crregion(struct rt_wdb	*wdbp,
   int i;
   struct bu_list head;
 
-  if(wdbp->dbip == DBI_NULL)
+  if (wdbp->dbip == DBI_NULL)
     return;
 
   BU_LIST_INIT(&head);
 
-  for(i=0; i<number; i++) {
+  for (i=0; i<number; i++) {
     solidname[grpname_len + extraTypeChars] = '\0';
     crname(interp, solidname, members[i], maxlen);
-    if( db_lookup( wdbp->dbip, solidname, LOOKUP_QUIET) == DIR_NULL ) {
+    if ( db_lookup( wdbp->dbip, solidname, LOOKUP_QUIET) == DIR_NULL ) {
       Tcl_AppendResult(interp, "region: ", region, " will skip member: ",
 		       solidname, "\n", (char *)NULL);
       continue;
@@ -252,7 +252,7 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
   ++arg;
   fw[2] = lw[2] = atof(argv[arg]) * wdbp->dbip->dbi_local2base;
 
-  if( fw[2] <= 0 ) {
+  if ( fw[2] <= 0 ) {
     Tcl_AppendResult(interp, "Radius <= 0 - STOP\n", (char *)NULL);
     edit_result = TCL_ERROR;
     goto end;
@@ -262,7 +262,7 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
   ++arg;
   dw[0] = atof( argv[arg] ) * wdbp->dbip->dbi_local2base;
 
-  if( dw[0] >= lw[0] ) {
+  if ( dw[0] >= lw[0] ) {
     Tcl_AppendResult(interp, "DRIVE wheel not in the rear - STOP \n", (char *)NULL);
     edit_result = TCL_ERROR;
     goto end;
@@ -276,7 +276,7 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
   ++arg;
   dw[2] = atof( argv[arg] ) * wdbp->dbip->dbi_local2base;
 
-  if( dw[2] <= 0 ) {
+  if ( dw[2] <= 0 ) {
     Tcl_AppendResult(interp, "Radius <= 0 - STOP\n", (char *)NULL);
     edit_result = TCL_ERROR;
     goto end;
@@ -286,7 +286,7 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
   ++arg;
   iw[0] = atof( argv[arg] ) * wdbp->dbip->dbi_local2base;
 
-  if( iw[0] <= fw[0] ) {
+  if ( iw[0] <= fw[0] ) {
     Tcl_AppendResult(interp, "IDLER wheel not in the front - STOP \n", (char *)NULL);
     edit_result = TCL_ERROR;
     goto end;
@@ -300,7 +300,7 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
   ++arg;
   iw[2] = atof( argv[arg] ) * wdbp->dbip->dbi_local2base;
 
-  if( iw[2] <= 0 ) {
+  if ( iw[2] <= 0 ) {
     Tcl_AppendResult(interp, "Radius <= 0 - STOP\n", (char *)NULL);
     edit_result = TCL_ERROR;
     goto end;
@@ -314,12 +314,12 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
   ++arg;
   tr[1] = atof( argv[arg] ) * wdbp->dbip->dbi_local2base;
 
-  if( tr[0] == tr[1] ) {
+  if ( tr[0] == tr[1] ) {
     Tcl_AppendResult(interp, "MIN == MAX ... STOP\n", (char *)NULL);
     edit_result = TCL_ERROR;
     goto end;
   }
-  if( tr[0] > tr[1] ) {
+  if ( tr[0] > tr[1] ) {
     Tcl_AppendResult(interp, "MIN > MAX .... will switch\n", (char *)NULL);
     tr[1] = tr[0];
     tr[0] = tr[2];
@@ -329,7 +329,7 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
   ++arg;
   tr[2] = atof( argv[arg] ) * wdbp->dbip->dbi_local2base;
 
-  if( tr[2] <= 0 ) {
+  if ( tr[2] <= 0 ) {
     Tcl_AppendResult(interp, "Track thickness <= 0 - STOP\n", (char *)NULL);
     edit_result = TCL_ERROR;
     goto end;
@@ -385,7 +385,7 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
   }
 
   /* find the front track slope to the idler */
-  for(i=0; i<24; i++)
+  for (i=0; i<24; i++)
     sol.s_values[i] = 0.0;
 
   /* add the solids */
@@ -402,7 +402,7 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
 
   /* solid 1 */
   /* find track around idler */
-  for(i=0; i<24; i++)
+  for (i=0; i<24; i++)
     sol.s_values[i] = 0.0;
   sol.s_type = ID_TGC;
   trcurve(iw, tr);
@@ -425,7 +425,7 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
 
   /* solid 3 */
   /* find idler track dummy arb8 */
-  for(i=0; i<24; i++)
+  for (i=0; i<24; i++)
     sol.s_values[i] = 0.0;
   crname(interp, solname, 3, len);
   strncpy(sol.s_name, solname, len-1);
@@ -437,7 +437,7 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
 
   /* solid 4 */
   /* track slope to drive */
-  for(i=0; i<24; i++)
+  for (i=0; i<24; i++)
     sol.s_values[i] = 0.0;
   slope(interp, lw, dw, tr);
   VMOVE(temp1, &sol.s_values[0]);
@@ -449,7 +449,7 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
 
   /* solid 5 */
   /* track around drive */
-  for(i=0; i<24; i++)
+  for (i=0; i<24; i++)
     sol.s_values[i] = 0.0;
   sol.s_type = ID_TGC;
   trcurve(dw, tr);
@@ -473,7 +473,7 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
 
   /* solid 7 */
   /* drive dummy arb8 */
-  for(i=0; i<24; i++)
+  for (i=0; i<24; i++)
     sol.s_values[i] = 0.0;
   crname(interp, solname, 7, len);
   strncpy(sol.s_name, solname, len-1);
@@ -623,23 +623,23 @@ wrobj(struct rt_wdb	*wdbp,
 	struct rt_db_internal intern;
 	int i;
 
-	if(wdbp->dbip == DBI_NULL)
+	if (wdbp->dbip == DBI_NULL)
 	  return 0;
 
-	if( db_lookup( wdbp->dbip, name, LOOKUP_QUIET) != DIR_NULL ) {
+	if ( db_lookup( wdbp->dbip, name, LOOKUP_QUIET) != DIR_NULL ) {
 	  Tcl_AppendResult(interp, "track naming error: ", name,
 			   " already exists\n", (char *)NULL);
 	  return(-1);
 	}
 
-	if( flags != DIR_SOLID )
+	if ( flags != DIR_SOLID )
 	{
 		Tcl_AppendResult(interp, "wrobj can only write solids, aborting\n" );
 		return( -1 );
 	}
 
 	RT_INIT_DB_INTERNAL( &intern );
-	switch( sol.s_type )
+	switch ( sol.s_type )
 	{
 		case ID_ARB8:
 			{
@@ -650,7 +650,7 @@ wrobj(struct rt_wdb	*wdbp,
 				arb->magic = RT_ARB_INTERNAL_MAGIC;
 
 				VMOVE( arb->pt[0], &sol.s_values[0] );
-				for( i=1 ; i<8 ; i++ )
+				for ( i=1; i<8; i++ )
 					VADD2( arb->pt[i], &sol.s_values[i*3], arb->pt[0] )
 
 				intern.idb_ptr = (genptr_t)arb;
@@ -685,14 +685,14 @@ wrobj(struct rt_wdb	*wdbp,
 			return( -1 );
 	}
 
-	if( (tdp = db_diradd( wdbp->dbip, name, -1L, 0, flags, (genptr_t)&intern.idb_type)) == DIR_NULL )
+	if ( (tdp = db_diradd( wdbp->dbip, name, -1L, 0, flags, (genptr_t)&intern.idb_type)) == DIR_NULL )
 	{
 		rt_db_free_internal( &intern, &rt_uniresource );
 		Tcl_AppendResult(interp, "Cannot add '", name, "' to directory, aborting\n", (char *)NULL );
 		return( -1 );
 	}
 
-	if( rt_db_put_internal( tdp, wdbp->dbip, &intern, &rt_uniresource ) < 0 )
+	if ( rt_db_put_internal( tdp, wdbp->dbip, &intern, &rt_uniresource ) < 0 )
 	{
 		rt_db_free_internal( &intern, &rt_uniresource );
 		Tcl_AppendResult(interp, "wrobj(wdbp, interp, ", name, "):  write error\n", (char *)NULL);
@@ -715,7 +715,7 @@ tancir(Tcl_Interp	*interp,
 	work[2] = cir2[1] - cir1[1];
 	work[1] = 0.0;
 	mag = MAGNITUDE( work );
-	if( mag > 1.0e-20 || mag < -1.0e-20 )  {
+	if ( mag > 1.0e-20 || mag < -1.0e-20 )  {
 		f = 1.0/mag;
 	}  else {
 	  Tcl_AppendResult(interp, "tancir():  0-length vector!\n", (char *)NULL);
@@ -723,12 +723,12 @@ tancir(Tcl_Interp	*interp,
 	}
 	VSCALE(work, work, f);
 	temp = acos( work[0] );
-	if( work[2] < 0.0 )
+	if ( work[2] < 0.0 )
 		temp = 6.28318512717958646 - temp;
 	tempp = acos( (cir1[2] - cir2[2]) * f );
 	ang = temp + tempp;
 	angc = temp - tempp;
-	if( (cir1[1] + cir1[2] * sin(ang)) >
+	if ( (cir1[1] + cir1[2] * sin(ang)) >
 	    (cir1[1] + cir1[2] * sin(angc)) )
 		ang = angc;
 	plano[0] = cir1[0] + cir1[2] * cos(ang);
@@ -751,24 +751,24 @@ slope(Tcl_Interp *interp,
 	vect_t	del, work;
 
 	switchs = 0;
-	if( wh1[2] < wh2[2] ) {
+	if ( wh1[2] < wh2[2] ) {
 		switchs++;
-		for(i=0; i<3; i++) {
+		for (i=0; i<3; i++) {
 			temp = wh1[i];
 			wh1[i] = wh2[i];
 			wh2[i] = temp;
 		}
 	}
 	tancir(interp, wh1, wh2);
-	if( switchs ) {
-		for(i=0; i<3; i++) {
+	if ( switchs ) {
+		for (i=0; i<3; i++) {
 			temp = wh1[i];
 			wh1[i] = wh2[i];
 			wh2[i] = temp;
 		}
 	}
-	if(plano[1] <= plant[1]) {
-		for(i=0; i<2; i++) {
+	if (plano[1] <= plant[1]) {
+		for (i=0; i<2; i++) {
 			temp = plano[i];
 			plano[i] = plant[i];
 			plant[i] = temp;
@@ -779,14 +779,14 @@ slope(Tcl_Interp *interp,
 	del[2] = plano[1] - plant[1];
 	mag = MAGNITUDE( del );
 	work[0] = -1.0 * t[2] * del[2] / mag;
-	if( del[0] < 0.0 )
+	if ( del[0] < 0.0 )
 		work[0] *= -1.0;
 	work[1] = 0.0;
 	work[2] = t[2] * fabs(del[0]) / mag;
 	b = (plano[1] - work[2]) - (del[2]/del[0]*(plano[0] - work[0]));
 	z = wh1[1];
 	r = wh1[2];
-	if( wh1[1] >= wh2[1] ) {
+	if ( wh1[1] >= wh2[1] ) {
 		z = wh2[1];
 		r = wh2[2];
 	}
@@ -801,7 +801,7 @@ slope(Tcl_Interp *interp,
 	work[0] = work[2] = 0.0;
 	work[1] = t[1] - t[0];
 	VMOVE(&sol.s_values[12], work);
-	for(i=3; i<=9; i+=3) {
+	for (i=3; i<=9; i+=3) {
 		j = i + 12;
 		VADD2(&sol.s_values[j], &sol.s_values[i], work);
 	}
@@ -819,8 +819,8 @@ int	flag;
 	int i, j;
 
 	vec[1] = 0.0;
-	if(plano[1] <= plant[1]) {
-		for(i=0; i<2; i++) {
+	if (plano[1] <= plant[1]) {
+		for (i=0; i<2; i++) {
 			temp = plano[i];
 			plano[i] = plant[i];
 			plant[i] = temp;
@@ -829,9 +829,9 @@ int	flag;
 
 	vec[0] = w[2] + t[2] + 1.0;
 	vec[2] = ( (plano[1] - w[1]) * vec[0] ) / (plano[0] - w[0]);
-	if( flag > 1 )
+	if ( flag > 1 )
 		vec[0] *= -1.0;
-	if(vec[2] >= 0.0)
+	if (vec[2] >= 0.0)
 		vec[2] *= -1.0;
 	sol.s_values[0] = w[0];
 	sol.s_values[1] = t[0] -1.0;
@@ -844,7 +844,7 @@ int	flag;
 	vec[2] = 0.0;
 	vec[1] = t[1] - t[0] + 2.0;
 	VMOVE(&sol.s_values[12], vec);
-	for(i=3; i<=9; i+=3) {
+	for (i=3; i<=9; i+=3) {
 		j = i + 12;
 		VADD2(&sol.s_values[j], &sol.s_values[i], vec);
 	}
@@ -887,7 +887,7 @@ fastf_t	t[];
 	tvec[1] = t[1] - t[0];
 	VMOVE(&sol.s_values[12], tvec);
 
-	for(i=3; i<=9; i+=3) {
+	for (i=3; i<=9; i+=3) {
 		j = i + 12;
 		VADD2(&sol.s_values[j], &sol.s_values[i], tvec);
 	}
@@ -915,13 +915,13 @@ fastf_t	t[];
 	tvec[1] = t[1] - t[0];
 	VCROSS(del, tvec, &sol.s_values[3]);
 	mag = MAGNITUDE( del );
-	if(del[2] < 0)
+	if (del[2] < 0)
 		mag *= -1.0;
 	VSCALE(&sol.s_values[9], del, t[2]/mag);
 	VADD2(&sol.s_values[6], &sol.s_values[3], &sol.s_values[9]);
 	VMOVE(&sol.s_values[12], tvec);
 
-	for(i=3; i<=9; i+=3) {
+	for (i=3; i<=9; i+=3) {
 		j = i + 12;
 		VADD2(&sol.s_values[j], &sol.s_values[i], tvec);
 	}
@@ -946,7 +946,7 @@ track_mk_tree_pure( struct rt_comb_internal *comb, struct bu_list *member_hd )
 {
 	register struct wmember *wp;
 
-	for( BU_LIST_FOR( wp, wmember, member_hd ) )  {
+	for ( BU_LIST_FOR( wp, wmember, member_hd ) )  {
 		union tree	*leafp, *nodep;
 
 		WDB_CK_WMEMBER(wp);
@@ -955,18 +955,18 @@ track_mk_tree_pure( struct rt_comb_internal *comb, struct bu_list *member_hd )
 		leafp->tr_l.magic = RT_TREE_MAGIC;
 		leafp->tr_l.tl_op = OP_DB_LEAF;
 		leafp->tr_l.tl_name = bu_strdup( wp->wm_name );
-		if( !bn_mat_is_identity( wp->wm_mat ) )  {
+		if ( !bn_mat_is_identity( wp->wm_mat ) )  {
 			leafp->tr_l.tl_mat = bn_mat_dup( wp->wm_mat );
 		}
 
-		if( !comb->tree )  {
+		if ( !comb->tree )  {
 			comb->tree = leafp;
 			continue;
 		}
 		/* Build a left-heavy tree */
 		BU_GETUNION( nodep, tree );
 		nodep->tr_b.magic = RT_TREE_MAGIC;
-		switch( wp->wm_op )  {
+		switch ( wp->wm_op )  {
 		case WMOP_UNION:
 			nodep->tr_b.tb_op = OP_UNION;
 			break;
@@ -1007,13 +1007,13 @@ track_mk_tree_gift( struct rt_comb_internal *comb, struct bu_list *member_hd )
 	int actual_count;
 	int new_nodes;
 
-	if( (new_nodes = bu_list_len( member_hd )) <= 0 )
+	if ( (new_nodes = bu_list_len( member_hd )) <= 0 )
 		return 0;	/* OK, nothing to do */
 
-	if( comb->tree && db_ck_v4gift_tree( comb->tree ) < 0 )
+	if ( comb->tree && db_ck_v4gift_tree( comb->tree ) < 0 )
 	{
 		db_non_union_push( comb->tree, &rt_uniresource );
-		if( db_ck_v4gift_tree( comb->tree ) < 0 )
+		if ( db_ck_v4gift_tree( comb->tree ) < 0 )
 		{
 			bu_log("track_mk_tree_gift() Cannot flatten tree for editing\n");
 			return -1;
@@ -1021,12 +1021,12 @@ track_mk_tree_gift( struct rt_comb_internal *comb, struct bu_list *member_hd )
 	}
 
 	/* make space for an extra leaf */
-	node_count = db_tree_nleaves( comb->tree ) ;
+	node_count = db_tree_nleaves( comb->tree );
 	tree_list = (struct rt_tree_array *)bu_calloc( node_count + new_nodes,
 		sizeof( struct rt_tree_array ), "tree list" );
 
 	/* flatten tree */
-	if( comb->tree )  {
+	if ( comb->tree )  {
 		/* Release storage for non-leaf nodes, steal leaves */
 		actual_count = (struct rt_tree_array *)db_flatten_tree(
 			tree_list, comb->tree, OP_UNION,
@@ -1038,10 +1038,10 @@ track_mk_tree_gift( struct rt_comb_internal *comb, struct bu_list *member_hd )
 	}
 
 	/* Add new members to the array */
-	for( BU_LIST_FOR( wp, wmember, member_hd ) )  {
+	for ( BU_LIST_FOR( wp, wmember, member_hd ) )  {
 		WDB_CK_WMEMBER(wp);
 
-		switch( wp->wm_op )  {
+		switch ( wp->wm_op )  {
 			case WMOP_INTERSECT:
 				tree_list[node_count].tl_op = OP_INTERSECT;
 				break;
@@ -1062,7 +1062,7 @@ track_mk_tree_gift( struct rt_comb_internal *comb, struct bu_list *member_hd )
 		tp->tr_l.magic = RT_TREE_MAGIC;
 		tp->tr_l.tl_op = OP_DB_LEAF;
 		tp->tr_l.tl_name = bu_strdup( wp->wm_name );
-		if( !bn_mat_is_identity( wp->wm_mat ) )  {
+		if ( !bn_mat_is_identity( wp->wm_mat ) )  {
 			tp->tr_l.tl_mat = bn_mat_dup( wp->wm_mat );
 		} else {
 			tp->tr_l.tl_mat = (matp_t)NULL;
@@ -1102,7 +1102,7 @@ track_mk_addmember(
 	BU_GETSTRUCT( wp, wmember );
 	wp->l.magic = WMEMBER_MAGIC;
 	wp->wm_name = bu_strdup( name );
-	switch( op )  {
+	switch ( op )  {
 	case WMOP_UNION:
 	case WMOP_INTERSECT:
 	case WMOP_SUBTRACT:
@@ -1133,7 +1133,7 @@ track_mk_freemembers( struct bu_list *headp )
 {
 	register struct wmember *wp;
 
-	while( BU_LIST_WHILE( wp, wmember, headp ) )  {
+	while ( BU_LIST_WHILE( wp, wmember, headp ) )  {
 		WDB_CK_WMEMBER(wp);
 		BU_LIST_DEQUEUE( &wp->l );
 		bu_free( (char *)wp->wm_name, "wm_name" );
@@ -1180,7 +1180,7 @@ track_mk_comb(
 
 	RT_INIT_DB_INTERNAL(&intern);
 
-	if( append_ok &&
+	if ( append_ok &&
 	    wdb_import( wdbp, &intern, combname, (matp_t)NULL ) >= 0 )  {
 		/* We retrieved an existing object, append to it */
 		comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -1202,7 +1202,7 @@ track_mk_comb(
 		fresh_combination = 1;
 	}
 
-	if( gift_semantics )
+	if ( gift_semantics )
 		track_mk_tree_gift( comb, headp );
 	else
 		track_mk_tree_pure( comb, headp );
@@ -1211,10 +1211,10 @@ track_mk_comb(
 	track_mk_freemembers( headp );
 
 	/* Don't change these things when appending to existing combination */
-	if( fresh_combination )  {
-		if( region_kind )  {
+	if ( fresh_combination )  {
+		if ( region_kind )  {
 			comb->region_flag = 1;
-			switch( region_kind )  {
+			switch ( region_kind )  {
 			case 'P':
 				comb->is_fastgen = REGION_FASTGEN_PLATE;
 				break;
@@ -1230,24 +1230,24 @@ track_mk_comb(
 					combname, region_kind, region_kind);
 			}
 		}
-		if( shadername )  bu_vls_strcat( &comb->shader, shadername );
-		if( shaderargs )  {
+		if ( shadername )  bu_vls_strcat( &comb->shader, shadername );
+		if ( shaderargs )  {
 			bu_vls_strcat( &comb->shader, " " );
 			bu_vls_strcat( &comb->shader, shaderargs );
 			/* Convert to Tcl form if necessary.  Use heuristics */
-			if( strchr( shaderargs, '=' ) != NULL &&
+			if ( strchr( shaderargs, '=' ) != NULL &&
 			    strchr( shaderargs, '{' ) == NULL )
 			{
 				struct bu_vls old;
 				bu_vls_init(&old);
 				bu_vls_vlscatzap(&old, &comb->shader);
-				if( bu_shader_to_tcl_list( bu_vls_addr(&old), &comb->shader) )
+				if ( bu_shader_to_tcl_list( bu_vls_addr(&old), &comb->shader) )
 					bu_log("Unable to convert shader string '%s %s'\n", shadername, shaderargs);
 				bu_vls_free(&old);
 			}
 		}
 
-		if( rgb )  {
+		if ( rgb )  {
 			comb->rgb_valid = 1;
 			comb->rgb[0] = rgb[0];
 			comb->rgb[1] = rgb[1];

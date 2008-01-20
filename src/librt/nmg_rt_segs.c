@@ -82,7 +82,7 @@ struct bu_structparse rt_hit_parsetab[] = {
 #define DO_LONGJMP
 #ifdef DO_LONGJMP
 jmp_buf nmg_longjump_env;
-#define nmg_rt_segs_exit(_s) {bu_log("%s\n",_s);longjmp(nmg_longjump_env, -1);}
+#define nmg_rt_segs_exit(_s) {bu_log("%s\n", _s);longjmp(nmg_longjump_env, -1);}
 #else
 #define nmg_rt_segs_exit(_s) bu_bomb(_s)
 #endif
@@ -159,7 +159,7 @@ pl_ray(struct ray_data *rd)
 		out_state = HMG_OUTBOUND_STATE(a_hit);
 
 		if (in_state == old_state) {
-			switch(in_state) {
+			switch (in_state) {
 			case NMG_RAY_STATE_INSIDE:
 				pl_color(fd, 55, 255, 55);
 				pdv_3line(fd, old_point, a_hit->hit.hit_point);
@@ -968,7 +968,7 @@ common_topo(struct bu_ptbl *a_tbl, struct bu_ptbl *next_tbl)
 {
 	long **p;
 
-	for (p = &a_tbl->buffer[a_tbl->end] ; p >= a_tbl->buffer ; p--) {
+	for (p = &a_tbl->buffer[a_tbl->end]; p >= a_tbl->buffer; p--) {
 		if (bu_ptbl_locate(next_tbl, *p) >= 0)
 			return *p;
 	}
@@ -1094,14 +1094,14 @@ unresolved(struct hitmiss *a_hit, struct hitmiss *next_hit, struct bu_ptbl *a_tb
 	bu_log("topo table A\n");
 	b = &a_tbl->buffer[a_tbl->end];
 	l_p = &a_tbl->buffer[0];
-	for ( ; l_p < b ; l_p ++)
-		bu_log("\t0x%08x %s\n",**l_p, bu_identify_magic( **l_p));
+	for (; l_p < b; l_p ++)
+		bu_log("\t0x%08x %s\n", **l_p, bu_identify_magic( **l_p));
 
 	bu_log("topo table NEXT\n");
 	b = &next_tbl->buffer[next_tbl->end];
 	l_p = &next_tbl->buffer[0];
-	for ( ; l_p < b ; l_p ++)
-		bu_log("\t0x%08x %s\n",**l_p, bu_identify_magic( **l_p));
+	for (; l_p < b; l_p ++)
+		bu_log("\t0x%08x %s\n", **l_p, bu_identify_magic( **l_p));
 
 	bu_log("<---Unable to fix state transition\n");
 	pl_ray(rd);
@@ -1144,7 +1144,7 @@ check_hitstate(struct hitmiss *hd, struct ray_data *rd)
 			V3ARGS(rd->rp->r_pt), V3ARGS(rd->rp->r_dir) );
 	}
 
-	while( a_hit != hd &&
+	while ( a_hit != hd &&
 		((a_hit->in_out & 0x0f0) >> 4) != NMG_RAY_STATE_OUTSIDE) {
 
 

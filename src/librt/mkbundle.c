@@ -73,7 +73,7 @@ rt_raybundle_maker(struct xray *rp, double radius, const fastf_t *avec, const fa
 	rp[0].index = count++;
 	rp[0].magic =RT_RAY_MAGIC;
 
-	for( ring=0; ring < nring; ring++ )  {
+	for ( ring=0; ring < nring; ring++ )  {
 		register int i;
 
 		theta = 0;
@@ -81,7 +81,7 @@ rt_raybundle_maker(struct xray *rp, double radius, const fastf_t *avec, const fa
 		fraction = ((double)(ring+1)) / nring;
 		theta = delta * fraction;	/* spiral skew */
 		radial_scale = radius * fraction;
-		for( i=0; i < rays_per_ring; i++ )  {
+		for ( i=0; i < rays_per_ring; i++ )  {
 			register double	ct, st;
 			/* pt = V + cos(theta) * A + sin(theta) * B */
 			ct = cos(theta) * radial_scale;
@@ -127,7 +127,7 @@ main()
 	rt_raybundle_maker( rp, bundle_radius, avec, bvec, rays_per_ring, nring );
 
 
-	for( i=0; i <= rays_per_ring * nring; i++ )  {
+	for ( i=0; i <= rays_per_ring * nring; i++ )  {
 		point_t	tip;
 		VJOIN1( tip, rp[i].r_pt, 3500, rp[i].r_dir );
 		pdv_3line( fp, rp[i].r_pt, tip );

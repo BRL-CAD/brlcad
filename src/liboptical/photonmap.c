@@ -97,7 +97,7 @@ int FindMedian(struct Photon *List, int Num, int Axis) {
 
 /* Generate a KD-Tree from a Flat Array of Photons */
 void BuildTree(struct Photon *EList, int ESize, struct PNode *Root) {
-    struct	Photon	*LList,*RList;
+    struct	Photon	*LList, *RList;
     vect_t		Min, Max;
     int			i, Axis, MedianIndex, LInd, RInd;
 
@@ -239,7 +239,7 @@ void SpecularReflect(vect_t normal, vect_t rdir) {
     vect_t	d;
     fastf_t	dot;
 
-    VSCALE(d, rdir,-1);
+    VSCALE(d, rdir, -1);
     dot= VDOT(d, normal);
 
     if (dot < 0.0f) {
@@ -768,7 +768,7 @@ int ICHit(struct application *ap, struct partition *PartHeadp, struct seg *finis
     /*  GetEstimate(C1, pt, normal, ScaleFactor/10.0, PMap[PM_GLOBAL]->StoredPhotons / 100, PM_GLOBAL, 5, 1);*/
     /*  GetEstimate(C1, pt, normal, ScaleFactor/1000.0, 10.0*log(PMap[PM_GLOBAL]->StoredPhotons), PM_GLOBAL, ScaleFactor/5.0, 1);*/
     GetEstimate(C1, pt, normal, ScaleFactor/1024.0, 128, PM_GLOBAL, ScaleFactor/8.0, 1, 15);
-    /*  GetEstimate(C2, pt, normal, (int)(ScaleFactor/pow(2,(log(PMap[PM_CAUSTIC]->MaxPhotons/2)/log(4)))), PMap[PM_CAUSTIC]->MaxPhotons / 50, PM_CAUSTIC, 0, 0);*/
+    /*  GetEstimate(C2, pt, normal, (int)(ScaleFactor/pow(2, (log(PMap[PM_CAUSTIC]->MaxPhotons/2)/log(4)))), PMap[PM_CAUSTIC]->MaxPhotons / 50, PM_CAUSTIC, 0, 0);*/
     GetEstimate(C2, pt, normal, ScaleFactor/1024.0, PMap[PM_CAUSTIC]->MaxPhotons / 100, PM_CAUSTIC, ScaleFactor/256.0, 1, 15);
     /*    GetEstimate(IMColor2, pt, normal, (int)(ScaleFactor/100.0), PMap[PM_CAUSTIC]->MaxPhotons/50, PM_CAUSTIC, 1, 0);*/
 
@@ -879,7 +879,7 @@ void BuildIrradianceCache(int pid, struct PNode *Node, struct application *ap) {
 	Node->C++;
 #ifndef HAVE_ALARM
 	if (!(ICSize%(PMap[PM_GLOBAL]->MaxPhotons/8)))
-	    bu_log("    Irradiance Cache Progress: %d%%\n",(int)(0.5+100.0*ICSize/PMap[PM_GLOBAL]->MaxPhotons));
+	    bu_log("    Irradiance Cache Progress: %d%%\n", (int)(0.5+100.0*ICSize/PMap[PM_GLOBAL]->MaxPhotons));
 #endif
 	bu_semaphore_release(PM_SEM);
 	Irradiance(pid, &Node->P, ap);
@@ -896,14 +896,14 @@ static int starttime = 0;
 void alarmhandler(int sig) {
     int t;
     float p, h, m, d, tl;
-    if(sig != SIGALRM)
+    if (sig != SIGALRM)
 	bu_bomb("Funky signals\n");
     t = time(NULL) - starttime;
     p = (float)ICSize/PMap[PM_GLOBAL]->MaxPhotons + .015;
     tl = (float)t*1.0/p - t;
     bu_log("    Irradiance Cache Progress: %d%%. Approximate time left: ",
 	    (int)(100.0*p), (1.0/p-1.0)*(float)t, (float)t*1.0/p);
-#define BAH(s, w) if(tl > (s)) { float d = floor(tl / (float)(s)); \
+#define BAH(s, w) if (tl > (s)) { float d = floor(tl / (float)(s)); \
     tl -= d * (s); bu_log("%d "w, (int)d, d>1?"s":""); }
     BAH(60*60*24, "day%s, ");
     BAH(60*60, "hour%s, ");
@@ -935,7 +935,7 @@ void Initialize(int MAP, int MapSize) {
     PMap[MAP]->MaxPhotons= MapSize;
     PMap[MAP]->Root= (struct PNode*)bu_malloc(sizeof(struct PNode), "PNode");
     PMap[MAP]->StoredPhotons= 0;
-    if(MapSize > 0)
+    if (MapSize > 0)
 	Emit[MAP] = (struct Photon*)bu_malloc(sizeof(struct Photon)*MapSize, "Photon");
     else
 	Emit[MAP] = NULL;
@@ -1132,7 +1132,7 @@ void BuildPhotonMap(struct application *ap, point_t eye_pos, int cpus, int width
 	bu_log("HitGB: %d,%d\n", HitG, HitB);
 	bu_log("Scale Factor: %.3f\n", ScaleFactor);
 	ratio= (double)HitG/((double)(HitG+HitB));
-	bu_log("EPL: %d, Adjusted EPL: %d\n",(int)EPL,(int)(EPL*ratio));
+	bu_log("EPL: %d, Adjusted EPL: %d\n", (int)EPL, (int)(EPL*ratio));
 	EPS[PM_GLOBAL]*= ratio;
 	EPS[PM_CAUSTIC]*= ratio;
 
@@ -1239,7 +1239,7 @@ void HeapUp(struct PhotonSearch *S, int ind) {
     /*  bu_log("  CHECK: %.3f > %.3f :: [%d] > [%d]\n", S->List[ind].Dist, S->List[i].Dist, ind, i);*/
     if (S->List[ind].Dist > S->List[i].Dist) {
 	/*    bu_log("SWAP_A: %.3f,%.3f\n", S->List[i].Dist, S->List[ind].Dist);*/
-	Swap(&S->List[i],&S->List[ind]);
+	Swap(&S->List[i], &S->List[ind]);
 	/*    bu_log("SWAP_B: %.3f,%.3f\n", S->List[i].Dist, S->List[ind].Dist);*/
     }
     HeapUp(S, i);
@@ -1262,7 +1262,7 @@ void HeapDown(struct PhotonSearch *S, int ind) {
 
     if (S->List[c].Dist > S->List[ind].Dist) {
 	/*    bu_log("SWAP_C: %.3f,%.3f :: %d,%d :: %d\n", S->List[c].Dist, S->List[ind].Dist, c, ind, S->Found);*/
-	Swap(&S->List[c],&S->List[ind]);
+	Swap(&S->List[c], &S->List[ind]);
 	/*    bu_log("SWAP_D: %.3f,%.3f :: %d,%d :: %d\n", S->List[c].Dist, S->List[ind].Dist, c, ind, S->Found);*/
     }
     HeapDown(S, c);
@@ -1429,7 +1429,7 @@ void IrradianceEstimate(struct application *ap, vect_t irrad, point_t pos, vect_
 	Search.Found= 0;
 	Search.RadSq*= 4.0;
 	LocatePhotons(&Search, PMap[PM_GLOBAL]->Root);
-    } while(Search.Found < Search.Max && Search.RadSq < ScaleFactor * ScaleFactor / 64.0);
+    } while (Search.Found < Search.Max && Search.RadSq < ScaleFactor * ScaleFactor / 64.0);
 
 
     irrad[0]= irrad[1]= irrad[2]= 0;
@@ -1524,7 +1524,7 @@ void GetEstimate(vect_t irrad, point_t pos, vect_t normal, fastf_t rad, int np, 
 	LocatePhotons(&Search, PMap[map]->Root);
 	if (!Search.Found && Search.RadSq > ScaleFactor*ScaleFactor/100.0)
 	    break;
-    } while(Search.Found < Search.Max && Search.RadSq < max_rad*max_rad);
+    } while (Search.Found < Search.Max && Search.RadSq < max_rad*max_rad);
 
     /*  bu_log("Found: %d\n", Search.Found);*/
     if (Search.Found < min_np) {

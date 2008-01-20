@@ -93,7 +93,7 @@ get_args(int argc, register char **argv)
 	pixcolor[BLU]  = 255;
 
 	while ( (c = bu_getopt( argc, argv, "adhcF:f:r:g:b:C:s:S:w:W:n:N:" )) != EOF )  {
-		switch( c )  {
+		switch ( c )  {
 		case 'a':
 			alias_off = 1;
 			break;
@@ -133,9 +133,10 @@ get_args(int argc, register char **argv)
 					= (unsigned char *)pixcolor;
 
 				/* premature null => atoi gives zeros */
-				for( c=0; c < 3; c++ )  {
+				for ( c=0; c < 3; c++ )  {
 					*conp++ = atoi(cp);
-					while( *cp && *cp++ != '/' ) ;
+					while ( *cp && *cp++ != '/' )
+					    ;
 				}
 			}
 			break;
@@ -154,12 +155,12 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( bu_optind+3 > argc )
+	if ( bu_optind+3 > argc )
 		return(0);
 	xpos = atoi( argv[bu_optind++]);
 	ypos = atoi( argv[bu_optind++]);
 	textstring = argv[bu_optind++];
-	if(debug) (void)fprintf(stderr, "fblabel %d %d %s\n", xpos, ypos, textstring);
+	if (debug) (void)fprintf(stderr, "fblabel %d %d %s\n", xpos, ypos, textstring);
 
 	if ( argc > bu_optind )
 		(void)fprintf( stderr, "fblabel: excess argument(s) ignored\n" );
@@ -181,16 +182,16 @@ main(int argc, char **argv)
 	if (pkg_init() != 0)
 	    bu_exit(1, NULL);
 
-	if( (fbp = fb_open( framebuffer, scr_width, scr_height )) == NULL )  {
+	if ( (fbp = fb_open( framebuffer, scr_width, scr_height )) == NULL )  {
 		fprintf(stderr, "fblabel:  Unable to open framebuffer %s\n", framebuffer);
 		bu_exit(12, NULL);
 	}
 
-	if( clear ) {
+	if ( clear ) {
 		fb_clear( fbp, PIXEL_NULL);
 	}
 
-	if( (vfp = vfont_get(font1)) == VFONT_NULL )  {
+	if ( (vfp = vfont_get(font1)) == VFONT_NULL )  {
 		fprintf(stderr, "fblabel:  Can't get font \"%s\"\n",
 			font1 == NULL ? "(null)" : font1);
 		bu_exit(1, NULL);
@@ -209,11 +210,11 @@ do_line(register struct vfont *vfp, register char *line)
 	register int    char_count, char_id;
 	register int	len = strlen( line );
 
-	if( vfp == VFONT_NULL )  return;
+	if ( vfp == VFONT_NULL )  return;
 
 	currx = xpos;
 
-	for( char_count = 0; char_count < len; char_count++ )  {
+	for ( char_count = 0; char_count < len; char_count++ )  {
 		register struct vfont_dispatch	*vdp;
 
 		char_id = (int) line[char_count] & 0377;
@@ -222,28 +223,28 @@ do_line(register struct vfont *vfp, register char *line)
 		vdp = &vfp->vf_dispatch[char_id];
 		width = vdp->vd_left + vdp->vd_right;
 		height = vdp->vd_up + vdp->vd_down;
-		if(debug) fprintf(stderr, "%c w=%2d h=%2d, currx=%d\n", char_id, width, height, currx);
+		if (debug) fprintf(stderr, "%c w=%2d h=%2d, currx=%d\n", char_id, width, height, currx);
 
 		/*
 		 *  Space characters are frequently not represented
 		 *  in the font set, so leave white space here.
 		 */
-		if( width <= 1 )  {
+		if ( width <= 1 )  {
 			char_id = 'n';	/* 1-en space */
 			vdp = &vfp->vf_dispatch[char_id];
 			width = vdp->vd_left + vdp->vd_right;
-			if( width <= 1 )  {
+			if ( width <= 1 )  {
 				char_id = 'N';	/* 1-en space */
 				vdp = &vfp->vf_dispatch[char_id];
 				width = vdp->vd_left + vdp->vd_right;
-				if( width <= 1 )
+				if ( width <= 1 )
 					width = 16;	/* punt */
 			}
 			currx += width;
 			continue;
 		}
 
-		if( currx + width > fb_getwidth(fbp) - 1 )  {
+		if ( currx + width > fb_getwidth(fbp) - 1 )  {
 			fprintf(stderr, "fblabel:  Ran off screen\n");
 			break;
 		}
@@ -278,7 +279,7 @@ do_char(struct vfont *vfp, struct vfont_dispatch *vdp, int x, int y)
 		memset((char *)&filterbuf[i][0], 0, (totwid+4)*sizeof(int));
 
 	 /* Initial base line for filtering depends on odd flag. */
-	if( vdp->vd_down % 2 )
+	if ( vdp->vd_down % 2 )
 		base = 1;
 	else
 		base = 2;
@@ -314,7 +315,7 @@ do_char(struct vfont *vfp, struct vfont_dispatch *vdp, int x, int y)
 			     (int)(pixcolor[BLU]*resbuf[j]+(1-resbuf[j])*tmp);
 			 fbline[j][BLU] &= 0377;
 		}
-		if( fb_write( fbp, x, y-vdp->vd_down+i, (unsigned char *)fbline, totwid+3 ) < totwid+3 )  {
+		if ( fb_write( fbp, x, y-vdp->vd_down+i, (unsigned char *)fbline, totwid+3 ) < totwid+3 )  {
 			fprintf(stderr, "fblabel: pixel write error\n");
 			bu_exit(1, NULL);
 		}

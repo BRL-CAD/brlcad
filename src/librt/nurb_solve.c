@@ -83,13 +83,13 @@ rt_nurb_solve(fastf_t *mat_1, fastf_t *mat_2, fastf_t *solution, int dim, int co
 
 	rt_nurb_doolittle (mat_1, mat_2, dim, coords);/* Create LU decomosition */
 
-	for( k =0; k < coords; k++)
+	for ( k =0; k < coords; k++)
 	{
 		fastf_t * ptr;
 
 		ptr = mat_2 + k;
 
-		for( i = 0; i < dim; i++)
+		for ( i = 0; i < dim; i++)
 		{
 			b[i] = *ptr;
 			ptr += coords;
@@ -103,7 +103,7 @@ rt_nurb_solve(fastf_t *mat_1, fastf_t *mat_2, fastf_t *solution, int dim, int co
 
 
 		ptr = solution + k;
-		for( i=0; i < dim; i++)
+		for ( i=0; i < dim; i++)
 		{
 			*ptr = s[i];
 			ptr += coords;
@@ -145,20 +145,20 @@ rt_nurb_doolittle(fastf_t *mat_1, fastf_t *mat_2, int row, int coords)
 	for ( i = 0; i < row; i++)		/* calculate the scaling factors */
 	{
 		maxd = 0.0;
-		for( j = 0; j < row; j++)
+		for ( j = 0; j < row; j++)
 		{
-			if( maxd < fabs(mat_1[i * row + j]) )
+			if ( maxd < fabs(mat_1[i * row + j]) )
 				maxd = fabs(mat_1[i * row + j]);
 		}
 		d[i] = 1.0 / maxd;
 	}
 
-	for ( k = 0 ; k < row; k++)
+	for ( k = 0; k < row; k++)
 	{
-		for( i = k; i < row; i++)
+		for ( i = k; i < row; i++)
 		{
 			tmp = 0.0;
-			for( j = 0; j <= k -1; j ++)
+			for ( j = 0; j <= k -1; j ++)
 				tmp += mat_1[i * row + j ] * mat_1[j * row + k];
 			s[i * row + k] = mat_1[i * row + k] - tmp;
 		}
@@ -174,14 +174,14 @@ rt_nurb_doolittle(fastf_t *mat_1, fastf_t *mat_2, int row, int coords)
 
 		if (max_pivot != k )		/* yes swap row k with row max_pivot */
 		{
-			for( m = 0; m < row; m++)
+			for ( m = 0; m < row; m++)
 			{
 				tmp = mat_1[k * row + m];
 				mat_1[k * row + m] = mat_1[max_pivot * row + m];
 				mat_1[max_pivot * row + m] = tmp;
 			}
 
-			for( x = 0; x < coords; x++)
+			for ( x = 0; x < coords; x++)
 			{
 				tmp = mat_2[k*coords + x];		/* b matrix also */
 				mat_2[k*coords+x] = mat_2[max_pivot*coords+x];
@@ -200,7 +200,7 @@ rt_nurb_doolittle(fastf_t *mat_1, fastf_t *mat_2, int row, int coords)
 
 		for (j = k + 1; j < row; j++) {	/* upper matrix */
 			tmp = 0;
-			for( i = 0; i <= k - 1; i++)
+			for ( i = 0; i <= k - 1; i++)
 				tmp += mat_1[ k * row + i] * mat_1[ i* row + j];
 
 			mat_1[ k * row + j] -= tmp;
@@ -220,10 +220,10 @@ rt_nurb_forw_solve(const fastf_t *lu, const fastf_t *b, fastf_t *y, int n)		/* s
 	register int i, j;
 	fastf_t tmp;
 
-	for(i = 0; i < n; i++)
+	for (i = 0; i < n; i++)
 	{
 		tmp = 0.0;
-		for(j = 0; j <= i - 1; j++)
+		for (j = 0; j <= i - 1; j++)
 			tmp += lu[i*n + j] * y[j];
 		y[i] = b[i] - tmp;
 	}
@@ -237,10 +237,10 @@ rt_nurb_back_solve(const fastf_t *lu, const fastf_t *y, fastf_t *x, int n)		/* s
 	register int i, j;
 	fastf_t tmp;
 
-	for( i = n - 1; i >= 0; i-- )
+	for ( i = n - 1; i >= 0; i-- )
 	{
 		tmp = 0.0;
-		for( j = i + 1; j < n; j++)
+		for ( j = i + 1; j < n; j++)
 			tmp += lu[i*n + j] * x[j];
 		x[i] = ( y[i] - tmp) / lu[i * n + i];
 	}
@@ -252,7 +252,7 @@ rt_nurb_p_mat(const fastf_t *mat, int dim)
 {
 	int i;
 
-	for( i = 0; i < dim; i++)
+	for ( i = 0; i < dim; i++)
 		fprintf(stderr, "%f\n", mat[i]);
 	fprintf(stderr, "\n");
 }

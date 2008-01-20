@@ -56,25 +56,25 @@ main(int argc, char **argv)
 	int x, y;
 	int readval;
 
-	if( argc < 2 )  {
+	if ( argc < 2 )  {
 		fprintf(stderr, "%s", usage);
 		bu_exit (1, NULL);
 	}
 
 	nlines = 512;
-	if( (infd1 = open( argv[1], 0 )) < 0 )  {
+	if ( (infd1 = open( argv[1], 0 )) < 0 )  {
 		perror( argv[1] );
 		bu_exit (3, NULL);
 	}
-	if( (infd2 = open( argv[2], 0 )) < 0 )  {
+	if ( (infd2 = open( argv[2], 0 )) < 0 )  {
 		perror( argv[2] );
 		bu_exit (3, NULL);
 	}
-	if( (infd3 = open( argv[3], 0 )) < 0 )  {
+	if ( (infd3 = open( argv[3], 0 )) < 0 )  {
 		perror( argv[3] );
 		bu_exit (3, NULL);
 	}
-	if( argc == 5 ) {
+	if ( argc == 5 ) {
 		nlines = atoi(argv[4] );
 	}
 
@@ -110,13 +110,13 @@ main(int argc, char **argv)
 	memset(out1, 0, pix_line*3);
 	write( 1, out1, pix_line*3 );
 
-	for( y=1; y < nlines-2; y++ )  {
+	for ( y=1; y < nlines-2; y++ )  {
 		static unsigned char *op;
 
 		op = out1+3;
 
 		/* do (width-2)*3 times, borders are black */
-		for( x=3; x < (pix_line-2)*3; x++ )  {
+		for ( x=3; x < (pix_line-2)*3; x++ )  {
 			register int i;
 			register unsigned char *a, *b, *c;
 

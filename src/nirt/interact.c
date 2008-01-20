@@ -139,7 +139,7 @@ interact(int input_source, void *sPtr)
 
 	for (i = 0; (Ch != '\n') && (i < 255); ++i) {
 	    if (Ch == CMT_CHAR) {
-		if( Prev_ch == '\\' ) {
+		if ( Prev_ch == '\\' ) {
 		    i--;
 		} else {
 		    in_cmt = 1;

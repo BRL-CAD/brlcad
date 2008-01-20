@@ -44,12 +44,12 @@ struct chore {
 
 
 #define GET(item, queue)	{\
-	while( queue == NULL )  sginap(1); \
+	while ( queue == NULL )  sginap(1); \
 	item = queue; \
 	queue = NULL; }
 
 #define PUT(queue, item)	{ \
-	while( queue != NULL )  sginap(1); \
+	while ( queue != NULL )  sginap(1); \
 	queue = item; \
 	item = NULL;  }
 

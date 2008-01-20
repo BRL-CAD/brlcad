@@ -95,14 +95,14 @@ int
 view_init(register struct application *ap, char *file, char *obj, int minus_o)
 {
 
-	if( !minus_o )
+	if ( !minus_o )
 		outfp = stdout;
 
 	/*
 	 *  Cause grid_setup() to align the grid on one inch boundaries,
 	 *  or cell_width boundaries, if it is given.
 	 */
-	if( cell_width > 0 )
+	if ( cell_width > 0 )
 		gift_grid_rounding = cell_width;
 	else
 		gift_grid_rounding = 25.4;		/* one inch */
@@ -127,14 +127,14 @@ void
 view_2init(struct application *ap)
 {
 
-	if( outfp == NULL )
+	if ( outfp == NULL )
 		bu_exit(EXIT_FAILURE, "outfp is NULL\n");
 
 	/*
 	 *  Not dropping out of parallel mode until here permits
 	 *  tree walking and database prepping to still be done in parallel.
 	 */
-	if( npsw >= 1 )  {
+	if ( npsw >= 1 )  {
 		bu_log("Note: changing from %d cpus to 1 cpu\n", npsw );
 		npsw = 1;		/* Disable parallel processing */
 	}
@@ -188,10 +188,10 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 	fastf_t			dot;
 	vect_t			normal;
 
-	if( pp == PartHeadp )
+	if ( pp == PartHeadp )
 		return(0);		/* nothing was actually hit?? */
 
-	if( jitter & JITTER_CELL )  {
+	if ( jitter & JITTER_CELL )  {
 		/*
 		 *  Find exact h, v coordinates of actual ray start by
 		 *  projecting start point into GIFT h, v coordinates.
@@ -215,7 +215,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 
 	RT_HIT_NORMAL( normal, pp->pt_inhit, pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip );
 	dot = -VDOT( normal, ap->a_ray.r_dir );
-	if( dot < 0 )  dot = 0;
+	if ( dot < 0 )  dot = 0;
 	fprintf( outfp, "%g %g %g\n",
 		hv[0], hv[1], dot );
 

@@ -195,7 +195,7 @@ dvec<LEN>::foldl(double identity, const dvec_op& op, int limit)
     a_store(_t);
     double val = identity;
     for (int i = 0; i < limit; i++) {
-	val = op(val,_t[i]);
+	val = op(val, _t[i]);
     }
     return val;
 }

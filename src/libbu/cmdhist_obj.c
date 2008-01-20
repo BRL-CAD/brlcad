@@ -120,7 +120,7 @@ cho_deleteProc(ClientData clientData)
 
 	/* free list of commands */
 	curr = BU_LIST_NEXT(bu_cmdhist, &chop->cho_head.l);
-	while(BU_LIST_NOT_HEAD(curr,&chop->cho_head.l)) {
+	while (BU_LIST_NOT_HEAD(curr, &chop->cho_head.l)) {
 		curr = BU_LIST_NEXT(bu_cmdhist, &chop->cho_head.l);
 		next = BU_LIST_PNEXT(bu_cmdhist, curr);
 

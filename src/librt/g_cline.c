@@ -60,7 +60,7 @@ const struct bu_structparse rt_cline_parse[] = {
 	{ "%f", 3, "H", RT_CLINE_O( h ),  BU_STRUCTPARSE_FUNC_NULL },
 	{ "%f", 1, "r", RT_CLINE_O( radius ), BU_STRUCTPARSE_FUNC_NULL },
 	{ "%f", 1, "t", RT_CLINE_O( thickness ), BU_STRUCTPARSE_FUNC_NULL },
-	{ {'\0','\0','\0','\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
+	{ {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
 	};
 
 /* shared with do.c */
@@ -105,7 +105,7 @@ rt_cline_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	VUNITIZE( cline->h );
 	stp->st_specific = (genptr_t)cline;
 
-	if( rt_cline_radius > 0.0 )
+	if ( rt_cline_radius > 0.0 )
 		max_tr = rt_cline_radius;
 	else
 		max_tr = 0.0;
@@ -142,7 +142,7 @@ rt_cline_print(register const struct soltab *stp)
 	VPRINT( "Height", cline->height );
 	VPRINT( "Unit Height", cline->h );
 	bu_log( "Radius: %g\n", cline->radius );
-	if( cline->thickness > 0.0 )
+	if ( cline->thickness > 0.0 )
 		bu_log( "Plate Mode Thickness: %g\n", cline->thickness );
 	else
 		bu_log( "Volume mode\n" );
@@ -179,7 +179,7 @@ rt_cline_shot(struct soltab *stp, register struct xray *rp, struct application *
 	BU_LIST_INIT( &ref_seghead.l );
 
 	/* This is a CLINE FASTGEN element */
-	if( rt_cline_radius > 0.0 )
+	if ( rt_cline_radius > 0.0 )
 	{
 		add_radius = rt_cline_radius;
 		reff = cline->radius + add_radius;
@@ -192,7 +192,7 @@ rt_cline_shot(struct soltab *stp, register struct xray *rp, struct application *
 
 	cosa = VDOT( rp->r_dir, cline->h );
 
-	if( cosa > 0.0 )
+	if ( cosa > 0.0 )
 		tmp = cosa - 1.0;
 	else
 		tmp = cosa + 1.0;
@@ -200,7 +200,7 @@ rt_cline_shot(struct soltab *stp, register struct xray *rp, struct application *
 	(void)bn_distsq_line3_line3( dist, cline->V, cline->height,
 				     rp->r_pt, rp->r_dir, pt1, pt2 );
 
-	if( NEAR_ZERO( tmp, RT_DOT_TOL ) )
+	if ( NEAR_ZERO( tmp, RT_DOT_TOL ) )
 	{
 		/* ray is parallel to CLINE */
 #if 1
@@ -212,15 +212,15 @@ rt_cline_shot(struct soltab *stp, register struct xray *rp, struct application *
 		return( 0 );
 #else
 
-		if( cline->thickness > 0.0 )
+		if ( cline->thickness > 0.0 )
 			return( 0 );	/* No end-on hits for plate mode cline */
 
-		if( dist[2] > reff*reff )
+		if ( dist[2] > reff*reff )
 			return( 0 );	/* missed */
 
 		VJOIN2( diff, cline->V, 1.0, cline->height, -1.0, rp->r_pt );
 		dist[0] = VDOT( diff, rp->r_dir );
-		if( dist[1] < dist[0] )
+		if ( dist[1] < dist[0] )
 		{
 			dist[2] = dist[0];
 			dist[0] = dist[1];
@@ -233,14 +233,14 @@ rt_cline_shot(struct soltab *stp, register struct xray *rp, struct application *
 		segp->seg_stp = stp;
 		segp->seg_in.hit_dist = dist[0];
 		segp->seg_in.hit_surfno = 1;
-		if( cosa > 0.0 )
+		if ( cosa > 0.0 )
 			VREVERSE( segp->seg_in.hit_normal, cline->h )
 		else
 			VMOVE( segp->seg_in.hit_normal, cline->h );
 
 		segp->seg_out.hit_dist = dist[1];
 		segp->seg_out.hit_surfno = -1;
-		if( cosa < 0.0 )
+		if ( cosa < 0.0 )
 			VREVERSE( segp->seg_out.hit_normal, cline->h )
 		else
 			VMOVE( segp->seg_out.hit_normal, cline->h );
@@ -249,17 +249,17 @@ rt_cline_shot(struct soltab *stp, register struct xray *rp, struct application *
 #endif
 	}
 
-	if( dist[2] > reff*reff )
+	if ( dist[2] > reff*reff )
 		return( 0 );	/* missed */
 
 
 	/* Exactly ==0 and ==1 are hits, not misses */
-	if( dist[0] < 0.0 || dist[0] > 1.0 )
+	if ( dist[0] < 0.0 || dist[0] > 1.0 )
 		return( 0 );	/* missed */
 
 	sina = sqrt( 1.0 - cosa*cosa);
 	tmp = sqrt( dist[2] ) - add_radius;
-	if( dist[2] > add_radius * add_radius )
+	if ( dist[2] > add_radius * add_radius )
 		half_los = sqrt( cline->radius*cline->radius - tmp*tmp) / sina;
 	else
 		half_los = cline->radius / sina;
@@ -270,7 +270,7 @@ rt_cline_shot(struct soltab *stp, register struct xray *rp, struct application *
 	VSUB2( diff, diff, rp->r_pt );
 	distmax = VDOT( rp->r_dir, diff );
 
-	if( distmin > distmax )
+	if ( distmin > distmax )
 	{
 		tmp = distmin;
 		distmin = distmax;
@@ -280,7 +280,7 @@ rt_cline_shot(struct soltab *stp, register struct xray *rp, struct application *
 	distmin -= cline->radius;
 	distmax += cline->radius;
 
-	if( cline->thickness <= 0.0 )
+	if ( cline->thickness <= 0.0 )
 	{
 		/* volume mode */
 
@@ -288,13 +288,13 @@ rt_cline_shot(struct soltab *stp, register struct xray *rp, struct application *
 		segp->seg_stp = stp;
 		segp->seg_in.hit_surfno = 2;
 		segp->seg_in.hit_dist = dist[1] - half_los;
-		if( segp->seg_in.hit_dist < distmin )
+		if ( segp->seg_in.hit_dist < distmin )
 			segp->seg_in.hit_dist = distmin;
 		VMOVE( segp->seg_in.hit_vpriv, cline->h );
 
 		segp->seg_out.hit_surfno = -2;
 		segp->seg_out.hit_dist = dist[1] + half_los;
-		if( segp->seg_out.hit_dist > distmax )
+		if ( segp->seg_out.hit_dist > distmax )
 			segp->seg_out.hit_dist = distmax;
 		VMOVE( segp->seg_out.hit_vpriv, cline->h );
 		BU_LIST_INSERT( &(seghead->l), &(segp->l) );
@@ -309,7 +309,7 @@ rt_cline_shot(struct soltab *stp, register struct xray *rp, struct application *
 			segp->seg_stp = stp;
 			segp->seg_in.hit_surfno = 2;
 		segp->seg_in.hit_dist = dist[1] - half_los;
-		if( segp->seg_in.hit_dist < distmin )
+		if ( segp->seg_in.hit_dist < distmin )
 			segp->seg_in.hit_dist = distmin;
 		VMOVE( segp->seg_in.hit_vpriv, cline->h );
 
@@ -322,7 +322,7 @@ rt_cline_shot(struct soltab *stp, register struct xray *rp, struct application *
 			segp->seg_stp = stp;
 			segp->seg_in.hit_surfno = 2;
 		segp->seg_in.hit_dist = dist[1] + half_los;
-		if( segp->seg_in.hit_dist > distmax )
+		if ( segp->seg_in.hit_dist > distmax )
 			segp->seg_in.hit_dist = distmax;
 		segp->seg_in.hit_dist -=  cline->thickness;
 		VMOVE( segp->seg_in.hit_vpriv, cline->h );
@@ -365,7 +365,7 @@ rt_cline_norm(register struct hit *hitp, struct soltab *stp, register struct xra
 	vect_t tmp;
 	fastf_t dot;
 
-	if( hitp->hit_surfno == 1 || hitp->hit_surfno == -1 )
+	if ( hitp->hit_surfno == 1 || hitp->hit_surfno == -1 )
 		return;
 
 	/* only need to do some calculations for surfno 2 or -2 */
@@ -375,12 +375,12 @@ rt_cline_norm(register struct hit *hitp, struct soltab *stp, register struct xra
 	VCROSS( hitp->hit_normal, tmp, hitp->hit_vpriv );
 	VUNITIZE( hitp->hit_normal );
 	dot = VDOT( hitp->hit_normal, rp->r_dir );
-	if( dot < 0.0 && hitp->hit_surfno < 0 )
+	if ( dot < 0.0 && hitp->hit_surfno < 0 )
 		VREVERSE( hitp->hit_normal, hitp->hit_normal )
-	else if( dot >  0.0 && hitp->hit_surfno > 0 )
+	else if ( dot >  0.0 && hitp->hit_surfno > 0 )
 		VREVERSE( hitp->hit_normal, hitp->hit_normal )
 
-	if( MAGNITUDE( hitp->hit_normal ) < 0.9 ) {
+	if ( MAGNITUDE( hitp->hit_normal ) < 0.9 ) {
 		bu_log( "BAD normal for solid %s for ray -p %g %g %g -d %g %g %g\n",
 			stp->st_name, V3ARGS( rp->r_pt ), V3ARGS( rp->r_dir ) );
 		bu_bomb( "BAD normal\n" );
@@ -472,23 +472,23 @@ rt_cline_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_
 
 	/* Draw the top */
 	RT_ADD_VLIST( vhead, &top[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
-	for( i=0; i<16; i++ )  {
+	for ( i=0; i<16; i++ )  {
 		RT_ADD_VLIST( vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
 	}
 
 	/* Draw the bottom */
 	RT_ADD_VLIST( vhead, &bottom[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
-	for( i=0; i<16; i++ )  {
+	for ( i=0; i<16; i++ )  {
 		RT_ADD_VLIST( vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
 	}
 
 	/* Draw connections */
-	for( i=0; i<16; i += 4 )  {
+	for ( i=0; i<16; i += 4 )  {
 		RT_ADD_VLIST( vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
 		RT_ADD_VLIST( vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
 	}
 
-	if( cline_ip->thickness > 0.0 && cline_ip->thickness < cline_ip->radius )
+	if ( cline_ip->thickness > 0.0 && cline_ip->thickness < cline_ip->radius )
 	{
 		/* draw inner cylinder */
 
@@ -502,18 +502,18 @@ rt_cline_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_
 
 		/* Draw the top */
 		RT_ADD_VLIST( vhead, &top[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
-		for( i=0; i<16; i++ )  {
+		for ( i=0; i<16; i++ )  {
 			RT_ADD_VLIST( vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
 		}
 
 		/* Draw the bottom */
 		RT_ADD_VLIST( vhead, &bottom[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
-		for( i=0; i<16; i++ )  {
+		for ( i=0; i<16; i++ )  {
 			RT_ADD_VLIST( vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
 		}
 
 		/* Draw connections */
-		for( i=0; i<16; i += 4 )  {
+		for ( i=0; i<16; i += 4 )  {
 			RT_ADD_VLIST( vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
 			RT_ADD_VLIST( vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
 		}
@@ -560,31 +560,31 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
 	rel_tol = bn_halfpi;
 	norm_tol = bn_halfpi;
 
-	if( ttol->abs <= 0.0 && ttol->rel <= 0.0 && ttol->norm <= 0.0 )
+	if ( ttol->abs <= 0.0 && ttol->rel <= 0.0 && ttol->norm <= 0.0 )
 	{
 		/* no tolerances specified, use 10% relative tolerance */
 		ang_tol = 2.0 * acos( 0.9 );
 	}
 	else
 	{
-		if( ttol->abs > 0.0 && ttol->abs < cline_ip->radius )
+		if ( ttol->abs > 0.0 && ttol->abs < cline_ip->radius )
 			abs_tol = 2.0 * acos( 1.0 - ttol->abs / cline_ip->radius );
-		if( ttol->rel > 0.0 && ttol->rel < 1.0 )
+		if ( ttol->rel > 0.0 && ttol->rel < 1.0 )
 			rel_tol = 2.0 * acos( 1.0 - ttol->rel );
-		if( ttol->norm > 0.0 )
+		if ( ttol->norm > 0.0 )
 			norm_tol = 2.0 * ttol->norm;
 	}
 
-	if( abs_tol < ang_tol )
+	if ( abs_tol < ang_tol )
 		ang_tol = abs_tol;
-	if( rel_tol < ang_tol )
+	if ( rel_tol < ang_tol )
 		ang_tol = rel_tol;
-	if( norm_tol < ang_tol )
+	if ( norm_tol < ang_tol )
 		ang_tol = norm_tol;
 
 	/* get number of segments per quadrant */
 	nsegs = (int)(bn_halfpi / ang_tol + 0.9999);
-	if( nsegs < 2 )
+	if ( nsegs < 2 )
 		nsegs = 2;
 
 	ang_tol = bn_halfpi / nsegs;
@@ -596,7 +596,7 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
 	base_outer = (struct cline_vert *)bu_calloc( nsegs, sizeof( struct cline_vert ), "base outer vertices" );
 	top_outer = (struct cline_vert *)bu_calloc( nsegs, sizeof( struct cline_vert ), "top outer vertices" );
 
-	if( cline_ip->thickness > 0.0 && cline_ip->thickness < cline_ip->radius )
+	if ( cline_ip->thickness > 0.0 && cline_ip->thickness < cline_ip->radius )
 	{
 		base_inner = (struct cline_vert *)bu_calloc( nsegs, sizeof( struct cline_vert ), "base inner vertices" );
 		top_inner = (struct cline_vert *)bu_calloc( nsegs, sizeof( struct cline_vert ), "top inner vertices" );
@@ -610,7 +610,7 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
 	VCROSS( v2, cline_ip->h, v1 );
 	VUNITIZE( v2 );
 	VADD2( top, cline_ip->v, cline_ip->h );
-	for( seg_no = 0; seg_no < nsegs ; seg_no++ )
+	for ( seg_no = 0; seg_no < nsegs; seg_no++ )
 	{
 		fastf_t a, b, c, d, angle;
 
@@ -619,7 +619,7 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
 		a = cos( angle );
 		b = sin( angle );
 
-		if( cline_ip->thickness > 0.0 && cline_ip->thickness < cline_ip->radius )
+		if ( cline_ip->thickness > 0.0 && cline_ip->thickness < cline_ip->radius )
 		{
 			c = a * (cline_ip->radius - cline_ip->thickness);
 			d = b * (cline_ip->radius - cline_ip->thickness);
@@ -633,7 +633,7 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
 		VJOIN2( base_outer[seg_no].pt, cline_ip->v, a, v1, b, v2 );
 		VADD2( top_outer[seg_no].pt, base_outer[seg_no].pt, cline_ip->h );
 
-		if( cline_ip->thickness > 0.0 && cline_ip->thickness < cline_ip->radius )
+		if ( cline_ip->thickness > 0.0 && cline_ip->thickness < cline_ip->radius )
 		{
 			VJOIN2( base_inner[seg_no].pt, cline_ip->v, c, v1, d, v2 );
 			VADD2( top_inner[seg_no].pt, base_inner[seg_no].pt, cline_ip->h );
@@ -642,14 +642,14 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
 
 	bu_ptbl_init( &faces, 64, "faces");
 	/* build outer faces */
-	for( seg_no=0 ; seg_no<nsegs ; seg_no++ )
+	for ( seg_no=0; seg_no<nsegs; seg_no++ )
 	{
 		int next_seg;
 		struct vertex **verts[3];
 		struct faceuse *fu;
 
 		next_seg = seg_no + 1;
-		if( next_seg == nsegs )
+		if ( next_seg == nsegs )
 			next_seg = 0;
 
 		verts[2] = &top_outer[seg_no].v;
@@ -668,16 +668,16 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
 	}
 
 	/* build inner faces */
-	if( cline_ip->thickness > 0.0 && cline_ip->thickness < cline_ip->radius )
+	if ( cline_ip->thickness > 0.0 && cline_ip->thickness < cline_ip->radius )
 	{
-		for( seg_no=0 ; seg_no<nsegs ; seg_no++ )
+		for ( seg_no=0; seg_no<nsegs; seg_no++ )
 		{
 			int next_seg;
 			struct vertex **verts[3];
 			struct faceuse *fu;
 
 			next_seg = seg_no + 1;
-			if( next_seg == nsegs )
+			if ( next_seg == nsegs )
 				next_seg = 0;
 
 			verts[0] = &top_inner[seg_no].v;
@@ -699,17 +699,17 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
 	/* build top faces */
 	top_center.v = (struct vertex *)NULL;
 	VMOVE( top_center.pt, top );
-	for( seg_no=0 ; seg_no<nsegs ; seg_no++ )
+	for ( seg_no=0; seg_no<nsegs; seg_no++ )
 	{
 		int next_seg;
 		struct vertex **verts[3];
 		struct faceuse *fu;
 
 		next_seg = seg_no + 1;
-		if( next_seg == nsegs )
+		if ( next_seg == nsegs )
 			next_seg = 0;
 
-		if( cline_ip->thickness > 0.0 && cline_ip->thickness < cline_ip->radius )
+		if ( cline_ip->thickness > 0.0 && cline_ip->thickness < cline_ip->radius )
 		{
 			verts[2] = &top_outer[seg_no].v;
 			verts[1] = &top_inner[seg_no].v;
@@ -736,17 +736,17 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
 	/* build base faces */
 	base_center.v = (struct vertex *)NULL;
 	VMOVE( base_center.pt, cline_ip->v );
-	for( seg_no=0 ; seg_no<nsegs ; seg_no++ )
+	for ( seg_no=0; seg_no<nsegs; seg_no++ )
 	{
 		int next_seg;
 		struct vertex **verts[3];
 		struct faceuse *fu;
 
 		next_seg = seg_no + 1;
-		if( next_seg == nsegs )
+		if ( next_seg == nsegs )
 			next_seg = 0;
 
-		if( cline_ip->thickness > 0.0 && cline_ip->thickness < cline_ip->radius )
+		if ( cline_ip->thickness > 0.0 && cline_ip->thickness < cline_ip->radius )
 		{
 			verts[0] = &base_outer[seg_no].v;
 			verts[1] = &base_inner[seg_no].v;
@@ -771,20 +771,20 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
 	}
 
 	/* assign vertex geometry */
-	if( top_center.v )
+	if ( top_center.v )
 		nmg_vertex_gv( top_center.v, top_center.pt );
-	if( base_center.v )
+	if ( base_center.v )
 		nmg_vertex_gv( base_center.v, base_center.pt );
 
-	for( seg_no=0 ; seg_no<nsegs ; seg_no++ )
+	for ( seg_no=0; seg_no<nsegs; seg_no++ )
 	{
 		nmg_vertex_gv( top_outer[seg_no].v, top_outer[seg_no].pt );
 		nmg_vertex_gv( base_outer[seg_no].v, base_outer[seg_no].pt );
 	}
 
-	if( cline_ip->thickness > 0.0 && cline_ip->thickness < cline_ip->radius )
+	if ( cline_ip->thickness > 0.0 && cline_ip->thickness < cline_ip->radius )
 	{
-		for( seg_no=0 ; seg_no<nsegs ; seg_no++ )
+		for ( seg_no=0; seg_no<nsegs; seg_no++ )
 		{
 			nmg_vertex_gv( top_inner[seg_no].v, top_inner[seg_no].pt );
 			nmg_vertex_gv( base_inner[seg_no].v, base_inner[seg_no].pt );
@@ -793,21 +793,21 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
 
 	bu_free( (char *)base_outer, "base outer vertices" );
 	bu_free( (char *)top_outer, "top outer vertices" );
-	if( cline_ip->thickness > 0.0 && cline_ip->thickness < cline_ip->radius )
+	if ( cline_ip->thickness > 0.0 && cline_ip->thickness < cline_ip->radius )
 	{
 		bu_free( (char *)base_inner, "base inner vertices" );
 		bu_free( (char *)top_inner, "top inner vertices" );
 	}
 
 	/* Associate face plane equations */
-	for( i=0 ; i<BU_PTBL_END( &faces ) ; i++ )
+	for ( i=0; i<BU_PTBL_END( &faces ); i++ )
 	{
 		struct faceuse *fu;
 
 		fu = (struct faceuse *)BU_PTBL_GET( &faces, i );
 		NMG_CK_FACEUSE( fu );
 
-		if( nmg_calc_face_g( fu ) )
+		if ( nmg_calc_face_g( fu ) )
 		{
 			bu_log( "rt_tess_cline: failed to calculate plane equation\n" );
 			nmg_pr_fu_briefly( fu, "" );
@@ -838,7 +838,7 @@ rt_cline_import(struct rt_db_internal *ip, const struct bu_external *ep, registe
 	rp = (union record *)ep->ext_buf;
 	/* Check record type */
 
-	if( rp->u_id != DBID_CLINE )  {
+	if ( rp->u_id != DBID_CLINE )  {
 		bu_log("rt_cline_import: defective record\n");
 		return(-1);
 	}
@@ -878,7 +878,7 @@ rt_cline_export(struct bu_external *ep, const struct rt_db_internal *ip, double 
 	point_t				work;
 
 	RT_CK_DB_INTERNAL(ip);
-	if( ip->idb_type != ID_CLINE )  return(-1);
+	if ( ip->idb_type != ID_CLINE )  return(-1);
 	cline_ip = (struct rt_cline_internal *)ip->idb_ptr;
 	RT_CLINE_CK_MAGIC(cline_ip);
 
@@ -992,7 +992,7 @@ rt_cline_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbo
 	VSCALE( local_v, cline_ip->v, mm2local );
 	VSCALE( local_h, cline_ip->h, mm2local );
 
-	if( cline_ip->thickness > 0.0 )
+	if ( cline_ip->thickness > 0.0 )
 	{
 		sprintf( buf, "\tV (%g %g %g)\n\tH (%g %g %g)\n\tradius %g\n\tplate mode thickness %g",
 				V3INTCLAMPARGS( local_v ), V3INTCLAMPARGS( local_h ), INTCLAMP(cline_ip->radius*mm2local), INTCLAMP(cline_ip->thickness*mm2local) );
@@ -1046,20 +1046,20 @@ rt_cline_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const c
 	Tcl_DStringInit( &ds );
 	bu_vls_init( &vls );
 
-	if( attr == (char *)NULL )
+	if ( attr == (char *)NULL )
 	{
 		bu_vls_strcpy( &vls, "cline" );
 		bu_vls_printf( &vls, " V {%.25G %.25G %.25G}", V3ARGS( cli->v ) );
 		bu_vls_printf( &vls, " H {%.25G %.25G %.25G}", V3ARGS( cli->h ) );
 		bu_vls_printf( &vls, " R %.25G T %.25G", cli->radius, cli->thickness );
 	}
-	else if( *attr == 'V')
+	else if ( *attr == 'V')
 		bu_vls_printf( &vls, "%.25G %.25G %.25G", V3ARGS( cli->v ) );
-	else if( *attr == 'H' )
+	else if ( *attr == 'H' )
 		bu_vls_printf( &vls, "%.25G %.25G %.25G", V3ARGS( cli->h ) );
-	else if( *attr == 'R' )
+	else if ( *attr == 'R' )
 		bu_vls_printf( &vls, "%.25G", cli->radius );
-	else if( *attr == 'T' )
+	else if ( *attr == 'T' )
 		bu_vls_printf( &vls, "%.25G", cli->thickness );
 	else
 	{
@@ -1084,14 +1084,14 @@ rt_cline_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, 
 	RT_CK_DB_INTERNAL( intern );
 	RT_CLINE_CK_MAGIC( cli );
 
-	while( argc >= 2 )
+	while ( argc >= 2 )
 	{
 		int array_len=3;
 
-		if( *argv[0] == 'V' )
+		if ( *argv[0] == 'V' )
 		{
 			new = cli->v;
-			if( tcl_list_to_fastf_array( interp, argv[1], &new, &array_len ) !=
+			if ( tcl_list_to_fastf_array( interp, argv[1], &new, &array_len ) !=
 			    array_len ) {
 				Tcl_SetResult( interp,
 				      "ERROR: Incorrect number of coordinates for vector\n",
@@ -1099,10 +1099,10 @@ rt_cline_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, 
 				return( TCL_ERROR );
 			}
 		}
-		else if( *argv[0] == 'H' )
+		else if ( *argv[0] == 'H' )
 		{
 			new = cli->h;
-			if( tcl_list_to_fastf_array( interp, argv[1], &new, &array_len ) !=
+			if ( tcl_list_to_fastf_array( interp, argv[1], &new, &array_len ) !=
 			    array_len ) {
 				Tcl_SetResult( interp,
 				      "ERROR: Incorrect number of coordinates for point\n",
@@ -1110,9 +1110,9 @@ rt_cline_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, 
 				return( TCL_ERROR );
 			}
 		}
-		else if( *argv[0] == 'R' )
+		else if ( *argv[0] == 'R' )
 			cli->radius = atof( argv[1] );
-		else if( *argv[0] == 'T' )
+		else if ( *argv[0] == 'T' )
 			cli->thickness = atof( argv[1] );
 
 		argc -= 2;

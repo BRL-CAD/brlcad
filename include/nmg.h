@@ -158,9 +158,9 @@
 /**
  * macros to check/validate a structure pointer
  */
-#define NMG_CKMAG(_ptr, _magic, _str)	BU_CKMAG(_ptr,_magic,_str)
+#define NMG_CKMAG(_ptr, _magic, _str)	BU_CKMAG(_ptr, _magic, _str)
 #define NMG_CK2MAG(_ptr, _magic1, _magic2, _str)	\
-	if( !(_ptr) || (*((long *)(_ptr)) != (_magic1) && *((long *)(_ptr)) != (_magic2) ) )  { \
+	if ( !(_ptr) || (*((long *)(_ptr)) != (_magic1) && *((long *)(_ptr)) != (_magic2) ) )  { \
 		bu_badmagic( (long *)(_ptr), _magic1, _str, __FILE__, __LINE__ ); \
 	}
 
@@ -195,12 +195,12 @@
 	if (!(_p)->l.forw || !(_p)->l.back || !(_p)->eumate_p || \
 	    !(_p)->radial_p || !(_p)->e_p || !(_p)->vu_p || \
 	    !(_p)->up.magic_p ) { \
-		bu_log("in %s at %d, Bad edgeuse member pointer\n",\
+		bu_log("in %s at %d, Bad edgeuse member pointer\n", \
 			 __FILE__, __LINE__);  nmg_pr_eu(_p, (char *)NULL); \
 		bu_bomb("NULL pointer\n"); \
 	} else if ((_p)->vu_p->up.eu_p != (_p) || \
 		(_p)->eumate_p->vu_p->up.eu_p != (_p)->eumate_p) {\
-		bu_log("in %s at %d, edgeuse lost vertexuse\n",\
+		bu_log("in %s at %d, edgeuse lost vertexuse\n", \
 			 __FILE__, __LINE__); \
 		bu_bomb("bye"); \
 	}
@@ -278,7 +278,7 @@ struct nmgregion_a {
  *
  *  The wire edgeuses are disconnected line segments.
  *  There is a special interpetation to the eu_hd list of wire edgeuses.
- *  Unlike edgeuses seen in loops, the eu_hd list contains eu1, eu1mate,
+ *  Unlike edgeuses seen in loops, the eu_hd list contains eu1, eu1mate, 
  *  eu2, eu2mate, ..., where each edgeuse and it's mate comprise a
  *  *non-connected* "wire" edge which starts at eu1->vu_p->v_p and ends
  *  at eu1mate->vu_p->v_p.  There is no relationship between the pairs
@@ -371,7 +371,7 @@ struct faceuse {
 	NMG_CK_FACE(_fu1->f_p); \
 	_fg = _fu1->f_p->g.plane_p; \
 	NMG_CK_FACE_G_PLANE(_fg); \
-	if( (_fu1->orientation != OT_SAME) != (_fu1->f_p->flip != 0) )  { \
+	if ( (_fu1->orientation != OT_SAME) != (_fu1->f_p->flip != 0) )  { \
 		VREVERSE( _N, _fg->N); \
 	} else { \
 		VMOVE( _N, _fg->N ); \
@@ -385,7 +385,7 @@ struct faceuse {
 	NMG_CK_FACE(_fu1->f_p); \
 	_fg = _fu1->f_p->g.plane_p; \
 	NMG_CK_FACE_G_PLANE(_fg); \
-	if( (_fu1->orientation != OT_SAME) != (_fu1->f_p->flip != 0) )  { \
+	if ( (_fu1->orientation != OT_SAME) != (_fu1->f_p->flip != 0) )  { \
 		HREVERSE( _N, _fg->N); \
 	} else { \
 		HMOVE( _N, _fg->N ); \
@@ -415,7 +415,7 @@ struct faceuse {
  *  The edges of an exterior (OT_SAME) loop occur in counter-clockwise
  *  order, as viewed from the normalward side (outside).
  */
-#define RT_LIST_SET_DOWN_TO_VERT(_hp,_vu)	{ \
+#define RT_LIST_SET_DOWN_TO_VERT(_hp, _vu)	{ \
 	(_hp)->forw = &((_vu)->l); (_hp)->back = (struct bu_list *)NULL; }
 
 struct loop {
@@ -599,7 +599,7 @@ struct vertexuse_a_cnurb {
  *  In particular, application code should NEVER do these things.
  *  Any need to do so should be handled by extending nmg_mk.c
  */
-#define NMG_INCR_INDEX(_p,_m)	\
+#define NMG_INCR_INDEX(_p, _m)	\
 	NMG_CK_MODEL(_m); (_p)->index = ((_m)->maxindex)++
 
 #define GET_REGION(p, m)	    {NMG_GETSTRUCT(p, nmgregion); NMG_INCR_INDEX(p, m);}
@@ -647,14 +647,14 @@ struct vertexuse_a_cnurb {
 #define FREE_VERTEXUSE_A_CNURB(p) NMG_FREESTRUCT(p, vertexuse_a_cnurb)
 
 /** Do two edgeuses share the same two vertices? If yes, eu's should be joined. */
-#define NMG_ARE_EUS_ADJACENT(_eu1,_eu2)	(  \
+#define NMG_ARE_EUS_ADJACENT(_eu1, _eu2)	(  \
 	( (_eu1)->vu_p->v_p == (_eu2)->vu_p->v_p &&   \
 	  (_eu1)->eumate_p->vu_p->v_p == (_eu2)->eumate_p->vu_p->v_p )  ||  \
 	( (_eu1)->vu_p->v_p == (_eu2)->eumate_p->vu_p->v_p &&  \
 	  (_eu1)->eumate_p->vu_p->v_p == (_eu2)->vu_p->v_p ) )
 
 /** Compat: Used in nmg_misc.c and nmg_mod.c */
-#define EDGESADJ(_e1, _e2) NMG_ARE_EUS_ADJACENT(_e1,_e2)
+#define EDGESADJ(_e1, _e2) NMG_ARE_EUS_ADJACENT(_e1, _e2)
 
 /** Print a plane equation. */
 #define PLPRINT(_s, _pl) bu_log("%s %gx + %gy + %gz = %g\n", (_s), \
@@ -742,21 +742,21 @@ struct nmg_struct_counts {
  *  is not used, to avoid the possibility of integer overflow from
  *  repeated test-and-set operations on one item.
  */
-#define NMG_INDEX_VALUE(_tab,_index)	((_tab)[_index])
-#define NMG_INDEX_TEST(_tab,_p)		( (_tab)[(_p)->index] )
-#define NMG_INDEX_SET(_tab,_p)		{(_tab)[(_p)->index] = 1;}
-#define NMG_INDEX_CLEAR(_tab,_p)	{(_tab)[(_p)->index] = 0;}
-#define NMG_INDEX_TEST_AND_SET(_tab,_p)	\
+#define NMG_INDEX_VALUE(_tab, _index)	((_tab)[_index])
+#define NMG_INDEX_TEST(_tab, _p)		( (_tab)[(_p)->index] )
+#define NMG_INDEX_SET(_tab, _p)		{(_tab)[(_p)->index] = 1;}
+#define NMG_INDEX_CLEAR(_tab, _p)	{(_tab)[(_p)->index] = 0;}
+#define NMG_INDEX_TEST_AND_SET(_tab, _p)	\
 	( (_tab)[(_p)->index] == 0 ? ((_tab)[(_p)->index] = 1) : 0 )
-#define NMG_INDEX_IS_SET(_tab,_p)	NMG_INDEX_TEST(_tab,_p)
-#define NMG_INDEX_FIRST_TIME(_tab,_p)	NMG_INDEX_TEST_AND_SET(_tab,_p)
-#define NMG_INDEX_ASSIGN(_tab,_p,_val)	{(_tab)[(_p)->index] = _val;}
-#define NMG_INDEX_GET(_tab,_p)		((_tab)[(_p)->index])
-#define NMG_INDEX_GETP(_ty,_tab,_p)	((struct _ty *)((_tab)[(_p)->index]))
-#define NMG_INDEX_OR(_tab,_p,_val)	{(_tab)[(_p)->index] |= _val;}
-#define NMG_INDEX_AND(_tab,_p,_val)	{(_tab)[(_p)->index] &= _val;}
-#define NMG_INDEX_RETURN_IF_SET_ELSE_SET(_tab,_index)	\
-	{ if( (_tab)[_index] )  return; \
+#define NMG_INDEX_IS_SET(_tab, _p)	NMG_INDEX_TEST(_tab, _p)
+#define NMG_INDEX_FIRST_TIME(_tab, _p)	NMG_INDEX_TEST_AND_SET(_tab, _p)
+#define NMG_INDEX_ASSIGN(_tab, _p, _val)	{(_tab)[(_p)->index] = _val;}
+#define NMG_INDEX_GET(_tab, _p)		((_tab)[(_p)->index])
+#define NMG_INDEX_GETP(_ty, _tab, _p)	((struct _ty *)((_tab)[(_p)->index]))
+#define NMG_INDEX_OR(_tab, _p, _val)	{(_tab)[(_p)->index] |= _val;}
+#define NMG_INDEX_AND(_tab, _p, _val)	{(_tab)[(_p)->index] &= _val;}
+#define NMG_INDEX_RETURN_IF_SET_ELSE_SET(_tab, _index)	\
+	{ if ( (_tab)[_index] )  return; \
 	  else (_tab)[_index] = 1; }
 
 /* flags for manifold-ness */
@@ -768,7 +768,7 @@ struct nmg_struct_counts {
 # define NMG_DANGLING	8 /* NMG_2MANIFOLD + 4th bit for special cond */
 #endif
 
-#define NMG_SET_MANIFOLD(_t,_p,_v) NMG_INDEX_OR(_t, _p, _v)
+#define NMG_SET_MANIFOLD(_t, _p, _v) NMG_INDEX_OR(_t, _p, _v)
 #define NMG_MANIFOLDS(_t, _p)	   NMG_INDEX_VALUE(_t, (_p)->index)
 #define NMG_CP_MANIFOLD(_t, _p, _q) (_t)[(_p)->index] = (_t)[(_q)->index]
 

@@ -67,7 +67,7 @@ get_args(int argc, register char **argv)
 	register int c;
 
 	while ( (c = bu_getopt( argc, argv, "ahs:w:n:t:x:" )) != EOF )  {
-		switch( c )  {
+		switch ( c )  {
 		case 'a':
 			autosize = 1;
 			break;
@@ -100,14 +100,14 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( bu_optind >= argc )  {
-		if( isatty(fileno(stdin)) )
+	if ( bu_optind >= argc )  {
+		if ( isatty(fileno(stdin)) )
 			return(0);
 		file_name = "-";
 		infp = stdin;
 	} else {
 		file_name = argv[bu_optind];
-		if( (infp = fopen(file_name, "r")) == NULL )  {
+		if ( (infp = fopen(file_name, "r")) == NULL )  {
 			perror(file_name);
 			(void)fprintf( stderr,
 				"pixbgstrip: cannot open \"%s\" for reading\n",
@@ -134,16 +134,16 @@ main(int argc, char **argv)
 		bu_exit ( 1, NULL );
 	}
 
-	if( isatty(fileno(stdout)) )  {
+	if ( isatty(fileno(stdout)) )  {
 		(void)fputs("Binary output must be redirected away from the terminal\n", stderr);
 		(void)fputs(usage, stderr);
 		bu_exit ( 1, NULL );
 	}
 
 	/* autosize input? */
-	if( fileinput && autosize ) {
+	if ( fileinput && autosize ) {
 		unsigned long int	w, h;
-		if( fb_common_file_size(&w, &h, file_name, 3) ) {
+		if ( fb_common_file_size(&w, &h, file_name, 3) ) {
 			file_width = (long)w;
 		} else {
 			fprintf(stderr, "pixbgstrip: unable to autosize\n");
@@ -153,30 +153,30 @@ main(int argc, char **argv)
 	scanbytes = file_width * sizeof(RGBpixel);
 	scanline = (unsigned char *)bu_malloc(scanbytes, "scanline");
 
-	while( !feof(infp) )  {
-		if( fread( scanline, 1, scanbytes, infp ) != scanbytes )
+	while ( !feof(infp) )  {
+		if ( fread( scanline, 1, scanbytes, infp ) != scanbytes )
 			break;
 		r = scanline[bg_x_offset*3+0];
 		g = scanline[bg_x_offset*3+1];
 		b = scanline[bg_x_offset*3+2];
-		for( i=0; i<file_width; i++ )  {
+		for ( i=0; i<file_width; i++ )  {
 			register int diff;
 
 			diff = scanline[i*3+0] - r;
-			if( diff <= -thresh || diff >= thresh ) continue;
+			if ( diff <= -thresh || diff >= thresh ) continue;
 
 			diff = scanline[i*3+1] - g;
-			if( diff <= -thresh || diff >= thresh ) continue;
+			if ( diff <= -thresh || diff >= thresh ) continue;
 
 			diff = scanline[i*3+2] - b;
-			if( diff <= -thresh || diff >= thresh ) continue;
+			if ( diff <= -thresh || diff >= thresh ) continue;
 
 			/* Input pixel matches background, set to black */
 			scanline[i*3+0] =
 				scanline[i*3+1] =
 				scanline[i*3+2] = 0;
 		}
-		if( fwrite( scanline, 1, scanbytes, stdout) != scanbytes )  {
+		if ( fwrite( scanline, 1, scanbytes, stdout) != scanbytes )  {
 			perror("pixbgstrip: fwrite()");
 			bu_exit (1, NULL);
 		}

@@ -159,7 +159,7 @@ get_args(int argc, register char **argv)
 	register int c;
 
 	while ( (c = bu_getopt( argc, argv, "ecs:w:n:S:W:N:" )) != EOF )  {
-		switch( c )  {
+		switch ( c )  {
 		case 'e':
 			/* Encapsulated PostScript */
 			encapsulated++;
@@ -186,14 +186,14 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( bu_optind >= argc )  {
-		if( isatty(fileno(stdin)) )
+	if ( bu_optind >= argc )  {
+		if ( isatty(fileno(stdin)) )
 			return(0);
 		file_name = "[stdin]";
 		infp = stdin;
 	} else {
 		file_name = argv[bu_optind];
-		if( (infp = fopen(file_name, "r")) == NULL )  {
+		if ( (infp = fopen(file_name, "r")) == NULL )  {
 			(void)fprintf( stderr,
 				"pl-ps: cannot open \"%s\" for reading\n",
 				file_name );
@@ -225,7 +225,7 @@ main(int argc, char **argv)
 	sp[0] = sp[1] = sp[2] = 0.0;	/* minimum */
 	sp[3] = sp[4] = sp[5] = 4096.0;	/* max */
 
-	if( encapsulated ) {
+	if ( encapsulated ) {
 		xpoints = width;
 		ypoints = height;
 	} else {
@@ -234,23 +234,23 @@ main(int argc, char **argv)
 	}
 	prolog(stdout, file_name, xpoints, ypoints);
 
-	while( (c = getc(infp)) != EOF ) {
+	while ( (c = getc(infp)) != EOF ) {
 		/* look it up */
-		if( c < 'A' || c > 'z' ) {
+		if ( c < 'A' || c > 'z' ) {
 			up = &uerror;
 		} else {
 			up = &letters[ c - 'A' ];
 		}
 
-		if( up->targ == TBAD ) {
+		if ( up->targ == TBAD ) {
 			fprintf( stderr, "Bad command '%c' (0x%02x)\n", c, c );
 			continue;
 		}
 
-		if( up->narg > 0 )
+		if ( up->narg > 0 )
 			getargs( up );
 
-		switch( c ) {
+		switch ( c ) {
 		case 's':
 		case 'w':
 			sp[0] = arg[0];
@@ -313,7 +313,7 @@ main(int argc, char **argv)
 			break;
 		case 'e':
 			/* New page */
-			if( page_dirty ) {
+			if ( page_dirty ) {
 				printf("showpage\n");
 				/* Recenter and rescale! */
 				scaleinfo(stdout, xpoints, ypoints);
@@ -322,15 +322,15 @@ main(int argc, char **argv)
 			break;
 		case 'f':
 			/* linmod */
-			if( strcmp( strarg, "solid" ) == 0 )  {
+			if ( strcmp( strarg, "solid" ) == 0 )  {
 				printf("NV ");
-			} else if( strcmp( strarg, "dotted" ) == 0 )  {
+			} else if ( strcmp( strarg, "dotted" ) == 0 )  {
 				printf("DV ");
-			} else if( strcmp( strarg, "longdashed" ) == 0 )  {
+			} else if ( strcmp( strarg, "longdashed" ) == 0 )  {
 				printf("LDV ");
-			} else if( strcmp( strarg, "shortdashed" ) == 0 )  {
+			} else if ( strcmp( strarg, "shortdashed" ) == 0 )  {
 				printf("SDV ");
-			} else if( strcmp( strarg, "dotdashed" ) == 0 )  {
+			} else if ( strcmp( strarg, "dotdashed" ) == 0 )  {
 				printf("DDV ");
 			} else {
 				fprintf(stderr, "linmod %s unknown\n", strarg);
@@ -338,7 +338,7 @@ main(int argc, char **argv)
 			break;
 		}
 
-		if( verbose )
+		if ( verbose )
 			fprintf( stderr, "%s\n", up->desc );
 	}
 
@@ -355,7 +355,7 @@ getshort(void)
 	v |= (getc(infp)<<8);	/* order is important! */
 
 	/* worry about sign extension - sigh */
-	if( v <= 0x7FFF )  return(v);
+	if ( v <= 0x7FFF )  return(v);
 	w = -1;
 	w &= ~0x7FFF;
 	return( w | v );
@@ -366,8 +366,8 @@ getargs(struct uplot *up)
 {
 	int	i;
 
-	for( i = 0; i < up->narg; i++ ) {
-		switch( up->targ ){
+	for ( i = 0; i < up->narg; i++ ) {
+		switch ( up->targ ){
 			case TSHORT:
 				arg[i] = getshort();
 				break;
@@ -395,7 +395,7 @@ getstring(void)
 	char	*cp;
 
 	cp = strarg;
-	while( (c = getc(infp)) != '\n' && c != EOF )
+	while ( (c = getc(infp)) != '\n' && c != EOF )
 		*cp++ = c;
 	*cp = 0;
 }
@@ -425,7 +425,7 @@ draw(double x1, double y1, double z1, double x2, double y2, double z2)
 	sy2 = (y2 - sp[1]) / (sp[4] - sp[1]) * height;
 
 #if 0
-	if( sx1 == sx2 && sy1 == sy2 )
+	if ( sx1 == sx2 && sy1 == sy2 )
 		XDrawPoint( dpy, win, gc, sx1, sy1 );
 	else
 #endif
@@ -453,7 +453,7 @@ label(double x, double y, char *str)
 	 * without a move command in between.  We
 	 * really need a better solution. - XXX
 	 */
-	if( lastx == x && lasty == y ) {
+	if ( lastx == x && lasty == y ) {
 		printf("DFntM (%s) show\n", str );
 
 	} else {
@@ -497,7 +497,7 @@ prolog(FILE *fp, char *name, int width, int height)
 
 	ltime = time(0);
 
-	if( encapsulated ) {
+	if ( encapsulated ) {
 		fputs( "%!PS-Adobe-2.0 EPSF-1.2\n", fp );
 		fputs( "%%Creator: BRL-CAD pl-ps\n", fp );
 		fprintf(fp, "%%%%CreationDate: %s", ctime(&ltime) );
@@ -533,7 +533,7 @@ scaleinfo(FILE *fp, int width, int height)
 	 * space from 0-4096 x 0-4096.  We thus calculate a scale
 	 * command to bring this space down to our width and height.
 	 */
-	if( !encapsulated && center ) {
+	if ( !encapsulated && center ) {
 		int	xtrans, ytrans;
 		xtrans = (8.5*72 - width)/2.0;
 		ytrans = (11*72 - height)/2.0;
@@ -546,7 +546,7 @@ void
 postlog(FILE *fp)
 {
 	fputs( "\n", fp );
-	if( !encapsulated )
+	if ( !encapsulated )
 		fputs( "%end(plot)\n", fp );
 	/*
 	 * I believe the Adobe spec says that even Encapsulated

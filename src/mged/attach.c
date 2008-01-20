@@ -163,19 +163,19 @@ void
 mged_fb_open(void)
 {
 #ifdef DM_X
-  if(dmp->dm_type == DM_TYPE_X)
+  if (dmp->dm_type == DM_TYPE_X)
     X_fb_open();
 #endif /* DM_X */
 #ifdef DM_TK
-  if(dmp->dm_type == DM_TYPE_TK)
+  if (dmp->dm_type == DM_TYPE_TK)
     tk_fb_open();
 #endif /* DM_TK */
 #ifdef DM_WGL
-  if(dmp->dm_type == DM_TYPE_WGL)
+  if (dmp->dm_type == DM_TYPE_WGL)
       Wgl_fb_open();
 #endif /* DM_WGL */
 #ifdef DM_OGL
-  if(dmp->dm_type == DM_TYPE_OGL)
+  if (dmp->dm_type == DM_TYPE_OGL)
       Ogl_fb_open();
 #endif /* DM_OGL */
 }
@@ -226,34 +226,34 @@ release(char *name, int need_close)
 {
   struct dm_list *save_dm_list = DM_LIST_NULL;
 
-  if(name != NULL){
+  if (name != NULL){
     struct dm_list *p;
 
-    if(!strcmp("nu", name))
+    if (!strcmp("nu", name))
       return TCL_OK;  /* Ignore */
 
     FOR_ALL_DISPLAYS(p, &head_dm_list.l){
-      if(strcmp(name, bu_vls_addr(&p->dml_dmp->dm_pathName)))
+      if (strcmp(name, bu_vls_addr(&p->dml_dmp->dm_pathName)))
 	continue;
 
       /* found it */
-      if(p != curr_dm_list){
+      if (p != curr_dm_list){
 	save_dm_list = curr_dm_list;
 	curr_dm_list = p;
       }
       break;
     }
 
-    if(p == &head_dm_list){
+    if (p == &head_dm_list){
       Tcl_AppendResult(interp, "release: ", name,
 		       " not found\n", (char *)NULL);
       return TCL_ERROR;
     }
-  }else if(dmp && !strcmp("nu", bu_vls_addr(&pathName)))
+  }else if (dmp && !strcmp("nu", bu_vls_addr(&pathName)))
       return TCL_OK;  /* Ignore */
 
-  if(fbp){
-    if(mged_variables->mv_listen){
+  if (fbp){
+    if (mged_variables->mv_listen){
       /* drop all clients */
       mged_variables->mv_listen = 0;
       set_port();
@@ -273,10 +273,10 @@ release(char *name, int need_close)
 
   /* If this display is being referenced by a command window,
      then remove the reference  */
-  if(curr_dm_list->dml_tie != NULL)
+  if (curr_dm_list->dml_tie != NULL)
     curr_dm_list->dml_tie->cl_tie = (struct dm_list *)NULL;
 
-  if(need_close)
+  if (need_close)
     DM_CLOSE(dmp);
 
   RT_FREE_VLIST(&curr_dm_list->dml_p_vlist);
@@ -284,7 +284,7 @@ release(char *name, int need_close)
   mged_slider_free_vls(curr_dm_list);
   bu_free( (genptr_t)curr_dm_list, "release: curr_dm_list" );
 
-  if(save_dm_list != DM_LIST_NULL)
+  if (save_dm_list != DM_LIST_NULL)
     curr_dm_list = save_dm_list;
   else
     curr_dm_list = (struct dm_list *)head_dm_list.l.forw;
@@ -295,7 +295,7 @@ release(char *name, int need_close)
 int
 f_release(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-  if(argc < 1 || 2 < argc){
+  if (argc < 1 || 2 < argc){
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -305,13 +305,13 @@ f_release(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_ERROR;
   }
 
-  if(argc == 2){
+  if (argc == 2){
     int status;
     struct bu_vls vls1;
 
     bu_vls_init(&vls1);
 
-    if(*argv[1] != '.')
+    if (*argv[1] != '.')
       bu_vls_printf(&vls1, ".%s", argv[1]);
     else
       bu_vls_strcpy(&vls1, argv[1]);
@@ -362,7 +362,7 @@ f_attach(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
   register struct w_dm *wp;
 
-  if(argc < 2){
+  if (argc < 2){
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -374,11 +374,11 @@ f_attach(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
   }
 
   /* Look at last argument, skipping over any options which preceed it */
-  for( wp = &which_dm[2]; wp->type != -1; wp++ )
-    if( strcmp(argv[argc - 1], wp->name ) == 0 )
+  for ( wp = &which_dm[2]; wp->type != -1; wp++ )
+    if ( strcmp(argv[argc - 1], wp->name ) == 0 )
       break;
 
-  if(wp->type == -1){
+  if (wp->type == -1){
     Tcl_AppendResult(interp, "attach(", argv[argc - 1], "): BAD\n", (char *)NULL);
     print_valid_dm();
     return TCL_ERROR;
@@ -392,13 +392,13 @@ int
 gui_setup(char *dstr)
 {
   /* initialize only once */
-  if(tkwin != NULL)
+  if (tkwin != NULL)
     return TCL_OK;
 
   Tcl_ResetResult(interp);
 
   /* set DISPLAY to dstr */
-  if(dstr != (char *)NULL){
+  if (dstr != (char *)NULL){
     Tcl_SetVar(interp, "env(DISPLAY)", dstr, TCL_GLOBAL_ONLY);
 #ifdef HAVE_SETENV
     setenv("DISPLAY", dstr, 0);
@@ -453,7 +453,7 @@ gui_setup(char *dstr)
   (void)Fb_Init(interp);
 #endif
 
-  if((tkwin = Tk_MainWindow(interp)) == NULL){
+  if ((tkwin = Tk_MainWindow(interp)) == NULL){
     return TCL_ERROR;
   }
 
@@ -487,7 +487,7 @@ mged_attach(
   predictor_init();
 
   /* Only need to do this once */
-  if(tkwin == NULL && NEED_GUI(wp->type)){
+  if (tkwin == NULL && NEED_GUI(wp->type)){
     struct dm *tmp_dmp;
     struct bu_vls tmp_vls;
 
@@ -497,8 +497,8 @@ mged_attach(
     bu_vls_init(&tmp_dmp->dm_dName);
     bu_vls_init(&tmp_vls);
     dm_processOptions(tmp_dmp, &tmp_vls, argc - 1, argv + 1);
-    if(strlen(bu_vls_addr(&tmp_dmp->dm_dName))){
-      if(gui_setup(bu_vls_addr(&tmp_dmp->dm_dName)) == TCL_ERROR){
+    if (strlen(bu_vls_addr(&tmp_dmp->dm_dName))){
+      if (gui_setup(bu_vls_addr(&tmp_dmp->dm_dName)) == TCL_ERROR){
 	bu_free( (genptr_t)curr_dm_list, "f_attach: dm_list" );
 	curr_dm_list = o_dm_list;
 	bu_vls_free(&tmp_dmp->dm_pathName);
@@ -507,7 +507,7 @@ mged_attach(
 	bu_free((genptr_t)tmp_dmp, "mged_attach: tmp_dmp");
 	return TCL_ERROR;
       }
-    } else if(gui_setup((char *)NULL) == TCL_ERROR){
+    } else if (gui_setup((char *)NULL) == TCL_ERROR){
       bu_free( (genptr_t)curr_dm_list, "f_attach: dm_list" );
       curr_dm_list = o_dm_list;
       bu_vls_free(&tmp_dmp->dm_pathName);
@@ -529,7 +529,7 @@ mged_attach(
       return TCL_ERROR;
   }
 
-  if(wp->init(o_dm_list, argc, argv) == TCL_ERROR) {
+  if (wp->init(o_dm_list, argc, argv) == TCL_ERROR) {
     goto Bad;
   }
 
@@ -545,7 +545,7 @@ mged_attach(
 #ifdef DO_DISPLAY_LISTS
   share_dlist(curr_dm_list);
 
-  if(displaylist && mged_variables->mv_dlist && !dlist_state->dl_active){
+  if (displaylist && mged_variables->mv_dlist && !dlist_state->dl_active){
     createDLists(&dgop->dgo_headSolid);
     dlist_state->dl_active = 1;
   }
@@ -559,7 +559,7 @@ mged_attach(
 Bad:
   Tcl_AppendResult(interp, "attach(", argv[argc - 1], "): BAD\n", (char *)NULL);
 
-  if(dmp != (struct dm *)0)
+  if (dmp != (struct dm *)0)
     release((char *)NULL, 1);  /* release() will call dm_close */
   else
     release((char *)NULL, 0);  /* release() will not call dm_close */
@@ -577,14 +577,14 @@ get_attached(void)
   int inflimit = 1000;
   char *ret = (char *)NULL;
 
-  while(inflimit > 0){
+  while (inflimit > 0){
     memset(line, 0, 80);
 
     bu_log("attach (nu");
 
     /* print all the available display manager types, skipping plot and ps */
     wp = &which_dm[2];
-    for( ; wp->type != -1; wp++ ) {
+    for (; wp->type != -1; wp++ ) {
 	bu_log("|%s", wp->name);
     }
     bu_log(")[nu]? ");
@@ -597,19 +597,19 @@ get_attached(void)
 	return;
     }
 
-    if(line[0] == '\n' || strncmp(line, "nu", 2) == 0) {
+    if (line[0] == '\n' || strncmp(line, "nu", 2) == 0) {
 	return;  /* Nothing more to do. */
     }
 
     line[strlen(line)-1] = '\0';        /* remove newline */
 
-    for( wp = &which_dm[2]; wp->type != -1; wp++ ) {
-	if( strcmp( line, wp->name ) == 0 ) {
+    for ( wp = &which_dm[2]; wp->type != -1; wp++ ) {
+	if ( strcmp( line, wp->name ) == 0 ) {
 	    break;
 	}
     }
 
-    if( wp->type != -1 ) {
+    if ( wp->type != -1 ) {
 	break;
     }
 
@@ -638,14 +638,14 @@ get_attached(void)
 int
 f_dm(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-  if( !cmd_hook ){
+  if ( !cmd_hook ){
     Tcl_AppendResult(interp, "The '", dmp->dm_name,
 		     "' display manager does not support local commands.\n",
 		     (char *)NULL);
     return TCL_ERROR;
   }
 
-  if(argc < 2){
+  if (argc < 2){
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -761,7 +761,7 @@ f_get_dm_list(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
   struct dm_list *dlp;
 
-  if(argc != 1){
+  if (argc != 1){
     struct bu_vls vls;
 
     bu_vls_init(&vls);

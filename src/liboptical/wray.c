@@ -116,7 +116,7 @@ struct vldray
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 #define WRAY_TAG(_ray, _ap)	{ \
-		if( (_ray.rt = _ap->a_level) > 0x3F || _ray.rt < 0 ) \
+		if ( (_ray.rt = _ap->a_level) > 0x3F || _ray.rt < 0 ) \
 			_ray.rt = 0x3F; \
 		_ray.rt |= ((_ap->a_x & 0x1FFF) << 6 ) | \
 			   ((_ap->a_y & 0x1FFF) << (6+13) ); \
@@ -144,12 +144,12 @@ wray( struct partition *pp, struct application *ap, FILE *fp, const vect_t inorm
 	 *  The negative of the air code is used for the "ob" field, to
 	 *  distinguish air from other regions.
 	 */
-	if( (vldray.ob = pp->pt_regionp->reg_regionid) <= 0 )
+	if ( (vldray.ob = pp->pt_regionp->reg_regionid) <= 0 )
 		vldray.ob = -(pp->pt_regionp->reg_aircode);
 
 	WRAY_TAG( vldray, ap );
 
-	if( fwrite( &vldray, sizeof(struct vldray), 1, fp ) != 1 )
+	if ( fwrite( &vldray, sizeof(struct vldray), 1, fp ) != 1 )
 		bu_bomb("rway:  write error");
 }
 

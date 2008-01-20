@@ -69,7 +69,7 @@
 void
 bn_table_free(struct bn_table *tabp)
 {
-	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_free(x%x)\n", tabp);
+	if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_free(x%x)\n", tabp);
 	BN_CK_TABLE(tabp);
 
 	tabp->nx = 0;			/* sanity */
@@ -82,7 +82,7 @@ bn_table_free(struct bn_table *tabp)
 void
 bn_tabdata_free(struct bn_tabdata *data)
 {
-	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_free(x%x)\n", data);
+	if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_free(x%x)\n", data);
 
 	BN_CK_TABDATA(data);
 	BN_CK_TABLE(data->table);
@@ -100,15 +100,15 @@ bn_ck_table(const struct bn_table *tabp)
 {
 	register int	i;
 
-	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_ck_table(x%x)\n", tabp);
+	if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_ck_table(x%x)\n", tabp);
 
 	BN_CK_TABLE(tabp);
 
-	if( tabp->nx < 2 )
+	if ( tabp->nx < 2 )
 	    bu_bomb("bn_ck_table() less than 2 wavelengths\n");
 
-	for( i=0; i < tabp->nx; i++ )  {
-		if( tabp->x[i] >= tabp->x[i+1] )
+	for ( i=0; i < tabp->nx; i++ )  {
+		if ( tabp->x[i] >= tabp->x[i+1] )
 			bu_bomb("bn_ck_table() wavelengths not in strictly ascending order\n");
 	}
 }
@@ -127,16 +127,16 @@ bn_table_make_uniform(int num, double first, double last)
 	fastf_t			delta;
 	int			j;
 
-	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_make_uniform( num=%d, %g, %g )\n", num, first, last );
+	if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_make_uniform( num=%d, %g, %g )\n", num, first, last );
 
-	if( first >= last )  bu_bomb("bn_table_make_uniform() first >= last\n");
+	if ( first >= last )  bu_bomb("bn_table_make_uniform() first >= last\n");
 
 	BN_GET_TABLE( tabp, num );
 
 	delta = (last - first) / (double)num;
 
 	fp = &tabp->x[0];
-	for( j = num; j > 0; j-- )  {
+	for ( j = num; j > 0; j-- )  {
 		*fp++ = first;
 		first += delta;
 	}
@@ -157,21 +157,21 @@ bn_tabdata_add(struct bn_tabdata *out, const struct bn_tabdata *in1, const struc
 	register fastf_t	*op;
 	register const fastf_t	*i1, *i2;
 
-	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_add(x%x, x%x, x%x)\n", out, in1, in2);
+	if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_add(x%x, x%x, x%x)\n", out, in1, in2);
 
 	BN_CK_TABDATA( out );
 	BN_CK_TABDATA( in1 );
 	BN_CK_TABDATA( in2 );
 
-	if( in1->table != in2->table || in1->table != out->table )
+	if ( in1->table != in2->table || in1->table != out->table )
 		bu_bomb("bn_tabdata_add(): samples drawn from different tables\n");
-	if( in1->ny != in2->ny || in1->ny != out->ny )
+	if ( in1->ny != in2->ny || in1->ny != out->ny )
 		bu_bomb("bn_tabdata_add(): different tabdata lengths?\n");
 
 	op = out->y;
 	i1 = in1->y;
 	i2 = in2->y;
-	for( j = in1->ny; j > 0; j-- )
+	for ( j = in1->ny; j > 0; j-- )
 		*op++ = *i1++ + *i2++;
 	/* VADD2N( out->y, i1->y, i2->y, in1->ny ); */
 }
@@ -188,21 +188,21 @@ bn_tabdata_mul(struct bn_tabdata *out, const struct bn_tabdata *in1, const struc
 	register fastf_t	*op;
 	register const fastf_t	*i1, *i2;
 
-	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_mul(x%x, x%x, x%x)\n", out, in1, in2);
+	if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_mul(x%x, x%x, x%x)\n", out, in1, in2);
 
 	BN_CK_TABDATA( out );
 	BN_CK_TABDATA( in1 );
 	BN_CK_TABDATA( in2 );
 
-	if( in1->table != in2->table || in1->table != out->table )
+	if ( in1->table != in2->table || in1->table != out->table )
 		bu_bomb("bn_tabdata_mul(): samples drawn from different tables\n");
-	if( in1->ny != in2->ny || in1->ny != out->ny )
+	if ( in1->ny != in2->ny || in1->ny != out->ny )
 		bu_bomb("bn_tabdata_mul(): different tabdata lengths?\n");
 
 	op = out->y;
 	i1 = in1->y;
 	i2 = in2->y;
-	for( j = in1->ny; j > 0; j-- )
+	for ( j = in1->ny; j > 0; j-- )
 		*op++ = *i1++ * *i2++;
 	/* VELMUL2N( out->y, i1->y, i2->y, in1->ny ); */
 }
@@ -219,23 +219,23 @@ bn_tabdata_mul3(struct bn_tabdata *out, const struct bn_tabdata *in1, const stru
 	register fastf_t	*op;
 	register const fastf_t	*i1, *i2, *i3;
 
-	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_mul3(x%x, x%x, x%x, x%x)\n", out, in1, in2, in3);
+	if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_mul3(x%x, x%x, x%x, x%x)\n", out, in1, in2, in3);
 
 	BN_CK_TABDATA( out );
 	BN_CK_TABDATA( in1 );
 	BN_CK_TABDATA( in2 );
 	BN_CK_TABDATA( in3 );
 
-	if( in1->table != in2->table || in1->table != out->table || in1->table != in2->table )
+	if ( in1->table != in2->table || in1->table != out->table || in1->table != in2->table )
 		bu_bomb("bn_tabdata_mul(): samples drawn from different tables\n");
-	if( in1->ny != in2->ny || in1->ny != out->ny )
+	if ( in1->ny != in2->ny || in1->ny != out->ny )
 		bu_bomb("bn_tabdata_mul(): different tabdata lengths?\n");
 
 	op = out->y;
 	i1 = in1->y;
 	i2 = in2->y;
 	i3 = in3->y;
-	for( j = in1->ny; j > 0; j-- )
+	for ( j = in1->ny; j > 0; j-- )
 		*op++ = *i1++ * *i2++ * *i3++;
 	/* VELMUL3N( out->y, i1->y, i2->y, i3->y, in1->ny ); */
 }
@@ -254,23 +254,23 @@ bn_tabdata_incr_mul3_scale(struct bn_tabdata *out, const struct bn_tabdata *in1,
 	register fastf_t	*op;
 	register const fastf_t	*i1, *i2, *i3;
 
-	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_incr_mul3_scale(x%x, x%x, x%x, x%x, %g)\n", out, in1, in2, in3, scale);
+	if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_incr_mul3_scale(x%x, x%x, x%x, x%x, %g)\n", out, in1, in2, in3, scale);
 
 	BN_CK_TABDATA( out );
 	BN_CK_TABDATA( in1 );
 	BN_CK_TABDATA( in2 );
 	BN_CK_TABDATA( in3 );
 
-	if( in1->table != in2->table || in1->table != out->table || in1->table != in3->table )
+	if ( in1->table != in2->table || in1->table != out->table || in1->table != in3->table )
 		bu_bomb("bn_tabdata_mul(): samples drawn from different tables\n");
-	if( in1->ny != in2->ny || in1->ny != out->ny )
+	if ( in1->ny != in2->ny || in1->ny != out->ny )
 		bu_bomb("bn_tabdata_mul(): different tabdata lengths?\n");
 
 	op = out->y;
 	i1 = in1->y;
 	i2 = in2->y;
 	i3 = in3->y;
-	for( j = in1->ny; j > 0; j-- )
+	for ( j = in1->ny; j > 0; j-- )
 		*op++ += *i1++ * *i2++ * *i3++ * scale;
 }
 
@@ -288,21 +288,21 @@ bn_tabdata_incr_mul2_scale(struct bn_tabdata *out, const struct bn_tabdata *in1,
 	register fastf_t	*op;
 	register const fastf_t	*i1, *i2;
 
-	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_incr_mul2_scale(x%x, x%x, x%x, %g)\n", out, in1, in2, scale);
+	if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_incr_mul2_scale(x%x, x%x, x%x, %g)\n", out, in1, in2, scale);
 
 	BN_CK_TABDATA( out );
 	BN_CK_TABDATA( in1 );
 	BN_CK_TABDATA( in2 );
 
-	if( in1->table != in2->table || in1->table != out->table )
+	if ( in1->table != in2->table || in1->table != out->table )
 		bu_bomb("bn_tabdata_mul(): samples drawn from different tables\n");
-	if( in1->ny != in2->ny || in1->ny != out->ny )
+	if ( in1->ny != in2->ny || in1->ny != out->ny )
 		bu_bomb("bn_tabdata_mul(): different tabdata lengths?\n");
 
 	op = out->y;
 	i1 = in1->y;
 	i2 = in2->y;
-	for( j = in1->ny; j > 0; j-- )
+	for ( j = in1->ny; j > 0; j-- )
 		*op++ += *i1++ * *i2++ * scale;
 }
 
@@ -318,19 +318,19 @@ bn_tabdata_scale(struct bn_tabdata *out, const struct bn_tabdata *in1, register 
 	register fastf_t	*op;
 	register const fastf_t	*i1;
 
-	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_scale(x%x, x%x, %g)\n", out, in1, scale);
+	if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_scale(x%x, x%x, %g)\n", out, in1, scale);
 
 	BN_CK_TABDATA( out );
 	BN_CK_TABDATA( in1 );
 
-	if( in1->table != out->table )
+	if ( in1->table != out->table )
 		bu_bomb("bn_tabdata_scale(): samples drawn from different tables\n");
-	if( in1->ny != out->ny )
+	if ( in1->ny != out->ny )
 		bu_bomb("bn_tabdata_scale(): different tabdata lengths?\n");
 
 	op = out->y;
 	i1 = in1->y;
-	for( j = in1->ny; j > 0; j-- )
+	for ( j = in1->ny; j > 0; j-- )
 		*op++ = *i1++ * scale;
 	/* VSCALEN( out->y, in->y, scale ); */
 }
@@ -346,12 +346,12 @@ bn_table_scale(struct bn_table *tabp, register double scale)
 	register int		j;
 	register fastf_t	*op;
 
-	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_scale(x%x, %g)\n", tabp, scale );
+	if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_scale(x%x, %g)\n", tabp, scale );
 
 	BN_CK_TABLE( tabp );
 
 	op = tabp->x;
-	for( j = tabp->nx+1; j > 0; j-- )
+	for ( j = tabp->nx+1; j > 0; j-- )
 		*op++ *= scale;
 	/* VSCALEN( tabp->x, tabp->x, scale, tabp->nx+1 ); */
 }
@@ -370,23 +370,23 @@ bn_tabdata_join1(struct bn_tabdata *out, const struct bn_tabdata *in1, register 
 	register fastf_t	*op;
 	register const fastf_t	*i1, *i2;
 
-	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_join1(x%x, x%x, %g, x%x)\n", out, in1, scale, in2 );
+	if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_join1(x%x, x%x, %g, x%x)\n", out, in1, scale, in2 );
 
 	BN_CK_TABDATA( out );
 	BN_CK_TABDATA( in1 );
 	BN_CK_TABDATA( in2 );
 
-	if( in1->table != out->table )
+	if ( in1->table != out->table )
 		bu_bomb("bn_tabdata_join1(): samples drawn from different tables\n");
-	if( in1->table != in2->table )
+	if ( in1->table != in2->table )
 		bu_bomb("bn_tabdata_join1(): samples drawn from different tables\n");
-	if( in1->ny != out->ny )
+	if ( in1->ny != out->ny )
 		bu_bomb("bn_tabdata_join1(): different tabdata lengths?\n");
 
 	op = out->y;
 	i1 = in1->y;
 	i2 = in2->y;
-	for( j = in1->ny; j > 0; j-- )
+	for ( j = in1->ny; j > 0; j-- )
 		*op++ = *i1++ + scale * *i2++;
 	/* VJOIN1N( out->y, in1->y, scale, in2->y ); */
 }
@@ -406,26 +406,26 @@ bn_tabdata_join2(struct bn_tabdata *out, const struct bn_tabdata *in1, register 
 	register fastf_t	*op;
 	register const fastf_t	*i1, *i2, *i3;
 
-	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_join2(x%x, x%x, %g, x%x, %g, x%x)\n", out, in1, scale2, in2, scale3, in3 );
+	if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_join2(x%x, x%x, %g, x%x, %g, x%x)\n", out, in1, scale2, in2, scale3, in3 );
 
 	BN_CK_TABDATA( out );
 	BN_CK_TABDATA( in1 );
 	BN_CK_TABDATA( in2 );
 
-	if( in1->table != out->table )
+	if ( in1->table != out->table )
 		bu_bomb("bn_tabdata_join1(): samples drawn from different tables\n");
-	if( in1->table != in2->table )
+	if ( in1->table != in2->table )
 		bu_bomb("bn_tabdata_join1(): samples drawn from different tables\n");
-	if( in1->table != in3->table )
+	if ( in1->table != in3->table )
 		bu_bomb("bn_tabdata_join1(): samples drawn from different tables\n");
-	if( in1->ny != out->ny )
+	if ( in1->ny != out->ny )
 		bu_bomb("bn_tabdata_join1(): different tabdata lengths?\n");
 
 	op = out->y;
 	i1 = in1->y;
 	i2 = in2->y;
 	i3 = in3->y;
-	for( j = in1->ny; j > 0; j-- )
+	for ( j = in1->ny; j > 0; j-- )
 		*op++ = *i1++ + scale2 * *i2++ + scale3 * *i3++;
 	/* VJOIN2N( out->y, in1->y, scale2, in2->y, scale3, in3->y ); */
 }
@@ -440,23 +440,23 @@ bn_tabdata_blend2(struct bn_tabdata *out, register double scale1, const struct b
 	register fastf_t	*op;
 	register const fastf_t	*i1, *i2;
 
-	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_blend2(x%x, %g, x%x, %g, x%x)\n", out, scale1, in1, scale2, in2 );
+	if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_blend2(x%x, %g, x%x, %g, x%x)\n", out, scale1, in1, scale2, in2 );
 
 	BN_CK_TABDATA( out );
 	BN_CK_TABDATA( in1 );
 	BN_CK_TABDATA( in2 );
 
-	if( in1->table != out->table )
+	if ( in1->table != out->table )
 		bu_bomb("bn_tabdata_blend2(): samples drawn from different tables\n");
-	if( in1->table != in2->table )
+	if ( in1->table != in2->table )
 		bu_bomb("bn_tabdata_blend2(): samples drawn from different tables\n");
-	if( in1->ny != out->ny )
+	if ( in1->ny != out->ny )
 		bu_bomb("bn_tabdata_blend2(): different tabdata lengths?\n");
 
 	op = out->y;
 	i1 = in1->y;
 	i2 = in2->y;
-	for( j = in1->ny; j > 0; j-- )
+	for ( j = in1->ny; j > 0; j-- )
 		*op++ = scale1 * *i1++ + scale2 * *i2++;
 	/* VBLEND2N( out->y, scale1, in1->y, scale2, in2->y ); */
 }
@@ -471,27 +471,27 @@ bn_tabdata_blend3(struct bn_tabdata *out, register double scale1, const struct b
 	register fastf_t	*op;
 	register const fastf_t	*i1, *i2, *i3;
 
-	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_blend3(x%x, %g, x%x, %g, x%x, %g, x%x)\n", out, scale1, in1, scale2, in2, scale3, in3 );
+	if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_blend3(x%x, %g, x%x, %g, x%x, %g, x%x)\n", out, scale1, in1, scale2, in2, scale3, in3 );
 
 	BN_CK_TABDATA( out );
 	BN_CK_TABDATA( in1 );
 	BN_CK_TABDATA( in2 );
 	BN_CK_TABDATA( in3 );
 
-	if( in1->table != out->table )
+	if ( in1->table != out->table )
 		bu_bomb("bn_tabdata_blend3(): samples drawn from different tables\n");
-	if( in1->table != in2->table )
+	if ( in1->table != in2->table )
 		bu_bomb("bn_tabdata_blend3(): samples drawn from different tables\n");
-	if( in1->table != in3->table )
+	if ( in1->table != in3->table )
 		bu_bomb("bn_tabdata_blend3(): samples drawn from different tables\n");
-	if( in1->ny != out->ny )
+	if ( in1->ny != out->ny )
 		bu_bomb("bn_tabdata_blend3(): different tabdata lengths?\n");
 
 	op = out->y;
 	i1 = in1->y;
 	i2 = in2->y;
 	i3 = in3->y;
-	for( j = in1->ny; j > 0; j-- )
+	for ( j = in1->ny; j > 0; j-- )
 		*op++ = scale1 * *i1++ + scale2 * *i2++ + scale3 * *i3++;
 	/* VBLEND3N( out->y, scale1, in1->y, scale2, in2->y, scale3, in3->y ); */
 }
@@ -514,10 +514,10 @@ bn_tabdata_area1(const struct bn_tabdata *in)
 
 	area = 0;
 	ip = in->y;
-	for( j = in->ny; j > 0; j-- )
+	for ( j = in->ny; j > 0; j-- )
 		area += *ip++;
 
-	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_area(x%x) = %g\n", in, area);
+	if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_area(x%x) = %g\n", in, area);
 
 	return area;
 }
@@ -543,12 +543,12 @@ bn_tabdata_area2(const struct bn_tabdata *in)
 	BN_CK_TABLE(tabp);
 
 	area = 0;
-	for( j = in->ny-1; j >= 0; j-- )  {
+	for ( j = in->ny-1; j >= 0; j-- )  {
 		width = tabp->x[j+1] - tabp->x[j];
 		area += in->y[j] * width;
 	}
 
-	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_area2(x%x) = %g\n", in, area);
+	if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_area2(x%x) = %g\n", in, area);
 	return area;
 }
 
@@ -574,10 +574,10 @@ bn_tabdata_mul_area1(const struct bn_tabdata *in1, const struct bn_tabdata *in2)
 	area = 0;
 	i1 = in1->y;
 	i2 = in2->y;
-	for( j = in1->ny; j > 0; j-- )
+	for ( j = in1->ny; j > 0; j-- )
 		area += *i1++ * *i2++;
 
-	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_mul_area1(x%x, x%x) = %g\n", in1, in2, area);
+	if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_mul_area1(x%x, x%x) = %g\n", in1, in2, area);
 	return area;
 }
 
@@ -603,12 +603,12 @@ bn_tabdata_mul_area2(const struct bn_tabdata *in1, const struct bn_tabdata *in2)
 	BN_CK_TABLE(tabp);
 
 	area = 0;
-	for( j = in1->ny-1; j >= 0; j-- )  {
+	for ( j = in1->ny-1; j >= 0; j-- )  {
 		width = tabp->x[j+1] - tabp->x[j];
 		area += in1->y[j] * in2->y[j] * width;
 	}
 
-	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_mul_area2(x%x, x%x) = %g\n", in1, in2, area);
+	if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_mul_area2(x%x, x%x) = %g\n", in1, in2, area);
 	return area;
 }
 
@@ -632,17 +632,17 @@ bn_table_find_x(const struct bn_table *tabp, double xval)
 {
 	register int	i;
 
-	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_find_x(x%x, %g)\n", tabp, xval );
+	if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_find_x(x%x, %g)\n", tabp, xval );
 	BN_CK_TABLE(tabp);
 
-	if( xval > tabp->x[tabp->nx] )  return -2;
-	if( xval >= tabp->x[tabp->nx-1] )  return tabp->nx-1;
+	if ( xval > tabp->x[tabp->nx] )  return -2;
+	if ( xval >= tabp->x[tabp->nx-1] )  return tabp->nx-1;
 
 	/* Search for proper interval in input spectrum */
-	for( i = tabp->nx-2; i >=0; i-- )  {
-		if( xval >= tabp->x[i] )  return i;
+	for ( i = tabp->nx-2; i >=0; i-- )  {
+		if ( xval >= tabp->x[i] )  return i;
 	}
-	/* if( xval < tabp->x[0] )  return -1; */
+	/* if ( xval < tabp->x[0] )  return -1; */
 	return -1;
 }
 
@@ -661,33 +661,33 @@ bn_table_lin_interp(const struct bn_tabdata *samp, register double wl)
 	register fastf_t	fract;
 	register fastf_t	ret;
 
-	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_lin_interp(x%x, %g)\n", samp, wl);
+	if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_lin_interp(x%x, %g)\n", samp, wl);
 
 	BN_CK_TABDATA(samp);
 	tabp = samp->table;
 	BN_CK_TABLE(tabp);
 
-	if( (i = bn_table_find_x( tabp, wl )) < 0 )  {
-		if(bu_debug&BU_DEBUG_TABDATA)bu_log("bn_table_lin_interp(%g) out of range %g to %g\n", wl, tabp->x[0], tabp->x[tabp->nx] );
+	if ( (i = bn_table_find_x( tabp, wl )) < 0 )  {
+		if (bu_debug&BU_DEBUG_TABDATA)bu_log("bn_table_lin_interp(%g) out of range %g to %g\n", wl, tabp->x[0], tabp->x[tabp->nx] );
 		return 0;
 	}
 
-	if( wl < tabp->x[i] || wl >= tabp->x[i+1] )  {
+	if ( wl < tabp->x[i] || wl >= tabp->x[i+1] )  {
 		bu_log("bn_table_lin_interp(%g) assertion1 failed at %g\n", wl, tabp->x[i] );
 		bu_bomb("bn_table_lin_interp() assertion1 failed\n");
 	}
 
-	if( i >= tabp->nx-2 )  {
+	if ( i >= tabp->nx-2 )  {
 		/* Assume value is constant in final interval. */
-		if(bu_debug&BU_DEBUG_TABDATA)bu_log("bn_table_lin_interp(%g)=%g off end of range %g to %g\n", wl, samp->y[tabp->nx-1], tabp->x[0], tabp->x[tabp->nx] );
+		if (bu_debug&BU_DEBUG_TABDATA)bu_log("bn_table_lin_interp(%g)=%g off end of range %g to %g\n", wl, samp->y[tabp->nx-1], tabp->x[0], tabp->x[tabp->nx] );
 		return samp->y[tabp->nx-1];
 	}
 
 	/* The interval has been found */
 	fract = (wl - tabp->x[i]) / (tabp->x[i+1] - tabp->x[i]);
-	if( fract < 0 || fract > 1 )  bu_bomb("bn_table_lin_interp() assertion2 failed\n");
+	if ( fract < 0 || fract > 1 )  bu_bomb("bn_table_lin_interp() assertion2 failed\n");
 	ret = (1-fract) * samp->y[i] + fract * samp->y[i+1];
-	if(bu_debug&BU_DEBUG_TABDATA)bu_log("bn_table_lin_interp(%g)=%g in range %g to %g\n",
+	if (bu_debug&BU_DEBUG_TABDATA)bu_log("bn_table_lin_interp(%g)=%g in range %g to %g\n",
 		wl, ret, tabp->x[i], tabp->x[i+1] );
 	return ret;
 }
@@ -711,36 +711,36 @@ bn_tabdata_resample_max(const struct bn_table *newtable, const struct bn_tabdata
 	int			i;
 	int			j, k;
 
-	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_resample_max(x%x, x%x)\n", newtable, olddata);
+	if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_resample_max(x%x, x%x)\n", newtable, olddata);
 
 	BN_CK_TABLE(newtable);
 	BN_CK_TABDATA(olddata);
 	oldtable = olddata->table;
 	BN_CK_TABLE(oldtable);
 
-	if( oldtable == newtable )  bu_log("bn_tabdata_resample_max() NOTICE old and new bn_table structs are the same\n");
+	if ( oldtable == newtable )  bu_log("bn_tabdata_resample_max() NOTICE old and new bn_table structs are the same\n");
 
 	BN_GET_TABDATA( newsamp, newtable );
 
-	for( i = 0; i < newtable->nx; i++ )  {
+	for ( i = 0; i < newtable->nx; i++ )  {
 		/*
 		 *  Find good value(s) in olddata to represent the span from
 		 *  newtable->x[i] to newtable->x[i+1].
 		 */
 		j = bn_table_find_x( oldtable, newtable->x[i] );
 		k = bn_table_find_x( oldtable, newtable->x[i+1] );
-		if( k == -1 )  {
+		if ( k == -1 )  {
 			/* whole new span is off left side of old table */
 			newsamp->y[i] = 0;
 			continue;
 		}
-		if( j == -2 )  {
+		if ( j == -2 )  {
 			/* whole new span is off right side of old table */
 			newsamp->y[i] = 0;
 			continue;
 		}
 
-		if( j == k && j > 0 )  {
+		if ( j == k && j > 0 )  {
 			register fastf_t tmp;
 			/*
 			 *  Simple case, ends of output span are completely
@@ -750,7 +750,7 @@ bn_tabdata_resample_max(const struct bn_table *newtable, const struct bn_tabdata
 			 */
 			newsamp->y[i] = bn_table_lin_interp( olddata, newtable->x[i] );
 			tmp = bn_table_lin_interp( olddata, newtable->x[i+1] );
-			if( tmp > newsamp->y[i] )  newsamp->y[i] = tmp;
+			if ( tmp > newsamp->y[i] )  newsamp->y[i] = tmp;
 		} else {
 			register fastf_t tmp, n;
 			register int	s;
@@ -762,9 +762,9 @@ bn_tabdata_resample_max(const struct bn_table *newtable, const struct bn_tabdata
 			 */
 			n = bn_table_lin_interp( olddata, newtable->x[i] );
 			tmp = bn_table_lin_interp( olddata, newtable->x[i+1] );
-			if( tmp > n )  n = tmp;
-			for( s = j+1; s <= k; s++ )  {
-				if( (tmp = olddata->y[s]) > n )
+			if ( tmp > n )  n = tmp;
+			for ( s = j+1; s <= k; s++ )  {
+				if ( (tmp = olddata->y[s]) > n )
 					n = tmp;
 			}
 			newsamp->y[i] = n;
@@ -792,18 +792,18 @@ bn_tabdata_resample_avg(const struct bn_table *newtable, const struct bn_tabdata
 	int			i;
 	int			j, k;
 
-	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_resample_avg(x%x, x%x)\n", newtable, olddata);
+	if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_resample_avg(x%x, x%x)\n", newtable, olddata);
 
 	BN_CK_TABLE(newtable);
 	BN_CK_TABDATA(olddata);
 	oldtable = olddata->table;
 	BN_CK_TABLE(oldtable);
 
-	if( oldtable == newtable )  bu_log("bn_tabdata_resample_avg() NOTICE old and new bn_table structs are the same\n");
+	if ( oldtable == newtable )  bu_log("bn_tabdata_resample_avg() NOTICE old and new bn_table structs are the same\n");
 
 	BN_GET_TABDATA( newsamp, newtable );
 
-	for( i = 0; i < newtable->nx; i++ )  {
+	for ( i = 0; i < newtable->nx; i++ )  {
 		/*
 		 *  Find good value(s) in olddata to represent the span from
 		 *  newtable->x[i] to newtable->x[i+1].
@@ -811,7 +811,7 @@ bn_tabdata_resample_avg(const struct bn_table *newtable, const struct bn_tabdata
 		j = bn_table_find_x( oldtable, newtable->x[i] );
 		k = bn_table_find_x( oldtable, newtable->x[i+1] );
 
-		if( j < 0 || k < 0 || j == k )  {
+		if ( j < 0 || k < 0 || j == k )  {
 			/*
 			 *  Simple case, ends of output span are completely
 			 *  contained within one input span.
@@ -841,7 +841,7 @@ bn_tabdata_resample_avg(const struct bn_table *newtable, const struct bn_tabdata
 			wsum = 0.5 * (a+b) * (oldtable->x[j+1] - newtable->x[i] );
 
 			/* Full intervals from j+1 to k */
-			for( s = j+1; s < k; s++ )  {
+			for ( s = j+1; s < k; s++ )  {
 				a = olddata->y[s];
 				b = olddata->y[s+1];
 				wsum += 0.5 * (a+b) * (oldtable->x[s+1] - oldtable->x[s] );
@@ -873,7 +873,7 @@ bn_table_write(const char *filename, const struct bn_table *tabp)
 	FILE	*fp;
 	int	j;
 
-	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_write(%s, x%x)\n", filename, tabp);
+	if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_write(%s, x%x)\n", filename, tabp);
 
 	BN_CK_TABLE(tabp);
 
@@ -881,7 +881,7 @@ bn_table_write(const char *filename, const struct bn_table *tabp)
 	fp = fopen( filename, "w" );
 	bu_semaphore_release( BU_SEM_SYSCALL );
 
-	if( fp == NULL )  {
+	if ( fp == NULL )  {
 		perror(filename);
 		bu_log("bn_table_write(%s, x%x) FAILED\n", filename, tabp);
 		return -1;
@@ -889,7 +889,7 @@ bn_table_write(const char *filename, const struct bn_table *tabp)
 
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
 	fprintf(fp, "  %d sample starts, and one end.\n", tabp->nx );
-	for( j=0; j <= tabp->nx; j++ )  {
+	for ( j=0; j <= tabp->nx; j++ )  {
 		fprintf( fp, "%g\n", tabp->x[j] );
 	}
 	fclose(fp);
@@ -913,13 +913,13 @@ bn_table_read(const char *filename)
 	int	nw;
 	int	j;
 
-	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_read(%s)\n", filename);
+	if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_read(%s)\n", filename);
 
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
 	fp = fopen( filename, "r" );
 	bu_semaphore_release( BU_SEM_SYSCALL );
 
-	if( fp == NULL )  {
+	if ( fp == NULL )  {
 		perror(filename);
 		bu_log("bn_table_read(%s) FAILED\n", filename);
 		return NULL;
@@ -931,12 +931,12 @@ bn_table_read(const char *filename)
 	sscanf( bu_vls_addr(&line), "%d", &nw );
 	bu_vls_free(&line);
 
-	if( nw <= 0 ) bu_bomb("bn_table_read() bad nw value\n");
+	if ( nw <= 0 ) bu_bomb("bn_table_read() bad nw value\n");
 
 	BN_GET_TABLE( tabp, nw );
 
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
-	for( j=0; j <= tabp->nx; j++ )  {
+	for ( j=0; j <= tabp->nx; j++ )  {
 		/* XXX assumes fastf_t == double */
 		fscanf( fp, "%lf", &tabp->x[j] );
 	}
@@ -959,7 +959,7 @@ bn_pr_table(const char *title, const struct bn_table *tabp)
 	bu_log("%s\n", title);
 	BN_CK_TABLE(tabp);
 
-	for( j=0; j <= tabp->nx; j++ )  {
+	for ( j=0; j <= tabp->nx; j++ )  {
 		bu_log("%3d: %g\n", j, tabp->x[j] );
 	}
 }
@@ -975,7 +975,7 @@ bn_pr_tabdata(const char *title, const struct bn_tabdata *data)
 	bu_log("%s: ", title);
 	BN_CK_TABDATA(data);
 
-	for( j=0; j < data->ny; j++ )  {
+	for ( j=0; j < data->ny; j++ )  {
 		bu_log("%g, ", data->y[j] );
 	}
 	bu_log("\n");
@@ -998,7 +998,7 @@ bn_print_table_and_tabdata(const char *filename, const struct bn_tabdata *data)
 	const struct bn_table	*tabp;
 	int	j;
 
-	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_print_table_and_tabdata(%s, x%x)\n", filename, data);
+	if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_print_table_and_tabdata(%s, x%x)\n", filename, data);
 
 	BN_CK_TABDATA(data);
 	tabp = data->table;
@@ -1008,14 +1008,14 @@ bn_print_table_and_tabdata(const char *filename, const struct bn_tabdata *data)
 	fp = fopen( filename, "w" );
 	bu_semaphore_release( BU_SEM_SYSCALL );
 
-	if( fp == NULL )  {
+	if ( fp == NULL )  {
 		perror(filename);
 		bu_log("bn_print_table_and_tabdata(%s, x%x) FAILED\n", filename, data );
 		return -1;
 	}
 
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
-	for( j=0; j < tabp->nx; j++ )  {
+	for ( j=0; j < tabp->nx; j++ )  {
 		fprintf( fp, "%g %g\n", tabp->x[j], data->y[j] );
 	}
 	fprintf( fp, "%g (novalue)\n", tabp->x[tabp->nx] );
@@ -1045,13 +1045,13 @@ bn_read_table_and_tabdata(const char *filename)
 	int	count = 0;
 	int	i;
 
-	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_read_table_and_tabdata(%s)\n", filename);
+	if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_read_table_and_tabdata(%s)\n", filename);
 
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
 	fp = fopen( filename, "r" );
 	bu_semaphore_release( BU_SEM_SYSCALL );
 
-	if( fp == NULL )  {
+	if ( fp == NULL )  {
 		perror(filename);
 		bu_log("bn_read_table_and_tabdata(%s) FAILED\n", filename);
 		return NULL;
@@ -1059,8 +1059,8 @@ bn_read_table_and_tabdata(const char *filename)
 
 	/* First pass:  Count number of lines */
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
-	for(;;)  {
-		if( bu_fgets( buf, sizeof(buf), fp ) == NULL )  break;
+	for (;;)  {
+		if ( bu_fgets( buf, sizeof(buf), fp ) == NULL )  break;
 		count++;
 	}
 	fclose(fp);
@@ -1073,9 +1073,9 @@ bn_read_table_and_tabdata(const char *filename)
 	/* Second pass:  Read only as much data as storage was allocated for */
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
 	fp = fopen( filename, "r" );
-	for( i=0; i < count; i++ )  {
+	for ( i=0; i < count; i++ )  {
 		buf[0] = '\0';
-		if( bu_fgets( buf, sizeof(buf), fp ) == NULL )  {
+		if ( bu_fgets( buf, sizeof(buf), fp ) == NULL )  {
 			bu_log("bn_read_table_and_tabdata(%s) unexpected EOF on line %d\n", filename, i);
 			break;
 		}
@@ -1106,7 +1106,7 @@ bn_tabdata_binary_read(const char *filename, int num, const struct bn_table *tab
 	int	fd;
 	int	i;
 
-	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_binary_read(%s, num=%d, x%x)\n", filename, num, tabp);
+	if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_binary_read(%s, num=%d, x%x)\n", filename, num, tabp);
 
 	BN_CK_TABLE(tabp);
 
@@ -1116,7 +1116,7 @@ bn_tabdata_binary_read(const char *filename, int num, const struct bn_table *tab
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
 	fd = open(filename, 0);
 	bu_semaphore_release( BU_SEM_SYSCALL );
-	if( fd <= 0 )  {
+	if ( fd <= 0 )  {
 	    perror(filename);
 	    bu_log("bn_tabdata_binary_read open failed on \"%s\"\n", filename);
 	    bu_semaphore_acquire( BU_SEM_SYSCALL );
@@ -1131,7 +1131,7 @@ bn_tabdata_binary_read(const char *filename, int num, const struct bn_table *tab
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
 	got = read( fd, (char *)data, len );
 	bu_semaphore_release( BU_SEM_SYSCALL );
-	if( got != len )  {
+	if ( got != len )  {
 	    if (got < 0) {
 		perror(filename);
 		bu_log("bn_tabdata_binary_read read error on \"%s\"\n", filename);
@@ -1150,7 +1150,7 @@ bn_tabdata_binary_read(const char *filename, int num, const struct bn_table *tab
 
 	/* Connect data[i].table pointer to tabp */
 	cp = (char *)data;
-	for( i = num-1; i >= 0; i--, cp += nbytes )  {
+	for ( i = num-1; i >= 0; i--, cp += nbytes )  {
 	    register struct bn_tabdata *sp;
 	    sp = (struct bn_tabdata *)cp;
 	    BN_CK_TABDATA(sp);
@@ -1177,7 +1177,7 @@ bn_tabdata_malloc_array(const struct bn_table *tabp, int num)
 	int	nw;
 	int	nbytes;
 
-	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_malloc_array(x%x, num=%d)\n", tabp, num);
+	if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_malloc_array(x%x, num=%d)\n", tabp, num);
 
 	BN_CK_TABLE(tabp);
 	nw = tabp->nx;
@@ -1187,7 +1187,7 @@ bn_tabdata_malloc_array(const struct bn_table *tabp, int num)
 		nbytes, "struct bn_tabdata[]" );
 
 	cp = (char *)data;
-	for( i = 0; i < num; i++ ) {
+	for ( i = 0; i < num; i++ ) {
 		register struct bn_tabdata	*sp;
 
 		sp = (struct bn_tabdata *)cp;
@@ -1205,14 +1205,14 @@ bn_tabdata_malloc_array(const struct bn_table *tabp, int num)
 void
 bn_tabdata_copy(struct bn_tabdata *out, const struct bn_tabdata *in)
 {
-	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_copy(x%x, x%x)\n", out, in);
+	if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_copy(x%x, x%x)\n", out, in);
 
 	BN_CK_TABDATA( out );
 	BN_CK_TABDATA( in );
 
-	if( in->table != out->table )
+	if ( in->table != out->table )
 		bu_bomb("bn_tabdata_copy(): samples drawn from different tables\n");
-	if( in->ny != out->ny )
+	if ( in->ny != out->ny )
 		bu_bomb("bn_tabdata_copy(): different tabdata lengths?\n");
 
 	memcpy((char *)out->y, (const char *)in->y, BN_SIZEOF_TABDATA_Y(in));
@@ -1231,7 +1231,7 @@ bn_tabdata_dup(const struct bn_tabdata *in)
 
 	memcpy((char *)data->y, (const char *)in->y, BN_SIZEOF_TABDATA_Y(in));
 
-	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_dup(x%x) = x%x\n", in, data);
+	if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_dup(x%x) = x%x\n", in, data);
 	return data;
 }
 
@@ -1252,10 +1252,10 @@ bn_tabdata_get_constval(double val, const struct bn_table *tabp)
 	BN_GET_TABDATA( data, tabp );
 
 	op = data->y;
-	for( todo = data->ny-1; todo >= 0; todo-- )
+	for ( todo = data->ny-1; todo >= 0; todo-- )
 		*op++ = val;
 
-	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_get_constval(val=%g, x%x)=x%x\n", val, tabp, data);
+	if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_get_constval(val=%g, x%x)=x%x\n", val, tabp, data);
 
 	return data;
 }
@@ -1271,12 +1271,12 @@ bn_tabdata_constval(struct bn_tabdata *data, double val)
 	int			todo;
 	register fastf_t	*op;
 
-	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_constval(x%x, val=%g)\n", data, val);
+	if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_constval(x%x, val=%g)\n", data, val);
 
 	BN_CK_TABDATA(data);
 
 	op = data->y;
-	for( todo = data->ny-1; todo >= 0; todo-- )
+	for ( todo = data->ny-1; todo >= 0; todo-- )
 		*op++ = val;
 }
 
@@ -1294,7 +1294,7 @@ bn_tabdata_to_tcl(struct bu_vls *vp, const struct bn_tabdata *data)
 	register int i;
 	register fastf_t	minval = MAX_FASTF, maxval = -MAX_FASTF;
 
-	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_to_tcl(x%x, x%x)\n", vp, data);
+	if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_to_tcl(x%x, x%x)\n", vp, data);
 
 	BU_CK_VLS(vp);
 	BN_CK_TABDATA(data);
@@ -1302,15 +1302,15 @@ bn_tabdata_to_tcl(struct bu_vls *vp, const struct bn_tabdata *data)
 	BN_CK_TABLE(tabp);
 
 	bu_vls_strcat(vp, "x {");
-	for( i=0; i < tabp->nx; i++ )  {
+	for ( i=0; i < tabp->nx; i++ )  {
 		bu_vls_printf( vp, "%g ", tabp->x[i] );
 	}
 	bu_vls_strcat(vp, "} y {");
-	for( i=0; i < data->ny; i++ )  {
+	for ( i=0; i < data->ny; i++ )  {
 		register fastf_t val = data->y[i];
 		bu_vls_printf( vp, "%g ", val );
-		if( val < minval )  minval = val;
-		if( val > maxval )  maxval = val;
+		if ( val < minval )  minval = val;
+		if ( val > maxval )  maxval = val;
 	}
 	bu_vls_printf( vp, "} nx %d ymin %g ymax %g",
 		tabp->nx, minval, maxval );
@@ -1336,23 +1336,24 @@ bn_tabdata_from_array(const double *array)
 	register int		i;
 
 	/* First, find len */
-	for( dp = array; *dp > 0; dp += 2 )	/* NIL */ ;
+	for ( dp = array; *dp > 0; dp += 2 )
+	    ; /* NIL */
 	len = (dp - array) >> 1;
 
 	/* Second, build bn_table */
 	BN_GET_TABLE( tabp, len );
-	for( i = 0; i < len; i++ )  {
+	for ( i = 0; i < len; i++ )  {
 		tabp->x[i] = array[i<<1];
 	}
 	tabp->x[len] = tabp->x[len-1] + 1;	/* invent span end */
 
 	/* Third, build bn_tabdata (last input "y" is ignored) */
 	BN_GET_TABDATA( data, tabp );
-	for( i = 0; i < len-1; i++ )  {
+	for ( i = 0; i < len-1; i++ )  {
 		data->y[i] = array[(i<<1)+1];
 	}
 
-	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_from_array(x%x) = x%x\n", array, data);
+	if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_from_array(x%x) = x%x\n", array, data);
 	return data;
 }
 
@@ -1368,18 +1369,18 @@ bn_tabdata_freq_shift(struct bn_tabdata *out, const struct bn_tabdata *in, doubl
 	const struct bn_table	*tabp;
 	register int 		i;
 
-	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_freq_shift(x%x, x%x, offset=%g)\n", out, in, offset);
+	if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_freq_shift(x%x, x%x, offset=%g)\n", out, in, offset);
 
 	BN_CK_TABDATA( out );
 	BN_CK_TABDATA( in );
 	tabp = in->table;
 
-	if( tabp != out->table )
+	if ( tabp != out->table )
 		bu_bomb("bn_tabdata_freq_shift(): samples drawn from different tables\n");
-	if( in->ny != out->ny )
+	if ( in->ny != out->ny )
 		bu_bomb("bn_tabdata_freq_shift(): different tabdata lengths?\n");
 
-	for( i=0; i < out->ny; i++ ) {
+	for ( i=0; i < out->ny; i++ ) {
 		out->y[i] = bn_table_lin_interp( in, tabp->x[i]+offset );
 	}
 }
@@ -1397,11 +1398,11 @@ bn_table_interval_num_samples(const struct bn_table *tabp, double low, double hi
 
 	BN_CK_TABLE(tabp);
 
-	for( i=0; i < tabp->nx-1; i++ )  {
-		if( tabp->x[i] >= low && tabp->x[i] <= hi )  count++;
+	for ( i=0; i < tabp->nx-1; i++ )  {
+		if ( tabp->x[i] >= low && tabp->x[i] <= hi )  count++;
 	}
 
-	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_interval_num_samples(x%x, low=%g, hi=%g) = %d\n", tabp, low, hi, count);
+	if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_interval_num_samples(x%x, low=%g, hi=%g) = %d\n", tabp, low, hi, count);
 	return count;
 }
 
@@ -1418,20 +1419,20 @@ bn_table_delete_sample_pts(struct bn_table *tabp, int i, int j)
 	int	tokill;
 	int	k;
 
-	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_delete_samples(x%x, %d, %d)\n", tabp, i, j);
+	if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_delete_samples(x%x, %d, %d)\n", tabp, i, j);
 
 	BN_CK_TABLE(tabp);
 
-	if( i < 0 || j < 0 )  bu_bomb("bn_table_delete_sample_pts() negative indices\n");
-	if( i >= tabp->nx || j >= tabp->nx )  bu_bomb("bn_table_delete_sample_pts() index out of range\n");
+	if ( i < 0 || j < 0 )  bu_bomb("bn_table_delete_sample_pts() negative indices\n");
+	if ( i >= tabp->nx || j >= tabp->nx )  bu_bomb("bn_table_delete_sample_pts() index out of range\n");
 
 	tokill = j - i + 1;
-	if( tokill < 1 )  bu_bomb("bn_table_delete_sample_pts(): nothing to delete\n");
-	if( tokill >= tabp->nx ) bu_bomb("bn_table_delete_sample_pts(): you can't kill 'em all!\n");
+	if ( tokill < 1 )  bu_bomb("bn_table_delete_sample_pts(): nothing to delete\n");
+	if ( tokill >= tabp->nx ) bu_bomb("bn_table_delete_sample_pts(): you can't kill 'em all!\n");
 
 	tabp->nx -= tokill;
 
-	for( k = i; k < tabp->nx; k++ )  {
+	for ( k = i; k < tabp->nx; k++ )  {
 		tabp->x[k] = tabp->x[k+tokill];
 	}
 	return tokill;
@@ -1456,33 +1457,33 @@ bn_table_merge2(const struct bn_table *a, const struct bn_table *b)
 
 	i = j = 0;		/* input subscripts */
 	k = 0;			/* output subscript */
-	while( i <= a->nx || j <= b->nx )  {
-		if( i > a->nx )  {
-			while( j <= b->nx )
+	while ( i <= a->nx || j <= b->nx )  {
+		if ( i > a->nx )  {
+			while ( j <= b->nx )
 				new->x[k++] = b->x[j++];
 			break;
 		}
-		if( j > b->nx )  {
-			while( i <= a->nx )
+		if ( j > b->nx )  {
+			while ( i <= a->nx )
 				new->x[k++] = a->x[i++];
 			break;
 		}
 		/* Both have remaining elements, take lower one */
-		if( a->x[i] == b->x[j] )  {
+		if ( a->x[i] == b->x[j] )  {
 			new->x[k++] = a->x[i++];
 			j++;		/* compress out duplicate */
 			continue;
 		}
-		if( a->x[i] <= b->x[j] )  {
+		if ( a->x[i] <= b->x[j] )  {
 			new->x[k++] = a->x[i++];
 		} else {
 			new->x[k++] = b->x[j++];
 		}
 	}
-	if( k > new->nx )  bu_bomb("bn_table_merge2() assertion failed, k>nx?\n");
+	if ( k > new->nx )  bu_bomb("bn_table_merge2() assertion failed, k>nx?\n");
 	new->nx = k-1;
 
-	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_merge2(x%x, x%x) = x%x\n", a, b, new);
+	if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_merge2(x%x, x%x) = x%x\n", a, b, new);
 	return new;
 }
 
@@ -1511,20 +1512,20 @@ bn_tabdata_mk_linear_filter(const struct bn_table *spectrum, double lower_wavele
 
 	BN_CK_TABLE(spectrum);
 
-	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_mk_linear_filter(x%x, low=%g, up=%g)\n", spectrum, lower_wavelen, upper_wavelen);
+	if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_mk_linear_filter(x%x, low=%g, up=%g)\n", spectrum, lower_wavelen, upper_wavelen);
 
-	if( lower_wavelen < spectrum->x[0] )
-	if( upper_wavelen > spectrum->x[spectrum->nx] )
+	if ( lower_wavelen < spectrum->x[0] )
+	if ( upper_wavelen > spectrum->x[spectrum->nx] )
 		bu_log("bn_tabdata_mk_linear_filter() warning, upper_wavelen %g > hightest sampled wavelen %g\n",
 			upper_wavelen, spectrum->x[spectrum->nx] );
 
 	/* First, find first (possibly partial) sample */
 	first = bn_table_find_x( spectrum, lower_wavelen );
-	if( first == -1 )  {
+	if ( first == -1 )  {
 		first = 0;
 		bu_log("bn_tabdata_mk_linear_filter() warning, lower_wavelen %g < lowest sampled wavelen %g\n",
 			lower_wavelen, spectrum->x[0] );
-	} else if( first <= -2 )  {
+	} else if ( first <= -2 )  {
 		bu_log("bn_tabdata_mk_linear_filter() ERROR, lower_wavelen %g > highest sampled wavelen %g\n",
 			lower_wavelen, spectrum->x[spectrum->nx] );
 		return NULL;
@@ -1532,11 +1533,11 @@ bn_tabdata_mk_linear_filter(const struct bn_table *spectrum, double lower_wavele
 
 	/* Second, find last (possibly partial) sample */
 	last = bn_table_find_x( spectrum, upper_wavelen );
-	if( last == -1 )  {
+	if ( last == -1 )  {
 		bu_log("bn_tabdata_mk_linear_filter() ERROR, upper_wavelen %g < lowest sampled wavelen %g\n",
 			upper_wavelen, spectrum->x[0] );
 		return NULL;
-	} else if( last <= -2 )  {
+	} else if ( last <= -2 )  {
 		last = spectrum->nx-1;
 		bu_log("bn_tabdata_mk_linear_filter() warning, upper_wavelen %g > highest sampled wavelen %g\n",
 			upper_wavelen, spectrum->x[spectrum->nx] );
@@ -1546,7 +1547,7 @@ bn_tabdata_mk_linear_filter(const struct bn_table *spectrum, double lower_wavele
 	BN_GET_TABDATA( filt, spectrum );
 
 	/* Special case:  first and last are in same sample cell */
-	if( first == last )  {
+	if ( first == last )  {
 		filt_range = upper_wavelen - lower_wavelen;
 		cell_range = spectrum->x[first+1] - spectrum->x[first];
 		frac = filt_range / cell_range;
@@ -1562,19 +1563,19 @@ bn_tabdata_mk_linear_filter(const struct bn_table *spectrum, double lower_wavele
 	filt_range = spectrum->x[first+1] - lower_wavelen;
 	cell_range = spectrum->x[first+1] - spectrum->x[first];
 	frac = filt_range / cell_range;
-	if( frac > 1 )  frac = 1;
+	if ( frac > 1 )  frac = 1;
 	BU_ASSERT( (frac >= 0.0) && (frac <= 1.0) );
 	filt->y[first] = frac;
 
 	filt_range = upper_wavelen - spectrum->x[last];
 	cell_range = spectrum->x[last+1] - spectrum->x[last];
 	frac = filt_range / cell_range;
-	if( frac > 1 )  frac = 1;
+	if ( frac > 1 )  frac = 1;
 	BU_ASSERT( (frac >= 0.0) && (frac <= 1.0) );
 	filt->y[last] = frac;
 
 	/* Fill in range between with 1.0 values */
-	for( i = first+1; i < last; i++ )
+	for ( i = first+1; i < last; i++ )
 		filt->y[i] = 1.0;
 
 	return filt;

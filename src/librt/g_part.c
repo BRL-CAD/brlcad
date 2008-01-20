@@ -215,7 +215,7 @@ const struct bu_structparse rt_part_parse[] = {
     { "%f", 3, "H",  bu_offsetof(struct rt_part_internal, part_H[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 1, "r_v", bu_offsetof(struct rt_part_internal, part_vrad), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 1, "r_h", bu_offsetof(struct rt_part_internal, part_hrad), BU_STRUCTPARSE_FUNC_NULL },
-    { {'\0','\0','\0','\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
+    { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
  };
 
 BU_EXTERN( void rt_part_ifree, (struct rt_db_internal *ip) );
@@ -263,7 +263,7 @@ rt_part_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	part->part_int = *pip;			/* struct copy */
 	pip = &part->part_int;
 
-	if( pip->part_type == RT_PARTICLE_TYPE_SPHERE )  {
+	if ( pip->part_type == RT_PARTICLE_TYPE_SPHERE )  {
 		/* XXX Ought to hand off to rt_sph_prep() here */
 		/* Compute bounding sphere and RPP */
 		VMOVE( stp->st_center, pip->part_V );
@@ -279,7 +279,7 @@ rt_part_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
 	/* Compute some essential terms */
 	hlen_sq = MAGSQ(pip->part_H );
-	if( hlen_sq <= SMALL )  {
+	if ( hlen_sq <= SMALL )  {
 		bu_log("part(%s): 0-length H vector\n", stp->st_dp->d_namep);
 		return 1;		/* BAD */
 	}
@@ -294,11 +294,11 @@ rt_part_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	 */
 
 	/* Calculate changes in terms of the "unit particle" */
-	if( pip->part_vrad >= pip->part_hrad )  {
+	if ( pip->part_vrad >= pip->part_hrad )  {
 		/* V end is larger, H end is smaller */
 		r_diff = (pip->part_vrad - pip->part_hrad) * inv_hlen;
 		r_diff_sq = r_diff * r_diff;
-		if( r_diff_sq > 1 )  {
+		if ( r_diff_sq > 1 )  {
 			/* No "equivalent cone" is possible, theta=90deg */
 			sin_theta = 1;
 			cos_theta = 0;
@@ -317,7 +317,7 @@ rt_part_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 		/* H end is larger, V end is smaller */
 		r_diff = (pip->part_hrad - pip->part_vrad) * inv_hlen;
 		r_diff_sq = r_diff * r_diff;
-		if( r_diff_sq > 1 )  {
+		if ( r_diff_sq > 1 )  {
 			/* No "equivalent cone" is possible, theta=90deg */
 			sin_theta = 1;
 			cos_theta = 0;
@@ -383,8 +383,8 @@ rt_part_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 		vect_t			work;
 		VSUB2SCALE( work, stp->st_max, stp->st_min, 0.5 );	/* radius */
 		f = work[X];
-		if( work[Y] > f )  f = work[Y];
-		if( work[Z] > f )  f = work[Z];
+		if ( work[Y] > f )  f = work[Y];
+		if ( work[Z] > f )  f = work[Z];
 		stp->st_aradius = f;
 		stp->st_bradius = MAGNITUDE(work);
 	}
@@ -405,7 +405,7 @@ rt_part_print(register const struct soltab *stp)
 	bu_log("part_vrad=%g\n", part->part_int.part_vrad );
 	bu_log("part_hrad=%g\n", part->part_int.part_hrad );
 
-	switch( part->part_int.part_type )  {
+	switch ( part->part_int.part_type )  {
 	case RT_PARTICLE_TYPE_SPHERE:
 		bu_log("part_type = SPHERE\n");
 		break;
@@ -451,7 +451,7 @@ rt_part_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	register struct hit *hitp = &hits[0];
 	int		check_v, check_h;
 
-	if( part->part_int.part_type == RT_PARTICLE_TYPE_SPHERE )  {
+	if ( part->part_int.part_type == RT_PARTICLE_TYPE_SPHERE )  {
 		vect_t	ov;		/* ray orgin to center (V - P) */
 		fastf_t	vrad_sq;
 		fastf_t	magsq_ov;	/* length squared of ov */
@@ -462,15 +462,15 @@ rt_part_shot(struct soltab *stp, register struct xray *rp, struct application *a
 		b = VDOT( rp->r_dir, ov );
 		magsq_ov = MAGSQ(ov);
 
-		if( magsq_ov >= (vrad_sq = part->part_int.part_vrad *
+		if ( magsq_ov >= (vrad_sq = part->part_int.part_vrad *
 		    part->part_int.part_vrad) ) {
 			/* ray origin is outside of sphere */
-			if( b < 0 ) {
+			if ( b < 0 ) {
 				/* ray direction is away from sphere */
 				return(0);		/* No hit */
 			}
 			root = b*b - magsq_ov + vrad_sq;
-			if( root <= 0 ) {
+			if ( root <= 0 ) {
 				/* no real roots */
 				return(0);		/* No hit */
 			}
@@ -498,7 +498,7 @@ rt_part_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	VSUB2( xlated, rp->r_pt, part->part_int.part_V );
 	MAT4X3VEC( pprime, part->part_SoR, xlated );
 
-	if( NEAR_ZERO(dprime[X], SMALL) && NEAR_ZERO(dprime[Y], SMALL) )  {
+	if ( NEAR_ZERO(dprime[X], SMALL) && NEAR_ZERO(dprime[Y], SMALL) )  {
 		check_v = check_h = 1;
 		goto check_hemispheres;
 	}
@@ -506,7 +506,7 @@ rt_part_shot(struct soltab *stp, register struct xray *rp, struct application *a
 
 	/* Find roots of the equation, using forumla for quadratic */
 	/* Note that vrad' = 1 and hrad' = hrad/vrad */
-	if( part->part_int.part_type == RT_PARTICLE_TYPE_CYLINDER )  {
+	if ( part->part_int.part_type == RT_PARTICLE_TYPE_CYLINDER )  {
 		/* Cylinder case, hrad == vrad, m = 0 */
 		fastf_t	a, b, c;
 		fastf_t	root;		/* root of radical */
@@ -514,7 +514,7 @@ rt_part_shot(struct soltab *stp, register struct xray *rp, struct application *a
 		a = dprime[X]*dprime[X] + dprime[Y]*dprime[Y];
 		b = dprime[X]*pprime[X] + dprime[Y]*pprime[Y];
 		c = pprime[X]*pprime[X] + pprime[Y]*pprime[Y] - 1;
-		if( (root = b*b - a * c) <= 0 )
+		if ( (root = b*b - a * c) <= 0 )
 			goto check_hemispheres;
 		root = sqrt(root);
 		t1 = (root-b) / a;
@@ -540,7 +540,7 @@ rt_part_shot(struct soltab *stp, register struct xray *rp, struct application *a
 			2 * m * pprime[Z] - 1;
 			/* was: ... -2m * vrad' * Pz' - vrad'**2 */
 
-		if( (root = b*b - a * c) <= 0 )
+		if ( (root = b*b - a * c) <= 0 )
 			goto check_hemispheres;
 		root = sqrt(root);
 
@@ -552,9 +552,9 @@ rt_part_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	 *  t1 and t2 are potential solutions to intersection with side.
 	 *  Find hit' point, see if Z values fall in range.
 	 */
-	if( (f = pprime[Z] + t1 * dprime[Z]) >= part->part_v_hdist )  {
+	if ( (f = pprime[Z] + t1 * dprime[Z]) >= part->part_v_hdist )  {
 		check_h = 1;		/* may also hit off end */
-		if( f <= part->part_h_hdist )  {
+		if ( f <= part->part_h_hdist )  {
 			hitp->hit_magic = RT_HIT_MAGIC;
 			/** VJOIN1( hitp->hit_vpriv, pprime, t1, dprime ); **/
 			hitp->hit_vpriv[X] = pprime[X] + t1 * dprime[X];
@@ -568,9 +568,9 @@ rt_part_shot(struct soltab *stp, register struct xray *rp, struct application *a
 		check_v = 1;
 	}
 
-	if( (f = pprime[Z] + t2 * dprime[Z]) >= part->part_v_hdist )  {
+	if ( (f = pprime[Z] + t2 * dprime[Z]) >= part->part_v_hdist )  {
 		check_h = 1;		/* may also hit off end */
-		if( f <= part->part_h_hdist )  {
+		if ( f <= part->part_h_hdist )  {
 			hitp->hit_magic = RT_HIT_MAGIC;
 			/** VJOIN1( hitp->hit_vpriv, pprime, t2, dprime ); **/
 			hitp->hit_vpriv[X] = pprime[X] + t2 * dprime[X];
@@ -588,7 +588,7 @@ rt_part_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	 *  Check for hitting the end hemispheres.
 	 */
 check_hemispheres:
-	if( check_v )  {
+	if ( check_v )  {
 		vect_t	ov;		/* ray orgin to center (V - P) */
 		fastf_t	rad_sq;
 		fastf_t	magsq_ov;	/* length squared of ov */
@@ -601,15 +601,15 @@ check_hemispheres:
 		VSUB2( ov, part->part_int.part_V, rp->r_pt );
 		b = VDOT( rp->r_dir, ov );
 		magsq_ov = MAGSQ(ov);
-		if( magsq_ov >= (rad_sq = part->part_int.part_vrad *
+		if ( magsq_ov >= (rad_sq = part->part_int.part_vrad *
 		    part->part_int.part_vrad) ) {
 			/* ray origin is outside of sphere */
-			if( b < 0 ) {
+			if ( b < 0 ) {
 				/* ray direction is away from sphere */
 				goto do_check_h;
 			}
 			root = b*b - magsq_ov + rad_sq;
-			if( root <= 0 ) {
+			if ( root <= 0 ) {
 				/* no real roots */
 				goto do_check_h;
 			}
@@ -619,14 +619,14 @@ check_hemispheres:
 		root = sqrt(root);
 		t1 = b - root;
 		/* see if hit'[Z] is below V end of cylinder */
-		if( pprime[Z] + t1 * dprime[Z] <= part->part_v_hdist )  {
+		if ( pprime[Z] + t1 * dprime[Z] <= part->part_v_hdist )  {
 			hitp->hit_magic = RT_HIT_MAGIC;
 			hitp->hit_dist = t1;
 			hitp->hit_surfno = RT_PARTICLE_SURF_VSPHERE;
 			hitp++;
 		}
 		t2 = b + root;
-		if( pprime[Z] + t2 * dprime[Z] <= part->part_v_hdist )  {
+		if ( pprime[Z] + t2 * dprime[Z] <= part->part_v_hdist )  {
 			hitp->hit_magic = RT_HIT_MAGIC;
 			hitp->hit_dist = t2;
 			hitp->hit_surfno = RT_PARTICLE_SURF_VSPHERE;
@@ -635,7 +635,7 @@ check_hemispheres:
 	}
 
 do_check_h:
-	if( check_h )  {
+	if ( check_h )  {
 		vect_t	ov;		/* ray orgin to center (V - P) */
 		fastf_t	rad_sq;
 		fastf_t	magsq_ov;	/* length squared of ov */
@@ -649,15 +649,15 @@ do_check_h:
 		VSUB2( ov, ov, rp->r_pt );
 		b = VDOT( rp->r_dir, ov );
 		magsq_ov = MAGSQ(ov);
-		if( magsq_ov >= (rad_sq = part->part_int.part_hrad *
+		if ( magsq_ov >= (rad_sq = part->part_int.part_hrad *
 		    part->part_int.part_hrad) ) {
 			/* ray origin is outside of sphere */
-			if( b < 0 ) {
+			if ( b < 0 ) {
 				/* ray direction is away from sphere */
 				goto out;
 			}
 			root = b*b - magsq_ov + rad_sq;
-			if( root <= 0 ) {
+			if ( root <= 0 ) {
 				/* no real roots */
 				goto out;
 			}
@@ -667,14 +667,14 @@ do_check_h:
 		root = sqrt(root);
 		t1 = b - root;
 		/* see if hit'[Z] is above H end of cylinder */
-		if( pprime[Z] + t1 * dprime[Z] >= part->part_h_hdist )  {
+		if ( pprime[Z] + t1 * dprime[Z] >= part->part_h_hdist )  {
 			hitp->hit_magic = RT_HIT_MAGIC;
 			hitp->hit_dist = t1;
 			hitp->hit_surfno = RT_PARTICLE_SURF_HSPHERE;
 			hitp++;
 		}
 		t2 = b + root;
-		if( pprime[Z] + t2 * dprime[Z] >= part->part_h_hdist )  {
+		if ( pprime[Z] + t2 * dprime[Z] >= part->part_h_hdist )  {
 			hitp->hit_magic = RT_HIT_MAGIC;
 			hitp->hit_dist = t2;
 			hitp->hit_surfno = RT_PARTICLE_SURF_HSPHERE;
@@ -682,13 +682,13 @@ do_check_h:
 		}
 	}
 out:
-	if( hitp == &hits[0] )
+	if ( hitp == &hits[0] )
 		return(0);	/* MISS */
-	if( hitp == &hits[1] )  {
+	if ( hitp == &hits[1] )  {
 		/* Only one hit, make it a 0-thickness segment */
 		hits[1] = hits[0];		/* struct copy */
 		hitp++;
-	} else if( hitp > &hits[2] )  {
+	} else if ( hitp > &hits[2] )  {
 		/*
 		 *  More than two intersections found.
 		 *  This can happen when a ray grazes down along a tangent
@@ -705,7 +705,7 @@ out:
 		hits[1] = hitp[-1];	/* struct copy */
 	}
 
-	if( hits[0].hit_dist < hits[1].hit_dist )  {
+	if ( hits[0].hit_dist < hits[1].hit_dist )  {
 		/* entry is [0], exit is [1] */
 		register struct seg *segp;
 
@@ -757,7 +757,7 @@ rt_part_norm(register struct hit *hitp, struct soltab *stp, register struct xray
 		(struct part_specific *)stp->st_specific;
 
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
-	switch( hitp->hit_surfno )  {
+	switch ( hitp->hit_surfno )  {
 	case RT_PARTICLE_SURF_VSPHERE:
 		VSUB2( hitp->hit_normal, hitp->hit_point, part->part_int.part_V );
 		VUNITIZE( hitp->hit_normal );
@@ -769,7 +769,7 @@ rt_part_norm(register struct hit *hitp, struct soltab *stp, register struct xray
 		break;
 	case RT_PARTICLE_SURF_BODY:
 		/* compute it */
-		if( part->part_int.part_type == RT_PARTICLE_TYPE_CYLINDER )  {
+		if ( part->part_int.part_type == RT_PARTICLE_TYPE_CYLINDER )  {
 			/* The X' and Y' components of hit' are N' */
 			hitp->hit_vpriv[Z] = 0;
 			MAT4X3VEC( hitp->hit_normal, part->part_invRoS,
@@ -808,7 +808,7 @@ rt_part_curve(register struct curvature *cvp, register struct hit *hitp, struct 
 	point_t	hit_local;	/* hit_point, with V as origin */
 	point_t	hit_unit;	/* hit_poit in unit coords, +Z along H */
 
-	switch( hitp->hit_surfno )  {
+	switch ( hitp->hit_surfno )  {
 	case RT_PARTICLE_SURF_VSPHERE:
 		bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
 		cvp->crv_c1 = cvp->crv_c2 = -part->part_int.part_vrad;
@@ -874,7 +874,7 @@ rt_part_uv(struct application *ap, struct soltab *stp, register struct hit *hitp
 
 	/* U is azimuth, atan() range: -pi to +pi */
 	uvp->uv_u = bn_atan2( hit_unit[Y], hit_unit[X] ) * bn_inv2pi;
-	if( uvp->uv_u < 0 )
+	if ( uvp->uv_u < 0 )
 		uvp->uv_u += 1.0;
 
 	/* approximation: beam_r / (solid_circumference = 2 * pi * radius) */
@@ -964,7 +964,7 @@ rt_part_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 	pip = (struct rt_part_internal *)ip->idb_ptr;
 	RT_PART_CK_MAGIC(pip);
 
-	if( pip->part_type == RT_PARTICLE_TYPE_SPHERE )  {
+	if ( pip->part_type == RT_PARTICLE_TYPE_SPHERE )  {
 		/* For the sphere, 3 rings of 16 points */
 		VSET( a, pip->part_vrad, 0, 0 );
 		VSET( b, 0, pip->part_vrad, 0 );
@@ -972,19 +972,19 @@ rt_part_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 
 		rt_ell_16pts( &sphere_rim[0][X], pip->part_V, a, b );
 		RT_ADD_VLIST( vhead, sphere_rim[15], BN_VLIST_LINE_MOVE );
-		for( i=0; i<16; i++ )  {
+		for ( i=0; i<16; i++ )  {
 			RT_ADD_VLIST( vhead, sphere_rim[i], BN_VLIST_LINE_DRAW );
 		}
 
 		rt_ell_16pts( &sphere_rim[0][X], pip->part_V, b, c );
 		RT_ADD_VLIST( vhead, sphere_rim[15], BN_VLIST_LINE_MOVE );
-		for( i=0; i<16; i++ )  {
+		for ( i=0; i<16; i++ )  {
 			RT_ADD_VLIST( vhead, sphere_rim[i], BN_VLIST_LINE_DRAW );
 		}
 
 		rt_ell_16pts( &sphere_rim[0][X], pip->part_V, a, c );
 		RT_ADD_VLIST( vhead, sphere_rim[15], BN_VLIST_LINE_MOVE );
-		for( i=0; i<16; i++ )  {
+		for ( i=0; i<16; i++ )  {
 			RT_ADD_VLIST( vhead, sphere_rim[i], BN_VLIST_LINE_DRAW );
 		}
 		return(0);		/* OK */
@@ -1010,7 +1010,7 @@ rt_part_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 
 	/* Draw V end hemisphere */
 	RT_ADD_VLIST( vhead, vhemi[0], BN_VLIST_LINE_MOVE );
-	for( i=7; i >= 0; i-- )  {
+	for ( i=7; i >= 0; i-- )  {
 		RT_ADD_VLIST( vhead, vhemi[i], BN_VLIST_LINE_DRAW );
 	}
 	RT_ADD_VLIST( vhead, vhemi[8], BN_VLIST_LINE_DRAW );
@@ -1025,7 +1025,7 @@ rt_part_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 
 	/* Draw H end hemisphere */
 	RT_ADD_VLIST( vhead, hhemi[0], BN_VLIST_LINE_MOVE );
-	for( i=7; i >= 0; i-- )  {
+	for ( i=7; i >= 0; i-- )  {
 		RT_ADD_VLIST( vhead, hhemi[i], BN_VLIST_LINE_DRAW );
 	}
 	RT_ADD_VLIST( vhead, hhemi[8], BN_VLIST_LINE_DRAW );
@@ -1109,7 +1109,7 @@ rt_part_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 	pip = (struct rt_part_internal *)ip->idb_ptr;
 	RT_PART_CK_MAGIC(pip);
 
-	if( pip->part_type == RT_PARTICLE_TYPE_SPHERE )
+	if ( pip->part_type == RT_PARTICLE_TYPE_SPHERE )
 		return(-1);
 	/* For now, concentrate on the most important kind. */
 
@@ -1153,20 +1153,20 @@ rt_part_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 
 	/* Find the larger of two hemispheres */
 	radius = pip->part_vrad;
-	if( pip->part_hrad > radius )
+	if ( pip->part_hrad > radius )
 		radius = pip->part_hrad;
 
 	/*
 	 *  Establish tolerances
 	 */
-	if( ttol->rel <= 0.0 || ttol->rel >= 1.0 )  {
+	if ( ttol->rel <= 0.0 || ttol->rel >= 1.0 )  {
 		rel = 0.0;		/* none */
 	} else {
 		/* Convert rel to absolute by scaling by radius */
 		rel = ttol->rel * radius;
 	}
-	if( ttol->abs <= 0.0 )  {
-		if( rel <= 0.0 )  {
+	if ( ttol->abs <= 0.0 )  {
+		if ( rel <= 0.0 )  {
 			/* No tolerance given, use a default */
 			rel = 0.10 * radius;	/* 10% */
 		} else {
@@ -1174,10 +1174,10 @@ rt_part_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 		}
 	} else {
 		/* Absolute tolerance was given, pick smaller */
-		if( ttol->rel <= 0.0 || rel > ttol->abs )
+		if ( ttol->rel <= 0.0 || rel > ttol->abs )
 		{
 			rel = ttol->abs;
-			if( rel > radius )
+			if ( rel > radius )
 				rel = radius;
 		}
 	}
@@ -1189,7 +1189,7 @@ rt_part_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 	state.theta_tol = 2 * acos( 1.0 - rel / radius );
 
 	/* To ensure normal tolerance, remain below this angle */
-	if( ttol->norm > 0.0 && ttol->norm < state.theta_tol )  {
+	if ( ttol->norm > 0.0 && ttol->norm < state.theta_tol )  {
 		state.theta_tol = ttol->norm;
 	}
 
@@ -1198,7 +1198,7 @@ rt_part_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 
 	/* Find the number of segments to divide 90 degrees worth into */
 	nsegs = bn_halfpi / state.theta_tol + 0.999;
-	if( nsegs < 2 )  nsegs = 2;
+	if ( nsegs < 2 )  nsegs = 2;
 
 	/*  Find total number of strips of vertices that will be needed.
 	 *  nsegs for each hemisphere, plus one equator each.
@@ -1227,7 +1227,7 @@ rt_part_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 	strips[nsegs+1].nverts_per_strip = nsegs;
 	strips[nsegs+1].nfaces = 0;
 
-	for( i=1; i<nsegs; i++ )  {
+	for ( i=1; i<nsegs; i++ )  {
 		strips[i].nverts_per_strip =
 			strips[nstrips-1-i].nverts_per_strip = i;
 		strips[i].nverts =
@@ -1236,15 +1236,15 @@ rt_part_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 			strips[nstrips-1-i].nfaces = (2 * i + 1)*4;
 	}
 	/* All strips have vertices and normals */
-	for( i=0; i<nstrips; i++ )  {
+	for ( i=0; i<nstrips; i++ )  {
 		strips[i].vp = (struct vertex **)bu_calloc( strips[i].nverts,
 			sizeof(struct vertex *), "strip vertex[]" );
 		strips[i].norms = (vect_t *)bu_calloc( strips[i].nverts,
 			sizeof( vect_t ), "strip normals[]" );
 	}
 	/* All strips have faces, except for the one (marked) equator */
-	for( i=0; i < nstrips; i++ )  {
-		if( strips[i].nfaces <= 0 )  {
+	for ( i=0; i < nstrips; i++ )  {
+		if ( strips[i].nfaces <= 0 )  {
 			strips[i].fu = (struct faceuse **)NULL;
 			continue;
 		}
@@ -1254,32 +1254,32 @@ rt_part_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 
 	/* First, build the triangular mesh topology */
 	/* Do the top. "toff" in i-1 is UP, towards +B */
-	for( i = 1; i <= nsegs; i++ )  {
+	for ( i = 1; i <= nsegs; i++ )  {
 		faceno = 0;
 		tlim = strips[i-1].nverts;
 		blim = strips[i].nverts;
-		for( stripno=0; stripno<4; stripno++ )  {
+		for ( stripno=0; stripno<4; stripno++ )  {
 			toff = stripno * strips[i-1].nverts_per_strip;
 			boff = stripno * strips[i].nverts_per_strip;
 
 			/* Connect this quarter strip */
-			for( j = 0; j < strips[i].nverts_per_strip; j++ )  {
+			for ( j = 0; j < strips[i].nverts_per_strip; j++ )  {
 
 				/* "Right-side-up" triangle */
 				vertp[0] = &(strips[i].vp[j+boff]);
 				vertp[1] = &(strips[i].vp[(j+1+boff)%blim]);
 				vertp[2] = &(strips[i-1].vp[(j+toff)%tlim]);
-				if( (strips[i-1].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
+				if ( (strips[i-1].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
 					bu_log("rt_part_tess() nmg_cmface failure\n");
 					goto fail;
 				}
-				if( j+1 >= strips[i].nverts_per_strip )  break;
+				if ( j+1 >= strips[i].nverts_per_strip )  break;
 
 				/* Follow with interior "Up-side-down" triangle */
 				vertp[0] = &(strips[i].vp[(j+1+boff)%blim]);
 				vertp[1] = &(strips[i-1].vp[(j+1+toff)%tlim]);
 				vertp[2] = &(strips[i-1].vp[(j+toff)%tlim]);
-				if( (strips[i-1].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
+				if ( (strips[i-1].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
 					bu_log("rt_part_tess() nmg_cmface failure\n");
 					goto fail;
 				}
@@ -1295,14 +1295,14 @@ rt_part_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 		blim = strips[i].nverts;
 		{
 			/* Connect this whole strip */
-			for( j = 0; j < strips[i].nverts; j++ )  {
+			for ( j = 0; j < strips[i].nverts; j++ )  {
 
 				/* "Right-side-up" rectangle */
 				vertp[3] = &(strips[i].vp[(j)%blim]);
 				vertp[2] = &(strips[i-1].vp[(j)%tlim]);
 				vertp[1] = &(strips[i-1].vp[(j+1)%tlim]);
 				vertp[0] = &(strips[i].vp[(j+1)%blim]);
-				if( (strips[i-1].fu[faceno++] = nmg_cmface(state.s, vertp, 4 )) == 0 )  {
+				if ( (strips[i-1].fu[faceno++] = nmg_cmface(state.s, vertp, 4 )) == 0 )  {
 					bu_log("rt_part_tess() nmg_cmface failure\n");
 					goto fail;
 				}
@@ -1311,32 +1311,32 @@ rt_part_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 	}
 
 	/* Do the bottom.  Everything is upside down. "toff" in i+1 is DOWN */
-	for( i = nsegs+1; i < nstrips; i++ )  {
+	for ( i = nsegs+1; i < nstrips; i++ )  {
 		faceno = 0;
 		tlim = strips[i+1].nverts;
 		blim = strips[i].nverts;
-		for( stripno=0; stripno<4; stripno++ )  {
+		for ( stripno=0; stripno<4; stripno++ )  {
 			toff = stripno * strips[i+1].nverts_per_strip;
 			boff = stripno * strips[i].nverts_per_strip;
 
 			/* Connect this quarter strip */
-			for( j = 0; j < strips[i].nverts_per_strip; j++ )  {
+			for ( j = 0; j < strips[i].nverts_per_strip; j++ )  {
 
 				/* "Right-side-up" triangle */
 				vertp[0] = &(strips[i].vp[j+boff]);
 				vertp[1] = &(strips[i+1].vp[(j+toff)%tlim]);
 				vertp[2] = &(strips[i].vp[(j+1+boff)%blim]);
-				if( (strips[i+1].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
+				if ( (strips[i+1].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
 					bu_log("rt_part_tess() nmg_cmface failure\n");
 					goto fail;
 				}
-				if( j+1 >= strips[i].nverts_per_strip )  break;
+				if ( j+1 >= strips[i].nverts_per_strip )  break;
 
 				/* Follow with interior "Up-side-down" triangle */
 				vertp[0] = &(strips[i].vp[(j+1+boff)%blim]);
 				vertp[1] = &(strips[i+1].vp[(j+toff)%tlim]);
 				vertp[2] = &(strips[i+1].vp[(j+1+toff)%tlim]);
-				if( (strips[i+1].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
+				if ( (strips[i+1].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
 					bu_log("rt_part_tess() nmg_cmface failure\n");
 					goto fail;
 				}
@@ -1348,7 +1348,7 @@ rt_part_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 	 *  Start with the location in the unit sphere, and project back.
 	 *  i=0 is "straight up" along +H.
 	 */
-	for( i=0; i < nstrips; i++ )  {
+	for ( i=0; i < nstrips; i++ )  {
 		double	alpha;		/* decline down from B to A */
 		double	beta;		/* angle around equator (azimuth) */
 		fastf_t		cos_alpha, sin_alpha;
@@ -1357,13 +1357,13 @@ rt_part_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 		point_t		model_pt;
 
 		/* Compensate for extra equator */
-		if( i <= nsegs )
+		if ( i <= nsegs )
 			alpha = (((double)i) / (nstrips-1-1));
 		else
 			alpha = (((double)i-1) / (nstrips-1-1));
 		cos_alpha = cos(alpha*bn_pi);
 		sin_alpha = sin(alpha*bn_pi);
-		for( j=0; j < strips[i].nverts; j++ )  {
+		for ( j=0; j < strips[i].nverts; j++ )  {
 
 			beta = ((double)j) / strips[i].nverts;
 			cos_beta = cos(beta*bn_twopi);
@@ -1373,7 +1373,7 @@ rt_part_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 				sin_beta * sin_alpha,
 				cos_alpha );
 			/* Convert from ideal sphere coordinates */
-			if( i <= nsegs )  {
+			if ( i <= nsegs )  {
 				MAT4X3PNT( model_pt, state.upper_invRinvS, sphere_pt );
 				VADD2( model_pt, model_pt, hcenter );
 				/* Convert sphere normal to ellipsoid normal */
@@ -1393,17 +1393,17 @@ rt_part_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 	}
 
 	/* Associate face geometry.  lower Equator has no faces */
-	for( i=0; i < nstrips; i++ )  {
-		for( j=0; j < strips[i].nfaces; j++ )  {
-			if( nmg_fu_planeeqn( strips[i].fu[j], tol ) < 0 )
+	for ( i=0; i < nstrips; i++ )  {
+		for ( j=0; j < strips[i].nfaces; j++ )  {
+			if ( nmg_fu_planeeqn( strips[i].fu[j], tol ) < 0 )
 				goto fail;
 		}
 	}
 
 	/* Associate normals with vertexuses */
-	for( i=0; i < nstrips; i++ )
+	for ( i=0; i < nstrips; i++ )
 	{
-		for( j=0; j < strips[i].nverts; j++ )
+		for ( j=0; j < strips[i].nverts; j++ )
 		{
 			struct faceuse *fu;
 			struct vertexuse *vu;
@@ -1412,16 +1412,16 @@ rt_part_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 			NMG_CK_VERTEX( strips[i].vp[j] );
 			VREVERSE( norm_opp, strips[i].norms[j] )
 
-			for( BU_LIST_FOR( vu, vertexuse, &strips[i].vp[j]->vu_hd ) )
+			for ( BU_LIST_FOR( vu, vertexuse, &strips[i].vp[j]->vu_hd ) )
 			{
 				fu = nmg_find_fu_of_vu( vu );
 				NMG_CK_FACEUSE( fu );
 				/* get correct direction of normals depending on
 				 * faceuse orientation
 				 */
-				if( fu->orientation == OT_SAME )
+				if ( fu->orientation == OT_SAME )
 					nmg_vertexuse_nv( vu, strips[i].norms[j] );
-				else if( fu->orientation == OT_OPPOSITE )
+				else if ( fu->orientation == OT_OPPOSITE )
 					nmg_vertexuse_nv( vu, norm_opp );
 			}
 		}
@@ -1432,13 +1432,13 @@ rt_part_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 
 	/* Release memory */
 	/* All strips have vertices and normals */
-	for( i=0; i<nstrips; i++ )  {
+	for ( i=0; i<nstrips; i++ )  {
 		bu_free( (char *)strips[i].vp, "strip vertex[]" );
 		bu_free( (char *)strips[i].norms, "strip norms[]" );
 	}
 	/* All strips have faces, except for equator */
-	for( i=0; i < nstrips; i++ )  {
-		if( strips[i].fu == (struct faceuse **)0 )  continue;
+	for ( i=0; i < nstrips; i++ )  {
+		if ( strips[i].fu == (struct faceuse **)0 )  continue;
 		bu_free( (char *)strips[i].fu, "strip faceuse[]" );
 	}
 	bu_free( (char *)strips, "strips[]" );
@@ -1446,13 +1446,13 @@ rt_part_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 fail:
 	/* Release memory */
 	/* All strips have vertices and normals */
-	for( i=0; i<nstrips; i++ )  {
+	for ( i=0; i<nstrips; i++ )  {
 		bu_free( (char *)strips[i].vp, "strip vertex[]" );
 		bu_free( (char *)strips[i].norms, "strip norms[]" );
 	}
 	/* All strips have faces, except for equator */
-	for( i=0; i < nstrips; i++ )  {
-		if( strips[i].fu == (struct faceuse **)0 )  continue;
+	for ( i=0; i < nstrips; i++ )  {
+		if ( strips[i].fu == (struct faceuse **)0 )  continue;
 		bu_free( (char *)strips[i].fu, "strip faceuse[]" );
 	}
 	bu_free( (char *)strips, "strips[]" );
@@ -1476,7 +1476,7 @@ rt_part_import(struct rt_db_internal *ip, const struct bu_external *ep, register
 	BU_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
 	/* Check record type */
-	if( rp->u_id != DBID_PARTICLE )  {
+	if ( rp->u_id != DBID_PARTICLE )  {
 		bu_log("rt_part_import: defective record\n");
 		return(-1);
 	}
@@ -1499,34 +1499,34 @@ rt_part_import(struct rt_db_internal *ip, const struct bu_external *ep, register
 	if (mat == NULL) mat = bn_mat_identity;
 	MAT4X3PNT( part->part_V, mat, v );
 	MAT4X3VEC( part->part_H, mat, h );
-	if( (part->part_vrad = vrad / mat[15]) < 0 )  {
+	if ( (part->part_vrad = vrad / mat[15]) < 0 )  {
 	  bu_log("unable to import particle, negative v radius\n");
 	  bu_free( ip->idb_ptr, "rt_part_internal" );
 	  ip->idb_ptr=NULL;
 	  return(-2);
 	}
-	if( (part->part_hrad = hrad / mat[15]) < 0 )  {
+	if ( (part->part_hrad = hrad / mat[15]) < 0 )  {
 	  bu_log("unable to import particle, negative h radius\n");
 	  bu_free( ip->idb_ptr, "rt_part_internal" );
 	  ip->idb_ptr=NULL;
 	  return(-3);
 	}
 
-	if( part->part_vrad > part->part_hrad )  {
+	if ( part->part_vrad > part->part_hrad )  {
 		maxrad = part->part_vrad;
 		minrad = part->part_hrad;
 	} else {
 		maxrad = part->part_hrad;
 		minrad = part->part_vrad;
 	}
-	if( maxrad <= 0 )  {
+	if ( maxrad <= 0 )  {
 	  bu_log("unable to import particle, negative radius\n");
 	  bu_free( ip->idb_ptr, "rt_part_internal" );
 	  ip->idb_ptr=NULL;
 	  return(-4);
 	}
 
-	if( MAGSQ( part->part_H ) * 1000000 < maxrad * maxrad )  {
+	if ( MAGSQ( part->part_H ) * 1000000 < maxrad * maxrad )  {
 		/* Height vector is insignificant, particle is a sphere */
 		part->part_vrad = part->part_hrad = maxrad;
 		VSETALL( part->part_H, 0 );		/* sanity */
@@ -1534,7 +1534,7 @@ rt_part_import(struct rt_db_internal *ip, const struct bu_external *ep, register
 		return(0);		/* OK */
 	}
 
-	if( (maxrad - minrad) / maxrad < 0.001 )  {
+	if ( (maxrad - minrad) / maxrad < 0.001 )  {
 		/* radii are nearly equal, particle is a cylinder (lozenge) */
 		part->part_vrad = part->part_hrad = maxrad;
 		part->part_type = RT_PARTICLE_TYPE_CYLINDER;
@@ -1559,7 +1559,7 @@ rt_part_export(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	fastf_t		hrad;
 
 	RT_CK_DB_INTERNAL(ip);
-	if( ip->idb_type != ID_PARTICLE )  return(-1);
+	if ( ip->idb_type != ID_PARTICLE )  return(-1);
 	pip = (struct rt_part_internal *)ip->idb_ptr;
 	RT_PART_CK_MAGIC(pip);
 
@@ -1615,34 +1615,34 @@ rt_part_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 	if (mat == NULL) mat = bn_mat_identity;
 	MAT4X3PNT( part->part_V, mat, &vec[0*3] );
 	MAT4X3VEC( part->part_H, mat, &vec[1*3] );
-	if( (part->part_vrad = vec[2*3] / mat[15]) < 0 )  {
+	if ( (part->part_vrad = vec[2*3] / mat[15]) < 0 )  {
 	  bu_free( ip->idb_ptr, "rt_part_internal" );
 	  ip->idb_ptr=NULL;
 	  bu_log("unable to import particle, negative v radius\n");
 	  return(-2);
 	}
-	if( (part->part_hrad = vec[2*3+1] / mat[15]) < 0 )  {
+	if ( (part->part_hrad = vec[2*3+1] / mat[15]) < 0 )  {
 	  bu_free( ip->idb_ptr, "rt_part_internal" );
 	  ip->idb_ptr=NULL;
 	  bu_log("unable to import particle, negative h radius\n");
 	  return(-3);
 	}
 
-	if( part->part_vrad > part->part_hrad )  {
+	if ( part->part_vrad > part->part_hrad )  {
 		maxrad = part->part_vrad;
 		minrad = part->part_hrad;
 	} else {
 		maxrad = part->part_hrad;
 		minrad = part->part_vrad;
 	}
-	if( maxrad <= 0 )  {
+	if ( maxrad <= 0 )  {
 	  bu_free( ip->idb_ptr, "rt_part_internal" );
 	  ip->idb_ptr=NULL;
 	  bu_log("unable to import particle, negative radius\n");
 	  return(-4);
 	}
 
-	if( MAGSQ( part->part_H ) * 1000000 < maxrad * maxrad )  {
+	if ( MAGSQ( part->part_H ) * 1000000 < maxrad * maxrad )  {
 		/* Height vector is insignificant, particle is a sphere */
 		part->part_vrad = part->part_hrad = maxrad;
 		VSETALL( part->part_H, 0 );		/* sanity */
@@ -1650,7 +1650,7 @@ rt_part_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 		return(0);		/* OK */
 	}
 
-	if( (maxrad - minrad) / maxrad < 0.001 )  {
+	if ( (maxrad - minrad) / maxrad < 0.001 )  {
 		/* radii are nearly equal, particle is a cylinder (lozenge) */
 		part->part_vrad = part->part_hrad = maxrad;
 		part->part_type = RT_PARTICLE_TYPE_CYLINDER;
@@ -1671,7 +1671,7 @@ rt_part_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
 	fastf_t			vec[8];
 
 	RT_CK_DB_INTERNAL(ip);
-	if( ip->idb_type != ID_PARTICLE )  return(-1);
+	if ( ip->idb_type != ID_PARTICLE )  return(-1);
 	pip = (struct rt_part_internal *)ip->idb_ptr;
 	RT_PART_CK_MAGIC(pip);
 
@@ -1708,7 +1708,7 @@ rt_part_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbos
 	char	buf[256];
 
 	RT_PART_CK_MAGIC(pip);
-	switch( pip->part_type )  {
+	switch ( pip->part_type )  {
 	case RT_PARTICLE_TYPE_SPHERE:
 		bu_vls_strcat( str, "spherical particle\n");
 		sprintf(buf, "\tV (%g, %g, %g)\n",

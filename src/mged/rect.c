@@ -74,7 +74,7 @@ rb_set_dirty_flag(void)
   struct dm_list *dmlp;
 
   FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l)
-    if(dmlp->dml_rubber_band == rubber_band)
+    if (dmlp->dml_rubber_band == rubber_band)
       dmlp->dml_dirty = 1;
 }
 
@@ -119,23 +119,23 @@ adjust_rect_for_zoom(void)
 {
   fastf_t width, height;
 
-  if(rubber_band->rb_width >= 0.0)
+  if (rubber_band->rb_width >= 0.0)
     width = rubber_band->rb_width;
   else
     width = -rubber_band->rb_width;
 
-  if(rubber_band->rb_height >= 0.0)
+  if (rubber_band->rb_height >= 0.0)
     height = rubber_band->rb_height;
   else
     height = -rubber_band->rb_height;
 
-  if(width >= height){
-    if(rubber_band->rb_height >= 0.0)
+  if (width >= height){
+    if (rubber_band->rb_height >= 0.0)
       rubber_band->rb_height = width / dmp->dm_aspect;
     else
       rubber_band->rb_height = -width / dmp->dm_aspect;
   }else{
-    if(rubber_band->rb_width >= 0.0)
+    if (rubber_band->rb_width >= 0.0)
       rubber_band->rb_width = height * dmp->dm_aspect;
     else
       rubber_band->rb_width = -height * dmp->dm_aspect;
@@ -147,16 +147,16 @@ draw_rect(void)
 {
   int line_style;
 
-  if(NEAR_ZERO(rubber_band->rb_width, (fastf_t)SMALL_FASTF) &&
+  if (NEAR_ZERO(rubber_band->rb_width, (fastf_t)SMALL_FASTF) &&
      NEAR_ZERO(rubber_band->rb_height, (fastf_t)SMALL_FASTF))
     return;
 
-  if(rubber_band->rb_linestyle == 'd')
+  if (rubber_band->rb_linestyle == 'd')
     line_style = 1; /* dashed lines */
   else
     line_style = 0; /* solid lines */
 
-  if(rubber_band->rb_active && mged_variables->mv_mouse_behavior == 'z')
+  if (rubber_band->rb_active && mged_variables->mv_mouse_behavior == 'z')
     adjust_rect_for_zoom();
 
   /* draw rectangle */
@@ -191,7 +191,7 @@ draw_rect(void)
 void
 paint_rect_area(void)
 {
-  if(!fbp)
+  if (!fbp)
     return;
 
   (void)fb_refresh(fbp, rubber_band->rb_pos[X], rubber_band->rb_pos[Y],
@@ -206,14 +206,14 @@ rt_rect_area(void)
   int width, height;
   struct bu_vls vls;
 
-  if(!fbp)
+  if (!fbp)
     return;
 
-  if(NEAR_ZERO(rubber_band->rb_width, (fastf_t)SMALL_FASTF) &&
+  if (NEAR_ZERO(rubber_band->rb_width, (fastf_t)SMALL_FASTF) &&
      NEAR_ZERO(rubber_band->rb_height, (fastf_t)SMALL_FASTF))
     return;
 
-  if(mged_variables->mv_port < 0){
+  if (mged_variables->mv_port < 0){
     bu_log("rt_rect_area: invalid port number - %d\n", mged_variables->mv_port);
     return;
   }
@@ -223,14 +223,14 @@ rt_rect_area(void)
   width = rubber_band->rb_dim[X];
   height = rubber_band->rb_dim[Y];
 
-  if(width >= 0){
+  if (width >= 0){
     xmax = xmin + width;
   }else{
     xmax = xmin;
     xmin += width;
   }
 
-  if(height >= 0){
+  if (height >= 0){
     ymax = ymin + height;
   }else{
     ymax = ymin;
@@ -257,7 +257,7 @@ zoom_rect_area(void)
   point_t old_view_center;
   point_t new_view_center;
 
-  if(NEAR_ZERO(rubber_band->rb_width, (fastf_t)SMALL_FASTF) &&
+  if (NEAR_ZERO(rubber_band->rb_width, (fastf_t)SMALL_FASTF) &&
      NEAR_ZERO(rubber_band->rb_height, (fastf_t)SMALL_FASTF))
     return;
 
@@ -278,17 +278,17 @@ zoom_rect_area(void)
   mged_center(new_model_center);
 
   /* zoom in to fill rectangle */
-  if(rubber_band->rb_width >= 0.0)
+  if (rubber_band->rb_width >= 0.0)
     width = rubber_band->rb_width;
   else
     width = -rubber_band->rb_width;
 
-  if(rubber_band->rb_height >= 0.0)
+  if (rubber_band->rb_height >= 0.0)
     height = rubber_band->rb_height;
   else
     height = -rubber_band->rb_height;
 
-  if(width >= height)
+  if (width >= height)
     sf = width / 2.0;
   else
     sf = height / 2.0 * dmp->dm_aspect;

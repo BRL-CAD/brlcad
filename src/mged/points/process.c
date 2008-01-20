@@ -640,7 +640,7 @@ process_group(point_line_t **plta, int count) {
 
     /* ignore insufficient counts */
     if (valid_count <= 2)
-	switch((*plta)[0].code) {
+	switch ((*plta)[0].code) {
 	    case(PLATE): /* need at least 3 (triangle) */
 		/*		printf("IGNORING PLATE POINT DUPLICATE(S)\n"); */
 		return 0;
@@ -656,7 +656,7 @@ process_group(point_line_t **plta, int count) {
        parser when a point-line of that particular type is
        encountered
     */
-    switch((*plta)[0].code) {
+    switch ((*plta)[0].code) {
 	case(PLATE):
 	    return create_plate(plta, valid_count);
 	case(ARB):

@@ -94,7 +94,7 @@ int main(int argc, char **argv) {
 
   /* Parse command line options */
 
-  while((c = 
+  while ((c = 
 #ifdef HAVE_GETOPT_LONG
 	getopt_long(argc, argv, shortopts, longopts, NULL)
 #else
@@ -102,7 +102,7 @@ int main(int argc, char **argv) {
 #endif
 	)!= -1)
   {
-	  switch(c) {
+	  switch (c) {
             case 'c':
               strncpy(comp_host, optarg, 64-1);
 	      comp_host[64-1] = '\0'; /* sanity */

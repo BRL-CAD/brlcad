@@ -48,7 +48,7 @@ Findp()
 
 	saverec = currec;	/* save current record number */
 
-	if( fseek( fd, 0L, 2 ) )	/* go to end of file */
+	if ( fseek( fd, 0L, 2 ) )	/* go to end of file */
 	{
 		bu_log( "Cannot seek to end of file\n" );
 		perror( "Findp" );
@@ -59,12 +59,12 @@ Findp()
 	Readrec( rec2 );	/* read last record into "card" buffer */
 	dstart = 0;
 	pstart = 0;
-	for( i=0 ; i<3 ; i++ )
+	for ( i=0; i<3; i++ )
 	{
 		counter++;	/* skip the single letter section ID */
 		Readcols( str, 7 );	/* read the number of records in the section */
 		pstart += atoi( str );	/* increment pstart */
-		if( i == 1 )	/* Global section */
+		if ( i == 1 )	/* Global section */
 		{
 			/* set record number for start of directory section */
 			dstart = pstart;
@@ -77,13 +77,13 @@ Findp()
 
 	/* make space for directory entries */
 	totentities = (pstart - dstart)/2;
-	if( totentities > 0 )
+	if ( totentities > 0 )
 	{
 		dir = (struct iges_directory **)bu_calloc( totentities ,
 			sizeof( struct iges_directory *),
 			"IGES directory*" );
 
-		for( i=0 ; i<totentities ; i++ )
+		for ( i=0; i<totentities; i++ )
 		{
 			dir[i] = (struct iges_directory *)bu_malloc( sizeof( struct iges_directory ), "IGES directory" );
 			dir[i]->name = (char *)NULL;
@@ -103,14 +103,14 @@ Free_dir()
 {
 	int i;
 
-	for( i=0 ; i<totentities ; i++ )
+	for ( i=0; i<totentities; i++ )
 	{
-		if( dir[i]->type == 124 || dir[i]->type == 700 )
+		if ( dir[i]->type == 124 || dir[i]->type == 700 )
 			bu_free( (char *)dir[i]->rot, "Free_dir: dir[i]->rot" );
 		bu_free( (char *)dir[i], "Free_dir: dir[i]" );
 	}
 
-	if( totentities > 0 )
+	if ( totentities > 0 )
 		bu_free( (char *)dir, "Free_dir: dir" );
 }
 

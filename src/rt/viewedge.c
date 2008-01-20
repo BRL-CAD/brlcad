@@ -288,13 +288,13 @@ view_init( struct application *ap, char *file, char *obj, int minus_o, int minus
 	}
 
 
-	if( (dbip = db_open( file, "r" )) == DBI_NULL )
+	if ( (dbip = db_open( file, "r" )) == DBI_NULL )
 	    bu_exit (EXIT_FAILURE, "rtedge: could not open database.\n");
 	RT_CK_DBI(dbip);
 
 	occlusion_rtip = rt_new_rti( dbip ); /* clones dbip */
 
-	for( i=0; i < MAX_PSW; i++ ) {
+	for ( i=0; i < MAX_PSW; i++ ) {
 		rt_init_resource( &occlusion_resources[i], i, occlusion_rtip );
 		bn_rand_init( occlusion_resources[i].re_randptr, i );
 	    }
@@ -375,7 +375,7 @@ view_init( struct application *ap, char *file, char *obj, int minus_o, int minus
 	bgcolor[BLU] = tmp[BLU];
     }
 
-    if( minus_o && (overlay || blend)) {
+    if ( minus_o && (overlay || blend)) {
 	/*
 	 * Output is to a file stream.  Do not allow parallel processing
 	 * since we can't seek to the rows.
@@ -406,7 +406,7 @@ view_2init( struct application *ap )
 {
     int i;
 
-    if(outputfile)
+    if (outputfile)
 	bif = bu_image_save_open(outputfile, BU_IMAGE_AUTO, width, height, 3);
 
     /*
@@ -630,7 +630,7 @@ view_eol( struct application *ap )
 	return;
     } /* end blend */
 
-    if( fbp != FBIO_NULL ) {
+    if ( fbp != FBIO_NULL ) {
 	/*
 	 * Simple whole scanline write to a framebuffer.
 	 */
@@ -638,7 +638,7 @@ view_eol( struct application *ap )
 	fb_write( fbp, 0, ap->a_y, scanline[cpu], per_processor_chunk );
 	bu_semaphore_release (BU_SEM_SYSCALL);
     }
-    if( outputfile != NULL ) {
+    if ( outputfile != NULL ) {
 	/*
 	 * Write to a file.
 	 */
@@ -664,7 +664,7 @@ void view_cleanup(void) { }
  * end of each frame
  */
 void view_end(void) { 
-    if(bif)
+    if (bif)
 	bu_image_save_close(bif); 
     bif = NULL;
 }
@@ -874,7 +874,7 @@ handle_main_ray( struct application *ap, register struct partition *PartHeadp,
      * If a pixel should be written to the fb, writeable is set.
      */
     if (occlusion_mode == OCCLUSION_MODE_EDGES)
-	writeable[cpu][ap->a_x] = (edge && oc) ;
+	writeable[cpu][ap->a_x] = (edge && oc);
     else if (occlusion_mode == OCCLUSION_MODE_HITS)
 	writeable[cpu][ap->a_x] = ( (me.c_ishit || edge) && oc);
     else if (occlusion_mode == OCCLUSION_MODE_DITHER) {
@@ -959,8 +959,8 @@ void choose_color (RGBpixel col, struct cell *me,
 	 * Determine the cell with the smallest hit distance.
 	 */
 
-	use_this = (me->c_dist < left->c_dist) ? me : left ;
-	use_this = (use_this->c_dist < below->c_dist) ? use_this : below ;
+	use_this = (me->c_dist < left->c_dist) ? me : left;
+	use_this = (use_this->c_dist < below->c_dist) ? use_this : below;
 
 	if (use_this == (struct cell *)NULL)
 	    bu_exit (EXIT_FAILURE, "Error: use_this is NULL.\n");

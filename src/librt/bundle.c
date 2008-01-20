@@ -111,20 +111,20 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 	const int		debug_shoot = RT_G_DEBUG & DEBUG_SHOOT;
 
 	RT_AP_CHECK(ap);
-	if( ap->a_magic )  {
+	if ( ap->a_magic )  {
 		RT_CK_AP(ap);
 	} else {
 		ap->a_magic = RT_AP_MAGIC;
 	}
-	if( ap->a_ray.magic )  {
+	if ( ap->a_ray.magic )  {
 		RT_CK_RAY(&(ap->a_ray));
 	} else {
 		ap->a_ray.magic = RT_RAY_MAGIC;
 	}
-	if( ap->a_resource == RESOURCE_NULL )  {
+	if ( ap->a_resource == RESOURCE_NULL )  {
 		ap->a_resource = &rt_uniresource;
 		rt_uniresource.re_magic = RESOURCE_MAGIC;
-		if(RT_G_DEBUG)bu_log("rt_shootray_bundle:  defaulting a_resource to &rt_uniresource\n");
+		if (RT_G_DEBUG)bu_log("rt_shootray_bundle:  defaulting a_resource to &rt_uniresource\n");
 	}
 	ss.ap = ap;
 	rtip = ap->a_rt_i;
@@ -133,7 +133,7 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 	RT_CK_RESOURCE(resp);
 	ss.resp = resp;
 
-	if(RT_G_DEBUG&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION|DEBUG_ALLHITS)) {
+	if (RT_G_DEBUG&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION|DEBUG_ALLHITS)) {
 		bu_log_indent_delta(2);
 		bu_log("\n**********shootray_bundle cpu=%d  %d,%d lvl=%d (%s)\n",
 			resp->re_cpu,
@@ -145,7 +145,7 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 			ap->a_onehit );
 		VPRINT("Dir", ap->a_ray.r_dir);
 	}
-	if(RT_BADVEC(ap->a_ray.r_pt)||RT_BADVEC(ap->a_ray.r_dir))  {
+	if (RT_BADVEC(ap->a_ray.r_pt)||RT_BADVEC(ap->a_ray.r_dir))  {
 		bu_log("\n**********shootray cpu=%d  %d,%d lvl=%d (%s)\n",
 			resp->re_cpu,
 			ap->a_x, ap->a_y,
@@ -156,7 +156,7 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 		bu_bomb("rt_shootray_bundle() bad ray\n");
 	}
 
-	if( rtip->needprep )
+	if ( rtip->needprep )
 		rt_prep(rtip);
 
 	InitialPart.pt_forw = InitialPart.pt_back = &InitialPart;
@@ -170,7 +170,7 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 	BU_LIST_INIT( &finished_segs.l );
 	ap->a_finished_segs_hdp = &finished_segs;
 
-	if( BU_LIST_UNINITIALIZED( &resp->re_parthead ) )  {
+	if ( BU_LIST_UNINITIALIZED( &resp->re_parthead ) )  {
 		/* XXX This shouldn't happen any more */
 		bu_log("rt_shootray_bundle() resp=x%x uninitialized, fixing it\n", resp);
 		/*
@@ -189,7 +189,7 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 	solidbits = get_solidbitv( rtip->nsolids, resp );
 	bu_bitv_clear(solidbits);
 
-	if( BU_LIST_IS_EMPTY( &resp->re_region_ptbl ) )  {
+	if ( BU_LIST_IS_EMPTY( &resp->re_region_ptbl ) )  {
 		BU_GETSTRUCT( regionbits, bu_ptbl );
 		bu_ptbl_init( regionbits, 7, "rt_shootray_bundle() regionbits ptbl" );
 	} else {
@@ -199,15 +199,15 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 	}
 
 	/* Verify that direction vector has unit length */
-	if(RT_G_DEBUG) {
+	if (RT_G_DEBUG) {
 		fastf_t f, diff;
 		f = MAGSQ(ap->a_ray.r_dir);
-		if( NEAR_ZERO(f, 0.0001) )  {
+		if ( NEAR_ZERO(f, 0.0001) )  {
 			bu_bomb("rt_shootray_bundle:  zero length dir vector\n");
 			return(0);
 		}
 		diff = f - 1;
-		if( !NEAR_ZERO( diff, 0.0001 ) )  {
+		if ( !NEAR_ZERO( diff, 0.0001 ) )  {
 			bu_log("rt_shootray_bundle: non-unit dir vect (x%d y%d lvl%d)\n",
 				ap->a_x, ap->a_y, ap->a_level );
 			f = 1/f;
@@ -216,10 +216,10 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 	}
 
 	/* Compute the inverse of the direction cosines */
-	if( ap->a_ray.r_dir[X] < -SQRT_SMALL_FASTF )  {
+	if ( ap->a_ray.r_dir[X] < -SQRT_SMALL_FASTF )  {
 		ss.abs_inv_dir[X] = -(ss.inv_dir[X]=1.0/ap->a_ray.r_dir[X]);
 		ss.rstep[X] = -1;
-	} else if( ap->a_ray.r_dir[X] > SQRT_SMALL_FASTF )  {
+	} else if ( ap->a_ray.r_dir[X] > SQRT_SMALL_FASTF )  {
 		ss.abs_inv_dir[X] =  (ss.inv_dir[X]=1.0/ap->a_ray.r_dir[X]);
 		ss.rstep[X] = 1;
 	} else {
@@ -227,10 +227,10 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 		ss.abs_inv_dir[X] = ss.inv_dir[X] = INFINITY;
 		ss.rstep[X] = 0;
 	}
-	if( ap->a_ray.r_dir[Y] < -SQRT_SMALL_FASTF )  {
+	if ( ap->a_ray.r_dir[Y] < -SQRT_SMALL_FASTF )  {
 		ss.abs_inv_dir[Y] = -(ss.inv_dir[Y]=1.0/ap->a_ray.r_dir[Y]);
 		ss.rstep[Y] = -1;
-	} else if( ap->a_ray.r_dir[Y] > SQRT_SMALL_FASTF )  {
+	} else if ( ap->a_ray.r_dir[Y] > SQRT_SMALL_FASTF )  {
 		ss.abs_inv_dir[Y] =  (ss.inv_dir[Y]=1.0/ap->a_ray.r_dir[Y]);
 		ss.rstep[Y] = 1;
 	} else {
@@ -238,10 +238,10 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 		ss.abs_inv_dir[Y] = ss.inv_dir[Y] = INFINITY;
 		ss.rstep[Y] = 0;
 	}
-	if( ap->a_ray.r_dir[Z] < -SQRT_SMALL_FASTF )  {
+	if ( ap->a_ray.r_dir[Z] < -SQRT_SMALL_FASTF )  {
 		ss.abs_inv_dir[Z] = -(ss.inv_dir[Z]=1.0/ap->a_ray.r_dir[Z]);
 		ss.rstep[Z] = -1;
-	} else if( ap->a_ray.r_dir[Z] > SQRT_SMALL_FASTF )  {
+	} else if ( ap->a_ray.r_dir[Z] > SQRT_SMALL_FASTF )  {
 		ss.abs_inv_dir[Z] =  (ss.inv_dir[Z]=1.0/ap->a_ray.r_dir[Z]);
 		ss.rstep[Z] = 1;
 	} else {
@@ -254,7 +254,7 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 	 *  If ray does not enter the model RPP, skip on.
 	 *  If ray ends exactly at the model RPP, trace it.
 	 */
-	if( !rt_in_rpp( &ap->a_ray, ss.inv_dir, rtip->mdl_min, rtip->mdl_max )  ||
+	if ( !rt_in_rpp( &ap->a_ray, ss.inv_dir, rtip->mdl_min, rtip->mdl_max )  ||
 	    ap->a_ray.r_max < 0.0 )  {
 		resp->re_nmiss_model++;
 		ap->a_return = ap->a_miss( ap );
@@ -287,13 +287,13 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 	ss.box_start = ss.model_start = ap->a_ray.r_min;
 	ss.box_end = ss.model_end = ap->a_ray.r_max;
 
-	if( ss.box_start < BACKING_DIST )
+	if ( ss.box_start < BACKING_DIST )
 		ss.box_start = BACKING_DIST; /* Only look a little bit behind */
 
 	ss.lastcut = CUTTER_NULL;
 	ss.old_status = (struct rt_shootray_status *)NULL;
 	ss.curcut = &ap->a_rt_i->rti_CutHead;
-	if( ss.curcut->cut_type == CUT_NUGRIDNODE ) {
+	if ( ss.curcut->cut_type == CUT_NUGRIDNODE ) {
 		ss.lastcell = CUTTER_NULL;
 		VSET( ss.curmin, ss.curcut->nugn.nu_axis[X][0].nu_spos,
 				 ss.curcut->nugn.nu_axis[Y][0].nu_spos,
@@ -301,7 +301,7 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 		VSET( ss.curmax, ss.curcut->nugn.nu_axis[X][ss.curcut->nugn.nu_cells_per_axis[X]-1].nu_epos,
 				 ss.curcut->nugn.nu_axis[Y][ss.curcut->nugn.nu_cells_per_axis[Y]-1].nu_epos,
 				 ss.curcut->nugn.nu_axis[Z][ss.curcut->nugn.nu_cells_per_axis[Z]-1].nu_epos );
-	} else if( ss.curcut->cut_type == CUT_CUTNODE ||
+	} else if ( ss.curcut->cut_type == CUT_CUTNODE ||
 		   ss.curcut->cut_type == CUT_BOXNODE ) {
 		ss.lastcell = ss.curcut;
 		VMOVE( ss.curmin, rtip->mdl_min );
@@ -320,12 +320,12 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 	 *  It is vitally important to always stay within the model RPP, or
 	 *  the space partitoning tree will pick wrong boxes & miss them.
 	 */
-	while( (cutp = rt_advance_to_next_cell( &ss )) != CUTTER_NULL )  {
-		if(debug_shoot) {
+	while ( (cutp = rt_advance_to_next_cell( &ss )) != CUTTER_NULL )  {
+		if (debug_shoot) {
 			rt_pr_cut( cutp, 0 );
 		}
 
-		if( cutp->bn.bn_len <= 0 )  {
+		if ( cutp->bn.bn_len <= 0 )  {
 			/* Push ray onwards to next box */
 			ss.box_start = ss.box_end;
 			resp->re_nempty_cells++;
@@ -334,11 +334,11 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 
 		/* Consider all objects within the box */
 		stpp = &(cutp->bn.bn_list[cutp->bn.bn_len-1]);
-		for( ; stpp >= cutp->bn.bn_list; stpp-- )  {
+		for (; stpp >= cutp->bn.bn_list; stpp-- )  {
 			register struct soltab *stp = *stpp;
 			int ray;
 
-			if( BU_BITTEST( solidbits, stp->st_bit ) )  {
+			if ( BU_BITTEST( solidbits, stp->st_bit ) )  {
 				resp->re_ndup++;
 				continue;	/* already shot */
 			}
@@ -347,7 +347,7 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 			/* XXX open issue: entering neighboring cells too? */
 			BU_BITSET( solidbits, stp->st_bit );
 
-			for( ray=0; ray < nrays; ray++ )  {
+			for ( ray=0; ray < nrays; ray++ )  {
 				struct xray	ss2_newray;
 
 				/* Be compatible with the ss backing distance stuff */
@@ -355,24 +355,24 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 				VJOIN1( ss2_newray.r_pt, rays[ray].r_pt, ss.dist_corr, ss2_newray.r_dir );
 
 				/* Check against bounding RPP, if desired by solid */
-				if( rt_functab[stp->st_id].ft_use_rpp )  {
-					if( !rt_in_rpp( &ss2_newray, ss.inv_dir,
+				if ( rt_functab[stp->st_id].ft_use_rpp )  {
+					if ( !rt_in_rpp( &ss2_newray, ss.inv_dir,
 					    stp->st_min, stp->st_max ) )  {
-						if(debug_shoot)bu_log("rpp miss %s by ray %d\n", stp->st_name, ray);
+						if (debug_shoot)bu_log("rpp miss %s by ray %d\n", stp->st_name, ray);
 						resp->re_prune_solrpp++;
 						continue;	/* MISS */
 					}
-					if( ss.dist_corr + ss2_newray.r_max < BACKING_DIST )  {
-						if(debug_shoot)bu_log("rpp skip %s, dist_corr=%g, r_max=%g, by ray %d\n", stp->st_name, ss.dist_corr, ss2_newray.r_max, ray);
+					if ( ss.dist_corr + ss2_newray.r_max < BACKING_DIST )  {
+						if (debug_shoot)bu_log("rpp skip %s, dist_corr=%g, r_max=%g, by ray %d\n", stp->st_name, ss.dist_corr, ss2_newray.r_max, ray);
 						resp->re_prune_solrpp++;
 						continue;	/* MISS */
 					}
 				}
 
-				if(debug_shoot)bu_log("shooting %s with ray %d\n", stp->st_name, ray);
+				if (debug_shoot)bu_log("shooting %s with ray %d\n", stp->st_name, ray);
 				resp->re_shots++;
 				BU_LIST_INIT( &(new_segs.l) );
-				if( rt_functab[stp->st_id].ft_shot(
+				if ( rt_functab[stp->st_id].ft_shot(
 				    stp, &ss2_newray, ap, &new_segs ) <= 0 )  {
 					resp->re_shot_miss++;
 					continue;	/* MISS */
@@ -381,7 +381,7 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 				/* Add seg chain to list awaiting rt_boolweave() */
 				{
 					register struct seg *s2;
-					while(BU_LIST_WHILE(s2, seg,&(new_segs.l)))  {
+					while (BU_LIST_WHILE(s2, seg, &(new_segs.l)))  {
 						BU_LIST_DEQUEUE( &(s2->l) );
 						/* Restore to original distance */
 						s2->seg_in.hit_dist += ss.dist_corr;
@@ -394,7 +394,7 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 				break;			/* HIT */
 			}
 		}
-		if( RT_G_DEBUG & DEBUG_ADVANCE )
+		if ( RT_G_DEBUG & DEBUG_ADVANCE )
 			rt_plot_cell( cutp, &ss, &(waiting_segs.l), rtip);
 
 		/*
@@ -414,7 +414,7 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 		 *  All partitions will have valid in and out distances.
 		 *  a_ray_length is treated similarly to a_onehit.
 		 */
-		if( ap->a_onehit != 0 && BU_LIST_NON_EMPTY( &(waiting_segs.l) ) )  {
+		if ( ap->a_onehit != 0 && BU_LIST_NON_EMPTY( &(waiting_segs.l) ) )  {
 			int	done;
 
 			/* Weave these segments into partition list */
@@ -426,10 +426,10 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 			last_bool_start = ss.box_end;
 
 			/* See if enough partitions have been acquired */
-			if( done > 0 )  goto hitit;
+			if ( done > 0 )  goto hitit;
 		}
 
-		if( ap->a_ray_length > 0.0 && ss.box_end >= ap->a_ray_length )
+		if ( ap->a_ray_length > 0.0 && ss.box_end >= ap->a_ray_length )
 			goto weave;
 
 		/* Push ray onwards to next box */
@@ -441,15 +441,15 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 	 *  Weave any remaining segments into the partition list.
 	 */
 weave:
-	if( RT_G_DEBUG&DEBUG_ADVANCE )
+	if ( RT_G_DEBUG&DEBUG_ADVANCE )
 		bu_log( "rt_shootray_bundle: ray has left known space\n" );
 
-	if( BU_LIST_NON_EMPTY( &(waiting_segs.l) ) )  {
+	if ( BU_LIST_NON_EMPTY( &(waiting_segs.l) ) )  {
 		rt_boolweave( &finished_segs, &waiting_segs, &InitialPart, ap );
 	}
 
 	/* finished_segs chain now has all segments hit by this ray */
-	if( BU_LIST_IS_EMPTY( &(finished_segs.l) ) )  {
+	if ( BU_LIST_IS_EMPTY( &(finished_segs.l) ) )  {
 		ap->a_return = ap->a_miss( ap );
 		status = "MISS prims";
 		goto out;
@@ -463,7 +463,7 @@ weave:
 		INFINITY,
 		regionbits, ap, solidbits);
 
-	if( FinalPart.pt_forw == &FinalPart )  {
+	if ( FinalPart.pt_forw == &FinalPart )  {
 		ap->a_return = ap->a_miss( ap );
 		status = "MISS bool";
 		RT_FREE_PT_LIST( &InitialPart, resp );
@@ -484,7 +484,7 @@ weave:
 	 *  VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
 	 */
 hitit:
-	if(debug_shoot)  rt_pr_partitions(rtip,&FinalPart, "a_hit()");
+	if (debug_shoot)  rt_pr_partitions(rtip, &FinalPart, "a_hit()");
 
 	/*
 	 *  Before recursing, release storage for unused Initial partitions.
@@ -497,7 +497,7 @@ hitit:
 	 *  finished_segs is only used by special hit routines
 	 *  which don't follow the traditional solid modeling paradigm.
 	 */
-	if(RT_G_DEBUG&DEBUG_ALLHITS) rt_pr_partitions(rtip,&FinalPart, "Parition list passed to a_hit() routine");
+	if (RT_G_DEBUG&DEBUG_ALLHITS) rt_pr_partitions(rtip, &FinalPart, "Parition list passed to a_hit() routine");
 	ap->a_return = ap->a_hit( ap, &FinalPart, &finished_segs );
 	status = "HIT";
 
@@ -520,7 +520,7 @@ out:
 	resp->re_nshootray++;
 
 	/* Terminate any logging */
-	if(RT_G_DEBUG&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION|DEBUG_ALLHITS))  {
+	if (RT_G_DEBUG&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION|DEBUG_ALLHITS))  {
 		bu_log_indent_delta(-2);
 		bu_log("----------shootray_bundle cpu=%d  %d,%d lvl=%d (%s) %s ret=%d\n",
 			resp->re_cpu,

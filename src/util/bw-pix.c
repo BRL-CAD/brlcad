@@ -49,27 +49,27 @@ main(int argc, char **argv)
 	FILE	*finp, *foutp;
 
 	/* check for input file */
-	if( argc > 1 ) {
-		if( (finp = fopen( argv[1], "r" )) == NULL ) {
+	if ( argc > 1 ) {
+		if ( (finp = fopen( argv[1], "r" )) == NULL ) {
 			bu_exit(1, "bw-pix: can't open \"%s\"\n", argv[1] );
 		}
 	} else
 		finp = stdin;
 
 	/* check for output file */
-	if( argc > 2 ) {
-		if( (foutp = fopen( argv[2], "w" )) == NULL ) {
+	if ( argc > 2 ) {
+		if ( (foutp = fopen( argv[2], "w" )) == NULL ) {
 			bu_exit(2, "bw-pix: can't open \"%s\"\n", argv[2] );
 		}
 	} else
 		foutp = stdout;
 
-	if( argc > 3 || isatty(fileno(finp)) || isatty(fileno(foutp)) ) {
+	if ( argc > 3 || isatty(fileno(finp)) || isatty(fileno(foutp)) ) {
 		bu_exit( 3, "Usage: bw-pix [in.bw] [out.pix]\n" );
 	}
 
-	while( (num = fread( ibuf, sizeof( char ), 1024, finp )) > 0 ) {
-		for( in = out = 0; in < num; in++, out += 3 ) {
+	while ( (num = fread( ibuf, sizeof( char ), 1024, finp )) > 0 ) {
+		for ( in = out = 0; in < num; in++, out += 3 ) {
 			obuf[out] = ibuf[in];
 			obuf[out+1] = ibuf[in];
 			obuf[out+2] = ibuf[in];

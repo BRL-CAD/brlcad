@@ -125,7 +125,7 @@ points_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, str
 		bu_log("points_setup: can't open \"%s\"\n", ptp->pt_file);
 		goto fail;
 	}
-	while( bu_fgets(buf, 512, fp) != NULL ) {
+	while ( bu_fgets(buf, 512, fp) != NULL ) {
 		double	u, v, mag;
 		struct points	*headp, *pp;
 
@@ -192,13 +192,13 @@ swp->sw_uv.uv_dv = ap->a_diverge;
 	ymin = vmin * mapp->ny;
 	ymax = vmax * mapp->ny;
 	/* for each latitude band */
-	for( y = ymin; y < ymax; y++ ) {
+	for ( y = ymin; y < ymax; y++ ) {
 		xmin = umin * mapp->nx[y];
 		xmax = umax * mapp->nx[y];
 		/* for each bin spanned in that band */
-		for( x = xmin; x < xmax; x++ ) {
+		for ( x = xmin; x < xmax; x++ ) {
 			pp = (struct points *)&(mapp->xbin[y][x*mapp->elsize]);
-			while( pp != NULL ) {
+			while ( pp != NULL ) {
 				if ( pp->u < umax && pp->u >= umin
 				  && pp->v < vmax && pp->v >= vmin
 				  && pp->color[0] > mag ) {

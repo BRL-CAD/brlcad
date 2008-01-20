@@ -380,7 +380,7 @@ light_gen_sample_pts_hit(register struct application *ap, struct partition *Part
 
     if ((pp=PartHeadp->pt_forw) == PartHeadp) return 0;
 
-    for( ; pp != PartHeadp; pp = pp->pt_forw )  {
+    for (; pp != PartHeadp; pp = pp->pt_forw )  {
 
 	if (pp->pt_regionp != lsp->lt_rp) continue;
 
@@ -546,7 +546,7 @@ light_gen_sample_pts(struct application    *upap,
 
 	bu_log("\t%d light sample points\n", lsp->lt_pt_count);
 
-	for (l=0 ; l < lsp->lt_pt_count ; l++, lpt++) {
+	for (l=0; l < lsp->lt_pt_count; l++, lpt++) {
 
 	    VJOIN1(p, lpt->lp_pt, 100.0, lpt->lp_norm);
 
@@ -664,7 +664,7 @@ light_setup(register struct region *rp,
 
 	/* Find first leaf node on left of tree */
 	tp = rp->reg_treetop;
-	while( tp->tr_op != OP_SOLID )
+	while ( tp->tr_op != OP_SOLID )
 	    tp = tp->tr_b.tb_left;
 	stp = tp->tr_a.tu_stp;
     }
@@ -766,7 +766,7 @@ light_init(struct application *ap)
     }
 
 
-    for( BU_LIST_FOR( lsp, light_specific, &(LightHead.l) ) )  {
+    for ( BU_LIST_FOR( lsp, light_specific, &(LightHead.l) ) )  {
 	nlights++;
 	if (lsp->lt_fraction > 0 )  continue;	/* overridden */
 	if (lsp->lt_intensity <= 0 )
@@ -780,7 +780,7 @@ light_init(struct application *ap)
     /* This is non-physical and risky, but gives nicer pictures for now */
     inten *= (1 + AmbientIntensity*0.5);
 
-    for( BU_LIST_FOR( lsp, light_specific, &(LightHead.l) ) )  {
+    for ( BU_LIST_FOR( lsp, light_specific, &(LightHead.l) ) )  {
 	RT_CK_LIGHT(lsp);
 	if (lsp->lt_fraction > 0 )  continue;	/* overridden */
 #ifdef RT_MULTISPECTRAL
@@ -793,7 +793,7 @@ light_init(struct application *ap)
     /*
      * Make sure we have sample points for all light sources in the scene
      */
-    for( BU_LIST_FOR( lsp, light_specific, &(LightHead.l) ) )  {
+    for ( BU_LIST_FOR( lsp, light_specific, &(LightHead.l) ) )  {
 	RT_CK_LIGHT(lsp);
 	if (lsp->lt_shadows > 1 && ! lsp->lt_infinite && lsp->lt_pt_count < 1)
 	    light_gen_sample_pts(ap, lsp);
@@ -804,7 +804,7 @@ light_init(struct application *ap)
 	bu_log("Lighting: Ambient = %d%%\n",
 	       (int)(AmbientIntensity*100));
 
-	for( BU_LIST_FOR( lsp, light_specific, &(LightHead.l) ) )  {
+	for ( BU_LIST_FOR( lsp, light_specific, &(LightHead.l) ) )  {
 	    RT_CK_LIGHT(lsp);
 	    bu_log( "  %s: (%g, %g, %g), aimed at (%g, %g, %g)\n",
 		    lsp->lt_name,
@@ -822,7 +822,7 @@ light_init(struct application *ap)
 		int samp;
 
 		bu_log( "  %d sample points\n", lsp->lt_pt_count);
-		for (samp = 0 ; samp < lsp->lt_pt_count ; samp++) {
+		for (samp = 0; samp < lsp->lt_pt_count; samp++) {
 		    bu_log("     pt %g %g %g N %g %g %g\n",
 			   V3ARGS(lsp->lt_sample_pts[samp].lp_pt),
 			   V3ARGS(lsp->lt_sample_pts[samp].lp_norm) );
@@ -856,7 +856,7 @@ light_cleanup(void)
 	BU_LIST_INIT( &(LightHead.l) );
 	return;
     }
-    for( BU_LIST_FOR( lsp, light_specific, &(LightHead.l) ) )  {
+    for ( BU_LIST_FOR( lsp, light_specific, &(LightHead.l) ) )  {
 	RT_CK_LIGHT(lsp);
 	if (lsp->lt_rp != REGION_NULL && lsp->lt_visible )  {
 	    /* Will be cleaned up by mlib_free() */
@@ -959,7 +959,7 @@ light_hit(struct application *ap, struct partition *PartHeadp, struct seg *finis
      *  e.g. (-1,+50), then the fact that the light is obscured will
      *  not be missed.
      */
-    for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )  {
+    for ( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )  {
 	if (pp->pt_regionp->reg_aircode != 0 )  {
 	    /* Accumulate transmission through each air lump */
 	    air_sols_seen++;
@@ -1098,7 +1098,7 @@ light_hit(struct application *ap, struct partition *PartHeadp, struct seg *finis
 #if 1
     {
 	struct light_specific *lsp;
-	for( BU_LIST_FOR( lsp, light_specific, &(LightHead.l) ) )  {
+	for ( BU_LIST_FOR( lsp, light_specific, &(LightHead.l) ) )  {
 	    if (lsp->lt_rp == regp) {
 #ifdef RT_MULTISPECTRAL
 		bn_tabdata_copy( ap->a_spectrum, ms_filter_color );
@@ -1335,7 +1335,7 @@ light_vis(struct light_obs_stuff *los, char *flags)
 
     reusept:
 
-	for (k=idx ; ((k+1) % los->lsp->lt_pt_count) != idx ;
+	for (k=idx; ((k+1) % los->lsp->lt_pt_count) != idx;
 	     k = (k+1) % los->lsp->lt_pt_count) {
 	    if (rdebug & RDEBUG_LIGHT )
 		bu_log("checking sample pt %d\n", k);
@@ -1416,7 +1416,7 @@ light_vis(struct light_obs_stuff *los, char *flags)
 	}
 
 	tryagain = 0;
-	for (k=0 ; k < los->lsp->lt_pt_count ; k++) {
+	for (k=0; k < los->lsp->lt_pt_count; k++) {
 	    if (flags[k] & VF_SEEN ) {
 		/* this one was used, we can re-use it */
 		tryagain = 1;
@@ -1676,7 +1676,7 @@ light_obs(struct application *ap, struct shadework *swp, int have)
     los.swp = swp;
 
     /* find largest sampled light */
-    for( BU_LIST_FOR( lsp, light_specific, &(LightHead.l) ) )  {
+    for ( BU_LIST_FOR( lsp, light_specific, &(LightHead.l) ) )  {
 	if (lsp->lt_pt_count > flag_size) {
 	    flag_size = lsp->lt_pt_count;
 	}
@@ -1695,7 +1695,7 @@ light_obs(struct application *ap, struct shadework *swp, int have)
     tl_p = swp->sw_tolight;
 
     i = 0;
-    for( BU_LIST_FOR( lsp, light_specific, &(LightHead.l) ) )  {
+    for ( BU_LIST_FOR( lsp, light_specific, &(LightHead.l) ) )  {
 	RT_CK_LIGHT(lsp);
 
 	if (rdebug & RDEBUG_LIGHT)
@@ -1707,7 +1707,7 @@ light_obs(struct application *ap, struct shadework *swp, int have)
 
 	los.lsp = lsp;
 #ifdef RT_MULTISPECTRAL
-	if(swp->msw_intensity[i]) BN_CK_TABDATA(swp->msw_intensity[i]);
+	if (swp->msw_intensity[i]) BN_CK_TABDATA(swp->msw_intensity[i]);
 	los.inten = &swp->msw_intensity[i];
 #else
 	los.inten = &swp->sw_intensity[3*i];
@@ -1743,7 +1743,7 @@ light_obs(struct application *ap, struct shadework *swp, int have)
 	if (flag_size > 0) {
 	    memset(flags, 0, flag_size * sizeof(char));
 	}
-	for (vis_ray = 0 ; vis_ray < tot_vis_rays ; vis_ray ++) {
+	for (vis_ray = 0; vis_ray < tot_vis_rays; vis_ray ++) {
 	    int lv;
 	    los.iter = vis_ray;
 
@@ -1810,8 +1810,8 @@ light_maker(int num, mat_t v2m)
 #endif
 
     /* Determine the Light location(s) in view space */
-    for( i=0; i<num; i++ )  {
-	switch(i)  {
+    for ( i=0; i<num; i++ )  {
+	switch (i)  {
 	case 0:
 	    /* 0:  At left edge, 1/2 high */
 	    VSET( color, 1,  1,  1 );	/* White */

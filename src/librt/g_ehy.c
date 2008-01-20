@@ -181,7 +181,7 @@ const struct bu_structparse rt_ehy_parse[] = {
     { "%f", 1, "r_1", bu_offsetof(struct rt_ehy_internal, ehy_r1),    BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 1, "r_2", bu_offsetof(struct rt_ehy_internal, ehy_r2),    BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 1, "c",   bu_offsetof(struct rt_ehy_internal, ehy_c),     BU_STRUCTPARSE_FUNC_NULL },
-    { {'\0','\0','\0','\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
+    { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
  };
 
 /**
@@ -228,7 +228,7 @@ rt_ehy_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	r2 = xip->ehy_r2;
 	c = xip->ehy_c;
 	/* Check for |H| > 0, |A| == 1, r1 > 0, r2 > 0, c > 0 */
-	if( NEAR_ZERO(mag_h, RT_LEN_TOL)
+	if ( NEAR_ZERO(mag_h, RT_LEN_TOL)
 		|| !NEAR_ZERO(mag_a - 1.0, RT_LEN_TOL)
 		|| r1 < 0.0 || r2 < 0.0 || c < 0.0 )  {
 		return(-2);		/* BAD, too small */
@@ -236,7 +236,7 @@ rt_ehy_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
 	/* Check for A.H == 0 */
 	f = VDOT( xip->ehy_Au, xip->ehy_H ) / mag_h;
-	if( !NEAR_ZERO(f, RT_DOT_TOL) )  {
+	if ( !NEAR_ZERO(f, RT_DOT_TOL) )  {
 		return(-2);		/* BAD */
 	}
 
@@ -374,7 +374,7 @@ rt_ehy_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 			 *  with side.  See if they fall in range.
 			 */
 			VJOIN1( hitp->hit_vpriv, pp, k1, dp );	/* hit' */
-			if( hitp->hit_vpriv[Z] >= -1.0
+			if ( hitp->hit_vpriv[Z] >= -1.0
 				&& hitp->hit_vpriv[Z] <= 0.0 ) {
 				hitp->hit_magic = RT_HIT_MAGIC;
 				hitp->hit_dist = k1;
@@ -383,7 +383,7 @@ rt_ehy_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 			}
 
 			VJOIN1( hitp->hit_vpriv, pp, k2, dp );	/* hit' */
-			if( hitp->hit_vpriv[Z] >= -1.0
+			if ( hitp->hit_vpriv[Z] >= -1.0
 				&& hitp->hit_vpriv[Z] <= 0.0 ) {
 				hitp->hit_magic = RT_HIT_MAGIC;
 				hitp->hit_dist = k2;
@@ -393,7 +393,7 @@ rt_ehy_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 		} else if ( !NEAR_ZERO(b, RT_PCOEF_TOL) ) {
 			k1 = -c/b;
 			VJOIN1( hitp->hit_vpriv, pp, k1, dp );	/* hit' */
-			if( hitp->hit_vpriv[Z] >= -1.0
+			if ( hitp->hit_vpriv[Z] >= -1.0
 				&& hitp->hit_vpriv[Z] <= 0.0 ) {
 				hitp->hit_magic = RT_HIT_MAGIC;
 				hitp->hit_dist = k1;
@@ -409,12 +409,12 @@ rt_ehy_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	 */
 check_plates:
 	/* check top plate */
-	if( hitp == &hits[1]  &&  !NEAR_ZERO(dp[Z], SMALL) )  {
+	if ( hitp == &hits[1]  &&  !NEAR_ZERO(dp[Z], SMALL) )  {
 		/* 1 hit so far, this is worthwhile */
 		k1 = -pp[Z] / dp[Z];		/* top plate */
 
 		VJOIN1( hitp->hit_vpriv, pp, k1, dp );	/* hit' */
-		if( hitp->hit_vpriv[X] * hitp->hit_vpriv[X] +
+		if ( hitp->hit_vpriv[X] * hitp->hit_vpriv[X] +
 			hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y] <= 1.0 ) {
 			hitp->hit_magic = RT_HIT_MAGIC;
 			hitp->hit_dist = k1;
@@ -423,10 +423,10 @@ check_plates:
 		}
 	}
 
-	if( hitp != &hits[2] )
+	if ( hitp != &hits[2] )
 		return(0);	/* MISS */
 
-	if( hits[0].hit_dist < hits[1].hit_dist )  {
+	if ( hits[0].hit_dist < hits[1].hit_dist )  {
 		/* entry is [0], exit is [1] */
 		register struct seg *segp;
 
@@ -480,7 +480,7 @@ rt_ehy_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 		(struct ehy_specific *)stp->st_specific;
 
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
-	switch( hitp->hit_surfno )  {
+	switch ( hitp->hit_surfno )  {
 	case EHY_NORM_BODY:
 		cp = ehy->ehy_cprime;
 		VSET( can_normal,
@@ -519,7 +519,7 @@ rt_ehy_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 	vect_t	vec1, vec2;		/* eigen vectors */
 	vect_t	tmp;
 
-	switch( hitp->hit_surfno )  {
+	switch ( hitp->hit_surfno )  {
 	case EHY_NORM_BODY:
 		/*
 		 * choose a tangent plane coordinate system
@@ -587,7 +587,7 @@ rt_ehy_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 	VSUB2( work, hitp->hit_point, ehy->ehy_V );
 	MAT4X3VEC( pprime, ehy->ehy_SoR, work );
 
-	switch( hitp->hit_surfno )  {
+	switch ( hitp->hit_surfno )  {
 	case EHY_NORM_BODY:
 		/* top plate, polar coords */
 		if (pprime[Z] == -1.0) {	/* bottom pt of body */
@@ -606,7 +606,7 @@ rt_ehy_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 		break;
 	}
 	/* Handle other half of acos() domain */
-	if( pprime[Y] < 0 )
+	if ( pprime[Y] < 0 )
 		uvp->uv_u = 1.0 - uvp->uv_u;
 
 	/* uv_du should be relative to rotation, uv_dv relative to height */
@@ -667,7 +667,7 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	r1 = xip->ehy_r1;
 	r2 = xip->ehy_r2;
 	/* Check for |H| > 0, |A| == 1, r1 > 0, r2 > 0, c > 0 */
-	if( NEAR_ZERO(mag_h, RT_LEN_TOL)
+	if ( NEAR_ZERO(mag_h, RT_LEN_TOL)
 		|| !NEAR_ZERO(mag_a - 1.0, RT_LEN_TOL)
 		|| r1 <= 0.0 || r2 <= 0.0 || c <= 0. )  {
 		return(-2);		/* BAD */
@@ -675,7 +675,7 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 
 	/* Check for A.H == 0 */
 	f = VDOT( xip->ehy_Au, xip->ehy_H ) / mag_h;
-	if( ! NEAR_ZERO(f, RT_DOT_TOL) )  {
+	if ( ! NEAR_ZERO(f, RT_DOT_TOL) )  {
 		return(-2);		/* BAD */
 	}
 
@@ -695,13 +695,13 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	/*
 	 *  Establish tolerances
 	 */
-	if( ttol->rel <= 0.0 || ttol->rel >= 1.0 )
+	if ( ttol->rel <= 0.0 || ttol->rel >= 1.0 )
 		dtol = 0.0;		/* none */
 	else
 		/* Convert rel to absolute by scaling by smallest side */
 		dtol = ttol->rel * 2 * r2;
-	if( ttol->abs <= 0.0 )  {
-		if( dtol <= 0.0 )
+	if ( ttol->abs <= 0.0 )  {
+		if ( dtol <= 0.0 )
 			/* No tolerance given, use a default */
 			dtol = 2 * 0.10 * r2;	/* 10% */
 		else
@@ -709,12 +709,12 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 			;
 	} else {
 		/* Absolute tolerance was given, pick smaller */
-		if( ttol->rel <= 0.0 || dtol > ttol->abs )
+		if ( ttol->rel <= 0.0 || dtol > ttol->abs )
 			dtol = ttol->abs;
 	}
 
 	/* To ensure normal tolerance, remain below this angle */
-	if( ttol->norm > 0.0 )
+	if ( ttol->norm > 0.0 )
 		ntol = ttol->norm;
 	else
 		/* tolerate everything */
@@ -851,7 +851,7 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	RT_ADD_VLIST( vhead,
 		&ellipses[nell-1][(nseg-1)*ELEMENTS_PER_VECT],
 		BN_VLIST_LINE_MOVE );
-	for( i = 0; i < nseg; i++ )  {
+	for ( i = 0; i < nseg; i++ )  {
 		RT_ADD_VLIST( vhead,
 			&ellipses[nell-1][i*ELEMENTS_PER_VECT],
 			BN_VLIST_LINE_DRAW );
@@ -870,7 +870,7 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 		RT_ADD_VLIST( vhead,
 			&ellipses[bottom][(nseg-1)*ELEMENTS_PER_VECT],
 			BN_VLIST_LINE_MOVE );
-		for( j = 0; j < nseg; j++ )  {
+		for ( j = 0; j < nseg; j++ )  {
 			RT_ADD_VLIST( vhead,
 				&ellipses[bottom][j*ELEMENTS_PER_VECT],
 				BN_VLIST_LINE_DRAW );
@@ -958,7 +958,7 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	r1 = xip->ehy_r1;
 	r2 = xip->ehy_r2;
 	/* Check for |H| > 0, |A| == 1, r1 > 0, r2 > 0, c > 0 */
-	if( NEAR_ZERO(mag_h, RT_LEN_TOL)
+	if ( NEAR_ZERO(mag_h, RT_LEN_TOL)
 		|| !NEAR_ZERO(mag_a - 1.0, RT_LEN_TOL)
 		|| r1 <= 0.0 || r2 <= 0.0 || c <= 0. )  {
 		return(1);		/* BAD */
@@ -966,7 +966,7 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 	/* Check for A.H == 0 */
 	f = VDOT( xip->ehy_Au, xip->ehy_H ) / mag_h;
-	if( ! NEAR_ZERO(f, RT_DOT_TOL) )  {
+	if ( ! NEAR_ZERO(f, RT_DOT_TOL) )  {
 		return(1);		/* BAD */
 	}
 
@@ -996,13 +996,13 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	/*
 	 *  Establish tolerances
 	 */
-	if( ttol->rel <= 0.0 || ttol->rel >= 1.0 )
+	if ( ttol->rel <= 0.0 || ttol->rel >= 1.0 )
 		dtol = 0.0;		/* none */
 	else
 		/* Convert rel to absolute by scaling by smallest side */
 		dtol = ttol->rel * 2 * r2;
-	if( ttol->abs <= 0.0 )  {
-		if( dtol <= 0.0 )
+	if ( ttol->abs <= 0.0 )  {
+		if ( dtol <= 0.0 )
 			/* No tolerance given, use a default */
 			dtol = 2 * 0.10 * r2;	/* 10% */
 		else
@@ -1010,12 +1010,12 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 			;
 	} else {
 		/* Absolute tolerance was given, pick smaller */
-		if( ttol->rel <= 0.0 || dtol > ttol->abs )
+		if ( ttol->rel <= 0.0 || dtol > ttol->abs )
 			dtol = ttol->abs;
 	}
 
 	/* To ensure normal tolerance, remain below this angle */
-	if( ttol->norm > 0.0 )
+	if ( ttol->norm > 0.0 )
 		ntol = ttol->norm;
 	else
 		/* tolerate everything */
@@ -1184,13 +1184,13 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	fu_top = outfaceuses[0];
 
 	/* Mark edges of this face as real, this is the only real edge */
-	for( BU_LIST_FOR( lu, loopuse, &outfaceuses[0]->lu_hd ) )
+	for ( BU_LIST_FOR( lu, loopuse, &outfaceuses[0]->lu_hd ) )
 	{
 		NMG_CK_LOOPUSE( lu );
 
-		if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+		if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
 			continue;
-		for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+		for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 		{
 			struct edge *e;
 
@@ -1318,8 +1318,8 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	}
 
 	/* Associate the face geometry */
-	for (i=0 ; i < face ; i++) {
-		if( nmg_fu_planeeqn( outfaceuses[i], tol ) < 0 )
+	for (i=0; i < face; i++) {
+		if ( nmg_fu_planeeqn( outfaceuses[i], tol ) < 0 )
 			goto fail;
 	}
 
@@ -1343,7 +1343,7 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 	/* Assign vertexuse normals */
 	nmg_vertex_tabulate( &vert_tab, &s->l.magic );
-	for( i=0 ; i<BU_PTBL_END( &vert_tab ) ; i++ )
+	for ( i=0; i<BU_PTBL_END( &vert_tab ); i++ )
 	{
 		point_t pt_prime, tmp_pt;
 		vect_t norm, rev_norm, tmp_vect;
@@ -1363,7 +1363,7 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		VUNITIZE( norm );
 		VREVERSE( rev_norm, norm );
 
-		for( BU_LIST_FOR( vu, vertexuse, &v->vu_hd ) )
+		for ( BU_LIST_FOR( vu, vertexuse, &v->vu_hd ) )
 		{
 			struct faceuse *fu;
 
@@ -1371,13 +1371,13 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 			fu = nmg_find_fu_of_vu( vu );
 
 			/* don't assign vertexuse normals to top face (flat) */
-			if( fu == fu_top || fu->fumate_p == fu_top )
+			if ( fu == fu_top || fu->fumate_p == fu_top )
 				continue;
 
 			NMG_CK_FACEUSE( fu );
-			if( fu->orientation == OT_SAME )
+			if ( fu->orientation == OT_SAME )
 				nmg_vertexuse_nv( vu, norm );
-			else if( fu->orientation == OT_OPPOSITE )
+			else if ( fu->orientation == OT_OPPOSITE )
 				nmg_vertexuse_nv( vu, rev_norm );
 		}
 	}
@@ -1413,7 +1413,7 @@ rt_ehy_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 	BU_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
 	/* Check record type */
-	if( rp->u_id != ID_SOLID )  {
+	if ( rp->u_id != ID_SOLID )  {
 		bu_log("rt_ehy_import: defective record\n");
 		return(-1);
 	}
@@ -1436,7 +1436,7 @@ rt_ehy_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 	xip->ehy_r2 = rp->s.s_values[3*3+1] / mat[15];
 	xip->ehy_c  = rp->s.s_values[3*3+2] / mat[15];
 
-	if( xip->ehy_r1 <= SMALL_FASTF || xip->ehy_r2 <= SMALL_FASTF || xip->ehy_c <= SMALL_FASTF ) {
+	if ( xip->ehy_r1 <= SMALL_FASTF || xip->ehy_r2 <= SMALL_FASTF || xip->ehy_c <= SMALL_FASTF ) {
 		bu_log( "rt_ehy_import: r1, r2, or c are zero\n" );
 		bu_free( (char *)ip->idb_ptr, "rt_ehy_import: ip->idb_ptr" );
 		return( -1 );
@@ -1457,7 +1457,7 @@ rt_ehy_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 	union record		*ehy;
 
 	RT_CK_DB_INTERNAL(ip);
-	if( ip->idb_type != ID_EHY )  return(-1);
+	if ( ip->idb_type != ID_EHY )  return(-1);
 	xip = (struct rt_ehy_internal *)ip->idb_ptr;
 	RT_EHY_CK_MAGIC(xip);
 
@@ -1542,7 +1542,7 @@ rt_ehy_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 	xip->ehy_r2 = vec[3*3+1] / mat[15];
 	xip->ehy_c  = vec[3*3+2] / mat[15];
 
-	if( xip->ehy_r1 <= SMALL_FASTF || xip->ehy_r2 <= SMALL_FASTF || xip->ehy_c <= SMALL_FASTF ) {
+	if ( xip->ehy_r1 <= SMALL_FASTF || xip->ehy_r2 <= SMALL_FASTF || xip->ehy_c <= SMALL_FASTF ) {
 		bu_log( "rt_ehy_import: r1, r2, or c are zero\n" );
 		bu_free( (char *)ip->idb_ptr, "rt_ehy_import: ip->idb_ptr" );
 		return( -1 );
@@ -1563,7 +1563,7 @@ rt_ehy_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	fastf_t			vec[3*4];
 
 	RT_CK_DB_INTERNAL(ip);
-	if( ip->idb_type != ID_EHY )  return(-1);
+	if ( ip->idb_type != ID_EHY )  return(-1);
 	xip = (struct rt_ehy_internal *)ip->idb_ptr;
 	RT_EHY_CK_MAGIC(xip);
 

@@ -204,12 +204,12 @@ int main(int ac, char **av)
 
     if (++arg_index >= ac) usage("No NMG specified\n");
 
-    if( db_dirbuild( dbip ) ) {
+    if ( db_dirbuild( dbip ) ) {
 	bu_exit(1, "db_dirbuild failed\n" );
     }
 
     /* process each remaining argument */
-    for ( ; arg_index < ac ; arg_index++ ) {
+    for (; arg_index < ac; arg_index++ ) {
 
 	if ( ! (dp = db_lookup(dbip, av[arg_index], 1)) ) {
 	    bu_exit(255, "%s: db_lookup failed\n", progname);

@@ -485,7 +485,7 @@ get_args (int argc, register char **argv)
 
     if (bu_optind >= argc)
     {
-	if(isatty(fileno(stdin)))
+	if (isatty(fileno(stdin)))
 	    return(0);
 	file_name = "stdin";
 	infp = stdin;

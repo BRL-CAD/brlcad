@@ -38,7 +38,7 @@ main(int argc, char **argv)
 	unsigned char pix[3], pixin[3], pixout[3];
 	int npixels;
 
-	if( argc != 4 && argc != 7 )
+	if ( argc != 4 && argc != 7 )
 	{
 		bu_log( "Usage:\n" );
 		bu_log( "\t%s [R_in G_in B_in] R_out G_out B_out  < pix_in > pix_out\n", argv[0] );
@@ -47,7 +47,7 @@ main(int argc, char **argv)
 		bu_exit( 1, NULL );
 	}
 
-	if( argc == 7 )
+	if ( argc == 7 )
 	{
 		argv++;
 		pixin[0] = '\0' + atoi( *argv );
@@ -64,18 +64,18 @@ main(int argc, char **argv)
 	argv++;
 	pixout[2] = '\0' + atoi( *argv );
 
-	if( argc == 4 )
+	if ( argc == 4 )
 	{
-		if( (npixels=fread( pixin, sizeof( unsigned char ), 3, stdin ) ) != 3 )
+		if ( (npixels=fread( pixin, sizeof( unsigned char ), 3, stdin ) ) != 3 )
 		{
 			bu_exit(1, "Unexpected end of input\n" );
 		}
 		fwrite( pixout, sizeof( unsigned char ), npixels, stdout );
 	}
 
-	while( (npixels=fread( pix, sizeof( unsigned char ), 3, stdin ) ) == 3 )
+	while ( (npixels=fread( pix, sizeof( unsigned char ), 3, stdin ) ) == 3 )
 	{
-		if( pix[0] == pixin[0] && pix[1] == pixin[1] && pix[2] == pixin[2] )
+		if ( pix[0] == pixin[0] && pix[1] == pixin[1] && pix[2] == pixin[2] )
 			fwrite( pixout, sizeof( unsigned char ), npixels, stdout );
 		else
 			fwrite( pix, sizeof( unsigned char ), npixels, stdout );

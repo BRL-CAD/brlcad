@@ -289,7 +289,7 @@ ps_open(Tcl_Interp *interp, int argc, char **argv)
 		argv++;
 	}
 
-	if(argv[0] == (char *)0) {
+	if (argv[0] == (char *)0) {
 		Tcl_AppendStringsToObj(obj, "no filename specified\n", (char *)NULL);
 		(void)ps_close(dmp);
 
@@ -372,7 +372,7 @@ NEWPG\n\
 static int
 ps_close(struct dm *dmp)
 {
-  if(!((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp)
+  if (!((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp)
     return TCL_ERROR;
 
   fputs("%end(plot)\n", ((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp);
@@ -407,7 +407,7 @@ ps_drawBegin(struct dm *dmp)
 static int
 ps_drawEnd(struct dm *dmp)
 {
-  if( !((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp )
+  if ( !((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp )
     return TCL_ERROR;
 
   fputs("% showpage	% uncomment to use raw file\n",
@@ -476,11 +476,11 @@ ps_drawVList(struct dm *dmp, register struct bn_vlist *vp)
   fastf_t			delta;
   int useful = 0;
 
-  if( !((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp )
+  if ( !((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp )
     return TCL_ERROR;
 
 #if 0
-  if( linestyle )
+  if ( linestyle )
     fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp, "DDV ");		/* Dot-dashed vectors */
   else
     fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp, "NV ");		/* Normal vectors */
@@ -491,19 +491,19 @@ ps_drawVList(struct dm *dmp, register struct bn_vlist *vp)
      * This value is a SWAG that seems to work OK.
      */
     delta = psmat[15]*0.0001;
-    if( delta < 0.0 )
+    if ( delta < 0.0 )
 	delta = -delta;
-    if( delta < SQRT_SMALL_FASTF )
+    if ( delta < SQRT_SMALL_FASTF )
 	delta = SQRT_SMALL_FASTF;
 
-  for( BU_LIST_FOR( tvp, bn_vlist, &vp->l ) )  {
+  for ( BU_LIST_FOR( tvp, bn_vlist, &vp->l ) )  {
     register int	i;
     register int	nused = tvp->nused;
     register int	*cmd = tvp->cmd;
     register point_t *pt = tvp->pt;
-    for( i = 0; i < nused; i++, cmd++, pt++ )  {
+    for ( i = 0; i < nused; i++, cmd++, pt++ )  {
       static vect_t	start, fin;
-      switch( *cmd )  {
+      switch ( *cmd )  {
       case BN_VLIST_POLY_START:
       case BN_VLIST_POLY_VERTNORM:
 	continue;
@@ -516,7 +516,7 @@ ps_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 			 * points behind eye plane!!!!
 			 */
 			dist = VDOT( *pt, &psmat[12] ) + psmat[15];
-			if( dist <= 0.0 )
+			if ( dist <= 0.0 )
 			{
 				pt_prev = pt;
 				dist_prev = dist;
@@ -542,9 +542,9 @@ ps_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 			 * points behind eye plane!!!!
 			 */
 			dist = VDOT( *pt, &psmat[12] ) + psmat[15];
-			if( dist <= 0.0 )
+			if ( dist <= 0.0 )
 			{
-				if( dist_prev <= 0.0 )
+				if ( dist_prev <= 0.0 )
 				{
 					/* nothing to plot */
 					dist_prev = dist;
@@ -566,7 +566,7 @@ ps_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 			}
 			else
 			{
-				if( dist_prev <= 0.0 )
+				if ( dist_prev <= 0.0 )
 				{
 					fastf_t alpha;
 					vect_t diff;
@@ -592,7 +592,7 @@ ps_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 	break;
       }
 
-      if(vclip( start, fin, dmp->dm_clipmin,
+      if (vclip( start, fin, dmp->dm_clipmin,
 		dmp->dm_clipmax ) == 0)
 	continue;
 
@@ -606,7 +606,7 @@ ps_drawVList(struct dm *dmp, register struct bn_vlist *vp)
     }
   }
 
-  if(useful)
+  if (useful)
     return TCL_OK;
 
   return TCL_ERROR;
@@ -637,10 +637,10 @@ ps_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int si
 {
   int sx, sy;
 
-  if( !((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp )
+  if ( !((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp )
     return TCL_ERROR;
 
-  switch( size )  {
+  switch ( size )  {
   default:
     /* Smallest */
     fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp, "DFntS ");
@@ -675,7 +675,7 @@ ps_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
   int sx1, sy1;
   int sx2, sy2;
 
-  if( !((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp )
+  if ( !((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp )
     return TCL_ERROR;
 
   sx1 = x1 * 2047.0 + 2048;
@@ -713,7 +713,7 @@ ps_setLineAttr(struct dm *dmp, int width, int style)
   dmp->dm_lineWidth = width;
   dmp->dm_lineStyle = style;
 
-  if(style == DM_DASHED_LINE)
+  if (style == DM_DASHED_LINE)
     fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp, "DDV "); /* Dot-dashed vectors */
   else
     fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp, "NV "); /* Normal vectors */
@@ -739,7 +739,7 @@ ps_setWinBounds(struct dm *dmp, register int *w)
   dmp->dm_clipmax[1] = w[3] / 2047.;
 
 #if 0
-  if(((struct ps_vars *)dmp->dm_vars.priv_vars)->zclip){
+  if (((struct ps_vars *)dmp->dm_vars.priv_vars)->zclip){
 #else
   if (dmp->dm_zclip) {
 #endif

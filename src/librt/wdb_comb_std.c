@@ -44,7 +44,7 @@
 #include "rtgeom.h"
 
 
-#define	PRINT_USAGE Tcl_AppendResult(interp, "c: usage 'c [-cr] comb_name [bool_expr]'\n",\
+#define	PRINT_USAGE Tcl_AppendResult(interp, "c: usage 'c [-cr] comb_name [bool_expr]'\n", \
 				     (char *)NULL)
 
 struct tokens {
@@ -150,7 +150,7 @@ wdb_add_operator(Tcl_Interp *interp, struct bu_list *hp, char ch, short int *las
 
 	BU_CK_LIST_HEAD(hp);
 
-	switch( ch )
+	switch ( ch )
 	{
 		case 'u':
 			wdb_append_union(hp);
@@ -209,7 +209,7 @@ wdb_add_operand(Tcl_Interp *interp, struct bu_list *hp, char *name)
 			name_len = tmp1;
 		else if (tmp1 == (-1) && tmp2 > 0)
 			name_len = tmp2;
-		else if(tmp1 > 0 && tmp2 > 0) {
+		else if (tmp1 > 0 && tmp2 > 0) {
 			if (tmp1 < tmp2)
 				name_len = tmp1;
 			else
@@ -272,7 +272,7 @@ wdb_do_union_subtr(struct bu_list *hp)
 {
 	struct tokens *tok;
 
-	for(BU_LIST_FOR(tok, tokens, hp)) {
+	for (BU_LIST_FOR(tok, tokens, hp)) {
 		struct tokens *prev, *next;
 		union tree *tp;
 
@@ -375,21 +375,21 @@ wdb_check_syntax(Tcl_Interp *interp, struct db_i *dbip, struct bu_list *hp, char
 	int errors=0;
 	short last_tok=WDB_TOK_NULL;
 
-	if(dbip == DBI_NULL)
+	if (dbip == DBI_NULL)
 	  return 0;
 
-	for( BU_LIST_FOR( tok, tokens, hp ) )
+	for ( BU_LIST_FOR( tok, tokens, hp ) )
 	{
-		switch( tok->type )
+		switch ( tok->type )
 		{
 			case WDB_TOK_LPAREN:
 				paren_count++;
-				if( last_tok == WDB_TOK_RPAREN )
+				if ( last_tok == WDB_TOK_RPAREN )
 					missing_op++;
 				break;
 			case WDB_TOK_RPAREN:
 				paren_count--;
-				if( last_tok == WDB_TOK_LPAREN )
+				if ( last_tok == WDB_TOK_LPAREN )
 					missing_exp++;
 				break;
 			case WDB_TOK_UNION:
@@ -399,50 +399,50 @@ wdb_check_syntax(Tcl_Interp *interp, struct db_i *dbip, struct bu_list *hp, char
 				break;
 			case WDB_TOK_TREE:
 				arg_count++;
-				if( !dp && !strcmp( comb_name, tok->tp->tr_l.tl_name ) )
+				if ( !dp && !strcmp( comb_name, tok->tp->tr_l.tl_name ) )
 					circular_ref++;
-				else if( db_lookup( dbip, tok->tp->tr_l.tl_name, LOOKUP_QUIET ) == DIR_NULL )
+				else if ( db_lookup( dbip, tok->tp->tr_l.tl_name, LOOKUP_QUIET ) == DIR_NULL )
 					Tcl_AppendResult(interp, "WARNING: '",
 						tok->tp->tr_l.tl_name,
 						"' does not actually exist\n", (char *)NULL );
 				break;
 		}
-		if( paren_count < 0 )
+		if ( paren_count < 0 )
 			paren_error++;
 		last_tok = tok->type;
 	}
 
-	if( paren_count || paren_error )
+	if ( paren_count || paren_error )
 	{
 		Tcl_AppendResult(interp, "ERROR: unbalanced parenthesis\n", (char *)NULL );
 		errors++;
 	}
 
-	if( missing_exp )
+	if ( missing_exp )
 	{
 		Tcl_AppendResult(interp, "ERROR: empty parenthesis (missing expression)\n", (char *)NULL );
 		errors++;
 	}
 
-	if( missing_op )
+	if ( missing_op )
 	{
 		Tcl_AppendResult(interp, "ERROR: must have operator between ')('\n", (char *)NULL );
 		errors++;
 	}
 
-	if( op_count != arg_count-1 )
+	if ( op_count != arg_count-1 )
 	{
 		Tcl_AppendResult(interp, "ERROR: mismatch of operators and operands\n", (char *)NULL );
 		errors++;
 	}
 
-	if( circular_ref )
+	if ( circular_ref )
 	{
 		Tcl_AppendResult(interp, "ERROR: combination cannot reference itself during initial creation\n", (char *)NULL );
 		errors++;
 	}
 
-	if( errors )
+	if ( errors )
 	{
 		Tcl_AppendResult(interp, "\t---------aborting!\n", (char *)NULL );
 		return( 1 );
@@ -531,7 +531,7 @@ wdb_comb_std_cmd(struct rt_wdb	*wdbp,
 		RT_CK_COMB(comb);
 
 		if (region_flag) {
-			if( !comb->region_flag ) {
+			if ( !comb->region_flag ) {
 				/* assign values from the defaults */
 				comb->region_id = wdbp->wdb_item_default++;
 				comb->aircode = wdbp->wdb_air_default;
@@ -571,7 +571,7 @@ wdb_comb_std_cmd(struct rt_wdb	*wdbp,
 	tok_hd.type = WDB_TOK_NULL;
 
 	last_tok = WDB_TOK_LPAREN;
-	for (i=0 ; i<argc ; i++) {
+	for (i=0; i<argc; i++) {
 		char *ptr;
 
 		ptr = argv[i];

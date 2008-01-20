@@ -65,7 +65,7 @@ void util_camera_init(util_camera_t *camera, int threads) {
   /* The camera will use a thread for every cpu the machine has. */
   camera->thread_num = threads ? threads : bu_avail_cpus();
 
-  if(camera->thread_num > 1) {
+  if (camera->thread_num > 1) {
     util_tlist = (pthread_t *)malloc(sizeof(pthread_t) * camera->thread_num);
     if (!util_tlist) {
 	perror("malloc");
@@ -80,7 +80,7 @@ void util_camera_init(util_camera_t *camera, int threads) {
 
 
 void util_camera_free(util_camera_t *camera) {
-  if(camera->thread_num > 1)
+  if (camera->thread_num > 1)
     free(util_tlist);
 }
 
@@ -96,11 +96,11 @@ void util_camera_prep(util_camera_t *camera, common_db_t *db) {
   aspect = (tfloat)db->env.img_vw / (tfloat)db->env.img_vh;
 
   /* Free camera view list if already allocated */
-  if(camera->view_list)
+  if (camera->view_list)
     free(camera->view_list);
 
   /* If there is no depth of field then just generate the standard look vector */
-  if(camera->dof == 0.0) {
+  if (camera->dof == 0.0) {
     camera->view_num = 1;
     camera->view_list = (util_camera_view_t *)malloc(sizeof(util_camera_view_t) * camera->view_num);
     if (!camera->view_list) {
@@ -251,8 +251,8 @@ void util_camera_prep(util_camera_t *camera, common_db_t *db) {
       exit(1);
   }
 
-  for(i = 0; i < UTIL_CAMERA_DOF_SAMPLES; i++) {
-    for(n = 0; n < UTIL_CAMERA_DOF_SAMPLES; n++) {
+  for (i = 0; i < UTIL_CAMERA_DOF_SAMPLES; i++) {
+    for (n = 0; n < UTIL_CAMERA_DOF_SAMPLES; n++) {
       /* Generate virtual camera position for this depth of field sample */
       MATH_VEC_MUL_SCALAR(temp, step_x, ((tfloat)i/(tfloat)(UTIL_CAMERA_DOF_SAMPLES-1)));
       MATH_VEC_ADD(camera->view_list[i*UTIL_CAMERA_DOF_SAMPLES+n].pos, dof_topl, temp);
@@ -341,11 +341,11 @@ void* util_camera_render_thread(void *ptr) {
 
 
   res_ind = 0;
-  /*  for(i = td->work.orig_y; i < td->work.orig_y + td->work.size_y; i++) { */	/* row, vertical */
-  while(1) {
+  /*  for (i = td->work.orig_y; i < td->work.orig_y + td->work.size_y; i++) { */	/* row, vertical */
+  while (1) {
     /* Determine if this scanline should be computed by this thread */
     pthread_mutex_lock(&td->mut);
-    if(*td->scanline == td->work.size_y) {
+    if (*td->scanline == td->work.size_y) {
       pthread_mutex_unlock(&td->mut);
       return(0);
     } else {
@@ -355,28 +355,28 @@ void* util_camera_render_thread(void *ptr) {
     pthread_mutex_unlock(&td->mut);
 
     v_scanline = scanline + td->work.orig_y;
-    if(td->work.format == COMMON_BIT_DEPTH_24) {
+    if (td->work.format == COMMON_BIT_DEPTH_24) {
       res_ind = 3*scanline*td->work.size_x;
-    } else if(td->work.format == COMMON_BIT_DEPTH_128) {
+    } else if (td->work.format == COMMON_BIT_DEPTH_128) {
       res_ind = 4*scanline*td->work.size_x;
     }
 
 
     /* optimization if there is no depth of field being applied */
-    if(td->camera->view_num == 1) {
+    if (td->camera->view_num == 1) {
       MATH_VEC_MUL_SCALAR(v1, td->camera->view_list[0].step_y, v_scanline);
       MATH_VEC_ADD(v1, v1, td->camera->view_list[0].top_l);
     }
 
 
     /* scanline, horizontal, each pixel */
-    for(n = td->work.orig_x; n < td->work.orig_x + td->work.size_x; n++) {
+    for (n = td->work.orig_x; n < td->work.orig_x + td->work.size_x; n++) {
 
       /* depth of view samples */
-      if(td->camera->view_num > 1) {
+      if (td->camera->view_num > 1) {
 	MATH_VEC_SET(accum, 0, 0, 0);
 
-	for(d = 0; d < td->camera->view_num; d++) {
+	for (d = 0; d < td->camera->view_num; d++) {
 	  MATH_VEC_MUL_SCALAR(ray.dir, td->camera->view_list[d].step_y, v_scanline);
 	  MATH_VEC_ADD(ray.dir, ray.dir, td->camera->view_list[d].top_l);
 	  MATH_VEC_MUL_SCALAR(v1, td->camera->view_list[d].step_x, n);
@@ -411,15 +411,15 @@ void* util_camera_render_thread(void *ptr) {
       }
 
 
-      if(td->work.format == COMMON_BIT_DEPTH_24) {
-	if(pixel.v[0] > 1) pixel.v[0] = 1;
-	if(pixel.v[1] > 1) pixel.v[1] = 1;
-	if(pixel.v[2] > 1) pixel.v[2] = 1;
+      if (td->work.format == COMMON_BIT_DEPTH_24) {
+	if (pixel.v[0] > 1) pixel.v[0] = 1;
+	if (pixel.v[1] > 1) pixel.v[1] = 1;
+	if (pixel.v[2] > 1) pixel.v[2] = 1;
 	((char *)(td->res_buf))[res_ind+0] = (unsigned char)(255 * pixel.v[0]);
 	((char *)(td->res_buf))[res_ind+1] = (unsigned char)(255 * pixel.v[1]);
 	((char *)(td->res_buf))[res_ind+2] = (unsigned char)(255 * pixel.v[2]);
 	res_ind += 3;
-      } else if(td->work.format == COMMON_BIT_DEPTH_128) {
+      } else if (td->work.format == COMMON_BIT_DEPTH_128) {
 	tfloat alpha;
 
 	alpha = 1.0;
@@ -452,7 +452,7 @@ void util_camera_render(util_camera_t *camera, common_db_t *db, tie_t *tie, void
   memcpy(&work, data, sizeof(common_work_t));
 
   /* Flip bits if endian requires us to */
-  if(tienet_endian) {
+  if (tienet_endian) {
     tienet_flip(&work.orig_x, &work.orig_x, sizeof(short));
     tienet_flip(&work.orig_y, &work.orig_y, sizeof(short));
     tienet_flip(&work.size_x, &work.size_x, sizeof(short));
@@ -461,9 +461,9 @@ void util_camera_render(util_camera_t *camera, common_db_t *db, tie_t *tie, void
   }
 
 
-  if(work.format == COMMON_BIT_DEPTH_24) {
+  if (work.format == COMMON_BIT_DEPTH_24) {
     *res_len = 3 * work.size_x * work.size_y + sizeof(common_work_t);
-  } else if(work.format == COMMON_BIT_DEPTH_128) {
+  } else if (work.format == COMMON_BIT_DEPTH_128) {
     *res_len = 4 * sizeof(tfloat) * work.size_x * work.size_y + sizeof(common_work_t);
   }
 
@@ -480,10 +480,10 @@ void util_camera_render(util_camera_t *camera, common_db_t *db, tie_t *tie, void
   pthread_mutex_init(&td.mut, 0);
 
   /* Launch Render threads */
-  if(camera->thread_num > 1) {
-    for(i = 0; i < camera->thread_num; i++)
+  if (camera->thread_num > 1) {
+    for (i = 0; i < camera->thread_num; i++)
       pthread_create(&util_tlist[i], NULL, util_camera_render_thread, &td);
-    for(i = 0; i < camera->thread_num; i++)
+    for (i = 0; i < camera->thread_num; i++)
       pthread_join(util_tlist[i], NULL);
   } else {
     util_camera_render_thread(&td);

@@ -468,11 +468,11 @@ main(argc, argv)
 	bu_exit(1, usage, argv[0], brlcad_ident("BRL-CAD to DXF Exporter"));
     }
 
-    if( !output_file  ) {
+    if ( !output_file  ) {
 	fp = stdout;
     } else {
 	/* Open output file */
-	if( (fp=fopen( output_file, "w+" )) == NULL ) {
+	if ( (fp=fopen( output_file, "w+" )) == NULL ) {
 	    perror( argv[0] );
 	    bu_exit(1, " Cannot open output file (%s) for writing\n", output_file);
 	}
@@ -486,17 +486,17 @@ main(argc, argv)
 	bu_exit(1, "Unable to open geometry file (%s) for reading\n", argv[0]);
     }
 
-    if( db_dirbuild( dbip ) ) {
+    if ( db_dirbuild( dbip ) ) {
 	bu_exit(1, "db_dirbuild failed\n" );
     }
 
     BN_CK_TOL(tree_state.ts_tol);
     RT_CK_TESS_TOL(tree_state.ts_ttol);
 
-    if( verbose ) {
+    if ( verbose ) {
 	bu_log( "Model: %s\n", argv[0] );
 	bu_log( "Objects:" );
-	for( i=1 ; i<argc ; i++ )
+	for ( i=1; i<argc; i++ )
 	    bu_log( " %s", argv[i] );
 	bu_log( "\nTesselation tolerances:\n\tabs = %g mm\n\trel = %g\n\tnorm = %g\n",
 		tree_state.ts_ttol->abs, tree_state.ts_ttol->rel, tree_state.ts_ttol->norm );
@@ -537,17 +537,17 @@ main(argc, argv)
 			(genptr_t)NULL);	/* in librt/nmg_bool.c */
 
     percent = 0;
-    if(regions_tried>0){
+    if (regions_tried>0){
 	percent = ((double)regions_converted * 100) / regions_tried;
-	if( verbose )
+	if ( verbose )
 	    bu_log("Tried %d regions, %d converted to NMG's successfully.  %g%%\n",
 		   regions_tried, regions_converted, percent);
     }
     percent = 0;
 
-    if( regions_tried > 0 ){
+    if ( regions_tried > 0 ){
 	percent = ((double)regions_written * 100) / regions_tried;
-	if( verbose )
+	if ( verbose )
 	    bu_log( "                  %d triangulated successfully. %g%%\n",
 		    regions_written, percent );
     }
@@ -556,7 +556,7 @@ main(argc, argv)
 
     fprintf( fp, "0\nENDSEC\n0\nEOF\n" );
 
-    if( output_file ) {
+    if ( output_file ) {
 	fclose(fp);
     }
 
@@ -585,13 +585,13 @@ find_closest_color( float color[3] )
     color_num = 0;
     dist_sq = MAGSQ( icolor );
 
-    for( i=1 ; i<256 ; i++ ) {
+    for ( i=1; i<256; i++ ) {
 	int tmp_dist;
 	int diff[3];
 
 	VSUB2( diff, icolor, &rgb[i*3] );
 	tmp_dist = MAGSQ( diff );
-	if( tmp_dist < dist_sq ) {
+	if ( tmp_dist < dist_sq ) {
 	    dist_sq = tmp_dist;
 	    color_num = i;
 	}
@@ -626,31 +626,31 @@ nmg_to_dxf( r, pathp, region_id, color )
     NMG_CK_MODEL( m );
 
     /* Count triangles */
-    for( BU_LIST_FOR( s, shell, &r->s_hd ) ) {
+    for ( BU_LIST_FOR( s, shell, &r->s_hd ) ) {
 	struct faceuse *fu;
 
 	NMG_CK_SHELL( s );
 
-	for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) ) {
+	for ( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) ) {
 	    struct loopuse *lu;
 	    int vert_count=0;
 
 	    NMG_CK_FACEUSE( fu );
 
-	    if( fu->orientation != OT_SAME )
+	    if ( fu->orientation != OT_SAME )
 		continue;
 
-	    for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) ) {
+	    for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) ) {
 		struct edgeuse *eu;
 
-		if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+		if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
 		    continue;
 
-		for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) ) {
+		for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) ) {
 		    vert_count++;
 		}
 
-		if( vert_count > 3 ) {
+		if ( vert_count > 3 ) {
 		    do_triangulate = 1;
 		    goto triangulate;
 		}
@@ -661,23 +661,23 @@ nmg_to_dxf( r, pathp, region_id, color )
     }
 
  triangulate:
-    if( do_triangulate ) {
+    if ( do_triangulate ) {
 	/* triangulate model */
 	nmg_triangulate_model( m, &tol );
 
 	/* Count triangles */
 	tri_count = 0;
-	for( BU_LIST_FOR( s, shell, &r->s_hd ) ) {
+	for ( BU_LIST_FOR( s, shell, &r->s_hd ) ) {
 	    struct faceuse *fu;
 
-	    for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) ) {
+	    for ( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) ) {
 		struct loopuse *lu;
 
-		if( fu->orientation != OT_SAME )
+		if ( fu->orientation != OT_SAME )
 		    continue;
 
-		for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) ) {
-		    if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+		for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) ) {
+		    if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
 			continue;
 
 		    tri_count++;
@@ -690,17 +690,17 @@ nmg_to_dxf( r, pathp, region_id, color )
 
     color_num = find_closest_color( color );
 
-    if( polyface_mesh ) {
+    if ( polyface_mesh ) {
 	int i;
 
 
 	fprintf( fp, "0\nPOLYLINE\n8\n%s\n62\n%d\n70\n64\n71\n%d\n72\n%d\n",
 		 region_name, color_num, BU_PTBL_LEN( &verts), tri_count );
-	for( i=0 ; i<BU_PTBL_LEN( &verts ) ; i++ ) {
+	for ( i=0; i<BU_PTBL_LEN( &verts ); i++ ) {
 	    fprintf( fp, "0\nVERTEX\n8\n%s\n", region_name );
 	    v = (struct vertex *)BU_PTBL_GET( &verts, i );
 	    NMG_CK_VERTEX( v );
-	    if( inches ) {
+	    if ( inches ) {
 		fprintf( fp, "10\n%f\n20\n%f\n30\n%f\n70\n192\n", V3ARGSIN( v->vg_p->coord ) );
 	    } else {
 		fprintf( fp, "10\n%f\n20\n%f\n30\n%f\n70\n192\n", V3ARGS( v->vg_p->coord ) );
@@ -709,29 +709,29 @@ nmg_to_dxf( r, pathp, region_id, color )
     }
 
     /* Check triangles */
-    for( BU_LIST_FOR( s, shell, &r->s_hd ) ) {
+    for ( BU_LIST_FOR( s, shell, &r->s_hd ) ) {
 	struct faceuse *fu;
 
 	NMG_CK_SHELL( s );
 
-	for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) ) {
+	for ( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) ) {
 	    struct loopuse *lu;
 
 	    NMG_CK_FACEUSE( fu );
 
-	    if( fu->orientation != OT_SAME )
+	    if ( fu->orientation != OT_SAME )
 		continue;
 
-	    for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) ) {
+	    for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) ) {
 		struct edgeuse *eu;
 		int vert_count=0;
 
 		NMG_CK_LOOPUSE( lu );
 
-		if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+		if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
 		    continue;
 
-		if( polyface_mesh ) {
+		if ( polyface_mesh ) {
 		    fprintf( fp, "0\nVERTEX\n8\n%s\n70\n128\n10\n0.0\n20\n0.0\n30\n0.0\n",
 			     region_name );
 		} else {
@@ -739,7 +739,7 @@ nmg_to_dxf( r, pathp, region_id, color )
 		}
 
 		/* check vertex numbers for each triangle */
-		for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) ) {
+		for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) ) {
 		    NMG_CK_EDGEUSE( eu );
 
 		    vert_count++;
@@ -747,11 +747,11 @@ nmg_to_dxf( r, pathp, region_id, color )
 		    v = eu->vu_p->v_p;
 		    NMG_CK_VERTEX( v );
 
-		    if( polyface_mesh ) {
+		    if ( polyface_mesh ) {
 			fprintf( fp, "%d\n%d\n",
 				 vert_count+70, bu_ptbl_locate( &verts, (long *)v ) + 1 );
 		    } else {
-			if( inches ) {
+			if ( inches ) {
 			    fprintf( fp, "%d\n%f\n%d\n%f\n%d\n%f\n",
 				     10 + vert_count - 1,
 				     v->vg_p->coord[X] / 25.4,
@@ -770,11 +770,11 @@ nmg_to_dxf( r, pathp, region_id, color )
 			}
 		    }
 		}
-		if( vert_count > 3 ) {
+		if ( vert_count > 3 ) {
 		    bu_free( region_name, "region name" );
 		    bu_log( "lu x%x has %d vertices!\n", lu, vert_count );
 		    bu_exit(1, "ERROR: LU is not a triangle\n");
-		} else if( vert_count < 3 ) {
+		} else if ( vert_count < 3 ) {
 		    continue;
 		} else {
 		    /* repeat the last vertex for the benefit of codes
@@ -782,9 +782,9 @@ nmg_to_dxf( r, pathp, region_id, color )
 		     * 3DFACES as requiring a fourth vertex even when
 		     * only three are input.
 		     */
-		    if( !polyface_mesh ) {
+		    if ( !polyface_mesh ) {
 			vert_count++;
-			if( inches ) {
+			if ( inches ) {
 			    fprintf( fp, "%d\n%f\n%d\n%f\n%d\n%f\n",
 				     10 + vert_count - 1,
 				     v->vg_p->coord[X] / 25.4,
@@ -813,7 +813,7 @@ nmg_to_dxf( r, pathp, region_id, color )
     bu_ptbl_free( &verts );
     bu_free( region_name, "region name" );
 
-    if( polyface_mesh ) {
+    if ( polyface_mesh ) {
 	fprintf( fp, "0\nSEQEND\n" );
     }
 
@@ -878,8 +878,8 @@ union tree *do_region_end(tsp, pathp, curtree, client_data)
     regions_tried++;
 
     /* Begin bomb protection */
-    if( ncpu == 1 ) {
-	if( BU_SETJUMP )  {
+    if ( ncpu == 1 ) {
+	if ( BU_SETJUMP )  {
 	    /* Error, bail out */
 	    char *sofar;
 	    BU_UNSETJUMP;		/* Relinquish the protection */
@@ -900,7 +900,7 @@ union tree *do_region_end(tsp, pathp, curtree, client_data)
 	    /*XXX*/			/* db_free_tree(curtree);*/		/* Does an nmg_kr() */
 
 	    /* Get rid of (m)any other intermediate structures */
-	    if( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC )  {
+	    if ( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC )  {
 		nmg_km(*tsp->ts_m);
 	    } else {
 		bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
@@ -911,16 +911,16 @@ union tree *do_region_end(tsp, pathp, curtree, client_data)
 	    goto out;
 	}
     }
-    if( verbose )
+    if ( verbose )
 	bu_log("Attempting to process region %s\n", db_path_to_string( pathp ));
 
     ret_tree = nmg_booltree_evaluate( curtree, tsp->ts_tol, &rt_uniresource );	/* librt/nmg_bool.c */
     BU_UNSETJUMP;		/* Relinquish the protection */
 
-    if( ret_tree ) {
+    if ( ret_tree ) {
 	r = ret_tree->tr_d.td_r;
     } else {
-	if( verbose ) {
+	if ( verbose ) {
 	    bu_log( "\tNothing left of this region after Boolean evaluation\n" );
 	}
 	regions_written++; /* don't count as a failure */
@@ -937,12 +937,12 @@ union tree *do_region_end(tsp, pathp, curtree, client_data)
 
 	/* Kill cracks */
 	s = BU_LIST_FIRST( shell, &r->s_hd );
-	while( BU_LIST_NOT_HEAD( &s->l, &r->s_hd ) ) {
+	while ( BU_LIST_NOT_HEAD( &s->l, &r->s_hd ) ) {
 	    struct shell *next_s;
 
 	    next_s = BU_LIST_PNEXT( shell, &s->l );
-	    if( nmg_kill_cracks( s ) ) {
-		if( nmg_ks( s ) ) {
+	    if ( nmg_kill_cracks( s ) ) {
+		if ( nmg_ks( s ) ) {
 		    empty_region = 1;
 		    break;
 		}
@@ -951,12 +951,12 @@ union tree *do_region_end(tsp, pathp, curtree, client_data)
 	}
 
 	/* kill zero length edgeuses */
-	if( !empty_region ) {
+	if ( !empty_region ) {
 	    empty_model = nmg_kill_zero_length_edgeuses( *tsp->ts_m );
 	}
 
-	if( !empty_region && !empty_model ) {
-	    if( BU_SETJUMP ) {
+	if ( !empty_region && !empty_model ) {
+	    if ( BU_SETJUMP ) {
 		char *sofar;
 
 		BU_UNSETJUMP;
@@ -974,7 +974,7 @@ union tree *do_region_end(tsp, pathp, curtree, client_data)
 		nmg_isect2d_final_cleanup();
 
 		/* Get rid of (m)any other intermediate structures */
-		if( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC ) {
+		if ( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC ) {
 		    nmg_km(*tsp->ts_m);
 		} else {
 		    bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
@@ -992,7 +992,7 @@ union tree *do_region_end(tsp, pathp, curtree, client_data)
 	    BU_UNSETJUMP;
 	}
 
-	if( !empty_model )
+	if ( !empty_model )
 	    nmg_kr( r );
     }
 
@@ -1006,12 +1006,12 @@ union tree *do_region_end(tsp, pathp, curtree, client_data)
      */
 
 
-    if(regions_tried>0){
+    if (regions_tried>0){
 	float npercent, tpercent;
 
 	npercent = (float)(regions_converted * 100) / regions_tried;
 	tpercent = (float)(regions_written * 100) / regions_tried;
-	if( verbose )
+	if ( verbose )
 	    bu_log("Tried %d regions, %d conv. to NMG's %d conv. to tri. nmgper = %.2f%% triper = %.2f%% \n",
 		   regions_tried, regions_converted, regions_written, npercent, tpercent);
     }

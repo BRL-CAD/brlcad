@@ -64,11 +64,11 @@ wdb_fopen_v( const char *filename, int version )
 {
 	struct db_i	*dbip;
 
-	if( rt_uniresource.re_magic != RESOURCE_MAGIC ) {
+	if ( rt_uniresource.re_magic != RESOURCE_MAGIC ) {
 		rt_init_resource( &rt_uniresource, 0, NULL );
 	}
 
-	if( (dbip = db_create( filename, version )) == DBI_NULL )
+	if ( (dbip = db_create( filename, version )) == DBI_NULL )
 		return RT_WDB_NULL;
 
 	return wdb_dbopen( dbip, RT_WDB_TYPE_DB_DISK );
@@ -106,7 +106,7 @@ wdb_dbopen( struct db_i *dbip, int mode )
 	}
 
 #if 0
-	if( (mode == RT_WDB_TYPE_DB_DISK || mode == RT_WDB_TYPE_DB_DISK_APPEND_ONLY ) &&
+	if ( (mode == RT_WDB_TYPE_DB_DISK || mode == RT_WDB_TYPE_DB_DISK_APPEND_ONLY ) &&
 	    dbip->dbi_read_only )  {
 		/* In-mem updates happen regardless of disk read-only flag */
 		bu_log("wdb_dbopen(%s): read-only\n",
@@ -114,7 +114,7 @@ wdb_dbopen( struct db_i *dbip, int mode )
 	}
 #endif
 
-	if( rt_uniresource.re_magic != RESOURCE_MAGIC )
+	if ( rt_uniresource.re_magic != RESOURCE_MAGIC )
 		rt_init_resource( &rt_uniresource, 0, NULL );
 
 	BU_GETSTRUCT(wdbp, rt_wdb);
@@ -157,7 +157,7 @@ wdb_import(struct rt_wdb *wdbp,	struct rt_db_internal *internp,	const char *name
 {
 	struct directory	*dp;
 
-	if( (dp = db_lookup( wdbp->dbip, name, LOOKUP_QUIET )) == DIR_NULL )
+	if ( (dp = db_lookup( wdbp->dbip, name, LOOKUP_QUIET )) == DIR_NULL )
 		return -4;
 
 	return rt_db_get_internal( internp, dp, wdbp->dbip, mat, &rt_uniresource );
@@ -186,10 +186,10 @@ wdb_export_external(
 	BU_CK_EXTERNAL(ep);
 
 	/* Stash name into external representation */
-	if( wdbp->dbip->dbi_version <= 4 )  {
+	if ( wdbp->dbip->dbi_version <= 4 )  {
 		db_wrap_v4_external( ep, name );
-	} else if( wdbp->dbip->dbi_version == 5 )  {
-		if( db_wrap_v5_external( ep, name ) < 0 )  {
+	} else if ( wdbp->dbip->dbi_version == 5 )  {
+		if ( db_wrap_v5_external( ep, name ) < 0 )  {
 			bu_log("wdb_export_external(%s): db_wrap_v5_external error\n",
 				name );
 			return -4;
@@ -200,17 +200,17 @@ wdb_export_external(
 		return -4;
 	}
 
-	switch( wdbp->type )  {
+	switch ( wdbp->type )  {
 
 	case RT_WDB_TYPE_DB_DISK:
-		if( wdbp->dbip->dbi_read_only )  {
+		if ( wdbp->dbip->dbi_read_only )  {
 			bu_log("wdb_export_external(%s): read-only database, write aborted\n");
 			return -5;
 		}
 		/* If name already exists, that object will be updated. */
 		dp = db_lookup( wdbp->dbip, name, LOOKUP_QUIET );
-		if( dp == DIR_NULL ) {
-			if( (dp = db_diradd( wdbp->dbip, name, -1L, 0, flags,
+		if ( dp == DIR_NULL ) {
+			if ( (dp = db_diradd( wdbp->dbip, name, -1L, 0, flags,
 					   (genptr_t)&type )) == DIR_NULL )  {
 			bu_log("wdb_export_external(%s): db_diradd error\n",
 			       name );
@@ -218,7 +218,7 @@ wdb_export_external(
 			}
 		}
 		dp->d_flags = (dp->d_flags & ~7) | flags;
-		if( db_put_external( ep, dp, wdbp->dbip ) < 0 )  {
+		if ( db_put_external( ep, dp, wdbp->dbip ) < 0 )  {
 			bu_log("wdb_export_external(%s): db_put_external error\n",
 				name );
 			return -3;
@@ -226,18 +226,18 @@ wdb_export_external(
 		break;
 
 	case RT_WDB_TYPE_DB_DISK_APPEND_ONLY:
-		if( wdbp->dbip->dbi_read_only )  {
+		if ( wdbp->dbip->dbi_read_only )  {
 			bu_log("wdb_export_external(%s): read-only database, write aborted\n");
 			return -5;
 		}
 		/* If name already exists, new non-conflicting name will be generated */
-		if( (dp = db_diradd( wdbp->dbip, name, -1L, 0, flags,
+		if ( (dp = db_diradd( wdbp->dbip, name, -1L, 0, flags,
 				    (genptr_t)&type )) == DIR_NULL )  {
 			bu_log("wdb_export_external(%s): db_diradd error\n",
 			       name );
 			return -3;
 		}
-		if( db_put_external( ep, dp, wdbp->dbip ) < 0 )  {
+		if ( db_put_external( ep, dp, wdbp->dbip ) < 0 )  {
 			bu_log("wdb_export_external(%s): db_put_external error\n",
 				name );
 			return -3;
@@ -245,12 +245,12 @@ wdb_export_external(
 		break;
 
 	case RT_WDB_TYPE_DB_INMEM_APPEND_ONLY:
-		if( (dp = db_lookup( wdbp->dbip, name, 0 )) != DIR_NULL )  {
+		if ( (dp = db_lookup( wdbp->dbip, name, 0 )) != DIR_NULL )  {
 			bu_log("wdb_export_external(%s): ERROR, that name is already in use, and APPEND_ONLY mode has been specified.\n",
 				name );
 			return -3;
 		}
-		if( (dp = db_diradd( wdbp->dbip, name, -1L, 0, flags,
+		if ( (dp = db_diradd( wdbp->dbip, name, -1L, 0, flags,
 				(genptr_t)&type )) == DIR_NULL )  {
 			bu_log("wdb_export_external(%s): db_diradd error\n",
 			       name );
@@ -262,8 +262,8 @@ wdb_export_external(
 		break;
 
 	case RT_WDB_TYPE_DB_INMEM:
-		if( (dp = db_lookup( wdbp->dbip, name, 0 )) == DIR_NULL )  {
-			if( (dp = db_diradd( wdbp->dbip, name, -1L, 0, flags,
+		if ( (dp = db_lookup( wdbp->dbip, name, 0 )) == DIR_NULL )  {
+			if ( (dp = db_diradd( wdbp->dbip, name, -1L, 0, flags,
 					(genptr_t)&type )) == DIR_NULL )  {
 				bu_log("wdb_export_external(%s): db_diradd error\n",
 				       name );
@@ -313,10 +313,10 @@ wdb_put_internal(
 	RT_CK_WDB(wdbp);
 	RT_CK_DB_INTERNAL(ip);
 
-	if( wdbp->dbip->dbi_version <= 4 )  {
+	if ( wdbp->dbip->dbi_version <= 4 )  {
 		BU_INIT_EXTERNAL( &ext );
 		ret = ip->idb_meth->ft_export( &ext, ip, local2mm, wdbp->dbip, &rt_uniresource );
-		if( ret < 0 )  {
+		if ( ret < 0 )  {
 			bu_log("rt_db_put_internal(%s):  solid export failure\n",
 				name);
 			ret = -1;
@@ -324,7 +324,7 @@ wdb_put_internal(
 		}
 		db_wrap_v4_external( &ext, name );
 	} else {
-		if( rt_db_cvt_to_external5( &ext, name, ip, local2mm, wdbp->dbip, &rt_uniresource, ip->idb_major_type ) < 0 )  {
+		if ( rt_db_cvt_to_external5( &ext, name, ip, local2mm, wdbp->dbip, &rt_uniresource, ip->idb_major_type ) < 0 )  {
 			bu_log("wdb_export(%s): solid export failure\n",
 				name );
 			ret = -2;
@@ -374,7 +374,7 @@ wdb_export(
 
 	RT_CK_WDB(wdbp);
 
-	if( (id <= 0 || id > ID_MAX_SOLID) && id != ID_COMBINATION )  {
+	if ( (id <= 0 || id > ID_MAX_SOLID) && id != ID_COMBINATION )  {
 		bu_log("wdb_export(%s): id=%d bad\n",
 			name, id );
 		return(-1);

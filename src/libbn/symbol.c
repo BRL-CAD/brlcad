@@ -73,7 +73,7 @@ tp_3symbol(FILE *fp, char *string, fastf_t *origin, fastf_t *rot, double scale)
 	mat_t	xlate_to_origin;
 	mat_t	mat;
 
-	if( string == NULL || *string == '\0' )
+	if ( string == NULL || *string == '\0' )
 		return;			/* done before begun! */
 
 	/*
@@ -91,11 +91,11 @@ tp_3symbol(FILE *fp, char *string, fastf_t *origin, fastf_t *rot, double scale)
 	bn_mat_mul( mat, xlate_to_origin, rot );
 
 	/* Check to see if initialization is needed */
-	if( tp_cindex[040] == 0 )  tp_setup();
+	if ( tp_cindex[040] == 0 )  tp_setup();
 
 	/* Draw each character in the input string */
 	offset = 0;
-	for( cp = (unsigned char *)string ; *cp; cp++, offset += scale )  {
+	for ( cp = (unsigned char *)string; *cp; cp++, offset += scale )  {
 		register TINY	*p;	/* pointer to stroke table */
 		register int	stroke;
 
@@ -103,17 +103,17 @@ tp_3symbol(FILE *fp, char *string, fastf_t *origin, fastf_t *rot, double scale)
 		MAT4X3PNT( loc, mat, temp );
 		pdv_3move( fp, loc );
 
-		for( p = tp_cindex[*cp]; (stroke= *p) != LAST; p++ )  {
+		for ( p = tp_cindex[*cp]; (stroke= *p) != LAST; p++ )  {
 			int	draw;
 
-			if( stroke==NEGY )  {
+			if ( stroke==NEGY )  {
 				ysign = (-1);
 				stroke = *++p;
 			} else
 				ysign = 1;
 
 			/* Detect & process pen control */
-			if( stroke < 0 )  {
+			if ( stroke < 0 )  {
 				stroke = -stroke;
 				draw = 0;
 			} else
@@ -123,7 +123,7 @@ tp_3symbol(FILE *fp, char *string, fastf_t *origin, fastf_t *rot, double scale)
 			VSET( temp, (stroke/11) * 0.1 * scale + offset,
 				   (ysign * (stroke%11)) * 0.1 * scale, 0 );
 			MAT4X3PNT( loc, mat, temp );
-			if( draw )
+			if ( draw )
 				pdv_3cont( fp, loc );
 			else
 				pdv_3move( fp, loc );

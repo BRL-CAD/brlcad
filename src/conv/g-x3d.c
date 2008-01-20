@@ -68,7 +68,7 @@
 
 #ifdef MEMORY_LEAK_CHECKING
 #define BARRIER_CHECK { \
-	if( bu_mem_barriercheck() ) { \
+	if ( bu_mem_barriercheck() ) { \
 		bu_log( "memory is corrupted at line %d in file %d\n", __LINE__, __FILE__ ); \
 	} \
 }
@@ -174,8 +174,8 @@ clean_pmp( struct plate_mode *pmp )
 
 	pmp->num_bots = 0;
 	pmp->num_nonbots = 0;
-	for( i=0 ; i<pmp->array_size ; i++ ) {
-		if( pmp->bots[i] ) {
+	for ( i=0; i<pmp->array_size; i++ ) {
+		if ( pmp->bots[i] ) {
 			struct rt_db_internal intern;
 
 			intern.idb_ptr = (genptr_t) pmp->bots[i];
@@ -203,20 +203,20 @@ dup_bot( struct rt_bot_internal *bot_in )
 	*bot = *bot_in;	/* struct copy */
 
 	bot->faces = (int *)bu_calloc( bot_in->num_faces*3, sizeof( int ), "bot faces" );
-	for( i=0 ; i<bot_in->num_faces*3 ; i++ )
+	for ( i=0; i<bot_in->num_faces*3; i++ )
 		bot->faces[i] = bot_in->faces[i];
 
 	bot->vertices = (fastf_t *)bu_calloc( bot_in->num_vertices*3, sizeof( fastf_t ), "bot verts" );
-	for( i=0 ; i<bot_in->num_vertices*3 ; i++ )
+	for ( i=0; i<bot_in->num_vertices*3; i++ )
 		bot->vertices[i] = bot_in->vertices[i];
 
-	if( bot_in->thickness ) {
+	if ( bot_in->thickness ) {
 		bot->thickness = (fastf_t *)bu_calloc( bot_in->num_faces, sizeof( fastf_t ), "bot thickness" );
-		for( i=0 ; i<bot_in->num_faces ; i++ )
+		for ( i=0; i<bot_in->num_faces; i++ )
 			bot->thickness[i] = bot_in->thickness[i];
 	}
 
-	if( bot_in->face_mode ) {
+	if ( bot_in->face_mode ) {
 		bot->face_mode = bu_bitv_dup( bot_in->face_mode );
 	}
 
@@ -234,17 +234,17 @@ select_lights(register struct db_tree_state *tsp, struct db_full_path *pathp, co
 	RT_CK_FULL_PATH( pathp );
 	dp = DB_FULL_PATH_CUR_DIR( pathp );
 
-	if( !(dp->d_flags & DIR_COMB) )
+	if ( !(dp->d_flags & DIR_COMB) )
 		return( -1 );
 
 	id = rt_db_get_internal( &intern, dp, dbip, (matp_t)NULL, &rt_uniresource );
-	if( id < 0 )
+	if ( id < 0 )
 	{
 		bu_log( "Cannot internal form of %s\n", dp->d_namep );
 		return( -1 );
 	}
 
-	if( id != ID_COMBINATION )
+	if ( id != ID_COMBINATION )
 	{
 		bu_log( "Directory/database mismatch!\n\t is '%s' a combination or not?\n",
 			dp->d_namep );
@@ -254,7 +254,7 @@ select_lights(register struct db_tree_state *tsp, struct db_full_path *pathp, co
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 	RT_CK_COMB( comb );
 
-	if( !strcmp( bu_vls_addr( &comb->shader ), "light" ) )
+	if ( !strcmp( bu_vls_addr( &comb->shader ), "light" ) )
 	{
 		rt_db_free_internal( &intern, &rt_uniresource );
 		return( 0 );
@@ -272,7 +272,7 @@ select_non_lights(register struct db_tree_state *tsp, struct db_full_path *pathp
 	int ret;
 
 	ret =  select_lights( tsp, pathp, combp, client_data );
-	if( ret == 0 )
+	if ( ret == 0 )
 		return( -1 );
 	else
 		return( 0 );
@@ -286,7 +286,7 @@ leaf_tess(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_in
 
 	BARRIER_CHECK;
 
-	if( ip->idb_type != ID_BOT ) {
+	if ( ip->idb_type != ID_BOT ) {
 		pmp->num_nonbots++;
 		return( nmg_booltree_leaf_tess(tsp, pathp, ip, client_data) );
 	}
@@ -294,9 +294,9 @@ leaf_tess(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_in
 	bot = (struct rt_bot_internal *)ip->idb_ptr;
 	RT_BOT_CK_MAGIC( bot );
 
-	if( bot->mode == RT_BOT_PLATE || bot->mode == RT_BOT_SURFACE )
+	if ( bot->mode == RT_BOT_PLATE || bot->mode == RT_BOT_SURFACE )
 	{
-		if( pmp->array_size <= pmp->num_bots ) {
+		if ( pmp->array_size <= pmp->num_bots ) {
 			pmp->array_size += 5;
 			pmp->bots = (struct rt_bot_internal **)bu_realloc(
 				    (char *)pmp->bots,
@@ -451,7 +451,7 @@ main(int argc, char **argv)
 		case 'u':
 			units = bu_strdup( bu_optarg );
 			scale_factor = bu_units_conversion( units );
-			if( scale_factor == 0.0 )
+			if ( scale_factor == 0.0 )
 			{
 				bu_exit(1, "Unrecognized units (%s)\n", units );
 			}
@@ -467,7 +467,7 @@ main(int argc, char **argv)
 		bu_exit(1, usage, argv[0]);
 	}
 
-	if( !units )
+	if ( !units )
 		units = "mm";
 
 	/* Open BRL-CAD database */
@@ -476,11 +476,11 @@ main(int argc, char **argv)
 		perror(argv[0]);
 		bu_exit(1, "Cannot open %s\n", argv[bu_optind] );
 	}
-	if( db_dirbuild( dbip ) ) {
+	if ( db_dirbuild( dbip ) ) {
 		bu_exit(1, "db_dirbuild() failed!\n" );
 	}
 
-	if( out_file == NULL )
+	if ( out_file == NULL )
 		fp_out = stdout;
 	else
 	{
@@ -501,12 +501,12 @@ main(int argc, char **argv)
 	pm.array_size = 5;
 	pm.bots = (struct rt_bot_internal **)bu_calloc( pm.array_size,
 		sizeof( struct rt_bot_internal *), "pm.bots" );
-	for( i=bu_optind ; i<argc ; i++ )
+	for ( i=bu_optind; i<argc; i++ )
 	{
 		struct directory *dp;
 
 		dp = db_lookup( dbip, argv[i], LOOKUP_QUIET );
-		if( dp == DIR_NULL )
+		if ( dp == DIR_NULL )
 		{
 			bu_log( "Cannot find %s\n", argv[i] );
 			continue;
@@ -517,7 +517,7 @@ main(int argc, char **argv)
 #endif
 
 		/* light source must be a combibation */
-		if( !(dp->d_flags & DIR_COMB) )
+		if ( !(dp->d_flags & DIR_COMB) )
 			continue;
 
 		/* walk trees selecting only light source regions */
@@ -551,7 +551,7 @@ main(int argc, char **argv)
 	/* Now we need to close each group set */
 	writeX3dEnd(fp_out);
 
-	if( verbose )
+	if ( verbose )
 		bu_log( "Total of %d regions converted of %d regions attempted\n",
 			regions_converted, regions_tried );
 
@@ -594,17 +594,17 @@ nmg_2_vrml(FILE *fp, struct db_full_path *pathp, struct model *m, struct mater_i
 	RT_CK_FULL_PATH( pathp );
 	dp = DB_FULL_PATH_CUR_DIR( pathp );
 
-	if( !(dp->d_flags & DIR_COMB) )
+	if ( !(dp->d_flags & DIR_COMB) )
 		return;
 
 	id = rt_db_get_internal( &intern, dp, dbip, (matp_t)NULL, &rt_uniresource );
-	if( id < 0 )
+	if ( id < 0 )
 	{
 		bu_log( "Cannot internal form of %s\n", dp->d_namep );
 		return;
 	}
 
-	if( id != ID_COMBINATION )
+	if ( id != ID_COMBINATION )
 	{
 		bu_log( "Directory/database mismatch!\n\t is '%s' a combination or not?\n",
 			dp->d_namep );
@@ -614,7 +614,7 @@ nmg_2_vrml(FILE *fp, struct db_full_path *pathp, struct model *m, struct mater_i
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 	RT_CK_COMB( comb );
 
-	if( mater->ma_color_valid )
+	if ( mater->ma_color_valid )
 	{
 		r = mater->ma_color[0];
 		g = mater->ma_color[1];
@@ -625,7 +625,7 @@ nmg_2_vrml(FILE *fp, struct db_full_path *pathp, struct model *m, struct mater_i
 		r = g = b = 0.5;
 	}
 
-	if( mater->ma_shader )
+	if ( mater->ma_shader )
 	{
 		tok = strtok( mater->ma_shader, tok_sep );
 		strncpy( mat.shader, tok, TXT_NAME_LEN );
@@ -644,7 +644,7 @@ nmg_2_vrml(FILE *fp, struct db_full_path *pathp, struct model *m, struct mater_i
 	bu_vls_strcpy( &vls, &mater->ma_shader[strlen(mat.shader)] );
 	(void)bu_struct_parse( &vls, vrml_mat_parse, (char *)&mat );
 
-	if( strncmp( "light", mat.shader, 5 ) == 0 )
+	if ( strncmp( "light", mat.shader, 5 ) == 0 )
 	{
 		/* this is a light source */
 		is_light = 1;
@@ -661,11 +661,11 @@ nmg_2_vrml(FILE *fp, struct db_full_path *pathp, struct model *m, struct mater_i
 #endif
 
 
-		if( strncmp( "plastic", mat.shader, 7 ) == 0 )
+		if ( strncmp( "plastic", mat.shader, 7 ) == 0 )
 		{
-			if( mat.shininess < 0 )
+			if ( mat.shininess < 0 )
 				mat.shininess = 10;
-			if( mat.transparency < 0.0 )
+			if ( mat.transparency < 0.0 )
 				mat.transparency = 0.0;
 
 #if 1
@@ -674,16 +674,16 @@ nmg_2_vrml(FILE *fp, struct db_full_path *pathp, struct model *m, struct mater_i
 			fprintf( fp, "\t\t\t\tmaterial Material {\n" );
 			fprintf( fp, "\t\t\t\t\tdiffuseColor %g %g %g \n", r, g, b );
 			fprintf( fp, "\t\t\t\t\tshininess %g\n", 1.0-exp(-(double)mat.shininess/20.0 ) );
-			if( mat.transparency > 0.0 )
+			if ( mat.transparency > 0.0 )
 				fprintf( fp, "\t\t\t\t\ttransparency %g\n", mat.transparency );
 			fprintf( fp, "\t\t\t\t\tspecularColor %g %g %g \n\t\t\t\t}\n", 1.0, 1.0, 1.0 );
 #endif
 		}
-		else if( strncmp( "glass", mat.shader, 5 ) == 0 )
+		else if ( strncmp( "glass", mat.shader, 5 ) == 0 )
 		{
-			if( mat.shininess < 0 )
+			if ( mat.shininess < 0 )
 				mat.shininess = 4;
-			if( mat.transparency < 0.0 )
+			if ( mat.transparency < 0.0 )
 				mat.transparency = 0.8;
 
 #if 1
@@ -692,21 +692,21 @@ nmg_2_vrml(FILE *fp, struct db_full_path *pathp, struct model *m, struct mater_i
 			fprintf( fp, "\t\t\t\tmaterial Material {\n" );
 			fprintf( fp, "\t\t\t\t\tdiffuseColor %g %g %g \n", r, g, b );
 			fprintf( fp, "\t\t\t\t\tshininess %g\n", 1.0-exp(-(double)mat.shininess/20.0 ) );
-			if( mat.transparency > 0.0 )
+			if ( mat.transparency > 0.0 )
 				fprintf( fp, "\t\t\t\t\ttransparency %g\n", mat.transparency );
 			fprintf( fp, "\t\t\t\t\tspecularColor %g %g %g \n\t\t\t\t}\n", 1.0, 1.0, 1.0 );
 #endif
 		}
 #if 0
 /*XXX please fix */
-		else if( strncmp( "texture", mat.shader, 7 ) == 0 )
+		else if ( strncmp( "texture", mat.shader, 7 ) == 0 )
 		{
-			if( mat.tx_w < 0 )
+			if ( mat.tx_w < 0 )
 				mat.tx_w = 512;
-			if( mat.tx_n < 0 )
+			if ( mat.tx_n < 0 )
 				mat.tx_n = 512;
 
-			if( strlen( mat.tx_file ) )
+			if ( strlen( mat.tx_file ) )
 			{
 				int tex_fd;
 				int nbytes;
@@ -714,7 +714,7 @@ nmg_2_vrml(FILE *fp, struct db_full_path *pathp, struct model *m, struct mater_i
 				long bytes_read=0;
 				unsigned char tex_buf[TXT_BUF_LEN*3];
 
-				if( (tex_fd = open( mat.tx_file, O_RDONLY )) == (-1) )
+				if ( (tex_fd = open( mat.tx_file, O_RDONLY )) == (-1) )
 				{
 					bu_log( "Cannot open texture file (%s)\n", mat.tx_file );
 					perror( "g-x3d: " );
@@ -729,16 +729,16 @@ nmg_2_vrml(FILE *fp, struct db_full_path *pathp, struct model *m, struct mater_i
 					fprintf( fp, "\t\t\t\t\trepeatT TRUE\n");
 					fprintf( fp, "\t\t\t\t\timage %d %d %d\n", mat.tx_w, mat.tx_n, 3 );
 					tex_len = mat.tx_w*mat.tx_n*3;
-					while( bytes_read < tex_len )
+					while ( bytes_read < tex_len )
 					{
 						long bytes_to_go=tex_len;
 						long readval;
 
 						bytes_to_go = tex_len - bytes_read;
-						if( bytes_to_go > TXT_BUF_LEN*3 )
+						if ( bytes_to_go > TXT_BUF_LEN*3 )
 							bytes_to_go = TXT_BUF_LEN*3;
 						nbytes = 0;
-						while( nbytes < bytes_to_go ) {
+						while ( nbytes < bytes_to_go ) {
 						    readval = read( tex_fd, &tex_buf[nbytes], bytes_to_go-nbytes );
 						    if (readval < 0) {
 							perror("READ ERROR");
@@ -749,7 +749,7 @@ nmg_2_vrml(FILE *fp, struct db_full_path *pathp, struct model *m, struct mater_i
 						}
 
 						bytes_read += nbytes;
-						for( i=0 ; i<nbytes ; i += 3 )
+						for ( i=0; i<nbytes; i += 3 )
 							fprintf( fp, "\t\t\t0x%02x%02x%02x\n",
 								tex_buf[i],
 								tex_buf[i+1],
@@ -760,7 +760,7 @@ nmg_2_vrml(FILE *fp, struct db_full_path *pathp, struct model *m, struct mater_i
 			}
 		}
 #endif
-		else if( mater->ma_color_valid )
+		else if ( mater->ma_color_valid )
 		{
 #if 1
 			fprintf( fp, "\t\t\t<Material diffuseColor=\"%g %g %g\"/>\n", r, g, b);
@@ -805,16 +805,16 @@ nmg_2_vrml(FILE *fp, struct db_full_path *pathp, struct model *m, struct mater_i
 		}
 	}
 
-	if( !is_light )
+	if ( !is_light )
 	{
 		/* triangulate any faceuses with holes */
-		for( BU_LIST_FOR( reg, nmgregion, &m->r_hd ) )
+		for ( BU_LIST_FOR( reg, nmgregion, &m->r_hd ) )
 		{
 			struct shell *s;
 
 			NMG_CK_REGION( reg );
 			s = BU_LIST_FIRST( shell, &reg->s_hd );
-			while( BU_LIST_NOT_HEAD( s, &reg->s_hd ) )
+			while ( BU_LIST_NOT_HEAD( s, &reg->s_hd ) )
 			{
 				struct shell *next_s;
 				struct faceuse *fu;
@@ -822,7 +822,7 @@ nmg_2_vrml(FILE *fp, struct db_full_path *pathp, struct model *m, struct mater_i
 				NMG_CK_SHELL( s );
 				next_s = BU_LIST_PNEXT( shell, &s->l );
 				fu = BU_LIST_FIRST( faceuse, &s->fu_hd );
-				while( BU_LIST_NOT_HEAD( &fu->l, &s->fu_hd ) )
+				while ( BU_LIST_NOT_HEAD( &fu->l, &s->fu_hd ) )
 				{
 					struct faceuse *next_fu;
 					struct loopuse *lu;
@@ -833,42 +833,42 @@ nmg_2_vrml(FILE *fp, struct db_full_path *pathp, struct model *m, struct mater_i
 
 					next_fu = BU_LIST_PNEXT( faceuse, &fu->l );
 
-					if( fu->orientation != OT_SAME )
+					if ( fu->orientation != OT_SAME )
 					{
 						fu = next_fu;
 						continue;
 					}
 
 					/* check if this faceuse has any holes */
-					for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+					for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
 					{
 						NMG_CK_LOOPUSE( lu );
-						if( lu->orientation == OT_OPPOSITE )
+						if ( lu->orientation == OT_OPPOSITE )
 						{
 							/* this is a hole, so
 							 * triangulate the faceuse
 							 */
-							if( BU_SETJUMP )
+							if ( BU_SETJUMP )
 							{
 								BU_UNSETJUMP;
 								bu_log( "A face has failed triangulation!\n" );
-								if( next_fu == fu->fumate_p )
+								if ( next_fu == fu->fumate_p )
 									next_fu = BU_LIST_PNEXT( faceuse, &next_fu->l );
-								if( nmg_kfu( fu ) )
+								if ( nmg_kfu( fu ) )
 								{
 									(void) nmg_ks( s );
 									shell_is_dead = 1;
 								}
 								face_is_dead = 1;
 							}
-							if( !face_is_dead )
+							if ( !face_is_dead )
 								nmg_triangulate_fu( fu, &tol );
 							BU_UNSETJUMP;
 							break;
 						}
 
 					}
-					if( shell_is_dead )
+					if ( shell_is_dead )
 						break;
 					fu = next_fu;
 				}
@@ -893,43 +893,43 @@ nmg_2_vrml(FILE *fp, struct db_full_path *pathp, struct model *m, struct mater_i
 
 	fprintf( fp, "\t\t<IndexedFaceSet coordIndex=\"\n");
 	first = 1;
-	if( !is_light )
+	if ( !is_light )
 	{
-		for( BU_LIST_FOR( reg, nmgregion, &m->r_hd ) )
+		for ( BU_LIST_FOR( reg, nmgregion, &m->r_hd ) )
 		{
 			struct shell *s;
 
 			NMG_CK_REGION( reg );
-			for( BU_LIST_FOR( s, shell, &reg->s_hd ) )
+			for ( BU_LIST_FOR( s, shell, &reg->s_hd ) )
 			{
 				struct faceuse *fu;
 
 				NMG_CK_SHELL( s );
-				for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
+				for ( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
 				{
 					struct loopuse *lu;
 
 					NMG_CK_FACEUSE( fu );
 
-					if( fu->orientation != OT_SAME )
+					if ( fu->orientation != OT_SAME )
 						continue;
 
-					for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+					for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
 					{
 						struct edgeuse *eu;
 
 						NMG_CK_LOOPUSE( lu );
 
-						if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+						if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
 							continue;
 
-						if( !first )
+						if ( !first )
 							fprintf( fp, ",\n" );
 						else
 							first = 0;
 
 						fprintf( fp, "\t\t\t\t" );
-						for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+						for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 						{
 							struct vertex *v;
 
@@ -955,7 +955,7 @@ nmg_2_vrml(FILE *fp, struct db_full_path *pathp, struct model *m, struct mater_i
 
 	fprintf( fp, "\t\t\t<Coordinate point=\"");
 
-	for( i=0 ; i<BU_PTBL_END( &verts ) ; i++ )
+	for ( i=0; i<BU_PTBL_END( &verts ); i++ )
 	{
 		struct vertex *v;
 		struct vertex_g *vg;
@@ -969,16 +969,16 @@ nmg_2_vrml(FILE *fp, struct db_full_path *pathp, struct model *m, struct mater_i
 		/* convert to desired units */
 		VSCALE( pt_meters, vg->coord, scale_factor );
 
-		if( is_light )
+		if ( is_light )
 			VADD2( ave_pt, ave_pt, pt_meters )
-		if( first )
+		if ( first )
 		{
-			if( !is_light )
+			if ( !is_light )
 				fprintf( fp, " %10.10e %10.10e %10.10e, ", V3ARGS(pt_meters));
 			first = 0;
 		}
 		else
-			if( !is_light )
+			if ( !is_light )
 				fprintf( fp, "%10.10e %10.10e %10.10e, ", V3ARGS( pt_meters ));
 	}
 
@@ -993,14 +993,14 @@ nmg_2_vrml(FILE *fp, struct db_full_path *pathp, struct model *m, struct mater_i
 #else
 	/* get list of vertices */
 	nmg_vertex_tabulate( &verts, &m->magic );
-	if( !is_light )
+	if ( !is_light )
 		fprintf( fp, "\t\t\t\t\tpoint [");
 	else
 	{
 		VSETALL( ave_pt, 0.0 );
 	}
 
-	for( i=0 ; i<BU_PTBL_END( &verts ) ; i++ )
+	for ( i=0; i<BU_PTBL_END( &verts ); i++ )
 	{
 		struct vertex *v;
 		struct vertex_g *vg;
@@ -1014,19 +1014,19 @@ nmg_2_vrml(FILE *fp, struct db_full_path *pathp, struct model *m, struct mater_i
 		/* convert to desired units */
 		VSCALE( pt_meters, vg->coord, scale_factor );
 
-		if( is_light )
+		if ( is_light )
 			VADD2( ave_pt, ave_pt, pt_meters )
-		if( first )
+		if ( first )
 		{
-			if( !is_light )
+			if ( !is_light )
 				fprintf( fp, " %10.10e %10.10e %10.10e, # point %d\n", V3ARGS( pt_meters ), i );
 			first = 0;
 		}
 		else
-			if( !is_light )
+			if ( !is_light )
 				fprintf( fp, "\t\t\t\t\t%10.10e %10.10e %10.10e, # point %d\n", V3ARGS( pt_meters ), i );
 	}
-	if( !is_light )
+	if ( !is_light )
 		fprintf( fp, "\t\t\t\t\t]\n\t\t\t\t}\n" );
 	else
 	{
@@ -1037,44 +1037,44 @@ nmg_2_vrml(FILE *fp, struct db_full_path *pathp, struct model *m, struct mater_i
 	}
 
 	first = 1;
-	if( !is_light )
+	if ( !is_light )
 	{
 		fprintf( fp, "\t\t\t\tcoordIndex [\n");
-		for( BU_LIST_FOR( reg, nmgregion, &m->r_hd ) )
+		for ( BU_LIST_FOR( reg, nmgregion, &m->r_hd ) )
 		{
 			struct shell *s;
 
 			NMG_CK_REGION( reg );
-			for( BU_LIST_FOR( s, shell, &reg->s_hd ) )
+			for ( BU_LIST_FOR( s, shell, &reg->s_hd ) )
 			{
 				struct faceuse *fu;
 
 				NMG_CK_SHELL( s );
-				for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
+				for ( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
 				{
 					struct loopuse *lu;
 
 					NMG_CK_FACEUSE( fu );
 
-					if( fu->orientation != OT_SAME )
+					if ( fu->orientation != OT_SAME )
 						continue;
 
-					for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+					for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
 					{
 						struct edgeuse *eu;
 
 						NMG_CK_LOOPUSE( lu );
 
-						if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+						if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
 							continue;
 
-						if( !first )
+						if ( !first )
 							fprintf( fp, ",\n" );
 						else
 							first = 0;
 
 						fprintf( fp, "\t\t\t\t\t" );
-						for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+						for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 						{
 							struct vertex *v;
 
@@ -1104,11 +1104,11 @@ nmg_2_vrml(FILE *fp, struct db_full_path *pathp, struct model *m, struct mater_i
 		mat.lt_angle = 180.0;
 		VSETALL( mat.lt_dir, 0.0 );
 
-		if( mat.lt_dir[X] != 0.0 || mat.lt_dir[Y] != 0.0 ||mat.lt_dir[Z] != 0.0 )
+		if ( mat.lt_dir[X] != 0.0 || mat.lt_dir[Y] != 0.0 ||mat.lt_dir[Z] != 0.0 )
 		{
 			fprintf( fp, "\t\tSpotLight {\n" );
 			fprintf( fp, "\t\t\ton \tTRUE\n" );
-			if( mat.lt_fraction > 0.0 )
+			if ( mat.lt_fraction > 0.0 )
 				fprintf( fp, "\t\t\tintensity \t%g\n", mat.lt_fraction );
 			fprintf( fp, "\t\t\tcolor \t%g %g %g\n", r, g, b );
 			fprintf( fp, "\t\t\tlocation \t%g %g %g\n", V3ARGS( ave_pt ) );
@@ -1157,10 +1157,10 @@ bot2vrml( struct plate_mode *pmp, struct db_full_path *pathp, int region_id )
 #if 1
 	fprintf( fp_out, "\t\t<IndexedFaceSet coordIndex=\"\n");
 	vert_count = 0;
-	for( bot_num = 0 ; bot_num < pmp->num_bots ; bot_num++ ) {
+	for ( bot_num = 0; bot_num < pmp->num_bots; bot_num++ ) {
 		bot = pmp->bots[bot_num];
 		RT_BOT_CK_MAGIC( bot );
-		for( i=0 ; i<bot->num_faces ; i++ )
+		for ( i=0; i<bot->num_faces; i++ )
 			fprintf( fp_out, "\t\t\t\t%d, %d, %d, -1,\n",
 				 vert_count+bot->faces[i*3],
 				 vert_count+bot->faces[i*3+1],
@@ -1177,10 +1177,10 @@ bot2vrml( struct plate_mode *pmp, struct db_full_path *pathp, int region_id )
 	fprintf( fp_out, ">\n");
 
 	fprintf( fp_out, "\t\t<Coordinate point=\"");
-	for( bot_num = 0 ; bot_num < pmp->num_bots ; bot_num++ ) {
+	for ( bot_num = 0; bot_num < pmp->num_bots; bot_num++ ) {
 		bot = pmp->bots[bot_num];
 		RT_BOT_CK_MAGIC( bot );
-		for( i=0 ; i<bot->num_vertices ; i++ )
+		for ( i=0; i<bot->num_vertices; i++ )
 			{
 				point_t pt;
 
@@ -1199,10 +1199,10 @@ bot2vrml( struct plate_mode *pmp, struct db_full_path *pathp, int region_id )
        fprintf( fp_out, "\t</Shape>\n");
 #else
 	fprintf( fp_out, "\t\t\tgeometry IndexedFaceSet {\n\t\t\t\tcoord Coordinate {\n\t\t\t\tpoint [\n" );
-	for( bot_num = 0 ; bot_num < pmp->num_bots ; bot_num++ ) {
+	for ( bot_num = 0; bot_num < pmp->num_bots; bot_num++ ) {
 		bot = pmp->bots[bot_num];
 		RT_BOT_CK_MAGIC( bot );
-		for( i=0 ; i<bot->num_vertices ; i++ )
+		for ( i=0; i<bot->num_vertices; i++ )
 			{
 				point_t pt;
 
@@ -1213,10 +1213,10 @@ bot2vrml( struct plate_mode *pmp, struct db_full_path *pathp, int region_id )
 	}
 	fprintf( fp_out, "\t\t\t\t\t]\n\t\t\t\t}\n\t\t\t\tcoordIndex [\n" );
 	vert_count = 0;
-	for( bot_num = 0 ; bot_num < pmp->num_bots ; bot_num++ ) {
+	for ( bot_num = 0; bot_num < pmp->num_bots; bot_num++ ) {
 		bot = pmp->bots[bot_num];
 		RT_BOT_CK_MAGIC( bot );
-		for( i=0 ; i<bot->num_faces ; i++ )
+		for ( i=0; i<bot->num_faces; i++ )
 			fprintf( fp_out, "\t\t\t\t\t%d, %d, %d, -1,\n",
 				 vert_count+bot->faces[i*3],
 				 vert_count+bot->faces[i*3+1],
@@ -1245,13 +1245,13 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 	char *name;
 
 	BARRIER_CHECK;
-	if( tsp->ts_is_fastgen != REGION_FASTGEN_PLATE ) {
+	if ( tsp->ts_is_fastgen != REGION_FASTGEN_PLATE ) {
 		clean_pmp( pmp );
 		return( nmg_region_end(tsp, pathp, curtree, client_data) );
 	}
 
 	/* FASTGEN plate mode region, just spew the bot triangles */
-	if( pmp->num_bots < 1 || pmp->num_nonbots > 0 ) {
+	if ( pmp->num_bots < 1 || pmp->num_nonbots > 0 ) {
 		clean_pmp( pmp );
 		BARRIER_CHECK;
 		return( nmg_region_end(tsp, pathp, curtree, client_data) );
@@ -1303,7 +1303,7 @@ union tree *nmg_region_end(register struct db_tree_state *tsp, struct db_full_pa
 	regions_tried++;
 
 	/* Begin bomb protection */
-	if( BU_SETJUMP )
+	if ( BU_SETJUMP )
 	{
 		/* Error, bail out */
 		BU_UNSETJUMP;		/* Relinquish the protection */
@@ -1321,7 +1321,7 @@ union tree *nmg_region_end(register struct db_tree_state *tsp, struct db_full_pa
 		db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
 
 		/* Get rid of (m)any other intermediate structures */
-		if( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC )
+		if ( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC )
 		{
 			nmg_km(*tsp->ts_m);
 		}
@@ -1337,7 +1337,7 @@ union tree *nmg_region_end(register struct db_tree_state *tsp, struct db_full_pa
 	}
 	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
 
-	if( ret_tree )
+	if ( ret_tree )
 		r = ret_tree->tr_d.td_r;
 	else
 		r = (struct nmgregion *)NULL;
@@ -1353,14 +1353,14 @@ union tree *nmg_region_end(register struct db_tree_state *tsp, struct db_full_pa
 
 		/* Kill cracks */
 		s = BU_LIST_FIRST( shell, &r->s_hd );
-		while( BU_LIST_NOT_HEAD( &s->l, &r->s_hd ) )
+		while ( BU_LIST_NOT_HEAD( &s->l, &r->s_hd ) )
 		{
 			struct shell *next_s;
 
 			next_s = BU_LIST_PNEXT( shell, &s->l );
-			if( nmg_kill_cracks( s ) )
+			if ( nmg_kill_cracks( s ) )
 			{
-				if( nmg_ks( s ) )
+				if ( nmg_ks( s ) )
 				{
 					empty_region = 1;
 					break;
@@ -1370,19 +1370,19 @@ union tree *nmg_region_end(register struct db_tree_state *tsp, struct db_full_pa
 		}
 
 		/* kill zero length edgeuses */
-		if( !empty_region )
+		if ( !empty_region )
 		{
 			 empty_model = nmg_kill_zero_length_edgeuses( *tsp->ts_m );
 		}
 
-		if( !empty_region && !empty_model )
+		if ( !empty_region && !empty_model )
 		{
 			/* Write the nmgregion to the output file */
 			nmg_2_vrml( fp_out, pathp, r->m_p, &tsp->ts_mater );
 		}
 
 		/* NMG region is no longer necessary */
-		if( !empty_model )
+		if ( !empty_model )
 			nmg_kr(r);
 
 	}

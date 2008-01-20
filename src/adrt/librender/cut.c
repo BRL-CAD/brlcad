@@ -148,7 +148,7 @@ void render_cut_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
   rd = (render_cut_t *)render->data;
 
   /* Draw Ballistic Arrow - Blue */
-  if(tie_work(&rd->tie, ray, &id, render_arrow_hit, NULL)) {
+  if (tie_work(&rd->tie, ray, &id, render_arrow_hit, NULL)) {
     pixel->v[0] = 0.0;
     pixel->v[1] = 0.0;
     pixel->v[2] = 1.0;
@@ -175,7 +175,7 @@ void render_cut_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
       (rd->plane[0]*ray->dir.v[0] + rd->plane[1]*ray->dir.v[1] + rd->plane[2]*ray->dir.v[2]);
 
   /* Ray never intersects plane */
-  if(t > 0)
+  if (t > 0)
     return;
 
   ray->pos.v[0] += -t * ray->dir.v[0];
@@ -188,7 +188,7 @@ void render_cut_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
   hit.plane[3] = rd->plane[3];
 
   /* Render Geometry */
-  if(!tie_work(tie, ray, &id, render_cut_hit, &hit))
+  if (!tie_work(tie, ray, &id, render_cut_hit, &hit))
     return;
 
   /*
@@ -201,7 +201,7 @@ void render_cut_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
   dot = fabs(dot);
 
 
-  if(hit.mesh->flags & (ADRT_MESH_SELECT|ADRT_MESH_HIT)) {
+  if (hit.mesh->flags & (ADRT_MESH_SELECT|ADRT_MESH_HIT)) {
     color.v[0] = hit.mesh->flags & ADRT_MESH_HIT ? 0.9 : 0.2;
     color.v[1] = 0.2;
     color.v[2] = hit.mesh->flags & ADRT_MESH_SELECT ? 0.9 : 0.2;
@@ -218,7 +218,7 @@ void render_cut_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
   }
 
 #if 0
-  if(dot < 0) {
+  if (dot < 0) {
 #endif
     /* Shade using inhit */
     MATH_VEC_MUL_SCALAR((*pixel), color, (dot*0.90));

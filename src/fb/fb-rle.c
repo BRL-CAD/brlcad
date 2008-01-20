@@ -87,8 +87,8 @@ get_args(int argc, register char **argv)
 {
 	register int	c;
 
-	while( (c = bu_getopt( argc, argv, "cF:hds:w:n:S:W:N:X:Y:C:" )) != EOF )  {
-		switch( c )  {
+	while ( (c = bu_getopt( argc, argv, "cF:hds:w:n:S:W:N:X:Y:C:" )) != EOF )  {
+		switch ( c )  {
 		case 'c':
 			crunch = 1;
 			break;
@@ -130,9 +130,10 @@ get_args(int argc, register char **argv)
 				register int *conp = background;
 
 				/* premature null => atoi gives zeros */
-				for( c=0; c < 3; c++ )  {
+				for ( c=0; c < 3; c++ )  {
 					*conp++ = atoi(cp);
-					while( *cp && *cp++ != '/' ) ;
+					while ( *cp && *cp++ != '/' )
+					    ;
 				}
 			}
 			break;
@@ -141,22 +142,22 @@ get_args(int argc, register char **argv)
 			return	0;
 		}
 	}
-	if( argv[bu_optind] != NULL )  {
+	if ( argv[bu_optind] != NULL )  {
 		if (bu_file_exists(argv[bu_optind])) {
 			(void) fprintf( stderr,
 				"\"%s\" already exists.\n",
 				argv[bu_optind] );
 			bu_exit( 1, NULL );
 		}
-		if( (outfp = fopen( argv[bu_optind], "w" )) == NULL )  {
+		if ( (outfp = fopen( argv[bu_optind], "w" )) == NULL )  {
 			perror(argv[bu_optind]);
 			return	0;
 		}
 	}
-	if( argc > ++bu_optind )
+	if ( argc > ++bu_optind )
 		(void) fprintf( stderr, "fb-rle: Excess arguments ignored\n" );
 
-	if( isatty(fileno(outfp)) )
+	if ( isatty(fileno(outfp)) )
 		return 0;
 	return	1;
 }
@@ -173,49 +174,49 @@ main(int argc, char **argv)
 	int		cm_save_needed;
 
 	outfp = stdout;
-	if( !get_args( argc, argv ) )  {
+	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
 		bu_exit( 1, NULL );
 	}
 
 	/* If screen size = default & file size is given, track file size */
-	if( screen_width == 0 && file_width > 0 )
+	if ( screen_width == 0 && file_width > 0 )
 		screen_width = file_width;
-	if( screen_height == 0 && file_height > 0 )
+	if ( screen_height == 0 && file_height > 0 )
 		screen_height = file_height;
 
-	if( (fbp = fb_open( framebuffer, screen_width, screen_height )) == FBIO_NULL )
+	if ( (fbp = fb_open( framebuffer, screen_width, screen_height )) == FBIO_NULL )
 		bu_exit(12, NULL);
 
 	/* Honor original screen size desires, if set, unless they shrank */
-	if( screen_width == 0 || fb_getwidth(fbp) < screen_width )
+	if ( screen_width == 0 || fb_getwidth(fbp) < screen_width )
 		screen_width = fb_getwidth(fbp);
-	if( screen_height == 0 || fb_getheight(fbp) < screen_height )
+	if ( screen_height == 0 || fb_getheight(fbp) < screen_height )
 		screen_height = fb_getheight(fbp);
 
 	/* If not specified, output file size tracks screen size */
-	if( file_width == 0 )
+	if ( file_width == 0 )
 		file_width = screen_width;
-	if( file_height == 0 )
+	if ( file_height == 0 )
 		file_height = screen_height;
 
 	/* Clip below and to left of (0, 0) */
-	if( screen_xoff < 0 )  {
+	if ( screen_xoff < 0 )  {
 		file_width += screen_xoff;
 		screen_xoff = 0;
 	}
-	if( screen_yoff < 0 )  {
+	if ( screen_yoff < 0 )  {
 		file_height += screen_yoff;
 		screen_yoff = 0;
 	}
 
 	/* Clip up and to the right */
-	if( screen_xoff + file_width > screen_width )
+	if ( screen_xoff + file_width > screen_width )
 		file_width = screen_width - screen_xoff;
-	if( screen_yoff + file_height > screen_height )
+	if ( screen_yoff + file_height > screen_height )
 		file_height = screen_height - screen_yoff;
 
-	if( file_width <= 0 || file_height <= 0 )  {
+	if ( file_width <= 0 || file_height <= 0 )  {
 		fprintf(stderr,
 			"fb-rle: Error: image rectangle entirely off screen\n");
 		bu_exit(1, NULL);
@@ -223,15 +224,15 @@ main(int argc, char **argv)
 
 	/* Read color map, see if it is linear */
 	cm_save_needed = 1;
-	if( fb_rmap( fbp, &cmap ) == -1 )
+	if ( fb_rmap( fbp, &cmap ) == -1 )
 		cm_save_needed = 0;
-	if( cm_save_needed && fb_is_linear_cmap( &cmap ) )
+	if ( cm_save_needed && fb_is_linear_cmap( &cmap ) )
 		cm_save_needed = 0;
-	if( crunch && (cm_save_needed == 0) )
+	if ( crunch && (cm_save_needed == 0) )
 		crunch = 0;
 
 	/* Convert to Utah format */
-	if( cm_save_needed )  for( y=0; y<256; y++ )  {
+	if ( cm_save_needed )  for ( y=0; y<256; y++ )  {
 		rlemap[y+0*256] = cmap.cm_red[y];
 		rlemap[y+1*256] = cmap.cm_green[y];
 		rlemap[y+2*256] = cmap.cm_blue[y];
@@ -247,7 +248,7 @@ main(int argc, char **argv)
 	outrle.background = 2;		/* use background */
 	outrle.bg_color = background;
 	outrle.alpha = 0;			/* no alpha channel */
-	if( cm_save_needed && !crunch ) {
+	if ( cm_save_needed && !crunch ) {
 		outrle.ncmap = 3;
 		outrle.cmaplen = 8;		/* 1<<8 = 256 */
 		outrle.cmap = rlemap;
@@ -263,14 +264,14 @@ main(int argc, char **argv)
 	outrle.comments = (const char **)0;
 
 	/* Add comments to the header file, since we have one */
-	if( framebuffer == (char *)0 )
+	if ( framebuffer == (char *)0 )
 		framebuffer = fbp->if_name;
 	snprintf( comment, COMMENT_SIZE, "encoded_from=%s", framebuffer );
 	rle_putcom( bu_strdup(comment), &outrle );
 	now = time(0);
 	snprintf( comment, COMMENT_SIZE, "encoded_date=%24.24s", ctime(&now) );
 	rle_putcom( bu_strdup(comment), &outrle );
-	if( (who = getenv("USER")) != (char *)0 ) {
+	if ( (who = getenv("USER")) != (char *)0 ) {
 		snprintf( comment, COMMENT_SIZE, "encoded_by=%s", who);
 		rle_putcom( bu_strdup(comment), &outrle );
 	}
@@ -284,8 +285,8 @@ main(int argc, char **argv)
 	rle_row_alloc( &outrle, &rows );
 
 	/* Read the image a scanline at a time, and encode it */
-	for( y = 0; y < file_height; y++ )  {
-		if( fb_read( fbp, screen_xoff, y+screen_yoff, scan_buf,
+	for ( y = 0; y < file_height; y++ )  {
+		if ( fb_read( fbp, screen_xoff, y+screen_yoff, scan_buf,
 		    file_width ) == -1 )  {
 			(void) fprintf(	stderr,
 				"fb-rle: read of %d pixels on line %d failed!\n",
@@ -293,7 +294,7 @@ main(int argc, char **argv)
 			bu_exit(1, NULL);
 		}
 
-		if( crunch )
+		if ( crunch )
 			cmap_crunch( (RGBpixel *)scan_buf, file_width, &cmap );
 
 		/* Grumble, convert to Utah layout */
@@ -304,7 +305,7 @@ main(int argc, char **argv)
 			register rle_pixel	*bp = rows[2];
 			register int		i;
 
-			for( i=0; i<file_width; i++ )  {
+			for ( i=0; i<file_width; i++ )  {
 				*rp++ = *pp++;
 				*gp++ = *pp++;
 				*bp++ = *pp++;

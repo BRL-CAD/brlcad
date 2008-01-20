@@ -65,7 +65,7 @@ get_args(int argc, register char **argv)
 	register int c;
 
 	while ( (c = bu_getopt( argc, argv, "cvhorW:F:" )) != EOF ) {
-		switch( c )  {
+		switch ( c )  {
 		case 'c':
 			cmap_crunch++;
 			break;
@@ -92,7 +92,7 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( bu_optind >= argc )
+	if ( bu_optind >= argc )
 		return(0);
 	else
 		yline = atoi( argv[bu_optind] );
@@ -115,16 +115,16 @@ main(int argc, char **argv)
 		bu_exit(1, "%s", usage );
 	}
 
-	if( (fbp = fb_open( NULL, scr_width, scr_height )) == NULL )
+	if ( (fbp = fb_open( NULL, scr_width, scr_height )) == NULL )
 		bu_exit( 2, "Unable to open framebuffer\n" );
 	scr_width = fb_getwidth(fbp);
 	scr_height = fb_getheight(fbp);
 
-	if( outframebuffer != NULL ) {
+	if ( outframebuffer != NULL ) {
 	    if (pkg_init() != 0)
 		bu_exit(1, NULL);
 
-	    if( (fboutp = fb_open( outframebuffer, scr_width, scr_width )) == NULL )
+	    if ( (fboutp = fb_open( outframebuffer, scr_width, scr_width )) == NULL )
 		bu_exit( 3, "Unable to open framebuffer\n" );
 	} else
 	    fboutp = fbp;
@@ -135,12 +135,12 @@ main(int argc, char **argv)
 	backgnd = (unsigned char *)bu_malloc( (scr_width+2) * sizeof(RGBpixel), "backgnd" );
 
 	/* Read the scanline to be examined */
-	if( fb_read( fbp, 0, yline, scan+3, scr_width ) != scr_width )
+	if ( fb_read( fbp, 0, yline, scan+3, scr_width ) != scr_width )
 		bu_exit(4, "Unable to read scanline from framebuffer\n");
 
 	fb_make_linear_cmap(&map);
-	if( cmap_crunch )  {
-		if( fb_rmap( fbp, &map ) < 0 )
+	if ( cmap_crunch )  {
+		if ( fb_rmap( fbp, &map ) < 0 )
 			fprintf(stderr, "fbscanplot: error reading colormap\n");
 	}
 
@@ -153,16 +153,16 @@ main(int argc, char **argv)
 	scan[(scr_width+1)*3+BLU] = scan[scr_width*3+BLU];
 
 	/* figure out where to put it on the screen */
-	if( fb_overlay == 0 && fboutp == fbp && yline < scr_height/2 ) {
+	if ( fb_overlay == 0 && fboutp == fbp && yline < scr_height/2 ) {
 		yoffset = scr_height - 256;
-		if( yoffset <= yline )
+		if ( yoffset <= yline )
 			yoffset = 0;
 	} else
 		yoffset = 0;
 
-	if( reverse ) {
+	if ( reverse ) {
 		/* Output the negative of the chosen line */
-		for( x = 0; x < scr_width; x++ ) {
+		for ( x = 0; x < scr_width; x++ ) {
 			outline[x*3+RED] = 255 - scan[(x+1)*3+RED];
 			outline[x*3+GRN] = 255 - scan[(x+1)*3+GRN];
 			outline[x*3+BLU] = 255 - scan[(x+1)*3+BLU];
@@ -171,17 +171,17 @@ main(int argc, char **argv)
 	}
 
 	/* The scanplot takes 256 lines, one for each intensity value */
-	for( y = 0; y < 256; y++ ) {
-		if( fb_overlay )
+	for ( y = 0; y < 256; y++ ) {
+		if ( fb_overlay )
 			fb_read( fboutp, 0, y+yoffset, backgnd, scr_width );
 
 		ip = &scan[1*3+RED];
 		op = &outline[0*3+RED];
-		for( x = 0; x < scr_width; x++, op += 3, ip += 3 ) {
-			if( y > (int)map.cm_red[ip[RED]]>>8 ) {
+		for ( x = 0; x < scr_width; x++, op += 3, ip += 3 ) {
+			if ( y > (int)map.cm_red[ip[RED]]>>8 ) {
 				op[RED] = 0;
 			} else {
-				if( y >= (int)map.cm_red[ip[RED-3]]>>8 ||
+				if ( y >= (int)map.cm_red[ip[RED-3]]>>8 ||
 				    y >= (int)map.cm_red[ip[RED+3]]>>8 ||
 				    y == (int)map.cm_red[ip[RED]]>>8 )
 					op[RED] = 255;
@@ -189,10 +189,10 @@ main(int argc, char **argv)
 					op[RED] = 0;
 			}
 
-			if( y > (int)map.cm_green[ip[GRN]]>>8 ) {
+			if ( y > (int)map.cm_green[ip[GRN]]>>8 ) {
 				op[GRN] = 0;
 			} else {
-				if( y >= (int)map.cm_green[ip[GRN-3]]>>8 ||
+				if ( y >= (int)map.cm_green[ip[GRN-3]]>>8 ||
 				    y >= (int)map.cm_green[ip[GRN+3]]>>8 ||
 				    y == (int)map.cm_green[ip[GRN]]>>8 )
 					op[GRN] = 255;
@@ -200,10 +200,10 @@ main(int argc, char **argv)
 					op[GRN] = 0;
 			}
 
-			if( y > (int)map.cm_blue[ip[BLU]]>>8 ) {
+			if ( y > (int)map.cm_blue[ip[BLU]]>>8 ) {
 				op[BLU] = 0;
 			} else {
-				if( y >= (int)map.cm_blue[ip[BLU-3]]>>8 ||
+				if ( y >= (int)map.cm_blue[ip[BLU-3]]>>8 ||
 				    y >= (int)map.cm_blue[ip[BLU+3]]>>8 ||
 				    y == (int)map.cm_blue[ip[BLU]]>>8 )
 					op[BLU] = 255;
@@ -211,21 +211,21 @@ main(int argc, char **argv)
 					op[BLU] = 0;
 			}
 
-			if( fb_overlay ) {
+			if ( fb_overlay ) {
 				/* background */
-				if( op[RED] == 0 && op[GRN] == 0 && op[BLU] == 0 ) {
+				if ( op[RED] == 0 && op[GRN] == 0 && op[BLU] == 0 ) {
 					op[RED] = backgnd[x*3+RED];
 					op[GRN] = backgnd[x*3+GRN];
 					op[BLU] = backgnd[x*3+BLU];
 				}
 			} else {
 				/* Grid lines */
-				if( (y & 63) == 0 && op[RED] == 0
+				if ( (y & 63) == 0 && op[RED] == 0
 				 && op[GRN] == 0 && op[BLU] == 0 ) {
 					op[RED] = 128;
 					op[GRN] = 128;
 					op[BLU] = 128;
-				} else if( (y & 15) == 0 && op[RED] == 0
+				} else if ( (y & 15) == 0 && op[RED] == 0
 				 && op[GRN] == 0 && op[BLU] == 0 ) {
 					op[RED] = 64;
 					op[GRN] = 64;
@@ -237,8 +237,8 @@ main(int argc, char **argv)
 		fb_write( fboutp, 0, y+yoffset, outline, scr_width );
 	}
 
-	if( verbose ) {
-		for( x = 0; x < scr_width; x++ )
+	if ( verbose ) {
+		for ( x = 0; x < scr_width; x++ )
 			printf( "%3d: %3d %3d %3d\n", x,
 			   scan[(x+1)*3+RED], scan[(x+1)*3+GRN], scan[(x+1)*3+BLU] );
 	}
@@ -248,7 +248,7 @@ main(int argc, char **argv)
 	bu_free(backgnd, "backgnd");
 
 	fb_close( fbp );
-	if( fboutp != fbp )
+	if ( fboutp != fbp )
 		fb_close( fboutp );
 
 	return 0;

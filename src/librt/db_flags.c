@@ -59,13 +59,13 @@ db_flags_internal(const struct rt_db_internal *intern)
 
 	RT_CK_DB_INTERNAL(intern);
 
-	if( intern->idb_type != ID_COMBINATION )
+	if ( intern->idb_type != ID_COMBINATION )
 		return DIR_SOLID;
 
 	comb = (struct rt_comb_internal *)intern->idb_ptr;
 	RT_CK_COMB(comb);
 
-	if( comb->region_flag )
+	if ( comb->region_flag )
 		return DIR_COMB | DIR_REGION;
 	return DIR_COMB;
 }

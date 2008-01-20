@@ -45,7 +45,7 @@ int main(int argc, char **argv)
 	double	period, stepsize, findex;
 	int	setsize;
 
-	if( isatty(fileno(stdout)) || argc < 2 ) {
+	if ( isatty(fileno(stdout)) || argc < 2 ) {
 		bu_exit(1, "%s", usage );
 	}
 
@@ -56,15 +56,15 @@ int main(int argc, char **argv)
 
 	findex = 0;
 	stepsize = 0;
-	while( fread(&period, sizeof(period), 1, stdin) == 1 ) {
-		if( period > 0 )
+	while ( fread(&period, sizeof(period), 1, stdin) == 1 ) {
+		if ( period > 0 )
 			stepsize = TABSIZE / period;
-		for( i = setsize; i > 0; i-- ) {
+		for ( i = setsize; i > 0; i-- ) {
 			d = sintab[(int)findex];
 			d *= 0.4;
 			fwrite( &d, sizeof(d), 1, stdout );
 			findex += stepsize;
-			if( findex > TABSIZE )
+			if ( findex > TABSIZE )
 				findex -= TABSIZE;
 		}
 	}
@@ -77,7 +77,7 @@ makesintab(void)
 	int	i;
 	double	theta;
 
-	for( i = 0; i < TABSIZE; i ++ ) {
+	for ( i = 0; i < TABSIZE; i ++ ) {
 		theta = i / (double)TABSIZE * 2 * M_PI;
 		sintab[i] = sin(theta);
 	}

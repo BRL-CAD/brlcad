@@ -62,7 +62,7 @@ const struct bu_structparse rt_grp_parse[] = {
 	{ "%f", 3, "V", bu_offsetof(struct rt_grip_internal, center[X]), BU_STRUCTPARSE_FUNC_NULL },
 	{ "%f", 3, "N", bu_offsetof(struct rt_grip_internal, normal[X]), BU_STRUCTPARSE_FUNC_NULL },
 	{ "%f", 1, "L", bu_offsetof(struct rt_grip_internal, mag), BU_STRUCTPARSE_FUNC_NULL },
-	{ {'\0','\0','\0','\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
+	{ {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
 };
 
 /**
@@ -102,7 +102,7 @@ rt_grp_print(register const struct soltab *stp)
 	register const struct grip_specific *gripp =
 		(struct grip_specific *)stp->st_specific;
 
-	if( gripp == GRIP_NULL )  {
+	if ( gripp == GRIP_NULL )  {
 		bu_log("grip(%s):  no data?\n", stp->st_name);
 		return;
 	}
@@ -278,7 +278,7 @@ rt_grp_import(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 
 	BU_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
-	if( rp->u_id != ID_SOLID )  {
+	if ( rp->u_id != ID_SOLID )  {
 		bu_log("rt_grp_import: defective record, id=x%x\n", rp->u_id);
 		return(-1);
 	}
@@ -304,12 +304,12 @@ rt_grp_import(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 
 	/* Verify that normal has unit length */
 	f = MAGNITUDE( gip->normal );
-	if( f <= SMALL )  {
+	if ( f <= SMALL )  {
 		bu_log("rt_grp_import:  bad normal, len=%g\n", f );
 		return(-1);		/* BAD */
 	}
 	t = f - 1.0;
-	if( !NEAR_ZERO( t, 0.001 ) )  {
+	if ( !NEAR_ZERO( t, 0.001 ) )  {
 		/* Restore normal to unit length */
 		f = 1/f;
 		VSCALE( gip->normal, gip->normal, f );
@@ -327,7 +327,7 @@ rt_grp_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 	union record		*rec;
 
 	RT_CK_DB_INTERNAL(ip);
-	if( ip->idb_type != ID_GRIP )  return(-1);
+	if ( ip->idb_type != ID_GRIP )  return(-1);
 	gip = (struct rt_grip_internal *)ip->idb_ptr;
 	RT_GRIP_CK_MAGIC(gip);
 
@@ -379,12 +379,12 @@ rt_grp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 
 	/* Verify that normal has unit length */
 	f = MAGNITUDE( gip->normal );
-	if( f <= SMALL )  {
+	if ( f <= SMALL )  {
 		bu_log("rt_grp_import:  bad normal, len=%g\n", f );
 		return(-1);		/* BAD */
 	}
 	t = f - 1.0;
-	if( !NEAR_ZERO( t, 0.001 ) )  {
+	if ( !NEAR_ZERO( t, 0.001 ) )  {
 		/* Restore normal to unit length */
 		f = 1/f;
 		VSCALE( gip->normal, gip->normal, f );
@@ -403,7 +403,7 @@ rt_grp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	fastf_t			vec[7];
 
 	RT_CK_DB_INTERNAL(ip);
-	if( ip->idb_type != ID_GRIP )  return(-1);
+	if ( ip->idb_type != ID_GRIP )  return(-1);
 	gip = (struct rt_grip_internal *)ip->idb_ptr;
 	RT_GRIP_CK_MAGIC(gip);
 

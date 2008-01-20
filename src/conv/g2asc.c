@@ -101,19 +101,19 @@ tclify_name( const char *name )
 
 	int max_len=2*strlen( name ) + 1;
 
-	if( max_len < 2 ) {
+	if ( max_len < 2 ) {
 		return( (char *)NULL );
 	}
 
-	if( max_len > tclified_name_buffer_len ) {
+	if ( max_len > tclified_name_buffer_len ) {
 		tclified_name_buffer_len = max_len;
 		tclified_name = bu_realloc( tclified_name, tclified_name_buffer_len, "tclified_name buffer" );
 	}
 
 	dest = tclified_name;
 
-	while( *src ) {
-		if( *src == '{' || *src == '}' ) {
+	while ( *src ) {
+		if ( *src == '{' || *src == '}' ) {
 			*dest++ = '\\';
 		}
 		*dest++ = *src++;
@@ -147,26 +147,26 @@ main(int argc, char **argv)
 	bu_debug = BU_DEBUG_COREDUMP;
 
 #if 0
-	if( argc > 1 && strcmp( argv[1], "-d" ) == 0 )  {
+	if ( argc > 1 && strcmp( argv[1], "-d" ) == 0 )  {
 		argc--; argv++;
 		debug = 1;
 	}
 #endif
 
-	if( argc >= 3 ) {
+	if ( argc >= 3 ) {
 		iname = argv[1];
-		if( strcmp(iname, "-") == 0 )  {
+		if ( strcmp(iname, "-") == 0 )  {
 			ifp = stdin;
 		} else {
 			ifp = fopen(iname, "r");
 		}
-		if( !ifp )  perror(iname);
-		if( strcmp(argv[2], "-") == 0 )  {
+		if ( !ifp )  perror(iname);
+		if ( strcmp(argv[2], "-") == 0 )  {
 			ofp = stdout;
 		} else {
 			ofp = fopen(argv[2], "w");
 		}
-		if( !ofp )  perror(argv[2]);
+		if ( !ofp )  perror(argv[2]);
 		if (ifp == NULL || ofp == NULL) {
 			bu_exit(1, "g2asc: can't open files.");
 		}
@@ -180,18 +180,18 @@ main(int argc, char **argv)
 	rt_init_resource( &rt_uniresource, 0, NULL );
 
 	/* First, determine what version database this is */
-	if( fread( (char *)&record, sizeof record, 1, ifp ) != 1 )  {
+	if ( fread( (char *)&record, sizeof record, 1, ifp ) != 1 )  {
 		bu_exit(2, "g2asc(%s) ERROR, file too short to be BRL-CAD database\n",
 			iname);
 	}
 
-	if( db5_header_is_valid( (unsigned char *)&record ) )  {
+	if ( db5_header_is_valid( (unsigned char *)&record ) )  {
 		Tcl_Interp	*interp;
 		struct db_i	*dbip;
 		struct directory *dp;
 		const char *u;
 
-		if( ifp == stdin || ofp == stdout ) {
+		if ( ifp == stdin || ofp == stdout ) {
 			bu_log( "Cannot use stdin or stdout for Release 6 or later databases\n");
 			bu_exit(1, "Please use the \"g2asc input.g output.g\" form\n" );
 		}
@@ -202,19 +202,19 @@ main(int argc, char **argv)
 		bu_log("  computer architecture is no longer necessary.\n");
 		interp = Tcl_CreateInterp();
 		/* This runs the init.tcl script */
-		if( Tcl_Init(interp) == TCL_ERROR )
+		if ( Tcl_Init(interp) == TCL_ERROR )
 			bu_log("Tcl_Init error %s\n", Tcl_GetStringResult(interp));
 
-		if( (dbip = db_open( iname, "rb" )) == NULL )  {
+		if ( (dbip = db_open( iname, "rb" )) == NULL )  {
 			bu_exit(4, "Unable to db_open() file '%s', aborting\n", iname );
 		}
 		RT_CK_DBI(dbip);
-		if( db_dirbuild( dbip ) ) {
+		if ( db_dirbuild( dbip ) ) {
 		    bu_exit(1, "db_dirbuild failed\n" );
 		}
 
 		/* write out the title and units special */
-		if( dbip->dbi_title[0] ) {
+		if ( dbip->dbi_title[0] ) {
 			fprintf( ofp, "title {%s}\n", tclify_name( dbip->dbi_title ) );
 		} else {
 			fprintf( ofp, "title {Untitled BRL-CAD Database}\n" );
@@ -228,14 +228,14 @@ main(int argc, char **argv)
 			struct bu_attribute_value_set *avs=NULL;
 
 			/* Process the _GLOBAL object */
-			if( dp->d_major_type == 2 && dp->d_minor_type == 0 ) {
+			if ( dp->d_major_type == 2 && dp->d_minor_type == 0 ) {
 				const char *value;
 				Tcl_Obj	*list, *obj;
 				int list_len;
 				struct bu_attribute_value_set g_avs;
 
 				/* get _GLOBAL attributes */
-				if( db5_get_attributes( dbip, &g_avs, dp ) ) {
+				if ( db5_get_attributes( dbip, &g_avs, dp ) ) {
 					bu_log( "Failed to find any attributes on _GLOBAL\n" );
 					continue;
 				}
@@ -260,15 +260,15 @@ main(int argc, char **argv)
 				}
 
 				value = bu_avs_get( &g_avs, "regionid_colortable" );
-				if( !value )
+				if ( !value )
 					continue;
 				list = Tcl_NewStringObj( value, -1);
-				if( Tcl_ListObjLength( interp, list, &list_len ) != TCL_OK ) {
+				if ( Tcl_ListObjLength( interp, list, &list_len ) != TCL_OK ) {
 					bu_log( "Failed to get length of region color table!!\n" );
 					continue;
 				}
-				for( i=0 ; i<list_len ; i++ ) {
-					if( Tcl_ListObjIndex( interp, list, i, &obj ) != TCL_OK ) {
+				for ( i=0; i<list_len; i++ ) {
+					if ( Tcl_ListObjIndex( interp, list, i, &obj ) != TCL_OK ) {
 						bu_log( "Cannot get entry %d from the color table!!\n",
 							i );
 						continue;
@@ -280,17 +280,17 @@ main(int argc, char **argv)
 				continue;
 			}
 
-			if( rt_db_get_internal( &intern, dp, dbip, NULL, &rt_uniresource ) < 0 )  {
+			if ( rt_db_get_internal( &intern, dp, dbip, NULL, &rt_uniresource ) < 0 )  {
 				bu_log("Unable to read '%s', skipping\n", dp->d_namep);
 				continue;
 			}
-			if( dp->d_flags & DIR_COMB ) {
-				if( intern.idb_meth->ft_tclget( interp, &intern, "tree" ) != TCL_OK )  {
+			if ( dp->d_flags & DIR_COMB ) {
+				if ( intern.idb_meth->ft_tclget( interp, &intern, "tree" ) != TCL_OK )  {
 					rt_db_free_internal( &intern, &rt_uniresource );
 					bu_log("Unable to export '%s', skipping\n", dp->d_namep );
 					continue;
 				}
-				if( dp->d_flags & DIR_REGION ) {
+				if ( dp->d_flags & DIR_REGION ) {
 					fprintf( ofp, "put {%s} comb region yes tree {%s}\n",
 						 tclify_name( dp->d_namep ),
 						 Tcl_GetStringResult(interp) );
@@ -300,7 +300,7 @@ main(int argc, char **argv)
 						 Tcl_GetStringResult(interp) );
 				}
 			} else {
-				if( intern.idb_meth->ft_tclget( interp, &intern, NULL ) != TCL_OK )  {
+				if ( intern.idb_meth->ft_tclget( interp, &intern, NULL ) != TCL_OK )  {
 					rt_db_free_internal( &intern, &rt_uniresource );
 					bu_log("Unable to export '%s', skipping\n", dp->d_namep );
 					continue;
@@ -310,11 +310,11 @@ main(int argc, char **argv)
 					 Tcl_GetStringResult(interp) );
 			}
 			avs = &intern.idb_avs;
-			if( avs->magic == BU_AVS_MAGIC && avs->count > 0 ) {
+			if ( avs->magic == BU_AVS_MAGIC && avs->count > 0 ) {
 				int i;
 
 				fprintf( ofp, "attr set {%s}", tclify_name( dp->d_namep ) );
-				for( i=0 ; i<avs->count ; i++ ) {
+				for ( i=0; i<avs->count; i++ ) {
 				    if (strlen(avs->avp[i].name) <= 0) {
 					continue;
 				    }
@@ -336,14 +336,14 @@ main(int argc, char **argv)
 top:
 	do {
 		/* Check record type and skip deleted records */
-		switch( record.u_id )  {
+		switch ( record.u_id )  {
 		case ID_FREE:
 			continue;
 		case ID_SOLID:
 			soldump();
 			continue;
 		case ID_COMB:
-			if( combdump() > 0 )  goto top;
+			if ( combdump() > 0 )  goto top;
 			continue;
 		case ID_MEMB:
 			(void)fprintf(stderr, "g2asc: stray MEMB record, skipped\n");
@@ -402,7 +402,7 @@ top:
 				record.u_id, record.u_id);
 			continue;
 		}
-	}  while( fread( (char *)&record, sizeof record, 1, ifp ) == 1  &&
+	}  while ( fread( (char *)&record, sizeof record, 1, ifp ) == 1  &&
 	    !feof(ifp) );
 	bu_exit(0, NULL);
 }
@@ -426,11 +426,11 @@ get_ext(struct bu_external *ep, int ngran)
 
 	/* Copy the freebie (first) record into the array of records.  */
 	memcpy((char *)ep->ext_buf, (char *)&record, sizeof(union record));
-	if( ngran <= 1 )  return;
+	if ( ngran <= 1 )  return;
 
 	count = fread( ((char *)ep->ext_buf)+sizeof(union record),
 		sizeof(union record), ngran-1, ifp);
-	if( count != ngran-1 )  {
+	if ( count != ngran-1 )  {
 		fprintf(stderr,
 			"g2asc: get_ext:  wanted to read %d granules, got %d\n",
 			ngran-1, count);
@@ -447,7 +447,7 @@ nmg_dump(void)
 	int			j, k;
 
 	/* just in case someone changes the record size */
-	if( sizeof( union record )%32 )
+	if ( sizeof( union record )%32 )
 	{
 		fprintf( stderr, "g2asc: nmg_dump cannot work with records not multiple of 32\n" );
 		bu_exit( -1, NULL );
@@ -457,7 +457,7 @@ nmg_dump(void)
 	granules = bu_glong(record.nmg.N_count);
 
 	/* get the array of structure counts */
-	for( j=0 ; j<26 ; j++ )
+	for ( j=0; j<26; j++ )
 		struct_count[j] = bu_glong( &record.nmg.N_structs[j*4] );
 
 	/* output some header info */
@@ -468,16 +468,16 @@ nmg_dump(void)
 		granules );		/* number of additional granules */
 
 	/* output the structure counts */
-	for( j=0 ; j<26 ; j++ )
+	for ( j=0; j<26; j++ )
 		(void)fprintf(ofp,  " %ld", struct_count[j] );
 	(void)fputc( '\n', ofp );
 
 	/* dump the reminder in hex format */
-	for( i=0 ; i<granules ; i++ )
+	for ( i=0; i<granules; i++ )
 	{
 		char *cp;
 		/* Read the record */
-		if( !fread( (char *)&rec, sizeof record, 1, ifp ) )
+		if ( !fread( (char *)&rec, sizeof record, 1, ifp ) )
 		{
 			(void)fprintf(stderr, "Error reading nmg granules\n" );
 			bu_exit( -1, NULL );
@@ -485,9 +485,9 @@ nmg_dump(void)
 		cp = (char *)&rec;
 
 		/* 32 bytes per line */
-		for( k=0 ; k<sizeof( union record)/32 ; k++ )
+		for ( k=0; k<sizeof( union record)/32; k++ )
 		{
-			for( j=0 ; j<32 ; j++ )
+			for ( j=0; j<32; j++ )
 				fprintf(ofp,  "%02x", (0xff & (*cp++)) );	 /* two hex digits per byte */
 			fputc( '\n', ofp );
 		}
@@ -504,7 +504,7 @@ strsol_dump(void)	/* print out strsol solid info */
 	rec[0] = record;	/* struct copy the current record */
 
 	/* read the rest from ifp */
-	if( !fread( (char *)&rec[1], sizeof record, DB_SS_NGRAN-1, ifp ) )
+	if ( !fread( (char *)&rec[1], sizeof record, DB_SS_NGRAN-1, ifp ) )
 	{
 		(void)fprintf(stderr, "Error reading strsol granules\n" );
 		bu_exit( -1, NULL );
@@ -536,7 +536,7 @@ idendump(void)	/* Print out Ident record information */
 	);
 
 	/* Print a warning message on stderr if versions differ */
-	if( strcmp( record.i.i_version, ID_VERSION ) != 0 )  {
+	if ( strcmp( record.i.i_version, ID_VERSION ) != 0 )  {
 		(void)fprintf(stderr,
 			"g2asc: File is version (%s), Program is version (%s)\n",
 			record.i.i_version, ID_VERSION );
@@ -558,13 +558,13 @@ polydata(void)	/* Print out Polydata record information */
 
 	(void)fprintf(ofp, "%c ", record.q.q_id );		/* Q */
 	(void)fprintf(ofp, "%d", record.q.q_count );		/* # of vertices <= 5 */
-	for( i = 0; i < 5; i++ )  {			/* [5][3] vertices */
-		for( j = 0; j < 3; j++ ) {
+	for ( i = 0; i < 5; i++ )  {			/* [5][3] vertices */
+		for ( j = 0; j < 3; j++ ) {
 			(void)fprintf(ofp, " %.12e", record.q.q_verts[i][j] );
 		}
 	}
-	for( i = 0; i < 5; i++ )  {			/* [5][3] normals */
-		for( j = 0; j < 3; j++ ) {
+	for ( i = 0; i < 5; i++ )  {			/* [5][3] normals */
+		for ( j = 0; j < 3; j++ ) {
 			(void)fprintf(ofp, " %.12e", record.q.q_norms[i][j] );
 		}
 	}
@@ -580,7 +580,7 @@ soldump(void)	/* Print out Solid record information */
 	(void)fprintf(ofp, "%d ", record.s.s_type );	/* GED primitive type */
 	(void)fprintf(ofp, "%.16s ", name(record.s.s_name) );	/* unique name */
 	(void)fprintf(ofp, "%d", record.s.s_cgtype );/* COMGEOM solid type */
-	for( i = 0; i < 24; i++ )
+	for ( i = 0; i < 24; i++ )
 		(void)fprintf(ofp, " %.12e", record.s.s_values[i] ); /* parameters */
 	(void)fprintf(ofp, "\n");			/* Terminate w/ a newline */
 }
@@ -601,7 +601,7 @@ cline_dump(void)
 
 	/* Hand off to librt's import() routine */
 	RT_INIT_DB_INTERNAL(&intern);
-	if( (rt_functab[ID_CLINE].ft_import( &intern, &ext, id_mat, DBI_NULL, &rt_uniresource )) != 0 )  {
+	if ( (rt_functab[ID_CLINE].ft_import( &intern, &ext, id_mat, DBI_NULL, &rt_uniresource )) != 0 )  {
 		fprintf(stderr, "g2asc: cline import failure\n");
 		bu_exit(-1, NULL);
 	}
@@ -636,7 +636,7 @@ bot_dump(void)
 
 	/* Hand off to librt's import() routine */
 	RT_INIT_DB_INTERNAL(&intern);
-	if( (rt_functab[ID_BOT].ft_import( &intern, &ext, id_mat, DBI_NULL, &rt_uniresource )) != 0 )  {
+	if ( (rt_functab[ID_BOT].ft_import( &intern, &ext, id_mat, DBI_NULL, &rt_uniresource )) != 0 )  {
 		fprintf(stderr, "g2asc: bot import failure\n");
 		bu_exit(-1, NULL);
 	}
@@ -653,13 +653,13 @@ bot_dump(void)
 	(void)fprintf(ofp, "%d", bot->num_faces );
 	(void)fprintf(ofp, "\n");
 
-	for( i=0 ; i<bot->num_vertices ; i++ )
+	for ( i=0; i<bot->num_vertices; i++ )
 		fprintf(ofp,  "	%d: %26.20e %26.20e %26.20e\n", i, V3ARGS( &bot->vertices[i*3] ) );
-	if( bot->mode == RT_BOT_PLATE )
+	if ( bot->mode == RT_BOT_PLATE )
 	{
 		struct bu_vls vls;
 
-		for( i=0 ; i<bot->num_faces ; i++ )
+		for ( i=0; i<bot->num_faces; i++ )
 			fprintf(ofp,  "	%d: %d %d %d %26.20e\n", i, V3ARGS( &bot->faces[i*3] ),
 				bot->thickness[i] );
 		bu_vls_init( &vls );
@@ -669,7 +669,7 @@ bot_dump(void)
 	}
 	else
 	{
-		for( i=0 ; i<bot->num_faces ; i++ )
+		for ( i=0; i<bot->num_faces; i++ )
 			fprintf(ofp,  "	%d: %d %d %d\n", i, V3ARGS( &bot->faces[i*3] ) );
 	}
 
@@ -694,7 +694,7 @@ pipe_dump(void)	/* Print out Pipe record information */
 
 	/* Hand off to librt's import() routine */
 	RT_INIT_DB_INTERNAL(&intern);
-	if( (rt_functab[ID_PIPE].ft_import( &intern, &ext, id_mat, NULL, &rt_uniresource )) != 0 )  {
+	if ( (rt_functab[ID_PIPE].ft_import( &intern, &ext, id_mat, NULL, &rt_uniresource )) != 0 )  {
 		fprintf(stderr, "g2asc: pipe import failure\n");
 		bu_exit(-1, NULL);
 	}
@@ -722,7 +722,7 @@ dump_pipe_segs(char *name, struct bu_list *headp)
 
 	/* print parameters for each point: one point per line */
 
-	for( BU_LIST_FOR( sp, wdb_pipept, headp ) )  {
+	for ( BU_LIST_FOR( sp, wdb_pipept, headp ) )  {
 			fprintf(ofp,  "%26.20e %26.20e %26.20e %26.20e %26.20e %26.20e\n",
 				sp->pp_id, sp->pp_od, sp->pp_bendradius, V3ARGS( sp->pp_coord ) );
 	}
@@ -744,7 +744,7 @@ particle_dump(void)
 
 	/* Hand off to librt's import() routine */
 	RT_INIT_DB_INTERNAL(&intern);
-	if( (rt_functab[ID_PARTICLE].ft_import( &intern, &ext, id_mat, NULL, &rt_uniresource )) != 0 )  {
+	if ( (rt_functab[ID_PARTICLE].ft_import( &intern, &ext, id_mat, NULL, &rt_uniresource )) != 0 )  {
 		fprintf(stderr, "g2asc: particle import failure\n");
 		bu_exit(-1, NULL);
 	}
@@ -756,7 +756,7 @@ particle_dump(void)
 	 * valid data.  The type is not used any further.
 	 */
 
-	switch( part->part_type )  {
+	switch ( part->part_type )  {
 	case RT_PARTICLE_TYPE_SPHERE:
 		break;
 	case RT_PARTICLE_TYPE_CYLINDER:
@@ -802,7 +802,7 @@ arbn_dump(void)
 
 	/* Hand off to librt's import() routine */
 	RT_INIT_DB_INTERNAL(&intern);
-	if( (rt_functab[ID_ARBN].ft_import( &intern, &ext, id_mat, NULL, &rt_uniresource )) != 0 )  {
+	if ( (rt_functab[ID_ARBN].ft_import( &intern, &ext, id_mat, NULL, &rt_uniresource )) != 0 )  {
 		fprintf(stderr, "g2asc: arbn import failure\n");
 		bu_exit(-1, NULL);
 	}
@@ -811,7 +811,7 @@ arbn_dump(void)
 	RT_ARBN_CK_MAGIC(arbn);
 
 	fprintf(ofp, "%c %.16s %d\n", 'n', name, arbn->neqn);
-	for( i = 0; i < arbn->neqn; i++ )  {
+	for ( i = 0; i < arbn->neqn; i++ )  {
 		fprintf(ofp, "n %26.20e %20.26e %26.20e %26.20e\n",
 			arbn->eqn[i][X], arbn->eqn[i][Y],
 			arbn->eqn[i][Z], arbn->eqn[i][3]);
@@ -852,12 +852,12 @@ combdump(void)	/* Print out Combination record information */
 	 */
 	BU_LIST_INIT( &head );
 	mcount = 0;
-	while(1)  {
+	while (1)  {
 		BU_GETSTRUCT( mp, mchain );
-		if( fread( (char *)&mp->r, sizeof(mp->r), 1, ifp ) != 1
+		if ( fread( (char *)&mp->r, sizeof(mp->r), 1, ifp ) != 1
 		    || feof( ifp ) )
 			break;
-		if( mp->r.u_id != ID_MEMB )  {
+		if ( mp->r.u_id != ID_MEMB )  {
 			ret_mp = mp;	/* Handle it later */
 			break;
 		}
@@ -869,7 +869,7 @@ combdump(void)	/* Print out Combination record information */
 	 *  Output the combination
 	 */
 	(void)fprintf(ofp, "%c ", record.c.c_id );		/* C */
-	switch( record.c.c_flags )  {
+	switch ( record.c.c_flags )  {
 	case DBV4_REGION:
 		(void)fprintf(ofp, "Y ");			/* Y if `R' */
 		break;
@@ -901,13 +901,13 @@ combdump(void)	/* Print out Combination record information */
 		record.c.c_rgb[1],
 		record.c.c_rgb[2] );
 	m1 = m2 = 0;
-	if( isascii(record.c.c_matname[0]) && isprint(record.c.c_matname[0]) )  {
+	if ( isascii(record.c.c_matname[0]) && isprint(record.c.c_matname[0]) )  {
 		m1 = 1;
-		if( record.c.c_matparm[0] )
+		if ( record.c.c_matparm[0] )
 			m2 = 1;
 	}
 	fprintf(ofp, "%d %d", m1, m2 );
-	switch( record.c.c_inherit )  {
+	switch ( record.c.c_inherit )  {
 	case DB_INH_HIGHER:
 		fprintf(ofp, " %d", DB_INH_HIGHER );
 		break;
@@ -918,21 +918,21 @@ combdump(void)	/* Print out Combination record information */
 	}
 	(void)fprintf(ofp, "\n");			/* Terminate w/ a newline */
 
-	if( m1 )
+	if ( m1 )
 		(void)fprintf(ofp, "%.32s\n", CH(record.c.c_matname) );
-	if( m2 )
+	if ( m2 )
 		(void)fprintf(ofp, "%.60s\n", CH(record.c.c_matparm) );
 
 	/*
 	 *  Output the member records now
 	 */
-	while( BU_LIST_WHILE( mp, mchain, &head ) )  {
+	while ( BU_LIST_WHILE( mp, mchain, &head ) )  {
 		membdump( &mp->r );
 		BU_LIST_DEQUEUE( &mp->l );
 		bu_free( (char *)mp, "mchain");
 	}
 
-	if( ret_mp )  {
+	if ( ret_mp )  {
 		memcpy((char *)&record, (char *)&ret_mp->r, sizeof(record));
 		bu_free( (char *)ret_mp, "mchain");
 		return 1;
@@ -954,7 +954,7 @@ membdump(union record *rp)
 	(void)fprintf(ofp, "%c ", rp->M.m_id );		/* M */
 	(void)fprintf(ofp, "%c ", rp->M.m_relation );	/* Boolean oper. */
 	(void)fprintf(ofp, "%.16s ", name(rp->M.m_instname) );	/* referred-to obj. */
-	for( i = 0; i < 16; i++ )			/* homogeneous transform matrix */
+	for ( i = 0; i < 16; i++ )			/* homogeneous transform matrix */
 		(void)fprintf(ofp, "%.12e ", rp->M.m_mat[i] );
 	(void)fprintf(ofp, "%d", 0 );			/* was COMGEOM solid # */
 	(void)fprintf(ofp, "\n");				/* Terminate w/ nl */
@@ -983,7 +983,7 @@ arsadump(void)	/* Print out ARS record information */
 
 	length = (int)record.a.a_totlen;	/* Get # of ARS B records */
 
-	for( i = 0; i < length; i++ )  {
+	for ( i = 0; i < length; i++ )  {
 		arsbdump();
 	}
 }
@@ -999,7 +999,7 @@ arsbdump(void)	/* Print out ARS B record information */
 	(void)fprintf(ofp, "%d ", record.b.b_type );		/* primitive type */
 	(void)fprintf(ofp, "%d ", record.b.b_n );		/* current curve # */
 	(void)fprintf(ofp, "%d", record.b.b_ngranule );	/* current granule */
-	for( i = 0; i < 24; i++ )  {			/* [8*3] vectors */
+	for ( i = 0; i < 24; i++ )  {			/* [8*3] vectors */
 		(void)fprintf(ofp, " %.12e", record.b.b_values[i] );
 	}
 	(void)fprintf(ofp, "\n");			/* Terminate w/ a newline */
@@ -1068,13 +1068,13 @@ bsurfdump(void)	/* Print d-spline surface description record information */
 	vp = (float *)bu_calloc(nbytes, 1, "KNOT DATA");
 	fp = vp;
 	count = fread( (char *)fp, 1, nbytes, ifp );
-	if( count != nbytes )  {
+	if ( count != nbytes )  {
 		(void)fprintf(stderr, "g2asc: spline knot read failure\n");
 		bu_exit(1, NULL);
 	}
 	/* Print the knot vector information */
 	count = record.d.d_kv_size[0] + record.d.d_kv_size[1];
-	for( i = 0; i < count; i++ )  {
+	for ( i = 0; i < count; i++ )  {
 		(void)fprintf(ofp, "%.12e\n", *vp++);
 	}
 	/* Free the knot data memory */
@@ -1085,14 +1085,14 @@ bsurfdump(void)	/* Print d-spline surface description record information */
 	vp = (float *)bu_calloc(nbytes, 1, "CONTROL MESH");
 	fp = vp;
 	count = fread( (char *)fp, 1, nbytes, ifp );
-	if( count != nbytes )  {
+	if ( count != nbytes )  {
 		(void)fprintf(stderr, "g2asc: control mesh read failure\n");
 		bu_exit(1, NULL);
 	}
 	/* Print the control mesh information */
 	count = record.d.d_ctl_size[0] * record.d.d_ctl_size[1] *
 		record.d.d_geom_type;
-	for( i = 0; i < count; i++ )  {
+	for ( i = 0; i < count; i++ )  {
 		(void)fprintf(ofp, "%.12e\n", *vp++);
 	}
 	/* Free the control mesh memory */
@@ -1113,9 +1113,9 @@ char *name(char *str)
 	register char *op = buf;
 	register int warn = 0;
 
-	while( op < &buf[NAMESIZE] )  {
-		if( *ip == '\0' )  break;
-		if( isascii(*ip) && isprint(*ip) && !isspace(*ip) )  {
+	while ( op < &buf[NAMESIZE] )  {
+		if ( *ip == '\0' )  break;
+		if ( isascii(*ip) && isprint(*ip) && !isspace(*ip) )  {
 			*op++ = *ip++;
 		}  else  {
 			*op++ = '@';
@@ -1124,12 +1124,12 @@ char *name(char *str)
 		}
 	}
 	*op = '\0';
-	if(warn)  {
+	if (warn)  {
 		(void)fprintf(stderr,
 			"g2asc: Illegal char in object name, converted to '%s'\n",
 			buf );
 	}
-	if( op == buf )  {
+	if ( op == buf )  {
 		/* Null input name */
 		(void)fprintf(stderr,
 			"g2asc:  NULL object name converted to -=NULL=-\n");
@@ -1152,11 +1152,11 @@ char *strchop(char *str, int len)
 	register int warn = 0;
 	char *ep;
 
-	if( len > sizeof(buf)-2 )  len=sizeof(buf)-2;
+	if ( len > sizeof(buf)-2 )  len=sizeof(buf)-2;
 	ep = &buf[len-1];		/* Leave room for null */
-	while( op < ep )  {
-		if( *ip == '\0' )  break;
-		if( isascii(*ip) && (isprint(*ip) || isspace(*ip)) )  {
+	while ( op < ep )  {
+		if ( *ip == '\0' )  break;
+		if ( isascii(*ip) && (isprint(*ip) || isspace(*ip)) )  {
 			*op++ = *ip++;
 		}  else  {
 			*op++ = '@';
@@ -1165,12 +1165,12 @@ char *strchop(char *str, int len)
 		}
 	}
 	*op = '\0';
-	if(warn)  {
+	if (warn)  {
 		(void)fprintf(stderr,
 			"g2asc: Illegal char in string, converted to '%s'\n",
 			buf );
 	}
-	if( op == buf )  {
+	if ( op == buf )  {
 		/* Null input name */
 		(void)fprintf(stderr,
 			"g2asc:  NULL string converted to -=STRING=-\n");
@@ -1194,7 +1194,7 @@ extrdump(void)
 
 	/* Hand off to librt's import() routine */
 	RT_INIT_DB_INTERNAL(&intern);
-	if( (rt_functab[ID_EXTRUDE].ft_import( &intern, &ext, id_mat, DBI_NULL, &rt_uniresource )) != 0 )  {
+	if ( (rt_functab[ID_EXTRUDE].ft_import( &intern, &ext, id_mat, DBI_NULL, &rt_uniresource )) != 0 )  {
 		fprintf(stderr, "g2asc: extrusion import failure\n");
 		bu_exit(-1, NULL);
 	}
@@ -1229,7 +1229,7 @@ sketchdump(void)
 
 	/* Hand off to librt's import() routine */
 	RT_INIT_DB_INTERNAL(&intern);
-	if( (rt_functab[ID_SKETCH].ft_import( &intern, &ext, id_mat, DBI_NULL, &rt_uniresource )) != 0 )  {
+	if ( (rt_functab[ID_SKETCH].ft_import( &intern, &ext, id_mat, DBI_NULL, &rt_uniresource )) != 0 )  {
 		fprintf(stderr, "g2asc: sketch import failure\n");
 		bu_exit( -1, NULL );
 	}
@@ -1243,11 +1243,11 @@ sketchdump(void)
 	(void)fprintf(ofp, "%.12e %.12e %.12e ", V3ARGS( skt->u_vec ) );
 	(void)fprintf(ofp, "%.12e %.12e %.12e ", V3ARGS( skt->v_vec ) );
 	(void)fprintf(ofp, "%d %d\n", skt->vert_count, crv->seg_count );
-	for( i=0 ; i<skt->vert_count ; i++ )
+	for ( i=0; i<skt->vert_count; i++ )
 		(void)fprintf(ofp, " %.12e %.12e", V2ARGS( skt->verts[i] ) );
 	(void)fprintf(ofp, "\n" );
 
-	for( j=0 ; j<crv->seg_count ; j++ )
+	for ( j=0; j<crv->seg_count; j++ )
 	{
 		long *lng;
 		struct line_seg *lsg;
@@ -1256,7 +1256,7 @@ sketchdump(void)
 		int k;
 
 		lng = (long *)crv->segments[j];
-		switch( *lng )
+		switch ( *lng )
 		{
 			case CURVE_LSEG_MAGIC:
 				lsg = (struct line_seg *)lng;
@@ -1271,10 +1271,10 @@ sketchdump(void)
 				nsg = (struct nurb_seg *)lng;
 				(void)fprintf(ofp, "  N %d %d %d %d %d\n   ", crv->reverse[j], nsg->order, nsg->pt_type,
 					nsg->k.k_size, nsg->c_size );
-				for( k=0 ; k<nsg->k.k_size ; k++ )
+				for ( k=0; k<nsg->k.k_size; k++ )
 					(void)fprintf(ofp, " %.12e", nsg->k.knots[k] );
 				(void)fprintf(ofp, "\n   " );
-				for( k=0 ; k<nsg->c_size ; k++ )
+				for ( k=0; k<nsg->c_size; k++ )
 					(void)fprintf(ofp, " %d", nsg->ctl_points[k] );
 				(void)fprintf(ofp, "\n" );
 				break;

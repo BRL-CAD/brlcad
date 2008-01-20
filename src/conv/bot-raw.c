@@ -123,7 +123,7 @@ int main(int ac, char *av[])
 	if (dp->d_flags & DIR_COMB) continue;
 
 	/* get the internal form */
-	i=rt_db_get_internal(&intern, dp, rtip->rti_dbip, mat,&rt_uniresource);
+	i=rt_db_get_internal(&intern, dp, rtip->rti_dbip, mat, &rt_uniresource);
 
 	if (i < 0) {
 	    fprintf(stderr, "rt_get_internal failure %d on %s\n", i, dp->d_namep);

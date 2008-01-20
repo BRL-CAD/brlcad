@@ -50,7 +50,7 @@ brst_log( const char *fmt, ... )
     va_start( ap, fmt );
     if (tty && (errfile[0] == '\0' || ! strcmp( errfile, "/dev/tty" ))) {
 	clr_Tabs( HmTtyFd );
-	if( ScDL != NULL ) {
+	if ( ScDL != NULL ) {
 	    (void) ScMvCursor( 1, SCROLL_TOP );
 	    (void) ScDeleteLn();
 	    (void) ScMvCursor( 1, SCROLL_BTM );
@@ -67,7 +67,7 @@ brst_log( const char *fmt, ... )
 		(void) vsprintf( buf, fmt, ap );
 		/* Newline will cause double scroll. */
 		p = buf+strlen(buf)-1;
-		if( *p == '\n' )
+		if ( *p == '\n' )
 		    *p = '\0'; /* clobber newline */
 		(void) puts( buf );
 		/*(void) vprintf( fmt, ap );*/

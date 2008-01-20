@@ -140,16 +140,16 @@ main(void)
    (void)printf("\t2 - black-blue-cyan-green-yellow-white\n");
    (void)printf("\t3 - black-blue-magenta-red-yellow-white\n");
    (void)fflush(stdout);
-   (void)scanf("%d",&icol);
-   if( (icol != 1) && (icol != 2) && (icol != 3) ) icol = 0;
+   (void)scanf("%d", &icol);
+   if ( (icol != 1) && (icol != 2) && (icol != 3) ) icol = 0;
 
    /*  Determine if a pix file is to be written.  */
    flag_pix = 0;
    (void)printf("Do you wish to create a pix file (0-no, 1-yes)?\n\t");
    (void)fflush(stdout);
-   (void)scanf("%d",&flag_pix);
-   if(flag_pix != 1) flag_pix = 0;
-   if(flag_pix == 1)
+   (void)scanf("%d", &flag_pix);
+   if (flag_pix != 1) flag_pix = 0;
+   if (flag_pix == 1)
    {
 	(void)printf("Enter name of the pix file to be created ");
 	(void)printf("(%d char max).\n\t", MAXFIL);
@@ -161,10 +161,10 @@ main(void)
    (void)fflush(stdout);
 
    /*  Zero color info array.  */
-   for(i=0; i<(MAXCOL + EXTRA); i++)
+   for (i=0; i<(MAXCOL + EXTRA); i++)
    {
 	/*  This part not necessarily needed.  cnt & more must be zeroed.  */
-/*	for(j=0; j<MAXARR; j++)
+/*	for (j=0; j<MAXARR; j++)
  *	{
  *	   array[i].x1[j] = (-1);
  *	   array[i].y1[j] = (-1);
@@ -183,11 +183,11 @@ main(void)
 
    /*  Set up color scale.  */
    dcol = (65535. + 1.) / MAXCOL;
-   if(icol == 0)		/*  Shades of gray.  */
+   if (icol == 0)		/*  Shades of gray.  */
    {
 	(void)printf("-shades of gray ");
 	(void)fflush(stdout);
-	for(i=0; i<MAXCOL; i++)
+	for (i=0; i<MAXCOL; i++)
 	{
 	   colval[i].red = (unsigned short)( (double)i * dcol );
 	   colval[i].green = (unsigned short)( (double)i * dcol );
@@ -195,11 +195,11 @@ main(void)
 	}
    }
 
-   if(icol == 1)		/*  Shades of red.  */
+   if (icol == 1)		/*  Shades of red.  */
    {
 	(void)printf("- shades of red ");
 	(void)fflush(stdout);
-	for(i=0; i<MAXCOL; i++)
+	for (i=0; i<MAXCOL; i++)
 	{
 	   colval[i].red = (unsigned short)( (double)i * dcol );
 	   colval[i].green = (unsigned short)0;
@@ -207,11 +207,11 @@ main(void)
 	}
    }
 
-   if(icol == 2)		/*  Black-blue-cyan-green-yellow-white.  */
+   if (icol == 2)		/*  Black-blue-cyan-green-yellow-white.  */
    {
 	(void)printf("- black-blue-cyan-green-yellow-white ");
 	(void)fflush(stdout);
-	if(MAXCOL > 1280.)
+	if (MAXCOL > 1280.)
 	{
 	   (void)printf("Maximum number of colors, %d, is ", MAXCOL);
 	   (void)printf("greater than 1280.\n");
@@ -222,7 +222,7 @@ main(void)
 	i = 0;
 	/*  Colors (0, 0, 0) to (0, 0, 255).  */
 	check = 0.;
-	while( (check <= 255.) && (i < MAXCOL) )
+	while ( (check <= 255.) && (i < MAXCOL) )
 	{
 	   colval[i].red = (unsigned short)0;
 	   colval[i].green = (unsigned short)0;
@@ -232,7 +232,7 @@ main(void)
 	}
 	/*  Colors (0, 0, 255) to (0, 255, 255).  */
 	check = 0.;
-	while( (check <= 255.) && (i < MAXCOL) )
+	while ( (check <= 255.) && (i < MAXCOL) )
 	{
 	   colval[i].red = (unsigned short)0;
 	   colval[i].green = (unsigned short)(check * 256.);
@@ -242,7 +242,7 @@ main(void)
 	}
 	/*  Colors (0, 255, 255) to (0, 255, 0).  */
 	check = 255.;
-	while( (check >= 0.) && (i < MAXCOL) )
+	while ( (check >= 0.) && (i < MAXCOL) )
 	{
 	   colval[i].red = (unsigned short)0;
 	   colval[i].green = (unsigned short)(255 * 256);
@@ -252,7 +252,7 @@ main(void)
 	}
 	/*  Colors (0, 255, 0) to (255, 255, 0).  */
 	check = 0.;
-	while( (check <= 255.) && (i < MAXCOL) )
+	while ( (check <= 255.) && (i < MAXCOL) )
 	{
 	   colval[i].red = (unsigned short)(check * 256.);
 	   colval[i].green = (unsigned short)(255 * 256);
@@ -262,7 +262,7 @@ main(void)
 	}
 	/*  Colors (255, 255, 0) to (255, 255, 255).  */
 	check = 0.;
-	while( (check <= 255.) && (i < MAXCOL) )
+	while ( (check <= 255.) && (i < MAXCOL) )
 	{
 	   colval[i].red = (unsigned short)(255 * 256);
 	   colval[i].green = (unsigned short)(255 * 256);
@@ -272,11 +272,11 @@ main(void)
 	}
    }
 
-   if(icol == 3)		/*  Black-blue-magenta-red-yellow-white.  */
+   if (icol == 3)		/*  Black-blue-magenta-red-yellow-white.  */
    {
 	(void)printf("- black-blue-magenta-red-yellow-white ");
 	(void)fflush(stdout);
-	if(MAXCOL > 1280.)
+	if (MAXCOL > 1280.)
 	{
 	   (void)printf("Maximum number of colors, %d, is ", MAXCOL);
 	   (void)printf("greater than 1280.\n");
@@ -287,7 +287,7 @@ main(void)
 	i = 0;
 	/*  Colors (0, 0, 0) to (0, 0, 255).  */
 	check = 0.;
-	while( (check <= 255.) && (i < MAXCOL) )
+	while ( (check <= 255.) && (i < MAXCOL) )
 	{
 	   colval[i].red = (unsigned short)0;
 	   colval[i].green = (unsigned short)0;
@@ -297,7 +297,7 @@ main(void)
 	}
 	/*  Colors (0, 0, 255) to (255, 0, 255).  */
 	check = 0.;
-	while( (check <= 255.) && (i < MAXCOL) )
+	while ( (check <= 255.) && (i < MAXCOL) )
 	{
 	   colval[i].red = (unsigned short)(check * 256.);
 	   colval[i].green = (unsigned short)0;
@@ -307,7 +307,7 @@ main(void)
 	}
 	/*  Colors (255, 0, 255) to (255, 0, 0).  */
 	check = 255.;
-	while( (check >= 0.) && (i < MAXCOL) )
+	while ( (check >= 0.) && (i < MAXCOL) )
 	{
 	   colval[i].red = (unsigned short)(255 * 256);
 	   colval[i].green = (unsigned short)0;
@@ -317,7 +317,7 @@ main(void)
 	}
 	/*  Colors (255, 0, 0) to (255, 255, 0).  */
 	check = 0.;
-	while( (check <= 255.) && (i < MAXCOL) )
+	while ( (check <= 255.) && (i < MAXCOL) )
 	{
 	   colval[i].red = (unsigned short)(255 * 256);
 	   colval[i].green = (unsigned short)(check * 256.);
@@ -327,7 +327,7 @@ main(void)
 	}
 	/*  Colors (255, 255, 0) to (255, 255, 255).  */
 	check = 0.;
-	while( (check <= 255.) && (i < MAXCOL) )
+	while ( (check <= 255.) && (i < MAXCOL) )
 	{
 	   colval[i].red = (unsigned short)(255 * 256);
 	   colval[i].green = (unsigned short)(255 * 256);
@@ -342,7 +342,7 @@ main(void)
 
    /*  Print out colors.  */
 /*
- * for(i=0; i<MAXCOL; i++)
+ * for (i=0; i<MAXCOL; i++)
  * {
  *	(void)printf("Color %d:  %d, %d, %d\n", i, colval[i].red,
  *		colval[i].green, colval[i].blue);
@@ -357,7 +357,7 @@ main(void)
    fpr = fopen(file, "r");
 
    /*  Check for non-existant file.  */
-   while(fpr == NULL)
+   while (fpr == NULL)
    {
 	(void)printf("\nThis file does not exist, please try again.\n");
 	(void)fflush(stdout);
@@ -367,17 +367,17 @@ main(void)
 
    /*  Read width and height of window.  */
    (void)bu_fgets(line, 150, fpr);
-   (void)sscanf(line, "%u %u",&wide,&high);
+   (void)sscanf(line, "%u %u", &wide, &high);
 
    /*  Check that width and height are not too big.  */
-   if(wide > MAXPIX)
+   if (wide > MAXPIX)
    {
 	(void)printf("The width of the window, %d, is greater\n", wide);
 	(void)printf("than the maximum for width, %d.  Press\n", MAXPIX);
 	(void)printf("delete to end program.\n");
 	(void)fflush(stdout);
    }
-   if(high > MAXPIX)
+   if (high > MAXPIX)
    {
 	(void)printf("The height of the window, %d, is greater\n", wide);
 	(void)printf("than the maximum for height, %d.  Press\n", MAXPIX);
@@ -386,12 +386,12 @@ main(void)
    }
 
    /*  Read pixel values.  */
-   for(i=0; i<(int)high; i++)
+   for (i=0; i<(int)high; i++)
    {
-	for(j=0; j<(int)wide; j++)
+	for (j=0; j<(int)wide; j++)
 	{
 	   (void)bu_fgets(line, 150, fpr);
-	   (void)sscanf(line, "%lf",&pixval[j][i]);
+	   (void)sscanf(line, "%lf", &pixval[j][i]);
 	}
    }
 
@@ -408,9 +408,9 @@ main(void)
 
    /*  Print out the first ten values as check.  */
 /*
- * for(i=0; i<10; i++)
+ * for (i=0; i<10; i++)
  * {
- *	(void)printf("value %d:  %f\n",(i+1), pixval[0][i]);
+ *	(void)printf("value %d:  %f\n", (i+1), pixval[0][i]);
  *	(void)fflush(stdout);
  * }
  */
@@ -418,9 +418,9 @@ main(void)
    /*  Print out the last ten values (only last 10 values when it is  */
    /*  a 256 x 256 file) as a check.  */
 /*
- * for(i=((int)wide - 11); i<(int)wide; i++)
+ * for (i=((int)wide - 11); i<(int)wide; i++)
  * {
- *	(void)printf("value %d:  %f\n",(i+1), pixval[(int)high - 1][i]);
+ *	(void)printf("value %d:  %f\n", (i+1), pixval[(int)high - 1][i]);
  *	(void)fflush(stdout);
  * }
  */
@@ -429,17 +429,17 @@ main(void)
    (void)fflush(stdout);
 
    /*  Find minimum and maximum of pixel values.  */
-   for(i=0; i<high; i++)
+   for (i=0; i<high; i++)
    {
-	for(j=0; j<wide; j++)
+	for (j=0; j<wide; j++)
 	{
-	   if( (j==0) && (i==0) )
+	   if ( (j==0) && (i==0) )
 	   {
 		min = pixval[j][i];
 		max = pixval[j][i];
 	   }
-	   if( min > pixval[j][i] ) min = pixval[j][i];
-	   if( max < pixval[j][i] ) max = pixval[j][i];
+	   if ( min > pixval[j][i] ) min = pixval[j][i];
+	   if ( max < pixval[j][i] ) max = pixval[j][i];
 	}
    }
 
@@ -454,24 +454,24 @@ main(void)
    /*  Find pixel bins.  */
    dpix = (max - min) / MAXCOL;
    pixbin[0] = min;
-   for(i=1; i<MAXCOL; i++)
+   for (i=1; i<MAXCOL; i++)
    {
 	pixbin[i] = pixbin[i-1] + dpix;
    }
    pixbin[MAXCOL] = max;
 
    /*  Find the color for each pixel.  */
-   for(i=0; i<high; i++)
+   for (i=0; i<high; i++)
    {
-	for(j=0; j<wide; j++)
+	for (j=0; j<wide; j++)
 	{
 	   /*  Determine the color associated with pixval[j][i].  */
 	   m = 0;
 	   k = 0;
 	   color[j][i] = 0;
-	   while( (m == 0) && (k < MAXCOL) )
+	   while ( (m == 0) && (k < MAXCOL) )
 	   {
-		if( (pixval[j][i] > pixbin[k]) &&
+		if ( (pixval[j][i] > pixbin[k]) &&
 			(pixval[j][i] <= pixbin[k + 1]) )
 		{
 		   color[j][i] = k;
@@ -489,11 +489,11 @@ main(void)
    (void)fflush(stdout);
 
    /*  Put color info in arrays.  */
-   for(i=0; i<high; i++)
+   for (i=0; i<high; i++)
    {
-	for(j=0; j<wide; j++)
+	for (j=0; j<wide; j++)
 	{
-	   if(array[color[j][i]].cnt < MAXARR)
+	   if (array[color[j][i]].cnt < MAXARR)
 	   {
 		array[color[j][i]].x1[array[color[j][i]].cnt] = j;
 		array[color[j][i]].y1[array[color[j][i]].cnt] = i;
@@ -501,9 +501,9 @@ main(void)
 	   }
 	   else
 	   {
-		if(array[color[j][i]].more == 0)
+		if (array[color[j][i]].more == 0)
 		{
-		   if(lstarr < (MAXARR + EXTRA) )
+		   if (lstarr < (MAXARR + EXTRA) )
 		   {
 			array[color[j][i]].more = lstarr;
 			k = lstarr;
@@ -520,7 +520,7 @@ main(void)
 		else
 		{
 		   k = array[color[j][i]].more;
-		   if(array[k].cnt < MAXARR)
+		   if (array[k].cnt < MAXARR)
 		   {
 			array[k].x1[array[k].cnt] = j;
 			array[k].y1[array[k].cnt] = i;
@@ -538,7 +538,7 @@ main(void)
    (void)printf("- color info in arrays.\n");
    (void)fflush(stdout);
 
-   if(flag != 0)
+   if (flag != 0)
    {
 	(void)printf("There too many pixels of one color.  Note that\n");
 	(void)printf("this means there is something wrong with the\n");
@@ -547,10 +547,10 @@ main(void)
    }
 
    /*  Write out count for each array.  */
-/* for(i=0; i<lstarr; i++)
+/* for (i=0; i<lstarr; i++)
  * {
  *	(void)printf("Color %d - count %d ", i, array[i].cnt);
- *	if(array[i].more > 0)
+ *	if (array[i].more > 0)
  *	{
  *	   (void)printf("- more %d\n", array[i].more);
  *	}
@@ -595,11 +595,11 @@ main(void)
 	5, white, black);
 
    /*  Create exit window & find its id.  */
-   wind_exit = XCreateSimpleWindow(my_display, my_window,(wide + 30),
+   wind_exit = XCreateSimpleWindow(my_display, my_window, (wide + 30),
 	(high + 65), 80, 30, 5, white, black);
 
    /*  Create color scale window & find its id.  */
-   wind_scale = XCreateSimpleWindow(my_display, my_window, 10,(high + 50),
+   wind_scale = XCreateSimpleWindow(my_display, my_window, 10, (high + 50),
 	(2 * MAXCOL), 60, 5, white, black);
 
    /*  Select input event masks that are to be responed to (exposure).  */
@@ -624,22 +624,22 @@ main(void)
    my_gc = XCreateGC(my_display, my_window, None, NULL);
 
    /*  Create a loop so that events will occur.  */
-   for(;;)
+   for (;;)
    {
-	XNextEvent(my_display,&event_received);
-	switch(event_received.type)
+	XNextEvent(my_display, &event_received);
+	switch (event_received.type)
 	{
 	   /*  Do the following when an expose occurs.  */
 	   case Expose:		/*  Code for expose event.  */
 	     /*  Draw the picture if the picture window is exposed.  */
-	     if(event_received.xexpose.window == wind_pic)
+	     if (event_received.xexpose.window == wind_pic)
 	     {						/*  START # 1  */
 		/*  Send groups of color to screen.  */
-		for(k=0; k<MAXCOL; k++)
+		for (k=0; k<MAXCOL; k++)
 		{
-		  if(array[k].cnt > 0)
+		  if (array[k].cnt > 0)
 		  {
-		   for(i=0; i<array[k].cnt; i++)
+		   for (i=0; i<array[k].cnt; i++)
 		   {
 			rect[i].x = array[k].x1[i];
 			rect[i].y = array[k].y1[i];
@@ -653,10 +653,10 @@ main(void)
 		   XFillRectangles(my_display, wind_pic, my_gc, rect, m);
 
 		   /*  Send extra array if there is a lot of that color.  */
-		   if(array[k].more > 0)
+		   if (array[k].more > 0)
 		   {
 			j = array[k].more;
-			for(i=0; i<array[j].cnt; i++)
+			for (i=0; i<array[j].cnt; i++)
 			{
 			   rect[i].x = array[j].x1[i];
 			   rect[i].y = array[j].y1[i];
@@ -665,7 +665,7 @@ main(void)
 			}
 			m = array[j].cnt;
 			XAllocColor(my_display, DefaultColormap(my_display,
-				screen),&colval[k]);
+				screen), &colval[k]);
 			XSetForeground(my_display, my_gc, colval[k].pixel);
 			XFillRectangles(my_display, wind_pic, my_gc, rect, m);
 		   }
@@ -674,7 +674,7 @@ main(void)
 	     }						/*  END # 1  */
 
 	     /*  If exit window is exposed write label.  */
-	     else if(event_received.xexpose.window == wind_exit)
+	     else if (event_received.xexpose.window == wind_exit)
 	     {						/*  START # 2  */
 		XSetForeground(my_display, my_gc, white);
 		font = XLoadFont(my_display, "8x13bold");
@@ -684,12 +684,12 @@ main(void)
 	     }						/*  END # 2  */
 
 	     /*  If color scale window is exposed put up color scale.  */
-	     else if(event_received.xexpose.window == wind_scale)
+	     else if (event_received.xexpose.window == wind_scale)
 	     {
-		for(i=0; i<MAXCOL; i++)
+		for (i=0; i<MAXCOL; i++)
 		{
 		   XAllocColor(my_display, DefaultColormap(my_display,
-			screen),&colval[i]);
+			screen), &colval[i]);
 		   XSetForeground(my_display, my_gc, colval[i].pixel);
 		   XFillRectangle(my_display, wind_scale, my_gc,
 			(i * 2), 0, 2, 30);
@@ -721,20 +721,20 @@ main(void)
 
 	   /*  Do the following if a mouse press occurs.  */
 	   case ButtonPress:
-	     if(event_received.xbutton.window == wind_exit)
+	     if (event_received.xbutton.window == wind_exit)
 	     {
 		XCloseDisplay(my_display);
 
 		/*  Create pix file if necessary.  */
-		if(flag_pix == 1)
+		if (flag_pix == 1)
 		{					/*  START # 1.  */
 		   /*  Open pix file to be written to.  */
 		   fpw = fopen(file_pix, "w");
 
 		   /*  Write colors to file.  */
-		   for(i=high; i>0; i--)
+		   for (i=high; i>0; i--)
 		   {					/*  START # 2.  */
-			for(j=0; j<wide; j++)
+			for (j=0; j<wide; j++)
 			{				/*  START # 3.  */
 			   c = (unsigned char)( (int)(colval[color[j][i-1]].red
 				/ 256) );

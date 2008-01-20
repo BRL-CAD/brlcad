@@ -170,14 +170,14 @@ int	width, height;
 	 *  The default mode is zero.
 	 */
 	mode = 0;
-	if( file != NULL )  {
+	if ( file != NULL )  {
 		register char *cp;
 		char	modebuf[80];
 		char	*mp;
 		int	alpha;
 		struct	modeflags *mfp;
 
-		if( strncmp(file, "/dev/ts", 7) ) {
+		if ( strncmp(file, "/dev/ts", 7) ) {
 			/* How did this happen?? */
 			mode = 0;
 		}
@@ -186,26 +186,26 @@ int	width, height;
 			alpha = 0;
 			mp = &modebuf[0];
 			cp = &file[7];
-			while( *cp != '\0' && !isspace(*cp) ) {
+			while ( *cp != '\0' && !isspace(*cp) ) {
 				*mp++ = *cp;	/* copy it to buffer */
-				if( isdigit(*cp) ) {
+				if ( isdigit(*cp) ) {
 					cp++;
 					continue;
 				}
 				alpha++;
-				for( mfp = modeflags; mfp->c != '\0'; mfp++ ) {
-					if( mfp->c == *cp ) {
+				for ( mfp = modeflags; mfp->c != '\0'; mfp++ ) {
+					if ( mfp->c == *cp ) {
 						mode = (mode&~mfp->mask)|mfp->value;
 						break;
 					}
 				}
-				if( mfp->c == '\0' && *cp != '-' ) {
+				if ( mfp->c == '\0' && *cp != '-' ) {
 					fb_log( "if_ts: unknown option '%c' ignored\n", *cp );
 				}
 				cp++;
 			}
 			*mp = '\0';
-			if( !alpha )
+			if ( !alpha )
 				mode = atoi( modebuf );
 			if (strlen(cp) > 0) {
 				unit = atoi(cp);
@@ -279,7 +279,7 @@ RGBpixel	*pp;
 	struct	rectangle rect;
 
 	if (pp != RGBPIXEL_NULL) {
-		setaltcolor(COLR24((*pp)[RED],(*pp)[GRN],(*pp)[BLU]));
+		setaltcolor(COLR24((*pp)[RED], (*pp)[GRN], (*pp)[BLU]));
 	} else {
 		setaltcolor(COLR24(0, 0, 0));
 	}
@@ -312,7 +312,7 @@ int	count;
 	size.width = count;
 	size.height = 1;	/*XXX*/
 
-	f_rdpixar_f(&dest,&size, 2, pixelp);
+	f_rdpixar_f(&dest, &size, 2, pixelp);
 	return(count);
 }
 
@@ -342,20 +342,20 @@ int	count;
 	size.width = count;
 	size.height = 1;	/*XXX*/
 #if 0
-	f_pixar_ff(&dest,&size, 2, pixelp);
+	f_pixar_ff(&dest, &size, 2, pixelp);
 #else
 #	if 0
 	/* This way dumps core if writes are longer than 1020 bytes -M */
-	f_pixar_ff(&dest,&size, 3, lbuf);
+	f_pixar_ff(&dest, &size, 3, lbuf);
 #	else
-	if( count > 800 )  {
+	if ( count > 800 )  {
 		size.width = 800;
-		f_pixar_ff(&dest,&size, 3, lbuf);
+		f_pixar_ff(&dest, &size, 3, lbuf);
 		size.width = count-800;
 		dest.x = 800;
-		f_pixar_ff(&dest,&size, 3,&lbuf[800][0]);
+		f_pixar_ff(&dest, &size, 3, &lbuf[800][0]);
 	} else {
-		f_pixar_ff(&dest,&size, 3, lbuf);
+		f_pixar_ff(&dest, &size, 3, lbuf);
 	}
 #	endif
 #endif
@@ -594,7 +594,7 @@ RGBpixel	*pp;
 	dest.y = ymin;
 	size.width = width;
 	size.height = height;
-	f_rdpixar_f(&dest,&size, 2, pp);
+	f_rdpixar_f(&dest, &size, 2, pp);
 
 	return( width*height );
 #else
@@ -618,7 +618,7 @@ RGBpixel	*pp;
 	dest.y = ymin;
 	size.width = width;
 	size.height = height;
-	f_pixar_ff(&dest,&size, 2, pp);
+	f_pixar_ff(&dest, &size, 2, pp);
 
 	return( width*height );
 #else
@@ -658,7 +658,7 @@ FBIO	*ifp;
 		ts_interface.if_width,
 		ts_interface.if_height );
 	fb_log( "Usage: /dev/ts[options] [channel]\n" );
-	for( mfp = modeflags; mfp->c != '\0'; mfp++ ) {
+	for ( mfp = modeflags; mfp->c != '\0'; mfp++ ) {
 		fb_log( "   %c   %s\n", mfp->c, mfp->help );
 	}
 	fb_log( "Channel Numbers:\n");

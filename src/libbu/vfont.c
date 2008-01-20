@@ -76,20 +76,20 @@ vfont_get(char *font)
 	int		magic;
 	int		size;
 
-	if( font == NULL )
+	if ( font == NULL )
 		font = DEFAULT_FONT;
 
 	/* Open the file and read in the header information. */
-	if( (fp = fopen( font, "r" )) == NULL )  {
+	if ( (fp = fopen( font, "r" )) == NULL )  {
 		snprintf( fname, FONTNAMESZ, "%s/%s", (char *)bu_brlcad_data("vfont", 0), font );
-		if( (fp = fopen( fname, "r" )) == NULL )  {
+		if ( (fp = fopen( fname, "r" )) == NULL )  {
 			snprintf( fname, FONTNAMESZ, "%s/%s", FONTDIR2, font );
-			if( (fp = fopen( fname, "r" )) == NULL )  {
+			if ( (fp = fopen( fname, "r" )) == NULL )  {
 				return(VFONT_NULL);
 			}
 		}
 	}
-	if( fread( (char *)header, sizeof(header), 1, fp ) != 1 ||
+	if ( fread( (char *)header, sizeof(header), 1, fp ) != 1 ||
 	    fread( (char *)dispatch, sizeof(dispatch), 1, fp ) != 1 )  {
 		fprintf(stderr, "vfont_get(%s):  header read error\n", fname );
 		fclose(fp);
@@ -98,7 +98,7 @@ vfont_get(char *font)
 	magic = vax_gshort( &header[0*2] ) & 0xFFFF;
 	size = vax_gshort( &header[1*2] ) & 0xFFFF;	/* unsigned short */
 
-	if( magic != 0436 )  {
+	if ( magic != 0436 )  {
 		fprintf(stderr, "vfont_get(%s):  bad magic number 0%o\n",
 			fname, magic );
 		fclose(fp);
@@ -108,7 +108,7 @@ vfont_get(char *font)
 	/* Read in the bit maps */
 	vfp = (struct vfont *)bu_malloc(sizeof(struct vfont), "vfont");
 	vfp->vf_bits = (char *)bu_malloc(size, "vfont bits");
-	if( fread( vfp->vf_bits, size, 1, fp ) != 1 )  {
+	if ( fread( vfp->vf_bits, size, 1, fp ) != 1 )  {
 		fprintf(stderr, "vfont_get(%s):  bitmap read error\n", fname );
 		fclose(fp);
 		bu_free( vfp->vf_bits, "vfont bits" );
@@ -124,7 +124,7 @@ vfont_get(char *font)
 	vfp->vf_maxy = vax_gshort( &header[3*2] );
 	vfp->vf_xtend = vax_gshort( &header[4*2] );
 
-	for( i=0; i<255; i++ )  {
+	for ( i=0; i<255; i++ )  {
 		register struct vfont_dispatch	*vdp = &(vfp->vf_dispatch[i]);
 		register unsigned char		*cp = &dispatch[i*10];
 
@@ -152,7 +152,7 @@ vax_gshort(unsigned char *msgp)
 	register unsigned char *p = (unsigned char *) msgp;
 	register int	i;
 
-	if( (i = (p[1] << 8) | p[0]) & 0x8000 )
+	if ( (i = (p[1] << 8) | p[0]) & 0x8000 )
 		return(i | ~0xFFFF);	/* Sign extend */
 	return(i);
 }

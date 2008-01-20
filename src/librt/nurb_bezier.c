@@ -68,7 +68,7 @@ rt_nurb_bezier(struct bu_list *bezier_hd, const struct face_g_snurb *orig_surf, 
 
 	NMG_CK_SNURB(orig_surf);
 
-	if( (dir = rt_bez_check( orig_surf )) == -1)  {
+	if ( (dir = rt_bez_check( orig_surf )) == -1)  {
 		s = rt_nurb_scopy( orig_surf, res );
 		BU_LIST_APPEND( bezier_hd, &s->l );
 		return 1;	/* Was already Bezier, nothing done */
@@ -77,8 +77,8 @@ rt_nurb_bezier(struct bu_list *bezier_hd, const struct face_g_snurb *orig_surf, 
 	BU_LIST_INIT( &todo );
 	rt_nurb_s_split( &todo, orig_surf, dir, res );
 
-	while( BU_LIST_WHILE( s, face_g_snurb, &todo ) )  {
-		if( (dir = rt_bez_check(s)) == -1)  {
+	while ( BU_LIST_WHILE( s, face_g_snurb, &todo ) )  {
+		if ( (dir = rt_bez_check(s)) == -1)  {
 			/* This snurb is now a Bezier */
 			BU_LIST_DEQUEUE( &s->l );
 			BU_LIST_APPEND( bezier_hd, &s->l );
@@ -97,9 +97,9 @@ rt_bez_check(const struct face_g_snurb *srf)
 {
 	NMG_CK_SNURB(srf);
 
-	if( srf->u.k_size > (2.0 * srf->order[0]))
+	if ( srf->u.k_size > (2.0 * srf->order[0]))
 		return 0;
-	if( srf->v.k_size > (2.0 * srf->order[1]))
+	if ( srf->v.k_size > (2.0 * srf->order[1]))
 		return 1;
 
 	return -1;
@@ -124,9 +124,9 @@ nurb_crv_is_bezier(const struct edge_g_cnurb *crv)
 	knot_min = crv->k.knots[0];
 	knot_max = crv->k.knots[crv->k.k_size-1];
 
-	for( i=1 ; i<crv->k.k_size-1 ; i++ )
+	for ( i=1; i<crv->k.k_size-1; i++ )
 	{
-		if( crv->k.knots[i] != knot_min && crv->k.knots[i] != knot_max )
+		if ( crv->k.knots[i] != knot_min && crv->k.knots[i] != knot_max )
 		{
 			bezier = 0;
 			break;
@@ -156,7 +156,7 @@ nurb_c_to_bezier(struct bu_list *clist, struct edge_g_cnurb *crv)
 
 	/* split curve at each knot value */
 	done = 0;
-	while( !done )
+	while ( !done )
 	{
 		fastf_t split;
 
@@ -164,16 +164,16 @@ nurb_c_to_bezier(struct bu_list *clist, struct edge_g_cnurb *crv)
 		knot_max = crv_copy->k.knots[crv_copy->k.k_size-1];
 
 		split = MAX_FASTF;
-		for( i=1 ; i<crv_copy->k.k_size-1 ; i++ )
+		for ( i=1; i<crv_copy->k.k_size-1; i++ )
 		{
-			if( crv_copy->k.knots[i] != knot_min && crv_copy->k.knots[i] != knot_max )
+			if ( crv_copy->k.knots[i] != knot_min && crv_copy->k.knots[i] != knot_max )
 			{
 				split = crv_copy->k.knots[i];
 				break;
 			}
 		}
 
-		if( split == MAX_FASTF )
+		if ( split == MAX_FASTF )
 		{
 			done = 1;
 			BU_LIST_APPEND( clist, &crv_copy->l );

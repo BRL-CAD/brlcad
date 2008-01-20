@@ -61,30 +61,30 @@ bu_fgets(char *s, int size, FILE *stream)
     int isEOF = 0;
 
     /* if we are not asked to read anything, just return */
-    if(size < 1) {
+    if (size < 1) {
 	return s;
     }
 
     /* if the buffer size is one, we have no space (we add a null)
      * so just return
      */
-    if(size == 1) {
+    if (size == 1) {
 	*s = '\0';
 	return s;
     }
 
     /* check for EOF or error */
-    if(feof(stream) || ferror(stream)) {
+    if (feof(stream) || ferror(stream)) {
 	*s = '\0';
 	return (char *)NULL;
     }
 
     /* actually do some reading */
-    while(totBytesRead < size - 1) {
+    while (totBytesRead < size - 1) {
 	int c;
 
 	c = fgetc(stream);
-	if(c == EOF) {
+	if (c == EOF) {
 	    isEOF = 1;
 	    break;
 	}
@@ -92,16 +92,16 @@ bu_fgets(char *s, int size, FILE *stream)
 	s[totBytesRead++] = c;
 
 	/* check for newline */
-	if(c == '\n') {
+	if (c == '\n') {
 	    break;
 	}
 
 	/* chech for CR */
-	if(c == '\r') {
+	if (c == '\r') {
 
 	    /* check for CR/LF combination */
 	    c = fgetc(stream);
-	    if(c != '\n') {
+	    if (c != '\n') {
 		/* not a CR/LF, so unget the last char */
 		ungetc(c, stream);
 	    }
@@ -113,7 +113,7 @@ bu_fgets(char *s, int size, FILE *stream)
     /* add our null */
     s[totBytesRead] = '\0';
 
-    if(isEOF && totBytesRead == 0)
+    if (isEOF && totBytesRead == 0)
 	return (char *)NULL;
     else
 	return s;

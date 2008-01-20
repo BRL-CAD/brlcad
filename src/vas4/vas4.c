@@ -66,7 +66,7 @@ get_args(int argc, register char **argv)
 	register int c;
 
 	while ( (c = bu_getopt( argc, argv, "dhF:s:S:w:W:n:N:" )) != EOF )  {
-		switch( c )  {
+		switch ( c )  {
 		case 'd':
 			debug = 1;
 			break;
@@ -97,7 +97,7 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( bu_optind >= argc )
+	if ( bu_optind >= argc )
 		return(0);
 
 	return(1);		/* OK */
@@ -133,11 +133,11 @@ main(int argc, char **argv)
 	 */
 	if (strcmp(argv[1], "init") == 0) {
 		vas_open();
-		if( get_vas_status() < 0 )
+		if ( get_vas_status() < 0 )
 			bu_exit(1, NULL);
 		vas_putc(C_INIT);
 		vas_await(R_INIT, 5);
-		if( get_vtr_status(0) < 0 )
+		if ( get_vtr_status(0) < 0 )
 			exit_code = 1;
 		goto done;
 	}
@@ -187,7 +187,7 @@ main(int argc, char **argv)
 	 *  but VTR is not queried.
 	 */
 	vas_open();
-	if( get_vas_status() < 0 )
+	if ( get_vas_status() < 0 )
 		bu_exit(1, NULL);
 
 	if (strcmp(argv[1], "rewind") == 0) {
@@ -212,23 +212,23 @@ main(int argc, char **argv)
 	 *  VAS IV is opened and checked above,
 	 *  and VTR status is checked here.
 	 */
-	if( get_vtr_status(0) < 0 )  {
+	if ( get_vtr_status(0) < 0 )  {
 		exit_code = 1;
 		goto done;
 	}
-	if( strcmp(argv[1], "search") == 0 )  {
-		if( argc >= 3 )
+	if ( strcmp(argv[1], "search") == 0 )  {
+		if ( argc >= 3 )
 			start_frame = str2frames(argv[2]);
 		else
 			start_frame = 1;
 		exit_code = search_frame(start_frame);
 		goto done;
 	}
-	else if( strcmp(argv[1], "time0") == 0 )  {
+	else if ( strcmp(argv[1], "time0") == 0 )  {
 		exit_code = time0();
 		goto done;
 	}
-	else if( strcmp( argv[1], "reset_time" ) == 0 )  {
+	else if ( strcmp( argv[1], "reset_time" ) == 0 )  {
 		exit_code = reset_tape_time();
 		goto done;
 	}
@@ -237,8 +237,8 @@ main(int argc, char **argv)
 	 *  If this is running on a workstation, and a window has to be
 	 *  opened to cause image to be re-displayed, do so now.
 	 */
-	if( framebuffer != (char *)0 )  {
-		if( (fbp = fb_open( framebuffer, scr_width, scr_height )) == FBIO_NULL )  {
+	if ( framebuffer != (char *)0 )  {
+		if ( (fbp = fb_open( framebuffer, scr_width, scr_height )) == FBIO_NULL )  {
 			exit_code = 12;
 			goto done;
 		}
@@ -248,12 +248,12 @@ main(int argc, char **argv)
 	 *  Commands that will actually record some image onto tape
 	 */
 	if (strcmp(argv[1], "new") == 0) {
-		if( argc >= 4 )  {
-			if( (start_frame = str2frames(argv[3])) < 1 )
+		if ( argc >= 4 )  {
+			if ( (start_frame = str2frames(argv[3])) < 1 )
 				usage_new();
 		}
 		if (argc >= 3) {
-			if( (scene_number = atoi(argv[2])) < 1 )
+			if ( (scene_number = atoi(argv[2])) < 1 )
 				usage_new();
 		}
 		else if (argc == 2) {
@@ -266,12 +266,12 @@ main(int argc, char **argv)
 		goto done;
 	}
 	else if (strcmp(argv[1], "old") == 0) {
-		if( argc >= 4 )  {
-			if( (start_frame = str2frames(argv[3])) < 1 )
+		if ( argc >= 4 )  {
+			if ( (start_frame = str2frames(argv[3])) < 1 )
 				usage_new();
 		}
 		if (argc >= 3) {
-			if( (scene_number = atoi(argv[2])) < 1 )
+			if ( (scene_number = atoi(argv[2])) < 1 )
 				usage_new();
 		}
 		else if (argc == 2) {
@@ -307,7 +307,7 @@ main(int argc, char **argv)
 
 done:
 	vas_close();
-	if(fbp) fb_close(fbp);
+	if (fbp) fb_close(fbp);
 	bu_exit(exit_code, NULL);
 }
 
@@ -381,7 +381,7 @@ program_recording(int new, int scene_number, int start_frame)
 	vas_putc(C_ENTER);
 
 	/* New or Old scene */
-	if( new )  {
+	if ( new )  {
 		vas_putnum(1);
 		vas_putc(C_ENTER);
 
@@ -405,7 +405,7 @@ program_recording(int new, int scene_number, int start_frame)
 	vas_await(R_RECORD, 30);
 
 	/* New scene only records 4 sec matte */
-	if( new )  {
+	if ( new )  {
 		fprintf(stderr, "Recording built-in title matte\n");
 		do_record(1);
 	}
@@ -452,15 +452,15 @@ do_record(int wait)
 	register int c;
 
 	vas_putc(C_RECORD);
-	for(;;)  {
+	for (;;)  {
 		c = vas_getc();
-		if(debug) vas_response(c);
-		switch( c )  {
+		if (debug) vas_response(c);
+		switch ( c )  {
 		case R_RECORD:
 			/* Completely done, ready to record next frame */
 			break;
 		case R_DONE:
-			if( wait )  {
+			if ( wait )  {
 				continue;
 			} else {
 				/* Don't wait for tape backspacing */
@@ -479,7 +479,7 @@ do_record(int wait)
 			/* These are for info only */
 			continue;
 		default:
-			if(!debug) vas_response(c);
+			if (!debug) vas_response(c);
 			continue;
 		}
 		break;
@@ -501,7 +501,7 @@ search_frame(int frame)
 	vas_putnum(frame);
 	vas_putc(C_ENTER);
 	reply = vas_getc();
-	if( reply == 'L' )
+	if ( reply == 'L' )
 		return(0);	/* OK */
 	/* 'K' is expected failure code */
 	vas_response(reply);
@@ -538,7 +538,7 @@ time0(void)
 	vas_putc(C_SEARCH);
 	vas_putc(C_SEARCH);
 	reply = vas_getc();
-	if( reply == 'L' )
+	if ( reply == 'L' )
 		return(0);	/* OK */
 	vas_response(reply);
 	return(-1);		/* fail */
@@ -558,8 +558,8 @@ get_vas_status(void)
 
 	vas_rawputc(C_ACTIVITY);
 	reply = vas_getc();		/* Needs timeout */
-	if(debug) vas_response(reply);
-	if( reply < 0x60 || reply > 0x78 )  return(-1);
+	if (debug) vas_response(reply);
+	if ( reply < 0x60 || reply > 0x78 )  return(-1);
 	return(reply);
 }
 
@@ -585,23 +585,23 @@ get_vtr_status(int chatter)
 	buf[2] = vas_getc();
 	buf[3] = vas_getc();
 
-	if( buf[0] != 'V' )  {
+	if ( buf[0] != 'V' )  {
 		fprintf(stderr, "Link to VTR is not working\n");
 		return(-1);
 	}
-	if( buf[1] != 'R' )  {
-		if( buf[1] == 'L' )  {
+	if ( buf[1] != 'R' )  {
+		if ( buf[1] == 'L' )  {
 			fprintf(stderr, "VTR is in Local mode, can not be program controlled\n");
 			return(-1);
 		}
 		fprintf(stderr, "VTR is in unknown mode\n");
 		return(-1);
 	}
-	if( buf[2] == 'R' )  {
-		if(chatter) fprintf(stderr, "VTR is online and ready to roll\n");
+	if ( buf[2] == 'R' )  {
+		if (chatter) fprintf(stderr, "VTR is online and ready to roll\n");
 		return(1);	/* very OK */
-	} else if(  buf[2] == 'N' )  {
-		if(chatter) fprintf(stderr, "VTR is online and stopped\n");
+	} else if (  buf[2] == 'N' )  {
+		if (chatter) fprintf(stderr, "VTR is online and stopped\n");
 		return(0);	/* OK */
 	} else {
 		fprintf(stderr, "VTR is online and has unknown ready status\n");
@@ -631,7 +631,7 @@ get_frame_code(void)
 	frame[4] = vas_getc();
 	frame[5] = vas_getc();
 	frame[6] = '\0';
-	if( status != 'C' && status != '<' )  {
+	if ( status != 'C' && status != '<' )  {
 		fprintf(stderr, "get_frame_code:  unable to acquire\n");
 		return(-1);
 	}
@@ -647,7 +647,7 @@ get_tape_position(void)
 	int	i;
 
 	vas_rawputc(C_SEND_TAPE_POS);
-	for( i=0; i<8; i++ )
+	for ( i=0; i<8; i++ )
 		buf[i] = vas_getc();
 	buf[8] = '\0';
 	fprintf(stderr, "Tape counter is at %s\n", buf);
@@ -676,7 +676,7 @@ str2frames(char *str)
 
 	suffix[0] = '\0';
 	sscanf( str, "%d%32s", &num, suffix );
-	switch( suffix[0] )  {
+	switch ( suffix[0] )  {
 	case 'f':
 	case '\0':
 		break;

@@ -80,7 +80,7 @@ char *options = "A:a:de:f:g:Gn:N:pP:rS:s:t:U:u:vV:W:";
 #endif
 
 int analysis_flags = ANALYSIS_VOLUME | ANALYSIS_OVERLAPS | ANALYSIS_WEIGHT | \
-	ANALYSIS_EXP_AIR | ANALYSIS_ADJ_AIR | ANALYSIS_GAP ;
+	ANALYSIS_EXP_AIR | ANALYSIS_ADJ_AIR | ANALYSIS_GAP;
 int multiple_analyses = 1;
 
 
@@ -214,7 +214,7 @@ static struct region_pair gapList = { /* list of gaps */
     (struct region *)NULL,
     (unsigned long)0,
     (double)0.0,
-    {0.0, 0.0, 0.0,}
+    {0.0, 0.0, 0.0, }
 };
 static struct region_pair adjAirList = { /* list of adjacent air */
     {
@@ -226,7 +226,7 @@ static struct region_pair adjAirList = { /* list of adjacent air */
     (struct region *)NULL,
     (unsigned long)0,
     (double)0.0,
-    {0.0, 0.0, 0.0,}
+    {0.0, 0.0, 0.0, }
 };
 static struct region_pair exposedAirList = { /* list of exposed air */
     {
@@ -238,7 +238,7 @@ static struct region_pair exposedAirList = { /* list of exposed air */
     (struct region *)NULL,
     (unsigned long)0,
     (double)0.0,
-    {0.0, 0.0, 0.0,}
+    {0.0, 0.0, 0.0, }
 };
 static struct region_pair overlapList = { /* list of overlaps */
     {
@@ -250,7 +250,7 @@ static struct region_pair overlapList = { /* list of overlaps */
     (struct region *)NULL,
     (unsigned long)0,
     (double)0.0,
-    {0.0, 0.0, 0.0,}
+    {0.0, 0.0, 0.0, }
 };
 
 
@@ -271,7 +271,7 @@ static const struct cvt_tab units_tab[3][40] = {
        * Values for converting from given units to mm
        */
 	{1.0,		"mm"}, /* default */
-	/*	{0.0,		"none"},*/ /* this is removed to force a certain
+	/*	{0.0,		"none"}, */ /* this is removed to force a certain
 					    * amount of error checking for the user
 					    */
 	{1.0e-7,	"angstrom"},
@@ -409,7 +409,7 @@ read_units_double(double *val, char *buf, const struct cvt_tab *cvt)
     }
     if (i == 2) {
 	*val = a;
-	for ( ; cvt->name[0] != '\0' ; ) {
+	for (; cvt->name[0] != '\0'; ) {
 	    if (!strncmp(cvt->name, units_string, 256)) {
 		goto found_units;
 	    } else {
@@ -468,7 +468,7 @@ parse_args(int ac, char *av[])
 		char *p;
 		analysis_flags = 0;
 		multiple_analyses = 0;
-		for (p = bu_optarg; *p ; p++) {
+		for (p = bu_optarg; *p; p++) {
 		    switch (*p) {
 		    case 'A' :
 			analysis_flags = ANALYSIS_VOLUME | ANALYSIS_WEIGHT | \
@@ -633,12 +633,12 @@ parse_args(int ac, char *av[])
 		static const char *dim[3] = {"length", "volume", "weight"};
 		char *units_name[3];
 
-		for (i=0 ; i < 3 && ptr; i++) {
+		for (i=0; i < 3 && ptr; i++) {
 		    units_name[i] = strsep(&ptr, ",");
 
 		    /* make sure the unit value is in the table */
 		    if (*units_name[i] != '\0') {
-			for (cv= &units_tab[i][0] ; cv->name[0] != '\0' ; cv++) {
+			for (cv= &units_tab[i][0]; cv->name[0] != '\0'; cv++) {
 			    if (!strcmp(cv->name, units_name[i])) {
 				goto found_cv;
 			    }
@@ -650,7 +650,7 @@ parse_args(int ac, char *av[])
 		}
 
 		bu_log("Units: ");
-		for (i=0 ; i < 3 ; i++) {
+		for (i=0; i < 3; i++) {
 		    bu_log(" %s: %s", dim[i], units[i]->name);
 		}
 		bu_log("\n");
@@ -729,7 +729,7 @@ parse_densities_buffer(char *buf, unsigned long len)
     } while (p && p < last);
 
 #ifdef PRINT_DENSITIES
-    for (idx=0 ; idx < num_densities ; idx++)
+    for (idx=0; idx < num_densities; idx++)
 	if (densities[idx].magic == DENSITY_MAGIC)
 	    bu_log("%4d %6g %s\n",
 		   idx,
@@ -824,7 +824,7 @@ add_unique_pair(struct region_pair *list, /* list to add into */
 
     /* look for it in our list */
     bu_semaphore_acquire( SEM_LIST );
-    for( BU_LIST_FOR(rp, region_pair, &list->l) ) {
+    for ( BU_LIST_FOR(rp, region_pair, &list->l) ) {
 
 	if ( (r1 == rp->r.r1 && r2 == rp->r2) || (r1 == rp->r2 && r2 == rp->r.r1) ) {
 	    /* we already have an entry for this region pair,
@@ -852,7 +852,7 @@ add_unique_pair(struct region_pair *list, /* list to add into */
     list->max_dist ++; /* really a count */
 
     /* insert in the list at the "nice" place */
-    for( BU_LIST_FOR(rp, region_pair, &list->l) ) {
+    for ( BU_LIST_FOR(rp, region_pair, &list->l) ) {
 	if (strcmp(rp->r.r1->reg_name, r1->reg_name) <= 0 )
 	    break;
     }
@@ -901,7 +901,7 @@ overlap(struct application *ap,
 
     depth = ohitp->hit_dist - ihitp->hit_dist;
 
-    if( depth < overlap_tolerance )
+    if ( depth < overlap_tolerance )
 	/* too small to matter, pick one or none */
 	return(1);
 
@@ -1007,7 +1007,7 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 
 
     /* examine each partition until we get back to the head */
-    for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )  {
+    for ( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )  {
 	struct density_entry *de;
 
 	/* inhit info */
@@ -1282,7 +1282,7 @@ plane_worker (int cpu, genptr_t ptr)
 	     * This is either the first time a view has been computed
 	     * or it is an odd numbered row in a grid refinement
 	     */
-	    for (u=1 ; u < state->steps[state->u_axis]; u++) {
+	    for (u=1; u < state->steps[state->u_axis]; u++) {
 		ap.a_ray.r_pt[state->u_axis] = ap.a_rt_i->mdl_min[state->u_axis] + u*gridSpacing;
 		ap.a_ray.r_pt[state->v_axis] = ap.a_rt_i->mdl_min[state->v_axis] + v*gridSpacing;
 		ap.a_ray.r_pt[state->i_axis] = ap.a_rt_i->mdl_min[state->i_axis];
@@ -1299,7 +1299,7 @@ plane_worker (int cpu, genptr_t ptr)
 	    /* shoot only the rays we need to on this row.
 	     * Some of them have been computed in a previous iteration.
 	     */
-	    for (u=1 ; u < state->steps[state->u_axis]; u+=2) {
+	    for (u=1; u < state->steps[state->u_axis]; u+=2) {
 		ap.a_ray.r_pt[state->u_axis] = ap.a_rt_i->mdl_min[state->u_axis] + u*gridSpacing;
 		ap.a_ray.r_pt[state->v_axis] = ap.a_rt_i->mdl_min[state->v_axis] + v*gridSpacing;
 		ap.a_ray.r_pt[state->i_axis] = ap.a_rt_i->mdl_min[state->i_axis];
@@ -1349,7 +1349,7 @@ find_cmd_line_obj(struct per_obj_data *obj_rpt, const char *name)
 	*p = '\0';
     }
 
-    for (i=0 ; i < num_objects ; i++) {
+    for (i=0; i < num_objects; i++) {
 	if (!strcmp(obj_rpt[i].o_name, str)) {
 	    bu_free(str, "");
 	    return i;
@@ -1384,7 +1384,7 @@ allocate_per_region_data(struct cstate *state, int start, int ac, char *av[])
      * objects the user specified on the command line
      */
     obj_tbl = bu_calloc(sizeof(struct per_obj_data), num_objects, "report tables");
-    for (i=0 ; i < num_objects ; i++) {
+    for (i=0; i < num_objects; i++) {
 	obj_tbl[i].o_name = av[start+i];
 	obj_tbl[i].o_len = bu_calloc(sizeof(double), num_views, "o_len");
 	obj_tbl[i].o_lenDensity = bu_calloc(sizeof(double), num_views, "o_lenDensity");
@@ -1396,7 +1396,7 @@ allocate_per_region_data(struct cstate *state, int start, int ac, char *av[])
     reg_tbl = bu_calloc(rtip->nregions, sizeof(struct per_region_data), "per_region_data");
 
 
-    for( i=0, BU_LIST_FOR( regp, region, &(rtip->HeadRegion) ), i++)  {
+    for ( i=0, BU_LIST_FOR( regp, region, &(rtip->HeadRegion) ), i++)  {
 	regp->reg_udata = &reg_tbl[i];
 
 	reg_tbl[i].r_lenDensity = bu_calloc(sizeof(double), num_views, "r_lenDensity");
@@ -1475,7 +1475,7 @@ options_prep(struct rt_i *rtip, vect_t span)
     /* refine the grid spacing if the user has set a
      * lower bound on the number of rays per model axis
      */
-    for (axis=0 ; axis < 3 ; axis++) {
+    for (axis=0; axis < 3; axis++) {
 	if (span[axis] < newGridSpacing*Samples_per_model_axis) {
 	    /* along this axis, the gridSpacing is
 	     * larger than the model span.  We need to refine.
@@ -1511,7 +1511,7 @@ options_prep(struct rt_i *rtip, vect_t span)
 	if (weight_tolerance == -1.0) {
 	    double max_den = 0.0;
 	    int i;
-	    for (i=0 ; i < num_densities ; i++) {
+	    for (i=0; i < num_densities; i++) {
 		if (densities[i].grams_per_cu_mm > max_den)
 		    max_den = densities[i].grams_per_cu_mm;
 	    }
@@ -1575,7 +1575,7 @@ view_reports(struct cstate *state)
 	int view;
 
 	/* for each object, compute the volume for all views */
-	for (obj=0 ; obj < num_objects ; obj++) {
+	for (obj=0; obj < num_objects; obj++) {
 	    double val;
 	    /* compute volume of object for given view */
 	    view = state->curr_view;
@@ -1598,7 +1598,7 @@ view_reports(struct cstate *state)
 	int obj;
 	int view = state->curr_view;
 
-	for (obj=0 ; obj < num_objects ; obj++) {
+	for (obj=0; obj < num_objects; obj++) {
 	    double grams_per_cu_mm = obj_tbl[obj].o_lenDensity[view] *
 		(state->area[view] / state->shots[view]);
 
@@ -1638,7 +1638,7 @@ weight_volume_terminate(struct cstate *state)
 	/* for each object, compute the weight for all views */
 	int obj;
 
-	for (obj=0 ; obj < num_objects ; obj++) {
+	for (obj=0; obj < num_objects; obj++) {
 	    int view = 0;
 	    if (verbose)
 		bu_log("object %d\n", obj);
@@ -1649,7 +1649,7 @@ weight_volume_terminate(struct cstate *state)
 	    low = hi = 0.0;
 
 	    /* compute the per-view weight of this object */
-	    for (view=1 ; view < num_views ; view++) {
+	    for (view=1; view < num_views; view++) {
 		obj_tbl[obj].o_weight[view] =
 		    obj_tbl[obj].o_lenDensity[view] *
 		    (state->area[view] / state->shots[view]);
@@ -1688,7 +1688,7 @@ weight_volume_terminate(struct cstate *state)
 	int obj;
 
 	/* for each object, compute the volume for all views */
-	for (obj=0 ; obj < num_objects ; obj++) {
+	for (obj=0; obj < num_objects; obj++) {
 
 	    /* compute volume of object for given view */
 	    int view = 0;
@@ -1697,7 +1697,7 @@ weight_volume_terminate(struct cstate *state)
 
 	    low = hi = 0.0;
 	    /* compute the per-view volume of this object */
-	    for (view=1 ; view < num_views ; view++) {
+	    for (view=1; view < num_views; view++) {
 		obj_tbl[obj].o_volume[view] =
 		    obj_tbl[obj].o_len[view] * (state->area[view] / state->shots[view]);
 
@@ -1819,7 +1819,7 @@ terminate_check(struct cstate *state)
 
 	    if (require_num_hits > 0) {
 		/* check to make sure every region was hit at least once */
-		for( BU_LIST_FOR( regp, region, &(state->rtip->HeadRegion) ) )  {
+		for ( BU_LIST_FOR( regp, region, &(state->rtip->HeadRegion) ) )  {
 		    RT_CK_REGION(regp);
 
 		    hits = ((struct per_region_data *)regp->reg_udata)->hits;
@@ -1873,10 +1873,10 @@ summary_reports(struct cstate *state, int start, int ac, char *av[])
 
     if (analysis_flags & ANALYSIS_WEIGHT) {
 	bu_log("Weight:\n");
-	for (obj=0 ; obj < num_objects ; obj++) {
+	for (obj=0; obj < num_objects; obj++) {
 	    avg = 0.0;
 
-	    for (view=0 ; view < num_views ; view++) {
+	    for (view=0; view < num_views; view++) {
 		/* computed in terminate_check() */
 		avg += obj_tbl[obj].o_weight[view];
 	    }
@@ -1889,13 +1889,13 @@ summary_reports(struct cstate *state, int start, int ac, char *av[])
 	if (print_per_region_stats) {
 	    double *wv;
 	    bu_log("\tregions:\n");
-	    for( BU_LIST_FOR( regp, region, &(state->rtip->HeadRegion) ))  {
+	    for ( BU_LIST_FOR( regp, region, &(state->rtip->HeadRegion) ))  {
 		double low = HUGE;
 		double hi = -HUGE;
 
 		avg = 0.0;
 
-		for (view=0 ; view < num_views ; view++) {
+		for (view=0; view < num_views; view++) {
 		    wv = &((struct per_region_data *)regp->reg_udata)->r_weight[view];
 
 		    *wv = ((struct per_region_data *)regp->reg_udata)->r_lenDensity[view] *
@@ -1922,7 +1922,7 @@ summary_reports(struct cstate *state, int start, int ac, char *av[])
 
 	/* print grand totals */
 	avg = 0.0;
-	for (view=0 ; view < num_views ; view++) {
+	for (view=0; view < num_views; view++) {
 	    avg += state->m_weight[view] =
 		state->m_lenDensity[view] *
 		( state->area[view] / state->shots[view]);
@@ -1937,10 +1937,10 @@ summary_reports(struct cstate *state, int start, int ac, char *av[])
 	bu_log("Volume:\n");
 
 	/* print per-object */
-	for (obj=0 ; obj < num_objects ; obj++) {
+	for (obj=0; obj < num_objects; obj++) {
 	    avg = 0.0;
 
-	    for (view=0 ; view < num_views ; view++)
+	    for (view=0; view < num_views; view++)
 		avg += obj_tbl[obj].o_volume[view];
 
 	    avg /= num_views;
@@ -1952,12 +1952,12 @@ summary_reports(struct cstate *state, int start, int ac, char *av[])
 	    double *vv;
 
 	    bu_log("\tregions:\n");
-	    for( BU_LIST_FOR( regp, region, &(state->rtip->HeadRegion) ))  {
+	    for ( BU_LIST_FOR( regp, region, &(state->rtip->HeadRegion) ))  {
 		double low = HUGE;
 		double hi = -HUGE;
 		avg = 0.0;
 
-		for (view=0 ; view < num_views ; view++) {
+		for (view=0; view < num_views; view++) {
 		    vv = &((struct per_region_data *)regp->reg_udata)->r_volume[view];
 
 		    /* convert view length to a volume */
@@ -1988,7 +1988,7 @@ summary_reports(struct cstate *state, int start, int ac, char *av[])
 
 	/* print grand totals */
 	avg = 0.0;
-	for (view=0 ; view < num_views ; view++) {
+	for (view=0; view < num_views; view++) {
 	    avg += state->m_volume[view] =
 		state->m_len[view] * ( state->area[view] / state->shots[view]);
 	}
@@ -2001,7 +2001,7 @@ summary_reports(struct cstate *state, int start, int ac, char *av[])
     if (analysis_flags & ANALYSIS_GAP) list_report(&gapList);
     if (analysis_flags & ANALYSIS_EXP_AIR) list_report(&exposedAirList);
 
-    for( BU_LIST_FOR( regp, region, &(state->rtip->HeadRegion) ) )  {
+    for ( BU_LIST_FOR( regp, region, &(state->rtip->HeadRegion) ) )  {
 	unsigned long hits;
 
 	RT_CK_REGION(regp);
@@ -2058,7 +2058,7 @@ main(int ac, char *av[])
      *  the database to be ray traced.  It also gives back the
      *  title string in the header (ID) record.
      */
-    if( (rtip=rt_dirbuild(av[arg_count], idbuf, IDBUFSIZE)) == RTI_NULL ) {
+    if ( (rtip=rt_dirbuild(av[arg_count], idbuf, IDBUFSIZE)) == RTI_NULL ) {
 	fprintf(stderr, "g_qa: rt_dirbuild failure on %s\n", av[arg_count]);
 	bu_exit(2, NULL);
     }
@@ -2072,8 +2072,8 @@ main(int ac, char *av[])
      * Here we identify any object trees in the database that the user
      * wants included in the ray trace.
      */
-    for ( ; arg_count < ac ; arg_count++ )  {
-	if( rt_gettree(rtip, av[arg_count]) < 0 )
+    for (; arg_count < ac; arg_count++ )  {
+	if ( rt_gettree(rtip, av[arg_count]) < 0 )
 	    fprintf(stderr, "rt_gettree(%s) FAILED\n", av[arg_count]);
     }
 
@@ -2081,7 +2081,7 @@ main(int ac, char *av[])
      *  Initialize all the per-CPU memory resources.
      *  The number of processors can change at runtime, init them all.
      */
-    for( i=0; i < max_cpus; i++ )  {
+    for ( i=0; i < max_cpus; i++ )  {
 	rt_init_resource( &resource[i], i, rtip );
 	bn_rand_init( resource[i].re_randptr, i );
     }
@@ -2152,7 +2152,7 @@ main(int ac, char *av[])
 	       state.steps[2]-1);
 
 
-	for (view=0 ; view < num_views ; view++) {
+	for (view=0; view < num_views; view++) {
 
 	    if (verbose)
 		bu_log("  view %d\n", view);

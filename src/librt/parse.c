@@ -103,10 +103,10 @@ bu_structprint(const char *title, const struct bu_structparse *parsetab, const c
 		bu_log( "Null \"struct bu_structparse\" pointer\n");
 		return;
 	}
-	for( sdp = parsetab; sdp->sp_name != (char *)0; sdp++ )  {
+	for ( sdp = parsetab; sdp->sp_name != (char *)0; sdp++ )  {
 
 		/* Skip alternate keywords for same value */
-		if( lastoff == sdp->sp_offset )
+		if ( lastoff == sdp->sp_offset )
 			continue;
 		lastoff = sdp->sp_offset;
 
@@ -129,7 +129,7 @@ bu_structprint(const char *title, const struct bu_structparse *parsetab, const c
 		bu_vls_item_print( &vls, sdp, base );
 		bu_log( " %s=%s\n", sdp->sp_name, bu_vls_addr(&vls) );
 #else
-		switch( sdp->sp_fmt[1] )  {
+		switch ( sdp->sp_fmt[1] )  {
 		case 'c':
 		case 's':
 			if (sdp->sp_count < 1)
@@ -244,7 +244,7 @@ bu_parse_double(const char *str, long int count, double *loc)
 	char	buf[128];
 	int	len;
 
-	for (i=0 ; i < count && *str ; ++i){
+	for (i=0; i < count && *str; ++i){
 		numstart = str;
 
 		/* skip sign */
@@ -252,7 +252,7 @@ bu_parse_double(const char *str, long int count, double *loc)
 
 		/* skip matissa */
 		dot_seen = 0;
-		for ( ; *str ; str++ ) {
+		for (; *str; str++ ) {
 			if (*str == '.' && !dot_seen) {
 				dot_seen = 1;
 				continue;
@@ -277,11 +277,11 @@ bu_parse_double(const char *str, long int count, double *loc)
 		}
 
 		len = str - numstart;
-		if( len > sizeof(buf)-1 )  len = sizeof(buf)-1;
+		if ( len > sizeof(buf)-1 )  len = sizeof(buf)-1;
 		strncpy( buf, numstart, len );
 		buf[len] = '\0';
 
-		if( sscanf( buf, "%lf", &tmp_double ) != 1 )
+		if ( sscanf( buf, "%lf", &tmp_double ) != 1 )
 			return -1;
 
 		*loc++ = tmp_double;
@@ -310,9 +310,9 @@ bu_struct_lookup(register const struct bu_structparse *sdp, register const char 
 	register char *loc;
 	int i, retval = 0;
 
-	for( ; sdp->sp_name != (char *)0; sdp++ )  {
+	for (; sdp->sp_name != (char *)0; sdp++ )  {
 
-		if( strcmp( sdp->sp_name, name ) != 0	/* no name match */
+		if ( strcmp( sdp->sp_name, name ) != 0	/* no name match */
 		    && sdp->sp_fmt[0] != 'i' )		/* no include desc */
 
 		    continue;
@@ -325,7 +325,7 @@ bu_struct_lookup(register const struct bu_structparse *sdp, register const char 
 
 		if (sdp->sp_fmt[0] == 'i') {
 			/* Indirect to another structure */
-			if( bu_struct_lookup(
+			if ( bu_struct_lookup(
 				(struct bu_structparse *)sdp->sp_count,
 				name, base, value )
 			    == 0 )
@@ -339,7 +339,7 @@ bu_struct_lookup(register const struct bu_structparse *sdp, register const char 
 			return(-1);
 		}
 
-		switch( sdp->sp_fmt[1] )  {
+		switch ( sdp->sp_fmt[1] )  {
 		case 'c':
 		case 's':
 			{	register int i, j;
@@ -347,8 +347,8 @@ bu_struct_lookup(register const struct bu_structparse *sdp, register const char 
 				/* copy the string, converting escaped
 				 * double quotes to just double quotes
 				 */
-				for(i=j=0 ;
-				    j < sdp->sp_count && value[i] != '\0' ;
+				for (i=j=0;
+				    j < sdp->sp_count && value[i] != '\0';
 				    loc[j++] = value[i++])
 					if (value[i] == '\\' &&
 					    value[i+1] == '"')
@@ -368,7 +368,7 @@ bu_struct_lookup(register const struct bu_structparse *sdp, register const char 
 			{	register short *ip = (short *)loc;
 				register short tmpi;
 				register const char *cp;
-				for (i=0 ; i < sdp->sp_count && *value ; ++i){
+				for (i=0; i < sdp->sp_count && *value; ++i){
 					tmpi = atoi( value );
 
 					cp = value;
@@ -400,13 +400,13 @@ bu_struct_lookup(register const struct bu_structparse *sdp, register const char 
 				register int tmpi;
 				register char const *cp;
 				/* Special case:  '=!' toggles a boolean */
-				if( *value == '!' )  {
+				if ( *value == '!' )  {
 					*ip = *ip ? 0 : 1;
 					value++;
 					break;
 				}
 				/* Normal case: an integer */
-				for (i=0 ; i < sdp->sp_count && *value ; ++i){
+				for (i=0; i < sdp->sp_count && *value; ++i){
 					tmpi = atoi( value );
 
 					cp = value;
@@ -442,7 +442,7 @@ bu_struct_lookup(register const struct bu_structparse *sdp, register const char 
 				name, sdp->sp_fmt );
 			return(-1);
 		}
-		if( sdp->sp_hook )  {
+		if ( sdp->sp_hook )  {
 			sdp->sp_hook( sdp, name, base, value );
 		}
 		return(retval);		/* OK or parse error */
@@ -483,11 +483,11 @@ bu_structparse(const struct bu_vls *in_vls, const struct bu_structparse *desc, c
 	bu_vls_vlscat( &vls, in_vls );
 	cp = bu_vls_addr( &vls );
 
-	while( *cp )  {
+	while ( *cp )  {
 		/* NAME = VALUE white-space-separator */
 
 		/* skip any leading whitespace */
-		while( *cp != '\0' && isascii(*cp) && isspace(*cp) )
+		while ( *cp != '\0' && isascii(*cp) && isspace(*cp) )
 			cp++;
 
 		/* Find equal sign */
@@ -495,8 +495,8 @@ bu_structparse(const struct bu_vls *in_vls, const struct bu_structparse *desc, c
 		while ( *cp != '\0' && *cp != '=' )
 			cp++;
 
-		if( *cp == '\0' )  {
-			if( name == cp ) break;
+		if ( *cp == '\0' )  {
+			if ( name == cp ) break;
 
 			/* end of string in middle of arg */
 			bu_log("bu_structparse: name '%s' without '='\n",
@@ -513,7 +513,7 @@ bu_structparse(const struct bu_vls *in_vls, const struct bu_structparse *desc, c
 			 * skip leading " & find terminating "
 			 * while skipping escaped quotes (\")
 			 */
-			for (value = ++cp ; *cp != '\0' ; ++cp)
+			for (value = ++cp; *cp != '\0'; ++cp)
 				if (*cp == '"' &&
 				    (cp == value || *(cp-1) != '\\') )
 					break;
@@ -527,20 +527,20 @@ bu_structparse(const struct bu_vls *in_vls, const struct bu_structparse *desc, c
 		} else {
 			/* non-strings are white-space delimited */
 			value = cp;
-			while( *cp != '\0' && isascii(*cp) && !isspace(*cp) )
+			while ( *cp != '\0' && isascii(*cp) && !isspace(*cp) )
 				cp++;
 		}
 
-		if( *cp != '\0' )
+		if ( *cp != '\0' )
 			*cp++ = '\0';
 
 		/* Lookup name in desc table and modify */
 		retval = bu_struct_lookup( desc, name, base, value );
-		if( retval == -1 ) {
+		if ( retval == -1 ) {
 		    bu_log("bu_structparse:  '%s=%s', element name not found in:\n",
 			   name, value);
 		    bu_structprint( "troublesome one", desc, base );
-		} else if( retval == -2 ) {
+		} else if ( retval == -2 ) {
 		    bu_vls_free( &vls );
 		    return -2;
 		}
@@ -578,7 +578,7 @@ bu_vls_item_print_core(struct bu_vls *vp, const struct bu_structparse *sdp, cons
 	return;
     }
 
-    switch( sdp->sp_fmt[1] )  {
+    switch ( sdp->sp_fmt[1] )  {
     case 'c':
     case 's':
 	if (sdp->sp_count < 1)
@@ -598,28 +598,28 @@ bu_vls_item_print_core(struct bu_vls *vp, const struct bu_structparse *sdp, cons
 	register short *sp = (short *)loc;
 
 	bu_vls_printf( vp, "%hd", *sp++ );
-	while( --i > 0 ) bu_vls_printf( vp, "%c%hd", sep_char, *sp++ ); }
+	while ( --i > 0 ) bu_vls_printf( vp, "%c%hd", sep_char, *sp++ ); }
 	break;
     case 'd': {
 	register int i = sdp->sp_count;
 	register int *dp = (int *)loc;
 
 	bu_vls_printf( vp, "%d", *dp++ );
-	while( --i > 0 ) bu_vls_printf( vp, "%c%d", sep_char, *dp++ ); }
+	while ( --i > 0 ) bu_vls_printf( vp, "%c%d", sep_char, *dp++ ); }
 	break;
     case 'f': {
 	register int i = sdp->sp_count;
 	register double *dp = (double *)loc;
 
 	bu_vls_printf( vp, "%.25G", *dp++ );
-	while( --i > 0 ) bu_vls_printf( vp, "%c%.25G", sep_char, *dp++ ); }
+	while ( --i > 0 ) bu_vls_printf( vp, "%c%.25G", sep_char, *dp++ ); }
 	break;
     case 'x': {
 	register int i = sdp->sp_count;
 	register int *dp = (int *)loc;
 
 	bu_vls_printf( vp, "%08x", *dp++ );
-	while( --i > 0 ) bu_vls_printf( vp, "%c%08x", sep_char, *dp++ );  }
+	while ( --i > 0 ) bu_vls_printf( vp, "%c%08x", sep_char, *dp++ );  }
 	break;
     default:
 	break;
@@ -668,8 +668,8 @@ bu_vls_name_print(struct bu_vls *vp, const struct bu_structparse *parsetab, cons
 {
     register const struct bu_structparse *sdp;
 
-    for( sdp = parsetab; sdp->sp_name != NULL; sdp++ )
-	if( strcmp(sdp->sp_name, name) == 0 ) {
+    for ( sdp = parsetab; sdp->sp_name != NULL; sdp++ )
+	if ( strcmp(sdp->sp_name, name) == 0 ) {
 	    bu_vls_item_print( vp, sdp, base );
 	    return 0;
 	}
@@ -687,8 +687,8 @@ bu_vls_name_print_nc(struct bu_vls *vp, const struct bu_structparse *parsetab, c
 {
     register const struct bu_structparse *sdp;
 
-    for( sdp = parsetab; sdp->sp_name != NULL; sdp++ )
-	if( strcmp(sdp->sp_name, name) == 0 ) {
+    for ( sdp = parsetab; sdp->sp_name != NULL; sdp++ )
+	if ( strcmp(sdp->sp_name, name) == 0 ) {
 	    bu_vls_item_print_nc( vp, sdp, base );
 	    return 0;
 	}
@@ -746,10 +746,10 @@ bu_vls_structprint(struct bu_vls *vls, register const struct bu_structparse *sdp
 		return;
 	}
 
-	for ( ; sdp->sp_name != (char*)NULL ; sdp++) {
+	for (; sdp->sp_name != (char*)NULL; sdp++) {
 		/* Skip alternate keywords for same value */
 
-		if( lastoff == sdp->sp_offset )
+		if ( lastoff == sdp->sp_offset )
 			continue;
 		lastoff = sdp->sp_offset;
 
@@ -774,7 +774,7 @@ bu_vls_structprint(struct bu_vls *vls, register const struct bu_structparse *sdp
 			break;
 		}
 
-		switch( sdp->sp_fmt[1] )  {
+		switch ( sdp->sp_fmt[1] )  {
 		case 'c':
 		case 's':
 			if (sdp->sp_count < 1)

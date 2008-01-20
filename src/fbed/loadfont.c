@@ -48,24 +48,24 @@ int loadfont(char *ff)
 	struct header	lochdr;
 
 	/* Open the file and read in the header information. */
-	if( (newff = fopen( ff, "r" )) == NULL )
+	if ( (newff = fopen( ff, "r" )) == NULL )
 		{
 		MvCursor( 1, 4 );
 		prnt_Debug( "Error opening font file '%s'", ff );
 		ffdes = NULL;
 		return 0;
 		}
-	if( ffdes != NULL )
+	if ( ffdes != NULL )
 		(void) fclose(ffdes);
 	ffdes = newff;
-	if( fread( (char *) &lochdr, (int) sizeof(struct header), 1, ffdes ) < 1 )
+	if ( fread( (char *) &lochdr, (int) sizeof(struct header), 1, ffdes ) < 1 )
 		{
 		(void) fprintf( stderr, "loadfont() read failed!\n" );
 		ffdes = NULL;
 		return 0;
 		}
 
-	if( lochdr.magic != 0436 )
+	if ( lochdr.magic != 0436 )
 		{
 		prnt_Debug( "Not a font file: %s", ff );
 		ffdes = NULL;
@@ -74,7 +74,7 @@ int loadfont(char *ff)
 	hdr = lochdr;
 
 	/* Read in the directory for the font. */
-	if( fread( (char *) dir, (int) sizeof(struct dispatch), 256, ffdes ) < 256 )
+	if ( fread( (char *) dir, (int) sizeof(struct dispatch), 256, ffdes ) < 256 )
 		{
 		(void) fprintf( stderr, "loadfont() read failed!\n" );
 		ffdes = NULL;

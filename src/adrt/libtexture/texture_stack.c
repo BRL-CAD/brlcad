@@ -68,7 +68,7 @@ void texture_stack_work(__TEXTURE_WORK_PROTOTYPE__) {
 
   td = (texture_stack_t *)texture->data;
 
-  for(i = td->num-1; i >= 0; i--)
+  for (i = td->num-1; i >= 0; i--)
     td->list[i]->work(td->list[i], mesh, ray, id, pixel);
 }
 

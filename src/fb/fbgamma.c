@@ -61,7 +61,7 @@ void mk_ramp(FBIO *fb, int r, int g, int b, int n)
 {
 
 	/* grey ramp */
-	for (x=0 ; x < scr_width ; ++x) {
+	for (x=0; x < scr_width; ++x) {
 		if (r) line[x*3] = rampval[x / patch_width + 1];
 		else line[x*3] = 0;
 		if (g) line[x*3+1] = rampval[x / patch_width + 1];
@@ -69,11 +69,11 @@ void mk_ramp(FBIO *fb, int r, int g, int b, int n)
 		if (b) line[x*3+2] = rampval[x / patch_width + 1];
 		else line[x*3+2] = 0;
 	}
-	for (y=patch_height*n ; y < patch_height*(n+1) && y < scr_height ; ++y) {
+	for (y=patch_height*n; y < patch_height*(n+1) && y < scr_height; ++y) {
 		fb_write(fb, 0, y, line, scr_width);
 	}
 
-	for (x=0 ; x < scr_width ; ++x) {
+	for (x=0; x < scr_width; ++x) {
 		if (r) line[x*3] = rampval[x / patch_width];
 		else line[x*3] = 0;
 		if (g) line[x*3+1] = rampval[x / patch_width];
@@ -81,7 +81,7 @@ void mk_ramp(FBIO *fb, int r, int g, int b, int n)
 		if (b) line[x*3+2] = rampval[x / patch_width];
 		else line[x*3+2] = 0;
 	}
-	for (y=patch_height*(n+1) ; y < patch_height*(n+2) && y < scr_height ; y += 2) {
+	for (y=patch_height*(n+1); y < patch_height*(n+2) && y < scr_height; y += 2) {
 		fb_write(fb, 0, y, altline, scr_width);
 		fb_write(fb, 0, y+1, line, scr_width);
 	}
@@ -129,7 +129,7 @@ main(int argc, char **argv)
 	/* check for flags */
 	bu_opterr = 0;
 	while ((i=bu_getopt(argc, argv, options)) != EOF) {
-		switch(i) {
+		switch (i) {
 		case 'h'	: fbsize = 1024; break;
 		case 'o'	: overlay++; break;
 		case 'i'	: image = !image; break;
@@ -162,7 +162,7 @@ main(int argc, char **argv)
 	if (pkg_init() != 0)
 	    bu_exit(1, NULL);
 
-	if( (fbp = fb_open( framebuffer, fbsize, fbsize )) == FBIO_NULL ) {
+	if ( (fbp = fb_open( framebuffer, fbsize, fbsize )) == FBIO_NULL ) {
 		bu_exit( 2, "Unable to open framebuffer\n" );
 	}
 
@@ -170,31 +170,31 @@ main(int argc, char **argv)
 	if (image) disp_image(fbp);
 
 	/* get the starting map */
-	if( overlay ) {
+	if ( overlay ) {
 		fb_rmap( fbp, &cm );
 	} else {
 		/* start with a linear map */
-		for( i = 0; i < 256; i++ ) {
+		for ( i = 0; i < 256; i++ ) {
 			cm.cm_red[i] = cm.cm_green[i]
 			= cm.cm_blue[i] = i << 8;
 		}
 	}
 
 	/* apply the gamma(s) */
-	for( i = 0; i < 256; i++ ) {
-		if( gamr < 0 )
+	for ( i = 0; i < 256; i++ ) {
+		if ( gamr < 0 )
 			cm.cm_red[i] = 65535 * pow( (double)cm.cm_red[i] / 65535.0, -1.0/gamr );
 		else
 			cm.cm_red[i] = 65535 * pow( (double)cm.cm_red[i] / 65535.0, gamr );
-		if( onegamma && (overlay == 0) ) {
+		if ( onegamma && (overlay == 0) ) {
 			cm.cm_green[i] = cm.cm_red[i];
 			cm.cm_blue[i]  = cm.cm_red[i];
 		} else {
-			if( gamg < 0 )
+			if ( gamg < 0 )
 				cm.cm_green[i] = 65535 * pow( (double)cm.cm_green[i] / 65535.0, -1.0/gamg );
 			else
 				cm.cm_green[i] = 65535 * pow( (double)cm.cm_green[i] / 65535.0, gamg );
-			if( gamb < 0 )
+			if ( gamb < 0 )
 				cm.cm_blue[i]  = 65535 * pow( (double)cm.cm_blue[i] / 65535.0, -1.0/gamb );
 			else
 				cm.cm_blue[i]  = 65535 * pow( (double)cm.cm_blue[i] / 65535.0, gamb );
@@ -209,7 +209,7 @@ main(int argc, char **argv)
 void
 checkgamma(double g)
 {
-	if( fabs(g) < 1.0e-10 ) {
+	if ( fabs(g) < 1.0e-10 ) {
 		fprintf( stderr, "fbgamma: gamma too close to zero\n" );
 		bu_exit(3, "%s", usage );
 	}

@@ -74,7 +74,7 @@ struct	kernels {
 	{ "Boxcar Average", "b", {1, 1, 1, 1, 1, 1, 1, 1, 1,
 				 1, 1, 1, 1, 27, 1, 1, 1, 1,
 				 1, 1, 1, 1, 1, 1, 1, 1, 1}, 53, 0},
-	{ "Animation Smear", "s",{1, 1, 1, 1, 1, 1, 1, 1, 1,
+	{ "Animation Smear", "s", {1, 1, 1, 1, 1, 1, 1, 1, 1,
 				 1, 1, 1, 1, 1, 1, 1, 1, 1,
 				 2, 2, 2, 2, 35, 2, 2, 2, 2}, 69, 0},
 	{ NULL, NULL, {0, 0, 0, 0, 0, 0, 0, 0, 0}, 0, 0 },
@@ -105,7 +105,7 @@ get_args(int argc, register char **argv)
 	register int c;
 
 	while ( (c = bu_getopt( argc, argv, "vf:d:o:w:n:s:" )) != EOF )  {
-		switch( c )  {
+		switch ( c )  {
 		case 'v':
 			verbose++;
 			break;
@@ -134,27 +134,27 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( bu_optind >= argc )  {
+	if ( bu_optind >= argc )  {
 		(void) fprintf( stderr,
 		    "pix3filter: must supply a file name\n");
 		return(0);
 	} else if ( bu_optind + 3 <= argc ) {
 
-		if( (oldfp = fopen(argv[bu_optind], "r")) == NULL )  {
+		if ( (oldfp = fopen(argv[bu_optind], "r")) == NULL )  {
 			(void)fprintf( stderr,
 				"pix3filter: cannot open \"%s\" for reading\n",
 				argv[bu_optind] );
 			return(0);
 		}
 
-		if( (curfp = fopen(argv[++bu_optind], "r")) == NULL )  {
+		if ( (curfp = fopen(argv[++bu_optind], "r")) == NULL )  {
 			(void)fprintf( stderr,
 				"pix3filter: cannot open \"%s\" for reading\n",
 				argv[bu_optind] );
 			return(0);
 		}
 
-		if( (newfp = fopen(argv[++bu_optind], "r")) == NULL )  {
+		if ( (newfp = fopen(argv[++bu_optind], "r")) == NULL )  {
 			(void)fprintf( stderr,
 				"pix3filter: cannot open \"%s\" for reading\n",
 				argv[bu_optind] );
@@ -168,7 +168,7 @@ get_args(int argc, register char **argv)
 		file_name = argv[bu_optind];
 		working_name = (char *)malloc(strlen(file_name)+5);
 
-		if( (curfp = fopen(file_name, "r")) == NULL )  {
+		if ( (curfp = fopen(file_name, "r")) == NULL )  {
 			(void)fprintf( stderr,
 				"pix3filter: cannot open \"%s\" for reading\n",
 				file_name );
@@ -214,7 +214,7 @@ get_args(int argc, register char **argv)
 		bu_optind += 1;
 	}
 
-	if( isatty(fileno(stdout)) )
+	if ( isatty(fileno(stdout)) )
 		return(0);
 
 	if ( argc > bu_optind )
@@ -238,7 +238,7 @@ main(int argc, char **argv)
 		bu_exit ( 1, NULL );
 	}
 
-	if( width > MAXLINE )  {
+	if ( width > MAXLINE )  {
 		fprintf(stderr, "pix3filter:  limited to scanlines of %d\n", MAXLINE);
 		bu_exit ( 1, NULL );
 	}
@@ -277,24 +277,24 @@ main(int argc, char **argv)
  */
 	fwrite( bottomcur, sizeof( char ), 3*width, stdout );
 
-	if(verbose) {
-		for( x = 0; x < 29; x++ )
+	if (verbose) {
+		for ( x = 0; x < 29; x++ )
 			fprintf(stderr, "kern[%d] = %d\n", x, kern[x]);
 	}
 
 	max = 0;
 	min = 255;
 
-	for( y = 1; y < height-1; y++ ) {
+	for ( y = 1; y < height-1; y++ ) {
 		/* read in top lines */
 		fread( topold, sizeof( char ), 3*width, oldfp );
 		fread( topcur, sizeof( char ), 3*width, curfp );
 		fread( topnew, sizeof( char ), 3*width, newfp );
 
-		for( color = 0; color < 3; color++ ) {
+		for ( color = 0; color < 3; color++ ) {
 			obuf[0+color] = middlecur[0+color];
 			/* Filter a line */
-			for( x = 3+color; x < 3*(width-1); x += 3 ) {
+			for ( x = 3+color; x < 3*(width-1); x += 3 ) {
 				r1 = topold[x-3] * kern[0] +
 				    topold[x] * kern[1] +
 				    topold[x+3] * kern[2];
@@ -324,15 +324,15 @@ main(int argc, char **argv)
 				    bottomnew[x+3] * kern[26];
 				value = (r1+r2+r3+r4+r5+r6+r7+r8+r9) /
 				     kerndiv + kernoffset;
-				if( value > max ) max = value;
-				if( value < min ) min = value;
-				if( verbose && (value > 255 || value < 0) ) {
+				if ( value > max ) max = value;
+				if ( value < min ) min = value;
+				if ( verbose && (value > 255 || value < 0) ) {
 					fprintf(stderr, "Value %d\n", value);
 					fprintf(stderr, "r1=%d, r2=%d, r3=%d\n", r1, r2, r3);
 				}
-				if( value < 0 )
+				if ( value < 0 )
 					obuf[x] = 0;
-				else if( value > 255 )
+				else if ( value > 255 )
 					obuf[x] = 255;
 				else
 					obuf[x] = value;
@@ -361,7 +361,7 @@ main(int argc, char **argv)
 	fwrite( topcur, sizeof( char ), 3*width, stdout );
 
 	/* Give advise on scaling factors */
-	if( verbose )
+	if ( verbose )
 		fprintf( stderr, "Max = %d,  Min = %d\n", max, min );
 
 	bu_exit ( 0, NULL );
@@ -379,13 +379,13 @@ select_filter(char *str)
 	int	i;
 
 	i = 0;
-	while( kernel[i].name != NULL ) {
-		if( strncmp( str, kernel[i].uname, strlen( kernel[i].uname ) ) == 0 )
+	while ( kernel[i].name != NULL ) {
+		if ( strncmp( str, kernel[i].uname, strlen( kernel[i].uname ) ) == 0 )
 			break;
 		i++;
 	}
 
-	if( kernel[i].name == NULL ) {
+	if ( kernel[i].name == NULL ) {
 		/* No match, output list and exit */
 		fprintf( stderr, "Unrecognized filter type \"%s\"\n", str );
 		dousage();
@@ -394,9 +394,9 @@ select_filter(char *str)
 
 	/* Have a match, set up that kernel */
 	kern = &kernel[i].kern[0];
-	if( dflag == 0 )
+	if ( dflag == 0 )
 		kerndiv = kernel[i].kerndiv;
-	if( oflag == 0 )
+	if ( oflag == 0 )
 		kernoffset = kernel[i].kernoffset;
 }
 
@@ -407,7 +407,7 @@ dousage(void)
 
 	fputs( usage, stderr );
 	i = 0;
-	while( kernel[i].name != NULL ) {
+	while ( kernel[i].name != NULL ) {
 		fprintf( stderr, "%-10s%s\n", kernel[i].uname, kernel[i].name );
 		i++;
 	}

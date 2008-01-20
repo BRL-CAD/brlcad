@@ -196,8 +196,8 @@ int main(int argc, char **argv)
 
 	/* Before option processing, get default number of processors */
 	npsw = bu_avail_cpus();		/* Use all that are present */
-	if( npsw > DEFAULT_PSW )  npsw = DEFAULT_PSW;
-	if( npsw > MAX_PSW )  npsw = MAX_PSW;
+	if ( npsw > DEFAULT_PSW )  npsw = DEFAULT_PSW;
+	if ( npsw > MAX_PSW )  npsw = MAX_PSW;
 
 	/* Before option processing, do application-specific initialization */
 	RT_APPLICATION_INIT( &ap );
@@ -228,7 +228,7 @@ int main(int argc, char **argv)
 	if (rt_verbosity & VERBOSE_LIBVERSIONS) {
 		char	hostname[512] = {0};
 #ifndef _WIN32
-		if( gethostname( hostname, sizeof(hostname) ) >= 0 &&
+		if ( gethostname( hostname, sizeof(hostname) ) >= 0 &&
 		    hostname[0] != '\0' )
 			(void)fprintf(stderr, "Running on %s\n", hostname);
 #else
@@ -237,7 +237,7 @@ int main(int argc, char **argv)
 #endif
 	}
 
-	if( bu_optind >= argc )  {
+	if ( bu_optind >= argc )  {
 		fprintf(stderr, "%s:  MGED database not specified\n", argv[0]);
 		(void)fputs(usage, stderr);
 		return 1;
@@ -249,9 +249,9 @@ int main(int argc, char **argv)
 		ap.a_logoverlap = rt_silent_logoverlap;
 
 	/* If user gave no sizing info at all, use 512 as default */
-	if( width <= 0 && cell_width <= 0 )
+	if ( width <= 0 && cell_width <= 0 )
 		width = 512;
-	if( height <= 0 && cell_height <= 0 )
+	if ( height <= 0 && cell_height <= 0 )
 		height = 512;
 
 	/* If user didn't provide an aspect ratio, use the image
@@ -261,9 +261,9 @@ int main(int argc, char **argv)
 	    aspect = (fastf_t)width / (fastf_t)height;
 	}
 
-	if( sub_grid_mode ) {
+	if ( sub_grid_mode ) {
 		/* check that we have a legal subgrid */
-		if( sub_xmax >= width || sub_ymax >= height ) {
+		if ( sub_xmax >= width || sub_ymax >= height ) {
 			fprintf( stderr, "rt: illegal values for subgrid %d,%d,%d,%d\n",
 				 sub_xmin, sub_ymin, sub_xmax, sub_ymax );
 			fprintf( stderr, "\tFor a %d X %d image, the subgrid must be within 0, 0,%d,%d\n",
@@ -272,11 +272,11 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if( incr_mode )  {
+	if ( incr_mode )  {
 		int x = height;
-		if( x < width )  x = width;
+		if ( x < width )  x = width;
 		incr_nlevel = 1;
-		while( (1<<incr_nlevel) < x )
+		while ( (1<<incr_nlevel) < x )
 			incr_nlevel++;
 		height = width = 1<<incr_nlevel;
 		if (rt_verbosity & VERBOSE_INCREMENTAL)
@@ -292,7 +292,7 @@ int main(int argc, char **argv)
 	npsw = 1;			/* force serial */
 #endif
 
-	if( npsw < 0 )  {
+	if ( npsw < 0 )  {
 		/* Negative number means "all but" npsw */
 		npsw = bu_avail_cpus() + npsw;
 	}
@@ -300,7 +300,7 @@ int main(int argc, char **argv)
 
 	/* allow debug builds to go higher than the max */
 	if (!(bu_debug & BU_DEBUG_PARALLEL)) {
-	    if( npsw > MAX_PSW ) {
+	    if ( npsw > MAX_PSW ) {
 		npsw = MAX_PSW;
 	    }
 	}
@@ -320,16 +320,16 @@ int main(int argc, char **argv)
 	 *  Do not use bu_log() or bu_malloc() before this point!
 	 */
 
-	if( bu_debug )  {
+	if ( bu_debug )  {
 		bu_printb( "libbu bu_debug", bu_debug, BU_DEBUG_FORMAT );
 		bu_log("\n");
 	}
 
-	if( RT_G_DEBUG )  {
+	if ( RT_G_DEBUG )  {
 		bu_printb( "librt rt_g.debug", rt_g.debug, DEBUG_FORMAT );
 		bu_log("\n");
 	}
-	if( rdebug )  {
+	if ( rdebug )  {
 		bu_printb( "rt rdebug", rdebug, RDEBUG_FORMAT );
 		bu_log("\n");
 	}
@@ -343,7 +343,7 @@ int main(int argc, char **argv)
 	nobjs = argc - bu_optind - 1;
 	objtab = &(argv[bu_optind+1]);
 
-	if( nobjs <= 0 )  {
+	if ( nobjs <= 0 )  {
 		bu_log("%s: no objects specified -- raytrace aborted\n", argv[0]);
 		return 1;
 	}
@@ -359,7 +359,7 @@ int main(int argc, char **argv)
 		bu_vls_from_argv( &str,
 			nobjs <= 16 ? nobjs : 16,
 			(const char **)argv+bu_optind+1 );
-		if( nobjs > 16 )
+		if ( nobjs > 16 )
 			bu_vls_strcat( &str, " ...");
 		else
 			bu_vls_putc( &str, ';' );
@@ -370,7 +370,7 @@ int main(int argc, char **argv)
 	/* Build directory of GED database */
 	bu_vls_init( &times );
 	rt_prep_timer();
-	if( (rtip=rt_dirbuild(title_file, idbuf, sizeof(idbuf))) == RTI_NULL ) {
+	if ( (rtip=rt_dirbuild(title_file, idbuf, sizeof(idbuf))) == RTI_NULL ) {
 		bu_log("rt:  rt_dirbuild(%s) failure\n", title_file);
 		return 2;
 	}
@@ -389,11 +389,11 @@ int main(int argc, char **argv)
 	rtip->rti_nu_gfactor = nu_gfactor;
 	rtip->useair = use_air;
 	rtip->rti_save_overlaps = save_overlaps;
-	if( rt_dist_tol > 0 )  {
+	if ( rt_dist_tol > 0 )  {
 		rtip->rti_tol.dist = rt_dist_tol;
 		rtip->rti_tol.dist_sq = rt_dist_tol * rt_dist_tol;
 	}
-	if( rt_perp_tol > 0 )  {
+	if ( rt_perp_tol > 0 )  {
 		rtip->rti_tol.perp = rt_perp_tol;
 		rtip->rti_tol.para = 1 - rt_perp_tol;
 	}
@@ -401,7 +401,7 @@ int main(int argc, char **argv)
 		rt_pr_tol( &rtip->rti_tol );
 
 	/* before view_init */
-	if( outputfile && strcmp( outputfile, "-") == 0 )
+	if ( outputfile && strcmp( outputfile, "-") == 0 )
 		outputfile = (char *)0;
 
 	if (framebuffer != (char *)0)
@@ -412,7 +412,7 @@ int main(int argc, char **argv)
 	 *  Note that width & height may not have been set yet,
 	 *  since they may change from frame to frame.
 	 */
-	if( view_init( &ap, title_file, title_obj, outputfile!=(char *)0, framebuffer!=(char *)0 ) != 0 )  {
+	if ( view_init( &ap, title_file, title_obj, outputfile!=(char *)0, framebuffer!=(char *)0 ) != 0 )  {
 		/* Framebuffer is desired */
 		register int xx, yy;
 		int	zoom;
@@ -420,14 +420,14 @@ int main(int argc, char **argv)
 		/* Ask for a fb big enough to hold the image, at least 512. */
 		/* This is so MGED-invoked "postage stamps" get zoomed up big enough to see */
 		xx = yy = 512;
-		if( width > xx || height > yy )  {
+		if ( width > xx || height > yy )  {
 			xx = width;
 			yy = height;
 		}
 		bu_semaphore_acquire( BU_SEM_SYSCALL );
 		fbp = fb_open( framebuffer, xx, yy );
 		bu_semaphore_release( BU_SEM_SYSCALL );
-		if( fbp == FBIO_NULL )  {
+		if ( fbp == FBIO_NULL )  {
 			fprintf(stderr, "rt:  can't open frame buffer\n");
 			pkg_terminate();
 			return 12;
@@ -435,13 +435,13 @@ int main(int argc, char **argv)
 
 		bu_semaphore_acquire( BU_SEM_SYSCALL );
 		/* If fb came out smaller than requested, do less work */
-		if( fb_getwidth(fbp) < width )  width = fb_getwidth(fbp);
-		if( fb_getheight(fbp) < height )  height = fb_getheight(fbp);
+		if ( fb_getwidth(fbp) < width )  width = fb_getwidth(fbp);
+		if ( fb_getheight(fbp) < height )  height = fb_getheight(fbp);
 
 		/* If the fb is lots bigger (>= 2X), zoom up & center */
-		if( width > 0 && height > 0 )  {
+		if ( width > 0 && height > 0 )  {
 			zoom = fb_getwidth(fbp)/width;
-			if( fb_getheight(fbp)/height < zoom )
+			if ( fb_getheight(fbp)/height < zoom )
 				zoom = fb_getheight(fbp)/height;
 		} else {
 			zoom = 1;
@@ -450,11 +450,11 @@ int main(int argc, char **argv)
 			       zoom, zoom );
 		bu_semaphore_release( BU_SEM_SYSCALL );
 	}
-	if( (outputfile == (char *)0) && (fbp == FBIO_NULL) )  {
+	if ( (outputfile == (char *)0) && (fbp == FBIO_NULL) )  {
 		/* If not going to framebuffer, or to a file, then use stdout */
-		if( outfp == NULL )  outfp = stdout;
+		if ( outfp == NULL )  outfp = stdout;
 		/* output_is_binary is changed by view_init, as appropriate */
-		if( output_is_binary && isatty(fileno(outfp)) )  {
+		if ( output_is_binary && isatty(fileno(outfp)) )  {
 			fprintf(stderr, "rt:  attempting to send binary output to terminal, aborting\n");
 			return 14;
 		}
@@ -464,7 +464,7 @@ int main(int argc, char **argv)
 	 *  Initialize all the per-CPU memory resources.
 	 *  The number of processors can change at runtime, init them all.
 	 */
-	for( i=0; i < MAX_PSW; i++ )  {
+	for ( i=0; i < MAX_PSW; i++ )  {
 		rt_init_resource( &resource[i], i, rtip );
 		bn_rand_init( resource[i].re_randptr, i );
 	}
@@ -477,21 +477,21 @@ int main(int argc, char **argv)
 	(void)signal( SIGINFO, siginfo_handler );
 #endif
 
-	if( !matflag )  {
+	if ( !matflag )  {
 		int frame_retval;
 		def_tree( rtip );		/* Load the default trees */
 		do_ae( azimuth, elevation );
 		frame_retval = do_frame( curframe );
 		if (frame_retval != 0) {
 		    /* Release the framebuffer, if any */
-		    if( fbp != FBIO_NULL ) {
+		    if ( fbp != FBIO_NULL ) {
 			fb_close(fbp);
 			pkg_terminate();
 		    }
 
 		    return 1;
 		}
-	} else if( !isatty(fileno(stdin)) && old_way( stdin ) )  {
+	} else if ( !isatty(fileno(stdin)) && old_way( stdin ) )  {
 		; /* All is done */
 	} else {
 		register char	*buf;
@@ -502,15 +502,15 @@ int main(int argc, char **argv)
 		 * All the work happens in the functions
 		 * called by rt_do_cmd().
 		 */
-		while( (buf = rt_read_cmd( stdin )) != (char *)0 )  {
-			if( R_DEBUG&RDEBUG_PARSE )
+		while ( (buf = rt_read_cmd( stdin )) != (char *)0 )  {
+			if ( R_DEBUG&RDEBUG_PARSE )
 				fprintf(stderr, "cmd: %s\n", buf );
 			ret = rt_do_cmd( rtip, buf, rt_cmdtab );
 			bu_free( buf, "rt_read_cmd command buffer" );
-			if( ret < 0 )
+			if ( ret < 0 )
 				break;
 		}
-		if( curframe < desiredframe )  {
+		if ( curframe < desiredframe )  {
 			fprintf(stderr,
 				"rt:  Desired frame %d not reached, last was %d\n",
 				desiredframe, curframe);

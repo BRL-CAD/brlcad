@@ -642,12 +642,12 @@ int read_spec (REMAPID_FILE *sfp, char *sf_name)
 
     BU_LIST_INIT(&cids);
 
-    for ( ; ; )
+    for (;;)
     {
 	/*
 	 *  Read in guy(s) to be assigned a particular new regionid
 	 */
-	for ( ; ; )
+	for (;;)
 	{
 	    while (isspace(ch = remapid_fgetc(sfp)))
 		;
@@ -792,7 +792,7 @@ tankill_reassign(char *db_name)
 	struct curr_id *id_map, *cip;
 
 	/* open TANKILL model */
-	if( (fd_in=fopen( db_name, "r" )) == NULL )
+	if ( (fd_in=fopen( db_name, "r" )) == NULL )
 	{
 		bu_log( "Cannot open TANKILL database (%s)\n", db_name );
 		perror( "remapid" );
@@ -803,7 +803,7 @@ tankill_reassign(char *db_name)
 	cip = mk_curr_id( 0 );
 
 	/* filter TANKILL model, changing ids as we go */
-	while( fscanf( fd_in, "%d %d %d", &vertex_count, &id, &surr_code ) != EOF )
+	while ( fscanf( fd_in, "%d %d %d", &vertex_count, &id, &surr_code ) != EOF )
 	{
 		int coord_no=0;
 		int in_space=1;
@@ -811,24 +811,24 @@ tankill_reassign(char *db_name)
 
 		cip->ci_id = id;
 		id_map = (struct curr_id *)bu_rb_search( assignment, 0, (void *)cip );
-		if( !id_map )
+		if ( !id_map )
 			printf( "%d %d %d", vertex_count, id, surr_code );
 		else
 			printf( "%d %d %d", vertex_count, id_map->ci_newid, surr_code );
 
 		/* just copy the rest of the component */
-		while( coord_no < 3*vertex_count || !in_space )
+		while ( coord_no < 3*vertex_count || !in_space )
 		{
 			ch = fgetc( fd_in );
-			if( ch == EOF && coord_no < 3*vertex_count )
+			if ( ch == EOF && coord_no < 3*vertex_count )
 			{
 				bu_log( "Unexpected EOF while processing ident %d\n", id );
 				bu_exit( EXIT_FAILURE, "Unexpected EOF\n" );
 			}
 
-			if( isspace( ch ) )
+			if ( isspace( ch ) )
 				in_space = 1;
-			else if( in_space )
+			else if ( in_space )
 			{
 				in_space = 0;
 				coord_no++;
@@ -919,7 +919,7 @@ main (int argc, char **argv)
     /*
      *	Make the specified reassignment
      */
-    if( tankill )
+    if ( tankill )
 	tankill_reassign( db_name );
     else
     {

@@ -58,7 +58,7 @@ void usage(){
 /* fitness of a given object compared to source */
 static int cmp_ind(const void *p1, const void *p2)
 {
-    if(((struct individual *)p2)->fitness > ((struct individual *)p1)->fitness)
+    if (((struct individual *)p2)->fitness > ((struct individual *)p1)->fitness)
 	return -1;
     else if (((struct individual *)p2)->fitness == ((struct individual *)p1)->fitness)
 	return 0;
@@ -134,7 +134,7 @@ int main(int argc, char *argv[]){
 
 
     ac = parse_args(argc, argv, &opts);
-    if(argc - ac != 3)
+    if (argc - ac != 3)
 	usage();
 
 
@@ -153,7 +153,7 @@ int main(int argc, char *argv[]){
     db_close(pop.db_c);
 
 
-    for(g = 1; g < opts.gens; g++ ){
+    for (g = 1; g < opts.gens; g++ ){
 #ifdef VERBOSE
 	printf("\nGeneration %d:\n"
 		"--------------\n", g);
@@ -173,7 +173,7 @@ int main(int argc, char *argv[]){
 	 * the most fit individual in the population
 	 * note: need to calculate outside of main pop
 	 * loop because it's needed for pop_wrand_ind()*/
-	for(i = 0; i < pop.size; i++) {
+	for (i = 0; i < pop.size; i++) {
 	   fit_diff(NL(pop.parent[i].id), pop.db_p, &fstate);
 	   pop.parent[i].fitness = fstate.fitness;
 	   total_fitness += FITNESS;
@@ -182,19 +182,19 @@ int main(int argc, char *argv[]){
 	qsort(pop.parent, pop.size, sizeof(struct individual), cmp_ind);
 
 	/* remove lower M of individuals */
-	for(i = 0; i < opts.kill_lower; i++) {
+	for (i = 0; i < opts.kill_lower; i++) {
 	    total_fitness -= pop.parent[i].fitness;
 	}
 
 
 	printf("Most fit from %s was %s with a fitness of %g\n", dbname, NL(pop.parent[pop.size-1].id), pop.parent[pop.size-1].fitness);
 	printf("%6.8g\t%6.8g\t%6.8g\n", total_fitness/pop.size, pop.parent[0].fitness, pop.parent[pop.size-1].fitness);
-	for(i = 0; i < pop.size; i++){
+	for (i = 0; i < pop.size; i++){
 
 	    pop.child[i].id = i;
 
 	    /* keep upper N */
-	    if(i >= pop.size - opts.keep_upper){
+	    if (i >= pop.size - opts.keep_upper){
 		pop_gop(REPRODUCE, NL(pop.parent[i].id), NULL, NL(pop.child[i].id), NULL,
 			pop.db_p, pop.db_c, &rt_uniresource);
 		continue;
@@ -205,9 +205,9 @@ int main(int argc, char *argv[]){
 	    gop = pop_wrand_gop();
 	    parent1 = pop_wrand_ind(pop.parent, pop.size, total_fitness, opts.kill_lower);
 	    /* only need 1 more individual, can't crossover, so reproduce */
-	    if(gop == CROSSOVER && i >= pop.size-opts.keep_upper-1)gop=REPRODUCE;
+	    if (gop == CROSSOVER && i >= pop.size-opts.keep_upper-1)gop=REPRODUCE;
 
-	    if(gop & (REPRODUCE | MUTATE)){
+	    if (gop & (REPRODUCE | MUTATE)){
 #ifdef VERBOSE
 		printf("r(%s)\t ---------------> (%s)\n", NL(pop.parent[parent1].id), NL(pop.child[i].id));
 #endif
@@ -249,7 +249,7 @@ int main(int argc, char *argv[]){
 #ifdef VERBOSE
     printf("\nFINAL POPULATION\n"
 	    "----------------\n");
-    for(i = 0; i < pop.size; i++)
+    for (i = 0; i < pop.size; i++)
 	printf("%s\tf:%.5g\n", NL(pop.child[i].id),
 		pop.child[i].fitness);
 #endif

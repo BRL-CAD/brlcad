@@ -72,28 +72,28 @@ main(int argc, char **argv)
 {
 	int	n;
 
-	if( argc > 1 ) {
-		if( (fp = fopen(argv[1], "r")) == NULL ) {
+	if ( argc > 1 ) {
+		if ( (fp = fopen(argv[1], "r")) == NULL ) {
 			fprintf( stderr, "%s", Usage );
 			bu_exit(1, "pixhist3d: can't open \"%s\"\n", argv[1] );
 		}
 	} else
 		fp = stdin;
 
-	if( isatty(fileno(fp)) ) {
+	if ( isatty(fileno(fp)) ) {
 		bu_exit(2, "%s", Usage );
 	}
 
-	if( (fbp = fb_open( NULL, 512, 512 )) == NULL )  {
+	if ( (fbp = fb_open( NULL, 512, 512 )) == NULL )  {
 		bu_exit(12, "fb_open failed\n");
 	}
 
-	while( (n = fread(&ibuf[0], sizeof(*ibuf), sizeof(ibuf), fp)) > 0 ) {
+	while ( (n = fread(&ibuf[0], sizeof(*ibuf), sizeof(ibuf), fp)) > 0 ) {
 		register unsigned char *bp;
 		register int i;
 
 		bp = &ibuf[0];
-		for( i = n/3; i > 0; i--, bp += 3 )  {
+		for ( i = n/3; i > 0; i--, bp += 3 )  {
 			rxb[ bp[RED] ][ bp[BLU] ]++;
 			rxg[ bp[RED] ][ bp[GRN] ]++;
 			bxg[ bp[BLU] ][ bp[GRN] ]++;
@@ -121,21 +121,21 @@ disp_array(long int (*v)[256], int xoff, int yoff)
 
 	/* Find max value */
 	max = 0;
-	for( y = 0; y < 256; y++ ) {
-		for( x = 0; x < 256; x++ ) {
-			if( v[y][x] > max )
+	for ( y = 0; y < 256; y++ ) {
+		for ( x = 0; x < 256; x++ ) {
+			if ( v[y][x] > max )
 				max = v[y][x];
 		}
 	}
 	scale = 255.0 / ((double)max);
 
 	/* plot them */
-	for( y = 0; y < 256; y++ ) {
-		for( x = 0; x < 256; x++ ) {
+	for ( y = 0; y < 256; y++ ) {
+		for ( x = 0; x < 256; x++ ) {
 			register int value;
 
 			value = v[y][x] * scale;
-			if( value < THRESH && v[y][x] != 0 )
+			if ( value < THRESH && v[y][x] != 0 )
 				value = THRESH;
 			obuf[x*3+RED] = obuf[x*3+GRN] = obuf[x*3+BLU] = value;
 		}

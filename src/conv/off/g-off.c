@@ -157,7 +157,7 @@ main(int argc, char **argv)
 		perror(argv[0]);
 		bu_exit(1, "ERROR: Unable to open geometry database (%s)\n", argv[0]);
 	}
-	if( db_dirbuild( dbip ) ) {
+	if ( db_dirbuild( dbip ) ) {
 	    bu_exit(1, "db_dirbuild failed\n" );
 	}
 
@@ -204,7 +204,7 @@ main(int argc, char **argv)
 	bu_vls_free(&base_seg);
 
 	percent = 0;
-	if(regions_tried>0)  percent = ((double)regions_done * 100) / regions_tried;
+	if (regions_tried>0)  percent = ((double)regions_done * 100) / regions_tried;
 	printf("Tried %d regions, %d converted successfully.  %g%%\n",
 		regions_tried, regions_done, percent);
 
@@ -245,8 +245,8 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 	regions_tried++;
 
 	/* Begin bomb protection */
-	if( ncpu == 1 ) {
-		if( BU_SETJUMP )  {
+	if ( ncpu == 1 ) {
+		if ( BU_SETJUMP )  {
 			/* Error, bail out */
 			BU_UNSETJUMP;		/* Relinquish the protection */
 
@@ -259,7 +259,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 			db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
 
 			/* Get rid of (m)any other intermediate structures */
-			if( (*tsp->ts_m)->magic != -1L )
+			if ( (*tsp->ts_m)->magic != -1L )
 				nmg_km(*tsp->ts_m);
 
 			/* Now, make a new, clean model structure for next pass. */
@@ -270,7 +270,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 	(void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
 	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);	/* librt/nmg_bool.c */
 	BU_UNSETJUMP;		/* Relinquish the protection */
-	if( ret_tree )
+	if ( ret_tree )
 		r = ret_tree->tr_d.td_r;
 	else
 		r = (struct nmgregion *)NULL;
@@ -310,7 +310,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 		fprintf(fp_fig, "\t\tsite base->location=trans(0, 0, 0);\n");
 		fprintf(fp_fig, "\t}\n");
 
-		if( bu_vls_strlen(&base_seg) <= 0 )  {
+		if ( bu_vls_strlen(&base_seg) <= 0 )  {
 			bu_vls_vlscat( &base_seg, &file_base );
 		} else {
 			fprintf(fp_fig, "\tjoint %s_jt {\n",
@@ -331,12 +331,12 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 		else {
 			nmg_to_psurf(r, fp_psurf);
 			fclose(fp_psurf);
-			if(verbose) bu_log("*** Wrote %s\n", bu_vls_addr(&file));
+			if (verbose) bu_log("*** Wrote %s\n", bu_vls_addr(&file));
 		}
 		bu_vls_free(&file);
 
 		/* Also write as UNIX-plot file, if desired */
-		if( debug_plots )  {
+		if ( debug_plots )  {
 			FILE	*fp;
 			bu_vls_vlscat(&file, &file_base);
 			bu_vls_strcat(&file, ".pl");
@@ -354,7 +354,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 				nmg_r_to_vlist( &vhead, r, 0 );
 				rt_vlist_to_uplot( fp, &vhead );
 				fclose(fp);
-				if(verbose) bu_log("*** Wrote %s\n", bu_vls_addr(&file));
+				if (verbose) bu_log("*** Wrote %s\n", bu_vls_addr(&file));
 			}
 			bu_vls_free(&file);
 		}

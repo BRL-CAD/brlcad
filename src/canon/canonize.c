@@ -68,7 +68,7 @@ queue(fd)
     fprintf(pfd, "CLC500"); /* magic cookie */
 
     /* write the command line options out to the data stream */
-    for (args=1 ; args < arg_c ; args++) {
+    for (args=1; args < arg_c; args++) {
 
 	if (!strcmp(arg_v[args], "-a")) {
 	    fprintf(pfd, " -w %d -n %d", width, height);
@@ -87,9 +87,9 @@ queue(fd)
 	fprintf(stderr, "args written\n");
 
     /* write the image down the pipe */
-    for( bytes_read = 0 ;
+    for ( bytes_read = 0;
 	 bytes_read < img_bytes &&
-	     (i = fread(img_buffer, 1, sizeof(img_buffer), fd)) ;
+	     (i = fread(img_buffer, 1, sizeof(img_buffer), fd));
 	 bytes_read += i ) {
 	fwrite(img_buffer, 1, i, pfd);
     }
@@ -129,7 +129,7 @@ main(int ac, char *av[])
     strncat(cmdbuf, print_queue, sizeof(cmdbuf)-strlen(cmdbuf)-1);
     cmdbuf[sizeof(cmdbuf)-1] = '\0';
 
-    for ( ; arg_ind < ac ; arg_ind++) {
+    for (; arg_ind < ac; arg_ind++) {
 	if (autosize &&
 	    !fb_common_file_size( &width, &height, av[arg_ind], 3)) {
 	    fprintf(stderr,

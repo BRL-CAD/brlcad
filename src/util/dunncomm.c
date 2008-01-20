@@ -119,18 +119,18 @@ dunnopen(void)
 	/* open the camera device */
 
 #ifdef HAVE_TERMIOS_H
-	if( (fd = open("/dev/camera", O_RDWR | O_NONBLOCK)) < 0 )
+	if ( (fd = open("/dev/camera", O_RDWR | O_NONBLOCK)) < 0 )
 #else
-	if( (fd = open("/dev/camera", O_RDWR | O_NDELAY)) < 0 )
+	if ( (fd = open("/dev/camera", O_RDWR | O_NDELAY)) < 0 )
 #endif
 	{
 		close(fd);
 		bu_exit(10, "\007dunnopen: can't open /dev/camera\n");
 	}
 #ifdef HAVE_TERMIOS_H
-	if( tcgetattr( fd, &tty ) < 0 )
+	if ( tcgetattr( fd, &tty ) < 0 )
 #else
-	if( ioctl(fd, TCGETA, &tty) < 0)
+	if ( ioctl(fd, TCGETA, &tty) < 0)
 #endif
 	{
 		close(fd);
@@ -166,9 +166,9 @@ dunnopen(void)
 #endif
 
 #if HAVE_TERMIOS_H
-	if( tcsetattr( fd, TCSAFLUSH, &tty ) < 0 )
+	if ( tcsetattr( fd, TCSAFLUSH, &tty ) < 0 )
 #else
-	if( ioctl(fd, TCSETA, &tty) < 0 )
+	if ( ioctl(fd, TCSETA, &tty) < 0 )
 #endif
 	{
 		perror("/dev/camera");
@@ -176,7 +176,7 @@ dunnopen(void)
 	}
 
 	/* Be certain the FNDELAY is off */
-	if( fcntl(fd, F_SETFL, 0) < 0 )  {
+	if ( fcntl(fd, F_SETFL, 0) < 0 )  {
 		perror("/dev/camera");
 		exit(21);
 	}
@@ -208,7 +208,7 @@ goodstatus(void)
 	FD_ZERO(&readfds);
 	FD_SET(fd, &readfds);
 	select(fd+1, &readfds, (fd_set *)0, (fd_set *)0, timeout);
-	if( FD_ISSET(fd, &readfds) ==0 ) {
+	if ( FD_ISSET(fd, &readfds) ==0 ) {
 		printf("\007dunnsnap: status request timed out\n");
 		return(0);
 	}
@@ -284,7 +284,7 @@ ready(int nsecs)
 	/* This loop is needed to skip leading nulls in input stream */
 	do {
 		i = read(fd, &status[0], 1);
-		if( i != 1 )  {
+		if ( i != 1 )  {
 		    if (i < 0) {
 			perror("dunnsnap READ ERROR");
 		    } else {
@@ -292,7 +292,7 @@ ready(int nsecs)
 		    }
 		    return 0;
 		}
-	} while( status[0] == '\0' );
+	} while ( status[0] == '\0' );
 
 	i = read(fd, &status[1], 1);
 	if (i != 1) {
@@ -304,7 +304,7 @@ ready(int nsecs)
 	    return 0;
 	}
 
-	if((status[0]&0x7f) == 'R' && (status[1]&0x7f) == '\r') {
+	if ((status[0]&0x7f) == 'R' && (status[1]&0x7f) == '\r') {
 	    /* camera is ready */
 	    return 1;
 	}
@@ -328,11 +328,11 @@ getexposure(char *title)
 	waittime.tv_sec = 20;
 	waittime.tv_usec = 0;
 
-	if(!ready(20)) {
+	if (!ready(20)) {
 		bu_exit(60, "dunncolor: (getexposure) camera not ready\n");
 	}
 
-	if(polaroid)
+	if (polaroid)
 		cmd = '<';	/* req 8x10 exposure values */
 	else
 		cmd = '=';	/* request AUX exposure values */
@@ -340,7 +340,7 @@ getexposure(char *title)
 	FD_ZERO(&readfds);
 	FD_SET(fd, &readfds);
 	select(fd+1, &readfds, (fd_set *)0, (fd_set *)0, &waittime);
-	if( FD_ISSET(fd, &readfds) ) {
+	if ( FD_ISSET(fd, &readfds) ) {
 		bu_exit(40, "dunncolor:\007 %s request exposure value cmd: timed out\n", title);
 	}
 
@@ -362,17 +362,17 @@ dunnsend(char color, int val)
 {
 	char digit;
 
-	if(val < 0 || val > 255) {
+	if (val < 0 || val > 255) {
 		printf("dunncolor: bad value %d\n", val);
 		return(-1);
 	}
 
-	if(!ready(5)) {
+	if (!ready(5)) {
 		printf("dunncolor: dunnsend(), camera not ready\n");
 		return(-1);
 	}
 
-	if( polaroid )
+	if ( polaroid )
 		cmd = 'K';	/* set 8x10 exposure values */
 	else
 		cmd = 'L';	/* set AUX exposure values */

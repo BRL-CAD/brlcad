@@ -65,20 +65,20 @@ main(int argc, char **argv)
 	int last_non_zero=(-1);
 	int new_last=0;
 
-	if( argc != 3 )
+	if ( argc != 3 )
 	{
 		bu_log( "%s", usage );
 		return 1;
 	}
 
-	if( (infp=fopen( argv[1], "r" )) == NULL )
+	if ( (infp=fopen( argv[1], "r" )) == NULL )
 	{
 		bu_log( "Cannot open input file (%s)\n", argv[1] );
 		bu_log( "%s", usage );
 		return 1;
 	}
 
-	if( (outfp = wdb_fopen( argv[2] )) == NULL )
+	if ( (outfp = wdb_fopen( argv[2] )) == NULL )
 	{
 		bu_log( "Cannot open output file (%s)\n", argv[2] );
 		bu_log( "%s", usage );
@@ -87,53 +87,53 @@ main(int argc, char **argv)
 
 
 	/* read ASCII header section */
-	while( 1 )
+	while ( 1 )
 	{
-		if( bu_fgets( line, LINE_LEN, infp ) == NULL )
+		if ( bu_fgets( line, LINE_LEN, infp ) == NULL )
 		{
 			bu_log( "Unexpected EOF while loking for data\n" );
 			return 1;
 		}
 		printf( "%s", line );
-		if( !strncmp( "DATA", line, 4 ) )
+		if ( !strncmp( "DATA", line, 4 ) )
 		{
 			bu_log( "Found DATA\n" );
 			break;
 		}
-		else if( !strncmp( "SPACE", line, 5 ) )
+		else if ( !strncmp( "SPACE", line, 5 ) )
 		{
-			if( !strstr( line, "CYLINDRICAL" ) )
+			if ( !strstr( line, "CYLINDRICAL" ) )
 			{
 				bu_log( "Can only handle cylindrical scans right now!\n" );
 				return 1;
 			}
 		}
-		else if( !strncmp( "NLG", line, 3 ) )
+		else if ( !strncmp( "NLG", line, 3 ) )
 		{
 			cptr = strchr( line, '=' );
-			if( !cptr )
+			if ( !cptr )
 			{
 				bu_log( "Error in setting NLG\n" );
 				return 1;
 			}
 			nlg = atoi( ++cptr );
 		}
-		else if( !strncmp( "NLT", line, 3 ) )
+		else if ( !strncmp( "NLT", line, 3 ) )
 		{
 			cptr = strchr( line, '=' );
-			if( !cptr )
+			if ( !cptr )
 			{
 				bu_log( "Error in setting NLT\n" );
 				return 1;
 			}
 			nlt = atoi( ++cptr );
 		}
-		else if( !strncmp( "LTINCR", line, 6 ) )
+		else if ( !strncmp( "LTINCR", line, 6 ) )
 		{
 			int tmp;
 
 			cptr = strchr( line, '=' );
-			if( !cptr )
+			if ( !cptr )
 			{
 				bu_log( "Error in setting LTINCR\n" );
 				return 1;
@@ -141,10 +141,10 @@ main(int argc, char **argv)
 			tmp = atoi( ++cptr );
 			delta_z = (fastf_t)(tmp)/1000.0;
 		}
-		else if( !strncmp( "RSHIFT", line, 6 ) )
+		else if ( !strncmp( "RSHIFT", line, 6 ) )
 		{
 			cptr = strchr( line, '=' );
-			if( !cptr )
+			if ( !cptr )
 			{
 				bu_log( "Error in setting RSHIFT\n" );
 				return 1;
@@ -158,7 +158,7 @@ main(int argc, char **argv)
 
 	/* allocate memory to hold vertices */
 	curves = (fastf_t **)bu_malloc( (nlt+2)*sizeof( fastf_t ** ), "ars curve pointers" );
-	for( y=0 ; y<nlt+2 ; y++ )
+	for ( y=0; y<nlt+2; y++ )
 		curves[y] = (fastf_t *)bu_calloc( (nlg+1)*3,
 			sizeof(fastf_t), "ars curve" );
 
@@ -167,7 +167,7 @@ main(int argc, char **argv)
 	coss = (fastf_t *)bu_calloc( nlg+1, sizeof( fastf_t ), "cosines" );
 
 	/* fill in the sines and cosines table */
-	for( x=0 ; x<nlg ; x++ )
+	for ( x=0; x<nlg; x++ )
 	{
 		angle = delta_angle * (fastf_t)x;
 		sins[x] = sin(angle);
@@ -177,11 +177,11 @@ main(int argc, char **argv)
 	coss[nlg] = coss[0];
 
 	/* read the actual data */
-	for( x=0 ; x<nlg ; x++ )
+	for ( x=0; x<nlg; x++ )
 	{
 		fastf_t z=0.0;
 
-		for( y=0 ; y<nlt ; y++ )
+		for ( y=0; y<nlt; y++ )
 		{
 			short r;
 			long radius;
@@ -189,17 +189,17 @@ main(int argc, char **argv)
 
 			ptr = &curves[y+1][x*3];
 
-			if( fread( &r, 2, 1, infp ) != 1 )
+			if ( fread( &r, 2, 1, infp ) != 1 )
 				bu_exit(1, "Unexpected end-of-file encountered in [%s]\n", argv[1]);
-			if( r < 0 )
+			if ( r < 0 )
 				rad = 0.0;
 			else
 			{
-				if( y < first_non_zero )
+				if ( y < first_non_zero )
 					first_non_zero = y;
 				radius = (long)(r) << rshift;
 				rad = (fastf_t)radius/1000.0;
-				if( y > last_non_zero )
+				if ( y > last_non_zero )
 					last_non_zero = y;
 			}
 			*ptr = rad * coss[x];
@@ -208,7 +208,7 @@ main(int argc, char **argv)
 /*			bu_log( "%d %d: %g (%d) (%g %g %g)\n", x, y, rad, r, V3ARGS( ptr ) ); */
 
 			/* duplicate the first point at the end of the curve */
-			if( x == 0 )
+			if ( x == 0 )
 			{
 				ptr = &curves[y+1][nlg*3];
 				*ptr = rad * coss[x];
@@ -223,24 +223,24 @@ main(int argc, char **argv)
 	fclose( infp );
 
 	/* eliminate single vertex spikes on each curve */
-	for( y=first_non_zero ; y<=last_non_zero ; y++ )
+	for ( y=first_non_zero; y<=last_non_zero; y++ )
 	{
 		int is_zero=1;
 
-		for( x=0 ; x<nlg ; x++ )
+		for ( x=0; x<nlg; x++ )
 		{
 			fastf_t *next, *prev;
 
 			ptr = &curves[y][x*3];
-			if( x == 0 )
+			if ( x == 0 )
 				prev = &curves[y][nlg*3];
 			else
 				prev = ptr - 3;
 			next = ptr + 3;
 
-			if( ptr[0] != 0.0 || ptr[1] != 0.0 )
+			if ( ptr[0] != 0.0 || ptr[1] != 0.0 )
 			{
-				if( prev[0] == 0.0 && prev[1] == 0.0 &&
+				if ( prev[0] == 0.0 && prev[1] == 0.0 &&
 				    next[0] == 0.0 && next[1] == 0.0 )
 				{
 					ptr[0] = 0.0;
@@ -250,7 +250,7 @@ main(int argc, char **argv)
 					is_zero = 0;
 			}
 		}
-		if( is_zero && first_non_zero == y )
+		if ( is_zero && first_non_zero == y )
 			first_non_zero = y + 1;
 		else
 			new_last = y;

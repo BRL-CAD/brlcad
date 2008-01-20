@@ -51,8 +51,8 @@ main(int argc, char **argv)
 	return(-1);
     }
 
-    sscanf(*(argv+1), "%lf",&addend);
-    sscanf(*(argv+2), "%d",&of);
+    sscanf(*(argv+1), "%lf", &addend);
+    sscanf(*(argv+2), "%d", &of);
     col_list = (int *) bu_calloc(argc-2, sizeof(int), "int array");
     for (i=3;i<argc;i++){
 	sscanf(*(argv+i), "%d", col_list+(i-3));
@@ -60,7 +60,7 @@ main(int argc, char **argv)
 
     count = 0;
     while (!feof(stdin)){
-	val = scanf("%lf",&temp);
+	val = scanf("%lf", &temp);
 	if (val<1)
 	    ;
 	else {

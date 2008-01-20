@@ -115,21 +115,21 @@ shrink_image(int scanlen, int Width, int Height, unsigned char *buffer, int Fact
 	facsq = Factor * Factor;
 	finalpixel = buffer;
 
-	for (y=0 ; y < Height ; y += Factor)
-		for (x=0 ; x < Width ; x += Factor) {
+	for (y=0; y < Height; y += Factor)
+		for (x=0; x < Width; x += Factor) {
 
 			/* average factor by factor pixels */
 
-			for (py = 0 ; py < 3 ; ++py)
+			for (py = 0; py < 3; ++py)
 				p[py] = 0;
 
-			for (py = 0 ; py < Factor ; py++) {
+			for (py = 0; py < Factor; py++) {
 
 				/* get first pixel in scanline */
 				pixelp = &buffer[y*scanlen+x*3];
 
 				/* add pixels from scanline to average */
-				for (px = 0 ; px < Factor ; px++) {
+				for (px = 0; px < Factor; px++) {
 					p[0] += *pixelp++;
 					p[1] += *pixelp++;
 					p[2] += *pixelp++;
@@ -137,7 +137,7 @@ shrink_image(int scanlen, int Width, int Height, unsigned char *buffer, int Fact
 			}
 
 			/* store resultant pixel back in buffer */
-			for (py = 0 ; py < 3 ; ++py)
+			for (py = 0; py < 3; ++py)
 				*finalpixel++ = p[py] / facsq;
 		}
 }
@@ -154,8 +154,8 @@ usample_image(int scanlen, int Width, int Height, unsigned char *buffer, int Fac
 
 	p = buffer;
 
-	for (y=0 ; y < Height ; y += Factor)
-		for (x=0 ; x < Width ; x += Factor, p += 3) {
+	for (y=0; y < Height; y += Factor)
+		for (x=0; x < Width; x += Factor, p += 3) {
 			t = x*3 + y*scanlen;
 			p[0] = buffer[t];
 			p[1] = buffer[t+1];

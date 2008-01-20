@@ -90,9 +90,9 @@ pphit(register struct application *ap, struct partition *PartHeadp, struct seg *
 	register int i, j;
 	vect_t		normal;
 
-	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
-		if( pp->pt_outhit->hit_dist >= 0.0 )  break;
-	if( pp == PartHeadp )  {
+	for ( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
+		if ( pp->pt_outhit->hit_dist >= 0.0 )  break;
+	if ( pp == PartHeadp )  {
 		bu_log("pphit:  no hit out front?\n");
 		return(0);
 	}
@@ -102,31 +102,31 @@ pphit(register struct application *ap, struct partition *PartHeadp, struct seg *
 #define pchar(c) {putc(c, stdout);if(col++==74){putc('\n', stdout);col=0;}}
 
 	cosI0 = -VDOT(normal, ap->a_ray.r_dir);
-	if( pp->pt_inflip )
+	if ( pp->pt_inflip )
 		cosI0 = -cosI0;
-	if( cosI0 <= 0.0 )  {
+	if ( cosI0 <= 0.0 )  {
 		ntomiss++;
 		return(0);
 	}
-	if( ntomiss > 0 )  {
+	if ( ntomiss > 0 )  {
 		pchar(' ');	/* miss target cmd */
 		pknum( ntomiss );
 		ntomiss = 0;
 		last_solidp = SOLTAB_NULL;
 	}
-	if( last_item != pp->pt_regionp->reg_regionid )  {
+	if ( last_item != pp->pt_regionp->reg_regionid )  {
 		last_item = pp->pt_regionp->reg_regionid;
 		pchar( '#' );	/* new item cmd */
 		pknum( last_item );
 		last_solidp = SOLTAB_NULL;
 	}
-	if( last_solidp != pp->pt_inseg->seg_stp )  {
+	if ( last_solidp != pp->pt_inseg->seg_stp )  {
 		last_solidp = pp->pt_inseg->seg_stp;
 		pchar( '!' );		/* new solid cmd */
 	}
 	i = cosI0 * 255.0;		/* integer angle */
 	j = (i>>5) & 07;
-	if( j != last_ihigh )  {
+	if ( j != last_ihigh )  {
 		last_ihigh = j;
 		pchar( '0'+j );		/* new inten high */
 	}
@@ -176,7 +176,7 @@ pknum(int arg)
 	do {
 		pchar( (int)('@'+(i & 037)) );
 		i >>= 5;
-	} while( i > 0 );
+	} while ( i > 0 );
 }
 
 /*
@@ -191,7 +191,7 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
 	ap->a_miss = ppmiss;
 	ap->a_onehit = 1;
 
-	if( !minus_o )
+	if ( !minus_o )
 		fprintf(stderr, "Warning:  -o ignored, .PP goes to stdout\n");
 
 	fprintf(stdout, "%s: %s (RT)\n", file, obj );

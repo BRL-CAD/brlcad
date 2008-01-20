@@ -64,14 +64,14 @@ rt_dirbuild( const char *filename, char *buf, int len )
 	register struct rt_i	*rtip;
 	register struct db_i	*dbip;		/* Database instance ptr */
 
-	if( rt_uniresource.re_magic == 0 )
+	if ( rt_uniresource.re_magic == 0 )
 		rt_init_resource( &rt_uniresource, 0, NULL );
 
-	if( (dbip = db_open( filename, "r" )) == DBI_NULL )
+	if ( (dbip = db_open( filename, "r" )) == DBI_NULL )
 		return( RTI_NULL );		/* FAIL */
 	RT_CK_DBI(dbip);
 
-	if( db_dirbuild( dbip ) < 0 )  {
+	if ( db_dirbuild( dbip ) < 0 )  {
 		db_close( dbip );
 		return RTI_NULL;		/* FAIL */
 	}
@@ -79,7 +79,7 @@ rt_dirbuild( const char *filename, char *buf, int len )
 	rtip = rt_new_rti( dbip );		/* clones dbip */
 	db_close(dbip);				/* releases original dbip */
 
-	if( buf != (char *)NULL )
+	if ( buf != (char *)NULL )
 		strncpy( buf, dbip->dbi_title, len );
 
 	return( rtip );				/* OK */
@@ -109,22 +109,22 @@ rt_db_get_internal(
 	BU_INIT_EXTERNAL(&ext);
 	RT_INIT_DB_INTERNAL(ip);
 
-	if( dbip->dbi_version > 4 )
+	if ( dbip->dbi_version > 4 )
 		return  rt_db_get_internal5( ip, dp, dbip, mat, resp );
 
-	if( db_get_external( &ext, dp, dbip ) < 0 )
+	if ( db_get_external( &ext, dp, dbip ) < 0 )
 		return -2;		/* FAIL */
 
-	if( dp->d_flags & DIR_COMB )  {
+	if ( dp->d_flags & DIR_COMB )  {
 		id = ID_COMBINATION;
 	} else {
 		/* As a convenience to older ft_import routines */
-		if( mat == NULL )  mat = bn_mat_identity;
+		if ( mat == NULL )  mat = bn_mat_identity;
 		id = rt_id_solid( &ext );
 	}
 
 	/* ip is already initialized and should not be re-initialized */
-	if( rt_functab[id].ft_import( ip, &ext, mat, dbip, resp ) < 0 )  {
+	if ( rt_functab[id].ft_import( ip, &ext, mat, dbip, resp ) < 0 )  {
 		bu_log("rt_db_get_internal(%s):  import failure\n",
 			dp->d_namep );
 		rt_db_free_internal( ip, resp );
@@ -165,13 +165,13 @@ rt_db_put_internal(
 	BU_INIT_EXTERNAL(&ext);
 	RT_CK_DB_INTERNAL( ip );
 
-	if( dbip->dbi_version > 4 )
+	if ( dbip->dbi_version > 4 )
 		return  rt_db_put_internal5( dp, dbip, ip, resp,
 		    DB5_MAJORTYPE_BRLCAD );
 
 	/* Scale change on export is 1.0 -- no change */
 	ret = ip->idb_meth->ft_export( &ext, ip, 1.0, dbip, resp );
-	if( ret < 0 )  {
+	if ( ret < 0 )  {
 		bu_log("rt_db_put_internal(%s):  solid export failure\n",
 			dp->d_namep);
 		rt_db_free_internal( ip, resp );
@@ -180,7 +180,7 @@ rt_db_put_internal(
 	}
 	rt_db_free_internal( ip, resp );
 
-	if( db_put_external( &ext, dp, dbip ) < 0 )  {
+	if ( db_put_external( &ext, dp, dbip ) < 0 )  {
 		bu_free_external( &ext );
 		return -1;		/* FAIL */
 	}
@@ -214,7 +214,7 @@ rt_fwrite_internal(
 	RT_CK_FUNCTAB( ip->idb_meth );
 	BU_INIT_EXTERNAL( &ext );
 
-	if( ip->idb_meth->ft_export( &ext, ip, conv2mm, NULL /*dbip*/, &rt_uniresource ) < 0 )  {
+	if ( ip->idb_meth->ft_export( &ext, ip, conv2mm, NULL /*dbip*/, &rt_uniresource ) < 0 )  {
 		bu_log("rt_file_put_internal(%s): solid export failure\n",
 			name );
 		bu_free_external( &ext );
@@ -222,7 +222,7 @@ rt_fwrite_internal(
 	}
 	BU_CK_EXTERNAL( &ext );
 
-	if( db_fwrite_external( fp, name, &ext ) < 0 )  {
+	if ( db_fwrite_external( fp, name, &ext ) < 0 )  {
 		bu_log("rt_fwrite_internal(%s): db_fwrite_external() error\n",
 			name );
 		bu_free_external( &ext );
@@ -254,10 +254,10 @@ rt_db_free_internal( struct rt_db_internal *ip, struct resource *resp )
 	/* resp is not checked, since most ifree's don't take/need it
 	 * (only combinations use it) -- leave it up to ft_ifree to check it
 	 */
-	if( ip->idb_ptr )  {
+	if ( ip->idb_ptr )  {
 	    ip->idb_ptr = NULL;		/* sanity.  Should be handled by INIT, below */
 	}
-	if( ip->idb_avs.magic == BU_AVS_MAGIC ) {
+	if ( ip->idb_avs.magic == BU_AVS_MAGIC ) {
 	    bu_avs_free(&ip->idb_avs);
 	}
 	RT_INIT_DB_INTERNAL(ip);

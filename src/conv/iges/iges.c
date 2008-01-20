@@ -216,44 +216,44 @@ nmg_to_winged_edge( r )
 
     NMG_CK_REGION( r );
 
-    for( BU_LIST_FOR( s, shell, &r->s_hd ) )
+    for ( BU_LIST_FOR( s, shell, &r->s_hd ) )
 	{
 	    struct faceuse *fu;
 
 	    NMG_CK_SHELL( s );
-	    for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
+	    for ( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
 		{
 		    struct loopuse *lu;
 
 		    NMG_CK_FACEUSE( fu );
-		    if( fu->orientation != OT_SAME )
+		    if ( fu->orientation != OT_SAME )
 			continue;
 
-		    for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+		    for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
 			{
-			    struct edgeuse *eu1,*eu2;
+			    struct edgeuse *eu1, *eu2;
 
 			    NMG_CK_LOOPUSE( lu );
-			    if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+			    if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
 				continue;
 
-			    for( BU_LIST_FOR( eu1, edgeuse, &lu->down_hd ) )
+			    for ( BU_LIST_FOR( eu1, edgeuse, &lu->down_hd ) )
 				{
 				    struct edgeuse *eu_new;
-				    struct vertex *v1=NULL,*v2=NULL;
+				    struct vertex *v1=NULL, *v2=NULL;
 
 				    NMG_CK_EDGEUSE( eu1 );
-				    if( eu1->radial_p == eu1->eumate_p )
+				    if ( eu1->radial_p == eu1->eumate_p )
 					continue;	/* dangling edge (?warning?) */
 
-				    if( eu1->radial_p->eumate_p->radial_p == eu1->eumate_p )
+				    if ( eu1->radial_p->eumate_p->radial_p == eu1->eumate_p )
 					continue;	/* winged edge */
 
 				    /* this edge has more than two radial faces
 				     * find the other face from this shell
 				     */
 				    eu2 = eu1->radial_p;
-				    while( eu2 != eu1 && eu2 != eu1->eumate_p
+				    while ( eu2 != eu1 && eu2 != eu1->eumate_p
 					   && nmg_find_s_of_eu( eu2 ) != s )
 					eu2 = eu2->eumate_p->radial_p;
 
@@ -272,11 +272,11 @@ nmg_to_winged_edge( r )
 				    nmg_movevu( eu1->eumate_p->vu_p, eu_new->eumate_p->vu_p->v_p );
 
 				    /* kill the new edge (I only wanted it for its vertices) */
-				    if( nmg_keu( eu_new ) )
+				    if ( nmg_keu( eu_new ) )
 					bu_exit(EXIT_FAILURE,  "nmg_to_winged_edge: Can't happen nmg_keu resulted in empty shell!\n" );
 
 				    /* move the other edgeuse to the same edge */
-				    if( eu2 == eu1 || eu2 == eu1->eumate_p )
+				    if ( eu2 == eu1 || eu2 == eu1->eumate_p )
 					bu_log( "nmg_to_winged_edge: couldn't find second radial face for eu x%x in shell x%x\n", eu1, s );
 				    else
 					nmg_moveeu( eu1, eu2 );
@@ -298,17 +298,17 @@ get_props( props, comb )
     endp = strchr( bu_vls_addr(&comb->shader), ' ' );
     memset(props->material_name, 0, 32);
     memset(props->material_params, 0, 60);
-    if( endp )  {
+    if ( endp )  {
 	int	len;
 	len = endp - bu_vls_addr(&comb->shader);
-	if( len > 31 ) len = 31;
+	if ( len > 31 ) len = 31;
 	strncpy( props->material_name, bu_vls_addr(&comb->shader), len );
 	strncpy( props->material_params, endp+1, 59 );
     } else {
 	strncpy( props->material_name, bu_vls_addr(&comb->shader), 31 );
 	props->material_params[0] = '\0';
     }
-    if( comb->region_flag )
+    if ( comb->region_flag )
 	{
 	    props->region_flag = 'R';
 	    props->ident = comb->region_id;
@@ -317,7 +317,7 @@ get_props( props, comb )
 	    props->los_density = comb->los;
 	}
     props->color_defined = ( comb->rgb_valid ? 1 : 0 );
-    if( props->color_defined )
+    if ( props->color_defined )
 	{
 	    props->color[0] = comb->rgb[0];
 	    props->color[1] = comb->rgb[1];
@@ -354,26 +354,26 @@ lookup_props( props, name )
     props->color[1] = 0;
     props->color[2] = 0;
 
-    if( name == NULL )
+    if ( name == NULL )
 	return( 1 );
 
     dp  = db_lookup( dbip, name, 1 );
-    if( dp == DIR_NULL )
+    if ( dp == DIR_NULL )
 	return( 1 );
 
-    if( !(dp->d_flags & DIR_COMB) )
+    if ( !(dp->d_flags & DIR_COMB) )
 	return( 1 );
 
     id = rt_db_get_internal( &intern, dp, dbip, (matp_t)NULL, &rt_uniresource);
 
-    if( id < 0 )
+    if ( id < 0 )
 	{
 	    rt_db_free_internal( &intern, &rt_uniresource);
 	    bu_log( "Could not get internal form of %s\n", dp->d_namep );
 	    return( 1 );
 	}
 
-    if( id != ID_COMBINATION )
+    if ( id != ID_COMBINATION )
 	{
 	    rt_db_free_internal( &intern, &rt_uniresource);
 	    bu_log( "Directory/Database mismatch! is %s a combination or not???\n", dp->d_namep );
@@ -406,17 +406,17 @@ write_freeform(FILE *fp,	/* output file */
     int remaining_chars=0;
     int i;
 
-    if( c == 'P' )
+    if ( c == 'P' )
 	{
 	    seq_no = &param_seq;
 	    paramlen = 64;
 	}
-    else if( c == 'G' )
+    else if ( c == 'G' )
 	{
 	    seq_no = &global_len;
 	    paramlen = 72;
 	}
-    else if( c == 'S' )
+    else if ( c == 'S' )
 	{
 	    seq_no = &start_len;
 	    paramlen = 72;
@@ -429,10 +429,10 @@ write_freeform(FILE *fp,	/* output file */
 
 
     /* the start section is just one big string, so just print in pieces if necessary */
-    if( c == 'S' )
+    if ( c == 'S' )
 	{
 	    line_start = 0;
-	    while( line_start < str_len )
+	    while ( line_start < str_len )
 		{
 		    (*seq_no)++;
 		    fprintf( fp, global_form, &s[line_start], c, *seq_no );
@@ -442,10 +442,10 @@ write_freeform(FILE *fp,	/* output file */
 	}
 
     /* Just print any string that will fit */
-    if( str_len <= paramlen )
+    if ( str_len <= paramlen )
 	{
 	    (*seq_no)++;
-	    if( c == 'P' )
+	    if ( c == 'P' )
 		fprintf( fp, param_form, s, de, c, *seq_no );
 	    else
 		fprintf( fp, global_form, s, c, *seq_no );
@@ -456,14 +456,14 @@ write_freeform(FILE *fp,	/* output file */
 	    int curr_loc=0;
 	    int field_start=0;
 
-	    while( 1 )
+	    while ( 1 )
 		{
 		    line_end = line_start + paramlen - 1;
 		    curr_loc = line_start;
-		    if( line_end >= str_len ) /* write the last line and break */
+		    if ( line_end >= str_len ) /* write the last line and break */
 			{
 			    (*seq_no)++;
-			    if( c == 'P' )
+			    if ( c == 'P' )
 				fprintf( fp, param_form, &s[line_start], de, c, *seq_no );
 			    else
 				fprintf( fp, global_form, &s[line_start], c, *seq_no );
@@ -475,11 +475,11 @@ write_freeform(FILE *fp,	/* output file */
 			     * but character strings may. The only way
 			     * to be sure is to interpret the entire string */
 
-			    if( remaining_chars >= paramlen )
+			    if ( remaining_chars >= paramlen )
 				{
 				    /* just print more of the string */
 				    (*seq_no)++;
-				    if( c == 'P' )
+				    if ( c == 'P' )
 					fprintf( fp, param_form, &s[line_start], de, c, *seq_no );
 				    else
 					fprintf( fp, global_form, &s[line_start], c, *seq_no );
@@ -489,31 +489,31 @@ write_freeform(FILE *fp,	/* output file */
 				{
 				    int done=0;
 
-				    while( !done )
+				    while ( !done )
 					{
 					    char num[81];
 					    int j=0;
 
 					    /* skip over any remainder of a string */
-					    if( remaining_chars )
+					    if ( remaining_chars )
 						{
 						    curr_loc = line_start + remaining_chars;
 						    remaining_chars = 0;
 						}
 					    field_start = curr_loc;
 
-					    if( s[curr_loc] == ',' || s[curr_loc] == ';' )
+					    if ( s[curr_loc] == ',' || s[curr_loc] == ';' )
 						{
 						    /* empty field */
 						    curr_loc++;
 						}
 					    else
 						{
-						    while( isdigit(s[curr_loc]) )
+						    while ( isdigit(s[curr_loc]) )
 							num[j++] = s[curr_loc++];
 						    num[j] = '\0';
 
-						    if( s[curr_loc] == 'H' )
+						    if ( s[curr_loc] == 'H' )
 							{
 							    /* This is a string */
 							    int len;
@@ -523,11 +523,11 @@ write_freeform(FILE *fp,	/* output file */
 							    /* skip over the 'H' */
 							    curr_loc++;
 
-							    if( curr_loc + len >= line_end )
+							    if ( curr_loc + len >= line_end )
 								{
 								    /* break this line in a string */
 								    (*seq_no)++;
-								    if( c == 'P' )
+								    if ( c == 'P' )
 									fprintf( fp, param_form, &s[line_start], de, c, *seq_no );
 								    else
 									fprintf( fp, global_form, &s[line_start], c, *seq_no );
@@ -542,26 +542,26 @@ write_freeform(FILE *fp,	/* output file */
 							    /* this is not a string and cannot be continued to next line */
 
 							    /* find end of this field */
-							    while( curr_loc < str_len && s[curr_loc] != ',' && s[curr_loc] != ';' )
+							    while ( curr_loc < str_len && s[curr_loc] != ',' && s[curr_loc] != ';' )
 								{
 								    curr_loc++;
 								}
 
-							    if( s[curr_loc] == ',' || s[curr_loc] == ';' )
+							    if ( s[curr_loc] == ',' || s[curr_loc] == ';' )
 								curr_loc++;
 
-							    if( curr_loc > line_end )
+							    if ( curr_loc > line_end )
 								{
 								    /* end of line must be at start of this field */
 
 								    line_end = field_start-1;
-								    for( i=line_start ; i<=line_end ; i++ )
+								    for ( i=line_start; i<=line_end; i++ )
 									fputc( s[i], fp );
 
 								    /* fill out line with blanks */
-								    for( i=0 ; i<paramlen-(line_end-line_start+1) ; i++ )
+								    for ( i=0; i<paramlen-(line_end-line_start+1); i++ )
 									fputc( ' ', fp );
-								    if( c == 'P' )
+								    if ( c == 'P' )
 									fprintf( fp, " %7d", de );
 								    /* add columns 73 through 80 */
 								    (*seq_no)++;
@@ -583,7 +583,7 @@ write_freeform(FILE *fp,	/* output file */
 int
 write_color_entity( color, fp_dir, fp_param )
      unsigned char color[3];
-     FILE *fp_dir,*fp_param;
+     FILE *fp_dir, *fp_param;
 {
     struct bu_vls		str;
     int			dir_entry[21];
@@ -593,11 +593,11 @@ write_color_entity( color, fp_dir, fp_param )
     bu_vls_init( &str );
 
     /* initialize directory entry */
-    for( i=0 ; i<21 ; i++ )
+    for ( i=0; i<21; i++ )
 	dir_entry[i] = DEFAULT;
 
     /* convert colors to percents */
-    for( i=0 ; i<3 ; i++ )
+    for ( i=0; i<3; i++ )
 	c[i] = (float)color[i]/2.55;
 
     bu_vls_printf( &str, "314,%g,%g,%g;", c[0], c[1], c[2] );
@@ -618,19 +618,19 @@ write_color_entity( color, fp_dir, fp_param )
 int
 get_color( color, fp_dir, fp_param )
      unsigned char color[3];
-     FILE *fp_dir,*fp_param;
+     FILE *fp_dir, *fp_param;
 {
     int color_de;
 
-    for( color_de=0 ; color_de < 9 ; color_de++ )
+    for ( color_de=0; color_de < 9; color_de++ )
 	{
-	    if( color[0] == colortab[color_de][1] &&
+	    if ( color[0] == colortab[color_de][1] &&
 		color[1] == colortab[color_de][2] &&
 		color[2] == colortab[color_de][3] )
 		break;
 	}
 
-    if( color_de == 9 )
+    if ( color_de == 9 )
 	color_de = (-write_color_entity( color, fp_dir, fp_param ));
 
     return( color_de );
@@ -638,7 +638,7 @@ get_color( color, fp_dir, fp_param )
 
 int
 write_attribute_definition( fp_dir, fp_param )
-     FILE *fp_dir,*fp_param;
+     FILE *fp_dir, *fp_param;
 {
     struct bu_vls str;
     int dir_entry[21];
@@ -647,7 +647,7 @@ write_attribute_definition( fp_dir, fp_param )
     bu_vls_init( &str );
 
     /* initialize directory entry */
-    for( i=0 ; i<21 ; i++ )
+    for ( i=0; i<21; i++ )
 	dir_entry[i] = DEFAULT;
 
     /* start with parameter data */
@@ -709,8 +709,8 @@ Print_stats(FILE *fp)
     int total_entities=0;
 
     fprintf( fp, "Wrote the following numbers and type of entities:\n" );
-    for( i=0 ; i<NO_OF_TYPES ; i++ )
-	if( type_count[i][1] > 0 )
+    for ( i=0; i<NO_OF_TYPES; i++ )
+	if ( type_count[i][1] > 0 )
 	    {
 		total_entities += type_count[i][1];
 		fprintf( fp, "\t%d - %s\n", type_count[i][1], type_name[i] );
@@ -718,7 +718,7 @@ Print_stats(FILE *fp)
 
     fprintf( fp, "Total of %d entities written\n", total_entities );
 
-    if( solids_to_nmg )
+    if ( solids_to_nmg )
 	fprintf( fp, "%d solids converted to NMG's before exporting to IGES\n", solids_to_nmg );
 }
 
@@ -728,10 +728,10 @@ write_dir_entry(FILE *fp, int entry[])
     int i,j,type_index;
     const char *label;
 
-    for( type_index=0; type_index<NO_OF_TYPES ; type_index++ )
-	if( type_count[type_index][0] == entry[1] )
+    for ( type_index=0; type_index<NO_OF_TYPES; type_index++ )
+	if ( type_count[type_index][0] == entry[1] )
 	    break;
-    if( type_index == NO_OF_TYPES )
+    if ( type_index == NO_OF_TYPES )
 	{
 	    bu_log( "Writing directory entry for an unknown entity type (%d)\n", entry[1] );
 	    label = unknown;
@@ -748,16 +748,16 @@ write_dir_entry(FILE *fp, int entry[])
     entry[10] = dir_seq + 1;
     entry[20] = dir_seq + 2;
 
-    for( j=0 ; j<2 ; j++ )
+    for ( j=0; j<2; j++ )
 	{
 
-	    for( i=j*10+1 ; i<(j+1)*10 ; i++ )
+	    for ( i=j*10+1; i<(j+1)*10; i++ )
 		{
-		    if( i == 18 )
+		    if ( i == 18 )
 			fprintf( fp, "%8.8s", label );
-		    else if( entry[i] == DEFAULT )
+		    else if ( entry[i] == DEFAULT )
 			fprintf( fp, "        " );
-		    else if( i == 9 )
+		    else if ( i == 9 )
 			fprintf( fp, "%08d", entry[i] );
 		    else
 			fprintf( fp, "%8d", entry[i] );
@@ -795,7 +795,7 @@ w_start_global(
     /* Write Global Section */
     bu_vls_printf( &str, ",,%ldH%s", strlen( db_name ), db_name);
 
-    if( output_file == NULL )
+    if ( output_file == NULL )
 	bu_vls_printf( &str, ",7Hstd_out" );
     else
 	bu_vls_printf( &str, ",%ldH%s", strlen( output_file ), output_file );
@@ -818,7 +818,7 @@ w_start_global(
     bu_vls_printf( &str, ",%g,100000.0,7HUnknown,7HUnknown,9,0" ,
 		   RT_LEN_TOL );
 
-    if( stat( db_name, &db_stat ) )
+    if ( stat( db_name, &db_stat ) )
 	{
 	    bu_log( "Cannot stat %s\n", db_name );
 	    perror( prog_name );
@@ -840,7 +840,7 @@ w_start_global(
 
     /* write attribute definition entity */
 
-    if( mode != TRIMMED_SURF_MODE )
+    if ( mode != TRIMMED_SURF_MODE )
 	attribute_de = write_attribute_definition( fp_dir, fp_param );
 
     bu_vls_free( &str );
@@ -852,7 +852,7 @@ nmgregion_to_iges( name, r, dependent, fp_dir, fp_param )
      char *name;
      struct nmgregion *r;
      int dependent;
-     FILE *fp_dir,*fp_param;
+     FILE *fp_dir, *fp_param;
 {
     struct nmgregion	*new_r;		/* temporary nmgregion */
     struct shell		*s_new;		/* shell made by nmg_mrsv */
@@ -870,33 +870,33 @@ nmgregion_to_iges( name, r, dependent, fp_dir, fp_param )
 
     {
 	struct shell *s;
-	for( BU_LIST_FOR( s, shell, &r->s_hd ) )
+	for ( BU_LIST_FOR( s, shell, &r->s_hd ) )
 	    {
 		struct faceuse *fu;
 
-		for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
+		for ( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
 		    {
 			struct loopuse *lu;
 
-			if( fu->orientation != OT_SAME )
+			if ( fu->orientation != OT_SAME )
 			    continue;
 
 			face_count++;
 
-			for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+			for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
 			    {
 				struct edgeuse *eu;
 
-				if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+				if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
 				    continue;
 
-				for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+				for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 				    {
 					struct vertex *v;
 
 					v = eu->vu_p->v_p;
 					NMG_CK_VERTEX( v );
-					if( !v->vg_p )
+					if ( !v->vg_p )
 					    bu_log( "vertex with no geometry!\n" );
 				    }
 			    }
@@ -904,7 +904,7 @@ nmgregion_to_iges( name, r, dependent, fp_dir, fp_param )
 	    }
     }
 
-    if( face_count == 0 )
+    if ( face_count == 0 )
 	return( 0 );
 
     /* Find outer shells and void shells and their associations */
@@ -912,14 +912,14 @@ nmgregion_to_iges( name, r, dependent, fp_dir, fp_param )
 
     brep_de = (int *)bu_calloc( outer_shell_count, sizeof( int ), "nmgregion_to_iges: brep_de" );
 
-    for( i=0 ; i<outer_shell_count ; i++ )
+    for ( i=0; i<outer_shell_count; i++ )
 	{
 	    int j;
 	    int tmp_dependent;
 	    struct shell *s;
 	    char *tmp_name;
 
-	    if( outer_shell_count == 1 )
+	    if ( outer_shell_count == 1 )
 		{
 		    new_r = r;
 		    s_new = NULL;
@@ -933,7 +933,7 @@ nmgregion_to_iges( name, r, dependent, fp_dir, fp_param )
 		    tmp_name = NULL;
 		    tmp_dependent = 1;
 
-		    for( j=BU_PTBL_END( shells[i] )-1 ; j >= 0  ; j-- )
+		    for ( j=BU_PTBL_END( shells[i] )-1; j >= 0; j-- )
 			{
 			    s = (struct shell *)BU_PTBL_GET( shells[i], j );
 			    nmg_mv_shell_to_region( s, new_r );
@@ -955,7 +955,7 @@ nmgregion_to_iges( name, r, dependent, fp_dir, fp_param )
 	    (void)bu_ptbl_reset( &vtab );
 	    (void)bu_ptbl_reset( &etab );
 
-	    if( outer_shell_count != 1 )
+	    if ( outer_shell_count != 1 )
 		(void)nmg_kr( new_r );
 	}
 
@@ -963,7 +963,7 @@ nmgregion_to_iges( name, r, dependent, fp_dir, fp_param )
     (void)bu_ptbl_free( &vtab );
     (void)bu_ptbl_free( &etab );
 
-    if( outer_shell_count != 1 )
+    if ( outer_shell_count != 1 )
 	return( write_solid_assembly( name, brep_de, outer_shell_count, dependent, fp_dir, fp_param ) );
     else
 	return( brep_de[0] );
@@ -974,32 +974,32 @@ verts_to_copious_data( pts, vert_count, pt_size, fp_dir, fp_param )
      point_t *pts;
      int vert_count;
      int pt_size;
-     FILE *fp_dir,*fp_param;
+     FILE *fp_dir, *fp_param;
 {
     struct bu_vls		str;
     int			dir_entry[21];
     int			i;
 
-    if( vert_count < 2 )
+    if ( vert_count < 2 )
 	return( 0 );
 
     bu_vls_init( &str );
 
     /* initialize directory entry */
-    for( i=0 ; i<21 ; i++ )
+    for ( i=0; i<21; i++ )
 	dir_entry[i] = DEFAULT;
 
     bu_vls_printf( &str, "106,%d,%d", pt_size-1, vert_count+1 );
-    if( pt_size == 2 )
+    if ( pt_size == 2 )
 	{
 	    bu_vls_printf( &str, ",0.0" );
-	    for( i=0 ; i<vert_count ; i++ )
+	    for ( i=0; i<vert_count; i++ )
 		bu_vls_printf( &str, ",%f,%f", pts[i][0], pts[i][1] );
 	    bu_vls_printf( &str, ",%f,%f", pts[0][0], pts[0][1] );
 	}
-    else if( pt_size == 3 )
+    else if ( pt_size == 3 )
 	{
-	    for( i=0 ; i<vert_count ; i++ )
+	    for ( i=0; i<vert_count; i++ )
 		bu_vls_printf( &str, ",%f,%f,%f", V3ARGS( pts[i] ) );
 	    bu_vls_printf( &str, ",%f,%f,%f", V3ARGS( pts[0] ) );
 	}
@@ -1015,7 +1015,7 @@ verts_to_copious_data( pts, vert_count, pt_size, fp_dir, fp_param )
     /* write directory entry for vertex list entity */
     dir_entry[1] = 106;
     dir_entry[8] = 0;
-    if( pt_size == 2 )
+    if ( pt_size == 2 )
 	{
 	    dir_entry[9] = 10500;
 	    dir_entry[15] = 63;
@@ -1040,7 +1040,7 @@ nmg_loop_to_tcurve( lu, surf_de, u_dir, v_dir, u_max, v_max, base_pt, fp_dir, fp
      vect_t u_dir,v_dir;
      fastf_t u_max,v_max;
      point_t base_pt;
-     FILE *fp_dir,*fp_param;
+     FILE *fp_dir, *fp_param;
 {
     struct bu_vls		str;
     int			dir_entry[21];
@@ -1052,14 +1052,14 @@ nmg_loop_to_tcurve( lu, surf_de, u_dir, v_dir, u_max, v_max, base_pt, fp_dir, fp
 
     NMG_CK_LOOPUSE( lu );
 
-    if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+    if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
 	return( 0 );
 
     /* count vertices */
-    for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+    for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 	vert_count++;
 
-    if( vert_count < 3 )
+    if ( vert_count < 3 )
 	return( 0 );
 
     /* Allocate memory for points */
@@ -1069,13 +1069,13 @@ nmg_loop_to_tcurve( lu, surf_de, u_dir, v_dir, u_max, v_max, base_pt, fp_dir, fp
     bu_vls_init( &str );
 
     /* initialize directory entry */
-    for( i=0 ; i<21 ; i++ )
+    for ( i=0; i<21; i++ )
 	dir_entry[i] = DEFAULT;
 
     bu_vls_printf( &str, "142,0,%d", surf_de );
 
     i = 0;
-    for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+    for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 	{
 	    struct vertex_g *vg;
 	    vect_t from_base;
@@ -1087,7 +1087,7 @@ nmg_loop_to_tcurve( lu, surf_de, u_dir, v_dir, u_max, v_max, base_pt, fp_dir, fp
 	    NMG_CK_VERTEX_G( eu->vu_p->v_p->vg_p );
 	    vg = eu->vu_p->v_p->vg_p;
 
-	    if( i >= vert_count )
+	    if ( i >= vert_count )
 		bu_exit(1, "nmg_loop_to_tcurve: too many vertices in loop!\n" );
 
 	    VMOVE( model_pts[i], vg->coord );
@@ -1095,13 +1095,13 @@ nmg_loop_to_tcurve( lu, surf_de, u_dir, v_dir, u_max, v_max, base_pt, fp_dir, fp
 	    VSUB2( from_base, vg->coord, base_pt );
 	    u = VDOT( u_dir, from_base )/u_max;
 	    v = VDOT( v_dir, from_base )/v_max;
-	    if( u < 0.0 )
+	    if ( u < 0.0 )
 		u = 0.0;
-	    if( u > 1.0 )
+	    if ( u > 1.0 )
 		u = 1.0;
-	    if( v < 0.0 )
+	    if ( v < 0.0 )
 		v = 0.0;
-	    if( v > 1.0 )
+	    if ( v > 1.0 )
 		v = 1.0;
 	    VSET( param_pts[i], u, v, 0.0 );
 
@@ -1133,7 +1133,7 @@ nmg_loop_to_tcurve( lu, surf_de, u_dir, v_dir, u_max, v_max, base_pt, fp_dir, fp
 void
 nmg_fu_to_tsurf( fu, fp_dir, fp_param )
      struct faceuse *fu;
-     FILE *fp_dir,*fp_param;
+     FILE *fp_dir, *fp_param;
 {
     struct bu_vls		str;
     int			dir_entry[21];
@@ -1151,21 +1151,21 @@ nmg_fu_to_tsurf( fu, fp_dir, fp_param )
     bu_vls_init( &str );
 
     /* initialize directory entry */
-    for( i=0 ; i<21 ; i++ )
+    for ( i=0; i<21; i++ )
 	dir_entry[i] = DEFAULT;
 
     /* count loops */
-    for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+    for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
 	{
 	    NMG_CK_LOOPUSE( lu );
 
-	    if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+	    if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
 		continue;
 
 	    loop_count++;
 	}
 
-    if( loop_count < 1 )	/* nothing to output */
+    if ( loop_count < 1 )	/* nothing to output */
 	return;
 
     /* write underlying surface */
@@ -1175,16 +1175,16 @@ nmg_fu_to_tsurf( fu, fp_dir, fp_param )
     curve_de = (int *)bu_calloc( loop_count, sizeof( int ), "nmg_fu_to_tsurf: curve_de" );
 
     i = (-1);
-    for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+    for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
 	{
-	    if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+	    if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
 		continue;
 
 	    curve_de[++i] = nmg_loop_to_tcurve( lu, surf_de, u_dir, v_dir, u_max, v_max, base_pt, fp_dir, fp_param );
 	}
 
     bu_vls_printf( &str, "144,%d,0,%d", surf_de, loop_count-1 );
-    for( i=0 ; i<loop_count ; i++ )
+    for ( i=0; i<loop_count; i++ )
 	bu_vls_printf( &str, ",%d", curve_de[i] );
     bu_vls_strcat( &str, ";" );
 
@@ -1212,22 +1212,22 @@ nmg_fu_to_tsurf( fu, fp_dir, fp_param )
 int nmgregion_to_tsurf( name, r, fp_dir, fp_param )
      char *name;
      struct nmgregion *r;
-     FILE *fp_dir,*fp_param;
+     FILE *fp_dir, *fp_param;
 {
     struct shell *s;
 
     NMG_CK_REGION( r );
 
-    for( BU_LIST_FOR( s, shell, &r->s_hd ) )
+    for ( BU_LIST_FOR( s, shell, &r->s_hd ) )
 	{
 	    struct faceuse *fu;
 
 	    NMG_CK_SHELL( s );
-	    for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
+	    for ( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
 		{
 		    NMG_CK_FACEUSE( fu );
 
-		    if( fu->orientation != OT_SAME )
+		    if ( fu->orientation != OT_SAME )
 			continue;
 
 		    nmg_fu_to_tsurf( fu, fp_dir, fp_param );
@@ -1241,7 +1241,7 @@ int
 write_vertex_list( r, vtab, fp_dir, fp_param )
      struct nmgregion *r;
      struct bu_ptbl *vtab;   /* vertex table */
-     FILE *fp_dir,*fp_param;
+     FILE *fp_dir, *fp_param;
 {
     struct bu_vls		str;
     int			dir_entry[21];
@@ -1252,7 +1252,7 @@ write_vertex_list( r, vtab, fp_dir, fp_param )
     bu_vls_init( &str );
 
     /* initialize directory entry */
-    for( i=0 ; i<21 ; i++ )
+    for ( i=0; i<21; i++ )
 	dir_entry[i] = DEFAULT;
 
     /* Built list of vertex structs */
@@ -1261,14 +1261,14 @@ write_vertex_list( r, vtab, fp_dir, fp_param )
     /* write parameter data for vertex list entity */
     bu_vls_printf( &str, "502,%d", BU_PTBL_END( vtab  ) );
 
-    for( i=0 ; i<BU_PTBL_END( vtab ) ; i++ ) {
+    for ( i=0; i<BU_PTBL_END( vtab ); i++ ) {
 	struct vertex                   *v;
 	register struct vertex_g        *vg;
 
 	v = (struct vertex *)BU_PTBL_GET(vtab,i);
 	NMG_CK_VERTEX(v);
 	vg = v->vg_p;
-	if( !vg )
+	if ( !vg )
 	    bu_log( "No geometry for vertex x%x #%d in table\n", v, i );
 	NMG_CK_VERTEX_G(vg);
 	bu_vls_printf( &str, ",%g,%g,%g",
@@ -1301,7 +1301,7 @@ int
 write_line_entity( start_vg, end_vg, fp_dir, fp_param )
      struct vertex_g	*start_vg;
      struct vertex_g	*end_vg;
-     FILE *fp_dir,*fp_param;
+     FILE *fp_dir, *fp_param;
 {
     struct bu_vls str;
     int dir_entry[21];
@@ -1313,7 +1313,7 @@ write_line_entity( start_vg, end_vg, fp_dir, fp_param )
     bu_vls_init( &str );
 
     /* initialize directory entry */
-    for( i=0 ; i<21 ; i++ )
+    for ( i=0; i<21; i++ )
 	dir_entry[i] = DEFAULT;
 
     /* start with parameter data */
@@ -1347,7 +1347,7 @@ int
 write_linear_bspline( start_vg, end_vg, fp_dir, fp_param )
      struct vertex_g	*start_vg;
      struct vertex_g	*end_vg;
-     FILE *fp_dir,*fp_param;
+     FILE *fp_dir, *fp_param;
 {
     struct bu_vls str;
     int dir_entry[21];
@@ -1359,7 +1359,7 @@ write_linear_bspline( start_vg, end_vg, fp_dir, fp_param )
     bu_vls_init( &str );
 
     /* initialize directory entry */
-    for( i=0 ; i<21 ; i++ )
+    for ( i=0; i<21; i++ )
 	dir_entry[i] = DEFAULT;
 
     /* start with parameter data */
@@ -1395,7 +1395,7 @@ write_edge_list( r, vert_de, etab, vtab, fp_dir, fp_param )
      int vert_de;		/* DE# for vertex list */
      struct bu_ptbl *etab;	/* edge table */
      struct bu_ptbl *vtab;	/* vertex table (already filled in) */
-     FILE *fp_dir,*fp_param;
+     FILE *fp_dir, *fp_param;
 {
     struct bu_vls str;
     int dir_entry[21];
@@ -1406,7 +1406,7 @@ write_edge_list( r, vert_de, etab, vtab, fp_dir, fp_param )
     bu_vls_init( &str );
 
     /* initialize directory entry */
-    for( i=0 ; i<21 ; i++ )
+    for ( i=0; i<21; i++ )
 	dir_entry[i] = DEFAULT;
 
     /* Build list of edge structures */
@@ -1415,13 +1415,13 @@ write_edge_list( r, vert_de, etab, vtab, fp_dir, fp_param )
     bu_vls_printf( &str, "504,%d", BU_PTBL_END( etab ) );
 
     /* write parameter data for edge list entity */
-    for( i=0 ; i<BU_PTBL_END( etab ) ; i++ )
+    for ( i=0; i<BU_PTBL_END( etab ); i++ )
 	{
 	    struct edge			*e;
 	    struct edgeuse			*eu;
 	    struct vertexuse		*vu;
-	    struct vertex			*start_v,*end_v;
-	    struct vertex_g			*start_vg,*end_vg;
+	    struct vertex			*start_v, *end_v;
+	    struct vertex_g			*start_vg, *end_vg;
 	    int				line_de; /* directory entry # for line entity */
 
 	    e = (struct edge *)BU_PTBL_GET(etab,i);
@@ -1440,7 +1440,7 @@ write_edge_list( r, vert_de, etab, vtab, fp_dir, fp_param )
 	    NMG_CK_VERTEX(end_v);
 	    end_vg = end_v->vg_p;
 	    NMG_CK_VERTEX_G(end_vg);
-	    if( do_nurbs )
+	    if ( do_nurbs )
 		line_de = write_linear_bspline( start_vg, end_vg, fp_dir, fp_param );
 	    else
 		line_de = write_line_entity( start_vg, end_vg, fp_dir, fp_param );
@@ -1472,13 +1472,13 @@ write_edge_list( r, vert_de, etab, vtab, fp_dir, fp_param )
 int
 write_point_entity( pt, fp_dir, fp_param )
      point_t pt;
-     FILE *fp_dir,*fp_param;
+     FILE *fp_dir, *fp_param;
 {
     struct bu_vls		str;
     int			dir_entry[21];
     int			i;
 
-    for( i=0 ; i<21 ; i++ )
+    for ( i=0; i<21; i++ )
 	dir_entry[i] = DEFAULT;
 
     bu_vls_init( &str );
@@ -1508,13 +1508,13 @@ write_point_entity( pt, fp_dir, fp_param )
 int
 write_direction_entity( pt, fp_dir, fp_param )
      point_t pt;
-     FILE *fp_dir,*fp_param;
+     FILE *fp_dir, *fp_param;
 {
     struct bu_vls		str;
     int			dir_entry[21];
     int			i;
 
-    for( i=0 ; i<21 ; i++ )
+    for ( i=0; i<21; i++ )
 	dir_entry[i] = DEFAULT;
 
     bu_vls_init( &str );
@@ -1544,14 +1544,14 @@ write_direction_entity( pt, fp_dir, fp_param )
 int
 write_plane_entity( plane, fp_dir, fp_param )
      plane_t plane;
-     FILE *fp_dir,*fp_param;
+     FILE *fp_dir, *fp_param;
 {
     struct bu_vls	str;
     point_t		pt_on_plane;	/* a point on the plane */
     int		dir_entry[21];
     int		i;
 
-    for( i=0 ; i<21 ; i++ )
+    for ( i=0; i<21; i++ )
 	dir_entry[i] = DEFAULT;
 
     bu_vls_init( &str );
@@ -1584,23 +1584,23 @@ int
 write_planar_nurb( fu, u_dir, v_dir, u_max, v_max, base_pt, fp_dir, fp_param )
      struct faceuse *fu;
      vect_t u_dir,v_dir;	/* output */
-     fastf_t *u_max,*v_max;	/* output */
+     fastf_t *u_max, *v_max;	/* output */
      point_t base_pt;	/* output ( point at u,v==0 ) */
      FILE *fp_dir;
      FILE *fp_param;
 {
     struct loopuse		*lu;
-    struct edgeuse		*eu,*eu_next;
-    struct vertex_g		*vg,*vg_next;
+    struct edgeuse		*eu, *eu_next;
+    struct vertex_g		*vg, *vg_next;
     point_t			ctl_pt;
-    fastf_t			umin,umax,vmin,vmax;
+    fastf_t			umin, umax, vmin, vmax;
     struct bu_vls   	str;
     int           	 	dir_entry[21];
     int             	i;
 
     NMG_CK_FACEUSE( fu );
 
-    for( i=0 ; i<21 ; i++ )
+    for ( i=0; i<21; i++ )
 	dir_entry[i] = DEFAULT;
 
     bu_vls_init( &str );
@@ -1608,13 +1608,13 @@ write_planar_nurb( fu, u_dir, v_dir, u_max, v_max, base_pt, fp_dir, fp_param )
     /* create direction vectors in u and v directions in plane */
     lu = BU_LIST_FIRST( loopuse, &fu->lu_hd );
     NMG_CK_LOOPUSE( lu );
-    while( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC &&
+    while ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC &&
 	   BU_LIST_NOT_HEAD( lu, &fu->lu_hd ) )
 	{
 	    lu = BU_LIST_PNEXT( loopuse, lu );
 	    NMG_CK_LOOPUSE( lu );
 	}
-    if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+    if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
 	{
 	    bu_log( "Write_planar_nurb: could not find a loop (with edges) in face\n" );
 	    return( 0 );
@@ -1640,13 +1640,13 @@ write_planar_nurb( fu, u_dir, v_dir, u_max, v_max, base_pt, fp_dir, fp_param )
     umax = (-umin);
     vmax = (-vmin);
 
-    for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+    for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
 	{
 	    NMG_CK_LOOPUSE( lu );
-	    if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+	    if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
 		continue;
 
-	    for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+	    for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 		{
 		    vect_t	tmp_vect;
 		    fastf_t	distu,distv;
@@ -1710,7 +1710,7 @@ write_shell_face_loop( name, r, dependent, edge_de, etab, vert_de, vtab, fp_dir,
      struct bu_ptbl *etab;	/* Table of edge pointers */
      int vert_de;		/* directory entry # for vertex list */
      struct bu_ptbl *vtab;	/* Table of vertex pointers */
-     FILE *fp_dir,*fp_param;
+     FILE *fp_dir, *fp_param;
 {
     struct edgeuse		*eu;
     struct faceuse		*fu;
@@ -1732,14 +1732,14 @@ write_shell_face_loop( name, r, dependent, edge_de, etab, vert_de, vtab, fp_dir,
     bu_vls_init( &str );
 
     /* count the shells */
-    for( BU_LIST_FOR( s, shell, &r->s_hd ) )
+    for ( BU_LIST_FOR( s, shell, &r->s_hd ) )
 	shell_count++;
 
     /* make space for the list of shell DE's */
     shell_list = (int *)bu_calloc( shell_count, sizeof( int ), "write_shell_face_loop: shell_list" );
 
     shell_count = 0;
-    for( BU_LIST_FOR( s, shell, &r->s_hd ) )
+    for ( BU_LIST_FOR( s, shell, &r->s_hd ) )
 	{
 	    int	*face_list;
 	    int	face_count=0;
@@ -1771,7 +1771,7 @@ write_shell_face_loop( name, r, dependent, edge_de, etab, vert_de, vtab, fp_dir,
 		    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd))
 			{
 			    NMG_CK_LOOPUSE(lu);
-			    if( lu->orientation == OT_SAME )
+			    if ( lu->orientation == OT_SAME )
 				exterior_loop = loop_count;
 			    loop_count++;
 			}
@@ -1817,7 +1817,7 @@ write_shell_face_loop( name, r, dependent, edge_de, etab, vert_de, vtab, fp_dir,
 
 					    e = eu->e_p;
 					    eu_tab = e->eu_p;
-					    if( eu_tab->vu_p->v_p == eu->vu_p->v_p )
+					    if ( eu_tab->vu_p->v_p == eu->vu_p->v_p )
 						orientation = 1;
 					    else
 						orientation = 0;
@@ -1843,7 +1843,7 @@ write_shell_face_loop( name, r, dependent, edge_de, etab, vert_de, vtab, fp_dir,
 
 			    /* write loop entry */
 			    /* initialize directory entry */
-			    for( i=0 ; i<21 ; i++ )
+			    for ( i=0; i<21; i++ )
 				dir_entry[i] = DEFAULT;
 
 			    /* remember where parameter data is going */
@@ -1864,12 +1864,12 @@ write_shell_face_loop( name, r, dependent, edge_de, etab, vert_de, vtab, fp_dir,
 
 			}
 
-		    if( exterior_loop < 0 )
+		    if ( exterior_loop < 0 )
 			{
 			    bu_log( "No outside loop found for face\n" );
 			    outer_loop_flag = 0;
 			}
-		    else if( exterior_loop != 0 ) /* move outside loop to start of list */
+		    else if ( exterior_loop != 0 ) /* move outside loop to start of list */
 			{
 			    int tmp;
 
@@ -1878,7 +1878,7 @@ write_shell_face_loop( name, r, dependent, edge_de, etab, vert_de, vtab, fp_dir,
 			    loop_list[exterior_loop] = tmp;
 			}
 
-		    if( do_nurbs )
+		    if ( do_nurbs )
 			{
 			    vect_t u_dir,v_dir;
 			    point_t base_pt;
@@ -1895,12 +1895,12 @@ write_shell_face_loop( name, r, dependent, edge_de, etab, vert_de, vtab, fp_dir,
 				       loop_count,
 				       outer_loop_flag );
 
-		    for( i=0 ; i<loop_count ; i++ )
+		    for ( i=0; i<loop_count; i++ )
 			bu_vls_printf( &str, ",%d", loop_list[i] );
 
 		    bu_vls_strcat( &str, ";" );
 
-		    for( i=0 ; i<21 ; i++ )
+		    for ( i=0; i<21; i++ )
 			dir_entry[i] = DEFAULT;
 
 		    dir_entry[1] = 510;
@@ -1919,12 +1919,12 @@ write_shell_face_loop( name, r, dependent, edge_de, etab, vert_de, vtab, fp_dir,
 
 	    /* write shell entity */
 	    bu_vls_printf( &str, "514,%d", face_count );
-	    for( i=0 ; i<face_count ; i++ )
+	    for ( i=0; i<face_count; i++ )
 		bu_vls_printf( &str, ",%d,1", face_list[i] );
 	    bu_vls_strcat( &str, ";" );
 
 	    /* initialize directory entry */
-	    for( i=0 ; i<21 ; i++ )
+	    for ( i=0; i<21; i++ )
 		dir_entry[i] = DEFAULT;
 
 	    dir_entry[1] = 514;
@@ -1944,13 +1944,13 @@ write_shell_face_loop( name, r, dependent, edge_de, etab, vert_de, vtab, fp_dir,
     /* write BREP object entity */
 
     /* write name entity */
-    if( name != NULL )
+    if ( name != NULL )
 	name_de = write_name_entity( name, fp_dir, fp_param );
     else
 	name_de = 0;
 
     /* write color and attributes entities, if appropriate */
-    if( !name || lookup_props( &props, name ) )
+    if ( !name || lookup_props( &props, name ) )
 	{
 	    prop_de = 0;
 	    color_de = 0;
@@ -1958,7 +1958,7 @@ write_shell_face_loop( name, r, dependent, edge_de, etab, vert_de, vtab, fp_dir,
     else
 	{
 	    prop_de = write_att_entity( &props, fp_dir, fp_param );
-	    if( props.color_defined )
+	    if ( props.color_defined )
 		color_de = get_color( props.color, fp_dir, fp_param );
 	}
 
@@ -1966,20 +1966,20 @@ write_shell_face_loop( name, r, dependent, edge_de, etab, vert_de, vtab, fp_dir,
     bu_vls_printf( &str, "186,%d,1,%d", shell_list[0], shell_count-1 );
 
     /* Add all other shells */
-    for( i=1 ; i<shell_count ; i++ )
+    for ( i=1; i<shell_count; i++ )
 	{
 	    bu_vls_printf( &str, ",%d,1", shell_list[i] );
 	}
 
-    if( prop_de || name_de )
+    if ( prop_de || name_de )
 	{
-	    if( prop_de && name_de )
+	    if ( prop_de && name_de )
 		bu_vls_strcat( &str, ",0,2" );
 	    else
 		bu_vls_printf( &str, ",0,1" );
-	    if( prop_de )
+	    if ( prop_de )
 		bu_vls_printf( &str, ",%d", prop_de );
-	    if( name_de )
+	    if ( name_de )
 		bu_vls_printf( &str, ",%d", name_de );
 
 	}
@@ -1987,13 +1987,13 @@ write_shell_face_loop( name, r, dependent, edge_de, etab, vert_de, vtab, fp_dir,
     bu_vls_strcat( &str, ";"  );
 
     /* initialize directory entry */
-    for( i=0 ; i<21 ; i++ )
+    for ( i=0; i<21; i++ )
 	dir_entry[i] = DEFAULT;
 
     dir_entry[1] = 186;
     dir_entry[2] = param_seq + 1;
     dir_entry[8] = 0;
-    if( dependent )
+    if ( dependent )
 	dir_entry[9] = 10001;
     else
 	dir_entry[9] = 1;
@@ -2031,35 +2031,35 @@ arb_is_rpp( arb )
 
     /* check the height vectors */
     VSUB2( v0, arb->pt[4], arb->pt[0] );
-    for( i=5 ; i<8 ; i++ )
+    for ( i=5; i<8; i++ )
 	{
 	    VSUB2( v1, arb->pt[i], arb->pt[i-4] );
-	    if( !VAPPROXEQUAL( v0, v1, tol.dist ) )
+	    if ( !VAPPROXEQUAL( v0, v1, tol.dist ) )
 		return( 0 );
 	}
 
     /* check the width vectors */
     VSUB2( v0, arb->pt[1], arb->pt[0] );
     VSUB2( v1, arb->pt[2], arb->pt[3] );
-    if( !VAPPROXEQUAL( v0, v1, tol.dist ) )
+    if ( !VAPPROXEQUAL( v0, v1, tol.dist ) )
 	return( 0 );
     VSUB2( v1, arb->pt[6], arb->pt[7] );
-    if( !VAPPROXEQUAL( v0, v1, tol.dist ) )
+    if ( !VAPPROXEQUAL( v0, v1, tol.dist ) )
 	return( 0 );
     VSUB2( v1, arb->pt[5], arb->pt[4] );
-    if( !VAPPROXEQUAL( v0, v1, tol.dist ) )
+    if ( !VAPPROXEQUAL( v0, v1, tol.dist ) )
 	return( 0 );
 
     /* check the depth vectors */
     VSUB2( v0, arb->pt[3], arb->pt[0] );
     VSUB2( v1, arb->pt[2], arb->pt[1] );
-    if( !VAPPROXEQUAL( v0, v1, tol.dist ) )
+    if ( !VAPPROXEQUAL( v0, v1, tol.dist ) )
 	return( 0 );
     VSUB2( v1, arb->pt[6], arb->pt[5] );
-    if( !VAPPROXEQUAL( v0, v1, tol.dist ) )
+    if ( !VAPPROXEQUAL( v0, v1, tol.dist ) )
 	return( 0 );
     VSUB2( v1, arb->pt[7], arb->pt[4] );
-    if( !VAPPROXEQUAL( v0, v1, tol.dist ) )
+    if ( !VAPPROXEQUAL( v0, v1, tol.dist ) )
 	return( 0 );
 
     /* check for a right angle corner */
@@ -2069,11 +2069,11 @@ arb_is_rpp( arb )
     VUNITIZE( v0 );
     VUNITIZE( v1 );
     VUNITIZE( v2 );
-    if( !BN_VECT_ARE_PERP( VDOT( v0, v1 ), &tol ) )
+    if ( !BN_VECT_ARE_PERP( VDOT( v0, v1 ), &tol ) )
 	return( 0 );
-    if( !BN_VECT_ARE_PERP( VDOT( v0, v2 ), &tol ) )
+    if ( !BN_VECT_ARE_PERP( VDOT( v0, v2 ), &tol ) )
 	return( 0 );
-    if( !BN_VECT_ARE_PERP( VDOT( v1, v2 ), &tol ) )
+    if ( !BN_VECT_ARE_PERP( VDOT( v1, v2 ), &tol ) )
 	return( 0 );
 
     return( 1 );
@@ -2082,7 +2082,7 @@ arb_is_rpp( arb )
 int
 write_name_entity( name, fp_dir, fp_param )
      char *name;
-     FILE *fp_dir,*fp_param;
+     FILE *fp_dir, *fp_param;
 {
     struct bu_vls		str;
     int			dir_entry[21];
@@ -2090,17 +2090,17 @@ write_name_entity( name, fp_dir, fp_param )
     int			name_len;
 
     name_len = strlen( name );
-    if( !name_len )
+    if ( !name_len )
 	return( 0 );
 
     bu_vls_init( &str );
 
     /* initialize directory entry */
-    for( i=0 ; i<21 ; i++ )
+    for ( i=0; i<21; i++ )
 	dir_entry[i] = DEFAULT;
 
     /* write parameter data into a string */
-    if( name_len >= NAMESIZE )
+    if ( name_len >= NAMESIZE )
 	bu_vls_printf( &str, "406,1,16H%16.16s;", name );
     else
 	bu_vls_printf( &str, "406,1,%ldH%s;", strlen( name ), name );
@@ -2125,7 +2125,7 @@ int
 tor_to_iges( ip, name, fp_dir, fp_param )
      struct rt_db_internal *ip;
      char *name;
-     FILE *fp_dir,*fp_param;
+     FILE *fp_dir, *fp_param;
 {
     struct rt_tor_internal	*tor;
     struct bu_vls		str;
@@ -2133,7 +2133,7 @@ tor_to_iges( ip, name, fp_dir, fp_param )
     int			name_de;
     int			i;
 
-    if( ip->idb_type != ID_TOR )
+    if ( ip->idb_type != ID_TOR )
 	bu_log( "tor_to_iges called for non-torus (type=%d)\n", ip->idb_type );
 
     tor = (struct rt_tor_internal *)ip->idb_ptr;
@@ -2143,7 +2143,7 @@ tor_to_iges( ip, name, fp_dir, fp_param )
     bu_vls_init( &str );
 
     /* initialize directory entry */
-    for( i=0 ; i<21 ; i++ )
+    for ( i=0; i<21; i++ )
 	dir_entry[i] = DEFAULT;
 
     /* write a name entity for this solid */
@@ -2178,7 +2178,7 @@ int
 sph_to_iges( ip, name, fp_dir, fp_param )
      char *name;
      struct rt_db_internal *ip;
-     FILE *fp_dir,*fp_param;
+     FILE *fp_dir, *fp_param;
 {
     struct rt_ell_internal	*sph;
     struct bu_vls		str;
@@ -2187,7 +2187,7 @@ sph_to_iges( ip, name, fp_dir, fp_param )
     int			name_de;
     int			i;
 
-    if( ip->idb_type != ID_SPH )
+    if ( ip->idb_type != ID_SPH )
 	bu_log( "sph_to_iges called for non-sph (type=%d)\n", ip->idb_type );
 
     sph = (struct rt_ell_internal *)ip->idb_ptr;
@@ -2200,7 +2200,7 @@ sph_to_iges( ip, name, fp_dir, fp_param )
     bu_vls_init( &str );
 
     /* initialize directory entry */
-    for( i=0 ; i<21 ; i++ )
+    for ( i=0; i<21; i++ )
 	dir_entry[i] = DEFAULT;
 
     radius = MAGNITUDE( sph->a );
@@ -2232,7 +2232,7 @@ int
 ell_to_iges( ip, name, fp_dir, fp_param )
      char *name;
      struct rt_db_internal *ip;
-     FILE *fp_dir,*fp_param;
+     FILE *fp_dir, *fp_param;
 {
     struct rt_ell_internal	*ell;
     struct bu_vls		str;
@@ -2246,7 +2246,7 @@ ell_to_iges( ip, name, fp_dir, fp_param )
     int			name_de;
     int			i;
 
-    if( ip->idb_type != ID_ELL )
+    if ( ip->idb_type != ID_ELL )
 	bu_log( "ell_to_iges called for non-ell (type=%d)\n", ip->idb_type );
 
     ell = (struct rt_ell_internal *)ip->idb_ptr;
@@ -2259,7 +2259,7 @@ ell_to_iges( ip, name, fp_dir, fp_param )
     bu_vls_init( &str );
 
     /* initialize directory entry */
-    for( i=0 ; i<21 ; i++ )
+    for ( i=0; i<21; i++ )
 	dir_entry[i] = DEFAULT;
 
     radius_a = MAGNITUDE( ell->a );
@@ -2302,7 +2302,7 @@ int
 rpp_to_iges( ip, name, fp_dir, fp_param )
      char *name;
      struct rt_db_internal *ip;
-     FILE *fp_dir,*fp_param;
+     FILE *fp_dir, *fp_param;
 {
     struct rt_arb_internal	*arb;
     struct bu_vls		str;
@@ -2317,7 +2317,7 @@ rpp_to_iges( ip, name, fp_dir, fp_param )
     int			name_de;
     int			i;
 
-    if( ip->idb_type != ID_ARB8 )
+    if ( ip->idb_type != ID_ARB8 )
 	bu_log( "rpp_to_iges called for non-arb (type=%d)\n", ip->idb_type );
 
     arb = (struct rt_arb_internal *)ip->idb_ptr;
@@ -2330,7 +2330,7 @@ rpp_to_iges( ip, name, fp_dir, fp_param )
     bu_vls_init( &str );
 
     /* initialize directory entry */
-    for( i=0 ; i<21 ; i++ )
+    for ( i=0; i<21; i++ )
 	dir_entry[i] = DEFAULT;
 
     VSUB2( a_dir, arb->pt[1], arb->pt[0] );
@@ -2347,7 +2347,7 @@ rpp_to_iges( ip, name, fp_dir, fp_param )
 
     /* c_dir cross a_dir must give b_dir for IGES */
     VCROSS( tmp_dir, c_dir, a_dir );
-    if( VDOT( b_dir, tmp_dir ) < 0.0 )
+    if ( VDOT( b_dir, tmp_dir ) < 0.0 )
 	{
 	    /* not a right-handed system, so exchange a_dir with c_dir */
 	    double tmp_length;
@@ -2388,11 +2388,11 @@ int
 arb_to_iges( ip, name, fp_dir, fp_param )
      char *name;
      struct rt_db_internal *ip;
-     FILE *fp_dir,*fp_param;
+     FILE *fp_dir, *fp_param;
 {
     struct rt_arb_internal *arb;
 
-    if( ip->idb_type != ID_ARB8 )
+    if ( ip->idb_type != ID_ARB8 )
 	{
 	    bu_log( "arb_to_iges called for non-arb (type=%d)\n", ip->idb_type );
 	    return( 0 );
@@ -2402,7 +2402,7 @@ arb_to_iges( ip, name, fp_dir, fp_param )
 
     RT_ARB_CK_MAGIC( arb );
 
-    if( arb_is_rpp( arb ) )
+    if ( arb_is_rpp( arb ) )
 	return( rpp_to_iges( ip, name, fp_dir, fp_param ) );
     else
 	return( nmg_to_iges( ip, name, fp_dir, fp_param ) );
@@ -2412,7 +2412,7 @@ int
 tgc_to_iges( ip, name, fp_dir, fp_param )
      char *name;
      struct rt_db_internal *ip;
-     FILE *fp_dir,*fp_param;
+     FILE *fp_dir, *fp_param;
 {
     struct rt_tgc_internal	*tgc;
     fastf_t			h_len,a_len,b_len,c_len,d_len;
@@ -2423,7 +2423,7 @@ tgc_to_iges( ip, name, fp_dir, fp_param )
     int			name_de;
     int			i;
 
-    if( ip->idb_type != ID_TGC )
+    if ( ip->idb_type != ID_TGC )
 	{
 	    bu_log( "tgc_to_iges called for non-tgc (type=%d)\n", ip->idb_type );
 	    return( 0 );
@@ -2451,14 +2451,14 @@ tgc_to_iges( ip, name, fp_dir, fp_param )
     VMOVE( b_dir, tgc->b );
     VSCALE( b_dir, b_dir, 1.0/b_len );
 
-    if( !BN_VECT_ARE_PERP( VDOT( h_dir, a_dir ), &tol ) ||
+    if ( !BN_VECT_ARE_PERP( VDOT( h_dir, a_dir ), &tol ) ||
 	!BN_VECT_ARE_PERP( VDOT( h_dir, b_dir ), &tol ) )
 	{
 	    /* this is not an rcc or a trc */
 	    return( nmg_to_iges( ip, name, fp_dir, fp_param ));
 	}
 
-    if( NEAR_ZERO( a_len-b_len, tol.dist ) &&
+    if ( NEAR_ZERO( a_len-b_len, tol.dist ) &&
 	NEAR_ZERO( c_len-d_len, tol.dist ) )
 	{
 	    /* this tgc is either an rcc or a trc */
@@ -2469,10 +2469,10 @@ tgc_to_iges( ip, name, fp_dir, fp_param )
 	    bu_vls_init( &str );
 
 	    /* initialize directory entry */
-	    for( i=0 ; i<21 ; i++ )
+	    for ( i=0; i<21; i++ )
 		dir_entry[i] = DEFAULT;
 
-	    if( NEAR_ZERO( a_len-c_len, tol.dist ) )
+	    if ( NEAR_ZERO( a_len-c_len, tol.dist ) )
 		{
 		    /* its an rcc */
 		    iges_type = 154;
@@ -2489,7 +2489,7 @@ tgc_to_iges( ip, name, fp_dir, fp_param )
 		    vect_t base;
 
 		    iges_type = 156;
-		    if( a_len > c_len )
+		    if ( a_len > c_len )
 			{
 			    bigger_r = a_len;
 			    smaller_r = c_len;
@@ -2550,13 +2550,13 @@ write_tree_of_unions( name, de_list, length, dependent, fp_dir, fp_param )
     bu_vls_init( &str );
 
     /* write name entity */
-    if( name != NULL )
+    if ( name != NULL )
 	name_de = write_name_entity( name, fp_dir, fp_param );
     else
 	name_de = 0;
 
     /* write color and attributes entities, if appropriate */
-    if( lookup_props( &props, name ) )
+    if ( lookup_props( &props, name ) )
 	{
 	    prop_de = 0;
 	    color_de = 0;
@@ -2564,24 +2564,24 @@ write_tree_of_unions( name, de_list, length, dependent, fp_dir, fp_param )
     else
 	{
 	    prop_de = write_att_entity( &props, fp_dir, fp_param );
-	    if( props.color_defined )
+	    if ( props.color_defined )
 		color_de = get_color( props.color, fp_dir, fp_param );
 	}
 
     /* write parameter data into a string */
     bu_vls_printf( &str, "180,%d,%d", 2*length-1, -de_list[0] );
-    for( i=1 ; i<length ; i++ )
+    for ( i=1; i<length; i++ )
 	bu_vls_printf( &str, ",%d,1", -de_list[i] );
 
-    if( prop_de || name_de )
+    if ( prop_de || name_de )
 	{
-	    if( prop_de && name_de )
+	    if ( prop_de && name_de )
 		bu_vls_strcat( &str, ",0,2" );
 	    else
 		bu_vls_printf( &str, ",0,1" );
-	    if( prop_de )
+	    if ( prop_de )
 		bu_vls_printf( &str, ",%d", prop_de );
-	    if( name_de )
+	    if ( name_de )
 		bu_vls_printf( &str, ",%d", name_de );
 
 	}
@@ -2589,13 +2589,13 @@ write_tree_of_unions( name, de_list, length, dependent, fp_dir, fp_param )
     bu_vls_strcat( &str, ";"  );
 
     /* initialize directory entry */
-    for( i=0 ; i<21 ; i++ )
+    for ( i=0; i<21; i++ )
 	dir_entry[i] = DEFAULT;
 
     dir_entry[1] = 180;
     dir_entry[2] = param_seq + 1;
     dir_entry[8] = 0;
-    if( dependent )
+    if ( dependent )
 	dir_entry[9] = 10001;
     else
 	dir_entry[9] = 1;
@@ -2629,13 +2629,13 @@ write_solid_assembly( name, de_list, length, dependent, fp_dir, fp_param )
     bu_vls_init( &str );
 
     /* write name entity */
-    if( name != NULL )
+    if ( name != NULL )
 	name_de = write_name_entity( name, fp_dir, fp_param );
     else
 	name_de = 0;
 
     /* write color and attributes entities, if appropriate */
-    if( lookup_props( &props, name ) )
+    if ( lookup_props( &props, name ) )
 	{
 	    prop_de = 0;
 	    color_de = 0;
@@ -2643,26 +2643,26 @@ write_solid_assembly( name, de_list, length, dependent, fp_dir, fp_param )
     else
 	{
 	    prop_de = write_att_entity( &props, fp_dir, fp_param );
-	    if( props.color_defined )
+	    if ( props.color_defined )
 		color_de = get_color( props.color, fp_dir, fp_param );
 	}
 
     /* write parameter data into a string */
     bu_vls_printf( &str, "184,%d", length );
-    for( i=0 ; i<length ; i++ )
+    for ( i=0; i<length; i++ )
 	bu_vls_printf( &str, ",%d", de_list[i] );
-    for( i=0 ; i<length ; i++ )
+    for ( i=0; i<length; i++ )
 	bu_vls_printf( &str, ",0" );
 
-    if( prop_de || name_de )
+    if ( prop_de || name_de )
 	{
-	    if( prop_de && name_de )
+	    if ( prop_de && name_de )
 		bu_vls_strcat( &str, ",0,2" );
 	    else
 		bu_vls_printf( &str, ",0,1" );
-	    if( prop_de )
+	    if ( prop_de )
 		bu_vls_printf( &str, ",%d", prop_de );
-	    if( name_de )
+	    if ( name_de )
 		bu_vls_printf( &str, ",%d", name_de );
 
 	}
@@ -2670,13 +2670,13 @@ write_solid_assembly( name, de_list, length, dependent, fp_dir, fp_param )
     bu_vls_strcat( &str, ";"  );
 
     /* initialize directory entry */
-    for( i=0 ; i<21 ; i++ )
+    for ( i=0; i<21; i++ )
 	dir_entry[i] = DEFAULT;
 
     dir_entry[1] = 184;
     dir_entry[2] = param_seq + 1;
     dir_entry[8] = 0;
-    if( dependent )
+    if ( dependent )
 	dir_entry[9] = 10001;
     else
 	dir_entry[9] = 1;
@@ -2694,7 +2694,7 @@ int
 nmg_to_iges( ip, name, fp_dir, fp_param )
      struct rt_db_internal *ip;
      char *name;
-     FILE *fp_dir,*fp_param;
+     FILE *fp_dir, *fp_param;
 {
     struct model *model;
     struct nmgregion *r;
@@ -2707,9 +2707,9 @@ nmg_to_iges( ip, name, fp_dir, fp_param )
     RT_CK_DB_INTERNAL( ip );
 
     dependent = 1;
-    for( i=0 ; i<no_of_indeps ; i++ )
+    for ( i=0; i<no_of_indeps; i++ )
 	{
-	    if( !strncmp( name, independent[i], NAMESIZE ) )
+	    if ( !strncmp( name, independent[i], NAMESIZE ) )
 		{
 		    dependent = 0;
 		    break;
@@ -2718,22 +2718,22 @@ nmg_to_iges( ip, name, fp_dir, fp_param )
 
     solid_is_brep = 1;
     comb_form = 1;
-    if( ip->idb_type == ID_NMG )
+    if ( ip->idb_type == ID_NMG )
 	{
 	    model = (struct model *)ip->idb_ptr;
 	    NMG_CK_MODEL( model );
 
 	    /* count the number of nmgregions */
 	    region_count = 0;
-	    for( BU_LIST_FOR( r, nmgregion, &model->r_hd ) )
+	    for ( BU_LIST_FOR( r, nmgregion, &model->r_hd ) )
 		{
 		    NMG_CK_REGION( r );
 		    region_count++;
 		}
 
-	    if( region_count == 0 )
+	    if ( region_count == 0 )
 		return( 0 );
-	    else if( region_count == 1 )
+	    else if ( region_count == 1 )
 		return( nmgregion_to_iges( name, BU_LIST_FIRST( nmgregion, &model->r_hd ) ,
 					   dependent, fp_dir, fp_param ) );
 	    else
@@ -2745,7 +2745,7 @@ nmg_to_iges( ip, name, fp_dir, fp_param )
 
 		    /* loop through all nmgregions in the model */
 		    region_count = 0;
-		    for( BU_LIST_FOR( r, nmgregion, &model->r_hd ) )
+		    for ( BU_LIST_FOR( r, nmgregion, &model->r_hd ) )
 			region_de[region_count++] = nmgregion_to_iges( (char *)NULL, r, 1 ,
 								       fp_dir, fp_param );
 
@@ -2759,17 +2759,17 @@ nmg_to_iges( ip, name, fp_dir, fp_param )
 	}
     else
 	{
-	    if( ip->idb_type == ID_BOT )
+	    if ( ip->idb_type == ID_BOT )
 		{
 		    struct rt_bot_internal *bot=(struct rt_bot_internal *)ip->idb_ptr;
-		    if( bot->mode != RT_BOT_SOLID )
+		    if ( bot->mode != RT_BOT_SOLID )
 			{
 			    bu_log( "%s is a plate mode primitive, and cannot be converted to IGES format!\n", name );
 			    return( 0 );
 			}
 		}
 	    model = nmg_mm();
-	    if( rt_functab[ip->idb_type].ft_tessellate( &r, model, ip, &ttol, &tol ) )
+	    if ( rt_functab[ip->idb_type].ft_tessellate( &r, model, ip, &ttol, &tol ) )
 		{
 		    nmg_km( model );
 		    return( 0 );
@@ -2788,7 +2788,7 @@ int
 null_to_iges( ip, name, fp_dir, fp_param )
      struct rt_db_internal *ip;
      char *name;
-     FILE *fp_dir,*fp_param;
+     FILE *fp_dir, *fp_param;
 {
     return( 0 );
 }
@@ -2796,7 +2796,7 @@ null_to_iges( ip, name, fp_dir, fp_param )
 int
 write_xform_entity( mat, fp_dir, fp_param )
      mat_t mat;
-     FILE *fp_dir,*fp_param;
+     FILE *fp_dir, *fp_param;
 {
     struct bu_vls		str;
     int			dir_entry[21];
@@ -2805,12 +2805,12 @@ write_xform_entity( mat, fp_dir, fp_param )
     bu_vls_init( &str );
 
     /* initialize directory entry */
-    for( i=0 ; i<21 ; i++ )
+    for ( i=0; i<21; i++ )
 	dir_entry[i] = DEFAULT;
 
     /* write parameter data into a string */
     bu_vls_strcpy( &str, "124"  );
-    for( i=0 ; i<12 ; i++ )
+    for ( i=0; i<12; i++ )
 	{
 	    bu_vls_printf( &str, ",%g", mat[i] );
 	}
@@ -2833,7 +2833,7 @@ int
 write_solid_instance( orig_de, mat, fp_dir, fp_param )
      int orig_de;
      mat_t mat;
-     FILE *fp_dir,*fp_param;
+     FILE *fp_dir, *fp_param;
 {
     struct bu_vls		str;
     int			dir_entry[21];
@@ -2842,7 +2842,7 @@ write_solid_instance( orig_de, mat, fp_dir, fp_param )
     bu_vls_init( &str );
 
     /* initialize directory entry */
-    for( i=0 ; i<21 ; i++ )
+    for ( i=0; i<21; i++ )
 	dir_entry[i] = DEFAULT;
 
     /* write the transformation matrix and make the link */
@@ -2867,7 +2867,7 @@ write_solid_instance( orig_de, mat, fp_dir, fp_param )
 int
 write_att_entity( props, fp_dir, fp_param )
      struct iges_properties *props;
-     FILE *fp_dir,*fp_param;
+     FILE *fp_dir, *fp_param;
 {
     struct bu_vls		str;
     int			dir_entry[21];
@@ -2877,7 +2877,7 @@ write_att_entity( props, fp_dir, fp_param )
     bu_vls_init( &str );
 
     /* initialize directory entry */
-    for( i=0 ; i<21 ; i++ )
+    for ( i=0; i<21; i++ )
 	dir_entry[i] = DEFAULT;
 
     /* write parameter data into a string */
@@ -2885,20 +2885,20 @@ write_att_entity( props, fp_dir, fp_param )
 
     /* material name */
     str_len = strlen( props->material_name );
-    if( str_len )
+    if ( str_len )
 	bu_vls_printf( &str, ",%dH%s", str_len, props->material_name );
     else
 	bu_vls_strcat( &str, "," );
 
     /* material parameters */
     str_len = strlen( props->material_params );
-    if( str_len )
+    if ( str_len )
 	bu_vls_printf( &str, ",%dH%s", str_len, props->material_params );
     else
 	bu_vls_strcat( &str, "," );
 
     /* region flag */
-    if( props->region_flag == 'R' )
+    if ( props->region_flag == 'R' )
 	bu_vls_strcat( &str, ",1" );
     else
 	bu_vls_strcat( &str, ",0" );
@@ -2935,7 +2935,7 @@ short_comb_to_iges( props, dependent, de_pointers, fp_dir, fp_param )
      struct iges_properties *props;
      int dependent;
      int de_pointers[];
-     FILE *fp_dir,*fp_param;
+     FILE *fp_dir, *fp_param;
 {
     struct bu_vls		str;
     int			dir_entry[21];
@@ -2946,16 +2946,16 @@ short_comb_to_iges( props, dependent, de_pointers, fp_dir, fp_param )
     int			i;
 
     /* if member has not been converted, don't try to write the tree */
-    if( de_pointers[0] == 0  )
+    if ( de_pointers[0] == 0  )
 	return( 0 );
 
-    if( dependent )
+    if ( dependent )
 	status = 10001;
 
     bu_vls_init( &str );
 
     /* initialize directory entry */
-    for( i=0 ; i<21 ; i++ )
+    for ( i=0; i<21; i++ )
 	dir_entry[i] = DEFAULT;
 
     /* write name entity */
@@ -2965,7 +2965,7 @@ short_comb_to_iges( props, dependent, de_pointers, fp_dir, fp_param )
     props_de = write_att_entity( props, fp_dir, fp_param );
 
     /* get color */
-    if( props->color_defined )
+    if ( props->color_defined )
 	color_de = get_color( props->color, fp_dir, fp_param );
     else
 	color_de = 0;
@@ -2973,15 +2973,15 @@ short_comb_to_iges( props, dependent, de_pointers, fp_dir, fp_param )
     /* write parameter data into a string */
     bu_vls_printf( &str, "430,%d", de_pointers[0] );
 
-    if( props_de || name_de )
+    if ( props_de || name_de )
 	{
-	    if( props_de && name_de )
+	    if ( props_de && name_de )
 		bu_vls_strcat( &str, ",0,2" );
 	    else
 		bu_vls_printf( &str, ",0,1" );
-	    if( props_de )
+	    if ( props_de )
 		bu_vls_printf( &str, ",%d", props_de );
-	    if( name_de )
+	    if ( name_de )
 		bu_vls_printf( &str, ",%d", name_de );
 
 	}
@@ -3010,7 +3010,7 @@ count_non_union_ops( tp )
 
     RT_CK_TREE( tp );
 
-    switch( tp->tr_op )
+    switch ( tp->tr_op )
 	{
 	    case OP_INTERSECT:
 	    case OP_SUBTRACT:
@@ -3036,7 +3036,7 @@ igs_tree( str, tp, length, de_pointers )
     RT_CK_TREE( tp );
     BU_CK_VLS( str );
 
-    switch( tp->tr_op )
+    switch ( tp->tr_op )
 	{
 	    case OP_UNION:
 		igs_tree( str, tp->tr_b.tb_left, length, de_pointers );
@@ -3085,7 +3085,7 @@ tree_to_iges( comb, length, dependent, props, de_pointers, fp_dir, fp_param )
      int length,dependent;
      struct iges_properties *props;
      int de_pointers[];
-     FILE *fp_dir,*fp_param;
+     FILE *fp_dir, *fp_param;
 {
     struct bu_vls		str;
     int			dir_entry[21];
@@ -3101,21 +3101,21 @@ tree_to_iges( comb, length, dependent, props, de_pointers, fp_dir, fp_param )
     RT_CK_COMB( comb );
 
     /* if any part of this tree has not been converted, don't try to write the tree */
-    for( i=0 ; i<length ; i++ )
+    for ( i=0; i<length; i++ )
 	{
-	    if( de_pointers[i] )
+	    if ( de_pointers[i] )
 		actual_length++;
 	}
-    if( actual_length != length )
+    if ( actual_length != length )
 	return( 0 );
 
-    if( dependent )
+    if ( dependent )
 	status = 10001;
 
     bu_vls_init( &str );
 
     /* initialize directory entry */
-    for( i=0 ; i<21 ; i++ )
+    for ( i=0; i<21; i++ )
 	dir_entry[i] = DEFAULT;
 
     /* write name entity */
@@ -3125,14 +3125,14 @@ tree_to_iges( comb, length, dependent, props, de_pointers, fp_dir, fp_param )
     props_de = write_att_entity( props, fp_dir, fp_param );
 
     /* get color */
-    if( props->color_defined )
+    if ( props->color_defined )
 	color_de = get_color( props->color, fp_dir, fp_param );
     else
 	color_de = 0;
 
     non_union_count = count_non_union_ops( comb->tree );
 
-    if( mode == CSG_MODE || non_union_count )
+    if ( mode == CSG_MODE || non_union_count )
 	{
 	    /* write the combination as a Boolean tree */
 	    entity_type = 180;
@@ -3144,21 +3144,21 @@ tree_to_iges( comb, length, dependent, props, de_pointers, fp_dir, fp_param )
 	    entity_type = 184;
 
 	    bu_vls_printf( &str, "%d,%d", entity_type, length );
-	    for( i=0 ; i<length ; i++ )
+	    for ( i=0; i<length; i++ )
 		bu_vls_printf( &str, ",%d", de_pointers[i] );
-	    for( i=0 ; i<length ; i++ )
+	    for ( i=0; i<length; i++ )
 		bu_vls_strcat( &str, ",0" );
 	}
 
-    if( props_de || name_de )
+    if ( props_de || name_de )
 	{
-	    if( props_de && name_de )
+	    if ( props_de && name_de )
 		bu_vls_strcat( &str, ",0,2" );
 	    else
 		bu_vls_printf( &str, ",0,1" );
-	    if( props_de )
+	    if ( props_de )
 		bu_vls_printf( &str, ",%d", props_de );
-	    if( name_de )
+	    if ( name_de )
 		bu_vls_printf( &str, ",%d", name_de );
 
 	}
@@ -3185,11 +3185,11 @@ comb_to_iges( comb, length, dependent, props, de_pointers, fp_dir, fp_param )
      int length,dependent;
      struct iges_properties *props;
      int de_pointers[];
-     FILE *fp_dir,*fp_param;
+     FILE *fp_dir, *fp_param;
 {
     RT_CK_COMB( comb );
 
-    if( length == 1 )
+    if ( length == 1 )
 	return( short_comb_to_iges( props, dependent, de_pointers, fp_dir, fp_param ) );
     else
 	return( tree_to_iges( comb, length, dependent, props, de_pointers, fp_dir, fp_param ) );

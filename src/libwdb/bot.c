@@ -68,7 +68,7 @@ mk_bot_w_normals(
 	struct rt_bot_internal *bot;
 	int i;
 
-	if( (num_normals > 0) && (fp->dbip->dbi_version < 5 ) ) {
+	if ( (num_normals > 0) && (fp->dbip->dbi_version < 5 ) ) {
 		bu_log( "You are using an old database format which does not support surface normals for BOT primitives\n" );
 		bu_log( "You are attempting to create a BOT primitive named \"%s\" with surface normals\n" );
 		bu_log( "The surface normals will not be saved\n" );
@@ -83,15 +83,15 @@ mk_bot_w_normals(
 	bot->num_vertices = num_vertices;
 	bot->num_faces = num_faces;
 	bot->vertices = (fastf_t *)bu_calloc( num_vertices * 3, sizeof( fastf_t ), "bot->vertices" );
-	for( i=0 ; i<num_vertices*3 ; i++ )
+	for ( i=0; i<num_vertices*3; i++ )
 		bot->vertices[i] = vertices[i];
 	bot->faces = (int *)bu_calloc( num_faces * 3, sizeof( int ), "bot->faces" );
-	for( i=0 ; i<num_faces*3 ; i++ )
+	for ( i=0; i<num_faces*3; i++ )
 		bot->faces[i] = faces[i];
-	if( mode == RT_BOT_PLATE )
+	if ( mode == RT_BOT_PLATE )
 	{
 		bot->thickness = (fastf_t *)bu_calloc( num_faces, sizeof( fastf_t ), "bot->thickness" );
-		for( i=0 ; i<num_faces ; i++ )
+		for ( i=0; i<num_faces; i++ )
 			bot->thickness[i] = thickness[i];
 		bot->face_mode = bu_bitv_dup( face_mode );
 	}
@@ -101,7 +101,7 @@ mk_bot_w_normals(
 		bot->face_mode = (struct bu_bitv *)NULL;
 	}
 
-	if( (num_normals > 0) && (fp->dbip->dbi_version >= 5 ) ) {
+	if ( (num_normals > 0) && (fp->dbip->dbi_version >= 5 ) ) {
 		bot->num_normals = num_normals;
 		bot->num_face_normals = bot->num_faces;
 		bot->normals = (fastf_t *)bu_calloc( bot->num_normals * 3, sizeof( fastf_t ), "BOT normals" );

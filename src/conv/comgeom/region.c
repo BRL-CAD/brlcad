@@ -86,11 +86,11 @@ getregion(void)
 	reg_num = 0;		/* safety */
 
 	/* Pre-load very first region card */
-	if( get_line( rcard, sizeof(rcard), "region card" ) == EOF )  {
+	if ( get_line( rcard, sizeof(rcard), "region card" ) == EOF )  {
 		printf("getregion: premature EOF\n");
 		return( -1 );
 	}
-	if( getint( rcard, 0, 5 ) != 1 )  {
+	if ( getint( rcard, 0, 5 ) != 1 )  {
 		printf("First region card not #1\ncard='%s'\n", rcard);
 		return(-1);
 	}
@@ -98,16 +98,16 @@ getregion(void)
 top:
 	reg_reg_flag = 0;
 
-	for( card=0; ; card++ )  {
-		if( card == 0 )  {
+	for ( card=0; ; card++ )  {
+		if ( card == 0 )  {
 			/* First card is already in input buffer */
 			reg_num = getint( rcard, 0, 5 );
 
 			/* -1 region number terminates table */
-			if( reg_num < 0 )
+			if ( reg_num < 0 )
 				return( 0 );		/* Done */
 
-			if( reg_num > reg_total )  {
+			if ( reg_num > reg_total )  {
 				printf("%d regions is more than claimed %d\n",
 					reg_num, reg_total );
 				return(-1);
@@ -115,23 +115,23 @@ top:
 
 			namecvt( reg_num, &(wmp[reg_num].wm_name), 'r' );
 		} else {
-			if( get_line( rcard, sizeof(rcard), "region card" ) == EOF )  {
+			if ( get_line( rcard, sizeof(rcard), "region card" ) == EOF )  {
 				printf("getregion: premature EOF\n");
 				return( -1 );
 			}
-			if( strcmp( rcard, "  end" ) == 0 ||
+			if ( strcmp( rcard, "  end" ) == 0 ||
 			    strcmp( rcard, "  END" ) == 0 )  {
 				/* Version 1, DoE/MORSE */
 				reg_total = reg_num;
 				return(0);	/* done */
 			}
-			if( getint( rcard, 0, 5 ) != 0 )  {
+			if ( getint( rcard, 0, 5 ) != 0 )  {
 				/* finished with this region */
 				break;
 			}
 		}
 
-		if( version == 1 )  {
+		if ( version == 1 )  {
 			cp = rcard + 10;
 		} else {
 			cp = rcard + 6;
@@ -140,34 +140,34 @@ top:
 		op = WMOP_UNION; /* default */
 
 		/* Scan each of the 9 fields on the card */
-		for( i=0; i<9; i++, cp += 7 )  {
+		for ( i=0; i<9; i++, cp += 7 )  {
 			char	nbuf[32];
 			char	*np;
 
 			/* Remove all spaces from the number */
 			np = nbuf;
-			for( j=2; j<7; j++ )  {
-				if( !isascii( cp[j] ) ) *np++ = '?';
-				else if( isspace( cp[j] ) )  continue;
+			for ( j=2; j<7; j++ )  {
+				if ( !isascii( cp[j] ) ) *np++ = '?';
+				else if ( isspace( cp[j] ) )  continue;
 				*np++ = cp[j];
 			}
 			*np = '\0';
 
 			/* Check for null field -- they are to be skipped */
-			if( (inst_num = atoi(nbuf)) == 0 )  {
+			if ( (inst_num = atoi(nbuf)) == 0 )  {
 				/* zeros are allowed as placeholders */
 				continue;
 			}
 
-			if( version == 5 )  {
+			if ( version == 5 )  {
 				/* Region references region in Gift5 */
-				if( cp[1] == 'g' || cp[1] == 'G' ) {
+				if ( cp[1] == 'g' || cp[1] == 'G' ) {
 					reg_reg_flag = 1;
-				} else if( cp[1] == 'R' || cp[1] == 'r' )  {
+				} else if ( cp[1] == 'R' || cp[1] == 'r' )  {
 					/* 'OR' */
 					op = WMOP_UNION;
 				} else {
-					if( inst_num < 0 )  {
+					if ( inst_num < 0 )  {
 						op = WMOP_SUBTRACT;
 						inst_num = -inst_num;
 					}  else  {
@@ -177,10 +177,10 @@ top:
 			} else {
 				/* XXX this may actually be an old piece of code,
 				 * rather than the V4 way of doing it. */
-				if( cp[1] != ' ' )  {
+				if ( cp[1] != ' ' )  {
 					op = WMOP_UNION;
 				}  else  {
-					if( inst_num < 0 )  {
+					if ( inst_num < 0 )  {
 						op = WMOP_SUBTRACT;
 						inst_num = -inst_num;
 					}  else  {
@@ -190,7 +190,7 @@ top:
 			}
 
 			/* In Gift5, regions can reference regions */
-			if( reg_reg_flag )
+			if ( reg_reg_flag )
 				namecvt(inst_num, &inst_name, 'r');
 			else
 				namecvt( inst_num, &inst_name, 's' );
@@ -201,7 +201,7 @@ top:
 		}
 	}
 
-	if(verbose) col_pr( wmp[reg_num].wm_name );
+	if (verbose) col_pr( wmp[reg_num].wm_name );
 
 	/* The region will be output later in getid(), below */
 
@@ -223,15 +223,15 @@ getid(void)
 	int los= -2;
 	char	idcard[132];
 
-	while(1)  {
-		if( get_line( idcard, sizeof(idcard), "region ident card" ) == EOF )  {
+	while (1)  {
+		if ( get_line( idcard, sizeof(idcard), "region ident card" ) == EOF )  {
 			printf("\ngetid:  EOF\n");
 			return;
 		}
-		if( idcard[0] == '\n' )
+		if ( idcard[0] == '\n' )
 			return;
 
-		if( version == 5 )  {
+		if ( version == 5 )  {
 			reg_num = getint( idcard, 0, 5 );
 			id =	getint( idcard, 5, 5 );
 			air =	getint( idcard, 10, 5 );
@@ -245,7 +245,7 @@ getid(void)
 			los =	getint( idcard, 77, 3 );
 		}
 
-		if( reg_num <= 0 )  {
+		if ( reg_num <= 0 )  {
 			printf("\ngetid:  region_id %d encountered, stoping\n", reg_num);
 			return;
 		}
@@ -263,8 +263,8 @@ region_register(int reg_num, int id, int air, int mat, int los)
 	register struct wmember	*wp;
 
 	wp = &wmp[reg_num];
-	if( BU_LIST_IS_EMPTY( &wp->l ) )  {
-		if( verbose )  {
+	if ( BU_LIST_IS_EMPTY( &wp->l ) )  {
+		if ( verbose )  {
 			char	paren[32];
 
 			/* Denote an empty region */
@@ -278,7 +278,7 @@ region_register(int reg_num, int id, int air, int mat, int los)
 		/* Add region to the one group that it belongs to. */
 	group_add( id, wp->wm_name );
 
-	if(verbose) col_pr( wp->wm_name );
+	if (verbose) col_pr( wp->wm_name );
 }
 
 #define NGROUPS	21
@@ -322,7 +322,7 @@ group_register(char *name, int lo, int hi)
 	char	nbuf[32];
 	register struct wmember	*wp;
 
-	if( ngroups >= NGROUPS )  {
+	if ( ngroups >= NGROUPS )  {
 		printf("Too many groups, ABORTING\n");
 		bu_exit(13, NULL);
 	}
@@ -343,9 +343,9 @@ group_add(register int val, char *name)
 {
 	register int	i;
 
-	for( i=ngroups-1; i>=0; i-- )  {
-		if( val < groups[i].grp_lo )  continue;
-		if( val > groups[i].grp_hi )  continue;
+	for ( i=ngroups-1; i>=0; i-- )  {
+		if ( val < groups[i].grp_lo )  continue;
+		if ( val > groups[i].grp_hi )  continue;
 		goto add;
 	}
 	printf("Unable to find group for value %d\n", val);
@@ -364,10 +364,10 @@ group_write(void)
 
 	BU_LIST_INIT( &allhead.l );
 
-	for( i=0; i < ngroups; i++ )  {
+	for ( i=0; i < ngroups; i++ )  {
 		wp = &groups[i].grp_wm;
 		/* Skip empty groups */
-		if( BU_LIST_IS_EMPTY( &wp->l ) )  continue;
+		if ( BU_LIST_IS_EMPTY( &wp->l ) )  continue;
 
 		/* Make a non-region combination */
 		mk_lfcomb( outfp, wp->wm_name, wp, 0 );
@@ -375,7 +375,7 @@ group_write(void)
 		/* Add it to "all.g" */
 		(void)mk_addmember( wp->wm_name, &allhead.l, NULL, WMOP_UNION );
 
-		if(verbose) col_pr( wp->wm_name );
+		if (verbose) col_pr( wp->wm_name );
 	}
 	/* Make all-encompasing "all.g" group here */
 	mk_lfcomb( outfp, "all.g", &allhead, 0 );

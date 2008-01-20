@@ -59,7 +59,7 @@ const struct bu_structparse rt_nul_parse[] = {
 # define RT_DECLARE_INTERFACE(name)	\
 	BU_EXTERN(int rt_##name##_prep, (struct soltab *stp, \
 			struct rt_db_internal *ip, struct rt_i *rtip )); \
-	BU_EXTERN(int rt_##name##_shot, (struct soltab *stp,\
+	BU_EXTERN(int rt_##name##_shot, (struct soltab *stp, \
 			register struct xray *rp, \
 			struct application *ap, struct seg *seghead )); \
 	BU_EXTERN(int rt_##name##_piece_shot, (\
@@ -1014,72 +1014,72 @@ const int rt_nfunctab = sizeof(rt_functab)/sizeof(struct rt_functab);
 #define NDEF(func, args)	func BU_ARGS(args) { \
 	bu_log(#func " unimplemented\n"); return(-1); }
 
-int IDEF(rt_nul_prep,(struct soltab *stp,
+int IDEF(rt_nul_prep, (struct soltab *stp,
 			struct rt_db_internal *ip,
 			struct rt_i *rtip))
-int IDEF(rt_nul_shot,(struct soltab *stp,
+int IDEF(rt_nul_shot, (struct soltab *stp,
 			struct xray *rp,
 			struct application *ap,
 			struct seg *seghead))
-int IDEF(rt_nul_piece_shot,(struct rt_piecestate *psp,
+int IDEF(rt_nul_piece_shot, (struct rt_piecestate *psp,
 			struct rt_piecelist *plp,
 			double dist_corr,
 			struct xray *rp,
 			struct application *ap,
 			struct seg *seghead))
-void DEF(rt_nul_piece_hitsegs,(struct rt_piecestate *psp,
+void DEF(rt_nul_piece_hitsegs, (struct rt_piecestate *psp,
 			struct seg *seghead,
 			struct application *ap))
-void DEF(rt_nul_print,(const struct soltab *stp))
-void DEF(rt_nul_norm,(struct hit *hitp,
+void DEF(rt_nul_print, (const struct soltab *stp))
+void DEF(rt_nul_norm, (struct hit *hitp,
 			struct soltab *stp,
 			struct xray *rp))
-void DEF(rt_nul_uv,(struct application *ap,
+void DEF(rt_nul_uv, (struct application *ap,
 			struct soltab *stp,
 			struct hit *hitp,
 			struct uvcoord *uvp))
-void DEF(rt_nul_curve,(struct curvature *cvp,
+void DEF(rt_nul_curve, (struct curvature *cvp,
 			struct hit *hitp,
 			struct soltab *stp))
-int IDEF(rt_nul_class,())
-void DEF(rt_nul_free,(struct soltab *stp))
-int NDEF(rt_nul_plot,(struct bu_list *vhead,
+int IDEF(rt_nul_class, ())
+void DEF(rt_nul_free, (struct soltab *stp))
+int NDEF(rt_nul_plot, (struct bu_list *vhead,
 			struct rt_db_internal *ip,
 			const struct rt_tess_tol *ttol,
 			const struct bn_tol *tol))
-void DEF(rt_nul_vshot,(struct soltab *stp[],
+void DEF(rt_nul_vshot, (struct soltab *stp[],
 			struct xray *rp[],
 			struct seg segp[], int n,
 			struct application *ap))
-int NDEF(rt_nul_tess,(struct nmgregion **r,
+int NDEF(rt_nul_tess, (struct nmgregion **r,
 			struct model *m,
 			struct rt_db_internal *ip,
 			const struct rt_tess_tol *ttol,
 			const struct bn_tol *tol))
-int NDEF(rt_nul_tnurb,(struct nmgregion **r,
+int NDEF(rt_nul_tnurb, (struct nmgregion **r,
 			struct model *m,
 			struct rt_db_internal *ip,
 			const struct bn_tol *tol))
-int NDEF(rt_nul_import5,(struct rt_db_internal *ip,
+int NDEF(rt_nul_import5, (struct rt_db_internal *ip,
 			const struct bu_external *ep,
 			const mat_t mat, const struct db_i *dbip,
 			struct resource *resp,
 			 const int minot_type))
-int NDEF(rt_nul_export5,(struct bu_external *ep,
+int NDEF(rt_nul_export5, (struct bu_external *ep,
 			const struct rt_db_internal *ip,
 			double local2mm, const struct db_i *dbip,
 			struct resource *resp,
 			const int minor_type ))
-int NDEF(rt_nul_import,(struct rt_db_internal *ip,
+int NDEF(rt_nul_import, (struct rt_db_internal *ip,
 			const struct bu_external *ep,
 			const mat_t mat, const struct db_i *dbip,
 			struct resource *resp ))
-int NDEF(rt_nul_export,(struct bu_external *ep,
+int NDEF(rt_nul_export, (struct bu_external *ep,
 			const struct rt_db_internal *ip,
 			double local2mm, const struct db_i *dbip,
 			struct resource *resp ))
-void DEF(rt_nul_ifree,(struct rt_db_internal *ip, struct resource *resp))
-int NDEF(rt_nul_describe,(struct bu_vls *str,
+void DEF(rt_nul_ifree, (struct rt_db_internal *ip, struct resource *resp))
+int NDEF(rt_nul_describe, (struct bu_vls *str,
 			const struct rt_db_internal *ip,
 			int verbose, double mm2local, struct resource *resp,
 			  struct db_i *db_i))
@@ -1141,7 +1141,7 @@ rt_id_solid(struct bu_external *ep)
 	BU_CK_EXTERNAL( ep );
 	rec = (union record *)ep->ext_buf;
 
-	switch( rec->u_id )  {
+	switch ( rec->u_id )  {
 	case ID_SOLID:
 		id = idmap[(int)(rec->s.s_type)];
 		break;
@@ -1156,19 +1156,19 @@ rt_id_solid(struct bu_external *ep)
 		break;
 	case DBID_STRSOL:
 		/* XXX This really needs to be some kind of table */
-		if( strcmp( rec->ss.ss_keyword, "ebm" ) == 0 )  {
+		if ( strcmp( rec->ss.ss_keyword, "ebm" ) == 0 )  {
 			id = ID_EBM;
 			break;
-		} else if( strcmp( rec->ss.ss_keyword, "vol" ) == 0 )  {
+		} else if ( strcmp( rec->ss.ss_keyword, "vol" ) == 0 )  {
 			id = ID_VOL;
 			break;
-		} else if( strcmp( rec->ss.ss_keyword, "hf" ) == 0 )  {
+		} else if ( strcmp( rec->ss.ss_keyword, "hf" ) == 0 )  {
 			id = ID_HF;
 			break;
-		} else if( strcmp( rec->ss.ss_keyword, "dsp" ) == 0 )  {
+		} else if ( strcmp( rec->ss.ss_keyword, "dsp" ) == 0 )  {
 			id = ID_DSP;
 			break;
-		} else if( strcmp( rec->ss.ss_keyword, "submodel" ) == 0 )  {
+		} else if ( strcmp( rec->ss.ss_keyword, "submodel" ) == 0 )  {
 			id = ID_SUBMODEL;
 			break;
 		}
@@ -1205,7 +1205,7 @@ rt_id_solid(struct bu_external *ep)
 		id = ID_NULL;		/* BAD */
 		break;
 	}
-	if( id < ID_NULL || id > ID_MAX_SOLID )  {
+	if ( id < ID_NULL || id > ID_MAX_SOLID )  {
 		bu_log("rt_id_solid: internal error, id=%d?\n", id);
 		id = ID_NULL;		/* very BAD */
 	}
@@ -1223,8 +1223,8 @@ rt_get_functab_by_label(const char *label)
 {
 	register const struct rt_functab	*ftp;
 
-	for( ftp = rt_functab; ftp->magic != 0; ftp++ )  {
-		if( strncmp( label, ftp->ft_label, 8 ) == 0 )
+	for ( ftp = rt_functab; ftp->magic != 0; ftp++ )  {
+		if ( strncmp( label, ftp->ft_label, 8 ) == 0 )
 			return ftp;
 	}
 	return NULL;
@@ -1267,15 +1267,15 @@ rt_generic_xform(
 	/* Scale change on export is 1.0 -- no change */
 	switch (dbip->dbi_version) {
 	case 4:
-	    if( rt_functab[id].ft_export( &ext, ip, 1.0, dbip, resp ) < 0 )  {
+	    if ( rt_functab[id].ft_export( &ext, ip, 1.0, dbip, resp ) < 0 )  {
 		bu_log("rt_generic_xform():  %s export failure\n",
 			rt_functab[id].ft_name);
 		return -1;			/* FAIL */
 	    }
-	    if( (free || op == ip) )  rt_db_free_internal(ip, resp);
+	    if ( (free || op == ip) )  rt_db_free_internal(ip, resp);
 
 	    RT_INIT_DB_INTERNAL(op);
-	    if( rt_functab[id].ft_import( op, &ext, mat, dbip, resp ) < 0 )  {
+	    if ( rt_functab[id].ft_import( op, &ext, mat, dbip, resp ) < 0 )  {
 		bu_log("rt_generic_xform():  solid import failure\n");
 		return -1;			/* FAIL */
 	    }
@@ -1283,14 +1283,14 @@ rt_generic_xform(
 	case 5:
 	    avs.magic = -1;
 
-	    if( rt_functab[id].ft_export5( &ext, ip, 1.0, dbip, resp, 0 ) < 0 )  {
+	    if ( rt_functab[id].ft_export5( &ext, ip, 1.0, dbip, resp, 0 ) < 0 )  {
 		bu_log("rt_generic_xform():  %s export failure\n",
 			rt_functab[id].ft_name);
 		return -1;			/* FAIL */
 	    }
 
-	    if( (free || op == ip) ) {
-		    if( ip->idb_avs.magic == BU_AVS_MAGIC ) {
+	    if ( (free || op == ip) ) {
+		    if ( ip->idb_avs.magic == BU_AVS_MAGIC ) {
 			    /* grab the attributes before they are lost
 			     * by rt_db_free_internal or RT_INIT_DB_INTERNAL
 			     */
@@ -1302,20 +1302,20 @@ rt_generic_xform(
 
 	    RT_INIT_DB_INTERNAL(op);
 
-	    if( !free && op != ip ) {
+	    if ( !free && op != ip ) {
 		    /* just copy the attributes from ip to op */
-		    if( ip->idb_avs.magic == BU_AVS_MAGIC ) {
+		    if ( ip->idb_avs.magic == BU_AVS_MAGIC ) {
 			    bu_avs_init( &op->idb_avs, ip->idb_avs.count, "avs" );
 			    bu_avs_merge( &op->idb_avs, &ip->idb_avs );
 		    }
-	    } else if( avs.magic == BU_AVS_MAGIC ) {
+	    } else if ( avs.magic == BU_AVS_MAGIC ) {
 		    /* put the saved attributes in the output */
 		    bu_avs_init( &op->idb_avs, avs.count, "avs" );
 		    bu_avs_merge( &op->idb_avs, &avs );
 		    bu_avs_free( &avs );
 	    }
 
-	    if( rt_functab[id].ft_import5( op, &ext, mat, dbip, resp, 0 ) < 0 )  {
+	    if ( rt_functab[id].ft_import5( op, &ext, mat, dbip, resp, 0 ) < 0 )  {
 		bu_log("rt_generic_xform():  solid import failure\n");
 		return -1;			/* FAIL */
 	    }

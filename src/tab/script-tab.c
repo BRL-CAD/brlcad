@@ -88,7 +88,7 @@ char	**argv;
 {
 	register int i;
 
-	for( i=0; i<3; i++ )
+	for ( i=0; i<3; i++ )
 		eye_model[i] = atof( argv[i+1] );
 	return(0);
 }
@@ -102,12 +102,12 @@ char	**argv;
 	vect_t	dir;
 	int	yflip = 0;
 
-	if( argc < 4 )
+	if ( argc < 4 )
 		return(-1);
 	pt[X] = atof(argv[1]);
 	pt[Y] = atof(argv[2]);
 	pt[Z] = atof(argv[3]);
-	if( argc > 4 )
+	if ( argc > 4 )
 		yflip = atoi(argv[4]);
 
 	/*
@@ -126,7 +126,7 @@ char	**argv;
 {
 	register int i;
 
-	for( i=0; i<16; i++ )
+	for ( i=0; i<16; i++ )
 		Viewrotscale[i] = atof( argv[i+1] );
 	return(0);
 }
@@ -139,7 +139,7 @@ char	**argv;
 	register int	i;
 	quat_t		quat;
 
-	for( i=0; i<4; i++ )
+	for ( i=0; i<4; i++ )
 		quat[i] = atof( argv[i+1] );
 	quat_quat2mat( Viewrotscale, quat );
 	return(0);
@@ -160,7 +160,7 @@ char	**argv;
 	quat_t	orient;
 
 	/* If no matrix or az/el specified yet, use params from cmd line */
-	if( Viewrotscale[15] <= 0.0 )
+	if ( Viewrotscale[15] <= 0.0 )
 		bu_exit(EXIT_FAILURE, "cm_end:  matrix not specified\n");
 
 	quat_mat2quat( orient, Viewrotscale );
@@ -310,7 +310,7 @@ char	**argv;
 	register char	*buf;
 	register int	ret;
 
-	if( argc != 1 || isatty(fileno(stdin)) )  {
+	if ( argc != 1 || isatty(fileno(stdin)) )  {
 		fprintf(stderr, "Usage: script-tab < script > table\n");
 		return 1;
 	}
@@ -321,12 +321,12 @@ char	**argv;
 	 * All the work happens in the functions
 	 * called by rt_do_cmd().
 	 */
-	while( (buf = rt_read_cmd( stdin )) != (char *)0 )  {
+	while ( (buf = rt_read_cmd( stdin )) != (char *)0 )  {
 #if		0
 		fprintf(stderr, "cmd: %s\n", buf );
 #endif
 		ret = rt_do_cmd( NULL, buf, rt_cmdtab );
-		if( ret < 0 )  {
+		if ( ret < 0 )  {
 			bu_log("Command failure on '%s'\n", buf);
 			bu_free( buf, "cmd buf" );
 			break;

@@ -704,7 +704,7 @@ arb8_edge(int arg)
 {
   es_menu = arg;
   es_edflag = EARB;
-  if(arg == 12)  {
+  if (arg == 12)  {
     es_edflag = ECMD_ARB_MAIN_MENU;
     sedit();
   }
@@ -717,12 +717,12 @@ arb7_edge(int arg)
 {
   es_menu = arg;
   es_edflag = EARB;
-  if(arg == 11) {
+  if (arg == 11) {
     /* move point 5 */
     es_edflag = PTARB;
     es_menu = 4;	/* location of point */
   }
-  if(arg == 12)  {
+  if (arg == 12)  {
     es_edflag = ECMD_ARB_MAIN_MENU;
     sedit();
   }
@@ -735,17 +735,17 @@ arb6_edge(int arg)
 {
   es_menu = arg;
   es_edflag = EARB;
-  if(arg == 8) {
+  if (arg == 8) {
     /* move point 5   location = 4 */
     es_edflag = PTARB;
     es_menu = 4;
   }
-  if(arg == 9) {
+  if (arg == 9) {
     /* move point 6   location = 6 */
     es_edflag = PTARB;
     es_menu = 6;
   }
-  if(arg == 10)  {
+  if (arg == 10)  {
     es_edflag = ECMD_ARB_MAIN_MENU;
     sedit();
   }
@@ -758,12 +758,12 @@ arb5_edge(int arg)
 {
   es_menu = arg;
   es_edflag = EARB;
-  if(arg == 8) {
+  if (arg == 8) {
     /* move point 5 at loaction 4 */
     es_edflag = PTARB;
     es_menu = 4;
   }
-  if(arg == 9)  {
+  if (arg == 9)  {
     es_edflag = ECMD_ARB_MAIN_MENU;
     sedit();
   }
@@ -776,7 +776,7 @@ arb4_point(int arg)
 {
   es_menu = arg;
   es_edflag = PTARB;
-  if(arg == 5)  {
+  if (arg == 5)  {
     es_edflag = ECMD_ARB_MAIN_MENU;
     sedit();
   }
@@ -799,7 +799,7 @@ ebm_ed(int arg)
 {
   es_menu = arg;
 
-  switch( arg ){
+  switch ( arg ){
   case MENU_EBM_FNAME:
     es_edflag = ECMD_EBM_FNAME;
     break;
@@ -820,7 +820,7 @@ dsp_ed(int arg)
 {
 	es_menu = arg;
 
-	switch( arg ) {
+	switch ( arg ) {
 	case MENU_DSP_FNAME:
 		es_edflag = ECMD_DSP_FNAME;
 		break;
@@ -853,7 +853,7 @@ vol_ed(int arg)
 {
   es_menu = arg;
 
-  switch( arg ){
+  switch ( arg ){
   case MENU_VOL_FNAME:
     es_edflag = ECMD_VOL_FNAME;
     break;
@@ -881,23 +881,23 @@ pipe_ed(int arg)
 	struct wdb_pipept *next;
 	struct wdb_pipept *prev;
 
-	if(dbip == DBI_NULL)
+	if (dbip == DBI_NULL)
 	  return;
 
-	switch( arg )
+	switch ( arg )
 	{
 		case MENU_PIPE_SELECT:
 			es_menu = arg;
 			es_edflag = ECMD_PIPE_PICK;
 		break;
 		case MENU_PIPE_NEXT_PT:
-			if( !es_pipept )
+			if ( !es_pipept )
 			{
 			  Tcl_AppendResult(interp, "No Pipe Segment selected\n", (char *)NULL);
 			  return;
 			}
 			next = BU_LIST_NEXT( wdb_pipept, &es_pipept->l );
-			if( next->l.magic == BU_LIST_HEAD_MAGIC )
+			if ( next->l.magic == BU_LIST_HEAD_MAGIC )
 			{
 			  Tcl_AppendResult(interp, "Current segment is the last\n", (char *)NULL);
 			  return;
@@ -909,13 +909,13 @@ pipe_ed(int arg)
 			sedit();
 		break;
 		case MENU_PIPE_PREV_PT:
-			if( !es_pipept )
+			if ( !es_pipept )
 			{
 			  Tcl_AppendResult(interp, "No Pipe Segment selected\n", (char *)NULL);
 			  return;
 			}
 			prev = BU_LIST_PREV( wdb_pipept, &es_pipept->l );
-			if( prev->l.magic == BU_LIST_HEAD_MAGIC )
+			if ( prev->l.magic == BU_LIST_HEAD_MAGIC )
 			{
 			  Tcl_AppendResult(interp, "Current segment is the first\n", (char *)NULL);
 			  return;
@@ -930,7 +930,7 @@ pipe_ed(int arg)
 			/* not used */
 		break;
 		case MENU_PIPE_MOV_PT:
-			if( !es_pipept )
+			if ( !es_pipept )
 			{
 			  Tcl_AppendResult(interp, "No Pipe Segment selected\n", (char *)NULL);
 			  es_edflag = IDLE;
@@ -942,7 +942,7 @@ pipe_ed(int arg)
 		case MENU_PIPE_PT_OD:
 		case MENU_PIPE_PT_ID:
 		case MENU_PIPE_PT_RADIUS:
-			if( !es_pipept )
+			if ( !es_pipept )
 			{
 			  Tcl_AppendResult(interp, "No Pipe Segment selected\n", (char *)NULL);
 			  es_edflag = IDLE;
@@ -979,13 +979,13 @@ tgc_ed(int arg)
 {
 	es_menu = arg;
 	es_edflag = PSCALE;
-	if(arg == MENU_TGC_ROT_H )
+	if (arg == MENU_TGC_ROT_H )
 		es_edflag = ECMD_TGC_ROT_H;
-	if(arg == MENU_TGC_ROT_AB)
+	if (arg == MENU_TGC_ROT_AB)
 		es_edflag = ECMD_TGC_ROT_AB;
-	if(arg == MENU_TGC_MV_H)
+	if (arg == MENU_TGC_MV_H)
 		es_edflag = ECMD_TGC_MV_H;
-	if(arg == MENU_TGC_MV_HH)
+	if (arg == MENU_TGC_MV_HH)
 		es_edflag = ECMD_TGC_MV_HH;
 
 	set_e_axes_pos(1);
@@ -1005,7 +1005,7 @@ static void
 eto_ed(int arg)
 {
 	es_menu = arg;
-	if(arg == MENU_ETO_ROT_C )
+	if (arg == MENU_ETO_ROT_C )
 		es_edflag = ECMD_ETO_ROT_C;
 	else
 		es_edflag = PSCALE;
@@ -1072,7 +1072,7 @@ arb8_mv_face(int arg)
 {
 	es_menu = arg - 1;
 	es_edflag = ECMD_ARB_MOVE_FACE;
-	if(arg == 7)  {
+	if (arg == 7)  {
 		es_edflag = ECMD_ARB_MAIN_MENU;
 		sedit();
 	}
@@ -1085,7 +1085,7 @@ arb7_mv_face(int arg)
 {
 	es_menu = arg - 1;
 	es_edflag = ECMD_ARB_MOVE_FACE;
-	if(arg == 7)  {
+	if (arg == 7)  {
 		es_edflag = ECMD_ARB_MAIN_MENU;
 		sedit();
 	}
@@ -1098,7 +1098,7 @@ arb6_mv_face(int arg)
 {
 	es_menu = arg - 1;
 	es_edflag = ECMD_ARB_MOVE_FACE;
-	if(arg == 6)  {
+	if (arg == 6)  {
 		es_edflag = ECMD_ARB_MAIN_MENU;
 		sedit();
 	}
@@ -1111,7 +1111,7 @@ arb5_mv_face(int arg)
 {
   es_menu = arg - 1;
   es_edflag = ECMD_ARB_MOVE_FACE;
-  if(arg == 6)  {
+  if (arg == 6)  {
     es_edflag = ECMD_ARB_MAIN_MENU;
     sedit();
   }
@@ -1124,7 +1124,7 @@ arb4_mv_face(int arg)
 {
   es_menu = arg - 1;
   es_edflag = ECMD_ARB_MOVE_FACE;
-  if(arg == 5)  {
+  if (arg == 5)  {
     es_edflag = ECMD_ARB_MAIN_MENU;
     sedit();
   }
@@ -1137,7 +1137,7 @@ arb8_rot_face(int arg)
 {
   es_menu = arg - 1;
   es_edflag = ECMD_ARB_SETUP_ROTFACE;
-  if(arg == 7)
+  if (arg == 7)
     es_edflag = ECMD_ARB_MAIN_MENU;
 
   sedit();
@@ -1148,7 +1148,7 @@ arb7_rot_face(int arg)
 {
   es_menu = arg - 1;
   es_edflag = ECMD_ARB_SETUP_ROTFACE;
-  if(arg == 7)
+  if (arg == 7)
     es_edflag = ECMD_ARB_MAIN_MENU;
 
   sedit();
@@ -1159,7 +1159,7 @@ arb6_rot_face(int arg)
 {
   es_menu = arg - 1;
   es_edflag = ECMD_ARB_SETUP_ROTFACE;
-  if(arg == 6)
+  if (arg == 6)
     es_edflag = ECMD_ARB_MAIN_MENU;
 
   sedit();
@@ -1170,7 +1170,7 @@ arb5_rot_face(int arg)
 {
   es_menu = arg - 1;
   es_edflag = ECMD_ARB_SETUP_ROTFACE;
-  if(arg == 6)
+  if (arg == 6)
     es_edflag = ECMD_ARB_MAIN_MENU;
 
   sedit();
@@ -1181,7 +1181,7 @@ arb4_rot_face(int arg)
 {
   es_menu = arg - 1;
   es_edflag = ECMD_ARB_SETUP_ROTFACE;
-  if(arg == 5)
+  if (arg == 5)
     es_edflag = ECMD_ARB_MAIN_MENU;
 
   sedit();
@@ -1223,10 +1223,10 @@ metaball_ed(int arg)
 {
 		struct wdb_metaballpt *next, *prev;
 
-	if(dbip == DBI_NULL)
+	if (dbip == DBI_NULL)
 		return;
 
-	switch( arg )
+	switch ( arg )
 	{
 		case MENU_METABALL_SET_THRESHOLD:
 			es_menu = arg;
@@ -1241,12 +1241,12 @@ metaball_ed(int arg)
 			es_edflag = ECMD_METABALL_PT_PICK;
 			break;
 		case MENU_METABALL_NEXT_PT:
-			if( !es_metaballpt ) {
+			if ( !es_metaballpt ) {
 			  Tcl_AppendResult(interp, "No Metaball Point selected\n", (char *)NULL);
 			  return;
 			}
 			next = BU_LIST_NEXT( wdb_metaballpt, &es_metaballpt->l );
-			if( next->l.magic == BU_LIST_HEAD_MAGIC ) {
+			if ( next->l.magic == BU_LIST_HEAD_MAGIC ) {
 			  Tcl_AppendResult(interp, "Current point is the last\n", (char *)NULL);
 			  return;
 			}
@@ -1257,12 +1257,12 @@ metaball_ed(int arg)
 			sedit();
 			break;
 		case MENU_METABALL_PREV_PT:
-			if( !es_metaballpt ) {
+			if ( !es_metaballpt ) {
 			  Tcl_AppendResult(interp, "No Metaball Point selected\n", (char *)NULL);
 			  return;
 			}
 			prev = BU_LIST_PREV( wdb_metaballpt, &es_metaballpt->l );
-			if( prev->l.magic == BU_LIST_HEAD_MAGIC ) {
+			if ( prev->l.magic == BU_LIST_HEAD_MAGIC ) {
 			  Tcl_AppendResult(interp, "Current point is the first\n", (char *)NULL);
 			  return;
 			}
@@ -1273,7 +1273,7 @@ metaball_ed(int arg)
 			sedit();
 			break;
 		case MENU_METABALL_MOV_PT:
-			if( !es_metaballpt ) {
+			if ( !es_metaballpt ) {
 			  Tcl_AppendResult(interp, "No Metaball Point selected\n", (char *)NULL);
 			  es_edflag = IDLE;
 			  return;
@@ -1283,7 +1283,7 @@ metaball_ed(int arg)
 			sedit();
 			break;
 		case MENU_METABALL_PT_FLDSTR:
-			if( !es_metaballpt ) {
+			if ( !es_metaballpt ) {
 			  Tcl_AppendResult(interp, "No Metaball Point selected\n", (char *)NULL);
 			  es_edflag = IDLE;
 			  return;
@@ -1310,7 +1310,7 @@ static void
 spline_ed(int arg)
 {
   /* XXX Why wasn't this done by setting es_edflag = ECMD_SPLINE_VPICK? */
-  if( arg < 0 )  {
+  if ( arg < 0 )  {
     /* Enter picking state */
     chg_state( ST_S_EDIT, ST_S_VPICK, "Vertex Pick" );
     return;
@@ -1332,7 +1332,7 @@ spline_ed(int arg)
 static void
 nmg_ed(int arg)
 {
-	switch(arg)  {
+	switch (arg)  {
 	default:
 	  Tcl_AppendResult(interp, "nmg_ed: undefined menu event?\n", (char *)NULL);
 	  return;
@@ -1342,7 +1342,7 @@ nmg_ed(int arg)
 	case ECMD_NMG_EKILL:
 		break;
 	case ECMD_NMG_EDEBUG:
-		if( !es_eu )  {
+		if ( !es_eu )  {
 		  Tcl_AppendResult(interp, "nmg_ed: no edge selected yet\n", (char *)NULL);
 		  return;
 		}
@@ -1356,7 +1356,7 @@ nmg_ed(int arg)
 			m = nmg_find_model( &es_eu->l.magic );
 			NMG_CK_MODEL(m);
 
-			if( *es_eu->g.magic_p == NMG_EDGE_G_LSEG_MAGIC )
+			if ( *es_eu->g.magic_p == NMG_EDGE_G_LSEG_MAGIC )
 			{
 				/* get space for list of items processed */
 				tab = (long *)bu_calloc( m->maxindex+1, sizeof(long),
@@ -1371,13 +1371,13 @@ nmg_ed(int arg)
 			}
 			view_state->vs_flag = 1;
 		}
-		if( *es_eu->up.magic_p == NMG_LOOPUSE_MAGIC )  {
+		if ( *es_eu->up.magic_p == NMG_LOOPUSE_MAGIC )  {
 			nmg_veu( &es_eu->up.lu_p->down_hd, es_eu->up.magic_p );
 		}
 		/* no change of state or es_edflag */
 		return;
 	case ECMD_NMG_FORW:
-		if( !es_eu )  {
+		if ( !es_eu )  {
 		  Tcl_AppendResult(interp, "nmg_ed: no edge selected yet\n", (char *)NULL);
 		  return;
 		}
@@ -1398,7 +1398,7 @@ nmg_ed(int arg)
 		sedit();
 		return;
 	case ECMD_NMG_BACK:
-		if( !es_eu )  {
+		if ( !es_eu )  {
 			bu_log("nmg_ed: no edge selected yet\n");
 			return;
 		}
@@ -1419,7 +1419,7 @@ nmg_ed(int arg)
 		sedit();
 		return;
 	case ECMD_NMG_RADIAL:
-		if( !es_eu )  {
+		if ( !es_eu )  {
 			bu_log("nmg_ed: no edge selected yet\n");
 			return;
 		}
@@ -1441,9 +1441,9 @@ nmg_ed(int arg)
 		return;
 	case ECMD_NMG_LEXTRU:
 		{
-			struct model *m,*m_tmp;
-			struct nmgregion *r,*r_tmp;
-			struct shell *s,*s_tmp;
+			struct model *m, *m_tmp;
+			struct nmgregion *r, *r_tmp;
+			struct shell *s, *s_tmp;
 			struct loopuse *lu=(struct loopuse *)NULL;
 			struct loopuse *lu_tmp;
 			struct edgeuse *eu;
@@ -1454,19 +1454,19 @@ nmg_ed(int arg)
 			NMG_CK_MODEL( m );
 
 			/* look for wire loops */
-			for( BU_LIST_FOR( r, nmgregion, &m->r_hd ) )
+			for ( BU_LIST_FOR( r, nmgregion, &m->r_hd ) )
 			{
 				NMG_CK_REGION( r );
-				for( BU_LIST_FOR( s, shell, &r->s_hd ) )
+				for ( BU_LIST_FOR( s, shell, &r->s_hd ) )
 				{
-					if( BU_LIST_IS_EMPTY( &s->lu_hd ) )
+					if ( BU_LIST_IS_EMPTY( &s->lu_hd ) )
 						continue;
 
-					for( BU_LIST_FOR( lu_tmp, loopuse, &s->lu_hd ) )
+					for ( BU_LIST_FOR( lu_tmp, loopuse, &s->lu_hd ) )
 					{
-						if( !lu )
+						if ( !lu )
 							lu = lu_tmp;
-						else if( lu_tmp == lu->lumate_p )
+						else if ( lu_tmp == lu->lumate_p )
 							continue;
 
 						wire_loop_count++;
@@ -1474,20 +1474,20 @@ nmg_ed(int arg)
 				}
 			}
 
-			if( !wire_loop_count )
+			if ( !wire_loop_count )
 			{
 			  Tcl_AppendResult(interp, "No sketch (wire loop) to extrude\n",
 					   (char *)NULL);
 			  return;
 			}
 
-			if( wire_loop_count > 1 )
+			if ( wire_loop_count > 1 )
 			{
 			  Tcl_AppendResult(interp, "Too many wire loops!  Don't know which to extrude!\n", (char *)NULL);
 				return;
 			}
 
-			if( !lu || *lu->up.magic_p != NMG_SHELL_MAGIC )
+			if ( !lu || *lu->up.magic_p != NMG_SHELL_MAGIC )
 			{
 				/* This should never happen */
 				bu_exit(EXIT_FAILURE,  "Cannot find wire loop!\n" );
@@ -1496,7 +1496,7 @@ nmg_ed(int arg)
 			/* Make sure loop is not a crack */
 			area = nmg_loop_plane_area( lu, lu_pl );
 
-			if( area < 0.0 )
+			if ( area < 0.0 )
 			{
 			  Tcl_AppendResult(interp, "Cannot extrude loop with no area\n",
 					   (char *)NULL);
@@ -1504,7 +1504,7 @@ nmg_ed(int arg)
 			}
 
 			/* Check if loop crosses itself */
-			for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+			for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 			{
 				struct edgeuse *eu2;
 				struct vertex *v1;
@@ -1516,7 +1516,7 @@ nmg_ed(int arg)
 				NMG_CK_VERTEX( v1 );
 				VSUB2( edge1, eu->eumate_p->vu_p->v_p->vg_p->coord, v1->vg_p->coord );
 
-				for( eu2 = BU_LIST_PNEXT( edgeuse, &eu->l ) ; BU_LIST_NOT_HEAD( eu2, &lu->down_hd ) ; eu2=BU_LIST_PNEXT( edgeuse, &eu2->l) )
+				for ( eu2 = BU_LIST_PNEXT( edgeuse, &eu->l ); BU_LIST_NOT_HEAD( eu2, &lu->down_hd ); eu2=BU_LIST_PNEXT( edgeuse, &eu2->l) )
 				{
 					struct vertex *v2;
 					vect_t edge2;
@@ -1525,18 +1525,18 @@ nmg_ed(int arg)
 
 					NMG_CK_EDGEUSE( eu2 );
 
-					if( eu2 == eu )
+					if ( eu2 == eu )
 						continue;
-					if( eu2 == BU_LIST_PNEXT_CIRC( edgeuse,  &eu->l ) )
+					if ( eu2 == BU_LIST_PNEXT_CIRC( edgeuse,  &eu->l ) )
 						continue;
-					if( eu2 == BU_LIST_PPREV_CIRC( edgeuse, &eu->l ) )
+					if ( eu2 == BU_LIST_PPREV_CIRC( edgeuse, &eu->l ) )
 						continue;
 
 					v2 = eu2->vu_p->v_p;
 					NMG_CK_VERTEX( v2 );
 					VSUB2( edge2, eu2->eumate_p->vu_p->v_p->vg_p->coord, v2->vg_p->coord );
 
-					if( (ret_val=bn_isect_lseg3_lseg3( dist, v1->vg_p->coord, edge1,
+					if ( (ret_val=bn_isect_lseg3_lseg3( dist, v1->vg_p->coord, edge1,
 						v2->vg_p->coord, edge2, &mged_tol )) > (-1) )
 					{
 					  struct bu_vls tmp_vls;
@@ -1550,7 +1550,7 @@ nmg_ed(int arg)
 					  bu_vls_printf(&tmp_vls,
 							"edge2: pt=( %g %g %g ), dir=( %g %g %g)\n",
 						  V3ARGS( v2->vg_p->coord ), V3ARGS( edge2 ) );
-					  if( ret_val == 0 )
+					  if ( ret_val == 0 )
 					    bu_vls_printf(&tmp_vls,
 							  "edges are collinear and overlap\n" );
 					  else
@@ -1576,7 +1576,7 @@ nmg_ed(int arg)
 			r_tmp = nmg_mrsv( m_tmp );
 			s_tmp = BU_LIST_FIRST( shell, &r_tmp->s_hd );
 			lu_copy = nmg_dup_loop( lu, &s_tmp->l.magic, (long **)0 );
-			if( !lu_copy )
+			if ( !lu_copy )
 			{
 			  Tcl_AppendResult(interp, "Failed to make copy of loop\n", (char *)NULL);
 			  nmg_km( m_tmp );
@@ -1589,7 +1589,7 @@ nmg_ed(int arg)
 
 			s = lu->up.s_p;
 
-			if( BU_LIST_NON_EMPTY( &s->fu_hd ) )
+			if ( BU_LIST_NON_EMPTY( &s->fu_hd ) )
 			{
 				/* make a new shell to hold the extruded solid */
 
@@ -1629,7 +1629,7 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 
 	RT_CK_DB_INTERNAL( ip );
 
-	switch( ip->idb_type )  {
+	switch ( ip->idb_type )  {
 	case ID_CLINE:
 		{
 			struct rt_cline_internal *cli =
@@ -1637,12 +1637,12 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 
 			RT_CLINE_CK_MAGIC( cli );
 
-			if( !strcmp( cp, "V" ) )
+			if ( !strcmp( cp, "V" ) )
 			{
 				VMOVE( mpt, cli->v );
 				*strp = "V";
 			}
-			else if( !strcmp( cp, "H" ) )
+			else if ( !strcmp( cp, "H" ) )
 			{
 				VADD2( mpt, cli->v, cli->h );
 				*strp = "H";
@@ -1661,12 +1661,12 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 
 			RT_PART_CK_MAGIC( part );
 
-			if( !strcmp( cp, "V" ) )
+			if ( !strcmp( cp, "V" ) )
 			{
 				VMOVE( mpt, part->part_V );
 				*strp = "V";
 			}
-			else if( !strcmp( cp, "H" ) )
+			else if ( !strcmp( cp, "H" ) )
 			{
 				VADD2( mpt, part->part_V, part->part_H );
 				*strp = "H";
@@ -1704,7 +1704,7 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 			RT_METABALL_CK_MAGIC( metaball );
 
 			VSETALL(mpt, 0.0);
-			if( es_metaballpt==NULL )
+			if ( es_metaballpt==NULL )
 			    snprintf(buf, BUFSIZ, "no point selected");
 			else {
 			    VMOVE( mpt, es_metaballpt->coord );
@@ -1721,39 +1721,39 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 			int good_vert=0;
 
 			RT_ARBN_CK_MAGIC( arbn );
-			for( i=0 ; i<arbn->neqn ; i++ )
+			for ( i=0; i<arbn->neqn; i++ )
 			{
-				for( j=i+1 ; j<arbn->neqn ; j++ )
+				for ( j=i+1; j<arbn->neqn; j++ )
 				{
-					for( k=j+1 ; k<arbn->neqn ; k++ )
+					for ( k=j+1; k<arbn->neqn; k++ )
 					{
-						if( !bn_mkpoint_3planes( mpt, arbn->eqn[i], arbn->eqn[j], arbn->eqn[k] ) )
+						if ( !bn_mkpoint_3planes( mpt, arbn->eqn[i], arbn->eqn[j], arbn->eqn[k] ) )
 						{
 							int l;
 
 							good_vert = 1;
-							for( l=0 ; l<arbn->neqn ; l++ )
+							for ( l=0; l<arbn->neqn; l++ )
 							{
-								if( l == i || l == j || l == k )
+								if ( l == i || l == j || l == k )
 									continue;
 
-								if( DIST_PT_PLANE( mpt, arbn->eqn[l] ) > mged_tol.dist )
+								if ( DIST_PT_PLANE( mpt, arbn->eqn[l] ) > mged_tol.dist )
 								{
 									good_vert = 0;
 									break;
 								}
 							}
 
-							if( good_vert )
+							if ( good_vert )
 								break;
 						}
-						if( good_vert )
+						if ( good_vert )
 							break;
 					}
-					if( good_vert )
+					if ( good_vert )
 						break;
 				}
-				if( good_vert )
+				if ( good_vert )
 					break;
 			}
 
@@ -1778,7 +1778,7 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 			struct rt_bot_internal *bot =
 				(struct rt_bot_internal *)ip->idb_ptr;
 
-			if( bot_verts[0] > -1 )
+			if ( bot_verts[0] > -1 )
 				VMOVE( mpt, &bot->vertices[bot_verts[0]*3] )
 			else
 				VMOVE( mpt, bot->vertices )
@@ -1838,13 +1838,13 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 				(struct rt_arb_internal *)ip->idb_ptr;
 			RT_ARB_CK_MAGIC( arb );
 
-			if( *cp == 'V' ) {
+			if ( *cp == 'V' ) {
 				int vertex_number;
 				char *ptr;
 
 				ptr = cp + 1;
 				vertex_number = (*ptr) - '0';
-				if( vertex_number < 1 || vertex_number > 8 )
+				if ( vertex_number < 1 || vertex_number > 8 )
 					vertex_number = 1;
 				VMOVE( mpt, arb->pt[vertex_number-1] );
 				sprintf( buf, "V%d", vertex_number );
@@ -1865,22 +1865,22 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 				(struct rt_ell_internal *)ip->idb_ptr;
 			RT_ELL_CK_MAGIC(ell);
 
-			if( strcmp( cp, "V" ) == 0 )  {
+			if ( strcmp( cp, "V" ) == 0 )  {
 				VMOVE( mpt, ell->v );
 				*strp = "V";
 				break;
 			}
-			if( strcmp( cp, "A" ) == 0 )  {
+			if ( strcmp( cp, "A" ) == 0 )  {
 				VADD2( mpt, ell->v, ell->a );
 				*strp = "A";
 				break;
 			}
-			if( strcmp( cp, "B" ) == 0 )  {
+			if ( strcmp( cp, "B" ) == 0 )  {
 				VADD2( mpt, ell->v, ell->b );
 				*strp = "B";
 				break;
 			}
-			if( strcmp( cp, "C" ) == 0 )  {
+			if ( strcmp( cp, "C" ) == 0 )  {
 				VADD2( mpt, ell->v, ell->c );
 				*strp = "C";
 				break;
@@ -1896,22 +1896,22 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 				(struct rt_superell_internal *)ip->idb_ptr;
 			RT_SUPERELL_CK_MAGIC(superell);
 
-			if( strcmp( cp, "V" ) == 0 )  {
+			if ( strcmp( cp, "V" ) == 0 )  {
 				VMOVE( mpt, superell->v );
 				*strp = "V";
 				break;
 			}
-			if( strcmp( cp, "A" ) == 0 )  {
+			if ( strcmp( cp, "A" ) == 0 )  {
 				VADD2( mpt, superell->v, superell->a );
 				*strp = "A";
 				break;
 			}
-			if( strcmp( cp, "B" ) == 0 )  {
+			if ( strcmp( cp, "B" ) == 0 )  {
 				VADD2( mpt, superell->v, superell->b );
 				*strp = "B";
 				break;
 			}
-			if( strcmp( cp, "C" ) == 0 )  {
+			if ( strcmp( cp, "C" ) == 0 )  {
 				VADD2( mpt, superell->v, superell->c );
 				*strp = "C";
 				break;
@@ -1927,7 +1927,7 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 				(struct rt_tor_internal *)ip->idb_ptr;
 			RT_TOR_CK_MAGIC(tor);
 
-			if( strcmp( cp, "V" ) == 0 )  {
+			if ( strcmp( cp, "V" ) == 0 )  {
 				VMOVE( mpt, tor->v );
 				*strp = "V";
 				break;
@@ -1944,32 +1944,32 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 				(struct rt_tgc_internal *)ip->idb_ptr;
 			RT_TGC_CK_MAGIC(tgc);
 
-			if( strcmp( cp, "V" ) == 0 )  {
+			if ( strcmp( cp, "V" ) == 0 )  {
 				VMOVE( mpt, tgc->v );
 				*strp = "V";
 				break;
 			}
-			if( strcmp( cp, "H" ) == 0 )  {
+			if ( strcmp( cp, "H" ) == 0 )  {
 				VMOVE( mpt, tgc->h );
 				*strp = "H";
 				break;
 			}
-			if( strcmp( cp, "A" ) == 0 )  {
+			if ( strcmp( cp, "A" ) == 0 )  {
 				VMOVE( mpt, tgc->a );
 				*strp = "A";
 				break;
 			}
-			if( strcmp( cp, "B" ) == 0 )  {
+			if ( strcmp( cp, "B" ) == 0 )  {
 				VMOVE( mpt, tgc->b );
 				*strp = "B";
 				break;
 			}
-			if( strcmp( cp, "C" ) == 0 )  {
+			if ( strcmp( cp, "C" ) == 0 )  {
 				VMOVE( mpt, tgc->c );
 				*strp = "C";
 				break;
 			}
-			if( strcmp( cp, "D" ) == 0 )  {
+			if ( strcmp( cp, "D" ) == 0 )  {
 				VMOVE( mpt, tgc->d );
 				*strp = "D";
 				break;
@@ -2098,7 +2098,7 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 				(struct rt_extrude_internal *)ip->idb_ptr;
 			RT_EXTRUDE_CK_MAGIC( extr );
 
-			if( extr->skt )
+			if ( extr->skt )
 			{
 				VJOIN2( mpt, extr->V, extr->skt->verts[0][0], extr->u_vec, extr->skt->verts[0][2], extr->v_vec );
 				*strp = "V1";
@@ -2139,32 +2139,32 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 			}
 #endif
 
-			if( BU_LIST_IS_EMPTY( &m->r_hd ) )
+			if ( BU_LIST_IS_EMPTY( &m->r_hd ) )
 				break;
 
 			r = BU_LIST_FIRST( nmgregion, &m->r_hd );
-			if( !r )
+			if ( !r )
 				break;
 			NMG_CK_REGION( r );
 
-			if( BU_LIST_IS_EMPTY( &r->s_hd ) )
+			if ( BU_LIST_IS_EMPTY( &r->s_hd ) )
 				break;
 
 			s = BU_LIST_FIRST( shell, &r->s_hd );
-			if( !s )
+			if ( !s )
 				break;
 			NMG_CK_SHELL( s );
 
-			if( BU_LIST_IS_EMPTY( &s->fu_hd ) )
+			if ( BU_LIST_IS_EMPTY( &s->fu_hd ) )
 				fu = (struct faceuse *)NULL;
 			else
 				fu = BU_LIST_FIRST( faceuse, &s->fu_hd );
-			if( fu )
+			if ( fu )
 			{
 				NMG_CK_FACEUSE( fu );
 				lu = BU_LIST_FIRST( loopuse, &fu->lu_hd );
 				NMG_CK_LOOPUSE( lu );
-				if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_EDGEUSE_MAGIC )
+				if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_EDGEUSE_MAGIC )
 				{
 					eu = BU_LIST_FIRST( edgeuse, &lu->down_hd );
 					NMG_CK_EDGEUSE( eu );
@@ -2178,20 +2178,20 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 					v = vu->v_p;
 				}
 				NMG_CK_VERTEX( v );
-				if( !v->vg_p )
+				if ( !v->vg_p )
 					break;
 				VMOVE( mpt, v->vg_p->coord );
 				*strp = "V";
 				break;
 			}
-			if( BU_LIST_IS_EMPTY( &s->lu_hd ) )
+			if ( BU_LIST_IS_EMPTY( &s->lu_hd ) )
 				lu = (struct loopuse *)NULL;
 			else
 				lu = BU_LIST_FIRST( loopuse, &s->lu_hd );
-			if( lu )
+			if ( lu )
 			{
 				NMG_CK_LOOPUSE( lu );
-				if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_EDGEUSE_MAGIC )
+				if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_EDGEUSE_MAGIC )
 				{
 					eu = BU_LIST_FIRST( edgeuse, &lu->down_hd );
 					NMG_CK_EDGEUSE( eu );
@@ -2205,35 +2205,35 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 					v = vu->v_p;
 				}
 				NMG_CK_VERTEX( v );
-				if( !v->vg_p )
+				if ( !v->vg_p )
 					break;
 				VMOVE( mpt, v->vg_p->coord );
 				*strp = "V";
 				break;
 			}
-			if( BU_LIST_IS_EMPTY( &s->eu_hd ) )
+			if ( BU_LIST_IS_EMPTY( &s->eu_hd ) )
 				eu = (struct edgeuse *)NULL;
 			else
 				eu = BU_LIST_FIRST( edgeuse, &s->eu_hd );
-			if( eu )
+			if ( eu )
 			{
 				NMG_CK_EDGEUSE( eu );
 				NMG_CK_VERTEXUSE( eu->vu_p );
 				v = eu->vu_p->v_p;
 				NMG_CK_VERTEX( v );
-				if( !v->vg_p )
+				if ( !v->vg_p )
 					break;
 				VMOVE( mpt, v->vg_p->coord );
 				*strp = "V";
 				break;
 			}
 			vu = s->vu_p;
-			if( vu )
+			if ( vu )
 			{
 				NMG_CK_VERTEXUSE( vu );
 				v = vu->v_p;
 				NMG_CK_VERTEX( v );
-				if( !v->vg_p )
+				if ( !v->vg_p )
 					break;
 				VMOVE( mpt, v->vg_p->coord );
 				*strp = "V";
@@ -2252,7 +2252,7 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 int
 f_get_solid_keypoint(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-	if( state == ST_VIEW || state == ST_S_PICK || state == ST_O_PICK )
+	if ( state == ST_VIEW || state == ST_S_PICK || state == ST_O_PICK )
 		return TCL_OK;
 
 	get_solid_keypoint( es_keypoint, &es_keytag, &es_int, es_mat );
@@ -2261,7 +2261,7 @@ f_get_solid_keypoint(ClientData clientData, Tcl_Interp *interp, int argc, char *
 
 void
 set_e_axes_pos(int both)
-	     /* if(!both) then set only curr_e_axes_pos, otherwise
+	     /* if (!both) then set only curr_e_axes_pos, otherwise
 	      set e_axes_pos and curr_e_axes_pos */
 {
 	int	i;
@@ -2449,20 +2449,20 @@ init_sedit(void)
 	register int		type;
 	int			id;
 
-	if(dbip == DBI_NULL || !illump)
+	if (dbip == DBI_NULL || !illump)
 	  return;
 
 	/*
 	 * Check for a processed region or other illegal solid.
 	 */
-	if( illump->s_Eflag )  {
+	if ( illump->s_Eflag )  {
 	  Tcl_AppendResult(interp,
 "Unable to Solid_Edit a processed region;  select a primitive instead\n", (char *)NULL);
 	  return;
 	}
 
 	/* Read solid description into es_int */
-	if( rt_db_get_internal( &es_int, LAST_SOLID(illump),
+	if ( rt_db_get_internal( &es_int, LAST_SOLID(illump),
 	  dbip, NULL, &rt_uniresource ) < 0 )  {
 	  Tcl_AppendResult(interp, "init_sedit(",
 			LAST_SOLID(illump)->d_namep,
@@ -2474,7 +2474,7 @@ init_sedit(void)
 	id = es_int.idb_type;
 
 	es_menu = 0;
-	if( id == ID_ARB8 )
+	if ( id == ID_ARB8 )
 	{
 		struct rt_arb_internal *arb;
 
@@ -2492,7 +2492,7 @@ init_sedit(void)
 		  return;
 		}
 	}
-	else if( id == ID_BSPLINE )
+	else if ( id == ID_BSPLINE )
 	{
 		register struct rt_nurb_internal *sip =
 			(struct rt_nurb_internal *) es_int.idb_ptr;
@@ -2593,7 +2593,7 @@ replot_editing_solid(void)
   illdp = LAST_SOLID(illump);
 
   FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid) {
-    if(LAST_SOLID(sp) == illdp )  {
+    if (LAST_SOLID(sp) == illdp )  {
       pathHmat( sp, mat, sp->s_fullpath.fp_len-2 );
       (void)replot_modified_solid( sp, &es_int, mat );
     }
@@ -2611,7 +2611,7 @@ transform_editing_solid(
 	struct rt_db_internal	*is,		/* input solid */
 	int			free)
 {
-	if( rt_matrix_transform( os, mat, is, free, dbip, &rt_uniresource ) < 0 )
+	if ( rt_matrix_transform( os, mat, is, free, dbip, &rt_uniresource ) < 0 )
 		bu_exit(EXIT_FAILURE, "transform_editing_solid failed to apply a matrix transform, aborting");
 }
 
@@ -2629,7 +2629,7 @@ sedit_menu(void) {
 	mmenu_set_all( MENU_L1, MENU_NULL );
 	chg_l2menu(ST_S_EDIT);
 
-	switch( es_int.idb_type ) {
+	switch ( es_int.idb_type ) {
 
 	case ID_ARB8:
 		mmenu_set_all( MENU_L1, cntrl_menu );
@@ -2719,8 +2719,8 @@ get_rotation_vertex(void)
   bu_vls_init(&cmd);
 
   bu_vls_printf(&str, "Enter fixed vertex number( ");
-  for(i=0; i<4; i++){
-    if( arb_vertices[type][loc+i] )
+  for (i=0; i<4; i++){
+    if ( arb_vertices[type][loc+i] )
       bu_vls_printf(&str, "%d ", arb_vertices[type][loc+i]);
   }
   bu_vls_printf(&str, ") [%d]: ",arb_vertices[type][loc]);
@@ -2729,16 +2729,16 @@ get_rotation_vertex(void)
  {%s} vertex_num %d 0 {{ summary \"Enter a vertex number to rotate about.\"}} OK",
 		&dName, bu_vls_addr(&str), arb_vertices[type][loc]);
 
-  while(!valid){
-    if(Tcl_Eval(interp, bu_vls_addr(&cmd)) != TCL_OK){
+  while (!valid){
+    if (Tcl_Eval(interp, bu_vls_addr(&cmd)) != TCL_OK){
       Tcl_AppendResult(interp, "get_rotation_vertex: Error reading vertex\n", (char *)NULL);
       /* Using default */
       return arb_vertices[type][loc];
     }
 
     fixv = atoi(Tcl_GetVar(interp, "vertex_num", TCL_GLOBAL_ONLY));
-    for(j=0; j<4; j++)  {
-      if( fixv==arb_vertices[type][loc+j] )
+    for (j=0; j<4; j++)  {
+      if ( fixv==arb_vertices[type][loc+j] )
 	valid=1;
     }
   }
@@ -2761,12 +2761,12 @@ get_file_name(char *str)
 	bu_vls_init( &varname_vls );
 	bu_vls_strcpy( &varname_vls, "mged_gui(getFileDir)" );
 
-	if( (fptr=strrchr( str, '/')))
+	if ( (fptr=strrchr( str, '/')))
 	{
 		dir = (char *)bu_malloc( (strlen(str)+1)*sizeof( char ), "get_file_name: dir" );
 		ptr1 = str;
 		ptr2 = dir;
-		while( ptr1 != fptr )
+		while ( ptr1 != fptr )
 			*ptr2++ = *ptr1++;
 		*ptr2 = '\0';
 		Tcl_SetVar(interp, bu_vls_addr(&varname_vls), dir, TCL_GLOBAL_ONLY);
@@ -2779,12 +2779,12 @@ get_file_name(char *str)
 		      bu_vls_addr(&varname_vls));
 	bu_vls_free(&varname_vls);
 
-	if( Tcl_Eval( interp, bu_vls_addr( &cmd ) ) )
+	if ( Tcl_Eval( interp, bu_vls_addr( &cmd ) ) )
 	{
 		bu_vls_free( &cmd );
 		return( (char *)NULL );
 	}
-	else if( Tcl_GetStringResult(interp)[0] != '\0' )
+	else if ( Tcl_GetStringResult(interp)[0] != '\0' )
 	{
 		bu_vls_free( &cmd );
 		return( Tcl_GetStringResult(interp) );
@@ -2833,7 +2833,7 @@ dsp_scale(struct rt_dsp_internal *dsp, int idx)
  * A great deal of magic takes place here, to accomplish solid editing.
  *
  *  Called from mged main loop after any event handlers:
- *		if( sedraw > 0 )  sedit();
+ *		if ( sedraw > 0 )  sedit();
  *  to process any residual events that the event handlers were too
  *  lazy to handle themselves.
  *
@@ -2854,13 +2854,13 @@ sedit(void)
 	mat_t	edit;
 	point_t rot_point;
 
-	if(dbip == DBI_NULL)
+	if (dbip == DBI_NULL)
 	  return;
 
 	sedraw = 0;
 	++update_views;
 
-	switch( es_edflag ) {
+	switch ( es_edflag ) {
 
 	case IDLE:
 	  /* do nothing more */
@@ -2891,7 +2891,7 @@ sedit(void)
 			fname = get_file_name( bu_vls_addr(&dsp->dsp_name) );
 			if ( ! fname) break;
 
-			if( stat( fname, &stat_buf ) ) {
+			if ( stat( fname, &stat_buf ) ) {
 				bu_vls_init( &message );
 				bu_vls_printf( &message, "Cannot get status of file %s\n", fname );
 				Tcl_SetResult(interp, bu_vls_addr( &message ), TCL_VOLATILE );
@@ -2923,16 +2923,16 @@ sedit(void)
 
 			RT_EBM_CK_MAGIC( ebm );
 
-			if( inpara == 2 )
+			if ( inpara == 2 )
 			{
-				if( stat( ebm->file, &stat_buf ) )
+				if ( stat( ebm->file, &stat_buf ) )
 				{
 					Tcl_AppendResult(interp, "Cannot get status of file ", ebm->file, (char *)NULL );
 					mged_print_result( TCL_ERROR );
 					return;
 				}
 				need_size = es_para[0] * es_para[1] * sizeof( unsigned char );
-				if( stat_buf.st_size < need_size )
+				if ( stat_buf.st_size < need_size )
 				{
 					Tcl_AppendResult(interp, "File (", ebm->file,
 						") is too small, set file name first", (char *)NULL );
@@ -2942,7 +2942,7 @@ sedit(void)
 				ebm->xdim = es_para[0];
 				ebm->ydim = es_para[1];
 			}
-			else if( inpara > 0 )
+			else if ( inpara > 0 )
 			{
 				Tcl_AppendResult(interp, "width and length of file are required\n", (char *)NULL );
 				mged_print_result( TCL_ERROR );
@@ -2962,11 +2962,11 @@ sedit(void)
 			RT_EBM_CK_MAGIC( ebm );
 
 			fname = get_file_name( ebm->file );
-			if( fname )
+			if ( fname )
 			{
 				struct bu_vls message;
 
-				if( stat( fname, &stat_buf ) )
+				if ( stat( fname, &stat_buf ) )
 				{
 					bu_vls_init( &message );
 					bu_vls_printf( &message, "Cannot get status of file %s\n", fname );
@@ -2976,7 +2976,7 @@ sedit(void)
 					return;
 				}
 				need_size = ebm->xdim * ebm->ydim * sizeof( unsigned char );
-				if( stat_buf.st_size < need_size )
+				if ( stat_buf.st_size < need_size )
 				{
 					bu_vls_init( &message );
 					bu_vls_printf( &message, "File (%s) is too small, adjust the file size parameters first", fname);
@@ -2998,9 +2998,9 @@ sedit(void)
 
 			RT_EBM_CK_MAGIC( ebm );
 
-			if( inpara == 1 )
+			if ( inpara == 1 )
 				ebm->tallness = es_para[0];
-			else if( inpara > 0 )
+			else if ( inpara > 0 )
 			{
 				Tcl_AppendResult(interp,
 					"extrusion depth required\n",
@@ -3008,7 +3008,7 @@ sedit(void)
 				mged_print_result( TCL_ERROR );
 				return;
 			}
-			else if( es_scale > 0.0 )
+			else if ( es_scale > 0.0 )
 			{
 				ebm->tallness *= es_scale;
 				es_scale = 0.0;
@@ -3023,15 +3023,15 @@ sedit(void)
 
 			RT_VOL_CK_MAGIC( vol );
 
-			if( inpara == 3 )
+			if ( inpara == 3 )
 				VMOVE( vol->cellsize, es_para )
-			else if( inpara > 0 && inpara != 3 )
+			else if ( inpara > 0 && inpara != 3 )
 			{
 				Tcl_AppendResult(interp, "x, y, and z cell sizes are required\n", (char *)NULL );
 				mged_print_result( TCL_ERROR );
 				return;
 			}
-			else if( es_scale > 0.0 )
+			else if ( es_scale > 0.0 )
 			{
 				VSCALE( vol->cellsize, vol->cellsize, es_scale )
 				es_scale = 0.0;
@@ -3048,16 +3048,16 @@ sedit(void)
 
 			RT_VOL_CK_MAGIC( vol );
 
-			if( inpara == 3 )
+			if ( inpara == 3 )
 			{
-				if( stat( vol->file, &stat_buf ) )
+				if ( stat( vol->file, &stat_buf ) )
 				{
 					Tcl_AppendResult(interp, "Cannot get status of file ", vol->file, (char *)NULL );
 					mged_print_result( TCL_ERROR );
 					return;
 				}
 				need_size = es_para[0] * es_para[1] * es_para[2] * sizeof( unsigned char );
-				if( stat_buf.st_size < need_size )
+				if ( stat_buf.st_size < need_size )
 				{
 					Tcl_AppendResult(interp, "File (", vol->file,
 						") is too small, set file name first", (char *)NULL );
@@ -3068,7 +3068,7 @@ sedit(void)
 				vol->ydim = es_para[1];
 				vol->zdim = es_para[2];
 			}
-			else if( inpara > 0 )
+			else if ( inpara > 0 )
 			{
 				Tcl_AppendResult(interp, "x, y, and z file sizes are required\n", (char *)NULL );
 				mged_print_result( TCL_ERROR );
@@ -3085,21 +3085,21 @@ sedit(void)
 			RT_VOL_CK_MAGIC( vol );
 
 			i = vol->lo;
-			if( inpara )
+			if ( inpara )
 				i = es_para[0];
-			else if( es_scale > 0.0 )
+			else if ( es_scale > 0.0 )
 			{
 				i = vol->lo * es_scale;
-				if( i == vol->lo && es_scale > 1.0 )
+				if ( i == vol->lo && es_scale > 1.0 )
 					i++;
-				else if( i == vol->lo && es_scale < 1.0 )
+				else if ( i == vol->lo && es_scale < 1.0 )
 					i--;
 			}
 
-			if( i < 0 )
+			if ( i < 0 )
 				i = 0;
 
-			if( i > 255 )
+			if ( i > 255 )
 				i = 255;
 
 			vol->lo = i;
@@ -3114,21 +3114,21 @@ sedit(void)
 			RT_VOL_CK_MAGIC( vol );
 
 			i = vol->hi;
-			if( inpara )
+			if ( inpara )
 				i = es_para[0];
-			else if( es_scale > 0.0 )
+			else if ( es_scale > 0.0 )
 			{
 				i = vol->hi * es_scale;
-				if( i == vol->hi && es_scale > 1.0 )
+				if ( i == vol->hi && es_scale > 1.0 )
 					i++;
-				else if( i == vol->hi && es_scale < 1.0 )
+				else if ( i == vol->hi && es_scale < 1.0 )
 					i--;
 			}
 
-			if( i < 0 )
+			if ( i < 0 )
 				i = 0;
 
-			if( i > 255 )
+			if ( i > 255 )
 				i = 255;
 
 			vol->hi = i;
@@ -3146,11 +3146,11 @@ sedit(void)
 			RT_VOL_CK_MAGIC( vol );
 
 			fname = get_file_name( vol->file );
-			if( fname )
+			if ( fname )
 			{
 				struct bu_vls message;
 
-				if( stat( fname, &stat_buf ) )
+				if ( stat( fname, &stat_buf ) )
 				{
 					bu_vls_init( &message );
 					bu_vls_printf( &message, "Cannot get status of file %s\n", fname );
@@ -3160,7 +3160,7 @@ sedit(void)
 					return;
 				}
 				need_size = vol->xdim * vol->ydim * vol->zdim * sizeof( unsigned char );
-				if( stat_buf.st_size < need_size )
+				if ( stat_buf.st_size < need_size )
 				{
 					bu_vls_init( &message );
 					bu_vls_printf( &message, "File (%s) is too small, adjust the file size parameters first", fname);
@@ -3192,16 +3192,16 @@ sedit(void)
 				   " \"BOT Mode\"", "  \"Select the desired mode\"", mode,
 				   " { surface volume plate plate/nocosine }",
 				   " { \"In surface mode, each triangle represents part of a zero thickness surface and no volume is enclosed\" \"In volume mode, the triangles are expected to enclose a volume and that volume becomes the solid\" \"In plate mode, each triangle represents a plate with a specified thickness\" \"In plate/nocosine mode, each triangle represents a plate with a specified thickness, but the LOS thickness reported by the raytracer is independent of obliquity angle\" } ", (char *)NULL );
-			if( ret_tcl != TCL_OK )
+			if ( ret_tcl != TCL_OK )
 			{
 				Tcl_AppendResult(interp, "Mode selection failed!\n", (char *)NULL );
 				break;
 			}
 			radio_result = Tcl_GetVar( interp, "_bot_mode_result", TCL_GLOBAL_ONLY );
 			bot->mode = atoi( radio_result ) + 1;
-			if( bot->mode == RT_BOT_PLATE || bot->mode == RT_BOT_PLATE_NOCOS )
+			if ( bot->mode == RT_BOT_PLATE || bot->mode == RT_BOT_PLATE_NOCOS )
 			{
-				if( old_mode != RT_BOT_PLATE && old_mode != RT_BOT_PLATE_NOCOS )
+				if ( old_mode != RT_BOT_PLATE && old_mode != RT_BOT_PLATE_NOCOS )
 				{
 					/* need to create some thicknesses */
 					bot->thickness = (fastf_t *)bu_calloc( bot->num_faces, sizeof( fastf_t ), "BOT thickness" );
@@ -3211,7 +3211,7 @@ sedit(void)
 			}
 			else
 			{
-				if( old_mode == RT_BOT_PLATE || old_mode == RT_BOT_PLATE_NOCOS )
+				if ( old_mode == RT_BOT_PLATE || old_mode == RT_BOT_PLATE_NOCOS )
 				{
 					/* free the per face memory */
 					bu_free( (char *)bot->thickness, "BOT thickness" );
@@ -3237,7 +3237,7 @@ sedit(void)
 				   " \"BOT Face Orientation\"", "  \"Select the desired orientation\"", orient,
 				   " { none right-hand-rule left-hand-rule }",
 				   " { \"No orientation means that there is no particular order for the vertices of the triangles\" \"right-hand-rule means that the vertices of each triangle are ordered such that the right-hand-rule produces an outward pointing normal\"  \"left-hand-rule means that the vertices of each triangle are ordered such that the left-hand-rule produces an outward pointing normal\" } ", (char *)NULL );
-			if( ret_tcl != TCL_OK )
+			if ( ret_tcl != TCL_OK )
 			{
 				Tcl_AppendResult(interp, "Face orientation selection failed!\n", (char *)NULL );
 				break;
@@ -3254,9 +3254,9 @@ sedit(void)
 
 			RT_BOT_CK_MAGIC( bot );
 
-			if( bot->mode != RT_BOT_PLATE && bot->mode != RT_BOT_PLATE_NOCOS )
+			if ( bot->mode != RT_BOT_PLATE && bot->mode != RT_BOT_PLATE_NOCOS )
 			{
-				if( Tcl_VarEval( interp, "cad_dialog ", ".bot_err ", "$mged_gui(mged,screen) ", "{Not Plate Mode} ",
+				if ( Tcl_VarEval( interp, "cad_dialog ", ".bot_err ", "$mged_gui(mged,screen) ", "{Not Plate Mode} ",
 					"{Cannot edit face thickness in a non-plate BOT} ", "\"\" ", "0 ", "OK ",
 					(char *)NULL ) != TCL_OK )
 				{
@@ -3265,32 +3265,32 @@ sedit(void)
 				break;
 			}
 
-			if( bot_verts[0] < 0 || bot_verts[1] < 0 || bot_verts[2] < 0 )
+			if ( bot_verts[0] < 0 || bot_verts[1] < 0 || bot_verts[2] < 0 )
 			{
 				/* setting thickness for all faces */
-				if( !inpara )
+				if ( !inpara )
 					break;
 
 				(void)Tcl_VarEval( interp, "cad_dialog ", ".bot_err ",
 					"$mged_gui(mged,screen) ", "{Setting Thickness for All Faces} ",
 					"{No face is selected, so this operation will modify all the faces in this BOT} ",
 					"\"\" ", "0 ", "OK ", "CANCEL ", (char *)NULL );
-				if( atoi( Tcl_GetStringResult(interp)) )
+				if ( atoi( Tcl_GetStringResult(interp)) )
 					break;
 
-				for( i=0 ; i<bot->num_faces ; i++ )
+				for ( i=0; i<bot->num_faces; i++ )
 					bot->thickness[i] = es_para[0];
 			}
 			else
 			{
 				/* setting thickness for just one face */
-				if( !inpara )
+				if ( !inpara )
 					break;
 
 				face_no = -1;
-				for( i=0 ; i < bot->num_faces ; i++ )
+				for ( i=0; i < bot->num_faces; i++ )
 				{
-					if( bot_verts[0] == bot->faces[i*3] &&
+					if ( bot_verts[0] == bot->faces[i*3] &&
 					    bot_verts[1] == bot->faces[i*3+1] &&
 					    bot_verts[2] == bot->faces[i*3+2] )
 					{
@@ -3298,7 +3298,7 @@ sedit(void)
 						break;
 					}
 				}
-				if( face_no < 0 )
+				if ( face_no < 0 )
 				{
 					bu_log( "Cannot find face with vertices %d %d %d!\n",
 						V3ARGS( bot_verts ) );
@@ -3321,10 +3321,10 @@ sedit(void)
 
 			strcpy( cur_settings, " { 0 0 }" );
 
-			if( bot->bot_flags & RT_BOT_USE_NORMALS ) {
+			if ( bot->bot_flags & RT_BOT_USE_NORMALS ) {
 				cur_settings[3] = '1';
 			}
-			if( bot->bot_flags & RT_BOT_USE_FLOATS ) {
+			if ( bot->bot_flags & RT_BOT_USE_FLOATS ) {
 				cur_settings[5] = '1';
 			}
 
@@ -3339,19 +3339,19 @@ sedit(void)
 					       " { {Use vertex normals} {Use single precision ray-tracing} }",
 					       " { {This selection indicates that surface normals at hit points should be interpolated from vertex normals} {This selection indicates that the prepped form of the BOT triangles should use sigle precision to save memory} } ",
 					       (char *)NULL );
-			if( ret_tcl != TCL_OK )
+			if ( ret_tcl != TCL_OK )
 			{
 				bu_log( "ERROR: cad_list_buts: %s\n", Tcl_GetStringResult(interp) );
 				break;
 			}
 			dialog_result = Tcl_GetVar( interp, "_bot_flags_result", TCL_GLOBAL_ONLY );
 
-			if( dialog_result[0] == '1' ) {
+			if ( dialog_result[0] == '1' ) {
 				bot->bot_flags |= RT_BOT_USE_NORMALS;
 			} else {
 				bot->bot_flags &= ~RT_BOT_USE_NORMALS;
 			}
-			if( dialog_result[2] == '1' ) {
+			if ( dialog_result[2] == '1' ) {
 				bot->bot_flags |= RT_BOT_USE_FLOATS;
 			} else {
 				bot->bot_flags &= ~RT_BOT_USE_FLOATS;
@@ -3369,7 +3369,7 @@ sedit(void)
 
 			RT_BOT_CK_MAGIC( bot );
 
-			if( bot->mode != RT_BOT_PLATE && bot->mode != RT_BOT_PLATE_NOCOS )
+			if ( bot->mode != RT_BOT_PLATE && bot->mode != RT_BOT_PLATE_NOCOS )
 			{
 				(void)Tcl_VarEval( interp, "cad_dialog ", ".bot_err ", "$mged_gui(mged,screen) ", "{Not Plate Mode} ",
 					"{Cannot edit face mode in a non-plate BOT} ", "\"\" ", "0 ", "OK ",
@@ -3377,14 +3377,14 @@ sedit(void)
 				break;
 			}
 
-			if( bot_verts[0] < 0 || bot_verts[1] < 0 || bot_verts[2] < 0 )
+			if ( bot_verts[0] < 0 || bot_verts[1] < 0 || bot_verts[2] < 0 )
 			{
 				/* setting mode for all faces */
 				(void)Tcl_VarEval( interp, "cad_dialog ", ".bot_err ",
 					"$mged_gui(mged,screen) ", "{Setting Mode for All Faces} ",
 					"{No face is selected, so this operation will modify all the faces in this BOT} ",
 					"\"\" ", "0 ", "OK ", "CANCEL ", (char *)NULL );
-				if( atoi( Tcl_GetStringResult(interp)) )
+				if ( atoi( Tcl_GetStringResult(interp)) )
 					break;
 
 				face_no = -2;
@@ -3393,9 +3393,9 @@ sedit(void)
 			{
 				/* setting thickness for just one face */
 				face_no = -1;
-				for( i=0 ; i < bot->num_faces ; i++ )
+				for ( i=0; i < bot->num_faces; i++ )
 				{
-					if( bot_verts[0] == bot->faces[i*3] &&
+					if ( bot_verts[0] == bot->faces[i*3] &&
 					    bot_verts[1] == bot->faces[i*3+1] &&
 					    bot_verts[2] == bot->faces[i*3+2] )
 					{
@@ -3403,7 +3403,7 @@ sedit(void)
 						break;
 					}
 				}
-				if( face_no < 0 )
+				if ( face_no < 0 )
 				{
 					bu_log( "Cannot find face with vertices %d %d %d!\n",
 						V3ARGS( bot_verts ) );
@@ -3411,7 +3411,7 @@ sedit(void)
 				}
 			}
 
-			if( face_no > -1 )
+			if ( face_no > -1 )
 				sprintf( fmode, " %d", BU_BITTEST( bot->face_mode, face_no )?1:0 );
 			else
 				sprintf( fmode, " %d", BU_BITTEST( bot->face_mode, 0 )?1:0 );
@@ -3422,25 +3422,25 @@ sedit(void)
 					       " { {Thickness centered about hit point} {Thickness appended to hit point} }",
 					       " { {This selection will place the plate thickness centered about the hit point} {This selection will place the plate thickness rayward of the hit point} } ",
 					       (char *)NULL );
-			if( ret_tcl != TCL_OK )
+			if ( ret_tcl != TCL_OK )
 			{
 				bu_log( "ERROR: cad_radio: %s\n", Tcl_GetStringResult(interp) );
 				break;
 			}
 			radio_result = Tcl_GetVar( interp, "_bot_fmode_result", TCL_GLOBAL_ONLY );
 
-			if( face_no > -1 )
+			if ( face_no > -1 )
 			{
-				if( atoi( radio_result ) )
+				if ( atoi( radio_result ) )
 					BU_BITSET( bot->face_mode, face_no );
 				else
 					BU_BITCLR( bot->face_mode, face_no );
 			}
 			else
 			{
-				if( atoi( radio_result ) )
+				if ( atoi( radio_result ) )
 				{
-					for( i=0 ; i<bot->num_faces ; i++ )
+					for ( i=0; i<bot->num_faces; i++ )
 						BU_BITSET( bot->face_mode, i );
 				}
 				else
@@ -3457,16 +3457,16 @@ sedit(void)
 
 			RT_BOT_CK_MAGIC( bot );
 
-			if( bot_verts[0] < 0 || bot_verts[1] < 0 || bot_verts[2] < 0 )
+			if ( bot_verts[0] < 0 || bot_verts[1] < 0 || bot_verts[2] < 0 )
 			{
 				bu_log( "No Face selected!\n" );
 				return;
 			}
 
 			face_no = -1;
-			for( i=0 ; i < bot->num_faces ; i++ )
+			for ( i=0; i < bot->num_faces; i++ )
 			{
-				if( bot_verts[0] == bot->faces[i*3] &&
+				if ( bot_verts[0] == bot->faces[i*3] &&
 				    bot_verts[1] == bot->faces[i*3+1] &&
 				    bot_verts[2] == bot->faces[i*3+2] )
 				{
@@ -3474,37 +3474,37 @@ sedit(void)
 					break;
 				}
 			}
-			if( face_no < 0 )
+			if ( face_no < 0 )
 			{
 				bu_log( "Cannot find selected face!\n");
 				return;
 			}
 			bot->num_faces--;
-			for( i=face_no ; i<bot->num_faces ; i++ )
+			for ( i=face_no; i<bot->num_faces; i++ )
 			{
 				j = i + 1;
 				bot->faces[3*i] = bot->faces[3*j];
 				bot->faces[3*i + 1] = bot->faces[3*j + 1];
 				bot->faces[3*i + 2] = bot->faces[3*j + 2];
-				if( bot->thickness )
+				if ( bot->thickness )
 					bot->thickness[i] = bot->thickness[j];
 			}
 
-			if( bot->face_mode )
+			if ( bot->face_mode )
 			{
 				struct bu_bitv *new_bitv;
 
 				new_bitv = bu_bitv_new( bot->num_faces );
 				BU_BITV_ZEROALL( new_bitv )
-				for( i=0 ; i<face_no ; i++ )
+				for ( i=0; i<face_no; i++ )
 				{
-					if( BU_BITTEST( bot->face_mode, i ) )
+					if ( BU_BITTEST( bot->face_mode, i ) )
 						BU_BITSET( new_bitv, i );
 				}
-				for( i=face_no ; i<bot->num_faces ; i++ )
+				for ( i=face_no; i<bot->num_faces; i++ )
 				{
 					j = i+1;
-					if( BU_BITTEST( bot->face_mode, j ) )
+					if ( BU_BITTEST( bot->face_mode, j ) )
 						BU_BITSET( new_bitv, i );
 				}
 				bu_bitv_free( bot->face_mode );
@@ -3531,24 +3531,24 @@ sedit(void)
 			bu_vls_printf( &tcl_cmd, "cad_input_dialog .get_sketch_name $mged_gui(mged,screen) {Select Sketch} {Enter the name of the sketch to be extruded} final_sketch_name %s 0 {{summary \"Enter sketch name\"}} APPLY DISMISS",
 				extr->sketch_name );
 			ret_tcl = Tcl_Eval( interp, bu_vls_addr( &tcl_cmd ) );
-			if( ret_tcl != TCL_OK )
+			if ( ret_tcl != TCL_OK )
 			{
 				bu_log( "ERROR: %s\n", Tcl_GetStringResult( interp ) );
 				bu_vls_free( &tcl_cmd );
 				break;
 			}
 
-			if( atoi( Tcl_GetStringResult( interp ) ) == 1 )
+			if ( atoi( Tcl_GetStringResult( interp ) ) == 1 )
 				break;
 
 			bu_vls_free( &tcl_cmd );
 
 			sketch_name = Tcl_GetVar( interp, "final_sketch_name", TCL_GLOBAL_ONLY );
-			if( extr->sketch_name )
+			if ( extr->sketch_name )
 				bu_free( (char *)extr->sketch_name, "extr->sketch_name" );
 			extr->sketch_name = bu_strdup( sketch_name );
 
-			if( extr->skt )
+			if ( extr->skt )
 			{
 				/* free the old sketch */
 				RT_INIT_DB_INTERNAL( &tmp_ip );
@@ -3559,7 +3559,7 @@ sedit(void)
 				rt_db_free_internal( &tmp_ip, &rt_uniresource );
 			}
 
-			if( (dp=db_lookup( dbip, sketch_name, 0 )) == DIR_NULL )
+			if ( (dp=db_lookup( dbip, sketch_name, 0 )) == DIR_NULL )
 			{
 				bu_log( "Warning: %s does not exist!\n",
 					sketch_name );
@@ -3569,7 +3569,7 @@ sedit(void)
 			{
 				/* import the new sketch */
 
-				if( rt_db_get_internal( &tmp_ip, dp, dbip, bn_mat_identity, &rt_uniresource ) != ID_SKETCH )
+				if ( rt_db_get_internal( &tmp_ip, dp, dbip, bn_mat_identity, &rt_uniresource ) != ID_SKETCH )
 				{
 					bu_log( "rt_extrude_import: ERROR: Cannot import sketch (%.16s) for extrusion\n",
 						sketch_name );
@@ -3586,9 +3586,9 @@ sedit(void)
 				(struct rt_extrude_internal *)es_int.idb_ptr;
 
 			RT_EXTRUDE_CK_MAGIC( extr );
-			if( inpara ) {
+			if ( inpara ) {
 #ifdef TRY_EDIT_NEW_WAY
-			  if(mged_variables->mv_context){
+			  if (mged_variables->mv_context){
 			    /* apply es_invmat to convert to real model coordinates */
 			    MAT4X3PNT( work, es_invmat, es_para );
 			    VSUB2(extr->h, work, extr->V);
@@ -3603,7 +3603,7 @@ sedit(void)
 			}
 
 			/* check for zero H vector */
-			if( MAGNITUDE( extr->h ) <= SQRT_SMALL_FASTF ) {
+			if ( MAGNITUDE( extr->h ) <= SQRT_SMALL_FASTF ) {
 			  Tcl_AppendResult(interp, "Zero H vector not allowed, resetting to +Z\n",
 					   (char *)NULL);
 				mged_print_result( TCL_ERROR );
@@ -3619,13 +3619,13 @@ sedit(void)
 
 			RT_EXTRUDE_CK_MAGIC( extr );
 
-			if( inpara ) {
+			if ( inpara ) {
 				/* take es_mat[15] (path scaling) into account */
 				es_para[0] *= es_mat[15];
 				es_scale = es_para[0] / MAGNITUDE(extr->h);
 				VSCALE(extr->h, extr->h, es_scale);
 			}
-			else if( es_scale > 0.0 )
+			else if ( es_scale > 0.0 )
 			{
 				VSCALE(extr->h, extr->h, es_scale);
 				es_scale = 0.0;
@@ -3643,7 +3643,7 @@ sedit(void)
 		/* put up specific arb edit menus */
 		menu_state->ms_flag = 0;
 		es_edflag = IDLE;
-		switch( es_menu ){
+		switch ( es_menu ){
 			case MENU_ARB_MV_EDGE:
 				mmenu_set( MENU_L1, which_menu[es_type-4] );
 				break;
@@ -3662,12 +3662,12 @@ sedit(void)
 
 	case ECMD_ARB_MOVE_FACE:
 		/* move face through definite point */
-		if(inpara) {
+		if (inpara) {
 			arb = (struct rt_arb_internal *)es_int.idb_ptr;
 			RT_ARB_CK_MAGIC( arb );
 
 #ifdef TRY_EDIT_NEW_WAY
-			if(mged_variables->mv_context){
+			if (mged_variables->mv_context){
 			  /* apply es_invmat to convert to real model space */
 			  MAT4X3PNT(work,es_invmat,es_para);
 			}else{
@@ -3690,13 +3690,13 @@ sedit(void)
 
 		/* check if point 5 is in the face */
 		pnt5 = 0;
-		for(i=0; i<4; i++)  {
-			if( arb_vertices[es_type-4][es_menu*4+i]==5 )
+		for (i=0; i<4; i++)  {
+			if ( arb_vertices[es_type-4][es_menu*4+i]==5 )
 				pnt5=1;
 		}
 
 		/* special case for arb7 */
-		if( es_type == ARB7  && pnt5 ){
+		if ( es_type == ARB7  && pnt5 ){
 		  Tcl_AppendResult(interp, "\nFixed vertex is point 5.\n", (char *)NULL);
 		  fixv = 5;
 		}
@@ -3713,8 +3713,8 @@ sedit(void)
 				type = es_type - 4;
 				bu_log("\nEnter fixed vertex number( ");
 				loc = es_menu*4;
-				for(i=0; i<4; i++){
-					if( arb_vertices[type][loc+i] )
+				for (i=0; i<4; i++){
+					if ( arb_vertices[type][loc+i] )
 						bu_log("%d ",
 						    arb_vertices[type][loc+i]);
 				}
@@ -3723,21 +3723,21 @@ sedit(void)
 				(void)bu_fgets( line, sizeof(line), stdin );
 				line[strlen(line)-1] = '\0';		/* remove newline */
 
-				if( feof(stdin) )  quit();
-				if( line[0] == '\0' )
+				if ( feof(stdin) )  quit();
+				if ( line[0] == '\0' )
 					fixv = arb_vertices[type][loc]; 	/* default */
 				else
 					fixv = atoi( line );
 
 				/* check whether nimble fingers entered valid vertex */
 				valid = 0;
-				for(j=0; j<4; j++)  {
-					if( fixv==arb_vertices[type][loc+j] )
+				for (j=0; j<4; j++)  {
+					if ( fixv==arb_vertices[type][loc+j] )
 						valid=1;
 				}
-				if( !valid )
+				if ( !valid )
 					fixv=0;
-			} while( fixv <= 0 || fixv > es_type );
+			} while ( fixv <= 0 || fixv > es_type );
 #endif
 		}
 
@@ -3754,7 +3754,7 @@ sedit(void)
 		arb = (struct rt_arb_internal *)es_int.idb_ptr;
 		RT_ARB_CK_MAGIC( arb );
 
-		if(inpara) {
+		if (inpara) {
 			static mat_t invsolr;
 			static vect_t tempvec;
 			static float rota, fb;
@@ -3769,7 +3769,7 @@ sedit(void)
 			VMOVE( work, eqp );
 			MAT4X3VEC( eqp, invsolr, work );
 
-			if( inpara == 3 ){
+			if ( inpara == 3 ){
 				/* 3 params:  absolute X,Y,Z rotations */
 				/* Build completely new rotation change */
 				MAT_IDN( modelchanges );
@@ -3782,7 +3782,7 @@ sedit(void)
 #ifdef TRY_EDIT_NEW_WAY
 				/* Borrow incr_change matrix here */
 				bn_mat_mul( incr_change, modelchanges, invsolr );
-				if(mged_variables->mv_context){
+				if (mged_variables->mv_context){
 				  /* calculate rotations about keypoint */
 				  bn_mat_xform_about_pt( edit, incr_change, es_keypoint );
 
@@ -3808,7 +3808,7 @@ sedit(void)
 				MAT4X3VEC( eqp, modelchanges, work );
 #endif
 			}
-			else if( inpara == 2 ){
+			else if ( inpara == 2 ){
 				/* 2 parameters:  rot,fb were given */
 				rota= es_para[0] * degtorad;
 				fb  = es_para[1] * degtorad;
@@ -3872,7 +3872,7 @@ sedit(void)
 			bot_verts[0] = -1;
 			bot_verts[1] = -1;
 			bot_verts[2] = -1;
-			if(inpara) {
+			if (inpara) {
 				/* accumulate the scale factor */
 				es_scale = es_para[0] / acc_sc_sol;
 				acc_sc_sol = es_para[0];
@@ -3900,12 +3900,12 @@ sedit(void)
 			bot_verts[0] = -1;
 			bot_verts[1] = -1;
 			bot_verts[2] = -1;
-			if(inpara) {
+			if (inpara) {
 				/* Need vector from current vertex/keypoint
 				 * to desired new location.
 				 */
 #ifdef TRY_EDIT_NEW_WAY
-			  if(mged_variables->mv_context){ /* move solid so that es_keypoint is at position es_para */
+			  if (mged_variables->mv_context){ /* move solid so that es_keypoint is at position es_para */
 			    vect_t raw_para;
 
 			    MAT4X3PNT(raw_para, es_invmat, es_para);
@@ -3937,12 +3937,12 @@ sedit(void)
 		bot_verts[0] = -1;
 		bot_verts[1] = -1;
 		bot_verts[2] = -1;
-		if( es_mvalid )  {
+		if ( es_mvalid )  {
 			/* Mouse parameter:  new position in model space */
 			VMOVE( es_para, es_mparam );
 			inpara = 1;
 		}
-		if(inpara) {
+		if (inpara) {
 
 
 			/* Keyboard parameter:  new position in model space.
@@ -3957,7 +3957,7 @@ sedit(void)
 			NMG_CK_SNURB(surf);
 			fp = &RT_NURB_GET_CONTROL_POINT( surf, spl_ui, spl_vi );
 #ifdef TRY_EDIT_NEW_WAY
-			if(mged_variables->mv_context){
+			if (mged_variables->mv_context){
 			  /* apply es_invmat to convert to real model space */
 			  MAT4X3PNT( fp, es_invmat, es_para );
 			}else{
@@ -3979,13 +3979,13 @@ sedit(void)
 
 			RT_CLINE_CK_MAGIC( cli );
 
-			if( inpara )
+			if ( inpara )
 			{
 				es_para[0] *= es_mat[15];
 				es_scale = es_para[0] / MAGNITUDE(cli->h);
 				VSCALE(cli->h, cli->h, es_scale);
 			}
-			else if( es_scale > 0.0 )
+			else if ( es_scale > 0.0 )
 			{
 				VSCALE(cli->h, cli->h, es_scale);
 				es_scale = 0.0;
@@ -4003,9 +4003,9 @@ sedit(void)
 
 			RT_CLINE_CK_MAGIC( cli );
 
-			if( inpara )
+			if ( inpara )
 				cli->radius = es_para[0];
-			else if( es_scale > 0.0 )
+			else if ( es_scale > 0.0 )
 			{
 				cli->radius *= es_scale;
 				es_scale = 0.0;
@@ -4023,9 +4023,9 @@ sedit(void)
 
 			RT_CLINE_CK_MAGIC( cli );
 
-			if( inpara )
+			if ( inpara )
 				cli->thickness = es_para[0];
-			else if( es_scale > 0.0 )
+			else if ( es_scale > 0.0 )
 			{
 				cli->thickness *= es_scale;
 				es_scale = 0.0;
@@ -4043,10 +4043,10 @@ sedit(void)
 
 			RT_CLINE_CK_MAGIC( cli );
 
-			if( inpara )
+			if ( inpara )
 			{
 #ifdef TRY_EDIT_NEW_WAY
-				if( mged_variables->mv_context )
+				if ( mged_variables->mv_context )
 				{
 					MAT4X3PNT( work, es_invmat, es_para );
 					VSUB2( cli->h, work, cli->v );
@@ -4059,7 +4059,7 @@ sedit(void)
 #endif
 			}
 			/* check for zero H vector */
-			if( MAGNITUDE( cli->h ) <= SQRT_SMALL_FASTF ) {
+			if ( MAGNITUDE( cli->h ) <= SQRT_SMALL_FASTF ) {
 			  Tcl_AppendResult(interp, "Zero H vector not allowed, resetting to +Z\n",
 					   (char *)NULL);
 				mged_print_result( TCL_ERROR );
@@ -4079,9 +4079,9 @@ sedit(void)
 				(struct rt_tgc_internal *)es_int.idb_ptr;
 
 			RT_TGC_CK_MAGIC(tgc);
-			if( inpara ) {
+			if ( inpara ) {
 #ifdef TRY_EDIT_NEW_WAY
-			  if(mged_variables->mv_context){
+			  if (mged_variables->mv_context){
 			    /* apply es_invmat to convert to real model coordinates */
 			    MAT4X3PNT( work, es_invmat, es_para );
 			    VSUB2(tgc->h, work, tgc->v);
@@ -4096,7 +4096,7 @@ sedit(void)
 			}
 
 			/* check for zero H vector */
-			if( MAGNITUDE( tgc->h ) <= SQRT_SMALL_FASTF ) {
+			if ( MAGNITUDE( tgc->h ) <= SQRT_SMALL_FASTF ) {
 			  Tcl_AppendResult(interp, "Zero H vector not allowed, resetting to +Z\n",
 					   (char *)NULL);
 				mged_print_result( TCL_ERROR );
@@ -4133,9 +4133,9 @@ sedit(void)
 				(struct rt_tgc_internal *)es_int.idb_ptr;
 
 			RT_TGC_CK_MAGIC(tgc);
-			if( inpara ) {
+			if ( inpara ) {
 #ifdef TRY_EDIT_NEW_WAY
-			  if(mged_variables->mv_context){
+			  if (mged_variables->mv_context){
 			    /* apply es_invmat to convert to real model coordinates */
 			    MAT4X3PNT( work, es_invmat, es_para );
 			    VSUB2(tgc->h, work, tgc->v);
@@ -4150,7 +4150,7 @@ sedit(void)
 			}
 
 			/* check for zero H vector */
-			if( MAGNITUDE( tgc->h ) <= SQRT_SMALL_FASTF ) {
+			if ( MAGNITUDE( tgc->h ) <= SQRT_SMALL_FASTF ) {
 			  Tcl_AppendResult(interp, "Zero H vector not allowed, resetting to +Z\n",
 					   (char *)NULL);
 				mged_print_result( TCL_ERROR );
@@ -4170,9 +4170,9 @@ sedit(void)
 
 	case PTARB:	/* move an ARB point */
 	case EARB:   /* edit an ARB edge */
-		if( inpara ) {
+		if ( inpara ) {
 #ifdef TRY_EDIT_NEW_WAY
-		  if(mged_variables->mv_context){
+		  if (mged_variables->mv_context){
 		    /* apply es_invmat to convert to real model space */
 		    MAT4X3PNT( work, es_invmat, es_para );
 		  }else{
@@ -4195,7 +4195,7 @@ sedit(void)
 			bot_verts[0] = -1;
 			bot_verts[1] = -1;
 			bot_verts[2] = -1;
-			if(inpara) {
+			if (inpara) {
 				static mat_t invsolr;
 				/*
 				 * Keyboard parameters:  absolute x,y,z rotations,
@@ -4223,7 +4223,7 @@ sedit(void)
 			/* Apply changes to solid */
 			/* xlate keypoint to origin, rotate, then put back. */
 #ifdef TRY_EDIT_NEW_WAY
-			switch(mged_variables->mv_rotate_about){
+			switch (mged_variables->mv_rotate_about){
 			case 'v':       /* View Center */
 			  VSET(work, 0.0, 0.0, 0.0);
 			  MAT4X3PNT(rot_point, view_state->vs_vop->vo_view2model, work);
@@ -4241,7 +4241,7 @@ sedit(void)
 			  break;
 			}
 
-			if(mged_variables->mv_context){
+			if (mged_variables->mv_context){
 			  /* calculate rotations about keypoint */
 			  bn_mat_xform_about_pt( edit, incr_change, rot_point );
 
@@ -4273,7 +4273,7 @@ sedit(void)
 
 			RT_EXTRUDE_CK_MAGIC(extr);
 #ifdef TRY_EDIT_NEW_WAY
-			if(inpara) {
+			if (inpara) {
 				static mat_t invsolr;
 				/*
 				 * Keyboard parameters:  absolute x,y,z rotations,
@@ -4299,7 +4299,7 @@ sedit(void)
 				/* Apply incremental changes already in incr_change */
 			}
 
-			if(mged_variables->mv_context){
+			if (mged_variables->mv_context){
 			  /* calculate rotations about keypoint */
 			  bn_mat_xform_about_pt( edit, incr_change, es_keypoint );
 
@@ -4330,7 +4330,7 @@ sedit(void)
 
 			RT_TGC_CK_MAGIC(tgc);
 #ifdef TRY_EDIT_NEW_WAY
-			if(inpara) {
+			if (inpara) {
 				static mat_t invsolr;
 				/*
 				 * Keyboard parameters:  absolute x,y,z rotations,
@@ -4356,7 +4356,7 @@ sedit(void)
 				/* Apply incremental changes already in incr_change */
 			}
 
-			if(mged_variables->mv_context){
+			if (mged_variables->mv_context){
 			  /* calculate rotations about keypoint */
 			  bn_mat_xform_about_pt( edit, incr_change, es_keypoint );
 
@@ -4387,7 +4387,7 @@ sedit(void)
 
 			RT_TGC_CK_MAGIC(tgc);
 #ifdef TRY_EDIT_NEW_WAY
-			if(inpara) {
+			if (inpara) {
 				static mat_t invsolr;
 				/*
 				 * Keyboard parameters:  absolute x,y,z rotations,
@@ -4413,7 +4413,7 @@ sedit(void)
 				/* Apply incremental changes already in incr_change */
 			}
 
-			if(mged_variables->mv_context){
+			if (mged_variables->mv_context){
 			  /* calculate rotations about keypoint */
 			  bn_mat_xform_about_pt( edit, incr_change, es_keypoint );
 
@@ -4456,7 +4456,7 @@ sedit(void)
 
 			RT_ETO_CK_MAGIC(eto);
 #ifdef TRY_EDIT_NEW_WAY
-			if(inpara) {
+			if (inpara) {
 				static mat_t invsolr;
 				/*
 				 * Keyboard parameters:  absolute x,y,z rotations,
@@ -4482,7 +4482,7 @@ sedit(void)
 				/* Apply incremental changes already in incr_change */
 			}
 
-			if(mged_variables->mv_context){
+			if (mged_variables->mv_context){
 			  /* calculate rotations about keypoint */
 			  bn_mat_xform_about_pt( edit, incr_change, es_keypoint );
 
@@ -4513,7 +4513,7 @@ sedit(void)
 		{
 			point_t new_pt;
 
-			if( !es_eu )
+			if ( !es_eu )
 			{
 			  Tcl_AppendResult(interp, "No edge selected!\n", (char *)NULL);
 			  mged_print_result( TCL_ERROR );
@@ -4521,11 +4521,11 @@ sedit(void)
 			}
 			NMG_CK_EDGEUSE( es_eu );
 
-			if( es_mvalid )
+			if ( es_mvalid )
 				VMOVE( new_pt, es_mparam )
-			else if( inpara == 3 ){
+			else if ( inpara == 3 ){
 #ifdef TRY_EDIT_NEW_WAY
-			  if(mged_variables->mv_context){
+			  if (mged_variables->mv_context){
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
 			  }else{
@@ -4534,17 +4534,17 @@ sedit(void)
 #else
 				VMOVE( new_pt, es_para );
 #endif
-			}else if( inpara && inpara != 3 )
+			}else if ( inpara && inpara != 3 )
 			{
 			  Tcl_AppendResult(interp, "x y z coordinates required for edge move\n",
 					   (char *)NULL);
 			  mged_print_result( TCL_ERROR );
 			  break;
 			}
-			else if( !es_mvalid && !inpara )
+			else if ( !es_mvalid && !inpara )
 				break;
 
-			if( !nmg_find_fu_of_eu( es_eu ) && *es_eu->up.magic_p == NMG_LOOPUSE_MAGIC )
+			if ( !nmg_find_fu_of_eu( es_eu ) && *es_eu->up.magic_p == NMG_LOOPUSE_MAGIC )
 			{
 				struct loopuse *lu;
 				fastf_t area;
@@ -4558,7 +4558,7 @@ sedit(void)
 
 				/* get plane equation for loop */
 				area = nmg_loop_plane_area( lu, pl );
-				if( area > 0.0 )
+				if ( area > 0.0 )
 				{
 					vect_t view_z_dir;
 					vect_t view_dir;
@@ -4569,7 +4569,7 @@ sedit(void)
 					MAT4X3VEC(view_dir, view_state->vs_vop->vo_view2model, view_z_dir);
 
 					/* intersect line through new_pt with plane of loop */
-					if( bn_isect_line3_plane( &dist, new_pt, view_dir, pl, &mged_tol ) < 1)
+					if ( bn_isect_line3_plane( &dist, new_pt, view_dir, pl, &mged_tol ) < 1)
 					{
 					  /* line does not intersect plane, don't do an esplit */
 					  Tcl_AppendResult(interp, "Edge Move: Cannot place new point in plane of loop\n", (char *)NULL);
@@ -4580,7 +4580,7 @@ sedit(void)
 				}
 			}
 
-			if( nmg_move_edge_thru_pt( es_eu, new_pt, &mged_tol ) < 0 ) {
+			if ( nmg_move_edge_thru_pt( es_eu, new_pt, &mged_tol ) < 0 ) {
 				VPRINT("Unable to hit", new_pt);
 			}
 		}
@@ -4591,7 +4591,7 @@ sedit(void)
 			struct model *m;
 			struct edge_g_lseg *eg;
 
-			if( !es_eu )
+			if ( !es_eu )
 			{
 			  Tcl_AppendResult(interp, "No edge selected!\n", (char *)NULL);
 			  mged_print_result( TCL_ERROR );
@@ -4601,7 +4601,7 @@ sedit(void)
 
 			m = nmg_find_model( &es_eu->l.magic );
 
-			if( *es_eu->up.magic_p == NMG_LOOPUSE_MAGIC )
+			if ( *es_eu->up.magic_p == NMG_LOOPUSE_MAGIC )
 			{
 				struct loopuse *lu;
 				struct edgeuse *prev_eu,*next_eu;
@@ -4609,7 +4609,7 @@ sedit(void)
 				lu = es_eu->up.lu_p;
 				NMG_CK_LOOPUSE( lu );
 
-				if( *lu->up.magic_p != NMG_SHELL_MAGIC )
+				if ( *lu->up.magic_p != NMG_SHELL_MAGIC )
 				{
 				  /* Currently can only kill wire edges or edges in wire loops */
 				  Tcl_AppendResult(interp, "Currently, we can only kill wire edges or edges in wire loops\n", (char *)NULL);
@@ -4621,12 +4621,12 @@ sedit(void)
 				prev_eu = BU_LIST_PPREV_CIRC( edgeuse, &es_eu->l );
 				NMG_CK_EDGEUSE( prev_eu );
 
-				if( prev_eu == es_eu )
+				if ( prev_eu == es_eu )
 				{
 					/* only one edge left in the loop
 					 * make it an edge to/from same vertex
 					 */
-					if( es_eu->vu_p->v_p == es_eu->eumate_p->vu_p->v_p )
+					if ( es_eu->vu_p->v_p == es_eu->eumate_p->vu_p->v_p )
 					{
 					  /* refuse to delete last edge that runs
 					   * to/from same vertex
@@ -4644,7 +4644,7 @@ sedit(void)
 				NMG_CK_EDGEUSE( next_eu );
 
 				nmg_movevu( next_eu->vu_p, es_eu->vu_p->v_p );
-				if( nmg_keu( es_eu ) )
+				if ( nmg_keu( es_eu ) )
 				{
 					/* Should never happen! */
 					bu_exit(EXIT_FAILURE,  "sedit(): killed edge and emptied loop!\n" );
@@ -4660,7 +4660,7 @@ sedit(void)
 
 				break;
 			}
-			else if( *es_eu->up.magic_p == NMG_SHELL_MAGIC )
+			else if ( *es_eu->up.magic_p == NMG_SHELL_MAGIC )
 			{
 				/* wire edge, just kill it */
 				(void)nmg_keu( es_eu );
@@ -4678,7 +4678,7 @@ sedit(void)
 			fastf_t area;
 			plane_t pl;
 
-			if( !es_eu )
+			if ( !es_eu )
 			{
 			  Tcl_AppendResult(interp, "No edge selected!\n", (char *)NULL);
 			  mged_print_result( TCL_ERROR );
@@ -4687,11 +4687,11 @@ sedit(void)
 			NMG_CK_EDGEUSE( es_eu );
 			m = nmg_find_model( &es_eu->l.magic );
 			NMG_CK_MODEL( m );
-			if( es_mvalid )
+			if ( es_mvalid )
 				VMOVE( new_pt, es_mparam )
-			else if( inpara == 3 ){
+			else if ( inpara == 3 ){
 #ifdef TRY_EDIT_NEW_WAY
-			  if(mged_variables->mv_context){
+			  if (mged_variables->mv_context){
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
 			  }else{
@@ -4700,17 +4700,17 @@ sedit(void)
 #else
 			  VMOVE( new_pt, es_para );
 #endif
-			}else if( inpara && inpara != 3 )
+			}else if ( inpara && inpara != 3 )
 			{
 			  Tcl_AppendResult(interp, "x y z coordinates required for edge split\n",
 					   (char *)NULL);
 			  mged_print_result( TCL_ERROR );
 			  break;
 			}
-			else if( !es_mvalid && !inpara )
+			else if ( !es_mvalid && !inpara )
 				break;
 
-			if( *es_eu->up.magic_p == NMG_LOOPUSE_MAGIC )
+			if ( *es_eu->up.magic_p == NMG_LOOPUSE_MAGIC )
 			{
 				struct loopuse *lu;
 
@@ -4718,7 +4718,7 @@ sedit(void)
 				NMG_CK_LOOPUSE( lu );
 
 				/* Currently, can only split wire edges or edges in wire loops */
-				if( *lu->up.magic_p != NMG_SHELL_MAGIC )
+				if ( *lu->up.magic_p != NMG_SHELL_MAGIC )
 				{
 				  Tcl_AppendResult(interp, "Currently, we can only split wire edges or edges in wire loops\n", (char *)NULL);
 					es_edflag = IDLE;
@@ -4728,7 +4728,7 @@ sedit(void)
 
 				/* get plane equation for loop */
 				area = nmg_loop_plane_area( lu, pl );
-				if( area > 0.0 )
+				if ( area > 0.0 )
 				{
 					vect_t view_z_dir;
 					vect_t view_dir;
@@ -4739,7 +4739,7 @@ sedit(void)
 					MAT4X3VEC(view_dir, view_state->vs_vop->vo_view2model, view_z_dir);
 
 					/* intersect line through new_pt with plane of loop */
-					if( bn_isect_line3_plane( &dist, new_pt, view_dir, pl, &mged_tol ) < 1)
+					if ( bn_isect_line3_plane( &dist, new_pt, view_dir, pl, &mged_tol ) < 1)
 					{
 					  /* line does not intersect plane, don't do an esplit */
 					  Tcl_AppendResult(interp, "Edge Split: Cannot place new point in plane of loop\n", (char *)NULL);
@@ -4769,11 +4769,11 @@ sedit(void)
 			plane_t new_lu_pl;
 			fastf_t area;
 
-			if( es_mvalid )
+			if ( es_mvalid )
 				VMOVE( to_pt, es_mparam )
-			else if( inpara == 3 ){
+			else if ( inpara == 3 ){
 #ifdef TRY_EDIT_NEW_WAY
-			  if(mged_variables->mv_context){
+			  if (mged_variables->mv_context){
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( to_pt, es_invmat, es_para);
 			  }else{
@@ -4783,27 +4783,27 @@ sedit(void)
 				VMOVE( to_pt, es_para )
 #endif
 			}
-			else if( inpara == 1 )
+			else if ( inpara == 1 )
 				VJOIN1( to_pt, lu_keypoint, es_para[0], lu_pl )
-			else if( inpara && inpara != 3 )
+			else if ( inpara && inpara != 3 )
 			{
 			  Tcl_AppendResult(interp, "x y z coordinates required for loop extrusion\n", (char *)NULL);
 			  mged_print_result( TCL_ERROR );
 			  break;
 			}
-			else if( !es_mvalid && !inpara )
+			else if ( !es_mvalid && !inpara )
 				break;
 
 			VSUB2( extrude_vec, to_pt, lu_keypoint );
 
-			if( bn_isect_line3_plane( &dist, to_pt, extrude_vec, lu_pl, &mged_tol ) < 1 )
+			if ( bn_isect_line3_plane( &dist, to_pt, extrude_vec, lu_pl, &mged_tol ) < 1 )
 			{
 			  Tcl_AppendResult(interp, "Cannot extrude parallel to plane of loop\n", (char *)NULL);
 			  mged_print_result( TCL_ERROR );
 			  return;
 			}
 
-			if( BU_LIST_NON_EMPTY( &es_s->fu_hd ) )
+			if ( BU_LIST_NON_EMPTY( &es_s->fu_hd ) )
 			{
 				struct nmgregion *r;
 
@@ -4814,14 +4814,14 @@ sedit(void)
 
 			new_lu = nmg_dup_loop( lu_copy, &es_s->l.magic, (long **)0 );
 			area = nmg_loop_plane_area( new_lu, new_lu_pl );
-			if( area < 0.0 )
+			if ( area < 0.0 )
 			{
 			  Tcl_AppendResult(interp, "loop to be extruded as no area!\n", (char *)NULL);
 			  mged_print_result( TCL_ERROR );
 			  return;
 			}
 
-			if( VDOT( extrude_vec, new_lu_pl ) > 0.0 )
+			if ( VDOT( extrude_vec, new_lu_pl ) > 0.0 )
 			{
 				plane_t tmp_pl;
 
@@ -4859,11 +4859,11 @@ sedit(void)
 
 			RT_PIPE_CK_MAGIC( pipe );
 
-			if( es_mvalid )
+			if ( es_mvalid )
 			  VMOVE( new_pt, es_mparam )
-			else if( inpara == 3 ){
+			else if ( inpara == 3 ){
 #ifdef TRY_EDIT_NEW_WAY
-			  if(mged_variables->mv_context){
+			  if (mged_variables->mv_context){
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
 			  }else{
@@ -4873,17 +4873,17 @@ sedit(void)
 			  VMOVE( new_pt, es_para )
 #endif
 			}
-			else if( inpara && inpara != 3 )
+			else if ( inpara && inpara != 3 )
 			{
 			  Tcl_AppendResult(interp, "x y z coordinates required for segment selection\n", (char *)NULL);
 			  mged_print_result( TCL_ERROR );
 			  break;
 			}
-			else if( !es_mvalid && !inpara )
+			else if ( !es_mvalid && !inpara )
 				break;
 
 			es_pipept = find_pipept_nearest_pt( &pipe->pipe_segs_head, new_pt );
-			if( !es_pipept )
+			if ( !es_pipept )
 			{
 			  Tcl_AppendResult(interp, "No PIPE segment selected\n", (char *)NULL);
 			  mged_print_result( TCL_ERROR );
@@ -4900,11 +4900,11 @@ sedit(void)
 
 			RT_PIPE_CK_MAGIC( pipe );
 
-			if( es_mvalid )
+			if ( es_mvalid )
 			  VMOVE( new_pt, es_mparam )
-			else if( inpara == 3 ){
+			else if ( inpara == 3 ){
 #ifdef TRY_EDIT_NEW_WAY
-			  if(mged_variables->mv_context){
+			  if (mged_variables->mv_context){
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
 			  }else{
@@ -4914,16 +4914,16 @@ sedit(void)
 				VMOVE( new_pt, es_para )
 #endif
 			}
-			else if( inpara && inpara != 3 )
+			else if ( inpara && inpara != 3 )
 			{
 			  Tcl_AppendResult(interp, "x y z coordinates required for segment split\n", (char *)NULL);
 			  mged_print_result( TCL_ERROR );
 			  break;
 			}
-			else if( !es_mvalid && !inpara )
+			else if ( !es_mvalid && !inpara )
 				break;
 
-			if( !es_pipept )
+			if ( !es_pipept )
 			{
 			  Tcl_AppendResult(interp, "No pipe segment selected\n", (char *)NULL);
 				mged_print_result( TCL_ERROR );
@@ -4941,11 +4941,11 @@ sedit(void)
 
 			RT_PIPE_CK_MAGIC( pipe );
 
-			if( es_mvalid )
+			if ( es_mvalid )
 				VMOVE( new_pt, es_mparam )
-			else if( inpara == 3 ){
+			else if ( inpara == 3 ){
 #ifdef TRY_EDIT_NEW_WAY
-			  if(mged_variables->mv_context){
+			  if (mged_variables->mv_context){
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
 			  }else{
@@ -4955,16 +4955,16 @@ sedit(void)
 				VMOVE( new_pt, es_para )
 #endif
 			}
-			else if( inpara && inpara != 3 )
+			else if ( inpara && inpara != 3 )
 			{
 			  Tcl_AppendResult(interp, "x y z coordinates required for segment movement\n", (char *)NULL);
 			  mged_print_result( TCL_ERROR );
 			  break;
 			}
-			else if( !es_mvalid && !inpara )
+			else if ( !es_mvalid && !inpara )
 				break;
 
-			if( !es_pipept )
+			if ( !es_pipept )
 			{
 			  Tcl_AppendResult(interp, "No pipe segment selected\n", (char *)NULL);
 			  mged_print_result( TCL_ERROR );
@@ -4982,11 +4982,11 @@ sedit(void)
 
 			RT_PIPE_CK_MAGIC( pipe );
 
-			if( es_mvalid )
+			if ( es_mvalid )
 				VMOVE( new_pt, es_mparam )
-			else if( inpara == 3 ){
+			else if ( inpara == 3 ){
 #ifdef TRY_EDIT_NEW_WAY
-			  if(mged_variables->mv_context){
+			  if (mged_variables->mv_context){
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
 			  }else{
@@ -4996,13 +4996,13 @@ sedit(void)
 				VMOVE( new_pt, es_para )
 #endif
 			}
-			else if( inpara && inpara != 3 )
+			else if ( inpara && inpara != 3 )
 			{
 			  Tcl_AppendResult(interp, "x y z coordinates required for 'append segment'\n", (char *)NULL);
 			  mged_print_result( TCL_ERROR );
 			  break;
 			}
-			else if( !es_mvalid && !inpara )
+			else if ( !es_mvalid && !inpara )
 				break;
 
 			es_pipept = add_pipept( pipe, es_pipept, new_pt );
@@ -5016,11 +5016,11 @@ sedit(void)
 
 			RT_PIPE_CK_MAGIC( pipe );
 
-			if( es_mvalid )
+			if ( es_mvalid )
 				VMOVE( new_pt, es_mparam )
-			else if( inpara == 3 ){
+			else if ( inpara == 3 ){
 #ifdef TRY_EDIT_NEW_WAY
-			  if(mged_variables->mv_context){
+			  if (mged_variables->mv_context){
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
 			  }else{
@@ -5030,13 +5030,13 @@ sedit(void)
 				VMOVE( new_pt, es_para )
 #endif
 			}
-			else if( inpara && inpara != 3 )
+			else if ( inpara && inpara != 3 )
 			{
 			  Tcl_AppendResult(interp, "x y z coordinates required for 'prepend segment'\n", (char *)NULL);
 			  mged_print_result( TCL_ERROR );
 			  break;
 			}
-			else if( !es_mvalid && !inpara )
+			else if ( !es_mvalid && !inpara )
 				break;
 
 			ins_pipept( pipe, es_pipept, new_pt );
@@ -5044,7 +5044,7 @@ sedit(void)
 		break;
 	case ECMD_PIPE_PT_DEL:
 		{
-			if( !es_pipept )
+			if ( !es_pipept )
 			{
 			  Tcl_AppendResult(interp, "No pipe segment selected\n", (char *)NULL);
 			  mged_print_result( TCL_ERROR );
@@ -5077,11 +5077,11 @@ sedit(void)
 
 			RT_ARS_CK_MAGIC( ars );
 
-			if( es_mvalid )
+			if ( es_mvalid )
 				VMOVE( pick_pt, es_mparam )
-			else if( inpara == 3 ){
+			else if ( inpara == 3 ){
 #ifdef TRY_EDIT_NEW_WAY
-			  if(mged_variables->mv_context){
+			  if (mged_variables->mv_context){
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( pick_pt, es_invmat, es_para);
 			  }else{
@@ -5091,13 +5091,13 @@ sedit(void)
 				VMOVE( pick_pt, es_para )
 #endif
 			}
-			else if( inpara && inpara != 3 )
+			else if ( inpara && inpara != 3 )
 			{
 				Tcl_AppendResult(interp, "x y z coordinates required for 'pick point'\n", (char *)NULL);
 				mged_print_result( TCL_ERROR );
 				break;
 			}
-			else if( !es_mvalid && !inpara )
+			else if ( !es_mvalid && !inpara )
 				break;
 
 			/* Get view direction vector */
@@ -5124,10 +5124,10 @@ sedit(void)
 
 			RT_ARS_CK_MAGIC( ars );
 
-			if( es_ars_crv >= 0 && es_ars_col >= 0 )
+			if ( es_ars_crv >= 0 && es_ars_col >= 0 )
 			{
 				es_ars_col++;
-				if( es_ars_col >= ars->pts_per_curve )
+				if ( es_ars_col >= ars->pts_per_curve )
 					es_ars_col = 0;
 				VMOVE( es_pt, &ars->curves[es_ars_crv][es_ars_col*3] );
 				VSCALE( selected_pt, es_pt, base2local );
@@ -5150,10 +5150,10 @@ sedit(void)
 
 			RT_ARS_CK_MAGIC( ars );
 
-			if( es_ars_crv >= 0 && es_ars_col >= 0 )
+			if ( es_ars_crv >= 0 && es_ars_col >= 0 )
 			{
 				es_ars_col--;
-				if( es_ars_col < 0 )
+				if ( es_ars_col < 0 )
 					es_ars_col = ars->pts_per_curve - 1;
 				VMOVE( es_pt, &ars->curves[es_ars_crv][es_ars_col*3] );
 				VSCALE( selected_pt, es_pt, base2local );
@@ -5176,10 +5176,10 @@ sedit(void)
 
 			RT_ARS_CK_MAGIC( ars );
 
-			if( es_ars_crv >= 0 && es_ars_col >= 0 )
+			if ( es_ars_crv >= 0 && es_ars_col >= 0 )
 			{
 				es_ars_crv++;
-				if(es_ars_crv >= ars->ncurves )
+				if (es_ars_crv >= ars->ncurves )
 					es_ars_crv = 0;
 				VMOVE( es_pt, &ars->curves[es_ars_crv][es_ars_col*3] );
 				VSCALE( selected_pt, es_pt, base2local );
@@ -5202,10 +5202,10 @@ sedit(void)
 
 			RT_ARS_CK_MAGIC( ars );
 
-			if( es_ars_crv >= 0 && es_ars_col >= 0 )
+			if ( es_ars_crv >= 0 && es_ars_col >= 0 )
 			{
 				es_ars_crv--;
-				if( es_ars_crv < 0 )
+				if ( es_ars_crv < 0 )
 					es_ars_crv = ars->ncurves - 1;
 				VMOVE( es_pt, &ars->curves[es_ars_crv][es_ars_col*3] );
 				VSCALE( selected_pt, es_pt, base2local );
@@ -5227,7 +5227,7 @@ sedit(void)
 
 			RT_ARS_CK_MAGIC( ars );
 
-			if( es_ars_crv < 0 || es_ars_col < 0 )
+			if ( es_ars_crv < 0 || es_ars_col < 0 )
 			{
 				bu_log( "No ARS point selected\n" );
 				break;
@@ -5236,23 +5236,23 @@ sedit(void)
 			curves = (fastf_t **)bu_malloc( (ars->ncurves+1) * sizeof( fastf_t * ),
 					"new curves" );
 
-			for( i=0 ; i<ars->ncurves+1 ; i++ )
+			for ( i=0; i<ars->ncurves+1; i++ )
 			{
 				int j,k;
 
 				curves[i] = (fastf_t *)bu_malloc( ars->pts_per_curve * 3 * sizeof( fastf_t ),
 						"new curves[i]" );
 
-				if( i <= es_ars_crv )
+				if ( i <= es_ars_crv )
 					k = i;
 				else
 					k = i - 1;
 
-				for( j=0 ; j<ars->pts_per_curve*3 ; j++ )
+				for ( j=0; j<ars->pts_per_curve*3; j++ )
 					curves[i][j] = ars->curves[k][j];
 			}
 
-			for( i=0 ; i<ars->ncurves ; i++ )
+			for ( i=0; i<ars->ncurves; i++ )
 				bu_free( (genptr_t)ars->curves[i], "ars->curves[i]" );
 			bu_free( (genptr_t)ars->curves, "ars->curves" );
 
@@ -5268,7 +5268,7 @@ sedit(void)
 
 			RT_ARS_CK_MAGIC( ars );
 
-			if( es_ars_crv < 0 || es_ars_col < 0 )
+			if ( es_ars_crv < 0 || es_ars_col < 0 )
 			{
 				bu_log( "No ARS point selected\n" );
 				break;
@@ -5277,16 +5277,16 @@ sedit(void)
 			curves = (fastf_t **)bu_malloc( ars->ncurves * sizeof( fastf_t * ),
 					"new curves" );
 
-			for( i=0 ; i<ars->ncurves ; i++ )
+			for ( i=0; i<ars->ncurves; i++ )
 			{
 				int j,k;
 
 				curves[i] = (fastf_t *)bu_malloc( (ars->pts_per_curve + 1) * 3 * sizeof( fastf_t ),
 						"new curves[i]" );
 
-				for( j=0 ; j<ars->pts_per_curve+1 ; j++ )
+				for ( j=0; j<ars->pts_per_curve+1; j++ )
 				{
-					if( j <= es_ars_col )
+					if ( j <= es_ars_col )
 						k = j;
 					else
 						k = j - 1;
@@ -5297,7 +5297,7 @@ sedit(void)
 				}
 			}
 
-			for( i=0 ; i<ars->ncurves ; i++ )
+			for ( i=0; i<ars->ncurves; i++ )
 				bu_free( (genptr_t)ars->curves[i], "ars->curves[i]" );
 			bu_free( (genptr_t)ars->curves, "ars->curves" );
 
@@ -5314,13 +5314,13 @@ sedit(void)
 
 			RT_ARS_CK_MAGIC( ars );
 
-			if( es_ars_crv < 0 || es_ars_col < 0 )
+			if ( es_ars_crv < 0 || es_ars_col < 0 )
 			{
 				bu_log( "No ARS point selected\n" );
 				break;
 			}
 
-			if( es_ars_crv == 0 || es_ars_crv == ars->ncurves-1 )
+			if ( es_ars_crv == 0 || es_ars_crv == ars->ncurves-1 )
 			{
 				bu_log( "Cannot delete first or last curve\n" );
 				break;
@@ -5330,30 +5330,30 @@ sedit(void)
 					"new curves" );
 
 			k = 0;
-			for( i=0 ; i<ars->ncurves ; i++ )
+			for ( i=0; i<ars->ncurves; i++ )
 			{
 				int j;
 
-				if( i == es_ars_crv )
+				if ( i == es_ars_crv )
 					continue;
 
 				curves[k] = (fastf_t *)bu_malloc( ars->pts_per_curve * 3 * sizeof( fastf_t ),
 						"new curves[k]" );
 
-				for( j=0 ; j<ars->pts_per_curve*3 ; j++ )
+				for ( j=0; j<ars->pts_per_curve*3; j++ )
 					curves[k][j] = ars->curves[i][j];
 
 				k++;
 			}
 
-			for( i=0 ; i<ars->ncurves ; i++ )
+			for ( i=0; i<ars->ncurves; i++ )
 				bu_free( (genptr_t)ars->curves[i], "ars->curves[i]" );
 			bu_free( (genptr_t)ars->curves, "ars->curves" );
 
 			ars->curves = curves;
 			ars->ncurves--;
 
-			if( es_ars_crv >= ars->ncurves )
+			if ( es_ars_crv >= ars->ncurves )
 				es_ars_crv = ars->ncurves - 1;
 		}
 		break;
@@ -5365,19 +5365,19 @@ sedit(void)
 
 			RT_ARS_CK_MAGIC( ars );
 
-			if( es_ars_crv < 0 || es_ars_col < 0 )
+			if ( es_ars_crv < 0 || es_ars_col < 0 )
 			{
 				bu_log( "No ARS point selected\n" );
 				break;
 			}
 
-			if( es_ars_col == 0 || es_ars_col == ars->ncurves - 1 )
+			if ( es_ars_col == 0 || es_ars_col == ars->ncurves - 1 )
 			{
 				bu_log( "Cannot delete first or last column\n" );
 				break;
 			}
 
-			if( ars->pts_per_curve < 3 )
+			if ( ars->pts_per_curve < 3 )
 			{
 				bu_log( "Cannot create an ARS with less than two points per curve\n" );
 				break;
@@ -5386,7 +5386,7 @@ sedit(void)
 			curves = (fastf_t **)bu_malloc( ars->ncurves * sizeof( fastf_t * ),
 					"new curves" );
 
-			for( i=0 ; i<ars->ncurves ; i++ )
+			for ( i=0; i<ars->ncurves; i++ )
 			{
 				int j,k;
 
@@ -5395,9 +5395,9 @@ sedit(void)
 						"new curves[i]" );
 
 				k = 0;
-				for( j=0 ; j<ars->pts_per_curve ; j++ )
+				for ( j=0; j<ars->pts_per_curve; j++ )
 				{
-					if( j == es_ars_col )
+					if ( j == es_ars_col )
 						continue;
 
 					curves[i][k*3] = ars->curves[i][j*3];
@@ -5407,14 +5407,14 @@ sedit(void)
 				}
 			}
 
-			for( i=0 ; i<ars->ncurves ; i++ )
+			for ( i=0; i<ars->ncurves; i++ )
 				bu_free( (genptr_t)ars->curves[i], "ars->curves[i]" );
 			bu_free( (genptr_t)ars->curves, "ars->curves" );
 
 			ars->curves = curves;
 			ars->pts_per_curve--;
 
-			if( es_ars_col >= ars->pts_per_curve )
+			if ( es_ars_col >= ars->pts_per_curve )
 				es_ars_col = ars->pts_per_curve - 1;
 		}
 		break;
@@ -5427,13 +5427,13 @@ sedit(void)
 
 			RT_ARS_CK_MAGIC( ars );
 
-			if( es_ars_crv < 0 || es_ars_col < 0 )
+			if ( es_ars_crv < 0 || es_ars_col < 0 )
 			{
 				bu_log( "No ARS point selected\n" );
 				break;
 			}
 
-			if( es_mvalid )
+			if ( es_mvalid )
 			{
 				vect_t view_dir;
 				plane_t view_pl;
@@ -5451,9 +5451,9 @@ sedit(void)
 				dist = DIST_PT_PLANE( es_mparam, view_pl );
 				VJOIN1( new_pt, es_mparam, -dist, view_pl );
 			}
-			else if( inpara == 3 ){
+			else if ( inpara == 3 ){
 #ifdef TRY_EDIT_NEW_WAY
-			  if(mged_variables->mv_context){
+			  if (mged_variables->mv_context){
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
 			  }else{
@@ -5463,18 +5463,18 @@ sedit(void)
 				VMOVE( new_pt, es_para )
 #endif
 			}
-			else if( inpara && inpara != 3 )
+			else if ( inpara && inpara != 3 )
 			{
 			  Tcl_AppendResult(interp, "x y z coordinates required for point movement\n", (char *)NULL);
 			  mged_print_result( TCL_ERROR );
 			  break;
 			}
-			else if( !es_mvalid && !inpara )
+			else if ( !es_mvalid && !inpara )
 				break;
 
 			VSUB2( diff, new_pt, &ars->curves[es_ars_crv][es_ars_col*3] );
 
-			for( i=0 ; i<ars->ncurves ; i++ )
+			for ( i=0; i<ars->ncurves; i++ )
 				VADD2( &ars->curves[i][es_ars_col*3],
 					&ars->curves[i][es_ars_col*3], diff );
 
@@ -5489,13 +5489,13 @@ sedit(void)
 
 			RT_ARS_CK_MAGIC( ars );
 
-			if( es_ars_crv < 0 || es_ars_col < 0 )
+			if ( es_ars_crv < 0 || es_ars_col < 0 )
 			{
 				bu_log( "No ARS point selected\n" );
 				break;
 			}
 
-			if( es_mvalid )
+			if ( es_mvalid )
 			{
 				vect_t view_dir;
 				plane_t view_pl;
@@ -5513,9 +5513,9 @@ sedit(void)
 				dist = DIST_PT_PLANE( es_mparam, view_pl );
 				VJOIN1( new_pt, es_mparam, -dist, view_pl );
 			}
-			else if( inpara == 3 ){
+			else if ( inpara == 3 ){
 #ifdef TRY_EDIT_NEW_WAY
-			  if(mged_variables->mv_context){
+			  if (mged_variables->mv_context){
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
 			  }else{
@@ -5525,18 +5525,18 @@ sedit(void)
 				VMOVE( new_pt, es_para )
 #endif
 			}
-			else if( inpara && inpara != 3 )
+			else if ( inpara && inpara != 3 )
 			{
 			  Tcl_AppendResult(interp, "x y z coordinates required for point movement\n", (char *)NULL);
 			  mged_print_result( TCL_ERROR );
 			  break;
 			}
-			else if( !es_mvalid && !inpara )
+			else if ( !es_mvalid && !inpara )
 				break;
 
 			VSUB2( diff, new_pt, &ars->curves[es_ars_crv][es_ars_col*3] );
 
-			for( i=0 ; i<ars->pts_per_curve ; i++ )
+			for ( i=0; i<ars->pts_per_curve; i++ )
 				VADD2( &ars->curves[es_ars_crv][i*3],
 					&ars->curves[es_ars_crv][i*3], diff );
 
@@ -5550,13 +5550,13 @@ sedit(void)
 
 			RT_ARS_CK_MAGIC( ars );
 
-			if( es_ars_crv < 0 || es_ars_col < 0 )
+			if ( es_ars_crv < 0 || es_ars_col < 0 )
 			{
 				bu_log( "No ARS point selected\n" );
 				break;
 			}
 
-			if( es_mvalid )
+			if ( es_mvalid )
 			{
 				vect_t view_dir;
 				plane_t view_pl;
@@ -5574,9 +5574,9 @@ sedit(void)
 				dist = DIST_PT_PLANE( es_mparam, view_pl );
 				VJOIN1( new_pt, es_mparam, -dist, view_pl );
 			}
-			else if( inpara == 3 ){
+			else if ( inpara == 3 ){
 #ifdef TRY_EDIT_NEW_WAY
-			  if(mged_variables->mv_context){
+			  if (mged_variables->mv_context){
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
 			  }else{
@@ -5586,13 +5586,13 @@ sedit(void)
 				VMOVE( new_pt, es_para )
 #endif
 			}
-			else if( inpara && inpara != 3 )
+			else if ( inpara && inpara != 3 )
 			{
 			  Tcl_AppendResult(interp, "x y z coordinates required for point movement\n", (char *)NULL);
 			  mged_print_result( TCL_ERROR );
 			  break;
 			}
-			else if( !es_mvalid && !inpara )
+			else if ( !es_mvalid && !inpara )
 				break;
 
 			VMOVE( &ars->curves[es_ars_crv][es_ars_col*3], new_pt );
@@ -5606,30 +5606,30 @@ sedit(void)
 
 			RT_BOT_CK_MAGIC( bot );
 
-			if( bot_verts[0] < 0 )
+			if ( bot_verts[0] < 0 )
 			{
 				bu_log( "No BOT point selected\n" );
 				break;
 			}
 
-			if( bot_verts[1] >= 0 && bot_verts[2] >= 0 )
+			if ( bot_verts[1] >= 0 && bot_verts[2] >= 0 )
 			{
 				bu_log( "A triangle is selected, not a BOT point!\n" );
 				break;
 			}
 
-			if( bot_verts[1] >= 0 )
+			if ( bot_verts[1] >= 0 )
 			{
 				bu_log( "An edge is selected, not a BOT point!\n" );
 				break;
 			}
 
 			vert = bot_verts[0];
-			if( es_mvalid )
+			if ( es_mvalid )
 				VMOVE( new_pt, es_mparam )
-			else if( inpara == 3 ){
+			else if ( inpara == 3 ){
 #ifdef TRY_EDIT_NEW_WAY
-			  if(mged_variables->mv_context){
+			  if (mged_variables->mv_context){
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
 			  }else{
@@ -5639,13 +5639,13 @@ sedit(void)
 				VMOVE( new_pt, es_para )
 #endif
 			}
-			else if( inpara && inpara != 3 )
+			else if ( inpara && inpara != 3 )
 			{
 			  Tcl_AppendResult(interp, "x y z coordinates required for point movement\n", (char *)NULL);
 			  mged_print_result( TCL_ERROR );
 			  break;
 			}
-			else if( !es_mvalid && !inpara )
+			else if ( !es_mvalid && !inpara )
 				break;
 
 			VMOVE( &bot->vertices[vert*3], new_pt );
@@ -5660,25 +5660,25 @@ sedit(void)
 
 			RT_BOT_CK_MAGIC( bot );
 
-			if( bot_verts[0] < 0 || bot_verts[1] < 0 )
+			if ( bot_verts[0] < 0 || bot_verts[1] < 0 )
 			{
 				Tcl_AppendResult( interp, "No BOT edge selected\n", (char *)NULL );
 				mged_print_result( TCL_ERROR );
 				break;
 			}
 
-			if( bot_verts[2] >= 0 )
+			if ( bot_verts[2] >= 0 )
 			{
 				bu_log( "A triangle is selected, not a BOT edge!\n" );
 				break;
 			}
 			v1 = bot_verts[0];
 			v2 = bot_verts[1];
-			if( es_mvalid )
+			if ( es_mvalid )
 				VMOVE( new_pt, es_mparam )
-			else if( inpara == 3 ){
+			else if ( inpara == 3 ){
 #ifdef TRY_EDIT_NEW_WAY
-			  if(mged_variables->mv_context){
+			  if (mged_variables->mv_context){
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
 			  }else{
@@ -5688,13 +5688,13 @@ sedit(void)
 				VMOVE( new_pt, es_para )
 #endif
 			}
-			else if( inpara && inpara != 3 )
+			else if ( inpara && inpara != 3 )
 			{
 			  Tcl_AppendResult(interp, "x y z coordinates required for point movement\n", (char *)NULL);
 			  mged_print_result( TCL_ERROR );
 			  break;
 			}
-			else if( !es_mvalid && !inpara )
+			else if ( !es_mvalid && !inpara )
 				break;
 
 
@@ -5712,7 +5712,7 @@ sedit(void)
 
 			RT_BOT_CK_MAGIC( bot );
 
-			if( bot_verts[0] < 0 ||
+			if ( bot_verts[0] < 0 ||
 				bot_verts[1] < 0 ||
 				bot_verts[2] < 0 )
 			{
@@ -5724,11 +5724,11 @@ sedit(void)
 			v2 = bot_verts[1];
 			v3 = bot_verts[2];
 
-			if( es_mvalid )
+			if ( es_mvalid )
 				VMOVE( new_pt, es_mparam )
-			else if( inpara == 3 ){
+			else if ( inpara == 3 ){
 #ifdef TRY_EDIT_NEW_WAY
-			  if(mged_variables->mv_context){
+			  if (mged_variables->mv_context){
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
 			  }else{
@@ -5738,13 +5738,13 @@ sedit(void)
 				VMOVE( new_pt, es_para )
 #endif
 			}
-			else if( inpara && inpara != 3 )
+			else if ( inpara && inpara != 3 )
 			{
 			  Tcl_AppendResult(interp, "x y z coordinates required for point movement\n", (char *)NULL);
 			  mged_print_result( TCL_ERROR );
 			  break;
 			}
-			else if( !es_mvalid && !inpara )
+			else if ( !es_mvalid && !inpara )
 				break;
 
 			VSUB2( diff, new_pt, &bot->vertices[v1*3] );
@@ -5771,18 +5771,18 @@ sedit(void)
 
 			RT_METABALL_CK_MAGIC( metaball );
 
-			if( es_mvalid )
+			if ( es_mvalid )
 			  VMOVE( new_pt, es_mparam )
-			else if( inpara == 3 ){
+			else if ( inpara == 3 ){
 			  VMOVE( new_pt, es_para )
 			}
-			else if( inpara && inpara != 3 )
+			else if ( inpara && inpara != 3 )
 			{
 			  Tcl_AppendResult(interp, "x y z coordinates required for control point selection\n", (char *)NULL);
 			  mged_print_result( TCL_ERROR );
 			  break;
 			}
-			else if( !es_mvalid && !inpara )
+			else if ( !es_mvalid && !inpara )
 				break;
 
 			tmp_tol.magic = BN_TOL_MAGIC;
@@ -5795,12 +5795,12 @@ sedit(void)
 			VSET( work, 0.0, 0.0, 1.0 )
 			MAT4X3VEC(dir, view_state->vs_vop->vo_view2model, work)
 
-			for( BU_LIST_FOR( ps, wdb_metaballpt, &metaball->metaball_ctrl_head ))
+			for ( BU_LIST_FOR( ps, wdb_metaballpt, &metaball->metaball_ctrl_head ))
 			{
 				fastf_t dist;
 
 				dist = bn_dist_line3_pt3( new_pt, dir, ps->coord );
-				if( dist < min_dist )
+				if ( dist < min_dist )
 				{
 					min_dist = dist;
 					nearest = ps;
@@ -5809,7 +5809,7 @@ sedit(void)
 
 			es_metaballpt = nearest;
 
-			if( !es_metaballpt )
+			if ( !es_metaballpt )
 			{
 			  Tcl_AppendResult(interp, "No METABALL control point selected\n", (char *)NULL);
 			  mged_print_result( TCL_ERROR );
@@ -5819,8 +5819,8 @@ sedit(void)
 		}
 		break;
 	case ECMD_METABALL_PT_MOV:
-		if(!es_metaballpt) { bu_log("Must select a point to move"); break; }
-		if(inpara != 3) { bu_log("Must provide dx dy dz"); break; }
+		if (!es_metaballpt) { bu_log("Must select a point to move"); break; }
+		if (inpara != 3) { bu_log("Must provide dx dy dz"); break; }
 		VADD2(es_metaballpt->coord, es_metaballpt->coord, es_para);
 		break;
 	case ECMD_METABALL_PT_DEL:
@@ -5874,7 +5874,7 @@ sedit(void)
 	}
 
 	/* must re-calculate the face plane equations for arbs */
-	if( es_int.idb_type == ID_ARB8 )
+	if ( es_int.idb_type == ID_ARB8 )
 	{
 		arb = (struct rt_arb_internal *)es_int.idb_ptr;
 		RT_ARB_CK_MAGIC( arb );
@@ -5889,7 +5889,7 @@ sedit(void)
 	set_e_axes_pos(0);
 	replot_editing_solid();
 
-	if(update_views){
+	if (update_views){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -5926,10 +5926,10 @@ sedit_mouse( const vect_t mousevec )
   vect_t raw_mp;                /* raw model position */
 
 
-  if( es_edflag <= 0 )
+  if ( es_edflag <= 0 )
     return;
 
-  switch( es_edflag )  {
+  switch ( es_edflag )  {
   case SSCALE:
   case PSCALE:
   case ECMD_DSP_SCALE_X:
@@ -5953,7 +5953,7 @@ sedit_mouse( const vect_t mousevec )
     acc_sc_sol *= es_scale;
 
     edit_absolute_scale = acc_sc_sol - 1.0;
-    if(edit_absolute_scale > 0)
+    if (edit_absolute_scale > 0)
       edit_absolute_scale /= 3.0;
 
     sedit();
@@ -6111,7 +6111,7 @@ sedit_mouse( const vect_t mousevec )
 	pos_view[Y] = mousevec[Y];
 
 	tmp_vert = rt_bot_find_v_nearest_pt2(bot, pos_view, view_state->vs_vop->vo_model2view);
-	if( tmp_vert < 0 )
+	if ( tmp_vert < 0 )
 	{
 		Tcl_AppendResult(interp, "ECMD_BOT_PICKV: unable to find a vertex!\n", (char *)NULL );
 		mged_print_result( TCL_ERROR );
@@ -6178,7 +6178,7 @@ sedit_mouse( const vect_t mousevec )
 
 		bu_vls_strcat( &vls, " {" );
 		hits = 0;
-		for( i=0 ; i<bot->num_faces ; i++ )
+		for ( i=0; i<bot->num_faces; i++ )
 		{
 			v1 = bot->faces[i*3];
 			v2 = bot->faces[i*3+1];
@@ -6187,7 +6187,7 @@ sedit_mouse( const vect_t mousevec )
 			VMOVE( pt2, &bot->vertices[v2*3] );
 			VMOVE( pt3, &bot->vertices[v3*3] );
 
-			if( bn_does_ray_isect_tri(start_pt, dir, pt1, pt2, pt3, tmp ) )
+			if ( bn_does_ray_isect_tri(start_pt, dir, pt1, pt2, pt3, tmp ) )
 			  {
 			    hits++;
 			    bu_vls_printf( &vls, " { %d %d %d }", v1, v2, v3 );
@@ -6195,14 +6195,14 @@ sedit_mouse( const vect_t mousevec )
 		}
 		bu_vls_strcat( &vls, " } " );
 
-		if( hits == 0 )
+		if ( hits == 0 )
 		{
 			bot_verts[0] = -1;
 			bot_verts[1] = -1;
 			bot_verts[2] = -1;
 			bu_vls_free( &vls );
 		}
-		if( hits == 1 )
+		if ( hits == 1 )
 		{
 			(void)sscanf( bu_vls_addr( &vls ), " { { %d %d %d", &bot_verts[0], &bot_verts[1], &bot_verts[2] );
 			bu_vls_free( &vls );
@@ -6215,7 +6215,7 @@ sedit_mouse( const vect_t mousevec )
 
 			ret_tcl = Tcl_VarEval( interp, "bot_face_select ", bu_vls_addr( &vls ), (char *)NULL );
 			bu_vls_free( &vls );
-			if( ret_tcl != TCL_OK )
+			if ( ret_tcl != TCL_OK )
 			{
 			  bu_log( "bot_face_select failed: %s\n", Tcl_GetStringResult(interp) );
 			  bot_verts[0] = -1;
@@ -6332,10 +6332,10 @@ sedit_trans(fastf_t *tvec)
   vect_t raw_kp;
   vect_t pos_model;
 
-  if( es_edflag <= 0 )
+  if ( es_edflag <= 0 )
     return;
 
-  switch( es_edflag ) {
+  switch ( es_edflag ) {
   case STRANS:
     /*
      * Use mouse to change solid's location.
@@ -6544,17 +6544,17 @@ sedit_abs_scale(void)
 {
   fastf_t old_acc_sc_sol;
 
-  if( es_edflag != SSCALE && es_edflag != PSCALE )
+  if ( es_edflag != SSCALE && es_edflag != PSCALE )
     return;
 
   old_acc_sc_sol = acc_sc_sol;
 
-  if(-SMALL_FASTF < edit_absolute_scale && edit_absolute_scale < SMALL_FASTF)
+  if (-SMALL_FASTF < edit_absolute_scale && edit_absolute_scale < SMALL_FASTF)
     acc_sc_sol = 1.0;
-  else if(edit_absolute_scale > 0.0)
+  else if (edit_absolute_scale > 0.0)
     acc_sc_sol = 1.0 + edit_absolute_scale * 3.0;
   else{
-    if((edit_absolute_scale - MGED_SMALL_SCALE) < -1.0)
+    if ((edit_absolute_scale - MGED_SMALL_SCALE) < -1.0)
       edit_absolute_scale = -1.0 + MGED_SMALL_SCALE;
 
     acc_sc_sol = 1.0 + edit_absolute_scale;
@@ -6579,7 +6579,7 @@ objedit_mouse( const vect_t mousevec )
 
   MAT_IDN( incr_change );
   scale = 1;
-  if( movedir & SARROW )  {
+  if ( movedir & SARROW )  {
     /* scaling option is in effect */
     scale = 1.0 + (fastf_t)(mousevec[Y]>0 ?
 			    mousevec[Y] : -mousevec[Y]);
@@ -6587,7 +6587,7 @@ objedit_mouse( const vect_t mousevec )
       scale = 1.0 / scale;
 
     /* switch depending on scaling option selected */
-    switch( edobj ) {
+    switch ( edobj ) {
 
     case BE_O_SCALE:
       /* global scaling */
@@ -6595,7 +6595,7 @@ objedit_mouse( const vect_t mousevec )
 
       acc_sc_obj /= incr_change[15];
       edit_absolute_scale = acc_sc_obj - 1.0;
-      if(edit_absolute_scale > 0.0)
+      if (edit_absolute_scale > 0.0)
 	edit_absolute_scale /= 3.0;
       break;
 
@@ -6605,7 +6605,7 @@ objedit_mouse( const vect_t mousevec )
       /* accumulate the scale factor */
       acc_sc[0] *= scale;
       edit_absolute_scale = acc_sc[0] - 1.0;
-      if(edit_absolute_scale > 0.0)
+      if (edit_absolute_scale > 0.0)
 	edit_absolute_scale /= 3.0;
       break;
 
@@ -6615,7 +6615,7 @@ objedit_mouse( const vect_t mousevec )
       /* accumulate the scale factor */
       acc_sc[1] *= scale;
       edit_absolute_scale = acc_sc[1] - 1.0;
-      if(edit_absolute_scale > 0.0)
+      if (edit_absolute_scale > 0.0)
 	edit_absolute_scale /= 3.0;
       break;
 
@@ -6625,7 +6625,7 @@ objedit_mouse( const vect_t mousevec )
       /* accumulate the scale factor */
       acc_sc[2] *= scale;
       edit_absolute_scale = acc_sc[2] - 1.0;
-      if(edit_absolute_scale > 0.0)
+      if (edit_absolute_scale > 0.0)
 	edit_absolute_scale /= 3.0;
       break;
     }
@@ -6643,7 +6643,7 @@ objedit_mouse( const vect_t mousevec )
 
     MAT_IDN( incr_change );
     new_edit_mats();
-  }  else if( movedir & (RARROW|UARROW) )  {
+  }  else if ( movedir & (RARROW|UARROW) )  {
     mat_t oldchanges;	/* temporary matrix */
 
     /* Vector from object keypoint to cursor */
@@ -6654,9 +6654,9 @@ objedit_mouse( const vect_t mousevec )
 #endif
     MAT4X3PNT( pos_view, view_state->vs_model2objview, temp );
 
-    if( movedir & RARROW )
+    if ( movedir & RARROW )
       pos_view[X] = mousevec[X];
-    if( movedir & UARROW )
+    if ( movedir & UARROW )
       pos_view[Y] = mousevec[Y];
 
     MAT4X3PNT(pos_model, view_state->vs_vop->vo_view2model, pos_view);/* NOT objview */
@@ -6713,19 +6713,19 @@ oedit_abs_scale(void)
 
   MAT_IDN( incr_mat );
 
-  if(-SMALL_FASTF < edit_absolute_scale && edit_absolute_scale < SMALL_FASTF)
+  if (-SMALL_FASTF < edit_absolute_scale && edit_absolute_scale < SMALL_FASTF)
     scale = 1;
-  else if(edit_absolute_scale > 0.0)
+  else if (edit_absolute_scale > 0.0)
     scale = 1.0 + edit_absolute_scale * 3.0;
   else{
-    if((edit_absolute_scale - MGED_SMALL_SCALE) < -1.0)
+    if ((edit_absolute_scale - MGED_SMALL_SCALE) < -1.0)
       edit_absolute_scale = -1.0 + MGED_SMALL_SCALE;
 
     scale = 1.0 + edit_absolute_scale;
   }
 
   /* switch depending on scaling option selected */
-  switch( edobj ) {
+  switch ( edobj ) {
 
   case BE_O_SCALE:
     /* global scaling */
@@ -6781,7 +6781,7 @@ vls_solid( struct bu_vls *vp, const struct rt_db_internal *ip, const mat_t mat )
 
 	RT_INIT_DB_INTERNAL(&intern);
 
-	if(dbip == DBI_NULL)
+	if (dbip == DBI_NULL)
 	  return;
 
 	BU_CK_VLS(vp);
@@ -6790,20 +6790,20 @@ vls_solid( struct bu_vls *vp, const struct rt_db_internal *ip, const mat_t mat )
 	id = ip->idb_type;
 	transform_editing_solid( &intern, mat, (struct rt_db_internal *)ip, 0 );
 
-	if( id != ID_ARS && id != ID_POLY && id != ID_BOT )
+	if ( id != ID_ARS && id != ID_POLY && id != ID_BOT )
 	{
-		if( rt_functab[id].ft_describe( vp, &intern, 1 /*verbose*/,
+		if ( rt_functab[id].ft_describe( vp, &intern, 1 /*verbose*/,
 		    base2local, &rt_uniresource, dbip ) < 0 )
 		  Tcl_AppendResult(interp, "vls_solid: describe error\n", (char *)NULL);
 	}
 	else
 	{
-		if( rt_functab[id].ft_describe( vp, &intern, 0 /* not verbose */,
+		if ( rt_functab[id].ft_describe( vp, &intern, 0 /* not verbose */,
 		    base2local, &rt_uniresource, dbip ) < 0 )
 		  Tcl_AppendResult(interp, "vls_solid: describe error\n", (char *)NULL);
 	}
 
-	if( id == ID_PIPE && es_pipept )
+	if ( id == ID_PIPE && es_pipept )
 	{
 		struct rt_pipe_internal *pipe;
 		struct wdb_pipept *ps=(struct wdb_pipept *)NULL;
@@ -6812,14 +6812,14 @@ vls_solid( struct bu_vls *vp, const struct rt_db_internal *ip, const mat_t mat )
 		pipe = (struct rt_pipe_internal *)ip->idb_ptr;
 		RT_PIPE_CK_MAGIC( pipe );
 
-		for( BU_LIST_FOR( ps, wdb_pipept, &pipe->pipe_segs_head ) )
+		for ( BU_LIST_FOR( ps, wdb_pipept, &pipe->pipe_segs_head ) )
 		{
 			seg_no++;
-			if( ps == es_pipept )
+			if ( ps == es_pipept )
 				break;
 		}
 
-		if( ps == es_pipept )
+		if ( ps == es_pipept )
 			rt_vls_pipept( vp, seg_no, &intern, base2local );
 	}
 
@@ -6836,7 +6836,7 @@ pscale(void)
 {
 	static fastf_t ma,mb;
 
-	switch( es_menu ) {
+	switch ( es_menu ) {
 
 	case MENU_VOL_CSIZE:	/* scale voxel size */
 		{
@@ -6849,7 +6849,7 @@ pscale(void)
 			struct rt_tgc_internal	*tgc =
 				(struct rt_tgc_internal *)es_int.idb_ptr;
 			RT_TGC_CK_MAGIC(tgc);
-			if( inpara ) {
+			if ( inpara ) {
 				/* take es_mat[15] (path scaling) into account */
 				es_para[0] *= es_mat[15];
 				es_scale = es_para[0] / MAGNITUDE(tgc->h);
@@ -6865,7 +6865,7 @@ pscale(void)
 			struct rt_tgc_internal	*tgc =
 				(struct rt_tgc_internal *)es_int.idb_ptr;
 			RT_TGC_CK_MAGIC(tgc);
-			if( inpara ) {
+			if ( inpara ) {
 				/* take es_mat[15] (path scaling) into account */
 				es_para[0] *= es_mat[15];
 				es_scale = es_para[0] / MAGNITUDE(tgc->h);
@@ -6960,15 +6960,15 @@ pscale(void)
 				(struct rt_tor_internal *)es_int.idb_ptr;
 			fastf_t	newrad;
 			RT_TOR_CK_MAGIC(tor);
-			if( inpara ) {
+			if ( inpara ) {
 				/* take es_mat[15] (path scaling) into account */
 				es_para[0] *= es_mat[15];
 				newrad = es_para[0];
 			} else {
 				newrad = tor->r_a * es_scale;
 			}
-			if( newrad < SMALL )  newrad = 4*SMALL;
-			if( tor->r_h <= newrad )
+			if ( newrad < SMALL )  newrad = 4*SMALL;
+			if ( tor->r_h <= newrad )
 				tor->r_a = newrad;
 		}
 		break;
@@ -6980,15 +6980,15 @@ pscale(void)
 				(struct rt_tor_internal *)es_int.idb_ptr;
 			fastf_t	newrad;
 			RT_TOR_CK_MAGIC(tor);
-			if( inpara ) {
+			if ( inpara ) {
 				/* take es_mat[15] (path scaling) into account */
 				es_para[0] *= es_mat[15];
 				newrad = es_para[0];
 			} else {
 				newrad = tor->r_h * es_scale;
 			}
-			if( newrad < SMALL )  newrad = 4*SMALL;
-			if( newrad <= tor->r_a )
+			if ( newrad < SMALL )  newrad = 4*SMALL;
+			if ( newrad <= tor->r_a )
 				tor->r_h = newrad;
 		}
 		break;
@@ -7002,14 +7002,14 @@ pscale(void)
 			vect_t	Nu;
 
 			RT_ETO_CK_MAGIC(eto);
-			if( inpara ) {
+			if ( inpara ) {
 				/* take es_mat[15] (path scaling) into account */
 				es_para[0] *= es_mat[15];
 				newrad = es_para[0];
 			} else {
 				newrad = eto->eto_r * es_scale;
 			}
-			if( newrad < SMALL )  newrad = 4*SMALL;
+			if ( newrad < SMALL )  newrad = 4*SMALL;
 			VMOVE(Nu, eto->eto_N);
 			VUNITIZE(Nu);
 			/* get horiz and vert components of C and Rd */
@@ -7032,14 +7032,14 @@ pscale(void)
 			vect_t	Nu;
 
 			RT_ETO_CK_MAGIC(eto);
-			if( inpara ) {
+			if ( inpara ) {
 				/* take es_mat[15] (path scaling) into account */
 				es_para[0] *= es_mat[15];
 				newrad = es_para[0];
 			} else {
 				newrad = eto->eto_rd * es_scale;
 			}
-			if( newrad < SMALL )  newrad = 4*SMALL;
+			if ( newrad < SMALL )  newrad = 4*SMALL;
 			work = MAGNITUDE(eto->eto_C);
 				if (newrad <= work) {
 				VMOVE(Nu, eto->eto_N);
@@ -7061,7 +7061,7 @@ pscale(void)
 			vect_t	Nu, Work;
 
 			RT_ETO_CK_MAGIC(eto);
-			if( inpara ) {
+			if ( inpara ) {
 				/* take es_mat[15] (path scaling) into account */
 				es_para[0] *= es_mat[15];
 				es_scale = es_para[0] / MAGNITUDE(eto->eto_C);
@@ -7086,7 +7086,7 @@ pscale(void)
 				(struct rt_rpc_internal *)es_int.idb_ptr;
 			RT_RPC_CK_MAGIC(rpc);
 
-			if( inpara ) {
+			if ( inpara ) {
 				/* take es_mat[15] (path scaling) into account */
 				es_para[0] *= es_mat[15];
 				es_scale = es_para[0] / MAGNITUDE(rpc->rpc_B);
@@ -7102,7 +7102,7 @@ pscale(void)
 				(struct rt_rpc_internal *)es_int.idb_ptr;
 
 			RT_RPC_CK_MAGIC(rpc);
-			if( inpara ) {
+			if ( inpara ) {
 				/* take es_mat[15] (path scaling) into account */
 				es_para[0] *= es_mat[15];
 				es_scale = es_para[0] / MAGNITUDE(rpc->rpc_H);
@@ -7118,7 +7118,7 @@ pscale(void)
 				(struct rt_rpc_internal *)es_int.idb_ptr;
 
 			RT_RPC_CK_MAGIC(rpc);
-			if( inpara ) {
+			if ( inpara ) {
 				/* take es_mat[15] (path scaling) into account */
 				es_para[0] *= es_mat[15];
 				es_scale = es_para[0] / rpc->rpc_r;
@@ -7134,7 +7134,7 @@ pscale(void)
 				(struct rt_rhc_internal *)es_int.idb_ptr;
 			RT_RHC_CK_MAGIC(rhc);
 
-			if( inpara ) {
+			if ( inpara ) {
 				/* take es_mat[15] (path scaling) into account */
 				es_para[0] *= es_mat[15];
 				es_scale = es_para[0] / MAGNITUDE(rhc->rhc_B);
@@ -7150,7 +7150,7 @@ pscale(void)
 				(struct rt_rhc_internal *)es_int.idb_ptr;
 			RT_RHC_CK_MAGIC(rhc);
 
-			if( inpara ) {
+			if ( inpara ) {
 				/* take es_mat[15] (path scaling) into account */
 				es_para[0] *= es_mat[15];
 				es_scale = es_para[0] / MAGNITUDE(rhc->rhc_H);
@@ -7166,7 +7166,7 @@ pscale(void)
 				(struct rt_rhc_internal *)es_int.idb_ptr;
 
 			RT_RHC_CK_MAGIC(rhc);
-			if( inpara ) {
+			if ( inpara ) {
 				/* take es_mat[15] (path scaling) into account */
 				es_para[0] *= es_mat[15];
 				es_scale = es_para[0] / rhc->rhc_r;
@@ -7182,7 +7182,7 @@ pscale(void)
 				(struct rt_rhc_internal *)es_int.idb_ptr;
 
 			RT_RHC_CK_MAGIC(rhc);
-			if( inpara ) {
+			if ( inpara ) {
 				/* take es_mat[15] (path scaling) into account */
 				es_para[0] *= es_mat[15];
 				es_scale = es_para[0] / rhc->rhc_c;
@@ -7198,7 +7198,7 @@ pscale(void)
 				(struct rt_epa_internal *)es_int.idb_ptr;
 
 			RT_EPA_CK_MAGIC(epa);
-			if( inpara ) {
+			if ( inpara ) {
 				/* take es_mat[15] (path scaling) into account */
 				es_para[0] *= es_mat[15];
 				es_scale = es_para[0] / MAGNITUDE(epa->epa_H);
@@ -7214,7 +7214,7 @@ pscale(void)
 				(struct rt_epa_internal *)es_int.idb_ptr;
 
 			RT_EPA_CK_MAGIC(epa);
-			if( inpara ) {
+			if ( inpara ) {
 				/* take es_mat[15] (path scaling) into account */
 				es_para[0] *= es_mat[15];
 				es_scale = es_para[0] / epa->epa_r1;
@@ -7233,7 +7233,7 @@ pscale(void)
 				(struct rt_epa_internal *)es_int.idb_ptr;
 
 			RT_EPA_CK_MAGIC(epa);
-			if( inpara ) {
+			if ( inpara ) {
 				/* take es_mat[15] (path scaling) into account */
 				es_para[0] *= es_mat[15];
 				es_scale = es_para[0] / epa->epa_r2;
@@ -7252,7 +7252,7 @@ pscale(void)
 				(struct rt_ehy_internal *)es_int.idb_ptr;
 
 			RT_EHY_CK_MAGIC(ehy);
-			if( inpara ) {
+			if ( inpara ) {
 				/* take es_mat[15] (path scaling) into account */
 				es_para[0] *= es_mat[15];
 				es_scale = es_para[0] / MAGNITUDE(ehy->ehy_H);
@@ -7268,7 +7268,7 @@ pscale(void)
 				(struct rt_ehy_internal *)es_int.idb_ptr;
 
 			RT_EHY_CK_MAGIC(ehy);
-			if( inpara ) {
+			if ( inpara ) {
 				/* take es_mat[15] (path scaling) into account */
 				es_para[0] *= es_mat[15];
 				es_scale = es_para[0] / ehy->ehy_r1;
@@ -7287,7 +7287,7 @@ pscale(void)
 				(struct rt_ehy_internal *)es_int.idb_ptr;
 
 			RT_EHY_CK_MAGIC(ehy);
-			if( inpara ) {
+			if ( inpara ) {
 				/* take es_mat[15] (path scaling) into account */
 				es_para[0] *= es_mat[15];
 				es_scale = es_para[0] / ehy->ehy_r2;
@@ -7306,7 +7306,7 @@ pscale(void)
 				(struct rt_ehy_internal *)es_int.idb_ptr;
 
 			RT_EHY_CK_MAGIC(ehy);
-			if( inpara ) {
+			if ( inpara ) {
 				/* take es_mat[15] (path scaling) into account */
 				es_para[0] *= es_mat[15];
 				es_scale = es_para[0] / ehy->ehy_c;
@@ -7322,7 +7322,7 @@ pscale(void)
 				(struct rt_tgc_internal *)es_int.idb_ptr;
 			RT_TGC_CK_MAGIC(tgc);
 
-			if( inpara ) {
+			if ( inpara ) {
 				/* take es_mat[15] (path scaling) into account */
 				es_para[0] *= es_mat[15];
 				es_scale = es_para[0] / MAGNITUDE(tgc->a);
@@ -7338,7 +7338,7 @@ pscale(void)
 				(struct rt_tgc_internal *)es_int.idb_ptr;
 			RT_TGC_CK_MAGIC(tgc);
 
-			if( inpara ) {
+			if ( inpara ) {
 				/* take es_mat[15] (path scaling) into account */
 				es_para[0] *= es_mat[15];
 				es_scale = es_para[0] / MAGNITUDE(tgc->b);
@@ -7353,7 +7353,7 @@ pscale(void)
 			struct rt_ell_internal	*ell =
 				(struct rt_ell_internal *)es_int.idb_ptr;
 			RT_ELL_CK_MAGIC(ell);
-			if( inpara ) {
+			if ( inpara ) {
 				/* take es_mat[15] (path scaling) into account */
 				es_scale = es_para[0] * es_mat[15] /
 					MAGNITUDE(ell->a);
@@ -7368,7 +7368,7 @@ pscale(void)
 			struct rt_ell_internal	*ell =
 				(struct rt_ell_internal *)es_int.idb_ptr;
 			RT_ELL_CK_MAGIC(ell);
-			if( inpara ) {
+			if ( inpara ) {
 				/* take es_mat[15] (path scaling) into account */
 				es_scale = es_para[0] * es_mat[15] /
 					MAGNITUDE(ell->b);
@@ -7383,7 +7383,7 @@ pscale(void)
 			struct rt_ell_internal	*ell =
 				(struct rt_ell_internal *)es_int.idb_ptr;
 			RT_ELL_CK_MAGIC(ell);
-			if( inpara ) {
+			if ( inpara ) {
 				/* take es_mat[15] (path scaling) into account */
 				es_scale = es_para[0] * es_mat[15] /
 					MAGNITUDE(ell->c);
@@ -7399,7 +7399,7 @@ pscale(void)
 				(struct rt_tgc_internal *)es_int.idb_ptr;
 			RT_TGC_CK_MAGIC(tgc);
 
-			if( inpara ) {
+			if ( inpara ) {
 				/* take es_mat[15] (path scaling) into account */
 				es_para[0] *= es_mat[15];
 				es_scale = es_para[0] / MAGNITUDE(tgc->c);
@@ -7414,7 +7414,7 @@ pscale(void)
 				(struct rt_tgc_internal *)es_int.idb_ptr;
 			RT_TGC_CK_MAGIC(tgc);
 
-			if( inpara ) {
+			if ( inpara ) {
 				/* take es_mat[15] (path scaling) into account */
 				es_para[0] *= es_mat[15];
 				es_scale = es_para[0] / MAGNITUDE(tgc->d);
@@ -7429,7 +7429,7 @@ pscale(void)
 				(struct rt_tgc_internal *)es_int.idb_ptr;
 			RT_TGC_CK_MAGIC(tgc);
 
-			if( inpara ) {
+			if ( inpara ) {
 				/* take es_mat[15] (path scaling) into account */
 				es_para[0] *= es_mat[15];
 				es_scale = es_para[0] / MAGNITUDE(tgc->a);
@@ -7447,7 +7447,7 @@ pscale(void)
 				(struct rt_tgc_internal *)es_int.idb_ptr;
 			RT_TGC_CK_MAGIC(tgc);
 
-			if( inpara ) {
+			if ( inpara ) {
 				/* take es_mat[15] (path scaling) into account */
 				es_para[0] *= es_mat[15];
 				es_scale = es_para[0] / MAGNITUDE(tgc->c);
@@ -7465,7 +7465,7 @@ pscale(void)
 				(struct rt_tgc_internal *)es_int.idb_ptr;
 			RT_TGC_CK_MAGIC(tgc);
 
-			if( inpara ) {
+			if ( inpara ) {
 				/* take es_mat[15] (path scaling) into account */
 				es_para[0] *= es_mat[15];
 				es_scale = es_para[0] / MAGNITUDE(tgc->a);
@@ -7486,7 +7486,7 @@ pscale(void)
 			struct rt_ell_internal	*ell =
 				(struct rt_ell_internal *)es_int.idb_ptr;
 			RT_ELL_CK_MAGIC(ell);
-			if( inpara ) {
+			if ( inpara ) {
 				/* take es_mat[15] (path scaling) into account */
 				es_scale = es_para[0] * es_mat[15] /
 					MAGNITUDE(ell->a);
@@ -7507,7 +7507,7 @@ pscale(void)
 			struct rt_superell_internal	*superell =
 				(struct rt_superell_internal *)es_int.idb_ptr;
 			RT_SUPERELL_CK_MAGIC(superell);
-			if( inpara ) {
+			if ( inpara ) {
 				/* take es_mat[15] (path scaling) into account */
 				es_scale = es_para[0] * es_mat[15] /
 					MAGNITUDE(superell->a);
@@ -7522,7 +7522,7 @@ pscale(void)
 			struct rt_superell_internal	*superell =
 				(struct rt_superell_internal *)es_int.idb_ptr;
 			RT_SUPERELL_CK_MAGIC(superell);
-			if( inpara ) {
+			if ( inpara ) {
 				/* take es_mat[15] (path scaling) into account */
 				es_scale = es_para[0] * es_mat[15] /
 					MAGNITUDE(superell->b);
@@ -7537,7 +7537,7 @@ pscale(void)
 			struct rt_superell_internal	*superell =
 				(struct rt_superell_internal *)es_int.idb_ptr;
 			RT_SUPERELL_CK_MAGIC(superell);
-			if( inpara ) {
+			if ( inpara ) {
 				/* take es_mat[15] (path scaling) into account */
 				es_scale = es_para[0] * es_mat[15] /
 					MAGNITUDE(superell->c);
@@ -7551,7 +7551,7 @@ pscale(void)
 			struct rt_superell_internal	*superell =
 				(struct rt_superell_internal *)es_int.idb_ptr;
 			RT_SUPERELL_CK_MAGIC(superell);
-			if( inpara ) {
+			if ( inpara ) {
 				/* take es_mat[15] (path scaling) into account */
 				es_scale = es_para[0] * es_mat[15] /
 					MAGNITUDE(superell->a);
@@ -7568,15 +7568,15 @@ pscale(void)
 
 	case MENU_PIPE_PT_OD:	/* scale OD of one pipe segment */
 	  {
-	    if( !es_pipept )
+	    if ( !es_pipept )
 	      {
 		Tcl_AppendResult(interp, "pscale: no pipe segment selected for scaling\n", (char *)NULL);
 		return;
 	      }
 
-	    if( inpara ) {
+	    if ( inpara ) {
 	      /* take es_mat[15] (path scaling) into account */
-	      if( es_pipept->pp_od > 0.0 )
+	      if ( es_pipept->pp_od > 0.0 )
 		es_scale = es_para[0] * es_mat[15]/es_pipept->pp_od;
 	      else
 		es_scale = (-es_para[0] * es_mat[15]);
@@ -7586,15 +7586,15 @@ pscale(void)
 	  break;
 	case MENU_PIPE_PT_ID:	/* scale ID of one pipe segment */
 		{
-			if( !es_pipept )
+			if ( !es_pipept )
 			{
 			  Tcl_AppendResult(interp, "pscale: no pipe segment selected for scaling\n", (char *)NULL);
 			  return;
 			}
 
-			if( inpara ) {
+			if ( inpara ) {
 				/* take es_mat[15] (path scaling) into account */
-				if( es_pipept->pp_id > 0.0 )
+				if ( es_pipept->pp_id > 0.0 )
 					es_scale = es_para[0] * es_mat[15]/es_pipept->pp_id;
 				else
 					es_scale = (-es_para[0] * es_mat[15]);
@@ -7604,15 +7604,15 @@ pscale(void)
 		break;
 	case MENU_PIPE_PT_RADIUS:	/* scale bend radius at selected point */
 		{
-			if( !es_pipept )
+			if ( !es_pipept )
 			{
 			  Tcl_AppendResult(interp, "pscale: no pipe segment selected for scaling\n", (char *)NULL);
 			  return;
 			}
 
-			if( inpara ) {
+			if ( inpara ) {
 				/* take es_mat[15] (path scaling) into account */
-				if( es_pipept->pp_id > 0.0 )
+				if ( es_pipept->pp_id > 0.0 )
 					es_scale = es_para[0] * es_mat[15]/es_pipept->pp_bendradius;
 				else
 					es_scale = (-es_para[0] * es_mat[15]);
@@ -7621,7 +7621,7 @@ pscale(void)
 		}
 		break;
 	case MENU_PIPE_SCALE_OD:	/* scale entire pipe OD */
-		if( inpara )
+		if ( inpara )
 		{
 			struct rt_pipe_internal *pipe =
 				(struct rt_pipe_internal *)es_int.idb_ptr;
@@ -7632,14 +7632,14 @@ pscale(void)
 			ps = BU_LIST_FIRST( wdb_pipept, &pipe->pipe_segs_head );
 			BU_CKMAG( ps, WDB_PIPESEG_MAGIC, "wdb_pipept" );
 
-			if( ps->pp_od > 0.0 )
+			if ( ps->pp_od > 0.0 )
 				es_scale = es_para[0] * es_mat[15]/ps->pp_od;
 			else
 			{
-				while( ps->l.magic != BU_LIST_HEAD_MAGIC && ps->pp_od <= 0.0 )
+				while ( ps->l.magic != BU_LIST_HEAD_MAGIC && ps->pp_od <= 0.0 )
 					ps = BU_LIST_NEXT( wdb_pipept, &ps->l );
 
-				if( ps->l.magic == BU_LIST_HEAD_MAGIC )
+				if ( ps->l.magic == BU_LIST_HEAD_MAGIC )
 				{
 				  Tcl_AppendResult(interp, "Entire pipe solid has zero OD!\n", (char *)NULL);
 				  return;
@@ -7651,7 +7651,7 @@ pscale(void)
 		pipe_scale_od( &es_int, es_scale );
 		break;
 	case MENU_PIPE_SCALE_ID:	/* scale entire pipe ID */
-		if( inpara )
+		if ( inpara )
 		{
 			struct rt_pipe_internal *pipe =
 				(struct rt_pipe_internal *)es_int.idb_ptr;
@@ -7662,15 +7662,15 @@ pscale(void)
 			ps = BU_LIST_FIRST( wdb_pipept, &pipe->pipe_segs_head );
 			BU_CKMAG( ps, WDB_PIPESEG_MAGIC, "wdb_pipept" );
 
-			if( ps->pp_id > 0.0 )
+			if ( ps->pp_id > 0.0 )
 				es_scale = es_para[0] * es_mat[15]/ps->pp_id;
 			else
 			{
-				while( ps->l.magic != BU_LIST_HEAD_MAGIC && ps->pp_id <= 0.0 )
+				while ( ps->l.magic != BU_LIST_HEAD_MAGIC && ps->pp_id <= 0.0 )
 					ps = BU_LIST_NEXT( wdb_pipept, &ps->l );
 
 				/* Check if entire pipe has zero ID */
-				if( ps->l.magic == BU_LIST_HEAD_MAGIC )
+				if ( ps->l.magic == BU_LIST_HEAD_MAGIC )
 					es_scale = (-es_para[0] * es_mat[15]);
 				else
 					es_scale = es_para[0] * es_mat[15]/ps->pp_id;
@@ -7679,7 +7679,7 @@ pscale(void)
 		pipe_scale_id( &es_int, es_scale );
 		break;
 	case MENU_PIPE_SCALE_RADIUS:	/* scale entire pipr bend radius */
-		if( inpara )
+		if ( inpara )
 		{
 			struct rt_pipe_internal *pipe =
 				(struct rt_pipe_internal *)es_int.idb_ptr;
@@ -7690,15 +7690,15 @@ pscale(void)
 			ps = BU_LIST_FIRST( wdb_pipept, &pipe->pipe_segs_head );
 			BU_CKMAG( ps, WDB_PIPESEG_MAGIC, "wdb_pipept" );
 
-			if( ps->pp_bendradius > 0.0 )
+			if ( ps->pp_bendradius > 0.0 )
 				es_scale = es_para[0] * es_mat[15]/ps->pp_bendradius;
 			else
 			{
-				while( ps->l.magic != BU_LIST_HEAD_MAGIC && ps->pp_bendradius <= 0.0 )
+				while ( ps->l.magic != BU_LIST_HEAD_MAGIC && ps->pp_bendradius <= 0.0 )
 					ps = BU_LIST_NEXT( wdb_pipept, &ps->l );
 
 				/* Check if entire pipe has zero ID */
-				if( ps->l.magic == BU_LIST_HEAD_MAGIC )
+				if ( ps->l.magic == BU_LIST_HEAD_MAGIC )
 					es_scale = (-es_para[0] * es_mat[15]);
 				else
 					es_scale = es_para[0] * es_mat[15]/ps->pp_bendradius;
@@ -7713,7 +7713,7 @@ pscale(void)
 				(struct rt_part_internal *)es_int.idb_ptr;
 
 			RT_PART_CK_MAGIC(part);
-			if( inpara ) {
+			if ( inpara ) {
 				/* take es_mat[15] (path scaling) into account */
 				es_para[0] *= es_mat[15];
 				es_scale = es_para[0] / MAGNITUDE(part->part_H);
@@ -7729,7 +7729,7 @@ pscale(void)
 				(struct rt_part_internal *)es_int.idb_ptr;
 
 			RT_PART_CK_MAGIC(part);
-			if( inpara ) {
+			if ( inpara ) {
 				/* take es_mat[15] (path scaling) into account */
 				es_para[0] *= es_mat[15];
 				es_scale = es_para[0] / part->part_vrad;
@@ -7745,7 +7745,7 @@ pscale(void)
 				(struct rt_part_internal *)es_int.idb_ptr;
 
 			RT_PART_CK_MAGIC(part);
-			if( inpara ) {
+			if ( inpara ) {
 				/* take es_mat[15] (path scaling) into account */
 				es_para[0] *= es_mat[15];
 				es_scale = es_para[0] / part->part_hrad;
@@ -7770,7 +7770,7 @@ pscale(void)
 		break;
 	case MENU_METABALL_PT_FLDSTR:
 		{
-			if( !es_metaballpt || !inpara) {
+			if ( !es_metaballpt || !inpara) {
 			  Tcl_AppendResult(interp, "pscale: no metaball point selected for scaling\n", (char *)NULL);
 			  return;
 			}
@@ -7812,7 +7812,7 @@ init_oedit_guts(void)
 	}
 
 	/* Not an evaluated region - just a regular path ending in a solid */
-	if( rt_db_get_internal( &es_int, LAST_SOLID(illump),
+	if ( rt_db_get_internal( &es_int, LAST_SOLID(illump),
 	    dbip, NULL, &rt_uniresource ) < 0 )  {
 		Tcl_AppendResult(interp, "init_oedit(",
 				LAST_SOLID(illump)->d_namep,
@@ -7951,7 +7951,7 @@ oedit_apply( int continue_editing )
 			continue;
 		(void)replot_original_solid(sp);
 
-		if( continue_editing == DOWN ) {
+		if ( continue_editing == DOWN ) {
 			sp->s_iflag = DOWN;
 		}
 	}
@@ -8005,7 +8005,7 @@ f_eqn(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	if(argc < 4 || 4 < argc){
+	if (argc < 4 || 4 < argc){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -8015,18 +8015,18 @@ f_eqn(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  return TCL_ERROR;
 	}
 
-	if( state != ST_S_EDIT ){
+	if ( state != ST_S_EDIT ){
 	  Tcl_AppendResult(interp, "Eqn: must be in solid edit\n", (char *)NULL);
 	  return TCL_ERROR;
 	}
 
-	if( es_int.idb_type != ID_ARB8 )
+	if ( es_int.idb_type != ID_ARB8 )
 	{
 	  Tcl_AppendResult(interp, "Eqn: type must be GENARB8\n", (char *)NULL);
 	  return TCL_ERROR;
 	}
 
-	if( es_edflag != ECMD_ARB_ROTATE_FACE ){
+	if ( es_edflag != ECMD_ARB_ROTATE_FACE ){
 	  Tcl_AppendResult(interp, "Eqn: must be rotating a face\n", (char *)NULL);
 	  return TCL_ERROR;
 	}
@@ -8035,13 +8035,13 @@ f_eqn(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	RT_ARB_CK_MAGIC( arb );
 
 	/* get the A,B,C from the command line */
-	for(i=0; i<3; i++)
+	for (i=0; i<3; i++)
 		es_peqn[es_menu][i]= atof(argv[i+1]);
 	VUNITIZE( &es_peqn[es_menu][0] );
 
 	VMOVE( tempvec, arb->pt[fixv] );
 	es_peqn[es_menu][3]=VDOT( es_peqn[es_menu], tempvec );
-	if( rt_arb_calc_points( arb, es_type, es_peqn, &mged_tol ) )
+	if ( rt_arb_calc_points( arb, es_type, es_peqn, &mged_tol ) )
 		return CMD_BAD;
 
 	/* draw the new version of the solid */
@@ -8120,7 +8120,7 @@ sedit_apply(int accept_flag)
 	}
 
 	/* Scale change on export is 1.0 -- no change */
-	if( rt_db_put_internal( dp, dbip, &es_int, &rt_uniresource ) < 0 )  {
+	if ( rt_db_put_internal( dp, dbip, &es_int, &rt_uniresource ) < 0 )  {
 		Tcl_AppendResult(interp, "sedit_apply(", dp->d_namep,
 				 "):  solid export failure\n", (char *)NULL);
 		if (accept_flag) {
@@ -8178,11 +8178,11 @@ sedit_accept(void)
 void
 sedit_reject(void)
 {
-	if( not_state( ST_S_EDIT, "Solid edit reject" ) || !illump ) {
+	if ( not_state( ST_S_EDIT, "Solid edit reject" ) || !illump ) {
 	    return;
 	}
 
-	if( sedraw > 0)
+	if ( sedraw > 0)
 	  sedit();
 
 	es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
@@ -8194,7 +8194,7 @@ sedit_reject(void)
 	es_ars_crv = (-1);
 	es_ars_col = (-1);
 
-	if( lu_copy )
+	if ( lu_copy )
 	{
 		struct model *m;
 
@@ -8208,7 +8208,7 @@ sedit_reject(void)
 	  register struct solid *sp;
 
 	  FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid) {
-	    if(LAST_SOLID(sp) == LAST_SOLID(illump))
+	    if (LAST_SOLID(sp) == LAST_SOLID(illump))
 	      (void)replot_original_solid( sp );
 	  }
 	}
@@ -8228,7 +8228,7 @@ mged_param(Tcl_Interp *interp, int argc, fastf_t *argvect)
 
   CHECK_DBI_NULL;
 
-  if( es_edflag <= 0 )  {
+  if ( es_edflag <= 0 )  {
     Tcl_AppendResult(interp,
 		     "A solid editor option not selected\n",
 		     (char *)NULL);
@@ -8236,7 +8236,7 @@ mged_param(Tcl_Interp *interp, int argc, fastf_t *argvect)
   }
 
 #if 0
-  if( es_edflag == ECMD_TGC_ROT_H
+  if ( es_edflag == ECMD_TGC_ROT_H
       || es_edflag == ECMD_TGC_ROT_AB
       || es_edflag == ECMD_ETO_ROT_C ) {
     Tcl_AppendResult(interp,
@@ -8247,21 +8247,21 @@ mged_param(Tcl_Interp *interp, int argc, fastf_t *argvect)
 #endif
 
   inpara = 0;
-  for( i = 0; i < argc; i++ )  {
+  for ( i = 0; i < argc; i++ )  {
     es_para[ inpara++ ] = argvect[i];
   }
 
-  if( es_edflag == PSCALE || es_edflag == SSCALE || es_edflag == ECMD_BOT_THICK )  {
+  if ( es_edflag == PSCALE || es_edflag == SSCALE || es_edflag == ECMD_BOT_THICK )  {
     if (inpara != 1) {
 	    Tcl_AppendResult(interp, "ERROR: only one argument needed\n", (char *)NULL);
 	    inpara = 0;
 	    return TCL_ERROR;
     }
 
-    if( es_menu == MENU_PIPE_PT_OD || es_menu == MENU_PIPE_PT_ID || es_menu == MENU_PIPE_SCALE_ID
+    if ( es_menu == MENU_PIPE_PT_OD || es_menu == MENU_PIPE_PT_ID || es_menu == MENU_PIPE_SCALE_ID
 	    || es_menu == MENU_METABALL_SET_THRESHOLD || es_menu == MENU_METABALL_SET_METHOD)
       {
-	if( es_para[0] < 0.0 )
+	if ( es_para[0] < 0.0 )
 	  {
 	    Tcl_AppendResult(interp, "ERROR: SCALE FACTOR < 0\n", (char *)NULL);
 	    inpara = 0;
@@ -8270,7 +8270,7 @@ mged_param(Tcl_Interp *interp, int argc, fastf_t *argvect)
       }
     else
       {
-	if(es_para[0] <= 0.0) {
+	if (es_para[0] <= 0.0) {
 	  Tcl_AppendResult(interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
 	  inpara = 0;
 	  return TCL_ERROR;
@@ -8285,7 +8285,7 @@ mged_param(Tcl_Interp *interp, int argc, fastf_t *argvect)
   }
 
   /* check if need to convert input values to the base unit */
-  switch( es_edflag ) {
+  switch ( es_edflag ) {
 
   case STRANS:
   case ECMD_VTRANS:
@@ -8337,18 +8337,18 @@ mged_param(Tcl_Interp *interp, int argc, fastf_t *argvect)
 #if 1
   sedit();
 
-  if(SEDIT_TRAN){
+  if (SEDIT_TRAN){
     vect_t diff;
     fastf_t inv_Viewscale = 1/view_state->vs_vop->vo_scale;
 
     VSUB2(diff, es_para, e_axes_pos);
     VSCALE(edit_absolute_model_tran, diff, inv_Viewscale);
     VMOVE(last_edit_absolute_model_tran, edit_absolute_model_tran);
-  }else if(SEDIT_ROTATE){
+  }else if (SEDIT_ROTATE){
     VMOVE(edit_absolute_model_rotate, es_para);
-  }else if(SEDIT_SCALE){
+  }else if (SEDIT_SCALE){
     edit_absolute_scale = acc_sc_sol - 1.0;
-    if(edit_absolute_scale > 0)
+    if (edit_absolute_scale > 0)
       edit_absolute_scale /= 3.0;
   }
 #endif
@@ -8366,7 +8366,7 @@ f_param(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
   CHECK_DBI_NULL;
   CHECK_READ_ONLY;
 
-  if(argc < 2 || 4 < argc){
+  if (argc < 2 || 4 < argc){
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -8376,7 +8376,7 @@ f_param(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_ERROR;
   }
 
-  for( i = 1; i < argc && i <= 3 ; i++ ){
+  for ( i = 1; i < argc && i <= 3; i++ ){
     argvect[i-1] = atof( argv[i] );
   }
 
@@ -8395,7 +8395,7 @@ double	xangle, yangle, zangle;
 {
 	mat_t	tempp;
 
-	if(!SEDIT_ROTATE)
+	if (!SEDIT_ROTATE)
 	  return 0;
 
 	MAT_IDN( incr_change );
@@ -8423,7 +8423,7 @@ double	xangle, yangle, zangle;
 	mat_t	tempp;
 	vect_t	point;
 
-	if( movedir != ROTARROW )  return 0;
+	if ( movedir != ROTARROW )  return 0;
 
 	MAT_IDN( incr_change );
 	bn_mat_angles_rad(incr_change, xangle, yangle, zangle);
@@ -8465,7 +8465,7 @@ label_edited_solid(
 
 	RT_CK_DB_INTERNAL( ip );
 
-	switch( ip->idb_type )  {
+	switch ( ip->idb_type )  {
 
 #define	POINT_LABEL( _pt, _char )	{ \
 	VMOVE( pl[npl].pt, _pt ); \
@@ -8481,24 +8481,24 @@ label_edited_solid(
 			struct rt_arb_internal *arb=
 				(struct rt_arb_internal *)es_int.idb_ptr;
 			RT_ARB_CK_MAGIC( arb );
-			switch( es_type )
+			switch ( es_type )
 			{
 				case ARB8:
-					for( i=0 ; i<8 ; i++ )
+					for ( i=0; i<8; i++ )
 					{
 						MAT4X3PNT( pos_view, xform, arb->pt[i] );
 						POINT_LABEL( pos_view, i+'1' );
 					}
 					break;
 				case ARB7:
-					for( i=0 ; i<7 ; i++ )
+					for ( i=0; i<7; i++ )
 					{
 						MAT4X3PNT( pos_view, xform, arb->pt[i] );
 						POINT_LABEL( pos_view, i+'1' );
 					}
 					break;
 				case ARB6:
-					for( i=0 ; i<5 ; i++ )
+					for ( i=0; i<5; i++ )
 					{
 						MAT4X3PNT( pos_view, xform, arb->pt[i] );
 						POINT_LABEL( pos_view, i+'1' );
@@ -8507,14 +8507,14 @@ label_edited_solid(
 					POINT_LABEL( pos_view, '6' );
 					break;
 				case ARB5:
-					for( i=0 ; i<5 ; i++ )
+					for ( i=0; i<5; i++ )
 					{
 						MAT4X3PNT( pos_view, xform, arb->pt[i] );
 						POINT_LABEL( pos_view, i+'1' );
 					}
 					break;
 				case ARB4:
-					for( i=0 ; i<3 ; i++ )
+					for ( i=0; i<3; i++ )
 					{
 						MAT4X3PNT( pos_view, xform, arb->pt[i] );
 						POINT_LABEL( pos_view, i+'1' );
@@ -8835,7 +8835,7 @@ label_edited_solid(
 
 			MAT4X3PNT(pos_view, xform, ars->curves[0] )
 
-			if( es_ars_crv >= 0 && es_ars_col >= 0 )
+			if ( es_ars_crv >= 0 && es_ars_col >= 0 )
 			{
 				point_t work;
 				point_t ars_pt;
@@ -8885,7 +8885,7 @@ label_edited_solid(
 			NMG_CK_MODEL(m);
 #endif
 
-			if( es_eu )  {
+			if ( es_eu )  {
 				point_t	cent;
 				NMG_CK_EDGEUSE(es_eu);
 				VADD2SCALE( cent,
@@ -8906,7 +8906,7 @@ label_edited_solid(
 			RT_PIPE_CK_MAGIC( pipe );
 #endif
 
-			if( es_pipept ) {
+			if ( es_pipept ) {
 				BU_CKMAG( es_pipept, WDB_PIPESEG_MAGIC, "wdb_pipept" );
 
 				MAT4X3PNT(pos_view, xform, es_pipept->pp_coord);
@@ -8937,7 +8937,7 @@ label_edited_solid(
 
 			RT_BOT_CK_MAGIC( bot );
 
-			if( bot_verts[2] > -1 &&
+			if ( bot_verts[2] > -1 &&
 				bot_verts[1] > -1 &&
 				bot_verts[0] > -1 )
 			{
@@ -8961,7 +8961,7 @@ label_edited_solid(
 				VMOVE( lines[4], mid_pt );
 				VMOVE( lines[5], p3 );
 			}
-			else if( bot_verts[1] > -1 && bot_verts[0] > -1 )
+			else if ( bot_verts[1] > -1 && bot_verts[0] > -1 )
 			{
 				/* editing an edge */
 				point_t mid_pt;
@@ -8972,7 +8972,7 @@ label_edited_solid(
 				MAT4X3PNT( pos_view, xform, mid_pt );
 				POINT_LABEL_STR( pos_view, "edge" );
 			}
-			if( bot_verts[0] > -1 )
+			if ( bot_verts[0] > -1 )
 			{
 				/* editing something, always label the vertex (this is the keypoint) */
 				MAT4X3PNT( pos_view, xform, &bot->vertices[bot_verts[0]*3] );
@@ -8989,7 +8989,7 @@ label_edited_solid(
 			RT_METABALL_CK_MAGIC( metaball );
 #endif
 
-			if( es_metaballpt ) {
+			if ( es_metaballpt ) {
 				BU_CKMAG( es_metaballpt, WDB_METABALLPT_MAGIC, "wdb_metaballpt" );
 
 				MAT4X3PNT(pos_view, xform, es_metaballpt->coord);
@@ -9030,14 +9030,14 @@ rt_arb_calc_planes(
 
 	type -= 4;	/* ARB4 at location 0, ARB5 at 1, etc */
 
-	for(i=0; i<6; i++) {
-		if(rt_arb_faces[type][i*4] == -1)
+	for (i=0; i<6; i++) {
+		if (rt_arb_faces[type][i*4] == -1)
 			break;	/* faces are done */
 		p1 = rt_arb_faces[type][i*4];
 		p2 = rt_arb_faces[type][i*4+1];
 		p3 = rt_arb_faces[type][i*4+2];
 
-		if( bn_mk_plane_3pts( planes[i],
+		if ( bn_mk_plane_3pts( planes[i],
 		    arb->pt[p1], arb->pt[p2], arb->pt[p3], tol ) < 0 )  {
 		  struct bu_vls tmp_vls;
 
@@ -9063,7 +9063,7 @@ sedit_vpick( point_t v_pos )
 
 	MAT4X3PNT( m_pos, view_state->vs_objview2model, v_pos );
 
-	if( nurb_closest2d( &surfno, &u, &v,
+	if ( nurb_closest2d( &surfno, &u, &v,
 	    (struct rt_nurb_internal *)es_int.idb_ptr,
 	    m_pos, view_state->vs_model2objview ) >= 0 )  {
 		spl_surfno = surfno;
@@ -9194,7 +9194,7 @@ nurb_closest3d(int *surface, int *uval, int *vval, const struct rt_nurb_internal
 	c_dist = INFINITY;
 	c_surfno = c_u = c_v = -1;
 
-	for( i = 0; i < spl->nsrf; i++ )  {
+	for ( i = 0; i < spl->nsrf; i++ )  {
 		int	advance;
 
 		srf = spl->srfs[i];
@@ -9202,8 +9202,8 @@ nurb_closest3d(int *surface, int *uval, int *vval, const struct rt_nurb_internal
 		mesh = srf->ctl_points;
 		advance = RT_NURB_EXTRACT_COORDS(srf->pt_type);
 
-		for( v = 0; v < srf->s_size[0]; v++ )  {
-			for( u = 0; u < srf->s_size[1]; u++ )  {
+		for ( v = 0; v < srf->s_size[0]; v++ )  {
+			for ( u = 0; u < srf->s_size[1]; u++ )  {
 				/* XXX 4-tuples? */
 				d = DIST3D(ref_pt, mesh);
 				if (d < c_dist)  {
@@ -9216,7 +9216,7 @@ nurb_closest3d(int *surface, int *uval, int *vval, const struct rt_nurb_internal
 			}
 		}
 	}
-	if( c_surfno < 0 )  return  -1;		/* FAIL */
+	if ( c_surfno < 0 )  return  -1;		/* FAIL */
 	*surface = c_surfno;
 	*uval = c_u;
 	*vval = c_v;
@@ -9260,7 +9260,7 @@ nurb_closest2d(
 	/* transform reference point to 2d */
 	MAT4X3PNT(ref_2d, mat, ref_pt);
 
-	for( i = 0; i < spl->nsrf; i++ )  {
+	for ( i = 0; i < spl->nsrf; i++ )  {
 		int	advance;
 
 		srf = spl->srfs[i];
@@ -9268,8 +9268,8 @@ nurb_closest2d(
 		mesh = srf->ctl_points;
 		advance = RT_NURB_EXTRACT_COORDS(srf->pt_type);
 
-		for( v = 0; v < srf->s_size[0]; v++ )  {
-			for( u = 0; u < srf->s_size[1]; u++ )  {
+		for ( v = 0; v < srf->s_size[0]; v++ )  {
+			for ( u = 0; u < srf->s_size[1]; u++ )  {
 				point_t	cur;
 				/* XXX 4-tuples? */
 				MAT4X3PNT( cur, mat, mesh );
@@ -9284,7 +9284,7 @@ nurb_closest2d(
 			}
 		}
 	}
-	if( c_surfno < 0 )  return  -1;		/* FAIL */
+	if ( c_surfno < 0 )  return  -1;		/* FAIL */
 	*surface = c_surfno;
 	*uval = c_u;
 	*vval = c_v;
@@ -9298,7 +9298,7 @@ f_keypoint(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
   CHECK_DBI_NULL;
 
-  if(argc < 1 || 4 < argc){
+  if (argc < 1 || 4 < argc){
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -9359,12 +9359,12 @@ f_get_sedit_menus(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
   struct menu_item *mip = (struct menu_item *)NULL;
   struct bu_vls vls;
 
-  if(state != ST_S_EDIT)
+  if (state != ST_S_EDIT)
     return TCL_ERROR;
 
   bu_vls_init(&vls);
 
-  switch( es_int.idb_type ) {
+  switch ( es_int.idb_type ) {
   case ID_ARB8:
     {
       struct bu_vls vls2;
@@ -9378,7 +9378,7 @@ f_get_sedit_menus(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
       mip = which_menu[es_type-4];
       /* submenu title */
       bu_vls_printf(&vls2, "{{%s} {}}", mip->menu_string);
-      for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
+      for (++mip; mip->menu_func != (void (*)())NULL; ++mip)
 	bu_vls_printf(&vls2, " {{%s} {}}", mip->menu_string);
 
       bu_vls_printf(&vls, " {{%s} {%s}}", cntrl_menu[1].menu_string, bu_vls_addr(&vls2));
@@ -9388,7 +9388,7 @@ f_get_sedit_menus(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
       mip = which_menu[es_type+1];
       /* submenu title */
       bu_vls_printf(&vls2, "{{%s} {}}", mip->menu_string);
-      for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
+      for (++mip; mip->menu_func != (void (*)())NULL; ++mip)
 	bu_vls_printf(&vls2, " {{%s} {}}", mip->menu_string);
 
       bu_vls_printf(&vls, " {{%s} {%s}}", cntrl_menu[2].menu_string, bu_vls_addr(&vls2));
@@ -9398,7 +9398,7 @@ f_get_sedit_menus(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
       mip = which_menu[es_type+6];
       /* submenu title */
       bu_vls_printf(&vls2, "{{%s} {}}", mip->menu_string);
-      for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
+      for (++mip; mip->menu_func != (void (*)())NULL; ++mip)
 	bu_vls_printf(&vls2, " {{%s} {}}", mip->menu_string);
 
       bu_vls_printf(&vls, " {{%s} {%s}}", cntrl_menu[3].menu_string, bu_vls_addr(&vls2));
@@ -9416,7 +9416,7 @@ f_get_sedit_menus(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
       mip = ars_pick_menu;
       /* title */
       bu_vls_printf(&vls2, " {{%s} {}}", mip->menu_string);
-      for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
+      for (++mip; mip->menu_func != (void (*)())NULL; ++mip)
 	bu_vls_printf(&vls2, " {{%s} {}}", mip->menu_string);
 
       mip = ars_menu;
@@ -9427,7 +9427,7 @@ f_get_sedit_menus(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
       bu_vls_printf(&vls, " {{%s} {%s}}", (++mip)->menu_string,
 		    bu_vls_addr(&vls2));
 
-      for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
+      for (++mip; mip->menu_func != (void (*)())NULL; ++mip)
 	bu_vls_printf(&vls, " {{%s} {}}", mip->menu_string);
 
       bu_vls_free(&vls2);
@@ -9435,7 +9435,7 @@ f_get_sedit_menus(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
 
     break;
   default:
-    switch( es_int.idb_type ) {
+    switch ( es_int.idb_type ) {
     case ID_TGC:
       mip = tgc_menu;
       break;
@@ -9498,13 +9498,13 @@ f_get_sedit_menus(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
       break;
     }
 
-    if(mip == (struct menu_item *)NULL)
+    if (mip == (struct menu_item *)NULL)
       break;
 
     /* title */
     bu_vls_printf(&vls, " {{%s} {}}", mip->menu_string);
 
-    for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
+    for (++mip; mip->menu_func != (void (*)())NULL; ++mip)
       bu_vls_printf(&vls, " {{%s} {}}", mip->menu_string);
 
     break;
@@ -9524,7 +9524,7 @@ f_get_sedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
   Tcl_Obj *pto;
   Tcl_Obj *pnto;
 
-  if(argc < 1 || 2 < argc){
+  if (argc < 1 || 2 < argc){
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -9534,12 +9534,12 @@ f_get_sedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_ERROR;
   }
 
-  if(state != ST_S_EDIT || !illump){
+  if (state != ST_S_EDIT || !illump){
     Tcl_AppendResult(interp, "get_sed: must be in solid edit state", (char *)0);
     return TCL_ERROR;
   }
 
-  if(argc == 1){
+  if (argc == 1){
     /* get solid type and parameters */
     RT_CK_DB_INTERNAL(&es_int);
     RT_CK_FUNCTAB(es_int.idb_meth);
@@ -9555,7 +9555,7 @@ f_get_sedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return status;
   }
 
-  if(argv[1][0] != '-' || argv[1][1] != 'c'){
+  if (argv[1][0] != '-' || argv[1][1] != 'c'){
     Tcl_AppendResult(interp, "Usage: get_sed [-c]", (char *)0);
     return TCL_ERROR;
   }
@@ -9598,7 +9598,7 @@ f_put_sedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
   int context;
 
   /*XXX needs better argument checking */
-  if(argc < 6){
+  if (argc < 6){
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -9608,13 +9608,13 @@ f_put_sedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_ERROR;
   }
 
-  if(state != ST_S_EDIT){
+  if (state != ST_S_EDIT){
     Tcl_AppendResult(interp, "put_sed: must be in solid edit state", (char *)0);
     return TCL_ERROR;
   }
 
   /* look for -c */
-  if(argv[1][0] == '-' && argv[1][1] == 'c'){
+  if (argv[1][0] == '-' && argv[1][1] == 'c'){
     context = 1;
     --argc;
     ++argv;
@@ -9622,7 +9622,7 @@ f_put_sedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     context = 0;
 
   ftp = rt_get_functab_by_label( argv[1] );
-  if( ftp == NULL ||
+  if ( ftp == NULL ||
       ftp->ft_parsetab == (struct bu_structparse *)NULL) {
     Tcl_AppendResult( interp, "put_sed: ", argv[1],
 		      " object type is not supported for db get",
@@ -9631,7 +9631,7 @@ f_put_sedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
   }
 
   RT_CK_FUNCTAB(es_int.idb_meth);
-  if( es_int.idb_meth != ftp ) {
+  if ( es_int.idb_meth != ftp ) {
     Tcl_AppendResult( interp,
 		      "put_sed: idb_meth type mismatch",
 		      (char *)0 );
@@ -9639,17 +9639,17 @@ f_put_sedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
   save_magic = *((long *)es_int.idb_ptr);
   *((long *)es_int.idb_ptr) = ftp->ft_internal_magic;
-  if( bu_structparse_argv(interp, argc-2, argv+2, ftp->ft_parsetab,
+  if ( bu_structparse_argv(interp, argc-2, argv+2, ftp->ft_parsetab,
 			  (char *)es_int.idb_ptr )==TCL_ERROR ) {
     return TCL_ERROR;
   }
   *((long *)es_int.idb_ptr) = save_magic;
 
-  if(context)
+  if (context)
     transform_editing_solid(&es_int, es_invmat, &es_int, 1);
 
   /* must re-calculate the face plane equations for arbs */
-  if( es_int.idb_type == ID_ARB8 ){
+  if ( es_int.idb_type == ID_ARB8 ){
     struct rt_arb_internal *arb;
 
     arb = (struct rt_arb_internal *)es_int.idb_ptr;
@@ -9658,7 +9658,7 @@ f_put_sedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     (void)rt_arb_calc_planes(interp, arb, es_type, es_peqn, &mged_tol);
   }
 
-  if(!es_keyfixed)
+  if (!es_keyfixed)
     get_solid_keypoint(es_keypoint, &es_keytag, &es_int, es_mat);
 
   set_e_axes_pos(0);
@@ -9675,10 +9675,10 @@ f_sedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
   struct bu_vls vls;
 
-  if(state != ST_S_EDIT || !illump)
+  if (state != ST_S_EDIT || !illump)
     return TCL_ERROR;
 
-  if(argc != 1){
+  if (argc != 1){
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helpdevel sed_reset");
     Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -9696,7 +9696,7 @@ f_sedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
   es_eu = (struct edgeuse *)NULL;
 
   /* read in a fresh copy */
-  if( rt_db_get_internal( &es_int, LAST_SOLID(illump),
+  if ( rt_db_get_internal( &es_int, LAST_SOLID(illump),
    dbip, NULL, &rt_uniresource ) < 0 )  {
     Tcl_AppendResult(interp, "sedit_reset(",
 			LAST_SOLID(illump)->d_namep,

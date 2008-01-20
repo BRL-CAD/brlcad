@@ -98,13 +98,13 @@ insert_id(int id)
 {
 	int i;
 
-	for( i=0 ; i<ident_count ; i++ )
+	for ( i=0; i<ident_count; i++ )
 	{
-		if( idents[i] == id )
+		if ( idents[i] == id )
 			return;
 	}
 
-	if( ident_count == ident_length )
+	if ( ident_count == ident_length )
 	{
 		idents = (int *)bu_realloc( (char *)idents, (ident_length + IDENT_BLOCK)*sizeof( int ), "insert_id: idents" );
 		ident_length += IDENT_BLOCK;
@@ -118,7 +118,7 @@ insert_id(int id)
 static int
 select_region(register struct db_tree_state *tsp, struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
 {
-	if( tsp->ts_regionid == curr_id )
+	if ( tsp->ts_regionid == curr_id )
 		return( 0 );
 	else
 		return( -1 );
@@ -172,7 +172,7 @@ long *flags;
 	m = r->m_p;
 	NMG_CK_MODEL( m );
 
-	for( BU_LIST_FOR( s, shell, &r->s_hd ) )
+	for ( BU_LIST_FOR( s, shell, &r->s_hd ) )
 	{
 		struct face *f;
 		struct faceuse *fu;
@@ -181,13 +181,13 @@ long *flags;
 
 		f = nmg_find_top_face( s, &dir, flags );
 		fu = f->fu_p;
-		if( fu->orientation != OT_SAME )
+		if ( fu->orientation != OT_SAME )
 			fu = fu->fumate_p;
-		if( fu->orientation != OT_SAME )
+		if ( fu->orientation != OT_SAME )
 			bu_exit(1, "nmg_find_void_shells: Neither faceuse nor mate have OT_SAME orient\n" );
 
 		NMG_GET_FU_NORMAL( normal, fu );
-		if( normal[dir] > 0.0 )
+		if ( normal[dir] > 0.0 )
 		{
 			NMG_INDEX_ASSIGN( flags, s, 1 )	/* external shell */
 		}
@@ -212,17 +212,17 @@ const struct bn_tol *ttol;
 
 	NMG_CK_REGION( r );
 
-	if( !r->ra_p )
+	if ( !r->ra_p )
 		nmg_region_a( r, ttol );
 
-	for( BU_LIST_FOR( s, shell, &r->s_hd ) )
+	for ( BU_LIST_FOR( s, shell, &r->s_hd ) )
 	{
 
 		NMG_CK_SHELL( s );
-		if( !s->sa_p )
+		if ( !s->sa_p )
 			nmg_shell_a( s, ttol );
 
-		if( NMG_INDEX_GET( flags, s ) == 1 )
+		if ( NMG_INDEX_GET( flags, s ) == 1 )
 		{
 			struct shell *void_s;
 
@@ -230,18 +230,18 @@ const struct bn_tol *ttol;
 			NMG_INDEX_ASSIGN( flags, s, ++ext_shell_id );
 
 			/* found an external shell, look for voids */
-			for( BU_LIST_FOR( void_s, shell, &r->s_hd ) )
+			for ( BU_LIST_FOR( void_s, shell, &r->s_hd ) )
 			{
 				int wrong_void=0;
 
-				if( void_s == s )
+				if ( void_s == s )
 					continue;
 
 				NMG_CK_SHELL( s );
-				if( !s->sa_p )
+				if ( !s->sa_p )
 					nmg_shell_a( s, ttol );
 
-				if( NMG_INDEX_GET( flags, void_s ) == (-1) )
+				if ( NMG_INDEX_GET( flags, void_s ) == (-1) )
 				{
 					struct shell *test_s;
 					int breakout=0;
@@ -249,56 +249,56 @@ const struct bn_tol *ttol;
 
 					/* this is a void shell
 					 * but does it belong with external shell s */
-					if( !V3RPP1_IN_RPP2( void_s->sa_p->min_pt, void_s->sa_p->max_pt, s->sa_p->min_pt, s->sa_p->max_pt ) )
+					if ( !V3RPP1_IN_RPP2( void_s->sa_p->min_pt, void_s->sa_p->max_pt, s->sa_p->min_pt, s->sa_p->max_pt ) )
 						continue;
 
-					for( BU_LIST_FOR( fu, faceuse, &void_s->fu_hd ) )
+					for ( BU_LIST_FOR( fu, faceuse, &void_s->fu_hd ) )
 					{
-						for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+						for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
 						{
-							if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+							if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
 								continue;
-							for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+							for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 							{
 								int class;
 
 								class = nmg_class_pt_s( eu->vu_p->v_p->vg_p->coord, s, 1, ttol );
 
-								if( class == NMG_CLASS_AoutB )
+								if ( class == NMG_CLASS_AoutB )
 								{
 									breakout = 1;
 									not_in_this_shell = 1;
 									break;
 								}
-								else if( class == NMG_CLASS_AinB )
+								else if ( class == NMG_CLASS_AinB )
 								{
 									breakout = 1;
 									break;
 								}
 							}
-							if( breakout )
+							if ( breakout )
 								break;
 						}
-						if( breakout )
+						if ( breakout )
 							break;
 					}
 
-					if( not_in_this_shell )
+					if ( not_in_this_shell )
 						continue;
 
 					/* Make sure there are no other external shells between these two */
-					for( BU_LIST_FOR( test_s, shell, &r->s_hd ) )
+					for ( BU_LIST_FOR( test_s, shell, &r->s_hd ) )
 					{
-						if( NMG_INDEX_GET( flags, test_s ) > 1 )
+						if ( NMG_INDEX_GET( flags, test_s ) > 1 )
 						{
 
-							if( !V3RPP1_IN_RPP2( void_s->sa_p->min_pt, void_s->sa_p->max_pt, test_s->sa_p->min_pt, test_s->sa_p->max_pt ) )
+							if ( !V3RPP1_IN_RPP2( void_s->sa_p->min_pt, void_s->sa_p->max_pt, test_s->sa_p->min_pt, test_s->sa_p->max_pt ) )
 								continue;
 
 							/* XXXX check for wrong_void, set to one if wrong */
 						}
 					}
-					if( wrong_void )
+					if ( wrong_void )
 						continue;
 
 					/* This void shell belongs with shell s
@@ -326,18 +326,18 @@ Write_tankill_region(struct nmgregion *r, struct db_tree_state *tsp, struct db_f
 	NMG_CK_MODEL( m );
 
 	/* if bounds haven't been calculated, do it now */
-	if( r->ra_p == NULL )
+	if ( r->ra_p == NULL )
 		nmg_region_a( r, &tol );
 
 	/* Check if region extents are beyond the limitations of the TANKILL format */
-	for( i=X ; i<ELEMENTS_PER_PT ; i++ )
+	for ( i=X; i<ELEMENTS_PER_PT; i++ )
 	{
-		if( r->ra_p->min_pt[i] < (-12000.0) )
+		if ( r->ra_p->min_pt[i] < (-12000.0) )
 		{
 			bu_log( "g-tankill: Coordinates too large (%g) for TANKILL format\n", r->ra_p->min_pt[i] );
 			return;
 		}
-		if( r->ra_p->max_pt[i] > 12000.0 )
+		if ( r->ra_p->max_pt[i] > 12000.0 )
 		{
 			bu_log( "g-tankill: Coordinates too large (%g) for TANKILL format\n", r->ra_p->max_pt[i] );
 			return;
@@ -349,14 +349,14 @@ Write_tankill_region(struct nmgregion *r, struct db_tree_state *tsp, struct db_f
 	 * and while we're at it, split touching loops
 	 */
 	bu_ptbl_init( &shells, 64, " &shells ");
-	for( BU_LIST_FOR( s, shell, &r->s_hd ) )
+	for ( BU_LIST_FOR( s, shell, &r->s_hd ) )
 	{
 		NMG_CK_SHELL( s );
 		bu_ptbl_ins( &shells, (long *)s );
 		nmg_s_split_touchingloops( s, &tol );
 	}
 
-	for( i=0 ; i<BU_PTBL_END( &shells ) ; i++ )
+	for ( i=0; i<BU_PTBL_END( &shells ); i++ )
 	{
 		s = (struct shell *)BU_PTBL_GET( &shells, i );
 		(void)nmg_decompose_shell( s, &tol );
@@ -368,19 +368,19 @@ Write_tankill_region(struct nmgregion *r, struct db_tree_state *tsp, struct db_f
 	nmg_triangulate_model( r->m_p, &tol );
 
 	/* XXXXX temporary fix for OT_UNSPEC loops */
-	for( BU_LIST_FOR( r, nmgregion, &l->r_hd ) )
+	for ( BU_LIST_FOR( r, nmgregion, &l->r_hd ) )
 	{
-		for( BU_LIST_FOR( s, shell, &r->s_hd ) )
+		for ( BU_LIST_FOR( s, shell, &r->s_hd ) )
 		{
 			struct faceuse *fu;
 
-			for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
+			for ( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
 			{
 				struct loopuse *lu;
 
-				for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+				for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
 				{
-					if( lu->orientation == OT_UNSPEC )
+					if ( lu->orientation == OT_UNSPEC )
 						lu->orientation = OT_SAME;
 				}
 			}
@@ -402,16 +402,16 @@ Write_tankill_region(struct nmgregion *r, struct db_tree_state *tsp, struct db_f
 	nmg_assoc_void_shells( r, flags, &tol );
 
 	/* Now merge external shell with all its void shells */
-	for( BU_LIST_FOR( s, shell, &r->s_hd ) )
+	for ( BU_LIST_FOR( s, shell, &r->s_hd ) )
 	{
-		if( NMG_INDEX_GET( flags, s ) > 1 )
+		if ( NMG_INDEX_GET( flags, s ) > 1 )
 		{
 			struct shell *s2;
 
 			s2 = BU_LIST_FIRST( shell, &r->s_hd );
-			while( BU_LIST_NOT_HEAD( s2, &r->s_hd ) )
+			while ( BU_LIST_NOT_HEAD( s2, &r->s_hd ) )
 			{
-				if( NMG_INDEX_GET( flags, s2 ) == (-NMG_INDEX_GET( flags, s ) ) )
+				if ( NMG_INDEX_GET( flags, s2 ) == (-NMG_INDEX_GET( flags, s ) ) )
 				{
 					struct shell *s_next;
 
@@ -423,7 +423,7 @@ Write_tankill_region(struct nmgregion *r, struct db_tree_state *tsp, struct db_f
 					s2 = BU_LIST_PNEXT( shell, s2 );
 			}
 		}
-		else if( NMG_INDEX_GET( flags, s ) > (-2) )
+		else if ( NMG_INDEX_GET( flags, s ) > (-2) )
 			bu_log( "Shell x%x is incorrectly marked as %d\n", s, NMG_INDEX_GET( flags, s ) );
 	}
 #else
@@ -436,7 +436,7 @@ Write_tankill_region(struct nmgregion *r, struct db_tree_state *tsp, struct db_f
 
 	/* Output each shell as a TANKILL object */
 	bu_ptbl_init( &vertices, 64, " &vertices ");
-	for( BU_LIST_FOR( s, shell, &r->s_hd ) )
+	for ( BU_LIST_FOR( s, shell, &r->s_hd ) )
 	{
 		struct faceuse *fu;
 		struct loopuse *lu;
@@ -451,34 +451,34 @@ Write_tankill_region(struct nmgregion *r, struct db_tree_state *tsp, struct db_f
 		/* Put entire first loop on list */
 		fu = BU_LIST_FIRST( faceuse, &s->fu_hd );
 		NMG_CK_FACEUSE( fu );
-		while( fu->orientation != OT_SAME && BU_LIST_NOT_HEAD( fu, &s->fu_hd ) )
+		while ( fu->orientation != OT_SAME && BU_LIST_NOT_HEAD( fu, &s->fu_hd ) )
 			fu = BU_LIST_PNEXT( faceuse, fu );
 
-		if( BU_LIST_IS_HEAD( fu, &s->fu_hd ) )
+		if ( BU_LIST_IS_HEAD( fu, &s->fu_hd ) )
 			continue;
 
 		lu = BU_LIST_FIRST( loopuse, &fu->lu_hd );
 		NMG_CK_LOOPUSE( lu );
-		while( BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC &&
+		while ( BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC &&
 			BU_LIST_NOT_HEAD( lu, &fu->lu_hd ) )
 		{
 			lu = BU_LIST_PNEXT( loopuse, lu );
 		}
 
-		if( BU_LIST_IS_HEAD( lu, &fu->lu_hd ) )
+		if ( BU_LIST_IS_HEAD( lu, &fu->lu_hd ) )
 		{
 			bu_log( "g-tankill: faceuse has no loops with edges\n" );
 			goto outt;
 		}
 
-		if( lu->orientation != OT_SAME )
+		if ( lu->orientation != OT_SAME )
 		{
 			bu_log( "g-tankill: Found a hole in a triangulated face!\n" );
 			nmg_pr_fu_briefly( fu, (char *)NULL );
 			goto outt;
 		}
 
-		for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+		for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 		{
 			NMG_CK_EDGEUSE( eu );
 			bu_ptbl_ins( &vertices, (long *)eu->vu_p->v_p );
@@ -492,7 +492,7 @@ Write_tankill_region(struct nmgregion *r, struct db_tree_state *tsp, struct db_f
 
 		/* Now travel through all the loops via radial structure */
 		missed_loops = 1;
-		while( missed_loops )
+		while ( missed_loops )
 		{
 			NMG_CK_EDGEUSE( eu1 );
 
@@ -501,13 +501,13 @@ Write_tankill_region(struct nmgregion *r, struct db_tree_state *tsp, struct db_f
 			NMG_CK_EDGEUSE( eu );
 
 			/* make sure we stay within the intended shell */
-			while(     nmg_find_s_of_eu( eu ) != s
+			while (     nmg_find_s_of_eu( eu ) != s
 				&& eu != eu1
 				&& eu != eu1->eumate_p
 				&& *eu->up.magic_p != NMG_LOOPUSE_MAGIC )
 					eu = eu->eumate_p->radial_p;
 
-			if( nmg_find_s_of_eu( eu ) != s )
+			if ( nmg_find_s_of_eu( eu ) != s )
 			{
 				bu_log( "g-tankill: different shells are connected via radials\n" );
 				goto outt;
@@ -518,7 +518,7 @@ Write_tankill_region(struct nmgregion *r, struct db_tree_state *tsp, struct db_f
 			NMG_CK_LOOPUSE( lu );
 
 			/* if this loop hasn't been processed, put it on the list */
-			if( NMG_INDEX_TEST_AND_SET( flags, lu ) )
+			if ( NMG_INDEX_TEST_AND_SET( flags, lu ) )
 			{
 				NMG_INDEX_SET( flags, lu->lumate_p );
 				eu1 = BU_LIST_PNEXT_CIRC( edgeuse, eu );
@@ -532,25 +532,25 @@ Write_tankill_region(struct nmgregion *r, struct db_tree_state *tsp, struct db_f
 				struct loopuse *next_lu=NULL;
 
 				/* Check for missed loops */
-				for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
+				for ( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
 				{
-					if( fu->orientation != OT_SAME )
+					if ( fu->orientation != OT_SAME )
 						continue;
 
-					for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+					for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
 					{
 						fastf_t tmp_dist;
 
 						/* if this loop was done continue looking */
-						if( NMG_INDEX_TEST( flags, lu ) )
+						if ( NMG_INDEX_TEST( flags, lu ) )
 							continue;
 
 						/* skips loops of a single vertex */
-						if( BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC )
+						if ( BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC )
 							continue;
 
 						/* shouldn't be any holes! */
-						if( lu->orientation != OT_SAME )
+						if ( lu->orientation != OT_SAME )
 						{
 							bu_log( "g-tankill: Found a hole in a triangulated face!\n" );
 							nmg_pr_fu_briefly( fu, (char *)NULL );
@@ -561,14 +561,14 @@ Write_tankill_region(struct nmgregion *r, struct db_tree_state *tsp, struct db_f
 						eu = BU_LIST_FIRST( edgeuse, &lu->down_hd );
 						VSUB2( to_loop, eu->vu_p->v_p->vg_p->coord, eu1->vu_p->v_p->vg_p->coord );
 						tmp_dist = MAGSQ( to_loop );
-						if( tmp_dist < dist_to_loop )
+						if ( tmp_dist < dist_to_loop )
 						{
 							dist_to_loop = tmp_dist;
 							next_lu = lu;
 						}
 					}
 				}
-				if( next_lu == NULL )
+				if ( next_lu == NULL )
 				{
 					/* we're done */
 					missed_loops = 0;
@@ -585,7 +585,7 @@ Write_tankill_region(struct nmgregion *r, struct db_tree_state *tsp, struct db_f
 				bu_ptbl_ins( &vertices, (long *)eu->vu_p->v_p );
 
 				/* put loop on list */
-				for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+				for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 					bu_ptbl_ins( &vertices, (long *)eu->vu_p->v_p );
 
 				eu1 = BU_LIST_PLAST_PLAST( edgeuse, &lu->down_hd );
@@ -598,23 +598,23 @@ Write_tankill_region(struct nmgregion *r, struct db_tree_state *tsp, struct db_f
 		}
 
 		/* Now write the data out */
-		if( fp_id )	/* Use id count instead of actual id */
+		if ( fp_id )	/* Use id count instead of actual id */
 			fprintf( fp_out, "%d %d %d           " ,
 				BU_PTBL_END( &vertices ), id_counter, surr_code );
 		else
 			fprintf( fp_out, "%d %d %d           " ,
 				BU_PTBL_END( &vertices ), tsp->ts_regionid, surr_code );
-		for( i=0 ; i<BU_PTBL_END( &vertices ) ; i++ )
+		for ( i=0; i<BU_PTBL_END( &vertices ); i++ )
 		{
 			struct vertex *v;
 
 			v = (struct vertex *)BU_PTBL_GET( &vertices, i );
-			if( (i-1)%4 == 0 )
+			if ( (i-1)%4 == 0 )
 				fprintf( fp_out, " %.3f %.3f %.3f\n", V3ARGS( v->vg_p->coord ) );
 			else
 				fprintf( fp_out, " %.3f %.3f %.3f", V3ARGS( v->vg_p->coord ) );
 		}
-		if( (BU_PTBL_END( &vertices )-2)%4 != 0 )
+		if ( (BU_PTBL_END( &vertices )-2)%4 != 0 )
 			fprintf( fp_out, "\n" );
 
 		/* clear the vertices list for the next shell */
@@ -622,7 +622,7 @@ Write_tankill_region(struct nmgregion *r, struct db_tree_state *tsp, struct db_f
 	}
 
 	/* write info to the idents file if one is open */
-	if( fp_id != NULL )
+	if ( fp_id != NULL )
 	{
 		struct directory *fp_name;	/* name from pathp */
 
@@ -734,11 +734,11 @@ main(int argc, char **argv)
 		perror(argv[0]);
 		bu_exit(1, "Cannot open %s\n", argv[bu_optind] );
 	}
-	if( db_dirbuild( dbip ) ) {
+	if ( db_dirbuild( dbip ) ) {
 	    bu_exit(1, "db_dirbuild failed\n" );
 	}
 
-	if( out_file == NULL )
+	if ( out_file == NULL )
 		fp_out = stdout;
 	else
 	{
@@ -750,7 +750,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	if( id_file != NULL )
+	if ( id_file != NULL )
 	{
 		if ((fp_id = fopen( id_file, "w")) == NULL)
 		{
@@ -772,7 +772,7 @@ main(int argc, char **argv)
 		(genptr_t)NULL );			/* do nothing */
 
 	/* TANKILL only allows up to 2000 distinct component codes */
-	if( ident_count > 2000 )
+	if ( ident_count > 2000 )
 	{
 		bu_log( "Too many ident codes for TANKILL\n" );
 		bu_log( "\tProcessing all regions anyway\n" );
@@ -780,15 +780,15 @@ main(int argc, char **argv)
 
 	/* Process regions in ident order */
 	curr_id = 0;
-	for( id_counter=0 ; id_counter<ident_count ; id_counter++ )
+	for ( id_counter=0; id_counter<ident_count; id_counter++ )
 	{
 		int next_id = 99999999;
-		for( j=0 ; j<ident_count ; j++ )
+		for ( j=0; j<ident_count; j++ )
 		{
 			int test_id;
 
 			test_id = idents[j];
-			if( test_id > curr_id && test_id < next_id )
+			if ( test_id > curr_id && test_id < next_id )
 				next_id = test_id;
 		}
 		curr_id = next_id;
@@ -807,12 +807,12 @@ main(int argc, char **argv)
 	}
 
 	percent = 0;
-	if( regions_tried > 0 )
+	if ( regions_tried > 0 )
 		percent = ((double)regions_converted * 100) / regions_tried;
 	printf( "Tried %d regions, %d converted to NMG's successfully.  %g%%\n",
 		regions_tried, regions_converted, percent );
 	percent = 0;
-	if( regions_tried > 0 )
+	if ( regions_tried > 0 )
 		percent = ((double)regions_written * 100) / regions_tried;
 	printf( "                  %d triangulated successfully. %g%%\n",
 		regions_written, percent );
@@ -863,7 +863,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 	regions_tried++;
 
 	/* Begin bomb protection */
-	if( BU_SETJUMP )
+	if ( BU_SETJUMP )
 	{
 		char *sofar;
 
@@ -883,7 +883,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 		nmg_isect2d_final_cleanup();
 
 		/* Get rid of (m)any other intermediate structures */
-		if( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC )
+		if ( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC )
 		{
 			nmg_km(*tsp->ts_m);
 		}
@@ -900,7 +900,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 	/* librt/nmg_bool.c */
 	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
 
-	if( ret_tree )
+	if ( ret_tree )
 		r = ret_tree->tr_d.td_r;
 	else
 		r = (struct nmgregion *)NULL;
@@ -915,14 +915,14 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 
 		/* Kill cracks */
 		s = BU_LIST_FIRST( shell, &r->s_hd );
-		while( BU_LIST_NOT_HEAD( &s->l, &r->s_hd ) )
+		while ( BU_LIST_NOT_HEAD( &s->l, &r->s_hd ) )
 		{
 			struct shell *next_s;
 
 			next_s = BU_LIST_PNEXT( shell, &s->l );
-			if( nmg_kill_cracks( s ) )
+			if ( nmg_kill_cracks( s ) )
 			{
-				if( nmg_ks( s ) )
+				if ( nmg_ks( s ) )
 				{
 					empty_region = 1;
 					break;
@@ -932,14 +932,14 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 		}
 
 		/* kill zero length edgeuses */
-		if( !empty_region )
+		if ( !empty_region )
 		{
 			 empty_model = nmg_kill_zero_length_edgeuses( *tsp->ts_m );
 		}
 
-		if( !empty_region && !empty_model )
+		if ( !empty_region && !empty_model )
 		{
-			if( BU_SETJUMP )
+			if ( BU_SETJUMP )
 			{
 				char *sofar;
 
@@ -958,7 +958,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 				nmg_isect2d_final_cleanup();
 
 				/* Get rid of (m)any other intermediate structures */
-				if( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC )
+				if ( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC )
 				{
 					nmg_km(*tsp->ts_m);
 				}
@@ -980,7 +980,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 			BU_UNSETJUMP;
 		}
 
-		if( !empty_model )
+		if ( !empty_model )
 			nmg_kr( r );
 	}
 

@@ -45,32 +45,32 @@ Convsurfs()
 	bu_log( "\n\nConverting NURB entities:\n" );
 
 	/* First count the number of surfaces */
-	for( i=0 ; i<totentities ; i++ )
+	for ( i=0; i<totentities; i++ )
 	{
-		if( dir[i]->type == 128 )
+		if ( dir[i]->type == 128 )
 			totsurfs ++;
 	}
 
 	surfs = (struct face_g_snurb **)bu_calloc( totsurfs+1, sizeof( struct face_g_snurb *), "surfs" );
 
-	for( i=0 ; i<totentities ; i++ )
+	for ( i=0; i<totentities; i++ )
 	{
-		if( dir[i]->type == 128 ) {
-			if( spline( i, &srf ) )
+		if ( dir[i]->type == 128 ) {
+			if ( spline( i, &srf ) )
 				surfs[convsurf++] = srf;
 		}
 	}
 
-	if( totsurfs )
+	if ( totsurfs )
 	{
-		if( curr_file->obj_name )
+		if ( curr_file->obj_name )
 			mk_bspline( fdout, curr_file->obj_name, surfs );
 		else
 			mk_bspline( fdout, "nurb.s", surfs );
 	}
 
 	bu_log( "Converted %d NURBS successfully out of %d total NURBS\n", convsurf, totsurfs );
-	if( convsurf )
+	if ( convsurf )
 		bu_log( "\tCaution: All NURBS are assumed to be part of the same solid\n" );
 }
 

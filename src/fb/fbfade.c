@@ -162,7 +162,7 @@ main(int argc, char **argv)
 	register bool_t	errors = 0;
 
 	while ( (c = bu_getopt( argc, argv, OPTSTR )) != EOF )
-	    switch( c )
+	    switch ( c )
 	    {
 		default:	/* '?': invalid option */
 		    errors = 1;

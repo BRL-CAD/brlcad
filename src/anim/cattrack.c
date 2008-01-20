@@ -165,7 +165,7 @@ int getcurve(fastf_t *pa, fastf_t *pb, fastf_t *pc, fastf_t *pth0, fastf_t *pth1
 	solved = 0;
 	/* refine theta_one */
 	stmp = sinh( (*pa)*(q_zero[X]-(*pc)) );
-	new_theta_zero = atan2(1.0,-stmp);
+	new_theta_zero = atan2(1.0, -stmp);
 	avg_theta_zero = 0.5 * (theta_zero + new_theta_zero);
 	if (fabs(theta_zero-avg_theta_zero)<T_TOL){
 	    solved++;
@@ -174,7 +174,7 @@ int getcurve(fastf_t *pa, fastf_t *pb, fastf_t *pc, fastf_t *pth0, fastf_t *pth1
 
 	/* refine theta_two */
 	stmp = sinh( (*pa)*(q_one[X]-(*pc)) );
-	new_theta_one = atan2(1.0,-stmp);
+	new_theta_one = atan2(1.0, -stmp);
 	avg_theta_one = 0.5 * (theta_one + new_theta_one);
 	if (fabs(theta_one-avg_theta_one)<T_TOL){
 	    solved++;
@@ -212,7 +212,7 @@ int ingetcurve(fastf_t *pa, fastf_t *pb, fastf_t *pc, fastf_t delta_s, fastf_t *
     i=0;
     while (i++<MAX_OUT_ITS){
 	for (j=0;j<MAX_ITS;j++){
-	    adjust = eff(*pa,*pc, p_zero[X], p_one[X], delta_s);
+	    adjust = eff(*pa, *pc, p_zero[X], p_one[X], delta_s);
 	    if ((*pa-adjust)<=0.0){
 		*pa *= 0.5;
 	    }
@@ -225,7 +225,7 @@ int ingetcurve(fastf_t *pa, fastf_t *pb, fastf_t *pc, fastf_t delta_s, fastf_t *
 	}
 
 	for (k=0;k<MAX_ITS;k++){
-	    adjust = gee(*pa,*pc, p_zero[X], p_one[X],(p_one[Z]-p_zero[Z]));
+	    adjust = gee(*pa, *pc, p_zero[X], p_one[X], (p_one[Z]-p_zero[Z]));
 	    *pc -= adjust;
 	    if (adjust<G_TOL){
 		break;

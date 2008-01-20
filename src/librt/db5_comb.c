@@ -96,10 +96,10 @@ db_tree_counter( const union tree *tp, struct db_tree_counter_state *tcsp )
 	RT_CK_TREE(tp);
 	DB_CK_TREE_COUNTER_STATE(tcsp);
 
-	switch( tp->tr_op )  {
+	switch ( tp->tr_op )  {
 	case OP_DB_LEAF:
 		tcsp->n_leaf++;
-		if( tp->tr_l.tl_mat && !bn_mat_is_identity(tp->tr_l.tl_mat) )  tcsp->n_mat++;
+		if ( tp->tr_l.tl_mat && !bn_mat_is_identity(tp->tr_l.tl_mat) )  tcsp->n_mat++;
 		/* Over-estimate storage requirement for matrix # */
 		tcsp->leafbytes += strlen(tp->tr_l.tl_name) + 1 + 8;
 		return 1;
@@ -115,7 +115,7 @@ db_tree_counter( const union tree *tp, struct db_tree_counter_state *tcsp )
 		tcsp->n_oper++;
 		ldepth = db_tree_counter( tp->tr_b.tb_left, tcsp );
 		rdepth = db_tree_counter( tp->tr_b.tb_right, tcsp );
-		if( ldepth > rdepth )  return ldepth;
+		if ( ldepth > rdepth )  return ldepth;
 		return rdepth;
 
 	case OP_INTERSECT:
@@ -126,7 +126,7 @@ db_tree_counter( const union tree *tp, struct db_tree_counter_state *tcsp )
 		tcsp->non_union_seen = 1;
 		ldepth = db_tree_counter( tp->tr_b.tb_left, tcsp );
 		rdepth = db_tree_counter( tp->tr_b.tb_right, tcsp );
-		if( ldepth > rdepth )  return ldepth;
+		if ( ldepth > rdepth )  return ldepth;
 		return rdepth;
 
 	default:
@@ -174,7 +174,7 @@ rt_comb_v5_serialize(
 	RT_CK_TREE(tp);
 	RT_CK_COMB_V5_SERIALIZE_STATE(ssp);
 
-	switch( tp->tr_op )  {
+	switch ( tp->tr_op )  {
 	case OP_DB_LEAF:
 		/*
 		 *  Encoding of the leaf:
@@ -185,7 +185,7 @@ rt_comb_v5_serialize(
 		memcpy(ssp->leafp, tp->tr_l.tl_name, n);
 		ssp->leafp += n;
 
-		if( tp->tr_l.tl_mat && !bn_mat_is_identity(tp->tr_l.tl_mat) )
+		if ( tp->tr_l.tl_mat && !bn_mat_is_identity(tp->tr_l.tl_mat) )
 			mi = ssp->mat_num++;
 		else
 			mi = -1;
@@ -193,7 +193,7 @@ rt_comb_v5_serialize(
 		ssp->leafp = db5_encode_length( ssp->leafp, mi, ssp->wid );
 
 		/* Encoding of the matrix */
-		if( mi > -1 )  {
+		if ( mi > -1 )  {
 			htond( ssp->matp,
 				(const unsigned char *)tp->tr_l.tl_mat,
 				ELEMENTS_PER_MAT );
@@ -201,14 +201,14 @@ rt_comb_v5_serialize(
 		}
 
 		/* Encoding of the "leaf" operator */
-		if( ssp->exprp )
+		if ( ssp->exprp )
 			*ssp->exprp++ = DB5COMB_TOKEN_LEAF;
 		return;
 
 	case OP_NOT:
 		/* Unary ops */
 		rt_comb_v5_serialize( tp->tr_b.tb_left, ssp );
-		if( ssp->exprp )
+		if ( ssp->exprp )
 			*ssp->exprp++ = DB5COMB_TOKEN_NOT;
 		return;
 
@@ -216,28 +216,28 @@ rt_comb_v5_serialize(
 		/* This node is known to be a binary op */
 		rt_comb_v5_serialize( tp->tr_b.tb_left, ssp );
 		rt_comb_v5_serialize( tp->tr_b.tb_right, ssp );
-		if( ssp->exprp )
+		if ( ssp->exprp )
 			*ssp->exprp++ = DB5COMB_TOKEN_UNION;
 		return;
 	case OP_INTERSECT:
 		/* This node is known to be a binary op */
 		rt_comb_v5_serialize( tp->tr_b.tb_left, ssp );
 		rt_comb_v5_serialize( tp->tr_b.tb_right, ssp );
-		if( ssp->exprp )
+		if ( ssp->exprp )
 			*ssp->exprp++ = DB5COMB_TOKEN_INTERSECT;
 		return;
 	case OP_SUBTRACT:
 		/* This node is known to be a binary op */
 		rt_comb_v5_serialize( tp->tr_b.tb_left, ssp );
 		rt_comb_v5_serialize( tp->tr_b.tb_right, ssp );
-		if( ssp->exprp )
+		if ( ssp->exprp )
 			*ssp->exprp++ = DB5COMB_TOKEN_SUBTRACT;
 		return;
 	case OP_XOR:
 		/* This node is known to be a binary op */
 		rt_comb_v5_serialize( tp->tr_b.tb_left, ssp );
 		rt_comb_v5_serialize( tp->tr_b.tb_right, ssp );
-		if( ssp->exprp )
+		if ( ssp->exprp )
 			*ssp->exprp++ = DB5COMB_TOKEN_XOR;
 		return;
 
@@ -273,7 +273,7 @@ rt_comb_export5(
 	RT_CK_DB_INTERNAL( ip );
 	RT_CK_RESOURCE(resp);
 
-	if( ip->idb_type != ID_COMBINATION ) bu_bomb("rt_comb_export5() type not ID_COMBINATION");
+	if ( ip->idb_type != ID_COMBINATION ) bu_bomb("rt_comb_export5() type not ID_COMBINATION");
 	comb = (struct rt_comb_internal *)ip->idb_ptr;
 	RT_CK_COMB(comb);
 
@@ -282,12 +282,12 @@ rt_comb_export5(
 	 */
 	memset((char *)&tcs, 0, sizeof(tcs));
 	tcs.magic = DB_TREE_COUNTER_STATE_MAGIC;
-	if( comb->tree )
+	if ( comb->tree )
 		max_stack_depth = db_tree_counter( comb->tree, &tcs );
 	else
 		max_stack_depth = 0;	/* some combinations have no tree */
 
-	if( tcs.non_union_seen )  {
+	if ( tcs.non_union_seen )  {
 		/* RPN expression needs one byte for each leaf or operator node */
 		rpn_len = tcs.n_leaf + tcs.n_oper;
 	} else {
@@ -348,27 +348,27 @@ rt_comb_export5(
 	ss.matp = cp;
 	ss.leafp = cp + tcs.n_mat * (ELEMENTS_PER_MAT * SIZEOF_NETWORK_DOUBLE);
 	leafp_end = ss.leafp + tcs.leafbytes;
-	if( rpn_len )
+	if ( rpn_len )
 		ss.exprp = leafp_end;
 	else
 		ss.exprp = NULL;
 
-	if( comb->tree )
+	if ( comb->tree )
 		rt_comb_v5_serialize( comb->tree, &ss );
 
 	BU_ASSERT_LONG( ss.mat_num, ==, tcs.n_mat );
 	BU_ASSERT_PTR( ss.matp, ==, cp + tcs.n_mat * (ELEMENTS_PER_MAT * SIZEOF_NETWORK_DOUBLE) );
 	BU_ASSERT_PTR( ss.leafp, ==, leafp_end );
-	if( rpn_len )
+	if ( rpn_len )
 		BU_ASSERT_PTR( ss.exprp, <=, ((unsigned char *)ep->ext_buf) + ep->ext_nbytes );
 
 	/* Encode all the other stuff as attributes. */
 	bu_vls_init( &value );
 	/* WARNING:  We remove const from the ip pointer!!! */
 	avsp = (struct bu_attribute_value_set *)&ip->idb_avs;
-	if( avsp->magic != BU_AVS_MAGIC )
+	if ( avsp->magic != BU_AVS_MAGIC )
 		bu_avs_init( avsp, 32, "rt_comb v5 attributes" );
-	if( comb->region_flag )  {
+	if ( comb->region_flag )  {
 		/* Presence of this attribute means this comb is a region. */
 		/* Current code values are 0, 1, and 2; all are regions.
 		 * See raytrace.h for meanings of different values
@@ -390,12 +390,12 @@ rt_comb_export5(
 	} else
 		bu_avs_remove( avsp, "region" );
 
-	if( comb->inherit )
+	if ( comb->inherit )
 		bu_avs_add( avsp, "inherit", "1" );
 	else
 		bu_avs_remove( avsp, "inherit" );
 
-	if( comb->rgb_valid )  {
+	if ( comb->rgb_valid )  {
 		bu_vls_trunc( &value, 0 );
 		bu_vls_printf( &value, "%d/%d/%d", V3ARGS(comb->rgb) );
 		bu_avs_add_vls( avsp, "rgb", &value );
@@ -403,19 +403,19 @@ rt_comb_export5(
 		bu_avs_remove( avsp, "rgb" );
 
 	/* optical shader string goes out in Tcl format */
-	if( bu_vls_strlen( &comb->shader ) > 0 )
+	if ( bu_vls_strlen( &comb->shader ) > 0 )
 		bu_avs_add_vls( avsp, "oshader", &comb->shader );
 	else
 		bu_avs_remove( avsp, "oshader" );
 
 #if 0
-	if( bu_vls_strlen( &comb->material ) > 0 )
+	if ( bu_vls_strlen( &comb->material ) > 0 )
 		bu_avs_add_vls( avsp, "material", &comb->material );
 	else
 		bu_avs_remove( avsp, "material" );
 #endif
 #if 0
-	if( comb->temperature > 0 )  {
+	if ( comb->temperature > 0 )  {
 		bu_vls_trunc( &value, 0 );
 		bu_vls_printf( &value, "%f", comb->temperature );
 		bu_avs_add_vls( avsp, "temp", &value );
@@ -423,28 +423,28 @@ rt_comb_export5(
 		bu_avs_remove( avsp, "temp" );
 #endif
 	/* GIFT compatability */
-	if( comb->region_id != 0 )  {
+	if ( comb->region_id != 0 )  {
 	    bu_vls_trunc( &value, 0 );
 	    bu_vls_printf( &value, "%d", comb->region_id );
 	    bu_avs_add_vls( avsp, "region_id", &value );
 	} else
 	    bu_avs_remove( avsp, "region_id" );
 
-	if( comb->aircode != 0 )  {
+	if ( comb->aircode != 0 )  {
 	    bu_vls_trunc( &value, 0 );
 	    bu_vls_printf( &value, "%d", comb->aircode );
 	    bu_avs_add_vls( avsp, "aircode", &value );
 	} else
 	    bu_avs_remove( avsp, "aircode" );
 
-	if( comb->GIFTmater != 0 )  {
+	if ( comb->GIFTmater != 0 )  {
 	    bu_vls_trunc( &value, 0 );
 	    bu_vls_printf( &value, "%d", comb->GIFTmater );
 	    bu_avs_add_vls( avsp, "material_id", &value );
 	} else
 	    bu_avs_remove( avsp, "material_id" );
 
-	if( comb->los != 0 )  {
+	if ( comb->los != 0 )  {
 	    bu_vls_trunc( &value, 0 );
 	    bu_vls_printf( &value, "%d", comb->los );
 	    bu_avs_add_vls( avsp, "los", &value );
@@ -521,7 +521,7 @@ rt_comb_import5(
 	exprp = leafp + leafbytes;
 	leafp_end = exprp;
 
-	if( rpn_len == 0 )  {
+	if ( rpn_len == 0 )  {
 		/* This tree is all union operators, import it as a balanced tree */
 
 		int	i;
@@ -532,7 +532,7 @@ rt_comb_import5(
 
 		/* insert all the leaf nodes into a bu_ptbl */
 		bu_ptbl_init( tbl1, nleaf, "rt_comb_import5: tbl" );
-		for( i = nleaf-1; i >= 0; i-- )  {
+		for ( i = nleaf-1; i >= 0; i-- )  {
 			union tree	*tp;
 			long		mi;
 
@@ -546,9 +546,9 @@ rt_comb_import5(
 			mi = 4095;			/* sanity */
 			leafp += db5_decode_signed( &mi, leafp, wid );
 
-			if( mi < 0 )  {
+			if ( mi < 0 )  {
 				/* Signal identity matrix */
-				if( !mat || bn_mat_is_identity( mat ) ) {
+				if ( !mat || bn_mat_is_identity( mat ) ) {
 					tp->tr_l.tl_mat = (matp_t)NULL;
 				} else
 					tp->tr_l.tl_mat = bn_mat_dup( mat );
@@ -560,13 +560,13 @@ rt_comb_import5(
 				ntohd( (unsigned char *)diskmat,
 					&matp[mi*ELEMENTS_PER_MAT*SIZEOF_NETWORK_DOUBLE],
 					ELEMENTS_PER_MAT);
-				if( !mat || bn_mat_is_identity( mat ) ) {
+				if ( !mat || bn_mat_is_identity( mat ) ) {
 					tp->tr_l.tl_mat = bn_mat_dup( diskmat );
 				} else {
 					tp->tr_l.tl_mat = (matp_t)bu_malloc(
 						sizeof(mat_t), "v5comb mat");
 					bn_mat_mul( tp->tr_l.tl_mat, mat, diskmat );
-					if( bn_mat_is_identity( tp->tr_l.tl_mat ) ) {
+					if ( bn_mat_is_identity( tp->tr_l.tl_mat ) ) {
 						bu_free( (char *)tp->tr_l.tl_mat, "tl_mat");
 						tp->tr_l.tl_mat = (matp_t)NULL;
 					}
@@ -585,22 +585,22 @@ rt_comb_import5(
 		 * stop when tbl2 has less than 2 members
 		 */
 		bu_ptbl_init( tbl2, (BU_PTBL_LEN( tbl1) + 1)/2, "rt_comb_import5: tbl1" );
-		while( 1 ) {
+		while ( 1 ) {
 			struct bu_ptbl *tmp;
 
-			for( i=0 ; i<BU_PTBL_LEN( tbl1 ) ; i += 2 ) {
+			for ( i=0; i<BU_PTBL_LEN( tbl1 ); i += 2 ) {
 				union tree *tp1, *tp2, *unionp;
 				int j;
 
 				j = i + 1;
 				tp1 = (union tree *)BU_PTBL_GET( tbl1, i );
-				if( j < BU_PTBL_LEN( tbl1 ) ) {
+				if ( j < BU_PTBL_LEN( tbl1 ) ) {
 					tp2 = (union tree *)BU_PTBL_GET( tbl1, j );
 				} else {
 					tp2 = (union tree *)NULL;
 				}
 
-				if( tp2 ) {
+				if ( tp2 ) {
 					RT_GET_TREE( unionp, resp );
 					unionp->tr_b.magic = RT_TREE_MAGIC;
 					unionp->tr_b.tb_op = OP_UNION;
@@ -613,14 +613,14 @@ rt_comb_import5(
 
 			}
 
-			if( BU_PTBL_LEN( tbl2 ) == 0 ) {
+			if ( BU_PTBL_LEN( tbl2 ) == 0 ) {
 				comb->tree = (union tree *)NULL;
 				bu_ptbl_free( tbl1 );
 				bu_ptbl_free( tbl2 );
 				bu_free( (char *)tbl1, "rt_comb_import5: tbl1" );
 				bu_free( (char *)tbl2, "rt_comb_import5: tbl2" );
 				break;
-			} else if( BU_PTBL_LEN( tbl2 ) == 1 ) {
+			} else if ( BU_PTBL_LEN( tbl2 ) == 1 ) {
 				comb->tree = (union tree *)BU_PTBL_GET( tbl2, 0 );
 				bu_ptbl_free( tbl1 );
 				bu_ptbl_free( tbl2 );
@@ -642,21 +642,21 @@ rt_comb_import5(
 	 *  Bring the RPN expression back from the disk,
 	 *  populating leaves and matricies in the order they are encountered.
 	 */
-	if( max_stack_depth > MAX_V5_STACK )  {
+	if ( max_stack_depth > MAX_V5_STACK )  {
 		bu_log("Combination needs stack depth %d, only have %d, aborted\n",
 			max_stack_depth, MAX_V5_STACK);
 		return -1;
 	}
 	sp = &stack[0];
 
-	for( i=0; i < rpn_len; i++, exprp++ )  {
+	for ( i=0; i < rpn_len; i++, exprp++ )  {
 		union tree	*tp;
 		long		mi;
 
 		RT_GET_TREE( tp, resp );
 		tp->tr_b.magic = RT_TREE_MAGIC;
 
-		switch( *exprp )  {
+		switch ( *exprp )  {
 		case DB5COMB_TOKEN_LEAF:
 			tp->tr_l.tl_op = OP_DB_LEAF;
 			tp->tr_l.tl_name = bu_strdup( (const char *)leafp );
@@ -666,9 +666,9 @@ rt_comb_import5(
 			mi = 4095;			/* sanity */
 			leafp += db5_decode_signed( &mi, leafp, wid );
 
-			if( mi < 0 )  {
+			if ( mi < 0 )  {
 				/* Signal identity matrix */
-				if( !mat || bn_mat_is_identity( mat ) ) {
+				if ( !mat || bn_mat_is_identity( mat ) ) {
 					tp->tr_l.tl_mat = (matp_t)NULL;
 				} else
 					tp->tr_l.tl_mat = bn_mat_dup( mat );
@@ -680,13 +680,13 @@ rt_comb_import5(
 				ntohd( (unsigned char *)diskmat,
 					&matp[mi*ELEMENTS_PER_MAT*SIZEOF_NETWORK_DOUBLE],
 					ELEMENTS_PER_MAT);
-				if( !mat || bn_mat_is_identity( mat ) ) {
+				if ( !mat || bn_mat_is_identity( mat ) ) {
 					tp->tr_l.tl_mat = bn_mat_dup( diskmat );
 				} else {
 					tp->tr_l.tl_mat = (matp_t)bu_malloc(
 						sizeof(mat_t), "v5comb mat");
 					bn_mat_mul( tp->tr_l.tl_mat, mat, diskmat );
-					if( bn_mat_is_identity( tp->tr_l.tl_mat ) ) {
+					if ( bn_mat_is_identity( tp->tr_l.tl_mat ) ) {
 						bu_free( (char *)tp->tr_l.tl_mat, "tl_mat");
 						tp->tr_l.tl_mat = (matp_t)NULL;
 					}
@@ -704,7 +704,7 @@ rt_comb_import5(
 			RT_CK_TREE(tp->tr_b.tb_right);
 			tp->tr_b.tb_left = *--sp;
 			RT_CK_TREE(tp->tr_b.tb_left);
-			switch( *exprp )  {
+			switch ( *exprp )  {
 			case DB5COMB_TOKEN_UNION:
 				tp->tr_b.tb_op = OP_UNION;
 				break;
@@ -745,23 +745,23 @@ rt_comb_import5(
 	RT_CK_TREE(comb->tree);
 
 finish:
-	if( ip->idb_avs.magic != BU_AVS_MAGIC )  return 0;	/* OK */
+	if ( ip->idb_avs.magic != BU_AVS_MAGIC )  return 0;	/* OK */
 
 	/* Unpack the attributes */
 	comb->rgb_valid = 0;
-	if( (ap = bu_avs_get( &ip->idb_avs, "rgb" )) != NULL )  {
+	if ( (ap = bu_avs_get( &ip->idb_avs, "rgb" )) != NULL )  {
 		int	ibuf[3];
-		if( sscanf( ap, "%d/%d/%d", ibuf, ibuf+1, ibuf+2 ) == 3 )  {
+		if ( sscanf( ap, "%d/%d/%d", ibuf, ibuf+1, ibuf+2 ) == 3 )  {
 			VMOVE( comb->rgb, ibuf );
 			comb->rgb_valid = 1;
 		} else {
 			bu_log("unable to parse 'rgb' attribute '%s'\n", ap);
 		}
 	}
-	if( (ap = bu_avs_get( &ip->idb_avs, "inherit" )) != NULL ) {
+	if ( (ap = bu_avs_get( &ip->idb_avs, "inherit" )) != NULL ) {
 		comb->inherit = atoi( ap );
 	}
-	if( (ap = bu_avs_get( &ip->idb_avs, "region" )) != NULL )  {
+	if ( (ap = bu_avs_get( &ip->idb_avs, "region" )) != NULL )  {
 	    /* Presence of this attribute implies it is a region */
 	    comb->region_flag = 1;
 
@@ -785,23 +785,23 @@ finish:
 	    }
 
 	    /* get the other GIFT "region" attributes */
-	    if( (ap = bu_avs_get( &ip->idb_avs, "region_id" )) != NULL )  {
+	    if ( (ap = bu_avs_get( &ip->idb_avs, "region_id" )) != NULL )  {
 		comb->region_id = atoi( ap );
 	    }
-	    if( (ap = bu_avs_get( &ip->idb_avs, "aircode" )) != NULL )  {
+	    if ( (ap = bu_avs_get( &ip->idb_avs, "aircode" )) != NULL )  {
 		comb->aircode = atoi( ap );
 	    }
-	    if( (ap = bu_avs_get( &ip->idb_avs, "material_id" )) != NULL )  {
+	    if ( (ap = bu_avs_get( &ip->idb_avs, "material_id" )) != NULL )  {
 		comb->GIFTmater = atoi( ap );
 #if 0
 		bu_vls_printf( &comb->material, "gift%d", comb->GIFTmater );
 #endif
 	    }
-	    if( (ap = bu_avs_get( &ip->idb_avs, "los" )) != NULL )  {
+	    if ( (ap = bu_avs_get( &ip->idb_avs, "los" )) != NULL )  {
 		comb->los = atoi( ap );
 	    }
 	}
-	if( (ap = bu_avs_get( &ip->idb_avs, "oshader" )) != NULL )  {
+	if ( (ap = bu_avs_get( &ip->idb_avs, "oshader" )) != NULL )  {
 		bu_vls_strcat( &comb->shader, ap );
 	}
 

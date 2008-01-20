@@ -176,7 +176,7 @@ fillItemTree( jobject parent_node,
 /* MACROS for getting and releasing resources */
 #define RTS_GET_XRAY( _p ) \
 	pthread_mutex_lock( &resource_mutex ); \
-	if( BU_PTBL_LEN( &rts_resource.xrays ) ) { \
+	if ( BU_PTBL_LEN( &rts_resource.xrays ) ) { \
 		_p = (struct xray *)BU_PTBL_GET( &rts_resource.xrays, BU_PTBL_LEN( &rts_resource.xrays )-1 );\
 		bu_ptbl_trunc( &rts_resource.xrays, BU_PTBL_LEN( &rts_resource.xrays )-1 );\
 		pthread_mutex_unlock( &resource_mutex ); \
@@ -197,7 +197,7 @@ fillItemTree( jobject parent_node,
 
 #define RTS_GET_RTSERVER_JOB( _p ) \
 	pthread_mutex_lock( &resource_mutex ); \
-	if( BU_LIST_NON_EMPTY( &rts_resource.rtserver_jobs ) ) { \
+	if ( BU_LIST_NON_EMPTY( &rts_resource.rtserver_jobs ) ) { \
 	       _p = BU_LIST_FIRST( rtserver_job, &rts_resource.rtserver_jobs ); \
 	       BU_LIST_DEQUEUE( &(_p)->l ); \
 	       pthread_mutex_unlock( &resource_mutex ); \
@@ -213,10 +213,10 @@ fillItemTree( jobject parent_node,
 #define RTS_FREE_RTSERVER_JOB( _p ) \
 	{ \
 		int _i; \
-		if( (_p)->l.forw != NULL && BU_LIST_NON_EMPTY( &((_p)->l) ) ) { \
+		if ( (_p)->l.forw != NULL && BU_LIST_NON_EMPTY( &((_p)->l) ) ) { \
 		       BU_LIST_DEQUEUE( &((_p)->l) ); \
 		} \
-		for( _i=0 ; _i<BU_PTBL_LEN( &(_p)->rtjob_rays) ; _i++ ) { \
+		for ( _i=0; _i<BU_PTBL_LEN( &(_p)->rtjob_rays); _i++ ) { \
 			struct xray *_xray; \
 			_xray = (struct xray *)BU_PTBL_GET( &(_p)->rtjob_rays, _i ); \
 			RTS_FREE_XRAY( _xray ); \
@@ -230,7 +230,7 @@ fillItemTree( jobject parent_node,
 
 #define RTS_GET_RAY_HIT( _p ) \
 	pthread_mutex_lock( &resource_mutex ); \
-	if( BU_LIST_NON_EMPTY( &rts_resource.ray_hits ) ) { \
+	if ( BU_LIST_NON_EMPTY( &rts_resource.ray_hits ) ) { \
 	       _p = BU_LIST_FIRST( ray_hit, &rts_resource.ray_hits ); \
 	       BU_LIST_DEQUEUE( &(_p)->l ); \
 	       pthread_mutex_unlock( &resource_mutex ); \
@@ -244,7 +244,7 @@ fillItemTree( jobject parent_node,
 	}
 
 #define RTS_FREE_RAY_HIT( _p ) \
-	if(  (_p)->l.forw != NULL && BU_LIST_NON_EMPTY( &(_p)->l ) ) {\
+	if (  (_p)->l.forw != NULL && BU_LIST_NON_EMPTY( &(_p)->l ) ) {\
 		BU_LIST_DEQUEUE( &(_p)->l ); \
 	} \
 	pthread_mutex_lock( &resource_mutex ); \
@@ -255,10 +255,10 @@ fillItemTree( jobject parent_node,
 #define RTS_FREE_RAY_RESULT( _p ) \
 	{ \
 		struct ray_hit *_rhp; \
-		while( BU_LIST_WHILE( _rhp, ray_hit, &(_p)->hitHead.l ) ) { \
+		while ( BU_LIST_WHILE( _rhp, ray_hit, &(_p)->hitHead.l ) ) { \
 			RTS_FREE_RAY_HIT( _rhp ); \
 		} \
-		if( (_p)->l.forw != NULL && BU_LIST_NON_EMPTY( &((_p)->l) ) ) {\
+		if ( (_p)->l.forw != NULL && BU_LIST_NON_EMPTY( &((_p)->l) ) ) {\
 			BU_LIST_DEQUEUE( &((_p)->l) ); \
 		} \
 		pthread_mutex_lock( &resource_mutex ); \
@@ -269,7 +269,7 @@ fillItemTree( jobject parent_node,
 
 #define RTS_GET_RAY_RESULT( _p ) \
 	pthread_mutex_lock( &resource_mutex ); \
-	if( BU_LIST_NON_EMPTY( &rts_resource.ray_results ) ) { \
+	if ( BU_LIST_NON_EMPTY( &rts_resource.ray_results ) ) { \
 	       _p = BU_LIST_FIRST( ray_result, &rts_resource.ray_results ); \
 	       BU_LIST_DEQUEUE( &(_p)->l ); \
 	       pthread_mutex_unlock( &resource_mutex ); \
@@ -285,7 +285,7 @@ fillItemTree( jobject parent_node,
 
 #define RTS_GET_RTSERVER_RESULT( _p ) \
 	pthread_mutex_lock( &resource_mutex ); \
-	if( BU_LIST_NON_EMPTY( &rts_resource.rtserver_results ) ) { \
+	if ( BU_LIST_NON_EMPTY( &rts_resource.rtserver_results ) ) { \
 	       _p = BU_LIST_FIRST( rtserver_result, &rts_resource.rtserver_results ); \
 	       BU_LIST_DEQUEUE( &(_p)->l ); \
 	       pthread_mutex_unlock( &resource_mutex ); \
@@ -301,14 +301,14 @@ fillItemTree( jobject parent_node,
 #define RTS_FREE_RTSERVER_RESULT( _p ) \
 	{ \
 		struct ray_result *_rrp; \
-		while( BU_LIST_WHILE( _rrp, ray_result, &(_p)->resultHead.l ) ) { \
+		while ( BU_LIST_WHILE( _rrp, ray_result, &(_p)->resultHead.l ) ) { \
 			RTS_FREE_RAY_RESULT( _rrp ); \
 		} \
-		if( (_p)->the_job ) { \
+		if ( (_p)->the_job ) { \
 		     RTS_FREE_RTSERVER_JOB( (_p)->the_job ); \
 		     (_p)->the_job = NULL; \
 		} \
-		if( (_p)->l.forw != NULL && BU_LIST_NON_EMPTY( &((_p)->l) ) ) { \
+		if ( (_p)->l.forw != NULL && BU_LIST_NON_EMPTY( &((_p)->l) ) ) { \
 			BU_LIST_DEQUEUE( &((_p)->l) ); \
 		} \
 		pthread_mutex_lock( &resource_mutex ); \
@@ -323,7 +323,7 @@ get_unique_jobid()
 
 	pthread_mutex_lock( &jobid_mutex );
 	aJobId = ++jobIds;
-	if( aJobId < 0 ) {
+	if ( aJobId < 0 ) {
 		jobIds = 0;
 		aJobId = ++jobIds;
 	}
@@ -365,7 +365,7 @@ count_list_members( struct bu_list *listhead )
 {
 	int count=0;
 	struct bu_list *l;
-	for( BU_LIST_FOR( l, bu_list, listhead ) ) {
+	for ( BU_LIST_FOR( l, bu_list, listhead ) ) {
 		count++;
 	}
 
@@ -439,7 +439,7 @@ copy_geometry( int dest, int src )
 	VREVERSE( rts_geometry[dest]->rts_mdl_max, rts_geometry[dest]->rts_mdl_min );
 
 	/* fill out each rtsserver_rti structure */
-	for( i=0 ; i < rts_geometry[dest]->rts_number_of_rtis ; i++ ) {
+	for ( i=0; i < rts_geometry[dest]->rts_number_of_rtis; i++ ) {
 		struct rt_i *rtip;
 
 		/* the allocation call initializes the xform pointers to NULL */
@@ -450,7 +450,7 @@ copy_geometry( int dest, int src )
 		/* copy the rt_i pointer (the same ones are used by all the sessions */
 		rtip = rts_geometry[src]->rts_rtis[i]->rtrti_rtip;
 		rts_geometry[dest]->rts_rtis[i]->rtrti_rtip = rtip;
-		if( rts_geometry[src]->rts_rtis[i]->rtrti_name ) {
+		if ( rts_geometry[src]->rts_rtis[i]->rtrti_name ) {
 			rts_geometry[dest]->rts_rtis[i]->rtrti_name =
 				bu_strdup( rts_geometry[src]->rts_rtis[i]->rtrti_name );
 		}
@@ -460,7 +460,7 @@ copy_geometry( int dest, int src )
 			(char **) bu_calloc( rts_geometry[dest]->rts_rtis[i]->rtrti_num_trees,
 					    sizeof( char *),
 					    "rtrti_trees" );
-		for( j=0 ; j<rts_geometry[dest]->rts_rtis[i]->rtrti_num_trees ; j++ ) {
+		for ( j=0; j<rts_geometry[dest]->rts_rtis[i]->rtrti_num_trees; j++ ) {
 			rts_geometry[dest]->rts_rtis[i]->rtrti_trees[j] =
 				bu_strdup( rts_geometry[src]->rts_rtis[i]->rtrti_trees[j] );
 		}
@@ -481,14 +481,14 @@ isLastUseOfRti( struct rt_i *rtip, int sessionid )
 {
 	int i, j;
 
-	for( i=0 ; i<num_geometries ; i++ ) {
-		if( i == sessionid )
+	for ( i=0; i<num_geometries; i++ ) {
+		if ( i == sessionid )
 			continue;
-		if( !rts_geometry[i] )
+		if ( !rts_geometry[i] )
 			continue;
-		for( j=0 ; j<rts_geometry[i]->rts_number_of_rtis ; j++ ) {
+		for ( j=0; j<rts_geometry[i]->rts_number_of_rtis; j++ ) {
 			struct rtserver_rti *rtsrtip = rts_geometry[i]->rts_rtis[j];
-			if( rtsrtip->rtrti_rtip == rtip )
+			if ( rtsrtip->rtrti_rtip == rtip )
 				return 0;
 		}
 	}
@@ -503,43 +503,43 @@ rts_clean( int sessionid)
 {
 	int i, j;
 
-	if( sessionid >= 0 && sessionid < num_geometries && rts_geometry[sessionid] ) {
+	if ( sessionid >= 0 && sessionid < num_geometries && rts_geometry[sessionid] ) {
 		/* free all old geometry */
-		for( i=0 ; i<rts_geometry[sessionid]->rts_number_of_rtis ; i++ ) {
+		for ( i=0; i<rts_geometry[sessionid]->rts_number_of_rtis; i++ ) {
 			struct rtserver_rti *rtsrtip;
 
 			rtsrtip = rts_geometry[sessionid]->rts_rtis[i];
-			if( rtsrtip->rtrti_name ) {
+			if ( rtsrtip->rtrti_name ) {
 				bu_free( rtsrtip->rtrti_name, "rtserver assembly name" );
 				rtsrtip->rtrti_name = NULL;
 			}
-			if( rtsrtip->rtrti_xform ) {
+			if ( rtsrtip->rtrti_xform ) {
 				bu_free( rtsrtip->rtrti_xform, "rtserver xform matrix" );
 				rtsrtip->rtrti_xform = NULL;
 			}
-			if( rtsrtip->rtrti_inv_xform ) {
+			if ( rtsrtip->rtrti_inv_xform ) {
 				bu_free( rtsrtip->rtrti_inv_xform, "rtserver inverse xform matrix" );
 				rtsrtip->rtrti_inv_xform = NULL;
 			}
 
-			for( j=0 ; j<rtsrtip->rtrti_num_trees ; j++ ) {
+			for ( j=0; j<rtsrtip->rtrti_num_trees; j++ ) {
 				bu_free( rtsrtip->rtrti_trees[j], "rtserver tree name" );
 				rtsrtip->rtrti_trees[j] = NULL;
 			}
 			rtsrtip->rtrti_num_trees =  0;
-			if( rtsrtip->rtrti_trees ) {
+			if ( rtsrtip->rtrti_trees ) {
 				bu_free( rtsrtip->rtrti_trees, "rtserver tree names" );
 				rtsrtip->rtrti_trees = NULL;
 			}
 
-			if( rtsrtip->rtrti_rtip ) {
-				if( isLastUseOfRti( rtsrtip->rtrti_rtip, i ) ) {
+			if ( rtsrtip->rtrti_rtip ) {
+				if ( isLastUseOfRti( rtsrtip->rtrti_rtip, i ) ) {
 					rt_clean( rtsrtip->rtrti_rtip );
 					rtsrtip->rtrti_rtip = NULL;
 				}
 			}
 		}
-		if( rts_geometry[sessionid]->rts_comp_names ) {
+		if ( rts_geometry[sessionid]->rts_comp_names ) {
 			Tcl_DeleteHashTable( rts_geometry[sessionid]->rts_comp_names );
 		}
 		bu_free( rts_geometry[sessionid], "rts_geometry" );
@@ -551,7 +551,7 @@ rts_clean( int sessionid)
 void
 rts_init()
 {
-	if( !needs_initialization ) {
+	if ( !needs_initialization ) {
 		return;
 	}
 	/* Things like bu_malloc() must have these initialized for use with parallel processing */
@@ -585,7 +585,7 @@ rts_open_session()
 
 	pthread_mutex_lock( &session_mutex );
 	/* make sure we have some geometry */
-	if( num_geometries == 0 || rts_geometry[0] == NULL ) {
+	if ( num_geometries == 0 || rts_geometry[0] == NULL ) {
 		fprintf( stderr, "rtServer: ERROR: no geometry loaded!!\n" );
 		pthread_mutex_unlock( &session_mutex );
 		return -1;
@@ -603,7 +603,7 @@ rts_open_session()
 	 */
 
 	/* if the initial session is not yet used, just return it */
-	if( !used_session_0 ) {
+	if ( !used_session_0 ) {
 		used_session_0 = 1;
 		pthread_mutex_unlock( &session_mutex );
 		return 0;
@@ -611,13 +611,13 @@ rts_open_session()
 
 	/* create a new session by making a new copy of session #0 */
 	/* look for an empty slot */
-	for( i=1 ; i<num_geometries ; i++ ) {
-		if( !rts_geometry[i] ) {
+	for ( i=1; i<num_geometries; i++ ) {
+		if ( !rts_geometry[i] ) {
 			break;
 		}
 	}
 
-	if( i >= num_geometries ) {
+	if ( i >= num_geometries ) {
 		/* need more slots */
 		num_geometries += GEOMETRIES_BLOCK_SIZE;
 		rts_geometry = (struct rtserver_geometry **)bu_realloc( rts_geometry,
@@ -641,14 +641,14 @@ reset_xforms( int sessionid )
 {
 	int i;
 
-	for( i=0 ; i<rts_geometry[sessionid]->rts_number_of_rtis ; i++ ) {
+	for ( i=0; i<rts_geometry[sessionid]->rts_number_of_rtis; i++ ) {
 		struct rtserver_rti *rts_rtip = rts_geometry[sessionid]->rts_rtis[i];
 
-		if( rts_rtip->rtrti_xform ) {
+		if ( rts_rtip->rtrti_xform ) {
 			bu_free( (char *)rts_rtip->rtrti_xform, "xform" );
 			rts_rtip->rtrti_xform = NULL;
 		}
-		if( rts_rtip->rtrti_inv_xform ) {
+		if ( rts_rtip->rtrti_inv_xform ) {
 			bu_free( (char *)rts_rtip->rtrti_inv_xform, "inv_xform" );
 			rts_rtip->rtrti_inv_xform = NULL;
 		}
@@ -666,7 +666,7 @@ rts_close_session( int sessionid )
 	int i, j;
 
 	pthread_mutex_lock( &session_mutex );
-	if( sessionid == 0 ) {
+	if ( sessionid == 0 ) {
 		/* never eliminate sessionid 0 */
 		used_session_0 = 0;
 
@@ -676,12 +676,12 @@ rts_close_session( int sessionid )
 		pthread_mutex_unlock( &session_mutex );
 		return;
 	}
-	if( sessionid >= num_geometries ) {
+	if ( sessionid >= num_geometries ) {
 		/* no such session */
 		pthread_mutex_unlock( &session_mutex );
 		return;
 	}
-	if( !rts_geometry[sessionid] ) {
+	if ( !rts_geometry[sessionid] ) {
 		/* this session has already been closed (or never opened) */
 		pthread_mutex_unlock( &session_mutex );
 		return;
@@ -691,15 +691,15 @@ rts_close_session( int sessionid )
 	reset_xforms( sessionid );
 
 	/* free everything else */
-	for( i=0 ; i<rts_geometry[sessionid]->rts_number_of_rtis ; i++ ) {
+	for ( i=0; i<rts_geometry[sessionid]->rts_number_of_rtis; i++ ) {
 		struct rtserver_rti *rts_rtip = rts_geometry[sessionid]->rts_rtis[i];
 
 		rts_rtip->rtrti_rtip = NULL;
-		if( rts_rtip->rtrti_name ) {
+		if ( rts_rtip->rtrti_name ) {
 			bu_free( rts_rtip->rtrti_name, "name" );
 			rts_rtip->rtrti_name = NULL;
 		}
-		for( j=0 ; j<rts_rtip->rtrti_num_trees ; j++ ) {
+		for ( j=0; j<rts_rtip->rtrti_num_trees; j++ ) {
 			bu_free( rts_rtip->rtrti_trees[j], "tree" );
 		}
 		bu_free( (char *)rts_rtip->rtrti_trees, "rtrti_trees" );
@@ -742,12 +742,12 @@ rts_load_geometry( char *filename, int use_articulation, int num_objs, char **ob
 	const char *attrs[] = {(const char *)"muves_comp", (const char *)NULL };
 
 	/* clean up any prior geometry data */
-	if( rts_geometry ) {
+	if ( rts_geometry ) {
 		struct db_i *dbip;
 
 		dbip = rts_geometry[0]->rts_rtis[0]->rtrti_rtip->rti_dbip;
-		for( i=0 ; i<num_geometries ; i++ ) {
-			if( rts_geometry[i] ) {
+		for ( i=0; i<num_geometries; i++ ) {
+			if ( rts_geometry[i] ) {
 				rts_clean( i );
 			}
 		}
@@ -756,7 +756,7 @@ rts_load_geometry( char *filename, int use_articulation, int num_objs, char **ob
 		rts_geometry = NULL;
 	}
 
-	if( hash_table_exists ) {
+	if ( hash_table_exists ) {
 		Tcl_DeleteHashTable( &name_tbl );
 		Tcl_DeleteHashTable( &ident_tbl);
 		Tcl_DeleteHashTable( &air_tbl );
@@ -764,7 +764,7 @@ rts_load_geometry( char *filename, int use_articulation, int num_objs, char **ob
 	}
 
 	/* create the new session */
-	if( num_geometries < 1 ) {
+	if ( num_geometries < 1 ) {
 		num_geometries = 5;	/* create five slots to start */
 		sessionid = 0;
 		rts_geometry = (struct rtserver_geometry **)bu_calloc( num_geometries,
@@ -774,7 +774,7 @@ rts_load_geometry( char *filename, int use_articulation, int num_objs, char **ob
 
 	/* open the BRL-CAD model */
 	rtip = rt_dirbuild( filename, (char *)NULL, 0 );
-	if( rtip == RTI_NULL ) {
+	if ( rtip == RTI_NULL ) {
 		bu_log( "rt_dirbuild() failed for file %s\n", filename );
 		return -1;
 	}
@@ -788,10 +788,10 @@ rts_load_geometry( char *filename, int use_articulation, int num_objs, char **ob
 	/* set the use air flags */
 	rtip->useair = use_air;
 
-	if( use_articulation && objects ) {
+	if ( use_articulation && objects ) {
 		fprintf( stderr, "Cannot use articulation when specifiying object names on the comand line for rtserver\n" );
 		return -2;
-	} else if( objects ) {
+	} else if ( objects ) {
 		int num_trees;
 
 		/* load the specified objects */
@@ -810,21 +810,21 @@ rts_load_geometry( char *filename, int use_articulation, int num_objs, char **ob
 		rts_geometry[sessionid]->rts_rtis[0]->rtrti_rtip = rtip;
 		num_trees = num_objs;
 		rts_geometry[sessionid]->rts_rtis[0]->rtrti_num_trees = num_trees;
-		if( verbose ) {
+		if ( verbose ) {
 			fprintf( stderr, "num_trees = %d\n", num_trees );
 		}
 
 		/* malloc some memory for pointers to the object names */
-		if( num_trees > 0 ) {
+		if ( num_trees > 0 ) {
 		    rts_geometry[sessionid]->rts_rtis[0]->rtrti_trees = (char **)bu_calloc( num_trees,
 						     sizeof( char *),
 						     "rtrti_trees" );
 
-		    for( i=0 ; i<num_trees ; i++ ) {
+		    for ( i=0; i<num_trees; i++ ) {
 			rts_geometry[sessionid]->rts_rtis[0]->rtrti_trees[i] = bu_strdup( objects[i] );
 		    }
 		}
-	} else if( use_articulation ) {
+	} else if ( use_articulation ) {
 		/* XXX get articulation data */
 	} else {
 		/* user just wants a single RT instance, with no articulation */
@@ -837,13 +837,13 @@ rts_load_geometry( char *filename, int use_articulation, int num_objs, char **ob
 
 		/* find the "rtserver_data" binary object */
 		dp = db_lookup( dbip, "rtserver_data", LOOKUP_QUIET );
-		if( dp == DIR_NULL ) {
+		if ( dp == DIR_NULL ) {
 			/* not found, cannot continue */
 			return -2;
 		}
 
 		/* fetch the "rtserver_data" object */
-		if( (id=rt_db_get_internal( &intern, dp, dbip, NULL, &rt_uniresource )) !=  ID_BINUNIF ) {
+		if ( (id=rt_db_get_internal( &intern, dp, dbip, NULL, &rt_uniresource )) !=  ID_BINUNIF ) {
 			/* either we did not get the object, or it is not a binary object */
 			return -3;
 		}
@@ -874,18 +874,18 @@ rts_load_geometry( char *filename, int use_articulation, int num_objs, char **ob
 		index2 = index1;
 
 		/* step through the rtserver_data buffer, appending each line as an element */
-		while( index2 < bip->count ) {
+		while ( index2 < bip->count ) {
 			Tcl_Obj *tmp;
 			int length;
 
 			/* find end of line */
-			while( index2 < bip->count &&
+			while ( index2 < bip->count &&
 			       bip->u.int8[index2] != '\n' &&
 			       bip->u.int8[index2] != '\0' ) {
 				index2++;
 			}
 			length = index2 - index1;
-			if( length > 0 ) {
+			if ( length > 0 ) {
 				/* make a new object and append it to the list */
 				tmp = Tcl_NewStringObj( &bip->u.int8[index1], index2 - index1 );
 				Tcl_ListObjAppendElement( interp, rtserver_data, tmp );
@@ -901,7 +901,7 @@ rts_load_geometry( char *filename, int use_articulation, int num_objs, char **ob
 		Tcl_ListObjLength( interp, rtserver_data, &data_len );
 
 		/* look for top level object (check each line in the list) */
-		for( i=0 ; i<data_len ; i++ ) {
+		for ( i=0; i<data_len; i++ ) {
 			Tcl_Obj *aline;
 			Tcl_Obj *key;
 			int found=0;
@@ -913,7 +913,7 @@ rts_load_geometry( char *filename, int use_articulation, int num_objs, char **ob
 			Tcl_ListObjIndex( interp, aline, 0, &key );
 
 			/* is this the "rtserver_tops" key?? */
-			if( !strcmp( "rtserver_tops", Tcl_GetStringFromObj( key, NULL ) ) ) {
+			if ( !strcmp( "rtserver_tops", Tcl_GetStringFromObj( key, NULL ) ) ) {
 				/* found top level object */
 				Tcl_Obj *value;
 				int num_trees=0;
@@ -926,18 +926,18 @@ rts_load_geometry( char *filename, int use_articulation, int num_objs, char **ob
 
 				/* save this number in the rts_geometry structure */
 				rts_geometry[sessionid]->rts_rtis[0]->rtrti_num_trees = num_trees;
-				if( verbose ) {
+				if ( verbose ) {
 					fprintf( stderr, "num_trees = %d\n", num_trees );
 				}
 
-				if( num_trees > 0 ) {
+				if ( num_trees > 0 ) {
 				    /* malloc some memory for pointers to the object names */
 				    rts_geometry[sessionid]->rts_rtis[0]->rtrti_trees = (char **)bu_calloc( num_trees,
 						     sizeof( char *),
 						     "rtrti_trees" );
 
 				    /* get the names of the top-level BRL-CAD objects */
-				    for( j=0 ; j < num_trees ; j++ ) {
+				    for ( j=0; j < num_trees; j++ ) {
 					Tcl_Obj *tree;
 
 					Tcl_ListObjIndex( interp, value, j, &tree );
@@ -945,7 +945,7 @@ rts_load_geometry( char *filename, int use_articulation, int num_objs, char **ob
 					/* copy the names */
 					rts_geometry[sessionid]->rts_rtis[0]->rtrti_trees[j] =
 						bu_strdup( Tcl_GetString( tree ) );
-					if( verbose ) {
+					if ( verbose ) {
 						fprintf( stderr, "\t%s\n", rts_geometry[sessionid]->rts_rtis[0]->rtrti_trees[j] );
 					}
 				    }
@@ -953,7 +953,7 @@ rts_load_geometry( char *filename, int use_articulation, int num_objs, char **ob
 				found = 1;
 				break;
 			}
-			if( found ) {
+			if ( found ) {
 				break;
 			}
 		}
@@ -966,7 +966,7 @@ rts_load_geometry( char *filename, int use_articulation, int num_objs, char **ob
 	VREVERSE( rts_geometry[sessionid]->rts_mdl_max, rts_geometry[sessionid]->rts_mdl_min );
 
 	/* for each RT instance, get its trees */
-	for( i=0 ; i<rts_geometry[sessionid]->rts_number_of_rtis ; i++ ) {
+	for ( i=0; i<rts_geometry[sessionid]->rts_number_of_rtis; i++ ) {
 		struct rtserver_rti *rts_rtip;
 		struct rt_i *rtip;
 
@@ -975,7 +975,7 @@ rts_load_geometry( char *filename, int use_articulation, int num_objs, char **ob
 		rtip = rts_rtip->rtrti_rtip;
 
 		/* create resource structures for each thread */
-		for( j=0 ; j<thread_count ; j++ ) {
+		for ( j=0; j<thread_count; j++ ) {
 			struct resource *resp;
 
 			resp = (struct resource *)bu_calloc( 1, sizeof( struct resource ), "resource" );
@@ -983,16 +983,16 @@ rts_load_geometry( char *filename, int use_articulation, int num_objs, char **ob
 		}
 
 		/* get the BRL-CAD objects for this rt instance */
-		if( verbose ) {
+		if ( verbose ) {
 			fprintf( stderr, "Getting trees:\n" );
-			for( j=0 ; j<rts_rtip->rtrti_num_trees ; j++ ) {
+			for ( j=0; j<rts_rtip->rtrti_num_trees; j++ ) {
 				fprintf( stderr, "\t%s\n", rts_rtip->rtrti_trees[j] );
 			}
 		}
-		if( rt_gettrees_and_attrs( rtip, attrs, rts_rtip->rtrti_num_trees,
+		if ( rt_gettrees_and_attrs( rtip, attrs, rts_rtip->rtrti_num_trees,
 				 (const char **)rts_rtip->rtrti_trees, ncpus ) ) {
 			fprintf( stderr, "Failed to get BRL-CAD objects:\n" );
-			for( j=0 ; j<rts_rtip->rtrti_num_trees ; j++ ) {
+			for ( j=0; j<rts_rtip->rtrti_num_trees; j++ ) {
 				fprintf( stderr, "\t%s\n", rts_rtip->rtrti_trees[j] );
 			}
 			return -4;
@@ -1006,7 +1006,7 @@ rts_load_geometry( char *filename, int use_articulation, int num_objs, char **ob
 		VMINMAX( rts_geometry[sessionid]->rts_mdl_min, rts_geometry[sessionid]->rts_mdl_max, rtip->mdl_max );
 	}
 
-	if( verbose ) {
+	if ( verbose ) {
 		fprintf( stderr, "Model extents: (%g %g %g) <-> (%g %g %g)\n",
 			 V3ARGS( rts_geometry[sessionid]->rts_mdl_min ),
 			 V3ARGS( rts_geometry[sessionid]->rts_mdl_max ) );
@@ -1021,7 +1021,7 @@ rts_load_geometry( char *filename, int use_articulation, int num_objs, char **ob
 int
 rts_miss( struct application *ap )
 {
-	if( verbose ) {
+	if ( verbose ) {
 		fprintf( stderr, "Missed!!!\n" );
 	}
 	return 0;
@@ -1037,7 +1037,7 @@ rts_hit( struct application *ap, struct partition *partHeadp, struct seg *segs )
 	struct partition *pp;
 	struct ray_result *ray_res;
 
-	if( verbose ) {
+	if ( verbose ) {
 		fprintf( stderr, "Got a hit!!!\n" );
 	}
 
@@ -1048,7 +1048,7 @@ rts_hit( struct application *ap, struct partition *partHeadp, struct seg *segs )
 	ray_res->the_ray = ap->a_ray;
 
 	/* build a list of hits */
-	for( BU_LIST_FOR( pp, partition, (struct bu_list *)partHeadp ) ) {
+	for ( BU_LIST_FOR( pp, partition, (struct bu_list *)partHeadp ) ) {
 		struct ray_hit *ahit;
 		struct region *rp;
 		Tcl_HashEntry *entry;
@@ -1067,8 +1067,8 @@ rts_hit( struct application *ap, struct partition *partHeadp, struct seg *segs )
 		rp = pp->pt_regionp;
 
 		/* find has table entry, if we have a table (to get MUVES_Component index) */
-		if( hash_table_exists ) {
-			if( rp->reg_aircode ) {
+		if ( hash_table_exists ) {
+			if ( rp->reg_aircode ) {
 				entry = Tcl_FindHashEntry( &air_tbl, (ClientData)rp->reg_aircode );
 			} else {
 				entry = Tcl_FindHashEntry( &ident_tbl, (ClientData)rp->reg_regionid );
@@ -1078,7 +1078,7 @@ rts_hit( struct application *ap, struct partition *partHeadp, struct seg *segs )
 		}
 
 		/* assign comp_id based on hash table results */
-		if( entry == NULL ) {
+		if ( entry == NULL ) {
 			ahit->comp_id = 0;
 		} else {
 			ahit->comp_id = (int)Tcl_GetHashValue( entry );
@@ -1090,7 +1090,7 @@ rts_hit( struct application *ap, struct partition *partHeadp, struct seg *segs )
 		/* add this to our list of hits */
 		BU_LIST_INSERT( &ray_res->hitHead.l, &ahit->l );
 
-		if( verbose ) {
+		if ( verbose ) {
 			fprintf( stderr, "\tentrance at dist=%g, hit region %s (id = %d)\n",
 				 pp->pt_inhit->hit_dist, rp->reg_name, ahit->comp_id );
 			fprintf( stderr, "\t\texit at dist = %g\n", pp->pt_outhit->hit_dist );
@@ -1120,7 +1120,7 @@ rtserver_thread( void *num )
 	struct application ap;
 	long thread_no=(long)(num);
 
-	if( verbose ) {
+	if ( verbose ) {
 		fprintf( stderr, "starting thread x%lx (%ld)\n", (long unsigned int)pthread_self(), thread_no );
 	}
 
@@ -1131,11 +1131,11 @@ rtserver_thread( void *num )
 	ap.a_logoverlap = rt_silent_logoverlap;
 
 	/* run forever */
-	while( 1 ) {
+	while ( 1 ) {
 		int queue;
 		int count_empty;
 
-		if( queues_are_empty ) {
+		if ( queues_are_empty ) {
 			/* wait until someone says there is stuff in an input queue */
 			pthread_mutex_lock( &input_queue_ready_mutex );
 			pthread_cond_wait( &input_queue_ready, &input_queue_ready_mutex );
@@ -1145,9 +1145,9 @@ rtserver_thread( void *num )
 
 		/* check all the queues in order (priority) */
 		count_empty = 0;
-		for( queue=0 ; queue<num_queues ; queue++ ) {
+		for ( queue=0; queue<num_queues; queue++ ) {
 			pthread_mutex_lock( &input_queue_mutex[queue] );
-			if( BU_LIST_NON_EMPTY( &input_queue[queue].l ) ) {
+			if ( BU_LIST_NON_EMPTY( &input_queue[queue].l ) ) {
 				struct rtserver_job *ajob;
 				struct rtserver_result *aresult;
 				struct xray *aray;
@@ -1161,14 +1161,14 @@ rtserver_thread( void *num )
 
 				pthread_mutex_lock( &counter_mutex );
 				working_threads++;
-				if( working_threads > max_working_threads ) {
+				if ( working_threads > max_working_threads ) {
 					max_working_threads = working_threads;
 				}
 				/*				fprintf( stderr, "max threads working at one time is: %d\n", max_working_threads ); */
 				pthread_mutex_unlock( &counter_mutex );
 
 				/* if this job is an exit signal, just exit */
-				if( ajob->exit_flag ) {
+				if ( ajob->exit_flag ) {
 					pthread_exit( (void *)0 );
 				}
 
@@ -1190,10 +1190,10 @@ rtserver_thread( void *num )
 				/* do some work
 				 * we may have a bunch of rays for this job
 				 */
-				if( verbose ) {
+				if ( verbose ) {
 				    fprintf( stderr, "Got a job with %d rays\n", BU_PTBL_LEN( &ajob->rtjob_rays ) );
 				}
-				for( j=0 ; j<BU_PTBL_LEN( &ajob->rtjob_rays ) ; j++ ) {
+				for ( j=0; j<BU_PTBL_LEN( &ajob->rtjob_rays ); j++ ) {
 					struct ray_result *ray_res;
 
 					aray = (struct xray *)BU_PTBL_GET( &ajob->rtjob_rays, j );
@@ -1209,13 +1209,13 @@ rtserver_thread( void *num )
 					 */
 					ap.a_uptr = (genptr_t)ray_res;
 
-					if( verbose ) {
+					if ( verbose ) {
 						fprintf( stderr, "thread x%lx (%ld) got job %d\n",
 							 (unsigned long int)pthread_self(), thread_no, ajob->rtjob_id );
 					}
 
 					/* shoot this ray at each rt_i structure for this session */
-					for( i=0 ; i<rts_geometry[sessionid]->rts_number_of_rtis ; i++ ) {
+					for ( i=0; i<rts_geometry[sessionid]->rts_number_of_rtis; i++ ) {
 						struct rtserver_rti *rts_rtip;
 						struct rt_i *rtip;
 
@@ -1225,7 +1225,7 @@ rtserver_thread( void *num )
 						ap.a_resource =
 							(struct resource *)BU_PTBL_GET( &rtip->rti_resources,
 								    thread_no );
-						if( rts_rtip->rtrti_xform ) {
+						if ( rts_rtip->rtrti_xform ) {
 							MAT4X3PNT( ap.a_ray.r_pt,
 								   rts_rtip->rtrti_xform,
 								   aray->r_pt );
@@ -1237,11 +1237,11 @@ rtserver_thread( void *num )
 							VMOVE( ap.a_ray.r_dir, aray->r_dir );
 						}
 						ap.a_ray.index = aray->index;
-						if( verbose ) {
+						if ( verbose ) {
 							fprintf( stderr, "shooting ray (%g %g %g) -> (%g %g %g)\n",
 								 V3ARGS( ap.a_ray.r_pt ), V3ARGS( ap.a_ray.r_dir ) );
 						}
-						if( rt_shootray( &ap ) ) {
+						if ( rt_shootray( &ap ) ) {
 							aresult->got_some_hits = 1;
 						}
 					}
@@ -1254,7 +1254,7 @@ rtserver_thread( void *num )
 				}
 
 				/* put results on output queue */
-				if( verbose ) {
+				if ( verbose ) {
 				    fprintf( stderr, "Putting results on output queue\n" );
 				}
 				pthread_mutex_lock( &output_queue_mutex[queue] );
@@ -1265,7 +1265,7 @@ rtserver_thread( void *num )
 				pthread_mutex_lock( &output_queue_ready_mutex );
 				pthread_cond_broadcast( &output_queue_ready );
 				pthread_mutex_unlock( &output_queue_ready_mutex );
-				if( verbose ) {
+				if ( verbose ) {
 				    fprintf(stderr, "Results placed on output qeueue and queue ready broadcast\n" );
 				}
 
@@ -1280,7 +1280,7 @@ rtserver_thread( void *num )
 				count_empty++;
 			}
 		}
-		if( count_empty == num_queues ) {
+		if ( count_empty == num_queues ) {
 			queues_are_empty = 1;
 		}
 	}
@@ -1312,7 +1312,7 @@ rts_start_server_threads( int thread_count, int queue_count )
 {
 	int i;
 
-	if( queue_count > 0 ) {
+	if ( queue_count > 0 ) {
 	  int old_queue_count=num_queues;
 
 	  num_queues += queue_count;
@@ -1330,7 +1330,7 @@ rts_start_server_threads( int thread_count, int queue_count )
 				      num_queues * sizeof( pthread_mutex_t ), "output_queue_mutex" );
 
 	  /* initialize the new mutexes and the new queues */
-	  for( i=old_queue_count ; i<num_queues ; i++ ) {
+	  for ( i=old_queue_count; i<num_queues; i++ ) {
 	    BU_LIST_INIT( &input_queue[i].l );
 	    BU_LIST_INIT( &output_queue[i].l );
 	    pthread_mutex_init( &input_queue_mutex[i], NULL );
@@ -1338,7 +1338,7 @@ rts_start_server_threads( int thread_count, int queue_count )
 	  }
 	}
 
-	if( thread_count > 0 ) {
+	if ( thread_count > 0 ) {
 	  int old_thread_count = num_threads;
 
 	  num_threads += thread_count;
@@ -1347,7 +1347,7 @@ rts_start_server_threads( int thread_count, int queue_count )
 	  threads = (pthread_t *)bu_realloc( threads,  num_threads * sizeof( pthread_t ), "threads" );
 
 	  /* start the new threads */
-	  for( i=old_thread_count ; i<num_threads ; i++ ) {
+	  for ( i=old_thread_count; i<num_threads; i++ ) {
 	    (void)pthread_create( &threads[i], NULL, rtserver_thread, (void *)i );
 	  }
 	}
@@ -1367,16 +1367,16 @@ rts_get_any_waiting_result( int sessionid )
 	int queue;
 
 	/* check all the queues in priority order */
-	for( queue=0 ; queue<num_queues ; queue++ ) {
+	for ( queue=0; queue<num_queues; queue++ ) {
 		/* lock the queue */
 		pthread_mutex_lock( &output_queue_mutex[queue] );
 
 		/* check for a result */
 
-		if( BU_LIST_NON_EMPTY( &output_queue[queue].l ) ) {
-			for( BU_LIST_FOR( aresult, rtserver_result, &output_queue[queue].l ) ) {
+		if ( BU_LIST_NON_EMPTY( &output_queue[queue].l ) ) {
+			for ( BU_LIST_FOR( aresult, rtserver_result, &output_queue[queue].l ) ) {
 				aresult = BU_LIST_FIRST( rtserver_result, &output_queue[queue].l );
-				if( aresult->the_job->sessionid == sessionid ) {
+				if ( aresult->the_job->sessionid == sessionid ) {
 
 					/* remove the result from the queue */
 					BU_LIST_DEQUEUE( &aresult->l );
@@ -1416,12 +1416,12 @@ rts_submit_job_to_queue_and_wait( struct rtserver_job *ajob, int queue )
 	rts_submit_job( ajob, queue );
 
 	/* run until we get our result from this queue */
-	while( 1 ) {
+	while ( 1 ) {
 		struct rtserver_result *aresult;
 
-		if( queue_is_empty ) {
+		if ( queue_is_empty ) {
 			/* wait until someone says there is stuff in the queue */
-		    if( verbose ) {
+		    if ( verbose ) {
 			fprintf( stderr, "Waiting for output queue to be ready\n" );
 		    }
 			pthread_mutex_lock( &output_queue_ready_mutex );
@@ -1429,23 +1429,23 @@ rts_submit_job_to_queue_and_wait( struct rtserver_job *ajob, int queue )
 			pthread_cond_wait( &output_queue_ready, &output_queue_ready_mutex );
 			pthread_mutex_unlock( &output_queue_ready_mutex );
 			queue_is_empty = 0;
-			if( verbose ) {
+			if ( verbose ) {
 			    fprintf( stderr, "Output queue is ready\n" );
 			}
 		}
 
 		/* lock the queue */
-		if( verbose ) {
+		if ( verbose ) {
 		    fprintf( stderr, "Locking the output queue to check for results\n" );
 		}
 		pthread_mutex_lock( &output_queue_mutex[queue] );
 
 		/* check for a result */
-		if( BU_LIST_NON_EMPTY( &output_queue[queue].l ) ) {
+		if ( BU_LIST_NON_EMPTY( &output_queue[queue].l ) ) {
 			int found=0;
 			/* look for our result */
-			for( BU_LIST_FOR( aresult, rtserver_result, &output_queue[queue].l ) ) {
-				if( aresult->the_job->rtjob_id == id &&
+			for ( BU_LIST_FOR( aresult, rtserver_result, &output_queue[queue].l ) ) {
+				if ( aresult->the_job->rtjob_id == id &&
 				    aresult->the_job->sessionid == sessionid ) {
 					BU_LIST_DEQUEUE( &aresult->l );
 					found = 1;
@@ -1453,8 +1453,8 @@ rts_submit_job_to_queue_and_wait( struct rtserver_job *ajob, int queue )
 				}
 			}
 
-			if( found ) {
-			    if( verbose ) {
+			if ( found ) {
+			    if ( verbose ) {
 				fprintf( stderr, "Found our result, unlocking the output queue\n" );
 			    }
 
@@ -1465,14 +1465,14 @@ rts_submit_job_to_queue_and_wait( struct rtserver_job *ajob, int queue )
 				return( aresult );
 			} else {
 				/* unlock the queue */
-			    if( verbose ) {
+			    if ( verbose ) {
 				fprintf( stderr, " Did not find our result, unlock queue and set empty to true\n" );
 			    }
 
 				queue_is_empty = 1;
 			}
 		} else {
-		    if( verbose ) {
+		    if ( verbose ) {
 			fprintf( stderr, "queue is empty, just unlock it and continue\n" );
 		    }
 
@@ -1506,17 +1506,17 @@ get_muves_components()
 	int sessionid;
 
 	/* make sure we have some geometry */
-	if( !rts_geometry ) {
+	if ( !rts_geometry ) {
 		return;
 	}
 
-	for( sessionid=0 ; sessionid<num_geometries ; sessionid++ ) {
-		if( rts_geometry[sessionid] ) {
+	for ( sessionid=0; sessionid<num_geometries; sessionid++ ) {
+		if ( rts_geometry[sessionid] ) {
 			break;
 		}
 	}
 
-	if( !rts_geometry[sessionid] ) {
+	if ( !rts_geometry[sessionid] ) {
 		return;
 	}
 
@@ -1527,30 +1527,30 @@ get_muves_components()
 	hash_table_exists = 1;
 
 	/* visit each rt_i */
-	for( i=0 ; i<rts_geometry[sessionid]->rts_number_of_rtis ; i++ ) {
+	for ( i=0; i<rts_geometry[sessionid]->rts_number_of_rtis; i++ ) {
 		struct rtserver_rti *rts_rtip=rts_geometry[sessionid]->rts_rtis[i];
 		struct rt_i *rtip=rts_rtip->rtrti_rtip;
 
 		/* visit each region in this rt_i */
-		for( j=0 ; j<rtip->nregions ; j++ ) {
+		for ( j=0; j<rtip->nregions; j++ ) {
 			struct region *rp=rtip->Regions[j];
 			struct bu_mro *attrs=rp->attr_values[0];
 			int new;
 			int index=0;
 
-			if( !rp || BU_MRO_STRLEN(attrs) < 1 ) {
+			if ( !rp || BU_MRO_STRLEN(attrs) < 1 ) {
 				/* not a region, or does not have a MUVES_Component attribute */
 				continue;
 			}
 
 			/* create an entry for this MUVES_Component name */
 			name_entry = Tcl_CreateHashEntry( &name_tbl, BU_MRO_GETSTRING( attrs ), &new );
-			if( verbose ) {
+			if ( verbose ) {
 				fprintf( stderr, "region %s, name = %s\n",
 					 rp->reg_name, BU_MRO_GETSTRING( attrs ) );
 			}
 			/* set value to next index */
-			if( new ) {
+			if ( new ) {
 				comp_count++;
 				Tcl_SetHashValue( name_entry, (ClientData)comp_count );
 				index = comp_count;
@@ -1558,16 +1558,16 @@ get_muves_components()
 				index = (int )Tcl_GetHashValue( name_entry );
 			}
 
-			if( rp->reg_aircode > 0 ) {
+			if ( rp->reg_aircode > 0 ) {
 				/* this is an air region, create an air table entry */
 				air_entry = Tcl_CreateHashEntry( &air_tbl, (char *)rp->reg_aircode, &new );
-				if( new ) {
+				if ( new ) {
 					Tcl_SetHashValue( air_entry, (ClientData)index );
 				}
 			} else {
 				/* this is a solid region, create an ident table entry */
 				ident_entry = Tcl_CreateHashEntry( &ident_tbl, (char *)rp->reg_regionid, &new );
-				if( new ) {
+				if ( new ) {
 					Tcl_SetHashValue( ident_entry, (ClientData)index );
 				}
 			}
@@ -1581,7 +1581,7 @@ get_muves_components()
 	names = (char **)bu_calloc( comp_count + 1, sizeof( char *), "MUVES names" );
 	names[0] = bu_strdup( "No MUVES Name" );
 	name_entry = Tcl_FirstHashEntry( &name_tbl, &search );
-	while( name_entry ) {
+	while ( name_entry ) {
 		char *name;
 		long index;
 
@@ -1601,14 +1601,14 @@ rts_shutdown()
 	int i;
 	struct db_i *dbip;
 
-	if( rts_geometry && rts_geometry[0] ) {
+	if ( rts_geometry && rts_geometry[0] ) {
 		dbip = rts_geometry[0]->rts_rtis[0]->rtrti_rtip->rti_dbip;
 	} else {
 	    dbip = NULL;
 	}
 
 	/* send a shutdown job to each thread */
-	for( i=0 ; i<num_threads ; i++ ) {
+	for ( i=0; i<num_threads; i++ ) {
 		struct rtserver_job *ajob;
 
 		RTS_GET_RTSERVER_JOB( ajob );
@@ -1618,34 +1618,34 @@ rts_shutdown()
 	}
 
 	/* wait for each thread to exit */
-	for( i=0 ; i<num_threads ; i++ ) {
+	for ( i=0; i<num_threads; i++ ) {
 		pthread_t thread = threads[i];
 		pthread_join( thread, NULL );
 	}
 
 	/* clean up */
-	if( num_threads ) {
+	if ( num_threads ) {
 		bu_free( (char *)threads, "threads" );
 	}
 	threads = NULL;
 	num_threads = 0;
 
-	for( i=num_geometries-1 ; i>=0 ; i-- ) {
+	for ( i=num_geometries-1; i>=0; i-- ) {
 		rts_clean( i );
 	}
 
-	if( dbip && dbip->dbi_magic == DBI_MAGIC ) {
+	if ( dbip && dbip->dbi_magic == DBI_MAGIC ) {
 		db_close( dbip );
 	}
 	num_geometries = 0;
-	if( rts_geometry ) {
+	if ( rts_geometry ) {
 		bu_free( (char *)rts_geometry, "rts_geometry" );
 	}
 	rts_geometry = NULL;
 
 	/* free queues and mutexes */
-	for( i=0 ; i<num_queues ; i++ ) {
-		while( BU_LIST_NON_EMPTY( &input_queue[i].l )) {
+	for ( i=0; i<num_queues; i++ ) {
+		while ( BU_LIST_NON_EMPTY( &input_queue[i].l )) {
 			struct rtserver_job *ajob;
 
 			ajob = BU_LIST_FIRST( rtserver_job, &input_queue[i].l );
@@ -1653,7 +1653,7 @@ rts_shutdown()
 			RTS_FREE_RTSERVER_JOB( ajob );
 		}
 
-		while( BU_LIST_NON_EMPTY( &output_queue[i].l )) {
+		while ( BU_LIST_NON_EMPTY( &output_queue[i].l )) {
 			struct rtserver_result *ares;
 
 			ares = BU_LIST_FIRST( rtserver_result, &output_queue[i].l );
@@ -1671,7 +1671,7 @@ rts_shutdown()
 	output_queue_mutex = NULL;
 	num_queues = 0;
 
-	if( hash_table_exists ) {
+	if ( hash_table_exists ) {
 		Tcl_DeleteHashTable( &name_tbl );
 		Tcl_DeleteHashTable( &ident_tbl);
 		Tcl_DeleteHashTable( &air_tbl );
@@ -1679,8 +1679,8 @@ rts_shutdown()
 	}
 
 	/* free resources */
-	if( BU_LIST_IS_INITIALIZED( &rts_resource.rtserver_results ) ) {
-		while( BU_LIST_NON_EMPTY( &rts_resource.rtserver_results ) ) {
+	if ( BU_LIST_IS_INITIALIZED( &rts_resource.rtserver_results ) ) {
+		while ( BU_LIST_NON_EMPTY( &rts_resource.rtserver_results ) ) {
 			struct rtserver_result *p;
 			p = (struct rtserver_result *)BU_LIST_FIRST( rtserver_result, &rts_resource.rtserver_results );
 			BU_LIST_DEQUEUE( &p->l );
@@ -1688,8 +1688,8 @@ rts_shutdown()
 		}
 	}
 
-	if( BU_LIST_IS_INITIALIZED( &rts_resource.ray_results ) ) {
-		while( BU_LIST_NON_EMPTY( &rts_resource.ray_results ) ) {
+	if ( BU_LIST_IS_INITIALIZED( &rts_resource.ray_results ) ) {
+		while ( BU_LIST_NON_EMPTY( &rts_resource.ray_results ) ) {
 			struct ray_result *p;
 			p = (struct ray_result *)BU_LIST_FIRST( ray_result, &rts_resource.ray_results );
 			BU_LIST_DEQUEUE( &p->l );
@@ -1697,8 +1697,8 @@ rts_shutdown()
 		}
 	}
 
-	if( BU_LIST_IS_INITIALIZED( &rts_resource.ray_hits ) ) {
-		while( BU_LIST_NON_EMPTY( &rts_resource.ray_hits ) ) {
+	if ( BU_LIST_IS_INITIALIZED( &rts_resource.ray_hits ) ) {
+		while ( BU_LIST_NON_EMPTY( &rts_resource.ray_hits ) ) {
 			struct ray_hit *p;
 			p = (struct ray_hit *)BU_LIST_FIRST( ray_hit, &rts_resource.ray_hits );
 			BU_LIST_DEQUEUE( &p->l );
@@ -1706,8 +1706,8 @@ rts_shutdown()
 		}
 	}
 
-	if( BU_LIST_IS_INITIALIZED( &rts_resource.rtserver_jobs ) ) {
-		while( BU_LIST_NON_EMPTY( &rts_resource.rtserver_jobs ) ) {
+	if ( BU_LIST_IS_INITIALIZED( &rts_resource.rtserver_jobs ) ) {
+		while ( BU_LIST_NON_EMPTY( &rts_resource.rtserver_jobs ) ) {
 			struct rtserver_job *p;
 			p = (struct rtserver_job *)BU_LIST_FIRST( rtserver_job, &rts_resource.rtserver_jobs );
 			BU_LIST_DEQUEUE( &p->l );
@@ -1715,8 +1715,8 @@ rts_shutdown()
 		}
 	}
 
-	if( rts_resource.xrays.l.magic == BU_PTBL_MAGIC ) {
-		for( i=0 ; i<BU_PTBL_LEN( &rts_resource.xrays ) ; i++ ) {
+	if ( rts_resource.xrays.l.magic == BU_PTBL_MAGIC ) {
+		for ( i=0; i<BU_PTBL_LEN( &rts_resource.xrays ); i++ ) {
 			struct xray *p = (struct xray *)BU_PTBL_GET( &rts_resource.xrays, i );
 			bu_free( (char *)p, "xray" );
 		}
@@ -1755,14 +1755,14 @@ build_Java_RayResult( JNIEnv *env, struct ray_result *ray_res, jobject jstart_pt
 	struct ray_hit *ahit;
 
 	/* get the JAVA Ray class */
-	if( (ray_class=(*env)->FindClass( env, "mil/army/arl/math/Ray" )) == NULL ) {
+	if ( (ray_class=(*env)->FindClass( env, "mil/army/arl/math/Ray" )) == NULL ) {
 		fprintf( stderr, "Failed to find Ray class\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
 	}
 
 	/* get the JAVA method id for the Ray class constructor */
-	if( (ray_constructor_id=(*env)->GetMethodID( env, ray_class, "<init>",
+	if ( (ray_constructor_id=(*env)->GetMethodID( env, ray_class, "<init>",
 	    "(Lmil/army/arl/math/Point;Lmil/army/arl/math/Vector3;)V" )) == NULL ) {
 		fprintf( stderr, "Failed to get method id for ray constructor\n" );
 		(*env)->ExceptionDescribe(env);
@@ -1773,14 +1773,14 @@ build_Java_RayResult( JNIEnv *env, struct ray_result *ray_res, jobject jstart_pt
 	jray = (*env)->NewObject( env, ray_class, ray_constructor_id, jstart_pt, jdir );
 
 	/* check for any exceptions */
-	if( (*env)->ExceptionOccurred(env) ) {
+	if ( (*env)->ExceptionOccurred(env) ) {
 		fprintf( stderr, "Exception thrown creating a ray\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
 	}
 
 	/* get the JAVA RayResult class */
-	if( (rayResult_class=(*env)->FindClass( env,
+	if ( (rayResult_class=(*env)->FindClass( env,
 	    "mil/army/arl/geometryservice/datatypes/RayResult" )) == NULL ) {
 		fprintf( stderr, "Failed to get class for RayResult\n" );
 		(*env)->ExceptionDescribe(env);
@@ -1788,7 +1788,7 @@ build_Java_RayResult( JNIEnv *env, struct ray_result *ray_res, jobject jstart_pt
 	}
 
 	/* get the JAVA method id for the RayResult constructor */
-	if( (rayResult_constructor_id=(*env)->GetMethodID( env, rayResult_class, "<init>",
+	if ( (rayResult_constructor_id=(*env)->GetMethodID( env, rayResult_class, "<init>",
 					   "(Lmil/army/arl/math/Ray;)V" )) == NULL ) {
 		fprintf( stderr, "Failed to get method id for rayResult constructor\n" );
 		(*env)->ExceptionDescribe(env);
@@ -1797,19 +1797,19 @@ build_Java_RayResult( JNIEnv *env, struct ray_result *ray_res, jobject jstart_pt
 
 	/* create a RayResult object using the newly created Ray */
 	jrayResult = (*env)->NewObject( env, rayResult_class, rayResult_constructor_id, jray );
-	if( (*env)->ExceptionOccurred(env) ) {
+	if ( (*env)->ExceptionOccurred(env) ) {
 		fprintf( stderr, "Exception thrown while creating a rayResult\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
 	}
 
 	/* If we have no hits, we are done, just return the empty RayResult object */
-	if( BU_LIST_IS_EMPTY( &(ray_res->l) ) ) {
+	if ( BU_LIST_IS_EMPTY( &(ray_res->l) ) ) {
 		return( jrayResult );
 	}
 
 	/* Get the JAVA methodid for the Point constructor */
-	if( (point_constructor_id=(*env)->GetMethodID( env, point_class, "<init>",
+	if ( (point_constructor_id=(*env)->GetMethodID( env, point_class, "<init>",
 							   "(DDD)V" )) == NULL ) {
 		fprintf( stderr, "Failed to get method id for Point constructor\n" );
 		(*env)->ExceptionDescribe(env);
@@ -1817,7 +1817,7 @@ build_Java_RayResult( JNIEnv *env, struct ray_result *ray_res, jobject jstart_pt
 	}
 
 	/* Get the JAVA methodid for the Vector3 constructor */
-	if( (vector_constructor_id=(*env)->GetMethodID( env, vect_class, "<init>",
+	if ( (vector_constructor_id=(*env)->GetMethodID( env, vect_class, "<init>",
 							   "(DDD)V" )) == NULL ) {
 		fprintf( stderr, "Failed to get method id for Vector3 constructor\n" );
 		(*env)->ExceptionDescribe(env);
@@ -1825,7 +1825,7 @@ build_Java_RayResult( JNIEnv *env, struct ray_result *ray_res, jobject jstart_pt
 	}
 
 	/* Get the JAVA class for Partition */
-	if( (partition_class=(*env)->FindClass( env,
+	if ( (partition_class=(*env)->FindClass( env,
 	    "mil/army/arl/geometryservice/datatypes/Partition" )) == NULL ) {
 		fprintf( stderr, "Failed to get class for Partition\n" );
 		(*env)->ExceptionDescribe(env);
@@ -1833,7 +1833,7 @@ build_Java_RayResult( JNIEnv *env, struct ray_result *ray_res, jobject jstart_pt
 	}
 
 	/* Get the JAVA constructor for a Partition */
-	if( (partition_constructor_id=(*env)->GetMethodID( env, partition_class, "<init>",
+	if ( (partition_constructor_id=(*env)->GetMethodID( env, partition_class, "<init>",
 	     "(DFFLmil/army/arl/math/Point;Lmil/army/arl/math/Vector3;Lmil/army/arl/math/Point;Lmil/army/arl/math/Vector3;Ljava/lang/String;)V" )) == NULL ) {
 		fprintf( stderr, "Failed to get method id for Partition constructor\n" );
 		(*env)->ExceptionDescribe(env);
@@ -1841,7 +1841,7 @@ build_Java_RayResult( JNIEnv *env, struct ray_result *ray_res, jobject jstart_pt
 	}
 
 	/* Get the JAVA method id for the RayResult's "addPartition" method */
-	if( (add_partition_id=(*env)->GetMethodID( env, rayResult_class, "addPartition",
+	if ( (add_partition_id=(*env)->GetMethodID( env, rayResult_class, "addPartition",
 				"(Lmil/army/arl/geometryservice/datatypes/Partition;)Z" )) == NULL ) {
 		fprintf( stderr, "Failed to get method id for rayResult addPartition method\n" );
 		(*env)->ExceptionDescribe(env);
@@ -1849,7 +1849,7 @@ build_Java_RayResult( JNIEnv *env, struct ray_result *ray_res, jobject jstart_pt
 	}
 
 	/* loop through all the hits in the results, and add them to the JAVA RayResult object */
-	for( BU_LIST_FOR( ahit, ray_hit, &ray_res->hitHead.l ) ) {
+	for ( BU_LIST_FOR( ahit, ray_hit, &ray_res->hitHead.l ) ) {
 		jdouble in_hit[3], out_hit[3];
 		jfloat inObl, outObl;
 		jstring regionName;
@@ -1867,7 +1867,7 @@ build_Java_RayResult( JNIEnv *env, struct ray_result *ray_res, jobject jstart_pt
 						 in_hit[X], in_hit[Y], in_hit[Z] );
 
 		/* check for any exceptions */
-		if( (*env)->ExceptionOccurred(env) ) {
+		if ( (*env)->ExceptionOccurred(env) ) {
 			fprintf( stderr, "Exception thrown while creating inhit point\n" );
 			(*env)->ExceptionDescribe(env);
 			return( (jobject)NULL );
@@ -1878,7 +1878,7 @@ build_Java_RayResult( JNIEnv *env, struct ray_result *ray_res, jobject jstart_pt
 						 out_hit[X], out_hit[Y], out_hit[Z] );
 
 		/* check for any exceptions */
-		if( (*env)->ExceptionOccurred(env) ) {
+		if ( (*env)->ExceptionOccurred(env) ) {
 			fprintf( stderr, "Exception thrown while creating outhit point\n" );
 			(*env)->ExceptionDescribe(env);
 			return( (jobject)NULL );
@@ -1889,7 +1889,7 @@ build_Java_RayResult( JNIEnv *env, struct ray_result *ray_res, jobject jstart_pt
 						  ahit->enter_normal[X], ahit->enter_normal[Y], ahit->enter_normal[Z] );
 
 		/* check for any exceptions */
-		if( (*env)->ExceptionOccurred(env) ) {
+		if ( (*env)->ExceptionOccurred(env) ) {
 			fprintf( stderr, "Exception thrown while creating inhit normal\n" );
 			(*env)->ExceptionDescribe(env);
 			return( (jobject)NULL );
@@ -1900,7 +1900,7 @@ build_Java_RayResult( JNIEnv *env, struct ray_result *ray_res, jobject jstart_pt
 						  ahit->exit_normal[X], ahit->exit_normal[Y], ahit->exit_normal[Z] );
 
 		/* check for any exceptions */
-		if( (*env)->ExceptionOccurred(env) ) {
+		if ( (*env)->ExceptionOccurred(env) ) {
 			fprintf( stderr, "Exception thrown while creating inhit normal\n" );
 			(*env)->ExceptionDescribe(env);
 			return( (jobject)NULL );
@@ -1908,18 +1908,18 @@ build_Java_RayResult( JNIEnv *env, struct ray_result *ray_res, jobject jstart_pt
 
 		/* calculate the entrance and exit obliquities */
 		inObl = acos( VDOT( reverse_ray_dir, ahit->enter_normal ) );
-		if( inObl < 0.0 ) {
+		if ( inObl < 0.0 ) {
 			inObl = -inObl;
 		}
-		if( inObl > M_PI_2 ) {
+		if ( inObl > M_PI_2 ) {
 			inObl = M_PI_2;
 		}
 
 		outObl = acos( VDOT( ray_res->the_ray.r_dir, ahit->exit_normal ) );
-		if( outObl < 0.0 ) {
+		if ( outObl < 0.0 ) {
 			outObl = -outObl;
 		}
-		if( outObl > M_PI_2 ) {
+		if ( outObl > M_PI_2 ) {
 			outObl = M_PI_2;
 		}
 
@@ -1927,7 +1927,7 @@ build_Java_RayResult( JNIEnv *env, struct ray_result *ray_res, jobject jstart_pt
 		regionName = (*env)->NewStringUTF(env, ahit->regp->reg_name );
 
 		/* check for any exceptions */
-		if( (*env)->ExceptionOccurred(env) ) {
+		if ( (*env)->ExceptionOccurred(env) ) {
 			fprintf( stderr, "Exception thrown while getting x coord of ray start point\n" );
 			(*env)->ExceptionDescribe(env);
 			return( (jobject)NULL );
@@ -1940,14 +1940,14 @@ build_Java_RayResult( JNIEnv *env, struct ray_result *ray_res, jobject jstart_pt
 						regionName );
 
 		/* check for any exceptions */
-		if( (*env)->ExceptionOccurred(env) ) {
+		if ( (*env)->ExceptionOccurred(env) ) {
 			fprintf( stderr, "Exception thrown while creating a partition\n" );
 			(*env)->ExceptionDescribe(env);
 			return( (jobject)NULL );
 		}
 
 		/* add this partition to the linked list of partitions */
-		if( (*env)->CallBooleanMethod( env, jrayResult, add_partition_id, jpartition ) != JNI_TRUE ) {
+		if ( (*env)->CallBooleanMethod( env, jrayResult, add_partition_id, jpartition ) != JNI_TRUE ) {
 			fprintf( stderr, "Failed to add a partition to rayResult!!!\n" );
 			(*env)->ExceptionDescribe(env);
 			return( (jobject)NULL );
@@ -1977,7 +1977,7 @@ fillItemMembers( jobject node,
 		 jmethodID itemTree_setLos_id,
 		 jmethodID itemTree_setUseCount_id )
 {
-	switch( tp->tr_op ) {
+	switch ( tp->tr_op ) {
 	case OP_SOLID:
 	case OP_NOP:
 	case OP_NOT:
@@ -2032,7 +2032,7 @@ fillItemTree( jobject parent_node,
 	jobject node;
 	const char *muvesName;
 
-	if( (dp=db_lookup( dbip, name, LOOKUP_QUIET )) == DIR_NULL ) {
+	if ( (dp=db_lookup( dbip, name, LOOKUP_QUIET )) == DIR_NULL ) {
 		return;
 	}
 
@@ -2041,7 +2041,7 @@ fillItemTree( jobject parent_node,
 	node = (*env)->NewObject( env, itemTree_class, itemTree_constructor_id, nodeName );
 
 	/* check for any exceptions */
-	if( (*env)->ExceptionOccurred(env) ) {
+	if ( (*env)->ExceptionOccurred(env) ) {
 		fprintf( stderr, "Exception thrown while creating ItemTree node\n" );
 		(*env)->ExceptionDescribe(env);
 		return;
@@ -2051,24 +2051,24 @@ fillItemTree( jobject parent_node,
 	(*env)->CallVoidMethod( env, parent_node, itemTree_addcomponent_id, node );
 
 	/* check for any exceptions */
-	if( (*env)->ExceptionOccurred(env) ) {
+	if ( (*env)->ExceptionOccurred(env) ) {
 		fprintf( stderr, "Exception thrown while adding an ItemTree node\n" );
 		(*env)->ExceptionDescribe(env);
 		return;
 	}
 
 
-	if( dp->d_flags & DIR_REGION ) {
+	if ( dp->d_flags & DIR_REGION ) {
 		struct rt_comb_internal *comb;
 		jint ident, los, uses;
 
-		if( (id = rt_db_get_internal( &intern, dp, dbip, NULL, &rt_uniresource ) ) < 0 ) {
+		if ( (id = rt_db_get_internal( &intern, dp, dbip, NULL, &rt_uniresource ) ) < 0 ) {
 			fprintf( stderr, "Failed to get internal form of BRL-CAD object (%s)\n", name );
 			return;
 		}
 
 		/* check for MUVES_Component */
-		if( (muvesName=bu_avs_get( &intern.idb_avs, "MUVES_Component" )) != NULL ) {
+		if ( (muvesName=bu_avs_get( &intern.idb_avs, "MUVES_Component" )) != NULL ) {
 			/* add this attribute */
 			jstring jmuvesName;
 
@@ -2076,7 +2076,7 @@ fillItemTree( jobject parent_node,
 			(*env)->CallVoidMethod( env, node, itemTree_setMuvesName_id, jmuvesName );
 
 			/* check for any exceptions */
-			if( (*env)->ExceptionOccurred(env) ) {
+			if ( (*env)->ExceptionOccurred(env) ) {
 				fprintf( stderr, "Exception thrown while setting the ItemTree MuvesName\n" );
 				(*env)->ExceptionDescribe(env);
 				rt_db_free_internal( &intern, &rt_uniresource );
@@ -2090,7 +2090,7 @@ fillItemTree( jobject parent_node,
 		ident = comb->region_id;
 		(*env)->CallVoidMethod( env, node, itemTree_setIdentNumber_id, ident );
 		/* check for any exceptions */
-		if( (*env)->ExceptionOccurred(env) ) {
+		if ( (*env)->ExceptionOccurred(env) ) {
 			fprintf( stderr, "Exception thrown while setting the ItemTree ident number\n" );
 			(*env)->ExceptionDescribe(env);
 			rt_db_free_internal( &intern, &rt_uniresource );
@@ -2101,7 +2101,7 @@ fillItemTree( jobject parent_node,
 		los = comb->los;
 		(*env)->CallVoidMethod( env, node, itemTree_setLos_id, los );
 		/* check for any exceptions */
-		if( (*env)->ExceptionOccurred(env) ) {
+		if ( (*env)->ExceptionOccurred(env) ) {
 			fprintf( stderr, "Exception thrown while setting the ItemTree los number\n" );
 			(*env)->ExceptionDescribe(env);
 			rt_db_free_internal( &intern, &rt_uniresource );
@@ -2112,7 +2112,7 @@ fillItemTree( jobject parent_node,
 		uses = dp->d_uses;
 		(*env)->CallVoidMethod( env, node, itemTree_setUseCount_id, uses );
 		/* check for any exceptions */
-		if( (*env)->ExceptionOccurred(env) ) {
+		if ( (*env)->ExceptionOccurred(env) ) {
 			fprintf( stderr, "Exception thrown while setting the ItemTree use count\n" );
 			(*env)->ExceptionDescribe(env);
 			rt_db_free_internal( &intern, &rt_uniresource );
@@ -2125,11 +2125,11 @@ fillItemTree( jobject parent_node,
 		return;
 	}
 
-	if( dp->d_flags & DIR_COMB ) {
+	if ( dp->d_flags & DIR_COMB ) {
 		/* recurse into this combination */
 		struct rt_comb_internal *comb;
 
-		if( (id = rt_db_get_internal( &intern, dp, dbip, NULL, &rt_uniresource ) ) < 0 ) {
+		if ( (id = rt_db_get_internal( &intern, dp, dbip, NULL, &rt_uniresource ) ) < 0 ) {
 			fprintf( stderr, "Failed to get internal form of BRL-CAD object (%s)\n", name );
 			return;
 		}
@@ -2138,7 +2138,7 @@ fillItemTree( jobject parent_node,
 		RT_CHECK_COMB( comb );
 
 		/* check for MUVES_Component */
-		if( (muvesName=bu_avs_get( &intern.idb_avs, "MUVES_Component" )) != NULL ) {
+		if ( (muvesName=bu_avs_get( &intern.idb_avs, "MUVES_Component" )) != NULL ) {
 			/* add this attribute */
 			jstring jmuvesName;
 
@@ -2146,7 +2146,7 @@ fillItemTree( jobject parent_node,
 			(*env)->CallVoidMethod( env, node, itemTree_setMuvesName_id, jmuvesName );
 
 			/* check for any exceptions */
-			if( (*env)->ExceptionOccurred(env) ) {
+			if ( (*env)->ExceptionOccurred(env) ) {
 				fprintf( stderr, "Exception thrown while setting the ItemTree MuvesName\n" );
 				(*env)->ExceptionDescribe(env);
 				return;
@@ -2196,20 +2196,20 @@ Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_getItemTree(JNIEnv *env, j
 	struct rtserver_geometry *rtsg;
 	int i;
 
-	if( sessionId < 0 || sessionId >= num_geometries ) {
+	if ( sessionId < 0 || sessionId >= num_geometries ) {
 		fprintf( stderr, "Called getItemTree with invalid sessionId\n" );
 		return( (jobject)NULL );
 	}
 
 	/* get the JAVA ItemTree class */
-	if( (itemTree_class=(*env)->FindClass( env, "mil/army/arl/geometryservice/datatypes/ItemTree" )) == NULL ) {
+	if ( (itemTree_class=(*env)->FindClass( env, "mil/army/arl/geometryservice/datatypes/ItemTree" )) == NULL ) {
 		fprintf( stderr, "Failed to find ItemTree class\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
 	}
 
 	/* get the JAVA method id for the ItemTree class constructor */
-	if( (itemTree_constructor_id=(*env)->GetMethodID( env, itemTree_class, "<init>",
+	if ( (itemTree_constructor_id=(*env)->GetMethodID( env, itemTree_class, "<init>",
 	    "(Ljava/lang/String;)V" )) == NULL ) {
 		fprintf( stderr, "Failed to get method id for ItemTree constructor\n" );
 		(*env)->ExceptionDescribe(env);
@@ -2217,7 +2217,7 @@ Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_getItemTree(JNIEnv *env, j
 	}
 
 	/* get the JAVA method id for the ItemTree addSubcomponent method */
-	if( (itemTree_addcomponent_id=(*env)->GetMethodID( env, itemTree_class, "addSubComponent",
+	if ( (itemTree_addcomponent_id=(*env)->GetMethodID( env, itemTree_class, "addSubComponent",
 	    "(Lmil/army/arl/geometryservice/datatypes/ItemTree;)V" )) == NULL ) {
 		fprintf( stderr, "Failed to get method id for ItemTree addSubComponent method\n" );
 		(*env)->ExceptionDescribe(env);
@@ -2225,7 +2225,7 @@ Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_getItemTree(JNIEnv *env, j
 	}
 
 	/* get the JAVA method id for the ItemTree setMuvesComponentName method */
-	if( (itemTree_setMuvesName_id=(*env)->GetMethodID( env, itemTree_class, "setMuvesComponentName",
+	if ( (itemTree_setMuvesName_id=(*env)->GetMethodID( env, itemTree_class, "setMuvesComponentName",
 	     "(Ljava/lang/String;)V" )) == NULL ) {
 		fprintf( stderr, "Failed to get method id for ItemTree setMuvesComponentName method\n" );
 		(*env)->ExceptionDescribe(env);
@@ -2233,7 +2233,7 @@ Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_getItemTree(JNIEnv *env, j
 	}
 
 	/* get the JAVA method id for the ItemTree setIdentNumber method */
-	if( (itemTree_setIdentNumber_id=(*env)->GetMethodID( env, itemTree_class, "setIdentNumber",
+	if ( (itemTree_setIdentNumber_id=(*env)->GetMethodID( env, itemTree_class, "setIdentNumber",
 	     "(I)V" )) == NULL ) {
 		fprintf( stderr, "Failed to get method id for ItemTree setIdentNumber method\n" );
 		(*env)->ExceptionDescribe(env);
@@ -2241,7 +2241,7 @@ Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_getItemTree(JNIEnv *env, j
 	}
 
 	/* get the JAVA method id for the ItemTree setLos method */
-	if( (itemTree_setLos_id=(*env)->GetMethodID( env, itemTree_class, "setLos",
+	if ( (itemTree_setLos_id=(*env)->GetMethodID( env, itemTree_class, "setLos",
 	     "(I)V" )) == NULL ) {
 		fprintf( stderr, "Failed to get method id for ItemTree setLos method\n" );
 		(*env)->ExceptionDescribe(env);
@@ -2249,7 +2249,7 @@ Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_getItemTree(JNIEnv *env, j
 	}
 
 	/* get the JAVA method id for the ItemTree setMaterialName method */
-	if( (itemTree_setMaterialName_id=(*env)->GetMethodID( env, itemTree_class, "setMaterialName",
+	if ( (itemTree_setMaterialName_id=(*env)->GetMethodID( env, itemTree_class, "setMaterialName",
 	     "(Ljava/lang/String;)V" )) == NULL ) {
 		fprintf( stderr, "Failed to get method id for ItemTree setMaterialName method\n" );
 		(*env)->ExceptionDescribe(env);
@@ -2257,7 +2257,7 @@ Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_getItemTree(JNIEnv *env, j
 	}
 
 	/* get the JAVA method id for the ItemTree setUseCount method */
-	if( (itemTree_setUseCount_id=(*env)->GetMethodID( env, itemTree_class, "setUseCount",
+	if ( (itemTree_setUseCount_id=(*env)->GetMethodID( env, itemTree_class, "setUseCount",
 	     "(I)V" )) == NULL ) {
 		fprintf( stderr, "Failed to get method id for ItemTree setUseCount method\n" );
 		(*env)->ExceptionDescribe(env);
@@ -2269,7 +2269,7 @@ Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_getItemTree(JNIEnv *env, j
 	rootNode = (*env)->NewObject( env, itemTree_class, itemTree_constructor_id, nodeName );
 
 	/* check for any exceptions */
-	if( (*env)->ExceptionOccurred(env) ) {
+	if ( (*env)->ExceptionOccurred(env) ) {
 		fprintf( stderr, "Exception thrown while creating the ItemTree root node\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
@@ -2278,11 +2278,11 @@ Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_getItemTree(JNIEnv *env, j
 	/* traverse the model trees for this sessionid */
 	rtsg = rts_geometry[sessionId];
 	dbip = rtsg->rts_rtis[0]->rtrti_rtip->rti_dbip;
-	for( i=0 ; i<rtsg->rts_number_of_rtis ; i++ ) {
+	for ( i=0; i<rtsg->rts_number_of_rtis; i++ ) {
 		struct rtserver_rti *rts_rti=rtsg->rts_rtis[i];
 		int j;
 
-		for( j=0 ; j<rts_rti->rtrti_num_trees ; j++ ) {
+		for ( j=0; j<rts_rti->rtrti_num_trees; j++ ) {
 			fillItemTree( rootNode, dbip, env, rts_rti->rtrti_trees[j], itemTree_class,
 				      itemTree_constructor_id, itemTree_addcomponent_id, itemTree_setMuvesName_id,
 				      itemTree_setMaterialName_id, itemTree_setIdentNumber_id, itemTree_setLos_id, itemTree_setUseCount_id );
@@ -2322,7 +2322,7 @@ Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_rtsInit(JNIEnv *env, jobje
 	int thread_count, queue_count;
 	int i;
 
-	if( num_threads > 0 ) {
+	if ( num_threads > 0 ) {
 		pthread_mutex_unlock( &session_mutex );
 		return ret;
 	}
@@ -2330,7 +2330,7 @@ Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_rtsInit(JNIEnv *env, jobje
 	rts_shutdown();
 	rts_init();
 
-	if( len < 4 ) {
+	if ( len < 4 ) {
 		bu_log( "wrong number of args\n" );
 		pthread_mutex_unlock( &session_mutex );
 		return( (jint) 1 );
@@ -2343,7 +2343,7 @@ Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_rtsInit(JNIEnv *env, jobje
 	(*env)->ReleaseStringChars( env, jobj, (const jchar *)str);
 
 	/* do not use less than two queues */
-	if( queue_count + num_queues < 2 ) {
+	if ( queue_count + num_queues < 2 ) {
 		queue_count = 2 - num_queues;
 	}
 
@@ -2354,7 +2354,7 @@ Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_rtsInit(JNIEnv *env, jobje
 	(*env)->ReleaseStringChars( env, jobj, (const jchar *)str);
 
 	/* do not use less than one thread */
-	if( num_threads + thread_count < 1 ) {
+	if ( num_threads + thread_count < 1 ) {
 		thread_count = 1 - num_threads;
 	}
 
@@ -2364,13 +2364,13 @@ Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_rtsInit(JNIEnv *env, jobje
 
 	obj_list = (char **)bu_calloc( num_objects, sizeof( char *), "obj_list" );
 	jobj_name = (jstring *)bu_calloc( num_objects, sizeof( jstring ), "jobj_name" );
-	for( i=0 ; i<num_objects ; i++ ) {
+	for ( i=0; i<num_objects; i++ ) {
 		jobj_name[i] = (jstring)(*env)->GetObjectArrayElement( env, args, i+3 );
 		obj_list[i] = (char *)(*env)->GetStringUTFChars(env, jobj_name[i], 0);
 	}
 
 	/* load the geometry */
-	if( (rts_load_return=rts_load_geometry( file_name, 0, num_objects, obj_list, thread_count )) < 0 ) {
+	if ( (rts_load_return=rts_load_geometry( file_name, 0, num_objects, obj_list, thread_count )) < 0 ) {
 		bu_log( "Failed to load geometry, rts_load_geometry() returned %d\n", rts_load_return );
 		ret = 2;
 	} else {
@@ -2380,7 +2380,7 @@ Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_rtsInit(JNIEnv *env, jobje
 
 	/* release the JAVA String objects that we created */
 	(*env)->ReleaseStringChars( env, jfile_name, (const jchar *)file_name);
-	for( i=0 ; i<num_objects ; i++ ) {
+	for ( i=0; i<num_objects; i++ ) {
 		(*env)->ReleaseStringChars( env, jobj_name[i], (const jchar *)obj_list[i]);
 	}
 
@@ -2455,98 +2455,98 @@ Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_shootArray( JNIEnv *env, j
 	int row, col;
 
 	/* extract base point for array of rays */
-	if( (point_class = (*env)->GetObjectClass( env, jstart_pt ) ) == NULL ) {
+	if ( (point_class = (*env)->GetObjectClass( env, jstart_pt ) ) == NULL ) {
 		fprintf( stderr, "Failed to find Point class\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
 	}
 
 	fidpx = (*env)->GetFieldID( env, point_class, "x", "D" );
-	if( fidpx == 0 && (*env)->ExceptionOccurred(env) ) {
+	if ( fidpx == 0 && (*env)->ExceptionOccurred(env) ) {
 		fprintf( stderr, "Exception thrown while getting x-fid of ray start point\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
 	}
 
 	base_pt[X] = (jdouble)(*env)->GetDoubleField( env, jstart_pt, fidpx );
-	if( (*env)->ExceptionOccurred(env) ) {
+	if ( (*env)->ExceptionOccurred(env) ) {
 		fprintf( stderr, "Exception thrown while getting x coord of ray start point\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
 	}
 
 	fidpy = (*env)->GetFieldID( env, point_class, "y", "D" );
-	if( fidpy == 0 && (*env)->ExceptionOccurred(env) ) {
+	if ( fidpy == 0 && (*env)->ExceptionOccurred(env) ) {
 		fprintf( stderr, "Exception thrown while getting y-fid of ray start point\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
 	}
 
 	base_pt[Y] = (*env)->GetDoubleField( env, jstart_pt, fidpy );
-	if( (*env)->ExceptionOccurred(env) ) {
+	if ( (*env)->ExceptionOccurred(env) ) {
 		fprintf( stderr, "Exception thrown while getting y coord of ray start point\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
 	}
 
 	fidpz = (*env)->GetFieldID( env, point_class, "z", "D" );
-	if( fidpz == 0 && (*env)->ExceptionOccurred(env) ) {
+	if ( fidpz == 0 && (*env)->ExceptionOccurred(env) ) {
 		fprintf( stderr, "Exception thrown while getting z-fid of ray start point\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
 	}
 
 	base_pt[Z] = (*env)->GetDoubleField( env, jstart_pt, fidpz );
-	if( (*env)->ExceptionOccurred(env) ) {
+	if ( (*env)->ExceptionOccurred(env) ) {
 		fprintf( stderr, "Exception thrown while getting z coord of ray start point\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
 	}
 
 	/* extract direction vector for the rays */
-	if( (vect_class = (*env)->GetObjectClass( env, jdir ) ) == NULL ) {
+	if ( (vect_class = (*env)->GetObjectClass( env, jdir ) ) == NULL ) {
 		fprintf( stderr, "Failed to find Vector3 class\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
 	}
 
 	fidvx = (*env)->GetFieldID( env, vect_class, "x", "D" );
-	if( fidvx == 0 && (*env)->ExceptionOccurred(env) ) {
+	if ( fidvx == 0 && (*env)->ExceptionOccurred(env) ) {
 		fprintf( stderr, "Exception thrown while getting x-fid of ray direction\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
 	}
 
 	ray_dir[X] = (*env)->GetDoubleField( env, jdir, fidvx );
-	if( (*env)->ExceptionOccurred(env) ) {
+	if ( (*env)->ExceptionOccurred(env) ) {
 		fprintf( stderr, "Exception thrown while getting x coord of ray direction\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
 	}
 
 	fidvy = (*env)->GetFieldID( env, vect_class, "y", "D" );
-	if( fidvy == 0 && (*env)->ExceptionOccurred(env) ) {
+	if ( fidvy == 0 && (*env)->ExceptionOccurred(env) ) {
 		fprintf( stderr, "Exception thrown while getting y-fid of ray direction\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
 	}
 
 	ray_dir[Y] = (*env)->GetDoubleField( env, jdir, fidvy );
-	if( (*env)->ExceptionOccurred(env) ) {
+	if ( (*env)->ExceptionOccurred(env) ) {
 		fprintf( stderr, "Exception thrown while getting y coord of ray direction\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
 	}
 
 	fidvz = (*env)->GetFieldID( env, vect_class, "z", "D" );
-	if( fidvz == 0 && (*env)->ExceptionOccurred(env) ) {
+	if ( fidvz == 0 && (*env)->ExceptionOccurred(env) ) {
 		fprintf( stderr, "Exception thrown while getting z-fid of ray direction\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
 	}
 
 	ray_dir[Z] = (*env)->GetDoubleField( env, jdir, fidvz );
-	if( (*env)->ExceptionOccurred(env) ) {
+	if ( (*env)->ExceptionOccurred(env) ) {
 		fprintf( stderr, "Exception thrown while getting z coord of ray direction\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
@@ -2554,21 +2554,21 @@ Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_shootArray( JNIEnv *env, j
 
 	/* extract row difference vector (the vector distance from one row to the next) */
 	row_dir[X] = (*env)->GetDoubleField( env, jrow_diff, fidvx );
-	if( (*env)->ExceptionOccurred(env) ) {
+	if ( (*env)->ExceptionOccurred(env) ) {
 		fprintf( stderr, "Exception thrown while getting x coord of row difference vector\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
 	}
 
 	row_dir[Y] = (*env)->GetDoubleField( env, jrow_diff, fidvy );
-	if( (*env)->ExceptionOccurred(env) ) {
+	if ( (*env)->ExceptionOccurred(env) ) {
 		fprintf( stderr, "Exception thrown while getting y coord of row difference vector\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
 	}
 
 	row_dir[Z] = (*env)->GetDoubleField( env, jrow_diff, fidvz );
-	if( (*env)->ExceptionOccurred(env) ) {
+	if ( (*env)->ExceptionOccurred(env) ) {
 		fprintf( stderr, "Exception thrown while getting z coord of row difference vector\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
@@ -2576,21 +2576,21 @@ Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_shootArray( JNIEnv *env, j
 
 	/* extract the column difference vector (the vector distance from column to the next) */
 	col_dir[X] = (*env)->GetDoubleField( env, jcol_diff, fidvx );
-	if( (*env)->ExceptionOccurred(env) ) {
+	if ( (*env)->ExceptionOccurred(env) ) {
 		fprintf( stderr, "Exception thrown while getting x coord of column difference vector\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
 	}
 
 	col_dir[Y] = (*env)->GetDoubleField( env, jcol_diff, fidvy );
-	if( (*env)->ExceptionOccurred(env) ) {
+	if ( (*env)->ExceptionOccurred(env) ) {
 		fprintf( stderr, "Exception thrown while getting y coord of column difference vector\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
 	}
 
 	col_dir[Z] = (*env)->GetDoubleField( env, jcol_diff, fidvz );
-	if( (*env)->ExceptionOccurred(env) ) {
+	if ( (*env)->ExceptionOccurred(env) ) {
 		fprintf( stderr, "Exception thrown while getting z coord of column difference vector\n" );
 		(*env)->ExceptionDescribe(env);
 		(*env)->ExceptionClear(env);
@@ -2598,9 +2598,9 @@ Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_shootArray( JNIEnv *env, j
 	}
 
 	/* throw an exception if we are asked to build an impossible array */
-	if( num_rows < 1 || num_cols < 1 ) {
+	if ( num_rows < 1 || num_cols < 1 ) {
 	    jclass rtServerUsageException = (*env)->FindClass( env, "mil/army/arl/geometryservice/GeometryServiceException" );
-	    if( rtServerUsageException == 0 ) {
+	    if ( rtServerUsageException == 0 ) {
 		return( (jobject)NULL );
 	    }
 	    (*env)->ThrowNew( env, rtServerUsageException, "neither rows nor columns can be less than 1" );
@@ -2617,8 +2617,8 @@ Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_shootArray( JNIEnv *env, j
 	ajob->maxHits = oneHit;
 
 	/* add all the requested rays to this job */
-	for( row=0 ; row < num_rows ; row++ ) {
-	    for( col=0 ; col < num_cols ; col++ ) {
+	for ( row=0; row < num_rows; row++ ) {
+	    for ( col=0; col < num_cols; col++ ) {
 		/* get a ray structure */
 		RTS_GET_XRAY( aray );
 		aray->index = row * num_cols + col;
@@ -2631,34 +2631,34 @@ Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_shootArray( JNIEnv *env, j
 	}
 
 	/* run this job */
-	if( verbose ) {
+	if ( verbose ) {
 	    fprintf( stderr, "Submitting a job\n" );
 	}
 	aresult = rts_submit_job_to_queue_and_wait( ajob, 1 );
-	if( verbose ) {
+	if ( verbose ) {
 	    fprintf( stderr, "Got C result\n" );
 	}
 
 	/* create Java array to hold results */
-	if( (rayResult_class = (*env)->FindClass( env, "mil/army/arl/geometryservice/datatypes/RayResult" )) == NULL ) {
+	if ( (rayResult_class = (*env)->FindClass( env, "mil/army/arl/geometryservice/datatypes/RayResult" )) == NULL ) {
 	    fprintf( stderr, "Failed to find RayResult class\n" );
 	    (*env)->ExceptionDescribe(env);
 	    return( (jobject)NULL );
 	}
-	if( (resultsArray = (*env)->NewObjectArray( env, num_rows * num_cols, rayResult_class, (jobject)NULL )) == NULL ) {
+	if ( (resultsArray = (*env)->NewObjectArray( env, num_rows * num_cols, rayResult_class, (jobject)NULL )) == NULL ) {
 	    fprintf( stderr, "Failed to create array of RayResults\n" );
 	    (*env)->ExceptionDescribe(env);
 	    return( (jobject)NULL );
 	}
 
-	if( (arrayClass = (*env)->FindClass( env, "java/lang/reflect/Array" ) ) == NULL ) {
+	if ( (arrayClass = (*env)->FindClass( env, "java/lang/reflect/Array" ) ) == NULL ) {
 	    fprintf( stderr, "Failed to find Array class\n" );
 	    (*env)->ExceptionDescribe(env);
 	    return( (jobject)NULL );
 	}
 
 	/* Get the method to set an element of an array */
-	if( (arraySetID = (*env)->GetStaticMethodID( env, arrayClass, "set", "(Ljava/lang/Object;ILjava/lang/Object;)V" )) == NULL ) {
+	if ( (arraySetID = (*env)->GetStaticMethodID( env, arrayClass, "set", "(Ljava/lang/Object;ILjava/lang/Object;)V" )) == NULL ) {
 	    fprintf( stderr, "Failed to find \"set\" method of Array\n" );
 	    (*env)->ExceptionDescribe(env);
 	    return( (jobject)NULL );
@@ -2666,17 +2666,17 @@ Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_shootArray( JNIEnv *env, j
 
 	/* Get the constructor for a Point */
 	point_constructorID = (*env)->GetMethodID( env, point_class, "<init>", "(DDD)V" );
-	if( point_constructorID == NULL ) {
+	if ( point_constructorID == NULL ) {
 	    fprintf( stderr, "Failed to find constructor for Point class\n" );
 	    (*env)->ExceptionDescribe(env);
 	    return( (jobject)NULL );
 	}
 
 	/* build result to return */
-	for( BU_LIST_FOR( ray_res, ray_result, &aresult->resultHead.l ) ) {
+	for ( BU_LIST_FOR( ray_res, ray_result, &aresult->resultHead.l ) ) {
 	    struct xray *theRay = &ray_res->the_ray;
 
-	    if( BU_LIST_NON_EMPTY( &ray_res->hitHead.l ) ) {
+	    if ( BU_LIST_NON_EMPTY( &ray_res->hitHead.l ) ) {
 		/* build a start Point for this ray */
 		jray_start_pt = (*env)->NewObject( env, point_class, point_constructorID, theRay->r_pt[X], theRay->r_pt[Y], theRay->r_pt[Z] );
 
@@ -2691,7 +2691,7 @@ Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_shootArray( JNIEnv *env, j
 	     * note that the ray "index" indicates where in the array it belongs
 	     */
 	    (*env)->CallStaticVoidMethod( env, arrayClass, arraySetID, resultsArray, theRay->index, jrayResult );
-	    if( (*env)->ExceptionOccurred(env) ) {
+	    if ( (*env)->ExceptionOccurred(env) ) {
 		fprintf( stderr, "Exception thrown while adding result to results array\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
@@ -2729,98 +2729,98 @@ Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_shootRay( JNIEnv *env, job
 	aray->index = 0;
 
 	/* extract start point */
-	if( (point_class = (*env)->GetObjectClass( env, jstart_pt ) ) == NULL ) {
+	if ( (point_class = (*env)->GetObjectClass( env, jstart_pt ) ) == NULL ) {
 		fprintf( stderr, "Failed to find Point class\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
 	}
 
 	fid = (*env)->GetFieldID( env, point_class, "x", "D" );
-	if( (*env)->ExceptionOccurred(env) ) {
+	if ( (*env)->ExceptionOccurred(env) ) {
 		fprintf( stderr, "Exception thrown while getting x-fid of ray start point\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
 	}
 
 	aray->r_pt[X] = (jdouble)(*env)->GetDoubleField( env, jstart_pt, fid );
-	if( (*env)->ExceptionOccurred(env) ) {
+	if ( (*env)->ExceptionOccurred(env) ) {
 		fprintf( stderr, "Exception thrown while getting x coord of ray start point\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
 	}
 
 	fid = (*env)->GetFieldID( env, point_class, "y", "D" );
-	if( (*env)->ExceptionOccurred(env) ) {
+	if ( (*env)->ExceptionOccurred(env) ) {
 		fprintf( stderr, "Exception thrown while getting y-fid of ray start point\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
 	}
 
 	aray->r_pt[Y] = (*env)->GetDoubleField( env, jstart_pt, fid );
-	if( (*env)->ExceptionOccurred(env) ) {
+	if ( (*env)->ExceptionOccurred(env) ) {
 		fprintf( stderr, "Exception thrown while getting y coord of ray start point\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
 	}
 
 	fid = (*env)->GetFieldID( env, point_class, "z", "D" );
-	if( (*env)->ExceptionOccurred(env) ) {
+	if ( (*env)->ExceptionOccurred(env) ) {
 		fprintf( stderr, "Exception thrown while getting z-fid of ray start point\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
 	}
 
 	aray->r_pt[Z] = (*env)->GetDoubleField( env, jstart_pt, fid );
-	if( (*env)->ExceptionOccurred(env) ) {
+	if ( (*env)->ExceptionOccurred(env) ) {
 		fprintf( stderr, "Exception thrown while getting z coord of ray start point\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
 	}
 
 	/* extract direction vector */
-	if( (vect_class = (*env)->GetObjectClass( env, jdir ) ) == NULL ) {
+	if ( (vect_class = (*env)->GetObjectClass( env, jdir ) ) == NULL ) {
 		fprintf( stderr, "Failed to find Vector3 class\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
 	}
 
 	fid = (*env)->GetFieldID( env, vect_class, "x", "D" );
-	if( (*env)->ExceptionOccurred(env) ) {
+	if ( (*env)->ExceptionOccurred(env) ) {
 		fprintf( stderr, "Exception thrown while getting x-fid of ray direction\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
 	}
 
 	aray->r_dir[X] = (*env)->GetDoubleField( env, jdir, fid );
-	if( (*env)->ExceptionOccurred(env) ) {
+	if ( (*env)->ExceptionOccurred(env) ) {
 		fprintf( stderr, "Exception thrown while getting x coord of ray direction\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
 	}
 
 	fid = (*env)->GetFieldID( env, vect_class, "y", "D" );
-	if( (*env)->ExceptionOccurred(env) ) {
+	if ( (*env)->ExceptionOccurred(env) ) {
 		fprintf( stderr, "Exception thrown while getting y-fid of ray direction\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
 	}
 
 	aray->r_dir[Y] = (*env)->GetDoubleField( env, jdir, fid );
-	if( (*env)->ExceptionOccurred(env) ) {
+	if ( (*env)->ExceptionOccurred(env) ) {
 		fprintf( stderr, "Exception thrown while getting y coord of ray direction\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
 	}
 
 	fid = (*env)->GetFieldID( env, vect_class, "z", "D" );
-	if( (*env)->ExceptionOccurred(env) ) {
+	if ( (*env)->ExceptionOccurred(env) ) {
 		fprintf( stderr, "Exception thrown while getting z-fid of ray direction\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
 	}
 
 	aray->r_dir[Z] = (*env)->GetDoubleField( env, jdir, fid );
-	if( (*env)->ExceptionOccurred(env) ) {
+	if ( (*env)->ExceptionOccurred(env) ) {
 		fprintf( stderr, "Exception thrown while getting z coord of ray direction\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
@@ -2837,11 +2837,11 @@ Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_shootRay( JNIEnv *env, job
 	RTS_ADD_RAY_TO_JOB( ajob, aray );
 
 	/* run this job */
-	if( verbose ) {
+	if ( verbose ) {
 	    fprintf( stderr, "Submitting a job\n" );
 	}
 	aresult = rts_submit_job_and_wait( ajob );
-	if( verbose ) {
+	if ( verbose ) {
 	    fprintf( stderr, "Got C result\n" );
 	}
 
@@ -2869,7 +2869,7 @@ Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_getBoundingBox(JNIEnv *env
 	jobject point1, point2, bb;
 	pointp_t min_pt, max_pt;
 
-	if( sessionId < 0 || sessionId >= num_geometries ) {
+	if ( sessionId < 0 || sessionId >= num_geometries ) {
 		fprintf( stderr, "Called getItemTree with invalid sessionId\n" );
 		return( (jobject)NULL );
 	}
@@ -2878,14 +2878,14 @@ Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_getBoundingBox(JNIEnv *env
 	max_pt = rts_geometry[sessionId]->rts_mdl_max;
 
 	/* get the BoundingBox class */
-	if( (boundingBox_class=(*env)->FindClass( env, "mil/army/arl/math/BoundingBox" ) ) == NULL ) {
+	if ( (boundingBox_class=(*env)->FindClass( env, "mil/army/arl/math/BoundingBox" ) ) == NULL ) {
 		fprintf( stderr, "Failed to find BoundingBox class\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
 	}
 
 	/* get the BoundingBox constructor id */
-	if( (boundingBox_constructor_id=(*env)->GetMethodID( env, boundingBox_class, "<init>",
+	if ( (boundingBox_constructor_id=(*env)->GetMethodID( env, boundingBox_class, "<init>",
 	     "(Lmil/army/arl/math/Point;Lmil/army/arl/math/Point;)V" ) ) == NULL ) {
 		fprintf( stderr, "Failed to find BoundingBox constructor method id\n" );
 		(*env)->ExceptionDescribe(env);
@@ -2893,14 +2893,14 @@ Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_getBoundingBox(JNIEnv *env
 	}
 
 	/* get the Point class */
-	if( (point_class=(*env)->FindClass( env, "mil/army/arl/math/Point" ) ) == NULL ) {
+	if ( (point_class=(*env)->FindClass( env, "mil/army/arl/math/Point" ) ) == NULL ) {
 		fprintf( stderr, "Failed to find Point class\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
 	}
 
 	/* get the Point constructor id */
-	if( (point_constructor_id=(*env)->GetMethodID( env, point_class, "<init>",
+	if ( (point_constructor_id=(*env)->GetMethodID( env, point_class, "<init>",
 	     "(DDD)V" ) ) == NULL ) {
 		fprintf( stderr, "Failed to find BoundingBox constructor method id\n" );
 		(*env)->ExceptionDescribe(env);
@@ -2909,13 +2909,13 @@ Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_getBoundingBox(JNIEnv *env
 
 	/* create the points of Bounding Box */
 	point1 = (*env)->NewObject( env, point_class, point_constructor_id, min_pt[X], min_pt[Y], min_pt[Z] );
-	if( (*env)->ExceptionOccurred(env) ) {
+	if ( (*env)->ExceptionOccurred(env) ) {
 		fprintf( stderr, "Exception thrown while creating minimum point for BoundingBox\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
 	}
 	point2 = (*env)->NewObject( env, point_class, point_constructor_id, max_pt[X], max_pt[Y], max_pt[Z] );
-	if( (*env)->ExceptionOccurred(env) ) {
+	if ( (*env)->ExceptionOccurred(env) ) {
 		fprintf( stderr, "Exception thrown while creating maximum point for BoundingBox\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
@@ -2923,7 +2923,7 @@ Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_getBoundingBox(JNIEnv *env
 
 	/* create the BoundingBox */
 	bb = (*env)->NewObject( env, boundingBox_class, boundingBox_constructor_id, point1, point2 );
-	if( (*env)->ExceptionOccurred(env) ) {
+	if ( (*env)->ExceptionOccurred(env) ) {
 		fprintf( stderr, "Exception thrown while creating BoundingBox\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
@@ -3028,8 +3028,8 @@ main( int argc, char *argv[] )
 	rts_resource_init();
 
 	/* process command line args */
-	while( (c=bu_getopt( argc, argv, "vs:n:t:q:ao:" ) ) != -1 ) {
-		switch( c ) {
+	while ( (c=bu_getopt( argc, argv, "vs:n:t:q:ao:" ) ) != -1 ) {
+		switch ( c ) {
 		case 'n':	/* number of cpus to use for prepping */
 			ncpus = atoi( bu_optarg );
 			break;
@@ -3057,23 +3057,23 @@ main( int argc, char *argv[] )
 	}
 
 	/* load geometry */
-	if( BU_PTBL_LEN( &objs ) > 0 ) {
+	if ( BU_PTBL_LEN( &objs ) > 0 ) {
 		char **objects;
 
 		objects = (char **)bu_malloc( BU_PTBL_LEN( &objs ) * sizeof( char *), "objects" );
-		for( i=0 ; i<BU_PTBL_LEN( &objs ) ; i++ ) {
+		for ( i=0; i<BU_PTBL_LEN( &objs ); i++ ) {
 			objects[i] = (char *)BU_PTBL_GET( &objs, i );
 		}
 		my_session_id = rts_load_geometry( argv[bu_optind], 0, BU_PTBL_LEN( &objs ), objects, thread_count );
 	} else {
-		if( bu_optind >= argc ) {
+		if ( bu_optind >= argc ) {
 			fprintf( stderr, "No BRL-CAD model specified\n" );
 			bu_exit(1, usage, argv[0]);
 		}
 		my_session_id = rts_load_geometry( argv[bu_optind], 0, 0, (char **)NULL, thread_count );
 	}
 
-	if( my_session_id < 0 ) {
+	if ( my_session_id < 0 ) {
 		bu_exit(2, "Failed to load geometry from file (%s)\n", argv[bu_optind] );
 	}
 
@@ -3082,7 +3082,7 @@ main( int argc, char *argv[] )
 	my_session_id = rts_open_session();
 	rts_close_session( my_session_id );
 	my_session_id = rts_open_session();
-	if( my_session_id < 0 ) {
+	if ( my_session_id < 0 ) {
 		bu_exit(2, "Failed to open session\n" );
 	} else {
 		fprintf( stderr, "Using session id %d\n", my_session_id );
@@ -3090,10 +3090,10 @@ main( int argc, char *argv[] )
 #if 0
 	get_muves_components();
 
-	if( verbose ) {
+	if ( verbose ) {
 		fprintf( stderr, "MUVES Component List: (%d components)\n", comp_count );
 		i = 0;
-		while( names[i] ) {
+		while ( names[i] ) {
 			fprintf( stderr, "\t%d - %s\n", i, names[i] );
 			i++;
 		}
@@ -3115,14 +3115,14 @@ main( int argc, char *argv[] )
 	fprintf( stderr, "shot from (%g %g %g) in direction (%g %g %g):\n",
 		 V3ARGS( aray->r_pt ),
 		 V3ARGS( aray->r_dir ) );
-	if( !aresult->got_some_hits ) {
+	if ( !aresult->got_some_hits ) {
 		fprintf( stderr, "\tMissed\n" );
 	} else {
 		struct ray_result *ray_res;
 		struct ray_hit *ahit;
 
 		ray_res = BU_LIST_FIRST( ray_result, &aresult->resultHead.l );
-		for( BU_LIST_FOR( ahit, ray_hit, &ray_res->hitHead.l ) ) {
+		for ( BU_LIST_FOR( ahit, ray_hit, &ray_res->hitHead.l ) ) {
 			fprintf( stderr, "\thit on comp %d at dist = %g los = %g\n",
 				 ahit->comp_id, ahit->hit_dist, ahit->los );
 		}
@@ -3136,8 +3136,8 @@ main( int argc, char *argv[] )
 	VSET( zdir, 0, 0, 1 );
 	VSUB2( model_size, rts_geometry[my_session_id]->rts_mdl_max, rts_geometry[my_session_id]->rts_mdl_min );
 	cell_size = model_size[X] / grid_size;
-	for( i=0 ; i<grid_size ; i++ ) {
-		for( j=0 ; j<grid_size ; j++ ) {
+	for ( i=0; i<grid_size; i++ ) {
+		for ( j=0; j<grid_size; j++ ) {
 			RTS_GET_RTSERVER_JOB( ajob );
 			ajob->rtjob_id = (grid_size - i - 1)*1000 + j;
 			ajob->sessionid = my_session_id;
@@ -3160,26 +3160,26 @@ main( int argc, char *argv[] )
 
 
 	result_map = (char **)bu_calloc( grid_size, sizeof( char *), "result_map" );
-	for( i=0 ; i<grid_size ; i++ ) {
+	for ( i=0; i<grid_size; i++ ) {
 		result_map[i] = (char *)bu_calloc( (grid_size+1), sizeof( char ), "result_map[i]" );
 	}
 	/* get all the results */
-	while( job_count ) {
+	while ( job_count ) {
 		aresult = rts_get_any_waiting_result( my_session_id );
-		if( aresult ) {
+		if ( aresult ) {
 			i = aresult->the_job->rtjob_id/1000;
 			j = aresult->the_job->rtjob_id%1000;
-			if( aresult->got_some_hits ) {
+			if ( aresult->got_some_hits ) {
 				/* count hits */
 				struct ray_hit *ahit;
 				struct ray_result *ray_res;
 				int hit_count=0;
 
 				ray_res = BU_LIST_FIRST( ray_result, &aresult->resultHead.l );
-				for( BU_LIST_FOR( ahit, ray_hit, &ray_res->hitHead.l ) ) {
+				for ( BU_LIST_FOR( ahit, ray_hit, &ray_res->hitHead.l ) ) {
 					hit_count++;
 				}
-				if( hit_count <= 9 ) {
+				if ( hit_count <= 9 ) {
 					result_map[i][j] = '0' + hit_count;
 				} else {
 					result_map[i][j] = '*';
@@ -3193,7 +3193,7 @@ main( int argc, char *argv[] )
 		}
 	}
 
-	for( i=0 ; i<grid_size ; i++ ) {
+	for ( i=0; i<grid_size; i++ ) {
 		fprintf( stderr, "%s\n", result_map[i] );
 	}
 

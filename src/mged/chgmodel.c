@@ -98,7 +98,7 @@ f_itemair(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	if(argc < 3 || 6 < argc){
+	if (argc < 3 || 6 < argc){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -108,13 +108,13 @@ f_itemair(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  return TCL_ERROR;
 	}
 
-	if( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
+	if ( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
 	  return TCL_ERROR;
-	if( (dp->d_flags & DIR_COMB) == 0 )  {
+	if ( (dp->d_flags & DIR_COMB) == 0 )  {
 	  Tcl_AppendResult(interp, dp->d_namep, ": not a combination\n", (char *)NULL);
 	  return TCL_ERROR;
 	}
-	if( (dp->d_flags & DIR_REGION) == 0 )  {
+	if ( (dp->d_flags & DIR_REGION) == 0 )  {
 	  Tcl_AppendResult(interp, dp->d_namep, ": not a region\n", (char *)NULL);
 	  return TCL_ERROR;
 	}
@@ -128,19 +128,19 @@ f_itemair(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	 * If, on the other hand, either of <GIFTmater> and <los>
 	 * is not included, it is left unchanged.
 	 */
-	if( argc > 3 )  {
+	if ( argc > 3 )  {
 		air = atoi( argv[3] );
 	}
-	if( argc > 4 )  {
+	if ( argc > 4 )  {
 		GIFTmater = atoi( argv[4] );
 		GIFTmater_set = 1;
 	}
-	if( argc > 5 )  {
+	if ( argc > 5 )  {
 		los = atoi( argv[5] );
 		los_set = 1;
 	}
 
-	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )  {
+	if ( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )  {
 		TCL_READ_ERR_return;
 	}
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -153,7 +153,7 @@ f_itemair(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	if ( los_set )  {
 		comb->los = los;
 	}
-	if( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )  {
+	if ( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )  {
 		TCL_WRITE_ERR_return;
 	}
 	return TCL_OK;
@@ -174,7 +174,7 @@ f_mater(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	if(argc < 2 || 8 < argc){
+	if (argc < 2 || 8 < argc){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -184,24 +184,24 @@ f_mater(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  return TCL_ERROR;
 	}
 
-	if( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
+	if ( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
 	  return TCL_ERROR;
-	if( (dp->d_flags & DIR_COMB) == 0 )  {
+	if ( (dp->d_flags & DIR_COMB) == 0 )  {
 	  Tcl_AppendResult(interp, dp->d_namep, ": not a combination\n", (char *)NULL);
 	  return TCL_ERROR;
 	}
 
-	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )  {
+	if ( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )  {
 		TCL_READ_ERR_return;
 	}
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 	RT_CK_COMB(comb);
 
-	if( argc >= 3 )  {
-	  if( strncmp( argv[2], "del", 3 ) != 0 )  {
+	if ( argc >= 3 )  {
+	  if ( strncmp( argv[2], "del", 3 ) != 0 )  {
 		/* Material */
 		bu_vls_trunc( &comb->shader, 0 );
-		if( bu_shader_to_tcl_list( argv[2], &comb->shader ))
+		if ( bu_shader_to_tcl_list( argv[2], &comb->shader ))
 		{
 			Tcl_AppendResult(interp, "Problem with shader string: ", argv[2], (char *)NULL );
 			return TCL_ERROR;
@@ -214,9 +214,9 @@ f_mater(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  struct bu_vls tmp_vls;
 
 	  bu_vls_init( &tmp_vls );
-	  if( bu_vls_strlen( &comb->shader ) )
+	  if ( bu_vls_strlen( &comb->shader ) )
 	  {
-		if( bu_shader_to_key_eq( bu_vls_addr(&comb->shader), &tmp_vls ) )
+		if ( bu_shader_to_key_eq( bu_vls_addr(&comb->shader), &tmp_vls ) )
 		{
 			Tcl_AppendResult(interp, "Problem with on disk shader string: ", bu_vls_addr(&comb->shader), (char *)NULL );
 			bu_vls_free( &tmp_vls );
@@ -228,7 +228,7 @@ f_mater(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 			"\n", MORE_ARGS_STR,
 			"Shader?  ('del' to delete, CR to skip) ", (char *)NULL);
 
-	  if( bu_vls_strlen( &comb->shader ) == 0 )
+	  if ( bu_vls_strlen( &comb->shader ) == 0 )
 	    bu_vls_printf(&curr_cmd_list->cl_more_default, "del");
 	  else
 	    bu_vls_printf(&curr_cmd_list->cl_more_default, "\"%S\"", &tmp_vls );
@@ -238,12 +238,12 @@ f_mater(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  goto fail;
 	}
 
-	if(argc >= 4){
-	  if( strncmp(argv[3], "del", 3) == 0 ){
+	if (argc >= 4){
+	  if ( strncmp(argv[3], "del", 3) == 0 ){
 	    /* leave color as is */
 		comb->rgb_valid = 0;
 		skip_args = 2;
-	  }else if(argc < 6){	/* prompt for color */
+	  }else if (argc < 6){	/* prompt for color */
 	    goto color_prompt;
 	  }else{	/* change color */
 	    sscanf(argv[3], "%d", &r);
@@ -257,7 +257,7 @@ f_mater(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}else{
 	/* Color */
 color_prompt:
-	  if( comb->rgb_valid ){
+	  if ( comb->rgb_valid ){
 	    struct bu_vls tmp_vls;
 
 	    bu_vls_init(&tmp_vls);
@@ -280,11 +280,11 @@ color_prompt:
 	  goto fail;
 	}
 
-	if(argc >= 7 - skip_args){
+	if (argc >= 7 - skip_args){
 	  inherit = *argv[6 - skip_args];
 	}else{
 	  /* Inherit */
-	  switch( comb->inherit )  {
+	  switch ( comb->inherit )  {
 	  case 0:
 	    Tcl_AppendResult(interp, "Inherit = 0:  lower nodes (towards leaves) override\n",
 			     (char *)NULL);
@@ -297,7 +297,7 @@ color_prompt:
 
 	  Tcl_AppendResult(interp, MORE_ARGS_STR,
 			   "Inheritance (0|1)? (CR to skip) ", (char *)NULL);
-	  switch( comb->inherit ) {
+	  switch ( comb->inherit ) {
 	  default:
 	    bu_vls_printf(&curr_cmd_list->cl_more_default, "1");
 	    break;
@@ -309,7 +309,7 @@ color_prompt:
 	  goto fail;
 	}
 
-	switch( inherit )  {
+	switch ( inherit )  {
 	case '1':
 		comb->inherit = 1;
 		break;
@@ -324,7 +324,7 @@ color_prompt:
 	  break;
 	}
 
-	if( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )  {
+	if ( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )  {
 		TCL_WRITE_ERR_return;
 	}
 	return TCL_OK;
@@ -345,7 +345,7 @@ f_edmater(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
   CHECK_DBI_NULL;
   CHECK_READ_ONLY;
 
-  if(argc < 2){
+  if (argc < 2){
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -363,7 +363,7 @@ f_edmater(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
   av = (char **)bu_malloc(sizeof(char *)*(argc + 2), "f_edmater: av");
   av[0] = "wmater";
   av[1] = tmpfil;
-  for(i = 2; i < argc + 1; ++i)
+  for (i = 2; i < argc + 1; ++i)
     av[i] = argv[i-1];
 
   av[i] = NULL;
@@ -406,7 +406,7 @@ f_wmater(
 
   CHECK_DBI_NULL;
 
-  if(argc < 3){
+  if (argc < 3){
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -416,23 +416,23 @@ f_wmater(
     return TCL_ERROR;
   }
 
-  if((fp = fopen(argv[1], "a")) == NULL){
+  if ((fp = fopen(argv[1], "a")) == NULL){
     Tcl_AppendResult(interp, "f_wmater: Failed to open file - ", argv[1], (char *)NULL);
     return TCL_ERROR;
   }
 
-  for(i = 2; i < argc; ++i){
-    if( (dp = db_lookup( dbip,  argv[i], LOOKUP_NOISY )) == DIR_NULL ){
+  for (i = 2; i < argc; ++i){
+    if ( (dp = db_lookup( dbip,  argv[i], LOOKUP_NOISY )) == DIR_NULL ){
       Tcl_AppendResult(interp, "f_wmater: Failed to find ", argv[i], "\n", (char *)NULL);
       status = TCL_ERROR;
       continue;
     }
-    if( (dp->d_flags & DIR_COMB) == 0 )  {
+    if ( (dp->d_flags & DIR_COMB) == 0 )  {
       Tcl_AppendResult(interp, dp->d_namep, ": not a combination\n", (char *)NULL);
       status = TCL_ERROR;
       continue;
     }
-	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )  {
+	if ( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )  {
 		TCL_READ_ERR;
 		status = TCL_ERROR;
 		continue;
@@ -478,7 +478,7 @@ f_rmater(
   CHECK_DBI_NULL;
   CHECK_READ_ONLY;
 
-  if(argc < 2 || 2 < argc){
+  if (argc < 2 || 2 < argc){
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -488,23 +488,23 @@ f_rmater(
     return TCL_ERROR;
   }
 
-  if((fp = fopen(argv[1], "r")) == NULL){
+  if ((fp = fopen(argv[1], "r")) == NULL){
     Tcl_AppendResult(interp, "f_rcodes: Failed to read file - ", argv[1], (char *)NULL);
     return TCL_ERROR;
   }
 
-  while(bu_fgets( line, LINELEN, fp ) != NULL){
-	if((extract_mater_from_line(line, name, shader,
+  while (bu_fgets( line, LINELEN, fp ) != NULL){
+	if ((extract_mater_from_line(line, name, shader,
 			    &r, &g, &b, &override, &inherit)) == TCL_ERROR)
 	continue;
 
-	if( (dp = db_lookup( dbip,  name, LOOKUP_NOISY )) == DIR_NULL ){
+	if ( (dp = db_lookup( dbip,  name, LOOKUP_NOISY )) == DIR_NULL ){
 		Tcl_AppendResult(interp, "f_rmater: Failed to find ", name, "\n", (char *)NULL);
 		status = TCL_ERROR;
 		continue;
 	}
 
-	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )  {
+	if ( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )  {
 		TCL_READ_ERR;
 		status = TCL_ERROR;
 	}
@@ -512,7 +512,7 @@ f_rmater(
 	RT_CK_COMB(comb);
 
 	/* Assign new values */
-	if(shader[0] == '-')
+	if (shader[0] == '-')
 		bu_vls_free( &comb->shader );
 	else
 		bu_vls_strcpy( &comb->shader, shader );
@@ -524,7 +524,7 @@ f_rmater(
 	comb->inherit = inherit;
 
 	/* Write new values to database */
-	if( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )  {
+	if ( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )  {
 		TCL_WRITE_ERR;
 		status = TCL_ERROR;
 	}
@@ -550,32 +550,32 @@ extract_mater_from_line(
   str[1] = shader;
 
   /* Extract first 2 strings. */
-  for(i=j=0; i < 2; ++i){
+  for (i=j=0; i < 2; ++i){
 
     /* skip white space */
-    while(line[j] == ' ' || line[j] == '\t')
+    while (line[j] == ' ' || line[j] == '\t')
       ++j;
 
-    if(line[j] == '\0')
+    if (line[j] == '\0')
       return TCL_ERROR;
 
     /* We found a double quote, so use everything between the quotes */
-    if(line[j] == '"'){
-      for(k = 0, ++j; line[j] != '"' && line[j] != '\0'; ++j, ++k)
+    if (line[j] == '"'){
+      for (k = 0, ++j; line[j] != '"' && line[j] != '\0'; ++j, ++k)
 	str[i][k] = line[j];
     }else{
-      for(k = 0; line[j] != ' ' && line[j] != '\t' && line[j] != '\0'; ++j, ++k)
+      for (k = 0; line[j] != ' ' && line[j] != '\t' && line[j] != '\0'; ++j, ++k)
 	str[i][k] = line[j];
     }
 
-    if(line[j] == '\0')
+    if (line[j] == '\0')
       return TCL_ERROR;
 
     str[i][k] = '\0';
     ++j;
   }
 
-  if((sscanf(line + j, "%d%d%d%d%d", r, g, b, override, inherit)) != 5)
+  if ((sscanf(line + j, "%d%d%d%d%d", r, g, b, override, inherit)) != 5)
     return TCL_ERROR;
 
   return TCL_OK;
@@ -600,7 +600,7 @@ f_comb_color(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     CHECK_DBI_NULL;
     CHECK_READ_ONLY;
 
-    if(argc < 5 || 5 < argc){
+    if (argc < 5 || 5 < argc){
       struct bu_vls vls;
 
       bu_vls_init(&vls);
@@ -612,12 +612,12 @@ f_comb_color(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     if ((dp = db_lookup(dbip,  argv[1], LOOKUP_NOISY)) == DIR_NULL)
       return TCL_ERROR;
-    if( (dp->d_flags & DIR_COMB) == 0 )  {
+    if ( (dp->d_flags & DIR_COMB) == 0 )  {
       Tcl_AppendResult(interp, dp->d_namep, ": not a combination\n", (char *)NULL);
       return TCL_ERROR;
     }
 
-	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )  {
+	if ( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )  {
 		TCL_READ_ERR_return;
 	}
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -636,7 +636,7 @@ f_comb_color(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     }
 
 	comb->rgb_valid = 1;
-	if( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )  {
+	if ( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )  {
 		TCL_WRITE_ERR_return;
 	}
 	return TCL_OK;
@@ -657,7 +657,7 @@ f_shader(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	CHECK_DBI_NULL;
 
-	if(argc < 2){
+	if (argc < 2){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -667,20 +667,20 @@ f_shader(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  return TCL_ERROR;
 	}
 
-	if( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
+	if ( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
 	  return TCL_ERROR;
-	if( (dp->d_flags & DIR_COMB) == 0 )  {
+	if ( (dp->d_flags & DIR_COMB) == 0 )  {
 	  Tcl_AppendResult(interp, dp->d_namep, ": not a combination\n", (char *)NULL);
 	  return TCL_ERROR;
 	}
 
-	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )  {
+	if ( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )  {
 		TCL_READ_ERR_return;
 	}
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 	RT_CK_COMB(comb);
 
-	if(argc == 2)  {
+	if (argc == 2)  {
 		/* Return the current shader string */
 		Tcl_AppendResult( interp, bu_vls_addr(&comb->shader), (char *)NULL);
 		rt_db_free_internal( &intern, &rt_uniresource );
@@ -693,7 +693,7 @@ f_shader(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		/* Bunch up the rest of the args, space separated */
 		bu_vls_from_argv( &comb->shader, argc-2, (const char **)argv+2 );
 
-		if( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )  {
+		if ( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )  {
 			TCL_WRITE_ERR_return;
 		}
 		/* Internal representation has been freed by rt_db_put_internal */
@@ -713,7 +713,7 @@ f_mirror(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     CHECK_DBI_NULL;
     CHECK_READ_ONLY;
 
-    if(argc < 4 || 4 < argc){
+    if (argc < 4 || 4 < argc){
 	struct bu_vls vls;
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help mirror");
@@ -724,13 +724,13 @@ f_mirror(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     /* validate the axis */
     k = -1;
-    if( strcmp( argv[3], "x" ) == 0 )
+    if ( strcmp( argv[3], "x" ) == 0 )
 	k = 0;
-    if( strcmp( argv[3], "y" ) == 0 )
+    if ( strcmp( argv[3], "y" ) == 0 )
 	k = 1;
-    if( strcmp( argv[3], "z" ) == 0 )
+    if ( strcmp( argv[3], "z" ) == 0 )
 	k = 2;
-    if( k < 0 ) {
+    if ( k < 0 ) {
 	Tcl_AppendResult(interp, "axis must be x, y or z\n", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -764,7 +764,7 @@ f_edcomb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	if(argc < 6 || 7 < argc){
+	if (argc < 6 || 7 < argc){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -774,9 +774,9 @@ f_edcomb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  return TCL_ERROR;
 	}
 
-	if( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
+	if ( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
 	  return TCL_ERROR;
-	if( (dp->d_flags & DIR_COMB) == 0 )  {
+	if ( (dp->d_flags & DIR_COMB) == 0 )  {
 	  Tcl_AppendResult(interp, dp->d_namep, ": not a combination\n", (char *)NULL);
 	  return TCL_ERROR;
 	}
@@ -786,13 +786,13 @@ f_edcomb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	los = atoi( argv[5] );
 	mat = atoi( argv[6] );
 
-	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )  {
+	if ( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )  {
 		TCL_READ_ERR_return;
 	}
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 	RT_CK_COMB(comb);
 
-	if( argv[2][0] == 'R' )
+	if ( argv[2][0] == 'R' )
 		comb->region_flag = 1;
 	else
 		comb->region_flag = 0;
@@ -800,7 +800,7 @@ f_edcomb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	comb->aircode = air;
 	comb->los = los;
 	comb->GIFTmater = mat;
-	if( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )  {
+	if ( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )  {
 		TCL_WRITE_ERR_return;
 	}
 	return TCL_OK;
@@ -849,10 +849,10 @@ f_make(ClientData	clientData,
 	struct rt_superell_internal	*superell_ip;
 	struct rt_metaball_internal	*metaball_ip;
 
-	if(argc == 2){
+	if (argc == 2){
 	  struct bu_vls vls;
 
-	  if(argv[1][0] == '-' && argv[1][1] == 't'){
+	  if (argv[1][0] == '-' && argv[1][1] == 't'){
 	    Tcl_AppendElement(interp, "arb8");
 	    Tcl_AppendElement(interp, "arb7");
 	    Tcl_AppendElement(interp, "arb6");
@@ -899,7 +899,7 @@ f_make(ClientData	clientData,
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	if(argc != 3){
+	if (argc != 3){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -909,7 +909,7 @@ f_make(ClientData	clientData,
 	  return TCL_ERROR;
 	}
 
-	if( db_lookup( dbip,  argv[1], LOOKUP_QUIET ) != DIR_NULL )  {
+	if ( db_lookup( dbip,  argv[1], LOOKUP_QUIET ) != DIR_NULL )  {
 	  aexists( argv[1] );
 	  return TCL_ERROR;
 	}
@@ -930,18 +930,18 @@ f_make(ClientData	clientData,
 			-view_state->vs_vop->vo_center[MDX] +view_state->vs_vop->vo_scale,
 			-view_state->vs_vop->vo_center[MDY] -view_state->vs_vop->vo_scale,
 			-view_state->vs_vop->vo_center[MDZ] -view_state->vs_vop->vo_scale );
-		for( i=1 ; i<8 ; i++ )			VMOVE( arb_ip->pt[i], arb_ip->pt[0] );
+		for ( i=1; i<8; i++ )			VMOVE( arb_ip->pt[i], arb_ip->pt[0] );
 		arb_ip->pt[1][Y] += view_state->vs_vop->vo_scale*2.0;
 		arb_ip->pt[2][Y] += view_state->vs_vop->vo_scale*2.0;
 		arb_ip->pt[2][Z] += view_state->vs_vop->vo_scale*2.0;
 		arb_ip->pt[3][Z] += view_state->vs_vop->vo_scale*2.0;
-		for( i=4 ; i<8 ; i++ )
+		for ( i=4; i<8; i++ )
 			arb_ip->pt[i][X] -= view_state->vs_vop->vo_scale*2.0;
 		arb_ip->pt[5][Y] += view_state->vs_vop->vo_scale*2.0;
 		arb_ip->pt[6][Y] += view_state->vs_vop->vo_scale*2.0;
 		arb_ip->pt[6][Z] += view_state->vs_vop->vo_scale*2.0;
 		arb_ip->pt[7][Z] += view_state->vs_vop->vo_scale*2.0;
-	} else if( strcmp( argv[2], "arb7" ) == 0 )  {
+	} else if ( strcmp( argv[2], "arb7" ) == 0 )  {
 		internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		internal.idb_type = ID_ARB8;
 		internal.idb_meth = &rt_functab[ID_ARB8];
@@ -952,18 +952,18 @@ f_make(ClientData	clientData,
 			-view_state->vs_vop->vo_center[MDX] +view_state->vs_vop->vo_scale,
 			-view_state->vs_vop->vo_center[MDY] -view_state->vs_vop->vo_scale,
 			-view_state->vs_vop->vo_center[MDZ] -(0.5*view_state->vs_vop->vo_scale) );
-		for( i=1 ; i<8 ; i++ )
+		for ( i=1; i<8; i++ )
 			VMOVE( arb_ip->pt[i], arb_ip->pt[0] );
 		arb_ip->pt[1][Y] += view_state->vs_vop->vo_scale*2.0;
 		arb_ip->pt[2][Y] += view_state->vs_vop->vo_scale*2.0;
 		arb_ip->pt[2][Z] += view_state->vs_vop->vo_scale*2.0;
 		arb_ip->pt[3][Z] += view_state->vs_vop->vo_scale;
-		for( i=4 ; i<8 ; i++ )
+		for ( i=4; i<8; i++ )
 			arb_ip->pt[i][X] -= view_state->vs_vop->vo_scale*2.0;
 		arb_ip->pt[5][Y] += view_state->vs_vop->vo_scale*2.0;
 		arb_ip->pt[6][Y] += view_state->vs_vop->vo_scale*2.0;
 		arb_ip->pt[6][Z] += view_state->vs_vop->vo_scale;
-	} else if( strcmp( argv[2], "arb6" ) == 0 )  {
+	} else if ( strcmp( argv[2], "arb6" ) == 0 )  {
 		internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		internal.idb_type = ID_ARB8;
 		internal.idb_meth = &rt_functab[ID_ARB8];
@@ -974,13 +974,13 @@ f_make(ClientData	clientData,
 			-view_state->vs_vop->vo_center[MDX] +view_state->vs_vop->vo_scale,
 			-view_state->vs_vop->vo_center[MDY] -view_state->vs_vop->vo_scale,
 			-view_state->vs_vop->vo_center[MDZ] -view_state->vs_vop->vo_scale );
-		for( i=1 ; i<8 ; i++ )
+		for ( i=1; i<8; i++ )
 			VMOVE( arb_ip->pt[i], arb_ip->pt[0] );
 		arb_ip->pt[1][Y] += view_state->vs_vop->vo_scale*2.0;
 		arb_ip->pt[2][Y] += view_state->vs_vop->vo_scale*2.0;
 		arb_ip->pt[2][Z] += view_state->vs_vop->vo_scale*2.0;
 		arb_ip->pt[3][Z] += view_state->vs_vop->vo_scale*2.0;
-		for( i=4 ; i<8 ; i++ )
+		for ( i=4; i<8; i++ )
 			arb_ip->pt[i][X] -= view_state->vs_vop->vo_scale*2.0;
 		arb_ip->pt[4][Y] += view_state->vs_vop->vo_scale;
 		arb_ip->pt[5][Y] += view_state->vs_vop->vo_scale;
@@ -988,7 +988,7 @@ f_make(ClientData	clientData,
 		arb_ip->pt[6][Z] += view_state->vs_vop->vo_scale*2.0;
 		arb_ip->pt[7][Y] += view_state->vs_vop->vo_scale;
 		arb_ip->pt[7][Z] += view_state->vs_vop->vo_scale*2.0;
-	} else if( strcmp( argv[2], "arb5" ) == 0 )  {
+	} else if ( strcmp( argv[2], "arb5" ) == 0 )  {
 		internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		internal.idb_type = ID_ARB8;
 		internal.idb_meth = &rt_functab[ID_ARB8];
@@ -999,19 +999,19 @@ f_make(ClientData	clientData,
 			-view_state->vs_vop->vo_center[MDX] +view_state->vs_vop->vo_scale,
 			-view_state->vs_vop->vo_center[MDY] -view_state->vs_vop->vo_scale,
 			-view_state->vs_vop->vo_center[MDZ] -view_state->vs_vop->vo_scale );
-		for( i=1 ; i<8 ; i++ )
+		for ( i=1; i<8; i++ )
 			VMOVE( arb_ip->pt[i], arb_ip->pt[0] );
 		arb_ip->pt[1][Y] += view_state->vs_vop->vo_scale*2.0;
 		arb_ip->pt[2][Y] += view_state->vs_vop->vo_scale*2.0;
 		arb_ip->pt[2][Z] += view_state->vs_vop->vo_scale*2.0;
 		arb_ip->pt[3][Z] += view_state->vs_vop->vo_scale*2.0;
-		for( i=4 ; i<8 ; i++ )
+		for ( i=4; i<8; i++ )
 		{
 			arb_ip->pt[i][X] -= view_state->vs_vop->vo_scale*2.0;
 			arb_ip->pt[i][Y] += view_state->vs_vop->vo_scale;
 			arb_ip->pt[i][Z] += view_state->vs_vop->vo_scale;
 		}
-	} else if( strcmp( argv[2], "arb4" ) == 0 )  {
+	} else if ( strcmp( argv[2], "arb4" ) == 0 )  {
 		internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		internal.idb_type = ID_ARB8;
 		internal.idb_meth = &rt_functab[ID_ARB8];
@@ -1022,19 +1022,19 @@ f_make(ClientData	clientData,
 			-view_state->vs_vop->vo_center[MDX] +view_state->vs_vop->vo_scale,
 			-view_state->vs_vop->vo_center[MDY] -view_state->vs_vop->vo_scale,
 			-view_state->vs_vop->vo_center[MDZ] -view_state->vs_vop->vo_scale );
-		for( i=1 ; i<8 ; i++ )
+		for ( i=1; i<8; i++ )
 			VMOVE( arb_ip->pt[i], arb_ip->pt[0] );
 		arb_ip->pt[1][Y] += view_state->vs_vop->vo_scale*2.0;
 		arb_ip->pt[2][Y] += view_state->vs_vop->vo_scale*2.0;
 		arb_ip->pt[2][Z] += view_state->vs_vop->vo_scale*2.0;
 		arb_ip->pt[3][Y] += view_state->vs_vop->vo_scale*2.0;
 		arb_ip->pt[3][Z] += view_state->vs_vop->vo_scale*2.0;
-		for( i=4 ; i<8 ; i++ )
+		for ( i=4; i<8; i++ )
 		{
 			arb_ip->pt[i][X] -= view_state->vs_vop->vo_scale*2.0;
 			arb_ip->pt[i][Y] += view_state->vs_vop->vo_scale*2.0;
 		}
-	} else if( strcmp( argv[2], "arbn") == 0 ) {
+	} else if ( strcmp( argv[2], "arbn") == 0 ) {
 		point_t view_center;
 
 		internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -1066,11 +1066,11 @@ f_make(ClientData	clientData,
 			-view_state->vs_vop->vo_center[MDX],
 			-view_state->vs_vop->vo_center[MDY],
 			-view_state->vs_vop->vo_center[MDZ] );
-		for( i=0 ; i<arbn_ip->neqn ; i++ ) {
+		for ( i=0; i<arbn_ip->neqn; i++ ) {
 			arbn_ip->eqn[i][3] +=
 				VDOT( view_center, arbn_ip->eqn[i] );
 		}
-	} else if( strcmp( argv[2], "ars" ) == 0 )  {
+	} else if ( strcmp( argv[2], "ars" ) == 0 )  {
 		int curve;
 		internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		internal.idb_type = ID_ARS;
@@ -1082,7 +1082,7 @@ f_make(ClientData	clientData,
 		ars_ip->pts_per_curve = 3;
 		ars_ip->curves = (fastf_t **)bu_malloc((ars_ip->ncurves+1) * sizeof(fastf_t **), "ars curve ptrs" );
 
-		for ( curve=0 ; curve < ars_ip->ncurves ; curve++ ) {
+		for ( curve=0; curve < ars_ip->ncurves; curve++ ) {
 		    ars_ip->curves[curve] = (fastf_t *)bu_calloc(
 			     (ars_ip->pts_per_curve + 1) * 3,
 			     sizeof(fastf_t), "ARS points");
@@ -1121,7 +1121,7 @@ f_make(ClientData	clientData,
 		    }
 		}
 
-	} else if( strcmp( argv[2], "sph" ) == 0 )  {
+	} else if ( strcmp( argv[2], "sph" ) == 0 )  {
 		internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		internal.idb_type = ID_ELL;
 		internal.idb_meth = &rt_functab[ID_ELL];
@@ -1132,7 +1132,7 @@ f_make(ClientData	clientData,
 		VSET( ell_ip->a, (0.5*view_state->vs_vop->vo_scale), 0.0, 0.0 );	/* A */
 		VSET( ell_ip->b, 0.0, (0.5*view_state->vs_vop->vo_scale), 0.0 );	/* B */
 		VSET( ell_ip->c, 0.0, 0.0, (0.5*view_state->vs_vop->vo_scale) );	/* C */
-	} else if(( strcmp( argv[2], "grp" ) == 0 ) ||
+	} else if (( strcmp( argv[2], "grp" ) == 0 ) ||
 		  ( strcmp( argv[2], "grip") == 0 )) {
 		internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		internal.idb_type = ID_GRIP;
@@ -1144,7 +1144,7 @@ f_make(ClientData	clientData,
 		    -view_state->vs_vop->vo_center[MDZ]);
 		VSET( grp_ip->normal, 1.0, 0.0, 0.0);
 		grp_ip->mag = view_state->vs_vop->vo_scale*0.75;
-	} else if( strcmp( argv[2], "ell1" ) == 0 )  {
+	} else if ( strcmp( argv[2], "ell1" ) == 0 )  {
 		internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		internal.idb_type = ID_ELL;
 		internal.idb_meth = &rt_functab[ID_ELL];
@@ -1155,7 +1155,7 @@ f_make(ClientData	clientData,
 		VSET( ell_ip->a, (0.5*view_state->vs_vop->vo_scale), 0.0, 0.0 );	/* A */
 		VSET( ell_ip->b, 0.0, (0.25*view_state->vs_vop->vo_scale), 0.0 );	/* B */
 		VSET( ell_ip->c, 0.0, 0.0, (0.25*view_state->vs_vop->vo_scale) );	/* C */
-	} else if( strcmp( argv[2], "ell" ) == 0 )  {
+	} else if ( strcmp( argv[2], "ell" ) == 0 )  {
 		internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		internal.idb_type = ID_ELL;
 		internal.idb_meth = &rt_functab[ID_ELL];
@@ -1166,7 +1166,7 @@ f_make(ClientData	clientData,
 		VSET( ell_ip->a, view_state->vs_vop->vo_scale, 0.0, 0.0 );		/* A */
 		VSET( ell_ip->b, 0.0, (0.5*view_state->vs_vop->vo_scale), 0.0 );	/* B */
 		VSET( ell_ip->c, 0.0, 0.0, (0.25*view_state->vs_vop->vo_scale) );	/* C */
-	} else if( strcmp( argv[2], "tor" ) == 0 )  {
+	} else if ( strcmp( argv[2], "tor" ) == 0 )  {
 		internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		internal.idb_type = ID_TOR;
 		internal.idb_meth = &rt_functab[ID_TOR];
@@ -1180,7 +1180,7 @@ f_make(ClientData	clientData,
 		tor_ip->r_b = view_state->vs_vop->vo_scale;
 		VSET( tor_ip->a, 0.0, view_state->vs_vop->vo_scale, 0.0 );
 		VSET( tor_ip->b, 0.0, 0.0, view_state->vs_vop->vo_scale );
-	} else if( strcmp( argv[2], "tgc" ) == 0 )  {
+	} else if ( strcmp( argv[2], "tgc" ) == 0 )  {
 		internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		internal.idb_type = ID_TGC;
 		internal.idb_meth = &rt_functab[ID_TGC];
@@ -1193,7 +1193,7 @@ f_make(ClientData	clientData,
 		VSET( tgc_ip->b,  0.0, (0.25*view_state->vs_vop->vo_scale), 0.0 );
 		VSET( tgc_ip->c,  (0.25*view_state->vs_vop->vo_scale), 0.0, 0.0 );
 		VSET( tgc_ip->d,  0.0, (0.5*view_state->vs_vop->vo_scale), 0.0 );
-	} else if( strcmp( argv[2], "tec" ) == 0 )  {
+	} else if ( strcmp( argv[2], "tec" ) == 0 )  {
 		internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		internal.idb_type = ID_TGC;
 		internal.idb_meth = &rt_functab[ID_TGC];
@@ -1206,7 +1206,7 @@ f_make(ClientData	clientData,
 		VSET( tgc_ip->b,  0.0, (0.25*view_state->vs_vop->vo_scale), 0.0 );
 		VSET( tgc_ip->c,  (0.25*view_state->vs_vop->vo_scale), 0.0, 0.0 );
 		VSET( tgc_ip->d,  0.0, (0.125*view_state->vs_vop->vo_scale), 0.0 );
-	} else if( strcmp( argv[2], "rec" ) == 0 )  {
+	} else if ( strcmp( argv[2], "rec" ) == 0 )  {
 		internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		internal.idb_type = ID_TGC;
 		internal.idb_meth = &rt_functab[ID_TGC];
@@ -1219,7 +1219,7 @@ f_make(ClientData	clientData,
 		VSET( tgc_ip->b,  0.0, (0.25*view_state->vs_vop->vo_scale), 0.0 );
 		VSET( tgc_ip->c,  (0.5*view_state->vs_vop->vo_scale), 0.0, 0.0 );
 		VSET( tgc_ip->d,  0.0, (0.25*view_state->vs_vop->vo_scale), 0.0 );
-	} else if( strcmp( argv[2], "trc" ) == 0 )  {
+	} else if ( strcmp( argv[2], "trc" ) == 0 )  {
 		internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		internal.idb_type = ID_TGC;
 		internal.idb_meth = &rt_functab[ID_TGC];
@@ -1232,7 +1232,7 @@ f_make(ClientData	clientData,
 		VSET( tgc_ip->b,  0.0, (0.5*view_state->vs_vop->vo_scale), 0.0 );
 		VSET( tgc_ip->c,  (0.25*view_state->vs_vop->vo_scale), 0.0, 0.0 );
 		VSET( tgc_ip->d,  0.0, (0.25*view_state->vs_vop->vo_scale), 0.0 );
-	} else if( strcmp( argv[2], "rcc" ) == 0 )  {
+	} else if ( strcmp( argv[2], "rcc" ) == 0 )  {
 		internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		internal.idb_type = ID_TGC;
 		internal.idb_meth = &rt_functab[ID_TGC];
@@ -1245,7 +1245,7 @@ f_make(ClientData	clientData,
 		VSET( tgc_ip->b,  0.0, (0.5*view_state->vs_vop->vo_scale), 0.0 );
 		VSET( tgc_ip->c,  (0.5*view_state->vs_vop->vo_scale), 0.0, 0.0 );
 		VSET( tgc_ip->d,  0.0, (0.5*view_state->vs_vop->vo_scale), 0.0 );
-	} else if( strcmp( argv[2], "half" ) == 0 ) {
+	} else if ( strcmp( argv[2], "half" ) == 0 ) {
 		internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		internal.idb_type = ID_HALF;
 		internal.idb_meth = &rt_functab[ID_HALF];
@@ -1254,7 +1254,7 @@ f_make(ClientData	clientData,
 		half_ip->magic = RT_HALF_INTERNAL_MAGIC;
 		VSET( half_ip->eqn, 0.0, 0.0, 1.0 );
 		half_ip->eqn[3] = (-view_state->vs_vop->vo_center[MDZ]);
-	} else if( strcmp( argv[2], "rpc" ) == 0 ) {
+	} else if ( strcmp( argv[2], "rpc" ) == 0 ) {
 		internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		internal.idb_type = ID_RPC;
 		internal.idb_meth = &rt_functab[ID_RPC];
@@ -1265,7 +1265,7 @@ f_make(ClientData	clientData,
 		VSET( rpc_ip->rpc_H, 0.0, 0.0, view_state->vs_vop->vo_scale );
 		VSET( rpc_ip->rpc_B, 0.0, (view_state->vs_vop->vo_scale*0.5), 0.0 );
 		rpc_ip->rpc_r = view_state->vs_vop->vo_scale*0.25;
-	} else if( strcmp( argv[2], "rhc" ) == 0 ) {
+	} else if ( strcmp( argv[2], "rhc" ) == 0 ) {
 		internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		internal.idb_type = ID_RHC;
 		internal.idb_meth = &rt_functab[ID_RHC];
@@ -1277,7 +1277,7 @@ f_make(ClientData	clientData,
 		VSET( rhc_ip->rhc_B, 0.0, (view_state->vs_vop->vo_scale*0.5), 0.0 );
 		rhc_ip->rhc_r = view_state->vs_vop->vo_scale*0.25;
 		rhc_ip->rhc_c = view_state->vs_vop->vo_scale*0.10;
-	} else if( strcmp( argv[2], "epa" ) == 0 ) {
+	} else if ( strcmp( argv[2], "epa" ) == 0 ) {
 		internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		internal.idb_type = ID_EPA;
 		internal.idb_meth = &rt_functab[ID_EPA];
@@ -1289,7 +1289,7 @@ f_make(ClientData	clientData,
 		VSET( epa_ip->epa_Au, 0.0, 1.0, 0.0 );
 		epa_ip->epa_r1 = view_state->vs_vop->vo_scale*0.5;
 		epa_ip->epa_r2 = view_state->vs_vop->vo_scale*0.25;
-	} else if( strcmp( argv[2], "ehy" ) == 0 ) {
+	} else if ( strcmp( argv[2], "ehy" ) == 0 ) {
 		internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		internal.idb_type = ID_EHY;
 		internal.idb_meth = &rt_functab[ID_EHY];
@@ -1302,7 +1302,7 @@ f_make(ClientData	clientData,
 		ehy_ip->ehy_r1 = view_state->vs_vop->vo_scale*0.5;
 		ehy_ip->ehy_r2 = view_state->vs_vop->vo_scale*0.25;
 		ehy_ip->ehy_c = ehy_ip->ehy_r2;
-	} else if( strcmp( argv[2], "eto" ) == 0 ) {
+	} else if ( strcmp( argv[2], "eto" ) == 0 ) {
 		internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		internal.idb_type = ID_ETO;
 		internal.idb_meth = &rt_functab[ID_ETO];
@@ -1314,7 +1314,7 @@ f_make(ClientData	clientData,
 		VSET( eto_ip->eto_C, view_state->vs_vop->vo_scale*0.1, 0.0, view_state->vs_vop->vo_scale*0.1 );
 		eto_ip->eto_r = view_state->vs_vop->vo_scale*0.5;
 		eto_ip->eto_rd = view_state->vs_vop->vo_scale*0.05;
-	} else if( strcmp( argv[2], "part" ) == 0 ) {
+	} else if ( strcmp( argv[2], "part" ) == 0 ) {
 		internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		internal.idb_type = ID_PARTICLE;
 		internal.idb_meth = &rt_functab[ID_PARTICLE];
@@ -1326,7 +1326,7 @@ f_make(ClientData	clientData,
 		part_ip->part_vrad = view_state->vs_vop->vo_scale*0.5;
 		part_ip->part_hrad = view_state->vs_vop->vo_scale*0.25;
 		part_ip->part_type = RT_PARTICLE_TYPE_CONE;
-	} else if( strcmp( argv[2], "nmg" ) == 0 ) {
+	} else if ( strcmp( argv[2], "nmg" ) == 0 ) {
 		struct model *m;
 		struct nmgregion *r;
 		struct shell *s;
@@ -1341,7 +1341,7 @@ f_make(ClientData	clientData,
 		internal.idb_type = ID_NMG;
 		internal.idb_meth = &rt_functab[ID_NMG];
 		internal.idb_ptr = (genptr_t)m;
-	} else if( strcmp( argv[2], "pipe" ) == 0 ) {
+	} else if ( strcmp( argv[2], "pipe" ) == 0 ) {
 		struct wdb_pipept *ps;
 
 		internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -1365,7 +1365,7 @@ f_make(ClientData	clientData,
 		ps->pp_id = 0.5*ps->pp_od;
 		ps->pp_bendradius = ps->pp_od;
 		BU_LIST_INSERT( &pipe_ip->pipe_segs_head, &ps->l );
-	} else if( strcmp( argv[2], "bot" ) == 0 ) {
+	} else if ( strcmp( argv[2], "bot" ) == 0 ) {
 		internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		internal.idb_type = ID_BOT;
 		internal.idb_meth = &rt_functab[ID_BOT];
@@ -1389,7 +1389,7 @@ f_make(ClientData	clientData,
 		VSET( &bot_ip->faces[3], 0, 1, 2 );
 		VSET( &bot_ip->faces[6], 0, 2, 3 );
 		VSET( &bot_ip->faces[9], 1, 2, 3 );
-	} else if( strcmp( argv[2], "extrude" ) == 0 ) {
+	} else if ( strcmp( argv[2], "extrude" ) == 0 ) {
 		char *av[3];
 
 		internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -1414,7 +1414,7 @@ f_make(ClientData	clientData,
 		av[1] = extrude_ip->sketch_name;
 		av[2] = "sketch";
 		f_make( clientData, interp, 3, av );
-	} else if( strcmp( argv[2], "sketch" ) == 0 ) {
+	} else if ( strcmp( argv[2], "sketch" ) == 0 ) {
 #if 0
 	    /* used by the now defunct default sketch object */
 		struct carc_seg *csg;
@@ -1502,7 +1502,7 @@ f_make(ClientData	clientData,
 		sketch_ip->skt_curve.reverse = (int *)NULL;
 		sketch_ip->skt_curve.segments = (genptr_t *)NULL;
 #endif
-	} else if( strcmp( argv[2], "superell" ) == 0 )  {
+	} else if ( strcmp( argv[2], "superell" ) == 0 )  {
 
 
 		internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -1571,10 +1571,10 @@ f_make(ClientData	clientData,
 	/* no interuprts */
 	(void)signal( SIGINT, SIG_IGN );
 
-	if( (dp = db_diradd( dbip, argv[1], -1L, 0, DIR_SOLID, (genptr_t)&internal.idb_type)) == DIR_NULL )  {
+	if ( (dp = db_diradd( dbip, argv[1], -1L, 0, DIR_SOLID, (genptr_t)&internal.idb_type)) == DIR_NULL )  {
 		TCL_ALLOC_ERR_return;
 	}
-	if( rt_db_put_internal( dp, dbip, &internal, &rt_uniresource ) < 0 )  {
+	if ( rt_db_put_internal( dp, dbip, &internal, &rt_uniresource ) < 0 )  {
 		TCL_WRITE_ERR_return;
 	}
 
@@ -1601,7 +1601,7 @@ mged_rot_obj(Tcl_Interp *interp, int iflag, fastf_t *argvect)
 
   update_views = 1;
 
-  if(movedir != ROTARROW) {
+  if (movedir != ROTARROW) {
     /* NOT in object rotate mode - put it in obj rot */
     movedir = ROTARROW;
   }
@@ -1634,7 +1634,7 @@ mged_rot_obj(Tcl_Interp *interp, int iflag, fastf_t *argvect)
   MAT_IDN(temp);
   bn_mat_angles(temp, argvect[0], argvect[1], argvect[2]);
 
-  if(iflag){
+  if (iflag){
     /* apply accumulated rotations */
     bn_mat_mul2(acc_rot_sol, temp);
   }
@@ -1666,7 +1666,7 @@ f_rot_obj(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
   CHECK_DBI_NULL;
   CHECK_READ_ONLY;
 
-  if(argc < 4 || 5 < argc){
+  if (argc < 4 || 5 < argc){
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -1676,17 +1676,17 @@ f_rot_obj(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_ERROR;
   }
 
-  if( not_state( ST_O_EDIT, "Object Rotation" ) )
+  if ( not_state( ST_O_EDIT, "Object Rotation" ) )
     return TCL_ERROR;
 
   /* Check for -i option */
-  if(argv[1][0] == '-' && argv[1][1] == 'i'){
+  if (argv[1][0] == '-' && argv[1][1] == 'i'){
     iflag = 1;  /* treat arguments as incremental values */
     ++argv;
     --argc;
   }
 
-  if(argc != 4)
+  if (argc != 4)
     return TCL_ERROR;
 
   argvect[0] = atof(argv[1]);
@@ -1706,7 +1706,7 @@ f_sc_obj(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	if(argc < 2 || 2 < argc){
+	if (argc < 2 || 2 < argc){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -1716,10 +1716,10 @@ f_sc_obj(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  return TCL_ERROR;
 	}
 
-	if( not_state( ST_O_EDIT, "Object Scaling" ) )
+	if ( not_state( ST_O_EDIT, "Object Scaling" ) )
 	  return TCL_ERROR;
 
-	if( atof(argv[1]) <= 0.0 ) {
+	if ( atof(argv[1]) <= 0.0 ) {
 	  Tcl_AppendResult(interp, "ERROR: scale factor <=  0\n", (char *)NULL);
 	  return TCL_ERROR;
 	}
@@ -1727,9 +1727,9 @@ f_sc_obj(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	update_views = 1;
 
 #if 0
-	if(movedir != SARROW) {
+	if (movedir != SARROW) {
 		/* Put in global object scale mode */
-		if( edobj == 0 )
+		if ( edobj == 0 )
 			edobj = BE_O_SCALE;	/* default is global scaling */
 		movedir = SARROW;
 	}
@@ -1738,7 +1738,7 @@ f_sc_obj(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	MAT_IDN(incr);
 
 	/* switch depending on type of scaling to do */
-	switch( edobj ) {
+	switch ( edobj ) {
 	default:
 	case BE_O_SCALE:
 		/* global scaling */
@@ -1796,7 +1796,7 @@ f_tr_obj(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	if(argc < 4 || 4 < argc){
+	if (argc < 4 || 4 < argc){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -1806,16 +1806,16 @@ f_tr_obj(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  return TCL_ERROR;
 	}
 
-	if( state == ST_S_EDIT )  {
+	if ( state == ST_S_EDIT )  {
 		/* In solid edit mode,
 		 * perform the equivalent of "press sxy" and "p xyz"
 		 */
-		if( be_s_trans(clientData, interp, argc, argv) == TCL_ERROR )
+		if ( be_s_trans(clientData, interp, argc, argv) == TCL_ERROR )
 			return TCL_ERROR;
 		return f_param(clientData, interp, argc, argv);
 	}
 
-	if( not_state( ST_O_EDIT, "Object Translation") )
+	if ( not_state( ST_O_EDIT, "Object Translation") )
 	  return TCL_ERROR;
 
 	/* Remainder of code concerns object edit case */
@@ -1825,12 +1825,12 @@ f_tr_obj(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	MAT_IDN(incr);
 	MAT_IDN(old);
 
-	if( (movedir & (RARROW|UARROW)) == 0 ) {
+	if ( (movedir & (RARROW|UARROW)) == 0 ) {
 		/* put in object trans mode */
 		movedir = UARROW | RARROW;
 	}
 
-	for(i=0; i<3; i++) {
+	for (i=0; i<3; i++) {
 		new_vertex[i] = atof(argv[i+1]) * local2base;
 	}
 #if 0
@@ -1869,7 +1869,7 @@ f_regdef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_OK;
   }
 
-  if(argc < 2 || 5 < argc){
+  if (argc < 2 || 5 < argc){
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -1884,23 +1884,23 @@ f_regdef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
   item_default = atoi(argv[1]);
   wdbp->wdb_item_default = item_default;
 
-  if(argc == 2)
+  if (argc == 2)
     return TCL_OK;
 
   air_default = atoi(argv[2]);
   wdbp->wdb_air_default = air_default;
-  if(air_default) {
+  if (air_default) {
     item_default = 0;
     wdbp->wdb_item_default = 0;
   }
 
-  if(argc == 3)
+  if (argc == 3)
     return TCL_OK;
 
   los_default = atoi(argv[3]);
   wdbp->wdb_los_default = los_default;
 
-  if(argc == 4)
+  if (argc == 4)
     return TCL_OK;
 
   mat_default = atoi(argv[4]);
@@ -1917,10 +1917,10 @@ mged_add_nmg_part(char *newname, struct model *m)
 	struct directory *new_dp;
 	struct nmgregion *r;
 
-	if(dbip == DBI_NULL)
+	if (dbip == DBI_NULL)
 	  return;
 
-	if( db_lookup( dbip,  newname, LOOKUP_QUIET ) != DIR_NULL )  {
+	if ( db_lookup( dbip,  newname, LOOKUP_QUIET ) != DIR_NULL )  {
 		aexists( newname );
 		/* Free memory here */
 		nmg_km(m);
@@ -1928,7 +1928,7 @@ mged_add_nmg_part(char *newname, struct model *m)
 		return;
 	}
 
-	if( (new_dp=db_diradd( dbip, newname, -1, 0, DIR_SOLID, (genptr_t)&new_intern.idb_type)) == DIR_NULL )  {
+	if ( (new_dp=db_diradd( dbip, newname, -1, 0, DIR_SOLID, (genptr_t)&new_intern.idb_type)) == DIR_NULL )  {
 		TCL_ALLOC_ERR;
 		return;
 	}
@@ -1945,7 +1945,7 @@ mged_add_nmg_part(char *newname, struct model *m)
 	new_intern.idb_meth = &rt_functab[ID_NMG];
 	new_intern.idb_ptr = (genptr_t)m;
 
-	if( rt_db_put_internal( new_dp, dbip, &new_intern, &rt_uniresource ) < 0 )  {
+	if ( rt_db_put_internal( new_dp, dbip, &new_intern, &rt_uniresource ) < 0 )  {
 		/* Free memory */
 		nmg_km(m);
 		Tcl_AppendResult(interp, "rt_db_put_internal() failure\n", (char *)NULL);
@@ -1983,7 +1983,7 @@ f_fracture(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	if(argc < 2 || 3 < argc){
+	if (argc < 2 || 3 < argc){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -1994,19 +1994,19 @@ f_fracture(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
 
 	Tcl_AppendResult(interp, "fracture:", (char *)NULL);
-	for (i=0 ; i < argc ; i++)
+	for (i=0; i < argc; i++)
 		Tcl_AppendResult(interp, " ", argv[i], (char *)NULL);
 	Tcl_AppendResult(interp, "\n", (char *)NULL);
 
-	if( (old_dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
+	if ( (old_dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
 		return TCL_ERROR;
 
-	if( rt_db_get_internal( &old_intern, old_dp, dbip, bn_mat_identity, &rt_uniresource ) < 0 )  {
+	if ( rt_db_get_internal( &old_intern, old_dp, dbip, bn_mat_identity, &rt_uniresource ) < 0 )  {
 	  Tcl_AppendResult(interp, "rt_db_get_internal() error\n", (char *)NULL);
 	  return TCL_ERROR;
 	}
 
-	if( old_intern.idb_type != ID_NMG )
+	if ( old_intern.idb_type != ID_NMG )
 	{
 		Tcl_AppendResult(interp, argv[1], " is not an NMG solid!!\n", (char *)NULL );
 		rt_db_free_internal( &old_intern, &rt_uniresource );
@@ -2030,7 +2030,7 @@ f_fracture(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  bu_vls_free(&tmp_vls);
 	}
 
-	/*	for(maxdigits=1, i=tf+tw+tp ; i > 0 ; i /= 10)
+	/*	for (maxdigits=1, i=tf+tw+tp; i > 0; i /= 10)
 	 *	maxdigits++;
 	 */
 
@@ -2140,7 +2140,7 @@ f_qorot(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	if(argc < 8 || 8 < argc){
+	if (argc < 8 || 8 < argc){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -2150,10 +2150,10 @@ f_qorot(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  return TCL_ERROR;
 	}
 
-	if( not_state( ST_O_EDIT, "Object Rotation" ) )
+	if ( not_state( ST_O_EDIT, "Object Rotation" ) )
 	  return TCL_ERROR;
 
-	if(movedir != ROTARROW) {
+	if (movedir != ROTARROW) {
 		/* NOT in object rotate mode - put it in obj rot */
 		movedir = ROTARROW;
 	}
@@ -2213,7 +2213,7 @@ set_localunit_TclVar(void)
   bu_vls_init(&units_vls);
 
   str = bu_units_string(dbip->dbi_local2base);
-  if(str)
+  if (str)
 	bu_vls_strcpy(&units_vls, str);
   else
 	bu_vls_printf(&units_vls, "%gmm", dbip->dbi_local2base);

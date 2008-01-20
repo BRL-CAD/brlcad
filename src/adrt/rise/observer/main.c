@@ -79,7 +79,7 @@ int main(int argc, char **argv) {
 
   signal(SIGINT, finish);
 
-  if(argc == 1) {
+  if (argc == 1) {
     help();
     return EXIT_FAILURE;
   }
@@ -90,7 +90,7 @@ int main(int argc, char **argv) {
 
   /* Parse command line options */
 
-  while((c =
+  while ((c =
 #ifdef HAVE_GETOPT_LONG
 	getopt_long(argc, argv, shortopts, longopts, NULL)
 #else
@@ -98,7 +98,7 @@ int main(int argc, char **argv) {
 #endif
 	)!= -1)
   {
-	  switch(c) {
+	  switch (c) {
 	    case 'p':
 	      port = atoi(optarg);
 	      break;
@@ -124,10 +124,10 @@ int main(int argc, char **argv) {
   argc -= optind;
   argv += optind;
 
-  if(argc)
+  if (argc)
     strncpy(host, argv[0], 64);
 
-  if(host[0]) {
+  if (host[0]) {
     printf("Observer mode: connecting to %s on port %d\n", host, port);
     rise_observer(host, port);
   } else {

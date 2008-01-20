@@ -112,7 +112,7 @@ rt_nurb_s_xsplit(struct face_g_snurb *srf, fastf_t param, int dir)
 				RT_NURB_EXTRACT_COORDS( srf2->pt_type),
 				"rt_nurb_s_xsplit: srf2 row mesh control points");
 
-		for( i = 0; i < srf->s_size[0]; i++)
+		for ( i = 0; i < srf->s_size[0]; i++)
 		{
 			fastf_t * old_mesh_ptr;
 			fastf_t * new_mesh_ptr;
@@ -184,7 +184,7 @@ rt_nurb_s_xsplit(struct face_g_snurb *srf, fastf_t param, int dir)
 				RT_NURB_EXTRACT_COORDS( srf2->pt_type),
 				"rt_nurb_s_xsplit: srf2 row mesh control points");
 
-		for( i = 0; i < srf->s_size[1]; i++)
+		for ( i = 0; i < srf->s_size[1]; i++)
 		{
 			fastf_t * old_mesh_ptr;
 			fastf_t * new_mesh_ptr;

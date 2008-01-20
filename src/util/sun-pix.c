@@ -124,7 +124,7 @@ get_args(int argc, register char **argv)
 	register int c;
 
 	while ( (c = bu_getopt( argc, argv, "bhiPvC" )) != EOF )  {
-		switch( c )  {
+		switch ( c )  {
 		case 'b':
 			pixout = 0;	/* bw(5) */
 			break;
@@ -149,14 +149,14 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( bu_optind >= argc )  {
-		if( isatty(fileno(stdin)) )
+	if ( bu_optind >= argc )  {
+		if ( isatty(fileno(stdin)) )
 			return(0);
 		file_name = "-";
 		fp = stdin;
 	} else {
 		file_name = argv[bu_optind];
-		if( (fp = fopen(file_name, "r")) == NULL )  {
+		if ( (fp = fopen(file_name, "r")) == NULL )  {
 			(void)fprintf( stderr,
 				"sun-pix: cannot open \"%s\" for reading\n",
 				file_name );
@@ -263,12 +263,12 @@ main(int argc, char **argv)
 		(void)fputs(usage, stderr);
 		bu_exit ( 1, NULL );
 	}
-	if( inverted ) {
+	if ( inverted ) {
 		off = 255;
 		on = 0;
 	}
 
-	if( !pure )  {
+	if ( !pure )  {
 		register long nbits;
 
 		fread( inbuf, sizeof(struct rasterfile), 1, fp );
@@ -282,7 +282,7 @@ main(int argc, char **argv)
 		header.ras_maptype = getlong( &inbuf[NET_LONG_LEN*6] );
 		header.ras_maplength = getlong( &inbuf[NET_LONG_LEN*7] );
 
-		if( header.ras_magic != RAS_MAGIC )  {
+		if ( header.ras_magic != RAS_MAGIC )  {
 			fprintf(stderr,
 				"sun-pix: bad magic number, was x%x, s/b x%x\n",
 				header.ras_magic, RAS_MAGIC );
@@ -294,7 +294,7 @@ main(int argc, char **argv)
 		nbits = (nbits + 15) & ~15;
 		header.ras_width = nbits / header.ras_depth;
 
-		if(verbose)  {
+		if (verbose)  {
 			fprintf( stderr,
 				"ras_width = %d, ras_height = %d\nras_depth = %d, ras_length = %d\n",
 				header.ras_width, header.ras_height,
@@ -305,7 +305,7 @@ main(int argc, char **argv)
 				header.ras_maptype,
 				header.ras_maplength );
 		}
-		if( hflag ) {
+		if ( hflag ) {
 			printf( "-w%d -n%d\n", header.ras_width, header.ras_height );
 			bu_exit ( 0, NULL );
 		}
@@ -315,7 +315,7 @@ main(int argc, char **argv)
 		header.ras_depth = 1;
 	}
 
-	switch( header.ras_type )  {
+	switch ( header.ras_type )  {
 	case RT_OLD:		/* ??? */
 	case RT_BYTE_ENCODED:
 	case RT_STANDARD:
@@ -329,11 +329,11 @@ main(int argc, char **argv)
 	width = header.ras_width;
 	x = 0;
 
-	switch( header.ras_depth )  {
+	switch ( header.ras_depth )  {
 	case 1:
 		/* 1-bit image */
 		/*  Gobble colormap -- ought to know what to do with it */
-		for( x=0; x<header.ras_maplength; x++)  {
+		for ( x=0; x<header.ras_maplength; x++)  {
 			(void)getc(fp);
 		}
 		if (colorout) {
@@ -345,16 +345,16 @@ main(int argc, char **argv)
 		}
 
 		scanbytes = ((width + 15) & ~15L) / 8;
-		while( (header.ras_type == RT_BYTE_ENCODED) ?
+		while ( (header.ras_type == RT_BYTE_ENCODED) ?
 		    decoderead(buf, sizeof(*buf), scanbytes, fp) :
 		    fread(buf, sizeof(*buf), scanbytes, fp) ) {
-			for( x = 0; x < width; x++ ) {
-				if( buf[x>>3] & bits[x&7] ) {
+			for ( x = 0; x < width; x++ ) {
+				if ( buf[x>>3] & bits[x&7] ) {
 					putchar(on);
-					if(pixout){putchar(on);putchar(on);}
+					if (pixout){putchar(on);putchar(on);}
 				} else {
 					putchar(off);
-					if(pixout){putchar(off);putchar(off);}
+					if (pixout){putchar(off);putchar(off);}
 				}
 			}
 		}

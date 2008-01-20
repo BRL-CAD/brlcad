@@ -85,12 +85,12 @@ int	raymiss(register struct application *ap);
 int
 view_init(register struct application *ap, char *file, char *obj, int minus_o)
 {
-	if( !minus_o )
+	if ( !minus_o )
 		outfp = stdout;
 
 	output_is_binary = 0;		/* output is printable ascii */
 
-	if( npsw > 1 )  {
+	if ( npsw > 1 )  {
 		bu_log("rtfrac:  dropping down to 1 CPU\n");
 		npsw = 1;
 	}
@@ -188,14 +188,14 @@ rayhit(register struct application *ap, struct partition *PartHeadp, struct seg 
 
 	d = 0;
 	/* examine each partition until we get back to the head */
-	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )  {
-		if( pp->pt_outhit->hit_dist <= 0 )  continue;
+	for ( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )  {
+		if ( pp->pt_outhit->hit_dist <= 0 )  continue;
 		cur_depth = pp->pt_inhit->hit_dist;
-		while( cur_depth > (d+1) * cell_depth )  d++;
+		while ( cur_depth > (d+1) * cell_depth )  d++;
 
 		/* Partition starts in this cell */
 more:
-		if( pp->pt_outhit->hit_dist <= (d+1) * cell_depth )  {
+		if ( pp->pt_outhit->hit_dist <= (d+1) * cell_depth )  {
 			/* Partition ends in this cell */
 			frac = (pp->pt_outhit->hit_dist -
 				cur_depth) / cell_depth;

@@ -73,7 +73,7 @@ db_open_inmem(void)
     dbip->dbi_read_only = 1;
 
     /* Initialize fields */
-    for( i=0; i<RT_DBNHASH; i++ ) {
+    for ( i=0; i<RT_DBNHASH; i++ ) {
 	dbip->dbi_Head[i] = DIR_NULL;
     }
 
@@ -165,10 +165,10 @@ db_inmem(struct directory *dp, struct bu_external *ext, int flags, struct db_i *
     BU_CK_EXTERNAL(ext);
     RT_CK_DIR(dp);
 
-    if( dp->d_flags & RT_DIR_INMEM )
+    if ( dp->d_flags & RT_DIR_INMEM )
 	bu_free( dp->d_un.ptr, "db_inmem() ext ptr" );
     dp->d_un.ptr = ext->ext_buf;
-    if( dbip->dbi_version < 5 ) {
+    if ( dbip->dbi_version < 5 ) {
 	dp->d_len = ext->ext_nbytes / 128;	/* DB_MINREC granule size */
     } else {
 	dp->d_len = ext->ext_nbytes;

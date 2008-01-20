@@ -73,7 +73,7 @@ int main(int argc, char **argv) {
 
   signal(SIGINT, finish);
 
-  if(argc == 1) {
+  if (argc == 1) {
     help();
     return EXIT_FAILURE;
   }
@@ -85,7 +85,7 @@ int main(int argc, char **argv) {
 
   /* Parse command line options */
 
-  while((c =
+  while ((c =
 #ifdef HAVE_GETOPT_LONG
 	getopt_long(argc, argv, shortopts, longopts, NULL)
 #else
@@ -93,7 +93,7 @@ int main(int argc, char **argv) {
 #endif
 	)!= -1)
   {
-	  switch(c) {
+	  switch (c) {
 		  case 'c':
 			  cache = 1;
 			  break;
@@ -114,7 +114,7 @@ int main(int argc, char **argv) {
   strncpy(proj, argv[0], 64-1);
   proj[64-1] = '\0'; /* sanity */
 
-  if(proj[0]) {
+  if (proj[0]) {
     bench(proj, cache, image);
   } else {
     help();

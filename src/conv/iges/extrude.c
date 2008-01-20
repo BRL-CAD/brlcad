@@ -49,7 +49,7 @@ int entityno;
 
 	/* Acquiring Data */
 
-	if( dir[entityno]->param <= pstart )
+	if ( dir[entityno]->param <= pstart )
 	{
 		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[entityno]->direct, dir[entityno]->name );
@@ -71,7 +71,7 @@ int entityno;
 	Readflt( &edir[Y], "" );
 	Readflt( &edir[Z], "" );
 
-	if( length <= 0.0 )
+	if ( length <= 0.0 )
 	{
 		bu_log( "Illegal parameters for entity D%07d (%s)\n" ,
 				dir[entityno]->direct, dir[entityno]->name );
@@ -90,7 +90,7 @@ int entityno;
 
 	/* Switch based on type of curve to be extruded */
 
-	switch( dir[curve]->type )
+	switch ( dir[curve]->type )
 	{
 		case 100:	/* circular arc */
 			return( Extrudcirc( entityno, curve, evect ) );
@@ -111,7 +111,7 @@ int entityno;
 			struct ptlist *pt_ptr;
 
 			npts = Getcurve( curve, &curv_pts );
-			if( npts < 3 )
+			if ( npts < 3 )
 				return( 0 );
 
 
@@ -122,7 +122,7 @@ int entityno;
 			fu = nmg_cface( s, (struct vertex **)NULL, npts-1 );
 			pt_ptr = curv_pts;
 			lu = BU_LIST_FIRST( loopuse, &fu->lu_hd );
-			for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+			for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 			{
 				struct vertex *v;
 
@@ -131,7 +131,7 @@ int entityno;
 				pt_ptr = pt_ptr->next;
 			}
 
-			if( nmg_calc_face_g( fu ) )
+			if ( nmg_calc_face_g( fu ) )
 			{
 				bu_log( "Extrude: Failed to calculate face geometry\n" );
 				nmg_km( m );
@@ -139,7 +139,7 @@ int entityno;
 				return( 0 );
 			}
 
-			if( nmg_extrude_face( fu, evect, &tol ) )
+			if ( nmg_extrude_face( fu, evect, &tol ) )
 			{
 				bu_log( "Extrude: extrusion failed\n" );
 				nmg_km( m );
@@ -155,7 +155,7 @@ int entityno;
 		}
 		default:
 			i = (-1);
-			while( dir[curve]->type != typecount[++i].type && i < ntypes );
+			while ( dir[curve]->type != typecount[++i].type && i < ntypes );
 			bu_log( "Extrusions of %s are not allowed\n", typecount[i].name );
 			break;
 	}

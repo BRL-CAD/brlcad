@@ -65,7 +65,7 @@ get_args(int argc, register char **argv)
 	register int c;
 
 	while ( (c = bu_getopt( argc, argv, "hcbdoF:s:w:n:S:W:N:" )) != EOF )  {
-		switch( c )  {
+		switch ( c )  {
 		case 'h':
 			/* high-res */
 			fbheight = fbwidth = 1024;
@@ -120,10 +120,10 @@ main(int argc, char **argv)
 		bu_exit( 1, NULL );
 	}
 
-	if( flavor == OLD )
+	if ( flavor == OLD )
 		oldflavor();	/* exits */
 
-	if( (fbp = fb_open( framebuffer, fbwidth, fbheight )) == NULL )
+	if ( (fbp = fb_open( framebuffer, fbwidth, fbheight )) == NULL )
 		bu_exit( 2, NULL );
 
 	fbwidth = fb_getwidth( fbp );
@@ -133,16 +133,16 @@ main(int argc, char **argv)
 	white_line = (unsigned char *)malloc( fbwidth * sizeof(RGBpixel) );
 	grey_line  = (unsigned char *)malloc( fbwidth * sizeof(RGBpixel) );
 	dark_line  = (unsigned char *)malloc( fbwidth * sizeof(RGBpixel) );
-	for( i = 0; i < fbwidth; i++ ) {
+	for ( i = 0; i < fbwidth; i++ ) {
 		white_line[3*i+RED] = white_line[3*i+GRN] = white_line[3*i+BLU] = 255;
 		grey_line[3*i+RED] = grey_line[3*i+GRN] = grey_line[3*i+BLU] = 128;
 		dark_line[3*i+RED] = dark_line[3*i+GRN] = dark_line[3*i+BLU] = 64;
 	}
 
-	if( clear )
+	if ( clear )
 		fb_clear( fbp, PIXEL_NULL );
 
-	if( flavor == BINARY ) {
+	if ( flavor == BINARY ) {
 		/* Dark lines every 8 */
 		grid( fbp, dark_line, 8 );
 		/* Grey lines every 64 */
@@ -167,9 +167,9 @@ grid(FBIO *fbp, unsigned char *line, int spacing)
 {
 	int	x, y;
 
-	for( y = 0; y < fbheight; y += spacing )
+	for ( y = 0; y < fbheight; y += spacing )
 		fb_write( fbp, 0, y, line, fbwidth );
-	for( x = 0; x < fbwidth; x += spacing ) {
+	for ( x = 0; x < fbwidth; x += spacing ) {
 		fb_writerect( fbp, x, 0, 1, fbheight, line );
 	}
 }
@@ -184,7 +184,7 @@ oldflavor(void)
 	register int	fb_sz;
 	static RGBpixel	black, white, red;
 
-	if( (fbp = fb_open( NULL, fbwidth, fbheight )) == NULL ) {
+	if ( (fbp = fb_open( NULL, fbwidth, fbheight )) == NULL ) {
 		bu_exit( 1, NULL );
 	}
 
@@ -194,20 +194,20 @@ oldflavor(void)
 	red[RED] = 255;
 	middle = fb_sz/2;
 	fb_ioinit(fbp);
-	if( fb_sz <= 512 )
+	if ( fb_sz <= 512 )
 		mask = 0x7;
 	else
 		mask = 0xf;
 
-	for( y = fb_sz-1; y >= 0; y-- )  {
-		for( x = 0; x < fb_sz; x++ ) {
-			if( x == y || x == fb_sz - y ) {
+	for ( y = fb_sz-1; y >= 0; y-- )  {
+		for ( x = 0; x < fb_sz; x++ ) {
+			if ( x == y || x == fb_sz - y ) {
 				FB_WPIXEL( fbp, white );
 			} else
-			if( x == middle || y == middle ) {
+			if ( x == middle || y == middle ) {
 				FB_WPIXEL( fbp, red );
 			} else
-			if( (x & mask) && (y & mask) ) {
+			if ( (x & mask) && (y & mask) ) {
 				FB_WPIXEL( fbp, black );
 			} else {
 				FB_WPIXEL( fbp, white );

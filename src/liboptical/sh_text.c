@@ -399,7 +399,7 @@ txt_render(struct application *ap, struct partition *pp, struct shadework *swp, 
 			bu_log( "\tcontributions to average:\n" );
 		}
 
-		for( line = start_line ; line <= stop_line ; line++ ) {
+		for ( line = start_line; line <= stop_line; line++ ) {
 			register unsigned char *cp=NULL;
 			fastf_t line_factor;
 			fastf_t line_upper, line_lower;
@@ -425,7 +425,7 @@ txt_render(struct application *ap, struct partition *pp, struct shadework *swp, 
 				bu_bomb("sh_text.c -- Unable to read datasource\n");
 			}
 
-			for( col = start_col ; col <= stop_col ; col++ ) {
+			for ( col = start_col; col <= stop_col; col++ ) {
 				fastf_t col_upper, col_lower;
 
 				col_upper = col + 1.0;
@@ -465,7 +465,7 @@ txt_render(struct application *ap, struct partition *pp, struct shadework *swp, 
 		bu_log(" in txt_render(): x=%d y=%d, dx=%d, dy=%d\n", x, y, dx, dy);
 
 	r = g = b = 0;
-	for( line=0; line<dy; line++ )  {
+	for ( line=0; line<dy; line++ )  {
 		register unsigned char *cp;
 		register unsigned char *ep;
 
@@ -483,7 +483,7 @@ txt_render(struct application *ap, struct partition *pp, struct shadework *swp, 
 		}
 
 		ep = cp + 3*dx;
-		while( cp < ep )  {
+		while ( cp < ep )  {
 			if (rdebug & RDEBUG_SHADE )
 				bu_log( "\tAdding %d %d %d\n", *cp, *(cp+1), *(cp+2) );
 			r += *cp++;
@@ -612,7 +612,7 @@ bwtxt_render(struct application *ap, struct partition *pp, struct shadework *swp
 	if (dx < 1 )  dx = 1;
 	if (dy < 1 )  dy = 1;
 	bw = 0;
-	for( line=0; line<dy; line++ )  {
+	for ( line=0; line<dy; line++ )  {
 		register unsigned char *cp=NULL;
 		register unsigned char *ep;
 
@@ -630,7 +630,7 @@ bwtxt_render(struct application *ap, struct partition *pp, struct shadework *swp
 		}
 
 		ep = cp + dx;
-		while( cp < ep )  {
+		while ( cp < ep )  {
 			bw += *cp++;
 		}
 	}

@@ -65,8 +65,8 @@ get_args(int argc, register char **argv)
 {
 	register int	c;
 
-	while( (c = bu_getopt( argc, argv, "hs:w:n:" )) != EOF )  {
-		switch( c )  {
+	while ( (c = bu_getopt( argc, argv, "hs:w:n:" )) != EOF )  {
+		switch ( c )  {
 		case 'h':
 			/* high-res */
 			file_height = file_width = 1024;
@@ -85,17 +85,17 @@ get_args(int argc, register char **argv)
 			return	0;
 		}
 	}
-	if( argv[bu_optind] != NULL )  {
-		if( (infp = fopen( argv[bu_optind], "r" )) == NULL )  {
+	if ( argv[bu_optind] != NULL )  {
+		if ( (infp = fopen( argv[bu_optind], "r" )) == NULL )  {
 			perror(argv[bu_optind]);
 			return	0;
 		}
 		bu_optind++;
 	}
-	if( argc > ++bu_optind )
+	if ( argc > ++bu_optind )
 		(void) fprintf( stderr, "Excess arguments ignored\n" );
 
-	if( isatty(fileno(infp)) || isatty(fileno(stdout)) )
+	if ( isatty(fileno(infp)) || isatty(fileno(stdout)) )
 		return 0;
 	return	1;
 }
@@ -110,7 +110,7 @@ main(int argc, char **argv)
 	unsigned char *inbuf;
 
 	infp = stdin;
-	if( !get_args( argc, argv ) )  {
+	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
 		bu_exit ( 1, NULL );
 	}
@@ -120,14 +120,14 @@ main(int argc, char **argv)
 
 	outbytes = inbytes * 2;		/* bytes/ output line */
 	outsize = file_width * file_height * 4 * 3;
-	if( (outbuf = (unsigned char *)malloc( outsize )) == (unsigned char *)0 )  {
+	if ( (outbuf = (unsigned char *)malloc( outsize )) == (unsigned char *)0 )  {
 		fprintf(stderr, "pixinterp2x:  unable to malloc buffer\n");
 		bu_exit ( 1, NULL );
 	}
 
 	outy = -2;
-	for( iny = 0; iny < file_height; iny++ )  {
-		if( fread( (char *)inbuf, 1, inbytes, infp ) != inbytes )  {
+	for ( iny = 0; iny < file_height; iny++ )  {
+		if ( fread( (char *)inbuf, 1, inbytes, infp ) != inbytes )  {
 			fprintf(stderr, "pixinterp2x fread error\n");
 			break;
 		}
@@ -135,12 +135,12 @@ main(int argc, char **argv)
 		outy += 2;
 		/* outy is line we will write on */
 		widen_line( inbuf, outy );
-		if( outy == 0 )
+		if ( outy == 0 )
 			widen_line( inbuf, ++outy );
 		else
 			interp_lines( outy-1, outy, outy-2 );
 	}
-	if( write( 1, (char *)outbuf, outsize ) != outsize )  {
+	if ( write( 1, (char *)outbuf, outsize ) != outsize )  {
 		perror("pixinterp2x write");
 		bu_exit (1, NULL);
 	}
@@ -162,7 +162,7 @@ widen_line(register unsigned char *cp, int y)
 	*op++ = *cp++;
 	*op++ = *cp++;
 	*op++ = *cp++;
-	for( i=0; i<inbytes; i+=3)  {
+	for ( i=0; i<inbytes; i+=3)  {
 		/* Average previous pixel with current pixel */
 		*op++ = ((int)cp[-3+0] + (int)cp[0])>>1;
 		*op++ = ((int)cp[-3+1] + (int)cp[1])>>1;
@@ -185,7 +185,7 @@ interp_lines(int out, int i1, int i2)
 	b = (unsigned char *)outbuf + (i2 * outbytes);
 	op = (unsigned char *)outbuf + (out * outbytes);
 
-	for( i=0; i<outbytes; i+=3 )  {
+	for ( i=0; i<outbytes; i+=3 )  {
 		*op++ = ((int)*a++ + (int)*b++)>>1;
 		*op++ = ((int)*a++ + (int)*b++)>>1;
 		*op++ = ((int)*a++ + (int)*b++)>>1;

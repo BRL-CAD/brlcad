@@ -60,11 +60,11 @@
 #define TRUE	1
 #define FALSE	0
 
-#define MOVE(v)	  VMOVE(last_move,(v))
+#define MOVE(v)	  VMOVE(last_move, (v))
 
 #define DRAW(v)	{ vect_t a, b;\
 		  MAT4X3PNT(a, view_state->vs_model2view, last_move);\
-		  MAT4X3PNT(b, view_state->vs_model2view,(v));\
+		  MAT4X3PNT(b, view_state->vs_model2view, (v));\
 		  pdv_3line(plotfp, a, b ); }
 
 extern struct db_i *dbip;	/* current database instance */
@@ -153,7 +153,7 @@ f_hideline(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	CHECK_DBI_NULL;
 
-	if(argc < 2 || 4 < argc){
+	if (argc < 2 || 4 < argc){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -168,13 +168,13 @@ f_hideline(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 			   "\" for writing.\n", (char *)NULL);
 	  return TCL_ERROR;
 	}
-	pl_space(plotfp,(int)GED_MIN,(int)GED_MIN,(int)GED_MAX,(int)GED_MAX);
+	pl_space(plotfp, (int)GED_MIN, (int)GED_MIN, (int)GED_MAX, (int)GED_MAX);
 
 	/*  Build list of objects being viewed */
 	numobjs = 0;
 	FOR_ALL_SOLIDS(sp) {
 		for (i = 0; i < numobjs; i++)  {
-			if( objname[i] == FIRST_SOLID(sp)->d_namep )
+			if ( objname[i] == FIRST_SOLID(sp)->d_namep )
 				break;
 		}
 		if (i == numobjs)
@@ -203,9 +203,9 @@ f_hideline(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	a.a_rbeam = 0;
 
 	if (argc > 2) {
-		sscanf(argv[2], "%f",&step);
+		sscanf(argv[2], "%f", &step);
 		step = view_state->vs_Viewscale/step;
-		sscanf(argv[3], "%f",&epsilon);
+		sscanf(argv[3], "%f", &epsilon);
 		epsilon *= view_state->vs_Viewscale/100;
 	} else {
 		step = view_state->vs_Viewscale/256;
@@ -229,14 +229,14 @@ f_hideline(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 			continue;
 
 		Tcl_AppendResult(interp, "Primitive\n", (char *)NULL);
-		for( BU_LIST_FOR( vp, bn_vlist, &(sp->s_vlist) ) )  {
+		for ( BU_LIST_FOR( vp, bn_vlist, &(sp->s_vlist) ) )  {
 			register int	i;
 			register int	nused = vp->nused;
 			register int	*cmd = vp->cmd;
 			register point_t *pt = vp->pt;
-			for( i = 0; i < nused; i++, cmd++, pt++ )  {
+			for ( i = 0; i < nused; i++, cmd++, pt++ )  {
 			  Tcl_AppendResult(interp, "\tVector\n", (char *)NULL);
-				switch( *cmd )  {
+				switch ( *cmd )  {
 				case BN_VLIST_POLY_START:
 				case BN_VLIST_POLY_VERTNORM:
 					break;

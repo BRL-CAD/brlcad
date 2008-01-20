@@ -38,9 +38,9 @@ int type;
 	int i;
 	int type_no=0;
 
-	for( i=1 ; i<ntypes ; i++ )
+	for ( i=1; i<ntypes; i++ )
 	{
-		if( typecount[i].type == type )
+		if ( typecount[i].type == type )
 		{
 			type_no = i;
 			break;

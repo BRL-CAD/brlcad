@@ -90,11 +90,11 @@ compare_colors(void)
     int found1=0, found2=0;
     int is_diff=0;
 
-    for( mp1 = mater_hd1; mp1 != MATER_NULL; mp1 = mp1->mt_forw )  {
+    for ( mp1 = mater_hd1; mp1 != MATER_NULL; mp1 = mp1->mt_forw )  {
 	found1 = 0;
 	mp2 = mater_hd2;
-	while( mp2 != MATER_NULL ) {
-	    if( mp1->mt_low == mp2->mt_low &&
+	while ( mp2 != MATER_NULL ) {
+	    if ( mp1->mt_low == mp2->mt_low &&
 		mp1->mt_high == mp2->mt_high &&
 		mp1->mt_r == mp2->mt_r &&
 		mp1->mt_g == mp2->mt_g &&
@@ -105,14 +105,14 @@ compare_colors(void)
 		mp2 = mp2->mt_forw;
 	    }
 	}
-	if( !found1 )
+	if ( !found1 )
 	    break;
     }
-    for( mp2 = mater_hd2; mp2 != MATER_NULL; mp2 = mp2->mt_forw )  {
+    for ( mp2 = mater_hd2; mp2 != MATER_NULL; mp2 = mp2->mt_forw )  {
 	found1 = 0;
 	mp1 = mater_hd1;
-	while( mp1 != MATER_NULL ) {
-	    if( mp1->mt_low == mp2->mt_low &&
+	while ( mp1 != MATER_NULL ) {
+	    if ( mp1->mt_low == mp2->mt_low &&
 		mp1->mt_high == mp2->mt_high &&
 		mp1->mt_r == mp2->mt_r &&
 		mp1->mt_g == mp2->mt_g &&
@@ -123,35 +123,35 @@ compare_colors(void)
 		mp1 = mp1->mt_forw;
 	    }
 	}
-	if( !found2 )
+	if ( !found2 )
 	    break;
     }
-    if( !found1 && !found2 ) {
+    if ( !found1 && !found2 ) {
 	return 0;
-    } else if( !found1 || !found2 ) {
+    } else if ( !found1 || !found2 ) {
 	is_diff = 1;
     } else {
 	/* actually compare two color tables */
 	mp1 = mater_hd1;
 	mp2 = mater_hd2;
-	while( mp1 != MATER_NULL && mp2 != MATER_NULL ) {
-	    if( mp1->mt_low != mp2->mt_low ) {
+	while ( mp1 != MATER_NULL && mp2 != MATER_NULL ) {
+	    if ( mp1->mt_low != mp2->mt_low ) {
 		is_diff = 1;
 		break;
 	    }
-	    if( mp1->mt_high != mp2->mt_high ) {
+	    if ( mp1->mt_high != mp2->mt_high ) {
 		is_diff = 1;
 		break;
 	    }
-	    if( mp1->mt_r != mp2->mt_r ) {
+	    if ( mp1->mt_r != mp2->mt_r ) {
 		is_diff = 1;
 		break;
 	    }
-	    if( mp1->mt_g != mp2->mt_g ) {
+	    if ( mp1->mt_g != mp2->mt_g ) {
 		is_diff = 1;
 		break;
 	    }
-	    if( mp1->mt_b != mp2->mt_b ) {
+	    if ( mp1->mt_b != mp2->mt_b ) {
 		is_diff = 1;
 		break;
 	    }
@@ -160,22 +160,22 @@ compare_colors(void)
 	}
     }
 
-    if( is_diff ) {
-	if( mode == HUMAN ) {
+    if ( is_diff ) {
+	if ( mode == HUMAN ) {
 	    printf( "Color table has changed from:\n" );
-	    for( mp1 = mater_hd1; mp1 != MATER_NULL; mp1 = mp1->mt_forw )  {
+	    for ( mp1 = mater_hd1; mp1 != MATER_NULL; mp1 = mp1->mt_forw )  {
 		printf( "\t%d..%d %d %d %d\n", mp1->mt_low, mp1->mt_high,
 			mp1->mt_r, mp1->mt_g, mp1->mt_b );
 	    }
 	    printf( "\t\tto:\n" );
-	    for( mp2 = mater_hd2; mp2 != MATER_NULL; mp2 = mp2->mt_forw )  {
+	    for ( mp2 = mater_hd2; mp2 != MATER_NULL; mp2 = mp2->mt_forw )  {
 		printf( "\t%d..%d %d %d %d\n", mp2->mt_low, mp2->mt_high,
 			mp2->mt_r, mp2->mt_g, mp2->mt_b );
 	    }
 	} else {
-	    if( version2 > 4 )
+	    if ( version2 > 4 )
 		printf( "attr rm _GLOBAL regionid_colortable\n" );
-	    for( mp2 = mater_hd2; mp2 != MATER_NULL; mp2 = mp2->mt_forw )  {
+	    for ( mp2 = mater_hd2; mp2 != MATER_NULL; mp2 = mp2->mt_forw )  {
 		printf( "color %d %d %d %d %d\n", mp2->mt_low, mp2->mt_high,
 			mp2->mt_r, mp2->mt_g, mp2->mt_b );
 	    }
@@ -188,7 +188,7 @@ compare_colors(void)
 void
 kill_obj(char *name)
 {
-    if( mode == HUMAN ) {
+    if ( mode == HUMAN ) {
 	printf( "%s has been killed\n", name );
     } else {
 	printf( "kill %s\n", name );
@@ -201,16 +201,16 @@ compare_external(struct directory *dp1, struct directory *dp2)
     int kill = 0;
     struct bu_external ext1, ext2;
 
-    if( db_get_external( &ext1, dp1, dbip1 ) ) {
+    if ( db_get_external( &ext1, dp1, dbip1 ) ) {
 	fprintf( stderr, "ERROR: db_get_external failed on solid %s in %s\n", dp1->d_namep, dbip1->dbi_filename );
 	bu_exit( 1, NULL );
     }
-    if( db_get_external( &ext2, dp2, dbip2 ) ) {
+    if ( db_get_external( &ext2, dp2, dbip2 ) ) {
 	fprintf( stderr, "ERROR: db_get_external failed on solid %s in %s\n", dp2->d_namep, dbip2->dbi_filename );
 	bu_exit( 1, NULL );
     }
 
-    if( ext1.ext_nbytes != ext2.ext_nbytes ) {
+    if ( ext1.ext_nbytes != ext2.ext_nbytes ) {
 	printf("Byte counts are different on %s (%ld != %ld)\n", dp1->d_namep, ext1.ext_nbytes, ext2.ext_nbytes);
 	kill = 1;
     }
@@ -221,7 +221,7 @@ compare_external(struct directory *dp1, struct directory *dp2)
     }
 
     if (kill) {
-	if( mode == HUMAN ) {
+	if ( mode == HUMAN ) {
 	    printf( "kill %s and import it from %s\n", dp1->d_namep, dbip1->dbi_filename );
 	} else {
 	    printf( "kill %s\n# IMPORT %s from %s\n", dp1->d_namep, dp2->d_namep, dbip2->dbi_filename );
@@ -234,8 +234,8 @@ compare_external(struct directory *dp1, struct directory *dp2)
 int
 isNumber( char *s )
 {
-    while( *s != '\0' ) {
-	if( isdigit( *s ) || *s == '.' || *s == '-' || *s == '+' || *s == 'e' || *s == 'E' ) {
+    while ( *s != '\0' ) {
+	if ( isdigit( *s ) || *s == '.' || *s == '-' || *s == '+' || *s == 'e' || *s == 'E' ) {
 	    s++;
 	} else {
 	    return 0;
@@ -256,36 +256,36 @@ compare_values( int type, Tcl_Obj *val1, Tcl_Obj *val2 )
 
     str_ret = strcmp( Tcl_GetStringFromObj( val1, NULL ), Tcl_GetStringFromObj( val2, NULL ) );
 
-    if( str_ret == 0 || type == ATTRS ) {
+    if ( str_ret == 0 || type == ATTRS ) {
 	return 0;
     }
 
-    if( Tcl_ListObjLength( interp, val1, &len1 ) == TCL_ERROR ) {
+    if ( Tcl_ListObjLength( interp, val1, &len1 ) == TCL_ERROR ) {
 	fprintf( stderr, "Error getting length of TCL object!!!\n" );
 	fprintf( stderr, "%s\n", Tcl_GetStringResult( interp ) );
 	bu_exit ( 1, NULL );
     }
 
-    if( Tcl_ListObjLength( interp, val2, &len2 ) == TCL_ERROR ) {
+    if ( Tcl_ListObjLength( interp, val2, &len2 ) == TCL_ERROR ) {
 	fprintf( stderr, "Error getting length of TCL object!!!\n" );
 	fprintf( stderr, "%s\n", Tcl_GetStringResult( interp ) );
 	bu_exit ( 1, NULL );
     }
 
-    if( len1 != len2 ) {
+    if ( len1 != len2 ) {
 	return 1;
     }
 
-    for( i=0 ; i<len1 ; i++ ) {
+    for ( i=0; i<len1; i++ ) {
 	char *str1;
 	char *str2;
 
-	if( Tcl_ListObjIndex( interp, val1, i, &obj1 ) == TCL_ERROR ) {
+	if ( Tcl_ListObjIndex( interp, val1, i, &obj1 ) == TCL_ERROR ) {
 	    fprintf( stderr, "Error getting word #%d in TCL object!!! (%s)\n", i, Tcl_GetStringFromObj( val1, NULL ) );
 	    fprintf( stderr, "%s\n", Tcl_GetStringResult( interp ) );
 	    bu_exit ( 1, NULL );
 	}
-	if( Tcl_ListObjIndex( interp, val2, i, &obj2 ) == TCL_ERROR ) {
+	if ( Tcl_ListObjIndex( interp, val2, i, &obj2 ) == TCL_ERROR ) {
 	    fprintf( stderr, "Error getting word #%d in TCL object!!! (%s)\n", i, Tcl_GetStringFromObj( val2, NULL ) );
 	    fprintf( stderr, "%s\n", Tcl_GetStringResult( interp ) );
 	    bu_exit ( 1, NULL );
@@ -293,15 +293,15 @@ compare_values( int type, Tcl_Obj *val1, Tcl_Obj *val2 )
 	str1 = Tcl_GetString( obj1 );
 	str2 = Tcl_GetString( obj2 );
 
-	if( use_floats && (isNumber(str1) && isNumber(str2)) ) {
+	if ( use_floats && (isNumber(str1) && isNumber(str2)) ) {
 	    a = atof( str1 );
 	    b = atof( str2 );
 
-	    if( a != b ) {
+	    if ( a != b ) {
 		return 1;
 	    }
 	} else {
-	    if( strcmp( str1, str2 ) ) {
+	    if ( strcmp( str1, str2 ) ) {
 		return 1;
 	    }
 	}
@@ -319,64 +319,64 @@ do_compare(int type, struct bu_vls *vls, Tcl_Obj *obj1, Tcl_Obj *obj2, char *obj
     int start_index;
     int found_diffs=0;
 
-    if( Tcl_ListObjLength( interp, obj1, &len1 ) == TCL_ERROR ) {
+    if ( Tcl_ListObjLength( interp, obj1, &len1 ) == TCL_ERROR ) {
 	fprintf( stderr, "Error getting length of TCL object!!!\n" );
 	fprintf( stderr, "%s\n", Tcl_GetStringResult( interp ) );
 	bu_exit ( 1, NULL );
     }
-    if( Tcl_ListObjLength( interp, obj2, &len2 ) == TCL_ERROR ) {
+    if ( Tcl_ListObjLength( interp, obj2, &len2 ) == TCL_ERROR ) {
 	fprintf( stderr, "Error getting length of TCL object!!!\n" );
 	fprintf( stderr, "%s\n", Tcl_GetStringResult( interp ) );
 	bu_exit ( 1, NULL );
     }
 
-    if( !len1 && !len2 )
+    if ( !len1 && !len2 )
 	return 0;
 
-    if( type == ATTRS ) {
+    if ( type == ATTRS ) {
 	start_index = 0;
     } else {
 	start_index = 1;
     }
 
     /* check for changed values from object 1 to object2 */
-    for( i=start_index ; i<len1 ; i+=2 ) {
-	if( Tcl_ListObjIndex( interp, obj1, i, &key1 ) == TCL_ERROR ) {
+    for ( i=start_index; i<len1; i+=2 ) {
+	if ( Tcl_ListObjIndex( interp, obj1, i, &key1 ) == TCL_ERROR ) {
 	    fprintf( stderr, "Error getting word #%d in TCL object!!! (%s)\n", i, Tcl_GetStringFromObj( obj1, &junk ) );
 	    fprintf( stderr, "%s\n", Tcl_GetStringResult( interp ) );
 	    bu_exit ( 1, NULL );
 	}
 
-	if( Tcl_ListObjIndex( interp, obj1, i+1, &val1 ) == TCL_ERROR ) {
+	if ( Tcl_ListObjIndex( interp, obj1, i+1, &val1 ) == TCL_ERROR ) {
 	    fprintf( stderr, "Error getting word #%d in TCL object!!! (%s)\n", i+1, Tcl_GetStringFromObj( obj1, &junk ) );
 	    fprintf( stderr, "%s\n", Tcl_GetStringResult( interp ) );
 	    bu_exit ( 1, NULL );
 	}
 
 	found = 0;
-	for( j=start_index ; j<len2 ; j += 2 ) {
-	    if( Tcl_ListObjIndex( interp, obj2, j, &key2 ) == TCL_ERROR ) {
+	for ( j=start_index; j<len2; j += 2 ) {
+	    if ( Tcl_ListObjIndex( interp, obj2, j, &key2 ) == TCL_ERROR ) {
 		fprintf( stderr, "Error getting word #%d in TCL object!!! (%s)\n", j, Tcl_GetStringFromObj( obj2, &junk ) );
 		fprintf( stderr, "%s\n", Tcl_GetStringResult( interp ) );
 		bu_exit ( 1, NULL );
 	    }
-	    if( !strcmp( Tcl_GetStringFromObj( key1, &junk ), Tcl_GetStringFromObj( key2, &junk ) ) ) {
+	    if ( !strcmp( Tcl_GetStringFromObj( key1, &junk ), Tcl_GetStringFromObj( key2, &junk ) ) ) {
 		found = 1;
-		if( Tcl_ListObjIndex( interp, obj2, j+1, &val2 ) == TCL_ERROR ) {
+		if ( Tcl_ListObjIndex( interp, obj2, j+1, &val2 ) == TCL_ERROR ) {
 		    fprintf( stderr, "Error getting word #%d in TCL object!!! (%s)\n", j+1, Tcl_GetStringFromObj( obj2, &junk ) );
 		    fprintf( stderr, "%s\n", Tcl_GetStringResult( interp ) );
 		    bu_exit ( 1, NULL );
 		}
 
 		/* check if this value has changed */
-		if( compare_values( type, val1, val2 ) ) {
-		    if( !found_diffs++ ) {
-			if( mode == HUMAN ) {
+		if ( compare_values( type, val1, val2 ) ) {
+		    if ( !found_diffs++ ) {
+			if ( mode == HUMAN ) {
 			    printf( "%s has changed:\n", obj_name );
 			}
 		    }
-		    if( mode == HUMAN ) {
-			if( type == PARAMS ) {
+		    if ( mode == HUMAN ) {
+			if ( type == PARAMS ) {
 			    printf( "\tparameter %s has changed from:\n\t\t%s\n\tto:\n\t\t%s\n",
 				    Tcl_GetStringFromObj( key1, &junk ),
 				    Tcl_GetStringFromObj( val1, &junk ),
@@ -391,24 +391,24 @@ do_compare(int type, struct bu_vls *vls, Tcl_Obj *obj1, Tcl_Obj *obj2, char *obj
 		    } else {
 			int val_len;
 
-			if( type == ATTRS ) {
+			if ( type == ATTRS ) {
 			    bu_vls_printf( vls, "attr set %s ", obj_name );
 			} else {
 			    bu_vls_strcat( vls, " " );
 			}
 			bu_vls_strcat( vls, Tcl_GetStringFromObj( key1, &junk ) );
 			bu_vls_strcat( vls, " " );
-			if( Tcl_ListObjLength( interp, val2, &val_len ) == TCL_ERROR ) {
+			if ( Tcl_ListObjLength( interp, val2, &val_len ) == TCL_ERROR ) {
 			    fprintf( stderr, "Error getting length of TCL object!!\n" );
 			    fprintf( stderr, "%s\n", Tcl_GetStringResult( interp ) );
 			    bu_exit( 1, NULL );
 			}
-			if( val_len > 1 )
+			if ( val_len > 1 )
 			    bu_vls_putc( vls, '{' );
 			bu_vls_strcat( vls, Tcl_GetStringFromObj( val2, &junk ) );
-			if( val_len > 1 )
+			if ( val_len > 1 )
 			    bu_vls_putc( vls, '}' );
-			if( type == ATTRS ) {
+			if ( type == ATTRS ) {
 			    bu_vls_putc( vls, '\n' );
 			}
 		    }
@@ -416,15 +416,15 @@ do_compare(int type, struct bu_vls *vls, Tcl_Obj *obj1, Tcl_Obj *obj2, char *obj
 		break;
 	    }
 	}
-	if( !found ) {
+	if ( !found ) {
 	    /* this keyword value pair has been eliminated */
-	    if( !found_diffs++ ) {
-		if( mode == HUMAN ) {
+	    if ( !found_diffs++ ) {
+		if ( mode == HUMAN ) {
 		    printf( "%s has changed:\n", obj_name );
 		}
 	    }
-	    if( mode == HUMAN ) {
-		if( type == PARAMS ) {
+	    if ( mode == HUMAN ) {
+		if ( type == PARAMS ) {
 		    printf( "\tparameter %s has been eliminated\n",
 			    Tcl_GetStringFromObj( key1, &junk ) );
 		} else {
@@ -432,7 +432,7 @@ do_compare(int type, struct bu_vls *vls, Tcl_Obj *obj1, Tcl_Obj *obj2, char *obj
 			    Tcl_GetStringFromObj( key1, &junk ), obj_name );
 		}
 	    } else {
-		if( type == ATTRS ) {
+		if ( type == ATTRS ) {
 		    bu_vls_printf( vls, "attr rm %s %s\n", obj_name,
 				   Tcl_GetStringFromObj( key1, &junk ) );
 		} else {
@@ -445,15 +445,15 @@ do_compare(int type, struct bu_vls *vls, Tcl_Obj *obj1, Tcl_Obj *obj2, char *obj
     }
 
     /* check for keyword value pairs in object 2 that don't appear in object 1 */
-    for( i=start_index ; i<len2 ; i+= 2 ) {
+    for ( i=start_index; i<len2; i+= 2 ) {
 	/* get keyword/value pairs from object 2 */
-	if( Tcl_ListObjIndex( interp, obj2, i, &key2 ) == TCL_ERROR ) {
+	if ( Tcl_ListObjIndex( interp, obj2, i, &key2 ) == TCL_ERROR ) {
 	    fprintf( stderr, "Error getting word #%d in TCL object!!! (%s)\n", i, Tcl_GetStringFromObj( obj2, &junk ) );
 	    fprintf( stderr, "%s\n", Tcl_GetStringResult( interp ) );
 	    bu_exit ( 1, NULL );
 	}
 
-	if( Tcl_ListObjIndex( interp, obj2, i+1, &val2 ) == TCL_ERROR ) {
+	if ( Tcl_ListObjIndex( interp, obj2, i+1, &val2 ) == TCL_ERROR ) {
 	    fprintf( stderr, "Error getting word #%d in TCL object!!! (%s)\n", i+1, Tcl_GetStringFromObj( obj2, &junk ) );
 	    fprintf( stderr, "%s\n", Tcl_GetStringResult( interp ) );
 	    bu_exit ( 1, NULL );
@@ -461,28 +461,28 @@ do_compare(int type, struct bu_vls *vls, Tcl_Obj *obj1, Tcl_Obj *obj2, char *obj
 
 	found = 0;
 	/* look for this keyword in object 1 */
-	for( j=start_index ; j<len1 ; j += 2 ) {
-	    if( Tcl_ListObjIndex( interp, obj1, j, &key1 ) == TCL_ERROR ) {
+	for ( j=start_index; j<len1; j += 2 ) {
+	    if ( Tcl_ListObjIndex( interp, obj1, j, &key1 ) == TCL_ERROR ) {
 		fprintf( stderr, "Error getting word #%d in TCL object!!! (%s)\n", i, Tcl_GetStringFromObj( obj1, &junk ) );
 		fprintf( stderr, "%s\n", Tcl_GetStringResult( interp ) );
 		bu_exit ( 1, NULL );
 	    }
-	    if( !strcmp( Tcl_GetStringFromObj( key1, &junk ), Tcl_GetStringFromObj( key2, &junk ) ) ) {
+	    if ( !strcmp( Tcl_GetStringFromObj( key1, &junk ), Tcl_GetStringFromObj( key2, &junk ) ) ) {
 		found = 1;
 		break;
 	    }
 	}
-	if( found )
+	if ( found )
 	    continue;
 
 	/* This keyword/value pair in object 2 is not in object 1 */
-	if( !found_diffs++ ) {
-	    if( mode == HUMAN ) {
+	if ( !found_diffs++ ) {
+	    if ( mode == HUMAN ) {
 		printf( "%s has changed:\n", obj_name );
 	    }
 	}
-	if( mode == HUMAN ) {
-	    if( type == PARAMS ) {
+	if ( mode == HUMAN ) {
+	    if ( type == PARAMS ) {
 		printf( "\t%s has new parameter \"%s\" with value %s\n",
 			obj_name,
 			Tcl_GetStringFromObj( key2, &junk ),
@@ -496,25 +496,25 @@ do_compare(int type, struct bu_vls *vls, Tcl_Obj *obj1, Tcl_Obj *obj2, char *obj
 	} else {
 	    int val_len;
 
-	    if( type == ATTRS ) {
+	    if ( type == ATTRS ) {
 		bu_vls_printf( vls, "attr set %s ", obj_name );
 	    } else {
 		bu_vls_strcat( vls, " " );
 	    }
 	    bu_vls_strcat( vls, Tcl_GetStringFromObj( key2, &junk ) );
 	    bu_vls_strcat( vls, " " );
-	    if( Tcl_ListObjLength( interp, val2, &val_len ) == TCL_ERROR ) {
+	    if ( Tcl_ListObjLength( interp, val2, &val_len ) == TCL_ERROR ) {
 		fprintf( stderr, "Error getting length of TCL object!!\n" );
 		fprintf( stderr, "%s\n", Tcl_GetStringResult( interp ) );
 		bu_exit( 1, NULL );
 	    }
-	    if( val_len > 1 )
+	    if ( val_len > 1 )
 		bu_vls_putc( vls, '{' );
 	    bu_vls_strcat( vls, Tcl_GetStringFromObj( val2, &junk ) );
-	    if( val_len > 1 )
+	    if ( val_len > 1 )
 		bu_vls_putc( vls, '}' );
 
-	    if( type == ATTRS )
+	    if ( type == ATTRS )
 		bu_vls_putc( vls, '\n' );
 	}
     }
@@ -531,30 +531,30 @@ compare_tcl_solids(char *str1, Tcl_Obj *obj1, struct directory *dp1, char *str2,
     /* check if same solid type */
     c1 = str1;
     c2 = str2;
-    while( *c1 != ' ' && *c2 != ' ' && *c1++ == *c2++ );
+    while ( *c1 != ' ' && *c2 != ' ' && *c1++ == *c2++ );
 
-    if( *c1 != *c2 ) {
+    if ( *c1 != *c2 ) {
 	/* different solid types */
-	if( mode == HUMAN )
+	if ( mode == HUMAN )
 	    printf( "solid %s:\n\twas: %s\n\tis now: %s\n\n", dp1->d_namep, str1, str2 );
 	else
 	    printf( "kill %s\ndb put %s %s\n", dp1->d_namep, dp1->d_namep, str2 );
 
 	return 1;
-    } else if( !strcmp( str1, str2 ) ) {
+    } else if ( !strcmp( str1, str2 ) ) {
 	return 0;		/* no difference */
     }
 
     /* same solid type, can use "db adjust" */
 
-    if( mode == MGED ) {
+    if ( mode == MGED ) {
 	bu_vls_init( &adjust );
 	bu_vls_printf( &adjust, "db adjust %s", dp1->d_namep );
     }
 
     different = do_compare( PARAMS, &adjust, obj1, obj2, dp1->d_namep );
 
-    if( mode != HUMAN ) {
+    if ( mode != HUMAN ) {
 	printf( "%s\n", bu_vls_addr( &adjust ) );
 	bu_vls_free( &adjust );
     }
@@ -570,17 +570,17 @@ compare_tcl_combs(Tcl_Obj *obj1, struct directory *dp1, Tcl_Obj *obj2, struct di
     int different = 0;
 
     /* first check if there is any difference */
-    if( !strcmp( Tcl_GetStringFromObj( obj1, &junk ), Tcl_GetStringFromObj( obj2, &junk ) ) )
+    if ( !strcmp( Tcl_GetStringFromObj( obj1, &junk ), Tcl_GetStringFromObj( obj2, &junk ) ) )
 	return 0;
 
-    if( mode != HUMAN ) {
+    if ( mode != HUMAN ) {
 	bu_vls_init( &adjust );
 	bu_vls_printf( &adjust, "db adjust %s", dp1->d_namep );
     }
 
     different = do_compare( PARAMS, &adjust, obj1, obj2, dp1->d_namep );
 
-    if( mode != HUMAN ) {
+    if ( mode != HUMAN ) {
 	printf( "%s\n", bu_vls_addr( &adjust ) );
 	bu_vls_free( &adjust );
     }
@@ -597,7 +597,7 @@ verify_region_attrs( struct directory *dp, struct db_i *dbip, Tcl_Obj *obj )
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
 
-    if( rt_db_get_internal( &intern, dp, dbip, NULL, &rt_uniresource ) < 0 ) {
+    if ( rt_db_get_internal( &intern, dp, dbip, NULL, &rt_uniresource ) < 0 ) {
 	fprintf( stderr, "Cannot import %s\n", dp->d_namep );
 	bu_exit( 1, NULL );
     }
@@ -605,55 +605,55 @@ verify_region_attrs( struct directory *dp, struct db_i *dbip, Tcl_Obj *obj )
     comb = (struct rt_comb_internal *)intern.idb_ptr;
     RT_CHECK_COMB( comb );
 
-    if( Tcl_ListObjGetElements( interp, obj, &len, &objs ) != TCL_OK ) {
+    if ( Tcl_ListObjGetElements( interp, obj, &len, &objs ) != TCL_OK ) {
 	fprintf( stderr, "Cannot get length of attributes for %s\n", dp->d_namep );
 	bu_exit( 1, NULL );
     }
 
-    for( i=1 ; i<len ; i += 2 ) {
+    for ( i=1; i<len; i += 2 ) {
 	char *key, *value;
 
 	key = Tcl_GetStringFromObj( objs[i-1], NULL );
 	value = Tcl_GetStringFromObj( objs[i], NULL );
-	if( !strcmp( key, "region_id" ) ) {
+	if ( !strcmp( key, "region_id" ) ) {
 	    short id;
 
 	    id = atoi( value );
-	    if( id != comb->region_id ) {
+	    if ( id != comb->region_id ) {
 		fprintf( stderr, "WARNING: %s in %s: \"region_id\" attribute says %d, while region says %d\n",
 			 dp->d_namep, dbip->dbi_filename, id, comb->region_id );
 	    }
-	} else if( !strcmp( key, "giftmater" ) ) {
+	} else if ( !strcmp( key, "giftmater" ) ) {
 	    short GIFTmater;
 
 	    GIFTmater = atoi( value );
-	    if( GIFTmater != comb->GIFTmater ) {
+	    if ( GIFTmater != comb->GIFTmater ) {
 		fprintf( stderr, "WARNING: %s in %s: \"giftmater\" attribute says %d, while region says %d\n",
 			 dp->d_namep, dbip->dbi_filename, GIFTmater, comb->GIFTmater );
 	    }
-	} else if( !strcmp( key, "los" ) ) {
+	} else if ( !strcmp( key, "los" ) ) {
 	    short los;
 
 	    los = atoi( value );
-	    if( los != comb->los ) {
+	    if ( los != comb->los ) {
 		fprintf( stderr, "WARNING: %s in %s: \"los\" attribute says %d, while region says %d\n",
 			 dp->d_namep, dbip->dbi_filename, los, comb->los );
 	    }
-	} else if( !strcmp( key, "material" ) ) {
-	    if( !strncmp( value, "gift", 4 ) ) {
+	} else if ( !strcmp( key, "material" ) ) {
+	    if ( !strncmp( value, "gift", 4 ) ) {
 		short GIFTmater;
 
 		GIFTmater = atoi( &value[4] );
-		if( GIFTmater != comb->GIFTmater ) {
+		if ( GIFTmater != comb->GIFTmater ) {
 		    fprintf( stderr, "WARNING: %s in %s: \"material\" attribute says %s, while region says %d\n",
 			     dp->d_namep, dbip->dbi_filename, value, comb->GIFTmater );
 		}
 	    }
-	} else if( !strcmp( key, "aircode" ) ) {
+	} else if ( !strcmp( key, "aircode" ) ) {
 	    short aircode;
 
 	    aircode = atoi( value );
-	    if( aircode != comb->aircode ) {
+	    if ( aircode != comb->aircode ) {
 		fprintf( stderr, "WARNING: %s in %s: \"aircode\" attribute says %d, while region says %d\n",
 			 dp->d_namep, dbip->dbi_filename, aircode, comb->aircode );
 	    }
@@ -677,29 +677,29 @@ remove_region_attrs( Tcl_Obj *obj )
     int i, j;
     int found_material=0;
 
-    if( Tcl_ListObjGetElements( interp, obj, &len, &objs ) != TCL_OK ) {
+    if ( Tcl_ListObjGetElements( interp, obj, &len, &objs ) != TCL_OK ) {
 	fprintf( stderr, "Cannot get length of attributes for %s\n",
 		 Tcl_GetStringFromObj( obj, NULL ) );
 	bu_exit( 1, NULL );
     }
 
-    if( len == 0 )
+    if ( len == 0 )
 	return;
 
-    for( i=len-1 ; i>0 ; i -= 2 ) {
+    for ( i=len-1; i>0; i -= 2 ) {
 
 	key = Tcl_GetStringFromObj( objs[i-1], NULL );
 	j = 0;
-	while( region_attrs[j] ) {
-	    if( !strcmp( key, region_attrs[j] ) ) {
+	while ( region_attrs[j] ) {
+	    if ( !strcmp( key, region_attrs[j] ) ) {
 		Tcl_ListObjReplace(interp, obj, i-1, 2, 0, NULL);
 		break;
 	    }
 	    j++;
 	}
-	if( !found_material && !strcmp( key, "material" ) ) {
+	if ( !found_material && !strcmp( key, "material" ) ) {
 	    found_material = 1;
-	    if( !strncmp( Tcl_GetStringFromObj( objs[i], NULL ), "gift", 4 ) ) {
+	    if ( !strncmp( Tcl_GetStringFromObj( objs[i], NULL ), "gift", 4 ) ) {
 		Tcl_ListObjReplace(interp, obj, i-1, 2, 0, NULL);
 	    }
 	}
@@ -716,9 +716,9 @@ compare_attrs( struct directory *dp1, struct directory *dp2 )
 
     bu_vls_init( &vls );
 
-    if( dbip1->dbi_version > 4 ) {
+    if ( dbip1->dbi_version > 4 ) {
 	bu_vls_printf( &vls, "_db1 attr get %s", dp1->d_namep );
-	if( Tcl_Eval( interp, bu_vls_addr( &vls ) ) != TCL_OK ) {
+	if ( Tcl_Eval( interp, bu_vls_addr( &vls ) ) != TCL_OK ) {
 	    fprintf( stderr, "Cannot get attributes for %s\n", dp1->d_namep );
 	    fprintf( stderr, "%s\n", Tcl_GetStringResult( interp ) );
 	    bu_exit( 1, NULL );
@@ -726,17 +726,17 @@ compare_attrs( struct directory *dp1, struct directory *dp2 )
 
 	obj1 = Tcl_DuplicateObj( Tcl_GetObjResult( interp ) );
 	Tcl_ResetResult( interp );
-	if( dp1->d_flags & DIR_REGION && verify_region_attribs ) {
+	if ( dp1->d_flags & DIR_REGION && verify_region_attribs ) {
 	    verify_region_attrs( dp1, dbip1, obj1 );
 	}
     } else {
 	obj1 = Tcl_NewObj();
     }
 
-    if( dbip2->dbi_version > 4 ) {
+    if ( dbip2->dbi_version > 4 ) {
 	bu_vls_trunc( &vls, 0 );
 	bu_vls_printf( &vls, "_db2 attr get %s", dp1->d_namep );
-	if( Tcl_Eval( interp, bu_vls_addr( &vls ) ) != TCL_OK ) {
+	if ( Tcl_Eval( interp, bu_vls_addr( &vls ) ) != TCL_OK ) {
 	    fprintf( stderr, "Cannot get attributes for %s\n", dp1->d_namep );
 	    fprintf( stderr, "%s\n", Tcl_GetStringResult( interp ) );
 	    bu_exit( 1, NULL );
@@ -744,14 +744,14 @@ compare_attrs( struct directory *dp1, struct directory *dp2 )
 
 	obj2 = Tcl_DuplicateObj( Tcl_GetObjResult( interp ) );
 	Tcl_ResetResult( interp );
-	if( dp1->d_flags & DIR_REGION && verify_region_attribs ) {
+	if ( dp1->d_flags & DIR_REGION && verify_region_attribs ) {
 	    verify_region_attrs( dp2, dbip2, obj2 );
 	}
     } else {
 	obj2 = Tcl_NewObj();
     }
 
-    if( (dp1->d_flags & DIR_REGION) && (dp2->d_flags & DIR_REGION) ) {
+    if ( (dp1->d_flags & DIR_REGION) && (dp2->d_flags & DIR_REGION) ) {
 	/* don't complain about "region" attributes */
 	remove_region_attrs( obj1 );
 	remove_region_attrs( obj2 );
@@ -788,19 +788,19 @@ diff_objs(struct rt_wdb *wdb1, struct rt_wdb *wdb2)
 	Tcl_Obj *obj1, *obj2;
 
 	/* check if this object exists in the other database */
-	if( (dp2 = db_lookup( dbip2, dp1->d_namep, 0 )) == DIR_NULL ) {
+	if ( (dp2 = db_lookup( dbip2, dp1->d_namep, 0 )) == DIR_NULL ) {
 	    kill_obj( dp1->d_namep );
 	    continue;
 	}
 
 	/* skip the _GLOBAL object */
-	if( dp1->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY )
+	if ( dp1->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY )
 	    continue;
 
 	/* try to get the TCL version of this object */
 	bu_vls_trunc( &vls, 0 );
 	bu_vls_printf( &vls, "_db1 get %s", dp1->d_namep );
-	if( Tcl_Eval( interp, bu_vls_addr( &vls ) ) != TCL_OK ) {
+	if ( Tcl_Eval( interp, bu_vls_addr( &vls ) ) != TCL_OK ) {
 	    /* cannot get TCL version, use bu_external */
 	    Tcl_ResetResult( interp );
 	    has_diff += compare_external( dp1, dp2 );
@@ -820,11 +820,11 @@ diff_objs(struct rt_wdb *wdb1, struct rt_wdb *wdb2)
 	/* try to get TCL version of object from the other database */
 	bu_vls_trunc( &vls, 0 );
 	bu_vls_printf( &vls, "_db2 get %s", dp1->d_namep );
-	if( Tcl_Eval( interp, bu_vls_addr( &vls ) ) != TCL_OK ) {
+	if ( Tcl_Eval( interp, bu_vls_addr( &vls ) ) != TCL_OK ) {
 	    Tcl_ResetResult( interp );
 
 	    /* cannot get it, they MUST be different */
-	    if( mode == HUMAN )
+	    if ( mode == HUMAN )
 		printf( "Replace %s with the same object from %s\n",
 			dp1->d_namep, dbip2->dbi_filename );
 	    else
@@ -841,29 +841,29 @@ diff_objs(struct rt_wdb *wdb1, struct rt_wdb *wdb2)
 	Tcl_ResetResult( interp );
 
 	/* got TCL versions of both */
-	if( (dp1->d_flags & DIR_SOLID) && (dp2->d_flags & DIR_SOLID) ) {
+	if ( (dp1->d_flags & DIR_SOLID) && (dp2->d_flags & DIR_SOLID) ) {
 	    /* both are solids */
 	    has_diff += compare_tcl_solids( str1, obj1, dp1, str2, obj2, dp2 );
-	    if( pre_5_vers != 2 ) {
+	    if ( pre_5_vers != 2 ) {
 		has_diff += compare_attrs( dp1, dp2 );
 	    }
 	    continue;
 	}
 
-	if( (dp1->d_flags & DIR_COMB) && (dp2->d_flags & DIR_COMB ) ) {
+	if ( (dp1->d_flags & DIR_COMB) && (dp2->d_flags & DIR_COMB ) ) {
 	    /* both are combinations */
 	    int len;
 	    has_diff += compare_tcl_combs( obj1, dp1, obj2, dp2 );
-	    if( pre_5_vers != 2 ) {
+	    if ( pre_5_vers != 2 ) {
 		has_diff += compare_attrs( dp1, dp2 );
 	    }
 	    continue;
 	}
 
 	/* the two objects are different types */
-	if( strcmp( str1, str2 ) ) {
+	if ( strcmp( str1, str2 ) ) {
 	    has_diff += 1;
-	    if( mode == HUMAN )
+	    if ( mode == HUMAN )
 		printf( "%s:\n\twas: %s\n\tis now: %s\n\n",
 			dp1->d_namep, str1, str2 );
 	    else
@@ -878,24 +878,24 @@ diff_objs(struct rt_wdb *wdb1, struct rt_wdb *wdb2)
     /* now look for objects in the other database that aren't here */
     FOR_ALL_DIRECTORY_START(dp2, dbip2) {
 	/* skip the _GLOBAL object */
-	if( dp2->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY )
+	if ( dp2->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY )
 	    continue;
 
 	/* check if this object exists in the other database */
-	if( (dp1 = db_lookup( dbip1, dp2->d_namep, 0 )) == DIR_NULL ) {
+	if ( (dp1 = db_lookup( dbip1, dp2->d_namep, 0 )) == DIR_NULL ) {
 	    /* need to add this object */
 	    has_diff += 1;
 	    argv[2] = dp2->d_namep;
-	    if( wdb_get_tcl( (ClientData)(wdb2), interp, 3, argv ) == TCL_ERROR || !strncmp( Tcl_GetStringResult(interp), "invalid", 7 ) ) {
+	    if ( wdb_get_tcl( (ClientData)(wdb2), interp, 3, argv ) == TCL_ERROR || !strncmp( Tcl_GetStringResult(interp), "invalid", 7 ) ) {
 		/* could not get TCL version */
-		if( mode == HUMAN )
+		if ( mode == HUMAN )
 		    printf( "Import %s from %s\n",
 			    dp2->d_namep, dbip2->dbi_filename );
 		else
 		    printf( "# IMPORT %s from %s\n",
 			    dp2->d_namep, dbip2->dbi_filename );
 	    } else {
-		if( mode == HUMAN )
+		if ( mode == HUMAN )
 		    printf( "%s does not exist in %s\n",
 			    dp2->d_namep, dbip1->dbi_filename );
 		else
@@ -922,7 +922,7 @@ main(int argc, char **argv)
     invoked_as = argv[0];
 
     while ((c = bu_getopt(argc, argv, "mfv")) != EOF) {
-	switch( c ) {
+	switch ( c ) {
 	    case 'm':	/* mged readable */
 		mode = MGED;
 		break;
@@ -938,7 +938,7 @@ main(int argc, char **argv)
     argc -= bu_optind;
     argv+= bu_optind;
 
-    if( argc != 2 ) {
+    if ( argc != 2 ) {
 	Usage( invoked_as );
 	bu_exit( 1, NULL );
     }
@@ -964,14 +964,14 @@ main(int argc, char **argv)
     }
 
     interp = Tcl_CreateInterp();
-    if( Tcl_Init(interp) == TCL_ERROR ) {
+    if ( Tcl_Init(interp) == TCL_ERROR ) {
 	fprintf( stderr, "Tcl_Init error %s\n", Tcl_GetStringResult(interp));
 	bu_exit( 1, NULL );
     }
 
     Rt_Init( interp );
 
-    if( (dbip1 = db_open( file1, "r" )) == DBI_NULL ) {
+    if ( (dbip1 = db_open( file1, "r" )) == DBI_NULL ) {
 	fprintf( stderr, "Cannot open %s\n", file1 );
 	perror( argv[0] );
 	bu_exit( 1, NULL );
@@ -979,24 +979,24 @@ main(int argc, char **argv)
 
     RT_CK_DBI(dbip1);
 
-    if( (wdb1 = wdb_dbopen( dbip1, RT_WDB_TYPE_DB_DISK )) == RT_WDB_NULL ) {
+    if ( (wdb1 = wdb_dbopen( dbip1, RT_WDB_TYPE_DB_DISK )) == RT_WDB_NULL ) {
 	fprintf( stderr, "wdb_dbopen failed for %s\n", file1 );
 	bu_exit( 1, NULL );
     }
 
-    if( db_dirbuild( dbip1 ) < 0 ) {
+    if ( db_dirbuild( dbip1 ) < 0 ) {
 	db_close( dbip1 );
 	fprintf( stderr, "db_dirbuild failed on %s\n", file1 );
 	bu_exit( 1, NULL );
     }
 
-    if( wdb_init_obj( interp, wdb1, "_db1") != TCL_OK ) {
+    if ( wdb_init_obj( interp, wdb1, "_db1") != TCL_OK ) {
 	wdb_close( wdb1 );
 	fprintf( stderr, "wdb_init_obj failed on %s\n", file1 );
 	bu_exit( 1, NULL );
     }
 
-    if( wdb_create_cmd( interp, wdb1, "_db1" ) != TCL_OK ) {
+    if ( wdb_create_cmd( interp, wdb1, "_db1" ) != TCL_OK ) {
 	wdb_close( wdb1 );
 	fprintf( stderr, "wdb_create_cmd failed on %s\n", file1 );
 	bu_exit( 1, NULL );
@@ -1006,11 +1006,11 @@ main(int argc, char **argv)
     mater_hd1 = rt_material_head;
     rt_material_head = MATER_NULL;
 
-    if( dbip1->dbi_version < 5 ) {
+    if ( dbip1->dbi_version < 5 ) {
 	pre_5_vers++;
     }
 
-    if( (dbip2 = db_open( file2, "r" )) == DBI_NULL ) {
+    if ( (dbip2 = db_open( file2, "r" )) == DBI_NULL ) {
 	fprintf( stderr, "Cannot open %s\n", file2 );
 	perror( argv[0] );
 	bu_exit( 1, NULL );
@@ -1018,28 +1018,28 @@ main(int argc, char **argv)
 
     RT_CK_DBI(dbip2);
 
-    if( db_dirbuild( dbip2 ) < 0 ) {
+    if ( db_dirbuild( dbip2 ) < 0 ) {
 	db_close( dbip1 );
 	db_close( dbip2 );
 	fprintf( stderr, "db_dirbuild failed on %s\n", file2 );
 	bu_exit( 1, NULL );
     }
 
-    if( (wdb2 = wdb_dbopen( dbip2, RT_WDB_TYPE_DB_DISK )) == RT_WDB_NULL ) {
+    if ( (wdb2 = wdb_dbopen( dbip2, RT_WDB_TYPE_DB_DISK )) == RT_WDB_NULL ) {
 	db_close( dbip2 );
 	wdb_close( wdb1 );
 	fprintf( stderr, "wdb_dbopen failed for %s\n", file2 );
 	bu_exit( 1, NULL );
     }
 
-    if( wdb_init_obj( interp, wdb2, "_db2") != TCL_OK ) {
+    if ( wdb_init_obj( interp, wdb2, "_db2") != TCL_OK ) {
 	wdb_close( wdb1 );
 	wdb_close( wdb2 );
 	fprintf( stderr, "wdb_init_obj failed on %s\n", file2 );
 	bu_exit( 1, NULL );
     }
 
-    if( wdb_create_cmd( interp, wdb2, "_db2" ) != TCL_OK ) {
+    if ( wdb_create_cmd( interp, wdb2, "_db2" ) != TCL_OK ) {
 	wdb_close( wdb1 );
 	fprintf( stderr, "wdb_create_cmd failed on %s\n", file2 );
 	bu_exit( 1, NULL );
@@ -1049,21 +1049,21 @@ main(int argc, char **argv)
     mater_hd2 = rt_material_head;
     rt_material_head = MATER_NULL;
 
-    if( dbip2->dbi_version < 5 ) {
+    if ( dbip2->dbi_version < 5 ) {
 	pre_5_vers++;
 	version2 = 4;
     } else {
 	version2 = 5;
     }
 
-    if( mode == HUMAN) {
+    if ( mode == HUMAN) {
 	printf( "\nChanges from %s to %s\n\n", dbip1->dbi_filename, dbip2->dbi_filename );
     }
 
     /* compare titles */
-    if( strcmp( dbip1->dbi_title, dbip2->dbi_title ) ) {
+    if ( strcmp( dbip1->dbi_title, dbip2->dbi_title ) ) {
 	different = 1;
-	if( mode == HUMAN ) {
+	if ( mode == HUMAN ) {
 	    printf( "Title has changed from: \"%s\" to: \"%s\"\n\n", dbip1->dbi_title, dbip2->dbi_title );
 	} else {
 	    printf( "title %s\n", dbip2->dbi_title );
@@ -1071,9 +1071,9 @@ main(int argc, char **argv)
     }
 
     /* and units */
-    if( dbip1->dbi_local2base != dbip2->dbi_local2base ) {
+    if ( dbip1->dbi_local2base != dbip2->dbi_local2base ) {
 	different = 1;
-	if( mode == HUMAN ) {
+	if ( mode == HUMAN ) {
 	    printf( "Units changed from %s to %s\n", bu_units_string(dbip1->dbi_local2base), bu_units_string(dbip2->dbi_local2base) );
 	} else {
 	    printf( "units %s\n", bu_units_string(dbip2->dbi_local2base) );

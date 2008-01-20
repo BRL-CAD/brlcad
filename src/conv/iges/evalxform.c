@@ -44,17 +44,17 @@ Evalxform()
 {
 
 	int i, j, xform;
-	struct list *ptr,*ptr1,*ptr_root;
+	struct list *ptr, *ptr1, *ptr_root;
 	mat_t rot;
 
 
-	for( i=0 ; i<totentities ; i++ ) /* loop through all entities */
+	for ( i=0; i<totentities; i++ ) /* loop through all entities */
 	{
 		/* skip non-transformation entities */
-		if( dir[i]->type != 124 && dir[i]->type != 700 )
+		if ( dir[i]->type != 124 && dir[i]->type != 700 )
 			continue;
 
-		if( dir[i]->trans >= 0 && !dir[i]->referenced )
+		if ( dir[i]->trans >= 0 && !dir[i]->referenced )
 		{
 			/* Make a linked list of the xform matrices
 				in reverse order */
@@ -62,9 +62,9 @@ Evalxform()
 			ptr1 = NULL;
 			ptr_root = NULL;
 			xform = i;
-			while( xform >= 0 )
+			while ( xform >= 0 )
 			{
-				if( ptr == NULL )
+				if ( ptr == NULL )
 					ptr = (struct list *)bu_malloc( sizeof( struct list ),
 							"Evalxform: ptr" );
 				else
@@ -78,22 +78,22 @@ Evalxform()
 				xform = dir[xform]->trans;
 			}
 
-			for( j=0 ; j<16 ; j++ )
+			for ( j=0; j<16; j++ )
 				rot[j] = (*identity)[j];
 
 			ptr_root = ptr;
-			while( ptr != NULL )
+			while ( ptr != NULL )
 			{
-				if( !dir[ptr->index]->referenced )
+				if ( !dir[ptr->index]->referenced )
 				{
 					Matmult( rot, *dir[ptr->index]->rot, rot );
-					for( j=0 ; j<16 ; j++ )
+					for ( j=0; j<16; j++ )
 						(*dir[ptr->index]->rot)[j] = rot[j];
 					dir[ptr->index]->referenced++;
 				}
 				else
 				{
-					for( j=0 ; j<16 ; j++ )
+					for ( j=0; j<16; j++ )
 					rot[j] = (*dir[ptr->index]->rot)[j];
 				}
 				ptr = ptr->prev;
@@ -101,7 +101,7 @@ Evalxform()
 
 			/* Free some memory */
 			ptr = ptr_root;
-			while( ptr )
+			while ( ptr )
 			{
 				ptr1 = ptr;
 				ptr = ptr->prev;
@@ -111,13 +111,13 @@ Evalxform()
 	}
 
 	/* set matrices for all other entities */
-	for( i=0 ; i<totentities ; i++ )
+	for ( i=0; i<totentities; i++ )
 	{
 		/* skip xform entities */
-		if( dir[i]->type == 124 || dir[i]->type == 700 )
+		if ( dir[i]->type == 124 || dir[i]->type == 700 )
 			continue;
 
-		if( dir[i]->trans >= 0 )
+		if ( dir[i]->trans >= 0 )
 			dir[i]->rot = dir[dir[i]->trans]->rot;
 		else
 			dir[i]->rot = identity;

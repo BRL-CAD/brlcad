@@ -54,7 +54,7 @@ union trie
 	l;
 	};
 #define NewTrie( p ) \
-		if( ((p) = (Trie *) malloc( sizeof(Trie) )) == TRIE_NULL )\
+		if ( ((p) = (Trie *) malloc( sizeof(Trie) )) == TRIE_NULL )\
 			{\
 			Malloc_Bomb(sizeof(Trie));\
 			return	TRIE_NULL;\

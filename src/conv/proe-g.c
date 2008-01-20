@@ -185,9 +185,9 @@ Build_unique_name(char *name)
 	name_len = strlen( name );
 	bu_vls_strcpy( &ret_name, name );
 	ptr = name_root;
-	while( ptr )
+	while ( ptr )
 	{
-		if( !strcmp( bu_vls_addr( &ret_name ), ptr->brlcad_name ) ||
+		if ( !strcmp( bu_vls_addr( &ret_name ), ptr->brlcad_name ) ||
 		    (ptr->solid_name && !strcmp( bu_vls_addr( &ret_name ), ptr->solid_name ) ) )
 		{
 			/* this name already exists, build a new one */
@@ -209,10 +209,10 @@ Add_new_name(char *name, unsigned int obj, int type)
 {
 	struct name_conv_list *ptr;
 
-	if( debug )
+	if ( debug )
 		bu_log( "Add_new_name( %s, x%x, %d )\n", name, obj, type );
 
-	if( type != ASSEMBLY_TYPE && type != PART_TYPE && type != CUT_SOLID_TYPE )
+	if ( type != ASSEMBLY_TYPE && type != PART_TYPE && type != CUT_SOLID_TYPE )
 	{
 		bu_exit(EXIT_FAILURE, "Bad type for name (%s) in Add_new_name\n", name );
 	}
@@ -223,26 +223,26 @@ Add_new_name(char *name, unsigned int obj, int type)
 	ptr->next = (struct name_conv_list *)NULL;
 	ptr->brlcad_name = bu_strdup( name );
 	ptr->obj = obj;
-	if( do_regex && type != CUT_SOLID_TYPE )
+	if ( do_regex && type != CUT_SOLID_TYPE )
 	{
 		regmatch_t pmatch;
 
-		if( regexec( &reg_cmp, ptr->brlcad_name, 1, &pmatch, 0  ) == 0 )
+		if ( regexec( &reg_cmp, ptr->brlcad_name, 1, &pmatch, 0  ) == 0 )
 		{
 			/* got a match */
 			strncpy( &ptr->brlcad_name[pmatch.rm_so], &ptr->brlcad_name[pmatch.rm_eo], MAX_LINE_LEN-1 );
 		}
-		if( debug )
+		if ( debug )
 			bu_log( "\tafter reg_ex, name is %s\n", ptr->brlcad_name );
 	}
-	else if( type == CUT_SOLID_TYPE ) {
+	else if ( type == CUT_SOLID_TYPE ) {
 		bu_free( (char *)ptr->brlcad_name, "brlcad_name" );
 		ptr->brlcad_name = NULL;
 	}
 	ptr->solid_use_no = 0;
 	ptr->comb_use_no = 0;
 
-	if( type != CUT_SOLID_TYPE )
+	if ( type != CUT_SOLID_TYPE )
 	{
 		/* make sure brlcad_name is unique */
 		char *tmp;
@@ -252,12 +252,12 @@ Add_new_name(char *name, unsigned int obj, int type)
 		bu_free( (char *)tmp, "brlcad_name" );
 	}
 
-	if( type == ASSEMBLY_TYPE )
+	if ( type == ASSEMBLY_TYPE )
 	{
 		ptr->solid_name = NULL;
 		return( ptr );
 	}
-	else if( type == PART_TYPE )
+	else if ( type == PART_TYPE )
 	{
 		struct bu_vls vls;
 
@@ -288,9 +288,9 @@ Add_new_name(char *name, unsigned int obj, int type)
 static char *
 Get_unique_name(char *name, unsigned int obj, int type)
 {
-	struct name_conv_list *ptr,*prev;
+	struct name_conv_list *ptr, *prev;
 
-	if( name_root == (struct name_conv_list *)NULL )
+	if ( name_root == (struct name_conv_list *)NULL )
 	{
 		/* start new list */
 		name_root = Add_new_name( name, obj, type );
@@ -302,9 +302,9 @@ Get_unique_name(char *name, unsigned int obj, int type)
 
 		prev = (struct name_conv_list *)NULL;
 		ptr = name_root;
-		while( ptr && !found )
+		while ( ptr && !found )
 		{
-			if( obj == ptr->obj )
+			if ( obj == ptr->obj )
 				found = 1;
 			else
 			{
@@ -313,7 +313,7 @@ Get_unique_name(char *name, unsigned int obj, int type)
 			}
 		}
 
-		if( !found )
+		if ( !found )
 		{
 			prev->next = Add_new_name( name, obj, type );
 			ptr = prev->next;
@@ -330,10 +330,10 @@ Get_solid_name(char *name, unsigned int obj)
 
 	ptr = name_root;
 
-	while( ptr && obj != ptr->obj )
+	while ( ptr && obj != ptr->obj )
 		ptr = ptr->next;
 
-	if( !ptr )
+	if ( !ptr )
 		ptr = Add_new_name( name, 0, PART_TYPE );
 
 	return( ptr->solid_name );
@@ -355,10 +355,10 @@ Convert_assy(char *line)
 	int start;
 	int i;
 
-	if( RT_G_DEBUG & DEBUG_MEM_FULL )
+	if ( RT_G_DEBUG & DEBUG_MEM_FULL )
 	{
 		bu_log( "Barrier check at start of Convert_assy:\n" );
-		if( bu_mem_barriercheck() )
+		if ( bu_mem_barriercheck() )
 			bu_exit(EXIT_FAILURE,  "Barrier check failed!!!\n" );
 	}
 
@@ -366,8 +366,8 @@ Convert_assy(char *line)
 
 	start = (-1);
 	/* skip leading blanks */
-	while( isspace( line[++start] ) && line[start] != '\0' );
-	if( strncmp( &line[start], "assembly", 8 ) && strncmp( &line[start], "ASSEMBLY", 8 ) )
+	while ( isspace( line[++start] ) && line[start] != '\0' );
+	if ( strncmp( &line[start], "assembly", 8 ) && strncmp( &line[start], "ASSEMBLY", 8 ) )
 	{
 		bu_log( "PROE-G: Convert_assy called for non-assembly:\n%s\n", line );
 		return;
@@ -375,12 +375,12 @@ Convert_assy(char *line)
 
 	/* skip blanks before name */
 	start += 7;
-	while( isspace( line[++start] ) && line[start] != '\0' );
+	while ( isspace( line[++start] ) && line[start] != '\0' );
 
 	/* get name */
 	i = (-1);
 	start--;
-	while( !isspace( line[++start] ) && line[start] != '\0' && line[start] != '\n' )
+	while ( !isspace( line[++start] ) && line[start] != '\0' && line[start] != '\n' )
 		name[++i] = line[start];
 	name[++i] = '\0';
 
@@ -389,25 +389,25 @@ Convert_assy(char *line)
 
 	bu_log( "Converting Assembly: %s\n", name );
 
-	if( debug )
+	if ( debug )
 		bu_log( "Convert_assy: %s x%x\n", name, obj );
 
-	while( bu_fgets( line1, MAX_LINE_LEN, fd_in ) )
+	while ( bu_fgets( line1, MAX_LINE_LEN, fd_in ) )
 	{
 		/* skip leading blanks */
 		start = (-1);
-		while( isspace( line1[++start] ) && line[start] != '\0' );
+		while ( isspace( line1[++start] ) && line[start] != '\0' );
 
-		if( !strncmp( &line1[start], "endassembly", 11 ) || !strncmp( &line1[start], "ENDASSEMBLY", 11 ) )
+		if ( !strncmp( &line1[start], "endassembly", 11 ) || !strncmp( &line1[start], "ENDASSEMBLY", 11 ) )
 		{
 
 			brlcad_name = Get_unique_name( name, obj, ASSEMBLY_TYPE );
-			if( debug )
+			if ( debug )
 			{
 				struct wmember *wp;
 
 				bu_log( "\tmake assembly ( %s)\n", brlcad_name );
-				for( BU_LIST_FOR( wp, wmember, &head.l ) )
+				for ( BU_LIST_FOR( wp, wmember, &head.l ) )
 					bu_log( "\t%c %s\n", wp->wm_op, wp->wm_name );
 			}
 			else
@@ -417,13 +417,13 @@ Convert_assy(char *line)
 			(char *)NULL, (char *)NULL, (unsigned char *)NULL, 0 );
 			break;
 		}
-		else if( !strncmp( &line1[start], "member", 6 ) || !strncmp( &line1[start], "MEMBER", 6 ) )
+		else if ( !strncmp( &line1[start], "member", 6 ) || !strncmp( &line1[start], "MEMBER", 6 ) )
 		{
 			start += 5;
-			while( isspace( line1[++start] ) && line1[start] != '\0' );
+			while ( isspace( line1[++start] ) && line1[start] != '\0' );
 			i = (-1);
 			start--;
-			while( !isspace( line1[++start] ) && line1[start] != '\0' && line1[start] != '\n' )
+			while ( !isspace( line1[++start] ) && line1[start] != '\0' && line1[start] != '\n' )
 				memb_name[++i] = line1[start];
 			memb_name[++i] = '\0';
 
@@ -431,68 +431,68 @@ Convert_assy(char *line)
 			sscanf( &line1[start], "%x", &memb_obj );
 
 			brlcad_name = Get_unique_name( memb_name, memb_obj, PART_TYPE );
-			if( debug )
+			if ( debug )
 				bu_log( "\tmember (%s)\n", brlcad_name );
 			wmem = mk_addmember( brlcad_name, &head.l, NULL, WMOP_UNION );
 		}
-		else if( !strncmp( &line1[start], "matrix", 6 ) || !strncmp( &line1[start], "MATRIX", 6 ) )
+		else if ( !strncmp( &line1[start], "matrix", 6 ) || !strncmp( &line1[start], "MATRIX", 6 ) )
 		{
 			int i, j;
 			double scale, inv_scale;
 
-			for( j=0 ; j<4 ; j++ )
+			for ( j=0; j<4; j++ )
 			{
 				bu_fgets( line1, MAX_LINE_LEN, fd_in );
 				sscanf( line1, "%f %f %f %f", &mat_col[0], &mat_col[1], &mat_col[2], &mat_col[3] );
-				for( i=0 ; i<4 ; i++ )
+				for ( i=0; i<4; i++ )
 					wmem->wm_mat[4*i+j] = mat_col[i];
 			}
 
 			/* convert this matrix to seperate scale factor into element #15 */
 /*			scale = MAGNITUDE( &wmem->wm_mat[0] ); */
 			scale = pow( bn_mat_det3( wmem->wm_mat ), 1.0/3.0 );
-			if( debug )
+			if ( debug )
 			{
 				bn_mat_print( brlcad_name, wmem->wm_mat );
 				bu_log( "\tscale = %g, conv_factor = %g\n", scale, conv_factor );
 			}
-			if( scale != 1.0 )
+			if ( scale != 1.0 )
 			{
 				inv_scale = 1.0/scale;
-				for( j=0 ; j<3 ; j++ )
+				for ( j=0; j<3; j++ )
 					HSCALE( &wmem->wm_mat[j*4], &wmem->wm_mat[j*4], inv_scale )
 
 				/* clamp rotation elements to fabs(1.0) */
-				for( j=0 ; j<3 ; j++ )
+				for ( j=0; j<3; j++ )
 				{
-					for( i=0 ; i<3 ; i++ )
+					for ( i=0; i<3; i++ )
 					{
-						if( wmem->wm_mat[j*4 + i] > 1.0 )
+						if ( wmem->wm_mat[j*4 + i] > 1.0 )
 							wmem->wm_mat[j*4 + i] = 1.0;
-						else if( wmem->wm_mat[j*4 + i] < -1.0 )
+						else if ( wmem->wm_mat[j*4 + i] < -1.0 )
 							wmem->wm_mat[j*4 + i] = -1.0;
 					}
 				}
 
-				if( top_level)
+				if ( top_level)
 					wmem->wm_mat[15] *= (inv_scale/conv_factor);
 				else
 					wmem->wm_mat[15] *= inv_scale;
 			}
-			else if( top_level )
+			else if ( top_level )
 				wmem->wm_mat[15] /= conv_factor;
 
-			if( top_level && do_reorient )
+			if ( top_level && do_reorient )
 			{
 				/* apply re_orient transformation here */
-				if( debug )
+				if ( debug )
 				{
 					bu_log( "Applying re-orient matrix to member %s\n", brlcad_name );
 					bn_mat_print( "re-orient matrix", re_orient );
 				}
 				bn_mat_mul2( re_orient, wmem->wm_mat );
 			}
-			if( debug )
+			if ( debug )
 				bn_mat_print( "final matrix", wmem->wm_mat );
 		}
 		else
@@ -501,10 +501,10 @@ Convert_assy(char *line)
 		}
 	}
 
-	if( RT_G_DEBUG & DEBUG_MEM_FULL )
+	if ( RT_G_DEBUG & DEBUG_MEM_FULL )
 	{
 		bu_log( "Barrier check at end of Convet_assy:\n" );
-		if( bu_mem_barriercheck() )
+		if ( bu_mem_barriercheck() )
 			bu_exit(EXIT_FAILURE,  "Barrier check failed!!!\n" );
 	}
 
@@ -518,9 +518,9 @@ do_modifiers(char *line1, int *start, struct wmember *head, char *name, fastf_t 
 	struct wmember *wmem;
 	int i;
 
-	while( strncmp( &line1[*start], "endmodifiers", 12 ) && strncmp( &line1[*start], "ENDMODIFIERS", 12 ) )
+	while ( strncmp( &line1[*start], "endmodifiers", 12 ) && strncmp( &line1[*start], "ENDMODIFIERS", 12 ) )
 	{
-		if( !strncmp( &line1[*start], "plane", 5 ) || !strncmp( &line1[*start], "PLANE", 5 ) )
+		if ( !strncmp( &line1[*start], "plane", 5 ) || !strncmp( &line1[*start], "PLANE", 5 ) )
 		{
 			struct name_conv_list *ptr;
 			char haf_name[MAX_LINE_LEN];
@@ -565,52 +565,52 @@ do_modifiers(char *line1, int *start, struct wmember *head, char *name, fastf_t 
 			dist = 0.0;
 			VSET( rpp_corner, min[X], min[Y], min[Z] );
 			tmp_dist = DIST_PT_PLANE( rpp_corner, plane ) * (fastf_t)orient;
-			if( tmp_dist > dist )
+			if ( tmp_dist > dist )
 				dist = tmp_dist;
 
 			VSET( rpp_corner, min[X], min[Y], max[Z] );
 			tmp_dist = DIST_PT_PLANE( rpp_corner, plane ) * (fastf_t)orient;
-			if( tmp_dist > dist )
+			if ( tmp_dist > dist )
 				dist = tmp_dist;
 
 			VSET( rpp_corner, min[X], max[Y], min[Z] );
 			tmp_dist = DIST_PT_PLANE( rpp_corner, plane ) * (fastf_t)orient;
-			if( tmp_dist > dist )
+			if ( tmp_dist > dist )
 				dist = tmp_dist;
 
 			VSET( rpp_corner, min[X], max[Y], max[Z] );
 			tmp_dist = DIST_PT_PLANE( rpp_corner, plane ) * (fastf_t)orient;
-			if( tmp_dist > dist )
+			if ( tmp_dist > dist )
 				dist = tmp_dist;
 
 			VSET( rpp_corner, max[X], min[Y], min[Z] );
 			tmp_dist = DIST_PT_PLANE( rpp_corner, plane ) * (fastf_t)orient;
-			if( tmp_dist > dist )
+			if ( tmp_dist > dist )
 				dist = tmp_dist;
 
 			VSET( rpp_corner, max[X], min[Y], max[Z] );
 			tmp_dist = DIST_PT_PLANE( rpp_corner, plane ) * (fastf_t)orient;
-			if( tmp_dist > dist )
+			if ( tmp_dist > dist )
 				dist = tmp_dist;
 
 			VSET( rpp_corner, max[X], max[Y], min[Z] );
 			tmp_dist = DIST_PT_PLANE( rpp_corner, plane ) * (fastf_t)orient;
-			if( tmp_dist > dist )
+			if ( tmp_dist > dist )
 				dist = tmp_dist;
 
 			VSET( rpp_corner, max[X], max[Y], max[Z] );
 			tmp_dist = DIST_PT_PLANE( rpp_corner, plane ) * (fastf_t)orient;
-			if( tmp_dist > dist )
+			if ( tmp_dist > dist )
 				dist = tmp_dist;
 
-			for( i=0 ; i<4 ; i++ )
+			for ( i=0; i<4; i++ )
 			{
 				VJOIN1( arb_pt[i+4], arb_pt[i], dist*(fastf_t)orient, plane );
 			}
 
-			if( top_level )
+			if ( top_level )
 			{
-				for( i=0 ; i<8 ; i++ )
+				for ( i=0; i<8; i++ )
 					VSCALE( arb_pt[i], arb_pt[i], conv_factor )
 			}
 
@@ -618,7 +618,7 @@ do_modifiers(char *line1, int *start, struct wmember *head, char *name, fastf_t 
 
 			snprintf( haf_name, MAX_LINE_LEN, "cut.%d", cut_count );
 			ptr = Add_new_name( haf_name, 0, CUT_SOLID_TYPE );
-			if( mk_arb8( fd_out, ptr->solid_name, (fastf_t *)arb_pt ) )
+			if ( mk_arb8( fd_out, ptr->solid_name, (fastf_t *)arb_pt ) )
 				bu_log( "Failed to create ARB8 solid for Assembly cut in part %s\n", name );
 			else
 			{
@@ -626,10 +626,10 @@ do_modifiers(char *line1, int *start, struct wmember *head, char *name, fastf_t 
 				wmem = mk_addmember( ptr->solid_name, &(head->l), NULL,
 						WMOP_SUBTRACT );
 
-				if( top_level && do_reorient )
+				if ( top_level && do_reorient )
 				{
 					/* apply re_orient transformation here */
-					if( debug )
+					if ( debug )
 					{
 						bu_log( "Applying re-orient matrix to solid %s\n", ptr->solid_name );
 						bn_mat_print( "re-orient matrix", re_orient );
@@ -641,20 +641,20 @@ do_modifiers(char *line1, int *start, struct wmember *head, char *name, fastf_t 
 		}
 		bu_fgets( line1, MAX_LINE_LEN, fd_in );
 		(*start) = (-1);
-		while( isspace( line1[++(*start)] ) );
+		while ( isspace( line1[++(*start)] ) );
 	}
 }
 
 void
 Add_face(int *face)
 {
-	if( !bot_faces )
+	if ( !bot_faces )
 	{
 		bot_faces = (int *)bu_malloc( 3 * BOT_FBLOCK * sizeof( int ), "bot_faces" );
 		bot_fsize = BOT_FBLOCK;
 		bot_fcurr = 0;
 	}
-	else if( bot_fcurr >= bot_fsize )
+	else if ( bot_fcurr >= bot_fsize )
 	{
 		bot_fsize += BOT_FBLOCK;
 		bot_faces = (int *)bu_realloc( (void *)bot_faces, 3 * bot_fsize * sizeof( int ), "bot_faces increase" );
@@ -685,13 +685,13 @@ Convert_part(char *line)
 	int solid_in_region=0;
 	point_t part_max, part_min;	/* Part RPP */
 
-	if( RT_G_DEBUG & DEBUG_MEM_FULL )
+	if ( RT_G_DEBUG & DEBUG_MEM_FULL )
 		bu_prmem( "At start of Conv_prt():\n" );
 
-	if( RT_G_DEBUG & DEBUG_MEM_FULL )
+	if ( RT_G_DEBUG & DEBUG_MEM_FULL )
 	{
 		bu_log( "Barrier check at start of Convet_part:\n" );
-		if( bu_mem_barriercheck() )
+		if ( bu_mem_barriercheck() )
 			bu_exit(EXIT_FAILURE,  "Barrier check failed!!!\n" );
 	}
 
@@ -705,8 +705,8 @@ Convert_part(char *line)
 
 	start = (-1);
 	/* skip leading blanks */
-	while( isspace( line[++start] ) && line[start] != '\0' );
-	if( strncmp( &line[start], "solid", 5 ) && strncmp( &line[start], "SOLID", 5 ) )
+	while ( isspace( line[++start] ) && line[start] != '\0' );
+	if ( strncmp( &line[start], "solid", 5 ) && strncmp( &line[start], "SOLID", 5 ) )
 	{
 		bu_log( "Convert_part: Called for non-part\n%s\n", line );
 		return;
@@ -714,21 +714,21 @@ Convert_part(char *line)
 
 	/* skip blanks before name */
 	start += 4;
-	while( isspace( line[++start] ) && line[start] != '\0' );
+	while ( isspace( line[++start] ) && line[start] != '\0' );
 
-	if( line[start] != '\0' ) {
+	if ( line[start] != '\0' ) {
 		/* get name */
 		i = (-1);
 		start--;
-		while( !isspace( line[++start] ) && line[start] != '\0' && line[start] != '\n' )
+		while ( !isspace( line[++start] ) && line[start] != '\0' && line[start] != '\n' )
 			name[++i] = line[start];
 		name[++i] = '\0';
 
 		/* get object id */
 		sscanf( &line[start], "%x", &obj );
-	} else if( stl_format && forced_name ) {
+	} else if ( stl_format && forced_name ) {
 		strncpy( name, forced_name, MAX_LINE_LEN-1 );
-	} else if( stl_format ) {
+	} else if ( stl_format ) {
 		/* build a name from the file name */
 		char tmp_str[512];
 		char *ptr;
@@ -743,15 +743,15 @@ Convert_part(char *line)
 
 		/* eliminate a trailing ".stl" */
 		len = strlen( tmp_str );
-		if( len > 4 )
+		if ( len > 4 )
 		{
-			if( !strncmp( &tmp_str[len-4], ".stl", 4 ) )
+			if ( !strncmp( &tmp_str[len-4], ".stl", 4 ) )
 				tmp_str[len-4] = '\0';
 		}
 
 		/* skip over all characters prior to the last '/' */
 		ptr = strrchr( tmp_str, '/' );
-		if( !ptr )
+		if ( !ptr )
 			ptr = tmp_str;
 		else
 			ptr++;
@@ -763,7 +763,7 @@ Convert_part(char *line)
 		sprintf( tmp_str, "_%d", obj_count );
 		len = strlen( name );
 		suff_len = strlen( tmp_str );
-		if( len + suff_len < MAX_LINE_LEN-1 )
+		if ( len + suff_len < MAX_LINE_LEN-1 )
 		    strncat( name, tmp_str, MAX_LINE_LEN - len - 1 );
 		else
 		    snprintf( &name[MAX_LINE_LEN-suff_len-1], MAX_LINE_LEN, "%s", tmp_str );
@@ -775,7 +775,7 @@ Convert_part(char *line)
 
 	bu_log( "Converting Part: %s\n", name );
 
-	if( debug )
+	if ( debug )
 		bu_log( "Conv_part %s x%x\n", name, obj );
 
 	solid_count++;
@@ -783,22 +783,22 @@ Convert_part(char *line)
 
 	bu_log( "\tUsing solid name: %s\n", solid_name );
 
-	if( RT_G_DEBUG & DEBUG_MEM || RT_G_DEBUG & DEBUG_MEM_FULL )
+	if ( RT_G_DEBUG & DEBUG_MEM || RT_G_DEBUG & DEBUG_MEM_FULL )
 		bu_prmem( "At start of Convert_part()" );
 
-	while( bu_fgets( line1, MAX_LINE_LEN, fd_in ) != NULL )
+	while ( bu_fgets( line1, MAX_LINE_LEN, fd_in ) != NULL )
 	{
 		start = (-1);
-		while( isspace( line1[++start] ) );
-		if( !strncmp( &line1[start], "endsolid", 8 ) || !strncmp( &line1[start], "ENDSOLID", 8 ) )
+		while ( isspace( line1[++start] ) );
+		if ( !strncmp( &line1[start], "endsolid", 8 ) || !strncmp( &line1[start], "ENDSOLID", 8 ) )
 			break;
-		else if( !strncmp( &line1[start], "color", 5 ) || !strncmp( &line1[start], "COLOR", 5 ) )
+		else if ( !strncmp( &line1[start], "color", 5 ) || !strncmp( &line1[start], "COLOR", 5 ) )
 		{
 			sscanf( &line1[start+5], "%f%f%f", &colr[0], &colr[1], &colr[2] );
-			for( i=0 ; i<3 ; i++ )
+			for ( i=0; i<3; i++ )
 				color[i] = (int)(colr[i] * 255.0);
 		}
-		else if( !strncmp( &line1[start], "normal", 6 ) || !strncmp( &line1[start], "NORMAL", 6 ) )
+		else if ( !strncmp( &line1[start], "normal", 6 ) || !strncmp( &line1[start], "NORMAL", 6 ) )
 		{
 			float x, y, z;
 
@@ -806,16 +806,16 @@ Convert_part(char *line)
 			sscanf( &line1[start], "%f%f%f", &x, &y, &z );
 			VSET( normal, x, y, z );
 		}
-		else if( !strncmp( &line1[start], "facet", 5 ) || !strncmp( &line1[start], "FACET", 5 ) )
+		else if ( !strncmp( &line1[start], "facet", 5 ) || !strncmp( &line1[start], "FACET", 5 ) )
 		{
 			VSET( normal, 0.0, 0.0, 0.0 );
 
 			start += 4;
-			while( line1[++start] && isspace( line1[start] ) );
+			while ( line1[++start] && isspace( line1[start] ) );
 
-			if( line1[start] )
+			if ( line1[start] )
 			{
-				if( !strncmp( &line1[start], "normal", 6 ) || !strncmp( &line1[start], "NORMAL", 6 ) )
+				if ( !strncmp( &line1[start], "normal", 6 ) || !strncmp( &line1[start], "NORMAL", 6 ) )
 				{
 					float x, y, z;
 
@@ -825,40 +825,40 @@ Convert_part(char *line)
 				}
 			}
 		}
-		else if( !strncmp( &line1[start], "outer loop", 10 ) || !strncmp( &line1[start], "OUTER LOOP", 10 ) )
+		else if ( !strncmp( &line1[start], "outer loop", 10 ) || !strncmp( &line1[start], "OUTER LOOP", 10 ) )
 		{
 			int endloop=0;
 			int vert_no=0;
 			int tmp_face[3];
 
-			while( !endloop )
+			while ( !endloop )
 			{
-				if( bu_fgets( line1, MAX_LINE_LEN, fd_in ) == NULL )
+				if ( bu_fgets( line1, MAX_LINE_LEN, fd_in ) == NULL )
 					bu_exit(EXIT_FAILURE,  "Unexpected EOF while reading a loop in a part!!!\n" );
 
 				start = (-1);
-				while( isspace( line1[++start] ) );
+				while ( isspace( line1[++start] ) );
 
-				if( !strncmp( &line1[start], "endloop", 7 ) || !strncmp( &line1[start], "ENDLOOP", 7 ) )
+				if ( !strncmp( &line1[start], "endloop", 7 ) || !strncmp( &line1[start], "ENDLOOP", 7 ) )
 					endloop = 1;
 				else if ( !strncmp( &line1[start], "vertex", 6 ) || !strncmp( &line1[start], "VERTEX", 6 ) )
 				{
 					double x, y, z;
 
 					sscanf( &line1[start+6], "%lf%lf%lf", &x, &y, &z );
-					if( top_level )
+					if ( top_level )
 					{
 						x *= conv_factor;
 						y *= conv_factor;
 						z *= conv_factor;
 					}
 
-					if( vert_no > 2 )
+					if ( vert_no > 2 )
 					{
 						int n;
 
 						bu_log( "Non-triangular loop:\n" );
-						for( n=0 ; n<3 ; n++ )
+						for ( n=0; n<3; n++ )
 							bu_log( "\t( %g %g %g )\n", V3ARGS( &vert_tree_root->the_array[tmp_face[n]] ) );
 
 						bu_log( "\t( %g %g %g )\n", x, y, z );
@@ -871,30 +871,30 @@ Convert_part(char *line)
 			}
 
 			/* check for degenerate faces */
-			if( tmp_face[0] == tmp_face[1] )
+			if ( tmp_face[0] == tmp_face[1] )
 			{
 				degenerate_count++;
 				continue;
 			}
 
-			if( tmp_face[0] == tmp_face[2] )
+			if ( tmp_face[0] == tmp_face[2] )
 			{
 				degenerate_count++;
 				continue;
 			}
 
-			if( tmp_face[1] == tmp_face[2] )
+			if ( tmp_face[1] == tmp_face[2] )
 			{
 				degenerate_count++;
 				continue;
 			}
 
-			if( debug )
+			if ( debug )
 			{
 				int n;
 
 				bu_log( "Making Face:\n" );
-				for( n=0 ; n<3; n++ )
+				for ( n=0; n<3; n++ )
 					bu_log( "\tvertex #%d: ( %g %g %g )\n", tmp_face[n], V3ARGS( &vert_tree_root->the_array[3*tmp_face[n]] ) );
 				VPRINT(" normal", normal);
 			}
@@ -902,15 +902,15 @@ Convert_part(char *line)
 			Add_face( tmp_face );
 			face_count++;
 		}
-		else if( !strncmp( &line1[start], "modifiers", 9 ) || !strncmp( &line1[start], "MODIFIERS", 9 ) )
+		else if ( !strncmp( &line1[start], "modifiers", 9 ) || !strncmp( &line1[start], "MODIFIERS", 9 ) )
 		{
-			if( face_count )
+			if ( face_count )
 			{
 				wmem = mk_addmember( solid_name, &head.l, NULL, WMOP_UNION );
-				if( top_level && do_reorient )
+				if ( top_level && do_reorient )
 				{
 					/* apply re_orient transformation here */
-					if( debug )
+					if ( debug )
 					{
 						bu_log( "Applying re-orient matrix to solid %s\n", solid_name );
 						bn_mat_print( "re-orient matrix", re_orient );
@@ -924,14 +924,14 @@ Convert_part(char *line)
 	}
 
 	/* Check if this part has any solid parts */
-	if( face_count == 0 )
+	if ( face_count == 0 )
 	{
 		char *save_name;
 
 		bu_log( "\t%s has no solid parts, ignoring\n", name );
-		if( degenerate_count )
+		if ( degenerate_count )
 			bu_log( "\t%d faces were degenerate\n", degenerate_count );
-		if( small_count )
+		if ( small_count )
 			bu_log( "\t%d faces were too small\n", small_count );
 		brlcad_name = Get_unique_name( name, obj, PART_TYPE );
 		save_name = bu_strdup( brlcad_name );
@@ -940,22 +940,22 @@ Convert_part(char *line)
 	}
 	else
 	{
-		if( degenerate_count )
+		if ( degenerate_count )
 			bu_log( "\t%d faces were degenerate\n", degenerate_count );
-		if( small_count )
+		if ( small_count )
 			bu_log( "\t%d faces were too small\n", small_count );
 	}
 
 	mk_bot( fd_out, solid_name, RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, vert_tree_root->curr_vert, bot_fcurr,
 		vert_tree_root->the_array, bot_faces, NULL, NULL );
 
-	if( face_count && !solid_in_region )
+	if ( face_count && !solid_in_region )
 	{
 		wmem = mk_addmember( solid_name, &head.l, NULL, WMOP_UNION );
-		if( top_level && do_reorient )
+		if ( top_level && do_reorient )
 		{
 			/* apply re_orient transformation here */
-			if( debug )
+			if ( debug )
 			{
 				bu_log( "Applying re-orient matrix to solid %s\n", solid_name );
 				bn_mat_print( "re-orient matrix", re_orient );
@@ -965,7 +965,7 @@ Convert_part(char *line)
 	}
 	brlcad_name = Get_unique_name( name, obj, PART_TYPE );
 
-	if( do_air )
+	if ( do_air )
 	{
 		bu_log( "\tMaking air region (%s)\n", brlcad_name );
 
@@ -977,27 +977,27 @@ Convert_part(char *line)
 	{
 		bu_log( "\tMaking region (%s)\n", brlcad_name );
 
-		if( const_id >= 0 )
+		if ( const_id >= 0 )
 		{
 			mk_lrcomb( fd_out, brlcad_name, &head, 1, (char *)NULL, (char *)NULL,
 			color, const_id, 0, mat_code, 100, 0 );
-			if( stl_format && face_count )
+			if ( stl_format && face_count )
 				(void)mk_addmember( brlcad_name, &all_head.l, NULL, WMOP_UNION );
 		}
 		else
 		{
 			mk_lrcomb( fd_out, brlcad_name, &head, 1, (char *)NULL, (char *)NULL,
 			color, id_no, 0, mat_code, 100, 0 );
-			if( stl_format && face_count )
+			if ( stl_format && face_count )
 				(void)mk_addmember( brlcad_name, &all_head.l, NULL, WMOP_UNION );
 			id_no++;
 		}
 	}
 
-	if( RT_G_DEBUG & DEBUG_MEM_FULL )
+	if ( RT_G_DEBUG & DEBUG_MEM_FULL )
 	{
 		bu_log( "Barrier check at end of Convert_part:\n" );
-		if( bu_mem_barriercheck() )
+		if ( bu_mem_barriercheck() )
 			bu_exit(EXIT_FAILURE,  "Barrier check failed!!!\n" );
 	}
 
@@ -1011,22 +1011,22 @@ Convert_input(void)
 {
 	char line[ MAX_LINE_LEN ];
 
-	if( !stl_format )
+	if ( !stl_format )
 	{
-		if( !bu_fgets( line, MAX_LINE_LEN, fd_in ) )
+		if ( !bu_fgets( line, MAX_LINE_LEN, fd_in ) )
 			return;
 
 		sscanf( line, "%f", &conv_factor );
 	}
 
-	if( !do_reorient && !stl_format )
+	if ( !do_reorient && !stl_format )
 		conv_factor = 1.0;
 
-	while( bu_fgets( line, MAX_LINE_LEN, fd_in ) != NULL )
+	while ( bu_fgets( line, MAX_LINE_LEN, fd_in ) != NULL )
 	{
-		if( !strncmp( line, "assembly", 8 ) || !strncmp( line, "ASSEMBLY", 8 ) )
+		if ( !strncmp( line, "assembly", 8 ) || !strncmp( line, "ASSEMBLY", 8 ) )
 			Convert_assy( line );
-		else if( !strncmp( line, "solid", 5 ) || !strncmp( line, "SOLID", 5 ) )
+		else if ( !strncmp( line, "solid", 5 ) || !strncmp( line, "SOLID", 5 ) )
 			Convert_part( line );
 		else
 			bu_log( "Unrecognized line:\n%s\n", line );
@@ -1042,10 +1042,10 @@ Rm_nulls(void)
 
 	dbip = fd_out->dbip;
 
-	if( debug || BU_PTBL_END( &null_parts )  )
+	if ( debug || BU_PTBL_END( &null_parts )  )
 	{
 		bu_log( "Deleting references to the following null parts:\n" );
-		for( i=0 ; i<BU_PTBL_END( &null_parts ) ; i++ )
+		for ( i=0; i<BU_PTBL_END( &null_parts ); i++ )
 		{
 			char *save_name;
 
@@ -1063,31 +1063,31 @@ Rm_nulls(void)
 		int changed=0;
 
 		/* skip solids */
-		if( dp->d_flags & DIR_SOLID )
+		if ( dp->d_flags & DIR_SOLID )
 			continue;
 
 		/* skip non-geometry */
-		if( !(dp->d_flags & ( DIR_SOLID | DIR_COMB ) ) )
+		if ( !(dp->d_flags & ( DIR_SOLID | DIR_COMB ) ) )
 			continue;
 
-		if( rt_db_get_internal( &intern, dp, dbip, (matp_t)NULL, &rt_uniresource ) < 1 )
+		if ( rt_db_get_internal( &intern, dp, dbip, (matp_t)NULL, &rt_uniresource ) < 1 )
 		{
 			bu_log( "Cannot get internal form of combination %s\n", dp->d_namep );
 			continue;
 		}
 		comb = (struct rt_comb_internal *)intern.idb_ptr;
 		RT_CK_COMB( comb );
-		if( comb->tree && db_ck_v4gift_tree( comb->tree ) < 0 )
+		if ( comb->tree && db_ck_v4gift_tree( comb->tree ) < 0 )
 		{
 			db_non_union_push( comb->tree, &rt_uniresource);
-			if( db_ck_v4gift_tree( comb->tree ) < 0 )
+			if ( db_ck_v4gift_tree( comb->tree ) < 0 )
 			{
 				bu_log( "Cannot flatten tree (%s) for editing\n", dp->d_namep );
 				continue;
 			}
 		}
 		node_count = db_tree_nleaves( comb->tree );
-		if( node_count > 0 )
+		if ( node_count > 0 )
 		{
 			tree_list = (struct rt_tree_array *)bu_calloc( node_count,
 				sizeof( struct rt_tree_array ), "tree list" );
@@ -1100,32 +1100,32 @@ Rm_nulls(void)
 			actual_count = 0;
 		}
 
-		for( j=0; j<actual_count; j++ )
+		for ( j=0; j<actual_count; j++ )
 		{
 			int k;
 			int found=0;
 
-			for( k=0 ; k<BU_PTBL_END( &null_parts ) ; k++ )
+			for ( k=0; k<BU_PTBL_END( &null_parts ); k++ )
 			{
 				char *save_name;
 
 				save_name = (char *)BU_PTBL_GET( &null_parts, k );
-				if( !strcmp( save_name, tree_list[j].tl_tree->tr_l.tl_name ) )
+				if ( !strcmp( save_name, tree_list[j].tl_tree->tr_l.tl_name ) )
 				{
 					found = 1;
 					break;
 				}
 			}
-			if( found )
+			if ( found )
 			{
 				/* This is a NULL part, delete the reference */
-/*				if( debug ) */
+/*				if ( debug ) */
 					bu_log( "Deleting reference to null part (%s) from combination %s\n",
 						tree_list[j].tl_tree->tr_l.tl_name, dp->d_namep );
 
 				db_free_tree( tree_list[j].tl_tree, &rt_uniresource);
 
-				for( k=j+1 ; k<actual_count ; k++ )
+				for ( k=j+1; k<actual_count; k++ )
 					tree_list[k-1] = tree_list[k]; /* struct copy */
 
 				actual_count--;
@@ -1134,14 +1134,14 @@ Rm_nulls(void)
 			}
 		}
 
-		if( changed )
+		if ( changed )
 		{
-			if( actual_count )
+			if ( actual_count )
 				comb->tree = (union tree *)db_mkgift_tree( tree_list, actual_count, &rt_uniresource );
 			else
 				comb->tree = (union tree *)NULL;
 
-			if( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )
+			if ( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )
 			{
 				bu_log( "Unable to write modified combination '%s' to database\n", dp->d_namep );
 				rt_comb_ifree( &intern, &rt_uniresource);
@@ -1177,7 +1177,7 @@ main(int argc, char **argv)
 
 	forced_name = NULL;
 
-	if( strstr( argv[0], "stl-g" ) )
+	if ( strstr( argv[0], "stl-g" ) )
 	{
 		/* this code was called as stl-g */
 		stl_format = 1;
@@ -1188,7 +1188,7 @@ main(int argc, char **argv)
 	else
 		usage = proe_usage;
 
-	if( argc < 2 )
+	if ( argc < 2 )
 		bu_exit(1, usage, argv[0]);
 
 	/* Get command line arguments. */
@@ -1198,7 +1198,7 @@ main(int argc, char **argv)
 		switch (c) {
 		case 't':	/* tolerance */
 			tmp = atof( bu_optarg );
-			if( tmp <= 0.0 ) {
+			if ( tmp <= 0.0 ) {
 				bu_log( "Tolerance must be greater then zero, using default (%g)\n",
 					tol.dist );
 				break;
@@ -1208,7 +1208,7 @@ main(int argc, char **argv)
 			break;
 		case 'c':	/* convert from units */
 			conv_factor = bu_units_conversion( bu_optarg );
-			if( conv_factor == 0.0 )
+			if ( conv_factor == 0.0 )
 			{
 				bu_log( "Illegal units: (%s)\n", bu_optarg );
 				bu_exit(EXIT_FAILURE,  "Illegal units!!\n" );
@@ -1229,7 +1229,7 @@ main(int argc, char **argv)
 			break;
 		case  'I':
 			const_id = atoi( bu_optarg );
-			if( const_id < 0 )
+			if ( const_id < 0 )
 			{
 				bu_log( "Illegal value for '-I' option, must be zero or greater!!!\n" );
 				bu_log( usage, argv[0] );
@@ -1249,7 +1249,7 @@ main(int argc, char **argv)
 			break;
 		case 'u':
 			do_regex = 1;
-			if( regcomp( &reg_cmp, bu_optarg, 0 ) )
+			if ( regcomp( &reg_cmp, bu_optarg, 0 ) )
 			{
 				bu_log( "Bad regular expression (%s)\n", bu_optarg );
 				bu_exit( 1, usage, argv[0] );
@@ -1275,7 +1275,7 @@ main(int argc, char **argv)
 	rt_init_resource( &rt_uniresource, 0, NULL );
 
 	input_file = argv[bu_optind];
-	if( (fd_in=fopen( input_file, "r")) == NULL )
+	if ( (fd_in=fopen( input_file, "r")) == NULL )
 	{
 		bu_log( "Cannot open input file (%s)\n", input_file );
 		perror( argv[0] );
@@ -1283,14 +1283,14 @@ main(int argc, char **argv)
 	}
 	bu_optind++;
 	brlcad_file = argv[bu_optind];
-	if( (fd_out=wdb_fopen( brlcad_file)) == NULL )
+	if ( (fd_out=wdb_fopen( brlcad_file)) == NULL )
 	{
 		bu_log( "Cannot open BRL-CAD file (%s)\n", brlcad_file );
 		perror( argv[0] );
 		bu_exit( 1, NULL );
 	}
 
-	if( stl_format )
+	if ( stl_format )
 		mk_id_units( fd_out, "Conversion from Stereolithography format", "mm" );
 	else
 		mk_id_units( fd_out, "Conversion from Pro/Engineer", "in" );
@@ -1302,7 +1302,7 @@ main(int argc, char **argv)
 
 	Convert_input();
 
-	if( stl_format )
+	if ( stl_format )
 	{
 		/* make a top level group */
 		mk_lcomb( fd_out, "all", &all_head, 0, (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0 );

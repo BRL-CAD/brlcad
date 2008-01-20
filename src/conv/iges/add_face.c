@@ -49,7 +49,7 @@ int face_orient;
 
 	/* Acquiring Data */
 
-	if( dir[entityno]->param <= pstart )
+	if ( dir[entityno]->param <= pstart )
 	{
 		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[entityno]->direct, dir[entityno]->name );
@@ -62,45 +62,45 @@ int face_orient;
 	Readint( &no_of_loops, "" );
 	Readint( &outer_loop_flag, "" );
 	loop_de = (int *)bu_calloc( no_of_loops, sizeof( int ), "Get_outer_face loop DE's" );
-	for( loop=0 ; loop<no_of_loops ; loop++ )
+	for ( loop=0; loop<no_of_loops; loop++ )
 		Readint( &loop_de[loop], "" );
 
 	/* Check that this is a planar surface */
-	if( dir[(surf_de-1)/2]->type == 190 ) /* plane entity */
+	if ( dir[(surf_de-1)/2]->type == 190 ) /* plane entity */
 		planar = 1;
 #if 0
-	else if( dir[(surf_de-1)/2]->type == 128 )
+	else if ( dir[(surf_de-1)/2]->type == 128 )
 	{
 		/* This is a NURB, but it might still be planar */
-		if( dir[(surf_de-1)/2]->form == 1 ) /* planar form */
+		if ( dir[(surf_de-1)/2]->form == 1 ) /* planar form */
 			planar = 1;
-		else if( dir[(surf_de-1)/2]->form == 0 )
+		else if ( dir[(surf_de-1)/2]->form == 0 )
 		{
 			/* They don't want to tell us */
-			if( planar_nurb( (surf_de-1)/2 ) )
+			if ( planar_nurb( (surf_de-1)/2 ) )
 				planar = 1;
 		}
 	}
 #endif
 
-	if( planar )
+	if ( planar )
 	{
 		fu = Make_planar_face( s, (loop_de[0]-1)/2, face_orient );
-		if( !fu )
+		if ( !fu )
 			goto err;
-		for( loop=1 ; loop<no_of_loops ; loop++ )
+		for ( loop=1; loop<no_of_loops; loop++ )
 		{
-			if( !Add_loop_to_face( s, fu, ((loop_de[loop]-1)/2), face_orient ))
+			if ( !Add_loop_to_face( s, fu, ((loop_de[loop]-1)/2), face_orient ))
 				goto err;
 		}
 	}
-	else if( dir[(surf_de-1)/2]->type == 128 )
+	else if ( dir[(surf_de-1)/2]->type == 128 )
 	{
 		struct face *f;
 
 		fu = Make_nurb_face( s, (surf_de-1)/2 );
 		NMG_CK_FACEUSE( fu );
-		if( !face_orient )
+		if ( !face_orient )
 		{
 			f = fu->f_p;
 			NMG_CK_FACE( f );
@@ -109,9 +109,9 @@ int face_orient;
 
 NMG_CK_FACE_G_SNURB( fu->f_p->g.snurb_p );
 
-		for( loop=0 ; loop<no_of_loops ; loop++ )
+		for ( loop=0; loop<no_of_loops; loop++ )
 		{
-			if( !Add_nurb_loop_to_face( s, fu, ((loop_de[loop]-1)/2), face_orient ))
+			if ( !Add_nurb_loop_to_face( s, fu, ((loop_de[loop]-1)/2), face_orient ))
 				goto err;
 		}
 NMG_CK_FACE_G_SNURB( fu->f_p->g.snurb_p );

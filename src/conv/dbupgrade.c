@@ -76,16 +76,16 @@ main(int argc, char **argv)
 
     rt_init_resource( &rt_uniresource, 0, NULL );
 
-    if( argc != 3 && argc != 4 )  {
+    if ( argc != 3 && argc != 4 )  {
 	fprintf(stderr, "Usage: %s input.g output.g\n", argv[0]);
 	return 1;
     }
 
-    if( argc == 4 ) {
+    if ( argc == 4 ) {
 	/* undocumented option to revert to an old db version
 	 * currently, can only revert to db version 4
 	 */
-	if( strcmp( argv[1], "-r" ) ) {
+	if ( strcmp( argv[1], "-r" ) ) {
 	    fprintf(stderr, "Usage: %s input.g output.g\n", argv[0]);
 	    return 1;
 	} else {
@@ -95,45 +95,45 @@ main(int argc, char **argv)
 	}
     }
 
-    if( !reverse ) {
-	if( (dbip = db_open( argv[in_arg], "r" )) == DBI_NULL )  {
+    if ( !reverse ) {
+	if ( (dbip = db_open( argv[in_arg], "r" )) == DBI_NULL )  {
 	    perror( argv[in_arg] );
 	    return 2;
 	}
 
-	if( (fp = wdb_fopen( argv[out_arg] )) == NULL )  {
+	if ( (fp = wdb_fopen( argv[out_arg] )) == NULL )  {
 	    perror( argv[out_arg] );
 	    return 3;
 	}
     } else {
-	if( (dbip = db_open( argv[in_arg], "r" )) == DBI_NULL )  {
+	if ( (dbip = db_open( argv[in_arg], "r" )) == DBI_NULL )  {
 	    perror( argv[in_arg] );
 	    return 2;
 	}
-	if( (dbip4 = db_create( argv[out_arg], 4 )) == DBI_NULL ) {
+	if ( (dbip4 = db_create( argv[out_arg], 4 )) == DBI_NULL ) {
 	    bu_log( "Failed to create output database (%s)\n", argv[out_arg] );
 	    return 3;
 	}
 
-	if( (fp = wdb_dbopen( dbip4, RT_WDB_TYPE_DB_DISK )) == RT_WDB_NULL ) {
+	if ( (fp = wdb_dbopen( dbip4, RT_WDB_TYPE_DB_DISK )) == RT_WDB_NULL ) {
 	    bu_log( "db_dbopen() failed for %s\n", argv[out_arg] );
 	    return 4;
 	}
 
     }
 
-    if( !reverse ) {
-	if( dbip->dbi_version == 5 ) {
+    if ( !reverse ) {
+	if ( dbip->dbi_version == 5 ) {
 	    bu_log( "This database (%s) is already at the current version\n",
 		    argv[in_arg] );
 	    return 5;
 	}
-	if( dbip->dbi_version != 4 ) {
+	if ( dbip->dbi_version != 4 ) {
 	    bu_log( "Input database version not recognized!!!!\n" );
 	    return 4;
 	}
-    } else if( reverse ) {
-	if( dbip->dbi_version != 5 ) {
+    } else if ( reverse ) {
+	if ( dbip->dbi_version != 5 ) {
 	    bu_log( "Can only revert from db version 5\n" );
 	    return 6;
 	}
@@ -141,18 +141,18 @@ main(int argc, char **argv)
 
 
     RT_CK_DBI(dbip);
-    if( db_dirbuild( dbip ) )
+    if ( db_dirbuild( dbip ) )
 	bu_exit(1, "db_dirbuild failed\n" );
 
-    if( (strcmp( dbip->dbi_title, "Untitled v4 BRL-CAD Database" )==0) && (dbip->dbi_version == 4) ) {
+    if ( (strcmp( dbip->dbi_title, "Untitled v4 BRL-CAD Database" )==0) && (dbip->dbi_version == 4) ) {
 	dbip->dbi_title=bu_strdup( "Untitled BRL-CAD Database" );
     }
     db_update_ident( fp->dbip, dbip->dbi_title, dbip->dbi_local2base );
 
     /* set regionid color table */
-    if( rt_material_head != MATER_NULL ) {
+    if ( rt_material_head != MATER_NULL ) {
 	bu_vls_init( &colortab );
-	for( mp = rt_material_head; mp != MATER_NULL; mp = mp->mt_forw )  {
+	for ( mp = rt_material_head; mp != MATER_NULL; mp = mp->mt_forw )  {
 	    bu_vls_printf( &colortab, "{%d %d %d %d %d} ", mp->mt_low, mp->mt_high,
 			   mp->mt_r, mp->mt_g, mp->mt_b);
 	}
@@ -167,21 +167,21 @@ main(int argc, char **argv)
 	int id;
 	int ret;
 
-	if( reverse && dp->d_major_type != DB5_MAJORTYPE_BRLCAD ) {
+	if ( reverse && dp->d_major_type != DB5_MAJORTYPE_BRLCAD ) {
 	    bu_log( "\t%s not supported in version4 databases, not converted\n",
 		    dp->d_namep);
 	    skipped++;
 	    continue;
 	}
 	id = rt_db_get_internal( &intern, dp, dbip, NULL, &rt_uniresource );
-	if( id < 0 )  {
+	if ( id < 0 )  {
 	    fprintf(stderr,
 		    "%s: rt_db_get_internal(%s) failure, skipping\n",
 		    argv[0], dp->d_namep);
 	    errors++;
 	    continue;
 	}
-	if( id == ID_COMBINATION ) {
+	if ( id == ID_COMBINATION ) {
 	    struct rt_comb_internal *comb;
 	    char *ptr;
 
@@ -189,7 +189,7 @@ main(int argc, char **argv)
 	    RT_CK_COMB( comb );
 
 	    /* Convert "plastic" to "phong" in the shader string */
-	    while( (ptr=strstr( bu_vls_addr( &comb->shader), "plastic" )) != NULL ) {
+	    while ( (ptr=strstr( bu_vls_addr( &comb->shader), "plastic" )) != NULL ) {
 		strncpy( ptr, "phong  ", 7 );
 	    }
 	}
@@ -202,9 +202,9 @@ main(int argc, char **argv)
 		continue;
 	    }
 	}
-	if( id == ID_POLY)
+	if ( id == ID_POLY)
 	    {
-		if( rt_pg_to_bot( &intern, &tol, &rt_uniresource ) )
+		if ( rt_pg_to_bot( &intern, &tol, &rt_uniresource ) )
 		    {
 			fprintf( stderr, "%s: Conversion from polysolid to BOT failed for solid %s\n",
 				 argv[0], dp->d_namep );
@@ -216,7 +216,7 @@ main(int argc, char **argv)
 	/* to insure null termination */
 	strncpy( name, dp->d_namep, 16 );
 	ret = wdb_put_internal( fp, name, &intern, 1.0 );
-	if( ret < 0 )  {
+	if ( ret < 0 )  {
 	    fprintf(stderr,
 		    "%s: wdb_put_internal(%s) failure, skipping\n",
 		    argv[0], dp->d_namep);

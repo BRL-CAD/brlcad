@@ -44,15 +44,15 @@ Convinst()
 	struct brlcad_att	brl_att;
 	mat_t			*rot;
 
-	for( i=0 ; i<totentities ; i++ )
+	for ( i=0; i<totentities; i++ )
 	{
-		if( dir[i]->type != 430 ) /* This is not an instance */
+		if ( dir[i]->type != 430 ) /* This is not an instance */
 			continue;
 
 		totinst++;
 
 		/* read parameters */
-		if( dir[i]->param <= pstart )
+		if ( dir[i]->param <= pstart )
 		{
 			bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 					dir[i]->direct, dir[i]->name );
@@ -64,7 +64,7 @@ Convinst()
 
 		/* convert pointer to a "dir" index */
 		pointer = (pointer - 1)/2;
-		if( pointer < 0 || pointer >= totentities )
+		if ( pointer < 0 || pointer >= totentities )
 		{
 			bu_log( "Primitive instance D%07d (%s) does not point to a legal primitive\n",
 				dir[i]->direct, dir[i]->name );
@@ -73,16 +73,16 @@ Convinst()
 
 		/* skip over the associativities */
 		Readint( &no_of_assoc, "" );
-		for( k=0 ; k<no_of_assoc ; k++ )
+		for ( k=0; k<no_of_assoc; k++ )
 			Readint( &j, "" );
 
 		/* get property entity DE's */
 		att_de = 0;
 		Readint( &no_of_props, "" );
-		for( k=0 ; k<no_of_props ; k++ )
+		for ( k=0; k<no_of_props; k++ )
 		{
 			Readint( &j, "" );
-			if( dir[(j-1)/2]->type == 422 &&
+			if ( dir[(j-1)/2]->type == 422 &&
 				 dir[(j-1)/2]->referenced == brlcad_att_de )
 			{
 				/* this is one of our attribute instances */
@@ -93,7 +93,7 @@ Convinst()
 		memset(&brl_att, 0, sizeof( struct brlcad_att ));
 		Read_att( att_de, &brl_att );
 
-		if( att_de )
+		if ( att_de )
 		{
 			/* This is actually a region or a group with just one member */
 			unsigned char *rgb;
@@ -103,7 +103,7 @@ Convinst()
 			(void)mk_addmember( dir[pointer]->name, &head.l, NULL, WMOP_INTERSECT );
 
 			/* Make the object */
-			if( dir[i]->colorp != 0 )
+			if ( dir[i]->colorp != 0 )
 				rgb = (unsigned char*)dir[i]->rgb;
 			else
 				rgb = (unsigned char *)0;
@@ -134,15 +134,15 @@ Convinst()
 			dir[pointer]->referenced++;
 
 			/* fix up transformation matrix if needed */
-			if( dir[i]->trans == 0 && dir[pointer]->trans == 0 )
+			if ( dir[i]->trans == 0 && dir[pointer]->trans == 0 )
 			{
 				continue;	/* nothing to do */
 			}
-			else if( dir[i]->trans == 0 )
+			else if ( dir[i]->trans == 0 )
 			{
 				dir[i]->trans = dir[pointer]->trans;	/* same as instanced */
 			}
-			else if( dir[i]->trans != 0 )
+			else if ( dir[i]->trans != 0 )
 			{
 				/* this instance refers to a transformation entity
 				   but the original instanced object does too,

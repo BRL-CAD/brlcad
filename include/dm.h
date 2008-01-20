@@ -114,14 +114,14 @@
 
 #define GET_DM(p, structure, w, hp) { \
 	register struct structure *tp; \
-	for(BU_LIST_FOR(tp, structure, hp)) { \
-		if(w == tp->win) { \
+	for (BU_LIST_FOR(tp, structure, hp)) { \
+		if (w == tp->win) { \
 			(p) = tp; \
 			break; \
 		} \
 	} \
 \
-	if(BU_LIST_IS_HEAD(tp, hp)) \
+	if (BU_LIST_IS_HEAD(tp, hp)) \
 		p = (struct structure *)NULL; \
 }
 
@@ -148,11 +148,11 @@
 #define DM_BLUE		DM_BLUE_R, DM_BLUE_G, DM_BLUE_B
 #define DM_YELLOW	DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B
 #define DM_WHITE	DM_WHITE_R, DM_WHITE_G, DM_WHITE_B
-#define DM_COPY_COLOR(_dr,_dg,_db,_sr,_sg,_sb){\
+#define DM_COPY_COLOR(_dr, _dg, _db, _sr, _sg, _sb){\
 	(_dr) = (_sr);\
 	(_dg) = (_sg);\
 	(_db) = (_sb); }
-#define DM_SAME_COLOR(_dr,_dg,_db,_sr,_sg,_sb)(\
+#define DM_SAME_COLOR(_dr, _dg, _db, _sr, _sg, _sb)(\
 	(_dr) == (_sr) &&\
 	(_dg) == (_sg) &&\
 	(_db) == (_sb))
@@ -256,31 +256,31 @@ struct dm_obj {
   void			*dmo_drawLabelsHookClientData;
 };
 
-#define DM_OPEN(_type,_argc,_argv) dm_open(_type,_argc,_argv)
+#define DM_OPEN(_type, _argc, _argv) dm_open(_type, _argc, _argv)
 #define DM_CLOSE(_dmp) _dmp->dm_close(_dmp)
 #define DM_DRAW_BEGIN(_dmp) _dmp->dm_drawBegin(_dmp)
 #define DM_DRAW_END(_dmp) _dmp->dm_drawEnd(_dmp)
 #define DM_NORMAL(_dmp) _dmp->dm_normal(_dmp)
-#define DM_LOADMATRIX(_dmp,_mat,_eye) _dmp->dm_loadMatrix(_dmp,_mat,_eye)
-#define DM_DRAW_STRING_2D(_dmp,_str,_x,_y,_size,_use_aspect)\
-     _dmp->dm_drawString2D(_dmp,_str,_x,_y,_size,_use_aspect)
-#define DM_DRAW_LINE_2D(_dmp,_x1,_y1,_x2,_y2) _dmp->dm_drawLine2D(_dmp,_x1,_y1,_x2,_y2)
-#define DM_DRAW_POINT_2D(_dmp,_x,_y) _dmp->dm_drawPoint2D(_dmp,_x,_y)
-#define DM_DRAW_VLIST(_dmp,_vlist) _dmp->dm_drawVList(_dmp,_vlist)
-#define DM_SET_FGCOLOR(_dmp,_r,_g,_b,_strict,_transparency) _dmp->dm_setFGColor(_dmp,_r,_g,_b,_strict,_transparency)
-#define DM_SET_BGCOLOR(_dmp,_r,_g,_b) _dmp->dm_setBGColor(_dmp,_r,_g,_b)
-#define DM_SET_LINE_ATTR(_dmp,_width,_dashed) _dmp->dm_setLineAttr(_dmp,_width,_dashed)
+#define DM_LOADMATRIX(_dmp, _mat, _eye) _dmp->dm_loadMatrix(_dmp, _mat, _eye)
+#define DM_DRAW_STRING_2D(_dmp, _str, _x, _y, _size, _use_aspect)\
+     _dmp->dm_drawString2D(_dmp, _str, _x, _y, _size, _use_aspect)
+#define DM_DRAW_LINE_2D(_dmp, _x1, _y1, _x2, _y2) _dmp->dm_drawLine2D(_dmp, _x1, _y1, _x2, _y2)
+#define DM_DRAW_POINT_2D(_dmp, _x, _y) _dmp->dm_drawPoint2D(_dmp, _x, _y)
+#define DM_DRAW_VLIST(_dmp, _vlist) _dmp->dm_drawVList(_dmp, _vlist)
+#define DM_SET_FGCOLOR(_dmp, _r, _g, _b, _strict, _transparency) _dmp->dm_setFGColor(_dmp, _r, _g, _b, _strict, _transparency)
+#define DM_SET_BGCOLOR(_dmp, _r, _g, _b) _dmp->dm_setBGColor(_dmp, _r, _g, _b)
+#define DM_SET_LINE_ATTR(_dmp, _width, _dashed) _dmp->dm_setLineAttr(_dmp, _width, _dashed)
 #define DM_CONFIGURE_WIN(_dmp) _dmp->dm_configureWin(_dmp)
-#define DM_SET_WIN_BOUNDS(_dmp,_w) _dmp->dm_setWinBounds(_dmp,_w)
-#define DM_SET_LIGHT(_dmp,_on) _dmp->dm_setLight(_dmp,_on)
-#define DM_SET_TRANSPARENCY(_dmp,_on) _dmp->dm_setTransparency(_dmp,_on)
-#define DM_SET_DEPTH_MASK(_dmp,_on) _dmp->dm_setDepthMask(_dmp,_on)
-#define DM_SET_ZBUFFER(_dmp,_on) _dmp->dm_setZBuffer(_dmp,_on)
-#define DM_DEBUG(_dmp,_lvl) _dmp->dm_debug(_dmp,_lvl)
-#define DM_BEGINDLIST(_dmp,_list) _dmp->dm_beginDList(_dmp,_list)
+#define DM_SET_WIN_BOUNDS(_dmp, _w) _dmp->dm_setWinBounds(_dmp, _w)
+#define DM_SET_LIGHT(_dmp, _on) _dmp->dm_setLight(_dmp, _on)
+#define DM_SET_TRANSPARENCY(_dmp, _on) _dmp->dm_setTransparency(_dmp, _on)
+#define DM_SET_DEPTH_MASK(_dmp, _on) _dmp->dm_setDepthMask(_dmp, _on)
+#define DM_SET_ZBUFFER(_dmp, _on) _dmp->dm_setZBuffer(_dmp, _on)
+#define DM_DEBUG(_dmp, _lvl) _dmp->dm_debug(_dmp, _lvl)
+#define DM_BEGINDLIST(_dmp, _list) _dmp->dm_beginDList(_dmp, _list)
 #define DM_ENDDLIST(_dmp) _dmp->dm_endDList(_dmp)
-#define DM_DRAWDLIST(_dmp,_list) _dmp->dm_drawDList(_dmp,_list)
-#define DM_FREEDLISTS(_dmp,_list,_range) _dmp->dm_freeDLists(_dmp,_list,_range)
+#define DM_DRAWDLIST(_dmp, _list) _dmp->dm_drawDList(_dmp, _list)
+#define DM_FREEDLISTS(_dmp, _list, _range) _dmp->dm_freeDLists(_dmp, _list, _range)
 
 DM_EXPORT extern struct dm dm_Null;
 

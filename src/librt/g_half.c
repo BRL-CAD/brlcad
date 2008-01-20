@@ -73,7 +73,7 @@ struct half_specific  {
 const struct bu_structparse rt_hlf_parse[] = {
     { "%f", 3, "N", bu_offsetof(struct rt_half_internal, eqn[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 1, "d", bu_offsetof(struct rt_half_internal, eqn[3]), BU_STRUCTPARSE_FUNC_NULL },
-    { {'\0','\0','\0','\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
+    { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
 };
 /**
  *  			R T _ H L F _ P R E P
@@ -124,7 +124,7 @@ rt_hlf_print(register const struct soltab *stp)
 	register const struct half_specific *halfp =
 		(struct half_specific *)stp->st_specific;
 
-	if( halfp == HALF_NULL )  {
+	if ( halfp == HALF_NULL )  {
 		bu_log("half(%s):  no data?\n", stp->st_name);
 		return;
 	}
@@ -162,24 +162,24 @@ rt_hlf_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 		fastf_t	norm_dist;
 
 		norm_dist = VDOT( halfp->half_eqn, rp->r_pt ) - halfp->half_eqn[3];
-		if( (slant_factor = -VDOT( halfp->half_eqn, rp->r_dir )) < -1.0e-10 )  {
+		if ( (slant_factor = -VDOT( halfp->half_eqn, rp->r_dir )) < -1.0e-10 )  {
 			/* exit point, when dir.N < 0.  out = min(out, s) */
 			out = norm_dist/slant_factor;
-			if( !NEAR_ZERO(out, INFINITY) )
+			if ( !NEAR_ZERO(out, INFINITY) )
 				return(0);	/* MISS */
 		} else if ( slant_factor > 1.0e-10 )  {
 			/* entry point, when dir.N > 0.  in = max(in, s) */
 			in = norm_dist/slant_factor;
-			if( !NEAR_ZERO(in, INFINITY) )
+			if ( !NEAR_ZERO(in, INFINITY) )
 				return(0);	/* MISS */
 		}  else  {
 			/* ray is parallel to plane when dir.N == 0.
 			 * If it is outside the solid, stop now */
-			if( norm_dist > 0.0 )
+			if ( norm_dist > 0.0 )
 				return(0);	/* MISS */
 		}
 	}
-	if( RT_G_DEBUG & DEBUG_ARB8 )
+	if ( RT_G_DEBUG & DEBUG_ARB8 )
 		bu_log("half: in=%f, out=%f\n", in, out);
 
 	{
@@ -217,7 +217,7 @@ rt_hlf_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	fastf_t	norm_dist;
 
 	/* for each ray/halfspace pair */
-	for(i = 0; i < n; i++){
+	for (i = 0; i < n; i++){
 		if (stp[i] == 0) continue; /* indicates "skip this pair" */
 
 		halfp = (struct half_specific *)stp[i]->st_specific;
@@ -227,7 +227,7 @@ rt_hlf_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 
 		norm_dist = VDOT(halfp->half_eqn, rp[i]->r_pt) - halfp->half_eqn[3];
 
-		if((slant_factor = -VDOT(halfp->half_eqn, rp[i]->r_dir)) <
+		if ((slant_factor = -VDOT(halfp->half_eqn, rp[i]->r_dir)) <
 								-1.0e-10) {
 			/* exit point, when dir.N < 0.  out = min(out, s) */
 			out = norm_dist/slant_factor;
@@ -237,7 +237,7 @@ rt_hlf_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 		}  else  {
 			/* ray is parallel to plane when dir.N == 0.
 			 * If it is outside the solid, stop now */
-			if( norm_dist > 0.0 ) {
+			if ( norm_dist > 0.0 ) {
 				RT_HALF_SEG_MISS(segp[i]);	/* No hit */
 				continue;
 			}
@@ -274,10 +274,10 @@ rt_hlf_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 
 	/* We are expected to compute hit_point here.  May be infinite. */
 	f = hitp->hit_dist;
-	if( f <= -INFINITY )  {
+	if ( f <= -INFINITY )  {
 		bu_log("rt_hlf_norm:  hit_dist = -INFINITY, unable to compute pt.\n");
 		VSETALL( hitp->hit_point, -INFINITY );
-	} else if( f >= INFINITY )  {
+	} else if ( f >= INFINITY )  {
 		bu_log("rt_hlf_norm:  hit_dist = +INFINITY, unable to compute pt.\n");
 		VSETALL( hitp->hit_point, INFINITY );
 	} else {
@@ -323,7 +323,7 @@ rt_hlf_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 	auto double ival;
 
 	f = hitp->hit_dist;
-	if( f <= -INFINITY || f >= INFINITY )  {
+	if ( f <= -INFINITY || f >= INFINITY )  {
 		bu_log("rt_hlf_uv:  infinite dist\n");
 		rt_pr_hit( "rt_hlf_uv", hitp );
 		uvp->uv_u = uvp->uv_v = 0;
@@ -333,46 +333,46 @@ rt_hlf_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 	VSUB2( P_A, hitp->hit_point, stp->st_center );
 
 	f = VDOT( P_A, halfp->half_Xbase )/10000;
-	if( f <= -INFINITY || f >= INFINITY )  {
+	if ( f <= -INFINITY || f >= INFINITY )  {
 		bu_log("rt_hlf_uv:  bad X vdot\n");
 		VPRINT("Xbase", halfp->half_Xbase);
 		rt_pr_hit( "rt_hlf_uv", hitp );
 		VPRINT("st_center", stp->st_center );
 		f = 0;
 	}
-	if( f < 0 )  f = -f;
+	if ( f < 0 )  f = -f;
 	f = modf( f, &ival );
-	if( f < 0.5 )
+	if ( f < 0.5 )
 		uvp->uv_u = 2 * f;		/* 0..1 */
 	else
 		uvp->uv_u = 2 * (1 - f);	/* 1..0 */
 
 	f = VDOT( P_A, halfp->half_Ybase )/10000;
-	if( f <= -INFINITY || f >= INFINITY )  {
+	if ( f <= -INFINITY || f >= INFINITY )  {
 		bu_log("rt_hlf_uv:  bad Y vdot\n");
 		VPRINT("Xbase", halfp->half_Ybase);
 		rt_pr_hit( "rt_hlf_uv", hitp );
 		VPRINT("st_center", stp->st_center );
 		f = 0;
 	}
-	if( f < 0 )  f = -f;
+	if ( f < 0 )  f = -f;
 	f = modf( f, &ival );
-	if( f < 0.5 )
+	if ( f < 0.5 )
 		uvp->uv_v = 2 * f;		/* 0..1 */
 	else
 		uvp->uv_v = 2 * (1 - f);	/* 1..0 */
 
-	if( uvp->uv_u < 0 || uvp->uv_v < 0 )  {
-		if( RT_G_DEBUG )
+	if ( uvp->uv_u < 0 || uvp->uv_v < 0 )  {
+		if ( RT_G_DEBUG )
 			bu_log("half_uv: bad uv=%f,%f\n", uvp->uv_u, uvp->uv_v);
 		/* Fix it up */
-		if( uvp->uv_u < 0 )  uvp->uv_u = (-uvp->uv_u);
-		if( uvp->uv_v < 0 )  uvp->uv_v = (-uvp->uv_v);
+		if ( uvp->uv_u < 0 )  uvp->uv_u = (-uvp->uv_u);
+		if ( uvp->uv_v < 0 )  uvp->uv_v = (-uvp->uv_v);
 	}
 
 	uvp->uv_du = uvp->uv_dv =
 		(ap->a_rbeam + ap->a_diverge * hitp->hit_dist) / (10000/2);
-	if( uvp->uv_du < 0 || uvp->uv_dv < 0 )  {
+	if ( uvp->uv_du < 0 || uvp->uv_dv < 0 )  {
 		rt_pr_hit( "rt_hlf_uv", hitp );
 		uvp->uv_du = uvp->uv_dv = 0;
 	}
@@ -408,7 +408,7 @@ rt_hlf_class(register const struct soltab *stp, const fastf_t *min, const fastf_
 	register const struct half_specific *halfp =
 		(struct half_specific *)stp->st_specific;
 
-	if( halfp == HALF_NULL ) {
+	if ( halfp == HALF_NULL ) {
 		bu_log( "half(%s):  no data?\n", stp->st_name );
 		return 0;
 	}
@@ -554,7 +554,7 @@ rt_hlf_import(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 
 	BU_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
-	if( rp->u_id != ID_SOLID )  {
+	if ( rp->u_id != ID_SOLID )  {
 		bu_log("rt_hlf_import: defective record, id=x%x\n", rp->u_id);
 		return(-1);
 	}
@@ -585,12 +585,12 @@ rt_hlf_import(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 
 	/* Verify that normal has unit length */
 	f = MAGNITUDE( hip->eqn );
-	if( f <= SMALL )  {
+	if ( f <= SMALL )  {
 		bu_log("rt_hlf_import:  bad normal, len=%g\n", f );
 		return(-1);		/* BAD */
 	}
 	t = f - 1.0;
-	if( !NEAR_ZERO( t, 0.001 ) )  {
+	if ( !NEAR_ZERO( t, 0.001 ) )  {
 		/* Restore normal to unit length */
 		f = 1/f;
 		VSCALE( hip->eqn, hip->eqn, f );
@@ -609,7 +609,7 @@ rt_hlf_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 	union record		*rec;
 
 	RT_CK_DB_INTERNAL(ip);
-	if( ip->idb_type != ID_HALF )  return(-1);
+	if ( ip->idb_type != ID_HALF )  return(-1);
 	hip = (struct rt_half_internal *)ip->idb_ptr;
 	RT_HALF_CK_MAGIC(hip);
 
@@ -668,12 +668,12 @@ rt_hlf_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 
 	/* Verify that normal has unit length */
 	f = MAGNITUDE( hip->eqn );
-	if( f <= SMALL )  {
+	if ( f <= SMALL )  {
 		bu_log("rt_hlf_import:  bad normal, len=%g\n", f );
 		return(-1);		/* BAD */
 	}
 	t = f - 1.0;
-	if( !NEAR_ZERO( t, 0.001 ) )  {
+	if ( !NEAR_ZERO( t, 0.001 ) )  {
 		/* Restore normal to unit length */
 		f = 1/f;
 		VSCALE( hip->eqn, hip->eqn, f );
@@ -692,7 +692,7 @@ rt_hlf_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	fastf_t				scaled_dist;
 
 	RT_CK_DB_INTERNAL( ip );
-	if( ip->idb_type != ID_HALF ) return -1;
+	if ( ip->idb_type != ID_HALF ) return -1;
 	hip = (struct rt_half_internal *)ip->idb_ptr;
 	RT_HALF_CK_MAGIC( hip );
 
