@@ -25,8 +25,6 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 * fix parallel crash report generation (multiple BU_MAPPED_FILE's
   getting acquired)
 
-* convert non-critical bu_bomb instances to bu_exit
-
 * fix incrTcl pathing issues when only using system tcl/tk
   (get incrTcl subconfigure to work like was done for Tcl)
 
