@@ -31,13 +31,15 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "machine.h"
+#include "bu.h"
 
-#define MmAllo( typ )		(typ *) malloc( sizeof(typ) )
-#define MmFree( typ, ptr )	free( (char *) ptr )
-#define MmVAllo( ct, typ )	(typ *) malloc( (ct)*sizeof(typ) )
-#define MmVFree( ct, typ, ptr )	free( (char *) ptr )
-#define MmStrDup( str )		strncpy( malloc( strlen(str)+1 ), str, strlen(str)+1 )
-#define MmStrFree( str )	free( str )
+#define MmAllo( typ )		(typ *) bu_malloc( sizeof(typ), BU_FLSTR )
+#define MmFree( typ, ptr )	bu_free( (char *) ptr, BU_FLSTR )
+#define MmVAllo( ct, typ )	(typ *) bu_malloc( (ct)*sizeof(typ), BU_FLSTR )
+#define MmVFree( ct, typ, ptr )	bu_free( (char *) ptr, BU_FLSTR )
+#define MmStrDup( str )		bu_strdup(str)
+#define MmStrFree( str )	bu_free( str, BU_FLSTR )
 
 #endif  /* __MM_H__ */
 
