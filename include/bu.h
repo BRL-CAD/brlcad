@@ -2784,8 +2784,7 @@ BU_EXPORT BU_EXTERN(int bu_image_save,
 
 /* fchmod.c */
 BU_EXPORT BU_EXTERN(int bu_fchmod,
-		    (const char *filename,
-		     FILE	     *fp,
+		    (FILE	     *fp,
 		     int	     pmode));
 
 __END_DECLS

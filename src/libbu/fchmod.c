@@ -36,25 +36,20 @@
 #include "machine.h"
 #include "bu.h"
 
-/* XXX 
- * For the moment we're passing filename. There should
- * be a way to get this from FILE * on Windows. A quick
- * look yielded nada.
- */
+
 int
-bu_fchmod(const char *filename,
-	  FILE	     *fp,
+bu_fchmod(FILE	     *fp,
 	  int	     pmode)
 {
+    if (!fp) {
+	return 0;
+    }
+
 #ifdef HAVE_FCHMOD
-    if (fp) {
-	return fchmod(fileno(fp), pmode);
-    }
+    return fchmod(fileno(fp), pmode);
+#else
+    return -1; /* probably Windows, fchmod unavailable and chmod insecure */
 #endif    
-    if (filename) {
-	return chmod(filename, pmode);
-    }
-    return 0;
 }
 
 /** @} */
