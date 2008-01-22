@@ -24,9 +24,6 @@
  *  Author -
  *	Keith A. Applin
  *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"
@@ -56,7 +53,7 @@ static fastf_t	plano[4], plant[4];
 static struct track_solid
 {
 	int s_type;
-	char s_name[NAMESIZE];
+	char s_name[NAMESIZE+1];
 	fastf_t s_values[24];
 } sol;
 
@@ -316,8 +313,8 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 tryagain:	/* sent here to try next set of names */
 
 	for (i=0; i<11; i++) {
-		crname(solname, i, 12);
-		crname(regname, i, 12);
+		crname(solname, i, sizeof(solname));
+		crname(regname, i, sizeof(regname));
 		if (	(db_lookup( dbip, solname, LOOKUP_QUIET) != DIR_NULL)	||
 			(db_lookup( dbip, regname, LOOKUP_QUIET) != DIR_NULL)	) {
 			/* name already exists */
@@ -342,8 +339,8 @@ tryagain:	/* sent here to try next set of names */
 
 	slope(fw, iw, tr);
 	VMOVE(temp2, &sol.s_values[0]);
-	crname(solname, 1, 12);
-	strncpy(sol.s_name, solname, NAMESIZE-1);
+	crname(solname, 1, sizeof(solname));
+	bu_strlcpy(sol.s_name, solname, NAMESIZE+1);
 	sol.s_type = ID_ARB8;
 	if ( wrobj(solname, DIR_SOLID) )
 	  return TCL_ERROR;
@@ -355,8 +352,8 @@ tryagain:	/* sent here to try next set of names */
 		sol.s_values[i] = 0.0;
 	sol.s_type = ID_TGC;
 	trcurve(iw, tr);
-	crname(solname, 2, 12);
-	strncpy(sol.s_name, solname, NAMESIZE-1);
+	crname(solname, 2, sizeof(solname));
+	bu_strlcpy(sol.s_name, solname, NAMESIZE+1);
 	if ( wrobj( solname, DIR_SOLID ) )
 	  return TCL_ERROR;
 	solname[8] = '\0';
@@ -365,8 +362,8 @@ tryagain:	/* sent here to try next set of names */
 	sol.s_values[11] = iw[2];
 	VMOVE(&sol.s_values[12], &sol.s_values[6]);
 	VMOVE(&sol.s_values[15], &sol.s_values[9]);
-	crname(solname, 3, 12);
-	strncpy(sol.s_name, solname, NAMESIZE-1);
+	crname(solname, 3, sizeof(solname));
+	bu_strlcpy(sol.s_name, solname, NAMESIZE+1);
 	if ( wrobj( solname, DIR_SOLID ) )
 		return TCL_ERROR;
 	solname[8] = '\0';
@@ -374,8 +371,8 @@ tryagain:	/* sent here to try next set of names */
 	/* find idler track dummy arb8 */
 	for (i=0; i<24; i++)
 		sol.s_values[i] = 0.0;
-	crname(solname, 4, 12);
-	strncpy(sol.s_name, solname, NAMESIZE-1);
+	crname(solname, 4, sizeof(solname));
+	bu_strlcpy(sol.s_name, solname, NAMESIZE+1);
 	sol.s_type = ID_ARB8;
 	crdummy(iw, tr, 1);
 	if ( wrobj(solname, DIR_SOLID) )
@@ -387,8 +384,8 @@ tryagain:	/* sent here to try next set of names */
 		sol.s_values[i] = 0.0;
 	slope(lw, dw, tr);
 	VMOVE(temp1, &sol.s_values[0]);
-	crname(solname, 5, 12);
-	strncpy(sol.s_name, solname, NAMESIZE-1);
+	crname(solname, 5, sizeof(solname));
+	bu_strlcpy(sol.s_name, solname, NAMESIZE+1);
 	if (wrobj(solname, DIR_SOLID))
 		return TCL_ERROR;
 	solname[8] = '\0';
@@ -398,8 +395,8 @@ tryagain:	/* sent here to try next set of names */
 		sol.s_values[i] = 0.0;
 	sol.s_type = ID_TGC;
 	trcurve(dw, tr);
-	crname(solname, 6, 12);
-	strncpy(sol.s_name, solname, NAMESIZE-1);
+	crname(solname, 6, sizeof(solname));
+	bu_strlcpy(sol.s_name, solname, NAMESIZE+1);
 	if ( wrobj(solname, DIR_SOLID) )
 		return TCL_ERROR;
 	solname[8] = '\0';
@@ -409,8 +406,8 @@ tryagain:	/* sent here to try next set of names */
 	sol.s_values[11] = dw[2];
 	VMOVE(&sol.s_values[12], &sol.s_values[6]);
 	VMOVE(&sol.s_values[15], &sol.s_values[9]);
-	crname(solname, 7, 12);
-	strncpy(sol.s_name, solname, NAMESIZE-1);
+	crname(solname, 7, sizeof(solname));
+	bu_strlcpy(sol.s_name, solname, NAMESIZE+1);
 	if ( wrobj(solname, DIR_SOLID) )
 		return TCL_ERROR;
 	solname[8] = '\0';
@@ -418,8 +415,8 @@ tryagain:	/* sent here to try next set of names */
 	/* drive dummy arb8 */
 	for (i=0; i<24; i++)
 		sol.s_name[i] = 0.0;
-	crname(solname, 8, 12);
-	strncpy(sol.s_name, solname, NAMESIZE-1);
+	crname(solname, 8, sizeof(solname));
+	bu_strlcpy(sol.s_name, solname, NAMESIZE+1);
 	sol.s_type = ID_ARB8;
 	crdummy(dw, tr, 2);
 	if ( wrobj(solname, DIR_SOLID) )
@@ -429,8 +426,8 @@ tryagain:	/* sent here to try next set of names */
 	/* track bottom */
 	temp1[1] = temp2[1] = tr[0];
 	bottom(temp1, temp2, tr);
-	crname(solname, 9, 12);
-	strncpy(sol.s_name, solname, NAMESIZE-1);
+	crname(solname, 9, sizeof(solname));
+	bu_strlcpy(sol.s_name, solname, NAMESIZE+1);
 	if ( wrobj(solname, DIR_SOLID) )
 		return TCL_ERROR;
 	solname[8] = '\0';
@@ -442,8 +439,8 @@ tryagain:	/* sent here to try next set of names */
 	temp2[0] = iw[0];
 	temp2[2] = iw[1] + iw[2];
 	top(temp1, temp2, tr);
-	crname(solname, 10, 12);
-	strncpy(sol.s_name, solname, NAMESIZE-1);
+	crname(solname, 10, sizeof(solname));
+	bu_strlcpy(sol.s_name, solname, NAMESIZE+1);
 	if ( wrobj(solname, DIR_SOLID) )
 		return TCL_ERROR;
 	solname[8] = '\0';
@@ -458,48 +455,48 @@ tryagain:	/* sent here to try next set of names */
 	/* region 1 */
 	memb[0] = 1;
 	memb[1] = 4;
-	crname(regname, 1, 12);
-	crregion(regname, oper, memb, 2, solname, 12);
+	crname(regname, 1, sizeof(regname));
+	crregion(regname, oper, memb, 2, solname, sizeof(regname));
 	solname[8] = regname[8] = '\0';
 
 	/* region 2 */
-	crname(regname, 2, 12);
+	crname(regname, 2, sizeof(regname));
 	memb[0] = 2;
 	memb[1] = 3;
 	memb[2] = 4;
-	crregion(regname, oper, memb, 3, solname, 12);
+	crregion(regname, oper, memb, 3, solname, sizeof(regname));
 	solname[8] = regname[8] = '\0';
 
 	/* region 5 */
-	crname(regname, 5, 12);
+	crname(regname, 5, sizeof(regname));
 	memb[0] = 5;
 	memb[1] = 8;
-	crregion(regname, oper, memb, 2, solname, 12);
+	crregion(regname, oper, memb, 2, solname, sizeof(regname));
 	solname[8] = regname[8] = '\0';
 
 	/* region 6 */
-	crname(regname, 6, 12);
+	crname(regname, 6, sizeof(regname));
 	memb[0] = 6;
 	memb[1] = 7;
 	memb[2] = 8;
-	crregion(regname, oper, memb, 3, solname, 12);
+	crregion(regname, oper, memb, 3, solname, sizeof(regname));
 	solname[8] = regname[8] = '\0';
 
 	/* region 9 */
-	crname(regname, 9, 12);
+	crname(regname, 9, sizeof(regname));
 	memb[0] = 9;
 	memb[1] = 1;
 	memb[2] = 5;
 	oper[2] = WMOP_SUBTRACT;
-	crregion(regname, oper, memb, 3, solname, 12);
+	crregion(regname, oper, memb, 3, solname, sizeof(regname));
 	solname[8] = regname[8] = '\0';
 
 	/* region 10 */
-	crname(regname, 10, 12);
+	crname(regname, 10, sizeof(regname));
 	memb[0] = 10;
 	memb[1] = 4;
 	memb[2] = 8;
-	crregion(regname, oper, memb, 3, solname, 12);
+	crregion(regname, oper, memb, 3, solname, sizeof(regname));
 	solname[8] = regname[8] = '\0';
 
 	/* group all the track regions */
@@ -507,13 +504,12 @@ tryagain:	/* sent here to try next set of names */
 	if ( (i = Trackpos / 10 + 1) > 9 )
 		j = 2;
 	itoa(i, temp, j);
-	strncat(grpname, temp, 9-strlen(grpname)-1);
-	grpname[9-1] = '\0'; /* sanity */
+	bu_strlcat(grpname, temp, sizeof(grpname));
 	for (i=1; i<11; i++) {
 		if ( i == 3 || i ==4 || i == 7 || i == 8 )
 			continue;
 		regname[8] = '\0';
-		crname(regname, i, 12);
+		crname(regname, i, sizeof(regname));
 		if ( db_lookup( dbip, regname, LOOKUP_QUIET) == DIR_NULL ) {
 		  Tcl_AppendResult(interp, "group: ", grpname, " will skip member: ",
 				   regname, "\n", (char *)NULL);
@@ -568,8 +564,7 @@ crname(char *name, int pos, int maxlen)
 	if ( i > 99 )
 		j = 3;
 	itoa(i, temp, j);
-	strncat(name, temp, maxlen-strlen(name)-1);
-	name[maxlen-1] = '\0'; /* sanity */
+	bu_strlcat(name, temp, maxlen);
 	return;
 }
 
