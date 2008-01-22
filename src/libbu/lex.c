@@ -147,12 +147,16 @@ top:
 	 * if we had NUMBER. or NUMBERe{+|-} that has be replaced (cp)
 	 */
 	*used = cp - sp -1;
-	if (*used == 0) *used = 1;
+	if (*used == 0)
+	    *used = 1;
+
 	unit = (char *)bu_malloc(*used+1, "unit token");
-	strncpy(unit, sp, *used);
-	unit[*used] = '\0';
+	bu_strlcpy(unit, sp, *used+1);
 	*used = sp-bu_vls_addr(rtstr) + *used;
-	if (*used == 0) *used = 1;
+
+	if (*used == 0)
+	    *used = 1;
+
 	return unit;
 }
 

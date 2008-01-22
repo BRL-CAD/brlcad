@@ -77,7 +77,7 @@ static int
 guess_file_format(char *filename, char *trimmedname)
 {
     /* look for the FMT: header */
-#define CMP(name) if (!strncmp(filename, #name":", strlen(#name))){strncpy(trimmedname, filename+strlen(#name)+1, BUFSIZ);return BU_IMAGE_##name; }
+#define CMP(name) if (!strncmp(filename, #name":", strlen(#name))){bu_strlcpy(trimmedname, filename+strlen(#name)+1, BUFSIZ);return BU_IMAGE_##name; }
     CMP(PIX);
     CMP(PNG);
     CMP(BMP);
@@ -85,7 +85,7 @@ guess_file_format(char *filename, char *trimmedname)
 #undef CMP
 
     /* no format header found, copy the name as it is */
-    strncpy(trimmedname, filename, BUFSIZ);
+    bu_strlcpy(trimmedname, filename, BUFSIZ);
 
     /* and guess based on extension */
 #define CMP(name, ext) if (!strncmp(filename+strlen(filename)-strlen(#name)-1, "."#ext, strlen(#name)+1)) return BU_IMAGE_##name;

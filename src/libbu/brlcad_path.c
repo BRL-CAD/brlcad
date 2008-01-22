@@ -360,7 +360,7 @@ bu_find_path(char result[MAXPATHLEN], const char *lhs, const char *rhs, struct b
 
     /* start fresh */
     memset(result, 0, (size_t)MAXPATHLEN);
-    strncpy(result, lhs, (size_t)MAXPATHLEN);
+    bu_strlcpy(result, lhs, (size_t)MAXPATHLEN);
 
     /* nothing to add, so just return what we have */
     if (!rhs || (rlen == 0)) {
@@ -388,7 +388,7 @@ bu_find_path(char result[MAXPATHLEN], const char *lhs, const char *rhs, struct b
     }
 
     /* found a match */
-    strncpy(result+llen, rhs, (size_t)(MAXPATHLEN - llen));
+    bu_strlcpy(result+llen, rhs, (size_t)(MAXPATHLEN - llen));
     if (bu_file_exists(result)) {
 	return 1;
     }

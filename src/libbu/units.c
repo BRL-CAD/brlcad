@@ -102,8 +102,7 @@ bu_units_conversion(const char *str)
 	char		ubuf[256];
 	int		len;
 
-	strncpy( ubuf, str, sizeof(ubuf)-1 );
-	ubuf[sizeof(ubuf)-1] = '\0';
+	bu_strlcpy( ubuf, str, sizeof(ubuf) );
 
 	/* Copy the given string, making it lower case */
 	ip = ubuf;

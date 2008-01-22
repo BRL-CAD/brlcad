@@ -175,7 +175,7 @@ bu_cv_fmt_cookie( char * buf, size_t buflen, int cookie )
 	}
 	buflen--;
 	if ( cookie == 0 )  {
-		strncpy( cp, "bogus!", buflen );
+		bu_strlcpy( cp, "bogus!", buflen );
 		return;
 	}
 
@@ -223,17 +223,17 @@ bu_cv_fmt_cookie( char * buf, size_t buflen, int cookie )
 		buflen--;
 		break;
 	case CV_16:
-		strncpy( cp, "16", buflen );
+		bu_strlcpy( cp, "16", buflen );
 		cp += 2;
 		buflen -= 2;
 		break;
 	case CV_32:
-		strncpy( cp, "32", buflen );
+		bu_strlcpy( cp, "32", buflen );
 		cp += 2;
 		buflen -= 2;
 		break;
 	case CV_64:
-		strncpy( cp, "64", buflen );
+		bu_strlcpy( cp, "64", buflen );
 		cp += 2;
 		buflen -= 2;
 		break;
