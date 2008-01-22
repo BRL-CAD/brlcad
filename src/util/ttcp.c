@@ -212,7 +212,7 @@ read_timer(char *str, int len)
 #ifdef SYSV
 	time_t now;
 	struct tms tmsnow;
-	char line[132];
+	char line[132] = {0};
 
 	(void)time(&now);
 	realt = now-time0;
@@ -224,7 +224,7 @@ read_timer(char *str, int len)
 	sprintf(line, "%g CPU secs in %g elapsed secs (%g%%)",
 		cput, realt,
 		cput/realt*100 );
-	(void)strncpy( str, line, len );
+	strncpy( str, line, len );
 	return( cput );
 #else
 	/* BSD */
@@ -232,12 +232,12 @@ read_timer(char *str, int len)
 	struct rusage ru1;
 	struct timeval td;
 	struct timeval tend, tstart;
-	char line[132];
+	char line[132] = {0};
 
 	getrusage(RUSAGE_SELF, &ru1);
 	gettimeofday(&timedol, (struct timezone *)0);
 	prusage(&ru0, &ru1, &timedol, &time0, line);
-	(void)strncpy( str, line, len );
+	strncpy( str, line, len );
 
 	/* Get real time */
 	tvsub( &td, &timedol, &time0 );
