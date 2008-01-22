@@ -33,7 +33,7 @@
 
 /* NSIG not always defined in <signal.h> */
 #ifndef NSIG
-#define NSIG 64
+#  define NSIG 64
 #endif
 
 /* ANSI C definitions */
