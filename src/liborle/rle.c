@@ -34,8 +34,6 @@
 
 #include <stdio.h>
 
-#include "machine.h"
-#include "fb.h"
 #include "orle.h"
 
 #define PRNT_A1_DEBUG(_op, _n) \
@@ -112,15 +110,15 @@
 #define NSEG	1024/3		/* Number of run segments of storage */
 static struct runs
 {
-    RGBpixel *first;
-    RGBpixel *last;
+    RLEpixel *first;
+    RLEpixel *last;
 } runs[NSEG];		/* ptrs to non-background run segs */
 
 /* Global data.								*/
 int	_bg_flag;
 int	_bw_flag;
 int	_cm_flag;
-RGBpixel	_bg_pixel;
+RLEpixel	_bg_pixel;
 
 int	_ncmap = 3;	/* Default : (3) channels in color map.		*/
 int	_cmaplen = 8;	/* Default : (8) log base 2 entries in map.	*/
@@ -350,7 +348,7 @@ rle_rhdr(FILE *fp, int *flags, register unsigned char *bgpixel)
 			    r_setup.h_background[0],
 			    r_setup.h_background[1],
 			    r_setup.h_background[2] );
-	if ( bgpixel != RGBPIXEL_NULL )
+	if ( bgpixel != NULL )
 	{
 	    /* No command-line backgr., use saved values.	*/
 	    _bg_pixel[RED] = r_setup.h_background[0];
@@ -388,7 +386,7 @@ rle_whdr(FILE *fp, int ncolors, int bgflag, int cmflag, unsigned char *bgpixel)
 {
     /* Magic numbers for output file.				*/
     static short	x_magic = XtndRMAGIC; /* Extended magic number.	*/
-    static RGBpixel	black = { 0, 0, 0 };
+    static RLEpixel	black = { 0, 0, 0 };
 
     /* safty check */
     if ( bgpixel == NULL )
@@ -483,7 +481,7 @@ _get_Color_Map_Seg(FILE *fp, register short unsigned int *cmap_seg)
 	Returns -1 upon failure, 0 otherwise.
 */
 int
-rle_rmap(FILE *fp, ColorMap *cmap)
+rle_rmap(FILE *fp, RLEColorMap *cmap)
 {
     if ( rle_verbose )
 	(void) fprintf( stderr, "Reading color map\n");
@@ -546,7 +544,7 @@ _put_Std_Map(FILE *fp)
 	Returns -1 upon failure, 0 otherwise.
 */
 int
-rle_wmap(FILE *fp, ColorMap *cmap)
+rle_wmap(FILE *fp, RLEColorMap *cmap)
 {
     if ( w_setup.h_ncmap == 0 )
     {
@@ -556,7 +554,7 @@ rle_wmap(FILE *fp, ColorMap *cmap)
     }
     if ( rle_verbose )
 	(void) fprintf( stderr, "Writing color map\n" );
-    if ( cmap == (ColorMap *) NULL )
+    if ( cmap == (RLEColorMap *) NULL )
     {
 	return _put_Std_Map( fp );
     }
@@ -576,7 +574,7 @@ rle_wmap(FILE *fp, ColorMap *cmap)
 	and 0 if untouched.
 */
 int
-rle_decode_ln(register FILE *fp, RGBpixel (*scan_buf))
+rle_decode_ln(register FILE *fp, RLEpixel (*scan_buf))
 {
     static int	lines_to_skip = 0;
     static int	opcode, datum;
@@ -642,7 +640,7 @@ rle_decode_ln(register FILE *fp, RGBpixel (*scan_buf))
 		    register unsigned char c;
 		    while ( n-- > 0 )
 		    {
-			/* Implicit knowledge of sizeof(RGBpixel) */
+			/* Implicit knowledge of sizeof(RLEpixel) */
 			*pp++ = c = getc( fp );
 			*pp++ = c;
 			*pp++ = c;
@@ -678,7 +676,7 @@ rle_decode_ln(register FILE *fp, RGBpixel (*scan_buf))
 		    /* Ugh, black & white.		*/
 		    while ( n-- > 0 )
 		    {
-			/* Implicit knowledge of sizeof(RGBpixel) */
+			/* Implicit knowledge of sizeof(RLEpixel) */
 			*pp++ = (unsigned char) word;
 			*pp++ = (unsigned char) word;
 			*pp++ = (unsigned char) word;
@@ -718,10 +716,10 @@ _put_Data(register FILE *fp, register unsigned char *cp, int n)
 	Output code for segment.
 */
 HIDDEN void
-_enc_Segment(FILE *fp, register RGBpixel (*data_p), register RGBpixel (*last_p))
+_enc_Segment(FILE *fp, register RLEpixel (*data_p), register RLEpixel (*last_p))
 {
-    register RGBpixel	*pixelp;
-    register RGBpixel	*runs_p = data_p;
+    register RLEpixel	*pixelp;
+    register RLEpixel	*runs_p = data_p;
     register int	state = DATA;
     register unsigned char	runval = (*data_p)[CUR];
     for ( pixelp = data_p + 1; pixelp <= last_p; pixelp++ )
@@ -792,11 +790,11 @@ _enc_Segment(FILE *fp, register RGBpixel (*data_p), register RGBpixel (*last_p))
 HIDDEN void
 _enc_Color_Seg(FILE *fp, register int seg, register int color)
 {
-    static RGBpixel *data_p;
-    static RGBpixel *last_p;
+    static RLEpixel *data_p;
+    static RLEpixel *last_p;
 
-    data_p = (RGBpixel *) &((*(runs[seg].first))[color]);
-    last_p = (RGBpixel *) &((*(runs[seg].last))[color]);
+    data_p = (RLEpixel *) &((*(runs[seg].first))[color]);
+    last_p = (RLEpixel *) &((*(runs[seg].last))[color]);
 
     _enc_Segment( fp, data_p, last_p );
     return;
@@ -808,7 +806,7 @@ _enc_Color_Seg(FILE *fp, register int seg, register int color)
 	before all pixels are processed, otherwise a 'nseg' is returned.
 */
 HIDDEN int
-_bg_Get_Runs(register RGBpixel (*pixelp), register RGBpixel (*endpix))
+_bg_Get_Runs(register RLEpixel (*pixelp), register RLEpixel (*endpix))
 {
     /* find non-background runs */
     register int	nseg = 0;
@@ -848,16 +846,16 @@ _bg_Get_Runs(register RGBpixel (*pixelp), register RGBpixel (*endpix))
 	Returns -1 upon failure, 0 otherwise.
 */
 int
-rle_encode_ln(register FILE *fp, RGBpixel (*scan_buf))
+rle_encode_ln(register FILE *fp, RLEpixel (*scan_buf))
 {
-    register RGBpixel *scan_p;
-    register RGBpixel *last_p;
+    register RLEpixel *scan_p;
+    register RLEpixel *last_p;
     register int	i;
     register int	color;		/* holds current color */
     register int	nseg;		/* number of non-bg run segments */
 
-    scan_p = (RGBpixel *)&(scan_buf[w_setup.h_xpos][RED]);
-    last_p = (RGBpixel *)&(scan_buf[w_setup.h_xpos+(w_setup.h_xlen-1)][RED]);
+    scan_p = (RLEpixel *)&(scan_buf[w_setup.h_xpos][RED]);
+    last_p = (RLEpixel *)&(scan_buf[w_setup.h_xpos+(w_setup.h_xlen-1)][RED]);
     if ( _bg_flag )
     {
 	if ( (nseg = _bg_Get_Runs( scan_p, last_p )) == -1 )
@@ -876,7 +874,7 @@ rle_encode_ln(register FILE *fp, RGBpixel (*scan_buf))
     }
     if ( _bw_flag )
     {
-	register RGBpixel *pixelp;
+	register RLEpixel *pixelp;
 	/* Compute NTSC Black & White in blue row.		*/
 	for ( pixelp=scan_p; pixelp <= last_p; pixelp++ )
 	    (*pixelp)[BLU] =  .35 * (*pixelp)[RED] +

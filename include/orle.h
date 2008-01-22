@@ -12,7 +12,6 @@
 /*
  *	Modified by :		Gary S. Moss
  *
- *  Note:  Users of this file will need to include "fb.h" first.
  */
 
 #include "machine.h"		/* for BIG_ENDIAN definition */
@@ -49,6 +48,17 @@
 #define NO_BOX_SAVE	(1<<0)	/* Saved with backgr.== H_CLEARFIRST	*/
 #define NO_COLORMAP	(1<<1)	/* Color map not saved.			*/
 #define NO_IMAGE	(1<<2)	/* Only color map saved.		*/
+
+/* basic colors */
+#ifndef RED
+#  define RED 0
+#endif
+#ifndef GRN
+#  define GRN 1
+#endif
+#ifndef BLU
+#  define BLU 2
+#endif
 
 typedef struct	/* Extended format RLE header.				*/
 	{
@@ -100,6 +110,14 @@ typedef struct /* Old RLE format instruction.				*/
 #endif
 	} Xtnd_Inst;
 
+typedef unsigned char RLEpixel[3];
+
+typedef struct  {
+    unsigned short cm_red[256];
+    unsigned short cm_green[256];
+    unsigned short cm_blue[256];
+} RLEColorMap;
+
 #define OPCODE(inst) (inst.opcode & ~LONG)
 #define LONGP(inst) (inst.opcode & LONG)
 #define DATUM(inst) (0x00ff & inst.datum)
@@ -110,13 +128,13 @@ typedef struct /* Old RLE format instruction.				*/
 
 #define	    XtndRMAGIC	((short)0xcc52) /* Extended RLE magic number.	*/
 
-#define STRIDE (sizeof(RGBpixel))	/* Distance (bytes) to next pixel.	*/
+#define STRIDE (sizeof(RLEpixel))	/* Distance (bytes) to next pixel.	*/
 
 /* Global data intended mainly for internal (library) use.		*/
 extern int	_bg_flag;
 extern int	_bw_flag;
 extern int	_cm_flag;
-extern RGBpixel	_bg_pixel;
+extern RLEpixel	_bg_pixel;
 
 /* Global flags for general use.					*/
 ORLE_EXPORT extern int	rle_debug;
