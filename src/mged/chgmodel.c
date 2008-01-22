@@ -340,53 +340,53 @@ f_edmater(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     int i;
     int status;
 
-  char **av;
+    char **av;
 
-  CHECK_DBI_NULL;
-  CHECK_READ_ONLY;
+    CHECK_DBI_NULL;
+    CHECK_READ_ONLY;
 
-  if (argc < 2){
-    struct bu_vls vls;
+    if (argc < 2) {
+	struct bu_vls vls;
 
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "help edmater");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "help edmater");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
+    }
 
-  fp = bu_temp_file(tmpfil, MAXPATHLEN);
-  if (!fp) {
-    return TCL_ERROR;
-  }
+    fp = bu_temp_file(tmpfil, MAXPATHLEN);
+    if (!fp)
+	return TCL_ERROR;
 
-  av = (char **)bu_malloc(sizeof(char *)*(argc + 2), "f_edmater: av");
-  av[0] = "wmater";
-  av[1] = tmpfil;
-  for (i = 2; i < argc + 1; ++i)
-    av[i] = argv[i-1];
+    av = (char **)bu_malloc(sizeof(char *)*(argc + 2), "f_edmater: av");
+    av[0] = "wmater";
+    av[1] = tmpfil;
+    for(i = 2; i < argc + 1; ++i)
+	av[i] = argv[i-1];
 
-  av[i] = NULL;
+    av[i] = NULL;
 
-  if (f_wmater(clientData, interp, argc + 1, av) == TCL_ERROR) {
+    if (f_wmater(clientData, interp, argc + 1, av) == TCL_ERROR) {
+	(void)unlink(tmpfil);
+	bu_free((genptr_t)av, "f_edmater: av");
+	return TCL_ERROR;
+    }
+
+    (void)fclose(fp);
+
+    if (editit(tmpfil)) {
+	av[0] = "rmater";
+	av[2] = NULL;
+	status = f_rmater(clientData, interp, 2, av);
+    } else {
+	status = TCL_ERROR;
+    }
+
     (void)unlink(tmpfil);
     bu_free((genptr_t)av, "f_edmater: av");
-    return TCL_ERROR;
-  }
 
-  if (editit(tmpfil)) {
-    av[0] = "rmater";
-    av[2] = NULL;
-    status = f_rmater(clientData, interp, 2, av);
-  } else {
-    status = TCL_ERROR;
-  }
-
-  (void)fclose(fp);
-  (void)unlink(tmpfil);
-  bu_free((genptr_t)av, "f_edmater: av");
-
-  return status;
+    return status;
 }
 
 
