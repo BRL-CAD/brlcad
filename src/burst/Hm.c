@@ -36,6 +36,9 @@
 #  include <unistd.h>
 #endif
 
+#include "machine.h"
+#include "bu.h"
+
 #include "./Sc.h"
 #include "./Hm.h"
 #include "./Mm.h"
@@ -118,11 +121,10 @@ HmBanner( char *pgmname, int borderchr )
 #define HmBUFLEN	81
 		static char     HmPgmName[HmBUFLEN] = "No name";
 		static int      HmBorderChr = '_';
-	if ( pgmname != NULL )
-		{
-		(void) strncpy( HmPgmName, pgmname, HmBUFLEN );
-		HmBorderChr = borderchr;
-		}
+	if( pgmname != NULL ) {
+	    bu_strlcpy( HmPgmName, pgmname, sizeof(HmPgmName) );
+	    HmBorderChr = borderchr;
+	}
 	(void) ScMvCursor( HmLftMenu, HmYBORDER );
 	for ( co = 1; co <= 3; co++ )
 		(void) putc( HmBorderChr, stdout );
@@ -131,7 +133,7 @@ HmBanner( char *pgmname, int borderchr )
 	for (; co <= ScCO; co++ )
 		(void) putc( HmBorderChr, stdout );
 	return;
-	}
+}
 
 /*
 	void	HmPrntItem( HmItem *itemp )	(DEBUG)

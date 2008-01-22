@@ -2333,10 +2333,10 @@ output_assembly( ProMdl model )
 	}
 
 	/* everything starts out in "curr_part_name", copy name to "curr_asm_name" */
-	strncpy( curr_asm_name, curr_part_name, sizeof(curr_asm_name)-1 );
+	bu_strlcpy( curr_asm_name, curr_part_name, sizeof(curr_asm_name) );
 
 	/* start filling in assembly info */
-	strncpy( curr_assem.name, curr_part_name, sizeof(curr_assem.name)-1 );
+	bu_strlcpy( curr_assem.name, curr_part_name, sizeof(curr_assem.name) );
 	curr_assem.members = NULL;
 	curr_assem.model = model;
 
@@ -2694,7 +2694,7 @@ output_top_level_object( ProMdl model, ProMdlType type )
 		ProMessageClear();
 		fprintf( stderr, "Could not get name for part" );
 		(void)ProWindowRefresh( PRO_VALUE_UNUSED );
-		strcpy( curr_part_name, "noname" );
+		bu_strlcpy( curr_part_name, "noname", PRO_NAME_SIZE );
 	} else {
 		(void)ProWstringToString( curr_part_name, name );
 	}
@@ -2797,7 +2797,7 @@ create_temp_directory()
 
 #else
 	/* default output file name */
-	strcpy( output_file, "proe.asc" );
+	bu_strlcpy( output_file, "proe.asc", sizeof(output_file) );
 
 	/* get the angle control */
 	(void) ProMessageDisplay( MSGFIL, "USER_PROMPT_DOUBLE",
@@ -3457,7 +3457,7 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 	}
 
 	/* default output file name */
-	strcpy( output_file, "proe.asc" );
+	bu_strlcpy( output_file, "proe.asc", sizeof(output_file) );
 
 	/* get the output file name */
 	(void)ProMessageDisplay( MSGFIL, "USER_PROMPT_STRING",

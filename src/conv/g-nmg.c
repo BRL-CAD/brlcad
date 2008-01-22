@@ -398,12 +398,12 @@ csg_comb_func(struct db_i *dbip, struct directory *dp, genptr_t ptr)
 	endp = strchr( bu_vls_addr(&comb->shader), ' ' );
 	if ( endp ) {
 		len = endp - bu_vls_addr(&comb->shader);
-		if ( len > 32 ) len = 32;
-		strncpy( matname, bu_vls_addr(&comb->shader), len );
-		strncpy( matparm, endp+1, 60 );
+		if( len > sizeof(matname) ) len = sizeof(matname);
+		bu_strlcpy( matname, bu_vls_addr(&comb->shader), len );
+		bu_strlcpy( matparm, endp+1, sizeof(matparm) );
 	}
 	else {
-		strncpy( matname, bu_vls_addr(&comb->shader), 32 );
+		bu_strlcpy( matname, bu_vls_addr(&comb->shader), sizeof(matname) );
 		matparm[0] = '\0';
 	}
 

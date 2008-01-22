@@ -72,7 +72,7 @@ get_Input(char *inbuf, int bufsz, char *msg)
 		if ( *cptr == CR || *cptr == LF )
 			cptr++;
 		*p = NUL;
-		(void) strncpy( inbuf, buffer, bufsz );
+		bu_strlcpy( inbuf, buffer, bufsz );
 		return 1;
 		}
 	else
@@ -165,8 +165,8 @@ get_Input(char *inbuf, int bufsz, char *msg)
 				ring_Bell();
 				break;
 				}
-			(void) strncpy( p, inbuf, bufsz );
-			(void) printf( "%s", p );
+			bu_strlcpy( p, inbuf, bufsz );
+			printf( "%s", p );
 			p += len;
 			break;
 			}
@@ -220,7 +220,7 @@ get_Input(char *inbuf, int bufsz, char *msg)
 		case CR :
 		case LF :
 		case EOF :
-			(void) strncpy( inbuf, buffer, bufsz );
+			bu_strlcpy( inbuf, buffer, bufsz );
 			prnt_Prompt( "" );
 			return 1;
 		case Ctrl('V') :
@@ -254,7 +254,7 @@ get_Input(char *inbuf, int bufsz, char *msg)
 			} /* End switch. */
 		}
 	while ( strlen( buffer ) < BUFSIZ );
-	(void) strncpy( inbuf, buffer, bufsz );
+	bu_strlcpy( inbuf, buffer, bufsz );
 	ring_Bell();
 	fb_log( "Buffer full.\n" );
 	prnt_Prompt( "" );
@@ -293,9 +293,9 @@ get_Func_Name(char *inbuf, int bufsz, char *msg)
 			cptr++;
 		*p = NUL;
 		if ( (ftbl = get_Try( buffer, try_rootp )) == FT_NULL )
-			(void) putchar( BEL );
+			putchar( BEL );
 		else
-			(void) strncpy( inbuf, buffer, bufsz );
+			bu_strlcpy( inbuf, buffer, bufsz );
 		return ftbl;
 		}
 	else
@@ -400,8 +400,8 @@ get_Func_Name(char *inbuf, int bufsz, char *msg)
 				ring_Bell();
 				break;
 				}
-			(void) strncpy( p, inbuf, bufsz );
-			(void) printf( "%s", p );
+			bu_strlcpy( p, inbuf, bufsz );
+			printf( "%s", p );
 			p += len;
 			break;
 			}
@@ -462,7 +462,7 @@ get_Func_Name(char *inbuf, int bufsz, char *msg)
 				}
 			else
 				{
-				(void) strncpy( inbuf, buffer, bufsz );
+				bu_strlcpy( inbuf, buffer, bufsz );
 				prnt_Prompt( "" );
 				prnt_Event( "" );
 				return ftbl;

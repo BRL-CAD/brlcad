@@ -97,8 +97,7 @@ bn_mat_print_guts(const char	*title,
 	snprintf(obuf, len, "MATRIX %s:\n  ", title);
 	cp = obuf+strlen(obuf);
 	if (!m) {
-		strncat(obuf, "(Identity)", len-(cp-obuf));
-		obuf[len-1] = '\0';
+		bu_strlcat(obuf, "(Identity)", len);
 	} else {
 		for (i=0; i<16; i++)  {
 			snprintf(cp, len-(cp-obuf), " %8.3f", m[i]);

@@ -314,7 +314,7 @@ copy_v4_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 	}
 
 	if (rp->u_id == ID_SOLID) {
-	    strncpy(rp->s.s_name, dp->d_namep, CLONE_BUFSIZE-1);
+	    bu_strlcpy(rp->s.s_name, dp->d_namep, CLONE_BUFSIZE);
 
 	    /* mirror */
 	    if (state->miraxis != W) {
@@ -510,7 +510,7 @@ copy_v4_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
 	    bu_vls_strcpy(&obj_list.names[idx].dest[i], bu_vls_addr(name));
 	    bu_vls_free(name);
 	}
-	strncpy(rp[0].c.c_name, bu_vls_addr(&obj_list.names[idx].dest[i]), CLONE_BUFSIZE-1);
+	bu_strlcpy(rp[0].c.c_name, bu_vls_addr(&obj_list.names[idx].dest[i]), CLONE_BUFSIZE);
 
 	/* add the object to the directory */
 	dp = db_diradd(_dbip, rp->c.c_name, RT_DIR_PHONY_ADDR, proto->d_len, proto->d_flags, &proto->d_minor_type);
@@ -1109,30 +1109,30 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	bu_fgets(line, 81, points);
     while (strcmp(strtok(line, ","), "112") != 0);
 
-    strncpy(tok, strtok(NULL, ","), 81-1);
-    strncpy(tok, strtok(NULL, ","), 81-1);
-    strncpy(tok, strtok(NULL, ","), 81-1);
-    strncpy(tok, strtok(NULL, ","), 81-1);
+    bu_strlcpy(tok, strtok(NULL, ","), sizeof(tok));
+    bu_strlcpy(tok, strtok(NULL, ","), sizeof(tok));
+    bu_strlcpy(tok, strtok(NULL, ","), sizeof(tok));
+    bu_strlcpy(tok, strtok(NULL, ","), sizeof(tok));
     s.n_segs = atoi(tok);
     s.t = (fastf_t *)bu_malloc(sizeof(fastf_t) * (s.n_segs+1), "t");
     s.k = (struct knot *)bu_malloc(sizeof(struct knot) * (s.n_segs+1), "k");
     for (i = 0; i <= s.n_segs; i++) {
-	strncpy(tok, strtok(NULL, ","), 81-1);
+	bu_strlcpy(tok, strtok(NULL, ","), sizeof(tok));
 	if (strstr(tok, "P") != NULL) {
 	    bu_fgets(line, 81, points);
 	    bu_fgets(line, 81, points);
-	    strncpy(tok, strtok(line, ","), 81-1);
+	    bu_strlcpy(tok, strtok(line, ","), sizeof(tok));
 	}
 	s.t[i] = atof(tok);
     }
     for (i = 0; i <= s.n_segs; i++)
 	for (j = 0; j < 3; j++) {
 	    for (k = 0; k < 4; k++) {
-		strncpy(tok, strtok(NULL, ","), 81-1);
+		bu_strlcpy(tok, strtok(NULL, ","), sizeof(tok));
 		if (strstr(tok, "P") != NULL) {
 		    bu_fgets(line, 81, points);
 		    bu_fgets(line, 81, points);
-		    strncpy(tok, strtok(line, ","), 81-1);
+		    bu_strlcpy(tok, strtok(line, ","), sizeof(tok));
 		}
 		s.k[i].c[j][k] = atof(tok);
 	    }
@@ -1205,8 +1205,8 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	for (i = 0; i < 2; i++)
 	    vargs[i] = (char *)bu_malloc(sizeof(char)*CLONE_BUFSIZE, "alloc vargs1");
 
-	strcpy(vargs[0], "e");
-	strncpy(vargs[1], bu_vls_addr(&links[j].name), CLONE_BUFSIZE-1);
+	bu_strlcpy(vargs[0], "e", sizeof(vargs[0]));
+	bu_strlcpy(vargs[1], bu_vls_addr(&links[j].name), CLONE_BUFSIZE);
 	vargs[2] = NULL;
 
 	state.interp = interp;
@@ -1243,8 +1243,8 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		state.src = dps[j];
 		/* global dbip */
 		dps[j] = copy_object(dbip, &rt_uniresource, &state);
-		strncpy(vargs[1], dps[j]->d_namep, CLONE_BUFSIZE-1);
-		/* strcpy(vargs[1], obj_list.names[index_in_list(obj_list, links[j].name)].dest[0]);*/
+		bu_strlcpy(vargs[1], dps[j]->d_namep, CLONE_BUFSIZE);
+		/* bu_strlcpy(vargs[1], obj_list.names[index_in_list(obj_list, links[j].name)].dest[0], sizeof(vargs[1]));*/
 
 		if (!no_draw || !is_dm_null()) {
 		    drawtrees(2, vargs, 1);

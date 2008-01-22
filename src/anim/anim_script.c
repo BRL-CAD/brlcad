@@ -186,7 +186,7 @@ int get_args(int argc, char **argv)
     void anim_dx_y_z2mat(fastf_t *, double, double, double), anim_dz_y_x2mat(fastf_t *, double, double, double);
     rotate = translate = 1; /* defaults */
     quaternion = permute = 0;
-    strcpy(mat_cmd, "lmul");
+    bu_strlcpy(mat_cmd, "lmul", sizeof(mat_cmd));
     while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
 	i=0;
 	switch (c){
@@ -234,7 +234,7 @@ int get_args(int argc, char **argv)
 	    sscanf(bu_optarg, "%d", &first_frame);
 	    break;
 	case 'm':
-	    strncpy(mat_cmd, bu_optarg, 10);
+	    bu_strlcpy(mat_cmd, bu_optarg, sizeof(mat_cmd));
 	    break;
 	case 'p':
 	    permute = 1;

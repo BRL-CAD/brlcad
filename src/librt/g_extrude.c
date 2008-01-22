@@ -2133,8 +2133,8 @@ rt_extrude_import(struct rt_db_internal *ip, const struct bu_external *ep, regis
 
 	ptr = (char *)rp;
 	ptr += sizeof( struct extr_rec );
-	extrude_ip->sketch_name = (char *)bu_calloc( 17, sizeof( char ), "Extrude sketch name" );
-	strncpy( extrude_ip->sketch_name, ptr, 16 );
+	extrude_ip->sketch_name = (char *)bu_calloc( NAMESIZE+1, sizeof( char ), "Extrude sketch name" );
+	bu_strlcpy( extrude_ip->sketch_name, ptr, NAMESIZE+1 );
 
 	return(0);			/* OK */
 }
@@ -2178,7 +2178,7 @@ rt_extrude_export(struct bu_external *ep, const struct rt_db_internal *ip, doubl
 	ptr = (unsigned char *)rec;
 	ptr += sizeof( struct extr_rec );
 
-	strncpy( (char *)ptr, extrude_ip->sketch_name, ep->ext_nbytes-sizeof(struct extr_rec)-1 );
+	bu_strlcpy( (char *)ptr, extrude_ip->sketch_name, ep->ext_nbytes-sizeof(struct extr_rec) );
 
 	return(0);
 }
@@ -2224,7 +2224,7 @@ rt_extrude_export5(struct bu_external *ep, const struct rt_db_internal *ip, doub
 	ptr += SIZEOF_NETWORK_LONG;
 	rem -= SIZEOF_NETWORK_LONG;
 
-	strncpy( (char *)ptr, extrude_ip->sketch_name, rem-1 );
+	bu_strlcpy( (char *)ptr, extrude_ip->sketch_name, rem );
 
 	return(0);
 }

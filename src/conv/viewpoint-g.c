@@ -76,7 +76,7 @@ struct viewpoint_verts
 	short has_norm;
 };
 
-#define	LINELEN	256 /* max input line length from elements file */
+#define	MAX_LINE_SIZE	256 /* max input line length from elements file */
 
 static char *tok_sep=" ";		/* seperator used in input files */
 static char *usage="viewpoint-g [-t tol] -c coord_file_name -e elements_file_name -o output_file_name";
@@ -89,8 +89,8 @@ main(int argc, char **argv)
 	struct rt_wdb *out_fp;		/* output file pointers */
 	char *output_file = "viewpoint.g";
 	char *base_name;		/* title and top level group name */
-	char coords_name[LINELEN] = {0};	/* input coordinates file name */
-	char elems_name[LINELEN] = {0};		/* input elements file name */
+	char coords_name[MAX_LINE_SIZE] = {0};	/* input coordinates file name */
+	char elems_name[MAX_LINE_SIZE] = {0};		/* input elements file name */
 	float x, y, z, nx, ny, nz;		/* vertex and normal coords */
 	char *ptr1, *ptr2;
 	int name_len;
@@ -99,7 +99,7 @@ main(int argc, char **argv)
 	int i;
 	int no_of_verts;
 	int no_of_faces=0;
-	char line[LINELEN];
+	char line[MAX_LINE_SIZE];
 	struct bu_ptbl vertices;	/* table of vertices for one face */
 	struct bu_ptbl faces;		/* table of faces for one element */
 	struct bu_ptbl names;		/* table of element names */
@@ -133,7 +133,7 @@ main(int argc, char **argv)
 				tol.dist_sq = tol.dist * tol.dist;
 				break;
 			case 'c': /* input coordinates file name */
-				strncpy( coords_name, bu_optarg, LINELEN );
+				bu_strlcpy( coords_name, bu_optarg, sizeof(coords_name) );
 				if ( (coords = fopen( coords_name, "r" )) == NULL )
 				{
 					bu_log( "Cannot open %s\n", coords_name );
@@ -142,7 +142,7 @@ main(int argc, char **argv)
 				}
 				break;
 			case 'e': /* input elements file name */
-				strncpy( elems_name, bu_optarg, LINELEN );
+				bu_strlcpy( elems_name, bu_optarg, sizeof(elems_name) );
 				if ( (elems = fopen( elems_name, "r" )) == NULL )
 				{
 					bu_log( "Cannot open %s\n", elems_name );
@@ -187,15 +187,15 @@ main(int argc, char **argv)
 	else
 		name_len = ptr2 - ptr1;
 
-	base_name = (char *)bu_calloc( name_len + 1, sizeof(char), "base_name" );
-	strncpy( base_name, ptr1, name_len );
+	base_name = (char *)bu_calloc( name_len+1, sizeof(char), "base_name" );
+	bu_strlcpy( base_name, ptr1, name_len+1 );
 
 	/* make title record */
 	mk_id( out_fp, base_name );
 
 	/* count vertices */
 	no_of_verts = 1;
-	while ( bu_fgets( line, LINELEN, coords ) != NULL )
+	while ( bu_fgets( line, MAX_LINE_SIZE, coords ) != NULL )
 		no_of_verts++;
 
 	/* allocate memory to store vertex coordinates and normal coordinates and a pointer to
@@ -204,7 +204,7 @@ main(int argc, char **argv)
 
 	/* Now read the vertices again and store them */
 	rewind( coords );
-	while ( bu_fgets( line, LINELEN, coords ) != NULL )
+	while ( bu_fgets( line, MAX_LINE_SIZE, coords ) != NULL )
 	{
 		int number_scanned;
 		number_scanned = sscanf( line, "%d,%f,%f,%f,%f,%f,%f", &i, &x, &z, &y, &nx, &ny, &nz );
@@ -232,19 +232,19 @@ main(int argc, char **argv)
 	while ( !done )
 	{
 		char *name, *ptr;
-		char curr_name[LINELEN] = {0};
+		char curr_name[MAX_LINE_SIZE] = {0};
 		int eof=0;
 
 		/* Find an element name that has not already been processed */
 		done = 1;
-		while ( bu_fgets( line, LINELEN, elems ) != NULL )
+		while ( bu_fgets( line, MAX_LINE_SIZE, elems ) != NULL )
 		{
 			line[strlen(line)-1] = '\0';
 			name = strtok( line, tok_sep );
 			if ( BU_PTBL_END( &names ) == 0 )
 			{
 				/* this is the first element processed */
-				strncpy( curr_name, name, LINELEN );
+				bu_strlcpy( curr_name, name, sizeof(curr_name) );
 
 				/* add this name to the table */
 				bu_ptbl_ins( &names, (long *)curr_name );
@@ -268,7 +268,7 @@ main(int argc, char **argv)
 				if ( !found )
 				{
 					/* didn't find name, so this becomes the current name */
-					strncpy( curr_name, name, LINELEN );
+					bu_strlcpy( curr_name, name, sizeof(curr_name) );
 
 					/* add it to the table */
 					bu_ptbl_ins( &names, (long *)curr_name );
@@ -330,7 +330,7 @@ main(int argc, char **argv)
 			while ( name == NULL || strcmp( name, curr_name ) )
 			{
 				/* check for enf of file */
-				if ( bu_fgets( line, LINELEN, elems ) == NULL )
+				if ( bu_fgets( line, MAX_LINE_SIZE, elems ) == NULL )
 				{
 					eof = 1;
 					break;

@@ -472,15 +472,13 @@ nirt_units (char *buffer, com_table *ctp)
     } else if (strcmp(buffer + i, "default") == 0) {
 	base2local = rtip -> rti_dbip -> dbi_base2local;
 	local2base = rtip -> rti_dbip -> dbi_local2base;
-	strncpy(local_u_name, bu_units_string(base2local), 64);
-	local_u_name[64] = '\0';
+	bu_strlcpy(local_u_name, bu_units_string(base2local), sizeof(local_u_name));
     } else {
 	if ((tmp_dbl = bu_units_conversion(buffer + i)) == 0.0) {
 	    bu_log("Invalid unit specification: '%s'\n", buffer + i);
 	    return;
 	}
-	strncpy(local_u_name, buffer + i, 64);
-	local_u_name[64] = '\0';
+	bu_strlcpy(local_u_name, buffer + i, sizeof(local_u_name));
 	local2base = tmp_dbl;
 	base2local = 1.0 / tmp_dbl;
     }

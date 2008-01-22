@@ -135,8 +135,8 @@ if_hit(struct application *ap, struct partition *part_head, struct seg *finished
 	ValTab[VTI_LOS].value.fval = r_entry(D) - r_exit(D);
 	ValTab[VTI_SLOS].value.fval = 0.01 * ValTab[VTI_LOS].value.fval *
 	    part -> pt_regionp -> reg_los;
-	strncpy(regionPN, part->pt_regionp->reg_name, 512);
-	regionPN[511] = '\0';
+	bu_strlcpy(regionPN, part->pt_regionp->reg_name, sizeof(regionPN));
+
 	ValTab[VTI_PATH_NAME].value.sval = part->pt_regionp->reg_name;
 	ValTab[VTI_REG_NAME].value.sval = bu_basename(regionPN);
 	ValTab[VTI_REG_ID].value.ival = part -> pt_regionp -> reg_regionid;
@@ -159,12 +159,11 @@ if_hit(struct application *ap, struct partition *part_head, struct seg *finished
 	    bu_vls_init(&claimant_list);
 	    ValTab[VTI_CLAIMANT_COUNT].value.ival = 0;
 	    for (rpp = part -> pt_overlap_reg; *rpp != REGION_NULL; ++rpp) {
-		char tmpcp[512];
+		char tmpcp[512] = {0};
 
 		if (ValTab[VTI_CLAIMANT_COUNT].value.ival++)
 		    bu_vls_strcat(&claimant_list, " ");
-		strncpy(tmpcp, (*rpp)->reg_name, 512);
-		tmpcp[511] = '\0';
+		bu_strlcpy(tmpcp, (*rpp)->reg_name, sizeof(tmpcp));
 		bu_vls_strcat(&claimant_list, bu_basename(tmpcp));
 	    }
 	    ValTab[VTI_CLAIMANT_LIST].value.sval =

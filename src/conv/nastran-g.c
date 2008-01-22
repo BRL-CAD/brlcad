@@ -25,9 +25,6 @@
  *  Author -
  *      John R. Anderson
  *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"
@@ -49,7 +46,9 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "wdb.h"
+#include "bu.h"
 #include "../librt/debug.h"
+
 
 struct coord_sys
 {
@@ -92,12 +91,9 @@ struct pshell
 #define		CORD_RECT	'R'
 #define		CORD_SPH	'S'
 
-extern char *bu_optarg;
-extern int bu_optind, bu_opterr, optopt;
-
 #define		NAMESIZE	16	/* from db.h */
 
-#define		MAXLINELEN	256	/* maximum allowed input line length */
+#define		MAX_LINE_SIZE	256	/* maximum allowed input line length */
 
 #define		INCHES		1
 #define		MM		2
@@ -163,9 +159,9 @@ reset_input(void)
 	fseek( fpin, start_off, SEEK_SET );
 	line_count = bulk_data_start_line;
 
-	tmp = bu_fgets( next_line, MAXLINELEN, fpin );
+	tmp = bu_fgets( next_line, MAX_LINE_SIZE, fpin );
 	while ( tmp && *tmp == '$' )
-		tmp = bu_fgets( next_line, MAXLINELEN, fpin );
+		tmp = bu_fgets( next_line, MAX_LINE_SIZE, fpin );
 
 	if ( tmp != (char *)NULL )
 		input_status = INPUT_OK;
@@ -204,13 +200,13 @@ do_silly_nastran_shortcuts(void)
 	{
 		if ( !strcmp( curr_rec[field_no], "=" ) )
 		{
-			strncpy( curr_rec[field_no], prev_rec[field_no], FIELD_LENGTH );
+			bu_strlcpy( curr_rec[field_no], prev_rec[field_no], FIELD_LENGTH );
 		}
 		else if ( !strcmp( curr_rec[field_no], "==" ) )
 		{
 			while ( field_no < NO_OF_FIELDS )
 			{
-				strncpy( curr_rec[field_no], prev_rec[field_no], FIELD_LENGTH );
+				bu_strlcpy( curr_rec[field_no], prev_rec[field_no], FIELD_LENGTH );
 				field_no++;
 			}
 		}
@@ -262,11 +258,11 @@ get_large_field_input(FILE *fp, int write_flag)
 		last_field++;
 	if ( last_field > 5 )
 		last_field = 5;
-	strncpy( curr_rec[0], line, 8 );
+	bu_strlcpy( curr_rec[0], line, 8 );
 	curr_rec[0][8] = '\0';
 	for ( field_no=1; field_no < last_field; field_no++ )
 	{
-		strncpy( curr_rec[field_no], &line[field_no*16 - 8], 16 );
+		bu_strlcpy( curr_rec[field_no], &line[field_no*16 - 8], 16 );
 		curr_rec[field_no][16] = '\0';
 	}
 
@@ -292,7 +288,7 @@ get_large_field_input(FILE *fp, int write_flag)
 		last_field += 4;
 		for ( field_no=5; field_no < last_field; field_no++ )
 		{
-			strncpy( curr_rec[field_no], &line[(field_no-4)*16 - 8], 16 );
+			bu_strlcpy( curr_rec[field_no], &line[(field_no-4)*16 - 8], 16 );
 			curr_rec[field_no][16] = '\0';
 		}
 	}
@@ -322,11 +318,11 @@ get_small_field_input(FILE *fp, int write_flag)
 		last_field++;
 	if ( last_field > 9 )
 		last_field = 9;
-	strncpy( curr_rec[0], line, 8 );
+	bu_strlcpy( curr_rec[0], line, 8 );
 	curr_rec[0][8] = '\0';
 	for ( field_no=2; field_no < last_field+1; field_no++ )
 	{
-		strncpy( curr_rec[field_no-1], &line[(field_no-1)*8], 8 );
+		bu_strlcpy( curr_rec[field_no-1], &line[(field_no-1)*8], 8 );
 		curr_rec[field_no-1][8] = '\0';
 	}
 
@@ -346,7 +342,7 @@ get_small_field_input(FILE *fp, int write_flag)
 		last_field += 9;
 		for ( field_no=10; field_no < last_field+1; field_no++ )
 		{
-			strncpy( curr_rec[field_no-1], &line[(field_no-9)*8], 8 );
+			bu_strlcpy( curr_rec[field_no-1], &line[(field_no-9)*8], 8 );
 			curr_rec[field_no-1][8] = '\0';
 		}
 	}
@@ -382,7 +378,7 @@ get_free_form_input(FILE *fp, int write_flag)
 
 		for ( i=0; i<count; i++ )
 		{
-			strncpy( line, prev_line, MAXLINELEN );
+			bu_strlcpy( line, prev_line, MAX_LINE_SIZE );
 			get_free_form_input( fp, write_flag );
 		}
 		return;
@@ -453,7 +449,7 @@ get_next_record( FILE *fp, int call_input, int write_flag )
 	while ( 1 )
 	{
 		line_count++;
-		tmp = bu_fgets( prev_line, MAXLINELEN, fp );
+		tmp = bu_fgets( prev_line, MAX_LINE_SIZE, fp );
 		if ( !tmp || prev_line[0] != '$' )
 			break;
 	}
@@ -540,7 +536,7 @@ log_line(char *str)
 	int i;
 
 	i = (-1);
-	while ( ++i < MAXLINELEN && line[i] != '\n' )
+	while ( ++i < MAX_LINE_SIZE && line[i] != '\n' )
 		if ( line[i] == '\0' )
 			line[i] = ' ';
 	bu_log( "%s:\n", str );
@@ -1108,7 +1104,7 @@ get_cbar(void)
 	fastf_t radius;
 	vect_t height;
 	struct pbar *pb;
-	char cbar_name[NAMESIZE];
+	char cbar_name[NAMESIZE+1];
 
 	eid = atoi( curr_rec[1] );
 
@@ -1226,9 +1222,9 @@ main(int argc, char **argv)
 		bu_exit(1, Usage, argv[0] );
 	}
 
-	line = (char *)bu_malloc( MAXLINELEN, "line" );
-	next_line = (char *)bu_malloc( MAXLINELEN, "next_line" );
-	prev_line = (char *)bu_malloc( MAXLINELEN, "prev_line" );
+	line = (char *)bu_malloc( MAX_LINE_SIZE, "line" );
+	next_line = (char *)bu_malloc( MAX_LINE_SIZE, "next_line" );
+	prev_line = (char *)bu_malloc( MAX_LINE_SIZE, "prev_line" );
 	curr_rec = (char **)bu_calloc( NO_OF_FIELDS, sizeof( char *), "curr_rec" );
 	for ( i=0; i<NO_OF_FIELDS; i++ )
 		curr_rec[i] = (char *)bu_malloc( sizeof( char )*FIELD_LENGTH, "curr_rec[i]" );
@@ -1239,7 +1235,7 @@ main(int argc, char **argv)
 	/* first pass, find start of NASTRAN "bulk data" */
 	start_off = (-1);
 	bulk_data_start_line = 0;
-	while ( bu_fgets( line, MAXLINELEN, fpin ) )
+	while ( bu_fgets( line, MAX_LINE_SIZE, fpin ) )
 	{
 		bulk_data_start_line++;
 		if ( strncmp( line, "BEGIN BULK", 10 ) )
@@ -1274,7 +1270,7 @@ main(int argc, char **argv)
 
 	/* count grid points */
 	fseek( fptmp, 0, SEEK_SET );
-	while ( bu_fgets( line, MAXLINELEN, fptmp  ) )
+	while ( bu_fgets( line, MAX_LINE_SIZE, fptmp  ) )
 	{
 		if ( !strncmp( line, "GRID", 4 ) )
 			grid_count++;
@@ -1436,7 +1432,7 @@ main(int argc, char **argv)
 	for ( BU_LIST_FOR( psh, pshell, &pshell_head.l ) )
 	{
 		struct model *m;
-		char name[NAMESIZE];
+		char name[NAMESIZE+1];
 
 		if ( !psh->s )
 			continue;
@@ -1466,7 +1462,7 @@ main(int argc, char **argv)
 	BU_LIST_INIT( &head.l );
 	for ( BU_LIST_FOR( pb, pbar, &pbar_head.l ) )
 	{
-		char name[NAMESIZE];
+		char name[NAMESIZE+1];
 
 		if ( BU_LIST_IS_EMPTY( &pb->head.l ) )
 			continue;

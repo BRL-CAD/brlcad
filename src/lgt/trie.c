@@ -538,8 +538,8 @@ get_Region_Name(char *inbuf, int bufsz, char *msg)
 				ring_Bell();
 				break;
 				}
-			(void) strncpy( p, inbuf, bufsz );
-			(void) printf( "%s", p );
+			bu_strlcpy( p, inbuf, bufsz );
+			printf( "%s", p );
 			p += len;
 			break;
 			}
@@ -603,7 +603,7 @@ get_Region_Name(char *inbuf, int bufsz, char *msg)
 				}
 			else
 				{
-				(void) strncpy( inbuf, buffer, bufsz );
+				bu_strlcpy( inbuf, buffer, bufsz );
 				prnt_Event( "" );
 				goto clean_return;
 				}

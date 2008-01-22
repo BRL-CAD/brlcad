@@ -193,7 +193,7 @@ toyota_setup(register struct region *rp, struct bu_vls *matparm, char **dtp, str
 	 */
 	tp->sun_sang = 6.840922996708585e-5;	/* in steradians */
 	tp->index_refrac = 1.2;
-	(void)strcpy( tp->material, "junk" );
+	bu_strlcpy( tp->material, "junk", sizeof(tp->material) );
 	VSET(tp->Zenith, 0., 0., 1.);
 
 	if (bu_struct_parse(matparm, toyota_parse, (char *)tp) < 0)  {
@@ -202,7 +202,7 @@ toyota_setup(register struct region *rp, struct bu_vls *matparm, char **dtp, str
 	}
 
 	/* Read in reflectance data. */
-	strncpy(mfile, tp->material, 200);
+	bu_strlcpy(mfile, tp->material, sizeof(mfile));
 	if ((fp = fopen(mfile, "r")) == NULL) {
 		perror(mfile);
 		bu_log("reflectance: cannot open %s for reading.", mfile);
@@ -1841,7 +1841,7 @@ absorp_coeff(fastf_t lambda, char *material)
 	int	n;
 
 	/* Do nothing, user has his own absorption data. */
-	strncpy(mfile, material, 80);
+	bu_strlcpy(mfile, material, sizeof(mfile));
 	if ((fp = fopen(mfile, "r")) == NULL) {
 		fprintf(stderr,
 			"absorp_coeff: cannot open %s for reading.", mfile);

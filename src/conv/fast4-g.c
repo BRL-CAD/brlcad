@@ -133,7 +133,7 @@
 #define HOLE 1
 #define WALL 2
 #define INT_LIST_BLOCK		256	/* Number of int_list array slots to allocate */
-#define	LINELEN			128	/* Length of char array for input line */
+#define	MAX_LINE_SIZE			128	/* Length of char array for input line */
 #define	REGION_LIST_BLOCK	256	/* initial length of array of region ids to process */
 
 
@@ -202,7 +202,7 @@ int hex_faces[12][3]={
 
 struct fast4_color HeadColor;
 
-static char	line[LINELEN+1];		/* Space for input line */
+static char	line[MAX_LINE_SIZE+1];		/* Space for input line */
 static FILE	*fdin;			/* Input FASTGEN4 file pointer */
 static struct rt_wdb *fdout;		/* Output BRL-CAD file pointer */
 static FILE	*fd_plot=NULL;		/* file for plot output */
@@ -261,9 +261,9 @@ get_line(void)
 {
     int len;
 
-    memset((void *)line, 0, LINELEN);
+    memset((void *)line, 0, MAX_LINE_SIZE);
 
-    if ( bu_fgets( line, LINELEN, fdin ) == (char *)NULL )
+    if ( bu_fgets( line, MAX_LINE_SIZE, fdin ) == (char *)NULL )
 	return( 0 );
 
     len = strlen( line );
@@ -666,8 +666,8 @@ make_region_name(int g_id, int c_id)
 	return;
 
     /* create a new name */
-    name = (char *)bu_malloc( LINELEN, "make_region_name" );
-    snprintf( name, LINELEN, "comp_%04d.r", r_id );
+    name = (char *)bu_malloc( MAX_LINE_SIZE, "make_region_name" );
+    snprintf( name, MAX_LINE_SIZE, "comp_%04d.r", r_id );
 
     make_unique_name( name );
 
@@ -861,19 +861,19 @@ f4_do_compsplt(void)
     fastf_t z;
     struct compsplt *splt;
 
-    strncpy( field, &line[8], 8 );
+    bu_strlcpy(field, &line[8], sizeof(field));
     gr = atoi( field );
 
-    strncpy( field, &line[16], 8 );
+    bu_strlcpy(field, &line[16], sizeof(field));
     co = atoi( field );
 
-    strncpy( field, &line[24], 8 );
+    bu_strlcpy(field, &line[24], sizeof(field));
     gr1 = atoi( field );
 
-    strncpy( field, &line[32], 8 );
+    bu_strlcpy(field, &line[32], sizeof(field));
     co1 = atoi( field );
 
-    strncpy( field, &line[40], 8 );
+    bu_strlcpy(field, &line[40], sizeof(field));
     z = atof( field ) * 25.4;
 
     if ( compsplt_root == NULL )
@@ -1119,7 +1119,7 @@ add_to_series(char *name, int reg_id)
 {
     if ( group_id < 0 || group_id > 10 )
 	{
-	    bu_log( "add_to_series: region (%s) not added, illegal group number %d, region_id=$d\n" ,
+	    bu_log( "add_to_series: region (%s) not added, illegal group number %d, region_id=$d\n",
 		    name, group_id, reg_id );
 	    return;
 	}
@@ -1242,12 +1242,12 @@ f4_do_groups(void)
 
     for ( group_no=0; group_no < 11; group_no++ )
 	{
-	    char name[LINELEN] = {0};
+	    char name[MAX_LINE_SIZE] = {0};
 
 	    if ( BU_LIST_IS_EMPTY( &group_head[group_no].l ) )
 		continue;
 
-	    snprintf( name, LINELEN, "%dxxx_series", group_no );
+	    snprintf( name, MAX_LINE_SIZE, "%dxxx_series", group_no );
 	    mk_lfcomb( fdout, name, &group_head[group_no], 0 );
 
 	    if ( mk_addmember( name, &head_all.l, NULL, WMOP_UNION ) == (struct wmember *)NULL )
@@ -1268,8 +1268,8 @@ f4_do_name(void)
     int i, j;
     int g_id;
     int c_id;
-    char comp_name[LINELEN] = {0}; /* should only use 25 chars */
-    char tmp_name[LINELEN] = {0}; /* should only use 25 chars */
+    char comp_name[MAX_LINE_SIZE] = {0}; /* should only use 25 chars */
+    char tmp_name[MAX_LINE_SIZE] = {0}; /* should only use 25 chars */
 
     if ( pass )
 	return;
@@ -1277,7 +1277,7 @@ f4_do_name(void)
     if ( debug )
 	bu_log( "f4_do_name: %s\n", line );
 
-    strncpy( field, &line[8], 8 );
+    bu_strlcpy(field, &line[8], sizeof(field));
     g_id = atoi( field );
 
     if ( g_id != group_id )
@@ -1287,7 +1287,7 @@ f4_do_name(void)
 	    return;
 	}
 
-    strncpy( field, &line[16], 8 );
+    bu_strlcpy(field, &line[16], sizeof(field));
     c_id = atoi( field );
 
     if ( c_id != comp_id )
@@ -1299,15 +1299,16 @@ f4_do_name(void)
 
     /* skip leading blanks */
     i = 56;
-    while ( i < 80 && isspace( line[i] ) )
+    while( i < sizeof(comp_name) && isspace( line[i] ) )
 	i++;
-    if ( i == 80 )
+
+    if( i == sizeof(comp_name) )
 	return;
 
-    strncpy( comp_name, &line[i], 80 - i );
+    bu_strlcpy( comp_name, &line[i], sizeof(comp_name) - i );
 
     /* eliminate trailing blanks */
-    i = 80 - i;
+    i = sizeof(comp_name) - i;
     while (  --i >= 0 && isspace( comp_name[i] ) )
 	comp_name[i] = '\0';
 
@@ -1350,7 +1351,7 @@ f4_do_grid(void)
     if ( RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
 	bu_log( "ERROR: bu_mem_barriercheck failed at start of f4_do_grid\n" );
 
-    strncpy( field, &line[8], 8 );
+    bu_strlcpy(field, &line[8], sizeof(field));
     grid_no = atoi( field );
 
     if ( grid_no < 1 )
@@ -1358,13 +1359,13 @@ f4_do_grid(void)
 	    bu_exit(1, "ERROR: bad grid id number = %d\n", grid_no);
 	}
 
-    strncpy( field, &line[24], 8 );
+    bu_strlcpy(field, &line[24], sizeof(field));
     x = atof( field );
 
-    strncpy( field, &line[32], 8 );
+    bu_strlcpy(field, &line[32], sizeof(field));
     y = atof( field );
 
-    strncpy( field, &line[40], 8 );
+    bu_strlcpy(field, &line[40], sizeof(field));
     z = atof( field );
 
     while ( grid_no > grid_size - 1 )
@@ -1399,17 +1400,18 @@ f4_do_sphere(void)
 	    return;
 	}
 
-    strncpy( field, &line[8], 8 );
+    bu_strlcpy(field, &line[8], sizeof(field));
     element_id = atoi( field );
 
-    strncpy( field, &line[24], 8 );
+    bu_strlcpy(field, &line[24], sizeof(field));
     center_pt = atoi( field );
 
-    strncpy( field, &line[56], 8 );
+    bu_strlcpy(field, &line[56], sizeof(field));
     thick = atof( field ) * 25.4;
 
-    strncpy( field, &line[64], 8 );
+    bu_strlcpy(field, &line[64], sizeof(field));
     radius = atof( field ) * 25.4;
+
     if ( radius <= 0.0 )
 	{
 	    bu_log( "f4_do_sphere: illegal radius (%f), skipping sphere\n", radius );
@@ -1475,7 +1477,7 @@ f4_do_vehicle(void)
     if ( pass )
 	return;
 
-    strncpy( vehicle, &line[8], 16 ); /* why 16? */
+    bu_strlcpy( vehicle, &line[8], sizeof(vehicle) );
     mk_id_units( fdout, vehicle, "in" );
 }
 
@@ -1499,11 +1501,12 @@ f4_do_cline(void)
 	    return;
 	}
 
-    strncpy( field, &line[8], 8 );
+    bu_strlcpy(field, &line[8], sizeof(field));
     element_id = atoi( field );
 
-    strncpy( field, &line[24], 8 );
+    bu_strlcpy(field, &line[24], sizeof(field));
     pt1 = atoi( field );
+
     if ( pass && (pt1 < 1 || pt1 > max_grid_no) )
 	{
 	    bu_log( "Illegal grid point (%d) in CLINE, skipping\n", pt1 );
@@ -1511,8 +1514,9 @@ f4_do_cline(void)
 	    return;
 	}
 
-    strncpy( field, &line[32], 8 );
+    bu_strlcpy(field, &line[32], sizeof(field));
     pt2 = atoi( field );
+
     if ( pass && (pt2 < 1 || pt2 > max_grid_no) )
 	{
 	    bu_log( "Illegal grid point in CLINE (%d), skipping\n", pt2 );
@@ -1527,10 +1531,10 @@ f4_do_cline(void)
 	    return;
 	}
 
-    strncpy( field, &line[56], 8 );
+    bu_strlcpy(field, &line[56], sizeof(field));
     thick = atof( field ) * 25.4;
 
-    strncpy( field, &line[64], 8 );
+    bu_strlcpy(field, &line[64], sizeof(field));
     radius = atof( field ) * 25.4;
 
     VSUB2( height, grid_points[pt2], grid_points[pt1] );
@@ -1556,7 +1560,7 @@ f4_do_ccone1(void)
     char *name = (char *)NULL;
     struct wmember r_head;
 
-    strncpy( field, &line[8], 8 );
+    bu_strlcpy(field, &line[8], sizeof(field));
     element_id = atoi( field );
 
     if ( !pass )
@@ -1572,19 +1576,19 @@ f4_do_ccone1(void)
 	    return;
 	}
 
-    strncpy( field, &line[24], 8 );
+    bu_strlcpy(field, &line[24], sizeof(field));
     pt1 = atoi( field );
 
-    strncpy( field, &line[32], 8 );
+    bu_strlcpy(field, &line[32], sizeof(field));
     pt2 = atoi( field );
 
-    strncpy( field, &line[56], 8 );
+    bu_strlcpy(field, &line[56], sizeof(field));
     thick = atof( field ) * 25.4;
 
-    strncpy( field, &line[64], 8 );
+    bu_strlcpy(field, &line[64], sizeof(field));
     r1 = atof( field ) * 25.4;
 
-    strncpy( field, &line[72], 8 );
+    bu_strlcpy(field, &line[72], sizeof(field));
     c1 = atoi( field );
 
     if ( !get_line() )
@@ -1595,7 +1599,7 @@ f4_do_ccone1(void)
 	    bu_exit(1, "ERROR: unexpected end-of-file");
 	}
 
-    strncpy( field, line, 8 );
+    bu_strlcpy(field, line, sizeof(field));
     c2 = atoi( field );
 
     if ( c1 != c2 )
@@ -1605,13 +1609,13 @@ f4_do_ccone1(void)
 		    group_id, comp_id, element_id );
 	}
 
-    strncpy( field, &line[8], 8 );
+    bu_strlcpy(field, &line[8], sizeof(field));
     r2 = atof( field ) * 25.4;
 
-    strncpy( field, &line[16], 8 );
+    bu_strlcpy(field, &line[16], sizeof(field));
     end1 = atoi( field );
 
-    strncpy( field, &line[24], 8 );
+    bu_strlcpy(field, &line[24], sizeof(field));
     end2 = atoi( field );
 
     if ( r1 < 0.0 || r2 < 0.0 )
@@ -1783,7 +1787,7 @@ f4_do_ccone2(void)
     char *name = (char *)NULL;
     struct wmember r_head;
 
-    strncpy( field, &line[8], 8 );
+    bu_strlcpy(field, &line[8], sizeof(field));
     element_id = atoi( field );
 
     if ( !pass )
@@ -1799,16 +1803,16 @@ f4_do_ccone2(void)
 	    return;
 	}
 
-    strncpy( field, &line[24], 8 );
+    bu_strlcpy(field, &line[24], sizeof(field));
     pt1 = atoi( field );
 
-    strncpy( field, &line[32], 8 );
+    bu_strlcpy(field, &line[32], sizeof(field));
     pt2 = atoi( field );
 
-    strncpy( field, &line[64], 8 );
+    bu_strlcpy(field, &line[64], sizeof(field));
     ro1 = atof( field ) * 25.4;
 
-    strncpy( field, &line[72], 8 );
+    bu_strlcpy(field, &line[72], sizeof(field));
     c1 = atoi( field );
 
     if ( !get_line() )
@@ -1819,7 +1823,7 @@ f4_do_ccone2(void)
 	    bu_exit(1, "ERROR: unexpected end-of-file encountered\n" );
 	}
 
-    strncpy( field, line, 8 );
+    bu_strlcpy(field, line, sizeof(field));
     c2 = atoi( field );
 
     if ( c1 != c2 )
@@ -1829,13 +1833,13 @@ f4_do_ccone2(void)
 		    group_id, comp_id, element_id );
 	}
 
-    strncpy( field, &line[8], 8 );
+    bu_strlcpy(field, &line[8], sizeof(field));
     ro2 = atof( field ) * 25.4;
 
-    strncpy( field, &line[16], 8 );
+    bu_strlcpy(field, &line[16], sizeof(field));
     ri1 = atof( field ) * 25.4;
 
-    strncpy( field, &line[24], 8 );
+    bu_strlcpy(field, &line[24], sizeof(field));
     ri2 = atof( field ) * 25.4;
 
     if ( pt1 == pt2 )
@@ -1909,7 +1913,7 @@ f4_do_ccone3(void)
     vect_t diff, diff2, diff3, diff4;
     struct wmember r_head;
 
-    strncpy( field, &line[8], 8 );
+    bu_strlcpy(field, &line[8], sizeof(field));
     element_id = atoi( field );
 
     if ( !pass )
@@ -1925,19 +1929,19 @@ f4_do_ccone3(void)
 	    return;
 	}
 
-    strncpy( field, &line[24], 8 );
+    bu_strlcpy(field, &line[24], sizeof(field));
     pt1 = atoi( field );
 
-    strncpy( field, &line[32], 8 );
+    bu_strlcpy(field, &line[32], sizeof(field));
     pt2 = atoi( field );
 
-    strncpy( field, &line[40], 8 );
+    bu_strlcpy(field, &line[40], sizeof(field));
     pt3 = atoi( field );
 
-    strncpy( field, &line[48], 8 );
+    bu_strlcpy(field, &line[48], sizeof(field));
     pt4 = atoi( field );
 
-    strncpy( field, &line[72], 8 );
+    bu_strlcpy(field, &line[72], sizeof(field));
 
     if ( !get_line() )
 	{
@@ -1956,7 +1960,7 @@ f4_do_ccone3(void)
 
     for ( i=0; i<4; i++ )
 	{
-	    strncpy( field, &line[8*(i+1)], 8 );
+	    bu_strlcpy(field, &line[8*(i+1)], sizeof(field));
 	    ro[i] = atof( field ) * 25.4;
 	    if ( ro[i] < 0.0 )
 		{
@@ -1971,7 +1975,7 @@ f4_do_ccone3(void)
 
     for ( i=0; i<4; i++ )
 	{
-	    strncpy( field, &line[32 + 8*(i+1)], 8 );
+	    bu_strlcpy(field, &line[32 + 8*(i+1)], sizeof(field));
 	    ri[i] = atof( field ) * 25.4;
 	    if ( ri[i] < 0.0 )
 		{
@@ -2272,10 +2276,10 @@ f4_do_hole_wall(int type)
     if ( s_len > 80 )
 	s_len = 80;
 
-    strncpy( field, &line[8], 8 );
+    bu_strlcpy(field, &line[8], sizeof(field));
     group = atoi( field );
 
-    strncpy( field, &line[16], 8 );
+    bu_strlcpy(field, &line[16], sizeof(field));
     comp = atoi( field );
 
     list_start = (struct hole_list *)NULL;
@@ -2284,14 +2288,14 @@ f4_do_hole_wall(int type)
 
     while ( col < s_len )
 	{
-	    strncpy( field, &line[col], 8 );
+	    bu_strlcpy(field, &line[col], sizeof(field));
 	    igrp = atoi( field );
 
 	    col += 8;
 	    if ( col >= s_len )
 		break;
 
-	    strncpy( field, &line[col], 8 );
+	    bu_strlcpy(field, &line[col], sizeof(field));
 	    icmp = atoi( field );
 
 	    if ( igrp >= 0 && icmp > 0 )
@@ -2391,7 +2395,7 @@ f4_do_tri(void)
     if ( debug )
 	bu_log( "f4_do_tri: %s\n", line );
 
-    strncpy( field, &line[8], 8 );
+    bu_strlcpy(field, &line[8], sizeof(field));
     element_id = atoi( field );
 
     if ( !bot )
@@ -2413,13 +2417,13 @@ f4_do_tri(void)
 		bu_log( "memory corrupted after malloc of faces, thickness, and facemode\n" );
 	}
 
-    strncpy( field, &line[24], 8 );
+    bu_strlcpy(field, &line[24], sizeof(field));
     pt1 = atoi( field );
 
-    strncpy( field, &line[32], 8 );
+    bu_strlcpy(field, &line[32], sizeof(field));
     pt2 = atoi( field );
 
-    strncpy( field, &line[40], 8 );
+    bu_strlcpy(field, &line[40], sizeof(field));
     pt3 = atoi( field );
 
     thick = 0.0;
@@ -2427,10 +2431,10 @@ f4_do_tri(void)
 
     if ( mode == PLATE_MODE )
 	{
-	    strncpy( field, &line[56], 8 );
+	    bu_strlcpy(field, &line[56], sizeof(field));
 	    thick = atof( field ) * 25.4;
 
-	    strncpy( field, &line[64], 8 );
+	    bu_strlcpy(field, &line[64], sizeof(field));
 	    pos = atoi( field );
 	    if ( pos == 0 )
 		pos = POS_FRONT;
@@ -2461,7 +2465,7 @@ f4_do_quad(void)
     fastf_t thick = 0.0;
     int pos = 0;
 
-    strncpy( field, &line[8], 8 );
+    bu_strlcpy(field, &line[8], sizeof(field));
     element_id = atoi( field );
 
     if ( debug )
@@ -2482,24 +2486,24 @@ f4_do_quad(void)
 	    face_count = 0;
 	}
 
-    strncpy( field, &line[24], 8 );
+    bu_strlcpy(field, &line[24], sizeof(field));
     pt1 = atoi( field );
 
-    strncpy( field, &line[32], 8 );
+    bu_strlcpy(field, &line[32], sizeof(field));
     pt2 = atoi( field );
 
-    strncpy( field, &line[40], 8 );
+    bu_strlcpy(field, &line[40], sizeof(field));
     pt3 = atoi( field );
 
-    strncpy( field, &line[48], 8 );
+    bu_strlcpy(field, &line[48], sizeof(field));
     pt4 = atoi( field );
 
     if ( mode == PLATE_MODE )
 	{
-	    strncpy( field, &line[56], 8 );
+	    bu_strlcpy(field, &line[56], sizeof(field));
 	    thick = atof( field ) * 25.4;
 
-	    strncpy( field, &line[64], 8 );
+	    bu_strlcpy(field, &line[64], sizeof(field));
 	    pos = atoi( field );
 
 	    if ( pos == 0 )	/* use default */
@@ -2665,10 +2669,10 @@ f4_do_section(int final)
 
     if ( !final )
 	{
-	    strncpy( field, &line[8], 8 );
+	    bu_strlcpy(field, &line[8], sizeof(field));
 	    group_id = atoi( field );
 
-	    strncpy( field, &line[16], 8 );
+	    bu_strlcpy(field, &line[16], sizeof(field));
 	    comp_id = atoi( field );
 
 	    region_id = group_id * 1000 + comp_id;
@@ -2685,7 +2689,7 @@ f4_do_section(int final)
 		    comp_id = 999;
 		}
 
-	    strncpy( field, &line[24], 8 );
+	    bu_strlcpy(field, &line[24], sizeof(field));
 	    mode = atoi( field );
 	    if ( mode != 1 && mode != 2 )
 		{
@@ -2719,7 +2723,7 @@ f4_do_hex1(void)
     int i;
     int cont1, cont2;
 
-    strncpy( field, &line[8], 8 );
+    bu_strlcpy(field, &line[8], sizeof(field));
     element_id = atoi( field );
 
     if ( !bot )
@@ -2748,11 +2752,11 @@ f4_do_hex1(void)
 
     for ( i=0; i<6; i++ )
 	{
-	    strncpy( field, &line[24 + i*8], 8 );
+	    bu_strlcpy(field, &line[24 + i*8], sizeof(field));
 	    pts[i] = atoi( field );
 	}
 
-    strncpy( field, &line[72], 8 );
+    bu_strlcpy(field, &line[72], sizeof(field));
     cont1 = atoi( field );
 
     if ( !get_line() )
@@ -2763,7 +2767,7 @@ f4_do_hex1(void)
 	    bu_exit(1, "ERROR: unexpected end-of-file encountered\n");
 	}
 
-    strncpy( field, line, 8 );
+    bu_strlcpy(field, line, sizeof(field));
     cont2 = atoi( field );
 
     if ( cont1 != cont2 )
@@ -2774,15 +2778,15 @@ f4_do_hex1(void)
 	    return;
 	}
 
-    strncpy( field, &line[8], 8 );
+    bu_strlcpy(field, &line[8], sizeof(field));
     pts[6] = atoi( field );
 
-    strncpy( field, &line[16], 8 );
+    bu_strlcpy(field, &line[16], sizeof(field));
     pts[7] = atoi( field );
 
     if ( mode == PLATE_MODE )
 	{
-	    strncpy( field, &line[56], 8 );
+	    bu_strlcpy(field, &line[56], sizeof(field));
 	    thick = atof( field ) * 25.4;
 	    if ( thick <= 0.0 )
 		{
@@ -2791,7 +2795,7 @@ f4_do_hex1(void)
 		    return;
 		}
 
-	    strncpy( field, &line[64], 8 );
+	    bu_strlcpy(field, &line[64], sizeof(field));
 	    pos = atoi( field );
 
 	    if ( pos == 0 )	/* use default */
@@ -2825,7 +2829,7 @@ f4_do_hex2(void)
     point_t points[8];
     char *name = (char *)NULL;
 
-    strncpy( field, &line[8], 8 );
+    bu_strlcpy(field, &line[8], sizeof(field));
     element_id = atoi( field );
 
     if ( !pass )
@@ -2843,11 +2847,11 @@ f4_do_hex2(void)
 
     for ( i=0; i<6; i++ )
 	{
-	    strncpy( field, &line[24 + i*8], 8 );
+	    bu_strlcpy(field, &line[24 + i*8], sizeof(field));
 	    pts[i] = atoi( field );
 	}
 
-    strncpy( field, &line[72], 8 );
+    bu_strlcpy(field, &line[72], sizeof(field));
     cont1 = atoi( field );
 
     if ( !get_line() )
@@ -2858,7 +2862,7 @@ f4_do_hex2(void)
 	    bu_exit(1, "ERROR: unexpected end-of-file encountered\n");
 	}
 
-    strncpy( field, line, 8 );
+    bu_strlcpy(field, line, sizeof(field));
     cont2 = atoi( field );
 
     if ( cont1 != cont2 )
@@ -2869,10 +2873,10 @@ f4_do_hex2(void)
 	    return;
 	}
 
-    strncpy( field, &line[8], 8 );
+    bu_strlcpy(field, &line[8], sizeof(field));
     pts[6] = atoi( field );
 
-    strncpy( field, &line[16], 8 );
+    bu_strlcpy(field, &line[16], sizeof(field));
     pts[7] = atoi( field );
 
     for ( i=0; i<8; i++ )
@@ -2904,7 +2908,7 @@ Process_hole_wall(void)
 		f4_do_compsplt();
 	    else if ( !strncmp( line, "SECTION", 7 ) )
 		{
-		    strncpy( field, &line[24], 8 );
+		    bu_strlcpy(field, &line[24], sizeof(field));
 		    mode = atoi( field );
 		    if ( mode != 1 && mode != 2 )
 			{
@@ -2954,25 +2958,25 @@ f4_do_cbacking(void)
     if ( !fd_muves )
 	return;
 
-    strncpy( field, &line[8], 8 );
+    bu_strlcpy(field, &line[8], sizeof(field));
     gr1 = atoi( field );
 
-    strncpy( field, &line[16], 8 );
+    bu_strlcpy(field, &line[16], sizeof(field));
     co1 = atoi( field );
 
-    strncpy( field, &line[24], 8 );
+    bu_strlcpy(field, &line[24], sizeof(field));
     gr2 = atoi( field );
 
-    strncpy( field, &line[32], 8 );
+    bu_strlcpy(field, &line[32], sizeof(field));
     co2 = atoi( field );
 
-    strncpy( field, &line[40], 8 );
+    bu_strlcpy(field, &line[40], sizeof(field));
     thickness = atof( field ) * 25.4;
 
-    strncpy( field, &line[48], 8 );
+    bu_strlcpy(field, &line[48], sizeof(field));
     probability = atof( field );
 
-    strncpy( field, &line[56], 8 );
+    bu_strlcpy(field, &line[56], sizeof(field));
     material = atoi( field );
 
     fprintf( fd_muves, "CBACKING %d %d %g %g %d\n", gr1*1000+co1, gr2*1000+co2, thickness, probability, material );
@@ -2996,7 +3000,7 @@ Process_input(int pass_number)
     region_id = 0;
     pass = pass_number;
     if ( !get_line() || !line[0] )
-	strcpy( line, "ENDDATA" );
+	bu_strlcpy( line, "ENDDATA", sizeof(line) );
     while ( 1 )
 	{
 	    if ( !strncmp( line, "VEHICLE", 7 ) )
@@ -3046,7 +3050,7 @@ Process_input(int pass_number)
 		bu_log( "ERROR: skipping unrecognized data type\n%s\n", line );
 
 	    if ( !get_line() || !line[0] )
-		strcpy( line, "ENDDATA" );
+		bu_strlcpy( line, "ENDDATA", sizeof(line) );
 	}
 
     if ( debug )
@@ -3246,10 +3250,10 @@ make_regions(void)
     struct wmember region;
     struct wmember solids;
     struct wmember holes;
-    char reg_name[LINELEN] = {0};
-    char solids_name[LINELEN] = {0};
-    char hole_name[LINELEN] = {0};
-    char splt_name[LINELEN] = {0};
+    char reg_name[MAX_LINE_SIZE] = {0};
+    char solids_name[MAX_LINE_SIZE] = {0};
+    char hole_name[MAX_LINE_SIZE] = {0};
+    char splt_name[MAX_LINE_SIZE] = {0};
 
     BU_LIST_INIT( &holes.l );
 
@@ -3298,7 +3302,7 @@ make_regions(void)
 	    if ( BU_LIST_IS_EMPTY( &solids.l ) )
 		goto cont1;
 
-	    snprintf( solids_name, LINELEN, "solids_%d.s", ptr1->region_id );
+	    snprintf( solids_name, MAX_LINE_SIZE, "solids_%d.s", ptr1->region_id );
 	    if ( mk_comb( fdout, solids_name, &solids.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 1, 1) )
 		bu_log("Failed to make combination of solids (%s)!\n\tRegion %s is in ERROR!\n",
 		       solids_name, ptr1->name );
@@ -3336,7 +3340,7 @@ make_regions(void)
 
 		    /* make a halfspace */
 		    VSET( norm, 0.0, 0.0, 1.0 );
-		    snprintf( splt_name, LINELEN, "splt_%d.s", ptr1->region_id );
+		    snprintf( splt_name, MAX_LINE_SIZE, "splt_%d.s", ptr1->region_id );
 		    mk_half( fdout, splt_name, norm, splt->z );
 
 		    /* intersect halfspace with current region */
@@ -3349,7 +3353,7 @@ make_regions(void)
 
 		    while ( lptr )
 			{
-			    snprintf( hole_name, LINELEN, "solids_%d.s", (lptr->group * 1000 + lptr->component) );
+			    snprintf( hole_name, MAX_LINE_SIZE, "solids_%d.s", (lptr->group * 1000 + lptr->component) );
 			    if ( mk_addmember( hole_name, &region.l, NULL, WMOP_SUBTRACT ) == (struct wmember *)NULL )
 				bu_log( "make_regions: mk_addmember failed to add %s to %s\n", hole_name, ptr1->name );
 			    lptr = lptr->next;
@@ -3366,7 +3370,7 @@ make_regions(void)
 
 		    while ( lptr )
 			{
-			    snprintf( hole_name, LINELEN, "solids_%d.s", (lptr->group * 1000 + lptr->component) );
+			    snprintf( hole_name, MAX_LINE_SIZE, "solids_%d.s", (lptr->group * 1000 + lptr->component) );
 			    if ( mk_addmember( hole_name, &region.l, NULL, WMOP_SUBTRACT ) == (struct wmember *)NULL )
 				bu_log( "make_regions: mk_addmember failed to add %s to %s\n", hole_name, ptr1->name );
 			    lptr = lptr->next;
@@ -3387,7 +3391,7 @@ make_regions(void)
 
 		    while ( lptr )
 			{
-			    snprintf( hole_name, LINELEN, "solids_%d.s", (lptr->group * 1000 + lptr->component) );
+			    snprintf( hole_name, MAX_LINE_SIZE, "solids_%d.s", (lptr->group * 1000 + lptr->component) );
 			    if ( mk_addmember( hole_name, &region.l, NULL, WMOP_SUBTRACT ) == (struct wmember *)NULL )
 				bu_log( "make_regions: mk_addmember failed to add %s to %s\n", hole_name, ptr1->name );
 			    lptr = lptr->next;

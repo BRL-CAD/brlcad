@@ -217,22 +217,22 @@ getsolid(void)
 
 	switch ( version )  {
 	case 5:
-		strncpy( given_solid_num, scard+0, 5 );
+		bu_strlcpy( given_solid_num, scard+0, sizeof(given_solid_num) );
 		given_solid_num[5] = '\0';
-		strncpy( solid_type, scard+5, 5 );
+		bu_strlcpy( solid_type, scard+5, sizeof(solid_type) );
 		solid_type[5] = '\0';
 		break;
 	case 4:
-		strncpy( given_solid_num, scard+0, 3 );
+		bu_strlcpy( given_solid_num, scard+0, sizeof(given_solid_num) );
 		given_solid_num[3] = '\0';
-		strncpy( solid_type, scard+3, 7 );
+		bu_strlcpy( solid_type, scard+3, sizeof(solid_type) );
 		solid_type[7] = '\0';
 		break;
 	case 1:
 		/* DoE/MORSE version, believed to be original MAGIC format */
-		strncpy( given_solid_num, scard+5, 4 );
+		bu_strlcpy( given_solid_num, scard+5, sizeof(given_solid_num) );
 		given_solid_num[4] = '\0';
-		strncpy( solid_type, scard+2, 3 );
+		bu_strlcpy( solid_type, scard+2, sizeof(solid_type) );
 		break;
 	default:
 		fprintf(stderr, "getsolid() version %d unimplemented\n", version);

@@ -3029,13 +3029,13 @@ build_start_cmd(int argc, char **argv, int startc)
 		return;
 	}
 
-	strncpy( file_fullname, argv[startc], sizeof(file_fullname) );
+	bu_strlcpy( file_fullname, argv[startc], sizeof(file_fullname) );
 
 	/* Save last component of file name */
 	if ( (cp = strrchr( argv[startc], '/' )) != (char *)0 )  {
-		(void)strncpy( file_basename, cp+1, sizeof(file_basename) );
+		bu_strlcpy( file_basename, cp+1, sizeof(file_basename) );
 	} else {
-		(void)strncpy( file_basename, argv[startc], sizeof(file_basename) );
+		bu_strlcpy( file_basename, argv[startc], sizeof(file_basename) );
 	}
 
 	/* Build new object_list[] string */

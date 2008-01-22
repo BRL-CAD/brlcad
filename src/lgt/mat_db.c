@@ -215,7 +215,7 @@ mat_Edit_Db_Entry(int id)
 		}
 	(void) snprintf( prompt, MAX_LN, "material name ? (%s) ", entry->name );
 	if ( get_Input( input_buf, MAX_LN, prompt ) != NULL )
-		(void) strncpy( entry->name, input_buf, MAX_MAT_NM );
+		bu_strlcpy( entry->name, input_buf, MAX_MAT_NM );
 	(void) sprintf( prompt, "shine ? [1 to n](%d) ", entry->shine );
 	if ( get_Input( input_buf, MAX_LN, prompt ) != NULL )
 		(void) sscanf( input_buf, "%d", &entry->shine );

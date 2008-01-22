@@ -2985,7 +2985,7 @@ sedit(void)
 					mged_print_result( TCL_ERROR );
 					return;
 				}
-				strncpy( ebm->file, fname, RT_EBM_NAME_LEN-1 );
+				bu_strlcpy( ebm->file, fname, RT_EBM_NAME_LEN );
 			}
 
 			break;
@@ -3169,7 +3169,7 @@ sedit(void)
 					mged_print_result( TCL_ERROR );
 					return;
 				}
-				strncpy( vol->file, fname, RT_VOL_NAME_LEN-1 );
+				bu_strlcpy( vol->file, fname, RT_VOL_NAME_LEN );
 			}
 
 			break;
@@ -3319,7 +3319,7 @@ sedit(void)
 
 			RT_BOT_CK_MAGIC( bot );
 
-			strcpy( cur_settings, " { 0 0 }" );
+			bu_strlcpy( cur_settings, " { 0 0 }", sizeof(cur_settings) );
 
 			if ( bot->bot_flags & RT_BOT_USE_NORMALS ) {
 				cur_settings[3] = '1';
@@ -8474,7 +8474,7 @@ label_edited_solid(
 
 #define	POINT_LABEL_STR( _pt, _str )	{ \
 	VMOVE( pl[npl].pt, _pt ); \
-	strncpy( pl[npl++].str, _str, sizeof(pl[0].str)-1 ); }
+	bu_strlcpy( pl[npl++].str, _str, sizeof(pl[0].str) ); }
 
 	case ID_ARB8:
 		{

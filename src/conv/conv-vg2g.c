@@ -99,7 +99,7 @@ main(int argc, char **argv)
 			(void)printf("convert from ver 3 to ver 4\n");
 			units = ID_IN_UNIT;
 			rec.i.i_version[0] = '\0';
-			strncpy(rec.i.i_version, ID_VERSION, 7);
+			bu_strlcpy(rec.i.i_version, ID_VERSION, sizeof(rec.i.i_version));
 		}
 	}
 	else {
@@ -119,7 +119,7 @@ main(int argc, char **argv)
 		(void)putchar( 7 );
 
 		rec.i.i_id = ID_IDENT;
-		strncpy( rec.i.i_version, ID_VERSION, 7 );
+		bu_strlcpy( rec.i.i_version, ID_VERSION, sizeof(rec.i.i_version) );
 		rec.i.i_units = 100;
 		while ( rec.i.i_units < ID_MM_UNIT || rec.i.i_units > ID_FT_UNIT )  {
 			printf("Units: 1=mm, 2=cm, 3=meters, 4=inches, 5=feet\nUnits? ");
@@ -131,8 +131,7 @@ main(int argc, char **argv)
 		printf("Title? "); fflush(stdout);
 		bu_fgets( line, sizeof(line), stdin );
 		line[strlen(line)-1] = '\0';		/* discard \n */
-		strncpy( rec.i.i_title, line, 71 );
-		rec.i.i_title[71] = '\0';
+		bu_strlcpy( rec.i.i_title, line, sizeof(rec.i.i_title) );
 		printf("Title=%s\n", rec.i.i_title );
 	}
 

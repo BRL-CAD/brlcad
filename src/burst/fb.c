@@ -28,10 +28,15 @@
 #include <string.h>
 #include <memory.h>
 #include <signal.h>
+
+#include "machine.h"
 #include "fb.h"
+#include "bu.h"
+
 #include "./burst.h"
 #include "./ascii.h"
 #include "./extern.h"
+
 
 boolean
 imageInit()
@@ -59,7 +64,7 @@ imageInit()
 	else
 	if ( lastfbfile[0] != NUL && strcmp( fbfile, lastfbfile ) != 0 )
 		needopen = 1; /* name changed */
-	(void) strncpy( lastfbfile, fbfile, LNBUFSZ );
+	bu_strlcpy( lastfbfile, fbfile, LNBUFSZ );
 
 	if ( needopen )
 		{

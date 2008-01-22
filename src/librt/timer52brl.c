@@ -86,7 +86,7 @@ char *str;
 	_getrusage(RUSAGE_SELF, &ru1);
 	_gettimeofday(&timedol, (struct timezone *)0);
 	prusage(&ru0, &ru1, &timedol, &time0, line);
-	(void)strncpy( str, line, len );
+	bu_strlcpy( str, line, len );
 	tvsub( &td, &ru1.ru_utime, &ru0.ru_utime );
 	usert = td.tv_sec + ((double)td.tv_usec) / 1000000;
 	if ( usert < 0.00001 )  usert = 0.00001;

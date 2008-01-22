@@ -291,7 +291,7 @@ db_diradd(register struct db_i *dbip, register const char *name, long int laddr,
 	/* if this is a version 4 database and the offending char is beyond NAMESIZE
 	 * then it is not really a problem
 	 */
-	if ( dbip->dbi_version < 5 && (tmp_ptr - name) < 16 ) {
+	if ( dbip->dbi_version < 5 && (tmp_ptr - name) < NAMESIZE ) {
 	    bu_log("db_diradd() object named '%s' is illegal, ignored\n", name );
 	    return DIR_NULL;
 	}

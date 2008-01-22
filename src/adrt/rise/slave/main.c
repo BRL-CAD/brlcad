@@ -99,7 +99,7 @@ int main(int argc, char **argv) {
 	      break;
 
 	    case 't':
-	      strncpy(temp, optarg, 4);
+	      bu_strlcpy(temp, optarg, sizeof(temp));
 	      threads = atoi(temp);
 	      if (threads < 0) threads = 0;
 	      if (threads > 32) threads = 32;
@@ -123,7 +123,7 @@ int main(int argc, char **argv) {
   argv += optind;
 
   if (argc)
-    strncpy(host, argv[0], 64);
+    bu_strlcpy(host, argv[0], sizeof(host));
 
   if (!host[0]) {
     if (!port)

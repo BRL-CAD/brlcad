@@ -111,8 +111,7 @@ int main(int argc, char **argv) {
   argc -= optind;
   argv += optind;
 
-  strncpy(proj, argv[0], 64-1);
-  proj[64-1] = '\0'; /* sanity */
+  bu_strlcpy(proj, argv[0], sizeof(proj));
 
   if (proj[0]) {
     bench(proj, cache, image);

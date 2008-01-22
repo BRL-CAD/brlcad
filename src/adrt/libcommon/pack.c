@@ -220,7 +220,7 @@ void common_pack_prop(void **app_data, int *app_ind, char *filename) {
       token = strtok(NULL, ",");
       /* strip off newline */
       if (token[strlen(token)-1] == '\n') token[strlen(token)-1] = 0;
-      strncpy(name, token, ADRT_NAME_SIZE);
+      strncpy(name, token, sizeof(name));
 
       /* set defaults */
       def_prop.color.v[0] = 0.8;

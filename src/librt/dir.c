@@ -80,7 +80,7 @@ rt_dirbuild( const char *filename, char *buf, int len )
 	db_close(dbip);				/* releases original dbip */
 
 	if ( buf != (char *)NULL )
-		strncpy( buf, dbip->dbi_title, len );
+		bu_strlcpy( buf, dbip->dbi_title, len );
 
 	return( rtip );				/* OK */
 }

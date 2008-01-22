@@ -113,14 +113,14 @@ init_Status(void)
 	(void) HmCursor();
 	while ( *(p+1) )
 		{
-		(void) strncpy( buf, *p++, template_co );
-		buf[template_co-1] = '\0';
+		bu_strlcpy( buf, *p++, template_co );
+
 		(void) printf( "%s\n\r", buf );
 		}
 	/* Last line is reverse-video if possible. */
 	(void) SetStandout();
-	(void) strncpy( buf, *p++, template_co );
-	buf[template_co-1] = '\0';
+	bu_strlcpy( buf, *p++, template_co );
+
 	(void) printf( "%s\n\r", buf );
 	(void) ClrStandout();
 	(void) fflush( stdout );

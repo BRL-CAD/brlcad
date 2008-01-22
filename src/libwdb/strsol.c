@@ -70,8 +70,8 @@ const char	*string_arg;
 	memset((char *)rec, 0, sizeof(rec));
 	rec[0].ss.ss_id = DBID_STRSOL;
 	NAMEMOVE( name, rec[0].ss.ss_name );
-	strncpy( rec[0].ss.ss_keyword, string_solid, sizeof(rec[0].ss.ss_keyword)-1 );
-	strncpy( rec[0].ss.ss_args, string_arg, DB_SS_LEN-1 );
+	bu_strlcpy( rec[0].ss.ss_keyword, string_solid, sizeof(rec[0].ss.ss_keyword) );
+	bu_strlcpy( rec[0].ss.ss_args, string_arg, DB_SS_LEN );
 
 	if ( fwrite( (char *)rec, sizeof(rec), 1, fp ) != 1 )
 		return -1;

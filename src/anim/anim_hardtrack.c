@@ -418,8 +418,8 @@ int get_args(int argc, char **argv)
     axes = cent = links_placed = print_wheel = print_link = 0;
     get_circumf = 0;
     print_mode = TRACK_ANIM;
-    strcpy(link_cmd, "rarc");
-    strcpy(wheel_cmd, "lmul");
+    bu_strlcpy(link_cmd, "rarc", sizeof(link_cmd));
+    bu_strlcpy(wheel_cmd, "lmul", sizeof(wheel_cmd));
     while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
 	i=0;
 	switch (c){
@@ -475,10 +475,10 @@ int get_args(int argc, char **argv)
 	case 'm':
 	    switch (*bu_optarg) {
 	    case 'l':
-		strncpy(link_cmd, argv[bu_optind], 10);
+		bu_strlcpy(link_cmd, argv[bu_optind], sizeof(link_cmd));
 		break;
 	    case 'w':
-		strncpy(wheel_cmd, argv[bu_optind], 10);
+		bu_strlcpy(wheel_cmd, argv[bu_optind], sizeof(wheel_cmd));
 		break;
 	    default:
 		fprintf(stderr, "Unknown option: -m%c\n", *bu_optarg);

@@ -170,49 +170,48 @@ prnt_Status(void)
 	pad_Strcpy( TITLE_PTR, title, TITLE_LEN - 1 );
 	pad_Strcpy( TIMER_PTR, timer, TIMER_LEN - 1 );
 	pad_Strcpy( F_SCRIPT_PTR, script_file, 32 );
-	(void) sprintf( scratchbuf, "%11.4f", view_size );
-	(void) strncpy( VU_SIZE_PTR, scratchbuf, strlen( scratchbuf ) );
+	sprintf( scratchbuf, "%11.4f", view_size );
+	bu_strlcpy( VU_SIZE_PTR, scratchbuf, strlen( scratchbuf ) );
 	pad_Strcpy( F_ERRORS_PTR, err_file, 32 );
-	(void) sprintf( scratchbuf, "%11.4f", grid_dist );
-	(void) strncpy( GRID_DIS_PTR, scratchbuf, strlen( scratchbuf ) );
+	sprintf( scratchbuf, "%11.4f", grid_dist );
+	bu_strlcpy( GRID_DIS_PTR, scratchbuf, strlen( scratchbuf ) );
 	pad_Strcpy( F_MAT_DB_PTR, mat_db_file, 32 );
-	(void) sprintf( scratchbuf, "%11.4f", x_grid_offset );
-	(void) strncpy( GRID_XOF_PTR, scratchbuf, strlen( scratchbuf ) );
+	sprintf( scratchbuf, "%11.4f", x_grid_offset );
+	bu_strlcpy( GRID_XOF_PTR, scratchbuf, strlen( scratchbuf ) );
 	pad_Strcpy( F_LGT_DB_PTR, lgt_db_file, 32 );
-	(void) sprintf( scratchbuf, "%11.4f", y_grid_offset );
-	(void) strncpy( GRID_YOF_PTR, scratchbuf, strlen( scratchbuf ) );
+	sprintf( scratchbuf, "%11.4f", y_grid_offset );
+	bu_strlcpy( GRID_YOF_PTR, scratchbuf, strlen( scratchbuf ) );
 	pad_Strcpy( F_RASTER_PTR, fb_file, 32 );
-	(void) sprintf( scratchbuf, "%11.4f", modl_radius );
-	(void) strncpy( MODEL_RA_PTR, scratchbuf, strlen( scratchbuf ) );
-	(void) sprintf( scratchbuf, "%3d %3d %3d",
+	sprintf( scratchbuf, "%11.4f", modl_radius );
+	bu_strlcpy( MODEL_RA_PTR, scratchbuf, strlen( scratchbuf ) );
+	sprintf( scratchbuf, "%3d %3d %3d",
 			background[0], background[1], background[2] );
-	(void) strncpy( BACKGROU_PTR, scratchbuf, strlen( scratchbuf ) );
-	(void) snprintf( scratchbuf, TEMPLATE_COLS+1,
+	bu_strlcpy( BACKGROU_PTR, scratchbuf, strlen( scratchbuf ) );
+	snprintf( scratchbuf, TEMPLATE_COLS+1,
 			"%4s",	pix_buffered == B_PAGE ? "PAGE" :
 				pix_buffered == B_PIO ? "PIO" :
 				pix_buffered == B_LINE ? "LINE" : "?"
 				);
-	(void) strncpy( BUFFERED_PTR, scratchbuf, strlen( scratchbuf ) );
-	(void) sprintf( scratchbuf, "0x%06x", RT_G_DEBUG );
-	(void) strncpy( DEBUGGER_PTR, scratchbuf, strlen( scratchbuf ) );
-	(void) sprintf( scratchbuf, "%-2d", max_bounce );
-	(void) strncpy( MAX_BOUN_PTR, scratchbuf, strlen( scratchbuf ) );
-	(void) snprintf( scratchbuf, TEMPLATE_COLS+1, " LGT %s", version );
-	(void) strncpy( PROGRAM_NM_PTR, scratchbuf, strlen( scratchbuf ) );
-	(void) snprintf( scratchbuf, TEMPLATE_COLS+1, " %s ",
+	bu_strlcpy( BUFFERED_PTR, scratchbuf, strlen( scratchbuf ) );
+	sprintf( scratchbuf, "0x%06x", RT_G_DEBUG );
+	bu_strlcpy( DEBUGGER_PTR, scratchbuf, strlen( scratchbuf ) );
+	sprintf( scratchbuf, "%-2d", max_bounce );
+	bu_strlcpy( MAX_BOUN_PTR, scratchbuf, strlen( scratchbuf ) );
+	snprintf( scratchbuf, TEMPLATE_COLS+1, " LGT %s", version );
+	bu_strlcpy( PROGRAM_NM_PTR, scratchbuf, strlen( scratchbuf ) );
+	snprintf( scratchbuf, TEMPLATE_COLS+1, " %s ",
 			ged_file == NULL ? "(null)" : ged_file );
-	(void) strncpy( F_GED_DB_PTR, scratchbuf,
-			Min( strlen( scratchbuf ), 26 ) );
-	(void) sprintf( scratchbuf, " [%04d-", grid_x_org );
-	(void) strncpy( GRID_PIX_PTR, scratchbuf, strlen( scratchbuf ) );
-	(void) sprintf( scratchbuf, "%04d,", grid_x_fin );
-	(void) strncpy( GRID_SIZ_PTR, scratchbuf, strlen( scratchbuf ) );
-	(void) sprintf( scratchbuf, "%04d-", grid_y_org );
-	(void) strncpy( GRID_SCN_PTR, scratchbuf, strlen( scratchbuf ) );
-	(void) sprintf( scratchbuf, "%04d:", grid_y_fin );
-	(void) strncpy( GRID_FIN_PTR, scratchbuf, strlen( scratchbuf ) );
-	(void) sprintf( scratchbuf, "%04d] ", frame_no );
-	(void) strncpy( FRAME_NO_PTR, scratchbuf, strlen( scratchbuf ) );
+	bu_strlcpy( F_GED_DB_PTR, scratchbuf, Min( strlen( scratchbuf ), 26 ) );
+	sprintf( scratchbuf, " [%04d-", grid_x_org );
+	bu_strlcpy( GRID_PIX_PTR, scratchbuf, strlen( scratchbuf ) );
+	sprintf( scratchbuf, "%04d,", grid_x_fin );
+	bu_strlcpy( GRID_SIZ_PTR, scratchbuf, strlen( scratchbuf ) );
+	sprintf( scratchbuf, "%04d-", grid_y_org );
+	bu_strlcpy( GRID_SCN_PTR, scratchbuf, strlen( scratchbuf ) );
+	sprintf( scratchbuf, "%04d:", grid_y_fin );
+	bu_strlcpy( GRID_FIN_PTR, scratchbuf, strlen( scratchbuf ) );
+	sprintf( scratchbuf, "%04d] ", frame_no );
+	bu_strlcpy( FRAME_NO_PTR, scratchbuf, strlen( scratchbuf ) );
 	update_Screen();
 	return;
 	}
@@ -224,7 +223,7 @@ update_Screen(void)
 	for ( row = 0; template[row][0] != '\0'; row++ )
 		{	register int	lastcol = -2;
 		if ( template[row+1] == NULL )
-			(void) SetStandout();
+			SetStandout();
 		for ( col = 0; col < tem_co; col++ )
 			if ( screen[row][col] != template[row][col] )
 				{
@@ -316,7 +315,7 @@ prnt_Prompt(char *prompt)
 		{
 		PROMPT_MOVE();
 		(void) ClrEOL();
-		(void) SetStandout();
+		SetStandout();
 		(void) printf( "%s", prompt );
 		(void) ClrStandout();
 		(void) fflush( stdout );
@@ -399,7 +398,7 @@ prnt_Scroll(const char *fmt, ... ) {
 	    static int	newline = 1;
 	    if ( CS != NULL )
 		{
-		    (void) SetScrlReg( TOP_SCROLL_WIN, PROMPT_LINE - 1 );
+		    SetScrlReg( TOP_SCROLL_WIN, PROMPT_LINE - 1 );
 		    if ( newline )
 			{
 			    SCROLL_PR_MOVE();

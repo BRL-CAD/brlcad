@@ -164,10 +164,9 @@ float	*y;
 float	*scale;
 float	*theta;
 {
-	char buf[128];
+	char buf[128] = {0};
 
-	strncpy( buf, string, sizeof(buf)-1 );
-	buf[sizeof(buf)-1] = '\0';
+	bu_strlcpy( buf, string, sizeof(buf) );
 	tp_2symbol( *fp, buf, *x, *y, *scale, *theta );
 }
 /** @} */

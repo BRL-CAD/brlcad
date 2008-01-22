@@ -81,7 +81,7 @@ main (int argc, char **argv)
     while ((opt = bu_getopt(argc, argv, OPT_STRING)) != -1)
 	switch (opt) {
 	case 'n':
-	    strncpy(rayname, bu_optarg, BUF_LEN-1);
+	    bu_strlcpy(rayname, bu_optarg, BUF_LEN);
 	    break;
 	case 'r':
 	    if (sscanf(bu_optarg, "%F", &ray_radius) != 1) {
@@ -101,10 +101,10 @@ main (int argc, char **argv)
     if (*rayname == '\0')	/* Was one given on command line? */
 	sprintf(rayname, "ray.%d", pid);
 
-    if (strlen(rayname) > NAMESIZE - 3) {
+    if (strlen(rayname) > NAMESIZE) {
 	fprintf(stderr,
-	    "Name '%s.s' for ray solid may not exceed %d characters\n",
-	    rayname, NAMESIZE - 1);
+		"Name '%s.s' for ray solid may not exceed %d characters\n",
+		rayname, NAMESIZE);
 	bu_exit(1, "Use the '-n name' option to specify a different name\n");
     }
 

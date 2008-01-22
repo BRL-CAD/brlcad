@@ -509,8 +509,8 @@ struct remap_reg *mk_remap_reg (char *region_name)
 
     rp->rr_magic = REMAP_REG_MAGIC;
 
-    rp->rr_name = (char *) bu_malloc(strlen(region_name) + 1, "region name");
-    strncpy(rp->rr_name, region_name, strlen(region_name));
+    rp->rr_name = (char *) bu_malloc(strlen(region_name)+1, "region name");
+    bu_strlcpy(rp->rr_name, region_name, strlen(region_name)+1);
 
     rp->rr_dp = DIR_NULL;
     rp->rr_ip = (struct rt_db_internal *) 0;

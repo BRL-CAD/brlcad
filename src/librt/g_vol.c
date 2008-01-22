@@ -535,8 +535,8 @@ rt_vol_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 	bu_vls_struct_print( &str, rt_vol_parse, (char *)&vol );
 
 	rec->ss.ss_id = DBID_STRSOL;
-	strncpy( rec->ss.ss_keyword, "vol", NAMESIZE-1 );
-	strncpy( rec->ss.ss_args, bu_vls_addr(&str), DB_SS_LEN-1 );
+	bu_strlcpy( rec->ss.ss_keyword, "vol", sizeof(rec->ss.ss_keyword) );
+	bu_strlcpy( rec->ss.ss_args, bu_vls_addr(&str), DB_SS_LEN );
 	bu_vls_free( &str );
 
 	return(0);
@@ -665,7 +665,7 @@ rt_vol_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	ep->ext_nbytes = bu_vls_strlen( &str );
 	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "vol external");
 
-	strncpy( ep->ext_buf, bu_vls_addr(&str), ep->ext_nbytes-1 );
+	bu_strlcpy( ep->ext_buf, bu_vls_addr(&str), ep->ext_nbytes );
 	bu_vls_free( &str );
 
 	return(0);

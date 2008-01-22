@@ -125,7 +125,7 @@ init_Icon_Texture(char *file, Mat_Db_Entry *entry)
 	iconp =	(struct icon_texture *) bu_malloc( sizeof( struct icon_texture ), "iconp" );
 	iconp->filenm = bu_malloc( strlen(file)+1, "iconp->filenm");
 
-	(void) strncpy( iconp->filenm, file, strlen(file)+1);
+	bu_strlcpy( iconp->filenm, file, strlen(file)+1);
 	iconp->map = iconmap;
 	iconp->wid = wid;
 	iconp->hgt = hgt;
@@ -167,7 +167,7 @@ init_Fb_Texture(char *file, Mat_Db_Entry *entry)
 		}
 	fbp = (struct fb_texture *) bu_malloc( sizeof( struct fb_texture ), "fbp");
 	fbp->filenm = bu_malloc( strlen(file)+1, "fbp->filenm");
-	(void) strncpy( fbp->filenm, file, strlen(file)+1 );
+	bu_strlcpy( fbp->filenm, file, strlen(file)+1 );
 	fbp->map = fbmap;
 	fbp->wid = wid;
 	fbp->hgt = hgt;

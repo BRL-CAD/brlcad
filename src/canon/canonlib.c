@@ -173,9 +173,9 @@ ipu_inquire(struct dsreq *dsp)
     /* up to 11 characters of status */
     if (testunitready00(dsp) != 0) {
 	if (RET(dsp)==DSRT_NOSEL)
-	    strcpy(response, "no response from device");
+	    bu_strlcpy(response, "no response from device", sizeof(response));
 	else
-	    strcpy(response, "device not ready");
+	    bu_strlcpy(response, "device not ready", sizeof(response));
 	return response;
     }
 
@@ -1228,7 +1228,7 @@ int parse_args(ac, av)
     else
 	++progname;
 
-    strncpy(arg_buf, progname, 10000);
+    bu_strlcpy(arg_buf, progname, sizeof(arg_buf));
     len = strlen(arg_buf) + 1;
     arg_v[arg_c = 0] = arg_buf;
     arg_v[++arg_c] = (char *)NULL;
@@ -1263,7 +1263,7 @@ int parse_args(ac, av)
 	case 'c'	: clear = !clear; break;
 	case 'd'	: if (isprint(*bu_optarg)) {
 	    memset(scsi_device, 0, sizeof(scsi_device));
-	    strncpy(scsi_device, bu_optarg, sizeof(scsi_device)-1);
+	    bu_strlcpy(scsi_device, bu_optarg, sizeof(scsi_device));
 	} else
 	    usage("-d scsi_device_name\n");
 	    break;

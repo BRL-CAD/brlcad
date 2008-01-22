@@ -272,9 +272,9 @@ char	*argv[];
 
 		memset(buf, 0, sizeof( buf ));
 		if (inches) {
-			strcpy( buf, "BRL-CAD generated STL FILE (Units=inches)");
+			bu_strlcpy( buf, "BRL-CAD generated STL FILE (Units=inches)", sizeof(buf));
 		} else {
-			strcpy( buf, "BRL-CAD generated STL FILE (Units=mm)");
+			bu_strlcpy( buf, "BRL-CAD generated STL FILE (Units=mm)", sizeof(buf));
 		}
 		write(bfd, &buf, 80);
 

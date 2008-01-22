@@ -203,7 +203,7 @@ found_interface:
 		free( (void *) ifp );
 		return	FBIO_NULL;
 	}
-	(void) strncpy( ifp->if_name, file, strlen(file)+1 );
+	bu_strlcpy( ifp->if_name, file, strlen(file)+1 );
 
 	/* Mark OK by filling in magic number */
 	ifp->if_magic = FB_MAGIC;

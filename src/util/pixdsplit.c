@@ -93,12 +93,12 @@ main (int argc, char *argv[])
 	switch (ch)
 	{
 	    case 'd':
-		df_name = (char *) bu_malloc(strlen(bu_optarg) + 1, "df_name");
-		strncpy(df_name, bu_optarg, strlen(bu_optarg));
+		df_name = (char *) bu_malloc(strlen(bu_optarg)+1, "df_name");
+		bu_strlcpy(df_name, bu_optarg, strlen(bu_optarg)+1);
 		break;
 	    case 'c':
-		cf_name = (char *) bu_malloc(strlen(bu_optarg) + 1, "cf_name");
-		strncpy(cf_name, bu_optarg, strlen(bu_optarg));
+		cf_name = (char *) bu_malloc(strlen(bu_optarg)+1, "cf_name");
+		bu_strlcpy(cf_name, bu_optarg, strlen(bu_optarg)+1);
 		break;
 	    case '#':
 		if ((sscanf(bu_optarg, "%d.%d", &c_per_p, &d_per_p) != 2)

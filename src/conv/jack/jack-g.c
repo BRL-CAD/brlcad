@@ -132,7 +132,7 @@ main(int argc, char **argv)
 		else
 			base++;
 		reg_name = bu_malloc(sizeof(base)+1, "reg_name");
-		strncpy(reg_name, base, sizeof(base));
+		bu_strlcpy(reg_name, base, sizeof(base)+1);
 		/* Ignore .pss extension if it's there. */
 		doti = strlen(reg_name) - 4;
 		if (doti > 0 && !strcmp(".pss", reg_name+doti))

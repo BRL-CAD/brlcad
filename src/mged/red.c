@@ -798,7 +798,7 @@ checkcomb(void)
 	}
 
 	line[++i] = '\0';
-	strncpy( lineCopy, line, RT_MAXLINE-1 );
+	bu_strlcpy( lineCopy, line, RT_MAXLINE );
 
 	/* skip leading white space */
 	i = (-1);
@@ -812,11 +812,11 @@ checkcomb(void)
 		int len;
 
 		len = strlen( ptr );
-		if ( len >= NAMESIZE ) {
+		if ( len > NAMESIZE ) {
 		    while ( len > 1 && isspace( ptr[len-1] ) )
 			len--;
 		}
-		if ( len >= NAMESIZE ) {
+		if ( len > NAMESIZE ) {
 		    Tcl_AppendResult(interp, "Name too long for v4 database: ",
 				     ptr, "\n", lineCopy, "\n", (char *)NULL );
 		    fclose( fp );
@@ -930,8 +930,7 @@ checkcomb(void)
 	    name = NULL;
 	    if ( ptr != NULL && *ptr != '\0' ) {
 		if ( dbip->dbi_version < 5 ) {
-		    strncpy( name_v4, ptr, NAMESIZE );
-		    name_v4[NAMESIZE] = '\0';
+		    bu_strlcpy(name_v4 , ptr , NAMESIZE+1);
 
 		    /* Eliminate trailing white space from name */
 		    j = NAMESIZE;
@@ -942,8 +941,8 @@ checkcomb(void)
 		    int len;
 
 		    len = strlen( ptr );
-		    name_v5 = (char *)bu_malloc( len + 1, "name_v5" );
-		    strncpy( name_v5, ptr, len );
+		    name_v5 = (char *)bu_malloc( len+1, "name_v5" );
+		    bu_strlcpy( name_v5, ptr, len+1 );
 		    while ( isspace( name_v5[len-1] ) ) {
 			len--;
 			name_v5[len] = '\0';
@@ -1224,8 +1223,7 @@ int build_comb(struct rt_comb_internal *comb, struct directory *dp, int node_cou
 	    /* Next must be the member name */
 	    ptr = strtok( (char *)NULL, delims );
 	    if ( dbip->dbi_version < 5 ) {
-		strncpy( name_v4, ptr, NAMESIZE );
-		name_v4[NAMESIZE] = '\0';
+		bu_strlcpy( name_v4 , ptr, NAMESIZE+1 );
 		name = name_v4;
 	    } else {
 		if ( name )
@@ -1440,7 +1438,7 @@ cmd_put_comb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
-    strncpy(red_tmpcomb, red_tmpcomb_init, 17-1);
+    bu_strlcpy(red_tmpcomb, red_tmpcomb_init, sizeof(red_tmpcomb));
     dp = db_lookup( dbip, argv[1], LOOKUP_QUIET );
     if (dp != DIR_NULL){
 	if ( !(dp->d_flags & DIR_COMB) ){
@@ -1576,7 +1574,7 @@ f_red(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
-    strncpy(red_tmpcomb, red_tmpcomb_init, 17-1);
+    bu_strlcpy(red_tmpcomb, red_tmpcomb_init, sizeof(red_tmpcomb));
 
     dp = db_lookup( dbip, argv[1], LOOKUP_QUIET );
 

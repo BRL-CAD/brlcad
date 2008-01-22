@@ -63,7 +63,7 @@ rt_read_timer(char *str, int len)
 	sprintf(line, "%f secs: %ld wave, %ld fp, %ld dmem, %ld other",
 		usert,
 		htime[0], htime[1], htime[2], htime[3], htime[4] );
-	(void)strncpy( str, line, len );
+	bu_strlcpy( str, line, len );
 	return( usert );
 }
 

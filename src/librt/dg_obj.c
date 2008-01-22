@@ -2007,11 +2007,10 @@ dgo_rtcheck_cmd(struct dg_obj	*dgop,
 	si.hStdError   = e_pipe[1];
 	si.wShowWindow = SW_HIDE;
 
-	snprintf(line, 2048, "%s ", dgop->dgo_rt_cmd[0]);
+	snprintf(line, sizeof(line), "%s ", dgop->dgo_rt_cmd[0]);
 	for (i=1; i < dgop->dgo_rt_cmd_len; i++) {
-	    snprintf(name, 256, "%s ", dgop->dgo_rt_cmd[i]);
-	    strncat(line, name, 2048-strlen(line)-1);
-	    line[2048-1] = '\0'; /* sanity */
+	    snprintf(name, sizeof(name), "%s ", dgop->dgo_rt_cmd[i]);
+	    bu_strlcat(line, name, sizeof(line));
 	}
 
 	CreateProcess(NULL, line, NULL, NULL, TRUE,
@@ -3246,8 +3245,7 @@ dgo_cvt_vlblock_to_solids(struct dg_obj *dgop, Tcl_Interp *interp, struct bn_vlb
 	char		shortname[32];
 	char		namebuf[64];
 
-	strncpy(shortname, name, 16-6);
-	shortname[16-6] = '\0';
+	bu_strlcpy(shortname, name, sizeof(shortname));
 
 	for ( i=0; i < vbp->nused; i++ )  {
 		if (BU_LIST_IS_EMPTY(&(vbp->head[i])))
@@ -4266,13 +4264,11 @@ dgo_run_rt(struct dg_obj *dgop,
 	si.hStdOutput  = pipe_err[1];
 	si.hStdError   = pipe_err[1];
 
-	snprintf(line, 2048, "%s ", dgop->dgo_rt_cmd[0]);
-	for (i=1;i<dgop->dgo_rt_cmd_len;i++) {
-	    snprintf(name, 256, "%s ", dgop->dgo_rt_cmd[i]);
-	    strncat(line, name, 2048-strlen(line)-1);
-	    line[2048-1] = '\0'; /* sanity */
+	snprintf(line, sizeof(line), "%s ", dgop->dgo_rt_cmd[0]);
+	for (i=1; i<dgop->dgo_rt_cmd_len; i++) {
+	    snprintf(name, sizeof(name), "%s ", dgop->dgo_rt_cmd[i]);
+	    bu_strlcat(line, name, sizeof(line));
 	}
-
 
 	CreateProcess(NULL, line, NULL, NULL, TRUE,
 		      DETACHED_PROCESS, NULL, NULL,

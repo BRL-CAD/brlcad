@@ -19,7 +19,6 @@
  *
  */
 /** @file proe-g.c
- *		P R O E - G
  *
  * Code to convert ascii output from Pro/Engineer to BRL-CAD
  * The required output is from the Pro/Develop application proe-brl
@@ -168,7 +167,7 @@ struct ptc_surf_list
 #define	SURF_PLANE	1
 #define	SURF_CYLINDER	2
 
-#define	MAX_LINE_LEN	512
+#define	MAX_LINE_SIZE	512
 
 #define	UNKNOWN_TYPE	0
 #define	ASSEMBLY_TYPE	1
@@ -230,7 +229,7 @@ Add_new_name(char *name, unsigned int obj, int type)
 		if ( regexec( &reg_cmp, ptr->brlcad_name, 1, &pmatch, 0  ) == 0 )
 		{
 			/* got a match */
-			strncpy( &ptr->brlcad_name[pmatch.rm_so], &ptr->brlcad_name[pmatch.rm_eo], MAX_LINE_LEN-1 );
+			bu_strlcpy( &ptr->brlcad_name[pmatch.rm_so], &ptr->brlcad_name[pmatch.rm_eo], MAX_LINE_SIZE );
 		}
 		if ( debug )
 			bu_log( "\tafter reg_ex, name is %s\n", ptr->brlcad_name );
@@ -344,10 +343,10 @@ Convert_assy(char *line)
 {
 	struct wmember head;
 	struct wmember *wmem = NULL;
-	char line1[MAX_LINE_LEN];
-	char name[MAX_LINE_LEN];
+	char line1[MAX_LINE_SIZE];
+	char name[MAX_LINE_SIZE];
 	unsigned int obj;
-	char memb_name[MAX_LINE_LEN];
+	char memb_name[MAX_LINE_SIZE];
 	unsigned int memb_obj;
 	char *brlcad_name = NULL;
 	float mat_col[4];
@@ -392,7 +391,7 @@ Convert_assy(char *line)
 	if ( debug )
 		bu_log( "Convert_assy: %s x%x\n", name, obj );
 
-	while ( bu_fgets( line1, MAX_LINE_LEN, fd_in ) )
+	while ( bu_fgets( line1, MAX_LINE_SIZE, fd_in ) )
 	{
 		/* skip leading blanks */
 		start = (-1);
@@ -442,7 +441,7 @@ Convert_assy(char *line)
 
 			for ( j=0; j<4; j++ )
 			{
-				bu_fgets( line1, MAX_LINE_LEN, fd_in );
+				bu_fgets( line1, MAX_LINE_SIZE, fd_in );
 				sscanf( line1, "%f %f %f %f", &mat_col[0], &mat_col[1], &mat_col[2], &mat_col[3] );
 				for ( i=0; i<4; i++ )
 					wmem->wm_mat[4*i+j] = mat_col[i];
@@ -523,7 +522,7 @@ do_modifiers(char *line1, int *start, struct wmember *head, char *name, fastf_t 
 		if ( !strncmp( &line1[*start], "plane", 5 ) || !strncmp( &line1[*start], "PLANE", 5 ) )
 		{
 			struct name_conv_list *ptr;
-			char haf_name[MAX_LINE_LEN];
+			char haf_name[MAX_LINE_SIZE];
 			fastf_t dist;
 			fastf_t tmp_dist;
 			point_t origin;
@@ -535,23 +534,23 @@ do_modifiers(char *line1, int *start, struct wmember *head, char *name, fastf_t 
 			point_t arb_pt[8];
 			point_t rpp_corner;
 
-			bu_fgets( line1, MAX_LINE_LEN, fd_in );
+			bu_fgets( line1, MAX_LINE_SIZE, fd_in );
 			sscanf( line1, "%lf %lf %lf", &x, &y, &z );
 			VSET( origin, x, y, z );
-			bu_fgets( line1, MAX_LINE_LEN, fd_in );
+			bu_fgets( line1, MAX_LINE_SIZE, fd_in );
 			sscanf( line1, "%lf %lf %lf", &x, &y, &z );
 			VSET( e1, x, y, z );
-			bu_fgets( line1, MAX_LINE_LEN, fd_in );
+			bu_fgets( line1, MAX_LINE_SIZE, fd_in );
 			sscanf( line1, "%lf %lf %lf", &x, &y, &z );
 			VSET( e2, x, y, z );
-			bu_fgets( line1, MAX_LINE_LEN, fd_in );
+			bu_fgets( line1, MAX_LINE_SIZE, fd_in );
 			sscanf( line1, "%lf %lf %lf", &x, &y, &z );
 			VSET( plane, x, y, z );
-			bu_fgets( line1, MAX_LINE_LEN, fd_in );
+			bu_fgets( line1, MAX_LINE_SIZE, fd_in );
 			sscanf( line1, "%lf %lf", &u_min, &v_min );
-			bu_fgets( line1, MAX_LINE_LEN, fd_in );
+			bu_fgets( line1, MAX_LINE_SIZE, fd_in );
 			sscanf( line1, "%lf %lf", &u_max, &v_max );
-			bu_fgets( line1, MAX_LINE_LEN, fd_in );
+			bu_fgets( line1, MAX_LINE_SIZE, fd_in );
 			sscanf( line1, "%d", &orient );
 
 			plane[H] = VDOT( plane, origin );
@@ -616,7 +615,7 @@ do_modifiers(char *line1, int *start, struct wmember *head, char *name, fastf_t 
 
 			cut_count++;
 
-			snprintf( haf_name, MAX_LINE_LEN, "cut.%d", cut_count );
+			snprintf( haf_name, MAX_LINE_SIZE, "cut.%d", cut_count );
 			ptr = Add_new_name( haf_name, 0, CUT_SOLID_TYPE );
 			if ( mk_arb8( fd_out, ptr->solid_name, (fastf_t *)arb_pt ) )
 				bu_log( "Failed to create ARB8 solid for Assembly cut in part %s\n", name );
@@ -639,7 +638,7 @@ do_modifiers(char *line1, int *start, struct wmember *head, char *name, fastf_t 
 
 			}
 		}
-		bu_fgets( line1, MAX_LINE_LEN, fd_in );
+		bu_fgets( line1, MAX_LINE_SIZE, fd_in );
 		(*start) = (-1);
 		while ( isspace( line1[++(*start)] ) );
 	}
@@ -667,8 +666,8 @@ Add_face(int *face)
 static void
 Convert_part(char *line)
 {
-	char line1[MAX_LINE_LEN];
-	char name[MAX_LINE_LEN];
+	char line1[MAX_LINE_SIZE];
+	char name[MAX_LINE_SIZE];
 	unsigned int obj=0;
 	char *solid_name;
 	int start;
@@ -727,7 +726,7 @@ Convert_part(char *line)
 		/* get object id */
 		sscanf( &line[start], "%x", &obj );
 	} else if ( stl_format && forced_name ) {
-		strncpy( name, forced_name, MAX_LINE_LEN-1 );
+		bu_strlcpy( name, forced_name, MAX_LINE_SIZE );
 	} else if ( stl_format ) {
 		/* build a name from the file name */
 		char tmp_str[512];
@@ -738,8 +737,7 @@ Convert_part(char *line)
 		obj = obj_count;
 
 		/* copy the file name into our work space */
-		strncpy( tmp_str, input_file, 512 );
-		tmp_str[511] = '\0';
+		bu_strlcpy( tmp_str, input_file, sizeof(tmp_str) );
 
 		/* eliminate a trailing ".stl" */
 		len = strlen( tmp_str );
@@ -757,20 +755,19 @@ Convert_part(char *line)
 			ptr++;
 
 		/* now copy what is left to the name */
-		strncpy( name, ptr, MAX_LINE_LEN-1 );
-		name[MAX_LINE_LEN-1] = '\0';
+		bu_strlcpy( name, ptr, MAX_LINE_SIZE );
 
 		sprintf( tmp_str, "_%d", obj_count );
 		len = strlen( name );
 		suff_len = strlen( tmp_str );
-		if ( len + suff_len < MAX_LINE_LEN-1 )
-		    strncat( name, tmp_str, MAX_LINE_LEN - len - 1 );
+		if ( len + suff_len < MAX_LINE_SIZE-1 )
+		    bu_strlcat( name, tmp_str, sizeof(name) );
 		else
-		    snprintf( &name[MAX_LINE_LEN-suff_len-1], MAX_LINE_LEN, "%s", tmp_str );
-		name[MAX_LINE_LEN-1] = '\0'; /* sanity */
+		    snprintf( &name[MAX_LINE_SIZE-suff_len-1], MAX_LINE_SIZE, "%s", tmp_str );
+		name[MAX_LINE_SIZE-1] = '\0'; /* sanity */
 
 	} else {
-		strncpy( name, "noname", MAX_LINE_LEN-1 );
+		bu_strlcpy( name, "noname", MAX_LINE_SIZE );
 	}
 
 	bu_log( "Converting Part: %s\n", name );
@@ -786,7 +783,7 @@ Convert_part(char *line)
 	if ( RT_G_DEBUG & DEBUG_MEM || RT_G_DEBUG & DEBUG_MEM_FULL )
 		bu_prmem( "At start of Convert_part()" );
 
-	while ( bu_fgets( line1, MAX_LINE_LEN, fd_in ) != NULL )
+	while ( bu_fgets( line1, MAX_LINE_SIZE, fd_in ) != NULL )
 	{
 		start = (-1);
 		while ( isspace( line1[++start] ) );
@@ -833,7 +830,7 @@ Convert_part(char *line)
 
 			while ( !endloop )
 			{
-				if ( bu_fgets( line1, MAX_LINE_LEN, fd_in ) == NULL )
+				if ( bu_fgets( line1, MAX_LINE_SIZE, fd_in ) == NULL )
 					bu_exit(EXIT_FAILURE,  "Unexpected EOF while reading a loop in a part!!!\n" );
 
 				start = (-1);
@@ -1009,11 +1006,11 @@ Convert_part(char *line)
 static void
 Convert_input(void)
 {
-	char line[ MAX_LINE_LEN ];
+	char line[ MAX_LINE_SIZE ];
 
 	if ( !stl_format )
 	{
-		if ( !bu_fgets( line, MAX_LINE_LEN, fd_in ) )
+		if ( !bu_fgets( line, MAX_LINE_SIZE, fd_in ) )
 			return;
 
 		sscanf( line, "%f", &conv_factor );
@@ -1022,7 +1019,7 @@ Convert_input(void)
 	if ( !do_reorient && !stl_format )
 		conv_factor = 1.0;
 
-	while ( bu_fgets( line, MAX_LINE_LEN, fd_in ) != NULL )
+	while ( bu_fgets( line, MAX_LINE_SIZE, fd_in ) != NULL )
 	{
 		if ( !strncmp( line, "assembly", 8 ) || !strncmp( line, "ASSEMBLY", 8 ) )
 			Convert_assy( line );

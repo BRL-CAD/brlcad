@@ -197,8 +197,8 @@ float		*char_width;	/* character scale (size) */
 	VSET( pnt, *x, *y, *z );
 	MAT_IDN(mat);
 	bn_mat_angles( mat, 0.0, 0.0, *theta );
-	strncpy( buf, string, sizeof(buf)-1 );
-	buf[sizeof(buf)-1] = '\0';
+	bu_strlcpy( buf, string, sizeof(buf) );
+
 	tp_3axis( *fp, buf, pnt, mat, *length, *ccw,
 		*ndigits, *label_start, *label_incr,
 		*tick_separation, *char_width );

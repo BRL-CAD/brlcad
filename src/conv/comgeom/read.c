@@ -82,10 +82,10 @@ getint(char *cp, int start, int len)
 {
 	char	buf[128];
 
-	if ( len >= sizeof(buf) )  len = sizeof(buf)-1;
+	if (len > sizeof(buf))
+	    len = sizeof(buf);
 
-	strncpy( buf, cp+start, len );
-	buf[len] = '\0';
+	bu_strlcpy( buf, cp+start, len );
 	return atoi(buf);
 }
 
@@ -97,10 +97,10 @@ getdouble(char *cp, int start, int len)
 {
 	char	buf[128];
 
-	if ( len >= sizeof(buf) )  len = sizeof(buf)-1;
+	if (len > sizeof(buf))
+	    len = sizeof(buf);
 
-	strncpy( buf, cp+start, len );
-	buf[len] = '\0';
+	bu_strlcpy( buf, cp+start, len );
 	return atof(buf);
 }
 

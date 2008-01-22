@@ -50,7 +50,7 @@ mk_ebm(struct rt_wdb *fp, const char *name, const char *file, int xdim, int ydim
 
 	BU_GETSTRUCT( ebm, rt_ebm_internal );
 	ebm->magic = RT_EBM_INTERNAL_MAGIC;
-	strncpy( ebm->file, file, RT_EBM_NAME_LEN );
+	bu_strlcpy( ebm->file, file, RT_EBM_NAME_LEN );
 	ebm->xdim = xdim;
 	ebm->ydim = ydim;
 	ebm->tallness = tallness;

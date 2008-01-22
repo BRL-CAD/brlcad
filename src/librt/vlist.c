@@ -400,7 +400,7 @@ rt_vlist_export(struct bu_vls *vls, struct bu_list *hp, const char *name)
 	bu_vls_setlen( vls, nbytes );
 	buf = (unsigned char *)bu_vls_addr(vls);
 	bp = bu_plong( buf, nelem );
-	strncpy( (char *)bp, name, namelen );
+	bu_strlcpy( (char *)bp, name, namelen );
 	bp += namelen;
 
 	/* Output cmds, as bytes */

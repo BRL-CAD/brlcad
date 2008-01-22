@@ -220,7 +220,7 @@ main(int argc, char **argv)
 					perror( "tankill-g" );
 					bu_exit( EXIT_FAILURE,  "Cannot open input file" );
 				}
-				strncpy( input_file, bu_optarg, START_ARRAY_SIZE );
+				bu_strlcpy( input_file, bu_optarg, sizeof(input_file) );
 				break;
 			case 'o': /* output file name */
 				output_file = bu_optarg;

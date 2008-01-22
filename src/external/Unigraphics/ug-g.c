@@ -1381,7 +1381,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 		}
 	}
 
-	strncpy( skt_name, skt_info.name, 31 );
+	bu_strlcpy( skt_name, skt_info.name, sizeof(skt_name) );
 
 	seg_count = num_curves;
 

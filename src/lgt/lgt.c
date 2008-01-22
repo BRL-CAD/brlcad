@@ -279,7 +279,7 @@ static void
 init_Lgts(void)
 {
     /* Ambient lighting.						*/
-    (void) strcpy( lgts[0].name, "EYE" );
+    bu_strlcpy( lgts[0].name, "EYE", sizeof(lgts[0].name));
     lgts[0].beam = 0;
     lgts[0].over = 0;
     lgts[0].rgb[0] = 255;
@@ -292,7 +292,7 @@ init_Lgts(void)
     lgts[0].stp = SOLTAB_NULL;
 
     /* Primary lighting.						*/
-    (void) strcpy( lgts[1].name, "LIGHT" );
+    bu_strlcpy( lgts[1].name, "LIGHT", sizeof(lgts[1].name) );
     lgts[1].beam = 0;
     lgts[1].over = 1;
     lgts[1].rgb[0] = 255;

@@ -175,8 +175,8 @@ server_args(struct pkg_conn *connection, char *buf)
     } else {
 	srv_argv = bu_realloc(srv_argv, srv_argc * sizeof(char *), "server_args() srv_argv realloc");
     }
-    srv_argv[srv_argc - 1] = bu_calloc(1, sizeof(buf) + 1, "server_args() srv_argv[] calloc");
-    strncpy(srv_argv[srv_argc - 1], buf, sizeof(buf)+1);
+    srv_argv[srv_argc - 1] = bu_calloc(1, strlen(buf)+1, "server_args() srv_argv[] calloc");
+    bu_strlcpy(srv_argv[srv_argc - 1], buf, strlen(buf)+1);
 
     bu_log("Planning to shoot at %s\n", buf);
 

@@ -124,13 +124,14 @@ Make_name(char *ptr, const char *form, const char *base, int number)
 	char scrat[NAMESIZE];
 	int len;
 
-	strncpy( ptr, base, NAMESIZE-1 );
+	bu_strlcpy( ptr, base, NAMESIZE );
 	snprintf( scrat, NAMESIZE, form, number );
+
 	len = strlen( ptr ) + strlen( scrat );
 	if ( len > (NAMESIZE-1) )
 		ptr[ (NAMESIZE-1) - strlen( scrat ) ] = '\0';
-	strncat( ptr, scrat, NAMESIZE-strlen(ptr)-1 );
-	ptr[NAMESIZE-1] = '\0'; /* sanity */
+
+	bu_strlcat( ptr, scrat, NAMESIZE );
 }
 
 void
@@ -715,7 +716,7 @@ main(int argc, char **argv)
 		return 1;
 	}
 
-	strncpy( name, argv[bu_optind++], NAMESIZE-1 ); /* Base name for objects */
+	bu_strlcpy( name, argv[bu_optind++], sizeof(name) ); /* Base name for objects */
 
 	fdout = wdb_fopen( argv[bu_optind] );
 	if ( fdout == NULL )
@@ -805,11 +806,12 @@ main(int argc, char **argv)
 
 /*	Generate Title */
 
-	strncpy(fname, name, 80-1);
+	bu_strlcpy(fname, name, sizeof(fname));
+
 	if ( !cable )
-		strcat(fname, " pipe and fluid");
+		bu_strlcat(fname, " pipe and fluid", sizeof(fname));
 	else
-		strcat(fname, " cable");
+		bu_strlcat(fname, " cable", sizeof(fname));
 
 /*	Create ident record	*/
 

@@ -111,9 +111,8 @@ get_args(int argc, register char **argv)
 	    case 'f':
 		if (format != 0)
 		    bu_free(format, "format_string");
-		format = (char *)
-			    bu_malloc(strlen(bu_optarg) + 1, "format string");
-		strncpy(format, bu_optarg, strlen(bu_optarg));
+		format = (char *)bu_malloc(strlen(bu_optarg)+1, "format string");
+		bu_strlcpy(format, bu_optarg, strlen(bu_optarg)+1);
 		break;
 	    case '#':
 		d_per_l = atoi(bu_optarg);

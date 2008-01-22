@@ -223,9 +223,9 @@ wdb_add_operand(Tcl_Interp *interp, struct bu_list *hp, char *name)
 	} else
 		name_len = strlen( name );
 
-	node->tr_l.tl_name = (char *)bu_malloc(name_len + 1, "node name");
-	strncpy(node->tr_l.tl_name, name, name_len);
-	node->tr_l.tl_name[name_len] = '\0';
+	node->tr_l.tl_name = (char *)bu_malloc(name_len+1, "node name");
+	bu_strlcpy(node->tr_l.tl_name, name, name_len+1);
+
 	tok = (struct tokens *)bu_malloc(sizeof(struct tokens), "tok");
 	tok->type = WDB_TOK_TREE;
 	tok->tp = node;

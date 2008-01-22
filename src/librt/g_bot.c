@@ -798,7 +798,7 @@ rt_bot_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 			htond( (unsigned char *)&rec->bot.bot_data[chars_used], (const unsigned char *)&tmp, 1 );
 			chars_used += 8;
 		}
-		strncpy( (char *)&rec->bot.bot_data[chars_used], bu_vls_addr( &face_mode ), ep->ext_nbytes - (sizeof(struct bot_rec)-1) - chars_used - 1);
+		bu_strlcpy( (char *)&rec->bot.bot_data[chars_used], bu_vls_addr( &face_mode ), ep->ext_nbytes - (sizeof(struct bot_rec)-1) - chars_used);
 		bu_vls_free( &face_mode );
 	}
 
@@ -1015,7 +1015,7 @@ rt_bot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 			cp += SIZEOF_NETWORK_DOUBLE;
 			rem -= SIZEOF_NETWORK_DOUBLE;
 		}
-		strncpy( (char *)cp, bu_vls_addr( &vls ), rem-1 );
+		bu_strlcpy( (char *)cp, bu_vls_addr( &vls ), rem );
 		cp += bu_vls_strlen( &vls );
 		rem -= bu_vls_strlen( &vls );
 		*cp = '\0';

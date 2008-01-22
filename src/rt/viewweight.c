@@ -295,8 +295,8 @@ void	view_end(struct application *ap)
     char *timeptr;
 
     /* default units */
-    strcpy(units, "grams");
-    strcpy(unit2, "in.");
+    bu_strlcpy(units, "grams", sizeof(units));
+    bu_strlcpy(unit2, "in.", sizeof(unit2));
 
     (void) time( &clock );
     locltime = localtime( &clock );
@@ -305,27 +305,27 @@ void	view_end(struct application *ap)
     /* XXX this should really use bu_units_conversion() and bu_units_string() */
     if ( dbp->dbi_base2local == 304.8 )  {
 	/* Feet */
-	strcpy( units, "grams" );
-	strcpy( unit2, "ft." );
+	bu_strlcpy( units, "grams", sizeof(units) );
+	bu_strlcpy( unit2, "ft.", sizeof(unit2) );
     } else if ( dbp->dbi_base2local == 25.4 )  {
 	/* inches */
 	conversion = 0.002204623;  /* lbs./gram */
-	strcpy( units, "lbs." );
-	strcpy( unit2, "in." );
+	bu_strlcpy( units, "lbs.", sizeof(units) );
+	bu_strlcpy( unit2, "in.", sizeof(unit2) );
     } else if ( dbp->dbi_base2local == 1.0 )  {
 	/* mm */
 	conversion = 0.001;  /* kg/gram */
-	strcpy( units, "kg" );
-	strcpy( unit2, "mm" );
+	bu_strlcpy( units, "kg", sizeof(units) );
+	bu_strlcpy( unit2, "mm", sizeof(unit2) );
     } else if ( dbp->dbi_base2local == 1000.0 )  {
 	/* km */
 	conversion = 0.001;  /* kg/gram */
-	strcpy( units, "kg" );
-	strcpy( unit2, "m" );
+	bu_strlcpy( units, "kg", sizeof(units) );
+	bu_strlcpy( unit2, "m", sizeof(unit2) );
     } else if ( dbp->dbi_base2local == 0.1 )  {
 	/* cm */
-	strcpy( units, "grams" );
-	strcpy( unit2, "cm." );
+	bu_strlcpy( units, "grams", sizeof(units) );
+	bu_strlcpy( unit2, "cm.", sizeof(unit2) );
     } else {
 	bu_log("Warning: base2mm=%g, using default of %s--%s\n",
 	       dbp->dbi_base2local, units, unit2 );

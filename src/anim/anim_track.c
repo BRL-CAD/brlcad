@@ -371,8 +371,8 @@ int get_args(int argc, char **argv)
     arced_frame = first_frame = 0;
     init_dist = radius = 0.0;
     one_radius = get_circumf = read_wheels = 0;
-    strcpy(link_cmd, "rarc");
-    strcpy(wheel_cmd, "lmul");
+    bu_strlcpy(link_cmd, "rarc", sizeof(link_cmd));
+    bu_strlcpy(wheel_cmd, "lmul", sizeof(wheel_cmd));
     print_mode = PRINT_ANIM;
     dist_mode = GIVEN;
     len_mode = TRACK_MIN;
@@ -443,10 +443,10 @@ int get_args(int argc, char **argv)
 	case 'm':
 	    switch (*bu_optarg) {
 	    case 'p':
-		strncpy(link_cmd, argv[bu_optind], 10);
+		bu_strlcpy(link_cmd, argv[bu_optind], sizeof(link_cmd));
 		break;
 	    case 'w':
-		strncpy(wheel_cmd, argv[bu_optind], 10);
+		bu_strlcpy(wheel_cmd, argv[bu_optind], sizeof(wheel_cmd));
 		break;
 	    default:
 		fprintf(stderr, "Unknown option: -m%c\n", *bu_optarg);

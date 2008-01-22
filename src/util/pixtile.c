@@ -125,7 +125,7 @@ main(int argc, char **argv)
 	int maximage;		/* Maximum # of images that will fit */
 	int islist = 0;		/* set if a list, zero if basename */
 	int is_stream = 0;	/* set if input is stream on stdin */
-	char name[256];
+	char name[256] = {0};
 
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
@@ -186,9 +186,9 @@ main(int argc, char **argv)
 					/* See if we read all the files */
 					if ( bu_optind >= argc )
 						goto done;
-					strncpy(name, argv[bu_optind++], 256-1);
+					bu_strlcpy(name, argv[bu_optind++], sizeof(name));
 				} else {
-					snprintf(name, 256, "%s.%d", base_name, framenumber);
+					snprintf(name, sizeof(name), "%s.%d", base_name, framenumber);
 				}
 				if ( (fd=open(name, 0))<0 )  {
 					perror(name);

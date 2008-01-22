@@ -612,11 +612,11 @@ f_in(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  aexists( argv[1] );
 	  return TCL_ERROR;
 	}
-	if ( dbip->dbi_version <= 4 && (int)strlen(argv[1]) >= NAMESIZE )  {
+	if ( dbip->dbi_version <= 4 && (int)strlen(argv[1]) > NAMESIZE )  {
 	  struct bu_vls tmp_vls;
 
 	  bu_vls_init(&tmp_vls);
-	  bu_vls_printf(&tmp_vls, "ERROR, v4 names are limited to %d characters\n", NAMESIZE-1);
+	  bu_vls_printf(&tmp_vls, "ERROR, v4 names are limited to %d characters\n", NAMESIZE);
 	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 	  return TCL_ERROR;
 	}
@@ -984,7 +984,7 @@ ebm_in(char **cmd_argvs, struct rt_db_internal *intern)
 	intern->idb_ptr = (genptr_t)ebm;
 	ebm->magic = RT_EBM_INTERNAL_MAGIC;
 
-	strncpy( ebm->file, cmd_argvs[3], RT_EBM_NAME_LEN-1 );
+	bu_strlcpy( ebm->file, cmd_argvs[3], RT_EBM_NAME_LEN );
 	ebm->xdim = atoi( cmd_argvs[4] );
 	ebm->ydim = atoi( cmd_argvs[5] );
 	ebm->tallness = atof( cmd_argvs[6] ) * local2base;
@@ -1135,10 +1135,10 @@ hf_in(char **cmd_argvs, struct rt_db_internal *intern)
 	intern->idb_ptr = (genptr_t)hf;
 	hf->magic = RT_HF_INTERNAL_MAGIC;
 
-	strncpy( hf->cfile, cmd_argvs[3], 128-1 );
-	strncpy( hf->dfile, cmd_argvs[4], 128-1 );
-	strncpy( hf->fmt, cmd_argvs[5], 7 );
-	hf->fmt[7] = '\0';
+	bu_strlcpy( hf->cfile, cmd_argvs[3], sizeof(hf->cfile) );
+	bu_strlcpy( hf->dfile, cmd_argvs[4], sizeof(hf->dfile) );
+	bu_strlcpy( hf->fmt, cmd_argvs[5], sizeof(hf->fmt) );
+
 	hf->w = atoi( cmd_argvs[6] );
 	hf->n = atoi( cmd_argvs[7] );
 	hf->shorts = atoi( cmd_argvs[8] );
@@ -1199,7 +1199,7 @@ vol_in(char **cmd_argvs, struct rt_db_internal *intern)
 	intern->idb_ptr = (genptr_t)vol;
 	vol->magic = RT_VOL_INTERNAL_MAGIC;
 
-	strncpy( vol->file, cmd_argvs[3], RT_VOL_NAME_LEN-1 );
+	bu_strlcpy( vol->file, cmd_argvs[3], sizeof(vol->file) );
 	vol->xdim = atoi( cmd_argvs[4] );
 	vol->ydim = atoi( cmd_argvs[5] );
 	vol->zdim = atoi( cmd_argvs[6] );

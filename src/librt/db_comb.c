@@ -254,14 +254,17 @@ rt_comb_import4(
 		{
 			union tree		*tp;
 			mat_t			diskmat;
-			char			namebuf[NAMESIZE+2];
+			char			namebuf[NAMESIZE+1];
 
 			RT_GET_TREE( tp, resp );
 			rt_tree_array[j].tl_tree = tp;
 			tp->tr_l.magic = RT_TREE_MAGIC;
 			tp->tr_l.tl_op = OP_DB_LEAF;
+
+			/* bu_strlcpy not safe here, buffer size mismatch */
 			strncpy( namebuf, rp[j+1].M.m_instname, NAMESIZE );
-			namebuf[NAMESIZE] = '\0';	/* ensure null term */
+			namebuf[NAMESIZE] = '\0'; /* sanity */
+
 			tp->tr_l.tl_name = bu_strdup( namebuf );
 
 			rt_mat_dbmat( diskmat, rp[j+1].M.m_mat );
@@ -372,12 +375,16 @@ rt_comb_import4(
 	{
 		char shader_str[94];
 
+		memset(shader_str, 0, 94);
+
 		/* copy shader info to a static string */
 		strncpy( shader_str,  rp[0].c.c_matname, 32 );
-		shader_str[33] = '\0';
+		shader_str[32] = '\0'; /* c_matname is a buffer, bu_strlcpy not safe here */
+
 		strcat( shader_str, " " );
-		strncat( shader_str, rp[0].c.c_matparm, 60 );
-		shader_str[93] = '\0';
+
+		/* c_matparm is a buffer, bu_strlcpy not safe here */
+		strncat( shader_str, rp[0].c.c_matparm, 32 );
 
 		/* convert to TCL format and place into comb->shader */
 		if ( bu_shader_to_tcl_list( shader_str, &comb->shader ) )
@@ -479,7 +486,9 @@ rt_comb_export4(
 		default:
 			bu_bomb("rt_comb_export4() corrupt rt_tree_array");
 		}
-		strncpy( rp[j+1].M.m_instname, tp->tr_l.tl_name, NAMESIZE );
+
+		NAMEMOVE( tp->tr_l.tl_name, rp[j+1].M.m_instname );
+
 		if ( tp->tr_l.tl_mat )  {
 			rt_dbmat_mat( rp[j+1].M.m_mat, tp->tr_l.tl_mat );
 		} else {
@@ -551,15 +560,17 @@ rt_comb_export4(
 					endp+1);
 				return -1;
 			}
-			strncpy( rp[0].c.c_matname, bu_vls_addr(&tmp_vls), len );
-			strncpy( rp[0].c.c_matparm, endp+1, sizeof(rp[0].c.c_matparm) );
+
+			/* stash as string even though c_matname/parm are NAMESIZE buffers */
+			bu_strlcpy( rp[0].c.c_matname, bu_vls_addr(&tmp_vls), sizeof(rp[0].c.c_matname) );
+			bu_strlcpy( rp[0].c.c_matparm, endp+1, sizeof(rp[0].c.c_matparm) );
 		} else {
 			if ( bu_vls_strlen(&tmp_vls) >= sizeof(rp[0].c.c_matname) )  {
 				bu_log("ERROR:  Shader name '%s' exceeds v4 database field, aborting.\n",
 					bu_vls_addr(&tmp_vls) );
 				return -1;
 			}
-			strncpy( rp[0].c.c_matname, bu_vls_addr(&tmp_vls), sizeof(rp[0].c.c_matname) );
+			bu_strlcpy( rp[0].c.c_matname, bu_vls_addr(&tmp_vls), sizeof(rp[0].c.c_matname) );
 			rp[0].c.c_matparm[0] = '\0';
 		}
 	}

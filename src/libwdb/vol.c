@@ -53,7 +53,7 @@ mk_vol(struct rt_wdb *fp, const char *name, const char *file, int xdim, int ydim
 
 	BU_GETSTRUCT( vol, rt_vol_internal );
 	vol->magic = RT_VOL_INTERNAL_MAGIC;
-	strncpy( vol->file, file, RT_VOL_NAME_LEN );
+	bu_strlcpy( vol->file, file, RT_VOL_NAME_LEN );
 	vol->xdim = xdim;
 	vol->ydim = ydim;
 	vol->zdim = zdim;

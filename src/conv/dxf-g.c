@@ -204,8 +204,8 @@ static int invisible=0;
 #define EOF_FLAG	-998
 
 #define TOL_SQ	0.00001
-#define LINELEN	2050
-char line[LINELEN];
+#define MAX_LINE_SIZE	2050
+char line[MAX_LINE_SIZE];
 
 static char *usage="dxf-g [-c] [-d] [-v] [-t tolerance] [-s scale_factor] input_file.dxf output_file.g\n";
 
@@ -893,8 +893,7 @@ process_blocks_code( int code )
 			if ( len > 16 ) {
 				len = 16;
 			}
-			strncpy( curr_block->handle, line, len );
-			curr_block->handle[len] = '\0';
+			bu_strlcpy( curr_block->handle, line, len );
 		}
 		break;
 	case 10:
@@ -3428,13 +3427,13 @@ readcodes()
 
 	curr_state->file_offset = ftell( dxf );
 
-	if ( bu_fgets( line, LINELEN, dxf ) == NULL ) {
+	if ( bu_fgets( line, MAX_LINE_SIZE, dxf ) == NULL ) {
 		return( ERROR_FLAG );
 	} else {
 		code = atoi( line );
 	}
 
-	if ( bu_fgets( line, LINELEN, dxf ) == NULL ) {
+	if ( bu_fgets( line, MAX_LINE_SIZE, dxf ) == NULL ) {
 		return( ERROR_FLAG );
 	}
 
@@ -3541,7 +3540,7 @@ main( int argc, char *argv[] )
 		name_len = ptr2 - ptr1;
 
 	base_name = (char *)bu_calloc( name_len + 1, 1, "base_name" );
-	strncpy( base_name, ptr1, name_len );
+	bu_strlcpy( base_name , ptr1 , name_len+1 );
 
 	mk_id( out_fp, base_name );
 

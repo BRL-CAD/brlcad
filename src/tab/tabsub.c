@@ -84,7 +84,7 @@ main(int argc, char **argv)
 	fprintf(stderr, "Usage:  tabsub prototype_file [table_file]\n");
 	bu_exit(12, NULL);
     }
-    strncpy(proto_file, argv[1], 255);
+    bu_strlcpy(proto_file, argv[1], sizeof(proto_file));
 
     /* Acquire in-core copy of prototype file */
     get_proto( &prototype, proto_file );
@@ -92,7 +92,7 @@ main(int argc, char **argv)
     if ( argc < 3 )  {
 	table = stdin;
     } else {
-	strncpy(table_file, argv[2], 255);
+	bu_strlcpy(table_file, argv[2], sizeof(table_file));
 	if ( (table = fopen( table_file, "r" )) == NULL )  {
 	    perror( table_file );
 	    bu_exit(3, NULL);

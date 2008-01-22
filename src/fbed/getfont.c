@@ -29,6 +29,9 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "machine.h"
+#include "bu.h"
+
 #include "./font.h"
 
 /* Variables controlling the font itself */
@@ -49,9 +52,9 @@ get_Font(char *fontname)
 	if ( fontname == NULL )
 		fontname = FONTNAME;
 	if ( fontname[0] != '/' )		/* absolute path */
-		(void) snprintf( fname, FONTNAMESZ, "%s/%s", FONTDIR, fontname );
+		snprintf( fname, FONTNAMESZ, "%s/%s", FONTDIR, fontname );
 	else
-		(void) strncpy( fname, fontname, FONTNAMESZ );
+		bu_strlcpy( fname, fontname, sizeof(fname) );
 
 	/* Open the file and read in the header information. */
 	if ( (newff = fopen( fname, "r" )) == NULL )

@@ -118,7 +118,7 @@ main(int ac, char *av[])
 
 	if (autosize) usage("Cannot autosize stdin\n");
 
-	strncat(cmdbuf, print_queue, sizeof(cmdbuf)-strlen(cmdbuf)-1);
+	bu_strlcat(cmdbuf, print_queue, sizeof(cmdbuf));
 	cmdbuf[sizeof(cmdbuf)-1] = '\0';
 
 	queue(stdin);
@@ -126,7 +126,7 @@ main(int ac, char *av[])
 	return(0);
     }
 
-    strncat(cmdbuf, print_queue, sizeof(cmdbuf)-strlen(cmdbuf)-1);
+    bu_strlcat(cmdbuf, print_queue, sizeof(cmdbuf));
     cmdbuf[sizeof(cmdbuf)-1] = '\0';
 
     for (; arg_ind < ac; arg_ind++) {

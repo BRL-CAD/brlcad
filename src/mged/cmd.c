@@ -709,7 +709,9 @@ cmd_setup(void)
 	if (pathname) {
 	    /* XXXXXXXXXXXXXXX UGLY XXXXXXXXXXXXXXXXXX*/
 	    int i;
-	    strcat(pathname, "/");
+
+	    bu_strlcat(pathname, "/", MAXPATHLEN);
+
 	    for (i=0;i<strlen(pathname);i++) {
 		if (pathname[i]=='\\')
 		    pathname[i]='/'; }

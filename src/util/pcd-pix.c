@@ -943,7 +943,7 @@ static void druckeid(void)
 	d=(struct ph1 *)sbuffer;
 
 #define dr(feld, kennung)   \
-     strncpy(ss, feld, sizeof(feld));\
+     bu_strlcpy(ss, feld, sizeof(ss));\
      ss[sizeof(feld)]=0;\
      bu_log("%s: %s \n", kennung, ss);
 

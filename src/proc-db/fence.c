@@ -272,10 +272,10 @@ int parseArguments(int argc, char **argv)
   progname = (char *) bu_calloc(DEFAULT_MAXNAMELENGTH, sizeof(char), "progname");
 
   if (argc > 1) {
-    strncpy(progname, argv[0], (strlen(argv[0])>DEFAULT_MAXNAMELENGTH?DEFAULT_MAXNAMELENGTH:strlen(argv[0])));
+    bu_strlcpy(progname, argv[0], (strlen(argv[0])+1>DEFAULT_MAXNAMELENGTH?DEFAULT_MAXNAMELENGTH:strlen(argv[0])+1));
   }
   else {
-    strncpy(progname, "fence\0", 6);
+    bu_strlcpy(progname, "fence\0", 6);
   }
   fflush(stdout);
 
@@ -309,29 +309,29 @@ int parseArguments(int argc, char **argv)
 
     case 'o' :
       memset(outputFilename, 0, DEFAULT_MAXNAMELENGTH);
-      strncpy(outputFilename, bu_optarg, DEFAULT_MAXNAMELENGTH);
+      bu_strlcpy(outputFilename, bu_optarg, DEFAULT_MAXNAMELENGTH);
       break;
     case 'O' :
       memset(outputFilename, 0, DEFAULT_MAXNAMELENGTH);
-      strncpy(outputFilename, bu_optarg, DEFAULT_MAXNAMELENGTH);
+      bu_strlcpy(outputFilename, bu_optarg, DEFAULT_MAXNAMELENGTH);
       break;
 
     case 'n' :
       memset(id, 0, DEFAULT_MAXNAMELENGTH);
-      strncpy(id, bu_optarg, DEFAULT_MAXNAMELENGTH);
+      bu_strlcpy(id, bu_optarg, DEFAULT_MAXNAMELENGTH);
       break;
     case 'N' :
       memset(id, 0, DEFAULT_MAXNAMELENGTH);
-      strncpy(id, bu_optarg, DEFAULT_MAXNAMELENGTH);
+      bu_strlcpy(id, bu_optarg, DEFAULT_MAXNAMELENGTH);
       break;
 
     case 'u' :
       memset(units, 0, DEFAULT_MAXNAMELENGTH);
-      strncpy(units, bu_optarg, DEFAULT_MAXNAMELENGTH);
+      bu_strlcpy(units, bu_optarg, DEFAULT_MAXNAMELENGTH);
       break;
     case 'U' :
       memset(units, 0, DEFAULT_MAXNAMELENGTH);
-      strncpy(units, bu_optarg, DEFAULT_MAXNAMELENGTH);
+      bu_strlcpy(units, bu_optarg, DEFAULT_MAXNAMELENGTH);
       break;
 
     case 'h' :
@@ -443,32 +443,32 @@ int parseArguments(int argc, char **argv)
 
     case 't' :
       memset(fenceMaterial, 0, DEFAULT_MAXNAMELENGTH*3);
-      strncpy(fenceMaterial, bu_optarg, DEFAULT_MAXNAMELENGTH*3);
+      bu_strlcpy(fenceMaterial, bu_optarg, DEFAULT_MAXNAMELENGTH*3);
       break;
     case 'T' :
       memset(fenceMaterial, 0, DEFAULT_MAXNAMELENGTH*3);
       memset(poleMaterial, 0, DEFAULT_MAXNAMELENGTH*3);
       memset(meshMaterial, 0, DEFAULT_MAXNAMELENGTH*3);
       memset(wireMaterial, 0, DEFAULT_MAXNAMELENGTH*3);
-      strncpy(fenceMaterial, bu_optarg, DEFAULT_MAXNAMELENGTH*3);
-      strncpy(poleMaterial, bu_optarg, DEFAULT_MAXNAMELENGTH*3);
-      strncpy(meshMaterial, bu_optarg, DEFAULT_MAXNAMELENGTH*3);
-      strncpy(wireMaterial, bu_optarg, DEFAULT_MAXNAMELENGTH*3);
+      bu_strlcpy(fenceMaterial, bu_optarg, DEFAULT_MAXNAMELENGTH*3);
+      bu_strlcpy(poleMaterial, bu_optarg, DEFAULT_MAXNAMELENGTH*3);
+      bu_strlcpy(meshMaterial, bu_optarg, DEFAULT_MAXNAMELENGTH*3);
+      bu_strlcpy(wireMaterial, bu_optarg, DEFAULT_MAXNAMELENGTH*3);
       break;
 
     case 'b' :
       memset(fenceMaterialParams, 0, DEFAULT_MAXNAMELENGTH*3);
-      strncpy(fenceMaterialParams, bu_optarg, DEFAULT_MAXNAMELENGTH*3);
+      bu_strlcpy(fenceMaterialParams, bu_optarg, DEFAULT_MAXNAMELENGTH*3);
       break;
     case 'B' :
       memset(fenceMaterialParams, 0, DEFAULT_MAXNAMELENGTH*3);
       memset(poleMaterialParams, 0, DEFAULT_MAXNAMELENGTH*3);
       memset(meshMaterialParams, 0, DEFAULT_MAXNAMELENGTH*3);
       memset(wireMaterialParams, 0, DEFAULT_MAXNAMELENGTH*3);
-      strncpy(fenceMaterialParams, bu_optarg, DEFAULT_MAXNAMELENGTH*3);
-      strncpy(poleMaterialParams, bu_optarg, DEFAULT_MAXNAMELENGTH*3);
-      strncpy(meshMaterialParams, bu_optarg, DEFAULT_MAXNAMELENGTH*3);
-      strncpy(wireMaterialParams, bu_optarg, DEFAULT_MAXNAMELENGTH*3);
+      bu_strlcpy(fenceMaterialParams, bu_optarg, DEFAULT_MAXNAMELENGTH*3);
+      bu_strlcpy(poleMaterialParams, bu_optarg, DEFAULT_MAXNAMELENGTH*3);
+      bu_strlcpy(meshMaterialParams, bu_optarg, DEFAULT_MAXNAMELENGTH*3);
+      bu_strlcpy(wireMaterialParams, bu_optarg, DEFAULT_MAXNAMELENGTH*3);
       break;
 
     case 'c' :
@@ -510,47 +510,47 @@ int parseArguments(int argc, char **argv)
 
     case 'f' :
       memset(fenceName, 0, DEFAULT_MAXNAMELENGTH);
-      strncpy(fenceName, bu_optarg, DEFAULT_MAXNAMELENGTH);
+      bu_strlcpy(fenceName, bu_optarg, DEFAULT_MAXNAMELENGTH);
       break;
     case 'F' :
       memset(fenceName, 0, DEFAULT_MAXNAMELENGTH);
-      strncpy(fenceName, bu_optarg, DEFAULT_MAXNAMELENGTH);
+      bu_strlcpy(fenceName, bu_optarg, DEFAULT_MAXNAMELENGTH);
       break;
 
     case 'p' :
       memset(poleName, 0, DEFAULT_MAXNAMELENGTH);
-      strncpy(poleName, bu_optarg, DEFAULT_MAXNAMELENGTH);
+      bu_strlcpy(poleName, bu_optarg, DEFAULT_MAXNAMELENGTH);
       break;
     case 'P' :
       memset(poleName, 0, DEFAULT_MAXNAMELENGTH);
-      strncpy(poleName, bu_optarg, DEFAULT_MAXNAMELENGTH);
+      bu_strlcpy(poleName, bu_optarg, DEFAULT_MAXNAMELENGTH);
       break;
 
     case 'm' :
       memset(meshName, 0, DEFAULT_MAXNAMELENGTH);
-      strncpy(meshName, bu_optarg, DEFAULT_MAXNAMELENGTH);
+      bu_strlcpy(meshName, bu_optarg, DEFAULT_MAXNAMELENGTH);
       break;
     case 'M' :
       memset(meshName, 0, DEFAULT_MAXNAMELENGTH);
-      strncpy(meshName, bu_optarg, DEFAULT_MAXNAMELENGTH);
+      bu_strlcpy(meshName, bu_optarg, DEFAULT_MAXNAMELENGTH);
       break;
 
     case 'w' :
       memset(wireName, 0, DEFAULT_MAXNAMELENGTH);
-      strncpy(wireName, bu_optarg, DEFAULT_MAXNAMELENGTH);
+      bu_strlcpy(wireName, bu_optarg, DEFAULT_MAXNAMELENGTH);
       break;
     case 'W' :
       memset(wireName, 0, DEFAULT_MAXNAMELENGTH);
-      strncpy(wireName, bu_optarg, DEFAULT_MAXNAMELENGTH);
+      bu_strlcpy(wireName, bu_optarg, DEFAULT_MAXNAMELENGTH);
       break;
 
     case 's' :
       memset(segmentName, 0, DEFAULT_MAXNAMELENGTH);
-      strncpy(segmentName, bu_optarg, DEFAULT_MAXNAMELENGTH);
+      bu_strlcpy(segmentName, bu_optarg, DEFAULT_MAXNAMELENGTH);
       break;
     case 'S' :
       memset(segmentName, 0, DEFAULT_MAXNAMELENGTH);
-      strncpy(segmentName, bu_optarg, DEFAULT_MAXNAMELENGTH);
+      bu_strlcpy(segmentName, bu_optarg, DEFAULT_MAXNAMELENGTH);
       break;
 
     case 'e' :
@@ -1918,7 +1918,7 @@ int main(int argc, char **argv)
 	  fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for fence name\n", verboseinput);
 	}
 	if (strcmp(verboseinput, "") != 0) {
-	  strncpy(fenceName, verboseinput, DEFAULT_MAXNAMELENGTH);
+	  bu_strlcpy(fenceName, verboseinput, DEFAULT_MAXNAMELENGTH);
 	}
       }
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
@@ -1997,7 +1997,7 @@ int main(int argc, char **argv)
 	  fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for fence material\n", verboseinput);
 	}
 	if (strcmp(verboseinput, "") != 0) {
-	  strncpy(fenceMaterial, verboseinput, DEFAULT_MAXNAMELENGTH*3);
+	  bu_strlcpy(fenceMaterial, verboseinput, DEFAULT_MAXNAMELENGTH*3);
 	}
       }
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
@@ -2014,7 +2014,7 @@ int main(int argc, char **argv)
 	  fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for fence material params\n", verboseinput);
 	}
 	if (strcmp(verboseinput, "") != 0) {
-	  strncpy(fenceMaterialParams, verboseinput, DEFAULT_MAXNAMELENGTH*3);
+	  bu_strlcpy(fenceMaterialParams, verboseinput, DEFAULT_MAXNAMELENGTH*3);
 	}
       }
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
@@ -2067,7 +2067,7 @@ int main(int argc, char **argv)
 	  fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for pole name\n", verboseinput);
 	}
 	if (strcmp(verboseinput, "") != 0) {
-	  strncpy(poleName, verboseinput, DEFAULT_MAXNAMELENGTH);
+	  bu_strlcpy(poleName, verboseinput, DEFAULT_MAXNAMELENGTH);
 	}
       }
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
@@ -2135,7 +2135,7 @@ int main(int argc, char **argv)
 	  fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for pole material\n", verboseinput);
 	}
 	if (strcmp(verboseinput, "") != 0) {
-	  strncpy(poleMaterial, verboseinput, DEFAULT_MAXNAMELENGTH*3);
+	  bu_strlcpy(poleMaterial, verboseinput, DEFAULT_MAXNAMELENGTH*3);
 	}
       }
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
@@ -2152,7 +2152,7 @@ int main(int argc, char **argv)
 	  fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for pole material params\n", verboseinput);
 	}
 	if (strcmp(verboseinput, "") != 0) {
-	  strncpy(poleMaterialParams, verboseinput, DEFAULT_MAXNAMELENGTH*3);
+	  bu_strlcpy(poleMaterialParams, verboseinput, DEFAULT_MAXNAMELENGTH*3);
 	}
       }
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
@@ -2205,7 +2205,7 @@ int main(int argc, char **argv)
 	  fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for mesh name\n", verboseinput);
 	}
 	if (strcmp(verboseinput, "") != 0) {
-	  strncpy(meshName, verboseinput, DEFAULT_MAXNAMELENGTH);
+	  bu_strlcpy(meshName, verboseinput, DEFAULT_MAXNAMELENGTH);
 	}
       }
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
@@ -2256,7 +2256,7 @@ int main(int argc, char **argv)
 	  fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for mesh material\n", verboseinput);
 	}
 	if (strcmp(verboseinput, "") != 0) {
-	  strncpy(meshMaterial, verboseinput, DEFAULT_MAXNAMELENGTH*3);
+	  bu_strlcpy(meshMaterial, verboseinput, DEFAULT_MAXNAMELENGTH*3);
 	}
       }
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
@@ -2273,7 +2273,7 @@ int main(int argc, char **argv)
 	  fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for mesh material params\n", verboseinput);
 	}
 	if (strcmp(verboseinput, "") != 0) {
-	  strncpy(meshMaterialParams, verboseinput, DEFAULT_MAXNAMELENGTH*3);
+	  bu_strlcpy(meshMaterialParams, verboseinput, DEFAULT_MAXNAMELENGTH*3);
 	}
       }
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
@@ -2326,7 +2326,7 @@ int main(int argc, char **argv)
 	  fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for wire name\n", verboseinput);
 	}
 	if (strcmp(verboseinput, "") != 0) {
-	  strncpy(wireName, verboseinput, DEFAULT_MAXNAMELENGTH);
+	  bu_strlcpy(wireName, verboseinput, DEFAULT_MAXNAMELENGTH);
 	}
       }
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
@@ -2377,7 +2377,7 @@ int main(int argc, char **argv)
 	  fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for wire material\n", verboseinput);
 	}
 	if (strcmp(verboseinput, "") != 0) {
-	  strncpy(wireMaterial, verboseinput, DEFAULT_MAXNAMELENGTH*3);
+	  bu_strlcpy(wireMaterial, verboseinput, DEFAULT_MAXNAMELENGTH*3);
 	}
       }
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
@@ -2394,7 +2394,7 @@ int main(int argc, char **argv)
 	  fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for wire material params\n", verboseinput);
 	}
 	if (strcmp(verboseinput, "") != 0) {
-	  strncpy(wireMaterialParams, verboseinput, DEFAULT_MAXNAMELENGTH*3);
+	  bu_strlcpy(wireMaterialParams, verboseinput, DEFAULT_MAXNAMELENGTH*3);
 	}
       }
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
@@ -2478,7 +2478,7 @@ int main(int argc, char **argv)
 	  fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for segment name\n", verboseinput);
 	}
 	if (strcmp(verboseinput, "") != 0) {
-	  strncpy(segmentName, verboseinput, DEFAULT_MAXNAMELENGTH);
+	  bu_strlcpy(segmentName, verboseinput, DEFAULT_MAXNAMELENGTH);
 	}
       }
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);

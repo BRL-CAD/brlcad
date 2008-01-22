@@ -143,9 +143,11 @@ rt_read_timer(char *str, int len)
 	bu_vls_init( &vls );
 	cpu = rt_get_timer( &vls, (double *)0 );
 	todo = bu_vls_strlen( &vls );
-	if ( todo > len )  todo = len-1;
-	strncpy( str, bu_vls_addr(&vls), todo );
-	str[todo] = '\0';
+
+	if (todo > len)
+	    todo = len;
+	bu_strlcpy( str, bu_vls_addr(&vls), todo );
+
 	return cpu;
 }
 

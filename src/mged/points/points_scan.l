@@ -64,6 +64,7 @@
 
 #include "machine.h"
 #include "vmath.h"
+#include "bu.h"
 
 /* increase token limits of at&t and mk2 lex */
 #undef YYLMAX
@@ -216,11 +217,8 @@ COMMA	[,]
     BEGIN(LINE);
 
     /* save the next line for error reporting */
-    strncpy(previous_linebuffer, linebuffer, YYLMAX);
-    previous_linebuffer[YYLMAX] = '\0';
-
-    strncpy(linebuffer, yytext+1, YYLMAX);
-    linebuffer[YYLMAX] = '\0';
+    bu_strlcpy(previous_linebuffer, linebuffer, YYLMAX);
+    bu_strlcpy(linebuffer, yytext+1, YYLMAX);
 
     while (i < yyleng && (yytext[i] == '\n' || yytext[i] == '\r')) {
 	if (yytext[i] == '\n') {

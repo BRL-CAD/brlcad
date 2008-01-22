@@ -232,7 +232,7 @@ do_grid(char *line)
 	if ( RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
 		bu_log( "ERROR: bu_mem_barriercheck failed at start of do_grid\n" );
 
-	strncpy( field, &line[8], 8 );
+	bu_strlcpy(field,  &line[8], sizeof(field));
 	grid_no = atoi( field );
 
 	if ( grid_no < 1 )
@@ -241,13 +241,13 @@ do_grid(char *line)
 		bu_bomb( "BAD GRID ID NUMBER\n" );
 	}
 
-	strncpy( field, &line[24], 8 );
+	bu_strlcpy(field,  &line[24], sizeof(field));
 	x = atof( field );
 
-	strncpy( field, &line[32], 8 );
+	bu_strlcpy(field,  &line[32], sizeof(field));
 	y = atof( field );
 
-	strncpy( field, &line[40], 8 );
+	bu_strlcpy(field,  &line[40], sizeof(field));
 	z = atof( field );
 
 	while ( grid_no > grid_size - 1 )
@@ -330,7 +330,7 @@ do_tri(char *line)
 	if ( debug )
 		bu_log( "do_tri: %s\n", line );
 
-	strncpy( field, &line[8], 8 );
+	bu_strlcpy(field,  &line[8], sizeof(field));
 	element_id = atoi( field );
 
 	if ( !bot )
@@ -349,13 +349,13 @@ do_tri(char *line)
 			bu_log( "memory corrupted after malloc of faces, thickness, and facemode\n" );
 	}
 
-	strncpy( field, &line[24], 8 );
+	bu_strlcpy(field,  &line[24], sizeof(field));
 	pt1 = atoi( field );
 
-	strncpy( field, &line[32], 8 );
+	bu_strlcpy(field,  &line[32], sizeof(field));
 	pt2 = atoi( field );
 
-	strncpy( field, &line[40], 8 );
+	bu_strlcpy(field,  &line[40], sizeof(field));
 	pt3 = atoi( field );
 
 	thick = 0.0;
@@ -363,10 +363,10 @@ do_tri(char *line)
 
 	if ( mode == PLATE_MODE )
 	{
-		strncpy( field, &line[56], 8 );
+		bu_strlcpy(field,  &line[56], sizeof(field));
 		thick = atof( field ) * 25.4;
 
-		strncpy( field, &line[64], 8 );
+		bu_strlcpy(field,  &line[64], sizeof(field));
 		pos = atoi( field );
 		if ( pos == 0 )
 			pos = POS_FRONT;
@@ -393,7 +393,7 @@ do_quad(char *line)
 	fastf_t thick = 0.0;
 	int pos = 0;
 
-	strncpy( field, &line[8], 8 );
+	bu_strlcpy(field,  &line[8], sizeof(field));
 	element_id = atoi( field );
 
 	if ( debug )
@@ -411,24 +411,24 @@ do_quad(char *line)
 		face_count = 0;
 	}
 
-	strncpy( field, &line[24], 8 );
+	bu_strlcpy(field,  &line[24], sizeof(field));
 	pt1 = atoi( field );
 
-	strncpy( field, &line[32], 8 );
+	bu_strlcpy(field,  &line[32], sizeof(field));
 	pt2 = atoi( field );
 
-	strncpy( field, &line[40], 8 );
+	bu_strlcpy(field,  &line[40], sizeof(field));
 	pt3 = atoi( field );
 
-	strncpy( field, &line[48], 8 );
+	bu_strlcpy(field,  &line[48], sizeof(field));
 	pt4 = atoi( field );
 
 	if ( mode == PLATE_MODE )
 	{
-		strncpy( field, &line[56], 8 );
+		bu_strlcpy(field,  &line[56], sizeof(field));
 		thick = atof( field ) * 25.4;
 
-		strncpy( field, &line[64], 8 );
+		bu_strlcpy(field,  &line[64], sizeof(field));
 		pos = atoi( field );
 
 		if ( pos == 0 )	/* use default */
@@ -571,10 +571,10 @@ wdb_importFg4Section_cmd(struct rt_wdb	*wdbp,
 
     FIND_NEWLINE(cp, eosFlag);
 
-    strncpy(field, line+8, 8);
+    bu_strlcpy(field, line+8, sizeof(field));
     group_id = atoi(field);
 
-    strncpy(field, line+16, 8);
+    bu_strlcpy(field, line+16, sizeof(field));
     comp_id = atoi(field);
 
     region_id = group_id * 1000 + comp_id;
@@ -584,7 +584,7 @@ wdb_importFg4Section_cmd(struct rt_wdb	*wdbp,
 	comp_id = 999;
     }
 
-    strncpy(field, line+24, 8);
+    bu_strlcpy(field, line+24, sizeof(field));
     mode = atoi(field);
     if (mode != 1 && mode != 2) {
 	bu_log("Illegal mode (%d) for group %d component %d, using volume mode\n",

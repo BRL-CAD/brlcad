@@ -388,7 +388,7 @@ db_update_ident( struct db_i *dbip, const char *new_title, double local2mm )
 	}
 
 	rec.i.i_title[0] = '\0';
-	(void)strncpy(rec.i.i_title, new_title, sizeof(rec.i.i_title)-1 );
+	bu_strlcpy(rec.i.i_title, new_title, sizeof(rec.i.i_title) );
 
 	old_title = dbip->dbi_title;
 	dbip->dbi_title = bu_strdup( new_title );
@@ -439,8 +439,8 @@ db_fwrite_ident( FILE *fp, const char *title, double local2mm )
 	memset((char *)&rec, 0, sizeof(rec));
 	rec.i.i_id = ID_IDENT;
 	rec.i.i_units = code;
-	(void)strncpy( rec.i.i_version, ID_VERSION, sizeof(rec.i.i_version) );
-	(void)strncpy(rec.i.i_title, title, sizeof(rec.i.i_title)-1 );
+	bu_strlcpy(rec.i.i_version, ID_VERSION, sizeof(rec.i.i_version));
+	bu_strlcpy(rec.i.i_title, title, sizeof(rec.i.i_title));
 
 	if ( fwrite( (char *)&rec, sizeof(rec), 1, fp ) != 1 )
 		return -1;

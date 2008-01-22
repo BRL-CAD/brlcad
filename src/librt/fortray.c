@@ -75,10 +75,11 @@ fr_string_f2c(char *str, int maxlen)
 	int	len;
 	int	i;
 
-	len = sizeof(buf)-1;
-	if ( maxlen < len )  len = maxlen;
-	strncpy( buf, str, len );
-	buf[len] = '\0';
+	len = sizeof(buf);
+	if (maxlen < len)
+	    len = maxlen;
+
+	bu_strlcpy( buf, str, len );
 
 	/* Remove any trailing blanks */
 	for ( i=strlen(buf)-1; i >= 0; i-- )  {
@@ -366,7 +367,8 @@ BU_FORTRAN(frname, FRNAME)(char		*fbuf,
 			offset = len-(fbuflen+1);
 			len -= (fbuflen+1);
 		}
-		strncpy( fbuf, rp->reg_name+offset, len );
+		bu_strlcpy( fbuf, rp->reg_name+offset, len );
+		fbuf[len] = ' '; /* replace null with space, needs testing */
 		for ( i=offset+len; i < fbuflen; i++ )
 			fbuf[i] = ' ';
 		return;

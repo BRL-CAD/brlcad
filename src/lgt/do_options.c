@@ -1215,8 +1215,8 @@ f_Animate(HMitem *itemp, char **args)
 			char		*suffixptr;
 		snprintf(prompt, MAX_LN, "Movie file prefix ? (%s) ", prefix);
 		if ( get_Input( input_ln, MAX_LN, prompt ) != NULL )
-			strncpy( prefix, input_ln, MAX_LN );
-		strncpy(movie_file, prefix, MAX_LN);
+			bu_strlcpy( prefix, input_ln, MAX_LN );
+		bu_strlcpy(movie_file, prefix, MAX_LN);
 		suffixptr = movie_file + strlen( movie_file );
 		(void) sprintf( prompt, "Number of frames ? (%d) ", noframes );
 		if (	get_Input( input_ln, MAX_LN, prompt ) != NULL
@@ -1441,12 +1441,12 @@ f_Wrt_Fb(HMitem *itemp, char **args)
 		static char save_fb_file[MAX_LN] = { 0 };
 		FBIO *save_fbiop;
 	if ( args != NULL && args[1] != NULL )
-		(void) strncpy( save_fb_file, args[1], MAX_LN );
+		bu_strlcpy( save_fb_file, args[1], MAX_LN );
 	else
 	if ( tty ) {
 	    snprintf( prompt, MAX_LN, "File name for saved image ? (%s) ", save_fb_file);
 	    if ( get_Input( input_ln, MAX_LN, prompt ) != NULL )
-		strncpy( save_fb_file, input_ln, MAX_LN );
+		bu_strlcpy( save_fb_file, input_ln, MAX_LN );
 	} else {
 	    return -1;
 	}
@@ -1509,13 +1509,13 @@ f_Rd_Fb(HMitem *itemp, char **args)
 		static char save_fb_file[MAX_LN] = { 0 };
 		FBIO *save_fbiop;
 	if ( args != NULL && args[1] != NULL )
-		(void) strncpy( save_fb_file, args[1], MAX_LN );
+		bu_strlcpy( save_fb_file, args[1], MAX_LN );
 	else
 	if ( tty )
 		{
 		snprintf( prompt, MAX_LN, "File name of image ? (%s) ", save_fb_file);
 		if ( get_Input( input_ln, MAX_LN, prompt ) != NULL )
-			strncpy( save_fb_file, input_ln, MAX_LN );
+			bu_strlcpy( save_fb_file, input_ln, MAX_LN );
 		}
 	else
 		return	-1;
@@ -1658,7 +1658,7 @@ static int
 f_Rd_Raw_IR(HMitem *itemp, char **args)
 {	FILE	*ir_fp;
 	if ( args != NULL && args[1] != NULL )
-		(void) strncpy( ir_file, args[1], MAX_LN );
+		bu_strlcpy( ir_file, args[1], MAX_LN );
 	else
 	if ( tty ) {
 	    (void) snprintf( prompt, MAX_LN, 
@@ -1666,7 +1666,7 @@ f_Rd_Raw_IR(HMitem *itemp, char **args)
 			     ir_file
 			     );
 	    if ( get_Input( input_ln, MAX_LN, prompt ) != NULL )
-		(void) strncpy( ir_file, input_ln, MAX_LN );
+		bu_strlcpy( ir_file, input_ln, MAX_LN );
 	} else {
 		return	-1;
 	}
@@ -1762,7 +1762,7 @@ f_Movie(HMitem *itemp, char **args)
 			     prefix
 			     );
 	    if ( get_Input( input_ln, MAX_LN, prompt ) != NULL )
-		(void) strncpy( prefix, input_ln, MAX_LN );
+		bu_strlcpy( prefix, input_ln, MAX_LN );
 	}
 	/* Setup default frame size to match grid size. */
 	if ( movie.m_frame_sz < 0 )
@@ -1828,7 +1828,7 @@ f_Movie(HMitem *itemp, char **args)
 				svkey_file[0] == '\0' ? "STDIN" : svkey_file
 				);
 		if ( get_Input( input_ln, MAX_LN, prompt) != NULL )
-			(void) strncpy( svkey_file, input_ln, MAX_LN );
+			bu_strlcpy( svkey_file, input_ln, MAX_LN );
 		if ( svkey_file[0] == '\0' )
 			movie.m_keys_fp = NULL; /* Will use STDIN. */
 		else
@@ -2066,16 +2066,16 @@ static int
 f_Err_File(HMitem *itemp, char **args)
 {	static int	err_fd = -1;
 	if ( args != NULL && args[1] != NULL )
-		(void) strncpy( err_file, args[1], MAX_LN );
+		bu_strlcpy( err_file, args[1], MAX_LN );
 	else
 	if ( tty )
 		{
 		(void) snprintf( prompt, MAX_LN, "Name of log file ? (%s) ", err_file );
 		if ( get_Input( input_ln, MAX_LN, prompt ) != NULL )
-			(void) strncpy( err_file, input_ln, MAX_LN );
+			bu_strlcpy( err_file, input_ln, MAX_LN );
 		}
 	else
-		(void) strncpy( err_file, "/dev/tty", MAX_LN );
+		bu_strlcpy( err_file, "/dev/tty", MAX_LN );
 
 	if ( err_file[0] == '\0' )
 		{
@@ -2185,7 +2185,7 @@ static int
 f_Wrt_IR_Db(HMitem *itemp, char **args)
 {	FILE		*ir_fp;
 	if ( args != NULL && args[1] != NULL )
-		(void) strncpy( ir_db_file, args[1], MAX_LN );
+		bu_strlcpy( ir_db_file, args[1], MAX_LN );
 	else
 	if ( tty ) {
 	    (void) snprintf( prompt, MAX_LN,
@@ -2193,7 +2193,7 @@ f_Wrt_IR_Db(HMitem *itemp, char **args)
 			     ir_db_file
 			     );
 	    if ( get_Input( input_ln, MAX_LN, prompt ) != NULL )
-		(void) strncpy( ir_db_file, input_ln, MAX_LN );
+		bu_strlcpy( ir_db_file, input_ln, MAX_LN );
 	} else {
 		return	-1;
 	}
@@ -2226,7 +2226,7 @@ static int
 f_Wrt_Lgt_Db(HMitem *itemp, char **args)
 {
 	if ( args != NULL && args[1] != NULL )
-		(void) strncpy( lgt_db_file, args[1], MAX_LN );
+		bu_strlcpy( lgt_db_file, args[1], MAX_LN );
 	else
 	if ( tty ) {
 	    (void) snprintf( prompt, MAX_LN,
@@ -2234,7 +2234,7 @@ f_Wrt_Lgt_Db(HMitem *itemp, char **args)
 			     lgt_db_file
 			     );
 	    if ( get_Input( input_ln, MAX_LN, prompt ) != NULL )
-		(void) strncpy( lgt_db_file, input_ln, MAX_LN );
+		bu_strlcpy( lgt_db_file, input_ln, MAX_LN );
 	} else {
 	    return	-1;
 	}
@@ -2257,7 +2257,7 @@ static int
 f_Wrt_Mat_Db(HMitem *itemp, char **args)
 {
 	if ( args != NULL && args[1] != NULL )
-		(void) strncpy( mat_db_file, args[1], MAX_LN );
+		bu_strlcpy( mat_db_file, args[1], MAX_LN );
 	else
 	if ( tty ) {
 	    (void) snprintf( prompt, MAX_LN, 
@@ -2265,7 +2265,7 @@ f_Wrt_Mat_Db(HMitem *itemp, char **args)
 			     mat_db_file
 			     );
 	    if ( get_Input( input_ln, MAX_LN, prompt ) != NULL )
-		(void) strncpy( mat_db_file, input_ln, MAX_LN );
+		bu_strlcpy( mat_db_file, input_ln, MAX_LN );
 	} else {
 	    return	-1;
 	}
@@ -2498,7 +2498,7 @@ static int
 f_Rd_IR_Db(HMitem *itemp, char **args)
 {	FILE	*ir_fp;
 	if ( args != NULL && args[1] != NULL )
-		(void) strncpy( ir_db_file, args[1], MAX_LN );
+		bu_strlcpy( ir_db_file, args[1], MAX_LN );
 	else
 	if ( tty ) {
 	    (void) snprintf( prompt, MAX_LN,
@@ -2506,7 +2506,7 @@ f_Rd_IR_Db(HMitem *itemp, char **args)
 			     ir_db_file
 			     );
 	    if ( get_Input( input_ln, MAX_LN, prompt ) != NULL )
-		(void) strncpy( ir_db_file, input_ln, MAX_LN );
+		bu_strlcpy( ir_db_file, input_ln, MAX_LN );
 	}
 	if ( ir_db_file[0] == '\0' )
 		{
@@ -2541,7 +2541,7 @@ static int
 f_Rd_Lgt_Db(HMitem *itemp, char **args)
 {
 	if ( args != NULL && args[1] != NULL )
-		(void) strncpy( lgt_db_file, args[1], MAX_LN );
+		bu_strlcpy( lgt_db_file, args[1], MAX_LN );
 	else
 	if ( tty ) {
 	    (void) snprintf( prompt, MAX_LN,
@@ -2549,7 +2549,7 @@ f_Rd_Lgt_Db(HMitem *itemp, char **args)
 			     lgt_db_file
 			     );
 	    if ( get_Input( input_ln, MAX_LN, prompt ) != NULL )
-		(void) strncpy( lgt_db_file, input_ln, MAX_LN);
+		bu_strlcpy( lgt_db_file, input_ln, MAX_LN);
 	}
 	if ( lgt_db_file[0] == '\0' )
 		{
@@ -2570,7 +2570,7 @@ static int
 f_Rd_Mat_Db(HMitem *itemp, char **args)
 {
 	if ( args != NULL && args[1] != NULL )
-		(void) strncpy( mat_db_file, args[1], MAX_LN );
+		bu_strlcpy( mat_db_file, args[1], MAX_LN );
 	else
 	if ( tty ) {
 	    (void) snprintf( prompt, MAX_LN,
@@ -2578,7 +2578,7 @@ f_Rd_Mat_Db(HMitem *itemp, char **args)
 			     mat_db_file
 			     );
 	    if ( get_Input( input_ln, MAX_LN, prompt ) != NULL )
-		(void) strncpy( mat_db_file, input_ln, MAX_LN);
+		bu_strlcpy( mat_db_file, input_ln, MAX_LN);
 	}
 	if ( mat_db_file[0] == '\0' )
 		{
@@ -2699,7 +2699,7 @@ f_Key_Frame(HMitem *itemp, char **args)
 		FILE		*svkey_fp=NULL;
 	if ( args != NULL && args[1] != NULL )
 		{
-		(void) strncpy( svkey_file, args[1], MAX_LN );
+		bu_strlcpy( svkey_file, args[1], MAX_LN );
 		if ( (svkey_fp = fopen( svkey_file, "r" )) == NULL )
 			{
 			bu_log( "Can't open \"%s\" for reading.", svkey_file );
@@ -2726,7 +2726,7 @@ f_Key_Frame(HMitem *itemp, char **args)
 				svkey_file
 				);
 		if ( get_Input( input_ln, MAX_LN, prompt ) != NULL )
-			(void) strncpy( svkey_file, input_ln, MAX_LN );
+			bu_strlcpy( svkey_file, input_ln, MAX_LN );
 		if ( svkey_file[0] == '\0' )
 			{
 			bu_log( "No default, must specify file name!\n" );
@@ -2932,7 +2932,7 @@ static int
 f_Raster_File(HMitem *itemp, char **args)
 {
 	if ( args != NULL && args[1] != NULL )
-		(void) strncpy( fb_file, args[1], MAX_LN );
+		bu_strlcpy( fb_file, args[1], MAX_LN );
 	else
 	if ( tty ) {
 	    (void) snprintf( prompt, MAX_LN,
@@ -2940,7 +2940,7 @@ f_Raster_File(HMitem *itemp, char **args)
 			     fb_file
 			     );
 	    if ( get_Input( input_ln, MAX_LN, prompt ) != NULL )
-		(void) strncpy( fb_file, input_ln, MAX_LN );
+		bu_strlcpy( fb_file, input_ln, MAX_LN );
 	} else {
 	    fb_file[0] = '\0';
 	}
@@ -3037,11 +3037,9 @@ f_Grid_X_Pos(HMitem *itemp, char **args)
 	if ( tty )
 		{
 		(void) sprintf( scratchbuf, " [%04d-", grid_x_org );
-		(void) strncpy( GRID_PIX_PTR,
-				scratchbuf, strlen( scratchbuf ) );
+		bu_strlcpy( GRID_PIX_PTR, scratchbuf, strlen( scratchbuf ) );
 		(void) sprintf( scratchbuf, "%04d,", grid_x_fin );
-		(void) strncpy( GRID_SIZ_PTR,
-				scratchbuf, strlen( scratchbuf ) );
+		bu_strlcpy( GRID_SIZ_PTR, scratchbuf, strlen( scratchbuf ) );
 		}
 	grid_x_cur = grid_x_org;
 	return	1;
@@ -3080,11 +3078,9 @@ f_Grid_Y_Pos(HMitem *itemp, char **args)
 	if ( tty )
 		{
 		(void) sprintf( scratchbuf, "%04d-", grid_y_org );
-		(void) strncpy( GRID_SCN_PTR,
-				scratchbuf, strlen( scratchbuf ) );
+		bu_strlcpy( GRID_SCN_PTR, scratchbuf, strlen( scratchbuf ) );
 		(void) sprintf( scratchbuf, "%04d:", grid_y_fin );
-		(void) strncpy( GRID_FIN_PTR,
-				scratchbuf, strlen( scratchbuf ) );
+		bu_strlcpy( GRID_FIN_PTR, scratchbuf, strlen( scratchbuf ) );
 		}
 	grid_y_cur = grid_y_org;
 	return	1;
@@ -3542,7 +3538,7 @@ make_Script(char *file)
 {	FILE	*run_fp;
 		char	**obj_p = objects;
 	if ( file != NULL )
-		(void) strncpy( script_file, file, MAX_LN );
+		bu_strlcpy( script_file, file, MAX_LN );
 	else
 	if ( tty ) {
 	    (void) snprintf( prompt, MAX_LN,
@@ -3550,7 +3546,7 @@ make_Script(char *file)
 			     script_file
 			     );
 	    if ( get_Input( input_ln, MAX_LN, prompt ) != NULL )
-		(void) strncpy( script_file, input_ln, MAX_LN );
+		bu_strlcpy( script_file, input_ln, MAX_LN );
 	}
 	if ( script_file[0] == '\0' )
 		{

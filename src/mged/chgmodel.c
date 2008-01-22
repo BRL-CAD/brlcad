@@ -2036,8 +2036,8 @@ f_fracture(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	/* get the prefix for the solids to be created. */
 	memset(prefix, 0, sizeof(prefix));
-	strncpy(prefix, argv[argc-1], sizeof(prefix)-2-maxdigits);
-	strcat(prefix, "_");
+	bu_strlcpy(prefix, argv[argc-1], sizeof(prefix));
+	bu_strlcat(prefix, "_", sizeof(prefix));
 
 	/* Bust it up here */
 

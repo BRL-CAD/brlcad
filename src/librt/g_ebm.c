@@ -662,8 +662,8 @@ rt_ebm_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 	bu_vls_struct_print( &str, rt_ebm_parse, (char *)&ebm );
 
 	rec->ss.ss_id = DBID_STRSOL;
-	strncpy( rec->ss.ss_keyword, "ebm", NAMESIZE-1 );
-	strncpy( rec->ss.ss_args, bu_vls_addr(&str), DB_SS_LEN-1 );
+	bu_strlcpy( rec->ss.ss_keyword, "ebm", sizeof(rec->ss.ss_keyword) );
+	bu_strlcpy( rec->ss.ss_args, bu_vls_addr(&str), DB_SS_LEN );
 	bu_vls_free( &str );
 
 	return(0);
@@ -803,7 +803,7 @@ rt_ebm_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	ep->ext_nbytes = bu_vls_strlen( &str ) + 1;
 	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "ebm external");
 
-	strncpy( ep->ext_buf, bu_vls_addr(&str), ep->ext_nbytes-1 );
+	bu_strlcpy( ep->ext_buf, bu_vls_addr(&str), ep->ext_nbytes );
 	bu_vls_free( &str );
 
 	return(0);
@@ -1647,8 +1647,8 @@ main( int argc, char * *argv )
 	Tsolid.st_matp = &Tmat;
 	MAT_IDN( Tsolid.st_matp );
 
-	strcpy( rec.ss.ss_keyword, "ebm" );
-	strcpy( rec.ss.ss_args, "file=bm.bw w=6 n=6 d=6.0" );
+	bu_strlcpy( rec.ss.ss_keyword, "ebm", sizeof(rec.ss.ss_keyword) );
+	bu_strlcpy( rec.ss.ss_args, "file=bm.bw w=6 n=6 d=6.0", DB_SS_LEN );
 
 	if ( rt_ebm_prep( &Tsolid, &rec, 0 ) != 0 )  {
 		bu_exit(1, "prep failed\n");
@@ -1992,7 +1992,7 @@ rt_ebm_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, ch
 					       TCL_STATIC );
 				return( TCL_ERROR );
 			}
-			strncpy( ebm->file, argv[1], RT_EBM_NAME_LEN-1 );
+			bu_strlcpy( ebm->file, argv[1], RT_EBM_NAME_LEN );
 		}
 		else if ( !strcmp( argv[0], "W" ) ) {
 			ebm->xdim = atoi( argv[1] );

@@ -49,6 +49,9 @@
 #  include <term.h>
 #endif
 
+#include "machine.h"
+#include "bu.h"
+
 #include "./Sc.h"
 
 
@@ -169,7 +172,7 @@ ScInit( FILE *fp ) {
       (void) fprintf( stderr, "TERM not set or exported!\n" );
       return	0;
     }
-  (void) strncpy( ScTermname, term, ScTERMSIZ-1 );
+  bu_strlcpy( ScTermname, term, ScTERMSIZ );
 
   /* Get terminal entry.						*/
   switch ( tgetent( ScTermcap, term ) )

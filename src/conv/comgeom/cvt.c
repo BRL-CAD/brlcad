@@ -101,7 +101,7 @@ get_args(int argc, register char **argv)
 		verbose = atoi(bu_optarg);
 		break;
 	    case 's':
-		strncpy( name_it, bu_optarg, sizeof(name_it) );
+		bu_strlcpy( name_it, bu_optarg, sizeof(name_it) );
 		break;
 	    case 'v':
 		version = atoi(bu_optarg);
@@ -212,7 +212,7 @@ main(int argc, char **argv)
     switch ( version )  {
 	case 1:
 	    title = ctitle;
-	    strcpy( units, "in" );
+	    bu_strlcpy( units, "in", sizeof(units) );
 	    break;
 	case 4:
 	case 5:
@@ -247,7 +247,7 @@ main(int argc, char **argv)
      */
     if ( mk_conversion( units ) < 0 )  {
 	printf("WARNING:  unknown units '%s', using inches\n", units);
-	strcpy( units, "in" );
+	bu_strlcpy( units, "in", sizeof(units) );
 	(void)mk_conversion( units );
     }
 

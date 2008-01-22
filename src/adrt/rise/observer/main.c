@@ -104,7 +104,7 @@ int main(int argc, char **argv) {
 	      break;
 
 	    case 'H':
-	      strncpy(host, optarg, 64);
+	      bu_strlcpy(host, optarg, sizeof(host));
 	      break;
 
 	    case 'h':
@@ -125,7 +125,7 @@ int main(int argc, char **argv) {
   argv += optind;
 
   if (argc)
-    strncpy(host, argv[0], 64);
+    bu_strlcpy(host, argv[0], sizeof(host));
 
   if (host[0]) {
     printf("Observer mode: connecting to %s on port %d\n", host, port);

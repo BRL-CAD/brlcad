@@ -28,9 +28,6 @@
  *	Michael John Muuss
  *	John R. Anderson
  *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 /** @} */
 
@@ -708,7 +705,6 @@ nmg_ck_e(const struct edgeuse *eu, const struct edge *e, const char *str)
 
 	errstr = bu_calloc(len, 1, "nmg_ck_e error str");
 	snprintf(errstr, len, "%sedge %8lx\n", str, (unsigned long)e);
-	errstr[len-1] = '\0'; /* sanity */
 
 	NMG_CK_EDGE(e);
 	NMG_CK_EDGEUSE(eu);
@@ -724,8 +720,7 @@ nmg_ck_e(const struct edgeuse *eu, const struct edge *e, const char *str)
 	} while (eparent != e->eu_p);
 
 	if (eparent != eu && eparent->eumate_p != eu) {
-	    strncat(errstr, "nmg_ck_e() Edge denies edgeuse parentage\n", len-strlen(errstr)-1);
-	    errstr[len-1] = '\0'; /* sanity */
+	    bu_strlcat(errstr, "nmg_ck_e() Edge denies edgeuse parentage\n", len);
 	    bu_bomb(errstr);
 	}
 
@@ -743,11 +738,9 @@ nmg_ck_vu(const long int *parent, const struct vertexuse *vu, const char *str)
 
 	errstr = bu_calloc(len, 1, "nmg_ck_vu error str");
 	snprintf(errstr, len, "%svertexuse %8lx\n", str, (unsigned long)vu);
-	errstr[len-1] = '\0'; /* sanity */
 
 	if (vu->up.magic_p != parent) {
-	    strncat(errstr, "nmg_ck_vu() Vertexuse denies parentage\n", len-strlen(errstr)-1);
-	    errstr[len-1] = '\0'; /* sanity */
+	    bu_strlcat(errstr, "nmg_ck_vu() Vertexuse denies parentage\n", len);
 	    bu_bomb(errstr);
 	}
 
@@ -766,25 +759,21 @@ nmg_ck_eu(const long int *parent, const struct edgeuse *eu, const char *str)
 
 	errstr = bu_calloc(len, 1, "nmg_ck_eu error str");
 	snprintf(errstr, len, "%sedgeuse %8lx\n", str, (unsigned long)eu);
-	errstr[len-1] = '\0'; /* sanity */
 
 	NMG_CK_EDGEUSE(eu);
 
 	if (eu->up.magic_p != parent) {
-	    strncat(errstr, "nmg_ck_eu() Edgeuse child denies parentage\n", len-strlen(errstr)-1);
-	    errstr[len-1] = '\0'; /* sanity */
+	    bu_strlcat(errstr, "nmg_ck_eu() Edgeuse child denies parentage\n", len);
 	    bu_bomb(errstr);
 	}
 
 	if (*eu->eumate_p->up.magic_p != *eu->up.magic_p) {
-	    strncat(errstr, "nmg_ck_eu() eumate has differnt kind of parent\n", len-strlen(errstr)-1);
-	    errstr[len-1] = '\0'; /* sanity */
+	    bu_strlcat(errstr, "nmg_ck_eu() eumate has differnt kind of parent\n", len);
 	    bu_bomb(errstr);
 	}
 	if (*eu->up.magic_p == NMG_SHELL_MAGIC) {
 		if (eu->eumate_p->up.s_p != eu->up.s_p) {
-		    strncat(errstr, "nmg_ck_eu() eumate in different shell\n", len-strlen(errstr)-1);
-		    errstr[len-1] = '\0'; /* sanity */
+		    bu_strlcat(errstr, "nmg_ck_eu() eumate in different shell\n", len);
 		    bu_bomb(errstr);
 		}
 
@@ -793,15 +782,13 @@ nmg_ck_eu(const long int *parent, const struct edgeuse *eu, const char *str)
 			eur = eur->eumate_p->radial_p;
 
 		if (!eur) {
-		    strncat(errstr, "nmg_ck_eu() Radial trip from eu ended in null pointer\n", len-strlen(errstr)-1);
-		    errstr[len-1] = '\0'; /* sanity */
+		    bu_strlcat(errstr, "nmg_ck_eu() Radial trip from eu ended in null pointer\n", len);
 		    bu_bomb(errstr);
 		}
 
 	} else if (*eu->up.magic_p == NMG_LOOPUSE_MAGIC) {
 		if (eu->eumate_p->up.lu_p != eu->up.lu_p->lumate_p) {
-		    strncat(errstr, "nmg_ck_eu() eumate not in same loop\n", len-strlen(errstr)-1);
-		    errstr[len-1] = '\0'; /* sanity */
+		    bu_strlcat(errstr, "nmg_ck_eu() eumate not in same loop\n", len);
 		    bu_bomb(errstr);
 		}
 
@@ -810,13 +797,11 @@ nmg_ck_eu(const long int *parent, const struct edgeuse *eu, const char *str)
 			eur = eur->eumate_p->radial_p;
 
 		if (!eur) {
-		    strncat(errstr, "nmg_ck_eu() radial path leads to null ptr\n", len-strlen(errstr)-1);
-		    errstr[len-1] = '\0'; /* sanity */
+		    bu_strlcat(errstr, "nmg_ck_eu() radial path leads to null ptr\n", len);
 		    bu_bomb(errstr);
 		}
 		if (eur == eu) {
-		    strncat(errstr, "nmg_ck_eu() Never saw eumate\n", len-strlen(errstr)-1);
-		    errstr[len-1] = '\0'; /* sanity */
+		    bu_strlcat(errstr, "nmg_ck_eu() Never saw eumate\n", len);
 		    bu_bomb(errstr);
 		}
 
@@ -829,8 +814,7 @@ nmg_ck_eu(const long int *parent, const struct edgeuse *eu, const char *str)
 			bu_bomb("nmg_ck_eu: edge and last-mate don't share vertex\n");
 
 	} else {
-	    strncat(errstr, "nmg_ck_eu() Bad edgeuse parent\n", len-strlen(errstr)-1);
-	    errstr[len-1] = '\0'; /* sanity */
+	    bu_strlcat(errstr, "nmg_ck_eu() Bad edgeuse parent\n", len);
 	    bu_bomb(errstr);
 	}
 
@@ -872,14 +856,12 @@ nmg_ck_l(const struct loopuse *lu, const struct loop *l, const char *str)
 
 	errstr = bu_calloc(len, 1, "nmg_ck_l error str");
 	snprintf(errstr, len, "%sloop %8lx\n", str, (unsigned long)l);
-	errstr[len-1] = '\0'; /* sanity */
 
 	NMG_CK_LOOP(l);
 	NMG_CK_LOOPUSE(lu);
 
 	if (l->lu_p != lu && l->lu_p->lumate_p != lu) {
-	    strncat(errstr, "nmg_ck_l() Cannot get from loop to loopuse\n", len-strlen(errstr)-1);
-	    errstr[len-1] = '\0'; /* sanity */
+	    bu_strlcat(errstr, "nmg_ck_l() Cannot get from loop to loopuse\n", len);
 	    bu_bomb(errstr);
 	}
 
@@ -908,34 +890,29 @@ nmg_ck_lu(const long int *parent, const struct loopuse *lu, const char *str)
 	NMG_CK_LOOPUSE(lu);
 
 	if (lu->up.magic_p != parent) {
-	    errstr = strncat(errstr, "nmg_ck_lu() loopuse child denies parentage\n", len-strlen(errstr)-1);
-	    errstr[len-1] = '\0'; /* sanity */
+	    bu_strlcat(errstr, "nmg_ck_lu() loopuse child denies parentage\n", len);
 	    bu_bomb(errstr);
 	}
 
 	/* check the parent of lu and lumate WRT each other */
 	NMG_CK_LOOPUSE(lu->lumate_p);
 	if (*lu->lumate_p->up.magic_p != *lu->up.magic_p) {
-	    strncat(errstr, "nmg_ck_lu() loopuse mate has different kind of parent\n", len-strlen(errstr)-1);
-	    errstr[len-1] = '\0'; /* sanity */
+	    bu_strlcat(errstr, "nmg_ck_lu() loopuse mate has different kind of parent\n", len);
 	    bu_bomb(errstr);
 	}
 
 	if (*lu->up.magic_p == NMG_SHELL_MAGIC) {
 		if (lu->lumate_p->up.s_p != lu->up.s_p) {
-		    strncat(errstr, "nmg_ck_lu() Lumate not in same shell\n", len-strlen(errstr)-1);
-		    errstr[len-1] = '\0'; /* sanity */
+		    bu_strlcat(errstr, "nmg_ck_lu() Lumate not in same shell\n", len);
 		    bu_bomb(errstr);
 		}
 	} else if (*lu->up.magic_p == NMG_FACEUSE_MAGIC) {
 		if (lu->lumate_p->up.fu_p != lu->up.fu_p->fumate_p) {
-		    strncat(errstr, "nmg_ck_lu() lumate part of different face\n", len-strlen(errstr)-1);
-		    errstr[len-1] = '\0'; /* sanity */
+		    bu_strlcat(errstr, "nmg_ck_lu() lumate part of different face\n", len);
 		    bu_bomb(errstr);
 		}
 	} else {
-	    strncat(errstr, "nmg_ck_lu() Bad loopuse parent type\n", len-strlen(errstr)-1);
-	    errstr[len-1] = '\0'; /* sanity */
+	    bu_strlcat(errstr, "nmg_ck_lu() Bad loopuse parent type\n", len);
 	    bu_bomb(errstr);
 	}
 
@@ -957,8 +934,7 @@ nmg_ck_lu(const long int *parent, const struct loopuse *lu, const char *str)
 			nmg_ck_eu(&lu->l.magic, eu, errstr);
 		}
 	} else {
-	    strncat(errstr, "nmg_ck_lu() Bad loopuse down pointer\n", len-strlen(errstr)-1 );
-	    errstr[len-1] = '\0'; /* sanity */
+	    bu_strlcat(errstr, "nmg_ck_lu() Bad loopuse down pointer\n", len);
 	    bu_bomb(errstr);
 	}
 	bu_free(errstr, "nmg_ck_lu error str");
@@ -1003,8 +979,7 @@ nmg_ck_f(const struct faceuse *fu, const struct face *f, const char *str)
 	NMG_CK_FACEUSE(fu);
 	NMG_CK_FACE_G_PLANE(f->g.plane_p);
 	if (f->fu_p != fu && f->fu_p->fumate_p != fu) {
-	    strncat(errstr, "nmg_ck_f() Cannot get from face to \"parent faceuse\"\n", len-strlen(errstr)-1);
-	    errstr[len-1] = '\0'; /* sanity */
+	    bu_strlcat(errstr, "nmg_ck_f() Cannot get from face to \"parent faceuse\"\n", len);
 	    bu_bomb(errstr);
 	}
 
@@ -1032,33 +1007,28 @@ nmg_ck_fu(const struct shell *s, const struct faceuse *fu, const char *str)
 	snprintf(errstr, len, "%sFaceuse %8lx\n", str, (unsigned long)fu);
 
 	if (fu->s_p != s) {
-	    strncat(errstr, "nmg_ck_fu() faceuse child denies shell parentage\n", len-strlen(errstr)-1 );
-	    errstr[len-1] = '\0'; /* sanity */
+	    bu_strlcat(errstr, "nmg_ck_fu() faceuse child denies shell parentage\n", len);
 	    bu_bomb(errstr);
 	}
 
 	if ( BU_LIST_PNEXT_PLAST( faceuse, fu ) ) {
-	    strncat(errstr, "nmg_ck_fu() Faceuse not lastward of next faceuse\n", len-strlen(errstr)-1 );
-	    errstr[len-1] = '\0'; /* sanity */
+	    bu_strlcat(errstr, "nmg_ck_fu() Faceuse not lastward of next faceuse\n", len);
 	    bu_bomb(errstr);
 	}
 
 	if ( BU_LIST_PLAST_PNEXT( faceuse, fu ) ) {
-	    strncat(errstr, "nmg_ck_fu() Faceuse not nextward from last faceuse\n", len-strlen(errstr)-1);
-	    errstr[len-1] = '\0'; /* sanity */
+	    bu_strlcat(errstr, "nmg_ck_fu() Faceuse not nextward from last faceuse\n", len);
 	    bu_bomb(errstr);
 	}
 
 	NMG_CK_FACEUSE(fu->fumate_p);
 	if (fu->fumate_p->fumate_p != fu) {
-	    strncat(errstr, "nmg_ck_fu() Faceuse not fumate of fumate\n", len-strlen(errstr)-1 );
-	    errstr[len-1] = '\0'; /* sanity */
+	    bu_strlcat(errstr, "nmg_ck_fu() Faceuse not fumate of fumate\n", len);
 	    bu_bomb(errstr);
 	}
 
 	if (fu->fumate_p->s_p != s) {
-	    strncat(errstr, "nmg_ck_fu() faceuse mates not in same shell\n", len-strlen(errstr)-1 );
-	    errstr[len-1] = '\0'; /* sanity */
+	    bu_strlcat(errstr, "nmg_ck_fu() faceuse mates not in same shell\n", len);
 	    bu_bomb(errstr);
 	}
 

@@ -114,7 +114,7 @@ points_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, str
 	if (ptp->pt_size < 0 )
 		ptp->pt_size = 512;
 	if (ptp->pt_file[0] == '\0' )
-		strcpy( ptp->pt_file, "points.ascii" );
+		bu_strlcpy( ptp->pt_file, "points.ascii", sizeof(ptp->pt_file) );
 
 	/* create a spherical data structure to bin point lists into */
 	if ((ptp->pt_map = spm_init( ptp->pt_size, sizeof(struct points) )) == SPM_NULL )

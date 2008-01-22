@@ -205,7 +205,7 @@ increment_assembly_counter(register struct area *cell, const char *path, area_ty
 
     l = strlen(path);
     buffer = bu_calloc(l+1, sizeof(char), "increment_assembly_counter buffer allocation");
-    strncpy(buffer, path, l);
+    bu_strlcpy(buffer, path, l+1);
 
     /* trim off the region name */
     while (l > 0) {
@@ -260,7 +260,7 @@ increment_assembly_counter(register struct area *cell, const char *path, area_ty
 
 		len = strlen(&buffer[l])+1;
 		name = (char *)bu_malloc(len, "increment_assembly_counter assembly name allocation");
-		strncpy(name, &buffer[l], len-1);
+		bu_strlcpy(name, &buffer[l], len);
 		cellp->name = name;
 		if (type == EXPOSED_AREA) {
 		    cellp->exposures++;

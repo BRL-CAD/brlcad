@@ -6299,7 +6299,7 @@ Make_new_name(struct db_i	*dbip,
 	int j;
 	char format_v4[25], format_v5[25];
 	struct bu_vls name_v5;
-	char name_v4[NAMESIZE];
+	char name_v4[NAMESIZE+1];
 	char *name;
 
 	/* only one use and not referenced elsewhere, nothing to do */
@@ -6332,7 +6332,7 @@ Make_new_name(struct db_i	*dbip,
 		use->used = 0;
 		if (dbip->dbi_version < 5) {
 			NAMEMOVE(dp->d_namep, name_v4);
-			name_v4[NAMESIZE-1] = '\0';                /* ensure null termination */
+			name_v4[NAMESIZE] = '\0';                /* ensure null termination */
 		}
 
 		/* Add an entry for the original at the end of the list

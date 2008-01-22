@@ -114,16 +114,16 @@ int main(int argc, char **argv) {
 			  port = atoi(optarg);
 			  break;
 		  case 'e':
-			  strncpy(exec, optarg, 64);
+			  bu_strlcpy(exec, optarg, sizeof(exec));
 			  break;
 		  case 'i':
-			  strncpy(temp, optarg, 4);
+			  bu_strlcpy(temp, optarg, sizeof(temp));
 			  interval = atoi(temp);
 			  if (interval < 0) interval = 0;
 			  if (interval > 60) interval = 60;
 			  break;
 		  case 'l':
-			  strncpy(list, optarg, 64);
+			  bu_strlcpy(list, optarg, sizeof(list));
 			  break;
 		  case 'h':
 			  help();
@@ -139,7 +139,7 @@ int main(int argc, char **argv) {
   argc -= optind;
   argv += optind;
 
-  strncpy(proj, argv[0], 64);
+  bu_strlcpy(proj, argv[0], sizeof(proj));
 
   if (proj[0]) {
     rise_master(port, obs_port, proj, list, exec, interval);

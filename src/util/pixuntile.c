@@ -113,7 +113,8 @@ int
 main(int argc, char **argv)
 {
 	int	i, y;
-	char	ibuf[1024*3], name[80];
+	char ibuf[1024*3] = {0};
+	char name[80] = {0};
 	FILE	*f[8];
 
 	if ( !get_args( argc, argv ) )  {
@@ -148,9 +149,9 @@ main(int argc, char **argv)
 					/* See if we read all the files */
 					if ( bu_optind >= argc )
 						goto done;
-					strncpy( name, argv[bu_optind++], 256-1 );
+					bu_strlcpy( name, argv[bu_optind++], sizeof(name) );
 				} else {
-					snprintf( name, 256, "%s.%d", base_name, framenumber );
+					snprintf( name, sizeof(name), "%s.%d", base_name, framenumber );
 				}
 				if ( (f[i] = fopen(name, "w")) == NULL ) {
 					perror( name );

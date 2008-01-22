@@ -126,8 +126,7 @@ cmd_glob(int *argcp, char **argv, int maxargs)
 	if (dbip == DBI_NULL)
 	  return 0;
 
-	strncpy( word, argv[*argcp], sizeof(word)-1 );
-	word[64] = '\0'; /* just in case */
+	bu_strlcpy( word, argv[*argcp], sizeof(word) );
 
 	/* If * ? [ or \ are present, this is a regular expression */
 	pattern = word;
@@ -201,8 +200,8 @@ HIDDEN void
 Do_prefix(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_leaf, genptr_t prefix_ptr, genptr_t obj_ptr, genptr_t user_ptr3)
 {
 	char *prefix, *obj;
-	char tempstring_v4[NAMESIZE+2];
-	int len = NAMESIZE+2;
+	char tempstring_v4[NAMESIZE+1];
+	int len = NAMESIZE+1;
 
 	RT_CK_DBI( dbip );
 	RT_CK_TREE( comb_leaf );
@@ -215,16 +214,15 @@ Do_prefix(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_lea
 
 	bu_free( comb_leaf->tr_l.tl_name, "comb_leaf->tr_l.tl_name" );
 	if ( dbip->dbi_version < 5 ) {
-		strncpy( tempstring_v4, prefix, len-1);
-		strncat( tempstring_v4, obj, len-strlen(prefix)-1);
-		tempstring_v4[len-1] = '\0'; /* sanity */
+		bu_strlcpy( tempstring_v4, prefix, len);
+		bu_strlcat( tempstring_v4, obj, len);
 		comb_leaf->tr_l.tl_name = bu_strdup( tempstring_v4 );
 	} else {
 	    len = strlen(prefix)+strlen(obj)+1;
 	    comb_leaf->tr_l.tl_name = (char *)bu_malloc( len, "Adding prefix" );
-	    strncpy( comb_leaf->tr_l.tl_name, prefix, len-1);
-	    strncat( comb_leaf->tr_l.tl_name, obj, len-strlen(prefix)-1 );
-	    comb_leaf->tr_l.tl_name[len-1] = '\0'; /* sanity */
+
+	    bu_strlcpy( comb_leaf->tr_l.tl_name , prefix, len);
+	    bu_strlcat( comb_leaf->tr_l.tl_name , obj, len );
 	}
 }
 
@@ -241,10 +239,10 @@ f_prefix(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	register struct directory *dp;
 	struct rt_db_internal	intern;
 	struct rt_comb_internal *comb;
-	char tempstring_v4[NAMESIZE+2];
+	char tempstring_v4[NAMESIZE+1];
 	struct bu_vls tempstring_v5;
 	char *tempstring;
-	int len = NAMESIZE+2;
+	int len = NAMESIZE+1;
 
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
@@ -272,7 +270,7 @@ f_prefix(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		  struct bu_vls tmp_vls;
 
 		  bu_vls_init(&tmp_vls);
-		  bu_vls_printf(&tmp_vls, "'%s%s' too long, must be less than %d characters.\n",
+		  bu_vls_printf(&tmp_vls, "'%s%s' too long, must be %d characters or less.\n",
 				argv[1], argv[i], NAMESIZE);
 		  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 		  bu_vls_free(&tmp_vls);
@@ -282,9 +280,8 @@ f_prefix(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		}
 
 		if ( dbip->dbi_version < 5 ) {
-			strncpy( tempstring_v4, argv[1], len-1);
-			strncat( tempstring_v4, argv[i], len-strlen(argv[1])-1);
-			tempstring_v4[len-1] = '\0'; /* sanity */
+			bu_strlcpy( tempstring_v4, argv[1], len);
+			bu_strlcat( tempstring_v4, argv[i], len);
 			tempstring = tempstring_v4;
 		} else {
 			bu_vls_trunc( &tempstring_v5, 0 );

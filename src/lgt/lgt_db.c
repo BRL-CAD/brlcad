@@ -168,7 +168,7 @@ lgt_Edit_Db_Entry(int id)
 	entry = &lgts[id];
 	(void) snprintf( prompt, MAX_LN, "light source name ? (%s) ", entry->name );
 	if ( get_Input( input_buf, MAX_LN, prompt ) != NULL )
-		(void) strncpy( entry->name, input_buf, MAX_LGT_NM-1 );
+		bu_strlcpy( entry->name, input_buf, MAX_LGT_NM );
 	(void) sprintf( prompt, "manual override ? [y|n](%c) ",
 			entry->over ? 'y' : 'n' );
 	if ( get_Input( input_buf, MAX_LN, prompt ) != NULL )

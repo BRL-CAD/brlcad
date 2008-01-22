@@ -404,9 +404,12 @@ int get_args( int argc, register char **argv )
 					pmargs[7]= item ? atoi(item) : 0;		/* Visualize Irradiance */
 					item= strtok(NULL, ",");
 					pmargs[8]= item ? atof(item) : 1.0;		/* Scale Lumens */
-					item= strtok(NULL, ",");
-					if (item) { strncpy(pmfile, item, 255-1); } else { pmfile[0]= 0; }
-/*					item ? strcpy(pmfile, item) : pmfile[0]= 0;*/	/* Scale Lumens */
+					item= strtok(NULL,",");
+					if (item) {
+					    bu_strlcpy(pmfile, item, sizeof(pmfile));
+					} else {
+					    pmfile[0]= 0;
+					}
 				}
 			}
 			break;

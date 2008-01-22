@@ -1967,7 +1967,7 @@ rt_hf_import(struct rt_db_internal *ip, const struct bu_external *ep, register c
 	xip->xlen = 1000;
 	xip->ylen = 1000;
 	xip->zscale = 1;
-	strcpy( xip->fmt, "nd" );
+	bu_strlcpy( xip->fmt, "nd", sizeof(xip->fmt) );
 
 	/* Process parameters found in .g file */
 	bu_vls_init( &str );
@@ -2128,8 +2128,8 @@ rt_hf_export(struct bu_external *ep, const struct rt_db_internal *ip, double loc
 	 */
 
 	rec->s.s_id = DBID_STRSOL;
-	strncpy( rec->ss.ss_keyword, "hf", NAMESIZE-1 );
-	strncpy( rec->ss.ss_args, bu_vls_addr(&str), DB_SS_LEN-1 );
+	bu_strlcpy( rec->ss.ss_keyword, "hf", sizeof(rec->ss.ss_keyword) );
+	bu_strlcpy( rec->ss.ss_args, bu_vls_addr(&str), DB_SS_LEN );
 	bu_vls_free( &str );
 
 	return(0);

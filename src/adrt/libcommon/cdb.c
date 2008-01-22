@@ -25,11 +25,6 @@
  *  Author -
  *      Justin L. Shumaker
  *
- *  Source -
- *      The U. S. Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
- * $Id$
  */
 
 #include "cdb.h"
@@ -38,15 +33,12 @@
 #include "env.h"
 
 
-int common_db_load(common_db_t *db, char *path);
-
-
 int common_db_load(common_db_t *db, char *path) {
   char proj_path[ADRT_NAME_SIZE], *path_ptr;
   int i;
 
   /* Parse path out of proj file and chdir to it */
-  strncpy(proj_path, path, ADRT_NAME_SIZE);
+  strncpy(proj_path, path, sizeof(proj_path));
 
   path_ptr = strrchr(proj_path, '/');
   if (path_ptr) {

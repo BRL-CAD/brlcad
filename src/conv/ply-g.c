@@ -59,9 +59,9 @@ static int endianness;
 
 static char *usage="Usage:\n\tply-g [-s scale_factor] [-d] [-v] input_file.ply output_file.g";
 
-#define LINELEN		512
+#define MAX_LINE_SIZE		512
 
-static char line[LINELEN];
+static char line[MAX_LINE_SIZE];
 
 #define PLY_ASCII		1
 #define PLY_BIN_BIG_ENDIAN	2
@@ -620,7 +620,7 @@ read_ply_header()
 	if ( verbose ) {
 		bu_log( "Reading header...\n" );
 	}
-	if ( bu_fgets( line, LINELEN, ply_fp ) == NULL ) {
+	if ( bu_fgets( line, MAX_LINE_SIZE, ply_fp ) == NULL ) {
 		bu_log( "Unexpected EOF in input file!\n" );
 		return( 1 );
 	}
@@ -628,7 +628,7 @@ read_ply_header()
 		bu_log( "Input file does not appear to be a PLY file!\n" );
 		return( 1 );
 	}
-	while ( bu_fgets( line, LINELEN, ply_fp ) ) {
+	while ( bu_fgets( line, MAX_LINE_SIZE, ply_fp ) ) {
 		struct element *elem_ptr;
 		int len;
 

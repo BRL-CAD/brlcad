@@ -521,7 +521,7 @@ main(int argc, char **argv)
 			}
 
 			if ( done ) {
-				snprintf(name, NAMESIZE, "%dxxx_series", in[0].cc/1000);
+				snprintf(name, NAMESIZE+1, "%dxxx_series", in[0].cc/1000);
 				mk_lcomb(outfp, name, &headd, 0, "", "", rgb, 0);
 				(void) mk_addmember(name, &heade.l, NULL, WMOP_UNION);
 			}
@@ -538,7 +538,7 @@ main(int argc, char **argv)
 		}       /* end "processing" if */
 	}
 
-	snprintf(name, NAMESIZE, "%s", top_level);
+	snprintf(name, NAMESIZE+1, "%s", top_level);
 	mk_lcomb(outfp, name, &heade, 0, "", "", 0, 0);
 
 	if ( BU_LIST_NON_EMPTY( &headf.l )) {
@@ -766,23 +766,23 @@ proc_sname(char shflg, char mrflg, int cnt, char ctflg)
 
 	if (in[0].mirror >= 0) {
 	  if ((mrflg == 'n') && (ctflg == 'n')) {
-	    sprintf(new_name, "%c.%.4d.s%.2d", shflg, in[0].cc, cnt);
+	    snprintf(new_name, NAMESIZE+1, "%c.%.4d.s%.2d", shflg, in[0].cc, cnt);
 	  }
 	  else if ((mrflg == 'n') && (ctflg == 'y')) {
-	    sprintf(new_name, "%c.%.4d.c%.2d", shflg, in[0].cc, cnt);
+	    snprintf(new_name, NAMESIZE+1, "%c.%.4d.c%.2d", shflg, in[0].cc, cnt);
 	  }
 	  else if ((mrflg == 'y') && (ctflg == 'n')) {
-	    sprintf(new_name, "%c.%.4d.s%.2d", shflg, (in[0].cc+in[0].mirror), cnt);
+	    snprintf(new_name, NAMESIZE+1, "%c.%.4d.s%.2d", shflg, (in[0].cc+in[0].mirror), cnt);
 	  }
 	  else {
-	    sprintf(new_name, "%c.%.4d.c%.2d", shflg, (in[0].cc+in[0].mirror), cnt);
+	    snprintf(new_name, NAMESIZE+1, "%c.%.4d.c%.2d", shflg, (in[0].cc+in[0].mirror), cnt);
 	  }
 	}
 	else if (ctflg == 'n') {
-	  sprintf(new_name, "%c%c.%.4d.s%.2d", side, shflg, in[0].cc, cnt);
+	  snprintf(new_name, NAMESIZE+1, "%c%c.%.4d.s%.2d", side, shflg, in[0].cc, cnt);
 	}
 	else {
-	  sprintf(new_name, "%c%c.%.4d.c%.2d", side, shflg, in[0].cc, cnt);
+	  snprintf(new_name, NAMESIZE+1, "%c%c.%.4d.c%.2d", side, shflg, in[0].cc, cnt);
 	}
 
 	return( new_name );
@@ -997,7 +997,7 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 	if ( arb6 && plate_mode )
 	{
 		fastf_t pts[24];
-		char tmp_name[NAMESIZE];
+		char tmp_name[NAMESIZE+1];
 		struct wmember tmp_head, mir_head;
 
 		BU_LIST_INIT( &tmp_head.l );
@@ -1036,14 +1036,14 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 				VJOIN1( &pts[2*3], &pts[1*3], thickness, norm )
 				VJOIN1( &pts[6*3], &pts[4*3], thickness, norm )
 				VMOVE( &pts[7*3], &pts[6*3] );
-				snprintf( tmp_name, NAMESIZE, "%s_%d", name, k );
+				snprintf( tmp_name, NAMESIZE+1, "%s_%d", name, k );
 				mk_arb8( outfp, tmp_name, pts );
 				mk_addmember( tmp_name, &tmp_head.l, NULL, WMOP_UNION );
 				if ( mirror_name[0] )
 				{
 					for ( i=0; i<8; i++ )
 						pts[i*3 + 1] = -pts[i*3 + 1];
-					snprintf( tmp_name, NAMESIZE, "%s_%dm", name, k );
+					snprintf( tmp_name, NAMESIZE+1, "%s_%dm", name, k );
 					mk_arb8( outfp, tmp_name, pts );
 					mk_addmember( tmp_name, &mir_head.l, NULL, WMOP_UNION );
 				}
@@ -1407,7 +1407,7 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 	{
 		char tmp_name[NAMESIZE+1];
 
-		snprintf( tmp_name, NAMESIZE, "out.%s", name );
+		snprintf( tmp_name, NAMESIZE+1, "out.%s", name );
 		mk_nmg( outfp, tmp_name, m );
 	}
 
@@ -1694,7 +1694,7 @@ proc_region(char *name1)
 	if ( BU_LIST_IS_EMPTY( &head.l ) )
 		return;
 
-	strncpy( tmpname, name1, NAMESIZE*2 );
+	bu_strlcpy( tmpname, name1, sizeof(tmpname) );
 
 	chkroot = 0;
 	while ( tmpname[chkroot++] != '.' );
@@ -1714,12 +1714,12 @@ proc_region(char *name1)
 	if ( cc != in[0].cc )
 	{
 		mir_count++;
-		snprintf(cname, NAMESIZE, "%s.r%.2d", tmpname, mir_count);
+		snprintf(cname, NAMESIZE+1, "%s.r%.2d", tmpname, mir_count);
 	}
 	else
 	{
 		reg_count++;
-		snprintf(cname, NAMESIZE, "%s.r%.2d", tmpname, reg_count);
+		snprintf(cname, NAMESIZE+1, "%s.r%.2d", tmpname, reg_count);
 	}
 
 
@@ -1827,14 +1827,14 @@ proc_triangle(int cnt)
 	shflg = 'f';
 	mrflg = 'n';
 	ctflg = 'n';
-	strncpy( name, proc_sname (shflg, mrflg, count+1, ctflg), NAMESIZE );
+	bu_strlcpy( name, proc_sname(shflg, mrflg, count+1, ctflg), sizeof(name) );
 	count++;
 
 	if (in[0].mirror != 0)
 	{
 
 		mrflg = 'y';
-		strncpy( mirror_name, proc_sname (shflg, mrflg, mir_count+1, ctflg), NAMESIZE );
+		bu_strlcpy( mirror_name, proc_sname(shflg, mrflg, mir_count+1, ctflg), sizeof(mirror_name) );
 		mir_count++;
 	}
 	else
@@ -2161,12 +2161,12 @@ proc_plate(int cnt)
 			shflg = 't';
 			mrflg = 'n';
 			ctflg = 'n';
-			strncpy( name, proc_sname (shflg, mrflg, count+1, ctflg), NAMESIZE );
+			bu_strlcpy( name, proc_sname(shflg, mrflg, count+1, ctflg), sizeof(name) );
 
 			if ( in[0].mirror != 0 )
 			{
 				mrflg = 'y';
-				strncpy( mirror_name, proc_sname (shflg, mrflg, mir_count+1, ctflg), NAMESIZE );
+				bu_strlcpy( mirror_name, proc_sname(shflg, mrflg, mir_count+1, ctflg), sizeof(mirror_name) );
 			}
 			else
 				mirror_name[0] = '\0';
@@ -2255,7 +2255,7 @@ proc_wedge(int cnt)
 		shflg = 'w';
 		mrflg = 'n';
 		ctflg = 'n';
-		strncpy( name, proc_sname (shflg, mrflg, count+1, ctflg), NAMESIZE );
+		bu_strlcpy( name, proc_sname(shflg, mrflg, count+1, ctflg), sizeof(name) );
 
 		/* make solids */
 
@@ -2271,7 +2271,7 @@ proc_wedge(int cnt)
 			fastf_t join_scale = 1.0/8.0;
 
 			ctflg = 'y';
-			strncpy( name, proc_sname (shflg, mrflg, count, ctflg), NAMESIZE );
+			bu_strlcpy( name, proc_sname(shflg, mrflg, count, ctflg), sizeof(name) );
 
 		/* Create planes for arb6. Planes will be formed with
 		   normal pointing inward for creation of inner arb6 */
@@ -2369,7 +2369,7 @@ proc_wedge(int cnt)
 
 		mrflg = 'y';
 		ctflg = 'n';
-		strncpy( name, proc_sname (shflg, mrflg, mir_count+1, ctflg), NAMESIZE );
+		bu_strlcpy( name, proc_sname(shflg, mrflg, mir_count+1, ctflg), sizeof(name) );
 
 		mk_arb8( outfp, name, &pt8[0][X] );
 		mir_count++;
@@ -2382,7 +2382,7 @@ proc_wedge(int cnt)
 			fastf_t join_scale = 1.0/8.0;
 
 			ctflg = 'y';
-			strncpy( name, proc_sname (shflg, mrflg, count, ctflg), NAMESIZE );
+			bu_strlcpy( name, proc_sname(shflg, mrflg, count, ctflg), sizeof(name) );
 
 		/* Create planes for arb6. Planes will be formed with
 		   normal pointing inward for creation of inner arb6 */
@@ -2485,7 +2485,7 @@ proc_sphere(int cnt)
 		shflg = 's';
 		mrflg = 'n';
 		ctflg = 'n';
-		strncpy( name, proc_sname (shflg, mrflg, count+1, ctflg), NAMESIZE );
+		bu_strlcpy( name, proc_sname(shflg, mrflg, count+1, ctflg), sizeof(name) );
 		count++;
 
 		VSET(center, in[i].x, in[i].y, in[i].z);
@@ -2506,7 +2506,7 @@ proc_sphere(int cnt)
 				/* name inside solid */
 
 				ctflg = 'y';
-				strncpy( name, proc_sname (shflg, mrflg, count, ctflg), NAMESIZE );
+				bu_strlcpy( name, proc_sname(shflg, mrflg, count, ctflg), sizeof(name) );
 
 				/* make inside solid */
 
@@ -2540,7 +2540,7 @@ proc_sphere(int cnt)
 
 		mrflg = 'y';
 		ctflg = 'n';
-		strncpy( name, proc_sname (shflg, mrflg, mir_count+1, ctflg), NAMESIZE );
+		bu_strlcpy( name, proc_sname(shflg, mrflg, mir_count+1, ctflg), sizeof(name) );
 
 		VSET(center, in[i].x, -in[i].y, in[i].z);
 
@@ -2556,7 +2556,7 @@ proc_sphere(int cnt)
 			if (in[i].surf_mode== '-'){
 
 				ctflg = 'y';
-				strncpy( name, proc_sname (shflg, mrflg, mir_count, ctflg), NAMESIZE );
+				bu_strlcpy( name, proc_sname(shflg, mrflg, mir_count, ctflg), sizeof(name) );
 
 				if ( (rad = in[i+1].x - in[i].rsurf_thick) > 0.0 ) {
 					mk_sph(outfp, name, center, rad);
@@ -2627,7 +2627,7 @@ proc_box(int cnt)
 		shflg = 'b';
 		mrflg = 'n';
 		ctflg = 'n';
-		strncpy( name, proc_sname (shflg, mrflg, count+1, ctflg), NAMESIZE );
+		bu_strlcpy( name, proc_sname(shflg, mrflg, count+1, ctflg), sizeof(name) );
 
 		/* make solid */
 
@@ -2639,7 +2639,7 @@ proc_box(int cnt)
 		if ( in[k].surf_mode == '-' ){
 
 			ctflg = 'y';
-			strncpy( name, proc_sname (shflg, mrflg, count, ctflg), NAMESIZE );
+			bu_strlcpy( name, proc_sname(shflg, mrflg, count, ctflg), sizeof(name) );
 
 			valid = 1;
 			len = MAGNITUDE( ab );
@@ -2720,7 +2720,7 @@ proc_box(int cnt)
 
 		mrflg = 'y';
 		ctflg = 'n';
-		strncpy( name, proc_sname (shflg, mrflg, mir_count+1, ctflg), NAMESIZE );
+		bu_strlcpy( name, proc_sname(shflg, mrflg, mir_count+1, ctflg), sizeof(name) );
 
 		mk_arb8( outfp, name, &pt8[0][X] );
 		mir_count++;
@@ -2730,7 +2730,7 @@ proc_box(int cnt)
 		if ( in[k].surf_mode == '-' ){
 
 			ctflg = 'y';
-			strncpy( name, proc_sname (shflg, mrflg, mir_count+1, ctflg), NAMESIZE );
+			bu_strlcpy( name, proc_sname(shflg, mrflg, mir_count+1, ctflg), sizeof(name) );
 
 			valid = 1;
 			len = MAGNITUDE( ab );
@@ -2895,7 +2895,7 @@ proc_donut(int cnt)
 		shflg = 'd';
 		mrflg = 'n';
 		ctflg = 'n';
-		strncpy( name, proc_sname (shflg, mrflg, count+1, ctflg), NAMESIZE );
+		bu_strlcpy( name, proc_sname(shflg, mrflg, count+1, ctflg), sizeof(name) );
 		count++;
 
 		BU_LIST_INIT( &donut_head.l );
@@ -3221,7 +3221,7 @@ proc_cylin(int cnt)
 		shflg = 'c';
 		mrflg = 'n';
 		ctflg = 'n';
-		strncpy( name, proc_sname (shflg, mrflg, count+1, ctflg), NAMESIZE );
+		bu_strlcpy( name, proc_sname(shflg, mrflg, count+1, ctflg), sizeof(name) );
 
 		count++;
 
@@ -3261,7 +3261,7 @@ proc_cylin(int cnt)
 				fastf_t rad1_tmp, rad2_tmp;
 
 				ctflg = 'y';
-				strncpy( name, proc_sname (shflg, mrflg, count, ctflg), NAMESIZE );
+				bu_strlcpy( name, proc_sname(shflg, mrflg, count, ctflg), sizeof(name) );
 
 				rad1 = in[k+2].x;
 				rad2 = in[k+2].y;
@@ -3529,7 +3529,7 @@ proc_cylin(int cnt)
 
 		mrflg = 'y';
 		ctflg = 'n';
-		strncpy( name, proc_sname (shflg, mrflg, mir_count+1, ctflg), NAMESIZE );
+		bu_strlcpy( name, proc_sname(shflg, mrflg, mir_count+1, ctflg), sizeof(name) );
 		mir_count++;
 
 		if (!((in[k].x==in[k+1].x)&&(in[k].y==in[k+1].y)&&(in[k].z==in[k+1].z))){
@@ -3561,7 +3561,7 @@ proc_cylin(int cnt)
 				fastf_t rad1_tmp, rad2_tmp;
 
 				ctflg = 'y';
-				strncpy( name, proc_sname (shflg, mrflg, mir_count, ctflg), NAMESIZE );
+				bu_strlcpy( name, proc_sname(shflg, mrflg, mir_count, ctflg), sizeof(name) );
 
 				rad1 = in[k+2].x;
 				rad2 = in[k+2].y;
@@ -3903,7 +3903,7 @@ proc_rod(int cnt)
 		shflg = 'r';
 		mrflg = 'n';
 		ctflg = 'n';
-		strncpy( name, proc_sname (shflg, mrflg, count+1, ctflg), NAMESIZE );
+		bu_strlcpy( name, proc_sname(shflg, mrflg, count+1, ctflg), sizeof(name) );
 
 		/* make solids */
 		count++;
@@ -3949,7 +3949,7 @@ proc_rod(int cnt)
 
 		mrflg = 'y';
 		ctflg = 'n';
-		strncpy( name, proc_sname (shflg, mrflg, mir_count+1, ctflg), NAMESIZE );
+		bu_strlcpy( name, proc_sname(shflg, mrflg, mir_count+1, ctflg), sizeof(name) );
 
 		/* make solids */
 		mir_count++;
@@ -4049,12 +4049,12 @@ proc_label(char *labelfile)
 	if ( cur_series == (in[0].cc / 1000))
 	{
 		if ( labelfile != NULL ) {
-			snprintf(gname, NAMESIZE, "%s", nm[in[0].cc].ug );
-			snprintf(mgname, NAMESIZE, "%s", nm[in[0].cc + in[0].mirror].ug);
+			snprintf(gname, NAMESIZE+1, "%s", nm[in[0].cc].ug );
+			snprintf(mgname, NAMESIZE+1, "%s", nm[in[0].cc + in[0].mirror].ug);
 		}
 		else {
-			snprintf(gname, NAMESIZE, "#%.4d", in[0].cc);
-			snprintf(mgname, NAMESIZE, "#%.4d", (in[0].cc + in[0].mirror));
+			snprintf(gname, NAMESIZE+1, "#%.4d", in[0].cc);
+			snprintf(mgname, NAMESIZE+1, "#%.4d", (in[0].cc + in[0].mirror));
 		}
 		if ( BU_LIST_NON_EMPTY( &heada.l ) )
 		{
@@ -4068,7 +4068,7 @@ proc_label(char *labelfile)
 		}
 	}
 	else {
-		sprintf(gname, "%dxxx_series", cur_series);
+		snprintf(gname, NAMESIZE+1, "%dxxx_series", cur_series);
 		mk_lcomb(outfp, gname, &headd, 0, "", "", rgb, 0);
 		(void) mk_addmember(gname, &heade.l, NULL, WMOP_UNION);
 
@@ -4274,7 +4274,7 @@ void
 mk_cyladdmember(char *name1, struct wmember *head, struct subtract_list *slist, int mirflag)
 {
 
-	char			tmpname[NAMESIZE];
+	char			tmpname[NAMESIZE+1];
 	int			cc, solnum;
 	struct subtract_list	*hold;
 
@@ -4298,7 +4298,7 @@ mk_cyladdmember(char *name1, struct wmember *head, struct subtract_list *slist, 
 
 	for ( slist = hold; slist; slist = slist->next ) {
 		if ( slist->outsolid == solnum ){
-			sprintf(tmpname, "c.%.4d.s%.2d", cc, slist->insolid );
+			snprintf(tmpname, NAMESIZE+1, "c.%.4d.s%.2d", cc, slist->insolid );
 			(void)mk_addmember( tmpname, &(head->l), NULL, WMOP_SUBTRACT );
 		}
 	}

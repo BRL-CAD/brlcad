@@ -32,7 +32,6 @@
 #include <signal.h>
 #include <errno.h>
 
-#include "./vecmath.h"
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
@@ -42,6 +41,7 @@
 
 #include "./Sc.h"
 #include "./ascii.h"
+#include "./vecmath.h"
 #include "./extern.h"
 
 
@@ -162,7 +162,7 @@ int	mode;
 		{
 		if ( p > buf )
 			*p++ = NOTIFY_DELIM;
-		(void) strncpy( p, str, LNBUFSZ );
+		bu_strlcpy( p, str, LNBUFSZ );
 		}
 	else
 		*p = NUL;

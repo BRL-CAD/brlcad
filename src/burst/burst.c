@@ -72,7 +72,7 @@ getCommand( char *name, char *buf, int len, FILE *fp )
 		}
 	    else
 		{ /* Generate comment command. */
-		    (void) strncpy( name, CMD_COMMENT, LNBUFSZ );
+		    bu_strlcpy( name, CMD_COMMENT, LNBUFSZ );
 		    return	1;
 		}
 	}

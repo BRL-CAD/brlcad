@@ -52,24 +52,24 @@
 #define HUGE 3.40282347e+38F
 #endif
 #define ADRT_GEOMETRY_REVISION 2
-
+#define ADRT_MAX_NAMESIZE 256
 
 typedef struct property_s {
-  char name[256];
+  char name[ADRT_MAX_NAMESIZE];
   float color[3];
   float emission;
 } property_t;
 
 
 typedef struct regmap_s {
-  char name[256];
+  char name[ADRT_MAX_NAMESIZE];
   int id;
 } regmap_t;
 
 
 typedef struct mesh_map_s {
-  char mesh[256];
-  char prop[256];
+  char mesh[ADRT_MAX_NAMESIZE];
+  char prop[ADRT_MAX_NAMESIZE];
 } mesh_map_t;
 
 
@@ -89,7 +89,7 @@ void regmap_lookup(char *name, int id) {
 
   for (i = 0; i < regmap_num; i++) {
     if (id == regmap_list[i].id) {
-      strncpy(name, regmap_list[i].name, 256);
+      bu_strlcpy(name, regmap_list[i].name, ADRT_MAX_NAMESIZE);
       continue;
     }
   }
@@ -142,7 +142,7 @@ static int reg_start_func(struct db_tree_state *tsp,
 			  const struct rt_comb_internal *combp,
 			  genptr_t client_data)
 {
-  char name[256], found;
+  char name[ADRT_MAX_NAMESIZE], found;
   unsigned color[3];
   int i;
 
@@ -165,7 +165,7 @@ static int reg_start_func(struct db_tree_state *tsp,
   }
 
   /* Do a lookup conversion on the name with the region map if used */
-  strncpy(name, pathp->fp_names[pathp->fp_len-1]->d_namep, 256);
+  bu_strlcpy(name, pathp->fp_names[pathp->fp_len-1]->d_namep, ADRT_MAX_NAMESIZE);
 
   /* If name is null, skip it */
   if (!strlen(name))
@@ -185,7 +185,7 @@ static int reg_start_func(struct db_tree_state *tsp,
 
   if (!found) {
     prop_list = (property_t *)bu_realloc(prop_list, sizeof(property_t) * (prop_num + 1), "prop_list");
-    strncpy(prop_list[prop_num].name, name, 256);
+    bu_strlcpy(prop_list[prop_num].name, name, ADRT_MAX_NAMESIZE);
     prop_list[prop_num].color[0] = color[0] / 255.0;
     prop_list[prop_num].color[1] = color[1] / 255.0;
     prop_list[prop_num].color[2] = color[2] / 255.0;
@@ -241,7 +241,7 @@ static union tree *leaf_func(struct db_tree_state *tsp,
     vectp_t vp;
     float vec[3];
     int i;
-    char prop_name[256], mesh_name[256];
+    char prop_name[ADRT_MAX_NAMESIZE], mesh_name[ADRT_MAX_NAMESIZE];
     unsigned char c;
 
 
@@ -286,21 +286,21 @@ static union tree *leaf_func(struct db_tree_state *tsp,
 
     if (use_regmap) {
       vlsp = region_name_from_path(pathp);
-      strncpy(mesh_name, bu_vls_strgrab(vlsp), 256);
+      bu_strlcpy(mesh_name, bu_vls_strgrab(vlsp), ADRT_MAX_NAMESIZE);
       regmap_lookup(mesh_name, tsp->ts_regionid);
       bu_free(vlsp, "vls");
     } else {
-      strncpy(mesh_name, db_path_to_string(pathp), 256);
+      bu_strlcpy(mesh_name, db_path_to_string(pathp), ADRT_MAX_NAMESIZE);
     }
 
     vlsp = region_name_from_path(pathp);
-    strncpy(prop_name, bu_vls_strgrab(vlsp), 256);
+    bu_strlcpy(prop_name, bu_vls_strgrab(vlsp), ADRT_MAX_NAMESIZE);
     regmap_lookup(prop_name, tsp->ts_regionid);
     bu_free(vlsp, "vls");
 
     /* if name is null, assign default property */
     if (!strlen(prop_name))
-      strcpy(prop_name, "default");
+      bu_strlcpy(prop_name, "default", ADRT_MAX_NAMESIZE);
 
     /* Grab the chars from the end till the '/' */
     i = strlen(prop_name)-1;
@@ -309,7 +309,7 @@ static union tree *leaf_func(struct db_tree_state *tsp,
 	i--;
 
     if (i != strlen(prop_name))
-      strncpy(prop_name, &prop_name[i+1], 256);
+      bu_strlcpy(prop_name, &prop_name[i+1], ADRT_MAX_NAMESIZE);
 
     /* Display Status */
     printf("bots processed: %d\r", ++bot_count);
@@ -334,8 +334,8 @@ static union tree *leaf_func(struct db_tree_state *tsp,
 
     mesh_map = (mesh_map_t *)bu_realloc(mesh_map, sizeof(mesh_map_t) * (mesh_map_ind + 1), "mesh_map");
 
-    strncpy(mesh_map[mesh_map_ind].mesh, mesh_name, 256);
-    strncpy(mesh_map[mesh_map_ind].prop, prop_name, 256);
+    bu_strlcpy(mesh_map[mesh_map_ind].mesh, mesh_name, ADRT_MAX_NAMESIZE);
+    bu_strlcpy(mesh_map[mesh_map_ind].prop, prop_name, ADRT_MAX_NAMESIZE);
     mesh_map_ind++;
 
 
@@ -407,7 +407,7 @@ static union tree *leaf_func(struct db_tree_state *tsp,
 
 void load_regmap(char *filename) {
   FILE *fh;
-  char line[256], name[256], idstr[20], *ptr;
+  char line[ADRT_MAX_NAMESIZE], name[ADRT_MAX_NAMESIZE], idstr[20], *ptr;
   int i, ind;
 
   regmap_num = 0;
@@ -423,7 +423,7 @@ void load_regmap(char *filename) {
 
   while (!feof(fh)) {
     /* read in the line */
-    bu_fgets(line, 256, fh);
+    bu_fgets(line, ADRT_MAX_NAMESIZE, fh);
 
     /* strip off the new line */
     line[strlen(line)-1] = 0;
@@ -444,7 +444,7 @@ void load_regmap(char *filename) {
 
     /* advance to the first space while reading the name */
     i = 0;
-    while (i < 256 && line[ind] != ' ' && ind < strlen(line))
+    while (i < ADRT_MAX_NAMESIZE && line[ind] != ' ' && ind < strlen(line))
       name[i++] = line[ind++];
     name[i] = 0;
 
@@ -464,7 +464,7 @@ void load_regmap(char *filename) {
 
       /* advance to the first space while reading the id string */
       i = 0;
-      while (i < 256 && line[ind] != ' ' && ind < strlen(line))
+      while (i < ADRT_MAX_NAMESIZE && line[ind] != ' ' && ind < strlen(line))
 	idstr[i++] = line[ind++];
       idstr[i] = 0;
 
@@ -486,14 +486,14 @@ void load_regmap(char *filename) {
 	for (i = 0; i <= hi-lo; i++) {
 	  /* Insert one entry into the regmap_list */
 	  regmap_list = (regmap_t *)bu_realloc(regmap_list, sizeof(regmap_t) * (regmap_num + 1), "regmap_list");
-	  strncpy(regmap_list[regmap_num].name, name, 256);
+	  bu_strlcpy(regmap_list[regmap_num].name, name, ADRT_MAX_NAMESIZE);
 	  regmap_list[regmap_num].id = lo + i;
 	  regmap_num++;
 	}
       } else {
 	/* insert one entry into the regmap_list */
 	regmap_list = (regmap_t *)bu_realloc(regmap_list, sizeof(regmap_t) * (regmap_num + 1), "regmap_list");
-	strncpy(regmap_list[regmap_num].name, name, 256);
+	bu_strlcpy(regmap_list[regmap_num].name, name, ADRT_MAX_NAMESIZE);
 	regmap_list[regmap_num].id = atoi(idstr);
 	regmap_num++;
       }
@@ -504,7 +504,7 @@ void load_regmap(char *filename) {
 
 int main(int argc, char *argv[]) {
   int i;
-  char idbuf[132], filename[256];
+  char idbuf[132], filename[ADRT_MAX_NAMESIZE];
   char shortopts[] = "r:";
   int c;
   unsigned char len;
@@ -534,9 +534,8 @@ int main(int argc, char *argv[]) {
   argv += bu_optind;
 
   /* Open the adrt file */
-  strncpy(filename, argv[1], 256);
-  strncat(filename, ".adrt", 256);
-  filename[256-1] = '\0';
+  bu_strlcpy(filename, argv[1], ADRT_MAX_NAMESIZE);
+  bu_strlcat(filename, ".adrt", ADRT_MAX_NAMESIZE);
 
   adrt_fh = fopen(filename, "w");
   printf("converting: %s\n", argv[0]);
@@ -593,9 +592,8 @@ int main(int argc, char *argv[]) {
   /*
   * Generate an environment file
   */
-  strncpy(filename, argv[1], 256);
-  strncat(filename, ".env", 256);
-  filename[256-1] = '\0';
+  bu_strlcpy(filename, argv[1], ADRT_MAX_NAMESIZE);
+  bu_strlcat(filename, ".env", ADRT_MAX_NAMESIZE);
 
   adrt_fh = fopen(filename, "w");
 
@@ -612,8 +610,8 @@ int main(int argc, char *argv[]) {
   /*
   * Generate a properties file
   */
-  strncpy(filename, argv[1], 256);
-  strcat(filename, ".properties");
+  bu_strlcpy(filename, argv[1], ADRT_MAX_NAMESIZE);
+  bu_strlcat(filename, ".properties", ADRT_MAX_NAMESIZE);
   adrt_fh = fopen(filename, "w");
   fprintf(adrt_fh, "properties,default\n");
   fprintf(adrt_fh, "color,0.8,0.8,0.8\n");
@@ -629,9 +627,8 @@ int main(int argc, char *argv[]) {
   /*
   * Generate a textures file
   */
-  strncpy(filename, argv[1], 256);
-  strncat(filename, ".textures", 256);
-  filename[256-1] = '\0';
+  bu_strlcpy(filename, argv[1], ADRT_MAX_NAMESIZE);
+  bu_strlcat(filename, ".textures", ADRT_MAX_NAMESIZE);
 
   adrt_fh = fopen(filename, "w");
   fclose(adrt_fh);
@@ -639,9 +636,8 @@ int main(int argc, char *argv[]) {
   /*
   * Generate a mesh map file
   */
-  strncpy(filename, argv[1], 256);
-  strncat(filename, ".map", 256);
-  filename[256-1] = '\0';
+  bu_strlcpy(filename, argv[1], ADRT_MAX_NAMESIZE);
+  bu_strlcat(filename, ".map", ADRT_MAX_NAMESIZE);
 
   adrt_fh = fopen(filename, "wb");
   for (i = 0; i < mesh_map_ind; i++) {
@@ -658,9 +654,8 @@ int main(int argc, char *argv[]) {
   /*
   * Generate a frames file
   */
-  strncpy(filename, argv[1], 256);
-  strncat(filename, ".frames", 256);
-  filename[256-1] = '\0';
+  bu_strlcpy(filename, argv[1], ADRT_MAX_NAMESIZE);
+  bu_strlcat(filename, ".frames", ADRT_MAX_NAMESIZE);
 
   adrt_fh = fopen(filename, "w");
   fprintf(adrt_fh, "frame,1\n");

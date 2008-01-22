@@ -861,7 +861,7 @@ struct directory  {
 
 #define RT_DIR_SET_NAMEP(_dp, _name)	{ \
 	if ( strlen(_name) < sizeof((_dp)->d_shortname) )  {\
-		strncpy( (_dp)->d_shortname, (_name), sizeof((_dp)->d_shortname) ); \
+		bu_strlcpy( (_dp)->d_shortname, (_name), sizeof((_dp)->d_shortname) ); \
 		(_dp)->d_namep = (_dp)->d_shortname; \
 	} else { \
 		(_dp)->d_namep = bu_strdup(_name); /* Calls bu_malloc() */ \

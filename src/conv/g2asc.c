@@ -1104,11 +1104,11 @@ bsurfdump(void)	/* Print d-spline surface description record information */
  *
  *  Take a database name and null-terminate it,
  *  converting unprintable characters to something printable.
- *  Here we deal with NAMESIZE long names not being null-terminated.
+ *  Here we deal with names not being null-terminated.
  */
 char *name(char *str)
 {
-	static char buf[NAMESIZE+2];
+	static char buf[NAMESIZE+1];
 	register char *ip = str;
 	register char *op = buf;
 	register int warn = 0;

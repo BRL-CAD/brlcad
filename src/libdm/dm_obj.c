@@ -1566,7 +1566,7 @@ dmo_labelPrimitive(struct dg_obj		*dgop,
 
 #define	POINT_LABEL_STR( _pt, _str )	{ \
 	VMOVE( pl[npl].pt, _pt ); \
-	strncpy( pl[npl++].str, _str, sizeof(pl[0].str)-1 ); }
+	bu_strlcpy( pl[npl++].str, _str, sizeof(pl[0].str) ); }
 
 
     RT_CK_DB_INTERNAL(ip);
@@ -3406,8 +3406,8 @@ dmo_openFb(dmop, interp)
 	case DM_TYPE_X:
 		*dmop->dmo_fbs.fbs_fbp = X24_interface; /* struct copy */
 
-		dmop->dmo_fbs.fbs_fbp->if_name = bu_malloc((unsigned)strlen("/dev/X") + 1, "if_name");
-		(void)strcpy(dmop->dmo_fbs.fbs_fbp->if_name, "/dev/X");
+		dmop->dmo_fbs.fbs_fbp->if_name = bu_malloc((unsigned)strlen("/dev/X")+1, "if_name");
+		bu_strlcpy(dmop->dmo_fbs.fbs_fbp->if_name, "/dev/X", strlen("/dev/X")+1);
 
 		/* Mark OK by filling in magic number */
 		dmop->dmo_fbs.fbs_fbp->if_magic = FB_MAGIC;
@@ -3429,8 +3429,8 @@ dmo_openFb(dmop, interp)
 	case DM_TYPE_TK:
 		*dmop->dmo_fbs.fbs_fbp = tk_interface; /* struct copy */
 
-		dmop->dmo_fbs.fbs_fbp->if_name = bu_malloc((unsigned)strlen("/dev/tk") + 1, "if_name");
-		(void)strcpy(dmop->dmo_fbs.fbs_fbp->if_name, "/dev/tk");
+		dmop->dmo_fbs.fbs_fbp->if_name = bu_malloc((unsigned)strlen("/dev/tk")+1, "if_name");
+		bu_strlcpy(dmop->dmo_fbs.fbs_fbp->if_name, "/dev/tk", strlen("/dev/tk")+1);
 
 		/* Mark OK by filling in magic number */
 		dmop->dmo_fbs.fbs_fbp->if_magic = FB_MAGIC;
@@ -3452,8 +3452,8 @@ dmo_openFb(dmop, interp)
 	case DM_TYPE_OGL:
 		*dmop->dmo_fbs.fbs_fbp = ogl_interface; /* struct copy */
 
-		dmop->dmo_fbs.fbs_fbp->if_name = bu_malloc((unsigned)strlen("/dev/ogl") + 1, "if_name");
-		(void)strcpy(dmop->dmo_fbs.fbs_fbp->if_name, "/dev/ogl");
+		dmop->dmo_fbs.fbs_fbp->if_name = bu_malloc((unsigned)strlen("/dev/ogl")+1, "if_name");
+		bu_strlcpy(dmop->dmo_fbs.fbs_fbp->if_name, "/dev/ogl", strlen("/dev/ogl")+1);
 
 		/* Mark OK by filling in magic number */
 		dmop->dmo_fbs.fbs_fbp->if_magic = FB_MAGIC;
@@ -3474,8 +3474,8 @@ dmo_openFb(dmop, interp)
 	case DM_TYPE_WGL:
 		*dmop->dmo_fbs.fbs_fbp = wgl_interface; /* struct copy */
 
-		dmop->dmo_fbs.fbs_fbp->if_name = bu_malloc((unsigned)strlen("/dev/wgl") + 1, "if_name");
-		(void)strcpy(dmop->dmo_fbs.fbs_fbp->if_name, "/dev/wgl");
+		dmop->dmo_fbs.fbs_fbp->if_name = bu_malloc((unsigned)strlen("/dev/wgl")+1, "if_name");
+		bu_strlcpy(dmop->dmo_fbs.fbs_fbp->if_name, "/dev/wgl", strlen("/dev/wgl")+1);
 
 		/* Mark OK by filling in magic number */
 		dmop->dmo_fbs.fbs_fbp->if_magic = FB_MAGIC;

@@ -203,7 +203,7 @@ int main(int ac, char *av[])
     int	pid[3];
 
     /* pick the LUN for the scanner this time */
-    (void)strncpy( scsi_device, "/dev/scsi/sc0d6l0", 1024 );
+    bu_strlcpy( scsi_device, "/dev/scsi/sc0d6l0", sizeof(scsi_device) );
 
     /* parse command flags, and make sure there are arguments
      * left over for processing.

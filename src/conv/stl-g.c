@@ -81,7 +81,7 @@ static int bot_fcurr=0;		/* current bot face */
 /* Size of blocks of faces to malloc */
 #define BOT_FBLOCK	128
 
-#define	MAX_LINE_LEN	512
+#define	MAX_LINE_SIZE	512
 
 void
 Add_face( face )
@@ -132,9 +132,9 @@ mk_unique_brlcad_name( struct bu_vls *name )
 
 static void
 Convert_part_ascii( line )
-char line[MAX_LINE_LEN];
+char line[MAX_LINE_SIZE];
 {
-	char line1[MAX_LINE_LEN];
+	char line1[MAX_LINE_SIZE];
 	struct bu_vls solid_name;
 	struct bu_vls region_name;
 
@@ -232,7 +232,7 @@ char line[MAX_LINE_LEN];
 	if ( RT_G_DEBUG & DEBUG_MEM || RT_G_DEBUG & DEBUG_MEM_FULL )
 		bu_prmem( "At start of Convert_part_ascii()" );
 
-	while ( bu_fgets( line1, MAX_LINE_LEN, fd_in ) != NULL )
+	while ( bu_fgets( line1, MAX_LINE_SIZE, fd_in ) != NULL )
 	{
 		start = (-1);
 		while ( isspace( line1[++start] ) );
@@ -279,7 +279,7 @@ char line[MAX_LINE_LEN];
 
 			while ( !endloop )
 			{
-				if ( bu_fgets( line1, MAX_LINE_LEN, fd_in ) == NULL )
+				if ( bu_fgets( line1, MAX_LINE_SIZE, fd_in ) == NULL )
 					bu_exit(EXIT_FAILURE,  "Unexpected EOF while reading a loop in a part!!!\n" );
 
 				start = (-1);
@@ -566,7 +566,7 @@ Convert_part_binary()
 static void
 Convert_input()
 {
-	char line[ MAX_LINE_LEN ];
+	char line[ MAX_LINE_SIZE ];
 
 	if ( binary ) {
 		if ( fread( line, 80, 1, fd_in ) < 1 ) {
@@ -582,7 +582,7 @@ Convert_input()
 		bu_log( "header data:\n%s\n\n", line );
 		Convert_part_binary();
 	} else {
-		while ( bu_fgets( line, MAX_LINE_LEN, fd_in ) != NULL ) {
+		while ( bu_fgets( line, MAX_LINE_SIZE, fd_in ) != NULL ) {
 		    int start = 0;
 		    while ( line[start] != '\0' && isspace( line[start] ) ) {
 			start++;

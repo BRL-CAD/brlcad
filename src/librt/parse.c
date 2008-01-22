@@ -277,9 +277,9 @@ bu_parse_double(const char *str, long int count, double *loc)
 		}
 
 		len = str - numstart;
-		if ( len > sizeof(buf)-1 )  len = sizeof(buf)-1;
-		strncpy( buf, numstart, len );
-		buf[len] = '\0';
+		if (len > sizeof(buf))
+		    len = sizeof(buf);
+		bu_strlcpy( buf, numstart, len);
 
 		if ( sscanf( buf, "%lf", &tmp_double ) != 1 )
 			return -1;

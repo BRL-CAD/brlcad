@@ -423,11 +423,10 @@ done:
 		    bu_log("Ran out of buffer space!");
 		    return TCL_ERROR;
 		}
-		strncat(line1, name, rem-1);
+		bu_strlcat(line1, name, sizeof(line1));
 		rem -= strlen(name);
 	    }
 	}
-	line1[2048-1] = '\0'; /* sanity */
 
 	CreateProcess(NULL, line1, NULL, NULL, TRUE,
 		      DETACHED_PROCESS, NULL, NULL,

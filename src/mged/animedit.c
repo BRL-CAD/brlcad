@@ -2878,7 +2878,7 @@ f_jsolve(int argc, char **argv)
 
 	for (count=0; count<myargc; count++) {
 		myargv[count] = (char *)bu_malloc(strlen(argv[count])+1, "param");
-		strncpy(myargv[count], argv[count], strlen(argv[count])+1-1);
+		bu_strlcpy(myargv[count], argv[count], strlen(argv[count])+1);
 	}
 
 	argv=myargv;

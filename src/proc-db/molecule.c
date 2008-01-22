@@ -183,7 +183,7 @@ process_sphere(int id, fastf_t *center, double rad, int sph_type)
 
 	newsph->next = ( struct sphere *)0;
 	newsph->s_id = id;
-	strncpy(newsph->s_name, nm1, sizeof(nm1) );
+	bu_strlcpy(newsph->s_name, nm1, sizeof(newsph->s_name) );
 	newsph->s_name[14] = '\0';
 	VMOVE( newsph->s_center, center );
 	newsph->s_rad = rad;

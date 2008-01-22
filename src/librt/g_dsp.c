@@ -3707,8 +3707,8 @@ rt_dsp_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 	bu_log("rt_dsp_export_v4(%s)\n", bu_vls_addr(&str) );
 
     rec->ss.ss_id = DBID_STRSOL;
-    strncpy( rec->ss.ss_keyword, "dsp", NAMESIZE-1 );
-    strncpy( rec->ss.ss_args, bu_vls_addr(&str), DB_SS_LEN-1 );
+    bu_strlcpy( rec->ss.ss_keyword, "dsp", sizeof(rec->ss.ss_keyword) );
+    bu_strlcpy( rec->ss.ss_args, bu_vls_addr(&str), DB_SS_LEN );
 
 
     if (BU_VLS_IS_INITIALIZED( &str )) bu_vls_free( &str );
@@ -3908,7 +3908,7 @@ rt_dsp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	cp++;
 	rem--;
 
-	strncpy((char *)cp, bu_vls_addr(&dsp_ip->dsp_name), rem);
+	bu_strlcpy((char *)cp, bu_vls_addr(&dsp_ip->dsp_name), rem);
 
 	return 0; /* OK */
 }

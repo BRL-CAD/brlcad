@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
       fprintf(stderr, "Usage: pf <filename> <prefix> <height in mm> <spacing> <x0> <y0> <z0> ... <xn> <yn> <zn> [-r]\n");
       bu_exit(1, NULL);
     }
-  strncpy(prefix, argv[2], 256-1);
+  bu_strlcpy(prefix, argv[2], sizeof(prefix));
   ps = atof(argv[4]);
 
   fp_db = wdb_fopen(argv[1]);
@@ -149,13 +149,13 @@ int main(int argc, char *argv[])
       c0d[1] = (pwidth - ps) / 2.0;
       c0h[2] = height;
 
-      snprintf(w1name, 256, "%swedge1-%ld.s", prefix, j);
+      snprintf(w1name, sizeof(w1name), "%swedge1-%ld.s", prefix, j);
       mk_wedge(fp_db, w1name, w0, w0x, w0z, xlen, ylen, zlen, x_top_len);
 
-      snprintf(w2name, 256, "%swedge2-%ld.s", prefix, j);
+      snprintf(w2name, sizeof(w2name), "%swedge2-%ld.s", prefix, j);
       mk_wedge(fp_db, w2name, w1, w1x, w1z, xlen, ylen, zlen, x_top_len);
 
-      snprintf(name, 256, "%spost-%ld.s", prefix, j);
+      snprintf(name, sizeof(name), "%spost-%ld.s", prefix, j);
       mk_arb8(fp_db, name, s0);
       mk_addmember(name, &wm.l, NULL, WMOP_UNION);
       mk_addmember(w1name, &wm.l, NULL, WMOP_SUBTRACT);
@@ -163,24 +163,24 @@ int main(int argc, char *argv[])
 
       if (round)
 	{
-	  snprintf(name, 256, "%spost_c.s", prefix);
+	  snprintf(name, sizeof(name), "%spost_c.s", prefix);
 	  mk_tgc(fp_db, name, c0, c0h, c0a, c0b, c0c, c0d);
 	  mk_addmember(name, &wm.l, NULL, WMOP_UNION);
 	  mk_addmember(w1name, &wm.l, NULL, WMOP_SUBTRACT);
 	  mk_addmember(w2name, &wm.l, NULL, WMOP_SUBTRACT);
 	}
-      snprintf(name, 256, "%sls%ld.s", prefix, j);
+      snprintf(name, sizeof(name), "%sls%ld.s", prefix, j);
       mk_arb8(fp_db, name, s1);
       mk_addmember(name, &swm.l, NULL, WMOP_UNION);
 
       for (k = 0; k < 8; k++)
 	s1[(3 * k) + 2] += (height / 3);
 
-      snprintf(name, 256, "%shs%ld.s", prefix, j);
+      snprintf(name, sizeof(name), "%shs%ld.s", prefix, j);
       mk_arb8(fp_db, name, s1);
       mk_addmember(name, &swm.l, NULL, WMOP_UNION);
 
-      snprintf(pname, 256, "%sp-%ld.c", prefix, j);
+      snprintf(pname, sizeof(pname), "%sp-%ld.c", prefix, j);
       matcolor[0] = 50;
       matcolor[1] = 30;
       matcolor[2] = 10;
@@ -188,7 +188,7 @@ int main(int argc, char *argv[])
 
       for (i = 0; i < numposts; i++)
 	{
-	  snprintf(name, 256, "%sp%ld-%ld.r", prefix, j, i);
+	  snprintf(name, sizeof(name), "%sp%ld-%ld.r", prefix, j, i);
 	  mk_addmember(pname, &wm2.l, NULL, WMOP_UNION);
 	  matcolor[0] = 50;
 	  matcolor[1] = 50;
@@ -205,7 +205,7 @@ int main(int argc, char *argv[])
 	  nwm->wm_mat[15] = 1;
 	}
 
-      snprintf(name, 256, "%ssec%ld.c", prefix, j);
+      snprintf(name, sizeof(name), "%ssec%ld.c", prefix, j);
       matcolor[0] = 50;
       matcolor[1] = 50;
       matcolor[2] = 20;
@@ -240,7 +240,7 @@ int main(int argc, char *argv[])
       nwm->wm_mat[15] = 1;
       if (j == 0)
 	{
-	  strncpy(firstname, name, 256-1);
+	  bu_strlcpy(firstname, name, sizeof(firstname));
 	  for (l = 0; l < 16; l++)
 	    first_mat[l] = nwm->wm_mat[l];
 	}
@@ -248,7 +248,7 @@ int main(int argc, char *argv[])
   nwm = mk_addmember(firstname, &fwm.l, NULL, WMOP_SUBTRACT);
   for (l = 0; l < 16; l++)
     nwm->wm_mat[l] = first_mat[l];
-  snprintf(name, 256, "%sfence.c", prefix);
+  snprintf(name, sizeof(name), "%sfence.c", prefix);
   matcolor[0] = 50;
   matcolor[1] = 50;
   matcolor[2] = 20;

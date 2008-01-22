@@ -946,7 +946,7 @@ Do_getmat(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_lea
 
 	kid_name = (char *)user_ptr2;
 
-	if ( strncmp( comb_leaf->tr_l.tl_name, kid_name, NAMESIZE ) )
+	if ( strncmp( comb_leaf->tr_l.tl_name, kid_name, NAMESIZE+1 ) )
 		return;
 
 	xmat = (matp_t)user_ptr1;
@@ -1136,8 +1136,8 @@ cvt_vlblock_to_solids(
 	char		namebuf[64];
 	char		*av[4];
 
-	strncpy( shortname, name, 16-6 );
-	shortname[16-6] = '\0';
+	bu_strlcpy( shortname, name, sizeof(shortname) );
+
 	/* Remove any residue colors from a previous overlay w/same name */
 	if ( dbip->dbi_read_only )  {
 		av[0] = "d";

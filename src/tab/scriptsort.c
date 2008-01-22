@@ -85,22 +85,20 @@ void addtext(struct frame *fp, char *tp)
 		*p = '\0';
 
 		if (fp->text) {
-			strncpy(p, fp->text, fp->tl-1);
+			bu_strlcpy(p, fp->text, fp->tl);
 			bu_free(fp->text, "text area");
 		}
 		fp->text = p;
 	}
-	strncat(&fp->text[fp->tp], tp, fp->tl-strlen(p)-1);
+	bu_strlcat(&fp->text[fp->tp], tp, fp->tl);
 
 	if (*tp == ';') {
-		strcat(&fp->text[fp->tp], "\n");
+		bu_strlcat(&fp->text[fp->tp], "\n", fp->tl);
 	} else {
-		strcat(&fp->text[fp->tp], " ");
+		bu_strlcat(&fp->text[fp->tp], " ", fp->tl);
 	}
 
 	fp->tp += strlen(tp)+1;
-
-	fp->text[fp->tl-1] = '\0'; /* sanity */
 }
 int token = SHELL;
 

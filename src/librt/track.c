@@ -140,8 +140,7 @@ crname(Tcl_Interp	*interp,
   char temp[4];
 
   itoa(interp, pos, temp, 1);
-  strncat(name, temp, maxlen-1);
-  name[4-1] = '\0'; /* sanity */
+  bu_strlcat(name, temp, maxlen);
 
   return;
 }
@@ -393,7 +392,8 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
   slope(interp, fw, iw, tr);
   VMOVE(temp2, &sol.s_values[0]);
   crname(interp, solname, 0, len);
-  strncpy(sol.s_name, solname, len-1);
+  bu_strlcpy(sol.s_name, solname, len);
+
   sol.s_type = ID_ARB8;
   if (wrobj(wdbp, interp, solname, DIR_SOLID))
     return TCL_ERROR;
@@ -407,7 +407,7 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
   sol.s_type = ID_TGC;
   trcurve(iw, tr);
   crname(interp, solname, 1, len);
-  strncpy(sol.s_name, solname, len-1);
+  bu_strlcpy(sol.s_name, solname, len);
   if (wrobj(wdbp, interp, solname, DIR_SOLID ) )
     return TCL_ERROR;
   solname[grpname_len + extraTypeChars] = '\0';
@@ -418,7 +418,7 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
   VMOVE(&sol.s_values[15], &sol.s_values[9]);
   /* solid 2 */
   crname(interp, solname, 2, len);
-  strncpy(sol.s_name, solname, len-1);
+  bu_strlcpy(sol.s_name, solname, len);
   if (wrobj(wdbp, interp, solname, DIR_SOLID ) )
     return TCL_ERROR;
   solname[grpname_len + extraTypeChars] = '\0';
@@ -428,7 +428,7 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
   for (i=0; i<24; i++)
     sol.s_values[i] = 0.0;
   crname(interp, solname, 3, len);
-  strncpy(sol.s_name, solname, len-1);
+  bu_strlcpy(sol.s_name, solname, len);
   sol.s_type = ID_ARB8;
   crdummy(iw, tr, 1);
   if (wrobj(wdbp, interp, solname, DIR_SOLID) )
@@ -442,7 +442,7 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
   slope(interp, lw, dw, tr);
   VMOVE(temp1, &sol.s_values[0]);
   crname(interp, solname, 4, len);
-  strncpy(sol.s_name, solname, len-1);
+  bu_strlcpy(sol.s_name, solname, len);
   if (wrobj(wdbp, interp, solname, DIR_SOLID))
     return TCL_ERROR;
   solname[grpname_len + extraTypeChars] = '\0';
@@ -454,7 +454,7 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
   sol.s_type = ID_TGC;
   trcurve(dw, tr);
   crname(interp, solname, 5, len);
-  strncpy(sol.s_name, solname, len-1);
+  bu_strlcpy(sol.s_name, solname, len);
   if (wrobj(wdbp, interp, solname, DIR_SOLID) )
     return TCL_ERROR;
   solname[grpname_len + extraTypeChars] = '\0';
@@ -466,7 +466,7 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
   VMOVE(&sol.s_values[12], &sol.s_values[6]);
   VMOVE(&sol.s_values[15], &sol.s_values[9]);
   crname(interp, solname, 6, len);
-  strncpy(sol.s_name, solname, len-1);
+  bu_strlcpy(sol.s_name, solname, len);
   if (wrobj(wdbp, interp, solname, DIR_SOLID) )
     return TCL_ERROR;
   solname[grpname_len + extraTypeChars] = '\0';
@@ -476,7 +476,7 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
   for (i=0; i<24; i++)
     sol.s_values[i] = 0.0;
   crname(interp, solname, 7, len);
-  strncpy(sol.s_name, solname, len-1);
+  bu_strlcpy(sol.s_name, solname, len);
   sol.s_type = ID_ARB8;
   crdummy(dw, tr, 2);
   if (wrobj(wdbp, interp, solname, DIR_SOLID) )
@@ -488,7 +488,7 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
   temp1[1] = temp2[1] = tr[0];
   bottom(temp1, temp2, tr);
   crname(interp, solname, 8, len);
-  strncpy(sol.s_name, solname, len-1);
+  bu_strlcpy(sol.s_name, solname, len);
   if (wrobj(wdbp, interp, solname, DIR_SOLID) )
     return TCL_ERROR;
   solname[grpname_len + extraTypeChars] = '\0';
@@ -502,7 +502,7 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
   temp2[2] = iw[1] + iw[2];
   top(temp1, temp2, tr);
   crname(interp, solname, 9, len);
-  strncpy(sol.s_name, solname, len-1);
+  bu_strlcpy(sol.s_name, solname, len);
   if (wrobj(wdbp, interp, solname, DIR_SOLID) )
     return TCL_ERROR;
   solname[grpname_len + extraTypeChars] = '\0';

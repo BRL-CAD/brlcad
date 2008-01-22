@@ -458,10 +458,11 @@ rt_output_handler(ClientData clientData, int mask)
 
     /* Get data from rt */
 #ifndef _WIN32
-    count = read((int)run_rtp->fd, line, RT_MAXLINE);
+    count = read((int)run_rtp->fd, line, sizeof(line)-1);
 #else
-    count = ReadFile(run_rtp->fd, line, 5120, &count, 0);
+    count = ReadFile(run_rtp->fd, line, sizeof(line)-1, &count, 0);
 #endif
+    count[sizeof(line)-1] = '\0'; /* sanity */
 
     if (count <= 0) {
 	int retcode;
@@ -504,7 +505,7 @@ rt_output_handler(ClientData clientData, int mask)
 	return;
     }
 
-    line[count] = '\0';
+    line[count] = '\0'; /* sanity */
 
     /*XXX For now just blather to stderr */
     bu_log("%s", line);
@@ -715,12 +716,11 @@ run_rt(void)
     si.hStdOutput  = pipe_err[1];
     si.hStdError   = pipe_err[1];
 
+    snprintf(line, sizeof(line), "%s ", rt_cmd_vec[0]);
 
-    snprintf(line, RT_MAXLINE+1, "%s ", rt_cmd_vec[0]);
     for (i=1;i<rt_cmd_vec_len;i++) {
-	snprintf(name, 2048, "%s ", rt_cmd_vec[i]);
-	strncat(line, name, RT_MAXLINE-strlen(line));
-	line[2048-1] = '\0'; /* sanity */
+	snprintf(name, sizeof(name), "%s ", rt_cmd_vec[i]);
+	bu_strlcat(line, name, sizeof(line));
     }
 
 
@@ -889,7 +889,7 @@ rtcheck_output_handler(ClientData clientData, int mask)
     int fd = (int)((long)clientData & 0xFFFF);	/* fd's will be small */
 
     /* Get textual output from rtcheck */
-    count = read((int)fd, line, RT_MAXLINE-1);
+    count = read((int)fd, line, sizeof(line)-1);
     if (count <= 0) {
 	if (count < 0) {
 	    perror("READ ERROR");
@@ -1028,17 +1028,25 @@ basename_without_suffix(register char *p1, register char *suff)
     register char *p2, *p3;
     static char buf[128];
 
+    /* find the basename */
     p2 = p1;
     while (*p1) {
 	if (*p1++ == '/')
 	    p2 = p1;
     }
+
+    /* find the end of suffix */
     for (p3=suff; *p3; p3++)
 	;
-    while (p1>p2 && p3>suff)
+
+    /* early out */
+    while (p1>p2 && p3>suff) {
 	if (*--p3 != *--p1)
 	    return(p2);
-    strncpy( buf, p2, p1-p2 );
+    }
+
+    /* stash and return filename, sans suffix */
+    bu_strlcpy( buf, p2, p1-p2+1 );
     return(buf);
 }
 
@@ -2195,18 +2203,16 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     si.hStdOutput  = pipe_out[1];
     si.hStdError   = pipe_err[1];
 
+    snprintf(line1, sizeof(line1), "%s ", rt_cmd_vec[0]);
 
-    snprintf(line1, 2048, "%s ", rt_cmd_vec[0]);
     for (i=1;i<rt_cmd_vec_len;i++) {
-	snprintf(name, 1024, "%s ", rt_cmd_vec[i]);
-	strncat(line1, name, 2048-strlen(line1)-1);
-	line1[1024-1] = '\0'; /* sanity */
+	snprintf(name, sizeof(name), "%s ",rt_cmd_vec[i]);
+	bu_strlcat(line1, name, sizeof(line1));
+
 	if (strstr(name, "-e") != NULL) {
 	    i++;
-	    snprintf(name, 1024, "\"%s\" ", rt_cmd_vec[i]);
-	    name[1024-1] = '\0'; /* sanity */
-	    strncat(line1, name, 2048-strlen(line1)-1);
-	    line1[2048-1] = '\0'; /* sanity */
+	    snprintf(name, sizeof(name), "\"%s\" ", rt_cmd_vec[i]);
+	    bu_strlcat(line1, name, sizeof(line1));
 	}
     }
 
@@ -2245,8 +2251,8 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	BU_LIST_INIT(&HeadQRayData.l);
 
 	/* handle partitions */
-	while (bu_fgets(line, RT_MAXLINE, fp_out) != (char *)NULL){
-	    if (line[0] == '\n'){
+	while (bu_fgets(line, sizeof(line), fp_out) != (char *)NULL) {
+	    if (line[0] == '\n') {
 		Tcl_AppendResult(interp, line+1, (char *)NULL);
 		break;
 	    }
@@ -2266,8 +2272,8 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	rt_vlblock_free(vbp);
 
 	/* handle overlaps */
-	while (bu_fgets(line, RT_MAXLINE, fp_out) != (char *)NULL){
-	    if (line[0] == '\n'){
+	while (bu_fgets(line, sizeof(line), fp_out) != (char *)NULL) {
+	    if (line[0] == '\n') {
 		Tcl_AppendResult(interp, line+1, (char *)NULL);
 		break;
 	    }
@@ -2291,13 +2297,13 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     if (QRAY_TEXT){
 	bu_vls_free(&t_vls);
 
-	while (bu_fgets(line, RT_MAXLINE, fp_out) != (char *)NULL)
+	while (bu_fgets(line, sizeof(line), fp_out) != (char *)NULL)
 	    Tcl_AppendResult(interp, line, (char *)NULL);
     }
 
     (void)fclose(fp_out);
 
-    while (bu_fgets(line, RT_MAXLINE, fp_err) != (char *)NULL)
+    while (bu_fgets(line, sizeof(line), fp_err) != (char *)NULL)
 	Tcl_AppendResult(interp, line, (char *)NULL);
     (void)fclose(fp_err);
 
@@ -2645,7 +2651,7 @@ cm_tree(int argc, char **argv)
     char *cp = rt_cmd_storage;
 
     for ( i = 1;  i < argc && i < MAXARGS; i++ )  {
-	strncpy(cp, argv[i], (MAXARGS*9)-1);
+	bu_strlcpy(cp, argv[i], MAXARGS*9);
 	rt_cmd_vec[i] = cp;
 	cp += strlen(cp) + 1;
     }

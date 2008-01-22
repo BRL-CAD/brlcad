@@ -18,6 +18,12 @@
  * information.
  */
 /** @file torii.c
+ *
+ * Create a bunch of torii.
+ *
+ * Author -
+ *   Christopher Sean Morrison
+ *
  */
 
 #include "common.h"
@@ -133,21 +139,10 @@ int create_torii(int level, int currentLevel, torusLevels_t *torii, point_t posi
 int output_torii(const char *fileName, int levels, const torusLevels_t torii, const char *name) {
   char scratch[256];
 
-  strncpy(scratch, name, strlen(name));
-  strncat(scratch, "_0", 2);
-  scratch[256-1] = '\0'; /* sanity */
+  bu_strlcpy(scratch, name, sizeof(scratch));
+  bu_strlcat(scratch, "_0", sizeof(scratch));
 
   bu_log("output_torii to file \"%s\" for %d levels using \"%s.c\" as the combination name", fileName, levels, name);
-
-  /*
-  BU_LIST_INIT(&torii.l);
-
-  memcpy(scratch, prototypeName, strlen(prototypeName));
-  strncat(scratch, ".c", 2);
-  scratch[256-1] = '\0';
-
-  mk_lcomb(db_fp, scratch, &torii, 0, NULL, NULL, NULL, 0);
-  */
 
   return 0;
 }

@@ -423,7 +423,7 @@ hmenuhit(HMenu *menup, int menux, int menuy)
 				{
 				    size_t len = strlen( gitemp->text ) + 1;
 				    Alloc(itemp->text, char, len);
-				    (void) strncpy( itemp->text, gitemp->text, len );
+				    bu_strlcpy( itemp->text, gitemp->text, len );
 				}
 			else
 				itemp->text = NULL;
@@ -431,7 +431,7 @@ hmenuhit(HMenu *menup, int menux, int menuy)
 				{
 				    size_t len = strlen( gitemp->help ) + 1;
 				    Alloc( itemp->help, char, len);
-				    (void) strncpy( itemp->help, gitemp->help, len );
+				    bu_strlcpy( itemp->help, gitemp->help, len );
 				}
 			else
 				itemp->help = NULL;

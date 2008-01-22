@@ -120,9 +120,9 @@ static char nmg_pr_padstr[128];
 #define MKPAD(_h) { \
 	if (!_h) { _h = nmg_pr_padstr; nmg_pr_padstr[0] = '\0'; } \
 	else if ( (_h) < nmg_pr_padstr || (_h) >= nmg_pr_padstr+sizeof(nmg_pr_padstr) )  { \
-		(void)strncpy(nmg_pr_padstr, (_h), sizeof(nmg_pr_padstr)/2); \
+		bu_strlcpy(nmg_pr_padstr, (_h), sizeof(nmg_pr_padstr)/2); \
 		_h = nmg_pr_padstr; \
-	} else { if (strlen(_h) < sizeof(nmg_pr_padstr)-4) (void)strcat(_h, "   "); } }
+	} else { if (strlen(_h) < sizeof(nmg_pr_padstr)-4) bu_strlcat(_h, "   ", sizeof(nmg_pr_padstr)); } }
 
 #define Return	{ h[strlen(h)-3] = '\0'; return; }
 

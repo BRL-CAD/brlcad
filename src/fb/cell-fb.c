@@ -322,16 +322,15 @@ static long read_Cell_Data(void)
     {
 	lbp = linebuf;
 	bu_fgets(lbp, MAX_LINE, filep);
-	strncpy(format, "%lf %lf", MAX_LINE-1);
+	bu_strlcpy(format, "%lf %lf", sizeof(format));
 	if (color_flag)
-	    strncat(format, " %d %d %d", MAX_LINE-strlen(format)-1);
+	    bu_strlcat(format, " %d %d %d", sizeof(format));
 	else
 	{   /* Skip to field of interest */
 	    for (i = 1; i < field; i++)
-		strncat(format, " %*lf", MAX_LINE-strlen(format)-1);
-	    strncat(format, " %lf", MAX_LINE-strlen(format)-1);
+		bu_strlcat(format, " %*lf", sizeof(format));
+	    bu_strlcat(format, " %lf", sizeof(format));
 	}
-	format[MAX_LINE-1] = '\0'; /* sanity */
     }
     /* EOF encountered before we found the desired view? */
     if (feof(filep))
@@ -739,7 +738,7 @@ static bool pars_Argv (register int argc, register char **argv)
 		    break;
 		}
 	    case 'F':
-		(void) strncpy(fbfile, bu_optarg, MAX_LINE);
+		(void) bu_strlcpy(fbfile, bu_optarg, sizeof(fbfile));
 		break;
 	    case 'N':
 		if (sscanf(bu_optarg, "%d", &fb_height) < 1)

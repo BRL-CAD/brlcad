@@ -92,11 +92,11 @@ void util_image_save_ppm(char *filename, void *image, int w, int h) {
 
   fh = fopen(filename, "wb");
 
-  strcpy(text, "P6\n");
+  strncpy(text, "P6\n", sizeof(text));
   fwrite(text, strlen(text), 1, fh);
-  sprintf(text, "%d %d\n", w, h);
+  snprintf(text, sizeof(text), "%d %d\n", w, h);
   fwrite(text, strlen(text), 1, fh);
-  strcpy(text, "255\n");
+  strncpy(text, "255\n", sizeof(text));
   fwrite(text, strlen(text), 1, fh);
   fwrite(image, 3 * w * h, 1, fh);
 

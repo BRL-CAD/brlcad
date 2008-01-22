@@ -961,13 +961,13 @@ combbld(void)
 	bu_fgets( buf, BUFSIZE, ifp );
 	zap_nl();
 	memset(matname, 0, sizeof(matname));
-	strncpy( matname, buf, sizeof(matname)-1 );
+	bu_strlcpy( matname, buf, sizeof(matname) );
     }
     if ( temp_pflag )  {
 	bu_fgets( buf, BUFSIZE, ifp );
 	zap_nl();
 	memset(matparm, 0, sizeof(matparm));
-	strncpy( matparm, buf, sizeof(matparm)-1 );
+	bu_strlcpy( matparm, buf, sizeof(matparm) );
     }
 
     for (;;)  {
@@ -1151,7 +1151,7 @@ identbld(void)
     char		unit_str[8] = {0};
     double		local2mm;
 
-    strncpy(unit_str, "none", 4);
+    bu_strlcpy(unit_str, "none", sizeof(unit_str));
 
     cp = buf;
     cp++;				/* ident */
@@ -1177,43 +1177,44 @@ identbld(void)
 
     (void)bu_fgets( buf, BUFSIZE, ifp);
     zap_nl();
-    (void)strncpy( title, buf, sizeof(title)-1 );
+    bu_strlcpy( title, buf, sizeof(title) );
 
     /* XXX Should use db_conversions() for this */
     switch (units)  {
 	case ID_NO_UNIT:
-	    strncpy(unit_str, "mm", 4);
+	    bu_strlcpy(unit_str, "mm", sizeof(unit_str));
 	    break;
 	case ID_MM_UNIT:
-	    strncpy(unit_str, "mm", 4);
+	    bu_strlcpy(unit_str, "mm", sizeof(unit_str));
 	    break;
 	case ID_UM_UNIT:
-	    strncpy(unit_str, "um", 4);
+	    bu_strlcpy(unit_str, "um", sizeof(unit_str));
 	    break;
 	case ID_CM_UNIT:
-	    strncpy(unit_str, "cm", 4);
+	    bu_strlcpy(unit_str, "cm", sizeof(unit_str));
 	    break;
 	case ID_M_UNIT:
-	    strncpy(unit_str, "m", 4);
+	    bu_strlcpy(unit_str, "m", sizeof(unit_str));
 	    break;
 	case ID_KM_UNIT:
-	    strncpy(unit_str, "km", 4);
+	    bu_strlcpy(unit_str, "km", sizeof(unit_str));
 	    break;
 	case ID_IN_UNIT:
-	    strncpy(unit_str, "in", 4);
+
+	    bu_strlcpy(unit_str, "in", sizeof(unit_str));
 	    break;
 	case ID_FT_UNIT:
-	    strncpy(unit_str, "ft", 4);
+	    bu_strlcpy(unit_str, "ft", sizeof(unit_str));
 	    break;
 	case ID_YD_UNIT:
-	    strncpy(unit_str, "yard", 4);
+	    bu_strlcpy(unit_str, "yard", sizeof(unit_str));
 	    break;
 	case ID_MI_UNIT:
-	    strncpy(unit_str, "mile", 4);
+	    bu_strlcpy(unit_str, "mile", sizeof(unit_str));
 	    break;
 	default:
 	    fprintf(stderr, "asc2g: unknown v4 units code = %d, defaulting to millimeters\n", units);
-	    strncpy(unit_str, "mm", 4);
+	    bu_strlcpy(unit_str, "mm", sizeof(unit_str));
     }
     local2mm = bu_units_conversion(unit_str);
     if ( local2mm <= 0 )  {

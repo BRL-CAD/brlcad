@@ -277,8 +277,8 @@ f_read_muves(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 						new_comp = (struct muves_comp *)bu_malloc( sizeof( struct muves_comp ), "new_comp" );
 						BU_LIST_INIT( &new_comp->l );
 						length = strlen( ptr );
-						new_comp->muves_name = (char *)bu_malloc( length + 1, "muves_comp.name" );
-						strncpy( new_comp->muves_name, ptr, length );
+						new_comp->muves_name = (char *)bu_malloc( length+1, "muves_comp.name" );
+						bu_strlcpy( new_comp->muves_name, ptr, length+1 );
 						BU_LIST_INIT( &new_comp->comp_head.l );
 					}
 
@@ -416,8 +416,8 @@ f_read_muves(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 				/* need to create a new system */
 				new_sys = (struct muves_sys *)bu_malloc( sizeof( struct muves_sys ), "new_sys" );
 				length = strlen( &line[i] );
-				new_sys->muves_name = (char *)bu_malloc( length + 1, "new_sys->muves_name" );
-				strncpy( new_sys->muves_name, &line[i], length );
+				new_sys->muves_name = (char *)bu_malloc( length+1, "new_sys->muves_name" );
+				bu_strlcpy( new_sys->muves_name, &line[i], length+1 );
 				BU_LIST_INIT( &new_sys->member_head.l );
 				BU_LIST_APPEND( &muves_sys_head.l, &new_sys->l );
 			}

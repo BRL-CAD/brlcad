@@ -80,7 +80,7 @@ static const char *bannerp = "BURST (2.2)";
 		(void) getInput( ptr );\
 		if ( (sscanf( (ptr)->buffer, (ptr)->fmt, &(var) )) != 1 )\
 			{\
-			(void) strcpy( (ptr)->buffer, "" );\
+			bu_strlcpy( (ptr)->buffer, "", LNBUFSZ );\
 			return;\
 			}\
 		(ptr)++;\
@@ -462,7 +462,7 @@ Input *ip;
 		{	char *str = strtok( cmdptr, WHITESPACE );
 		if ( str == NULL )
 			return	0;
-		(void) strncpy( ip->buffer, str, LNBUFSZ );
+		bu_strlcpy( ip->buffer, str, LNBUFSZ );
 		cmdptr = NULL;
 		}
 	return  1;
@@ -605,7 +605,7 @@ HmItem *itemp;
 		register Input *ip = input;
 		FILE *airfp;
 	if ( getInput( ip ) )
-		(void) strncpy( airfile, ip->buffer, LNBUFSZ );
+		bu_strlcpy( airfile, ip->buffer, LNBUFSZ );
 	else
 		airfile[0] = NUL;
 	if ( (airfp = fopen( airfile, "r" )) == NULL )
@@ -638,7 +638,7 @@ HmItem *itemp;
 		register Input *ip = input;
 		FILE *armorfp;
 	if ( getInput( ip ) )
-		(void) strncpy( armorfile, ip->buffer, LNBUFSZ );
+		bu_strlcpy( armorfile, ip->buffer, LNBUFSZ );
 	else
 		armorfile[0] = NUL;
 	if ( (armorfp = fopen( armorfile, "r" )) == NULL )
@@ -688,7 +688,7 @@ HmItem *itemp;
 			};
 		register Input *ip = input;
 	if ( getInput( ip ) )
-		(void) strncpy( outfile, ip->buffer, LNBUFSZ );
+		bu_strlcpy( outfile, ip->buffer, LNBUFSZ );
 	else
 		outfile[0] = NUL;
 	if ( (outfp = fopen( outfile, "w" )) == NULL )
@@ -736,7 +736,7 @@ HmItem *itemp;
 		register Input *ip = input;
 		FILE *colorfp;
 	if ( getInput( ip ) )
-		(void) strncpy( colorfile, ip->buffer, LNBUFSZ );
+		bu_strlcpy( colorfile, ip->buffer, LNBUFSZ );
 	else
 		colorfile[0] = NUL;
 	if ( (colorfp = fopen( colorfile, "r" )) == NULL )
@@ -773,7 +773,7 @@ HmItem *itemp;
 			(void) snprintf( scrbuf, LNBUFSZ, "%c%s",
 					CHAR_COMMENT, ip->buffer );
 			logCmd( scrbuf );
-			(void) strcpy( ip->buffer, " " ); /* restore default */
+			bu_strlcpy( ip->buffer, " ", LNBUFSZ ); /* restore default */
 			}
 		}
 	else
@@ -810,7 +810,7 @@ HmItem *itemp;
 		register Input *ip = input;
 		FILE *critfp;
 	if ( getInput( ip ) )
-		(void) strncpy( critfile, ip->buffer, LNBUFSZ );
+		bu_strlcpy( critfile, ip->buffer, LNBUFSZ );
 	else
 		critfile[0] = NUL;
 	if ( (critfp = fopen( critfile, "r" )) == NULL )
@@ -919,9 +919,9 @@ HmItem *itemp;
 		register Input *ip = input;
 		static int errfd = -1;
 	if ( getInput( ip ) )
-		(void) strncpy( errfile, ip->buffer, LNBUFSZ );
+		bu_strlcpy( errfile, ip->buffer, LNBUFSZ );
 	else
-		(void) strncpy( errfile, "/dev/tty", LNBUFSZ );
+		bu_strlcpy( errfile, "/dev/tty", LNBUFSZ );
 	/* insure that error log is truncated */
 	errfd = open( errfile, O_TRUNC|O_CREAT|O_WRONLY, 0644 );
 	if (errfd == -1)
@@ -1024,7 +1024,7 @@ HmItem *itemp;
 			};
 		register Input *ip = input;
 	if ( getInput( ip ) )
-		(void) strncpy( fbfile, ip->buffer, LNBUFSZ );
+		bu_strlcpy( fbfile, ip->buffer, LNBUFSZ );
 	else
 		fbfile[0] = NUL;
 	(void) snprintf( scrbuf, LNBUFSZ, "%s\t\t%s",
@@ -1046,7 +1046,7 @@ HmItem *itemp;
     register Input *ip = input;
 
     if ( getInput( ip ) )
-	(void) strncpy( gedfile, ip->buffer, LNBUFSZ );
+	bu_strlcpy( gedfile, ip->buffer, LNBUFSZ );
 
     if (!bu_file_exists(gedfile)) {
 	(void) snprintf( scrbuf, LNBUFSZ, 
@@ -1072,7 +1072,7 @@ HmItem *itemp;
 			};
 		register Input *ip = input;
 	if ( getInput( ip ) )
-		(void) strncpy( gridfile, ip->buffer, LNBUFSZ );
+		bu_strlcpy( gridfile, ip->buffer, LNBUFSZ );
 	else
 		histfile[0] = NUL;
 	if ( (gridfp = fopen( gridfile, "w" )) == NULL )
@@ -1145,7 +1145,7 @@ HmItem *itemp;
 			};
 		register Input *ip = input;
 	if ( getInput( ip ) )
-		(void) strncpy( histfile, ip->buffer, LNBUFSZ );
+		bu_strlcpy( histfile, ip->buffer, LNBUFSZ );
 	else
 		histfile[0] = NUL;
 	if ( (histfp = fopen( histfile, "w" )) == NULL )
@@ -1252,7 +1252,7 @@ HmItem *itemp;
 			};
 		register Input *ip = input;
 	if ( getInput( ip ) )
-		(void) strncpy( objects, ip->buffer, LNBUFSZ );
+		bu_strlcpy( objects, ip->buffer, LNBUFSZ );
 	(void) snprintf( scrbuf, LNBUFSZ, "%s\t\t%s",
 			itemp != NULL ? itemp->text : cmdname,
 			objects );
@@ -1321,7 +1321,7 @@ HmItem *itemp;
 			};
 		register Input *ip = input;
 	if ( getInput( ip ) )
-		(void) strncpy( plotfile, ip->buffer, LNBUFSZ );
+		bu_strlcpy( plotfile, ip->buffer, LNBUFSZ );
 	else
 		plotfile[0] = NUL;
 	if ( (plotfp = fopen( plotfile, "w" )) == NULL )
@@ -1349,7 +1349,7 @@ HmItem *itemp;
 			};
 		register Input *ip = input;
 	if ( getInput( ip ) )
-		(void) strncpy( shotfile, ip->buffer, LNBUFSZ );
+		bu_strlcpy( shotfile, ip->buffer, LNBUFSZ );
 	if ( (shotfp = fopen( shotfile, "r" )) == NULL )
 		{
 		    (void) snprintf( scrbuf, LNBUFSZ, 
@@ -1376,7 +1376,7 @@ HmItem *itemp;
 			};
 		register Input *ip = input;
 	if ( getInput( ip ) )
-		(void) strncpy( shotfile, ip->buffer, LNBUFSZ );
+		bu_strlcpy( shotfile, ip->buffer, LNBUFSZ );
 	if ( (shotfp = fopen( shotfile, "r" )) == NULL )
 		{
 		    (void) snprintf( scrbuf, LNBUFSZ, 
@@ -1403,7 +1403,7 @@ HmItem *itemp;
 			};
 		register Input *ip = input;
 	if ( getInput( ip ) )
-		(void) strncpy( burstfile, ip->buffer, LNBUFSZ );
+		bu_strlcpy( burstfile, ip->buffer, LNBUFSZ );
 	if ( (burstfp = fopen( burstfile, "r" )) == NULL )
 		{
 		    (void) snprintf( scrbuf, LNBUFSZ, 
@@ -1432,7 +1432,7 @@ HmItem *itemp;
 		char cmdfile[LNBUFSZ];
 		FILE *cmdfp;
 	if ( getInput( ip ) )
-		(void) strncpy( cmdfile, ip->buffer, LNBUFSZ );
+		bu_strlcpy( cmdfile, ip->buffer, LNBUFSZ );
 	if ( (cmdfp = fopen( cmdfile, "r" )) == NULL )
 		{
 		    (void) snprintf( scrbuf, LNBUFSZ, 
@@ -1456,7 +1456,7 @@ HmItem *itemp;
 			};
 		register Input *ip = input;
 	if ( getInput( ip ) )
-		(void) strncpy( shotlnfile, ip->buffer, LNBUFSZ );
+		bu_strlcpy( shotlnfile, ip->buffer, LNBUFSZ );
 	else
 		shotlnfile[0] = NUL;
 	if ( (shotlnfp = fopen( shotlnfile, "w" )) == NULL )
@@ -1554,7 +1554,7 @@ HmItem *itemp;
 		FILE *cmdfp;
 		FILE *inpfp;
 	if ( getInput( ip ) )
-		(void) strncpy( cmdfile, ip->buffer, LNBUFSZ );
+		bu_strlcpy( cmdfile, ip->buffer, LNBUFSZ );
 	if ( (cmdfp = fopen( cmdfile, "w" )) == NULL )
 		{
 		    (void) snprintf( scrbuf, LNBUFSZ, 

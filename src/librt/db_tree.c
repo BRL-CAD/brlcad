@@ -71,8 +71,7 @@ db_dup_db_tree_state(struct db_tree_state *otsp, const struct db_tree_state *its
 	if ( shader_len )
 	{
 		otsp->ts_mater.ma_shader = (char *)bu_malloc( shader_len+1, "db_new_combined_tree_state: ma_shader" );
-		strncpy( otsp->ts_mater.ma_shader, itsp->ts_mater.ma_shader, shader_len );
-		otsp->ts_mater.ma_shader[shader_len] = '\0';
+		bu_strlcpy( otsp->ts_mater.ma_shader, itsp->ts_mater.ma_shader, shader_len+1 );
 	}
 	else
 		otsp->ts_mater.ma_shader = (char *)NULL;

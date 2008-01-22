@@ -141,8 +141,9 @@ Ogl_fb_open()
 	}
 
 	*fbp = ogl_interface; /* struct copy */
-	fbp->if_name = bu_malloc((unsigned)strlen(ogl_name) + 1, "if_name");
-	strncpy(fbp->if_name, ogl_name, strlen(ogl_name)+1);
+
+	fbp->if_name = bu_malloc((unsigned)strlen(ogl_name)+1, "if_name");
+	bu_strlcpy(fbp->if_name, ogl_name, strlen(ogl_name)+1);
 
 	/* Mark OK by filling in magic number */
 	fbp->if_magic = FB_MAGIC;

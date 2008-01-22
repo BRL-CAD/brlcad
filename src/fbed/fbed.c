@@ -353,18 +353,16 @@ main(int argc, char **argv)
 	init_Tty();
 	init_Try();
 	get_Font( FONTNAME );
-	{	static char default_macro_file[MAX_LN];
-		char *home;
-	if ( (home = getenv( "HOME" )) != NULL )
-		{
-		(void) strncpy( default_macro_file, home, MAX_LN );
-		home = default_macro_file + strlen( default_macro_file );
-		*home++ = '/';
-		}
-	else
-		home = default_macro_file;
-	(void) strcpy( home, ".fbed_macros" );
-	(void) f_Rd_Macros_From_File( default_macro_file );
+	{
+	    static char default_macro_file[MAX_LN];
+	    char *home;
+	    if( (home = getenv( "HOME" )) != NULL ) {
+		snprintf(default_macro_file, "%s/.fbed_macros", home );
+	    } else {
+		bu_strlcpy(default_macro_file, ".fbed_macros", sizeof(default_macro_file) );
+	    }
+
+	    (void) f_Rd_Macros_From_File( default_macro_file );
 	}
 #define CBREAK_MODE		/* Signals are generated from keyboard. */
 #if defined( CBREAK_MODE )
@@ -573,8 +571,8 @@ push_Macro(char *buf)
 	fb_log( "Macro buffer would overflow.\n" );
 	return 0;
     }
-    (void) strncpy( macro_buf, cptr, MACROBUFSZ );
-    (void) snprintf(cread_buf, MACROBUFSZ, "%s%s", buf, macro_buf);
+    bu_strlcpy( macro_buf, cptr, MACROBUFSZ );
+    snprintf(cread_buf, MACROBUFSZ, "%s%s", buf, macro_buf);
     cptr = cread_buf;
     return 1;
 }
@@ -1133,7 +1131,7 @@ f_Name_Keyboard_Macro(char *buf)
 		{
 		Malloc_Bomb();
 		}
-	(void) strncpy( macro_entry->f_name, macro_name, strlen(macro_name)+1 );
+	bu_strlcpy( macro_entry->f_name, macro_name, strlen(macro_name)+1 );
 	add_Try( macro_entry, macro_entry->f_name, &try_rootp );
 	return 1;
 	}
@@ -1596,7 +1594,7 @@ f_Stop_Macro(char *buf)
 		{
 		Malloc_Bomb();
 		}
-	(void) strncpy( macro_entry->f_buff, macro_buf, strlen(macro_buf)+1 );
+	bu_strlcpy( macro_entry->f_buff, macro_buf, strlen(macro_buf)+1 );
 	fb_log( "Keyboard macro defined.\n" );
 	return 1;
 	}
@@ -1630,7 +1628,7 @@ f_Enter_Macro_Definition(char *buf)
 		{
 		Malloc_Bomb();
 		}
-	(void) strncpy( macro_entry->f_buff, macro_buf, strlen(macro_buf)+1 );
+	bu_strlcpy( macro_entry->f_buff, macro_buf, strlen(macro_buf)+1 );
 	if ( interactive )
 		fb_log( "Keyboard macro defined.\n" );
 	return 1;

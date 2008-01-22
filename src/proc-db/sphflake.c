@@ -145,7 +145,7 @@ int main(int argc, char **argv)
 
   memset(fileName, 0, MAX_INPUT_LENGTH);
   depth = DEFAULT_MAXDEPTH;
-  strncpy(fileName, DEFAULT_FILENAME, MAX_INPUT_LENGTH);
+  bu_strlcpy(fileName, DEFAULT_FILENAME, sizeof(fileName));
 
   bu_opterr = 0;
 
@@ -157,7 +157,7 @@ int main(int argc, char **argv)
       break;
     case 'D':  /* Use ALL default parameters */
       memset(fileName, 0, MAX_INPUT_LENGTH);
-      strncpy(fileName, DEFAULT_FILENAME, MAX_INPUT_LENGTH);
+      bu_strlcpy(fileName, DEFAULT_FILENAME, sizeof(fileName));
       depth = DEFAULT_MAXDEPTH;
       break;
     case 'd':  /* Use a user-defined depth */
@@ -169,7 +169,7 @@ int main(int argc, char **argv)
     case 'F':
     case 'f':  /* Use a user-defined filename */
       memset(fileName, 0, MAX_INPUT_LENGTH);
-      strncpy(fileName, bu_optarg, MAX_INPUT_LENGTH);
+      bu_strlcpy(fileName, bu_optarg, sizeof(fileName));
       break;
     case 'h':
     case 'H':
@@ -248,14 +248,15 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
   unsigned int c[3];
 
   if (name == NULL) {
-    strncpy(p->fileName, DEFAULT_FILENAME, MAX_INPUT_LENGTH);
+    bu_strlcpy(p->fileName, DEFAULT_FILENAME, sizeof(p->fileName));
   }
   else {
-    strncpy(p->fileName, name, MAX_INPUT_LENGTH);
+    bu_strlcpy(p->fileName, name, sizeof(p->fileName));
   }
   p->maxRadius = DEFAULT_MAXRADIUS;
   p->maxDepth =  (depth > 0) ? (depth) : (DEFAULT_MAXDEPTH);
   p->deltaRadius = DEFAULT_DELTARADIUS;
+
   p->pos[X] = DEFAULT_ORIGIN_X;
   p->pos[Y] = DEFAULT_ORIGIN_Y;
   p->pos[Z] = DEFAULT_ORIGIN_Z;
@@ -263,9 +264,11 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
   p->matArray = (depthMat_t *)malloc(sizeof(depthMat_t) * (p->maxDepth+1));
 
   for (i = 0; i <= p->maxDepth; i++) {
-    strncpy(p->matArray[i].name, DEFAULT_MAT, MAX_INPUT_LENGTH);
-    strncpy(p->matArray[i].params, DEFAULT_MATPARAM, MAX_INPUT_LENGTH);
+    bu_strlcpy(p->matArray[i].name, DEFAULT_MAT, sizeof(p->matArray[i].name));
+    bu_strlcpy(p->matArray[i].params, DEFAULT_MATPARAM, sizeof(p->matArray[i].params));
+
     sscanf(DEFAULT_MATCOLOR, "%u %u %u", &(c[0]), &(c[1]), &(c[2]));
+
     p->matArray[i].color[0] = c[0];
     p->matArray[i].color[1] = c[1];
     p->matArray[i].color[2] = c[2];
@@ -434,7 +437,7 @@ void createLights(params_t *p)
 
   /* now make the light region... */
   mk_addmember(name, &(wmemberArray[LIGHT0_ID].l), NULL, WMOP_UNION);
-  strcat(name, ".r");
+  bu_strlcat(name, ".r", sizeof(name));
   sscanf(LIGHT0_MATCOLOR, "%d %d %d", &r, &g, &b);
   c[0] = (char)r;
   c[1] = (char)g;
@@ -448,7 +451,7 @@ void createLights(params_t *p)
 
   /* now make the light region... */
   mk_addmember(name, &(wmemberArray[LIGHT1_ID].l), NULL, WMOP_UNION);
-  strcat(name, ".r");
+  bu_strlcat(name, ".r", sizeof(name));
   sscanf(LIGHT1_MATCOLOR, "%d %d %d", &r, &g, &b);
   c[0] = (char)r;
   c[1] = (char)g;
@@ -471,7 +474,7 @@ void createPlane(params_t *p)
 
   /* now make the plane region... */
   mk_addmember(name, &(wmemberArray[PLANE_ID].l), NULL, WMOP_UNION);
-  strcat(name, ".r");
+  bu_strlcat(name, ".r", sizeof(name));
   mk_lcomb(fp, name, &(wmemberArray[PLANE_ID]), 1, PLANE_MAT, PLANE_MATPARAM, (unsigned char *)PLANE_MATCOLOR, 0);
 
   printf("\nPlane created");

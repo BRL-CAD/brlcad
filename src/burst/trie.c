@@ -28,6 +28,9 @@
 #include <stdio.h>
 #include <signal.h>
 
+#include "machine.h"
+#include "bu.h"
+
 #include "./burst.h"
 #include "./trie.h"
 #include "./ascii.h"
@@ -376,8 +379,8 @@ Trie	**triepp;
 				ring_Bell();
 				break;
 				}
-			(void) strncpy( p, inbuf, bufsz );
-			(void) printf( "%s", p );
+			bu_strlcpy( p, inbuf, bufsz );
+			printf( "%s", p );
 			p += len;
 			break;
 			}
@@ -441,7 +444,7 @@ Trie	**triepp;
 				}
 			else
 				{
-				(void) strncpy( inbuf, buffer, bufsz );
+				bu_strlcpy( inbuf, buffer, bufsz );
 				notify( NULL, NOTIFY_DELETE );
 				goto clean_return;
 				}

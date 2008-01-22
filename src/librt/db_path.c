@@ -205,10 +205,10 @@ db_path_to_string( const struct db_full_path *pp )
 		*cp++ = '/';
 		rem--;
 		if ( pp->fp_names[i] ) {
-			strncpy( cp, pp->fp_names[i]->d_namep, rem-1 );
+			bu_strlcpy( cp, pp->fp_names[i]->d_namep, rem );
 			rem -= strlen(pp->fp_names[i]->d_namep);
 		} else {
-			strncpy( cp, "**NULL**", rem-1 );
+			bu_strlcpy( cp, "**NULL**", rem );
 			rem -= 8;
 		}
 		cp += strlen( cp );

@@ -93,10 +93,9 @@ int			inherit;
 	NAMEMOVE( name, rec.c.c_name );
 	rec.c.c_pad1 = len;		/* backwards compat, was c_length */
 	if ( matname ) {
-		strncpy( rec.c.c_matname, matname, sizeof(rec.c.c_matname) );
+		bu_strlcpy( rec.c.c_matname, matname, sizeof(rec.c.c_matname) );
 		if ( matparm )
-			strncpy( rec.c.c_matparm, matparm,
-				sizeof(rec.c.c_matparm) );
+			bu_strlcpy( rec.c.c_matparm, matparm, sizeof(rec.c.c_matparm) );
 	}
 	if ( rgb )  {
 		rec.c.c_override = 1;
@@ -163,10 +162,9 @@ int		inherit;
 	NAMEMOVE( name, rec.c.c_name );
 	rec.c.c_pad1 = len;		/* backwards compat, was c_length */
 	if ( matname ) {
-		strncpy( rec.c.c_matname, matname, sizeof(rec.c.c_matname) );
+		bu_strlcpy( rec.c.c_matname, matname, sizeof(rec.c.c_matname) );
 		if ( matparm )
-			strncpy( rec.c.c_matparm, matparm,
-				sizeof(rec.c.c_matparm) );
+			bu_strlcpy( rec.c.c_matparm, matparm, sizeof(rec.c.c_matparm) );
 	}
 	if ( rgb )  {
 		rec.c.c_override = 1;

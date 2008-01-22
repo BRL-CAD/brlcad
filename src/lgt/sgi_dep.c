@@ -1193,8 +1193,8 @@ char	*msg;
 				ring_Bell();
 				break;
 				}
-			(void) strncpy( p, inbuf, bufsz );
-			(void) printf( "%s", p );
+			bu_strlcpy( p, inbuf, bufsz );
+			printf( "%s", p );
 			p += len;
 			break;
 			}
@@ -1248,7 +1248,7 @@ char	*msg;
 		case CR :
 		case LF :
 		case EOF :
-			(void) strncpy( inbuf, buffer, bufsz );
+			bu_strlcpy( inbuf, buffer, bufsz );
 			prnt_Prompt( "" );
 			if ( inbuf[0] == '\0' )
 				return	NULL;
@@ -1279,8 +1279,9 @@ char	*msg;
 			}
 			} /* End switch. */
 		}
-	while ( strlen( buffer ) < BUFSIZ );
-	(void) strncpy( inbuf, buffer, bufsz );
+	while( strlen( buffer ) < BUFSIZ )
+	    ;
+	bu_strlcpy( inbuf, buffer, bufsz );
 	ring_Bell();
 	prnt_Event( "Buffer full." );
 	prnt_Prompt( "" );

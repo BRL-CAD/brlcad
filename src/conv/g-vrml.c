@@ -76,7 +76,7 @@
 
 
 #define TXT_BUF_LEN	512
-#define TXT_NAME_LEN	128
+#define TXT_NAME_SIZE	128
 
 struct plate_mode {
 	int num_bots;
@@ -87,7 +87,7 @@ struct plate_mode {
 
 struct vrml_mat {
 	/* typical shader parameters */
-	char shader[TXT_NAME_LEN];
+	char shader[TXT_NAME_SIZE];
 	int shininess;
 	double transparency;
 
@@ -97,7 +97,7 @@ struct vrml_mat {
 	fastf_t lt_angle;
 
 	/* texture parameters */
-	char	tx_file[TXT_NAME_LEN];
+	char	tx_file[TXT_NAME_SIZE];
 	int	tx_w;
 	int	tx_n;
 };
@@ -106,7 +106,7 @@ struct vrml_mat {
 #define PL_OA(_m)	bu_offsetofarray(struct vrml_mat, _m)
 
 const struct bu_structparse vrml_mat_parse[]={
-	{"%s", TXT_NAME_LEN, "ma_shader", PL_OA(shader), 	BU_STRUCTPARSE_FUNC_NULL },
+	{"%s", TXT_NAME_SIZE, "ma_shader", PL_OA(shader), 	BU_STRUCTPARSE_FUNC_NULL },
 	{"%d", 1, "shine",		PL_O(shininess),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%d", 1, "sh",			PL_O(shininess),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%f", 1, "transmit",		PL_O(transparency),	BU_STRUCTPARSE_FUNC_NULL },
@@ -116,7 +116,7 @@ const struct bu_structparse vrml_mat_parse[]={
 	{"%f",	3, "aim",		PL_OA(lt_dir),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",  1, "w",         	PL_O(tx_w),             BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",  1, "n",         	PL_O(tx_n),             BU_STRUCTPARSE_FUNC_NULL },
-	{"%s",  TXT_NAME_LEN, "file",	PL_OA(tx_file), 	BU_STRUCTPARSE_FUNC_NULL },
+	{"%s",  TXT_NAME_SIZE, "file",	PL_OA(tx_file), 	BU_STRUCTPARSE_FUNC_NULL },
 	{"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
@@ -810,7 +810,7 @@ nmg_2_vrml(FILE *fp, struct db_full_path *pathp, struct model *m, struct mater_i
 	if ( mater->ma_shader )
 	{
 		tok = strtok( mater->ma_shader, tok_sep );
-		strncpy( mat.shader, tok, TXT_NAME_LEN );
+		bu_strlcpy( mat.shader, tok, TXT_NAME_SIZE );
 	}
 	else
 		mat.shader[0] = '\0';
