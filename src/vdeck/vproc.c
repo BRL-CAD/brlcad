@@ -60,27 +60,25 @@ void		blank_fill();
 	make a COMGEOM deck for current list of objects
 
  */
-deck( prefix )
-register char *prefix;
+void
+deck(register char *prefix)
 {
 	register int	i;
 
 	nns = nnr = 0;
 
 	/* Create file for solid table.					*/
-	if ( prefix != 0 )
-	{
-		(void) strncpy( st_file, prefix, 73 );
-		(void) strcat( st_file, ".st" );
-	}
-	else
-		(void) strncpy( st_file, "solids", 7 );
-	if ( (solfd = creat( st_file, 0644 )) < 0 )
-	{
-		perror( st_file );
-		bu_exit( 10, NULL );
-	}
+	if ( prefix != 0 ) {
+	    /* !!! this seems wrong. st_file is a pointer into a bu_vls */
+	    bu_strlcpy(st_file, prefix, 80);
+	    bu_strlcat(st_file, ".st", 80);
+	} else
+	    bu_strlcpy( st_file, "solids", 80 );
 
+	if ( (solfd = creat( st_file, 0644 )) < 0 ) {
+	    perror( st_file );
+	    bu_exit( 10, NULL );
+	}
 
 	/* Target units (a2, 3x)						*/
 	ewrite( solfd, bu_units_string(dbip->dbi_local2base), 2 );
@@ -99,32 +97,29 @@ register char *prefix;
 	ewrite( solfd, LF, 1 );
 
 	/* Create file for region table.				*/
-	if ( prefix != 0 )
-	{
-		(void) strncpy( rt_file, prefix, 73 );
-		(void) strcat( rt_file, ".rt" );
-	}
-	else
-		(void) strncpy( rt_file, "regions", 8 );
-	if ( (regfd = creat( rt_file, 0644 )) < 0 )
-	{
-		perror( rt_file );
-		bu_exit( 10, NULL );
+	if ( prefix != 0 ) {
+	    bu_strlcpy(rt_file, prefix, 80);
+	    bu_strlcat(rt_file, ".rt", 80);
+	} else
+	    bu_strlcpy(rt_file, "regions", 80);
+
+	if ( (regfd = creat( rt_file, 0644 )) < 0 ) {
+	    perror( rt_file );
+	    bu_exit( 10, NULL );
 	}
 
 	/* create file for region ident table
 	 */
-	if ( prefix != 0 )
-	{
-		(void) strncpy( id_file, prefix, 73 );
-		(void) strcat( id_file, ".id" );
+	if ( prefix != 0 ) {
+	    bu_strlcpy(id_file, prefix, 80);
+	    bu_strlcat(id_file, ".id", 80);
 	}
 	else
-		(void) strncpy( id_file, "region_ids", 11 );
-	if ( (ridfd = creat( id_file, 0644 )) < 0 )
-	{
-		perror( id_file );
-		bu_exit( 10, NULL );
+	    bu_strLcpy(id_file, "region_ids", 80);
+
+	if ( (ridfd = creat( id_file, 0644 )) < 0 ) {
+	    perror( id_file );
+	    bu_exit( 10, NULL );
 	}
 	itoa( -1, buff, 5 );
 	ewrite( ridfd, buff, 5 );
@@ -174,8 +169,7 @@ register char *prefix;
 	Execute shell command.
  */
 int
-shell( args )
-char  *args[];
+shell( char *args[] )
 {
 	register char	*from, *to;
 	char		*argv[4], cmdbuf[MAXLN];
@@ -256,8 +250,7 @@ toc()
 	List the table of contents.
  */
 void
-list_toc( args )
-char	 *args[];
+list_toc( char *args[] )
 {
 	register int	i, j;
 	(void) fflush( stdout );
@@ -287,9 +280,8 @@ char	 *args[];
 /*	c o l _ p r t ( )
 	Print list of names in tabular columns.
  */
-col_prt( list, ct )
-register char	*list[];
-register int	ct;
+int
+col_prt( char *list[], int ct )
 {
 	char		buf[MAX_COL+2];
 	register int	i, column, spaces;
@@ -303,7 +295,7 @@ register int	ct;
 		}
 		else
 		{
-			(void) strncpy( &buf[column], list[i], MAX_COL+2 );
+			bu_strlcpy( &buf[column], list[i], MAX_COL+2-column );
 			column += strlen( list[i] );
 			spaces = NAMESIZE - (column % NAMESIZE );
 			if ( column + spaces < MAX_COL )
@@ -322,9 +314,7 @@ register int	ct;
 	matches one of the arguments into the current list 'curr_list'.
  */
 int
-insert(  args,	ct )
-char		*args[];
-register int	ct;
+insert( char *args[], int ct )
 {
 	register int	i, j, nomatch;
 
@@ -348,13 +338,13 @@ register int	ct;
 	return	curr_ct;
 }
 
+
 /*	d e l e t e ( )
 	delete all members of current list 'curr_list' which match
 	one of the arguments
  */
 int
-delete(  args )
-char	*args[];
+delete( char *args[] )
 {
 	register int	i;
 	register int	nomatch;
@@ -402,11 +392,8 @@ char	*args[];
 /*	i t o a ( )
 	Convert integer to ascii  wd format.
  */
-itoa( n, s, w )
-register
-char	*s;
-register
-int   n,    w;
+void
+itoa( int n, char *s, int w )
 {
 	int	 c, i, j, sign;
 
@@ -432,31 +419,29 @@ int   n,    w;
 	}
 }
 
-vls_blanks( v, n )
-struct rt_vls	*v;
-int		n;
+
+void
+vls_blanks( struct bu_vls *v, int n )
 {
-	RT_VLS_CHECK(v);
-	rt_vls_strncat( v, "                                                                                                                                ",
+	BU_CK_VLS(v);
+	bu_vls_strncat( v, "                                                                                                                                ",
 	    n);
 }
 
-/*
+
+/**
  *			V L S _ I T O A
  *
  *	Convert integer to ascii  wd format.
  */
-vls_itoa( v, n, w )
-struct rt_vls	*v;
-register int	n;
-register int	w;
+vls_itoa( struct bu_vls *v, int n, int w )
 {
 	int	 c, i, j, sign;
 	register char	*s;
 
-	RT_VLS_CHECK(v);
-	rt_vls_strncat( v, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", w);
-	s = rt_vls_addr(v)+rt_vls_strlen(v)-w;
+	BU_CK_VLS(v);
+	bu_vls_strncat( v, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", w);
+	s = bu_vls_addr(v)+bu_vls_strlen(v)-w;
 
 	if ( (sign = n) < 0 )	n = -n;
 	i = 0;
@@ -480,53 +465,46 @@ register int	w;
 	}
 }
 
-vls_ftoa_vec_cvt( v, vec, w, d )
-struct rt_vls	*v;
-vect_t		vec;
-int		w;
-int		d;
+
+void
+vls_ftoa_vec_cvt( struct bu_vls *v, vect_t vec, int w, int d )
 {
 	vls_ftoa( v, vec[X]*dbip->dbi_base2local, w, d );
 	vls_ftoa( v, vec[Y]*dbip->dbi_base2local, w, d );
 	vls_ftoa( v, vec[Z]*dbip->dbi_base2local, w, d );
 }
 
-vls_ftoa_vec( v, vec, w, d )
-struct rt_vls	*v;
-vect_t		vec;
-int		w;
-int		d;
+
+void
+vls_ftoa_vec( struct bu_vls *v, vect_t vec, int w, int d )
 {
 	vls_ftoa( v, vec[X], w, d );
 	vls_ftoa( v, vec[Y], w, d );
 	vls_ftoa( v, vec[Z], w, d );
 }
 
-vls_ftoa_cvt( v, f, w, d )
-struct rt_vls	*v;
-register double	f;
-register int	w, d;
+
+void
+vls_ftoa_cvt( struct bu_vls *v, double f, int w, int d )
 {
 	vls_ftoa( v, f*dbip->dbi_base2local, w, d );
 }
 
-/*
+
+/**
  *			V L S _ F T O A
  *
  *	Convert float to ascii  w.df format.
  */
-vls_ftoa( v, f, w, d )
-struct rt_vls	*v;
-register double	f;
-register int	w, d;
+vls_ftoa( struct bu_vls *v, double f, int w, int d )
 {
 	register char	*s;
 	register int	c, i, j;
 	long	n, sign;
 
-	RT_VLS_CHECK(v);
-	rt_vls_strncat( v, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", w);
-	s = rt_vls_addr(v)+rt_vls_strlen(v)-w;
+	BU_CK_VLS(v);
+	bu_vls_strncat( v, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", w);
+	s = bu_vls_addr(v)+bu_vls_strlen(v)-w;
 
 	if ( w <= d + 2 )
 	{
@@ -580,6 +558,7 @@ register int	w, d;
 	}
 }
 
+
 /*
 	Section 5:	I / O   R O U T I N E S
  *
@@ -597,9 +576,7 @@ register int	w, d;
 
  */
 char
-getcmd( args, ct )
-char		*args[];
-register int	ct;
+getcmd( char *args[], int ct )
 {
 	/* Get arguments.						 */
 	if ( ct == 0 )
@@ -623,14 +600,14 @@ register int	ct;
 	return	(args[0])[0];
 }
 
+
 /*	g e t a r g ( )
 	Get a word of input into 'str',
 	Return 0 if newline is encountered.
 	Return 1 otherwise.
  */
 char
-getarg( str )
-register char	*str;
+getarg( char *str )
 {
 	do
 	{
@@ -649,12 +626,12 @@ register char	*str;
 	return	0;
 }
 
+
 /*	m e n u ( )
 	Display menu stored at address 'addr'.
  */
 void
-menu( addr )
-char **addr;
+menu( char **addr )
 {
 	register char	**sbuf = addr;
 	while ( *sbuf )
@@ -663,17 +640,18 @@ char **addr;
 	return;
 }
 
+
 /*	b l a n k _ f i l l ( )
 	Write count blanks to fildes.
  */
 void
-blank_fill( fildes, count )
-register int	fildes,	count;
+blank_fill( int fildes, int count )
 {
 	register char	*blank_buf = BLANKS;
 	ewrite( fildes, blank_buf, (unsigned) count );
 	return;
 }
+
 
 /*
 	Section 6:	I N T E R R U P T   H A N D L E R S
@@ -688,7 +666,7 @@ register int	fildes,	count;
  */
 /*ARGSUSED*/
 void
-abort_sig( sig )
+abort_sig( int sig )
 {
 	(void) signal( SIGINT, quit );	/* reset trap */
 
@@ -696,12 +674,13 @@ abort_sig( sig )
 	longjmp( env, sig );
 }
 
+
 /*	q u i t ( )
 	Terminate run.
  */
 /*ARGSUSED*/
 void
-quit( sig )
+quit( int sig )
 {
 	(void) fprintf( stdout, "quitting...\n" );
 	bu_exit( 0, NULL );
