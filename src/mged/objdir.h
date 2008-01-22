@@ -51,8 +51,9 @@ struct directory  {
 #define LOOKUP_QUIET	0
 #define LOOKUP_NOISY	1
 
+/* should come from db.h */
 #ifndef NAMESIZE
-#define NAMESIZE		16
+#  define NAMESIZE		16
 #endif
 
 /*
