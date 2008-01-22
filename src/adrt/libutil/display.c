@@ -36,6 +36,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <bu.h>
 #include "font.h"
 
 #define UTIL_DISPLAY_FONT_WIDTH 8
