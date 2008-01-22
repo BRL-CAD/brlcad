@@ -2336,7 +2336,8 @@ nmg_get_interior_pt(fastf_t *pt, const struct loopuse *lu, const struct bn_tol *
 			case 2:
 				tol_mult = 1.005 * tol->dist;
 				break;
-			default:			/* sanity / lint */
+			default:
+			    /* sanity check */
 				tol_mult = 1;
 				break;
 		}
