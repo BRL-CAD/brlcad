@@ -36,6 +36,10 @@
 
 #include "common.h"
 
+#include "machine.h"
+#include "bu.h"
+
+
 #define	IPU_LUN_SCANNER		0x0
 #define	IPU_LUN_FILM_SCANNER	0x1
 #define	IPU_LUN_ANALOG_INPUT	0x2
