@@ -98,56 +98,52 @@ int editit(const char *file);
 int
 f_tedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-	register int i;
-	FILE *fp;
+    register int i;
+    FILE *fp;
 
-	CHECK_DBI_NULL;
-	CHECK_READ_ONLY;
+    CHECK_DBI_NULL;
+    CHECK_READ_ONLY;
 
-	if (argc < 1 || 1 < argc) {
-	  struct bu_vls vls;
+    if (argc < 1 || 1 < argc) {
+	struct bu_vls vls;
 
-	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "help ted");
-	  Tcl_Eval(interp, bu_vls_addr(&vls));
-	  bu_vls_free(&vls);
-	  return TCL_ERROR;
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "help ted");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
+    }
+
+    /* Only do this if in solid edit state */
+    if (not_state(ST_S_EDIT, "Primitive Text Edit"))
+	return TCL_ERROR;
+
+    fp = bu_temp_file(tmpfil, MAXPATHLEN);
+    if (fp == NULL)
+	return TCL_ERROR;
+
+    if (writesolid()) {
+	(void)unlink(tmpfil);
+	return TCL_ERROR;
+    }
+
+    (void)fclose(fp);
+
+    if (editit(tmpfil)) {
+	if (readsolid()) {
+	    (void)unlink(tmpfil);
+	    return TCL_ERROR;
 	}
 
-	/* Only do this if in solid edit state */
-	if (not_state(ST_S_EDIT, "Primitive Text Edit"))
-	  return TCL_ERROR;
+	/* Update the display */
+	replot_editing_solid();
+	view_state->vs_flag = 1;
+	Tcl_AppendResult(interp, "done\n", (char *)NULL);
+    }
 
-	fp = bu_temp_file(tmpfil, MAXPATHLEN);
-	if (fp == NULL) {
-	  return TCL_ERROR;
-	}
+    unlink(tmpfil);
 
-	if (writesolid()) {
-	  (void)unlink(tmpfil);
-	  return TCL_ERROR;
-	}
-
-	if (fp) {
-	    fclose(fp);
-	    fp = NULL;
-	}
-
-	if (editit(tmpfil)) {
-		if (readsolid()) {
-		  (void)unlink(tmpfil);
-		  return TCL_ERROR;
-		}
-
-		/* Update the display */
-		replot_editing_solid();
-		view_state->vs_flag = 1;
-		Tcl_AppendResult(interp, "done\n", (char *)NULL);
-	}
-
-	unlink(tmpfil);
-
-	return TCL_OK;
+    return TCL_OK;
 }
 
 /*
