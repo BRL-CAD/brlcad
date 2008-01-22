@@ -129,7 +129,7 @@ get_args(int argc, register char **argv)
 				file_name );
 			return(0);
 		}
-		(void)bu_fchmod(file_name, outfp, 0444);
+		(void)bu_fchmod(outfp, 0444);
 	}
 
 	if ( argc > ++bu_optind )
