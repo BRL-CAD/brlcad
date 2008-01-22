@@ -23,17 +23,6 @@
  * This header file describes the object file structure,
  * and some commonly used 3D vector math macros.
  *
- * Authors -
- *	Michael John Muuss
- *	Earl P Weaver
- *
- */
-
-#define NAMESIZE	16
-#define NAMEMOVE(from, to)	strncpy(to, from, NAMESIZE)
-extern char	*strncpy();
-
-/*
  *		OBJECT FILE FORMAT
  *
  * All records are 128 bytes long, and are composed of one of 5 formats:
@@ -42,7 +31,13 @@ extern char	*strncpy();
  *	A COMBINATION extention (2 members)
  *	An ARS 'A' (header) record
  *	An ARS 'B' (data) record
+ *
+ * Authors -
+ *	Michael John Muuss
+ *	Earl P Weaver
+ *
  */
+
 union record  {
 	char	u_id;		/* To differentiate SOLID vs COMB */
 	char	u_size[128];	/* Total record size */
