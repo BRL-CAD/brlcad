@@ -462,7 +462,7 @@ rt_output_handler(ClientData clientData, int mask)
 #else
     count = ReadFile(run_rtp->fd, line, sizeof(line)-1, &count, 0);
 #endif
-    count[sizeof(line)-1] = '\0'; /* sanity */
+    line[sizeof(line)-1] = '\0'; /* sanity */
 
     if (count <= 0) {
 	int retcode;
