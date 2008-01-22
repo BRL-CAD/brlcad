@@ -79,122 +79,121 @@ static char	tmpfil[MAXPATHLEN];
 int
 f_edcolor(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-	register struct mater *mp;
-	register struct mater *zot;
-	register FILE *fp;
-	register int fd;
-	char line[128];
-	static char hdr[] = "LOW\tHIGH\tRed\tGreen\tBlue\n";
-	int ret = TCL_OK;
+    register struct mater *mp;
+    register struct mater *zot;
+    register FILE *fp;
+    register int fd;
+    char line[128];
+    static char hdr[] = "LOW\tHIGH\tRed\tGreen\tBlue\n";
+    int ret = TCL_OK;
 
-	CHECK_DBI_NULL;
-	CHECK_READ_ONLY;
+    CHECK_DBI_NULL;
+    CHECK_READ_ONLY;
 
-	if (argc < 1 || 1 < argc){
-	  struct bu_vls vls;
+    if (argc < 1 || 1 < argc) {
+	struct bu_vls vls;
 
-	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "help edcolor");
-	  Tcl_Eval(interp, bu_vls_addr(&vls));
-	  bu_vls_free(&vls);
-	  return TCL_ERROR;
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "help edcolor");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
+    }
+
+    fp = bu_temp_file(tmpfil, MAXPATHLEN);
+    if (fp == NULL)
+	return TCL_ERROR;
+
+    fprintf( fp, "%s", hdr );
+    for (mp = rt_material_head; mp != MATER_NULL; mp = mp->mt_forw) {
+	(void)fprintf( fp, "%d\t%d\t%3d\t%3d\t%3d",
+		       mp->mt_low, mp->mt_high,
+		       mp->mt_r, mp->mt_g, mp->mt_b);
+	(void)fprintf(fp, "\n");
+    }
+    (void)fclose(fp);
+
+    if (!editit( tmpfil)) {
+	Tcl_AppendResult(interp, "Editor returned bad status.  Aborted\n", (char *)NULL);
+	return TCL_ERROR;
+    }
+
+    /* Read file and process it */
+    if ((fp = fopen( tmpfil, "r")) == NULL) {
+	perror(tmpfil);
+	return TCL_ERROR;
+    }
+
+    if (bu_fgets(line, sizeof (line), fp) == NULL ||
+	line[0] != hdr[0]) {
+	Tcl_AppendResult(interp, "Header line damaged, aborting\n", (char *)NULL);
+	return TCL_ERROR;
+    }
+
+    if (dbip->dbi_version < 5) {
+	/* Zap all the current records, both in core and on disk */
+	while (rt_material_head != MATER_NULL) {
+	    zot = rt_material_head;
+	    rt_material_head = rt_material_head->mt_forw;
+	    color_zaprec(zot);
+	    bu_free((genptr_t)zot, "mater rec");
 	}
 
-	fp = bu_temp_file(tmpfil, MAXPATHLEN);
-	if (fp == NULL) {
-	    return TCL_ERROR;;
+	while (bu_fgets(line, sizeof (line), fp) != NULL) {
+	    int cnt;
+	    int low, hi, r, g, b;
+
+	    cnt = sscanf(line, "%d %d %d %d %d",
+			 &low, &hi, &r, &g, &b);
+	    if (cnt != 5) {
+		Tcl_AppendResult(interp, "Discarding ",
+				 line, "\n", (char *)NULL);
+		continue;
+	    }
+	    BU_GETSTRUCT(mp, mater);
+	    mp->mt_low = low;
+	    mp->mt_high = hi;
+	    mp->mt_r = r;
+	    mp->mt_g = g;
+	    mp->mt_b = b;
+	    mp->mt_daddr = MATER_NO_ADDR;
+	    rt_insert_color(mp);
+	    color_putrec(mp);
+	}
+    } else {
+	struct bu_vls vls;
+
+	/* free colors in rt_material_head */
+	rt_color_free();
+
+	bu_vls_init(&vls);
+
+	while (bu_fgets(line, sizeof (line), fp) != NULL) {
+	    int cnt;
+	    int low, hi, r, g, b;
+
+	    /* check to see if line is reasonable */
+	    cnt = sscanf(line, "%d %d %d %d %d",
+			 &low, &hi, &r, &g, &b);
+	    if (cnt != 5) {
+		Tcl_AppendResult(interp, "Discarding ",
+				 line, "\n", (char *)NULL);
+		continue;
+	    }
+	    bu_vls_printf(&vls, "{%d %d %d %d %d} ", low, hi, r, g, b);
 	}
 
-	fprintf( fp, "%s", hdr );
-	for ( mp = rt_material_head; mp != MATER_NULL; mp = mp->mt_forw )  {
-		(void)fprintf( fp, "%d\t%d\t%3d\t%3d\t%3d",
-			mp->mt_low, mp->mt_high,
-			mp->mt_r, mp->mt_g, mp->mt_b );
-		(void)fprintf( fp, "\n" );
-	}
-	(void)fclose(fp);
+	db5_update_attribute("_GLOBAL", "regionid_colortable", bu_vls_addr(&vls), dbip);
+	db5_import_color_table(bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+    }
 
-	if ( !editit( tmpfil ) )  {
-	  Tcl_AppendResult(interp, "Editor returned bad status.  Aborted\n", (char *)NULL);
-	  return TCL_ERROR;
-	}
+    (void)fclose(fp);
+    (void)unlink(tmpfil);
 
-	/* Read file and process it */
-	if ( (fp = fopen( tmpfil, "r")) == NULL )  {
-	  perror( tmpfil );
-	  return TCL_ERROR;
-	}
+    color_soltab();
 
-	if (bu_fgets(line, sizeof (line), fp) == NULL ||
-	    line[0] != hdr[0]) {
-		Tcl_AppendResult(interp, "Header line damaged, aborting\n", (char *)NULL);
-		return TCL_ERROR;
-	}
-
-	if (dbip->dbi_version < 5) {
-		/* Zap all the current records, both in core and on disk */
-		while (rt_material_head != MATER_NULL) {
-			zot = rt_material_head;
-			rt_material_head = rt_material_head->mt_forw;
-			color_zaprec(zot);
-			bu_free((genptr_t)zot, "mater rec");
-		}
-
-		while (bu_fgets(line, sizeof (line), fp) != NULL) {
-			int cnt;
-			int low, hi, r, g, b;
-
-			cnt = sscanf(line, "%d %d %d %d %d",
-				     &low, &hi, &r, &g, &b);
-			if (cnt != 5) {
-				Tcl_AppendResult(interp, "Discarding ",
-						 line, "\n", (char *)NULL);
-				continue;
-			}
-			BU_GETSTRUCT(mp, mater);
-			mp->mt_low = low;
-			mp->mt_high = hi;
-			mp->mt_r = r;
-			mp->mt_g = g;
-			mp->mt_b = b;
-			mp->mt_daddr = MATER_NO_ADDR;
-			rt_insert_color(mp);
-			color_putrec(mp);
-		}
-	} else {
-		struct bu_vls vls;
-
-		/* free colors in rt_material_head */
-		rt_color_free();
-
-		bu_vls_init(&vls);
-
-		while (bu_fgets(line, sizeof (line), fp) != NULL) {
-			int cnt;
-			int low, hi, r, g, b;
-
-			/* check to see if line is reasonable */
-			cnt = sscanf(line, "%d %d %d %d %d",
-				     &low, &hi, &r, &g, &b);
-			if (cnt != 5) {
-				Tcl_AppendResult(interp, "Discarding ",
-						 line, "\n", (char *)NULL);
-				continue;
-			}
-			bu_vls_printf(&vls, "{%d %d %d %d %d} ", low, hi, r, g, b);
-		}
-
-		db5_update_attribute("_GLOBAL", "regionid_colortable", bu_vls_addr(&vls), dbip);
-		db5_import_color_table(bu_vls_addr(&vls));
-		bu_vls_free(&vls);
-	}
-
-	(void)fclose(fp);
-	(void)unlink(tmpfil);
-
-	color_soltab();
-
-	return ret;
+    return ret;
 }
 
 /*
