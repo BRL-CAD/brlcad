@@ -1576,16 +1576,16 @@ f_red(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     bu_strlcpy(red_tmpcomb, red_tmpcomb_init, sizeof(red_tmpcomb));
 
-    dp = db_lookup( dbip, argv[1], LOOKUP_QUIET );
+    dp = db_lookup(dbip, argv[1], LOOKUP_QUIET);
 
-    if ( dp != DIR_NULL ) {
-	if ( !(dp->d_flags & DIR_COMB ) ) {
+    if (dp != DIR_NULL) {
+	if (!(dp->d_flags & DIR_COMB)) {
 	    Tcl_AppendResult(interp, argv[1],
 			     " is not a combination, so cannot be edited this way\n", (char *)NULL);
 	    return TCL_ERROR;
 	}
 
-	if ( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )
+	if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0)
 	    TCL_READ_ERR_return;
 
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -1593,10 +1593,16 @@ f_red(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	/* Make a file for the text editor */
 	fp = bu_temp_file(red_tmpfil, MAXPATHLEN);
 
-	/* Write the combination components to the file */
-	if ( writecomb( comb, dp->d_namep ) ) {
+	if (fp == (FILE *)0) {
 	    Tcl_AppendResult(interp, "Unable to edit ", argv[1], "\n", (char *)NULL);
-	    unlink( red_tmpfil );
+	    Tcl_AppendResult(interp, "Unable to create ", red_tmpfil, "\n", (char *)NULL);
+	    return TCL_ERROR;
+	}
+
+	/* Write the combination components to the file */
+	if (writecomb(comb, dp->d_namep)) {
+	    Tcl_AppendResult(interp, "Unable to edit ", argv[1], "\n", (char *)NULL);
+	    unlink(red_tmpfil);
 	    return TCL_ERROR;
 	}
     } else {
@@ -1605,51 +1611,58 @@ f_red(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	/* Make a file for the text editor */
 	fp = bu_temp_file(red_tmpfil, MAXPATHLEN);
 
-	/* Write the combination components to the file */
-	if ( writecomb( comb, argv[1] ) ) {
+	if (fp == (FILE *)0) {
 	    Tcl_AppendResult(interp, "Unable to edit ", argv[1], "\n", (char *)NULL);
-	    unlink( red_tmpfil );
+	    Tcl_AppendResult(interp, "Unable to create ", red_tmpfil, "\n", (char *)NULL);
+	    return TCL_ERROR;
+	}
+
+	/* Write the combination components to the file */
+	if (writecomb(comb, argv[1])) {
+	    Tcl_AppendResult(interp, "Unable to edit ", argv[1], "\n", (char *)NULL);
+	    unlink(red_tmpfil);
 	    return TCL_ERROR;
 	}
     }
 
-    /* Edit the file */
-    if ( editit( red_tmpfil ) ){
+    (void)fclose(fp);
 
+    /* Edit the file */
+    if (editit(red_tmpfil)) {
 	/* specifically avoid CHECK_READ_ONLY; above so that
 	 * we can delay checking if the geometry is read-only
 	 * until here so that red may be used to view objects.
 	 */
 	if (!dbip->dbi_read_only) {
-	    if ( (node_count = checkcomb()) < 0 ){ /* Do some quick checking on the edited file */
+	    if ((node_count = checkcomb()) < 0) { /* Do some quick checking on the edited file */
 		Tcl_AppendResult(interp, "Error in edited region, no changes made\n", (char *)NULL);
-		if ( comb )
-		    rt_comb_ifree( &intern, &rt_uniresource );
-		(void)unlink( red_tmpfil );
+		if (comb)
+		    rt_comb_ifree(&intern, &rt_uniresource);
+		(void)unlink(red_tmpfil);
 		return TCL_ERROR;
 	    }
 
-	    if ( comb ){
-		if ( save_comb( dp ) ){ /* Save combination to a temp name */
+	    if (comb) {
+		if (save_comb(dp)) { /* Save combination to a temp name */
 		    Tcl_AppendResult(interp, "No changes made\n", (char *)NULL);
-		    rt_comb_ifree( &intern, &rt_uniresource );
-		    (void)unlink( red_tmpfil );
+		    rt_comb_ifree(&intern, &rt_uniresource);
+		    (void)unlink(red_tmpfil);
 		    return TCL_OK;
 		}
 	    }
 
-	    if ( build_comb( comb, dp, node_count, argv[1] ) ){
+	    if (build_comb(comb, dp, node_count, argv[1])) {
 		Tcl_AppendResult(interp, "Unable to construct new ", dp->d_namep,
 				 (char *)NULL);
-		if ( comb ){
-		    restore_comb( dp );
-		    Tcl_AppendResult(interp, "\toriginal restored\n", (char *)NULL );
-		    rt_comb_ifree( &intern, &rt_uniresource );
+		if (comb) {
+		    restore_comb(dp);
+		    Tcl_AppendResult(interp, "\toriginal restored\n", (char *)NULL);
+		    rt_comb_ifree(&intern, &rt_uniresource);
 		}
 
-		(void)unlink( red_tmpfil );
+		(void)unlink(red_tmpfil);
 		return TCL_ERROR;
-	    }else if ( comb ){
+	    } else if (comb) {
 		/* eliminate the temporary combination */
 		char *av[3];
 
@@ -1663,10 +1676,6 @@ f_red(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
     }
 
-    if (fp) {
-	fclose(fp);
-	fp = NULL;
-    }
     unlink(red_tmpfil);
     return TCL_OK;
 }
