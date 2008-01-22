@@ -62,8 +62,8 @@ struct patches{
 #define NAMESIZE 16
 struct names{
 
-	char	ug[NAMESIZE];
-	char	lg[NAMESIZE];
+	char	ug[NAMESIZE+1];
+	char	lg[NAMESIZE+1];
 	int	eqlos,
 		matcode;
 
@@ -89,7 +89,6 @@ float mmtin = 25.4;
 double conv_mm2in;
 fastf_t third = 0.333333333;
 
-/* char  name[NAMESIZE+1];	*/
 char  cname[NAMESIZE+1];
 char  tname[NAMESIZE+1];
 char  surf[2];
