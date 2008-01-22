@@ -19,7 +19,7 @@
  *
  */
 /** @file fence.c
-/*
+ *
  *      This program generages a chain-link fence.  Every parameter of
  *      the fence may be adjusted.  Default values are held in fence.h
  *      Be wary of long fences...
@@ -588,7 +588,7 @@ int parseArguments(int argc, char **argv)
       if (strchr(bu_optarg, 'F')!=NULL) generateFenceParam = 1;
       if (strchr(bu_optarg, 'P')!=NULL) generatePolesParam = 1;
       if (strchr(bu_optarg, 'M')!=NULL) generateMeshParam = 1;
-      if (generateFenceParam == generatePolesParam == generateMeshParam == 0) {
+      if (generateFenceParam == 0 && generatePolesParam == 0 && generateMeshParam == 0) {
 	(void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Invalid generate parameters specified");
 	bu_exit(1, NULL);
       }
@@ -600,7 +600,7 @@ int parseArguments(int argc, char **argv)
       if (strchr(bu_optarg, 'F')!=NULL) generateFenceParam = (DEFAULT_GENERATEFENCE) ? 0 : 1;
       if (strchr(bu_optarg, 'P')!=NULL) generatePolesParam = (DEFAULT_GENERATEPOLES) ? 0 : 1;
       if (strchr(bu_optarg, 'M')!=NULL) generateMeshParam = (DEFAULT_GENERATEMESH) ? 0 : 1;
-      if (generateFenceParam == generatePolesParam == generateMeshParam == 0) {
+      if (generateFenceParam == 0 && generatePolesParam == 0 && generateMeshParam == 0) {
 	(void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Invalid generate parameters specified or all specified to zero");
 	bu_exit(1, NULL);
       }
