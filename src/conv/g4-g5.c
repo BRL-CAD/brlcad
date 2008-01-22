@@ -59,8 +59,6 @@ main(int argc, char **argv)
 	struct bn_tol tol;
 	char name[17];
 
-	name[16] = '\0';
-
 	/* XXX These need to be improved */
 	tol.magic = BN_TOL_MAGIC;
 	tol.dist = 0.005;
@@ -123,7 +121,13 @@ main(int argc, char **argv)
 
 			/* Convert "plastic" to "phong" in the shader string */
 			while ( (ptr=strstr( bu_vls_addr( &comb->shader), "plastic" )) != NULL ) {
-				strncpy( ptr, "phong  ", 7 );
+			    ptr[0] = 'p'; /* p */
+			    ptr[1] = 'h'; /* l */
+			    ptr[2] = 'o'; /* a */
+			    ptr[3] = 'n'; /* s */
+			    ptr[4] = 'g'; /* t */
+			    ptr[5] = ' '; /* i */
+			    ptr[6] = ' '; /* c */
 			}
 		}
 		if ( id == ID_HF ) {
@@ -147,7 +151,7 @@ main(int argc, char **argv)
 		}
 
 		/* to insure null termination */
-		strncpy( name, dp->d_namep, 16 );
+		bu_strlcpy( name, dp->d_namep, sizeof(name) );
 		ret = wdb_put_internal( fp, name, &intern, 1.0 );
 		if ( ret < 0 )  {
 			fprintf(stderr,
