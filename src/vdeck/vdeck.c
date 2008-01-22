@@ -496,17 +496,17 @@ region_end( register struct db_tree_state *tsp, struct db_full_path *pathp, unio
 			(void) sprintf( op, "%5d ", nnr+delreg );
 			first = 0;
 		} else {
-			strncpy( op, "      ", 6 );
+			bu_strlcpy( op, "      \0", 7 );
 		}
 		op += 6;
 
 		if ( left > 9*7 )  {
-			strncpy( op, cp, 9*7 );
+			bu_strlcpy( op, cp, 9*7+1 );
 			cp += 9*7;
 			op += 9*7;
 			left -= 9*7;
 		} else {
-			strncpy( op, cp, left );
+			bu_strlcpy( op, cp, left+1 );
 			op += left;
 			while ( left < 9*7 )  {
 				*op++ = ' ';
@@ -514,7 +514,7 @@ region_end( register struct db_tree_state *tsp, struct db_full_path *pathp, unio
 			}
 			left = 0;
 		}
-		strncpy( op, regdp->d_namep, 128 );
+		bu_strlcpy( op, regdp->d_namep, sizeof(op) );
 		op += strlen(op);
 		*op++ = '\n';
 		*op = '\0';
@@ -1502,7 +1502,7 @@ col_prt( register char *list[], register int ct )
 		}
 		else
 		{
-			(void) strncpy( &buf[column], list[i], MAX_COL+2 );
+			bu_strlcpy( &buf[column], list[i], MAX_COL+2-column );
 			column += strlen( list[i] );
 			spaces = NAMESIZE - (column % NAMESIZE );
 			if ( column + spaces < MAX_COL )
