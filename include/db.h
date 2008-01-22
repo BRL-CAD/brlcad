@@ -67,7 +67,13 @@
 #ifndef __DB_H__
 #define __DB_H__
 
+#include "machine.h"
+#include "bu.h"
+
+
 #define NAMESIZE		16
+#define NAMEMOVE(from,to)	(void)strncpy(to, from, NAMESIZE)
+ /* don't use bu_strlcpy for NAMEMOVE */
 
 /*
  *  Define the database format for storing binary floating point values.
@@ -75,8 +81,6 @@
  *  IEEE double precision in network order.
  */
 typedef float dbfloat_t;
-
-#define NAMEMOVE(from, to)	(void)strncpy(to, from, NAMESIZE)
 
 #define DB_MINREC	128
 
