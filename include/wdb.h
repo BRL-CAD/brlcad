@@ -119,6 +119,7 @@ struct wdb_metaballpt {
 	struct bu_list	l;
 	point_t		coord;
 	fastf_t		fldstr;		/**< @brief  field strength */
+	fastf_t		sweat;		/**< @brief  beta value used for metaball and blob evaluation */
 };
 #define WDB_METABALLPT_NULL	((struct wdb_metaballpt *)0)
 #define WDB_METABALLPT_MAGIC	0x6D627074	/**< @brief  mbpt */

@@ -129,10 +129,11 @@ struct rt_metaball_internal {
 	long    magic;
 	int	method;
 	fastf_t	threshold;
-	fastf_t	goo;	/* not used in potential field */
 	struct bu_list	metaball_ctrl_head;
 };
 fastf_t rt_metaball_point_value(point_t *p, struct rt_metaball_internal *mb);
+int rt_metaball_lookup_type_id(const char *name);
+const char *rt_metaball_lookup_type_name(const int id);
 #define RT_METABALL_INTERNAL_MAGIC      0x62616c6c	/* ball */
 #define RT_METABALL_CK_MAGIC(_p)        BU_CKMAG(_p, RT_METABALL_INTERNAL_MAGIC, "rt_metaball_internal")
 

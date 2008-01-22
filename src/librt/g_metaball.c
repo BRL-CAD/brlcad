@@ -210,12 +210,10 @@ rt_metaball_print(register const struct soltab *stp)
 	mb = (struct rt_metaball_internal *)stp->st_specific;
 	RT_METABALL_CK_MAGIC(mb);
 	for ( BU_LIST_FOR( mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)) ++metaball_count;
-	bu_log( "Metaball with %d points and a threshold of %g (%s rendering", metaball_count, mb->threshold );
-	if ( mb->method != METABALL_ISOPOTENTIAL ) bu_log(", blobbyness factor of %g", mb->goo);
-	bu_log(")\n");
+	bu_log( "Metaball with %d points and a threshold of %g (%s rendering)\n", metaball_count, mb->threshold );
 	metaball_count=0;
 	for ( BU_LIST_FOR( mbpt, wdb_metaballpt, &mb->metaball_ctrl_head))
-		bu_log("\t%d: %g field strength at (%g, %g, %g)\n", ++metaball_count, mbpt->fldstr, V3ARGS(mbpt->coord));
+		bu_log("\t%d: %g field strength at (%g, %g, %g) and 'goo' of %g\n", ++metaball_count, mbpt->fldstr, V3ARGS(mbpt->coord), mbpt->sweat);
 	return;
 }
 
@@ -488,7 +486,7 @@ rt_metaball_import5(struct rt_db_internal *ip, const struct bu_external *ep, reg
 	BU_CK_EXTERNAL( ep );
 	metaball_count = bu_glong((unsigned char *)ep->ext_buf);
 	buf = (fastf_t *)bu_malloc((metaball_count*4+1)*SIZEOF_NETWORK_DOUBLE, "rt_metaball_import5: buf");
-	ntohd((unsigned char *)buf, (unsigned char *)ep->ext_buf+3*SIZEOF_NETWORK_LONG, metaball_count*4+1);
+	ntohd((unsigned char *)buf, (unsigned char *)ep->ext_buf+2*SIZEOF_NETWORK_LONG, metaball_count*4+1);
 
 	RT_CK_DB_INTERNAL( ip );
 	ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -498,7 +496,6 @@ rt_metaball_import5(struct rt_db_internal *ip, const struct bu_external *ep, reg
 	mb = (struct rt_metaball_internal *)ip->idb_ptr;
 	mb->magic = RT_METABALL_INTERNAL_MAGIC;
 	mb->method = bu_glong((unsigned char *)ep->ext_buf + SIZEOF_NETWORK_LONG);
-	mb->goo = bu_glong((unsigned char *)ep->ext_buf + 2*SIZEOF_NETWORK_LONG);
 	mb->threshold = buf[0];
 	BU_LIST_INIT( &mb->metaball_ctrl_head );
 	if (mat == NULL) mat = bn_mat_identity;
@@ -554,7 +551,6 @@ rt_metaball_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
 	    bu_bomb("Failed to allocate DB space!\n");
 	bu_plong((unsigned char *)ep->ext_buf, metaball_count);
 	bu_plong((unsigned char *)ep->ext_buf + SIZEOF_NETWORK_LONG, mb->method);
-	bu_plong((unsigned char *)ep->ext_buf + SIZEOF_NETWORK_LONG, mb->goo);
 
 	/* pack the point data */
 	buf = (fastf_t *)bu_malloc((metaball_count*4+1)*SIZEOF_NETWORK_DOUBLE, "rt_metaball_export5: buf");
@@ -579,7 +575,7 @@ int
 rt_metaball_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
 	int metaball_count = 0;
-	char buf[BUFSIZ], buf2[BUFSIZ];
+	char buf[BUFSIZ];
 	struct rt_metaball_internal *mb;
 	struct wdb_metaballpt *mbpt;
 
@@ -588,18 +584,13 @@ rt_metaball_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ve
 	RT_METABALL_CK_MAGIC(mb);
 	for (BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)) metaball_count++;
 
-	if ( mb->method == METABALL_ISOPOTENTIAL )
-	    *buf2 = '\0';
-	else
-	    snprintf( buf2, BUFSIZ, ", blobbyness of %g", mb->goo);
-
-	snprintf(buf, BUFSIZ, "Metaball with %d points and a threshold of %g (%s rendering%s)\n", metaball_count, mb->threshold, rt_metaball_lookup_type_name(mb->method), buf2);
+	snprintf(buf, BUFSIZ, "Metaball with %d points and a threshold of %g (%s rendering)\n", metaball_count, mb->threshold, rt_metaball_lookup_type_name(mb->method));
 	bu_vls_strcat(str, buf);
 	if (!verbose)return 0;
 	metaball_count=0;
 	for ( BU_LIST_FOR( mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)){
-		snprintf(buf, BUFSIZ, "\t%d: %g field strength at (%g, %g, %g)\n",
-			++metaball_count, mbpt->fldstr, V3ARGS(mbpt->coord));
+		snprintf(buf, BUFSIZ, "\t%d: %g field strength at (%g, %g, %g) and goo of %g\n",
+			++metaball_count, mbpt->fldstr, V3ARGS(mbpt->coord), mbpt->sweat);
 		bu_vls_strcat(str, buf);
 	}
 	return 0;

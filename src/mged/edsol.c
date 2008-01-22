@@ -238,13 +238,14 @@ int	es_menu;		/* item selected from menu */
 #define MENU_SUPERELL_SCALE_ABC	116
 #define MENU_METABALL_SET_THRESHOLD	117
 #define MENU_METABALL_SET_METHOD	118
-#define MENU_METABALL_SELECT	119
-#define MENU_METABALL_NEXT_PT	120
-#define MENU_METABALL_PREV_PT	121
-#define MENU_METABALL_MOV_PT	122
-#define MENU_METABALL_PT_FLDSTR	123
-#define MENU_METABALL_DEL_PT	124
-#define MENU_METABALL_ADD_PT	125
+#define MENU_METABALL_PT_SET_GOO	119
+#define MENU_METABALL_SELECT	120
+#define MENU_METABALL_NEXT_PT	121
+#define MENU_METABALL_PREV_PT	122
+#define MENU_METABALL_MOV_PT	123
+#define MENU_METABALL_PT_FLDSTR	124
+#define MENU_METABALL_DEL_PT	125
+#define MENU_METABALL_ADD_PT	126
 
 struct menu_item cline_menu[] = {
 	{ "CLINE MENU",		(void (*)())NULL, 0 },
@@ -668,6 +669,7 @@ struct menu_item metaball_menu[] = {
 	{ "Previous Point", metaball_ed, MENU_METABALL_PREV_PT },
 	{ "Move Point", metaball_ed, MENU_METABALL_MOV_PT },
 	{ "Scale Point fldstr", metaball_ed, MENU_METABALL_PT_FLDSTR },
+	{ "Scale Point \"goo\" value", metaball_ed, MENU_METABALL_PT_SET_GOO },
 	{ "Delete Point", metaball_ed, MENU_METABALL_DEL_PT },
 	{ "Add Point", metaball_ed, MENU_METABALL_ADD_PT },
 	{ "", (void (*)())NULL, 0 }
@@ -1233,6 +1235,10 @@ metaball_ed(int arg)
 			es_edflag = PSCALE;
 			break;
 		case MENU_METABALL_SET_METHOD:
+			es_menu = arg;
+			es_edflag = PSCALE;
+			break;
+		case MENU_METABALL_PT_SET_GOO:
 			es_menu = arg;
 			es_edflag = PSCALE;
 			break;
@@ -7768,10 +7774,19 @@ pscale(void)
 			ball->method = es_para[0];
 		}
 		break;
+	case MENU_METABALL_PT_SET_GOO:
+		{
+			if ( !es_metaballpt || !inpara) {
+			  Tcl_AppendResult(interp, "pscale: no metaball point selected for scaling goo\n", (char *)NULL);
+			  return;
+			}
+			es_metaballpt->sweat *= *es_para * (es_scale?es_scale:1.0);
+		}
+		break;
 	case MENU_METABALL_PT_FLDSTR:
 		{
 			if ( !es_metaballpt || !inpara) {
-			  Tcl_AppendResult(interp, "pscale: no metaball point selected for scaling\n", (char *)NULL);
+			  Tcl_AppendResult(interp, "pscale: no metaball point selected for scaling strength\n", (char *)NULL);
 			  return;
 			}
 			es_metaballpt->fldstr *= *es_para * (es_scale?es_scale:1.0);
@@ -8259,7 +8274,8 @@ mged_param(Tcl_Interp *interp, int argc, fastf_t *argvect)
     }
 
     if ( es_menu == MENU_PIPE_PT_OD || es_menu == MENU_PIPE_PT_ID || es_menu == MENU_PIPE_SCALE_ID
-	    || es_menu == MENU_METABALL_SET_THRESHOLD || es_menu == MENU_METABALL_SET_METHOD)
+	    || es_menu == MENU_METABALL_SET_THRESHOLD || es_menu == MENU_METABALL_SET_METHOD
+	    || es_menu == MENU_METABALL_PT_SET_GOO)
       {
 	if ( es_para[0] < 0.0 )
 	  {
