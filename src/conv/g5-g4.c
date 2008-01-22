@@ -134,7 +134,13 @@ main(int argc, char **argv)
 
 			/* Convert "plastic" to "phong" in the shader string */
 			while ( (ptr=strstr( bu_vls_addr( &comb->shader), "plastic" )) != NULL ) {
-				strncpy( ptr, "phong  ", 7 );
+			    ptr[0] = 'p'; /* p */
+			    ptr[1] = 'h'; /* l */
+			    ptr[2] = 'o'; /* a */
+			    ptr[3] = 'n'; /* s */
+			    ptr[4] = 'g'; /* t */
+			    ptr[5] = ' '; /* i */
+			    ptr[6] = ' '; /* c */
 			}
 		}
 		if ( id == ID_HF ) {
