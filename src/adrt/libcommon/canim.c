@@ -101,11 +101,9 @@ int common_anim_read(common_anim_t *anim, const char *frames_file) {
 
       anim->frame_list[anim->frame_num].tlist = (common_anim_transform_t *)realloc(anim->frame_list[anim->frame_num].tlist, sizeof(common_anim_transform_t) * (anim->frame_list[anim->frame_num].tnum+1));
 
-
       /* Mesh Name */
       token = strtok(NULL, ",");
       strncpy(anim->frame_list[anim->frame_num].tlist[anim->frame_list[anim->frame_num].tnum].mesh_name, token, ADRT_NAME_SIZE);
-
 
       /* Matrix */
       for (i = 0; i < 16; i++) {
