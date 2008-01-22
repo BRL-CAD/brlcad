@@ -2094,6 +2094,8 @@ AC_CHECK_FUNCS(\
 	srand48 \
 	strchr \
 	strdup \
+	strlcat \
+	strlcpy \
 	strsep \
 	strtok \
 	sync \
