@@ -54,7 +54,7 @@ struct node *root;
 	struct node *ptr;
 	char *opa, *opb, *tmp, oper[4];
 
-	strcpy( oper, "   " );
+	bu_strlcpy( oper, "   ", sizeof(oper) );
 
 	/* initialize both stacks */
 	Initastack();
@@ -90,21 +90,21 @@ struct node *root;
 			size = strlen(opa) + strlen(opb) + 6;
 
 			/* construct the character string (opa ptr->op opb) */
-			tmp = (char *)bu_malloc( size, "Showtree: tmp" );
+			tmp = (char *)bu_malloc(size, "Showtree: tmp");
 			if ( ptr->parent )
-				strcpy( tmp, "(" );
+			    bu_strlcpy(tmp, "(", size);
 			else
-				*tmp = '\0';
-			strncat( tmp, opa, size - strlen(tmp) - 1 );
+			    *tmp = '\0';
+			bu_strlcat(tmp, opa, size);
 			oper[1] = operator[ptr->op];
-			strncat( tmp, oper, size - strlen(tmp) - 1 );
-			strncat( tmp, opb, size - strlen(tmp) - 1 );
-			if ( ptr->parent )
-				strcat( tmp, ")" );
-			tmp[size-1] = '\0'; /* sanity */
+
+			bu_strlcat(tmp, oper, size);
+			bu_strlcat(tmp, opb, size);
+			if (ptr->parent)
+			    bu_strlcat(tmp, ")", size);
 
 			/* push the character string representing the result */
-			Apush( tmp );
+			Apush(tmp);
 		}
 
 		if ( ptr == root )	/* done! */

@@ -56,14 +56,14 @@ char *name;
 	ptr = name_root;
 	while ( ptr )
 	{
-		if ( !strncmp( ptr->name, name, NAMESIZE ) )
+		if ( !strncmp( ptr->name, name, NAMESIZE+1 ) )
 			return( ptr->name );
 		ptr = ptr->next;
 	}
 
 	/* add this name to the list */
 	ptr = (struct name_list *)bu_malloc( sizeof( struct name_list ), "Add_brl_name: ptr" );
-	strncpy( ptr->name, name, NAMESIZE );
+	bu_strlcpy( ptr->name, name, NAMESIZE+1 );
 	ptr->next = name_root;
 	name_root = ptr;
 
@@ -93,7 +93,7 @@ char *name;
 	ptr = name_root;
 	while ( ptr )
 	{
-		if ( !strncmp( ptr->name, name, NAMESIZE ) )
+		if ( !strncmp( ptr->name, name, NAMESIZE+1 ) )
 		{
 			found = 1;
 			break;
@@ -119,7 +119,7 @@ char *name;
 		ptr = name_root;
 		while ( ptr )
 		{
-			if ( !strncmp( ptr->name, name, NAMESIZE ) )
+			if ( !strncmp( ptr->name, name, NAMESIZE+1 ) )
 			{
 				found = 1;
 				break;
@@ -148,7 +148,7 @@ char *name;
 		ptr = name_root;
 		while ( ptr )
 		{
-			if ( !strncmp( ptr->name, name, NAMESIZE ) )
+			if ( !strncmp( ptr->name, name, NAMESIZE+1 ) )
 			{
 				found = 1;
 				break;
@@ -628,7 +628,7 @@ Check_names()
 	bu_log( "Assigning names to entities without names...\n" );
 	for ( i=0; i < totentities; i++ )
 	{
-		char tmp_name[NAMESIZE + 1];
+		char tmp_name[NAMESIZE+1];
 
 		if ( dir[i]->name == (char *)NULL )
 		{

@@ -50,7 +50,7 @@ struct trclist
 	fastf_t r1, r2;
 	int op; /* 0 => union, 1=> subtract */
 	int index;
-	char name[NAMESIZE];
+	char name[NAMESIZE+1];
 	struct subtracts *subtr;
 	struct trclist *next, *prev;
 };
@@ -76,7 +76,7 @@ int entityno;
 	fastf_t		hmax, hmin;		/* Max and Min distances along axis of rotation */
 	fastf_t		rmax;			/* Max radius */
 	int		cutop = Intersect;	/* Operator for cutting solid */
-	char		cutname[NAMESIZE];	/* Name for cutting solid */
+	char		cutname[NAMESIZE+1];	/* Name for cutting solid */
 	struct subtracts *subp;
 	int		i;
 
@@ -216,7 +216,7 @@ int entityno;
 		}
 
 		/* Make a name for the TRC */
-		snprintf( trcptr->name, NAMESIZE, "rev.%d.%d", entityno, ntrcs ); /* Format for creating TRC names */
+		snprintf( trcptr->name, NAMESIZE+1, "rev.%d.%d", entityno, ntrcs ); /* Format for creating TRC names */
 
 		/* Make the TRC */
 		if ( mk_trc_top( fdout, trcptr->name, trcptr->base,

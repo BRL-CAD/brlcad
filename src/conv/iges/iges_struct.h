@@ -152,7 +152,7 @@ struct spline
 
 struct reglist
 {
-	char name[NAMESIZE];
+	char name[NAMESIZE+1];
 	struct node *tree;
 	struct reglist *next;
 };

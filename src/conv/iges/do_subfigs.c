@@ -219,10 +219,10 @@ Do_subfigs()
 
 					list_ptr->file_name = file_name;
 					if ( no_of_members == 1 )
-						strncpy( list_ptr->obj_name, dir[subfigdef_index]->name, NAMESIZE );
+						bu_strlcpy( list_ptr->obj_name, dir[subfigdef_index]->name, NAMESIZE+1 );
 					else
 					{
-						strncpy( list_ptr->obj_name, "subfig", NAMESIZE );
+						bu_strlcpy( list_ptr->obj_name, "subfig", NAMESIZE+1 );
 						(void) Make_unique_brl_name( list_ptr->obj_name );
 					}
 

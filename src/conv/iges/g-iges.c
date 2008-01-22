@@ -565,7 +565,7 @@ genptr_t		client_data;
 				len = strlen( output_file ) + strlen( dp->d_namep ) + 6 + SUFFIX_LEN;
 				multi_name = bu_malloc( sizeof( char )*len, "multi_name" );
 				snprintf(multi_name, len, "%s/%s.igs", output_file, dp->d_namep);
-				strcpy( suffix, "a" );
+				bu_strlcpy( suffix, "a", sizeof(suffix) );
 				suffix[0]--;
 				while ( !unique )
 				{
@@ -624,7 +624,7 @@ genptr_t		client_data;
 			dependent = 1;
 			for ( i=0; i<no_of_indeps; i++ )
 			{
-				if ( !strncmp( dp->d_namep, independent[i], NAMESIZE ) )
+				if ( !strncmp( dp->d_namep, independent[i], NAMESIZE+1 ) )
 				{
 					dependent = 0;
 					break;
@@ -765,7 +765,7 @@ genptr_t	ptr;
 
 	for ( i=0; i<no_of_indeps; i++ )
 	{
-		if ( !strncmp( dp->d_namep, independent[i], NAMESIZE ) )
+		if ( !strncmp( dp->d_namep, independent[i], NAMESIZE+1 ) )
 		{
 			dependent = 0;
 			break;
@@ -807,7 +807,7 @@ genptr_t	ptr;
 		return;
 	}
 
-	strncpy( props.name, dp->d_namep, NAMESIZE );
+	bu_strlcpy( props.name, dp->d_namep, NAMESIZE+1 );
 	props.material_name[0] = '\0';
 	props.material_params[0] = '\0';
 	props.region_flag = ' ';

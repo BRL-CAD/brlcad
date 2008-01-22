@@ -296,16 +296,16 @@ get_props( props, comb )
     RT_CK_COMB( comb );
 
     endp = strchr( bu_vls_addr(&comb->shader), ' ' );
-    memset(props->material_name, 0, 32);
-    memset(props->material_params, 0, 60);
+    memset(props->material_name, 0, sizeof(props->material_name));
+    memset(props->material_params, 0, sizeof(props->material_params));
     if ( endp )  {
 	int	len;
 	len = endp - bu_vls_addr(&comb->shader);
-	if ( len > 31 ) len = 31;
-	strncpy( props->material_name, bu_vls_addr(&comb->shader), len );
-	strncpy( props->material_params, endp+1, 59 );
+	if( len > sizeof(props->material_name) ) len = sizeof(props->material_name);
+	bu_strlcpy( props->material_name, bu_vls_addr(&comb->shader), len );
+	bu_strlcpy( props->material_params, endp+1, sizeof(props->material_params) );
     } else {
-	strncpy( props->material_name, bu_vls_addr(&comb->shader), 31 );
+	bu_strlcpy( props->material_name, bu_vls_addr(&comb->shader), sizeof(props->material_name) );
 	props->material_params[0] = '\0';
     }
     if ( comb->region_flag )
@@ -342,7 +342,7 @@ lookup_props( props, name )
     struct rt_comb_internal *comb;
     int id;
 
-    strncpy( props->name, name, NAMESIZE );
+    bu_strlcpy( props->name, name, NAMESIZE+1 );
     props->material_name[0] = '\0';
     props->material_params[0] = '\0';
     props->region_flag = ' ';
@@ -2709,7 +2709,7 @@ nmg_to_iges( ip, name, fp_dir, fp_param )
     dependent = 1;
     for ( i=0; i<no_of_indeps; i++ )
 	{
-	    if ( !strncmp( name, independent[i], NAMESIZE ) )
+	    if ( !strncmp( name, independent[i], NAMESIZE+1 ) )
 		{
 		    dependent = 0;
 		    break;

@@ -234,7 +234,7 @@ char *argv[];
 		usage();
 		bu_exit( 1, NULL );
 	}
-	strncpy( brlcad_file, output_file, 256 );
+	bu_strlcpy( brlcad_file,  output_file, sizeof(brlcad_file) );
 
 	argc -= bu_optind;
 	argv += bu_optind;
@@ -242,12 +242,12 @@ char *argv[];
 	BU_LIST_INIT( &iges_list.l );
 	curr_file = (struct file_list *)bu_malloc( sizeof( struct file_list ), "iges-g: curr_file" );
 	if ( solid_name )
-		strncpy( curr_file->obj_name, Make_unique_brl_name( solid_name ), NAMESIZE );
+		bu_strlcpy( curr_file->obj_name, Make_unique_brl_name( solid_name ), NAMESIZE+1 );
 	else
-		strncpy( curr_file->obj_name, Make_unique_brl_name( "all" ), NAMESIZE );
+		bu_strlcpy( curr_file->obj_name, Make_unique_brl_name( "all" ), NAMESIZE+1 );
 
-	curr_file->file_name = (char *)bu_malloc( strlen( argv[0] ) + 1, "iges-g: curr_file->file_name" );
-	strncpy( curr_file->file_name, argv[0], strlen(argv[0])+1 );
+	curr_file->file_name = (char *)bu_malloc( strlen(argv[0])+1, "iges-g: curr_file->file_name" );
+	bu_strlcpy( curr_file->file_name, argv[0], strlen(argv[0])+1 );
 	BU_LIST_APPEND( &iges_list.l, &curr_file->l );
 
 	while ( BU_LIST_NON_EMPTY( &iges_list.l ) )
