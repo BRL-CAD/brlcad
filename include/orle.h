@@ -60,6 +60,10 @@
 #  define BLU 2
 #endif
 
+#ifndef COPYRGB
+#  define COPYRGB(to, from) { (to)[RED]=(from)[RED]; (to)[GRN]=(from)[GRN]; (to)[BLU]=(from)[BLU]; }
+#endif
+
 typedef struct	/* Extended format RLE header.				*/
 	{
 	short	h_xpos, h_ypos;	/* Lower-left corner of image.		*/
