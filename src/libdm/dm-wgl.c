@@ -306,6 +306,8 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
       Tcl_DStringInit(&ds);
       Tcl_DStringAppend(&ds, "toplevel ", -1);
       Tcl_DStringAppend(&ds, bu_vls_addr(&dmp->dm_pathName), -1);
+      Tcl_DStringAppend(&ds, "; wm deiconify ", -1);
+      Tcl_DStringAppend(&ds, bu_vls_addr(&dmp->dm_pathName), -1);
       if (Tcl_Eval(interp, Tcl_DStringValue(&ds)) != TCL_OK) {
 	  Tcl_DStringFree(&ds);
 	  return DM_NULL;
