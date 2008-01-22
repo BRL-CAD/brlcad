@@ -49,8 +49,8 @@
 #include "./ged.h"
 #include "./sedit.h"
 
-char	new_name[NAMESIZE];
-char	prestr[NAMESIZE];
+char	new_name[NAMESIZE+1];
+char	prestr[NAMESIZE+1];
 int	ncharadd;
 
 
