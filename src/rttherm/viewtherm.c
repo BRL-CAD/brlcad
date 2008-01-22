@@ -18,11 +18,8 @@
  * information.
  */
 /** @file viewtherm.c
- *	./rttherm -P1 -s64 -o mtherm ../.db.6d/moss.g all.g
  *
- *			V I E W T H E R M . C
- *
- *	Ray Tracing Thermal Images.
+ *  Ray Tracing Thermal Images.
  *
  *  Output is written to a file.
  *
@@ -33,9 +30,6 @@
  *  Author -
  *	Michael John Muuss
  *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"
