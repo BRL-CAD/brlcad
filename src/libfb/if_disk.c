@@ -155,6 +155,11 @@ dsk_open(FBIO *ifp, char *file, int width, int height)
 		} else
 			return	-1;
 	}
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	setmode(ifp->if_fd, _O_BINARY);
+#endif
+
 	ifp->if_width = width;
 	ifp->if_height = height;
 	if ( lseek( ifp->if_fd, (off_t)0L, 0 ) == -1L ) {
