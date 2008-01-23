@@ -778,7 +778,8 @@ cmd_rt(ClientData	clientData,
        int		argc,
        char		**argv)
 {
-    char *ptr, buf[256] = {0};
+    const char *ptr;
+    char buf[256] = {0};
 
     CHECK_DBI_NULL;
 
@@ -916,7 +917,9 @@ cmd_rtcheck(ClientData	clientData,
 	    int		argc,
 	    char	**argv)
 {
-    char *ptr, buf[256] = {0};
+    const char *ptr;
+    char buf[256] = {0};
+
     CHECK_DBI_NULL;
 
     ptr = bu_brlcad_root("bin", 1);
@@ -944,7 +947,9 @@ cmd_rtarea(ClientData	clientData,
 	   int		argc,
 	   char	**argv)
 {
-    char *ptr, buf[256] = {0};
+    const char *ptr;
+    char buf[256] = {0};
+
     CHECK_DBI_NULL;
 
     ptr = bu_brlcad_root("bin", 1);
@@ -972,7 +977,9 @@ cmd_rtedge(ClientData	clientData,
 	   int		argc,
 	   char	**argv)
 {
-    char *ptr, buf[256] = {0};
+    const char *ptr;
+    char buf[256] = {0};
+
     CHECK_DBI_NULL;
 
     ptr = bu_brlcad_root("bin", 1);
@@ -1000,7 +1007,9 @@ cmd_rtweight(ClientData	clientData,
 	     int	argc,
 	     char	**argv)
 {
-    char *ptr, buf[256] = {0};
+    const char *ptr;
+    char buf[256] = {0};
+
     CHECK_DBI_NULL;
 
     ptr = bu_brlcad_root("bin", 1);
@@ -1824,7 +1833,9 @@ int
 f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 #if 1
-    char *ptr, buf[256];
+    const char *ptr;
+    char buf[256];
+
     CHECK_DBI_NULL;
 
     ptr = bu_brlcad_root("bin", 1);
@@ -2337,7 +2348,9 @@ int
 f_vnirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 #if 1
-    char *ptr, buf[256];
+    const char *ptr;
+    char buf[256];
+
     CHECK_DBI_NULL;
 
     ptr = bu_brlcad_root("bin", 1);
