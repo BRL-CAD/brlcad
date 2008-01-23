@@ -329,12 +329,12 @@ An error has occured while adding a new object to the database.\n", (char *)NULL
 	return TCL_ERROR;  }
 
 /* For errors from db_delete() or db_dirdelete() */
-#define TCL_DELETE_ERR(_name){ \
+#define TCL_DELETE_ERR(_name) { \
 	Tcl_AppendResult(interp, "An error has occurred while deleting '", _name, \
 	"' from the database.\n", (char *)NULL);\
 	TCL_ERROR_RECOVERY_SUGGESTION; }
 
-#define TCL_DELETE_ERR_return(_name){  \
+#define TCL_DELETE_ERR_return(_name) {  \
 	TCL_DELETE_ERR(_name); \
 	return TCL_ERROR;  }
 

@@ -207,7 +207,7 @@ Pex_open(struct dm *dmp)
   bu_vls_strcpy(&str, "init_x ");
   bu_vls_printf(&str, "%s\n", bu_vls_addr(&dmp->dmr_pathName));
 
-  if (Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR){
+  if (Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR) {
     bu_vls_free(&str);
     (void)pex_close(dmp);
     return TCL_ERROR;
@@ -357,13 +357,13 @@ Pex_open(struct dm *dmp)
 
 /* Begin PEX stuff. */
     if (PEXInitialize(((struct pex_vars *)dmp->dmr_vars)->dpy,
-		     &pex_info, 80, pex_err) != 0){
+		     &pex_info, 80, pex_err) != 0) {
       bu_vls_free(&str);
       bu_log("Pex_setup: %s\n", pex_err);
       return TCL_ERROR;
     }
 
-    if (!IMMED_MODE_SPT(pex_info)){
+    if (!IMMED_MODE_SPT(pex_info)) {
       bu_vls_free(&str);
       bu_log("Pex_setup: Immediate mode is not supported.\n");
       return TCL_ERROR;
@@ -491,7 +491,7 @@ mat_t mat;
   static PEXVector vuv = { 0.0, 1.0, 0.0 };
   static PEXCoord vrp = { 0.0, 0.0, 0.0 };
 
-  if ((err = PEXViewOrientationMatrix(&vrp, &vpn, &vuv, view.orientation)) != 0){
+  if ((err = PEXViewOrientationMatrix(&vrp, &vpn, &vuv, view.orientation)) != 0) {
     bu_log("Pex_newrot: bad PEXViewOrientationMatrix return - %d\n", err);
     return;
   }
@@ -509,7 +509,7 @@ mat_t mat;
   perspective = 0;
   if ((err = PEXViewMappingMatrix(view_win, &viewport, perspective,
 				 &prp, view_plane, back, front,
-				 view.mapping)) != 0){
+				 view.mapping)) != 0) {
     bu_log("Pex_newrot: bad PEXViewMappingMatrix return - %d\n", err);
     return;
   }
@@ -566,9 +566,9 @@ register short r, g, b;
 		    ((struct pex_vars *)dmp->dmr_vars)->renderer);
   {
 #if 0
-    if ( illum ){
+    if ( illum ) {
       SET_COLOR( 0.9, 0.9, 0.9, color );
-    }else{
+    } else {
       SET_COLOR( r / 255.0, g / 255.0,
 		 b / 255.0, color );
     }
@@ -612,7 +612,7 @@ register short r, g, b;
 	  break;
 	case BN_VLIST_LINE_MOVE:
 	  /* Move, start line */
-	  if ( first == 0 ){
+	  if ( first == 0 ) {
 	    PEXPolyline(((struct pex_vars *)dmp->dmr_vars)->dpy,
 			((struct pex_vars *)dmp->dmr_vars)->renderer,
 			PEXOCRender, ncoord, coord_buf);
@@ -774,11 +774,11 @@ register short r, g, b;
 		    ((struct pex_vars *)dmp->dmr_vars)->renderer,
 		    PEXOCRender, 1.0);
 
-    if ( dashed ){
+    if ( dashed ) {
       PEXSetLineType(((struct pex_vars *)dmp->dmr_vars)->dpy,
 		     ((struct pex_vars *)dmp->dmr_vars)->renderer,
 		     PEXOCRender, PEXLineTypeDashed);
-    }else{
+    } else {
       PEXSetLineType(((struct pex_vars *)dmp->dmr_vars)->dpy,
 					  ((struct pex_vars *)dmp->dmr_vars)->renderer,
 					  PEXOCRender, PEXLineTypeSolid);
@@ -1005,7 +1005,7 @@ struct dm *dmp;
 
 #ifdef DOUBLE_BUFFERING_WITH_PIXMAPS
     if (((struct pex_vars *)dmp->dmr_vars)->height != ((struct pex_vars *)dmp->dmr_vars)->pix_height ||
-       ((struct pex_vars *)dmp->dmr_vars)->width != ((struct pex_vars *)dmp->dmr_vars)->pix_width){
+       ((struct pex_vars *)dmp->dmr_vars)->width != ((struct pex_vars *)dmp->dmr_vars)->pix_width) {
       Tk_FreePixmap( ((struct pex_vars *)dmp->dmr_vars)->dpy, ((struct pex_vars *)dmp->dmr_vars)->pix );
 
       ((struct pex_vars *)dmp->dmr_vars)->pix_width = ((struct pex_vars *)dmp->dmr_vars)->width;
@@ -1049,7 +1049,7 @@ struct dm *dmp;
       }
     }
   } else if (((struct pex_vars *)dmp->dmr_vars)->width < 679) {
-    if (((struct pex_vars *)dmp->dmr_vars)->fontstruct->per_char->width != 6){
+    if (((struct pex_vars *)dmp->dmr_vars)->fontstruct->per_char->width != 6) {
       if ((newfontstruct = XLoadQueryFont(((struct pex_vars *)dmp->dmr_vars)->dpy, FONT6)) != NULL ) {
 	XFreeFont(((struct pex_vars *)dmp->dmr_vars)->dpy, ((struct pex_vars *)dmp->dmr_vars)->fontstruct);
 	((struct pex_vars *)dmp->dmr_vars)->fontstruct = newfontstruct;
@@ -1059,7 +1059,7 @@ struct dm *dmp;
       }
     }
   } else if (((struct pex_vars *)dmp->dmr_vars)->width < 776) {
-    if (((struct pex_vars *)dmp->dmr_vars)->fontstruct->per_char->width != 7){
+    if (((struct pex_vars *)dmp->dmr_vars)->fontstruct->per_char->width != 7) {
       if ((newfontstruct = XLoadQueryFont(((struct pex_vars *)dmp->dmr_vars)->dpy, FONT7)) != NULL ) {
 	XFreeFont(((struct pex_vars *)dmp->dmr_vars)->dpy, ((struct pex_vars *)dmp->dmr_vars)->fontstruct);
 	((struct pex_vars *)dmp->dmr_vars)->fontstruct = newfontstruct;
@@ -1069,7 +1069,7 @@ struct dm *dmp;
       }
     }
   } else if (((struct pex_vars *)dmp->dmr_vars)->width < 873) {
-    if (((struct pex_vars *)dmp->dmr_vars)->fontstruct->per_char->width != 8){
+    if (((struct pex_vars *)dmp->dmr_vars)->fontstruct->per_char->width != 8) {
       if ((newfontstruct = XLoadQueryFont(((struct pex_vars *)dmp->dmr_vars)->dpy, FONT8)) != NULL ) {
 	XFreeFont(((struct pex_vars *)dmp->dmr_vars)->dpy, ((struct pex_vars *)dmp->dmr_vars)->fontstruct);
 	((struct pex_vars *)dmp->dmr_vars)->fontstruct = newfontstruct;
@@ -1079,7 +1079,7 @@ struct dm *dmp;
       }
     }
   } else {
-    if (((struct pex_vars *)dmp->dmr_vars)->fontstruct->per_char->width != 9){
+    if (((struct pex_vars *)dmp->dmr_vars)->fontstruct->per_char->width != 9) {
       if ((newfontstruct = XLoadQueryFont(((struct pex_vars *)dmp->dmr_vars)->dpy, FONT9)) != NULL ) {
 	XFreeFont(((struct pex_vars *)dmp->dmr_vars)->dpy, ((struct pex_vars *)dmp->dmr_vars)->fontstruct);
 	((struct pex_vars *)dmp->dmr_vars)->fontstruct = newfontstruct;
@@ -1126,7 +1126,7 @@ struct dm *dmp;
   else if (--((struct pex_vars *)dmp->dmr_vars)->perspective_angle < 0) /* toggle perspective matrix */
     ((struct pex_vars *)dmp->dmr_vars)->perspective_angle = 3;
 
-  if (((struct pex_vars *)dmp->dmr_vars)->mvars.perspective_mode){
+  if (((struct pex_vars *)dmp->dmr_vars)->mvars.perspective_mode) {
     struct bu_vls vls;
 
     bu_vls_init(&vls);

@@ -281,7 +281,7 @@ f_set(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
   bu_vls_init(&vls);
 
-  if (argc < 1 || 2 < argc){
+  if (argc < 1 || 2 < argc) {
     bu_vls_printf(&vls, "help vars");
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
@@ -364,7 +364,7 @@ set_dlist(void)
   /* save current display manager */
   save_dlp = curr_dm_list;
 
-  if (mged_variables->mv_dlist){
+  if (mged_variables->mv_dlist) {
     /* create display lists */
 
     /* for each display manager dlp1 that shares its' dml_mged_variables with save_dlp */
@@ -381,7 +381,7 @@ set_dlist(void)
 	dlp1->dml_dirty = 1;
       }
     }
-  }else{
+  } else {
     /*
      * Free display lists if not being used by another display manager
      */

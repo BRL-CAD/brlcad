@@ -83,7 +83,7 @@ vas_open(void)
 {
 
 	/* Open VAS Port */
-	if ((vas_fd=open(VAS_PORT, O_RDWR)) < 0){
+	if ((vas_fd=open(VAS_PORT, O_RDWR)) < 0) {
 		perror(VAS_PORT);
 		bu_exit(1, NULL);
 	}

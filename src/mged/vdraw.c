@@ -169,7 +169,7 @@ char **argv;
 	char result_string[90];
 	point_t pos;
 
-	if (argc < 1 || 1 < argc){
+	if (argc < 1 || 1 < argc) {
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -195,7 +195,7 @@ char **argv;
 {
 	char result_string[90];
 
-	if (argc < 1 || 1 < argc){
+	if (argc < 1 || 1 < argc) {
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -224,7 +224,7 @@ char **argv;
 	mat_t mymat;
 	char c;
 
-	if (argc < 2 || 2 < argc){
+	if (argc < 2 || 2 < argc) {
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -312,7 +312,7 @@ char **argv;
 	vect_t dir, norm, temp;
 	mat_t mymat;
 
-	if (argc < 3){
+	if (argc < 3) {
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);

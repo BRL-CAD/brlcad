@@ -105,14 +105,14 @@ main(int argc, char **argv)
 	    scanf("%lf", &viewsize);
 	if (translate)
 	    val=scanf("%lf %lf %lf", point, point+1, point+2);
-	if (rotate&&quaternion){
+	if (rotate&&quaternion) {
 	    val = scanf("%lf %lf %lf %lf", quat, quat+1, quat+2, quat+3);
 	    val -= 1;
 	} else if (rotate) {
 	    val=scanf("%lf %lf %lf", &yaw, &pitch, &roll);
 	}
 
-	if (val < 3){ /* ie. scanf not completely successful */
+	if (val < 3) { /* ie. scanf not completely successful */
 	    /* with steering option, must go extra loop after end of file */
 	    if (steer && !last_steer)
 		last_steer = 1;
@@ -137,12 +137,12 @@ main(int argc, char **argv)
 	    anim_v_unpermute(a);
 
 	/* make final matrix, including translation etc */
-	if (axes){ /* add pre-rotation from original axes */
+	if (axes) { /* add pre-rotation from original axes */
 	    bn_mat_mul(m_x, a, m_rev_axes);
 	    MAT_MOVE(a, m_x);
 	}
 	anim_add_trans(a, point, rcentroid); /* add translation */
-	if (axes && relative_a){ /* add post-rotation back to original axes */
+	if (axes && relative_a) { /* add post-rotation back to original axes */
 	    bn_mat_mul(m_x, m_axes, a);
 	    MAT_MOVE(a, m_x);
 	}
@@ -151,7 +151,7 @@ main(int argc, char **argv)
 
 
 	/* print one frame of script */
-	if (go && view){
+	if (go && view) {
 	    printf("start %d;\n", frame);
 	    printf("clean;\n");
 	    if (readview)
@@ -164,7 +164,7 @@ main(int argc, char **argv)
 	    printf("0 0 0 1;\n");
 	    printf("end;\n");
 	}
-	else if (go){
+	else if (go) {
 	    printf("start %d;\n", frame);
 	    printf("clean;\n");
 	    printf("anim %s matrix %s\n", *(argv+bu_optind), mat_cmd);
@@ -189,7 +189,7 @@ int get_args(int argc, char **argv)
     bu_strlcpy(mat_cmd, "lmul", sizeof(mat_cmd));
     while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
 	i=0;
-	switch (c){
+	switch (c) {
 	case 'a':
 	    bu_optind -= 1;
 	    sscanf(argv[bu_optind+(i++)], "%lf", &yaw );

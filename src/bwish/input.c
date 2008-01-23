@@ -441,7 +441,7 @@ processChar(char ch)
 	    bu_log("%S", &input_str);
 	    bu_vls_vlscat(&input_str, &temp);
 	    bu_vls_free(&temp);
-	}else
+	} else
 	    insert_char(ch);
 
 	escaped = bracketed = 0;
@@ -470,7 +470,7 @@ processChar(char ch)
 	    bu_log("%S", &input_str);
 	    bu_vls_vlscat(&input_str, &temp);
 	    bu_vls_free(&temp);
-	}else
+	} else
 	    insert_char(ch);
 
 	escaped = bracketed = 0;
@@ -503,7 +503,7 @@ processChar(char ch)
 	    bu_log("%S", &input_str);
 	    bu_vls_vlscat(&input_str, &temp);
 	    bu_vls_free(&temp);
-	}else
+	} else
 	    insert_char(ch);
 
 	escaped = bracketed = 0;

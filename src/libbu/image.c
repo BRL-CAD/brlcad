@@ -77,7 +77,7 @@ static int
 guess_file_format(char *filename, char *trimmedname)
 {
     /* look for the FMT: header */
-#define CMP(name) if (!strncmp(filename, #name":", strlen(#name))){bu_strlcpy(trimmedname, filename+strlen(#name)+1, BUFSIZ);return BU_IMAGE_##name; }
+#define CMP(name) if (!strncmp(filename, #name":", strlen(#name))) {bu_strlcpy(trimmedname, filename+strlen(#name)+1, BUFSIZ);return BU_IMAGE_##name; }
     CMP(PIX);
     CMP(PNG);
     CMP(BMP);

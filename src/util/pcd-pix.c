@@ -1095,7 +1095,7 @@ static void decode(dim w, dim h, implane *f, implane *f1, implane *f2, int autos
 	melde("decode\n");
 #define nextbuf  {  nptr=sbuffer;  EREADBUF; }
 #define checkbuf { if (nptr >= sbuffer + sizeof(sbuffer)) nextbuf; }
-#define shiftout(n){ sreg<<=n; inh-=n; \
+#define shiftout(n) { sreg<<=n; inh-=n; \
 		    while (inh<=24) \
 		     {checkbuf; \
 		      sreg |= ((unsigned long)(*(nptr++)))<<(24-inh);\

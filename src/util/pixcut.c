@@ -231,7 +231,7 @@ main(int argc, char **argv)
 				}
 				last = "bottom";
 			}
-			if (base_x+new_width >org_width ){
+			if (base_x+new_width >org_width ) {
 				if (last) {
 					if (comma) {
 						(void)fprintf(stderr, ", %s", last);

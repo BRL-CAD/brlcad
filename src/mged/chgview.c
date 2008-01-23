@@ -234,7 +234,7 @@ cmd_erase_all(ClientData	clientData,
 #else
   CHECK_DBI_NULL;
 
-  if (argc < 2){
+  if (argc < 2) {
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -321,7 +321,7 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-  if (argc < 2){
+  if (argc < 2) {
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -676,7 +676,7 @@ f_regdebug(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	static int regdebug = 0;
 	static char debug_str[10];
 
-	if (argc < 1 || 2 < argc){
+	if (argc < 1 || 2 < argc) {
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -885,7 +885,7 @@ mged_freemem(void)
   register struct solid		*sp;
   register struct bn_vlist	*vp;
 
-  FOR_ALL_SOLIDS(sp, &FreeSolid.l){
+  FOR_ALL_SOLIDS(sp, &FreeSolid.l) {
     GET_SOLID(sp, &FreeSolid.l);
     bu_free((genptr_t)sp, "mged_freemem: struct solid");
   }
@@ -1172,7 +1172,7 @@ f_view(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		vect_t aet;
 
 		/* return Viewrot as azimuth, elevation and twist */
-		if (argc == 2){
+		if (argc == 2) {
 			bu_vls_init(&vls);
 			bn_encode_vect(&vls, view_state->vs_vop->vo_aet);
 			Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
@@ -1181,7 +1181,7 @@ f_view(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 			return TCL_OK;
 		}
 
-		if (argc != 5){
+		if (argc != 5) {
 			bu_vls_init(&vls);
 			bu_vls_printf(&vls, "view: aet requires 3 parameters");
 			Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
@@ -1355,7 +1355,7 @@ f_view(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 int
 f_refresh(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-  if (argc < 1 || 1 < argc){
+  if (argc < 1 || 1 < argc) {
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -1425,7 +1425,7 @@ cmd_aetview(ClientData	clientData,
   int iflag = 0;
   fastf_t twist = 0.0;  /* assumed to be 0.0 ---- unless supplied by user */
 
-  if (argc < 3 || 5 < argc){
+  if (argc < 3 || 5 < argc) {
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -1436,7 +1436,7 @@ cmd_aetview(ClientData	clientData,
   }
 
   /* Check for -i option */
-  if (argv[1][0] == '-' && argv[1][1] == 'i'){
+  if (argv[1][0] == '-' && argv[1][1] == 'i') {
     iflag = 1;  /* treat arguments as incremental values */
     ++argv;
     --argc;
@@ -1598,12 +1598,12 @@ pr_schain(struct solid *startp, int lvl)
 
   if ( setjmp( jmp_env ) == 0 )
     (void)signal( SIGINT, sig3);
-  else{
+  else {
     bu_vls_free(&vls);
     return;
   }
 
-  FOR_ALL_SOLIDS(sp, &startp->l){
+  FOR_ALL_SOLIDS(sp, &startp->l) {
     if (lvl <= -2) {
       /* print only leaves */
       bu_vls_printf(&vls, "%s ", LAST_SOLID(sp)->d_namep );
@@ -1734,7 +1734,7 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	argc -= (bu_optind - 1);
 	argv += (bu_optind - 1);
 
-	if (argc != 2){
+	if (argc != 2) {
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -1744,7 +1744,7 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  return TCL_ERROR;
 	}
 
-	if (state != ST_S_PICK && state != ST_O_PICK){
+	if (state != ST_S_PICK && state != ST_O_PICK) {
 	  state_err("keyboard illuminate pick");
 	  goto bail_out;
 	}
@@ -1753,7 +1753,7 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	for (nm_pieces = 0; path_piece[nm_pieces] != 0; ++nm_pieces)
 	;
 
-	if (nm_pieces == 0){
+	if (nm_pieces == 0) {
 	  Tcl_AppendResult(interp, "Bad solid path: '", argv[1], "'\n", (char *)NULL);
 	  goto bail_out;
 	}
@@ -1764,12 +1764,12 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		goto bail_out;
 
 	nmatch = 0;
-	if (!(dp -> d_flags & DIR_SOLID)){
+	if (!(dp -> d_flags & DIR_SOLID)) {
 	  Tcl_AppendResult(interp, basename, " is not a solid\n", (char *)NULL);
 	  goto bail_out;
 	}
 
-	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid){
+	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid) {
 	  int	a_new_match;
 
 /* XXX Could this make use of db_full_path_subset()? */
@@ -1815,7 +1815,7 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	illump = lastfound;
 	illump->s_iflag = UP;
 
-	if (!illum_only){
+	if (!illum_only) {
 	  if ( state == ST_O_PICK )  {
 	    ipathpos = 0;
 	    (void)chg_state( ST_O_PICK, ST_O_PATH, "Keyboard illuminate");
@@ -1835,7 +1835,7 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_OK;
 
 bail_out:
-    if (state != ST_VIEW){
+    if (state != ST_VIEW) {
       struct bu_vls vls;
 
       bu_vls_init(&vls);
@@ -1880,7 +1880,7 @@ f_sed(
 
   if ( not_state( ST_VIEW, "keyboard solid edit start") )
     return TCL_ERROR;
-  if (BU_LIST_IS_EMPTY(&dgop->dgo_headSolid)){
+  if (BU_LIST_IS_EMPTY(&dgop->dgo_headSolid)) {
     Tcl_AppendResult(interp, "no solids being displayed\n",  (char *)NULL);
     return TCL_ERROR;
   }
@@ -1999,12 +1999,12 @@ mged_print_knobvals(Tcl_Interp *interp)
 
   bu_vls_init(&vls);
 
-  if (mged_variables->mv_rateknobs){
-    if (es_edclass == EDIT_CLASS_ROTATE && mged_variables->mv_transform == 'e'){
+  if (mged_variables->mv_rateknobs) {
+    if (es_edclass == EDIT_CLASS_ROTATE && mged_variables->mv_transform == 'e') {
       bu_vls_printf(&vls, "x = %f\n", edit_rate_model_rotate[X]);
       bu_vls_printf(&vls, "y = %f\n", edit_rate_model_rotate[Y]);
       bu_vls_printf(&vls, "z = %f\n", edit_rate_model_rotate[Z]);
-    }else{
+    } else {
       bu_vls_printf(&vls, "x = %f\n", view_state->vs_rate_rotate[X]);
       bu_vls_printf(&vls, "y = %f\n", view_state->vs_rate_rotate[Y]);
       bu_vls_printf(&vls, "z = %f\n", view_state->vs_rate_rotate[Z]);
@@ -2015,21 +2015,21 @@ mged_print_knobvals(Tcl_Interp *interp)
     else
       bu_vls_printf(&vls, "S = %f\n", view_state->vs_rate_scale);
 
-    if (es_edclass == EDIT_CLASS_TRAN && mged_variables->mv_transform == 'e'){
+    if (es_edclass == EDIT_CLASS_TRAN && mged_variables->mv_transform == 'e') {
       bu_vls_printf(&vls, "X = %f\n", edit_rate_model_tran[X]);
       bu_vls_printf(&vls, "Y = %f\n", edit_rate_model_tran[Y]);
       bu_vls_printf(&vls, "Z = %f\n", edit_rate_model_tran[Z]);
-    }else{
+    } else {
       bu_vls_printf(&vls, "X = %f\n", view_state->vs_rate_tran[X]);
       bu_vls_printf(&vls, "Y = %f\n", view_state->vs_rate_tran[Y]);
       bu_vls_printf(&vls, "Z = %f\n", view_state->vs_rate_tran[Z]);
     }
-  }else{
-    if (es_edclass == EDIT_CLASS_ROTATE && mged_variables->mv_transform == 'e'){
+  } else {
+    if (es_edclass == EDIT_CLASS_ROTATE && mged_variables->mv_transform == 'e') {
       bu_vls_printf(&vls, "ax = %f\n", edit_absolute_model_rotate[X]);
       bu_vls_printf(&vls, "ay = %f\n", edit_absolute_model_rotate[Y]);
       bu_vls_printf(&vls, "az = %f\n", edit_absolute_model_rotate[Z]);
-    }else{
+    } else {
       bu_vls_printf(&vls, "ax = %f\n", view_state->vs_absolute_rotate[X]);
       bu_vls_printf(&vls, "ay = %f\n", view_state->vs_absolute_rotate[Y]);
       bu_vls_printf(&vls, "az = %f\n", view_state->vs_absolute_rotate[Z]);
@@ -2040,18 +2040,18 @@ mged_print_knobvals(Tcl_Interp *interp)
     else
       bu_vls_printf(&vls, "aS = %f\n", view_state->vs_absolute_scale);
 
-    if (es_edclass == EDIT_CLASS_TRAN && mged_variables->mv_transform == 'e'){
+    if (es_edclass == EDIT_CLASS_TRAN && mged_variables->mv_transform == 'e') {
       bu_vls_printf(&vls, "aX = %f\n", edit_absolute_model_tran[X]);
       bu_vls_printf(&vls, "aY = %f\n", edit_absolute_model_tran[Y]);
       bu_vls_printf(&vls, "aZ = %f\n", edit_absolute_model_tran[Z]);
-    }else{
+    } else {
       bu_vls_printf(&vls, "aX = %f\n", view_state->vs_absolute_tran[X]);
       bu_vls_printf(&vls, "aY = %f\n", view_state->vs_absolute_tran[Y]);
       bu_vls_printf(&vls, "aZ = %f\n", view_state->vs_absolute_tran[Z]);
     }
   }
 
-  if (adc_state->adc_draw){
+  if (adc_state->adc_draw) {
     bu_vls_printf(&vls, "xadc = %d\n", adc_state->adc_dv_x);
     bu_vls_printf(&vls, "yadc = %d\n", adc_state->adc_dv_y);
     bu_vls_printf(&vls, "ang1 = %d\n", adc_state->adc_dv_a1);
@@ -2085,7 +2085,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
   CHECK_DBI_NULL;
 
-  if (argc < 1){
+  if (argc < 1) {
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -2100,8 +2100,8 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     int c;
 
     bu_optind = 1;
-    while ((c = bu_getopt(argc, argv, "eimo:v")) != EOF){
-      switch (c){
+    while ((c = bu_getopt(argc, argv, "eimo:v")) != EOF) {
+      switch (c) {
       case 'e':
 	edit_flag = 1;
 	break;
@@ -2136,7 +2136,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
   VSETALL(tvec, 0.0);
   VSETALL(rvec, 0.0);
 
-  for (--argc, ++argv; argc; --argc, ++argv){
+  for (--argc, ++argv; argc; --argc, ++argv) {
     cmd = *argv;
 
     if ( strcmp( cmd, "zap" ) == 0 || strcmp( cmd, "zero" ) == 0 )  {
@@ -2164,8 +2164,8 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
       (void)mged_svbase();
     } else if ( strcmp( cmd, "calibrate" ) == 0 ) {
       VSETALL( view_state->vs_absolute_tran, 0.0 );
-    }else{
-      if (argc - 1){
+    } else {
+      if (argc - 1) {
 	i = atoi(argv[1]);
 	f = atof(argv[1]);
 #if 0
@@ -2174,7 +2174,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	else if ( f > 1.0 )
 	  f = 1.0;
 #endif
-      }else
+      } else
 	goto usage;
 
       --argc;
@@ -2190,10 +2190,10 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
       switch ( cmd[0] )  {
       case 'x':
-	if (incr_flag){
+	if (incr_flag) {
 	  if (EDIT_ROTATE && ((mged_variables->mv_transform == 'e' &&
-			      !view_flag && !model_flag) || edit_flag)){
-	    switch (mged_variables->mv_coords){
+			      !view_flag && !model_flag) || edit_flag)) {
+	    switch (mged_variables->mv_coords) {
 	    case 'm':
 	      edit_rate_model_rotate[X] += f;
 	      edit_rate_model_origin = origin;
@@ -2214,20 +2214,20 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	      break;
 	    }
-	  }else{
-	    if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)){
+	  } else {
+	    if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
 	      view_state->vs_rate_model_rotate[X] += f;
 	      view_state->vs_rate_model_origin = origin;
-	    }else{
+	    } else {
 	      view_state->vs_rate_rotate[X] += f;
 	      view_state->vs_rate_origin = origin;
 	    }
 
 	  }
-	}else{
+	} else {
 	  if (EDIT_ROTATE && ((mged_variables->mv_transform == 'e' &&
-			      !view_flag && !model_flag) || edit_flag)){
-	    switch (mged_variables->mv_coords){
+			      !view_flag && !model_flag) || edit_flag)) {
+	    switch (mged_variables->mv_coords) {
 	    case 'm':
 	      edit_rate_model_rotate[X] = f;
 	      edit_rate_model_origin = origin;
@@ -2248,11 +2248,11 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	      break;
 	    }
-	  }else{
-	    if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)){
+	  } else {
+	    if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
 	      view_state->vs_rate_model_rotate[X] = f;
 	      view_state->vs_rate_model_origin = origin;
-	    }else{
+	    } else {
 	      view_state->vs_rate_rotate[X] = f;
 	      view_state->vs_rate_origin = origin;
 	    }
@@ -2262,10 +2262,10 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	break;
       case 'y':
-	if (incr_flag){
+	if (incr_flag) {
 	  if (EDIT_ROTATE && ((mged_variables->mv_transform == 'e' &&
-			      !view_flag && !model_flag) || edit_flag)){
-	    switch (mged_variables->mv_coords){
+			      !view_flag && !model_flag) || edit_flag)) {
+	    switch (mged_variables->mv_coords) {
 	    case 'm':
 	      edit_rate_model_rotate[Y] += f;
 	      edit_rate_model_origin = origin;
@@ -2286,19 +2286,19 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	      break;
 	    }
-	  }else{
-	    if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)){
+	  } else {
+	    if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
 	      view_state->vs_rate_model_rotate[Y] += f;
 	      view_state->vs_rate_model_origin = origin;
-	    }else{
+	    } else {
 	      view_state->vs_rate_rotate[Y] += f;
 	      view_state->vs_rate_origin = origin;
 	    }
 	  }
-	}else{
+	} else {
 	  if (EDIT_ROTATE && ((mged_variables->mv_transform == 'e' &&
-			      !view_flag && !model_flag) || edit_flag)){
-	    switch (mged_variables->mv_coords){
+			      !view_flag && !model_flag) || edit_flag)) {
+	    switch (mged_variables->mv_coords) {
 	    case 'm':
 	      edit_rate_model_rotate[Y] = f;
 	      edit_rate_model_origin = origin;
@@ -2319,11 +2319,11 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	      break;
 	    }
-	  }else{
-	    if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)){
+	  } else {
+	    if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
 	      view_state->vs_rate_model_rotate[Y] = f;
 	      view_state->vs_rate_model_origin = origin;
-	    }else{
+	    } else {
 	      view_state->vs_rate_rotate[Y] = f;
 	      view_state->vs_rate_origin = origin;
 	    }
@@ -2332,10 +2332,10 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	break;
       case 'z':
-	if (incr_flag){
+	if (incr_flag) {
 	  if (EDIT_ROTATE && ((mged_variables->mv_transform == 'e' &&
-			      !view_flag && !model_flag) || edit_flag)){
-	    switch (mged_variables->mv_coords){
+			      !view_flag && !model_flag) || edit_flag)) {
+	    switch (mged_variables->mv_coords) {
 	    case 'm':
 	      edit_rate_model_rotate[Z] += f;
 	      edit_rate_model_origin = origin;
@@ -2356,19 +2356,19 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	      break;
 	    }
-	  }else{
-	    if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)){
+	  } else {
+	    if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
 	      view_state->vs_rate_model_rotate[Z] += f;
 	      view_state->vs_rate_model_origin = origin;
-	    }else{
+	    } else {
 	      view_state->vs_rate_rotate[Z] += f;
 	      view_state->vs_rate_origin = origin;
 	    }
 	  }
-	}else{
+	} else {
 	  if (EDIT_ROTATE && ((mged_variables->mv_transform == 'e' &&
-			      !view_flag && !model_flag) || edit_flag)){
-	    switch (mged_variables->mv_coords){
+			      !view_flag && !model_flag) || edit_flag)) {
+	    switch (mged_variables->mv_coords) {
 	    case 'm':
 	      edit_rate_model_rotate[Z] = f;
 	      edit_rate_model_origin = origin;
@@ -2389,11 +2389,11 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	      break;
 	    }
-	  }else{
-	    if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)){
+	  } else {
+	    if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
 	      view_state->vs_rate_model_rotate[Z] = f;
 	      view_state->vs_rate_model_origin = origin;
-	    }else{
+	    } else {
 	      view_state->vs_rate_rotate[Z] = f;
 	      view_state->vs_rate_origin = origin;
 	    }
@@ -2402,10 +2402,10 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
       break;
     case 'X':
-      if (incr_flag){
+      if (incr_flag) {
 	if (EDIT_TRAN && ((mged_variables->mv_transform == 'e' &&
-			  !view_flag && !model_flag) || edit_flag)){
-	  switch (mged_variables->mv_coords){
+			  !view_flag && !model_flag) || edit_flag)) {
+	  switch (mged_variables->mv_coords) {
 	  case 'm':
 	  case 'o':
 	    edit_rate_model_tran[X] += f;
@@ -2419,16 +2419,16 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	    break;
 	  }
-	}else{
+	} else {
 	  if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag))
 	    view_state->vs_rate_model_tran[X] += f;
 	  else
 	    view_state->vs_rate_tran[X] += f;
 	}
-      }else{
+      } else {
 	if (EDIT_TRAN && ((mged_variables->mv_transform == 'e' &&
-			  !view_flag && !model_flag) || edit_flag)){
-	  switch (mged_variables->mv_coords){
+			  !view_flag && !model_flag) || edit_flag)) {
+	  switch (mged_variables->mv_coords) {
 	  case 'm':
 	  case 'o':
 	    edit_rate_model_tran[X] = f;
@@ -2442,7 +2442,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	    break;
 	  }
-	}else{
+	} else {
 	  if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag))
 	    view_state->vs_rate_model_tran[X] = f;
 	  else
@@ -2452,10 +2452,10 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
       break;
     case 'Y':
-      if (incr_flag){
+      if (incr_flag) {
 	if (EDIT_TRAN && ((mged_variables->mv_transform == 'e' &&
-			  !view_flag && !model_flag) || edit_flag)){
-	  switch (mged_variables->mv_coords){
+			  !view_flag && !model_flag) || edit_flag)) {
+	  switch (mged_variables->mv_coords) {
 	  case 'm':
 	  case 'o':
 	    edit_rate_model_tran[Y] += f;
@@ -2469,16 +2469,16 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	    break;
 	  }
-	}else{
+	} else {
 	  if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag))
 	    view_state->vs_rate_model_tran[Y] += f;
 	  else
 	    view_state->vs_rate_tran[Y] += f;
 	}
-      }else{
+      } else {
 	if (EDIT_TRAN && ((mged_variables->mv_transform == 'e' &&
-			  !view_flag && !model_flag) || edit_flag)){
-	  switch (mged_variables->mv_coords){
+			  !view_flag && !model_flag) || edit_flag)) {
+	  switch (mged_variables->mv_coords) {
 	  case 'm':
 	  case 'o':
 	    edit_rate_model_tran[Y] = f;
@@ -2492,7 +2492,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	    break;
 	  }
-	}else{
+	} else {
 	  if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag))
 	    view_state->vs_rate_model_tran[Y] = f;
 	  else
@@ -2502,10 +2502,10 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
       break;
     case 'Z':
-      if (incr_flag){
+      if (incr_flag) {
 	if (EDIT_TRAN && ((mged_variables->mv_transform == 'e' &&
-			  !view_flag && !model_flag) || edit_flag)){
-	  switch (mged_variables->mv_coords){
+			  !view_flag && !model_flag) || edit_flag)) {
+	  switch (mged_variables->mv_coords) {
 	  case 'm':
 	  case 'o':
 	    edit_rate_model_tran[Z] += f;
@@ -2519,16 +2519,16 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	    break;
 	  }
-	}else{
+	} else {
 	  if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag))
 	    view_state->vs_rate_model_tran[Z] += f;
 	  else
 	    view_state->vs_rate_tran[Z] += f;
 	}
-      }else{
+      } else {
 	if (EDIT_TRAN && ((mged_variables->mv_transform == 'e' &&
-			  !view_flag && !model_flag) || edit_flag)){
-	  switch (mged_variables->mv_coords){
+			  !view_flag && !model_flag) || edit_flag)) {
+	  switch (mged_variables->mv_coords) {
 	  case 'm':
 	  case 'o':
 	    edit_rate_model_tran[Z] = f;
@@ -2542,7 +2542,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	    break;
 	  }
-	}else{
+	} else {
 	  if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag))
 	    view_state->vs_rate_model_tran[Z] = f;
 	  else
@@ -2552,16 +2552,16 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
       break;
     case 'S':
-      if (incr_flag){
-	if (EDIT_SCALE && ((mged_variables->mv_transform == 'e' && !view_flag) || edit_flag)){
+      if (incr_flag) {
+	if (EDIT_SCALE && ((mged_variables->mv_transform == 'e' && !view_flag) || edit_flag)) {
 	  edit_rate_scale += f;
-	}else{
+	} else {
 	  view_state->vs_rate_scale += f;
 	}
-      }else{
-	if (EDIT_SCALE && ((mged_variables->mv_transform == 'e' && !view_flag) || edit_flag)){
+      } else {
+	if (EDIT_SCALE && ((mged_variables->mv_transform == 'e' && !view_flag) || edit_flag)) {
 	  edit_rate_scale = f;
-	}else{
+	} else {
 	  view_state->vs_rate_scale = f;
 	}
       }
@@ -2573,10 +2573,10 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
   } else if ( cmd[0] == 'a' && cmd[1] != '\0' && cmd[2] == '\0' ) {
     switch ( cmd[1] ) {
     case 'x':
-      if (incr_flag){
+      if (incr_flag) {
 	if (EDIT_ROTATE && ((mged_variables->mv_transform == 'e' &&
-			     !view_flag && !model_flag) || edit_flag)){
-	  switch (mged_variables->mv_coords){
+			     !view_flag && !model_flag) || edit_flag)) {
+	  switch (mged_variables->mv_coords) {
 	  case 'm':
 	    edit_absolute_model_rotate[X] += f;
 	    break;
@@ -2587,19 +2587,19 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    edit_absolute_view_rotate[X] += f;
 	    break;
 	  }
-	}else{
-	  if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)){
+	} else {
+	  if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
 	    view_state->vs_absolute_model_rotate[X] += f;
-	  }else{
+	  } else {
 	    view_state->vs_absolute_rotate[X] += f;
 	  }
 	}
 
 	rvec[X] = f;
-      }else{
+      } else {
 	if (EDIT_ROTATE && ((mged_variables->mv_transform == 'e' &&
-			     !view_flag && !model_flag) || edit_flag)){
-	  switch (mged_variables->mv_coords){
+			     !view_flag && !model_flag) || edit_flag)) {
+	  switch (mged_variables->mv_coords) {
 	  case 'm':
 	    rvec[X] = f - last_edit_absolute_model_rotate[X];
 	    edit_absolute_model_rotate[X] = f;
@@ -2613,11 +2613,11 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    edit_absolute_view_rotate[X] = f;
 	    break;
 	  }
-	}else{
-	  if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)){
+	} else {
+	  if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
 	    rvec[X] = f - view_state->vs_last_absolute_model_rotate[X];
 	    view_state->vs_absolute_model_rotate[X] = f;
-	  }else{
+	  } else {
 	    rvec[X] = f - view_state->vs_last_absolute_rotate[X];
 	    view_state->vs_absolute_rotate[X] = f;
 	  }
@@ -2626,11 +2626,11 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
       /* wrap around */
       if (EDIT_ROTATE && ((mged_variables->mv_transform == 'e' &&
-			  !view_flag && !model_flag) || edit_flag)){
+			  !view_flag && !model_flag) || edit_flag)) {
 	fastf_t *arp;
 	fastf_t *larp;
 
-	switch (mged_variables->mv_coords){
+	switch (mged_variables->mv_coords) {
 	case 'm':
 	  arp = edit_absolute_model_rotate;
 	  larp = last_edit_absolute_model_rotate;
@@ -2654,14 +2654,14 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  arp[X] = arp[X] - 360.0;
 
 	larp[X] = arp[X];
-      }else{
+      } else {
 	fastf_t *arp;
 	fastf_t *larp;
 
-	if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)){
+	if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
 	  arp = view_state->vs_absolute_model_rotate;
 	  larp = view_state->vs_last_absolute_model_rotate;
-	}else{
+	} else {
 	  arp = view_state->vs_absolute_rotate;
 	  larp = view_state->vs_last_absolute_rotate;
 	}
@@ -2677,10 +2677,10 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
       do_rot = 1;
       break;
     case 'y':
-      if (incr_flag){
+      if (incr_flag) {
 	if (EDIT_ROTATE && ((mged_variables->mv_transform == 'e' &&
-			     !view_flag && !model_flag) || edit_flag)){
-	  switch (mged_variables->mv_coords){
+			     !view_flag && !model_flag) || edit_flag)) {
+	  switch (mged_variables->mv_coords) {
 	  case 'm':
 	    edit_absolute_model_rotate[Y] += f;
 	    break;
@@ -2691,19 +2691,19 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    edit_absolute_view_rotate[Y] += f;
 	    break;
 	  }
-	}else{
-	  if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)){
+	} else {
+	  if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
 	    view_state->vs_absolute_model_rotate[Y] += f;
-	  }else{
+	  } else {
 	    view_state->vs_absolute_rotate[Y] += f;
 	  }
 	}
 
 	rvec[Y] = f;
-      }else{
+      } else {
 	if (EDIT_ROTATE && ((mged_variables->mv_transform == 'e' &&
-			     !view_flag && !model_flag) || edit_flag)){
-	  switch (mged_variables->mv_coords){
+			     !view_flag && !model_flag) || edit_flag)) {
+	  switch (mged_variables->mv_coords) {
 	  case 'm':
 	    rvec[Y] = f - last_edit_absolute_model_rotate[Y];
 	    edit_absolute_model_rotate[Y] = f;
@@ -2717,11 +2717,11 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    edit_absolute_view_rotate[Y] = f;
 	    break;
 	  }
-	}else{
-	  if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)){
+	} else {
+	  if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
 	    rvec[Y] = f - view_state->vs_last_absolute_model_rotate[Y];
 	    view_state->vs_absolute_model_rotate[Y] = f;
-	  }else{
+	  } else {
 	    rvec[Y] = f - view_state->vs_last_absolute_rotate[Y];
 	    view_state->vs_absolute_rotate[Y] = f;
 	  }
@@ -2730,11 +2730,11 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
       /* wrap around */
       if (EDIT_ROTATE && ((mged_variables->mv_transform == 'e' &&
-			  !view_flag && !model_flag) || edit_flag)){
+			  !view_flag && !model_flag) || edit_flag)) {
 	fastf_t *arp;
 	fastf_t *larp;
 
-	switch (mged_variables->mv_coords){
+	switch (mged_variables->mv_coords) {
 	case 'm':
 	  arp = edit_absolute_model_rotate;
 	  larp = last_edit_absolute_model_rotate;
@@ -2758,14 +2758,14 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  arp[Y] = arp[Y] - 360.0;
 
 	larp[Y] = arp[Y];
-      }else{
+      } else {
 	fastf_t *arp;
 	fastf_t *larp;
 
-	if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)){
+	if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
 	  arp = view_state->vs_absolute_model_rotate;
 	  larp = view_state->vs_last_absolute_model_rotate;
-	}else{
+	} else {
 	  arp = view_state->vs_absolute_rotate;
 	  larp = view_state->vs_last_absolute_rotate;
 	}
@@ -2781,10 +2781,10 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
       do_rot = 1;
       break;
     case 'z':
-      if (incr_flag){
+      if (incr_flag) {
 	if (EDIT_ROTATE && ((mged_variables->mv_transform == 'e' &&
-			     !view_flag && !model_flag) || edit_flag)){
-	  switch (mged_variables->mv_coords){
+			     !view_flag && !model_flag) || edit_flag)) {
+	  switch (mged_variables->mv_coords) {
 	  case 'm':
 	    edit_absolute_model_rotate[Z] += f;
 	    break;
@@ -2795,19 +2795,19 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    edit_absolute_view_rotate[Z] += f;
 	    break;
 	  }
-	}else{
-	  if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)){
+	} else {
+	  if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
 	    view_state->vs_absolute_model_rotate[Z] += f;
-	  }else{
+	  } else {
 	    view_state->vs_absolute_rotate[Z] += f;
 	  }
 	}
 
 	rvec[Z] = f;
-      }else{
+      } else {
 	if (EDIT_ROTATE && ((mged_variables->mv_transform == 'e' &&
-			     !view_flag && !model_flag) || edit_flag)){
-	  switch (mged_variables->mv_coords){
+			     !view_flag && !model_flag) || edit_flag)) {
+	  switch (mged_variables->mv_coords) {
 	  case 'm':
 	    rvec[Z] = f - last_edit_absolute_model_rotate[Z];
 	    edit_absolute_model_rotate[Z] = f;
@@ -2821,11 +2821,11 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    edit_absolute_view_rotate[Z] = f;
 	    break;
 	  }
-	}else{
-	  if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)){
+	} else {
+	  if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
 	    rvec[Z] = f - view_state->vs_last_absolute_model_rotate[Z];
 	    view_state->vs_absolute_model_rotate[Z] = f;
-	  }else{
+	  } else {
 	    rvec[Z] = f - view_state->vs_last_absolute_rotate[Z];
 	    view_state->vs_absolute_rotate[Z] = f;
 	  }
@@ -2834,11 +2834,11 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
       /* wrap around */
       if (EDIT_ROTATE && ((mged_variables->mv_transform == 'e' &&
-			  !view_flag && !model_flag) || edit_flag)){
+			  !view_flag && !model_flag) || edit_flag)) {
 	fastf_t *arp;
 	fastf_t *larp;
 
-	switch (mged_variables->mv_coords){
+	switch (mged_variables->mv_coords) {
 	case 'm':
 	  arp = edit_absolute_model_rotate;
 	  larp = last_edit_absolute_model_rotate;
@@ -2862,14 +2862,14 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  arp[Z] = arp[Z] - 360.0;
 
 	larp[Z] = arp[Z];
-      }else{
+      } else {
 	fastf_t *arp;
 	fastf_t *larp;
 
-	if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)){
+	if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
 	  arp = view_state->vs_absolute_model_rotate;
 	  larp = view_state->vs_last_absolute_model_rotate;
-	}else{
+	} else {
 	  arp = view_state->vs_absolute_rotate;
 	  larp = view_state->vs_last_absolute_rotate;
 	}
@@ -2886,10 +2886,10 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
       break;
     case 'X':
       sf = f * local2base / view_state->vs_vop->vo_scale;
-      if (incr_flag){
+      if (incr_flag) {
 	if (EDIT_TRAN && ((mged_variables->mv_transform == 'e' &&
-			  !view_flag && !model_flag) || edit_flag)){
-	  switch (mged_variables->mv_coords){
+			  !view_flag && !model_flag) || edit_flag)) {
+	  switch (mged_variables->mv_coords) {
 	  case 'm':
 	  case 'o':
 	    edit_absolute_model_tran[X] += sf;
@@ -2902,19 +2902,19 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	    break;
 	  }
-	}else if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)){
+	} else if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
 	  view_state->vs_absolute_model_tran[X] += sf;
 	  view_state->vs_last_absolute_model_tran[X] = view_state->vs_absolute_model_tran[X];
-	}else{
+	} else {
 	  view_state->vs_absolute_tran[X] += sf;
 	  view_state->vs_last_absolute_tran[X] = view_state->vs_absolute_tran[X];
 	}
 
 	tvec[X] = f;
-      }else{
+      } else {
 	if (EDIT_TRAN && ((mged_variables->mv_transform == 'e' &&
-			  !view_flag && !model_flag) || edit_flag)){
-	  switch (mged_variables->mv_coords){
+			  !view_flag && !model_flag) || edit_flag)) {
+	  switch (mged_variables->mv_coords) {
 	  case 'm':
 	  case 'o':
 	    tvec[X] = f - last_edit_absolute_model_tran[X]*view_state->vs_vop->vo_scale*base2local;
@@ -2929,11 +2929,11 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	    break;
 	  }
-	}else if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)){
+	} else if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
 	  tvec[X] = f - view_state->vs_last_absolute_model_tran[X]*view_state->vs_vop->vo_scale*base2local;
 	  view_state->vs_absolute_model_tran[X] = sf;
 	  view_state->vs_last_absolute_model_tran[X] = view_state->vs_absolute_model_tran[X];
-	}else{
+	} else {
 	  tvec[X] = f - view_state->vs_last_absolute_tran[X]*view_state->vs_vop->vo_scale*base2local;
 	  view_state->vs_absolute_tran[X] = sf;
 	  view_state->vs_last_absolute_tran[X] = view_state->vs_absolute_tran[X];
@@ -2945,10 +2945,10 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
       break;
     case 'Y':
       sf = f * local2base / view_state->vs_vop->vo_scale;
-      if (incr_flag){
+      if (incr_flag) {
 	if (EDIT_TRAN && ((mged_variables->mv_transform == 'e' &&
-			  !view_flag && !model_flag) || edit_flag)){
-	  switch (mged_variables->mv_coords){
+			  !view_flag && !model_flag) || edit_flag)) {
+	  switch (mged_variables->mv_coords) {
 	  case 'm':
 	  case 'o':
 	    edit_absolute_model_tran[Y] += sf;
@@ -2961,19 +2961,19 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	    break;
 	  }
-	}else if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)){
+	} else if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
 	  view_state->vs_absolute_model_tran[Y] += sf;
 	  view_state->vs_last_absolute_model_tran[Y] = view_state->vs_absolute_model_tran[Y];
-	}else{
+	} else {
 	  view_state->vs_absolute_tran[Y] += sf;
 	  view_state->vs_last_absolute_tran[Y] = view_state->vs_absolute_tran[Y];
 	}
 
 	tvec[Y] = f;
-      }else{
+      } else {
 	if (EDIT_TRAN && ((mged_variables->mv_transform == 'e' &&
-			  !view_flag && !model_flag) || edit_flag)){
-	  switch (mged_variables->mv_coords){
+			  !view_flag && !model_flag) || edit_flag)) {
+	  switch (mged_variables->mv_coords) {
 	  case 'm':
 	  case 'o':
 	    tvec[Y] = f - last_edit_absolute_model_tran[Y]*view_state->vs_vop->vo_scale*base2local;
@@ -2988,11 +2988,11 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	    break;
 	  }
-	}else if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)){
+	} else if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
 	  tvec[Y] = f - view_state->vs_last_absolute_model_tran[Y]*view_state->vs_vop->vo_scale*base2local;
 	  view_state->vs_absolute_model_tran[Y] = sf;
 	  view_state->vs_last_absolute_model_tran[Y] = view_state->vs_absolute_model_tran[Y];
-	}else{
+	} else {
 	  tvec[Y] = f - view_state->vs_last_absolute_tran[Y]*view_state->vs_vop->vo_scale*base2local;
 	  view_state->vs_absolute_tran[Y] = sf;
 	  view_state->vs_last_absolute_tran[Y] = view_state->vs_absolute_tran[Y];
@@ -3003,10 +3003,10 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
       break;
     case 'Z':
       sf = f * local2base / view_state->vs_vop->vo_scale;
-      if (incr_flag){
+      if (incr_flag) {
 	if (EDIT_TRAN && ((mged_variables->mv_transform == 'e' &&
-			  !view_flag && !model_flag) || edit_flag)){
-	  switch (mged_variables->mv_coords){
+			  !view_flag && !model_flag) || edit_flag)) {
+	  switch (mged_variables->mv_coords) {
 	  case 'm':
 	  case 'o':
 	    edit_absolute_model_tran[Z] += sf;
@@ -3019,19 +3019,19 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	    break;
 	  }
-	}else if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)){
+	} else if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
 	  view_state->vs_absolute_model_tran[Z] += sf;
 	  view_state->vs_last_absolute_model_tran[Z] = view_state->vs_absolute_model_tran[Z];
-	}else{
+	} else {
 	  view_state->vs_absolute_tran[Z] += sf;
 	  view_state->vs_last_absolute_tran[Z] = view_state->vs_absolute_tran[Z];
 	}
 
 	tvec[Z] = f;
-      }else{
+      } else {
 	if (EDIT_TRAN && ((mged_variables->mv_transform == 'e' &&
-			  !view_flag && !model_flag) || edit_flag)){
-	  switch (mged_variables->mv_coords){
+			  !view_flag && !model_flag) || edit_flag)) {
+	  switch (mged_variables->mv_coords) {
 	  case 'm':
 	  case 'o':
 	    tvec[Z] = f - last_edit_absolute_model_tran[Z]*view_state->vs_vop->vo_scale*base2local;
@@ -3046,11 +3046,11 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	    break;
 	  }
-	}else if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)){
+	} else if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
 	  tvec[Z] = f - view_state->vs_last_absolute_model_tran[Z]*view_state->vs_vop->vo_scale*base2local;
 	  view_state->vs_absolute_model_tran[Z] = sf;
 	  view_state->vs_last_absolute_model_tran[Z] = view_state->vs_absolute_model_tran[Z];
-	}else{
+	} else {
 	  tvec[Z] = f - view_state->vs_last_absolute_tran[Z]*view_state->vs_vop->vo_scale*base2local;
 	  view_state->vs_absolute_tran[Z] = sf;
 	  view_state->vs_last_absolute_tran[Z] = view_state->vs_absolute_tran[Z];
@@ -3060,25 +3060,25 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
       do_tran = 1;
       break;
     case 'S':
-      if (incr_flag){
-	if (EDIT_SCALE && ((mged_variables->mv_transform == 'e' && !view_flag) || edit_flag)){
+      if (incr_flag) {
+	if (EDIT_SCALE && ((mged_variables->mv_transform == 'e' && !view_flag) || edit_flag)) {
 	  edit_absolute_scale += f;
 	  if (state == ST_S_EDIT)
 	    sedit_abs_scale();
 	  else
 	    oedit_abs_scale();
-	}else{
+	} else {
 	  view_state->vs_absolute_scale += f;
 	  abs_zoom();
 	}
-      }else{
-	if (EDIT_SCALE && ((mged_variables->mv_transform == 'e' && !view_flag) || edit_flag)){
+      } else {
+	if (EDIT_SCALE && ((mged_variables->mv_transform == 'e' && !view_flag) || edit_flag)) {
 	  edit_absolute_scale = f;
 	  if (state == ST_S_EDIT)
 	    sedit_abs_scale();
 	  else
 	    oedit_abs_scale();
-	}else{
+	} else {
 	  view_state->vs_absolute_scale = f;
 	  abs_zoom();
 	}
@@ -3260,12 +3260,12 @@ abs_zoom(void)
   /* Use initial Viewscale */
   if (-SMALL_FASTF < view_state->vs_absolute_scale && view_state->vs_absolute_scale < SMALL_FASTF)
     view_state->vs_vop->vo_scale = view_state->vs_i_Viewscale;
-  else{
+  else {
     /* if positive */
-    if (view_state->vs_absolute_scale > 0){
+    if (view_state->vs_absolute_scale > 0) {
       /* scale i_Viewscale by values in [0.0, 1.0] range */
       view_state->vs_vop->vo_scale = view_state->vs_i_Viewscale * (1.0 - view_state->vs_absolute_scale);
-    }else/* negative */
+    } else/* negative */
       /* scale i_Viewscale by values in [1.0, 10.0] range */
       view_state->vs_vop->vo_scale = view_state->vs_i_Viewscale * (1.0 + (view_state->vs_absolute_scale * -9.0));
   }
@@ -3277,7 +3277,7 @@ abs_zoom(void)
 
   if (view_state->vs_absolute_tran[X] != 0.0 ||
      view_state->vs_absolute_tran[Y] != 0.0 ||
-     view_state->vs_absolute_tran[Z] != 0.0){
+     view_state->vs_absolute_tran[Z] != 0.0) {
     set_absolute_tran();
   }
 }
@@ -3358,7 +3358,7 @@ f_qvrot(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     double	el;
     double	theta;
 
-    if (argc < 5 || 5 < argc){
+    if (argc < 5 || 5 < argc) {
       struct bu_vls vls;
 
       bu_vls_init(&vls);
@@ -3522,7 +3522,7 @@ f_svbase(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
   int status;
   struct dm_list *dmlp;
 
-  if (argc < 1 || 1 < argc){
+  if (argc < 1 || 1 < argc) {
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -3554,7 +3554,7 @@ f_svbase(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 int
 f_vrot_center(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-  if (argc < 5 || 5 < argc){
+  if (argc < 5 || 5 < argc) {
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -3635,7 +3635,7 @@ setview(double	a1,
 
 	if (view_state->vs_absolute_tran[X] != 0.0 ||
 	    view_state->vs_absolute_tran[Y] != 0.0 ||
-	    view_state->vs_absolute_tran[Z] != 0.0){
+	    view_state->vs_absolute_tran[Z] != 0.0) {
 		set_absolute_tran();
 	}
 }
@@ -4135,11 +4135,11 @@ view_ring_init(struct _view_state *vsp1, struct _view_state *vsp2)
 
   BU_LIST_INIT(&vsp1->vs_headView.l);
 
-  if (vsp2 != (struct _view_state *)NULL){
+  if (vsp2 != (struct _view_state *)NULL) {
     struct view_ring *vrp1_current_view = NULL;
     struct view_ring *vrp1_last_view = NULL;
 
-    for (BU_LIST_FOR(vrp2, view_ring, &vsp2->vs_headView.l)){
+    for (BU_LIST_FOR(vrp2, view_ring, &vsp2->vs_headView.l)) {
       BU_GETSTRUCT(vrp1, view_ring);
       /* append to last list element */
       BU_LIST_APPEND(vsp1->vs_headView.l.back, &vrp1->l);
@@ -4173,7 +4173,7 @@ view_ring_destroy(struct dm_list *dlp)
 {
   struct view_ring *vrp;
 
-  while (BU_LIST_NON_EMPTY(&dlp->dml_view_state->vs_headView.l)){
+  while (BU_LIST_NON_EMPTY(&dlp->dml_view_state->vs_headView.l)) {
     vrp = BU_LIST_FIRST(view_ring, &dlp->dml_view_state->vs_headView.l);
     BU_LIST_DEQUEUE(&vrp->l);
     bu_free((genptr_t)vrp, "view_ring_destroy: vrp");
@@ -4397,7 +4397,7 @@ f_view_ring(ClientData	clientData,
 			view_state->vs_vop->vo_scale = view_state->vs_current_view->vr_scale;
 			new_mats();
 			(void)mged_svbase();
-		}else if (vrp == view_state->vs_last_view)
+		} else if (vrp == view_state->vs_last_view)
 			view_state->vs_last_view = view_state->vs_current_view;
 
 		BU_LIST_DEQUEUE(&vrp->l);
@@ -4498,7 +4498,7 @@ mged_erot(struct view_obj	*vop,
 
 	update_views = 1;
 
-	switch (coords){
+	switch (coords) {
 	case 'm':
 		break;
 	case 'o':
@@ -4604,7 +4604,7 @@ mged_vrot(char origin, fastf_t *newrot)
 
 	bn_mat_inv(newinv, newrot);
 
-	if (origin != 'v'){
+	if (origin != 'v') {
 		point_t		rot_pt;
 		point_t		new_origin;
 		mat_t		viewchg, viewchginv;
@@ -4739,7 +4739,7 @@ mged_etran(struct view_obj	*vop,
   mat_t xlatemat;
 
   /* compute delta */
-  switch (coords){
+  switch (coords) {
   case 'm':
     VSCALE(delta, tvec, local2base);
     break;
@@ -4757,7 +4757,7 @@ mged_etran(struct view_obj	*vop,
     break;
   }
 
-  if (state == ST_S_EDIT){
+  if (state == ST_S_EDIT) {
     save_edflag = es_edflag;
     if (!SEDIT_TRAN)
       es_edflag = STRANS;
@@ -4766,7 +4766,7 @@ mged_etran(struct view_obj	*vop,
     inpara = 3;
     sedit();
     es_edflag = save_edflag;
-  }else{
+  } else {
     MAT_IDN(xlatemat);
     MAT_DELTAS_VEC(xlatemat, delta);
     bn_mat_mul2(xlatemat, modelchanges);
@@ -4783,7 +4783,7 @@ mged_otran(const vect_t tvec)
 {
   vect_t work;
 
-  if (state == ST_S_EDIT || state == ST_O_EDIT){
+  if (state == ST_S_EDIT || state == ST_O_EDIT) {
     /* apply acc_rot_sol to tvec */
     MAT4X3PNT(work, acc_rot_sol, tvec);
   }
@@ -4872,7 +4872,7 @@ mged_escale(struct view_obj	*vop,
   if (-SMALL_FASTF < sfactor && sfactor < SMALL_FASTF)
     return TCL_OK;
 
-  if (state == ST_S_EDIT){
+  if (state == ST_S_EDIT) {
     int save_edflag;
 
     save_edflag = es_edflag;
@@ -4883,7 +4883,7 @@ mged_escale(struct view_obj	*vop,
     old_scale = acc_sc_sol;
     acc_sc_sol *= sfactor;
 
-    if (acc_sc_sol < MGED_SMALL_SCALE){
+    if (acc_sc_sol < MGED_SMALL_SCALE) {
       acc_sc_sol = old_scale;
       es_edflag = save_edflag;
       return TCL_OK;
@@ -4897,7 +4897,7 @@ mged_escale(struct view_obj	*vop,
     sedit();
 
     es_edflag = save_edflag;
-  }else{
+  } else {
     point_t temp;
     point_t pos_model;
     mat_t smat;
@@ -4906,13 +4906,13 @@ mged_escale(struct view_obj	*vop,
     inv_sfactor = 1.0 / sfactor;
     MAT_IDN(smat);
 
-    switch (edobj){
+    switch (edobj) {
     case BE_O_XSCALE:                            /* local scaling ... X-axis */
       smat[0] = sfactor;
       old_scale = acc_sc[X];
       acc_sc[X] *= sfactor;
 
-      if (acc_sc[X] < MGED_SMALL_SCALE){
+      if (acc_sc[X] < MGED_SMALL_SCALE) {
 	acc_sc[X] = old_scale;
 	return TCL_OK;
       }
@@ -4922,7 +4922,7 @@ mged_escale(struct view_obj	*vop,
       old_scale = acc_sc[Y];
       acc_sc[Y] *= sfactor;
 
-      if (acc_sc[Y] < MGED_SMALL_SCALE){
+      if (acc_sc[Y] < MGED_SMALL_SCALE) {
 	acc_sc[Y] = old_scale;
 	return TCL_OK;
       }
@@ -4932,7 +4932,7 @@ mged_escale(struct view_obj	*vop,
       old_scale = acc_sc[Z];
       acc_sc[Z] *= sfactor;
 
-      if (acc_sc[Z] < MGED_SMALL_SCALE){
+      if (acc_sc[Z] < MGED_SMALL_SCALE) {
 	acc_sc[Z] = old_scale;
 	return TCL_OK;
       }
@@ -4943,7 +4943,7 @@ mged_escale(struct view_obj	*vop,
       old_scale = acc_sc_sol;
       acc_sc_sol *= inv_sfactor;
 
-      if (acc_sc_sol < MGED_SMALL_SCALE){
+      if (acc_sc_sol < MGED_SMALL_SCALE) {
 	acc_sc_sol = old_scale;
 	return TCL_OK;
       }

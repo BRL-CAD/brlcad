@@ -97,7 +97,7 @@ main(int argc, char **argv)
 
     /* read data */
     num_read = length;
-    while (1){
+    while (1) {
 
 	switch (input_mode) {
 	case YPR:
@@ -140,10 +140,10 @@ main(int argc, char **argv)
 	    break;
 	}
 
-	if (input_inv){
+	if (input_inv) {
 	    anim_tran(matrix);
 	}
-	if (input_perm){
+	if (input_perm) {
 	    anim_v_unpermute(matrix);
 	}
 	/* end of input conversion, begin output conversion*/
@@ -153,10 +153,10 @@ main(int argc, char **argv)
 	    VSET(temp2, matrix[1], matrix[5], matrix[9]);
 	    anim_dirn2mat(matrix, temp, temp2);
 	}
-	if (output_perm){
+	if (output_perm) {
 	    anim_v_permute(matrix);
 	}
-	if (output_inv){
+	if (output_inv) {
 	    anim_tran(matrix);
 	}
 

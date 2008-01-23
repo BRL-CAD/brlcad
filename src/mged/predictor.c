@@ -220,7 +220,7 @@ predictor_frame(void)
 
 	if ( view_state->vs_rateflag_rotate == 0 &&
 	    view_state->vs_rateflag_tran == 0 &&
-	    view_state->vs_rateflag_scale == 0 ){
+	    view_state->vs_rateflag_scale == 0 ) {
 	  predictor_kill();
 	  return;
 	}

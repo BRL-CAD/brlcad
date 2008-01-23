@@ -1614,7 +1614,7 @@ rt_sketch_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verb
 			bu_vls_strcat( str, buf );
 			if ( bsg->ctl_points[0] >= sketch_ip->vert_count ||
 			    bsg->ctl_points[bsg->degree] >= sketch_ip->vert_count ) {
-			    if ( sketch_ip->skt_curve.reverse[seg_no] ){
+			    if ( sketch_ip->skt_curve.reverse[seg_no] ) {
 				sprintf( buf, "\t\t\tstarts at vertex #%d\n\t\t\tends at vertex #%d\n",
 					 bsg->ctl_points[bsg->degree],
 					 bsg->ctl_points[0] );

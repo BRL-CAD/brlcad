@@ -183,14 +183,14 @@ bu_structprint(const char *title, const struct bu_structparse *parsetab, const c
 
 				if (sdp->sp_count == ELEMENTS_PER_MAT) {
 					bu_matprint(sdp->sp_name, (matp_t)dp);
-				} else if (sdp->sp_count <= ELEMENTS_PER_VECT){
+				} else if (sdp->sp_count <= ELEMENTS_PER_VECT) {
 					bu_log( " %s=%.25G", sdp->sp_name, *dp++ );
 
 					while (--i > 0)
 						bu_log( ",%.25G", *dp++ );
 
 					bu_log("\n");
-				}else  {
+				} else  {
 					int delta = strlen(sdp->sp_name)+2;
 
 					bu_log_indent_delta(delta);
@@ -244,7 +244,7 @@ bu_parse_double(const char *str, long int count, double *loc)
 	char	buf[128];
 	int	len;
 
-	for (i=0; i < count && *str; ++i){
+	for (i=0; i < count && *str; ++i) {
 		numstart = str;
 
 		/* skip sign */
@@ -368,7 +368,7 @@ bu_struct_lookup(register const struct bu_structparse *sdp, register const char 
 			{	register short *ip = (short *)loc;
 				register short tmpi;
 				register const char *cp;
-				for (i=0; i < sdp->sp_count && *value; ++i){
+				for (i=0; i < sdp->sp_count && *value; ++i) {
 					tmpi = atoi( value );
 
 					cp = value;
@@ -383,7 +383,7 @@ bu_struct_lookup(register const struct bu_structparse *sdp, register const char 
 					 */
 					if (cp == value ||
 					    (cp == value+1 &&
-					    (*value == '+' || *value == '-'))){
+					    (*value == '+' || *value == '-'))) {
 					    retval = -2;
 					    break;
 					} else {
@@ -406,7 +406,7 @@ bu_struct_lookup(register const struct bu_structparse *sdp, register const char 
 					break;
 				}
 				/* Normal case: an integer */
-				for (i=0; i < sdp->sp_count && *value; ++i){
+				for (i=0; i < sdp->sp_count && *value; ++i) {
 					tmpi = atoi( value );
 
 					cp = value;
@@ -421,7 +421,7 @@ bu_struct_lookup(register const struct bu_structparse *sdp, register const char 
 					 */
 					if (cp == value ||
 					    (cp == value+1 &&
-					    (*value == '+' || *value == '-'))){
+					    (*value == '+' || *value == '-'))) {
 					    retval = -2;
 					    break;
 					} else {

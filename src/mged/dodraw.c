@@ -1000,7 +1000,7 @@ pathHmat(
 	sp->s_color[1] = sp->s_basecolor[1] = ts.ts_mater.ma_color[1] * 255.;
 	sp->s_color[2] = sp->s_basecolor[2] = ts.ts_mater.ma_color[2] * 255.;
 #else
-	if (!sp->s_uflag){
+	if (!sp->s_uflag) {
 	  /* the user did not specify a color */
 	  sp->s_basecolor[0] = ts.ts_mater.ma_color[0] * 255.;
 	  sp->s_basecolor[1] = ts.ts_mater.ma_color[1] * 255.;
@@ -1306,7 +1306,7 @@ f_facetize(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	CHECK_DBI_NULL;
 
-	if (argc < 3){
+	if (argc < 3) {
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -1360,7 +1360,7 @@ f_facetize(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
 	argc -= bu_optind;
 	argv += bu_optind;
-	if ( argc < 0 ){
+	if ( argc < 0 ) {
 	  Tcl_AppendResult(interp, "facetize: missing argument\n", (char *)NULL);
 	  return TCL_ERROR;
 	}
@@ -1368,7 +1368,7 @@ f_facetize(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	newname = argv[0];
 	argv++;
 	argc--;
-	if ( argc < 0 ){
+	if ( argc < 0 ) {
 	  Tcl_AppendResult(interp, "facetize: missing argument\n", (char *)NULL);
 	  return TCL_ERROR;
 	}
@@ -1547,7 +1547,7 @@ f_bev(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	if (argc < 2){
+	if (argc < 2) {
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);

@@ -433,7 +433,7 @@ rt_tor_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	/*  It is known that the equation is 4th order.  Therefore,
 	 *  if the root finder returns other than 4 roots, error.
 	 */
-	if ( (i = rt_poly_roots( &C, val, stp->st_dp->d_namep )) != 4 ){
+	if ( (i = rt_poly_roots( &C, val, stp->st_dp->d_namep )) != 4 ) {
 	    if ( i > 0 )  {
 		bu_log("tor:  rt_poly_roots() 4!=%d\n", i);
 		bn_pr_roots( stp->st_name, val, i );
@@ -456,7 +456,7 @@ rt_tor_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	 *  or sufficiently close, then use the real part as one value
 	 *  of 't' for the intersections
 	 */
-	for ( j=0, i=0; j < 4; j++ ){
+	for ( j=0, i=0; j < 4; j++ ) {
 		if ( NEAR_ZERO( val[j].im, ap->a_rt_i->rti_tol.dist ) )
 			k[i++] = val[j].re;
 	}
@@ -572,7 +572,7 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	for (i = 0; i < n; i++) segp[i].seg_stp = stp[i];
 
 	/* for each ray/torus pair */
-	for (i = 0; i < n; i++){
+	for (i = 0; i < n; i++) {
 		if ( segp[i].seg_stp == 0) continue;	/* Skip */
 		tor = (struct tor_specific *)stp[i]->st_specific;
 
@@ -659,13 +659,13 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	}
 
 	/* Unfortunately finding the 4th order roots are too ugly to inline */
-	for (i = 0; i < n; i++){
+	for (i = 0; i < n; i++) {
 	    if ( segp[i].seg_stp == 0) continue;	/* Skip */
 
 	    /*  It is known that the equation is 4th order.  Therefore,
 	     *  if the root finder returns other than 4 roots, error.
 	     */
-	    if ( (num_roots = rt_poly_roots( &(C[i]), &(val[i][0]), (*stp)->st_dp->d_namep )) != 4 ){
+	    if ( (num_roots = rt_poly_roots( &(C[i]), &(val[i][0]), (*stp)->st_dp->d_namep )) != 4 ) {
 		if ( num_roots > 0 )  {
 		    bu_log("tor:  rt_poly_roots() 4!=%d\n", num_roots);
 		    bn_pr_roots( "tor", val[i], num_roots );
@@ -684,7 +684,7 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	}
 
 	/* for each ray/torus pair */
-	for (i = 0; i < n; i++){
+	for (i = 0; i < n; i++) {
 		if ( segp[i].seg_stp == 0) continue; /* Skip */
 
 		/*  Only real roots indicate an intersection in real space.
@@ -723,7 +723,7 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	}
 
 	/* Process each one segment hit */
-	for (i = 0; i < n; i++){
+	for (i = 0; i < n; i++) {
 		if ( segp[i].seg_stp == 0) continue; /* Skip */
 		if ( C[i].dgr != 2 )  continue;  /* Not one segment */
 
@@ -757,7 +757,7 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	}
 
 	/* Process each two segment hit */
-	for (i = 0; i < n; i++){
+	for (i = 0; i < n; i++) {
 
 		if ( segp[i].seg_stp == 0) continue;	/* Skip */
 		if ( C[i].dgr != 4 )  continue;  /* Not two segment */

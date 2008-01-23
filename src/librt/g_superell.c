@@ -444,7 +444,7 @@ rt_superell_shot(struct soltab *stp, register struct xray *rp, struct applicatio
    *  or sufficiently close, then use the real part as one value
    *  of 't' for the intersections
    */
-  for ( j=0, i=0; j < 2; j++ ){
+  for ( j=0, i=0; j < 2; j++ ) {
     if ( NEAR_ZERO( complexRoot[j].im, 0.001 ) )
       realRoot[i++] = complexRoot[j].re;
   }

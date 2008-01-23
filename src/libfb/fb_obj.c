@@ -295,7 +295,7 @@ fbo_clear_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		}
 
 		ms = pixel;
-	}else
+	} else
 		ms = RGBPIXEL_NULL;
 
 	status = fb_clear(fbop->fbo_fbs.fbs_fbp, ms);

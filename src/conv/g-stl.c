@@ -293,7 +293,7 @@ char	*argv[];
 		(genptr_t)NULL);	/* in librt/nmg_bool.c */
 
 	percent = 0;
-	if (regions_tried>0){
+	if (regions_tried>0) {
 		percent = ((double)regions_converted * 100) / regions_tried;
 		if ( verbose )
 			bu_log("Tried %d regions, %d converted to NMG's successfully.  %g%%\n",
@@ -301,7 +301,7 @@ char	*argv[];
 	}
 	percent = 0;
 
-	if ( regions_tried > 0 ){
+	if ( regions_tried > 0 ) {
 		percent = ((double)regions_written * 100) / regions_tried;
 		if ( verbose )
 			bu_log( "                  %d triangulated successfully. %g%%\n",
@@ -720,7 +720,7 @@ out:
 	 */
 
 
-	if (regions_tried>0){
+	if (regions_tried>0) {
 		float npercent, tpercent;
 
 		npercent = (float)(regions_converted * 100) / regions_tried;

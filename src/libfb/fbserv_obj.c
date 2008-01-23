@@ -484,7 +484,7 @@ setup_socket(int fd)
   int on = 1;
 
 #if defined(SO_KEEPALIVE)
-  if (setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, (char *)&on, sizeof(on)) < 0){
+  if (setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, (char *)&on, sizeof(on)) < 0) {
     bu_log("setsockopt (SO_KEEPALIVE): %m");
   }
 #endif
@@ -496,7 +496,7 @@ setup_socket(int fd)
     int	val;
     int	size;
 
-    for (size = 256; size > 16; size /= 2){
+    for (size = 256; size > 16; size /= 2) {
       val = size * 1024;
       m = setsockopt(fd, SOL_SOCKET, SO_RCVBUF,
 		      (char *)&val, sizeof(val));

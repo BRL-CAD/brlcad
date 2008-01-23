@@ -260,7 +260,7 @@ ps_open(Tcl_Interp *interp, int argc, char **argv)
 		case 'l':               /* line width */
 			if (argv[0][2] != '\0')
 				sscanf(&argv[0][2], "%d", &((struct ps_vars *)dmp->dm_vars.priv_vars)->linewidth);
-			else{
+			else {
 				argv++;
 				if (argv[0] == (char *)0 || argv[0][0] == '-') {
 					Tcl_AppendStringsToObj(obj, ps_usage, (char *)0);
@@ -739,13 +739,13 @@ ps_setWinBounds(struct dm *dmp, register int *w)
   dmp->dm_clipmax[1] = w[3] / 2047.;
 
 #if 0
-  if (((struct ps_vars *)dmp->dm_vars.priv_vars)->zclip){
+  if (((struct ps_vars *)dmp->dm_vars.priv_vars)->zclip) {
 #else
   if (dmp->dm_zclip) {
 #endif
     dmp->dm_clipmin[2] = w[4] / 2048.;
     dmp->dm_clipmax[2] = w[5] / 2047.;
-  }else{
+  } else {
     dmp->dm_clipmin[2] = -1.0e20;
     dmp->dm_clipmax[2] = 1.0e20;
   }

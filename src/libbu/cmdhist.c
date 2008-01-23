@@ -192,7 +192,7 @@ bu_cmdhist_add(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	struct bu_vls vls;
 	struct timeval zero;
 
-	if (argc != 3){
+	if (argc != 3) {
 		bu_vls_init(&vls);
 		bu_vls_printf(&vls, "helplib cmdhist_add");
 		Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -321,7 +321,7 @@ f_delay(clientData, interp, argc, argv)
 {
 	struct timeval tv;
 
-	if (argc < 3 || 3 < argc){
+	if (argc < 3 || 3 < argc) {
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);

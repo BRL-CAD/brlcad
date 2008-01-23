@@ -199,7 +199,7 @@ unsigned long limit;	/* extent of decomposition */ \
 	/* each iteration of this loop decomposes the data into 2 halves: \
 	 * the "average image" and the "image detail" \
 	 */ \
-	for (img_size = dimen; img_size > limit; img_size = half_size ){ \
+	for (img_size = dimen; img_size > limit; img_size = half_size ) { \
 \
 		half_size = img_size/2; \
 		 \
@@ -375,7 +375,7 @@ unsigned long limit; \
 			for (x=0; x < img_size; x += 2 ) { \
 				x_tmp = x*channels + y_tmp; \
 \
-				for (d=0; d < channels; d++, avg++, detail++){ \
+				for (d=0; d < channels; d++, avg++, detail++) { \
 					i = x_tmp + d; \
 					j = i + channels; \
 					*detail = (buffer[i] - buffer[j]) * onehalf; \
@@ -496,7 +496,7 @@ unsigned long limit; \
 				i = x_tmp + y*row_len; \
 				j = i + row_len; \
  \
-				for (d=0; d < channels; d++, avg++, detail++){ \
+				for (d=0; d < channels; d++, avg++, detail++) { \
 					buf[i++] = *avg + *detail; \
 					buf[j++] = *avg - *detail; \
 				} \
@@ -527,7 +527,7 @@ unsigned long limit; \
 				i = row_start + x * channels; \
 				j = i + channels; \
  \
-				for (d=0; d < channels; d++, avg++, detail++){ \
+				for (d=0; d < channels; d++, avg++, detail++) { \
 					buf[i++] = *avg + *detail; \
 					buf[j++] = *avg - *detail; \
 				} \
@@ -603,7 +603,7 @@ unsigned long limit; \
 			for (x=0; x < img_wsize; x += 2 ) { \
 				x_tmp = x*channels + y_tmp; \
 \
-				for (d=0; d < channels; d++, avg++, detail++){ \
+				for (d=0; d < channels; d++, avg++, detail++) { \
 					i = x_tmp + d; \
 					j = i + channels; \
 					*detail = (buffer[i] - buffer[j]) * onehalf; \

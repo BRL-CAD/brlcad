@@ -143,7 +143,7 @@ main(int ac, char **av)
 
 	/* get all the option flags from the command line */
 	while ((c=bu_getopt(ac, av, options)) != EOF)
-		if (c == 'o'){
+		if (c == 'o') {
 			newoffset = strtol(bu_optarg, &eos, 0);
 
 			if (eos != bu_optarg)

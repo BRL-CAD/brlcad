@@ -62,7 +62,7 @@ f_eac(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	CHECK_DBI_NULL;
 
-	if (argc < 2){
+	if (argc < 2) {
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -76,7 +76,7 @@ f_eac(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	if ( setjmp( jmp_env ) == 0 )
 	  (void)signal( SIGINT, sig3);  /* allow interupts */
-	else{
+	else {
 	  bu_vls_free( &v );
 	  return TCL_OK;
 	}

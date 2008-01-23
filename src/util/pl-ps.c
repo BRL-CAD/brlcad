@@ -367,7 +367,7 @@ getargs(struct uplot *up)
 	int	i;
 
 	for ( i = 0; i < up->narg; i++ ) {
-		switch ( up->targ ){
+		switch ( up->targ ) {
 			case TSHORT:
 				arg[i] = getshort();
 				break;

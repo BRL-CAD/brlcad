@@ -135,7 +135,7 @@ main(int argc, char **argv)
 
 	/*calculate turn angles and print table*/
 
-	if (turn_wheels){
+	if (turn_wheels) {
 	    if (v[0] >= 0)
 		sign = 1.0;
 	    else
@@ -162,7 +162,7 @@ int get_args(int argc, char **argv)
 {
     int c;
     while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
-	switch (c){
+	switch (c) {
 	case 'l':
 	    sscanf(bu_optarg, "%lf", &length);
 	    break;

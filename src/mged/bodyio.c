@@ -78,7 +78,7 @@ cmd_import_body(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 
     CHECK_DBI_NULL;
 
-    if (argc != 4){
+    if (argc != 4) {
       struct bu_vls vls;
 
       bu_vls_init(&vls);
@@ -251,7 +251,7 @@ cmd_export_body(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 
     CHECK_DBI_NULL;
 
-    if (argc != 3){
+    if (argc != 3) {
       bu_vls_init(&vls);
       bu_vls_printf(&vls, "help %s", argv[0]);
       Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -262,7 +262,7 @@ cmd_export_body(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
     /*
      *	Find the guy we're told to write
      */
-    if ( (dp = db_lookup( dbip, argv[2], LOOKUP_NOISY)) == DIR_NULL ){
+    if ( (dp = db_lookup( dbip, argv[2], LOOKUP_NOISY)) == DIR_NULL ) {
 	bu_vls_init( &vls );
 	bu_vls_printf( &vls,
 	    "Cannot find object %s for writing\n", argv[2] );

@@ -229,7 +229,7 @@ nmg_tri_plfu(struct faceuse *fu, struct bu_list *tbl2d)
 		NMG_CK_LOOPUSE(lu);
 		if ( BU_LIST_IS_EMPTY(&lu->down_hd) ) {
 			bu_log("Empty child list for loopuse %s %d\n", __FILE__, __LINE__);
-		} else if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC){
+		} else if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
 			vu = BU_LIST_FIRST(vertexuse, &lu->down_hd);
 			pdv_3move(fd, vu->v_p->vg_p->coord);
 			if ( (p=find_pt2d(tbl2d, vu)) ) {
@@ -2110,7 +2110,7 @@ cut_diagonals(struct bu_list *tbl2d, struct bu_list *tlist, const struct faceuse
 		NMG_CK_LOOPUSE(toplu);
 		NMG_CK_LOOPUSE(botlu);
 
-		if (toplu == botlu){
+		if (toplu == botlu) {
 
 			/* if points are the same, this is a split-loop op */
 			if (tp->top->vu_p->v_p == tp->bot->vu_p->v_p) {
@@ -2567,7 +2567,7 @@ triangulate:
 	BU_LIST_INIT(&tlist);
 	nmg_trap_face(tbl2d, &tlist, tol);
 
-	if (rt_g.NMG_debug & DEBUG_TRI){
+	if (rt_g.NMG_debug & DEBUG_TRI) {
 		print_tlist(tbl2d, &tlist);
 
 		bu_log("Cutting diagonals ----------\n");

@@ -396,7 +396,7 @@ skipbytes(int fd, off_t num)
 	while ( num > 0 ) {
 		try = num > scanbytes ? scanbytes : num;
 		n = read( fd, scanline, try );
-		if ( n <= 0 ){
+		if ( n <= 0 ) {
 			return -1;
 		}
 		num -= n;

@@ -44,14 +44,14 @@
 
 #ifndef HAVE_SDL
 
-void util_display_init(int w, int h){ fprintf(stderr, "No SDL support!\n"); exit(-1); }
-void util_display_free(void){}
-void util_display_draw(void *frame){}
-void util_display_text(char *text, int x, int y, int jh, int jv){}
-void util_display_flush(void){}
-void util_display_cross(void){}
-void util_display_flip(void){}
-void util_display_editor(char **content_buffer, int *content_lines, char **console_buffer, int *console_lines, void (*fcb_process)(char *content, char *response)){}
+void util_display_init(int w, int h) { fprintf(stderr, "No SDL support!\n"); exit(-1); }
+void util_display_free(void) {}
+void util_display_draw(void *frame) {}
+void util_display_text(char *text, int x, int y, int jh, int jv) {}
+void util_display_flush(void) {}
+void util_display_cross(void) {}
+void util_display_flip(void) {}
+void util_display_editor(char **content_buffer, int *content_lines, char **console_buffer, int *console_lines, void (*fcb_process)(char *content, char *response)) {}
 
 #else
 
@@ -86,16 +86,16 @@ int i;
 modes=SDL_ListModes(NULL, SDL_HWSURFACE | SDL_DOUBLEBUF);
 
 /* Check is there are any modes available */
-if(modes == (SDL_Rect **)0){
+if(modes == (SDL_Rect **)0) {
   printf("No modes available!\n");
   exit(-1);
 }
 
 
 /* Check if our resolution is restricted */
-if(modes == (SDL_Rect **)-1){
+if(modes == (SDL_Rect **)-1) {
   printf("All resolutions available.\n");
-} else{
+} else {
   /* Print valid modes */
   printf("Available Modes\n");
   for (i=0;modes[i];++i)

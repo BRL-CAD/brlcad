@@ -101,7 +101,7 @@ f_polybinout(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	int	need_normal = 0;
 	struct	bu_external	obuf;
 
-	if (argc < 2 || 2 < argc){
+	if (argc < 2 || 2 < argc) {
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);

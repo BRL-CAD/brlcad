@@ -242,7 +242,7 @@ return;
 	fu1 = nmg_find_fu_of_eu(eu1);
 	fu2 = nmg_find_fu_of_eu(eu2);
 	if ( fu1 && fu2 )  {
-		if ( fu1->orientation != fu2->orientation ){
+		if ( fu1->orientation != fu2->orientation ) {
 			eu2 = eu2->eumate_p;
 			fu2 = nmg_find_fu_of_eu(eu2);
 			if ( fu1->orientation != fu2->orientation )

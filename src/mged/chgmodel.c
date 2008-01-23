@@ -98,7 +98,7 @@ f_itemair(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	if (argc < 3 || 6 < argc){
+	if (argc < 3 || 6 < argc) {
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -174,7 +174,7 @@ f_mater(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	if (argc < 2 || 8 < argc){
+	if (argc < 2 || 8 < argc) {
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -206,10 +206,10 @@ f_mater(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 			Tcl_AppendResult(interp, "Problem with shader string: ", argv[2], (char *)NULL );
 			return TCL_ERROR;
 		}
-	  }else{
+	  } else {
 		bu_vls_free( &comb->shader );
 	  }
-	}else{
+	} else {
 	  /* Shader */
 	  struct bu_vls tmp_vls;
 
@@ -238,14 +238,14 @@ f_mater(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  goto fail;
 	}
 
-	if (argc >= 4){
-	  if ( strncmp(argv[3], "del", 3) == 0 ){
+	if (argc >= 4) {
+	  if ( strncmp(argv[3], "del", 3) == 0 ) {
 	    /* leave color as is */
 		comb->rgb_valid = 0;
 		skip_args = 2;
-	  }else if (argc < 6){	/* prompt for color */
+	  } else if (argc < 6) {	/* prompt for color */
 	    goto color_prompt;
-	  }else{	/* change color */
+	  } else {	/* change color */
 	    sscanf(argv[3], "%d", &r);
 	    sscanf(argv[4], "%d", &g);
 	    sscanf(argv[5], "%d", &b);
@@ -254,10 +254,10 @@ f_mater(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    comb->rgb[2] = b;
 	    comb->rgb_valid = 1;
 	  }
-	}else{
+	} else {
 	/* Color */
 color_prompt:
-	  if ( comb->rgb_valid ){
+	  if ( comb->rgb_valid ) {
 	    struct bu_vls tmp_vls;
 
 	    bu_vls_init(&tmp_vls);
@@ -270,7 +270,7 @@ color_prompt:
 			  comb->rgb[0],
 			  comb->rgb[1],
 			  comb->rgb[2] );
-	  }else{
+	  } else {
 	    Tcl_AppendResult(interp, "Color = (No color specified)\n", (char *)NULL);
 	    bu_vls_printf(&curr_cmd_list->cl_more_default, "del");
 	  }
@@ -280,9 +280,9 @@ color_prompt:
 	  goto fail;
 	}
 
-	if (argc >= 7 - skip_args){
+	if (argc >= 7 - skip_args) {
 	  inherit = *argv[6 - skip_args];
-	}else{
+	} else {
 	  /* Inherit */
 	  switch ( comb->inherit )  {
 	  case 0:
@@ -406,7 +406,7 @@ f_wmater(
 
   CHECK_DBI_NULL;
 
-  if (argc < 3){
+  if (argc < 3) {
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -416,13 +416,13 @@ f_wmater(
     return TCL_ERROR;
   }
 
-  if ((fp = fopen(argv[1], "a")) == NULL){
+  if ((fp = fopen(argv[1], "a")) == NULL) {
     Tcl_AppendResult(interp, "f_wmater: Failed to open file - ", argv[1], (char *)NULL);
     return TCL_ERROR;
   }
 
-  for (i = 2; i < argc; ++i){
-    if ( (dp = db_lookup( dbip,  argv[i], LOOKUP_NOISY )) == DIR_NULL ){
+  for (i = 2; i < argc; ++i) {
+    if ( (dp = db_lookup( dbip,  argv[i], LOOKUP_NOISY )) == DIR_NULL ) {
       Tcl_AppendResult(interp, "f_wmater: Failed to find ", argv[i], "\n", (char *)NULL);
       status = TCL_ERROR;
       continue;
@@ -478,7 +478,7 @@ f_rmater(
   CHECK_DBI_NULL;
   CHECK_READ_ONLY;
 
-  if (argc < 2 || 2 < argc){
+  if (argc < 2 || 2 < argc) {
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -488,17 +488,17 @@ f_rmater(
     return TCL_ERROR;
   }
 
-  if ((fp = fopen(argv[1], "r")) == NULL){
+  if ((fp = fopen(argv[1], "r")) == NULL) {
     Tcl_AppendResult(interp, "f_rcodes: Failed to read file - ", argv[1], (char *)NULL);
     return TCL_ERROR;
   }
 
-  while (bu_fgets( line, LINELEN, fp ) != NULL){
+  while (bu_fgets( line, LINELEN, fp ) != NULL) {
 	if ((extract_mater_from_line(line, name, shader,
 			    &r, &g, &b, &override, &inherit)) == TCL_ERROR)
 	continue;
 
-	if ( (dp = db_lookup( dbip,  name, LOOKUP_NOISY )) == DIR_NULL ){
+	if ( (dp = db_lookup( dbip,  name, LOOKUP_NOISY )) == DIR_NULL ) {
 		Tcl_AppendResult(interp, "f_rmater: Failed to find ", name, "\n", (char *)NULL);
 		status = TCL_ERROR;
 		continue;
@@ -550,7 +550,7 @@ extract_mater_from_line(
   str[1] = shader;
 
   /* Extract first 2 strings. */
-  for (i=j=0; i < 2; ++i){
+  for (i=j=0; i < 2; ++i) {
 
     /* skip white space */
     while (line[j] == ' ' || line[j] == '\t')
@@ -560,10 +560,10 @@ extract_mater_from_line(
       return TCL_ERROR;
 
     /* We found a double quote, so use everything between the quotes */
-    if (line[j] == '"'){
+    if (line[j] == '"') {
       for (k = 0, ++j; line[j] != '"' && line[j] != '\0'; ++j, ++k)
 	str[i][k] = line[j];
-    }else{
+    } else {
       for (k = 0; line[j] != ' ' && line[j] != '\t' && line[j] != '\0'; ++j, ++k)
 	str[i][k] = line[j];
     }
@@ -600,7 +600,7 @@ f_comb_color(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     CHECK_DBI_NULL;
     CHECK_READ_ONLY;
 
-    if (argc < 5 || 5 < argc){
+    if (argc < 5 || 5 < argc) {
       struct bu_vls vls;
 
       bu_vls_init(&vls);
@@ -657,7 +657,7 @@ f_shader(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	CHECK_DBI_NULL;
 
-	if (argc < 2){
+	if (argc < 2) {
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -713,7 +713,7 @@ f_mirror(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     CHECK_DBI_NULL;
     CHECK_READ_ONLY;
 
-    if (argc < 4 || 4 < argc){
+    if (argc < 4 || 4 < argc) {
 	struct bu_vls vls;
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help mirror");
@@ -764,7 +764,7 @@ f_edcomb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	if (argc < 6 || 7 < argc){
+	if (argc < 6 || 7 < argc) {
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -849,10 +849,10 @@ f_make(ClientData	clientData,
 	struct rt_superell_internal	*superell_ip;
 	struct rt_metaball_internal	*metaball_ip;
 
-	if (argc == 2){
+	if (argc == 2) {
 	  struct bu_vls vls;
 
-	  if (argv[1][0] == '-' && argv[1][1] == 't'){
+	  if (argv[1][0] == '-' && argv[1][1] == 't') {
 	    Tcl_AppendElement(interp, "arb8");
 	    Tcl_AppendElement(interp, "arb7");
 	    Tcl_AppendElement(interp, "arb6");
@@ -899,7 +899,7 @@ f_make(ClientData	clientData,
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	if (argc != 3){
+	if (argc != 3) {
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -1637,7 +1637,7 @@ mged_rot_obj(Tcl_Interp *interp, int iflag, fastf_t *argvect)
   MAT_IDN(temp);
   bn_mat_angles(temp, argvect[0], argvect[1], argvect[2]);
 
-  if (iflag){
+  if (iflag) {
     /* apply accumulated rotations */
     bn_mat_mul2(acc_rot_sol, temp);
   }
@@ -1669,7 +1669,7 @@ f_rot_obj(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
   CHECK_DBI_NULL;
   CHECK_READ_ONLY;
 
-  if (argc < 4 || 5 < argc){
+  if (argc < 4 || 5 < argc) {
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -1683,7 +1683,7 @@ f_rot_obj(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_ERROR;
 
   /* Check for -i option */
-  if (argv[1][0] == '-' && argv[1][1] == 'i'){
+  if (argv[1][0] == '-' && argv[1][1] == 'i') {
     iflag = 1;  /* treat arguments as incremental values */
     ++argv;
     --argc;
@@ -1709,7 +1709,7 @@ f_sc_obj(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	if (argc < 2 || 2 < argc){
+	if (argc < 2 || 2 < argc) {
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -1799,7 +1799,7 @@ f_tr_obj(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	if (argc < 4 || 4 < argc){
+	if (argc < 4 || 4 < argc) {
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -1872,7 +1872,7 @@ f_regdef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_OK;
   }
 
-  if (argc < 2 || 5 < argc){
+  if (argc < 2 || 5 < argc) {
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -1986,7 +1986,7 @@ f_fracture(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	if (argc < 2 || 3 < argc){
+	if (argc < 2 || 3 < argc) {
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -2143,7 +2143,7 @@ f_qorot(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	if (argc < 8 || 8 < argc){
+	if (argc < 8 || 8 < argc) {
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);

@@ -95,7 +95,7 @@ int get_args(int argc, char **argv)
 {
     int c;
     while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
-	switch (c){
+	switch (c) {
 	case 'r':
 	    full_print = 1;
 	    break;

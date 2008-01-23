@@ -100,12 +100,12 @@ An error has occured while adding a new object to the database.\n", (char *)NULL
 	WDB_TCL_ALLOC_ERR; \
 	return TCL_ERROR; }
 
-#define WDB_TCL_DELETE_ERR(_name){ \
+#define WDB_TCL_DELETE_ERR(_name) { \
 	Tcl_AppendResult(interp, "An error has occurred while deleting '", _name, \
 	"' from the database.\n", (char *)NULL);\
 	WDB_TCL_ERROR_RECOVERY_SUGGESTION; }
 
-#define WDB_TCL_DELETE_ERR_return(_name){  \
+#define WDB_TCL_DELETE_ERR_return(_name) {  \
 	WDB_TCL_DELETE_ERR(_name); \
 	return TCL_ERROR;  }
 
@@ -4398,7 +4398,7 @@ wdb_facetize_cmd(struct rt_wdb	*wdbp,
 	union tree		*facetize_tree;
 	struct model		*nmg_model;
 
-	if (argc < 3){
+	if (argc < 3) {
 		Tcl_AppendResult(interp,
 				 "Usage: ",
 				 argv[0],
@@ -4451,7 +4451,7 @@ wdb_facetize_cmd(struct rt_wdb	*wdbp,
 	}
 	argc -= bu_optind;
 	argv += bu_optind;
-	if ( argc < 0 ){
+	if ( argc < 0 ) {
 	  Tcl_AppendResult(interp, "facetize: missing argument\n", (char *)NULL);
 	  return TCL_ERROR;
 	}
@@ -4459,7 +4459,7 @@ wdb_facetize_cmd(struct rt_wdb	*wdbp,
 	newname = argv[0];
 	argv++;
 	argc--;
-	if ( argc < 0 ){
+	if ( argc < 0 ) {
 	  Tcl_AppendResult(interp, "facetize: missing argument\n", (char *)NULL);
 	  return TCL_ERROR;
 	}

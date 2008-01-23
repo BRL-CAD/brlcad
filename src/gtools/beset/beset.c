@@ -50,7 +50,7 @@
 struct rt_db_internal source_obj;
 
 
-void usage(){
+void usage() {
     bu_exit(1, "Usage: %s [options] db.g object\nOptions:\n -p #\t\tPopulation size\n -g #\t\tNumber of generations\n -r #\t\tResolution \n -u #\t\tUpper percent of individuals to keep\n -l #\t\tLower percent of individuals to kill\n", bu_getprogname());
 }
 
@@ -115,7 +115,7 @@ parse_args (int ac, char *av[], struct options *opts)
 
 
 
-int main(int argc, char *argv[]){
+int main(int argc, char *argv[]) {
     int i, g; /* generation and parent counters */
     int parent1, parent2;
     int gop;
@@ -153,7 +153,7 @@ int main(int argc, char *argv[]){
     db_close(pop.db_c);
 
 
-    for (g = 1; g < opts.gens; g++ ){
+    for (g = 1; g < opts.gens; g++ ) {
 #ifdef VERBOSE
 	printf("\nGeneration %d:\n"
 		"--------------\n", g);
@@ -189,12 +189,12 @@ int main(int argc, char *argv[]){
 
 	printf("Most fit from %s was %s with a fitness of %g\n", dbname, NL(pop.parent[pop.size-1].id), pop.parent[pop.size-1].fitness);
 	printf("%6.8g\t%6.8g\t%6.8g\n", total_fitness/pop.size, pop.parent[0].fitness, pop.parent[pop.size-1].fitness);
-	for (i = 0; i < pop.size; i++){
+	for (i = 0; i < pop.size; i++) {
 
 	    pop.child[i].id = i;
 
 	    /* keep upper N */
-	    if (i >= pop.size - opts.keep_upper){
+	    if (i >= pop.size - opts.keep_upper) {
 		pop_gop(REPRODUCE, NL(pop.parent[i].id), NULL, NL(pop.child[i].id), NULL,
 			pop.db_p, pop.db_c, &rt_uniresource);
 		continue;
@@ -207,7 +207,7 @@ int main(int argc, char *argv[]){
 	    /* only need 1 more individual, can't crossover, so reproduce */
 	    if (gop == CROSSOVER && i >= pop.size-opts.keep_upper-1)gop=REPRODUCE;
 
-	    if (gop & (REPRODUCE | MUTATE)){
+	    if (gop & (REPRODUCE | MUTATE)) {
 #ifdef VERBOSE
 		printf("r(%s)\t ---------------> (%s)\n", NL(pop.parent[parent1].id), NL(pop.child[i].id));
 #endif

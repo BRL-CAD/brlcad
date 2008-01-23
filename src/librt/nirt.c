@@ -140,7 +140,7 @@ dgo_nirt_cmd(struct dg_obj	*dgop,
 	if (argc > 3) {
 		if (sscanf(argv[argc-3], "%lf", &center_model[X]) == 1 &&
 		    sscanf(argv[argc-2], "%lf", &center_model[Y]) == 1 &&
-		    sscanf(argv[argc-1], "%lf", &center_model[Z]) == 1){
+		    sscanf(argv[argc-1], "%lf", &center_model[Z]) == 1) {
 			use_input_orig = 1;
 			argc -= 3;
 			VSCALE(center_model, center_model, dgop->dgo_wdbp->dbip->dbi_local2base);
@@ -235,7 +235,7 @@ dgo_nirt_cmd(struct dg_obj	*dgop,
 done:
 			if (*val == '\0')
 			    bu_vls_printf(&o_vls, " fmt r \"\\n\" ");
-			else{
+			else {
 			    bu_vls_printf(&o_vls, " fmt r \"\\n%*s\" ", count, val);
 
 			    if (count)
@@ -584,7 +584,7 @@ dgo_vnirt_cmd(struct dg_obj	*dgop,
      * arguments are passed straight through to nirt.
      */
     if (sscanf(argv[argc-2], "%lf", &view_ray_orig[X]) != 1 ||
-       sscanf(argv[argc-1], "%lf", &view_ray_orig[Y]) != 1){
+       sscanf(argv[argc-1], "%lf", &view_ray_orig[Y]) != 1) {
 	return TCL_ERROR;
     }
     view_ray_orig[Z] = DG_GED_MAX;

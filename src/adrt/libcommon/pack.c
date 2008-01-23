@@ -639,7 +639,7 @@ void common_pack_mesh_adrt(common_db_t *db, void **app_data, int *app_ind, char 
     /* Write Matrix */
     if (matrixind >= 0) {
       common_pack_write(app_data, app_ind, db->anim.frame_list[0].tlist[matrixind].matrix, sizeof(tfloat)*16);
-    } else{
+    } else {
       tfloat matrix[16];
       math_mat_ident(matrix, 4);
       common_pack_write(app_data, app_ind, matrix, sizeof(tfloat)*16);

@@ -87,7 +87,7 @@ f_analyze(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	CHECK_DBI_NULL;
 
-	if (argc < 1){
+	if (argc < 1) {
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -414,7 +414,7 @@ anal_face(struct bu_vls *vp, int face, fastf_t *center_pt, const struct rt_arb_i
 	 * fallback angles so that they always give the outward
 	 * pointing normal vector.
 	 */
-	if ( (plane[3] - VDOT(center_pt, &plane[0])) < 0.0 ){
+	if ( (plane[3] - VDOT(center_pt, &plane[0])) < 0.0 ) {
 		for ( i=0; i<4; i++ )
 			plane[i] *= -1.0;
 	}

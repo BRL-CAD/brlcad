@@ -2151,7 +2151,7 @@ nmg_purge_unwanted_intersection_points(struct bu_ptbl *vert_list, fastf_t *mag_l
 		 * be on the list of intersecting loops.
 		 */
 		overlap = 0;
-		for (BU_LIST_FOR(fu2lu, loopuse, &fu->lu_hd )){
+		for (BU_LIST_FOR(fu2lu, loopuse, &fu->lu_hd )) {
 			NMG_CK_LOOPUSE(fu2lu);
 			NMG_CK_LOOP(fu2lu->l_p);
 

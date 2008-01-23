@@ -890,7 +890,7 @@ rt_arb_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	fastf_t	s;
 
 	/* Intialize return values */
-	for (i = 0; i < n; i++){
+	for (i = 0; i < n; i++) {
 		segp[i].seg_stp = stp[i];	/* Assume hit, if 0 then miss */
 		segp[i].seg_in.hit_dist = -INFINITY;    /* used as in */
 		segp[i].seg_in.hit_surfno = -1;		/* used as iplane */
@@ -942,7 +942,7 @@ rt_arb_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	 *  Segment was initialized as "good" (seg_stp set valid);
 	 *  that is revoked here on misses.
 	 */
-	for (i = 0; i < n; i++){
+	for (i = 0; i < n; i++) {
 		if (stp[i] == 0) continue;		/* skip this ray */
 		if ( segp[i].seg_stp == 0 ) continue;	/* missed */
 
@@ -1707,7 +1707,7 @@ rt_arb_calc_points(
 	RT_ARB_CK_MAGIC(arb);
 
 	/* find new points for entire solid */
-	for (i=0; i<8; i++){
+	for (i=0; i<8; i++) {
 		if ( rt_arb_3face_intersect( pt[i], planes, cgtype, i*3 ) < 0 )  {
 		  bu_log("rt_arb_calc_points: Intersection of planes fails %d\n", i);
 		  return -1;			/* FAIL */

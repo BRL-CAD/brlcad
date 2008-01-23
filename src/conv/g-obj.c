@@ -253,14 +253,14 @@ main(int argc, char **argv)
 		(genptr_t)NULL);	/* in librt/nmg_bool.c */
 
 	percent = 0;
-	if (regions_tried>0){
+	if (regions_tried>0) {
 		percent = ((double)regions_converted * 100) / regions_tried;
 		printf("Tried %d regions, %d converted to NMG's successfully.  %g%%\n",
 			regions_tried, regions_converted, percent);
 	}
 	percent = 0;
 
-	if ( regions_tried > 0 ){
+	if ( regions_tried > 0 ) {
 		percent = ((double)regions_written * 100) / regions_tried;
 		printf( "                  %d triangulated successfully. %g%%\n",
 			regions_written, percent );
@@ -706,7 +706,7 @@ out:
 
 	db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
 
-	if (regions_tried>0){
+	if (regions_tried>0) {
 		float npercent;
 		float tpercent;
 

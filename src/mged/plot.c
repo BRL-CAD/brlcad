@@ -81,7 +81,7 @@ f_plot(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	int floating;			/* 3-D floating point plot */
 	int	is_pipe = 0;
 
-	if (argc < 2){
+	if (argc < 2) {
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -302,7 +302,7 @@ f_area(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	CHECK_DBI_NULL;
 
-	if (argc < 1 || 2 < argc){
+	if (argc < 1 || 2 < argc) {
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -332,10 +332,10 @@ f_area(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  }
 	}
 
-	if (argc == 2){
+	if (argc == 2) {
 	  Tcl_AppendResult(interp, "Tolerance is ", argv[1], "\n", (char *)NULL);
 	  tol_ptr = argv[1];
-	}else{
+	} else {
 	  struct bu_vls tmp_vls;
 	  double tol = 0.005;
 
@@ -347,22 +347,22 @@ f_area(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  bu_vls_free(&tmp_vls);
 	}
 
-	if (pipe(fd1) != 0){
+	if (pipe(fd1) != 0) {
 	  perror("f_area");
 	  return TCL_ERROR;
 	}
 
-	if (pipe(fd2) != 0){
+	if (pipe(fd2) != 0) {
 	  perror("f_area");
 	  return TCL_ERROR;
 	}
 
-	if (pipe(fd3) != 0){
+	if (pipe(fd3) != 0) {
 	  perror("f_area");
 	  return TCL_ERROR;
 	}
 
-	if ((pid1 = fork()) == 0){
+	if ((pid1 = fork()) == 0) {
 	  dup2(fd1[0], fileno(stdin));
 	  dup2(fd2[1], fileno(stdout));
 
@@ -376,7 +376,7 @@ f_area(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  execlp("cad_boundp", "cad_boundp", "-t", tol_ptr, (char *)NULL);
 	}
 
-	if ((pid2 = fork()) == 0){
+	if ((pid2 = fork()) == 0) {
 	  dup2(fd2[0], fileno(stdin));
 	  dup2(fd3[1], fileno(stdout));
 

@@ -140,7 +140,7 @@ int		inherit;
 
 	memset((char *)&rec, 0, sizeof(rec));
 	rec.c.c_id = ID_COMB;
-	if ( region ){
+	if ( region ) {
 		switch ( region )  {
 		case DBV4_NON_REGION:	/* sanity, fixes a non-bool arg */
 		case DBV4_REGION:

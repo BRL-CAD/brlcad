@@ -196,7 +196,7 @@ f_vrmgr(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	struct bu_vls	str;
 	char		*role;
 
-	if (argc < 3){
+	if (argc < 3) {
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);

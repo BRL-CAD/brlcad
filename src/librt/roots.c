@@ -80,14 +80,14 @@ rt_poly_eval_w_2derivatives(register bn_complex_t *cZ, register bn_poly_t *eqn, 
     *c = *b;
     *d = *c;
 
-    for ( n=1; ( m = eqn->dgr - n ) >= 0; ++n){
+    for ( n=1; ( m = eqn->dgr - n ) >= 0; ++n) {
 	bn_cx_mul( b, cZ );
 	b->re += eqn->cf[n];
-	if ( m > 0 ){
+	if ( m > 0 ) {
 	    bn_cx_mul( c, cZ );
 	    bn_cx_add( c, b );
 	}
-	if ( m > 1 ){
+	if ( m > 1 ) {
 	    bn_cx_mul( d, cZ );
 	    bn_cx_add( d, c );
 	}
@@ -148,7 +148,7 @@ rt_poly_findroot(register bn_poly_t *eqn, /* polynomial */
 	bn_cx_sub( &p1_H, &cH );
 	bn_cx_add( &p1, &cH );		/* p1 <== p1+H */
 	bn_cx_scal( &p0, (double)(eqn->dgr) );
-	if ( bn_cx_amplsq( &p1_H ) > bn_cx_amplsq( &p1 ) ){
+	if ( bn_cx_amplsq( &p1_H ) > bn_cx_amplsq( &p1 ) ) {
 	    bn_cx_div( &p0, &p1_H);
 	    bn_cx_sub( nxZ, &p0 );
 	} else {
@@ -215,7 +215,7 @@ rt_poly_checkroots(register bn_poly_t *eqn, bn_complex_t *roots, register int nr
     register int	n;
     int		m;
 
-    for ( m=0; m < nroots; ++m ){
+    for ( m=0; m < nroots; ++m ) {
 	/* Select value of Z to evaluate at */
 	zr = bn_cx_real( &roots[m] );
 	zi = bn_cx_imag( &roots[m] );
@@ -303,7 +303,7 @@ rt_poly_roots(register bn_poly_t	*eqn,	/* equation to be solved */
      * to prevent the polynomial factoring from blowing up, below.
      */
     while ( NEAR_ZERO( eqn->cf[0], SMALL ) )  {
-	for ( n=0; n <= eqn->dgr; n++ ){
+	for ( n=0; n <= eqn->dgr; n++ ) {
 	    eqn->cf[n] = eqn->cf[n+1];
 	}
 	if ( --eqn->dgr <= 0 )
@@ -326,7 +326,7 @@ rt_poly_roots(register bn_poly_t	*eqn,	/* equation to be solved */
 	++n;
     }
 
-    while ( eqn->dgr > 2 ){
+    while ( eqn->dgr > 2 ) {
 	if ( eqn->dgr == 4 )  {
 	    if ( bn_poly_quartic_roots(&roots[n], eqn) )  {
 		if ( rt_poly_checkroots( eqn, &roots[n], 4 ) == 0 )  {
@@ -349,7 +349,7 @@ rt_poly_roots(register bn_poly_t	*eqn,	/* equation to be solved */
 	if ( (rt_poly_findroot( eqn, &roots[n], name )) < 0 )
 	    return(n);	/* return those we found, anyways */
 
-	if ( fabs(roots[n].im) > 1.0e-5* fabs(roots[n].re) ){
+	if ( fabs(roots[n].im) > 1.0e-5* fabs(roots[n].re) ) {
 	    /* If root is complex, its complex conjugate is
 	     * also a root since complex roots come in con-
 	     * jugate pairs when all coefficients are real.
@@ -369,11 +369,11 @@ rt_poly_roots(register bn_poly_t	*eqn,	/* equation to be solved */
     /* For polynomials of lower degree, iterative techniques
      * are an inefficient way to find the roots.
      */
-    if ( eqn->dgr == 1 ){
+    if ( eqn->dgr == 1 ) {
 	roots[n].re = -(eqn->cf[1]);
 	roots[n].im = 0.0;
 	++n;
-    } else if ( eqn->dgr == 2 ){
+    } else if ( eqn->dgr == 2 ) {
 	bn_poly_quadratic_roots(&roots[n], eqn);
 	n += 2;
     }

@@ -106,7 +106,7 @@ cmd_kill(ClientData	clientData,
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	if (argc < 2){
+	if (argc < 2) {
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -184,7 +184,7 @@ f_copy_inv(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	if (argc < 3 || 3 < argc){
+	if (argc < 3 || 3 < argc) {
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -280,7 +280,7 @@ f_arced(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	if (argc < 3){
+	if (argc < 3) {
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -414,7 +414,7 @@ find_solid_with_path(register struct db_full_path *pathp)
 		ret = sp;
 		count++;
 	}
-	if ( count > 1 ){
+	if ( count > 1 ) {
 	  struct bu_vls tmp_vls;
 
 	  bu_vls_init(&tmp_vls);
@@ -448,7 +448,7 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	CHECK_DBI_NULL;
 
-	if (argc < 3 || 3 < argc){
+	if (argc < 3 || 3 < argc) {
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -576,7 +576,7 @@ f_putmat (ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     CHECK_DBI_NULL;
     CHECK_READ_ONLY;
 
-    if (argc < 3 || 18 < argc){
+    if (argc < 3 || 18 < argc) {
       struct bu_vls vls;
 
       bu_vls_init(&vls);
@@ -668,7 +668,7 @@ f_copymat(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     CHECK_DBI_NULL;
     CHECK_READ_ONLY;
 
-    if (argc < 3 || 3 < argc){
+    if (argc < 3 || 3 < argc) {
       struct bu_vls vls;
 
       bu_vls_init(&vls);

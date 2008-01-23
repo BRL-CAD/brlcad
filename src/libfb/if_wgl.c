@@ -507,8 +507,8 @@ int		npix;
 	if ((ybase + nlines - 1) > clp->ypixmax)
 		nlines = clp->ypixmax - ybase + 1;
 
-	if (!WGL(ifp)->use_ext_ctrl){
-	if (!WGL(ifp)->copy_flag){
+	if (!WGL(ifp)->use_ext_ctrl) {
+	if (!WGL(ifp)->copy_flag) {
 		/*
 		 * Blank out areas of the screen around the image, if exposed.
 		 * In COPY mode, this is done in backbuffer_to_screen().
@@ -747,7 +747,7 @@ int	width, height;
 
 	SGI(ifp)->mi_shmid = -1;	/* indicate no shared memory */
 
-	if (wgl_nwindows && !multiple_windows){
+	if (wgl_nwindows && !multiple_windows) {
 		fb_log("Warning - wgl_open: Multiple windows opened. Use /dev/wglm for first window!");
 	}
 
@@ -1189,7 +1189,7 @@ unsigned char	*pp;		/* pointer to beginning of memory segment*/
 	if ( CJDEBUG ) printf("entering wgl_clear\n");
 
 	if (multiple_windows) {
-		if (wglMakeCurrent(WGL(ifp)->hdc, WGL(ifp)->glxc)==False){
+		if (wglMakeCurrent(WGL(ifp)->hdc, WGL(ifp)->glxc)==False) {
 		fb_log("Warning, wgl_clear: wglMakeCurrent unsuccessful.\n");
 		}
 	}
@@ -1220,12 +1220,12 @@ unsigned char	*pp;		/* pointer to beginning of memory segment*/
 
 
 	/* Update screen */
-	if (WGL(ifp)->use_ext_ctrl){
+	if (WGL(ifp)->use_ext_ctrl) {
 		glClear(GL_COLOR_BUFFER_BIT);
-	}else{
-	if ( WGL(ifp)->copy_flag){
+	} else {
+	if ( WGL(ifp)->copy_flag) {
 		/* COPY mode: clear both buffers */
-		if (WGL(ifp)->front_flag){
+		if (WGL(ifp)->front_flag) {
 			glDrawBuffer(GL_BACK);
 			glClear(GL_COLOR_BUFFER_BIT);
 			glDrawBuffer(GL_FRONT);
@@ -1238,7 +1238,7 @@ unsigned char	*pp;		/* pointer to beginning of memory segment*/
 		}
 	} else {
 		glClear(GL_COLOR_BUFFER_BIT);
-		if (SGI(ifp)->mi_doublebuffer){
+		if (SGI(ifp)->mi_doublebuffer) {
 			SwapBuffers( WGL(ifp)->hdc);
 		}
 	}
@@ -1289,18 +1289,18 @@ int	xzoom, yzoom;
 	else	ifp->if_zoomflag = 0;
 
 
-	if (WGL(ifp)->use_ext_ctrl){
+	if (WGL(ifp)->use_ext_ctrl) {
 		wgl_clipper(ifp);
-	}else{
+	} else {
 	if (multiple_windows) {
-		if (wglMakeCurrent(WGL(ifp)->hdc, WGL(ifp)->glxc)==False){
+		if (wglMakeCurrent(WGL(ifp)->hdc, WGL(ifp)->glxc)==False) {
 			fb_log("Warning, wgl_view: wglMakeCurrent unsuccessful.\n");
 		}
 	}
 
 	/* Set clipping matrix  and zoom level */
 	glMatrixMode(GL_PROJECTION);
-	if (WGL(ifp)->copy_flag && !WGL(ifp)->front_flag){
+	if (WGL(ifp)->copy_flag && !WGL(ifp)->front_flag) {
 		/* COPY mode - no changes to backbuffer copy - just
 		 * need to update front buffer
 		 */
@@ -1315,11 +1315,11 @@ int	xzoom, yzoom;
 	glOrtho( clp->oleft, clp->oright, clp->obottom, clp->otop, -1.0, 1.0);
 	glPixelZoom((float) ifp->if_xzoom, (float) ifp->if_yzoom);
 
-	if (WGL(ifp)->copy_flag){
+	if (WGL(ifp)->copy_flag) {
 		backbuffer_to_screen(ifp, -1);
 	} else {
 		wgl_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
-		if (SGI(ifp)->mi_doublebuffer){
+		if (SGI(ifp)->mi_doublebuffer) {
 			SwapBuffers( WGL(ifp)->hdc);
 		}
 	}
@@ -1498,12 +1498,12 @@ int	count;
 		return ret;
 
 	if (multiple_windows) {
-		if (wglMakeCurrent(WGL(ifp)->hdc, WGL(ifp)->glxc)==False){
+		if (wglMakeCurrent(WGL(ifp)->hdc, WGL(ifp)->glxc)==False) {
 		    fb_log("Warning, wgl_write: wglMakeCurrent unsuccessful.\n");
 		}
 	}
 
-	if (!WGL(ifp)->use_ext_ctrl){
+	if (!WGL(ifp)->use_ext_ctrl) {
 	if ( xstart + count <= ifp->if_width  )  {
 		/* "Fast path" case for writes of less than one scanline.
 		 * The assumption is that there will be a lot of short
@@ -1517,7 +1517,7 @@ int	count;
 		}
 #endif
 		wgl_xmit_scanlines( ifp, ybase, 1, xstart, count );
-		if (WGL(ifp)->copy_flag){
+		if (WGL(ifp)->copy_flag) {
 		    /* repaint one scanline from backbuffer */
 		    backbuffer_to_screen(ifp, ybase);
 		}
@@ -1529,7 +1529,7 @@ int	count;
 		}
 		else { /* just write rectangle */
 			wgl_xmit_scanlines( ifp, ybase, y-ybase, 0, ifp->if_width );
-			if (WGL(ifp)->copy_flag){
+			if (WGL(ifp)->copy_flag) {
 				backbuffer_to_screen(ifp, -1);
 			}
 		}
@@ -1591,9 +1591,9 @@ wgl_writerect(FBIO *ifp,
 	if ( (ifp->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH )
 		return width*height;
 
-	if (!WGL(ifp)->use_ext_ctrl){
+	if (!WGL(ifp)->use_ext_ctrl) {
 	if (multiple_windows) {
-	if (wglMakeCurrent(WGL(ifp)->hdc, WGL(ifp)->glxc)==False){
+	if (wglMakeCurrent(WGL(ifp)->hdc, WGL(ifp)->glxc)==False) {
 		fb_log("Warning, wgl_writerect: wglMakeCurrent unsuccessful.\n");
 	}
 	}
@@ -1604,7 +1604,7 @@ wgl_writerect(FBIO *ifp,
 	}
 	else { /* just write rectangle*/
 		wgl_xmit_scanlines( ifp, ymin, height, xmin, width );
-		if (WGL(ifp)->copy_flag){
+		if (WGL(ifp)->copy_flag) {
 			backbuffer_to_screen(ifp, -1);
 		}
 	}
@@ -1665,9 +1665,9 @@ wgl_bwwriterect(FBIO *ifp,
 	if ( (ifp->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH )
 		return width*height;
 
-	if (!WGL(ifp)->use_ext_ctrl){
+	if (!WGL(ifp)->use_ext_ctrl) {
 	if (multiple_windows) {
-	if (wglMakeCurrent(WGL(ifp)->hdc, WGL(ifp)->glxc)==False){
+	if (wglMakeCurrent(WGL(ifp)->hdc, WGL(ifp)->glxc)==False) {
 		fb_log("Warning, wgl_writerect: wglMakeCurrent unsuccessful.\n");
 	}
 	}
@@ -1678,7 +1678,7 @@ wgl_bwwriterect(FBIO *ifp,
 	}
 	else { /* just write rectangle*/
 		wgl_xmit_scanlines( ifp, ymin, height, xmin, width );
-		if (WGL(ifp)->copy_flag){
+		if (WGL(ifp)->copy_flag) {
 			backbuffer_to_screen(ifp, -1);
 		}
 	}
@@ -1770,7 +1770,7 @@ wgl_wmap(register FBIO *ifp,
 	SGI(ifp)->mi_cmap_flag = !is_linear_cmap(ifp);
 
 
-	if (!WGL(ifp)->use_ext_ctrl){
+	if (!WGL(ifp)->use_ext_ctrl) {
 	if ( WGL(ifp)->soft_cmap_flag )  {
 		/* if current and previous maps are linear, return */
 		if ( SGI(ifp)->mi_cmap_flag == 0 && prev == 0 )  return(0);
@@ -1778,13 +1778,13 @@ wgl_wmap(register FBIO *ifp,
 		/* Software color mapping, trigger a repaint */
 
 		if (multiple_windows) {
-		if (wglMakeCurrent(WGL(ifp)->hdc, WGL(ifp)->glxc)==False){
+		if (wglMakeCurrent(WGL(ifp)->hdc, WGL(ifp)->glxc)==False) {
 			fb_log("Warning, wgl_wmap: wglMakeCurrent unsuccessful.\n");
 		}
 		}
 
 		wgl_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
-		if (SGI(ifp)->mi_doublebuffer){
+		if (SGI(ifp)->mi_doublebuffer) {
 			SwapBuffers( WGL(ifp)->hdc);
 		} else if (WGL(ifp)->copy_flag) {
 			backbuffer_to_screen(ifp, -1);
@@ -1904,7 +1904,7 @@ wgl_flush(FBIO *ifp)
 {
 	if ( (ifp->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH )  {
 		if (multiple_windows) {
-			if (wglMakeCurrent(WGL(ifp)->hdc, WGL(ifp)->glxc)==False){
+			if (wglMakeCurrent(WGL(ifp)->hdc, WGL(ifp)->glxc)==False) {
 				fb_log("Warning, wgl_flush: wglMakeCurrent unsuccessful.\n");
 			}
 		}
@@ -1913,7 +1913,7 @@ wgl_flush(FBIO *ifp)
 		if ( SGI(ifp)->mi_doublebuffer) {
 			SwapBuffers( WGL(ifp)->hdc);
 		} else {
-			if (WGL(ifp)->copy_flag){
+			if (WGL(ifp)->copy_flag) {
 				backbuffer_to_screen(ifp, -1);
 			}
 		}
@@ -2204,8 +2204,8 @@ reorder_cursor(char *dst,
 	if ( (xbytes = xbits /8) * 8 != xbits)
 		xbytes++;
 
-	for (j=0, k=(ybits-1)*xbytes; j < ybits*xbytes; j+=xbytes, k-=xbytes){
-		for (i=0; i < xbytes; i++){
+	for (j=0, k=(ybits-1)*xbytes; j < ybits*xbytes; j+=xbytes, k-=xbytes) {
+		for (i=0; i < xbytes; i++) {
 			dst[j+i] = src[k+i];
 		}
 	}
@@ -2223,7 +2223,7 @@ backbuffer_to_screen(register FBIO *ifp,
 {
 	struct wgl_clip *clp;
 
-	if (!(WGL(ifp)->front_flag)){
+	if (!(WGL(ifp)->front_flag)) {
 		WGL(ifp)->front_flag = 1;
 		glDrawBuffer(GL_FRONT);
 		glMatrixMode(GL_PROJECTION);
@@ -2372,18 +2372,18 @@ wgl_refresh(FBIO *ifp,
   int mm;
   struct wgl_clip *clp;
 
-  if (w < 0){
+  if (w < 0) {
     w = -w;
     x -= w;
   }
 
-  if (h < 0){
+  if (h < 0) {
     h = -h;
     y -= h;
   }
 
 #if 0
-  if (glIsEnabled(GL_DEPTH_TEST)){
+  if (glIsEnabled(GL_DEPTH_TEST)) {
     glDisable(GL_DEPTH_TEST);
     dflag = 1;
   }

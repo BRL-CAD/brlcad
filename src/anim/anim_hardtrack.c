@@ -141,19 +141,19 @@ main(int argc, char **argv)
     MAT_IDN(m_axes);
     MAT_IDN(m_rev_axes);
 
-    if (!get_args(argc, argv)){
+    if (!get_args(argc, argv)) {
 	fprintf(stderr, "anim_hardtrack: argument error.");
 	return(-1);
     }
 
-    if (axes || cent ){ /* vehicle has own reference frame */
+    if (axes || cent ) { /* vehicle has own reference frame */
 	anim_add_trans(m_axes, centroid, zero);
 	anim_add_trans(m_rev_axes, zero, rcentroid);
     }
 
     /* get track information from specified file */
 
-    if (!(stream = fopen(*(argv+bu_optind), "r"))){
+    if (!(stream = fopen(*(argv+bu_optind), "r"))) {
 	fprintf(stderr, "Anim_hardtrack: Could not open file %s.\n", *(argv+bu_optind));
 	return(0);
     }
@@ -174,7 +174,7 @@ main(int argc, char **argv)
     /*allocate memory for track information*/
     x = (struct all *) bu_calloc(num_wheels, sizeof(struct all), "struct all");
     /*read rest of track info */
-    for (i=0;i<NW;i++){
+    for (i=0;i<NW;i++) {
 	fscanf(stream, "%lf %lf %lf", temp, temp+1, temp+2);
 	if (radius)
 	    x[i].w.rad = radius;
@@ -216,22 +216,22 @@ main(int argc, char **argv)
 	VMOVE(p2, p3);
 	scanf("%*f");/*time stamp*/
 	val = scanf("%lf %lf %lf", p3, p3+1, p3 + 2);
-	if (!steer){
+	if (!steer) {
 	    scanf("%lf %lf %lf", &yaw, &pitch, &roll);
 	    anim_dy_p_r2mat(mat_v, yaw, pitch, roll);
 	    anim_add_trans(mat_v, p3, rcentroid);
 	}
 	else { /* analyze positions for steering */
 	    /*get useful direction unit vectors*/
-	    if (frame == first_frame){ /* first frame*/
+	    if (frame == first_frame) { /* first frame*/
 		VSUBUNIT(dir, p3, p2);
 		VMOVE(dir2, dir);
 	    }
-	    else if (val < 3){ /*last frame*/
+	    else if (val < 3) { /*last frame*/
 		VSUBUNIT(dir, p2, p1);
 		VMOVE(dir2, dir);
 	    }
-	    else if (frame > first_frame){ /*normal*/
+	    else if (frame > first_frame) { /*normal*/
 		VSUBUNIT(dir, p3, p1);
 		VSUBUNIT(dir2, p2, p1);/*needed for vertical case*/
 	    }
@@ -245,13 +245,13 @@ main(int argc, char **argv)
 	/*determine distance traveled*/
 	VMOVE(wheel_prev, wheel_now);
 	MAT4X3PNT(wheel_now, mat_v, to_track);
-	if (frame > first_frame){  /* increment distance by distance moved */
+	if (frame > first_frame) {  /* increment distance by distance moved */
 	    VSUB2(vdelta, wheel_now, wheel_prev);
 	    MAT3X3VEC(temp, mat_v, to_front);/*new front of vehicle*/
 	    distance += VDOT(temp, vdelta);/*portion of vdelta in line with track*/
 	}
 
-	if (go){
+	if (go) {
 	    if (print_mode==TRACK_ANIM) {
 		printf("start %d;\nclean;\n", frame);
 	    } else if (print_mode==TRACK_ARCED) {
@@ -259,15 +259,15 @@ main(int argc, char **argv)
 		last_frame = 1;
 	    }
 	    if (print_link) {
-		for (count=0;count<num_links;count++){
+		for (count=0;count<num_links;count++) {
 		    (void) get_link(position, &y_rot, distance+tracklen*count/num_links+init_dist);
 		    anim_y_p_r2mat(wmat, 0.0, y_rot+r[count].ang, 0.0);
 		    anim_add_trans(wmat, position, r[count].pos);
-		    if ((axes || cent) && links_placed){ /* link moved from vehicle coords */
+		    if ((axes || cent) && links_placed) { /* link moved from vehicle coords */
 			bn_mat_mul(mat_x, wmat, m_rev_axes);
 			bn_mat_mul(wmat, m_axes, mat_x);
 		    }
-		    else if (axes || cent){ /* link moved to vehicle coords */
+		    else if (axes || cent) { /* link moved to vehicle coords */
 			MAT_MOVE(mat_x, wmat);
 			bn_mat_mul(wmat, m_axes, mat_x);
 		    }
@@ -280,12 +280,12 @@ main(int argc, char **argv)
 		    }
 		}
 	    }
-	    if (print_wheel){
-		for (count = 0;count<num_wheels;count++){
+	    if (print_wheel) {
+		for (count = 0;count<num_wheels;count++) {
 		    anim_y_p_r2mat(wmat, 0.0, -distance/x[count].w.rad, 0.0);
 		    VREVERSE(temp, x[count].w.pos);
 		    anim_add_trans(wmat, x[count].w.pos, temp);
-		    if (axes || cent){
+		    if (axes || cent) {
 			bn_mat_mul(mat_x, wmat, m_rev_axes);
 			bn_mat_mul(wmat, m_axes, mat_x);
 		    }
@@ -321,7 +321,7 @@ int track_prep(void)/*run once at the beginning to establish important track inf
     vect_t difference, link_cent;
 
     /* first loop - get inter axle slopes and start/end angles */
-    for (i=0;i<NW;i++){
+    for (i=0;i<NW;i++) {
 	/*calculate current slope vector*/
 	VSUB2(x[i].s.dir, x[i].w.pos, x[PREV(i)].w.pos);
 	x[i].s.len = MAGNITUDE(x[i].s.dir);
@@ -335,7 +335,7 @@ int track_prep(void)/*run once at the beginning to establish important track inf
     }
 
     /* second loop - handle concavities */
-    for (i=0;i<NW;i++){
+    for (i=0;i<NW;i++) {
 	arc_angle = x[i].w.ang0 - x[i].w.ang1;
 	while (arc_angle < 0.0)
 	    arc_angle += 2.0*M_PI;
@@ -351,7 +351,7 @@ int track_prep(void)/*run once at the beginning to establish important track inf
 
     /* third loop - calculate geometry of track segments */
     tracklen = 0.0;
-    for (i=0;i<NW;i++){
+    for (i=0;i<NW;i++) {
 	/*calculate endpoints of track segment*/
 	x[i].t.pos1[0] = x[i].w.pos[0] + x[i].w.rad*cos(x[i].w.ang0);
 	x[i].t.pos1[1] = x[i].w.pos[1];
@@ -372,7 +372,7 @@ int track_prep(void)/*run once at the beginning to establish important track inf
     /* for a track with links already placed, get initial positions*/
     r = (struct rlink *) bu_calloc(num_links, sizeof(struct rlink), "struct rlink");
     if (links_placed)
-	for (i=0;i<num_links;i++){
+	for (i=0;i<num_links;i++) {
 	    get_link(link_cent, &link_angle, init_dist + tracklen*i/num_links);
 	    VREVERSE(r[i].pos, link_cent);
 	    r[i].ang = -link_angle;
@@ -389,14 +389,14 @@ int get_link(fastf_t *pos, fastf_t *angle_p, fastf_t dist)
 	dist -= tracklen;
     while (dist < 0.0)
 	dist += tracklen;
-    for (i=0;i<NW;i++){
-	if ( (dist  -= x[i].t.len) < 0 ){
+    for (i=0;i<NW;i++) {
+	if ( (dist  -= x[i].t.len) < 0 ) {
 	    VSCALE(temp, (x[i].t.dir), dist);
 	    VADD2(pos, x[i].t.pos1, temp);
 	    *angle_p = atan2(x[i].t.dir[2], x[i].t.dir[0]);
 	    return(2*i);
 	}
-	if ((dist -= x[i].w.rad*x[i].w.arc) < 0){
+	if ((dist -= x[i].w.rad*x[i].w.arc) < 0) {
 	    *angle_p = dist/x[i].w.rad;
 	    *angle_p = x[i].w.ang1 - *angle_p; /*from x-axis to link*/
 	    pos[0] = x[i].w.pos[0] + x[i].w.rad*cos(*angle_p);
@@ -422,7 +422,7 @@ int get_args(int argc, char **argv)
     bu_strlcpy(wheel_cmd, "lmul", sizeof(wheel_cmd));
     while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
 	i=0;
-	switch (c){
+	switch (c) {
 	case 'b':
 	    bu_optind -= 1;
 	    sscanf(argv[bu_optind+(i++)], "%lf", &yaw );
@@ -501,16 +501,16 @@ void show_info(int which)/* for debugging - -1:track 0:both 1:link*/
 
 {
     int i;
-    if (which <=0){
+    if (which <=0) {
 	fprintf(stderr, "track length: %f\n", tracklen);
 	fprintf(stderr, "link length: %f\n", tracklen/num_links);
-	for (i=0;i<NW;i++){
+	for (i=0;i<NW;i++) {
 	    fprintf(stderr, "wheel %d: %f %f %f %f %f %f\n", i, x[i].w.pos[0], x[i].w.pos[1], x[i].w.pos[2], x[i].w.rad, x[i].w.ang1, x[i].w.arc);
 	    fprintf(stderr, "track %d: %f %f %f %f %f %f %f\n", i, x[i].t.pos1[0], x[i].t.pos1[1], x[i].t.pos1[2], x[i].t.dir[0], x[i].t.dir[1], x[i].t.dir[2], x[i].t.len);
 	    fprintf(stderr, "slope %d: %f %f %f %f\n", i, x[i].s.dir[0], x[i].s.dir[1], x[i].s.dir[2], x[i].s.len);
 	}
     }
-    /*	if (which >= 0){
+    /*	if (which >= 0) {
 	fprintf(stderr, "%d %f %f %f %f\n", count, position[0], position[1], position[2], y_rot);
 	}*/
 }

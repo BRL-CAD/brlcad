@@ -127,14 +127,14 @@ fastf_t rt_metaball_get_bounding_sphere(point_t *center, fastf_t threshold, stru
 	VSCALE(*center, *center, 0.5);
 
 	/* start looking for the radius... */
-	for (BU_LIST_FOR(mbpt, wdb_metaballpt, points)){
+	for (BU_LIST_FOR(mbpt, wdb_metaballpt, points)) {
 		VSUB2(d, mbpt->coord, *center);
 		/* since the surface is where threshold=fldstr/mag,
 		   mag=fldstr/threshold, so make that the initial value */
 		dist = MAGNITUDE(d) + mbpt->fldstr/threshold;
 		/* and add all the contribution */
 		for (BU_LIST_FOR(mbpt2, wdb_metaballpt, points))
-			if (mbpt2 != mbpt){
+			if (mbpt2 != mbpt) {
 				fastf_t additive;
 				VSUB2(d, mbpt2->coord, mbpt->coord);
 				mag = MAGNITUDE(d) + dist;
@@ -206,7 +206,7 @@ rt_metaball_print(register const struct soltab *stp)
 	struct rt_metaball_internal *mb;
 	struct wdb_metaballpt *mbpt;
 
-	if (stp==NULL){ bu_log("soltab is null\n"); return; }
+	if (stp==NULL) { bu_log("soltab is null\n"); return; }
 	mb = (struct rt_metaball_internal *)stp->st_specific;
 	RT_METABALL_CK_MAGIC(mb);
 	for ( BU_LIST_FOR( mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)) ++metaball_count;
@@ -350,7 +350,7 @@ rt_metaball_norm(register struct hit *hitp, struct soltab *stp, register struct 
 	case METABALL_METABALL: bu_log("strict metaballs not implemented yet\n");
 		break;
 	case METABALL_ISOPOTENTIAL:
-		for (BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)){
+		for (BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)) {
 			VSUB2(v, hitp->hit_point, mbpt->coord);
 			a = MAGSQ(v);
 			VJOIN1(hitp->hit_normal, hitp->hit_normal, mbpt->fldstr / (a*a), v);	/* f/r^4 */
@@ -555,7 +555,7 @@ rt_metaball_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
 	/* pack the point data */
 	buf = (fastf_t *)bu_malloc((metaball_count*4+1)*SIZEOF_NETWORK_DOUBLE, "rt_metaball_export5: buf");
 	buf[0] = mb->threshold;
-	for (BU_LIST_FOR( mbpt, wdb_metaballpt, &mb->metaball_ctrl_head), i+=4){
+	for (BU_LIST_FOR( mbpt, wdb_metaballpt, &mb->metaball_ctrl_head), i+=4) {
 		VSCALE(&buf[i], mbpt->coord, local2mm);
 		buf[i+3] = mbpt->fldstr * local2mm;
 	}
@@ -588,7 +588,7 @@ rt_metaball_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ve
 	bu_vls_strcat(str, buf);
 	if (!verbose)return 0;
 	metaball_count=0;
-	for ( BU_LIST_FOR( mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)){
+	for ( BU_LIST_FOR( mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)) {
 		snprintf(buf, BUFSIZ, "\t%d: %g field strength at (%g, %g, %g) and goo of %g\n",
 			++metaball_count, mbpt->fldstr, V3ARGS(mbpt->coord), mbpt->sweat);
 		bu_vls_strcat(str, buf);

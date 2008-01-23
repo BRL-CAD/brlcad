@@ -148,7 +148,7 @@
 #define DM_BLUE		DM_BLUE_R, DM_BLUE_G, DM_BLUE_B
 #define DM_YELLOW	DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B
 #define DM_WHITE	DM_WHITE_R, DM_WHITE_G, DM_WHITE_B
-#define DM_COPY_COLOR(_dr, _dg, _db, _sr, _sg, _sb){\
+#define DM_COPY_COLOR(_dr, _dg, _db, _sr, _sg, _sb) {\
 	(_dr) = (_sr);\
 	(_dg) = (_sg);\
 	(_db) = (_sb); }

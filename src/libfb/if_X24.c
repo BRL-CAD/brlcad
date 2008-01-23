@@ -887,9 +887,9 @@ unsigned char	*pp;
 	 ifp, pp, pp[RED], pp[GRN], pp[BLU]);
 #endif
 
-  if (pp == (unsigned char *)NULL){
+  if (pp == (unsigned char *)NULL) {
     red = grn = blu = 0;
-  }else{
+  } else {
     red = pp[RED];
     grn = pp[GRN];
     blu = pp[BLU];
@@ -898,12 +898,12 @@ unsigned char	*pp;
   /* Clear the backing store */
   npix = xi->xi_iwidth * xi->xi_xheight;
 
-  if (red == grn && red == blu){
+  if (red == grn && red == blu) {
     memset(xi->xi_mem, red, npix*3);
-  }else{
+  } else {
     cp = xi->xi_mem;
     n = npix;
-    while (n--){
+    while (n--) {
       *cp++ = red;
       *cp++ = grn;
       *cp++ = blu;
@@ -2067,7 +2067,7 @@ XEvent *event;
 {
   struct xinfo *xi = XI(ifp);
 
-  switch ((int)event->type){
+  switch ((int)event->type) {
   case Expose:
     {
       XExposeEvent *expose = (XExposeEvent *)event;
@@ -2120,7 +2120,7 @@ XEvent *event;
 	  button = Button3;
       }
 
-      switch (button){
+      switch (button) {
       case Button1:
 	break;
       case Button2:
@@ -2134,7 +2134,7 @@ XEvent *event;
 
 	  x -= xi->xi_xlf;
 	  sy -= xi->xi_xheight - xi->xi_xbt - 1;
-	  if (x < 0 || sy < 0){
+	  if (x < 0 || sy < 0) {
 	    fb_log("No RGB (outside image) 1\n");
 	    break;
 	  }
@@ -2149,7 +2149,7 @@ XEvent *event;
 	  else
 	    isy = xi->xi_ibt + (sy - xi->xi_ibt_h + ifp->if_yzoom - 1) / ifp->if_yzoom;
 
-	  if (ix >= xi->xi_iwidth || isy >= xi->xi_iheight){
+	  if (ix >= xi->xi_iwidth || isy >= xi->xi_iheight) {
 	    fb_log("No RGB (outside image) 2\n");
 	    break;
 	  }
@@ -2234,7 +2234,7 @@ int width, height;
 
   X24_updstate(ifp);
 
-  switch (xi->xi_flags & FLG_VMASK){
+  switch (xi->xi_flags & FLG_VMASK) {
   case FLG_VD24:
   case FLG_VT24:
     /* Destroy old image struct and image buffer */
@@ -3834,12 +3834,12 @@ X24_refresh(ifp, x, y, w, h)
 FBIO *ifp;
 int x, y, w, h;
 {
-  if (w < 0){
+  if (w < 0) {
     w = -w;
     x -= w;
   }
 
-  if (h < 0){
+  if (h < 0) {
     h = -h;
     y -= h;
   }

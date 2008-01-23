@@ -1134,7 +1134,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
  *	QUAT_FROM_ROT_DEG( quat, 180.0, 1.0, 0.0, 0.0, 0.0 );
  *
  */
-#define QUAT_FROM_ROT(q, r, x, y, z){ \
+#define QUAT_FROM_ROT(q, r, x, y, z) { \
 	register fastf_t _rot = (r) * 0.5; \
 	QSET(q, x, y, z, cos(_rot)); \
 	VUNITIZE(q); \

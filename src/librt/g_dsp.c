@@ -1835,7 +1835,7 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 
     (void)permute_cell(A, B, C, D, isect->dsp, &dsp_bb->dspb_rpp);
 
-    if ((cond=isect_ray_triangle(isect, B, D, A, &hits[1], ab_first)) > 0.0){
+    if ((cond=isect_ray_triangle(isect, B, D, A, &hits[1], ab_first)) > 0.0) {
 	/* hit triangle */
 
 	/* record cell */
@@ -2917,7 +2917,7 @@ rt_dsp_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 	bu_log("interpolated %g %g %g  dot:%g\n", V3ARGS(N), dot);
 
     if ( (hitp->hit_vpriv[Z] == 0.0 && dot > 0.0)/* in-hit needs fix */ ||
-	 (hitp->hit_vpriv[Z] == 1.0 && dot < 0.0)/* out-hit needs fix */){
+	 (hitp->hit_vpriv[Z] == 1.0 && dot < 0.0)/* out-hit needs fix */) {
 	/* bring the normal back to being perpindicular
 	 * to the ray to avoid "flipped normal" warnings
 	 */

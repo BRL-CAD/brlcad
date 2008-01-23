@@ -118,7 +118,7 @@ f_qray(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
   struct bu_vls vls;
 
-  if (6 < argc){
+  if (6 < argc) {
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "help qray");
     Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -128,19 +128,19 @@ f_qray(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
   }
 
   /* print help message */
-  if (argc == 1){
+  if (argc == 1) {
     Tcl_AppendResult(interp, "Usage:\n", qray_syntax, (char *)NULL);
     return TCL_OK;
   }
 
-  if (strcmp(argv[1], "fmt") == 0){
+  if (strcmp(argv[1], "fmt") == 0) {
     int i;
 
-    if (argc == 2){			/* get all format strings */
+    if (argc == 2) {			/* get all format strings */
       qray_print_fmts();
       return TCL_OK;
-    }else if (argc == 3){		/* get particular format string */
-      if ((i = qray_get_fmt_index(*argv[2])) < 0){
+    } else if (argc == 3) {		/* get particular format string */
+      if ((i = qray_get_fmt_index(*argv[2])) < 0) {
 	Tcl_AppendResult(interp,
 			  "qray: unrecognized format type: '",
 			 argv[2], "'\nUsage:\n", qray_syntax, (char *)NULL);
@@ -149,8 +149,8 @@ f_qray(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
       Tcl_AppendResult(interp, bu_vls_addr(&qray_fmts[i].fmt), (char *)NULL);
       return TCL_OK;
-    }else if (argc == 4){		/* set value */
-      if ((i = qray_get_fmt_index(*argv[2])) < 0){
+    } else if (argc == 4) {		/* set value */
+      if ((i = qray_get_fmt_index(*argv[2])) < 0) {
 	Tcl_AppendResult(interp,
 			  "qray: unrecognized format type: '",
 			 argv[2], "'\nUsage:\n", qray_syntax, (char *)NULL);
@@ -168,12 +168,12 @@ f_qray(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_ERROR;
   }
 
-  if (strcmp(argv[1], "basename") == 0){
-    if (argc == 2){		/* get value */
+  if (strcmp(argv[1], "basename") == 0) {
+    if (argc == 2) {		/* get value */
       Tcl_AppendResult(interp, bu_vls_addr(&qray_basename), (char *)NULL);
 
       return TCL_OK;
-    }else if (argc == 3){		/* set value */
+    } else if (argc == 3) {		/* set value */
       bu_vls_strcpy(&qray_basename, argv[2]);
       return TCL_OK;
     }
@@ -184,12 +184,12 @@ f_qray(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_ERROR;
   }
 
-  if (strcmp(argv[1], "script") == 0){
-    if (argc == 2){		/* get value */
+  if (strcmp(argv[1], "script") == 0) {
+    if (argc == 2) {		/* get value */
       Tcl_AppendResult(interp, bu_vls_addr(&qray_script), (char *)NULL);
 
       return TCL_OK;
-    }else if (argc == 3){		/* set value */
+    } else if (argc == 3) {		/* set value */
       bu_vls_strcpy(&qray_script, argv[2]);
       return TCL_OK;
     }
@@ -200,16 +200,16 @@ f_qray(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_ERROR;
   }
 
-  if (strcmp(argv[1], "effects") == 0){
-    if (argc == 2){		/* get value */
+  if (strcmp(argv[1], "effects") == 0) {
+    if (argc == 2) {		/* get value */
       bu_vls_init(&vls);
       bu_vls_printf(&vls, "%c", qray_effects);
       Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
       bu_vls_free(&vls);
 
       return TCL_OK;
-    }else if (argc == 3){		/* set value */
-      if (*argv[2] != 't' && *argv[2] != 'g' && *argv[2] != 'b'){
+    } else if (argc == 3) {		/* set value */
+      if (*argv[2] != 't' && *argv[2] != 'g' && *argv[2] != 'b') {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "qray effects: bad value - %s", argv[2]);
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
@@ -229,18 +229,18 @@ f_qray(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_ERROR;
   }
 
-  if (strcmp(argv[1], "echo") == 0){
-    if (argc == 2){		/* get value */
+  if (strcmp(argv[1], "echo") == 0) {
+    if (argc == 2) {		/* get value */
       if (qray_cmd_echo)
 	Tcl_AppendResult(interp, "1", (char *)NULL);
       else
 	Tcl_AppendResult(interp, "0", (char *)NULL);
 
       return TCL_OK;
-    }else if (argc == 3){		/* set value */
+    } else if (argc == 3) {		/* set value */
       int ival;
 
-      if (sscanf(argv[2], "%d", &ival) < 1){
+      if (sscanf(argv[2], "%d", &ival) < 1) {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "qray echo: bad value - %s", argv[2]);
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
@@ -263,8 +263,8 @@ f_qray(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_ERROR;
   }
 
-  if (strcmp(argv[1], "oddcolor") == 0){
-    if (argc == 2){		/* get value */
+  if (strcmp(argv[1], "oddcolor") == 0) {
+    if (argc == 2) {		/* get value */
       bu_vls_init(&vls);
       bu_vls_printf(&vls, "%d %d %d",
 		    qray_odd_color.r, qray_odd_color.g, qray_odd_color.b);
@@ -272,14 +272,14 @@ f_qray(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
       bu_vls_free(&vls);
 
       return TCL_OK;
-    }else if (argc == 5){		/* set value */
+    } else if (argc == 5) {		/* set value */
       int r, g, b;
 
       if (sscanf(argv[2], "%d", &r) != 1 ||
 	 sscanf(argv[3], "%d", &g) != 1 ||
 	 sscanf(argv[4], "%d", &b) != 1 ||
 	 r < 0 || g < 0 || b < 0 ||
-	 255 < r || 255 < g || 255 < b){
+	 255 < r || 255 < g || 255 < b) {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "qray oddcolor %s %s %s - bad value",
 		      argv[2], argv[3], argv[4]);
@@ -300,8 +300,8 @@ f_qray(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_ERROR;
   }
 
-  if (strcmp(argv[1], "evencolor") == 0){
-    if (argc == 2){		/* get value */
+  if (strcmp(argv[1], "evencolor") == 0) {
+    if (argc == 2) {		/* get value */
       bu_vls_init(&vls);
       bu_vls_printf(&vls, "%d %d %d",
 		    qray_even_color.r, qray_even_color.g, qray_even_color.b);
@@ -309,14 +309,14 @@ f_qray(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
       bu_vls_free(&vls);
 
       return TCL_OK;
-    }else if (argc == 5){		/* set value */
+    } else if (argc == 5) {		/* set value */
       int r, g, b;
 
       if (sscanf(argv[2], "%d", &r) != 1 ||
 	 sscanf(argv[3], "%d", &g) != 1 ||
 	 sscanf(argv[4], "%d", &b) != 1 ||
 	 r < 0 || g < 0 || b < 0 ||
-	 255 < r || 255 < g || 255 < b){
+	 255 < r || 255 < g || 255 < b) {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "qray evencolor %s %s %s - bad value",
 		      argv[2], argv[3], argv[4]);
@@ -337,8 +337,8 @@ f_qray(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_ERROR;
   }
 
-  if (strcmp(argv[1], "voidcolor") == 0){
-    if (argc == 2){		/* get value */
+  if (strcmp(argv[1], "voidcolor") == 0) {
+    if (argc == 2) {		/* get value */
       bu_vls_init(&vls);
       bu_vls_printf(&vls, "%d %d %d",
 		    qray_void_color.r, qray_void_color.g, qray_void_color.b);
@@ -346,14 +346,14 @@ f_qray(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
       bu_vls_free(&vls);
 
       return TCL_OK;
-    }else if (argc == 5){		/* set value */
+    } else if (argc == 5) {		/* set value */
       int r, g, b;
 
       if (sscanf(argv[2], "%d", &r) != 1 ||
 	 sscanf(argv[3], "%d", &g) != 1 ||
 	 sscanf(argv[4], "%d", &b) != 1 ||
 	 r < 0 || g < 0 || b < 0 ||
-	 255 < r || 255 < g || 255 < b){
+	 255 < r || 255 < g || 255 < b) {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "qray voidcolor %s %s %s - bad value",
 		      argv[2], argv[3], argv[4]);
@@ -374,8 +374,8 @@ f_qray(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_ERROR;
   }
 
-  if (strcmp(argv[1], "overlapcolor") == 0){
-    if (argc == 2){		/* get value */
+  if (strcmp(argv[1], "overlapcolor") == 0) {
+    if (argc == 2) {		/* get value */
       bu_vls_init(&vls);
       bu_vls_printf(&vls, "%d %d %d",
 		    qray_overlap_color.r, qray_overlap_color.g, qray_overlap_color.b);
@@ -383,14 +383,14 @@ f_qray(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
       bu_vls_free(&vls);
 
       return TCL_OK;
-    }else if (argc == 5){		/* set value */
+    } else if (argc == 5) {		/* set value */
       int r, g, b;
 
       if (sscanf(argv[2], "%d", &r) != 1 ||
 	 sscanf(argv[3], "%d", &g) != 1 ||
 	 sscanf(argv[4], "%d", &b) != 1 ||
 	 r < 0 || g < 0 || b < 0 ||
-	 255 < r || 255 < g || 255 < b){
+	 255 < r || 255 < g || 255 < b) {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "qray overlapcolor %s %s %s - bad value",
 		      argv[2], argv[3], argv[4]);
@@ -411,12 +411,12 @@ f_qray(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_ERROR;
   }
 
-  if (strcmp(argv[1], "vars") == 0){
+  if (strcmp(argv[1], "vars") == 0) {
     qray_print_vars();
     return TCL_OK;
   }
 
-  if (strcmp(argv[1], "help") == 0){
+  if (strcmp(argv[1], "help") == 0) {
     Tcl_AppendResult(interp, "Usage:\n", qray_syntax, (char *)NULL);
     return TCL_OK;
   }
@@ -489,7 +489,7 @@ init_qray(void)
 
   qray_fmts = (struct qray_fmt *)bu_malloc(sizeof(struct qray_fmt) * n + 1, "qray_fmts");
 
-  for (i = 0; i < n; ++i){
+  for (i = 0; i < n; ++i) {
     qray_fmts[i].type = def_qray_fmt_data[i].type;
     bu_vls_init(&qray_fmts[i].fmt);
     bu_vls_strcpy(&qray_fmts[i].fmt, def_qray_fmt_data[i].fmt);
@@ -507,7 +507,7 @@ qray_data_to_vlist(struct bn_vlblock *vbp, struct qray_dataList *headp, fastf_t 
   vect_t in_pt, out_pt;
   vect_t last_out_pt;
 
-  for (BU_LIST_FOR(ndlp, qray_dataList, &headp->l)){
+  for (BU_LIST_FOR(ndlp, qray_dataList, &headp->l)) {
     if (do_overlaps)
       vhead = rt_vlblock_find(vbp,
 			      qray_overlap_color.r,
@@ -531,7 +531,7 @@ qray_data_to_vlist(struct bn_vlblock *vbp, struct qray_dataList *headp, fastf_t 
     RT_ADD_VLIST( vhead, in_pt, BN_VLIST_LINE_MOVE );
     RT_ADD_VLIST( vhead, out_pt, BN_VLIST_LINE_DRAW );
 
-    if (!do_overlaps && i > 1 && !VAPPROXEQUAL(last_out_pt, in_pt, SQRT_SMALL_FASTF)){
+    if (!do_overlaps && i > 1 && !VAPPROXEQUAL(last_out_pt, in_pt, SQRT_SMALL_FASTF)) {
       vhead = rt_vlblock_find(vbp,
 			      qray_void_color.r,
 			      qray_void_color.g,

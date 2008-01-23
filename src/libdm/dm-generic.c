@@ -120,7 +120,7 @@ dm_share_dlist(struct dm *dmp1, struct dm *dmp2)
        bu_vls_strcmp(&dmp1->dm_dName, &dmp2->dm_dName))
       return TCL_ERROR;
 
-  switch (dmp1->dm_type){
+  switch (dmp1->dm_type) {
 #ifdef DM_OGL
   case DM_TYPE_OGL:
     return ogl_share_dlist(dmp1, dmp2);
@@ -167,7 +167,7 @@ dm_Normal2Xy(struct dm *dmp, register fastf_t f, int use_aspect)
 void
 dm_fogHint(struct dm *dmp, int fastfog)
 {
-  switch (dmp->dm_type){
+  switch (dmp->dm_type) {
 #ifdef DM_OGL
   case DM_TYPE_OGL:
     ogl_fogHint(dmp, fastfog);

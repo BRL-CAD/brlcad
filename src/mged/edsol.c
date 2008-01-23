@@ -801,7 +801,7 @@ ebm_ed(int arg)
 {
   es_menu = arg;
 
-  switch ( arg ){
+  switch ( arg ) {
   case MENU_EBM_FNAME:
     es_edflag = ECMD_EBM_FNAME;
     break;
@@ -855,7 +855,7 @@ vol_ed(int arg)
 {
   es_menu = arg;
 
-  switch ( arg ){
+  switch ( arg ) {
   case MENU_VOL_FNAME:
     es_edflag = ECMD_VOL_FNAME;
     break;
@@ -2725,7 +2725,7 @@ get_rotation_vertex(void)
   bu_vls_init(&cmd);
 
   bu_vls_printf(&str, "Enter fixed vertex number( ");
-  for (i=0; i<4; i++){
+  for (i=0; i<4; i++) {
     if ( arb_vertices[type][loc+i] )
       bu_vls_printf(&str, "%d ", arb_vertices[type][loc+i]);
   }
@@ -2735,8 +2735,8 @@ get_rotation_vertex(void)
  {%s} vertex_num %d 0 {{ summary \"Enter a vertex number to rotate about.\"}} OK",
 		&dName, bu_vls_addr(&str), arb_vertices[type][loc]);
 
-  while (!valid){
-    if (Tcl_Eval(interp, bu_vls_addr(&cmd)) != TCL_OK){
+  while (!valid) {
+    if (Tcl_Eval(interp, bu_vls_addr(&cmd)) != TCL_OK) {
       Tcl_AppendResult(interp, "get_rotation_vertex: Error reading vertex\n", (char *)NULL);
       /* Using default */
       return arb_vertices[type][loc];
@@ -3594,11 +3594,11 @@ sedit(void)
 			RT_EXTRUDE_CK_MAGIC( extr );
 			if ( inpara ) {
 #ifdef TRY_EDIT_NEW_WAY
-			  if (mged_variables->mv_context){
+			  if (mged_variables->mv_context) {
 			    /* apply es_invmat to convert to real model coordinates */
 			    MAT4X3PNT( work, es_invmat, es_para );
 			    VSUB2(extr->h, work, extr->V);
-			  }else{
+			  } else {
 			    VSUB2(extr->h, es_para, extr->V);
 			  }
 #else
@@ -3649,7 +3649,7 @@ sedit(void)
 		/* put up specific arb edit menus */
 		menu_state->ms_flag = 0;
 		es_edflag = IDLE;
-		switch ( es_menu ){
+		switch ( es_menu ) {
 			case MENU_ARB_MV_EDGE:
 				mmenu_set( MENU_L1, which_menu[es_type-4] );
 				break;
@@ -3673,10 +3673,10 @@ sedit(void)
 			RT_ARB_CK_MAGIC( arb );
 
 #ifdef TRY_EDIT_NEW_WAY
-			if (mged_variables->mv_context){
+			if (mged_variables->mv_context) {
 			  /* apply es_invmat to convert to real model space */
 			  MAT4X3PNT(work,es_invmat,es_para);
-			}else{
+			} else {
 			  VMOVE(work, es_para);
 			}
 #else
@@ -3702,11 +3702,11 @@ sedit(void)
 		}
 
 		/* special case for arb7 */
-		if ( es_type == ARB7  && pnt5 ){
+		if ( es_type == ARB7  && pnt5 ) {
 		  Tcl_AppendResult(interp, "\nFixed vertex is point 5.\n", (char *)NULL);
 		  fixv = 5;
 		}
-		else{
+		else {
 #if 1
 		  fixv = get_rotation_vertex();
 #else
@@ -3719,7 +3719,7 @@ sedit(void)
 				type = es_type - 4;
 				bu_log("\nEnter fixed vertex number( ");
 				loc = es_menu*4;
-				for (i=0; i<4; i++){
+				for (i=0; i<4; i++) {
 					if ( arb_vertices[type][loc+i] )
 						bu_log("%d ",
 						    arb_vertices[type][loc+i]);
@@ -3775,7 +3775,7 @@ sedit(void)
 			VMOVE( work, eqp );
 			MAT4X3VEC( eqp, invsolr, work );
 
-			if ( inpara == 3 ){
+			if ( inpara == 3 ) {
 				/* 3 params:  absolute X,Y,Z rotations */
 				/* Build completely new rotation change */
 				MAT_IDN( modelchanges );
@@ -3788,7 +3788,7 @@ sedit(void)
 #ifdef TRY_EDIT_NEW_WAY
 				/* Borrow incr_change matrix here */
 				bn_mat_mul( incr_change, modelchanges, invsolr );
-				if (mged_variables->mv_context){
+				if (mged_variables->mv_context) {
 				  /* calculate rotations about keypoint */
 				  bn_mat_xform_about_pt( edit, incr_change, es_keypoint );
 
@@ -3802,7 +3802,7 @@ sedit(void)
 				  MAT_IDN( incr_change );
 				  /* work contains original es_peqn[es_menu][0] */
 				  MAT4X3VEC( eqp, mat, work );
-				}else{
+				} else {
 				  VMOVE( work, eqp );
 				  MAT4X3VEC( eqp, modelchanges, work );
 				}
@@ -3814,7 +3814,7 @@ sedit(void)
 				MAT4X3VEC( eqp, modelchanges, work );
 #endif
 			}
-			else if ( inpara == 2 ){
+			else if ( inpara == 2 ) {
 				/* 2 parameters:  rot,fb were given */
 				rota= es_para[0] * degtorad;
 				fb  = es_para[1] * degtorad;
@@ -3824,7 +3824,7 @@ sedit(void)
 				es_peqn[es_menu][1] = cos(fb) * sin(rota);
 				es_peqn[es_menu][2] = sin(fb);
 			}
-			else{
+			else {
 			  Tcl_AppendResult(interp, "Must be < rot fb | xdeg ydeg zdeg >\n",
 					   (char *)NULL);
 				mged_print_result( TCL_ERROR );
@@ -3911,7 +3911,7 @@ sedit(void)
 				 * to desired new location.
 				 */
 #ifdef TRY_EDIT_NEW_WAY
-			  if (mged_variables->mv_context){ /* move solid so that es_keypoint is at position es_para */
+			  if (mged_variables->mv_context) { /* move solid so that es_keypoint is at position es_para */
 			    vect_t raw_para;
 
 			    MAT4X3PNT(raw_para, es_invmat, es_para);
@@ -3919,7 +3919,7 @@ sedit(void)
 			    VSUB2( delta, work, raw_para );
 			    MAT_IDN( xlatemat );
 			    MAT_DELTAS_VEC_NEG( xlatemat, delta );
-			  }else{ /* move solid to position es_para */
+			  } else { /* move solid to position es_para */
 			    /* move solid to position es_para */
 			    MAT4X3PNT(work, es_invmat, es_keypoint);
 			    VSUB2( delta, work, es_para );
@@ -3963,10 +3963,10 @@ sedit(void)
 			NMG_CK_SNURB(surf);
 			fp = &RT_NURB_GET_CONTROL_POINT( surf, spl_ui, spl_vi );
 #ifdef TRY_EDIT_NEW_WAY
-			if (mged_variables->mv_context){
+			if (mged_variables->mv_context) {
 			  /* apply es_invmat to convert to real model space */
 			  MAT4X3PNT( fp, es_invmat, es_para );
-			}else{
+			} else {
 			  VMOVE( fp, es_para );
 			}
 #else
@@ -4087,11 +4087,11 @@ sedit(void)
 			RT_TGC_CK_MAGIC(tgc);
 			if ( inpara ) {
 #ifdef TRY_EDIT_NEW_WAY
-			  if (mged_variables->mv_context){
+			  if (mged_variables->mv_context) {
 			    /* apply es_invmat to convert to real model coordinates */
 			    MAT4X3PNT( work, es_invmat, es_para );
 			    VSUB2(tgc->h, work, tgc->v);
-			  }else{
+			  } else {
 			    VSUB2(tgc->h, es_para, tgc->v);
 			  }
 #else
@@ -4141,11 +4141,11 @@ sedit(void)
 			RT_TGC_CK_MAGIC(tgc);
 			if ( inpara ) {
 #ifdef TRY_EDIT_NEW_WAY
-			  if (mged_variables->mv_context){
+			  if (mged_variables->mv_context) {
 			    /* apply es_invmat to convert to real model coordinates */
 			    MAT4X3PNT( work, es_invmat, es_para );
 			    VSUB2(tgc->h, work, tgc->v);
-			  }else{
+			  } else {
 			    VSUB2(tgc->h, es_para, tgc->v);
 			  }
 #else
@@ -4178,10 +4178,10 @@ sedit(void)
 	case EARB:   /* edit an ARB edge */
 		if ( inpara ) {
 #ifdef TRY_EDIT_NEW_WAY
-		  if (mged_variables->mv_context){
+		  if (mged_variables->mv_context) {
 		    /* apply es_invmat to convert to real model space */
 		    MAT4X3PNT( work, es_invmat, es_para );
-		  }else{
+		  } else {
 		    VMOVE( work, es_para );
 		  }
 #else
@@ -4229,7 +4229,7 @@ sedit(void)
 			/* Apply changes to solid */
 			/* xlate keypoint to origin, rotate, then put back. */
 #ifdef TRY_EDIT_NEW_WAY
-			switch (mged_variables->mv_rotate_about){
+			switch (mged_variables->mv_rotate_about) {
 			case 'v':       /* View Center */
 			  VSET(work, 0.0, 0.0, 0.0);
 			  MAT4X3PNT(rot_point, view_state->vs_vop->vo_view2model, work);
@@ -4247,7 +4247,7 @@ sedit(void)
 			  break;
 			}
 
-			if (mged_variables->mv_context){
+			if (mged_variables->mv_context) {
 			  /* calculate rotations about keypoint */
 			  bn_mat_xform_about_pt( edit, incr_change, rot_point );
 
@@ -4258,7 +4258,7 @@ sedit(void)
 			   */
 			  bn_mat_mul( mat1, edit, es_mat );
 			  bn_mat_mul( mat, es_invmat, mat1 );
-			}else{
+			} else {
 			  MAT4X3PNT(work, es_invmat, rot_point);
 			  bn_mat_xform_about_pt( mat, incr_change, work );
 			}
@@ -4305,7 +4305,7 @@ sedit(void)
 				/* Apply incremental changes already in incr_change */
 			}
 
-			if (mged_variables->mv_context){
+			if (mged_variables->mv_context) {
 			  /* calculate rotations about keypoint */
 			  bn_mat_xform_about_pt( edit, incr_change, es_keypoint );
 
@@ -4317,7 +4317,7 @@ sedit(void)
 			  bn_mat_mul( mat1, edit, es_mat );
 			  bn_mat_mul( mat, es_invmat, mat1 );
 			  MAT4X3VEC(extr->h, mat, extr->h);
-			}else{
+			} else {
 			  MAT4X3VEC(extr->h, incr_change, extr->h);
 			}
 #else
@@ -4362,7 +4362,7 @@ sedit(void)
 				/* Apply incremental changes already in incr_change */
 			}
 
-			if (mged_variables->mv_context){
+			if (mged_variables->mv_context) {
 			  /* calculate rotations about keypoint */
 			  bn_mat_xform_about_pt( edit, incr_change, es_keypoint );
 
@@ -4374,7 +4374,7 @@ sedit(void)
 			  bn_mat_mul( mat1, edit, es_mat );
 			  bn_mat_mul( mat, es_invmat, mat1 );
 			  MAT4X3VEC(tgc->h, mat, tgc->h);
-			}else{
+			} else {
 			  MAT4X3VEC(tgc->h, incr_change, tgc->h);
 			}
 #else
@@ -4419,7 +4419,7 @@ sedit(void)
 				/* Apply incremental changes already in incr_change */
 			}
 
-			if (mged_variables->mv_context){
+			if (mged_variables->mv_context) {
 			  /* calculate rotations about keypoint */
 			  bn_mat_xform_about_pt( edit, incr_change, es_keypoint );
 
@@ -4434,7 +4434,7 @@ sedit(void)
 			  MAT4X3VEC(tgc->b, mat, tgc->b);
 			  MAT4X3VEC(tgc->c, mat, tgc->c);
 			  MAT4X3VEC(tgc->d, mat, tgc->d);
-			}else{
+			} else {
 			  MAT4X3VEC(tgc->a, incr_change, tgc->a);
 			  MAT4X3VEC(tgc->b, incr_change, tgc->b);
 			  MAT4X3VEC(tgc->c, incr_change, tgc->c);
@@ -4488,7 +4488,7 @@ sedit(void)
 				/* Apply incremental changes already in incr_change */
 			}
 
-			if (mged_variables->mv_context){
+			if (mged_variables->mv_context) {
 			  /* calculate rotations about keypoint */
 			  bn_mat_xform_about_pt( edit, incr_change, es_keypoint );
 
@@ -4501,7 +4501,7 @@ sedit(void)
 			  bn_mat_mul( mat, es_invmat, mat1 );
 
 			  MAT4X3VEC(eto->eto_C, mat, eto->eto_C);
-			}else{
+			} else {
 			  MAT4X3VEC(eto->eto_C, incr_change, eto->eto_C);
 			}
 #else
@@ -4529,18 +4529,18 @@ sedit(void)
 
 			if ( es_mvalid )
 				VMOVE( new_pt, es_mparam )
-			else if ( inpara == 3 ){
+			else if ( inpara == 3 ) {
 #ifdef TRY_EDIT_NEW_WAY
-			  if (mged_variables->mv_context){
+			  if (mged_variables->mv_context) {
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
-			  }else{
+			  } else {
 			    VMOVE( new_pt, es_para );
 			  }
 #else
 				VMOVE( new_pt, es_para );
 #endif
-			}else if ( inpara && inpara != 3 )
+			} else if ( inpara && inpara != 3 )
 			{
 			  Tcl_AppendResult(interp, "x y z coordinates required for edge move\n",
 					   (char *)NULL);
@@ -4695,18 +4695,18 @@ sedit(void)
 			NMG_CK_MODEL( m );
 			if ( es_mvalid )
 				VMOVE( new_pt, es_mparam )
-			else if ( inpara == 3 ){
+			else if ( inpara == 3 ) {
 #ifdef TRY_EDIT_NEW_WAY
-			  if (mged_variables->mv_context){
+			  if (mged_variables->mv_context) {
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
-			  }else{
+			  } else {
 			    VMOVE( new_pt, es_para );
 			  }
 #else
 			  VMOVE( new_pt, es_para );
 #endif
-			}else if ( inpara && inpara != 3 )
+			} else if ( inpara && inpara != 3 )
 			{
 			  Tcl_AppendResult(interp, "x y z coordinates required for edge split\n",
 					   (char *)NULL);
@@ -4777,12 +4777,12 @@ sedit(void)
 
 			if ( es_mvalid )
 				VMOVE( to_pt, es_mparam )
-			else if ( inpara == 3 ){
+			else if ( inpara == 3 ) {
 #ifdef TRY_EDIT_NEW_WAY
-			  if (mged_variables->mv_context){
+			  if (mged_variables->mv_context) {
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( to_pt, es_invmat, es_para);
-			  }else{
+			  } else {
 			    VMOVE( to_pt, es_para );
 			  }
 #else
@@ -4867,12 +4867,12 @@ sedit(void)
 
 			if ( es_mvalid )
 			  VMOVE( new_pt, es_mparam )
-			else if ( inpara == 3 ){
+			else if ( inpara == 3 ) {
 #ifdef TRY_EDIT_NEW_WAY
-			  if (mged_variables->mv_context){
+			  if (mged_variables->mv_context) {
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
-			  }else{
+			  } else {
 			    VMOVE( new_pt, es_para );
 			  }
 #else
@@ -4908,12 +4908,12 @@ sedit(void)
 
 			if ( es_mvalid )
 			  VMOVE( new_pt, es_mparam )
-			else if ( inpara == 3 ){
+			else if ( inpara == 3 ) {
 #ifdef TRY_EDIT_NEW_WAY
-			  if (mged_variables->mv_context){
+			  if (mged_variables->mv_context) {
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
-			  }else{
+			  } else {
 			    VMOVE( new_pt, es_para );
 			  }
 #else
@@ -4949,12 +4949,12 @@ sedit(void)
 
 			if ( es_mvalid )
 				VMOVE( new_pt, es_mparam )
-			else if ( inpara == 3 ){
+			else if ( inpara == 3 ) {
 #ifdef TRY_EDIT_NEW_WAY
-			  if (mged_variables->mv_context){
+			  if (mged_variables->mv_context) {
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
-			  }else{
+			  } else {
 			    VMOVE( new_pt, es_para );
 			  }
 #else
@@ -4990,12 +4990,12 @@ sedit(void)
 
 			if ( es_mvalid )
 				VMOVE( new_pt, es_mparam )
-			else if ( inpara == 3 ){
+			else if ( inpara == 3 ) {
 #ifdef TRY_EDIT_NEW_WAY
-			  if (mged_variables->mv_context){
+			  if (mged_variables->mv_context) {
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
-			  }else{
+			  } else {
 			    VMOVE( new_pt, es_para );
 			  }
 #else
@@ -5024,12 +5024,12 @@ sedit(void)
 
 			if ( es_mvalid )
 				VMOVE( new_pt, es_mparam )
-			else if ( inpara == 3 ){
+			else if ( inpara == 3 ) {
 #ifdef TRY_EDIT_NEW_WAY
-			  if (mged_variables->mv_context){
+			  if (mged_variables->mv_context) {
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
-			  }else{
+			  } else {
 			    VMOVE( new_pt, es_para );
 			  }
 #else
@@ -5085,12 +5085,12 @@ sedit(void)
 
 			if ( es_mvalid )
 				VMOVE( pick_pt, es_mparam )
-			else if ( inpara == 3 ){
+			else if ( inpara == 3 ) {
 #ifdef TRY_EDIT_NEW_WAY
-			  if (mged_variables->mv_context){
+			  if (mged_variables->mv_context) {
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( pick_pt, es_invmat, es_para);
-			  }else{
+			  } else {
 			    VMOVE( pick_pt, es_para );
 			  }
 #else
@@ -5457,12 +5457,12 @@ sedit(void)
 				dist = DIST_PT_PLANE( es_mparam, view_pl );
 				VJOIN1( new_pt, es_mparam, -dist, view_pl );
 			}
-			else if ( inpara == 3 ){
+			else if ( inpara == 3 ) {
 #ifdef TRY_EDIT_NEW_WAY
-			  if (mged_variables->mv_context){
+			  if (mged_variables->mv_context) {
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
-			  }else{
+			  } else {
 			    VMOVE( new_pt, es_para );
 			  }
 #else
@@ -5519,12 +5519,12 @@ sedit(void)
 				dist = DIST_PT_PLANE( es_mparam, view_pl );
 				VJOIN1( new_pt, es_mparam, -dist, view_pl );
 			}
-			else if ( inpara == 3 ){
+			else if ( inpara == 3 ) {
 #ifdef TRY_EDIT_NEW_WAY
-			  if (mged_variables->mv_context){
+			  if (mged_variables->mv_context) {
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
-			  }else{
+			  } else {
 			    VMOVE( new_pt, es_para );
 			  }
 #else
@@ -5580,12 +5580,12 @@ sedit(void)
 				dist = DIST_PT_PLANE( es_mparam, view_pl );
 				VJOIN1( new_pt, es_mparam, -dist, view_pl );
 			}
-			else if ( inpara == 3 ){
+			else if ( inpara == 3 ) {
 #ifdef TRY_EDIT_NEW_WAY
-			  if (mged_variables->mv_context){
+			  if (mged_variables->mv_context) {
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
-			  }else{
+			  } else {
 			    VMOVE( new_pt, es_para );
 			  }
 #else
@@ -5633,12 +5633,12 @@ sedit(void)
 			vert = bot_verts[0];
 			if ( es_mvalid )
 				VMOVE( new_pt, es_mparam )
-			else if ( inpara == 3 ){
+			else if ( inpara == 3 ) {
 #ifdef TRY_EDIT_NEW_WAY
-			  if (mged_variables->mv_context){
+			  if (mged_variables->mv_context) {
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
-			  }else{
+			  } else {
 			    VMOVE( new_pt, es_para );
 			  }
 #else
@@ -5682,12 +5682,12 @@ sedit(void)
 			v2 = bot_verts[1];
 			if ( es_mvalid )
 				VMOVE( new_pt, es_mparam )
-			else if ( inpara == 3 ){
+			else if ( inpara == 3 ) {
 #ifdef TRY_EDIT_NEW_WAY
-			  if (mged_variables->mv_context){
+			  if (mged_variables->mv_context) {
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
-			  }else{
+			  } else {
 			    VMOVE( new_pt, es_para );
 			  }
 #else
@@ -5732,12 +5732,12 @@ sedit(void)
 
 			if ( es_mvalid )
 				VMOVE( new_pt, es_mparam )
-			else if ( inpara == 3 ){
+			else if ( inpara == 3 ) {
 #ifdef TRY_EDIT_NEW_WAY
-			  if (mged_variables->mv_context){
+			  if (mged_variables->mv_context) {
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
-			  }else{
+			  } else {
 			    VMOVE( new_pt, es_para );
 			  }
 #else
@@ -5779,7 +5779,7 @@ sedit(void)
 
 			if ( es_mvalid )
 			  VMOVE( new_pt, es_mparam )
-			else if ( inpara == 3 ){
+			else if ( inpara == 3 ) {
 			  VMOVE( new_pt, es_para )
 			}
 			else if ( inpara && inpara != 3 )
@@ -5895,7 +5895,7 @@ sedit(void)
 	set_e_axes_pos(0);
 	replot_editing_solid();
 
-	if (update_views){
+	if (update_views) {
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -6559,7 +6559,7 @@ sedit_abs_scale(void)
     acc_sc_sol = 1.0;
   else if (edit_absolute_scale > 0.0)
     acc_sc_sol = 1.0 + edit_absolute_scale * 3.0;
-  else{
+  else {
     if ((edit_absolute_scale - MGED_SMALL_SCALE) < -1.0)
       edit_absolute_scale = -1.0 + MGED_SMALL_SCALE;
 
@@ -6723,7 +6723,7 @@ oedit_abs_scale(void)
     scale = 1;
   else if (edit_absolute_scale > 0.0)
     scale = 1.0 + edit_absolute_scale * 3.0;
-  else{
+  else {
     if ((edit_absolute_scale - MGED_SMALL_SCALE) < -1.0)
       edit_absolute_scale = -1.0 + MGED_SMALL_SCALE;
 
@@ -8020,7 +8020,7 @@ f_eqn(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	if (argc < 4 || 4 < argc){
+	if (argc < 4 || 4 < argc) {
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -8030,7 +8030,7 @@ f_eqn(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  return TCL_ERROR;
 	}
 
-	if ( state != ST_S_EDIT ){
+	if ( state != ST_S_EDIT ) {
 	  Tcl_AppendResult(interp, "Eqn: must be in solid edit\n", (char *)NULL);
 	  return TCL_ERROR;
 	}
@@ -8041,7 +8041,7 @@ f_eqn(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  return TCL_ERROR;
 	}
 
-	if ( es_edflag != ECMD_ARB_ROTATE_FACE ){
+	if ( es_edflag != ECMD_ARB_ROTATE_FACE ) {
 	  Tcl_AppendResult(interp, "Eqn: must be rotating a face\n", (char *)NULL);
 	  return TCL_ERROR;
 	}
@@ -8353,16 +8353,16 @@ mged_param(Tcl_Interp *interp, int argc, fastf_t *argvect)
 #if 1
   sedit();
 
-  if (SEDIT_TRAN){
+  if (SEDIT_TRAN) {
     vect_t diff;
     fastf_t inv_Viewscale = 1/view_state->vs_vop->vo_scale;
 
     VSUB2(diff, es_para, e_axes_pos);
     VSCALE(edit_absolute_model_tran, diff, inv_Viewscale);
     VMOVE(last_edit_absolute_model_tran, edit_absolute_model_tran);
-  }else if (SEDIT_ROTATE){
+  } else if (SEDIT_ROTATE) {
     VMOVE(edit_absolute_model_rotate, es_para);
-  }else if (SEDIT_SCALE){
+  } else if (SEDIT_SCALE) {
     edit_absolute_scale = acc_sc_sol - 1.0;
     if (edit_absolute_scale > 0)
       edit_absolute_scale /= 3.0;
@@ -8382,7 +8382,7 @@ f_param(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
   CHECK_DBI_NULL;
   CHECK_READ_ONLY;
 
-  if (argc < 2 || 4 < argc){
+  if (argc < 2 || 4 < argc) {
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -8392,7 +8392,7 @@ f_param(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_ERROR;
   }
 
-  for ( i = 1; i < argc && i <= 3; i++ ){
+  for ( i = 1; i < argc && i <= 3; i++ ) {
     argvect[i-1] = atof( argv[i] );
   }
 
@@ -9314,7 +9314,7 @@ f_keypoint(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
   CHECK_DBI_NULL;
 
-  if (argc < 1 || 4 < argc){
+  if (argc < 1 || 4 < argc) {
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -9540,7 +9540,7 @@ f_get_sedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
   Tcl_Obj *pto;
   Tcl_Obj *pnto;
 
-  if (argc < 1 || 2 < argc){
+  if (argc < 1 || 2 < argc) {
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -9550,12 +9550,12 @@ f_get_sedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_ERROR;
   }
 
-  if (state != ST_S_EDIT || !illump){
+  if (state != ST_S_EDIT || !illump) {
     Tcl_AppendResult(interp, "get_sed: must be in solid edit state", (char *)0);
     return TCL_ERROR;
   }
 
-  if (argc == 1){
+  if (argc == 1) {
     /* get solid type and parameters */
     RT_CK_DB_INTERNAL(&es_int);
     RT_CK_FUNCTAB(es_int.idb_meth);
@@ -9571,7 +9571,7 @@ f_get_sedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return status;
   }
 
-  if (argv[1][0] != '-' || argv[1][1] != 'c'){
+  if (argv[1][0] != '-' || argv[1][1] != 'c') {
     Tcl_AppendResult(interp, "Usage: get_sed [-c]", (char *)0);
     return TCL_ERROR;
   }
@@ -9614,7 +9614,7 @@ f_put_sedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
   int context;
 
   /*XXX needs better argument checking */
-  if (argc < 6){
+  if (argc < 6) {
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -9624,13 +9624,13 @@ f_put_sedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_ERROR;
   }
 
-  if (state != ST_S_EDIT){
+  if (state != ST_S_EDIT) {
     Tcl_AppendResult(interp, "put_sed: must be in solid edit state", (char *)0);
     return TCL_ERROR;
   }
 
   /* look for -c */
-  if (argv[1][0] == '-' && argv[1][1] == 'c'){
+  if (argv[1][0] == '-' && argv[1][1] == 'c') {
     context = 1;
     --argc;
     ++argv;
@@ -9665,7 +9665,7 @@ f_put_sedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     transform_editing_solid(&es_int, es_invmat, &es_int, 1);
 
   /* must re-calculate the face plane equations for arbs */
-  if ( es_int.idb_type == ID_ARB8 ){
+  if ( es_int.idb_type == ID_ARB8 ) {
     struct rt_arb_internal *arb;
 
     arb = (struct rt_arb_internal *)es_int.idb_ptr;
@@ -9694,7 +9694,7 @@ f_sedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
   if (state != ST_S_EDIT || !illump)
     return TCL_ERROR;
 
-  if (argc != 1){
+  if (argc != 1) {
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helpdevel sed_reset");
     Tcl_Eval(interp, bu_vls_addr(&vls));

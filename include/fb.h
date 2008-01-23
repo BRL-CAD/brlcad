@@ -162,7 +162,7 @@ FB_EXPORT extern int wgl_close_existing();
 #define	FB_WPIXEL(ifp, pp) {if((ifp)->if_pno==-1)_fb_pgin((ifp),(ifp)->if_pixcur/(ifp)->if_ppixels);\
 	(*((ifp)->if_pcurp+0))=(pp)[0];(*((ifp)->if_pcurp+1))=(pp)[1];(*((ifp)->if_pcurp+2))=(pp)[2];\
 	(ifp)->if_pcurp+=3;(ifp)->if_pixcur++;(ifp)->if_pdirty=1;\
-	if ((ifp)->if_pcurp>=(ifp)->if_pendp){_fb_pgout((ifp));(ifp)->if_pno= -1;}}
+	if ((ifp)->if_pcurp>=(ifp)->if_pendp) {_fb_pgout((ifp));(ifp)->if_pno= -1;}}
 
 /* Debug Bitvector Definition */
 #define	FB_DEBUG_BIO	1	/* Buffered io calls (less r/wpixel) */

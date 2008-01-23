@@ -340,7 +340,7 @@ Tcl_Interp *_interp;
   /* libdm uses interp */
   interp = _interp;
 
-  switch (dm_type){
+  switch (dm_type) {
 #ifdef DM_WGL
   case DM_TYPE_WGL:
     cmd_hook = Wgl_dm;
@@ -387,7 +387,7 @@ Tcl_Interp *_interp;
   cmd_setup(interp, cmdtab);
 
   /* open display manager */
-  switch (dm_type){
+  switch (dm_type) {
 #ifdef DM_WGL
   case DM_TYPE_WGL:
     return Wgl_dmInit();
@@ -403,17 +403,17 @@ Tcl_Interp *_interp;
 }
 
 static void
-refresh(){
+refresh() {
   int i;
   struct plot_list *plp;
 
   DM_DRAW_BEGIN(dmp);
   DM_LOADMATRIX(dmp, model2view, 0);
 
-  for (BU_LIST_FOR(plp, plot_list, &HeadPlot.l)){
+  for (BU_LIST_FOR(plp, plot_list, &HeadPlot.l)) {
     if (plp->pl_draw)
-      for (i=0; i < plp->pl_vbp->nused; i++){
-	if (plp->pl_vbp->rgb[i] != 0){
+      for (i=0; i < plp->pl_vbp->nused; i++) {
+	if (plp->pl_vbp->rgb[i] != 0) {
 	  long rgb;
 
 	  rgb = plp->pl_vbp->rgb[i];
@@ -527,21 +527,21 @@ size_reset()
   VSETALL( min,  INFINITY );
   VSETALL( max, -INFINITY );
 
-  for (BU_LIST_FOR(plp, plot_list, &HeadPlot.l)){
+  for (BU_LIST_FOR(plp, plot_list, &HeadPlot.l)) {
     struct bn_vlblock *vbp;
 
     vbp = plp->pl_vbp;
-    for (i=0; i < vbp->nused; i++){
+    for (i=0; i < vbp->nused; i++) {
       register struct bn_vlist *vp = (struct bn_vlist *)&vbp->head[i];
 
-      for (BU_LIST_FOR(tvp, bn_vlist, &vp->l)){
+      for (BU_LIST_FOR(tvp, bn_vlist, &vp->l)) {
 	register int j;
 	register int nused = tvp->nused;
 	register int *cmd = tvp->cmd;
 	register point_t *pt = tvp->pt;
 
-	for (j = 0; j < nused; j++, cmd++, pt++ ){
-	  switch (*cmd){
+	for (j = 0; j < nused; j++, cmd++, pt++ ) {
+	  switch (*cmd) {
 	  case BN_VLIST_POLY_START:
 	  case BN_VLIST_POLY_VERTNORM:
 	    break;
@@ -666,7 +666,7 @@ char    **argv;
   FILE *fp;
   struct plot_list *plp;
 
-  if (argc < 2){
+  if (argc < 2) {
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -683,11 +683,11 @@ char    **argv;
     do_size_reset = 0;
 
   /* read plot files */
-  for (read_file=0, i=1; i < argc; ++i){
+  for (read_file=0, i=1; i < argc; ++i) {
     char *bnp;
 
     file = argv[i];
-    if ((fp = fopen(file, "r")) == NULL){
+    if ((fp = fopen(file, "r")) == NULL) {
       bu_log("%s: can't open \"%s\"\n", argv[0], file);
       continue;
     }
@@ -702,9 +702,9 @@ char    **argv;
       ++bnp;
 
     /* check for existing objects with same name as argv[i] */
-    for (BU_LIST_FOR(plp, plot_list, &HeadPlot.l)){
+    for (BU_LIST_FOR(plp, plot_list, &HeadPlot.l)) {
       /* found object with same name */
-      if (!strcmp(bu_vls_addr(&plp->pl_name), bnp)){
+      if (!strcmp(bu_vls_addr(&plp->pl_name), bnp)) {
 	rt_vlblock_free(plp->pl_vbp);
 	goto up_to_vl;
       }
@@ -725,7 +725,7 @@ char    **argv;
   if (!read_file)
     return TCL_ERROR;
 
-  if (do_size_reset){
+  if (do_size_reset) {
     size_reset();
     new_mats();
   }
@@ -750,7 +750,7 @@ char    **argv;
 {
   mat_t newrot;
 
-  if (argc != 4){
+  if (argc != 4) {
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -779,7 +779,7 @@ char    **argv;
 {
   int status;
 
-  if (argc < 2 || MAXARGS < argc){
+  if (argc < 2 || MAXARGS < argc) {
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -807,7 +807,7 @@ char    **argv;
 {
   struct plot_list *plp;
 
-  if (argc != 1){
+  if (argc != 1) {
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -837,7 +837,7 @@ char    **argv;
   int i;
   struct plot_list *plp;
 
-  if (argc < 2){
+  if (argc < 2) {
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -847,9 +847,9 @@ char    **argv;
     return TCL_ERROR;
   }
 
-  for (i=1; i < argc; ++i){
-    for (BU_LIST_FOR(plp, plot_list, &HeadPlot.l)){
-      if (!strcmp(argv[i], bu_vls_addr(&plp->pl_name))){
+  for (i=1; i < argc; ++i) {
+    for (BU_LIST_FOR(plp, plot_list, &HeadPlot.l)) {
+      if (!strcmp(argv[i], bu_vls_addr(&plp->pl_name))) {
 	BU_LIST_DEQUEUE(&plp->l);
 	bu_vls_free(&plp->pl_name);
 	rt_vlblock_free(plp->pl_vbp);
@@ -876,7 +876,7 @@ char    **argv;
   int i;
   struct plot_list *plp;
 
-  if (argc < 2){
+  if (argc < 2) {
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -886,9 +886,9 @@ char    **argv;
     return TCL_ERROR;
   }
 
-  for (i=1; i < argc; ++i){
-    for (BU_LIST_FOR(plp, plot_list, &HeadPlot.l)){
-      if (!strcmp(argv[i], bu_vls_addr(&plp->pl_name))){
+  for (i=1; i < argc; ++i) {
+    for (BU_LIST_FOR(plp, plot_list, &HeadPlot.l)) {
+      if (!strcmp(argv[i], bu_vls_addr(&plp->pl_name))) {
 	plp->pl_draw = 1;
 	break;
       }
@@ -912,7 +912,7 @@ char    **argv;
   int i;
   struct plot_list *plp;
 
-  if (argc < 2){
+  if (argc < 2) {
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -922,9 +922,9 @@ char    **argv;
     return TCL_ERROR;
   }
 
-  for (i=1; i < argc; ++i){
-    for (BU_LIST_FOR(plp, plot_list, &HeadPlot.l)){
-      if (!strcmp(argv[i], bu_vls_addr(&plp->pl_name))){
+  for (i=1; i < argc; ++i) {
+    for (BU_LIST_FOR(plp, plot_list, &HeadPlot.l)) {
+      if (!strcmp(argv[i], bu_vls_addr(&plp->pl_name))) {
 	plp->pl_draw = 0;
 	break;
       }
@@ -949,7 +949,7 @@ char	**argv;
   int len;
   int linelen=0;
 
-  if (argc != 1){
+  if (argc != 1) {
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -959,7 +959,7 @@ char	**argv;
     return TCL_ERROR;
   }
 
-  for (BU_LIST_FOR(plp, plot_list, &HeadPlot.l)){
+  for (BU_LIST_FOR(plp, plot_list, &HeadPlot.l)) {
     len = strlen(bu_vls_addr(&plp->pl_name));
 
     if (len < 13)
@@ -994,7 +994,7 @@ char	**argv;
   int status;
   double	val;
 
-  if (argc != 2){
+  if (argc != 2) {
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -1042,7 +1042,7 @@ char    **argv;
   int status;
   vect_t view_pos;
 
-  if (argc != 3){
+  if (argc != 3) {
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -1074,7 +1074,7 @@ char	**argv;
   int iflag = 0;
   fastf_t o_twist;
 
-  if (argc < 3 || 5 < argc){
+  if (argc < 3 || 5 < argc) {
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -1085,7 +1085,7 @@ char	**argv;
   }
 
   /* Check for -i option */
-  if (argv[1][0] == '-' && argv[1][1] == 'i'){
+  if (argv[1][0] == '-' && argv[1][1] == 'i') {
     iflag = 1;  /* treat arguments as incremental values */
     ++argv;
     --argc;
@@ -1104,7 +1104,7 @@ char	**argv;
 
   new_mats();
 
-  if (argc == 4){ /* twist angle supplied */
+  if (argc == 4) { /* twist angle supplied */
     double x, y, z;
 
     x = y = 0.0;
@@ -1177,7 +1177,7 @@ X_dmInit()
   av[2] = "sampler_bind_dm";
   av[3] = (char *)NULL;
 
-  if ((dmp = DM_OPEN(DM_TYPE_X, 3, av)) == DM_NULL){
+  if ((dmp = DM_OPEN(DM_TYPE_X, 3, av)) == DM_NULL) {
     Tcl_AppendResult(interp, "Failed to open a display manager\n", (char *)NULL);
     return TCL_ERROR;
   }
@@ -1198,18 +1198,18 @@ X_doEvent(clientData, eventPtr)
 ClientData clientData;
 XEvent *eventPtr;
 {
-  if (eventPtr->type == Expose && eventPtr->xexpose.count == 0){
+  if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
     refresh();
-  }else if (eventPtr->type == ConfigureNotify){
+  } else if (eventPtr->type == ConfigureNotify) {
     dm_configureWindowShape(dmp);
     refresh();
-  }else if ( eventPtr->type == MotionNotify ) {
+  } else if ( eventPtr->type == MotionNotify ) {
     int mx, my;
 
     mx = eventPtr->xmotion.x;
     my = eventPtr->xmotion.y;
 
-    switch (mouse_mode){
+    switch (mouse_mode) {
     case MOUSE_MODE_ROTATE:
       vrot((my - omy) * app_scale,
 	   (mx - omx) * app_scale,
@@ -1269,7 +1269,7 @@ char *argv[];
 {
   int status;
 
-  if ( !strcmp( argv[0], "set" )){
+  if ( !strcmp( argv[0], "set" )) {
     struct bu_vls tmp_vls;
     struct bu_vls vls;
 
@@ -1298,10 +1298,10 @@ char *argv[];
     return TCL_OK;
   }
 
-  if ( !strcmp( argv[0], "m")){
+  if ( !strcmp( argv[0], "m")) {
     vect_t view_pos;
 
-    if ( argc < 4){
+    if ( argc < 4) {
       Tcl_AppendResult(interp, "dm m: need more parameters\n",
 		       "dm m button 1|0 xpos ypos\n", (char *)NULL);
       return TCL_ERROR;
@@ -1309,7 +1309,7 @@ char *argv[];
 
 #if 0
     /* This assumes a 3-button mouse */
-    switch (*argv[1]){
+    switch (*argv[1]) {
     case '1':
       ((struct x_vars *)dmp->dm_vars)->mb_mask = Button1Mask;
       break;
@@ -1334,10 +1334,10 @@ char *argv[];
     return status;
   }
 
-  if ( !strcmp( argv[0], "am" )){
+  if ( !strcmp( argv[0], "am" )) {
     int buttonpress;
 
-    if ( argc < 5){
+    if ( argc < 5) {
       Tcl_AppendResult(interp, "dm am: need more parameters\n",
 		       "dm am <r|t|z> 1|0 xpos ypos\n", (char *)NULL);
       return TCL_ERROR;
@@ -1347,8 +1347,8 @@ char *argv[];
     omx = atoi(argv[3]);
     omy = atoi(argv[4]);
 
-    if (buttonpress){
-      switch (*argv[1]){
+    if (buttonpress) {
+      switch (*argv[1]) {
       case 'r':
 	mouse_mode = MOUSE_MODE_ROTATE;
 	break;
@@ -1362,7 +1362,7 @@ char *argv[];
 	mouse_mode = MOUSE_MODE_IDLE;
 	break;
       }
-    }else
+    } else
       mouse_mode = MOUSE_MODE_IDLE;
   }
 
@@ -1389,7 +1389,7 @@ Ogl_dmInit()
   av[2] = "sampler_bind_dm";
   av[3] = (char *)NULL;
 
-  if ((dmp = DM_OPEN(DM_TYPE_OGL, 3, av)) == DM_NULL){
+  if ((dmp = DM_OPEN(DM_TYPE_OGL, 3, av)) == DM_NULL) {
     Tcl_AppendResult(interp, "Failed to open a display manager\n", (char *)NULL);
     return TCL_ERROR;
   }
@@ -1411,21 +1411,21 @@ Ogl_doEvent(clientData, eventPtr)
 ClientData clientData;
 XEvent *eventPtr;
 {
-  if (eventPtr->type == Expose && eventPtr->xexpose.count == 0){
+  if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
     glClearColor(0.0, 0.0, 0.0, 0.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     refresh();
-  }else if (eventPtr->type == ConfigureNotify){
+  } else if (eventPtr->type == ConfigureNotify) {
     dm_configureWindowShape(dmp);
     refresh();
-  }else if ( eventPtr->type == MotionNotify ) {
+  } else if ( eventPtr->type == MotionNotify ) {
     int mx, my;
 
     mx = eventPtr->xmotion.x;
     my = eventPtr->xmotion.y;
 
-    switch (mouse_mode){
+    switch (mouse_mode) {
     case MOUSE_MODE_ROTATE:
       vrot((my - omy) * app_scale,
 	   (mx - omx) * app_scale,
@@ -1514,10 +1514,10 @@ char *argv[];
     return TCL_OK;
   }
 
-  if ( !strcmp( argv[0], "m")){
+  if ( !strcmp( argv[0], "m")) {
     vect_t view_pos;
 
-    if ( argc < 4){
+    if ( argc < 4) {
       Tcl_AppendResult(interp, "dm m: need more parameters\n",
 		       "dm m button 1|0 xpos ypos\n", (char *)NULL);
       return TCL_ERROR;
@@ -1525,7 +1525,7 @@ char *argv[];
 
 #if 0
     /* This assumes a 3-button mouse */
-    switch (*argv[1]){
+    switch (*argv[1]) {
     case '1':
       ((struct ogl_vars *)dmp->dm_vars)->mb_mask = Button1Mask;
       break;
@@ -1550,10 +1550,10 @@ char *argv[];
     return status;
   }
 
-  if ( !strcmp( argv[0], "am" )){
+  if ( !strcmp( argv[0], "am" )) {
     int buttonpress;
 
-    if ( argc < 5){
+    if ( argc < 5) {
       Tcl_AppendResult(interp, "dm am: need more parameters\n",
 		       "dm am <r|t|z> 1|0 xpos ypos\n", (char *)NULL);
       return TCL_ERROR;
@@ -1563,8 +1563,8 @@ char *argv[];
     omx = atoi(argv[3]);
     omy = atoi(argv[4]);
 
-    if (buttonpress){
-      switch (*argv[1]){
+    if (buttonpress) {
+      switch (*argv[1]) {
       case 'r':
 	mouse_mode = MOUSE_MODE_ROTATE;
 	break;
@@ -1578,7 +1578,7 @@ char *argv[];
 	mouse_mode = MOUSE_MODE_IDLE;
 	break;
       }
-    }else
+    } else
       mouse_mode = MOUSE_MODE_IDLE;
   }
 
@@ -1590,7 +1590,7 @@ Ogl_colorchange()
 {
   if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.cueing_on) {
     glEnable(GL_FOG);
-  }else{
+  } else {
     glDisable(GL_FOG);
   }
 
@@ -1635,7 +1635,7 @@ Wgl_dmInit()
   av[2] = "sampler_bind_dm";
   av[3] = (char *)NULL;
 
-  if ((dmp = DM_OPEN(DM_TYPE_WGL, 3, av)) == DM_NULL){
+  if ((dmp = DM_OPEN(DM_TYPE_WGL, 3, av)) == DM_NULL) {
     Tcl_AppendResult(interp, "Failed to open a display manager\n", (char *)NULL);
     return TCL_ERROR;
   }
@@ -1657,21 +1657,21 @@ Wgl_doEvent(clientData, eventPtr)
 ClientData clientData;
 XEvent *eventPtr;
 {
-  if (eventPtr->type == Expose && eventPtr->xexpose.count == 0){
+  if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
     glClearColor(0.0, 0.0, 0.0, 0.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     refresh();
-  }else if (eventPtr->type == ConfigureNotify){
+  } else if (eventPtr->type == ConfigureNotify) {
     dm_configureWindowShape(dmp);
     refresh();
-  }else if ( eventPtr->type == MotionNotify ) {
+  } else if ( eventPtr->type == MotionNotify ) {
     int mx, my;
 
     mx = eventPtr->xmotion.x;
     my = eventPtr->xmotion.y;
 
-    switch (mouse_mode){
+    switch (mouse_mode) {
     case MOUSE_MODE_ROTATE:
       vrot((my - omy) * app_scale,
 	   (mx - omx) * app_scale,
@@ -1760,10 +1760,10 @@ char *argv[];
     return TCL_OK;
   }
 
-  if ( !strcmp( argv[0], "m")){
+  if ( !strcmp( argv[0], "m")) {
     vect_t view_pos;
 
-    if ( argc < 4){
+    if ( argc < 4) {
       Tcl_AppendResult(interp, "dm m: need more parameters\n",
 		       "dm m button 1|0 xpos ypos\n", (char *)NULL);
       return TCL_ERROR;
@@ -1771,7 +1771,7 @@ char *argv[];
 
 #if 0
     /* This assumes a 3-button mouse */
-    switch (*argv[1]){
+    switch (*argv[1]) {
     case '1':
       ((struct wgl_vars *)dmp->dm_vars)->mb_mask = Button1Mask;
       break;
@@ -1796,10 +1796,10 @@ char *argv[];
     return status;
   }
 
-  if ( !strcmp( argv[0], "am" )){
+  if ( !strcmp( argv[0], "am" )) {
     int buttonpress;
 
-    if ( argc < 5){
+    if ( argc < 5) {
       Tcl_AppendResult(interp, "dm am: need more parameters\n",
 		       "dm am <r|t|z> 1|0 xpos ypos\n", (char *)NULL);
       return TCL_ERROR;
@@ -1809,8 +1809,8 @@ char *argv[];
     omx = atoi(argv[3]);
     omy = atoi(argv[4]);
 
-    if (buttonpress){
-      switch (*argv[1]){
+    if (buttonpress) {
+      switch (*argv[1]) {
       case 'r':
 	mouse_mode = MOUSE_MODE_ROTATE;
 	break;
@@ -1824,7 +1824,7 @@ char *argv[];
 	mouse_mode = MOUSE_MODE_IDLE;
 	break;
       }
-    }else
+    } else
       mouse_mode = MOUSE_MODE_IDLE;
   }
 
@@ -1836,7 +1836,7 @@ Wgl_colorchange()
 {
   if (((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.cueing_on) {
     glEnable(GL_FOG);
-  }else{
+  } else {
     glDisable(GL_FOG);
   }
 

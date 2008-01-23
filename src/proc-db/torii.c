@@ -69,7 +69,7 @@ void usage(char *progname)
 }
 
 
-int create_torii(int level, int currentLevel, torusLevels_t *torii, point_t position, const int dirArray[6][6], int dir){
+int create_torii(int level, int currentLevel, torusLevels_t *torii, point_t position, const int dirArray[6][6], int dir) {
   point_t newPosition;
 
   VMOVE(newPosition, position);

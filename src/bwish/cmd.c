@@ -232,7 +232,7 @@ cmd_journal(clientData, interp, argc, argv)
      int argc;
      char **argv;
 {
-    if (argc < 1 || 3 < argc){
+    if (argc < 1 || 3 < argc) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -252,7 +252,7 @@ cmd_journal(clientData, interp, argc, argv)
     if (argc < 2)
 	return TCL_OK;
 
-    if (argv[1][0] == '-' && argv[1][1] == 'd'){
+    if (argv[1][0] == '-' && argv[1][1] == 'd') {
 	journal_delay = 1;
 	++argv;
 	--argc;
@@ -295,7 +295,7 @@ f_delay(clientData, interp, argc, argv)
 {
     struct timeval tv;
 
-    if (argc < 3 || 3 < argc){
+    if (argc < 3 || 3 < argc) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -448,15 +448,15 @@ cmd_hist(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     bu_vls_init(&vls);
 
-    if (argc < 2){
+    if (argc < 2) {
 	Tcl_AppendResult(interp, "hist command\n\troutine for maintaining command history", (char *)0);
 	return TCL_ERROR;
     }
 
-    if (strcmp(argv[1], "add") == 0){
+    if (strcmp(argv[1], "add") == 0) {
 	struct timeval zero;
 
-	if (argc != 3){
+	if (argc != 3) {
 	    Tcl_AppendResult(interp, "hist add command\n\tadd command to history", (char *)0);
 	    return TCL_ERROR;
 	}
@@ -475,8 +475,8 @@ cmd_hist(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_OK;
     }
 
-    if (strcmp(argv[1], "next") == 0){
-	if (argc != 2){
+    if (strcmp(argv[1], "next") == 0) {
+	if (argc != 2) {
 	    Tcl_AppendResult(interp, "hist next\n\treturn next command in history", (char *)0);
 	    return TCL_ERROR;
 	}
@@ -490,8 +490,8 @@ cmd_hist(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_OK;
     }
 
-    if (strcmp(argv[1], "prev") == 0){
-	if (argc != 2){
+    if (strcmp(argv[1], "prev") == 0) {
+	if (argc != 2) {
 	    Tcl_AppendResult(interp, "hist prev\n\treturn previous command in history", (char *)0);
 	    return TCL_ERROR;
 	}

@@ -138,14 +138,14 @@ create_text_overlay( struct bu_vls *vp )
 	 * we replace any TABs with spaces. Also, look for the
 	 * maximum line length.
 	 */
-	for (p = start; *p != '\0'; ++p){
+	for (p = start; *p != '\0'; ++p) {
 	    if (*p == '\t')
 		*p = ' ';
-	    else if (*p == '\n'){
+	    else if (*p == '\n') {
 		if (i > imax)
 		    imax = i;
 		i = 0;
-	    }else
+	    } else
 		++i;
 	}
 
@@ -156,14 +156,14 @@ create_text_overlay( struct bu_vls *vp )
 	++imax;
 	i = 0;
 	bu_vls_init(&vls);
-	for (p = start; *p != '\0'; ++p){
-	    if (*p == '\n'){
+	for (p = start; *p != '\0'; ++p) {
+	    if (*p == '\n') {
 		for (j = 0; j < imax - i; ++j)
 		    bu_vls_putc(&vls, ' ');
 
 		bu_vls_putc(&vls, *p);
 		i = 0;
-	    }else{
+	    } else {
 		bu_vls_putc(&vls, *p);
 		++i;
 	    }
@@ -339,7 +339,7 @@ dotitles(struct bu_vls *overlay_vls)
 
 	if ( view_state->vs_vop->vo_perspective <= 0)
 	    bn_mat_mul( xform, view_state->vs_model2objview, es_mat );
-	else{
+	else {
 	    mat_t tmat;
 
 	    bn_mat_mul( tmat, view_state->vs_model2objview, es_mat );
@@ -366,7 +366,7 @@ dotitles(struct bu_vls *overlay_vls)
 	}
     }
 
-    if (mged_variables->mv_faceplate){
+    if (mged_variables->mv_faceplate) {
 	/* Line across the bottom, above two bottom status lines */
 	DM_SET_FGCOLOR(dmp,
 		       color_scheme->cs_other_line[0],
@@ -376,7 +376,7 @@ dotitles(struct bu_vls *overlay_vls)
 			 GED2PM1(XMIN), GED2PM1(TITLE_YBASE-TEXT1_DY),
 			 GED2PM1(XMAX), GED2PM1(TITLE_YBASE-TEXT1_DY) );
 
-	if (mged_variables->mv_orig_gui){
+	if (mged_variables->mv_orig_gui) {
 	    /* Enclose window in decorative box.  Mostly for alignment. */
 	    DM_DRAW_LINE_2D( dmp,
 			     GED2PM1(XMIN), GED2PM1(YMIN),
@@ -403,7 +403,7 @@ dotitles(struct bu_vls *overlay_vls)
 			   color_scheme->cs_state_text1[2], 1, 1.0);
 	    DM_DRAW_STRING_2D(dmp, state_str[state],
 			      GED2PM1(MENUX), GED2PM1(MENUY - MENU_DY), 1, 0 );
-	}else{
+	} else {
 	    scroll_ybot = SCROLLY;
 	    x = XMIN + 20;
 	    y = YMAX+TEXT0_DY;
@@ -435,7 +435,7 @@ dotitles(struct bu_vls *overlay_vls)
 	    }
 	}
 
-	if (mged_variables->mv_orig_gui){
+	if (mged_variables->mv_orig_gui) {
 	    DM_SET_FGCOLOR(dmp,
 			   color_scheme->cs_other_line[0],
 			   color_scheme->cs_other_line[1],
@@ -483,9 +483,9 @@ dotitles(struct bu_vls *overlay_vls)
 	 * Prepare the numerical display of the currently edited solid/object.
 	 */
 	/*	create_text_overlay( &vls ); */
-	if (mged_variables->mv_orig_gui){
+	if (mged_variables->mv_orig_gui) {
 	    screen_vls( SOLID_XBASE, scroll_ybot+TEXT0_DY, overlay_vls );
-	}else{
+	} else {
 	    screen_vls( x, y, overlay_vls );
 	}
 
@@ -530,7 +530,7 @@ dotitles(struct bu_vls *overlay_vls)
 		       adc_state->adc_dst * f,
 		       adc_state->adc_pos_grid[X] * f, adc_state->adc_pos_grid[Y] * f,
 		       adc_state->adc_pos_view[X] * f, adc_state->adc_pos_view[Y] * f);
-	if (mged_variables->mv_faceplate){
+	if (mged_variables->mv_faceplate) {
 	    DM_SET_FGCOLOR(dmp,
 			   color_scheme->cs_status_text2[0],
 			   color_scheme->cs_status_text2[1],
@@ -541,7 +541,7 @@ dotitles(struct bu_vls *overlay_vls)
 	Tcl_SetVar(interp, bu_vls_addr(&curr_dm_list->dml_adc_name),
 		   bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 	ss_line_not_drawn = 0;
-    }else{
+    } else {
 	Tcl_SetVar(interp, bu_vls_addr(&curr_dm_list->dml_adc_name), "", TCL_GLOBAL_ONLY);
     }
 
@@ -556,7 +556,7 @@ dotitles(struct bu_vls *overlay_vls)
 		       es_keypoint[X] * base2local,
 		       es_keypoint[Y] * base2local,
 		       es_keypoint[Z] * base2local);
-	if (mged_variables->mv_faceplate && ss_line_not_drawn){
+	if (mged_variables->mv_faceplate && ss_line_not_drawn) {
 	    DM_SET_FGCOLOR(dmp,
 			   color_scheme->cs_status_text2[0],
 			   color_scheme->cs_status_text2[1],
@@ -571,14 +571,14 @@ dotitles(struct bu_vls *overlay_vls)
 	Tcl_SetVar(interp, bu_vls_addr(&vls), bu_vls_addr(&kp_vls), TCL_GLOBAL_ONLY);
 
 	bu_vls_free(&kp_vls);
-    }else{
+    } else {
 	bu_vls_trunc(&vls, 0);
 	bu_vls_printf(&vls, "%s(keypoint)", MGED_DISPLAY_VAR);
 	Tcl_SetVar(interp, bu_vls_addr(&vls), "", TCL_GLOBAL_ONLY);
     }
 
     if ( illump != SOLID_NULL )  {
-	if (mged_variables->mv_faceplate && ss_line_not_drawn){
+	if (mged_variables->mv_faceplate && ss_line_not_drawn) {
 	    bu_vls_trunc(&vls, 0);
 
 	    /* Illuminated path */
@@ -603,7 +603,7 @@ dotitles(struct bu_vls *overlay_vls)
 
     bu_vls_trunc(&vls, 0);
     bu_vls_printf(&vls, "%.2f fps", 1/frametime );
-    if (mged_variables->mv_faceplate && ss_line_not_drawn){
+    if (mged_variables->mv_faceplate && ss_line_not_drawn) {
 	DM_SET_FGCOLOR(dmp,
 		       color_scheme->cs_status_text2[0],
 		       color_scheme->cs_status_text2[1],

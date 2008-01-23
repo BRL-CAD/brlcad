@@ -77,14 +77,14 @@ gettime(fastf_t dist, fastf_t a, fastf_t b, fastf_t c, fastf_t init)
 
     old = init;
     success = 0;
-    while (countdown-->0){
+    while (countdown-->0) {
 	temp = (3.0*a*old+2.0*b)*old+c;
-	if (temp<DIVIDE_TOL){
+	if (temp<DIVIDE_TOL) {
 	    new = 0.75*old;
 	} else {
 	    new = old - (((a*old+b)*old+c)*old-dist)/temp;
 	}
-	if (((new-old)<DELTA)&&((old-new)<DELTA)){
+	if (((new-old)<DELTA)&&((old-new)<DELTA)) {
 	    success = 1;
 	    break;
 	}
@@ -131,13 +131,13 @@ main(int argc, char **argv)
     }
     l[0] = 0.0;
 
-    while (plen<maxlines){
+    while (plen<maxlines) {
 	i = (verbose) ? plen : plen%2;
 	j = (verbose) ? (plen-1) : (plen+1)%2;
 	num = scanf("%lf %lf %lf %lf", &end, x+i, y+i, z+i);
 	if (num<4)
 	    break;
-	if (plen){
+	if (plen) {
 	    temp0 = x[i]-x[j];
 	    temp1 = y[i]-y[j];
 	    temp2 = z[i]-z[j];
@@ -153,16 +153,16 @@ main(int argc, char **argv)
     time = end - start;
     dist = l[plen-1];
 
-    if (query){
+    if (query) {
 	printf("%f\n", dist);
 	return(0);
     }
 
-    if (time < DIVIDE_TOL){
+    if (time < DIVIDE_TOL) {
 	fprintf(stderr, "anim_time: time too small. Only %f s.\n", time);
 	return 10;
     }
-    if (dist < DIVIDE_TOL){
+    if (dist < DIVIDE_TOL) {
 	fprintf(stderr, "anim_time: pathlength too small. Only %f\n", dist);
 	return 10;
     }
@@ -217,14 +217,14 @@ main(int argc, char **argv)
     temp2 = 1.0/slope;
     if (verbose) {
 	printf("%.12e\t%.12e\t%.12e\t%.12e\n", start, x[0], y[0], z[0]);
-	for (i=1; i<plen-1; i++){
+	for (i=1; i<plen-1; i++) {
 	    temp0 = gettime(l[i], a, b, c, l[i]*temp2);
 	    printf("%.12e\t%.12e\t%.12e\t%.12e\n", temp0+start, x[i], y[i], z[i]);
 	}
 	printf("%.12e\t%.12e\t%.12e\t%.12e\n", end, x[plen-1], y[plen-1], z[plen-1]);
     } else {
 	printf("%.12e\n", start);
-	for (i=1; i<plen-1; i++){
+	for (i=1; i<plen-1; i++) {
 	    temp0 = gettime(l[i], a, b, c, l[i]*temp2);
 	    printf("%.12e\n", temp0+start);
 	}
@@ -245,7 +245,7 @@ int get_args(int argc, char **argv)
     int c;
 
     while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
-	switch (c){
+	switch (c) {
 	case 's':
 	    sscanf(bu_optarg, "%lf", &inv0);
 	    v0_set = TIME_ABSOLUTE;

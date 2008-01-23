@@ -371,7 +371,7 @@ build_tops(char **start, char **end)
 	    break;
 	}
 	sp->s_wflag = UP;
-	for (BU_LIST_PFOR(forw, sp, solid, &dgop->dgo_headSolid)){
+	for (BU_LIST_PFOR(forw, sp, solid, &dgop->dgo_headSolid)) {
 	    if ( FIRST_SOLID(forw) == dp )
 		forw->s_wflag = UP;
 	}
@@ -397,7 +397,7 @@ setup_rt(register char **vp, int printcmd)
     rt_cmd_vec_len = vp - rt_cmd_vec;
     rt_cmd_vec_len += build_tops(vp, &rt_cmd_vec[MAXARGS]);
 
-    if (printcmd){
+    if (printcmd) {
 	/* Print out the command we are about to run */
 	vp = &rt_cmd_vec[0];
 	while ( *vp )
@@ -515,12 +515,12 @@ rt_output_handler(ClientData clientData, int mask)
 static void
 rt_set_eye_model(fastf_t *eye_model)
 {
-    if (dmp->dm_zclip || mged_variables->mv_perspective_mode){
+    if (dmp->dm_zclip || mged_variables->mv_perspective_mode) {
 	vect_t temp;
 
 	VSET( temp, 0.0, 0.0, 1.0 );
 	MAT4X3PNT(eye_model, view_state->vs_vop->vo_view2model, temp);
-    }else{ /* not doing zclipping, so back out of geometry */
+    } else { /* not doing zclipping, so back out of geometry */
 	register struct solid *sp;
 	register int i;
 	double  t;
@@ -532,11 +532,11 @@ rt_set_eye_model(fastf_t *eye_model)
 	VSET(eye_model, -view_state->vs_vop->vo_center[MDX],
 	     -view_state->vs_vop->vo_center[MDY], -view_state->vs_vop->vo_center[MDZ]);
 
-	for (i = 0; i < 3; ++i){
+	for (i = 0; i < 3; ++i) {
 	    extremum[0][i] = INFINITY;
 	    extremum[1][i] = -INFINITY;
 	}
-	FOR_ALL_SOLIDS (sp, &dgop->dgo_headSolid){
+	FOR_ALL_SOLIDS (sp, &dgop->dgo_headSolid) {
 	    minus[X] = sp->s_center[X] - sp->s_size;
 	    minus[Y] = sp->s_center[Y] - sp->s_size;
 	    minus[Z] = sp->s_center[Z] - sp->s_size;
@@ -556,9 +556,9 @@ rt_set_eye_model(fastf_t *eye_model)
 	    (eye_model[Y] >= extremum[0][Y]) &&
 	    (eye_model[Y] <= extremum[1][Y]) &&
 	    (eye_model[Z] >= extremum[0][Z]) &&
-	    (eye_model[Z] <= extremum[1][Z])){
+	    (eye_model[Z] <= extremum[1][Z])) {
 	    t_in = -INFINITY;
-	    for (i = 0; i < 6; ++i){
+	    for (i = 0; i < 6; ++i) {
 		if (direction[i%3] == 0)
 		    continue;
 		t = (extremum[i/3][i%3] - eye_model[i%3]) /
@@ -816,7 +816,7 @@ cmd_rrt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     CHECK_DBI_NULL;
 
-    if (argc < 2 || MAXARGS < argc){
+    if (argc < 2 || MAXARGS < argc) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -1068,7 +1068,7 @@ f_saveview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     CHECK_DBI_NULL;
 
-    if (argc < 2){
+    if (argc < 2) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -1119,7 +1119,7 @@ f_saveview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	if (dp->d_addr == RT_DIR_PHONY_ADDR) continue;
 	(void)fprintf(fp, "'%s' ", dp->d_namep);
 	sp->s_wflag = UP;
-	for (BU_LIST_PFOR(forw, sp, solid, &dgop->dgo_headSolid)){
+	for (BU_LIST_PFOR(forw, sp, solid, &dgop->dgo_headSolid)) {
 	    if ( FIRST_SOLID(forw) == dp )
 		forw->s_wflag = UP;
 	}
@@ -1187,7 +1187,7 @@ f_loadview(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
      */
     /*	CHECK_DBI_NULL; */
 
-    if (argc < 2){
+    if (argc < 2) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -1403,7 +1403,7 @@ f_rmats(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     CHECK_DBI_NULL;
 
-    if (argc < 2 || 3 < argc){
+    if (argc < 2 || 3 < argc) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -1562,7 +1562,7 @@ f_savekey(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     vect_t	eye_model;
     vect_t temp;
 
-    if (argc < 2 || 3 < argc){
+    if (argc < 2 || 3 < argc) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -1694,7 +1694,7 @@ f_preview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     CHECK_DBI_NULL;
 
-    if (argc < 2){
+    if (argc < 2) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -1880,7 +1880,7 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     CHECK_DBI_NULL;
 
-    if (argc < 1 || MAXARGS < argc){
+    if (argc < 1 || MAXARGS < argc) {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -1906,31 +1906,31 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     *vp++ = argv[0];
 
     /* swipe x, y, z off the end if present */
-    if (argc > 3){
+    if (argc > 3) {
 	if (sscanf(argv[argc-3], "%lf", &center_model[X]) == 1 &&
 	   sscanf(argv[argc-2], "%lf", &center_model[Y]) == 1 &&
-	   sscanf(argv[argc-1], "%lf", &center_model[Z]) == 1){
+	   sscanf(argv[argc-1], "%lf", &center_model[Z]) == 1) {
 	    use_input_orig = 1;
 	    argc -= 3;
 	    VSCALE(center_model, center_model, local2base);
-	}else if (adc_state->adc_draw)
+	} else if (adc_state->adc_draw)
 	    *vp++ = "-b";
-    }else if (adc_state->adc_draw)
+    } else if (adc_state->adc_draw)
 	*vp++ = "-b";
 
-    if (mged_variables->mv_use_air){
+    if (mged_variables->mv_use_air) {
 	*vp++ = "-u";
 	*vp++ = "1";
     }
 
     /* Calculate point from which to fire ray */
-    if (!use_input_orig && adc_state->adc_draw){
+    if (!use_input_orig && adc_state->adc_draw) {
 	vect_t  view_ray_orig;
 
 	VSET(view_ray_orig, (fastf_t)adc_state->adc_dv_x, (fastf_t)adc_state->adc_dv_y, GED_MAX);
 	VSCALE(view_ray_orig, view_ray_orig, INV_GED);
 	MAT4X3PNT(center_model, view_state->vs_vop->vo_view2model, view_ray_orig);
-    }else if (!use_input_orig){
+    } else if (!use_input_orig) {
 	VSET(center_model, -view_state->vs_vop->vo_center[MDX],
 	     -view_state->vs_vop->vo_center[MDY], -view_state->vs_vop->vo_center[MDZ]);
     }
@@ -1963,7 +1963,7 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		  dir[X], dir[Y], dir[Z]);
 
     i = 0;
-    if (QRAY_GRAPHICS){
+    if (QRAY_GRAPHICS) {
 
 	*vp++ = "-e";
 	*vp++ = QRAY_FORMAT_NULL;
@@ -1984,7 +1984,7 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	*vp++ = "-e";
 	*vp++ = bu_vls_addr(&p_vls);
 
-	if (QRAY_TEXT){
+	if (QRAY_TEXT) {
 	    char *cp;
 	    int count = 0;
 
@@ -2033,7 +2033,7 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
     }
 
-    if (QRAY_TEXT){
+    if (QRAY_TEXT) {
 
 	bu_vls_init(&t_vls);
 
@@ -2074,7 +2074,7 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     setup_rt( vp, qray_cmd_echo );
 
-    if (use_input_orig){
+    if (use_input_orig) {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "\nFiring from (%lf, %lf, %lf)...\n",
 		      center_model[X], center_model[Y], center_model[Z]);
@@ -2243,7 +2243,7 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 #endif
 
     bu_vls_free(&p_vls);   /* use to form "partition" part of nirt command above */
-    if (QRAY_GRAPHICS){
+    if (QRAY_GRAPHICS) {
 
 	if (QRAY_TEXT)
 	    bu_vls_free(&o_vls); /* used to form "overlap" part of nirt command above */
@@ -2294,7 +2294,7 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	update_views = 1;
     }
 
-    if (QRAY_TEXT){
+    if (QRAY_TEXT) {
 	bu_vls_free(&t_vls);
 
 	while (bu_fgets(line, sizeof(line), fp_out) != (char *)NULL)
@@ -2366,7 +2366,7 @@ f_vnirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     CHECK_DBI_NULL;
 
-    if (argc < 3){
+    if (argc < 3) {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -2383,7 +2383,7 @@ f_vnirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
      * arguments are passed straight through to nirt.
      */
     if (sscanf(argv[argc-2], "%lf", &view_ray_orig[X]) != 1 ||
-       sscanf(argv[argc-1], "%lf", &view_ray_orig[Y]) != 1){
+       sscanf(argv[argc-1], "%lf", &view_ray_orig[Y]) != 1) {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -2709,7 +2709,7 @@ cmd_solids_on_ray (ClientData clientData, Tcl_Interp *interp, int argc, char **a
     point_t			minus, plus;	/* vrts of solid's bnding bx */
     vect_t			unit_H, unit_V;
 
-    if (argc < 1 || 3 < argc){
+    if (argc < 1 || 3 < argc) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);

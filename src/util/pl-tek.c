@@ -459,7 +459,7 @@ tekcont(register int x, register int y)
 	loy=(y>>2)&037;
 	extra = (x & 03) + ((y<<2) & 014);
 	n = (abs(hix-ohix) + abs(hiy-ohiy) + 6) / 12;
-	if (hiy != ohiy){
+	if (hiy != ohiy) {
 		(void)putc(hiy|040, stdout);
 		ohiy=hiy;
 	}
@@ -523,7 +523,7 @@ teklinemod(register char *s)
 	register int c;				/* DAG -- was char */
 
 	(void)putc(ESC, stdout);
-	switch (s[0]){
+	switch (s[0]) {
 	case 'l':
 		c = 'd';
 		break;

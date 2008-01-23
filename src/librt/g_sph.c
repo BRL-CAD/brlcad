@@ -293,7 +293,7 @@ rt_sph_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	fastf_t	root;		/* root of radical */
 
 	/* for each ray/sphere pair */
-	for (i = 0; i < n; i++){
+	for (i = 0; i < n; i++) {
 		if (stp[i] == 0) continue; /* stp[i] == 0 signals skip ray */
 
 		sph = (struct sph_specific *)stp[i]->st_specific;

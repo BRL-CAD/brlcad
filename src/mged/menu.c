@@ -151,7 +151,7 @@ mmenu_set(int index, struct menu_item *value)
     Tcl_DStringFree(&ds_menu);
     bu_vls_free(&menu_string);
 
-    FOR_ALL_DISPLAYS(dlp, &head_dm_list.l){
+    FOR_ALL_DISPLAYS(dlp, &head_dm_list.l) {
       if (menu_state == dlp->dml_menu_state &&
 	 dlp->dml_mged_variables->mv_faceplate &&
 	 dlp->dml_mged_variables->mv_orig_gui)
@@ -168,7 +168,7 @@ mmenu_set_all(int index, struct menu_item *value)
 
   save_cmd_list = curr_cmd_list;
   save_dm_list = curr_dm_list;
-  FOR_ALL_DISPLAYS(p, &head_dm_list.l){
+  FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
     if (p->dml_tie)
       curr_cmd_list = p->dml_tie;
 
@@ -183,9 +183,9 @@ mmenu_set_all(int index, struct menu_item *value)
 void
 mged_highlight_menu_item(struct menu_item *mptr, int y)
 {
-  switch (mptr->menu_arg){
+  switch (mptr->menu_arg) {
   case BV_RATE_TOGGLE:
-    if (mged_variables->mv_rateknobs){
+    if (mged_variables->mv_rateknobs) {
       DM_SET_FGCOLOR(dmp,
 		     color_scheme->cs_menu_text1[0],
 		     color_scheme->cs_menu_text1[1],
@@ -198,7 +198,7 @@ mged_highlight_menu_item(struct menu_item *mptr, int y)
 		     color_scheme->cs_menu_text2[2], 1, 1.0);
       DM_DRAW_STRING_2D(dmp, "/Abs",
 			GED2PM1(MENUX+4*40), GED2PM1(y-15), 0, 0);
-    }else{
+    } else {
       DM_SET_FGCOLOR(dmp,
 		     color_scheme->cs_menu_text2[0],
 		     color_scheme->cs_menu_text2[1],
@@ -263,7 +263,7 @@ mmenu_display(int y_top)
 	   mptr->menu_arg == BV_EYEROT_TOGGLE)))
 #endif
 	mged_highlight_menu_item(mptr, y);
-      else{
+      else {
 	if (mptr == *m)
 	  DM_SET_FGCOLOR(dmp,
 			 color_scheme->cs_menu_title[0],

@@ -416,7 +416,7 @@ rt_ell_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	fastf_t	root;		/* root of radical */
 
 	/* for each ray/ellipse pair */
-	for (i = 0; i < n; i++){
+	for (i = 0; i < n; i++) {
 		if (stp[i] == 0) continue; /* stp[i] == 0 signals skip ray */
 
 		ell = (struct ell_specific *)stp[i]->st_specific;

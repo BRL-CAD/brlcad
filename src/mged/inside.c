@@ -173,7 +173,7 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	CHECK_DBI_NULL;
 
-	if (argc < 1){
+	if (argc < 1) {
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -231,7 +231,7 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    status = TCL_ERROR;
 	    goto end;
 	  }
-	  if ( (outdp = db_lookup( dbip,  argv[arg], LOOKUP_NOISY )) == DIR_NULL ){
+	  if ( (outdp = db_lookup( dbip,  argv[arg], LOOKUP_NOISY )) == DIR_NULL ) {
 	    status = TCL_ERROR;
 	    goto end;
 	  }
@@ -339,7 +339,7 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		  ++arg;
 		}
 
-		if ( arbin(&intern, thick, nface, cgtype, planes) ){
+		if ( arbin(&intern, thick, nface, cgtype, planes) ) {
 		  status = TCL_ERROR;
 		  goto end;
 		}
@@ -358,7 +358,7 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    ++arg;
 	  }
 
-	  if ( tgcin(&intern, thick) ){
+	  if ( tgcin(&intern, thick) ) {
 	    status = TCL_ERROR;
 	    goto end;
 	  }
@@ -373,7 +373,7 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  thick[0] = atof( argv[arg] ) * local2base;
 	  ++arg;
 
-	  if ( ellgin(&intern, thick) ){
+	  if ( ellgin(&intern, thick) ) {
 	    status = TCL_ERROR;
 	    goto end;
 	  }
@@ -388,7 +388,7 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  thick[0] = atof( argv[arg] ) * local2base;
 	  ++arg;
 
-	  if ( torin(&intern, thick) ){
+	  if ( torin(&intern, thick) ) {
 	    status = TCL_ERROR;
 	    goto end;
 	  }
@@ -406,7 +406,7 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    ++arg;
 	  }
 
-	  if ( partin(&intern, thick) ){
+	  if ( partin(&intern, thick) ) {
 	    status = TCL_ERROR;
 	    goto end;
 	  }
@@ -424,7 +424,7 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    ++arg;
 	  }
 
-	  if ( rpcin(&intern, thick) ){
+	  if ( rpcin(&intern, thick) ) {
 	    status = TCL_ERROR;
 	    goto end;
 	  }
@@ -442,7 +442,7 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    ++arg;
 	  }
 
-	  if ( rhcin(&intern, thick) ){
+	  if ( rhcin(&intern, thick) ) {
 	    status = TCL_ERROR;
 	    goto end;
 	  }
@@ -460,7 +460,7 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    ++arg;
 	  }
 
-	  if ( epain(&intern, thick) ){
+	  if ( epain(&intern, thick) ) {
 	    status = TCL_ERROR;
 	    goto end;
 	  }
@@ -478,7 +478,7 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    ++arg;
 	  }
 
-	  if ( ehyin(&intern, thick) ){
+	  if ( ehyin(&intern, thick) ) {
 	    status = TCL_ERROR;
 	    goto end;
 	  }
@@ -496,7 +496,7 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    ++arg;
 	  }
 
-	  if ( etoin(&intern, thick) ){
+	  if ( etoin(&intern, thick) ) {
 	    status = TCL_ERROR;
 	    goto end;
 	  }
@@ -511,7 +511,7 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  }
 	  thick[0] = atof( argv[arg] ) * local2base;
 	  ++arg;
-	  if ( nmgin( &intern, thick[0] ) ){
+	  if ( nmgin( &intern, thick[0] ) ) {
 	    status = TCL_ERROR;
 	    goto end;
 	  }
@@ -1165,7 +1165,7 @@ ellgin(struct rt_db_internal *ip, fastf_t thick[6])
 		thick[order[2]] = thick[order[2]]/(1.016447*pow(ratio, .071834));
 
 	for (i=0; i<3; i++) {
-	  if ( (nmag[i] = mag[i] - thick[i]) <= 0.0 ){
+	  if ( (nmag[i] = mag[i] - thick[i]) <= 0.0 ) {
 	    struct bu_vls tmp_vls;
 
 	    bu_vls_init(&tmp_vls);

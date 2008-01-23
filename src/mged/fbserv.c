@@ -338,7 +338,7 @@ set_port(void)
 	mged_variables->mv_port = 0;
 
     /* Try a reasonable number of times to hang a listen */
-    for (i = 0; i < MAX_PORT_TRIES; ++i){
+    for (i = 0; i < MAX_PORT_TRIES; ++i) {
 	if (mged_variables->mv_port < 1024)
 	    sprintf(portname, "%d", mged_variables->mv_port + 5559);
 	else
@@ -404,7 +404,7 @@ existing_client_handler(ClientData clientData, int mask)
   struct dm_list *dlp;
   struct dm_list *scdlp;  /* save current dm_list pointer */
 
-  FOR_ALL_DISPLAYS(dlp, &head_dm_list.l){
+  FOR_ALL_DISPLAYS(dlp, &head_dm_list.l) {
     for (i = MAX_CLIENTS-1; i >= 0; i--)
       if (fd == dlp->dml_clients[i].c_fd)
 	goto found;
@@ -417,7 +417,7 @@ found:
   scdlp = curr_dm_list;
 
   curr_dm_list = dlp;
-  for (i = MAX_CLIENTS-1; i >= 0; i--){
+  for (i = MAX_CLIENTS-1; i >= 0; i--) {
     if (clients[i].c_fd == 0)
       continue;
 
@@ -430,7 +430,7 @@ found:
     if (clients[i].c_fd != fd)
       continue;
 
-    if (pkg_suckin(clients[i].c_pkg) <= 0){
+    if (pkg_suckin(clients[i].c_pkg) <= 0) {
       /* Probably EOF */
       drop_client(i);
 
@@ -454,7 +454,7 @@ setup_socket(int fd)
   int on = 1;
 
 #if defined(SO_KEEPALIVE)
-  if (setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, (char *)&on, sizeof(on)) < 0){
+  if (setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, (char *)&on, sizeof(on)) < 0) {
     bu_log("setsockopt (SO_KEEPALIVE): %m\n");
   }
 #endif
@@ -465,7 +465,7 @@ setup_socket(int fd)
     int	val;
     int	size;
 
-    for (size = 256; size > 16; size /= 2){
+    for (size = 256; size > 16; size /= 2) {
       val = size * 1024;
       m = setsockopt(fd, SOL_SOCKET, SO_RCVBUF,
 		      (char *)&val, sizeof(val));

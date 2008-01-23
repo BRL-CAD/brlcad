@@ -534,7 +534,7 @@ bu_parse_double(const char *str, long int count, double *loc)
 	char	buf[128];
 	int	len;
 
-	for (i=0; i < count && *str; ++i){
+	for (i=0; i < count && *str; ++i) {
 		numstart = str;
 
 		/* skip sign */
@@ -668,7 +668,7 @@ bu_struct_lookup(register const struct bu_structparse *sdp, register const char 
 				register const char *cp;
 				register const char *pv = value;
 
-				for (i=0; i < sdp->sp_count && *pv; ++i){
+				for (i=0; i < sdp->sp_count && *pv; ++i) {
 					tmpi = atoi( pv );
 
 					cp = pv;
@@ -683,7 +683,7 @@ bu_struct_lookup(register const struct bu_structparse *sdp, register const char 
 					 */
 					if (cp == pv ||
 					    (cp == pv+1 &&
-					    (*pv == '+' || *pv == '-'))){
+					    (*pv == '+' || *pv == '-'))) {
 					    retval = -2;
 					    break;
 					} else {
@@ -708,7 +708,7 @@ bu_struct_lookup(register const struct bu_structparse *sdp, register const char 
 					break;
 				}
 				/* Normal case: an integer */
-				for (i=0; i < sdp->sp_count && *pv; ++i){
+				for (i=0; i < sdp->sp_count && *pv; ++i) {
 					tmpi = atoi( pv );
 
 					cp = pv;
@@ -723,7 +723,7 @@ bu_struct_lookup(register const struct bu_structparse *sdp, register const char 
 					 */
 					if (cp == pv ||
 					    (cp == pv+1 &&
-					    (*pv == '+' || *pv == '-'))){
+					    (*pv == '+' || *pv == '-'))) {
 					    retval = -2;
 					    break;
 					} else {
@@ -1113,14 +1113,14 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 
 				if (sdp->sp_count == 16) {
 					bu_matprint(sdp->sp_name, dp);
-				} else if (sdp->sp_count <= 3){
+				} else if (sdp->sp_count <= 3) {
 					bu_log( " %s=%.25G", sdp->sp_name, *dp++ );
 
 					while (--i > 0)
 						bu_log( ",%.25G", *dp++ );
 
 					bu_log("\n");
-				}else  {
+				} else  {
 					int delta = strlen(sdp->sp_name)+2;
 
 					bu_log_indent_delta(delta);
@@ -1459,14 +1459,14 @@ bu_vls_struct_print2(struct bu_vls			*vls_out,
 
 				if (sdp->sp_count == 16) {
 					bu_vls_matprint(vls_out, sdp->sp_name, dp);
-				} else if (sdp->sp_count <= 3){
+				} else if (sdp->sp_count <= 3) {
 					bu_vls_printf(vls_out, " %s=%.25G", sdp->sp_name, *dp++ );
 
 					while (--i > 0)
 						bu_vls_printf(vls_out, ",%.25G", *dp++ );
 
 					bu_vls_printf(vls_out, "\n");
-				}else  {
+				} else  {
 					int delta = strlen(sdp->sp_name)+2;
 
 					bu_log_indent_delta(delta);

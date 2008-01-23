@@ -89,7 +89,7 @@ main(int argc, char **argv)
     if (!get_args(argc, argv))
 	fprintf(stderr, "anim_keyread: get_args error");
 
-    while (!feof(stdin)){  /* read one keyframe */
+    while (!feof(stdin)) {  /* read one keyframe */
 	scanf("%lf", &time);
 	scanf("%lf", &viewsize);
 	scanf("%lf %lf %lf", eyept, eyept+1, eyept+2);
@@ -126,7 +126,7 @@ main(int argc, char **argv)
 		VSCALE(angle, angle, RTOD);
 	    printf("%.10g\t%.10g\t%.10g\n", angle[X], angle[Y], angle[Z]);
 	}
-	else if (mode==QUATERNION){
+	else if (mode==QUATERNION) {
 	    anim_mat2quat(quat, viewrot);
 	    printf("%.10g\t%.10g\t%.10g\t%.10g\n", quat[X], quat[Y], quat[Z], quat[W]);
 	}
@@ -146,7 +146,7 @@ int get_args(int argc, char **argv)
     units = DEGREES;
 
     while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
-	switch (c){
+	switch (c) {
 	case 'y':
 	    mode = YPR;
 	    break;

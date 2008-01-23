@@ -129,12 +129,12 @@ adjust_rect_for_zoom(void)
   else
     height = -rubber_band->rb_height;
 
-  if (width >= height){
+  if (width >= height) {
     if (rubber_band->rb_height >= 0.0)
       rubber_band->rb_height = width / dmp->dm_aspect;
     else
       rubber_band->rb_height = -width / dmp->dm_aspect;
-  }else{
+  } else {
     if (rubber_band->rb_width >= 0.0)
       rubber_band->rb_width = height * dmp->dm_aspect;
     else
@@ -213,7 +213,7 @@ rt_rect_area(void)
      NEAR_ZERO(rubber_band->rb_height, (fastf_t)SMALL_FASTF))
     return;
 
-  if (mged_variables->mv_port < 0){
+  if (mged_variables->mv_port < 0) {
     bu_log("rt_rect_area: invalid port number - %d\n", mged_variables->mv_port);
     return;
   }
@@ -223,16 +223,16 @@ rt_rect_area(void)
   width = rubber_band->rb_dim[X];
   height = rubber_band->rb_dim[Y];
 
-  if (width >= 0){
+  if (width >= 0) {
     xmax = xmin + width;
-  }else{
+  } else {
     xmax = xmin;
     xmin += width;
   }
 
-  if (height >= 0){
+  if (height >= 0) {
     ymax = ymin + height;
-  }else{
+  } else {
     ymax = ymin;
     ymin += height;
   }

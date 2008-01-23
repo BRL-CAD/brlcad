@@ -49,10 +49,10 @@
 #include "brlcad_version.h"
 
 
-#define FB_TCL_CKMAG(_ptr, _magic, _str){ \
+#define FB_TCL_CKMAG(_ptr, _magic, _str) { \
 	struct bu_vls _fb_vls; \
 \
-	if (!(_ptr)){ \
+	if (!(_ptr)) { \
 		bu_vls_init(&_fb_vls); \
 		bu_vls_printf(&_fb_vls, "ERROR: null %s ptr, file %s, line %d\n", \
 			_str, __FILE__, __LINE__ ); \
@@ -60,7 +60,7 @@
 		bu_vls_free(&_fb_vls); \
 \
 		return TCL_ERROR; \
-	}else if (*((long *)(_ptr)) != (_magic)){ \
+	} else if (*((long *)(_ptr)) != (_magic)) { \
 		bu_vls_init(&_fb_vls); \
 		bu_vls_printf(&_fb_vls, "ERROR: bad %s ptr x%lx, s/b x%x, was x%lx, file %s, line %d\n", \
 		_str, (long)_ptr, _magic, (long)*((long *)(_ptr)), __FILE__, __LINE__); \
@@ -137,12 +137,12 @@ fb_cmd_open_existing(ClientData clientData, Tcl_Interp *interp, int argc, char *
     struct bu_vls vls;
     int found = 0;
 
-    if (argc < 2){
+    if (argc < 2) {
 	Tcl_AppendResult(interp, "XXXfb_open_existing: wrong number of args\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
-    if ((ifp = (FBIO *)calloc(sizeof(FBIO), 1)) == FBIO_NULL){
+    if ((ifp = (FBIO *)calloc(sizeof(FBIO), 1)) == FBIO_NULL) {
 	Tcl_AppendResult(interp, "fb_open_existing: failed to allocate ifp memory\n", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -158,7 +158,7 @@ fb_cmd_open_existing(ClientData clientData, Tcl_Interp *interp, int argc, char *
 	/* Mark OK by filling in magic number */
 	ifp->if_magic = FB_MAGIC;
 
-	if ((X24_open_existing(ifp, argc - 1, argv + 1)) <= -1){
+	if ((X24_open_existing(ifp, argc - 1, argv + 1)) <= -1) {
 	    ifp->if_magic = 0; /* sanity */
 	    free((void *) ifp->if_name);
 	    free((void *) ifp);
@@ -181,7 +181,7 @@ fb_cmd_open_existing(ClientData clientData, Tcl_Interp *interp, int argc, char *
 	/* Mark OK by filling in magic number */
 	ifp->if_magic = FB_MAGIC;
 
-	if ((tk_open_existing(ifp, argc - 1, argv + 1)) <= -1){
+	if ((tk_open_existing(ifp, argc - 1, argv + 1)) <= -1) {
 	    ifp->if_magic = 0; /* sanity */
 	    free((void *) ifp->if_name);
 	    free((void *) ifp);
@@ -203,7 +203,7 @@ fb_cmd_open_existing(ClientData clientData, Tcl_Interp *interp, int argc, char *
 	/* Mark OK by filling in magic number */
 	ifp->if_magic = FB_MAGIC;
 
-	if ((wgl_open_existing(ifp, argc - 1, argv + 1)) <= -1){
+	if ((wgl_open_existing(ifp, argc - 1, argv + 1)) <= -1) {
 	    ifp->if_magic = 0; /* sanity */
 	    free((void *) ifp->if_name);
 	    free((void *) ifp);
@@ -224,7 +224,7 @@ fb_cmd_open_existing(ClientData clientData, Tcl_Interp *interp, int argc, char *
 	/* Mark OK by filling in magic number */
 	ifp->if_magic = FB_MAGIC;
 
-	if ((ogl_open_existing(ifp, argc - 1, argv + 1)) <= -1){
+	if ((ogl_open_existing(ifp, argc - 1, argv + 1)) <= -1) {
 	    ifp->if_magic = 0; /* sanity */
 	    free((void *) ifp->if_name);
 	    free((void *) ifp);
@@ -278,12 +278,12 @@ fb_cmd_close_existing(ClientData clientData, Tcl_Interp *interp, int argc, char 
     struct bu_vls vls;
     int status;
 
-    if (argc != 2){
+    if (argc != 2) {
 	/* XXX need help message */
 	return TCL_ERROR;
     }
 
-    if (sscanf(argv[1], "%lu", (unsigned long *)&ifp) != 1){
+    if (sscanf(argv[1], "%lu", (unsigned long *)&ifp) != 1) {
 	Tcl_AppendResult(interp, "fb_close_existing: failed to provide ifp\n", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -292,7 +292,7 @@ fb_cmd_close_existing(ClientData clientData, Tcl_Interp *interp, int argc, char 
     _fb_pgflush(ifp);
 #ifdef IF_X
     if (strcasecmp(ifp->if_name, X_device_name) == 0) {
-	if ((status = X24_close_existing(ifp)) <= -1){
+	if ((status = X24_close_existing(ifp)) <= -1) {
 	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "fb_close_existing: can not close device \"%s\", ret=%d.\n",
 			  ifp->if_name, status);
@@ -312,7 +312,7 @@ fb_cmd_close_existing(ClientData clientData, Tcl_Interp *interp, int argc, char 
 
 #ifdef IF_WGL
     if (strcasecmp(ifp->if_name, wgl_device_name) == 0) {
-	if ((status = wgl_close_existing(ifp)) <= -1){
+	if ((status = wgl_close_existing(ifp)) <= -1) {
 	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "fb_close_existing: can not close device \"%s\", ret=%d.\n",
 			  ifp->if_name, status);
@@ -331,7 +331,7 @@ fb_cmd_close_existing(ClientData clientData, Tcl_Interp *interp, int argc, char 
 
 #ifdef IF_OGL
     if (strcasecmp(ifp->if_name, ogl_device_name) == 0) {
-	if ((status = ogl_close_existing(ifp)) <= -1){
+	if ((status = ogl_close_existing(ifp)) <= -1) {
 	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "fb_close_existing: can not close device \"%s\", ret=%d.\n",
 			  ifp->if_name, status);
@@ -352,7 +352,7 @@ fb_cmd_close_existing(ClientData clientData, Tcl_Interp *interp, int argc, char 
 #if 0
 /* XXX TJM: not yet */
     if (strcasecmp(ifp->if_name, tk_device_name) == 0) {
-	if ((status = tk_close_existing(ifp)) <= -1){
+	if ((status = tk_close_existing(ifp)) <= -1) {
 	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "fb_close_existing: can not close device \"%s\", ret=%d.\n",
 			  ifp->if_name, status);

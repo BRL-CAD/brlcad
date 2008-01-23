@@ -148,7 +148,7 @@ do_cell(struct val *vp, double xc, double yc)
 		fprintf(stderr, "%d roots?\n", nroots);
 		return;
 	}
-	for ( l=0; l < nroots; l++ ){
+	for ( l=0; l < nroots; l++ ) {
 		if ( NEAR_ZERO( roots[l].im, 0.0001 ) )
 			vp->v_z[vp->v_n++] = roots[l].re;
 	}

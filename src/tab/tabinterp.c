@@ -925,13 +925,13 @@ spline( register struct chan *chp, fastf_t *times )
 		hi1 = end ? chp->c_itime[1] - chp->c_itime[0]:
 			chp->c_itime[i+1] - chp->c_itime[i];
 		D2yi1 = D2yi;
-		if (i>0){
+		if (i>0) {
 			hi = chp->c_itime[i]-chp->c_itime[i-1];
 			corr = end ? 2*s+u : 0.0;
 			D2yi = (end*v+rrr[i]-hi1*D2yi1-s*D2yn1)/
 				(diag[i]+corr);
 			if (end) D2yn1 = D2yi;
-			if (i>1){
+			if (i>1) {
 				a = 2*(hi+hi1);
 				if (i==1) a += konst*hi;
 				if (i==chp->c_ilen-2) a += konst*hi1;
@@ -1224,7 +1224,7 @@ int get_args(int argc, char **argv)
 {
 	int c;
 	while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
-		switch (c){
+		switch (c) {
 		case 'q':
 			verbose = 0;
 			break;

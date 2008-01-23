@@ -153,7 +153,7 @@ f_hideline(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	CHECK_DBI_NULL;
 
-	if (argc < 2 || 4 < argc){
+	if (argc < 2 || 4 < argc) {
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);

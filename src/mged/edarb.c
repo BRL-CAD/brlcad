@@ -337,7 +337,7 @@ f_extrude(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	CHECK_DBI_NULL;
 
-	if (argc < 3 || 3 < argc){
+	if (argc < 3 || 3 < argc) {
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -545,7 +545,7 @@ f_arbdef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	if (argc < 4 || 4 < argc){
+	if (argc < 4 || 4 < argc) {
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -644,7 +644,7 @@ f_mirface(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	struct rt_arb_internal *arb;
 	struct rt_arb_internal larb;	/* local copy of solid */
 
-	if (argc < 3 || 3 < argc){
+	if (argc < 3 || 3 < argc) {
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -826,7 +826,7 @@ f_edgedir(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	vect_t slope;
 	fastf_t rot, fb;
 
-	if (argc < 3 || 4 < argc){
+	if (argc < 3 || 4 < argc) {
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -1029,7 +1029,7 @@ f_permute(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     CHECK_DBI_NULL;
     CHECK_READ_ONLY;
 
-    if (argc < 2 || 2 < argc){
+    if (argc < 2 || 2 < argc) {
       struct bu_vls vls;
 
       bu_vls_init(&vls);

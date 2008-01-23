@@ -69,10 +69,10 @@ struct solid  {
 #define SOLID_NULL	((struct solid *)0)
 
 #define GET_SOLID(p, fp) { \
-	if (BU_LIST_IS_EMPTY(fp)){ \
+	if (BU_LIST_IS_EMPTY(fp)) { \
 		BU_GETSTRUCT(p, solid); \
 		db_full_path_init(&(p)->s_fullpath); \
-	}else{ \
+	} else { \
 		p = BU_LIST_NEXT(solid, fp); \
 		BU_LIST_DEQUEUE(&((p)->l)); \
 		(p)->s_fullpath.fp_len = 0; \

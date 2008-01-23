@@ -85,7 +85,7 @@ f_3ptarb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	if (argc < 1 || 27 < argc){
+	if (argc < 1 || 27 < argc) {
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -332,7 +332,7 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	if (argc < 1 || 27 < argc){
+	if (argc < 1 || 27 < argc) {
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);

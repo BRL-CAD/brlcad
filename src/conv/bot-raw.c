@@ -99,7 +99,7 @@ int main(int ac, char *av[])
     printf("geometry file: %s\n", av[1]);
 
 
-    if ((rtip=rt_dirbuild(av[1], idbuf, sizeof(idbuf)))==RTI_NULL){
+    if ((rtip=rt_dirbuild(av[1], idbuf, sizeof(idbuf)))==RTI_NULL) {
 	fprintf(stderr, "rtexample: rt_dirbuild failure\n");
 	return 2;
     }

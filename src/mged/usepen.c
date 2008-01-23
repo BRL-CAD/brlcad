@@ -107,7 +107,7 @@ f_mouse(
 	int	xpos;
 	int	ypos;
 
-	if (argc < 4 || 4 < argc){
+	if (argc < 4 || 4 < argc) {
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -328,7 +328,7 @@ f_aip(
 {
   register struct solid *sp;
 
-  if (argc < 1 || 2 < argc){
+  if (argc < 1 || 2 < argc) {
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -338,39 +338,39 @@ f_aip(
     return TCL_ERROR;
   }
 
-  if (!ndrawn){
+  if (!ndrawn) {
 	  return TCL_OK;
   } else if (state != ST_S_PICK && state != ST_O_PICK  && state != ST_O_PATH) {
 	  return TCL_OK;
   }
 
-  if (state == ST_O_PATH){
-    if (argc == 1 || *argv[1] == 'f'){
+  if (state == ST_O_PATH) {
+    if (argc == 1 || *argv[1] == 'f') {
       ++ipathpos;
       if (ipathpos >= illump->s_fullpath.fp_len)
 	ipathpos = 0;
-    }else if (*argv[1] == 'b'){
+    } else if (*argv[1] == 'b') {
       --ipathpos;
       if (ipathpos < 0)
 	ipathpos = illump->s_fullpath.fp_len-1;
-    }else{
+    } else {
       Tcl_AppendResult(interp, "aip: bad parameter - ", argv[1], "\n", (char *)NULL);
       return TCL_ERROR;
     }
-  }else{
+  } else {
     sp = illump;
     sp->s_iflag = DOWN;
-    if (argc == 1 || *argv[1] == 'f'){
+    if (argc == 1 || *argv[1] == 'f') {
       if (BU_LIST_NEXT_IS_HEAD(sp, &dgop->dgo_headSolid))
 	sp = BU_LIST_NEXT(solid, &dgop->dgo_headSolid);
       else
 	sp = BU_LIST_PNEXT(solid, sp);
-    }else if (*argv[1] == 'b'){
+    } else if (*argv[1] == 'b') {
       if (BU_LIST_PREV_IS_HEAD(sp, &dgop->dgo_headSolid))
 	sp = BU_LIST_PREV(solid, &dgop->dgo_headSolid);
       else
 	sp = BU_LIST_PLAST(solid, sp);
-    }else{
+    } else {
       Tcl_AppendResult(interp, "aip: bad parameter - ", argv[1], "\n", (char *)NULL);
       return TCL_ERROR;
     }
@@ -493,7 +493,7 @@ f_matpick(
 
 	CHECK_DBI_NULL;
 
-	if (argc < 2 || 3 < argc){
+	if (argc < 2 || 3 < argc) {
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -503,13 +503,13 @@ f_matpick(
 	  return TCL_ERROR;
 	}
 
-	if (!strcmp("-n", argv[1])){
+	if (!strcmp("-n", argv[1])) {
 	  illum_only = 1;
 	  --argc;
 	  ++argv;
 	}
 
-	if (argc != 2){
+	if (argc != 2) {
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -561,7 +561,7 @@ got:
 		  sp->s_iflag = DOWN;
 	}
 
-	if (!illum_only){
+	if (!illum_only) {
 	  (void)chg_state( ST_O_PATH, ST_O_EDIT, "mouse press" );
 	  chg_l2menu(ST_O_EDIT);
 

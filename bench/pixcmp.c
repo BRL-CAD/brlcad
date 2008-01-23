@@ -79,7 +79,7 @@ void
 handle_i_opt(const char *arg, long *skip1, long *skip2)
 {
     const char *endptr = arg;
-    if ((arg == NULL) || ((skip1 == NULL) && (skip2 == NULL))){
+    if ((arg == NULL) || ((skip1 == NULL) && (skip2 == NULL))) {
 	/* nothing to do */
 	return;
     }

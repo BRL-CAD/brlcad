@@ -989,7 +989,7 @@ nmg_ml(struct shell *s)
 
 	/* Save the first edgeuse so we can tell if the loop closes */
 	feu = BU_LIST_FIRST( edgeuse, &s->eu_hd );
-	if (feu){
+	if (feu) {
 		NMG_CK_EDGEUSE(feu);
 		NMG_CK_VERTEXUSE(feu->vu_p);
 		NMG_CK_VERTEX(feu->vu_p->v_p);

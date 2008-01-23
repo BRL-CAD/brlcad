@@ -120,7 +120,7 @@ vls_print_matrix(struct bu_vls *vls, matp_t matrix)
     if (bn_mat_is_identity(matrix))
 	return;
 
-    for (k=0; k<16; k++){
+    for (k=0; k<16; k++) {
 	sprintf(buf, "%g", matrix[k]);
 	tmp = atof(buf);
 	if (tmp == matrix[k])
@@ -136,7 +136,7 @@ put_rgb_into_comb(struct rt_comb_internal *comb, char *str)
 {
     int r, g, b;
 
-    if (sscanf(str, "%d%d%d", &r, &g, &b) != 3){
+    if (sscanf(str, "%d%d%d", &r, &g, &b) != 3) {
 	comb->rgb_valid = 0;
 	return;
     }
@@ -1244,15 +1244,15 @@ int build_comb(struct rt_comb_internal *comb, struct directory *dp, int node_cou
 		Tcl_AppendResult(interp, "\tWARNING: '", name, "' does not exist\n", (char *)NULL);
 	    /* get matrix */
 	    ptr = strtok( (char *)NULL, delims );
-	    if ( !ptr ){
+	    if ( !ptr ) {
 		matrix = (matp_t)NULL;
 		done2 = 1;
-	    }else if (*ptr == 'u' ||
+	    } else if (*ptr == 'u' ||
 		     (*ptr == '-' && *(ptr+1) == '\0') ||
 		     (*ptr == '+' && *(ptr+1) == '\0')) {
 		/* assume another relational operator */
 		matrix = (matp_t)NULL;
-	    }else {
+	    } else {
 		int k;
 
 		matrix = (matp_t)bu_calloc( 16, sizeof( fastf_t ), "red: matrix" );
@@ -1428,7 +1428,7 @@ cmd_put_comb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     CHECK_DBI_NULL;
     CHECK_READ_ONLY;
 
-    if (argc < 7 || 11 < argc){
+    if (argc < 7 || 11 < argc) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -1440,8 +1440,8 @@ cmd_put_comb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     bu_strlcpy(red_tmpcomb, red_tmpcomb_init, sizeof(red_tmpcomb));
     dp = db_lookup( dbip, argv[1], LOOKUP_QUIET );
-    if (dp != DIR_NULL){
-	if ( !(dp->d_flags & DIR_COMB) ){
+    if (dp != DIR_NULL) {
+	if ( !(dp->d_flags & DIR_COMB) ) {
 	    Tcl_AppendResult(interp, argv[1],
 			     " is not a combination, so cannot be edited this way\n", (char *)NULL);
 	    return TCL_ERROR;
@@ -1453,15 +1453,15 @@ cmd_put_comb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 	save_comb(dp); /* Save combination to a temp name */
 	save_comb_flag = 1;
-    }else{
+    } else {
 	comb = (struct rt_comb_internal *)NULL;
     }
 
     /* empty the existing combination */
-    if ( comb && comb->tree ){
+    if ( comb && comb->tree ) {
 	db_free_tree( comb->tree, &rt_uniresource );
 	comb->tree = NULL;
-    }else{
+    } else {
 	/* make an empty combination structure */
 	BU_GETSTRUCT( comb, rt_comb_internal );
 	comb->magic = RT_COMB_MAGIC;
@@ -1488,8 +1488,8 @@ cmd_put_comb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     else
 	comb->region_flag = 0;
 
-    if (comb->region_flag){
-	if (argc != 11){
+    if (comb->region_flag) {
+	if (argc != 11) {
 	    struct bu_vls vls;
 
 	    bu_vls_init(&vls);
@@ -1510,8 +1510,8 @@ cmd_put_comb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	mat_default = comb->GIFTmater;
 	los_default = comb->los;
 	offset = 6;
-    }else{
-	if (argc != 7){
+    } else {
+	if (argc != 7) {
 	    struct bu_vls vls;
 
 	    bu_vls_init(&vls);
@@ -1531,14 +1531,14 @@ cmd_put_comb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     else
 	comb->inherit = 0;
 
-    if (put_tree_into_comb(comb, dp, argv[1], new_name, argv[offset + 4]) == TCL_ERROR){
-	if (comb){
+    if (put_tree_into_comb(comb, dp, argv[1], new_name, argv[offset + 4]) == TCL_ERROR) {
+	if (comb) {
 	    restore_comb(dp);
 	    Tcl_AppendResult(interp, "\toriginal restored\n", (char *)NULL);
 	}
 	(void)unlink(red_tmpfil);
 	return TCL_ERROR;
-    }else if (save_comb_flag){
+    } else if (save_comb_flag) {
 	/* eliminate the temporary combination */
 	char *av[3];
 
@@ -1564,7 +1564,7 @@ f_red(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     CHECK_DBI_NULL;
 
-    if (argc != 2){
+    if (argc != 2) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);

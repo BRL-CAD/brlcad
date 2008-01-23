@@ -86,7 +86,7 @@ fastf_t f;
   fastf_t tmp_f;
 
   /* This way makes no assumption about the size of f */
-  if (f > 1.0){
+  if (f > 1.0) {
     tmp_f = (f - 1.0) / 2.0;
     i = tmp_f;
     tmp_f = (tmp_f - i) * 2.0;
@@ -97,7 +97,7 @@ fastf_t f;
       return (-1.0 + tmp_f);
   }
 
-  if (f < -1.0){
+  if (f < -1.0) {
     tmp_f = (f + 1.0) / 2.0;
     i = tmp_f;
     tmp_f = (tmp_f - i) * 2.0;

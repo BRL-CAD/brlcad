@@ -428,13 +428,13 @@ rt_tgc_shear(const fastf_t *vect, int axis, fastf_t *Shr, fastf_t *Trn, fastf_t 
 	if ( NEAR_ZERO( vect[axis], SMALL_FASTF ) )
 		bu_bomb("rt_tgc_shear() divide by zero\n");
 
-	if ( axis == X ){
+	if ( axis == X ) {
 		Inv[4] = -(Shr[4] = Trn[1] = -vect[Y]/vect[X]);
 		Inv[8] = -(Shr[8] = Trn[2] = -vect[Z]/vect[X]);
-	} else if ( axis == Y ){
+	} else if ( axis == Y ) {
 		Inv[1] = -(Shr[1] = Trn[4] = -vect[X]/vect[Y]);
 		Inv[9] = -(Shr[9] = Trn[6] = -vect[Z]/vect[Y]);
-	} else if ( axis == Z ){
+	} else if ( axis == Z ) {
 		Inv[2] = -(Shr[2] = Trn[8] = -vect[X]/vect[Z]);
 		Inv[6] = -(Shr[6] = Trn[9] = -vect[Y]/vect[Z]);
 	}
@@ -720,7 +720,7 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 		 *  or sufficiently close, then use the real part as one value
 		 *  of 't' for the intersections
 		 */
-		for ( l=0, npts=0; l < nroots; l++ ){
+		for ( l=0, npts=0; l < nroots; l++ ) {
 			if ( NEAR_ZERO( val[l].im, 1e-2 ) ) {
 				hit_type[npts] = TGC_NORM_BODY;
 				k[npts++] = val[l].re;
@@ -729,7 +729,7 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 		/* bu_log("npts rooted is %d; ", npts); */
 
 		/* Here, 'npts' is number of points being returned */
-		if ( npts != 0 && npts != 2 && npts != 4 && npts > 0 ){
+		if ( npts != 0 && npts != 2 && npts != 4 && npts > 0 ) {
 			bu_log("tgc:  reduced %d to %d roots\n", nroots, npts);
 			bn_pr_roots( stp->st_name, val, nroots );
 		} else if (nroots < 0) {
@@ -759,7 +759,7 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	while ( i < npts ) {
 		zval = k[i]*dprime[Z] + pprime[Z];
 		/* Height vector is unitized (tgc->tgc_sH == 1.0) */
-		if ( zval >= 1.0 || zval <= 0.0 ){
+		if ( zval >= 1.0 || zval <= 0.0 ) {
 			int j;
 			/* drop this hit */
 			npts--;
@@ -797,11 +797,11 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 		bu_log("alf1 is %f, alf2 is %f\n", alf1, alf2);
 		bu_log("work[x]=%f, work[y]=%f, aadcc=%f, bbddd=%f\n", work[X], work[Y], tgc->tgc_AAdCC, tgc->tgc_BBdDD);
 		*/
-		if ( alf1 <= 1.0 ){
+		if ( alf1 <= 1.0 ) {
 			hit_type[npts] = TGC_NORM_BOT;
 			k[npts++] = b;
 		}
-		if ( alf2 <= 1.0 ){
+		if ( alf2 <= 1.0 ) {
 			hit_type[npts] = TGC_NORM_TOP;
 			k[npts++] = t;
 		}
@@ -856,7 +856,7 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 		}
 	}
 
-	if ( npts != 0 && npts != 2 && npts != 4 ){
+	if ( npts != 0 && npts != 2 && npts != 4 ) {
 		bu_log("tgc(%s):  %d intersects != {0, 2, 4}\n",
 		    stp->st_name, npts );
 		bu_log( "\tray: pt = (%g %g %g), dir = (%g %g %g)\n",
@@ -1028,7 +1028,7 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 	 *  then the cone equation reduces to a much simpler quadratic
 	 *  form.  Otherwise it is a (gah!) quartic equation.
 	 */
-		if ( tgc->tgc_AD_CB ){
+		if ( tgc->tgc_AD_CB ) {
 			/* (void) bn_poly_add( &sum, &Xsqr, &Ysqr ); and */
 			/* (void) bn_poly_sub( &C, &sum, &Rsqr ); inline expand to */
 			C[ix].dgr = 2;
@@ -1089,11 +1089,11 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 	}
 
 	/* It seems impractical to try to vectorize finding and sorting roots. */
-	for (ix = 0; ix < n; ix++){
+	for (ix = 0; ix < n; ix++) {
 		if (segp[ix].seg_stp == 0) continue; /* == 0 signals skip ray */
 
 		/* Again, check for the equal eccentricities case. */
-		if ( C[ix].dgr == 2 ){
+		if ( C[ix].dgr == 2 ) {
 			fastf_t roots;
 
 			/* Find the real roots the easy way. */
@@ -1120,12 +1120,12 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 		 *  or sufficiently close, then use the real part as one value
 		 *  of 't' for the intersections
 		 */
-			for ( l=0, npts=0; l < nroots; l++ ){
+			for ( l=0, npts=0; l < nroots; l++ ) {
 				if ( NEAR_ZERO( val[l].im, 0.0001 ) )
 					k[npts++] = val[l].re;
 			}
 			/* Here, 'npts' is number of points being returned */
-			if ( npts != 0 && npts != 2 && npts != 4 && npts > 0 ){
+			if ( npts != 0 && npts != 2 && npts != 4 && npts > 0 ) {
 				bu_log("tgc:  reduced %d to %d roots\n", nroots, npts);
 				bn_pr_roots( "tgc", val, nroots );
 			} else if (nroots < 0) {
@@ -1146,7 +1146,7 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 		for ( i = 0; i < npts; ++i )
 			k[i] -= cor_proj;
 
-		if ( npts != 0 && npts != 2 && npts != 4 ){
+		if ( npts != 0 && npts != 2 && npts != 4 ) {
 			bu_log("tgc(%s):  %d intersects != {0, 2, 4}\n",
 			    stp[ix]->st_name, npts );
 			RT_TGC_SEG_MISS(segp[ix]);		/* No hit	*/
@@ -1171,13 +1171,13 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 	 */
 		intersect = 0;
 		tgc = (struct tgc_specific *)stp[ix]->st_specific;
-		for ( i=0; i < npts; i++ ){
+		for ( i=0; i < npts; i++ ) {
 			/* segp[ix].seg_in.hit_normal holds dprime */
 			/* segp[ix].seg_out.hit_normal holds pprime */
 			zval = k[i]*segp[ix].seg_in.hit_normal[Z] +
 			    segp[ix].seg_out.hit_normal[Z];
 			/* Height vector is unitized (tgc->tgc_sH == 1.0) */
-			if ( zval < 1.0 && zval > 0.0 ){
+			if ( zval < 1.0 && zval > 0.0 ) {
 				if ( ++intersect == 2 )  {
 					pt[IN] = k[i];
 				}  else
@@ -1203,7 +1203,7 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 		/* segp[ix].seg_in.hit_normal holds dprime */
 		VMOVE( dprime, segp[ix].seg_in.hit_normal );
 
-		if ( intersect == 2 ){
+		if ( intersect == 2 ) {
 			/*  If two between-plane intersections exist, they are
 		 *  the hit points for the ray.
 		 */
@@ -1246,10 +1246,10 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 			/* Must scale C and D vectors */
 			alf2 = ALPHA(work[X], work[Y], tgc->tgc_AAdCC, tgc->tgc_BBdDD);
 
-			if ( alf1 <= 1.0 ){
+			if ( alf1 <= 1.0 ) {
 				pt[IN] = b;
 				nflag = TGC_NORM_BOT; /* copy reverse normal */
-			} else if ( alf2 <= 1.0 ){
+			} else if ( alf2 <= 1.0 ) {
 				pt[IN] = t;
 				nflag = TGC_NORM_TOP;	/* copy normal */
 			} else {
@@ -1326,7 +1326,7 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 	 *  normal with the direction vector to determine the
 	 *  orientation of the intersections.
 	 */
-			if ( dir > 0.0 ){
+			if ( dir > 0.0 ) {
 				segp[ix].seg_in.hit_dist = b * t_scale;
 				segp[ix].seg_in.hit_surfno = TGC_NORM_BOT;	/* reverse normal */
 

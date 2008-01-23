@@ -99,7 +99,7 @@ pphit(register struct application *ap, struct partition *PartHeadp, struct seg *
 	hitp = pp->pt_inhit;
 	RT_HIT_NORMAL( normal, hitp, pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip );
 
-#define pchar(c) {putc(c, stdout);if(col++==74){putc('\n', stdout);col=0;}}
+#define pchar(c) {putc(c, stdout);if(col++==74) {putc('\n', stdout);col=0;}}
 
 	cosI0 = -VDOT(normal, ap->a_ray.r_dir);
 	if ( pp->pt_inflip )

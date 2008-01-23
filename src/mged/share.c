@@ -250,7 +250,7 @@ f_share(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	SHARE_RESOURCE(uflag, _view_state, dml_view_state, vs_rc, dlp1, dlp2, vls, "share: view_state")
       }
-    }else {
+    } else {
       bu_vls_printf(&vls, "share: resource type '%s' unknown\n", argv[1]);
       Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 
@@ -415,7 +415,7 @@ usurp_all_resources(struct dm_list *dlp1, struct dm_list *dlp2)
 void
 free_all_resources(struct dm_list *dlp)
 {
-  if (!--dlp->dml_view_state->vs_rc){
+  if (!--dlp->dml_view_state->vs_rc) {
     view_ring_destroy(dlp);
     bu_free((genptr_t)dlp->dml_view_state, "free_all_resources: view_state");
   }
@@ -450,7 +450,7 @@ share_dlist(struct dm_list *dlp2)
   if (!dlp2->dml_dmp->dm_displaylist)
     return;
 
-  FOR_ALL_DISPLAYS(dlp1, &head_dm_list.l){
+  FOR_ALL_DISPLAYS(dlp1, &head_dm_list.l) {
     if (dlp1 != dlp2 &&
        dlp1->dml_dmp->dm_type == dlp2->dml_dmp->dm_type &&
        !bu_vls_strcmp(&dlp1->dml_dmp->dm_dName, &dlp2->dml_dmp->dm_dName)) {

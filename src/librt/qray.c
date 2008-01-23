@@ -295,7 +295,7 @@ dgo_qray_cmd(struct dg_obj	*dgop,
 			    sscanf(argv[3], "%d", &g) != 1 ||
 			    sscanf(argv[4], "%d", &b) != 1 ||
 			    r < 0 || g < 0 || b < 0 ||
-			    255 < r || 255 < g || 255 < b){
+			    255 < r || 255 < g || 255 < b) {
 				bu_vls_init(&vls);
 				bu_vls_printf(&vls, "qray oddcolor %s %s %s - bad value",
 					      argv[2], argv[3], argv[4]);
@@ -406,7 +406,7 @@ dgo_qray_cmd(struct dg_obj	*dgop,
 			    sscanf(argv[3], "%d", &g) != 1 ||
 			    sscanf(argv[4], "%d", &b) != 1 ||
 			    r < 0 || g < 0 || b < 0 ||
-			    255 < r || 255 < g || 255 < b){
+			    255 < r || 255 < g || 255 < b) {
 				bu_vls_init(&vls);
 				bu_vls_printf(&vls, "qray overlapcolor %s %s %s - bad value",
 					      argv[2], argv[3], argv[4]);

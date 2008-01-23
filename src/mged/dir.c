@@ -77,7 +77,7 @@ f_memprint(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
   CHECK_DBI_NULL;
 
-  if (argc < 1 || 1 < argc){
+  if (argc < 1 || 1 < argc) {
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -247,7 +247,7 @@ f_prefix(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	if (argc < 3){
+	if (argc < 3) {
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -370,7 +370,7 @@ cmd_killall(ClientData	clientData,
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	if (argc < 2){
+	if (argc < 2) {
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -382,7 +382,7 @@ cmd_killall(ClientData	clientData,
 
 	if ( setjmp( jmp_env ) == 0 )
 		(void)signal( SIGINT, sig3);  /* allow interupts */
-	else{
+	else {
 		/* Free intern? */
 		return TCL_OK;
 	}
@@ -464,7 +464,7 @@ cmd_killtree(ClientData	clientData,
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	if (argc < 2){
+	if (argc < 2) {
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -519,7 +519,7 @@ f_debugdir(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
   CHECK_DBI_NULL;
 
-  if (argc < 1 || 1 < argc){
+  if (argc < 1 || 1 < argc) {
     struct bu_vls vls;
 
     bu_vls_init(&vls);

@@ -317,23 +317,23 @@ register RGBpixel *v;
 			DITHER(g, (*v)[GRN], dg, MAG2);
 			DITHER(b, (*v)[BLU], db, MAG2);
 			return (greyvec[ ( (r + g + b)/3) >> 4]);
-		}else if (r == 0) {
+		} else if (r == 0) {
 			DITHER(r, (*v)[RED], dr, MAG2);
 			DITHER(g, (*v)[GRN], dg, MAG2);
 			DITHER(b, (*v)[BLU], db, MAG2);
 			return (bluvec[ b >> 4]);
-		}else return ( r + g * 6 + b * 36 );
-	}else if (g == b && g == 0) {
+		} else return ( r + g * 6 + b * 36 );
+	} else if (g == b && g == 0) {
 		DITHER(r, (*v)[RED], dr, MAG2);
 		DITHER(g, (*v)[GRN], dg, MAG2);
 		DITHER(b, (*v)[BLU], db, MAG2);
 		return (redvec [ r >> 4]);
-	}else if (r == b && r == 0) {
+	} else if (r == b && r == 0) {
 		DITHER(r, (*v)[RED], dr, MAG2);
 		DITHER(g, (*v)[GRN], dg, MAG2);
 		DITHER(b, (*v)[BLU], db, MAG2);
 		return (grnvec[ g >> 4]);
-	}else return ( r + g * 6 + b * 36 );
+	} else return ( r + g * 6 + b * 36 );
 }
 /*
  *	c o n v R G B

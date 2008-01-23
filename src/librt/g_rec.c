@@ -588,7 +588,7 @@ rt_rec_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	fastf_t	dx2dy2;
 
 	/* for each ray/right_eliptical_cylinder pair */
-	for (i = 0; i < n; i++){
+	for (i = 0; i < n; i++) {
 		if (stp[i] == 0) continue; /* stp[i] == 0 signals skip ray */
 
 		rec = (struct rec_specific *)stp[i]->st_specific;

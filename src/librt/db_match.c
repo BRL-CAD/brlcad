@@ -133,7 +133,7 @@ db_regexp_match_all(struct bu_vls *dest, struct db_i *dbip, const char *pattern)
 	register struct directory *dp;
 
 	for ( i = num = 0; i < RT_DBNHASH; i++ )  {
-		for ( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw ){
+		for ( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw ) {
 			if ( !db_regexp_match( pattern, dp->d_namep ) )
 				continue;
 			if ( num == 0 )
@@ -188,7 +188,7 @@ db_update_nref( struct db_i *dbip, struct resource *resp )
 
 	/* Examine all COMB nodes */
 	for ( i = 0; i < RT_DBNHASH; i++ )  {
-		for ( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw ){
+		for ( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw ) {
 
 			/* handle non-combination objects that reference other objects */
 			if ( dp->d_major_type == DB5_MAJORTYPE_BRLCAD ) {

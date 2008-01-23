@@ -100,10 +100,10 @@ main(int argc, char **argv)
     VMOVEN(points+4, first, 4);
     VMOVEN(points+8, second, 4);
     num_read=4; /* in order to pass test if n=1 */
-    for (cur=points+12; cur<points+(4*(3*enn+1)); cur+=4){
+    for (cur=points+12; cur<points+(4*(3*enn+1)); cur+=4) {
 	num_read=scanf("%lf %lf %lf %lf", cur, cur+1, cur+2, cur+3);
     }
-    if (num_read<4){
+    if (num_read<4) {
 	fprintf(stderr, "Anim_fly: Not enough lines in input table.\n");
 	fprintf(stderr, "Increase number of lines or reduce the minimum stepsize with -s.\n");
 	fprintf(stderr, "Currently the minumum step size is %g seconds.\n", desired_step);
@@ -126,7 +126,7 @@ main(int argc, char **argv)
 		status=MIDDLE;
 	    break;
 	case MIDDLE: /* middle points (at least one)*/
-	    for (i=0; i<3*enn*4; i++){
+	    for (i=0; i<3*enn*4; i++) {
 		VMOVEN(points+(4*i), points+(4*(i+1)), 4);
 	    }
 	    num_read=scanf("%lf %lf %lf %lf", points+(4*(3*enn)), points+(4*(3*enn)+1), points+(4*(3*enn)+2), points+(4*(3*enn)+3));
@@ -141,7 +141,7 @@ main(int argc, char **argv)
 	    break;
 	case WANE: /* last n - 1 middle points */
 	    pp += 4;
-	    if (pp >= 4*enn){
+	    if (pp >= 4*enn) {
 		status = END;
 		count--;
 		pp = 0;
@@ -168,7 +168,7 @@ main(int argc, char **argv)
     }
 
     /* Return the factor needed to achieve the requested max_bank */
-    if (estimate_f){
+    if (estimate_f) {
 	if (max_cross < VDIVIDE_TOL) {
 	    printf("%.10g\n", 0.0);
 	} else {
@@ -202,7 +202,7 @@ get_orientation(fastf_t *p0, fastf_t *p1, fastf_t *p2, fastf_t (*function) (/* ?
 	*p_yaw = last_yaw;
 
     /* avoid sudden yaw changes in vertical loops */
-    if (not_first_time&&loop){
+    if (not_first_time&&loop) {
 	if ((fabs(last_yaw - *p_yaw)<181.0)&&(fabs(last_yaw - *p_yaw)>179.0))
 	    upside_down = (upside_down) ? 0 : 1;
 	if (upside_down)
@@ -287,7 +287,7 @@ int get_args(int argc, char **argv)
 
     estimate_f = 0;
     while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
-	switch (c){
+	switch (c) {
 	case 'b':
 	    sscanf(bu_optarg, "%lf", &max_bank);
 	    estimate_f = 1;

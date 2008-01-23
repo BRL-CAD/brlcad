@@ -914,7 +914,7 @@ dgo_who_cmd(struct dg_obj	*dgop,
 		}
 		Tcl_AppendResult(interp, FIRST_SOLID(sp)->d_namep, " ", (char *)NULL);
 		sp->s_flag = UP;
-		FOR_REST_OF_SOLIDS(forw, sp, &dgop->dgo_headSolid){
+		FOR_REST_OF_SOLIDS(forw, sp, &dgop->dgo_headSolid) {
 			if (FIRST_SOLID(forw) == FIRST_SOLID(sp))
 				forw->s_flag = UP;
 		}

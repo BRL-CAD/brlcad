@@ -224,7 +224,7 @@ bu_ptbl_rm(struct bu_ptbl *b, const long int *p)
 
 	BU_CK_PTBL(b);
 	for (l = b->end-1; l >= 0; --l)  {
-		if (pp[l] == p){
+		if (pp[l] == p) {
 			/* delete consecutive occurrence(s) of p */
 			ndel++;
 

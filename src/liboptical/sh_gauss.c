@@ -533,7 +533,7 @@ gauss_render(struct application *ap, struct partition *pp, struct shadework *swp
 			/* XXX You might use a bu_ptbl list of the solid pointers... */
 			/* check to see if the solid is from this region */
 			for (BU_LIST_FOR(dbint_p, reg_db_internals,
-			    &gauss_sp->dbil)){
+			    &gauss_sp->dbil)) {
 
 				CK_DBINT(dbint_p);
 

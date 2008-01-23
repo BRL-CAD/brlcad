@@ -235,13 +235,13 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
   dmp->dm_interp = interp;
 
   dmp->dm_vars.pub_vars = (genptr_t)bu_calloc(1, sizeof(struct dm_xvars), "ogl_open: dm_xvars");
-  if (dmp->dm_vars.pub_vars == (genptr_t)NULL){
+  if (dmp->dm_vars.pub_vars == (genptr_t)NULL) {
     bu_free(dmp, "ogl_open: dmp");
     return DM_NULL;
   }
 
   dmp->dm_vars.priv_vars = (genptr_t)bu_calloc(1, sizeof(struct ogl_vars), "ogl_open: ogl_vars");
-  if (dmp->dm_vars.priv_vars == (genptr_t)NULL){
+  if (dmp->dm_vars.priv_vars == (genptr_t)NULL) {
     bu_free(dmp->dm_vars.pub_vars, "ogl_open: dmp->dm_vars.pub_vars");
     bu_free(dmp, "ogl_open: dmp");
     return DM_NULL;
@@ -259,7 +259,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
   if (bu_vls_strlen(&dmp->dm_pathName) == 0)
      bu_vls_printf(&dmp->dm_pathName, ".dm_ogl%d", count);
   ++count;
-  if (bu_vls_strlen(&dmp->dm_dName) == 0){
+  if (bu_vls_strlen(&dmp->dm_dName) == 0) {
     char *dp;
 
     dp = getenv("DISPLAY");
@@ -292,7 +292,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
   /* this is important so that ogl_configureWin knows to set the font */
   ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = NULL;
 
-  if ((tmp_dpy = XOpenDisplay(bu_vls_addr(&dmp->dm_dName))) == NULL){
+  if ((tmp_dpy = XOpenDisplay(bu_vls_addr(&dmp->dm_dName))) == NULL) {
     bu_vls_free(&init_proc_vls);
     (void)ogl_close(dmp);
     return DM_NULL;
@@ -302,7 +302,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
   {
     int return_val;
 
-    if (!XQueryExtension(tmp_dpy, "GLX", &return_val, &return_val, &return_val)){
+    if (!XQueryExtension(tmp_dpy, "GLX", &return_val, &return_val, &return_val)) {
       bu_vls_free(&init_proc_vls);
       (void)ogl_close(dmp);
       return DM_NULL;
@@ -310,18 +310,18 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
   }
 #endif
 
-  if (dmp->dm_width == 0){
+  if (dmp->dm_width == 0) {
     dmp->dm_width =
       DisplayWidth(tmp_dpy, DefaultScreen(tmp_dpy)) - 30;
      ++make_square;
   }
-  if (dmp->dm_height == 0){
+  if (dmp->dm_height == 0) {
     dmp->dm_height =
       DisplayHeight(tmp_dpy, DefaultScreen(tmp_dpy)) - 30;
      ++make_square;
   }
 
-  if (make_square > 0){
+  if (make_square > 0) {
     /* Make window square */
     if (dmp->dm_height <
        dmp->dm_width)
@@ -334,7 +334,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
 
   XCloseDisplay(tmp_dpy);
 
-  if (dmp->dm_top){
+  if (dmp->dm_top) {
     /* Make xtkwin a toplevel window */
     ((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin =
       Tk_CreateWindowFromPath(interp,
@@ -342,13 +342,13 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
 			      bu_vls_addr(&dmp->dm_pathName),
 			      bu_vls_addr(&dmp->dm_dName));
     ((struct dm_xvars *)dmp->dm_vars.pub_vars)->top = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin;
-  }else{
+  } else {
      char *cp;
 
      cp = strrchr(bu_vls_addr(&dmp->dm_pathName), (int)'.');
-     if (cp == bu_vls_addr(&dmp->dm_pathName)){
+     if (cp == bu_vls_addr(&dmp->dm_pathName)) {
        ((struct dm_xvars *)dmp->dm_vars.pub_vars)->top = tkwin;
-     }else{
+     } else {
        struct bu_vls top_vls;
 
        bu_vls_init(&top_vls);
@@ -380,7 +380,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
 		&init_proc_vls,
 		&dmp->dm_pathName);
 
-  if (Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR){
+  if (Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR) {
     bu_vls_free(&init_proc_vls);
     bu_vls_free(&str);
     (void)ogl_close(dmp);
@@ -407,7 +407,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
 
   /* must do this before MakeExist */
   if ((((struct dm_xvars *)dmp->dm_vars.pub_vars)->vip=ogl_choose_visual(dmp,
-				    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin)) == NULL){
+				    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin)) == NULL) {
     bu_log("ogl_open: Can't get an appropriate visual.\n");
     (void)ogl_close(dmp);
     return DM_NULL;
@@ -450,18 +450,18 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
   if ( list == (XDeviceInfoPtr)NULL ||
       list == (XDeviceInfoPtr)1 )  goto Done;
 
-  for (j = 0; j < ndevices; ++j, list++){
-    if (list->use == IsXExtensionDevice){
-      if (!strcmp(list->name, "dial+buttons")){
+  for (j = 0; j < ndevices; ++j, list++) {
+    if (list->use == IsXExtensionDevice) {
+      if (!strcmp(list->name, "dial+buttons")) {
 	if ((dev = XOpenDevice(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			      list->id)) == (XDevice *)NULL){
+			      list->id)) == (XDevice *)NULL) {
 	  bu_log("ogl_open: Couldn't open the dials+buttons\n");
 	  goto Done;
 	}
 
 	for (cip = dev->classes, k = 0; k < dev->num_classes;
-	    ++k, ++cip){
-	  switch (cip->input_class){
+	    ++k, ++cip) {
+	  switch (cip->input_class) {
 #ifdef IR_BUTTONS
 	  case ButtonClass:
 	    DeviceButtonPress(dev, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->devbuttonpress,
@@ -495,14 +495,14 @@ Done:
 
   if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 		      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
-		      ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)){
+		      ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
     bu_log("ogl_open: Couldn't make context current\n");
     (void)ogl_close(dmp);
     return DM_NULL;
   }
 
   /* display list (fontOffset + char) will display a given ASCII char */
-  if ((((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset = glGenLists(128))==0){
+  if ((((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset = glGenLists(128))==0) {
     bu_log("dm-ogl: Can't make display lists for font.\n");
     (void)ogl_close(dmp);
     return DM_NULL;
@@ -582,7 +582,7 @@ ogl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 
     if (!glXMakeCurrent(((struct dm_xvars *)dmp1->dm_vars.pub_vars)->dpy,
 			((struct dm_xvars *)dmp1->dm_vars.pub_vars)->win,
-			((struct ogl_vars *)dmp1->dm_vars.priv_vars)->glxc)){
+			((struct ogl_vars *)dmp1->dm_vars.priv_vars)->glxc)) {
       bu_log("ogl_share_dlist: Couldn't make context current\nUsing old context\n.");
       ((struct ogl_vars *)dmp1->dm_vars.priv_vars)->glxc = old_glxContext;
 
@@ -590,7 +590,7 @@ ogl_share_dlist(struct dm *dmp1, struct dm *dmp2)
     }
 
     /* display list (fontOffset + char) will display a given ASCII char */
-    if ((((struct ogl_vars *)dmp1->dm_vars.priv_vars)->fontOffset = glGenLists(128))==0){
+    if ((((struct ogl_vars *)dmp1->dm_vars.priv_vars)->fontOffset = glGenLists(128))==0) {
       bu_log("dm-ogl: Can't make display lists for font.\nUsing old context\n.");
       ((struct ogl_vars *)dmp1->dm_vars.priv_vars)->glxc = old_glxContext;
 
@@ -663,7 +663,7 @@ ogl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 
     if (!glXMakeCurrent(((struct dm_xvars *)dmp2->dm_vars.pub_vars)->dpy,
 			((struct dm_xvars *)dmp2->dm_vars.pub_vars)->win,
-			((struct ogl_vars *)dmp2->dm_vars.priv_vars)->glxc)){
+			((struct ogl_vars *)dmp2->dm_vars.priv_vars)->glxc)) {
       bu_log("ogl_share_dlist: Couldn't make context current\nUsing old context\n.");
       ((struct ogl_vars *)dmp2->dm_vars.priv_vars)->glxc = old_glxContext;
 
@@ -728,8 +728,8 @@ ogl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 HIDDEN int
 ogl_close(struct dm *dmp)
 {
-  if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy){
-    if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc){
+  if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy) {
+    if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc) {
       glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy, None, NULL);
       glXDestroyContext(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc);
@@ -778,7 +778,7 @@ ogl_drawBegin(struct dm *dmp)
 
   if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 		      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
-		      ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)){
+		      ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
     bu_log("ogl_drawBegin: Couldn't make context current\n");
     return TCL_ERROR;
   }
@@ -793,13 +793,13 @@ ogl_drawBegin(struct dm *dmp)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   }
 
-  if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->face_flag){
+  if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->face_flag) {
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
     ((struct ogl_vars *)dmp->dm_vars.priv_vars)->face_flag = 0;
-    if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.cueing_on){
+    if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.cueing_on) {
       glEnable(GL_FOG);
       /*XXX Need to do something with Viewscale */
       fogdepth = 2.2 * (*dmp->dm_vp); /* 2.2 is heuristic */
@@ -833,7 +833,7 @@ ogl_drawEnd(struct dm *dmp)
     glLightfv(GL_LIGHT0, GL_POSITION, light0_direction);
   }
 
-  if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.doublebuffer){
+  if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.doublebuffer) {
     glXSwapBuffers(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 		   ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win);
 
@@ -854,7 +854,7 @@ ogl_drawEnd(struct dm *dmp)
     bu_vls_init(&tmp_vls);
     bu_vls_printf(&tmp_vls, "ANY ERRORS?\n");
 
-    while ((error = glGetError())!=0){
+    while ((error = glGetError())!=0) {
       bu_vls_printf(&tmp_vls, "Error: %x\n", error);
     }
 
@@ -884,7 +884,7 @@ ogl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
   GLfloat gtmat[16];
   mat_t	newm;
 
-  if (dmp->dm_debugLevel){
+  if (dmp->dm_debugLevel) {
     struct bu_vls tmp_vls;
 
     bu_log("ogl_loadMatrix()\n");
@@ -1092,7 +1092,7 @@ ogl_normal(struct dm *dmp)
   if (dmp->dm_debugLevel)
     bu_log("ogl_normal\n");
 
-  if (!((struct ogl_vars *)dmp->dm_vars.priv_vars)->face_flag){
+  if (!((struct ogl_vars *)dmp->dm_vars.priv_vars)->face_flag) {
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadMatrixd( ((struct ogl_vars *)dmp->dm_vars.priv_vars)->faceplate_mat );
@@ -1144,7 +1144,7 @@ ogl_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
   if (dmp->dm_debugLevel)
     bu_log("ogl_drawLine2D()\n");
 
-  if (dmp->dm_debugLevel){
+  if (dmp->dm_debugLevel) {
     GLfloat pmat[16];
 
     glGetFloatv(GL_PROJECTION_MATRIX, pmat);
@@ -1172,7 +1172,7 @@ ogl_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
 HIDDEN int
 ogl_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 {
-  if (dmp->dm_debugLevel){
+  if (dmp->dm_debugLevel) {
     bu_log("ogl_drawPoint2D():\n");
     bu_log("\tdmp: %lu\tx - %lf\ty - %lf\n", (unsigned long)dmp, x, y);
   }
@@ -1195,9 +1195,9 @@ ogl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b
   dmp->dm_fg[1] = g;
   dmp->dm_fg[2] = b;
 
-  if (strict){
+  if (strict) {
     glColor3ub( (GLubyte)r, (GLubyte)g, (GLubyte)b );
-  }else{
+  } else {
 
     if (dmp->dm_light) {
       /* Ambient = .2, Diffuse = .6, Specular = .2 */
@@ -1229,7 +1229,7 @@ ogl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b
       glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuseColor);
 #endif
 
-    }else{
+    } else {
       glColor3ub( (GLubyte)r,  (GLubyte)g,  (GLubyte)b );
     }
   }
@@ -1251,10 +1251,10 @@ ogl_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b
   ((struct ogl_vars *)dmp->dm_vars.priv_vars)->g = g / 255.0;
   ((struct ogl_vars *)dmp->dm_vars.priv_vars)->b = b / 255.0;
 
-  if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.doublebuffer){
+  if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.doublebuffer) {
     if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
-			((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)){
+			((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
       bu_log("ogl_setBGColor: Couldn't make context current\n");
       return TCL_ERROR;
     }
@@ -1362,7 +1362,7 @@ ogl_choose_visual(struct dm *dmp, Tk_Window tkwin)
 			  0, &vitemp, &num);
 
   while (1) {
-    for (i=0, j=0, vip=vibase; i<num; i++, vip++){
+    for (i=0, j=0, vip=vibase; i<num; i++, vip++) {
       /* requirements */
       fail = glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 		   vip, GLX_USE_GL, &use);
@@ -1391,7 +1391,7 @@ ogl_choose_visual(struct dm *dmp, Tk_Window tkwin)
       if ( m_stereo ) {
 	fail = glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 		     vip, GLX_STEREO, &stereo);
-	if (fail || !stereo){
+	if (fail || !stereo) {
 	  bu_log("ogl_choose_visual: failed visual - GLX_STEREO\n");
 	  continue;
 	}
@@ -1399,7 +1399,7 @@ ogl_choose_visual(struct dm *dmp, Tk_Window tkwin)
 #endif
 
       /* this visual meets criteria */
-      if (j >= NGOOD){
+      if (j >= NGOOD) {
 	bu_log("ogl_choose_visual: More than %d candidate visuals!\n", NGOOD);
 	break;
       }
@@ -1407,13 +1407,13 @@ ogl_choose_visual(struct dm *dmp, Tk_Window tkwin)
     }
 
     /* j = number of acceptable visuals under consideration */
-    if (j >= 1){
+    if (j >= 1) {
       baddepth = 1000;
       for (tries = 0; tries < j; ++tries) {
 	maxvip = vibase + good[0];
 	for (i=1; i<j; i++) {
 	  vip = vibase + good[i];
-	  if ((vip->depth > maxvip->depth)&&(vip->depth < baddepth)){
+	  if ((vip->depth > maxvip->depth)&&(vip->depth < baddepth)) {
 	    maxvip = vip;
 	  }
 	}
@@ -1425,7 +1425,7 @@ ogl_choose_visual(struct dm *dmp, Tk_Window tkwin)
 
 	if (Tk_SetWindowVisual(tkwin,
 			       maxvip->visual, maxvip->depth,
-			       ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap)){
+			       ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap)) {
 
 	  glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 		       maxvip, GLX_DEPTH_SIZE,
@@ -1484,7 +1484,7 @@ ogl_configureWin_guts(struct dm *dmp, int force)
 
   if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 		      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
-		      ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)){
+		      ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
     bu_log("ogl_configureWin_guts: Couldn't make context current\n");
     return TCL_ERROR;
   }
@@ -1564,7 +1564,7 @@ ogl_configureWin_guts(struct dm *dmp, int force)
       }
     }
   } else if (dmp->dm_width < 679) {
-    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 6){
+    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 6) {
       if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 					  FONT6)) != NULL ) {
 	XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
@@ -1575,7 +1575,7 @@ ogl_configureWin_guts(struct dm *dmp, int force)
       }
     }
   } else if (dmp->dm_width < 776) {
-    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 7){
+    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 7) {
       if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 					  FONT7)) != NULL ) {
 	XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
@@ -1586,7 +1586,7 @@ ogl_configureWin_guts(struct dm *dmp, int force)
       }
     }
   } else if (dmp->dm_width < 873) {
-    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 8){
+    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 8) {
       if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 					  FONT8)) != NULL ) {
 	XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
@@ -1597,7 +1597,7 @@ ogl_configureWin_guts(struct dm *dmp, int force)
       }
     }
   } else {
-    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 9){
+    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 9) {
       if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 					  FONT9)) != NULL ) {
 	XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
@@ -1629,7 +1629,7 @@ ogl_setLight(struct dm *dmp, int lighting_on)
 
   if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 		      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
-		      ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)){
+		      ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
     bu_log("ogl_setLight: Couldn't make context current\n");
     return TCL_ERROR;
   }
@@ -1666,7 +1666,7 @@ ogl_setTransparency(struct dm *dmp,
 
   if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 		      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
-		      ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)){
+		      ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
     bu_log("ogl_setTransparency: Couldn't make context current\n");
     return TCL_ERROR;
   }
@@ -1693,7 +1693,7 @@ ogl_setDepthMask(struct dm *dmp,
 
   if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 		      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
-		      ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)){
+		      ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
     bu_log("ogl_setDepthMask: Couldn't make context current\n");
     return TCL_ERROR;
   }
@@ -1717,7 +1717,7 @@ ogl_setZBuffer(struct dm *dmp, int zbuffer_on)
 
   if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 		      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
-		      ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)){
+		      ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
     bu_log("ogl_setZBuffer: Couldn't make context current\n");
     return TCL_ERROR;
   }
@@ -1745,7 +1745,7 @@ ogl_beginDList(struct dm *dmp, unsigned int list)
 
   if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 		      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
-		      ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)){
+		      ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
     bu_log("ogl_beginDList: Couldn't make context current\n");
     return TCL_ERROR;
   }
@@ -1782,7 +1782,7 @@ ogl_freeDLists(struct dm *dmp, unsigned int list, int range)
 
   if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 		      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
-		      ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)){
+		      ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
     bu_log("ogl_freeDLists: Couldn't make context current\n");
     return TCL_ERROR;
   }

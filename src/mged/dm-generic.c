@@ -130,10 +130,10 @@ common_dm(int argc, char **argv)
   if (dbip == DBI_NULL)
 	  return TCL_OK;
 
-  if (!strcmp(argv[0], "idle")){
+  if (!strcmp(argv[0], "idle")) {
     am_mode = AMM_IDLE;
     scroll_active = 0;
-    if (rubber_band->rb_active){
+    if (rubber_band->rb_active) {
       rubber_band->rb_active = 0;
 
       if (mged_variables->mv_mouse_behavior == 'p')
@@ -147,14 +147,14 @@ common_dm(int argc, char **argv)
     return TCL_OK;
   }
 
-  if (!strcmp(argv[0], "m")){
+  if (!strcmp(argv[0], "m")) {
     int x;
     int y;
     int old_orig_gui;
     int stolen = 0;
     fastf_t fx, fy;
 
-    if (argc < 3){
+    if (argc < 3) {
       Tcl_AppendResult(interp, "dm m: need more parameters\n",
 		       "dm m xpos ypos\n", (char *)NULL);
       return TCL_ERROR;
@@ -168,15 +168,15 @@ common_dm(int argc, char **argv)
     y = fy * GED_MAX;
 
     if (mged_variables->mv_faceplate &&
-       mged_variables->mv_orig_gui){
+       mged_variables->mv_orig_gui) {
 #define        MENUXLIM        (-1250)
 
-      if (x >= MENUXLIM && scroll_select(x, y, 0)){
+      if (x >= MENUXLIM && scroll_select(x, y, 0)) {
 	stolen = 1;
 	goto end;
       }
 
-      if (x < MENUXLIM && mmenu_select(y, 0)){
+      if (x < MENUXLIM && mmenu_select(y, 0)) {
 	stolen = 1;
 	goto end;
       }
@@ -188,7 +188,7 @@ common_dm(int argc, char **argv)
 
 end:
     bu_vls_init(&vls);
-    if (mged_variables->mv_mouse_behavior == 'q' && !stolen){
+    if (mged_variables->mv_mouse_behavior == 'q' && !stolen) {
       point_t view_pt;
       point_t model_pt;
 
@@ -208,9 +208,9 @@ end:
       else
 	bu_vls_printf(&vls, "qray_nirt -b %lf %lf %lf",
 		      model_pt[X], model_pt[Y], model_pt[Z]);
-    }else if ((mged_variables->mv_mouse_behavior == 'p' ||
+    } else if ((mged_variables->mv_mouse_behavior == 'p' ||
 	      mged_variables->mv_mouse_behavior == 'r' ||
-	      mged_variables->mv_mouse_behavior == 'z') && !stolen){
+	      mged_variables->mv_mouse_behavior == 'z') && !stolen) {
 
       if (grid_state->gr_snap)
 	snap_to_grid(&fx, &fy);
@@ -222,43 +222,43 @@ end:
       rubber_band->rb_height = 0.0;
       rect_view2image();
       rb_set_dirty_flag();
-    }else if (mged_variables->mv_mouse_behavior == 's' && !stolen){
+    } else if (mged_variables->mv_mouse_behavior == 's' && !stolen) {
 #if 0
-      if (grid_state->gr_snap){
+      if (grid_state->gr_snap) {
 	snap_to_grid(&fx, &fy);
 	x = fx * GED_MAX;
 	y = fy * GED_MAX;
       }
 #endif
       bu_vls_printf(&vls, "mouse_solid_edit_select %d %d", x, y);
-    }else if (mged_variables->mv_mouse_behavior == 'm' && !stolen){
+    } else if (mged_variables->mv_mouse_behavior == 'm' && !stolen) {
 #if 0
-      if (grid_state->gr_snap){
+      if (grid_state->gr_snap) {
 	snap_to_grid(&fx, &fy);
 	x = fx * GED_MAX;
 	y = fy * GED_MAX;
       }
 #endif
       bu_vls_printf(&vls, "mouse_matrix_edit_select %d %d", x, y);
-    }else if (mged_variables->mv_mouse_behavior == 'c' && !stolen){
+    } else if (mged_variables->mv_mouse_behavior == 'c' && !stolen) {
 #if 0
-      if (grid_state->gr_snap){
+      if (grid_state->gr_snap) {
 	snap_to_grid(&fx, &fy);
 	x = fx * GED_MAX;
 	y = fy * GED_MAX;
       }
 #endif
       bu_vls_printf(&vls, "mouse_comb_edit_select %d %d", x, y);
-    } else if (mged_variables->mv_mouse_behavior == 'o' && !stolen){
+    } else if (mged_variables->mv_mouse_behavior == 'o' && !stolen) {
 #if 0
-      if (grid_state->gr_snap){
+      if (grid_state->gr_snap) {
 	snap_to_grid(&fx, &fy);
 	x = fx * GED_MAX;
 	y = fy * GED_MAX;
       }
 #endif
       bu_vls_printf(&vls, "mouse_rt_obj_select %d %d", x, y);
-    }else if (adc_state->adc_draw && mged_variables->mv_transform == 'a' && !stolen) {
+    } else if (adc_state->adc_draw && mged_variables->mv_transform == 'a' && !stolen) {
       point_t model_pt;
       point_t view_pt;
 
@@ -318,8 +318,8 @@ end:
     return status;
   }
 
-  if (!strcmp(argv[0], "am")){
-    if (argc < 4){
+  if (!strcmp(argv[0], "am")) {
+    if (argc < 4) {
       Tcl_AppendResult(interp, "dm am: need more parameters\n",
 		       "dm am <r|t|s> xpos ypos\n", (char *)NULL);
       return TCL_ERROR;
@@ -328,23 +328,23 @@ end:
     dml_omx = atoi(argv[2]);
     dml_omy = atoi(argv[3]);
 
-    switch (*argv[1]){
+    switch (*argv[1]) {
     case 'r':
       am_mode = AMM_ROT;
       break;
     case 't':
       am_mode = AMM_TRAN;
 
-      if (grid_state->gr_snap){
+      if (grid_state->gr_snap) {
 	int save_edflag;
 
 	if ((state == ST_S_EDIT || state == ST_O_EDIT) &&
-	   mged_variables->mv_transform == 'e'){
-	  if (state == ST_S_EDIT){
+	   mged_variables->mv_transform == 'e') {
+	  if (state == ST_S_EDIT) {
 	    save_edflag = es_edflag;
 	    if (!SEDIT_TRAN)
 	      es_edflag = STRANS;
-	  }else{
+	  } else {
 	    save_edflag = edobj;
 	    edobj = BE_O_XY;
 	  }
@@ -355,7 +355,7 @@ end:
 	    es_edflag = save_edflag;
 	  else
 	    edobj = save_edflag;
-	}else
+	} else
 	  snap_view_center_to_grid();
       }
 
@@ -364,7 +364,7 @@ end:
       if (state == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
 	 NEAR_ZERO(acc_sc_sol, (fastf_t)SMALL_FASTF))
 	acc_sc_sol = 1.0;
-      else if (state == ST_O_EDIT && mged_variables->mv_transform == 'e'){
+      else if (state == ST_O_EDIT && mged_variables->mv_transform == 'e') {
 	edit_absolute_scale = acc_sc_obj - 1.0;
 	if (edit_absolute_scale > 0.0)
 	  edit_absolute_scale /= 3.0;
@@ -381,11 +381,11 @@ end:
     return TCL_OK;
   }
 
-  if (!strcmp(argv[0], "adc")){
+  if (!strcmp(argv[0], "adc")) {
     fastf_t fx, fy;
     fastf_t td; /* tick distance */
 
-    if (argc < 4){
+    if (argc < 4) {
       Tcl_AppendResult(interp, "dm adc: need more parameters\n",
 		       "dm adc 1|2|t|d xpos ypos\n", (char *)NULL);
       return TCL_ERROR;
@@ -394,7 +394,7 @@ end:
     dml_omx = atoi(argv[2]);
     dml_omy = atoi(argv[3]);
 
-    switch (*argv[1]){
+    switch (*argv[1]) {
     case '1':
       fx = dm_Xx2Normal(dmp, dml_omx) * GED_MAX - adc_state->adc_dv_x;
       fy = dm_Xy2Normal(dmp, dml_omy, 1) * GED_MAX - adc_state->adc_dv_y;
@@ -463,8 +463,8 @@ end:
     return TCL_OK;
   }
 
-  if (!strcmp(argv[0], "con")){
-    if (argc < 5){
+  if (!strcmp(argv[0], "con")) {
+    if (argc < 5) {
       Tcl_AppendResult(interp, "dm con: need more parameters\n",
 		       "dm con r|t|s x|y|z xpos ypos\n",
 		       "dm con a x|y|1|2|d xpos ypos\n", (char *)NULL);
@@ -474,9 +474,9 @@ end:
     dml_omx = atoi(argv[3]);
     dml_omy = atoi(argv[4]);
 
-    switch (*argv[1]){
+    switch (*argv[1]) {
     case 'a':
-      switch (*argv[2]){
+      switch (*argv[2]) {
       case 'x':
 	am_mode = AMM_CON_XADC;
 	break;
@@ -498,7 +498,7 @@ end:
       }
       break;
     case 'r':
-      switch (*argv[2]){
+      switch (*argv[2]) {
       case 'x':
 	am_mode = AMM_CON_ROT_X;
 	break;
@@ -515,7 +515,7 @@ end:
       }
       break;
     case 't':
-      switch (*argv[2]){
+      switch (*argv[2]) {
       case 'x':
 	am_mode = AMM_CON_TRAN_X;
 	break;
@@ -532,12 +532,12 @@ end:
       }
       break;
     case 's':
-      switch (*argv[2]){
+      switch (*argv[2]) {
       case 'x':
 	if (state == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
 	   NEAR_ZERO(acc_sc_sol, (fastf_t)SMALL_FASTF))
 	  acc_sc_sol = 1.0;
-	else if (state == ST_O_EDIT && mged_variables->mv_transform == 'e'){
+	else if (state == ST_O_EDIT && mged_variables->mv_transform == 'e') {
 	  edit_absolute_scale = acc_sc[0] - 1.0;
 	  if (edit_absolute_scale > 0.0)
 	    edit_absolute_scale /= 3.0;
@@ -549,7 +549,7 @@ end:
 	if (state == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
 	   NEAR_ZERO(acc_sc_sol, (fastf_t)SMALL_FASTF))
 	  acc_sc_sol = 1.0;
-	else if (state == ST_O_EDIT && mged_variables->mv_transform == 'e'){
+	else if (state == ST_O_EDIT && mged_variables->mv_transform == 'e') {
 	  edit_absolute_scale = acc_sc[1] - 1.0;
 	  if (edit_absolute_scale > 0.0)
 	    edit_absolute_scale /= 3.0;
@@ -561,7 +561,7 @@ end:
 	if (state == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
 	   NEAR_ZERO(acc_sc_sol, (fastf_t)SMALL_FASTF))
 	  acc_sc_sol = 1.0;
-	else if (state == ST_O_EDIT && mged_variables->mv_transform == 'e'){
+	else if (state == ST_O_EDIT && mged_variables->mv_transform == 'e') {
 	  edit_absolute_scale = acc_sc[2] - 1.0;
 	  if (edit_absolute_scale > 0.0)
 	    edit_absolute_scale /= 3.0;
@@ -584,11 +584,11 @@ end:
     return TCL_OK;
   }
 
-  if (!strcmp(argv[0], "size")){
+  if (!strcmp(argv[0], "size")) {
     int width, height;
 
     /* get the window size */
-    if (argc == 1){
+    if (argc == 1) {
       bu_vls_init(&vls);
       bu_vls_printf(&vls, "%d %d", dmp->dm_width, dmp->dm_height);
       Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
@@ -598,7 +598,7 @@ end:
     }
 
     /* set the window size */
-    if ( argc == 3 ){
+    if ( argc == 3 ) {
       width = atoi( argv[1] );
       height = atoi( argv[2] );
 
@@ -618,8 +618,8 @@ end:
   }
 
 #if defined(DM_X) || defined(DM_TK) || defined(DM_OGL) || defined(DM_WGL)
-  if (!strcmp(argv[0], "getx")){
-    if (argc == 1){
+  if (!strcmp(argv[0], "getx")) {
+    if (argc == 1) {
       struct bu_vls tmp_vls;
 
       bu_vls_init(&tmp_vls);
@@ -628,7 +628,7 @@ end:
 		      (const char *)dmp->dm_vars.pub_vars);
       Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
       bu_vls_free(&tmp_vls);
-    }else if (argc == 2){
+    } else if (argc == 2) {
       bu_vls_init(&vls);
       bu_vls_struct_item_named(&vls, dm_xvars_vparse, argv[1],
 			       (const char *)dmp->dm_vars.pub_vars, ',');
@@ -640,10 +640,10 @@ end:
   }
 #endif
 
-  if (!strcmp(argv[0], "bg")){
+  if (!strcmp(argv[0], "bg")) {
     int r, g, b;
 
-    if (argc != 1 && argc != 4){
+    if (argc != 1 && argc != 4) {
       bu_vls_init(&vls);
       bu_vls_printf(&vls, "Usage: dm bg [r g b]");
       Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
@@ -667,7 +667,7 @@ end:
 
     if (sscanf(argv[1], "%d", &r) != 1 ||
        sscanf(argv[2], "%d", &g) != 1 ||
-       sscanf(argv[3], "%d", &b) != 1){
+       sscanf(argv[3], "%d", &b) != 1) {
       bu_vls_init(&vls);
       bu_vls_printf(&vls, "Usage: dm bg r g b");
       Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);

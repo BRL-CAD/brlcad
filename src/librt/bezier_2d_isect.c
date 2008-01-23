@@ -400,7 +400,7 @@ FindRoots(
 	    if (ControlPolygonFlatEnough(w, degree, epsilon)) {
 		    *intercept = (point2d_t *)bu_malloc( sizeof( point2d_t ), "FindRoots: unique solution (intercept)" );
 		    *normal = (point2d_t *)bu_malloc( sizeof( point2d_t ), "FindRoots: unique solution (normal)" );
-		    if ( !ComputeXIntercept( w, degree, ray_start, ray_dir, epsilon, *intercept[0], *normal[0] ) ){
+		    if ( !ComputeXIntercept( w, degree, ray_start, ray_dir, epsilon, *intercept[0], *normal[0] ) ) {
 			    bu_free( (char *)(*intercept), "FindRoots: no solution" );
 			    bu_free( (char *)(*normal), "FindRoots: no solution" );
 			    return 0;
@@ -465,7 +465,7 @@ subdivide_bezier( struct bezier_2d_list *bezier_in, int degree, fastf_t epsilon,
 	new_head = (struct bezier_2d_list *)bu_malloc( sizeof( struct bezier_2d_list ),
 						       "subdivide_bezier: new_head" );
 	BU_LIST_INIT( &new_head->l );
-	if ( depth >= MAXDEPTH ){
+	if ( depth >= MAXDEPTH ) {
 		BU_LIST_APPEND( &new_head->l, &bezier_in->l );
 		return( new_head );
 	}

@@ -223,7 +223,7 @@ nmg_class_pt_vu(struct fpi *fpi, struct vertexuse *vu)
 	NMG_CK_VERTEXUSE(vu);
 
 	/* see if we've classified this vertex WRT the point already */
-	for (BU_LIST_FOR(ved, ve_dist, &fpi->ve_dh)){
+	for (BU_LIST_FOR(ved, ve_dist, &fpi->ve_dh)) {
 		NMG_CK_VED(ved);
 		if (ved->magic_p == &vu->v_p->magic) {
 			goto found;

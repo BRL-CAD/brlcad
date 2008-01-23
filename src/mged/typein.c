@@ -564,7 +564,7 @@ f_in(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	CHECK_DBI_NULL;
 
-	if (argc < 1){
+	if (argc < 1) {
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -732,7 +732,7 @@ f_in(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	} else if ( strncmp( argv[2], "arb", 3 ) == 0 )  {
 		int n = atoi(&argv[2][3]);
 
-		if (n < 4 || 8 < n){
+		if (n < 4 || 8 < n) {
 			Tcl_AppendResult(interp, "ERROR: \"", argv[2],
 					 "\" not supported!\n", (char *)0);
 			Tcl_AppendResult(interp, "supported arbs: arb4 arb5 arb6 arb7 arb8\n",

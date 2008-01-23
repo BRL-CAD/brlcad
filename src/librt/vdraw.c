@@ -201,11 +201,11 @@ vdraw_write_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 		/* only allow one past the end */
 
 		for (BU_LIST_FOR(vp, bn_vlist, &(dgop->dgo_currVHead->vdc_vhd))) {
-			if (uind < BN_VLIST_CHUNK){
+			if (uind < BN_VLIST_CHUNK) {
 				/* this is the right vlist */
 				break;
 			}
-			if (vp->nused == 0){
+			if (vp->nused == 0) {
 				break;
 			}
 			uind -= vp->nused;
@@ -282,7 +282,7 @@ vdraw_insert_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
 				/* this is the right vlist */
 			break;
 		}
-		if (vp->nused == 0){
+		if (vp->nused == 0) {
 			break;
 		}
 		uind -= vp->nused;

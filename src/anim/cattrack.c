@@ -83,7 +83,7 @@ fastf_t hyper_get_z(fastf_t a, fastf_t b, fastf_t c, fastf_t x)
 {
     fastf_t z;
 
-    if (fabs(a)>VDIVIDE_TOL){
+    if (fabs(a)>VDIVIDE_TOL) {
 	z = cosh(a*(x-c))/a + b;
     } else {
 	z = b;
@@ -135,7 +135,7 @@ int getcurve(fastf_t *pa, fastf_t *pb, fastf_t *pc, fastf_t *pth0, fastf_t *pth1
     costheta = (r_zero-r_one)/MAGNITUDE(diff);
     tang_ang += acos(costheta);
 
-    if (!called_before){
+    if (!called_before) {
 	theta_one = tang_ang;
 	theta_zero = tang_ang;
 	(*pa) = 1.0;
@@ -150,7 +150,7 @@ int getcurve(fastf_t *pa, fastf_t *pb, fastf_t *pc, fastf_t *pth0, fastf_t *pth1
     }
 
     status = MAX_REACHED;
-    for (i=0;i<T_MAX_ITS;i++){
+    for (i=0;i<T_MAX_ITS;i++) {
 	q_zero[X] = p_zero[X] + r_zero * cos(theta_zero);
 	q_zero[Z] = p_zero[Z] + r_zero * sin(theta_zero);
 	q_one[X] = p_one[X] + r_one * cos(theta_one);
@@ -167,7 +167,7 @@ int getcurve(fastf_t *pa, fastf_t *pb, fastf_t *pc, fastf_t *pth0, fastf_t *pth1
 	stmp = sinh( (*pa)*(q_zero[X]-(*pc)) );
 	new_theta_zero = atan2(1.0, -stmp);
 	avg_theta_zero = 0.5 * (theta_zero + new_theta_zero);
-	if (fabs(theta_zero-avg_theta_zero)<T_TOL){
+	if (fabs(theta_zero-avg_theta_zero)<T_TOL) {
 	    solved++;
 	}
 	theta_zero = avg_theta_zero;
@@ -176,12 +176,12 @@ int getcurve(fastf_t *pa, fastf_t *pb, fastf_t *pc, fastf_t *pth0, fastf_t *pth1
 	stmp = sinh( (*pa)*(q_one[X]-(*pc)) );
 	new_theta_one = atan2(1.0, -stmp);
 	avg_theta_one = 0.5 * (theta_one + new_theta_one);
-	if (fabs(theta_one-avg_theta_one)<T_TOL){
+	if (fabs(theta_one-avg_theta_one)<T_TOL) {
 	    solved++;
 	}
 	theta_one = avg_theta_one;
 
-	if (solved == 2){
+	if (solved == 2) {
 	    status = SOLVED;
 	    break;
 	}
@@ -210,29 +210,29 @@ int ingetcurve(fastf_t *pa, fastf_t *pb, fastf_t *pc, fastf_t delta_s, fastf_t *
 
     status = MAX_REACHED;
     i=0;
-    while (i++<MAX_OUT_ITS){
-	for (j=0;j<MAX_ITS;j++){
+    while (i++<MAX_OUT_ITS) {
+	for (j=0;j<MAX_ITS;j++) {
 	    adjust = eff(*pa, *pc, p_zero[X], p_one[X], delta_s);
-	    if ((*pa-adjust)<=0.0){
+	    if ((*pa-adjust)<=0.0) {
 		*pa *= 0.5;
 	    }
 	    else {
 		*pa -= adjust;
 	    }
-	    if (adjust<F_TOL){
+	    if (adjust<F_TOL) {
 		break;
 	    }
 	}
 
-	for (k=0;k<MAX_ITS;k++){
+	for (k=0;k<MAX_ITS;k++) {
 	    adjust = gee(*pa, *pc, p_zero[X], p_one[X], (p_one[Z]-p_zero[Z]));
 	    *pc -= adjust;
-	    if (adjust<G_TOL){
+	    if (adjust<G_TOL) {
 		break;
 	    }
 	}
 
-	if ((j==0)&&(k==0)){
+	if ((j==0)&&(k==0)) {
 	    status = SOLVED;
 	    break;
 	}

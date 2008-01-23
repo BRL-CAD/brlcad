@@ -155,7 +155,7 @@ get_args(register int argc, register char **argv)
 				return(0);
 			}
 		} else {
-			if ((paste = fopen(paste_name, "r")) == NULL){
+			if ((paste = fopen(paste_name, "r")) == NULL) {
 				perror(paste_name);
 				(void)fprintf(stderr,
 				"pixpaste: cannot open \"%s\" for reading",

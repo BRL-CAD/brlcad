@@ -366,7 +366,7 @@ bu_flog(FILE *fp, char *fmt, ...)
 	size_t len;
 
 	len = bu_vls_strlen(&output);
-	if (len){
+	if (len) {
 	  bu_semaphore_acquire(BU_SEM_SYSCALL);
 	  ret = fwrite( bu_vls_addr(&output), len, 1, fp );
 	  bu_semaphore_release(BU_SEM_SYSCALL);

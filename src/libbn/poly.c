@@ -114,8 +114,8 @@ bn_poly_mul(register struct bn_poly *product, register const struct bn_poly *m1,
 	if ( (product->dgr = m1->dgr + m2->dgr) > BN_MAX_POLY_DEGREE )
 	    return BN_POLY_NULL;
 
-	for ( ct1=0; ct1 <= m1->dgr; ++ct1 ){
-	    for ( ct2=0; ct2 <= m2->dgr; ++ct2 ){
+	for ( ct1=0; ct1 <= m1->dgr; ++ct1 ) {
+	    for ( ct2=0; ct2 <= m2->dgr; ++ct2 ) {
 		product->cf[ct1+ct2] +=
 		    m1->cf[ct1] * m2->cf[ct2];
 	    }
@@ -135,7 +135,7 @@ bn_poly_scale(register struct bn_poly *eqn, double factor)
 {
     register int		cnt;
 
-    for ( cnt=0; cnt <= eqn->dgr; ++cnt ){
+    for ( cnt=0; cnt <= eqn->dgr; ++cnt ) {
 	eqn->cf[cnt] *= factor;
     }
     return eqn;
@@ -157,19 +157,19 @@ bn_poly_add(register struct bn_poly *sum, register const struct bn_poly *poly1, 
 
     tmp = bn_Zero_poly;
 
-    if ( poly1->dgr >= poly2->dgr ){
+    if ( poly1->dgr >= poly2->dgr ) {
 	*sum = *poly1;
-	for ( i=0; i <= poly2->dgr; ++i ){
+	for ( i=0; i <= poly2->dgr; ++i ) {
 	    tmp.cf[i+offset] = poly2->cf[i];
 	}
     } else {
 	*sum = *poly2;
-	for ( i=0; i <= poly1->dgr; ++i ){
+	for ( i=0; i <= poly1->dgr; ++i ) {
 	    tmp.cf[i+offset] = poly1->cf[i];
 	}
     }
 
-    for ( i=0; i <= sum->dgr; ++i ){
+    for ( i=0; i <= sum->dgr; ++i ) {
 	sum->cf[i] += tmp.cf[i];
     }
     return sum;
@@ -192,20 +192,20 @@ bn_poly_sub(register struct bn_poly *diff, register const struct bn_poly *poly1,
     *diff = bn_Zero_poly;
     tmp = bn_Zero_poly;
 
-    if ( poly1->dgr >= poly2->dgr ){
+    if ( poly1->dgr >= poly2->dgr ) {
 	*diff = *poly1;
-	for ( i=0; i <= poly2->dgr; ++i ){
+	for ( i=0; i <= poly2->dgr; ++i ) {
 	    tmp.cf[i+offset] = poly2->cf[i];
 	}
     } else {
 	diff->dgr = poly2->dgr;
-	for ( i=0; i <= poly1->dgr; ++i ){
+	for ( i=0; i <= poly1->dgr; ++i ) {
 	    diff->cf[i+offset] = poly1->cf[i];
 	}
 	tmp = *poly2;
     }
 
-    for ( i=0; i <= diff->dgr; ++i ){
+    for ( i=0; i <= diff->dgr; ++i ) {
 	diff->cf[i] -= tmp.cf[i];
     }
     return diff;
@@ -232,13 +232,13 @@ bn_poly_synthetic_division(register struct bn_poly *quo, register struct bn_poly
     if ((rem->dgr = dvsor->dgr - 1) > dvdend->dgr)
 	rem->dgr = dvdend->dgr;
 
-    for ( n=0; n <= quo->dgr; ++n){
+    for ( n=0; n <= quo->dgr; ++n) {
 	quo->cf[n] /= dvsor->cf[0];
-	for ( div=1; div <= dvsor->dgr; ++div){
+	for ( div=1; div <= dvsor->dgr; ++div) {
 	    quo->cf[n+div] -= quo->cf[n] * dvsor->cf[div];
 	}
     }
-    for ( n=1; n<=(rem->dgr+1); ++n){
+    for ( n=1; n<=(rem->dgr+1); ++n) {
 	rem->cf[n-1] = quo->cf[quo->dgr+n];
 	quo->cf[quo->dgr+n] = 0;
     }
@@ -379,7 +379,7 @@ bn_poly_cubic_roots(register struct bn_complex *roots, register const struct bn_
     if ( (delta = a*a) > SQRT_MAX_FASTF ) return 0;	/* FAIL */
     delta = b*b*0.25 + delta*a*INV_TWENTYSEVEN;
 
-    if ( delta > 0.0 ){
+    if ( delta > 0.0 ) {
 	fastf_t		r_delta, A, B;
 
 	r_delta = sqrt( delta );
@@ -394,7 +394,7 @@ bn_poly_cubic_roots(register struct bn_complex *roots, register const struct bn_
 
 	roots[0].im = 0.0;
 	roots[2].im = -( roots[1].im = (A - B)*SQRT3*0.5 );
-    } else if ( delta == 0.0 ){
+    } else if ( delta == 0.0 ) {
 	fastf_t	b_2;
 	b_2 = -0.5 * b;
 

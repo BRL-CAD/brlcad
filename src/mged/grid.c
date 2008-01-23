@@ -109,7 +109,7 @@ set_grid_draw(void)
   grid_set_dirty_flag();
 
   /* This gets done at most one time. */
-  if (grid_auto_size && grid_state->gr_draw){
+  if (grid_auto_size && grid_state->gr_draw) {
     fastf_t res = view_state->vs_vop->vo_size*base2local / 64.0;
 
     grid_state->gr_res_h = res;
@@ -419,7 +419,7 @@ update_grids(fastf_t sf)
   struct bu_vls save_result;
   struct bu_vls cmd;
 
-  FOR_ALL_DISPLAYS(dlp, &head_dm_list.l){
+  FOR_ALL_DISPLAYS(dlp, &head_dm_list.l) {
     dlp->dml_grid_state->gr_res_h *= sf;
     dlp->dml_grid_state->gr_res_v *= sf;
     VSCALE(dlp->dml_grid_state->gr_anchor, dlp->dml_grid_state->gr_anchor, sf);
@@ -446,7 +446,7 @@ f_grid_set (ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
   bu_vls_init(&vls);
 
-  if (argc < 1 || 5 < argc){
+  if (argc < 1 || 5 < argc) {
     bu_vls_printf(&vls, "help grid_set");
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);

@@ -2236,8 +2236,8 @@ struct hitmiss {
 }
 
 #define NMG_CK_HITMISS_LISTS(a_hit, rd) { \
-    for (BU_LIST_FOR(a_hit, hitmiss, &rd->rd_hit)){NMG_CK_HITMISS(a_hit);} \
-    for (BU_LIST_FOR(a_hit, hitmiss, &rd->rd_miss)){NMG_CK_HITMISS(a_hit);} }
+    for (BU_LIST_FOR(a_hit, hitmiss, &rd->rd_hit)) {NMG_CK_HITMISS(a_hit);} \
+    for (BU_LIST_FOR(a_hit, hitmiss, &rd->rd_miss)) {NMG_CK_HITMISS(a_hit);} }
 
 
 /*	Ray Data structure

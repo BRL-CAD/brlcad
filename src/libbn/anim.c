@@ -106,7 +106,7 @@ void anim_v_permute(mat_t m)
 	int i;
 	fastf_t store;
 
-	for (i=0; i<9; i+=4){
+	for (i=0; i<9; i+=4) {
 		store = m[i];
 		m[i] = -m[i+1];
 		m[i+1] = m[i+2];
@@ -129,7 +129,7 @@ void anim_v_unpermute(mat_t m)
 	int i;
 	fastf_t store;
 
-	for (i=0; i<9; i+=4){
+	for (i=0; i<9; i+=4) {
 		store = m[i+2];
 		m[i+2] = m[i+1];
 		m[i+1] = -m[i];
@@ -192,7 +192,7 @@ int anim_mat2zyx(const mat_t viewrot, vect_t angle)
 	fastf_t sin_x, sin_z, cos_x, cos_z, big_x, big_z;
 	static fastf_t previous[3];
 
-	if ((viewrot[1]==0.0) && (viewrot[0]==0.0)){
+	if ((viewrot[1]==0.0) && (viewrot[0]==0.0)) {
 		return_value = ERROR1;
 		angle[0] = 0.0;
 		angle[2] = atan2(viewrot[4], viewrot[5]);
@@ -220,7 +220,7 @@ int anim_mat2zyx(const mat_t viewrot, vect_t angle)
 	id_x  = (fabs(sin_x) > fabs(cos_x)) ? 1 : 0;
 	big_x = id_x ? sin_x : cos_x;
 
-	if (fabs(big_x*big_z) < VDIVIDE_TOL){ /* this should be impossible*/
+	if (fabs(big_x*big_z) < VDIVIDE_TOL) { /* this should be impossible*/
 		/* unable to calculate pitch*/
 		return(ERROR2);
 	}
@@ -261,7 +261,7 @@ int anim_mat2ypr(mat_t viewrot, vect_t angle)
 	fastf_t sin_y, sin_r, cos_y, cos_r, big_y, big_r;
 	static fastf_t prev_angle[3];
 
-	if ((viewrot[9]==0.0) && (viewrot[10]==0.0)){
+	if ((viewrot[9]==0.0) && (viewrot[10]==0.0)) {
 		return_value = ERROR1;
 		angle[2] = 0.0;
 		angle[0] = atan2(-viewrot[1], viewrot[5]);
@@ -289,7 +289,7 @@ int anim_mat2ypr(mat_t viewrot, vect_t angle)
 	id_r  = (fabs(sin_r) > fabs(cos_r)) ? 1 : 0;
 	big_r = id_r ? sin_r : cos_r;
 
-	if (fabs(big_y*big_r) < VDIVIDE_TOL){ /* this should not happen */
+	if (fabs(big_y*big_r) < VDIVIDE_TOL) { /* this should not happen */
 		/* unable to calculate pitch*/
 		return(ERROR2);
 	}
@@ -347,7 +347,7 @@ int anim_mat2quat(quat_t quat, const mat_t viewrot)
 		else {
 			quat[X] = 0.0;
 			square = 0.5 * (1 - viewrot[10]);
-			if (square != 0.0){
+			if (square != 0.0) {
 				quat[Y] = sqrt(square);
 				quat[Z] = 0.5 * viewrot[9]/ quat[Y];
 			}
@@ -758,10 +758,10 @@ void anim_dir2mat(mat_t m, const vect_t d, const vect_t d2b)
 	VMOVE( d2, d2b );
 	sign = 1.0;
 	hypotenuse = sqrt(d[0]*d[0]+d[1]*d[1]);
-	if (hypotenuse < VDIVIDE_TOL){ /* vertical direction - use d2 to
+	if (hypotenuse < VDIVIDE_TOL) { /* vertical direction - use d2 to
 					* determine roll */
 		hypotenuse = sqrt(d2[0]*d2[0]+d2[1]*d2[1]);
-		if (hypotenuse < VDIVIDE_TOL){ /* use x-axis as default*/
+		if (hypotenuse < VDIVIDE_TOL) { /* use x-axis as default*/
 			VSET(d2, 1, 0, 0);
 			hypotenuse = 1;
 		}

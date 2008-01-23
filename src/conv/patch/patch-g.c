@@ -340,17 +340,17 @@ main(int argc, char **argv)
   *       group labels (<15 characters) separated by "white space".
   */
 	done = 1;
-	if ( labelfile != NULL ){
+	if ( labelfile != NULL ) {
 
-		while (done != 0){
+		while (done != 0) {
 
-			if ( (stop=fscanf( gfp, "%4d", &num )) == 1 ){
+			if ( (stop=fscanf( gfp, "%4d", &num )) == 1 ) {
 			    fscanf( gfp, "%16s %16s", nm[num].ug, nm[num].lg ); /* NAMESIZE */
 				while ( (fgetc( gfp )) != '\n' )
 					;
 			}
 			else {
-				if ( stop == EOF ){
+				if ( stop == EOF ) {
 					done = 0;
 				}
 				else {
@@ -389,7 +389,7 @@ main(int argc, char **argv)
 	{
 		nread = read(fd, buf, sizeof(buf));     /* read one line of file into a buffer  */
 
-		if (nread > 0){         /*  For valid reads, assign values to the input array  */
+		if (nread > 0) {         /*  For valid reads, assign values to the input array  */
 
 			sscanf(buf, "%lf %lf %lf %c %d %d %d %d %d %d %d %d %d %d %d %d %d %d",
 			    &in[i].x, &in[i].y, &in[i].z, &in[i].surf_mode, &in[i].surf_type,
@@ -403,7 +403,7 @@ main(int argc, char **argv)
 			in[i].y = mmtin*in[i].y;
 			in[i].z = mmtin*in[i].z;
 			/* Normal thickness is in hundreths of an inch */
-			if ( in[i].surf_type <= 3 ){
+			if ( in[i].surf_type <= 3 ) {
 				in[i].rsurf_thick = (mmtin/100) *
 				    (abs(in[i].surf_thick)) +
 				    (abs(in[i].surf_type))*mmtin;
@@ -417,7 +417,7 @@ main(int argc, char **argv)
 			in[i].surf_type = abs(in[i].surf_type);
 
 			/*  Regurgitate data just loaded for debugging   */
-			if (debug > 0){
+			if (debug > 0) {
 				bu_log( "%lf %lf %lf %c %lf %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
 				    in[i].x, in[i].y, in[i].z, in[i].surf_mode, in[i].surf_type,
 				    in[i].surf_thick, in[i].spacecode, in[i].cc,
@@ -456,7 +456,7 @@ main(int argc, char **argv)
 			if ( RT_G_DEBUG&DEBUG_MEM_FULL )
 				bu_prmem( "At start of component" );
 
-			switch (in[i-1].surf_type){    /* Key on surface types. */
+			switch (in[i-1].surf_type) {    /* Key on surface types. */
 
 			case 0:  	/* triangle approximation */
 			case 1:  	/* triangle approximation (thickness + 1") */
@@ -1730,10 +1730,10 @@ proc_region(char *name1)
 		mk_lrcomb(outfp, cname, &head, 1, 0, 0, 0, cc, 0, 2, 100, 0);
 	}
 
-	if ( cc == in[0].cc){
+	if ( cc == in[0].cc) {
 		(void) mk_addmember(cname, &heada.l, NULL, WMOP_UNION);
 	}
-	else{
+	else {
 		(void) mk_addmember(cname, &headb.l, NULL, WMOP_UNION);
 	}
 
@@ -1763,10 +1763,10 @@ proc_triangle(int cnt)
 		mir_count=0;
 	}
 
-	for (k=0; k < (cnt); k++){
-		for (l=0; l<= 7; l++){
+	for (k=0; k < (cnt); k++) {
+		for (l=0; l<= 7; l++) {
 
-			if (in[k].ept[l] > 0){
+			if (in[k].ept[l] > 0) {
 
 				index = in[k].ept[l];
 				list[index].x = in[k].x;
@@ -1784,8 +1784,8 @@ proc_triangle(int cnt)
 	/* Everything is sequenced, but separated, compress into single array here */
 	l = 1;
 
-	for (k=1; k<10000; k++){
-		if (list[k].flag == 1){
+	for (k=1; k<10000; k++) {
+		if (list[k].flag == 1) {
 			list[k].flag = 0;
 			x[l] = list[k].x;
 			y[l] = list[k].y;
@@ -1798,7 +1798,7 @@ proc_triangle(int cnt)
 			bu_log( "k=%d l=%d %f %f %f flag=%d\n", k, l, list[k].x, list[k].y, list[k].z, list[k].flag);
 	}
 
-	if (debug > 2){
+	if (debug > 2) {
 		for (k=1;(k<=l);k++)
 			bu_log( "%d %f %f %f\n", k, x[k], y[k], z[k]);
 	}
@@ -2040,9 +2040,9 @@ proc_plate(int cnt)
 	if ((in[0].rsurf_thick > 0)||(aflg > 0))
 	{
 
-		for (k=0; k < (cnt); k++){
-			for (l=0; l<= 7; l++){
-				if (in[k].ept[l] > 0){
+		for (k=0; k < (cnt); k++) {
+			for (l=0; l<= 7; l++) {
+				if (in[k].ept[l] > 0) {
 					index = in[k].ept[l];
 
 					list[index].x = in[k].x;
@@ -2107,8 +2107,8 @@ proc_plate(int cnt)
 		/* Everything is sequenced, but separated, compress into single array here */
 		l = 1;
 
-		for (k=1; k<10000; k++){
-			if (list[k].flag == 1){
+		for (k=1; k<10000; k++) {
+			if (list[k].flag == 1) {
 				list[k].flag = 0;
 				x[l] = list[k].x;
 				y[l] = list[k].y;
@@ -2233,7 +2233,7 @@ proc_wedge(int cnt)
 		mir_count=0;
 	}
 
-	for (k=0; k <= (cnt-1); k+=4){
+	for (k=0; k <= (cnt-1); k+=4) {
 		VSET( pt8[0], in[k].x, in[k].y, in[k].z );
 		VSET( pt8[3], in[k+1].x, in[k+1].y, in[k+1].z );
 		VSET( pt8[1], in[k+2].x, in[k+2].y, in[k+2].z );
@@ -2264,7 +2264,7 @@ proc_wedge(int cnt)
 
 		(void) mk_addmember(name, &head.l, NULL, WMOP_UNION);
 
-		if ( in[k].surf_mode == '-' ){
+		if ( in[k].surf_mode == '-' ) {
 			point_t interior;
 			vect_t diff;
 
@@ -2349,7 +2349,7 @@ proc_wedge(int cnt)
 
 	/*   Mirror Processing - duplicates above code!   */
 	ret = 0;
-	for (k=0; k <= (cnt-1) && in[k].mirror != 0; k+=4){
+	for (k=0; k <= (cnt-1) && in[k].mirror != 0; k+=4) {
 
 		VSET( pt8[0], in[k].x, -in[k].y, in[k].z );
 		VSET( pt8[3], in[k+1].x, -in[k+1].y, in[k+1].z );
@@ -2375,7 +2375,7 @@ proc_wedge(int cnt)
 		mir_count++;
 
 		(void) mk_addmember(name, &head.l, NULL, WMOP_UNION);
-		if ( in[k].surf_mode == '-' ){
+		if ( in[k].surf_mode == '-' ) {
 			point_t interior;
 			vect_t diff;
 
@@ -2479,7 +2479,7 @@ proc_sphere(int cnt)
 	}
 
 
-	for ( i=0; i < cnt; i+=2 ){
+	for ( i=0; i < cnt; i+=2 ) {
 
 		/* name solids */
 		shflg = 's';
@@ -2501,7 +2501,7 @@ proc_sphere(int cnt)
 			/* Check if hollow (i.e. plate mode) subract sphere with
 				   radius R1 - thickness */
 
-			if (in[i].surf_mode== '-'){
+			if (in[i].surf_mode== '-') {
 
 				/* name inside solid */
 
@@ -2553,7 +2553,7 @@ proc_sphere(int cnt)
 			/* Check if mirrored surface is hollow (i.e. plate mode) subract
 				sphere with radius R1 - thickness */
 
-			if (in[i].surf_mode== '-'){
+			if (in[i].surf_mode== '-') {
 
 				ctflg = 'y';
 				bu_strlcpy( name, proc_sname(shflg, mrflg, mir_count, ctflg), sizeof(name) );
@@ -2607,7 +2607,7 @@ proc_box(int cnt)
 	}
 
 
-	for (k=0; k <= (cnt-1); k+=4){
+	for (k=0; k <= (cnt-1); k+=4) {
 		VSET( pt8[0], in[k].x, in[k].y, in[k].z );
 		VSET( pt8[1], in[k+1].x, in[k+1].y, in[k+1].z );
 		VSET( pt8[4], in[k+2].x, in[k+2].y, in[k+2].z );
@@ -2636,7 +2636,7 @@ proc_box(int cnt)
 
 		(void) mk_addmember(name, &head.l, NULL, WMOP_UNION);
 
-		if ( in[k].surf_mode == '-' ){
+		if ( in[k].surf_mode == '-' ) {
 
 			ctflg = 'y';
 			bu_strlcpy( name, proc_sname(shflg, mrflg, count, ctflg), sizeof(name) );
@@ -2644,7 +2644,7 @@ proc_box(int cnt)
 			valid = 1;
 			len = MAGNITUDE( ab );
 			leni = (len - (2.0 * in[k].rsurf_thick)) / len;
-			if ( leni > 0.0 ){
+			if ( leni > 0.0 ) {
 				VSCALE( abi, ab, leni );
 				VSCALE( ab, ab, in[k].rsurf_thick / len );
 			}
@@ -2653,7 +2653,7 @@ proc_box(int cnt)
 
 			len = MAGNITUDE( ac );
 			leni = (len - (2.0 * in[k].rsurf_thick)) / len;
-			if ( valid && leni > 0.0 ){
+			if ( valid && leni > 0.0 ) {
 				VSCALE( aci, ac, leni );
 				VSCALE( ac, ac, in[k].rsurf_thick / len );
 			}
@@ -2662,7 +2662,7 @@ proc_box(int cnt)
 
 			len = MAGNITUDE( ad );
 			leni = (len - (2.0 * in[k].rsurf_thick)) / len;
-			if ( valid && leni > 0.0 ){
+			if ( valid && leni > 0.0 ) {
 				VSCALE( adi, ad, leni );
 				VSCALE( ad, ad, in[k].rsurf_thick / len );
 			}
@@ -2703,7 +2703,7 @@ proc_box(int cnt)
 
 	/*   Mirror Processing - duplicates above code!   */
 
-	for (k=0; k <= (cnt-1) && in[k].mirror != 0; k+=4){
+	for (k=0; k <= (cnt-1) && in[k].mirror != 0; k+=4) {
 		VSET( pt8[0], in[k].x, -in[k].y, in[k].z );
 		VSET( pt8[1], in[k+1].x, -in[k+1].y, in[k+1].z );
 		VSET( pt8[4], in[k+2].x, -in[k+2].y, in[k+2].z );
@@ -2727,7 +2727,7 @@ proc_box(int cnt)
 
 		(void) mk_addmember(name, &head.l, NULL, WMOP_UNION);
 
-		if ( in[k].surf_mode == '-' ){
+		if ( in[k].surf_mode == '-' ) {
 
 			ctflg = 'y';
 			bu_strlcpy( name, proc_sname(shflg, mrflg, mir_count+1, ctflg), sizeof(name) );
@@ -2735,7 +2735,7 @@ proc_box(int cnt)
 			valid = 1;
 			len = MAGNITUDE( ab );
 			leni = (len - (2.0 * in[k].rsurf_thick)) / len;
-			if ( leni > 0.0 ){
+			if ( leni > 0.0 ) {
 				VSCALE( abi, ab, leni );
 				VSCALE( ab, ab, in[k].rsurf_thick / len );
 			}
@@ -2744,7 +2744,7 @@ proc_box(int cnt)
 
 			len = MAGNITUDE( ac );
 			leni = (len - (2.0 * in[k].rsurf_thick)) / len;
-			if ( valid && leni > 0.0 ){
+			if ( valid && leni > 0.0 ) {
 				VSCALE( aci, ac, leni );
 				VSCALE( ac, ac, in[k].rsurf_thick / len );
 			}
@@ -2753,7 +2753,7 @@ proc_box(int cnt)
 
 			len = MAGNITUDE( ad );
 			leni = (len - (2.0 * in[k].rsurf_thick)) / len;
-			if ( valid && leni > 0.0 ){
+			if ( valid && leni > 0.0 ) {
 				VSCALE( adi, ad, leni );
 				VSCALE( ad, ad, in[k].rsurf_thick / len );
 			}
@@ -3206,7 +3206,7 @@ proc_cylin(int cnt)
 
 
 	slist = get_subtract(cnt);
-	if ( debug>2 ){
+	if ( debug>2 ) {
 		struct subtract_list *sp;
 
 		for ( sp=slist; sp; sp=sp->next )
@@ -3215,7 +3215,7 @@ proc_cylin(int cnt)
 	}
 
 
-	for (k=0; k < (cnt-1); k+=3){	 /* For all sub-cylinders in this cc */
+	for (k=0; k < (cnt-1); k+=3) {	 /* For all sub-cylinders in this cc */
 
 		/* name solids */
 		shflg = 'c';
@@ -3227,7 +3227,7 @@ proc_cylin(int cnt)
 
 		/* Test for a cylinder with no length, all conditions must be true to fail. */
 
-		if (!((in[k].x==in[k+1].x)&&(in[k].y==in[k+1].y)&&(in[k].z==in[k+1].z))){
+		if (!((in[k].x==in[k+1].x)&&(in[k].y==in[k+1].y)&&(in[k].z==in[k+1].z))) {
 
 			VSET(base, in[k].x, in[k].y, in[k].z);
 			VSET(top, in[k+1].x, in[k+1].y, in[k+1].z);
@@ -3255,7 +3255,7 @@ proc_cylin(int cnt)
 
 			j = (int)(in[k+2].z/mmtin);
 
-			if (in[k].surf_mode== '-'){     /* Plate mode */
+			if (in[k].surf_mode== '-') {     /* Plate mode */
 				vect_t unit_h;
 				fastf_t sin_ang;
 				fastf_t rad1_tmp, rad2_tmp;
@@ -3268,7 +3268,7 @@ proc_cylin(int cnt)
 				VSUB2(ab, top, base);
 				ht = MAGNITUDE( ab );
 				sin_ang = ht/hypot( ht, rad2-rad1 );
-				switch (j){
+				switch (j) {
 
 				case 0: /* Both ends open */
 
@@ -3522,7 +3522,7 @@ proc_cylin(int cnt)
 
 	/*    Mirror Processing - duplicates above code!   */
 
-	for (k=0; k < (cnt-1); k+=3){
+	for (k=0; k < (cnt-1); k+=3) {
 
 		if ( in[k].mirror == 0 )
 			continue;
@@ -3532,7 +3532,7 @@ proc_cylin(int cnt)
 		bu_strlcpy( name, proc_sname(shflg, mrflg, mir_count+1, ctflg), sizeof(name) );
 		mir_count++;
 
-		if (!((in[k].x==in[k+1].x)&&(in[k].y==in[k+1].y)&&(in[k].z==in[k+1].z))){
+		if (!((in[k].x==in[k+1].x)&&(in[k].y==in[k+1].y)&&(in[k].z==in[k+1].z))) {
 
 			VSET(base, in[k].x, -in[k].y, in[k].z);
 			VSET(top, in[k+1].x, -in[k+1].y, in[k+1].z);
@@ -3555,7 +3555,7 @@ proc_cylin(int cnt)
 
 			j = (int)(in[k+2].z/mmtin);
 
-			if (in[k].surf_mode== '-'){ 	/* Plate mode */
+			if (in[k].surf_mode== '-') { 	/* Plate mode */
 				vect_t unit_h;
 				fastf_t sin_ang;
 				fastf_t rad1_tmp, rad2_tmp;
@@ -3569,7 +3569,7 @@ proc_cylin(int cnt)
 				ht = MAGNITUDE( ab );
 				sin_ang = ht/hypot( ht, rad2-rad1 );
 
-				switch (j){
+				switch (j) {
 
 				case 0: /* Both ends open */
 
@@ -3844,10 +3844,10 @@ proc_rod(int cnt)
 	}
 
 
-	for (k=0; k < cnt; k++){
-		for (l=0; l<= 7; l++){
+	for (k=0; k < cnt; k++) {
+		for (l=0; l<= 7; l++) {
 
-			if (in[k].ept[l] > 0){
+			if (in[k].ept[l] > 0) {
 
 				index = in[k].ept[l];
 				list[index].x = in[k].x;
@@ -3869,8 +3869,8 @@ proc_rod(int cnt)
 	/* list[0] will not hold anything, so don't look */
 
 	l = 0;
-	for (k=1; k<10000; k++){
-		if (list[k].flag == 1){
+	for (k=1; k<10000; k++) {
+		if (list[k].flag == 1) {
 			list[k].flag = 0;
 			x[l] = list[k].x;
 			y[l] = list[k].y;
@@ -3886,13 +3886,13 @@ proc_rod(int cnt)
 		}
 	}
 
-	if (debug > 2){
+	if (debug > 2) {
 		for (k=1;(k<=l);k++)
 			bu_log( "compressed: %d %f %f %f %f %d\n",
 			    k, x[k], y[k], z[k], radius[k], mirror[k]);
 	}
 
-	for (k=1; k < (l-1); k++){
+	for (k=1; k < (l-1); k++) {
 
 		if ( (x[k]==x[k+1]) && (y[k]==y[k+1]) && (z[k]==z[k+1]) ) {
 			k += 2;
@@ -3914,14 +3914,14 @@ proc_rod(int cnt)
 		tmp = radius[k];
 		tmp1 = radius[k+1];
 
-		if ((tmp > 0)&&(tmp1 > 0)){
+		if ((tmp > 0)&&(tmp1 > 0)) {
 			mk_trc_top(outfp, name, base, top, tmp, tmp1);
 		}
 		else {
 			bu_log( "Bad Rod Radius for %s\n", name);
 		}
 
-		if ( count > 1 && (count % num_unions) == 0 ){
+		if ( count > 1 && (count % num_unions) == 0 ) {
 			(void)mk_addmember(name, &head.l, NULL, WMOP_SUBTRACT);
 			proc_region( name );
 			(void)mk_addmember(name, &head.l, NULL, WMOP_UNION);
@@ -3936,7 +3936,7 @@ proc_rod(int cnt)
 
 	/*    Mirror Processing - duplicates above code!    */
 
-	for ( k=1; k < (l-1); k++){
+	for ( k=1; k < (l-1); k++) {
 
 		if ( mirror[k] == 0 )
 			continue;
@@ -3960,7 +3960,7 @@ proc_rod(int cnt)
 		tmp = radius[k];
 		tmp1 = radius[k+1];
 
-		if ((tmp > 0)&&(tmp1 > 0)){
+		if ((tmp > 0)&&(tmp1 > 0)) {
 			mk_trc_top(outfp, name, base, top, tmp, tmp1);
 		}
 		else {
@@ -4088,7 +4088,7 @@ void
 set_color(int color)
 {
 
-	switch ( color ){
+	switch ( color ) {
 
 	case 0:      /* 0XXX_series */
 
@@ -4242,7 +4242,7 @@ pt_inside( point_t a, point_t base, point_t top, double rad1, double rad2 )
 	radius = ((rad2 - rad1)*dist)/mag_bt + rad1;
 
 	pt_radsq = MAGSQ(ba) - (dist*dist);
-	if ( debug>2 && pt_radsq - (radius*radius) < tol.dist_sq  ){
+	if ( debug>2 && pt_radsq - (radius*radius) < tol.dist_sq  ) {
 		bu_log( "pt_inside: point (%.4f,%.4f,%.4f) inside cylinder endpoints (%.4f,%.4f,%.4f) and (%.4f,%.4f,%.4f)\n",
 		    a[0]/mmtin, a[1]/mmtin, a[2]/mmtin,
 		    base[0]/mmtin, base[1]/mmtin, base[2]/mmtin,
@@ -4297,7 +4297,7 @@ mk_cyladdmember(char *name1, struct wmember *head, struct subtract_list *slist, 
 	(void)mk_addmember( name1, &(head->l), NULL, WMOP_UNION );
 
 	for ( slist = hold; slist; slist = slist->next ) {
-		if ( slist->outsolid == solnum ){
+		if ( slist->outsolid == solnum ) {
 			snprintf(tmpname, NAMESIZE+1, "c.%.4d.s%.2d", cc, slist->insolid );
 			(void)mk_addmember( tmpname, &(head->l), NULL, WMOP_SUBTRACT );
 		}
@@ -4325,7 +4325,7 @@ get_subtract(int cnt)
 	int i, j;
 
 	/* free up memory for slist, if any */
-	for ( next=slist; next; ){
+	for ( next=slist; next; ) {
 		slist = next;
 		next = slist->next;
 		bu_free( (char *)slist, "get_subtract: slist" );
@@ -4352,7 +4352,7 @@ struct subtract_list *
 add_to_list(struct subtract_list *slist, int outsolid, int insolid, int inmirror)
 {
 
-	if ( slist == NULL ){
+	if ( slist == NULL ) {
 		slist = (struct subtract_list *)bu_malloc(sizeof(struct subtract_list), "add_to_list: slist" );
 		slist->outsolid = outsolid;
 		slist->insolid = insolid;

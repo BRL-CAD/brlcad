@@ -131,7 +131,7 @@ f_joint(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
   int status;
 
-  if (argc < 1){
+  if (argc < 1) {
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -813,7 +813,7 @@ parse_path(struct arc *ap, FILE *fip, struct bu_vls *str)
 		}
 		if (token.t_key.value == SYM_ARC) {
 			continue;
-		}else if (token.t_key.value == SYM_MINUS) {
+		} else if (token.t_key.value == SYM_MINUS) {
 			break;
 		} else {
 			parse_error(str, "parse_path: syntax error.");
@@ -889,7 +889,7 @@ parse_list(struct arc *ap, FILE *fip, struct bu_vls *str)
 		}
 		if (token.t_key.value == SYM_COMMA) {
 			continue;
-		}else if (token.t_key.value == SYM_END) {
+		} else if (token.t_key.value == SYM_END) {
 			break;
 		} else {
 			parse_error(str, "parse_path: syntax error.");
@@ -2331,7 +2331,7 @@ part_solve(struct hold *hp, double limits, double tol)
 				    hp->effector.path.fp_names[i]->d_namep)==0) break;
 			}
 			if (i+jp->path.arc_last >= hp->effector.path.fp_len) continue;
-			for (j=1; j<=jp->path.arc_last;j++){
+			for (j=1; j<=jp->path.arc_last;j++) {
 				if (strcmp(jp->path.arc[j],
 				    hp->effector.path.fp_names[i+j]->d_namep)
 				    != 0) break;
@@ -3576,7 +3576,7 @@ f_jmesh(int argc, char **argv)
 
 	for (BU_LIST_FOR(jp, artic_joints, &artic_head)) {
 		i=0;
-		for (BU_LIST_FOR(gp, artic_grips, &jp->head)){
+		for (BU_LIST_FOR(gp, artic_grips, &jp->head)) {
 			i++;
 			for (gpp=BU_LIST_NEXT(artic_grips, &(gp->l));
 			    BU_LIST_NOT_HEAD(gpp, &(jp->head));

@@ -290,7 +290,7 @@ void doit(void)
     }
 
     /* write out the actual pixels */
-    if (fwrite(rast, ras.ras_width, ras.ras_height, stdout) != ras.ras_height){
+    if (fwrite(rast, ras.ras_width, ras.ras_height, stdout) != ras.ras_height) {
 	(void)fprintf(stderr, "%s: error writing image\n", progname);
 	bu_exit (1, NULL);
     }

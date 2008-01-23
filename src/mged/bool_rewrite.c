@@ -316,9 +316,9 @@ show_gift_bool (struct bool_tree_node *rp, int new_line)
 
   if (bt_is_leaf(rp))
     Tcl_AppendResult(interp, bt_leaf_name(rp), (char *)NULL);
-  else{
+  else {
     show_gift_bool(bt_opd(rp, BT_LEFT), 0);
-    switch (bt_opn(rp)){
+    switch (bt_opn(rp)) {
     case OPN_UNION:
       Tcl_AppendResult(interp, " u ", (char *)NULL);
       break;

@@ -220,7 +220,7 @@ f_press(ClientData clientData,
 {
 	register int i;
 
-	if (argc < 2){
+	if (argc < 2) {
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
@@ -237,7 +237,7 @@ f_press(ClientData clientData,
 		int menu, item;
 		register struct menu_item	*mptr;
 
-		if ( edsol && edobj ){
+		if ( edsol && edobj ) {
 		  struct bu_vls tmp_vls;
 
 		  bu_vls_init(&tmp_vls);
@@ -836,7 +836,7 @@ chg_state(int from, int to, char *str)
   struct dm_list *save_dm_list;
   struct bu_vls vls;
 
-  if (state != from){
+  if (state != from) {
     bu_log("Unable to do <%s> going from %s to %s state.\n", str, state_str[from], state_str[to]);
     return(1);	/* BAD */
   }
@@ -846,11 +846,11 @@ chg_state(int from, int to, char *str)
   stateChange(from, to);
 
   save_dm_list = curr_dm_list;
-  FOR_ALL_DISPLAYS(p, &head_dm_list.l){
+  FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
     curr_dm_list = p;
 
 #if 0
-    if (to == ST_VIEW){
+    if (to == ST_VIEW) {
       mat_t o_toViewcenter;
       fastf_t o_Viewscale;
 

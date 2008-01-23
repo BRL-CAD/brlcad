@@ -90,7 +90,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	BU_LIST_INIT(&head);
 
-	if (argc < 1 || 27 < argc){
+	if (argc < 1 || 27 < argc) {
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);

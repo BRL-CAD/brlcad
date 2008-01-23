@@ -65,8 +65,8 @@ main(int argc, char **argv)
 
     /* copy any lines preceeding the first "start" command */
     last_pos = ftell(stdin);
-    while (bu_fgets(line, MAXLEN, stdin)!=NULL){
-	if (strncmp(line, "start", 5)){
+    while (bu_fgets(line, MAXLEN, stdin)!=NULL) {
+	if (strncmp(line, "start", 5)) {
 	    printf("%s", line);
 	    last_pos = ftell(stdin);
 	}
@@ -79,8 +79,8 @@ main(int argc, char **argv)
 
     /* find the highest frame number in the file */
     maxnum = 0;
-    while (bu_fgets(line, MAXLEN, stdin)!=NULL){
-	if (!strncmp(line, "start", 5)){
+    while (bu_fgets(line, MAXLEN, stdin)!=NULL) {
+	if (!strncmp(line, "start", 5)) {
 	    sscanf(strpbrk(line, "0123456789"), "%d", &number);
 	    maxnum = (maxnum>number)?maxnum:number;
 	}
@@ -95,10 +95,10 @@ main(int argc, char **argv)
 
     first_frame = frame_number;
     success = 1;
-    while (length--){
+    while (length--) {
 	number = -1;
 	success = 0; /* tells whether or not any frames have been found  which have the current frame number*/
-	if (incremental){
+	if (incremental) {
 	    fseek(stdin, 0L, 0);
 	} else {
 	    fseek(stdin, last_pos, 0);
@@ -109,37 +109,37 @@ main(int argc, char **argv)
 
 	/* inner loop: search through the entire file for frames */
 	/*  which have the current frame number */
-	while (!feof(stdin)){
+	while (!feof(stdin)) {
 
 	    /*read to next "start" command*/
-	    while (bu_fgets(line, MAXLEN, stdin)!=NULL){
-		if (!strncmp(line, "start", 5)){
+	    while (bu_fgets(line, MAXLEN, stdin)!=NULL) {
+		if (!strncmp(line, "start", 5)) {
 		    sscanf( strpbrk(line, "0123456789"), "%d", &number);
 		    break;
 		}
 	    }
-	    if (number==frame_number){
-		if (!success){ /*first successful match*/
+	    if (number==frame_number) {
+		if (!success) { /*first successful match*/
 		    printf("%s", line);
 		    if (!suppressed) printf("clean;\n");
 		    success = 1;
 		    last_pos = ftell(stdin);
 		}
 		/* print contents until next "end" */
-		while (bu_fgets(line, MAXLEN, stdin)!=NULL){
+		while (bu_fgets(line, MAXLEN, stdin)!=NULL) {
 		    if (!strncmp(line, "end;", 4))
 			break;
 		    else if (strncmp(line, "clean", 5))
 			printf("%s", line);
 		}
 		/* save contents until next "start" */
-		while (bu_fgets(line, MAXLEN, stdin)!=NULL){
+		while (bu_fgets(line, MAXLEN, stdin)!=NULL) {
 		    if (!strncmp(line, "start", 5))
 			break;
 		    else {
 			reserve -= strlen(line);
 			reserve -= 1;
-			if (reserve > 0){
+			if (reserve > 0) {
 			    bu_strlcat(pbuffer, line, reserve + strlen(line) + 1);
 			} else {
 			    printf("ERROR: ran out of buffer space (%d characters)\n", MAXLEN*MAXLINES);
@@ -154,9 +154,9 @@ main(int argc, char **argv)
 	printf("%s", pbuffer);
 
 	/* get next frame number */
-	if (incremental){
+	if (incremental) {
 	    frame_number = frame_number + 2*spread;
-	    while (frame_number > maxnum){
+	    while (frame_number > maxnum) {
 		spread = spread>>1;
 		frame_number = first_frame + spread;
 	    }
@@ -176,7 +176,7 @@ int get_args(int argc, char **argv)
     suppressed = 0;
 
     while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
-	switch (c){
+	switch (c) {
 	case 'c':
 	    suppressed = 1;
 	    break;

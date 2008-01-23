@@ -1240,7 +1240,7 @@ edge_hit_ray_state(struct ray_data *rd, struct edgeuse *eu, struct hitmiss *myhi
 			}
 
 			if (! (NMG_3MANIFOLD &
-			       NMG_MANIFOLDS(rd->manifolds, fu->f_p)) ){
+			       NMG_MANIFOLDS(rd->manifolds, fu->f_p)) ) {
 				bu_log("This is not a 3-Manifold face.  I'll skip it\n");
 				goto next_edgeuse;
 			}

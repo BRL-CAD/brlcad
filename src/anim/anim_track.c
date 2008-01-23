@@ -148,14 +148,14 @@ main(int argc, char **argv)
     if (!get_args(argc, argv))
 	fprintf(stderr, "Anim_track: Argument error.\n");
 
-    if (axes || cent ){ /* vehicle has own reference frame */
+    if (axes || cent ) { /* vehicle has own reference frame */
 	anim_add_trans(m_axes, centroid, zero);
 	anim_add_trans(m_rev_axes, zero, rcentroid);
     }
 
     /* get track information from specified file */
 
-    if (!(stream = fopen(*(argv+bu_optind), "r"))){
+    if (!(stream = fopen(*(argv+bu_optind), "r"))) {
 	fprintf(stderr, "Track: Could not open file %s.\n", *(argv+bu_optind));
 	return(0);
     }
@@ -181,7 +181,7 @@ main(int argc, char **argv)
     wh = (struct wheel *) bu_calloc(num_wheels, sizeof(struct wheel), "wh wheel");
 
     /*read original wheel positions*/
-    for (i=0;i<NW;i++){
+    for (i=0;i<NW;i++) {
 	fscanf(stream, "%lf %lf %lf", temp, temp+1, temp+2);
 	if (one_radius)
 	    x[i].w.rad = radius;
@@ -232,14 +232,14 @@ main(int argc, char **argv)
     prev_dist = distance = 0.0;
     frame = first_frame;
     for (; ; frame++) {
-	if (dist_mode==GIVEN){
+	if (dist_mode==GIVEN) {
 	    scanf("%*f");/*time*/
 	    val = scanf("%lf", &distance);
 	    if (val < 1) {
 		break;
 	    }
 	}
-	else if (dist_mode==CALCULATED){
+	else if (dist_mode==CALCULATED) {
 	    scanf("%*f");/*time*/
 	    scanf("%lf %lf %lf", cent_pos, cent_pos+1, cent_pos+2);
 	    val = scanf("%lf %lf %lf", &yaw, &pch, &roll);
@@ -252,7 +252,7 @@ main(int argc, char **argv)
 
 	if (read_wheels) {
 	    /* read in all wheel positions */
-	    for (i=0;i<NW;i++){
+	    for (i=0;i<NW;i++) {
 		val=scanf("%lf %lf", x[i].w.pos, x[i].w.pos + 2);
 		if (val < 2) {
 		    break;
@@ -263,7 +263,7 @@ main(int argc, char **argv)
 	if (dist_mode==STEERED) {
 	    scanf("%*f");/*time*/
 	    val = scanf("%lf %lf %lf", cent_pos, cent_pos+1, cent_pos + 2);
-	    if (val < 3){
+	    if (val < 3) {
 		if (last_steer)
 		    break;
 		else
@@ -275,7 +275,7 @@ main(int argc, char **argv)
 
 	/* call track_prep to calculate geometry of track */
 	if ((frame==first_frame)||read_wheels) {
-	    if ((track_prep())==-1){
+	    if ((track_prep())==-1) {
 		fprintf(stderr, "Track: error in frame %d: track too short.\n", frame);
 		break;
 	    }
@@ -285,11 +285,11 @@ main(int argc, char **argv)
 	}
 
 
-	if ((dist_mode==CALCULATED)||(dist_mode==STEERED)){
+	if ((dist_mode==CALCULATED)||(dist_mode==STEERED)) {
 	    /*determine distance traveled*/
 	    VMOVE(wheel_prev, wheel_now);
 	    MAT4X3PNT(wheel_now, mat_x, to_track);
-	    if (frame > first_frame){ /* increment distance by distance moved*/
+	    if (frame > first_frame) { /* increment distance by distance moved*/
 		VSUB2(vdelta, wheel_now, wheel_prev);
 		MAT3X3VEC(temp, mat_x, to_front);/*new front of vehicle*/
 		distance += VDOT(temp, vdelta);/*portion of vdelta in line with track*/
@@ -313,11 +313,11 @@ main(int argc, char **argv)
 		last_frame = 1;
 	    }
 	    if (print_link) {
-		for (count=0;count<num_links;count++){
+		for (count=0;count<num_links;count++) {
 		    (void) get_link(position, &y_rot, distance+tracklen*count/num_links+init_dist);
 		    anim_y_p_r2mat(wmat, 0.0, y_rot, 0.0);
 		    anim_add_trans(wmat, position, zero);
-		    if (axes || cent){ /* link moved to vehicle coords */
+		    if (axes || cent) { /* link moved to vehicle coords */
 			MAT_MOVE(mat_x, wmat);
 			bn_mat_mul(wmat, m_axes, mat_x);
 		    }
@@ -330,12 +330,12 @@ main(int argc, char **argv)
 		    }
 		}
 	    }
-	    if (print_wheel){
-		for (count = 0;count<num_wheels;count++){
+	    if (print_wheel) {
+		for (count = 0;count<num_wheels;count++) {
 		    anim_y_p_r2mat(wmat, 0.0, -distance/wh[count].rad, 0.0);
 		    VREVERSE(temp, wh[count].pos);
 		    anim_add_trans(wmat, x[count].w.pos, temp);
-		    if (axes || cent){
+		    if (axes || cent) {
 			bn_mat_mul(mat_x, wmat, m_rev_axes);
 			bn_mat_mul(wmat, m_axes, mat_x);
 		    }
@@ -380,7 +380,7 @@ int get_args(int argc, char **argv)
 
     while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
 	i=0;
-	switch (c){
+	switch (c) {
 	case 's':
 	    dist_mode = STEERED;
 	    break;
@@ -510,7 +510,7 @@ int track_prep(void)
     fastf_t hyper_get_s(fastf_t a, fastf_t c, fastf_t x);
 
     /* first loop - get inter axle slopes and start/end angles */
-    for (i=0;i<NW;i++){
+    for (i=0;i<NW;i++) {
 	/*calculate current slope vector*/
 	VSUB2(x[i].s.dir, x[i].w.pos, x[PREV(i)].w.pos);
 	x[i].s.len = MAGNITUDE(x[i].s.dir);
@@ -523,7 +523,7 @@ int track_prep(void)
 	x[i].w.ang0 = x[PREV(i)].w.ang1;
     }
     /* second loop - handle concavities */
-    for (i=0;i<NW;i++){
+    for (i=0;i<NW;i++) {
 	arc_angle = x[i].w.ang0 - x[i].w.ang1;
 	while (arc_angle < 0.0)
 	    arc_angle += 2.0*M_PI;
@@ -538,7 +538,7 @@ int track_prep(void)
     }
 
     /* third loop - calculate geometry of straight track segments */
-    for (i=0;i<NW;i++){
+    for (i=0;i<NW;i++) {
 	/*calculate endpoints of track segment*/
 	x[i].t.pos1[0] = x[i].w.pos[0] + x[i].w.rad*cos(x[i].w.ang0);
 	x[i].t.pos1[1] = x[i].w.pos[1];
@@ -554,7 +554,7 @@ int track_prep(void)
 
     /* calculate total track length used so far*/
     linearlen = x[0].w.arc*x[0].w.rad;
-    for (i=1;i<NW;i++){
+    for (i=1;i<NW;i++) {
 	linearlen += x[i].t.len;
 	linearlen += x[i].w.arc*x[i].w.rad;
     }
@@ -571,12 +571,12 @@ int track_prep(void)
 
     /* calculate geometry of hyperbolic segment */
     hyperlen = tracklen - linearlen;
-    if (hyperlen < x[0].t.len){ /* desired length of hyperbola less than straight line*/
-	if ((len_mode==TRACK_ELASTIC)||(len_mode==TRACK_STRETCH)){
+    if (hyperlen < x[0].t.len) { /* desired length of hyperbola less than straight line*/
+	if ((len_mode==TRACK_ELASTIC)||(len_mode==TRACK_STRETCH)) {
 	    tracklen += (x[0].t.len-hyperlen);
 	    hyperlen = tracklen - linearlen;
 	}
-	else{
+	else {
 	    return(-1);/*bad, track is too short*/
 	}
     }
@@ -622,14 +622,14 @@ int get_link(fastf_t *pos, fastf_t *angle_p, fastf_t dist)
 
     /* we want it to ignore the distance between wheel(n-1) and wheel(0)*/
     dist += x[0].t.len;
-    for (i=0;i<NW;i++){
-	if ( (dist  -= x[i].t.len) < 0 ){
+    for (i=0;i<NW;i++) {
+	if ( (dist  -= x[i].t.len) < 0 ) {
 	    VSCALE(temp, (x[i].t.dir), dist);
 	    VADD2(pos, x[i].t.pos1, temp);
 	    *angle_p = atan2(x[i].t.dir[2], x[i].t.dir[0]);
 	    return(2*i);
 	}
-	if ((dist -= x[i].w.rad*x[i].w.arc) < 0){
+	if ((dist -= x[i].w.rad*x[i].w.arc) < 0) {
 	    *angle_p = dist/x[i].w.rad;
 	    *angle_p = x[i].w.ang1 - *angle_p;/*from x-axis to link*/
 	    pos[X] = x[i].w.pos[X] + x[i].w.rad*cos(*angle_p);
@@ -641,7 +641,7 @@ int get_link(fastf_t *pos, fastf_t *angle_p, fastf_t dist)
     }
 
     /* caternary section */
-    if ( curve_a > VDIVIDE_TOL){
+    if ( curve_a > VDIVIDE_TOL) {
 	pos[X] = hyper_get_x(curve_a, 0.0, s_start+dist, 0, 0, 0);
 	pos[Y] = x[0].w.pos[Y];
 	pos[Z] = hyper_get_z(curve_a, curve_b, 0.0, pos[X]);
@@ -662,10 +662,10 @@ void show_info(int which)/* for debugging - -1:track 0:both 1:link*/
 
 {
     int i;
-    if (which <=0){
+    if (which <=0) {
 	fprintf(stderr, "track length: %f\n", tracklen);
 	fprintf(stderr, "link length: %f\n", tracklen/num_links);
-	for (i=0;i<NW;i++){
+	for (i=0;i<NW;i++) {
 	    fprintf(stderr, "wheel %d: \n", i);
 	    fprintf(stderr, " pos\t%f\t%f\t%f\t\n", x[i].w.pos[X], x[i].w.pos[Y], x[i].w.pos[Z]);
 	    fprintf(stderr, " rad\t%f\tang0\t%f\tang1\t%f\tarc\t%f\n", x[i].w.rad, x[i].w.ang0, x[i].w.ang1, x[i].w.arc);
@@ -676,7 +676,7 @@ void show_info(int which)/* for debugging - -1:track 0:both 1:link*/
 	    fprintf(stderr, "slope %d: %f %f %f %f\n", i, x[i].s.dir[0], x[i].s.dir[1], x[i].s.dir[2], x[i].s.len);
 	}
     }
-    /*	if (which >= 0){
+    /*	if (which >= 0) {
 	fprintf(stderr, "%d %f %f %f %f\n", count, position[0], position[1], position[2], y_rot);
 	}*/
 }

@@ -238,13 +238,13 @@ tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
     dmp->dm_interp = interp;
 
     dmp->dm_vars.pub_vars = (genptr_t)bu_calloc(1, sizeof(struct dm_xvars), "tk_open: dm_xvars");
-    if (dmp->dm_vars.pub_vars == (genptr_t)NULL){
+    if (dmp->dm_vars.pub_vars == (genptr_t)NULL) {
 	bu_free(dmp, "tk_open: dmp");
 	return DM_NULL;
     }
 
     dmp->dm_vars.priv_vars = (genptr_t)bu_calloc(1, sizeof(struct tk_vars), "tk_open: tk_vars");
-    if (dmp->dm_vars.priv_vars == (genptr_t)NULL){
+    if (dmp->dm_vars.priv_vars == (genptr_t)NULL) {
 	bu_free(dmp->dm_vars.pub_vars, "tk_open: dmp->dm_vars.pub_vars");
 	bu_free(dmp, "tk_open: dmp");
 	return DM_NULL;
@@ -262,7 +262,7 @@ tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
     }
 
     ++count;
-    if (bu_vls_strlen(&dmp->dm_dName) == 0){
+    if (bu_vls_strlen(&dmp->dm_dName) == 0) {
 	char *dp;
 
 	dp = DisplayString(Tk_Display(tkwin));
@@ -283,19 +283,19 @@ tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
 
     ((struct dm_xvars *)dmp->dm_vars.pub_vars)->tkfontset = 0;
 
-    if (dmp->dm_top){
+    if (dmp->dm_top) {
 	/* Make xtkwin a toplevel window */
 	((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin = Tk_CreateWindowFromPath(interp, tkwin,
 										     bu_vls_addr(&dmp->dm_pathName),
 										     bu_vls_addr(&dmp->dm_dName));
 	((struct dm_xvars *)dmp->dm_vars.pub_vars)->top = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin;
-    }else{
+    } else {
 	char *cp;
 
 	cp = strrchr(bu_vls_addr(&dmp->dm_pathName), (int)'.');
-	if (cp == bu_vls_addr(&dmp->dm_pathName)){
+	if (cp == bu_vls_addr(&dmp->dm_pathName)) {
 	    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->top = tkwin;
-	}else{
+	} else {
 	    struct bu_vls top_vls;
 
 	    bu_vls_init(&top_vls);
@@ -312,7 +312,7 @@ tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
 			    cp + 1, (char *)NULL);
     }
 
-    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin == NULL){
+    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin == NULL) {
 	bu_log("tk_open: Failed to open %s\n", bu_vls_addr(&dmp->dm_pathName));
 	(void)tk_close(dmp);
 	return DM_NULL;
@@ -326,7 +326,7 @@ tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
 		  &init_proc_vls,
 		  &dmp->dm_pathName);
 
-    if (Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR){
+    if (Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR) {
 	bu_vls_free(&str);
 	(void)tk_close(dmp);
 
@@ -346,21 +346,21 @@ tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
 	return DM_NULL;
     }
 
-    if (dmp->dm_width == 0){
+    if (dmp->dm_width == 0) {
 	dmp->dm_width =
 	    WidthOfScreen(Tk_Screen((
 				     (struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin)) - 30;
 	++make_square;
     }
 
-    if (dmp->dm_height == 0){
+    if (dmp->dm_height == 0) {
 	dmp->dm_height =
 	    HeightOfScreen(Tk_Screen((
 				      (struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin)) - 30;
 	++make_square;
     }
 
-    if (make_square > 0){
+    if (make_square > 0) {
 	/* Make window square */
 	if (dmp->dm_height <
 	   dmp->dm_width)
@@ -378,7 +378,7 @@ tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
     XSynchronize(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy, 1);
 
     /* must do this before MakeExist */
-    if ((((struct dm_xvars *)dmp->dm_vars.pub_vars)->vip = Tk_choose_visual(dmp)) == NULL){
+    if ((((struct dm_xvars *)dmp->dm_vars.pub_vars)->vip = Tk_choose_visual(dmp)) == NULL) {
 	bu_log("Tk_open: Can't get an appropriate visual.\n");
 	(void)tk_close(dmp);
 	return DM_NULL;
@@ -445,18 +445,18 @@ tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
     if ( list == (XDeviceInfoPtr)NULL ||
 	list == (XDeviceInfoPtr)1 )  goto Done;
 
-    for (j = 0; j < ndevices; ++j, list++){
-	if (list->use == IsXExtensionDevice){
-	    if (!strcmp(list->name, "dial+buttons")){
+    for (j = 0; j < ndevices; ++j, list++) {
+	if (list->use == IsXExtensionDevice) {
+	    if (!strcmp(list->name, "dial+buttons")) {
 		if ((dev = XOpenDevice(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-				      list->id)) == (XDevice *)NULL){
+				      list->id)) == (XDevice *)NULL) {
 		    bu_log("Tk_open: Couldn't open the dials+buttons\n");
 		    goto Done;
 		}
 
 		for (cip = dev->classes, k = 0; k < dev->num_classes;
-		    ++k, ++cip){
-		    switch (cip->input_class){
+		    ++k, ++cip) {
+		    switch (cip->input_class) {
 #if IR_BUTTONS
 			case ButtonClass:
 			    DeviceButtonPress(dev, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->devbuttonpress,
@@ -512,7 +512,7 @@ tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
 HIDDEN int
 tk_close(struct dm *dmp)
 {
-    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy){
+    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy) {
 	if (((struct x_vars *)dmp->dm_vars.priv_vars)->gc)
 	    Tk_FreeGC(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 		      ((struct x_vars *)dmp->dm_vars.priv_vars)->gc);
@@ -608,7 +608,7 @@ tk_drawEnd(struct dm *dmp)
 HIDDEN int
 tk_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 {
-    if (dmp->dm_debugLevel){
+    if (dmp->dm_debugLevel) {
 	bu_log("tk_loadMatrix()\n");
 
 	bu_log("which eye = %d\t", which_eye);
@@ -893,7 +893,7 @@ tk_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int si
 {
     int sx, sy;
 
-    if (dmp->dm_debugLevel){
+    if (dmp->dm_debugLevel) {
 	bu_log("tk_drawString2D():\n");
 	bu_log("\tstr - %s\n", str);
 	bu_log("\tx - %g\n", x);
@@ -903,9 +903,9 @@ tk_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int si
 	bu_log("color = %d\n", ((struct x_vars *)dmp->dm_vars.priv_vars)->fg);
 	/*  bu_log("real_color = %d\n", ((struct x_vars *)dmp->dm_vars.priv_vars)->gc->foreground); */
 
-	if (use_aspect){
+	if (use_aspect) {
 	    bu_log("\tuse_aspect - %d\t\taspect ratio - %g\n", use_aspect, dmp->dm_aspect);
-	}else
+	} else
 	    bu_log("\tuse_aspect - 0");
     }
 

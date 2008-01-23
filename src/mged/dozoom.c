@@ -261,11 +261,11 @@ drawSolid(register struct solid *sp,
 	  short g,
 	  short b) {
 
-  if (sp->s_cflag){
+  if (sp->s_cflag) {
     if (!DM_SAME_COLOR(r, g, b,
 		      (short)geometry_default_color[0],
 		      (short)geometry_default_color[1],
-		      (short)geometry_default_color[2])){
+		      (short)geometry_default_color[2])) {
       DM_SET_FGCOLOR(dmp,
 		     (short)geometry_default_color[0],
 		     (short)geometry_default_color[1],
@@ -281,7 +281,7 @@ drawSolid(register struct solid *sp,
     if (!DM_SAME_COLOR(r, g, b,
 		      (short)sp->s_color[0],
 		      (short)sp->s_color[1],
-		      (short)sp->s_color[2])){
+		      (short)sp->s_color[2])) {
       DM_SET_FGCOLOR(dmp,
 		     (short)sp->s_color[0],
 		     (short)sp->s_color[1],
@@ -461,7 +461,7 @@ dozoom(int which_eye)
 			continue;
 		    }
 
-		    if (linestyle != sp->s_soldash){
+		    if (linestyle != sp->s_soldash) {
 		      linestyle = sp->s_soldash;
 		      DM_SET_LINE_ATTR(dmp, mged_variables->mv_linewidth, linestyle);
 		    }
@@ -501,7 +501,7 @@ dozoom(int which_eye)
 			continue;
 		    }
 
-		    if (linestyle != sp->s_soldash){
+		    if (linestyle != sp->s_soldash) {
 		      linestyle = sp->s_soldash;
 		      DM_SET_LINE_ATTR(dmp, mged_variables->mv_linewidth, linestyle);
 		    }
@@ -536,7 +536,7 @@ dozoom(int which_eye)
 			continue;
 		    }
 
-		    if (linestyle != sp->s_soldash){
+		    if (linestyle != sp->s_soldash) {
 		      linestyle = sp->s_soldash;
 		      DM_SET_LINE_ATTR(dmp, mged_variables->mv_linewidth, linestyle);
 		    }
@@ -553,7 +553,7 @@ dozoom(int which_eye)
 		  curr_dm_list = save_dm_list;
 
 		/* draw predictor vlist */
-		if (mged_variables->mv_predictor){
+		if (mged_variables->mv_predictor) {
 		  DM_SET_FGCOLOR(dmp,
 				 color_scheme->cs_predictor[0],
 				 color_scheme->cs_predictor[1],
@@ -655,7 +655,7 @@ createDLists(struct bu_list *hsp)
 {
   register struct solid *sp;
 
-  FOR_ALL_SOLIDS(sp, hsp){
+  FOR_ALL_SOLIDS(sp, hsp) {
     createDList(sp);
   }
 }
@@ -679,10 +679,10 @@ createDListALL(struct solid *sp)
   FOR_ALL_DISPLAYS(dlp, &head_dm_list.l)
     dlp->dml_dlist_state->dl_flag = 1;
 
-  FOR_ALL_DISPLAYS(dlp, &head_dm_list.l){
+  FOR_ALL_DISPLAYS(dlp, &head_dm_list.l) {
     if (dlp->dml_dmp->dm_displaylist &&
-       dlp->dml_mged_variables->mv_dlist){
-      if (dlp->dml_dlist_state->dl_flag){
+       dlp->dml_mged_variables->mv_dlist) {
+      if (dlp->dml_dlist_state->dl_flag) {
 	curr_dm_list = dlp;
 	createDList(sp);
       }
@@ -704,7 +704,7 @@ createDListsAll(struct bu_list *hsp)
 {
   struct solid *sp;
 
-  FOR_ALL_SOLIDS(sp, hsp){
+  FOR_ALL_SOLIDS(sp, hsp) {
     createDListALL(sp);
   }
 }
@@ -721,9 +721,9 @@ freeDListsAll(unsigned int dlist, int range)
   FOR_ALL_DISPLAYS(dlp, &head_dm_list.l)
     dlp->dml_dlist_state->dl_flag = 1;
 
-  FOR_ALL_DISPLAYS(dlp, &head_dm_list.l){
+  FOR_ALL_DISPLAYS(dlp, &head_dm_list.l) {
     if (dlp->dml_dmp->dm_displaylist &&
-       dlp->dml_mged_variables->mv_dlist){
+       dlp->dml_mged_variables->mv_dlist) {
       if (dlp->dml_dlist_state->dl_flag)
 	DM_FREEDLISTS(dlp->dml_dmp, dlist, range);
     }

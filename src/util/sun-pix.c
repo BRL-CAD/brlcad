@@ -351,10 +351,10 @@ main(int argc, char **argv)
 			for ( x = 0; x < width; x++ ) {
 				if ( buf[x>>3] & bits[x&7] ) {
 					putchar(on);
-					if (pixout){putchar(on);putchar(on);}
+					if (pixout) {putchar(on);putchar(on);}
 				} else {
 					putchar(off);
-					if (pixout){putchar(off);putchar(off);}
+					if (pixout) {putchar(off);putchar(off);}
 				}
 			}
 		}

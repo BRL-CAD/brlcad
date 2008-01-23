@@ -362,7 +362,7 @@ skipbytes(int fd, off_t num)
 	while ( num > 0 ) {
 		try = num > MAX_LINE ? MAX_LINE : num;
 		n = read( fd, ibuf, try );
-		if ( n <= 0 ){
+		if ( n <= 0 ) {
 			return -1;
 		}
 		num -= n;

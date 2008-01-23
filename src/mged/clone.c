@@ -548,7 +548,7 @@ int
 copy_v5_comb_tree(union tree *tree, int idx)
 {
     char *buf;
-    switch (tree->tr_op){
+    switch (tree->tr_op) {
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
