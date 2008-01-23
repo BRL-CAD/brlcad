@@ -11,6 +11,7 @@ entire history of the project is available through SVN.
 --- 2007-11-XX  Release 7.11.0                                     ---
 ----------------------------------------------------------------------
 
+* ported rtwizard to function properly on Windows - Bob Parker
 * fixed mged text-editing commands on Windows platform - Bob Parker
 * removed duplicate points text-editing ARBs in mged - John Anderson
 * improved mged ted line-ending support using wordpad - Bob Parker
