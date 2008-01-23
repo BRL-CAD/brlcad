@@ -105,7 +105,6 @@ extern RGBpixel bgpixel;
 extern RGBpixel *ir_table;
 
 extern char *CS, *DL;
-extern char *beginptr;
 extern char *ged_file;
 
 extern char err_file[];

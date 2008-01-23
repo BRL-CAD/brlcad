@@ -89,8 +89,6 @@ char	timer[TIMER_LEN];
 char	script_file[MAX_LN];
 char	*ged_file = NULL;
 
-char	*beginptr;		     /* sbrk() at start of program.	*/
-
 /* Unit vectors representing horizontal and vertical directions of grid	*/
 fastf_t	grid_hor[3], grid_ver[3];
 
