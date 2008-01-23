@@ -243,6 +243,8 @@ pkg_open(const char *host, const char *service, const char *protocol, const char
     LPHOSTENT lpHostEntry;
     register SOCKET netfd;
     SOCKADDR_IN saServer;
+    WORD wVersionRequested;		/* initialize Windows socket networking, increment reference count */
+    WSADATA wsaData;
 #else
     struct sockaddr_in sinme;		/* Client */
     struct sockaddr_in sinhim;		/* Server */
@@ -265,23 +267,17 @@ pkg_open(const char *host, const char *service, const char *protocol, const char
 	fflush(pkg_debug);
     }
 
-#ifdef HAVE_WINSOCK_H
-    /* initialize Windows socket networking, increment reference count */
-    WORD wVersionRequested;
-    WSADATA wsaData;
-
-    wVersionRequested = MAKEWORD(1, 1);
-    if (WSAStartup(wVersionRequested, &wsaData) != 0) {
-	fprintf(stderr, "pkg_open:  could not find a usable WinSock DLL" );
-	return(-1);
-    }
-#endif
-
     /* Check for default error handler */
     if ( errlog == NULL )
 	errlog = pkg_errlog;
 
 #ifdef HAVE_WINSOCK_H
+    wVersionRequested = MAKEWORD(1, 1);
+    if (WSAStartup(wVersionRequested, &wsaData) != 0) {
+	pkg_perror(errlog, "pkg_open:  could not find a usable WinSock DLL");
+	return(PKC_ERROR);
+    }
+
     if ((lpHostEntry = gethostbyname(host)) == NULL) {
 	pkg_perror(errlog, "pkg_open:  gethostbyname");
 	return(PKC_ERROR);
@@ -442,6 +438,8 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
     int	pkg_listenfd;
 #ifdef HAVE_WINSOCK_H
     SOCKADDR_IN saServer;
+    WORD wVersionRequested;		/* initialize Windows socket networking, increment reference count */
+    WSADATA wsaData;
 #else
     struct sockaddr_in sinme;
 #  ifdef HAVE_SYS_UN_H
@@ -466,6 +464,12 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
 	errlog = pkg_errlog;
 
 #ifdef HAVE_WINSOCK_H
+    wVersionRequested = MAKEWORD(1, 1);
+    if (WSAStartup(wVersionRequested, &wsaData) != 0) {
+	pkg_perror(errlog, "pkg_open:  could not find a usable WinSock DLL");
+	return(PKC_ERROR);
+    }
+
     memset((char *)&saServer, 0, sizeof(saServer));
 
     if (atoi(service) > 0) {
@@ -476,14 +480,14 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
 		    "pkg_permserver(%s,%d): unknown service\n",
 		    service, backlog );
 	    errlog(errbuf);
-	    return(-1);
+	    return(PKC_ERROR);
 	}
 	saServer.sin_port = sp->s_port;
     }
 
     if ((pkg_listenfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == INVALID_SOCKET) {
 	pkg_perror(errlog, "pkg_permserver:  socket");
-	return(-1);
+	return(PKC_ERROR);
     }
 
 #if 0
@@ -497,7 +501,7 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
 	pkg_perror(errlog, "pkg_permserver: bind");
 	closesocket(pkg_listenfd);
 
-	return(-1);
+	return(PKC_ERROR);
     }
 
     if (backlog > 5)
@@ -507,7 +511,7 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
 	pkg_perror(errlog, "pkg_permserver:  listen");
 	closesocket(pkg_listenfd);
 
-	return(-1);
+	return(PKC_ERROR);
     }
 
     return(pkg_listenfd);
@@ -659,6 +663,10 @@ pkg_getclient(int fd, const struct pkg_switch *switchp, void (*errlog) (char *ms
     register int s2;
     unsigned int fromlen = sizeof (from);
     auto int onoff;
+#ifdef HAVE_WINSOCK_H
+    WORD wVersionRequested;		/* initialize Windows socket networking, increment reference count */
+    WSADATA wsaData;
+#endif
 
     if ( pkg_debug )  {
 	pkg_timestamp();
@@ -679,6 +687,15 @@ pkg_getclient(int fd, const struct pkg_switch *switchp, void (*errlog) (char *ms
 	    pkg_perror( errlog, "pkg_getclient: FIONBIO 1" );
     }
 #endif
+
+#ifdef HAVE_WINSOCK_H
+    wVersionRequested = MAKEWORD(1, 1);
+    if (WSAStartup(wVersionRequested, &wsaData) != 0) {
+	pkg_perror(errlog, "pkg_open:  could not find a usable WinSock DLL");
+	return(PKC_ERROR);
+    }
+#endif
+
     do  {
 #ifdef HAVE_WINSOCK_H
 	s2 = accept(fd, (struct sockaddr *)NULL, NULL);
