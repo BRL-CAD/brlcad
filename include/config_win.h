@@ -56,6 +56,7 @@
 #define INSTALL_DIRECTORY    "C:/brlcad" MAJOR_VERSION_STRING "_" MINOR_VERSION_STRING "_" PATCH_VERSION_STRING
 #define IWIDGETS_VERSION  "4.0.2"
 
+#define REVERSE_IEEE		yes
 #define HAS_OPENGL		1
 #define HAVE_FCNTL_H		1
 #define HAVE_PUTENV     	1
@@ -77,7 +78,9 @@
 #define HAVE_TIME		1
 #define HAVE_VFORK		1
 #define HAVE_WINSOCK_H		1
-#define REVERSE_IEEE		yes
+
+#define HAVE_SBRK 1
+#define sbrk(i) (NULL)
 
 /* XXX - do not rely on config_win.h providing these headers.  they
  * will be removed at some point.

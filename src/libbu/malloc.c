@@ -105,14 +105,6 @@ extern const char bu_vls_message[];
 extern const char bu_strdup_message[];
 
 
-#ifdef _WIN32
-char *sbrk(i)
-{
-	return( (char *)0 );
-}
-#endif
-
-
 /**
  *			B U _ M E M D E B U G _ A D D
  *
