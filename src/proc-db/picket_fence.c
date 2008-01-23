@@ -40,7 +40,6 @@ int main(int argc, char *argv[])
   long i, j, k, l;
   char name[256];
   char pname[256];
-  char number[256];
   char w1name[256];
   char w2name[256];
   char firstname[256];
@@ -253,6 +252,8 @@ int main(int argc, char *argv[])
   matcolor[1] = 50;
   matcolor[2] = 20;
   mk_lcomb(fp_db, name, &fwm, 0, "plastic", "", matcolor, 0);
+
+  return 0;
 }
 
 /*

@@ -39,36 +39,6 @@
 
 struct rt_nurb_internal	si;
 
-void make_face( point_t a, point_t b, point_t c, point_t d, int order);
-
-
-main(int argc, char **argv)
-{
-	point_t	a, b, c, d;
-	struct rt_wdb *fp;
-
-	si.magic = RT_NURB_INTERNAL_MAGIC;
-	si.nsrf = 0;
-	si.srfs = (struct face_g_snurb **)bu_malloc( sizeof(struct face_g_snurb *)*100, "snurb ptrs");
-
-	if ((fp = wdb_fopen(argv[1])) == NULL) {
-	  bu_log("unable to open new database [%s]\n", argv[1]);
-	  perror("unable to open database file");
-	  return 1;
-	}
-
-	mk_id( fp, "Mike's Spline Test" );
-
-	VSET( a,  0,  0,  0 );
-	VSET( b, 10,  0,  0 );
-	VSET( c, 10, 10,  0 );
-	VSET( d,  0, 10,  0 );
-
-	make_face( a, b, c, d, 2 );
-
-	mk_export_fwrite( fp, "spl", (genptr_t)&si, ID_BSPLINE );
-}
-
 void
 make_face(fastf_t *a, fastf_t *b, fastf_t *c, fastf_t *d, int order)
 {
@@ -125,6 +95,38 @@ make_face(fastf_t *a, fastf_t *b, fastf_t *c, fastf_t *d, int order)
 
 	si.srfs[si.nsrf++] = srf;
 }
+
+
+int
+main(int argc, char **argv)
+{
+	point_t	a, b, c, d;
+	struct rt_wdb *fp;
+
+	si.magic = RT_NURB_INTERNAL_MAGIC;
+	si.nsrf = 0;
+	si.srfs = (struct face_g_snurb **)bu_malloc( sizeof(struct face_g_snurb *)*100, "snurb ptrs");
+
+	if ((fp = wdb_fopen(argv[1])) == NULL) {
+	  bu_log("unable to open new database [%s]\n", argv[1]);
+	  perror("unable to open database file");
+	  return 1;
+	}
+
+	mk_id( fp, "Mike's Spline Test" );
+
+	VSET( a,  0,  0,  0 );
+	VSET( b, 10,  0,  0 );
+	VSET( c, 10, 10,  0 );
+	VSET( d,  0, 10,  0 );
+
+	make_face( a, b, c, d, 2 );
+
+	mk_export_fwrite( fp, "spl", (genptr_t)&si, ID_BSPLINE );
+
+	return 0;
+}
+
 
 /*
  * Local Variables:
