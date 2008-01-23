@@ -60,9 +60,9 @@ mk_nmg( struct rt_wdb *filep, const char *name, struct model *m )
  *			M K _ B O T _ F R O M _ N M G
  *
  *  For ray-tracing speed, many database conversion routines like to
- *  offer the option of converting NMG objects to bags of triangles (BoT).
- *  Here is a convenience routine to replace the old
- *  (now obsolete in BRL-CAD 6.0) routine write_shell_as_polysolid.
+ *  offer the option of converting NMG objects to bags of triangles
+ *  (BoT).  Here is a convenience routine to replace the old routine
+ *  write_shell_as_polysolid.  (obsolete since BRL-CAD 6.0)
  */
 int
 mk_bot_from_nmg( struct rt_wdb *ofp, const char *name, struct shell *s )

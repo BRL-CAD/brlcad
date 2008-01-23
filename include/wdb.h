@@ -311,7 +311,6 @@ WDB_EXPORT int mk_bspline( struct rt_wdb *wdbp, const char *name, struct face_g_
 WDB_EXPORT int mk_nmg( struct rt_wdb *filep, const char *name, struct model *m );
 WDB_EXPORT int mk_bot_from_nmg( struct rt_wdb *ofp, const char *name, struct shell *s );
 
-#define write_shell_as_polysolid(ofp, name, s)	mk_bot_from_nmg(ofp, name, s)
 
 /* skt.c */
 WDB_EXPORT int mk_sketch(

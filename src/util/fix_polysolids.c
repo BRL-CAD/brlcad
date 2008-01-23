@@ -159,8 +159,6 @@ main(int argc, char *argv[])
 	    nmg_gluefaces( (struct faceuse **)BU_PTBL_BASEADDR( &faces), BU_PTBL_END( &faces ), &tol );
 	    nmg_fix_normals( s, &tol );
 
-	    // write_shell_as_polysolid( stdout, rec.p.p_name, s );
-	    // replaced with nmg_to_poly()
 	    break;
 	default:
 	    fwrite( &rec, sizeof( union record ), 1, stdout );

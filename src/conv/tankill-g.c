@@ -396,7 +396,7 @@ main(int argc, char **argv)
 		{
 			if ( verbose )
 				bu_log( "\twriting polysolid %s\n", name );
-			write_shell_as_polysolid( out_fp, name, s );
+			mk_bot_from_nmg( out_fp, name, s );
 		}
 		else
 		{

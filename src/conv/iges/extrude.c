@@ -147,7 +147,7 @@ int entityno;
 				return( 0 );
 			}
 
-			write_shell_as_polysolid( fdout, dir[entityno]->name, s );
+			mk_bot_from_nmg( fdout, dir[entityno]->name, s );
 			nmg_km( m );
 			bu_free( (char *)curv_pts, "curve_pts" );
 

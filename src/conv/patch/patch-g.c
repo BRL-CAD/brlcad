@@ -1261,7 +1261,7 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 		s = BU_LIST_FIRST( shell, &r->s_hd );
 
 		if ( polysolid )
-			write_shell_as_polysolid( outfp, name, s );
+			mk_bot_from_nmg( outfp, name, s );
 		else
 		{
 			nmg_shell_coplanar_face_merge( s, tol, 0 );
@@ -1275,7 +1275,7 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 			nmg_mirror_model( m );
 
 			if ( polysolid )
-				write_shell_as_polysolid( outfp, mirror_name, s );
+				mk_bot_from_nmg( outfp, mirror_name, s );
 			else
 				mk_nmg( outfp, mirror_name, m );
 		}
@@ -1641,7 +1641,7 @@ nmg_face_g( fu, pl1 );
 	s = BU_LIST_FIRST( shell, &r->s_hd );
 
 	if ( polysolid )
-		write_shell_as_polysolid( outfp, name, s );
+		mk_bot_from_nmg( outfp, name, s );
 	else
 	{
 		nmg_shell_coplanar_face_merge( s, tol, 0 );
@@ -1660,7 +1660,7 @@ nmg_face_g( fu, pl1 );
 			bu_log( "writing  %s (mirrored) to BRL-CAD DB\n", mirror_name );
 
 		if ( polysolid )
-			write_shell_as_polysolid( outfp, mirror_name, s );
+			mk_bot_from_nmg( outfp, mirror_name, s );
 		else
 			mk_nmg( outfp, mirror_name, m );
 	}

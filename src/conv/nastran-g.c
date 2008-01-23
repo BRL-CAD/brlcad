@@ -1423,7 +1423,7 @@ main(int argc, char **argv)
 	{
 		nmg_rebound( nmg_model, &tol );
 		if ( polysolids )
-			write_shell_as_polysolid( fpout, "pshell.0", nmg_shell );
+			mk_bot_from_nmg( fpout, "pshell.0", nmg_shell );
 		else
 			mk_nmg( fpout, "pshell.0", nmg_model );
 	}
@@ -1447,7 +1447,7 @@ main(int argc, char **argv)
 		}
 		sprintf( name, "pshell.%d", psh->pid );
 		if ( polysolids )
-			write_shell_as_polysolid( fpout, name, psh->s );
+			mk_bot_from_nmg( fpout, name, psh->s );
 		else
 			mk_nmg( fpout, name, m );
 

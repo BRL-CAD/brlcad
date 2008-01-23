@@ -10986,7 +10986,7 @@ nmg_to_poly(const struct model *m, struct rt_pg_internal *poly_int, const struct
 				if( max_count > 5 )
 				{
 					if( rt_g.NMG_debug & DEBUG_BASIC )
-						bu_log( "write_shell_as_polysolid: triangulating fu x%x\n", fu );
+						bu_log( "nmg_to_poly: triangulating fu x%x\n", fu );
 					nmg_triangulate_fu( fu, tol );
 				}
 
