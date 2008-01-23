@@ -106,10 +106,6 @@ vect_t		left_eye_delta;
 int		report_progress;	/* !0 = user wants progress report */
 /***** end variables shared with worker() *****/
 
-/***** variables shared with do.c *****/
-char		*beginptr;		/* sbrk() at start of program */
-/***** end variables shared with do.c *****/
-
 /* Variables shared within mainline pieces */
 extern fastf_t	rt_dist_tol;		/* Value for rti_tol.dist */
 extern fastf_t	rt_perp_tol;		/* Value for rti_tol.perp */
@@ -308,8 +304,6 @@ main(int argc, char **argv)
 	 *  Now that the fork() has been done, it is safe to initialize
 	 *  the parallel processing support.
 	 */
-
-	beginptr = (char *) sbrk(0);
 
 	avail_cpus = bu_avail_cpus();
 	max_cpus = bu_get_public_cpus();
@@ -548,8 +542,6 @@ ph_gettrees(register struct pkg_conn *pc, char *buf)
 		rt_g.rtg_parallel = 1;
 	} else
 		rt_g.rtg_parallel = 0;
-
-	beginptr = (char *) sbrk(0);
 
 	seen_gettrees = 1;
 	(void)free(buf);
