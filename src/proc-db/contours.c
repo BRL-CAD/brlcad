@@ -39,7 +39,8 @@ int	x, y, z;
 int	npts;
 char	name[128];
 
-main(void)
+int
+main(int argc, char *argv[])
 {
   register int i;
 
@@ -56,6 +57,8 @@ main(void)
     }
     /* Close curves? */
   }
+
+  return 0;
 }
 
 /*

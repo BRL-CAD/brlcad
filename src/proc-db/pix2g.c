@@ -204,7 +204,7 @@ main(int ac, char *av[])
 
 	bu_log("Loading image %s from file...", imageFileName);
 	if (image->buflen < width * height * 3) {
-		bu_log("\nWARNING: %s needs %d bytes, file only contains %d bytes\n", imageFileName, width*height*3, image->buflen);
+		bu_log("\nWARNING: %s needs %d bytes, file only contains %ld bytes\n", imageFileName, width*height*3, image->buflen);
 	} else if (image->buflen > width* height * 3) {
 		bu_log("\nWarning: Image file size is larger than specified texture size\n");
 	}
