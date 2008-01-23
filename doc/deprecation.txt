@@ -64,6 +64,8 @@ src/librt/bomb.c
 
 7.12.0
 ------
+include/bu.h
+	char *bu_brlcad_path() -> const char *bu_brlcad_path() [const]
 include/bn.h
 	bn_mat_zero() -> MAT_ZERO() [deprecated pre-7.0]
 	bn_mat_idn() -> MAT_IDN() [deprecated pre-7.0]
@@ -72,7 +74,7 @@ include/compat4.h
 	compat4.h -> bu.h && bn.h [deprecated 5.0]
 include/raytrace.h
 	rt_overlap_quietly() -> struct application.a_logoverlap = rt_silent_logoverlap [deprecated pre 7.0]
-src/libbu/brlcad_path.c
+include/bu.h
 	bu_brlcad_path() -> bu_brlcad_root() || bu_brlcad_data() [deprecated 7.4]
 	bu_tcl_brlcad_path() -> bu_tcl_brlcad_root() || bu_tcl_brlcad_data() [deprecated 7.4]
 include/fb.h

@@ -421,7 +421,7 @@ bu_find_path(char result[MAXPATHLEN], const char *lhs, const char *rhs, struct b
  * It is the caller's responsibility to call bu_strdup() or make
  * other provisions to save the returned string, before calling again.
  */
-char *
+const char *
 bu_brlcad_root(const char *rhs, int fail_quietly)
 {
     static char result[MAXPATHLEN] = {0};
@@ -551,7 +551,7 @@ bu_brlcad_root(const char *rhs, int fail_quietly)
  * It is the caller's responsibility to call bu_strdup() or make
  * other provisions to save the returned string, before calling again.
  */
-char *
+const char *
 bu_brlcad_data(const char *rhs, int fail_quietly)
 {
     static char result[MAXPATHLEN] = {0};
