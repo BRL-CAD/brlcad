@@ -91,9 +91,6 @@ main(int argc, char **argv)
 		return	1;
 	}
 
-	if (pkg_init() != 0)
-	    bu_exit(1, NULL);
-
 	if ( (fbp = fb_open( framebuffer, scr_width, scr_height )) == NULL )
 		return	1;
 

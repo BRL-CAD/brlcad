@@ -114,9 +114,6 @@ do_fb(void)
 {
 	FBIO	*fbp;
 
-	if (pkg_init() != 0)
-	    bu_exit(1, NULL);
-
 	if ( (fbp = fb_open( framebuffer, 0, 0 )) == FBIO_NULL ) {
 		bu_exit( 2, "Unable to open framebuffer\n" );
 	}

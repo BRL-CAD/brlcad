@@ -154,23 +154,17 @@ main(int argc, char **argv)
 		bu_exit( 1, NULL );
 	}
 
-	if (pkg_init() != 0)
-	    bu_exit(1, NULL);
-
 	png_p = png_create_write_struct( PNG_LIBPNG_VER_STRING, NULL, NULL, NULL );
 	if (!png_p) {
-		pkg_terminate();
 		bu_exit(EXIT_FAILURE,  "Could not create PNG write structure\n" );
 	}
 
 	info_p = png_create_info_struct( png_p );
 	if (!info_p) {
-		pkg_terminate();
 		bu_exit(EXIT_FAILURE,  "Could not create PNG info structure\n" );
 	}
 
 	if ((fbp = fb_open(framebuffer, screen_width, screen_height)) == NULL) {
-		pkg_terminate();
 		bu_exit(12, NULL);
 	}
 
@@ -254,7 +248,6 @@ main(int argc, char **argv)
 	}
 	fb_close( fbp );
 	png_write_end( png_p, NULL );
-	pkg_terminate();
 	bu_exit(0, NULL);
 }
 

@@ -404,9 +404,6 @@ int main(int argc, char **argv)
 	if ( outputfile && strcmp( outputfile, "-") == 0 )
 		outputfile = (char *)0;
 
-	if (framebuffer != (char *)0)
-	    pkg_init();
-
 	/*
 	 *  Initialize application.
 	 *  Note that width & height may not have been set yet,
@@ -429,7 +426,6 @@ int main(int argc, char **argv)
 		bu_semaphore_release( BU_SEM_SYSCALL );
 		if ( fbp == FBIO_NULL )  {
 			fprintf(stderr, "rt:  can't open frame buffer\n");
-			pkg_terminate();
 			return 12;
 		}
 
@@ -486,7 +482,6 @@ int main(int argc, char **argv)
 		    /* Release the framebuffer, if any */
 		    if ( fbp != FBIO_NULL ) {
 			fb_close(fbp);
-			pkg_terminate();
 		    }
 
 		    return 1;
@@ -520,7 +515,6 @@ int main(int argc, char **argv)
 	/* Release the framebuffer, if any */
 	if (fbp != FBIO_NULL) {
 		fb_close(fbp);
-		pkg_terminate();
 	}
 
 	return(0);

@@ -105,11 +105,7 @@ main(int argc, char **argv)
 		bu_exit( 1, NULL );
 	}
 
-	if (pkg_init() != 0)
-	    bu_exit(1, NULL);
-
 	if ((fbp = fb_open(framebuffer, scr_width, scr_height)) == NULL) {
-	    pkg_terminate();
 	    bu_exit(2, NULL);
 	}
 
@@ -152,7 +148,6 @@ main(int argc, char **argv)
 		fb_clear( fbp, PIXEL_NULL );
 	}
 	(void)fb_close( fbp );
-	pkg_terminate();
 	return(0);
 }
 

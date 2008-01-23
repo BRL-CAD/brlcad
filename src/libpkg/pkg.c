@@ -171,28 +171,6 @@ static void	pkg_checkin(register struct pkg_conn *pc, int nodelay);
 #  define DMSG(s) /**/
 #endif
 
-int
-pkg_init() {
-#if defined(_WIN32) && !defined(__CYGWIN__)
-    WORD wVersionRequested;
-    WSADATA wsaData;
-
-    wVersionRequested = MAKEWORD(1, 1);
-    if (WSAStartup(wVersionRequested, &wsaData) != 0) {
-	fprintf(stderr, "pkg_startup:  could not find a usable WinSock DLL" );
-	return(-1);
-    }
-#endif
-
-    return 0; /* good */
-}
-
-void
-pkg_terminate() {
-#if defined(_WIN32) && !defined(__CYGWIN__)
-    WSACleanup();
-#endif
-}
 
 /*
  * Routines to insert/extract short/long's into char arrays,
@@ -261,7 +239,7 @@ pkg_plong(char *buf, long unsigned int l)
 struct pkg_conn *
 pkg_open(const char *host, const char *service, const char *protocol, const char *uname, const char *passwd, const struct pkg_switch *switchp, void (*errlog) (char *msg))
 {
-#if defined(_WIN32) && !defined(__CYGWIN__)
+#ifdef HAVE_WINSOCK_H
     LPHOSTENT lpHostEntry;
     register SOCKET netfd;
     SOCKADDR_IN saServer;
@@ -287,11 +265,23 @@ pkg_open(const char *host, const char *service, const char *protocol, const char
 	fflush(pkg_debug);
     }
 
+#ifdef HAVE_WINSOCK_H
+    /* initialize Windows socket networking, increment reference count */
+    WORD wVersionRequested;
+    WSADATA wsaData;
+
+    wVersionRequested = MAKEWORD(1, 1);
+    if (WSAStartup(wVersionRequested, &wsaData) != 0) {
+	fprintf(stderr, "pkg_open:  could not find a usable WinSock DLL" );
+	return(-1);
+    }
+#endif
+
     /* Check for default error handler */
     if ( errlog == NULL )
 	errlog = pkg_errlog;
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
+#ifdef HAVE_WINSOCK_H
     if ((lpHostEntry = gethostbyname(host)) == NULL) {
 	pkg_perror(errlog, "pkg_open:  gethostbyname");
 	return(PKC_ERROR);
@@ -399,7 +389,7 @@ pkg_open(const char *host, const char *service, const char *protocol, const char
 
     if ( connect(netfd, addr, addrlen) < 0 )  {
 	pkg_perror( errlog, "pkg_open: client connect" );
-#if defined(_WIN32) && !defined(__CYGWIN__)
+#ifdef HAVE_WINSOCK_H
 	(void)closesocket(netfd);
 #else
 	(void)close(netfd);
@@ -450,13 +440,13 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
 {
     register struct servent *sp;
     int	pkg_listenfd;
-#if defined(_WIN32) && !defined(__CYGWIN__)
+#ifdef HAVE_WINSOCK_H
     SOCKADDR_IN saServer;
 #else
     struct sockaddr_in sinme;
-#ifdef HAVE_SYS_UN_H
+#  ifdef HAVE_SYS_UN_H
     struct sockaddr_un sunme;		/* UNIX Domain */
-#endif
+#  endif
     struct sockaddr *addr;			/* UNIX or INET addr */
     int	addrlen;			/* length of address */
     int	on = 1;
@@ -475,8 +465,7 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
     if ( errlog == NULL )
 	errlog = pkg_errlog;
 
-    /* WIN32 STUFF ========================= */
-#if defined(_WIN32) && !defined(__CYGWIN__)
+#ifdef HAVE_WINSOCK_H
     memset((char *)&saServer, 0, sizeof(saServer));
 
     if (atoi(service) > 0) {
@@ -522,11 +511,12 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
     }
 
     return(pkg_listenfd);
-    /* END WIN32 STUFF ========================= */
-#else
+
+#else /* !HAVE_WINSOCK_H */
+
     memset((char *)&sinme, 0, sizeof(sinme));
 
-#ifdef HAVE_SYS_UN_H
+#  ifdef HAVE_SYS_UN_H
     if ( service != NULL && service[0] == '/' ) {
 	/* UNIX Domain socket */
 	strncpy( sunme.sun_path, service, sizeof(sunme.sun_path) );
@@ -535,7 +525,7 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
 	addrlen = strlen(sunme.sun_path) + 2;
 	goto ready;
     }
-#endif
+#  endif /* HAVE_SYS_UN_H */
     /* Determine port for service */
     if ( atoi(service) > 0 )  {
 	sinme.sin_port = htons((unsigned short)atoi(service));
@@ -555,9 +545,9 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
     addr = (struct sockaddr *) &sinme;
     addrlen = sizeof(struct sockaddr_in);
 
-#ifdef HAVE_SYS_UN_H
+#  ifdef HAVE_SYS_UN_H
  ready:
-#endif
+#  endif
 
     if ( (pkg_listenfd = socket(addr->sa_family, SOCK_STREAM, 0)) < 0 )  {
 	pkg_perror( errlog, "pkg_permserver:  socket" );
@@ -569,37 +559,37 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
 			(char *)&on, sizeof(on) ) < 0 )  {
 	    pkg_perror( errlog, "pkg_permserver: setsockopt SO_REUSEADDR" );
 	}
-#if defined(TCP_NODELAY)
+#  if defined(TCP_NODELAY)
 	/* SunOS 3.x defines it but doesn't support it! */
 	if ( setsockopt( pkg_listenfd, IPPROTO_TCP, TCP_NODELAY,
 			(char *)&on, sizeof(on) ) < 0 )  {
 	    pkg_perror( errlog, "pkg_permserver: setsockopt TCP_NODELAY" );
 	}
-#endif
+#  endif
     }
 
     if ( bind(pkg_listenfd, addr, addrlen) < 0 )  {
 	pkg_perror( errlog, "pkg_permserver: bind" );
-#if defined(_WIN32) && !defined(__CYGWIN__)
+#  ifdef HAVE_WINSOCK_H
 	(void)closesocket(pkg_listenfd);
-#else
+#  else
 	close(pkg_listenfd);
-#endif
+#  endif
 	return(-1);
     }
 
     if ( backlog > 5 )  backlog = 5;
     if ( listen(pkg_listenfd, backlog) < 0 )  {
 	pkg_perror( errlog, "pkg_permserver:  listen" );
-#if defined(_WIN32) && !defined(__CYGWIN__)
+#  ifdef HAVE_WINSOCK_H
 	(void)closesocket(pkg_listenfd);
-#else
+#  else
 	close(pkg_listenfd);
-#endif
+#  endif
 	return(-1);
     }
     return(pkg_listenfd);
-#endif
+#endif /* HAVE_WINSOCK_H */
 }
 
 /*
@@ -690,7 +680,7 @@ pkg_getclient(int fd, const struct pkg_switch *switchp, void (*errlog) (char *ms
     }
 #endif
     do  {
-#if defined(_WIN32) && !defined(__CYGWIN__)
+#ifdef HAVE_WINSOCK_H
 	s2 = accept(fd, (struct sockaddr *)NULL, NULL);
 #else
 	s2 = accept(fd, (struct sockaddr *)&from, &fromlen);
@@ -698,7 +688,7 @@ pkg_getclient(int fd, const struct pkg_switch *switchp, void (*errlog) (char *ms
 	if (s2 < 0) {
 	    if (errno == EINTR)
 		continue;
-#if defined(_WIN32) && !defined(__CYGWIN__)
+#ifdef HAVE_WINSOCK_H
 	    if (errno == WSAEWOULDBLOCK)
 		return(PKC_NULL);
 #else
@@ -802,11 +792,17 @@ pkg_close(register struct pkg_conn *pc)
 	pc->pkc_inbuf = (char *)0;
 	pc->pkc_inlen = 0;
     }
-#if defined(_WIN32) && !defined(__CYGWIN__)
+#ifdef HAVE_WINSOCK_H
     (void)closesocket(pc->pkc_fd);
 #else
     (void)close(pc->pkc_fd);
 #endif
+
+#ifdef HAVE_WINSOCK_H
+    /* deinitialize Windows socket networking, decrements ref count */
+    WSACleanup();
+#endif
+
     pc->pkc_fd = -1;		/* safety */
     pc->pkc_buf = (char *)0;	/* safety */
     pc->pkc_magic = 0;		/* safety */
@@ -1895,7 +1891,7 @@ pkg_suckin(register struct pkg_conn *pc)
 
     /* Take as much as the system will give us, up to buffer size */
     if ( (got = PKG_READ( pc->pkc_fd, &pc->pkc_inbuf[pc->pkc_inend], avail )) <= 0 )  {
-#if defined(_WIN32) && !defined(__CYGWIN__)
+#ifdef HAVE_WINSOCK_H
 	int ecode = WSAGetLastError();
 	
 #endif
@@ -1910,7 +1906,7 @@ pkg_suckin(register struct pkg_conn *pc)
 	    ret = 0;	/* EOF */
 	    goto out;
 	}
-#ifndef _WIN32
+#ifndef HAVE_WINSOCK_H
 	pkg_perror(pc->pkc_errlog, "pkg_suckin: read");
 	sprintf(errbuf, "pkg_suckin: read(%d, x%lx, %d) ret=%d inbuf=x%lx, inend=%d\n",
 		pc->pkc_fd, (long)(&pc->pkc_inbuf[pc->pkc_inend]), avail,

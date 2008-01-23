@@ -245,8 +245,6 @@ main(int argc, char **argv)
 	src_height = hires ? 1024 : 512;	/* starting default */
 
     if ( in_fb_file != NULL ) {
-	if (pkg_init() != 0)
-	    bu_exit(1, NULL);
 
 	if ( (fbp = fb_open( in_fb_file, src_width, src_height ))
 	     == FBIO_NULL
@@ -304,15 +302,9 @@ main(int argc, char **argv)
     if ( dst_height == 0 )
 	dst_height = src_height;	/* default */
 
-    if (out_fb_file != (char *)0) {
-	if (pkg_init() != 0)
-	    bu_exit(1, NULL);
-    }
-
-    if ( (fbp = fb_open( out_fb_file, dst_width, dst_height )) == FBIO_NULL
-	)
+    if ( (fbp = fb_open( out_fb_file, dst_width, dst_height )) == FBIO_NULL )
 	Fatal(fbp, "Couldn't open output frame buffer" );
-    else	{
+    else {
 	register int	wt = fb_getwidth( fbp );
 	register int	ht = fb_getheight( fbp );
 

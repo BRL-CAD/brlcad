@@ -325,9 +325,6 @@ main(int argc, char **argv)
 
 	/* Single-Frame-Buffer Server */
 	if ( framebuffer != NULL ) {
-	    if (pkg_init() != 0) {
-		bu_exit(1, NULL);
-	    }
 		fb_server_retain_on_close = 1;	/* don't ever close the frame buffer */
 
 		/* open a frame buffer */

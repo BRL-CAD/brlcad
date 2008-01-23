@@ -156,9 +156,6 @@ main(int argc, char **argv)
 		bu_exit(1, NULL);
 	}
 
-	if (pkg_init() != 0)
-	    bu_exit(1, NULL);
-
 	if ( (fbp = fb_open( framebuffer, screen_width, screen_height )) == NULL )
 		bu_exit(12, NULL);
 

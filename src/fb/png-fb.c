@@ -193,28 +193,21 @@ main(int argc, char **argv)
 		bu_exit( 1, NULL );
 	}
 
-	if (pkg_init() != 0)
-	    bu_exit(1, NULL);
-
 	if (fread(header, 8, 1, fp_in) != 1) {
-		pkg_terminate();
 		bu_exit(EXIT_FAILURE,  "ERROR: Failed while reading file header!!!\n" );
 	}
 
 	if (!png_check_sig((png_bytep)header, 8)) {
-		pkg_terminate();
 		bu_exit(EXIT_FAILURE,  "This is not a PNG file!!!\n" );
 	}
 
 	png_p = png_create_read_struct( PNG_LIBPNG_VER_STRING, NULL, NULL, NULL );
 	if (!png_p) {
-		pkg_terminate();
 		bu_exit(EXIT_FAILURE,  "png_create_read_struct() failed!!\n" );
 	}
 
 	info_p = png_create_info_struct( png_p );
 	if (!info_p) {
-		pkg_terminate();
 		bu_exit(EXIT_FAILURE,  "png_create_info_struct() failed!!\n" );
 	}
 
@@ -266,7 +259,6 @@ main(int argc, char **argv)
 
 	if ( header_only )  {
 		fprintf(stdout, "WIDTH=%d HEIGHT=%d\n", file_width, file_height);
-		pkg_terminate();
 		bu_exit(0, NULL);
 	}
 
@@ -440,7 +432,6 @@ main(int argc, char **argv)
 	if ( fb_close( fbp ) < 0 )  {
 		fprintf(stderr, "png-fb: Warning: fb_close() error\n");
 	}
-	pkg_terminate();
 	bu_exit(0, NULL);
 }
 

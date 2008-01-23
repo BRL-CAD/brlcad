@@ -138,20 +138,15 @@ main(int argc, char **argv)
 		bu_exit( 1, NULL );
 	}
 
-	if (pkg_init() != 0)
-	    bu_exit(1, NULL);
-
 	scanpix = screen_width;
 	scanbytes = scanpix * sizeof(RGBpixel);
 	if ( (scanline = (unsigned char *)malloc(scanbytes)) == RGBPIXEL_NULL )  {
 		fprintf(stderr,
 			"fb-pix:  malloc(%d) failure\n", scanbytes );
-		pkg_terminate();
 		bu_exit(2, NULL);
 	}
 
 	if ((fbp = fb_open(framebuffer, screen_width, screen_height)) == NULL) {
-	    pkg_terminate();
 	    bu_exit(12, NULL);
 	}
 
@@ -192,7 +187,6 @@ main(int argc, char **argv)
 		}
 	}
 	fb_close( fbp );
-	pkg_terminate();
 	bu_exit(0, NULL);
 }
 

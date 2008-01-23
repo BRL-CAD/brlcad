@@ -121,8 +121,6 @@ struct pkg_conn {
 	pkg_send( (type), bu_vls_addr((vlsp)), bu_vls_strlen((vlsp))+1, (pkg) )
 
 
-PKG_EXPORT PKG_EXTERN(int pkg_init, ());
-PKG_EXPORT PKG_EXTERN(void pkg_terminate, ());
 PKG_EXPORT PKG_EXTERN(int pkg_process, (register struct pkg_conn *));
 PKG_EXPORT PKG_EXTERN(int pkg_suckin, (register struct pkg_conn *));
 PKG_EXPORT PKG_EXTERN(struct pkg_conn *pkg_open, (const char *host, const char *service, const char *protocol, const char *uname, const char *passwd, const struct pkg_switch* switchp, void (*errlog)PKG_ARGS((char *msg))));

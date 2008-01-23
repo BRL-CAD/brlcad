@@ -121,9 +121,6 @@ main(int argc, char **argv)
 	scr_height = fb_getheight(fbp);
 
 	if ( outframebuffer != NULL ) {
-	    if (pkg_init() != 0)
-		bu_exit(1, NULL);
-
 	    if ( (fboutp = fb_open( outframebuffer, scr_width, scr_width )) == NULL )
 		bu_exit( 3, "Unable to open framebuffer\n" );
 	} else

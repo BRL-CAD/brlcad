@@ -571,8 +571,6 @@ main(int argc, char **argv)
 	bu_log( "Opened in READ ONLY mode\n" );
     }
 
-    pkg_init();
-
     /* --- Now safe to process commands. --- */
     if (interactive) {
 	/* This is an interactive mged, process .mgedrc */
@@ -616,7 +614,6 @@ main(int argc, char **argv)
 		    /* too late to fall back to classic, we forked and detached already */
 		    bu_log("Unable to initialize an MGED graphical user interface.\nTry using foreground (-f) or classic-mode (-c) options to MGED.\n");
 		    bu_log("%s\nMGED aborted.\n", Tcl_GetStringResult(interp));
-		    pkg_terminate();
 		    mged_finish(1);
 		}
 		bu_log("%s\nMGED unable to initialize gui, reverting to classic mode.\n", Tcl_GetStringResult(interp));
@@ -2151,7 +2148,6 @@ mged_finish(int exitcode)
 #endif
 
     /* XXX should deallocate libbu semaphores */
-    pkg_terminate();
 
     mged_global_variable_teardown(interp);
 

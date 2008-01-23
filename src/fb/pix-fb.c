@@ -204,9 +204,6 @@ main(int argc, char **argv)
 		bu_exit( 1, NULL );
 	}
 
-	if (pkg_init() != 0)
-	    bu_exit(1, NULL);
-
 	/* autosize input? */
 	if ( fileinput && autosize ) {
 		unsigned long int	w, h;
@@ -225,7 +222,6 @@ main(int argc, char **argv)
 		scr_height = file_height;
 
 	if ((fbp = fb_open( framebuffer, scr_width, scr_height)) == NULL) {
-	    pkg_terminate();
 	    bu_exit(12, NULL);
 	}
 
@@ -274,7 +270,6 @@ main(int argc, char **argv)
 		fprintf(stderr,
 			"pix-fb:  malloc(%d) failure for scanline buffer\n",
 			scanbytes);
-		pkg_terminate();
 		bu_exit(2, NULL);
 	}
 
@@ -376,7 +371,6 @@ main(int argc, char **argv)
 		fprintf(stderr, "pix-fb: Warning: fb_close() error\n");
 	}
 
-	pkg_terminate();
 	bu_exit(0, NULL);
 }
 

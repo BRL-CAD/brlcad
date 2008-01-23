@@ -159,9 +159,6 @@ main(int argc, char **argv)
 		bu_exit(1, "%s", usage );
 	}
 
-	if (pkg_init() != 0)
-	    bu_exit(1, NULL);
-
 	if ( (fbp = fb_open( framebuffer, fbsize, fbsize )) == FBIO_NULL ) {
 		bu_exit( 2, "Unable to open framebuffer\n" );
 	}
