@@ -3515,6 +3515,7 @@ RT_EXPORT BU_EXTERN(int rt_pipe_ck,
 		    (const struct bu_list *headp));
 
 /* g_metaball.c */
+struct rt_metaball_internal;
 RT_EXPORT BU_EXTERN(void rt_vls_metaballpt,
 		    (struct bu_vls *vp,
 		     int pt_no,
