@@ -364,13 +364,6 @@ WDB_EXPORT WDB_EXTERN(int mk_submodel, (struct rt_wdb *fp, const char *name, con
 			const char *treetop, int meth));
 #define mk_strsol(fp, name, solid, arg)	+++error_obsolete_libwdb_routine+++
 
-/*
- *  The polysolid has been replaced by the BoT.
- *  Automatic conversion is provided by rt_pg_to_bot()
- */
-#define mk_polysolid(fp, name)	+++error_obsolete_libwdb_routine+++
-#define mk_poly(fp, npts, verts, norms)	+++error_obsolete_libwdb_routine+++
-#define mk_fpoly(fp, npts, verts)	+++error_obsolete_libwdb_routine+++
 
 /* mater.c */
 WDB_EXPORT int mk_write_color_table( struct rt_wdb *ofp );

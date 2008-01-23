@@ -64,6 +64,10 @@ src/librt/bomb.c
 
 7.12.0
 ------
+include/wdb.h
+	removed mk_poly() [deprecated pre-7.0]
+	removed mk_polysolid() [deprecated pre-7.0]
+	removed mk_fpoly() [deprecated pre-7.0]
 include/bu.h
 	char *bu_brlcad_path() -> const char *bu_brlcad_path() [const]
 include/bn.h

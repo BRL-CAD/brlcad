@@ -53,7 +53,6 @@ EXTRA_DIST = \
 	$(man_MANS) \
 	$(BREP_EXTRA) \
 	libwdb.dsp \
-	poly.c \
 	reg4.c \
 	spl.c
 

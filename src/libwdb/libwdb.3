@@ -178,21 +178,6 @@ FILE	*fp;
 char	*name;
 struct	wmember *headp;
 .sp
-mk_polysolid( fp, name )
-FILE	*fp;
-char	*name;
-.sp
-mk_poly( fp, npts, vert, norm )
-FILE	*fp;
-int	npts;
-fastf_t	vert[][3];
-fastf_t	norm[][3];
-.sp
-mk_fpoly( fp, npts, vert )
-FILE	*fp;
-int	npts;
-fastf_t	vert[][3];
-.sp
 mk_bsolid( fp, name, nsurf, res )
 FILE    *fp;
 char    *name;
@@ -392,30 +377,6 @@ is the linked list equivalent of
 .I mk_fcomb\^.
 Note that the linked list heads must be initialized by an
 invocation of BU_LIST_INIT( &head.l );
-.PP
-.I mk_polysolid\^
-writes the header record for a polygon solid called ``name'',
-which must be immediately
-followed by one or more
-.I mk_poly\^
-calls before using any other
-.I mk_*\^
-routines.
-.I mk_poly\^
-is called with ``npts'' (3 to 5) vertices in the ``vert'' array,
-with a matching number of normals in the ``norm'' array.
-All vertices must be coplanar.
-For the present, note that librt/pg.c only uses the first normal
-in the ``norm'' array, although the intention is to do optional
-normal interpolation for those occasions where it may be desirable
-to have curved-looking polygons.
-.I mk_fpoly\^
-is like
-.I mk_poly\^
-except no normals are given.  It is a ``fast'' or ``flat'' form
-of the poly routine.  This function computes normals for you from
-the given vertices by assuming a counter clockwise ordering of the
-vertices as viewed from the top (outside).
 .PP
 The routine
 .I mk_bsolid\^
