@@ -162,13 +162,21 @@ namespace eval RtWizard {
     # makeImage
     #
     itcl::body PictureTypeE::makeImage {fb w h} {
+	global tcl_platform
+	global env
 
-	set tgi [file join / tmp [pid]_ghost.pix]
-	set tfci [file join / tmp [pid]_fc.pix]
-	set tmi [file join / tmp [pid]_merge.pix]
-	set tbw [ file join / tmp [pid]_bw.bw ]
-	set tmod [ file join / tmp [pid]_bwmod.bw ]
-	set tbwpix [ file join / tmp [pid]_bwpix.pix]
+	if {$tcl_platform(platform) == "windows"} {
+	    set dir $env(TMP)
+	} else {
+	    set dir "/tmp"
+	}
+
+	set tgi [file join $dir [pid]_ghost.pix]
+	set tfci [file join $dir [pid]_fc.pix]
+	set tmi [file join $dir [pid]_merge.pix]
+	set tbw [ file join $dir [pid]_bw.bw ]
+	set tmod [ file join $dir [pid]_bwmod.bw ]
+	set tbwpix [ file join $dir [pid]_bwpix.pix]
 
 	#
 	# Get the background color
@@ -177,40 +185,41 @@ namespace eval RtWizard {
 	set bg [hexToRGB $bgHex]
 	set bgl "=[lindex $bg 0]/[lindex $bg 1]/[lindex $bg 2]"
 
+	set binpath [bu_brlcad_root bin]
+
 	#
 	# Get the gamma
 	#
 	set gamma 12 ; #[$gp getIntensity]
 
-	set binpath [bu_brlcad_root bin]
 	#
 	# Run rt to generate the full-color version of the ghost image
 	#
 	rtCmd $gp $fb $w $h
 
-	catch "exec $binpath/fb-pix -F $fb -w $w -n $h > $tgi" junk
+	catch {exec "$binpath/fb-pix" -F $fb -w $w -n $h > $tgi} junk
 
 	#
 	# Run rt to generate the insert
 	#
 	rtCmd $fp $fb $w $h
-	catch "exec $binpath/fb-pix -F $fb -w $w -n $h > $tfci" junk
+	catch {exec "$binpath/fb-pix" -F $fb -w $w -n $h > $tfci} junk
 
 	#
 	# Convert to ghost image
 	#
-	catch "exec $binpath/pix-bw $tgi > $tbw" junk
+	catch {exec "$binpath/pix-bw" $tgi > $tbw} junk
 
-	catch "exec $binpath/bwmod -a 4 -d259 -r$gamma -m255 < $tbw > $tmod" junk
+	catch {exec "$binpath/bwmod" -a 4 -d259 -r$gamma -m255 $tbw > $tmod} junk
 
-	catch "exec $binpath/bw-pix < $tmod > $tbwpix" junk
+	catch {exec "$binpath/bw-pix" $tmod $tbwpix} junk
 
-	catch "exec pixmatte -e $tfci $bgl $tbwpix $tfci > $tmi" junk
+	catch {exec "$binpath/pixmatte" -e $tfci $bgl $tbwpix $tfci > $tmi} junk
 
 	#
 	# Finally, put the image to the framebuffer
 	#
-	catch "exec $binpath/pix-fb -F $fb -w $w -n $h $tmi" junk
+	catch {exec "$binpath/pix-fb" -F $fb -w $w -n $h $tmi} junk
     }
 
 }; # end namespace
