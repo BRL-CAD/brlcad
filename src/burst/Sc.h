@@ -75,11 +75,7 @@
 	there is a problem in retrieving the corresponding termcap
 	entry.
 **/
-#if _STDC_
 extern boolean	ScInit( FILE *fp );
-#else
-extern boolean	ScInit();
-#endif
 
 /**
 
@@ -148,7 +144,6 @@ extern char	*ScSF;
 extern int	ScLI;
 extern int	ScCO;
 
-#if _STDC_
 extern boolean	ScClrEOL( void );
 extern boolean	ScClrScrlReg( void );
 extern boolean	ScClrStandout( void );
@@ -161,20 +156,6 @@ extern boolean	ScMvCursor( int x, int y );
 extern boolean	ScSetScrlReg( int top, int btm );
 extern boolean	ScSetStandout( void );
 extern boolean	ScUpScroll( void );
-#else
-extern boolean	ScClrEOL();
-extern boolean	ScClrScrlReg();
-extern boolean	ScClrStandout();
-extern boolean	ScClrText();
-extern boolean	ScDeleteLn();
-extern boolean	ScDnScroll();
-extern boolean	ScHmCursor();
-extern boolean	ScInsertLn();
-extern boolean	ScMvCursor();
-extern boolean	ScSetScrlReg();
-extern boolean	ScSetStandout();
-extern boolean	ScUpScroll();
-#endif
 
 #define ScTCAPSIZ	1024
 #define ScTERMSIZ	80
