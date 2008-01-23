@@ -426,6 +426,7 @@ namespace eval RtWizard {
     # getFrameBuffer - opens frame buffer and returns the port.
     #
     ::itcl::body FbPage::getFrameBuffer { width height {screenOnly false} } {
+	global tcl_platform
 	#
 	# If the user specified a framebuffer file and it is
 	# not null, return the name. Otherwise, open an on-screen
@@ -443,9 +444,20 @@ namespace eval RtWizard {
 	#
 	set port [incr lastPort]
 	set ok false
+	#
+	#
+	#
+	if {$tcl_platform(platform) == "windows"} {
+	    set fbType "/dev/wgl"
+	} else {
+	    set fbType "/dev/X"
+	}
+	#
+	#
+	#
 	while {[catch \
-		    "exec $binpath/fbserv -w $width -n $height -F /dev/X -p $port &" \
-		catchResult]} {
+		    {exec "$binpath/fbserv" -w $width -n $height -F $fbType -p $port &} \
+		    catchResult]} {
 	    puts $catchResult
 	    incr port
 	}
@@ -453,7 +465,7 @@ namespace eval RtWizard {
 	# Damn important, give the fbserv a bit o' time to fire up
 	#
 	after 1000
-	exec $binpath/fbclear -F $port 0 0 0
+	exec "$binpath/fbclear" -F $port 0 0 0
 	set lastPort $port
 
 	return $port
