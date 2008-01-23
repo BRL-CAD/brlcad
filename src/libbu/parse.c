@@ -567,9 +567,11 @@ bu_parse_double(const char *str, long int count, double *loc)
 		}
 
 		len = str - numstart;
-		if ( len > sizeof(buf)-1 )  len = sizeof(buf)-1;
+		if( len > sizeof(buf)-1 )
+		    len = sizeof(buf)-1;
+		/* this cannot be bu_strlcpy as it intentionally copies short */
 		strncpy( buf, numstart, len );
-		buf[len] = '\0';
+		buf[len] = '\0'; /* sanity */
 
 		if ( sscanf( buf, "%lf", &tmp_double ) != 1 )
 			return -1;
@@ -1262,10 +1264,10 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 				bu_vls_extend(vls, increase);
 
 				cp = vls->vls_str + vls->vls_offset + vls->vls_len;
-				if (vls->vls_len) (void)strcat(cp, " ");
-				(void)strncat(cp, sdp->sp_name, increase-1);
-				(void)strncat(cp, "=\"", increase-strlen(sdp->sp_name)-1);
-				cp[vls->vls_offset + vls->vls_len - 1] = '\0';
+				if (vls->vls_len)
+				    bu_strlcat(cp, " ", increase);
+				bu_strlcat(cp, sdp->sp_name, increase);
+				bu_strlcat(cp, "=\"", increase);
 
 				/* copy the string, escaping all the internal
 				 * double quote (") characters
@@ -1872,8 +1874,7 @@ bu_list_elem( const char *in, int index )
 
 	len = end - start + 1;
 	out = bu_malloc( len+1, "bu_list_elem:out" );
-	strncpy( out, start, len );
-	*(out + len) = '\0';
+	bu_strlcpy( out, start, len+1 );
 
 	return( out );
 }
