@@ -1650,9 +1650,6 @@ AC_CHECK_HEADER(sys/sched.h,
 #include <sys/sched.h>
 ])
 
-AC_CHECK_HEADER(sys/stat.h, AC_DEFINE(HAVE_UNIX_IO,, Fix this, sys/types.h and sys/stat.h ...))
-AC_CHECK_HEADER(sys/time.h, AC_DEFINE(TIME_WITH_SYS_TIME,1,sys/time.h))
-
 AC_CHECK_HEADER(sys/mount.h,
 		AC_DEFINE(HAVE_SYS_MOUNT_H,1, Define to 1 if you have the <sys/mount.h> header file.),,
 		[
