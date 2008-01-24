@@ -95,7 +95,6 @@ int rt_metaball_lookup_type_id(const char *name)
 
 const char *rt_metaball_lookup_type_name(const int id)
 {
-    printf("Going to return \"%s\" for id %d\n", metaballnames[id], id);
     return metaballnames[id];
 }
 
@@ -255,7 +254,15 @@ rt_metaball_point_value_iso(point_t *p, struct bu_list *points)
 fastf_t
 rt_metaball_point_value_blob(point_t *p, struct bu_list *points)
 {
-    bu_exit(1, "rt_metaball_point_value_blob() No implemented");
+	struct wdb_metaballpt *mbpt;
+	fastf_t ret = 0.0;
+	point_t v;
+
+	for (BU_LIST_FOR(mbpt, wdb_metaballpt, points)) {
+		VSUB2(v, mbpt->coord, *p);
+		ret += exp((mbpt->sweat/mbpt->fldstr) * MAGSQ(v) - mbpt->sweat);
+	}
+	return ret;
 }
 
 /* main point evaluation function, to be exposed to the ugly outside world. */
@@ -269,7 +276,7 @@ rt_metaball_point_value(point_t *p, struct rt_metaball_internal *mb)
 	case METABALL_ISOPOTENTIAL:
 	    return rt_metaball_point_value_iso( p, &mb->metaball_ctrl_head );
 	case METABALL_BLOB:
-	    break;
+	    return rt_metaball_point_value_blob( p, &mb->metaball_ctrl_head );
 	default:
 	    break;
     }
@@ -485,8 +492,8 @@ rt_metaball_import5(struct rt_db_internal *ip, const struct bu_external *ep, reg
 
 	BU_CK_EXTERNAL( ep );
 	metaball_count = bu_glong((unsigned char *)ep->ext_buf);
-	buf = (fastf_t *)bu_malloc((metaball_count*4+1)*SIZEOF_NETWORK_DOUBLE, "rt_metaball_import5: buf");
-	ntohd((unsigned char *)buf, (unsigned char *)ep->ext_buf+2*SIZEOF_NETWORK_LONG, metaball_count*4+1);
+	buf = (fastf_t *)bu_malloc((metaball_count*5+1)*SIZEOF_NETWORK_DOUBLE, "rt_metaball_import5: buf");
+	ntohd((unsigned char *)buf, (unsigned char *)ep->ext_buf+2*SIZEOF_NETWORK_LONG, metaball_count*5+1);
 
 	RT_CK_DB_INTERNAL( ip );
 	ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -499,12 +506,13 @@ rt_metaball_import5(struct rt_db_internal *ip, const struct bu_external *ep, reg
 	mb->threshold = buf[0];
 	BU_LIST_INIT( &mb->metaball_ctrl_head );
 	if (mat == NULL) mat = bn_mat_identity;
-	for (i=1; i<=metaball_count*4; i+=4) {
+	for (i=1; i<=metaball_count*5; i+=5) {
 			/* Apply modeling transformations */
 		BU_GETSTRUCT( mbpt, wdb_metaballpt );
 		mbpt->l.magic = WDB_METABALLPT_MAGIC;
 		MAT4X3PNT( mbpt->coord, mat, &buf[i] );
 		mbpt->fldstr = buf[i+3] / mat[15];
+		mbpt->sweat = buf[i+4];
 		BU_LIST_INSERT( &mb->metaball_ctrl_head, &mbpt->l );
 	}
 
@@ -522,7 +530,8 @@ rt_metaball_import5(struct rt_db_internal *ip, const struct bu_external *ep, reg
  *	fastf_t	X1	(start point)
  *	fastf_t	Y1
  *	fastf_t	Z1
- *	fastf_t	fldstr1 (end point)
+ *	fastf_t	fldstr1 
+ *	fastf_t sweat1	(end point)
  *	fastf_t	X2	(start point)
  *	...
  */
@@ -545,7 +554,7 @@ rt_metaball_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
 	for (BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)) metaball_count++;
 
 	BU_CK_EXTERNAL(ep);
-	ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE*(1+4*metaball_count) + 3*SIZEOF_NETWORK_LONG;
+	ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE*(1+5*metaball_count) + 3*SIZEOF_NETWORK_LONG;
 	ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "metaball external");
 	if (ep->ext_buf == NULL)
 	    bu_bomb("Failed to allocate DB space!\n");
@@ -553,13 +562,14 @@ rt_metaball_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
 	bu_plong((unsigned char *)ep->ext_buf + SIZEOF_NETWORK_LONG, mb->method);
 
 	/* pack the point data */
-	buf = (fastf_t *)bu_malloc((metaball_count*4+1)*SIZEOF_NETWORK_DOUBLE, "rt_metaball_export5: buf");
+	buf = (fastf_t *)bu_malloc((metaball_count*5+1)*SIZEOF_NETWORK_DOUBLE, "rt_metaball_export5: buf");
 	buf[0] = mb->threshold;
-	for (BU_LIST_FOR( mbpt, wdb_metaballpt, &mb->metaball_ctrl_head), i+=4) {
+	for (BU_LIST_FOR( mbpt, wdb_metaballpt, &mb->metaball_ctrl_head), i+=5) {
 		VSCALE(&buf[i], mbpt->coord, local2mm);
 		buf[i+3] = mbpt->fldstr * local2mm;
+		buf[i+4] = mbpt->sweat;
 	}
-	htond((unsigned char *)ep->ext_buf + 3*SIZEOF_NETWORK_LONG, (unsigned char *)buf, 2 + 4 * metaball_count);
+	htond((unsigned char *)ep->ext_buf + 2*SIZEOF_NETWORK_LONG, (unsigned char *)buf, 1 + 5 * metaball_count);
 	bu_free((genptr_t)buf, "rt_metaball_export5: buf");
 	return 0;
 }
