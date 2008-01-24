@@ -69,9 +69,7 @@ db_read(const struct db_i *dbip, genptr_t addr, long int count, long int offset)
 				/* byte offset from start of file */
 {
 	register int	got;
-#ifdef HAVE_UNIX_IO
 	register long	s;
-#endif
 
 	RT_CK_DBI(dbip);
 	if (RT_G_DEBUG&DEBUG_DB)  {
@@ -93,17 +91,20 @@ db_read(const struct db_i *dbip, genptr_t addr, long int count, long int offset)
 		return(0);
 	}
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
-#ifdef HAVE_LSEEK
+
+	if (fseek( dbip->dbi_fp, offset, 0 ))
+		bu_bomb("db_read: fseek error\n");
+	got = fread( addr, 1, count, dbip->dbi_fp );
+
+#if 0
+	/* old method */
 	if ((s=(long)lseek( dbip->dbi_fd, (off_t)offset, 0 )) != offset) {
 		bu_log("db_read: lseek returns %d not %d\n", s, offset);
 		bu_bomb("db_read: Goodbye");
 	}
 	got = read( dbip->dbi_fd, addr, count );
-#else
-	if (fseek( dbip->dbi_fp, offset, 0 ))
-		bu_bomb("db_read: fseek error\n");
-	got = fread( addr, 1, count, dbip->dbi_fp );
 #endif
+
 	bu_semaphore_release( BU_SEM_SYSCALL );
 
 	if ( got != count )  {
@@ -247,14 +248,17 @@ db_write(struct db_i *dbip, const genptr_t addr, long int count, long int offset
 		return(-1);
 	}
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
-#ifdef HAVE_UNIX_IO
+
+#if 0
+	/* old method */
 	(void)lseek( dbip->dbi_fd, offset, 0 );
 	got = write( dbip->dbi_fd, addr, count );
-#else
+#endif
+
 	(void)fseek( dbip->dbi_fp, offset, 0 );
 	got = fwrite( addr, 1, count, dbip->dbi_fp );
 	fflush(dbip->dbi_fp);
-#endif
+
 	bu_semaphore_release( BU_SEM_SYSCALL );
 	if ( got != count )  {
 		perror("db_write");

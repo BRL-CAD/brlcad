@@ -40,10 +40,6 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <math.h>
-#ifdef HAVE_UNIX_IO
-#  include <sys/types.h>
-#  include <sys/stat.h>
-#endif
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif

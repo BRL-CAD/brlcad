@@ -52,14 +52,18 @@
 
 #include <stdio.h>
 #include <math.h>
-#include <fcntl.h>
 #include <string.h>
 
+#ifdef HAVE_FCNTL_H
+#  include <fcntl.h>
+#endif
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
-#ifdef HAVE_UNIX_IO
+#ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h>
 #endif
 #ifdef HAVE_SYS_MMAN_H
@@ -95,7 +99,7 @@ bu_open_mapped_file(const char *name, const char *appl)
 				/* non-null only when app. will use 'apbuf' */
 {
 	struct bu_mapped_file	*mp = (struct bu_mapped_file *)NULL;
-#ifdef HAVE_UNIX_IO
+#ifdef HAVE_SYS_STAT_H
 	struct stat		sb;
 	int			fd;	/* unix file descriptor */
 #else
@@ -121,7 +125,7 @@ bu_open_mapped_file(const char *name, const char *appl)
 		if ( appl && strcmp( appl, mp->appl ) )
 			continue;
 		/* File is already mapped -- verify size and modtime */
-#ifdef HAVE_UNIX_IO
+#ifdef HAVE_SYS_STAT_H
 		if ( !mp->dont_restat )  {
 			bu_semaphore_acquire(BU_SEM_SYSCALL);
 			ret = stat( name, &sb );
@@ -157,7 +161,7 @@ dont_reuse:
 	mp = (struct bu_mapped_file *)NULL;
 
 	/* File is not yet mapped, open file read only. */
-#ifdef HAVE_UNIX_IO
+#ifdef HAVE_SYS_STAT_H
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	fd = open( name, O_RDONLY );
 	bu_semaphore_release(BU_SEM_SYSCALL);
@@ -181,14 +185,14 @@ dont_reuse:
 		bu_log("bu_open_mapped_file(%s) 0-length file\n", name);
 		goto fail;
 	}
-#endif /* HAVE_UNIX_IO */
+#endif /* HAVE_SYS_STAT_H */
 
 	/* Optimisticly assume that things will proceed OK */
 	BU_GETSTRUCT( mp, bu_mapped_file );
 	mp->name = bu_strdup( name );
 	if ( appl ) mp->appl = bu_strdup( appl );
 
-#ifdef HAVE_UNIX_IO
+#ifdef HAVE_SYS_STAT_H
 	mp->buflen = (size_t)sb.st_size;
 	mp->modtime = (long)sb.st_mtime;
 #  ifdef HAVE_SYS_MMAN_H
@@ -227,7 +231,7 @@ dont_reuse:
 	(void)close(fd);
 	bu_semaphore_release(BU_SEM_SYSCALL);
 
-#else /* !HAVE_UNIX_IO */
+#else /* !HAVE_SYS_STAT_H */
 
 	/* Read it in with stdio, with no clue how big it is */
 	bu_semaphore_acquire(BU_SEM_SYSCALL);

@@ -37,8 +37,10 @@
 #include <string.h>
 #include <ctype.h>
 
-#ifdef HAVE_UNIX_IO
+#ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h>
 #endif
 
@@ -134,7 +136,7 @@ view_init( struct application *ap, char *file, char *obj, int minus_o )
 void
 view_2init( struct application *ap, char *framename )
 {
-#ifdef HAVE_UNIX_IO
+#ifdef HAVE_SYS_STAT_H
 	struct stat sb;
 	char line[RT_MAXLINE];
 #endif
@@ -142,7 +144,7 @@ view_2init( struct application *ap, char *framename )
 	if ( outfp == NULL )
 		bu_exit(EXIT_FAILURE, "outfp is NULL\n");
 
-#ifdef HAVE_UNIX_IO
+#ifdef HAVE_SYS_STAT_H
 	/* read in any existing data */
 	if ( outfp != NULL && stat( framename, &sb ) >= 0 && sb.st_size > 0 )  {
 		Tcl_HashEntry *entry;

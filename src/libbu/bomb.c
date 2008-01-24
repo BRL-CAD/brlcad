@@ -48,7 +48,7 @@
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
-#ifdef HAVE_UNIX_IO
+#ifdef HAVE_FCNTL_H
 #  include <fcntl.h>
 #endif
 
@@ -154,7 +154,7 @@ bu_bomb(const char *str)
 	}
     }
 
-#if defined(HAVE_UNIX_IO)
+#ifdef HAVE_UNISTD_H
     /*
      * No application level error handling,
      * go to extra pains to ensure that user gets to see this message.

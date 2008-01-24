@@ -42,8 +42,10 @@
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
-#ifdef HAVE_UNIX_IO
+#ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h>
 #endif
 
@@ -121,36 +123,38 @@ db_open(const char *name, const char *mode)
 	dbip->dbi_eof = mfp->buflen;
 	dbip->dbi_inmem = mfp->buf;
 	dbip->dbi_mf->apbuf = (genptr_t)dbip;
-	dbip->dbi_fd = -1;
 
-#ifdef HAVE_UNIX_IO
 	/* Do this too, so we can seek around on the file */
+	if ( (dbip->dbi_fp = fopen( name, "rb")) == NULL )
+	    goto fail;
+	dbip->dbi_fd = fileno(dbip->dbi_fp);
+
+#if 0
+	/* old method */
 	if ( (dbip->dbi_fd = open( name, O_RDONLY )) < 0 )
 	    goto fail;
 	if ( (dbip->dbi_fp = fdopen( dbip->dbi_fd, "rb" )) == NULL )
 	    goto fail;
-#else /* HAVE_UNIX_IO */
-	if ( (dbip->dbi_fp = fopen( name, "rb")) == NULL )
-	    goto fail;
-	dbip->dbi_fd = -1;
 #endif
+
 	dbip->dbi_read_only = 1;
     }  else  {
 	/* Read-write mode */
 	BU_GETSTRUCT( dbip, db_i );
 	dbip->dbi_eof = -1L;
-	dbip->dbi_fd = -1;
 
-#ifdef HAVE_UNIX_IO
+	if ( (dbip->dbi_fp = fopen( name, "r+b")) == NULL )
+	    goto fail;
+	dbip->dbi_fd = fileno(dbip->dbi_fp);
+
+#if 0
+	/* old method */
 	if ( (dbip->dbi_fd = open( name, O_RDWR )) < 0 )
 	    goto fail;
 	if ( (dbip->dbi_fp = fdopen( dbip->dbi_fd, "r+w" )) == NULL )
 	    goto fail;
-#else /* HAVE_UNIX_IO */
-	if ( (dbip->dbi_fp = fopen( name, "r+b")) == NULL )
-	    goto fail;
-	dbip->dbi_fd = -1;
 #endif
+
 	dbip->dbi_read_only = 0;
     }
 
@@ -325,12 +329,12 @@ db_close(register struct db_i *dbip)
     /* try to ensure/encourage that the file is written out */
     db_sync(dbip);
 
-#ifdef HAVE_UNIX_IO
-    (void)close( dbip->dbi_fd );
-#endif
     if (dbip->dbi_fp) {
 	fclose( dbip->dbi_fp );
+    } else if (dbip->dbi_fd > 0) {
+	(void)close( dbip->dbi_fd );
     }
+
     if ( dbip->dbi_title )
 	bu_free( dbip->dbi_title, "dbi_title" );
     if ( dbip->dbi_filename )

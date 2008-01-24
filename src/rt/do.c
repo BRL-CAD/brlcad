@@ -39,9 +39,14 @@
 #include <string.h>
 #include <ctype.h>
 #include <math.h>
-#ifdef HAVE_UNIX_IO
+
+#ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h>
+#endif
+#ifdef HAVE_FCNTL_H
 #  include <fcntl.h>
 #endif
 
@@ -719,7 +724,8 @@ do_frame(int framenumber)
 		}  else  {
 			snprintf( framename, 128, "%s.%d", outputfile, framenumber );
 		}
-#ifdef HAVE_UNIX_IO
+
+#ifdef HAVE_SYS_STAT_H
 		/*
 		 *  This code allows the computation of a particular frame
 		 *  to a disk file to be resumed automaticly.
@@ -757,16 +763,12 @@ do_frame(int framenumber)
 #endif
 
 		/* Ordinary case for creating output file */
-#if defined(_WIN32) && !defined(__CYGWIN__)
 		if ( outfp == NULL && (outfp = fopen( framename, "w+b" )) == NULL )
-#else
-		if ( outfp == NULL && (outfp = fopen( framename, "w" )) == NULL )
-#endif
-		    {
-			perror( framename );
-			if ( matflag )  return(0);	/* OK */
-			return(-1);			/* Bad */
-		    }
+		{
+		    perror( framename );
+		    if ( matflag )  return(0);	/* OK */
+		    return(-1);			/* Bad */
+		}
 
 		if (rt_verbosity & VERBOSE_OUTPUTFILE)
 			bu_log("Output file is '%s' %dx%d pixels\n",
