@@ -363,7 +363,8 @@ rt_metaball_norm(register struct hit *hitp, struct soltab *stp, register struct 
 			VJOIN1(hitp->hit_normal, hitp->hit_normal, mbpt->fldstr / (a*a), v);	/* f/r^4 */
 		}
 		break;
-	case METABALL_BLOB: bu_log("blobs not implemented yet\n");
+	case METABALL_BLOB:
+		VSET(hitp->hit_normal, 1, 0, 0);
 		break;
 	default: bu_log("unknown metaball method\n"); break;
 	}
