@@ -678,7 +678,8 @@ cmd_setup(void)
 	register struct cmdtab *ctp;
 	struct bu_vls temp;
 	struct bu_vls	vls;
-	char		*pathname;
+	const char *pathname;
+	char buffer[1024];
 
 	bu_vls_init(&temp);
 	for (ctp = cmdtab; ctp->ct_name != NULL; ctp++) {
@@ -704,20 +705,21 @@ cmd_setup(void)
 
 	/* Locate the BRL-CAD-specific Tcl scripts */
 	pathname = bu_brlcad_data("tclscripts", 1);
+	snprintf(buffer, sizeof(buffer), "%s", pathname);
 
 #ifdef _WIN32
 	if (pathname) {
 	    /* XXXXXXXXXXXXXXX UGLY XXXXXXXXXXXXXXXXXX*/
 	    int i;
 
-	    bu_strlcat(pathname, "/", MAXPATHLEN);
+	    bu_strlcat(buffer, "/", MAXPATHLEN);
 
-	    for (i=0;i<strlen(pathname);i++) {
-		if (pathname[i]=='\\')
-		    pathname[i]='/'; }
+	    for (i=0;i<strlen(buffer);i++) {
+		if (buffer[i]=='\\')
+		    buffer[i]='/'; }
 
 	    bu_vls_init(&vls);
-	    bu_vls_printf(&vls, "source %s/mged/tree.tcl", pathname);
+	    bu_vls_printf(&vls, "source %s/mged/tree.tcl", buffer);
 	    (void)Tcl_Eval(interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 	}
@@ -2819,20 +2821,17 @@ cmd_concat(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	/* get any prefix */
 	if (argc < 2) {
 		Tcl_AppendResult(interp, MORE_ARGS_STR,
-				 "concat: Enter database: ",
+				 "dbconcat: Enter database: ",
 				 (char *)NULL);
 		return TCL_ERROR;
 	}
 
 	if (argc < 3) {
 		Tcl_AppendResult(interp, MORE_ARGS_STR,
-				 "concat: Enter prefix string or / for no prefix: ",
+				 "dbconcat: Enter prefix string or / for no prefix: ",
 				 (char *)NULL);
 		return TCL_ERROR;
 	}
-
-	/* replace dbconcat with concat */
-	argv[0] = "concat";
 
 	return wdb_concat_cmd(wdbp, interp, argc, argv);
 }
