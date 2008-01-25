@@ -34,6 +34,8 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * add mged background option, disable auto-background
 
+* fix opengl framebuffer
+
 
 THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------
