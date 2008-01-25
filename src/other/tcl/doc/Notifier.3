@@ -107,8 +107,8 @@ Indicates whether events should be serviced by \fBTcl_ServiceAll\fR.
 Must be one of \fBTCL_SERVICE_NONE\fR or \fBTCL_SERVICE_ALL\fR.
 .AP Tcl_NotifierProcs* notifierProcPtr in
 Structure of function pointers describing notifier procedures that are
-to replace the ones installed in the executable.  See "REPLACING THE
-NOTIFIER" for details.
+to replace the ones installed in the executable.  See
+\fBREPLACING THE NOTIFIER\fR for details.
 .BE
 
 .SH INTRODUCTION
@@ -243,7 +243,7 @@ The \fIflags\fR argument will be the same as the \fIflags\fR
 argument passed to \fBTcl_DoOneEvent\fR except that it will never
 be 0 (\fBTcl_DoOneEvent\fR replaces 0 with \fBTCL_ALL_EVENTS\fR).
 \fIFlags\fR indicates what kinds of events should be considered;
-if the bit corresponding to this event source isn't set, the event
+if the bit corresponding to this event source is not set, the event
 source should return immediately without doing anything.  For
 example, the file event source checks for the \fBTCL_FILE_EVENTS\fR
 bit.
@@ -385,7 +385,7 @@ There are several reasons why an event source might defer an event.
 One possibility is that events of this type are excluded by the
 \fIflags\fR argument.
 For example, the file event source will always return 0 if the
-\fBTCL_FILE_EVENTS\fR bit isn't set in \fIflags\fR.
+\fBTCL_FILE_EVENTS\fR bit is not set in \fIflags\fR.
 Another example of deferring events happens in Tk if
 \fBTk_RestrictEvents\fR has been invoked to defer certain kinds
 of window events.
@@ -409,8 +409,9 @@ Tcl_ThreadID for the current thread, use the \fBTcl_GetCurrentThread\fR
 procedure.  (A thread would then need to pass this identifier to other
 threads for those threads to be able to add events to its queue.)
 After adding an event to another thread's queue, you then typically
-need to call \fBTcl_ThreadAlert\fR to "wake up" that thread's notifier to
-alert it to the new event.
+need to call \fBTcl_ThreadAlert\fR to
+.QW "wake up"
+that thread's notifier to alert it to the new event.
 .PP
 \fBTcl_DeleteEvents\fR can be used to explicitly remove one or more
 events from the event queue.  \fBTcl_DeleteEvents\fR calls \fIproc\fR
@@ -454,7 +455,9 @@ procedure when initializing a Tcl interpreter.  Similarly,
 called by \fBTcl_Finalize\fR when shutting down a Tcl interpreter.
 .PP
 \fBTcl_WaitForEvent\fR is the lowest-level procedure in the notifier;
-it is responsible for waiting for an ``interesting'' event to occur or
+it is responsible for waiting for an
+.QW interesting
+event to occur or
 for a given time to elapse.  Before \fBTcl_WaitForEvent\fR is invoked,
 each of the event sources' setup procedure will have been invoked.
 The \fItimePtr\fR argument to
@@ -468,13 +471,13 @@ to occur; it should not actually process the event in any way.
 Later on, the
 event sources will process the raw events and create Tcl_Events on
 the event queue in their \fIcheckProc\fR procedures.
-However, on some platforms (such as Windows) this isn't possible;
+However, on some platforms (such as Windows) this is not possible;
 events may be processed in \fBTcl_WaitForEvent\fR, including queuing
 Tcl_Events and more (for example, callbacks for native widgets may be
 invoked).  The return value from \fBTcl_WaitForEvent\fR must be either
 0, 1, or \-1.  On platforms such as Windows where events get processed in
 \fBTcl_WaitForEvent\fR, a return value of 1 means that there may be more
-events still pending that haven't been processed.  This is a sign to the
+events still pending that have not been processed.  This is a sign to the
 caller that it must call \fBTcl_WaitForEvent\fR again if it wants all
 pending events to be processed. A 0 return value means that calling
 \fBTcl_WaitForEvent\fR again will not have any effect: either this is a
@@ -489,7 +492,9 @@ forever because there were no active event sources and the timeout was
 infinite.
 .PP
 \fBTcl_AlertNotifier\fR is used in multithreaded applications to allow
-any thread to "wake up" the notifier to alert it to new events on its
+any thread to
+.QW "wake up"
+the notifier to alert it to new events on its
 queue.  \fBTcl_AlertNotifier\fR requires as an argument the notifier
 handle returned by \fBTcl_InitNotifier\fR.
 .PP
@@ -499,7 +504,7 @@ invoked by \fBTcl_SetMaxBlockTime\fR whenever the maximum blocking
 time has been reduced.  \fBTcl_SetTimer\fR should arrange for the
 external event loop to invoke \fBTcl_ServiceAll\fR after the specified
 interval even if no events have occurred.  This interface is needed
-because \fBTcl_WaitForEvent\fR isn't invoked when there is an external
+because \fBTcl_WaitForEvent\fR is not invoked when there is an external
 event loop.  If the
 notifier will only be used from \fBTcl_DoOneEvent\fR, then
 \fBTcl_SetTimer\fR need not do anything.

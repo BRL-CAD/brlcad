@@ -425,6 +425,21 @@ proc macro {name args} {
 	}
 	VE {}
 	VS {}
+	QW {
+	    formattedText "``[lindex $args 0]''[lindex $args 1] "
+	}
+	MT {
+	    text "``'' "
+	}
+	PQ {
+	    formattedText \
+		"(``[lindex $args 0]''[lindex $args 1])[lindex $args 2] "
+	}
+	QR {
+	    formattedText "``[lindex $args 0]"
+	    dash
+	    formattedText "[lindex $args 1]''[lindex $args 2] "
+	}
 	default {
 	    puts stderr "Unknown macro: .$name [join $args " "]"
 	}
@@ -516,13 +531,12 @@ proc formattedText {text} {
 		dash
 		set text [string range $text [expr {$index+2}] end]
 	    }
-	    | {
+	    & - | {
 		set text [string range $text [expr {$index+2}] end]
 	    }
-	    o {
-		text "\\'"
-		regexp {'([^']*)'(.*)} $text all ch text
-		text $chars($ch)
+	    ( {
+		char [string range $text $index [expr {$index+3}]]
+		set text [string range $text [expr {$index+4}] end]
 	    }
 	    default {
 		puts stderr "Unknown sequence: \\$c"
@@ -665,31 +679,50 @@ proc char {name} {
     global file state
 
     switch -exact $name {
-        \\o {
+        {\o} {
 	    set state(intl) 1
 	}
-	\\\  {
+	{\ } {
 	    textSetup
 	    puts -nonewline $file " "
 	}
-	\\0 {
+	{\0} {
 	    textSetup
 	    puts -nonewline $file " \\emspace "
 	}
-	\\\\ {
+	{\\} - {\e} {
 	    textSetup
 	    puts -nonewline $file "\\\\"
 	}
-	\\(+- {
+	{\(+-} {
 	    textSetup
 	    puts -nonewline $file "\\'b1 "
 	}
-	\\% -
-	\\| {
+	{\%} - {\|} {
 	}
-	\\(bu {
+	{\(->} {
+	    textSetup
+	    puts -nonewline $file "->"
+	}
+	{\(bu} {
 	    textSetup
 	    puts -nonewline $file "\\bullet "
+	}
+	{\(co} {
+	    textSetup
+	    puts -nonewline $file "\\'a9 "
+	}
+	{\(mu} {
+	    textSetup
+	    puts -nonewline $file "\\'d7 "
+	}
+	{\(em} {
+	    textSetup
+	    puts -nonewline $file "-"
+	}
+	{\(fm} {
+	    textSetup
+	    puts -nonewline $file "\\'27 "
 	}
 	default {
 	    puts stderr "Unknown character: $name"

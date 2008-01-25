@@ -29,14 +29,14 @@ Making a comma-separated list:
 .CS
 set data {1 2 3 4 5}
 \fBjoin\fR $data ", "
-     \fB=> 1, 2, 3, 4, 5\fR
+     \fB\(-> 1, 2, 3, 4, 5\fR
 .CE
 .PP
 Using \fBjoin\fR to flatten a list by a single level:
 .CS
 set data {1 {2 3} 4 {5 {6 7} 8}}
 \fBjoin\fR $data
-     \fB=> 1 2 3 4 5 {6 7} 8\fR
+     \fB\(-> 1 2 3 4 5 {6 7} 8\fR
 .CE
 
 .SH "SEE ALSO"

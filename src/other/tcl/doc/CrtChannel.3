@@ -155,7 +155,8 @@ Current interpreter. (can be NULL)
 .AP "const char" *optionName in
 Name of the invalid option.
 .AP "const char" *optionList in
-Specific options list (space separated words, without "-") 
+Specific options list (space separated words, without
+.QW \- )
 to append to the standard generic options list.
 Can be NULL for generic options error message only.
 
@@ -649,7 +650,7 @@ created. The function should do whatever channel type specific action is
 required to implement the new value of the option.
 .PP
 Some options are handled by the generic code and this function is never
-called to set them, e.g. \fB-blockmode\fR. Other options are specific to
+called to set them, e.g. \fB\-blockmode\fR. Other options are specific to
 each channel type and the \fIsetOptionProc\fR procedure of the channel
 driver will get called to implement them. The \fIsetOptionProc\fR field can
 be NULL, which indicates that this channel type supports no type specific
@@ -698,7 +699,7 @@ function should also call \fBTcl_SetErrno\fR to store an appropriate POSIX
 error code.
 .PP
 Some options are handled by the generic code and this function is never
-called to retrieve their value, e.g. \fB-blockmode\fR. Other options are
+called to retrieve their value, e.g. \fB\-blockmode\fR. Other options are
 specific to each channel type and the \fIgetOptionProc\fR procedure of the
 channel driver will get called to implement them. The \fIgetOptionProc\fR
 field can be NULL, which indicates that this channel type supports no type
@@ -850,7 +851,9 @@ These values can be retrieved with \fBTcl_ChannelTruncateProc\fR,
 which returns a pointer to the function.
 .SH TCL_BADCHANNELOPTION
 .PP
-This procedure generates a "bad option" error message in an
+This procedure generates a
+.QW "bad option"
+error message in an
 (optional) interpreter.  It is used by channel drivers when 
 an invalid Set/Get option is requested. Its purpose is to concatenate
 the generic options list to the specific ones and factorize
@@ -871,12 +874,17 @@ so you get for instance:
     -buffering, -buffersize, -eofchar, -translation,
     -peername, or -sockname
 .CE
-when called with \fIoptionList\fR="peername sockname"
+when called with \fIoptionList\fR equal to
+.QW "peername sockname"
 .PP
-``blah'' is the \fIoptionName\fR argument and ``<specific options>''
+.QW blah
+is the \fIoptionName\fR argument and
+.QW "<specific options>"
 is a space separated list of specific option words.
 The function takes good care of inserting minus signs before
-each option, commas after, and an ``or'' before the last option.
+each option, commas after, and an
+.QW or
+before the last option.
 .SH "OLD CHANNEL TYPES"
 The original (8.3.1 and below) \fBTcl_ChannelType\fR structure contains
 the following fields:

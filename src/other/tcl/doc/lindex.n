@@ -68,16 +68,26 @@ lindex [lindex [lindex $a 1] 2] 3
 .CE
 .SH EXAMPLES
 .CS
-\fBlindex\fR {a b c}  \fI=> a b c\fR
-\fBlindex\fR {a b c} {} \fI=> a b c\fR
-\fBlindex\fR {a b c} 0 \fI=> a\fR
-\fBlindex\fR {a b c} 2 \fI=> c\fR
-\fBlindex\fR {a b c} end \fI=> c\fR
-\fBlindex\fR {a b c} end-1 \fI=> b\fR
-\fBlindex\fR {{a b c} {d e f} {g h i}} 2 1 \fI=> h\fR
-\fBlindex\fR {{a b c} {d e f} {g h i}} {2 1} \fI=> h\fR
-\fBlindex\fR {{{a b} {c d}} {{e f} {g h}}} 1 1 0 \fI=> g\fR
-\fBlindex\fR {{{a b} {c d}} {{e f} {g h}}} {1 1 0} \fI=> g\fR
+\fBlindex\fR {a b c}
+      \fI\(-> a b c\fR
+\fBlindex\fR {a b c} {}
+      \fI\(-> a b c\fR
+\fBlindex\fR {a b c} 0
+      \fI\(-> a\fR
+\fBlindex\fR {a b c} 2
+      \fI\(-> c\fR
+\fBlindex\fR {a b c} end
+      \fI\(-> c\fR
+\fBlindex\fR {a b c} end-1
+      \fI\(-> b\fR
+\fBlindex\fR {{a b c} {d e f} {g h i}} 2 1
+      \fI\(-> h\fR
+\fBlindex\fR {{a b c} {d e f} {g h i}} {2 1}
+      \fI\(-> h\fR
+\fBlindex\fR {{{a b} {c d}} {{e f} {g h}}} 1 1 0
+      \fI\(-> g\fR
+\fBlindex\fR {{{a b} {c d}} {{e f} {g h}}} {1 1 0}
+      \fI\(-> g\fR
 .CE
 .SH "SEE ALSO"
 list(n), lappend(n), linsert(n), llength(n), lsearch(n), 

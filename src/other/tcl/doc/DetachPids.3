@@ -51,16 +51,16 @@ overflow, even if all the children have exited.
 \fBTcl_DetachPids\fR may be called to ask Tcl to take responsibility
 for one or more processes whose process ids are contained in the
 \fIpidPtr\fR array passed as argument.  The caller presumably
-has started these processes running in background and doesn't
+has started these processes running in background and does not
 want to have to deal with them again.
 .PP
 \fBTcl_ReapDetachedProcs\fR invokes the \fBwaitpid\fR kernel call
 on each of the background processes so that its state can be cleaned
-up if it has exited.  If the process hasn't exited yet,
-\fBTcl_ReapDetachedProcs\fR doesn't wait for it to exit;  it will check again
+up if it has exited.  If the process has not exited yet,
+\fBTcl_ReapDetachedProcs\fR does not wait for it to exit;  it will check again
 the next time it is invoked.
 Tcl automatically calls \fBTcl_ReapDetachedProcs\fR each time the
-\fBexec\fR command is executed, so in most cases it isn't necessary
+\fBexec\fR command is executed, so in most cases it is not necessary
 for any code outside of Tcl to invoke \fBTcl_ReapDetachedProcs\fR.
 However, if you call \fBTcl_DetachPids\fR in situations where the
 \fBexec\fR command may never get executed, you may wish to call

@@ -441,7 +441,7 @@ test expr-9.10 {CompileRelationalExpr: error compiling relational arm} -body {
 test expr-10.1 {CompileShiftExpr: just add expr} {expr 4+-2} 2
 test expr-10.2 {CompileShiftExpr: just add expr} {expr 0xff-2} 253
 test expr-10.3 {CompileShiftExpr: just add expr} {expr -1--2} 1
-test expr-10.4 {CompileShiftExpr: just add expr} {expr 1-0123} -82
+test expr-10.4 {CompileShiftExpr: just add expr} {expr 1-0o123} -82
 test expr-10.5 {CompileShiftExpr: error in add expr} -body {
     expr x+3
 } -returnCodes error -match glob -result *
@@ -463,7 +463,7 @@ test expr-10.11 {CompileShiftExpr: runtime error} {
 test expr-11.1 {CompileAddExpr: just multiply expr} {expr 4*-2} -8
 test expr-11.2 {CompileAddExpr: just multiply expr} {expr 0xff%2} 1
 test expr-11.3 {CompileAddExpr: just multiply expr} {expr -1/2} -1
-test expr-11.4 {CompileAddExpr: just multiply expr} {expr 7891%0123} 6
+test expr-11.4 {CompileAddExpr: just multiply expr} {expr 7891%0o123} 6
 test expr-11.5 {CompileAddExpr: error in multiply expr} -body {
     expr x*3
 } -returnCodes error -match glob -result *
@@ -514,7 +514,7 @@ test expr-12.11 {CompileMultiplyExpr: runtime error} {
 } {1 {can't use non-numeric string as operand of "/"}}
 
 test expr-13.1 {CompileUnaryExpr: unary exprs} {expr -0xff} -255
-test expr-13.2 {CompileUnaryExpr: unary exprs} {expr +000123} 83
+test expr-13.2 {CompileUnaryExpr: unary exprs} {expr +0o00123} 83
 test expr-13.3 {CompileUnaryExpr: unary exprs} {expr +--++36} 36
 test expr-13.4 {CompileUnaryExpr: unary exprs} {expr !2} 0
 test expr-13.5 {CompileUnaryExpr: unary exprs} {expr +--+-62.0} -62.0
@@ -553,7 +553,7 @@ test expr-13.17 {CompileUnaryExpr: negating non-numeric boolean literals} {
 test expr-14.1 {CompilePrimaryExpr: literal primary} {expr 1} 1
 test expr-14.2 {CompilePrimaryExpr: literal primary} {expr 123} 123
 test expr-14.3 {CompilePrimaryExpr: literal primary} {expr 0xff} 255
-test expr-14.4 {CompilePrimaryExpr: literal primary} {expr 00010} 8
+test expr-14.4 {CompilePrimaryExpr: literal primary} {expr 0o0010} 8
 test expr-14.5 {CompilePrimaryExpr: literal primary} {expr 62.0} 62.0
 test expr-14.6 {CompilePrimaryExpr: literal primary} {
     expr 3.1400000
@@ -6452,10 +6452,10 @@ test expr-39.25 {Tcl_ExprDoubleObj and NaN} \
     } {1 {domain error: argument not in valid range}}
 
 test expr-40.1 {large octal shift} {
-    expr 0100000000000000000000000000000000
+    expr 0o100000000000000000000000000000000
 } [expr 0x1000000000000000000000000]
 test expr-40.2 {large octal shift} {
-    expr 0100000000000000000000000000000001
+    expr 0o100000000000000000000000000000001
 } [expr 0x1000000000000000000000001]
 
 test expr-41.1 {exponent overflow} {

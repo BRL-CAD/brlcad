@@ -32,7 +32,7 @@ Arbitrary one-word value to pass to \fIproc\fR.
 \fBTcl_DoWhenIdle\fR arranges for \fIproc\fR to be invoked
 when the application becomes idle.  The application is
 considered to be idle when \fBTcl_DoOneEvent\fR has been
-called, couldn't find any events to handle, and is about
+called, could not find any events to handle, and is about
 to go to sleep waiting for an event to occur.  At this
 point all pending \fBTcl_DoWhenIdle\fR handlers are
 invoked.  For each call to \fBTcl_DoWhenIdle\fR there will
@@ -61,7 +61,7 @@ all of the handlers are removed.  If no existing handlers match
 \fIproc\fR and \fIclientData\fR then nothing happens.
 .PP
 \fBTcl_DoWhenIdle\fR is most useful in situations where
-(a) a piece of work will have to be done but (b) it's
+(a) a piece of work will have to be done but (b) it is
 possible that something will happen in the near future
 that will change what has to be done or require something
 different to be done.  \fBTcl_DoWhenIdle\fR allows the

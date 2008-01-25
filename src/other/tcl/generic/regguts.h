@@ -60,24 +60,24 @@
 
 /* voids */
 #ifndef VOID
-#define	VOID	void			/* for function return values */
+#define	VOID	void		/* for function return values */
 #endif
 #ifndef DISCARD
-#define	DISCARD	void			/* for throwing values away */
+#define	DISCARD	void		/* for throwing values away */
 #endif
 #ifndef PVOID
-#define	PVOID	void *			/* generic pointer */
+#define	PVOID	void *		/* generic pointer */
 #endif
 #ifndef VS
-#define	VS(x)	((void*)(x))		/* cast something to generic ptr */
+#define	VS(x)	((void*)(x))	/* cast something to generic ptr */
 #endif
 #ifndef NOPARMS
-#define	NOPARMS	void			/* for empty parm lists */
+#define	NOPARMS	void		/* for empty parm lists */
 #endif
 
 /* const */
 #ifndef CONST
-#define	CONST	const			/* for old compilers, might be empty */
+#define	CONST	const		/* for old compilers, might be empty */
 #endif
 
 /* function-pointer declarator */
@@ -105,7 +105,7 @@
 #include <limits.h>
 #endif
 #ifndef _POSIX2_RE_DUP_MAX
-#define	_POSIX2_RE_DUP_MAX	255	/* normally from <limits.h> */
+#define	_POSIX2_RE_DUP_MAX 255	/* normally from <limits.h> */
 #endif
 
 /*
@@ -189,7 +189,7 @@ union tree {
 #define	tcolor	colors.ccolor
 #define	tptr	ptrs.pptr
 
-/* internal per-color structure for the color machinery */
+/* Internal per-color descriptor structure for the color machinery */
 struct colordesc {
     uchr nchrs;			/* number of chars of this color */
     color sub;			/* open subcolor (if any); free chain ptr */
@@ -235,9 +235,9 @@ struct colormap {
 
 /*
  * Interface definitions for locale-interface functions in locale.c.
- * Multi-character collating elements (MCCEs) cause most of the trouble.
  */
 
+/* Representation of a set of characters. */
 struct cvec {
     int nchrs;			/* number of chrs */
     int chrspace;		/* number of chrs possible */
@@ -245,18 +245,11 @@ struct cvec {
     int nranges;		/* number of ranges (chr pairs) */
     int rangespace;		/* number of chrs possible */
     chr *ranges;		/* pointer to vector of chr pairs */
-    int nmcces;			/* number of MCCEs */
-    int mccespace;		/* number of MCCEs possible */
-    int nmccechrs;		/* number of chrs used for MCCEs */
-    chr *mcces[1];		/* pointers to 0-terminated MCCEs */
-				/* and both batches of chrs are on the end */
 };
 
-/* caution:  this value cannot be changed easily */
-#define	MAXMCCE	2		/* length of longest MCCE */
-
 /*
- * definitions for NFA internal representation
+ * definitions for non-deterministic finite autmaton (NFA) internal
+ * representation
  *
  * Having a "from" pointer within each arc may seem redundant, but it saves a
  * lot of hassle.
@@ -274,6 +267,7 @@ struct arc {
 #define	freechain	outchain
     struct arc *inchain;	/* *to's ins chain */
     struct arc *colorchain;	/* color's arc chain */
+    struct arc *colorchainRev;	/* back-link in color's arc chain */
 };
 
 struct arcbatch {		/* for bulk allocation of arcs */
@@ -284,7 +278,7 @@ struct arcbatch {		/* for bulk allocation of arcs */
 
 struct state {
     int no;
-#		define	FREESTATE	(-1)
+#define	FREESTATE	(-1)
     char flag;			/* marks special states */
     int nins;			/* number of inarcs */
     struct arc *ins;		/* chain of inarcs */
@@ -310,6 +304,9 @@ struct nfa {
     struct colormap *cm;	/* the color map */
     color bos[2];		/* colors, if any, assigned to BOS and BOL */
     color eos[2];		/* colors, if any, assigned to EOS and EOL */
+    size_t size;		/* Current NFA size; differs from nstates as
+				 * it also counts the number of states created
+				 * by children of this state. */
     struct vars *v;		/* simplifies compile error reporting */
     struct nfa *parent;		/* parent NFA, if any */
 };
@@ -337,6 +334,14 @@ struct cnfa {
 };
 #define	ZAPCNFA(cnfa)	((cnfa).nstates = 0)
 #define	NULLCNFA(cnfa)	((cnfa).nstates == 0)
+
+/*
+ * Used to limit the maximum NFA size to something sane. [Bug 1810264]
+ */
+
+#ifndef REG_MAX_STATES
+#   define REG_MAX_STATES	100000
+#endif
 
 /*
  * subexpression tree
@@ -401,7 +406,8 @@ struct guts {
 };
 
 /*
- * Magic for allocating a variable workspace.
+ * Magic for allocating a variable workspace. This default version is
+ * stack-hungry.
  */
 
 #ifndef AllocVars

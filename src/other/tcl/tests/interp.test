@@ -19,7 +19,7 @@ if {[lsearch [namespace children] ::tcltest] == -1} {
 
 testConstraint testinterpdelete [llength [info commands testinterpdelete]]
 
-set hidden_cmds {cd encoding exec exit fconfigure file glob load open pwd socket source}
+set hidden_cmds {cd encoding exec exit fconfigure file glob load open pwd socket source unload}
 
 foreach i [interp slaves] {
   interp delete $i
@@ -1795,7 +1795,7 @@ test interp-23.2 {testing hiding vs aliases} {unixOrPc} {
     lappend l [lsort [interp hidden a]]
     interp delete a
     set l
-} {{cd encoding exec exit fconfigure file glob load open pwd socket source} {bar clock} {cd encoding exec exit fconfigure file glob load open pwd socket source} {bar clock} {bar cd encoding exec exit fconfigure file glob load open pwd socket source} clock {cd encoding exec exit fconfigure file glob load open pwd socket source}} 
+} {{cd encoding exec exit fconfigure file glob load open pwd socket source unload} {bar clock} {cd encoding exec exit fconfigure file glob load open pwd socket source unload} {bar clock} {bar cd encoding exec exit fconfigure file glob load open pwd socket source unload} clock {cd encoding exec exit fconfigure file glob load open pwd socket source unload}} 
 
 test interp-24.1 {result resetting on error} {
     catch {interp delete a}

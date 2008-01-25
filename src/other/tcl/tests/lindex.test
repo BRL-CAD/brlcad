@@ -15,7 +15,7 @@
 # RCS: @(#) $Id$
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
-    package require tcltest
+    package require tcltest 2.2
     namespace import -force ::tcltest::*
 }
 
@@ -66,14 +66,14 @@ test lindex-3.4 {integer 3} testevalex {
     set x [string range 33 0 0]
     list [testevalex {lindex {a b c} $x}] [testevalex {lindex {a b c} $x}]
 } {{} {}}
-test lindex-3.5 {bad octal} testevalex {
-    set x 08
+test lindex-3.5 {bad octal} -constraints testevalex -body {
+    set x 0o8
     list [catch { testevalex {lindex {a b c} $x} } result] $result
-} {1 {bad index "08": must be integer?[+-]integer? or end?[+-]integer? (looks like invalid octal number)}}
-test lindex-3.6 {bad octal} testevalex {
-    set x -09
+} -match glob -result {1 {*invalid octal number*}}
+test lindex-3.6 {bad octal} -constraints testevalex -body {
+    set x -0o9
     list [catch { testevalex {lindex {a b c} $x} } result] $result
-} {1 {bad index "-09": must be integer?[+-]integer? or end?[+-]integer? (looks like invalid octal number)}}
+} -match glob -result {1 {*invalid octal number*}}
 test lindex-3.7 {indexes don't shimmer wide ints} {
     set x [expr {(wide(1)<<31) - 2}]
     list $x [lindex {1 2 3} $x] [incr x] [incr x]
@@ -101,14 +101,14 @@ test lindex-4.5 {index = end-3} testevalex {
     set x end-3
     list [testevalex {lindex {a b c} $x}] [testevalex {lindex {a b c} $x}]
 } {{} {}}
-test lindex-4.6 {bad octal} testevalex {
-    set x end-08
+test lindex-4.6 {bad octal} -constraints testevalex -body {
+    set x end-0o8
     list [catch { testevalex {lindex {a b c} $x} } result] $result
-} {1 {bad index "end-08": must be integer?[+-]integer? or end?[+-]integer? (looks like invalid octal number)}}
-test lindex-4.7 {bad octal} testevalex {
-    set x end--09
+} -match glob -result {1 {*invalid octal number*}}
+test lindex-4.7 {bad octal} -constraints testevalex -body {
+    set x end--0o9
     list [catch { testevalex {lindex {a b c} $x} } result] $result
-} {1 {bad index "end--09": must be integer?[+-]integer? or end?[+-]integer?}}
+} -match glob -result {1 {*invalid octal number*}}
 test lindex-4.8 {bad integer, not octal} testevalex {
     set x end-0a2
     list [catch { testevalex {lindex {a b c} $x} } result] $result
@@ -257,14 +257,14 @@ test lindex-11.4 {integer 3} {
     } result
     set result
 } {{} {}}
-test lindex-11.5 {bad octal} {
-    set x 08
+test lindex-11.5 {bad octal} -body {
+    set x 0o8
     list [catch { lindex {a b c} $x } result] $result
-} {1 {bad index "08": must be integer?[+-]integer? or end?[+-]integer? (looks like invalid octal number)}}
-test lindex-11.6 {bad octal} {
-    set x -09
+} -match glob -result {1 {*invalid octal number*}}
+test lindex-11.6 {bad octal} -body {
+    set x -0o9
     list [catch { lindex {a b c} $x } result] $result
-} {1 {bad index "-09": must be integer?[+-]integer? or end?[+-]integer? (looks like invalid octal number)}}
+} -match glob -result {1 {*invalid octal number*}}
 
 # Indices relative to end
 
@@ -303,14 +303,14 @@ test lindex-12.5 {index = end-3} {
     } result
     set result
 } {{} {}}
-test lindex-12.6 {bad octal} {
-    set x end-08
+test lindex-12.6 {bad octal} -body {
+    set x end-0o8
     list [catch { lindex {a b c} $x } result] $result
-} {1 {bad index "end-08": must be integer?[+-]integer? or end?[+-]integer? (looks like invalid octal number)}}
-test lindex-12.7 {bad octal} {
-    set x end--09
+} -match glob -result {1 {*invalid octal number*}}
+test lindex-12.7 {bad octal} -body {
+    set x end--0o9
     list [catch { lindex {a b c} $x } result] $result
-} {1 {bad index "end--09": must be integer?[+-]integer? or end?[+-]integer?}}
+} -match glob -result {1 {*invalid octal number*}}
 test lindex-12.8 {bad integer, not octal} {
     set x end-0a2
     list [catch { lindex {a b c} $x } result] $result

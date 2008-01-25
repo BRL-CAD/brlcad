@@ -195,8 +195,8 @@ test cmdIL-3.10 {SortCompare procedure, -integer option} {
     list [catch {lsort -integer {3 q}} msg] $msg
 } {1 {expected integer but got "q"}}
 test cmdIL-3.11 {SortCompare procedure, -integer option} {
-    lsort -integer {35 21 0x20 30 023 100 8}
-} {8 023 21 30 0x20 35 100}
+    lsort -integer {35 21 0x20 30 0o23 100 8}
+} {8 0o23 21 30 0x20 35 100}
 test cmdIL-3.12 {SortCompare procedure, -real option} {
     list [catch {lsort -real {6...4 3}} msg] $msg
 } {1 {expected floating-point number but got "6...4"}}
@@ -247,8 +247,8 @@ test cmdIL-3.18 {SortCompare procedure, -command option} -body {
     rename cmp ""
 } -result {48 36 35 22 21 18 6}
 test cmdIL-3.19 {SortCompare procedure, -decreasing option} {
-    lsort -decreasing -integer {35 21 0x20 30 023 100 8}
-} {100 35 0x20 30 21 023 8}
+    lsort -decreasing -integer {35 21 0x20 30 0o23 100 8}
+} {100 35 0x20 30 21 0o23 8}
 
 test cmdIL-4.1 {DictionaryCompare procedure, numerics, leading zeros} {
     lsort -dictionary {a003b a03b}

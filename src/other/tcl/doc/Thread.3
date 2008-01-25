@@ -50,7 +50,7 @@ A condition variable, which must be associated with a mutex lock.
 A mutex lock.
 .AP Tcl_Time *timePtr in
 A time limit on the condition wait.  NULL to wait forever.
-Note that a polling value of 0 seconds doesn't make much sense.
+Note that a polling value of 0 seconds does not make much sense.
 .AP Tcl_ThreadDataKey *keyPtr in
 This identifies a block of thread local storage.  The key should be
 static and process-wide, yet each thread will end up associating
@@ -82,7 +82,7 @@ waited upon into it.
 Beginning with the 8.1 release, the Tcl core is thread safe, which
 allows you to incorporate Tcl into multithreaded applications without
 customizing the Tcl core.  To enable Tcl multithreading support,
-you must include the \fB--enable-threads\fR option to \fBconfigure\fR
+you must include the \fB\-\|\-enable-threads\fR option to \fBconfigure\fR
 when you configure and compile your Tcl core.
 .PP
 An important constraint of the Tcl threads implementation is that

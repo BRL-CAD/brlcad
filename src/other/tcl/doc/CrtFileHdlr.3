@@ -81,7 +81,7 @@ events while waiting for files to become ready for I/O.  For this to work
 correctly, the application may need to use non-blocking I/O operations on
 the files for which handlers are declared.  Otherwise the application may
 block if it reads or writes too much data; while waiting for the I/O to
-complete the application won't be able to service other events. Use
+complete the application will not be able to service other events. Use
 \fBTcl_SetChannelOption\fR with \fB\-blocking\fR to set the channel into
 blocking or nonblocking mode as required.
 .PP

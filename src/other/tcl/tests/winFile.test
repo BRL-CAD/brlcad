@@ -95,6 +95,9 @@ proc cacls {fname args} {
 
 # dir/q output:
 # 2003-11-03  20:36                  598 OCTAVIAN\benny         filename.txt
+# Note this output from a german win2k machine:
+# 14.12.2007  14:26                   30 VORDEFINIERT\Administratest.dat
+#
 # Modified to cope with Msys environment and use ls -l.
 proc getuser {fname} {
     global env
@@ -112,7 +115,7 @@ proc getuser {fname} {
     } else {
         set dirtext [exec cmd /c dir /q [file nativename $fname]]
         foreach line [split $dirtext "\n"] {
-            if {[string match -nocase "* $tail" $line]} {
+            if {[string match -nocase "*$tail" $line]} {
                 set attrs [string range $line \
                                0 end-[string length $tail]]
                 regexp { [^ \\]+\\.*$} $attrs owner

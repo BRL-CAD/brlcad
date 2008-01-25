@@ -61,7 +61,9 @@ Interpreter in which to execute the specified command.
 .AP "const char" *slaveName in
 Name of slave interpreter to create or manipulate.
 .AP int isSafe in
-If non-zero, a ``safe'' slave that is suitable for running untrusted code
+If non-zero, a
+.QW safe
+slave that is suitable for running untrusted code
 is created, otherwise a trusted slave is created.
 .AP Tcl_Interp *slaveInterp in
 Interpreter to use for creating the source command for an alias (see
@@ -126,16 +128,21 @@ It also creates a slave command named \fIslaveName\fR in \fIinterp\fR which
 allows \fIinterp\fR to manipulate the new slave. 
 If \fIisSafe\fR is zero, the command creates a trusted slave in which Tcl
 code has access to all the Tcl commands.
-If it is \fB1\fR, the command creates a ``safe'' slave in which Tcl code
-has access only to set of Tcl commands defined as ``Safe Tcl''; see the
-manual entry for the Tcl \fBinterp\fR command for details.
+If it is \fB1\fR, the command creates a
+.QW safe
+slave in which Tcl code has access only to set of Tcl commands defined as
+.QW "Safe Tcl" ;
+see the manual entry for the Tcl \fBinterp\fR command for details.
 If the creation of the new slave interpreter failed, \fBNULL\fR is returned.
 .PP
-\fBTcl_IsSafe\fR returns \fB1\fR if \fIinterp\fR is ``safe'' (was created
-with the \fBTCL_SAFE_INTERPRETER\fR flag specified),
+\fBTcl_IsSafe\fR returns \fB1\fR if \fIinterp\fR is
+.QW safe
+(was created with the \fBTCL_SAFE_INTERPRETER\fR flag specified),
 \fB0\fR otherwise.
 .PP
-\fBTcl_MakeSafe\fR marks \fIinterp\fR as ``safe'', so that future
+\fBTcl_MakeSafe\fR marks \fIinterp\fR as
+.QW safe ,
+so that future
 calls to \fBTcl_IsSafe\fR will return 1.  It also removes all known
 potentially-unsafe core functionality (both commands and variables)
 from \fIinterp\fR.  However, it cannot know what parts of an extension

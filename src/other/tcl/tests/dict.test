@@ -35,10 +35,10 @@ proc getOrder {dictVal args} {
 
 test dict-1.1 {dict command basic syntax} {
     list [catch {dict} msg] $msg
-} {1 {wrong # args: should be "dict subcommand ?arg ...?"}}
+} {1 {wrong # args: should be "dict subcommand ?argument ...?"}}
 test dict-1.2 {dict command basic syntax} {
     list [catch {dict ?} msg] $msg
-} {1 {bad subcommand "?": must be append, create, exists, filter, for, get, incr, info, keys, lappend, merge, remove, replace, set, size, unset, update, values, or with}}
+} {1 {unknown or ambiguous subcommand "?": must be append, create, exists, filter, for, get, incr, info, keys, lappend, merge, remove, replace, set, size, unset, update, values, or with}}
 
 test dict-2.1 {dict create command} {
     dict create

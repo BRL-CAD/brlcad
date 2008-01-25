@@ -17,7 +17,7 @@
 if {[info commands package] == ""} {
     error "version mismatch: library\nscripts expect Tcl version 7.5b1 or later but the loaded version is\nonly [info patchlevel]"
 }
-package require -exact Tcl 8.5b1
+package require -exact Tcl 8.5.0
 
 # Compute the auto path to use in this interpreter.
 # The values on the path come from several locations:
@@ -72,31 +72,6 @@ namespace eval tcl {
         if {$Dir ni $Path} {
 	    lappend Path $Dir
 	    encoding dirs $Path
-        }
-    }
-
-    # Set up the 'chan' ensemble (TIP #208).
-    namespace eval chan {
-        # TIP #219. Added methods: create, postevent.
-	# TIP 287.  Added method: pending.
-        namespace ensemble create -command ::chan -map {
-            blocked     ::tcl::chan::blocked
-            close       ::tcl::chan::close
-            configure   ::tcl::chan::configure
-            copy        ::tcl::chan::copy
-            create      ::tcl::chan::rCreate
-            eof         ::tcl::chan::eof
-            event       ::tcl::chan::event
-            flush       ::tcl::chan::flush
-            gets        ::tcl::chan::gets
-            names       {::file channels}
-	    pending	::tcl::chan::Pending
-            postevent   ::tcl::chan::rPostevent
-            puts        ::tcl::chan::puts
-            read        ::tcl::chan::read
-            seek        ::tcl::chan::seek
-            tell        ::tcl::chan::tell
-            truncate    ::tcl::chan::Truncate
         }
     }
 

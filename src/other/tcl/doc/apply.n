@@ -41,7 +41,8 @@ The invocation of \fBapply\fR adds a call frame to Tcl's evaluation stack
 proceeds in this call frame, in the namespace given by \fInamespace\fR or
 in the global namespace if none was specified. If given, \fInamespace\fR is
 interpreted relative to the global namespace even if its name does not start
-with '::'. 
+with
+.QW :: .
 .PP
 The semantics of \fBapply\fR can also be described by:
 .PP
@@ -49,7 +50,7 @@ The semantics of \fBapply\fR can also be described by:
 proc apply {fun args} {
    set len [llength $fun]
    if {($len < 2) || ($len > 3)} {
-      error "can't interpret \\"$fun\\" as anonymous function"
+      error "can't interpret \e"$fun\e" as anonymous function"
    }
    lassign $fun argList body ns
    set name ::$ns::[getGloballyUniqueName]
@@ -67,25 +68,25 @@ to each element of a list.
 .CS
 proc map {lambda list} {
    set result {}
-   foreach $item $list {
+   foreach item $list {
       lappend result [\fBapply\fR $lambda $item]
    }
    return $result
 }
 map {x {return [string length $x]:$x}} {a bb ccc dddd}
-      \fI=> 1:a 2:bb 3:ccc 4:dddd\fR
+      \fI\(-> 1:a 2:bb 3:ccc 4:dddd\fR
 map {x {expr {$x**2 + 3*$x - 2}}} {-4 -3 -2 -1 0 1 2 3 4}
-      \fI=> 2 -2 -4 -4 -2 2 8 16 26\fR
+      \fI\(-> 2 -2 -4 -4 -2 2 8 16 26\fR
 .CE
 .PP
 The \fBapply\fR command is also useful for defining callbacks for use in the
 \fBtrace\fR command:
 .CS
 set vbl "123abc"
-trace add variable vbl write {\fBapply\fR {v1 v2 op} {
+trace add variable vbl write {\fBapply\fR {{v1 v2 op} {
    upvar 1 $v1 v
-   puts "updated variable to \\"$v\\""
-}}
+   puts "updated variable to \e"$v\e""
+}}}
 set vbl 123
 set vbl abc
 .CE

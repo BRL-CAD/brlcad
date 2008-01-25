@@ -63,7 +63,7 @@ buffered for a channel in nonblocking mode, which could consume a
 large amount of memory.
 To avoid wasting memory, nonblocking I/O should normally
 be used in an event-driven fashion with the \fBfileevent\fR command
-(don't invoke \fBputs\fR unless you have recently been notified
+(do not invoke \fBputs\fR unless you have recently been notified
 via a file event that the channel is ready for more output data).
 .SH EXAMPLES
 Write a short message to the console (or wherever \fBstdout\fR is

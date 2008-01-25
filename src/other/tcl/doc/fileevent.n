@@ -30,9 +30,11 @@ interact with the user while waiting for the data to arrive.  If an
 application invokes \fBgets\fR or \fBread\fR on a blocking channel when
 there is no input data available, the process will block; until the input
 data arrives, it will not be able to service other events, so it will
-appear to the user to ``freeze up''.  With \fBfileevent\fR, the process can
+appear to the user to
+.QW "freeze up" .
+With \fBfileevent\fR, the process can
 tell when data is present and only invoke \fBgets\fR or \fBread\fR when
-they won't block.
+they will not block.
 .PP
 The \fIchannelId\fR argument to \fBfileevent\fR refers to an open
 channel such as a Tcl standard channel (\fBstdin\fR, \fBstdout\fR,

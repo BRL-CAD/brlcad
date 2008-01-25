@@ -237,7 +237,8 @@ static TcpState *	CreateSocket(Tcl_Interp *interp, int port,
 			    const char *host, int server, const char *myaddr,
 			    int myport, int async);
 static int		CreateSocketAddress(struct sockaddr_in *sockaddrPtr,
-			    const char *host, int port);
+			    const char *host, int port, int willBind,
+			    const char **errorMsgPtr);
 static int		FileBlockModeProc(ClientData instanceData, int mode);
 static int		FileCloseProc(ClientData instanceData,
 			    Tcl_Interp *interp);
@@ -967,8 +968,16 @@ TtySetOptionProc(
 	    return TCL_ERROR;
 	}
 	if (argc == 2) {
-	    iostate.c_cc[VSTART] = argv[0][0];
-	    iostate.c_cc[VSTOP]	 = argv[1][0];
+	    Tcl_DString ds;
+	    Tcl_DStringInit(&ds);
+
+	    Tcl_UtfToExternalDString(NULL, argv[0], -1, &ds);
+	    iostate.c_cc[VSTART] = *(const cc_t *) Tcl_DStringValue(&ds);
+	    Tcl_DStringSetLength(&ds, 0);
+
+	    Tcl_UtfToExternalDString(NULL, argv[1], -1, &ds);
+	    iostate.c_cc[VSTOP] = *(const cc_t *) Tcl_DStringValue(&ds);
+	    Tcl_DStringFree(&ds);
 	} else {
 	    if (interp) {
 		Tcl_AppendResult(interp, "bad value for -xchar: "
@@ -1142,13 +1151,19 @@ TtyGetOptionProc(
     }
     if (len==0 || (len>1 && strncmp(optionName, "-xchar", len)==0)) {
 	IOSTATE iostate;
-
+	Tcl_DString ds;
 	valid = 1;
+
 	GETIOSTATE(fsPtr->fd, &iostate);
-	sprintf(buf, "%c", iostate.c_cc[VSTART]);
-	Tcl_DStringAppendElement(dsPtr, buf);
-	sprintf(buf, "%c", iostate.c_cc[VSTOP]);
-	Tcl_DStringAppendElement(dsPtr, buf);
+	Tcl_DStringInit(&ds);
+
+	Tcl_ExternalToUtfDString(NULL,  (const char *) &iostate.c_cc[VSTART], 1, &ds);
+	Tcl_DStringAppendElement(dsPtr, (const char *) Tcl_DStringValue(&ds));
+	Tcl_DStringSetLength(&ds, 0);
+
+	Tcl_ExternalToUtfDString(NULL,  (const char *) &iostate.c_cc[VSTOP], 1, &ds);
+	Tcl_DStringAppendElement(dsPtr, (const char *) Tcl_DStringValue(&ds));
+	Tcl_DStringFree(&ds);
     }
     if (len == 0) {
 	Tcl_DStringEndSublist(dsPtr);
@@ -2455,14 +2470,15 @@ CreateSocket(
     struct sockaddr_in sockaddr;	/* socket address */
     struct sockaddr_in mysockaddr;	/* Socket address for client */
     TcpState *statePtr;
+    const char *errorMsg = NULL;
 
     sock = -1;
     origState = 0;
-    if (!CreateSocketAddress(&sockaddr, host, port)) {
+    if (!CreateSocketAddress(&sockaddr, host, port, 0, &errorMsg)) {
 	goto addressError;
     }
     if ((myaddr != NULL || myport != 0) &&
-	    !CreateSocketAddress(&mysockaddr, myaddr, myport)) {
+	    !CreateSocketAddress(&mysockaddr, myaddr, myport, 1, &errorMsg)) {
 	goto addressError;
     }
 
@@ -2594,6 +2610,9 @@ CreateSocket(
     if (interp != NULL) {
 	Tcl_AppendResult(interp, "couldn't open socket: ",
 		Tcl_PosixError(interp), NULL);
+	if (errorMsg != NULL) {
+	    Tcl_AppendResult(interp, " (", errorMsg, ")", NULL);
+	}
     }
     return NULL;
 }
@@ -2619,9 +2638,71 @@ static int
 CreateSocketAddress(
     struct sockaddr_in *sockaddrPtr,	/* Socket address */
     const char *host,			/* Host. NULL implies INADDR_ANY */
-    int port)				/* Port number */
+    int port,				/* Port number */
+    int willBind,			/* Is this an address to bind() to or
+					 * to connect() to? */
+    const char **errorMsgPtr)		/* Place to store the error message
+					 * detail, if available. */
 {
-    struct hostent *hostent;		/* Host database entry */
+#ifdef HAVE_GETADDRINFO
+    struct addrinfo hints, *resPtr = NULL;
+    char *native;
+    Tcl_DString ds;
+    int result;
+
+    if (host == NULL) {
+	sockaddrPtr->sin_family = AF_INET;
+	sockaddrPtr->sin_addr.s_addr = INADDR_ANY;
+    addPort:
+	sockaddrPtr->sin_port = htons((unsigned short) (port & 0xFFFF));
+	return 1;
+    }
+
+    (void) memset(&hints, 0, sizeof(struct addrinfo));
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    if (willBind) {
+	hints.ai_flags |= AI_PASSIVE;
+    }
+
+    /*
+     * Note that getaddrinfo() *is* thread-safe. If a platform doesn't get
+     * that right, it shouldn't use this part of the code.
+     */
+
+    native = Tcl_UtfToExternalDString(NULL, host, -1, &ds);
+    result = getaddrinfo(native, NULL, &hints, &resPtr);
+    Tcl_DStringFree(&ds);
+    if (result == 0) {
+	memcpy(sockaddrPtr, resPtr->ai_addr, sizeof(struct sockaddr_in));
+	freeaddrinfo(resPtr);
+	goto addPort;
+    }
+
+    /*
+     * Ought to use gai_strerror() here...
+     */
+
+    switch (result) {
+    case EAI_NONAME:
+    case EAI_SERVICE:
+#if defined(EAI_ADDRFAMILY) && EAI_ADDRFAMILY != EAI_NONAME
+    case EAI_ADDRFAMILY:
+#endif
+#if defined(EAI_NODATA) && EAI_NODATA != EAI_NONAME
+    case EAI_NODATA:
+#endif
+	*errorMsgPtr = gai_strerror(result);
+	errno = EHOSTUNREACH;
+	return 0;
+    case EAI_SYSTEM:
+	return 0;
+    default:
+	*errorMsgPtr = gai_strerror(result);
+	errno = ENXIO;
+	return 0;
+    }
+#else /* !HAVE_GETADDRINFO */
     struct in_addr addr;		/* For 64/32 bit madness */
 
     (void) memset(sockaddrPtr, '\0', sizeof(struct sockaddr_in));
@@ -2630,10 +2711,15 @@ CreateSocketAddress(
     if (host == NULL) {
 	addr.s_addr = INADDR_ANY;
     } else {
+	struct hostent *hostent;	/* Host database entry */
 	Tcl_DString ds;
 	const char *native;
 
-	native = Tcl_UtfToExternalDString(NULL, host, -1, &ds);
+	if (host == NULL) {
+	    native = NULL;
+	} else {
+	    native = Tcl_UtfToExternalDString(NULL, host, -1, &ds);
+	}
 	addr.s_addr = inet_addr(native);		/* INTL: Native. */
 
 	/*
@@ -2642,8 +2728,11 @@ CreateSocketAddress(
 	 */
 
 	if (addr.s_addr == 0xFFFFFFFF) {
-	    hostent = gethostbyname(native);		/* INTL: Native. */
-	    if (hostent == NULL) {
+	    hostent = TclpGetHostByName(native);	/* INTL: Native. */
+	    if (hostent != NULL) {
+		memcpy(&addr, hostent->h_addr_list[0],
+			(size_t) hostent->h_length);
+	    } else {
 #ifdef	EHOSTUNREACH
 		errno = EHOSTUNREACH;
 #else /* !EHOSTUNREACH */
@@ -2651,13 +2740,15 @@ CreateSocketAddress(
 		errno = ENXIO;
 #endif /* ENXIO */
 #endif /* EHOSTUNREACH */
-		Tcl_DStringFree(&ds);
+		if (native != NULL) {
+		    Tcl_DStringFree(&ds);
+		}
 		return 0;	/* Error. */
 	    }
-	    memcpy(&addr, (void *) hostent->h_addr_list[0],
-		    (size_t) hostent->h_length);
 	}
-	Tcl_DStringFree(&ds);
+	if (native != NULL) {
+	    Tcl_DStringFree(&ds);
+	}
     }
 
     /*
@@ -2669,6 +2760,7 @@ CreateSocketAddress(
 
     sockaddrPtr->sin_addr.s_addr = addr.s_addr;
     return 1;			/* Success. */
+#endif /* HAVE_GETADDRINFO */
 }
 
 /*

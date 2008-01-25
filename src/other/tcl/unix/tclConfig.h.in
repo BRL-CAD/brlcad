@@ -34,6 +34,9 @@
 /* Do we have fts functions? */
 #undef HAVE_FTS
 
+/* Define to 1 if getaddrinfo is available. */
+#undef HAVE_GETADDRINFO
+
 /* Define to 1 if you have the `getattrlist' function. */
 #undef HAVE_GETATTRLIST
 
@@ -181,12 +184,6 @@
 /* Define to 1 if you have the `strtol' function. */
 #undef HAVE_STRTOL
 
-/* Define to 1 if you have the `strtoll' function. */
-#undef HAVE_STRTOLL
-
-/* Define to 1 if you have the `strtoull' function. */
-#undef HAVE_STRTOULL
-
 /* Is 'struct dirent64' in <sys/types.h>? */
 #undef HAVE_STRUCT_DIRENT64
 
@@ -229,9 +226,6 @@
 
 /* Should we use the global timezone variable? */
 #undef HAVE_TIMEZONE_VAR
-
-/* Define to 1 if you have the `tmpnam' function. */
-#undef HAVE_TMPNAM
 
 /* Should we use the tm_gmtoff field of struct tm? */
 #undef HAVE_TM_GMTOFF
@@ -370,6 +364,9 @@
 /* Are bytecode statistics enabled? */
 #undef TCL_COMPILE_STATS
 
+/* Are we cross-compiling? */
+#undef TCL_CROSS_COMPILE
+
 /* Are we to override what our default encoding is? */
 #undef TCL_DEFAULT_ENCODING
 
@@ -384,6 +381,9 @@
 
 /* What is the default extension for shared libraries? */
 #undef TCL_SHLIB_EXT
+
+/* The C stack grows upwards in memory. */
+#undef TCL_STACK_GROWS_UP
 
 /* Are we building with threads enabled? */
 #undef TCL_THREADS

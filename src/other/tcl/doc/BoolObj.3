@@ -83,7 +83,9 @@ Note that the routines \fBTcl_GetBooleanFromObj\fR and
 The set of values for which \fBTcl_GetBooleanFromObj\fR
 will return \fBTCL_OK\fR is strictly larger than
 the set of values for which \fBTcl_GetBoolean\fR will do the same.
-For example, the value "5" passed to \fBTcl_GetBooleanFromObj\fR
+For example, the value
+.QW 5
+passed to \fBTcl_GetBooleanFromObj\fR
 will lead to a \fBTCL_OK\fR return (and the boolean value 1),
 while the same value passed to \fBTcl_GetBoolean\fR will lead to
 a \fBTCL_ERROR\fR return.

@@ -118,7 +118,7 @@ block in a (potentially multi-block) input stream, telling the conversion
 routine to perform any finalization that needs to occur after the last
 byte is converted and then to reset to an initial state.
 \fBTCL_ENCODING_STOPONERROR\fR signifies that the conversion routine should
-return immediately upon reading a source character that doesn't exist in
+return immediately upon reading a source character that does not exist in
 the target encoding; otherwise a default fallback character will
 automatically be substituted.  
 .AP Tcl_EncodingState *statePtr in/out
@@ -277,18 +277,25 @@ is filled with the corresponding number of bytes that were stored in
 Windows-only convenience
 functions for converting between UTF-8 and Windows strings.  On Windows 95
 (as with the Unix operating system),
-all strings exchanged between Tcl and the operating system are "char"
+all strings exchanged between Tcl and the operating system are
+.QW "char"
 based.  On Windows NT, some strings exchanged between Tcl and the
-operating system are "char" oriented while others are in Unicode.  By
+operating system are
+.QW "char"
+oriented while others are in Unicode.  By
 convention, in Windows a TCHAR is a character in the ANSI code page
 on Windows 95 and a Unicode character on Windows NT.
 .PP
-If you planned to use the same "char" based interfaces on both Windows
+If you planned to use the same
+.QW "char"
+based interfaces on both Windows
 95 and Windows NT, you could use \fBTcl_UtfToExternal\fR and
 \fBTcl_ExternalToUtf\fR (or their \fBTcl_DString\fR equivalents) with an
 encoding of NULL (the current system encoding).  On the other hand,
 if you planned to use the Unicode interface when running on Windows NT
-and the "char" interfaces when running on Windows 95, you would have
+and the
+.QW "char"
+interfaces when running on Windows 95, you would have
 to perform the following type of test over and over in your program
 (as represented in pseudo-code):
 .CS
@@ -457,8 +464,9 @@ are obsolete interfaces best replaced with calls to
 \fBTcl_GetEncodingSearchPath\fR and \fBTcl_SetEncodingSearchPath\fR.
 They are called to access and set the first element of the \fIsearchPath\fR
 list.  Since Tcl searches \fIsearchPath\fR for encoding data files in
-list order, these routines establish the ``default'' directory in which
-to find encoding data files.
+list order, these routines establish the
+.QW default
+directory in which to find encoding data files.
 .VE 8.5
 .SH "ENCODING FILES"
 Space would prohibit precompiling into Tcl every possible encoding
@@ -471,7 +479,9 @@ external encoding may consist of single-byte, multi-byte, or double-byte
 characters.  
 .PP
 Each dynamically-loadable encoding is represented as a text file.  The
-initial line of the file, beginning with a ``#'' symbol, is a comment
+initial line of the file, beginning with a
+.QW #
+symbol, is a comment
 that provides a human-readable description of the file.  The next line
 identifies the type of encoding file.  It can be one of the following
 letters:
@@ -557,7 +567,7 @@ and 0x8163 in \fBshiftjis\fR map to 203E and 2026 in Unicode, respectively.
 Following the first page will be all the other pages, each in the same
 format as the first: one number identifying the page followed by 256
 double-byte Unicode characters.  If a character in the encoding maps to the
-Unicode character 0000, it means that the character doesn't actually exist.
+Unicode character 0000, it means that the character does not actually exist.
 If all characters on a page would map to 0000, that page can be omitted.
 .PP
 Case [4] is the escape-sequence encoding file.  The lines in an this type of
@@ -569,13 +579,13 @@ encoding:
 E
 init		{}
 final		{}
-iso8859-1	\\x1b(B
-jis0201		\\x1b(J
-jis0208		\\x1b$@
-jis0208		\\x1b$B
-jis0212		\\x1b$(D
-gb2312		\\x1b$A
-ksc5601		\\x1b$(C
+iso8859-1	\ex1b(B
+jis0201		\ex1b(J
+jis0208		\ex1b$@
+jis0208		\ex1b$B
+jis0212		\ex1b$(D
+gb2312		\ex1b$A
+ksc5601		\ex1b$(C
 .CE
 .PP
 In the file, the first column represents an option and the second column
@@ -584,8 +594,11 @@ the first character is converted, while \fBfinal\fR is a string to emit
 or expect after the last character.  All other options are names of
 table-based encodings; the associated value is the escape-sequence that
 marks that encoding.  Tcl syntax is used for the values; in the above
-example, for instance, ``\fB{}\fR'' represents the empty string and
-``\fB\\x1b\fR'' represents character 27.
+example, for instance,
+.QW \fB{}\fR
+represents the empty string and
+.QW \fB\ex1b\fR
+represents character 27.
 .PP
 When \fBTcl_GetEncoding\fR encounters an encoding \fIname\fR that has not
 been loaded, it attempts to load an encoding file called \fIname\fB.enc\fR

@@ -10,7 +10,7 @@
 .TH Tcl_StaticPackage 3 7.5 Tcl "Tcl Library Procedures"
 .BS
 .SH NAME
-Tcl_StaticPackage \- make a statically linked package available via the `load' command
+Tcl_StaticPackage \- make a statically linked package available via the 'load' command
 .SH SYNOPSIS
 .nf
 \fB#include <tcl.h>\fR
@@ -22,7 +22,7 @@ Tcl_StaticPackage \- make a statically linked package available via the `load' c
 If not NULL, points to an interpreter into which the package has
 already been loaded (i.e., the caller has already invoked the
 appropriate initialization procedure).  NULL means the package
-hasn't yet been incorporated into any interpreter.
+has not yet been incorporated into any interpreter.
 .AP "const char" *pkgName in
 Name of the package;  should be properly capitalized (first letter
 upper-case, all others lower-case).
@@ -32,7 +32,7 @@ interpreter.
 .AP Tcl_PackageInitProc *safeInitProc in
 Procedure to call to incorporate this package into a safe interpreter
 (one that will execute untrusted scripts).   NULL means the package
-can't be used in safe interpreters.
+cannot be used in safe interpreters.
 .BE
 
 .SH DESCRIPTION

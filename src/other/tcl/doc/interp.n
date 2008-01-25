@@ -14,9 +14,8 @@
 .SH NAME
 interp \- Create and manipulate Tcl interpreters
 .SH SYNOPSIS
-\fBinterp \fIoption \fR?\fIarg arg ...\fR?
+\fBinterp \fIsubcommand \fR?\fIarg arg ...\fR?
 .BE
-
 .SH DESCRIPTION
 .PP
 This command makes it possible to create one or more new Tcl
@@ -83,7 +82,7 @@ Both restrictions are motivated by safety concerns.
 The \fBinterp\fR command is used to create, delete, and manipulate
 slave interpreters, and to share or transfer
 channels between interpreters.  It can have any of several forms, depending
-on the \fIoption\fR argument:
+on the \fIsubcommand\fR argument:
 .TP
 \fBinterp\fR \fBalias\fR \fIsrcPath\fR \fIsrcToken\fR
 Returns a Tcl list whose elements are the \fItargetCmd\fR and
@@ -107,7 +106,9 @@ may be anywhere in the hierarchy of interpreters under the interpreter
 invoking the command.
 \fISrcPath\fR and \fIsrcCmd\fR identify the source of the alias.
 \fISrcPath\fR is a Tcl list whose elements select a particular
-interpreter.  For example, ``\fBa b\fR'' identifies an interpreter
+interpreter.  For example,
+.QW "\fBa b\fR"
+identifies an interpreter
 \fBb\fR, which is a slave of interpreter \fBa\fR, which is a slave
 of the invoking interpreter.  An empty list specifies the interpreter
 invoking the command.  \fIsrcCmd\fR gives the name of a new
@@ -179,8 +180,8 @@ This command concatenates all of the \fIarg\fR arguments in the same
 fashion as the \fBconcat\fR command, then evaluates the resulting string as
 a Tcl script in the slave interpreter identified by \fIpath\fR. The result
 of this evaluation (including all \fBreturn\fR options,
-such as \fB-errorinfo\fR and \fB-errorcode\fR information, if an error occurs)
-is returned to the invoking interpreter.
+such as \fB\-errorinfo\fR and \fB\-errorcode\fR information, if an
+error occurs) is returned to the invoking interpreter.
 Note that the script will be executed in the current context stack frame of the
 \fIpath\fR interpreter; this is so that the implementations (in a master
 interpreter) of aliases in a slave interpreter can execute scripts in
@@ -188,7 +189,7 @@ the slave that find out information about the slave's current state
 and stack frame.
 .TP
 \fBinterp exists \fIpath\fR
-Returns  \fB1\fR if a slave interpreter by the specified \fIpath\fR
+Returns \fB1\fR if a slave interpreter by the specified \fIpath\fR
 exists in this master, \fB0\fR otherwise. If \fIpath\fR is omitted, the
 invoking interpreter is used.
 .TP
@@ -221,29 +222,34 @@ Hidden commands are explained in more detail in \fBHIDDEN COMMANDS\fR, below.
 Returns a list of the names of all hidden commands in the interpreter
 identified by \fIpath\fR.
 .TP
-\fBinterp\fR \fBinvokehidden\fR \fIpath\fR ?\fB-namespace\fR \fInamespace\fR? ?\fB-global\fR? ?\fB\-\|\-\fR? \fIhiddenCmdName\fR ?\fIarg ...\fR?
+\fBinterp\fR \fBinvokehidden\fR \fIpath\fR ?\fI\-option ...\fR? \fIhiddenCmdName\fR ?\fIarg ...\fR?
 Invokes the hidden command \fIhiddenCmdName\fR with the arguments supplied
 in the interpreter denoted by \fIpath\fR. No substitutions or evaluation
-are applied to the arguments.
-If the \fB-namespace\fR flag is present, the hidden command is invoked in
-the specified namespace in the target interpreter.
-If the \fB-global\fR flag is present, the hidden command is invoked at the
+are applied to the arguments. Three \fI\-option\fRs are supported, all
+of which start with \fB\-\fR: \fB\-namespace\fR (which takes a single
+argument afterwards, \fInsName\fR), \fB\-global\fR, and \fB\-\|\-\fR.
+If the \fB\-namespace\fR flag is present, the hidden command is invoked in
+the namespace called \fInsName\fR in the target interpreter.
+If the \fB\-global\fR flag is present, the hidden command is invoked at the
 global level in the target interpreter; otherwise it is invoked at the
 current call frame and can access local variables in that and outer call
 frames.
-If both the \fB-namespace\fR and \fB-global\fR flags are present, the
-\fB-namespace\fR flag is ignored.
+The \fB\-\|\-\fR flag allows the \fIhiddenCmdName\fR argument to start with a
+.QW \-
+character, and is otherwise unnecessary.
+If both the \fB\-namespace\fR and \fB\-global\fR flags are present, the
+\fB\-namespace\fR flag is ignored.
 Note that the hidden command will be executed (by default) in the
 current context stack frame of the \fIpath\fR interpreter.
 Hidden commands are explained in more detail in \fBHIDDEN COMMANDS\fR, below.
 .TP
-\fBinterp\fR \fBlimit\fR \fIpath\fR \fIlimitType\fR ?\fIoption\fR? ?\fIvalue\fR \fI...\fR?
+\fBinterp\fR \fBlimit\fR \fIpath\fR \fIlimitType\fR ?\fI\-option\fR? ?\fIvalue\fR \fI...\fR?
 .VS 8.5
 Sets up, manipulates and queries the configuration of the resource
 limit \fIlimitType\fR for the interpreter denoted by \fIpath\fR.  If
-no \fIoption\fR is specified, return the current configuration of the
-limit.  If \fIoption\fR is the sole argument, return the value of that
-option.  Otherwise, a list of \fIoption\fR/\fIvalue\fR argument pairs
+no \fI\-option\fR is specified, return the current configuration of the
+limit.  If \fI\-option\fR is the sole argument, return the value of that
+option.  Otherwise, a list of \fI\-option\fR/\fIvalue\fR argument pairs
 must supplied. See \fBRESOURCE LIMITS\fR below for a more detailed
 explanation of what limits and options are supported.
 .VE 8.5
@@ -268,13 +274,15 @@ and related procedures in that interpreter will return an error.
 The \fInewlimit\fR value is also returned.
 The \fInewlimit\fR value must be a positive integer between 1 and the
 maximum value of a non-long integer on the platform.
-.sp
+.RS
+.PP
 The command sets the maximum size of the Tcl call stack only. It cannot
 by itself prevent stack overflows on the C stack being used by the
 application. If your machine has a limit on the size of the C stack, you
 may get stack overflows before reaching the limit set by the command. If
 this happens, see if there is a mechanism in your system for increasing
 the maximum size of the C stack.
+.RE
 .TP
 \fBinterp\fR \fBshare\fR \fIsrcPath channelId destPath\fR
 Causes the IO channel identified by \fIchannelId\fR to become shared
@@ -363,8 +371,8 @@ This command concatenates all of the \fIarg\fR arguments in
 the same fashion as the \fBconcat\fR command, then evaluates
 the resulting string as a Tcl script in \fIslave\fR.
 The result of this evaluation (including all \fBreturn\fR options,
-such as \fB-errorinfo\fR and \fB-errorcode\fR information, if an error occurs)
-is returned to the invoking interpreter.
+such as \fB\-errorinfo\fR and \fB\-errorcode\fR information, if an
+error occurs) is returned to the invoking interpreter.
 Note that the script will be executed in the current context stack frame
 of \fIslave\fR; this is so that the implementations (in a master
 interpreter) of aliases in a slave interpreter can execute scripts in
@@ -397,17 +405,22 @@ For more details on hidden commands, see \fBHIDDEN COMMANDS\fR, below.
 \fIslave \fBhidden\fR
 Returns a list of the names of all hidden commands in \fIslave\fR.
 .TP
-\fIslave \fBinvokehidden\fR ?\fB-namespace\fR \fInamespace\fR? ?\fB-global\fR ?\fB\-\|\-\fR? \fIhiddenName \fR?\fIarg ..\fR?
+\fIslave \fBinvokehidden\fR ?\fI\-option ...\fR? \fIhiddenName \fR?\fIarg ..\fR?
 This command invokes the hidden command \fIhiddenName\fR with the
 supplied arguments, in \fIslave\fR. No substitutions or evaluations are
-applied to the arguments.
-If the \fB-namespace\fR flag is given, the hidden command is invoked in
+applied to the arguments. Three \fI\-option\fRs are supported, all
+of which start with \fB\-\fR: \fB\-namespace\fR (which takes a single
+argument afterwards, \fInsName\fR), \fB\-global\fR, and \fB\-\|\-\fR.
+If the \fB\-namespace\fR flag is given, the hidden command is invoked in
 the specified namespace in the slave.
-If the \fB-global\fR flag is given, the command is invoked at the global
+If the \fB\-global\fR flag is given, the command is invoked at the global
 level in the slave; otherwise it is invoked at the current call frame and
 can access local variables in that or outer call frames.
-If both the \fB-namespace\fR and \fB-global\fR flags are given, the
-\fB-namespace\fR flag is ignored.
+The \fB\-\|\-\fR flag allows the \fIhiddenCmdName\fR argument to start with a
+.QW \-
+character, and is otherwise unnecessary.
+If both the \fB\-namespace\fR and \fB\-global\fR flags are given, the
+\fB\-namespace\fR flag is ignored.
 Note that the hidden command will be executed (by default) in the
 current context stack frame of \fIslave\fR.
 For more details on hidden commands,
@@ -416,13 +429,13 @@ see \fBHIDDEN COMMANDS\fR, below.
 \fIslave \fBissafe\fR
 Returns  \fB1\fR if the slave interpreter is safe, \fB0\fR otherwise.
 .TP
-\fIslave \fBlimit\fR \fIlimitType\fR ?\fIoption\fR? ?\fIvalue\fR \fI...\fR?
+\fIslave \fBlimit\fR \fIlimitType\fR ?\fI\-option\fR? ?\fIvalue\fR \fI...\fR?
 .VS 8.5
 Sets up, manipulates and queries the configuration of the resource
-limit \fIlimitType\fR for the slave interpreter.  If no \fIoption\fR
+limit \fIlimitType\fR for the slave interpreter.  If no \fI\-option\fR
 is specified, return the current configuration of the limit.  If
-\fIoption\fR is the sole argument, return the value of that option.
-Otherwise, a list of \fIoption\fR/\fIvalue\fR argument pairs must
+\fI\-option\fR is the sole argument, return the value of that option.
+Otherwise, a list of \fI\-option\fR/\fIvalue\fR argument pairs must
 supplied. See \fBRESOURCE LIMITS\fR below for a more detailed explanation of
 what limits and options are supported.
 .VE 8.5
@@ -441,13 +454,15 @@ and related procedures in \fIslave\fR will return an error.
 The \fInewlimit\fR value is also returned.
 The \fInewlimit\fR value must be a positive integer between 1 and the
 maximum value of a non-long integer on the platform.
-.sp
+.RS
+.PP
 The command sets the maximum size of the Tcl call stack only. It cannot
 by itself prevent stack overflows on the C stack being used by the
 application. If your machine has a limit on the size of the C stack, you
 may get stack overflows before reaching the limit set by the command. If
 this happens, see if there is a mechanism in your system for increasing
 the maximum size of the C stack.
+.RE
 .SH "SAFE INTERPRETERS"
 .PP
 A safe interpreter is one with restricted functionality, so that
@@ -473,32 +488,33 @@ A safe interpreter is created with exactly the following set of
 built-in commands:
 .DS
 .ta 1.2i 2.4i 3.6i
-\fBafter	append	apply	array
-binary	break	case	catch
-clock	close	concat	continue
-dict	eof	error	eval
-expr	fblocked	fcopy	fileevent
-flush	for	foreach	format
-gets	global	if	incr
-info	interp	join	lappend
-lassign	lindex	linsert	list
-llength	lrange	lrepeat	lreplace
-lsearch	lset	lsort	namespace
-package	pid	proc	puts
-read	regexp	regsub	rename
-return	scan	seek	set
-split	string	subst	switch
-tell	time	trace	unset
-update	uplevel	upvar	variable
-vwait	while\fR
+\fBafter\fR	\fBappend\fR	\fBapply\fR	\fBarray\fR
+\fBbinary\fR	\fBbreak\fR	\fBcatch\fR	\fBchan\fR
+\fBclock\fR	\fBclose\fR	\fBconcat\fR	\fBcontinue\fR
+\fBdict\fR	\fBeof\fR	\fBerror\fR	\fBeval\fR
+\fBexpr\fR	\fBfblocked\fR	\fBfcopy\fR	\fBfileevent\fR
+\fBflush\fR	\fBfor\fR	\fBforeach\fR	\fBformat\fR
+\fBgets\fR	\fBglobal\fR	\fBif\fR	\fBincr\fR
+\fBinfo\fR	\fBinterp\fR	\fBjoin\fR	\fBlappend\fR
+\fBlassign\fR	\fBlindex\fR	\fBlinsert\fR	\fBlist\fR
+\fBllength\fR	\fBlrange\fR	\fBlrepeat\fR	\fBlreplace\fR
+\fBlsearch\fR	\fBlset\fR	\fBlsort\fR	\fBnamespace\fR
+\fBpackage\fR	\fBpid\fR	\fBproc\fR	\fBputs\fR
+\fBread\fR	\fBregexp\fR	\fBregsub\fR	\fBrename\fR
+\fBreturn\fR	\fBscan\fR	\fBseek\fR	\fBset\fR
+\fBsplit\fR	\fBstring\fR	\fBsubst\fR	\fBswitch\fR
+\fBtell\fR	\fBtime\fR	\fBtrace\fR	\fBunset\fR
+\fBupdate\fR	\fBuplevel\fR	\fBupvar\fR	\fBvariable\fR
+\fBvwait\fR	\fBwhile\fR
 .DE
 The following commands are hidden by \fBinterp create\fR when it
 creates a safe interpreter:
 .DS
 .ta 1.2i 2.4i 3.6i
-\fBcd	encoding	exec	exit
-fconfigure	file	glob	load
-open	pwd	socket	source	unload\fR
+\fBcd\fR	\fBencoding\fR	\fBexec\fR	\fBexit\fR
+\fBfconfigure\fR	\fBfile\fR	\fBglob\fR	\fBload\fR
+\fBopen\fR	\fBpwd\fR	\fBsocket\fR	\fBsource\fR
+\fBunload\fR
 .DE
 These commands can be recreated later as Tcl procedures or aliases, or
 re-exposed by \fBinterp expose\fR.
@@ -507,25 +523,24 @@ The following commands from Tcl's library of support procedures are
 not present in a safe interpreter:
 .DS
 .ta 1.6i 3.2i
-\fBauto_exec_ok	auto_import	auto_load
-auto_load_index	auto_qualify	unknown\fR
+\fBauto_exec_ok\fR	\fBauto_import\fR	\fBauto_load\fR
+\fBauto_load_index\fR	\fBauto_qualify\fR	\fBunknown\fR
 .DE
 Note in particular that safe interpreters have no default \fBunknown\fR
 command, so Tcl's default autoloading facilities are not available.
 Autoload access to Tcl's commands that are normally autoloaded:
 .DS
 .ta 2.1i
-\fB
-auto_mkindex	auto_mkindex_old
-auto_reset	history
-parray	pkg_mkIndex
-::pkg::create	::safe::interpAddToAccessPath
-::safe::interpCreate	::safe::interpConfigure
-::safe::interpDelete	::safe::interpFindInAccessPath
-::safe::interpInit	::safe::setLogCmd
-tcl_endOfWord	tcl_findLibrary
-tcl_startOfNextWord	tcl_startOfPreviousWord
-tcl_wordBreakAfter	tcl_wordBreakBefore\fR
+\fBauto_mkindex\fR	\fBauto_mkindex_old\fR
+\fBauto_reset\fR	\fBhistory\fR
+\fBparray\fR	\fBpkg_mkIndex\fR
+\fB::pkg::create\fR	\fB::safe::interpAddToAccessPath\fR
+\fB::safe::interpCreate\fR	\fB::safe::interpConfigure\fR
+\fB::safe::interpDelete\fR	\fB::safe::interpFindInAccessPath\fR
+\fB::safe::interpInit\fR	\fB::safe::setLogCmd\fR
+\fBtcl_endOfWord\fR	\fBtcl_findLibrary\fR
+\fBtcl_startOfNextWord\fR	\fBtcl_startOfPreviousWord\fR
+\fBtcl_wordBreakAfter\fR	\fBtcl_wordBreakBefore\fR
 .DE
 can only be provided by explicit definition of an \fBunknown\fR command
 in the safe interpreter.  This will involve exposing the \fBsource\fR
@@ -568,9 +583,10 @@ as they would be for any other command invoked in that interpreter.
 The command procedure for the source command takes its arguments
 and merges them with the \fItargetCmd\fR and \fIarg\fRs for the
 alias to create a new array of arguments.  If the words
-of \fIsrcCmd\fR were ``\fIsrcCmd arg1 arg2 ... argN\fR'',
+of \fIsrcCmd\fR were
+.QW "\fIsrcCmd arg1 arg2 ... argN\fR" ,
 the new set of words will be
-``\fItargetCmd arg arg ... arg arg1 arg2 ... argN\fR'',
+.QW "\fItargetCmd arg arg ... arg arg1 arg2 ... argN\fR" ,
 where \fItargetCmd\fR and \fIarg\fRs are the values supplied when the
 alias was created.  \fITargetCmd\fR is then used to locate a command
 procedure in the target interpreter, and that command procedure
@@ -683,9 +699,10 @@ catch and handle.
 Every limit has a number of options associated with it, some of which are
 common across all kinds of limits, and others of which are particular to the
 kind of limit.
+.VE 8.5
 .TP
 \fB\-command\fR
-.
+.VS 8.5
 This option (common for all limit types) specifies (if non-empty) a Tcl script
 to be executed in the global namespace of the interpreter reading and writing
 the option when the particular limit in the limited interpreter is exceeded.
@@ -695,33 +712,37 @@ reported through the background error mechanism (see \fBBACKGROUND ERROR
 HANDLING\fR). Note that the callbacks defined by one interpreter are
 completely isolated from the callbacks defined by another, and that the order
 in which those callbacks are called is undefined.
+.VE 8.5
 .TP
 \fB\-granularity\fR
-.
+.VS 8.5
 This option (common for all limit types) specifies how frequently (out of the
 points when the Tcl interpreter is in a consistent state where limit checking
 is possible) that the limit is actually checked. This allows the tuning of how
 frequently a limit is checked, and hence how often the limit-checking overhead
 (which may be substantial in the case of time limits) is incurred.
+.VE 8.5
 .TP
 \fB\-milliseconds\fR
-.
+.VS 8.5
 This option specifies the number of milliseconds after the moment defined in
 the \fB\-seconds\fR option that the time limit will fire. It should only ever
 be specified in conjunction with the \fB\-seconds\fR option (whether it was
 set previously or is being set this invocation.)
+.VE 8.5
 .TP
 \fB\-seconds\fR
-.
+.VS 8.5
 This option specifies the number of seconds after the epoch (see \fBclock
 seconds\fR) that the time limit for the interpreter will be triggered. The
 limit will be triggered at the start of the second unless specified at a
 sub-second level using the \fB\-milliseconds\fR option. This option may be the
 empty string, which indicates that a time limit is not set for the
 interpreter.
+.VE 8.5
 .TP
 \fB\-value\fR
-.
+.VS 8.5
 This option specifies the number of commands that the interpreter may execute
 before triggering the command limit. This option may be the empty string,
 which indicates that a command limit is not set for the interpreter.
@@ -753,7 +774,7 @@ in the interpreter's global namespace without further substitutions being
 performed.
 .VE 8.5
 .SH CREDITS
-This mechanism is based on the Safe-Tcl prototype implemented
+The safe interpreter mechanism is based on the Safe-Tcl prototype implemented
 by Nathaniel Borenstein and Marshall Rose.
 .SH EXAMPLES
 Creating and using an alias for a command in the current interpreter:
@@ -789,7 +810,6 @@ set i [\fBinterp create\fR]
 }
 .CE
 .VE 8.5
-
 .SH "SEE ALSO"
 bgerror(n), load(n), safe(n), Tcl_CreateSlave(3)
 .SH KEYWORDS

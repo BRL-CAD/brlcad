@@ -192,11 +192,11 @@ TclpGetWideClicks(void)
  *-----------------------------------------------------------------------------
  */
 
-Tcl_WideInt
+double
 TclpWideClicksToNanoseconds(
     Tcl_WideInt clicks)
 {
-    Tcl_WideInt nsec;
+    double nsec;
 
     if (tclGetTimeProcPtr != NativeGetTime) {
 	nsec = clicks * 1000;
@@ -210,9 +210,9 @@ TclpWideClicksToNanoseconds(
 	    maxClicksForUInt64 = UINT64_MAX / tb.numer;
 	}
 	if ((uint64_t) clicks < maxClicksForUInt64) {
-	    nsec = (Tcl_WideInt) ((uint64_t) clicks * tb.numer / tb.denom);
+	    nsec = ((uint64_t) clicks) * tb.numer / tb.denom;
 	} else {
-	    nsec = (Tcl_WideInt) ((long double) clicks * tb.numer / tb.denom);
+	    nsec = ((long double) (uint64_t) clicks) * tb.numer / tb.denom;
 	}
 #else
 #error Wide high-resolution clicks not implemented on this platform

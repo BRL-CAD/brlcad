@@ -310,7 +310,9 @@ Tcl_GetByteArrayFromObj(
 {
     ByteArray *baPtr;
 
-    SetByteArrayFromAny(NULL, objPtr);
+    if (objPtr->typePtr != &tclByteArrayType) {
+	SetByteArrayFromAny(NULL, objPtr);
+    }
     baPtr = GET_BYTEARRAY(objPtr);
 
     if (lengthPtr != NULL) {
@@ -395,7 +397,7 @@ SetByteArrayFromAny(
     Tcl_UniChar ch;
 
     if (objPtr->typePtr != &tclByteArrayType) {
-	src = Tcl_GetStringFromObj(objPtr, &length);
+	src = TclGetStringFromObj(objPtr, &length);
 	srcEnd = src + length;
 
 	byteArrayPtr = (ByteArray *) ckalloc(BYTEARRAY_SIZE(length));
@@ -607,7 +609,7 @@ Tcl_BinaryObjCmd(
 	 * places the formatted data into the buffer.
 	 */
 
-	format = Tcl_GetString(objv[2]);
+	format = TclGetString(objv[2]);
 	arg = 3;
 	offset = 0;
 	length = 0;
@@ -693,10 +695,13 @@ Tcl_BinaryObjCmd(
 		    int listc;
 		    Tcl_Obj **listv;
 
-		    if (Tcl_ListObjGetElements(interp, objv[arg++], &listc,
+		    /* The macro evals its args more than once: avoid arg++ */		    
+		    if (TclListObjGetElements(interp, objv[arg], &listc,
 			    &listv) != TCL_OK) {
 			return TCL_ERROR;
 		    }
+		    arg++;
+		    
 		    if (count == BINARY_ALL) {
 			count = listc;
 		    } else if (count > listc) {
@@ -772,7 +777,7 @@ Tcl_BinaryObjCmd(
 	 */
 
 	arg = 3;
-	format = Tcl_GetString(objv[2]);
+	format = TclGetString(objv[2]);
 	cursor = buffer;
 	maxPos = cursor;
 	while (*format != 0) {
@@ -810,7 +815,8 @@ Tcl_BinaryObjCmd(
 	    case 'B': {
 		unsigned char *last;
 
-		str = Tcl_GetStringFromObj(objv[arg++], &length);
+		str = TclGetStringFromObj(objv[arg], &length);
+		arg++;
 		if (count == BINARY_ALL) {
 		    count = length;
 		} else if (count == BINARY_NOCOUNT) {
@@ -871,7 +877,8 @@ Tcl_BinaryObjCmd(
 		unsigned char *last;
 		int c;
 
-		str = Tcl_GetStringFromObj(objv[arg++], &length);
+		str = TclGetStringFromObj(objv[arg], &length);
+		arg++;
 		if (count == BINARY_ALL) {
 		    count = length;
 		} else if (count == BINARY_NOCOUNT) {
@@ -971,7 +978,7 @@ Tcl_BinaryObjCmd(
 		    listc = 1;
 		    count = 1;
 		} else {
-		    Tcl_ListObjGetElements(interp, objv[arg], &listc, &listv);
+		    TclListObjGetElements(interp, objv[arg], &listc, &listv);
 		    if (count == BINARY_ALL) {
 			count = listc;
 		    }
@@ -1033,7 +1040,7 @@ Tcl_BinaryObjCmd(
 	numberCachePtr = &numberCacheHash;
 	Tcl_InitHashTable(numberCachePtr, TCL_ONE_WORD_KEYS);
 	buffer = Tcl_GetByteArrayFromObj(objv[2], &length);
-	format = Tcl_GetString(objv[3]);
+	format = TclGetString(objv[3]);
 	cursor = buffer;
 	arg = 4;
 	offset = 0;
@@ -1124,7 +1131,7 @@ Tcl_BinaryObjCmd(
 		src = buffer + offset;
 		valuePtr = Tcl_NewObj();
 		Tcl_SetObjLength(valuePtr, count);
-		dest = Tcl_GetString(valuePtr);
+		dest = TclGetString(valuePtr);
 
 		if (cmd == 'b') {
 		    for (i = 0; i < count; i++) {
@@ -1180,7 +1187,7 @@ Tcl_BinaryObjCmd(
 		src = buffer + offset;
 		valuePtr = Tcl_NewObj();
 		Tcl_SetObjLength(valuePtr, count);
-		dest = Tcl_GetString(valuePtr);
+		dest = TclGetString(valuePtr);
 
 		if (cmd == 'h') {
 		    for (i = 0; i < count; i++) {
@@ -1724,7 +1731,7 @@ FormatNumber(
     case 'i':
     case 'I':
     case 'n':
-	if (Tcl_GetLongFromObj(interp, src, &value) != TCL_OK) {
+	if (TclGetLongFromObj(interp, src, &value) != TCL_OK) {
 	    return TCL_ERROR;
 	}
 	if (NeedReversing(type)) {
@@ -1746,7 +1753,7 @@ FormatNumber(
     case 's':
     case 'S':
     case 't':
-	if (Tcl_GetLongFromObj(interp, src, &value) != TCL_OK) {
+	if (TclGetLongFromObj(interp, src, &value) != TCL_OK) {
 	    return TCL_ERROR;
 	}
 	if (NeedReversing(type)) {
@@ -1762,7 +1769,7 @@ FormatNumber(
 	 * 8-bit integer values.
 	 */
     case 'c':
-	if (Tcl_GetLongFromObj(interp, src, &value) != TCL_OK) {
+	if (TclGetLongFromObj(interp, src, &value) != TCL_OK) {
 	    return TCL_ERROR;
 	}
 	*(*cursorPtr)++ = (unsigned char) value;

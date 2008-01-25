@@ -6,7 +6,7 @@ dnl	to configure the system for the local environment.
 # RCS: @(#) $Id$
 
 AC_INIT([tcl],[8.5])
-AC_PREREQ(2.52)
+AC_PREREQ(2.59)
 
 dnl This is only used when included from macosx/configure.ac
 m4_ifdef([SC_USE_CONFIG_HEADERS], [
@@ -27,7 +27,7 @@ m4_ifdef([SC_USE_CONFIG_HEADERS], [
 TCL_VERSION=8.5
 TCL_MAJOR_VERSION=8
 TCL_MINOR_VERSION=5
-TCL_PATCH_LEVEL="b1"
+TCL_PATCH_LEVEL=".0"
 VERSION=${TCL_VERSION}
 
 #------------------------------------------------------------------------
@@ -151,7 +151,7 @@ AC_CHECK_FUNCS(getcwd, , [AC_DEFINE(USEGETWD, 1, [Is getcwd Posix-compliant?])])
 # Nb: if getcwd uses popen and pwd(1) (like SunOS 4) we should really
 # define USEGETWD even if the posix getcwd exists. Add a test ?
 
-AC_REPLACE_FUNCS(opendir strtol strtoll strtoull tmpnam waitpid)
+AC_REPLACE_FUNCS(opendir strtol waitpid)
 AC_CHECK_FUNC(strerror, , [AC_DEFINE(NO_STRERROR, 1, [Do we have strerror()])])
 AC_CHECK_FUNC(getwd, , [AC_DEFINE(NO_GETWD, 1, [Do we have getwd()])])
 AC_CHECK_FUNC(wait3, , [AC_DEFINE(NO_WAIT3, 1, [Do we have wait3()])])
@@ -164,6 +164,8 @@ if test "`uname -s`" = "Darwin" && test "${TCL_THREADS}" = 1 && \
     ac_cv_func_realpath=no
 fi
 AC_CHECK_FUNC(realpath, , [AC_DEFINE(NO_REALPATH, 1, [Do we have realpath()])])
+
+SC_TCL_GETADDRINFO
 
 #-------------------------------------------------------------------- 
 #	Look for thread-safe variants of some library functions.
@@ -656,6 +658,28 @@ if test $tcl_ok = yes; then
     fi
 fi
 AC_MSG_RESULT([$tcl_ok])
+
+#--------------------------------------------------------------------
+#  Does the C stack grow upwards or downwards? Or cross-compiling?
+#--------------------------------------------------------------------
+
+AC_CACHE_CHECK([if the C stack grows upwards in memory], tcl_cv_stack_grows_up, [
+    AC_TRY_RUN([
+	int StackGrowsUp(int *parent) {
+	    int here;
+	    return (&here < parent);
+	}
+	int main (int argc, char *argv[]) {
+	    int foo;
+	    return StackGrowsUp(&foo);
+	}
+    ], tcl_cv_stack_grows_up=yes, tcl_cv_stack_grows_up=no,
+    tcl_cv_stack_grows_up=unknown)])
+if test $tcl_cv_stack_grows_up = unknown; then
+    AC_DEFINE(TCL_CROSS_COMPILE, 1, [Are we cross-compiling?])
+elif test $tcl_cv_stack_grows_up = yes; then
+    AC_DEFINE(TCL_STACK_GROWS_UP, 1, [The C stack grows upwards in memory.])
+fi
 
 #--------------------------------------------------------------------
 #	The statements below define a collection of symbols related to

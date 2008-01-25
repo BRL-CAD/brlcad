@@ -40,7 +40,7 @@ test link-2.1 {writing C variables from Tcl} {testlink} {
     testlink delete
     testlink set 43 1.21 4 - 56785678 64 250 30000 60000 0xbaadbeef 12321 32123 3.25 1231231234
     testlink create 1 1 1 1 1 1 1 1 1 1 1 1 1 1
-    set int "00721"
+    set int "0o0721"
     set real -10.5
     set bool true
     set string abcdef
@@ -55,7 +55,7 @@ test link-2.1 {writing C variables from Tcl} {testlink} {
     set float 1.0987654321
     set uwide 357357357357
     concat [testlink get] | $int $real $bool $string $wide $char $uchar $short $ushort $uint $long $ulong $float $uwide
-} {465 -10.5 1 abcdef 135135 79 161 8000 40000 -1073628482 34543 567890 1.0987653732299805 357357357357 | 00721 -10.5 true abcdef 135135 79 161 8000 40000 0xc001babe 34543 567890 1.0987654321 357357357357}
+} {465 -10.5 1 abcdef 135135 79 161 8000 40000 -1073628482 34543 567890 1.0987653732299805 357357357357 | 0o0721 -10.5 true abcdef 135135 79 161 8000 40000 0xc001babe 34543 567890 1.0987654321 357357357357}
 test link-2.2 {writing bad values into variables} {testlink} {
     testlink delete
     testlink set 43 1.23 4 - 56785678 64 250 30000 60000 0xbeefbabe 12321 32123 3.25 1231231234

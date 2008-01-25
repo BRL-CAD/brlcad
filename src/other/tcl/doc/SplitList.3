@@ -153,7 +153,7 @@ include spaces between adjacent list elements.
 \fBTcl_ConvertElement\fR uses one of two different approaches to
 handle the special characters in \fIsrc\fR.  Wherever possible, it
 handles special characters by surrounding the string with braces.
-This produces clean-looking output, but can't be used in some situations,
+This produces clean-looking output, but cannot be used in some situations,
 such as when \fIsrc\fR contains unmatched braces.
 In these situations, \fBTcl_ConvertElement\fR handles special
 characters by generating backslash sequences for them.
@@ -169,7 +169,9 @@ the command not to be parsed correctly.
 .VS 8.5
 By default, \fBTcl_ConvertElement\fR will use quoting in its output
 to be sure the first character of an element is not the hash
-character (``#'').  This is to be sure the first element of any list
+character
+.PQ # .
+This is to be sure the first element of any list
 passed to \fBeval\fR is not mis-parsed as the beginning of a comment.
 When a list element is not the first element of a list, this quoting
 is not necessary.  When the caller can be sure that the element is

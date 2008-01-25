@@ -8,10 +8,11 @@
 #
 # Copyright (c) 1998-1999 by Scriptics Corporation.
 # Copyright (c) 2001 by Kevin B. Kenny.  All rights reserved.
+# Copyright (c) 2007 Daniel A. Steffen <das@users.sourceforge.net>
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-# 
+#
 # RCS: @(#) $Id$
 
 library tcl
@@ -39,7 +40,7 @@ declare 3 generic {
     void TclAllocateFreeObjects(void)
 }
 # Replaced by TclpChdir in 8.1:
-#  declare 4 generic {   
+#  declare 4 generic {
 #      int TclChdir(Tcl_Interp *interp, char *dirName)
 #  }
 declare 5 {unix win} {
@@ -65,7 +66,7 @@ declare 9 {unix win} {
 	    TclFile *errFilePtr)
 }
 declare 10 generic {
-    int TclCreateProc(Tcl_Interp *interp, Namespace *nsPtr, 
+    int TclCreateProc(Tcl_Interp *interp, Namespace *nsPtr,
 	    CONST char *procName,
 	    Tcl_Obj *argsPtr, Tcl_Obj *bodyPtr, Proc **procPtrPtr)
 }
@@ -223,7 +224,8 @@ declare 51 generic {
 }
 # Removed in Tcl 8.5a2
 #declare 52 generic {
-#    int TclInvoke(Tcl_Interp *interp, int argc, CONST84 char **argv, int flags)
+#    int TclInvoke(Tcl_Interp *interp, int argc, CONST84 char **argv,
+#	    int flags)
 #}
 declare 53 generic {
     int TclInvokeObjectCommand(ClientData clientData, Tcl_Interp *interp,
@@ -318,7 +320,6 @@ declare 76 generic {
 declare 77 generic {
     void TclpGetTime(Tcl_Time *time)
 }
-
 declare 78 generic {
     int TclpGetTimeZone(unsigned long time)
 }
@@ -517,7 +518,7 @@ declare 128 generic {
 declare 129 generic {
     int Tcl_PushCallFrame(Tcl_Interp *interp, Tcl_CallFrame *framePtr,
 	    Tcl_Namespace *nsPtr, int isProcCallFrame)
-} 
+}
 declare 130 generic {
     int Tcl_RemoveInterpResolvers(Tcl_Interp *interp, CONST char *name)
 }
@@ -576,19 +577,15 @@ declare 144 generic {
 declare 145 generic {
     struct AuxDataType *TclGetAuxDataType(char *typeName)
 }
-
 declare 146 generic {
     TclHandle TclHandleCreate(VOID *ptr)
 }
-
 declare 147 generic {
     void TclHandleFree(TclHandle handle)
 }
-
 declare 148 generic {
     TclHandle TclHandlePreserve(TclHandle handle)
 }
-
 declare 149 generic {
     void TclHandleRelease(TclHandle handle)
 }
@@ -602,7 +599,6 @@ declare 151 generic {
     void TclRegExpRangeUniChar(Tcl_RegExp re, int index, int *startPtr,
 	    int *endPtr)
 }
-
 declare 152 generic {
     void TclSetLibraryPath(Tcl_Obj *pathPtr)
 }
@@ -635,7 +631,8 @@ declare 159 generic {
 }
 #declare 160 generic {
 #    int TclpMatchFilesTypes(Tcl_Interp *interp, char *separators,
-#	    Tcl_DString *dirPtr, char *pattern, char *tail, GlobTypeData *types)
+#	    Tcl_DString *dirPtr, char *pattern, char *tail,
+#	    GlobTypeData *types)
 #}
 
 # new in 8.3.2/8.4a2
@@ -671,7 +668,7 @@ declare 165 generic {
 
 # New function due to TIP #33
 declare 166 generic {
-    int TclListObjSetElement(Tcl_Interp *interp, Tcl_Obj *listPtr, 
+    int TclListObjSetElement(Tcl_Interp *interp, Tcl_Obj *listPtr,
 	    int index, Tcl_Obj *valuePtr)
 }
 
@@ -696,7 +693,6 @@ declare 171 generic {
             int numChars, Command *cmdPtr, int result, int traceFlags,
 	    int objc, Tcl_Obj *CONST objv[])
 }
-
 declare 172 generic {
     int TclInThreadExit(void)
 }
@@ -705,7 +701,7 @@ declare 172 generic {
 
 declare 173 generic {
     int TclUniCharMatch(CONST Tcl_UniChar *string, int strLen,
-	    CONST Tcl_UniChar *pattern, int ptnLen, int nocase)
+	    CONST Tcl_UniChar *pattern, int ptnLen, int flags)
 }
 
 # added for 8.4.3
@@ -728,7 +724,6 @@ declare 177 generic {
     void TclVarErrMsg(Tcl_Interp *interp, CONST char *part1, CONST char *part2,
 	    CONST char *operation, CONST char *reason)
 }
-
 declare 178 generic {
     void Tcl_SetStartupScript(Tcl_Obj *pathPtr, CONST char* encodingName)
 }
@@ -804,10 +799,9 @@ declare 183 generic {
 # Added in tcl8.5a5 for compiler/executor experimentation.
 #
 declare 197 generic {
-    int TclCompEvalObj (Tcl_Interp *interp, Tcl_Obj *objPtr,
+    int TclCompEvalObj(Tcl_Interp *interp, Tcl_Obj *objPtr,
 		        CONST CmdFrame* invoker, int word)
 }
-
 declare 198 generic {
     int TclObjGetFrame(Tcl_Interp *interp, Tcl_Obj *objPtr,
 	    CallFrame **framePtrPtr)
@@ -819,33 +813,33 @@ declare 198 generic {
 
 # 200-208 exported for use by the test suite [Bug 1054748]
 declare 200 generic {
-    int TclpObjRemoveDirectory (Tcl_Obj *pathPtr, int recursive,
+    int TclpObjRemoveDirectory(Tcl_Obj *pathPtr, int recursive,
 	Tcl_Obj **errorPtr)
 }
 declare 201 generic {
-    int TclpObjCopyDirectory (Tcl_Obj *srcPathPtr, Tcl_Obj *destPathPtr,
+    int TclpObjCopyDirectory(Tcl_Obj *srcPathPtr, Tcl_Obj *destPathPtr,
 	Tcl_Obj **errorPtr)
 }
 declare 202 generic {
-    int TclpObjCreateDirectory (Tcl_Obj *pathPtr)
+    int TclpObjCreateDirectory(Tcl_Obj *pathPtr)
 }
 declare 203 generic {
-    int TclpObjDeleteFile (Tcl_Obj *pathPtr)
+    int TclpObjDeleteFile(Tcl_Obj *pathPtr)
 }
 declare 204 generic {
-    int TclpObjCopyFile (Tcl_Obj *srcPathPtr, Tcl_Obj *destPathPtr)
+    int TclpObjCopyFile(Tcl_Obj *srcPathPtr, Tcl_Obj *destPathPtr)
 }
 declare 205 generic {
-    int TclpObjRenameFile (Tcl_Obj *srcPathPtr, Tcl_Obj *destPathPtr)
+    int TclpObjRenameFile(Tcl_Obj *srcPathPtr, Tcl_Obj *destPathPtr)
 }
 declare 206 generic {
-    int TclpObjStat (Tcl_Obj *pathPtr, Tcl_StatBuf *buf)
+    int TclpObjStat(Tcl_Obj *pathPtr, Tcl_StatBuf *buf)
 }
 declare 207 generic {
-    int TclpObjAccess (Tcl_Obj *pathPtr, int mode)
+    int TclpObjAccess(Tcl_Obj *pathPtr, int mode)
 }
 declare 208 generic {
-    Tcl_Channel TclpOpenFileChannel (Tcl_Interp *interp,
+    Tcl_Channel TclpOpenFileChannel(Tcl_Interp *interp,
 	    Tcl_Obj *pathPtr, int mode, int permissions)
 }
 # Made public by TIP 258
@@ -891,18 +885,16 @@ declare 225 generic {
     Tcl_Obj *TclTraceDictPath(Tcl_Interp *interp, Tcl_Obj *rootPtr,
 	    int keyc, Tcl_Obj *CONST keyv[], int flags)
 }
-
 declare 226 generic {
     int TclObjBeingDeleted(Tcl_Obj *objPtr)
 }
-
 declare 227 generic {
     void TclSetNsPath(Namespace *nsPtr, int pathLength,
             Tcl_Namespace *pathAry[])
 }
 declare 228 generic {
     int TclObjInterpProcCore(register Tcl_Interp *interp, Tcl_Obj *procNameObj,
-             int skip, ProcErrorProc errorProc) 
+             int skip, ProcErrorProc errorProc)
 }
 declare 229 generic {
     int	TclPtrMakeUpvar(Tcl_Interp *interp, Var *otherP1Ptr,
@@ -913,7 +905,6 @@ declare 230 generic {
 	    CONST char *part2, int flags, CONST char *msg,
 	    CONST int createPart1, CONST int createPart2, Var **arrayPtrPtr)
 }
-
 declare 231 generic {
     int	TclGetNamespaceFromObj(Tcl_Interp *interp, Tcl_Obj *objPtr,
 	    Tcl_Namespace **nsPtrPtr)
@@ -930,7 +921,7 @@ declare 233 generic {
 
 # Exports for VarReform compat: Itcl, XOTcl like to peek into our varTables :(
 declare 234 generic {
-    Var *TclVarHashCreateVar(TclVarHashTable *tablePtr, const char *key, 
+    Var *TclVarHashCreateVar(TclVarHashTable *tablePtr, const char *key,
              int *newPtr)
 }
 declare 235 generic {
@@ -942,7 +933,6 @@ declare 236 generic {
     void TclBackgroundException(Tcl_Interp *interp, int code)
 }
 
-
 ##############################################################################
 
 # Define the platform specific internal Tcl interface. These functions are
@@ -950,8 +940,8 @@ declare 236 generic {
 
 interface tclIntPlat
 
-############################
-# Windows specific internals
+################################
+# Windows specific functions
 
 declare 0 win {
     void TclWinConvertError(DWORD errCode)
@@ -1063,13 +1053,12 @@ declare 27 win {
 declare 28 win {
     void TclWinResetInterfaces(void)
 }
-
 declare 29 win {
     int TclWinCPUID( unsigned int index, unsigned int *regs )
 }
 
-#########################
-# Unix specific internals
+################################
+# Unix specific functions
 
 # Pipe channel functions
 
@@ -1131,25 +1120,25 @@ declare 13 unix {
 # Added in 8.5:
 
 declare 14 unix {
-    int TclUnixCopyFile (CONST char *src, CONST char *dst,
+    int TclUnixCopyFile(CONST char *src, CONST char *dst,
 	    CONST Tcl_StatBuf *statBufPtr, int dontCopyAtts)
 }
+
+################################
+# Mac OS X specific functions
 
 declare 15 macosx {
     int TclMacOSXGetFileAttribute(Tcl_Interp *interp, int objIndex,
 	    Tcl_Obj *fileName, Tcl_Obj **attributePtrPtr)
 }
-
 declare 16 macosx {
     int TclMacOSXSetFileAttribute(Tcl_Interp *interp, int objIndex,
 	    Tcl_Obj *fileName, Tcl_Obj *attributePtr)
 }
-
 declare 17 macosx {
     int TclMacOSXCopyFileAttributes(CONST char *src, CONST char *dst,
 	    CONST Tcl_StatBuf *statBufPtr)
 }
-
 declare 18 macosx {
     int TclMacOSXMatchType(Tcl_Interp *interp, CONST char *pathName,
 	    CONST char *fileName, Tcl_StatBuf *statBufPtr,

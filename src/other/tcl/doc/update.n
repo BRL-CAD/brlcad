@@ -19,7 +19,8 @@ update \- Process pending events and idle callbacks
 
 .SH DESCRIPTION
 .PP
-This command is used to bring the application ``up to date''
+This command is used to bring the application
+.QW "up to date"
 by entering the event loop repeatedly until all pending events
 (including idle callbacks) have been processed.
 .PP

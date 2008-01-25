@@ -329,6 +329,9 @@ DoText(
 		p++;
 	    } else if (*p == '&') {
 		p++;
+	    } else if (*p == '0') {
+		PRINT(("text { }\n"));
+		p++;
 	    } else if (*p == '(') {
 		if ((p[1] == 0) || (p[2] == 0)) {
 		    fprintf(stderr, "Bad \\( sequence on line %d.\n",
@@ -338,6 +341,13 @@ DoText(
 		    PRINT(("char {\\(%c%c}\n", p[1], p[2]));
 		    p += 3;
 		}
+	    } else if (*p == 'N' && *(p+1) == '\'') {
+		int ch;
+
+		p += 2;
+		sscanf(p,"%d",&ch);
+		PRINT(("text \\u%04x", ch));
+		while(*p&&*p!='\'') p++;
 	    } else if (*p != 0) {
 		PRINT(("char {\\%c}\n", *p));
 		p++;
@@ -377,7 +387,23 @@ QuoteText(
     }
     for ( ; count > 0; string++, count--) {
 	switch (*string) {
-	case '$': case '[': case '{': case ' ': case ';': case '\\':
+	case '\\':
+	    if (*(string+1) == 'N' && *(string+2) == '\'') {
+		int ch;
+
+		string += 3;
+		count -= 3;
+		sscanf(string,"%d",&ch);
+		PRINT(("\\u%04x", ch));
+		while(count>0&&*string!='\'') {string++;count--;}
+		continue;
+	    } else if (*(string+1) == '0') {
+		PRINT(("\\ "));
+		string++;
+		count--;
+		continue;
+	    }
+	case '$': case '[': case '{': case ' ': case ';':
 	case '"': case '\t':
 	    PRINTC('\\');
 	default:

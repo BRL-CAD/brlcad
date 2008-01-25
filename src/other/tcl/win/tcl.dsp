@@ -208,10 +208,6 @@ SOURCE=..\compat\tclErrno.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\compat\tmpnam.c
-# End Source File
-# Begin Source File
-
 SOURCE=..\compat\unistd.h
 # End Source File
 # Begin Source File

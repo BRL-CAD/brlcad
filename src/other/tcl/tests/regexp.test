@@ -655,6 +655,11 @@ test regexp-21.13 {multiple matches handle newlines} {
 } {{0 -1} {2 1} {4 3}}
 
 
+test regexp-22.1 {Bug 1810038} {
+    regexp ($|^X)* {}
+} 1
+
+
 # cleanup
 ::tcltest::cleanupTests
 return

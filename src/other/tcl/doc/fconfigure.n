@@ -120,6 +120,9 @@ channel, a two-element list will always be returned.  The default value
 for \fB\-eofchar\fR is the empty string in all cases except for files
 under Windows.  In that case the \fB\-eofchar\fR is Control-z (\ex1a) for
 reading and the empty string for writing.
+The acceptable range for \fB\-eofchar\fR values is \ex01 - \ex7f;
+attempting to set \fB\-eofchar\fR to a value outside of this range will
+generate an error.
 .TP
 \fB\-translation\fR \fImode\fR
 .TP

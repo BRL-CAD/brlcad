@@ -23,14 +23,16 @@ lappend \- Append list elements onto a variable
 This command treats the variable given by \fIvarName\fR as a list
 and appends each of the \fIvalue\fR arguments to that list as a separate
 element, with spaces between elements.
-If \fIvarName\fR doesn't exist, it is created as a list with elements
+If \fIvarName\fR does not exist, it is created as a list with elements
 given by the \fIvalue\fR arguments.
 \fBLappend\fR is similar to \fBappend\fR except that the \fIvalue\fRs
 are appended as list elements rather than raw text.
 This command provides a relatively efficient way to build up
-large lists.  For example, ``\fBlappend a $b\fR'' is much
-more efficient than ``\fBset a [concat $a [list $b]]\fR'' when
-\fB$a\fR is long.
+large lists.  For example,
+.QW "\fBlappend a $b\fR"
+is much more efficient than
+.QW "\fBset a [concat $a [list $b]]\fR"
+when \fB$a\fR is long.
 .SH EXAMPLE
 Using \fBlappend\fR to build up a list of numbers.
 .CS

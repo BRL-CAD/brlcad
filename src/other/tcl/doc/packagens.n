@@ -9,7 +9,7 @@
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME
-pkg::create \- Construct an appropriate `package ifneeded' command for a given package specification
+pkg::create \- Construct an appropriate 'package ifneeded' command for a given package specification
 .SH SYNOPSIS
 \fB::pkg::create \fI\-name packageName\fR \fI\-version packageVersion\fR ?\fI\-load filespec\fR? ... ?\fI\-source filespec\fR? ...
 .BE
@@ -46,9 +46,7 @@ specifies a Tcl library that must be loaded with the
 specified.
 .PP
 At least one \fB\-load\fR or \fB\-source\fR parameter must be given.
-
 .SH "SEE ALSO"
 package(n)
-
 .SH KEYWORDS
 auto-load, index, package, version

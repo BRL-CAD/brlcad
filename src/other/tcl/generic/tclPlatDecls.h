@@ -47,7 +47,7 @@
  * Exported function declarations:
  */
 
-#ifdef __WIN32__
+#ifdef __WIN32__ /* WIN */
 #ifndef Tcl_WinUtfToTChar_TCL_DECLARED
 #define Tcl_WinUtfToTChar_TCL_DECLARED
 /* 0 */
@@ -60,8 +60,8 @@ EXTERN TCHAR *		Tcl_WinUtfToTChar (CONST char * str, int len,
 EXTERN char *		Tcl_WinTCharToUtf (CONST TCHAR * str, int len, 
 				Tcl_DString * dsPtr);
 #endif
-#endif /* __WIN32__ */
-#ifdef MAC_OSX_TCL
+#endif /* WIN */
+#ifdef MAC_OSX_TCL /* MACOSX */
 #ifndef Tcl_MacOSXOpenBundleResources_TCL_DECLARED
 #define Tcl_MacOSXOpenBundleResources_TCL_DECLARED
 /* 0 */
@@ -78,20 +78,20 @@ EXTERN int		Tcl_MacOSXOpenVersionedBundleResources (
 				int hasResourceFile, int maxPathLen, 
 				char * libraryPath);
 #endif
-#endif /* MAC_OSX_TCL */
+#endif /* MACOSX */
 
 typedef struct TclPlatStubs {
     int magic;
     struct TclPlatStubHooks *hooks;
 
-#ifdef __WIN32__
+#ifdef __WIN32__ /* WIN */
     TCHAR * (*tcl_WinUtfToTChar) (CONST char * str, int len, Tcl_DString * dsPtr); /* 0 */
     char * (*tcl_WinTCharToUtf) (CONST TCHAR * str, int len, Tcl_DString * dsPtr); /* 1 */
-#endif /* __WIN32__ */
-#ifdef MAC_OSX_TCL
+#endif /* WIN */
+#ifdef MAC_OSX_TCL /* MACOSX */
     int (*tcl_MacOSXOpenBundleResources) (Tcl_Interp * interp, CONST char * bundleName, int hasResourceFile, int maxPathLen, char * libraryPath); /* 0 */
     int (*tcl_MacOSXOpenVersionedBundleResources) (Tcl_Interp * interp, CONST char * bundleName, CONST char * bundleVersion, int hasResourceFile, int maxPathLen, char * libraryPath); /* 1 */
-#endif /* MAC_OSX_TCL */
+#endif /* MACOSX */
 } TclPlatStubs;
 
 #ifdef __cplusplus
@@ -108,7 +108,7 @@ extern TclPlatStubs *tclPlatStubsPtr;
  * Inline function declarations:
  */
 
-#ifdef __WIN32__
+#ifdef __WIN32__ /* WIN */
 #ifndef Tcl_WinUtfToTChar
 #define Tcl_WinUtfToTChar \
 	(tclPlatStubsPtr->tcl_WinUtfToTChar) /* 0 */
@@ -117,8 +117,8 @@ extern TclPlatStubs *tclPlatStubsPtr;
 #define Tcl_WinTCharToUtf \
 	(tclPlatStubsPtr->tcl_WinTCharToUtf) /* 1 */
 #endif
-#endif /* __WIN32__ */
-#ifdef MAC_OSX_TCL
+#endif /* WIN */
+#ifdef MAC_OSX_TCL /* MACOSX */
 #ifndef Tcl_MacOSXOpenBundleResources
 #define Tcl_MacOSXOpenBundleResources \
 	(tclPlatStubsPtr->tcl_MacOSXOpenBundleResources) /* 0 */
@@ -127,7 +127,7 @@ extern TclPlatStubs *tclPlatStubsPtr;
 #define Tcl_MacOSXOpenVersionedBundleResources \
 	(tclPlatStubsPtr->tcl_MacOSXOpenVersionedBundleResources) /* 1 */
 #endif
-#endif /* MAC_OSX_TCL */
+#endif /* MACOSX */
 
 #endif /* defined(USE_TCL_STUBS) && !defined(USE_TCL_STUB_PROCS) */
 

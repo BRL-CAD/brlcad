@@ -40,16 +40,6 @@
 #define NOBJHIGH	1200
 
 /*
- * Alignment for allocated memory.
- */
-
-#if defined(__APPLE__)
-#define ALLOCALIGN	16
-#else
-#define ALLOCALIGN	8
-#endif
-
-/*
  * The following union stores accounting information for each block including
  * two small magic numbers and a bucket number when in use or a next pointer
  * when free. The original requested size (not including the Block overhead)
@@ -69,7 +59,7 @@ typedef union Block {
 	} u;
 	size_t reqSize;			/* Requested allocation size. */
     } b;
-    unsigned char padding[ALLOCALIGN];
+    unsigned char padding[TCL_ALLOCALIGN];
 } Block;
 #define nextBlock	b.u.next
 #define sourceBucket	b.u.s.bucket
@@ -83,7 +73,7 @@ typedef union Block {
  * of buckets in the bucket cache.
  */
 
-#define MINALLOC	((sizeof(Block) + 8 + (ALLOCALIGN-1)) & ~(ALLOCALIGN-1))
+#define MINALLOC	((sizeof(Block) + 8 + (TCL_ALLOCALIGN-1)) & ~(TCL_ALLOCALIGN-1))
 #define NBUCKETS	(11 - (MINALLOC >> 5))
 #define MAXALLOC	(MINALLOC << (NBUCKETS - 1))
 
@@ -426,7 +416,7 @@ TclpRealloc(
 {
     Cache *cachePtr = TclpGetAllocCache();
     Block *blockPtr;
-    void *new;
+    void *newPtr;
     size_t size, min;
     int bucket;
 
@@ -475,15 +465,15 @@ TclpRealloc(
      * Finally, perform an expensive malloc/copy/free.
      */
 
-    new = TclpAlloc(reqSize);
-    if (new != NULL) {
+    newPtr = TclpAlloc(reqSize);
+    if (newPtr != NULL) {
 	if (reqSize > blockPtr->blockReqSize) {
 	    reqSize = blockPtr->blockReqSize;
 	}
-	memcpy(new, ptr, reqSize);
+	memcpy(newPtr, ptr, reqSize);
 	TclpFree(ptr);
     }
-    return new;
+    return newPtr;
 }
 
 /*

@@ -194,7 +194,7 @@ test incr-1.22 {TclCompileIncrCmd: increment given, large int} {
 } 200005
 test incr-1.23 {TclCompileIncrCmd: increment given, formatted int != int} {
     set i 25
-    incr i 000012345     ;# an octal literal
+    incr i 0o00012345     ;# an octal literal
 } 5374
 test incr-1.24 {TclCompileIncrCmd: increment given, formatted int != int} {
     set i 25
@@ -445,7 +445,7 @@ test incr-2.22 {incr command (not compiled): increment given, large int} {
 test incr-2.23 {incr command (not compiled): increment given, formatted int != int} {
     set z incr
     set i 25
-    $z i 000012345     ;# an octal literal
+    $z i 0o00012345     ;# an octal literal
 } 5374
 test incr-2.24 {incr command (not compiled): increment given, formatted int != int} {
     set z incr

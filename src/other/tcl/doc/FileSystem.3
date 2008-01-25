@@ -252,27 +252,38 @@ rather than calling system level functions like \fBaccess\fR and
 extension which calls them should work unmodified on Unix and
 Windows.  Second, the Windows implementation of some of these functions
 fixes some bugs in the system level calls.  Third, these function calls
-deal with any 'Utf to platform-native' path conversions which may be
+deal with any
+.QW "Utf to platform-native"
+path conversions which may be
 required (and may cache the results of such conversions for greater
 efficiency on subsequent calls).  Fourth, and perhaps most importantly,
-all of these functions are 'virtual filesystem aware'.  Any virtual
-filesystem (VFS for short) which has been registered (through
+all of these functions are
+.QW "virtual filesystem aware" .
+Any virtual filesystem (VFS for short) which has been registered (through
 \fBTcl_FSRegister\fR) may reroute file access to alternative
 media or access methods.  This means that all of these functions (and
 therefore the corresponding \fBfile\fR, \fBglob\fR, \fBpwd\fR, \fBcd\fR,
-\fBopen\fR, etc.  Tcl commands) may be operate on 'files' which are not
+\fBopen\fR, etc.  Tcl commands) may be operate on
+.QW files
+which are not
 native files in the native filesystem.  This also means that any Tcl
 extension which accesses the filesystem (FS for short) through this API is
-automatically 'virtual filesystem aware'.  Of course, if an extension
+automatically
+.QW "virtual filesystem aware" .
+Of course, if an extension
 accesses the native filesystem directly (through platform-specific
 APIs, for example), then Tcl cannot intercept such calls.
 .PP
-If appropriate VFSes have been registered, the 'files' may, to give two
+If appropriate VFSes have been registered, the
+.QW files
+may, to give two
 examples, be remote (e.g. situated on a remote ftp server) or archived
 (e.g. lying inside a .zip archive).  Such registered filesystems provide
 a lookup table of functions to implement all or some of the functionality
 listed here.  Finally, the \fBTcl_FSStat\fR and \fBTcl_FSLstat\fR calls
-abstract away from what the 'struct stat' buffer is actually
+abstract away from what the
+.QW "struct stat"
+buffer is actually
 declared to be, allowing the same code to be used both on systems with
 and systems without support for files larger than 2GB in size.
 .PP
@@ -304,41 +315,56 @@ function with such an object will result in no action being taken.
 \fBTcl_FSCopyFile\fR attempts to copy the file given by \fIsrcPathPtr\fR to the
 path name given by \fIdestPathPtr\fR.  If the two paths given lie in the same
 filesystem (according to \fBTcl_FSGetFileSystemForPath\fR) then that
-filesystem's 'copy file' function is called (if it is non-NULL).
+filesystem's
+.QW "copy file"
+function is called (if it is non-NULL).
 Otherwise the function returns -1 and sets the \fBerrno\fR global C
-variable to the 'EXDEV'
-POSIX error code (which signifies a 'cross-domain link').
+variable to the
+.QW EXDEV
+POSIX error code (which signifies a
+.QW "cross-domain link" ).
 .PP
 \fBTcl_FSCopyDirectory\fR attempts to copy the directory given by \fIsrcPathPtr\fR to the
 path name given by \fIdestPathPtr\fR.  If the two paths given lie in the same
 filesystem (according to \fBTcl_FSGetFileSystemForPath\fR) then that
-filesystem's 'copy file' function is called (if it is non-NULL).
+filesystem's
+.QW "copy file"
+function is called (if it is non-NULL).
 Otherwise the function returns -1 and sets the \fBerrno\fR global C
-variable to the 'EXDEV'
-POSIX error code (which signifies a 'cross-domain link').
+variable to the
+.QW EXDEV
+POSIX error code (which signifies a
+.QW "cross-domain link" ).
 .PP
 \fBTcl_FSCreateDirectory\fR attempts to create the directory given by
-\fIpathPtr\fR by calling the owning filesystem's 'create directory'
+\fIpathPtr\fR by calling the owning filesystem's
+.QW "create directory"
 function.
 .PP
 \fBTcl_FSDeleteFile\fR attempts to delete the file given by
-\fIpathPtr\fR by calling the owning filesystem's 'delete file'
+\fIpathPtr\fR by calling the owning filesystem's
+.QW "delete file"
 function.
 .PP
 \fBTcl_FSRemoveDirectory\fR attempts to remove the directory given by
-\fIpathPtr\fR by calling the owning filesystem's 'remove directory'
+\fIpathPtr\fR by calling the owning filesystem's
+.QW "remove directory"
 function.
 .PP
 \fBTcl_FSRenameFile\fR attempts to rename the file or directory given by
 \fIsrcPathPtr\fR to the path name given by \fIdestPathPtr\fR.  If the two paths
 given lie in the same filesystem (according to
-\fBTcl_FSGetFileSystemForPath\fR) then that filesystem's 'rename file'
+\fBTcl_FSGetFileSystemForPath\fR) then that filesystem's
+.QW "rename file"
 function is called (if it is non-NULL).  Otherwise the function returns -1
-and sets the \fBerrno\fR global C variable to the 'EXDEV' POSIX error
-code (which signifies a 'cross-domain link').
+and sets the \fBerrno\fR global C variable to the
+.QW EXDEV
+POSIX error code (which signifies a
+.QW "cross-domain link" ).
 .PP
-\fBTcl_FSListVolumes\fR calls each filesystem which has a non-NULL 'list
-volumes' function and asks them to return their list of root volumes.  It
+\fBTcl_FSListVolumes\fR calls each filesystem which has a non-NULL
+.QW "list volumes"
+function and asks them to return their list of root volumes.  It
 accumulates the return values in a list which is returned to the
 caller (with a reference count of 0).
 .PP
@@ -349,12 +375,19 @@ its contents as a Tcl script.  It returns the same information as
 \fBTcl_EvalObjEx\fR.
 If \fIencodingName\fR is NULL, the system encoding is used for
 reading the file contents.
-If the file couldn't be read then a Tcl error is returned to describe
-why the file couldn't be read.
-The eofchar for files is '\\32' (^Z) for all platforms.
-If you require a ``^Z'' in code for string comparison, you can use
-``\\032'' or ``\\u001a'', which will be safely substituted by the Tcl
-interpreter into ``^Z''.
+If the file could not be read then a Tcl error is returned to describe
+why the file could not be read.
+The eofchar for files is
+.QW \e32
+(^Z) for all platforms.
+If you require a
+.QW ^Z
+in code for string comparison, you can use
+.QW \e032
+or
+.QW \eu001a ,
+which will be safely substituted by the Tcl interpreter into
+.QW ^Z .
 \fBTcl_FSEvalFile\fR is a simpler version of
 \fBTcl_FSEvalFileEx\fR that always uses the system encoding
 when reading the file.
@@ -391,7 +424,9 @@ that the path needs to be checked only for the correct type.
 extends it to support the creation of links.  The appropriate function
 for the filesystem to which \fIlinkNamePtr\fR belongs will be called.
 .PP
-If the \fItoPtr\fR is NULL, a 'read link' action is performed.  The result
+If the \fItoPtr\fR is NULL, a
+.QW "read link"
+action is performed.  The result
 is a Tcl_Obj specifying the contents of the symbolic link given by
 \fIlinkNamePtr\fR, or NULL if the link could not be read.  The result is owned
 by the caller, which should call Tcl_DecrRefCount when the result is no
@@ -421,7 +456,11 @@ given.
 .PP
 This returns 0 on success and -1 on error (as per the \fButime\fR
 documentation).  If successful, the function
-will update the 'atime' and 'mtime' values of the file given.
+will update the
+.QW atime
+and
+.QW mtime
+values of the file given.
 .PP
 \fBTcl_FSFileAttrsGet\fR implements read access for the hookable \fBfile
 attributes\fR subcommand.  The appropriate function for the filesystem to
@@ -584,8 +623,11 @@ of zero, they will be freed when this function returns.
 \fBTcl_FSConvertToPathType\fR tries to convert the given Tcl_Obj to a valid
 Tcl path type, taking account of the fact that the cwd may have changed
 even if this object is already supposedly of the correct type.
-The filename may begin with "~" (to indicate current user's home
-directory) or "~<user>" (to indicate any user's home directory).
+The filename may begin with
+.QW ~
+(to indicate current user's home directory) or
+.QW ~<user>
+(to indicate any user's home directory).
 .PP
 If the conversion succeeds (i.e. the object is a valid path in one of
 the current filesystems), then \fBTCL_OK\fR is returned.  Otherwise
@@ -607,8 +649,13 @@ from the given Tcl_Obj.
 .PP
 If the translation succeeds (i.e. the object is a valid path), then it is
 returned.  Otherwise NULL will be returned, and an error message may be
-left in the interpreter.  A "translated" path is one which contains no
-"~" or "~user" sequences (these have been expanded to their current
+left in the interpreter.  A
+.QW translated
+path is one which contains no
+.QW ~
+or
+.QW ~user
+sequences (these have been expanded to their current
 representation in the filesystem).  The object returned is owned by the
 caller, which must store it or call Tcl_DecrRefCount to ensure memory is
 freed.  This function is of little practical use, and
@@ -628,8 +675,10 @@ in native form (from, e.g. \fBreadlink\fR or a native dialog), and that path
 is to be used at the Tcl level, then calling this function is an
 efficient way of creating the appropriate path object type.
 .PP
-The resulting object is a pure 'path' object, which will only receive
-a Utf-8 string representation if that is required by some Tcl code.
+The resulting object is a pure
+.QW path
+object, which will only receive
+a UTF-8 string representation if that is required by some Tcl code.
 .PP
 \fBTcl_FSGetNativePath\fR is for use by the Win/Unix native
 filesystems, so that they can easily retrieve the native (char* or
@@ -656,8 +705,13 @@ passed in (unless that is a relative path, in which case the native
 representation may be freed any time the cwd changes).
 .PP
 \fBTcl_FSFileSystemInfo\fR returns a list of two elements.  The first
-element is the name of the filesystem (e.g. "native" or "vfs" or "zip"
-or "prowrap", perhaps), and the second is the particular type of the
+element is the name of the filesystem (e.g.
+.QW native ,
+.QW vfs ,
+.QW zip ,
+or
+.QW prowrap ,
+perhaps), and the second is the particular type of the
 given path within that filesystem (which is filesystem dependent).  The
 second element may be empty if the filesystem does not provide a
 further categorization of files.
@@ -781,8 +835,9 @@ designed to support efficient, cached conversion of these UTF\-8 paths
 to other native representations.
 .SS "EXAMPLE FILESYSTEM DEFINITION"
 .PP
-Here is the filesystem lookup table used by the "vfs" extension which
-allows filesystem actions to be implemented in Tcl.
+Here is the filesystem lookup table used by the
+.QW vfs
+extension which allows filesystem actions to be implemented in Tcl.
 .CS
 static Tcl_Filesystem vfsFilesystem = {
     "tclvfs",
@@ -845,7 +900,10 @@ representations.
 .PP
 The \fItypeName\fR field contains a null-terminated string that
 identifies the type of the filesystem implemented, e.g.
-``native'' or ``zip'' or ```vfs''.
+.QW native ,
+.QW zip
+or
+.QW vfs .
 .SS "STRUCTURE LENGTH"
 .PP
 The \fIstructureLength\fR field is generally implemented as
@@ -923,12 +981,17 @@ typedef ClientData Tcl_FSCreateInternalRepProc(
 .PP
 Function to normalize a path.  Should be implemented for all
 filesystems which can have multiple string representations for the same
-path object.  In Tcl, every 'path' must have a single unique 'normalized'
+path object.  In Tcl, every
+.QW path
+must have a single unique
+.QW normalized
 string representation.  Depending on the filesystem,
 there may be more than one unnormalized string representation which
 refers to that path (e.g. a relative path, a path with different
 character case if the filesystem is case insensitive, a path contain a
-reference to a home directory such as '~', a path containing symbolic
+reference to a home directory such as
+.QW ~ ,
+a path containing symbolic
 links, etc).  If the very last component in the path is a symbolic
 link, it should not be converted into the object it points to (but
 its case or other aspects should be made unique).  All other path
@@ -964,10 +1027,16 @@ etc.  The Tcl core expects filesystems to behave in this way).
 .PP
 Function to determine the type of a path in this filesystem.  May be
 NULL, in which case no type information will be available to users of
-the filesystem.  The 'type' is used only for informational purposes,
+the filesystem.  The
+.QW type
+is used only for informational purposes,
 and should be returned as the string representation of the Tcl_Obj
-which is returned.  A typical return value might be "networked", "zip"
-or "ftp".  The Tcl_Obj result is owned by the filesystem and so Tcl will
+which is returned.  A typical return value might be
+.QW networked ,
+.QW zip
+or
+.QW ftp .
+The Tcl_Obj result is owned by the filesystem and so Tcl will
 increment the refCount of that object if it wishes to retain a reference
 to it.
 .PP
@@ -979,7 +1048,9 @@ typedef Tcl_Obj* Tcl_FSFilesystemPathTypeProc(
 .PP
 Function to return the separator character(s) for this filesystem.
 This need only be implemented if the filesystem wishes to use a
-different separator than the standard string "/".  Amongst other
+different separator than the standard string
+.QW / .
+Amongst other
 uses, it is returned by the \fBfile separator\fR command.  The
 return value should be an object with refCount of zero.
 .PP
@@ -1190,7 +1261,9 @@ NULL (or an empty list) if no volumes are provided.  The result object
 is considered to be owned by the filesystem (not by Tcl's core), but
 should be given a refCount for Tcl.  Tcl will use the contents of the
 list and then decrement that refCount.  This allows filesystems to
-choose whether they actually want to retain a 'master list' of volumes
+choose whether they actually want to retain a
+.QW "master list"
+of volumes
 or not (if not, they generate the list on the fly and pass it to Tcl
 with a refCount of 1 and then forget about the list, if yes, then
 they simply increment the refCount of their master list and pass it
@@ -1287,7 +1360,9 @@ occurred in the process.  If successful, the directory specified by
 \fIpathPtr\fR should have been removed from the filesystem.  If the
 \fIrecursive\fR flag is given, then a non-empty directory should be
 deleted without error.  If this flag is not given, then and the
-directory is non-empty a POSIX 'EEXIST' error should be signalled.  If an
+directory is non-empty a POSIX
+.QW EEXIST
+error should be signalled.  If an
 error does occur, the name of the file or directory which caused the
 error should be placed in \fIerrorPtr\fR.
 .SS DELETEFILEPROC
@@ -1475,8 +1550,7 @@ typedef int Tcl_FSChdirProc(
 The \fBTcl_FSChdirProc\fR changes the applications current working
 directory to the value specified in \fIpathPtr\fR. The function returns
 -1 on error or 0 on success.
-
-.SH KEYWORDS
-stat, access, filesystem, vfs, virtual
 .SH "SEE ALSO"
 cd(n), file(n), load(n), open(n), pwd(n), unload(n)
+.SH KEYWORDS
+stat, access, filesystem, vfs, virtual

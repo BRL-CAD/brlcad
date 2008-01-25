@@ -16,7 +16,6 @@ uplevel \- Execute a script in a different stack frame
 .SH SYNOPSIS
 \fBuplevel \fR?\fIlevel\fR?\fI arg \fR?\fIarg ...\fR?
 .BE
-
 .SH DESCRIPTION
 .PP
 All of the \fIarg\fR arguments are concatenated as if they had
@@ -55,7 +54,7 @@ the command
 .CE
 then the \fBset\fR command will modify the same variable \fBx\fR in \fBb\fR's
 context:  the procedure \fBc\fR does not appear to be on the call stack
-when \fBd\fR is executing.  The command ``\fBinfo level\fR'' may
+when \fBd\fR is executing.  The \fBinfo level\fR command may
 be used to obtain the level of the current procedure.
 .PP
 \fBUplevel\fR makes it possible to implement new control
@@ -92,9 +91,7 @@ proc do {body while condition} {
     }
 }
 .CE
-
 .SH "SEE ALSO"
 apply(n), namespace(n), upvar(n)
-
 .SH KEYWORDS
 context, level, namespace, stack frame, variables

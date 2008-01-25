@@ -36,28 +36,23 @@
 
 /*
  - newcvec - allocate a new cvec
- ^ static struct cvec *newcvec(int, int, int);
+ ^ static struct cvec *newcvec(int, int);
  */
 static struct cvec *
 newcvec(
     int nchrs,			/* to hold this many chrs... */
-    int nranges,		/* ... and this many ranges... */
-    int nmcces)			/* ... and this many MCCEs */
+    int nranges)		/* ... and this many ranges... */
 {
-    size_t n, nc;
-    struct cvec *cv;
+    size_t nc = (size_t)nchrs + (size_t)nranges*2;
+    size_t n = sizeof(struct cvec) + nc*sizeof(chr);
+    struct cvec *cv = (struct cvec *) MALLOC(n);
 
-    nc = (size_t)nchrs + (size_t)nmcces*(MAXMCCE+1) + (size_t)nranges*2;
-    n = sizeof(struct cvec) + (size_t)(nmcces-1)*sizeof(chr *)
-	    + nc*sizeof(chr);
-    cv = (struct cvec *) MALLOC(n);
     if (cv == NULL) {
 	return NULL;
     }
     cv->chrspace = nchrs;
-    cv->chrs = (chr *)&cv->mcces[nmcces];	/* chrs just after MCCE ptrs */
-    cv->mccespace = nmcces;
-    cv->ranges = cv->chrs + nchrs + nmcces*(MAXMCCE+1);
+    cv->chrs = (chr *)(((char *)cv)+sizeof(struct cvec));
+    cv->ranges = cv->chrs + nchrs;
     cv->rangespace = nranges;
     return clearcvec(cv);
 }
@@ -71,18 +66,9 @@ static struct cvec *
 clearcvec(
     struct cvec *cv)		/* character vector */
 {
-    int i;
-
     assert(cv != NULL);
     cv->nchrs = 0;
-    assert(cv->chrs == (chr *)&cv->mcces[cv->mccespace]);
-    cv->nmcces = 0;
-    cv->nmccechrs = 0;
     cv->nranges = 0;
-    for (i = 0; i < cv->mccespace; i++) {
-	cv->mcces[i] = NULL;
-    }
-
     return cv;
 }
 
@@ -95,7 +81,6 @@ addchr(
     struct cvec *cv,		/* character vector */
     pchr c)			/* character to add */
 {
-    assert(cv->nchrs < cv->chrspace - cv->nmccechrs);
     cv->chrs[cv->nchrs++] = (chr)c;
 }
 
@@ -115,90 +100,25 @@ addrange(
     cv->nranges++;
 }
 
-#ifdef REGEXP_MCCE_ENABLED
-/*
- * This static function is currently called from a single spot in regcomp.c,
- * with two NULL pointers; in that case it does nothing, so that we define out
- * both the call and the code.
- */
-
-/*
- - addmcce - add an MCCE to a cvec
- ^ static VOID addmcce(struct cvec *, const chr *, const chr *);
- */
-
-static void
-addmcce(
-    struct cvec *cv,		/* character vector */
-    const chr *startp,		/* beginning of text */
-    const chr *endp)		/* just past end of text */
-{
-    int len, i;
-    const chr *s, *d;
-
-    if (startp == NULL && endp == NULL) {
-	return;
-    }
-    len = endp - startp;
-    assert(len > 0);
-    assert(cv->nchrs + len < cv->chrspace - cv->nmccechrs);
-    assert(cv->nmcces < cv->mccespace);
-    d = &cv->chrs[cv->chrspace - cv->nmccechrs - len - 1];
-    cv->mcces[cv->nmcces++] = d;
-    for (s = startp, i = len; i > 0; s++, i--) {
-	*d++ = *s;
-    }
-    *d++ = 0;			/* endmarker */
-    assert(d == &cv->chrs[cv->chrspace - cv->nmccechrs]);
-    cv->nmccechrs += len + 1;
-}
-#endif
-
-/*
- - haschr - does a cvec contain this chr?
- ^ static int haschr(struct cvec *, pchr);
- */
-static int			/* predicate */
-haschr(
-    struct cvec *cv,		/* character vector */
-    pchr c)			/* character to test for */
-{
-    int i;
-    const chr *p;
-
-    for (p = cv->chrs, i = cv->nchrs; i > 0; p++, i--) {
-	if (*p == c) {
-	    return 1;
-	}
-    }
-    for (p = cv->ranges, i = cv->nranges; i > 0; p += 2, i--) {
-	if ((*p <= c) && (c <= *(p+1))) {
-	    return 1;
-	}
-    }
-    return 0;
-}
-
 /*
  - getcvec - get a cvec, remembering it as v->cv
- ^ static struct cvec *getcvec(struct vars *, int, int, int);
+ ^ static struct cvec *getcvec(struct vars *, int, int);
  */
 static struct cvec *
 getcvec(
     struct vars *v,		/* context */
     int nchrs,			/* to hold this many chrs... */
-    int nranges,		/* ... and this many ranges... */
-    int nmcces)			/* ... and this many MCCEs */
+    int nranges)		/* ... and this many ranges... */
 {
     if ((v->cv != NULL) && (nchrs <= v->cv->chrspace) &&
-	    (nranges <= v->cv->rangespace) && (nmcces <= v->cv->mccespace)) {
+	    (nranges <= v->cv->rangespace)) {
 	return clearcvec(v->cv);
     }
 
     if (v->cv != NULL) {
 	freecvec(v->cv);
     }
-    v->cv = newcvec(nchrs, nranges, nmcces);
+    v->cv = newcvec(nchrs, nranges);
     if (v->cv == NULL) {
 	ERR(REG_ESPACE);
     }

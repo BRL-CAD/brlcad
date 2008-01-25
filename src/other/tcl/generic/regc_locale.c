@@ -611,43 +611,6 @@ static const chr printCharTable[] = {
 #define	CH	NOCELT
 
 /*
- - nmcces - how many distinct MCCEs are there?
- ^ static int nmcces(struct vars *);
- */
-static int
-nmcces(
-    struct vars *v)		/* context */
-{
-    /*
-     * No multi-character collating elements defined at the moment.
-     */
-    return 0;
-}
-
-/*
- - nleaders - how many chrs can be first chrs of MCCEs?
- ^ static int nleaders(struct vars *);
- */
-static int
-nleaders(
-    struct vars *v)		/* context */
-{
-    return 0;
-}
-
-/*
- - allmcces - return a cvec with all the MCCEs of the locale
- ^ static struct cvec *allmcces(struct vars *, struct cvec *);
- */
-static struct cvec *
-allmcces(
-    struct vars *v,		/* context */
-    struct cvec *cv)		/* this is supposed to have enough room */
-{
-    return clearcvec(cv);
-}
-
-/*
  - element - map collating-element name to celt
  ^ static celt element(struct vars *, const chr *, const chr *);
  */
@@ -718,8 +681,8 @@ range(
 	return NULL;
     }
 
-    if (!cases) {			/* easy version */
-	cv = getcvec(v, 0, 1, 0);
+    if (!cases) {		/* easy version */
+	cv = getcvec(v, 0, 1);
 	NOERRN();
 	addrange(cv, a, b);
 	return cv;
@@ -733,7 +696,7 @@ range(
 
     nchrs = (b - a + 1)*2 + 4;
 
-    cv = getcvec(v, nchrs, 0, 0);
+    cv = getcvec(v, nchrs, 0);
     NOERRN();
 
     for (c=a; c<=b; c++) {
@@ -759,14 +722,10 @@ range(
  - before - is celt x before celt y, for purposes of range legality?
  ^ static int before(celt, celt);
  */
-static int				/* predicate */
+static int			/* predicate */
 before(
-    celt x, celt y)			/* collating elements */
+    celt x, celt y)		/* collating elements */
 {
-    /*
-     * trivial because no MCCEs.
-     */
-
     if (x < y) {
 	return 1;
     }
@@ -792,7 +751,7 @@ eclass(
      */
 
     if ((v->cflags&REG_FAKE) && c == 'x') {
-	cv = getcvec(v, 4, 0, 0);
+	cv = getcvec(v, 4, 0);
 	addchr(cv, (chr)'x');
 	addchr(cv, (chr)'y');
 	if (cases) {
@@ -809,7 +768,7 @@ eclass(
     if (cases) {
 	return allcases(v, c);
     }
-    cv = getcvec(v, 1, 0, 0);
+    cv = getcvec(v, 1, 0);
     assert(cv != NULL);
     addchr(cv, (chr)c);
     return cv;
@@ -889,7 +848,7 @@ cclass(
 
     switch((enum classes) index) {
     case CC_PRINT:
-	cv = getcvec(v, NUM_PRINT_CHAR, NUM_PRINT_RANGE, 0);
+	cv = getcvec(v, NUM_PRINT_CHAR, NUM_PRINT_RANGE);
 	if (cv) {
 	    for (i=0 ; (size_t)i<NUM_PRINT_CHAR ; i++) {
 		addchr(cv, printCharTable[i]);
@@ -901,7 +860,7 @@ cclass(
 	}
 	break;
     case CC_ALNUM:
-	cv = getcvec(v, NUM_ALPHA_CHAR, NUM_DIGIT_RANGE + NUM_ALPHA_RANGE, 0);
+	cv = getcvec(v, NUM_ALPHA_CHAR, NUM_DIGIT_RANGE + NUM_ALPHA_RANGE);
 	if (cv) {
 	    for (i=0 ; (size_t)i<NUM_ALPHA_CHAR ; i++) {
 		addchr(cv, alphaCharTable[i]);
@@ -917,7 +876,7 @@ cclass(
 	}
 	break;
     case CC_ALPHA:
-	cv = getcvec(v, NUM_ALPHA_CHAR, NUM_ALPHA_RANGE, 0);
+	cv = getcvec(v, NUM_ALPHA_CHAR, NUM_ALPHA_RANGE);
 	if (cv) {
 	    for (i=0 ; (size_t)i<NUM_ALPHA_RANGE ; i++) {
 		addrange(cv, alphaRangeTable[i].start,
@@ -929,23 +888,23 @@ cclass(
 	}
 	break;
     case CC_ASCII:
-	cv = getcvec(v, 0, 1, 0);
+	cv = getcvec(v, 0, 1);
 	if (cv) {
 	    addrange(cv, 0, 0x7f);
 	}
 	break;
     case CC_BLANK:
-	cv = getcvec(v, 2, 0, 0);
+	cv = getcvec(v, 2, 0);
 	addchr(cv, '\t');
 	addchr(cv, ' ');
 	break;
     case CC_CNTRL:
-	cv = getcvec(v, 0, 2, 0);
+	cv = getcvec(v, 0, 2);
 	addrange(cv, 0x0, 0x1f);
 	addrange(cv, 0x7f, 0x9f);
 	break;
     case CC_DIGIT:
-	cv = getcvec(v, 0, NUM_DIGIT_RANGE, 0);
+	cv = getcvec(v, 0, NUM_DIGIT_RANGE);
 	if (cv) {
 	    for (i=0 ; (size_t)i<NUM_DIGIT_RANGE ; i++) {
 		addrange(cv, digitRangeTable[i].start,
@@ -954,7 +913,7 @@ cclass(
 	}
 	break;
     case CC_PUNCT:
-	cv = getcvec(v, NUM_PUNCT_CHAR, NUM_PUNCT_RANGE, 0);
+	cv = getcvec(v, NUM_PUNCT_CHAR, NUM_PUNCT_RANGE);
 	if (cv) {
 	    for (i=0 ; (size_t)i<NUM_PUNCT_RANGE ; i++) {
 		addrange(cv, punctRangeTable[i].start,
@@ -975,7 +934,7 @@ cclass(
 	 * someone comes up with a better arrangement!)
 	 */
 
-	cv = getcvec(v, 0, 3, 0);
+	cv = getcvec(v, 0, 3);
 	if (cv) {
 	    addrange(cv, '0', '9');
 	    addrange(cv, 'a', 'f');
@@ -983,7 +942,7 @@ cclass(
 	}
 	break;
     case CC_SPACE:
-	cv = getcvec(v, NUM_SPACE_CHAR, NUM_SPACE_RANGE, 0);
+	cv = getcvec(v, NUM_SPACE_CHAR, NUM_SPACE_RANGE);
 	if (cv) {
 	    for (i=0 ; (size_t)i<NUM_SPACE_RANGE ; i++) {
 		addrange(cv, spaceRangeTable[i].start,
@@ -995,7 +954,7 @@ cclass(
 	}
 	break;
     case CC_LOWER:
-	cv  = getcvec(v, NUM_LOWER_CHAR, NUM_LOWER_RANGE, 0);
+	cv  = getcvec(v, NUM_LOWER_CHAR, NUM_LOWER_RANGE);
 	if (cv) {
 	    for (i=0 ; (size_t)i<NUM_LOWER_RANGE ; i++) {
 		addrange(cv, lowerRangeTable[i].start,
@@ -1007,7 +966,7 @@ cclass(
 	}
 	break;
     case CC_UPPER:
-	cv  = getcvec(v, NUM_UPPER_CHAR, NUM_UPPER_RANGE, 0);
+	cv  = getcvec(v, NUM_UPPER_CHAR, NUM_UPPER_RANGE);
 	if (cv) {
 	    for (i=0 ; (size_t)i<NUM_UPPER_RANGE ; i++) {
 		addrange(cv, upperRangeTable[i].start,
@@ -1019,7 +978,7 @@ cclass(
 	}
 	break;
     case CC_GRAPH:
-	cv  = getcvec(v, NUM_GRAPH_CHAR, NUM_GRAPH_RANGE, 0);
+	cv  = getcvec(v, NUM_GRAPH_CHAR, NUM_GRAPH_RANGE);
 	if (cv) {
 	    for (i=0 ; (size_t)i<NUM_GRAPH_RANGE ; i++) {
 		addrange(cv, graphRangeTable[i].start,
@@ -1057,10 +1016,10 @@ allcases(
     tc = Tcl_UniCharToTitle((chr)c);
 
     if (tc != uc) {
-	cv = getcvec(v, 3, 0, 0);
+	cv = getcvec(v, 3, 0);
 	addchr(cv, tc);
     } else {
-	cv = getcvec(v, 2, 0, 0);
+	cv = getcvec(v, 2, 0);
     }
     addchr(cv, lc);
     if (lc != uc) {

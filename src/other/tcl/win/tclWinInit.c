@@ -592,7 +592,7 @@ TclpSetVariables(
  * TclpFindVariable --
  *
  *	Locate the entry in environ for a given name. On Unix this routine is
- *	case sensetive, on Windows this matches mioxed case.
+ *	case sensitive, on Windows this matches mioxed case.
  *
  * Results:
  *	The return value is the index in environ of an entry with the name

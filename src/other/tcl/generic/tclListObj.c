@@ -428,7 +428,7 @@ Tcl_ListObjGetElements(
     if (listPtr->typePtr != &tclListType) {
 	int result, length;
 
-	(void) Tcl_GetStringFromObj(listPtr, &length);
+	(void) TclGetStringFromObj(listPtr, &length);
 	if (!length) {
 	    *objcPtr = 0;
 	    *objvPtr = NULL;
@@ -485,12 +485,12 @@ Tcl_ListObjAppendList(
 	Tcl_Panic("%s called with shared object", "Tcl_ListObjAppendList");
     }
 
-    result = Tcl_ListObjLength(interp, listPtr, &listLen);
+    result = TclListObjLength(interp, listPtr, &listLen);
     if (result != TCL_OK) {
 	return result;
     }
 
-    result = Tcl_ListObjGetElements(interp, elemListPtr, &objc, &objv);
+    result = TclListObjGetElements(interp, elemListPtr, &objc, &objv);
     if (result != TCL_OK) {
 	return result;
     }
@@ -546,7 +546,7 @@ Tcl_ListObjAppendElement(
     if (listPtr->typePtr != &tclListType) {
 	int result, length;
 
-	(void) Tcl_GetStringFromObj(listPtr, &length);
+	(void) TclGetStringFromObj(listPtr, &length);
 	if (!length) {
 	    Tcl_SetListObj(listPtr, 1, &objPtr);
 	    return TCL_OK;
@@ -657,7 +657,7 @@ Tcl_ListObjIndex(
     if (listPtr->typePtr != &tclListType) {
 	int result, length;
 
-	(void) Tcl_GetStringFromObj(listPtr, &length);
+	(void) TclGetStringFromObj(listPtr, &length);
 	if (!length) {
 	    *objPtrPtr = NULL;
 	    return TCL_OK;
@@ -712,7 +712,7 @@ Tcl_ListObjLength(
     if (listPtr->typePtr != &tclListType) {
 	int result, length;
 
-	(void) Tcl_GetStringFromObj(listPtr, &length);
+	(void) TclGetStringFromObj(listPtr, &length);
 	if (!length) {
 	    *intPtr = 0;
 	    return TCL_OK;
@@ -787,7 +787,7 @@ Tcl_ListObjReplace(
     if (listPtr->typePtr != &tclListType) {
 	int length;
 
-	(void) Tcl_GetStringFromObj(listPtr, &length);
+	(void) TclGetStringFromObj(listPtr, &length);
 	if (!length) {
 	    if (objc) {
 		Tcl_SetListObj(listPtr, objc, NULL);
@@ -1006,7 +1006,7 @@ TclLindexList(
      */
 
     if (argPtr->typePtr != &tclListType
-	    && TclGetIntForIndex(NULL , argPtr, 0, &index) == TCL_OK) {
+	    && TclGetIntForIndexM(NULL , argPtr, 0, &index) == TCL_OK) {
 	/*
 	 * argPtr designates a single index.
 	 */
@@ -1036,7 +1036,7 @@ TclLindexList(
 	return TclLindexFlat(interp, listPtr, 1, &argPtr);
     }
 
-    Tcl_ListObjGetElements(NULL, indexListCopy, &indexCount, &indices);
+    TclListObjGetElements(NULL, indexListCopy, &indexCount, &indices);
     listPtr = TclLindexFlat(interp, listPtr, indexCount, indices);
     Tcl_DecrRefCount(indexListCopy);
     return listPtr;
@@ -1101,9 +1101,9 @@ TclLindexFlat(
 
 	    break;
 	}
-	Tcl_ListObjGetElements(NULL, sublistCopy, &listLen, &elemPtrs);
+	TclListObjGetElements(NULL, sublistCopy, &listLen, &elemPtrs);
 
-	if (TclGetIntForIndex(interp, indexArray[i], /*endValue*/ listLen-1,
+	if (TclGetIntForIndexM(interp, indexArray[i], /*endValue*/ listLen-1,
 		&index) == TCL_OK) {
 	    if (index<0 || index>=listLen) {
 		/*
@@ -1112,7 +1112,7 @@ TclLindexFlat(
 		 */
 
 		while (++i < indexCount) {
-		    if (TclGetIntForIndex(interp, indexArray[i], -1, &index)
+		    if (TclGetIntForIndexM(interp, indexArray[i], -1, &index)
 			!= TCL_OK) {
 			Tcl_DecrRefCount(sublistCopy);
 			return NULL;
@@ -1180,7 +1180,7 @@ TclLsetList(
      */
 
     if (indexArgPtr->typePtr != &tclListType
-	    && TclGetIntForIndex(NULL, indexArgPtr, 0, &index) == TCL_OK) {
+	    && TclGetIntForIndexM(NULL, indexArgPtr, 0, &index) == TCL_OK) {
 	/*
 	 * indexArgPtr designates a single index.
 	 */
@@ -1198,7 +1198,7 @@ TclLsetList(
 
 	return TclLsetFlat(interp, listPtr, 1, &indexArgPtr, valuePtr);
     }
-    Tcl_ListObjGetElements(NULL, indexArgPtr, &indexCount, &indices);
+    TclListObjGetElements(NULL, indexArgPtr, &indexCount, &indices);
 
     /*
      * Let TclLsetFlat handle the actual lset'ting.
@@ -1307,17 +1307,24 @@ TclLsetFlat(
 
 	/* Check for the possible error conditions... */
 	result = TCL_ERROR;
-	if (Tcl_ListObjGetElements(interp, subListPtr, &elemCount, &elemPtrs)
+	if (TclListObjGetElements(interp, subListPtr, &elemCount, &elemPtrs)
 		!= TCL_OK) {
 	    /* ...the sublist we're indexing into isn't a list at all. */
 	    break;
 	}
 
-	if (TclGetIntForIndex(interp, *indexArray++, elemCount - 1, &index)
+	/*
+	 * WARNING: the macro TclGetIntForIndexM is not safe for
+	 * post-increments, avoid '*indexArray++' here.
+	 */
+	
+	if (TclGetIntForIndexM(interp, *indexArray, elemCount - 1, &index)
 		!= TCL_OK)  {
 	    /* ...the index we're trying to use isn't an index at all. */
+	    indexArray++;
 	    break;
 	}
+	indexArray++;
 
 	if (index < 0 || index >= elemCount) {
 	    /* ...the index points outside the sublist. */
@@ -1472,7 +1479,7 @@ TclListObjSetElement(
     if (listPtr->typePtr != &tclListType) {
 	int length, result;
 
-	(void) Tcl_GetStringFromObj(listPtr, &length);
+	(void) TclGetStringFromObj(listPtr, &length);
 	if (!length) {
 	    Tcl_SetObjResult(interp,
 		    Tcl_NewStringObj("list index out of range", -1));
@@ -1654,7 +1661,7 @@ SetListFromAny(
      * Get the string representation. Make it up-to-date if necessary.
      */
 
-    string = Tcl_GetStringFromObj(objPtr, &length);
+    string = TclGetStringFromObj(objPtr, &length);
 
     /*
      * Parse the string into separate string objects, and create a List
@@ -1794,7 +1801,7 @@ UpdateStringOfList(
     listPtr->length = 1;
     elemPtrs = &listRepPtr->elements;
     for (i = 0; i < numElems; i++) {
-	elem = Tcl_GetStringFromObj(elemPtrs[i], &length);
+	elem = TclGetStringFromObj(elemPtrs[i], &length);
 	listPtr->length += Tcl_ScanCountedElement(elem, length, flagPtr+i)+1;
 
 	/*
@@ -1813,7 +1820,7 @@ UpdateStringOfList(
     listPtr->bytes = ckalloc((unsigned) listPtr->length);
     dst = listPtr->bytes;
     for (i = 0; i < numElems; i++) {
-	elem = Tcl_GetStringFromObj(elemPtrs[i], &length);
+	elem = TclGetStringFromObj(elemPtrs[i], &length);
 	dst += Tcl_ConvertCountedElement(elem, length, dst,
 		flagPtr[i] | (i==0 ? 0 : TCL_DONT_QUOTE_HASH));
 	*dst = ' ';

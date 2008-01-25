@@ -284,7 +284,7 @@ if the object's reference count drops to zero, frees its storage.
 An object shared by different code or data structures has
 \fIrefCount\fR greater than 1.
 Incrementing an object's reference count ensures that
-it won't be freed too early or have its value change accidentally.
+it will not be freed too early or have its value change accidentally.
 .PP
 As an example, the bytecode interpreter shares argument objects
 between calling and called Tcl procedures to avoid having to copy objects.
@@ -300,7 +300,7 @@ When an object's reference count drops less than or equal to zero,
 \fBTcl_DecrRefCount\fR reclaims its storage.
 Most command procedures do not have to be concerned about
 reference counting since they use an object's value immediately
-and don't retain a pointer to the object after they return.
+and do not retain a pointer to the object after they return.
 However, if they do retain a pointer to an object in a data structure,
 they must be careful to increment its reference count
 since the retained pointer is a new reference.
@@ -315,7 +315,9 @@ by using \fBTcl_DuplicateObj\fR;
 this returns a new duplicate of the original object
 that has \fIrefCount\fR 0.
 If the object is not shared,
-the command procedure "owns" the object and can safely modify it directly.
+the command procedure
+.QW "owns"
+the object and can safely modify it directly.
 For example, the following code appears in the command procedure
 that implements \fBlinsert\fR.
 This procedure modifies the list object passed to it in \fIobjv[1]\fR

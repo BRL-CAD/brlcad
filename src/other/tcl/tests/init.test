@@ -207,7 +207,7 @@ test init-5.0 {return options passed through ::unknown} -setup {
     list $code $foo $bar $code2 $foo2 $bar2
 } -cleanup {
     unset ::auto_index(::xxx)
-} -result {2 xxx {-code 1 -level 1 -errorcode NONE} 2 xxx {-code 1 -level 1 -errorcode NONE}}
+} -result {2 xxx {-errorcode NONE -code 1 -level 1} 2 xxx {-code 1 -level 1 -errorcode NONE}}
 
 cleanupTests
 }	;#  End of [interp eval $testInterp]

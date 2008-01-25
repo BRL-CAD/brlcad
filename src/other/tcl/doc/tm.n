@@ -20,7 +20,6 @@ tm \- Facilities for locating and loading of Tcl Modules
 \fB::tcl::tm::roots\fR \fIpath\fR...
 .fi
 .BE
-
 .SH DESCRIPTION
 This document describes the facilities for locating and loading Tcl
 Modules. The following commands are supported:
@@ -56,8 +55,11 @@ that they are searched for modules.
 .TP
 \fB::tcl::tm::roots\fR \fIpath\fR...
 Similar to \fBpath add\fR, and layered on top of it. This command
-takes a list of paths, extends each with "\fBtcl\fIX\fB/site-tcl\fR",
-and "\fBtcl\fIX\fB/\fIX\fB.\fIy\fR", for major version \fIX\fR of the
+takes a list of paths, extends each with
+.QW "\fBtcl\fIX\fB/site-tcl\fR" ,
+and
+.QW "\fBtcl\fIX\fB/\fIX\fB.\fIy\fR" ,
+for major version \fIX\fR of the
 Tcl interpreter and minor version \fIy\fR less than or equal to the
 minor version of the interpreter, and adds the resulting set of paths
 to the list of paths to search.
@@ -87,7 +89,7 @@ package.
 .PP
 The name of a module file has to match the regular expression:
 .CS
-([[:alpha:]][:[:alnum:]]*)-([[:digit:]].*)\\.tm
+([[:alpha:]][:[:alnum:]]*)-([[:digit:]].*)\e.tm
 .CE
 .PP
 The first capturing parentheses provides the name of the package, the
@@ -112,7 +114,11 @@ For any two directories, neither is an ancestor directory of the
 other.
 .PP
 This is required to avoid ambiguities in package naming. If for
-example the two directories "\fIfoo/\fR" and "\fIfoo/cool\fR" were on
+example the two directories
+.QW "\fIfoo/\fR"
+and
+.QW "\fIfoo/cool\fR"
+were on
 the path a package named \fBcool::ice\fR could be found via the
 names \fBcool::ice\fR or \fBice\fR, the latter potentially
 obscuring a package named \fBice\fR, unqualified.
@@ -120,14 +126,18 @@ obscuring a package named \fBice\fR, unqualified.
 Before the search is started, the name of the requested package is
 translated into a partial path, using the following algorithm:
 .IP
-All occurrences of "\fB::\fR" in the package name are replaced by
+All occurrences of
+.QW "\fB::\fR"
+in the package name are replaced by
 the appropriate directory separator character for the platform we are
-on. On Unix, for example, this is "\fB/\fR".
+on. On Unix, for example, this is
+.QW "\fB/\fR" .
 .PP
 Example:
 .IP
 The requested package is \fBencoding::base64\fR. The generated
-partial path is "\fIencoding/base64\fR"
+partial path is
+.QW "\fIencoding/base64\fR" .
 .PP
 After this translation the package is looked for in all module paths,
 by combining them one-by-one, first to last with the partial path to
@@ -157,12 +167,13 @@ Both package name \fBPNAME\fR and package version \fBPVERSION\fR are
 extracted from the filename \fBMF\fR according to the definition
 below:
 .CS
-\fBMF\fR = /module_path/\fBPNAME'\fR-\fBPVERSION\fR.tm
+\fBMF\fR = /module_path/\fBPNAME\(fm\fR-\fBPVERSION\fR.tm
 .CE
 .PP
-Where \fBPNAME'\fR is the partial path of the module as defined in
-section \fBFINDING MODULES\fR, and translated into \fB\fRPNAME by
-changing all directory separators to "\fB::\fR",
+Where \fBPNAME\(fm\fR is the partial path of the module as defined in
+section \fBFINDING MODULES\fR, and translated into \fBPNAME\fR by
+changing all directory separators to
+.QW "\fB::\fR" ,
 and \fBmodule_path\fR is the path (from the list of paths to search)
 that we found the module file under.
 .PP
@@ -253,13 +264,11 @@ environment variables:
 \fB$::env(TCL8.0_TM_PATH)\fR
 .CE
 .RE
-
 .SH "SEE ALSO"
-package(n), Tcl Improvement Proposal #189 "\fITcl Modules\fR" (online
-at http://tip.tcl.tk/189.html), Tcl Improvement Proposal #190
-"\fIImplementation Choices for Tcl Modules\fR" (online at
-http://tip.tcl.tk/190.html)
-
-
+package(n), Tcl Improvement Proposal #189
+.QW "\fITcl Modules\fR"
+(online at http://tip.tcl.tk/189.html), Tcl Improvement Proposal #190
+.QW "\fIImplementation Choices for Tcl Modules\fR"
+(online at http://tip.tcl.tk/190.html)
 .SH "KEYWORDS"
 modules, package

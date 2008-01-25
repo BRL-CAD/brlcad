@@ -49,81 +49,84 @@ If an \fIarg\fR (or pair of \fIarg\fRs) has one of the forms
 described below then it is used by \fBexec\fR to control the
 flow of input and output among the subprocess(es).
 Such arguments will not be passed to the subprocess(es).  In forms
-such as ``< \fIfileName\fR'' \fIfileName\fR may either be in a
-separate argument from ``<'' or in the same argument with no
-intervening space (i.e. ``<\fIfileName\fR'').
+such as
+.QW "\fB<\fR \fIfileName\fR" ,
+\fIfileName\fR may either be in a separate argument from
+.QW \fB<\fR
+or in the same argument with no intervening space (i.e.
+.QW \fB<\fIfileName\fR ).
 .TP 15
-|
+\fB|\fR
 Separates distinct commands in the pipeline.  The standard output
 of the preceding command will be piped into the standard input
 of the next command.
 .TP 15
-|&
+\fB|&\fR
 Separates distinct commands in the pipeline.  Both standard output
 and standard error of the preceding command will be piped into
 the standard input of the next command.
 This form of redirection overrides forms such as 2> and >&.
 .TP 15
-<\0\fIfileName\fR
+\fB<\0\fIfileName\fR
 The file named by \fIfileName\fR is opened and used as the standard
 input for the first command in the pipeline.
 .TP 15
-<@\0\fIfileId\fR
+\fB<@\0\fIfileId\fR
 \fIFileId\fR must be the identifier for an open file, such as the return
 value from a previous call to \fBopen\fR.
 It is used as the standard input for the first command in the pipeline.
 \fIFileId\fR must have been opened for reading.
 .TP 15
-<<\0\fIvalue\fR
+\fB<<\0\fIvalue\fR
 \fIValue\fR is passed to the first command as its standard input.
 .TP 15
->\0\fIfileName\fR
+\fB>\0\fIfileName\fR
 Standard output from the last command is redirected to the file named
 \fIfileName\fR, overwriting its previous contents.
 .TP 15
-2>\0\fIfileName\fR
+\fB2>\0\fIfileName\fR
 Standard error from all commands in the pipeline is redirected to the
 file named \fIfileName\fR, overwriting its previous contents.
 .TP 15
->&\0\fIfileName\fR
+\fB>&\0\fIfileName\fR
 Both standard output from the last command and standard error from all
 commands are redirected to the file named \fIfileName\fR, overwriting
 its previous contents.
 .TP 15
->>\0\fIfileName\fR
+\fB>>\0\fIfileName\fR
 Standard output from the last command is
 redirected to the file named \fIfileName\fR, appending to it rather
 than overwriting it.
 .TP 15
-2>>\0\fIfileName\fR
+\fB2>>\0\fIfileName\fR
 Standard error from all commands in the pipeline is
 redirected to the file named \fIfileName\fR, appending to it rather
 than overwriting it.
 .TP 15
->>&\0\fIfileName\fR
+\fB>>&\0\fIfileName\fR
 Both standard output from the last command and standard error from
 all commands are redirected to the file named \fIfileName\fR,
 appending to it rather than overwriting it.
 .TP 15
->@\0\fIfileId\fR
+\fB>@\0\fIfileId\fR
 \fIFileId\fR must be the identifier for an open file, such as the return
 value from a previous call to \fBopen\fR.
 Standard output from the last command is redirected to \fIfileId\fR's
 file, which must have been opened for writing.
 .TP 15
-2>@\0\fIfileId\fR
+\fB2>@\0\fIfileId\fR
 \fIFileId\fR must be the identifier for an open file, such as the return
 value from a previous call to \fBopen\fR.
 Standard error from all commands in the pipeline is
 redirected to \fIfileId\fR's file.
 The file must have been opened for writing.
 .TP 15
-2>@1\0
+\fB2>@1\0\fR
 Standard error from all commands in the pipeline is redirected to the
 command result.  This operator is only valid at the end of the command
 pipeline.
 .TP 15
->&@\0\fIfileId\fR
+\fB>&@\0\fIfileId\fR
 \fIFileId\fR must be the identifier for an open file, such as the return
 value from a previous call to \fBopen\fR.
 Both standard output from the last command and standard error from
@@ -134,17 +137,18 @@ If standard output has not been redirected then the \fBexec\fR
 command returns the standard output from the last command
 in the pipeline,
 .VS 8.5
-unless ``2>@1'' was specified, in which case
-standard error is included as well.
+unless
+.QW 2>@1
+was specified, in which case standard error is included as well.
 .VE 8.5
 If any of the commands in the pipeline exit abnormally or
 are killed or suspended, then \fBexec\fR will return an error
 and the error message will include the pipeline's output followed by
 error messages describing the abnormal terminations; the
-\fB-errorcode\fR return option will contain additional information
+\fB\-errorcode\fR return option will contain additional information
 about the last abnormal termination encountered.
 If any of the commands writes to its standard error file and that
-standard error isn't redirected
+standard error is not redirected
 .VS 8.5
 and \fB\-ignorestderr\fR is not specified,
 .VE 8.5
@@ -156,22 +160,27 @@ output.
 If the last character of the result or error message
 is a newline then that character is normally deleted
 from the result or error message.
-This is consistent with other Tcl return values, which don't
+This is consistent with other Tcl return values, which do not
 normally end with newlines.
 However, if \fB\-keepnewline\fR is specified then the trailing
 newline is retained.
 .PP
-If standard input isn't redirected with ``<'' or ``<<''
-or ``<@'' then the standard input for the first command in the
+If standard input is not redirected with
+.QW < ,
+.QW <<
+or
+.QW <@
+then the standard input for the first command in the
 pipeline is taken from the application's current standard input.
 .PP
-If the last \fIarg\fR is ``&'' then the pipeline will be
-executed in background.
+If the last \fIarg\fR is
+.QW &
+then the pipeline will be executed in background.
 In this case the \fBexec\fR command will return a list whose
 elements are the process identifiers for all of the subprocesses
 in the pipeline.
 The standard output from the last command in the pipeline will
-go to the application's standard output if it hasn't been
+go to the application's standard output if it has not been
 redirected, and error output from all of
 the commands in the pipeline will go to the application's
 standard error file unless redirected.
@@ -183,13 +192,16 @@ in the PATH environment variable are searched for
 an executable by the given name.
 If the name contains a slash then it must refer to an executable
 reachable from the current directory.
-No ``glob'' expansion or other shell-like substitutions
+No
+.QW glob
+expansion or other shell-like substitutions
 are performed on the arguments to commands.
 .SH "PORTABILITY ISSUES"
 .TP
 \fBWindows\fR (all versions)
 .
-Reading from or writing to a socket, using the ``\fB@\0\fIfileId\fR''
+Reading from or writing to a socket, using the
+.QW \fB@\0\fIfileId\fR
 notation, does not work.  When reading from a socket, a 16-bit DOS
 application will hang and a 32-bit application will return immediately with
 end-of-file.  When either type of application writes to a socket, the
@@ -214,9 +226,13 @@ path separator, it may or may not be recognized as a path name, depending on
 the program.  
 .PP
 Additionally, when calling a 16-bit DOS or Windows 3.X application, all path
-names must use the short, cryptic, path format (e.g., using ``applba~1.def''
-instead of ``applbakery.default''), which can be obtained with the
-\fBfile attributes $fileName -shortname\fR command.
+names must use the short, cryptic, path format (e.g., using
+.QW applba~1.def
+instead of
+.QW applbakery.default ),
+which can be obtained with the
+.QW "\fBfile attributes \fIfileName \fB\-shortname\fR"
+command.
 .PP
 Two or more forward or backward slashes in a row in a path refer to a
 network path.  For example, a simple concatenation of the root directory
@@ -229,15 +245,11 @@ command should be used to concatenate path components.
 .PP
 Note that there are two general types of Win32 console applications:
 .RS
-.TP
-1) CLI
-.
-CommandLine Interface, simple stdio exchange. \fBnetstat.exe\fR for
+.IP [1]
+CLI \(em CommandLine Interface, simple stdio exchange. \fBnetstat.exe\fR for
 example.
-.TP
-2) TUI
-.
-Textmode User Interface, any application that accesses the console
+.IP [2]
+TUI \(em Textmode User Interface, any application that accesses the console
 API for doing such things as cursor movement, setting text color, detecting
 key presses and mouse movement, etc.  An example would be \fBtelnet.exe\fR
 from Windows 2000.  These types of applications are not common in a windows
@@ -274,7 +286,8 @@ The Windows NT home directory.
 The directories listed in the path.
 .PP
 In order to execute shell built-in commands like \fBdir\fR and \fBcopy\fR,
-the caller must prepend the desired command with ``\fBcmd.exe /c\0\fR''
+the caller must prepend the desired command with
+.QW "\fBcmd.exe /c\0\fR"
 because built-in commands are not implemented using executables.
 .RE
 .TP
@@ -297,9 +310,12 @@ The Windows 9x system directory.
 The Windows 9x home directory.
 .IP \(bu
 The directories listed in the path.
+.RE
+.RS
 .PP
 In order to execute shell built-in commands like \fBdir\fR and \fBcopy\fR,
-the caller must prepend the desired command with ``\fBcommand.com /c\0\fR''
+the caller must prepend the desired command with
+.QW "\fBcommand.com /c\0\fR"
 because built-in commands are not implemented using executables.
 .PP
 Once a 16-bit DOS application has read standard input from a console and 
@@ -311,7 +327,9 @@ at this time.
 .PP
 Redirection between the \fBNUL:\fR device and a 16-bit application does not
 always work.  When redirecting from \fBNUL:\fR, some applications may hang,
-others will get an infinite stream of ``0x01'' bytes, and some will actually
+others will get an infinite stream of
+.QW 0x01
+bytes, and some will actually
 correctly get an immediate end-of-file; the behavior seems to depend upon 
 something compiled into the application itself.  When redirecting greater than
 4K or so to \fBNUL:\fR, some applications will hang.  The above problems do not
@@ -346,7 +364,7 @@ To execute a simple program and get its result:
 .PP
 To execute a program that can return a non-zero result, you should
 wrap the call to \fBexec\fR in \fBcatch\fR and check the contents
-of the \fB-errorcode\fR return option if you have an error:
+of the \fB\-errorcode\fR return option if you have an error:
 .CS
 set status 0
 if {[catch {\fBexec\fR grep foo bar.txt} results options]} {
@@ -410,7 +428,9 @@ differences in behaviour between \fBexec\fR and DOS batch files.
 .PP
 When in doubt, use the command \fBauto_execok\fR: it will return the
 complete path to the program as seen by the \fBexec\fR command.  This
-applies especially when you want to run "internal" commands like
+applies especially when you want to run
+.QW internal
+commands like
 \fIdir\fR from a Tcl script (if you just want to list filenames, use
 the \fBglob\fR command.)  To do that, use this:
 .CS

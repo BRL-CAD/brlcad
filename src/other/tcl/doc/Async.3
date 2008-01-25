@@ -50,9 +50,9 @@ or 0 if \fIinterp\fR is NULL.
 These procedures provide a safe mechanism for dealing with
 asynchronous events such as signals.
 If an event such as a signal occurs while a Tcl script is being
-evaluated then it isn't safe to take any substantive action to
+evaluated then it is not safe to take any substantive action to
 process the event.
-For example, it isn't safe to evaluate a Tcl script since the
+For example, it is not safe to evaluate a Tcl script since the
 interpreter may already be in the middle of evaluating a script;
 it may not even be safe to allocate memory, since a memory
 allocation could have been in progress when the event occurred.

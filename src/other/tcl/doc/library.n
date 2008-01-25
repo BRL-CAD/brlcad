@@ -28,7 +28,6 @@ auto_execok, auto_import, auto_load, auto_mkindex, auto_mkindex_old, auto_qualif
 \fBtcl_wordBreakAfter \fIstr start\fR
 \fBtcl_wordBreakBefore \fIstr start\fR
 .BE
-
 .SH INTRODUCTION
 .PP
 Tcl includes a library of Tcl procedures for commonly-needed functions.
@@ -54,7 +53,6 @@ If the library procedure \fBTcl_Init\fR is invoked from an application's
 The code in \fBinit.tcl\fR will define the \fBunknown\fR procedure
 and arrange for the other procedures to be loaded on-demand using
 the auto-load mechanism defined below.
-
 .SH "COMMAND PROCEDURES"
 .PP
 The following procedures are provided in the Tcl library:
@@ -97,7 +95,7 @@ with the \fBauto_mkindex\fR command.  If \fIcmd\fR is found in an
 index file, then the appropriate script is evaluated to create the
 command.  The \fBauto_load\fR command returns 1 if \fIcmd\fR was
 successfully created.  The command returns 0 if there was no index
-entry for \fIcmd\fR or if the script didn't actually define \fIcmd\fR
+entry for \fIcmd\fR or if the script did not actually define \fIcmd\fR
 (e.g. because index information is out of date).  If an error occurs
 while processing the script, then that error is returned.
 \fBAuto_load\fR only reads the index information once and saves it in
@@ -135,9 +133,11 @@ unsophisticated way:  if any line contains the word \fBproc\fR
 as its first characters then it is assumed to be a procedure
 definition and the next word of the line is taken as the
 procedure's name.
-Procedure definitions that don't appear in this way (e.g. they
+Procedure definitions that do not appear in this way (e.g. they
 have spaces before the \fBproc\fR) will not be indexed.  If your 
-script contains "dangerous" code, such as global initialization
+script contains
+.QW dangerous
+code, such as global initialization
 code or procedure names with special characters like \fB$\fR,
 \fB*\fR, \fB[\fR or \fB]\fR, you are safer using auto_mkindex_old.
 .RE
@@ -147,7 +147,7 @@ Destroys all the information cached by \fBauto_execok\fR and
 \fBauto_load\fR.  This information will be re-read from disk the next
 time it is needed.  \fBAuto_reset\fR also deletes any procedures
 listed in the auto-load index, so that fresh copies of them will be
-loaded the next time that they're used.
+loaded the next time that they are used.
 .TP
 \fBauto_qualify \fIcommand namespace\fR
 Computes a list of fully qualified names for \fIcommand\fR.  This list
@@ -174,7 +174,9 @@ their initialization.  They call this procedure to look for their
 script library in several standard directories.
 The last component of the name of the library directory is 
 normally \fIbasenameversion\fR
-(e.g., tk8.0), but it might be "library" when in the build hierarchies.
+(e.g., tk8.0), but it might be
+.QW library
+when in the build hierarchies.
 The \fIinitScript\fR file will be sourced into the interpreter
 once it is found.  The directory in which this file is found is
 stored into the global variable \fIvarName\fR.
@@ -230,7 +232,6 @@ Returns the index of the first word boundary before the starting index
 boundaries before the starting point in the given string.  The index
 returned refers to the second character of the pair that comprises a
 boundary.
-
 .SH "VARIABLES"
 .PP
 The following global variables are defined or used by the procedures in
@@ -265,13 +266,15 @@ the directories listed in the $tcl_pkgPath variable.
 If set, then it specifies the location of the directory containing
 library scripts (the value of this variable will be
 assigned to the \fBtcl_library\fR variable and therefore returned by
-the command \fBinfo library\fR).  If this variable isn't set then
+the command \fBinfo library\fR).  If this variable is not set then
 a default value is used.
 .TP
 \fBenv(TCLLIBPATH)\fR
 If set, then it must contain a valid Tcl list giving directories to
 search during auto-load operations.  Directories must be specified in 
-Tcl format, using "/" as the path separator, regardless of platform.
+Tcl format, using
+.QW /
+as the path separator, regardless of platform.
 This variable is only used when initializing the \fBauto_path\fR variable.
 .TP
 \fBtcl_nonwordchars\fR
@@ -290,9 +293,7 @@ word or not.  If the pattern matches a character, the character is
 considered to be a word character.  On Windows platforms, words are
 comprised of any character that is not a space, tab, or newline.  Under
 Unix, words are comprised of numbers, letters or underscores.
-
 .SH "SEE ALSO"
 info(n), re_syntax(n)
-
 .SH KEYWORDS
 auto-exec, auto-load, library, unknown, word, whitespace 

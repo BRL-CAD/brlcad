@@ -1236,10 +1236,8 @@ FsAddMountsToGlobResult(
 	    }
 	}
 	if (!found && dir) {
-	    int len, mlen;
-	    const char *path;
-	    const char *mount;
 	    Tcl_Obj *norm;
+	    int len, mlen;
 
 	    /*
 	     * We know mElt is absolute normalized and lies inside pathPtr, so
@@ -1247,9 +1245,11 @@ FsAddMountsToGlobResult(
 	     * i.e. the representation which is relative to pathPtr.
 	     */
 
-	    mount = Tcl_GetStringFromObj(mElt, &mlen);
 	    norm = Tcl_FSGetNormalizedPath(NULL, pathPtr);
 	    if (norm != NULL) {
+		const char *path, *mount;
+
+		mount = Tcl_GetStringFromObj(mElt, &mlen);
 		path = Tcl_GetStringFromObj(norm, &len);
 		if (path[len-1] == '/') {
 		    /*
@@ -1258,7 +1258,8 @@ FsAddMountsToGlobResult(
 
 		    len--;
 		}
-		mElt = TclNewFSPathObj(pathPtr, mount + len + 1, mlen - len);
+		len++; /* account for '/' in the mElt [Bug 1602539] */
+		mElt = TclNewFSPathObj(pathPtr, mount + len, mlen - len);
 		Tcl_ListObjAppendElement(NULL, resultPtr, mElt);
 	    }
 	    /*
@@ -3813,7 +3814,7 @@ Tcl_FSSplitPath(
      */
 
     if (lenPtr != NULL) {
-	Tcl_ListObjLength(NULL, result, lenPtr);
+	TclListObjLength(NULL, result, lenPtr);
     }
     return result;
 }

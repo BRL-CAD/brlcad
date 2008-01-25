@@ -59,11 +59,13 @@ be considered less than, equal to, or greater than the second,
 respectively.
 .TP 20
 \fB\-increasing\fR
-Sort the list in increasing order (``smallest'' items first).
+Sort the list in increasing order
+.PQ smallest "items first" .
 This is the default.
 .TP 20
 \fB\-decreasing\fR
-Sort the list in decreasing order (``largest'' items first).
+Sort the list in decreasing order
+.PQ largest "items first" .
 .TP 20
 \fB\-indices\fR
 .VS "8.5 (TIP#217)"
@@ -83,7 +85,7 @@ each sublist
 For example,
 .RS
 .CS
-lsort -integer -index 1 \\
+lsort -integer -index 1 \e
       {{First 24} {Second 18} {Third 30}}
 .CE
 returns \fB{Second 18} {First 24} {Third 30}\fR, and
@@ -91,7 +93,7 @@ returns \fB{Second 18} {First 24} {Third 30}\fR, and
 '\" This example is from the test suite!
 '\"
 .CS
-lsort -index end-1 \\
+lsort -index end-1 \e
       {{a 1 e i} {b 2 3 f g} {c 4 5 6 d h}}
 .CE
 returns \fB{c 4 5 6 d h} {a 1 e i} {b 2 3 f g}\fR,
@@ -122,7 +124,7 @@ effect if combined with the \fB\-dictionary\fR, \fB\-integer\fR, or
 If this option is specified, then only the last set of duplicate
 elements found in the list will be retained.  Note that duplicates are
 determined relative to the comparison used in the sort.  Thus if 
-\fI-index 0\fR is used, \fB{1 a}\fR and \fB{1 b}\fR would be
+\fI\-index 0\fR is used, \fB{1 a}\fR and \fB{1 b}\fR would be
 considered duplicates and only the second element, \fB{1 b}\fR, would
 be retained.
 .SH "NOTES"
@@ -194,7 +196,7 @@ More complex sorting using a comparison function:
     }
     return [string compare [lindex $a 1] [lindex $b 1]]
 }
-% \fBlsort\fR -command compare \\
+% \fBlsort\fR -command compare \e
         {{3 apple} {0x2 carrot} {1 dingo} {2 banana}}
 {1 dingo} {2 banana} {0x2 carrot} {3 apple}
 .CE

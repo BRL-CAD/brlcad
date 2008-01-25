@@ -343,6 +343,8 @@ static int		TestsetassocdataCmd(ClientData dummy,
 			    Tcl_Interp *interp, int argc, const char **argv);
 static int		TestsetCmd(ClientData dummy,
 			    Tcl_Interp *interp, int argc, const char **argv);
+static int		Testset2Cmd(ClientData dummy,
+			    Tcl_Interp *interp, int argc, const char **argv);
 static int		TestseterrorcodeCmd(ClientData dummy,
 			    Tcl_Interp *interp, int argc, const char **argv);
 static int		TestsetobjerrorcodeCmd(
@@ -665,6 +667,8 @@ Tcltest_Init(
     Tcl_CreateCommand(interp, "testsetnoerr", TestsetCmd,
 	    (ClientData) 0, NULL);
     Tcl_CreateCommand(interp, "testseterr", TestsetCmd,
+	    (ClientData) TCL_LEAVE_ERR_MSG, NULL);
+    Tcl_CreateCommand(interp, "testset2", Testset2Cmd,
 	    (ClientData) TCL_LEAVE_ERR_MSG, NULL);
     Tcl_CreateCommand(interp, "testseterrorcode", TestseterrorcodeCmd,
 	    (ClientData) 0, NULL);
@@ -4809,6 +4813,38 @@ TestsetCmd(
     } else {
 	Tcl_AppendResult(interp, "wrong # args: should be \"",
 		argv[0], " varName ?newValue?\"", NULL);
+	return TCL_ERROR;
+    }
+}
+static int
+Testset2Cmd(
+    ClientData data,		/* Additional flags for Get/SetVar2. */
+    register Tcl_Interp *interp,/* Current interpreter. */
+    int argc,			/* Number of arguments. */
+    const char **argv)		/* Argument strings. */
+{
+    int flags = PTR2INT(data);
+    const char *value;
+
+    if (argc == 3) {
+	Tcl_SetResult(interp, "before get", TCL_STATIC);
+	value = Tcl_GetVar2(interp, argv[1], argv[2], flags);
+	if (value == NULL) {
+	    return TCL_ERROR;
+	}
+	Tcl_AppendElement(interp, value);
+	return TCL_OK;
+    } else if (argc == 4) {
+	Tcl_SetResult(interp, "before set", TCL_STATIC);
+	value = Tcl_SetVar2(interp, argv[1], argv[2], argv[3], flags);
+	if (value == NULL) {
+	    return TCL_ERROR;
+	}
+	Tcl_AppendElement(interp, value);
+	return TCL_OK;
+    } else {
+	Tcl_AppendResult(interp, "wrong # args: should be \"",
+		argv[0], " varName elemName ?newValue?\"", NULL);
 	return TCL_ERROR;
     }
 }

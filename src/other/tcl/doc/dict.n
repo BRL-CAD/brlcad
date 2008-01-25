@@ -60,7 +60,8 @@ argument after the rule selection word is a two-element list.  If the
 \fIscript\fR returns with a condition of \fBTCL_BREAK\fR, no further
 key/value pairs are considered for inclusion in the resulting
 dictionary, and a condition of \fBTCL_CONTINUE\fR is equivalent to a false
-result. The order in which the key/value pairs are tested is undefined.
+result. The key/value pairs are tested in the order in which the keys
+were inserted into the dictionary.
 .TP
 \fBdict filter \fIdictionaryValue \fBvalue \fIglobPattern\fR
 The value rule only matches those key/value pairs whose values match
@@ -78,7 +79,8 @@ body generates a \fBTCL_BREAK\fR result, no further pairs from the
 dictionary will be iterated over and the \fBdict for\fR command will
 terminate successfully immediately. If any evaluation of the body
 generates a \fBTCL_CONTINUE\fR result, this shall be treated exactly like a
-normal \fBTCL_OK\fR result.  The order of iteration is undefined.
+normal \fBTCL_OK\fR result. The order of iteration is the order in
+which the keys were inserted into the dictionary.
 .TP
 \fBdict get \fIdictionaryValue \fR?\fIkey ...\fR?
 Given a dictionary value (first argument) and a key (second argument),
@@ -120,11 +122,8 @@ string produced by \fBTcl_HashStats\fR, similar to \fBarray info\fR.
 \fBdict keys \fIdictionaryValue \fR?\fIglobPattern\fR?
 Return a list of all keys in the given dictionary value. If a pattern
 is supplied, only those keys that match it (according to the rules of
-\fBstring match\fR) will be returned. The returned keys will be in an
-arbitrary implementation-specific order, though where no pattern is
-supplied the i'th key returned by \fBdict keys\fR will be the key for
-the i'th value returned by \fBdict values\fR applied to the same
-dictionary value.
+\fBstring match\fR) will be returned. The returned keys will be in the
+order that they were inserted into the dictionary.
 .TP
 \fBdict lappend \fIdictionaryVariable key \fR?\fIvalue ...\fR?
 This appends the given items to the list value that the given key maps
@@ -194,10 +193,8 @@ contents only happen when \fIbody\fR terminates.
 Return a list of all values in the given dictionary value. If a
 pattern is supplied, only those values that match it (according to the
 rules of \fBstring match\fR) will be returned. The returned values
-will be in an arbitrary implementation-specific order, though where no
-pattern is supplied the i'th key returned by \fBdict keys\fR will be
-the key for the i'th value returned by \fBdict values\fR applied to
-the same dictionary value.
+will be in the order of that the keys associated with those values
+were inserted into the dictionary.
 .TP
 \fBdict with \fIdictionaryVariable \fR?\fIkey ...\fR? \fIbody\fR
 Execute the Tcl script in \fIbody\fR with the value for each key in
@@ -215,15 +212,15 @@ dictionaries no longer exists. The result of \fBdict with\fR is
 traces; changes to the \fIdictionaryVariable\fR's contents only happen
 when \fIbody\fR terminates.
 .SH "DICTIONARY VALUES"
-Dictionaries are values that contain an efficient (but \fInot\fR
-order-preserving) mapping from arbitrary keys to arbitrary values.
+Dictionaries are values that contain an efficient, order-preserving
+mapping from arbitrary keys to arbitrary values.
 They have a textual format that is exactly that of any list with an
 even number of elements, with each mapping in the dictionary being
-represented as two items in the list.  When a command takes a
+represented as two items in the list. When a command takes a
 dictionary and produces a new dictionary based on it (either returning
 it or writing it back into the variable that the starting dictionary
-was read from) there is \fIno\fR guarantee that the new dictionary
-will have the same ordering of keys.
+was read from) the new dictionary will have the same order of keys,
+modulo any deleted keys and with new keys added on to the end.
 .SH EXAMPLES
 Constructing and using nested dictionaries:
 .CS

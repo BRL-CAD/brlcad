@@ -32,7 +32,8 @@
 
 /*
  * The following variable is used to tell whether this module has been
- * initialized.
+ * initialized.  If 1, initialization of sockets was successful, if -1 then
+ * socket initialization failed (WSAStartup failed).
  */
 
 static int initialized = 0;
@@ -46,94 +47,6 @@ static TclInitProcessGlobalValueProc InitializeHostName;
 static ProcessGlobalValue hostName = {
     0, 0, NULL, NULL, InitializeHostName, NULL, NULL
 };
-
-/*
- * Mingw, Cygwin and OpenWatcom may not have LPFN_* typedefs.
- */
-
-#ifdef HAVE_NO_LPFN_DECLS
-typedef SOCKET (PASCAL FAR *LPFN_ACCEPT)(SOCKET s, struct sockaddr FAR *addr,
-	    int FAR *addrlen);
-typedef int (PASCAL FAR *LPFN_BIND)(SOCKET s, const struct sockaddr FAR *addr,
-	    int namelen);
-typedef int (PASCAL FAR *LPFN_CLOSESOCKET)(SOCKET s);
-typedef int (PASCAL FAR *LPFN_CONNECT)(SOCKET s,
-	    const struct sockaddr FAR *name, int namelen);
-typedef struct hostent FAR *(PASCAL FAR *LPFN_GETHOSTBYADDR)
-	    (const char FAR *addr, int addrlen, int addrtype);
-typedef struct hostent FAR *(PASCAL FAR *LPFN_GETHOSTBYNAME)
-	    (const char FAR *name);
-typedef int (PASCAL FAR *LPFN_GETHOSTNAME)(char FAR *name, int namelen);
-typedef int (PASCAL FAR *LPFN_GETPEERNAME)(SOCKET sock,
-	    struct sockaddr FAR *name, int FAR *namelen);
-typedef struct servent FAR *(PASCAL FAR *LPFN_GETSERVBYNAME)
-	    (const char FAR *name, const char FAR *proto);
-typedef int (PASCAL FAR *LPFN_GETSOCKNAME)(SOCKET sock,
-	    struct sockaddr FAR *name, int FAR *namelen);
-typedef int (PASCAL FAR *LPFN_GETSOCKOPT)(SOCKET s, int level, int optname,
-	    char FAR *optval, int FAR *optlen);
-typedef u_short (PASCAL FAR *LPFN_HTONS)(u_short hostshort);
-typedef unsigned long (PASCAL FAR *LPFN_INET_ADDR)(const char FAR *cp);
-typedef char FAR *(PASCAL FAR *LPFN_INET_NTOA)(struct in_addr in);
-typedef int (PASCAL FAR *LPFN_IOCTLSOCKET)(SOCKET s, long cmd,
-	    u_long FAR *argp);
-typedef int (PASCAL FAR *LPFN_LISTEN)(SOCKET s, int backlog);
-typedef u_short (PASCAL FAR *LPFN_NTOHS)(u_short netshort);
-typedef int (PASCAL FAR *LPFN_RECV)(SOCKET s, char FAR *buf, int len,
-	    int flags);
-typedef int (PASCAL FAR *LPFN_SELECT)(int nfds, fd_set FAR *readfds,
-	    fd_set FAR *writefds, fd_set FAR *exceptfds,
-	    const struct timeval FAR *timeout);
-typedef int (PASCAL FAR *LPFN_SEND)(SOCKET s,
-	    const char FAR *buf, int len, int flags);
-typedef int (PASCAL FAR *LPFN_SETSOCKOPT)(SOCKET s, int level, int optname,
-	    const char FAR *optval, int optlen);
-typedef SOCKET (PASCAL FAR *LPFN_SOCKET)(int af, int type, int protocol);
-typedef int (PASCAL FAR *LPFN_WSAASYNCSELECT)(SOCKET s, HWND hWnd, u_int wMsg,
-	    long lEvent);
-typedef int (PASCAL FAR *LPFN_WSACLEANUP)(void);
-typedef int (PASCAL FAR *LPFN_WSAGETLASTERROR)(void);
-typedef int (PASCAL FAR *LPFN_WSASTARTUP)(WORD wVersionRequired,
-	    LPWSADATA lpWSAData);
-#endif
-
-/*
- * The following structure contains pointers to all of the WinSock API entry
- * points used by Tcl. It is initialized by InitSockets. Since we dynamically
- * load the Winsock DLL on demand, we must use this function table to refer to
- * functions in the winsock API.
- */
-
-static struct {
-    HMODULE		    hModule;	/* Handle to WinSock library. */
-    /* Winsock 1.1 functions */
-    LPFN_ACCEPT		    accept;
-    LPFN_BIND		    bind;
-    LPFN_CLOSESOCKET	    closesocket;
-    LPFN_CONNECT	    connect;
-    LPFN_GETHOSTBYADDR	    gethostbyaddr;
-    LPFN_GETHOSTBYNAME	    gethostbyname;
-    LPFN_GETHOSTNAME	    gethostname;
-    LPFN_GETPEERNAME	    getpeername;
-    LPFN_GETSERVBYNAME	    getservbyname;
-    LPFN_GETSOCKNAME	    getsockname;
-    LPFN_GETSOCKOPT	    getsockopt;
-    LPFN_HTONS		    htons;
-    LPFN_INET_ADDR	    inet_addr;
-    LPFN_INET_NTOA	    inet_ntoa;
-    LPFN_IOCTLSOCKET	    ioctlsocket;
-    LPFN_LISTEN		    listen;
-    LPFN_NTOHS		    ntohs;
-    LPFN_RECV		    recv;
-    LPFN_SELECT		    select;
-    LPFN_SEND		    send;
-    LPFN_SETSOCKOPT	    setsockopt;
-    LPFN_SOCKET		    socket;
-    LPFN_WSAASYNCSELECT	    WSAAsyncSelect;
-    LPFN_WSACLEANUP	    WSACleanup;
-    LPFN_WSAGETLASTERROR    WSAGetLastError;
-    LPFN_WSASTARTUP	    WSAStartup;
-} winSock;
 
 /*
  * The following defines declare the messages used on socket windows.
@@ -288,9 +201,8 @@ static Tcl_ChannelType tcpChannelType = {
  *
  * InitSockets --
  *
- *	Initialize the socket module. Attempts to load the wsock32.dll library
- *	and set up the winSock function table. If successful, registers the
- *	event window for the socket notifier code.
+ *	Initialize the socket module.  If winsock startup is successful,
+ *	registers the event window for the socket notifier code.
  *
  *	Assumes socketMutex is held.
  *
@@ -298,8 +210,8 @@ static Tcl_ChannelType tcpChannelType = {
  *	None.
  *
  * Side effects:
- *	Dynamically loads wsock32.dll, and registers a new window class and
- *	creates a window for use in asynchronous socket notification.
+ *	Initializes winsock, registers a new window class and creates a
+ *	window for use in asynchronous socket notification.
  *
  *----------------------------------------------------------------------
  */
@@ -316,103 +228,6 @@ InitSockets(void)
     if (!initialized) {
 	initialized = 1;
 	Tcl_CreateExitHandler(SocketExitHandler, (ClientData) NULL);
-
-	winSock.hModule = LoadLibraryA("wsock32.dll");
-
-	if (winSock.hModule == NULL) {
-	    return;
-	}
-
-	/*
-	 * Initialize the function table.
-	 */
-
-	winSock.accept = (LPFN_ACCEPT)
-		GetProcAddress(winSock.hModule, "accept");
-	winSock.bind = (LPFN_BIND)
-		GetProcAddress(winSock.hModule, "bind");
-	winSock.closesocket = (LPFN_CLOSESOCKET)
-		GetProcAddress(winSock.hModule, "closesocket");
-	winSock.connect = (LPFN_CONNECT)
-		GetProcAddress(winSock.hModule, "connect");
-	winSock.gethostbyaddr = (LPFN_GETHOSTBYADDR)
-		GetProcAddress(winSock.hModule, "gethostbyaddr");
-	winSock.gethostbyname = (LPFN_GETHOSTBYNAME)
-		GetProcAddress(winSock.hModule, "gethostbyname");
-	winSock.gethostname = (LPFN_GETHOSTNAME)
-		GetProcAddress(winSock.hModule, "gethostname");
-	winSock.getpeername = (LPFN_GETPEERNAME)
-		GetProcAddress(winSock.hModule, "getpeername");
-	winSock.getservbyname = (LPFN_GETSERVBYNAME)
-		GetProcAddress(winSock.hModule, "getservbyname");
-	winSock.getsockname = (LPFN_GETSOCKNAME)
-		GetProcAddress(winSock.hModule, "getsockname");
-	winSock.getsockopt = (LPFN_GETSOCKOPT)
-		GetProcAddress(winSock.hModule, "getsockopt");
-	winSock.htons = (LPFN_HTONS)
-		GetProcAddress(winSock.hModule, "htons");
-	winSock.inet_addr = (LPFN_INET_ADDR)
-		GetProcAddress(winSock.hModule, "inet_addr");
-	winSock.inet_ntoa = (LPFN_INET_NTOA)
-		GetProcAddress(winSock.hModule, "inet_ntoa");
-	winSock.ioctlsocket = (LPFN_IOCTLSOCKET)
-		GetProcAddress(winSock.hModule, "ioctlsocket");
-	winSock.listen = (LPFN_LISTEN)
-		GetProcAddress(winSock.hModule, "listen");
-	winSock.ntohs = (LPFN_NTOHS)
-		GetProcAddress(winSock.hModule, "ntohs");
-	winSock.recv = (LPFN_RECV)
-		GetProcAddress(winSock.hModule, "recv");
-	winSock.select = (LPFN_SELECT)
-		GetProcAddress(winSock.hModule, "select");
-	winSock.send = (LPFN_SEND)
-		GetProcAddress(winSock.hModule, "send");
-	winSock.setsockopt = (LPFN_SETSOCKOPT)
-		GetProcAddress(winSock.hModule, "setsockopt");
-	winSock.socket = (LPFN_SOCKET)
-		GetProcAddress(winSock.hModule, "socket");
-	winSock.WSAAsyncSelect = (LPFN_WSAASYNCSELECT)
-		GetProcAddress(winSock.hModule, "WSAAsyncSelect");
-	winSock.WSACleanup = (LPFN_WSACLEANUP)
-		GetProcAddress(winSock.hModule, "WSACleanup");
-	winSock.WSAGetLastError = (LPFN_WSAGETLASTERROR)
-		GetProcAddress(winSock.hModule, "WSAGetLastError");
-	winSock.WSAStartup = (LPFN_WSASTARTUP)
-		GetProcAddress(winSock.hModule, "WSAStartup");
-
-	/*
-	 * Now check that all fields are properly initialized. If not, return
-	 * zero to indicate that we failed to initialize properly.
-	 */
-
-	if ((winSock.accept == NULL) ||
-		(winSock.bind == NULL) ||
-		(winSock.closesocket == NULL) ||
-		(winSock.connect == NULL) ||
-		(winSock.gethostbyname == NULL) ||
-		(winSock.gethostbyaddr == NULL) ||
-		(winSock.gethostname == NULL) ||
-		(winSock.getpeername == NULL) ||
-		(winSock.getservbyname == NULL) ||
-		(winSock.getsockname == NULL) ||
-		(winSock.getsockopt == NULL) ||
-		(winSock.htons == NULL) ||
-		(winSock.inet_addr == NULL) ||
-		(winSock.inet_ntoa == NULL) ||
-		(winSock.ioctlsocket == NULL) ||
-		(winSock.listen == NULL) ||
-		(winSock.ntohs == NULL) ||
-		(winSock.recv == NULL) ||
-		(winSock.select == NULL) ||
-		(winSock.send == NULL) ||
-		(winSock.setsockopt == NULL) ||
-		(winSock.socket == NULL) ||
-		(winSock.WSAAsyncSelect == NULL) ||
-		(winSock.WSACleanup == NULL) ||
-		(winSock.WSAGetLastError == NULL) ||
-		(winSock.WSAStartup == NULL)) {
-	    goto unloadLibrary;
-	}
 
 	/*
 	 * Create the async notification window with a new class. We must
@@ -434,7 +249,7 @@ InitSockets(void)
 
 	if (!RegisterClassA(&windowClass)) {
 	    TclWinConvertError(GetLastError());
-	    goto unloadLibrary;
+	    goto initFailure;
 	}
 
 	/*
@@ -447,10 +262,10 @@ InitSockets(void)
 #define WSA_VERSION_MINOR 1
 #define WSA_VERSION_REQD  MAKEWORD(WSA_VERSION_MAJOR, WSA_VERSION_MINOR)
 
-	err = winSock.WSAStartup((WORD)WSA_VERSION_REQD, &wsaData);
+	err = WSAStartup((WORD)WSA_VERSION_REQD, &wsaData);
 	if (err != 0) {
 	    TclWinConvertWSAError(err);
-	    goto unloadLibrary;
+	    goto initFailure;
 	}
 
 	/*
@@ -462,8 +277,8 @@ InitSockets(void)
 	if (MAKEWORD(HIBYTE(wsaData.wVersion), LOBYTE(wsaData.wVersion))
 		< MAKEWORD(WSA_VERSION_MINOR, WSA_VERSION_MAJOR)) {
 	    TclWinConvertWSAError(WSAVERNOTSUPPORTED);
-	    winSock.WSACleanup();
-	    goto unloadLibrary;
+	    WSACleanup();
+	    goto initFailure;
 	}
 
 #undef WSA_VERSION_REQD
@@ -482,16 +297,16 @@ InitSockets(void)
 	tsdPtr->threadId   = Tcl_GetCurrentThread();
 	tsdPtr->readyEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 	if (tsdPtr->readyEvent == NULL) {
-	    goto unloadLibrary;
+	    goto initFailure;
 	}
 	tsdPtr->socketListLock = CreateEvent(NULL, FALSE, TRUE, NULL);
 	if (tsdPtr->socketListLock == NULL) {
-	    goto unloadLibrary;
+	    goto initFailure;
 	}
 	tsdPtr->socketThread = CreateThread(NULL, 256, SocketThread, tsdPtr,
 		0, &id);
 	if (tsdPtr->socketThread == NULL) {
-	    goto unloadLibrary;
+	    goto initFailure;
 	}
 
 	SetThreadPriority(tsdPtr->socketThread, THREAD_PRIORITY_HIGHEST);
@@ -504,17 +319,16 @@ InitSockets(void)
 	WaitForSingleObject(tsdPtr->readyEvent, INFINITE);
 
 	if (tsdPtr->hwnd == NULL) {
-	    goto unloadLibrary; /* Trouble creating the window */
+	    goto initFailure; /* Trouble creating the window */
 	}
 
 	Tcl_CreateEventSource(SocketSetupProc, SocketCheckProc, NULL);
     }
     return;
 
-  unloadLibrary:
+  initFailure:
     TclpFinalizeSockets();
-    FreeLibrary(winSock.hModule);
-    winSock.hModule = NULL;
+    initialized = -1;
     return;
 }
 
@@ -523,7 +337,7 @@ InitSockets(void)
  *
  * SocketsEnabled --
  *
- *	Check that the WinSock DLL is loaded and ready.
+ *	Check that the WinSock was successfully initialized.
  *
  * Results:
  *	1 if it is.
@@ -540,7 +354,7 @@ SocketsEnabled(void)
 {
     int enabled;
     Tcl_MutexLock(&socketMutex);
-    enabled = (winSock.hModule != NULL);
+    enabled = (initialized == 1);
     Tcl_MutexUnlock(&socketMutex);
     return enabled;
 }
@@ -569,19 +383,14 @@ SocketExitHandler(
     ClientData clientData)		/* Not used. */
 {
     Tcl_MutexLock(&socketMutex);
-    if (winSock.hModule) {
+    /*
+     * Make sure the socket event handling window is cleaned-up for, at
+     * most, this thread.
+     */
 
-	/*
-	 * Make sure the socket event handling window is cleaned-up for, at
-	 * most, this thread.
-	 */
-
-	TclpFinalizeSockets();
-	UnregisterClass("TclSocket", TclWinGetTclInstance());
-	winSock.WSACleanup();
-	FreeLibrary(winSock.hModule);
-	winSock.hModule = NULL;
-    }
+    TclpFinalizeSockets();
+    UnregisterClass("TclSocket", TclWinGetTclInstance());
+    WSACleanup();
     initialized = 0;
     Tcl_MutexUnlock(&socketMutex);
 }
@@ -886,7 +695,7 @@ SocketEventProc(
 	timeout.tv_usec = 0;
 	timeout.tv_sec = 0;
 
-	if (winSock.select(0, &readFds, NULL, NULL, &timeout) != 0) {
+	if (select(0, &readFds, NULL, NULL, &timeout) != 0) {
 	    mask |= TCL_READABLE;
 	} else {
 	    infoPtr->readyEvents &= ~(FD_READ);
@@ -985,8 +794,8 @@ TcpCloseProc(
 	 * background.
 	 */
 
-	if (winSock.closesocket(infoPtr->socket) == SOCKET_ERROR) {
-	    TclWinConvertWSAError((DWORD) winSock.WSAGetLastError());
+	if (closesocket(infoPtr->socket) == SOCKET_ERROR) {
+	    TclWinConvertWSAError((DWORD) WSAGetLastError());
 	    errorCode = Tcl_GetErrno();
 	}
     }
@@ -1105,7 +914,7 @@ CreateSocket(
 	goto error;
     }
 
-    sock = winSock.socket(AF_INET, SOCK_STREAM, 0);
+    sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock == INVALID_SOCKET) {
 	goto error;
     }
@@ -1134,8 +943,8 @@ CreateSocket(
 	 * look for bugs.
 	 */
 
-	if (winSock.bind(sock, (SOCKADDR *) &sockaddr,
-		sizeof(SOCKADDR_IN)) == SOCKET_ERROR) {
+	if (bind(sock, (SOCKADDR *) &sockaddr, sizeof(SOCKADDR_IN))
+		== SOCKET_ERROR) {
 	    goto error;
 	}
 
@@ -1145,7 +954,7 @@ CreateSocket(
 	 * there may be differences between TCP/IP stacks).
 	 */
 
-	if (winSock.listen(sock, SOMAXCONN) == SOCKET_ERROR) {
+	if (listen(sock, SOMAXCONN) == SOCKET_ERROR) {
 	    goto error;
 	}
 
@@ -1168,8 +977,8 @@ CreateSocket(
 	 */
 
 	if (myaddr != NULL || myport != 0) {
-	    if (winSock.bind(sock, (SOCKADDR *) &mysockaddr,
-		    sizeof(SOCKADDR_IN)) == SOCKET_ERROR) {
+	    if (bind(sock, (SOCKADDR *) &mysockaddr, sizeof(SOCKADDR_IN))
+		    == SOCKET_ERROR) {
 		goto error;
 	    }
 	}
@@ -1180,8 +989,7 @@ CreateSocket(
 	 */
 
 	if (async) {
-	    if (winSock.ioctlsocket(sock, (long) FIONBIO,
-		    &flag) == SOCKET_ERROR) {
+	    if (ioctlsocket(sock, (long) FIONBIO, &flag) == SOCKET_ERROR) {
 		goto error;
 	    }
 	}
@@ -1190,9 +998,9 @@ CreateSocket(
 	 * Attempt to connect to the remote socket.
 	 */
 
-	if (winSock.connect(sock, (SOCKADDR *) &sockaddr,
+	if (connect(sock, (SOCKADDR *) &sockaddr,
 		sizeof(SOCKADDR_IN)) == SOCKET_ERROR) {
-	    TclWinConvertWSAError((DWORD) winSock.WSAGetLastError());
+	    TclWinConvertWSAError((DWORD) WSAGetLastError());
 	    if (Tcl_GetErrno() != EWOULDBLOCK) {
 		goto error;
 	    }
@@ -1227,20 +1035,19 @@ CreateSocket(
      * automatically places the socket into non-blocking mode.
      */
 
-    winSock.ioctlsocket(sock, (long) FIONBIO, &flag);
-    SendMessage(tsdPtr->hwnd, SOCKET_SELECT,
-	    (WPARAM) SELECT, (LPARAM) infoPtr);
+    ioctlsocket(sock, (long) FIONBIO, &flag);
+    SendMessage(tsdPtr->hwnd, SOCKET_SELECT, (WPARAM) SELECT, (LPARAM) infoPtr);
 
     return infoPtr;
 
   error:
-    TclWinConvertWSAError((DWORD) winSock.WSAGetLastError());
+    TclWinConvertWSAError((DWORD) WSAGetLastError());
     if (interp != NULL) {
 	Tcl_AppendResult(interp, "couldn't open socket: ",
 		Tcl_PosixError(interp), NULL);
     }
     if (sock != INVALID_SOCKET) {
-	winSock.closesocket(sock);
+	closesocket(sock);
     }
     return NULL;
 }
@@ -1284,13 +1091,13 @@ CreateSocketAddress(
 
     ZeroMemory(sockaddrPtr, sizeof(SOCKADDR_IN));
     sockaddrPtr->sin_family = AF_INET;
-    sockaddrPtr->sin_port = winSock.htons((u_short) (port & 0xFFFF));
+    sockaddrPtr->sin_port = htons((u_short) (port & 0xFFFF));
     if (host == NULL) {
 	addr.s_addr = INADDR_ANY;
     } else {
-	addr.s_addr = winSock.inet_addr(host);
+	addr.s_addr = inet_addr(host);
 	if (addr.s_addr == INADDR_NONE) {
-	    hostent = winSock.gethostbyname(host);
+	    hostent = gethostbyname(host);
 	    if (hostent != NULL) {
 		memcpy(&addr, hostent->h_addr, (size_t) hostent->h_length);
 	    } else {
@@ -1594,7 +1401,7 @@ TcpAccept(
 
     len = sizeof(SOCKADDR_IN);
 
-    newSocket = winSock.accept(infoPtr->socket, (SOCKADDR *)&addr,
+    newSocket = accept(infoPtr->socket, (SOCKADDR *)&addr,
 	    &len);
 
     /*
@@ -1662,8 +1469,7 @@ TcpAccept(
 
     if (infoPtr->acceptProc != NULL) {
 	(infoPtr->acceptProc) (infoPtr->acceptProcData, newInfoPtr->channel,
-		winSock.inet_ntoa(addr.sin_addr),
-		winSock.ntohs(addr.sin_port));
+		inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
     }
 }
 
@@ -1739,7 +1545,7 @@ TcpInputProc(
     while (1) {
 	SendMessage(tsdPtr->hwnd, SOCKET_SELECT,
 		(WPARAM) UNSELECT, (LPARAM) infoPtr);
-	bytesRead = winSock.recv(infoPtr->socket, buf, toRead, 0);
+	bytesRead = recv(infoPtr->socket, buf, toRead, 0);
 	infoPtr->readyEvents &= ~(FD_READ);
 
 	/*
@@ -1768,7 +1574,7 @@ TcpInputProc(
 	 * Check for error condition or underflow in non-blocking case.
 	 */
 
-	error = winSock.WSAGetLastError();
+	error = WSAGetLastError();
 	if ((infoPtr->flags & SOCKET_ASYNC) || (error != WSAEWOULDBLOCK)) {
 	    TclWinConvertWSAError(error);
 	    *errorCodePtr = Tcl_GetErrno();
@@ -1849,7 +1655,7 @@ TcpOutputProc(
 	SendMessage(tsdPtr->hwnd, SOCKET_SELECT,
 		(WPARAM) UNSELECT, (LPARAM) infoPtr);
 
-	bytesWritten = winSock.send(infoPtr->socket, buf, toWrite, 0);
+	bytesWritten = send(infoPtr->socket, buf, toWrite, 0);
 	if (bytesWritten != SOCKET_ERROR) {
 	    /*
 	     * Since Windows won't generate a new write event until we hit an
@@ -1871,7 +1677,7 @@ TcpOutputProc(
 	 * send fails with WSAEWOULDBLOCK.
 	 */
 
-	error = winSock.WSAGetLastError();
+	error = WSAGetLastError();
 	if (error == WSAEWOULDBLOCK) {
 	    infoPtr->readyEvents &= ~(FD_WRITE);
 	    if (infoPtr->flags & SOCKET_ASYNC) {
@@ -1956,10 +1762,10 @@ TcpSetOptionProc(
 	if (boolVar) {
 	    val = TRUE;
 	}
-	rtn = winSock.setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE,
+	rtn = setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE,
 		(const char *) &val, sizeof(BOOL));
 	if (rtn != 0) {
-	    TclWinConvertWSAError(winSock.WSAGetLastError());
+	    TclWinConvertWSAError(WSAGetLastError());
 	    if (interp) {
 		Tcl_AppendResult(interp, "couldn't set socket option: ",
 			Tcl_PosixError(interp), NULL);
@@ -1977,10 +1783,10 @@ TcpSetOptionProc(
 	if (!boolVar) {
 	    val = TRUE;
 	}
-	rtn = winSock.setsockopt(sock, IPPROTO_TCP, TCP_NODELAY,
+	rtn = setsockopt(sock, IPPROTO_TCP, TCP_NODELAY,
 		(const char *) &val, sizeof(BOOL));
 	if (rtn != 0) {
-	    TclWinConvertWSAError(winSock.WSAGetLastError());
+	    TclWinConvertWSAError(WSAGetLastError());
 	    if (interp) {
 		Tcl_AppendResult(interp, "couldn't set socket option: ",
 			Tcl_PosixError(interp), NULL);
@@ -2064,7 +1870,7 @@ TcpGetOptionProc(
 	ret = TclWinGetSockOpt((int)sock, SOL_SOCKET, SO_ERROR,
 		(char *)&err, &optlen);
 	if (ret == SOCKET_ERROR) {
-	    err = winSock.WSAGetLastError();
+	    err = WSAGetLastError();
 	}
 	if (err) {
 	    TclWinConvertWSAError(err);
@@ -2075,28 +1881,25 @@ TcpGetOptionProc(
 
     if ((len == 0) || ((len > 1) && (optionName[1] == 'p') &&
 	    (strncmp(optionName, "-peername", len) == 0))) {
-	if (winSock.getpeername(sock, (LPSOCKADDR) &peername, &size) == 0) {
+	if (getpeername(sock, (LPSOCKADDR) &peername, &size) == 0) {
 	    if (len == 0) {
 		Tcl_DStringAppendElement(dsPtr, "-peername");
 		Tcl_DStringStartSublist(dsPtr);
 	    }
-	    Tcl_DStringAppendElement(dsPtr,
-		    winSock.inet_ntoa(peername.sin_addr));
+	    Tcl_DStringAppendElement(dsPtr, inet_ntoa(peername.sin_addr));
 
 	    if (peername.sin_addr.s_addr == 0) {
 		hostEntPtr = NULL;
 	    } else {
-		hostEntPtr = winSock.gethostbyaddr(
-			(char *) &(peername.sin_addr),
+		hostEntPtr = gethostbyaddr((char *) &(peername.sin_addr),
 			sizeof(peername.sin_addr), AF_INET);
 	    }
 	    if (hostEntPtr != NULL) {
 		Tcl_DStringAppendElement(dsPtr, hostEntPtr->h_name);
 	    } else {
-		Tcl_DStringAppendElement(dsPtr,
-			winSock.inet_ntoa(peername.sin_addr));
+		Tcl_DStringAppendElement(dsPtr, inet_ntoa(peername.sin_addr));
 	    }
-	    TclFormatInt(buf, winSock.ntohs(peername.sin_port));
+	    TclFormatInt(buf, ntohs(peername.sin_port));
 	    Tcl_DStringAppendElement(dsPtr, buf);
 	    if (len == 0) {
 		Tcl_DStringEndSublist(dsPtr);
@@ -2112,7 +1915,7 @@ TcpGetOptionProc(
 	     */
 
 	    if (len) {
-		TclWinConvertWSAError((DWORD) winSock.WSAGetLastError());
+		TclWinConvertWSAError((DWORD) WSAGetLastError());
 		if (interp) {
 		    Tcl_AppendResult(interp, "can't get peername: ",
 			    Tcl_PosixError(interp), NULL);
@@ -2124,27 +1927,24 @@ TcpGetOptionProc(
 
     if ((len == 0) || ((len > 1) && (optionName[1] == 's') &&
 	    (strncmp(optionName, "-sockname", len) == 0))) {
-	if (winSock.getsockname(sock, (LPSOCKADDR) &sockname, &size) == 0) {
+	if (getsockname(sock, (LPSOCKADDR) &sockname, &size) == 0) {
 	    if (len == 0) {
 		Tcl_DStringAppendElement(dsPtr, "-sockname");
 		Tcl_DStringStartSublist(dsPtr);
 	    }
-	    Tcl_DStringAppendElement(dsPtr,
-		    winSock.inet_ntoa(sockname.sin_addr));
+	    Tcl_DStringAppendElement(dsPtr, inet_ntoa(sockname.sin_addr));
 	    if (sockname.sin_addr.s_addr == 0) {
 		hostEntPtr = NULL;
 	    } else {
-		hostEntPtr = winSock.gethostbyaddr(
-			(char *) &(sockname.sin_addr),
+		hostEntPtr = gethostbyaddr((char *) &(sockname.sin_addr),
 			sizeof(peername.sin_addr), AF_INET);
 	    }
 	    if (hostEntPtr != NULL) {
 		Tcl_DStringAppendElement(dsPtr, hostEntPtr->h_name);
 	    } else {
-		Tcl_DStringAppendElement(dsPtr,
-			winSock.inet_ntoa(sockname.sin_addr));
+		Tcl_DStringAppendElement(dsPtr, inet_ntoa(sockname.sin_addr));
 	    }
-	    TclFormatInt(buf, winSock.ntohs(sockname.sin_port));
+	    TclFormatInt(buf, ntohs(sockname.sin_port));
 	    Tcl_DStringAppendElement(dsPtr, buf);
 	    if (len == 0) {
 		Tcl_DStringEndSublist(dsPtr);
@@ -2153,7 +1953,7 @@ TcpGetOptionProc(
 	    }
 	} else {
 	    if (interp) {
-		TclWinConvertWSAError((DWORD) winSock.WSAGetLastError());
+		TclWinConvertWSAError((DWORD) WSAGetLastError());
 		Tcl_AppendResult(interp, "can't get sockname: ",
 			Tcl_PosixError(interp), NULL);
 	    }
@@ -2170,8 +1970,7 @@ TcpGetOptionProc(
 	    Tcl_DStringAppendElement(dsPtr, "-keepalive");
 	}
 	optlen = sizeof(BOOL);
-	winSock.getsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, (char *)&opt,
-		&optlen);
+	getsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, (char *)&opt, &optlen);
 	if (opt) {
 	    Tcl_DStringAppendElement(dsPtr, "1");
 	} else {
@@ -2190,7 +1989,7 @@ TcpGetOptionProc(
 	    Tcl_DStringAppendElement(dsPtr, "-nagle");
 	}
 	optlen = sizeof(BOOL);
-	winSock.getsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (char *)&opt,
+	getsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (char *)&opt,
 		&optlen);
 	if (opt) {
 	    Tcl_DStringAppendElement(dsPtr, "0");
@@ -2493,14 +2292,14 @@ SocketProc(
     case SOCKET_SELECT:
 	infoPtr = (SocketInfo *) lParam;
 	if (wParam == SELECT) {
-	    winSock.WSAAsyncSelect(infoPtr->socket, hwnd,
+	    WSAAsyncSelect(infoPtr->socket, hwnd,
 		    SOCKET_MESSAGE, infoPtr->selectEvents);
 	} else {
 	    /*
 	     * Clear the selection mask
 	     */
 
-	    winSock.WSAAsyncSelect(infoPtr->socket, hwnd, 0, 0);
+	    WSAAsyncSelect(infoPtr->socket, hwnd, 0, 0);
 	}
 	break;
 
@@ -2576,13 +2375,18 @@ InitializeHostName(
 	     * Maintainers are welcome to supply it.
 	     */
 
-	    Tcl_DStringSetLength(&ds, 255);
-	    if (winSock.gethostname(Tcl_DStringValue(&ds),
-		    Tcl_DStringLength(&ds)) == 0) {
+	    Tcl_DString inDs;
+
+	    Tcl_DStringInit(&inDs);
+	    Tcl_DStringSetLength(&inDs, 255);
+	    if (gethostname(Tcl_DStringValue(&inDs),
+			    Tcl_DStringLength(&inDs)) == 0) {
 		Tcl_DStringSetLength(&ds, 0);
 	    } else {
-		Tcl_DStringSetLength(&ds, strlen(Tcl_DStringValue(&ds)));
+		Tcl_ExternalToUtfDString(NULL,
+			Tcl_DStringValue(&inDs), -1, &ds);
 	    }
+	    Tcl_DStringFree(&inDs);
 	}
     }
 
@@ -2630,7 +2434,7 @@ TclWinGetSockOpt(
 	return SOCKET_ERROR;
     }
 
-    return winSock.getsockopt((SOCKET)s, level, optname, optval, optlen);
+    return getsockopt((SOCKET)s, level, optname, optval, optlen);
 }
 
 int
@@ -2651,7 +2455,7 @@ TclWinSetSockOpt(
 	return SOCKET_ERROR;
     }
 
-    return winSock.setsockopt((SOCKET)s, level, optname, optval, optlen);
+    return setsockopt((SOCKET)s, level, optname, optval, optlen);
 }
 
 u_short
@@ -2668,7 +2472,7 @@ TclWinNToHS(
 	return (u_short) -1;
     }
 
-    return winSock.ntohs(netshort);
+    return ntohs(netshort);
 }
 
 struct servent *
@@ -2686,7 +2490,7 @@ TclWinGetServByName(
 	return NULL;
     }
 
-    return winSock.getservbyname(name, proto);
+    return getservbyname(name, proto);
 }
 
 /*

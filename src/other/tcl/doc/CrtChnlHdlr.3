@@ -63,7 +63,7 @@ contain a subset of the bits from the \fImask\fR argument to
 .PP
 Each channel handler is identified by a unique combination of \fIchannel\fR,
 \fIproc\fR and \fIclientData\fR.
-There may be many handlers for a given channel as long as they don't
+There may be many handlers for a given channel as long as they do not
 have the same \fIchannel\fR, \fIproc\fR, and \fIclientData\fR.
 If \fBTcl_CreateChannelHandler\fR is invoked when there is already a handler
 for \fIchannel\fR, \fIproc\fR, and \fIclientData\fR, then no new

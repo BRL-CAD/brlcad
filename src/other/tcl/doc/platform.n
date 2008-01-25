@@ -30,7 +30,7 @@ Whilst Tcl provides the \fBtcl_platform\fR array for identifying the
 current architecture (in particular, the platform and machine
 elements) this is not always sufficient. This is because (on Unix
 machines) \fBtcl_platform\fR reflects the values returned by the
-\fBuname\fR command and these aren't standardized across platforms and
+\fBuname\fR command and these are not standardized across platforms and
 architectures. In addition, on at least one platform (AIX) the
 \fBtcl_platform(machine)\fR contains the CPU serial number.
 .PP

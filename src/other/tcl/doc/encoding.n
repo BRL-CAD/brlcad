@@ -82,10 +82,11 @@ of the original string.  The \fBencoding\fR command can be used to
 convert this string to the expected Japanese Unicode characters.  For
 example,
 .CS
-set s [\fBencoding convertfrom\fR euc-jp "\\xA4\\xCF"]
+set s [\fBencoding convertfrom\fR euc-jp "\exA4\exCF"]
 .CE
-would return the Unicode string "\\u306F", which is the Hiragana
-letter HA.
+would return the Unicode string
+.QW "\eu306F" ,
+which is the Hiragana letter HA.
 
 .SH "SEE ALSO"
 Tcl_GetEncoding(3)

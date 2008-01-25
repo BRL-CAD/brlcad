@@ -10,17 +10,17 @@ clock \- Obtain and manipulate dates and times
 .SH "SYNOPSIS"
 package require \fBTcl 8.5\fR
 .sp
-\fBclock add\fR \fItimeVal\fR ?\fIcount unit...\fR? ?\fI-option value\fR?
+\fBclock add\fR \fItimeVal\fR ?\fIcount unit...\fR? ?\fI\-option value\fR?
 .sp
-\fBclock clicks\fR ?\fI-option\fR?
+\fBclock clicks\fR ?\fI\-option\fR?
 .sp
-\fBclock format\fR \fItimeVal\fR ?\fI-option value\fR...?
+\fBclock format\fR \fItimeVal\fR ?\fI\-option value\fR...?
 .sp
 \fBclock microseconds\fR 
 .sp
 \fBclock milliseconds\fR 
 .sp
-\fBclock scan\fR \fIinputString\fR ?\fI-option value\fR...?
+\fBclock scan\fR \fIinputString\fR ?\fI\-option value\fR...?
 .sp
 \fBclock seconds\fR 
 .sp
@@ -31,27 +31,29 @@ The \fBclock\fR command performs several operations that obtain and
 manipulate values that represent times.  The command supports several
 subcommands that determine what action is carried out by the command.
 .TP
-\fBclock add\fR \fItimeVal\fR ?\fIcount unit...\fR? ?\fI-option value\fR?
+\fBclock add\fR \fItimeVal\fR ?\fIcount unit...\fR? ?\fI\-option value\fR?
 Adds a (possibly negative) offset to a time that is expressed as an
 integer number of seconds.  See \fBCLOCK ARITHMETIC\fR for a full description.
 .TP
-\fBclock clicks\fR ?\fI-option\fR?
-If no \fI-option\fR argument is supplied, returns a high-resolution
+\fBclock clicks\fR ?\fI\-option\fR?
+If no \fI\-option\fR argument is supplied, returns a high-resolution
 time value as a system-dependent integer value.  The unit of the value
 is system-dependent but should be the highest resolution clock available
 on the system such as a CPU cycle counter.  See \fBHIGH RESOLUTION TIMERS\fR for a full description.
-.sp
-If the \fI-option\fR argument is \fI-milliseconds\fR, then the command
+.RS
+.PP
+If the \fI\-option\fR argument is \fI\-milliseconds\fR, then the command
 is synonymous with \fBclock milliseconds\fR (see below).  This
 usage is obsolete, and \fBclock milliseconds\fR is to be
 considered the preferred way of obtaining a count of milliseconds.
-.sp
-If the \fI-option\fR argument is \fI-microseconds\fR, then the command
+.PP
+If the \fI\-option\fR argument is \fI\-microseconds\fR, then the command
 is synonymous with \fBclock microseconds\fR (see below).  This
 usage is obsolete, and \fBclock microseconds\fR is to be
 considered the preferred way of obtaining a count of microseconds.
+.RE
 .TP
-\fBclock format\fR \fItimeVal\fR ?\fI-option value\fR...?
+\fBclock format\fR \fItimeVal\fR ?\fI\-option value\fR...?
 Formats a time that is expressed as an integer number of seconds into a format
 intended for consumption by users or external programs.
 See \fBFORMATTING TIMES\fR for a full description.
@@ -62,7 +64,7 @@ Returns the current time as an integer number of microseconds.  See \fBHIGH RESO
 \fBclock milliseconds\fR 
 Returns the current time as an integer number of milliseconds.  See \fBHIGH RESOLUTION TIMERS\fR for a full description.
 .TP
-\fBclock scan\fR \fIinputString\fR ?\fI-option value\fR...?
+\fBclock scan\fR \fIinputString\fR ?\fI\-option value\fR...?
 Scans a time that is expressed as a character string and produces an
 integer number of seconds.
 See \fBSCANNING TIMES\fR for a full description.
@@ -93,15 +95,16 @@ to identify an interval of time, for example, \fI3 seconds\fR or
 \fI1 year\fR.
 .SS "OPTIONS"
 .TP
-\fB-base\fR time
+\fB\-base\fR time
 Specifies that any relative times present in a \fBclock scan\fR command
 are to be given relative to \fItime\fR.  \fItime\fR must be expressed as
 a count of nominal seconds from the epoch time of 1 January 1970, 00:00 UTC.
 .TP
-\fB-format\fR format
+\fB\-format\fR format
 Specifies the desired output format for \fBclock format\fR or the
 expected input format for \fBclock scan\fR.  The \fIformat\fR string consists
-of any number of characters other than the per-cent sign ('\fI%\fR')
+of any number of characters other than the per-cent sign
+.PQ \fB%\fR
 interspersed with any number of \fIformat groups\fR, which are two-character
 sequences beginning with the per-cent sign.  The permissible format groups,
 and their interpretation, are described under \fBFORMAT GROUPS\fR.
@@ -112,38 +115,41 @@ On \fBclock format\fR, the default format is
 %a %b %d %H:%M:%S %z %Y
 .CE
 .PP
-On \fBclock scan\fR, the lack of a \fI-format\fR option indicates that
-a "free format scan" is requested; see \fBFREE FORM SCAN\fR for a
-description of what happens.
+On \fBclock scan\fR, the lack of a \fI\-format\fR option indicates that a
+.QW "free format scan"
+is requested; see \fBFREE FORM SCAN\fR for a description of what happens.
 .RE
 .TP
-\fB-gmt\fR boolean
+\fB\-gmt\fR boolean
 If \fIboolean\fR is true, specifies that a time specified to \fBclock add\fR,
 \fBclock format\fR or \fBclock scan\fR should be processed in
 UTC.  If \fIboolean\fR is false, the processing defaults to the local time
 zone.  This usage is obsolete; the correct current usage is to
-specify the UTC time zone with '\fB-timezone\fR \fI:UTC\fR' or any of
-the equivalent ways to specify it.
+specify the UTC time zone with
+.QW "\fB\-timezone\fR \fI:UTC\fR"
+or any of the equivalent ways to specify it.
 .TP
-\fB-locale\fR localeName
+\fB\-locale\fR localeName
 Specifies that locale-dependent scanning and formatting (and date arithmetic
 for dates preceding the adoption of the Gregorian calendar) is to be done in
 the locale identified by \fIlocaleName\fR.  The locale name may be any of
 the locales acceptable to the \fBmsgcat\fR package, or it may be the special
 name \fIsystem\fR, which represents the current locale of the process, or
 the null string, which represents Tcl's default locale.
-.sp
+.RS
+.PP
 The effect of locale on scanning and formatting is discussed in the
 descriptions of the individual format groups under \fBFORMAT GROUPS\fR.
 The effect of locale on clock arithmetic is discussed under
 \fBCLOCK ARITHMETIC\fR.
+.RE
 .TP
-\fB-timezone\fR zoneName
+\fB\-timezone\fR zoneName
 Specifies that clock arithmetic, formatting, and scanning are to be done
 according to the rules for the time zone specified by \fIzoneName\fR.
 The permissible values, and their interpretation, are discussed under
 \fBTIME ZONES\fR.
-On subcommands that expect a \fB-timezone\fR argument, the default
+On subcommands that expect a \fB\-timezone\fR argument, the default
 is to use the \fIcurrent time zone\fR.  The current time zone is
 determined, in order of preference, by:
 .RS
@@ -163,7 +169,7 @@ years 1902 to 2037) that can be represented in a 32-bit integer.
 The \fBclock add\fR command performs clock arithmetic on a value
 (expressed as nominal seconds from the epoch time of 1 January 1970, 00:00 UTC)
 given as its first argument.  The remaining arguments (other than the
-possible \fB-timezone\fR, \fB-locale\fR and \fB-gmt\fR options)
+possible \fB\-timezone\fR, \fB\-locale\fR and \fB\-gmt\fR options)
 are integers and keywords in alternation, where the keywords are chosen
 from \fBseconds\fR, \fBminutes\fR, \fBhours\fR,
 \fBdays\fR, \fBweeks\fR, \fBmonths\fR, or \fByears\fR, or
@@ -190,11 +196,11 @@ that observe summer time (Daylight Saving Time).  For example,
 the following code sets the value of \fBx\fR to \fB04:00:00\fR because
 the clock has changed in the interval in question.
 .CS
-set s [\fBclock scan\fR {2004-10-30 05:00:00} \\
-           -format {%Y-%m-%d %H:%M:%S} \\
+set s [\fBclock scan\fR {2004-10-30 05:00:00} \e
+           -format {%Y-%m-%d %H:%M:%S} \e
            -timezone :America/New_York]
 set a [\fBclock add\fR $s 24 hours -timezone :America/New_York]
-set x [\fBclock format\fR $a \\
+set x [\fBclock format\fR $a \e
            -format {%H:%M:%S} -timezone :America/New_York]
 .CE
 .PP
@@ -210,11 +216,11 @@ the time changes at the start or end of summer time (Daylight Saving Time)
 results in the \fIsame local time\fR on the day in question.  For
 instance, the following code sets the value of \fBx\fR to \fB05:00:00\fR.
 .CS
-set s [\fBclock scan\fR {2004-10-30 05:00:00} \\
-           -format {%Y-%m-%d %H:%M:%S} \\
+set s [\fBclock scan\fR {2004-10-30 05:00:00} \e
+           -format {%Y-%m-%d %H:%M:%S} \e
            -timezone :America/New_York]
 set a [\fBclock add\fR $s 1 day -timezone :America/New_York]
-set x [\fBclock format\fR $a \\
+set x [\fBclock format\fR $a \e
            -format {%H:%M:%S} -timezone :America/New_York]
 .CE
 .PP
@@ -225,11 +231,11 @@ Daylight Saving Time change using US rules), the time is converted
 as if the clock had not changed.  Thus, the following code
 will set the value of \fBx\fR to \fB03:30:00\fR.
 .CS
-set s [\fBclock scan\fR {2004-04-03 02:30:00} \\
-           -format {%Y-%m-%d %H:%M:%S} \\
+set s [\fBclock scan\fR {2004-04-03 02:30:00} \e
+           -format {%Y-%m-%d %H:%M:%S} \e
            -timezone :America/New_York]
 set a [\fBclock add\fR $s 1 day -timezone :America/New_York]
-set x [\fBclock format\fR $a \\
+set x [\fBclock format\fR $a \e
            -format {%H:%M:%S} -timezone :America/New_York]
 .CE
 .PP
@@ -284,70 +290,75 @@ expressed in seconds from the epoch time of 1 January 1970, 00:00 UTC,
 as returned by \fBclock seconds\fR, \fBclock scan\fR, \fBclock add\fR,
 \fBfile atime\fR or \fBfile mtime\fR.
 .PP
-If a \fB-format\fR option is present, the following argument is
+If a \fB\-format\fR option is present, the following argument is
 a string that specifies how the date and time are to be formatted.
 The string consists
-of any number of characters other than the per-cent sign ('\fI%\fR')
+of any number of characters other than the per-cent sign
+.PQ \fB%\fR
 interspersed with any number of \fIformat groups\fR, which are two-character
 sequences beginning with the per-cent sign.  The permissible format groups,
 and their interpretation, are described under \fBFORMAT GROUPS\fR.
 .PP
-If a \fB-timezone\fR option is present, the following
+If a \fB\-timezone\fR option is present, the following
 argument is a string that specifies the time zone in which the date and time
-are to be formatted.  As an alternative to \fB-timezone\fR \fI:UTC\fR,
-the obsolete usage \fB-gmt\fR \fItrue\fR may be used.  See
+are to be formatted.  As an alternative to
+.QW "\fB\-timezone\fR \fI:UTC\fR" ,
+the obsolete usage
+.QW "\fB\-gmt\fR \fItrue\fR"
+may be used.  See
 \fBTIME ZONES\fR for the permissible variants for the time zone.
 .PP
-If a \fB-locale\fR option is present, the following argument is
+If a \fB\-locale\fR option is present, the following argument is
 a string that specifies the locale in which the time is to be formatted,
 in the same format that is used for the \fBmsgcat\fR package.  Note
-that the default, if \fB-locale\fR is not specified, is the root locale
+that the default, if \fB\-locale\fR is not specified, is the root locale
 \fB{}\fR rather than the current locale.  The current locale may
-be obtained by using \fB-locale\fR \fBcurrent\fR.
+be obtained by using \fB\-locale\fR \fBcurrent\fR.
 In addition, some platforms support a \fBsystem\fR locale that
 reflects the user's current choices.  For instance, on Windows, the
 format that the user has selected from dates and times in the Control
 Panel can be obtained by using the \fBsystem\fR locale.  On
 platforms that do not define a user selection of date and time formats
-separate from \fBLC_TIME\fR, \fB-locale\fR \fBsystem\fR is
-synonymous with \fB-locale\fR \fBcurrent\fR.
+separate from \fBLC_TIME\fR, \fB\-locale\fR \fBsystem\fR is
+synonymous with \fB\-locale\fR \fBcurrent\fR.
 .SH "SCANNING TIMES"
 The \fBclock scan\fR command accepts times that are formatted as
 strings and converts them to counts of seconds from the epoch time
-of 1 January 1970, 00:00 UTC.  It normally takes a \fB-format\fR
+of 1 January 1970, 00:00 UTC.  It normally takes a \fB\-format\fR
 option that is followed by a string describing
 the expected format of the input.  (See
 \fBFREE FORM SCAN\fR for the effect of \fBclock scan\fR
 without such an argument.)  The string consists of any number of
-characters other than the per-cent sign ('\fI%\fR'),
+characters other than the per-cent sign
+.PQ \fB%\fR "" ,
 interspersed with any number of \fIformat groups\fR, which are two-character
 sequences beginning with the per-cent sign.  The permissible format groups,
 and their interpretation, are described under \fBFORMAT GROUPS\fR.
 .PP
-If a \fB-timezone\fR option is present, the following
+If a \fB\-timezone\fR option is present, the following
 argument is a string that specifies the time zone in which the date and time
-are to be interpreted.  As an alternative to \fB-timezone\fR \fI:UTC\fR,
-the obsolete usage \fB-gmt\fR \fItrue\fR may be used.  See
+are to be interpreted.  As an alternative to \fB\-timezone\fR \fI:UTC\fR,
+the obsolete usage \fB\-gmt\fR \fItrue\fR may be used.  See
 \fBTIME ZONES\fR for the permissible variants for the time zone.
 .PP
-If a \fB-locale\fR option is present, the following argument is
+If a \fB\-locale\fR option is present, the following argument is
 a string that specifies the locale in which the time is to be interpreted,
 in the same format that is used for the \fBmsgcat\fR package.  Note
-that the default, if \fB-locale\fR is not specified, is the root locale
+that the default, if \fB\-locale\fR is not specified, is the root locale
 \fB{}\fR rather than the current locale.  The current locale may
-be obtained by using \fB-locale\fR \fBcurrent\fR.
+be obtained by using \fB\-locale\fR \fBcurrent\fR.
 In addition, some platforms support a \fBsystem\fR locale that
 reflects the user's current choices.  For instance, on Windows, the
 format that the user has selected from dates and times in the Control
 Panel can be obtained by using the \fBsystem\fR locale.  On
 platforms that do not define a user selection of date and time formats
-separate from \fBLC_TIME\fR, \fB-locale\fR \fBsystem\fR is
-synonymous with \fB-locale\fR \fBcurrent\fR.
+separate from \fBLC_TIME\fR, \fB\-locale\fR \fBsystem\fR is
+synonymous with \fB\-locale\fR \fBcurrent\fR.
 .PP
-If a \fB-base\fR option is present, the following argument is
+If a \fB\-base\fR option is present, the following argument is
 a time (expressed in seconds from the epoch time) that is used as
 a \fIbase time\fR for interpreting relative times.  If no
-\fB-base\fR option is present, the base time is the current time.
+\fB\-base\fR option is present, the base time is the current time.
 .PP
 Scanning of times in fixed format works by determining three things:
 the date, the time of day, and the time zone.  These three are then
@@ -422,7 +433,7 @@ combines with the hour and minute.
 If the string contains neither a \fB%s\fR format group nor
 a group specifying the hour of the day, then midnight (\fB00:00\fR, the start
 of the given date) is used.
-The time zone is determined by either the \fB-timezone\fR or \fB-gmt\fR
+The time zone is determined by either the \fB\-timezone\fR or \fB\-gmt\fR
 options, or by using the current time zone.
 .PP
 If a format string lacks a \fB%z\fR or \fB%Z\fR format group,
@@ -463,7 +474,7 @@ any unique prefix of either form).
 \fB%c\fR
 On output, receives a localized representation of date and time of day;
 the localized representation is expected to use the Gregorian calendar.
-On input, matches whatever %c produces.
+On input, matches whatever \fB%c\fR produces.
 .TP
 \fB%C\fR
 On output, receives the number of the century in Indo-Arabic numerals.
@@ -489,7 +500,7 @@ whitespace, that are expected to be the number of the day of the month.
 \fB%Ec\fR
 On output, produces a locale-dependent representation of the date and
 time of day in the locale's alternative calendar.  On input, matches
-whatever %Ec produces.  The locale's alternative calendar need not
+whatever \fB%Ec\fR produces.  The locale's alternative calendar need not
 be the Gregorian calendar.
 .TP
 \fB%EC\fR
@@ -509,13 +520,13 @@ Common Era.
 \fB%Ex\fR
 On output, produces a locale-dependent representation of the date
 in the locale's alternative calendar.  On input, matches
-whatever %Ex produces.  The locale's alternative calendar need not
+whatever \fB%Ex\fR produces.  The locale's alternative calendar need not
 be the Gregorian calendar.
 .TP
 \fB%EX\fR
 On output, produces a locale-dependent representation of the
 time of day in the locale's alternative numerals.  On input, matches
-whatever %EX produces.
+whatever \fB%EX\fR produces.
 .TP
 \fB%Ey\fR
 On output, produces a locale-dependent number of the year of the era
@@ -587,7 +598,9 @@ and interprets them as the number of the month.
 .TP
 \fB%Od\fR, \fB%Oe\fR, \fB%OH\fR, \fB%OI\fR, \fB%Ok\fR, \fB%Ol\fR, \fB%Om\fR, \fB%OM\fR, \fB%OS\fR, \fB%Ou\fR, \fB%Ow\fR, \fB%Oy\fR
 All of these format groups are synonymous with their counterparts
-without the '\fBO\fR', except that the string is produced and parsed in the
+without the
+.QW \fBO\fR ,
+except that the string is produced and parsed in the
 locale-dependent alternative numerals.
 .TP
 \fB%p\fR
@@ -635,7 +648,7 @@ Synonymous with \fB%H:%M:%S\fR.
 .TP
 \fB%u\fR
 On output, produces the number of the day of the week
-(\fB1\fR-Monday, \fB7\fR-Sunday). On input, accepts a single digit and
+(\fB1\fR\(->Monday, \fB7\fR\(->Sunday). On input, accepts a single digit and
 interprets it as the day of the week. Sunday may be either \fB0\fR or
 \fB7\fR.
 .TP
@@ -694,7 +707,7 @@ week number \fB%V\fR; programs should use \fB%G\fR for that purpose.
 .TP
 \fB%z\fR
 On output, produces the current time zone, expressed in hours and
-minutes east (+hhmm) or west (-hhmm) of Greenwich. On input, accepts a
+minutes east (+hhmm) or west (\-hhmm) of Greenwich. On input, accepts a
 time zone specifier (see \fBTIME ZONES\fR below) that will be used to
 determine the time zone.
 .TP
@@ -709,11 +722,15 @@ Brazilian Standard Time. It is recommended that date/time strings for
 use by computers use numeric time zones instead.
 .TP
 \fB%%\fR
-On output, produces a literal '\fB%\fR' character. On input, matches
-a literal '\fB%\fR' character.
+On output, produces a literal
+.QW \fB%\fR
+character. On input, matches a literal
+.QW \fB%\fR
+character.
 .TP
 \fB%+\fR
-Synonymous with '\fB%a %b %e %H:%M:%S %Z %Y\fR'.
+Synonymous with
+.QW "\fB%a %b %e %H:%M:%S %Z %Y\fR" .
 .SH "TIME ZONES"
 When the \fBclock\fR command is processing a local time, it has several
 possible sources for the time zone to use.  In order of preference, they
@@ -722,8 +739,8 @@ are:
 A time zone specified inside a string being parsed and matched by a \fB%z\fR
 or \fB%Z\fR format group.
 .IP [2]
-A time zone specified with the \fB-timezone\fR option to the \fBclock\fR
-command (or, equivalently, by \fB-gmt\fR \fB1\fR).
+A time zone specified with the \fB\-timezone\fR option to the \fBclock\fR
+command (or, equivalently, by \fB\-gmt\fR \fB1\fR).
 .IP [3]
 A time zone specified in an environment variable \fBTCL_TZ\fR.
 .IP [4]
@@ -759,10 +776,13 @@ that give the rules for various locales.  A complete list
 of the location names is too lengthy to be listed here.
 On most Tcl installations, the definitions of the locations
 are to be found in named files in the directory
- "\fI/no_backup/tools/lib/tcl8.5/clock/tzdata\fR".  On some Unix systems, these
-files are omitted, and the definitions are instead
-obtained from system files in "\fI/usr/share/zoneinfo\fR",
- "\fI/usr/share/lib/zoneinfo\fR" or "\fI/usr/local/etc/zoneinfo\fR".
+.QW "\fI/no_backup/tools/lib/tcl8.5/clock/tzdata\fR" .
+On some Unix systems, these files are omitted, and the definitions are
+instead obtained from system files in
+.QW "\fI/usr/share/zoneinfo\fR" ,
+.QW "\fI/usr/share/lib/zoneinfo\fR"
+or
+.QW "\fI/usr/local/etc/zoneinfo\fR" .
 As a special case, the name \fB:localtime\fR refers to
 the local time zone as defined by the C library.
 .PP
@@ -784,17 +804,18 @@ Developers wishing to localize the date and time formatting and parsing
 are referred to \fIhttp://tip.tcl.tk/173\fR for a
 specification.
 .SH "FREE FORM SCAN"
-If the \fBclock scan\fR command is invoked without a \fB-format\fR
+If the \fBclock scan\fR command is invoked without a \fB\-format\fR
 option, then it requests a \fIfree-form scan.\fR  \fI
 This form of scan is deprecated.\fR  The reason for the deprecation
-is that there are too many ambiguities. (Does the string '2000'
+is that there are too many ambiguities. (Does the string
+.QW 2000
 represent a year, a time of day, or a quantity?)  No set of rules
 for interpreting free-form dates and times has been found to
 give unsurprising results in all cases.
 .PP
-If free-form scan is used, only the \fB-base\fR and \fB-gmt\fR
-options are accepted.  The \fB-timezone\fR and \fB-locale\fR
-options will result in an error if \fB-format\fR is not supplied.
+If free-form scan is used, only the \fB\-base\fR and \fB\-gmt\fR
+options are accepted.  The \fB\-timezone\fR and \fB\-locale\fR
+options will result in an error if \fB\-format\fR is not supplied.
 .PP
 For the benefit of users who need to understand legacy code that
 uses free-form scan, the documentation for how free-form scan
@@ -803,13 +824,13 @@ interprets a string is included here:
 If only a time is
 specified, the current date is assumed.  If the \fIinputString\fR
 does not contain a
-time zone mnemonic, the local time zone is assumed, unless the \fB-gmt\fR
+time zone mnemonic, the local time zone is assumed, unless the \fB\-gmt\fR
 argument is true, in which case the clock value is calculated assuming
 that the specified time is relative to Greenwich Mean Time.
-\fB-gmt\fR, if specified, affects only the computed time value; it does not
-impact the interpretation of \fB-base\fR.
+\fB\-gmt\fR, if specified, affects only the computed time value; it does not
+impact the interpretation of \fB\-base\fR.
 .PP
-If the \fB-base\fR flag is specified, the next argument should contain
+If the \fB\-base\fR flag is specified, the next argument should contain
 an integer clock value.  Only the date in this value is used, not the
 time.  This is useful for determining the time on a specific day or
 doing other date-relative conversions.
@@ -825,24 +846,31 @@ a 24-hour clock.
 .TP
 \fIdate\fR
 A specific month and day with optional year.  The
-acceptable formats are "\fBmm/dd\fR?\fB/yy\fR?",
- "\fBmonthname dd\fR?\fB, yy\fR?",
- "\fBday, dd monthname \fR?\fByy\fR?",
- "\fBdd monthname yy\fR",
- "?\fBCC\fR?\fByymmdd\fR", and
- "\fBdd-monthname-\fR?\fBCC\fR?\fByy\fR".
+acceptable formats are
+.QW "\fBmm/dd\fR?\fB/yy\fR?" ,
+.QW "\fBmonthname dd\fR?\fB, yy\fR?" ,
+.QW "\fBday, dd monthname \fR?\fByy\fR?" ,
+.QW "\fBdd monthname yy\fR" ,
+.QW "?\fBCC\fR?\fByymmdd\fR" ,
+and
+.QW "\fBdd-monthname-\fR?\fBCC\fR?\fByy\fR" .
 The default year is the current year.  If the year is less
 than 100, we treat the years 00-68 as 2000-2068 and the years 69-99
 as 1969-1999.  Not all platforms can represent the years 38-70, so
 an error may result if these years are used.
 .TP
 \fIISO 8601 point-in-time\fR
-An ISO 8601 point-in-time specification, such as \fBCCyymmddThhmmss\fR,
-where \fBT\fR is the literal T, "\fBCCyymmdd hhmmss\fR", or
-\fBCCyymmddThh:mm:ss\fR. Note that only these three formats are accepted.
+An ISO 8601 point-in-time specification, such as
+.QW \fICCyymmdd\fBT\fIhhmmss\fR,
+where \fBT\fR is the literal
+.QW T ,
+.QW "\fICCyymmdd hhmmss\fR" ,
+or
+.QW \fICCyymmdd\fBT\fIhh:mm:ss\fR .
+Note that only these three formats are accepted.
 The command does \fInot\fR accept the full range of point-in-time
 specifications specified in ISO8601.  Other formats can be recognized by
-giving an explicit \fI-format\fR option to the \fBclock scan\fR command.
+giving an explicit \fI\-format\fR option to the \fBclock scan\fR command.
 .TP
 \fIrelative time\fR
 A specification relative to the current time.  The format is \fBnumber

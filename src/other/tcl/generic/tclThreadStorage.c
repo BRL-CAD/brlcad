@@ -192,7 +192,7 @@ ThreadStorageGetHashTable(
 {
     int index = PTR2UINT(id) % STORAGE_CACHE_SLOTS;
     Tcl_HashEntry *hPtr;
-    int new;
+    int isNew;
 
     /*
      * It's important that we pick up the hash table pointer BEFORE comparing
@@ -241,7 +241,7 @@ ThreadStorageGetHashTable(
 	     */
 
 	    hPtr = Tcl_CreateHashEntry(&threadStorageHashTable, (char *) id,
-		    &new);
+		    &isNew);
 
 	    if (hPtr == NULL) {
 		Tcl_Panic("Tcl_CreateHashEntry failed from "

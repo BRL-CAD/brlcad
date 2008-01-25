@@ -56,7 +56,9 @@ int
 .AS Tcl_Namespace **namespacePtrPtr in/out
 .AP Tcl_Interp *interp in/out
 The interpreter in which the ensemble is to be created or found. Also
-where error result messages are written.
+where error result messages are written. The functions whose names
+start with \fBTcl_GetEnsemble\fR may have a NULL for the \fIinterp\fR,
+but all other functions must not.
 .AP "const char" *name in
 The name of the ensemble command to be created.
 .AP Tcl_Namespace *namespacePtr in

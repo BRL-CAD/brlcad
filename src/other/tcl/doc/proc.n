@@ -44,7 +44,7 @@ or the argument's default value.
 Arguments with default values need not be
 specified in a procedure invocation.  However, there must be enough
 actual arguments for all the
-formal arguments that don't have defaults, and there must not be any extra
+formal arguments that do not have defaults, and there must not be any extra
 actual arguments.  There is one special case to permit procedures with
 variable numbers of arguments.  If the last formal argument has the name
 \fBargs\fR, then a call to the procedure may contain more actual arguments
@@ -64,7 +64,7 @@ the \fBvariable\fR command or the \fBupvar\fR command.
 .PP
 The \fBproc\fR command returns an empty string.  When a procedure is
 invoked, the procedure's return value is the value specified in a
-\fBreturn\fR command.  If the procedure doesn't execute an explicit
+\fBreturn\fR command.  If the procedure does not execute an explicit
 \fBreturn\fR, then its return value is the value of the last command
 executed in the procedure's body.
 If an error occurs while executing the procedure

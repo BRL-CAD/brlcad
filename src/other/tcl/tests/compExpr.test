@@ -37,7 +37,7 @@ test compExpr-1.3 {TclCompileExpr procedure, error compiling expr} -body {
 } -match glob -result {1 {* "*foo"}}
 
 test compExpr-1.4 {TclCompileExpr procedure, expr has no operators} {
-    set a {000123}
+    set a {0o00123}
     expr {$a}
 } 83
 
@@ -283,7 +283,7 @@ test compExpr-4.7 {CompileCondExpr procedure, simple "false" clause} {
 } nope
 test compExpr-4.8 {CompileCondExpr procedure, convert "false" clause to numeric} {
     catch {unset a}
-    set a 00123
+    set a 0o0123
     expr {0? 42 : $a}
 } 83
 test compExpr-4.9 {CompileCondExpr procedure, error in "false" clause} {

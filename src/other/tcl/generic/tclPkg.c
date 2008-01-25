@@ -44,8 +44,8 @@ typedef struct PkgAvail {
 typedef struct Package {
     char *version;		/* Version that has been supplied in this
 				 * interpreter via "package provide"
-				 * (malloc'ed). NULL means the package
-				 * doesn't exist in this interpreter yet. */
+				 * (malloc'ed). NULL means the package doesn't
+				 * exist in this interpreter yet. */
     PkgAvail *availPtr;		/* First in list of all available versions of
 				 * this package. */
     ClientData clientData;	/* Client data. */
@@ -56,23 +56,23 @@ typedef struct Package {
  */
 
 static int		CheckVersionAndConvert(Tcl_Interp *interp,
-			    CONST char *string, char **internal, int *stable);
+			    const char *string, char **internal, int *stable);
 static int		CompareVersions(char *v1i, char *v2i,
 			    int *isMajorPtr);
 static int		CheckRequirement(Tcl_Interp *interp,
-			    CONST char *string);
+			    const char *string);
 static int		CheckAllRequirements(Tcl_Interp *interp, int reqc,
-			    Tcl_Obj *CONST reqv[]);
-static int		RequirementSatisfied(char *havei, CONST char *req);
+			    Tcl_Obj *const reqv[]);
+static int		RequirementSatisfied(char *havei, const char *req);
 static int		SomeRequirementSatisfied(char *havei, int reqc,
-			    Tcl_Obj *CONST reqv[]);
+			    Tcl_Obj *const reqv[]);
 static void		AddRequirementsToResult(Tcl_Interp *interp, int reqc,
-			    Tcl_Obj *CONST reqv[]);
+			    Tcl_Obj *const reqv[]);
 static void		AddRequirementsToDString(Tcl_DString *dstring,
-			    int reqc, Tcl_Obj *CONST reqv[]);
-static Package *	FindPackage(Tcl_Interp *interp, CONST char *name);
-static const char *	PkgRequireCore(Tcl_Interp *interp, CONST char *name,
-			    int reqc, Tcl_Obj *CONST reqv[],
+			    int reqc, Tcl_Obj *const reqv[]);
+static Package *	FindPackage(Tcl_Interp *interp, const char *name);
+static const char *	PkgRequireCore(Tcl_Interp *interp, const char *name,
+			    int reqc, Tcl_Obj *const reqv[],
 			    ClientData *clientDataPtr);
 
 /*
@@ -112,8 +112,8 @@ int
 Tcl_PkgProvide(
     Tcl_Interp *interp,		/* Interpreter in which package is now
 				 * available. */
-    CONST char *name,		/* Name of package. */
-    CONST char *version)	/* Version string for package. */
+    const char *name,		/* Name of package. */
+    const char *version)	/* Version string for package. */
 {
     return Tcl_PkgProvideEx(interp, name, version, NULL);
 }
@@ -122,8 +122,8 @@ int
 Tcl_PkgProvideEx(
     Tcl_Interp *interp,		/* Interpreter in which package is now
 				 * available. */
-    CONST char *name,		/* Name of package. */
-    CONST char *version,	/* Version string for package. */
+    const char *name,		/* Name of package. */
+    const char *version,	/* Version string for package. */
     ClientData clientData)	/* clientdata for this package (normally used
 				 * for C callback function table) */
 {
@@ -188,12 +188,12 @@ Tcl_PkgProvideEx(
  *----------------------------------------------------------------------
  */
 
-CONST char *
+const char *
 Tcl_PkgRequire(
     Tcl_Interp *interp,		/* Interpreter in which package is now
 				 * available. */
-    CONST char *name,		/* Name of desired package. */
-    CONST char *version,	/* Version string for desired version; NULL
+    const char *name,		/* Name of desired package. */
+    const char *version,	/* Version string for desired version; NULL
 				 * means use the latest version available. */
     int exact)			/* Non-zero means that only the particular
 				 * version given is acceptable. Zero means use
@@ -202,12 +202,12 @@ Tcl_PkgRequire(
     return Tcl_PkgRequireEx(interp, name, version, exact, NULL);
 }
 
-CONST char *
+const char *
 Tcl_PkgRequireEx(
     Tcl_Interp *interp,		/* Interpreter in which package is now
 				 * available. */
-    CONST char *name,		/* Name of desired package. */
-    CONST char *version,	/* Version string for desired version; NULL
+    const char *name,		/* Name of desired package. */
+    const char *version,	/* Version string for desired version; NULL
 				 * means use the latest version available. */
     int exact,			/* Non-zero means that only the particular
 				 * version given is acceptable. Zero means use
@@ -291,12 +291,14 @@ Tcl_PkgRequireEx(
 	return NULL;
     }
 
-    /* Translate between old and new API, and defer to the new function. */
+    /*
+     * Translate between old and new API, and defer to the new function.
+     */
 
     if (version == NULL) {
 	result = PkgRequireCore(interp, name, 0, NULL, clientDataPtr);
     } else {
-	if (exact && TCL_OK 
+	if (exact && TCL_OK
 		!= CheckVersionAndConvert(interp, version, NULL, NULL)) {
 	    return NULL;
 	}
@@ -316,10 +318,10 @@ int
 Tcl_PkgRequireProc(
     Tcl_Interp *interp,		/* Interpreter in which package is now
 				 * available. */
-    CONST char *name,		/* Name of desired package. */
+    const char *name,		/* Name of desired package. */
     int reqc,			/* Requirements constraining the desired
 				 * version. */
-    Tcl_Obj *CONST reqv[],	/* 0 means to use the latest version
+    Tcl_Obj *const reqv[],	/* 0 means to use the latest version
 				 * available. */
     ClientData *clientDataPtr)
 {
@@ -337,10 +339,10 @@ static const char *
 PkgRequireCore(
     Tcl_Interp *interp,		/* Interpreter in which package is now
 				 * available. */
-    CONST char *name,		/* Name of desired package. */
+    const char *name,		/* Name of desired package. */
     int reqc,			/* Requirements constraining the desired
 				 * version. */
-    Tcl_Obj *CONST reqv[],	/* 0 means to use the latest version
+    Tcl_Obj *const reqv[],	/* 0 means to use the latest version
 				 * available. */
     ClientData *clientDataPtr)
 {
@@ -349,11 +351,9 @@ PkgRequireCore(
     PkgAvail *availPtr, *bestPtr, *bestStablePtr;
     char *availVersion, *bestVersion;
 				/* Internal rep. of versions */
-    int availStable;
-    char *script;
-    int code, satisfies, pass;
+    int availStable, code, satisfies, pass;
+    char *script, *pkgVersionI;
     Tcl_DString command;
-    char *pkgVersionI;
 
     /*
      * It can take up to three passes to find the package: one pass to run the
@@ -368,9 +368,9 @@ PkgRequireCore(
 	    break;
 	}
 
-	/* 
-	 * Check whether we're already attempting to load some version
-	 * of this package (circular dependency detection).
+	/*
+	 * Check whether we're already attempting to load some version of this
+	 * package (circular dependency detection).
 	 */
 
 	if (pkgPtr->clientData != NULL) {
@@ -408,7 +408,10 @@ PkgRequireCore(
 	    if (bestPtr != NULL) {
 		int res = CompareVersions(availVersion, bestVersion, NULL);
 
-		/* Note: Use internal reps! */
+		/*
+		 * Note: Use internal reps!
+		 */
+
 		if (res <= 0) {
 		    /*
 		     * The version of the package sought is not as good as the
@@ -474,7 +477,7 @@ PkgRequireCore(
 	     * will still exist when the script completes.
 	     */
 
-	    CONST char *versionToProvide = bestPtr->version;
+	    const char *versionToProvide = bestPtr->version;
 	    script = bestPtr->script;
 
 	    pkgPtr->clientData = (ClientData) versionToProvide;
@@ -494,7 +497,6 @@ PkgRequireCore(
 			    " provided", NULL);
 		} else {
 		    char *pvi, *vi;
-		    int res;
 
 		    if (CheckVersionAndConvert(interp, pkgPtr->version, &pvi,
 			    NULL) != TCL_OK) {
@@ -504,10 +506,10 @@ PkgRequireCore(
 			ckfree(pvi);
 			code = TCL_ERROR;
 		    } else {
-			res = CompareVersions(pvi, vi, NULL);
+			int res = CompareVersions(pvi, vi, NULL);
+
 			ckfree(pvi);
 			ckfree(vi);
-
 			if (res != 0) {
 			    code = TCL_ERROR;
 			    Tcl_AppendResult(interp,
@@ -520,10 +522,11 @@ PkgRequireCore(
 		}
 	    } else if (code != TCL_ERROR) {
 		Tcl_Obj *codePtr = Tcl_NewIntObj(code);
+
 		Tcl_ResetResult(interp);
-		Tcl_AppendResult(interp, "attempt to provide package ",
-			name, " ", versionToProvide, " failed: "
-			"bad return code: ", TclGetString(codePtr), NULL);
+		Tcl_AppendResult(interp, "attempt to provide package ", name,
+			" ", versionToProvide, " failed: bad return code: ",
+			TclGetString(codePtr), NULL);
 		TclDecrRefCount(codePtr);
 		code = TCL_ERROR;
 	    }
@@ -650,12 +653,12 @@ PkgRequireCore(
  *----------------------------------------------------------------------
  */
 
-CONST char *
+const char *
 Tcl_PkgPresent(
     Tcl_Interp *interp,		/* Interpreter in which package is now
 				 * available. */
-    CONST char *name,		/* Name of desired package. */
-    CONST char *version,	/* Version string for desired version; NULL
+    const char *name,		/* Name of desired package. */
+    const char *version,	/* Version string for desired version; NULL
 				 * means use the latest version available. */
     int exact)			/* Non-zero means that only the particular
 				 * version given is acceptable. Zero means use
@@ -664,12 +667,12 @@ Tcl_PkgPresent(
     return Tcl_PkgPresentEx(interp, name, version, exact, NULL);
 }
 
-CONST char *
+const char *
 Tcl_PkgPresentEx(
     Tcl_Interp *interp,		/* Interpreter in which package is now
 				 * available. */
-    CONST char *name,		/* Name of desired package. */
-    CONST char *version,	/* Version string for desired version; NULL
+    const char *name,		/* Name of desired package. */
+    const char *version,	/* Version string for desired version; NULL
 				 * means use the latest version available. */
     int exact,			/* Non-zero means that only the particular
 				 * version given is acceptable. Zero means use
@@ -687,15 +690,20 @@ Tcl_PkgPresentEx(
     if (hPtr) {
 	pkgPtr = Tcl_GetHashValue(hPtr);
 	if (pkgPtr->version != NULL) {
-
 	    /*
 	     * At this point we know that the package is present. Make sure
 	     * that the provided version meets the current requirement by
 	     * calling Tcl_PkgRequireEx() to check for us.
 	     */
 
-	    return Tcl_PkgRequireEx(interp, name, version, exact,
-		    clientDataPtr);
+	    const char *foundVersion = Tcl_PkgRequireEx(interp, name, version,
+		    exact, clientDataPtr);
+
+	    if (foundVersion == NULL) {
+		Tcl_SetErrorCode(interp, "TCL", "LOOKUP", "PACKAGE", name,
+			NULL);
+	    }
+	    return foundVersion;
 	}
     }
 
@@ -705,6 +713,7 @@ Tcl_PkgPresentEx(
     } else {
 	Tcl_AppendResult(interp, "package ", name, " is not present", NULL);
     }
+    Tcl_SetErrorCode(interp, "TCL", "LOOKUP", "PACKAGE", name, NULL);
     return NULL;
 }
 
@@ -731,9 +740,9 @@ Tcl_PackageObjCmd(
     ClientData dummy,		/* Not used. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST objv[])	/* Argument objects. */
+    Tcl_Obj *const objv[])	/* Argument objects. */
 {
-    static CONST char *pkgOptions[] = {
+    static const char *pkgOptions[] = {
 	"forget",  "ifneeded", "names",   "prefer",   "present",
 	"provide", "require",  "unknown", "vcompare", "versions",
 	"vsatisfies", NULL
@@ -750,7 +759,7 @@ Tcl_PackageObjCmd(
     Tcl_HashEntry *hPtr;
     Tcl_HashSearch search;
     Tcl_HashTable *tablePtr;
-    CONST char *version;
+    const char *version;
     char *argv2, *argv3, *argv4, *iva = NULL, *ivb = NULL;
 
     if (objc < 2) {
@@ -815,7 +824,6 @@ Tcl_PackageObjCmd(
 
 	for (availPtr = pkgPtr->availPtr, prevPtr = NULL; availPtr != NULL;
 		prevPtr = availPtr, availPtr = availPtr->nextPtr) {
-
 	    if (CheckVersionAndConvert(interp, availPtr->version, &avi,
 		    NULL) != TCL_OK) {
 		ckfree(argv3i);
@@ -1007,7 +1015,7 @@ Tcl_PackageObjCmd(
 	break;
     }
     case PKG_PREFER: {
-	static CONST char *pkgPreferOptions[] = {
+	static const char *pkgPreferOptions[] = {
 	    "latest", "stable", NULL
 	};
 
@@ -1137,7 +1145,7 @@ Tcl_PackageObjCmd(
 static Package *
 FindPackage(
     Tcl_Interp *interp,		/* Interpreter to use for package lookup. */
-    CONST char *name)		/* Name of package to fine. */
+    const char *name)		/* Name of package to fine. */
 {
     Interp *iPtr = (Interp *) interp;
     Tcl_HashEntry *hPtr;
@@ -1227,13 +1235,13 @@ TclFreePackageInfo(
 static int
 CheckVersionAndConvert(
     Tcl_Interp *interp,		/* Used for error reporting. */
-    CONST char *string,		/* Supposedly a version number, which is
+    const char *string,		/* Supposedly a version number, which is
 				 * groups of decimal digits separated by
 				 * dots. */
     char **internal,		/* Internal normalized representation */
     int *stable)		/* Flag: Version is (un)stable. */
 {
-    CONST char *p = string;
+    const char *p = string;
     char prevChar;
     int hasunstable = 0;
     /*
@@ -1481,7 +1489,10 @@ CompareVersions(
 	if (*s1 != 0) {
 	    s1++;
 	} else if (*s2 == 0) {
-	    /* s1, s2 both at the end => identical */
+	    /*
+	     * s1, s2 both at the end => identical
+	     */
+
 	    res = 0;
 	    break;
 	}
@@ -1520,7 +1531,7 @@ static int
 CheckAllRequirements(
     Tcl_Interp *interp,
     int reqc,			/* Requirements to check. */
-    Tcl_Obj *CONST reqv[])
+    Tcl_Obj *const reqv[])
 {
     int i;
 
@@ -1553,7 +1564,7 @@ CheckAllRequirements(
 static int
 CheckRequirement(
     Tcl_Interp *interp,		/* Used for error reporting. */
-    CONST char *string)		/* Supposedly a requirement. */
+    const char *string)		/* Supposedly a requirement. */
 {
     /*
      * Syntax of requirement = version
@@ -1566,7 +1577,7 @@ CheckRequirement(
     dash = strchr(string, '-');
     if (dash == NULL) {
 	/*
-	 * no dash found, has to be a simple version.
+	 * No dash found, has to be a simple version.
 	 */
 
 	return CheckVersionAndConvert(interp, string, NULL, NULL);
@@ -1585,7 +1596,8 @@ CheckRequirement(
     /*
      * Exactly one dash is present. Copy the string, split at the location of
      * dash and check that both parts are versions. Note that the max part can
-     * be empty.
+     * be empty. Also note that the string allocated with strdup() must be
+     * freed with free() and not ckfree().
      */
 
     DupString(buf, string);
@@ -1625,7 +1637,7 @@ AddRequirementsToResult(
     Tcl_Interp *interp,
     int reqc,			/* Requirements constraining the desired
 				 * version. */
-    Tcl_Obj *CONST reqv[])	/* 0 means to use the latest version
+    Tcl_Obj *const reqv[])	/* 0 means to use the latest version
 				 * available. */
 {
     if (reqc > 0) {
@@ -1666,7 +1678,7 @@ AddRequirementsToDString(
     Tcl_DString *dsPtr,
     int reqc,			/* Requirements constraining the desired
 				 * version. */
-    Tcl_Obj *CONST reqv[])	/* 0 means to use the latest version
+    Tcl_Obj *const reqv[])	/* 0 means to use the latest version
 				 * available. */
 {
     if (reqc > 0) {
@@ -1706,7 +1718,7 @@ SomeRequirementSatisfied(
 				 * requirements. */
     int reqc,			/* Requirements constraining the desired
 				 * version. */
-    Tcl_Obj *CONST reqv[])	/* 0 means to use the latest version
+    Tcl_Obj *const reqv[])	/* 0 means to use the latest version
 				 * available. */
 {
     int i;
@@ -1741,7 +1753,7 @@ static int
 RequirementSatisfied(
     char *havei,		/* Version string, of candidate package we
 				 * have. */
-    CONST char *req)		/* Requirement string the candidate has to
+    const char *req)		/* Requirement string the candidate has to
 				 * satisfy. */
 {
     /*
@@ -1839,16 +1851,16 @@ RequirementSatisfied(
  *----------------------------------------------------------------------
  */
 
-CONST char *
+const char *
 Tcl_PkgInitStubsCheck(
     Tcl_Interp *interp,
-    CONST char * version,
+    const char * version,
     int exact)
 {
-    CONST char *actualVersion = Tcl_PkgPresent(interp, "Tcl", version, 0);
+    const char *actualVersion = Tcl_PkgPresent(interp, "Tcl", version, 0);
 
     if (exact && actualVersion) {
-	CONST char *p = version;
+	const char *p = version;
 	int count = 0;
 
 	while (*p) {

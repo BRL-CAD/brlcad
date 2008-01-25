@@ -1057,6 +1057,15 @@ test reg-33.11 {Bug 840258} {
     regsub {(^|[\n\r]+)\.*\?<.*?(\n|\r)+} \
 	    "TQ\r\n.?<5000267>Test already stopped\r\n" {} tmp
 } 1
+test reg-33.12 {Bug 1810264 - bad read} {
+    regexp {\3161573148} {\3161573148}
+} 0
+test reg-33.13 {Bug 1810264 - infinite loop} {
+    regexp {($|^)*} {x}
+} 1
+test reg-33.14 {Bug 1810264 - super-expensive expression} {
+    regexp {(x{200}){200}$y} {x}
+} 0
 
 # cleanup
 ::tcltest::cleanupTests

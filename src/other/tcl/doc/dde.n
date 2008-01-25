@@ -17,7 +17,7 @@ dde \- Execute a Dynamic Data Exchange command
 .sp
 \fBpackage require dde 1.3\fR
 .sp
-\fBdde servername\fR ?\fB-force\fR? ?\fB-handler \fIproc\fR? ?\fB--\fR? ?\fItopic\fR?
+\fBdde servername\fR ?\fB\-force\fR? ?\fB\-handler \fIproc\fR? ?\fB\-\|\-\fR? ?\fItopic\fR?
 .sp
 \fBdde execute\fR ?\fB\-async\fR? \fIservice topic data\fR
 .sp
@@ -47,20 +47,24 @@ has the service name \fBExcel\fR.
 The following commands are a subset of the full Dynamic Data Exchange
 set of commands.
 .TP
-\fBdde servername \fR?\fB-force\fR? ?\fB-handler \fIproc\fR? ?\fB--\fR? ?\fItopic\fR?
+\fBdde servername \fR?\fB\-force\fR? ?\fB\-handler \fIproc\fR? ?\fB\-\|\-\fR? ?\fItopic\fR?
 \fBdde servername\fR registers the interpreter as a DDE server with
 the service name \fBTclEval\fR and the topic name specified by \fItopic\fR.
 If no \fItopic\fR is given, \fBdde servername\fR returns the name
 of the current topic or the empty string if it is not registered as a
 service. If the given \fItopic\fR name is already in use, then a
-suffix of the form ' #2' or ' #3' is appended to the name to make it
+suffix of the form
+.QW " #2"
+or
+.QW " #3"
+is appended to the name to make it
 unique. The command's result will be the name actually used. The
-\fB-force\fR option is used to force registration of precisely the
+\fB\-force\fR option is used to force registration of precisely the
 given \fItopic\fR name.
 .IP
-The \fB-handler\fR option specifies a Tcl procedure that will be called to
+The \fB\-handler\fR option specifies a Tcl procedure that will be called to
 process calls to the dde server. If the package has been loaded into a
-safe interpreter then a \fB-handler\fR procedure must be defined. The
+safe interpreter then a \fB\-handler\fR procedure must be defined. The
 procedure is called with all the arguments provided by the remote
 call.
 .TP

@@ -359,9 +359,6 @@ WIN_OBJS = \
 	tclWinThrd.$(OBJEXT) \
 	tclWinTime.$(OBJEXT)
 
-COMPAT_OBJS = \
-	strtoll.$(OBJEXT) strtoull.$(OBJEXT)
-
 PIPE_OBJS = stub16.$(OBJEXT)
 
 DDE_OBJS = tclWinDde.$(OBJEXT)
@@ -372,7 +369,7 @@ STUB_OBJS = tclStubLib.$(OBJEXT)
 
 TCLSH_OBJS = tclAppInit.$(OBJEXT)
 
-TCL_OBJS = ${GENERIC_OBJS} $(TOMMATH_OBJS) ${WIN_OBJS} ${COMPAT_OBJS}
+TCL_OBJS = ${GENERIC_OBJS} $(TOMMATH_OBJS) ${WIN_OBJS}
 
 TCL_DOCS = "$(ROOT_DIR_NATIVE)"/doc/*.[13n]
 
@@ -647,8 +644,8 @@ install-libraries: libraries install-tzdata install-msgs
 	    done;
 	@echo "Installing package msgcat 1.4.2 as a Tcl Module";
 	@$(COPY) $(ROOT_DIR)/library/msgcat/msgcat.tcl $(SCRIPT_INSTALL_DIR)/../tcl8/8.5/msgcat-1.4.2.tm;
-	@echo "Installing package tcltest 2.3b1 as a Tcl Module";
-	@$(COPY) $(ROOT_DIR)/library/tcltest/tcltest.tcl $(SCRIPT_INSTALL_DIR)/../tcl8/8.5/tcltest-2.3b1.tm;
+	@echo "Installing package tcltest 2.3.0 as a Tcl Module";
+	@$(COPY) $(ROOT_DIR)/library/tcltest/tcltest.tcl $(SCRIPT_INSTALL_DIR)/../tcl8/8.5/tcltest-2.3.0.tm;
 	@echo "Installing package platform 1.0.3 as a Tcl Module";
 	@$(COPY) $(ROOT_DIR)/library/platform/platform.tcl $(SCRIPT_INSTALL_DIR)/../tcl8/8.4/platform-1.0.3.tm;
 	@echo "Installing package platform::shell 1.1.3 as a Tcl Module";

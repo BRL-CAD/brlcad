@@ -44,7 +44,9 @@ puts $x                     ;# Prints "f"
 puts $y                     ;# Prints "g"
 .CE
 The \fBlassign\fR command has other uses.  It can be used to create
-the analogue of the "shift" command in many shell languages like this:
+the analogue of the
+.QW shift
+command in many shell languages like this:
 .CS
 set ::argv [lassign $::argv argumentToReadOff]
 .CE

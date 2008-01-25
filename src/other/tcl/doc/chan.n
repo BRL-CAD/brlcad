@@ -173,6 +173,9 @@ returned.  The default value for \fB\-eofchar\fR is the empty string
 in all cases except for files under Windows.  In that case the
 \fB\-eofchar\fR is Control-z (\ex1a) for reading and the empty string
 for writing.
+The acceptable range for \fB\-eofchar\fR values is \ex01 - \ex7f;
+attempting to set \fB\-eofchar\fR to a value outside of this range will
+generate an error.
 .TP
 \fB\-translation\fR \fImode\fR
 .TP
@@ -293,7 +296,9 @@ Note that \fIinputChan\fR can become readable during a background
 copy.  You should turn off any \fBchan event\fR or \fBfileevent\fR
 handlers during a background copy so those handlers do not interfere
 with the copy.  Any I/O attempted by a \fBchan event\fR or
-\fBfileevent\fR handler will get a "channel busy" error.
+\fBfileevent\fR handler will get a
+.QW "channel busy"
+error.
 .PP
 \fBChan copy\fR translates end-of-line sequences in \fIinputChan\fR
 and \fIoutputChan\fR according to the \fB\-translation\fR option for
@@ -333,7 +338,11 @@ the channel.
 .PP
 The argument \fImode\fR specifies if the new channel is opened for
 reading, writing, or both. It has to be a list containing any of the
-strings "\fBread\fR" or "\fBwrite\fR". The list must have at least one
+strings
+.QW \fBread\fR
+or
+.QW \fBwrite\fR .
+The list must have at least one
 element, as a channel you can neither write to nor read from makes no
 sense. The handler command for the new channel must support the chosen
 mode, or an error is thrown.
@@ -411,9 +420,11 @@ while waiting for the data to arrive.  If an application invokes
 \fBchan gets\fR or \fBchan read\fR on a blocking channel when there is
 no input data available, the process will block; until the input data
 arrives, it will not be able to service other events, so it will
-appear to the user to ``freeze up''.  With \fBchan event\fR, the
+appear to the user to
+.QW "freeze up" .
+With \fBchan event\fR, the
 process can tell when data is present and only invoke \fBchan gets\fR
-or \fBchan read\fR when they won't block.
+or \fBchan read\fR when they will not block.
 .PP
 A channel is considered to be readable if there is unread data
 available on the underlying device.  A channel is also considered to
@@ -496,7 +507,8 @@ only those channel names that match it (according to the rules of
 .TP
 \fBchan pending \fImode channelId\fR
 .
-Depending on whether \fImode\fR is "input" or "output", returns the number of 
+Depending on whether \fImode\fR is \fBinput\fR or \fBoutput\fR,
+returns the number of
 bytes of input or output (respectively) currently buffered 
 internally for \fIchannelId\fR (especially useful in a readable event 
 callback to impose application-specific limits on input line lengths to avoid
@@ -510,7 +522,7 @@ This subcommand is used by command handlers specified with \fBchan
 create\fR. It notifies the channel represented by the handle
 \fIchannelId\fR that the event(s) listed in the \fIeventSpec\fR have
 occurred. The argument has to be a list containing any of the strings
-"\fBread\fR" and "\fBwrite\fR". The list must contain at least one
+\fBread\fR and \fBwrite\fR. The list must contain at least one
 element as it does not make sense to invoke the command if there are
 no events to post.
 .RS
@@ -575,7 +587,7 @@ is possible for an arbitrarily large amount of data to be buffered for
 a channel in nonblocking mode, which could consume a large amount of
 memory.  To avoid wasting memory, nonblocking I/O should normally be
 used in an event-driven fashion with the \fBchan event\fR command
-(don't invoke \fBchan puts\fR unless you have recently been notified
+(do not invoke \fBchan puts\fR unless you have recently been notified
 via a file event that the channel is ready for more output data).
 .RE
 .TP
@@ -721,6 +733,6 @@ while {[\fBchan gets\fR $f line] >= 0} {
 .SH "SEE ALSO"
 close(n), eof(n), fblocked(n), fconfigure(n), fcopy(n), file(n),
 fileevent(n), flush(n), gets(n), open(n), puts(n), read(n), seek(n),
-socket(n), tell(n), reflectedchan(n)
+socket(n), tell(n), refchan(n)
 .SH KEYWORDS
 channel, input, output, events, offset

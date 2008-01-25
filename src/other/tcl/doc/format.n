@@ -50,8 +50,8 @@ The fields that are present must appear in the order given above.
 The paragraphs below discuss each of these fields in turn.
 .PP
 If the \fB%\fR is followed by a decimal number and a \fB$\fR, as in
-``\fB%2$d\fR'', then the value to convert is not taken from the
-next sequential argument.
+.QW \fB%2$d\fR ,
+then the value to convert is not taken from the next sequential argument.
 Instead, it is taken from the argument indicated by the number,
 where 1 corresponds to the first \fIarg\fR.
 If the conversion specifier requires multiple arguments because
@@ -75,8 +75,8 @@ Specifies that a number should always be printed with a sign,
 even if positive.
 .TP 10
 \fIspace\fR
-Specifies that a space should be added to the beginning of the 
-number if the first character isn't a sign.
+Specifies that a space should be added to the beginning of the
+number if the first character is not a sign.
 .TP 10
 \fB0\fR
 Specifies that the number should be padded on the left with 
@@ -156,7 +156,10 @@ Convert integer to unsigned octal string.
 .TP 10
 \fBx\fR or \fBX\fR
 Convert integer to unsigned hexadecimal string, using digits
-``0123456789abcdef'' for \fBx\fR and ``0123456789ABCDEF'' for \fBX\fR).
+.QW 0123456789abcdef
+for \fBx\fR and
+.QW 0123456789ABCDEF
+for \fBX\fR).
 .TP 10
 \fBc\fR
 Convert integer to the Unicode character it represents.
@@ -228,7 +231,7 @@ reordering the data values passed to \fBformat\fR:
 set fmt1 "Today, %d shares in %s were bought at $%.2f each"
 puts [\fBformat\fR $fmt1 123 "Global BigCorp" 19.37]
 
-set fmt2 "Bought %2\\$s equity ($%3$.2f x %1\\$d) today"
+set fmt2 "Bought %2\e$s equity ($%3$.2f x %1\e$d) today"
 puts [\fBformat\fR $fmt2 123 "Global BigCorp" 19.37]
 .CE
 .PP
@@ -254,9 +257,7 @@ for {set i 0} {$i<=20} {incr i} {
 # Finish off by printing the separator again
 puts $sep
 .CE
-
 .SH "SEE ALSO"
 scan(n), sprintf(3), string(n)
-
 .SH KEYWORDS
 conversion specifier, format, sprintf, string, substitution

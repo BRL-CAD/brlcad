@@ -1052,7 +1052,7 @@ TraverseUnixTree(
 
     while ((ent = fts_read(fts)) != NULL) {
 	unsigned short info = ent->fts_info;
-	char * path = ent->fts_path + sourceLen;
+	char *path = ent->fts_path + sourceLen;
 	unsigned short pathlen = ent->fts_pathlen - sourceLen;
 	int type;
 	Tcl_StatBuf *statBufPtr = NULL;
@@ -1084,7 +1084,7 @@ TraverseUnixTree(
 		    break;
 		}
 	    } else {
-		statBufPtr = ent->fts_statp;
+		statBufPtr = (Tcl_StatBuf *) ent->fts_statp;
 	    }
 	}
 	result = (*traverseProc)(sourcePtr, targetPtr, statBufPtr, type,
@@ -1595,18 +1595,31 @@ SetPermissionsAttribute(
 {
     long mode;
     mode_t newMode;
-    int result;
+    int result = TCL_ERROR;
     CONST char *native;
+    char *modeStringPtr = TclGetString(attributePtr);
+    int scanned = TclParseAllWhiteSpace(modeStringPtr, -1);
 
     /*
-     * First try if the string is a number
+     * First supply support for octal number format
      */
 
-    if (Tcl_GetLongFromObj(NULL, attributePtr, &mode) == TCL_OK) {
+    if ((modeStringPtr[scanned] == '0')
+	    && (modeStringPtr[scanned+1] >= '0')
+	    && (modeStringPtr[scanned+1] <= '7')) {
+	/* Leading zero - attempt octal interpretation */
+	Tcl_Obj *modeObj;
+
+	TclNewLiteralStringObj(modeObj, "0o");
+	Tcl_AppendToObj(modeObj, modeStringPtr+scanned+1, -1);
+	result = Tcl_GetLongFromObj(NULL, modeObj, &mode);
+	Tcl_DecrRefCount(modeObj);
+    }
+    if (result == TCL_OK
+	    || Tcl_GetLongFromObj(NULL, attributePtr, &mode) == TCL_OK) {
 	newMode = (mode_t) (mode & 0x00007FFF);
     } else {
 	Tcl_StatBuf buf;
-	char *modeStringPtr = TclGetString(attributePtr);
 
 	/*
 	 * Try the forms "rwxrwxrwx" and "ugo=rwx"

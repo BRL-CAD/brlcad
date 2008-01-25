@@ -103,13 +103,14 @@ the build instructions.
 #		memdbg   = Enables the debugging memory allocator.
 #		compdbg  = Enables byte compilation logging.
 #
-#	CHECKS=nodep,fullwarn,none
+#	CHECKS=nodep,fullwarn,64bit,none
 #		Sets special macros for checking compatability.
 #
 #		nodep	 = Turns off compatability macros to ensure the core
 #			    isn't being built with deprecated functions. 
 #		fullwarn = Builds with full compiler and link warnings enabled.
 #			    Very verbose.
+#		64bit    = Enable 64bit portability warnings (if available)
 #
 #	MACHINE=(IX86|IA64|AMD64|ALPHA)
 #		Set the machine type used for the compiler, linker, and
@@ -175,20 +176,9 @@ Please `cd` to its location first.
 PROJECT	= tcl
 !include "rules.vc"
 
-STUBPREFIX = $(PROJECT)stub
-
-!if [nmakehlp -g ../generic/tcl.h TCL_VERSION] == 85
-DOTVERSION	= 8.5
-!elseif [nmakehlp -g ../generic/tcl.h TCL_VERSION] == 86
-DOTVERSION	= 8.6
-!elseif [nmakehlp -g ../generic/tcl.h TCL_VERSION] == 90
-DOTVERSION	= 9.0
-!elseif [nmakehlp -g ../generic/tcl.h TCL_VERSION] == 0
-MSG =^
-Cannot get version string from ../generic/tcl.h
-!error $(MSG)
-!endif
-VERSION = $(DOTVERSION:.=)
+STUBPREFIX      = $(PROJECT)stub
+DOTVERSION      = $(TCL_MAJOR_VERSION).$(TCL_MINOR_VERSION)
+VERSION         = $(TCL_MAJOR_VERSION)$(TCL_MINOR_VERSION)
 
 DDEDOTVERSION = 1.3
 DDEVERSION = $(DDEDOTVERSION:.=)
@@ -252,8 +242,6 @@ TCLOBJS = \
 	$(TMP_DIR)\regerror.obj \
 	$(TMP_DIR)\regexec.obj \
 	$(TMP_DIR)\regfree.obj \
-	$(TMP_DIR)\strtoll.obj \
-	$(TMP_DIR)\strtoull.obj \
 	$(TMP_DIR)\tclAlloc.obj \
 	$(TMP_DIR)\tclAsync.obj \
 	$(TMP_DIR)\tclBasic.obj \
@@ -430,14 +418,8 @@ cdebug	= -Zi -WX $(DEBUGFLAGS)
 !endif
 
 ### Declarations common to all compiler options
-cwarn = -D _CRT_SECURE_NO_DEPRECATE -D _CRT_NONSTDC_NO_DEPRECATE
+cwarn = $(WARNINGS) -D _CRT_SECURE_NO_DEPRECATE -D _CRT_NONSTDC_NO_DEPRECATE
 cflags = -nologo -c $(COMPILERFLAGS) $(cwarn) -Fp$(TMP_DIR)^\
-
-!if $(FULLWARNINGS)
-cflags = $(cflags) -W4
-!else
-cflags = $(cflags) -W3
-!endif
 
 !if $(MSVCRT)
 !if $(DEBUG) && !$(UNCHECKED)
@@ -454,9 +436,8 @@ crt = -MT
 !endif
 
 TCL_INCLUDES	= -I"$(WINDIR)" -I"$(GENERICDIR)" -I"$(TOMMATHDIR)"
-BASE_CFLAGS	= $(cflags) $(cdebug) $(crt) $(TCL_INCLUDES) \
-			-DTCL_PIPE_DLL=\"$(TCLPIPEDLLNAME)\" -DTCL_TOMMATH \
-			-DMP_PREC=4 -Dinline=__inline
+TCL_DEFINES	= -DTCL_PIPE_DLL=\"$(TCLPIPEDLLNAME)\" -DTCL_TOMMATH -DMP_PREC=4 -Dinline=__inline
+BASE_CFLAGS	= $(cflags) $(cdebug) $(crt) $(TCL_INCLUDES) $(TCL_DEFINES)
 CON_CFLAGS	= $(cflags) $(cdebug) $(crt) -DCONSOLE
 TCL_CFLAGS	= $(BASE_CFLAGS) $(OPTDEFINES)
 STUB_CFLAGS     = $(cflags) $(cdebug) $(OPTDEFINES)
@@ -474,10 +455,6 @@ ldebug	= -release -opt:ref -opt:icf,3
 
 ### Declarations common to all linker options
 lflags	= -nologo -machine:$(MACHINE) $(LINKERFLAGS) $(ldebug)
-
-!if $(FULLWARNINGS)
-lflags = $(lflags) -warn:3
-!endif
 
 !if $(PROFILE)
 lflags	= $(lflags) -profile
@@ -499,11 +476,13 @@ dlllflags = $(lflags) -dll
 conlflags = $(lflags) -subsystem:console
 guilflags = $(lflags) -subsystem:windows
 
-baselibs   = kernel32.lib user32.lib
+baselibs   = kernel32.lib user32.lib ws2_32.lib
 # Avoid 'unresolved external symbol __security_cookie' errors.
 # c.f. http://support.microsoft.com/?id=894573
 !if "$(MACHINE)" == "IA64" || "$(MACHINE)" == "AMD64"
+!if $(VCVERSION) > 1399 && $(VCVERSION) < 1500
 baselibs   = $(baselibs) bufferoverflowU.lib
+!endif
 !endif
 
 #---------------------------------------------------------------------
@@ -650,23 +629,6 @@ gentommath_h:
 !endif
 
 #---------------------------------------------------------------------
-# Generate the makefile depedancies.
-#---------------------------------------------------------------------
-
-depend:
-!if !exist($(TCLSH))
-	@echo Build tclsh first!
-!else
-	$(TCLSH) $(TOOLSDIR:\=/)/mkdepend.tcl -vc32 -out:"$(OUT_DIR)\depend.mk" \
-		-passthru:"-DBUILD_tcl $(TCL_INCLUDES:"="")" $(GENERICDIR) \
-		$(COMPATDIR) $(WINDIR) @<<
-$(TCLOBJS)
-<<
-!endif
-
-#" for emacs font-locking.
-
-#---------------------------------------------------------------------
 # Build the windows help file.
 #---------------------------------------------------------------------
 
@@ -796,11 +758,13 @@ $(OUT_DIR)\tclConfig.sh: $(WINDIR)\tclConfig.sh.in
 <<
 
 
+#---------------------------------------------------------------------
 # The following target generates the file generic/tclDate.c 
 # from the yacc grammar found in generic/tclGetDate.y.  This is
 # only run by hand as yacc is not available in all environments.
 # The name of the .c file is different than the name of the .y file
 # so that make doesn't try to automatically regenerate the .c file.
+#---------------------------------------------------------------------
 
 gendate:
 	bison --output-file=$(GENERICDIR)/tclDate.c \
@@ -864,39 +828,38 @@ $(TMP_DIR)\tclWinDde.obj: $(WINDIR)\tclWinDde.c
 
 
 ### The following objects are part of the stub library and should not
-### be built as DLL objects.  -Zl is used to avoid a dependancy on any
+### be built as DLL objects.  -Zl is used to avoid a dependency on any
 ### specific C run-time.
 
 $(TMP_DIR)\tclStubLib.obj: $(GENERICDIR)\tclStubLib.c
 	$(cc32) $(STUB_CFLAGS) -Zl -DSTATIC_BUILD $(TCL_INCLUDES) -Fo$@ $?
 
+#---------------------------------------------------------------------
+# Generate the source dependencies.  Having dependency rules will
+# improve incremental build accuracy without having to resort to a
+# full rebuild just because some non-global header file like
+# tclCompile.h was changed.  These rules aren't needed when building
+# from scratch.
+#---------------------------------------------------------------------
+
+depend:
+!if !exist($(TCLSH))
+	@echo Build tclsh first!
+!else
+	$(TCLSH) $(TOOLSDIR:\=/)/mkdepend.tcl -vc32 -out:"$(OUT_DIR)\depend.mk" \
+		-passthru:"-DBUILD_tcl $(TCL_INCLUDES)" $(GENERICDIR),$$(GENERICDIR) \
+		$(COMPATDIR),$$(COMPATDIR) $(TOMMATHDIR),$$(TOMMATHDIR) $(WINDIR),$$(WINDIR) @<<
+$(TCLOBJS)
+<<
+!endif
 
 #---------------------------------------------------------------------
-# Dedependency rules
+# Dependency rules
 #---------------------------------------------------------------------
-
-$(GENERICDIR)\regcomp.c: \
-	$(GENERICDIR)\regguts.h \
-	$(GENERICDIR)\regc_lex.c \
-	$(GENERICDIR)\regc_color.c \
-	$(GENERICDIR)\regc_nfa.c \
-	$(GENERICDIR)\regc_cvec.c \
-	$(GENERICDIR)\regc_locale.c
-$(GENERICDIR)\regcustom.h: \
-	$(GENERICDIR)\tclInt.h \
-	$(GENERICDIR)\tclPort.h \
-	$(GENERICDIR)\regex.h
-$(GENERICDIR)\regexec.c: \
-	$(GENERICDIR)\rege_dfa.c \
-	$(GENERICDIR)\regguts.h
-$(GENERICDIR)\regerror.c: $(GENERICDIR)\regguts.h
-$(GENERICDIR)\regfree.c: $(GENERICDIR)\regguts.h
-$(GENERICDIR)\regfronts.c: $(GENERICDIR)\regguts.h
-$(GENERICDIR)\regguts.h: $(GENERICDIR)\regcustom.h
 
 !if exist("$(OUT_DIR)\depend.mk")
 !include "$(OUT_DIR)\depend.mk"
-!message *** Dependency rules in effect.
+!message *** Dependency rules in use.
 !else
 !message *** Dependency rules are not being used.
 !endif
@@ -1039,6 +1002,8 @@ install-libraries: tclConfig install-msgs install-tzdata
 	@echo Installing encodings
 	@$(CPY) "$(ROOT)\library\encoding\*.enc" \
 		"$(SCRIPT_INSTALL_DIR)\encoding\"
+
+#" emacs fix
 
 install-tzdata:
 	@echo Installing time zone data

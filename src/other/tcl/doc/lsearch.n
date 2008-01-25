@@ -52,7 +52,7 @@ The list elements are in sorted order.  If this option is specified,
 \fIlist\fR.  If no other options are specified, \fIlist\fR is assumed
 to be sorted in increasing order, and to contain ASCII strings.  This
 option is mutually exclusive with \fB\-glob\fR and \fB\-regexp\fR, and
-is treated exactly like \fB-exact\fR when either \fB\-all\fR or
+is treated exactly like \fB\-exact\fR when either \fB\-all\fR or
 \fB\-not\fR are specified.
 .SS "GENERAL MODIFIER OPTIONS"
 These options may be given with all matching styles.
@@ -143,51 +143,50 @@ overall list to the term found.  This option has no effect unless the
 Basic searching:
 .CS
 \fBlsearch\fR {a b c d e} c
-      => 2
+      \fI\(-> 2\fR
 \fBlsearch\fR -all {a b c a b c} c
-      => 2 5
+      \fI\(-> 2 5\fR
 .CE
-
+.PP
 Using \fBlsearch\fR to filter lists:
 .CS
 \fBlsearch\fR -inline {a20 b35 c47} b*
-      => b35
+      \fI\(-> b35\fR
 \fBlsearch\fR -inline -not {a20 b35 c47} b*
-      => a20
+      \fI\(-> a20\fR
 \fBlsearch\fR -all -inline -not {a20 b35 c47} b*
-      => a20 c47
+      \fI\(-> a20 c47\fR
 \fBlsearch\fR -all -not {a20 b35 c47} b*
-      => 0 2
+      \fI\(-> 0 2\fR
 .CE
-This can even do a "set-like" removal operation:
+.PP
+This can even do a
+.QW set-like
+removal operation:
 .CS
 \fBlsearch\fR -all -inline -not -exact {a b c a d e a f g a} a
-      => b c d e f g
+      \fI\(-> b c d e f g\fR
 .CE
-
+.PP
 Searching may start part-way through the list:
 .CS
 \fBlsearch\fR -start 3 {a b c a b c} c
-      => 5
+      \fI\(-> 5\fR
 .CE
-
+.PP
 It is also possible to search inside elements:
 .CS
 \fBlsearch\fR -index 1 -all -inline {{a abc} {b bcd} {c cde}} *bc*
-      => {a abc} {b bcd}
+      \fI\(-> {a abc} {b bcd}\fR
 .CE
-
 .SH "SEE ALSO"
 foreach(n), list(n), lappend(n), lindex(n), linsert(n), llength(n), 
 lset(n), lsort(n), lrange(n), lreplace(n),
 .VS 8.5
 string(n)
 .VE
-
-
 .SH KEYWORDS
 list, match, pattern, regular expression, search, string
-
 '\" Local Variables:
 '\" mode: nroff
 '\" End:

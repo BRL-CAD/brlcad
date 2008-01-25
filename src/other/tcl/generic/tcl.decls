@@ -4,13 +4,14 @@
 #	functions that are exported by the Tcl library via the stubs table.
 #	This file is used to generate the tclDecls.h, tclPlatDecls.h,
 #	tclStub.c, and tclPlatStub.c files.
-#	
 #
 # Copyright (c) 1998-1999 by Scriptics Corporation.
 # Copyright (c) 2001, 2002 by Kevin B. Kenny.  All rights reserved.
+# Copyright (c) 2007 Daniel A. Steffen <das@users.sourceforge.net>
+#
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-# 
+#
 # RCS: @(#) $Id$
 
 library tcl
@@ -32,8 +33,9 @@ declare 0 generic {
 	    CONST char* version, ClientData clientData)
 }
 declare 1 generic {
-    CONST84_RETURN char * Tcl_PkgRequireEx(Tcl_Interp *interp, CONST char *name,
-	    CONST char *version, int exact, ClientData *clientDataPtr)
+    CONST84_RETURN char * Tcl_PkgRequireEx(Tcl_Interp *interp,
+	    CONST char *name, CONST char *version, int exact,
+	    ClientData *clientDataPtr)
 }
 declare 2 generic {
     void Tcl_Panic(CONST char *format, ...)
@@ -69,7 +71,6 @@ declare 9 unix {
 declare 10 unix {
     void Tcl_DeleteFileHandler(int fd)
 }
-
 declare 11 generic {
     void Tcl_SetTimer(Tcl_Time *timePtr)
 }
@@ -116,7 +117,7 @@ declare 24 generic {
 	    CONST char *file, int line)
 }
 declare 25 generic {
-    Tcl_Obj * Tcl_DbNewListObj(int objc, Tcl_Obj *CONST *objv, 
+    Tcl_Obj * Tcl_DbNewListObj(int objc, Tcl_Obj *CONST *objv,
 	    CONST char *file, int line)
 }
 declare 26 generic {
@@ -354,7 +355,7 @@ declare 94 generic {
 }
 declare 95 generic {
     void Tcl_CreateMathFunc(Tcl_Interp *interp, CONST char *name,
-	    int numArgs, Tcl_ValueType *argTypes, 
+	    int numArgs, Tcl_ValueType *argTypes,
 	    Tcl_MathProc *proc, ClientData clientData)
 }
 declare 96 generic {
@@ -945,7 +946,6 @@ declare 265 generic {
 declare 266 generic {
     void Tcl_ValidateAllMemory(CONST char *file, int line)
 }
-
 declare 267 generic {
     void Tcl_AppendResultVA(Tcl_Interp *interp, va_list argList)
 }
@@ -964,16 +964,17 @@ declare 271 generic {
 	    CONST char *version, int exact)
 }
 declare 272 generic {
-    CONST84_RETURN char * Tcl_PkgPresentEx(Tcl_Interp *interp, CONST char *name,
-	    CONST char *version, int exact, ClientData *clientDataPtr)
+    CONST84_RETURN char * Tcl_PkgPresentEx(Tcl_Interp *interp,
+	    CONST char *name, CONST char *version, int exact,
+	    ClientData *clientDataPtr)
 }
 declare 273 generic {
-    int Tcl_PkgProvide(Tcl_Interp *interp, CONST char *name, 
+    int Tcl_PkgProvide(Tcl_Interp *interp, CONST char *name,
 	    CONST char *version)
 }
 # TIP #268: The internally used new Require function is in slot 573.
 declare 274 generic {
-    CONST84_RETURN char * Tcl_PkgRequire(Tcl_Interp *interp, CONST char *name, 
+    CONST84_RETURN char * Tcl_PkgRequire(Tcl_Interp *interp, CONST char *name,
 	    CONST char *version, int exact)
 }
 declare 275 generic {
@@ -1137,7 +1138,7 @@ declare 316 generic {
     int Tcl_SetSystemEncoding(Tcl_Interp *interp, CONST char *name)
 }
 declare 317 generic {
-    Tcl_Obj * Tcl_SetVar2Ex(Tcl_Interp *interp, CONST char *part1, 
+    Tcl_Obj * Tcl_SetVar2Ex(Tcl_Interp *interp, CONST char *part1,
             CONST char *part2, Tcl_Obj *newValuePtr, int flags)
 }
 declare 318 generic {
@@ -1266,7 +1267,6 @@ declare 356 generic {
     Tcl_RegExp Tcl_GetRegExpFromObj(Tcl_Interp *interp, Tcl_Obj *patObj,
 	    int flags)
 }
-
 declare 357 generic {
     Tcl_Obj *Tcl_EvalTokens(Tcl_Interp *interp, Tcl_Token *tokenPtr,
 	    int count)
@@ -1288,7 +1288,7 @@ declare 361 generic {
 }
 declare 362 generic {
     int Tcl_ParseExpr(Tcl_Interp *interp, CONST char *start, int numBytes,
-	    Tcl_Parse *parsePtr)	 
+	    Tcl_Parse *parsePtr)
 }
 declare 363 generic {
     int Tcl_ParseQuotedString(Tcl_Interp *interp, CONST char *start,
@@ -1412,48 +1412,56 @@ declare 398 generic {
     CONST84_RETURN char * Tcl_ChannelName(CONST Tcl_ChannelType *chanTypePtr)
 }
 declare 399 generic {
-    Tcl_ChannelTypeVersion Tcl_ChannelVersion(CONST Tcl_ChannelType *chanTypePtr)
+    Tcl_ChannelTypeVersion Tcl_ChannelVersion(
+	    CONST Tcl_ChannelType *chanTypePtr)
 }
 declare 400 generic {
-    Tcl_DriverBlockModeProc * Tcl_ChannelBlockModeProc(CONST Tcl_ChannelType
-	    *chanTypePtr)
+    Tcl_DriverBlockModeProc * Tcl_ChannelBlockModeProc(
+	    CONST Tcl_ChannelType *chanTypePtr)
 }
 declare 401 generic {
-    Tcl_DriverCloseProc * Tcl_ChannelCloseProc(CONST Tcl_ChannelType *chanTypePtr)
+    Tcl_DriverCloseProc * Tcl_ChannelCloseProc(
+	    CONST Tcl_ChannelType *chanTypePtr)
 }
 declare 402 generic {
-    Tcl_DriverClose2Proc * Tcl_ChannelClose2Proc(CONST Tcl_ChannelType *chanTypePtr)
+    Tcl_DriverClose2Proc * Tcl_ChannelClose2Proc(
+	    CONST Tcl_ChannelType *chanTypePtr)
 }
 declare 403 generic {
-    Tcl_DriverInputProc * Tcl_ChannelInputProc(CONST Tcl_ChannelType *chanTypePtr)
+    Tcl_DriverInputProc * Tcl_ChannelInputProc(
+	    CONST Tcl_ChannelType *chanTypePtr)
 }
 declare 404 generic {
-    Tcl_DriverOutputProc * Tcl_ChannelOutputProc(CONST Tcl_ChannelType *chanTypePtr)
+    Tcl_DriverOutputProc * Tcl_ChannelOutputProc(
+	    CONST Tcl_ChannelType *chanTypePtr)
 }
 declare 405 generic {
-    Tcl_DriverSeekProc * Tcl_ChannelSeekProc(CONST Tcl_ChannelType *chanTypePtr)
+    Tcl_DriverSeekProc * Tcl_ChannelSeekProc(
+	    CONST Tcl_ChannelType *chanTypePtr)
 }
 declare 406 generic {
-    Tcl_DriverSetOptionProc * Tcl_ChannelSetOptionProc(CONST Tcl_ChannelType
-	    *chanTypePtr)
+    Tcl_DriverSetOptionProc * Tcl_ChannelSetOptionProc(
+	    CONST Tcl_ChannelType *chanTypePtr)
 }
 declare 407 generic {
-    Tcl_DriverGetOptionProc * Tcl_ChannelGetOptionProc(CONST Tcl_ChannelType
-	    *chanTypePtr)
+    Tcl_DriverGetOptionProc * Tcl_ChannelGetOptionProc(
+	    CONST Tcl_ChannelType *chanTypePtr)
 }
 declare 408 generic {
-    Tcl_DriverWatchProc * Tcl_ChannelWatchProc(CONST Tcl_ChannelType *chanTypePtr)
+    Tcl_DriverWatchProc * Tcl_ChannelWatchProc(
+	    CONST Tcl_ChannelType *chanTypePtr)
 }
 declare 409 generic {
-    Tcl_DriverGetHandleProc * Tcl_ChannelGetHandleProc(CONST Tcl_ChannelType
-	    *chanTypePtr)
+    Tcl_DriverGetHandleProc * Tcl_ChannelGetHandleProc(
+	    CONST Tcl_ChannelType *chanTypePtr)
 }
 declare 410 generic {
-    Tcl_DriverFlushProc * Tcl_ChannelFlushProc(CONST Tcl_ChannelType *chanTypePtr)
+    Tcl_DriverFlushProc * Tcl_ChannelFlushProc(
+	    CONST Tcl_ChannelType *chanTypePtr)
 }
 declare 411 generic {
-    Tcl_DriverHandlerProc * Tcl_ChannelHandlerProc(CONST Tcl_ChannelType
-	    *chanTypePtr)
+    Tcl_DriverHandlerProc * Tcl_ChannelHandlerProc(
+	    CONST Tcl_ChannelType *chanTypePtr)
 }
 
 # Introduced in 8.4a2
@@ -1478,7 +1486,6 @@ declare 417 generic {
 declare 418 generic {
     int Tcl_IsChannelExisting(CONST char* channelName)
 }
-
 declare 419 generic {
     int Tcl_UniCharNcasecmp(CONST Tcl_UniChar *ucs, CONST Tcl_UniChar *uct,
 	    unsigned long numChars)
@@ -1487,21 +1494,17 @@ declare 420 generic {
     int Tcl_UniCharCaseMatch(CONST Tcl_UniChar *uniStr,
 	    CONST Tcl_UniChar *uniPattern, int nocase)
 }
-
 declare 421 generic {
     Tcl_HashEntry *Tcl_FindHashEntry(Tcl_HashTable *tablePtr, CONST char *key)
 }
-
 declare 422 generic {
     Tcl_HashEntry *Tcl_CreateHashEntry(Tcl_HashTable *tablePtr,
 	    CONST char *key, int *newPtr)
 }
-
 declare 423 generic {
     void Tcl_InitCustomHashTable(Tcl_HashTable *tablePtr, int keyType,
 	    Tcl_HashKeyType *typePtr)
 }
-
 declare 424 generic {
     void Tcl_InitObjHashTable(Tcl_HashTable *tablePtr)
 }
@@ -1697,14 +1700,14 @@ declare 479 generic {
 }
 declare 480 generic {
     void Tcl_FSMountsChanged(Tcl_Filesystem *fsPtr)
-}	  
+}
 # New function due to TIP#56
 declare 481 generic {
     int Tcl_EvalTokensStandard(Tcl_Interp *interp, Tcl_Token *tokenPtr,
 	    int count)
 }
 
-# New export due to TIP#73 
+# New export due to TIP#73
 declare 482 generic {
     void Tcl_GetTime(Tcl_Time* timeBuf)
 }
@@ -1976,36 +1979,37 @@ declare 551 generic {
 }
 # TIP#233 (Virtualized Time)
 declare 552 generic {
-    void Tcl_SetTimeProc (Tcl_GetTimeProc* getProc,
+    void Tcl_SetTimeProc(Tcl_GetTimeProc* getProc,
 	    Tcl_ScaleTimeProc* scaleProc,
 	    ClientData clientData)
 }
 declare 553 generic {
-    void Tcl_QueryTimeProc (Tcl_GetTimeProc** getProc,
+    void Tcl_QueryTimeProc(Tcl_GetTimeProc** getProc,
 	    Tcl_ScaleTimeProc** scaleProc,
 	    ClientData* clientData)
 }
 # TIP#218 (Driver Thread Actions) davygrvy/akupries ChannelType ver 4
 declare 554 generic {
-    Tcl_DriverThreadActionProc *Tcl_ChannelThreadActionProc(CONST Tcl_ChannelType *chanTypePtr)
+    Tcl_DriverThreadActionProc *Tcl_ChannelThreadActionProc(
+	    CONST Tcl_ChannelType *chanTypePtr)
 }
 
 # TIP#237 (Arbitrary-precision Integers) kevin kenny
 
 declare 555 generic {
-    Tcl_Obj* Tcl_NewBignumObj( mp_int* value )
+    Tcl_Obj* Tcl_NewBignumObj(mp_int* value)
 }
 declare 556 generic {
-    Tcl_Obj* Tcl_DbNewBignumObj( mp_int* value, CONST char* file, int line )
+    Tcl_Obj* Tcl_DbNewBignumObj(mp_int* value, CONST char* file, int line)
 }
 declare 557 generic {
-    void Tcl_SetBignumObj( Tcl_Obj* obj, mp_int* value )
+    void Tcl_SetBignumObj(Tcl_Obj* obj, mp_int* value)
 }
 declare 558 generic {
-    int Tcl_GetBignumFromObj( Tcl_Interp* interp, Tcl_Obj* obj, mp_int* value )
+    int Tcl_GetBignumFromObj(Tcl_Interp* interp, Tcl_Obj* obj, mp_int* value)
 }
 declare 559 generic {
-    int Tcl_TakeBignumFromObj( Tcl_Interp* interp, Tcl_Obj* obj, mp_int* value )
+    int Tcl_TakeBignumFromObj(Tcl_Interp* interp, Tcl_Obj* obj, mp_int* value)
 }
 
 # TIP #208 ('chan' Command) jeffh
@@ -2020,22 +2024,22 @@ declare 561 generic {
 # TIP#219 (Tcl Channel Reflection API) akupries
 
 declare 562 generic {
-    void Tcl_SetChannelErrorInterp (Tcl_Interp* interp, Tcl_Obj* msg)
+    void Tcl_SetChannelErrorInterp(Tcl_Interp* interp, Tcl_Obj* msg)
 }
 declare 563 generic {
-    void Tcl_GetChannelErrorInterp (Tcl_Interp* interp, Tcl_Obj** msg)
+    void Tcl_GetChannelErrorInterp(Tcl_Interp* interp, Tcl_Obj** msg)
 }
 declare 564 generic {
-    void Tcl_SetChannelError (Tcl_Channel chan, Tcl_Obj* msg)
+    void Tcl_SetChannelError(Tcl_Channel chan, Tcl_Obj* msg)
 }
 declare 565 generic {
-    void Tcl_GetChannelError (Tcl_Channel chan, Tcl_Obj** msg)
+    void Tcl_GetChannelError(Tcl_Channel chan, Tcl_Obj** msg)
 }
 
 # TIP #237 (Additional conversion functions for bignum support)
 
 declare 566 generic {
-    int Tcl_InitBignumFromDouble(Tcl_Interp* interp, double initval, 
+    int Tcl_InitBignumFromDouble(Tcl_Interp* interp, double initval,
 		mp_int *toInit)
 }
 
@@ -2068,7 +2072,7 @@ declare 572 generic {
 
 # TIP#268: Extended version numbers and requirements
 declare 573 generic {
-    int Tcl_PkgRequireProc(Tcl_Interp *interp, CONST char *name, 
+    int Tcl_PkgRequireProc(Tcl_Interp *interp, CONST char *name,
 	    int objc, Tcl_Obj *CONST objv[], ClientData *clientDataPtr)
 }
 
@@ -2102,8 +2106,12 @@ declare 579 generic {
 
 interface tclPlat
 
-######################
-# Windows declarations
+################################
+# Unix specific functions
+#   (none)
+
+################################
+# Windows specific functions
 
 # Added in Tcl 8.1
 
@@ -2114,9 +2122,8 @@ declare 1 win {
     char * Tcl_WinTCharToUtf(CONST TCHAR *str, int len, Tcl_DString *dsPtr)
 }
 
-##################
-# Mac OS X declarations
-#
+################################
+# Mac OS X specific functions
 
 declare 0 macosx {
     int Tcl_MacOSXOpenBundleResources(Tcl_Interp *interp,
@@ -2134,27 +2141,40 @@ declare 1 macosx {
 	    char *libraryPath)
 }
 
-
 ##############################################################################
 
-# Public functions that are not accessible via the stubs table:
-# (listed here _as comments_ so that the 'checkstubs' make target does not 
-# complain about them) 
+# Public functions that are not accessible via the stubs table.
 
-# void Tcl_Main(int argc, char **argv, Tcl_AppInitProc *appInitProc)
-# CONST char *Tcl_InitStubs(Tcl_Interp *interp, CONST char *version, int exact)
-# CONST char *TclTomMathInitializeStubs(Tcl_Interp* interp,
-#	CONST char* version, int epoch, int revision
-# CONST char *Tcl_PkgInitStubsCheck(Tcl_Interp *interp, CONST char *version,
-#	int exact);
+export {
+    void Tcl_Main(int argc, char **argv, Tcl_AppInitProc *appInitProc)
+}
+export {
+    CONST char *Tcl_InitStubs(Tcl_Interp *interp, CONST char *version,
+	int exact)
+}
+export {
+    CONST char *TclTomMathInitializeStubs(Tcl_Interp* interp,
+	CONST char* version, int epoch, int revision
+}
+export {
+    CONST char *Tcl_PkgInitStubsCheck(Tcl_Interp *interp, CONST char *version,
+	int exact);
+}
 
+# Global variables that need to be exported from the tcl shared library.
 
-# Global variables that need to be exported from the tcl shared library:
-# (listed here _as comments_ so that the 'checkstubs' make target does not 
-# complain about them, c.f. tk bug bug 1716117)
-
-# TclStubs *tclStubsPtr                 (fool checkstubs)
-# TclPlatStubs *tclPlatStubsPtr         (fool checkstubs)
-# TclIntStubs *tclIntStubsPtr           (fool checkstubs)
-# TclIntPlatStubs *tclIntPlatStubsPtr   (fool checkstubs)
-# TclTomMathStubs* tclTomMathStubsPtr   (fool checkstubs)
+export {
+    TclStubs *tclStubsPtr                       (fool checkstubs)
+}
+export {
+    TclPlatStubs *tclPlatStubsPtr               (fool checkstubs)
+}
+export {
+    TclIntStubs *tclIntStubsPtr                 (fool checkstubs)
+}
+export {
+    TclIntPlatStubs *tclIntPlatStubsPtr         (fool checkstubs)
+}
+export {
+    TclTomMathStubs* tclTomMathStubsPtr         (fool checkstubs)
+}

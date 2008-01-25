@@ -19,8 +19,8 @@
 #include <math.h>
 
 /*
- * The absolute pathname of the executable in which this Tcl library
- * is running.
+ * The absolute pathname of the executable in which this Tcl library is
+ * running.
  */
 
 static ProcessGlobalValue executableName = {
@@ -470,7 +470,7 @@ Tcl_SplitList(
 	}
 	argv[i] = p;
 	if (brace) {
-	    memcpy((void *) p, (void *) element, (size_t) elSize);
+	    memcpy(p, element, (size_t) elSize);
 	    p += elSize;
 	    *p = 0;
 	    p++;
@@ -1105,7 +1105,7 @@ Tcl_Concat(
 	if (length == 0) {
 	    continue;
 	}
-	memcpy((void *) p, (void *) element, (size_t) length);
+	memcpy(p, element, (size_t) length);
 	p += length;
 	*p = ' ';
 	p++;
@@ -1145,14 +1145,15 @@ Tcl_ConcatObj(
     char *p;
     char *element;
     char *concatStr;
-    Tcl_Obj *objPtr;
+    Tcl_Obj *objPtr, *resPtr;
 
     /*
-     * Check first to see if all the items are of list type. If so, we will
-     * concat them together as lists, and return a list object. This is only
-     * valid when the lists have no current string representation, since we
-     * don't know what the original type was. An original string rep may have
-     * lost some whitespace info when converted which could be important.
+     * Check first to see if all the items are of list type or empty. If so,
+     * we will concat them together as lists, and return a list object. This
+     * is only valid when the lists have no current string representation,
+     * since we don't know what the original type was. An original string rep
+     * may have lost some whitespace info when converted which could be
+     * important.
      */
 
     for (i = 0;  i < objc;  i++) {
@@ -1160,7 +1161,12 @@ Tcl_ConcatObj(
 
 	objPtr = objv[i];
 	if (objPtr->typePtr != &tclListType) {
-	    break;
+	    TclGetString(objPtr);
+	    if (objPtr->length) {
+		break;
+	    } else {
+		continue;
+	    }
 	}
 	listRepPtr = (List *) objPtr->internalRep.twoPtrValue.ptr1;
 	if (objPtr->bytes != NULL && !listRepPtr->canonicalFlag) {
@@ -1171,19 +1177,38 @@ Tcl_ConcatObj(
 	Tcl_Obj **listv;
 	int listc;
 
-	objPtr = Tcl_NewListObj(0, NULL);
+	resPtr = NULL;
 	for (i = 0;  i < objc;  i++) {
 	    /*
 	     * Tcl_ListObjAppendList could be used here, but this saves us a
 	     * bit of type checking (since we've already done it). Use of
 	     * INT_MAX tells us to always put the new stuff on the end. It
 	     * will be set right in Tcl_ListObjReplace.
+	     * Note that all objs at this point are either lists or have an
+	     * empty string rep.
 	     */
 
-	    Tcl_ListObjGetElements(NULL, objv[i], &listc, &listv);
-	    Tcl_ListObjReplace(NULL, objPtr, INT_MAX, 0, listc, listv);
+	    objPtr = objv[i];
+	    if (objPtr->bytes && !objPtr->length) {
+		continue;
+	    }
+	    TclListObjGetElements(NULL, objPtr, &listc, &listv);
+	    if (listc) {
+		if (resPtr) {
+		    Tcl_ListObjReplace(NULL, resPtr, INT_MAX, 0, listc, listv);
+		} else {
+		    if (Tcl_IsShared(objPtr)) {
+			resPtr = TclListObjCopy(NULL, objPtr);
+		    } else {
+			resPtr = objPtr;
+		    }
+		}
+	    }
 	}
-	return objPtr;
+	if (!resPtr) {
+	    resPtr = Tcl_NewObj();
+	}
+	return resPtr;
     }
 
     /*
@@ -1194,7 +1219,7 @@ Tcl_ConcatObj(
     allocSize = 0;
     for (i = 0;  i < objc;  i++) {
 	objPtr = objv[i];
-	element = Tcl_GetStringFromObj(objPtr, &length);
+	element = TclGetStringFromObj(objPtr, &length);
 	if ((element != NULL) && (length > 0)) {
 	    allocSize += (length + 1);
 	}
@@ -1209,7 +1234,7 @@ Tcl_ConcatObj(
      * the terminating NULL byte.
      */
 
-    concatStr = (char *) ckalloc((unsigned) allocSize);
+    concatStr = ckalloc((unsigned) allocSize);
 
     /*
      * Now concatenate the elements. Clip white space off the front and back
@@ -1224,7 +1249,7 @@ Tcl_ConcatObj(
 	p = concatStr;
 	for (i = 0;  i < objc;  i++) {
 	    objPtr = objv[i];
-	    element = Tcl_GetStringFromObj(objPtr, &elemLength);
+	    element = TclGetStringFromObj(objPtr, &elemLength);
 	    while ((elemLength > 0) && (UCHAR(*element) < 127)
 		    && isspace(UCHAR(*element))) { /* INTL: ISO C space. */
 		element++;
@@ -1246,7 +1271,7 @@ Tcl_ConcatObj(
 	    if (elemLength == 0) {
 		continue;	/* nothing left of this element */
 	    }
-	    memcpy((void *) p, (void *) element, (size_t) elemLength);
+	    memcpy(p, element, (size_t) elemLength);
 	    p += elemLength;
 	    *p = ' ';
 	    p++;
@@ -1528,6 +1553,235 @@ Tcl_StringCaseMatch(
 /*
  *----------------------------------------------------------------------
  *
+ * TclByteArrayMatch --
+ *
+ *	See if a particular string matches a particular pattern.  Does not
+ *	allow for case insensitivity.
+ *	Parallels tclUtf.c:TclUniCharMatch, adjusted for char* and sans nocase.
+ *
+ * Results:
+ *	The return value is 1 if string matches pattern, and 0 otherwise. The
+ *	matching operation permits the following special characters in the
+ *	pattern: *?\[] (see the manual entry for details on what these mean).
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+int
+TclByteArrayMatch(
+    const unsigned char *string,	/* String. */
+    int strLen,				/* Length of String */
+    const unsigned char *pattern,	/* Pattern, which may contain special
+					 * characters. */
+    int ptnLen,				/* Length of Pattern */
+    int flags)
+{
+    const unsigned char *stringEnd, *patternEnd;
+    unsigned char p;
+
+    stringEnd = string + strLen;
+    patternEnd = pattern + ptnLen;
+
+    while (1) {
+	/*
+	 * See if we're at the end of both the pattern and the string. If so,
+	 * we succeeded. If we're at the end of the pattern but not at the end
+	 * of the string, we failed.
+	 */
+
+	if (pattern == patternEnd) {
+	    return (string == stringEnd);
+	}
+	p = *pattern;
+	if ((string == stringEnd) && (p != '*')) {
+	    return 0;
+	}
+
+	/*
+	 * Check for a "*" as the next pattern character. It matches any
+	 * substring. We handle this by skipping all the characters up to the
+	 * next matching one in the pattern, and then calling ourselves
+	 * recursively for each postfix of string, until either we match or we
+	 * reach the end of the string.
+	 */
+
+	if (p == '*') {
+	    /*
+	     * Skip all successive *'s in the pattern.
+	     */
+
+	    while (*(++pattern) == '*') {
+		/* empty body */
+	    }
+	    if (pattern == patternEnd) {
+		return 1;
+	    }
+	    p = *pattern;
+	    while (1) {
+		/*
+		 * Optimization for matching - cruise through the string
+		 * quickly if the next char in the pattern isn't a special
+		 * character.
+		 */
+
+		if ((p != '[') && (p != '?') && (p != '\\')) {
+		    while ((string < stringEnd) && (p != *string)) {
+			string++;
+		    }
+		}
+		if (TclByteArrayMatch(string, stringEnd - string,
+				pattern, patternEnd - pattern, 0)) {
+		    return 1;
+		}
+		if (string == stringEnd) {
+		    return 0;
+		}
+		string++;
+	    }
+	}
+
+	/*
+	 * Check for a "?" as the next pattern character. It matches any
+	 * single character.
+	 */
+
+	if (p == '?') {
+	    pattern++;
+	    string++;
+	    continue;
+	}
+
+	/*
+	 * Check for a "[" as the next pattern character. It is followed by a
+	 * list of characters that are acceptable, or by a range (two
+	 * characters separated by "-").
+	 */
+
+	if (p == '[') {
+	    unsigned char ch1, startChar, endChar;
+
+	    pattern++;
+	    ch1 = *string;
+	    string++;
+	    while (1) {
+		if ((*pattern == ']') || (pattern == patternEnd)) {
+		    return 0;
+		}
+		startChar = *pattern;
+		pattern++;
+		if (*pattern == '-') {
+		    pattern++;
+		    if (pattern == patternEnd) {
+			return 0;
+		    }
+		    endChar = *pattern;
+		    pattern++;
+		    if (((startChar <= ch1) && (ch1 <= endChar))
+			    || ((endChar <= ch1) && (ch1 <= startChar))) {
+			/*
+			 * Matches ranges of form [a-z] or [z-a].
+			 */
+			break;
+		    }
+		} else if (startChar == ch1) {
+		    break;
+		}
+	    }
+	    while (*pattern != ']') {
+		if (pattern == patternEnd) {
+		    pattern--;
+		    break;
+		}
+		pattern++;
+	    }
+	    pattern++;
+	    continue;
+	}
+
+	/*
+	 * If the next pattern character is '\', just strip off the '\' so we
+	 * do exact matching on the character that follows.
+	 */
+
+	if (p == '\\') {
+	    if (++pattern == patternEnd) {
+		return 0;
+	    }
+	}
+
+	/*
+	 * There's no special character. Just make sure that the next bytes of
+	 * each string match.
+	 */
+
+	if (*string != *pattern) {
+	    return 0;
+	}
+	string++;
+	pattern++;
+    }
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TclStringMatchObj --
+ *
+ *	See if a particular string matches a particular pattern.
+ *	Allows case insensitivity.  This is the generic multi-type handler
+ *	for the various matching algorithms.
+ *
+ * Results:
+ *	The return value is 1 if string matches pattern, and 0 otherwise. The
+ *	matching operation permits the following special characters in the
+ *	pattern: *?\[] (see the manual entry for details on what these mean).
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+int
+TclStringMatchObj(
+    Tcl_Obj *strObj,	/* string object. */
+    Tcl_Obj *ptnObj,	/* pattern object. */
+    int flags)		/* Only TCL_MATCH_NOCASE should be passed or 0. */
+{
+    int match, length, plen;
+
+    /*
+     * Promote based on the type of incoming object.
+     * XXX: Currently doesn't take advantage of exact-ness that
+     * XXX: TclReToGlob tells us about
+    trivial = nocase ? 0 : TclMatchIsTrivial(TclGetString(ptnObj));
+     */
+
+    if ((strObj->typePtr == &tclStringType)) {
+	Tcl_UniChar *udata, *uptn;
+
+	udata = Tcl_GetUnicodeFromObj(strObj, &length);
+	uptn  = Tcl_GetUnicodeFromObj(ptnObj, &plen);
+	match = TclUniCharMatch(udata, length, uptn, plen, flags);
+    } else if ((strObj->typePtr == &tclByteArrayType) && !flags) {
+	unsigned char *data, *ptn;
+
+	data = Tcl_GetByteArrayFromObj(strObj, &length);
+	ptn  = Tcl_GetByteArrayFromObj(ptnObj, &plen);
+	match = TclByteArrayMatch(data, length, ptn, plen, 0);
+    } else {
+	match = Tcl_StringCaseMatch(TclGetString(strObj),
+		TclGetString(ptnObj), flags);
+    }
+    return match;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
  * Tcl_DStringInit --
  *
  *	Initializes a dynamic string, discarding any previous contents of the
@@ -1599,11 +1853,11 @@ Tcl_DStringAppend(
 	dsPtr->spaceAvl = newSize * 2;
 	if (dsPtr->string == dsPtr->staticSpace) {
 	    char *newString = ckalloc((unsigned) dsPtr->spaceAvl);
-	    memcpy((void *) newString, (void *) dsPtr->string,
-		    (size_t) dsPtr->length);
+
+	    memcpy(newString, dsPtr->string, (size_t) dsPtr->length);
 	    dsPtr->string = newString;
 	} else {
-	    dsPtr->string = (char *) ckrealloc((void *) dsPtr->string,
+	    dsPtr->string = ckrealloc((void *) dsPtr->string,
 		    (size_t) dsPtr->spaceAvl);
 	}
     }
@@ -1664,8 +1918,8 @@ Tcl_DStringAppendElement(
 	dsPtr->spaceAvl = newSize * 2;
 	if (dsPtr->string == dsPtr->staticSpace) {
 	    char *newString = ckalloc((unsigned) dsPtr->spaceAvl);
-	    memcpy((void *) newString, (void *) dsPtr->string,
-		    (size_t) dsPtr->length);
+
+	    memcpy(newString, dsPtr->string, (size_t) dsPtr->length);
 	    dsPtr->string = newString;
 	} else {
 	    dsPtr->string = (char *) ckrealloc((void *) dsPtr->string,
@@ -1746,8 +2000,8 @@ Tcl_DStringSetLength(
 	}
 	if (dsPtr->string == dsPtr->staticSpace) {
 	    char *newString = ckalloc((unsigned) dsPtr->spaceAvl);
-	    memcpy((void *) newString, (void *) dsPtr->string,
-		    (size_t) dsPtr->length);
+
+	    memcpy(newString, dsPtr->string, (size_t) dsPtr->length);
 	    dsPtr->string = newString;
 	} else {
 	    dsPtr->string = (char *) ckrealloc((void *) dsPtr->string,
@@ -1878,7 +2132,7 @@ Tcl_DStringGetResult(
 	    dsPtr->spaceAvl = dsPtr->length+1;
 	} else {
 	    dsPtr->string = (char *) ckalloc((unsigned) (dsPtr->length+1));
-	    strcpy(dsPtr->string, iPtr->result);
+	    memcpy(dsPtr->string, iPtr->result, (unsigned) dsPtr->length+1);
 	    (*iPtr->freeProc)(iPtr->result);
 	}
 	dsPtr->spaceAvl = dsPtr->length+1;
@@ -1891,7 +2145,7 @@ Tcl_DStringGetResult(
 	    dsPtr->string = (char *) ckalloc((unsigned) (dsPtr->length + 1));
 	    dsPtr->spaceAvl = dsPtr->length + 1;
 	}
-	strcpy(dsPtr->string, iPtr->result);
+	memcpy(dsPtr->string, iPtr->result, (unsigned) dsPtr->length+1);
     }
 
     iPtr->result = iPtr->resultSpace;
@@ -2305,7 +2559,10 @@ TclGetIntForIndex(
     int *indexPtr)		/* Location filled in with an integer
 				 * representing an index. */
 {
-    if (Tcl_GetIntFromObj(NULL, objPtr, indexPtr) == TCL_OK) {
+    int length;
+    char *opPtr, *bytes;
+
+    if (TclGetIntFromObj(NULL, objPtr, indexPtr) == TCL_OK) {
 	return TCL_OK;
     }
 
@@ -2316,72 +2573,72 @@ TclGetIntForIndex(
 	 */
 
 	*indexPtr = endValue + objPtr->internalRep.longValue;
-
-    } else {
-	int length;
-	char *opPtr, *bytes = Tcl_GetStringFromObj(objPtr, &length);
-
-	/* Leading whitespace is acceptable in an index */
-	while (length && isspace(UCHAR(*bytes))) { /* INTL: ISO space. */
-	    bytes++; length--;
-	}
-
-	if (TCL_OK == TclParseNumber(NULL, NULL, NULL,
-		bytes, length, (CONST char **)&opPtr,
-		TCL_PARSE_INTEGER_ONLY | TCL_PARSE_NO_WHITESPACE)) {
-	    int code, first, second;
-	    char savedOp = *opPtr;
-	    if ((savedOp != '+') && (savedOp != '-')) {
-		goto parseError;
-	    }
-	    if (isspace(UCHAR(opPtr[1]))) {
-		goto parseError;
-	    }
-	    *opPtr = '\0';
-	    code = Tcl_GetInt(interp, bytes, &first);
-	    *opPtr = savedOp;
-	    if (code == TCL_ERROR) {
-		goto parseError;
-	    }
-	    if (TCL_ERROR == Tcl_GetInt(interp, opPtr+1, &second)) {
-		goto parseError;
-	    }
-	    if (savedOp == '+') {
-		*indexPtr = first + second;
-	    } else {
-		*indexPtr = first - second;
-	    }
-	    return TCL_OK;
-	}
-
-	/*
-	 * Report a parse error.
-	 */
-
-    parseError:
-	if (interp != NULL) {
-	    char *bytes = Tcl_GetString(objPtr);
-
-	    /*
-	     * The result might not be empty; this resets it which should be
-	     * both a cheap operation, and of little problem because this is
-	     * an error-generation path anyway.
-	     */
-
-	    Tcl_ResetResult(interp);
-	    Tcl_AppendResult(interp, "bad index \"", bytes,
-		    "\": must be integer?[+-]integer? or end?[+-]integer?",
-		    (char *) NULL);
-	    if (!strncmp(bytes, "end-", 3)) {
-		bytes += 3;
-	    }
-	    TclCheckBadOctal(interp, bytes);
-	}
-
-	return TCL_ERROR;
+	return TCL_OK;
     }
 
-    return TCL_OK;
+    bytes = TclGetStringFromObj(objPtr, &length);
+
+    /*
+     * Leading whitespace is acceptable in an index.
+     */
+
+    while (length && isspace(UCHAR(*bytes))) {		/* INTL: ISO space. */
+	bytes++;
+	length--;
+    }
+
+    if (TclParseNumber(NULL, NULL, NULL, bytes, length, (const char **)&opPtr,
+	    TCL_PARSE_INTEGER_ONLY | TCL_PARSE_NO_WHITESPACE) == TCL_OK) {
+	int code, first, second;
+	char savedOp = *opPtr;
+
+	if ((savedOp != '+') && (savedOp != '-')) {
+	    goto parseError;
+	}
+	if (isspace(UCHAR(opPtr[1]))) {
+	    goto parseError;
+	}
+	*opPtr = '\0';
+	code = Tcl_GetInt(interp, bytes, &first);
+	*opPtr = savedOp;
+	if (code == TCL_ERROR) {
+	    goto parseError;
+	}
+	if (TCL_ERROR == Tcl_GetInt(interp, opPtr+1, &second)) {
+	    goto parseError;
+	}
+	if (savedOp == '+') {
+	    *indexPtr = first + second;
+	} else {
+	    *indexPtr = first - second;
+	}
+	return TCL_OK;
+    }
+
+    /*
+     * Report a parse error.
+     */
+
+  parseError:
+    if (interp != NULL) {
+	char *bytes = Tcl_GetString(objPtr);
+
+	/*
+	 * The result might not be empty; this resets it which should be both
+	 * a cheap operation, and of little problem because this is an
+	 * error-generation path anyway.
+	 */
+
+	Tcl_ResetResult(interp);
+	Tcl_AppendResult(interp, "bad index \"", bytes,
+		"\": must be integer?[+-]integer? or end?[+-]integer?", NULL);
+	if (!strncmp(bytes, "end-", 4)) {
+	    bytes += 4;
+	}
+	TclCheckBadOctal(interp, bytes);
+    }
+
+    return TCL_ERROR;
 }
 
 /*
@@ -2417,8 +2674,8 @@ UpdateStringOfEndOffset(
 	buffer[len++] = '-';
 	len += TclFormatInt(buffer+len, -(objPtr->internalRep.longValue));
     }
-    objPtr->bytes = ckalloc((unsigned) (len+1));
-    strcpy(objPtr->bytes, buffer);
+    objPtr->bytes = ckalloc((unsigned) len+1);
+    memcpy(objPtr->bytes, buffer, (unsigned) len+1);
     objPtr->length = len;
 }
 
@@ -2461,13 +2718,13 @@ SetEndOffsetFromAny(
      * Check for a string rep of the right form.
      */
 
-    bytes = Tcl_GetStringFromObj(objPtr, &length);
+    bytes = TclGetStringFromObj(objPtr, &length);
     if ((*bytes != 'e') || (strncmp(bytes, "end",
 	    (size_t)((length > 3) ? 3 : length)) != 0)) {
 	if (interp != NULL) {
 	    Tcl_ResetResult(interp);
 	    Tcl_AppendResult(interp, "bad index \"", bytes,
-		    "\": must be end?[+-]integer?", (char*) NULL);
+		    "\": must be end?[+-]integer?", NULL);
 	}
 	return TCL_ERROR;
     }
@@ -2501,7 +2758,7 @@ SetEndOffsetFromAny(
 	if (interp != NULL) {
 	    Tcl_ResetResult(interp);
 	    Tcl_AppendResult(interp, "bad index \"", bytes,
-		    "\": must be end?[+-]integer?", (char *) NULL);
+		    "\": must be end?[+-]integer?", NULL);
 	}
 	return TCL_ERROR;
     }
@@ -2556,6 +2813,9 @@ TclCheckBadOctal(
 	p++;
     }
     if (*p == '0') {
+	if ((p[1] == 'o') || p[1] == 'O') {
+	    p+=2;
+	}
 	while (isdigit(UCHAR(*p))) {	/* INTL: digit. */
 	    p++;
 	}
@@ -2572,8 +2832,9 @@ TclCheckBadOctal(
 		 * Don't reset the result here because we want this result to
 		 * be added to an existing error message as extra info.
 		 */
+
 		Tcl_AppendResult(interp, " (looks like invalid octal number)",
-			(char *) NULL);
+			NULL);
 	    }
 	    return 1;
 	}
@@ -2727,8 +2988,8 @@ TclSetProcessGlobalValue(
 	Tcl_CreateExitHandler(FreeProcessGlobalValue, (ClientData) pgvPtr);
     }
     bytes = Tcl_GetStringFromObj(newValue, &pgvPtr->numBytes);
-    pgvPtr->value = ckalloc((unsigned int) pgvPtr->numBytes + 1);
-    strcpy(pgvPtr->value, bytes);
+    pgvPtr->value = ckalloc((unsigned) pgvPtr->numBytes + 1);
+    memcpy(pgvPtr->value, bytes, (unsigned) pgvPtr->numBytes + 1);
     if (pgvPtr->encoding) {
 	Tcl_FreeEncoding(pgvPtr->encoding);
     }
@@ -2795,7 +3056,7 @@ TclGetProcessGlobalValue(
 	    ckfree(pgvPtr->value);
 	    pgvPtr->value = ckalloc((unsigned int)
 		    Tcl_DStringLength(&newValue) + 1);
-	    memcpy((void*) pgvPtr->value, (void*) Tcl_DStringValue(&newValue),
+	    memcpy(pgvPtr->value, Tcl_DStringValue(&newValue),
 		    (size_t) Tcl_DStringLength(&newValue) + 1);
 	    Tcl_DStringFree(&newValue);
 	    Tcl_FreeEncoding(pgvPtr->encoding);
@@ -2924,8 +3185,9 @@ CONST char *
 Tcl_GetNameOfExecutable(void)
 {
     int numBytes;
-    CONST char * bytes =
+    const char *bytes =
 	    Tcl_GetStringFromObj(TclGetObjNameOfExecutable(), &numBytes);
+
     if (numBytes == 0) {
 	return NULL;
     }
@@ -2978,6 +3240,188 @@ TclPlatformType *
 TclGetPlatform(void)
 {
     return &tclPlatform;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TclReToGlob --
+ *
+ *	Attempt to convert a regular expression to an equivalent glob pattern.
+ *
+ * Results:
+ *	Returns TCL_OK on success, TCL_ERROR on failure. If interp is not
+ *	NULL, an error message is placed in the result. On success, the
+ *	DString will contain an exact equivalent glob pattern. The caller is
+ *	responsible for calling Tcl_DStringFree on success. If exactPtr is not
+ *	NULL, it will be 1 if an exact match qualifies.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+int
+TclReToGlob(
+    Tcl_Interp *interp,
+    const char *reStr,
+    int reStrLen,
+    Tcl_DString *dsPtr,
+    int *exactPtr)
+{
+    int anchorLeft, anchorRight;
+    char *dsStr, *dsStrStart, *msg;
+    const char *p, *strEnd;
+
+    strEnd = reStr + reStrLen;
+    Tcl_DStringInit(dsPtr);
+
+    /*
+     * "***=xxx" == "*xxx*"
+     */
+
+    if ((reStrLen >= 4) && (memcmp("***=", reStr, 4) == 0)) {
+	if (exactPtr) {
+	    *exactPtr = 1;
+	}
+	Tcl_DStringAppend(dsPtr, reStr + 4, reStrLen - 4);
+	return TCL_OK;
+    }
+
+    /*
+     * Write to the ds directly without the function overhead.
+     * An equivalent glob pattern can be no more than reStrLen+2 in size.
+     */
+
+    Tcl_DStringSetLength(dsPtr, reStrLen + 2);
+    dsStrStart = Tcl_DStringValue(dsPtr);
+
+    /*
+     * Check for anchored REs (ie ^foo$), so we can use string equal if
+     * possible. Do not alter the start of str so we can free it correctly.
+     */
+
+    msg = NULL;
+    p = reStr;
+    anchorRight = 0;
+    dsStr = dsStrStart;
+    if (*p == '^') {
+	anchorLeft = 1;
+	p++;
+    } else {
+	anchorLeft = 0;
+	*dsStr++ = '*';
+    }
+
+    for ( ; p < strEnd; p++) {
+	switch (*p) {
+	case '\\':
+	    p++;
+	    switch (*p) {
+	    case 'a':
+		*dsStr++ = '\a';
+		break;
+	    case 'b':
+		*dsStr++ = '\b';
+		break;
+	    case 'f':
+		*dsStr++ = '\f';
+		break;
+	    case 'n':
+		*dsStr++ = '\n';
+		break;
+	    case 'r':
+		*dsStr++ = '\r';
+		break;
+	    case 't':
+		*dsStr++ = '\t';
+		break;
+	    case 'v':
+		*dsStr++ = '\v';
+		break;
+	    case 'B': case '\\':
+		*dsStr++ = '\\';
+		*dsStr++ = '\\';
+		anchorLeft = 0; /* prevent exact match */
+		break;
+	    case '*': case '[': case ']': case '?':
+		/* Only add \ where necessary for glob */
+		*dsStr++ = '\\';
+		anchorLeft = 0; /* prevent exact match */
+		/* fall through */
+	    case '{': case '}': case '(': case ')': case '+':
+	    case '.': case '|': case '^': case '$':
+		*dsStr++ = *p;
+		break;
+	    default:
+		msg = "invalid escape sequence";
+		goto invalidGlob;
+	    }
+	    break;
+	case '.':
+	    anchorLeft = 0; /* prevent exact match */
+	    if (p+1 < strEnd) {
+		if (p[1] == '*') {
+		    p++;
+		    if ((dsStr == dsStrStart) || (dsStr[-1] != '*')) {
+			*dsStr++ = '*';
+		    }
+		    continue;
+		} else if (p[1] == '+') {
+		    p++;
+		    *dsStr++ = '?';
+		    *dsStr++ = '*';
+		    continue;
+		}
+	    }
+	    *dsStr++ = '?';
+	    break;
+	case '$':
+	    if (p+1 != strEnd) {
+		msg = "$ not anchor";
+		goto invalidGlob;
+	    }
+	    anchorRight = 1;
+	    break;
+	case '*': case '+': case '?': case '|': case '^':
+	case '{': case '}': case '(': case ')': case '[': case ']':
+	    msg = "unhandled RE special char";
+	    goto invalidGlob;
+	    break;
+	default:
+	    *dsStr++ = *p;
+	    break;
+	}
+    }
+    if (!anchorRight && ((dsStr == dsStrStart) || (dsStr[-1] != '*'))) {
+	*dsStr++ = '*';
+    }
+    Tcl_DStringSetLength(dsPtr, dsStr - dsStrStart);
+
+    if (exactPtr) {
+	*exactPtr = (anchorLeft && anchorRight);
+    }
+
+#if 0
+    fprintf(stderr, "INPUT RE '%.*s' OUTPUT GLOB '%s' anchor %d:%d \n",
+	    reStrLen, reStr,
+	    Tcl_DStringValue(dsPtr), anchorLeft, anchorRight);
+    fflush(stderr);
+#endif
+    return TCL_OK;
+
+  invalidGlob:
+#if 0
+    fprintf(stderr, "INPUT RE '%.*s' NO OUTPUT GLOB %s (%c)\n",
+	    reStrLen, reStr, msg, *p);
+    fflush(stderr);
+#endif
+    if (interp != NULL) {
+	Tcl_AppendResult(interp, msg, NULL);
+    }
+    Tcl_DStringFree(dsPtr);
+    return TCL_ERROR;
 }
 
 /*

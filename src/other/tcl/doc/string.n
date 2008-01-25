@@ -41,7 +41,7 @@ first \fIlength\fR characters are used in the comparison.  If
 \fB\-length\fR is negative, it is ignored.  If \fB\-nocase\fR is
 specified, then the strings are compared in a case-insensitive manner.
 .TP
-\fBstring equal\fR ?\fB\-nocase\fR? ?\fB-length int\fR? \fIstring1 string2\fR
+\fBstring equal\fR ?\fB\-nocase\fR? ?\fB\-length int\fR? \fIstring1 string2\fR
 Perform a character-by-character comparison of strings \fIstring1\fR
 and \fIstring2\fR.  Returns 1 if \fIstring1\fR and \fIstring2\fR are
 identical, or 0 when not.  If \fB\-length\fR is specified, then only
@@ -77,24 +77,42 @@ string.  \fIcharIndex\fR may be specified as follows:
 .IP \fIinteger\fR 10
 For any index value that passes \fBstring is integer -strict\fR,
 the char specified at this integral index
-(e.g. \fB2\fR would refer to the "c" in "abcd").
+(e.g. \fB2\fR would refer to the
+.QW c
+in
+.QW abcd ).
 .IP \fBend\fR 10
 The last char of the string
-(e.g. \fBend\fR would refer to the "d" in "abcd").
+(e.g. \fBend\fR would refer to the
+.QW d
+in
+.QW abcd ).
 .IP \fBend\fR\-\fIN\fR 10
 The last char of the string minus the specified integer offset \fIN\fR
-(e.g. \fBend\fR\-1 would refer to the "c" in "abcd").
+(e.g. \fBend\fR\-1 would refer to the
+.QW c
+in
+.QW abcd ).
 .IP \fBend\fR+\fIN\fR 10
 The last char of the string plus the specified integer offset \fIN\fR
-(e.g. \fBend\fR+\-1 would refer to the "c" in "abcd").
+(e.g. \fBend\fR+\-1 would refer to the
+.QW c
+in
+.QW abcd ).
 .IP \fIM\fR+\fIN\fR 10
 The char specified at the integral index that is the sum of 
 integer values \fIM\fR and \fIN\fR
-(e.g. \fB1+1\fR would refer to the "c" in "abcd").
+(e.g. \fB1+1\fR would refer to the
+.QW c
+in
+.QW abcd ).
 .IP \fIM\fR\-\fIN\fR 10
 The char specified at the integral index that is the difference of 
 integer values \fIM\fR and \fIN\fR
-(e.g. \fB2\-1\fR would refer to the "b" in "abcd").
+(e.g. \fB2\-1\fR would refer to the
+.QW b
+in
+.QW abcd ).
 .PP
 In the specifications above, the integer value \fIM\fR contains no
 trailing whitespace and the integer value \fIN\fR contains no
@@ -120,7 +138,7 @@ Any Unicode alphabet or digit character.
 .IP \fBalpha\fR 12
 Any Unicode alphabet character.
 .IP \fBascii\fR 12
-Any character with a value less than \\u0080 (those that are in the
+Any character with a value less than \eu0080 (those that are in the
 7\-bit ascii range).
 .IP \fBboolean\fR 12
 Any of the forms allowed to \fBTcl_GetBoolean\fR.
@@ -145,8 +163,9 @@ the value, 0 is returned and the \fIvarname\fR will contain \-1.
 .IP \fBlist\fR 12
 Any proper list structure, with optional surrounding whitespace. In
 case of improper list structure, 0 is returned and the \fIvarname\fR
-will contain the index of the "element" where the list parsing fails,
-or \-1 if this cannot be determined.
+will contain the index of the
+.QW element
+where the list parsing fails, or \-1 if this cannot be determined.
 .IP \fBlower\fR 12
 Any Unicode lower case alphabet character.
 .IP \fBprint\fR 12
@@ -231,7 +250,7 @@ it will return the string \fB02c322c222c\fR.
 .TP
 \fBstring match\fR ?\fB\-nocase\fR? \fIpattern\fR \fIstring\fR
 See if \fIpattern\fR matches \fIstring\fR; return 1 if it does, 0 if
-it doesn't.  If \fB\-nocase\fR is specified, then the pattern attempts
+it does not.  If \fB\-nocase\fR is specified, then the pattern attempts
 to match against the string in a case insensitive manner.  For the two
 strings to match, their contents must be identical except that the
 following special sequences may appear in \fIpattern\fR:
@@ -246,10 +265,16 @@ Matches any character in the set given by \fIchars\fR.  If a sequence
 of the form \fIx\fB\-\fIy\fR appears in \fIchars\fR, then any
 character between \fIx\fR and \fIy\fR, inclusive, will match.  When
 used with \fB\-nocase\fR, the end points of the range are converted to
-lower case first.  Whereas {[A\-z]} matches '_' when matching
-case-sensitively ('_' falls between the 'Z' and 'a'), with
-\fB\-nocase\fR this is considered like {[A\-Za\-z]} (and probably what
-was meant in the first place).
+lower case first.  Whereas {[A\-z]} matches
+.QW _
+when matching case-sensitively (since
+.QW _
+falls between the
+.QW Z
+and
+.QW a ),
+with \fB\-nocase\fR this is considered like {[A\-Za\-z]} (and
+probably what was meant in the first place).
 .IP \fB\e\fIx\fR 10
 Matches the single character \fIx\fR.  This provides a way of avoiding
 the special interpretation of the characters \fB*?[]\e\fR in

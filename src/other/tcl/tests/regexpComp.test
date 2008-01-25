@@ -822,6 +822,82 @@ foreach {str exp result} {
 	     [subst {evalInProc {set a "$str"; regexp {$exp} \$a}}] $result
 }
 
+set i 0
+foreach {str exp result} {
+    foo		^foo		1
+    foobar	^foobar$	1
+    foobar	bar$		1
+    foobar	^$		0
+    ""		^$		1
+    anything	$		1
+    anything	^.*$		1
+    anything	^.*a$		0
+    anything	^.*a.*$		1
+    anything	^.*.*$		1
+    anything	^.*..*$		1
+    anything	^.*b$		0
+    anything	^a.*$		1
+} {
+    test regexpComp-23.[incr i] {regexp command compiling tests INST_REGEXP} \
+	[subst {evalInProc {set a "$str"; set re "$exp"; regexp \$re \$a}}] $result
+}
+
+test regexpComp-24.1 {regexp command compiling tests} {
+    evalInProc {
+	set re foo
+	regexp -nocase $re bar
+    }
+} 0
+test regexpComp-24.2 {regexp command compiling tests} {
+    evalInProc {
+	set re {^foo$}
+	regexp $re dogfood
+    }
+} 0
+test regexpComp-24.3 {regexp command compiling tests} {
+    evalInProc {
+	set a foo
+	set re {^foo$}
+	regexp $re $a
+    }
+} 1
+test regexpComp-24.4 {regexp command compiling tests} {
+    evalInProc {
+	set re foo
+	regexp $re dogfood
+    }
+} 1
+test regexpComp-24.5 {regexp command compiling tests} {
+    evalInProc {
+	set re FOO
+	regexp -nocase $re dogfod
+    }
+} 0
+test regexpComp-24.6 {regexp command compiling tests} {
+    evalInProc {
+	set re foo
+	regexp -n $re dogfoOd
+    }
+} 1
+test regexpComp-24.7 {regexp command compiling tests} {
+    evalInProc {
+	set re FoO
+	regexp -no -- $re dogfood
+    }
+} 1
+test regexpComp-24.8 {regexp command compiling tests} {
+    evalInProc {
+	set re foo
+	regexp -- $re dogfod
+    }
+} 0
+test regexpComp-24.9 {regexp command compiling tests} {
+    evalInProc {
+	set re "("
+	list [catch {regexp -- $re dogfod} msg] $msg
+    }
+} {1 {couldn't compile regular expression pattern: parentheses () not balanced}}
+
 # cleanup
 ::tcltest::cleanupTests
 return

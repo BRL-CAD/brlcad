@@ -465,7 +465,7 @@ test expr-old-23.8 {double quotes} {
 # Numbers in various bases.
 
 test expr-old-24.1 {numbers in different bases} {expr 0x20} 32
-test expr-old-24.2 {numbers in different bases} {expr 015} 13
+test expr-old-24.2 {numbers in different bases} {expr 0o15} 13
 
 # Conversions between various data types.
 
@@ -678,7 +678,7 @@ test expr-old-28.14 {Tcl_ExprBool usage} {
 # Operands enclosed in braces
 
 test expr-old-29.1 {braces} {expr {{abc}}} abc
-test expr-old-29.2 {braces} {expr {{00010}}} 8
+test expr-old-29.2 {braces} {expr {{0o0010}}} 8
 test expr-old-29.3 {braces} {expr {{3.1200000}}} 3.12
 test expr-old-29.4 {braces} {expr {{a{b}{1 {2 3}}c}}} "a{b}{1 {2 3}}c"
 test expr-old-29.5 {braces} -body {
@@ -959,10 +959,10 @@ test expr-old-34.17 {errors in math functions} -constraints testmathfunctions \
     } -match glob -result {1 {too many arguments for math function*}}
 
 test expr-old-36.1 {ExprLooksLikeInt procedure} -body {
-    expr 0289
+    expr 0o289
 } -returnCodes error -match glob -result {*invalid octal number*}
 test expr-old-36.2 {ExprLooksLikeInt procedure} {
-    set x 0289
+    set x 0o289
     list [catch {expr {$x+1}} msg] $msg
 } {1 {can't use invalid octal number as operand of "+"}}
 test expr-old-36.3 {ExprLooksLikeInt procedure} {
@@ -1014,7 +1014,7 @@ test expr-old-36.14 {ExprLooksLikeInt procedure} {
     expr {$x+1}
 } 123456789012345678901234567891
 test expr-old-36.15 {ExprLooksLikeInt procedure} {
-    set x "099 "
+    set x "0o99 "
     list [catch {expr {$x+1}} msg] $msg
 } {1 {can't use invalid octal number as operand of "+"}}
 test expr-old-36.16 {ExprLooksLikeInt procedure} {

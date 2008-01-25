@@ -110,10 +110,13 @@ vsatisfies\fR. If multiple versions are suitable the implementation
 with the highest version is chosen. This last part is additionally
 influenced by the selection mode set with \fBpackage prefer\fR.
 .PP
-In the "stable" selection mode the command will select the highest
+In the
+.QW stable
+selection mode the command will select the highest
 stable version satisfying the requirements, if any. If no stable
 version satisfies the requirements, the highest unstable version
-satisfying the requirements will be selected.  In the "latest"
+satisfying the requirements will be selected.  In the
+.QW latest
 selection mode the command will accept the highest version satisfying
 all the requirements, regardless of its stableness.
 .PP
@@ -143,7 +146,9 @@ of \fIpackage\fR is acceptable to the caller.  This command is
 equivalent to \fBpackage require \fIpackage version\fR-\fIversion\fR.
 .TP
 \fBpackage unknown \fR?\fIcommand\fR?
-This command supplies a ``last resort'' command to invoke during
+This command supplies a
+.QW "last resort"
+command to invoke during
 \fBpackage require\fR if no suitable version of a package can be found
 in the \fBpackage ifneeded\fR database.
 If the \fIcommand\fR argument is supplied, it contains the first part
@@ -178,17 +183,24 @@ have any of the forms:
 .RS
 .TP
 min
-This form is called "min-bounded".
+This form is called
+.QW min-bounded .
 .TP
 min-
-This form is called "min-unbound".
+This form is called
+.QW min-unbound .
 .TP
 min-max
-This form is called "bounded".
+This form is called
+.QW bounded .
 .RE
 .RS
 .PP
-where "min" and "max" are valid version numbers. The legacy syntax is
+where
+.QW min
+and
+.QW max
+are valid version numbers. The legacy syntax is
 a special case of the extended syntax, keeping backward
 compatibility. Regarding satisfaction the rules are:
 .RE
@@ -197,7 +209,9 @@ compatibility. Regarding satisfaction the rules are:
 The \fIversion\fR has to pass at least one of the listed
 \fIrequirement\fRs to be satisfactory.
 .IP [2]
-A version satisfies a "bounded" requirement when
+A version satisfies a
+.QW bounded
+requirement when
 .RS
 .IP [a]
 For \fImin\fR equal to the \fImax\fR if, and only if the \fIversion\fR
@@ -205,42 +219,63 @@ is equal to the \fImin\fR.
 .IP [b]
 Otherwise if, and only if the \fIversion\fR is greater than or equal
 to the \fImin\fR, and less than the \fImax\fR, where both \fImin\fR
-and \fImax\fR have been padded internally with 'a0'. Note that while
-the comparison to \fImin\fR is inclusive, the comparison to
-\fImax\fR is exclusive.
+and \fImax\fR have been padded internally with
+.QW a0 .
+Note that while the comparison to \fImin\fR is inclusive, the
+comparison to \fImax\fR is exclusive.
 .RE
 .IP [3]
-A "min-bounded" requirement is a "bounded" requirement in disguise,
+A
+.QW min-bounded
+requirement is a
+.QW bounded
+requirement in disguise,
 with the \fImax\fR part implicitly specified as the next higher major
 version number of the \fImin\fR part. A version satisfies it per the
 rules above.
 .IP [4]
-A \fIversion\fR satisfies a "min-unbound" requirement if, and only if
-it is greater than or equal to the \fImin\fR, where the \fImin\fR has
-been padded internally with 'a0'. There is no constraint to a maximum.
+A \fIversion\fR satisfies a
+.QW min-unbound
+requirement if, and only if it is greater than or equal to the
+\fImin\fR, where the \fImin\fR has been padded internally with
+.QW a0 .
+There is no constraint to a maximum.
 .RE
 .TP
 \fBpackage prefer \fR?\fBlatest\fR|\fBstable\fR?
-With no arguments, the commands returns either "latest" or "stable",
+With no arguments, the commands returns either
+.QW latest
+or
+.QW stable ,
 whichever describes the current mode of selection logic used by
 \fBpackage require\fR.
 .RS
 .PP
-When passed the argument "latest", it sets the selection logic mode to
-"latest".
+When passed the argument
+.QW latest ,
+it sets the selection logic mode to
+.QW latest .
 .PP
-When passed the argument "stable", if the mode is already "stable",
-that value is kept.  If the mode is already "latest", then the attempt
-to set it back to "stable" is ineffective and the mode value remains
-"latest".
+When passed the argument
+.QW stable ,
+if the mode is already
+.QW stable ,
+that value is kept.  If the mode is already
+.QW latest ,
+then the attempt to set it back to
+.QW stable
+is ineffective and the mode value remains
+.QW latest .
 .PP
 When passed any other value as an argument, raise an invalid argument
 error.
 .PP
 When an interpreter is created, its initial selection mode value is set to
-"stable" unless the environment variable \fBTCL_PKG_PREFER_LATEST\fR
+.QW stable
+unless the environment variable \fBTCL_PKG_PREFER_LATEST\fR
 is set.  If that environment variable is defined (with any value) then
-the initial (and permanent) selection mode value is set to "latest".
+the initial (and permanent) selection mode value is set to
+.QW latest .
 .RE
 .SH "VERSION NUMBERS"
 .PP
@@ -253,14 +288,28 @@ For example, version 2.1 is later than 1.3 and version
 3.4.6 is later than 3.3.5.
 Missing fields are equivalent to zeroes:  version 1.3 is the
 same as version 1.3.0 and 1.3.0.0, so it is earlier than 1.3.1 or 1.3.0.2.
-In addition, the letters 'a' (alpha) and/or 'b' (beta) may appear
+In addition, the letters
+.QW a
+(alpha) and/or
+.QW b
+(beta) may appear
 exactly once to replace a dot for separation. These letters
-semantically add a negative specifier into the version, where 'a' is
--2, and 'b' is -1. Each may be specified only once, and 'a' or 'b' are
-mutually exclusive in a specifier. Thus 1.3a1 becomes (semantically)
-1.3.-2.1, 1.3b1 is 1.3.-1.1. Negative numbers are not directly allowed
+semantically add a negative specifier into the version, where
+.QW a
+is \-2, and
+.QW b
+is \-1. Each may be specified only once, and
+.QW a
+or
+.QW b
+are mutually exclusive in a specifier. Thus 1.3a1 becomes (semantically)
+1.3.\-2.1, 1.3b1 is 1.3.\-1.1. Negative numbers are not directly allowed
 in version specifiers.
-A version number not containing the letters 'a' or 'b' as specified
+A version number not containing the letters
+.QW a
+or
+.QW b
+as specified
 above is called a \fBstable\fR version, whereas presence of the letters
 causes the version to be called is \fBunstable\fR.
 A later version number is assumed to be upwards compatible with
@@ -276,7 +325,7 @@ to work unmodified with either version 1.7.3 or version 3.1.
 The recommended way to use packages in Tcl is to invoke \fBpackage require\fR
 and \fBpackage provide\fR commands in scripts, and use the procedure
 \fBpkg_mkIndex\fR to create package index files.
-Once you've done this, packages will be loaded automatically
+Once you have done this, packages will be loaded automatically
 in response to \fBpackage require\fR commands.
 See the documentation for \fBpkg_mkIndex\fR for details.
 .SH EXAMPLES
@@ -298,9 +347,7 @@ if {[catch {\fBpackage require\fR Snack}]} {
    # We have the package, configure the app to use it
 }
 .CE
-
 .SH "SEE ALSO"
 msgcat(n), packagens(n), pkgMkIndex(n)
-
 .SH KEYWORDS
 package, version

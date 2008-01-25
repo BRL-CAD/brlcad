@@ -99,9 +99,14 @@ sub-dictionaries of the main dictionary object passed to them.
 .SH DESCRIPTION
 .PP
 Tcl dictionary objects have an internal representation that supports
-efficient mapping from keys to values and which does not guarantee any
-particular ordering of keys within the dictionary (the underlying
-basic data-structure is a hash table created with \fBTcl_InitObjHashTable\fR).
+efficient mapping from keys to values and which guarantees that the
+particular ordering of keys within the dictionary remains the same
+modulo any keys being deleted (which removes them from the order) or
+added (which adds them to the end of the order). If reinterpreted as a
+list, the values at the even-valued indices in the list will be the
+keys of the dictionary, and each will be followed (in the odd-valued
+index) bu the value associated with that key.
+.PP
 The procedures described in this man page are used to
 create, modify, index, and iterate over dictionary objects from C code.
 .PP
@@ -190,7 +195,7 @@ keys must exist and have dictionaries as their values.
 .SH EXAMPLE
 Using the dictionary iteration interface to search determine if there
 is a key that maps to itself:
-
+.PP
 .CS
 Tcl_DictSearch search;
 Tcl_Obj *key, *value;
@@ -225,7 +230,6 @@ for (; done ; \fBTcl_DictObjNext\fR(&search, &key, &value, &done)) {
 Tcl_SetObjResult(interp, Tcl_NewBooleanObj(!done));
 return TCL_OK;
 .CE
-
 .SH "SEE ALSO"
 Tcl_NewObj, Tcl_DecrRefCount, Tcl_IncrRefCount, Tcl_InitObjHashTable
 .SH KEYWORDS

@@ -23,7 +23,8 @@ char *
 .AP Tcl_Interp *interp in
 Interpreter in which to report an error, if any.
 .AP "const char" *name in
-File name, which may start with a ``~''.
+File name, which may start with a
+.QW ~ .
 .AP Tcl_DString *bufferPtr in/out
 If needed, this dynamic string is used to store the new file name.
 At the time of the call it should be uninitialized or free.  The
@@ -55,7 +56,7 @@ After \fBTcl_TranslateFileName\fR returns a non-NULL result, the caller must
 eventually invoke \fBTcl_DStringFree\fR to free any information
 placed in \fI*bufferPtr\fR.  The caller need not know whether or
 not \fBTcl_TranslateFileName\fR actually used the string;  \fBTcl_TranslateFileName\fR
-initializes \fI*bufferPtr\fR even if it doesn't use it, so the call to
+initializes \fI*bufferPtr\fR even if it does not use it, so the call to
 \fBTcl_DStringFree\fR will be safe in either case.
 .PP
 If an error occurs (e.g. because there was no user by the given

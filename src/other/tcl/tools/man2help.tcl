@@ -13,7 +13,8 @@
 # PASS 1
 #
 
-set man2tclprog [file join [file dirname [info script]] man2tcl.exe]
+set man2tclprog [file join [file dirname [info script]] \
+	man2tcl[file extension [info nameofexecutable]]]
 
 proc generateContents {basename version files} {
     global curID topics

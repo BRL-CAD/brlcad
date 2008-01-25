@@ -23,7 +23,7 @@ info \- Return information about the state of the Tcl interpreter
 .PP
 This command provides information about various internals of the Tcl
 interpreter.
-The legal \fIoption\fR's (which may be abbreviated) are:
+The legal \fIoption\fRs (which may be abbreviated) are:
 .TP
 \fBinfo args \fIprocname\fR
 Returns a list containing the names of the arguments to procedure
@@ -39,8 +39,8 @@ Returns a count of the total number of commands that have been invoked
 in this interpreter.
 .TP
 \fBinfo commands \fR?\fIpattern\fR?
-If \fIpattern\fR isn't specified,
-'\" Do not move this .VS above the .TP
+If \fIpattern\fR is not specified,
+.\" Do not move this .VS above the .TP
 .VS 8.5
 returns a list of names of all the Tcl commands visible
 (i.e. executable without using a qualified name) to the current namespace,
@@ -58,23 +58,23 @@ If \fIpattern\fR is a qualified name,
 the resulting list of command names has each one qualified with the name
 of the specified namespace, and only the commands defined in the named
 namespace are returned.
-'\" Technically, most of this hasn't changed; that's mostly just the
-'\" way it always worked. Hardly anyone knew that though.
+.\" Technically, most of this hasn't changed; that's mostly just the
+.\" way it always worked. Hardly anyone knew that though.
 .VE 8.5
 .TP
 \fBinfo complete \fIcommand\fR
 Returns 1 if \fIcommand\fR is a complete Tcl command in the sense of
 having no unclosed quotes, braces, brackets or array element names.
-If the command doesn't appear to be complete then 0 is returned.
+If the command does not appear to be complete then 0 is returned.
 This command is typically used in line-oriented input environments
 to allow users to type in commands that span multiple lines;  if the
-command isn't complete, the script can delay evaluating it until additional
+command is not complete, the script can delay evaluating it until additional
 lines have been typed to complete the command.
 .TP
 \fBinfo default \fIprocname arg varname\fR
 \fIProcname\fR must be the name of a Tcl command procedure and \fIarg\fR
 must be the name of an argument to that procedure.  If \fIarg\fR
-doesn't have a default value then the command returns \fB0\fR.
+does not have a default value then the command returns \fB0\fR.
 Otherwise it returns \fB1\fR and places the default value of \fIarg\fR
 into variable \fIvarname\fR.
 .TP
@@ -90,26 +90,30 @@ command returns a number giving the frame level of the command. This
 is 1 if the command is invoked at top-level. If \fInumber\fR is
 specified, then the result is a dictionary containing the location
 information for the command at the \fInumber\fRed level on the stack.
-.sp
+.RS
+.PP
 If \fInumber\fR is positive (> 0) then it selects a particular stack
 level (1 refers to the top-most active command, i.e., \fBinfo frame\fR
 itself, 2 to the command it was called from, and so on); otherwise it
 gives a level relative to the current command (0 refers to the current
 command, i.e., \fBinfo frame\fR itself, -1 to its caller, and so on).
-.sp
+.PP
 This is similar to how \fBinfo level\fR works, except that this
-subcommand reports all frames, like \fBsource\fR'd scripts,
-\fBeval\fR's, \fBuplevel\fR's, etc.
-.sp
-Note that for nested commands, like "foo [[bar [[x]]]]" only "x" will
-be seen by an \fBinfo frame\fR invoked within "x". This is the same as
-for \fBinfo level\fR and error stack traces.
-.sp
+subcommand reports all frames, like \fBsource\fRd scripts,
+\fBeval\fRs, \fBuplevel\fRs, etc.
+.PP
+Note that for nested commands, like
+.QW "foo [bar [x]]" ,
+only
+.QW x
+will be seen by an \fBinfo frame\fR invoked within
+.QW x .
+This is the same as for \fBinfo level\fR and error stack traces.
+.PP
 The result dictionary may contain the keys listed below, with the
 specified meanings for their values:
-.RS
 .TP
-\fItype\fR
+\fBtype\fR
 This entry is always present and describes the nature of the location
 for the command. The recognized values are \fBsource\fR, \fBproc\fR,
 \fBeval\fR, and \fBprecompiled\fR.
@@ -131,34 +135,34 @@ the package \fBtbcload\fR), and no further information will be
 available.
 .RE
 .TP
-\fIline\fR
+\fBline\fR
 This entry provides the number of the line the command is at inside of
 the script it is a part of. This information is not present for type
 \fBprecompiled\fR. For type \fBsource\fR this information is counted
 relative to the beginning of the file, whereas for the last two types
 the line is counted relative to the start of the script.
 .TP
-\fIfile\fR
+\fBfile\fR
 This entry is present only for type \fBsource\fR. It provides the
 normalized path of the file the command is in.
 .TP
-\fIcmd\fR
+\fBcmd\fR
 This entry provides the string representation of the command. This is
 usually the unsubstituted form, however for commands which are a pure
 list executed by eval it is the substituted form as they have no other
 string representation. Care is taken that the pure-List property of
 the latter is not spoiled.
 .TP
-\fIproc\fR
+\fBproc\fR
 This entry is present only if the command is found in the body of a
 regular Tcl procedure. It then provides the name of that procedure.
 .TP
-\fIlambda\fR
+\fBlambda\fR
 This entry is present only if the command is found in the body of an
 anonymous Tcl procedure, i.e. a lambda. It then provides the entire
 definition of the lambda in question.
 .TP
-\fIlevel\fR
+\fBlevel\fR
 This entry is present only if the queried frame has a corresponding
 frame returned by \fBinfo level\fR. It provides the index of this
 frame, relative to the current level (0 and negative numbers).
@@ -189,14 +193,14 @@ counted relative to the start of each word (smallest scope)
 .RE
 .TP
 \fBinfo functions \fR?\fIpattern\fR?
-If \fIpattern\fR isn't specified, returns a list of all the math
+If \fIpattern\fR is not specified, returns a list of all the math
 functions currently defined.
 If \fIpattern\fR is specified, only those functions whose name matches
 \fIpattern\fR are returned.  Matching is determined using the same
 rules as for \fBstring match\fR.
 .TP
 \fBinfo globals \fR?\fIpattern\fR?
-If \fIpattern\fR isn't specified, returns a list of all the names
+If \fIpattern\fR is not specified, returns a list of all the names
 of currently-defined global variables.
 Global variables are variables in the global namespace.
 If \fIpattern\fR is specified, only those names matching \fIpattern\fR
@@ -245,7 +249,7 @@ To get a list of just the packages in the current interpreter, specify
 an empty string for the \fIinterp\fR argument.
 .TP
 \fBinfo locals \fR?\fIpattern\fR?
-If \fIpattern\fR isn't specified, returns a list of all the names
+If \fIpattern\fR is not specified, returns a list of all the names
 of currently-defined local variables, including arguments to the
 current procedure, if any.
 Variables defined with the \fBglobal\fR, \fBupvar\fR  and
@@ -264,7 +268,7 @@ Returns the value of the global variable \fBtcl_patchLevel\fR; see
 the \fBtclvars\fR manual entry for more information.
 .TP
 \fBinfo procs \fR?\fIpattern\fR?
-If \fIpattern\fR isn't specified, returns a list of all the
+If \fIpattern\fR is not specified, returns a list of all the
 names of Tcl command procedures in the current namespace.
 If \fIpattern\fR is specified,
 only those procedure names in the current namespace
@@ -290,7 +294,7 @@ Otherwise the command returns an empty string.
 \fBinfo sharedlibextension\fR
 Returns the extension used on this platform for the names of files
 containing shared libraries (for example, \fB.so\fR under Solaris).
-If shared libraries aren't supported on this platform then an empty
+If shared libraries are not supported on this platform then an empty
 string is returned.
 .TP
 \fBinfo tclversion\fR
@@ -298,7 +302,7 @@ Returns the value of the global variable \fBtcl_version\fR; see
 the \fBtclvars\fR manual entry for more information.
 .TP
 \fBinfo vars\fR ?\fIpattern\fR?
-If \fIpattern\fR isn't specified,
+If \fIpattern\fR is not specified,
 returns a list of all the names of currently-visible variables.
 This includes locals and currently-visible globals.
 If \fIpattern\fR is specified, only those names matching \fIpattern\fR
@@ -313,7 +317,9 @@ If \fIpattern\fR is a qualified name,
 the resulting list of variable names
 has each matching namespace variable qualified with the name
 of its namespace.
-Note that a currently-visible variable may not yet "exist" if it has not
+Note that a currently-visible variable may not yet
+.QW exist
+if it has not
 been set (e.g. a variable declared but not set by \fBvariable\fR).
 .SH EXAMPLE
 This command prints out a procedure suitable for saving in a Tcl
@@ -339,7 +345,6 @@ proc printProc {procName} {
 global(n), proc(n)
 .SH KEYWORDS
 command, information, interpreter, level, namespace, procedure, variable
-
-'\" Local Variables:
-'\" mode: nroff
-'\" End:
+.\" Local Variables:
+.\" mode: nroff
+.\" End:

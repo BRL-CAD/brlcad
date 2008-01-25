@@ -1,5 +1,5 @@
 README:  Tcl
-    This is the Tcl 8.5b1 source distribution.
+    This is the Tcl 8.5.0 source distribution.
     Tcl/Tk is also available through NetCVS:
 	http://tcl.sourceforge.net/
     You can get any source release of Tcl from the file distributions
@@ -114,9 +114,7 @@ more.  More information can be found at
 
 There is a USENET news group, "comp.lang.tcl", intended for the exchange of
 information about Tcl, Tk, and related applications.  The newsgroup is a
-great place to ask general information questions.  There is also
-a USENET news group, "comp.lang.tcl.announce", intended to announce new
-releases of software, training, and more.  For bug reports, please
+great place to ask general information questions.  For bug reports, please
 see the "Support and bug fixes" section below.
 
 6. Tcl'ers Wiki

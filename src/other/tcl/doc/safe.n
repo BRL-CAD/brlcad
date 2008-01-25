@@ -33,7 +33,6 @@ Safe\ Base \- A mechanism for creating and manipulating safe interpreters
 ?\fB\-nested\fR \fIboolean\fR? ?\fB\-nestedLoadOk\fR?
 ?\fB\-deleteHook\fR \fIscript\fR?
 .BE
-
 .SH DESCRIPTION
 Safe Tcl is a mechanism for executing untrusted Tcl scripts
 safely and for providing mediated access by such scripts to
@@ -123,7 +122,7 @@ Example of use:
 .RS
 .PP
 .CS
-$slave eval [list set tk_library \\
+$slave eval [list set tk_library \e
       [::safe::interpFindInAccessPath $name $tk_library]]
 .CE
 .RE
@@ -138,7 +137,7 @@ Example of use:
 .RS
 .PP
 .CS
-$slave eval [list set tk_library \\
+$slave eval [list set tk_library \e
       [::safe::interpAddToAccessPath $name $tk_library]]
 .CE
 .RE
@@ -158,6 +157,7 @@ This prevents a safe interpreter from seeing messages about failures
 and other events that might contain sensitive information such as real
 directory names.
 .RS
+.PP
 Example of use:
 .PP
 .CS
@@ -200,7 +200,7 @@ The default value is \fBtrue\fR :
 safe interpreters are allowed to load statically linked packages.
 .TP
 \fB\-noStatics\fR
-This option is a convenience shortcut for \fB-statics false\fR and
+This option is a convenience shortcut for \fB\-statics false\fR and
 thus specifies that the safe interpreter will not be allowed
 to load statically linked packages.
 .TP
@@ -212,7 +212,7 @@ safe interpreters are not allowed to load packages into
 their own sub-interpreters.
 .TP
 \fB\-nestedLoadOk\fR
-This option is a convenience shortcut for \fB-nested true\fR and
+This option is a convenience shortcut for \fB\-nested true\fR and
 thus specifies the safe interpreter will be allowed
 to load packages into its own sub-interpreters.
 .TP 
@@ -297,7 +297,7 @@ for the \fBsource\fR and \fBload\fR aliases provided to the slave
 are path in the form of 
 \fB[file join \fR\fItoken filename\fR\fB]\fR (i.e. when using the
 native file path formats: \fItoken\fR\fB/\fR\fIfilename\fR
-on Unix and \fItoken\fR\fB\\\fIfilename\fR on Windows),
+on Unix and \fItoken\fR\fB\e\fIfilename\fR on Windows),
 where \fItoken\fR is representing one of the directories 
 of the \fIaccessPath\fR list and \fIfilename\fR is
 one file in that directory (no sub directories access are allowed).
@@ -313,8 +313,12 @@ To further prevent potential information leakage from sensitive files that
 are accidentally included in the set of files that can be sourced by a safe
 interpreter, the \fBsource\fR alias restricts access to files
 meeting the following constraints: the file name must
-fourteen characters or shorter, must not contain more than one dot ("\fB.\fR"),
-must end up with the extension \fB.tcl\fR or be called \fBtclIndex\fR.
+fourteen characters or shorter, must not contain more than one dot
+.PQ \fB.\fR "" ,
+must end up with the extension
+.PQ \fB.tcl\fR
+or be called
+.PQ \fBtclIndex\fR .
 .PP
 Each element of the initial access path
 list will be assigned a token that will be set in
@@ -324,9 +328,9 @@ the \fBtcl_library\fR for that slave.
 If the access path argument is not given or is the empty list, 
 the default behavior is to let the slave access the same packages
 as the master has access to (Or to be more precise: 
-only packages written in Tcl (which by definition can't be dangerous
+only packages written in Tcl (which by definition cannot be dangerous
 as they run in the slave interpreter) and C extensions that
-provides a Safe_Init entry point). For that purpose, the master's 
+provides a _SafeInit entry point). For that purpose, the master's 
 \fBauto_path\fR will be used to construct the slave access path. 
 In order that the slave successfully loads the Tcl library files
 (which includes the auto-loading mechanism itself) the \fBtcl_library\fR will be

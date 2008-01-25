@@ -21,8 +21,10 @@ The \fBlreverse\fR command returns a list that has the same elements as its
 input list, \fIlist\fR, except with the elements in the reverse order.
 .SH EXAMPLES
 .CS
-\fBlreverse\fR {a a b c}        => c b a a
-\fBlreverse\fR {a b {c d} e f}  => f e {c d} b a
+\fBlreverse\fR {a a b c}
+      \fI\(-> c b a a\fR
+\fBlreverse\fR {a b {c d} e f}
+      \fI\(-> f e {c d} b a\fR
 .CE
 .SH "SEE ALSO"
 list(n), lsearch(n), lsort(n)

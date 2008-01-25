@@ -128,19 +128,19 @@ typedef struct CmdLocation {
  */
 
 typedef struct ECL {
-  int srcOffset;		/* Command location to find the entry. */
-  int nline;
-  int *line;			/* Line information for all words in the
+    int srcOffset;		/* Command location to find the entry. */
+    int nline;
+    int *line;			/* Line information for all words in the
 				 * command. */
 } ECL;
 
 typedef struct ExtCmdLoc {
-  int type;			/* Context type. */
-  Tcl_Obj *path;		/* Path of the sourced file the command is
+    int type;			/* Context type. */
+    Tcl_Obj *path;		/* Path of the sourced file the command is
 				 * in. */
-  ECL *loc;			/* Command word locations (lines). */
-  int nloc;			/* Number of allocated entries in 'loc'. */
-  int nuloc;			/* Number of used entries in 'loc'. */
+    ECL *loc;			/* Command word locations (lines). */
+    int nloc;			/* Number of allocated entries in 'loc'. */
+    int nuloc;			/* Number of used entries in 'loc'. */
 } ExtCmdLoc;
 
 /*
@@ -161,7 +161,8 @@ typedef struct ExtCmdLoc {
 typedef ClientData (AuxDataDupProc)  (ClientData clientData);
 typedef void       (AuxDataFreeProc) (ClientData clientData);
 typedef void	   (AuxDataPrintProc)(ClientData clientData,
-			    struct ByteCode *codePtr, unsigned int pcOffset);
+			    Tcl_Obj *appendObj, struct ByteCode *codePtr,
+			    unsigned int pcOffset);
 
 /*
  * We define a separate AuxDataType struct to hold type-related information
@@ -623,9 +624,9 @@ typedef struct ByteCode {
  * [namespace upvar].
  */
 
-#define INST_UPVAR                      122
-#define INST_NSUPVAR                    123
-#define INST_VARIABLE                   124
+#define INST_UPVAR			122
+#define INST_NSUPVAR			123
+#define INST_VARIABLE			124
 
 /* Instruction to support compiling syntax error to bytecode */
 
@@ -635,8 +636,18 @@ typedef struct ByteCode {
 
 #define INST_REVERSE			126
 
+/* regexp instruction */
+
+#define INST_REGEXP			127
+
+/* For [info exists] compilation */
+#define INST_EXIST_SCALAR		128
+#define INST_EXIST_ARRAY		129
+#define INST_EXIST_ARRAY_STK		130
+#define INST_EXIST_STK			131
+
 /* The last opcode */
-#define LAST_INST_OPCODE		126
+#define LAST_INST_OPCODE		131
 
 /*
  * Table describing the Tcl bytecode instructions: their name (for displaying
@@ -915,8 +926,6 @@ MODULE_SCOPE void	TclRegisterAuxDataType(AuxDataType *typePtr);
 MODULE_SCOPE int	TclRegisterLiteral(CompileEnv *envPtr,
 			    char *bytes, int length, int flags);
 MODULE_SCOPE void	TclReleaseLiteral(Tcl_Interp *interp, Tcl_Obj *objPtr);
-MODULE_SCOPE void	TclSetCmdNameObj(Tcl_Interp *interp, Tcl_Obj *objPtr,
-			    Command *cmdPtr);
 MODULE_SCOPE int	TclSingleOpCmd(ClientData clientData,
 			    Tcl_Interp *interp, int objc,
 			    Tcl_Obj *CONST objv[]);

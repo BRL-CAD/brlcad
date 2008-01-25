@@ -104,7 +104,9 @@ How To Compile And Install Tcl:
 (d) Type "make".  This will create a library archive called
     "libtcl<version>.a" or "libtcl<version>.so" and an interpreter
     application called "tclsh" that allows you to type Tcl commands
-    interactively or execute script files.
+    interactively or execute script files.  It will also create
+    a stub library archive "libtclstub<version>.a" that developers
+    may link against other C code to produce loadable extensions for Tcl.
 
 (e) If the make fails then you'll have to personalize the Makefile
     for your site or possibly modify the distribution in other ways.
@@ -120,10 +122,15 @@ How To Compile And Install Tcl:
     the --prefix and --exec-prefix options to "configure".  See the
     Makefile for information on what directories were chosen; you
     can override these choices by modifying the "prefix" and
-    "exec_prefix" variables in the Makefile.
+    "exec_prefix" variables in the Makefile.  The installed binaries
+    have embedded within them path values relative to the install
+    directory.  If you change your mind about where Tcl should be
+    installed, start this procedure over again from step (a) so that
+    the path embedded in the binaries agrees with the install location.
 
-(g) At this point you can play with Tcl by running "make shell"
-    and typing Tcl commands at the prompt.
+(g) At this point you can play with Tcl by running the installed "tclsh"
+    executable, or via the "make shell" target, and typing Tcl commands
+    at the interactive prompt.
 
 If you have trouble compiling Tcl, see the URL noted above about working
 platforms.  It contains information that people have provided about changes

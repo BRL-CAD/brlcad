@@ -25,10 +25,14 @@ is identical to \fBlist arg ...\fR, though the \fIarg\fR is required
 with \fBlrepeat\fR.
 .SH EXAMPLES
 .CS
-lrepeat 3 a  => a a a
-lrepeat 3 [lrepeat 3 0] => {0 0 0} {0 0 0} {0 0 0}
-lrepeat 3 a b c => a b c a b c a b c
-lrepeat 3 [lrepeat 2 a] b c => {a a} b c {a a} b c {a a} b c
+\fBlrepeat\fR 3 a
+      \fI\(-> a a a\fR
+\fBlrepeat\fR 3 [\fBlrepeat\fR 3 0]
+      \fI\(-> {0 0 0} {0 0 0} {0 0 0}\fR
+\fBlrepeat\fR 3 a b c
+      \fI\(-> a b c a b c a b c\fR
+\fBlrepeat\fR 3 [\fBlrepeat\fR 2 a] b c
+      \fI\(-> {a a} b c {a a} b c {a a} b c\fR
 .CE
 .SH "SEE ALSO"
 list(n), lappend(n), linsert(n), llength(n), lset(n)

@@ -1332,7 +1332,7 @@ test cmdAH-28.4 {Tcl_FileObjCmd: stat} {
 test cmdAH-28.5 {Tcl_FileObjCmd: stat} {unix} {
     catch {unset stat}
     file stat $gorpfile stat
-    expr $stat(mode)&0777
+    expr $stat(mode)&0o777
 } {501}
 test cmdAH-28.6 {Tcl_FileObjCmd: stat} {
     string tolower [list [catch {file stat _bogus_ stat} msg] \

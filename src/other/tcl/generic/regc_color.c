@@ -611,12 +611,9 @@ okcolors(
 	    scd->sub = NOSUB;
 	    while ((a = cd->arcs) != NULL) {
 		assert(a->co == co);
-		/* uncolorchain(cm, a); */
-		cd->arcs = a->colorchain;
+		uncolorchain(cm, a);
 		a->co = sco;
-		/* colorchain(cm, a); */
-		a->colorchain = scd->arcs;
-		scd->arcs = a;
+		colorchain(cm, a);
 	    }
 	    freecolor(cm, co);
 	} else {
@@ -648,7 +645,11 @@ colorchain(
 {
     struct colordesc *cd = &cm->cd[a->co];
 
+    if (cd->arcs != NULL) {
+	cd->arcs->colorchainRev = a;
+    }
     a->colorchain = cd->arcs;
+    a->colorchainRev = NULL;
     cd->arcs = a;
 }
 
@@ -662,37 +663,21 @@ uncolorchain(
     struct arc *a)
 {
     struct colordesc *cd = &cm->cd[a->co];
-    struct arc *aa;
+    struct arc *aa = a->colorchainRev;
 
-    aa = cd->arcs;
-    if (aa == a) {		/* easy case */
+    if (aa == NULL) {
+	assert(cd->arcs == a);
 	cd->arcs = a->colorchain;
     } else {
-	assert(aa != NULL);
-	for (; aa->colorchain!=a ; aa=aa->colorchain) {
-	    assert(aa->colorchain != NULL);
-	    continue;
-	}
+	assert(aa->colorchain == a);
 	aa->colorchain = a->colorchain;
     }
+    if (a->colorchain != NULL) {
+	a->colorchain->colorchainRev = aa;
+    }
     a->colorchain = NULL;	/* paranoia */
+    a->colorchainRev = NULL;
 }
-
-#ifdef REGEXP_MCCE_ENABLED
-/*
- - singleton - is this character in its own color?
- ^ static int singleton(struct colormap *, pchr c);
- */
-static int			/* predicate */
-singleton(
-    struct colormap *cm,
-    pchr c)
-{
-    color co = GETCOLOR(cm, c);	/* color of c */
-
-    return (cm->cd[co].nchrs == 1) && (cm->cd[co].sub == NOSUB);
-}
-#endif
 
 /*
  - rainbow - add arcs of all full colors (but one) between specified states

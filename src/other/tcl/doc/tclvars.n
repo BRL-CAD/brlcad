@@ -14,7 +14,6 @@
 .SH NAME
 tclvars \- Variables used by Tcl
 .BE
-
 .SH DESCRIPTION
 .PP
 The following global variables are created and managed automatically
@@ -27,7 +26,7 @@ whose elements are the environment variables for the process.
 Reading an element will return the value of the corresponding
 environment variable.
 Setting an element of the array will modify the corresponding
-environment variable or create a new one if it doesn't already
+environment variable or create a new one if it does not already
 exist.
 Unsetting an element of \fBenv\fR will remove the corresponding
 environment variable.
@@ -37,32 +36,37 @@ If the entire \fBenv\fR array is unset then Tcl will stop
 monitoring \fBenv\fR accesses and will not update environment
 variables.
 .RS
+.PP
 Under Windows, the environment variables PATH and COMSPEC in any
 capitalization are converted automatically to upper case.  For instance, the
-PATH variable could be exported by the operating system as ``path'',
-``Path'', ``PaTh'', etc., causing otherwise simple Tcl code to have to
+PATH variable could be exported by the operating system as
+.QW path ,
+.QW Path ,
+.QW PaTh ,
+etc., causing otherwise simple Tcl code to have to
 support many special cases.  All other environment variables inherited by
 Tcl are left unmodified.  Setting an env array variable to blank is the
 same as unsetting it as this is the behavior of the underlying Windows OS.
 It should be noted that relying on an existing and empty environment variable
-won't work on windows and is discouraged for cross-platform usage.
+will not work on Windows and is discouraged for cross-platform usage.
 .RE
 .TP
 \fBerrorCode\fR
-This variable holds the value of the \fB-errorcode\fR return option
+This variable holds the value of the \fB\-errorcode\fR return option
 set by the most recent error that occurred in this interpreter.
 This list value represents additional information about the error
 in a form that is easy to process with programs.
 The first element of the list identifies a general class of
 errors, and determines the format of the rest of the list.
-The following formats for \fB-errorcode\fR return options
+The following formats for \fB\-errorcode\fR return options
 are used by the Tcl core; individual applications may define
 additional formats.
 .RS
 .TP
 \fBARITH\fI code msg\fR
+.
 This format is used when an arithmetic error occurs (e.g. an attempt
-to divide by zero in the \fBexpr\fR command).
+to divide zero by zero in the \fBexpr\fR command).
 \fICode\fR identifies the precise error and \fImsg\fR provides a
 human-readable description of the error.  \fICode\fR will be either
 DIVZERO (for an attempt to divide by zero),
@@ -70,6 +74,11 @@ DOMAIN (if an argument is outside the domain of a function, such as acos(\-3)),
 IOVERFLOW (for integer overflow),
 OVERFLOW (for a floating-point overflow),
 or UNKNOWN (if the cause of the error cannot be determined).
+.RS
+.PP
+Detection of these errors depends in part on the underlying hardware
+and system libraries.
+.RE
 .TP
 \fBCHILDKILLED\fI pid sigName msg\fR
 This format is used when a child process has been killed because of
@@ -78,7 +87,8 @@ The \fIsigName\fR element will be the symbolic name of the signal that caused
 the process to terminate; it will be one of the names from the
 include file signal.h, such as \fBSIGPIPE\fR.
 The \fImsg\fR element will be a short human-readable message
-describing the signal, such as ``write on pipe with no readers''
+describing the signal, such as
+.QW "write on pipe with no readers"
 for \fBSIGPIPE\fR.
 .TP
 \fBCHILDSTATUS\fI pid code\fR
@@ -95,13 +105,14 @@ The \fIsigName\fR element will be the symbolic name of the signal that caused
 the process to suspend; this will be one of the names from the
 include file signal.h, such as \fBSIGTTIN\fR.
 The \fImsg\fR element will be a short human-readable message
-describing the signal, such as ``background tty read''
+describing the signal, such as
+.QW "background tty read"
 for \fBSIGTTIN\fR.
 .TP
 \fBNONE\fR
 This format is used for errors where no additional information is
 available for an error besides the message returned with the
-error.  In these cases the \fB-errorcode\fR return option
+error.  In these cases the \fB\-errorcode\fR return option
 will consist of a list containing a single element whose
 contents are \fBNONE\fR.
 .TP
@@ -113,19 +124,25 @@ of the error that occurred, such as \fBENOENT\fR; this will
 be one of the values defined in the include file errno.h.
 The \fImsg\fR element will be a human-readable
 message corresponding to \fIerrName\fR, such as
-``no such file or directory'' for the \fBENOENT\fR case.
+.QW "no such file or directory"
+for the \fBENOENT\fR case.
 .PP
-To set the \fB-errorcode\fR return option, applications should use library
+To set the \fB\-errorcode\fR return option, applications should use library
 procedures such as \fBTcl_SetObjErrorCode\fR, \fBTcl_SetReturnOptions\fR,
-and \fBTcl_PosixError\fR, or they may invoke the \fB-errorcode\fR
+and \fBTcl_PosixError\fR, or they may invoke the \fB\-errorcode\fR
 option of the \fBreturn\fR command.
-If one of these methods hasn't been used, then the Tcl
-interpreter will reset the variable to \fBNONE\fR after
+If none of these methods for setting the error code has been used,
+the Tcl interpreter will reset the variable to \fBNONE\fR after
 the next error.
 .RE
+.\" .TP
+.\" \fBTCL\fR ...
+.\" .
+.\" Indicates some sort of problem generated in relation to Tcl itself,
+.\" e.g. a failure to look up a channel or variable.
 .TP
 \fBerrorInfo\fR
-This variable holds the value of the \fB-errorinfo\fR return option
+This variable holds the value of the \fB\-errorinfo\fR return option
 set by the most recent error that occurred in this interpreter.
 This string value will contain one or more lines
 identifying the Tcl commands and procedures that were being executed
@@ -149,16 +166,17 @@ is created by searching several different directories until one is
 found that contains an appropriate Tcl startup script.
 If the \fBTCL_LIBRARY\fR environment variable exists, then
 the directory it names is checked first.
-If \fBTCL_LIBRARY\fR isn't set or doesn't refer to an appropriate
+If \fBTCL_LIBRARY\fR is not set or doesn't refer to an appropriate
 directory, then Tcl checks several other directories based on a
 compiled-in default location, the location of the binary containing
 the application, and the current working directory.
 .TP
 \fBtcl_patchLevel\fR
+.
 When an interpreter is created Tcl initializes this variable to
 hold a string giving the current patch level for Tcl, such as
-\fB7.3p2\fR for Tcl 7.3 with the first two official patches, or
-\fB7.4b4\fR for the fourth beta release of Tcl 7.4.
+\fB8.4.16\fR for Tcl 8.4 with the first sixteen official patches, or
+\fB8.5b3\fR for the third beta release of Tcl 8.5.
 The value of this variable is returned by the \fBinfo patchlevel\fR
 command.
 .TP
@@ -184,7 +202,7 @@ This is an associative array whose elements contain information about
 the platform on which the application is running, such as the name of
 the operating system, its current release number, and the machine's
 instruction set.  The elements listed below will always
-be defined, but they may have empty strings as values if Tcl couldn't
+be defined, but they may have empty strings as values if Tcl could not
 retrieve any relevant information.  In addition, extensions
 and applications may add additional values to the array.  The
 predefined elements are:
@@ -263,7 +281,9 @@ binary number.
 .VE 8.5
 .PP
 .RS
-17 digits is ``perfect'' for IEEE floating-point in that it allows
+17 digits is
+.QW perfect
+for IEEE floating-point in that it allows
 double-precision values to be converted to strings and back to
 binary with no loss of information.  However, using 17 digits prevents
 any rounding, which produces longer, less intuitive results.  For example,
@@ -297,8 +317,6 @@ Setting it to 2 generates a detailed listing in stdout of the
 bytecode instructions emitted during every compilation.
 This variable is useful in
 tracking down suspected problems with the Tcl compiler.
-It is also occasionally useful when converting
-existing code to use Tcl8.0.
 .PP
 .RS
 This variable and functionality only exist if
@@ -324,8 +342,6 @@ of bytecode instructions are not shown.
 Setting this variable is useful in
 tracking down suspected problems with the bytecode compiler
 and interpreter.
-It is also occasionally useful when converting
-code to use Tcl8.0.
 .PP
 .RS
 This variable and functionality only exist if
@@ -334,18 +350,22 @@ This variable and functionality only exist if
 .TP
 \fBtcl_wordchars\fR
 The value of this variable is a regular expression that can be set to
-control what are considered ``word'' characters, for instances like
+control what are considered
+.QW word
+characters, for instances like
 selecting a word by double-clicking in text in Tk.  It is platform
-dependent.  On Windows, it defaults to \fB\\S\fR, meaning anything
-but a Unicode space character.  Otherwise it defaults to \fB\\w\fR,
+dependent.  On Windows, it defaults to \fB\eS\fR, meaning anything
+but a Unicode space character.  Otherwise it defaults to \fB\ew\fR,
 which is any Unicode word character (number, letter, or underscore).
 .TP
 \fBtcl_nonwordchars\fR
 The value of this variable is a regular expression that can be set to
-control what are considered ``non-word'' characters, for instances like
+control what are considered
+.QW non-word
+characters, for instances like
 selecting a word by double-clicking in text in Tk.  It is platform
-dependent.  On Windows, it defaults to \fB\\s\fR, meaning any Unicode space
-character.  Otherwise it defaults to \fB\\W\fR, which is anything but a
+dependent.  On Windows, it defaults to \fB\es\fR, meaning any Unicode space
+character.  Otherwise it defaults to \fB\eW\fR, which is anything but a
 Unicode word character (number, letter, or underscore).
 .TP
 \fBtcl_version\fR
@@ -383,9 +403,7 @@ variable:
 \fBgeometry\fR
 If set, contains the user-supplied geometry specification to use for
 the main Tk window.
-
 .SH "SEE ALSO"
 eval(n), tclsh(1), wish(1)
-
 .SH KEYWORDS
 arithmetic, bytecode, compiler, error, environment, POSIX, precision, subprocess, variables

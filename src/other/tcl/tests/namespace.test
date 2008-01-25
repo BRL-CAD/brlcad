@@ -174,7 +174,7 @@ test namespace-7.7 {Bug 1655305} -setup {
     interp create slave
     # Can't invoke through the ensemble, since deleting the global namespace
     # (indirectly, via deleting ::tcl) deletes the ensemble.
-    slave eval {rename ::tcl::Info_commands ::infocommands}
+    slave eval {rename ::tcl::info::commands ::infocommands}
     slave hide infocommands
     slave eval {
 	proc foo {} {

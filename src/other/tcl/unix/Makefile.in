@@ -791,8 +791,8 @@ install-libraries: libraries $(INSTALL_TZDATA) install-msgs
 	    done;
 	@echo "Installing package msgcat 1.4.2 as a Tcl Module";
 	@$(INSTALL_DATA) $(TOP_DIR)/library/msgcat/msgcat.tcl $(SCRIPT_INSTALL_DIR)/../tcl8/8.5/msgcat-1.4.2.tm;
-	@echo "Installing package tcltest 2.3b1 as a Tcl Module";
-	@$(INSTALL_DATA) $(TOP_DIR)/library/tcltest/tcltest.tcl $(SCRIPT_INSTALL_DIR)/../tcl8/8.5/tcltest-2.3b1.tm;
+	@echo "Installing package tcltest 2.3.0 as a Tcl Module";
+	@$(INSTALL_DATA) $(TOP_DIR)/library/tcltest/tcltest.tcl $(SCRIPT_INSTALL_DIR)/../tcl8/8.5/tcltest-2.3.0.tm;
 
 	@echo "Installing package platform 1.0.3 as a Tcl Module";
 	@$(INSTALL_DATA) $(TOP_DIR)/library/platform/platform.tcl $(SCRIPT_INSTALL_DIR)/../tcl8/8.4/platform-1.0.3.tm;
@@ -838,17 +838,17 @@ install-doc: doc
 	    done;
 	@echo "Installing and cross-linking top-level (.1) docs";
 	@for i in $(TOP_DIR)/doc/*.1; do \
-	    [ ! -e $(TOP_DIR)/doc/$$i ] || $(UNIX_DIR)/installManPage $(MAN_FLAGS) $(TOP_DIR)/doc/$$i $(MAN1_INSTALL_DIR); \
+	    $(UNIX_DIR)/installManPage $(MAN_FLAGS) $$i $(MAN1_INSTALL_DIR); \
 	done
 
 	@echo "Installing and cross-linking C API (.3) docs";
 	@for i in $(TOP_DIR)/doc/*.3; do \
-	    [ ! -e $(TOP_DIR)/doc/$$i ] || $(UNIX_DIR)/installManPage $(MAN_FLAGS) $(TOP_DIR)/doc/$$i $(MAN3_INSTALL_DIR); \
+	    $(UNIX_DIR)/installManPage $(MAN_FLAGS) $$i $(MAN3_INSTALL_DIR); \
 	done
 
 	@echo "Installing and cross-linking command (.n) docs";
 	@for i in $(TOP_DIR)/doc/*.n; do \
-	    [ ! -e $(TOP_DIR)/doc/$$i ] || $(UNIX_DIR)/installManPage $(MAN_FLAGS) $(TOP_DIR)/doc/$$i $(MANN_INSTALL_DIR); \
+	    $(UNIX_DIR)/installManPage $(MAN_FLAGS) $$i $(MANN_INSTALL_DIR); \
 	done
 
 # Optional target to install private headers
@@ -1501,17 +1501,8 @@ strtod.o: $(COMPAT_DIR)/strtod.c
 strtol.o: $(COMPAT_DIR)/strtol.c
 	$(CC) -c $(STUB_CC_SWITCHES) $(COMPAT_DIR)/strtol.c
 
-strtoll.o: $(COMPAT_DIR)/strtoll.c
-	$(CC) -c $(STUB_CC_SWITCHES) $(COMPAT_DIR)/strtoll.c
-
 strtoul.o: $(COMPAT_DIR)/strtoul.c
 	$(CC) -c $(STUB_CC_SWITCHES) $(COMPAT_DIR)/strtoul.c
-
-strtoull.o: $(COMPAT_DIR)/strtoull.c
-	$(CC) -c $(STUB_CC_SWITCHES) $(COMPAT_DIR)/strtoull.c
-
-tmpnam.o: $(COMPAT_DIR)/tmpnam.c
-	$(CC) -c $(STUB_CC_SWITCHES) $(COMPAT_DIR)/tmpnam.c
 
 waitpid.o: $(COMPAT_DIR)/waitpid.c
 	$(CC) -c $(STUB_CC_SWITCHES) $(COMPAT_DIR)/waitpid.c

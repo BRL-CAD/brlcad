@@ -59,11 +59,11 @@ extern "C" {
 
 #define TCL_MAJOR_VERSION   8
 #define TCL_MINOR_VERSION   5
-#define TCL_RELEASE_LEVEL   TCL_BETA_RELEASE
-#define TCL_RELEASE_SERIAL  1
+#define TCL_RELEASE_LEVEL   TCL_FINAL_RELEASE
+#define TCL_RELEASE_SERIAL  0
 
 #define TCL_VERSION	    "8.5"
-#define TCL_PATCH_LEVEL	    "8.5b1"
+#define TCL_PATCH_LEVEL	    "8.5.0"
 
 /*
  * The following definitions set up the proper options for Windows compilers.
@@ -348,11 +348,8 @@ typedef long LONG;
  *	longVal == Tcl_WideAsLong(Tcl_LongAsWide(longVal))
  *
  * Note on converting between Tcl_WideInt and strings. This implementation (in
- * tclObj.c) depends on the functions strtoull() and sprintf(...,"%"
- * TCL_LL_MODIFIER "d",...). TCL_LL_MODIFIER_SIZE is the length of the
- * modifier string, which is "ll" on most 32-bit Unix systems. It has to be
- * split up like this to allow for the more complex formats sometimes needed
- * (e.g. in the format(n) command.)
+ * tclObj.c) depends on the function
+ * sprintf(...,"%" TCL_LL_MODIFIER "d",...).
  */
 
 #if !defined(TCL_WIDE_INT_TYPE)&&!defined(TCL_WIDE_INT_IS_LONG)
@@ -360,10 +357,8 @@ typedef long LONG;
 #      define TCL_WIDE_INT_TYPE long long
 #      if defined(__WIN32__) && !defined(__CYGWIN__)
 #         define TCL_LL_MODIFIER        "I64"
-#         define TCL_LL_MODIFIER_SIZE   3
 #      else
 #         define TCL_LL_MODIFIER	"L"
-#         define TCL_LL_MODIFIER_SIZE	1
 #      endif
 typedef struct stat	Tcl_StatBuf;
 #   elif defined(__WIN32__)
@@ -371,7 +366,6 @@ typedef struct stat	Tcl_StatBuf;
 #      ifdef __BORLANDC__
 typedef struct stati64 Tcl_StatBuf;
 #         define TCL_LL_MODIFIER	"L"
-#         define TCL_LL_MODIFIER_SIZE	1
 #      else /* __BORLANDC__ */
 #         if _MSC_VER < 1400 || !defined(_M_IX86)
 typedef struct _stati64	Tcl_StatBuf;
@@ -379,7 +373,6 @@ typedef struct _stati64	Tcl_StatBuf;
 typedef struct _stat64	Tcl_StatBuf;
 #         endif /* _MSC_VER < 1400 */
 #         define TCL_LL_MODIFIER	"I64"
-#         define TCL_LL_MODIFIER_SIZE	3
 #      endif /* __BORLANDC__ */
 #   else /* __WIN32__ */
 /*
@@ -414,7 +407,6 @@ typedef struct stat	Tcl_StatBuf;
 #   define Tcl_DoubleAsWide(val)	((long)((double)(val)))
 #   ifndef TCL_LL_MODIFIER
 #      define TCL_LL_MODIFIER		"l"
-#      define TCL_LL_MODIFIER_SIZE	1
 #   endif /* !TCL_LL_MODIFIER */
 #else /* TCL_WIDE_INT_IS_LONG */
 /*
@@ -428,7 +420,6 @@ typedef struct stat64	Tcl_StatBuf;
 typedef struct stat	Tcl_StatBuf;
 #      endif /* HAVE_STRUCT_STAT64 */
 #      define TCL_LL_MODIFIER		"ll"
-#      define TCL_LL_MODIFIER_SIZE	2
 #   endif /* !TCL_LL_MODIFIER */
 #   define Tcl_WideAsLong(val)		((long)((Tcl_WideInt)(val)))
 #   define Tcl_LongAsWide(val)		((Tcl_WideInt)((long)(val)))
@@ -525,6 +516,12 @@ typedef void (Tcl_ThreadCreateProc) _ANSI_ARGS_((ClientData clientData));
 #define TCL_THREAD_STACK_DEFAULT (0)    /* Use default size for stack */
 #define TCL_THREAD_NOFLAGS	 (0000) /* Standard flags, default behaviour */
 #define TCL_THREAD_JOINABLE	 (0001) /* Mark the thread as joinable */
+
+/*
+ * Flag values passed to Tcl_StringCaseMatch.
+ */
+
+#define TCL_MATCH_NOCASE	(1<<0)
 
 /*
  * Flag values passed to Tcl_GetRegExpFromObj.
@@ -1273,7 +1270,8 @@ typedef struct Tcl_HashSearch {
  */
 
 typedef struct {
-    Tcl_HashSearch search;	/* Search struct for underlying hash table. */
+    void *next;			/* Search position for underlying hash
+				 * table. */
     int epoch;			/* Epoch marker for dictionary being searched,
 				 * or -1 if search has terminated. */
     Tcl_Dict dictionaryPtr;	/* Reference to dictionary being searched. */
@@ -2296,10 +2294,11 @@ EXTERN CONST char *Tcl_PkgInitStubsCheck _ANSI_ARGS_((Tcl_Interp *interp,
 #   define Tcl_IncrRefCount(objPtr) \
 	++(objPtr)->refCount
     /*
-     * Use empty if ; else to handle use in unbraced outer if/else conditions
+     * Use do/while0 idiom for optimum correctness without compiler warnings
+     * http://c2.com/cgi/wiki?TrivialDoWhileLoop
      */
 #   define Tcl_DecrRefCount(objPtr) \
-	if (--(objPtr)->refCount > 0) ; else TclFreeObj(objPtr)
+	do { if (--(objPtr)->refCount <= 0) TclFreeObj(objPtr); } while(0)
 #   define Tcl_IsShared(objPtr) \
 	((objPtr)->refCount > 1)
 #endif

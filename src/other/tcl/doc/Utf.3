@@ -156,8 +156,9 @@ end of the \fBTcl_DString\fR.
 \fBTcl_UtfToUniCharDString\fR converts the given UTF-8 string to Unicode,
 storing the result in the previously initialized \fBTcl_DString\fR.
 In the argument \fIlength\fR, you may either specify the length of
-the given UTF-8 string in bytes or "-1", in which
-case \fBTcl_UtfToUniCharDString\fR uses \fBstrlen\fR to
+the given UTF-8 string in bytes or
+.QW \-1 ,
+in which case \fBTcl_UtfToUniCharDString\fR uses \fBstrlen\fR to
 calculate the length.  The return value is a pointer to the Unicode
 representation of the UTF-8 string.  Storage for the return value
 is appended to the end of the \fBTcl_DString\fR.  The Unicode string

@@ -411,7 +411,7 @@ TclCreateProc(
 	 */
 
 	if (Tcl_IsShared(bodyPtr)) {
-	    bytes = Tcl_GetStringFromObj(bodyPtr, &length);
+	    bytes = TclGetStringFromObj(bodyPtr, &length);
 	    bodyPtr = Tcl_NewStringObj(bytes, length);
 	}
 
@@ -442,7 +442,7 @@ TclCreateProc(
      * THIS FAILS IF THE ARG LIST OBJECT'S STRING REP CONTAINS NULS.
      */
 
-    args = Tcl_GetStringFromObj(argsPtr, &length);
+    args = TclGetStringFromObj(argsPtr, &length);
     result = Tcl_SplitList(interp, args, &numArgs, &argArray);
     if (result != TCL_OK) {
 	goto procError;
@@ -555,7 +555,7 @@ TclCreateProc(
 
 	    if (localPtr->defValuePtr != NULL) {
 		int tmpLength;
-		char *tmpPtr = Tcl_GetStringFromObj(localPtr->defValuePtr,
+		char *tmpPtr = TclGetStringFromObj(localPtr->defValuePtr,
 			&tmpLength);
 
 		if ((valueLength != tmpLength) ||
@@ -781,7 +781,7 @@ TclObjGetFrame(
 	    || objPtr->typePtr == &tclWideIntType
 #endif
 	    ) {
-	if (Tcl_GetIntFromObj(NULL, objPtr, &level) != TCL_OK || level < 0) {
+	if (TclGetIntFromObj(NULL, objPtr, &level) != TCL_OK || level < 0) {
 	    goto levelError;
 	}
 	level = curLevel - level;
@@ -1520,7 +1520,7 @@ PushProcCallFrame(
     CallFrame *framePtr, **framePtrPtr;
     int result;
     ByteCode *codePtr;
-    
+
     /*
      * If necessary (i.e. if we haven't got a suitable compilation already
      * cached) compile the procedure's body. The compiler will allocate frame
@@ -2408,7 +2408,7 @@ SetLambdaFromAny(
      * length is not 2, then it cannot be converted to lambdaType.
      */
 
-    result = Tcl_ListObjGetElements(interp, objPtr, &objc, &objv);
+    result = TclListObjGetElements(interp, objPtr, &objc, &objv);
     if ((result != TCL_OK) || ((objc != 2) && (objc != 3))) {
 	TclNewLiteralStringObj(errPtr, "can't interpret \"");
 	Tcl_AppendObjToObj(errPtr, objPtr);
@@ -2539,7 +2539,7 @@ SetLambdaFromAny(
     if (objc == 2) {
 	TclNewLiteralStringObj(nsObjPtr, "::");
     } else {
-	char *nsName = Tcl_GetString(objv[2]);
+	char *nsName = TclGetString(objv[2]);
 
 	if ((*nsName != ':') || (*(nsName+1) != ':')) {
 	    TclNewLiteralStringObj(nsObjPtr, "::");
@@ -2624,7 +2624,7 @@ Tcl_ApplyObjCmd(
 	int numElem;
 
 	if ((lambdaPtr->typePtr == &tclCmdNameType) ||
-		(Tcl_ListObjGetElements(interp, lambdaPtr, &numElem,
+		(TclListObjGetElements(interp, lambdaPtr, &numElem,
 		&elemPtr) == TCL_OK && numElem == 1)) {
 	    return Tcl_EvalObjv(interp, objc-1, objv+1, 0);
 	}
@@ -2727,6 +2727,130 @@ MakeLambdaError(
 	    "\n    (lambda term \"%.*s%s\" line %d)",
 	    (overflow ? limit : nameLen), procName,
 	    (overflow ? "..." : ""), interp->errorLine));
+}
+
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * Tcl_DisassembleObjCmd --
+ *
+ *	Implementation of the "::tcl::unsupported::disassemble" command. This
+ *	command is not documented, but will disassemble procedures, lambda
+ *	terms and general scripts. Note that will compile terms if necessary
+ *	in order to disassemble them.
+ *
+ *----------------------------------------------------------------------
+ */
+
+int
+Tcl_DisassembleObjCmd(
+    ClientData dummy,		/* Not used. */
+    Tcl_Interp *interp,		/* Current interpreter. */
+    int objc,			/* Number of arguments. */
+    Tcl_Obj *CONST objv[])	/* Argument objects. */
+{
+    static const char *types[] = {
+	"lambda", "proc", "script", NULL
+    };
+    enum Types {
+	DISAS_LAMBDA, DISAS_PROC, DISAS_SCRIPT
+    };
+    int idx, result;
+
+    if (objc != 3) {
+	Tcl_WrongNumArgs(interp, 1, objv, "type procName|lambdaTerm|script");
+	return TCL_ERROR;
+    }
+    if (Tcl_GetIndexFromObj(interp, objv[1], types, "type", 0, &idx)!=TCL_OK){
+	return TCL_ERROR;
+    }
+
+    switch ((enum Types) idx) {
+    case DISAS_LAMBDA: {
+	Proc *procPtr = NULL;
+	Command cmd;
+	Tcl_Obj *nsObjPtr;
+	Tcl_Namespace *nsPtr;
+
+	/*
+	 * Compile (if uncompiled) and disassemble a lambda term.
+	 */
+
+	if (objv[2]->typePtr == &lambdaType) {
+	    procPtr = objv[2]->internalRep.twoPtrValue.ptr1;
+	}
+	if (procPtr == NULL || procPtr->iPtr != (Interp *) interp) {
+	    result = SetLambdaFromAny(interp, objv[2]);
+	    if (result != TCL_OK) {
+		return result;
+	    }
+	    procPtr = objv[2]->internalRep.twoPtrValue.ptr1;
+	}
+
+	memset(&cmd, 0, sizeof(Command));
+	nsObjPtr = objv[2]->internalRep.twoPtrValue.ptr2;
+	result = TclGetNamespaceFromObj(interp, nsObjPtr, &nsPtr);
+	if (result != TCL_OK) {
+	    return result;
+	}
+	cmd.nsPtr = (Namespace *) nsPtr;
+	procPtr->cmdPtr = &cmd;
+	result = PushProcCallFrame(procPtr, interp, objc, objv, 1);
+	if (result != TCL_OK) {
+	    return result;
+	}
+	TclPopStackFrame(interp);
+	if (((ByteCode *) procPtr->bodyPtr->internalRep.otherValuePtr)->flags
+		& TCL_BYTECODE_PRECOMPILED) {
+	    Tcl_AppendResult(interp, "may not disassemble prebuilt bytecode",
+		    NULL);
+	    return TCL_ERROR;
+	}
+	Tcl_SetObjResult(interp, TclDisassembleByteCodeObj(procPtr->bodyPtr));
+	break;
+    }
+    case DISAS_PROC: {
+	Proc *procPtr = TclFindProc((Interp *) interp, TclGetString(objv[2]));
+
+	if (procPtr == NULL) {
+	    Tcl_AppendResult(interp, "\"", TclGetString(objv[2]),
+		    "\" isn't a procedure", NULL);
+	    return TCL_ERROR;
+	}
+
+	/*
+	 * Compile (if uncompiled) and disassemble a procedure.
+	 */
+
+	result = PushProcCallFrame(procPtr, interp, 2, objv+1, 1);
+	if (result != TCL_OK) {
+	    return result;
+	}
+	TclPopStackFrame(interp);
+	if (((ByteCode *) procPtr->bodyPtr->internalRep.otherValuePtr)->flags
+		& TCL_BYTECODE_PRECOMPILED) {
+	    Tcl_AppendResult(interp, "may not disassemble prebuilt bytecode",
+		    NULL);
+	    return TCL_ERROR;
+	}
+	Tcl_SetObjResult(interp, TclDisassembleByteCodeObj(procPtr->bodyPtr));
+	break;
+    }
+    case DISAS_SCRIPT:
+	/*
+	 * Compile and disassemble a script.
+	 */
+
+	if (objv[2]->typePtr != &tclByteCodeType) {
+	    if (TclSetByteCodeFromAny(interp, objv[2], NULL, NULL) != TCL_OK){
+		return TCL_ERROR;
+	    }
+	}
+	Tcl_SetObjResult(interp, TclDisassembleByteCodeObj(objv[2]));
+	break;
+    }
+    return TCL_OK;
 }
 
 /*

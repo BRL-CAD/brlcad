@@ -25,8 +25,7 @@
  * Prototypes for the variable hash key methods.
  */
 
-static Tcl_HashEntry *	AllocVarEntry(Tcl_HashTable *tablePtr,
-			    void *keyPtr);
+static Tcl_HashEntry *	AllocVarEntry(Tcl_HashTable *tablePtr, void *keyPtr);
 static void		FreeVarEntry(Tcl_HashEntry *hPtr);
 static int		CompareVarKeys(void *keyPtr, Tcl_HashEntry *hPtr);
 static unsigned int	HashVarKey(Tcl_HashTable *tablePtr, void *keyPtr);
@@ -148,6 +147,9 @@ static void		AppendLocals(Tcl_Interp *interp, Tcl_Obj *listPtr,
 static void		DeleteSearches(Interp *iPtr, Var *arrayVarPtr);
 static void		DeleteArray(Interp *iPtr, Tcl_Obj *arrayNamePtr,
 			    Var *varPtr, int flags);
+static Tcl_Var          ObjFindNamespaceVar(Tcl_Interp *interp,
+			    Tcl_Obj *namePtr, Tcl_Namespace *contextNsPtr,
+			    int flags);
 static int		ObjMakeUpvar(Tcl_Interp *interp,
 			    CallFrame *framePtr, Tcl_Obj *otherP1Ptr,
 			    const char *otherP2, const int otherFlags,
@@ -157,7 +159,8 @@ static ArraySearch *	ParseSearchId(Tcl_Interp *interp, const Var *varPtr,
 static void		UnsetVarStruct(Var *varPtr, Var *arrayPtr,
 			    Interp *iPtr, Tcl_Obj *part1Ptr,
 			    Tcl_Obj *part2Ptr, int flags);
-static int		SetArraySearchObj(Tcl_Interp *interp, Tcl_Obj *objPtr);
+static int		SetArraySearchObj(Tcl_Interp *interp,
+			    Tcl_Obj *objPtr);
 
 /*
  * Functions defined in this file that may be exported in the future for use
@@ -231,8 +234,8 @@ static Tcl_ObjType tclParsedVarNameType = {
  * Type of Tcl_Objs used to speed up array searches.
  *
  * INTERNALREP DEFINITION:
- *   twoPtrValue.ptr1:	searchIdNumber as offset from (char*)NULL
- *   twoPtrValue.ptr2:	variableNameStartInString as offset from (char*)NULL
+ *   twoPtrValue.ptr1:	searchIdNumber (cast to pointer)
+ *   twoPtrValue.ptr2:	variableNameStartInString (cast to pointer)
  *
  * Note that the value stored in ptr2 is the offset into the string of the
  * start of the variable name and not the address of the variable name itself,
@@ -243,11 +246,11 @@ Tcl_ObjType tclArraySearchType = {
     "array search",
     NULL, NULL, NULL, SetArraySearchObj
 };
-
+
 Var *
 TclVarHashCreateVar(
     TclVarHashTable *tablePtr,
-    const char *key, 
+    const char *key,
     int *newPtr)
 {
     Tcl_Obj *keyPtr;
@@ -398,7 +401,7 @@ TclLookupVar(
 /*
  *----------------------------------------------------------------------
  *
- * TclObjLookupVar --
+ * TclObjLookupVar, TclObjLookupVarEx --
  *
  *	This function is used by virtually all of the variable code to locate
  *	a variable given its name(s). The parsing into array/element
@@ -481,14 +484,27 @@ TclObjLookupVar(
 
 Var *
 TclObjLookupVarEx(
-    Tcl_Interp *interp,
-    Tcl_Obj *part1Ptr,
-    Tcl_Obj *part2Ptr,
-    int flags,
-    const char *msg,
-    const int createPart1,
-    const int createPart2,
-    Var **arrayPtrPtr)
+    Tcl_Interp *interp,		/* Interpreter to use for lookup. */
+    Tcl_Obj *part1Ptr,		/* If part2Ptr isn't NULL, this is the name of
+				 * an array. Otherwise, this is a full
+				 * variable name that could include a
+				 * parenthesized array element. */
+    Tcl_Obj *part2Ptr,		/* Name of element within array, or NULL. */
+    int flags,			/* Only TCL_GLOBAL_ONLY, TCL_NAMESPACE_ONLY,
+				 * and TCL_LEAVE_ERR_MSG bits matter. */
+    const char *msg,		/* Verb to use in error messages, e.g. "read"
+				 * or "set". Only needed if TCL_LEAVE_ERR_MSG
+				 * is set in flags. */
+    const int createPart1,	/* If 1, create hash table entry for part 1 of
+				 * name, if it doesn't already exist. If 0,
+				 * return error if it doesn't exist. */
+    const int createPart2,	/* If 1, create hash table entry for part 2 of
+				 * name, if it doesn't already exist. If 0,
+				 * return error if it doesn't exist. */
+    Var **arrayPtrPtr)		/* If the name refers to an element of an
+				 * array, *arrayPtrPtr gets filled in with
+				 * address of array variable. Otherwise this
+				 * is set to NULL. */
 {
     Interp *iPtr = (Interp *) interp;
     register Var *varPtr;	/* Points to the variable's in-frame Var
@@ -504,43 +520,10 @@ TclObjLookupVarEx(
     char *part2 = part2Ptr? TclGetString(part2Ptr):NULL;
     char *newPart2 = NULL;
 
-    /*
-     * If part1Ptr is a tclParsedVarNameType, separate it into the pre-parsed
-     * parts.
-     */
-
     *arrayPtrPtr = NULL;
-    if (typePtr == &tclParsedVarNameType) {
-	if (part1Ptr->internalRep.twoPtrValue.ptr1 != NULL) {
-	    if (part2Ptr != NULL) {
-		/*
-		 * ERROR: part1Ptr is already an array element, cannot specify
-		 * a part2.
-		 */
-
-		if (flags & TCL_LEAVE_ERR_MSG) {
-		    TclObjVarErrMsg(interp, part1Ptr, part2Ptr, msg,
-			    needArray, -1);
-		}
-		return NULL;
-	    }
-	    part2 = newPart2 = part1Ptr->internalRep.twoPtrValue.ptr2;
-	    if (newPart2) {
-		part2Ptr = Tcl_NewStringObj(newPart2, -1);
-		Tcl_IncrRefCount(part2Ptr);
-	    }
-	    part1Ptr = part1Ptr->internalRep.twoPtrValue.ptr1;
-	    typePtr = part1Ptr->typePtr;
-	}
-	parsed = 1;
-    }
-    part1 = Tcl_GetStringFromObj(part1Ptr, &len1);
 
     if (varFramePtr) {
 	nsPtr = varFramePtr->nsPtr;
-	if (nsPtr->varResProc != NULL || iPtr->resolverPtr != NULL) {
-	    goto doParse;
-	}
     } else {
 	/*
 	 * Some variables in the global ns have to be initialized before the
@@ -548,12 +531,13 @@ TclObjLookupVarEx(
 	 */
 
 	nsPtr = NULL;
-	goto doParse;
     }
 
     if (typePtr == &localVarNameType) {
-	int localIndex = (int) part1Ptr->internalRep.ptrAndLongRep.value;
+	int localIndex;
 
+    localVarNameTypeHandling:
+	localIndex = (int) part1Ptr->internalRep.ptrAndLongRep.value;
 	if (HasLocalVars(varFramePtr)
 		&& !(flags & (TCL_GLOBAL_ONLY | TCL_NAMESPACE_ONLY))
 		&& (localIndex < varFramePtr->numCompiledLocals)) {
@@ -561,7 +545,8 @@ TclObjLookupVarEx(
 	     * Use the cached index if the names coincide.
 	     */
 
-	    Tcl_Obj *namePtr = (Tcl_Obj *) part1Ptr->internalRep.ptrAndLongRep.ptr;
+	    Tcl_Obj *namePtr = (Tcl_Obj *)
+		    part1Ptr->internalRep.ptrAndLongRep.ptr;
 	    Tcl_Obj *checkNamePtr = localName(iPtr->varFramePtr, localIndex);
 
 	    if ((!namePtr && (checkNamePtr == part1Ptr)) ||
@@ -611,7 +596,40 @@ TclObjLookupVarEx(
 #endif
     }
 
-  doParse:
+    /*
+     * If part1Ptr is a tclParsedVarNameType, separate it into the pre-parsed
+     * parts.
+     */
+
+    if (typePtr == &tclParsedVarNameType) {
+	if (part1Ptr->internalRep.twoPtrValue.ptr1 != NULL) {
+	    if (part2Ptr != NULL) {
+		/*
+		 * ERROR: part1Ptr is already an array element, cannot specify
+		 * a part2.
+		 */
+
+		if (flags & TCL_LEAVE_ERR_MSG) {
+		    TclObjVarErrMsg(interp, part1Ptr, part2Ptr, msg,
+			    noSuchVar, -1);
+		}
+		return NULL;
+	    }
+	    part2 = newPart2 = part1Ptr->internalRep.twoPtrValue.ptr2;
+	    if (newPart2) {
+		part2Ptr = Tcl_NewStringObj(newPart2, -1);
+		Tcl_IncrRefCount(part2Ptr);
+	    }
+	    part1Ptr = part1Ptr->internalRep.twoPtrValue.ptr1;
+	    typePtr = part1Ptr->typePtr;
+	    if (typePtr == &localVarNameType) {
+		goto localVarNameTypeHandling;
+	    }
+	}
+	parsed = 1;
+    }
+    part1 = TclGetStringFromObj(part1Ptr, &len1);
+
     if (!parsed && (*(part1 + len1 - 1) == ')')) {
 	/*
 	 * part1Ptr is possibly an unparsed array element.
@@ -627,6 +645,7 @@ TclObjLookupVarEx(
 			TclObjVarErrMsg(interp, part1Ptr, part2Ptr, msg,
 				needArray, -1);
 		    }
+		    return NULL;
 		}
 
 		/*
@@ -706,8 +725,10 @@ TclObjLookupVarEx(
 
 	part1Ptr->typePtr = &localVarNameType;
 	if (part1Ptr != localName(iPtr->varFramePtr, index)) {
-	    part1Ptr->internalRep.ptrAndLongRep.ptr = localName(iPtr->varFramePtr, index);
-	    Tcl_IncrRefCount((Tcl_Obj *)part1Ptr->internalRep.ptrAndLongRep.ptr);
+	    part1Ptr->internalRep.ptrAndLongRep.ptr =
+		    localName(iPtr->varFramePtr, index);
+	    Tcl_IncrRefCount((Tcl_Obj *)
+		    part1Ptr->internalRep.ptrAndLongRep.ptr);
 	} else {
 	    part1Ptr->internalRep.ptrAndLongRep.ptr = NULL;
 	}
@@ -767,9 +788,10 @@ TclObjLookupVarEx(
 }
 
 /*
- * This flag bit should not interfere with TCL_GLOBAL_ONLY, TCL_NAMESPACE_ONLY,
- * or TCL_LEAVE_ERR_MSG; it signals that the variable lookup is performed for
- * upvar (or similar) purposes, with slightly different rules:
+ * This flag bit should not interfere with TCL_GLOBAL_ONLY,
+ * TCL_NAMESPACE_ONLY, or TCL_LEAVE_ERR_MSG; it signals that the variable
+ * lookup is performed for upvar (or similar) purposes, with slightly
+ * different rules:
  *    - Bug #696893 - variable is either proc-local or in the current
  *	namespace; never follow the second (global) resolution path
  *    - Bug #631741 - do not use special namespace or interp resolvers
@@ -778,7 +800,7 @@ TclObjLookupVarEx(
  * (Bug #835020)
  */
 
-#define LOOKUP_FOR_UPVAR 0x40000
+#define AVOID_RESOLVERS 0x40000
 
 /*
  *----------------------------------------------------------------------
@@ -828,7 +850,7 @@ TclLookupSimpleVar(
     Tcl_Obj *varNamePtr,	/* This is a simple variable name that could
 				 * represent a scalar or an array. */
     int flags,			/* Only TCL_GLOBAL_ONLY, TCL_NAMESPACE_ONLY,
-				 * LOOKUP_FOR_UPVAR and TCL_LEAVE_ERR_MSG bits
+				 * AVOID_RESOLVERS and TCL_LEAVE_ERR_MSG bits
 				 * matter. */
     const int create,		/* If 1, create hash table entry for varname,
 				 * if it doesn't already exist. If 0, return
@@ -849,7 +871,7 @@ TclLookupSimpleVar(
 				 * the variable. */
     Namespace *varNsPtr, *cxtNsPtr, *dummy1Ptr, *dummy2Ptr;
     ResolverScheme *resPtr;
-    int new, i, result;
+    int isNew, i, result;
     const char *varName = TclGetString(varNamePtr);
 
     varPtr = NULL;
@@ -869,7 +891,7 @@ TclLookupSimpleVar(
      */
 
     if ((cxtNsPtr->varResProc != NULL || iPtr->resolverPtr != NULL)
-	    && !(flags & LOOKUP_FOR_UPVAR)) {
+	    && !(flags & AVOID_RESOLVERS)) {
 	resPtr = iPtr->resolverPtr;
 	if (cxtNsPtr->varResProc) {
 	    result = (*cxtNsPtr->varResProc)(interp, varName,
@@ -914,18 +936,16 @@ TclLookupSimpleVar(
 	    || !HasLocalVars(varFramePtr)
 	    || (strstr(varName, "::") != NULL)) {
 	const char *tail;
-	int lookGlobal;
-
-	lookGlobal = (flags & TCL_GLOBAL_ONLY)
+	int lookGlobal = (flags & TCL_GLOBAL_ONLY)
 		|| (cxtNsPtr == iPtr->globalNsPtr)
 		|| ((*varName == ':') && (*(varName+1) == ':'));
+
 	if (lookGlobal) {
 	    *indexPtr = -1;
-	    flags = (flags | TCL_GLOBAL_ONLY) &
-		    ~(TCL_NAMESPACE_ONLY | LOOKUP_FOR_UPVAR);
+	    flags = (flags | TCL_GLOBAL_ONLY) & ~TCL_NAMESPACE_ONLY;
 	} else {
-	    if (flags & LOOKUP_FOR_UPVAR) {
-		flags = (flags | TCL_NAMESPACE_ONLY) & ~LOOKUP_FOR_UPVAR;
+	    if (flags & AVOID_RESOLVERS) {
+		flags = (flags | TCL_NAMESPACE_ONLY);
 	    }
 	    if (flags & TCL_NAMESPACE_ONLY) {
 		*indexPtr = -2;
@@ -937,9 +957,9 @@ TclLookupSimpleVar(
 	 * otherwise generate our own error!
 	 */
 
-	varPtr = (Var *) Tcl_FindNamespaceVar(interp, varName,
-		(Tcl_Namespace *) cxtNsPtr, flags & ~TCL_LEAVE_ERR_MSG);
-
+	varPtr = (Var *) ObjFindNamespaceVar(interp, varNamePtr,
+		(Tcl_Namespace *) cxtNsPtr,
+		(flags | AVOID_RESOLVERS) & ~TCL_LEAVE_ERR_MSG);
 	if (varPtr == NULL) {
 	    Tcl_Obj *tailPtr;
 
@@ -949,16 +969,17 @@ TclLookupSimpleVar(
 		if (varNsPtr == NULL) {
 		    *errMsgPtr = badNamespace;
 		    return NULL;
-		}
-		if (tail == NULL) {
+		} else if (tail == NULL) {
 		    *errMsgPtr = missingName;
 		    return NULL;
-		} else if (tail != varName) {
+		}
+		if (tail != varName) {
 		    tailPtr = Tcl_NewStringObj(tail, -1);
 		} else {
 		    tailPtr = varNamePtr;
 		}
-		varPtr = VarHashCreateVar(&varNsPtr->varTable, tailPtr, &new);
+		varPtr = VarHashCreateVar(&varNsPtr->varTable, tailPtr,
+			&isNew);
 		if (lookGlobal) {
 		    /*
 		     * The variable was created starting from the global
@@ -981,9 +1002,11 @@ TclLookupSimpleVar(
 	Tcl_Obj **objPtrPtr = &varFramePtr->localCachePtr->varName0;
 
 	for (i=0 ; i<localCt ; i++, objPtrPtr++) {
-	    Tcl_Obj *objPtr = *objPtrPtr;
+	    register Tcl_Obj *objPtr = *objPtrPtr;
+
 	    if (objPtr) {
 		char *localName = TclGetString(objPtr);
+
 		if ((varName[0] == localName[0])
 			&& (strcmp(varName, localName) == 0)) {
 		    *indexPtr = i;
@@ -999,7 +1022,7 @@ TclLookupSimpleVar(
 		TclInitVarHashTable(tablePtr, NULL);
 		varFramePtr->varTablePtr = tablePtr;
 	    }
-	    varPtr = VarHashCreateVar(tablePtr, varNamePtr, &new);
+	    varPtr = VarHashCreateVar(tablePtr, varNamePtr, &isNew);
 	} else {
 	    varPtr = NULL;
 	    if (tablePtr != NULL) {
@@ -1070,7 +1093,7 @@ TclLookupArrayElement(
     Var *arrayPtr,		/* Pointer to the array's Var structure. */
     int index)			/* If >=0, the index of the local array. */
 {
-    int new;
+    int isNew;
     Var *varPtr;
     TclVarHashTable *tablePtr;
     Namespace *nsPtr;
@@ -1121,8 +1144,9 @@ TclLookupArrayElement(
     }
 
     if (createElem) {
-	varPtr = VarHashCreateVar(arrayPtr->value.tablePtr, elNamePtr, &new);
-	if (new) {
+	varPtr = VarHashCreateVar(arrayPtr->value.tablePtr, elNamePtr,
+		&isNew);
+	if (isNew) {
 	    if (arrayPtr->flags & VAR_SEARCH_ACTIVE) {
 		DeleteSearches((Interp *) interp, arrayPtr);
 	    }
@@ -1363,7 +1387,9 @@ TclPtrGetVar(
 				 * in the array part1. */
     const int flags,		/* OR-ed combination of TCL_GLOBAL_ONLY, and
 				 * TCL_LEAVE_ERR_MSG bits. */
-    int index)
+    int index)			/* Index into the local variable table of the
+				 * variable, or -1. Only used when part1Ptr is
+				 * NULL. */
 {
     Interp *iPtr = (Interp *) interp;
     const char *msg;
@@ -1442,7 +1468,7 @@ Tcl_SetObjCmd(
     Tcl_Obj *varValueObj;
 
     if (objc == 2) {
-	varValueObj = Tcl_ObjGetVar2(interp, objv[1], NULL, TCL_LEAVE_ERR_MSG);
+	varValueObj = Tcl_ObjGetVar2(interp, objv[1], NULL,TCL_LEAVE_ERR_MSG);
 	if (varValueObj == NULL) {
 	    return TCL_ERROR;
 	}
@@ -1471,12 +1497,12 @@ Tcl_SetObjCmd(
  *
  * Results:
  *	Returns a pointer to the malloc'ed string which is the character
- *	representation of the variable's new value. The caller must not
- *	modify this string. If the write operation was disallowed then NULL
- *	is returned; if the TCL_LEAVE_ERR_MSG flag is set, then an
- *	explanatory message will be left in the interp's result. Note that the
- *	returned string may not be the same as newValue; this is because
- *	variable traces may modify the variable's value.
+ *	representation of the variable's new value. The caller must not modify
+ *	this string. If the write operation was disallowed then NULL is
+ *	returned; if the TCL_LEAVE_ERR_MSG flag is set, then an explanatory
+ *	message will be left in the interp's result. Note that the returned
+ *	string may not be the same as newValue; this is because variable
+ *	traces may modify the variable's value.
  *
  * Side effects:
  *	If varName is defined as a local or global variable in interp, its
@@ -1728,7 +1754,8 @@ TclPtrSetVar(
 				 * variable, or NULL if the variable is a
 				 * scalar. */
     Tcl_Obj *part1Ptr,		/* Name of an array (if part2 is non-NULL) or
-				 * the name of a variable. NULL if index >= 0*/
+				 * the name of a variable. NULL if the 'index'
+				 * parameter is >= 0 */
     Tcl_Obj *part2Ptr,		/* If non-NULL, gives the name of an element
 				 * in the array part1. */
     Tcl_Obj *newValuePtr,	/* New value for variable. */
@@ -1769,7 +1796,7 @@ TclPtrSetVar(
 
     if (TclIsVarArray(varPtr)) {
 	if (flags & TCL_LEAVE_ERR_MSG) {
-	    TclObjVarErrMsg(interp, part1Ptr, part2Ptr, "set", isArray, index);
+	    TclObjVarErrMsg(interp, part1Ptr, part2Ptr, "set", isArray,index);
 	}
 	goto earlyError;
     }
@@ -1841,7 +1868,7 @@ TclPtrSetVar(
 		    varPtr->value.objPtr = Tcl_DuplicateObj(oldValuePtr);
 		    TclDecrRefCount(oldValuePtr);
 		    oldValuePtr = varPtr->value.objPtr;
-		    Tcl_IncrRefCount(oldValuePtr);	/* Since var is ref. */
+		    Tcl_IncrRefCount(oldValuePtr);	/* Since var is ref */
 		}
 		Tcl_AppendObjToObj(oldValuePtr, newValuePtr);
 	    }
@@ -1865,10 +1892,9 @@ TclPtrSetVar(
 
     if ((varPtr->flags & VAR_TRACED_WRITE)
 	    || (arrayPtr && (arrayPtr->flags & VAR_TRACED_WRITE))) {
-	if (TCL_ERROR == TclObjCallVarTraces(iPtr, arrayPtr, varPtr,
-		 part1Ptr, part2Ptr,
-		(flags&(TCL_GLOBAL_ONLY|TCL_NAMESPACE_ONLY))|TCL_TRACE_WRITES,
-		(flags & TCL_LEAVE_ERR_MSG), index)) {
+	if (TCL_ERROR == TclObjCallVarTraces(iPtr, arrayPtr, varPtr, part1Ptr,
+		part2Ptr, (flags & (TCL_GLOBAL_ONLY|TCL_NAMESPACE_ONLY))
+		| TCL_TRACE_WRITES, (flags & TCL_LEAVE_ERR_MSG), index)) {
 	    goto cleanup;
 	}
     }
@@ -2008,7 +2034,9 @@ TclPtrIncrObjVar(
 				 * any of TCL_GLOBAL_ONLY, TCL_NAMESPACE_ONLY,
 				 * TCL_APPEND_VALUE, TCL_LIST_ELEMENT,
 				 * TCL_LEAVE_ERR_MSG. */
-    int index)
+    int index)			/* Index into the local variable table of the
+				 * variable, or -1. Only used when part1Ptr is
+				 * NULL. */
 {
     register Tcl_Obj *varValuePtr, *newValuePtr = NULL;
     int duplicated, code;
@@ -2261,7 +2289,6 @@ UnsetVarStruct(
 	DeleteSearches(iPtr, varPtr);
     }
 
-
     /*
      * The code below is tricky, because of the possibility that a trace
      * function might try to access a variable being deleted. To handle this
@@ -2300,7 +2327,7 @@ UnsetVarStruct(
 
 	    int isNew;
 	    Tcl_HashEntry *tPtr =
-		Tcl_FindHashEntry(&iPtr->varTraces, (char *) varPtr);
+		    Tcl_FindHashEntry(&iPtr->varTraces, (char *) varPtr);
 
 	    tracePtr = Tcl_GetHashValue(tPtr);
 	    varPtr->flags &= ~VAR_ALL_TRACES;
@@ -2319,7 +2346,8 @@ UnsetVarStruct(
 	    dummyVar.flags &= ~VAR_TRACE_ACTIVE;
 	    TclObjCallVarTraces(iPtr, arrayPtr, (Var *) &dummyVar,
 		    part1Ptr, part2Ptr,
-		    (flags & (TCL_GLOBAL_ONLY|TCL_NAMESPACE_ONLY))| TCL_TRACE_UNSETS,
+		    (flags & (TCL_GLOBAL_ONLY|TCL_NAMESPACE_ONLY))
+			    | TCL_TRACE_UNSETS,
 		    /* leaveErrMsg */ 0, -1);
 	    if (tPtr) {
 		Tcl_DeleteHashEntry(tPtr);
@@ -2336,7 +2364,7 @@ UnsetVarStruct(
 		Tcl_EventuallyFree((ClientData) prevPtr, TCL_DYNAMIC);
 	    }
 	    for (activePtr = iPtr->activeVarTracePtr;  activePtr != NULL;
-		 activePtr = activePtr->nextPtr) {
+		    activePtr = activePtr->nextPtr) {
 		if (activePtr->varPtr == varPtr) {
 		    activePtr->nextTracePtr = NULL;
 		}
@@ -2491,7 +2519,7 @@ Tcl_AppendObjCmd(
     }
 
     if (objc == 2) {
-	varValuePtr = Tcl_ObjGetVar2(interp, objv[1], NULL, TCL_LEAVE_ERR_MSG);
+	varValuePtr = Tcl_ObjGetVar2(interp, objv[1], NULL,TCL_LEAVE_ERR_MSG);
 	if (varValuePtr == NULL) {
 	    return TCL_ERROR;
 	}
@@ -2509,8 +2537,8 @@ Tcl_AppendObjCmd(
 	     * variable again.
 	     */
 
-	    varValuePtr = TclPtrSetVar(interp, varPtr, arrayPtr, objv[1], NULL,
-		    objv[i], (TCL_APPEND_VALUE | TCL_LEAVE_ERR_MSG), -1);
+	    varValuePtr = TclPtrSetVar(interp, varPtr, arrayPtr, objv[1],
+		    NULL, objv[i], TCL_APPEND_VALUE|TCL_LEAVE_ERR_MSG, -1);
 	    if (varValuePtr == NULL) {
 		return TCL_ERROR;
 	    }
@@ -2569,7 +2597,7 @@ Tcl_LappendObjCmd(
 		return TCL_ERROR;
 	    }
 	} else {
-	    result = Tcl_ListObjLength(interp, newValuePtr, &numElems);
+	    result = TclListObjLength(interp, newValuePtr, &numElems);
 	    if (result != TCL_OK) {
 		return result;
 	    }
@@ -2627,7 +2655,7 @@ Tcl_LappendObjCmd(
 	    createdNewObj = 1;
 	}
 
-	result = Tcl_ListObjLength(interp, varValuePtr, &numElems);
+	result = TclListObjLength(interp, varValuePtr, &numElems);
 	if (result == TCL_OK) {
 	    result = Tcl_ListObjReplace(interp, varValuePtr, numElems, 0,
 		    (objc-2), (objv+2));
@@ -2733,9 +2761,9 @@ Tcl_ArrayObjCmd(
 
     if (varPtr && (varPtr->flags & VAR_TRACED_ARRAY)
 	    && (TclIsVarArray(varPtr) || TclIsVarUndefined(varPtr))) {
-	if (TCL_ERROR == TclObjCallVarTraces(iPtr, arrayPtr, varPtr, varNamePtr,
-		NULL, (TCL_LEAVE_ERR_MSG|TCL_NAMESPACE_ONLY|TCL_GLOBAL_ONLY|
-		TCL_TRACE_ARRAY), /* leaveErrMsg */ 1, -1)) {
+	if (TclObjCallVarTraces(iPtr, arrayPtr, varPtr, varNamePtr, NULL,
+		(TCL_LEAVE_ERR_MSG|TCL_NAMESPACE_ONLY|TCL_GLOBAL_ONLY|
+		TCL_TRACE_ARRAY), /* leaveErrMsg */ 1, -1) == TCL_ERROR) {
 	    return TCL_ERROR;
 	}
     }
@@ -2854,7 +2882,7 @@ Tcl_ArrayObjCmd(
     }
     case ARRAY_STARTSEARCH: {
 	ArraySearch *searchPtr;
-	int new;
+	int isNew;
 	char *varName = TclGetString(varNamePtr);
 
 	if (objc != 3) {
@@ -2866,8 +2894,8 @@ Tcl_ArrayObjCmd(
 	}
 	searchPtr = (ArraySearch *) ckalloc(sizeof(ArraySearch));
 	hPtr = Tcl_CreateHashEntry(&iPtr->varSearches,
-		(char *) varPtr, &new);
-	if (new) {
+		(char *) varPtr, &isNew);
+	if (isNew) {
 	    searchPtr->id = 1;
 	    Tcl_AppendResult(interp, "s-1-", varName, NULL);
 	    varPtr->flags |= VAR_SEARCH_ACTIVE;
@@ -2968,7 +2996,8 @@ Tcl_ArrayObjCmd(
 	 */
 
 	TclNewObj(tmpResPtr);
-	result = Tcl_ListObjGetElements(interp, nameLstPtr, &count, &namePtrPtr);
+	result = Tcl_ListObjGetElements(interp, nameLstPtr, &count,
+		&namePtrPtr);
 	if (result != TCL_OK) {
 	    goto errorInArrayGet;
 	}
@@ -3019,9 +3048,9 @@ Tcl_ArrayObjCmd(
     case ARRAY_NAMES: {
 	Tcl_HashSearch search;
 	Var *varPtr2;
-	char *pattern = NULL;
+	char *pattern;
 	char *name;
-	Tcl_Obj *namePtr, *resultPtr;
+	Tcl_Obj *namePtr, *resultPtr, *patternPtr;
 	int mode, matched = 0;
 	static const char *options[] = {
 	    "-exact", "-glob", "-regexp", NULL
@@ -3038,18 +3067,23 @@ Tcl_ArrayObjCmd(
 	    return TCL_OK;
 	}
 	if (objc == 4) {
-	    pattern = TclGetString(objv[3]);
+	    patternPtr = objv[3];
+	    pattern = TclGetString(patternPtr);
 	} else if (objc == 5) {
-	    pattern = TclGetString(objv[4]);
+	    patternPtr = objv[4];
+	    pattern = TclGetString(patternPtr);
 	    if (Tcl_GetIndexFromObj(interp, objv[3], options, "option", 0,
 		    &mode) != TCL_OK) {
 		return TCL_ERROR;
 	    }
+	} else {
+	    patternPtr = NULL;
+	    pattern = NULL;
 	}
 	TclNewObj(resultPtr);
 	if (((enum options) mode)==OPT_GLOB && pattern!=NULL &&
 		TclMatchIsTrivial(pattern)) {
-	    varPtr2 = VarHashFindVar(varPtr->value.tablePtr, objv[3]);
+	    varPtr2 = VarHashFindVar(varPtr->value.tablePtr, patternPtr);
 	    if ((varPtr2 != NULL) && !TclIsVarUndefined(varPtr2)) {
 		result = Tcl_ListObjAppendElement(interp, resultPtr,
 			VarHashGetKey(varPtr2));
@@ -3192,7 +3226,7 @@ Tcl_ArrayObjCmd(
 	    Tcl_SetObjResult(interp, Tcl_NewStringObj(stats, -1));
 	    ckfree((void *)stats);
 	} else {
-	    Tcl_SetResult(interp, "error reading array statistics",TCL_STATIC);
+	    Tcl_SetResult(interp,"error reading array statistics",TCL_STATIC);
 	    return TCL_ERROR;
 	}
 	break;
@@ -3304,7 +3338,7 @@ TclArraySet(
 	int elemLen;
 	Tcl_Obj **elemPtrs, *copyListObj;
 
-	result = Tcl_ListObjGetElements(interp, arrayElemObj,
+	result = TclListObjGetElements(interp, arrayElemObj,
 		&elemLen, &elemPtrs);
 	if (result != TCL_OK) {
 	    return result;
@@ -3444,9 +3478,9 @@ ObjMakeUpvar(
      */
 
     if (index < 0) {
-	if ((0 == (arrayPtr
+	if (!(arrayPtr != NULL
 		     ? (TclIsVarInHash(arrayPtr) && TclGetVarNsPtr(arrayPtr))
-		     : (TclIsVarInHash(otherPtr) && TclGetVarNsPtr(otherPtr))))
+		     : (TclIsVarInHash(otherPtr) && TclGetVarNsPtr(otherPtr)))
 		&& ((myFlags & (TCL_GLOBAL_ONLY | TCL_NAMESPACE_ONLY))
 			|| (varFramePtr == NULL)
 			|| !HasLocalVars(varFramePtr)
@@ -3524,10 +3558,8 @@ TclPtrObjMakeUpvar(
 {
     Interp *iPtr = (Interp *) interp;
     CallFrame *varFramePtr = iPtr->varFramePtr;
+    const char *errMsg, *p, *myName;
     Var *varPtr;
-    const char *errMsg;
-    const char *p;
-    const char *myName;
 
     if (index >= 0) {
 	if (!HasLocalVars(varFramePtr)) {
@@ -3562,7 +3594,7 @@ TclPtrObjMakeUpvar(
 
 	/*
 	 * Lookup and eventually create the new variable. Set the flag bit
-	 * LOOKUP_FOR_UPVAR to indicate the special resolution rules for upvar
+	 * AVOID_RESOLVERS to indicate the special resolution rules for upvar
 	 * purposes:
 	 *   - Bug #696893 - variable is either proc-local or in the current
 	 *     namespace; never follow the second (global) resolution path.
@@ -3570,7 +3602,7 @@ TclPtrObjMakeUpvar(
 	 */
 
 	varPtr = TclLookupSimpleVar(interp, myNamePtr,
-		(myFlags|LOOKUP_FOR_UPVAR), /* create */ 1, &errMsg, &index);
+		myFlags|AVOID_RESOLVERS, /* create */ 1, &errMsg, &index);
 	if (varPtr == NULL) {
 	    TclObjVarErrMsg(interp, myNamePtr, NULL, "create", errMsg, -1);
 	    return TCL_ERROR;
@@ -4141,13 +4173,12 @@ SetArraySearchObj(
 
     TclFreeIntRep(objPtr);
     objPtr->typePtr = &tclArraySearchType;
-    /* Do NOT optimize this address arithmetic! */
-    objPtr->internalRep.twoPtrValue.ptr1 = (void *)(((char *)NULL) + id);
-    objPtr->internalRep.twoPtrValue.ptr2 = (void *)(((char *)NULL) + offset);
+    objPtr->internalRep.twoPtrValue.ptr1 = INT2PTR(id);
+    objPtr->internalRep.twoPtrValue.ptr2 = INT2PTR(offset);
     return TCL_OK;
 
   syntax:
-    Tcl_AppendResult(interp, "illegal search identifier \"",string,"\"", NULL);
+    Tcl_AppendResult(interp, "illegal search identifier \"",string,"\"",NULL);
     return TCL_ERROR;
 }
 
@@ -4198,15 +4229,20 @@ ParseSearchId(
     }
 
     /*
-     * Cast is safe, since always came from an int in the first place. Do NOT
-     * optimize this address arithmetic!
+     * Extract the information out of the Tcl_Obj.
      */
 
-    id = (int)(((char*)handleObj->internalRep.twoPtrValue.ptr1) -
-	    ((char*)NULL));
+#if 1
+    id = PTR2INT(handleObj->internalRep.twoPtrValue.ptr1);
     string = TclGetString(handleObj);
-    offset = (((char*)handleObj->internalRep.twoPtrValue.ptr2) -
-	    ((char*)NULL));
+    offset = PTR2INT(handleObj->internalRep.twoPtrValue.ptr2);
+#else
+    id = (int)(((char *) handleObj->internalRep.twoPtrValue.ptr1) -
+	    ((char *) NULL));
+    string = TclGetString(handleObj);
+    offset = (((char *) handleObj->internalRep.twoPtrValue.ptr2) -
+	    ((char *) NULL));
+#endif
 
     /*
      * This test cannot be placed inside the Tcl_Obj machinery, since it is
@@ -4216,9 +4252,7 @@ ParseSearchId(
     if (strcmp(string+offset, varName) != 0) {
 	Tcl_AppendResult(interp, "search identifier \"", string,
 		"\" isn't for variable \"", varName, "\"", NULL);
-	Tcl_SetErrorCode(interp, "TCL", "LOOKUP", "ARRAYSEARCH", string,
-		NULL);
-	return NULL;
+	goto badLookup;
     }
 
     /*
@@ -4232,7 +4266,7 @@ ParseSearchId(
 
     if (varPtr->flags & VAR_SEARCH_ACTIVE) {
 	Tcl_HashEntry *hPtr =
-		Tcl_FindHashEntry(&iPtr->varSearches,(char *) varPtr);
+		Tcl_FindHashEntry(&iPtr->varSearches, (char *) varPtr);
 
 	for (searchPtr = (ArraySearch *) Tcl_GetHashValue(hPtr);
 		searchPtr != NULL; searchPtr = searchPtr->nextPtr) {
@@ -4242,6 +4276,7 @@ ParseSearchId(
 	}
     }
     Tcl_AppendResult(interp, "couldn't find search \"", string, "\"", NULL);
+  badLookup:
     Tcl_SetErrorCode(interp, "TCL", "LOOKUP", "ARRAYSEARCH", string, NULL);
     return NULL;
 }
@@ -4607,11 +4642,13 @@ TclObjVarErrMsg(
     const char *operation,	/* String describing operation that failed,
 				 * e.g. "read", "set", or "unset". */
     const char *reason,		/* String describing why operation failed. */
-    int index)
+    int index)			/* Index into the local variable table of the
+				 * variable, or -1. Only used when part1Ptr is
+				 * NULL. */
 {
     Tcl_ResetResult(interp);
     if (!part1Ptr) {
-	part1Ptr = localName(((Interp*)interp)->varFramePtr, index);
+	part1Ptr = localName(((Interp *)interp)->varFramePtr, index);
     }
     Tcl_AppendResult(interp, "can't ", operation, " \"",
 	    TclGetString(part1Ptr), NULL);
@@ -4682,8 +4719,9 @@ DupLocalVarName(
     }
     dupPtr->internalRep.ptrAndLongRep.ptr = namePtr;
     Tcl_IncrRefCount(namePtr);
-    
-    dupPtr->internalRep.ptrAndLongRep.value = srcPtr->internalRep.ptrAndLongRep.value;
+
+    dupPtr->internalRep.ptrAndLongRep.value =
+	    srcPtr->internalRep.ptrAndLongRep.value;
     dupPtr->typePtr = &localVarNameType;
 }
 
@@ -4790,7 +4828,7 @@ UpdateParsedVarName(
 	Tcl_Panic("scalar parsedVarName without a string rep");
     }
 
-    part1 = Tcl_GetStringFromObj(arrayPtr, &len1);
+    part1 = TclGetStringFromObj(arrayPtr, &len1);
     len2 = strlen(part2);
 
     totalLen = len1 + len2 + 2;
@@ -4841,7 +4879,38 @@ Tcl_FindNamespaceVar(
 				 * Otherwise, points to namespace in which to
 				 * resolve name. If NULL, look up name in the
 				 * current namespace. */
-    int flags)			/* An OR'd combination of flags:
+    int flags)			/* An OR'd combination of: AVOID_RESOLVERS,
+				 * TCL_GLOBAL_ONLY (look up name only in
+				 * global namespace), TCL_NAMESPACE_ONLY (look
+				 * up only in contextNsPtr, or the current
+				 * namespace if contextNsPtr is NULL), and
+				 * TCL_LEAVE_ERR_MSG. If both TCL_GLOBAL_ONLY
+				 * and TCL_NAMESPACE_ONLY are given,
+				 * TCL_GLOBAL_ONLY is ignored. */
+{
+    Tcl_Obj *namePtr = Tcl_NewStringObj(name, -1);
+    Tcl_Var var;
+
+    Tcl_IncrRefCount(namePtr);
+    var = ObjFindNamespaceVar(interp, namePtr, contextNsPtr, flags);
+    Tcl_DecrRefCount(namePtr);
+    return var;
+}
+
+static Tcl_Var
+ObjFindNamespaceVar(
+    Tcl_Interp *interp,		/* The interpreter in which to find the
+				 * variable. */
+    Tcl_Obj *namePtr,		/* Variable's name. If it starts with "::",
+				 * will be looked up in global namespace.
+				 * Else, looked up first in contextNsPtr
+				 * (current namespace if contextNsPtr is
+				 * NULL), then in global namespace. */
+    Tcl_Namespace *contextNsPtr,/* Ignored if TCL_GLOBAL_ONLY flag set.
+				 * Otherwise, points to namespace in which to
+				 * resolve name. If NULL, look up name in the
+				 * current namespace. */
+    int flags)			/* An OR'd combination of: AVOID_RESOLVERS,
 				 * TCL_GLOBAL_ONLY (look up name only in
 				 * global namespace), TCL_NAMESPACE_ONLY (look
 				 * up only in contextNsPtr, or the current
@@ -4859,6 +4928,7 @@ Tcl_FindNamespaceVar(
     int result;
     Tcl_Var var;
     Tcl_Obj *simpleNamePtr;
+    char *name = TclGetString(namePtr);
 
     /*
      * If this namespace has a variable resolver, then give it first crack at
@@ -4874,7 +4944,8 @@ Tcl_FindNamespaceVar(
 	cxtNsPtr = (Namespace *) TclGetCurrentNamespace(interp);
     }
 
-    if (cxtNsPtr->varResProc != NULL || iPtr->resolverPtr != NULL) {
+    if (!(flags & AVOID_RESOLVERS) &&
+	    (cxtNsPtr->varResProc != NULL || iPtr->resolverPtr != NULL)) {
 	resPtr = iPtr->resolverPtr;
 
 	if (cxtNsPtr->varResProc) {
@@ -4913,21 +4984,27 @@ Tcl_FindNamespaceVar(
      */
 
     varPtr = NULL;
-    simpleNamePtr = Tcl_NewStringObj(simpleName, -1);
-    Tcl_IncrRefCount(simpleNamePtr);
+    if (simpleName != name) {
+	simpleNamePtr = Tcl_NewStringObj(simpleName, -1);
+	Tcl_IncrRefCount(simpleNamePtr);
+    } else {
+	simpleNamePtr = namePtr;
+    }
+
     for (search = 0;  (search < 2) && (varPtr == NULL);  search++) {
 	if ((nsPtr[search] != NULL) && (simpleName != NULL)) {
 	    varPtr = VarHashFindVar(&nsPtr[search]->varTable, simpleNamePtr);
 	}
     }
-    Tcl_DecrRefCount(simpleNamePtr);
-    if (varPtr != NULL) {
-	return (Tcl_Var) varPtr;
-    } else if (flags & TCL_LEAVE_ERR_MSG) {
+    if (simpleName != name) {
+	Tcl_DecrRefCount(simpleNamePtr);
+    }
+    if ((varPtr == NULL) && (flags & TCL_LEAVE_ERR_MSG)) {
 	Tcl_ResetResult(interp);
 	Tcl_AppendResult(interp, "unknown variable \"", name, "\"", NULL);
+	Tcl_SetErrorCode(interp, "TCL", "LOOKUP", "VARIABLE", name, NULL);
     }
-    return (Tcl_Var) NULL;
+    return (Tcl_Var) varPtr;
 }
 
 /*
@@ -5044,7 +5121,7 @@ TclInfoVarsCmd(
 		    if (specificNsInPattern) {
 			elemObjPtr = Tcl_NewObj();
 			Tcl_GetVariableFullName(interp, (Tcl_Var) varPtr,
-				    elemObjPtr);
+				elemObjPtr);
 		    } else {
 			elemObjPtr = VarHashGetKey(varPtr);
 		    }
@@ -5446,8 +5523,8 @@ CompareVarKeys(
     }
 
     /*
-     * Don't use Tcl_GetStringFromObj as it would prevent l1 and l2 being
-     * in a register.
+     * Don't use Tcl_GetStringFromObj as it would prevent l1 and l2 being in a
+     * register.
      */
 
     p1 = TclGetString(objPtr1);
@@ -5497,7 +5574,7 @@ HashVarKey(
      *	  character's bits hang around in the low-order bits of the hash value
      *	  for ever, plus they spread fairly rapidly up to the high-order bits
      *	  to fill out the hash value. This seems works well both for decimal
-     *	  and *non-decimal strings.
+     *	  and non-decimal strings.
      */
 
     for (i=0 ; i<length ; i++) {

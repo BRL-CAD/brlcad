@@ -55,7 +55,6 @@ Address of procedure to call to release storage at
 An argument list which must have been initialized using
 \fBva_start\fR, and cleared using \fBva_end\fR.
 .BE
-
 .SH DESCRIPTION
 .PP
 The procedures described here are utilities for manipulating the
@@ -140,7 +139,6 @@ call; the last argument in the list must be a NULL pointer.
 .PP
 \fBTcl_AppendResultVA\fR is the same as \fBTcl_AppendResult\fR except that
 instead of taking a variable number of arguments it takes an argument list.
-
 .SH "OLD STRING PROCEDURES"
 .PP
 Use of the following procedures (is deprecated
@@ -163,17 +161,19 @@ list element, so that the list elements in the result are properly
 separated.
 However if the new list element is the first in a list or sub-list
 (i.e. \fIinterp\fR's current result is empty, or consists of the
-single character ``{'', or ends in the characters `` {'') then no
-space is added.
+single character
+.QW { ,
+or ends in the characters
+.QW " {" )
+then no space is added.
 .PP
 \fBTcl_FreeResult\fR performs part of the work
 of \fBTcl_ResetResult\fR.
 It frees up the memory associated with \fIinterp\fR's result.
-It also sets \fIinterp->freeProc\fR to zero, but doesn't
+It also sets \fIinterp->freeProc\fR to zero, but does not
 change \fIinterp->result\fR or clear error state.
 \fBTcl_FreeResult\fR is most commonly used when a procedure
 is about to replace one result value with another.
-
 .SH "DIRECT ACCESS TO INTERP->RESULT IS DEPRECATED"
 .PP
 It used to be legal for programs to
@@ -184,7 +184,6 @@ because it can make the result's string and object forms inconsistent.
 Programs should always read the result
 using the procedures \fBTcl_GetObjResult\fR or \fBTcl_GetStringResult\fR,
 and write the result using \fBTcl_SetObjResult\fR or \fBTcl_SetResult\fR.
-
 .SH "THE TCL_FREEPROC ARGUMENT TO TCL_SETRESULT"
 .PP
 \fBTcl_SetResult\fR's \fIfreeProc\fR argument specifies how 
@@ -209,7 +208,7 @@ In this case \fBTcl_SetResult\fR will make a copy of the string in
 dynamically allocated storage and arrange for the copy to be the
 result for the current Tcl command.
 .PP
-If \fIfreeProc\fR isn't one of the values \fBTCL_STATIC\fR,
+If \fIfreeProc\fR is not one of the values \fBTCL_STATIC\fR,
 \fBTCL_DYNAMIC\fR, and \fBTCL_VOLATILE\fR, then it is the address
 of a procedure that Tcl should call to free the string.
 This allows applications to use non-standard storage allocators.
@@ -221,9 +220,7 @@ typedef void Tcl_FreeProc(char *\fIblockPtr\fR);
 .CE
 When \fIfreeProc\fR is called, its \fIblockPtr\fR will be set to
 the value of \fIresult\fR passed to \fBTcl_SetResult\fR.
-
 .SH "SEE ALSO"
 Tcl_AddErrorInfo, Tcl_CreateObjCommand, Tcl_SetErrorCode, Tcl_Interp
-
 .SH KEYWORDS
 append, command, element, list, object, result, return value, interpreter

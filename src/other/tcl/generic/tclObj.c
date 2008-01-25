@@ -17,7 +17,6 @@
  */
 
 #include "tclInt.h"
-#include "tclCompile.h"
 #include "tommath.h"
 #include <float.h>
 
@@ -189,9 +188,6 @@ static int		GetBignumFromObj(Tcl_Interp *interp, Tcl_Obj *objPtr,
  */
 
 static Tcl_HashEntry *	AllocObjEntry(Tcl_HashTable *tablePtr, void *keyPtr);
-static int		CompareObjKeys(void *keyPtr, Tcl_HashEntry *hPtr);
-static void		FreeObjEntry(Tcl_HashEntry *hPtr);
-static unsigned int	HashObjKey(Tcl_HashTable *tablePtr, void *keyPtr);
 
 /*
  * Prototypes for the CommandName object type.
@@ -259,12 +255,12 @@ Tcl_ObjType tclBignumType = {
  */
 
 Tcl_HashKeyType tclObjHashKeyType = {
-    TCL_HASH_KEY_TYPE_VERSION,		/* version */
-    0,					/* flags */
-    HashObjKey,				/* hashKeyProc */
-    CompareObjKeys,			/* compareKeysProc */
-    AllocObjEntry,			/* allocEntryProc */
-    FreeObjEntry			/* freeEntryProc */
+    TCL_HASH_KEY_TYPE_VERSION,	/* version */
+    0,				/* flags */
+    TclHashObjKey,		/* hashKeyProc */
+    TclCompareObjKeys,		/* compareKeysProc */
+    AllocObjEntry,		/* allocEntryProc */
+    TclFreeObjEntry		/* freeEntryProc */
 };
 
 /*
@@ -494,7 +490,7 @@ Tcl_AppendAllObjTypes(
      * Get the test for a valid list out of the way first.
      */
 
-    if (Tcl_ListObjLength(interp, objPtr, &numElems) != TCL_OK) {
+    if (TclListObjLength(interp, objPtr, &numElems) != TCL_OK) {
 	return TCL_ERROR;
     }
 
@@ -1423,7 +1419,7 @@ ParseBoolean(
     register Tcl_Obj *objPtr)	/* The object to parse/convert. */
 {
     int i, length, newBool;
-    char lowerCase[6], *str = Tcl_GetStringFromObj(objPtr, &length);
+    char lowerCase[6], *str = TclGetStringFromObj(objPtr, &length);
 
     if ((length == 0) || (length > 5)) {
 	/* longest valid boolean string rep. is "false" */
@@ -1902,9 +1898,12 @@ Tcl_GetIntFromObj(
     register Tcl_Obj *objPtr,	/* The object from which to get a int. */
     register int *intPtr)	/* Place to store resulting int. */
 {
+#if (LONG_MAX == INT_MAX)
+    return TclGetLongFromObj(interp, objPtr, (long *) intPtr);
+#else
     long l;
 
-    if (Tcl_GetLongFromObj(interp, objPtr, &l) != TCL_OK) {
+    if (TclGetLongFromObj(interp, objPtr, &l) != TCL_OK) {
 	return TCL_ERROR;
     }
     if ((ULONG_MAX > UINT_MAX) && ((l > UINT_MAX) || (l < -(long)UINT_MAX))) {
@@ -1918,6 +1917,7 @@ Tcl_GetIntFromObj(
     }
     *intPtr = (int) l;
     return TCL_OK;
+#endif
 }
 
 /*
@@ -1942,7 +1942,7 @@ SetIntFromAny(
     Tcl_Obj *objPtr)		/* Pointer to the object to convert */
 {
     long l;
-    return Tcl_GetLongFromObj(interp, objPtr, &l);
+    return TclGetLongFromObj(interp, objPtr, &l);
 }
 
 /*
@@ -3322,14 +3322,14 @@ AllocObjEntry(
     hPtr->key.oneWordValue = (char *) objPtr;
     Tcl_IncrRefCount(objPtr);
     hPtr->clientData = NULL;
-    
+
     return hPtr;
 }
 
 /*
  *----------------------------------------------------------------------
  *
- * CompareObjKeys --
+ * TclCompareObjKeys --
  *
  *	Compares two Tcl_Obj * keys.
  *
@@ -3343,8 +3343,8 @@ AllocObjEntry(
  *----------------------------------------------------------------------
  */
 
-static int
-CompareObjKeys(
+int
+TclCompareObjKeys(
     void *keyPtr,		/* New key to compare. */
     Tcl_HashEntry *hPtr)	/* Existing key to compare. */
 {
@@ -3392,7 +3392,7 @@ CompareObjKeys(
 /*
  *----------------------------------------------------------------------
  *
- * FreeObjEntry --
+ * TclFreeObjEntry --
  *
  *	Frees space for a Tcl_HashEntry containing the Tcl_Obj * key.
  *
@@ -3405,8 +3405,8 @@ CompareObjKeys(
  *----------------------------------------------------------------------
  */
 
-static void
-FreeObjEntry(
+void
+TclFreeObjEntry(
     Tcl_HashEntry *hPtr)	/* Hash entry to free. */
 {
     Tcl_Obj *objPtr = (Tcl_Obj *) hPtr->key.oneWordValue;
@@ -3418,7 +3418,7 @@ FreeObjEntry(
 /*
  *----------------------------------------------------------------------
  *
- * HashObjKey --
+ * TclHashObjKey --
  *
  *	Compute a one-word summary of the string representation of the
  *	Tcl_Obj, which can be used to generate a hash index.
@@ -3433,8 +3433,8 @@ FreeObjEntry(
  *----------------------------------------------------------------------
  */
 
-static unsigned int
-HashObjKey(
+unsigned int
+TclHashObjKey(
     Tcl_HashTable *tablePtr,	/* Hash table. */
     void *keyPtr)		/* Key from which to compute hash value. */
 {

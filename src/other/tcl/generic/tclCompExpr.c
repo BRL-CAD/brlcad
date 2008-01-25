@@ -744,6 +744,30 @@ ParseExpr(
 				" or \"%.*s%s(...)\" or ...",
 				(scanned < limit) ? scanned : limit - 3,
 				start, (scanned < limit) ? "" : "...");
+			if (NotOperator(lastParsed)) {
+			    if ((lastStart[0] == '0')
+				    && ((lastStart[1] == 'o')
+				    || (lastStart[1] == 'O'))
+				    && (lastStart[2] >= '0')
+				    && (lastStart[2] <= '9')) {
+				const char *end = lastStart + 2;
+				Tcl_Obj* copy;
+				while (isdigit(*end)) {
+				    end++;
+				}
+				copy = Tcl_NewStringObj(lastStart,
+					end - lastStart);
+				if (TclCheckBadOctal(NULL,
+					Tcl_GetString(copy))) {
+					TclNewLiteralStringObj(post,
+						"(invalid octal number?)");
+				}
+				Tcl_DecrRefCount(copy);
+			    }
+			    scanned = 0;
+			    insertMark = 1;
+			    parsePtr->errorType = TCL_PARSE_BAD_NUMBER;
+			}
 			goto error;
 		    }
 		}
@@ -2033,8 +2057,8 @@ TclCompileExpr(
 	TclAdvanceLines(&envPtr->line, script,
 		script + TclParseAllWhiteSpace(script, numBytes));
 
-	Tcl_ListObjGetElements(NULL, litList, &objc, (Tcl_Obj ***)&litObjv);
-	Tcl_ListObjGetElements(NULL, funcList, &objc, &funcObjv);
+	TclListObjGetElements(NULL, litList, &objc, (Tcl_Obj ***)&litObjv);
+	TclListObjGetElements(NULL, funcList, &objc, &funcObjv);
 	CompileExprTree(interp, opTree, 0, &litObjv, funcObjv,
 		parsePtr->tokenPtr, envPtr, 1 /* optimize */);
     } else {
@@ -2182,7 +2206,8 @@ CompileExprTree(
 
 		Tcl_DStringInit(&cmdName);
 		Tcl_DStringAppend(&cmdName, "tcl::mathfunc::", -1);
-		p = Tcl_GetStringFromObj(*funcObjv++, &length);
+		p = TclGetStringFromObj(*funcObjv, &length);
+		funcObjv++;
 		Tcl_DStringAppend(&cmdName, p, length);
 		TclEmitPush(TclRegisterNewNSLiteral(envPtr,
 			Tcl_DStringValue(&cmdName),
@@ -2321,7 +2346,7 @@ CompileExprTree(
 	    Tcl_Obj *const *litObjv = *litObjvPtr;
 	    Tcl_Obj *literal = *litObjv;
 	    int length;
-	    const char *bytes = Tcl_GetStringFromObj(literal, &length);
+	    const char *bytes = TclGetStringFromObj(literal, &length);
 
 	    TclEmitPush(TclRegisterNewLiteral(envPtr, bytes, length), envPtr);
 	    (*litObjvPtr)++;

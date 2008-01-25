@@ -17,7 +17,6 @@ expr \- Evaluate an expression
 .SH SYNOPSIS
 \fBexpr \fIarg \fR?\fIarg arg ...\fR?
 .BE
-
 .SH DESCRIPTION
 .PP
 Concatenates \fIarg\fRs (adding separator spaces between them),
@@ -57,7 +56,7 @@ above, then it is treated as a floating-point number if that is
 possible.  Floating-point numbers may be specified in any of several
 common formats making use of the decimal digits, the decimal point \fB.\fR,
 the characters \fBe\fR or \fBE\fR indicating scientific notation, and
-the sign characters \fB+\fR or \fB-\fR.  For example, all of the
+the sign characters \fB+\fR or \fB\-\fR.  For example, all of the
 following are valid floating-point numbers:  2.1, 3., 6e4, 7.91e+16.
 Also recognized as floating point values are the strings \fBInf\fR
 and \fBNaN\fR making use of any case for each character.
@@ -90,7 +89,7 @@ The command will be executed and its result will be used as
 the operand.
 .IP [7]
 As a mathematical function whose arguments have any of the above
-forms for operands, such as \fBsin($x)\fR.  See MATH FUNCTIONS below for
+forms for operands, such as \fBsin($x)\fR.  See \fBMATH FUNCTIONS\fR below for
 a discussion of how mathematical functions are handled.
 .LP
 Where the above substitutions occur (e.g. inside quoted strings), they
@@ -115,8 +114,9 @@ will produce the value on the right side of the line:
 .CE
 .SS OPERATORS
 .PP
-The valid operators are listed below, grouped in decreasing order
-of precedence:
+The valid operators (most of which are also available as commands in
+the \fBtcl::mathop\fR namespace; see the \fBmathop\fR(n) manual page
+for details) are listed below, grouped in decreasing order of precedence:
 .TP 20
 \fB\-\0\0+\0\0~\0\0!\fR
 Unary minus, unary plus, bit-wise NOT, logical NOT.  None of these operators
@@ -203,18 +203,25 @@ precedence level.  For example, the command
 .CE
 returns 0.
 .PP
-The \fB&&\fR, \fB||\fR, and \fB?:\fR operators have ``lazy
-evaluation'', just as in C, 
-which means that operands are not evaluated if they are
+The \fB&&\fR, \fB||\fR, and \fB?:\fR operators have
+.QW "lazy evaluation" ,
+just as in C, which means that operands are not evaluated if they are
 not needed to determine the outcome.  For example, in the command
 .CS
 \fBexpr {$v ? [a] : [b]}\fR
 .CE
-only one of \fB[a]\fR or \fB[b]\fR will actually be evaluated,
+only one of
+.QW \fB[a]\fR
+or
+.QW \fB[b]\fR
+will actually be evaluated,
 depending on the value of \fB$v\fR.  Note, however, that this is
 only true if the entire expression is enclosed in braces;  otherwise
-the Tcl parser will evaluate both \fB[a]\fR and \fB[b]\fR before
-invoking the \fBexpr\fR command.
+the Tcl parser will evaluate both
+.QW \fB[a]\fR
+and
+.QW \fB[b]\fR
+before invoking the \fBexpr\fR command.
 .SS "MATH FUNCTIONS"
 .PP
 .VS 8.5
@@ -229,6 +236,11 @@ is the same in every way as the processing of:
 .CS
 \fBexpr {[tcl::mathfunc::sin [expr {$x+$y}]]}\fR
 .CE
+which in turn is the same as the processing of:
+.CS
+\fBtcl::mathfunc::sin [expr {$x+$y}]\fR
+.CE
+.PP
 The executor will search for \fBtcl::mathfunc::sin\fR using the usual
 rules for resolving functions in namespaces. Either
 \fB::tcl::mathfunc::sin\fR or \fB[namespace
@@ -256,7 +268,7 @@ All internal computations involving floating-point are
 done with the C type \fIdouble\fR.
 When converting a string to floating-point, exponent overflow is
 detected and results in the \fIdouble\fR value of \fBInf\fR or
-\fB-Inf\fR as appropriate.  Floating-point overflow and underflow
+\fB\-Inf\fR as appropriate.  Floating-point overflow and underflow
 are detected to the degree supported by the hardware, which is generally
 pretty reliable.
 .PP
@@ -274,9 +286,11 @@ returns 1, while
 \fBexpr\fR {5 / ( [string length "abcd"] + 0.0 )}
 .CE
 both return 1.25.
-Floating-point values are always returned with a ``\fB.\fR''
-or an \fBe\fR so that they will not look like integer values.  For
-example,
+Floating-point values are always returned with a
+.QW \fB.\fR
+or an
+.QW \fBe\fR
+so that they will not look like integer values.  For example,
 .CS
 \fBexpr\fR {20.0/5.0}
 .CE
@@ -302,9 +316,9 @@ both return 1.  The first comparison is done using integer
 comparison, and the second is done using string comparison after
 the second operand is converted to the string \fB18\fR.
 Because of Tcl's tendency to treat values as numbers whenever
-possible, it isn't generally a good idea to use operators like \fB==\fR
+possible, it is not generally a good idea to use operators like \fB==\fR
 when you really want string comparison and the values of the
-operands could be arbitrary;  it's better in these cases to use
+operands could be arbitrary;  it is better in these cases to use
 the \fBeq\fR or \fBne\fR operators, or the \fBstring\fR command instead.
 .SH "PERFORMANCE CONSIDERATIONS"
 .PP
@@ -328,7 +342,7 @@ then the \fBexpr\fR command will evaluate the expression \fB$a + 2*4\fR.
 Most expressions do not require a second round of substitutions.
 Either they are enclosed in braces or, if not,
 their variable and command substitutions yield numbers or strings
-that don't themselves require substitutions.
+that do not themselves require substitutions.
 However, because a few unbraced expressions 
 need two rounds of substitutions,
 the bytecode compiler must emit
@@ -337,9 +351,15 @@ The most expensive code is required for
 unbraced expressions that contain command substitutions.
 These expressions must be implemented by generating new code
 each time the expression is executed.
+.VS 8.5
+When the expression is unbraced to allow the substitution of a function or
+operator, consider using the commands documented in the \fBmathfunc\fR(n) or
+\fBmathop\fR(n) manual pages directly instead.
+.VE 8.5
 .SH EXAMPLES
-Define a procedure that computes an "interesting" mathematical
-function:
+Define a procedure that computes an
+.QW interesting
+mathematical function:
 .CS
 proc tcl::mathfunc::calc {x y} {
     \fBexpr\fR { ($x**2 - $y**2) / exp($x**2 + $y**2) }
@@ -379,16 +399,14 @@ Generate a random integer in the range 0..99 inclusive:
 .CS
 set randNum [\fBexpr\fR { int(100 * rand()) }]
 .CE
-
 .SH "SEE ALSO"
-array(n), for(n), if(n), mathfunc(n), namespace(n), proc(n), string(n), Tcl(n), while(n)
-
+array(n), for(n), if(n), mathfunc(n), mathop(n), namespace(n), proc(n),
+string(n), Tcl(n), while(n)
 .SH KEYWORDS
 arithmetic, boolean, compare, expression, fuzzy comparison
-
 .SH COPYRIGHT
+.nf
 Copyright (c) 1993 The Regents of the University of California.
-.br
 Copyright (c) 1994-2000 Sun Microsystems Incorporated.
-.br
 Copyright (c) 2005 by Kevin B. Kenny <kennykb@acm.org>. All rights reserved.
+.fi

@@ -2277,7 +2277,7 @@ test trace-29.1 {Tcl_CreateTrace, correct command and argc/argv arguments of tra
 } {{expr 14 + 16} {expr 14 + 16} {set stuff [expr 14 + 16]} {set stuff 30}}
 test trace-29.2 {Tcl_CreateTrace, correct command and argc/argv arguments of trace proc} {testcmdtrace} {
     testcmdtrace tracetest {set stuff [info tclversion]}
-} [concat {{info tclversion} {info tclversion} ::tcl::Info_tclversion {::tcl::Info_tclversion} {set stuff [info tclversion]}} [list "set stuff [info tclversion]"]]
+} [concat {{info tclversion} {info tclversion} ::tcl::info::tclversion {::tcl::info::tclversion} {set stuff [info tclversion]}} [list "set stuff [info tclversion]"]]
 test trace-29.3 {Tcl_CreateTrace, correct command and argc/argv arguments of trace proc} {testcmdtrace} {
     testcmdtrace deletetest {set stuff [info tclversion]}
 } [info tclversion]

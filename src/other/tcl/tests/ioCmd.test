@@ -118,7 +118,7 @@ test iocmd-4.4 {read command} {
 } {1 {wrong # args: should be "read channelId ?numChars?" or "read ?-nonewline? channelId"}}
 test iocmd-4.5 {read command} {
    list [catch {read -nonew file4} msg] $msg $::errorCode
-} {1 {can not find channel named "-nonew"} NONE}
+} {1 {can not find channel named "-nonew"} {TCL LOOKUP CHANNEL -nonew}}
 test iocmd-4.6 {read command} {
    list [catch {read stdout} msg] $msg
 } {1 {channel "stdout" wasn't opened for reading}}
@@ -141,10 +141,8 @@ test iocmd-4.9 {read command} {
 } {1 {bad argument "foo": should be "nonewline"} NONE}
 test iocmd-4.10 {read command} {
     list [catch {read file107} msg] $msg $::errorCode
-} {1 {can not find channel named "file107"} NONE}
-
+} {1 {can not find channel named "file107"} {TCL LOOKUP CHANNEL file107}}
 set path(test3) [makeFile {} test3]
-
 test iocmd-4.11 {read command} {
     set f [open $path(test3) w]
     set x [list [catch {read $f} msg] $msg $::errorCode]
@@ -245,9 +243,7 @@ test iocmd-8.9 {fconfigure command} {
 test iocmd-8.10 {fconfigure command} {
     list [catch {fconfigure a b} msg] $msg
 } {1 {can not find channel named "a"}}
-
 set path(fconfigure.dummy) [makeFile {} fconfigure.dummy]
-
 test iocmd-8.11 {fconfigure command} {
     set chan [open $path(fconfigure.dummy) r]
     set res [list [catch {fconfigure $chan -froboz blarfo} msg] $msg]
@@ -266,9 +262,7 @@ test iocmd-8.13 {fconfigure command} {
     close $chan
     set res
 } {1 {bad option "-buffer": should be one of -blocking, -buffering, -buffersize, -encoding, -eofchar, or -translation}}
-
 removeFile fconfigure.dummy
-
 test iocmd-8.14 {fconfigure command} {
     fconfigure stdin -buffers
 } 4096
@@ -351,7 +345,7 @@ test iocmd-9.2 {eof command} {
 test iocmd-9.3 {eof command} {
     catch {close file100}
     list [catch {eof file100} msg] $msg $::errorCode
-} {1 {can not find channel named "file100"} NONE}
+} {1 {can not find channel named "file100"} {TCL LOOKUP CHANNEL file100}}
 
 # The tests for Tcl_ExecObjCmd are in exec.test
 
@@ -502,7 +496,6 @@ test iocmd-13.8 {errors in open command} {
 test iocmd-13.9 {errors in open command} {
     list [catch {open $path(test1) r++} msg] $msg
 } {1 {illegal access mode "r++"}}
-
 test iocmd-13.10.1 {open for append, a mode} -setup {
     set log   [makeFile {} out]
     set chans {}
@@ -518,7 +511,6 @@ test iocmd-13.10.1 {open for append, a mode} -setup {
     # Ensure that channels are gone, even if body failed to do so
     foreach ch $chans {catch {close $ch}}
 } -result {0 1 2 3 4 5 6 7 8 9}
-
 test iocmd-13.10.2 {open for append, O_APPEND} -setup {
     set log   [makeFile {} out]
     set chans {}
@@ -537,7 +529,7 @@ test iocmd-13.10.2 {open for append, O_APPEND} -setup {
 
 test iocmd-14.1 {file id parsing errors} {
     list [catch {eof gorp} msg] $msg $::errorCode
-} {1 {can not find channel named "gorp"} NONE}
+} {1 {can not find channel named "gorp"} {TCL LOOKUP CHANNEL gorp}}
 test iocmd-14.2 {file id parsing errors} {
     list [catch {eof filex} msg] $msg
 } {1 {can not find channel named "filex"}}
@@ -769,6 +761,10 @@ test iocmd-21.19 {chan create, init failure -> no channel, no finalize} -match g
 proc note  {item}  {global res; lappend res $item; return}
 proc track {}      {upvar args item; note $item; return}
 proc notes {items} {foreach i $items {note $i}}
+# This forces the return options to be in the order that the test expects!
+proc noteOpts opts {global res; lappend res [dict merge {
+    -code !?! -level !?! -errorcode !?! -errorline !?! -errorinfo !?!
+} $opts]; return}
 
 # Helper command, canned result for 'initialize' method.
 # Gets the optional methods as arguments. Use return features
@@ -866,13 +862,15 @@ test iocmd-22.8 {chan finalize, for close, custom code, close error} -match glob
     rename foo {}
     set res
 } -result {{initialize rc* {read write}} rc* {finalize rc*} 1 *bad code*}
-test iocmd-22.9 {chan finalize, for close, ignore level, close error} -match glob -body {
+test iocmd-22.9 {chan finalize, for close, ignore level, close error} -match glob -setup {
     set res {}
+} -body {
     proc foo {args} {track; oninit; return -level 5 -code 777 BANG}
     note [set c [chan create {r w} foo]]
-    note [catch {close $c} msg opt]; note $msg; note $opt
+    note [catch {close $c} msg opt]; note $msg; noteOpts $opt
+    return $res
+} -cleanup {
     rename foo {}
-    set res
 } -result {{initialize rc* {read write}} rc* {finalize rc*} 1 *bad code* {-code 1 -level 0 -errorcode NONE -errorline 1 -errorinfo *bad code*subcommand "finalize"*}}
 
 # --- === *** ###########################
@@ -968,7 +966,7 @@ test iocmd-23.8 {chan read, level is squashed} -match glob -body {
 	return -level 55 -code 777 BOOM!
     }
     set c [chan create {r w} foo]
-    note [catch {read $c 2} msg opt]; note $msg; note $opt
+    note [catch {read $c 2} msg opt]; note $msg; noteOpts $opt
     close $c
     rename foo {}
     set res
@@ -1108,7 +1106,7 @@ test iocmd-24.13 {chan write, failed write, level is ignored} -match glob -body 
     set c [chan create {r w} foo]
     note [catch {puts -nonewline $c snarfsnarfsnarf; flush $c} msg opt]
     note $msg
-    note $opt
+    noteOpts $opt
     close $c
     rename foo {}
     set res
@@ -1226,7 +1224,7 @@ test iocmd-25.10 {chan configure, cgetall, level is ignored} -match glob -body {
 	return -level 55 -code 777 BANG
     }
     set c [chan create {r w} foo]
-    note [catch {fconfigure $c} msg opt]; note $msg; note $opt
+    note [catch {fconfigure $c} msg opt]; note $msg; noteOpts $opt
     close $c
     rename foo {}
     set res
@@ -1310,7 +1308,7 @@ test iocmd-26.7 {chan configure, set option, level is ignored} -match glob -body
 	return -level 55 -code 444 BANG
     }
     set c [chan create {r w} foo]
-    note [catch {fconfigure $c -rc-foo bar} msg opt]; note $msg; note $opt
+    note [catch {fconfigure $c -rc-foo bar} msg opt]; note $msg; noteOpts $opt
     close $c
     rename foo {}
     set res
@@ -1383,7 +1381,7 @@ test iocmd-27.6 {chan configure, get option, level is ignored} -match glob -body
 	return -level 77 -code 333 BANG
     }
     set c [chan create {r w} foo]
-    note [catch {fconfigure $c -rc-foo} msg opt]; note $msg; note $opt
+    note [catch {fconfigure $c -rc-foo} msg opt]; note $msg; noteOpts $opt
     close $c
     rename foo {}
     set res
@@ -1441,7 +1439,7 @@ test iocmd-28.6 {chan tell, level is ignored} -match glob -body {
     set res {}
     proc foo {args} {oninit seek; onfinal; track; return -level 11 -code 222 BANG}
     set c [chan create {r w} foo]
-    note [catch {tell $c} msg opt]; note $msg; note $opt
+    note [catch {tell $c} msg opt]; note $msg; noteOpts $opt
     close $c
     rename foo {}
     set res
@@ -1522,7 +1520,7 @@ test iocmd-28.15 {chan seek, level is ignored} -match glob -body {
     set res {}
     proc foo {args} {oninit seek; onfinal; track; return -level 33 -code 99 BANG}
     set c [chan create {r w} foo]
-    note [catch {seek $c 0 start} msg opt]; note $msg; note $opt
+    note [catch {seek $c 0 start} msg opt]; note $msg; noteOpts $opt
     close $c
     rename foo {}
     set res
@@ -1658,14 +1656,16 @@ test iocmd-29.9 {chan blocking, custom return is error} -match glob -body {
     rename foo {}
     set res
 } -result {{blocking rc* 0} 1 *bad code*}
-test iocmd-29.10 {chan blocking, level is ignored} -match glob -body {
+test iocmd-29.10 {chan blocking, level is ignored} -match glob -setup {
     set res {}
+} -body {
     proc foo {args} {oninit blocking; onfinal; track; return -level 99 -code 44 BANG}
     set c [chan create {r w} foo]
-    note [catch {fconfigure $c -blocking 0} msg opt]; note $msg; note $opt
+    note [catch {fconfigure $c -blocking 0} msg opt]; note $msg; noteOpts $opt
     catch {close $c}
+    return $res
+} -cleanup {
     rename foo {}
-    set res
 } -result {{blocking rc* 0} 1 *bad code* {-code 1 -level 0 -errorcode NONE -errorline 1 -errorinfo *bad code*subcommand "blocking"*}}
 test iocmd-29.11 {chan blocking, regular return ok, value ignored} -match glob -body {
     set res {}
@@ -1732,7 +1732,7 @@ test iocmd-31.1 {chan postevent, restricted to reflected channels} -match glob -
     close $c
     removeFile goo
     set msg
-} -result {channel "file*" is not a reflected channel}
+} -result {can not find reflected channel named "file*"}
 test iocmd-31.2 {chan postevent, unwanted events} -match glob -body {
     set res {}
     proc foo {args} {oninit; onfinal; track; return}
@@ -1848,6 +1848,9 @@ proc inthread {chan script args} {
     testthread send $tid {
 	proc note {item} {global notes; lappend notes $item}
 	proc notes {} {global notes; return $notes}
+	proc noteOpts opts {global notes; lappend notes [dict merge {
+	    -code !?! -level !?! -errorcode !?! -errorline !?! -errorinfo !?!
+	} $opts]}
     }
     testthread send $tid [list proc s {} [list uplevel 1 $script]]; # (*)
 
@@ -1968,7 +1971,7 @@ test iocmd.tf-22.9 {chan finalize, for close, ignore level, close error} -match 
     proc foo {args} {track; oninit; return -level 5 -code 777 BANG}
     note [set c [chan create {r w} foo]]
     notes [inthread $c {
-	note [catch {close $c} msg opt]; note $msg; note $opt
+	note [catch {close $c} msg opt]; note $msg; noteOpts $opt
 	notes
     } c]
     rename foo {}
@@ -2095,7 +2098,7 @@ test iocmd.tf-23.8 {chan read, level is squashed} -match glob -body {
     }
     set c [chan create {r w} foo]
     notes [inthread $c {
-	note [catch {read $c 2} msg opt]; note $msg; note $opt
+	note [catch {read $c 2} msg opt]; note $msg; noteOpts $opt
 	close $c
 	notes
     } c]
@@ -2281,7 +2284,7 @@ test iocmd.tf-24.13 {chan write, failed write, level is ignored} -match glob -bo
     notes [inthread $c {
 	note [catch {puts -nonewline $c snarfsnarfsnarf; flush $c} msg opt]
 	note $msg
-	note $opt
+	noteOpts $opt
 	close $c
 	notes
     } c]
@@ -2444,7 +2447,7 @@ test iocmd.tf-25.10 {chan configure, cgetall, level is ignored} -match glob -bod
     notes [inthread $c {
 	note [catch {fconfigure $c} msg opt]
 	note $msg
-	note $opt
+	noteOpts $opt
 	close $c
 	notes
     } c]
@@ -2559,7 +2562,7 @@ test iocmd.tf-26.7 {chan configure, set option, level is ignored} -match glob -b
     notes [inthread $c {
 	note [catch {fconfigure $c -rc-foo bar} msg opt]
 	note $msg
-	note $opt
+	noteOpts $opt
 	close $c
 	notes
     } c]
@@ -2660,7 +2663,7 @@ test iocmd.tf-27.6 {chan configure, get option, level is ignored} -match glob -b
     notes [inthread $c {
 	note [catch {fconfigure $c -rc-foo} msg opt]
 	note $msg
-	note $opt
+	noteOpts $opt
 	close $c
 	notes
     } c]
@@ -2748,7 +2751,7 @@ test iocmd.tf-28.6 {chan tell, level is ignored} -match glob -body {
     notes [inthread $c {
 	note [catch {tell $c} msg opt]
 	note $msg
-	note $opt
+	noteOpts $opt
 	close $c
 	notes
     } c]
@@ -2874,7 +2877,7 @@ test iocmd.tf-28.15 {chan seek, level is ignored} -match glob -body {
     notes [inthread $c {
 	note [catch {seek $c 0 start} msg opt]
 	note $msg
-	note $opt
+	noteOpts $opt
 	close $c
 	notes
     } c]
@@ -3078,7 +3081,7 @@ test iocmd.tf-29.10 {chan blocking, level is ignored} -match glob -body {
     notes [inthread $c {
 	note [catch {fconfigure $c -blocking 0} msg opt]
 	note $msg
-	note $opt
+	noteOpts $opt
 	catch {close $c}
 	notes
     } c]
@@ -3179,7 +3182,7 @@ test iocmd.tf-31.8 {chan postevent, bad input} -match glob -body {
     rename foo {}
     set res
 } -constraints {testchannel testthread} \
-    -result {{postevent for channel "rc*" called from outside interpreter}}
+    -result {{can not find reflected channel named "rc*"}}
 
 # ### ### ### ######### ######### #########
 

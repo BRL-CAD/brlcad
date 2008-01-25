@@ -110,12 +110,16 @@ the package, Tcl picks the file that was loaded first.
 .TP
 \fBWindows\fR\0\0\0\0\0
 .
-When a load fails with "library not found" error, it is also possible
+When a load fails with
+.QW "library not found"
+error, it is also possible
 that a dependent library was not found.  To see the dependent libraries,
-type ``dumpbin -imports <dllname>'' in a DOS console to see what the
-library must import.
-When loading a DLL in the current directory, Windows will ignore ``./'' as
-a path specifier and use a search heuristic to find the DLL instead.
+type
+.QW "dumpbin -imports <dllname>"
+in a DOS console to see what the library must import.
+When loading a DLL in the current directory, Windows will ignore
+.QW ./
+as a path specifier and use a search heuristic to find the DLL instead.
 To avoid this, load the DLL with:
 .CS
 \fBload\fR [file join [pwd] mylib.DLL]
@@ -134,7 +138,7 @@ The following is a minimal extension:
 #include <stdio.h>
 static int fooCmd(ClientData clientData,
         Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]) {
-    printf("called with %d arguments\\n", objc);
+    printf("called with %d arguments\en", objc);
     return TCL_OK;
 }
 int Foo_Init(Tcl_Interp *interp) {

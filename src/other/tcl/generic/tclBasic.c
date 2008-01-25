@@ -51,7 +51,7 @@ typedef struct OldMathFuncData {
  */
 
 static char *	CallCommandTraces(Interp *iPtr, Command *cmdPtr,
-		    const char *oldName, const char* newName, int flags);
+		    const char *oldName, const char *newName, int flags);
 static int	CheckDoubleResult(Tcl_Interp *interp, double dResult);
 static void	DeleteInterpProc(Tcl_Interp *interp);
 static void	DeleteOpCmdClientData(ClientData clientData);
@@ -91,9 +91,8 @@ static int	ExprUnaryFunc(ClientData clientData, Tcl_Interp *interp,
 		    int argc, Tcl_Obj *const *objv);
 static int	ExprWideFunc(ClientData clientData, Tcl_Interp *interp,
 		    int argc, Tcl_Obj *const *objv);
-static void	MathFuncWrongNumArgs(Tcl_Interp* interp, int expected,
+static void	MathFuncWrongNumArgs(Tcl_Interp *interp, int expected,
 		    int actual, Tcl_Obj *const *objv);
-
 #ifdef USE_DTRACE
 static int	DTraceObjCmd(ClientData dummy, Tcl_Interp *interp, int objc,
 		    Tcl_Obj *const objv[]);
@@ -102,7 +101,7 @@ static int	DTraceObjCmd(ClientData dummy, Tcl_Interp *interp, int objc,
 extern TclStubs tclStubs;
 
 /*
- * The following structures define the commands in the Tcl core.
+ * The following structure define the commands in the Tcl core.
  */
 
 typedef struct {
@@ -113,14 +112,6 @@ typedef struct {
 				 * safe interpreter. Otherwise it will be
 				 * hidden. */
 } CmdInfo;
-typedef struct {
-    const char *name;		/* Name of object-based command. */
-    const char *name2;		/* Name of secondary object-based command. */
-    Tcl_ObjCmdProc *objProc;	/* Object-based function for command. */
-    int isSafe;			/* If non-zero, command will be present in
-				 * safe interpreter. Otherwise it will be
-				 * hidden. */
-} CmdInfo2;
 
 /*
  * The built-in commands, and the functions that implement them:
@@ -136,15 +127,14 @@ static const CmdInfo builtInCmds[] = {
     {"array",		Tcl_ArrayObjCmd,	NULL,			1},
     {"binary",		Tcl_BinaryObjCmd,	NULL,			1},
     {"break",		Tcl_BreakObjCmd,	TclCompileBreakCmd,	1},
+#ifndef EXCLUDE_OBSOLETE_COMMANDS
     {"case",		Tcl_CaseObjCmd,		NULL,			1},
+#endif
     {"catch",		Tcl_CatchObjCmd,	TclCompileCatchCmd,	1},
     {"concat",		Tcl_ConcatObjCmd,	NULL,			1},
     {"continue",	Tcl_ContinueObjCmd,	TclCompileContinueCmd,	1},
-    {"dict",		Tcl_DictObjCmd,		TclCompileDictCmd,	1},
-    {"encoding",	Tcl_EncodingObjCmd,	NULL,			0},
     {"error",		Tcl_ErrorObjCmd,	NULL,			1},
     {"eval",		Tcl_EvalObjCmd,		NULL,			1},
-    {"exit",		Tcl_ExitObjCmd,		NULL,			0},
     {"expr",		Tcl_ExprObjCmd,		TclCompileExprCmd,	1},
     {"for",		Tcl_ForObjCmd,		TclCompileForCmd,	1},
     {"foreach",		Tcl_ForeachObjCmd,	TclCompileForeachCmd,	1},
@@ -159,7 +149,6 @@ static const CmdInfo builtInCmds[] = {
     {"linsert",		Tcl_LinsertObjCmd,	NULL,			1},
     {"list",		Tcl_ListObjCmd,		TclCompileListCmd,	1},
     {"llength",		Tcl_LlengthObjCmd,	TclCompileLlengthCmd,	1},
-    {"load",		Tcl_LoadObjCmd,		NULL,			0},
     {"lrange",		Tcl_LrangeObjCmd,	NULL,			1},
     {"lrepeat",		Tcl_LrepeatObjCmd,	NULL,			1},
     {"lreplace",	Tcl_LreplaceObjCmd,	NULL,			1},
@@ -177,11 +166,9 @@ static const CmdInfo builtInCmds[] = {
     {"scan",		Tcl_ScanObjCmd,		NULL,			1},
     {"set",		Tcl_SetObjCmd,		TclCompileSetCmd,	1},
     {"split",		Tcl_SplitObjCmd,	NULL,			1},
-    {"string",		Tcl_StringObjCmd,	TclCompileStringCmd,	1},
     {"subst",		Tcl_SubstObjCmd,	NULL,			1},
     {"switch",		Tcl_SwitchObjCmd,	TclCompileSwitchCmd,	1},
     {"trace",		Tcl_TraceObjCmd,	NULL,			1},
-    {"unload",		Tcl_UnloadObjCmd,	NULL,			1},
     {"unset",		Tcl_UnsetObjCmd,	NULL,			1},
     {"uplevel",		Tcl_UplevelObjCmd,	NULL,			1},
     {"upvar",		Tcl_UpvarObjCmd,	TclCompileUpvarCmd,	1},
@@ -189,43 +176,43 @@ static const CmdInfo builtInCmds[] = {
     {"while",		Tcl_WhileObjCmd,	TclCompileWhileCmd,	1},
 
     /*
-     * Commands in the UNIX core:
+     * Commands in the OS-interface. Note that many of these are unsafe.
      */
 
     {"after",		Tcl_AfterObjCmd,	NULL,			1},
     {"cd",		Tcl_CdObjCmd,		NULL,			0},
+    {"close",		Tcl_CloseObjCmd,	NULL,			1},
+    {"eof",		Tcl_EofObjCmd,		NULL,			1},
+    {"encoding",	Tcl_EncodingObjCmd,	NULL,			0},
+    {"exec",		Tcl_ExecObjCmd,		NULL,			0},
+    {"exit",		Tcl_ExitObjCmd,		NULL,			0},
+    {"fblocked",	Tcl_FblockedObjCmd,	NULL,			1},
+    {"fconfigure",	Tcl_FconfigureObjCmd,	NULL,			0},
+    {"fcopy",		Tcl_FcopyObjCmd,	NULL,			1},
     {"file",		Tcl_FileObjCmd,		NULL,			0},
+    {"fileevent",	Tcl_FileEventObjCmd,	NULL,			1},
+    {"flush",		Tcl_FlushObjCmd,	NULL,			1},
+    {"gets",		Tcl_GetsObjCmd,		NULL,			1},
     {"glob",		Tcl_GlobObjCmd,		NULL,			0},
+    {"load",		Tcl_LoadObjCmd,		NULL,			0},
     {"open",		Tcl_OpenObjCmd,		NULL,			0},
     {"pid",		Tcl_PidObjCmd,		NULL,			1},
+    {"puts",		Tcl_PutsObjCmd,		NULL,			1},
     {"pwd",		Tcl_PwdObjCmd,		NULL,			0},
+    {"read",		Tcl_ReadObjCmd,		NULL,			1},
+    {"seek",		Tcl_SeekObjCmd,		NULL,			1},
     {"socket",		Tcl_SocketObjCmd,	NULL,			0},
+    {"source",		Tcl_SourceObjCmd,	NULL,			0},
+    {"tell",		Tcl_TellObjCmd,		NULL,			1},
     {"time",		Tcl_TimeObjCmd,		NULL,			1},
+    {"unload",		Tcl_UnloadObjCmd,	NULL,			0},
     {"update",		Tcl_UpdateObjCmd,	NULL,			1},
     {"vwait",		Tcl_VwaitObjCmd,	NULL,			1},
-    {"exec",		Tcl_ExecObjCmd,		NULL,			0},
-    {"source",		Tcl_SourceObjCmd,	NULL,			0},
     {NULL,		NULL,			NULL,			0}
 };
 
-static const CmdInfo2 builtInCmds2[] = {
-    {"fileevent",	"::tcl::chan::event",	  Tcl_FileEventObjCmd,	1},
-    {"fcopy",		"::tcl::chan::copy",	  Tcl_FcopyObjCmd,	1},
-    {"close",		"::tcl::chan::close",	  Tcl_CloseObjCmd,	1},
-    {"eof",		"::tcl::chan::eof",	  Tcl_EofObjCmd,	1},
-    {"fblocked",	"::tcl::chan::blocked",	  Tcl_FblockedObjCmd,	1},
-    {"fconfigure",	"::tcl::chan::configure", Tcl_FconfigureObjCmd,	0},
-    {"flush",		"::tcl::chan::flush",	  Tcl_FlushObjCmd,	1},
-    {"gets",		"::tcl::chan::gets",	  Tcl_GetsObjCmd,	1},
-    {"puts",		"::tcl::chan::puts",	  Tcl_PutsObjCmd,	1},
-    {"read",		"::tcl::chan::read",	  Tcl_ReadObjCmd,	1},
-    {"seek",		"::tcl::chan::seek",	  Tcl_SeekObjCmd,	1},
-    {"tell",		"::tcl::chan::tell",	  Tcl_TellObjCmd,	1},
-    {NULL,		NULL,			0}
-};
-
 /*
- * Math functions
+ * Math functions. All are safe.
  */
 
 typedef struct {
@@ -268,7 +255,7 @@ static const BuiltinFuncDef BuiltinFuncTable[] = {
 };
 
 /*
- * TIP#174's math operators.
+ * TIP#174's math operators. All are safe.
  */
 
 typedef struct {
@@ -282,57 +269,97 @@ typedef struct {
     const char *expected;	/* For error message, what argument(s)
 				 * were expected. */
 } OpCmdInfo;
-
 static const OpCmdInfo mathOpCmds[] = {
     { "~",	TclSingleOpCmd,		TclCompileInvertOpCmd,
-		/* numArgs */ {1},	"integer" },
+		/* numArgs */ {1},	"integer"},
     { "!",	TclSingleOpCmd,		TclCompileNotOpCmd,
-		/* numArgs */ {1},	"boolean" },
+		/* numArgs */ {1},	"boolean"},
     { "+",	TclVariadicOpCmd,	TclCompileAddOpCmd,
-		/* identity */ {0},	NULL },
+		/* identity */ {0},	NULL},
     { "*",	TclVariadicOpCmd,	TclCompileMulOpCmd,
-		/* identity */ {1},	NULL },
+		/* identity */ {1},	NULL},
     { "&",	TclVariadicOpCmd,	TclCompileAndOpCmd,
-		/* identity */ {-1},	NULL },
+		/* identity */ {-1},	NULL},
     { "|",	TclVariadicOpCmd,	TclCompileOrOpCmd,
-		/* identity */ {0},	NULL },
+		/* identity */ {0},	NULL},
     { "^",	TclVariadicOpCmd,	TclCompileXorOpCmd,
-		/* identity */ {0},	NULL },
+		/* identity */ {0},	NULL},
     { "**",	TclVariadicOpCmd,	TclCompilePowOpCmd,
-		/* identity */ {1},	NULL },
+		/* identity */ {1},	NULL},
     { "<<",	TclSingleOpCmd,		TclCompileLshiftOpCmd,
-		/* numArgs */ {2},	"integer shift" },
+		/* numArgs */ {2},	"integer shift"},
     { ">>",	TclSingleOpCmd,		TclCompileRshiftOpCmd,
-		/* numArgs */ {2},	"integer shift" },
+		/* numArgs */ {2},	"integer shift"},
     { "%",	TclSingleOpCmd,		TclCompileModOpCmd,
-		/* numArgs */ {2},	"integer integer" },
+		/* numArgs */ {2},	"integer integer"},
     { "!=",	TclSingleOpCmd,		TclCompileNeqOpCmd,
 		/* numArgs */ {2},	"value value"},
     { "ne",	TclSingleOpCmd,		TclCompileStrneqOpCmd,
-		/* numArgs */ {2},	"value value" },
+		/* numArgs */ {2},	"value value"},
     { "in",	TclSingleOpCmd,		TclCompileInOpCmd,
 		/* numArgs */ {2},	"value list"},
     { "ni",	TclSingleOpCmd,		TclCompileNiOpCmd,
 		/* numArgs */ {2},	"value list"},
     { "-",	TclNoIdentOpCmd,	TclCompileMinusOpCmd,
-		/* unused */ {0},		"value ?value ...?"},
+		/* unused */ {0},	"value ?value ...?"},
     { "/",	TclNoIdentOpCmd,	TclCompileDivOpCmd,
-		/* unused */ {0},		"value ?value ...?"},
+		/* unused */ {0},	"value ?value ...?"},
     { "<",	TclSortingOpCmd,	TclCompileLessOpCmd,
-		/* unused */ {0},		NULL },
+		/* unused */ {0},	NULL},
     { "<=",	TclSortingOpCmd,	TclCompileLeqOpCmd,
-		/* unused */ {0},		NULL },
+		/* unused */ {0},	NULL},
     { ">",	TclSortingOpCmd,	TclCompileGreaterOpCmd,
-		/* unused */ {0},		NULL },
+		/* unused */ {0},	NULL},
     { ">=",	TclSortingOpCmd,	TclCompileGeqOpCmd,
-		/* unused */ {0},		NULL },
+		/* unused */ {0},	NULL},
     { "==",	TclSortingOpCmd,	TclCompileEqOpCmd,
-		/* unused */ {0},		NULL },
+		/* unused */ {0},	NULL},
     { "eq",	TclSortingOpCmd,	TclCompileStreqOpCmd,
-		/* unused */ {0},		NULL },
+		/* unused */ {0},	NULL},
     { NULL,	NULL,			NULL,
-		{0},			NULL }
+		{0},			NULL}
 };
+
+/*
+ * Macros for stack checks. The goal of these macros is to allow the size of
+ * the stack to be checked (so preventing overflow) in a *cheap* way. Note
+ * that the check needs to be (amortized) cheap since it is on the critical
+ * path for recursion.
+ */
+
+#if defined(TCL_NO_STACK_CHECK)
+/*
+ * Stack check disabled: make them noops.
+ */
+
+#   define CheckCStack(interp, localIntPtr)	1
+#   define GetCStackParams(iPtr)		/* do nothing */
+#elif defined(TCL_CROSS_COMPILE)
+
+/*
+ * This variable is static and only set *once*, during library initialization.
+ * It therefore needs no thread guards.
+ */
+
+static int stackGrowsDown = 1;
+#   define GetCStackParams(iPtr) \
+    stackGrowsDown = TclpGetCStackParams(&((iPtr)->stackBound))
+#   define CheckCStack(iPtr, localIntPtr) \
+    (stackGrowsDown \
+	    ? ((localIntPtr) > (iPtr)->stackBound) \
+	    : ((localIntPtr) < (iPtr)->stackBound) \
+    )
+#else /* !TCL_NO_STACK_CHECK && !TCL_CROSS_COMPILE */
+#   define GetCStackParams(iPtr) \
+    TclpGetCStackParams(&((iPtr)->stackBound))
+#   ifdef TCL_STACK_GROWS_UP
+#	define CheckCStack(iPtr, localIntPtr) \
+	   (!(iPtr)->stackBound || (localIntPtr) < (iPtr)->stackBound)
+#    else /* TCL_STACK_GROWS_UP */
+#	define CheckCStack(iPtr, localIntPtr) \
+	   ((localIntPtr) > (iPtr)->stackBound)
+#    endif /* TCL_STACK_GROWS_UP */
+#endif /* TCL_NO_STACK_CHECK/TCL_CROSS_COMPILE */
 
 /*
  *----------------------------------------------------------------------
@@ -361,7 +388,6 @@ Tcl_CreateInterp(void)
     const BuiltinFuncDef *builtinFuncPtr;
     const OpCmdInfo *opcmdInfoPtr;
     const CmdInfo *cmdInfoPtr;
-    const CmdInfo2 *cmdInfo2Ptr;
     Tcl_Namespace *mathfuncNSPtr, *mathopNSPtr;
     union {
 	char c[sizeof(short)];
@@ -463,8 +489,9 @@ Tcl_CreateInterp(void)
     iPtr->activeCmdTracePtr = NULL;
     iPtr->activeInterpTracePtr = NULL;
     iPtr->assocData = NULL;
-    iPtr->execEnvPtr = NULL;		/* Set after namespaces initialized */
-    iPtr->emptyObjPtr = Tcl_NewObj();	/* Another empty object */
+    iPtr->execEnvPtr = NULL;	/* Set after namespaces initialized. */
+    iPtr->emptyObjPtr = Tcl_NewObj();
+				/* Another empty object. */
     Tcl_IncrRefCount(iPtr->emptyObjPtr);
     iPtr->resultSpace[0] = 0;
     iPtr->threadId = Tcl_GetCurrentThread();
@@ -472,15 +499,15 @@ Tcl_CreateInterp(void)
     /*
      * Initialise the tables for variable traces and searches *before*
      * creating the global ns - so that the trace on errorInfo can be
-     * recorded. 
+     * recorded.
      */
-    
+
     Tcl_InitHashTable(&iPtr->varTraces, TCL_ONE_WORD_KEYS);
     Tcl_InitHashTable(&iPtr->varSearches, TCL_ONE_WORD_KEYS);
-        
-    iPtr->globalNsPtr = NULL;		/* Force creation of global ns below */
+
+    iPtr->globalNsPtr = NULL;	/* Force creation of global ns below. */
     iPtr->globalNsPtr = (Namespace *) Tcl_CreateNamespace(interp, "",
-	    (ClientData) NULL, NULL);
+	    NULL, NULL);
     if (iPtr->globalNsPtr == NULL) {
 	Tcl_Panic("Tcl_CreateInterp: can't create global namespace");
     }
@@ -572,6 +599,25 @@ Tcl_CreateInterp(void)
     TclInitLimitSupport(interp);
 
     /*
+     * Initialise the thread-specific data ekeko.
+     */
+
+#if defined(TCL_THREADS) && defined(USE_THREAD_ALLOC)
+    iPtr->allocCache = TclpGetAllocCache();
+#else
+    iPtr->allocCache = NULL;
+#endif
+    iPtr->pendingObjDataPtr = NULL;
+    iPtr->asyncReadyPtr = TclGetAsyncReadyPtr();
+
+    /*
+     * Insure that the stack checking mechanism for this interp is
+     * initialized.
+     */
+
+    GetCStackParams(iPtr);
+
+    /*
      * Create the core commands. Do it here, rather than calling
      * Tcl_CreateCommand, because it's faster (there's no need to check for a
      * pre-existing command by the same name). If a command has a Tcl_CmdProc
@@ -601,11 +647,11 @@ Tcl_CreateInterp(void)
 	    cmdPtr->cmdEpoch = 0;
 	    cmdPtr->compileProc = cmdInfoPtr->compileProc;
 	    cmdPtr->proc = TclInvokeObjectCommand;
-	    cmdPtr->clientData = (ClientData) cmdPtr;
+	    cmdPtr->clientData = cmdPtr;
 	    cmdPtr->objProc = cmdInfoPtr->objProc;
-	    cmdPtr->objClientData = (ClientData) NULL;
+	    cmdPtr->objClientData = NULL;
 	    cmdPtr->deleteProc = NULL;
-	    cmdPtr->deleteData = (ClientData) NULL;
+	    cmdPtr->deleteData = NULL;
 	    cmdPtr->flags = 0;
 	    cmdPtr->importRefPtr = NULL;
 	    cmdPtr->tracePtr = NULL;
@@ -614,35 +660,23 @@ Tcl_CreateInterp(void)
     }
 
     /*
-     * Register "clock", "chan" and "info" subcommands. These *do* go through
+     * Create the "chan", "dict", "info" and "string" ensembles. Note that all
+     * these commands (and their subcommands that are not present in the
+     * global namespace) are wholly safe.
+     */
+
+    TclInitChanCmd(interp);
+    TclInitDictCmd(interp);
+    TclInitInfoCmd(interp);
+    TclInitStringCmd(interp);
+
+    /*
+     * Register "clock" subcommands. These *do* go through
      * Tcl_CreateObjCommand, since they aren't in the global namespace and
      * involve ensembles.
      */
 
     TclClockInit(interp);
-
-    for (cmdInfo2Ptr=builtInCmds2; cmdInfo2Ptr->name!=NULL; cmdInfo2Ptr++) {
-	Tcl_CreateObjCommand(interp, cmdInfo2Ptr->name, cmdInfo2Ptr->objProc,
-		NULL, NULL);
-	Tcl_CreateObjCommand(interp, cmdInfo2Ptr->name2, cmdInfo2Ptr->objProc,
-		NULL, NULL);
-    }
-
-    TclInitInfoCmd(interp);
-
-    /* TIP #208 */
-    Tcl_CreateObjCommand(interp, "::tcl::chan::Truncate",
-	    TclChanTruncateObjCmd, NULL, NULL);
-
-    /* TIP #219 */
-    Tcl_CreateObjCommand(interp, "::tcl::chan::rCreate",
-	    TclChanCreateObjCmd, NULL, NULL);
-    Tcl_CreateObjCommand(interp, "::tcl::chan::rPostevent",
-	    TclChanPostEventObjCmd, NULL, NULL);
-
-    /* TIP #287 */
-    Tcl_CreateObjCommand(interp, "::tcl::chan::Pending",
-	    TclChanPendingObjCmd, NULL, NULL);
 
     /*
      * Register the built-in functions. This is empty now that they are
@@ -656,6 +690,13 @@ Tcl_CreateInterp(void)
     Tcl_CreateObjCommand(interp, "::tcl::Bgerror",
 	    TclDefaultBgErrorHandlerObjCmd, NULL, NULL);
 
+    /*
+     * Create an unsupported command for debugging bytecode.
+     */
+
+    Tcl_CreateObjCommand(interp, "::tcl::unsupported::disassemble",
+	    Tcl_DisassembleObjCmd, NULL, NULL);
+
 #ifdef USE_DTRACE
     /*
      * Register the tcl::dtrace command.
@@ -668,7 +709,7 @@ Tcl_CreateInterp(void)
      * Register the builtin math functions.
      */
 
-    mathfuncNSPtr = Tcl_CreateNamespace(interp, "::tcl::mathfunc", NULL, NULL);
+    mathfuncNSPtr = Tcl_CreateNamespace(interp, "::tcl::mathfunc", NULL,NULL);
     if (mathfuncNSPtr == NULL) {
 	Tcl_Panic("Can't create math function namespace");
     }
@@ -693,18 +734,19 @@ Tcl_CreateInterp(void)
     }
     (void) Tcl_Export(interp, mathopNSPtr, "*", 1);
     strcpy(mathFuncName, "::tcl::mathop::");
-    for (opcmdInfoPtr=mathOpCmds ; opcmdInfoPtr->name!=NULL ; opcmdInfoPtr++) {
+    for (opcmdInfoPtr=mathOpCmds ; opcmdInfoPtr->name!=NULL ; opcmdInfoPtr++){
 	TclOpCmdClientData *occdPtr = (TclOpCmdClientData *)
 		ckalloc(sizeof(TclOpCmdClientData));
+
 	occdPtr->operator = opcmdInfoPtr->name;
 	occdPtr->i.numArgs = opcmdInfoPtr->i.numArgs;
 	occdPtr->expected = opcmdInfoPtr->expected;
 	strcpy(mathFuncName + MATH_OP_PREFIX_LEN, opcmdInfoPtr->name);
 	cmdPtr = (Command *) Tcl_CreateObjCommand(interp, mathFuncName,
-		opcmdInfoPtr->objProc, (ClientData) occdPtr,
-		DeleteOpCmdClientData);
+		opcmdInfoPtr->objProc, occdPtr, DeleteOpCmdClientData);
 	if (cmdPtr == NULL) {
-	    Tcl_Panic("failed to create math operator %s", opcmdInfoPtr->name);
+	    Tcl_Panic("failed to create math operator %s",
+		    opcmdInfoPtr->name);
 	} else if (opcmdInfoPtr->compileProc != NULL) {
 	    cmdPtr->compileProc = opcmdInfoPtr->compileProc;
 	}
@@ -718,8 +760,7 @@ Tcl_CreateInterp(void)
     TclSetupEnv(interp);
 
     /*
-     * TIP #59: Make embedded configuration information
-     * available.
+     * TIP #59: Make embedded configuration information available.
      */
 
     TclInitEmbeddedConfigurationInformation(interp);
@@ -738,7 +779,7 @@ Tcl_CreateInterp(void)
 
     /* TIP #291 */
     Tcl_SetVar2Ex(interp, "tcl_platform", "pointerSize",
-	    Tcl_NewLongObj((long) sizeof(void*)), TCL_GLOBAL_ONLY);
+	    Tcl_NewLongObj((long) sizeof(void *)), TCL_GLOBAL_ONLY);
 
     /*
      * Set up other variables such as tcl_version and tcl_library
@@ -767,7 +808,7 @@ Tcl_CreateInterp(void)
      * TIP #268: Full patchlevel instead of just major.minor
      */
 
-    Tcl_PkgProvideEx(interp, "Tcl", TCL_PATCH_LEVEL, (ClientData) &tclStubs);
+    Tcl_PkgProvideEx(interp, "Tcl", TCL_PATCH_LEVEL, &tclStubs);
 
 #ifdef Tcl_InitStubs
 #undef Tcl_InitStubs
@@ -785,8 +826,9 @@ static void
 DeleteOpCmdClientData(
     ClientData clientData)
 {
-    TclOpCmdClientData *occdPtr = (TclOpCmdClientData *) clientData;
-    ckfree((char *)occdPtr);
+    TclOpCmdClientData *occdPtr = clientData;
+
+    ckfree((char *) occdPtr);
 }
 
 /*
@@ -810,7 +852,6 @@ TclHideUnsafeCommands(
     Tcl_Interp *interp)		/* Hide commands in this interpreter. */
 {
     register const CmdInfo *cmdInfoPtr;
-    register const CmdInfo2 *cmdInfo2Ptr;
 
     if (interp == NULL) {
 	return TCL_ERROR;
@@ -818,12 +859,6 @@ TclHideUnsafeCommands(
     for (cmdInfoPtr = builtInCmds; cmdInfoPtr->name != NULL; cmdInfoPtr++) {
 	if (!cmdInfoPtr->isSafe) {
 	    Tcl_HideCommand(interp, cmdInfoPtr->name, cmdInfoPtr->name);
-	}
-    }
-    for (cmdInfo2Ptr=builtInCmds2; cmdInfo2Ptr->name!=NULL; cmdInfo2Ptr++) {
-	if (!cmdInfo2Ptr->isSafe) {
-	    Tcl_HideCommand(interp, cmdInfo2Ptr->name, cmdInfo2Ptr->name);
-	    Tcl_HideCommand(interp, cmdInfo2Ptr->name2, cmdInfo2Ptr->name2);
 	}
     }
     return TCL_OK;
@@ -964,7 +999,7 @@ Tcl_SetAssocData(
     }
     hPtr = Tcl_CreateHashEntry(iPtr->assocData, name, &isNew);
     if (isNew == 0) {
-	dPtr = (AssocData *) Tcl_GetHashValue(hPtr);
+	dPtr = Tcl_GetHashValue(hPtr);
     } else {
 	dPtr = (AssocData *) ckalloc(sizeof(AssocData));
     }
@@ -1007,9 +1042,9 @@ Tcl_DeleteAssocData(
     if (hPtr == NULL) {
 	return;
     }
-    dPtr = (AssocData *) Tcl_GetHashValue(hPtr);
+    dPtr = Tcl_GetHashValue(hPtr);
     if (dPtr->proc != NULL) {
-	(dPtr->proc)(dPtr->clientData, interp);
+	dPtr->proc(dPtr->clientData, interp);
     }
     ckfree((char *) dPtr);
     Tcl_DeleteHashEntry(hPtr);
@@ -1046,13 +1081,13 @@ Tcl_GetAssocData(
     Tcl_HashEntry *hPtr;
 
     if (iPtr->assocData == NULL) {
-	return (ClientData) NULL;
+	return NULL;
     }
     hPtr = Tcl_FindHashEntry(iPtr->assocData, name);
     if (hPtr == NULL) {
-	return (ClientData) NULL;
+	return NULL;
     }
-    dPtr = (AssocData *) Tcl_GetHashValue(hPtr);
+    dPtr = Tcl_GetHashValue(hPtr);
     if (procPtr != NULL) {
 	*procPtr = dPtr->proc;
     }
@@ -1133,7 +1168,7 @@ Tcl_DeleteInterp(
      * Ensure that the interpreter is eventually deleted.
      */
 
-    Tcl_EventuallyFree((ClientData) interp, (Tcl_FreeProc *) DeleteInterpProc);
+    Tcl_EventuallyFree(interp, (Tcl_FreeProc *) DeleteInterpProc);
 }
 
 /*
@@ -1249,10 +1284,10 @@ DeleteInterpProc(
 	for (hPtr = Tcl_FirstHashEntry(hTablePtr, &search);
 		hPtr != NULL;
 		hPtr = Tcl_FirstHashEntry(hTablePtr, &search)) {
-	    dPtr = (AssocData *) Tcl_GetHashValue(hPtr);
+	    dPtr = Tcl_GetHashValue(hPtr);
 	    Tcl_DeleteHashEntry(hPtr);
 	    if (dPtr->proc != NULL) {
-		(*dPtr->proc)(dPtr->clientData, interp);
+		dPtr->proc(dPtr->clientData, interp);
 	    }
 	    ckfree((char *) dPtr);
 	}
@@ -1269,7 +1304,7 @@ DeleteInterpProc(
 	Tcl_Panic("DeleteInterpProc: popping rootCallFrame with other frames on top");
     }
     Tcl_PopCallFrame(interp);
-    ckfree((char *)iPtr->rootFramePtr);
+    ckfree((char *) iPtr->rootFramePtr);
     iPtr->rootFramePtr = NULL;
     Tcl_DeleteNamespace((Tcl_Namespace *) iPtr->globalNsPtr);
 
@@ -1301,7 +1336,7 @@ DeleteInterpProc(
     }
     TclFreePackageInfo(iPtr);
     while (iPtr->tracePtr != NULL) {
-	Tcl_DeleteTrace((Tcl_Interp*) iPtr, (Tcl_Trace) iPtr->tracePtr);
+	Tcl_DeleteTrace((Tcl_Interp *) iPtr, (Tcl_Trace) iPtr->tracePtr);
     }
     if (iPtr->execEnvPtr != NULL) {
 	TclDeleteExecEnv(iPtr->execEnvPtr);
@@ -1337,7 +1372,7 @@ DeleteInterpProc(
 	for (hPtr = Tcl_FirstHashEntry(iPtr->linePBodyPtr, &hSearch);
 		hPtr != NULL;
 		hPtr = Tcl_NextHashEntry(&hSearch)) {
-	    CmdFrame *cfPtr = (CmdFrame*) Tcl_GetHashValue(hPtr);
+	    CmdFrame *cfPtr = Tcl_GetHashValue(hPtr);
 
 	    if (cfPtr->type == TCL_LOCATION_SOURCE) {
 		Tcl_DecrRefCount(cfPtr->data.eval.path);
@@ -1379,8 +1414,8 @@ DeleteInterpProc(
     }
 
     Tcl_DeleteHashTable(&iPtr->varTraces);
-    Tcl_DeleteHashTable(&iPtr->varSearches);    
-    
+    Tcl_DeleteHashTable(&iPtr->varSearches);
+
     ckfree((char *) iPtr);
 }
 
@@ -1533,7 +1568,7 @@ Tcl_HideCommand(
      */
 
     cmdPtr->hPtr = hPtr;
-    Tcl_SetHashValue(hPtr, (ClientData) cmdPtr);
+    Tcl_SetHashValue(hPtr, cmdPtr);
 
     /*
      * If the command being hidden has a compile function, increment the
@@ -1617,7 +1652,7 @@ Tcl_ExposeCommand(
 		"\"", NULL);
 	return TCL_ERROR;
     }
-    cmdPtr = (Command *) Tcl_GetHashValue(hPtr);
+    cmdPtr = Tcl_GetHashValue(hPtr);
 
     /*
      * Check that we have a true global namespace command (enforced by
@@ -1681,7 +1716,7 @@ Tcl_ExposeCommand(
 
     cmdPtr->hPtr = hPtr;
 
-    Tcl_SetHashValue(hPtr, (ClientData) cmdPtr);
+    Tcl_SetHashValue(hPtr, cmdPtr);
 
     /*
      * Not needed as we are only in the global namespace (but would be needed
@@ -1786,7 +1821,7 @@ Tcl_CreateCommand(
 	 * intact.
 	 */
 
-	cmdPtr = (Command *) Tcl_GetHashValue(hPtr);
+	cmdPtr = Tcl_GetHashValue(hPtr);
 	oldRefPtr = cmdPtr->importRefPtr;
 	cmdPtr->importRefPtr = NULL;
 
@@ -1799,7 +1834,7 @@ Tcl_CreateCommand(
 	     * stuck in an infinite loop).
 	     */
 
-	     ckfree((char*) Tcl_GetHashValue(hPtr));
+	     ckfree((char *) Tcl_GetHashValue(hPtr));
 	}
     } else {
 	/*
@@ -1819,7 +1854,7 @@ Tcl_CreateCommand(
     cmdPtr->cmdEpoch = 0;
     cmdPtr->compileProc = NULL;
     cmdPtr->objProc = TclInvokeStringCommand;
-    cmdPtr->objClientData = (ClientData) cmdPtr;
+    cmdPtr->objClientData = cmdPtr;
     cmdPtr->proc = proc;
     cmdPtr->clientData = clientData;
     cmdPtr->deleteProc = deleteProc;
@@ -1837,7 +1872,7 @@ Tcl_CreateCommand(
 	cmdPtr->importRefPtr = oldRefPtr;
 	while (oldRefPtr != NULL) {
 	    refCmdPtr = oldRefPtr->importedCmdPtr;
-	    dataPtr = (ImportedCmdData *) refCmdPtr->objClientData;
+	    dataPtr = refCmdPtr->objClientData;
 	    dataPtr->realCmdPtr = cmdPtr;
 	    oldRefPtr = oldRefPtr->nextPtr;
 	}
@@ -1936,7 +1971,7 @@ Tcl_CreateObjCommand(
     hPtr = Tcl_CreateHashEntry(&nsPtr->cmdTable, tail, &isNew);
     TclInvalidateNsPath(nsPtr);
     if (!isNew) {
-	cmdPtr = (Command *) Tcl_GetHashValue(hPtr);
+	cmdPtr = Tcl_GetHashValue(hPtr);
 
 	/*
 	 * Command already exists. If its object-based Tcl_ObjCmdProc is
@@ -1971,7 +2006,7 @@ Tcl_CreateObjCommand(
 	     * stuck in an infinite loop).
 	     */
 
-	     ckfree((char *) Tcl_GetHashValue(hPtr));
+	     ckfree(Tcl_GetHashValue(hPtr));
 	}
     } else {
 	/*
@@ -1992,7 +2027,7 @@ Tcl_CreateObjCommand(
     cmdPtr->objProc = proc;
     cmdPtr->objClientData = clientData;
     cmdPtr->proc = TclInvokeObjectCommand;
-    cmdPtr->clientData = (ClientData) cmdPtr;
+    cmdPtr->clientData = cmdPtr;
     cmdPtr->deleteProc = deleteProc;
     cmdPtr->deleteData = clientData;
     cmdPtr->flags = 0;
@@ -2008,7 +2043,7 @@ Tcl_CreateObjCommand(
 	cmdPtr->importRefPtr = oldRefPtr;
 	while (oldRefPtr != NULL) {
 	    refCmdPtr = oldRefPtr->importedCmdPtr;
-	    dataPtr = (ImportedCmdData *) refCmdPtr->objClientData;
+	    dataPtr = refCmdPtr->objClientData;
 	    dataPtr->realCmdPtr = cmdPtr;
 	    oldRefPtr = oldRefPtr->nextPtr;
 	}
@@ -2053,7 +2088,7 @@ TclInvokeStringCommand(
     register int objc,		/* Number of arguments. */
     Tcl_Obj *const objv[])	/* Argument objects. */
 {
-    Command *cmdPtr = (Command *) clientData;
+    Command *cmdPtr = clientData;
     int i, result;
     const char **argv = (const char **)
 	    TclStackAlloc(interp, (unsigned)(objc + 1) * sizeof(char *));
@@ -2069,7 +2104,7 @@ TclInvokeStringCommand(
 
     result = (*cmdPtr->proc)(cmdPtr->clientData, interp, objc, argv);
 
-    TclStackFree(interp, (void *)argv);
+    TclStackFree(interp, (void *) argv);
     return result;
 }
 
@@ -2177,7 +2212,7 @@ TclRenameCommand(
     Command *cmdPtr;
     Tcl_HashEntry *hPtr, *oldHPtr;
     int isNew, result;
-    Tcl_Obj* oldFullName;
+    Tcl_Obj *oldFullName;
     Tcl_DString newFullName;
 
     /*
@@ -2245,7 +2280,7 @@ TclRenameCommand(
 
     oldHPtr = cmdPtr->hPtr;
     hPtr = Tcl_CreateHashEntry(&newNsPtr->cmdTable, newTail, &isNew);
-    Tcl_SetHashValue(hPtr, (ClientData) cmdPtr);
+    Tcl_SetHashValue(hPtr, cmdPtr);
     cmdPtr->hPtr = hPtr;
     cmdPtr->nsPtr = newNsPtr;
     TclResetShadowedCmdRefs(interp, cmdPtr);
@@ -2405,7 +2440,7 @@ Tcl_SetCommandInfoFromToken(
     cmdPtr->clientData = infoPtr->clientData;
     if (infoPtr->objProc == NULL) {
 	cmdPtr->objProc = TclInvokeStringCommand;
-	cmdPtr->objClientData = (ClientData) cmdPtr;
+	cmdPtr->objClientData = cmdPtr;
     } else {
 	cmdPtr->objProc = infoPtr->objProc;
 	cmdPtr->objClientData = infoPtr->objClientData;
@@ -2713,7 +2748,7 @@ Tcl_DeleteCommandFromToken(
 	while (tracePtr != NULL) {
 	    CommandTrace *nextPtr = tracePtr->nextPtr;
 	    if ((--tracePtr->refCount) <= 0) {
-		ckfree((char*)tracePtr);
+		ckfree((char *) tracePtr);
 	    }
 	    tracePtr = nextPtr;
 	}
@@ -2860,7 +2895,7 @@ CallCommandTraces(
     }
     active.cmdPtr = cmdPtr;
 
-    Tcl_Preserve((ClientData) iPtr);
+    Tcl_Preserve(iPtr);
 
     for (tracePtr = cmdPtr->tracePtr; tracePtr != NULL;
 	    tracePtr = active.nextTracePtr) {
@@ -2878,18 +2913,18 @@ CallCommandTraces(
 	}
 	tracePtr->refCount++;
 	if (state == NULL) {
-	    state = Tcl_SaveInterpState((Tcl_Interp *)iPtr, TCL_OK);
+	    state = Tcl_SaveInterpState((Tcl_Interp *) iPtr, TCL_OK);
 	}
 	(*tracePtr->traceProc)(tracePtr->clientData,
 		(Tcl_Interp *) iPtr, oldName, newName, flags);
 	cmdPtr->flags &= ~tracePtr->flags;
 	if ((--tracePtr->refCount) <= 0) {
-	    ckfree((char*)tracePtr);
+	    ckfree((char *) tracePtr);
 	}
     }
 
     if (state) {
-	Tcl_RestoreInterpState((Tcl_Interp *)iPtr, state);
+	Tcl_RestoreInterpState((Tcl_Interp *) iPtr, state);
     }
 
     /*
@@ -2908,7 +2943,7 @@ CallCommandTraces(
     cmdPtr->flags &= ~CMD_TRACE_ACTIVE;
     cmdPtr->refCount--;
     iPtr->activeCmdTracePtr = active.nextPtr;
-    Tcl_Release((ClientData) iPtr);
+    Tcl_Release(iPtr);
     return result;
 }
 
@@ -2918,8 +2953,8 @@ CallCommandTraces(
  * GetCommandSource --
  *
  *	This function returns a Tcl_Obj with the full source string for the
- *	command. This insures that traces get a correct nul-terminated command
- *	string. 
+ *	command. This insures that traces get a correct NUL-terminated command
+ *	string.
  *
  *----------------------------------------------------------------------
  */
@@ -2928,24 +2963,18 @@ static Tcl_Obj *
 GetCommandSource(
     Interp *iPtr,
     const char *command,
-    int numChars, 
+    int numChars,
     int objc,
     Tcl_Obj *const objv[])
 {
-    Tcl_Obj *commandPtr;
-    
     if (!command) {
-	commandPtr = Tcl_NewListObj(objc, objv);
-    } else {
-	if (command == (char *) -1) {
-	    command = TclGetSrcInfoForCmd(iPtr, &numChars);
-	}
-	commandPtr = Tcl_NewStringObj(command, numChars);
+	return Tcl_NewListObj(objc, objv);
     }
-
-    return commandPtr;
+    if (command == (char *) -1) {
+	command = TclGetSrcInfoForCmd(iPtr, &numChars);
+    }
+    return Tcl_NewStringObj(command, numChars);
 }
-
 
 /*
  *----------------------------------------------------------------------
@@ -3021,7 +3050,8 @@ Tcl_CreateMathFunc(
 
     data->proc = proc;
     data->numArgs = numArgs;
-    data->argTypes = (Tcl_ValueType*) ckalloc(numArgs * sizeof(Tcl_ValueType));
+    data->argTypes = (Tcl_ValueType *)
+	    ckalloc(numArgs * sizeof(Tcl_ValueType));
     memcpy(data->argTypes, argTypes, numArgs * sizeof(Tcl_ValueType));
     data->clientData = clientData;
 
@@ -3030,7 +3060,7 @@ Tcl_CreateMathFunc(
     Tcl_DStringAppend(&bigName, name, -1);
 
     Tcl_CreateObjCommand(interp, Tcl_DStringValue(&bigName),
-	    OldMathFuncProc, (ClientData) data, OldMathFuncDeleteProc);
+	    OldMathFuncProc, data, OldMathFuncDeleteProc);
     Tcl_DStringFree(&bigName);
 }
 
@@ -3198,6 +3228,7 @@ OldMathFuncDeleteProc(
      ClientData clientData)
 {
     OldMathFuncData *dataPtr = clientData;
+
     ckfree((void *) dataPtr->argTypes);
     ckfree((void *) dataPtr);
 }
@@ -3272,7 +3303,7 @@ Tcl_GetMathFuncInfo(
      */
 
     if (cmdPtr->objProc == &OldMathFuncProc) {
-	OldMathFuncData *dataPtr = (OldMathFuncData*) cmdPtr->clientData;
+	OldMathFuncData *dataPtr = cmdPtr->clientData;
 
 	*procPtr = dataPtr->proc;
 	*numArgsPtr = dataPtr->numArgs;
@@ -3318,29 +3349,32 @@ Tcl_ListMathFuncs(
     Namespace *dummy2NsPtr;
     const char *dummyNamePtr;
     Tcl_Obj *result = Tcl_NewObj();
-    Tcl_HashEntry *cmdHashEntry;
-    Tcl_HashSearch cmdHashSearch;
-    const char *cmdNamePtr;
 
     TclGetNamespaceForQualName(interp, "::tcl::mathfunc",
 	    globalNsPtr, TCL_FIND_ONLY_NS | TCL_GLOBAL_ONLY,
 	    &nsPtr, &dummy1NsPtr, &dummy2NsPtr, &dummyNamePtr);
+    if (nsPtr == NULL) {
+	return result;
+    }
 
-    if (nsPtr != NULL) {
-	if ((pattern != NULL) && TclMatchIsTrivial(pattern)) {
-	    if (Tcl_FindHashEntry(&nsPtr->cmdTable, pattern) != NULL) {
+    if ((pattern != NULL) && TclMatchIsTrivial(pattern)) {
+	if (Tcl_FindHashEntry(&nsPtr->cmdTable, pattern) != NULL) {
+	    Tcl_ListObjAppendElement(NULL, result,
+		    Tcl_NewStringObj(pattern, -1));
+	}
+    } else {
+	Tcl_HashSearch cmdHashSearch;
+	Tcl_HashEntry *cmdHashEntry =
+		Tcl_FirstHashEntry(&nsPtr->cmdTable,&cmdHashSearch);
+
+	for (; cmdHashEntry != NULL;
+		cmdHashEntry = Tcl_NextHashEntry(&cmdHashSearch)) {
+	    const char *cmdNamePtr =
+		    Tcl_GetHashKey(&nsPtr->cmdTable, cmdHashEntry);
+
+	    if (pattern == NULL || Tcl_StringMatch(cmdNamePtr, pattern)) {
 		Tcl_ListObjAppendElement(NULL, result,
-			Tcl_NewStringObj(pattern, -1));
-	    }
-	} else {
-	    cmdHashEntry = Tcl_FirstHashEntry(&nsPtr->cmdTable,&cmdHashSearch);
-	    for (; cmdHashEntry != NULL;
-		    cmdHashEntry = Tcl_NextHashEntry(&cmdHashSearch)) {
-		cmdNamePtr = Tcl_GetHashKey(&nsPtr->cmdTable, cmdHashEntry);
-		if (pattern == NULL || Tcl_StringMatch(cmdNamePtr, pattern)) {
-		    Tcl_ListObjAppendElement(NULL, result,
-			    Tcl_NewStringObj(cmdNamePtr, -1));
-		}
+			Tcl_NewStringObj(cmdNamePtr, -1));
 	    }
 	}
     }
@@ -3369,6 +3403,7 @@ int
 TclInterpReady(
     Tcl_Interp *interp)
 {
+    int localInt; /* used for checking the stack */
     register Interp *iPtr = (Interp *) interp;
 
     /*
@@ -3386,7 +3421,7 @@ TclInterpReady(
 	Tcl_ResetResult(interp);
 	Tcl_AppendResult(interp,
 		"attempt to call eval in deleted interpreter", NULL);
-	Tcl_SetErrorCode(interp, "CORE", "IDELETE",
+	Tcl_SetErrorCode(interp, "TCL", "IDELETE",
 		"attempt to call eval in deleted interpreter", NULL);
 	return TCL_ERROR;
     }
@@ -3396,14 +3431,19 @@ TclInterpReady(
      * probably because of an infinite loop somewhere.
      */
 
-    if (((iPtr->numLevels) > iPtr->maxNestingDepth)
-	    || (TclpCheckStackSpace() == 0)) {
-	Tcl_AppendResult(interp,
-		"too many nested evaluations (infinite loop?)", NULL);
-	return TCL_ERROR;
+    if (((iPtr->numLevels) <= iPtr->maxNestingDepth)
+	    && CheckCStack(iPtr, &localInt)) {
+	return TCL_OK;
     }
 
-    return TCL_OK;
+    if (!CheckCStack(iPtr, &localInt)) {
+	Tcl_AppendResult(interp,
+		"out of stack space (infinite loop?)", NULL);
+    } else {
+	Tcl_AppendResult(interp,
+		"too many nested evaluations (infinite loop?)", NULL);
+    }
+    return TCL_ERROR;
 }
 
 /*
@@ -3464,7 +3504,7 @@ TclEvalObjvInternal(
     Namespace *savedNsPtr = NULL;
     Namespace *lookupNsPtr = iPtr->lookupNsPtr;
     Tcl_Obj *commandPtr = NULL;
-    
+
     if (TclInterpReady(interp) == TCL_ERROR) {
 	return TCL_ERROR;
     }
@@ -3493,8 +3533,8 @@ TclEvalObjvInternal(
 	    } else {
 		varFramePtr->nsPtr = iPtr->globalNsPtr;
 	    }
-	} else if ((flags & TCL_EVAL_GLOBAL) && (varFramePtr != iPtr->rootFramePtr)
-		&& !savedVarFramePtr) {
+	} else if ((flags & TCL_EVAL_GLOBAL)
+		&& (varFramePtr != iPtr->rootFramePtr) && !savedVarFramePtr) {
 	    varFramePtr = iPtr->rootFramePtr;
 	    savedVarFramePtr = iPtr->varFramePtr;
 	    iPtr->varFramePtr = varFramePtr;
@@ -3520,7 +3560,7 @@ TclEvalObjvInternal(
 	/*
 	 * TCL_EVAL_INVOKE was not set: clear rewrite rules
 	 */
-	
+
 	iPtr->ensembleRewrite.sourceObjs = NULL;
     }
 
@@ -3539,8 +3579,8 @@ TclEvalObjvInternal(
 	 */
 
 	commandPtr = GetCommandSource(iPtr, command, length, objc, objv);
-	command = Tcl_GetStringFromObj(commandPtr, &length);
-	
+	command = TclGetStringFromObj(commandPtr, &length);
+
 	/*
 	 * Execute any command or execution traces. Note that we bump up the
 	 * command's reference count for the duration of the calling of the
@@ -3586,7 +3626,7 @@ TclEvalObjvInternal(
     if (TCL_DTRACE_CMD_INFO_ENABLED() && iPtr->cmdFramePtr) {
 	Tcl_Obj *info = TclInfoFrame(interp, iPtr->cmdFramePtr);
 	char *a[4]; int i[2];
-	
+
 	TclDTraceInfo(info, a, i);
 	TCL_DTRACE_CMD_INFO(a[0], a[1], a[2], a[3], i[0], i[1]);
 	TclDecrRefCount(info);
@@ -3598,7 +3638,8 @@ TclEvalObjvInternal(
 
     cmdPtr->refCount++;
     iPtr->cmdCount++;
-    if (code == TCL_OK && traceCode == TCL_OK && !TclLimitExceeded(iPtr->limit)) {
+    if (code == TCL_OK && traceCode == TCL_OK
+	    && !TclLimitExceeded(iPtr->limit)) {
 	if (TCL_DTRACE_CMD_ENTRY_ENABLED()) {
 	    TCL_DTRACE_CMD_ENTRY(TclGetString(objv[0]), objc - 1,
 		    (Tcl_Obj **)(objv + 1));
@@ -3608,7 +3649,8 @@ TclEvalObjvInternal(
 	    TCL_DTRACE_CMD_RETURN(TclGetString(objv[0]), code);
 	}
     }
-    if (Tcl_AsyncReady()) {
+
+    if (TclAsyncReady(iPtr)) {
 	code = Tcl_AsyncInvoke(interp, code);
     }
     if (code == TCL_OK && TclLimitReady(iPtr->limit)) {
@@ -3621,7 +3663,7 @@ TclEvalObjvInternal(
 
     if (traced) {
 	if (!(cmdPtr->flags & CMD_IS_DELETED)) {
-	    if ((cmdPtr->flags & CMD_HAS_EXEC_TRACES) && (traceCode == TCL_OK)) {
+	    if ((cmdPtr->flags & CMD_HAS_EXEC_TRACES) && traceCode == TCL_OK){
 		traceCode = TclCheckExecutionTraces(interp, command, length,
 			cmdPtr, code, TCL_TRACE_LEAVE_EXEC, objc, objv);
 	    }
@@ -3632,11 +3674,11 @@ TclEvalObjvInternal(
 	}
 
 	/*
-	 * If one of the trace invocation resulted in error, then change the 
+	 * If one of the trace invocation resulted in error, then change the
 	 * result code accordingly. Note, that the interp->result should
 	 * already be set correctly by the call to TraceExecutionProc.
 	 */
-	
+
 	if (traceCode != TCL_OK) {
 	    code = traceCode;
 	}
@@ -3644,7 +3686,7 @@ TclEvalObjvInternal(
 	    Tcl_DecrRefCount(commandPtr);
 	}
     }
-    
+
     /*
      * Decrement the reference count of cmdPtr and deallocate it if it has
      * dropped to zero.
@@ -3667,7 +3709,7 @@ TclEvalObjvInternal(
 	Tcl_Obj *r;
 
 	r = Tcl_GetObjResult(interp);
-	TCL_DTRACE_CMD_RESULT(TclGetString(objv[0]), code, TclGetString(r), r);
+	TCL_DTRACE_CMD_RESULT(TclGetString(objv[0]), code, TclGetString(r),r);
     }
 
   done:
@@ -3680,11 +3722,11 @@ TclEvalObjvInternal(
     {
 	Namespace *currNsPtr = NULL;	/* Used to check for and invoke any
 					 * registered unknown command handler
-					 * for the current namespace
-					 * (TIP 181). */
+					 * for the current namespace (TIP
+					 * 181). */
 	int newObjc, handlerObjc;
 	Tcl_Obj **handlerObjv;
-	
+
 	currNsPtr = varFramePtr->nsPtr;
 	if ((currNsPtr == NULL) || (currNsPtr->unknownHandlerPtr == NULL)) {
 	    currNsPtr = iPtr->globalNsPtr;
@@ -3692,17 +3734,17 @@ TclEvalObjvInternal(
 		Tcl_Panic("TclEvalObjvInternal: NULL global namespace pointer");
 	    }
 	}
-    
+
 	/*
 	 * Check to see if the resolution namespace has lost its unknown
 	 * handler. If so, reset it to "::unknown".
 	 */
-	
+
 	if (currNsPtr->unknownHandlerPtr == NULL) {
 	    TclNewLiteralStringObj(currNsPtr->unknownHandlerPtr, "::unknown");
 	    Tcl_IncrRefCount(currNsPtr->unknownHandlerPtr);
 	}
-	
+
 	/*
 	 * Get the list of words for the unknown handler and allocate enough
 	 * space to hold both the handler prefix and all words of the command
@@ -3804,12 +3846,12 @@ Tcl_EvalObjv(
 	return code;
     } else {
 	int allowExceptions = (iPtr->evalFlags & TCL_ALLOW_EXCEPTIONS);
-	
+
 	/*
 	 * If we are again at the top level, process any unusual return code
 	 * returned by the evaluated code.
 	 */
-	
+
 	if (iPtr->numLevels == 0) {
 	    if (code == TCL_RETURN) {
 		code = TclUpdateReturnInfo(iPtr);
@@ -3819,24 +3861,24 @@ Tcl_EvalObjv(
 		code = TCL_ERROR;
 	    }
 	}
-	
+
 	if ((code == TCL_ERROR) && !(flags & TCL_EVAL_INVOKE)) {
 	    /*
 	     * If there was an error, a command string will be needed for the
 	     * error log: generate it now. Do not worry too much about doing
 	     * it expensively.
 	     */
-	    
+
 	    Tcl_Obj *listPtr;
 	    char *cmdString;
 	    int cmdLen;
-	    
+
 	    listPtr = Tcl_NewListObj(objc, objv);
 	    cmdString = Tcl_GetStringFromObj(listPtr, &cmdLen);
 	    Tcl_LogCommandInfo(interp, cmdString, cmdString, cmdLen);
 	    Tcl_DecrRefCount(listPtr);
 	}
-	
+
 	return code;
     }
 }
@@ -3987,21 +4029,17 @@ TclEvalEx(
 				 * state has been allocated while evaluating
 				 * the script, so that it can be freed
 				 * properly if an error occurs. */
-
-    Tcl_Parse *parsePtr =
-	    (Tcl_Parse *) TclStackAlloc(interp, sizeof(Tcl_Parse));
-    CmdFrame *eeFramePtr =
-	    (CmdFrame *) TclStackAlloc(interp, sizeof(CmdFrame));
-    Tcl_Obj **stackObjArray =
-	    (Tcl_Obj **) TclStackAlloc(interp, minObjs*sizeof(Tcl_Obj *));
-    int *expandStack =
-	    (int *) TclStackAlloc(interp, minObjs*sizeof(int));
-    int *linesStack =
-	    (int *) TclStackAlloc(interp, minObjs*sizeof(int));
-	    
-
+    Tcl_Parse *parsePtr = (Tcl_Parse *)
+	    TclStackAlloc(interp, sizeof(Tcl_Parse));
+    CmdFrame *eeFramePtr = (CmdFrame *)
+	    TclStackAlloc(interp, sizeof(CmdFrame));
+    Tcl_Obj **stackObjArray = (Tcl_Obj **)
+	    TclStackAlloc(interp, minObjs * sizeof(Tcl_Obj *));
+    int *expandStack = (int *) TclStackAlloc(interp, minObjs * sizeof(int));
+    int *linesStack = (int *) TclStackAlloc(interp, minObjs * sizeof(int));
 				/* TIP #280 Structures for tracking of command
 				 * locations. */
+
     if (numBytes < 0) {
 	numBytes = strlen(script);
     }
@@ -4080,7 +4118,8 @@ TclEvalEx(
 	eeFramePtr->data.eval.path = NULL;
     }
 
-    eeFramePtr->level = (iPtr->cmdFramePtr==NULL? 1 : iPtr->cmdFramePtr->level+1);
+    eeFramePtr->level =
+	    (iPtr->cmdFramePtr==NULL ? 1 : iPtr->cmdFramePtr->level+1);
     eeFramePtr->framePtr = iPtr->framePtr;
     eeFramePtr->nextPtr = iPtr->cmdFramePtr;
     eeFramePtr->nline = 0;
@@ -4104,8 +4143,7 @@ TclEvalEx(
 	gotParse = 1;
 	if (parsePtr->numWords > 0) {
 	    /*
-	     * TIP #280. Track lines within the words of the current
-	     * command.
+	     * TIP #280. Track lines within the words of the current command.
 	     */
 
 	    int wordLine  = line;
@@ -4120,7 +4158,8 @@ TclEvalEx(
 
 	    if (numWords > minObjs) {
 		expand = (int *) ckalloc(numWords * sizeof(int));
-		objvSpace = (Tcl_Obj **) ckalloc(numWords * sizeof(Tcl_Obj *));
+		objvSpace = (Tcl_Obj **)
+			ckalloc(numWords * sizeof(Tcl_Obj *));
 		lineSpace = (int *) ckalloc(numWords * sizeof(int));
 	    }
 	    expandRequested = 0;
@@ -4129,7 +4168,7 @@ TclEvalEx(
 
 	    for (objectsUsed = 0, tokenPtr = parsePtr->tokenPtr;
 		    objectsUsed < numWords;
-		    objectsUsed++, tokenPtr += (tokenPtr->numComponents + 1)) {
+		    objectsUsed++, tokenPtr += tokenPtr->numComponents+1) {
 		/*
 		 * TIP #280. Track lines to current word. Save the information
 		 * on a per-word basis, signaling dynamic words as needed.
@@ -4161,7 +4200,7 @@ TclEvalEx(
 		if (tokenPtr->type == TCL_TOKEN_EXPAND_WORD) {
 		    int numElements;
 
-		    code = Tcl_ListObjLength(interp, objv[objectsUsed],
+		    code = TclListObjLength(interp, objv[objectsUsed],
 			    &numElements);
 		    if (code == TCL_ERROR) {
 			/*
@@ -4194,8 +4233,8 @@ TclEvalEx(
 
 		if ((numWords > minObjs) || (objectsNeeded >  minObjs)) {
 		    objv = objvSpace = (Tcl_Obj **)
-			    ckalloc(objectsNeeded * sizeof(Tcl_Obj*));
-		    lines = lineSpace = (int*)
+			    ckalloc(objectsNeeded * sizeof(Tcl_Obj *));
+		    lines = lineSpace = (int *)
 			    ckalloc(objectsNeeded * sizeof(int));
 		}
 
@@ -4243,7 +4282,8 @@ TclEvalEx(
 	    eeFramePtr->cmd.str.cmd = parsePtr->commandStart;
 	    eeFramePtr->cmd.str.len = parsePtr->commandSize;
 
-	    if (parsePtr->term == parsePtr->commandStart + parsePtr->commandSize - 1) {
+	    if (parsePtr->term ==
+		    parsePtr->commandStart + parsePtr->commandSize - 1) {
 		eeFramePtr->cmd.str.len--;
 	    }
 
@@ -4270,7 +4310,7 @@ TclEvalEx(
 	    if (objvSpace != stackObjArray) {
 		ckfree((char *) objvSpace);
 		objvSpace = stackObjArray;
-		ckfree ((char*) lineSpace);
+		ckfree((char *) lineSpace);
 		lineSpace = linesStack;
 	    }
 
@@ -4307,6 +4347,7 @@ TclEvalEx(
     /*
      * Generate and log various pieces of error information.
      */
+
     if (iPtr->numLevels == 0) {
 	if (code == TCL_RETURN) {
 	    code = TclUpdateReturnInfo(iPtr);
@@ -4328,7 +4369,8 @@ TclEvalEx(
 
 	    commandLength -= 1;
 	}
-	Tcl_LogCommandInfo(interp, script, parsePtr->commandStart, commandLength);
+	Tcl_LogCommandInfo(interp, script, parsePtr->commandStart,
+		commandLength);
     }
     iPtr->flags &= ~ERR_ALREADY_LOGGED;
 
@@ -4364,7 +4406,7 @@ TclEvalEx(
     TclStackFree(interp, stackObjArray);
     TclStackFree(interp, eeFramePtr);
     TclStackFree(interp, parsePtr);
-    
+
     return code;
 }
 
@@ -4392,7 +4434,7 @@ TclAdvanceLines(
     const char *start,
     const char *end)
 {
-    const char *p;
+    register const char *p;
 
     for (p = start; p < end; p++) {
 	if (*p == '\n') {
@@ -4553,8 +4595,7 @@ TclEvalObjEx(
 	 */
 
 	if (objPtr->typePtr == &tclListType) {	/* is a list... */
-	    List *listRepPtr =
-		    (List *) objPtr->internalRep.twoPtrValue.ptr1;
+	    List *listRepPtr = objPtr->internalRep.twoPtrValue.ptr1;
 
 	    if (objPtr->bytes == NULL ||	/* ...without a string rep */
 		    listRepPtr->canonicalFlag) {/* ...or that is canonical */
@@ -4567,8 +4608,8 @@ TclEvalObjEx(
 		int line, i;
 		char *w;
 		Tcl_Obj **elements, *copyPtr = TclListObjCopy(NULL, objPtr);
-		CmdFrame *eoFramePtr =
-			(CmdFrame *) TclStackAlloc(interp, sizeof(CmdFrame));
+		CmdFrame *eoFramePtr = (CmdFrame *)
+			TclStackAlloc(interp, sizeof(CmdFrame));
 
 		eoFramePtr->type = TCL_LOCATION_EVAL_LIST;
 		eoFramePtr->level = (iPtr->cmdFramePtr == NULL?
@@ -4578,7 +4619,8 @@ TclEvalObjEx(
 
 		Tcl_ListObjGetElements(NULL, copyPtr,
 			&(eoFramePtr->nline), &elements);
-		eoFramePtr->line = (int *) ckalloc(eoFramePtr->nline * sizeof(int));
+		eoFramePtr->line = (int *)
+			ckalloc(eoFramePtr->nline * sizeof(int));
 
 		eoFramePtr->cmd.listPtr  = objPtr;
 		Tcl_IncrRefCount(eoFramePtr->cmd.listPtr);
@@ -4592,12 +4634,13 @@ TclEvalObjEx(
 		line = 1;
 		for (i=0; i < eoFramePtr->nline; i++) {
 		    eoFramePtr->line[i] = line;
-		    w = Tcl_GetString(elements[i]);
+		    w = TclGetString(elements[i]);
 		    TclAdvanceLines(&line, w, w + strlen(w));
 		}
 
 		iPtr->cmdFramePtr = eoFramePtr;
-		result = Tcl_EvalObjv(interp, eoFramePtr->nline, elements, flags);
+		result = Tcl_EvalObjv(interp, eoFramePtr->nline, elements,
+			flags);
 
 		Tcl_DecrRefCount(copyPtr);
 		iPtr->cmdFramePtr = iPtr->cmdFramePtr->nextPtr;
@@ -4657,8 +4700,8 @@ TclEvalObjEx(
 		 */
 
 		int pc = 0;
-		CmdFrame *ctxPtr =
-			(CmdFrame *) TclStackAlloc(interp, sizeof(CmdFrame));
+		CmdFrame *ctxPtr = (CmdFrame *)
+			TclStackAlloc(interp, sizeof(CmdFrame));
 
 		*ctxPtr = *invoker;
 		if (invoker->type == TCL_LOCATION_BC) {
@@ -4851,7 +4894,8 @@ Tcl_ExprDouble(
 	exprPtr = Tcl_NewStringObj(exprstring, -1);
 	Tcl_IncrRefCount(exprPtr);
 	result = Tcl_ExprDoubleObj(interp, exprPtr, ptr);
-	Tcl_DecrRefCount(exprPtr);	/* Discard the expression object. */
+	Tcl_DecrRefCount(exprPtr);
+				/* Discard the expression object. */
 	if (result != TCL_OK) {
 	    (void) Tcl_GetStringResult(interp);
 	}
@@ -4938,7 +4982,7 @@ Tcl_ExprLongObj(
     case TCL_NUMBER_DOUBLE: {
 	mp_int big;
 
-	d = *((const double *)internalPtr);
+	d = *((const double *) internalPtr);
 	Tcl_DecrRefCount(resultPtr);
 	if (Tcl_InitBignumFromDouble(interp, d, &big) != TCL_OK) {
 	    return TCL_ERROR;
@@ -4949,7 +4993,7 @@ Tcl_ExprLongObj(
     case TCL_NUMBER_LONG:
     case TCL_NUMBER_WIDE:
     case TCL_NUMBER_BIG:
-	result = Tcl_GetLongFromObj(interp, resultPtr, ptr);
+	result = TclGetLongFromObj(interp, resultPtr, ptr);
 	break;
 
     case TCL_NUMBER_NAN:
@@ -4986,7 +5030,7 @@ Tcl_ExprDoubleObj(
 	    break;
 #endif
 	case TCL_NUMBER_DOUBLE:
-	    *ptr = *((const double *)internalPtr);
+	    *ptr = *((const double *) internalPtr);
 	    result = TCL_OK;
 	    break;
 	default:
@@ -5010,7 +5054,8 @@ Tcl_ExprBooleanObj(
     result = Tcl_ExprObj(interp, objPtr, &resultPtr);
     if (result == TCL_OK) {
 	result = Tcl_GetBooleanFromObj(interp, resultPtr, ptr);
-	Tcl_DecrRefCount(resultPtr);	/* Discard the result object. */
+	Tcl_DecrRefCount(resultPtr);
+				/* Discard the result object. */
     }
     return result;
 }
@@ -5055,7 +5100,7 @@ TclObjInvokeNamespace(
      * command.
      */
 
-    result = TclPushStackFrame(interp, &framePtr, nsPtr, /*isProcCallFrame*/0);
+    result = TclPushStackFrame(interp, &framePtr, nsPtr, /*isProcFrame*/0);
     if (result != TCL_OK) {
 	return TCL_ERROR;
     }
@@ -5118,7 +5163,7 @@ TclObjInvoke(
 	return TCL_ERROR;
     }
 
-    cmdName = Tcl_GetString(objv[0]);
+    cmdName = TclGetString(objv[0]);
     hTblPtr = iPtr->hiddenCmdTablePtr;
     if (hTblPtr != NULL) {
 	hPtr = Tcl_FindHashEntry(hTblPtr, cmdName);
@@ -5128,14 +5173,14 @@ TclObjInvoke(
 		cmdName, "\"", NULL);
 	return TCL_ERROR;
     }
-    cmdPtr = (Command *) Tcl_GetHashValue(hPtr);
+    cmdPtr = Tcl_GetHashValue(hPtr);
 
     /*
      * Invoke the command function.
      */
 
     iPtr->cmdCount++;
-    result = (*cmdPtr->objProc)(cmdPtr->objClientData, interp, objc, objv);
+    result = cmdPtr->objProc(cmdPtr->objClientData, interp, objc, objv);
 
     /*
      * If an error occurred, record information about what was being executed
@@ -5147,7 +5192,7 @@ TclObjInvoke(
 	    && ((iPtr->flags & ERR_ALREADY_LOGGED) == 0)) {
 	int length;
 	Tcl_Obj *command = Tcl_NewListObj(objc, objv);
-	const char* cmdString;
+	const char *cmdString;
 
 	Tcl_IncrRefCount(command);
 	cmdString = Tcl_GetStringFromObj(command, &length);
@@ -5238,7 +5283,7 @@ Tcl_AppendObjToErrorInfo(
     Tcl_Obj *objPtr)		/* Message to record. */
 {
     int length;
-    const char *message = Tcl_GetStringFromObj(objPtr, &length);
+    const char *message = TclGetStringFromObj(objPtr, &length);
 
     Tcl_AddObjErrorInfo(interp, message, length);
     Tcl_DecrRefCount(objPtr);
@@ -5582,8 +5627,8 @@ ExprCeilFunc(
     ClientData clientData,	/* Ignored */
     Tcl_Interp *interp,		/* The interpreter in which to execute the
 				 * function. */
-    int objc,			/* Actual parameter count */
-    Tcl_Obj *const *objv)	/* Actual parameter list */
+    int objc,			/* Actual parameter count. */
+    Tcl_Obj *const *objv)	/* Actual parameter list. */
 {
     int code;
     double d;
@@ -5617,8 +5662,8 @@ ExprFloorFunc(
     ClientData clientData,	/* Ignored */
     Tcl_Interp *interp,		/* The interpreter in which to execute the
 				 * function. */
-    int objc,			/* Actual parameter count */
-    Tcl_Obj *const *objv)	/* Actual parameter list */
+    int objc,			/* Actual parameter count. */
+    Tcl_Obj *const *objv)	/* Actual parameter list. */
 {
     int code;
     double d;
@@ -5650,9 +5695,9 @@ ExprFloorFunc(
 static int
 ExprIsqrtFunc(
     ClientData clientData,	/* Ignored */
-    Tcl_Interp* interp,		/* The interpreter in which to execute */
-    int objc,			/* Actual parameter count */
-    Tcl_Obj *const *objv)	/* Actual parameter list */
+    Tcl_Interp *interp,		/* The interpreter in which to execute. */
+    int objc,			/* Actual parameter count. */
+    Tcl_Obj *const *objv)	/* Actual parameter list. */
 {
     ClientData ptr;
     int type;
@@ -5661,7 +5706,7 @@ ExprIsqrtFunc(
     mp_int big;
     int exact = 0;		/* Flag == 1 if the argument can be
 				 * represented in a double as an exact
-				 * integer */
+				 * integer. */
 
     /*
      * Check syntax.
@@ -5685,7 +5730,7 @@ ExprIsqrtFunc(
 	Tcl_GetDoubleFromObj(interp, objv[1], &d);
 	return TCL_ERROR;
     case TCL_NUMBER_DOUBLE:
-	d = *((const double *)ptr);
+	d = *((const double *) ptr);
 	if (d < 0) {
 	    goto negarg;
 	}
@@ -5752,8 +5797,8 @@ ExprSqrtFunc(
     ClientData clientData,	/* Ignored */
     Tcl_Interp *interp,		/* The interpreter in which to execute the
 				 * function. */
-    int objc,			/* Actual parameter count */
-    Tcl_Obj *const *objv)	/* Actual parameter list */
+    int objc,			/* Actual parameter count. */
+    Tcl_Obj *const *objv)	/* Actual parameter list. */
 {
     int code;
     double d;
@@ -5855,8 +5900,8 @@ ExprBinaryFunc(
 				 * double result. */
     Tcl_Interp *interp,		/* The interpreter in which to execute the
 				 * function. */
-    int objc,			/* Actual parameter count */
-    Tcl_Obj *const *objv)	/* Parameter vector */
+    int objc,			/* Actual parameter count. */
+    Tcl_Obj *const *objv)	/* Parameter vector. */
 {
     int code;
     double d1, d2;
@@ -5897,8 +5942,8 @@ ExprAbsFunc(
     ClientData clientData,	/* Ignored. */
     Tcl_Interp *interp,		/* The interpreter in which to execute the
 				 * function. */
-    int objc,			/* Actual parameter count */
-    Tcl_Obj *const *objv)	/* Parameter vector */
+    int objc,			/* Actual parameter count. */
+    Tcl_Obj *const *objv)	/* Parameter vector. */
 {
     ClientData ptr;
     int type;
@@ -5914,7 +5959,7 @@ ExprAbsFunc(
     }
 
     if (type == TCL_NUMBER_LONG) {
-	long l = *((const long int *)ptr);
+	long l = *((const long *) ptr);
 	if (l < (long)0) {
 	    if (l == LONG_MIN) {
 		TclBNInitBignumFromLong(&big, l);
@@ -5928,7 +5973,7 @@ ExprAbsFunc(
     }
 
     if (type == TCL_NUMBER_DOUBLE) {
-	double d = *((const double *)ptr);
+	double d = *((const double *) ptr);
 	if (d < 0.0) {
 	    Tcl_SetObjResult(interp, Tcl_NewDoubleObj(-d));
 	} else {
@@ -5939,7 +5984,7 @@ ExprAbsFunc(
 
 #ifndef NO_WIDE_TYPE
     if (type == TCL_NUMBER_WIDE) {
-	Tcl_WideInt w = *((const Tcl_WideInt *)ptr);
+	Tcl_WideInt w = *((const Tcl_WideInt *) ptr);
 	if (w < (Tcl_WideInt)0) {
 	    if (w == LLONG_MIN) {
 		TclBNInitBignumFromWideInt(&big, w);
@@ -5955,7 +6000,7 @@ ExprAbsFunc(
 
     if (type == TCL_NUMBER_BIG) {
 	/* TODO: const correctness ? */
-	if (mp_cmp_d((mp_int *)ptr, 0) == MP_LT) {
+	if (mp_cmp_d((mp_int *) ptr, 0) == MP_LT) {
 	    Tcl_GetBignumFromObj(NULL, objv[1], &big);
 	tooLarge:
 	    mp_neg(&big, &big);
@@ -5984,8 +6029,8 @@ ExprBoolFunc(
     ClientData clientData,	/* Ignored. */
     Tcl_Interp *interp,		/* The interpreter in which to execute the
 				 * function. */
-    int objc,			/* Actual parameter count */
-    Tcl_Obj *const *objv)	/* Actual parameter vector */
+    int objc,			/* Actual parameter count. */
+    Tcl_Obj *const *objv)	/* Actual parameter vector. */
 {
     int value;
 
@@ -6005,8 +6050,8 @@ ExprDoubleFunc(
     ClientData clientData,	/* Ignored. */
     Tcl_Interp *interp,		/* The interpreter in which to execute the
 				 * function. */
-    int objc,			/* Actual parameter count */
-    Tcl_Obj *const *objv)	/* Actual parameter vector */
+    int objc,			/* Actual parameter count. */
+    Tcl_Obj *const *objv)	/* Actual parameter vector. */
 {
     double dResult;
     if (objc != 2) {
@@ -6031,8 +6076,8 @@ ExprEntierFunc(
     ClientData clientData,	/* Ignored. */
     Tcl_Interp *interp,		/* The interpreter in which to execute the
 				 * function. */
-    int objc,			/* Actual parameter count */
-    Tcl_Obj *const *objv)	/* Actual parameter vector */
+    int objc,			/* Actual parameter count. */
+    Tcl_Obj *const *objv)	/* Actual parameter vector. */
 {
     double d;
     int type;
@@ -6047,7 +6092,7 @@ ExprEntierFunc(
     }
 
     if (type == TCL_NUMBER_DOUBLE) {
-	d = *((const double *)ptr);
+	d = *((const double *) ptr);
 	if ((d >= (double)LONG_MAX) || (d <= (double)LONG_MIN)) {
 	    mp_int big;
 
@@ -6087,8 +6132,8 @@ ExprIntFunc(
     ClientData clientData,	/* Ignored. */
     Tcl_Interp *interp,		/* The interpreter in which to execute the
 				 * function. */
-    int objc,			/* Actual parameter count */
-    Tcl_Obj *const *objv)	/* Actual parameter vector */
+    int objc,			/* Actual parameter count. */
+    Tcl_Obj *const *objv)	/* Actual parameter vector. */
 {
     long iResult;
     Tcl_Obj *objPtr;
@@ -6096,7 +6141,7 @@ ExprIntFunc(
 	return TCL_ERROR;
     }
     objPtr = Tcl_GetObjResult(interp);
-    if (Tcl_GetLongFromObj(NULL, objPtr, &iResult) != TCL_OK) {
+    if (TclGetLongFromObj(NULL, objPtr, &iResult) != TCL_OK) {
 	/*
 	 * Truncate the bignum; keep only bits in long range.
 	 */
@@ -6107,7 +6152,7 @@ ExprIntFunc(
 	mp_mod_2d(&big, (int) CHAR_BIT * sizeof(long), &big);
 	objPtr = Tcl_NewBignumObj(&big);
 	Tcl_IncrRefCount(objPtr);
-	Tcl_GetLongFromObj(NULL, objPtr, &iResult);
+	TclGetLongFromObj(NULL, objPtr, &iResult);
 	Tcl_DecrRefCount(objPtr);
     }
     Tcl_SetObjResult(interp, Tcl_NewLongObj(iResult));
@@ -6119,8 +6164,8 @@ ExprWideFunc(
     ClientData clientData,	/* Ignored. */
     Tcl_Interp *interp,		/* The interpreter in which to execute the
 				 * function. */
-    int objc,			/* Actual parameter count */
-    Tcl_Obj *const *objv)	/* Actual parameter vector */
+    int objc,			/* Actual parameter count. */
+    Tcl_Obj *const *objv)	/* Actual parameter vector. */
 {
     Tcl_WideInt wResult;
     Tcl_Obj *objPtr;
@@ -6151,14 +6196,14 @@ ExprRandFunc(
     ClientData clientData,	/* Ignored. */
     Tcl_Interp *interp,		/* The interpreter in which to execute the
 				 * function. */
-    int objc,			/* Actual parameter count */
-    Tcl_Obj *const *objv)	/* Actual parameter vector */
+    int objc,			/* Actual parameter count. */
+    Tcl_Obj *const *objv)	/* Actual parameter vector. */
 {
     Interp *iPtr = (Interp *) interp;
     double dResult;
     long tmp;			/* Algorithm assumes at least 32 bits. Only
 				 * long guarantees that. See below. */
-    Tcl_Obj* oResult;
+    Tcl_Obj *oResult;
 
     if (objc != 1) {
 	MathFuncWrongNumArgs(interp, 1, objc, objv);
@@ -6244,8 +6289,8 @@ ExprRoundFunc(
     ClientData clientData,	/* Ignored. */
     Tcl_Interp *interp,		/* The interpreter in which to execute the
 				 * function. */
-    int objc,			/* Actual parameter count */
-    Tcl_Obj *const *objv)	/* Parameter vector */
+    int objc,			/* Actual parameter count. */
+    Tcl_Obj *const *objv)	/* Parameter vector. */
 {
     double d;
     ClientData ptr;
@@ -6264,7 +6309,7 @@ ExprRoundFunc(
 	double fractPart, intPart;
 	long max = LONG_MAX, min = LONG_MIN;
 
-	fractPart = modf(*((const double *)ptr), &intPart);
+	fractPart = modf(*((const double *) ptr), &intPart);
 	if (fractPart <= -0.5) {
 	    min++;
 	} else if (fractPart >= 0.5) {
@@ -6319,8 +6364,8 @@ ExprSrandFunc(
     ClientData clientData,	/* Ignored. */
     Tcl_Interp *interp,		/* The interpreter in which to execute the
 				 * function. */
-    int objc,			/* Actual parameter count */
-    Tcl_Obj *const *objv)	/* Parameter vector */
+    int objc,			/* Actual parameter count. */
+    Tcl_Obj *const *objv)	/* Parameter vector. */
 {
     Interp *iPtr = (Interp *) interp;
     long i = 0;			/* Initialized to avoid compiler warning. */
@@ -6334,7 +6379,7 @@ ExprSrandFunc(
 	return TCL_ERROR;
     }
 
-    if (Tcl_GetLongFromObj(NULL, objv[1], &i) != TCL_OK) {
+    if (TclGetLongFromObj(NULL, objv[1], &i) != TCL_OK) {
 	Tcl_Obj *objPtr;
 	mp_int big;
 
@@ -6346,7 +6391,7 @@ ExprSrandFunc(
 	mp_mod_2d(&big, (int) CHAR_BIT * sizeof(long), &big);
 	objPtr = Tcl_NewBignumObj(&big);
 	Tcl_IncrRefCount(objPtr);
-	Tcl_GetLongFromObj(NULL, objPtr, &i);
+	TclGetLongFromObj(NULL, objPtr, &i);
 	Tcl_DecrRefCount(objPtr);
     }
 
@@ -6391,9 +6436,9 @@ ExprSrandFunc(
 static void
 MathFuncWrongNumArgs(
     Tcl_Interp *interp,		/* Tcl interpreter */
-    int expected,		/* Formal parameter count */
-    int found,			/* Actual parameter count */
-    Tcl_Obj *const *objv)	/* Actual parameter vector */
+    int expected,		/* Formal parameter count. */
+    int found,			/* Actual parameter count. */
+    Tcl_Obj *const *objv)	/* Actual parameter vector. */
 {
     const char *name = Tcl_GetString(objv[0]);
     const char *tail = name + strlen(name);
@@ -6469,36 +6514,36 @@ TclDTraceInfo(
     char **args,
     int *argsi)
 {
-	static Tcl_Obj *keys[7] = { NULL };
-	Tcl_Obj **k = keys, *val;
-	int i;
-	
-	if (!*k) {
-	    TclNewLiteralStringObj(keys[0], "cmd");
-	    TclNewLiteralStringObj(keys[1], "type");
-	    TclNewLiteralStringObj(keys[2], "proc");
-	    TclNewLiteralStringObj(keys[3], "file");
-	    TclNewLiteralStringObj(keys[4], "lambda");
-	    TclNewLiteralStringObj(keys[5], "line");
-	    TclNewLiteralStringObj(keys[6], "level");
+    static Tcl_Obj *keys[7] = { NULL };
+    Tcl_Obj **k = keys, *val;
+    int i;
+
+    if (!*k) {
+	TclNewLiteralStringObj(keys[0], "cmd");
+	TclNewLiteralStringObj(keys[1], "type");
+	TclNewLiteralStringObj(keys[2], "proc");
+	TclNewLiteralStringObj(keys[3], "file");
+	TclNewLiteralStringObj(keys[4], "lambda");
+	TclNewLiteralStringObj(keys[5], "line");
+	TclNewLiteralStringObj(keys[6], "level");
+    }
+    for (i = 0; i < 4; i++) {
+	Tcl_DictObjGet(NULL, info, *k++, &val);
+	args[i] = val ? TclGetString(val) : NULL;
+    }
+    if (!args[2]) {
+	Tcl_DictObjGet(NULL, info, *k, &val);
+	args[2] = val ? TclGetString(val) : NULL;
+    }
+    k++;
+    for (i = 0; i < 2; i++) {
+	Tcl_DictObjGet(NULL, info, *k++, &val);
+	if (val) {
+	    TclGetIntFromObj(NULL, val, &(argsi[i]));
+	} else {
+	    argsi[i] = 0;
 	}
-	for (i = 0; i < 4; i++) {
-	    Tcl_DictObjGet(NULL, info, *k++, &val);
-	    args[i] = val ? TclGetString(val) : NULL;
-	}
-	if (!args[2]) {
-	    Tcl_DictObjGet(NULL, info, *k, &val);
-	    args[2] = val ? TclGetString(val) : NULL;
-	}
-	k++;
-	for (i = 0; i < 2; i++) {
-	    Tcl_DictObjGet(NULL, info, *k++, &val);
-	    if (val) {
-		Tcl_GetIntFromObj(NULL, val, &(argsi[i]));
-	    } else {
-		argsi[i] = 0;
-	    }
-	}
+    }
 }
 #endif /* USE_DTRACE */
 

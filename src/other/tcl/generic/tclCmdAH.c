@@ -125,7 +125,7 @@ Tcl_CaseObjCmd(
     if (caseObjc == 1) {
 	Tcl_Obj **newObjv;
 
-	Tcl_ListObjGetElements(interp, caseObjv[0], &caseObjc, &newObjv);
+	TclListObjGetElements(interp, caseObjv[0], &caseObjc, &newObjv);
 	caseObjv = newObjv;
     }
 
@@ -494,7 +494,7 @@ Tcl_EncodingObjCmd(
 	     * Store the result as binary data.
 	     */
 
-	    stringPtr = Tcl_GetStringFromObj(data, &length);
+	    stringPtr = TclGetStringFromObj(data, &length);
 	    Tcl_UtfToExternalDString(encoding, stringPtr, length, &ds);
 	    Tcl_SetObjResult(interp, Tcl_NewByteArrayObj(
 		    (unsigned char *) Tcl_DStringValue(&ds),
@@ -869,7 +869,7 @@ Tcl_FileObjCmd(
 
 	    long newTime;
 
-	    if (Tcl_GetLongFromObj(interp, objv[3], &newTime) != TCL_OK) {
+	    if (TclGetLongFromObj(interp, objv[3], &newTime) != TCL_OK) {
 		return TCL_ERROR;
 	    }
 
@@ -1752,7 +1752,7 @@ Tcl_ForeachObjCmd(
 	    result = TCL_ERROR;
 	    goto done;
 	}
-	Tcl_ListObjGetElements(NULL, vCopyList[i], &varcList[i], &varvList[i]);
+	TclListObjGetElements(NULL, vCopyList[i], &varcList[i], &varvList[i]);
 	if (varcList[i] < 1) {
 	    Tcl_AppendResult(interp, "foreach varlist is empty", NULL);
 	    result = TCL_ERROR;
@@ -1764,7 +1764,7 @@ Tcl_ForeachObjCmd(
 	    result = TCL_ERROR;
 	    goto done;
 	}
-	Tcl_ListObjGetElements(NULL, aCopyList[i], &argcList[i], &argvList[i]);
+	TclListObjGetElements(NULL, aCopyList[i], &argcList[i], &argvList[i]);
 
 	j = argcList[i] / varcList[i];
 	if ((argcList[i] % varcList[i]) != 0) {
