@@ -136,9 +136,6 @@ Recent Bugs
 
 * Create menu.. create "part" boo hiss..
 
-* xpush sometimes doesn't work, e.g. objects with empty trees,
-  resulting in the db being left in a bad situation.
-
 * wavelet isn't working correctly on a simple image decomposition &
   reconstruction.
 
