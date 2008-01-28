@@ -143,7 +143,7 @@ bu_crashreport(const char *filename)
 	} else {
 	    fprintf(fp, "\nSystem information:\n");
 	    while (bu_fgets(buffer, CR_BUFSIZE, popenfp)) {
-		if ((strlen(buffer) == 0) || ((strlen(buffer) == 1) && (buffer[0] = '\n'))) {
+		if ((strlen(buffer) == 0) || ((strlen(buffer) == 1) && (buffer[0] == '\n'))) {
 		    continue;
 		}
 		fprintf(fp, "%s", buffer);
