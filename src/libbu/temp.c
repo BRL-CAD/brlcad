@@ -154,11 +154,6 @@ mkstemp(char *file_template)
     static const char replace[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     static int replacelen = sizeof(replace) - 1;
 
-    /* _O_TEMPORARY on Windows removes file when last descriptor is closed */
-#ifndef O_TEMPORARY
-#  define O_TEMPORARY 0
-#endif
-
     if (!file_template || file_template[0] == '\0')
 	return -1;
 
