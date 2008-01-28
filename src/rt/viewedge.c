@@ -92,8 +92,8 @@ fastf_t		maxangle; /* Value of the cosine of the angle between
 			   */
 
 typedef int color[3];
-color	fgcolor = { 255, 255, 255};
-color	bgcolor = { 0, 0, 0};
+color	fgcolor = {255, 255, 255};
+color	bgcolor = {0, 0, 0};
 
 /*
  * Flags that set which edges are detected.
@@ -189,11 +189,9 @@ static void choose_color (RGBpixel col, struct cell *me,
 # define Abs( x )        ((x) < 0 ? -(x) : (x))                  /* UNSAFE */
 #endif
 
-
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
-    /*XXX need to investigate why this doesn't work on Windows */
-#if !defined(__alpha) && !defined(_WIN32) /* XXX Alpha does not support this initialization! */
+#if !defined(__alpha) /* XXX Alpha does not support this initialization! */
     {"%d", 1, "detect_regions", bu_byteoffset(detect_regions), BU_STRUCTPARSE_FUNC_NULL},
     {"%d", 1, "dr", bu_byteoffset(detect_regions), BU_STRUCTPARSE_FUNC_NULL},
     {"%d", 1, "detect_distance", bu_byteoffset(detect_distance), BU_STRUCTPARSE_FUNC_NULL},

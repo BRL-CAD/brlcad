@@ -425,16 +425,17 @@ int cm_closedb(int argc, char **argv)
 extern struct bu_structparse view_parse[];
 
 struct bu_structparse set_parse[] = {
-/*XXX need to investigate why this doesn't work on Windows */
-#if !defined(__alpha) && !defined(_WIN32) /* XXX Alpha does not support this initialization! */
+#if !defined(__alpha) /* XXX Alpha does not support this initialization! */
 	{"%d",	1, "width",	bu_byteoffset(width),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "height",	bu_byteoffset(height),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "save_overlaps", bu_byteoffset(save_overlaps),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%f",	1, "perspective", bu_byteoffset(rt_perspective),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%f",	1, "angle",	bu_byteoffset(rt_perspective),	BU_STRUCTPARSE_FUNC_NULL },
+#if !defined(_WIN32) || defined(__CYGWIN__)
 	{"%d",  1, "rt_bot_minpieces", bu_byteoffset(rt_bot_minpieces), BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",  1, "rt_bot_tri_per_piece", bu_byteoffset(rt_bot_tri_per_piece), BU_STRUCTPARSE_FUNC_NULL },
 	{"%f",  1, "rt_cline_radius", bu_byteoffset(rt_cline_radius), BU_STRUCTPARSE_FUNC_NULL },
+#endif
 	{"%S",  1, "ray_data_file", bu_byteoffset(ray_data_file), BU_STRUCTPARSE_FUNC_NULL },
 	{"i", bu_byteoffset(view_parse[0]), "View_Module-Specific Parameters", 0, BU_STRUCTPARSE_FUNC_NULL },
 #endif
