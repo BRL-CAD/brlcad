@@ -116,15 +116,15 @@ void bu_rgb_to_hsv (unsigned char *rgb, fastf_t *hsv)
     /*
      *	Compute hue
      */
-    if (*sat == 0.0)
+    if (NEAR_ZERO(*sat, SMALL_FASTF))
 	*hue = ACHROMATIC;
     else
     {
-	if (red == max)
+	if (NEAR_ZERO(red - max, SMALL_FASTF)) /* red == max */
 	    *hue = (grn - blu) / delta;
-	else if (grn == max)
+	else if (NEAR_ZERO(grn - max, SMALL_FASTF)) /* grn == max */
 	    *hue = 2.0 + (blu - red) / delta;
-	else if (blu == max)
+	else if (NEAR_ZERO(blu - max, SMALL_FASTF)) /* blu == max */
 	    *hue = 4.0 + (red - grn) / delta;
 
 	/*
@@ -152,20 +152,21 @@ int bu_hsv_to_rgb (fastf_t *hsv, unsigned char *rgb)
     sat = hsv[SAT];
     val = hsv[VAL];
 
-    if ((((hue < 0.0) || (hue > 360.0)) && (hue != ACHROMATIC))
-     || (sat < 0.0) || (sat > 1.0)
-     || (val < 0.0) || (val > 1.0)
-     || ((hue == ACHROMATIC) && (sat > 0.0)))
+    if ((((hue < 0.0) || (hue > 360.0)) && (!NEAR_ZERO(hue - ACHROMATIC, SMALL_FASTF))) /* hue != ACHROMATIC */
+	|| (sat < 0.0) || (sat > 1.0)
+	|| (val < 0.0) || (val > 1.0)
+	|| ((NEAR_ZERO(hue - ACHROMATIC, SMALL_FASTF)) && (sat > 0.0))) /* hue == ACHROMATIC */
     {
 	bu_log("bu_hsv_to_rgb: Illegal HSV (%g, %g, %g)\n",
 	    V3ARGS(hsv));
 	return (0);
     }
-    if (sat == 0.0)	/*	so hue == ACHROMATIC (or is ignored)	*/
+
+    /* so hue == ACHROMATIC (or is ignored)	*/
+    if (NEAR_ZERO(sat, SMALL_FASTF)) {
 	VSETALL(float_rgb, val)
-    else
-    {
-	if (hue == 360.0)
+    } else {
+	if (NEAR_ZERO(hue - 360.0, SMALL_FASTF))
 	    hue = 0.0;
 	hue /= 60.0;
 	hue_int = floor((double) hue);
@@ -173,8 +174,7 @@ int bu_hsv_to_rgb (fastf_t *hsv, unsigned char *rgb)
 	p = val * (1.0 - sat);
 	q = val * (1.0 - (sat * hue_frac));
 	t = val * (1.0 - (sat * (1.0 - hue_frac)));
-	switch (hue_int)
-	{
+	switch (hue_int) {
 	    case 0: VSET(float_rgb, val, t, p); break;
 	    case 1: VSET(float_rgb, q, val, p); break;
 	    case 2: VSET(float_rgb, p, val, t); break;
@@ -183,7 +183,7 @@ int bu_hsv_to_rgb (fastf_t *hsv, unsigned char *rgb)
 	    case 5: VSET(float_rgb, val, p, q); break;
 	    default:
 		bu_log("%s:%d: This shouldn't happen\n",
-		    __FILE__, __LINE__);
+		       __FILE__, __LINE__);
 		bu_bomb("unexpected condition encountered in bu_hsv_to_rgb\n");
 	}
     }
