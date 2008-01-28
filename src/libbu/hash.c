@@ -122,7 +122,7 @@ bu_create_hash_tbl( unsigned long tbl_size )
  *	the hash table entry corresponding to the provided key, or NULL if not found
  */
 struct bu_hash_entry *
-bu_find_hash_entry( struct bu_hash_tbl *hsh_tbl, unsigned char *key, int key_len, struct bu_hash_entry **prev, unsigned long *index )
+bu_find_hash_entry( struct bu_hash_tbl *hsh_tbl, unsigned char *key, int key_len, struct bu_hash_entry **prev, unsigned long *idx )
 {
 	struct bu_hash_entry *hsh_entry=NULL;
 	int found=0;
@@ -130,19 +130,19 @@ bu_find_hash_entry( struct bu_hash_tbl *hsh_tbl, unsigned char *key, int key_len
 	BU_CK_HASH_TBL( hsh_tbl );
 
 	/* calculate the index into the bin array */
-	*index = bu_hash( key, key_len ) & hsh_tbl->mask;
-	if ( *index >= hsh_tbl->num_lists ) {
+	*idx = bu_hash( key, key_len ) & hsh_tbl->mask;
+	if ( *idx >= hsh_tbl->num_lists ) {
 		fprintf( stderr, "hash function returned too large value (%ld), only have %ld lists\n",
-			 *index, hsh_tbl->num_lists );
+			 *idx, hsh_tbl->num_lists );
 		*prev = NULL;
 		return( (struct bu_hash_entry *)NULL );
 	}
 
 	/* look for the provided key in the list of entries in this bin */
 	*prev = NULL;
-	if ( hsh_tbl->lists[*index] ) {
+	if ( hsh_tbl->lists[*idx] ) {
 		*prev = NULL;
-		hsh_entry = hsh_tbl->lists[*index];
+		hsh_entry = hsh_tbl->lists[*idx];
 		while ( hsh_entry ) {
 			unsigned char *c1, *c2;
 			int i;
@@ -247,7 +247,7 @@ struct bu_hash_entry *
 bu_hash_add_entry( struct bu_hash_tbl *hsh_tbl, unsigned char *key, int key_len, int *new )
 {
 	struct bu_hash_entry *hsh_entry, *prev;
-	unsigned long index;
+	unsigned long idx;
 
 	BU_CK_HASH_TBL( hsh_tbl );
 
@@ -256,7 +256,7 @@ bu_hash_add_entry( struct bu_hash_tbl *hsh_tbl, unsigned char *key, int key_len,
 	 * get the hash bin index for this key
 	 * find the previous entry to link the new one to
 	 */
-	hsh_entry = bu_find_hash_entry( hsh_tbl, key, key_len, &prev, &index );
+	hsh_entry = bu_find_hash_entry( hsh_tbl, key, key_len, &prev, &idx );
 
 	if ( hsh_entry ) {
 		/* this key is already in the table, return the entry, with flag set to 0 */
@@ -271,7 +271,7 @@ bu_hash_add_entry( struct bu_hash_tbl *hsh_tbl, unsigned char *key, int key_len,
 	} else {
 		/* first entry in this bin */
 		hsh_entry = (struct bu_hash_entry *)calloc( 1, sizeof( struct bu_hash_entry ) );
-		hsh_tbl->lists[index] = hsh_entry;
+		hsh_tbl->lists[idx] = hsh_entry;
 	}
 
 	/* fill in the structure */
@@ -281,8 +281,8 @@ bu_hash_add_entry( struct bu_hash_tbl *hsh_tbl, unsigned char *key, int key_len,
 	hsh_entry->magic = BU_HASH_ENTRY_MAGIC;
 
 	/* make a copy of the key */
-	hsh_entry->key = (unsigned char *)malloc( key_len );
-	memcpy(hsh_entry->key, key, key_len);
+	hsh_entry->key = (unsigned char *)malloc( (size_t)key_len );
+	memcpy(hsh_entry->key, key, (size_t)key_len);
 
 	/* set "new" flag, increment count of entries, and return new entry */
 	*new = 1;
@@ -298,7 +298,7 @@ bu_hash_add_entry( struct bu_hash_tbl *hsh_tbl, unsigned char *key, int key_len,
 void
 bu_hash_tbl_pr( struct bu_hash_tbl *hsh_tbl, char *str )
 {
-	unsigned long index;
+	unsigned long idx;
 	struct bu_hash_entry *hsh_entry;
 
 	BU_CK_HASH_TBL( hsh_tbl );
@@ -307,11 +307,11 @@ bu_hash_tbl_pr( struct bu_hash_tbl *hsh_tbl, char *str )
 	fprintf( stderr, "bu_hash_table (%ld entries):\n", hsh_tbl->num_entries );
 
 	/* visit all the entries in this table */
-	for ( index=0; index<hsh_tbl->num_lists; index++ ) {
-		hsh_entry = hsh_tbl->lists[index];
+	for ( idx=0; idx<hsh_tbl->num_lists; idx++ ) {
+		hsh_entry = hsh_tbl->lists[idx];
 		while ( hsh_entry ) {
 			BU_CK_HASH_ENTRY( hsh_entry );
-			fprintf( stderr, "\tindex=%ld, key=x%lx, value=x%lx\n", index, (unsigned long int)hsh_entry->key, (unsigned long int)hsh_entry->value );
+			fprintf( stderr, "\tindex=%ld, key=x%lx, value=x%lx\n", idx, (unsigned long int)hsh_entry->key, (unsigned long int)hsh_entry->value );
 			hsh_entry = hsh_entry->next;
 		}
 	}
@@ -326,15 +326,15 @@ bu_hash_tbl_pr( struct bu_hash_tbl *hsh_tbl, char *str )
 void
 bu_hash_tbl_free( struct bu_hash_tbl *hsh_tbl )
 {
-	unsigned long index;
+	unsigned long idx;
 	struct bu_hash_entry *hsh_entry, *tmp;
 
 	BU_CK_HASH_TBL( hsh_tbl );
 
 	/* loop through all the bins in this hash table */
-	for ( index=0; index<hsh_tbl->num_lists; index++ ) {
+	for ( idx=0; idx<hsh_tbl->num_lists; idx++ ) {
 		/* traverse all the entries in the list for this bin */
-		hsh_entry = hsh_tbl->lists[index];
+		hsh_entry = hsh_tbl->lists[idx];
 		while ( hsh_entry ) {
 			BU_CK_HASH_ENTRY( hsh_entry );
 			tmp = hsh_entry->next;
@@ -376,7 +376,7 @@ bu_hash_tbl_first( struct bu_hash_tbl *hsh_tbl, struct bu_hash_record *rec )
 	/* initialize the record structure */
 	rec->magic = BU_HASH_RECORD_MAGIC;
 	rec->tbl = hsh_tbl;
-	rec->index = -1;
+	rec->index = (unsigned long)-1;
 	rec->hsh_entry = (struct bu_hash_entry *)NULL;
 
 	if ( hsh_tbl->num_entries == 0 ) {
