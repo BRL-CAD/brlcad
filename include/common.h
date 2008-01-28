@@ -64,6 +64,16 @@
 #  define __END_DECLS
 #endif
 
+/* _O_TEMPORARY on Windows removes file when last descriptor is closed */
+#ifndef O_TEMPORARY
+#  define O_TEMPORARY 0
+#endif
+
+/* _O_BINARY on Windows indicates whether to use binary or text (default) I/O */
+#ifndef O_BINARY
+#  define O_BINARY 0
+#endif
+
 #endif  /* __COMMON_H__ */
 /** @} */
 /*
