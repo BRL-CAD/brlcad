@@ -56,6 +56,11 @@
 #include "machine.h"
 #include "bu.h"
 
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#  include <fcntl.h>
+#  include <io.h>
+#endif
+
 
 #define NFILES		4		/* Two in, two out */
 #define EL_WIDTH	32		/* Max width of one element */
@@ -129,7 +134,11 @@ open_file(int i, char *name)
 		if ( isatty(fileno(stdin)) )
 			return(-1);	/* FAIL */
 		/* XXX No checking for multiple uses of stdin */
-	}  else if ( (fp[i] = fopen(name, "r")) == NULL )  {
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	} else if ((fp[i] = fopen(name, "rb")) == NULL) {
+#else
+	} else if ((fp[i] = fopen(name, "r")) == NULL) {
+#endif
 		perror(name);
 		bu_log("pixmatte: cannot open \"%s\" for reading\n", name );
 		return(-1);		/* FAIL */
@@ -215,6 +224,9 @@ main(int argc, char **argv)
 	if ( isatty(fileno(stdout)) )
 		usage( "Cannot write image to tty\n", 1);
 
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	setmode(fileno(stdout), _O_BINARY);
+#endif
 
 	bu_log("pixmatte:\tif( %s ", file_name[0] );
 	if ( wanted & LT )  {

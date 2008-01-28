@@ -52,7 +52,11 @@ main(int argc, char **argv)
 
 	/* check for input file */
 	if ( argc > 1 ) {
-		if ( (finp = fopen( argv[1], "r" )) == NULL ) {
+#if defined(_WIN32) && !defined(__CYGWIN__)
+		if ((finp = fopen( argv[1], "rb")) == NULL) {
+#else
+		if ((finp = fopen( argv[1], "r")) == NULL) {
+#endif
 			bu_exit(1, "bw-pix: can't open \"%s\"\n", argv[1] );
 		}
 	} else
@@ -60,7 +64,11 @@ main(int argc, char **argv)
 
 	/* check for output file */
 	if ( argc > 2 ) {
-		if ( (foutp = fopen( argv[2], "w" )) == NULL ) {
+#if defined(_WIN32) && !defined(__CYGWIN__)
+		if ((foutp = fopen( argv[2], "wb")) == NULL) {
+#else
+		if ((foutp = fopen( argv[2], "w")) == NULL) {
+#endif
 			bu_exit(2, "bw-pix: can't open \"%s\"\n", argv[2] );
 		}
 	} else

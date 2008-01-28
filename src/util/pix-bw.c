@@ -47,6 +47,10 @@
 #include "machine.h"
 #include "bu.h"
 
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#  include <fcntl.h>
+#  include <io.h>
+#endif
 
 unsigned char	ibuf[3*1024], obuf[1024];
 
@@ -108,12 +112,19 @@ main(int argc, char **argv)
 	}
 
 	if ( argc > 1 ) {
-		if ( (finp = fopen(argv[1], "r")) == NULL ) {
+#if defined(_WIN32) && !defined(__CYGWIN__)
+		if ((finp = fopen(argv[1], "rb")) == NULL) {
+#else
+		if ((finp = fopen(argv[1], "r")) == NULL) {
+#endif
 			bu_exit(2, "pix-bw: can't open \"%s\"\n", argv[1] );
 		}
 	} else
 		finp = stdin;
 
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	setmode(fileno(stdout), _O_BINARY);
+#endif
 	foutp = stdout;
 
 	if ( isatty(fileno(finp)) || isatty(fileno(foutp)) ) {

@@ -46,6 +46,10 @@
 #include "machine.h"
 #include "bu.h"
 
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#  include <fcntl.h>
+#  include <io.h>
+#endif
 
 char *progname = "(noname)";
 
@@ -156,7 +160,11 @@ get_args(int argc, register char **argv)
 		file_name = "-";
 	} else {
 		file_name = argv[bu_optind];
-		if ( freopen(file_name, "r", stdin) == NULL )  {
+#if defined(_WIN32) && !defined(__CYGWIN__)
+		if (freopen(file_name, "rb", stdin) == NULL) {
+#else
+		if (freopen(file_name, "r", stdin) == NULL) {
+#endif
 			(void)fprintf( stderr,
 				"bwmod: cannot open \"%s\" for reading\n",
 				file_name );
@@ -235,6 +243,10 @@ int main(int argc, char **argv)
 	register int		tmp;
 	int	 		n;
 	unsigned long		clip_high, clip_low;
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	setmode(fileno(stdout), _O_BINARY);
+#endif
 
 	progname = *argv;
 
