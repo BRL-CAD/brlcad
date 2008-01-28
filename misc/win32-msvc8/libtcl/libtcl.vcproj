@@ -83,6 +83,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="ws2_32.lib"
 				OutputFile="Release/tcl85.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
@@ -390,14 +391,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\tcl\compat\strtoll.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\other\tcl\compat\strtoull.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\src\other\tcl\generic\tclAlloc.c"
 				>
 			</File>
@@ -543,10 +536,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\other\tcl\generic\tclMain.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\other\tcl\generic\tclMathOp.c"
 				>
 			</File>
 			<File
