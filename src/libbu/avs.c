@@ -65,7 +65,7 @@ void
 bu_avs_init(struct bu_attribute_value_set *avsp, int len, const char *str)
 {
 	if (bu_debug & BU_DEBUG_AVS)
-		bu_log("bu_avs_init(%8x, len=%d, %s)\n", avsp, len, str);
+		bu_log("bu_avs_init(%8x, len=%d, %s)\n", (unsigned int)avsp, len, str);
 
 	avsp->magic = BU_AVS_MAGIC;
 	if ( len <= 0 )  len = AVS_ALLOCATION_INCREMENT + AVS_ALLOCATION_INCREMENT;
@@ -91,7 +91,7 @@ bu_avs_new(int len, const char *str)
 	bu_avs_init( avsp, len, "bu_avs_new" );
 
 	if (bu_debug & BU_DEBUG_AVS)
-		bu_log("bu_avs_new(len=%d, %s) = x%x\n", len, str, avsp);
+		bu_log("bu_avs_new(len=%d, %s) = x%x\n", len, str, (unsigned int)avsp);
 
 	return avsp;
 }

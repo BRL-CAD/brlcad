@@ -227,9 +227,8 @@ bu_getprogname(void) {
  * before main() for you, but necessary otherwise for portability.
  */
 void
-bu_setprogname(const char *argv0) {
-    const char *base = bu_basename(argv0);
-
+bu_setprogname(const char *argv0)
+{
 #ifdef HAVE_SETPROGNAME
     setprogname(argv0);
 #endif
@@ -499,13 +498,21 @@ bu_brlcad_root(const char *rhs, int fail_quietly)
     }
 
     /* /usr/brlcad static path */
-    if (strncmp("/usr/brlcad", BRLCAD_ROOT, (size_t)12) != 0) {
-	if (bu_find_path(result, "/usr/brlcad", rhs, &searched, "\t/usr/brlcad default path\n")) {
-	    if (bu_debug & BU_DEBUG_PATHS) {
-		bu_log("Found: /usr/brlcad default path [%s]\n", result);
+    {
+	const char *root = BRLCAD_ROOT;
+	/* only check /usr/brlcad if not already tested earlier via BRLCAD_ROOT */
+
+	if (root[0] != '/' || root[1] != 'u' || root[ 2] != 's' || root[ 3] != 'r' ||
+	    root[4] != '/' || root[5] != 'b' || root[ 6] != 'r' || root[ 7] != 'l' ||
+	    root[8] != 'c' || root[9] != 'a' || root[10] != 'd' || root[11] != '\0') {
+
+	    if (bu_find_path(result, "/usr/brlcad", rhs, &searched, "\t/usr/brlcad default path\n")) {
+		if (bu_debug & BU_DEBUG_PATHS) {
+		    bu_log("Found: /usr/brlcad default path [%s]\n", result);
+		}
+		bu_vls_free(&searched);
+		return result;
 	    }
-	    bu_vls_free(&searched);
-	    return result;
 	}
     }
 

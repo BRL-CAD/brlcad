@@ -93,7 +93,7 @@ static char c = 0;
 static int warned;
 
 /* avoid stack variables for bu_backtrace() */
-static char *args[4] = { NULL, NULL, NULL, NULL };
+static char *debugger_args[4] = { NULL, NULL, NULL, NULL };
 static const char *locate_gdb = NULL;
 
 
@@ -101,15 +101,19 @@ static const char *locate_gdb = NULL;
 static void
 backtrace_sigchld(int signum)
 {
-    backtrace_done = 1;
-    interrupt_wait = 1;
+    if (signum) {
+	backtrace_done = 1;
+	interrupt_wait = 1;
+    }
 }
 
 /* SIGINT handler for bu_backtrace() */
 static void
 backtrace_sigint(int signum)
 {
-    interrupt_wait = 1;
+    if (signum) {
+	interrupt_wait = 1;
+    }
 }
 
 
@@ -300,12 +304,12 @@ bu_backtrace(FILE *fp)
 
     /* make sure the debugger exists */
     if ((locate_gdb = bu_which("gdb"))) {
-	args[0] = bu_strdup(locate_gdb);
+	debugger_args[0] = bu_strdup(locate_gdb);
 	if (bu_debug & BU_DEBUG_BACKTRACE) {
 	    bu_log("Found gdb in USER path: %s\n", locate_gdb);
 	}
     } else if ((locate_gdb = bu_whereis("gdb"))) {
-	args[0] = bu_strdup(locate_gdb);
+	debugger_args[0] = bu_strdup(locate_gdb);
 	if (bu_debug & BU_DEBUG_BACKTRACE) {
 	    bu_log("Found gdb in SYSTEM path: %s\n", locate_gdb);
 	}
@@ -323,12 +327,12 @@ bu_backtrace(FILE *fp)
 
     snprintf(buffer, BT_BUFSIZE, "%d", bu_process_id());
 
-    args[1] = (char*) bu_argv0();
-    args[2] = buffer;
+    debugger_args[1] = (char*) bu_argv0();
+    debugger_args[2] = buffer;
 
     if (bu_debug & BU_DEBUG_BACKTRACE) {
 	bu_log("CALL STACK BACKTRACE REQUESTED\n");
-	bu_log("Invoking Debugger: %s %s %s\n\n", args[0], args[1], args[2]);
+	bu_log("Invoking Debugger: %s %s %s\n\n", debugger_args[0], debugger_args[1], debugger_args[2]);
     }
 
     /* fork so that trace symbols stop _here_ instead of in some libc
@@ -337,21 +341,21 @@ bu_backtrace(FILE *fp)
     pid = fork();
     if (pid == 0) {
 	/* child */
-	backtrace(args, fileno(fp));
-	bu_free(args[0], "gdb strdup");
-	args[0] = NULL;
+	backtrace(debugger_args, fileno(fp));
+	bu_free(debugger_args[0], "gdb strdup");
+	debugger_args[0] = NULL;
 	exit(0);
     } else if (pid == (pid_t) -1) {
 	/* failure */
-	bu_free(args[0], "gdb strdup");
-	args[0] = NULL;
+	bu_free(debugger_args[0], "gdb strdup");
+	debugger_args[0] = NULL;
 	perror("unable to fork for gdb");
 	return 0;
     }
     /* parent */
-    if (args[0]) {
-	bu_free(args[0], "gdb strdup");
-	args[0] = NULL;
+    if (debugger_args[0]) {
+	bu_free(debugger_args[0], "gdb strdup");
+	debugger_args[0] = NULL;
     }
     fflush(fp);
 

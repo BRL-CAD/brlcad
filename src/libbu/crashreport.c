@@ -113,7 +113,8 @@ bu_crashreport(const char *filename)
     }
 
     /* write out operating system information */
-    if ((path = bu_which("uname"))) {
+    path = bu_which("uname");
+    if (path) {
 	snprintf(buffer, CR_BUFSIZE, "%s -a 2>&1", path);
 	popenfp = popen(buffer, "r");
 	if (!popenfp) {
@@ -131,11 +132,12 @@ bu_crashreport(const char *filename)
     }
 
     /* write out kernel and hardware information */
-    if (path = bu_which("sysctl")) {
+    path = bu_which("sysctl");
+    if (path) {
 	/* need 2>&1 to capture stderr junk from sysctl on Mac OS X for kern.exec */
 	snprintf(buffer, CR_BUFSIZE, "%s -a 2>&1", path);
 	popenfp = popen(buffer, "r");
-	if (!popenfp) {
+	if (popenfp == (FILE *)NULL) {
 	    perror("unable to popen sysctl");
 	    bu_log("WARNING: Unable to obtain sysctl information\n");
 	} else {
