@@ -49,7 +49,7 @@
  *  Support routine for BU_CKMAG macro
  */
 void
-bu_badmagic(const long int *ptr, unsigned long int magic, const char *str, const char *file, int line)
+bu_badmagic(const unsigned long *ptr, unsigned long magic, const char *str, const char *file, int line)
 {
 	char	buf[MAGICBUFSIZ];
 
@@ -58,16 +58,16 @@ bu_badmagic(const long int *ptr, unsigned long int magic, const char *str, const
 			str, file, line );
 		bu_bomb(buf);
 	}
-	if ( ((size_t)(ptr)) & (sizeof(long)-1) )  {
+	if ( ((size_t)(ptr)) & (sizeof(unsigned long)-1) )  {
 		snprintf(buf, MAGICBUFSIZ, "ERROR: x%lx mis-aligned %s pointer, file %s, line %d\n",
-			(long)ptr, str, file, line );
+			(unsigned long)ptr, str, file, line );
 		bu_bomb(buf);
 	}
-	if ( *(ptr) != (long int)(magic) )  {
+	if ( *(ptr) != (unsigned long)(magic) )  {
 		snprintf(buf, MAGICBUFSIZ, "ERROR: bad pointer x%lx: s/b %s(x%lx), was %s(x%lx), file %s, line %d\n",
-			(long)ptr,
+			(unsigned long)ptr,
 			str, magic,
-			bu_identify_magic( *(ptr) ), *(ptr),
+			bu_identify_magic( (long)*(ptr) ), *(ptr),
 			file, line );
 		bu_bomb(buf);
 	}
