@@ -138,6 +138,10 @@ main(int argc, char **argv)
 		bu_exit( 1, NULL );
 	}
 
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	setmode(fileno(stdout), _O_BINARY);
+#endif
+
 	scanpix = screen_width;
 	scanbytes = scanpix * sizeof(RGBpixel);
 	if ( (scanline = (unsigned char *)malloc(scanbytes)) == RGBPIXEL_NULL )  {
