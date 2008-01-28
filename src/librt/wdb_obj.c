@@ -23,17 +23,9 @@
  *
  *  @brief a quasi-object-oriented database interface.
  *
- *  A database object contains the attributes and
- *  methods for controlling a BRL-CAD database.
+ *  A database object contains the attributes and methods for
+ *  controlling a BRL-CAD database.
  *
- *
- *  @author	Michael John Muuss
- *  @author      Glenn Durfee
- *  @author	Robert G. Parker
- *
- *  @par source
- *	The U. S. Army Research Laboratory
- *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 /** @} */
 
@@ -44,6 +36,7 @@
 #include <string.h>
 #include <math.h>
 #include <errno.h>
+#include <assert.h>
 
 #if defined(HAVE_FCNTL_H)
 #  include <fcntl.h>
@@ -54,7 +47,8 @@
 
 #include "tcl.h"
 #include "machine.h"
-#include "cmd.h"		/* this includes bu.h */
+#include "bu.h"
+#include "cmd.h"
 #include "vmath.h"
 #include "bn.h"
 #include "db.h"
@@ -64,6 +58,7 @@
 #include "wdb.h"
 
 #include "./debug.h"
+
 
 /*
  * rt_comb_ifree() should NOT be used here because
@@ -180,6 +175,27 @@ struct wdb_killtree_data {
   Tcl_Interp	*interp;
   int		notify;
 };
+
+
+/**
+ * structure used by the dbconcat command for keeping tract of where
+ * objects are being copied to and from, and what type of affix to
+ * use.
+ */
+struct concat_data {
+	int copy_mode;
+	struct db_i *old_dbip;
+	struct db_i *new_dbip;
+	struct bu_vls affix;
+};
+
+#define NO_AFFIX	1<<0
+#define AUTO_PREFIX	1<<1
+#define AUTO_SUFFIX	1<<2
+#define CUSTOM_PREFIX	1<<3
+#define CUSTOM_SUFFIX	1<<4
+#define V4_MAXNAME	NAMESIZE
+
 
 /* from librt/tcl.c */
 extern int rt_tcl_rt(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv);
@@ -3251,83 +3267,121 @@ wdb_move_all_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
 	return wdb_move_all_cmd(wdbp, interp, argc-1, argv+1);
 }
 
-/**
- *
- *
- */
-struct concat_data {
-	int unique_mode;
-	struct db_i *old_dbip;
-	struct db_i *new_dbip;
-	struct bu_vls prestr;
-};
-
-#define ADD_PREFIX 1
-#define ADD_SUFFIX 2
-#define OLD_PREFIX 3
-#define V4_MAXNAME 16
 
 /**
- *
- *
+ * find a new unique name given a list of previously used names, and
+ * the type of naming mode that described what type of affix to use.
  */
 static char *
-get_new_name(
-	     const char *name,
+get_new_name(const char *name,
 	     struct db_i *dbip,
 	     Tcl_HashTable *name_tbl,
 	     Tcl_HashTable *used_names_tbl,
-	     struct concat_data *cc_data )
+	     struct concat_data *cc_data)
 {
-	int new=0;
-	Tcl_HashEntry *ptr;
 	struct bu_vls new_name;
-	int num=0;
-	char *aname;
-	char *ret_name;
+	Tcl_HashEntry *ptr = NULL;
+	char *aname = NULL;
+	char *ret_name = NULL;
+	int new=0;
+	long num=0;
+
+	RT_CK_DBI(dbip);
+	BU_ASSERT(name_tbl);
+	BU_ASSERT(used_names_tbl);
+	BU_ASSERT(cc_data);
+
+	if (!name) {
+	    bu_log("WARNING: encountered NULL name, renaming to \"UNKNOWN\"\n");
+	    name = "UNKNOWN";
+	}
 
 	ptr = Tcl_CreateHashEntry( name_tbl, name, &new );
 
 	if ( !new ) {
-		return( (char *)Tcl_GetHashValue( ptr ) );
+	    return( (char *)Tcl_GetHashValue( ptr ) );
 	}
 
-	/* need to create a unique name for this item */
 	bu_vls_init( &new_name );
-	if ( cc_data->unique_mode != OLD_PREFIX ) {
-		bu_vls_strcpy( &new_name, name );
-		aname = bu_vls_addr( &new_name );
-	} else {
-		bu_vls_vlscat( &new_name, &cc_data->prestr );
-		bu_vls_strcat( &new_name, name );
-		if ( cc_data->old_dbip->dbi_version < 5 ) {
-			bu_vls_trunc( &new_name, V4_MAXNAME );
-		}
-		aname = bu_vls_addr( &new_name );
-	}
-        while (  db_lookup( dbip, aname, LOOKUP_QUIET ) != DIR_NULL ||
-                Tcl_FindHashEntry( used_names_tbl, aname ) != NULL ) {
+
+	do {
+	    /* iterate until we find an object name that is not in
+	     * use, trying to accommodate the user's requested affix
+	     * naming mode.
+	     */
+
             bu_vls_trunc( &new_name, 0 );
-            if ( cc_data->unique_mode == OLD_PREFIX ) {
-		bu_vls_vlscat( &new_name, &cc_data->prestr );
-            }
+
+	    if (cc_data->copy_mode & NO_AFFIX) {
+		if (num > 0 && cc_data->copy_mode & CUSTOM_PREFIX) {
+		    /* auto-increment prefix */
+		    bu_vls_printf( &new_name, "%ld_", num );
+		}
+		bu_vls_strcat( &new_name, name );
+		if (num > 0 && cc_data->copy_mode & CUSTOM_SUFFIX) {
+		    /* auto-increment suffix */
+		    bu_vls_printf( &new_name, "_%ld", num );
+		}
+	    } else if (cc_data->copy_mode & CUSTOM_SUFFIX) {
+		/* use custom suffix */
+		bu_vls_strcpy( &new_name, name );
+		if (num > 0) {
+		    bu_vls_printf( &new_name, "_%ld_", num );
+		}
+		bu_vls_vlscat( &new_name, &cc_data->affix );
+	    } else if (cc_data->copy_mode & CUSTOM_PREFIX) {
+		/* use custom prefix */
+		bu_vls_vlscat( &new_name, &cc_data->affix );
+		if (num > 0) {
+		    bu_vls_printf( &new_name, "_%ld_", num );
+		}
+		bu_vls_strcat( &new_name, name );
+	    } else if (cc_data->copy_mode & AUTO_SUFFIX) {
+		/* use auto-incrementing suffix */
+		bu_vls_strcat( &new_name, name );
+		bu_vls_printf( &new_name, "_%ld", num );
+	    } else if (cc_data->copy_mode & AUTO_PREFIX) {
+		/* use auto-incrementing prefix */
+		bu_vls_printf( &new_name, "%ld_", num );
+		bu_vls_strcat( &new_name, name );
+	    } else {
+		/* no custom suffix/prefix specified, use prefix */
+		if (num > 0) {
+		    bu_vls_printf( &new_name, "_%ld", num );
+		}
+		bu_vls_strcpy( &new_name, name );
+	    }
+
+	    /* make sure it fits for v4 */
+	    if ( cc_data->old_dbip->dbi_version < 5 ) {
+		if (bu_vls_strlen(&new_name) > V4_MAXNAME) {
+		    bu_log("ERROR: generated new name [%s] is too long (%ld > %ld)\n", bu_vls_addr(&new_name), bu_vls_strlen(&new_name), V4_MAXNAME);
+		}
+		return NULL;
+	    }
+	    aname = bu_vls_addr( &new_name );
+
             num++;
-            if ( cc_data->unique_mode == ADD_PREFIX ) {
-                bu_vls_printf( &new_name, "%d_", num);
-            }
-            bu_vls_strcat( &new_name, name );
-            if ( cc_data->unique_mode == ADD_SUFFIX ||
-                    cc_data->unique_mode == OLD_PREFIX ) {
-                bu_vls_printf( &new_name, "_%d", num );
-            }
-            aname = bu_vls_addr( &new_name );
-        }
 
-	/* now have a unique name, make entries for it in both hash tables */
+	} while (db_lookup( dbip, aname, LOOKUP_QUIET ) != DIR_NULL ||
+		 Tcl_FindHashEntry( used_names_tbl, aname ) != NULL);
 
+	/* if they didn't get what they asked for, warn them */
+	if (num > 1) {
+	    if (cc_data->copy_mode & NO_AFFIX) {
+		bu_log("WARNING: unable to import [%s] without an affix, imported as [%s]\n", name, bu_vls_addr(&new_name));
+	    } else if (cc_data->copy_mode & CUSTOM_SUFFIX) {
+		bu_log("WARNING: unable to import [%s] as [%s%s], imported as [%s]\n", name, name, bu_vls_addr(&cc_data->affix), bu_vls_addr(&new_name));
+	    } else if (cc_data->copy_mode & CUSTOM_PREFIX) {
+		bu_log("WARNING: unable to import [%s] as [%s%s], imported as [%s]\n", name, bu_vls_addr(&cc_data->affix), name, bu_vls_addr(&new_name));
+	    }
+	}
+
+	/* we should now have a unique name.  store it in the hash */
 	ret_name = bu_vls_strgrab( &new_name );
 	Tcl_SetHashValue( ptr, (ClientData)ret_name );
 	(void)Tcl_CreateHashEntry( used_names_tbl, ret_name, &new );
+	bu_vls_free( &new_name );
 
 	return( ret_name );
 }
@@ -3472,71 +3526,104 @@ wdb_concat_cmd(struct rt_wdb	*wdbp,
 {
 	struct db_i		*newdbp;
 	int			bad = 0;
-	int			file_index;
 	struct directory	*dp;
 	Tcl_HashTable		name_tbl;
 	Tcl_HashTable		used_names_tbl;
 	Tcl_HashEntry		*ptr;
 	Tcl_HashSearch		search;
 	struct concat_data	cc_data;
+	const char *oldfile;
+	struct bu_vls vls;
 
 	WDB_TCL_CHECK_READ_ONLY;
 
-	if (argc != 3 ) {
-		struct bu_vls vls;
+	/* expecting either 3 or 4 args */
+	if ( (argc < 3) || 
+	     (argc > 4) ||
+	     (argc > 1 && argv[1][0] == '-' && argc != 4) ) {
+	    bu_vls_init(&vls);
+	    bu_vls_printf(&vls, "helplib_alias wdb_concat %s", argv[0]);
+	    Tcl_Eval(interp, bu_vls_addr(&vls));
+	    bu_vls_free(&vls);
+	    return TCL_ERROR;
+	}
+
+	bu_vls_init( &cc_data.affix );
+	cc_data.copy_mode = 0;
+
+	if ( argv[1][0] == '-' ) {
+	    /* specified suffix or prefix explicitly */
+
+	    oldfile = argv[2];
+
+	    if ( argv[1][1] == 'p' ) {
+
+		cc_data.copy_mode |= AUTO_PREFIX;
+
+		if (strcmp(argv[3], "/") == 0) {
+		    cc_data.copy_mode = NO_AFFIX | CUSTOM_PREFIX;
+		} else {
+		    (void)bu_vls_strcpy(&cc_data.affix, argv[3]);
+		    cc_data.copy_mode |= CUSTOM_PREFIX;
+		}
+
+	    } else if ( argv[1][1] == 's' ) {
+
+		cc_data.copy_mode |= AUTO_SUFFIX;
+
+		if (strcmp(argv[3], "/") == 0) {
+		    cc_data.copy_mode = NO_AFFIX | CUSTOM_SUFFIX;
+		} else {
+		    (void)bu_vls_strcpy(&cc_data.affix, argv[3]);
+		    cc_data.copy_mode |= CUSTOM_SUFFIX;
+		}
+
+	    } else {
+		bu_vls_free( &cc_data.affix );
 
 		bu_vls_init(&vls);
 		bu_vls_printf(&vls, "helplib_alias wdb_concat %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
+	    }
+
+	} else {
+	    /* no prefix/suffix preference, use prefix */
+
+	    oldfile = argv[1];
+
+	    cc_data.copy_mode |= AUTO_PREFIX;
+
+	    if (strcmp(argv[2], "/") == 0) {
+		cc_data.copy_mode = NO_AFFIX;
+	    } else {
+		(void)bu_vls_strcpy(&cc_data.affix, argv[2]);
+		cc_data.copy_mode |= CUSTOM_PREFIX;
+	    }
+	    
 	}
 
-	bu_vls_init( &cc_data.prestr );
-
-	if ( argv[1][0] == '-' ) {
-
-		file_index = 2;
-
-		if ( argv[1][1] == 'p' ) {
-			cc_data.unique_mode = ADD_PREFIX;
-		} else if ( argv[1][1] == 's' ) {
-			cc_data.unique_mode = ADD_SUFFIX;
-		} else {
-			struct bu_vls vls;
-
-			bu_vls_init(&vls);
-			bu_vls_printf(&vls, "helplib_alias wdb_concat %s", argv[0]);
-			Tcl_Eval(interp, bu_vls_addr(&vls));
-			bu_vls_free(&vls);
-			return TCL_ERROR;
-		}
-	} else {
-		file_index = 1;
-		cc_data.unique_mode = OLD_PREFIX;
-
-		if (strcmp(argv[2], "/") != 0) {
-			(void)bu_vls_strcpy(&cc_data.prestr, argv[2]);
-		}
-
-		if ( wdbp->dbip->dbi_version < 5 ) {
-			if ( bu_vls_strlen(&cc_data.prestr) > 12) {
-				bu_vls_trunc( &cc_data.prestr, 12 );
-			}
-		}
+	if ( wdbp->dbip->dbi_version < 5 ) {
+	    if ( bu_vls_strlen(&cc_data.affix) > V4_MAXNAME-1) {
+		bu_log("ERROR: affix [%s] is too long for v%d\n", bu_vls_addr(&cc_data.affix), wdbp->dbip->dbi_version);
+		bu_vls_free( &cc_data.affix );
+		return TCL_ERROR;
+	    }
 	}
 
 	/* open the input file */
-	if ((newdbp = db_open(argv[file_index], "r")) == DBI_NULL) {
-		perror(argv[file_index]);
-		Tcl_AppendResult(interp, "concat: Can't open ",
-				 argv[file_index], (char *)NULL);
+	if ((newdbp = db_open(oldfile, "r")) == DBI_NULL) {
+		bu_vls_free( &cc_data.affix );
+		perror(oldfile);
+		Tcl_AppendResult(interp, "%s: Can't open ", argv[0], oldfile, (char *)NULL);
 		return TCL_ERROR;
 	}
 
 	if ( newdbp->dbi_version > 4 && wdbp->dbip->dbi_version < 5 ) {
-		Tcl_AppendResult(interp, "concat: databases are incompatible, convert ",
-				 wdbp->dbip->dbi_filename, " to version 5 first",
+		bu_vls_free( &cc_data.affix );
+		Tcl_AppendResult(interp, argv[0], ": databases are incompatible, use dbupgrade on ",
+				 wdbp->dbip->dbi_filename, " first",
 				 (char *)NULL );
 		return TCL_ERROR;
 	}
@@ -3549,17 +3636,16 @@ wdb_concat_cmd(struct rt_wdb	*wdbp,
 	/* visit each directory pointer in the input database */
 	Tcl_InitHashTable( &name_tbl, TCL_STRING_KEYS );
 	Tcl_InitHashTable( &used_names_tbl, TCL_STRING_KEYS );
-	FOR_ALL_DIRECTORY_START( dp, newdbp )
+
+	FOR_ALL_DIRECTORY_START( dp, newdbp ) {
 		if ( dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY ) {
 			/* skip GLOBAL object */
 			continue;
 		}
+		copy_object( interp, dp, newdbp, wdbp->dbip, &name_tbl, &used_names_tbl, &cc_data );
+	} FOR_ALL_DIRECTORY_END;
 
-		copy_object( interp, dp, newdbp, wdbp->dbip, &name_tbl,
-				     &used_names_tbl, &cc_data );
-	FOR_ALL_DIRECTORY_END;
-
-	bu_vls_free( &cc_data.prestr );
+	bu_vls_free( &cc_data.affix );
 	rt_mempurge(&(newdbp->dbi_freep));
 
 	/* Free all the directory entries, and close the input database */
@@ -3811,6 +3897,9 @@ wdb_dir_check5(register struct db_i		*input_dbip,
 		dcsp->wdbp->wdb_num_dups++;
 		*dcsp->dup_dirp++ = dupdp;
 	}
+
+	bu_vls_free( &local );
+
 	return;
 }
 
@@ -4277,6 +4366,7 @@ wdb_comb_cmd(struct rt_wdb	*wdbp,
 			bu_vls_printf(&tmp_vls, "bad operation: %c skip member: %s\n",
 				      oper, dp->d_namep);
 			Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+			bu_vls_free(&tmp_vls);
 			continue;
 		}
 
@@ -5838,6 +5928,7 @@ wdb_tol_cmd(struct rt_wdb	*wdbp,
 		    bu_vls_init(&vls);
 		    bu_vls_printf(&vls, "absolute tolerance cannot be less than distance tolerance, clamped to %f\n", wdbp->wdb_tol.dist);
 		    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+		    bu_vls_free(&vls);
 		}
 		wdbp->wdb_ttol.abs = f;
 		break;
@@ -6320,8 +6411,8 @@ Make_new_name(struct db_i	*dbip,
 	else
 		suffix_start = name_length;
 
-	if (dbip->dbi_version >= 5)
-		bu_vls_init(&name_v5);
+	bu_vls_init(&name_v5);
+
 	j = 0;
 	for (use_no=0; use_no<dp->d_uses; use_no++) {
 		j++;
@@ -6375,8 +6466,7 @@ Make_new_name(struct db_i	*dbip,
 		BU_LIST_INSERT(&dp->d_use_hd, &use->l);
 	}
 
-	if (dbip->dbi_version >= 5)
-		bu_vls_free(&name_v5);
+	bu_vls_free(&name_v5);
 }
 
 /**
@@ -7855,7 +7945,7 @@ wdb_hide_cmd(struct rt_wdb	*wdbp,
 				bu_vls_init( &vls );
 				bu_vls_printf( &vls, "Hiding BRL-CAD geometry (%s) is generaly a bad idea.\n", dp->d_namep );
 				bu_vls_strcat( &vls, "This may cause unexpected problems with other commands.\n" );
-				bu_vls_strcat( &vls, "Are you sure you want to do this??" );
+				bu_vls_strcat( &vls, "Are you sure you want to do this?" );
 				(void)Tcl_ResetResult( interp );
 				if ( Tcl_VarEval( interp, "tk_messageBox -type yesno ",
 						 "-title Warning -icon question -message {",
@@ -7871,6 +7961,7 @@ wdb_hide_cmd(struct rt_wdb	*wdbp,
 					}
 					(void)Tcl_ResetResult( interp );
 				}
+				bu_vls_free( &vls );
 #endif
 			}
 			if ( no_hide )

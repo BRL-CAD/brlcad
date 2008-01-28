@@ -141,18 +141,11 @@ Tk_Window tkwin = NULL;
  */
 static struct bu_vls tcl_output_hook;
 
-
-int mged_cmd(int argc, char **argv, struct funtab *in_functions);
-
-
 struct cmdtab {
 	char *ct_name;
 	int (*ct_func)();
 };
 
-#if 1
-int f_test_bomb_hook(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-#endif
 
 static struct cmdtab cmdtab[] = {
 	{"%", f_comm},
@@ -2805,7 +2798,7 @@ cmd_dup(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  *  Concatenate another GED file into the current file.
  *  Interrupts are not permitted during this function.
  *
- *  Usage:  dbconcat file.g [prefix]
+ *  Usage:  dbconcat [-p|-s] file.g [prefix|suffix]
  *  becomes: db concat file.g prefix
  *
  *  NOTE:  If a prefix is not given on the command line,
@@ -2825,10 +2818,33 @@ cmd_concat(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 				 (char *)NULL);
 		return TCL_ERROR;
 	}
-
+	if (argc == 2 && argv[1][0] == '-' && argv[1][1] == 'p') {
+		Tcl_AppendResult(interp, MORE_ARGS_STR,
+				 "dbconcat: Enter database: ",
+				 (char *)NULL);
+		return TCL_ERROR;
+	}
+	if (argc == 2 && argv[1][0] == '-' && argv[1][1] == 's') {
+		Tcl_AppendResult(interp, MORE_ARGS_STR,
+				 "dbconcat: Enter database: ",
+				 (char *)NULL);
+		return TCL_ERROR;
+	}
 	if (argc < 3) {
 		Tcl_AppendResult(interp, MORE_ARGS_STR,
 				 "dbconcat: Enter prefix string or / for no prefix: ",
+				 (char *)NULL);
+		return TCL_ERROR;
+	}
+	if (argc == 3 && argv[1][0] == '-' && argv[1][1] == 'p') {
+		Tcl_AppendResult(interp, MORE_ARGS_STR,
+				 "dbconcat: Enter prefix string or / for no prefix: ",
+				 (char *)NULL);
+		return TCL_ERROR;
+	}
+	if (argc == 3 && argv[1][0] == '-' && argv[1][1] == 's') {
+		Tcl_AppendResult(interp, MORE_ARGS_STR,
+				 "dbconcat: Enter suffix string or / for no suffix: ",
 				 (char *)NULL);
 		return TCL_ERROR;
 	}
