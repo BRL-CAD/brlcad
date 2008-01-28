@@ -226,7 +226,7 @@ namespace eval RtWizard {
 	#
 	# Put the image to the framebuffer
 	#
-	catch {exec "bindpath/pix-fb" -F $fb -w $w -n $h $tmi} junk
+	catch {exec "$binpath/pix-fb" -F $fb -w $w -n $h $tmi} junk
 
 	#
 	# Finally! Run rtedge
