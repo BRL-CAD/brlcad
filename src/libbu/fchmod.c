@@ -33,20 +33,27 @@
 
 #include "common.h"
 
+#ifdef HAVE_SYS_TYPES_H
+#  include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
+#  include <sys/stat.h>
+#endif
+
 #include "machine.h"
 #include "bu.h"
 
 
 int
-bu_fchmod(FILE	     *fp,
-	  int	     pmode)
+bu_fchmod(FILE	     	*fp,
+	  unsigned long pmode)
 {
     if (!fp) {
 	return 0;
     }
 
 #ifdef HAVE_FCHMOD
-    return fchmod(fileno(fp), pmode);
+    return fchmod(fileno(fp), (mode_t)pmode);
 #else
     return -1; /* probably Windows, fchmod unavailable and chmod insecure */
 #endif    
