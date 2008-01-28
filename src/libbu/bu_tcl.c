@@ -97,7 +97,7 @@ static struct bu_cmdtab bu_cmds[] = {
 
 void
 bu_badmagic_tcl(Tcl_Interp	*interp,
-		const long	*ptr,
+		const unsigned long	*ptr,
 		unsigned long	magic,
 		const char	*str,
 		const char	*file,
@@ -111,11 +111,11 @@ bu_badmagic_tcl(Tcl_Interp	*interp,
 		Tcl_AppendResult(interp, buf, NULL);
 		return;
 	}
-	if (*((long *)(ptr)) != (magic)) {
+	if (*((unsigned long *)(ptr)) != (magic)) {
 		snprintf(buf, SMALLBUFSIZ, "ERROR: bad pointer in TCL interface x%lx: s/b %s(x%lx), was %s(x%lx), file %s, line %d\n",
-			(long)ptr,
+			(unsigned long)ptr,
 			str, magic,
-			bu_identify_magic( *(ptr) ), *(ptr),
+			bu_identify_magic( (long)*(ptr) ), *(ptr),
 			file, line);
 		Tcl_AppendResult(interp, buf, NULL);
 		return;
@@ -309,7 +309,6 @@ bu_structparse_argv(Tcl_Interp			*interp,
 				{
 				register short *sh = (short *)loc;
 				register int tmpi;
-				register char const *cp;
 
 				if ( argc < 1 ) { /* XXX - when was ii defined */
 					bu_vls_trunc( &str, 0 );
@@ -393,7 +392,6 @@ bu_structparse_argv(Tcl_Interp			*interp,
 			case 'd': {
 				register int *ip = (int *)loc;
 				register int tmpi;
-				register char const *cp;
 
 				if ( argc < 1 ) { /* XXX - when was ii defined */
 					bu_vls_trunc( &str, 0 );
@@ -762,7 +760,7 @@ bu_tcl_printb(ClientData	clientData,
 		return TCL_ERROR;
 	}
 	bu_vls_init(&str);
-	bu_vls_printb(&str, argv[1], atoi(argv[2]), argv[3]);
+	bu_vls_printb(&str, argv[1], (unsigned)atoi(argv[2]), argv[3]);
 	Tcl_SetResult(interp, bu_vls_addr(&str), TCL_VOLATILE);
 	bu_vls_free(&str);
 	return TCL_OK;
@@ -1335,7 +1333,7 @@ bu_tcl_units_conversion(ClientData	clientData,
 	}
 
 	conv_factor = bu_units_conversion(argv[1]);
-	if (conv_factor == 0.0) {
+	if (NEAR_ZERO(conv_factor, SMALL_FASTF)) {
 		Tcl_AppendResult(interp, "ERROR: bu_units_conversion: Unrecognized units string: ",
 				 argv[1], "\n", (char *)NULL);
 		return TCL_ERROR;
