@@ -159,6 +159,8 @@ puts "copy [file join $rootDir src archer archer.bat] [file join $installDir bin
 file copy [file join $rootDir src archer archer.bat] [file join $installDir bin]
 puts "copy [file join $rootDir src mged mged.bat] [file join $installDir bin]"
 file copy [file join $rootDir src mged mged.bat] [file join $installDir bin]
+puts "copy [file join $rootDir src util rtwizard.bat] [file join $installDir bin]"
+file copy [file join $rootDir src util rtwizard.bat] [file join $installDir bin]
 # End Copy files to the bin directory
 
 
