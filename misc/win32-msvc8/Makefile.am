@@ -5,7 +5,9 @@ EXTRA_DIST= \
 	brlcad/brlcad.sln \
 	btclsh/btclsh.vcproj \
 	bw2fb/bw2fb.vcproj \
+	bw2pix/bw2pix.vcproj \
 	bwish/bwish.vcproj \
+	bwmod/bwmod.vcproj \
 	cat2fb/cat2fb.vcproj \
 	cell2fb/cell2fb.vcproj \
 	cmap2fb/cmap2fb.vcproj \
@@ -70,9 +72,11 @@ EXTRA_DIST= \
 	mged/mged.vcproj \
 	nirt/nirt.vcproj \
 	orle2fb/orle2fb.vcproj \
+	pix2bw/pix2bw.vcproj \
 	pix2fb/pix2fb.vcproj \
 	pixautosize/pixautosize.vcproj \
 	pixflip2fb/pixflip2fb.vcproj \
+	pixmatte/pixmatte.vcproj \
 	pl2fb/pl2fb.vcproj \
 	png2fb/png2fb.vcproj \
 	polar2fb/polar2fb.vcproj \
