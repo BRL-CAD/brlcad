@@ -163,7 +163,7 @@ dont_reuse:
 	/* File is not yet mapped, open file read only. */
 #ifdef HAVE_SYS_STAT_H
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
-	fd = open( name, O_RDONLY );
+	fd = open( name, O_RDONLY | O_BINARY );
 	bu_semaphore_release(BU_SEM_SYSCALL);
 
 	if ( fd < 0 )  {
