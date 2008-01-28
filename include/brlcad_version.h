@@ -109,9 +109,7 @@ static const char BRLCAD_HOST[256] = {
 
 /**
  * configured installation path, updated every time a build pass
- * occurs
- *
- * should be a quoted value
+ * occurs.  should be a quoted value
  */
 #ifndef BRLCAD_PATH
 static const char BRLCAD_PATH[256] = {
@@ -120,8 +118,7 @@ static const char BRLCAD_PATH[256] = {
 #endif
 
 /**
- * compilation user, updated every time a build pass occurs
- *
+ * compilation user, updated every time a build pass occurs.
  * should be a quoted value
  */
 #ifndef BRLCAD_USER
@@ -154,15 +151,15 @@ brlcad_version(void)
 static const char *
 brlcad_ident(const char *title)
 {
-    static char version[1024] = {0};
+    static char ident[1024] = {0};
     static char label[64] = {0};
 
     if (title) {
 	snprintf(label, 64, "  %s", title);
     }
 
-    if (version[0] == 0) {
-	snprintf(version, 1024,
+    if (ident[0] == 0) {
+	snprintf(ident, 1024,
 		 "BRL-CAD Release %s%s\n"
 		 "    %s, Compilation %d\n"
 		 "    %s@%s:%s\n",
@@ -172,7 +169,12 @@ brlcad_ident(const char *title)
 		 );
     }
 
-    return version;
+    /* quell use warnings, never true */
+    if (label[0] == 'Z') {
+	return brlcad_ident(NULL);
+    }
+
+    return ident;
 }
 
 
