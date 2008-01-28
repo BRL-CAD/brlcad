@@ -72,8 +72,6 @@ Recent Bugs
 * dsp primitive is going into what seems to be an unbounded memory
   allocation loop during prep, inside dsp_layers().
 
-* units command in mged doesn't work right?
-
 * mged -c, select ogl display manager, crashes X11 -- tested on os x
 
 * crashes during photonmap raytrace of m35 where right node is invalid
