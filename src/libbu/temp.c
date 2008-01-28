@@ -25,6 +25,12 @@
  *
  */
 
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#  include <fcntl.h>
+#  include <io.h>
+#endif
+
+
 #include "common.h"
 
 #include <stdlib.h>
@@ -41,7 +47,6 @@
 
 #include "machine.h"
 #include "bu.h"
-
 
 #define _TF_FAIL "WARNING: Unable to create a temporary file\n"
 
