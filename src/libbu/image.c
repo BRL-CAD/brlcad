@@ -121,7 +121,7 @@ png_save(int fd, char *rgb, int width, int height)
     }
 
     png_init_io (png_ptr, fh);
-    png_set_IHDR (png_ptr, info_ptr, width, height, 8, PNG_COLOR_TYPE_RGB,
+    png_set_IHDR (png_ptr, info_ptr, (unsigned)width, (unsigned)height, 8, PNG_COLOR_TYPE_RGB,
                   PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE,
                   PNG_FILTER_TYPE_BASE);
     png_write_info (png_ptr, info_ptr);
@@ -137,11 +137,29 @@ png_save(int fd, char *rgb, int width, int height)
 static int
 bmp_save(int fd, char *rgb, int width, int height)
 {
+    FILE *fh;
+
+    fh = fdopen(fd, "wb");
+    if (fh==NULL) {
+	perror("fdopen");
+	bu_exit(-1, "bmp_save trying to get FILE pointer for descriptor\n");
+    }
+
+    if (!rgb || width<0 || height<0) {
+	bu_exit(-1, "Ohs Noes!\n");
+    }
+
+    bu_log("Unimplemented\n");
+
     return 0;
 }
 
 static int
-pix_save(int fd, char *rgb, int size) { write(fd, rgb, size); return 2; }
+pix_save(int fd, char *rgb, int size)
+{
+    write(fd, rgb, (unsigned)size);
+    return 2;
+}
 
 /* size is bytes of PIX data, bw output file will be 1/3 this size.
  * Also happens to munge up the contents of rgb. */
@@ -149,12 +167,17 @@ static int
 bw_save(int fd, char *rgb, int size)
 {
     int bwsize = size/3, i;
+
     if (bwsize*3 != size) {
 	bu_exit(-1, "Huh, size=%d is not a multiple of 3.\n", size);
     }
+
     /* an ugly naïve pixel grey-scale hack. Does not take human color curves. */
-    for (i=0;i<bwsize;++i) rgb[i] = (int)((float)rgb[i*3]+(float)rgb[i*3+1]+(float)rgb[i*3+2]/3.0);
-    write(fd, rgb, bwsize);
+    for (i=0;i<bwsize;++i)
+	rgb[i] = (int)((float)rgb[i*3]+(float)rgb[i*3+1]+(float)rgb[i*3+2]/3.0);
+
+    write(fd, rgb, (unsigned)bwsize);
+
     return 2;
 }
 
@@ -209,7 +232,7 @@ bu_image_save_open(char *filename, int format, int width, int height, int depth)
     bif->width = width;
     bif->height = height;
     bif->depth = depth;
-    bif->data = (char *)bu_malloc(width*height*depth, "bu_image_file data");
+    bif->data = (char *)bu_malloc((size_t)(width*height*depth), "bu_image_file data");
     return bif;
 }
 
@@ -217,7 +240,7 @@ int
 bu_image_save_writeline(struct bu_image_file *bif, int y, unsigned char *data)
 {
     if (bif==NULL) { printf("trying to write a line with a null bif\n"); return -1; }
-    memcpy(bif->data + bif->width*bif->depth*y, data, bif->width*bif->depth);
+    memcpy(bif->data + bif->width*bif->depth*y, data, (size_t)bif->width*bif->depth);
     return 0;
 }
 

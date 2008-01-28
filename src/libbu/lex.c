@@ -150,8 +150,8 @@ top:
 	if (*used == 0)
 	    *used = 1;
 
-	unit = (char *)bu_malloc(*used+1, "unit token");
-	bu_strlcpy(unit, sp, *used+1);
+	unit = (char *)bu_malloc((size_t)(*used+1), "unit token");
+	bu_strlcpy(unit, sp, (size_t)(*used+1));
 	*used = sp-bu_vls_addr(rtstr) + *used;
 
 	if (*used == 0)
