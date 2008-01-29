@@ -283,8 +283,11 @@ namespace eval RtWizard {
     # activateOKButton - called the first time a file is selected
     #
     itcl::body DbPage::activateOKButton {} {
-	$itk_component(bbox) buttonconfigure OK -state normal
-	$itk_component(fileSelect) configure -selectfilecommand ""
+	if {[getDbFile] == ""} {
+	    $itk_component(bbox) buttonconfigure OK -state disabled
+	} else {
+	    $itk_component(bbox) buttonconfigure OK -state normal
+	}
     }
 }
 #end namespace
