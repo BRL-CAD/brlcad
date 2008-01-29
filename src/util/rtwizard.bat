@@ -31,7 +31,7 @@ CD %PATH%\..
 SET RTWIZARD=%CD%\share\brlcad\%CAD_VERSION%\tclscripts\rtwizard\rtwizard.tcl
 CD %SAVE_CD%
 
-START /B bwish "%RTWIZARD%"
+START /B bwish "%RTWIZARD%" %1
 
 CLS
 EXIT
