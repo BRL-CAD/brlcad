@@ -370,9 +370,6 @@ BC_ARG_ENABLE([build_ef], [ef-build], [Enable compilation of Endgame Framework m
 # unigraphics plugin
 BC_ARG_ENABLE([build_ug], [unigraphics-build], [Enable compilation of Unigraphics importer], [no])
 
-# ADRT (enables SDL and Python with options if they're not enabled)
-BC_ARG_ENABLE([build_adrt], [adrt-build], [Enable compilation of ADRT], [auto])
-
 # example geometry
 BC_ARG_ENABLE([install_geometry], [models-install], [Enable installation of example geometry models], [yes])
 
@@ -415,12 +412,6 @@ BC_ARG_WITH([with_opengl], [ogl], [Specify use of or path to OpenGL], [auto])
 
 # use wgl
 BC_ARG_WITH([with_wgl], [wgl], [Specify use of or path to WindowsGL], [auto])
-
-# use sdl
-BC_ARG_WITH([with_sdl], [sdl], [Specify use of or path to SDL], [auto])
-
-# use python
-BC_ARG_WITH([with_python], [python], [Specify use of or path to python], [auto])
 
 # use pro/engineer
 BC_ARG_WITH([with_proe], [proe], [Specify build of Pro/ENGINEER plugin or path to Pro/ENGINEER installation], [no])
@@ -635,12 +626,6 @@ BC_ARG_WITH_ALIAS([with_opengl], [opengl])
 # with wgl aliases (help uses wgl)
 BC_ARG_WITH_ALIAS([with_wgl], [windowsgl])
 
-# with sdl aliases (help uses sdl)
-BC_ARG_WITH_ALIAS([with_sdl], [libsdl])
-
-# with python aliases (help uses python)
-BC_ARG_WITH_ALIAS([with_python], [libpython])
-
 
 ###
 # set up path searching
@@ -766,43 +751,6 @@ if test "x$bc_with_opengl" = "xyes" ; then
 	fi
 fi
 
-# enabling/disabling ADRT implies enabling/disabling the SDL and Python options
-if test "x$bc_build_adrt" = "xyes" ; then
-	if test "x$bc_with_sdl" = "xauto" ; then
-		bc_with_sdl=yes
-	elif test "x$bc_with_sdl" = "xno" ; then
-		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-		AC_MSG_WARN([ADRT presently requires SDL support])
-		AC_MSG_WARN([The SDL option has been enabled (--with-sdl=yes)])
-		AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
-		bc_with_sdl=yes
-	fi
-	if test "x$bc_with_python" = "xauto" ; then
-		bc_with_python=yes
-	elif test "x$bc_with_python" = "xno" ; then
-		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-		AC_MSG_WARN([ADRT presently requires Python support])
-		AC_MSG_WARN([The Python option has been enabled (--with-python=yes)])
-		AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
-		bc_with_python=yes
-	fi
-elif test "x$bc_build_adrt" = "xno" ; then
-	if test "x$bc_with_sdl" = "xyes" ; then
-		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-		AC_MSG_WARN([SDL was requested, yet ADRT was disabled.])
-		AC_MSG_WARN([Since only ADRT utilizes SDL, it will not be utilized (--with-sdl=no)])
-		AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
-	fi
-	if test "x$bc_with_python" = "xyes" ; then
-		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-		AC_MSG_WARN([Python was requested, yet ADRT was disabled.])
-		AC_MSG_WARN([Since only ADRT utilizes Python, it will not be utilized (--with-python=no)])
-		AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
-	fi
-	bc_with_sdl=no
-	bc_with_python=no
-fi
-
 # turning on verbose means turning on progress and warning verbosity
 if test "x$bc_build_verbose" = "xyes" ; then
 	if test "x$bc_build_warnings_set" = "xno" ; then
@@ -918,12 +866,6 @@ AC_MSG_RESULT($bc_with_opengl)
 
 AC_MSG_CHECKING(whether to compile the WindowsGL interfaces)
 AC_MSG_RESULT($bc_with_wgl)
-
-AC_MSG_CHECKING(whether to compile against SDL for ADRT)
-AC_MSG_RESULT($bc_with_sdl)
-
-AC_MSG_CHECKING(whether to compile against Python for ADRT)
-AC_MSG_RESULT($bc_with_python)
 
 AC_MSG_CHECKING(whether to compile the Pro/ENGINEER plugin)
 AC_MSG_RESULT($bc_with_proe)
@@ -1062,31 +1004,6 @@ fi
 AC_DEFINE(EXTERN_STDOUT,,[Stdout is extern])
 
 AC_FUNC_ALLOCA
-
-# test for sdl-config, auto for with-sdl is 'no'
-SDL_CONFIG=""
-if test "x$bc_with_sdl" = "xyes" ; then
-	AC_PATH_PROG(SDL_CONFIG, sdl-config, , $PATH)
-	if test "x$SDL_CONFIG" = "x" ; then
-		if test "x$bc_with_sdl" = "xyes" ; then
-			AC_MSG_NOTICE([sdl-config is presently required, searching more extensively])
-			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-			AC_MSG_WARN([Unable to find sdl-config])
-		fi
-	fi
-fi
-
-# test for python interpreter, auto for with-python is 'no'
-PYTHON=""
-python_works=no
-if test "x$bc_with_python" = "xyes" ; then
-	AM_PATH_PYTHON(2.0,
-		       PYTHON_CFLAGS=-I`$PYTHON -c "import distutils.sysconfig;print distutils.sysconfig.get_config_var('INCLUDEPY')"`
-		       PYTHON_LIBS=`$PYTHON -c "import distutils.sysconfig; print distutils.sysconfig.get_config_var('LIBPL')+'/'+distutils.sysconfig.get_config_var('LIBRARY')+' '+distutils.sysconfig.get_config_var('LIBS')"`
-		       AC_DEFINE(HAVE_PYTHON,1,[Python is available])
-		       python_works=yes
-		       )
-fi
 
 dnl if building jove wasn't specifically requested and wasn't
 dnl disabled, see if there is either emacs or jove available.
@@ -3407,66 +3324,11 @@ fi # bc_with_wgl
 AC_MSG_CHECKING(whether to build against WindowsGL)
 AC_MSG_RESULT($build_against_wgl)
 
-
-dnl *** SDL availability  ***
-sdl_works="no"
-if test "x$bc_with_sdl" != "xno" ; then
-    if test "x$SDL_CONFIG" != "x" ; then
-	AM_PATH_SDL(1.2.0,,AC_MSG_ERROR([Cannot find SDL.]))
-	AC_SUBST(SDL_CFLAGS)
-	AC_SUBST(SDL_LIBS)
-	AC_DEFINE(HAVE_SDL, 1, [SDL 1.2.0+ is available])
-	sdl_works="yes"
-    fi
-fi
-AC_MSG_CHECKING(for SDL functionality)
-AC_MSG_RESULT($sdl_works)
-
-
-dnl *** Python availability ***
-python_works="no"
-AC_MSG_CHECKING(for Python functionality)
-if test "x$bc_with_python" != "xno" ; then
-    if test "x$PYTHON" != "x" ; then
-	python_works="yes"
-    fi
-fi
-AC_SUBST(PYTHON_CFLAGS)
-AC_SUBST(PYTHON_LIBS)
-AC_MSG_RESULT($python_works)
-
-
 dnl *** ADRT compilation ***
 dnl figure out whether we have everything we need to build ADRT
-dnl requires sdl and python
 build_brlcad_adrt="no"
 if test "x$bc_build_adrt" = "xauto" ; then
-    if test "x$python_works" = "xyes" ; then
-	if test "x$sdl_works" = "xyes" ; then
-	    build_brlcad_adrt="yes"
-	else
-	    build_brlcad_adrt="no (need sdl)"
-	fi
-    else
-	if test "x$sdl_works" = "xyes" ; then
-	    build_brlcad_adrt="no (need python)"
-	else
-	    build_brlcad_adrt="no (need python and sdl)"
-	fi
-    fi
-elif test "x$bc_build_adrt" = "xyes" ; then
     build_brlcad_adrt="yes"
-    if test "x$sdl_works" = "xno" ; then
-	AC_MSG_NOTICE([ADRT requires SDL (and Python)])
-	AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-	AC_MSG_NOTICE([Try adding --disable-adrt-build])
-	AC_MSG_ERROR([*** Using ADRT was requested, yet no system SDL library was found ***])
-    elif test "x$python_works" = "xno" ; then
-	AC_MSG_NOTICE([ADRT requires Python (and SDL)])
-	AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-	AC_MSG_NOTICE([Try adding --disable-adrt-build])
-	AC_MSG_ERROR([*** Using ADRT was requested, yet no system Python interpreter was found ***])
-    fi
 fi
 
 

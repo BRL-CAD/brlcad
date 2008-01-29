@@ -1,10 +1,9 @@
 # $Id$
 
 lib_LTLIBRARIES = libtieutil.la
-libtieutil_la_SOURCES = camera.c display.c image.c rand.c umath.c
+libtieutil_la_SOURCES = camera.c image.c rand.c umath.c
 
 AM_CFLAGS = \
-	@SDL_CFLAGS@ \
 	-I${top_srcdir}/src/adrt \
 	-I${top_srcdir}/src/adrt/libtie \
 	-I${top_srcdir}/src/adrt/libtienet \
@@ -14,10 +13,9 @@ AM_CFLAGS = \
 	${TCL_CPPFLAGS}
 
 libtieutil_la_LIBADD= \
-	@SDL_LIBS@ \
 	$(top_builddir)/src/libbu/libbu.la
 
-noinst_HEADERS = camera.h display.h font.h
+noinst_HEADERS = camera.h font.h
 
 tieincludedir = $(includedir)/tie
 tieinclude_HEADERS = image.h umath.h rand.h 

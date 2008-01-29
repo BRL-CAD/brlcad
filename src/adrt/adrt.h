@@ -8,6 +8,7 @@
 /* Pixel Format: 0 = unsigned char, 1 =  tfloat */
 #define	ADRT_PIXEL_FMT		0
 
+/* these are contained in an ADRT_NETOP_WORK message */
 enum
 {
   ADRT_WORK_INIT = 100,
@@ -20,6 +21,7 @@ enum
   ADRT_WORK_MINMAX
 };
 
+/* top level messages */
 enum
 {
   ADRT_NETOP_NOP = 200,
