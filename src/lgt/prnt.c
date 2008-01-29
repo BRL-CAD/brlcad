@@ -300,9 +300,9 @@ do_More(int *linesp)
 void
 prnt_Menu(void)
 {
-	prnt_Paged_Menu( lgt_menu );
+	prnt_Paged_Menu( (char **)lgt_menu );
 	if ( ir_mapping )
-		prnt_Paged_Menu( ir_menu );
+		prnt_Paged_Menu( (char **)ir_menu );
 	hmredraw();
 	return;
 	}
@@ -380,7 +380,7 @@ prnt_Title(const char* titleptr)
  */
 void
 prnt_Usage(void)
-{	register char	**p = usage;
+{	register char	**p = (char **)usage;
 	while ( *p != NULL )
 		(void) fprintf( stderr, "%s\n", *p++ );
 	return;
