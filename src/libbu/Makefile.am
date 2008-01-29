@@ -98,10 +98,18 @@ AM_CPPFLAGS = \
 	${TCL_CPPFLAGS}
 
 if BUILD_TCL
-DEPS = include src/other/tcl
+TCLDEP = $(LDEP) src/other/tcl
 else
-DEPS = include
+TCLDEP =
 endif
+
+if BUILD_PNG
+PNGDEP = $(LDEP) src/other/libpng
+else
+PNGDEP =
+endif
+
+DEPENDS = $(TCLDEP) $(PNGDEP)
 
 include $(top_srcdir)/misc/Makefile.defs
 

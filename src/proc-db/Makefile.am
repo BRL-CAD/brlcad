@@ -102,6 +102,8 @@ EXTRA_DIST = \
 	$(man_MANS) \
 	sgi.sh
 
+DEPENDS = src/libwdb
+
 include $(top_srcdir)/misc/Makefile.defs
 
 FAST_OBJECTS = \

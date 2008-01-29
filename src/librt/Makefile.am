@@ -235,7 +235,7 @@ DEPADD=src/other/openNURBS
 else
 DEPADD=
 endif
-DEPS=src/libbn src/libsysv $(DEPADD)
+DEPENDS = src/libbn src/libsysv $(DEPADD)
 
 include $(top_srcdir)/misc/Makefile.defs
 
