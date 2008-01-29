@@ -3117,7 +3117,7 @@ package provide Archer 1.0
 
 	# This is not needed for the released code.
 	# However, it won't hurt anything to leave it.
-	if {$theme != "CVS"} {
+	if {$theme != "CVS" && $theme != ".svn"} {
 	    lappend themes $theme
 	}
     }
