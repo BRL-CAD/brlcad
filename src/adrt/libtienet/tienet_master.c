@@ -71,9 +71,9 @@ typedef struct tienet_master_socket_s {
 
 void				tienet_master_init(int port, void fcb_result(tienet_buffer_t *result), char *list, char *exec, int buffer_size, int ver_key, int verbose);
 void				tienet_master_free(void);
-void				tienet_master_push(void *data, int size);
+void				tienet_master_push(const void *data, size_t size);
 void				tienet_master_shutdown(void);
-void				tienet_master_broadcast(void *mesg, int mesg_len);
+void				tienet_master_broadcast(const void *mesg, size_t mesg_len);
 
 void				tienet_master_begin(void);
 void				tienet_master_end(void);
@@ -211,7 +211,7 @@ void tienet_master_free()
 }
 
 
-void tienet_master_push(void *data, int size)
+void tienet_master_push(const void *data, size_t size)
 {
   tienet_master_socket_t *socket, *tmp;
   short op;
@@ -797,7 +797,7 @@ void tienet_master_shutdown()
 
 
 /* This function does not support message queuing right now, so don't try it. */
-void tienet_master_broadcast(void *mesg, int mesg_len)
+void tienet_master_broadcast(const void *mesg, size_t mesg_len)
 {
   tienet_master_socket_t *socket;
 

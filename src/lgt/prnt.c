@@ -40,7 +40,7 @@
 #include "./screen.h"
 #include "./ascii.h"
 
-static char	*usage[] =
+static const char * usage[] =
 	{
 "",
 "Usage:",
@@ -54,7 +54,7 @@ static char	*usage[] =
 "",
 0
 	};
-static char	*lgt_menu[] =
+static const char * lgt_menu[] =
 	{
 "                BRL Lighting Model (LGT) : global command set",
 "",
@@ -117,7 +117,7 @@ static char	*lgt_menu[] =
 "# anything           comment or NOP (useful in preparing input files)",
 	NULL
 	};
-static char	*ir_menu[] =
+static const char * ir_menu[] =
 	{
 "",
 "                       Infrared Module: local commands",
@@ -309,7 +309,7 @@ prnt_Menu(void)
 
 /*	p r n t _ P r o m p t ( )					*/
 void
-prnt_Prompt(char *prompt)
+prnt_Prompt(const char* prompt)
 {
 	if ( tty )
 		{
@@ -325,7 +325,7 @@ prnt_Prompt(char *prompt)
 
 /*	p r n t _ T i m e r ( )						*/
 void
-prnt_Timer(char *eventstr)
+prnt_Timer(const char* eventstr)
 {
 	(void) rt_read_timer( timer, TIMER_LEN-1 );
 	if ( tty )
@@ -340,7 +340,7 @@ prnt_Timer(char *eventstr)
 
 /*	p r n t _ E v e n t ( )						*/
 void
-prnt_Event(char *s)
+prnt_Event(const char* s)
 {	static int	lastlen = 0;
 		register int	i;
 	if ( ! tty )
@@ -368,7 +368,7 @@ prnt_Event(char *s)
 
 /*	p r n t _ T i t l e ( )						*/
 void
-prnt_Title(char *titleptr)
+prnt_Title(const char* titleptr)
 {
 	if ( ! tty || RT_G_DEBUG )
 		bu_log( "%s\n", titleptr == NULL ? "(null)" : titleptr );

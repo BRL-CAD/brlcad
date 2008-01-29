@@ -37,7 +37,7 @@
 
 #include "adrt_common.h"
 
-extern int common_db_load(common_db_t *db, char *path);
+extern int common_db_load(common_db_t* db, const char* path);
 
 #endif
 

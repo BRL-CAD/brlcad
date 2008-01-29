@@ -48,7 +48,7 @@ STATIC void do_Char(int c, int xpos, int ypos, int odd);
 void menu_char(int x_adjust, int menu_wid, int odd, register unsigned char *menu_border);
 
 void
-do_line(int xpos, int ypos, register char *line, RGBpixel (*menu_border))
+do_line(int xpos, int ypos, register const char* line, RGBpixel (*menu_border))
 
 
 		       /* Menu outline color, if NULL, do filtering. */

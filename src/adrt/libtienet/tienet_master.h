@@ -40,12 +40,12 @@
 
 extern void   	tienet_master_init(int port, void fcb_result(tienet_buffer_t *result), char *list, char *exec, int buffer_size, int ver_key, int verbose);
 extern void	tienet_master_free();
-extern void	tienet_master_push(void *data, int size);
+extern void	tienet_master_push(const void *data, size_t size);
 extern void	tienet_master_begin();
 extern void	tienet_master_end();
 extern void	tienet_master_wait();
 extern void	tienet_master_shutdown();
-extern void	tienet_master_broadcast(void *mesg, int mesg_len);
+extern void	tienet_master_broadcast(const void* mesg, size_t mesg_len);
 extern uint64_t	tienet_master_get_rays_fired();
 
 extern int	tienet_master_active_slaves;

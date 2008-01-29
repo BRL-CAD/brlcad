@@ -114,7 +114,7 @@ struct nmllist
 		of the scrolling region.
  */
 void
-HmBanner( char *pgmname, int borderchr )
+HmBanner( const char *pgmname, int borderchr )
 {
     register int    co;
     register char   *p;
@@ -533,12 +533,12 @@ HmHelp( register HmWindow *win, int entry )
 	}
 
 /*
-	void	HmError( char *str )
+	void	HmError( const char *str )
 
 	Display str on line HmYCOMMO.
  */
 void
-HmError( char *str )
+HmError( const char *str )
 {
 	(void) ScMvCursor( HmLftMenu, HmYCOMMO );
 	(void) ScClrEOL();

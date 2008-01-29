@@ -264,12 +264,12 @@ extern void	HmRedraw( void );
 
 /**
 
-	void	HmError( char *string )
+	void	HmError( const char *string )
 
 	HmError() will display string on line HmYCOMMO.
 
 **/
-extern void	HmError( char *str );
+extern void	HmError( const char *str );
 
 #define HmYCOMMO	(HmTopMenu+HmMaxVis+HmHGTBORDER)
 #define HmYPROMPT	(HmYCOMMO+1)

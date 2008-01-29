@@ -54,11 +54,11 @@ void util_image_free() {
 }
 
 
-void util_image_load_ppm(char *filename, void *image, int *w, int *h) {
+void util_image_load_ppm(const char* filename, void* image, int* w, int* h) {
 }
 
 
-void util_image_load_raw(char *filename, void *image, int *w, int *h) {
+void util_image_load_raw(const char* filename, void* image, int* w, int* h) {
   FILE	*fh;
   unsigned long dest_len;
   void	*src;
@@ -86,7 +86,7 @@ void util_image_load_raw(char *filename, void *image, int *w, int *h) {
 }
 
 
-void util_image_save_ppm(char *filename, void *image, int w, int h) {
+void util_image_save_ppm(const char* filename, const void* image, const int w, const int h) {
   FILE *fh;
   char text[16];
 
@@ -106,7 +106,7 @@ void util_image_save_ppm(char *filename, void *image, int w, int h) {
 /*
 * Format, 128-bit image, 4 floats, RGBA
 */
-void util_image_save_raw(char *filename, void *image, int w, int h) {
+void util_image_save_raw(const char* filename, const void* image, const int w, const int h) {
   FILE	*fh;
   unsigned char	*dest;
   unsigned long	dest_len;
@@ -131,7 +131,7 @@ void util_image_save_raw(char *filename, void *image, int w, int h) {
 }
 
 
-void util_image_convert_128to24(void *image24, void *image128, int w, int h) {
+void util_image_convert_128to24(void* image24, const void* image128, const int w, const int h) {
   int i;
 
   for (i = 0; i < w * h; i++) {
@@ -142,7 +142,7 @@ void util_image_convert_128to24(void *image24, void *image128, int w, int h) {
 }
 
 
-void util_image_convert_32to24(void *image24, void *image32, int w, int h, int endian) {
+void util_image_convert_32to24(void *image24, const void *image32, const int w, const int h, const int endian) {
   int i;
 
   for (i = 0; i < w * h; i++) {

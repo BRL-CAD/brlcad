@@ -864,7 +864,7 @@ prntScr( const char *format, ... )
 		va_list	ap;
 
 	va_start( ap, format );
-	format  = va_arg( ap, char * );
+	format  = va_arg( ap, const char * );
 
 	if ( tty )
 		{

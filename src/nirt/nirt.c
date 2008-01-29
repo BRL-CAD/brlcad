@@ -60,7 +60,7 @@ extern void	cm_debug();
 extern void	cm_attr();
 
 
-char	usage[] = "\
+const char	usage[] = "\
 Usage: 'nirt [options] model.g objects...'\n\
 Options:\n\
  -b        back out of geometry before first shot\n\
@@ -77,7 +77,7 @@ Options:\n\
 ";
 
 char		*db_name;	/* the name of the BRL-CAD geometry file */
-com_table	ComTab[] = {
+const com_table	ComTab[] = {
     { "attr", cm_attr, "select attributes", "<-f(flush) | -p(print) | attribute_name>" },
     { "ae", az_el, "set/query azimuth and elevation",
       "azimuth elevation" },

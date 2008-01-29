@@ -42,10 +42,10 @@ struct dispatch	dir[256];	/* Directory for character font. */
 int width = 0,	/* Size of current character. */
 		height = 0;
 
-extern void fb_log(char *fmt, ...);
+extern void fb_log(const char* fmt, ...);
 
 int
-get_Font(char *fontname)
+get_Font(const char* fontname)
 {	FILE		*newff;
 		struct header	lochdr;
 		static char fname[FONTNAMESZ];

@@ -43,7 +43,7 @@
 
 
 extern	int	common_pack(common_db_t *db, void **app_data, char *proj);
-extern	void	common_pack_write(void **dest, int *ind, void *src, int size);
+extern	void	common_pack_write(void** dest, int* ind, const void* src, size_t size);
 
 extern	int	common_pack_trinum;
 

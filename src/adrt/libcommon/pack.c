@@ -46,41 +46,41 @@
 #define M *1024 K
 
 
-void	common_pack_write(void **dest, int *ind, void *src, int size);
+void	common_pack_write(void **dest, int *ind, const void *src, size_t size);
 
 int	common_pack(common_db_t *db, void **app_data, char *proj);
 void	common_pack_camera(common_db_t *db, void **app_data, int *app_ind);
 void	common_pack_env(common_db_t *db, void **app_data, int *app_ind);
-void	common_pack_prop(void **app_data, int *app_ind, char *filename);
-void	common_pack_texture(void **app_data, int *app_ind, char *filename);
+void	common_pack_prop(void **app_data, int *app_ind, const char *filename);
+void	common_pack_texture(void **app_data, int *app_ind, const char *filename);
 
-void	common_pack_mesh(common_db_t *db, void **app_data, int *app_ind, char *filename);
-void	common_pack_mesh_adrt(common_db_t *db, void **app_data, int *app_ind, char *filename);
-void    common_pack_kdtree_cache(common_db_t *db, void **app_data, int *app_ind, char *filename);
-void	common_pack_mesh_map(void **app_data, int *app_ind, char *filename);
+void	common_pack_mesh(common_db_t *db, void **app_data, int *app_ind, const char *filename);
+void	common_pack_mesh_adrt(common_db_t *db, void **app_data, int *app_ind, const char *filename);
+void    common_pack_kdtree_cache(common_db_t *db, void **app_data, int *app_ind, const char *filename);
+void	common_pack_mesh_map(void **app_data, int *app_ind, const char *filename);
 
 int	common_pack_app_size;
 int	common_pack_app_mem;
 int	common_pack_trinum;
 
 
-void common_pack_write(void **dest, int *ind, void *src, int size) {
+void common_pack_write(void **dest, int *ind, const void *src, size_t size) {
   if ((int)(*ind + size) > (int)common_pack_app_size)
     common_pack_app_size = *ind + size;
 
   if (common_pack_app_size > common_pack_app_mem) {
     common_pack_app_mem = common_pack_app_size + (16 M);
-    *dest = realloc(*dest, common_pack_app_mem);
+    *dest = realloc(*dest, (size_t)common_pack_app_mem);
   }
 
-  memcpy(&(((char *)*dest)[*ind]), src, size);
+  memcpy(&(((char *)*dest)[*ind]), src, (size_t)size);
   *ind += size;
 }
 
 
 int common_pack(common_db_t *db, void **app_data, char *proj) {
   short s;
-  int app_ind, i;
+  int app_ind;
 
   common_pack_app_size = 0;
   common_pack_app_mem = 0;
@@ -117,13 +117,12 @@ int common_pack(common_db_t *db, void **app_data, char *proj) {
   common_pack_mesh_map(app_data, &app_ind, db->env.mesh_map_file);
 
 
-  *app_data = realloc(*app_data, common_pack_app_size);
+  *app_data = realloc(*app_data, (size_t)common_pack_app_size);
   return(common_pack_app_size);
 }
 
 
 void common_pack_camera(common_db_t *db, void **app_data, int *app_ind) {
-  short s;
   unsigned int marker, size;
 
   marker = *app_ind;
@@ -187,7 +186,7 @@ void common_pack_env(common_db_t *db, void **app_data, int *app_ind) {
 }
 
 
-void common_pack_prop(void **app_data, int *app_ind, char *filename) {
+void common_pack_prop(void** app_data, int* app_ind, const char* filename) {
   FILE *fh;
   common_prop_t def_prop;
   char line[ADRT_NAME_SIZE], name[ADRT_NAME_SIZE], *token;
@@ -281,7 +280,7 @@ void common_pack_prop(void **app_data, int *app_ind, char *filename) {
 }
 
 
-void common_pack_texture(void **app_data, int *app_ind, char *filename) {
+void common_pack_texture(void** app_data, int* app_ind, const char* filename) {
   FILE *fh;
   char line[256], *token;
   unsigned char c;
@@ -403,7 +402,7 @@ void common_pack_texture(void **app_data, int *app_ind, char *filename) {
 
       common_pack_write(app_data, app_ind, &tile, sizeof(unsigned int));
     } else if (!strcmp("camo", token)) {
-      tfloat size;
+      tfloat toksize;
       int octaves, absolute;
       TIE_3 color1, color2, color3;
 
@@ -412,7 +411,7 @@ void common_pack_texture(void **app_data, int *app_ind, char *filename) {
 
       /* size */
       token = strtok(NULL, ",");
-      size = atof(token);
+      toksize = atof(token);
 
       /* octaves */
       token = strtok(NULL, ",");
@@ -447,14 +446,14 @@ void common_pack_texture(void **app_data, int *app_ind, char *filename) {
       if (token[strlen(token)-1] == '\n') token[strlen(token)-1] = 0;
       color3.v[2] = atof(token);
 
-      common_pack_write(app_data, app_ind, &size, sizeof(tfloat));
+      common_pack_write(app_data, app_ind, &toksize, sizeof(tfloat));
       common_pack_write(app_data, app_ind, &octaves, sizeof(int));
       common_pack_write(app_data, app_ind, &absolute, sizeof(int));
       common_pack_write(app_data, app_ind, &color1, sizeof(TIE_3));
       common_pack_write(app_data, app_ind, &color2, sizeof(TIE_3));
       common_pack_write(app_data, app_ind, &color3, sizeof(TIE_3));
     } else if (!strcmp("clouds", token)) {
-      tfloat size;
+      tfloat toksize;
       int octaves, absolute;
       TIE_3 scale, translate;
 
@@ -463,7 +462,7 @@ void common_pack_texture(void **app_data, int *app_ind, char *filename) {
 
       /* size */
       token = strtok(NULL, ",");
-      size = atof(token);
+      toksize = atof(token);
 
       /* octaves */
       token = strtok(NULL, ",");
@@ -490,7 +489,7 @@ void common_pack_texture(void **app_data, int *app_ind, char *filename) {
       if (token[strlen(token)-1] == '\n') token[strlen(token)-1] = 0;
       translate.v[2] = atof(token);
 
-      common_pack_write(app_data, app_ind, &size, sizeof(tfloat));
+      common_pack_write(app_data, app_ind, &toksize, sizeof(tfloat));
       common_pack_write(app_data, app_ind, &octaves, sizeof(int));
       common_pack_write(app_data, app_ind, &absolute, sizeof(int));
       common_pack_write(app_data, app_ind, &scale, sizeof(TIE_3));
@@ -531,19 +530,20 @@ void common_pack_texture(void **app_data, int *app_ind, char *filename) {
 }
 
 
-void common_pack_mesh(common_db_t *db, void **app_data, int *app_ind, char *filename) {
+void common_pack_mesh(common_db_t* db, void** app_data, int* app_ind, const char* filename) {
   common_pack_mesh_adrt(db, app_data, app_ind, filename);
 }
 
 
-void common_pack_mesh_adrt(common_db_t *db, void **app_data, int *app_ind, char *filename) {
+void common_pack_mesh_adrt(common_db_t* db, void** app_data, int* app_ind, const char* filename) {
   FILE *fh;
   TIE_3 v[48];
-  char meshname[256], texturename[256];
+  char meshname[256];
   unsigned char c;
   unsigned short s, endian;
   int matrixind;
-  unsigned int face[144], marker_size, size, i, j, k, n, num, end, total_tri_num;
+  unsigned int face[144], marker_size, size, i, n, num, total_tri_num;
+  long end;
 
 
   fh = fopen(filename, "rb");
@@ -656,7 +656,7 @@ void common_pack_mesh_adrt(common_db_t *db, void **app_data, int *app_ind, char 
 }
 
 
-void common_pack_kdtree_cache(common_db_t *db, void **app_data, int *app_ind, char *filename) {
+void common_pack_kdtree_cache(common_db_t* db, void** app_data, int* app_ind, const char* filename) {
   FILE *fh;
   void *kdcache;
   unsigned int marker, size;
@@ -696,7 +696,7 @@ void common_pack_kdtree_cache(common_db_t *db, void **app_data, int *app_ind, ch
 }
 
 
-void common_pack_mesh_map(void **app_data, int *app_ind, char *filename) {
+void common_pack_mesh_map(void** app_data, int* app_ind, const char* filename) {
   FILE *fh;
   unsigned int marker, size;
   void *map;

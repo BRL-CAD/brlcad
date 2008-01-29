@@ -56,9 +56,9 @@ void	common_unpack_texture(int socknum);
 void	common_unpack_mesh(common_db_t *db, int socknum, tie_t *tie);
 void	common_unpack_kdtree_cache(int socknum, tie_t *tie);
 void	common_unpack_mesh_map(common_db_t *db, int socknum);
-void	common_unpack_mesh_link(char *mesh_name, char *prop_name, common_db_t *db);
-void	common_unpack_prop_lookup(char *name, common_prop_t **prop);
-void	common_unpack_texture_lookup(char *name, texture_t **texture);
+void	common_unpack_mesh_link(const char* mesh_name, const char* prop_name, common_db_t* db);
+void	common_unpack_prop_lookup(const char* name, common_prop_t** prop);
+void	common_unpack_texture_lookup(const char* name, texture_t** texture);
 
 
 void common_unpack(common_db_t *db, tie_t *tie, util_camera_t *camera, int socknum) {
@@ -678,7 +678,7 @@ void common_unpack_mesh_map(common_db_t *db, int socknum) {
 }
 
 
-void common_unpack_mesh_link(char *mesh_name, char *prop_name, common_db_t *db) {
+void common_unpack_mesh_link(const char* mesh_name, const char* prop_name, common_db_t* db) {
   unsigned int i;
 
 
@@ -693,7 +693,7 @@ void common_unpack_mesh_link(char *mesh_name, char *prop_name, common_db_t *db) 
 }
 
 
-void common_unpack_prop_lookup(char *name, common_prop_t **prop) {
+void common_unpack_prop_lookup(const char* name, common_prop_t** prop) {
   unsigned int i;
 
   for (i = 0; i < prop_num; i++)
@@ -708,7 +708,7 @@ void common_unpack_prop_lookup(char *name, common_prop_t **prop) {
 }
 
 
-void common_unpack_texture_lookup(char *name, texture_t **texture) {
+void common_unpack_texture_lookup(const char* name, texture_t** texture) {
   unsigned int i;
 
   for (i = 0; i < texture_num; i++)

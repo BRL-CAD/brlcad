@@ -105,7 +105,7 @@ static void* bench_ipc(void *ptr) {
 }
 
 
-void bench(char *proj, int cache, int image) {
+void bench(const char* proj, int cache, int image) {
   struct sockaddr_in server;
   struct sockaddr_in client;
   struct hostent h;

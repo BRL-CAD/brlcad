@@ -42,14 +42,14 @@
 void	util_image_init();
 void	util_image_free();
 
-void	util_image_load_ppm(char *filename, void *image, int *w, int *h);
-void	util_image_save_ppm(char *filename, void *image, int w, int h);
+void	util_image_load_ppm(const char* filename, void* image, int* w, int* h);
+void	util_image_save_ppm(const char* filename, const void* image, const int w, const int h);
 
-void	util_image_load_raw(char *filename, void *image, int *w, int *h);
-void	util_image_save_raw(char *filename, void *image, int w, int h);
+void	util_image_load_raw(const char* filename, void *image, int* w, int* h);
+void	util_image_save_raw(const char* filename, const void* image, const int w, const int h);
 
-void	util_image_convert_128to24(void *image24, void *image128, int w, int h);
-void	util_image_convert_32to24(void *image24, void *image32, int w, int h, int endian);
+void	util_image_convert_128to24(void* image24, const void* image128, const int w, const int h);
+void	util_image_convert_32to24(void* image24, const void* image32, const int w, const int h, const int endian);
 
 extern tfloat	*rise_image_raw;
 

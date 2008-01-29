@@ -44,7 +44,7 @@
 
 
 /* The table of output values */
-outval ValTab[] = {
+const outval ValTab[] = {
     { 0, VTI_LITERAL },
     { "x_orig", VTI_X_ORIG, OIT_FLOAT },
     { "y_orig", VTI_Y_ORIG, OIT_FLOAT },
@@ -115,7 +115,7 @@ static char	def_sf_name[] = DEF_SF_NAME;
 char		*sf_name = def_sf_name;		/* Name of state file */
 
 FILE		*outf = (FILE *)NULL;
-char		*def_fmt[] = {
+const char	*def_fmt[] = {
     "\"Origin (x y z) = (%.8f %.8f %.8f)  (h v d) = (%.4f %.4f %.4f)\nDirection (x y z) = (%.8f %.8f %.8f)  (az el) = (%.8f %.8f)\n\" x_orig y_orig z_orig h v d_orig x_dir y_dir z_dir a e",
     "\"    Region Name               Entry (x y z)              LOS  Obliq_in Attrib\n\"",
     "\"%-20s (%9.4f %9.4f %9.4f) %8.4f %8.4f %s\n\" reg_name x_in y_in z_in los obliq_in attributes",
@@ -134,14 +134,14 @@ extern char			*ocname[];
 
 
 void
-format_output (char *buffer, com_table	*ctp)
+format_output (const char* buffer, com_table* ctp)
 {
-    char	*bp = buffer;	/* was  + 1; */
+    const char* bp = buffer;	/* was  + 1; */
     int		fmt_type = FMT_NONE;
     int		i;
     int		use_defaults = 0;
 
-    void	parse_fmt(char *uoutspec, int outcom_type);
+    void	parse_fmt(const char* uoutspec, int outcom_type);
     void	show_ospec(outitem *oil);
 
     /* Handle no args, arg=='?', and obvious bad arg */
@@ -219,7 +219,7 @@ format_output (char *buffer, com_table	*ctp)
  * outcom_type is the type of output command
  */
 void
-parse_fmt(char *uoutspec, int outcom_type)
+parse_fmt(const char *uoutspec, int outcom_type)
 {
     char	*of;		/* Format for current output item */
     char	*up;
@@ -639,7 +639,7 @@ check_conv_spec (outitem *oip)
 
 
 void
-direct_output(char *buffer, com_table *ctp)
+direct_output(const char *buffer, com_table *ctp)
 {
     int 	i = 0;      /* current position on the *buffer        */
     FILE	*newf;
@@ -702,7 +702,7 @@ direct_output(char *buffer, com_table *ctp)
 
 
 void
-state_file(char *buffer, com_table *ctp)
+state_file(const char *buffer, com_table *ctp)
 {
     int 	i = 0;      /* current position on the *buffer        */
     static char	*new_name;
@@ -738,10 +738,10 @@ state_file(char *buffer, com_table *ctp)
 
 
 void
-dump_state(char *buffer, com_table *ctp)
+dump_state(const char *buffer, com_table *ctp)
 {
     char	*c;
-    static char	fmt_char[] = {'r', 'h', 'p', 'f', 'm', 'o'};
+    static const char	fmt_char[] = {'r', 'h', 'p', 'f', 'm', 'o'};
     FILE	*sfPtr;
     int		f;
     outitem	*oip;		/* Pointer into list of output items */

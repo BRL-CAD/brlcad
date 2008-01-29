@@ -61,9 +61,9 @@ static char *usage[] =
 
 void init_Status(void);
 void prnt_Status(void), prnt_Usage(void);
-void prnt_Prompt(char *msg);
+void prnt_Prompt(const char *msg);
 void prnt_Macro(register char *bufp);
-void prnt_Rectangle(char *str, register Rectangle *rectp);
+void prnt_Rectangle(const char *str, register Rectangle *rectp);
 /**void prnt_FBC();**/
 
 /*	p r n t _ S t a t u s ( ) */
@@ -113,13 +113,13 @@ init_Status(void)
 	(void) HmCursor();
 	while ( *(p+1) )
 		{
-		bu_strlcpy( buf, *p++, template_co );
+		bu_strlcpy( buf, *p++, (size_t)template_co );
 
 		(void) printf( "%s\n\r", buf );
 		}
 	/* Last line is reverse-video if possible. */
 	(void) SetStandout();
-	bu_strlcpy( buf, *p++, template_co );
+	bu_strlcpy( buf, *p++, (size_t)template_co );
 
 	(void) printf( "%s\n\r", buf );
 	(void) ClrStandout();
@@ -152,7 +152,7 @@ prnt_Pixel(char *msg, RGBpixel (*pixelp))
 	return;
 	}
 
-#define Va_Decl( _func )	_func(char *fmt, ...)
+#define Va_Decl( _func )	_func(const char *fmt, ...)
 #define Va_Start()		va_list	ap; va_start( ap, fmt )
 #define Va_End()		va_end( ap )
 #define Va_Print( _p )		(void) vfprintf( _p, fmt, ap )
@@ -199,7 +199,8 @@ fb_log (const char *fmt, ...)	/* de-macro'd due to fmt now being const */
 /* VARARGS */
 void
 Va_Decl( prnt_Scroll )
-	{	extern char *DL, *CS;
+{
+    extern char *DL, *CS;
 	Va_Start();
 	if ( tty )
 		{
@@ -317,7 +318,7 @@ prnt_FBC()
 #endif
 
 void
-prnt_Prompt(char *msg)
+prnt_Prompt(const char *msg)
 {
 	PROMPT_MOVE();
 	(void) ClrEOL();
@@ -357,7 +358,7 @@ prnt_Macro(register char *bufp)
 	}
 
 void
-prnt_Rectangle(char *str, register Rectangle *rectp)
+prnt_Rectangle(const char *str, register Rectangle *rectp)
 {
 	prnt_Scroll(	"%s {<%d,%d>,<%d,%d>}\n",
 			str,

@@ -37,8 +37,8 @@
 #include "tienet_util.h"
 
 
-void tienet_flip(void *src, void *dest, int size) {
-  int   i;
+void tienet_flip(const void* src, void* dest, size_t size) {
+  size_t i;
   char  b;
   for (i = 0; i < size/2; i++) {
     b = ((char*)src)[i];
@@ -48,7 +48,7 @@ void tienet_flip(void *src, void *dest, int size) {
 }
 
 
-int tienet_send(int socket, void *data, int size, int flip) {
+int tienet_send(int socket, const void* data, size_t size, const int flip) {
   fd_set	set;
   int		ind = 0, r;
 

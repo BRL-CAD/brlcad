@@ -48,7 +48,7 @@ ring_Bell(void)
 	Get a line of input.
  */
 int
-get_Input(char *inbuf, int bufsz, char *msg)
+get_Input(char* inbuf, size_t bufsz, const char* msg)
 {	static char buffer[BUFSIZ];
 		register char *p = buffer;
 		register int c;
@@ -265,7 +265,7 @@ get_Input(char *inbuf, int bufsz, char *msg)
 	TENEX-style command completion.
  */
 Func_Tab *
-get_Func_Name(char *inbuf, int bufsz, char *msg)
+get_Func_Name(char* inbuf, size_t bufsz, const char* msg)
 {	extern Try	*try_rootp;
 		extern Func_Tab	*get_Try(register char *name, register Try *tryp);
 		static char buffer[BUFSIZ];

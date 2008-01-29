@@ -96,11 +96,11 @@ get_our_hostname(void)
  *  Used by host_lookup_by_addr, too.
  */
 struct ihost *
-host_lookup_by_hostent(struct hostent *addr, int enter)
+host_lookup_by_hostent(const struct hostent * addr, int enter)
 {
 	register struct ihost	*ihp;
-	struct hostent	*addr2;
-	struct hostent	*addr3;
+	const struct hostent *	addr2;
+	const struct hostent *	addr3;
 
 	addr2 = gethostbyname(addr->h_name);
 	if ( addr != addr2 )  {
@@ -141,7 +141,7 @@ host_lookup_by_hostent(struct hostent *addr, int enter)
  *  This routine is used to handle unexpected volunteers.
  */
 struct ihost *
-make_default_host(char *name)
+make_default_host(const char* name)
 {
 	register struct ihost	*ihp;
 
@@ -167,7 +167,7 @@ make_default_host(char *name)
  *			H O S T _ L O O K U P _ B Y _ A D D R
  */
 struct ihost *
-host_lookup_by_addr(struct sockaddr_in *from, int enter)
+host_lookup_by_addr(const struct sockaddr_in * from, int enter)
 {
 	register struct ihost	*ihp;
 	struct hostent	*addr;
@@ -209,7 +209,7 @@ host_lookup_by_addr(struct sockaddr_in *from, int enter)
  *			H O S T _ L O O K U P _ B Y _ N A M E
  */
 struct ihost *
-host_lookup_by_name(char *name, int enter)
+host_lookup_by_name(const char* name, int enter)
 {
 	struct sockaddr_in	sockhim;
 	struct hostent		*addr;

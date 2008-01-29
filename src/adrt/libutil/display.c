@@ -162,7 +162,7 @@ void util_display_draw(void *frame) {
 }
 
 
-void util_display_text(char *text, int x, int y, int jh, int jv) {
+void util_display_text(const char* text, int x, int y, int jh, int jv) {
   SDL_Rect font, dest;
   int i, loc_x, loc_y;
 

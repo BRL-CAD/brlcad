@@ -45,7 +45,7 @@ static const char RCSid[] = "@(#) try.c 2.1, modified 12/9/86 at 15:54:34, archi
 			Malloc_Bomb(); \
 			}
 int
-add_Try(Func_Tab *ftbl, register char *name, register Try **trypp)
+add_Try(Func_Tab* ftbl, register const char* name, register Try** trypp)
 {	register Try	*curp;
 	if ( *name == NUL )
 		{ /* We are finished, make leaf node. */

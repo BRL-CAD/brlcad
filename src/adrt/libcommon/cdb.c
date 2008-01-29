@@ -29,13 +29,15 @@
 
 #include "cdb.h"
 #include <string.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 #include "canim.h"
 #include "env.h"
 
 
-int common_db_load(common_db_t *db, char *path) {
+int common_db_load(common_db_t *db, const char *path) {
   char proj_path[ADRT_NAME_SIZE], *path_ptr;
-  int i;
 
   /* Parse path out of proj file and chdir to it */
   strncpy(proj_path, path, sizeof(proj_path));
