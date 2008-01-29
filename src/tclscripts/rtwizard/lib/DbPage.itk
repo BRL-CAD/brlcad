@@ -107,6 +107,7 @@ namespace eval RtWizard {
 	private {
 	    method onOK {}
 	    method onCancel {}
+	    method activateOKButton {}
 	}
     }
 
@@ -155,8 +156,8 @@ namespace eval RtWizard {
 	#
 	itk_component add fileSelect {
 	    ::iwidgets::fileselectionbox $cs.#auto \
-		    -height 340
-
+		-height 340 \
+		-selectfilecommand [::itcl::code $this activateOKButton] 
 	} {
 	    usual
 	}
@@ -177,8 +178,9 @@ namespace eval RtWizard {
 	}
 
 	$itk_component(bbox) add OK \
-		-text "OK" \
-		-command "[::itcl::code $this onOK]"
+	    -text "OK" \
+	    -command "[::itcl::code $this onOK]" \
+	    -state disabled
 
 	$itk_component(bbox) add cancel \
 		-text "Cancel" \
@@ -277,7 +279,13 @@ namespace eval RtWizard {
 #	$::wizardInstance selectPrev
     }
 
-
+    #
+    # activateOKButton - called the first time a file is selected
+    #
+    itcl::body DbPage::activateOKButton {} {
+	$itk_component(bbox) buttonconfigure OK -state normal
+	$itk_component(fileSelect) configure -selectfilecommand ""
+    }
 }
 #end namespace
 
