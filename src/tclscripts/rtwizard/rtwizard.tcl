@@ -75,6 +75,7 @@ namespace eval RtWizard {
     set helpFont {-family helvetica -size 12 \
 	    -slant italic}
 
+
     #
     # main
     #
@@ -156,13 +157,10 @@ namespace eval RtWizard {
 	$fb inform "Support for image type F loaded." 2
 
 	#
-	# XXX need to disable all menu options
-	#
-
-	#
 	# Pack the wizard
 	#
 	pack $w -expand 1 -fill both
+	wm protocol . WM_DELETE_WINDOW ::exit
 	$fb inform "Megawidgets packed." 5
 
 	#
@@ -191,7 +189,7 @@ namespace eval RtWizard {
 
 	    #
 	    # Start up the gui, and run until the dbFile has
-	    # be specified.
+	    # been specified.
 	    #
 	    vwait ::RtWizard::dbFile
 
@@ -200,6 +198,9 @@ namespace eval RtWizard {
 	    #
 	    wm deiconify $fb
 	}
+
+	$w activateMenu image
+	$w activateMenu help
 
 	#
 	# At this point, the database should be specified.
@@ -236,6 +237,7 @@ namespace eval RtWizard {
     }
 
 }
+
 
 #
 # Start main
