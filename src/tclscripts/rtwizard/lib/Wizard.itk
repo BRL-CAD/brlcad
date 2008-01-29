@@ -125,6 +125,7 @@ namespace eval RtWizard {
 	    method preview {}
 
 	    method updateRenderMenu {}
+	    method activateMenu {token}
 	}
 
 	private {
@@ -264,6 +265,7 @@ namespace eval RtWizard {
 	#
 	$itk_component(menubar) add menubutton image \
 		-text "Image" \
+		-state disabled \
 		-menu {
 	    options -tearoff false -selectcolor blue
 	}
@@ -304,6 +306,7 @@ namespace eval RtWizard {
 	#
 	$itk_component(menubar) add menubutton help \
 		-text Help \
+		-state disabled \
 		-menu {
 	    options -tearoff true -selectcolor green
 	}
@@ -592,6 +595,11 @@ namespace eval RtWizard {
 	    $itk_component(menubar) menuconfigure render \
 		    -state disabled
 	}
+    }
+
+    itcl::body Wizard::activateMenu {token} {
+	catch {$itk_component(menubar) menuconfigure $token \
+		   -state normal}
     }
 
 }; # end namespace
