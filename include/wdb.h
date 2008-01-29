@@ -117,10 +117,14 @@ struct wdb_pipept {
 
 struct wdb_metaballpt {
 	struct bu_list	l;
-	point_t		coord;
+	int		type;
 	fastf_t		fldstr;		/**< @brief  field strength */
 	fastf_t		sweat;		/**< @brief  beta value used for metaball and blob evaluation */
+	point_t		coord;
+	point_t		coord2;
 };
+#define WDB_METABALLPT_TYPE_POINT 0x0
+#define WDB_METABALLPT_TYPE_LINE 0x1
 #define WDB_METABALLPT_NULL	((struct wdb_metaballpt *)0)
 #define WDB_METABALLPT_MAGIC	0x6D627074	/**< @brief  mbpt */
 
