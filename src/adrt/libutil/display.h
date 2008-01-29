@@ -59,7 +59,7 @@ extern SDL_Surface *util_display_buffer;
 extern void util_display_init(int w, int h);
 extern void util_display_free(void);
 extern void util_display_draw(void *frame);
-extern void util_display_text(char *text, int x, int y, int jh, int jv);
+extern void util_display_text(const char *text, int x, int y, int jh, int jv);
 extern void util_display_flush(void);
 extern void util_display_cross(void);
 extern void util_display_flip(void);
