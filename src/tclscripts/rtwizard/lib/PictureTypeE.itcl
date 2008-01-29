@@ -190,7 +190,8 @@ namespace eval RtWizard {
 	#
 	# Get the gamma
 	#
-	set gamma 12 ; #[$gp getIntensity]
+	#set gamma 12 ; #[$gp getIntensity]
+	set gamma [$gp getIntensity]
 
 	#
 	# Run rt to generate the full-color version of the ghost image
