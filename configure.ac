@@ -332,7 +332,7 @@ BC_ARG_ENABLE([build_zlib], [zlib-build], [Build the included zlib compression l
 BC_ARG_ENABLE([build_urt], [urt-build], [Build the included Utah Raster Toolkit], [auto])
 
 # force enable/disable building of openNURBS
-BC_ARG_ENABLE([build_opennurbs], [opennurbs-build], [Build the included openNURBS library], [no])
+BC_ARG_ENABLE([build_opennurbs], [opennurbs-build], [Build the included openNURBS library], [auto])
 
 # force enable/disable building of termlib
 BC_ARG_ENABLE([build_termlib], [termlib-build], [Build the included termlib library], [auto])
