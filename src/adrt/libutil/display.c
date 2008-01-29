@@ -47,7 +47,7 @@
 void util_display_init(int w, int h) { fprintf(stderr, "No SDL support!\n"); exit(-1); }
 void util_display_free(void) {}
 void util_display_draw(void *frame) {}
-void util_display_text(char *text, int x, int y, int jh, int jv) {}
+void util_display_text(const char *text, int x, int y, int jh, int jv) {}
 void util_display_flush(void) {}
 void util_display_cross(void) {}
 void util_display_flip(void) {}
