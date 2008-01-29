@@ -340,7 +340,7 @@ parse_fmt(const char *uoutspec, int outcom_type)
 	    *uos++ = '\0';
 
 	oip->code_nm = 0;
-	for (vtp = ValTab + 1; vtp->name; ++vtp) {
+	for (vtp = (outval *)(ValTab + 1); vtp->name; ++vtp) {
 	    if (strcmp(vtp->name, up) == 0) {
 		oip->code_nm = vtp->code_nm;
 		break;
@@ -493,7 +493,7 @@ print_item (char *buffer, com_table *ctp)
 	if (*bp != '\0')
 	    *bp++ = '\0';
 
-	for (vtp = ValTab + 1; vtp->name; ++vtp) {
+	for (vtp = (outval *)(ValTab + 1); vtp->name; ++vtp) {
 	    if (strcmp(vtp->name, bp0) == 0) {
 		switch (vtp->type) {
 		case OIT_INT:
