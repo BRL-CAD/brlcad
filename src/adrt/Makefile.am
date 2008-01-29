@@ -13,6 +13,7 @@ always_compile = \
 	libtienet \
 	libutil \
 	master \
+	scripts \
 	slave
 
 if BUILD_ADRT
