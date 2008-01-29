@@ -158,9 +158,10 @@ test notebook-6.1 "Hide selected tab" -setup {
 } -body {
     set result [list]
     lappend result [$nb index current] [winfo ismapped $nb.f2]
-    $nb tab $nb.f2 -state hidden
+    $nb hide $nb.f2
     lappend result [$nb index current] [winfo ismapped $nb.f2]
-} -result [list 1 1 2 0]
+    update idletasks; lappend result [winfo ismapped $nb.f3]
+} -result [list 1 1 2 0 1]
 
 # See 1370833
 test notebook-6.2 "Forget selected tab" -setup {
@@ -188,7 +189,7 @@ test notebook-6.3 "Hide first tab when it's the current" -setup {
 } -body {
     set result [list]
     lappend result [$nb index current] [winfo ismapped $nb.f1]
-    $nb tab $nb.f1 -state hidden
+    $nb hide $nb.f1
     lappend result [$nb index current] [winfo ismapped $nb.f1]
 } -result [list 0 1 1 0]
 
@@ -218,7 +219,7 @@ test notebook-6.5 "Hide last tab when it's the current" -setup {
 } -body {
     set result [list]
     lappend result [$nb index current] [winfo ismapped $nb.f3]
-    $nb tab $nb.f3 -state hidden
+    $nb hide $nb.f3
     lappend result [$nb index current] [winfo ismapped $nb.f3]
 } -result [list 2 1 1 0]
 
@@ -248,7 +249,7 @@ test notebook-6.7 "Hide a middle tab when it's the current" -setup {
 } -body {
     set result [list]
     lappend result [$nb index current] [winfo ismapped $nb.f2]
-    $nb tab $nb.f2 -state hidden
+    $nb hide $nb.f2
     lappend result [$nb index current] [winfo ismapped $nb.f2]
 } -result [list 1 1 2 0]
 
@@ -278,7 +279,7 @@ test notebook-6.9 "Hide a non-current tab < current" -setup {
 } -body {
     set result [list]
     lappend result [$nb index current] [winfo ismapped $nb.f2]
-    $nb tab $nb.f1 -state hidden
+    $nb hide $nb.f1
     lappend result [$nb index current] [winfo ismapped $nb.f2]
 } -result [list 1 1 1 1]
 
@@ -308,10 +309,26 @@ test notebook-6.11 "Hide a non-current tab > current" -setup {
 } -body {
     set result [list]
     lappend result [$nb index current] [winfo ismapped $nb.f2]
-    $nb tab $nb.f3 -state hidden
+    $nb hide $nb.f3
     lappend result [$nb index current] [winfo ismapped $nb.f2]
 } -result [list 1 1 1 1]
 
+test notebook-6.12 "Hide and re-add a tab" -setup {
+    pack [set nb [ttk::notebook .nb]]; update
+    $nb add [ttk::frame $nb.f1]
+    $nb add [ttk::frame $nb.f2]
+    $nb add [ttk::frame $nb.f3]
+    $nb select $nb.f2
+} -cleanup  {
+    destroy $nb
+} -body {
+    set result [list]
+    lappend result [$nb index current] [$nb tab $nb.f2 -state]
+    $nb hide $nb.f2
+    lappend result [$nb index current] [$nb tab $nb.f2 -state]
+    $nb add $nb.f2
+    lappend result [$nb index current] [$nb tab $nb.f2 -state]
+} -result [list 1 normal 2 hidden 2 normal]
 
 #
 # Insert:
@@ -426,5 +443,55 @@ test notebook-7.8b "insert new - current tab undisturbed - exhaustive" -body {
 test notebook-7.end "insert - cleanup" -body {
     destroy .nb
 }
+
+test notebook-1817596-1 "insert should autoselect first tab" -body {
+    pack [ttk::notebook .nb]
+    list \
+	[.nb insert end [ttk::label .nb.l1 -text One] -text One] \
+	[.nb select] \
+	;
+} -result [list "" .nb.l1] -cleanup { destroy .nb }
+
+test notebook-1817596-2 "error in insert should have no effect" -body {
+    pack [ttk::notebook .nb]
+    .nb insert end [ttk::label .nb.l1]
+    .nb insert end [ttk::label .nb.l2]
+    list \
+    	[catch { .nb insert .l2 0 -badoption badvalue } err] \
+	[.nb tabs] \
+} -result [list 1 [list .nb.l1 .nb.l2]] -cleanup { destroy .nb }
+
+test notebook-1817596-3 "insert/configure" -body {
+    pack [ttk::notebook .nb]
+    .nb insert end [ttk::label .nb.l0] -text "L0"
+    .nb insert end [ttk::label .nb.l1] -text "L1"
+    .nb insert end [ttk::label .nb.l2] -text "XX"
+    .nb insert 0 2 -text "L2"
+
+    list [.nb tabs] [.nb tab 0 -text] [.nb tab 1 -text] [.nb tab 2 -text]
+
+} -result [list [list .nb.l2 .nb.l0 .nb.l1] L2 L0 L1] -cleanup { destroy .nb }
+
+
+# See #1343984
+test notebook-1343984-1 "don't autoselect on destroy - setup" -body {
+    ttk::notebook .nb
+    set ::history [list]
+    bind TestFrame <Map> { lappend history MAP %W }
+    bind TestFrame <Destroy> { lappend history DESTROY %W }
+    .nb add [ttk::frame .nb.frame1 -class TestFrame] -text "Frame 1"
+    .nb add [ttk::frame .nb.frame2 -class TestFrame] -text "Frame 2"
+    .nb add [ttk::frame .nb.frame3 -class TestFrame] -text "Frame 3"
+    pack .nb -fill both -expand 1
+    update
+    set ::history
+} -result [list MAP .nb.frame1]
+
+test notebook-1343984-2 "don't autoselect on destroy" -body {
+    set ::history [list]
+    destroy .nb
+    update
+    set ::history
+} -result [list DESTROY .nb.frame1 DESTROY .nb.frame2 DESTROY .nb.frame3]
 
 tcltest::cleanupTests

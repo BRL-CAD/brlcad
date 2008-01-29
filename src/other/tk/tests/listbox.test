@@ -2127,20 +2127,20 @@ test listbox-27.1 {widget deletion while active} {
 } 0
 
 test listbox-28.1 {listbox -activestyle} {
-    catch {destroy .l}
+    destroy .l
     listbox .l -activ non
     .l cget -activestyle
 } none
 test listbox-28.2 {listbox -activestyle} {
-    catch {destroy .l}
+    destroy .l
     listbox .l
     .l cget -activestyle
-} underline
-test listbox-28.3 {listbox -activestyle} {
-    catch {destroy .l}
-    listbox .l -activestyle dot
-    .l cget -activestyle
 } dotbox
+test listbox-28.3 {listbox -activestyle} {
+    destroy .l
+    listbox .l -activestyle und
+    .l cget -activestyle
+} underline
 
 test listbox-29.1 {listbox selection behavior, -state disabled} {
     destroy .l

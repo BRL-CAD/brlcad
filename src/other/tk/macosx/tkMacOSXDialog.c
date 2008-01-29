@@ -38,14 +38,14 @@
  * The following structures are used in the GetFileName() function. They store
  * information about the file dialog and the file filters.
  */
-
-typedef struct OpenFileData {
-    FileFilterList fl;		/* List of file filters. */
-    SInt16 curType;		/* The filetype currently being listed. */
-    short popupItem;		/* Item number of the popup in the dialog. */
-    int usePopup;		/* True if we show the popup menu (this is
-				 * an open operation and the -filetypes
-				 * option is set). */
+typedef struct _OpenFileData {
+    FileFilterList fl;          /* List of file filters.                   */
+    SInt16 curType;             /* The filetype currently being listed.    */
+    short initialType;          /* Type to use initially                   */
+    short popupItem;            /* Item number of the popup in the dialog. */
+    short usePopup;             /* True if we show the popup menu (this    */
+                                /* is an open operation and the            */
+                                /* -filetypes option is set).              */
 } OpenFileData;
 
 typedef struct NavHandlerUserData {
@@ -85,7 +85,8 @@ static int		NavServicesGetFile(Tcl_Interp *interp,
 			    OpenFileData *ofd, AEDesc *initialDescPtr,
 			    char *initialFile, AEDescList *selectDescPtr,
 			    CFStringRef title, CFStringRef message,
-			    int multiple, int isOpen, Tk_Window parent);
+			    const char *initialType, int multiple, int isOpen,
+			    Tk_Window parent);
 static int		HandleInitialDirectory(Tcl_Interp *interp,
 			    char *initialFile, char *initialDir, FSRef *dirRef,
 			    AEDescList *selectDescPtr, AEDesc *dirDescPtr);
@@ -261,13 +262,16 @@ Tk_GetOpenFileObjCmd(
     AEDesc *initialPtr = NULL;
     AEDescList selectDesc = {typeNull, NULL};
     char *initialFile = NULL, *initialDir = NULL;
+    Tcl_Obj *typeVariablePtr = NULL;
+    const char *initialtype = NULL;
     static const char *openOptionStrings[] = {
 	"-defaultextension", "-filetypes", "-initialdir", "-initialfile",
-	"-message", "-multiple", "-parent", "-title", NULL
+	"-message", "-multiple", "-parent", "-title", "-typevariable", NULL
     };
     enum openOptions {
 	OPEN_DEFAULT, OPEN_FILETYPES, OPEN_INITDIR, OPEN_INITFILE,
-	OPEN_MESSAGE, OPEN_MULTIPLE, OPEN_PARENT, OPEN_TITLE
+	OPEN_MESSAGE, OPEN_MULTIPLE, OPEN_PARENT, OPEN_TITLE,
+	OPEN_TYPEVARIABLE,
     };
 
     if (!fileDlgInited) {
@@ -275,6 +279,7 @@ Tk_GetOpenFileObjCmd(
     }
     TkInitFileFilters(&ofd.fl);
     ofd.curType = 0;
+    ofd.initialType = -1;
     ofd.popupItem = OPEN_POPUP_ITEM;
     ofd.usePopup = 1;
 
@@ -338,6 +343,9 @@ Tk_GetOpenFileObjCmd(
 		title = CFStringCreateWithBytes(NULL, (unsigned char*)
 			choice, choiceLen, kCFStringEncodingUTF8, false);
 		break;
+	    case OPEN_TYPEVARIABLE:
+	        typeVariablePtr = objv[i + 1];
+	        break;
 	}
     }
 
@@ -345,12 +353,25 @@ Tk_GetOpenFileObjCmd(
 	    &selectDesc, &initialDesc) != TCL_OK) {
 	goto end;
     }
-
     if (initialDesc.descriptorType == typeFSRef) {
 	initialPtr = &initialDesc;
     }
+    if (typeVariablePtr) {
+	initialtype = Tcl_GetVar(interp, Tcl_GetString(typeVariablePtr), 0);
+    }
     result = NavServicesGetFile(interp, &ofd, initialPtr, NULL, &selectDesc,
-	    title, message, multiple, OPEN_FILE, parent);
+	    title, message, initialtype, multiple, OPEN_FILE, parent);
+
+    if (typeVariablePtr) {
+	FileFilter *filterPtr = ofd.fl.filters;
+	int i = ofd.curType;
+
+	while (filterPtr && i-- > 0) {
+	    filterPtr = filterPtr->next;
+	}
+	Tcl_SetVar(interp, Tcl_GetString(typeVariablePtr), filterPtr->name, 0);
+    }
+
 end:
     TkFreeFileFilters(&ofd.fl);
     if (initialDesc.dataHandle) {
@@ -401,11 +422,11 @@ Tk_GetSaveFileObjCmd(
     OpenFileData ofd;
     static const char *saveOptionStrings[] = {
 	"-defaultextension", "-filetypes", "-initialdir", "-initialfile",
-	"-message", "-parent", "-title", NULL
+	"-message", "-parent", "-title", "-typevariable", NULL
     };
     enum saveOptions {
 	SAVE_DEFAULT, SAVE_FILETYPES, SAVE_INITDIR, SAVE_INITFILE,
-	SAVE_MESSAGE, SAVE_PARENT, SAVE_TITLE
+	SAVE_MESSAGE, SAVE_PARENT, SAVE_TITLE, SAVE_TYPEVARIABLE,
     };
 
     if (!fileDlgInited) {
@@ -480,7 +501,7 @@ Tk_GetSaveFileObjCmd(
 	initialPtr = &initialDesc;
     }
     result = NavServicesGetFile(interp, &ofd, initialPtr, initialFile, NULL,
-	    title, message, false, SAVE_FILE, parent);
+	    title, message, NULL, false, SAVE_FILE, parent);
     TkFreeFileFilters(&ofd.fl);
 end:
     if (initialDesc.dataHandle) {
@@ -588,7 +609,7 @@ Tk_ChooseDirectoryObjCmd(clientData, interp, objc, objv)
 	initialPtr = &initialDesc;
     }
     result = NavServicesGetFile(interp, &ofd, initialPtr, NULL, NULL, title,
-	    message, false, CHOOSE_FOLDER, parent);
+	    message, NULL, false, CHOOSE_FOLDER, parent);
     TkFreeFileFilters(&ofd.fl);
 end:
     if (initialDesc.dataHandle) {
@@ -737,6 +758,7 @@ NavServicesGetFile(
     AEDescList *selectDescPtr,
     CFStringRef title,
     CFStringRef message,
+    const char *initialtype,
     int multiple,
     int isOpen,
     Tk_Window parent)
@@ -800,6 +822,9 @@ NavServicesGetFile(
 		filterPtr = filterPtr->next, index++) {
 	    menuItemNames[index] = CFStringCreateWithCString(NULL,
 		    filterPtr->name, kCFStringEncodingUTF8);
+	    if (initialtype && strcmp(filterPtr->name, initialtype) == 0) {
+		ofdPtr->initialType = index;
+	    }
 	}
 	options.popupExtension = CFArrayCreate(NULL,
 		(const void **) menuItemNames, ofdPtr->fl.numFilters, NULL);
@@ -988,10 +1013,34 @@ OpenEventProc(
     NavCallBackUserData callBackUD)
 {
     NavHandlerUserData *data = (NavHandlerUserData*) callBackUD;
+    OpenFileData *ofd = data->ofdPtr;
 
     switch (callBackSelector) {
+	case kNavCBStart:
+	    if (ofd && ofd->initialType >= 0) {
+		/* Select initial filter */
+		FileFilter *filterPtr = ofd->fl.filters;
+		int i = ofd->initialType;
+
+		while (filterPtr && i-- > 0) {
+		    filterPtr = filterPtr->next;
+		}
+		if (filterPtr) {
+		    NavMenuItemSpec selectItem;
+
+		    selectItem.version = kNavMenuItemSpecVersion;
+		    selectItem.menuCreator = 0;
+		    selectItem.menuType = ofd->initialType;
+		    selectItem.menuItemName[0] = strlen(filterPtr->name);
+		    strncpy((char*) &selectItem.menuItemName[1],
+			    filterPtr->name, 255);
+		    ChkErr(NavCustomControl, callBackParams->context,
+			    kNavCtlSelectCustomType, &selectItem);
+		}
+	    }
+	    break;
 	case kNavCBPopupMenuSelect:
-	    data->ofdPtr->curType = ((NavMenuItemSpec *)
+	    ofd->curType = ((NavMenuItemSpec *)
 		    callBackParams->eventData.eventDataParms.param)->menuType;
 	    break;
 	case kNavCBAccept:
@@ -1060,7 +1109,7 @@ OpenFileFilterProc(
 
 		if (!theInfo->isFolder) {
 		    OSType fileType;
-		    StringPtr fileNamePtr;
+		    StringPtr fileNamePtr = NULL;
 		    Tcl_DString fileNameDString;
 		    int i;
 		    FileFilter *filterPtr;
@@ -1076,8 +1125,7 @@ OpenFileFilterProc(
 			strncpy(fileName, (char*) fileNamePtr + 1, len);
 			fileName[len] = '\0';
 			fileNamePtr = (unsigned char*) fileName;
-
-		    } else if ((theItem->descriptorType = typeFSRef)) {
+		    } else if ((theItem->descriptorType == typeFSRef)) {
 			OSStatus err;
 			FSRef *theRef = (FSRef *) *theItem->dataHandle;
 			HFSUniStr255 uniFileName;
@@ -1090,8 +1138,6 @@ OpenFileFilterProc(
 				    uniFileName.length, &fileNameDString);
 			    fileNamePtr = (unsigned char*)
 				    Tcl_DStringValue(&fileNameDString);
-			} else {
-			    fileNamePtr = NULL;
 			}
 		    }
 		    if (ofdPtr->usePopup) {

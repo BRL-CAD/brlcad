@@ -1238,7 +1238,7 @@ Tk_ChangeOutlineGC(
 	ckfree(q);
     } else if (dash->number>2 || (dash->number==2 &&
 	    (dash->pattern.array[0]!=dash->pattern.array[1]))) {
-	p = (char *) (dash->number > (int)sizeof(char *))
+	p = (dash->number > (int)sizeof(char *))
 		? dash->pattern.pt : dash->pattern.array;
 	XSetDashes(((TkCanvas *)canvas)->display, outline->gc,
 		outline->offset, p, dash->number);
@@ -1445,7 +1445,7 @@ Tk_CanvasPsOutline(
 	str = (char *)ckalloc((unsigned int) (1 - 8*dash->number));
 	lptr = (char *)ckalloc((unsigned int) (1 - 2*dash->number));
     }
-    ptr = (char *) ((ABS(dash->number) > sizeof(char *)) ) ?
+    ptr = (ABS(dash->number) > sizeof(char *)) ?
 	    dash->pattern.pt : dash->pattern.array;
     if (dash->number > 0) {
 	char *ptr0 = ptr;

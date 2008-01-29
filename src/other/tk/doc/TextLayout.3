@@ -216,7 +216,7 @@ the given point (\fIx, y\fR) to the characters in \fIlayout\fR.
 Newline/return characters and non-displaying space characters that occur at
 the end of individual lines in the text layout are ignored for hit detection
 purposes, but tab characters are not.  The return value is 0 if the point
-actually hits the \fIlayout\fR.  If the point didn't hit the \fIlayout\fR
+actually hits the \fIlayout\fR.  If the point did not hit the \fIlayout\fR
 then the return value is the distance in pixels from the point to the
 \fIlayout\fR.
 .PP
@@ -234,8 +234,7 @@ is the responsibility of the caller to take the Postscript array of
 strings and add some Postscript function operate on the array to render
 each of the lines.  The code that represents the Postscript array of
 strings is appended to \fIinterp->result\fR.
-.PP
-.SH DISPLAY MODEL
+.SH "DISPLAY MODEL"
 When measuring a text layout, space characters that occur at the end of a
 line are ignored.  The space characters still exist and the insertion point
 can be positioned amongst them, but their additional width is ignored when

@@ -25,7 +25,8 @@ scale \- Create and manipulate scale widgets
 .SH "WIDGET-SPECIFIC OPTIONS"
 .OP \-bigincrement bigIncrement BigIncrement
 Some interactions with the scale cause its value to change by
-``large'' increments;  this option specifies the size of the
+.QW large
+increments;  this option specifies the size of the
 large increments.  If specified as 0, the large increments default
 to 1/10 the range of the scale.
 .OP \-command command Command
@@ -73,7 +74,7 @@ or \fBsunken\fR.
 Specifies one of three states for the scale:  \fBnormal\fR,
 \fBactive\fR, or \fBdisabled\fR.
 If the scale is disabled then the value may not be changed and the scale
-won't activate.
+will not activate.
 If the scale is active, the slider is displayed using the color
 specified by the \fBactiveBackground\fR option.
 .OP \-tickinterval tickInterval TickInterval
@@ -188,7 +189,7 @@ the slider;  \fBtrough1\fR means that the point is over the
 portion of the slider above  or to the left of the slider;
 and \fBtrough2\fR means that the point is over the portion
 of the slider below or to the right of the slider.
-If the point isn't over one of these elements, an empty string
+If the point is not over one of these elements, an empty string
 is returned.
 .TP
 \fIpathName \fBset\fR \fIvalue\fR

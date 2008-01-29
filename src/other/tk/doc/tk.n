@@ -29,13 +29,16 @@ depending on the \fIoption\fR argument.  The legal forms are:
 .TP
 \fBtk appname \fR?\fInewName\fR?
 .
-If \fInewName\fR isn't specified, this command returns the name
+If \fInewName\fR is not specified, this command returns the name
 of the application (the name that may be used in \fBsend\fR
 commands to communicate with the application).
 If \fInewName\fR is specified, then the name of the application
 is changed to \fInewName\fR.
 If the given name is already in use, then a suffix of the form
-``\fB #2\fR'' or ``\fB #3\fR'' is appended in order to make the name unique.
+.QW "\fB #2\fR"
+or
+.QW "\fB #3\fR"
+is appended in order to make the name unique.
 The command's result is the name actually chosen.
 \fInewName\fR should not start with a capital letter.
 This will interfere with option processing, since names starting with
@@ -67,7 +70,9 @@ omitted, it defaults to the main window.  If the \fInumber\fR argument is
 omitted, the current value of the scaling factor is returned.
 .RS
 .PP
-A ``point'' is a unit of measurement equal to 1/72 inch.  A scaling factor
+A
+.QW point
+is a unit of measurement equal to 1/72 inch.  A scaling factor
 of 1.0 corresponds to 1 pixel per point, which is equivalent to a standard
 72 dpi monitor.  A scaling factor of 1.25 would mean 1.25 pixels per point,
 which is the setting for a 90 dpi monitor; setting the scaling factor to
@@ -83,18 +88,20 @@ accommodate the new scaling factor.
 \fBtk inactive \fR?\fB\-displayof \fIwindow\fR? ?\fBreset\fR?
 .
 Returns a positive integer, the number of milliseconds since the last
-time the user interacted with the system. If the \fB-displayof\fR
+time the user interacted with the system. If the \fB\-displayof\fR
 option is given then the return value refers to the display of
 \fIwindow\fR; otherwise it refers to the display of the application's
 main window.
-
-\fBtk inactive\fR will return -1, if querying the user inactive time
+.RS
+.PP
+\fBtk inactive\fR will return \-1, if querying the user inactive time
 is not supported by the system, and in safe interpreters.
-
+.PP
 If the literal string \fBreset\fR is given as an additional argument,
 the timer is reset and an empty string is returned. Resetting the
 inactivity time is forbidden in safe interpreters and will throw and
 error if tried.
+.RE
 .TP
 \fBtk useinputmethods \fR?\fB\-displayof \fIwindow\fR? ?\fIboolean\fR?
 .

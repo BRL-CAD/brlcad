@@ -1,15 +1,14 @@
 #
 # $Id$
 #
-# Ttk widget set: XP Native theme
+# Settings for 'xpnative' theme
 #
-# @@@ todo: spacing and padding needs tweaking
 
-namespace eval ttk {
+namespace eval ttk::theme::xpnative {
 
-    style theme settings xpnative {
+    ttk::style theme settings xpnative {
 
-	style configure . \
+	ttk::style configure . \
 	    -background SystemButtonFace \
 	    -foreground SystemWindowText \
 	    -selectforeground SystemHighlightText \
@@ -17,49 +16,49 @@ namespace eval ttk {
 	    -font TkDefaultFont \
 	    ;
 
-	style map "." \
+	ttk::style map "." \
 	    -foreground [list disabled SystemGrayText] \
 	    ;
 
-	style configure TButton -padding {1 1} -width -11
-	style configure TRadiobutton -padding 2
-	style configure TCheckbutton -padding 2
-	style configure TMenubutton -padding {8 4} -anchor w
+	ttk::style configure TButton -anchor center -padding {1 1} -width -11
+	ttk::style configure TRadiobutton -padding 2
+	ttk::style configure TCheckbutton -padding 2
+	ttk::style configure TMenubutton -padding {8 4}
 
-	style configure TNotebook -tabmargins {2 2 2 0}
-	style map TNotebook.Tab \
+	ttk::style configure TNotebook -tabmargins {2 2 2 0}
+	ttk::style map TNotebook.Tab \
 	    -expand [list selected {2 2 2 2}]
 
 	# Treeview:
-	style configure Heading -font TkHeadingFont
-	style configure Row -background SystemWindow
-	style configure Cell -background SystemWindow
-	style map Row \
+	ttk::style configure Heading -font TkHeadingFont
+	ttk::style configure Row -background SystemWindow
+	ttk::style configure Cell -background SystemWindow
+	ttk::style map Row \
 	    -background [list selected SystemHighlight] \
 	    -foreground [list selected SystemHighlightText] ;
-	style map Cell \
+	ttk::style map Cell \
 	    -background [list selected SystemHighlight] \
 	    -foreground [list selected SystemHighlightText] ;
-	style map Item \
+	ttk::style map Item \
 	    -background [list selected SystemHighlight] \
 	    -foreground [list selected SystemHighlightText] ;
 
-	style configure TLabelframe -foreground "#0046d5"
+	ttk::style configure TLabelframe -foreground "#0046d5"
 
 	# OR: -padding {3 3 3 6}, which some apps seem to use.
-	style configure TEntry -padding {2 2 2 4}
-	style map TEntry \
+	ttk::style configure TEntry -padding {2 2 2 4}
+	ttk::style map TEntry \
 	    -selectbackground [list !focus SystemWindow] \
 	    -selectforeground [list !focus SystemWindowText] \
 	    ;
-	style configure TCombobox -padding 2
-	style map TCombobox \
+	ttk::style configure TCombobox -padding 2
+	ttk::style map TCombobox \
 	    -selectbackground [list !focus SystemWindow] \
 	    -selectforeground [list !focus SystemWindowText] \
 	    -foreground	[list {readonly focus} SystemHighlightText] \
 	    -focusfill	[list {readonly focus} SystemHighlight] \
 	    ;
 
-	style configure Toolbutton -padding {4 4}
+	ttk::style configure Toolbutton -padding {4 4}
     }
 }

@@ -744,7 +744,7 @@ NameWindow(
     char *pathName;
     int isNew;
     Tcl_HashEntry *hPtr;
-    int length1, length2;
+    size_t length1, length2;
 
     /*
      * Setup all the stuff except name right away, then do the name stuff
@@ -1706,7 +1706,7 @@ Tk_MakeWindowExist(
     }
 
     createProc = Tk_GetClassProc(winPtr->classProcsPtr, createProc);
-    if (createProc != NULL) {
+    if (createProc != NULL && parent != None) {
 	winPtr->window = (*createProc)(tkwin, parent, winPtr->instanceData);
     } else {
 	winPtr->window = TkpMakeWindow(winPtr, parent);

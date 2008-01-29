@@ -146,6 +146,19 @@ test imgPPM-3.13 {ReadPPMFileHeader procedure, file ends too soon} {
     list [catch {image create photo p1 -file test.ppm} msg] $msg
 } {1 {couldn't recognize data in image file "test.ppm"}}
 
+test imgPPM-4.1 {StringReadPPM procedure, data too short [Bug 1822391]} \
+    -setup {
+	image create photo I -width 1103 -height 997
+    } \
+    -cleanup {
+	image delete I
+    } \
+    -body {
+	I put "P5\n1103 997\n255\n"
+    } \
+    -returnCodes error \
+    -result {truncated PPM data}
+
 eval image delete [image names]
 
 # cleanup

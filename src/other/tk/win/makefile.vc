@@ -184,19 +184,26 @@ PROJECT	= tk
 !message ***    Tcl sources.
 !endif
 
-STUBPREFIX = $(PROJECT)stub
-!if [nmakehlp -g ../generic/tk.h TK_VERSION] == 85
-DOTVERSION	= 8.5
-!elseif [nmakehlp -g ../generic/tk.h TK_VERSION] == 86
-DOTVERSION	= 8.6
-!elseif [nmakehlp -g ../generic/tk.h TK_VERSION] == 90
-DOTVERSION	= 9.0
-!elseif [nmakehlp -g ../generic/tk.h TK_VERSION] == 0
-MSG =^
-Cannot get version string from ../generic/tk.h
-!error $(MSG)
+# Extra makefile options processing...
+!if "$(OPTS)" == "" || [nmakehlp -f "$(OPTS)" "none"]
+HAVE_UXTHEME_H    = 1
+TTK_SQUARE_WIDGET = 0
+!else
+!if [nmakehlp -f $(OPTS) "noxp"]
+!message *** Exclude support for XP theme
+HAVE_UXTHEME_H  = 0
+!else
+HAVE_UXTHEME_H  = 1
 !endif
-VERSION = $(DOTVERSION:.=)
+!if [nmakehlp -f "$(OPTS)" "square"]
+!message *** Include ttk square demo widget
+TTK_SQUARE_WIDGET   = 1
+!else
+TTK_SQUARE_WIDGET   = 0
+!endif
+!endif
+
+STUBPREFIX = $(PROJECT)stub
 WISHNAMEPREFIX = wish
 
 BINROOT		= .
@@ -204,15 +211,15 @@ ROOT		= ..
 
 TK_LIBRARY	= $(ROOT)\library
 
-TKIMPLIB	= "$(OUT_DIR)\$(PROJECT)$(VERSION)$(SUFX).lib"
-TKLIBNAME	= $(PROJECT)$(VERSION)$(SUFX).$(EXT)
+TKIMPLIB	= "$(OUT_DIR)\$(PROJECT)$(TK_VERSION)$(SUFX).lib"
+TKLIBNAME	= $(PROJECT)$(TK_VERSION)$(SUFX).$(EXT)
 TKLIB		= "$(OUT_DIR)\$(TKLIBNAME)"
 
-TKSTUBLIBNAME	= $(STUBPREFIX)$(VERSION).lib
+TKSTUBLIBNAME	= $(STUBPREFIX)$(TK_VERSION).lib
 TKSTUBLIB	= "$(OUT_DIR)\$(TKSTUBLIBNAME)"
 
-WISH 		= "$(OUT_DIR)\$(WISHNAMEPREFIX)$(VERSION)$(SUFX).exe"
-WISHC 		= "$(OUT_DIR)\$(WISHNAMEPREFIX)c$(VERSION)$(SUFX).exe"
+WISH 		= "$(OUT_DIR)\$(WISHNAMEPREFIX)$(TK_VERSION)$(SUFX).exe"
+WISHC 		= "$(OUT_DIR)\$(WISHNAMEPREFIX)c$(TK_VERSION)$(SUFX).exe"
 
 TKTEST		= "$(OUT_DIR)\$(PROJECT)test.exe"
 CAT32		= "$(OUT_DIR)\cat32.exe"
@@ -220,7 +227,7 @@ CAT32		= "$(OUT_DIR)\cat32.exe"
 LIB_INSTALL_DIR		= $(_INSTALLDIR)\lib
 BIN_INSTALL_DIR		= $(_INSTALLDIR)\bin
 DOC_INSTALL_DIR		= $(_INSTALLDIR)\doc
-SCRIPT_INSTALL_DIR	= $(_INSTALLDIR)\lib\$(PROJECT)$(DOTVERSION)
+SCRIPT_INSTALL_DIR	= $(_INSTALLDIR)\lib\$(PROJECT)$(TK_DOTVERSION)
 INCLUDE_INSTALL_DIR	= $(_INSTALLDIR)\include
 
 WISHOBJS = \
@@ -401,11 +408,6 @@ BITMAPDIR	= $(ROOT)\bitmaps
 DOCDIR		= $(ROOT)\doc
 RCDIR		= $(WINDIR)\rc
 
-!if $(TCLINSTALL)
-TCL_INCLUDES	= -I "$(_TCLDIR)\include"
-!else
-TCL_INCLUDES	= -I "$(_TCLDIR)\win" -I "$(_TCLDIR)\generic"
-!endif
 TK_INCLUDES	= -I"$(WINDIR)" -I"$(GENERICDIR)" -I"$(BITMAPDIR)" -I"$(XLIBDIR)" \
 			$(TCL_INCLUDES)
 
@@ -416,12 +418,11 @@ CONFIG_DEFS     =-DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 \
 !if $(HAVE_UXTHEME_H)
 		 -DHAVE_UXTHEME_H=1 \
 !endif
-!if [nmakehlp -f "$(OPTS)" "square"]
+!if $(TTK_SQUARE_WIDGET)
 		 -DTTK_SQUARE_WIDGET=1 \
 !endif
 
 TK_DEFINES	=-DBUILD_ttk $(OPTDEFINES)  $(CONFIG_DEFS)
-
 
 #---------------------------------------------------------------------
 # Compile flags
@@ -435,22 +436,16 @@ cdebug	= $(OPTIMIZATIONS)
 !else
 cdebug	=
 !endif
-!else if "$(MACHINE)" == "IA64"
+!else if "$(MACHINE)" == "IA64" || "$(MACHINE)" == "AMD64"
 ### Warnings are too many, can't support warnings into errors.
-cdebug	= -Z7 -Od $(DEBUGFLAGS)
+cdebug	= -Zi -Od $(DEBUGFLAGS)
 !else
-cdebug	= -Z7 -WX $(DEBUGFLAGS)
+cdebug	= -Zi -WX $(DEBUGFLAGS)
 !endif
 
 ### Declarations common to all compiler options
-cwarn = -D _CRT_SECURE_NO_DEPRECATE -D _CRT_NONSTDC_NO_DEPRECATE
+cwarn = $(WARNINGS) -D _CRT_SECURE_NO_DEPRECATE -D _CRT_NONSTDC_NO_DEPRECATE
 cflags = -nologo -c $(COMPILERFLAGS) $(cwarn) -Fp$(TMP_DIR)^\
-
-!if $(FULLWARNINGS)
-cflags = $(cflags) -W4
-!else
-cflags = $(cflags) -W3
-!endif
 
 !if $(MSVCRT)
 !if $(DEBUG) && !$(UNCHECKED)
@@ -486,10 +481,6 @@ ldebug	= -release -opt:ref -opt:icf,3
 ### Declarations common to all linker options
 lflags	= -nologo -machine:$(MACHINE) $(LINKERFLAGS) $(ldebug)
 
-!if $(FULLWARNINGS)
-lflags = $(lflags) -warn:3
-!endif
-
 !if $(PROFILE)
 lflags	= $(lflags) -profile
 !endif
@@ -514,7 +505,9 @@ baselibs   = kernel32.lib user32.lib
 # Avoid 'unresolved external symbol __security_cookie' errors.
 # c.f. http://support.microsoft.com/?id=894573
 !if "$(MACHINE)" == "IA64" || "$(MACHINE)" == "AMD64"
+!if $(VCVERSION) > 1399 && $(VCVERSION) < 1500
 baselibs   = $(baselibs) bufferoverflowU.lib
+!endif
 !endif
 guilibs	  = $(baselibs) gdi32.lib
 
@@ -543,12 +536,13 @@ tktest:	  setup $(TKTEST) $(CAT32)
 test: test-classic test-ttk
 
 test-classic: setup $(TKTEST) $(TKLIB) $(CAT32)
-	set TCL_LIBRARY=$(TCL_LIBRARY)
-	set TK_LIBRARY=$(TK_LIBRARY)
+	@set TCL_LIBRARY=$(TCL_LIBRARY:\=/)
+	@set TK_LIBRARY=$(TK_LIBRARY:\=/)
+	@set TCLLIBPATH=
 !if $(TCLINSTALL)
-	set PATH=$(_TCLDIR)\bin;$(PATH)
+	@set PATH=$(_TCLDIR)\bin;$(PATH)
 !else
-	set PATH=$(_TCLDIR)\win\$(BUILDDIRTOP);$(PATH)
+	@set PATH=$(_TCLDIR)\win\$(BUILDDIRTOP);$(PATH)
 !endif
 !if "$(OS)" == "Windows_NT"  || "$(MSVCDIR)" == "IDE"
 	$(TKTEST) "$(ROOT)/tests/all.tcl" $(TESTFLAGS) | $(CAT32)
@@ -557,12 +551,13 @@ test-classic: setup $(TKTEST) $(TKLIB) $(CAT32)
 !endif
 
 test-ttk: setup $(TKTEST) $(TKLIB) $(CAT32)
-	set TCL_LIBRARY=$(TCL_LIBRARY)
-	set TK_LIBRARY=$(TK_LIBRARY)
+	@set TCL_LIBRARY=$(TCL_LIBRARY:\=/)
+	@set TK_LIBRARY=$(TK_LIBRARY:\=/)
+	@set TCLLIBPATH=
 !if $(TCLINSTALL)
-	set PATH=$(_TCLDIR)\bin;$(PATH)
+	@set PATH=$(_TCLDIR)\bin;$(PATH)
 !else
-	set PATH=$(_TCLDIR)\win\$(BUILDDIRTOP);$(PATH)
+	@set PATH=$(_TCLDIR)\win\$(BUILDDIRTOP);$(PATH)
 !endif
 !if "$(OS)" == "Windows_NT"  || "$(MSVCDIR)" == "IDE"
 	$(TKTEST) "$(ROOT)/tests/ttk/all.tcl" $(TESTFLAGS) | $(CAT32)
@@ -571,31 +566,50 @@ test-ttk: setup $(TKTEST) $(TKLIB) $(CAT32)
 !endif
 
 runtest: setup $(TKTEST) $(TKLIB) $(CAT32)
-	set TCL_LIBRARY=$(TCL_LIBRARY)
-	set TK_LIBRARY=$(TK_LIBRARY)
+	@set TCL_LIBRARY=$(TCL_LIBRARY:\=/)
+	@set TK_LIBRARY=$(TK_LIBRARY:\=/)
+	@set TCLLIBPATH=
 !if $(TCLINSTALL)
-	set PATH=$(_TCLDIR)\bin;$(PATH)
+	@set PATH=$(_TCLDIR)\bin;$(PATH)
 !else
-	set PATH=$(_TCLDIR)\win\$(BUILDDIRTOP);$(PATH)
+	@set PATH=$(_TCLDIR)\win\$(BUILDDIRTOP);$(PATH)
 !endif
 	$(TKTEST) 
 
 rundemo: setup $(TKTEST) $(TKLIB) $(CAT32)
-	set TCL_LIBRARY=$(TCL_LIBRARY)
-	set TK_LIBRARY=$(TK_LIBRARY)
+	@set TCL_LIBRARY=$(TCL_LIBRARY:\=/)
+	@set TK_LIBRARY=$(TK_LIBRARY:\=/)
+	@set TCLLIBPATH=
 !if $(TCLINSTALL)
-	set PATH=$(_TCLDIR)\bin;$(PATH)
+	@set PATH=$(_TCLDIR)\bin;$(PATH)
 !else
-	set PATH=$(_TCLDIR)\win\$(BUILDDIRTOP);$(PATH)
+	@set PATH=$(_TCLDIR)\win\$(BUILDDIRTOP);$(PATH)
 !endif
 	$(TKTEST) $(ROOT)\library\demos\widget
 
 shell: setup $(WISH)
-	set TCL_LIBRARY=$(TCL_LIBRARY)
-	set TK_LIBRARY=$(TK_LIBRARY)
-        $(WISH) <<
-        console show
+	@set TCL_LIBRARY=$(TCL_LIBRARY:\=/)
+	@set TK_LIBRARY=$(TK_LIBRARY:\=/)
+	@set TCLLIBPATH=
+!if $(TCLINSTALL)
+	@set PATH=$(_TCLDIR)\bin;$(PATH)
+!else
+	@set PATH=$(_TCLDIR)\win\$(BUILDDIRTOP);$(PATH)
+!endif
+	$(WISH) <<
+	console show
 <<
+
+dbgshell: setup $(WISH)
+	@set TCL_LIBRARY=$(TCL_LIBRARY:\=/)
+	@set TK_LIBRARY=$(TK_LIBRARY:\=/)
+	@set TCLLIBPATH=
+!if $(TCLINSTALL)
+	@set PATH=$(_TCLDIR)\bin;$(PATH)
+!else
+	@set PATH=$(_TCLDIR)\win\$(BUILDDIRTOP);$(PATH)
+!endif
+	windbg $(WISH)
 
 setup:
 	@if not exist $(OUT_DIR)\nul mkdir $(OUT_DIR)
@@ -660,27 +674,10 @@ genstubs:
 
 
 #---------------------------------------------------------------------
-# Generate the makefile depedancies.
-#---------------------------------------------------------------------
-
-depend:
-!if !exist($(TCLSH))
-	@echo Build tclsh first!
-!else
-	set TCL_LIBRARY=$(TCL_LIBRARY)
-	$(TCLSH) $(TOOLSDIR:\=/)/mkdepend.tcl -vc32 -out:"$(OUT_DIR)\depend.mk" \
-		-passthru:"-DBUILD_tcl $(TK_INCLUDES:"="")" $(GENERICDIR) \
-		$(COMPATDIR) $(WINDIR) @<<
-$(TKOBJS)
-<<
-!endif
-
-
-#---------------------------------------------------------------------
 # Regenerate the windows help files.
 #---------------------------------------------------------------------
 
-HLPBASE		= $(PROJECT)$(VERSION)
+HLPBASE		= $(PROJECT)$(TK_VERSION)
 HELPFILE	= $(OUT_DIR)\$(HLPBASE).hlp
 HELPCNT		= $(OUT_DIR)\$(HLPBASE).cnt
 DOCTMP_DIR	= $(OUT_DIR)\$(PROJECT)_docs
@@ -737,7 +734,7 @@ $(MAN2TCL): $(TCLTOOLSDIR)\$$(@B).c
 	$(_VC_MANIFEST_EMBED_EXE)
 
 $(HELPRTF): $(MAN2TCL) $(MAN2HELP) $(MAN2HELP2) $(INDEX)
-	$(TCLSH) $(MAN2HELP) -bitmap $(BMP_NOPATH) $(PROJECT) $(VERSION) $(DOCDIR:\=/)
+	$(TCLSH) $(MAN2HELP) -bitmap $(BMP_NOPATH) $(PROJECT) $(TK_VERSION) $(DOCDIR:\=/)
 
 install-docs:
 !if exist($(HELPFILE))
@@ -745,25 +742,25 @@ install-docs:
 	$(CPY) "$(HELPCNT)" "$(DOC_INSTALL_DIR)\"
 	$(TCLSH) <<
 puts "Installing $(PROJECT)'s helpfile contents into Tcl's ..."
-set f [open "$(DOC_INSTALL_DIR:\=/)/tcl$(VERSION).cnt" r]
+set f [open "$(DOC_INSTALL_DIR:\=/)/tcl$(TK_VERSION).cnt" r]
 while {![eof $$f]} {
     if {[regexp {:Include $(PROJECT)([0-9]{2}).cnt} [gets $$f] dummy ver]} {
-	if {$$ver == $(VERSION)} {
+	if {$$ver == $(TK_VERSION)} {
 	    puts "Already installed."
 	    exit
 	} else {
 	    # do something here logical to remove (or replace) it.
-	    puts "$$ver != $(VERSION), unfinished code path, die, die!"
+	    puts "$$ver != $(TK_VERSION), unfinished code path, die, die!"
 	    exit 1
 	}
     }
 }
 close $$f
-set f [open "$(DOC_INSTALL_DIR:\=/)/tcl$(VERSION).cnt" a]
+set f [open "$(DOC_INSTALL_DIR:\=/)/tcl$(TK_VERSION).cnt" a]
 puts $$f {:Include $(HLPBASE).cnt}
 close $$f
 <<
-	start /wait winhlp32 -g $(DOC_INSTALL_DIR)\tcl$(VERSION).hlp
+	start /wait winhlp32 -g $(DOC_INSTALL_DIR)\tcl$(TK_VERSION).hlp
 !endif
 
 #---------------------------------------------------------------------
@@ -800,100 +797,38 @@ $(TMP_DIR)\tkStubLib.obj : $(GENERICDIR)\tkStubLib.c
 	$(cc32) $(STUB_CFLAGS) $(TK_INCLUDES) -Zl -DSTATIC_BUILD -Fo$@ $?
 
 
+$(TMP_DIR)\wish.exe.manifest: $(WINDIR)\wish.exe.manifest.in
+	@nmakehlp -s << $** >$@
+@MACHINE@	  $(MACHINE:IX86=X86)
+@TK_WIN_VERSION@  $(TK_MAJOR_VERSION).$(TK_MINOR_VERSION).0.0
+<<
+
+#---------------------------------------------------------------------
+# Generate the makefile depedancies.
+#---------------------------------------------------------------------
+
+depend:
+!if !exist($(TCLSH))
+	@echo Build tclsh first!
+!else
+	set TCL_LIBRARY=$(TCL_LIBRARY)
+	$(TCLSH) $(TCLTOOLSDIR)\mkdepend.tcl -vc32 -out:"$(OUT_DIR)\depend.mk" \
+		-passthru:"-DBUILD_tk $(TK_INCLUDES)" $(GENERICDIR),$$(GENERICDIR) \
+		$(WINDIR),$$(WINDIR) $(TTKDIR),$$(TTKDIR) $(XLIBDIR),$$(XLIBDIR) \
+		$(BITMAPDIR),$$(BITMAPDIR) @<<
+$(TKOBJS)
+<<
+!endif
+
+
 #---------------------------------------------------------------------
 # Dedependency rules
 #---------------------------------------------------------------------
-
-$(TMP_DIR)\wish.exe.manifest: $(WINDIR)\wish.exe.manifest.in
-!if ![sed "1d" < NUL > NUL]
-        sed -f << $** > $@
-s/@MACHINE@/$(MACHINE:IX86=X86)/
-s/@TK_WIN_VERSION@/$(DOTVERSION).0.0/
-<<
-!else
-       $(TCLSH) <<
-set f [open {$(WINDIR:\=/)/wish.exe.manifest.in} r]
-set data [read $$f]
-close $$f
-set mach {$(MACHINE)}
-if {[regexp -nocase {$(IX86)$$} $mach ]} {set mach X86}
-set winver "$(DOTVERSION).0.0"
-set data [string map [list @MACHINE@ $$mach @TK_WIN_VERSION@ $$winver] $$data]
-puts {Creating $(TMP_DIR:\=/)/wish.exe.manifest}
-set f [open {$(TMP_DIR:\=/)/wish.exe.manifest} w]
-puts -nonewline $$f $$data
-close $$f
-exit
-<<
-!endif
 
 $(TMP_DIR)\tk.res: \
     $(RCDIR)\buttons.bmp \
     $(RCDIR)\cursor*.cur \
     $(RCDIR)\tk.ico
-
-$(GENERICDIR)/default.h: $(WINDIR)/tkWinDefault.h
-$(GENERICDIR)/tkButton.c: $(GENERICDIR)/default.h
-$(GENERICDIR)/tkCanvas.c: $(GENERICDIR)/default.h
-$(GENERICDIR)/tkEntry.c: $(GENERICDIR)/default.h
-$(GENERICDIR)/tkFrame.c: $(GENERICDIR)/default.h
-$(GENERICDIR)/tkListbox.c: $(GENERICDIR)/default.h
-$(GENERICDIR)/tkMenu.c: $(GENERICDIR)/default.h
-$(GENERICDIR)/tkMenubutton.c: $(GENERICDIR)/default.h
-$(GENERICDIR)/tkMessage.c: $(GENERICDIR)/default.h
-$(GENERICDIR)/tkPanedWindow.c: $(GENERICDIR)/default.h
-$(GENERICDIR)/tkScale.c: $(GENERICDIR)/default.h
-$(GENERICDIR)/tkScrollbar.c: $(GENERICDIR)/default.h
-$(GENERICDIR)/tkText.c: $(GENERICDIR)/default.h
-$(GENERICDIR)/tkTextIndex.c: $(GENERICDIR)/default.h
-$(GENERICDIR)/tkTextTag.c: $(GENERICDIR)/default.h
-$(GENERICDIR)/tkUndo.c: $(GENERICDIR)/tkUndo.h
-
-$(GENERICDIR)/tkText.c: $(GENERICDIR)/tkText.h
-$(GENERICDIR)/tkTest.c: $(GENERICDIR)/tkText.h
-$(GENERICDIR)/tkTextBTree.c: $(GENERICDIR)/tkText.h
-$(GENERICDIR)/tkTextDisp.c: $(GENERICDIR)/tkText.h
-$(GENERICDIR)/tkTextDisp.c: $(GENERICDIR)/tkText.h
-$(GENERICDIR)/tkTextImage.c: $(GENERICDIR)/tkText.h
-$(GENERICDIR)/tkTextIndex.c: $(GENERICDIR)/tkText.h
-$(GENERICDIR)/tkTextMark.c: $(GENERICDIR)/tkText.h
-$(GENERICDIR)/tkTextTag.c: $(GENERICDIR)/tkText.h
-$(GENERICDIR)/tkTextWind.c: $(GENERICDIR)/tkText.h
-
-$(GENERICDIR)/tkMacWinMenu.c: $(GENERICDIR)/tkMenu.h
-$(GENERICDIR)/tkMenu.c: $(GENERICDIR)/tkMenu.h
-$(GENERICDIR)/tkMenuDraw.c: $(GENERICDIR)/tkMenu.h
-$(WINDIR)/tkWinMenu.c: $(GENERICDIR)/tkMenu.h
-
-$(TTKDIR)/ttkBlink.c: $(TTKDIR)/ttkTheme.h
-$(TTKDIR)/ttkButton.c: $(TTKDIR)/ttkTheme.h
-$(TTKDIR)/ttkCache.c: $(TTKDIR)/ttkTheme.h
-$(TTKDIR)/ttkClamTheme.c: $(TTKDIR)/ttkTheme.h
-$(TTKDIR)/ttkClassicTheme.c: $(TTKDIR)/ttkTheme.h
-$(TTKDIR)/ttkDefaultTheme.c: $(TTKDIR)/ttkTheme.h
-$(TTKDIR)/ttkElements.c: $(TTKDIR)/ttkTheme.h
-$(TTKDIR)/ttkEntry.c: $(TTKDIR)/ttkTheme.h
-$(TTKDIR)/ttkFrame.c: $(TTKDIR)/ttkTheme.h
-$(TTKDIR)/ttkImage.c: $(TTKDIR)/ttkTheme.h
-$(TTKDIR)/ttkInit.c: $(TTKDIR)/ttkTheme.h
-$(TTKDIR)/ttkLabel.c: $(TTKDIR)/ttkTheme.h
-$(TTKDIR)/ttkLayout.c: $(TTKDIR)/ttkTheme.h
-$(TTKDIR)/ttkManager.c: $(TTKDIR)/ttkTheme.h $(TTKDIR)/ttkManager.h
-$(TTKDIR)/ttkNotebook.c: $(TTKDIR)/ttkTheme.h
-$(TTKDIR)/ttkPanedwindow.c: $(TTKDIR)/ttkTheme.h
-$(TTKDIR)/ttkProgress.c: $(TTKDIR)/ttkTheme.h
-$(TTKDIR)/ttkScroll.c: $(TTKDIR)/ttkTheme.h
-$(TTKDIR)/ttkScrollbar.c: $(TTKDIR)/ttkTheme.h
-$(TTKDIR)/ttkSeparator.c: $(TTKDIR)/ttkTheme.h
-$(TTKDIR)/ttkSquare.c: $(TTKDIR)/ttkTheme.h
-$(TTKDIR)/ttkState.c: $(TTKDIR)/ttkTheme.h
-$(TTKDIR)/ttkTagSet.c: $(TTKDIR)/ttkTheme.h
-$(TTKDIR)/ttkTheme.c: $(TTKDIR)/ttkTheme.h
-$(TTKDIR)/ttkTrace.c: $(TTKDIR)/ttkTheme.h
-$(TTKDIR)/ttkTrack.c: $(TTKDIR)/ttkTheme.h
-$(TTKDIR)/ttkTreeview.c: $(TTKDIR)/ttkTheme.h
-$(TTKDIR)/ttkWidget.c: $(TTKDIR)/ttkTheme.h $(TTKDIR)/ttkWidget.h
-
 
 !if exist("$(OUT_DIR)\depend.mk")
 !include "$(OUT_DIR)\depend.mk"
@@ -963,8 +898,8 @@ install-binaries:
 !if !$(STATIC_BUILD)
 	@echo creating package index
 	@type << > $(OUT_DIR)\pkgIndex.tcl
-if {[catch {package present Tcl $(TCL_DOTVERSION)$(TCL_PATCHLEVEL)}]} { return }
-package ifneeded Tk $(DOTVERSION)$(TCL_PATCHLEVEL) [list load [file join $$dir .. .. bin $(TKLIBNAME)] Tk]
+if {[package vcompare [package provide Tcl] $(TCL_PATCH_LEVEL)] != 0} { return }
+package ifneeded Tk $(TK_PATCH_LEVEL) [list load [file join $$dir .. .. bin $(TKLIBNAME)] Tk]
 <<
 	@$(CPY) $(OUT_DIR)\pkgIndex.tcl "$(SCRIPT_INSTALL_DIR)\"
 !endif
@@ -1005,8 +940,8 @@ tidy:
 	@if exist $(TKIMPLIB) del $(TKIMPLIB)
 	@echo Removing $(WISH) ...
 	@if exist $(WISH) del $(WISH)
-	@echo Removing $(TCLTEST) ...
-	@if exist $(TCLTEST) del $(TCLTEST)
+	@echo Removing $(TKTEST) ...
+	@if exist $(TKTEST) del $(TKTEST)
 	@echo Removing $(TKSTUBLIB) ...
 	@if exist $(TKSTUBLIB) del $(TKSTUBLIB)
 
@@ -1019,6 +954,12 @@ clean:
 	@if exist $(WINDIR)\nmakehlp.exe del $(WINDIR)\nmakehlp.exe
 	@echo Cleaning $(WINDIR)\_junk.pch ...
 	@if exist $(WINDIR)\_junk.pch del $(WINDIR)\_junk.pch
+	@echo Cleaning $(WINDIR)\vercl.x ...
+	@if exist $(WINDIR)\vercl.x del $(WINDIR)\vercl.x
+	@echo Cleaning $(WINDIR)\vercl.i ...
+	@if exist $(WINDIR)\vercl.i del $(WINDIR)\vercl.i
+	@echo Cleaning $(WINDIR)\versions.vc ...
+	@if exist $(WINDIR)\versions.vc del $(WINDIR)\versions.vc
 
 hose:
 	@echo Hosing $(OUT_DIR)\* ...

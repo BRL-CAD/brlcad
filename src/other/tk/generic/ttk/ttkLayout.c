@@ -280,6 +280,7 @@ static void TTKInitPadding(int padc, int pixels[4], Ttk_Padding *pad)
 {
     switch (padc)
     {
+	case 0: pixels[0] = 0; /*FALLTHRU*/
 	case 1:	pixels[1] = pixels[0]; /*FALLTHRU*/
 	case 2:	pixels[2] = pixels[0]; /*FALLTHRU*/
 	case 3:	pixels[3] = pixels[1]; /*FALLTHRU*/
@@ -721,7 +722,7 @@ Ttk_LayoutTemplate Ttk_BuildLayoutTemplate(Ttk_LayoutSpec spec)
 {
     Ttk_TemplateNode *first = 0, *last = 0;
 
-    for ( ; !(spec->opcode & TTK_LAYOUT_END) ; ++spec) {
+    for ( ; !(spec->opcode & _TTK_LAYOUT_END) ; ++spec) {
 	if (spec->elementName) {
 	    Ttk_TemplateNode *node =
 		Ttk_NewTemplateNode(spec->elementName, spec->opcode);
@@ -734,7 +735,7 @@ Ttk_LayoutTemplate Ttk_BuildLayoutTemplate(Ttk_LayoutSpec spec)
 	    last = node;
 	}
 
-	if (spec->opcode & TTK_CHILDREN) {
+	if (spec->opcode & _TTK_CHILDREN) {
 	    int depth = 1;
 	    last->child = Ttk_BuildLayoutTemplate(spec+1);
 
@@ -742,17 +743,29 @@ Ttk_LayoutTemplate Ttk_BuildLayoutTemplate(Ttk_LayoutSpec spec)
 	     */
 	    while (depth) {
 		++spec;
-		if (spec->opcode & TTK_CHILDREN) {
+		if (spec->opcode & _TTK_CHILDREN) {
 		    ++depth;
 		}
-		if (spec->opcode & TTK_LAYOUT_END) {
+		if (spec->opcode & _TTK_LAYOUT_END) {
 		    --depth;
 		}
 	    }
 	}
+
     } /* for */
 
     return first;
+}
+
+void Ttk_RegisterLayouts(Ttk_Theme theme, Ttk_LayoutSpec spec)
+{
+    while (!(spec->opcode & _TTK_LAYOUT_END)) {
+	Ttk_LayoutTemplate layoutTemplate = Ttk_BuildLayoutTemplate(spec+1);
+	Ttk_RegisterLayoutTemplate(theme, spec->elementName, layoutTemplate);
+	do {
+	    ++spec;
+	} while (!(spec->opcode & _TTK_LAYOUT));
+    }
 }
 
 Tcl_Obj *Ttk_UnparseLayoutTemplate(Ttk_TemplateNode *node) 

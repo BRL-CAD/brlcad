@@ -45,7 +45,7 @@ name wisely.  It is recommended to use a separate namespace for image names
 \fBimage delete \fR?\fIname name\fR ...?
 Deletes each of the named images and returns an empty string.
 If there are instances of the images displayed in widgets,
-the images won't actually be deleted until all of the instances
+the images will not actually be deleted until all of the instances
 are released.
 However, the association between the instances and the image
 manager will be dropped.

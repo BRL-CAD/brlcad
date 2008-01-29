@@ -80,20 +80,27 @@
 static OSStatus CarbonEventHandlerProc(EventHandlerCallRef callRef,
 	EventRef event, void *userData);
 static OSStatus InstallStandardApplicationEventHandler(void);
-static void ExitRaelEventHandlerProc(EventHandlerCallRef callRef,
-	EventRef event, void *userData) __attribute__ ((__noreturn__));
 static void CarbonTimerProc(EventLoopTimerRef timer, void *userData);
 
 /*
  * Static data used by several functions in this file:
  */
 
-static jmp_buf exitRaelJmpBuf;
 static EventLoopTimerRef carbonTimer = NULL;
 static int carbonTimerEnabled = 0;
 static EventHandlerUPP carbonEventHandlerUPP = NULL;
 static Tcl_Interp *carbonEventInterp = NULL;
 static int inTrackingLoop = 0;
+
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 1050
+/*
+ * For InstallStandardApplicationEventHandler():
+ */
+
+static jmp_buf exitRaelJmpBuf;
+static void ExitRaelEventHandlerProc(EventHandlerCallRef callRef,
+	EventRef event, void *userData) __attribute__ ((__noreturn__));
+#endif
 
 
 /*
@@ -130,8 +137,9 @@ CarbonEventHandlerProc(
     bzero(&eventStatus, sizeof(eventStatus));
 
 #ifdef TK_MAC_DEBUG_CARBON_EVENTS
-    if (macEvent.eKind != kEventMouseMoved &&
-	    macEvent.eKind != kEventMouseDragged) {
+    if (!(macEvent.eClass == kEventClassMouse && (
+	    macEvent.eKind == kEventMouseMoved ||
+	    macEvent.eKind == kEventMouseDragged))) {
 	TkMacOSXDbgMsg("Started handling %s",
 		TkMacOSXCarbonEventToAscii(event));
 	TkMacOSXInitNamedDebugSymbol(HIToolbox, void, _DebugPrintEvent,
@@ -249,7 +257,7 @@ TkMacOSXInitCarbonEvents(
 	_TraceEventByName(CFSTR("kEventWindowActivated"));
 	_TraceEventByName(CFSTR("kEventWindowDeactivated"));
 	_TraceEventByName(CFSTR("kEventWindowUpdate"));
-	_TraceEventByName(CFSTR("kEventWindowExpanded"));
+	_TraceEventByName(CFSTR("kEventWindowExpanding"));
 	_TraceEventByName(CFSTR("kEventWindowBoundsChanged"));
 	_TraceEventByName(CFSTR("kEventWindowDragStarted"));
 	_TraceEventByName(CFSTR("kEventWindowDragCompleted"));
@@ -289,7 +297,7 @@ TkMacOSXInstallWindowCarbonEventHandler(
 	{kEventClassWindow,	 kEventWindowActivated},
 	{kEventClassWindow,	 kEventWindowDeactivated},
 	{kEventClassWindow,	 kEventWindowUpdate},
-	{kEventClassWindow,	 kEventWindowExpanded},
+	{kEventClassWindow,	 kEventWindowExpanding},
 	{kEventClassWindow,	 kEventWindowBoundsChanged},
 	{kEventClassWindow,	 kEventWindowDragStarted},
 	{kEventClassWindow,	 kEventWindowDragCompleted},
@@ -324,65 +332,92 @@ TkMacOSXInstallWindowCarbonEventHandler(
 static OSStatus
 InstallStandardApplicationEventHandler(void)
 {
-   /*
-    * This is a hack to workaround missing Carbon API to install the standard
-    * application event handler (InstallStandardEventHandler() does not work
-    * on the application target). The only way to install the standard app
-    * handler is to call RunApplicationEventLoop(), but since we are running
-    * our own event loop, we'll immediately need to break out of RAEL again:
-    * we do this via longjmp out of the ExitRaelEventHandlerProc event handler
-    * called first off from RAEL by posting a high priority dummy event.
-    * This workaround is derived from a similar approach in Technical Q&A 1061.
-    */
-    enum {
-	kExitRaelEvent = 'ExiT'
-    };
-    const EventTypeSpec exitRaelEventType = {
-	kExitRaelEvent, kExitRaelEvent
-    };
-    EventHandlerUPP exitRaelEventHandler;
-    EventHandlerRef exitRaelEventHandlerRef = NULL;
-    EventRef exitRaelEvent = NULL;
     OSStatus err = memFullErr;
 
-    exitRaelEventHandler = NewEventHandlerUPP(
-	    (EventHandlerProcPtr) ExitRaelEventHandlerProc);
-    if (exitRaelEventHandler) {
-	err = ChkErr(InstallEventHandler, GetEventDispatcherTarget(),
-		exitRaelEventHandler, 1, &exitRaelEventType, NULL,
-		&exitRaelEventHandlerRef);
-    }
-    if (err == noErr) {
-	err = ChkErr(CreateEvent, NULL, kExitRaelEvent, kExitRaelEvent,
-		GetCurrentEventTime(), kEventAttributeNone, &exitRaelEvent);
-    }
-    if (err == noErr) {
-	err = ChkErr(PostEventToQueue, GetMainEventQueue(), exitRaelEvent,
-		kEventPriorityHigh);
-    }
-    if (err == noErr) {
-	if (!setjmp(exitRaelJmpBuf)) {
-	    RunApplicationEventLoop();
-
-	    /*
-	     * This point should never be reached!
-	     */
-
-	    Tcl_Panic("RunApplicationEventLoop exited !");
+    TK_IF_HI_TOOLBOX(5,
+       /*
+	* The approach below does not work correctly in Leopard, it leads to
+	* crashes in [NSView unlockFocus] whenever HIToolbox uses Cocoa (Help
+	* menu, Nav Services, Color Picker). While it is now possible to
+	* install the standard app handler with InstallStandardEventHandler(),
+	* to fully replicate RAEL the standard menubar event handler also needs
+	* to be installed. Unfortunately there appears to be no public API to
+	* obtain the menubar event target. As a workaround, for now we resort
+	* to calling the HIToolbox-internal GetMenuBarEventTarget() directly
+	* (symbol acquired via TkMacOSXInitNamedDebugSymbol() from HIToolbox
+	* version 343, may not exist in later versions).
+	*/
+	err = ChkErr(InstallStandardEventHandler, GetApplicationEventTarget());
+	TkMacOSXInitNamedDebugSymbol(HIToolbox, EventTargetRef,
+		GetMenuBarEventTarget, void);
+	if (GetMenuBarEventTarget) {
+	    ChkErr(InstallStandardEventHandler, GetMenuBarEventTarget());
+	} else {
+	    TkMacOSXDbgMsg("Unable to install standard menubar event handler");
 	}
-    }
-    if (exitRaelEvent) {
-	ReleaseEvent(exitRaelEvent);
-    }
-    if (exitRaelEventHandlerRef) {
-	RemoveEventHandler(exitRaelEventHandlerRef);
-    }
-    if (exitRaelEventHandler) {
-	DisposeEventHandlerUPP(exitRaelEventHandler);
-    }
+    ) TK_ELSE_HI_TOOLBOX (5,
+       /*
+	* This is a hack to workaround missing Carbon API to install the
+	* standard application event handler (InstallStandardEventHandler()
+	* does not work on the application target). The only way to install the
+	* standard app handler is to call RunApplicationEventLoop(), but since
+	* we are running our own event loop, we'll immediately need to break
+	* out of RAEL again: we do this via longjmp out of the
+	* ExitRaelEventHandlerProc event handler called first off from RAEL by
+	* posting a high priority dummy event. This workaround is derived from
+	* a similar approach in Technical Q&A 1061.
+	*/
+	enum {
+	    kExitRaelEvent = 'ExiT'
+	};
+	const EventTypeSpec exitRaelEventType = {
+	    kExitRaelEvent, kExitRaelEvent
+	};
+	EventHandlerUPP exitRaelEventHandler;
+	EventHandlerRef exitRaelEventHandlerRef = NULL;
+	EventRef exitRaelEvent = NULL;
+
+	exitRaelEventHandler = NewEventHandlerUPP(
+		(EventHandlerProcPtr) ExitRaelEventHandlerProc);
+	if (exitRaelEventHandler) {
+	    err = ChkErr(InstallEventHandler, GetEventDispatcherTarget(),
+		    exitRaelEventHandler, 1, &exitRaelEventType, NULL,
+		    &exitRaelEventHandlerRef);
+	}
+	if (err == noErr) {
+	    err = ChkErr(CreateEvent, NULL, kExitRaelEvent, kExitRaelEvent,
+		    GetCurrentEventTime(), kEventAttributeNone,
+		    &exitRaelEvent);
+	}
+	if (err == noErr) {
+	    err = ChkErr(PostEventToQueue, GetMainEventQueue(), exitRaelEvent,
+		    kEventPriorityHigh);
+	}
+	if (err == noErr) {
+	    if (!setjmp(exitRaelJmpBuf)) {
+		RunApplicationEventLoop();
+
+		/*
+		 * This point should never be reached!
+		 */
+
+		Tcl_Panic("RunApplicationEventLoop exited !");
+	    }
+	}
+	if (exitRaelEvent) {
+	    ReleaseEvent(exitRaelEvent);
+	}
+	if (exitRaelEventHandlerRef) {
+	    RemoveEventHandler(exitRaelEventHandlerRef);
+	}
+	if (exitRaelEventHandler) {
+	    DisposeEventHandlerUPP(exitRaelEventHandler);
+	}
+    ) TK_ENDIF
     return err;
 }
 
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 1050
 /*
  *----------------------------------------------------------------------
  *
@@ -409,6 +444,7 @@ ExitRaelEventHandlerProc(
 {
     longjmp(exitRaelJmpBuf, 1);
 }
+#endif
 
 /*
  *----------------------------------------------------------------------

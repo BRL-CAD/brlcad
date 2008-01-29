@@ -1599,7 +1599,11 @@ TkGetMiterPoints(
     double deltaX, deltaY;	/* X and y offsets cooresponding to dist
 				 * (fudge factors for bounding box). */
     double p1x, p1y, p2x, p2y, p3x, p3y;
-    static double elevenDegrees = (11.0*2.0*PI)/360.0;
+#ifndef _MSC_VER
+    static const double elevenDegrees = (11.0*2.0*PI)/360.0;
+#else /* msvc8 with -fp:strict requires it this way */
+    static const double elevenDegrees = 0.19198621771937624;
+#endif
 
     /*
      * Round the coordinates to integers to mimic what happens when the line

@@ -32,7 +32,7 @@ be as wide as it is tall, 200 means the text should
 be twice as wide as it is tall, 50 means the text should
 be twice as tall as it is wide, and so on.
 Used to choose line length for text if \fBwidth\fR option
-isn't specified.
+is not specified.
 Defaults to 150.
 .OP \-justify justify Justify
 Specifies how to justify lines of text.
@@ -98,10 +98,10 @@ are replaced with enough blank space to line up on the next
 characters (ASCII code less than 0x20) and characters not defined
 in the font are displayed as a four-character sequence \fB\ex\fIhh\fR where
 \fIhh\fR is the two-digit hexadecimal number corresponding to
-the character.  In the unusual case where the font doesn't contain
-all of the characters in ``0123456789abcdef\ex'' then control
-characters and undefined characters are not displayed at all.
-
+the character.  In the unusual case where the font does not contain
+all of the characters in
+.QW 0123456789abcdef\ex
+then control characters and undefined characters are not displayed at all.
 .SH "WIDGET COMMAND"
 .PP
 The \fBmessage\fR command creates a new Tcl command whose
@@ -134,16 +134,13 @@ modifies the given widget option(s) to have the given value(s);  in
 this case the command returns an empty string.
 \fIOption\fR may have any of the values accepted by the \fBmessage\fR
 command.
-
 .SH "DEFAULT BINDINGS"
 .PP
 When a new message is created, it has no default event bindings:
 messages are intended for output purposes only.
-
 .SH BUGS
 .PP
-Tabs don't work very well with text that is centered or right-justified.
+Tabs do not work very well with text that is centered or right-justified.
 The most common result is that the line is justified wrong.
-
 .SH KEYWORDS
 message, widget

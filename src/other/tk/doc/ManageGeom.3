@@ -24,13 +24,12 @@ Token for window to be managed.
 .AP "const Tk_GeomMgr" *mgrPtr in
 Pointer to data structure containing information about the
 geometry manager, or NULL to indicate that \fItkwin\fR's geometry
-shouldn't be managed anymore.
+should not be managed anymore.
 The data structure pointed to by \fImgrPtr\fR must be static:
 Tk keeps a reference to it as long as the window is managed.
 .AP ClientData clientData in
 Arbitrary one-word value to pass to geometry manager callbacks.
 .BE
-
 .SH DESCRIPTION
 .PP
 \fBTk_ManageGeometry\fR arranges for a particular geometry manager,

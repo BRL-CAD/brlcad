@@ -19,11 +19,10 @@ wm title $w "Constrained Entry Demonstration"
 wm iconname $w "entry3"
 positionWindow $w
 
-
 label $w.msg -font $font -wraplength 5i -justify left -text "Four different\
 	entries are displayed below.  You can add characters by pointing,\
 	clicking and typing, though each is constrained in what it will\
-	accept.  The first only accepts integers or the empty string\
+	accept.  The first only accepts 32-bit integers or the empty string\
 	(checking when focus leaves it) and will flash to indicate any\
 	problem.  The second only accepts strings with fewer than ten\
 	characters and sounds the bell when an attempt to go over the limit\
@@ -65,6 +64,8 @@ proc focusAndFlash {W fg bg {count 9}} {
 }
 
 labelframe $w.l1 -text "Integer Entry"
+# Alternatively try using {string is digit} for arbitrary length numbers,
+# and not just 32-bit ones.
 entry $w.l1.e -validate focus -vcmd {string is integer %P}
 $w.l1.e configure -invalidcommand \
 	"focusAndFlash %W [$w.l1.e cget -fg] [$w.l1.e cget -bg]"
@@ -183,5 +184,4 @@ grid $w.l1 $w.l2 -in $w.mid -padx 3m -pady 1m -sticky ew
 grid $w.l3 $w.l4 -in $w.mid -padx 3m -pady 1m -sticky ew
 grid columnconfigure $w.mid {0 1} -uniform 1
 pack $w.msg -side top
-pack $w.buttons -side bottom -fill x -pady 2m
 pack $w.mid -fill both -expand 1

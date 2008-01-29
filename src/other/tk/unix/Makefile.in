@@ -832,17 +832,17 @@ install-doc:
 	    done;
 	@echo "Installing and cross-linking top-level (.1) docs";
 	@for i in $(TOP_DIR)/doc/*.1; do \
-	    [ ! -e $(TOP_DIR)/doc/$$i ] || $(UNIX_DIR)/installManPage $(MAN_FLAGS) $(TOP_DIR)/doc/$$i $(MAN1_INSTALL_DIR); \
+	    $(UNIX_DIR)/installManPage $(MAN_FLAGS) $$i $(MAN1_INSTALL_DIR); \
 	done
 
 	@echo "Installing and cross-linking C API (.3) docs";
 	@for i in $(TOP_DIR)/doc/*.3; do \
-	    [ ! -e $(TOP_DIR)/doc/$$i ] || $(UNIX_DIR)/installManPage $(MAN_FLAGS) $(TOP_DIR)/doc/$$i $(MAN3_INSTALL_DIR); \
+	    $(UNIX_DIR)/installManPage $(MAN_FLAGS) $$i $(MAN3_INSTALL_DIR); \
 	done
 
 	@echo "Installing and cross-linking command (.n) docs";
 	@for i in $(TOP_DIR)/doc/*.n; do \
-	    [ ! -e $(TOP_DIR)/doc/$$i ] || $(UNIX_DIR)/installManPage $(MAN_FLAGS) $(TOP_DIR)/doc/$$i $(MANN_INSTALL_DIR); \
+	    $(UNIX_DIR)/installManPage $(MAN_FLAGS) $$i $(MANN_INSTALL_DIR); \
 	done
 
 # Optional target to install private headers

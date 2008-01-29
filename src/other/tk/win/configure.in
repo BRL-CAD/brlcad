@@ -16,7 +16,7 @@ SHELL=/bin/sh
 TK_VERSION=8.5
 TK_MAJOR_VERSION=8
 TK_MINOR_VERSION=5
-TK_PATCH_LEVEL="b1"
+TK_PATCH_LEVEL=".0"
 VER=$TK_MAJOR_VERSION$TK_MINOR_VERSION
 
 #------------------------------------------------------------------------
@@ -179,7 +179,7 @@ TK_SHARED_LIB_SUFFIX="\${NODOT_VERSION}${DLLSUFFIX}"
 TK_UNSHARED_LIB_SUFFIX="\${NODOT_VERSION}${LIBSUFFIX}"
 TK_EXPORT_FILE_SUFFIX="\${NODOT_VERSION}${LIBSUFFIX}"
 
-eval "TK_SRC_DIR=`cd $srcdir/..; pwd`"
+eval "TK_SRC_DIR=\"`cd $srcdir/..; pwd`\""
 
 eval "TK_DLL_FILE=tk$VER${DLLSUFFIX}"
 eval "TK_LIB_FILE=${LIBPREFIX}tk$VER${LIBSUFFIX}"
@@ -231,9 +231,11 @@ fi
 
 # The wish.exe.manifest requires these
 # TK_WIN_VERSION is the 4 dotted pair Windows version format
+# Make sure the patch level doesn't contain extra dotted pairs (interim rel)
+AB_PATCH_LEVEL="`echo $TK_PATCH_LEVEL | sed -e 's/\..*//'`"
 case "$TK_PATCH_LEVEL" in
-     a*) TK_WIN_VERSION="$TK_VERSION.0.`echo $TK_PATCH_LEVEL | tr -d a`" ;;
-     b*) TK_WIN_VERSION="$TK_VERSION.1.`echo $TK_PATCH_LEVEL | tr -d b`" ;;
+     a*) TK_WIN_VERSION="$TK_VERSION.0.`echo $AB_PATCH_LEVEL | tr -d a`" ;;
+     b*) TK_WIN_VERSION="$TK_VERSION.1.`echo $AB_PATCH_LEVEL | tr -d b`" ;;
      .*) TK_WIN_VERSION="$TK_VERSION.2$TK_PATCH_LEVEL" ;;
 esac
 AC_SUBST(TK_WIN_VERSION)

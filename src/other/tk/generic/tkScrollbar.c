@@ -542,7 +542,7 @@ ConfigureScrollbar(
      */
 
     if (scrollPtr->command != NULL) {
-	scrollPtr->commandSize = strlen(scrollPtr->command);
+        scrollPtr->commandSize = (int)strlen(scrollPtr->command);
     } else {
 	scrollPtr->commandSize = 0;
     }

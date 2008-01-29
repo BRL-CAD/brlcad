@@ -48,7 +48,7 @@ String value describes desired bitmap; internal rep will be
 modified to cache pointer to corresponding Pixmap.
 .AP "const char" *info in
 Same as \fIobjPtr\fR except description of bitmap is passed as a string and
-resulting Pixmap isn't cached.
+resulting Pixmap is not cached.
 .AP "const char" *name in
 Name for new bitmap to be defined.
 .AP "const char" *source in
@@ -93,8 +93,9 @@ by Tk:
 .RS
 .TP 12
 \fBerror\fR
-The international "don't" symbol:  a circle with a diagonal line
-across it.
+The international
+.QW don't
+symbol:  a circle with a diagonal line across it.
 .TP 12
 \fBgray75\fR
 75% gray: a checkerboard pattern where three out of four bits are on.
@@ -113,7 +114,8 @@ every fourth pixel in every other row.
 An hourglass symbol.
 .TP 12
 \fBinfo\fR
-A large letter ``i''.
+A large letter
+.QW i .
 .TP 12
 \fBquesthead\fR
 The silhouette of a human head, with a question mark in it.
@@ -180,7 +182,7 @@ Under normal conditions, \fBTk_AllocBitmapFromObj\fR
 returns an identifier for the requested bitmap.  If an error
 occurs in creating the bitmap, such as when \fIobjPtr\fR refers
 to a non-existent file, then \fBNone\fR is returned and an error
-message is left in \fIinterp\fR's result if \fIinterp\fR isn't
+message is left in \fIinterp\fR's result if \fIinterp\fR is not
 NULL. \fBTk_AllocBitmapFromObj\fR caches information about the return
 value in \fIobjPtr\fR, which speeds up future calls to procedures
 such as \fBTk_AllocBitmapFromObj\fR and \fBTk_GetBitmapFromObj\fR.
@@ -193,7 +195,7 @@ return value, so \fBTk_GetBitmap\fR is less efficient than
 .PP
 \fBTk_GetBitmapFromObj\fR returns the token for an existing bitmap, given
 the window and description used to create the bitmap.
-\fBTk_GetBitmapFromObj\fR doesn't actually create the bitmap; the bitmap
+\fBTk_GetBitmapFromObj\fR does not actually create the bitmap; the bitmap
 must already have been created with a previous call to
 \fBTk_AllocBitmapFromObj\fR or \fBTk_GetBitmap\fR.  The return
 value is cached in \fIobjPtr\fR, which speeds up
@@ -212,7 +214,7 @@ describe the bitmap.
 \fBTCL_ERROR\fR is returned and an error message is left in
 \fIinterp->result\fR.
 Note:  \fBTk_DefineBitmap\fR expects the memory pointed to by
-\fIsource\fR to be static:  \fBTk_DefineBitmap\fR doesn't make
+\fIsource\fR to be static:  \fBTk_DefineBitmap\fR does not make
 a private copy of this memory, but uses the bytes pointed to
 by \fIsource\fR later in calls to \fBTk_AllocBitmapFromObj\fR or
 \fBTk_GetBitmap\fR.

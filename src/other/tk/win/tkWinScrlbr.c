@@ -255,13 +255,8 @@ CreateProc(
     }
 
     scrollPtr->lastVertical = scrollPtr->info.vertical;
-#ifdef _WIN64
     scrollPtr->oldProc = (WNDPROC)SetWindowLongPtr(scrollPtr->hwnd,
-	    GWLP_WNDPROC, (LONG_PTR) ScrollbarProc);
-#else
-    scrollPtr->oldProc = (WNDPROC)SetWindowLong(scrollPtr->hwnd, GWL_WNDPROC,
-	    (DWORD) ScrollbarProc);
-#endif
+	    GWLP_WNDPROC, (INT_PTR) ScrollbarProc);
     window = Tk_AttachHWND(tkwin, scrollPtr->hwnd);
 
     UpdateScrollbar(scrollPtr);
@@ -306,11 +301,7 @@ TkpDisplayScrollbar(
     if (scrollPtr->lastVertical != scrollPtr->info.vertical) {
 	HWND hwnd = Tk_GetHWND(Tk_WindowId(tkwin));
 
-#ifdef _WIN64
-	SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR) scrollPtr->oldProc);
-#else
-	SetWindowLong(hwnd, GWL_WNDPROC, (DWORD) scrollPtr->oldProc);
-#endif
+	SetWindowLongPtr(hwnd, GWLP_WNDPROC, (INT_PTR) scrollPtr->oldProc);
 	DestroyWindow(hwnd);
 
 	CreateProc(tkwin, Tk_WindowId(Tk_Parent(tkwin)),
@@ -344,11 +335,7 @@ TkpDestroyScrollbar(
     HWND hwnd = winScrollPtr->hwnd;
 
     if (hwnd) {
-#ifdef _WIN64
-	SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR) winScrollPtr->oldProc);
-#else
-	SetWindowLong(hwnd, GWL_WNDPROC, (DWORD) winScrollPtr->oldProc);
-#endif
+	SetWindowLongPtr(hwnd, GWLP_WNDPROC, (INT_PTR) winScrollPtr->oldProc);
 	if (winScrollPtr->winFlags & IN_MODAL_LOOP) {
 	    ((TkWindow *)scrollPtr->tkwin)->flags |= TK_DONT_DESTROY_WINDOW;
 	    SetParent(hwnd, NULL);

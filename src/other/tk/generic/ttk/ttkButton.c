@@ -194,9 +194,8 @@ BasePostConfigure(Tcl_Interp *interp, void *recordPtr, int mask)
     return status;
 }
 
-
 /*------------------------------------------------------------------------
- * +++ Label widget:
+ * +++ Label widget.
  * Just a base widget that adds a few appearance-related options
  */
 
@@ -274,6 +273,12 @@ static WidgetSpec LabelWidgetSpec =
     TtkWidgetDoLayout,		/* layoutProc */
     TtkWidgetDisplay		/* displayProc */
 };
+
+TTK_BEGIN_LAYOUT(LabelLayout)
+    TTK_GROUP("Label.border", TTK_FILL_BOTH|TTK_BORDER,
+	TTK_GROUP("Label.padding", TTK_FILL_BOTH|TTK_BORDER,
+	    TTK_NODE("Label.label", TTK_FILL_BOTH)))
+TTK_END_LAYOUT
 
 /*------------------------------------------------------------------------
  * +++ Button widget.
@@ -376,6 +381,13 @@ static WidgetSpec ButtonWidgetSpec =
     TtkWidgetDoLayout,		/* layoutProc */
     TtkWidgetDisplay		/* displayProc */
 };
+
+TTK_BEGIN_LAYOUT(ButtonLayout)
+    TTK_GROUP("Button.border", TTK_FILL_BOTH|TTK_BORDER,
+	TTK_GROUP("Button.focus", TTK_FILL_BOTH,
+	    TTK_GROUP("Button.padding", TTK_FILL_BOTH,
+	        TTK_NODE("Button.label", TTK_FILL_BOTH))))
+TTK_END_LAYOUT
 
 /*------------------------------------------------------------------------
  * +++ Checkbutton widget.
@@ -569,6 +581,13 @@ static WidgetSpec CheckbuttonWidgetSpec =
     TtkWidgetDisplay		/* displayProc */
 };
 
+TTK_BEGIN_LAYOUT(CheckbuttonLayout)
+     TTK_GROUP("Checkbutton.padding", TTK_FILL_BOTH,
+	 TTK_NODE("Checkbutton.indicator", TTK_PACK_LEFT)
+	 TTK_GROUP("Checkbutton.focus", TTK_PACK_LEFT | TTK_STICK_W,
+	     TTK_NODE("Checkbutton.label", TTK_FILL_BOTH)))
+TTK_END_LAYOUT
+
 /*------------------------------------------------------------------------
  * +++ Radiobutton widget.
  */
@@ -740,6 +759,13 @@ static WidgetSpec RadiobuttonWidgetSpec =
     TtkWidgetDisplay		/* displayProc */
 };
 
+TTK_BEGIN_LAYOUT(RadiobuttonLayout)
+     TTK_GROUP("Radiobutton.padding", TTK_FILL_BOTH,
+	 TTK_NODE("Radiobutton.indicator", TTK_PACK_LEFT)
+	 TTK_GROUP("Radiobutton.focus", TTK_PACK_LEFT,
+	     TTK_NODE("Radiobutton.label", TTK_FILL_BOTH)))
+TTK_END_LAYOUT
+
 /*------------------------------------------------------------------------
  * +++ Menubutton widget.
  */
@@ -802,13 +828,29 @@ static WidgetSpec MenubuttonWidgetSpec =
     TtkWidgetDisplay		/* displayProc */
 };
 
-/*
- * Initialization:
+TTK_BEGIN_LAYOUT(MenubuttonLayout)
+    TTK_GROUP("Menubutton.border", TTK_FILL_BOTH,
+	TTK_GROUP("Menubutton.focus", TTK_FILL_BOTH,
+	    TTK_NODE("Menubutton.indicator", TTK_PACK_RIGHT)
+	    TTK_GROUP("Menubutton.padding", TTK_PACK_LEFT|TTK_EXPAND|TTK_FILL_X,
+	        TTK_NODE("Menubutton.label", TTK_PACK_LEFT))))
+TTK_END_LAYOUT
+
+/*------------------------------------------------------------------------
+ * +++ Initialization.
  */
 
 MODULE_SCOPE
 void TtkButton_Init(Tcl_Interp *interp)
 {
+    Ttk_Theme theme = Ttk_GetDefaultTheme(interp);
+
+    Ttk_RegisterLayout(theme, "TLabel", LabelLayout);
+    Ttk_RegisterLayout(theme, "TButton", ButtonLayout);
+    Ttk_RegisterLayout(theme, "TCheckbutton", CheckbuttonLayout);
+    Ttk_RegisterLayout(theme, "TRadiobutton", RadiobuttonLayout);
+    Ttk_RegisterLayout(theme, "TMenubutton", MenubuttonLayout);
+
     RegisterWidget(interp, "ttk::label", &LabelWidgetSpec);
     RegisterWidget(interp, "ttk::button", &ButtonWidgetSpec);
     RegisterWidget(interp, "ttk::checkbutton", &CheckbuttonWidgetSpec);

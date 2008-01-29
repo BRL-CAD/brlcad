@@ -76,7 +76,7 @@ set wincur(data_octal) {
 }
 set wincur(data_binary) {}
 foreach wincur(num) $wincur(data_octal) {
-    append wincur(data_binary) [binary format c 0$wincur(num)]
+    append wincur(data_binary) [binary format c [scan $wincur(num) %o]]
 }
 set wincur(dir) [makeDirectory {dir with spaces}]
 set wincur(file) [makeFile $wincur(data_binary) "test file.cur" $wincur(dir)]

@@ -31,7 +31,7 @@ Specifies a desired height for the label.
 If an image or bitmap is being displayed in the label then the value is in
 screen units (i.e. any of the forms acceptable to \fBTk_GetPixels\fR);
 for text it is in lines of text.
-If this option isn't specified, the label's desired height is computed
+If this option is not specified, the label's desired height is computed
 from the size of the image or bitmap or text being displayed in it.
 .OP \-state state State
 Specifies one of three states for the label:  \fBnormal\fR, \fBactive\fR,
@@ -46,10 +46,9 @@ Specifies a desired width for the label.
 If an image or bitmap is being displayed in the label then the value is in
 screen units (i.e. any of the forms acceptable to \fBTk_GetPixels\fR);
 for text it is in characters.
-If this option isn't specified, the label's desired width is computed
+If this option is not specified, the label's desired width is computed
 from the size of the image or bitmap or text being displayed in it.
 .BE
-
 .SH DESCRIPTION
 .PP
 The \fBlabel\fR command creates a new window (given by the
@@ -112,8 +111,8 @@ labels are not intended to be interactive.
 # Make the widgets
 \fBlabel\fR .t \-text "This widget is at the top"    \-bg red
 \fBlabel\fR .b \-text "This widget is at the bottom" \-bg green
-\fBlabel\fR .l \-text "Left\\nHand\\nSide"
-\fBlabel\fR .r \-text "Right\\nHand\\nSide"
+\fBlabel\fR .l \-text "Left\enHand\enSide"
+\fBlabel\fR .r \-text "Right\enHand\enSide"
 text .mid
 \.mid insert end "This layout is like Java's BorderLayout"
 # Lay them out
@@ -123,9 +122,7 @@ pack .l   \-side left   \-fill y
 pack .r   \-side right  \-fill y
 pack .mid \-expand 1    \-fill both
 .CE
-
 .SH "SEE ALSO"
-labelframe(n), button(n), ttk_label(n)
-
+labelframe(n), button(n), ttk::label(n)
 .SH KEYWORDS
 label, widget

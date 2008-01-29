@@ -6,7 +6,7 @@ dnl	to configure the system for the local environment.
 # RCS: @(#) $Id$
 
 AC_INIT([tk],[8.5])
-AC_PREREQ(2.52)
+AC_PREREQ(2.59)
 
 dnl This is only used when included from macosx/configure.ac
 m4_ifdef([SC_USE_CONFIG_HEADERS], [
@@ -27,9 +27,9 @@ m4_ifdef([SC_USE_CONFIG_HEADERS], [
 TK_VERSION=8.5
 TK_MAJOR_VERSION=8
 TK_MINOR_VERSION=5
-TK_PATCH_LEVEL="b1"
+TK_PATCH_LEVEL=".0"
 VERSION=${TK_VERSION}
-LOCALES="cs de el en en_gb eo es es_ES fr it nl pl pt ru"
+LOCALES="cs da de el en en_gb eo es fr hu it nl pl pt ru sv"
 
 #--------------------------------------------------------------------
 # Find and load the tclConfig.sh file
@@ -219,6 +219,38 @@ AC_TYPE_PID_T
 AC_TYPE_SIZE_T
 AC_TYPE_UID_T
 
+AC_CHECK_TYPE([intptr_t], [
+    AC_DEFINE([HAVE_INTPTR_T], 1, [Do we have the intptr_t type?])], [
+    AC_CACHE_CHECK([for pointer-size signed integer type], tcl_cv_intptr_t, [
+    for tcl_cv_intptr_t in "int" "long" "long long" none; do
+	if test "$tcl_cv_intptr_t" != none; then
+	    AC_COMPILE_IFELSE([AC_LANG_BOOL_COMPILE_TRY([AC_INCLUDES_DEFAULT],
+		    [[sizeof (void *) <= sizeof ($tcl_cv_intptr_t)]])], 
+		[tcl_ok=yes], [tcl_ok=no])
+	    test "$tcl_ok" = yes && break; fi
+    done])
+    if test "$tcl_cv_intptr_t" != none; then
+	AC_DEFINE_UNQUOTED([intptr_t], [$tcl_cv_intptr_t], [Signed integer
+	   type wide enough to hold a pointer.])
+    fi
+])
+AC_CHECK_TYPE([uintptr_t], [
+    AC_DEFINE([HAVE_UINTPTR_T], 1, [Do we have the uintptr_t type?])], [
+    AC_CACHE_CHECK([for pointer-size unsigned integer type], tcl_cv_uintptr_t, [
+    for tcl_cv_uintptr_t in "unsigned int" "unsigned long" "unsigned long long" \
+	    none; do
+	if test "$tcl_cv_uintptr_t" != none; then
+	    AC_COMPILE_IFELSE([AC_LANG_BOOL_COMPILE_TRY([AC_INCLUDES_DEFAULT],
+		    [[sizeof (void *) <= sizeof ($tcl_cv_uintptr_t)]])], 
+		[tcl_ok=yes], [tcl_ok=no])
+	    test "$tcl_ok" = yes && break; fi
+    done])
+    if test "$tcl_cv_uintptr_t" != none; then
+	AC_DEFINE_UNQUOTED([uintptr_t], [$tcl_cv_uintptr_t], [Unsigned integer
+	   type wide enough to hold a pointer.])
+    fi
+])
+
 #-------------------------------------------
 #     In OS/390 struct pwd has no pw_gecos field
 #-------------------------------------------
@@ -256,10 +288,29 @@ if test "`uname -s`" = "Darwin" ; then
 	fi
     fi
     AC_MSG_RESULT([$tk_aqua])
-    # remove 64-bit arch flags from CFLAGS et al. for combined 32 & 64 bit fat
-    # builds, as neither TkAqua nor TkX11 can be built for 64-bit at present.
-    test "$fat_32_64" = yes && for v in CFLAGS CPPFLAGS LDFLAGS; do
-	eval $v'="`echo "$'$v' "|sed -e "s/-arch ppc64 / /g" -e "s/-arch x86_64 / /g"`"'; done
+    if test "$fat_32_64" = yes; then
+	if test $tk_aqua = no; then
+	    AC_CACHE_CHECK([for 64-bit X11], tcl_cv_lib_x11_64, [
+		for v in CFLAGS CPPFLAGS LDFLAGS; do
+		    eval 'hold_'$v'="$'$v'";'$v'="`echo "$'$v' "|sed -e "s/-arch ppc / /g" -e "s/-arch i386 / /g"`"'
+		done
+		CPPFLAGS="$CPPFLAGS -I/usr/X11R6/include"
+		LDFLAGS="$LDFLAGS -L/usr/X11R6/lib -lX11"
+		AC_TRY_LINK([#include <X11/Xlib.h>], [XrmInitialize();], 
+		    tcl_cv_lib_x11_64=yes, tcl_cv_lib_x11_64=no)
+		for v in CFLAGS CPPFLAGS LDFLAGS; do
+		    eval $v'="$hold_'$v'"'
+		done])
+	fi
+	# remove 64-bit arch flags from CFLAGS et al. for combined 32 & 64 bit
+	# fat builds if configuration does not support 64-bit.
+	if test $tk_aqua = yes -o "$tcl_cv_lib_x11_64" = no; then
+	    AC_MSG_NOTICE([Removing 64-bit architectures from compiler & linker flags])
+	    for v in CFLAGS CPPFLAGS LDFLAGS; do
+		eval $v'="`echo "$'$v' "|sed -e "s/-arch ppc64 / /g" -e "s/-arch x86_64 / /g"`"'
+	    done
+	fi
+    fi
     if test $tk_aqua = no; then
 	# check if weak linking whole libraries is possible.
 	AC_CACHE_CHECK([if ld accepts -weak-l flag], tcl_cv_ld_weak_l, [

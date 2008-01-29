@@ -197,7 +197,9 @@ TkpDrawEntryBorderAndFocus(Entry *entryPtr, Drawable d, int isSpinbox)
     } else {
 	drawState = kThemeStateActive;
     }
-    TkMacOSXSetupDrawingContext(d, NULL, 0, &dc);
+    if (!TkMacOSXSetupDrawingContext(d, NULL, 0, &dc)) {
+	return 0;
+    }
     DrawThemeEditTextFrame(&bounds, drawState);
     if (entryPtr->flags & GOT_FOCUS) {
 	/*
@@ -307,7 +309,9 @@ TkpDrawSpinboxButtons(Spinbox *sbPtr, Drawable d)
     rects[0].height = Tk_Height(tkwin);
     XFillRectangles(Tk_Display(tkwin), d, bgGC, rects, 1);
 
-    TkMacOSXSetupDrawingContext(d, NULL, 0, &dc);
+    if (!TkMacOSXSetupDrawingContext(d, NULL, 0, &dc)) {
+	return 0;
+    }
     ChkErr(DrawThemeButton, &inBounds, inKind, &inNewInfo, inPrevInfo,
 	    inEraseProc, inLabelProc, inUserData);
     TkMacOSXRestoreDrawingContext(&dc);

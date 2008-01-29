@@ -122,6 +122,7 @@ test winfo-4.4 {"winfo containing" command} {
     list [catch {winfo containing -displayof geek 25 30} msg] $msg
 } {1 {bad window path name "geek"}}
 test winfo-4.5 {"winfo containing" command} {
+    raise .t
     winfo containing [winfo rootx .t.f] [winfo rooty .t.f]
 } .t.f
 test winfo-4.6 {"winfo containing" command} {nonPortable} {

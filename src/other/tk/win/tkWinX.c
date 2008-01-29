@@ -274,21 +274,7 @@ TkWinXInit(
 	tkWinProcs = &asciiProcs;
     }
 
-    /*
-     * When threads are enabled, we cannot use CLASSDC because threads will
-     * then write into the same device context.
-     *
-     * This is a hack; we should add a subsystem that manages device context
-     * on a per-thread basis. See also tkWinWm.c, which also initializes a
-     * WNDCLASS structure.
-     */
-
-#ifdef TCL_THREADS
     childClass.style = CS_HREDRAW | CS_VREDRAW;
-#else
-    childClass.style = CS_HREDRAW | CS_VREDRAW | CS_CLASSDC;
-#endif
-
     childClass.cbClsExtra = 0;
     childClass.cbWndExtra = 0;
     childClass.hInstance = hInstance;

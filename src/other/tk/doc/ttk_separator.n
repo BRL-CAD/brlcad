@@ -7,15 +7,13 @@
 '\" RCS: @(#) $Id$
 '\" 
 .so man.macros
-.TH ttk_separator n 8.5 Tk "Tk Themed Widget"
+.TH ttk::separator n 8.5 Tk "Tk Themed Widget"
 .BS
-.\" Use _ instead of :: as the name becomes a filename on install
 .SH NAME
-ttk_separator \- Separator bar
+ttk::separator \- Separator bar
 .SH SYNOPSIS
 \fBttk::separator\fR \fIpathName \fR?\fIoptions\fR?
 .BE
-
 .SH DESCRIPTION
 A \fBttk::separator\fR widget displays a horizontal or vertical separator
 bar.
@@ -23,19 +21,15 @@ bar.
 \-class	\-cursor	\-state	\-style	
 \-takefocus
 .SE
-
 .SH "WIDGET-SPECIFIC OPTIONS"
 .OP \-orient orient Orient
 One of \fBhorizontal\fR or \fBvertical\fR.
 Specifies the orientation of the separator.
-
 .SH "WIDGET COMMAND"
 Separator widgets support the standard 
 \fBcget\fR, \fBconfigure\fR, \fBinstate\fR, and \fBstate\fR 
 methods.  No other widget methods are used.
-
 .SH "SEE ALSO"
-ttk_widget(n)
-
+ttk::widget(n)
 .SH "KEYWORDS"
 widget, separator

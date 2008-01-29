@@ -27,14 +27,15 @@ on the \fIoption\fR argument:
 .TP
 \fBpack \fIslave \fR?\fIslave ...\fR? ?\fIoptions\fR?
 If the first argument to \fBpack\fR is a window name (any value
-starting with ``.''), then the command is processed in the same
-way as \fBpack configure\fR.
+starting with
+.QW . ),
+then the command is processed in the same way as \fBpack configure\fR.
 .TP
 \fBpack configure \fIslave \fR?\fIslave ...\fR? ?\fIoptions\fR?
 The arguments consist of the names of one or more slave windows
 followed by pairs of arguments that specify how
 to manage the slaves.
-See ``THE PACKER ALGORITHM'' below for details on how the options
+See \fBTHE PACKER ALGORITHM\fR below for details on how the options
 are used by the packer.
 The following options are supported:
 .RS
@@ -136,13 +137,14 @@ The slaves will no longer be managed by the packer.
 Returns a list whose elements are the current configuration state of
 the slave given by \fIslave\fR in the same option-value form that
 might be specified to \fBpack configure\fR.
-The first two elements of the list are ``\fB\-in \fImaster\fR'' where
-\fImaster\fR is the slave's master.
+The first two elements of the list are
+.QW "\fB\-in \fImaster\fR"
+where \fImaster\fR is the slave's master.
 .TP
 \fBpack propagate \fImaster\fR ?\fIboolean\fR?
 If \fIboolean\fR has a true boolean value such as \fB1\fR or \fBon\fR
 then propagation is enabled for \fImaster\fR, which must be a window
-name (see ``GEOMETRY PROPAGATION'' below).
+name (see \fBGEOMETRY PROPAGATION\fR below).
 If \fIboolean\fR has a false boolean value then propagation is
 disabled for \fImaster\fR.
 In either of these cases an empty string is returned.
@@ -184,7 +186,7 @@ For the left or right side the height of the parcel is
 the height of the cavity and the width is the requested width
 of the slave plus the \fB\-ipadx\fR and \fB\-padx\fR options.
 The parcel may be enlarged further because of the \fB\-expand\fR
-option (see ``EXPANSION'' below)
+option (see \fBEXPANSION\fR below)
 .IP [2]
 The packer chooses the dimensions of the slave.
 The width will normally be the slave's requested width plus
@@ -208,7 +210,7 @@ slave and the edges of the parcel.
 Once a given slave has been packed, the area of its parcel
 is subtracted from the cavity, leaving a smaller rectangular
 cavity for the next slave.
-If a slave doesn't use all of its parcel, the unused space
+If a slave does not use all of its parcel, the unused space
 in the parcel will not be used by subsequent slaves.
 If the cavity should become too small to meet the needs of
 a slave then the slave will be given whatever space is
@@ -252,7 +254,7 @@ visible without danger of the slave being clipped by its parent.
 If the master for a slave is not its parent then you must make sure
 that the slave is higher in the stacking order than the master.
 Otherwise the master will obscure the slave and it will appear as
-if the slave hasn't been packed correctly.
+if the slave has not been packed correctly.
 The easiest way to make sure the slave is higher than the master is
 to create the master window first:  the most recently created window
 will be highest in the stacking order.
@@ -263,8 +265,8 @@ the stacking order of either the master or the slave.
 # Make the widgets
 label .t \-text "This widget is at the top"    \-bg red
 label .b \-text "This widget is at the bottom" \-bg green
-label .l \-text "Left\\nHand\\nSide"
-label .r \-text "Right\\nHand\\nSide"
+label .l \-text "Left\enHand\enSide"
+label .r \-text "Right\enHand\enSide"
 text .mid
 \.mid insert end "This layout is like Java's BorderLayout"
 # Lay them out

@@ -54,6 +54,8 @@ namespace eval ::tk {
     ::msgcat::mcset en "Select Log File"
     ::msgcat::mcset en "Select a file to source"
     ::msgcat::mcset en "&Selection:"
+    ::msgcat::mcset en "Show &Hidden Directories"
+    ::msgcat::mcset en "Show &Hidden Files and Directories"
     ::msgcat::mcset en "Skip Messages"
     ::msgcat::mcset en "&Source..."
     ::msgcat::mcset en "Tcl Scripts"

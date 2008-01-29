@@ -80,7 +80,7 @@ contents of the widget may still be selected.  If the spinbox is
 disabled, the value may not be changed, no insertion cursor will be
 displayed, the contents will not be selectable, and the spinbox may
 be displayed in a different color, depending on the values of the
-\fB-disabledforeground\fR and \fB-disabledbackground\fR options.
+\fB\-disabledforeground\fR and \fB\-disabledbackground\fR options.
 .OP \-to to To
 A floating-point value corresponding to the highest value for the spinbox,
 to be used in conjunction with \fB\-from\fR and \fB\-increment\fR.  When
@@ -114,7 +114,6 @@ size just large enough to hold its current text.
 Must be a proper boolean value.  If on, the spinbox will wrap around the
 values of data in the widget.
 .BE
-
 .SH DESCRIPTION
 .PP
 The \fBspinbox\fR command creates a new window (given by the
@@ -147,7 +146,6 @@ may be used to change the view in the window.  Spinboxes use
 the standard \fBxScrollCommand\fR mechanism for interacting with
 scrollbars (see the description of the \fBxScrollCommand\fR option
 for details).  They also support scanning, as described below.
-
 .SH VALIDATION
 .PP
 Validation works by setting the \fBvalidateCommand\fR
@@ -174,9 +172,9 @@ following substitutions are recognized:
 .PP
 .IP \fB%d\fR 5
 Type of action: 1 for \fBinsert\fR, 0 for \fBdelete\fR,
-or -1 for focus, forced or textvariable validation.
+or \-1 for focus, forced or textvariable validation.
 .IP \fB%i\fR 5
-Index of char string to be inserted/deleted, if any, otherwise -1.
+Index of char string to be inserted/deleted, if any, otherwise \-1.
 .IP \fB%P\fR 5
 The value of the spinbox should edition occur.  If you are configuring the
 spinbox widget to have a new textvariable, this will be the value of that
@@ -214,13 +212,12 @@ validated.  If you wish to edit the value of the widget
 during validation and still have the \fBvalidate\fR option set, you should
 include the command
 .CS
-     \fI%W config -validate %v\fR
+     \fI%W config \-validate %v\fR
 .CE
 in the \fBvalidateCommand\fR or \fBinvalidCommand\fR (whichever one you
 were editing the spinbox widget from).  It is also recommended to not set an
 associated \fBtextVariable\fR during validation, as that can cause the
 spinbox widget to become out of sync with the \fBtextVariable\fR.
-
 .SH "WIDGET COMMAND"
 .PP
 The \fBspinbox\fR command creates a new Tcl command whose
@@ -231,6 +228,7 @@ operations on the widget.  It has the following general form:
 .CE
 \fIOption\fR and the \fIarg\fRs
 determine the exact behavior of the command.
+.SS INDICES
 .PP
 Many of the widget commands for spinboxes take one or more indices as
 arguments.  An index specifies a particular character in the spinbox's
@@ -255,22 +253,27 @@ insertion cursor.
 .TP 12
 \fBsel.first\fR
 Indicates the first character in the selection.  It is an error to
-use this form if the selection isn't in the spinbox window.
+use this form if the selection is not in the spinbox window.
 .TP 12
 \fBsel.last\fR
 Indicates the character just after the last one in the selection.
-It is an error to use this form if the selection isn't in the
+It is an error to use this form if the selection is not in the
 spinbox window.
 .TP 12
 \fB@\fInumber\fR
 In this form, \fInumber\fR is treated as an x-coordinate in the
 spinbox's window;  the character spanning that x-coordinate is used.
-For example, ``\fB@0\fR'' indicates the left-most character in the
-window.
+For example,
+.QW \fB@0\fR
+indicates the left-most character in the window.
 .LP
-Abbreviations may be used for any of the forms above, e.g. ``\fBe\fR''
-or ``\fBsel.f\fR''.  In general, out-of-range indices are automatically
-rounded to the nearest legal value.
+Abbreviations may be used for any of the forms above, e.g.
+.QW \fBe\fR
+or
+.QW \fBsel.f\fR .
+In general, out-of-range indices are automatically rounded to the
+nearest legal value.
+.SS SUBCOMMANDS
 .PP
 The following commands are possible for spinbox widgets:
 .TP
@@ -309,7 +312,7 @@ Delete one or more elements of the spinbox.
 \fIFirst\fR is the index of the first character to delete, and
 \fIlast\fR is the index of the character just after the last
 one to delete.
-If \fIlast\fR isn't specified it defaults to \fIfirst\fR+1,
+If \fIlast\fR is not specified it defaults to \fIfirst\fR+1,
 i.e. a single character is deleted.
 This command returns an empty string.
 .TP
@@ -368,14 +371,14 @@ Locate the end of the selection nearest to the character given by
 (i.e. including but not going beyond \fIindex\fR).  The other
 end of the selection is made the anchor point for future
 \fBselect to\fR commands.  If the selection
-isn't currently in the spinbox, then a new selection is created to
+is not currently in the spinbox, then a new selection is created to
 include the characters between \fIindex\fR and the most recent
 selection anchor point, inclusive.
 Returns an empty string.
 .TP
 \fIpathName \fBselection clear\fR
 Clear the selection if it is currently in this widget.  If the
-selection isn't in this widget then the command has no effect.
+selection is not in this widget then the command has no effect.
 Returns an empty string.
 .TP
 \fIpathName \fBselection element\fR ?\fIelement\fR?
@@ -384,7 +387,7 @@ is specified, it will be displayed depressed.
 .TP
 \fIpathName \fBselection from \fIindex\fR
 Set the selection anchor point to just before the character
-given by \fIindex\fR.  Doesn't change the selection.
+given by \fIindex\fR.  Does not change the selection.
 Returns an empty string.
 .TP
 \fIpathName \fBselection present\fR
@@ -408,7 +411,7 @@ to the characters from the anchor point up to but not including
 \fIindex\fR.
 The anchor point is determined by the most recent \fBselect from\fR
 or \fBselect adjust\fR command in this widget.
-If the selection isn't in this widget then a new selection is
+If the selection is not in this widget then a new selection is
 created using the most recent anchor point specified for the widget.
 Returns an empty string.
 .RE
@@ -467,9 +470,11 @@ become visible.
 .PP
 Tk automatically creates class bindings for spinboxes that give them
 the following default behavior.
-In the descriptions below, ``word'' refers to a contiguous group
-of letters, digits, or ``_'' characters, or any single character
-other than these.
+In the descriptions below,
+.QW word
+refers to a contiguous group of letters, digits, or
+.QW _
+characters, or any single character other than these.
 .IP [1]
 Clicking mouse button 1 positions the insertion cursor
 just before the character underneath the mouse cursor, sets the
@@ -530,7 +535,7 @@ Shift-End moves the cursor to the end and extends the selection
 to that point.
 .IP [12]
 The Select key and Control-Space set the selection anchor to the position
-of the insertion cursor.  They don't affect the current selection.
+of the insertion cursor.  They do not affect the current selection.
 Shift-Select and Control-Shift-Space adjust the selection to the
 current position of the insertion cursor, selecting from the anchor
 to the insertion cursor if there was not any selection previously.

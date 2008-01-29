@@ -57,9 +57,11 @@ Returns the class name for \fIwindow\fR.
 .TP
 \fBwinfo colormapfull \fIwindow\fR
 Returns 1 if the colormap for \fIwindow\fR is known to be full, 0
-otherwise.  The colormap for a window is ``known'' to be full if the last
+otherwise.  The colormap for a window is
+.QW known
+to be full if the last
 attempt to allocate a new color on that window failed and this
-application hasn't freed any colors in the colormap since the
+application has not freed any colors in the colormap since the
 failed allocation.
 .TP
 \fBwinfo containing \fR?\fB\-displayof \fIwindow\fR? \fIrootX rootY\fR
@@ -90,7 +92,10 @@ window exists.
 Returns a floating-point value giving the number of pixels
 in \fIwindow\fR corresponding to the distance given by \fInumber\fR.
 \fINumber\fR may be specified in any of the forms acceptable
-to \fBTk_GetScreenMM\fR, such as ``2.0c'' or ``1i''.
+to \fBTk_GetScreenMM\fR, such as
+.QW 2.0c
+or
+.QW 1i .
 The return value may be fractional;  for an integer value, use
 \fBwinfo pixels\fR.
 .TP
@@ -128,7 +133,7 @@ Returns \fB1\fR if \fIwindow\fR is currently mapped, \fB0\fR otherwise.
 \fBwinfo manager \fIwindow\fR
 Returns the name of the geometry manager currently
 responsible for \fIwindow\fR, or an empty string if \fIwindow\fR
-isn't managed by any geometry manager.
+is not managed by any geometry manager.
 The name is usually the name of the Tcl command for the geometry
 manager, such as \fBpack\fR or \fBplace\fR.
 If the geometry manager is a widget, such as canvases or text, the
@@ -155,7 +160,10 @@ the display of the application's main window.
 Returns the number of pixels in \fIwindow\fR corresponding
 to the distance given by \fInumber\fR.
 \fINumber\fR may be specified in any of the forms acceptable
-to \fBTk_GetPixels\fR, such as ``2.0c'' or ``1i''.
+to \fBTk_GetPixels\fR, such as
+.QW 2.0c
+or
+.QW 1i .
 The result is rounded to the nearest integer value;  for a
 fractional result, use \fBwinfo fpixels\fR.
 .TP
@@ -164,7 +172,7 @@ If the mouse pointer is on the same screen as \fIwindow\fR, returns the
 pointer's x coordinate, measured in pixels in the screen's root window.
 If a virtual root window is in use on the screen, the position is
 measured in the virtual root.
-If the mouse pointer isn't on the same screen as \fIwindow\fR then
+If the mouse pointer is not on the same screen as \fIwindow\fR then
 -1 is returned.
 .TP
 \fBwinfo pointerxy \fIwindow\fR
@@ -173,15 +181,15 @@ with two elements, which are the pointer's x and y coordinates measured
 in pixels in the screen's root window.
 If a virtual root window is in use on the screen, the position
 is computed in the virtual root.
-If the mouse pointer isn't on the same screen as \fIwindow\fR then
-both of the returned coordinates are -1.
+If the mouse pointer is not on the same screen as \fIwindow\fR then
+both of the returned coordinates are \-1.
 .TP
 \fBwinfo pointery \fIwindow\fR
 If the mouse pointer is on the same screen as \fIwindow\fR, returns the
 pointer's y coordinate, measured in pixels in the screen's root window.
 If a virtual root window is in use on the screen, the position
 is computed in the virtual root.
-If the mouse pointer isn't on the same screen as \fIwindow\fR then
+If the mouse pointer is not on the same screen as \fIwindow\fR then
 -1 is returned.
 .TP
 \fBwinfo reqheight \fIwindow\fR
@@ -252,7 +260,8 @@ in pixels.
 Returns a string containing information about the server for
 \fIwindow\fR's display.  The exact format of this string may vary
 from platform to platform.  For X servers the string
-has the form ``\fBX\fImajor\fBR\fIminor vendor vendorVersion\fR''
+has the form
+.QW "\fBX\fImajor\fBR\fIminor vendor vendorVersion\fR"
 where \fImajor\fR and \fIminor\fR are the version and revision
 numbers provided by the server (e.g., \fBX11R5\fR), \fIvendor\fR
 is the name of the vendor for the server, and \fIvendorRelease\fR
@@ -331,7 +340,7 @@ has no border).
 Print where the mouse pointer is and what window it is currently over:
 .CS
 lassign [\fBwinfo pointerxy\fR .] x y
-puts -nonewline "Mouse pointer at ($x,$y) which is "
+puts \-nonewline "Mouse pointer at ($x,$y) which is "
 set win [\fBwinfo containing\fR $x $y]
 if {$win eq ""} {
     puts "over no window"

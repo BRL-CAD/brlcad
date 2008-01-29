@@ -7,15 +7,13 @@
 '\" RCS: @(#) $Id$
 '\" 
 .so man.macros
-.TH ttk_radiobutton n 8.5 Tk "Tk Themed Widget"
+.TH ttk::radiobutton n 8.5 Tk "Tk Themed Widget"
 .BS
-.\" Use _ instead of :: as the name becomes a filename on install
 .SH NAME
-ttk_radiobutton \- Mutually exclusive option widget
+ttk::radiobutton \- Mutually exclusive option widget
 .SH SYNOPSIS
 \fBttk::radiobutton\fR \fIpathName \fR?\fIoptions\fR?
 .BE
-
 .SH DESCRIPTION
 \fBttk::radiobutton\fR widgets are used in groups to show or change
 a set of mutually-exclusive options.
@@ -27,43 +25,41 @@ it sets the variable to its associated value.
 \-state	\-style	\-takefocus	\-text
 \-textvariable	\-underline	\-width
 .SE
-
 .SH "WIDGET-SPECIFIC OPTIONS"
 .OP \-command command Command
 A Tcl script to evaluate whenever the widget is invoked.
 .OP \-value Value Value
-The value to store in the associated \fI-variable\fR 
+The value to store in the associated \fI\-variable\fR 
 when the widget is selected. 
 .OP \-variable variable Variable
 The name of a global variable whose value is linked to the widget.
 Default value is \fB::selectedButton\fR.
-
 .SH "WIDGET COMMAND"
 In addition to the standard 
 \fBcget\fR, \fBconfigure\fR, \fBinstate\fR, and \fBstate\fR 
 commands, radiobuttons support the following additional
 widget commands:
 .TP
-\fIpathname\fR invoke
-Sets the \fI-variable\fR to the \fI-value\fR, selects the widget,
-and evaluates the associated \fI-command\fR.  
-Returns the result of the \fI-command\fR, or the empty
-string if no \fI-command\fR is specified.
+\fIpathname\fB invoke\fR
+Sets the \fB\-variable\fR to the \fB\-value\fR, selects the widget,
+and evaluates the associated \fB\-command\fR.  
+Returns the result of the \fB\-command\fR, or the empty
+string if no \fB\-command\fR is specified.
 .\" Missing: select, deselect.  Useful?
 .\" Missing: flash.  This is definitely not useful.
-
 .SH "WIDGET STATES"
 The widget does not respond to user input if the \fBdisabled\fR state is set.
 The widget sets the \fBselected\fR state whenever 
-the linked \fB-variable\fR is set to the widget's \fB-value\fR,
+the linked \fB\-variable\fR is set to the widget's \fB\-value\fR,
 and clears it otherwise.
 The widget sets the \fBalternate\fR state whenever the 
-linked \fB-variable\fR is unset.  
-(The \fBalternate\fR state may be used to indicate a ``tri-state'' 
-or ``indeterminate'' selection.)
-
+linked \fB\-variable\fR is unset.  
+(The \fBalternate\fR state may be used to indicate a
+.QW tri-state
+or
+.QW indeterminate
+selection.)
 .SH "SEE ALSO"
-ttk_widget(n), ttk_checkbutton(n), radiobutton(n)
-
+ttk::widget(n), ttk::checkbutton(n), radiobutton(n)
 .SH "KEYWORDS"
 widget, button, option

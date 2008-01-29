@@ -6,6 +6,37 @@ package require Tk 8.5
 package require tcltest ; namespace import -force tcltest::*
 loadTestedCommands
 
+testConstraint coreScrollbar [expr {[tk windowingsystem] eq "aqua"}]
+
+test scrollbar-swapout-1 "Use core scrollbars on OSX..." -constraints {
+    coreScrollbar
+} -body {
+    ttk::scrollbar .sb -command "yadda"
+    list [winfo class .sb] [.sb cget -command]
+} -result [list Scrollbar yadda] -cleanup { 
+    destroy .sb 
+}
+
+test scrollbar-swapout-2 "... unless -style is specified ..." -constraints {
+    coreScrollbar
+} -body {
+    ttk::style layout Vertical.Custom.TScrollbar \
+    	[ttk::style layout Vertical.TScrollbar] ; # See #1833339
+    ttk::scrollbar .sb -command "yadda" -style Custom.TScrollbar 
+    list [winfo class .sb] [.sb cget -command] [.sb cget -style]
+} -result [list TScrollbar yadda Custom.TScrollbar] -cleanup {
+    destroy .sb
+}
+
+test scrollbar-swapout-3 "... or -class." -constraints {
+    coreScrollbar
+} -body {
+    ttk::scrollbar .sb -command "yadda" -class Custom.TScrollbar 
+    list [winfo class .sb] [.sb cget -command]
+} -result [list Custom.TScrollbar yadda] -cleanup {
+    destroy .sb
+}
+
 test scrollbar-1.0 "Setup" -body {
     ttk::scrollbar .tsb
 } -result .tsb

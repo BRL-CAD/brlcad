@@ -47,7 +47,7 @@ test wm-1.1 {Tk_WmObjCmd procedure, miscellaneous errors} {
 } {1 {wrong # args: should be "wm option window ?arg ...?"}}
 test wm-1.2 {Tk_WmObjCmd procedure, miscellaneous errors} {
     list [catch {wm foo} msg] $msg
-} {1 {bad option "foo": must be aspect, attributes, client, colormapwindows, command, deiconify, focusmodel, frame, geometry, grid, group, iconbitmap, iconify, iconmask, iconname, iconphoto, iconposition, iconwindow, maxsize, minsize, overrideredirect, positionfrom, protocol, resizable, sizefrom, stackorder, state, title, transient, or withdraw}}
+} {1 {bad option "foo": must be aspect, attributes, client, colormapwindows, command, deiconify, focusmodel, forget, frame, geometry, grid, group, iconbitmap, iconify, iconmask, iconname, iconphoto, iconposition, iconwindow, manage, maxsize, minsize, overrideredirect, positionfrom, protocol, resizable, sizefrom, stackorder, state, title, transient, or withdraw}}
 test wm-1.3 {Tk_WmObjCmd procedure, miscellaneous errors} {
     list [catch {wm command} msg] $msg
 } {1 {wrong # args: should be "wm option window ?arg ...?"}}
@@ -2032,6 +2032,52 @@ test wm-deletion-epoch-1.1 {Deletion epoch on multiple displays} -constraints al
     destroy .t
     wm deiconify $w
 } -returnCodes error -result {bad window path name ".t"}
+
+### Docking test (manage, forget) ###
+test wm-manage-1.1 {} {
+    deleteWindows
+    set result [list]
+    toplevel .t
+    button .t.b -text "Manage This"
+    pack .t.b
+    update
+    lappend result [winfo manage .t.b]
+    lappend result [winfo toplevel .t.b]
+    wm manage .t.b
+    update
+    lappend result [winfo manage .t.b]
+    lappend result [winfo toplevel .t.b]
+    wm forget .t.b
+    pack .t.b
+    update
+    lappend result [winfo manage .t.b]
+    lappend result [winfo toplevel .t.b]
+    set result
+} {pack .t wm .t.b pack .t}
+
+test wm-manage-1.2 {} {
+    deleteWindows
+    set result [list]
+    toplevel .t
+    toplevel .t.t
+    button .t.t.b -text "Manage This"
+    pack .t.t.b
+    update
+    lappend result [winfo manage .t.t]
+    lappend result [winfo toplevel .t.t.b]
+    wm forget .t.t
+    wm forget .t.t ; # second call should be a no-op
+    pack .t.t
+    update
+    lappend result [winfo manage .t.t]
+    lappend result [winfo toplevel .t.t.b]
+    wm manage .t.t
+    wm manage .t.t ; # second call should be a no-op
+    wm deiconify .t.t
+    update
+    lappend result [winfo manage .t.t]
+    lappend result [winfo toplevel .t.t.b]
+} {wm .t.t pack .t wm .t.t}
 
 # FIXME:
 

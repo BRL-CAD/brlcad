@@ -32,7 +32,7 @@ Tk_Window
 .AS Tcl_Interp *topLevScreen
 .AP Tcl_Interp *interp out
 Tcl interpreter to use for error reporting.  If no error occurs,
-then \fI*interp\fR isn't modified.
+then \fI*interp\fR is not modified.
 .AP Tk_Window parent in
 Token for the window that is to serve as the logical parent of
 the new window.
@@ -43,15 +43,15 @@ the same \fIparent\fR.
 Has same format as \fIscreenName\fR.  If NULL, then new window is
 created as an internal window.  If non-NULL, new window is created as
 a top-level window on screen \fItopLevScreen\fR.  If \fItopLevScreen\fR
-is an empty string (``'') then new
-window is created as top-level window of \fIparent\fR's screen.
+is an empty string
+.PQ ""
+then new window is created as top-level window of \fIparent\fR's screen.
 .AP Tk_Window tkwin in
 Token for window.
 .AP "const char" *pathName in
 Name of new window, specified as path name within application
 (e.g. \fB.a.b.c\fR).
 .BE
-
 .SH DESCRIPTION
 .PP
 The procedures \fBTk_CreateWindow\fR, 
@@ -59,7 +59,7 @@ The procedures \fBTk_CreateWindow\fR,
 are used to create new windows for
 use in Tk-based applications.  Each of the procedures returns a token
 that can be used to manipulate the window in other calls to the Tk
-library.  If the window couldn't be created successfully, then NULL
+library.  If the window could not be created successfully, then NULL
 is returned and \fIinterp->result\fR is modified to hold an error
 message.
 .PP
@@ -104,7 +104,7 @@ as in calls to \fBTk_CreateWindow\fR, the parent of the new window
 must exist at the time of the call, but the new window must not
 already exist.
 .PP
-The window creation procedures don't
+The window creation procedures do not
 actually issue the command to X to create a window.
 Instead, they create a local data structure associated with
 the window and defer the creation of the X window.
@@ -117,7 +117,7 @@ mapped all of the window attributes can be set while creating
 the window.
 .PP
 The value returned by a window-creation procedure is not the
-X token for the window (it can't be, since X hasn't been
+X token for the window (it cannot be, since X has not been
 asked to create the window yet).  Instead, it is a token
 for Tk's local data structure for the window.  Most
 of the Tk library procedures take Tk_Window tokens, rather
@@ -139,7 +139,7 @@ then the event handlers will be invoked later, after X has seen
 the request and returned an event for it.
 .PP
 If a window has been created
-but hasn't been mapped, so no X window exists, it is
+but has not been mapped, so no X window exists, it is
 possible to force the creation of the X window by
 calling \fBTk_MakeWindowExist\fR.  This procedure issues
 the X commands to instantiate the window given by \fItkwin\fR.

@@ -17,7 +17,7 @@ namespace eval ::tk {
     ::msgcat::mcset de "Details >>"
     ::msgcat::mcset de "Directory \"%1\$s\" does not exist." "Das Verzeichnis \"%1\$s\" existiert nicht."
     ::msgcat::mcset de "&Directory:" "&Verzeichnis:"
-    ::msgcat::mcset de "&Edit" "&Bearbieten"
+    ::msgcat::mcset de "&Edit" "&Bearbeiten"
     ::msgcat::mcset de "Error: %1\$s" "Fehler: %1\$s"
     ::msgcat::mcset de "E&xit" "&Ende"
     ::msgcat::mcset de "&File" "&Datei"

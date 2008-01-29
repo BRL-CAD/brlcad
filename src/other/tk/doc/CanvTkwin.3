@@ -140,7 +140,7 @@ modified using image commands.
 .PP
 \fBTk_CanvasTagsParseProc\fR and \fBTk_CanvasTagsPrintProc\fR are
 procedures that handle the \fB\-tags\fR option for canvas items.
-The code of a canvas type manager won't call these procedures
+The code of a canvas type manager will not call these procedures
 directly, but will use their addresses to create a \fBTk_CustomOption\fR
 structure for the \fB\-tags\fR option.   The code typically looks
 like this:

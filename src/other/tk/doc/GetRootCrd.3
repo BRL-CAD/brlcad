@@ -28,7 +28,6 @@ corresponding to left edge of \fItkwin\fR's border.
 Pointer to location in which to store root-window y-coordinate
 corresponding to top edge of \fItkwin\fR's border.
 .BE
-
 .SH DESCRIPTION
 .PP
 This procedure scans through the structural information maintained
@@ -36,8 +35,7 @@ by Tk to compute the root-window coordinates corresponding to
 the upper-left corner of \fItkwin\fR's border.  If \fItkwin\fR has
 no border, then \fBTk_GetRootCoords\fR returns the root-window
 coordinates corresponding to location (0,0) in \fItkwin\fR.
-\fBTk_GetRootCoords\fR is relatively efficient, since it doesn't have to
+\fBTk_GetRootCoords\fR is relatively efficient, since it does not have to
 communicate with the X server.
-
 .SH KEYWORDS
 coordinates, root window

@@ -414,6 +414,8 @@ XCopyPlane(
 
 	    fgBrush = CreateSolidBrush(gc->foreground);
 	    oldBrush = SelectObject(destDC, fgBrush);
+	    SetBkColor(destDC, RGB(255,255,255));
+	    SetTextColor(destDC, RGB(0,0,0));
 	    BitBlt(destDC, dest_x, dest_y, (int) width, (int) height, srcDC,
 		    src_x, src_y, MASKPAT);
 	    SelectObject(destDC, oldBrush);

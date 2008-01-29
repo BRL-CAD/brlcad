@@ -22,7 +22,6 @@ menu, tk_menuSetFocus \- Create and manipulate menu widgets
 \-activeborderwidth	\-cursor		\-relief
 \-activeforeground	\-disabledforeground	\-takefocus
 \-background	\-font
-
 .SE
 .SH "WIDGET-SPECIFIC OPTIONS"
 .OP \-postcommand postCommand Command
@@ -49,9 +48,12 @@ to invoke whenever the menu is torn off.  The actual command will
 consist of the value of this option, followed by a space, followed
 by the name of the menu window, followed by a space, followed by
 the name of the name of the torn off menu window.  For example, if
-the option's is ``\fBa b\fR'' and menu \fB.x.y\fR is torn off to
+the option's is
+.QW "\fBa b\fR"
+and menu \fB.x.y\fR is torn off to
 create a new menu \fB.x.tearoff1\fR, then the command
-``\fBa b .x.y .x.tearoff1\fR'' will be invoked.
+.QW "\fBa b .x.y .x.tearoff1\fR"
+will be invoked.
 .OP \-title title Title
 The string will be used to title the window created when this menu is
 torn off. If the title is NULL, then the window will have the title
@@ -65,7 +67,6 @@ changed, this does not affect the menu widget's behavior. This is used
 by the cloning mechanism and is not normally set outside of the Tk
 library.
 .BE
-
 .SH INTRODUCTION
 .PP
 The \fBmenu\fR command creates a new top-level window (given
@@ -230,7 +231,7 @@ to system restrictions.
 .SS "SPECIAL MENUS IN MENUBARS"
 .PP
 Certain menus in a menubar will be treated specially.  On the Macintosh,
-access to the special Apple and Help menus is provided. On Windows,
+access to the special Application and Help menus is provided. On Windows,
 access to the Windows System menu in each window is provided. On X Windows,
 a special right-justified help menu is provided. In all cases, these
 menus must be created with the command name of the menubar menu concatenated
@@ -239,24 +240,16 @@ the special menus would be .menubar.apple and .menubar.help; on Windows,
 the special menu would be .menubar.system; on X Windows, the help
 menu would be .menubar.help.
 .PP
-When Tk sees an Apple menu on the Macintosh, that menu's contents make
-up the first items of the Apple menu on the screen whenever the window
-containing the menubar is in front. The menu is the
-first one that the user sees and has a title which is an Apple logo.
+When Tk sees a .menubar.apple menu on the Macintosh, that menu's contents
+make up the first items of the Application menu whenever the window
+containing the menubar is in front.
 After all of the Tk-defined items, the menu will have a separator,
-followed by all of the items in the user's Apple Menu Items folder.
-Since the System uses a different menu definition procedure for
-the Apple menu than Tk uses for its menus, and the system APIs do
-not fully support everything Tk tries to do, the menu item will only
-have its text displayed. No font attributes, images, bitmaps, or colors
-will be displayed. In addition, a menu with a tearoff item will have
-the tearoff item displayed as "(TearOff)".
+followed by all standard Application menu items.
 .PP
-When Tk see a Help menu on the Macintosh, the menu's contents are
-appended to the standard help menu on the right of the user's menubar
-whenever the user's menubar is in front. The first items in the menu
-are provided by Apple. Similar to the Apple Menu, customization in this
-menu is limited to what the system provides.
+When Tk sees a Help menu on the Macintosh, the menu's contents are
+appended to the standard Help menu on the right of the user's menubar
+whenever the window's menubar is in front. The first items in the menu
+are provided by Mac OS X.
 .PP
 When Tk sees a System menu on Windows, its items are appended to the 
 system menu that the menubar is attached to. This menu has an icon
@@ -313,7 +306,9 @@ This form may not be abbreviated.
 Same as \fBend\fR.
 .TP 12
 \fBnone\fR
-Indicates ``no entry at all'';  this is used most commonly with
+Indicates
+.QW "no entry at all" ;
+this is used most commonly with
 the \fBactivate\fR option to deactivate all the entries in the
 menu.  In most cases the specification of \fBnone\fR causes
 nothing to happen in the widget command.
@@ -322,11 +317,12 @@ This form may not be abbreviated.
 \fB@\fInumber\fR
 In this form, \fInumber\fR is treated as a y-coordinate in the
 menu's window;  the entry closest to that y-coordinate is used.
-For example, ``\fB@0\fR'' indicates the top-most entry in the
-window.
+For example,
+.QW \fB@0\fR
+indicates the top-most entry in the window.
 .TP 12
 \fIpattern\fR
-If the index doesn't satisfy one of the above forms then this
+If the index does not satisfy one of the above forms then this
 form is used.  \fIPattern\fR is pattern-matched against the label of
 each entry in the menu, in order from the top down, until a
 matching entry is found.  The rules of \fBTcl_StringMatch\fR
@@ -611,8 +607,8 @@ returned without posting the menu.
 \fIpathName \fBpostcascade \fIindex\fR
 Posts the submenu associated with the cascade entry given by
 \fIindex\fR, and unposts any previously posted submenu.
-If \fIindex\fR doesn't correspond to a cascade entry,
-or if \fIpathName\fR isn't posted,
+If \fIindex\fR does not correspond to a cascade entry,
+or if \fIpathName\fR is not posted,
 the command has no effect except to unpost any currently posted
 submenu.
 .TP
@@ -730,7 +726,7 @@ Otherwise, if the current menu was posted from a
 menubutton, then the current menubutton is unposted and the
 next menubutton to the right is posted.
 .PP
-Disabled menu entries are non-responsive:  they don't activate and
+Disabled menu entries are non-responsive:  they do not activate and
 they ignore mouse button presses and releases.
 .PP
 Several of the bindings make use of the command \fBtk_menuSetFocus\fR.
@@ -741,12 +737,10 @@ The behavior of menus can be changed by defining new bindings for
 individual widgets or by redefining the class bindings.
 .SH BUGS
 .PP
-At present it isn't possible to use the
+At present it is not possible to use the
 option database to specify values for the options to individual
 entries.
-
 .SH "SEE ALSO"
-bind(n), menubutton(n), ttk_menubutton(n), toplevel(n)
-
+bind(n), menubutton(n), ttk::menubutton(n), toplevel(n)
 .SH KEYWORDS
 menu, widget

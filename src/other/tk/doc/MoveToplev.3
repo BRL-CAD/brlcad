@@ -46,7 +46,7 @@ similar in function to the \fBwm geometry\fR Tcl command except that
 negative offsets cannot be specified.  It is invoked by widgets such as
 menus that want to appear at a particular place on the screen.
 .PP
-When \fBTk_MoveToplevelWindow\fR is called it doesn't immediately
+When \fBTk_MoveToplevelWindow\fR is called it does not immediately
 pass on the new desired location to the window manager;  it defers
 this action until all other outstanding work has been completed,
 using the \fBTk_DoWhenIdle\fR mechanism.

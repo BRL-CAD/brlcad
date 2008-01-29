@@ -35,9 +35,9 @@ tcltest::loadTestedCommands
 # The set of hidden commands is platform dependent:
 
 if {[string equal $tcl_platform(platform) "windows"]} {
-    set hidden_cmds {bell cd clipboard encoding exec exit fconfigure file glob grab load menu open pwd selection socket source tk_chooseColor tk_chooseDirectory tk_getOpenFile tk_getSaveFile tk_messageBox toplevel wm}
+    set hidden_cmds {bell cd clipboard encoding exec exit fconfigure file glob grab load menu open pwd selection socket source tk_chooseColor tk_chooseDirectory tk_getOpenFile tk_getSaveFile tk_messageBox toplevel unload wm}
 } else {
-    set hidden_cmds {bell cd clipboard encoding exec exit fconfigure file glob grab load menu open pwd selection send socket source toplevel wm}
+    set hidden_cmds {bell cd clipboard encoding exec exit fconfigure file glob grab load menu open pwd selection send socket source toplevel unload wm}
 }
 
 set saveAutoPath $::auto_path

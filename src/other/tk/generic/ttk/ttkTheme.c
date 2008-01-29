@@ -671,7 +671,8 @@ Ttk_GetResourceCache(Tcl_Interp *interp)
  * Register a new layout specification with a style.
  * @@@ TODO: Make sure layoutName is not ".", root style must not have a layout
  */
-static void Ttk_RegisterLayoutTemplate(
+MODULE_SCOPE
+void Ttk_RegisterLayoutTemplate(
     Ttk_Theme theme,			/* Target theme */
     const char *layoutName,		/* Name of new layout */
     Ttk_LayoutTemplate layoutTemplate)	/* Template */
@@ -1095,8 +1096,6 @@ Ttk_ElementSize(
     element->specPtr->size(
 	element->clientData, element->elementRecord,
 	tkwin, widthPtr, heightPtr, paddingPtr);
-    *widthPtr += paddingPtr->left + paddingPtr->right;
-    *heightPtr += paddingPtr->top + paddingPtr->bottom;
 }
 
 /*
@@ -1462,7 +1461,7 @@ static int StyleElementCreateCmd(
     FactoryRec *recPtr;
 
     if (objc < 5) {
-	Tcl_WrongNumArgs(interp, 5, objv, "name type ?options...?");
+	Tcl_WrongNumArgs(interp, 3, objv, "name type ?options...?");
 	return TCL_ERROR;
     }
 
@@ -1498,22 +1497,24 @@ static int StyleElementNamesCmd(
 }
 
 /* + style element options $element --
+ * 	Return list of element options for specified element
  */
 static int StyleElementOptionsCmd(
     ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * CONST objv[])
 {
-    StylePackageData *pkgPtr = (StylePackageData *)clientData;
+    StylePackageData *pkgPtr = clientData;
     Ttk_Theme theme = pkgPtr->currentTheme;
-    Tcl_HashEntry *entryPtr;
+    const char *elementName;
+    ElementImpl *elementImpl;
 
     if (objc != 4) {
 	Tcl_WrongNumArgs(interp, 3, objv, "element");
 	return TCL_ERROR;
     }
 
-    entryPtr = Tcl_FindHashEntry(&theme->elementTable, Tcl_GetString(objv[3]));
-    if (entryPtr) {
-	ElementImpl *elementImpl = (ElementImpl *)Tcl_GetHashValue(entryPtr);
+    elementName = Tcl_GetString(objv[3]);
+    elementImpl = Ttk_GetElement(theme, elementName);
+    if (elementImpl) {
 	Ttk_ElementSpec *specPtr = elementImpl->specPtr;
 	Ttk_ElementOptionSpec *option = specPtr->options;
 	Tcl_Obj *result = Tcl_NewListObj(0,0);
@@ -1528,9 +1529,7 @@ static int StyleElementOptionsCmd(
 	return TCL_OK;
     }
 
-    Tcl_AppendResult(interp, 
-	"element ", Tcl_GetString(objv[3]), " not found",
-	NULL);
+    Tcl_AppendResult(interp, "element ", elementName, " not found", NULL);
     return TCL_ERROR;
 }
 

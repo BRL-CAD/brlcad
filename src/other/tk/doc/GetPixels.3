@@ -77,9 +77,9 @@ on the screen.
 nearest even number of pixels and stores that value at \fI*intPtr\fR.
 It returns \fBTCL_OK\fR under normal circumstances.
 If an error occurs (e.g. \fIobjPtr\fR contains a number followed
-by a character that isn't one of the ones above) then
+by a character that is not one of the ones above) then
 \fBTCL_ERROR\fR is returned and an error message is left
-in \fIinterp\fR's result if \fIinterp\fR isn't NULL.
+in \fIinterp\fR's result if \fIinterp\fR is not NULL.
 \fBTk_GetPixelsFromObj\fR caches information about the return
 value in \fIobjPtr\fR, which speeds up future calls to
 \fBTk_GetPixelsFromObj\fR with the same \fIobjPtr\fR.

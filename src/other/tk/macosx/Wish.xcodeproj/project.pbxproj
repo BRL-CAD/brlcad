@@ -309,13 +309,304 @@
 		F9EA4AF408FA3BDB00B1F5F0 /* tkAboutDlg.r in Rez */ = {isa = PBXBuildFile; fileRef = F966BBC108F27A3B005CB29B /* tkAboutDlg.r */; };
 		F9F4415E0C8BAE6F00BCCD67 /* tclDTrace.d in Sources */ = {isa = PBXBuildFile; fileRef = F9F4415D0C8BAE6F00BCCD67 /* tclDTrace.d */; };
 		F9FC77B80AB29E9100B7077D /* tclUnixCompat.c in Sources */ = {isa = PBXBuildFile; fileRef = F9FC77B70AB29E9100B7077D /* tclUnixCompat.c */; };
+		F9FD30BC0CC1AD070073837D /* regcomp.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3ED008F272A7004A47F5 /* regcomp.c */; };
+		F9FD30BD0CC1AD070073837D /* regerror.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3ED308F272A7004A47F5 /* regerror.c */; };
+		F9FD30BE0CC1AD070073837D /* regexec.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3ED608F272A7004A47F5 /* regexec.c */; };
+		F9FD30BF0CC1AD070073837D /* regfree.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3ED708F272A7004A47F5 /* regfree.c */; };
+		F9FD30C00CC1AD070073837D /* tclAlloc.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3EDC08F272A7004A47F5 /* tclAlloc.c */; settings = {COMPILER_FLAGS = "-DUSE_TCLALLOC=0"; }; };
+		F9FD30C10CC1AD070073837D /* tclAsync.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3EDD08F272A7004A47F5 /* tclAsync.c */; };
+		F9FD30C20CC1AD070073837D /* tclBasic.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3EDE08F272A7004A47F5 /* tclBasic.c */; };
+		F9FD30C30CC1AD070073837D /* tclBinary.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3EDF08F272A7004A47F5 /* tclBinary.c */; };
+		F9FD30C40CC1AD070073837D /* tclCkalloc.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3EE008F272A7004A47F5 /* tclCkalloc.c */; };
+		F9FD30C50CC1AD070073837D /* tclClock.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3EE108F272A7004A47F5 /* tclClock.c */; };
+		F9FD30C60CC1AD070073837D /* tclCmdAH.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3EE208F272A7004A47F5 /* tclCmdAH.c */; };
+		F9FD30C70CC1AD070073837D /* tclCmdIL.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3EE308F272A7004A47F5 /* tclCmdIL.c */; };
+		F9FD30C80CC1AD070073837D /* tclCmdMZ.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3EE408F272A7004A47F5 /* tclCmdMZ.c */; };
+		F9FD30C90CC1AD070073837D /* tclCompCmds.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3EE508F272A7004A47F5 /* tclCompCmds.c */; };
+		F9FD30CA0CC1AD070073837D /* tclCompExpr.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3EE608F272A7004A47F5 /* tclCompExpr.c */; };
+		F9FD30CB0CC1AD070073837D /* tclCompile.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3EE708F272A7004A47F5 /* tclCompile.c */; };
+		F9FD30CC0CC1AD070073837D /* tclConfig.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3EE908F272A7004A47F5 /* tclConfig.c */; };
+		F9FD30CD0CC1AD070073837D /* tclDate.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3EEA08F272A7004A47F5 /* tclDate.c */; };
+		F9FD30CE0CC1AD070073837D /* tclDictObj.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3EEC08F272A7004A47F5 /* tclDictObj.c */; };
+		F9FD30CF0CC1AD070073837D /* tclEncoding.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3EED08F272A7004A47F5 /* tclEncoding.c */; };
+		F9FD30D00CC1AD070073837D /* tclEnv.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3EEE08F272A7004A47F5 /* tclEnv.c */; };
+		F9FD30D10CC1AD070073837D /* tclEvent.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3EEF08F272A7004A47F5 /* tclEvent.c */; };
+		F9FD30D20CC1AD070073837D /* tclExecute.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3EF008F272A7004A47F5 /* tclExecute.c */; };
+		F9FD30D30CC1AD070073837D /* tclFCmd.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3EF108F272A7004A47F5 /* tclFCmd.c */; };
+		F9FD30D40CC1AD070073837D /* tclFileName.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3EF208F272A7004A47F5 /* tclFileName.c */; };
+		F9FD30D50CC1AD070073837D /* tclGet.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3EF408F272A7004A47F5 /* tclGet.c */; };
+		F9FD30D60CC1AD070073837D /* tclHash.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3EF608F272A7004A47F5 /* tclHash.c */; };
+		F9FD30D70CC1AD070073837D /* tclHistory.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3EF708F272A7004A47F5 /* tclHistory.c */; };
+		F9FD30D80CC1AD070073837D /* tclIndexObj.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3EF808F272A7004A47F5 /* tclIndexObj.c */; };
+		F9FD30D90CC1AD070073837D /* tclInterp.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3EFC08F272A7004A47F5 /* tclInterp.c */; };
+		F9FD30DA0CC1AD070073837D /* tclIO.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3EFE08F272A7004A47F5 /* tclIO.c */; };
+		F9FD30DB0CC1AD070073837D /* tclIOCmd.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3F0008F272A7004A47F5 /* tclIOCmd.c */; };
+		F9FD30DC0CC1AD070073837D /* tclIOGT.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3F0108F272A7004A47F5 /* tclIOGT.c */; };
+		F9FD30DD0CC1AD070073837D /* tclIORChan.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3F0208F272A7004A47F5 /* tclIORChan.c */; };
+		F9FD30DE0CC1AD070073837D /* tclIOSock.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3F0308F272A7004A47F5 /* tclIOSock.c */; };
+		F9FD30DF0CC1AD070073837D /* tclIOUtil.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3F0408F272A7004A47F5 /* tclIOUtil.c */; };
+		F9FD30E00CC1AD070073837D /* tclLink.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3F0508F272A7004A47F5 /* tclLink.c */; };
+		F9FD30E10CC1AD070073837D /* tclListObj.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3F0608F272A7004A47F5 /* tclListObj.c */; };
+		F9FD30E20CC1AD070073837D /* tclLiteral.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3F0708F272A7004A47F5 /* tclLiteral.c */; };
+		F9FD30E30CC1AD070073837D /* tclLoad.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3F0808F272A7004A47F5 /* tclLoad.c */; };
+		F9FD30E40CC1AD070073837D /* tclMain.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3F0A08F272A7004A47F5 /* tclMain.c */; };
+		F9FD30E50CC1AD070073837D /* tclNamesp.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3F0B08F272A7004A47F5 /* tclNamesp.c */; };
+		F9FD30E60CC1AD070073837D /* tclNotify.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3F0C08F272A7004A47F5 /* tclNotify.c */; };
+		F9FD30E70CC1AD070073837D /* tclObj.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3F0D08F272A7004A47F5 /* tclObj.c */; };
+		F9FD30E80CC1AD070073837D /* tclPanic.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3F0E08F272A7004A47F5 /* tclPanic.c */; };
+		F9FD30E90CC1AD070073837D /* tclParse.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3F0F08F272A7004A47F5 /* tclParse.c */; };
+		F9FD30EA0CC1AD070073837D /* tclPathObj.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3F1108F272A7004A47F5 /* tclPathObj.c */; };
+		F9FD30EB0CC1AD070073837D /* tclPipe.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3F1208F272A7004A47F5 /* tclPipe.c */; };
+		F9FD30EC0CC1AD070073837D /* tclPkg.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3F1308F272A7004A47F5 /* tclPkg.c */; };
+		F9FD30ED0CC1AD070073837D /* tclPkgConfig.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3F1408F272A7004A47F5 /* tclPkgConfig.c */; settings = {COMPILER_FLAGS = "-DCFG_INSTALL_LIBDIR=\\\"$(LIBDIR)\\\" -DCFG_INSTALL_BINDIR=\\\"$(BINDIR)\\\" -DCFG_INSTALL_SCRDIR=\\\"$(TCL_LIBRARY)\\\" -DCFG_INSTALL_INCDIR=\\\"$(INCLUDEDIR)\\\" -DCFG_INSTALL_DOCDIR=\\\"$(MANDIR)\\\" -DCFG_RUNTIME_LIBDIR=\\\"$(LIBDIR)\\\" -DCFG_RUNTIME_BINDIR=\\\"$(BINDIR)\\\" -DCFG_RUNTIME_SCRDIR=\\\"$(TCL_LIBRARY)\\\" -DCFG_RUNTIME_INCDIR=\\\"$(INCLUDEDIR)\\\" -DCFG_RUNTIME_DOCDIR=\\\"$(MANDIR)\\\""; }; };
+		F9FD30EE0CC1AD070073837D /* tclPosixStr.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3F1708F272A7004A47F5 /* tclPosixStr.c */; };
+		F9FD30EF0CC1AD070073837D /* tclPreserve.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3F1808F272A7004A47F5 /* tclPreserve.c */; };
+		F9FD30F00CC1AD070073837D /* tclProc.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3F1908F272A7004A47F5 /* tclProc.c */; };
+		F9FD30F10CC1AD070073837D /* tclRegexp.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3F1A08F272A7004A47F5 /* tclRegexp.c */; };
+		F9FD30F20CC1AD070073837D /* tclResolve.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3F1C08F272A7004A47F5 /* tclResolve.c */; };
+		F9FD30F30CC1AD070073837D /* tclResult.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3F1D08F272A7004A47F5 /* tclResult.c */; };
+		F9FD30F40CC1AD070073837D /* tclScan.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3F1E08F272A7004A47F5 /* tclScan.c */; };
+		F9FD30F50CC1AD070073837D /* tclStringObj.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3F1F08F272A7004A47F5 /* tclStringObj.c */; };
+		F9FD30F60CC1AD070073837D /* tclStrToD.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3F2408F272A7004A47F5 /* tclStrToD.c */; };
+		F9FD30F70CC1AD070073837D /* tclStubInit.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3F2508F272A7004A47F5 /* tclStubInit.c */; };
+		F9FD30F80CC1AD070073837D /* tclStubLib.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3F2608F272A7004A47F5 /* tclStubLib.c */; };
+		F9FD30F90CC1AD070073837D /* tclThread.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3F2A08F272A7004A47F5 /* tclThread.c */; };
+		F9FD30FA0CC1AD070073837D /* tclThreadAlloc.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3F2B08F272A7004A47F5 /* tclThreadAlloc.c */; };
+		F9FD30FB0CC1AD070073837D /* tclThreadJoin.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3F2C08F272A7004A47F5 /* tclThreadJoin.c */; };
+		F9FD30FC0CC1AD070073837D /* tclThreadStorage.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3F2D08F272A7004A47F5 /* tclThreadStorage.c */; };
+		F9FD30FD0CC1AD070073837D /* tclTimer.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3F2F08F272A7004A47F5 /* tclTimer.c */; };
+		F9FD30FE0CC1AD070073837D /* tclTomMathInterface.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3F3108F272A7004A47F5 /* tclTomMathInterface.c */; };
+		F9FD30FF0CC1AD070073837D /* tclTrace.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3F3208F272A7004A47F5 /* tclTrace.c */; };
+		F9FD31000CC1AD070073837D /* tclUtf.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3F3408F272A7004A47F5 /* tclUtf.c */; };
+		F9FD31010CC1AD070073837D /* tclUtil.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3F3508F272A7004A47F5 /* tclUtil.c */; };
+		F9FD31020CC1AD070073837D /* tclVar.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3F3608F272A7004A47F5 /* tclVar.c */; };
+		F9FD31030CC1AD070073837D /* bn_fast_s_mp_mul_digs.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D426408F272B3004A47F5 /* bn_fast_s_mp_mul_digs.c */; };
+		F9FD31040CC1AD070073837D /* bn_fast_s_mp_sqr.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D426608F272B3004A47F5 /* bn_fast_s_mp_sqr.c */; };
+		F9FD31050CC1AD070073837D /* bn_mp_add.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D426908F272B3004A47F5 /* bn_mp_add.c */; };
+		F9FD31060CC1AD070073837D /* bn_mp_add_d.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D426A08F272B3004A47F5 /* bn_mp_add_d.c */; };
+		F9FD31070CC1AD070073837D /* bn_mp_and.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D426C08F272B3004A47F5 /* bn_mp_and.c */; };
+		F9FD31080CC1AD070073837D /* bn_mp_clamp.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D426D08F272B3004A47F5 /* bn_mp_clamp.c */; };
+		F9FD31090CC1AD070073837D /* bn_mp_clear.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D426E08F272B3004A47F5 /* bn_mp_clear.c */; };
+		F9FD310A0CC1AD070073837D /* bn_mp_clear_multi.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D426F08F272B3004A47F5 /* bn_mp_clear_multi.c */; };
+		F9FD310B0CC1AD070073837D /* bn_mp_cmp.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D427008F272B3004A47F5 /* bn_mp_cmp.c */; };
+		F9FD310C0CC1AD070073837D /* bn_mp_cmp_d.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D427108F272B3004A47F5 /* bn_mp_cmp_d.c */; };
+		F9FD310D0CC1AD070073837D /* bn_mp_cmp_mag.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D427208F272B3004A47F5 /* bn_mp_cmp_mag.c */; };
+		F9FD310E0CC1AD070073837D /* bn_mp_copy.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D427408F272B3004A47F5 /* bn_mp_copy.c */; };
+		F9FD310F0CC1AD070073837D /* bn_mp_count_bits.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D427508F272B3004A47F5 /* bn_mp_count_bits.c */; };
+		F9FD31100CC1AD070073837D /* bn_mp_div.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D427608F272B3004A47F5 /* bn_mp_div.c */; };
+		F9FD31110CC1AD070073837D /* bn_mp_div_2.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D427708F272B3004A47F5 /* bn_mp_div_2.c */; };
+		F9FD31120CC1AD070073837D /* bn_mp_div_2d.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D427808F272B3004A47F5 /* bn_mp_div_2d.c */; };
+		F9FD31130CC1AD070073837D /* bn_mp_div_3.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D427908F272B3004A47F5 /* bn_mp_div_3.c */; };
+		F9FD31140CC1AD070073837D /* bn_mp_div_d.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D427A08F272B3004A47F5 /* bn_mp_div_d.c */; };
+		F9FD31150CC1AD070073837D /* bn_mp_exch.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D427E08F272B3004A47F5 /* bn_mp_exch.c */; };
+		F9FD31160CC1AD070073837D /* bn_mp_expt_d.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D427F08F272B3004A47F5 /* bn_mp_expt_d.c */; };
+		F9FD31170CC1AD070073837D /* bn_mp_grow.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D428708F272B3004A47F5 /* bn_mp_grow.c */; };
+		F9FD31180CC1AD070073837D /* bn_mp_init.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D428808F272B3004A47F5 /* bn_mp_init.c */; };
+		F9FD31190CC1AD070073837D /* bn_mp_init_copy.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D428908F272B3004A47F5 /* bn_mp_init_copy.c */; };
+		F9FD311A0CC1AD070073837D /* bn_mp_init_multi.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D428A08F272B3004A47F5 /* bn_mp_init_multi.c */; };
+		F9FD311B0CC1AD070073837D /* bn_mp_init_set.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D428B08F272B3004A47F5 /* bn_mp_init_set.c */; };
+		F9FD311C0CC1AD070073837D /* bn_mp_init_size.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D428D08F272B3004A47F5 /* bn_mp_init_size.c */; };
+		F9FD311D0CC1AD070073837D /* bn_mp_karatsuba_mul.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D429208F272B3004A47F5 /* bn_mp_karatsuba_mul.c */; };
+		F9FD311E0CC1AD070073837D /* bn_mp_karatsuba_sqr.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D429308F272B3004A47F5 /* bn_mp_karatsuba_sqr.c */; };
+		F9FD311F0CC1AD070073837D /* bn_mp_lshd.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D429508F272B3004A47F5 /* bn_mp_lshd.c */; };
+		F9FD31200CC1AD070073837D /* bn_mp_mod.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D429608F272B3004A47F5 /* bn_mp_mod.c */; };
+		F9FD31210CC1AD070073837D /* bn_mp_mod_2d.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D429708F272B3004A47F5 /* bn_mp_mod_2d.c */; };
+		F9FD31220CC1AD070073837D /* bn_mp_mul.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D429C08F272B3004A47F5 /* bn_mp_mul.c */; };
+		F9FD31230CC1AD070073837D /* bn_mp_mul_2.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D429D08F272B3004A47F5 /* bn_mp_mul_2.c */; };
+		F9FD31240CC1AD070073837D /* bn_mp_mul_2d.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D429E08F272B3004A47F5 /* bn_mp_mul_2d.c */; };
+		F9FD31250CC1AD070073837D /* bn_mp_mul_d.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D429F08F272B3004A47F5 /* bn_mp_mul_d.c */; };
+		F9FD31260CC1AD070073837D /* bn_mp_neg.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D42A208F272B3004A47F5 /* bn_mp_neg.c */; };
+		F9FD31270CC1AD070073837D /* bn_mp_or.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D42A308F272B3004A47F5 /* bn_mp_or.c */; };
+		F9FD31280CC1AD070073837D /* bn_mp_radix_size.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D42AB08F272B3004A47F5 /* bn_mp_radix_size.c */; };
+		F9FD31290CC1AD070073837D /* bn_mp_radix_smap.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D42AC08F272B3004A47F5 /* bn_mp_radix_smap.c */; };
+		F9FD312A0CC1AD070073837D /* bn_mp_read_radix.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D42AE08F272B3004A47F5 /* bn_mp_read_radix.c */; };
+		F9FD312B0CC1AD070073837D /* bn_mp_rshd.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D42B908F272B3004A47F5 /* bn_mp_rshd.c */; };
+		F9FD312C0CC1AD070073837D /* bn_mp_set.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D42BA08F272B3004A47F5 /* bn_mp_set.c */; };
+		F9FD312D0CC1AD070073837D /* bn_mp_shrink.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D42BC08F272B3004A47F5 /* bn_mp_shrink.c */; };
+		F9FD312E0CC1AD070073837D /* bn_mp_sqr.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D42BE08F272B3004A47F5 /* bn_mp_sqr.c */; };
+		F9FD312F0CC1AD070073837D /* bn_mp_sqrt.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D42C008F272B3004A47F5 /* bn_mp_sqrt.c */; };
+		F9FD31300CC1AD070073837D /* bn_mp_sub.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D42C108F272B3004A47F5 /* bn_mp_sub.c */; };
+		F9FD31310CC1AD070073837D /* bn_mp_sub_d.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D42C208F272B3004A47F5 /* bn_mp_sub_d.c */; };
+		F9FD31320CC1AD070073837D /* bn_mp_to_unsigned_bin_n.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D42C708F272B3004A47F5 /* bn_mp_to_unsigned_bin_n.c */; };
+		F9FD31330CC1AD070073837D /* bn_mp_to_unsigned_bin.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D42C608F272B3004A47F5 /* bn_mp_to_unsigned_bin.c */; };
+		F9FD31340CC1AD070073837D /* bn_mp_toom_mul.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D42C808F272B3004A47F5 /* bn_mp_toom_mul.c */; };
+		F9FD31350CC1AD070073837D /* bn_mp_toom_sqr.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D42C908F272B3004A47F5 /* bn_mp_toom_sqr.c */; };
+		F9FD31360CC1AD070073837D /* bn_mp_toradix_n.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D42CB08F272B3004A47F5 /* bn_mp_toradix_n.c */; };
+		F9FD31370CC1AD070073837D /* bn_mp_unsigned_bin_size.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D42CC08F272B3004A47F5 /* bn_mp_unsigned_bin_size.c */; };
+		F9FD31380CC1AD070073837D /* bn_mp_xor.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D42CD08F272B3004A47F5 /* bn_mp_xor.c */; };
+		F9FD31390CC1AD070073837D /* bn_mp_zero.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D42CE08F272B3004A47F5 /* bn_mp_zero.c */; };
+		F9FD313A0CC1AD070073837D /* bn_reverse.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D42D008F272B3004A47F5 /* bn_reverse.c */; };
+		F9FD313B0CC1AD070073837D /* bn_s_mp_add.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D42D108F272B3004A47F5 /* bn_s_mp_add.c */; };
+		F9FD313C0CC1AD070073837D /* bn_s_mp_mul_digs.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D42D308F272B3004A47F5 /* bn_s_mp_mul_digs.c */; };
+		F9FD313D0CC1AD070073837D /* bn_s_mp_sqr.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D42D508F272B3004A47F5 /* bn_s_mp_sqr.c */; };
+		F9FD313E0CC1AD070073837D /* bn_s_mp_sub.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D42D608F272B3004A47F5 /* bn_s_mp_sub.c */; };
+		F9FD313F0CC1AD070073837D /* bncore.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D42D708F272B3004A47F5 /* bncore.c */; };
+		F9FD31400CC1AD070073837D /* tclMacOSXBundle.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D433908F272B5004A47F5 /* tclMacOSXBundle.c */; };
+		F9FD31410CC1AD070073837D /* tclMacOSXFCmd.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D433D08F272B5004A47F5 /* tclMacOSXFCmd.c */; };
+		F9FD31420CC1AD070073837D /* tclMacOSXNotify.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D433E08F272B5004A47F5 /* tclMacOSXNotify.c */; };
+		F9FD31430CC1AD070073837D /* tclLoadDyld.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D445B08F272B9004A47F5 /* tclLoadDyld.c */; };
+		F9FD31440CC1AD070073837D /* tclUnixChan.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D445F08F272B9004A47F5 /* tclUnixChan.c */; };
+		F9FD31450CC1AD070073837D /* tclUnixCompat.c in Sources */ = {isa = PBXBuildFile; fileRef = F9FC77B70AB29E9100B7077D /* tclUnixCompat.c */; };
+		F9FD31460CC1AD070073837D /* tclUnixEvent.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D446008F272B9004A47F5 /* tclUnixEvent.c */; };
+		F9FD31470CC1AD070073837D /* tclUnixFCmd.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D446108F272B9004A47F5 /* tclUnixFCmd.c */; };
+		F9FD31480CC1AD070073837D /* tclUnixFile.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D446208F272B9004A47F5 /* tclUnixFile.c */; };
+		F9FD31490CC1AD070073837D /* tclUnixInit.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D446308F272B9004A47F5 /* tclUnixInit.c */; settings = {COMPILER_FLAGS = "-DTCL_LIBRARY=\\\"$(TCL_LIBRARY)\\\" -DTCL_PACKAGE_PATH=\\\"$(TCL_PACKAGE_PATH)\\\""; }; };
+		F9FD314A0CC1AD070073837D /* tclUnixNotfy.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D446408F272B9004A47F5 /* tclUnixNotfy.c */; };
+		F9FD314B0CC1AD070073837D /* tclUnixPipe.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D446508F272B9004A47F5 /* tclUnixPipe.c */; };
+		F9FD314C0CC1AD070073837D /* tclUnixSock.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D446708F272B9004A47F5 /* tclUnixSock.c */; };
+		F9FD314D0CC1AD070073837D /* tclUnixThrd.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D446908F272B9004A47F5 /* tclUnixThrd.c */; };
+		F9FD314E0CC1AD070073837D /* tclUnixTime.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D446B08F272B9004A47F5 /* tclUnixTime.c */; };
+		F9FD314F0CC1AD070073837D /* tk3d.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BAAC08F27A39005CB29B /* tk3d.c */; };
+		F9FD31500CC1AD070073837D /* tkArgv.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BAAE08F27A39005CB29B /* tkArgv.c */; };
+		F9FD31510CC1AD070073837D /* tkAtom.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BAAF08F27A39005CB29B /* tkAtom.c */; };
+		F9FD31520CC1AD070073837D /* tkBind.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BAB008F27A39005CB29B /* tkBind.c */; };
+		F9FD31530CC1AD070073837D /* tkBitmap.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BAB108F27A39005CB29B /* tkBitmap.c */; };
+		F9FD31540CC1AD070073837D /* tkButton.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BAB208F27A39005CB29B /* tkButton.c */; };
+		F9FD31550CC1AD070073837D /* tkCanvArc.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BAB408F27A39005CB29B /* tkCanvArc.c */; };
+		F9FD31560CC1AD070073837D /* tkCanvas.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BAB508F27A39005CB29B /* tkCanvas.c */; };
+		F9FD31570CC1AD070073837D /* tkCanvBmap.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BAB708F27A39005CB29B /* tkCanvBmap.c */; };
+		F9FD31580CC1AD070073837D /* tkCanvImg.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BAB808F27A39005CB29B /* tkCanvImg.c */; };
+		F9FD31590CC1AD070073837D /* tkCanvLine.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BAB908F27A39005CB29B /* tkCanvLine.c */; };
+		F9FD315A0CC1AD070073837D /* tkCanvPoly.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BABA08F27A39005CB29B /* tkCanvPoly.c */; };
+		F9FD315B0CC1AD070073837D /* tkCanvPs.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BABB08F27A39005CB29B /* tkCanvPs.c */; };
+		F9FD315C0CC1AD070073837D /* tkCanvText.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BABD08F27A39005CB29B /* tkCanvText.c */; };
+		F9FD315D0CC1AD070073837D /* tkCanvUtil.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BABE08F27A39005CB29B /* tkCanvUtil.c */; };
+		F9FD315E0CC1AD070073837D /* tkCanvWind.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BABF08F27A39005CB29B /* tkCanvWind.c */; };
+		F9FD315F0CC1AD070073837D /* tkClipboard.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BAC008F27A39005CB29B /* tkClipboard.c */; };
+		F9FD31600CC1AD070073837D /* tkCmds.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BAC108F27A39005CB29B /* tkCmds.c */; };
+		F9FD31610CC1AD070073837D /* tkColor.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BAC208F27A39005CB29B /* tkColor.c */; };
+		F9FD31620CC1AD070073837D /* tkConfig.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BAC408F27A39005CB29B /* tkConfig.c */; };
+		F9FD31630CC1AD070073837D /* tkConsole.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BAC508F27A39005CB29B /* tkConsole.c */; };
+		F9FD31640CC1AD070073837D /* tkCursor.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BAC608F27A39005CB29B /* tkCursor.c */; };
+		F9FD31650CC1AD070073837D /* tkEntry.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BAC808F27A39005CB29B /* tkEntry.c */; };
+		F9FD31660CC1AD070073837D /* tkError.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BACA08F27A39005CB29B /* tkError.c */; };
+		F9FD31670CC1AD070073837D /* tkEvent.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BACB08F27A39005CB29B /* tkEvent.c */; };
+		F9FD31680CC1AD070073837D /* tkFileFilter.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BACC08F27A39005CB29B /* tkFileFilter.c */; };
+		F9FD31690CC1AD070073837D /* tkFocus.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BACE08F27A39005CB29B /* tkFocus.c */; };
+		F9FD316A0CC1AD070073837D /* tkFont.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BACF08F27A39005CB29B /* tkFont.c */; };
+		F9FD316B0CC1AD070073837D /* tkFrame.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BAD108F27A39005CB29B /* tkFrame.c */; };
+		F9FD316C0CC1AD070073837D /* tkGC.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BAD208F27A39005CB29B /* tkGC.c */; };
+		F9FD316D0CC1AD070073837D /* tkGeometry.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BAD308F27A39005CB29B /* tkGeometry.c */; };
+		F9FD316E0CC1AD070073837D /* tkGet.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BAD408F27A39005CB29B /* tkGet.c */; };
+		F9FD316F0CC1AD070073837D /* tkGrab.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BAD508F27A39005CB29B /* tkGrab.c */; };
+		F9FD31700CC1AD070073837D /* tkGrid.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BAD608F27A39005CB29B /* tkGrid.c */; };
+		F9FD31710CC1AD070073837D /* tkImage.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BAD708F27A39005CB29B /* tkImage.c */; };
+		F9FD31720CC1AD070073837D /* tkImgBmap.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BAD808F27A39005CB29B /* tkImgBmap.c */; };
+		F9FD31730CC1AD070073837D /* tkImgGIF.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BAD908F27A39005CB29B /* tkImgGIF.c */; };
+		F9FD31740CC1AD070073837D /* tkImgPhoto.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BADA08F27A39005CB29B /* tkImgPhoto.c */; };
+		F9FD31750CC1AD070073837D /* tkImgPPM.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BADB08F27A39005CB29B /* tkImgPPM.c */; };
+		F9FD31760CC1AD070073837D /* tkListbox.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BAE408F27A39005CB29B /* tkListbox.c */; };
+		F9FD31770CC1AD070073837D /* tkMacWinMenu.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BAE508F27A39005CB29B /* tkMacWinMenu.c */; };
+		F9FD31780CC1AD070073837D /* tkMain.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BAE608F27A39005CB29B /* tkMain.c */; };
+		F9FD31790CC1AD070073837D /* tkMenu.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BAE708F27A39005CB29B /* tkMenu.c */; };
+		F9FD317A0CC1AD070073837D /* tkMenubutton.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BAE908F27A39005CB29B /* tkMenubutton.c */; };
+		F9FD317B0CC1AD070073837D /* tkMenuDraw.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BAEB08F27A39005CB29B /* tkMenuDraw.c */; };
+		F9FD317C0CC1AD070073837D /* tkMessage.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BAEC08F27A39005CB29B /* tkMessage.c */; };
+		F9FD317D0CC1AD070073837D /* tkObj.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BAED08F27A39005CB29B /* tkObj.c */; };
+		F9FD317E0CC1AD070073837D /* tkOldConfig.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BAEE08F27A39005CB29B /* tkOldConfig.c */; };
+		F9FD317F0CC1AD070073837D /* tkOldTest.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BAFE08F27A39005CB29B /* tkOldTest.c */; };
+		F9FD31800CC1AD070073837D /* tkOption.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BAEF08F27A39005CB29B /* tkOption.c */; };
+		F9FD31810CC1AD070073837D /* tkPack.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BAF008F27A39005CB29B /* tkPack.c */; };
+		F9FD31820CC1AD070073837D /* tkPanedWindow.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BAF108F27A39005CB29B /* tkPanedWindow.c */; };
+		F9FD31830CC1AD070073837D /* tkPlace.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BAF208F27A39005CB29B /* tkPlace.c */; };
+		F9FD31850CC1AD070073837D /* tkRectOval.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BAF608F27A39005CB29B /* tkRectOval.c */; };
+		F9FD31860CC1AD070073837D /* tkScale.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BAF708F27A39005CB29B /* tkScale.c */; };
+		F9FD31870CC1AD070073837D /* tkScrollbar.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BAF908F27A39005CB29B /* tkScrollbar.c */; };
+		F9FD31880CC1AD070073837D /* tkSelect.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BAFB08F27A39005CB29B /* tkSelect.c */; };
+		F9FD31890CC1AD070073837D /* tkSquare.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BAFD08F27A39005CB29B /* tkSquare.c */; };
+		F9FD318A0CC1AD070073837D /* tkStubInit.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BAFF08F27A39005CB29B /* tkStubInit.c */; };
+		F9FD318B0CC1AD070073837D /* tkStubLib.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BB0008F27A39005CB29B /* tkStubLib.c */; };
+		F9FD318C0CC1AD070073837D /* tkStyle.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BB0108F27A39005CB29B /* tkStyle.c */; };
+		F9FD318D0CC1AD070073837D /* tkTest.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BB0208F27A39005CB29B /* tkTest.c */; };
+		F9FD318E0CC1AD070073837D /* tkText.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BB0308F27A39005CB29B /* tkText.c */; };
+		F9FD318F0CC1AD070073837D /* tkTextBTree.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BB0508F27A39005CB29B /* tkTextBTree.c */; };
+		F9FD31900CC1AD070073837D /* tkTextDisp.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BB0608F27A39005CB29B /* tkTextDisp.c */; };
+		F9FD31910CC1AD070073837D /* tkTextImage.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BB0808F27A39005CB29B /* tkTextImage.c */; };
+		F9FD31920CC1AD070073837D /* tkTextIndex.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BB0908F27A39005CB29B /* tkTextIndex.c */; };
+		F9FD31930CC1AD070073837D /* tkTextMark.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BB0A08F27A39005CB29B /* tkTextMark.c */; };
+		F9FD31940CC1AD070073837D /* tkTextTag.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BB0B08F27A39005CB29B /* tkTextTag.c */; };
+		F9FD31950CC1AD070073837D /* tkTextWind.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BB0C08F27A39005CB29B /* tkTextWind.c */; };
+		F9FD31960CC1AD070073837D /* tkTrig.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BB0D08F27A39005CB29B /* tkTrig.c */; };
+		F9FD31970CC1AD070073837D /* tkUndo.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BB0E08F27A39005CB29B /* tkUndo.c */; };
+		F9FD31980CC1AD070073837D /* tkUtil.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BB1008F27A39005CB29B /* tkUtil.c */; };
+		F9FD31990CC1AD070073837D /* tkVisual.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BB1108F27A39005CB29B /* tkVisual.c */; };
+		F9FD319A0CC1AD070073837D /* tkWindow.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BB1208F27A39005CB29B /* tkWindow.c */; };
+		F9FD319B0CC1AD070073837D /* ttkBlink.c in Sources */ = {isa = PBXBuildFile; fileRef = F96887E10AF786D5000797B5 /* ttkBlink.c */; };
+		F9FD319C0CC1AD070073837D /* ttkButton.c in Sources */ = {isa = PBXBuildFile; fileRef = F96887E20AF786D5000797B5 /* ttkButton.c */; };
+		F9FD319D0CC1AD070073837D /* ttkCache.c in Sources */ = {isa = PBXBuildFile; fileRef = F96887E30AF786D5000797B5 /* ttkCache.c */; };
+		F9FD319E0CC1AD070073837D /* ttkClamTheme.c in Sources */ = {isa = PBXBuildFile; fileRef = F96887E40AF786D5000797B5 /* ttkClamTheme.c */; };
+		F9FD319F0CC1AD070073837D /* ttkClassicTheme.c in Sources */ = {isa = PBXBuildFile; fileRef = F96887E50AF786D5000797B5 /* ttkClassicTheme.c */; };
+		F9FD31A00CC1AD070073837D /* ttkDefaultTheme.c in Sources */ = {isa = PBXBuildFile; fileRef = F96887E70AF786D5000797B5 /* ttkDefaultTheme.c */; };
+		F9FD31A10CC1AD070073837D /* ttkElements.c in Sources */ = {isa = PBXBuildFile; fileRef = F96887E80AF786D5000797B5 /* ttkElements.c */; };
+		F9FD31A20CC1AD070073837D /* ttkEntry.c in Sources */ = {isa = PBXBuildFile; fileRef = F96887E90AF786D5000797B5 /* ttkEntry.c */; };
+		F9FD31A30CC1AD070073837D /* ttkFrame.c in Sources */ = {isa = PBXBuildFile; fileRef = F96887EA0AF786D5000797B5 /* ttkFrame.c */; };
+		F9FD31A40CC1AD070073837D /* ttkImage.c in Sources */ = {isa = PBXBuildFile; fileRef = F96887EB0AF786D5000797B5 /* ttkImage.c */; };
+		F9FD31A50CC1AD070073837D /* ttkInit.c in Sources */ = {isa = PBXBuildFile; fileRef = F96887EC0AF786D5000797B5 /* ttkInit.c */; };
+		F9FD31A60CC1AD070073837D /* ttkLabel.c in Sources */ = {isa = PBXBuildFile; fileRef = F96887ED0AF786D5000797B5 /* ttkLabel.c */; };
+		F9FD31A70CC1AD070073837D /* ttkLayout.c in Sources */ = {isa = PBXBuildFile; fileRef = F96887EE0AF786D5000797B5 /* ttkLayout.c */; };
+		F9FD31A80CC1AD070073837D /* ttkManager.c in Sources */ = {isa = PBXBuildFile; fileRef = F96887EF0AF786D5000797B5 /* ttkManager.c */; };
+		F9FD31A90CC1AD070073837D /* ttkNotebook.c in Sources */ = {isa = PBXBuildFile; fileRef = F96887F10AF786D5000797B5 /* ttkNotebook.c */; };
+		F9FD31AA0CC1AD070073837D /* ttkPanedwindow.c in Sources */ = {isa = PBXBuildFile; fileRef = F96887F20AF786D5000797B5 /* ttkPanedwindow.c */; };
+		F9FD31AB0CC1AD070073837D /* ttkProgress.c in Sources */ = {isa = PBXBuildFile; fileRef = F96887F30AF786D5000797B5 /* ttkProgress.c */; };
+		F9FD31AC0CC1AD070073837D /* ttkScale.c in Sources */ = {isa = PBXBuildFile; fileRef = F96887F40AF786D5000797B5 /* ttkScale.c */; };
+		F9FD31AD0CC1AD070073837D /* ttkScroll.c in Sources */ = {isa = PBXBuildFile; fileRef = F96887F50AF786D5000797B5 /* ttkScroll.c */; };
+		F9FD31AE0CC1AD070073837D /* ttkScrollbar.c in Sources */ = {isa = PBXBuildFile; fileRef = F96887F60AF786D5000797B5 /* ttkScrollbar.c */; };
+		F9FD31AF0CC1AD070073837D /* ttkSeparator.c in Sources */ = {isa = PBXBuildFile; fileRef = F96887F70AF786D5000797B5 /* ttkSeparator.c */; };
+		F9FD31B00CC1AD070073837D /* ttkSquare.c in Sources */ = {isa = PBXBuildFile; fileRef = F96887F80AF786D5000797B5 /* ttkSquare.c */; };
+		F9FD31B10CC1AD070073837D /* ttkState.c in Sources */ = {isa = PBXBuildFile; fileRef = F96887F90AF786D5000797B5 /* ttkState.c */; };
+		F9FD31B20CC1AD070073837D /* ttkStubInit.c in Sources */ = {isa = PBXBuildFile; fileRef = F96887FA0AF786D5000797B5 /* ttkStubInit.c */; };
+		F9FD31B30CC1AD070073837D /* ttkStubLib.c in Sources */ = {isa = PBXBuildFile; fileRef = F96887FB0AF786D5000797B5 /* ttkStubLib.c */; };
+		F9FD31B40CC1AD070073837D /* ttkTagSet.c in Sources */ = {isa = PBXBuildFile; fileRef = F96887FC0AF786D5000797B5 /* ttkTagSet.c */; };
+		F9FD31B50CC1AD070073837D /* ttkTheme.c in Sources */ = {isa = PBXBuildFile; fileRef = F96887FD0AF786D5000797B5 /* ttkTheme.c */; };
+		F9FD31B60CC1AD070073837D /* ttkTrace.c in Sources */ = {isa = PBXBuildFile; fileRef = F96888000AF786D5000797B5 /* ttkTrace.c */; };
+		F9FD31B70CC1AD070073837D /* ttkTrack.c in Sources */ = {isa = PBXBuildFile; fileRef = F96888010AF786D5000797B5 /* ttkTrack.c */; };
+		F9FD31B80CC1AD070073837D /* ttkTreeview.c in Sources */ = {isa = PBXBuildFile; fileRef = F96888020AF786D5000797B5 /* ttkTreeview.c */; };
+		F9FD31B90CC1AD070073837D /* ttkWidget.c in Sources */ = {isa = PBXBuildFile; fileRef = F96888030AF786D5000797B5 /* ttkWidget.c */; };
+		F9FD31DA0CC1AD070073837D /* tkAppInit.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BC7508F27A3D005CB29B /* tkAppInit.c */; settings = {COMPILER_FLAGS = "-DTK_TEST"; }; };
+		F9FD31DB0CC1AD070073837D /* tkUnix3d.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BC7908F27A3D005CB29B /* tkUnix3d.c */; };
+		F9FD31DC0CC1AD070073837D /* tkUnixScale.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BC8C08F27A3D005CB29B /* tkUnixScale.c */; };
+		F9FD31E20CC1AD070073837D /* tclDTrace.d in Sources */ = {isa = PBXBuildFile; fileRef = F9F4415D0C8BAE6F00BCCD67 /* tclDTrace.d */; };
+		F9FD31E40CC1AD070073837D /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F966C07408F2820D005CB29B /* CoreFoundation.framework */; };
+		F9FD31F80CC1ADB70073837D /* tkUnixCursor.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BC7D08F27A3D005CB29B /* tkUnixCursor.c */; };
+		F9FD31FA0CC1ADB70073837D /* tkUnixKey.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BC8708F27A3D005CB29B /* tkUnixKey.c */; };
+		F9FD31FB0CC1ADB70073837D /* tkUnixXId.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BC9108F27A3D005CB29B /* tkUnixXId.c */; };
+		F9FD31FC0CC1ADB70073837D /* tkUnixInit.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BC8508F27A3D005CB29B /* tkUnixInit.c */; };
+		F9FD31FD0CC1ADB70073837D /* tkUnixEmbed.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BC8108F27A3D005CB29B /* tkUnixEmbed.c */; };
+		F9FD31FE0CC1ADB70073837D /* tkUnixSend.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BC8F08F27A3D005CB29B /* tkUnixSend.c */; };
+		F9FD31FF0CC1ADB70073837D /* tkUnixFocus.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BC8308F27A3D005CB29B /* tkUnixFocus.c */; };
+		F9FD32000CC1ADB70073837D /* tkUnixWm.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BC9008F27A3D005CB29B /* tkUnixWm.c */; };
+		F9FD32010CC1ADB70073837D /* tkUnixRFont.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BC8B08F27A3D005CB29B /* tkUnixRFont.c */; };
+		F9FD32020CC1ADB70073837D /* tkUnix.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BC7808F27A3D005CB29B /* tkUnix.c */; };
+		F9FD32030CC1ADB70073837D /* tkUnixMenu.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BC8808F27A3D005CB29B /* tkUnixMenu.c */; };
+		F9FD32040CC1ADB70073837D /* tkUnixConfig.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BC7C08F27A3D005CB29B /* tkUnixConfig.c */; };
+		F9FD32050CC1ADB70073837D /* tkUnixDraw.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BC8008F27A3D005CB29B /* tkUnixDraw.c */; };
+		F9FD32060CC1ADB70073837D /* tkUnixDialog.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BC7F08F27A3D005CB29B /* tkUnixDialog.c */; };
+		F9FD32070CC1ADB70073837D /* tkUnixSelect.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BC8E08F27A3D005CB29B /* tkUnixSelect.c */; };
+		F9FD32080CC1ADB70073837D /* tkUnixEvent.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BC8208F27A3D005CB29B /* tkUnixEvent.c */; };
+		F9FD32090CC1ADB70073837D /* tkUnixColor.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BC7B08F27A3D005CB29B /* tkUnixColor.c */; };
+		F9FD320A0CC1ADB70073837D /* tkUnixButton.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BC7A08F27A3D005CB29B /* tkUnixButton.c */; };
+		F9FD320B0CC1ADB70073837D /* tkUnixMenubu.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BC8908F27A3D005CB29B /* tkUnixMenubu.c */; };
+		F9FD320C0CC1ADB70073837D /* tkUnixScrlbr.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BC8D08F27A3D005CB29B /* tkUnixScrlbr.c */; };
+		F9FD32170CC1AF170073837D /* libX11.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = F9FD32140CC1AF170073837D /* libX11.dylib */; };
+		F9FD32180CC1AF170073837D /* libXext.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = F9FD32150CC1AF170073837D /* libXext.dylib */; };
+		F9FD32190CC1AF170073837D /* libXss.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = F9FD32160CC1AF170073837D /* libXss.dylib */; };
+		F9FD349B0CC1BB0D0073837D /* libfreetype.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = F9FD34990CC1BB0D0073837D /* libfreetype.dylib */; };
+		F9FD349C0CC1BB0D0073837D /* libXft.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = F9FD349A0CC1BB0D0073837D /* libXft.dylib */; };
+		F9FD34C40CC1BBD70073837D /* libfontconfig.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = F9FD34C30CC1BBD70073837D /* libfontconfig.dylib */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		8DD76FB20486AB0100D96B5E /* tktest */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = tktest; sourceTree = BUILT_PRODUCTS_DIR; };
+		F9099B8A0CC67D30005A9580 /* textpeer.tcl */ = {isa = PBXFileReference; explicitFileType = text.script; fileEncoding = 4; path = textpeer.tcl; sourceTree = "<group>"; };
+		F9099B8B0CC67D3E005A9580 /* ttkbut.tcl */ = {isa = PBXFileReference; explicitFileType = text.script; fileEncoding = 4; path = ttkbut.tcl; sourceTree = "<group>"; };
 		F91E62260C1AE686006C9D96 /* Tclsh-Info.plist.in */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = "Tclsh-Info.plist.in"; sourceTree = "<group>"; };
+		F936FCD70CCD984500716967 /* ttkprogress.tcl */ = {isa = PBXFileReference; explicitFileType = text.script; fileEncoding = 4; path = ttkprogress.tcl; sourceTree = "<group>"; };
+		F936FCD80CCD984600716967 /* tree.tcl */ = {isa = PBXFileReference; explicitFileType = text.script; fileEncoding = 4; path = tree.tcl; sourceTree = "<group>"; };
+		F936FCD90CCD984600716967 /* toolbar.tcl */ = {isa = PBXFileReference; explicitFileType = text.script; fileEncoding = 4; path = toolbar.tcl; sourceTree = "<group>"; };
+		F936FCDA0CCD984600716967 /* ttknote.tcl */ = {isa = PBXFileReference; explicitFileType = text.script; fileEncoding = 4; path = ttknote.tcl; sourceTree = "<group>"; };
+		F936FCDB0CCD984600716967 /* combo.tcl */ = {isa = PBXFileReference; explicitFileType = text.script; fileEncoding = 4; path = combo.tcl; sourceTree = "<group>"; };
 		F93E5EFD09CF8711008FA367 /* tkMacOSXFont.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tkMacOSXFont.h; sourceTree = "<group>"; };
-		F95FAFF90B34F1130072E431 /* macOSXLoad.test */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = macOSXLoad.test; sourceTree = "<group>"; };
+		F95FAFF90B34F1130072E431 /* macOSXLoad.test */ = {isa = PBXFileReference; explicitFileType = text.script; fileEncoding = 4; path = macOSXLoad.test; sourceTree = "<group>"; };
 		F966BA0408F27A37005CB29B /* error.xbm */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; path = error.xbm; sourceTree = "<group>"; };
 		F966BA0508F27A37005CB29B /* gray12.xbm */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; path = gray12.xbm; sourceTree = "<group>"; };
 		F966BA0608F27A37005CB29B /* gray25.xbm */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; path = gray25.xbm; sourceTree = "<group>"; };
@@ -1747,6 +2038,8 @@
 		F9A3082D08F2D4AB00BAE1AB /* Tk.framework */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.framework; path = Tk.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		F9A3084B08F2D4CE00BAE1AB /* Wish.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Wish.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F9A3084E08F2D4F400BAE1AB /* Tcl.framework */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.framework; path = Tcl.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		F9A493240CEBF38300B78AE2 /* chanio.test */ = {isa = PBXFileReference; explicitFileType = text.script; fileEncoding = 4; path = chanio.test; sourceTree = "<group>"; };
+		F9D1360A0CDC252C00DBE0B5 /* mclist.tcl */ = {isa = PBXFileReference; explicitFileType = text.script; fileEncoding = 4; path = mclist.tcl; sourceTree = "<group>"; };
 		F9ECB1120B26521500A28025 /* pkgIndex.tcl */ = {isa = PBXFileReference; explicitFileType = text.script; fileEncoding = 4; path = pkgIndex.tcl; sourceTree = "<group>"; };
 		F9ECB1130B26521500A28025 /* platform.tcl */ = {isa = PBXFileReference; explicitFileType = text.script; fileEncoding = 4; path = platform.tcl; sourceTree = "<group>"; };
 		F9ECB1140B26521500A28025 /* shell.tcl */ = {isa = PBXFileReference; explicitFileType = text.script; fileEncoding = 4; path = shell.tcl; sourceTree = "<group>"; };
@@ -1755,7 +2048,16 @@
 		F9ECB1E10B26543C00A28025 /* platform_shell.n */ = {isa = PBXFileReference; explicitFileType = text.man; fileEncoding = 4; path = platform_shell.n; sourceTree = "<group>"; };
 		F9ECB1E20B26543C00A28025 /* platform.n */ = {isa = PBXFileReference; explicitFileType = text.man; fileEncoding = 4; path = platform.n; sourceTree = "<group>"; };
 		F9F4415D0C8BAE6F00BCCD67 /* tclDTrace.d */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.dtrace; path = tclDTrace.d; sourceTree = "<group>"; };
+		F9F4EFDC0CC7B3CA00378A27 /* ttkpane.tcl */ = {isa = PBXFileReference; explicitFileType = text.script; fileEncoding = 4; languageSpecificationIdentifier = shell; path = ttkpane.tcl; sourceTree = "<group>"; };
+		F9F4EFDD0CC7B3CB00378A27 /* ttkmenu.tcl */ = {isa = PBXFileReference; explicitFileType = text.script; fileEncoding = 4; languageSpecificationIdentifier = shell; path = ttkmenu.tcl; sourceTree = "<group>"; };
 		F9FC77B70AB29E9100B7077D /* tclUnixCompat.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = tclUnixCompat.c; sourceTree = "<group>"; };
+		F9FD31F40CC1AD070073837D /* tktest-X11 */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "tktest-X11"; sourceTree = BUILT_PRODUCTS_DIR; };
+		F9FD32140CC1AF170073837D /* libX11.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libX11.dylib; path = /usr/X11R6/lib/libX11.dylib; sourceTree = "<absolute>"; };
+		F9FD32150CC1AF170073837D /* libXext.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libXext.dylib; path = /usr/X11R6/lib/libXext.dylib; sourceTree = "<absolute>"; };
+		F9FD32160CC1AF170073837D /* libXss.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libXss.dylib; path = /usr/X11R6/lib/libXss.dylib; sourceTree = "<absolute>"; };
+		F9FD34990CC1BB0D0073837D /* libfreetype.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libfreetype.dylib; path = /usr/X11R6/lib/libfreetype.dylib; sourceTree = "<absolute>"; };
+		F9FD349A0CC1BB0D0073837D /* libXft.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libXft.dylib; path = /usr/X11R6/lib/libXft.dylib; sourceTree = "<absolute>"; };
+		F9FD34C30CC1BBD70073837D /* libfontconfig.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libfontconfig.dylib; path = /usr/X11R6/lib/libfontconfig.dylib; sourceTree = "<absolute>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -1766,6 +2068,20 @@
 				F966C07508F2820D005CB29B /* CoreFoundation.framework in Frameworks */,
 				F966C07708F2821B005CB29B /* Carbon.framework in Frameworks */,
 				F966C07908F28233005CB29B /* IOKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F9FD31E30CC1AD070073837D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F9FD31E40CC1AD070073837D /* CoreFoundation.framework in Frameworks */,
+				F9FD32170CC1AF170073837D /* libX11.dylib in Frameworks */,
+				F9FD32180CC1AF170073837D /* libXext.dylib in Frameworks */,
+				F9FD32190CC1AF170073837D /* libXss.dylib in Frameworks */,
+				F9FD349C0CC1BB0D0073837D /* libXft.dylib in Frameworks */,
+				F9FD349B0CC1BB0D0073837D /* libfreetype.dylib in Frameworks */,
+				F9FD34C40CC1BBD70073837D /* libfontconfig.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1789,9 +2105,10 @@
 			isa = PBXGroup;
 			children = (
 				F9A3084B08F2D4CE00BAE1AB /* Wish.app */,
-				8DD76FB20486AB0100D96B5E /* tktest */,
 				F9A3082D08F2D4AB00BAE1AB /* Tk.framework */,
 				F9A3084E08F2D4F400BAE1AB /* Tcl.framework */,
+				8DD76FB20486AB0100D96B5E /* tktest */,
+				F9FD31F40CC1AD070073837D /* tktest-X11 */,
 			);
 			includeInIndex = 0;
 			name = Products;
@@ -2154,6 +2471,7 @@
 				F966BB2208F27A39005CB29B /* check.tcl */,
 				F966BB2308F27A39005CB29B /* clrpick.tcl */,
 				F966BB2408F27A39005CB29B /* colors.tcl */,
+				F936FCDB0CCD984600716967 /* combo.tcl */,
 				F966BB2508F27A39005CB29B /* cscroll.tcl */,
 				F966BB2608F27A39005CB29B /* ctext.tcl */,
 				F966BB2708F27A39005CB29B /* dialog1.tcl */,
@@ -2174,6 +2492,7 @@
 				F966BB4308F27A3A005CB29B /* ixset */,
 				F966BB4408F27A3A005CB29B /* label.tcl */,
 				F966BB4508F27A3A005CB29B /* labelframe.tcl */,
+				F9D1360A0CDC252C00DBE0B5 /* mclist.tcl */,
 				F966BB4608F27A3A005CB29B /* menu.tcl */,
 				F966BB4708F27A3A005CB29B /* menubu.tcl */,
 				F966BB4808F27A3A005CB29B /* msgbox.tcl */,
@@ -2196,7 +2515,15 @@
 				F966BB5A08F27A3A005CB29B /* tclIndex */,
 				F966BB5B08F27A3A005CB29B /* tcolor */,
 				F966BB5C08F27A3A005CB29B /* text.tcl */,
+				F9099B8A0CC67D30005A9580 /* textpeer.tcl */,
 				F966BB5D08F27A3A005CB29B /* timer */,
+				F936FCD90CCD984600716967 /* toolbar.tcl */,
+				F936FCD80CCD984600716967 /* tree.tcl */,
+				F9099B8B0CC67D3E005A9580 /* ttkbut.tcl */,
+				F9F4EFDD0CC7B3CB00378A27 /* ttkmenu.tcl */,
+				F936FCDA0CCD984600716967 /* ttknote.tcl */,
+				F9F4EFDC0CC7B3CA00378A27 /* ttkpane.tcl */,
+				F936FCD70CCD984500716967 /* ttkprogress.tcl */,
 				F966BB5E08F27A3A005CB29B /* twind.tcl */,
 				F966BB5F08F27A3A005CB29B /* unicodeout.tcl */,
 				F966BB6008F27A3A005CB29B /* vscale.tcl */,
@@ -2524,6 +2851,12 @@
 				F966C07408F2820D005CB29B /* CoreFoundation.framework */,
 				F966C07608F2821B005CB29B /* Carbon.framework */,
 				F966C07808F28233005CB29B /* IOKit.framework */,
+				F9FD32140CC1AF170073837D /* libX11.dylib */,
+				F9FD32150CC1AF170073837D /* libXext.dylib */,
+				F9FD32160CC1AF170073837D /* libXss.dylib */,
+				F9FD349A0CC1BB0D0073837D /* libXft.dylib */,
+				F9FD34990CC1BB0D0073837D /* libfreetype.dylib */,
+				F9FD34C30CC1BBD70073837D /* libfontconfig.dylib */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -3239,6 +3572,7 @@
 				F96D434C08F272B5004A47F5 /* binary.test */,
 				F96D434D08F272B5004A47F5 /* case.test */,
 				F96D434E08F272B5004A47F5 /* chan.test */,
+				F9A493240CEBF38300B78AE2 /* chanio.test */,
 				F96D434F08F272B5004A47F5 /* clock.test */,
 				F96D435008F272B5004A47F5 /* cmdAH.test */,
 				F96D435108F272B5004A47F5 /* cmdIL.test */,
@@ -3561,6 +3895,25 @@
 			productReference = F9A3084B08F2D4CE00BAE1AB /* Wish.app */;
 			productType = "com.apple.product-type.application";
 		};
+		F9FD30B30CC1AD070073837D /* tktest-X11 */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F9FD31E80CC1AD070073837D /* Build configuration list for PBXNativeTarget "tktest-X11" */;
+			buildPhases = (
+				F9FD30B40CC1AD070073837D /* ShellScript */,
+				F9FD30B50CC1AD070073837D /* ShellScript */,
+				F9FD30BB0CC1AD070073837D /* Sources */,
+				F9FD31E30CC1AD070073837D /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "tktest-X11";
+			productInstallPath = "$(BINDIR)";
+			productName = tktest;
+			productReference = F9FD31F40CC1AD070073837D /* tktest-X11 */;
+			productType = "com.apple.product-type.tool";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -3578,6 +3931,7 @@
 			targets = (
 				F9E61D16090A3E94002B3151 /* Tk */,
 				8DD76FA90486AB0100D96B5E /* tktest */,
+				F9FD30B30CC1AD070073837D /* tktest-X11 */,
 			);
 		};
 /* End PBXProject section */
@@ -3668,6 +4022,48 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
 			shellScript = "## tk configure shell script phase\n\ncd \"${TK_SRCROOT}\"/macosx &&\nif [ configure.ac -nt configure -o ../unix/configure.in -nt configure -o ../unix/tcl.m4 -nt configure -o ../unix/aclocal.m4 -nt configure ]; then\n    echo \"Running autoconf & autoheader in tk/macosx\"\n    rm -rf autom4te.cache\n    ${AUTOCONF:-${DEVELOPER_DIR}/usr/bin/autoconf} && ${AUTOHEADER:-${DEVELOPER_DIR}/usr/bin/autoheader} || exit $?\n    rm -rf autom4te.cache\nfi\n\ncd \"${DERIVED_FILE_DIR}\" && mkdir -p tk && cd tk &&\nif [ \"${TK_SRCROOT}\"/macosx/configure -nt config.status ]; then\n    echo \"Configuring Tk\"\n    \"${TK_SRCROOT}\"/macosx/configure --cache-file=../config.cache --prefix=${PREFIX} --bindir=${BINDIR} --libdir=${LIBDIR} --mandir=${MANDIR} --includedir=${INCLUDEDIR} --disable-shared --enable-aqua --with-tcl=../tcl ${CONFIGURE_ARGS}\nelse\n    ./config.status\nfi";
+			showEnvVarsInLog = 0;
+		};
+		F9FD30B40CC1AD070073837D /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"$(TCL_SRCROOT)/macosx/configure.ac",
+				"$(TCL_SRCROOT)/unix/configure.in",
+				"$(TCL_SRCROOT)/unix/tcl.m4",
+				"$(TCL_SRCROOT)/unix/aclocal.m4",
+				"$(TCL_SRCROOT)/unix/tclConfig.sh.in",
+				"$(TCL_SRCROOT)/unix/Makefile.in",
+				"$(TCL_SRCROOT)/unix/dltest/Makefile.in",
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/tcl/tclConfig.sh",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/bash;
+			shellScript = "## tcl configure shell script phase\n\ncd \"${TCL_SRCROOT}\"/macosx &&\nif [ configure.ac -nt configure -o ../unix/configure.in -nt configure -o ../unix/tcl.m4 -nt configure -o ../unix/aclocal.m4 -nt configure ]; then\n    echo \"Running autoconf & autoheader in tcl/macosx\"\n    rm -rf autom4te.cache\n    ${AUTOCONF:-${DEVELOPER_DIR}/usr/bin/autoconf} && ${AUTOHEADER:-${DEVELOPER_DIR}/usr/bin/autoheader} || exit $?\n    rm -rf autom4te.cache\nfi\n\ncd \"${DERIVED_FILE_DIR}\" && mkdir -p tcl && cd tcl &&\nif [ \"${TCL_SRCROOT}\"/macosx/configure -nt config.status ]; then\n    echo \"Configuring Tcl\"\n    \"${TCL_SRCROOT}\"/macosx/configure --cache-file=../config.cache --prefix=${PREFIX} --bindir=${BINDIR} --libdir=${LIBDIR} --mandir=${MANDIR} --includedir=${INCLUDEDIR} --disable-shared ${CONFIGURE_ARGS}\nelse\n    ./config.status\nfi\n";
+			showEnvVarsInLog = 0;
+		};
+		F9FD30B50CC1AD070073837D /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"$(TK_SRCROOT)/macosx/configure.ac",
+				"$(TK_SRCROOT)/unix/configure.in",
+				"$(TK_SRCROOT)/unix/tcl.m4",
+				"$(TK_SRCROOT)/unix/aclocal.m4",
+				"$(TK_SRCROOT)/unix/tkConfig.sh.in",
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/tk/tkConfig.sh",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/bash;
+			shellScript = "## tk configure shell script phase\n\ncd \"${TK_SRCROOT}\"/macosx &&\nif [ configure.ac -nt configure -o ../unix/configure.in -nt configure -o ../unix/tcl.m4 -nt configure -o ../unix/aclocal.m4 -nt configure ]; then\n    echo \"Running autoconf & autoheader in tk/macosx\"\n    rm -rf autom4te.cache\n    ${AUTOCONF:-${DEVELOPER_DIR}/usr/bin/autoconf} && ${AUTOHEADER:-${DEVELOPER_DIR}/usr/bin/autoheader} || exit $?\n    rm -rf autom4te.cache\nfi\n\ncd \"${DERIVED_FILE_DIR}\" && mkdir -p tk && cd tk &&\nif [ \"${TK_SRCROOT}\"/macosx/configure -nt config.status ]; then\n    echo \"Configuring Tk\"\n    PATH=\"${PATH}:/usr/X11R6/bin\" \"${TK_SRCROOT}\"/macosx/configure --cache-file=../config.cache --prefix=${PREFIX} --bindir=${BINDIR} --libdir=${LIBDIR} --mandir=${MANDIR} --includedir=${INCLUDEDIR} --disable-shared --enable-xft --with-tcl=../tcl ${CONFIGURE_ARGS}\nelse\n    ./config.status\nfi";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -3975,6 +4371,290 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		F9FD30BB0CC1AD070073837D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F9FD30BC0CC1AD070073837D /* regcomp.c in Sources */,
+				F9FD30BD0CC1AD070073837D /* regerror.c in Sources */,
+				F9FD30BE0CC1AD070073837D /* regexec.c in Sources */,
+				F9FD30BF0CC1AD070073837D /* regfree.c in Sources */,
+				F9FD30C00CC1AD070073837D /* tclAlloc.c in Sources */,
+				F9FD30C10CC1AD070073837D /* tclAsync.c in Sources */,
+				F9FD30C20CC1AD070073837D /* tclBasic.c in Sources */,
+				F9FD30C30CC1AD070073837D /* tclBinary.c in Sources */,
+				F9FD30C40CC1AD070073837D /* tclCkalloc.c in Sources */,
+				F9FD30C50CC1AD070073837D /* tclClock.c in Sources */,
+				F9FD30C60CC1AD070073837D /* tclCmdAH.c in Sources */,
+				F9FD30C70CC1AD070073837D /* tclCmdIL.c in Sources */,
+				F9FD30C80CC1AD070073837D /* tclCmdMZ.c in Sources */,
+				F9FD30C90CC1AD070073837D /* tclCompCmds.c in Sources */,
+				F9FD30CA0CC1AD070073837D /* tclCompExpr.c in Sources */,
+				F9FD30CB0CC1AD070073837D /* tclCompile.c in Sources */,
+				F9FD30CC0CC1AD070073837D /* tclConfig.c in Sources */,
+				F9FD30CD0CC1AD070073837D /* tclDate.c in Sources */,
+				F9FD30CE0CC1AD070073837D /* tclDictObj.c in Sources */,
+				F9FD30CF0CC1AD070073837D /* tclEncoding.c in Sources */,
+				F9FD30D00CC1AD070073837D /* tclEnv.c in Sources */,
+				F9FD30D10CC1AD070073837D /* tclEvent.c in Sources */,
+				F9FD30D20CC1AD070073837D /* tclExecute.c in Sources */,
+				F9FD30D30CC1AD070073837D /* tclFCmd.c in Sources */,
+				F9FD30D40CC1AD070073837D /* tclFileName.c in Sources */,
+				F9FD30D50CC1AD070073837D /* tclGet.c in Sources */,
+				F9FD30D60CC1AD070073837D /* tclHash.c in Sources */,
+				F9FD30D70CC1AD070073837D /* tclHistory.c in Sources */,
+				F9FD30D80CC1AD070073837D /* tclIndexObj.c in Sources */,
+				F9FD30D90CC1AD070073837D /* tclInterp.c in Sources */,
+				F9FD30DA0CC1AD070073837D /* tclIO.c in Sources */,
+				F9FD30DB0CC1AD070073837D /* tclIOCmd.c in Sources */,
+				F9FD30DC0CC1AD070073837D /* tclIOGT.c in Sources */,
+				F9FD30DD0CC1AD070073837D /* tclIORChan.c in Sources */,
+				F9FD30DE0CC1AD070073837D /* tclIOSock.c in Sources */,
+				F9FD30DF0CC1AD070073837D /* tclIOUtil.c in Sources */,
+				F9FD30E00CC1AD070073837D /* tclLink.c in Sources */,
+				F9FD30E10CC1AD070073837D /* tclListObj.c in Sources */,
+				F9FD30E20CC1AD070073837D /* tclLiteral.c in Sources */,
+				F9FD30E30CC1AD070073837D /* tclLoad.c in Sources */,
+				F9FD30E40CC1AD070073837D /* tclMain.c in Sources */,
+				F9FD30E50CC1AD070073837D /* tclNamesp.c in Sources */,
+				F9FD30E60CC1AD070073837D /* tclNotify.c in Sources */,
+				F9FD30E70CC1AD070073837D /* tclObj.c in Sources */,
+				F9FD30E80CC1AD070073837D /* tclPanic.c in Sources */,
+				F9FD30E90CC1AD070073837D /* tclParse.c in Sources */,
+				F9FD30EA0CC1AD070073837D /* tclPathObj.c in Sources */,
+				F9FD30EB0CC1AD070073837D /* tclPipe.c in Sources */,
+				F9FD30EC0CC1AD070073837D /* tclPkg.c in Sources */,
+				F9FD30ED0CC1AD070073837D /* tclPkgConfig.c in Sources */,
+				F9FD30EE0CC1AD070073837D /* tclPosixStr.c in Sources */,
+				F9FD30EF0CC1AD070073837D /* tclPreserve.c in Sources */,
+				F9FD30F00CC1AD070073837D /* tclProc.c in Sources */,
+				F9FD30F10CC1AD070073837D /* tclRegexp.c in Sources */,
+				F9FD30F20CC1AD070073837D /* tclResolve.c in Sources */,
+				F9FD30F30CC1AD070073837D /* tclResult.c in Sources */,
+				F9FD30F40CC1AD070073837D /* tclScan.c in Sources */,
+				F9FD30F50CC1AD070073837D /* tclStringObj.c in Sources */,
+				F9FD30F60CC1AD070073837D /* tclStrToD.c in Sources */,
+				F9FD30F70CC1AD070073837D /* tclStubInit.c in Sources */,
+				F9FD30F80CC1AD070073837D /* tclStubLib.c in Sources */,
+				F9FD30F90CC1AD070073837D /* tclThread.c in Sources */,
+				F9FD30FA0CC1AD070073837D /* tclThreadAlloc.c in Sources */,
+				F9FD30FB0CC1AD070073837D /* tclThreadJoin.c in Sources */,
+				F9FD30FC0CC1AD070073837D /* tclThreadStorage.c in Sources */,
+				F9FD30FD0CC1AD070073837D /* tclTimer.c in Sources */,
+				F9FD30FE0CC1AD070073837D /* tclTomMathInterface.c in Sources */,
+				F9FD30FF0CC1AD070073837D /* tclTrace.c in Sources */,
+				F9FD31000CC1AD070073837D /* tclUtf.c in Sources */,
+				F9FD31010CC1AD070073837D /* tclUtil.c in Sources */,
+				F9FD31020CC1AD070073837D /* tclVar.c in Sources */,
+				F9FD31030CC1AD070073837D /* bn_fast_s_mp_mul_digs.c in Sources */,
+				F9FD31040CC1AD070073837D /* bn_fast_s_mp_sqr.c in Sources */,
+				F9FD31050CC1AD070073837D /* bn_mp_add.c in Sources */,
+				F9FD31060CC1AD070073837D /* bn_mp_add_d.c in Sources */,
+				F9FD31070CC1AD070073837D /* bn_mp_and.c in Sources */,
+				F9FD31080CC1AD070073837D /* bn_mp_clamp.c in Sources */,
+				F9FD31090CC1AD070073837D /* bn_mp_clear.c in Sources */,
+				F9FD310A0CC1AD070073837D /* bn_mp_clear_multi.c in Sources */,
+				F9FD310B0CC1AD070073837D /* bn_mp_cmp.c in Sources */,
+				F9FD310C0CC1AD070073837D /* bn_mp_cmp_d.c in Sources */,
+				F9FD310D0CC1AD070073837D /* bn_mp_cmp_mag.c in Sources */,
+				F9FD310E0CC1AD070073837D /* bn_mp_copy.c in Sources */,
+				F9FD310F0CC1AD070073837D /* bn_mp_count_bits.c in Sources */,
+				F9FD31100CC1AD070073837D /* bn_mp_div.c in Sources */,
+				F9FD31110CC1AD070073837D /* bn_mp_div_2.c in Sources */,
+				F9FD31120CC1AD070073837D /* bn_mp_div_2d.c in Sources */,
+				F9FD31130CC1AD070073837D /* bn_mp_div_3.c in Sources */,
+				F9FD31140CC1AD070073837D /* bn_mp_div_d.c in Sources */,
+				F9FD31150CC1AD070073837D /* bn_mp_exch.c in Sources */,
+				F9FD31160CC1AD070073837D /* bn_mp_expt_d.c in Sources */,
+				F9FD31170CC1AD070073837D /* bn_mp_grow.c in Sources */,
+				F9FD31180CC1AD070073837D /* bn_mp_init.c in Sources */,
+				F9FD31190CC1AD070073837D /* bn_mp_init_copy.c in Sources */,
+				F9FD311A0CC1AD070073837D /* bn_mp_init_multi.c in Sources */,
+				F9FD311B0CC1AD070073837D /* bn_mp_init_set.c in Sources */,
+				F9FD311C0CC1AD070073837D /* bn_mp_init_size.c in Sources */,
+				F9FD311D0CC1AD070073837D /* bn_mp_karatsuba_mul.c in Sources */,
+				F9FD311E0CC1AD070073837D /* bn_mp_karatsuba_sqr.c in Sources */,
+				F9FD311F0CC1AD070073837D /* bn_mp_lshd.c in Sources */,
+				F9FD31200CC1AD070073837D /* bn_mp_mod.c in Sources */,
+				F9FD31210CC1AD070073837D /* bn_mp_mod_2d.c in Sources */,
+				F9FD31220CC1AD070073837D /* bn_mp_mul.c in Sources */,
+				F9FD31230CC1AD070073837D /* bn_mp_mul_2.c in Sources */,
+				F9FD31240CC1AD070073837D /* bn_mp_mul_2d.c in Sources */,
+				F9FD31250CC1AD070073837D /* bn_mp_mul_d.c in Sources */,
+				F9FD31260CC1AD070073837D /* bn_mp_neg.c in Sources */,
+				F9FD31270CC1AD070073837D /* bn_mp_or.c in Sources */,
+				F9FD31280CC1AD070073837D /* bn_mp_radix_size.c in Sources */,
+				F9FD31290CC1AD070073837D /* bn_mp_radix_smap.c in Sources */,
+				F9FD312A0CC1AD070073837D /* bn_mp_read_radix.c in Sources */,
+				F9FD312B0CC1AD070073837D /* bn_mp_rshd.c in Sources */,
+				F9FD312C0CC1AD070073837D /* bn_mp_set.c in Sources */,
+				F9FD312D0CC1AD070073837D /* bn_mp_shrink.c in Sources */,
+				F9FD312E0CC1AD070073837D /* bn_mp_sqr.c in Sources */,
+				F9FD312F0CC1AD070073837D /* bn_mp_sqrt.c in Sources */,
+				F9FD31300CC1AD070073837D /* bn_mp_sub.c in Sources */,
+				F9FD31310CC1AD070073837D /* bn_mp_sub_d.c in Sources */,
+				F9FD31320CC1AD070073837D /* bn_mp_to_unsigned_bin_n.c in Sources */,
+				F9FD31330CC1AD070073837D /* bn_mp_to_unsigned_bin.c in Sources */,
+				F9FD31340CC1AD070073837D /* bn_mp_toom_mul.c in Sources */,
+				F9FD31350CC1AD070073837D /* bn_mp_toom_sqr.c in Sources */,
+				F9FD31360CC1AD070073837D /* bn_mp_toradix_n.c in Sources */,
+				F9FD31370CC1AD070073837D /* bn_mp_unsigned_bin_size.c in Sources */,
+				F9FD31380CC1AD070073837D /* bn_mp_xor.c in Sources */,
+				F9FD31390CC1AD070073837D /* bn_mp_zero.c in Sources */,
+				F9FD313A0CC1AD070073837D /* bn_reverse.c in Sources */,
+				F9FD313B0CC1AD070073837D /* bn_s_mp_add.c in Sources */,
+				F9FD313C0CC1AD070073837D /* bn_s_mp_mul_digs.c in Sources */,
+				F9FD313D0CC1AD070073837D /* bn_s_mp_sqr.c in Sources */,
+				F9FD313E0CC1AD070073837D /* bn_s_mp_sub.c in Sources */,
+				F9FD313F0CC1AD070073837D /* bncore.c in Sources */,
+				F9FD31400CC1AD070073837D /* tclMacOSXBundle.c in Sources */,
+				F9FD31410CC1AD070073837D /* tclMacOSXFCmd.c in Sources */,
+				F9FD31420CC1AD070073837D /* tclMacOSXNotify.c in Sources */,
+				F9FD31430CC1AD070073837D /* tclLoadDyld.c in Sources */,
+				F9FD31440CC1AD070073837D /* tclUnixChan.c in Sources */,
+				F9FD31450CC1AD070073837D /* tclUnixCompat.c in Sources */,
+				F9FD31460CC1AD070073837D /* tclUnixEvent.c in Sources */,
+				F9FD31470CC1AD070073837D /* tclUnixFCmd.c in Sources */,
+				F9FD31480CC1AD070073837D /* tclUnixFile.c in Sources */,
+				F9FD31490CC1AD070073837D /* tclUnixInit.c in Sources */,
+				F9FD314A0CC1AD070073837D /* tclUnixNotfy.c in Sources */,
+				F9FD314B0CC1AD070073837D /* tclUnixPipe.c in Sources */,
+				F9FD314C0CC1AD070073837D /* tclUnixSock.c in Sources */,
+				F9FD314D0CC1AD070073837D /* tclUnixThrd.c in Sources */,
+				F9FD314E0CC1AD070073837D /* tclUnixTime.c in Sources */,
+				F9FD314F0CC1AD070073837D /* tk3d.c in Sources */,
+				F9FD31500CC1AD070073837D /* tkArgv.c in Sources */,
+				F9FD31510CC1AD070073837D /* tkAtom.c in Sources */,
+				F9FD31520CC1AD070073837D /* tkBind.c in Sources */,
+				F9FD31530CC1AD070073837D /* tkBitmap.c in Sources */,
+				F9FD31540CC1AD070073837D /* tkButton.c in Sources */,
+				F9FD31550CC1AD070073837D /* tkCanvArc.c in Sources */,
+				F9FD31560CC1AD070073837D /* tkCanvas.c in Sources */,
+				F9FD31570CC1AD070073837D /* tkCanvBmap.c in Sources */,
+				F9FD31580CC1AD070073837D /* tkCanvImg.c in Sources */,
+				F9FD31590CC1AD070073837D /* tkCanvLine.c in Sources */,
+				F9FD315A0CC1AD070073837D /* tkCanvPoly.c in Sources */,
+				F9FD315B0CC1AD070073837D /* tkCanvPs.c in Sources */,
+				F9FD315C0CC1AD070073837D /* tkCanvText.c in Sources */,
+				F9FD315D0CC1AD070073837D /* tkCanvUtil.c in Sources */,
+				F9FD315E0CC1AD070073837D /* tkCanvWind.c in Sources */,
+				F9FD315F0CC1AD070073837D /* tkClipboard.c in Sources */,
+				F9FD31600CC1AD070073837D /* tkCmds.c in Sources */,
+				F9FD31610CC1AD070073837D /* tkColor.c in Sources */,
+				F9FD31620CC1AD070073837D /* tkConfig.c in Sources */,
+				F9FD31630CC1AD070073837D /* tkConsole.c in Sources */,
+				F9FD31640CC1AD070073837D /* tkCursor.c in Sources */,
+				F9FD31650CC1AD070073837D /* tkEntry.c in Sources */,
+				F9FD31660CC1AD070073837D /* tkError.c in Sources */,
+				F9FD31670CC1AD070073837D /* tkEvent.c in Sources */,
+				F9FD31680CC1AD070073837D /* tkFileFilter.c in Sources */,
+				F9FD31690CC1AD070073837D /* tkFocus.c in Sources */,
+				F9FD316A0CC1AD070073837D /* tkFont.c in Sources */,
+				F9FD316B0CC1AD070073837D /* tkFrame.c in Sources */,
+				F9FD316C0CC1AD070073837D /* tkGC.c in Sources */,
+				F9FD316D0CC1AD070073837D /* tkGeometry.c in Sources */,
+				F9FD316E0CC1AD070073837D /* tkGet.c in Sources */,
+				F9FD316F0CC1AD070073837D /* tkGrab.c in Sources */,
+				F9FD31700CC1AD070073837D /* tkGrid.c in Sources */,
+				F9FD31710CC1AD070073837D /* tkImage.c in Sources */,
+				F9FD31720CC1AD070073837D /* tkImgBmap.c in Sources */,
+				F9FD31730CC1AD070073837D /* tkImgGIF.c in Sources */,
+				F9FD31740CC1AD070073837D /* tkImgPhoto.c in Sources */,
+				F9FD31750CC1AD070073837D /* tkImgPPM.c in Sources */,
+				F9FD31760CC1AD070073837D /* tkListbox.c in Sources */,
+				F9FD31770CC1AD070073837D /* tkMacWinMenu.c in Sources */,
+				F9FD31780CC1AD070073837D /* tkMain.c in Sources */,
+				F9FD31790CC1AD070073837D /* tkMenu.c in Sources */,
+				F9FD317A0CC1AD070073837D /* tkMenubutton.c in Sources */,
+				F9FD317B0CC1AD070073837D /* tkMenuDraw.c in Sources */,
+				F9FD317C0CC1AD070073837D /* tkMessage.c in Sources */,
+				F9FD317D0CC1AD070073837D /* tkObj.c in Sources */,
+				F9FD317E0CC1AD070073837D /* tkOldConfig.c in Sources */,
+				F9FD317F0CC1AD070073837D /* tkOldTest.c in Sources */,
+				F9FD31800CC1AD070073837D /* tkOption.c in Sources */,
+				F9FD31810CC1AD070073837D /* tkPack.c in Sources */,
+				F9FD31820CC1AD070073837D /* tkPanedWindow.c in Sources */,
+				F9FD31830CC1AD070073837D /* tkPlace.c in Sources */,
+				F9FD31850CC1AD070073837D /* tkRectOval.c in Sources */,
+				F9FD31860CC1AD070073837D /* tkScale.c in Sources */,
+				F9FD31870CC1AD070073837D /* tkScrollbar.c in Sources */,
+				F9FD31880CC1AD070073837D /* tkSelect.c in Sources */,
+				F9FD31890CC1AD070073837D /* tkSquare.c in Sources */,
+				F9FD318A0CC1AD070073837D /* tkStubInit.c in Sources */,
+				F9FD318B0CC1AD070073837D /* tkStubLib.c in Sources */,
+				F9FD318C0CC1AD070073837D /* tkStyle.c in Sources */,
+				F9FD318D0CC1AD070073837D /* tkTest.c in Sources */,
+				F9FD318E0CC1AD070073837D /* tkText.c in Sources */,
+				F9FD318F0CC1AD070073837D /* tkTextBTree.c in Sources */,
+				F9FD31900CC1AD070073837D /* tkTextDisp.c in Sources */,
+				F9FD31910CC1AD070073837D /* tkTextImage.c in Sources */,
+				F9FD31920CC1AD070073837D /* tkTextIndex.c in Sources */,
+				F9FD31930CC1AD070073837D /* tkTextMark.c in Sources */,
+				F9FD31940CC1AD070073837D /* tkTextTag.c in Sources */,
+				F9FD31950CC1AD070073837D /* tkTextWind.c in Sources */,
+				F9FD31960CC1AD070073837D /* tkTrig.c in Sources */,
+				F9FD31970CC1AD070073837D /* tkUndo.c in Sources */,
+				F9FD31980CC1AD070073837D /* tkUtil.c in Sources */,
+				F9FD31990CC1AD070073837D /* tkVisual.c in Sources */,
+				F9FD319A0CC1AD070073837D /* tkWindow.c in Sources */,
+				F9FD319B0CC1AD070073837D /* ttkBlink.c in Sources */,
+				F9FD319C0CC1AD070073837D /* ttkButton.c in Sources */,
+				F9FD319D0CC1AD070073837D /* ttkCache.c in Sources */,
+				F9FD319E0CC1AD070073837D /* ttkClamTheme.c in Sources */,
+				F9FD319F0CC1AD070073837D /* ttkClassicTheme.c in Sources */,
+				F9FD31A00CC1AD070073837D /* ttkDefaultTheme.c in Sources */,
+				F9FD31A10CC1AD070073837D /* ttkElements.c in Sources */,
+				F9FD31A20CC1AD070073837D /* ttkEntry.c in Sources */,
+				F9FD31A30CC1AD070073837D /* ttkFrame.c in Sources */,
+				F9FD31A40CC1AD070073837D /* ttkImage.c in Sources */,
+				F9FD31A50CC1AD070073837D /* ttkInit.c in Sources */,
+				F9FD31A60CC1AD070073837D /* ttkLabel.c in Sources */,
+				F9FD31A70CC1AD070073837D /* ttkLayout.c in Sources */,
+				F9FD31A80CC1AD070073837D /* ttkManager.c in Sources */,
+				F9FD31A90CC1AD070073837D /* ttkNotebook.c in Sources */,
+				F9FD31AA0CC1AD070073837D /* ttkPanedwindow.c in Sources */,
+				F9FD31AB0CC1AD070073837D /* ttkProgress.c in Sources */,
+				F9FD31AC0CC1AD070073837D /* ttkScale.c in Sources */,
+				F9FD31AD0CC1AD070073837D /* ttkScroll.c in Sources */,
+				F9FD31AE0CC1AD070073837D /* ttkScrollbar.c in Sources */,
+				F9FD31AF0CC1AD070073837D /* ttkSeparator.c in Sources */,
+				F9FD31B00CC1AD070073837D /* ttkSquare.c in Sources */,
+				F9FD31B10CC1AD070073837D /* ttkState.c in Sources */,
+				F9FD31B20CC1AD070073837D /* ttkStubInit.c in Sources */,
+				F9FD31B30CC1AD070073837D /* ttkStubLib.c in Sources */,
+				F9FD31B40CC1AD070073837D /* ttkTagSet.c in Sources */,
+				F9FD31B50CC1AD070073837D /* ttkTheme.c in Sources */,
+				F9FD31B60CC1AD070073837D /* ttkTrace.c in Sources */,
+				F9FD31B70CC1AD070073837D /* ttkTrack.c in Sources */,
+				F9FD31B80CC1AD070073837D /* ttkTreeview.c in Sources */,
+				F9FD31B90CC1AD070073837D /* ttkWidget.c in Sources */,
+				F9FD31DA0CC1AD070073837D /* tkAppInit.c in Sources */,
+				F9FD32020CC1ADB70073837D /* tkUnix.c in Sources */,
+				F9FD31DB0CC1AD070073837D /* tkUnix3d.c in Sources */,
+				F9FD320A0CC1ADB70073837D /* tkUnixButton.c in Sources */,
+				F9FD32090CC1ADB70073837D /* tkUnixColor.c in Sources */,
+				F9FD32040CC1ADB70073837D /* tkUnixConfig.c in Sources */,
+				F9FD31F80CC1ADB70073837D /* tkUnixCursor.c in Sources */,
+				F9FD32060CC1ADB70073837D /* tkUnixDialog.c in Sources */,
+				F9FD32050CC1ADB70073837D /* tkUnixDraw.c in Sources */,
+				F9FD31FD0CC1ADB70073837D /* tkUnixEmbed.c in Sources */,
+				F9FD32080CC1ADB70073837D /* tkUnixEvent.c in Sources */,
+				F9FD31FF0CC1ADB70073837D /* tkUnixFocus.c in Sources */,
+				F9FD31FC0CC1ADB70073837D /* tkUnixInit.c in Sources */,
+				F9FD31FA0CC1ADB70073837D /* tkUnixKey.c in Sources */,
+				F9FD32030CC1ADB70073837D /* tkUnixMenu.c in Sources */,
+				F9FD320B0CC1ADB70073837D /* tkUnixMenubu.c in Sources */,
+				F9FD32010CC1ADB70073837D /* tkUnixRFont.c in Sources */,
+				F9FD31DC0CC1AD070073837D /* tkUnixScale.c in Sources */,
+				F9FD320C0CC1ADB70073837D /* tkUnixScrlbr.c in Sources */,
+				F9FD32070CC1ADB70073837D /* tkUnixSelect.c in Sources */,
+				F9FD31FE0CC1ADB70073837D /* tkUnixSend.c in Sources */,
+				F9FD32000CC1ADB70073837D /* tkUnixWm.c in Sources */,
+				F9FD31FB0CC1ADB70073837D /* tkUnixXId.c in Sources */,
+				F9FD31E20CC1AD070073837D /* tclDTrace.d in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
@@ -3988,6 +4668,10 @@
 		F91BCC50093152310042A6BF /* ReleaseUniversal */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				OTHER_LDFLAGS = (
+					"$(OTHER_LDFLAGS_AQUA)",
+					"$(OTHER_LDFLAGS)",
+				);
 				PRODUCT_NAME = tktest;
 			};
 			name = ReleaseUniversal;
@@ -4016,6 +4700,10 @@
 		F93084380BB93D2800CD0B9E /* DebugMemCompile */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				OTHER_LDFLAGS = (
+					"$(OTHER_LDFLAGS_AQUA)",
+					"$(OTHER_LDFLAGS)",
+				);
 				PRODUCT_NAME = tktest;
 			};
 			name = DebugMemCompile;
@@ -4062,6 +4750,10 @@
 					"$(GCC_PREPROCESSOR_DEFINITIONS)",
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				OTHER_LDFLAGS = (
+					"$(OTHER_LDFLAGS_AQUA)",
+					"$(OTHER_LDFLAGS)",
+				);
 				PRODUCT_NAME = tktest;
 				ZERO_LINK = YES;
 			};
@@ -4070,6 +4762,10 @@
 		F95CC8B209158F3100EA5ACE /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				OTHER_LDFLAGS = (
+					"$(OTHER_LDFLAGS_AQUA)",
+					"$(OTHER_LDFLAGS)",
+				);
 				PRODUCT_NAME = tktest;
 			};
 			name = Release;
@@ -4077,6 +4773,10 @@
 		F95CC8B309158F3100EA5ACE /* DebugNoFixZL */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				OTHER_LDFLAGS = (
+					"$(OTHER_LDFLAGS_AQUA)",
+					"$(OTHER_LDFLAGS)",
+				);
 				PRODUCT_NAME = tktest;
 			};
 			name = DebugNoFixZL;
@@ -4125,6 +4825,10 @@
 		F99EE73D0BE835310060D4AF /* DebugUnthreaded */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				OTHER_LDFLAGS = (
+					"$(OTHER_LDFLAGS_AQUA)",
+					"$(OTHER_LDFLAGS)",
+				);
 				PRODUCT_NAME = tktest;
 			};
 			name = DebugUnthreaded;
@@ -4132,6 +4836,10 @@
 		F99EE73E0BE835310060D4AF /* DebugLeaks */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				OTHER_LDFLAGS = (
+					"$(OTHER_LDFLAGS_AQUA)",
+					"$(OTHER_LDFLAGS)",
+				);
 				PRODUCT_NAME = tktest;
 			};
 			name = DebugLeaks;
@@ -4169,6 +4877,10 @@
 		F9DB62090B65ADA800A370FB /* ReleaseUniversal10.4uSDK */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				OTHER_LDFLAGS = (
+					"$(OTHER_LDFLAGS_AQUA)",
+					"$(OTHER_LDFLAGS)",
+				);
 				PRODUCT_NAME = tktest;
 			};
 			name = ReleaseUniversal10.4uSDK;
@@ -4200,6 +4912,10 @@
 		F9DB62200B65AFDE00A370FB /* ReleasePPC10.3.9SDK */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				OTHER_LDFLAGS = (
+					"$(OTHER_LDFLAGS_AQUA)",
+					"$(OTHER_LDFLAGS)",
+				);
 				PRODUCT_NAME = tktest;
 			};
 			name = ReleasePPC10.3.9SDK;
@@ -4227,6 +4943,10 @@
 		F9DB62360B65B03A00A370FB /* ReleasePPC10.2.8SDK */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				OTHER_LDFLAGS = (
+					"$(OTHER_LDFLAGS_AQUA)",
+					"$(OTHER_LDFLAGS)",
+				);
 				PRODUCT_NAME = tktest;
 			};
 			name = ReleasePPC10.2.8SDK;
@@ -4262,6 +4982,10 @@
 		F9EEED970C2FEFD300396116 /* ReleaseUniversal10.5SDK */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				OTHER_LDFLAGS = (
+					"$(OTHER_LDFLAGS_AQUA)",
+					"$(OTHER_LDFLAGS)",
+				);
 				PRODUCT_NAME = tktest;
 			};
 			name = ReleaseUniversal10.5SDK;
@@ -4281,6 +5005,205 @@
 				SDKROOT = /Developer/SDKs/MacOSX10.5.sdk;
 			};
 			name = ReleaseUniversal10.5SDK;
+		};
+		F9FD31E90CC1AD070073837D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CONFIGURE_ARGS = "tcl_cv_cc_visibility_hidden=no $(CONFIGURE_ARGS)";
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"__private_extern__=extern",
+					"$(GCC_PREPROCESSOR_DEFINITIONS)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = (
+					/usr/X11R6/include,
+					/usr/X11R6/include/freetype2,
+					"$(HEADER_SEARCH_PATHS)",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					/usr/X11R6/lib,
+					"$(LIBRARY_SEARCH_PATHS)",
+				);
+				PRODUCT_NAME = "tktest-X11";
+				ZERO_LINK = YES;
+			};
+			name = Debug;
+		};
+		F9FD31EA0CC1AD070073837D /* DebugNoFixZL */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				HEADER_SEARCH_PATHS = (
+					/usr/X11R6/include,
+					/usr/X11R6/include/freetype2,
+					"$(HEADER_SEARCH_PATHS)",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					/usr/X11R6/lib,
+					"$(LIBRARY_SEARCH_PATHS)",
+				);
+				PRODUCT_NAME = "tktest-X11";
+			};
+			name = DebugNoFixZL;
+		};
+		F9FD31EB0CC1AD070073837D /* DebugUnthreaded */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				HEADER_SEARCH_PATHS = (
+					/usr/X11R6/include,
+					/usr/X11R6/include/freetype2,
+					"$(HEADER_SEARCH_PATHS)",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					/usr/X11R6/lib,
+					"$(LIBRARY_SEARCH_PATHS)",
+				);
+				PRODUCT_NAME = "tktest-X11";
+			};
+			name = DebugUnthreaded;
+		};
+		F9FD31EC0CC1AD070073837D /* DebugMemCompile */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				HEADER_SEARCH_PATHS = (
+					/usr/X11R6/include,
+					/usr/X11R6/include/freetype2,
+					"$(HEADER_SEARCH_PATHS)",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					/usr/X11R6/lib,
+					"$(LIBRARY_SEARCH_PATHS)",
+				);
+				PRODUCT_NAME = "tktest-X11";
+			};
+			name = DebugMemCompile;
+		};
+		F9FD31ED0CC1AD070073837D /* DebugLeaks */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				HEADER_SEARCH_PATHS = (
+					/usr/X11R6/include,
+					/usr/X11R6/include/freetype2,
+					"$(HEADER_SEARCH_PATHS)",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					/usr/X11R6/lib,
+					"$(LIBRARY_SEARCH_PATHS)",
+				);
+				PRODUCT_NAME = "tktest-X11";
+			};
+			name = DebugLeaks;
+		};
+		F9FD31EE0CC1AD070073837D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				HEADER_SEARCH_PATHS = (
+					/usr/X11R6/include,
+					/usr/X11R6/include/freetype2,
+					"$(HEADER_SEARCH_PATHS)",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					/usr/X11R6/lib,
+					"$(LIBRARY_SEARCH_PATHS)",
+				);
+				PRODUCT_NAME = "tktest-X11";
+			};
+			name = Release;
+		};
+		F9FD31EF0CC1AD070073837D /* ReleaseUniversal */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = (
+					ppc,
+					ppc64,
+					i386,
+					x86_64,
+				);
+				CFLAGS = "-arch ppc -arch ppc64 -arch i386 -arch x86_64 $(CFLAGS)";
+				HEADER_SEARCH_PATHS = (
+					/usr/X11R6/include,
+					/usr/X11R6/include/freetype2,
+					"$(HEADER_SEARCH_PATHS)",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					/usr/X11R6/lib,
+					"$(LIBRARY_SEARCH_PATHS)",
+				);
+				PRODUCT_NAME = "tktest-X11";
+			};
+			name = ReleaseUniversal;
+		};
+		F9FD31F00CC1AD070073837D /* ReleaseUniversal10.5SDK */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = (
+					ppc,
+					ppc64,
+					i386,
+					x86_64,
+				);
+				CFLAGS = "-arch ppc -arch ppc64 -arch i386 -arch x86_64 $(CFLAGS)";
+				HEADER_SEARCH_PATHS = (
+					/usr/X11R6/include,
+					/usr/X11R6/include/freetype2,
+					"$(HEADER_SEARCH_PATHS)",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					/usr/X11R6/lib,
+					"$(LIBRARY_SEARCH_PATHS)",
+				);
+				PRODUCT_NAME = "tktest-X11";
+			};
+			name = ReleaseUniversal10.5SDK;
+		};
+		F9FD31F10CC1AD070073837D /* ReleaseUniversal10.4uSDK */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				HEADER_SEARCH_PATHS = (
+					/usr/X11R6/include,
+					/usr/X11R6/include/freetype2,
+					"$(HEADER_SEARCH_PATHS)",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					/usr/X11R6/lib,
+					"$(LIBRARY_SEARCH_PATHS)",
+				);
+				PRODUCT_NAME = "tktest-X11";
+			};
+			name = ReleaseUniversal10.4uSDK;
+		};
+		F9FD31F20CC1AD070073837D /* ReleasePPC10.3.9SDK */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				HEADER_SEARCH_PATHS = (
+					/usr/X11R6/include,
+					/usr/X11R6/include/freetype2,
+					"$(HEADER_SEARCH_PATHS)",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					/usr/X11R6/lib,
+					"$(LIBRARY_SEARCH_PATHS)",
+				);
+				PRODUCT_NAME = "tktest-X11";
+			};
+			name = ReleasePPC10.3.9SDK;
+		};
+		F9FD31F30CC1AD070073837D /* ReleasePPC10.2.8SDK */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				HEADER_SEARCH_PATHS = (
+					/usr/X11R6/include,
+					/usr/X11R6/include/freetype2,
+					"$(HEADER_SEARCH_PATHS)",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					/usr/X11R6/lib,
+					"$(LIBRARY_SEARCH_PATHS)",
+				);
+				PRODUCT_NAME = "tktest-X11";
+			};
+			name = ReleasePPC10.2.8SDK;
 		};
 /* End XCBuildConfiguration section */
 
@@ -4335,6 +5258,24 @@
 				F9DB620A0B65ADA800A370FB /* ReleaseUniversal10.4uSDK */,
 				F9DB62210B65AFDE00A370FB /* ReleasePPC10.3.9SDK */,
 				F9DB62370B65B03A00A370FB /* ReleasePPC10.2.8SDK */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		F9FD31E80CC1AD070073837D /* Build configuration list for PBXNativeTarget "tktest-X11" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F9FD31E90CC1AD070073837D /* Debug */,
+				F9FD31EA0CC1AD070073837D /* DebugNoFixZL */,
+				F9FD31EB0CC1AD070073837D /* DebugUnthreaded */,
+				F9FD31EC0CC1AD070073837D /* DebugMemCompile */,
+				F9FD31ED0CC1AD070073837D /* DebugLeaks */,
+				F9FD31EE0CC1AD070073837D /* Release */,
+				F9FD31EF0CC1AD070073837D /* ReleaseUniversal */,
+				F9FD31F00CC1AD070073837D /* ReleaseUniversal10.5SDK */,
+				F9FD31F10CC1AD070073837D /* ReleaseUniversal10.4uSDK */,
+				F9FD31F20CC1AD070073837D /* ReleasePPC10.3.9SDK */,
+				F9FD31F30CC1AD070073837D /* ReleasePPC10.2.8SDK */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

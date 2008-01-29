@@ -74,7 +74,7 @@ This option is special in that it may not be specified via the option
 database, and it may not be modified with the \fBconfigure\fR
 widget command.
 .OP \-use use Use
-This option is used for embedding. If the value isn't an empty string,
+This option is used for embedding. If the value is not an empty string,
 it must be the window identifier of a container window, specified as
 a hexadecimal string like the ones returned by the \fBwinfo id\fR
 command. The toplevel widget will be created as a child of the given

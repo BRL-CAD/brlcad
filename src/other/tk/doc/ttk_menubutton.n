@@ -7,15 +7,13 @@
 '\" RCS: @(#) $Id$
 '\" 
 .so man.macros
-.TH ttk_menubutton n 8.5 Tk "Tk Themed Widget"
+.TH ttk::menubutton n 8.5 Tk "Tk Themed Widget"
 .BS
-.\" Use _ instead of :: as the name becomes a filename on install
 .SH NAME
-ttk_menubutton \- Widget that pops down a menu when pressed
+ttk::menubutton \- Widget that pops down a menu when pressed
 .SH SYNOPSIS
 \fBttk::menubutton\fR \fIpathName \fR?\fIoptions\fR?
 .BE
-
 .SH DESCRIPTION
 A \fBttk::menubutton\fR widget displays a textual label and/or image,
 and displays a menu when pressed.
@@ -24,14 +22,13 @@ and displays a menu when pressed.
 \-state	\-style	\-takefocus	\-text
 \-textvariable	\-underline	\-width
 .SE
-
 .SH "WIDGET-SPECIFIC OPTIONS"
 .OP \-direction direction Direction
 Specifies where the menu is to be popped up relative 
 to the menubutton.  
-One of: \fIabove\fR, \fIbelow\fR, \fIleft\fR, \fIright\fR,
-or \fIflush\fR.  The default is \fIbelow\fR.  
-\fIflush\fR pops the menu up directly over the menubutton.
+One of: \fBabove\fR, \fBbelow\fR, \fBleft\fR, \fBright\fR,
+or \fBflush\fR.  The default is \fBbelow\fR.  
+\fBflush\fR pops the menu up directly over the menubutton.
 .OP \-menu menu Menu
 Specifies the path name of the menu associated with the menubutton.
 To be on the safe side, the menu ought to be a direct child of the
@@ -39,14 +36,11 @@ menubutton.
 .\" not documented: may go away:
 .\" .OP \-anchor anchor Anchor
 .\" .OP \-padding padding Pad
-
 .SH "WIDGET COMMAND"
 Menubutton widgets support the standard 
 \fBcget\fR, \fBconfigure\fR, \fBinstate\fR, and \fBstate\fR 
 methods.  No other widget methods are used.
-
 .SH "SEE ALSO"
-ttk_widget(n), menu(n), menubutton(n)
-
+ttk::widget(n), menu(n), menubutton(n)
 .SH "KEYWORDS"
 widget, button, menu

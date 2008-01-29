@@ -35,6 +35,9 @@ checkbutton $w.b3 -text "Driver Sober" -variable sober -relief flat
 pack $w.b0 -side top -pady 2 -anchor w
 pack $w.b1 $w.b2 $w.b3 -side top -pady 2 -anchor w -padx 15
 
+## This code makes $w.b0 function as a tri-state button; it's not
+## needed at all for just straight yes/no buttons.
+
 set in_check 0
 proc tristate_check {n1 n2 op} {
     global safety wipers brakes sober in_check

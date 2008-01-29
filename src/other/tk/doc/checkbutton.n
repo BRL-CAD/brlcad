@@ -36,7 +36,7 @@ Specifies a desired height for the button.
 If an image or bitmap is being displayed in the button then the value is in
 screen units (i.e. any of the forms acceptable to \fBTk_GetPixels\fR);
 for text it is in lines of text.
-If this option isn't specified, the button's desired height is computed
+If this option is not specified, the button's desired height is computed
 from the size of the image or bitmap or text being displayed in it.
 .OP \-indicatoron indicatorOn IndicatorOn
 Specifies whether or not the indicator should be drawn.  Must be a
@@ -45,19 +45,25 @@ ignored and the widget's relief is always sunken if the widget is
 selected and raised otherwise.
 .OP \-offrelief offRelief OffRelief
 Specifies the relief for the checkbutton when the indicator is not drawn and
-the checkbutton is off.  The default value is "raised".  By setting this option
-to "flat" and setting -indicatoron to false and -overrelief to raised,
-the effect is achieved 
+the checkbutton is off.  The default value is
+.QW raised .
+By setting this option to
+.QW flat
+and setting \fB\-indicatoron\fR to false and \fB\-overrelief\fR to
+.QW raised ,
+the effect is achieved
 of having a flat button that raises on mouse-over and which is
 depressed when activated.  This is the behavior typically exhibited by
 the Bold, Italic, and Underline checkbuttons on the toolbar of a 
 word-processor, for example.
 .OP \-offvalue offValue Value
 Specifies value to store in the button's associated variable whenever
-this button is deselected.  Defaults to ``0''.
+this button is deselected.  Defaults to
+.QW 0 .
 .OP \-onvalue onValue Value
 Specifies value to store in the button's associated variable whenever
-this button is selected.  Defaults to ``1''.
+this button is selected.  Defaults to
+.QW 1 .
 .OP \-overrelief overRelief OverRelief
 Specifies an alternative relief for the checkbutton, to be used when the
 mouse cursor is over the widget.  This option can be used to make
@@ -100,7 +106,8 @@ specified.
 .OP \-tristatevalue tristateValue Value
 .VS 8.5
 Specifies the value that causes the checkbutton to display the multi-value 
-selection, also known as the tri-state mode.  Defaults to ``""''
+selection, also known as the tri-state mode.  Defaults to
+.QW "" .
 .VE 8.5
 .OP \-variable variable Variable
 Specifies name of global variable to set to indicate whether
@@ -112,10 +119,9 @@ Specifies a desired width for the button.
 If an image or bitmap is being displayed in the button then the value is in
 screen units (i.e. any of the forms acceptable to \fBTk_GetPixels\fR);
 for text it is in characters.
-If this option isn't specified, the button's desired width is computed
+If this option is not specified, the button's desired width is computed
 from the size of the image or bitmap or text being displayed in it.
 .BE
-
 .SH DESCRIPTION
 .PP
 The \fBcheckbutton\fR command creates a new window (given by the
@@ -162,20 +168,30 @@ the indicator is drawn with a tri-state appearance and is in the tri-state
 mode indicating mixed or multiple values.  (This is used when the check 
 box represents the state of multiple items.)
 The indicator is drawn in a platform dependent manner.  Under Unix and 
-Windows, the background interior of the box is ``grayed''.  Under Mac, 
-the indicator is drawn with a dash mark inside.
+Windows, the background interior of the box is
+.QW grayed .
+Under Mac, the indicator is drawn with a dash mark inside.
 By default, the name of the variable associated with a checkbutton is the
 same as the \fIname\fR used to create the checkbutton.
-The variable name, and the ``on'', ``off'' and ``tristate'' values stored in 
-it, may be modified with options on the command line or in the option
-database.
+The variable name, and the
+.QW on ,
+.QW off
+and
+.QW tristate
+values stored in it, may be modified with options on the command line
+or in the option database.
 Configuration options may also be used to modify the way the
 indicator is displayed (or whether it is displayed at all).
 By default a checkbutton is configured to select and deselect
 itself on alternate button clicks.
 In addition, each checkbutton monitors its associated variable and
 automatically selects and deselects itself when the variables value
-changes to and from the button's ``on'', ``off'' and ``tristate'' values.
+changes to and from the button's
+.QW on ,
+.QW off
+and
+.QW tristate
+values.
 .VE 8.5
 .SH "WIDGET COMMAND"
 .PP
@@ -211,7 +227,8 @@ this case the command returns an empty string.
 command.
 .TP
 \fIpathName \fBdeselect\fR
-Deselects the checkbutton and sets the associated variable to its ``off''
+Deselects the checkbutton and sets the associated variable to its
+.QW off
 value.
 .TP
 \fIpathName \fBflash\fR
@@ -230,7 +247,8 @@ empty string if there is no command associated with the checkbutton.
 This command is ignored if the checkbutton's state is \fBdisabled\fR.
 .TP
 \fIpathName \fBselect\fR
-Selects the checkbutton and sets the associated variable to its ``on''
+Selects the checkbutton and sets the associated variable to its
+.QW on
 value.
 .TP
 \fIpathName \fBtoggle\fR
@@ -254,27 +272,25 @@ invoked, if there is one).
 .IP [3]
 When a checkbutton has the input focus, the space key causes the checkbutton
 to be invoked.  Under Windows, there are additional key bindings; plus
-(+) and equal (=) select the button, and minus (-) deselects the button.
+(+) and equal (=) select the button, and minus (\-) deselects the button.
 .PP
 If the checkbutton's state is \fBdisabled\fR then none of the above
 actions occur:  the checkbutton is completely non-responsive.
 .PP
 The behavior of checkbuttons can be changed by defining new bindings for
 individual widgets or by redefining the class bindings.
-
 .SH EXAMPLE
 This example shows a group of uncoupled checkbuttons.
 .PP
 .CS
-    labelframe .lbl -text "Steps:"
-    \fBcheckbutton\fR .c1 -text Lights  -variable lights
-    \fBcheckbutton\fR .c2 -text Cameras -variable cameras
-    \fBcheckbutton\fR .c3 -text Action! -variable action
-    pack .c1 .c2 .c3 -in .lbl
+    labelframe .lbl \-text "Steps:"
+    \fBcheckbutton\fR .c1 \-text Lights  \-variable lights
+    \fBcheckbutton\fR .c2 \-text Cameras \-variable cameras
+    \fBcheckbutton\fR .c3 \-text Action! \-variable action
+    pack .c1 .c2 .c3 \-in .lbl
     pack .lbl
 .CE
-
 .SH "SEE ALSO"
-button(n), options(n), radiobutton(n), ttk_checkbutton(n)
+button(n), options(n), radiobutton(n), ttk::checkbutton(n)
 .SH KEYWORDS
 checkbutton, widget

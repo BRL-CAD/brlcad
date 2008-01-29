@@ -309,7 +309,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT AR RANLIB RC SET_MAKE TCL_THREADS CYGPATH CELIB_DIR DL_LIBS CFLAGS_DEBUG CFLAGS_OPTIMIZE CFLAGS_WARNING CPP EGREP MAN2TCLFLAGS CFLAGS_DEFAULT LDFLAGS_DEFAULT TCL_VERSION TCL_PATCH_LEVEL TCL_BIN_DIR TCL_SRC_DIR TCL_LIB_FILE TCL_LIB_FLAG TCL_LIB_SPEC TCL_STUB_LIB_FILE TCL_STUB_LIB_FLAG TCL_STUB_LIB_SPEC TCL_DEFS BUILD_TCLSH TCLSH_PROG TK_WIN_VERSION MACHINE TK_VERSION TK_MAJOR_VERSION TK_MINOR_VERSION TK_PATCH_LEVEL TK_DBGX TK_LIB_FILE TK_DLL_FILE TK_STUB_LIB_FILE TK_STUB_LIB_FLAG TK_BUILD_STUB_LIB_SPEC TK_SRC_DIR TK_BIN_DIR TCL_MAJOR_VERSION TCL_MINOR_VERSION TCL_DBGX CFG_TK_SHARED_LIB_SUFFIX CFG_TK_UNSHARED_LIB_SUFFIX CFG_TK_EXPORT_FILE_SUFFIX TK_SHARED_BUILD DEPARG EXTRA_CFLAGS STLIB_LD SHLIB_LD SHLIB_LD_LIBS SHLIB_CFLAGS SHLIB_SUFFIX CC_OBJNAME CC_EXENAME LDFLAGS_DEBUG LDFLAGS_OPTIMIZE LDFLAGS_CONSOLE LDFLAGS_WINDOW RC_OUT RC_TYPE RC_INCLUDE RC_DEFINE RC_DEFINES TK_RES RES LIBS_GUI DLLSUFFIX LIBPREFIX LIBSUFFIX EXESUFFIX LIBRARIES MAKE_LIB POST_MAKE_LIB MAKE_DLL MAKE_EXE TK_LIB_FLAG TK_LIB_SPEC TK_BUILD_LIB_SPEC TK_STUB_LIB_SPEC TK_STUB_LIB_PATH TK_BUILD_STUB_LIB_PATH TK_CC_SEARCH_FLAGS TK_LD_SEARCH_FLAGS LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT AR RANLIB RC SET_MAKE TCL_THREADS CYGPATH CELIB_DIR DL_LIBS CFLAGS_DEBUG CFLAGS_OPTIMIZE CFLAGS_WARNING CPP EGREP MAN2TCLFLAGS CFLAGS_DEFAULT LDFLAGS_DEFAULT TCL_VERSION TCL_BIN_DIR TCL_SRC_DIR TCL_LIB_FILE TCL_LIB_FLAG TCL_LIB_SPEC TCL_STUB_LIB_FILE TCL_STUB_LIB_FLAG TCL_STUB_LIB_SPEC TCL_DEFS BUILD_TCLSH TCLSH_PROG TK_WIN_VERSION MACHINE TK_VERSION TK_MAJOR_VERSION TK_MINOR_VERSION TK_PATCH_LEVEL TK_DBGX TK_LIB_FILE TK_DLL_FILE TK_STUB_LIB_FILE TK_STUB_LIB_FLAG TK_BUILD_STUB_LIB_SPEC TK_SRC_DIR TK_BIN_DIR TCL_MAJOR_VERSION TCL_MINOR_VERSION TCL_PATCH_LEVEL TCL_DBGX CFG_TK_SHARED_LIB_SUFFIX CFG_TK_UNSHARED_LIB_SUFFIX CFG_TK_EXPORT_FILE_SUFFIX TK_SHARED_BUILD DEPARG EXTRA_CFLAGS STLIB_LD SHLIB_LD SHLIB_LD_LIBS SHLIB_CFLAGS SHLIB_SUFFIX CC_OBJNAME CC_EXENAME LDFLAGS_DEBUG LDFLAGS_OPTIMIZE LDFLAGS_CONSOLE LDFLAGS_WINDOW RC_OUT RC_TYPE RC_INCLUDE RC_DEFINE RC_DEFINES TK_RES RES LIBS_GUI DLLSUFFIX LIBPREFIX LIBSUFFIX EXESUFFIX LIBRARIES MAKE_LIB POST_MAKE_LIB MAKE_DLL MAKE_EXE TK_LIB_FLAG TK_LIB_SPEC TK_BUILD_LIB_SPEC TK_STUB_LIB_SPEC TK_STUB_LIB_PATH TK_BUILD_STUB_LIB_PATH TK_CC_SEARCH_FLAGS TK_LD_SEARCH_FLAGS LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -1309,7 +1309,7 @@ SHELL=/bin/sh
 TK_VERSION=8.5
 TK_MAJOR_VERSION=8
 TK_MINOR_VERSION=5
-TK_PATCH_LEVEL="b1"
+TK_PATCH_LEVEL=".0"
 VER=$TK_MAJOR_VERSION$TK_MINOR_VERSION
 
 #------------------------------------------------------------------------
@@ -2731,8 +2731,9 @@ echo "$as_me: WARNING: 64bit mode not supported with GCC on Windows" >&2;}
 	fi
 	SHLIB_LD=""
 	SHLIB_LD_LIBS=""
-	LIBS=""
-	LIBS_GUI="-lgdi32 -lcomdlg32 -limm32 -lcomctl32 -lshell32 -lole32 -loleaut32 -luuid"
+	LIBS="-lws2_32"
+	# mingw needs to link ole32 and oleaut32 for [send], but MSVC doesn't
+	LIBS_GUI="-lgdi32 -lcomdlg32 -limm32 -lcomctl32 -lshell32 -luuid -lole32 -loleaut32"
 	STLIB_LD='${AR} cr'
 	RC_OUT=-o
 	RC_TYPE=
@@ -2908,6 +2909,7 @@ echo "${ECHO_T}   Using 64-bit $MACHINE mode" >&6
 	    fi
 	fi
 
+	LIBS="user32.lib advapi32.lib ws2_32.lib"
 	if test "$do64bit" != "no" ; then
 	    # The space-based-path will work for the Makefile, but will
 	    # not work if AC_TRY_COMPILE is called.  TEA has the
@@ -2922,7 +2924,7 @@ echo "${ECHO_T}   Using 64-bit $MACHINE mode" >&6
 	    LINKBIN="\"${PATH64}/link.exe\""
 	    # Avoid 'unresolved external symbol __security_cookie' errors.
 	    # c.f. http://support.microsoft.com/?id=894573
-	    LIBS="user32.lib advapi32.lib bufferoverflowU.lib"
+	    LIBS="$LIBS bufferoverflowU.lib"
 	else
 	    RC="rc"
 	    # -Od - no optimization
@@ -2932,7 +2934,6 @@ echo "${ECHO_T}   Using 64-bit $MACHINE mode" >&6
 	    CFLAGS_OPTIMIZE="-nologo -O2 ${runtime}"
 	    lflags="-nologo"
 	    LINKBIN="link"
-	    LIBS="user32.lib advapi32.lib"
 	fi
 
 	if test "$doWince" != "no" ; then
@@ -3038,7 +3039,7 @@ _ACEOF
 	    LIBS="$LIBS \"\${CELIB_DIR}/wince-${ARCH}-pocket-wce300-release/celib.lib\""
 	    LIBS_GUI="commctrl.lib commdlg.lib"
 	else
-	    LIBS_GUI="gdi32.lib comdlg32.lib imm32.lib comctl32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib"
+	    LIBS_GUI="gdi32.lib comdlg32.lib imm32.lib comctl32.lib shell32.lib uuid.lib"
 	fi
 
 	SHLIB_LD="${LINKBIN} -dll -incremental:no ${lflags}"
@@ -3958,7 +3959,6 @@ echo "${ECHO_T}file not found" >&6
 
 
 
-
     echo "$as_me:$LINENO: checking for tclsh in Tcl build directory" >&5
 echo $ECHO_N "checking for tclsh in Tcl build directory... $ECHO_C" >&6
     BUILD_TCLSH=${TCL_BIN_DIR}/tclsh${TCL_MAJOR_VERSION}${TCL_MINOR_VERSION}${TCL_DBGX}${EXEEXT}
@@ -4017,7 +4017,7 @@ TK_SHARED_LIB_SUFFIX="\${NODOT_VERSION}${DLLSUFFIX}"
 TK_UNSHARED_LIB_SUFFIX="\${NODOT_VERSION}${LIBSUFFIX}"
 TK_EXPORT_FILE_SUFFIX="\${NODOT_VERSION}${LIBSUFFIX}"
 
-eval "TK_SRC_DIR=`cd $srcdir/..; pwd`"
+eval "TK_SRC_DIR=\"`cd $srcdir/..; pwd`\""
 
 eval "TK_DLL_FILE=tk$VER${DLLSUFFIX}"
 eval "TK_LIB_FILE=${LIBPREFIX}tk$VER${LIBSUFFIX}"
@@ -4069,9 +4069,11 @@ fi
 
 # The wish.exe.manifest requires these
 # TK_WIN_VERSION is the 4 dotted pair Windows version format
+# Make sure the patch level doesn't contain extra dotted pairs (interim rel)
+AB_PATCH_LEVEL="`echo $TK_PATCH_LEVEL | sed -e 's/\..*//'`"
 case "$TK_PATCH_LEVEL" in
-     a*) TK_WIN_VERSION="$TK_VERSION.0.`echo $TK_PATCH_LEVEL | tr -d a`" ;;
-     b*) TK_WIN_VERSION="$TK_VERSION.1.`echo $TK_PATCH_LEVEL | tr -d b`" ;;
+     a*) TK_WIN_VERSION="$TK_VERSION.0.`echo $AB_PATCH_LEVEL | tr -d a`" ;;
+     b*) TK_WIN_VERSION="$TK_VERSION.1.`echo $AB_PATCH_LEVEL | tr -d b`" ;;
      .*) TK_WIN_VERSION="$TK_VERSION.2$TK_PATCH_LEVEL" ;;
 esac
 
@@ -4813,7 +4815,6 @@ s,@MAN2TCLFLAGS@,$MAN2TCLFLAGS,;t t
 s,@CFLAGS_DEFAULT@,$CFLAGS_DEFAULT,;t t
 s,@LDFLAGS_DEFAULT@,$LDFLAGS_DEFAULT,;t t
 s,@TCL_VERSION@,$TCL_VERSION,;t t
-s,@TCL_PATCH_LEVEL@,$TCL_PATCH_LEVEL,;t t
 s,@TCL_BIN_DIR@,$TCL_BIN_DIR,;t t
 s,@TCL_SRC_DIR@,$TCL_SRC_DIR,;t t
 s,@TCL_LIB_FILE@,$TCL_LIB_FILE,;t t
@@ -4841,6 +4842,7 @@ s,@TK_SRC_DIR@,$TK_SRC_DIR,;t t
 s,@TK_BIN_DIR@,$TK_BIN_DIR,;t t
 s,@TCL_MAJOR_VERSION@,$TCL_MAJOR_VERSION,;t t
 s,@TCL_MINOR_VERSION@,$TCL_MINOR_VERSION,;t t
+s,@TCL_PATCH_LEVEL@,$TCL_PATCH_LEVEL,;t t
 s,@TCL_DBGX@,$TCL_DBGX,;t t
 s,@CFG_TK_SHARED_LIB_SUFFIX@,$CFG_TK_SHARED_LIB_SUFFIX,;t t
 s,@CFG_TK_UNSHARED_LIB_SUFFIX@,$CFG_TK_UNSHARED_LIB_SUFFIX,;t t

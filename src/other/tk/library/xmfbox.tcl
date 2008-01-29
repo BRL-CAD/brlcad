@@ -157,7 +157,22 @@ proc ::tk::MotifFDialog_FileTypes {w} {
 
     # The filetypes radiobuttons
     # set data(fileType) $data(-defaulttype)
+    # Default type to first entry
+    set initialTypeName [lindex $data(-filetypes) 0 0]
+    if {($data(-typevariable) ne "")
+	&& [uplevel 4 [list info exists $data(-typevariable)]]} {
+	set initialTypeName [uplevel 4 [list set $data(-typevariable)]]
+    }
+    set ix 0
     set data(fileType) 0
+    foreach fltr $data(-filetypes) {
+	set fname [lindex $fltr 0]
+	if {[string first $initialTypeName $fname] == 0} {
+	    set data(fileType) $ix
+	    break
+	}
+	incr ix
+    }
 
     MotifFDialog_SetFilter $w [lindex $data(-filetypes) $data(fileType)]
 
@@ -176,7 +191,7 @@ proc ::tk::MotifFDialog_FileTypes {w} {
 		-text $title \
 		-variable ::tk::dialog::file::[winfo name $w](fileType) \
 		-value $cnt \
-		-command "[list tk::MotifFDialog_SetFilter $w $type]"
+		-command [list tk::MotifFDialog_SetFilter $w $type]
 	    pack $f.b$cnt -side left
 	    incr cnt
 	}
@@ -226,6 +241,7 @@ proc ::tk::MotifFDialog_Config {dataName type argList} {
 	{-initialfile "" "" ""}
 	{-parent "" "" "."}
 	{-title "" "" ""}
+	{-typevariable "" "" ""}
     }
     if {$type eq "open"} {
 	lappend specs {-multiple "" "" "0"}
@@ -841,8 +857,15 @@ proc ::tk::MotifFDialog_ActivateSEnt {w} {
 		return
 	    }
 	}
-	
+
 	lappend newFileList $item
+    }
+
+    # Return selected filter
+    if {[info exists data(-typevariable)] && $data(-typevariable) ne ""
+	&& [info exists data(-filetypes)] && $data(-filetypes) ne ""} {
+	upvar 2 $data(-typevariable) initialTypeName
+	set initialTypeName [lindex $data(-filetypes) $data(fileType) 0]
     }
 
     if {$data(-multiple) != 0} {

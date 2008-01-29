@@ -67,6 +67,31 @@
 #endif
 
 /*
+ * Macros used to cast between pointers and integers (e.g. when storing an int
+ * in ClientData), on 64-bit architectures they avoid gcc warning about "cast
+ * to/from pointer from/to integer of different size".
+ */
+
+#if !defined(INT2PTR) && !defined(PTR2INT)
+#   if defined(HAVE_INTPTR_T) || defined(intptr_t)
+#	define INT2PTR(p) ((void*)(intptr_t)(p))
+#	define PTR2INT(p) ((int)(intptr_t)(p))
+#   else
+#	define INT2PTR(p) ((void*)(p))
+#	define PTR2INT(p) ((int)(p))
+#   endif
+#endif
+#if !defined(UINT2PTR) && !defined(PTR2UINT)
+#   if defined(HAVE_UINTPTR_T) || defined(uintptr_t)
+#	define UINT2PTR(p) ((void*)(uintptr_t)(p))
+#	define PTR2UINT(p) ((unsigned int)(uintptr_t)(p))
+#   else
+#	define UINT2PTR(p) ((void*)(p))
+#	define PTR2UINT(p) ((unsigned int)(p))
+#   endif
+#endif
+
+/*
  * Opaque type declarations:
  */
 
@@ -1155,6 +1180,7 @@ MODULE_SCOPE int	TkTileParseProc(ClientData clientData,
 MODULE_SCOPE char *	TkTilePrintProc(ClientData clientData, Tk_Window tkwin,
 			    char *widgRec, int offset,
 			    Tcl_FreeProc **freeProcPtr);
+MODULE_SCOPE void       TkMapTopFrame(Tk_Window tkwin);
 MODULE_SCOPE XEvent *	TkpGetBindingXEvent(Tcl_Interp *interp);
 MODULE_SCOPE void	TkCreateExitHandler(Tcl_ExitProc *proc,
 			    ClientData clientData);
@@ -1171,6 +1197,8 @@ MODULE_SCOPE void	TkPrintPadAmount(Tcl_Interp *interp,
 MODULE_SCOPE int	TkParsePadAmount(Tcl_Interp *interp,
 			    Tk_Window tkwin, Tcl_Obj *objPtr,
 			    int *pad1Ptr, int *pad2Ptr);
+MODULE_SCOPE void       TkFocusSplit(TkWindow *winPtr);
+MODULE_SCOPE void       TkFocusJoin(TkWindow *winPtr);
 MODULE_SCOPE int	TkpAlwaysShowSelection(Tk_Window tkwin);
 MODULE_SCOPE void	TkpDrawCharsInContext(Display * display,
 			    Drawable drawable, GC gc, Tk_Font tkfont,

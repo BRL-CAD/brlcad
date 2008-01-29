@@ -338,19 +338,19 @@ GetMenuIndicatorGeometry(
 		*heightPtr = mePtr->height;
 		if (mePtr->type == CHECK_BUTTON_ENTRY) {
 		    mePtr->platformEntryData = (TkMenuPlatformEntryData)
-			    ((65 * mePtr->height) / 100);
+			    INT2PTR((65 * mePtr->height) / 100);
 		} else {
 		    mePtr->platformEntryData = (TkMenuPlatformEntryData)
-			    ((75 * mePtr->height) / 100);
+			    INT2PTR((75 * mePtr->height) / 100);
 		}
 	    } else {
 		*widthPtr = *heightPtr = mePtr->height;
 		if (mePtr->type == CHECK_BUTTON_ENTRY) {
 		    mePtr->platformEntryData = (TkMenuPlatformEntryData)
-			    ((80 * mePtr->height) / 100);
+			    INT2PTR((80 * mePtr->height) / 100);
 		} else {
 		    mePtr->platformEntryData = (TkMenuPlatformEntryData)
-			    mePtr->height;
+			    INT2PTR(mePtr->height);
 		}
 	    }
 	} else {

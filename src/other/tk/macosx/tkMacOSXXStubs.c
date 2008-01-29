@@ -706,15 +706,7 @@ XSetClipRectangles(
     int n,
     int ordering)
 {
-    TkRegion clipRgn;
-
-    if (gc->clip_mask && ((TkpClipMask*)gc->clip_mask)->type
-	    == TKP_CLIP_REGION) {
-	clipRgn = ((TkpClipMask*)gc->clip_mask)->value.region;
-	SetEmptyRgn((RgnHandle) clipRgn);
-    } else {
-	clipRgn = TkCreateRegion(); /* LEAK! */
-    }
+    TkRegion clipRgn = TkCreateRegion();
 
     while (n--) {
 	XRectangle rect = *rectangles;
@@ -725,6 +717,7 @@ XSetClipRectangles(
 	rectangles++;
     }
     TkSetRegion(d, gc, clipRgn);
+    TkDestroyRegion(clipRgn);
     return 1;
 }
 #endif

@@ -32,7 +32,7 @@
  * Exported function declarations:
  */
 
-#ifdef __WIN32__
+#ifdef __WIN32__ /* WIN */
 #ifndef TkAlignImageData_TCL_DECLARED
 #define TkAlignImageData_TCL_DECLARED
 /* 0 */
@@ -224,8 +224,8 @@ EXTERN void		TkWinSetHINSTANCE (HINSTANCE hInstance);
 /* 35 */
 EXTERN int		TkWinGetPlatformTheme (void);
 #endif
-#endif /* __WIN32__ */
-#ifdef MAC_OSX_TK
+#endif /* WIN */
+#ifdef MAC_OSX_TK /* AQUA */
 #ifndef TkGenerateActivateEvents_TCL_DECLARED
 #define TkGenerateActivateEvents_TCL_DECLARED
 /* 0 */
@@ -477,7 +477,7 @@ EXTERN void		TkGenWMDestroyEvent (Tk_Window tkwin);
 /* 53 */
 EXTERN unsigned long	TkpGetMS (void);
 #endif
-#endif /* MAC_OSX_TK */
+#endif /* AQUA */
 #if !(defined(__WIN32__) || defined(MAC_OSX_TK)) /* X11 */
 #ifndef TkCreateXEventSource_TCL_DECLARED
 #define TkCreateXEventSource_TCL_DECLARED
@@ -558,7 +558,7 @@ typedef struct TkIntPlatStubs {
     int magic;
     struct TkIntPlatStubHooks *hooks;
 
-#ifdef __WIN32__
+#ifdef __WIN32__ /* WIN */
     char * (*tkAlignImageData) (XImage * image, int alignment, int bitOrder); /* 0 */
     void *reserved1;
     void (*tkGenerateActivateEvents) (TkWindow * winPtr, int active); /* 2 */
@@ -595,8 +595,8 @@ typedef struct TkIntPlatStubs {
     int (*tkWinGetPlatformId) (void); /* 33 */
     void (*tkWinSetHINSTANCE) (HINSTANCE hInstance); /* 34 */
     int (*tkWinGetPlatformTheme) (void); /* 35 */
-#endif /* __WIN32__ */
-#ifdef MAC_OSX_TK
+#endif /* WIN */
+#ifdef MAC_OSX_TK /* AQUA */
     void (*tkGenerateActivateEvents) (TkWindow * winPtr, int active); /* 0 */
     void *reserved1;
     void *reserved2;
@@ -651,7 +651,7 @@ typedef struct TkIntPlatStubs {
     void (*tkGenWMDestroyEvent) (Tk_Window tkwin); /* 51 */
     void *reserved52;
     unsigned long (*tkpGetMS) (void); /* 53 */
-#endif /* MAC_OSX_TK */
+#endif /* AQUA */
 #if !(defined(__WIN32__) || defined(MAC_OSX_TK)) /* X11 */
     void (*tkCreateXEventSource) (void); /* 0 */
     void (*tkFreeWindowId) (TkDisplay * dispPtr, Window w); /* 1 */
@@ -684,7 +684,7 @@ extern TkIntPlatStubs *tkIntPlatStubsPtr;
  * Inline function declarations:
  */
 
-#ifdef __WIN32__
+#ifdef __WIN32__ /* WIN */
 #ifndef TkAlignImageData
 #define TkAlignImageData \
 	(tkIntPlatStubsPtr->tkAlignImageData) /* 0 */
@@ -826,8 +826,8 @@ extern TkIntPlatStubs *tkIntPlatStubsPtr;
 #define TkWinGetPlatformTheme \
 	(tkIntPlatStubsPtr->tkWinGetPlatformTheme) /* 35 */
 #endif
-#endif /* __WIN32__ */
-#ifdef MAC_OSX_TK
+#endif /* WIN */
+#ifdef MAC_OSX_TK /* AQUA */
 #ifndef TkGenerateActivateEvents
 #define TkGenerateActivateEvents \
 	(tkIntPlatStubsPtr->tkGenerateActivateEvents) /* 0 */
@@ -1020,7 +1020,7 @@ extern TkIntPlatStubs *tkIntPlatStubsPtr;
 #define TkpGetMS \
 	(tkIntPlatStubsPtr->tkpGetMS) /* 53 */
 #endif
-#endif /* MAC_OSX_TK */
+#endif /* AQUA */
 #if !(defined(__WIN32__) || defined(MAC_OSX_TK)) /* X11 */
 #ifndef TkCreateXEventSource
 #define TkCreateXEventSource \

@@ -56,7 +56,7 @@ TkStateParseProc(
     int offset)			/* Offset into item. */
 {
     int c;
-    int flags = (int)clientData;
+    int flags = PTR2INT(clientData);
     size_t length;
 
     register Tk_State *statePtr = (Tk_State *) (widgRec + offset);
@@ -277,7 +277,7 @@ TkOffsetParseProc(
 
     switch(value[0]) {
     case '#':
-	if (((int)clientData) & TK_OFFSET_RELATIVE) {
+	if (PTR2INT(clientData) & TK_OFFSET_RELATIVE) {
 	    tsoffset.flags = TK_OFFSET_RELATIVE;
 	    p++;
 	    break;
@@ -339,7 +339,7 @@ TkOffsetParseProc(
 	goto goodTSOffset;
     }
     if ((q = strchr(p,',')) == NULL) {
-	if (((int)clientData) & TK_OFFSET_INDEX) {
+	if (PTR2INT(clientData) & TK_OFFSET_INDEX) {
 	    if (Tcl_GetInt(interp, (char *) p, &tsoffset.flags) != TCL_OK) {
 		Tcl_ResetResult(interp);
 		goto badTSOffset;
@@ -373,10 +373,10 @@ TkOffsetParseProc(
   badTSOffset:
     Tcl_AppendResult(interp, "bad offset \"", value,
 	    "\": expected \"x,y\"", NULL);
-    if (((int) clientData) & TK_OFFSET_RELATIVE) {
+    if (PTR2INT(clientData) & TK_OFFSET_RELATIVE) {
 	Tcl_AppendResult(interp, ", \"#x,y\"", NULL);
     }
-    if (((int) clientData) & TK_OFFSET_INDEX) {
+    if (PTR2INT(clientData) & TK_OFFSET_INDEX) {
 	Tcl_AppendResult(interp, ", <index>", NULL);
     }
     Tcl_AppendResult(interp, ", n, ne, e, se, s, sw, w, nw, or center", NULL);
@@ -938,7 +938,7 @@ TkFindStateNumObj(
 
     if ((keyPtr->typePtr == &tkStateKeyObjType)
 	    && (keyPtr->internalRep.twoPtrValue.ptr1 == mapPtr)) {
-	return (int) keyPtr->internalRep.twoPtrValue.ptr2;
+	return PTR2INT(keyPtr->internalRep.twoPtrValue.ptr2);
     }
 
     /*
@@ -953,7 +953,7 @@ TkFindStateNumObj(
 		(*typePtr->freeIntRepProc)(keyPtr);
 	    }
 	    keyPtr->internalRep.twoPtrValue.ptr1 = (void *) mapPtr;
-	    keyPtr->internalRep.twoPtrValue.ptr2 = (void *) mPtr->numKey;
+	    keyPtr->internalRep.twoPtrValue.ptr2 = INT2PTR(mPtr->numKey);
 	    keyPtr->typePtr = &tkStateKeyObjType;
 	    return mPtr->numKey;
 	}

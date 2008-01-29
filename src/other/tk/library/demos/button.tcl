@@ -22,12 +22,10 @@ label $w.msg -font $font -wraplength 4i -justify left -text "If you click on any
 pack $w.msg -side top
 
 ## See Code / Dismiss buttons
-set btns [addSeeDismiss $w.buttons $w]
-pack $btns -side bottom -fill x
+pack [addSeeDismiss $w.buttons $w] -side bottom -fill x
 
 proc colorrefresh {w col} {
     $w configure -bg $col
-    $w.buttons configure -bg $col
     if {[tk windowingsystem] eq "aqua"} {
 	# set highlightbackground of all buttons in $w
 	set l [list $w]

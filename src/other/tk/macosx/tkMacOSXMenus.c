@@ -22,7 +22,8 @@
 #define kEditMenu		3
 
 #define kSourceItem		1
-#define kCloseItem		2
+#define kDemoItem		2
+#define kCloseItem		3
 
 #define EDIT_CUT		1
 #define EDIT_COPY		2
@@ -33,11 +34,48 @@ MenuRef tkAppleMenu;
 MenuRef tkFileMenu;
 MenuRef tkEditMenu;
 
-static Tcl_Interp * gInterp;	    /* Interpreter for this application. */
+static Tcl_Interp * gInterp = NULL;	    /* Standard menu interpreter. */
+static EventHandlerRef menuEventHandlerRef = NULL;
 
 static void GenerateEditEvent(int flag);
-static void SourceDialog(void);
+static Tcl_Obj* GetWidgetDemoPath(Tcl_Interp *interp);
+static OSStatus MenuEventHandlerProc(EventHandlerCallRef callRef,
+	EventRef event, void *userData);
 
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * GetWidgetDemoPath --
+ *
+ *	Get path to the widget demo.
+ *
+ * Results:
+ *	pathObj with ref count 0.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+Tcl_Obj*
+GetWidgetDemoPath(
+    Tcl_Interp *interp)
+{
+    Tcl_Obj *libpath , *result = NULL;
+
+    libpath = Tcl_GetVar2Ex(gInterp, "tk_library", NULL, TCL_GLOBAL_ONLY);
+    if (libpath) {
+	Tcl_Obj *demo[2] = {	Tcl_NewStringObj("demos", 5),
+				Tcl_NewStringObj("widget", 6) };
+	
+	Tcl_IncrRefCount(libpath);
+	result = Tcl_FSJoinToPath(libpath, 2, demo);
+	Tcl_DecrRefCount(libpath);
+    }
+    return result;
+}
 
 /*
  *----------------------------------------------------------------------
@@ -81,8 +119,11 @@ TkMacOSXHandleMenuSelect(
 				"tkAboutDialog", &dummy) == 0) {
 			    TkAboutDlg();
 			} else {
-			    Tcl_EvalEx(gInterp, "tkAboutDialog", -1,
-				    TCL_EVAL_GLOBAL);
+			    if (Tcl_EvalEx(gInterp, "tkAboutDialog", -1,
+				    TCL_EVAL_GLOBAL) != TCL_OK) {
+				Tcl_BackgroundError(gInterp);
+			    }
+			    Tcl_ResetResult(gInterp);
 			}
 			break;
 		    }
@@ -91,11 +132,41 @@ TkMacOSXHandleMenuSelect(
 	case kFileMenu:
 	    switch (theItem) {
 		case kSourceItem:
-		    /*
-		     * TODO: source script
-		     */
+		    if (gInterp) {
+			if(Tcl_EvalEx(gInterp, "tk_getOpenFile -filetypes {"
+				"{{TCL Scripts} {.tcl} TEXT} "
+				"{{Text Files} {} TEXT}}", -1, TCL_EVAL_GLOBAL)
+				== TCL_OK) {
+			    Tcl_Obj *path = Tcl_GetObjResult(gInterp);
+			    int len;
+			    
+			    Tcl_GetStringFromObj(path, &len);
+			    if (len) {
+				Tcl_IncrRefCount(path);
+				if (Tcl_FSEvalFile(gInterp, path)
+					== TCL_ERROR) {
+				    Tcl_BackgroundError(gInterp);
+				}
+				Tcl_DecrRefCount(path);
+			    }
+			}
+			Tcl_ResetResult(gInterp);
+		    }
+		    break;
+		case kDemoItem:
+		    if (gInterp) {
+			Tcl_Obj *path = GetWidgetDemoPath(gInterp);
 
-		    SourceDialog();
+			if (path) {
+			    Tcl_IncrRefCount(path);
+			    if (Tcl_FSEvalFile(gInterp, path)
+				    == TCL_ERROR) {
+				Tcl_BackgroundError(gInterp);
+			    }
+			    Tcl_DecrRefCount(path);
+			    Tcl_ResetResult(gInterp);
+			}
+		    }
 		    break;
 		case kCloseItem:
 		    /* Send close event */
@@ -127,6 +198,53 @@ TkMacOSXHandleMenuSelect(
 /*
  *----------------------------------------------------------------------
  *
+ * MenuEventHandlerProc --
+ *
+ *	One-time handler of kEventMenuEnableItems for the edit menu.
+ *
+ * Results:
+ *	OS status code.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+static OSStatus
+MenuEventHandlerProc(
+    EventHandlerCallRef callRef,
+    EventRef event,
+    void *userData)
+{
+    OSStatus result = eventNotHandledErr, err;
+    int menuContext;
+
+    err = ChkErr(GetEventParameter, event, kEventParamMenuContext, typeUInt32,
+	    NULL, sizeof(menuContext), NULL, &menuContext);
+    if (err == noErr && (menuContext & kMenuContextMenuBarTracking)) {
+	if (gInterp) {
+	    Tcl_Obj *path = GetWidgetDemoPath(gInterp);
+
+	    if (path) {
+		Tcl_IncrRefCount(path);
+		if (Tcl_FSAccess(path, R_OK) == 0) {
+		    EnableMenuItem(tkFileMenu, kDemoItem);
+		}
+		Tcl_DecrRefCount(path);
+	    }
+	}
+	ChkErr(RemoveEventHandler, menuEventHandlerRef);
+	menuEventHandlerRef = NULL;
+	result = noErr;
+    }
+
+    return result;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
  * TkMacOSXInitMenus --
  *
  *	This procedure initializes the Macintosh menu bar.
@@ -145,8 +263,12 @@ TkMacOSXInitMenus(
     Tcl_Interp *interp)
 {
     OSStatus err;
-    gInterp = interp;
+    EventHandlerUPP menuEventHandlerUPP;
+    const EventTypeSpec menuEventTypes[] = {
+	{kEventClassMenu, kEventMenuEnableItems},
+    };
 
+    gInterp = interp;
     if (TkMacOSXUseMenuID(kAppleMenu) != TCL_OK) {
 	Tcl_Panic("Menu ID %d is already in use!", kAppleMenu);
     }
@@ -170,8 +292,15 @@ TkMacOSXInitMenus(
     }
     SetMenuTitle(tkFileMenu, "\pFile");
     InsertMenu(tkFileMenu, 0);
-    AppendMenu(tkFileMenu, "\pSource\xc9");
-    AppendMenu(tkFileMenu, "\pClose/W");
+    InsertMenuItem(tkFileMenu, "\pSource\xc9", kSourceItem - 1);
+    InsertMenuItem(tkFileMenu, "\pRun Widget Demo", kDemoItem - 1);
+    InsertMenuItem(tkFileMenu, "\pClose/W", kCloseItem - 1);
+    DisableMenuItem(tkFileMenu, kDemoItem);
+    menuEventHandlerUPP = NewEventHandlerUPP(MenuEventHandlerProc);
+    ChkErr(InstallEventHandler, GetMenuEventTarget(tkFileMenu),
+	    menuEventHandlerUPP, GetEventTypeCount(menuEventTypes),
+	    menuEventTypes, NULL, &menuEventHandlerRef);
+    DisposeEventHandlerUPP(menuEventHandlerUPP);
 
     if (TkMacOSXUseMenuID(kEditMenu) != TCL_OK) {
 	Tcl_Panic("Menu ID %d is already in use!", kEditMenu);
@@ -269,45 +398,4 @@ GenerateEditEvent(
 	    break;
     }
     Tk_QueueWindowEvent((XEvent *) &event, TCL_QUEUE_TAIL);
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * SourceDialog --
- *
- *	Presents a dialog to the user for selecting a Tcl file. The
- *	selected file will be sourced into the main interpreter.
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	None.
- *
- *----------------------------------------------------------------------
- */
-
-static void
-SourceDialog(void)
-{
-    int result;
-    const char *path;
-    const char *openCmd = "tk_getOpenFile -filetypes {\
-	    {{TCL Scripts} {.tcl} TEXT} {{Text Files} {} TEXT}}";
-
-    if (gInterp == NULL) {
-	return;
-    }
-    if (Tcl_EvalEx(gInterp, openCmd, -1, TCL_EVAL_GLOBAL) != TCL_OK) {
-	return;
-    }
-    path = Tcl_GetStringResult(gInterp);
-    if (strlen(path) == 0) {
-	return;
-    }
-    result = Tcl_EvalFile(gInterp, path);
-    if (result == TCL_ERROR) {
-	Tcl_BackgroundError(gInterp);
-    }
 }

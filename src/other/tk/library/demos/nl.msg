@@ -5,68 +5,42 @@ mcset nl "About..."  "Info..."
 mcset nl "&About..." "&Info..."
 mcset nl "<F1>"      "<F1>"
 mcset nl "&Quit"     "&Einde"
-mcset nl "Meta-Q"    "Meta-E"		;# Displayed hotkey
+mcset nl "Meta+Q"    "Meta+E"		;# Displayed hotkey
 mcset nl "Meta-q"    "Meta-e"		;# Actual binding sequence
+mcset nl "Ctrl+Q"    "Ctrl+E"		;# Displayed hotkey
+mcset nl "Control-q" "Control-e"	;# Actual binding sequence
 mcset nl "Dismiss"   "Sluiten"
-mcset nl "See Code"  "Bekijk Code"
 mcset nl "See Variables"    "Bekijk Variabelen"
 mcset nl "Variable Values"  "Waarden Variabelen"
 mcset nl "OK"        "OK"
 mcset nl "Run the \"%s\" sample program" "Start voorbeeld \"%s\""
-mcset nl "Rerun Demo" "Herstart Demo"
 mcset nl "Print Code" "Code Afdrukken"
 mcset nl "Demo code: %s" "Code van Demo %s"
 mcset nl "About Widget Demo" "Over deze demonstratie"
 mcset nl "Tk widget demonstration" "Demonstratie van Tk widgets"
 mcset nl "Copyright (c) %s" "Copyright (c) %s"
 
-mcset nl {
-    @@title
-    Tk Widget Demonstrations
-    @@newline
-    @@normal
-    @@newline
-
-    This application provides a front end for several short scripts
-    that demonstrate what you can do with Tk widgets.  Each of the
-    numbered lines below describes a demonstration;  you can click on
-    it to invoke the demonstration.  Once the demonstration window
-    appears, you can click the
-    @@bold
-    See Code
-    @@normal
-    button to see the Tcl/Tk code that created the demonstration.  If
-    you wish, you can edit the code and click the
-    @@bold
-    Rerun Demo
-    @@normal
-    button in the code window to reinvoke the demonstration with the
-    modified code.
-    @@newline
-} {
-    @@title
-    Demostratie van Tk widgets
-    @@newline
-    @@normal
-    @@newline
-
-    Dit programma is een schil rond enkele korte scripts waarmee
-    gedemonstreerd wordt wat je kunt doen met Tk widgets. Elk van de
-    genummerde regels hieronder omschrijft een demonstratie; je kunt de
-    demonstratie starten door op de regel te klikken.
-    Zodra het nieuwe venster verschijnt, kun je op de knop
-    @@bold
-    Bekijk Code
-    @@normal
-    drukken om de achterliggende Tcl/Tk code te zien. Als je dat wilt,
-    kun je de code wijzigen en op de knop
-    @@bold
-    Herstart Demo
-    @@normal
-    drukken in het codevenster om de demonstratie uit te voeren met de
-    nieuwe code.
-    @@newline
-}
+mcset nl "Tk Widget Demonstrations" "Demostratie van Tk widgets"
+mcset nl "This application provides a front end for several short scripts" \
+	"Dit programma is een schil rond enkele korte scripts waarmee"
+mcset nl "that demonstrate what you can do with Tk widgets.  Each of the" \
+	"gedemonstreerd wordt wat je kunt doen met Tk widgets.  Elk van de"
+mcset nl "numbered lines below describes a demonstration;  you can click on" \
+	"genummerde regels hieronder omschrijft een demonstratie;  je kunt de"
+mcset nl "it to invoke the demonstration.  Once the demonstration window" \
+	"demonstratie starten door op de regel te klikken."
+mcset nl "appears, you can click the" \
+	"Zodra het nieuwe venster verschijnt, kun je op de knop"
+mcset nl "See Code"  "Bekijk Code"	;# This is also button text!
+mcset nl "button to see the Tcl/Tk code that created the demonstration.  If" \
+	"drukken om de achterliggende Tcl/Tk code te zien.  Als je dat wilt,"
+mcset nl "you wish, you can edit the code and click the" \
+	"kun je de code wijzigen en op de knop"
+mcset nl "Rerun Demo" "Herstart Demo"	;# This is also button text!
+mcset nl "button in the code window to reinvoke the demonstration with the" \
+	"drukken in het codevenster om de demonstratie uit te voeren met de"
+mcset nl "modified code." \
+	"nieuwe code."
 
 mcset nl "Labels, buttons, checkbuttons, and radiobuttons" \
          "Labels, knoppen, vinkjes/aankruishokjes en radioknoppen"
@@ -142,4 +116,3 @@ mcset nl "A dialog box with a local grab" \
          "Een dialoogvenster met een locale \"grab\""
 mcset nl "A dialog box with a global grab" \
          "Een dialoogvenster met een globale \"grab\""
-

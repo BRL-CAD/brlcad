@@ -274,9 +274,8 @@ main(
     setlocale(LC_ALL, "C");
 
     /*
-     * Create the console channels and install them as the standard channels.
-     * All I/O will be discarded until Tk_CreateConsoleWindow is called to
-     * attach the console to a text widget.
+     * Console emulation widget not required as this entry is from the
+     * console subsystem, thus stdin,out,err already have end-points.
      */
 
     consoleRequired = FALSE;

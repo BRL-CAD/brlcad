@@ -91,11 +91,7 @@ proc ::tk_dialog {w title text bitmap default args} {
     # overridden by the caller).
 
     option add *Dialog.msg.wrapLength 3i widgetDefault
-    if {$windowingsystem eq "aqua"} {
-	option add *Dialog.msg.font system widgetDefault
-    } else {
-	option add *Dialog.msg.font {Times 12} widgetDefault
-    }
+    option add *Dialog.msg.font TkCaptionFont widgetDefault
 
     label $w.msg -justify left -text $text
     pack $w.msg -in $w.top -side right -expand 1 -fill both -padx 3m -pady 3m

@@ -22,17 +22,22 @@ positionWindow $w
 set btns [addSeeDismiss $w.buttons $w]
 pack $btns -side bottom -fill x
 
+# Only set the font family in one place for simplicity and consistency
+
+set family Courier
+
 text $w.text -yscrollcommand "$w.scroll set" -setgrid true \
-	-width 70 -height 32 -wrap word
+	-width 70 -height 32 -wrap word -font "$family 12"
 scrollbar $w.scroll -command "$w.text yview"
 pack $w.scroll -side right -fill y
 pack $w.text -expand yes -fill both
 
 # Set up display styles
 
-$w.text tag configure bold -font {Courier 12 bold italic}
-$w.text tag configure big -font {Courier 14 bold}
-$w.text tag configure verybig -font {Helvetica 24 bold}
+$w.text tag configure bold -font "$family 12 bold italic"
+$w.text tag configure big -font "$family 14 bold"
+$w.text tag configure verybig -font "Helvetica 24 bold"
+$w.text tag configure tiny -font "Times 8 bold"
 if {[winfo depth $w] > 1} {
     $w.text tag configure color1 -background #a0b7ce
     $w.text tag configure color2 -foreground red
@@ -53,8 +58,8 @@ $w.text tag configure underline -underline on
 $w.text tag configure overstrike -overstrike on
 $w.text tag configure right -justify right
 $w.text tag configure center -justify center
-$w.text tag configure super -offset 4p -font {Courier 10}
-$w.text tag configure sub -offset -2p -font {Courier 10}
+$w.text tag configure super -offset 4p -font "$family 10"
+$w.text tag configure sub -offset -2p -font "$family 10"
 $w.text tag configure margins -lmargin1 12m -lmargin2 6m -rmargin 10m
 $w.text tag configure spacing -spacing1 10p -spacing2 2p \
 	-lmargin1 12m -lmargin2 6m -rmargin 10m
@@ -63,17 +68,17 @@ $w.text insert end {Text widgets like this one allow you to display information 
 variety of styles.  Display styles are controlled using a mechanism
 called }
 $w.text insert end tags bold
-$w.text insert end {. Tags are just textual names that you can apply to one
+$w.text insert end {.  Tags are just textual names that you can apply to one
 or more ranges of characters within a text widget.  You can configure
 tags with various display styles.  If you do this, then the tagged
 characters will be displayed with the styles you chose.  The
 available display styles are:
 }
 $w.text insert end "\n1. Font." big
-$w.text insert end "  You can choose any X font, "
+$w.text insert end "  You can choose any system font, "
 $w.text insert end large verybig
 $w.text insert end " or "
-$w.text insert end "small.\n"
+$w.text insert end "small" tiny ".\n"
 $w.text insert end "\n2. Color." big
 $w.text insert end "  You can change either the "
 $w.text insert end background color1

@@ -41,7 +41,7 @@ If this is an empty string then no bitmap is displayed in the dialog.
 If this is an integer greater than or equal to zero, then it gives
 the index of the button that is to be the default button for the dialog
 (0 for the leftmost button, and so on).
-If less than zero or an empty string then there won't be any default
+If less than zero or an empty string then there will not be any default
 button.
 .TP
 \fIstring\fR
@@ -55,14 +55,14 @@ mouse or by typing return to invoke the default button (if any).
 Then it returns the index of the selected button:  0 for the leftmost
 button, 1 for the button next to it, and so on.
 If the dialog's window is destroyed before the user selects one
-of the buttons, then -1 is returned.
+of the buttons, then \-1 is returned.
 .PP
 While waiting for the user to respond, \fBtk_dialog\fR sets a local
 grab.  This prevents the user from interacting with the application
 in any way except to invoke the dialog box.
 .SH EXAMPLE
 .CS
-set reply [\fBtk_dialog\fR .foo "The Title" "Do you want to say yes?" \\
+set reply [\fBtk_dialog\fR .foo "The Title" "Do you want to say yes?" \e
         questhead 0 Yes No "I'm not sure"]
 .CE
 

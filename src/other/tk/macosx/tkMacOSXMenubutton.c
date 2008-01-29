@@ -27,6 +27,9 @@
 
 #define TK_POPUP_OFFSET 32	/* size of popup marker */
 
+#define FIRST_DRAW	    2
+#define ACTIVE		    4
+
 MODULE_SCOPE int TkMacOSXGetNewMenuID(Tcl_Interp *interp, TkMenu *menuInstPtr,
 	int cascade, short *menuIDPtr);
 MODULE_SCOPE void TkMacOSXFreeMenuID(short menuID);
@@ -76,6 +79,7 @@ static void UserPaneBackgroundProc(ControlHandle,
 	ControlBackgroundPtr info);
 static int MenuButtonInitControl (MacMenuButton *mbPtr, Rect *paneRect,
 	Rect *cntrRect );
+static void MenuButtonEventProc(ClientData clientData, XEvent *eventPtr);
 static int UpdateControlColors(MacMenuButton *mbPtr);
 static void ComputeMenuButtonControlParams(TkMenuButton *mbPtr,
 	MenuButtonControlParams * paramsPtr);
@@ -116,22 +120,17 @@ TkpCreateMenuButton(
     Tk_Window tkwin)
 {
     MacMenuButton *mbPtr = (MacMenuButton *) ckalloc(sizeof(MacMenuButton));
-    mbPtr->userPaneBackground = PIXEL_MAGIC << 24;
+
+    Tk_CreateEventHandler(tkwin, ActivateMask,
+	    MenuButtonEventProc, (ClientData) mbPtr);
     mbPtr->flags = 0;
+    mbPtr->userPaneBackground = PIXEL_MAGIC << 24;
     mbPtr->userPane = NULL;
     mbPtr->control = NULL;
-    mbPtr->picParams.version = -2;
-    mbPtr->picParams.hRes = 0x00480000;
-    mbPtr->picParams.vRes = 0x00480000;
-    mbPtr->picParams.srcRect.top = 0;
-    mbPtr->picParams.srcRect.left = 0;
-    mbPtr->picParams.reserved1 = 0;
-    mbPtr->picParams.reserved2 = 0;
-    mbPtr->bevelButtonContent.contentType = kControlContentPictHandle;
     mbPtr->menuRef = NULL;
-
     bzero(&mbPtr->params, sizeof(mbPtr->params));
-    bzero(&mbPtr->titleParams,sizeof(mbPtr->titleParams));
+    bzero(&mbPtr->titleParams, sizeof(mbPtr->titleParams));
+
     return (TkMenuButton *) mbPtr;
 }
 
@@ -162,26 +161,25 @@ TkpDisplayMenuButton(
     Pixmap pixmap;
     MacMenuButton *mbPtr = (MacMenuButton *) butPtr;
     CGrafPtr destPort, savePort;
-    Boolean portChanged;
+    Boolean portChanged = false;
     int hasImageOrBitmap = 0, width, height;
     OSStatus err;
     ControlButtonGraphicAlignment theAlignment;
     Rect paneRect, cntrRect;
+    int active, enabled;
 
     butPtr->flags &= ~REDRAW_PENDING;
     if ((butPtr->tkwin == NULL) || !Tk_IsMapped(tkwin)) {
 	return;
     }
     pixmap = (Pixmap) Tk_WindowId(tkwin);
-    destPort = TkMacOSXGetDrawablePort(Tk_WindowId(tkwin));
-    portChanged = QDSwapPort(destPort, &savePort);
     TkMacOSXSetUpClippingRgn(Tk_WindowId(tkwin));
 
     winPtr = (TkWindow *)butPtr->tkwin;
     paneRect.left = winPtr->privatePtr->xOff;
     paneRect.top = winPtr->privatePtr->yOff;
-    paneRect.right = paneRect.left+Tk_Width(butPtr->tkwin)-1;
-    paneRect.bottom = paneRect.top+Tk_Height(butPtr->tkwin)-1;
+    paneRect.right = paneRect.left+Tk_Width(butPtr->tkwin);
+    paneRect.bottom = paneRect.top+Tk_Height(butPtr->tkwin);
 
     cntrRect = paneRect;
 
@@ -193,8 +191,12 @@ TkpDisplayMenuButton(
     if (mbPtr->userPane) {
 	MenuButtonControlParams params;
 	bzero(&params, sizeof(params));
-	ComputeMenuButtonControlParams(butPtr, &params );
-	if (bcmp(&params,&mbPtr->params,sizeof(params))) {
+	ComputeMenuButtonControlParams(butPtr, &params);
+	if (
+#ifdef TK_REBUILD_TOPLEVEL
+	    (winPtr->flags & TK_REBUILD_TOPLEVEL) ||
+#endif
+	    bcmp(&params,&mbPtr->params,sizeof(params))) {
 	    if (mbPtr->userPane) {
 		DisposeControl(mbPtr->userPane);
 		mbPtr->userPane = NULL;
@@ -208,21 +210,29 @@ TkpDisplayMenuButton(
 	    return;
 	}
     }
-    SetControlBounds(mbPtr->userPane,&paneRect);
-    SetControlBounds(mbPtr->control,&cntrRect);
+    SetControlBounds(mbPtr->userPane, &paneRect);
+    SetControlBounds(mbPtr->control, &cntrRect);
+
+    if (butPtr->image != None) {
+	Tk_SizeOfImage(butPtr->image, &width, &height);
+	hasImageOrBitmap = 1;
+    } else if (butPtr->bitmap != None) {
+	Tk_SizeOfBitmap(butPtr->display, butPtr->bitmap, &width, &height);
+	hasImageOrBitmap = 1;
+    }
 
     /*
      * We need to cache the title and its style
      */
 
-    if (!(mbPtr->flags & 2)) {
+    if (!(mbPtr->flags & FIRST_DRAW)) {
 	ControlTitleParams titleParams;
 	int titleChanged;
 	int styleChanged;
 
-	ComputeControlTitleParams(butPtr,&titleParams);
-	CompareControlTitleParams(&titleParams,&mbPtr->titleParams,
-		&titleChanged,&styleChanged);
+	ComputeControlTitleParams(butPtr, &titleParams);
+	CompareControlTitleParams(&titleParams, &mbPtr->titleParams,
+		&titleChanged, &styleChanged);
 	if (titleChanged) {
 	    CFStringRef cf = CFStringCreateWithCString(NULL,
 		  (char*) titleParams.title, kCFStringEncodingUTF8);
@@ -249,43 +259,54 @@ TkpDisplayMenuButton(
 		    sizeof(titleParams.style));
 	}
     }
-    if (butPtr->image != None) {
-	Tk_SizeOfImage(butPtr->image, &width, &height);
-	hasImageOrBitmap = 1;
-    } else if (butPtr->bitmap != None) {
-	Tk_SizeOfBitmap(butPtr->display, butPtr->bitmap, &width, &height);
-	hasImageOrBitmap = 1;
-    }
     if (hasImageOrBitmap) {
-	mbPtr->picParams.srcRect.right = width;
-	mbPtr->picParams.srcRect.bottom = height;
+	{
+	    destPort = TkMacOSXGetDrawablePort(Tk_WindowId(tkwin));
+	    portChanged = QDSwapPort(destPort, &savePort);
+	    mbPtr->picParams.version = -2;
+	    mbPtr->picParams.hRes = 0x00480000;
+	    mbPtr->picParams.vRes = 0x00480000;
+	    mbPtr->picParams.srcRect.top = 0;
+	    mbPtr->picParams.srcRect.left = 0;
+	    mbPtr->picParams.srcRect.bottom = height;
+	    mbPtr->picParams.srcRect.right = width;
+	    mbPtr->picParams.reserved1 = 0;
+	    mbPtr->picParams.reserved2 = 0;
+	    mbPtr->bevelButtonContent.contentType = kControlContentPictHandle;
+	    mbPtr->bevelButtonContent.u.picture = OpenCPicture(&mbPtr->picParams);
+	    if (!mbPtr->bevelButtonContent.u.picture) {
+		TkMacOSXDbgMsg("OpenCPicture failed");
+	    }
+	    tkPictureIsOpen = 1;
 
-	/*
-	 * Set the flag to circumvent clipping and bounds problems with OS
-	 * 10.0.4
-	 */
-
-	tkPictureIsOpen = 1;
-	mbPtr->bevelButtonContent.u.picture = OpenCPicture(&mbPtr->picParams);
-	if (!mbPtr->bevelButtonContent.u.picture) {
-	    TkMacOSXDbgMsg("OpenCPicture failed");
+	    /*
+	     * TO DO - There is one case where XCopyPlane calls CopyDeepMask,
+	     * which does not get recorded in the picture. So the bitmap code
+	     * will fail in that case.
+	     */
 	}
-
-	/*
-	 * TO DO - There is one case where XCopyPlane calls CopyDeepMask,
-	 * which does not get recorded in the picture. So the bitmap code
-	 * will fail in that case.
-	 */
-
 	if (butPtr->image != NULL) {
 	    Tk_RedrawImage(butPtr->image, 0, 0, width, height, pixmap, 0, 0);
 	} else {
-	    XCopyPlane(butPtr->display, butPtr->bitmap, pixmap, NULL, 0, 0,
+	    GC gc;
+	    
+	    if (butPtr->state == STATE_DISABLED) {
+		gc = butPtr->disabledGC;
+	    } else if (butPtr->state == STATE_ACTIVE) {
+		gc = butPtr->activeTextGC;
+	    } else {
+		gc = butPtr->normalTextGC;
+	    }
+	    XCopyPlane(butPtr->display, butPtr->bitmap, pixmap, gc, 0, 0,
 		    width, height, 0, 0, 1);
 	}
-	ClosePicture();
-
-	tkPictureIsOpen = 0;
+	{
+	    ClosePicture();
+	    tkPictureIsOpen = 0;
+	    if (portChanged) {
+		QDSwapPort(savePort, NULL);
+	    }
+	}
 	ChkErr(SetControlData, mbPtr->control, kControlButtonPart,
 		kControlBevelButtonContentTag,
 		sizeof(ControlButtonContentInfo),
@@ -324,25 +345,47 @@ TkpDisplayMenuButton(
 		kControlBevelButtonGraphicAlignTag,
 		sizeof(ControlButtonGraphicAlignment), (char *) &theAlignment);
     }
-    if (butPtr->flags & GOT_FOCUS) {
-	HiliteControl(mbPtr->control,kControlButtonPart);
-    } else {
-	HiliteControl(mbPtr->control,kControlNoPart);
+    active = ((mbPtr->flags & ACTIVE) != 0);
+    if (active != IsControlActive(mbPtr->control)) {
+	if (active) {
+	    ChkErr(ActivateControl, mbPtr->control);
+	} else {
+	    ChkErr(DeactivateControl, mbPtr->control);
+	}
+    }
+    enabled = !(butPtr->state == STATE_DISABLED);
+    if (enabled != IsControlEnabled(mbPtr->control)) {
+	if (enabled) {
+	    ChkErr(EnableControl, mbPtr->control);
+	} else {
+	    ChkErr(DisableControl, mbPtr->control);
+	}
+    }
+    if (active && enabled) {
+	if (butPtr->state == STATE_ACTIVE) {
+	    if (hasImageOrBitmap) {
+		HiliteControl(mbPtr->control, kControlButtonPart);
+	    } else {
+		HiliteControl(mbPtr->control, kControlLabelPart);
+	    }
+	} else {
+	    HiliteControl(mbPtr->control, kControlNoPart);
+	}
     }
     UpdateControlColors(mbPtr);
-    if (mbPtr->flags&2) {
+    if (mbPtr->flags & FIRST_DRAW) {
 	ShowControl(mbPtr->control);
 	ShowControl(mbPtr->userPane);
-	mbPtr->flags ^= 2;
+	mbPtr->flags ^= FIRST_DRAW;
     } else {
-	Draw1Control(mbPtr->userPane);
 	SetControlVisibility(mbPtr->control, true, true);
+	Draw1Control(mbPtr->userPane);
     }
     if (hasImageOrBitmap) {
-	KillPicture(mbPtr->bevelButtonContent.u.picture);
-    }
-    if (portChanged) {
-	QDSwapPort(savePort, NULL);
+	if (mbPtr->bevelButtonContent.contentType ==
+		kControlContentPictHandle) {
+	    KillPicture(mbPtr->bevelButtonContent.u.picture);
+	}
     }
 }
 
@@ -409,21 +452,9 @@ TkpComputeMenuButtonGeometry(mbPtr)
     mbPtr->inset = mbPtr->highlightWidth + mbPtr->borderWidth;
     if (mbPtr->image != None) {
 	Tk_SizeOfImage(mbPtr->image, &width, &height);
-	if (mbPtr->width > 0) {
-	    width = mbPtr->width;
-	}
-	if (mbPtr->height > 0) {
-	    height = mbPtr->height;
-	}
 	hasImageOrBitmap = 1;
     } else if (mbPtr->bitmap != None) {
 	Tk_SizeOfBitmap(mbPtr->display, mbPtr->bitmap, &width, &height);
-	if (mbPtr->width > 0) {
-	    width = mbPtr->width;
-	}
-	if (mbPtr->height > 0) {
-	    height = mbPtr->height;
-	}
 	hasImageOrBitmap = 1;
     } else {
 	hasImageOrBitmap = 0;
@@ -445,7 +476,19 @@ TkpComputeMenuButtonGeometry(mbPtr)
 	width += 2*mbPtr->padX;
 	height += 2*mbPtr->padY;
     }
-
+    if (hasImageOrBitmap) {
+	if (mbPtr->width > 0) {
+	    width = mbPtr->width;
+	}
+	if (mbPtr->height > 0) {
+	    height = mbPtr->height;
+	}
+	mbPtr->inset = mbPtr->highlightWidth + 2;
+	width += (2 * mbPtr->borderWidth + 4);
+	height += (2 * mbPtr->borderWidth + 4);
+    } else {
+	width += TK_POPUP_OFFSET;
+    }
     if (mbPtr->indicatorOn) {
 	mm = WidthMMOfScreen(Tk_Screen(mbPtr->tkwin));
 	pixels = WidthOfScreen(Tk_Screen(mbPtr->tkwin));
@@ -455,9 +498,6 @@ TkpComputeMenuButtonGeometry(mbPtr)
     } else {
 	mbPtr->indicatorHeight = 0;
 	mbPtr->indicatorWidth = 0;
-    }
-    if (!hasImageOrBitmap) {
-	width += TK_POPUP_OFFSET;
     }
 
     Tk_GeometryRequest(mbPtr->tkwin, (int) (width + 2*mbPtr->inset),
@@ -636,7 +676,7 @@ MenuButtonInitControl(
      * Do this only if we are using bevel buttons.
      */
 
-    ComputeControlTitleParams(butPtr,&mbPtr->titleParams);
+    ComputeControlTitleParams(butPtr, &mbPtr->titleParams);
     mbPtr->control = NewControl(mbPtr->windowRef,
 	    cntrRect, "\p" /* mbPtr->titleParams.title */,
 	    initiallyVisible, mbPtr->params.initialValue,
@@ -702,7 +742,10 @@ MenuButtonInitControl(
 	SetControlMaximum(mbPtr->control, 1);
 	SetControlValue(mbPtr->control, 1);
     }
-    mbPtr->flags |= 2;
+    mbPtr->flags |= FIRST_DRAW;
+    if (IsWindowActive(mbPtr->windowRef)) {
+	mbPtr->flags |= ACTIVE;
+    }
     return 0;
 }
 
@@ -859,7 +902,7 @@ UpdateControlColors(
     MacMenuButton *mbPtr)
 {
     XColor *xcolor;
-    TkMenuButton * butPtr = ( TkMenuButton * )mbPtr;
+    TkMenuButton * butPtr = (TkMenuButton *) mbPtr;
 
     /*
      * Under Appearance we cannot change the background of the
@@ -876,4 +919,46 @@ UpdateControlColors(
     mbPtr->userPaneBackground = xcolor->pixel;
 
     return false;
+}
+
+/*
+ *--------------------------------------------------------------
+ *
+ * MenuButtonEventProc --
+ *
+ *	This procedure is invoked by the Tk dispatcher for various
+ *	events on buttons.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	When it gets exposed, it is redisplayed.
+ *
+ *--------------------------------------------------------------
+ */
+
+static void
+MenuButtonEventProc(
+    ClientData clientData,	/* Information about window. */
+    XEvent *eventPtr)		/* Information about event. */
+{
+    TkMenuButton *buttonPtr = (TkMenuButton *) clientData;
+    MacMenuButton *mbPtr = (MacMenuButton *) clientData;
+
+    if (eventPtr->type == ActivateNotify
+	    || eventPtr->type == DeactivateNotify) {
+	if ((buttonPtr->tkwin == NULL) || (!Tk_IsMapped(buttonPtr->tkwin))) {
+	    return;
+	}
+	if (eventPtr->type == ActivateNotify) {
+	    mbPtr->flags |= ACTIVE;
+	} else {
+	    mbPtr->flags &= ~ACTIVE;
+	}
+	if ((buttonPtr->flags & REDRAW_PENDING) == 0) {
+	    Tcl_DoWhenIdle(TkpDisplayMenuButton, (ClientData) buttonPtr);
+	    buttonPtr->flags |= REDRAW_PENDING;
+	}
+    }
 }

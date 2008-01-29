@@ -1309,28 +1309,26 @@ pack $btns -side bottom -fill x
 
 set f [frame $w.frame]
 pack $f -side top -fill both -expand yes
-set h [scrollbar $f.hscroll -highlightthickness 0 -orient horizontal]
-set v [scrollbar $f.vscroll -highlightthickness 0 -orient vertical]
-set f1 [frame $f.f1 -bd 2 -relief sunken]
-set c [canvas $f1.c -width 900 -height 500 -borderwidth 0 \
-    -highlightthickness 0 -xscrollcommand "$h set" -yscrollcommand "$v set"]
+set h [scrollbar $f.hscroll -orient horizontal]
+set v [scrollbar $f.vscroll -orient vertical]
+set f1 [frame $f.f1 -borderwidth 2 -relief sunken]
+set c [canvas $f1.c -width 900 -height 500 -highlightthickness 0 \
+	   -xscrollcommand [list $h set] \
+	   -yscrollcommand [list $v set]]
 pack $c -expand yes -fill both
-grid $f1 -padx 1 -pady 1 \
-    -row 0 -column 0 -rowspan 1 -columnspan 1 -sticky news
-grid $v -padx 1 -pady 1 \
-    -row 0 -column 1 -rowspan 1 -columnspan 1 -sticky news
-grid $h -padx 1 -pady 1 \
-    -row 1 -column 0 -rowspan 1 -columnspan 1 -sticky news
+grid $f1 -padx 1 -pady 1 -row 0 -column 0 -rowspan 1 -columnspan 1 -sticky news
+grid $v -padx 1 -pady 1 -row 0 -column 1 -rowspan 1 -columnspan 1 -sticky news
+grid $h -padx 1 -pady 1 -row 1 -column 0 -rowspan 1 -columnspan 1 -sticky news
 grid rowconfig    $f 0 -weight 1 -minsize 0
 grid columnconfig $f 0 -weight 1 -minsize 0
 pack $f -expand yes -fill both -padx 1 -pady 1
 
-$v config -command "$c yview"
-$h config -command "$c xview"
+$v configure -command [list $c yview]
+$h configure -command [list $c xview]
 
 # Create an entry for displaying and typing in current room.
 
-entry $c.entry -width 10 -relief sunken -bd 2 -textvariable currentRoom
+entry $c.entry -width 10 -textvariable currentRoom
 
 # Choose colors, then fill in the floorplan.
 

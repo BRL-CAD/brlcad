@@ -34,15 +34,15 @@ of \fIname\fR\-\fIvalue\fR pairs, where the first argument of the pair
 is the name of an option in the Tk option database and the second
 argument is the new value to use for that option.  The following
 database names are currently supported:
-.DS L
+.DS
 .ta 4c 8c
-\fBactiveBackground	foreground	selectColor
-activeForeground	highlightBackground	selectBackground
-background	highlightColor	selectForeground
-disabledForeground	insertBackground	troughColor\fR
+\fBactiveBackground\fR	\fBforeground\fR	\fBselectColor\fR
+\fBactiveForeground\fR	\fBhighlightBackground\fR	\fBselectBackground\fR
+\fBbackground\fR	\fBhighlightColor\fR	\fBselectForeground\fR
+\fBdisabledForeground\fR	\fBinsertBackground\fR	\fBtroughColor\fR
 .DE
 \fBtk_setPalette\fR tries to compute reasonable defaults for any
-options that you don't specify.  You can specify options other
+options that you do not specify.  You can specify options other
 than the above ones and Tk will change those options on widgets as
 well.  This feature may be useful if you are using custom widgets with
 additional color options.
@@ -66,7 +66,8 @@ from the .Xdefaults file or options specified on the command-line
 that creates a widget.
 .PP
 The procedure \fBtk_bisque\fR is provided for backward compatibility:
-it restores the application's colors to the light brown (``bisque'')
+it restores the application's colors to the light brown
+.PQ bisque
 color scheme used in Tk 3.6 and earlier versions.
 
 .SH KEYWORDS

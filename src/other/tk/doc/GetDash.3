@@ -33,31 +33,41 @@ value converted from \fIstring\fR.
 .PP
 These procedure parses the string and fills in the result in the
 Tk_Dash structure. The string can be a list of integers or a
-character string containing only \fB[.,-_]\fR or spaces. If all
-goes well, \fBTCL_OK\fR is returned. If \fIstring\fR doesn't have the
+character string containing only
+.QW \fB.,\-_\fR
+or spaces. If all
+goes well, \fBTCL_OK\fR is returned. If \fIstring\fR does not have the
 proper syntax then \fBTCL_ERROR\fR is returned, an error message is left
 in the interpreter's result, and nothing is stored at *\fIdashPtr\fR.
 .PP
 The first possible syntax is a list of integers. Each element
 represents the number of pixels of a line segment. Only the odd
-segments are drawn using the "outline" color. The other segments
-are drawn transparent.
+segments are drawn using the
+.QW outline
+color. The other segments are drawn transparent.
 .PP
 The second possible syntax is a character list containing only
-5 possible characters \fB[.,-_ ]\fR. The space can be used
+5 possible characters
+.QW "\fB.,\-_ \fR" .
+The space can be used
 to enlarge the space between other line elements, and can not
 occur as the first position in the string. Some examples:
-    -dash .     = -dash {2 4}
-    -dash -     = -dash {6 4}
-    -dash -.    = -dash {6 4 2 4}
-    -dash -..   = -dash {6 4 2 4 2 4}
-    -dash {. }  = -dash {2 8}
-    -dash ,     = -dash {4 4}
+.CS
+    \-dash .     = \-dash {2 4}
+    \-dash \-     = \-dash {6 4}
+    \-dash \-.    = \-dash {6 4 2 4}
+    \-dash \-..   = \-dash {6 4 2 4 2 4}
+    \-dash {. }  = \-dash {2 8}
+    \-dash ,     = \-dash {4 4}
+.CE
 .PP
 The main difference of this syntax with the previous is that it
 is shape-conserving. This means that all values in the dash
 list will be multiplied by the line width before display. This
-assures that "." will always be displayed as a dot and "-"
+assures that
+.QW .
+will always be displayed as a dot and
+.QW \-
 always as a dash regardless of the line width.
 .PP
 On systems where only a limited set of dash patterns, the dash

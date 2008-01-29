@@ -400,7 +400,7 @@ typedef struct
 
     /* Derived resources:
      */
-    Tcl_HashTable columnNames;	/* Map: column name -> column index */
+    Tcl_HashTable columnNames;	/* Map: column name -> column table entry */
     int nColumns; 		/* #columns */
     unsigned showFlags;		/* bitmask of subparts to display */
 
@@ -501,14 +501,13 @@ static void DisplayLayout(
     Ttk_DrawLayout(layout, state, d);
 }
 
-/* + ColumnIndex --
- * 	Maps column identifier to column index.
- * 	Returns: -1 if not found, column index otherwise.
+/* + GetColumn --
+ * 	Look up column by name or number.
+ * 	Returns: pointer to column table entry, NULL if not found.
  * 	Leaves an error message in interp->result on error.
- *
- * Column IDs may be specified by name or as a number.
  */
-static int ColumnIndex(Tcl_Interp *interp, Treeview *tv, Tcl_Obj *columnIDObj)
+static TreeColumn *GetColumn(
+    Tcl_Interp *interp, Treeview *tv, Tcl_Obj *columnIDObj)
 {
     Tcl_HashEntry *entryPtr;
     int columnIndex;
@@ -518,7 +517,7 @@ static int ColumnIndex(Tcl_Interp *interp, Treeview *tv, Tcl_Obj *columnIDObj)
     entryPtr = Tcl_FindHashEntry(
 	    &tv->tree.columnNames, Tcl_GetString(columnIDObj));
     if (entryPtr) {
-	return (int)Tcl_GetHashValue(entryPtr);
+	return Tcl_GetHashValue(entryPtr);
     }
 
     /* Check for number:
@@ -531,16 +530,40 @@ static int ColumnIndex(Tcl_Interp *interp, Treeview *tv, Tcl_Obj *columnIDObj)
 		    Tcl_GetString(columnIDObj),
 		    " out of bounds",
 		    NULL);
-	    return -1;
+	    return NULL;
 	}
 
-	return columnIndex;
+	return tv->tree.columns + columnIndex;
     }
     Tcl_ResetResult(interp);
     Tcl_AppendResult(interp,
 	"Invalid column index ", Tcl_GetString(columnIDObj),
 	NULL);
-    return -1;
+    return NULL;
+}
+
+/* + FindColumn --
+ * 	Look up column by name, number, or display index.
+ */
+static TreeColumn *FindColumn(
+    Tcl_Interp *interp, Treeview *tv, Tcl_Obj *columnIDObj)
+{
+    int colno;
+
+    if (sscanf(Tcl_GetString(columnIDObj), "#%d", &colno) == 1)
+    {	/* Display column specification, #n */
+	if (colno >= 0 && colno < tv->tree.nDisplayColumns) {
+	    return tv->tree.displayColumns[colno];
+	}
+	/* else */
+	Tcl_ResetResult(interp);
+	Tcl_AppendResult(interp,
+	    "Column ", Tcl_GetString(columnIDObj), " out of range",
+	    NULL);
+	return NULL;
+    }
+
+    return GetColumn(interp, tv, columnIDObj);
 }
 
 /* + FindItem --
@@ -608,32 +631,6 @@ static Tcl_Obj *ItemID(Treeview *tv, TreeItem *item)
     return Tcl_NewStringObj(ItemName(tv, item), -1);
 }
 
-/* + FindColumn --
- */
-static TreeColumn *FindColumn(
-    Tcl_Interp *interp, Treeview *tv, Tcl_Obj *columnIDObj)
-{
-    int column;
-
-    if (sscanf(Tcl_GetString(columnIDObj), "#%d", &column) == 1)
-    {	/* Display column specification, #n */
-	if (column >= 0 && column < tv->tree.nDisplayColumns) {
-	    return tv->tree.displayColumns[column];
-	}
-	/* else */
-	Tcl_ResetResult(interp);
-	Tcl_AppendResult(interp,
-	    "Column ", Tcl_GetString(columnIDObj), " out of range",
-	    NULL);
-	return NULL;
-    }
-
-    column = ColumnIndex(interp, tv, columnIDObj);
-    if (column >= 0)
-	return tv->tree.columns + column;
-    return 0;
-}
-
 /*------------------------------------------------------------------------
  * +++ Column configuration.
  */
@@ -689,7 +686,7 @@ static int TreeviewInitColumns(Tcl_Interp *interp, Treeview *tv)
 
 	Tcl_HashEntry *entryPtr = Tcl_CreateHashEntry(
 	    &tv->tree.columnNames, Tcl_GetString(columnName), &isNew);
-	Tcl_SetHashValue(entryPtr, i);
+	Tcl_SetHashValue(entryPtr, tv->tree.columns + i);
 
 	InitColumn(tv->tree.columns + i);
 	Tk_InitOptions(
@@ -733,12 +730,11 @@ static int TreeviewInitDisplayColumns(Tcl_Interp *interp, Treeview *tv)
     } else {
 	displayColumns = (TreeColumn**)ckalloc((ndcols+1)*sizeof(TreeColumn*));
 	for (index = 0; index < ndcols; ++index) {
-	    int columnIndex = ColumnIndex(interp, tv, dcolumns[index]);
-	    if (columnIndex == -1) {
+	    displayColumns[index+1] = GetColumn(interp, tv, dcolumns[index]);
+	    if (!displayColumns[index+1]) {
 		ckfree((ClientData)displayColumns);
 		return TCL_ERROR;
 	    }
-	    displayColumns[index+1] = tv->tree.columns + columnIndex;
 	}
     }
     displayColumns[0] = &tv->tree.column0;
@@ -1474,7 +1470,7 @@ static Ttk_Layout TreeviewGetLayout(
 static void TreeviewDoLayout(void *clientData)
 {
     Treeview *tv = clientData;
-    Ttk_LayoutNode *clientNode = Ttk_LayoutFindNode(tv->core.layout, "client");
+    Ttk_LayoutNode *clientNode = Ttk_LayoutFindNode(tv->core.layout,"treearea");
     int visibleRows;
 
     /* ASSERT: SLACKINVARIANT */
@@ -3045,48 +3041,39 @@ static WidgetSpec TreeviewWidgetSpec =
  * +++ Layout specifications.
  */
 
-TTK_BEGIN_LAYOUT(TreeviewLayout)
+TTK_BEGIN_LAYOUT_TABLE(LayoutTable)
+
+TTK_LAYOUT("Treeview",
     TTK_GROUP("Treeview.field", TTK_FILL_BOTH|TTK_BORDER,
 	TTK_GROUP("Treeview.padding", TTK_FILL_BOTH,
-	    TTK_NODE("Treeview.client", TTK_FILL_BOTH)))
-TTK_END_LAYOUT
+	    TTK_NODE("Treeview.treearea", TTK_FILL_BOTH))))
 
-TTK_BEGIN_LAYOUT(ItemLayout)
+TTK_LAYOUT("Item",
     TTK_GROUP("Treeitem.padding", TTK_FILL_BOTH,
 	TTK_NODE("Treeitem.indicator", TTK_PACK_LEFT)
 	TTK_NODE("Treeitem.image", TTK_PACK_LEFT)
 	TTK_GROUP("Treeitem.focus", TTK_PACK_LEFT,
-	    TTK_NODE("Treeitem.text", TTK_PACK_LEFT)))
-TTK_END_LAYOUT
+	    TTK_NODE("Treeitem.text", TTK_PACK_LEFT))))
 
-TTK_BEGIN_LAYOUT(CellLayout)
+TTK_LAYOUT("Cell",
     TTK_GROUP("Treedata.padding", TTK_FILL_BOTH,
-	TTK_NODE("Treeitem.text", TTK_FILL_BOTH))
-TTK_END_LAYOUT
+	TTK_NODE("Treeitem.text", TTK_FILL_BOTH)))
 
-TTK_BEGIN_LAYOUT(HeadingLayout)
+TTK_LAYOUT("Heading",
     TTK_NODE("Treeheading.cell", TTK_FILL_BOTH)
     TTK_GROUP("Treeheading.border", TTK_FILL_BOTH,
 	TTK_GROUP("Treeheading.padding", TTK_FILL_BOTH,
 	    TTK_NODE("Treeheading.image", TTK_PACK_RIGHT)
-	    TTK_NODE("Treeheading.text", TTK_FILL_X)))
-TTK_END_LAYOUT
+	    TTK_NODE("Treeheading.text", TTK_FILL_X))))
 
-TTK_BEGIN_LAYOUT(RowLayout)
-    TTK_NODE("Treeitem.row", TTK_FILL_BOTH)
-TTK_END_LAYOUT
+TTK_LAYOUT("Row",
+    TTK_NODE("Treeitem.row", TTK_FILL_BOTH))
+
+TTK_END_LAYOUT_TABLE
 
 /*------------------------------------------------------------------------
  * +++ Tree indicator element.
  */
-
-#ifdef UNUSED
-#if defined(WIN32)
-static const int WIN32_XDRAWLINE_HACK = 1;
-#else
-static const int WIN32_XDRAWLINE_HACK = 0;
-#endif
-#endif
 
 typedef struct
 {
@@ -3111,12 +3098,14 @@ static void TreeitemIndicatorSize(
     int *widthPtr, int *heightPtr, Ttk_Padding *paddingPtr)
 {
     TreeitemIndicator *indicator = elementRecord;
+    Ttk_Padding margins;
     int size = 0;
 
-    Ttk_GetPaddingFromObj(NULL, tkwin, indicator->marginsObj, paddingPtr);
+    Ttk_GetPaddingFromObj(NULL, tkwin, indicator->marginsObj, &margins);
     Tk_GetPixelsFromObj(NULL, tkwin, indicator->sizeObj, &size);
 
-    *widthPtr = *heightPtr = size;
+    *widthPtr = size + Ttk_PaddingWidth(margins);
+    *heightPtr = size + Ttk_PaddingHeight(margins);
 }
 
 static void TreeitemIndicatorDraw(
@@ -3190,7 +3179,7 @@ static Ttk_ElementSpec RowElementSpec =
     TK_STYLE_VERSION_2,
     sizeof(RowElement),
     RowElementOptions,
-    TtkNullElementGeometry,
+    TtkNullElementSize,
     RowElementDraw
 };
 
@@ -3209,12 +3198,9 @@ void TtkTreeview_Init(Tcl_Interp *interp)
 	    &TreeitemIndicatorElementSpec, 0);
     Ttk_RegisterElement(interp, theme, "Treeitem.row", &RowElementSpec, 0);
     Ttk_RegisterElement(interp, theme, "Treeheading.cell", &RowElementSpec, 0);
+    Ttk_RegisterElement(interp, theme, "treearea", &ttkNullElementSpec, 0);
 
-    Ttk_RegisterLayout(theme, TreeviewWidgetSpec.className, TreeviewLayout);
-    Ttk_RegisterLayout(theme, "Item", ItemLayout);
-    Ttk_RegisterLayout(theme, "Cell", CellLayout);
-    Ttk_RegisterLayout(theme, "Heading", HeadingLayout);
-    Ttk_RegisterLayout(theme, "Row", RowLayout);
+    Ttk_RegisterLayouts(theme, LayoutTable);
 }
 
 /*EOF*/

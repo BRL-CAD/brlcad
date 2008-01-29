@@ -1044,6 +1044,133 @@ TkFocusFree(
 }
 
 /*
+ *----------------------------------------------------------------------
+ *
+ * TkFocusSplit --
+ *
+ *	Adjust focus window for a newly managed toplevel, thus splitting
+ *      the toplevel into two toplevels.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	A new record is allocated for the new toplevel window.
+ *
+ *----------------------------------------------------------------------
+ */
+
+void
+TkFocusSplit(winPtr)
+    TkWindow *winPtr;          /* Window is the new toplevel
+                                * Any focus point at or below window
+				* must be moved to this new toplevel */
+{
+    ToplevelFocusInfo *tlFocusPtr;
+    DisplayFocusInfo *displayFocusPtr;
+    TkWindow *topLevelPtr;
+    TkWindow *subWinPtr;
+
+    displayFocusPtr = FindDisplayFocusInfo(winPtr->mainPtr, winPtr->dispPtr);
+
+    /*
+     * Find the top-level window for winPtr, then find (or create)
+     * a record for the top-level.  Also see whether winPtr and all its
+     * ancestors are mapped.
+     */
+
+    for (topLevelPtr = winPtr; ; topLevelPtr = topLevelPtr->parentPtr)  {
+	if (topLevelPtr == NULL) {
+	    /*
+	     * The window is being deleted.  No point in worrying about
+	     * giving it the focus.
+	     */
+	    return;
+	}
+	if (topLevelPtr->flags & TK_TOP_HIERARCHY) {
+	    break;
+	}
+    }
+
+    /* Search all focus records to find child windows of winPtr */
+    for (tlFocusPtr = winPtr->mainPtr->tlFocusPtr; tlFocusPtr != NULL;
+	 tlFocusPtr = tlFocusPtr->nextPtr) {
+	if (tlFocusPtr->topLevelPtr == topLevelPtr) {
+	    break;
+	}
+    }
+
+    if (tlFocusPtr == NULL) {
+	/* No focus record for this toplevel, nothing to do. */
+	return;
+    }
+
+    /* See if current focusWin is child of the new toplevel */
+    for (subWinPtr = tlFocusPtr->focusWinPtr; 
+	 subWinPtr && subWinPtr != winPtr && subWinPtr != topLevelPtr;
+	 subWinPtr = subWinPtr->parentPtr) {}
+
+    if (subWinPtr == winPtr) {
+	/* Move focus to new toplevel */
+	ToplevelFocusInfo *newTlFocusPtr;
+
+	newTlFocusPtr = (ToplevelFocusInfo *) ckalloc(sizeof(ToplevelFocusInfo));
+	newTlFocusPtr->topLevelPtr = winPtr;
+	newTlFocusPtr->focusWinPtr = tlFocusPtr->focusWinPtr;
+	newTlFocusPtr->nextPtr = winPtr->mainPtr->tlFocusPtr;
+	winPtr->mainPtr->tlFocusPtr = newTlFocusPtr;
+	/* Move old toplevel's focus to the toplevel itself */
+	tlFocusPtr->focusWinPtr = topLevelPtr;
+    }
+    /* If it's not, then let focus progress naturally */
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TkFocusJoin --
+ *
+ *	Remove the focus record for this window that is nolonger managed
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	A tlFocusPtr record is removed
+ *
+ *----------------------------------------------------------------------
+ */
+
+void
+TkFocusJoin(winPtr)
+    TkWindow *winPtr;          /* Window is no longer a toplevel */
+{
+    ToplevelFocusInfo *tlFocusPtr;
+    ToplevelFocusInfo *tmpPtr;
+
+    /*
+     * Remove old toplevel record
+     */
+    if (winPtr && winPtr->mainPtr && winPtr->mainPtr->tlFocusPtr
+	&& winPtr->mainPtr->tlFocusPtr->topLevelPtr == winPtr) {
+	tmpPtr = winPtr->mainPtr->tlFocusPtr;
+	winPtr->mainPtr->tlFocusPtr = tmpPtr->nextPtr;
+	ckfree((char *)tmpPtr);
+    } else {
+	for (tlFocusPtr = winPtr->mainPtr->tlFocusPtr; tlFocusPtr != NULL;
+	     tlFocusPtr = tlFocusPtr->nextPtr) {
+	    if (tlFocusPtr->nextPtr &&
+		tlFocusPtr->nextPtr->topLevelPtr == winPtr) {
+		tmpPtr = tlFocusPtr->nextPtr;
+		tlFocusPtr->nextPtr = tmpPtr->nextPtr;
+		ckfree((char *)tmpPtr);
+		break;
+	    }
+	}
+    }
+}
+
+/*
  * Local Variables:
  * mode: c
  * c-basic-offset: 4

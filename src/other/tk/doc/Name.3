@@ -55,9 +55,17 @@ The \fBTk_PathName\fR macro returns a
 hierarchical name for \fItkwin\fR.
 Path names have a structure similar to file names in Unix but with
 dots between elements instead of slashes:  the main window for
-an application has the path name ``.'';  its children have names like
-``.a'' and ``.b''; their children have names like ``.a.aa'' and
-``.b.bb''; and so on.  A window is considered to be a child of
+an application has the path name
+.QW . ;
+its children have names like
+.QW .a
+and
+.QW .b ;
+their children have names like
+.QW .a.aa
+and
+.QW .b.bb ;
+and so on.  A window is considered to be a child of
 another window for naming purposes if the second window was named
 as the first window's \fIparent\fR when the first window was created.
 This is not always the same as the X window hierarchy.  For

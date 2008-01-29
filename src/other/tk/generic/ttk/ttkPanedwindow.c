@@ -404,10 +404,10 @@ static void PanedPlaceSlaves(void *managerData)
     PlacePanes(pw);
 }
 
-static void PaneRemoved(Ttk_Manager *mgr, int index)
+static void PaneRemoved(void *managerData, int index)
 {
-    Paned *pw = Ttk_ManagerData(mgr);
-    Pane *pane = Ttk_SlaveData(mgr, index);
+    Paned *pw = managerData;
+    Pane *pane = Ttk_SlaveData(pw->paned.mgr, index);
     DestroyPane(pw, pane);
 }
 
@@ -440,35 +440,30 @@ static int AddPane(
     return TCL_OK;
 }
 
-/* PanedGeometryRequestProc --
- * 	Update pane request size, but only if slave is currently unmapped.
- * 	Geometry requests from mapped slaves are not directly honored,
+/* PaneRequest --
+ * 	Only update pane request size if slave is currently unmapped.
+ * 	Geometry requests from mapped slaves are not directly honored
  * 	in order to avoid unexpected pane resizes (esp. while the
  * 	user is dragging a sash [#1325286]).
  */
-static void PanedGeometryRequestProc(
-    ClientData clientData, Tk_Window slaveWindow)
+static int PaneRequest(void *managerData, int index, int width, int height)
 {
-    Ttk_Manager *mgr = clientData;
-    Paned *pw = Ttk_ManagerData(mgr);
+    Paned *pw = managerData;
+    Pane *pane = Ttk_SlaveData(pw->paned.mgr, index);
+    Tk_Window slaveWindow = Ttk_SlaveWindow(pw->paned.mgr, index);
+    int horizontal = pw->paned.orient == TTK_ORIENT_HORIZONTAL;
 
     if (!Tk_IsMapped(slaveWindow)) {
-	int slaveIndex = Ttk_SlaveIndex(mgr, slaveWindow); /* ASSERT: != -1 */
-	Pane *pane = Ttk_SlaveData(mgr, slaveIndex);
-	pane->reqSize
-	    = pw->paned.orient == TTK_ORIENT_HORIZONTAL
-	    ? Tk_ReqWidth(slaveWindow) : Tk_ReqHeight(slaveWindow);
+	pane->reqSize = horizontal ? width : height;
     }
-
-    /* Continue with default GeometryRequestProc:
-     */
-    Ttk_GeometryRequestProc(clientData, slaveWindow);
+    return 1;
 }
 
 static Ttk_ManagerSpec PanedManagerSpec = {
-    { "panedwindow", PanedGeometryRequestProc, Ttk_LostSlaveProc },
+    { "panedwindow", Ttk_GeometryRequestProc, Ttk_LostSlaveProc },
     PanedSize,
     PanedPlaceSlaves,
+    PaneRequest,
     PaneRemoved
 };
 

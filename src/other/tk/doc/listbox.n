@@ -51,13 +51,13 @@ or \fBextended\fR;  the default value is \fBbrowse\fR.
 .OP \-state state State
 Specifies one of two states for the listbox:  \fBnormal\fR or \fBdisabled\fR.
 If the listbox is disabled then items may not be inserted or deleted,
-items are drawn in the \fB-disabledforeground\fR color, and selection
+items are drawn in the \fB\-disabledforeground\fR color, and selection
 cannot be modified and is not shown (though selection information is retained).
 .OP \-width width Width
 Specifies the desired width for the window in characters.
-If the font doesn't have a uniform width then the width of the
-character ``0'' is used in translating from character units to
-screen units.
+If the font does not have a uniform width then the width of the character
+.QW 0
+is used in translating from character units to screen units.
 If zero or less, then the desired width for the window is made just
 large enough to hold all the elements in the listbox.
 .BE
@@ -195,7 +195,7 @@ string is returned.
 \fIpathName \fBdelete \fIfirst \fR?\fIlast\fR?
 Deletes one or more elements of the listbox.  \fIFirst\fR and \fIlast\fR
 are indices specifying the first and last elements in the range
-to delete.  If \fIlast\fR isn't specified it defaults to
+to delete.  If \fIlast\fR is not specified it defaults to
 \fIfirst\fR, i.e. a single element is deleted.
 .TP
 \fIpathName \fBget \fIfirst\fR ?\fIlast\fR?
@@ -313,7 +313,7 @@ this range.
 .TP
 \fIpathName \fBselection includes \fIindex\fR
 Returns 1 if the element indicated by \fIindex\fR is currently
-selected, 0 if it isn't.
+selected, 0 if it is not.
 .TP
 \fIpathName \fBselection set \fIfirst \fR?\fIlast\fR?
 Selects all of the elements in the range between
@@ -420,6 +420,10 @@ In both modes, clicking button 1 on an element selects
 it and deselects any other selected item.
 In \fBbrowse\fR mode it is also possible to drag the selection
 with button 1.
+.VS 8.5
+On button 1, the listbox will also take focus if it has a \fBnormal\fR
+state and \fB\-takefocus\fR is true.
+.VE 8.5
 .PP
 If the selection mode is \fBmultiple\fR or \fBextended\fR,
 any number of elements may be selected at once, including discontiguous
@@ -452,7 +456,7 @@ the button down.
 In \fBextended\fR mode, pressing button 1 with the Control key down
 starts a toggle operation: the anchor is set to the element under
 the mouse, and its selection state is reversed.  The selection state
-of other elements isn't changed.
+of other elements is not changed.
 If the mouse is dragged with button 1 down, then the selection state
 of all elements between the anchor and the element under the mouse
 is set to match that of the anchor element;  the selection state of

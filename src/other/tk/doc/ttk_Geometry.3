@@ -196,15 +196,15 @@ If it is \fBTK_RELIEF_RAISED\fR, adds two pixels
 at the bottom and right so 
 the inner region is shifted up and to the right.
 Otherwise, adds 1 pixel on all sides.
-This is typically used in element geometry procedures to simulate 
-a "pressed-in" look for pushbuttons.
-
+This is typically used in element geometry procedures to simulate a
+.QW pressed-in
+look for pushbuttons.
 .SH "CONVERSION ROUTINES"
 \fBTtk_GetPaddingFromObj\fR converts the string in \fIobjPtr\fR
 to a \fBTtk_Padding\fR structure.
 The string representation is a list of 
 up to four length specifications 
-\fI"left top right bottom"\fR.  
+.QW "\fIleft top right bottom\fR" .
 If fewer than four elements are specified, 
 \fIbottom\fR defaults to \fItop\fR,
 \fIright\fR defaults to \fIleft\fR, and 
@@ -218,9 +218,7 @@ except that the lengths are specified as integers
 \fBTtk_GetStickyFromObj\fR converts the string in \fIobjPtr\fR
 to a \fIsticky\fR bitmask.  The string contains zero or more
 of the characters \fBn\fR, \fBs\fR, \fBe\fR, or \fBw\fR.
-
 .SH "SEE ALSO"
 Tk_GetReliefFromObj(3), Tk_GetPixelsFromObj(3), Tk_GetAnchorFromObj(3)
-
 .SH "KEYWORDS"
 geometry, padding, margins, box, region, sticky, relief

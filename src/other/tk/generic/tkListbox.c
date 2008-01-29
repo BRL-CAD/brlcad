@@ -723,7 +723,7 @@ ListboxWidgetObjCmd(
 	 */
 
 	for (i = 0; i < listPtr->nElements; i++) {
-	    if (Tcl_FindHashEntry(listPtr->selection, (char *)i) != NULL) {
+	    if (Tcl_FindHashEntry(listPtr->selection, (char *) INT2PTR(i))) {
 		sprintf(indexStringRep, "%d", i);
 		Tcl_AppendElement(interp, indexStringRep);
 	    }
@@ -1204,7 +1204,7 @@ ListboxSelectionSubCmd(
 	}
 	Tcl_SetObjResult(interp,
 		Tcl_NewBooleanObj((Tcl_FindHashEntry(listPtr->selection,
-			(char *)first) != NULL)));
+			(char *) INT2PTR(first)) != NULL)));
 	result = TCL_OK;
 	break;
     case SELECTION_SET:
@@ -1388,7 +1388,8 @@ ListboxGetItemAttributes(
     Tcl_HashEntry *entry;
     ItemAttr *attrs;
 
-    entry = Tcl_CreateHashEntry(listPtr->itemAttrTable, (char *)index, &isNew);
+    entry = Tcl_CreateHashEntry(listPtr->itemAttrTable,
+	    (char *) INT2PTR(index), &isNew);
     if (isNew) {
 	attrs = (ItemAttr *) ckalloc(sizeof(ItemAttr));
 	attrs->border = NULL;
@@ -1916,7 +1917,7 @@ DisplayListbox(
 	 * special foreground/background colors.
 	 */
 
-	entry = Tcl_FindHashEntry(listPtr->itemAttrTable, (char *)i);
+	entry = Tcl_FindHashEntry(listPtr->itemAttrTable, (char *) INT2PTR(i));
 
 	/*
 	 * If the listbox is enabled, items may be drawn differently; they may
@@ -1925,7 +1926,7 @@ DisplayListbox(
 	 */
 
 	if (listPtr->state & STATE_NORMAL) {
-	    if (Tcl_FindHashEntry(listPtr->selection, (char *)i) != NULL) {
+	    if (Tcl_FindHashEntry(listPtr->selection, (char *) INT2PTR(i))) {
 		/*
 		 * Selected items are drawn differently.
 		 */
@@ -2008,7 +2009,7 @@ DisplayListbox(
 		/* Draw bottom bevel */
 		if (i + 1 == listPtr->nElements ||
 			Tcl_FindHashEntry(listPtr->selection,
-				(char *)(i + 1)) == NULL ) {
+				(char *) INT2PTR(i + 1)) == NULL ) {
 		    Tk_3DHorizontalBevel(tkwin, pixmap, selectedBg, x-left,
 			    y + listPtr->lineHeight - listPtr->selBorderWidth,
 			    width+left+right, listPtr->selBorderWidth, 0, 0, 0,
@@ -2445,13 +2446,13 @@ ListboxDeleteSubCmd(
 	 * Remove selection information.
 	 */
 
-	entry = Tcl_FindHashEntry(listPtr->selection, (char *)i);
+	entry = Tcl_FindHashEntry(listPtr->selection, (char *) INT2PTR(i));
 	if (entry != NULL) {
 	    listPtr->numSelected--;
 	    Tcl_DeleteHashEntry(entry);
 	}
 
-	entry = Tcl_FindHashEntry(listPtr->itemAttrTable, (char *)i);
+	entry = Tcl_FindHashEntry(listPtr->itemAttrTable, (char *) INT2PTR(i));
 	if (entry != NULL) {
 	    ckfree((char *)Tcl_GetHashValue(entry));
 	    Tcl_DeleteHashEntry(entry);
@@ -3031,7 +3032,7 @@ ListboxSelect(
      */
 
     for (i = first; i <= last; i++) {
-	entry = Tcl_FindHashEntry(listPtr->selection, (char *)i);
+	entry = Tcl_FindHashEntry(listPtr->selection, (char *) INT2PTR(i));
 	if (entry != NULL) {
 	    if (!select) {
 		Tcl_DeleteHashEntry(entry);
@@ -3042,8 +3043,8 @@ ListboxSelect(
 	    }
 	} else {
 	    if (select) {
-		entry = Tcl_CreateHashEntry(listPtr->selection, (char *)i,
-			&isNew);
+		entry = Tcl_CreateHashEntry(listPtr->selection,
+			(char *) INT2PTR(i), &isNew);
 		Tcl_SetHashValue(entry, (ClientData) NULL);
 		listPtr->numSelected++;
 		if (firstRedisplay < 0) {
@@ -3114,7 +3115,7 @@ ListboxFetchSelection(
     needNewline = 0;
     Tcl_DStringInit(&selection);
     for (i = 0; i < listPtr->nElements; i++) {
-	entry = Tcl_FindHashEntry(listPtr->selection, (char *)i);
+	entry = Tcl_FindHashEntry(listPtr->selection, (char *) INT2PTR(i));
 	if (entry != NULL) {
 	    if (needNewline) {
 		Tcl_DStringAppend(&selection, "\n", 1);
@@ -3430,7 +3431,7 @@ ListboxListVarProc(
 	     * Clean up selection.
 	     */
 
-	    entry = Tcl_FindHashEntry(listPtr->selection, (char *)i);
+	    entry = Tcl_FindHashEntry(listPtr->selection, (char *) INT2PTR(i));
 	    if (entry != NULL) {
 		listPtr->numSelected--;
 		Tcl_DeleteHashEntry(entry);
@@ -3440,7 +3441,8 @@ ListboxListVarProc(
 	     * Clean up attributes.
 	     */
 
-	    entry = Tcl_FindHashEntry(listPtr->itemAttrTable, (char *)i);
+	    entry = Tcl_FindHashEntry(listPtr->itemAttrTable,
+		    (char *) INT2PTR(i));
 	    if (entry != NULL) {
 		ckfree((char *) Tcl_GetHashValue(entry));
 		Tcl_DeleteHashEntry(entry);
@@ -3514,23 +3516,23 @@ MigrateHashEntries(
 
     if (offset > 0) {
 	for (i = last; i >= first; i--) {
-	    entry = Tcl_FindHashEntry(table, (char *)i);
+	    entry = Tcl_FindHashEntry(table, (char *) INT2PTR(i));
 	    if (entry != NULL) {
 		clientData = Tcl_GetHashValue(entry);
 		Tcl_DeleteHashEntry(entry);
-		entry = Tcl_CreateHashEntry(table, (char *)(i + offset),
-			&isNew);
+		entry = Tcl_CreateHashEntry(table,
+			(char *) INT2PTR(i + offset), &isNew);
 		Tcl_SetHashValue(entry, clientData);
 	    }
 	}
     } else {
 	for (i = first; i <= last; i++) {
-	    entry = Tcl_FindHashEntry(table, (char *)i);
+	    entry = Tcl_FindHashEntry(table, (char *) INT2PTR(i));
 	    if (entry != NULL) {
 		clientData = Tcl_GetHashValue(entry);
 		Tcl_DeleteHashEntry(entry);
-		entry = Tcl_CreateHashEntry(table, (char *)(i + offset),
-			&isNew);
+		entry = Tcl_CreateHashEntry(table,
+			(char *) INT2PTR(i + offset), &isNew);
 		Tcl_SetHashValue(entry, clientData);
 	    }
 	}

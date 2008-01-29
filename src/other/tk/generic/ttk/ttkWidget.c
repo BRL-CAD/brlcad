@@ -1,8 +1,7 @@
 /* $Id$
  * Copyright (c) 2003, Joe English
  *
- * Ttk widget implementation, core widget utilities.
- *
+ * Core widget utilities.
  */
 
 #include <string.h>
@@ -20,13 +19,13 @@
 
 /* UpdateLayout --
  * 	Call the widget's get-layout hook to recompute corePtr->layout.
- * 	Returns TCL_OK if successful, returns TCL_ERROR and leaves 
+ * 	Returns TCL_OK if successful, returns TCL_ERROR and leaves
  * 	the layout unchanged otherwise.
  */
 static int UpdateLayout(Tcl_Interp *interp, WidgetCore *corePtr)
 {
     Ttk_Theme themePtr = Ttk_GetCurrentTheme(interp);
-    Ttk_Layout newLayout = 
+    Ttk_Layout newLayout =
     	corePtr->widgetSpec->getLayoutProc(interp, themePtr,corePtr);
 
     if (newLayout) {
@@ -52,83 +51,78 @@ static void SizeChanged(WidgetCore *corePtr)
     }
 }
 
-/*
- * RedisplayWidget --
- *	Redraw a widget.  Called as an idle handler.
+#ifndef TK_NO_DOUBLE_BUFFERING
+
+/* BeginDrawing --
+ * 	Returns a Drawable for drawing the widget contents.
+ *	This is normally an off-screen Pixmap, copied to
+ *	the window by EndDrawing().
  */
-
-static void RedisplayWidget(ClientData recordPtr)
+static Drawable BeginDrawing(Tk_Window tkwin)
 {
-    WidgetCore *corePtr = (WidgetCore *)recordPtr;
-    Tk_Window tkwin = corePtr->tkwin;
-    Drawable d;
-#ifndef TK_NO_DOUBLE_BUFFERING
-    XGCValues gcValues;
-    GC gc;
-#endif /* TK_NO_DOUBLE_BUFFERING */
-
-    corePtr->flags &= ~REDISPLAY_PENDING;
-    if (!Tk_IsMapped(tkwin)) {
-	return;
-    }
-
-#ifndef TK_NO_DOUBLE_BUFFERING
-    /*
-     * Get a Pixmap for drawing in the background:
-     */
-    d = Tk_GetPixmap(Tk_Display(tkwin), Tk_WindowId(tkwin),
+    return Tk_GetPixmap(Tk_Display(tkwin), Tk_WindowId(tkwin),
 	    Tk_Width(tkwin), Tk_Height(tkwin),
 	    DefaultDepthOfScreen(Tk_Screen(tkwin)));
+}
 
-    /*
-     * Get a GC for blitting the pixmap to the display:
-     */
+/* EndDrawing --
+ *	Copy the drawable contents to the screen and release resources.
+ */
+static void EndDrawing(Tk_Window tkwin, Drawable d)
+{
+    XGCValues gcValues;
+    GC gc;
+
     gcValues.function = GXcopy;
     gcValues.graphics_exposures = False;
-    gc = Tk_GetGC(corePtr->tkwin, GCFunction|GCGraphicsExposures, &gcValues);
-#else
-    d = Tk_WindowId(tkwin);
-#endif /* TK_NO_DOUBLE_BUFFERING */
+    gc = Tk_GetGC(tkwin, GCFunction|GCGraphicsExposures, &gcValues);
 
-    /*
-     * Recompute layout and draw widget contents:
-     */
-    corePtr->widgetSpec->layoutProc(recordPtr);
-    corePtr->widgetSpec->displayProc(recordPtr, d);
-
-#ifndef TK_NO_DOUBLE_BUFFERING
-    /*
-     * Copy to the screen.
-     */
     XCopyArea(Tk_Display(tkwin), d, Tk_WindowId(tkwin), gc,
 	    0, 0, (unsigned) Tk_Width(tkwin), (unsigned) Tk_Height(tkwin),
 	    0, 0);
 
-    /*
-     * Release resources
-     */
     Tk_FreePixmap(Tk_Display(tkwin), d);
     Tk_FreeGC(Tk_Display(tkwin), gc);
-#endif /* TK_NO_DOUBLE_BUFFERING */
+}
+#else
+/* No double-buffering: draw directly into the window. */
+static Drawable BeginDrawing(Tk_Window tkwin) { return Tk_WindowId(tkwin); }
+static void EndDrawing(Tk_Window tkwin, Drawable d) { }
+#endif
+
+/* DrawWidget --
+ *	Redraw a widget.  Called as an idle handler.
+ */
+static void DrawWidget(ClientData recordPtr)
+{
+    WidgetCore *corePtr = recordPtr;
+
+    corePtr->flags &= ~REDISPLAY_PENDING;
+    if (Tk_IsMapped(corePtr->tkwin)) {
+	Drawable d = BeginDrawing(corePtr->tkwin);
+	corePtr->widgetSpec->layoutProc(recordPtr);
+	corePtr->widgetSpec->displayProc(recordPtr, d);
+	EndDrawing(corePtr->tkwin, d);
+    }
 }
 
-/* TtkRedisplayWidget -- 
+/* TtkRedisplayWidget --
  * 	Schedule redisplay as an idle handler.
  */
-void TtkRedisplayWidget(WidgetCore *corePtr) 
+void TtkRedisplayWidget(WidgetCore *corePtr)
 {
     if (corePtr->flags & WIDGET_DESTROYED) {
 	return;
     }
 
     if (!(corePtr->flags & REDISPLAY_PENDING)) {
-	Tcl_DoWhenIdle(RedisplayWidget, (ClientData) corePtr);
+	Tcl_DoWhenIdle(DrawWidget, (ClientData) corePtr);
 	corePtr->flags |= REDISPLAY_PENDING;
     }
 }
 
 /* TtkResizeWidget --
- * 	Recompute widget size, schedule geometry propagation and redisplay. 
+ * 	Recompute widget size, schedule geometry propagation and redisplay.
  */
 void TtkResizeWidget(WidgetCore *corePtr)
 {
@@ -240,7 +234,7 @@ WidgetCleanup(char *memPtr)
  *
  *	For Deactivate/Activate pseudo-events, clear/set the background state flag.
  *
- *	<<NOTE-REALIZED>> On the first ConfigureNotify event 
+ *	<<NOTE-REALIZED>> On the first ConfigureNotify event
  *	(which indicates that the window has just been created),
  *	update the layout.  This is to work around two problems:
  *	(1) Virtual events aren't delivered to unrealized widgets
@@ -286,7 +280,7 @@ static void CoreEventProc(ClientData clientData, XEvent *eventPtr)
 		    CoreEventMask,CoreEventProc,clientData);
 
 	    if (corePtr->flags & REDISPLAY_PENDING) {
-		Tcl_CancelIdleCall(RedisplayWidget, clientData);
+		Tcl_CancelIdleCall(DrawWidget, clientData);
 	    }
 
 	    corePtr->widgetSpec->cleanupProc(corePtr);
@@ -484,7 +478,7 @@ Ttk_Layout TtkWidgetGetLayout(
     WidgetCore *corePtr = recordPtr;
     const char *styleName = 0;
 
-    if (corePtr->styleObj) 
+    if (corePtr->styleObj)
     	styleName = Tcl_GetString(corePtr->styleObj);
 
     if (!styleName || *styleName == '\0')
@@ -496,8 +490,8 @@ Ttk_Layout TtkWidgetGetLayout(
 
 /*
  * TtkWidgetGetOrientedLayout --
- * 	Helper routine.  Same as TtkWidgetGetLayout, but prefixes 
- * 	"Horizontal." or "Vertical." to the style name, depending 
+ * 	Helper routine.  Same as TtkWidgetGetLayout, but prefixes
+ * 	"Horizontal." or "Vertical." to the style name, depending
  * 	on the value of the 'orient' option.
  */
 Ttk_Layout TtkWidgetGetOrientedLayout(
@@ -511,18 +505,17 @@ Ttk_Layout TtkWidgetGetOrientedLayout(
 
     Tcl_DStringInit(&styleName);
 
-    /* Prefix: 
+    /* Prefix:
      */
     Ttk_GetOrientFromObj(NULL, orientObj, &orient);
     if (orient == TTK_ORIENT_HORIZONTAL)
 	Tcl_DStringAppend(&styleName, "Horizontal.", -1);
-    else 
+    else
 	Tcl_DStringAppend(&styleName, "Vertical.", -1);
-
 
     /* Add base style name:
      */
-    if (corePtr->styleObj) 
+    if (corePtr->styleObj)
     	baseStyleName = Tcl_GetString(corePtr->styleObj);
     if (!baseStyleName || *baseStyleName == '\0')
     	baseStyleName = corePtr->widgetSpec->className;
@@ -531,7 +524,7 @@ Ttk_Layout TtkWidgetGetOrientedLayout(
 
     /* Create layout:
      */
-    layout= Ttk_CreateLayout(interp, themePtr, Tcl_DStringValue(&styleName), 
+    layout= Ttk_CreateLayout(interp, themePtr, Tcl_DStringValue(&styleName),
 	recordPtr, corePtr->optionTable, corePtr->tkwin);
 
     Tcl_DStringFree(&styleName);
@@ -784,7 +777,7 @@ int TtkWidgetIdentifyCommand(
 	|| Tcl_GetIntFromObj(interp, objv[3], &y) != TCL_OK)
 	return TCL_ERROR;
 
-    node = Ttk_LayoutIdentify(corePtr->layout, x, y); 
+    node = Ttk_LayoutIdentify(corePtr->layout, x, y);
     if (node) {
 	const char *elementName = Ttk_LayoutNodeName(node);
 	Tcl_SetObjResult(interp,Tcl_NewStringObj(elementName,-1));

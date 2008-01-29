@@ -7,15 +7,13 @@
 '\" RCS: @(#) $Id$
 '\" 
 .so man.macros
-.TH ttk_widget n 8.5 Tk "Tk Themed Widget"
+.TH ttk::widget n 8.5 Tk "Tk Themed Widget"
 .BS
 .SH NAME
-ttk_widget \- Standard options and commands supported by Tk themed widgets
+ttk::widget \- Standard options and commands supported by Tk themed widgets
 .BE
-
 .SH DESCRIPTION
 This manual describes common widget options and commands.
-
 .SH "STANDARD OPTIONS"
 The following options are supported by all Tk themed widgets:
 .OP \-class undefined undefined
@@ -41,15 +39,13 @@ or the empty string.
 See \fIoptions(n)\fR in the Tk reference manual for the full description.
 .OP \-style style Style
 May be used to specify a custom widget style.
-
 .SH "SCROLLABLE WIDGET OPTIONS"
-.PP
 The following options are supported by widgets that
 are controllable by a scrollbar.  
 See \fIscrollbar(n)\fR for more information
 .OP \-xscrollcommand xScrollCommand ScrollCommand
 A command prefix, used to communicate with horizontal scrollbars.
-.br
+.RS
 When the view in the widget's window changes, the widget will
 generate a Tcl command by concatenating the scroll command and
 two numbers.
@@ -59,27 +55,30 @@ and 1 indicates the end.
 The first fraction indicates the first information in the widget
 that is visible in the window, and the second fraction indicates
 the information just after the last portion that is visible.
-.br
+.PP
 Typically the \fBxScrollCommand\fR option consists of the path name 
-of a \fBscrollbar\fR widget followed by ``set'', e.g. ``.x.scrollbar set''.
+of a \fBscrollbar\fR widget followed by
+.QW set ,
+e.g.
+.QW ".x.scrollbar set" .
 This will cause the scrollbar to be updated whenever the view in the 
 window changes.
-.br
+.PP
 If this option is set to the empty string (the default),
-then no command is be executed.
+then no command will be executed.
+.RE
 .OP \-yscrollcommand yScrollCommand ScrollCommand
 A command prefix, used to communicate with vertical scrollbars.
-See the description of \fB-xscrollcommand\fR above for details.
-
+See the description of \fB\-xscrollcommand\fR above for details.
 .SH "LABEL OPTIONS"
 The following options are supported by labels, buttons,
 and other button-like widgets:
 .OP \-text text Text
 Specifies a text string to be displayed inside the widget
-(unless overridden by \fB-textvariable\fR).
+(unless overridden by \fB\-textvariable\fR).
 .OP \-textvariable textVariable Variable
 Specifies the name of variable whose value will be used
-in place of the \fB-text\fR resource.
+in place of the \fB\-text\fR resource.
 .OP \-underline underline Underline
 If set, specifies the integer index (0-based) of a character to underline 
 in the text string.
@@ -94,7 +93,7 @@ the widget is in a particular state or combination of states.
 All images in the list should have the same size.
 .OP \-compound compound Compound
 Specifies how to display the image relative to the text,
-in the case both \fB-text\fR and \fB-image\fR are present.
+in the case both \fB\-text\fR and \fB\-image\fR are present.
 Valid values are: 
 .RS
 .IP text
@@ -116,14 +115,14 @@ If greater than zero, specifies how much space, in character widths,
 to allocate for the text label.  
 If less than zero, specifies a minimum width.
 If zero or unspecified, the natural width of the text label is used.
-
 .SH "COMPATIBILITY OPTIONS"
 .OP \-state state State
 May be set to \fBnormal\fR or \fBdisabled\fR
 to control the \fBdisabled\fR state bit.
-This is a ``write-only'' option: setting it changes the
-widget state, but the \fBstate\fR widget command does
-not affect the state option.
+This is a write-only option:
+setting it changes the widget state, 
+but the \fBstate\fR widget command 
+does not affect the \fB\-state\fR option.
 
 .SH COMMANDS
 .TP
@@ -155,11 +154,12 @@ If \fIscript\fR is specified, equivalent to
 if {[\fIpathName\fR instate \fIstateSpec\fR]} \fIscript\fR
 .CE
 .TP 
-\fIpathName \fBstate\fR ?\fIstateSpec\fR
+\fIpathName \fBstate\fR ?\fIstateSpec\fR?
 Modify or inquire widget state.
 If \fIstateSpec\fR is present, sets the widget state: 
 for each flag in \fIstateSpec\fR, sets the corresponding flag
 or clears it if prefixed by an exclamation point.
+.RS
 Returns a new state spec indicating which flags were changed:
 .CS
 set changes [\fIpathName \fRstate \fIspec\fR]
@@ -168,30 +168,44 @@ set changes [\fIpathName \fRstate \fIspec\fR]
 will restore \fIpathName\fR to the original state.
 If \fIstateSpec\fR is not specified, 
 returns a list of the currently-enabled state flags.
+.RE
 .SH "WIDGET STATES"
 The widget state is a bitmap of independent state flags.
 Widget state flags include:
 .TP
 \fBactive\fR
 The mouse cursor is over the widget 
-and pressing a mouse button will cause some action to occur.
-(aka "prelight" (Gnome), "hot" (Windows), "hover").
+and pressing a mouse button will cause some action to occur. (aka
+.QW prelight
+(Gnome),
+.QW hot
+(Windows),
+.QW hover ).
 .TP
 \fBdisabled\fR
-Widget is disabled under program control 
-(aka "unavailable", "inactive") 
+Widget is disabled under program control (aka
+.QW unavailable ,
+.QW inactive ) 
 .TP
 \fBfocus\fR
 Widget has keyboard focus 
 .TP
 \fBpressed\fR
-Widget is being pressed (aka "armed" in Motif). 
+Widget is being pressed (aka
+.QW armed
+in Motif). 
 .TP
 \fBselected\fR
-"On", "true", or "current" for things like checkbuttons and radiobuttons. 
+.QW On ,
+.QW true ,
+or
+.QW current
+for things like checkbuttons and radiobuttons. 
 .TP
 \fBbackground\fR
-Windows and the Mac have a notion of an "active" or foreground window.
+Windows and the Mac have a notion of an
+.QW active
+or foreground window.
 The \fBbackground\fR state is set for widgets in a background window,
 and cleared for those in the foreground window.
 .TP
@@ -200,9 +214,11 @@ Widget should not allow user modification.
 .TP
 \fBalternate\fR
 A widget-specific alternate display format.
-For example, used for checkbuttons and radiobuttons 
-in the "tristate" or "mixed" state,
-and for buttons with \fB-default active\fR.
+For example, used for checkbuttons and radiobuttons in the
+.QW tristate
+or
+.QW mixed
+state, and for buttons with \fB\-default active\fR.
 .TP
 \fBinvalid\fR
 The widget's value is invalid.
@@ -212,23 +228,20 @@ entry widget value failed validation.)
 A \fIstate specification\fR or \fIstateSpec\fR is a list
 of state names, optionally prefixed with an exclamation point (!)
 indicating that the bit is off.
-
 .SH EXAMPLES
 .CS
 set b [ttk::button .b]
 
 # Disable the widget:
-$b state disabled			
+$b state disabled
 
 # Invoke the widget only if it is currently pressed and enabled:
-$b instate {pressed !disabled} { .b invoke }	
+$b instate {pressed !disabled} { .b invoke }
 
 # Reenable widget:
-$b state !disabled			
+$b state !disabled
 .CE
-
 .SH "SEE ALSO"
-ttk_intro(n), style(n)
-
+ttk::intro(n), style(n)
 .SH KEYWORDS
 state, configure, option

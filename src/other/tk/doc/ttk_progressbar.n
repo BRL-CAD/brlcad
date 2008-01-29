@@ -7,15 +7,13 @@
 '\" RCS: @(#) $Id$
 '\" 
 .so man.macros
-.TH ttk_progressbar n 8.5 Tk "Tk Themed Widget"
+.TH ttk::progressbar n 8.5 Tk "Tk Themed Widget"
 .BS
-.\" Use _ instead of :: as the name becomes a filename on install
 .SH NAME
-ttk_progressbar \- Provide progress feedback
+ttk::progressbar \- Provide progress feedback
 .SH SYNOPSIS
 \fBttk::progressbar\fR \fIpathName \fR?\fIoptions\fR?
 .BE
-
 .SH DESCRIPTION
 A \fBttk::progressbar\fR widget shows the status of a long-running
 operation.  They can operate in two modes: \fIdeterminate\fR mode shows the
@@ -25,7 +23,6 @@ that something is happening.
 .SO
 \-class	\-cursor	\-takefocus	\-style
 .SE
-
 .SH "WIDGET-SPECIFIC OPTIONS"
 .OP \-orient orient Orient
 One of \fBhorizontal\fR or \fBvertical\fR.
@@ -36,37 +33,37 @@ Specifies the length of the long axis of the progress bar
 .OP \-mode mode Mode
 One of \fBdeterminate\fR or \fBindeterminate\fR.
 .OP \-maximum maximum Maximum
-A floating point number specifying the maximum \fB-value\fR.
+A floating point number specifying the maximum \fB\-value\fR.
 Defaults to 100.
 .OP \-value value Value
 The current value of the progress bar.
 In \fIdeterminate\fR mode, this represents the amount of work completed.
-In \fIindeterminate\fR mode, it is interpreted modulo \fB-maximum\fR;
-that is, the progress bar completes one "cycle" when
-the \fB-value\fR increases by \fB-maximum\fR.
+In \fIindeterminate\fR mode, it is interpreted modulo \fB\-maximum\fR;
+that is, the progress bar completes one
+.QW cycle
+when the \fB\-value\fR increases by \fB\-maximum\fR.
 .OP \-variable variable Variable
-The name of a Tcl variable which is linked to the \fB-value\fR.
-If specified, the \fB-value\fR of the progress bar is 
+The name of a Tcl variable which is linked to the \fB\-value\fR.
+If specified, the \fB\-value\fR of the progress bar is 
 automatically set to the value of the variable whenever 
 the latter is modified.
 .OP \-phase phase Phase
 Read-only option.
 The widget periodically increments the value of this option 
-whenever the \fB-value\fR is greater than 0 and,
-in \fIdeterminate\fR mode, less than \fB-maximum\fR.
+whenever the \fB\-value\fR is greater than 0 and,
+in \fIdeterminate\fR mode, less than \fB\-maximum\fR.
 This option may be used by the current theme 
 to provide additional animation effects.
-
 .SH "WIDGET COMMAND"
 .TP
 \fIpathName \fBcget\fR \fIoption\fR
-Returns the current value of the specified \fIoption\fR; see \fIttk_widget(n)\fR.
+Returns the current value of the specified \fIoption\fR; see \fIttk::widget(n)\fR.
 .TP
 \fIpathName \fBconfigure\fR ?\fIoption\fR? ?\fIvalue option value ...\fR?
-Modify or query widget options; see \fIttk_widget(n)\fR.
+Modify or query widget options; see \fIttk::widget(n)\fR.
 .TP
 \fIpathName \fBinstate \fIstatespec\fR ?\fIscript\fR?
-Test the widget state; see \fIttk_widget(n)\fR.
+Test the widget state; see \fIttk::widget(n)\fR.
 .TP
 \fIpathName \fBstart\fR ?\fIinterval\fR?
 Begin autoincrement mode:
@@ -75,15 +72,14 @@ every \fIinterval\fR milliseconds.
 If omitted, \fIinterval\fR defaults to 50 milliseconds (20 steps/second).
 .TP
 \fIpathName \fBstate\fR ?\fIstateSpec\fR?
-Modify or query the widget state; see \fIttk_widget(n)\fR.
+Modify or query the widget state; see \fIttk::widget(n)\fR.
 .TP
 \fIpathName \fBstep\fR ?\fIamount\fR?
-Increments the \fB-value\fR by \fIamount\fR.  
+Increments the \fB\-value\fR by \fIamount\fR.  
 \fIamount\fR defaults to 1.0 if omitted.
 .TP
 \fIpathName \fBstop\fR
 Stop autoincrement mode:
 cancels any recurring timer event initiated by \fIpathName \fBstart\fR.
-
 .SH "SEE ALSO"
-ttk_widget(n)
+ttk::widget(n)

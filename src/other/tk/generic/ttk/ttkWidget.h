@@ -6,7 +6,8 @@
 #ifndef _TTKWIDGET
 #define _TTKWIDGET
 
-/* State flags for 'flags' field.
+/*
+ * State flags for 'flags' field.
  */
 #define WIDGET_DESTROYED	0x0001
 #define REDISPLAY_PENDING 	0x0002	/* scheduled call to RedisplayWidget */
@@ -91,27 +92,33 @@ struct WidgetSpec_
 MODULE_SCOPE int  TtkNullInitialize(Tcl_Interp *, void *);
 MODULE_SCOPE int  TtkNullPostConfigure(Tcl_Interp *, void *, int);
 MODULE_SCOPE void TtkNullCleanup(void *recordPtr);
-MODULE_SCOPE Ttk_Layout TtkWidgetGetLayout(Tcl_Interp *, Ttk_Theme, void *recordPtr);
+MODULE_SCOPE Ttk_Layout TtkWidgetGetLayout(
+	Tcl_Interp *, Ttk_Theme, void *recordPtr);
 MODULE_SCOPE Ttk_Layout TtkWidgetGetOrientedLayout(
-    Tcl_Interp *, Ttk_Theme, void *recordPtr, Tcl_Obj *orientObj);
+	Tcl_Interp *, Ttk_Theme, void *recordPtr, Tcl_Obj *orientObj);
 MODULE_SCOPE int  TtkWidgetSize(void *recordPtr, int *w, int *h);
 MODULE_SCOPE void TtkWidgetDoLayout(void *recordPtr);
 MODULE_SCOPE void TtkWidgetDisplay(void *recordPtr, Drawable);
 
 MODULE_SCOPE int TtkCoreConfigure(Tcl_Interp*, void *, int mask);
 
-/* Commands present in all widgets:
- */
-MODULE_SCOPE int TtkWidgetConfigureCommand(Tcl_Interp *, int, Tcl_Obj*const[], void *);
-MODULE_SCOPE int TtkWidgetCgetCommand(Tcl_Interp *, int, Tcl_Obj*const[], void *);
-MODULE_SCOPE int TtkWidgetInstateCommand(Tcl_Interp *, int, Tcl_Obj*const[], void *);
-MODULE_SCOPE int TtkWidgetStateCommand(Tcl_Interp *, int, Tcl_Obj*const[], void *);
-
 /* Common widget commands:
  */
-MODULE_SCOPE int TtkWidgetIdentifyCommand(Tcl_Interp *, int, Tcl_Obj*const[], void *);
+MODULE_SCOPE int TtkWidgetConfigureCommand(
+	Tcl_Interp *, int, Tcl_Obj*const[], void *);
+MODULE_SCOPE int TtkWidgetCgetCommand(
+	Tcl_Interp *, int, Tcl_Obj*const[], void *);
+MODULE_SCOPE int TtkWidgetInstateCommand(
+	Tcl_Interp *, int, Tcl_Obj*const[], void *);
+MODULE_SCOPE int TtkWidgetStateCommand(
+	Tcl_Interp *, int, Tcl_Obj*const[], void *);
+MODULE_SCOPE int TtkWidgetIdentifyCommand(
+	Tcl_Interp *, int, Tcl_Obj*const[], void *);
 
-MODULE_SCOPE int TtkWidgetConstructorObjCmd(ClientData,Tcl_Interp*,int,Tcl_Obj*CONST[]);
+/* Widget constructor:
+ */
+MODULE_SCOPE int TtkWidgetConstructorObjCmd(
+	ClientData, Tcl_Interp*, int, Tcl_Obj*const[]);
 
 #define RegisterWidget(interp, name, specPtr) \
     Tcl_CreateObjCommand(interp, name, \
@@ -236,7 +243,8 @@ MODULE_SCOPE const char *ttkDefaultStrings[];
 /*
  * ... other option types...
  */
-MODULE_SCOPE int TtkGetLabelAnchorFromObj(Tcl_Interp*,Tcl_Obj*,Ttk_PositionSpec *);
+MODULE_SCOPE int TtkGetLabelAnchorFromObj(
+	Tcl_Interp*, Tcl_Obj*, Ttk_PositionSpec *);
 
 /*
  * Platform-specific initialization.

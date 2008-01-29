@@ -610,15 +610,12 @@ ConfigureMenuButton(
 	Tk_FreeSavedOptions(&savedOptions);
     }
 
-    if ((mbPtr->image == NULL) && (mbPtr->bitmap == None)
-	    && (mbPtr->textVarName != NULL)) {
-
+    if (mbPtr->textVarName != NULL) {
 	/*
-	 * The menubutton displays the value of a variable. Set up a trace to
-	 * watch for any changes in it, create the variable if it doesn't
-	 * exist, and fetch its current value.
+	 * If no image or -compound is used, display the value of a variable.
+	 * Set up a trace to watch for any changes in it, create the variable
+	 * if it doesn't exist, and fetch its current value.
 	 */
-
 	CONST char *value;
 
 	value = Tcl_GetVar(interp, mbPtr->textVarName, TCL_GLOBAL_ONLY);

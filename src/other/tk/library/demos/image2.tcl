@@ -22,7 +22,7 @@ proc loadDir w {
     global dirName
 
     $w.f.list delete 0 end
-    foreach i [lsort [glob -directory $dirName *]] {
+    foreach i [lsort [glob -type f -directory $dirName *]] {
 	$w.f.list insert end [file tail $i]
     }
 }
@@ -57,7 +57,12 @@ proc loadImage {w x y} {
     global dirName
 
     set file [file join $dirName [$w.f.list get @$x,$y]]
-    image2a configure -file $file
+    if {[catch {
+	image2a configure -file $file
+    }]} then {
+	# Mark the file as not loadable
+	$w.f.list itemconfigure @$x,$y -bg \#c00000 -selectbackground \#ff0000
+    }
 }
 
 set w .image2

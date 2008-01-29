@@ -47,7 +47,7 @@ Specifies a desired height for the button.
 If an image or bitmap is being displayed in the button then the value is in
 screen units (i.e. any of the forms acceptable to \fBTk_GetPixels\fR);
 for text it is in lines of text.
-If this option isn't specified, the button's desired height is computed
+If this option is not specified, the button's desired height is computed
 from the size of the image or bitmap or text being displayed in it.
 .OP \-overrelief overRelief OverRelief
 Specifies an alternative relief for the button, to be used when the
@@ -72,7 +72,7 @@ Specifies a desired width for the button.
 If an image or bitmap is being displayed in the button then the value is in
 screen units (i.e. any of the forms acceptable to \fBTk_GetPixels\fR);
 for text it is in characters.
-If this option isn't specified, the button's desired width is computed
+If this option is not specified, the button's desired width is computed
 from the size of the image or bitmap or text being displayed in it.
 .BE
 
@@ -178,23 +178,25 @@ The behavior of buttons can be changed by defining new bindings for
 individual widgets or by redefining the class bindings.
 
 .SH EXAMPLES
-This is the classic Tk "Hello, World!" demonstration:
+This is the classic Tk
+.QW "Hello, World!"
+demonstration:
 .PP
 .CS
-    \fBbutton\fR .b -text "Hello, World!" -command exit
+    \fBbutton\fR .b \-text "Hello, World!" \-command exit
     pack .b
 .CE
 .PP
 This example demonstrates how to handle button accelerators:
 .PP
 .CS
-    \fBbutton\fR .b1 -text Hello -underline 0
-    \fBbutton\fR .b2 -text World -underline 0
-    bind . <Key-h> {.b1 flash; .b1 invoke}
-    bind . <Key-w> {.b2 flash; .b2 invoke}
+    \fBbutton\fR .b1 \-text Hello \-underline 0
+    \fBbutton\fR .b2 \-text World \-underline 0
+    bind . <Key\-h> {.b1 flash; .b1 invoke}
+    bind . <Key\-w> {.b2 flash; .b2 invoke}
     pack .b1 .b2
 .CE
 .SH "SEE ALSO"
-ttk_button(n)
+ttk::button(n)
 .SH KEYWORDS
 button, widget

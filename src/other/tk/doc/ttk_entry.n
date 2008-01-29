@@ -10,28 +10,25 @@
 '\" RCS: @(#) $Id$
 '\" 
 .so man.macros
-.TH ttk_entry n 8.5 Tk "Tk Themed Widget"
+.TH ttk::entry n 8.5 Tk "Tk Themed Widget"
 .BS
-.\" Use _ instead of :: as the name becomes a filename on install
 .SH NAME
-ttk_entry \- Editable text field widget
+ttk::entry \- Editable text field widget
 .SH SYNOPSIS
 \fBttk::entry\fR \fIpathName \fR?\fIoptions\fR?
 .BE
-
 .SH DESCRIPTION
 .PP
 An \fBttk::entry\fR widget displays a one-line text string and
 allows that string to be edited by the user.
 The value of the string may be linked to a Tcl variable 
-with the \fB-textvariable\fR option.
+with the \fB\-textvariable\fR option.
 Entry widgets support horizontal scrolling with the 
-standard \fB-xscrollcommand\fR option and \fBxview\fR widget command.
+standard \fB\-xscrollcommand\fR option and \fBxview\fR widget command.
 .SO
 \-class	\-cursor	\-style	\-takefocus
 \-xscrollcommand
 .SE
-
 .SH "WIDGET-SPECIFIC OPTIONS"
 .OP \-exportselection exportSelection ExportSelection
 A boolean value specifying whether or not 
@@ -57,14 +54,16 @@ One of \fBleft\fR, \fBcenter\fR, or \fBright\fR.
 If this option is specified, then the true contents of the entry
 are not displayed in the window.
 Instead, each character in the entry's value will be displayed as
-the first character in the value of this option, such as ``*''.
+the first character in the value of this option, such as
+.QW *
+or a bullet.
 This is useful, for example, if the entry is to be used to enter
 a password.
 If characters in the entry are selected and copied elsewhere, the
 information copied will be what is displayed, not the true contents
 of the entry.
 .OP \-state state State
-Compatibility option; see \fIttk_widget(n)\fR for details.
+Compatibility option; see \fIttk::widget(n)\fR for details.
 Specifies one of three states for the entry,
 \fBnormal\fR, \fBdisabled\fR, or \fBreadonly\fR.
 See \fBWIDGET STATES\fR, below.
@@ -88,8 +87,6 @@ Specifies an integer value indicating the desired width of the entry window,
 in average-size characters of the widget's font.
 .\" Not in ttk: If the value is less than or equal to zero, the widget picks a
 .\" Not in ttk: size just large enough to hold its current text.
-.BE
-
 .SH NOTES
 A portion of the entry may be selected as described below.
 If an entry is exporting its selection (see the \fBexportSelection\fR
@@ -107,7 +104,6 @@ may be used to change the view in the window.  Entries use
 the standard \fBxScrollCommand\fR mechanism for interacting with
 scrollbars (see the description of the \fBxScrollCommand\fR option
 for details).
-
 .SH "INDICES"
 Many of the \fBentry\fR widget commands take one or more indices as
 arguments.  An index specifies a particular character in the entry's
@@ -118,8 +114,9 @@ to the first character in the string.
 .IP \fB@\fInumber\fR
 In this form, \fInumber\fR is treated as an x-coordinate in the
 entry's window;  the character spanning that x-coordinate is used.
-For example, ``\fB@0\fR'' indicates the left-most character in the
-window.
+For example,
+.QW \fB@0\fR
+indicates the left-most character in the window.
 .IP \fBend\fR
 Indicates the character just after the last one in the entry's string.
 This is equivalent to specifying a numerical index equal to the length
@@ -129,16 +126,18 @@ Indicates the character adjacent to and immediately following the
 insert cursor.
 .IP \fBsel.first\fR
 Indicates the first character in the selection.  It is an error to
-use this form if the selection isn't in the entry window.
+use this form if the selection is not in the entry window.
 .IP \fBsel.last\fR
 Indicates the character just after the last one in the selection.
-It is an error to use this form if the selection isn't in the
+It is an error to use this form if the selection is not in the
 entry window.
 .LP
-Abbreviations may be used for any of the forms above, e.g. ``\fBe\fR''
-or ``\fBsel.f\fR''.  In general, out-of-range indices are automatically
-rounded to the nearest legal value.
-
+Abbreviations may be used for any of the forms above, e.g.
+.QW \fBe\fR
+or
+.QW \fBsel.f\fR .
+In general, out-of-range indices are automatically rounded to the
+nearest legal value.
 .SH "WIDGET COMMAND"
 .PP
 The following commands are possible for entry widgets:
@@ -155,18 +154,18 @@ of the window.
 .TP
 \fIpathName \fBcget\fR \fIoption\fR
 Returns the current value of the specified \fIoption\fR.
-See \fIttk_widget(n)\fR.
+See \fIttk::widget(n)\fR.
 .TP
 \fIpathName \fBconfigure\fR ?\fIoption\fR? ?\fIvalue option value ...\fR?
 Modify or query widget options.
-See \fIttk_widget(n)\fR.
+See \fIttk::widget(n)\fR.
 .TP
 \fIpathName \fBdelete \fIfirst \fR?\fIlast\fR?
 Delete one or more elements of the entry.
 \fIFirst\fR is the index of the first character to delete, and
 \fIlast\fR is the index of the character just after the last
 one to delete.
-If \fIlast\fR isn't specified it defaults to \fIfirst\fR+1,
+If \fIlast\fR is not specified it defaults to \fIfirst\fR+1,
 i.e. a single character is deleted.
 This command returns the empty string.
 .TP
@@ -190,7 +189,7 @@ indicated by \fIindex\fR.  Returns the empty string.
 .TP
 \fIpathName \fBinstate \fIstatespec\fR ?\fIscript\fR?
 Test the widget state.
-See \fIttk_widget(n)\fR.
+See \fIttk::widget(n)\fR.
 .TP
 \fIpathName \fBselection \fIoption arg\fR
 This command is used to adjust the selection within an entry.  It
@@ -199,7 +198,7 @@ has several forms, depending on \fIoption\fR:
 .TP
 \fIpathName \fBselection clear\fR
 Clear the selection if it is currently in this widget.
-If the selection isn't in this widget then the command has no effect.
+If the selection is not in this widget then the command has no effect.
 Returns the empty string.
 .TP
 \fIpathName \fBselection present\fR
@@ -216,11 +215,11 @@ earlier one, then the entry's selection is cleared.
 .TP
 \fIpathName \fBstate\fR ?\fIstateSpec\fR?
 Modify or query the widget state.
-See \fIttk_widget(n)\fR.
+See \fIttk::widget(n)\fR.
 .TP
 \fIpathName \fBvalidate\fR
 Force revalidation, independent of the conditions specified 
-by the \fB-validate\fR option.
+by the \fB\-validate\fR option.
 Returns 0 if validation fails, 1 if it succeeds.
 Sets or clears the \fBinvalid\fR state accordingly.
 .TP
@@ -262,19 +261,18 @@ If \fInumber\fR is negative then characters farther to the left
 become visible;  if it is positive then characters farther to the right
 become visible.
 .RE
-
 .SH VALIDATION
-The \fB-validate\fR, \fB-validatecommand\fR, and \fB-invalidcommand\fR
+The \fB\-validate\fR, \fB\-validatecommand\fR, and \fB\-invalidcommand\fR
 options are used to enable entry widget validation.
 .SS "VALIDATION MODES"
 There are two main validation modes: \fIprevalidation\fR,
-in which the \fB-validatecommand\fR is evaluated prior to each edit
+in which the \fB\-validatecommand\fR is evaluated prior to each edit
 and the return value is used to determine whether to accept 
 or reject the change;
-and \fIrevalidation\fR, in which the \fB-validatecommand\fR is 
+and \fIrevalidation\fR, in which the \fB\-validatecommand\fR is 
 evaluated to determine whether the current value is valid.
 .PP
-The \fB-validate\fR option determines when validation occurs;
+The \fB\-validate\fR option determines when validation occurs;
 it may be set to any of the following values:
 .IP \fBnone\fR
 Default.  This means validation will only occur when 
@@ -293,30 +291,30 @@ The entry is revalidated when the entry loses focus.
 .IP \fBall\fR
 Validation is performed for all above conditions.
 .PP
-The \fB-invalidcommand\fR is evaluated whenever
-the \fB-validatecommand\fR returns a false value.
+The \fB\-invalidcommand\fR is evaluated whenever
+the \fB\-validatecommand\fR returns a false value.
 .PP
-The \fB-validatecommand\fR and \fB-invalidcommand\fR
+The \fB\-validatecommand\fR and \fB\-invalidcommand\fR
 may modify the entry widget's value
 via the widget \fBinsert\fR or \fBdelete\fR commands,
-or by setting the linked \fB-textvariable\fR.
+or by setting the linked \fB\-textvariable\fR.
 If either does so during prevalidation,
 then the edit is rejected 
-regardless of the value returned by the \fB-validatecommand\fR.
+regardless of the value returned by the \fB\-validatecommand\fR.
 .PP
-If \fB-validatecommand\fR is empty (the default), 
+If \fB\-validatecommand\fR is empty (the default), 
 validation always succeeds.
 .SS "VALIDATION SCRIPT SUBSTITUTIONS"
 It is possible to perform percent substitutions on the 
-\fB-validatecommand\fR and \fBinvalidCommand\fR,
+\fB\-validatecommand\fR and \fBinvalidCommand\fR,
 just as in a \fBbind\fR script.
 The following substitutions are recognized:
 .IP \fB%d\fR
 Type of action: 1 for \fBinsert\fR prevalidation, 
 0 for \fBdelete\fR prevalidation,
-or -1 for revalidation.
+or \-1 for revalidation.
 .IP \fB%i\fR
-Index of character string to be inserted/deleted, if any, otherwise -1.
+Index of character string to be inserted/deleted, if any, otherwise \-1.
 .IP \fB%P\fR
 In prevalidation, the new value of the entry if the edit is accepted.
 In revalidation, the current value of the entry.
@@ -325,7 +323,7 @@ The current value of entry prior to editing.
 .IP \fB%S\fR
 The text string being inserted/deleted, if any, {} otherwise.
 .IP \fB%v\fR
-The current value of the \fB-validate\fR option.
+The current value of the \fB\-validate\fR option.
 .IP \fB%V\fR
 The validation condition that triggered the callback
 (\fBkey\fR, \fBfocusin\fR, \fBfocusout\fR, or \fBforced\fR).
@@ -334,23 +332,24 @@ The name of the entry widget.
 .SS "DIFFERENCES FROM TK ENTRY WIDGET VALIDATION"
 .IP \(bu
 The standard Tk entry widget automatically disables validation
-(by setting \fB-validate\fR to \fBnone\fR)
-if the \fB-validatecommand\fR or \fB-invalidcommand\fR modifies 
+(by setting \fB\-validate\fR to \fBnone\fR)
+if the \fB\-validatecommand\fR or \fB\-invalidcommand\fR modifies 
 the entry's value.
 The Tk themed entry widget only disables validation if one
-of the validation scripts raises an error, or if \fB-validatecommand\fR
+of the validation scripts raises an error, or if \fB\-validatecommand\fR
 does not return a valid boolean value.
 (Thus, it is not necessary to reenable validation after 
 modifying the entry value in a validation script).
 .IP \(bu
 The standard entry widget invokes validation whenever the linked
-\fB-textvariable\fR is modified; the Tk themed entry widget does not.
-
+\fB\-textvariable\fR is modified; the Tk themed entry widget does not.
 .SH "DEFAULT BINDINGS"
 The entry widget's default bindings enable the following behavior.  
-In the descriptions below, ``word'' refers to a contiguous group
-of letters, digits, or ``_'' characters, or any single character
-other than these.
+In the descriptions below,
+.QW word
+refers to a contiguous group of letters, digits, or
+.QW _
+characters, or any single character other than these.
 .IP \(bu
 Clicking mouse button 1 positions the insert cursor
 just before the character underneath the mouse cursor, sets the
@@ -425,7 +424,6 @@ Control-d deletes the character to the right of the insert cursor.
 .IP \(bu
 Control-k deletes all the characters to the right of the insertion
 cursor.
-
 .SH "WIDGET STATES"
 In the \fBdisabled\fR state, 
 the entry cannot be edited and the text cannot be selected.
@@ -436,17 +434,17 @@ the entry cannot be edited
 The \fBdisabled\fR state is the same as \fBreadonly\fR, 
 and in addition text cannot be selected.
 .PP
-Note that changes to the linked \fB-textvariable\fR will 
+Note that changes to the linked \fB\-textvariable\fR will 
 still be reflected in the entry, even if it is disabled or readonly.
 .PP
-Typically, the text is "grayed-out" in the \fBdisabled\fR state,
+Typically, the text is
+.QW grayed-out
+in the \fBdisabled\fR state,
 and a different background is used in the \fBreadonly\fR state. 
 .PP
 The entry widget sets the \fBinvalid\fR state if revalidation fails,
 and clears it whenever validation succeeds.
-
 .SH "SEE ALSO"
-ttk_widget(n), entry(n)
-
+ttk::widget(n), entry(n)
 .SH KEYWORDS
 entry, widget, text field

@@ -15,9 +15,9 @@
 package require Tcl 8.5	;# Guard against [source] in an 8.4- interp
 			;# before using 8.5 [package] features.
 # Insist on running with compatible version of Tcl
-package require Tcl 8.5b1-8.6
+package require Tcl 8.5.0-8.6
 # Verify that we have Tk binary and script components from the same release
-package require -exact Tk  8.5b1
+package require -exact Tk  8.5.0
 
 # Create a ::tk namespace
 namespace eval ::tk {

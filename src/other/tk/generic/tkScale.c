@@ -636,7 +636,7 @@ ConfigureScale(
 
 	ComputeFormat(scalePtr);
 
-	scalePtr->labelLength = scalePtr->label ? strlen(scalePtr->label) : 0;
+	scalePtr->labelLength = scalePtr->label ? (int)strlen(scalePtr->label) : 0;
 
 	Tk_SetBackgroundFromBorder(scalePtr->tkwin, scalePtr->bgBorder);
 

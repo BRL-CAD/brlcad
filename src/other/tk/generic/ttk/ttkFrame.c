@@ -14,8 +14,7 @@
  * +++ Frame widget:
  */
 
-typedef struct
-{
+typedef struct {
     Tcl_Obj	*borderWidthObj;
     Tcl_Obj	*paddingObj;
     Tcl_Obj	*reliefObj;
@@ -23,8 +22,7 @@ typedef struct
     Tcl_Obj 	*heightObj;
 } FramePart;
 
-typedef struct 
-{
+typedef struct {
     WidgetCore	core;
     FramePart	frame;
 } Frame;
@@ -165,6 +163,10 @@ static WidgetSpec FrameWidgetSpec =
     TtkWidgetDisplay		/* displayProc */
 };
 
+TTK_BEGIN_LAYOUT(FrameLayout)
+    TTK_NODE("Frame.border", TTK_FILL_BOTH)
+TTK_END_LAYOUT
+
 /* ======================================================================
  * +++ Labelframe widget:
  */
@@ -237,11 +239,11 @@ typedef struct {
     Tk_Window	labelWidget;
 
     Ttk_Manager	*mgr;
+    Ttk_Layout	labelLayout;	/* Sublayout for label */
     Ttk_Box	labelParcel;	/* Set in layoutProc */
 } LabelframePart;
 
-typedef struct
-{
+typedef struct {
     WidgetCore  	core;
     FramePart   	frame;
     LabelframePart	label;
@@ -270,8 +272,7 @@ static Tk_OptionSpec LabelframeOptionSpecs[] =
 /*
  * Labelframe style parameters:
  */
-typedef struct
-{
+typedef struct {
     int 		borderWidth;	/* border width */
     Ttk_Padding 	padding;	/* internal padding */
     Ttk_PositionSpec	labelAnchor;	/* corner/side to place label */
@@ -287,8 +288,6 @@ static void LabelframeStyleOptions(Labelframe *lf, LabelframeStyle *style)
     style->borderWidth = DEFAULT_BORDERWIDTH;
     style->padding = Ttk_UniformPadding(0);
     style->labelAnchor = TTK_PACK_TOP | TTK_STICK_W;
-    style->labelMargins = 
-	Ttk_MakePadding(DEFAULT_LABELINSET,0,DEFAULT_LABELINSET,0);
     style->labelOutside = 0;
 
     if ((objPtr = Ttk_QueryOption(layout, "-borderwidth", 0)) != NULL) {
@@ -302,6 +301,14 @@ static void LabelframeStyleOptions(Labelframe *lf, LabelframeStyle *style)
     }
     if ((objPtr = Ttk_QueryOption(layout,"-labelmargins", 0)) != NULL) {
 	Ttk_GetBorderFromObj(NULL, objPtr, &style->labelMargins);
+    } else {
+	if (style->labelAnchor & (TTK_PACK_TOP|TTK_PACK_BOTTOM)) {
+	    style->labelMargins = 
+		Ttk_MakePadding(DEFAULT_LABELINSET,0,DEFAULT_LABELINSET,0);
+	} else {
+	    style->labelMargins = 
+		Ttk_MakePadding(0,DEFAULT_LABELINSET,0,DEFAULT_LABELINSET);
+	}
     }
     if ((objPtr = Ttk_QueryOption(layout,"-labeloutside", 0)) != NULL) {
 	Tcl_GetBooleanFromObj(NULL, objPtr, &style->labelOutside);
@@ -317,17 +324,13 @@ static void LabelframeStyleOptions(Labelframe *lf, LabelframeStyle *style)
 static void 
 LabelframeLabelSize(Labelframe *lframePtr, int *widthPtr, int *heightPtr)
 {
-    WidgetCore *corePtr = &lframePtr->core;
     Tk_Window labelWidget = lframePtr->label.labelWidget;
-    Ttk_LayoutNode *textNode = Ttk_LayoutFindNode(corePtr->layout, "text");
 
     if (labelWidget) {
 	*widthPtr = Tk_ReqWidth(labelWidget);
 	*heightPtr = Tk_ReqHeight(labelWidget);
-    } else if (textNode) { 
-	Ttk_LayoutNodeReqSize(corePtr->layout, textNode, widthPtr, heightPtr);
     } else {
-	*widthPtr = *heightPtr = 0;
+	Ttk_LayoutSize(lframePtr->label.labelLayout, 0, widthPtr, heightPtr);
     }
 }
 
@@ -375,6 +378,36 @@ static int LabelframeSize(void *recordPtr, int *widthPtr, int *heightPtr)
     return 0;
 }
 
+/* 
+ * LabelframeGetLayout --
+ * 	Getlayout widget hook.
+ */
+
+static Ttk_Layout LabelframeGetLayout(
+    Tcl_Interp *interp, Ttk_Theme theme, void *recordPtr)
+{
+    Labelframe *lf = recordPtr;
+    Ttk_Layout frameLayout = TtkWidgetGetLayout(interp, theme, recordPtr);
+    Ttk_Layout labelLayout;
+
+    if (!frameLayout) {
+	return NULL;
+    }
+
+    labelLayout = Ttk_CreateSublayout(
+	interp, theme, frameLayout, ".Label", lf->core.optionTable);
+
+    if (labelLayout) {
+	if (lf->label.labelLayout) {
+	    Ttk_FreeLayout(lf->label.labelLayout);
+	}
+	Ttk_RebindSublayout(labelLayout, recordPtr);
+	lf->label.labelLayout = labelLayout;
+    }
+
+    return frameLayout;
+}
+
 /*
  * LabelframeDoLayout --
  * 	Labelframe layout hook.  
@@ -386,18 +419,10 @@ static void LabelframeDoLayout(void *recordPtr)
 {
     Labelframe *lframePtr = recordPtr;
     WidgetCore *corePtr = &lframePtr->core;
-    Ttk_Box borderParcel = Ttk_WinBox(corePtr->tkwin);
-    Ttk_LayoutNode
-	*textNode = Ttk_LayoutFindNode(corePtr->layout, "text"),
-	*borderNode = Ttk_LayoutFindNode(corePtr->layout, "border");
     int lw, lh;			/* Label width and height */
     LabelframeStyle style;
+    Ttk_Box borderParcel = Ttk_WinBox(lframePtr->core.tkwin);
     Ttk_Box labelParcel;
-
-    /*
-     * Do base layout:
-     */
-    Ttk_PlaceLayout(corePtr->layout,corePtr->state,borderParcel);
 
     /*
      * Compute label parcel:
@@ -425,15 +450,21 @@ static void LabelframeDoLayout(void *recordPtr)
     /* 
      * Place border and label:
      */
-    if (borderNode) {
-	Ttk_PlaceLayoutNode(corePtr->layout, borderNode, borderParcel);
-    }
-    if (textNode) {
-	Ttk_PlaceLayoutNode(corePtr->layout, textNode, labelParcel);
-    }
+    Ttk_PlaceLayout(corePtr->layout, corePtr->state, borderParcel);
+    Ttk_PlaceLayout(lframePtr->label.labelLayout, corePtr->state, labelParcel);
     /* labelWidget placed in LabelframePlaceSlaves GM hook */
     lframePtr->label.labelParcel = labelParcel;
 }
+
+static void LabelframeDisplay(void *recordPtr, Drawable d)
+{
+    Labelframe *lframePtr = recordPtr;
+    Ttk_DrawLayout(lframePtr->core.layout, lframePtr->core.state, d);
+    Ttk_DrawLayout(lframePtr->label.labelLayout, lframePtr->core.state, d);
+}
+
+/* +++ Labelframe geometry manager hooks.
+ */
 
 /* LabelframePlaceSlaves --
  * 	Sets the position and size of the labelwidget.  
@@ -451,8 +482,10 @@ static void LabelframePlaceSlaves(void *recordPtr)
     }
 }
 
-/* Labelframe geometry manager:
- */
+static int LabelRequest(void *managerData, int index, int width, int height)
+{
+    return 1;
+}
 
 /* LabelRemoved --
  * 	Unset the -labelwidget option.
@@ -461,17 +494,17 @@ static void LabelframePlaceSlaves(void *recordPtr)
  * 	This routine is also called when the widget voluntarily forgets
  * 	the slave in LabelframeConfigure.
  */
-static void LabelRemoved(Ttk_Manager *mgr, int slaveIndex)
+static void LabelRemoved(void *managerData, int slaveIndex)
 {
-    Labelframe *lframe = Ttk_ManagerData(mgr);
+    Labelframe *lframe = managerData;
     lframe->label.labelWidget = 0;
 }
 
-static Ttk_ManagerSpec LabelframeManagerSpec = 
-{
+static Ttk_ManagerSpec LabelframeManagerSpec = {
     { "labelframe", Ttk_GeometryRequestProc, Ttk_LostSlaveProc },
     LabelframeSize,
     LabelframePlaceSlaves,
+    LabelRequest,
     LabelRemoved
 };
 
@@ -485,6 +518,7 @@ static int LabelframeInitialize(Tcl_Interp *interp, void *recordPtr)
     lframe->label.mgr = Ttk_CreateManager(
 	&LabelframeManagerSpec, lframe, lframe->core.tkwin);
     lframe->label.labelWidget = 0;
+    lframe->label.labelLayout = 0;
     lframe->label.labelParcel = Ttk_MakeBox(-1,-1,-1,-1);
 
     return TCL_OK;
@@ -581,19 +615,35 @@ static WidgetSpec LabelframeWidgetSpec =
     LabelframeCleanup,		/* cleanupProc */
     LabelframeConfigure,	/* configureProc */
     TtkNullPostConfigure,  	/* postConfigureProc */
-    TtkWidgetGetLayout, 	/* getLayoutProc */
+    LabelframeGetLayout, 	/* getLayoutProc */
     LabelframeSize,		/* sizeProc */
     LabelframeDoLayout,		/* layoutProc */
-    TtkWidgetDisplay		/* displayProc */
+    LabelframeDisplay		/* displayProc */
 };
 
+TTK_BEGIN_LAYOUT(LabelframeLayout)
+    TTK_NODE("Labelframe.border", TTK_FILL_BOTH)
+TTK_END_LAYOUT
+
+TTK_BEGIN_LAYOUT(LabelSublayout)
+    TTK_GROUP("Label.fill", TTK_FILL_BOTH,
+	TTK_NODE("Label.text", TTK_FILL_BOTH))
+TTK_END_LAYOUT
+
 /* ======================================================================
- * +++ Initialization:
+ * +++ Initialization.
  */
 
 MODULE_SCOPE
 void TtkFrame_Init(Tcl_Interp *interp)
 {
+    Ttk_Theme theme =  Ttk_GetDefaultTheme(interp);
+
+    Ttk_RegisterLayout(theme, "TFrame", FrameLayout);
+    Ttk_RegisterLayout(theme, "TLabelframe", LabelframeLayout);
+    Ttk_RegisterLayout(theme, "TLabelframe.Label", LabelSublayout);
+
     RegisterWidget(interp, "ttk::frame", &FrameWidgetSpec);
     RegisterWidget(interp, "ttk::labelframe", &LabelframeWidgetSpec);
 }
+

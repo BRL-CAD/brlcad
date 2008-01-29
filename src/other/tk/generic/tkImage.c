@@ -574,7 +574,9 @@ Tk_GetImage(
     return (Tk_Image) imagePtr;
 
   noSuchImage:
-    Tcl_AppendResult(interp, "image \"", name, "\" doesn't exist", NULL);
+    if (interp) {
+	Tcl_AppendResult(interp, "image \"", name, "\" doesn't exist", NULL);
+    }
     return NULL;
 }
 

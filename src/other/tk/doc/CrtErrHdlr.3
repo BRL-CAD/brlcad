@@ -26,13 +26,13 @@ Tk_ErrorHandler
 Display whose errors are to be handled.
 .AP int error in
 Match only error events with this value in the \fIerror_code\fR
-field.  If -1, then match any \fIerror_code\fR value.
+field.  If \-1, then match any \fIerror_code\fR value.
 .AP int request in
 Match only error events with this value in the \fIrequest_code\fR
-field.  If -1, then match any \fIrequest_code\fR value.
+field.  If \-1, then match any \fIrequest_code\fR value.
 .AP int minor in
 Match only error events with this value in the \fIminor_code\fR
-field.  If -1, then match any \fIminor_code\fR value.
+field.  If \-1, then match any \fIminor_code\fR value.
 .AP Tk_ErrorProc *proc in
 Procedure to invoke whenever an error event is received for
 \fIdisplay\fR and matches \fIerror\fR, \fIrequest\fR, and \fIminor\fR.
@@ -43,14 +43,13 @@ Arbitrary one-word value to pass to \fIproc\fR.
 Token for error handler to delete (return value from a previous
 call to \fBTk_CreateErrorHandler\fR).
 .BE
-
 .SH DESCRIPTION
 .PP
 \fBTk_CreateErrorHandler\fR arranges for a particular procedure
 (\fIproc\fR) to be called whenever certain protocol errors occur on a
 particular display (\fIdisplay\fR).  Protocol errors occur when
 the X protocol is used incorrectly, such as attempting to map a window
-that doesn't exist.  See the Xlib documentation for \fBXSetErrorHandler\fR
+that does not exist.  See the Xlib documentation for \fBXSetErrorHandler\fR
 for more information on the kinds of errors that can occur.
 For \fIproc\fR to be invoked
 to handle a particular error, five things must occur:
@@ -58,15 +57,15 @@ to handle a particular error, five things must occur:
 The error must pertain to \fIdisplay\fR.
 .IP [2]
 Either the \fIerror\fR argument to \fBTk_CreateErrorHandler\fR
-must have been -1, or the \fIerror\fR argument must match
+must have been \-1, or the \fIerror\fR argument must match
 the \fIerror_code\fR field from the error event.
 .IP [3]
 Either the \fIrequest\fR argument to \fBTk_CreateErrorHandler\fR
-must have been -1, or the \fIrequest\fR argument must match
+must have been \-1, or the \fIrequest\fR argument must match
 the \fIrequest_code\fR field from the error event.
 .IP [4]
 Either the \fIminor\fR argument to \fBTk_CreateErrorHandler\fR
-must have been -1, or the \fIminor\fR argument must match
+must have been \-1, or the \fIminor\fR argument must match
 the \fIminor_code\fR field from the error event.
 .IP [5]
 The protocol request to which the error pertains must have been
@@ -98,14 +97,13 @@ If more than more than one handler matches a particular error, then
 they are invoked in turn.  The handlers will be invoked in reverse
 order of creation:  most recently declared handler first.
 If any handler returns 0, then subsequent (older) handlers will
-not be invoked.  If no handler returns 0, then Tk invokes X'es
+not be invoked.  If no handler returns 0, then Tk invokes X's
 default error handler, which prints an error message and aborts the
 program.  If you wish to have a default handler that deals with errors
 that no other handler can deal with, then declare it first.
 .PP
-The X documentation states that ``the error handler should not call
-any functions (directly or indirectly) on the display that will
-generate protocol requests or that will look for input events.''
+The X documentation states that
+.QW "the error handler should not call any functions (directly or indirectly) on the display that will generate protocol requests or that will look for input events."
 This restriction applies to handlers declared by \fBTk_CreateErrorHandler\fR;
 disobey it at your own risk.
 .PP

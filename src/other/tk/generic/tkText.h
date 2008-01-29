@@ -566,9 +566,9 @@ typedef struct TkSharedText {
 				 * statements. */
     int autoSeparators;		/* Non-zero means the separators will be
 				 * inserted automatically. */
-    int modifiedSet;		/* Flag indicating that the 'dirtynesss' of
-				 * the text widget has been expplicitly set. */
-    int isDirty;		/* Flag indicating the 'dirtynesss' of the
+    int modifiedSet;		/* Flag indicating that the 'dirtyness' of
+				 * the text widget has been explicitly set. */
+    int isDirty;		/* Flag indicating the 'dirtyness' of the
 				 * text widget. If the flag is not zero,
 				 * unsaved modifications have been applied to
 				 * the text widget. */

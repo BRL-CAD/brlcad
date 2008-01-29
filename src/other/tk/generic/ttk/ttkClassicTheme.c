@@ -3,9 +3,7 @@
  *
  * Copyright (c) 2004, Joe English
  *
- * Ttk widget set: classic theme.
- *
- * Implements the "classic" Motif-like Tk look.
+ * "classic" theme; implements the classic Motif-like Tk look.
  *
  */
 
@@ -35,10 +33,9 @@ static Ttk_ElementOptionSpec HighlightElementOptions[] = {
     {NULL}
 };
 
-static void
-HighlightElementSize(
-    void *clientData, void *elementRecord,
-    Tk_Window tkwin, int *widthPtr, int *heightPtr, Ttk_Padding *paddingPtr)
+static void HighlightElementSize(
+    void *clientData, void *elementRecord, Tk_Window tkwin,
+    int *widthPtr, int *heightPtr, Ttk_Padding *paddingPtr)
 {
     HighlightElement *hl = elementRecord;
     int highlightThickness = 0;
@@ -47,9 +44,9 @@ HighlightElementSize(
     *paddingPtr = Ttk_UniformPadding((short)highlightThickness);
 }
 
-static void
-HighlightElementDraw(void *clientData, void *elementRecord,
-    Tk_Window tkwin, Drawable d, Ttk_Box b, unsigned int state)
+static void HighlightElementDraw(
+    void *clientData, void *elementRecord, Tk_Window tkwin,
+    Drawable d, Ttk_Box b, unsigned int state)
 {
     HighlightElement *hl = elementRecord;
     int highlightThickness = 0;
@@ -101,8 +98,7 @@ static Ttk_ElementOptionSpec ButtonBorderElementOptions[] =
     {NULL}
 };
 
-static void
-ButtonBorderElementSize(
+static void ButtonBorderElementSize(
     void *clientData, void *elementRecord, Tk_Window tkwin,
     int *widthPtr, int *heightPtr, Ttk_Padding *paddingPtr)
 {
@@ -124,8 +120,7 @@ ButtonBorderElementSize(
  * padding for default ring is drawn in the wrong color 
  * when the button is active.)
  */
-static void
-ButtonBorderElementDraw(
+static void ButtonBorderElementDraw(
     void *clientData, void *elementRecord, Tk_Window tkwin,
     Drawable d, Ttk_Box b, unsigned int state)
 {
@@ -424,51 +419,49 @@ static Ttk_ElementSpec SashElementSpec = {
  * +++ Widget layouts.
  */
 
-TTK_BEGIN_LAYOUT(ButtonLayout)
+TTK_BEGIN_LAYOUT_TABLE(LayoutTable)
+
+TTK_LAYOUT("TButton",
     TTK_GROUP("Button.highlight", TTK_FILL_BOTH,
         TTK_GROUP("Button.border", TTK_FILL_BOTH|TTK_BORDER,
 	    TTK_GROUP("Button.padding", TTK_FILL_BOTH,
-	        TTK_NODE("Button.label", TTK_FILL_BOTH))))
-TTK_END_LAYOUT
+	        TTK_NODE("Button.label", TTK_FILL_BOTH)))))
 
-TTK_BEGIN_LAYOUT(CheckbuttonLayout)
+TTK_LAYOUT("TCheckbutton",
     TTK_GROUP("Checkbutton.highlight", TTK_FILL_BOTH,
         TTK_GROUP("Checkbutton.border", TTK_FILL_BOTH,
 	    TTK_GROUP("Checkbutton.padding", TTK_FILL_BOTH,
 	        TTK_NODE("Checkbutton.indicator", TTK_PACK_LEFT)
-	        TTK_NODE("Checkbutton.label", TTK_PACK_LEFT|TTK_FILL_BOTH))))
-TTK_END_LAYOUT
+	        TTK_NODE("Checkbutton.label", TTK_PACK_LEFT|TTK_FILL_BOTH)))))
 
-TTK_BEGIN_LAYOUT(RadiobuttonLayout)
+TTK_LAYOUT("TRadiobutton",
     TTK_GROUP("Radiobutton.highlight", TTK_FILL_BOTH,
         TTK_GROUP("Radiobutton.border", TTK_FILL_BOTH,
 	    TTK_GROUP("Radiobutton.padding", TTK_FILL_BOTH,
 	        TTK_NODE("Radiobutton.indicator", TTK_PACK_LEFT)
-	        TTK_NODE("Radiobutton.label", TTK_PACK_LEFT|TTK_FILL_BOTH))))
-TTK_END_LAYOUT
+	        TTK_NODE("Radiobutton.label", TTK_PACK_LEFT|TTK_FILL_BOTH)))))
 
-TTK_BEGIN_LAYOUT(MenubuttonLayout)
+TTK_LAYOUT("TMenubutton",
     TTK_GROUP("Menubutton.highlight", TTK_FILL_BOTH,
         TTK_GROUP("Menubutton.border", TTK_FILL_BOTH,
 	    TTK_NODE("Menubutton.indicator", TTK_PACK_RIGHT)
 	    TTK_GROUP("Menubutton.padding", TTK_PACK_LEFT|TTK_EXPAND|TTK_FILL_X,
-	        TTK_NODE("Menubutton.label", 0))))
-TTK_END_LAYOUT
+	        TTK_NODE("Menubutton.label", 0)))))
 
 /* "classic" entry, includes highlight border */
-TTK_BEGIN_LAYOUT(EntryLayout)
+TTK_LAYOUT("TEntry",
     TTK_GROUP("Entry.highlight", TTK_FILL_BOTH,
         TTK_GROUP("Entry.field", TTK_FILL_BOTH|TTK_BORDER,
 	    TTK_GROUP("Entry.padding", TTK_FILL_BOTH,
-	        TTK_NODE("Entry.textarea", TTK_FILL_BOTH))))
-TTK_END_LAYOUT
+	        TTK_NODE("Entry.textarea", TTK_FILL_BOTH)))))
 
 /* Notebook tabs -- omit focus ring */
-TTK_BEGIN_LAYOUT(TabLayout)
+TTK_LAYOUT("Tab",
     TTK_GROUP("Notebook.tab", TTK_FILL_BOTH,
 	TTK_GROUP("Notebook.padding", TTK_FILL_BOTH,
-	    TTK_NODE("Notebook.label", TTK_FILL_BOTH)))
-TTK_END_LAYOUT
+	    TTK_NODE("Notebook.label", TTK_FILL_BOTH))))
+
+TTK_END_LAYOUT_TABLE
 
 /* POSSIBLY: include Scale layouts w/focus border
  */
@@ -514,12 +507,7 @@ MODULE_SCOPE int TtkClassicTheme_Init(Tcl_Interp *interp)
     /*
      * Register layouts:
      */
-    Ttk_RegisterLayout(theme, "TButton", ButtonLayout);
-    Ttk_RegisterLayout(theme, "TCheckbutton", CheckbuttonLayout);
-    Ttk_RegisterLayout(theme, "TRadiobutton", RadiobuttonLayout);
-    Ttk_RegisterLayout(theme, "TMenubutton", MenubuttonLayout);
-    Ttk_RegisterLayout(theme, "TEntry", EntryLayout);
-    Ttk_RegisterLayout(theme, "TNotebook.Tab", TabLayout);
+    Ttk_RegisterLayouts(theme, LayoutTable);
 
     Tcl_PkgProvide(interp, "ttk::theme::classic", TTK_VERSION);
 

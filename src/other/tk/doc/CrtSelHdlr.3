@@ -37,11 +37,10 @@ and the selection contents are requested in the format given by
 .AP ClientData clientData in
 Arbitrary one-word value to pass to \fIproc\fR.
 .AP Atom format in
-If the selection requestor isn't in this process, \fIformat\fR determines
+If the selection requestor is not in this process, \fIformat\fR determines
 the representation used to transmit the selection to its
 requestor.
 .BE
-
 .SH DESCRIPTION
 .PP
 \fBTk_CreateSelHandler\fR arranges for a particular procedure
@@ -77,7 +76,7 @@ at \fIbuffer\fR containing \fImaxBytes\fR or fewer characters
 count of the number of non-NULL characters stored at
 \fIbuffer\fR.  If the selection no longer exists (e.g. it once
 existed but the user deleted the range of characters containing
-it), then \fIproc\fR should return -1.
+it), then \fIproc\fR should return \-1.
 .PP
 When transferring large selections, Tk will break them up into
 smaller pieces (typically a few thousand bytes each) for more

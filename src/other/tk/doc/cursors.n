@@ -14,10 +14,9 @@
 .SH NAME
 cursors \- mouse cursors available in Tk
 .BE
-
 .SH DESCRIPTION
 .PP
-The \fB-cursor\fR widget option allows a Tk programmer to change the
+The \fB\-cursor\fR widget option allows a Tk programmer to change the
 mouse cursor for a particular widget.  The cursor names recognized by
 Tk on all platforms are:
 .CS
@@ -99,12 +98,10 @@ umbrella
 ur_angle
 watch
 xterm
-
-The \fBnone\fR cursor can be specified to eliminate the cursor.
 .CE
-
+.PP
+The \fBnone\fR cursor can be specified to eliminate the cursor.
 .SH "PORTABILITY ISSUES"
-
 .TP
 \fBWindows\fR
 On Windows systems, the following cursors are mapped to native cursors:
@@ -135,7 +132,6 @@ uparrow
 wait
 .CE
 .RE
-
 .TP
 \fBMac OS X\fR
 On Mac OS X systems, the following cursors are mapped to native cursors:
@@ -174,6 +170,5 @@ countingupanddownhand
 spinning
 .CE
 .RE
-
 .SH KEYWORDS
 cursor, option

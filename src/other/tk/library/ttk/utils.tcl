@@ -17,18 +17,6 @@ proc ttk::takefocus {w} {
     expr {[$w instate !disabled] && [winfo viewable $w]}
 }
 
-# ttk::traverseTo $w --
-# 	Set the keyboard focus to the specified window.
-#
-proc ttk::traverseTo {w} {
-    set focus [focus]
-    if {$focus ne ""} {
-	event generate $focus <<TraverseOut>>
-    }
-    focus $w
-    event generate $w <<TraverseIn>>
-}
-
 ## ttk::traverseTo $w --
 # 	Set the keyboard focus to the specified window.
 #
@@ -126,6 +114,13 @@ namespace eval ttk {
 #
 proc ttk::SaveGrab {w} {
     variable Grab
+
+    if {[info exists Grab($w)]} {
+	# $w is already on the grab stack.
+	# This should not happen, but bail out in case it does anyway:
+	#
+	return
+    }
 
     set restoreGrab [set restoreFocus ""]
 

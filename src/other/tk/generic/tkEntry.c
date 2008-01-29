@@ -2008,7 +2008,9 @@ InsertChars(
     char *value)		/* New characters to add (NULL-terminated
 				 * string). */
 {
-    int byteIndex, byteCount, oldChars, charsAdded, newByteCount;
+    ptrdiff_t byteIndex;
+    size_t byteCount, newByteCount;
+    int oldChars, charsAdded;
     CONST char *string;
     char *newStr;
 
@@ -2021,7 +2023,7 @@ InsertChars(
 
     newByteCount = entryPtr->numBytes + byteCount + 1;
     newStr = (char *) ckalloc((unsigned) newByteCount);
-    memcpy(newStr, string, (size_t) byteIndex);
+    memcpy(newStr, string, byteIndex);
     strcpy(newStr + byteIndex, value);
     strcpy(newStr + byteIndex + byteCount, string + byteIndex);
 

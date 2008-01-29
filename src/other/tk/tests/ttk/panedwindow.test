@@ -6,6 +6,7 @@ package require Tk 8.5
 package require tcltest ; namespace import -force tcltest::*
 loadTestedCommands
 
+proc propagate-geometry {} { update idletasks }
 
 # Basic sanity checks:
 #
@@ -220,7 +221,7 @@ test paned-sashpos-setup "Setup for sash position test" -body {
     .pw add [frame .pw.f3 -width 20 -height 20]
     .pw add [frame .pw.f4 -width 20 -height 20]
 
-    update idletasks
+    propagate-geometry
     list [winfo reqwidth .pw] [winfo reqheight .pw]
 } -result [list 20 [expr {20*4 + 5*3}]]
 
@@ -245,5 +246,50 @@ test paned-sashpos-restore "Set height then sash positions" -body {
 } -result [list 20 120 [list 30 60 90]]
 
 test paned-sashpos-cleanup "Clean up" -body { destroy .pw }
+
+test paned-propagation-setup "Setup." -body {
+    ttk::style theme use default
+    ttk::style configure -sashthickness 5
+    wm geometry . {}
+    ttk::panedwindow .pw -orient vertical
+
+    frame .pw.f1 -width 100 -height 50
+    frame .pw.f2 -width 100 -height 50
+
+    list [winfo reqwidth .pw.f1] [winfo reqheight .pw.f1]
+} -result [list 100 50] 
+
+test paned-propagation-1 "Initial request size" -body {
+    .pw add .pw.f1
+    .pw add .pw.f2
+    propagate-geometry
+    list [winfo reqwidth .pw] [winfo reqheight .pw]
+} -result [list 100 105]
+
+test paned-propagation-2 "Slave change before map" -body {
+    .pw.f1 configure -width 200 -height 100
+    propagate-geometry
+    list [winfo reqwidth .pw] [winfo reqheight .pw]
+} -result [list 200 155]
+
+test paned-propagation-3 "Map window" -body {
+    pack .pw -expand true -fill both
+    update
+    list [winfo width .pw] [winfo height .pw] [.pw sashpos 0]
+} -result [list 200 155 100]
+
+test paned-propagation-4 "Slave change after map, off-axis" -body {
+    .pw.f1 configure -width 100 ;# should be granted
+    propagate-geometry
+    list [winfo reqwidth .pw] [winfo reqheight .pw] [.pw sashpos 0]
+} -result [list 100 155 100]
+
+test paned-propagation-5 "Slave change after map, on-axis" -body {
+    .pw.f1 configure -height 50 ;# should be denied
+    propagate-geometry
+    list [winfo reqwidth .pw] [winfo reqheight .pw] [.pw sashpos 0]
+} -result [list 100 155 100]
+
+test paned-propagation-cleanup "Clean up." -body { destroy .pw }
 
 tcltest::cleanupTests

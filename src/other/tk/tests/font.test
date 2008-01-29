@@ -309,8 +309,8 @@ test font-8.4 {font command: families} {
 
 test font-9.1 {font command: measure: arguments} {
     # (skip < 0)
-    list [catch {font measure xyz -displayof} msg] $msg
-} {1 {value for "-displayof" missing}}
+    list [catch {expr {[font measure xyz -displayof]>0}} msg] $msg
+} {0 1}
 test font-9.2 {font command: measure: arguments} {
     # (objc - skip != 4) 
     list [catch {font measure} msg] $msg
@@ -327,6 +327,15 @@ test font-9.5 {font command: measure} {
     # Tk_TextWidth()
     expr [font measure $fixed "abcdefg"]==[font measure $fixed "a"]*7
 } {1}
+test font-9.6 {font command: measure -d} {
+     list [catch {expr {[font measure $fixed -d] > 0}} msg] $msg
+} {0 1}
+test font-9.7 {font command: measure -d with -displayof} {
+     list [catch {expr {[font measure $fixed -displayof . -d] > 0}} msg] $msg
+} {0 1}
+test font-9.8 {font command: measure: arguments} {
+    list [catch {font measure $fixed -displayof .} msg] $msg
+} {1 {wrong # args: should be "font measure font ?-displayof window? text"}}
 
 test font-10.1 {font command: metrics: arguments} {
     list [catch {font metrics xyz -displayof} msg] $msg

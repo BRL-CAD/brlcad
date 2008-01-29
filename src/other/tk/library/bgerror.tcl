@@ -7,7 +7,8 @@
 #	Donal K. Fellows.
 #
 # Copyright (c) 1998-2000 by Ajuba Solutions.
-# All rights reserved.
+# Copyright (c) 2007 by ActiveState Software Inc.
+# Copyright (c) 2007 Daniel A. Steffen <das@users.sourceforge.net>
 # 
 # RCS: @(#) $Id$
 # $Id$
@@ -18,9 +19,11 @@ namespace eval ::tk::dialog::error {
     option add *ErrorDialog.function.text [mc "Save To Log"] \
 	widgetDefault
     option add *ErrorDialog.function.command [namespace code SaveToLog]
+    option add *ErrorDialog*Label.font TkCaptionFont widgetDefault
     if {[tk windowingsystem] eq "aqua"} {
 	option add *ErrorDialog*background systemAlertBackgroundActive \
 		widgetDefault
+	option add *ErrorDialog*info.text.background white widgetDefault
 	option add *ErrorDialog*Button.highlightBackground \
 		systemAlertBackgroundActive widgetDefault
     }
@@ -42,7 +45,7 @@ proc ::tk::dialog::error::Details {} {
     if { ($caption eq "") || ($command eq "") } {
 	grid forget $w.function
     }
-    lappend command [.bgerrorDialog.top.info.text get 1.0 end-1c]
+    lappend command [$w.top.info.text get 1.0 end-1c]
     $w.function configure -text $caption -command $command
     grid $w.top.info - -sticky nsew -padx 3m -pady 3m
 }
@@ -96,17 +99,10 @@ proc ::tk::dialog::error::bgerror err {
     # we use the default dialog then :
     set windowingsystem [tk windowingsystem]
     if {$windowingsystem eq "aqua"} {
-	set ok		[mc Ok]
-	set messageFont	system
-	set textRelief	flat
-	set textHilight	0
+	set ok [mc Ok]
     } else {
-	set ok		[mc OK]
-	set messageFont	{Times -18}
-	set textRelief	sunken
-	set textHilight	1
+	set ok [mc OK]
     }
-
 
     # Truncate the message if it is too wide (>maxLine characters) or
     # too tall (>4 lines).  Truncation occurs at the first point at
@@ -128,47 +124,40 @@ proc ::tk::dialog::error::bgerror err {
 	incr lines
     }
 
-    set w .bgerrorDialog
     set title [mc "Application Error"]
     set text [mc "Error: %1\$s" $displayedErr]
     set buttons [list ok $ok dismiss [mc "Skip Messages"] \
-	    function [mc "Details >>"]]
+		     function [mc "Details >>"]]
 
     # 1. Create the top-level window and divide it into top
     # and bottom parts.
 
-    destroy .bgerrorDialog
-    toplevel .bgerrorDialog -class ErrorDialog
-    wm withdraw .bgerrorDialog
-    wm title .bgerrorDialog $title
-    wm iconname .bgerrorDialog ErrorDialog
-    wm protocol .bgerrorDialog WM_DELETE_WINDOW { }
+    set dlg .bgerrorDialog
+    destroy $dlg
+    toplevel $dlg -class ErrorDialog
+    wm withdraw $dlg
+    wm title $dlg $title
+    wm iconname $dlg ErrorDialog
+    wm protocol $dlg WM_DELETE_WINDOW { }
 
     if {$windowingsystem eq "aqua"} {
-	::tk::unsupported::MacWindowStyle style .bgerrorDialog moveableAlert {}
+	::tk::unsupported::MacWindowStyle style $dlg moveableAlert {}
     }
 
-    frame .bgerrorDialog.bot
-    frame .bgerrorDialog.top
+    frame $dlg.bot
+    frame $dlg.top
     if {$windowingsystem eq "x11"} {
-	.bgerrorDialog.bot configure -relief raised -bd 1
-	.bgerrorDialog.top configure -relief raised -bd 1
+	$dlg.bot configure -relief raised -bd 1
+	$dlg.top configure -relief raised -bd 1
     }
-    pack .bgerrorDialog.bot -side bottom -fill both
-    pack .bgerrorDialog.top -side top -fill both -expand 1
+    pack $dlg.bot -side bottom -fill both
+    pack $dlg.top -side top -fill both -expand 1
 
-    set W [frame $w.top.info]
-    text $W.text				\
-	    -yscrollcommand [list $W.scroll set]\
-	    -setgrid true			\
-	    -width 40				\
-	    -height 10				\
-	    -state normal			\
-	    -relief $textRelief			\
-	    -highlightthickness $textHilight	\
-	    -wrap char
-    if {$windowingsystem eq "aqua"} {
-	$W.text configure -width 80 -background white
+    set W [frame $dlg.top.info]
+    text $W.text -setgrid true -height 10 -wrap char \
+	-yscrollcommand [list $W.scroll set]
+    if {$windowingsystem ne "aqua"} {
+	$W.text configure -width 40
     }
 
     scrollbar $W.scroll -command [list $W.text yview]
@@ -182,80 +171,68 @@ proc ::tk::dialog::error::bgerror err {
     # 2. Fill the top part with bitmap and message
 
     # Max-width of message is the width of the screen...
-    set wrapwidth [winfo screenwidth .bgerrorDialog]
+    set wrapwidth [winfo screenwidth $dlg]
     # ...minus the width of the icon, padding and a fudge factor for
     # the window manager decorations and aesthetics.
-    set wrapwidth [expr {$wrapwidth-60-[winfo pixels .bgerrorDialog 9m]}]
-    label .bgerrorDialog.msg -justify left -text $text -font $messageFont \
-	    -wraplength $wrapwidth
+    set wrapwidth [expr {$wrapwidth-60-[winfo pixels $dlg 9m]}]
+    label $dlg.msg -justify left -text $text -wraplength $wrapwidth
     if {$windowingsystem eq "aqua"} {
 	# On the Macintosh, use the stop bitmap
-	label .bgerrorDialog.bitmap -bitmap stop
+	label $dlg.bitmap -bitmap stop
     } else {
 	# On other platforms, make the error icon
-	canvas .bgerrorDialog.bitmap -width 32 -height 32 -highlightthickness 0
-	.bgerrorDialog.bitmap create oval 0 0 31 31 -fill red -outline black
-	.bgerrorDialog.bitmap create line 9 9 23 23 -fill white -width 4
-	.bgerrorDialog.bitmap create line 9 23 23 9 -fill white -width 4
+	canvas $dlg.bitmap -width 32 -height 32 -highlightthickness 0
+	$dlg.bitmap create oval 0 0 31 31 -fill red -outline black
+	$dlg.bitmap create line 9 9 23 23 -fill white -width 4
+	$dlg.bitmap create line 9 23 23 9 -fill white -width 4
     }
-    grid .bgerrorDialog.bitmap .bgerrorDialog.msg \
-	    -in .bgerrorDialog.top	\
-	    -row 0			\
-	    -padx 3m			\
-	    -pady 3m
-    grid configure	 .bgerrorDialog.msg -sticky nsw -padx {0 3m}
-    grid rowconfigure	 .bgerrorDialog.top 1 -weight 1
-    grid columnconfigure .bgerrorDialog.top 1 -weight 1
+    grid $dlg.bitmap $dlg.msg -in $dlg.top -row 0 -padx 3m -pady 3m
+    grid configure	 $dlg.msg -sticky nsw -padx {0 3m}
+    grid rowconfigure	 $dlg.top 1 -weight 1
+    grid columnconfigure $dlg.top 1 -weight 1
 
     # 3. Create a row of buttons at the bottom of the dialog.
 
     set i 0
     foreach {name caption} $buttons {
-	button .bgerrorDialog.$name	\
-		-text $caption		\
-		-default normal		\
+	button $dlg.$name -text $caption -default normal \
 	    -command [namespace code [list set button $i]]
-	grid .bgerrorDialog.$name	\
-		-in .bgerrorDialog.bot	\
-		-column $i		\
-		-row 0			\
-		-sticky ew		\
-		-padx 10
-	grid columnconfigure .bgerrorDialog.bot $i -weight 1
+	grid $dlg.$name -in $dlg.bot -column $i -row 0 -sticky ew -padx 10
+	grid columnconfigure $dlg.bot $i -weight 1
 	# We boost the size of some Mac buttons for l&f
 	if {$windowingsystem eq "aqua"} {
 	    if {($name eq "ok") || ($name eq "dismiss")} {
-		grid columnconfigure .bgerrorDialog.bot $i -minsize 90
+		grid columnconfigure $dlg.bot $i -minsize 90
 	    }
-	    grid configure .bgerrorDialog.$name -pady 7
+	    grid configure $dlg.$name -pady 7
 	}
 	incr i
     }
     # The "OK" button is the default for this dialog.
-    .bgerrorDialog.ok configure -default active
+    $dlg.ok configure -default active
 
-    bind .bgerrorDialog <Return>	[namespace code Return]
-    bind .bgerrorDialog <Destroy>	[namespace code [list Destroy %W]]
-    .bgerrorDialog.function configure -command [namespace code Details]
+    bind $dlg <Return>	[namespace code Return]
+    bind $dlg <Destroy>	[namespace code [list Destroy %W]]
+    $dlg.function configure -command [namespace code Details]
 
     # 6. Place the window (centered in the display) and deiconify it.
 
-    ::tk::PlaceWindow .bgerrorDialog
+    ::tk::PlaceWindow $dlg
 
     # 7. Ensure that we are topmost.
 
-    raise .bgerrorDialog
+    raise $dlg
     if {$tcl_platform(platform) eq "windows"} {
 	# Place it topmost if we aren't at the top of the stacking
 	# order to ensure that it's seen
-	if {[lindex [wm stackorder .] end] ne ".bgerrorDialog"} {
-	    wm attributes .bgerrorDialog -topmost 1
+	if {[lindex [wm stackorder .] end] ne "$dlg"} {
+	    wm attributes $dlg -topmost 1
 	}
     }
 
     # 8. Set a grab and claim the focus too.
 
-    ::tk::SetFocusGrab .bgerrorDialog .bgerrorDialog.ok
+    ::tk::SetFocusGrab $dlg $dlg.ok
 
     # 9. Wait for the user to respond, then restore the focus and
     # return the index of the selected button.  Restore the focus
@@ -266,7 +243,7 @@ proc ::tk::dialog::error::bgerror err {
     vwait [namespace which -variable button]
     set copy $button; # Save a copy...
 
-    ::tk::RestoreFocusGrab .bgerrorDialog .bgerrorDialog.ok destroy
+    ::tk::RestoreFocusGrab $dlg $dlg.ok destroy
 
     if {$copy == 1} {
 	return -code break

@@ -654,6 +654,11 @@ tkWinTest.$(OBJEXT): tkWinTest.c
 tkSquare.$(OBJEXT): tkSquare.c
 	$(CC) -c $(CC_SWITCHES) @DEPARG@ $(CC_OBJNAME)
 
+# Extra dependency info
+tkConsole.$(OBJEXT): configure Makefile
+tkMain.$(OBJEXT): configure Makefile
+tkWindow.$(OBJEXT): configure Makefile
+
 # Add the object extension to the implicit rules.  By default .obj is not
 # automatically added.
 

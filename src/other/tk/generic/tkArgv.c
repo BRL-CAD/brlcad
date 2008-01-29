@@ -13,7 +13,7 @@
  * RCS: @(#) $Id$
  */
 
-#include "tkPort.h"
+#include "tkInt.h"
 
 /*
  * Default table of argument descriptors. These are normally available in
@@ -172,7 +172,7 @@ Tk_ParseArgv(
 	infoPtr = matchPtr;
 	switch (infoPtr->type) {
 	case TK_ARGV_CONSTANT:
-	    *((int *) infoPtr->dst) = (int) infoPtr->src;
+	    *((int *) infoPtr->dst) = PTR2INT(infoPtr->src);
 	    break;
 	case TK_ARGV_INT:
 	    if (argc == 0) {
@@ -337,7 +337,7 @@ PrintUsage(
 				 * for default options. */
 {
     register Tk_ArgvInfo *infoPtr;
-    int width, i, numSpaces;
+    size_t width, i, numSpaces;
 #define NUM_SPACES 20
     static char spaces[] = "                    ";
     char tmp[TCL_DOUBLE_SPACE];
@@ -351,7 +351,7 @@ PrintUsage(
     for (i = 0; i < 2; i++) {
 	for (infoPtr = i ? defaultTable : argTable;
 		infoPtr->type != TK_ARGV_END; infoPtr++) {
-	    int length;
+	    size_t length;
 	    if (infoPtr->key == NULL) {
 		continue;
 	    }

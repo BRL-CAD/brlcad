@@ -243,7 +243,7 @@ TkMacOSXProcessCommandEvent(
 		    (menuContext & kMenuContextMenuBarTracking)) {
 		TkMacOSXHandleMenuSelect(GetMenuID(command.menu.menuRef),
 			command.menu.menuItemIndex,
-			GetCurrentEventKeyModifiers() & optionKey);
+			(GetCurrentEventKeyModifiers() & optionKey) != 0);
 		return 1;
 	    }
 	} else {

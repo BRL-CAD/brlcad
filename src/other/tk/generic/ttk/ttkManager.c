@@ -287,7 +287,7 @@ static void RemoveSlave(Ttk_Manager *mgr, int index)
 
     /* Notify manager:
      */
-    mgr->managerSpec->SlaveRemoved(mgr, index);
+    mgr->managerSpec->SlaveRemoved(mgr->managerData, index);
 
     /* Remove from array:
      */
@@ -317,7 +317,15 @@ static void RemoveSlave(Ttk_Manager *mgr, int index)
 void Ttk_GeometryRequestProc(ClientData clientData, Tk_Window slaveWindow)
 {
     Ttk_Manager *mgr = clientData;
-    ScheduleUpdate(mgr, MGR_RESIZE_REQUIRED);
+    int slaveIndex = Ttk_SlaveIndex(mgr, slaveWindow);
+    int reqWidth = Tk_ReqWidth(slaveWindow);
+    int reqHeight= Tk_ReqHeight(slaveWindow);
+
+    if (mgr->managerSpec->SlaveRequest(
+		mgr->managerData, slaveIndex, reqWidth, reqHeight)) 
+    {
+	ScheduleUpdate(mgr, MGR_RESIZE_REQUIRED);
+    }
 }
 
 void Ttk_LostSlaveProc(ClientData clientData, Tk_Window slaveWindow)
@@ -403,10 +411,6 @@ void Ttk_ManagerSizeChanged(Ttk_Manager *mgr)
 int Ttk_NumberSlaves(Ttk_Manager *mgr)
 {
     return mgr->nSlaves;
-}
-void *Ttk_ManagerData(Ttk_Manager *mgr)
-{
-    return mgr->managerData;
 }
 void *Ttk_SlaveData(Ttk_Manager *mgr, int slaveIndex)
 {

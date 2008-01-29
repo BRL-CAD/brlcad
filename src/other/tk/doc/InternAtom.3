@@ -44,7 +44,8 @@ by \fBTk_GetAtomName\fR is in Tk's storage:  the caller need
 not free this space when finished with the string, and the caller
 should not modify the contents of the returned string.
 If there is no atom \fIatom\fR on \fItkwin\fR's display,
-then \fBTk_GetAtomName\fR returns the string ``?bad atom?''.
+then \fBTk_GetAtomName\fR returns the string
+.QW "?bad atom?" .
 .PP
 Tk caches
 the information returned by \fBTk_InternAtom\fR and \fBTk_GetAtomName\fR

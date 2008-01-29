@@ -253,9 +253,12 @@ GetThemeColor(
     } else if (textColor) {
 	err = ChkErr(GetThemeTextColor, textColor, 32, true, c);
     } else {
-	c->red	 = ((pixel >> 16) & 0xff) << 8;
-	c->green = ((pixel >>  8) & 0xff) << 8;
-	c->blue	 = ((pixel	) & 0xff) << 8;
+	c->red	  = (pixel >> 16) & 0xff;
+	c->green  = (pixel >>  8) & 0xff;
+	c->blue	  = (pixel	) & 0xff;
+	c->red	 |= c->red   << 8;
+	c->green |= c->green << 8;
+	c->blue	 |= c->blue  << 8;
     }
     return err;
 }

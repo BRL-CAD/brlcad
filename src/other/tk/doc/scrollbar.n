@@ -39,7 +39,7 @@ name of a widget and either \fBxview\fR (if the scrollbar is for
 horizontal scrolling) or \fByview\fR (for vertical scrolling).
 All scrollable widgets have \fBxview\fR and \fByview\fR commands
 that take exactly the additional arguments appended by the scrollbar
-as described in SCROLLING COMMANDS below.
+as described in \fBSCROLLING COMMANDS\fR below.
 .OP \-elementborderwidth elementBorderWidth BorderWidth
 Specifies the width of borders drawn around the internal elements
 of the scrollbar (the two arrows and the slider).  The value may
@@ -53,7 +53,6 @@ scrollbars this will be the width and for horizontal scrollbars
 this will be the height.
 The value may have any of the forms acceptable to \fBTk_GetPixels\fR.
 .BE
-
 .SH DESCRIPTION
 .PP
 The \fBscrollbar\fR command creates a new window (given by the
@@ -282,7 +281,7 @@ If the button is held down, the action auto-repeats.
 .IP [3]
 Pressing button 1 over the slider and dragging causes the view
 to drag with the slider.
-If the \fBjump\fR option is true, then the view doesn't drag along
+If the \fBjump\fR option is true, then the view does not drag along
 with the slider;  it changes only when the mouse button is released.
 .IP [4]
 Pressing button 1 over \fBtrough2\fR causes the view in the
@@ -334,15 +333,13 @@ The End key adjusts the view to the bottom (right edge) of the document.
 Create a window with a scrollable \fBtext\fR widget:
 .CS
 toplevel .tl
-text .tl.t -yscrollcommand {.tl.s set}
-\fBscrollbar\fR .tl.s -command {.tl.t yview}
-grid .tl.t .tl.s -sticky nsew
-grid columnconfigure .tl 0 -weight 1
-grid rowconfigure .tl 0 -weight 1
+text .tl.t \-yscrollcommand {.tl.s set}
+\fBscrollbar\fR .tl.s \-command {.tl.t yview}
+grid .tl.t .tl.s \-sticky nsew
+grid columnconfigure .tl 0 \-weight 1
+grid rowconfigure .tl 0 \-weight 1
 .CE
-
 .SH "SEE ALSO"
-ttk_scrollbar(n)
-
+ttk:scrollbar(n)
 .SH KEYWORDS
 scrollbar, widget

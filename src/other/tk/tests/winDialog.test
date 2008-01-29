@@ -89,7 +89,7 @@ test winDialog-5.1 {GetFileName: no arguments} {nt testwinevent} {
 } {0}
 test winDialog-5.2 {GetFileName: one argument} {nt} {
     list [catch {tk_getOpenFile -foo} msg] $msg
-} {1 {bad option "-foo": must be -defaultextension, -filetypes, -initialdir, -initialfile, -multiple, -parent, or -title}}
+} {1 {bad option "-foo": must be -defaultextension, -filetypes, -initialdir, -initialfile, -multiple, -parent, -title, or -typevariable}}
 test winDialog-5.4 {GetFileName: many arguments} {nt testwinevent} {
     start {tk_getOpenFile -initialdir c:/ -parent . -title test -initialfile foo}
     then {
@@ -98,7 +98,7 @@ test winDialog-5.4 {GetFileName: many arguments} {nt testwinevent} {
 } {0}
 test winDialog-5.5 {GetFileName: Tcl_GetIndexFromObj() != TCL_OK} {nt} {
     list [catch {tk_getOpenFile -foo bar -abc} msg] $msg
-} {1 {bad option "-foo": must be -defaultextension, -filetypes, -initialdir, -initialfile, -multiple, -parent, or -title}}
+} {1 {bad option "-foo": must be -defaultextension, -filetypes, -initialdir, -initialfile, -multiple, -parent, -title, or -typevariable}}
 test winDialog-5.6 {GetFileName: Tcl_GetIndexFromObj() == TCL_OK} {nt testwinevent} {
     start {tk_getOpenFile -title bar}
     then {

@@ -32,8 +32,9 @@ and all events will be reported in the normal fashion.
 When the pointer is outside \fIwindow\fR's tree, button presses and
 releases and
 mouse motion events are reported to \fIwindow\fR, and window entry
-and window exit events are ignored.
-The grab subtree ``owns'' the pointer:
+and window exit events are ignored. The grab subtree
+.QW owns
+the pointer:
 windows outside the grab subtree will be visible on the screen
 but they will be insensitive until the grab is released.
 The tree of windows underneath the grab window can include top-level
@@ -111,7 +112,7 @@ events and not providing any mechanism for releasing the grab).  Take
 .PP
 It took an incredibly complex and gross implementation to produce
 the simple grab effect described above.
-Given the current implementation, it isn't safe for applications
+Given the current implementation, it is not safe for applications
 to use the Xlib grab facilities at all except through the Tk grab
 procedures.
 If applications try to manipulate X's grab mechanisms directly,
@@ -120,7 +121,7 @@ things will probably break.
 If a single process is managing several different Tk applications,
 only one of those applications can have a local grab for a given
 display at any given time.  If the applications are in different
-processes, this restriction doesn't exist.
+processes, this restriction does not exist.
 .SH EXAMPLE
 Set a grab so that only one button may be clicked out of a group.  The
 other buttons are unresponsive to the mouse until the middle button is

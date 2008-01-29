@@ -23,13 +23,17 @@ typedef struct TtkManager_ Ttk_Manager;
  * SlaveRemoved() is called immediately before a slave is removed.
  * NB: the associated slave window may have been destroyed when this
  * routine is called.
+ * 
+ * SlaveRequest() is called when a slave requests a size change.
+ * It should return 1 if the request should propagate, 0 otherwise.
  */
 typedef struct {			/* Manager hooks */
     Tk_GeomMgr tkGeomMgr;		/* "real" Tk Geometry Manager */
 
     int  (*RequestedSize)(void *managerData, int *widthPtr, int *heightPtr);
     void (*PlaceSlaves)(void *managerData);
-    void (*SlaveRemoved)(Ttk_Manager *, int slaveIndex);
+    int  (*SlaveRequest)(void *managerData, int slaveIndex, int w, int h);
+    void (*SlaveRemoved)(void *managerData, int slaveIndex);
 } Ttk_ManagerSpec;
 
 /*
@@ -76,9 +80,6 @@ MODULE_SCOPE int Ttk_GetSlaveIndexFromObj(
  */
 MODULE_SCOPE int Ttk_NumberSlaves(Ttk_Manager *);
     /* Returns: number of managed slaves */
-
-MODULE_SCOPE void *Ttk_ManagerData(Ttk_Manager *);
-    /* Returns: client data associated with master */
 
 MODULE_SCOPE void *Ttk_SlaveData(Ttk_Manager *, int slaveIndex);
     /* Returns: client data associated with slave */

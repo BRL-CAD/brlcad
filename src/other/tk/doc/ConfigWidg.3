@@ -118,9 +118,12 @@ The \fItype\fR field indicates what type of configuration option this is
 (e.g. \fBTK_CONFIG_COLOR\fR for a color value, or \fBTK_CONFIG_INT\fR for
 an integer value).  The \fItype\fR field indicates how to use the
 value of the option (more on this below).
-The \fIargvName\fR field is a string such as ``\-font'' or ``\-bg'',
+The \fIargvName\fR field is a string such as
+.QW \-font
+or
+.QW \-bg ,
 which is compared with the values in \fIargv\fR (if \fIargvName\fR is
-NULL it means this is a grouped entry;  see GROUPED ENTRIES below).  The
+NULL it means this is a grouped entry;  see \fBGROUPED ENTRIES\fR below).  The
 \fIdbName\fR and \fIdbClass\fR fields are used to look up a value
 for this option in the option database.  The \fIdefValue\fR field
 specifies a default value for this configuration option if no
@@ -162,7 +165,8 @@ of each \fIspecs\fR entry indicates where in \fIwidgRec\fR to store
 the information about this configuration option.  You should use the
 \fBTk_Offset\fR macro to generate \fIoffset\fR values (see below for
 a description of \fBTk_Offset\fR).  The location indicated by
-\fIwidgRec\fR and \fIoffset\fR will be referred to as the ``target''
+\fIwidgRec\fR and \fIoffset\fR will be referred to as the
+.QW target
 in the descriptions below.
 .PP
 The \fItype\fR field of each entry in \fIspecs\fR determines what
@@ -181,7 +185,7 @@ If \fBTK_CONFIG_NULL_OK\fR is specified in \fIspecFlags\fR then the value
 may be an empty string, in which case the target and \fItkwin\fR's
 active cursor will be set to \fBNone\fR.
 If the previous value of the target
-wasn't \fBNone\fR, then it is freed by passing it to \fBTk_FreeCursor\fR.
+was not \fBNone\fR, then it is freed by passing it to \fBTk_FreeCursor\fR.
 .TP
 \fBTK_CONFIG_ANCHOR\fR
 The value must be an ASCII string identifying an anchor point in one of the ways
@@ -197,14 +201,24 @@ is stored in the target.
 If \fBTK_CONFIG_NULL_OK\fR is specified in \fIspecFlags\fR then the value
 may be an empty string, in which case the target is set to \fBNone\fR.
 If the previous value of the target
-wasn't \fBNone\fR, then it is freed by passing it to \fBTk_FreeBitmap\fR.
+was not \fBNone\fR, then it is freed by passing it to \fBTk_FreeBitmap\fR.
 .TP
 \fBTK_CONFIG_BOOLEAN\fR
 The value must be an ASCII string specifying a boolean value.  Any
-of the values ``true'', ``yes'', ``on'', or ``1'',
+of the values
+.QW true ,
+.QW yes ,
+.QW on ,
+or
+.QW 1 ,
 or an abbreviation of one of these values, means true;
-any of the values ``false'', ``no'', ``off'', or ``0'', or an abbreviation of
-one of these values, means false.
+any of the values
+.QW false ,
+.QW no ,
+.QW off ,
+or
+.QW 0 ,
+or an abbreviation of one of these values, means false.
 The target is expected to be an integer;  for true values it will
 be set to 1 and for false values it will be set to 0.
 .TP
@@ -216,7 +230,7 @@ is stored in the target.
 If \fBTK_CONFIG_NULL_OK\fR is specified in \fIspecFlags\fR then the value
 may be an empty string, in which case the target will be set to NULL.
 If the previous value of the target
-wasn't NULL, then it is freed by passing it to \fBTk_Free3DBorder\fR.
+was not NULL, then it is freed by passing it to \fBTk_Free3DBorder\fR.
 .TP
 \fBTK_CONFIG_CAP_STYLE\fR
 The value must be
@@ -234,7 +248,7 @@ is stored in the target.
 If \fBTK_CONFIG_NULL_OK\fR is specified in \fIspecFlags\fR then the value
 may be an empty string, in which case the target will be set to \fBNone\fR.
 If the previous value of the target
-wasn't NULL, then it is freed by passing it to \fBTk_FreeColor\fR.
+was not NULL, then it is freed by passing it to \fBTk_FreeColor\fR.
 .TP
 \fBTK_CONFIG_CURSOR\fR
 This option is identical to \fBTK_CONFIG_ACTIVE_CURSOR\fR except
@@ -265,12 +279,15 @@ is stored in the target.
 If \fBTK_CONFIG_NULL_OK\fR is specified in \fIspecFlags\fR then the value
 may be an empty string, in which case the target will be set to NULL.
 If the previous value of the target
-wasn't NULL, then it is freed by passing it to \fBTk_FreeFont\fR.
+was not NULL, then it is freed by passing it to \fBTk_FreeFont\fR.
 .TP
 \fBTK_CONFIG_INT\fR
 The value must be an ASCII integer string
-in the format accepted by \fBstrtol\fR (e.g. ``0''
-and ``0x'' prefixes may be used to specify octal or hexadecimal
+in the format accepted by \fBstrtol\fR (e.g.
+.QW 0
+and
+.QW 0x
+prefixes may be used to specify octal or hexadecimal
 numbers, respectively).  The string is converted to an integer
 value and the integer is stored in the target.
 .TP
@@ -314,19 +331,22 @@ of the value is made by allocating memory space with
 space.  A pointer to the new string is stored in the target.
 If \fBTK_CONFIG_NULL_OK\fR is specified in \fIspecFlags\fR then the value
 may be an empty string, in which case the target will be set to NULL.
-If the previous value of the target wasn't NULL, then it is
+If the previous value of the target was not NULL, then it is
 freed by passing it to \fBTcl_Free\fR.
 .TP
 \fBTK_CONFIG_SYNONYM\fR
 This \fItype\fR value identifies special entries in \fIspecs\fR that
 are synonyms for other entries.  If an \fIargv\fR value matches the
-\fIargvName\fR of a \fBTK_CONFIG_SYNONYM\fR entry, the entry isn't used
+\fIargvName\fR of a \fBTK_CONFIG_SYNONYM\fR entry, the entry is not used
 directly. Instead, \fBTk_ConfigureWidget\fR searches \fIspecs\fR
 for another entry whose \fIargvName\fR is the same as the \fIdbName\fR
 field in the \fBTK_CONFIG_SYNONYM\fR entry;  this new entry is used just
 as if its \fIargvName\fR had matched the \fIargv\fR value.  The
 synonym mechanism allows multiple \fIargv\fR values to be used for
-a single configuration option, such as ``\-background'' and ``\-bg''.
+a single configuration option, such as
+.QW \-background
+and
+.QW \-bg .
 .TP
 \fBTK_CONFIG_UID\fR
 The value is translated to a \fBTk_Uid\fR
@@ -369,8 +389,8 @@ First, if the \fIflags\fR argument to \fBTk_ConfigureWidget\fR has
 the \fBTK_CONFIG_ARGV_ONLY\fR bit set (i.e., \fIflags\fR | \fBTK_CONFIG_ARGV_ONLY\fR != 0),
 then the option database and
 \fIdefValue\fR fields are not used.  In this case, if an entry in
-\fIspecs\fR doesn't match a field in \fIargv\fR then nothing happens:
-the corresponding target isn't modified.  This feature is useful
+\fIspecs\fR does not match a field in \fIargv\fR then nothing happens:
+the corresponding target is not modified.  This feature is useful
 when the goal is to modify certain configuration options while
 leaving others in their current state, such as when a \fBconfigure\fR
 widget command is being processed.
@@ -399,7 +419,7 @@ on the type of the target.
 This flag is typically used to allow a
 feature to be turned off entirely, e.g. set a cursor value to
 \fBNone\fR so that a window simply inherits its parent's cursor.
-If this bit isn't set then empty strings are processed as strings,
+If this bit is not set then empty strings are processed as strings,
 which generally results in an error.
 .TP
 \fBTK_CONFIG_DONT_SET_DEFAULT\fR
@@ -520,7 +540,7 @@ to release all of the resources associated with configuration options.
 It scans through \fIspecs\fR and for each entry corresponding to a
 resource that must be explicitly freed (e.g. those with
 type \fBTK_CONFIG_COLOR\fR), it frees the resource in the widget record.
-If the field in the widget record doesn't refer to a resource (e.g.
+If the field in the widget record does not refer to a resource (e.g.
 it contains a null pointer) then no resource is freed for that
 entry.
 After freeing a resource, \fBTk_FreeOptions\fR sets the

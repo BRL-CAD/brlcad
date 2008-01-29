@@ -388,6 +388,7 @@ static int		TextEditRedo(TkText *textPtr);
 static Tcl_Obj *	TextGetText(CONST TkText *textPtr,
 			    CONST TkTextIndex *index1,
 			    CONST TkTextIndex *index2, int visibleOnly);
+static void		GenerateModifiedEvent(TkText *textPtr);
 static void		UpdateDirtyFlag(TkSharedText *sharedPtr);
 static void		TextPushUndoAction(TkText *textPtr,
 			    Tcl_Obj *undoString, int insert,
@@ -1726,7 +1727,8 @@ TextReplaceCmd(
      */
 
     int origAutoSep = textPtr->sharedTextPtr->autoSeparators;
-    int result;
+    int result, lineNumber;
+    TkTextIndex indexTmp;
 
     if (textPtr->sharedTextPtr->undo) {
 	textPtr->sharedTextPtr->autoSeparators = 0;
@@ -1736,9 +1738,18 @@ TextReplaceCmd(
 	}
     }
 
+    /*
+     * Must save and restore line in indexFromPtr based on line number; can't
+     * keep the line itself as that might be eliminated/invalidated when
+     * deleting the range. [Bug 1602537]
+     */
+
+    indexTmp = *indexFromPtr;
+    lineNumber = TkBTreeLinesTo(textPtr, indexFromPtr->linePtr);
     DeleteIndexRange(NULL, textPtr, indexFromPtr, indexToPtr, viewUpdate);
+    indexTmp.linePtr = TkBTreeFindLine(indexTmp.tree, textPtr, lineNumber);
     result = TextInsertCmd(NULL, textPtr, interp, objc-4, objv+4,
-	    indexFromPtr, viewUpdate);
+	    &indexTmp, viewUpdate);
 
     if (textPtr->sharedTextPtr->undo) {
 	textPtr->sharedTextPtr->lastEditMode = TK_TEXT_EDIT_REPLACE;
@@ -3101,7 +3112,7 @@ DeleteIndexRange(
 	    Tcl_Obj *get;
 
 	    if (sharedTextPtr->autoSeparators
-		&& (sharedTextPtr->lastEditMode != TK_TEXT_EDIT_DELETE)) {
+		    && (sharedTextPtr->lastEditMode != TK_TEXT_EDIT_DELETE)) {
 		TkUndoInsertUndoSeparator(sharedTextPtr->undoStack);
 	    }
 
@@ -3110,11 +3121,11 @@ DeleteIndexRange(
 	    get = TextGetText(textPtr, &index1, &index2, 0);
 	    TextPushUndoAction(textPtr, get, 0, &index1, &index2);
 	}
-	UpdateDirtyFlag(sharedTextPtr);
-
 	sharedTextPtr->stateEpoch++;
 
 	TkBTreeDeleteIndexRange(sharedTextPtr->tree, &index1, &index2);
+
+    	UpdateDirtyFlag(sharedTextPtr);
     }
 
     resetViewCount = 0;
@@ -3123,17 +3134,18 @@ DeleteIndexRange(
 
 	if (line != -1) {
 	    int byteIndex = lineAndByteIndex[resetViewCount+1];
+	    TkTextIndex indexTmp;
 
 	    if (tPtr == textPtr) {
 		if (viewUpdate) {
 		    TkTextMakeByteIndex(sharedTextPtr->tree, textPtr, line,
-			    byteIndex, &index1);
-		    TkTextSetYView(tPtr, &index1, 0);
+			    byteIndex, &indexTmp);
+		    TkTextSetYView(tPtr, &indexTmp, 0);
 		}
 	    } else {
-		TkTextMakeByteIndex(sharedTextPtr->tree, NULL, line, byteIndex,
-			&index1);
-		TkTextSetYView(tPtr, &index1, 0);
+		TkTextMakeByteIndex(sharedTextPtr->tree, NULL, line,
+			byteIndex, &indexTmp);
+		TkTextSetYView(tPtr, &indexTmp, 0);
 	    }
 	}
 	resetViewCount += 2;
@@ -3143,7 +3155,6 @@ DeleteIndexRange(
     }
 
     if (line1 >= line2) {
-
 	/*
 	 * Invalidate any selection retrievals in progress, assuming we didn't
 	 * check for this case above.
@@ -4976,7 +4987,6 @@ TextEditCmd(
 	    return TCL_ERROR;
 	} else {
 	    int setModified;
-	    XEvent event;
 
 	    if (Tcl_GetBooleanFromObj(interp, objv[3],
 		    &setModified) != TCL_OK) {
@@ -4984,30 +4994,17 @@ TextEditCmd(
 	    }
 
 	    /*
-	     * Set or reset the dirty info and trigger a Modified event.
+	     * Set or reset the dirty info, but trigger a Modified event only
+	     * if it has changed.  Ensure a rationalized value for the bit.
 	     */
 
-	    if (setModified) {
-		textPtr->sharedTextPtr->isDirty = 1;
-		textPtr->sharedTextPtr->modifiedSet = 1;
-	    } else {
-		textPtr->sharedTextPtr->isDirty = 0;
-		textPtr->sharedTextPtr->modifiedSet = 0;
+	    setModified = setModified ? 1 : 0;
+
+	    textPtr->sharedTextPtr->isDirty = setModified;
+	    if (textPtr->sharedTextPtr->modifiedSet != setModified) {
+		textPtr->sharedTextPtr->modifiedSet = setModified;
+		GenerateModifiedEvent(textPtr);
 	    }
-
-	    /*
-	     * Send an event that the text was modified. This is equivalent to
-	     * "event generate $textWidget <<Modified>>"
-	     */
-
-	    memset(&event, 0, sizeof(event));
-	    event.xany.type = VirtualEvent;
-	    event.xany.serial = NextRequest(Tk_Display(textPtr->tkwin));
-	    event.xany.send_event = False;
-	    event.xany.window = Tk_WindowId(textPtr->tkwin);
-	    event.xany.display = Tk_Display(textPtr->tkwin);
-	    ((XVirtualEvent *) &event)->name = Tk_GetUid("Modified");
-	    Tk_HandleEvent(&event);
 	}
 	break;
     case EDIT_REDO:
@@ -5138,6 +5135,41 @@ TextGetText(
 /*
  *----------------------------------------------------------------------
  *
+ * GenerateModifiedEvent --
+ *
+ *	Send an event that the text was modified. This is equivalent to
+ *	   event generate $textWidget <<Modified>>
+ *
+ * Results:
+ *	None
+ *
+ * Side effects:
+ *	May force the text window into existence.
+ *
+ *----------------------------------------------------------------------
+ */
+
+static void
+GenerateModifiedEvent(
+    TkText *textPtr)	/* Information about text widget. */
+{
+    XEvent event;
+
+    Tk_MakeWindowExist(textPtr->tkwin);
+
+    memset(&event, 0, sizeof(event));
+    event.xany.type = VirtualEvent;
+    event.xany.serial = NextRequest(Tk_Display(textPtr->tkwin));
+    event.xany.send_event = False;
+    event.xany.window = Tk_WindowId(textPtr->tkwin);
+    event.xany.display = Tk_Display(textPtr->tkwin);
+    ((XVirtualEvent *) &event)->name = Tk_GetUid("Modified");
+    Tk_HandleEvent(&event);
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
  * UpdateDirtyFlag --
  *
  *	Increases the dirtyness of the text widget
@@ -5166,21 +5198,7 @@ UpdateDirtyFlag(
 	TkText *textPtr;
 	for (textPtr = sharedTextPtr->peers; textPtr != NULL;
 		textPtr = textPtr->next) {
-	    /*
-	     * Send an event that the text was modified. This is equivalent to
-	     *	   event generate $textWidget <<Modified>>
-	     */
-
-	    XEvent event;
-
-	    memset(&event, 0, sizeof(event));
-	    event.xany.type = VirtualEvent;
-	    event.xany.serial = NextRequest(Tk_Display(textPtr->tkwin));
-	    event.xany.send_event = False;
-	    event.xany.window = Tk_WindowId(textPtr->tkwin);
-	    event.xany.display = Tk_Display(textPtr->tkwin);
-	    ((XVirtualEvent *) &event)->name = Tk_GetUid("Modified");
-	    Tk_HandleEvent(&event);
+	    GenerateModifiedEvent(textPtr);
 	}
     }
 }

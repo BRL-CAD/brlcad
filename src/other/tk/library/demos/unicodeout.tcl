@@ -55,7 +55,7 @@ set oldCursor [$w cget -cursor]
 $w conf -cursor watch
 update
 
-if {[tk windowingsystem] eq "x11"} {
+if {[tk windowingsystem] in {x11 win32}} {
 	# Using presentation forms (pre-layouted)
 	addSample $w Arabic \
 		"\uFE94\uFEF4\uFE91\uFEAE\uFECC\uFEDF\uFE8D " \
@@ -71,7 +71,7 @@ addSample $w "Simpl. Chinese" "\u6C49\u8BED"
 addSample $w Greek \
 	 "\u0395\u03BB\u03BB\u03B7\u03BD\u03B9\u03BA\u03AE " \
 	 "\u03B3\u03BB\u03CE\u03C3\u03C3\u03B1"
-if {[tk windowingsystem] eq "x11"} {
+if {[tk windowingsystem] in {x11 win32}} {
 	# Visual order (pre-layouted)
 	addSample $w Hebrew \
 		"\u05DD\u05D9\u05DC\u05E9\u05D5\u05E8\u05D9 " \

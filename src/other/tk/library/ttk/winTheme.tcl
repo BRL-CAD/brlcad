@@ -1,14 +1,13 @@
 #
 # $Id$
 #
-# Ttk widget set: Windows Native theme
+# Settings for 'winnative' theme.
 #
 
-namespace eval ttk {
+namespace eval ttk::theme::winnative {
+    ttk::style theme settings winnative {
 
-    style theme settings winnative {
-
-	style configure "." \
+	ttk::style configure "." \
 	    -background SystemButtonFace \
 	    -foreground SystemWindowText \
 	    -selectforeground SystemHighlightText \
@@ -17,60 +16,62 @@ namespace eval ttk {
 	    -font TkDefaultFont \
 	    ;
 
-	style map "." -foreground [list disabled SystemGrayText] ;
-        style map "." -embossed [list disabled 1] ;
+	ttk::style map "." -foreground [list disabled SystemGrayText] ;
+        ttk::style map "." -embossed [list disabled 1] ;
 
-	style configure TButton -width -11 -relief raised -shiftrelief 1
-	style configure TCheckbutton -padding "2 4"
-	style configure TRadiobutton -padding "2 4"
-	style configure TMenubutton \
-	    -padding "8 4" -arrowsize 3 -relief raised -anchor w
+	ttk::style configure TButton \
+	    -anchor center -width -11 -relief raised -shiftrelief 1
+	ttk::style configure TCheckbutton -padding "2 4"
+	ttk::style configure TRadiobutton -padding "2 4"
+	ttk::style configure TMenubutton \
+	    -padding "8 4" -arrowsize 3 -relief raised
 
-	style map TButton -relief {{!disabled pressed} sunken}
+	ttk::style map TButton -relief {{!disabled pressed} sunken}
 
-	style configure TEntry \
+	ttk::style configure TEntry \
 	    -padding 2 -selectborderwidth 0 -insertwidth 1
-	style map TEntry \
+	ttk::style map TEntry \
 	    -fieldbackground \
 	    	[list readonly SystemButtonFace disabled SystemButtonFace] \
 	    -selectbackground [list !focus SystemWindow] \
 	    -selectforeground [list !focus SystemWindowText] \
 	    ;
 
-	style configure TCombobox -padding 2
-	style map TCombobox \
+	ttk::style configure TCombobox -padding 2
+	ttk::style map TCombobox \
 	    -selectbackground [list !focus SystemWindow] \
 	    -selectforeground [list !focus SystemWindowText] \
 	    -foreground	[list {readonly focus} SystemHighlightText] \
 	    -focusfill	[list {readonly focus} SystemHighlight] \
 	    ;
 
-	style configure TLabelframe -borderwidth 2 -relief groove
+	ttk::style configure TLabelframe -borderwidth 2 -relief groove
 
-	style configure Toolbutton -relief flat -padding {8 4}
-	style map Toolbutton -relief \
+	ttk::style configure Toolbutton -relief flat -padding {8 4}
+	ttk::style map Toolbutton -relief \
 	    {disabled flat selected sunken  pressed sunken  active raised}
 
-	style configure TScale -groovewidth 4
+	ttk::style configure TScale -groovewidth 4
 
-	style configure TNotebook -tabmargins {2 2 2 0}
-	style configure TNotebook.Tab -padding {3 1} -borderwidth 1
-	style map TNotebook.Tab -expand [list selected {2 2 2 0}]
+	ttk::style configure TNotebook -tabmargins {2 2 2 0}
+	ttk::style configure TNotebook.Tab -padding {3 1} -borderwidth 1
+	ttk::style map TNotebook.Tab -expand [list selected {2 2 2 0}]
 
 	# Treeview:
-	style configure Heading -font TkHeadingFont -relief raised
-	style configure Row -background SystemWindow
-	style configure Cell -background SystemWindow
-	style map Row \
+	ttk::style configure Heading -font TkHeadingFont -relief raised
+	ttk::style configure Row -background SystemWindow
+	ttk::style configure Cell -background SystemWindow
+	ttk::style map Row \
 	    -background [list selected SystemHighlight] \
 	    -foreground [list selected SystemHighlightText] ;
-	style map Cell \
+	ttk::style map Cell \
 	    -background [list selected SystemHighlight] \
 	    -foreground [list selected SystemHighlightText] ;
-	style map Item \
+	ttk::style map Item \
 	    -background [list selected SystemHighlight] \
 	    -foreground [list selected SystemHighlightText] ;
 
-        style configure TProgressbar -borderwidth 0 -background SystemHighlight
+        ttk::style configure TProgressbar \
+	    -background SystemHighlight -borderwidth 0 ;
     }
 }

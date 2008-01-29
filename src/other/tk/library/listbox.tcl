@@ -35,7 +35,7 @@
 
 bind Listbox <1> {
     if {[winfo exists %W]} {
-	tk::ListboxBeginSelect %W [%W index @%x,%y]
+	tk::ListboxBeginSelect %W [%W index @%x,%y] 1
     }
 }
 
@@ -227,7 +227,7 @@ if {"x11" eq [tk windowingsystem]} {
 # el -		The element for the selection operation (typically the
 #		one under the pointer).  Must be in numerical form.
 
-proc ::tk::ListboxBeginSelect {w el} {
+proc ::tk::ListboxBeginSelect {w el {focus 1}} {
     variable ::tk::Priv
     if {[$w cget -selectmode] eq "multiple"} {
 	if {[$w selection includes $el]} {
@@ -243,6 +243,10 @@ proc ::tk::ListboxBeginSelect {w el} {
 	set Priv(listboxPrev) $el
     }
     event generate $w <<ListboxSelect>>
+    # check existence as ListboxSelect may destroy us
+    if {$focus && [winfo exists $w] && [$w cget -state] eq "normal"} {
+	focus $w
+    }
 }
 
 # ::tk::ListboxMotion --

@@ -11,8 +11,7 @@
 #include <tk.h>
 #include "ttkTheme.h"
 
-/*
- *----------------------------------------------------------------------
+/*----------------------------------------------------------------------
  * +++ Text element.
  *
  * This element displays a textual label in the foreground color.
@@ -21,15 +20,13 @@
  * is present and >= 0.
  */
 
-typedef struct
-{
+typedef struct {
     /*
      * Element options:
      */
     Tcl_Obj	*textObj;
     Tcl_Obj	*fontObj;
     Tcl_Obj	*foregroundObj;
-    Tcl_Obj	*backgroundObj;
     Tcl_Obj	*underlineObj;
     Tcl_Obj	*widthObj;
     Tcl_Obj	*anchorObj;
@@ -51,22 +48,19 @@ typedef struct
 /* Text element options table.
  * NB: Keep in sync with label element option table.
  */
-static Ttk_ElementOptionSpec TextElementOptions[] =
-{
+static Ttk_ElementOptionSpec TextElementOptions[] = {
     { "-text", TK_OPTION_STRING,
 	Tk_Offset(TextElement,textObj), "" },
     { "-font", TK_OPTION_FONT,
 	Tk_Offset(TextElement,fontObj), DEFAULT_FONT },
     { "-foreground", TK_OPTION_COLOR,
 	Tk_Offset(TextElement,foregroundObj), "black" },
-    { "-background", TK_OPTION_BORDER,
-	Tk_Offset(TextElement,backgroundObj), DEFAULT_BACKGROUND },
     { "-underline", TK_OPTION_INT,
 	Tk_Offset(TextElement,underlineObj), "-1"},
     { "-width", TK_OPTION_INT,
 	Tk_Offset(TextElement,widthObj), "-1"},
     { "-anchor", TK_OPTION_ANCHOR,
-	Tk_Offset(TextElement,anchorObj), "center"},
+	Tk_Offset(TextElement,anchorObj), "w"},
     { "-justify", TK_OPTION_JUSTIFY,
 	Tk_Offset(TextElement,justifyObj), "left" },
     { "-wraplength", TK_OPTION_PIXELS,
@@ -209,8 +203,7 @@ static void TextElementDraw(
     }
 }
 
-static Ttk_ElementSpec TextElementSpec =
-{
+static Ttk_ElementSpec TextElementSpec = {
     TK_STYLE_VERSION_2,
     sizeof(TextElement),
     TextElementOptions,
@@ -218,44 +211,12 @@ static Ttk_ElementSpec TextElementSpec =
     TextElementDraw
 };
 
-/*
- * ImageTextElement --
- * 	Same as TextElement, but erases the background area first.
- */
-static void ImageTextElementDraw(
-    void *clientData, void *elementRecord, Tk_Window tkwin,
-    Drawable d, Ttk_Box b, Ttk_State state)
-{
-    TextElement *text = elementRecord;
-    Tk_3DBorder bd = Tk_Get3DBorderFromObj(tkwin,text->backgroundObj);
-
-    if (!TextSetup(text, tkwin))
-	return;
-
-    XFillRectangle(Tk_Display(tkwin), d,
-	Tk_3DBorderGC(tkwin, bd, TK_3D_FLAT_GC), b.x, b.y, b.width, b.height);
-
-    TextDraw(text, tkwin, d, b);
-    TextCleanup(text);
-}
-
-static Ttk_ElementSpec ImageTextElementSpec =
-{
-    TK_STYLE_VERSION_2,
-    sizeof(TextElement),
-    TextElementOptions,
-    TextElementSize,
-    ImageTextElementDraw
-};
-
-/*
- *----------------------------------------------------------------------
+/*----------------------------------------------------------------------
  * +++ Image element.
  * Draws an image.
  */
 
-typedef struct
-{
+typedef struct {
     Tcl_Obj	*imageObj;
     Tcl_Obj 	*stippleObj;	/* For TTK_STATE_DISABLED */
     Tcl_Obj 	*backgroundObj;	/* " " */
@@ -268,8 +229,7 @@ typedef struct
 
 /* ===> NB: Keep in sync with label element option table.  <===
  */
-static Ttk_ElementOptionSpec ImageElementOptions[] =
-{
+static Ttk_ElementOptionSpec ImageElementOptions[] = {
     { "-image", TK_OPTION_STRING,
 	Tk_Offset(ImageElement,imageObj), "" },
     { "-stipple", TK_OPTION_STRING, 	/* Really: TK_OPTION_BITMAP */
@@ -393,8 +353,7 @@ static void ImageElementDraw(
     }
 }
 
-static Ttk_ElementSpec ImageElementSpec =
-{
+static Ttk_ElementSpec ImageElementSpec = {
     TK_STYLE_VERSION_2,
     sizeof(ImageElement),
     ImageElementOptions,
@@ -433,8 +392,7 @@ static Ttk_ElementSpec ImageElementSpec =
  * Here, padding is handled by a different element.
  */
 
-typedef struct
-{
+typedef struct {
     /*
      * Element options:
      */
@@ -451,8 +409,7 @@ typedef struct
     int 		totalWidth, totalHeight;
 } LabelElement;
 
-static Ttk_ElementOptionSpec LabelElementOptions[] =
-{
+static Ttk_ElementOptionSpec LabelElementOptions[] = {
     { "-compound", TK_OPTION_ANY,
 	Tk_Offset(LabelElement,compoundObj), "none" },
     { "-space", TK_OPTION_PIXELS,
@@ -467,14 +424,12 @@ static Ttk_ElementOptionSpec LabelElementOptions[] =
 	Tk_Offset(LabelElement,text.fontObj), DEFAULT_FONT },
     { "-foreground", TK_OPTION_COLOR,
 	Tk_Offset(LabelElement,text.foregroundObj), "black" },
-    { "-background", TK_OPTION_BORDER,
-	Tk_Offset(LabelElement,text.backgroundObj), DEFAULT_BACKGROUND },
     { "-underline", TK_OPTION_INT,
 	Tk_Offset(LabelElement,text.underlineObj), "-1"},
     { "-width", TK_OPTION_INT,
 	Tk_Offset(LabelElement,text.widthObj), ""},
     { "-anchor", TK_OPTION_ANCHOR,
-	Tk_Offset(LabelElement,text.anchorObj), "center"},
+	Tk_Offset(LabelElement,text.anchorObj), "w"},
     { "-justify", TK_OPTION_JUSTIFY,
 	Tk_Offset(LabelElement,text.justifyObj), "left" },
     { "-wraplength", TK_OPTION_PIXELS,
@@ -687,8 +642,7 @@ static void LabelElementDraw(
     LabelCleanup(l);
 }
 
-static Ttk_ElementSpec LabelElementSpec =
-{
+static Ttk_ElementSpec LabelElementSpec = {
     TK_STYLE_VERSION_2,
     sizeof(LabelElement),
     LabelElementOptions,
@@ -708,7 +662,5 @@ void TtkLabel_Init(Tcl_Interp *interp)
     Ttk_RegisterElement(interp, theme, "text", &TextElementSpec, NULL);
     Ttk_RegisterElement(interp, theme, "image", &ImageElementSpec, NULL);
     Ttk_RegisterElement(interp, theme, "label", &LabelElementSpec, NULL);
-    Ttk_RegisterElement(interp, theme, "Labelframe.text", /* @@@ */
-	    				&ImageTextElementSpec,NULL);
 }
 

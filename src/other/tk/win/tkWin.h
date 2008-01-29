@@ -15,6 +15,21 @@
 #ifndef _TKWIN
 #define _TKWIN
 
+/*
+ * We must specify the lower version we intend to support. In particular
+ * the SystemParametersInfo API doesn't like to receive structures that
+ * are larger than it expects which affects the font assignements.
+ *
+ * WINVER = 0x0410 means Windows 98 and above
+ */
+
+#ifndef WINVER
+#define WINVER 0x0410
+#endif
+#ifndef _WIN32_WINDOWS
+#define _WIN32_WINDOWS 0x0410
+#endif
+
 #ifndef _TK
 #include <tk.h>
 #endif

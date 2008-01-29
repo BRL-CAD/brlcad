@@ -61,11 +61,11 @@ static void		UpdateStringOfTextIndex(Tcl_Obj *objPtr);
 #define GET_TEXTINDEX(objPtr) \
 	((TkTextIndex *) (objPtr)->internalRep.twoPtrValue.ptr1)
 #define GET_INDEXEPOCH(objPtr) \
-	((int) (objPtr)->internalRep.twoPtrValue.ptr2)
+	(PTR2INT((objPtr)->internalRep.twoPtrValue.ptr2))
 #define SET_TEXTINDEX(objPtr, indexPtr) \
 	((objPtr)->internalRep.twoPtrValue.ptr1 = (VOID *) (indexPtr))
 #define SET_INDEXEPOCH(objPtr, epoch) \
-	((objPtr)->internalRep.twoPtrValue.ptr2 = (VOID *) (epoch))
+	((objPtr)->internalRep.twoPtrValue.ptr2 = INT2PTR(epoch))
 
 /*
  * Define the 'textindex' object type, which Tk uses to represent indices in

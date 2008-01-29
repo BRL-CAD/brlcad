@@ -5,7 +5,6 @@
 #define WIN32_LEAN_AND_MEAN
 #endif
 
-#include <windows.h>
 #include <tkWinInt.h>
 #include "ttk/ttkTheme.h"
 
@@ -56,9 +55,7 @@ static SystemColorEntry sysColors[] = {
 	{ NULL, 0 }
 };
 
-static void
-RegisterSystemColors(
-    Tcl_Interp *interp)
+static void RegisterSystemColors(Tcl_Interp *interp)
 {
     Ttk_ResourceCache cache = Ttk_GetResourceCache(interp);
     SystemColorEntry *sysColor;
@@ -74,14 +71,12 @@ RegisterSystemColors(
 }
 
 static HWND
-CreateThemeMonitorWindow(
-    HINSTANCE hinst,
-    Tcl_Interp *interp)
+CreateThemeMonitorWindow(HINSTANCE hinst, Tcl_Interp *interp)
 {
     WNDCLASSEX wc;
-    HWND hwnd = NULL;
-    CHAR title[32] = "TtkMonitorWindow";
-    CHAR name[32] = "TtkMonitorClass";
+    HWND       hwnd = NULL;
+    CHAR       title[32] = "TtkMonitorWindow";
+    CHAR       name[32] = "TtkMonitorClass";
     
     wc.cbSize        = sizeof(WNDCLASSEX);
     wc.style         = CS_HREDRAW | CS_VREDRAW;
@@ -97,14 +92,10 @@ CreateThemeMonitorWindow(
     wc.lpszClassName = name;
 
     if (RegisterClassEx(&wc)) {
-	hwnd = CreateWindow(name, title, WS_OVERLAPPEDWINDOW,
-		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-		NULL, NULL, hinst, NULL);
-#ifdef _WIN64
+	hwnd = CreateWindow( name, title, WS_OVERLAPPEDWINDOW,
+	    CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+	    NULL, NULL, hinst, NULL );
 	SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG)interp);
-#else
-	SetWindowLong(hwnd, GWL_USERDATA, (LONG)interp);
-#endif
 	ShowWindow(hwnd, SW_HIDE);
 	UpdateWindow(hwnd);
     }
@@ -112,26 +103,16 @@ CreateThemeMonitorWindow(
 }
 
 static void 
-DestroyThemeMonitorWindow(
-    void *clientData)
+DestroyThemeMonitorWindow(void *clientData)
 {
     HWND hwnd = (HWND)clientData;
-
     DestroyWindow(hwnd);
 }
 
 static LRESULT WINAPI
-WndProc(
-    HWND hwnd,
-    UINT msg,
-    WPARAM wp,
-    LPARAM lp)
+WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 {
-#ifdef _WIN64
     Tcl_Interp *interp = (Tcl_Interp *)GetWindowLongPtr(hwnd, GWLP_USERDATA);
-#else
-    Tcl_Interp *interp = (Tcl_Interp *)GetWindowLong(hwnd, GWL_USERDATA);
-#endif
     Ttk_Theme theme;
 
     switch (msg) {
@@ -144,8 +125,9 @@ WndProc(
 
     case WM_THEMECHANGED:
 	/*
-	 * Reset the application theme to 'xpnative' if present, which will in
-	 * turn fall back to 'winnative' if XP theming is disabled.
+	 * Reset the application theme to 'xpnative' if present,
+	 * which will in turn fall back to 'winnative' if XP theming
+	 * is disabled.
 	 */
 
 	theme = Ttk_GetTheme(interp, "xpnative");
@@ -165,9 +147,7 @@ WndProc(
 MODULE_SCOPE int TtkWinTheme_Init(Tcl_Interp *, HWND hwnd);
 MODULE_SCOPE int TtkXPTheme_Init(Tcl_Interp *, HWND hwnd);
 
-MODULE_SCOPE int
-Ttk_WinPlatformInit(
-    Tcl_Interp *interp)
+MODULE_SCOPE int Ttk_WinPlatformInit(Tcl_Interp *interp)
 {
     HWND hwnd;
 
@@ -179,11 +159,3 @@ Ttk_WinPlatformInit(
 
     return TCL_OK;
 }
-
-/*
- * Local Variables:
- * mode: c
- * c-basic-offset: 4
- * fill-column: 78
- * End:
- */

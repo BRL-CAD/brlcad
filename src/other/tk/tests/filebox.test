@@ -113,8 +113,8 @@ if {$tcl_platform(platform) == "unix"} {
     set modes 1
 }
 
-set unknownOptionsMsg(tk_getOpenFile) {bad option "-foo": must be -defaultextension, -filetypes, -initialdir, -initialfile, -multiple, -parent, or -title}
-set unknownOptionsMsg(tk_getSaveFile) {bad option "-foo": must be -defaultextension, -filetypes, -initialdir, -initialfile, -parent, or -title}
+set unknownOptionsMsg(tk_getOpenFile) {bad option "-foo": must be -defaultextension, -filetypes, -initialdir, -initialfile, -multiple, -parent, -title, or -typevariable}
+set unknownOptionsMsg(tk_getSaveFile) {bad option "-foo": must be -defaultextension, -filetypes, -initialdir, -initialfile, -parent, -title, or -typevariable}
 
 set tmpFile "filebox.tmp"
 makeFile {
@@ -269,6 +269,27 @@ foreach mode $modes {
 		    -initialfile $fileName -initialdir $fileDir]
         } $pathName
     }
+    foreach {x res} [list 1 "-unset-" 2 "Text files"] {
+	set t [expr {$x + [llength [array names filters]]}]
+        test filebox-3.$t-$mode "tk_getOpenFile command" nonUnixUserInteraction {
+	    catch {unset tv}
+	    catch {unset typeName}
+	    ToPressButton $parent ok
+	    if {[info exists tv]} {
+	    } else {
+	    }
+	    set choice [tk_getOpenFile -title "Press Ok" \
+		    -filetypes $filters($x) -parent $parent \
+		    -initialfile $fileName -initialdir $fileDir \
+		    -typevariable tv]
+	    if {[info exists tv]} {
+		regexp {^(.*) \(.*\)$} $tv dummy typeName
+	    } else {
+		set typeName "-unset-"
+	    }
+	    set typeName
+        } $res
+    }
 
     test filebox-4.1-$mode "tk_getSaveFile command" -body {
 	tk_getSaveFile -foo
@@ -378,6 +399,69 @@ foreach mode $modes {
 		    -filetypes $filters($x) -parent $parent \
 		    -initialfile $fileName -initialdir $fileDir]
 	} $pathName[lindex $addedExtensions $x]
+    }
+
+    if {!$mode} {
+
+	test filebox-7.1-$mode "tk_getOpenFile - directory not readable" \
+	    -constraints nonUnixUserInteraction \
+	    -setup {
+		rename ::tk_messageBox ::saved_messageBox
+		set ::gotmessage {}
+		proc tk_messageBox args {
+		    set ::gotmessage $args
+		}
+		toplevel .t1
+		file mkdir [file join $fileDir NOTREADABLE]
+		file attributes [file join $fileDir NOTREADABLE] \
+		    -permissions 300
+	    } \
+	    -cleanup {
+		rename ::tk_messageBox {}
+		rename ::saved_messageBox ::tk_messageBox
+		unset ::gotmessage
+		destroy .t1
+		file delete -force [file join $fileDir NOTREADABLE]
+	    } \
+	    -body {
+		ToEnterFileByKey .t1 NOTREADABLE $fileDir
+		ToPressButton .t1 ok
+		ToPressButton .t1 cancel
+		tk_getOpenFile -parent .t1 \
+		    -title "Please select the NOTREADABLE directory" \
+		    -initialdir $fileDir
+		set gotmessage
+	    } \
+	    -match glob \
+	    -result "*NOTREADABLE*"
+
+	test filebox-7.2-$mode "tk_getOpenFile - bad file name" \
+	    -constraints nonUnixUserInteraction \
+	    -setup {
+		rename ::tk_messageBox ::saved_messageBox
+		set ::gotmessage {}
+		proc tk_messageBox args {
+		    set ::gotmessage $args
+		}
+		toplevel .t1
+	    } \
+	    -cleanup {
+		rename ::tk_messageBox {}
+		rename ::saved_messageBox ::tk_messageBox
+		unset ::gotmessage
+		destroy .t1
+	    } \
+	    -body {
+		ToEnterFileByKey .t1 RUBBISH $fileDir
+		ToPressButton .t1 ok
+		ToPressButton .t1 cancel
+		tk_getOpenFile -parent .t1 \
+		    -title "Please enter RUBBISH as a file name" \
+		    -initialdir $fileDir
+		set gotmessage
+	    } \
+	    -match glob \
+	    -result "*RUBBISH*"
     }
 
     # The rest of the tests need to be executed on Unix only.

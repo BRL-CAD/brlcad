@@ -370,7 +370,7 @@ When reading an image file or processing
 string data specified with the \fB\-data\fR configuration option, the
 photo image code invokes each handler in turn until one is
 found that claims to be able to read the data in the file or string.
-Usually this will find the correct handler, but if it doesn't, the
+Usually this will find the correct handler, but if it does not, the
 user may give a format name with the \fB\-format\fR option to specify
 which handler to use.  In fact the photo image code will try those
 handlers whose names begin with the string specified for the
@@ -427,7 +427,7 @@ Load an image from a file and tile it to the size of a window, which
 is useful for producing a tiled background:
 .CS
 # These lines should be called once
-\fBimage create photo\fR untiled -file "theFile.ppm"
+\fBimage create photo\fR untiled \-file "theFile.ppm"
 \fBimage create photo\fR tiled
 
 # These lines should be called whenever .someWidget changes

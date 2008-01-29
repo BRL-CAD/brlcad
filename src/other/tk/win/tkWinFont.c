@@ -336,7 +336,7 @@ CreateNamedSystemLogFont(
     Tcl_Interp *interp,
     Tk_Window tkwin,
     CONST char* name,
-    LOGFONT* logFontPtr)
+    LOGFONTA* logFontPtr)
 {
     HFONT hFont;
     int r;
@@ -368,19 +368,13 @@ CreateNamedSystemFont(
     CONST char* name,
     HFONT hFont)
 {
-    TkFontAttributes *faPtr;
-    WinFont *fontPtr;
+    WinFont winfont;
     int r;
     
-    TkDeleteNamedFont(interp, tkwin, name);
-    
-    fontPtr = (WinFont *) ckalloc(sizeof(WinFont));
-    InitFont(tkwin, hFont, 0, fontPtr);
-    faPtr = (TkFontAttributes*)ckalloc(sizeof(TkFontAttributes));
-    memcpy(faPtr, &fontPtr->font.fa, sizeof(TkFontAttributes));
-    r = TkCreateNamedFont(interp, tkwin, name, faPtr);
-    TkpDeleteFont((TkFont *)fontPtr);
-    ckfree((char *) fontPtr);
+    TkDeleteNamedFont(NULL, tkwin, name);
+    InitFont(tkwin, hFont, 0, &winfont);
+    r = TkCreateNamedFont(interp, tkwin, name, &winfont.font.fa);
+    TkpDeleteFont((TkFont *)&winfont);
     return r;
 }
 
@@ -403,42 +397,52 @@ TkWinSetupSystemFonts(TkMainInfo *mainPtr)
     NONCLIENTMETRICS ncMetrics;
     ICONMETRICS iconMetrics;
     HFONT hFont;
-    
+
     interp = (Tcl_Interp *) mainPtr->interp;
     tkwin = (Tk_Window) mainPtr->winPtr;
-    
+
     /* force this for now */
-    if (((TkWindow *) tkwin)->mainPtr == NULL)
+    if (((TkWindow *) tkwin)->mainPtr == NULL) {
         ((TkWindow *) tkwin)->mainPtr = mainPtr;
-    
+    }
+
+    /*
+     * If this API call fails then we will fallback to setting these
+     * named fonts from script in ttk/fonts.tcl. So far I've only
+     * seen it fail when WINVER has been defined for a higher platform than
+     * we are running on. (ie: WINVER=0x0600 and running on XP).
+     */
+
+    ZeroMemory(&ncMetrics, sizeof(ncMetrics));
     ncMetrics.cbSize = sizeof(ncMetrics);
-    SystemParametersInfo(SPI_GETNONCLIENTMETRICS, sizeof(ncMetrics),
-	    &ncMetrics, 0);
-    
-    CreateNamedSystemLogFont(interp, tkwin, "TkDefaultFont",
+    if (SystemParametersInfo(SPI_GETNONCLIENTMETRICS,
+	    sizeof(ncMetrics), &ncMetrics, 0)) {
+	CreateNamedSystemLogFont(interp, tkwin, "TkDefaultFont",
 	    &ncMetrics.lfMessageFont);
-    CreateNamedSystemLogFont(interp, tkwin, "TkHeadingFont",
+	CreateNamedSystemLogFont(interp, tkwin, "TkHeadingFont",
 	    &ncMetrics.lfMessageFont);
-    CreateNamedSystemLogFont(interp, tkwin, "TkTextFont",
+	CreateNamedSystemLogFont(interp, tkwin, "TkTextFont",
 	    &ncMetrics.lfMessageFont);
-    CreateNamedSystemLogFont(interp, tkwin, "TkMenuFont",
+	CreateNamedSystemLogFont(interp, tkwin, "TkMenuFont",
 	    &ncMetrics.lfMenuFont);
-    CreateNamedSystemLogFont(interp, tkwin, "TkTooltipFont",
+	CreateNamedSystemLogFont(interp, tkwin, "TkTooltipFont",
 	    &ncMetrics.lfStatusFont);
-    CreateNamedSystemLogFont(interp, tkwin, "TkCaptionFont",
+	CreateNamedSystemLogFont(interp, tkwin, "TkCaptionFont",
 	    &ncMetrics.lfCaptionFont);
-    CreateNamedSystemLogFont(interp, tkwin, "TkSmallCaptionFont",
+	CreateNamedSystemLogFont(interp, tkwin, "TkSmallCaptionFont",
 	    &ncMetrics.lfSmCaptionFont);
+    }
 
     iconMetrics.cbSize = sizeof(iconMetrics);
-    SystemParametersInfo(SPI_GETICONMETRICS, sizeof(iconMetrics),
-	    &iconMetrics, 0);
-    CreateNamedSystemLogFont(interp, tkwin, "TkIconFont",
+    if (SystemParametersInfo(SPI_GETICONMETRICS, sizeof(iconMetrics),
+	    &iconMetrics, 0)) {
+	CreateNamedSystemLogFont(interp, tkwin, "TkIconFont",
 	    &iconMetrics.lfFont);
-    
+    }
+
     hFont = (HFONT)GetStockObject(ANSI_FIXED_FONT);
     CreateNamedSystemFont(interp, tkwin, "TkFixedFont", hFont);
-    
+
     /* 
      * Setup the remaining standard Tk font names as named fonts.
      */
@@ -1398,11 +1402,14 @@ InitFont(
     Tcl_ExternalToUtfDString(systemEncoding, buf, -1, &faceString);
 
     fontPtr->font.fid	= (Font) fontPtr;
+    fontPtr->hwnd	= hwnd;
+    fontPtr->pixelSize	= tm.tmHeight - tm.tmInternalLeading;
 
     faPtr		= &fontPtr->font.fa;
     faPtr->family	= Tk_GetUid(Tcl_DStringValue(&faceString));
+
     faPtr->size =
-	    TkFontGetPoints(tkwin, -(tm.tmHeight - tm.tmInternalLeading));
+	    TkFontGetPoints(tkwin, -(fontPtr->pixelSize));
     faPtr->weight =
 	    (tm.tmWeight > FW_MEDIUM) ? TK_FW_BOLD : TK_FW_NORMAL;
     faPtr->slant	= (tm.tmItalic != 0) ? TK_FS_ITALIC : TK_FS_ROMAN;
@@ -1414,9 +1421,6 @@ InitFont(
     fmPtr->descent	= tm.tmDescent;
     fmPtr->maxWidth	= tm.tmMaxCharWidth;
     fmPtr->fixed	= !(tm.tmPitchAndFamily & TMPF_FIXED_PITCH);
-
-    fontPtr->hwnd	= hwnd;
-    fontPtr->pixelSize	= tm.tmHeight - tm.tmInternalLeading;
 
     fontPtr->numSubFonts 	= 1;
     fontPtr->subFontArray	= fontPtr->staticSubFonts;

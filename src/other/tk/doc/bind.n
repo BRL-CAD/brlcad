@@ -17,7 +17,6 @@ bind \- Arrange for X events to invoke Tcl scripts
 .SH SYNOPSIS
 \fBbind\fI tag\fR ?\fIsequence\fR? ?\fB+\fR??\fIscript\fR?
 .BE
-
 .SH "INTRODUCTION"
 .PP
 The \fBbind\fR command associates Tcl scripts with X events.
@@ -25,7 +24,9 @@ If all three arguments are specified, \fBbind\fR will
 arrange for \fIscript\fR (a Tcl script) to be evaluated whenever
 the event(s) given by \fIsequence\fR occur in the window(s)
 identified by \fItag\fR.
-If \fIscript\fR is prefixed with a ``+'', then it is appended to
+If \fIscript\fR is prefixed with a
+.QW + ,
+then it is appended to
 any existing binding for \fIsequence\fR;  otherwise \fIscript\fR replaces
 any existing binding.
 If \fIscript\fR is an empty string then the current binding for
@@ -74,7 +75,7 @@ pattern matches a \fBKeyPress\fR event for the particular
 character.  The second form of pattern is longer but more general.
 It has the following syntax:
 .CS
-\fB<\fImodifier-modifier-type-detail\fB>\fR
+\fB<\fImodifier\-modifier\-type\-detail\fB>\fR
 .CE
 The entire event pattern is surrounded by angle brackets.
 Inside the angle brackets are zero or more modifiers, an event
@@ -94,7 +95,7 @@ Modifiers, such as \fBShift\fR or \fBControl\fR, may not be combined with a
 virtual event to modify it.  Bindings on a virtual event may be created
 before the virtual event is defined, and if the definition of a virtual
 event changes dynamically, all windows bound to that virtual event will
-respond immediately to the new definition.  
+respond immediately to the new definition.
 .PP
 Some widgets (e.g. \fBmenu\fR and \fBtext\fR) issue virtual events
 when their internal state is updated in some ways.  Please see the
@@ -104,16 +105,16 @@ manual page for each widget for details.
 Modifiers consist of any of the following values:
 .DS
 .ta 6c
-\fBControl\fR	\fBMod2, M2\fR
-\fBShift\fR	\fBMod3, M3\fR	
-\fBLock\fR	\fBMod4, M4\fR
-\fBButton1, B1\fR	\fBMod5, M5\fR	
-\fBButton2, B2\fR	\fBMeta, M\fR
-\fBButton3, B3\fR	\fBAlt\fR
-\fBButton4, B4\fR	\fBDouble\fR
-\fBButton5, B5\fR	\fBTriple\fR
-\fBMod1, M1\fR	\fBQuadruple\fR
-\fBExtended\fR
+\fBControl\fR	\fBMod1\fR, \fBM1\fR, \fBCommand\fR
+\fBAlt\fR	\fBMod2\fR, \fBM2\fR, \fBOption\fR
+\fBShift\fR	\fBMod3\fR, \fBM3\fR
+\fBLock\fR	\fBMod4\fR, \fBM4\fR
+\fBExtended\fR	\fBMod5\fR, \fBM5\fR
+\fBButton1\fR, \fBB1\fR	\fBMeta\fR, \fBM\fR
+\fBButton2\fR, \fBB2\fR	\fBDouble\fR
+\fBButton3\fR, \fBB3\fR	\fBTriple\fR
+\fBButton4\fR, \fBB4\fR	\fBQuadruple\fR
+\fBButton5\fR, \fBB5\fR
 .DE
 Where more than one value is listed, separated by commas, the values
 are equivalent.
@@ -125,8 +126,8 @@ must include all of those specified in the event pattern.
 An event may also contain additional modifiers not specified in
 the binding.
 For example, if button 1 is pressed while the shift and control keys
-are down, the pattern \fB<Control-Button-1>\fR will match
-the event, but \fB<Mod1-Button-1>\fR will not.
+are down, the pattern \fB<Control\-Button\-1>\fR will match
+the event, but \fB<Mod1\-Button\-1>\fR will not.
 If no modifiers are specified, then any combination of modifiers may
 be present in the event.
 .PP
@@ -145,14 +146,18 @@ events. They cause a particular event pattern to be repeated 2, 3 or 4
 times, and also place a time and space requirement on the sequence: for a
 sequence of events to match a \fBDouble\fR, \fBTriple\fR or \fBQuadruple\fR
 pattern, all of the events must occur close together in time and without
-substantial mouse motion in between.  For example, \fB<Double-Button-1>\fR
-is equivalent to \fB<Button-1><Button-1>\fR with the extra time and space
+substantial mouse motion in between.  For example, \fB<Double\-Button\-1>\fR
+is equivalent to \fB<Button\-1><Button\-1>\fR with the extra time and space
 requirement.
+.PP
+The \fBCommand\fR and \fBOption\fR modifiers are equivalents of \fBMod1\fR
+resp. \fBMod2\fR, they correspond to Macintosh-specific modifier keys.
 .PP
 .VS 8.5
 The \fBExtended\fR modifier is, at present, specific to Windows.  It
-appears on events that are associated with the keys on the "extended
-keyboard."  On a US keyboard, the extended keys include the \fBAlt\fR
+appears on events that are associated with the keys on the
+.QW "extended keyboard" .
+On a US keyboard, the extended keys include the \fBAlt\fR
 and \fBControl\fR keys at the right of the keyboard, the cursor keys
 in the cluster to the left of the numeric pad, the \fBNumLock\fR key,
 the \fBBreak\fR key, the \fBPrintScreen\fR key, and the \fB/\fR and
@@ -166,17 +171,17 @@ couple non-standard X event types that were added to better support
 the Macintosh and Windows platforms.  Below is a list of all the valid
 types; where two names appear together, they are synonyms.
 .DS
-.ta \w'ButtonPress, Button\0\0\0'u +\w'KeyPress, Key\0\0\0'u
-\fBActivate	Destroy	Map
-ButtonPress, Button	Enter	MapRequest
-ButtonRelease	Expose	Motion
-Circulate	FocusIn	MouseWheel	
-CirculateRequest	FocusOut	Property
-Colormap	Gravity	Reparent
-Configure	KeyPress, Key	ResizeRequest
-ConfigureRequest	KeyRelease	Unmap
-Create	Leave	Visibility
-Deactivate\fR
+.ta \w'\fBButtonPress, Button\0\0\0\fR'u +\w'\fBKeyPress, Key\0\0\0\fR'u
+\fBActivate\fR	\fBDestroy\fR	\fBMap\fR
+\fBButtonPress\fR, \fBButton\fR	\fBEnter\fR	\fBMapRequest\fR
+\fBButtonRelease\fR	\fBExpose\fR	\fBMotion\fR
+\fBCirculate\fR	\fBFocusIn\fR	\fBMouseWheel\fR
+\fBCirculateRequest\fR	\fBFocusOut\fR	\fBProperty\fR
+\fBColormap\fR	\fBGravity\fR	\fBReparent\fR
+\fBConfigure\fR	\fBKeyPress\fR, \fBKey\fR	\fBResizeRequest\fR
+\fBConfigureRequest\fR	\fBKeyRelease\fR	\fBUnmap\fR
+\fBCreate\fR	\fBLeave\fR	\fBVisibility\fR
+\fBDeactivate\fR
 .DE
 Most of the above events have the same fields and behaviors as events
 in the X Windowing system.  You can find more detailed descriptions of
@@ -217,13 +222,13 @@ events are sent to the window which currently has the keyboard focus.
 The \fBButtonPress\fR and \fBButtonRelease\fR events
 are generated when the user presses or releases a mouse button.
 \fBMotion\fR events are generated whenever the pointer is moved.
-\fBButtonPress\fR, \fBButtonRelease\fR, and \fBMotion\fR events are 
+\fBButtonPress\fR, \fBButtonRelease\fR, and \fBMotion\fR events are
 normally sent to the window containing the pointer.
 .RS
 .PP
 When a mouse button is pressed, the window containing the pointer
 automatically obtains a temporary pointer grab.
-Subsequent \fBButtonPress\fR, \fBButtonRelease\fR, and \fBMotion\fR 
+Subsequent \fBButtonPress\fR, \fBButtonRelease\fR, and \fBMotion\fR
 events will be sent to that window,
 regardless of which window contains the pointer,
 until all buttons have been released.
@@ -245,7 +250,7 @@ Other windows become mapped when they are placed under control
 of a geometry manager (for example \fBpack\fR or \fBgrid\fR).
 .PP
 A window is \fIviewable\fR only if it and all of its ancestors are mapped.
-Note that geometry managers typically do not map their children until 
+Note that geometry managers typically do not map their children until
 they have been mapped themselves, and unmap all children
 when they become unmapped; hence in Tk \fBMap\fR and \fBUnmap\fR
 events indicate whether or not a window is viewable.
@@ -260,16 +265,17 @@ specifies the new state.
 An \fBExpose\fR event is generated whenever all or part of a
 window should be redrawn (for example, when a window is
 first mapped or if it becomes unobscured).
-It is normally not necessary for client applications to 
+It is normally not necessary for client applications to
 handle \fBExpose\fR events, since Tk handles them internally.
 .IP \fBDestroy\fR 5
-A \fBDestroy\fR event is delivered to a window when 
+A \fBDestroy\fR event is delivered to a window when
 it is destroyed.
 .RS
 .PP
 When the \fBDestroy\fR event is delivered
-to a widget, it is in a ``half-dead'' state: the widget still exists,
-but most operations on it will fail.
+to a widget, it is in a
+.QW half-dead
+state: the widget still exists, but most operations on it will fail.
 .RE
 .IP "\fBFocusIn\fR, \fBFocusOut\fR" 5
 The \fBFocusIn\fR and \fBFocusOut\fR events are generated
@@ -280,20 +286,20 @@ and a \fBFocusIn\fR event is sent to the new one.
 .PP
 In addition,
 if the old and new focus windows do not share a common parent,
-``virtual crossing'' focus events are sent to the intermediate
-windows in the hierarchy.
+.QW "virtual crossing"
+focus events are sent to the intermediate windows in the hierarchy.
 Thus a \fBFocusIn\fR event indicates
 that the target window or one of its descendants has acquired the focus,
-and a \fBFocusOut\fR event indicates that the focus 
+and a \fBFocusOut\fR event indicates that the focus
 has been changed to a window outside the target window's hierarchy.
 .PP
 The keyboard focus may be changed explicitly by a call to \fBfocus\fR,
-or implicitly by the window manager.  
+or implicitly by the window manager.
 .RE
 .IP "\fBEnter\fR, \fBLeave\fR" 5
 An \fBEnter\fR event is sent to a window when the pointer
 enters that window, and a \fBLeave\fR event is sent when
-the pointer leaves it.  
+the pointer leaves it.
 .RS
 .PP
 If there is a pointer grab in effect, \fBEnter\fR and \fBLeave\fR
@@ -301,7 +307,8 @@ events are only delivered to the window owning the grab.
 .PP
 In addition, when the pointer moves
 between two windows, \fBEnter\fR and \fBLeave\fR
-``virtual crossing'' events are sent to intermediate windows
+.QW "virtual crossing"
+events are sent to intermediate windows
 in the hierarchy in the same manner as for \fBFocusIn\fR and
 \fBFocusOut\fR events.
 .RE
@@ -316,7 +323,7 @@ associated with a window has been changed, installed, or uninstalled.
 .RS
 .PP
 Widgets may be assigned a private colormap by
-specifying a \fB-colormap\fR option; the window manager
+specifying a \fB\-colormap\fR option; the window manager
 is responsible for installing and uninstalling colormaps
 as necessary.
 .PP
@@ -350,7 +357,7 @@ position in the stacking order.
 .PP
 The last part of a long event specification is \fIdetail\fR.  In the
 case of a \fBButtonPress\fR or \fBButtonRelease\fR event, it is the
-number of a button (1-5).  If a button number is given, then only an
+number of a button (1\-5).  If a button number is given, then only an
 event on that particular button will match;  if no button number is
 given, then an event on any button will match.  Note:  giving a
 specific button number is different than specifying a button modifier;
@@ -359,17 +366,22 @@ while in the second it refers to some other button that is already
 depressed when the matching event occurs.  If a button
 number is given then \fItype\fR may be omitted:  if will default
 to \fBButtonPress\fR.  For example, the specifier \fB<1>\fR
-is equivalent to \fB<ButtonPress-1>\fR.
+is equivalent to \fB<ButtonPress\-1>\fR.
 .PP
 If the event type is \fBKeyPress\fR or \fBKeyRelease\fR, then
 \fIdetail\fR may be specified in the form of an X keysym.  Keysyms
 are textual specifications for particular keys on the keyboard;
-they include all the alphanumeric ASCII characters (e.g. ``a'' is
-the keysym for the ASCII character ``a''), plus descriptions for
-non-alphanumeric characters (``comma'' is the keysym for the comma
-character), plus descriptions for all the non-ASCII keys on the
-keyboard (``Shift_L'' is the keysym for the left shift key, and
-``F1'' is the keysym for the F1 function key, if it exists).  The
+they include all the alphanumeric ASCII characters (e.g.
+.QW a
+is the keysym for the ASCII character
+.QW a ),
+plus descriptions for non-alphanumeric characters
+.PQ comma "is the keysym for the comma character" ,
+plus descriptions for all the non-ASCII keys on the keyboard (e.g.
+.QW Shift_L
+is the keysym for the left shift key, and
+.QW F1
+is the keysym for the F1 function key, if it exists).  The
 complete list of keysyms is not presented here;  it is
 available in other X documentation and may vary from system to
 system.
@@ -377,8 +389,8 @@ If necessary, you can use the \fB%K\fR notation described below
 to print out the keysym name for a particular key.
 If a keysym \fIdetail\fR is given, then the
 \fItype\fR field may be omitted;  it will default to \fBKeyPress\fR.
-For example, \fB<Control-comma>\fR is equivalent to
-\fB<Control-KeyPress-comma>\fR.
+For example, \fB<Control\-comma>\fR is equivalent to
+\fB<Control\-KeyPress\-comma>\fR.
 .SH "BINDING SCRIPTS AND SUBSTITUTIONS"
 .PP
 The \fIscript\fR argument to \fBbind\fR is a Tcl script,
@@ -430,17 +442,17 @@ the string will be one of the following:
 .RS
 .DS
 .ta 6c
-\fBNotifyAncestor	NotifyNonlinearVirtual
-NotifyDetailNone	NotifyPointer
-NotifyInferior	NotifyPointerRoot
-NotifyNonlinear	NotifyVirtual\fR
+\fBNotifyAncestor\fR	\fBNotifyNonlinearVirtual\fR
+\fBNotifyDetailNone\fR	\fBNotifyPointer\fR
+\fBNotifyInferior\fR	\fBNotifyPointerRoot\fR
+\fBNotifyNonlinear\fR	\fBNotifyVirtual\fR
 .DE
 For \fBConfigureRequest\fR events, the string will be one of:
 .DS
 .ta 6c
-\fBAbove	Opposite
-Below	None
-BottomIf	TopIf\fR
+\fBAbove\fR	\fBOpposite\fR
+\fBBelow\fR	\fBNone\fR
+\fBBottomIf\fR	\fBTopIf\fR
 .DE
 .VS 8.5
 For virtual events, the string will be whatever value is stored in the
@@ -453,8 +465,8 @@ For events other than these, the substituted string is undefined.
 .RE
 .IP \fB%f\fR 5
 The \fIfocus\fR field from the event (\fB0\fR or \fB1\fR).  Valid only
-for \fBEnter\fR and \fBLeave\fR events.  \fB1\fR if the receiving 
-window is the focus window or a descendant of the focus window, 
+for \fBEnter\fR and \fBLeave\fR events.  \fB1\fR if the receiving
+window is the focus window or a descendant of the focus window,
 \fB0\fR otherwise.
 .IP \fB%h\fR 5
 The \fIheight\fR field from the event.  Valid for the \fBConfigure\fR,
@@ -494,7 +506,7 @@ the property has been removed).
 The \fItime\fR field from the event.
 This is the X server timestamp (typically the time since
 the last server reset) in milliseconds, when the event occurred.
-Valid for most events.  
+Valid for most events.
 .IP \fB%w\fR 5
 The \fIwidth\fR field from the event.
 Indicates the new or requested width of the window.
@@ -503,17 +515,17 @@ Valid only for
 \fBResizeRequest\fR, and \fBExpose\fR events.
 .IP "\fB%x\fR, \fB%y\fR" 5
 The \fIx\fR and \fIy\fR fields from the event.
-For \fBButtonPress\fR, \fBButtonRelease\fR, \fBMotion\fR, 
+For \fBButtonPress\fR, \fBButtonRelease\fR, \fBMotion\fR,
 \fBKeyPress\fR, \fBKeyRelease\fR, and \fBMouseWheel\fR events,
 \fB%x\fR and \fB%y\fR indicate the position of the mouse pointer
 relative to the receiving window.
-For \fBEnter\fR and \fBLeave\fR events, the position where the 
+For \fBEnter\fR and \fBLeave\fR events, the position where the
 mouse pointer crossed the window, relative to the receiving window.
 For \fBConfigure\fR and \fBCreate\fR requests, the \fIx\fR and \fIy\fR
 coordinates of the window relative to its parent window.
 .IP \fB%A\fR 5
 Substitutes the UNICODE character corresponding to the event, or
-the empty string if the event doesn't correspond to a UNICODE character
+the empty string if the event does not correspond to a UNICODE character
 (e.g. the shift key was pressed). \fBXmbLookupString\fR (or
 \fBXLookupString\fR when input method support is turned off) does all
 the work of translating from the event to a UNICODE character.
@@ -530,8 +542,11 @@ the delta.  The sign of the value represents the direction the mouse
 wheel was scrolled.
 .IP \fB%E\fR 5
 The \fIsend_event\fR field from the event.  Valid for all event types.
-\fB0\fR indicates that this is a ``normal'' event, \fB1\fR indicates
-that it is a ``synthetic'' event generated by \fBSendEvent\fR.
+\fB0\fR indicates that this is a
+.QW normal
+event, \fB1\fR indicates that it is a
+.QW synthetic
+event generated by \fBSendEvent\fR.
 .IP \fB%K\fR 5
 The keysym corresponding to the event, substituted as a textual
 string.  Valid only for \fBKeyPress\fR and \fBKeyRelease\fR events.
@@ -554,22 +569,15 @@ The \fItype\fR field from the event.  Valid for all event types.
 .IP \fB%W\fR 5
 The path name of the window to which the event was reported (the
 \fIwindow\fR field from the event).  Valid for all event types.
-.IP \fB%X\fR 5
-The \fIx_root\fR field from the event.
+.IP "\fB%X\fR, \fB%Y\fR" 5
+The \fIx_root\fR and  \fIy_root\fR fields from the event.
 If a virtual-root window manager is being used then the substituted
-value is the corresponding x-coordinate in the virtual root.
+values are the corresponding x-coordinate and y-coordinate in the virtual root.
 Valid only for
 \fBButtonPress\fR, \fBButtonRelease\fR, \fBKeyPress\fR, \fBKeyRelease\fR,
 and \fBMotion\fR events.
-Same meaning as \fB%x\fR, except relative to the (virtual) root window.
-.IP \fB%Y\fR 5
-The \fIy_root\fR field from the event.
-If a virtual-root window manager is being used then the substituted
-value is the corresponding y-coordinate in the virtual root.
-Valid only for
-\fBButtonPress\fR, \fBButtonRelease\fR, \fBKeyPress\fR, \fBKeyRelease\fR,
-and \fBMotion\fR events.
-Same meaning as \fB%y\fR, except relative to the (virtual) root window.
+Same meaning as \fB%x\fR and \fB%y\fR, except relative to the (virtual) root
+window.
 .LP
 The replacement string for a %-replacement is formatted as a proper
 Tcl list element.
@@ -593,7 +601,7 @@ actually executed will be
 .CE
 This will cause the \fBinsert\fR to receive the original replacement
 string (open square bracket) as its first argument.
-If the extra backslash hadn't been added, Tcl would not have been
+If the extra backslash had not been added, Tcl would not have been
 able to parse the script correctly.
 .SH "MULTIPLE MATCHES"
 .PP
@@ -621,36 +629,43 @@ have the same \fItag\fR, then the most specific binding
 is chosen and its script is evaluated.
 The following tests are applied, in order, to determine which of
 several matching sequences is more specific:
-(a) an event pattern that specifies a specific button or key is more specific
-than one that doesn't;
-(b) a longer sequence (in terms of number
+.RS
+.IP (a)
+an event pattern that specifies a specific button or key is more specific
+than one that does not;
+.IP (b)
+a longer sequence (in terms of number
 of events matched) is more specific than a shorter sequence;
-(c) if the modifiers specified in one pattern are a subset of the
+.IP (c)
+if the modifiers specified in one pattern are a subset of the
 modifiers in another pattern, then the pattern with more modifiers
 is more specific.
-(d) a virtual event whose physical pattern matches the sequence is less
-specific than the same physical pattern that is not associated with a 
+.IP (d)
+a virtual event whose physical pattern matches the sequence is less
+specific than the same physical pattern that is not associated with a
 virtual event.
-(e) given a sequence that matches two or more virtual events, one 
+.IP (e)
+given a sequence that matches two or more virtual events, one
 of the virtual events will be chosen, but the order is undefined.
+.RE
 .PP
 If the matching sequences contain more than one event, then tests
-(c)-(e) are applied in order from the most recent event to the least recent
+(c)\-(e) are applied in order from the most recent event to the least recent
 event in the sequences.  If these tests fail to determine a winner, then the
 most recently registered sequence is the winner.
 .PP
 If there are two (or more) virtual events that are both triggered by the
 same sequence, and both of those virtual events are bound to the same window
 tag, then only one of the virtual events will be triggered, and it will
-be picked at random:  
+be picked at random:
 .CS
-event add <<Paste>> <Control-y>
-event add <<Paste>> <Button-2>
-event add <<Scroll>> <Button-2>
+event add <<Paste>> <Control\-y>
+event add <<Paste>> <Button\-2>
+event add <<Scroll>> <Button\-2>
 \fBbind\fR Entry <<Paste>> {puts Paste}
 \fBbind\fR Entry <<Scroll>> {puts Scroll}
 .CE
-If the user types Control-y, the \fB<<Paste>>\fR binding
+If the user types Control\-y, the \fB<<Paste>>\fR binding
 will be invoked, but if the user presses button 2 then one of
 either the \fB<<Paste>>\fR or the \fB<<Scroll>>\fR bindings will
 be invoked, but exactly which one gets invoked is undefined.
@@ -664,12 +679,12 @@ When a \fIsequence\fR specified in a \fBbind\fR command contains
 more than one event pattern, then its script is executed whenever
 the recent events (leading up to and including the current event)
 match the given sequence.  This means, for example, that if button 1 is
-clicked repeatedly the sequence \fB<Double-ButtonPress-1>\fR will match
+clicked repeatedly the sequence \fB<Double\-ButtonPress\-1>\fR will match
 each button press but the first.
 If extraneous events that would prevent a match occur in the middle
 of an event sequence then the extraneous events are
 ignored unless they are \fBKeyPress\fR or \fBButtonPress\fR events.
-For example, \fB<Double-ButtonPress-1>\fR will match a sequence of
+For example, \fB<Double\-ButtonPress\-1>\fR will match a sequence of
 presses of button 1, even though there will be \fBButtonRelease\fR
 events (and possibly \fBMotion\fR events) between the
 \fBButtonPress\fR events.
@@ -692,7 +707,7 @@ The \fBbgerror\fR command will be executed at global level
 Arrange for a string describing the motion of the mouse to be printed
 out when the mouse is double-clicked:
 .CS
-\fBbind\fR . <Double-1> {
+\fBbind\fR . <Double\-1> {
     puts "hi from (%x,%y)"
 }
 .CE
@@ -701,14 +716,12 @@ A little GUI that displays what the keysym name of the last key
 pressed is:
 .CS
 set keysym "Press any key"
-pack [label .l -textvariable keysym -padx 2m -pady 1m]
+pack [label .l \-textvariable keysym \-padx 2m \-pady 1m]
 \fBbind\fR . <Key> {
     set keysym "You pressed %K"
 }
 .CE
-
 .SH "SEE ALSO"
 bgerror(n), bindtags(n), event(n), focus(n), grab(n), keysyms(n)
-
 .SH KEYWORDS
 binding, event

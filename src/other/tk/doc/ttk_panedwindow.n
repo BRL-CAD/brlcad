@@ -7,20 +7,18 @@
 '\" RCS: @(#) $Id$
 '\" 
 .so man.macros
-.TH ttk_panedwindow n 8.5 Tk "Tk Themed Widget"
+.TH ttk::panedwindow n 8.5 Tk "Tk Themed Widget"
 .BS
-.\" Use _ instead of :: as the name becomes a filename on install
 .SH NAME
-ttk_panedwindow \- Multi-pane container window
+ttk::panedwindow \- Multi-pane container window
 .SH SYNOPSIS
 .nf
 \fBttk::panedwindow\fR \fIpathName \fR?\fIoptions\fR?
 .br
-\fIpathName \fBadd\fR \fIpathName.subwindow\fR ?\fIoptions...\fR?
-\fIpathName \fBinsert\fR \fIindex\fR \fIpathName.subwindow\fR ?\fIoptions...\fR?
+\fIpathName \fBadd\fR \fIwindow\fR ?\fIoptions...\fR?
+\fIpathName \fBinsert\fR \fIindex\fR \fIwindow\fR ?\fIoptions...\fR?
 .fi
 .BE
-
 .SH DESCRIPTION
 A \fBttk::panedwindow\fR widget displays a number of subwindows, stacked
 either vertically or horizontally.  The user may adjust the relative sizes
@@ -28,7 +26,6 @@ of the subwindows by dragging the sash between panes.
 .SO
 \-class	\-cursor	\-takefocus	\-style
 .SE
-
 .SH "WIDGET-SPECIFIC OPTIONS"
 .OP \-orient orient Orient
 Specifies the orientation of the window.
@@ -44,17 +41,15 @@ If present and greater than zero,
 specifies the desired height of the widget in pixels.
 Otherwise, the requested height is determined by the height
 of the managed windows.
-
 .SH "PANE OPTIONS"
 The following options may be specified for each pane:
 .OP \-weight weight Weight
 An integer specifying the relative stretchability of the pane.
 When the paned window is resized, the extra space is added
-or subtracted to each pane proportionally to its \fB-weight\fR.
-
+or subtracted to each pane proportionally to its \fB\-weight\fR.
 .SH "WIDGET COMMAND"
 Supports the standard \fBconfigure\fR, \fBcget\fR, \fBstate\fR, 
-and \fBinstate\fR commands; see \fIttk_widget(n)\fR for details.
+and \fBinstate\fR commands; see \fIttk::widget(n)\fR for details.
 Additional commands:
 .TP
 \fIpathname \fBadd\fR \fIsubwindow\fR \fIoptions...\fR
@@ -74,13 +69,13 @@ If \fIsubwindow\fR is already managed by the paned window,
 moves it to the specified position.
 See \fBPANE OPTIONS\fR for the list of available options.
 .TP
-\fIpathname \fBpane\fR \fIpane -option \fR?\fIvalue \fR?\fI-option value...\fR
+\fIpathname \fBpane\fR \fIpane \-option \fR?\fIvalue \fR?\fI\-option value...\fR
 Query or modify the options of the specified \fIpane\fR,
 where \fIpane\fR is either an integer index or the name of a managed subwindow.
-If no \fI-option\fR is specified, returns a dictionary of the pane 
+If no \fI\-option\fR is specified, returns a dictionary of the pane 
 option values.
-If one \fI-option\fR is specified, returns the value of that \fIoption\fR.
-Otherwise, sets the \fI-option\fRs to the corresponding \fIvalue\fRs.
+If one \fI\-option\fR is specified, returns the value of that \fIoption\fR.
+Otherwise, sets the \fI\-option\fRs to the corresponding \fIvalue\fRs.
 .TP
 \fIpathname\fR \fBsashpos\fR \fIindex\fR ?\fInewpos\fR?
 If \fInewpos\fR is specified, sets the position 
@@ -98,6 +93,5 @@ Returns the new position of sash number \fIindex\fR.
 \fIpathname\fR \fBidentify\fR \fIx y\fR
 Returns the index of the sash at point \fIx,y\fR,
 or the empty string if \fIx,y\fR is not over a sash.
-
 .SH "SEE ALSO"
-ttk_widget(n), ttk_notebook(n), panedwindow(n)
+ttk::widget(n), ttk::notebook(n), panedwindow(n)

@@ -34,7 +34,7 @@ proc ::tk_optionMenu {w varName firstValue args} {
 	set var $firstValue
     }
     menubutton $w -textvariable $varName -indicatoron 1 -menu $w.menu \
-	    -relief raised -bd 2 -highlightthickness 2 -anchor c \
+	    -relief raised -highlightthickness 1 -anchor c \
 	    -direction flush
     menu $w.menu -tearoff 0
     $w.menu add radiobutton -label $firstValue -variable $varName

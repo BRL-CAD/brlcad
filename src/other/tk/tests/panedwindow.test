@@ -1949,7 +1949,7 @@ test panedwindow-22.16 {ArrangePanes, last pane grows} {
 		[winfo width .f4] [winfo width .p]
     }
     -cleanup {destroy .p .f1 .f2 .f3 .f4}
-    -result {50 150 1 1 222 50 150 1 78 300}
+    -result {50 150 1 1 211 50 150 1 89 300}
 }
 
 
@@ -2282,7 +2282,7 @@ test panedwindow-24.29.1 {ConfigurePanes, -hide works} {
 		[winfo width .f4] [winfo width .p]
     }
     -cleanup {destroy .p .f1 .f2 .f3 .f4}
-    -result {1 1 1 1 40 40 40 40 182 1 0 1 1 40 40 40 40 136}
+    -result {1 1 1 1 40 40 40 40 171 1 0 1 1 40 40 40 40 128}
 }
 test panedwindow-24.29.2 {ConfigurePanes, -hide works} {
     -body {
@@ -2307,7 +2307,7 @@ test panedwindow-24.29.2 {ConfigurePanes, -hide works} {
 		[winfo width .f4] [winfo width .p]
     }
     -cleanup {destroy .p .f1 .f2 .f3 .f4}
-    -result {1 1 1 0 28 40 40 1 130 1 0 1 1 40 40 40 34 130}
+    -result {1 1 1 0 39 40 40 1 130 1 0 1 1 40 40 40 42 130}
 }
 test panedwindow-24.29.3 {ConfigurePanes, -hide works, last pane stretches} {
     -body {
@@ -2325,7 +2325,7 @@ test panedwindow-24.29.3 {ConfigurePanes, -hide works, last pane stretches} {
 	lappend result [winfo width .f1] [winfo width .f2] [winfo width .f3]
     }
     -cleanup {destroy .p .f1 .f2 .f3}
-    -result {50 50 88 50 50 144}
+    -result {50 50 94 50 50 147}
 }
 test panedwindow-24.29.4 {ConfigurePanes, -hide works, last pane stretches} {
     -body {
@@ -2344,7 +2344,7 @@ test panedwindow-24.29.4 {ConfigurePanes, -hide works, last pane stretches} {
 	lappend result [winfo height .f1] [winfo height .f2] [winfo height .f3]
     }
     -cleanup {destroy .p .f1 .f2 .f3}
-    -result {50 50 88 50 50 144}
+    -result {50 50 94 50 50 147}
 }
 
 test panedwindow-24.30 {ConfigurePanes, -stretch first} {
@@ -2366,7 +2366,7 @@ test panedwindow-24.30 {ConfigurePanes, -stretch first} {
 		[winfo width .f4]
     }
     -cleanup {destroy .p .f1 .f2 .f3 .f4}
-    -result {40 40 40 40 86 40 40 40}
+    -result {51 40 40 40 94 40 40 40}
 }
 test panedwindow-24.31 {ConfigurePanes, -stretch middle} {
     -body {
@@ -2387,7 +2387,7 @@ test panedwindow-24.31 {ConfigurePanes, -stretch middle} {
 		[winfo width .f4]
     }
     -cleanup {destroy .p .f1 .f2 .f3 .f4}
-    -result {40 40 40 40 40 40 86 40}
+    -result {40 45 46 40 40 45 94 40}
 }
 test panedwindow-24.32 {ConfigurePanes, -stretch always} {
     -body {
@@ -2408,7 +2408,7 @@ test panedwindow-24.32 {ConfigurePanes, -stretch always} {
 		[winfo width .f4]
     }
     -cleanup {destroy .p .f1 .f2 .f3 .f4}
-    -result {40 40 40 40 55 40 55 56}
+    -result {42 43 43 43 58 43 58 58}
 }
 test panedwindow-24.33 {ConfigurePanes, -stretch never} {
     -body {

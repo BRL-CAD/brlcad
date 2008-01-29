@@ -718,12 +718,14 @@ Tk_FontObjCmd(
     case FONT_MEASURE: {
 	char *string;
 	Tk_Font tkfont;
-	int length, skip;
+	int length = 0, skip = 0;
 	Tcl_Obj *resultPtr;
 
-	skip = TkGetDisplayOf(interp, objc - 3, objv + 3, &tkwin);
-	if (skip < 0) {
-	    return TCL_ERROR;
+	if (objc > 4) {
+	    skip = TkGetDisplayOf(interp, objc - 3, objv + 3, &tkwin);
+	    if (skip < 0) {
+		return TCL_ERROR;
+	    }
 	}
 	if (objc - skip != 4) {
 	    Tcl_WrongNumArgs(interp, 2, objv, "font ?-displayof window? text");
@@ -944,7 +946,7 @@ RecomputeWidgets(
 
 int
 TkCreateNamedFont(
-    Tcl_Interp *interp,		/* Interp for error return. */
+    Tcl_Interp *interp,		/* Interp for error return (can be NULL). */
     Tk_Window tkwin,		/* A window associated with interp. */
     const char *name,		/* Name for the new named font. */
     TkFontAttributes *faPtr)	/* Attributes for the new named font. */
@@ -961,9 +963,10 @@ TkCreateNamedFont(
     if (!isNew) {
 	nfPtr = (NamedFont *) Tcl_GetHashValue(namedHashPtr);
 	if (nfPtr->deletePending == 0) {
-	    Tcl_ResetResult(interp);
-	    Tcl_AppendResult(interp, "named font \"", name,
-		    "\" already exists", NULL);
+	    if (interp) {
+		Tcl_AppendResult(interp, "named font \"", name,
+			"\" already exists", NULL);
+	    }
 	    return TCL_ERROR;
 	}
 
@@ -1001,7 +1004,7 @@ TkCreateNamedFont(
 
 int
 TkDeleteNamedFont(
-    Tcl_Interp *interp,		/* Interp for error return. */
+    Tcl_Interp *interp,		/* Interp for error return (can be NULL). */
     Tk_Window tkwin,		/* A window associated with interp. */
     CONST char *name)		/* Name for the new named font. */
 {
@@ -1013,8 +1016,10 @@ TkDeleteNamedFont(
 
     namedHashPtr = Tcl_FindHashEntry(&fiPtr->namedTable, name);
     if (namedHashPtr == NULL) {
-	Tcl_AppendResult(interp, "named font \"", name,
-		"\" doesn't exist", NULL);
+	if (interp) {
+	    Tcl_AppendResult(interp, "named font \"", name,
+		    "\" doesn't exist", NULL);
+	}
 	return TCL_ERROR;
     }
     nfPtr = (NamedFont *) Tcl_GetHashValue(namedHashPtr);

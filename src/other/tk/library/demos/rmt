@@ -45,7 +45,7 @@ menu .menu.file.apps  -postcommand fillAppsMenu
 
 # Create text window and scrollbar.
 
-text .t -relief sunken -bd 2 -yscrollcommand ".s set" -setgrid true
+text .t -yscrollcommand ".s set" -setgrid true
 scrollbar .s -command ".t yview"
 grid .t .s -sticky nsew
 grid rowconfigure . 0 -weight 1

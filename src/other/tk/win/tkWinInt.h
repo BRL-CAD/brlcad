@@ -121,7 +121,6 @@ typedef struct {
  */
 
 #define TK_WIN_TOPLEVEL_CLASS_NAME "TkTopLevel"
-#define TK_WIN_TOPLEVEL_NOCDC_CLASS_NAME "TkTopLevelNoCDC"
 #define TK_WIN_CHILD_CLASS_NAME "TkChild"
 
 /*
@@ -248,5 +247,52 @@ long			TkpWinToplevelOverrideRedirect(TkWindow *winPtr,
 			    int reqValue);
 void			TkpWinToplevelDetachWindow(TkWindow *winPtr);
 int			TkpWmGetState(TkWindow *winPtr);
+
+/*
+ * The following functions are not present in old versions of Windows
+ * API headers but are used in the Tk source to ensure 64bit 
+ * compatability.
+ */
+
+#ifndef GetClassLongPtr
+#   define GetClassLongPtrA	GetClassLongA
+#   define GetClassLongPtrW	GetClassLongW
+#   define SetClassLongPtrA	SetClassLongA
+#   define SetClassLongPtrW	SetClassLongW
+#   ifdef UNICODE
+#	define GetClassLongPtr	GetClassLongPtrW
+#	define SetClassLongPtr	SetClassLongPtrW
+#   else
+#	define GetClassLongPtr	GetClassLongPtrA
+#	define SetClassLongPtr	SetClassLongPtrA
+#   endif /* !UNICODE */
+#endif /* !GetClassLongPtr */
+#ifndef GCLP_HICON
+#   define GCLP_HICON		GCL_HICON
+#endif /* !GCLP_HICON */
+#ifndef GCLP_HICONSM
+#   define GCLP_HICONSM		(-34)
+#endif /* !GCLP_HICONSM */
+
+#ifndef GetWindowLongPtr
+#   define GetWindowLongPtrA	GetWindowLongA
+#   define GetWindowLongPtrW	GetWindowLongW
+#   define SetWindowLongPtrA	SetWindowLongA
+#   define SetWindowLongPtrW	SetWindowLongW
+#   ifdef UNICODE
+#	define GetWindowLongPtr	GetWindowLongPtrW
+#	define SetWindowLongPtr	SetWindowLongPtrW
+#   else
+#	define GetWindowLongPtr	GetWindowLongPtrW
+#	define SetWindowLongPtr	SetWindowLongPtrW
+#   endif /* !UNICODE */
+#endif /* !GetWindowLongPtr */
+#ifndef GWLP_WNDPROC
+#define GWLP_WNDPROC		GWL_WNDPROC
+#define GWLP_HINSTANCE		GWL_HINSTANCE
+#define GWLP_HWNDPARENT		GWL_HWNDPARENT
+#define GWLP_USERDATA		GWL_USERDATA
+#define GWLP_ID			GWL_ID
+#endif /* !GWLP_WNDPROC */
 
 #endif /* _TKWININT */

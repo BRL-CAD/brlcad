@@ -30,9 +30,9 @@ contained entirely within the \fIcmd\fR argument.  If one or
 more \fIarg\fRs are present, they are concatenated to form the
 command to be executed, just as for the \fBeval\fR command.
 .PP
-If the initial arguments of the command begin with ``\-''
-they are treated as options.  The following options are
-currently defined:
+If the initial arguments of the command begin with
+.QW \-
+they are treated as options.  The following options are currently defined:
 .TP
 \fB\-async\fR
 Requests asynchronous invocation.  In this case the \fBsend\fR
@@ -49,7 +49,8 @@ the application's main window.
 .TP
 \fB\-\|\-\fR
 Serves no purpose except to terminate the list of options.  This
-option is needed only if \fIapp\fR could contain a leading ``\-''
+option is needed only if \fIapp\fR could contain a leading
+.QW \-
 character.
 
 .SH "APPLICATION NAMES"
@@ -94,7 +95,7 @@ This script fragment can be used to make an application that only runs
 once on a particular display.
 .CS
 if {[tk appname FoobarApp] ne "FoobarApp"} {
-    \fBsend\fR -async FoobarApp RemoteStart $argv
+    \fBsend\fR \-async FoobarApp RemoteStart $argv
     exit
 }
 # The command that will be called remotely, which raises

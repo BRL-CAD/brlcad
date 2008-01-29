@@ -16,7 +16,6 @@ wm \- Communicate with window manager
 .SH SYNOPSIS
 \fBwm\fR \fIoption window \fR?\fIargs\fR?
 .BE
-
 .SH DESCRIPTION
 .PP
 The \fBwm\fR command is used to interact with window managers in
@@ -55,9 +54,29 @@ with a window. The first form returns a list of the platform specific
 flags and their values. The second form returns the value for the
 specific option. The third form sets one or more of the values. The
 values are as follows:
+.RS
+.PP
+All platforms support the following attributes (though X11 users
+should see the notes below):
+.TP
+\fB\-fullscreen\fR
+Places the window in a mode that takes up the entire screen, has no
+borders, and covers the general use area (i.e. Start menu and taskbar on
+Windows, dock and menubar on OSX, general window decorations on X11).
+.TP
+\fB\-topmost\fR
+Specifies whether this is a topmost window (displays above all other windows).
 .PP
 On Windows, the following attributes may be set.
-.RS
+.TP
+\fB\-alpha\fR
+.VS 8.5
+Specifies the alpha transparency level of the toplevel.
+It accepts a value from \fB0.0\fR (fully transparent) to \fB1.0\fR
+(opaque).  Values outside that range will be constrained.  This is
+supported on Windows 2000/XP+.  Where not supported, the \fB\-alpha\fR
+value remains at \fB1.0\fR.
+.VE 8.5
 .TP
 \fB\-disabled\fR
 Specifies whether the window is in a disabled state.
@@ -65,85 +84,55 @@ Specifies whether the window is in a disabled state.
 \fB\-toolwindow\fR
 Specifies a toolwindow style window (as defined in the MSDN).
 .TP
-\fB\-topmost\fR
-Specifies whether this is a topmost window (displays above all other windows).
-.VS 8.5
-.TP
-\fB\-alpha\fR
-Specifies the alpha transparency level of the toplevel.
-It accepts a value from \fB0.0\fR (fully transparent) to \fB1.0\fR
-(opaque).  Values outside that range will be constrained.  This is
-supported on Windows 2000/XP+.  Where not supported, the \fB\-alpha\fR
-value remains at \fB1.0\fR.
-.TP
 \fB\-transparentcolor\fR
+.VS 8.5
 Specifies the transparent color index of the toplevel.  It takes any color
 value accepted by \fBTk_GetColor\fR.  If the empty string is specified
 (default), no transparent color is used.  This is supported on Windows
 2000/XP+.  Where not supported, the \fB\-transparentcolor\fR value remains
 at \fB{}\fR.
-.TP
-\fB\-fullscreen\fR
-Places the window in a mode that takes up the entire screen, has no
-borders, and covers the Start menu and taskbar.
-.RE
 .VE 8.5
 .PP
 On Mac OS X, the following attributes may be set.
-.RS
-.TP
-\fB\-modified\fR
-Specifies the modification state of the window (determines whether the
-window close widget contains the modification indicator and whether the
-proxy icon is draggable).
-.TP
-\fB\-titlepath\fR
-Specifies the path of the file referenced as the window proxy icon (which
-can be dragged and dropped in lieu of the file's finder icon).
 .TP
 \fB\-alpha\fR
 Specifies the alpha transparency level of the window.
 It accepts a value from \fB0.0\fR (fully transparent) to \fB1.0\fR (opaque),
 values outside that range will be constrained.
 .TP
-\fB\-topmost\fR
-Specifies whether this is a topmost window (displays above all other windows).
+\fB\-modified\fR
+Specifies the modification state of the window (determines whether the
+window close widget contains the modification indicator and whether the
+proxy icon is draggable).
+.TP
+\fB\-notify\fR
+Specifies process notification state (bouncing of the application dock icon).
+.TP
+\fB\-titlepath\fR
+Specifies the path of the file referenced as the window proxy icon (which
+can be dragged and dropped in lieu of the file's finder icon).
 .TP
 \fB\-transparent\fR
 Makes the window content area transparent and turns off the window shadow. For
 the transparency to be effecive, the toplevel background needs to be set to a
-color with some alpha, e.g. "systemTransparent".
-.TP
-\fB\-fullscreen\fR
-Places the window in a mode that takes up the entire main screen and hides
-the dock and menu bar.
-.RE
+color with some alpha, e.g.
+.QW systemTransparent .
 .PP
 On X11, the following attributes may be set.
 These are not supported by all window managers,
 and will have no effect under older WMs.
 .\" See http://www.freedesktop.org/Standards/wm-spec
-.RS
 .TP
-\fB-topmost\fR
-Requests that this window should be kept above
-all other windows that do not also have the \fB-topmost\fR
-attribute set.
-.TP
-\fB-zoomed\fR
+\fB\-zoomed\fR
 Requests that the window should be maximized.
-This is the same as \fB[wm state zoomed]\fR on Windows and Mac OS X.
-.TP
-\fB-fullscreen\fR
-Requests that the window should fill the entire screen 
-and have no window decorations.
-.RE
+This is the same as \fBwm state zoomed\fR on Windows and Mac OS X.
 .PP
 On X11, changes to window attributes are performed asynchronously.
 Querying the value of an attribute returns the current state,
 which will not be the same as the value most recently set
 if the window manager has not yet processed the request
 or if it does not support the attribute.
+.RE
 .TP
 \fBwm client \fIwindow\fR ?\fIname\fR?
 If \fIname\fR is specified, this command stores \fIname\fR (which
@@ -152,7 +141,7 @@ the host on which the application is executing) in \fIwindow\fR's
 \fBWM_CLIENT_MACHINE\fR property for use by the window manager or
 session manager.
 The command returns an empty string in this case.
-If \fIname\fR isn't specified, the command returns the last name
+If \fIname\fR is not specified, the command returns the last name
 set in a \fBwm client\fR command for \fIwindow\fR.
 If \fIname\fR is specified as an empty string, the command deletes the
 \fBWM_CLIENT_MACHINE\fR property from \fIwindow\fR.
@@ -161,7 +150,9 @@ If \fIname\fR is specified as an empty string, the command deletes the
 This command is used to manipulate the \fBWM_COLORMAP_WINDOWS\fR
 property, which provides information to the window managers about
 windows that have private colormaps.
-If \fIwindowList\fR isn't specified, the command returns a list
+.RS
+.PP
+If \fIwindowList\fR is not specified, the command returns a list
 whose elements are the names of the windows in the \fBWM_COLORMAP_WINDOWS\fR
 property.
 If \fIwindowList\fR is specified, it consists of a list of window
@@ -170,6 +161,7 @@ property with the given windows and returns an empty string.
 The \fBWM_COLORMAP_WINDOWS\fR property should normally contain a
 list of the internal windows within \fIwindow\fR whose colormaps differ
 from their parents.
+.PP
 The order of the windows in the property indicates a priority order:
 the window manager will attempt to install as many colormaps as possible
 from the head of this list when \fIwindow\fR gets the colormap focus.
@@ -182,6 +174,7 @@ whose colormaps differ from their parents, followed by the top-level
 itself;  the order of the internal windows is undefined.
 See the ICCCM documentation for more information on the
 \fBWM_COLORMAP_WINDOWS\fR property.
+.RE
 .TP
 \fBwm command \fIwindow\fR ?\fIvalue\fR?
 If \fIvalue\fR is specified, this command stores \fIvalue\fR in \fIwindow\fR's
@@ -189,7 +182,7 @@ If \fIvalue\fR is specified, this command stores \fIvalue\fR in \fIwindow\fR's
 session manager and returns an empty string.
 \fIValue\fR must have proper list structure;  the elements should
 contain the words of the command used to invoke the application.
-If \fIvalue\fR isn't specified then the command returns the last value
+If \fIvalue\fR is not specified then the command returns the last value
 set in a \fBwm command\fR command for \fIwindow\fR.
 If \fIvalue\fR is specified as an empty string, the command
 deletes the \fBWM_COMMAND\fR property from \fIwindow\fR.
@@ -209,6 +202,8 @@ to the command, then it specifies the focus model for \fIwindow\fR.
 In this case the command returns an empty string.  If no additional
 argument is supplied, then the command returns the current focus
 model for \fIwindow\fR.
+.RS
+.PP
 An \fBactive\fR focus model means that \fIwindow\fR will claim the
 input focus for itself or its descendants, even at times when
 the focus is currently in some other application.  \fBPassive\fR means that
@@ -218,13 +213,21 @@ once the focus has been given to \fIwindow\fR or one of its descendants,
 the application may re-assign the focus among \fIwindow\fR's descendants.
 The focus model defaults to \fBpassive\fR, and Tk's \fBfocus\fR command
 assumes a passive model of focusing.
+.RE
+.TP
+\fBwm forget \fIwindow\fR
+The \fIwindow\fR will be unmapped from the screen and will no longer
+be managed by \fBwm\fR.  Windows created with the \fBtoplevel\fR
+command will be treated like \fBframe\fR windows once they are no
+longer managed by \fBwm\fR, however, the \fB\-menu\fR configuration will be
+remembered and the menus will return once the widget is managed again.
 .TP
 \fBwm frame \fIwindow\fR
 If \fIwindow\fR has been reparented by the window manager into a
 decorative frame, the command returns the platform specific window
 identifier for the outermost frame that contains \fIwindow\fR (the
 window whose parent is the root or virtual root).  If \fIwindow\fR
-hasn't been reparented by the window manager then the command returns
+has not been reparented by the window manager then the command returns
 the platform specific window identifier for \fIwindow\fR.
 .TP
 \fBwm geometry \fIwindow\fR ?\fInewGeometry\fR?
@@ -237,9 +240,12 @@ the form \fB=\fIwidth\fBx\fIheight\fB\(+-\fIx\fB\(+-\fIy\fR, where
 any of \fB=\fR, \fIwidth\fBx\fIheight\fR, or \fB\(+-\fIx\fB\(+-\fIy\fR
 may be omitted.  \fIWidth\fR and \fIheight\fR are positive integers
 specifying the desired dimensions of \fIwindow\fR.  If \fIwindow\fR
-is gridded (see GRIDDED GEOMETRY MANAGEMENT below) then the dimensions
+is gridded (see \fBGRIDDED GEOMETRY MANAGEMENT\fR below) then the dimensions
 are specified in grid units;  otherwise they are specified in pixel
-units.  \fIX\fR and \fIy\fR specify the desired location of
+units.
+.RS
+.PP
+\fIX\fR and \fIy\fR specify the desired location of
 \fIwindow\fR on the screen, in pixels.
 If \fIx\fR is preceded by \fB+\fR, it specifies
 the number of pixels between the left edge of the screen and the left
@@ -251,10 +257,12 @@ number of pixels between the top of the screen and the top
 of \fIwindow\fR's border;  if \fIy\fR is preceded by \fB\-\fR then
 it specifies the number of pixels between the bottom of \fIwindow\fR's
 border and the bottom of the screen.
+.PP
 If \fInewGeometry\fR is specified as an empty string then any
 existing user-specified geometry for \fIwindow\fR is cancelled, and
 the window will revert to the size requested internally by its
 widgets.
+.RE
 .TP
 \fBwm grid \fIwindow\fR ?\fIbaseWidth baseHeight widthInc heightInc\fR?
 This command indicates that \fIwindow\fR is to be managed as a
@@ -271,20 +279,25 @@ that are non-negative integers.
 Tk will pass this information to the window manager;  during
 manual resizing, the window manager will restrict the window's size
 to one of these acceptable sizes.
+.RS
+.PP
 Furthermore, during manual resizing the window manager will display
 the window's current size in terms of grid units rather than pixels.
 If \fIbaseWidth\fR etc. are all specified as empty strings, then
 \fIwindow\fR will no longer be managed as a gridded window.  If
 \fIbaseWidth\fR etc. are specified then the return value is an
 empty string.
+.PP
 Otherwise the return value is a Tcl list containing
 four elements corresponding to the current \fIbaseWidth\fR,
 \fIbaseHeight\fR, \fIwidthInc\fR, and \fIheightInc\fR;  if
 \fIwindow\fR is not currently gridded, then an empty string
 is returned.
+.PP
 Note: this command should not be needed very often, since the
 \fBTk_SetGrid\fR library procedure and the \fBsetGrid\fR option
 provide easier access to the same functionality.
+.RE
 .TP
 \fBwm group \fIwindow\fR ?\fIpathName\fR?
 If \fIpathName\fR is specified, it gives the path name for the leader of
@@ -294,7 +307,7 @@ leader is iconified.  \fIPathName\fR may be specified as an empty string to
 remove \fIwindow\fR from any group association.  If \fIpathName\fR is
 specified then the command returns an empty string;  otherwise it
 returns the path name of \fIwindow\fR's current group leader, or an empty
-string if \fIwindow\fR isn't part of any group.
+string if \fIwindow\fR is not part of any group.
 .TP
 \fBwm iconbitmap \fIwindow\fR ?\fIbitmap\fR?
 If \fIbitmap\fR is specified, then it names a bitmap in the standard
@@ -308,7 +321,9 @@ Otherwise it returns the name of
 the current icon bitmap associated with \fIwindow\fR, or an empty
 string if \fIwindow\fR has no icon bitmap.  On the Windows operating
 system, an additional flag is supported: 
-\fBwm iconbitmap \fIwindow\fR ?\fB\-default\fR? ?\fIimage\fR?.  
+.RS
+.TP
+\fBwm iconbitmap \fIwindow\fR ?\fB\-default\fR? ?\fIimage\fR?
 If the \fB\-default\fR
 flag is given, the icon is applied to all toplevel windows (existing
 and future) to which no other specific icon has yet been applied.
@@ -319,9 +334,10 @@ file for which the shell has assigned an icon.  Tcl will
 first test if the file contains an icon, then if it has an assigned
 icon, and finally, if that fails, test for
 a bitmap.
+.RE
 .TP
 \fBwm iconify \fIwindow\fR
-Arrange for \fIwindow\fR to be iconified.  It \fIwindow\fR hasn't
+Arrange for \fIwindow\fR to be iconified.  It \fIwindow\fR has not
 yet been mapped for the first time, this command will arrange for
 it to appear in the iconified state when it is eventually mapped.
 .TP
@@ -343,7 +359,7 @@ returns the name of the current icon mask associated with
 If \fInewName\fR is specified, then it is passed to the window
 manager;  the window manager should display \fInewName\fR inside
 the icon associated with \fIwindow\fR.  In this case an empty
-string is returned as result.  If \fInewName\fR isn't specified
+string is returned as result.  If \fInewName\fR is not specified
 then the command returns the current icon name for \fIwindow\fR,
 or an empty string if no icon name has been specified (in this
 case the window manager will normally display the window's title,
@@ -351,7 +367,6 @@ as specified with the \fBwm title\fR command).
 .VS 8.5
 .TP
 \fBwm iconphoto \fIwindow\fR ?\fB\-default\fR? \fIimage1\fR ?\fIimage2 ...\fR?
-.RS
 Sets the titlebar icon for \fIwindow\fR based on the named photo images.
 If \fB\-default\fR is specified, this is applied to all future created
 toplevels as well.  The data in the images is taken as a snapshot at the
@@ -359,6 +374,7 @@ time of invocation.  If the images are later changed, this is not
 reflected to the titlebar icons.  Multiple images are accepted to allow
 different images sizes (e.g., 16x16 and 32x32) to be provided. The window
 manager may scale provided icons to an appropriate size.
+.RS
 .PP
 On Windows, the images are packed into a Windows icon structure.
 This will override an ico specified to \fBwm iconbitmap\fR, and
@@ -394,9 +410,14 @@ returned.  Otherwise the command returns the path name of the
 current icon window for \fIwindow\fR, or an empty string if there
 is no icon window currently specified for \fIwindow\fR.
 Button press events are disabled for \fIwindow\fR as long as it is
-an icon window;  this is needed in order to allow window managers
-to ``own'' those events.
+an icon window;  this is needed in order to allow window managers to
+.QW own
+those events.
 Note: not all window managers support the notion of an icon window.
+.TP
+\fBwm manage \fIwidget\fR
+The \fIwidget\fR specified will become a stand alone top-level window.  The
+window will be decorated with the window managers title bar, etc.
 .TP
 \fBwm maxsize \fIwindow\fR ?\fIwidth height\fR?
 If \fIwidth\fR and \fIheight\fR are specified, they give
@@ -452,7 +473,8 @@ If \fIwho\fR is specified, then the command returns an empty string.
 Otherwise it returns \fBuser\fR or \fBprogram\fR to indicate the
 source of the window's current position, or an empty string if
 no source has been specified yet.  Most window managers interpret
-``no source'' as equivalent to \fBprogram\fR.
+.QW "no source"
+as equivalent to \fBprogram\fR.
 Tk will automatically set the position source to \fBuser\fR
 when a \fBwm geometry\fR command is invoked, unless the source has
 been set explicitly to \fBprogram\fR.
@@ -471,7 +493,7 @@ protocol handler for \fIname\fR, and \fIcommand\fR will
 be invoked in the future whenever the window manager sends a
 message to the client for that protocol.
 In this case the command returns an empty string.
-If \fIname\fR is specified but \fIcommand\fR isn't, then the current
+If \fIname\fR is specified but \fIcommand\fR is not, then the current
 command for \fIname\fR is returned, or an empty string if there
 is no handler defined for \fIname\fR.
 If \fIcommand\fR is specified as an empty string then the current
@@ -484,8 +506,8 @@ are currently defined for \fIwindow\fR.
 .RS
 .PP
 Tk always defines a protocol handler for \fBWM_DELETE_WINDOW\fR, even if
-you haven't asked for one with \fBwm protocol\fR.
-If a \fBWM_DELETE_WINDOW\fR message arrives when you haven't defined
+you have not asked for one with \fBwm protocol\fR.
+If a \fBWM_DELETE_WINDOW\fR message arrives when you have not defined
 a handler, then Tk handles the message by destroying the window for
 which it was received.
 .RE
@@ -519,18 +541,19 @@ If \fIwho\fR is specified, then the command returns an empty string.
 Otherwise it returns \fBuser\fR or \fBwindow\fR to indicate the
 source of the window's current size, or an empty string if
 no source has been specified yet.  Most window managers interpret
-``no source'' as equivalent to \fBprogram\fR.
+.QW "no source"
+as equivalent to \fBprogram\fR.
 .TP
-\fBwm stackorder \fIwindow\fR ?\fIisabove|isbelow window\fR?
-The stackorder command returns a list of toplevel windows
+\fBwm stackorder \fIwindow\fR ?\fBisabove\fR|\fBisbelow \fIwindow\fR?
+The \fBstackorder\fR command returns a list of toplevel windows
 in stacking order, from lowest to highest. When a single toplevel
 window is passed, the returned list recursively includes all of the
 window's children that are toplevels. Only those toplevels
 that are currently mapped to the screen are returned.
-The stackorder command can also be used to determine if one
+The \fBstackorder\fR command can also be used to determine if one
 toplevel is positioned above or below a second toplevel.
-When two window arguments separated by either \fIisabove\fR or
-\fIisbelow\fR are passed, a boolean result indicates whether
+When two window arguments separated by either \fBisabove\fR or
+\fBisbelow\fR are passed, a boolean result indicates whether
 or not the first window is currently above or below the second
 window in the stacking order.
 .TP
@@ -549,7 +572,7 @@ iconwindow\fR command).  The \fBicon\fR state cannot be set.
 If \fIstring\fR is specified, then it will be passed to the window
 manager for use as the title for \fIwindow\fR (the window manager
 should display this string in \fIwindow\fR's title bar).  In this
-case the command returns an empty string.  If \fIstring\fR isn't
+case the command returns an empty string.  If \fIstring\fR is not
 specified then the command returns the current title for the
 \fIwindow\fR.  The title for a window defaults to its name.
 .TP
@@ -561,7 +584,7 @@ path name for a top-level window).  If \fImaster\fR
 is specified as an empty string then \fIwindow\fR is marked as not
 being a transient window any more.  Otherwise the command
 returns the path name of \fIwindow\fR's current master, or an
-empty string if \fIwindow\fR isn't currently a transient window.
+empty string if \fIwindow\fR is not currently a transient window.
 A transient window will mirror state changes in the master and
 inherit the state of the master when initially mapped. It is an
 error to attempt to make a window a transient of itself.
@@ -604,6 +627,21 @@ all forms of resizing, including the window's natural size as
 well as manual resizes and the \fBwm geometry\fR command.
 You can also use the command \fBwm resizable\fR to completely
 disable interactive resizing in one or both dimensions.
+.PP
+The \fBwm manage\fR and \fBwm forget\fR commands may be used to
+perform undocking and docking of windows.  After a widget is managed
+by \fBwm manage\fR command, all other \fBwm\fR subcommands may be used
+with the widget.  Only widgets created using the toplevel command may
+have an attached menu via the \fB\-menu\fR configure option.  A toplevel
+widget may be used as a frame and managed with any of the other
+geometry managers after using the \fBwm forget\fR command.  Any menu
+associated with a toplevel widget will be hidden when managed by
+another geometry managers.  The menus will reappear once the window is
+managed by \fBwm\fR.  All custom bindtags for widgets in a subtree
+that have their top-level widget changed via a \fBwm manage\fR or
+\fBwm forget\fR command, must be redone to adjust any top-level widget
+path in the bindtags. Bindtags that have not been customized do not
+have to be redone.
 .SH "GRIDDED GEOMETRY MANAGEMENT"
 .PP
 Gridded geometry management occurs when one of the widgets of an
@@ -640,7 +678,7 @@ rather than pixels.
 .SH BUGS
 .PP
 Most existing window managers appear to have bugs that affect the
-operation of the \fBwm\fR command.  For example, some changes won't
+operation of the \fBwm\fR command.  For example, some changes will not
 take effect if the window is already active:  the window will have
 to be withdrawn and de-iconified in order to make the change happen.
 .SH EXAMPLES

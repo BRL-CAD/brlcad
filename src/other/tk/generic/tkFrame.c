@@ -943,10 +943,11 @@ ConfigureFrame(
      * A few of the options require additional processing.
      */
 
-    if (((oldMenuName == NULL) && (framePtr->menuName != NULL))
+    if ((((oldMenuName == NULL) && (framePtr->menuName != NULL))
 	    || ((oldMenuName != NULL) && (framePtr->menuName == NULL))
 	    || ((oldMenuName != NULL) && (framePtr->menuName != NULL)
-	    && strcmp(oldMenuName, framePtr->menuName) != 0)) {
+	    && strcmp(oldMenuName, framePtr->menuName) != 0))
+	&& framePtr->type == TYPE_TOPLEVEL) {
 	TkSetWindowMenuBar(interp, framePtr->tkwin, oldMenuName,
 		framePtr->menuName);
     }
@@ -1908,6 +1909,33 @@ FrameLostSlaveProc(
 	labelframePtr->labelWin = NULL;
     }
     FrameWorldChanged((ClientData) framePtr);
+}
+
+void
+TkMapTopFrame (tkwin)
+     Tk_Window tkwin;
+{
+    Frame *framePtr = ((TkWindow*)tkwin)->instanceData;
+    Tk_OptionTable optionTable;
+    if (Tk_IsTopLevel(tkwin) && framePtr->type == TYPE_FRAME) {
+	framePtr->type = TYPE_TOPLEVEL;
+	Tcl_DoWhenIdle(MapFrame, (ClientData)framePtr);
+	if (framePtr->menuName != NULL) {
+	    TkSetWindowMenuBar(framePtr->interp, framePtr->tkwin, NULL,
+			       framePtr->menuName);
+	}
+    } else if (!Tk_IsTopLevel(tkwin) && framePtr->type == TYPE_TOPLEVEL) {
+	framePtr->type = TYPE_FRAME;
+    } else {
+	/* Not a frame or toplevel, skip it */
+	return;
+    }
+    /*
+     * The option table has already been created so 
+     * the cached pointer will be returned.
+     */
+    optionTable = Tk_CreateOptionTable(framePtr->interp, optionSpecs[framePtr->type]);
+    framePtr->optionTable = optionTable;
 }
 
 /*

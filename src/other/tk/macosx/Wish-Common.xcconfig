@@ -14,7 +14,8 @@
 
 HEADER_SEARCH_PATHS = $(TK_SRCROOT)/generic $(TK_SRCROOT)/xlib $(DERIVED_FILE_DIR)/tcl $(DERIVED_FILE_DIR)/tk $(HEADER_SEARCH_PATHS)
 REZ_SEARCH_PATHS = $(TK_SRCROOT)/generic $(TCL_SRCROOT)/generic $(REZ_SEARCH_PATHS)
-OTHER_LDFLAGS = -headerpad_max_install_names -sectcreate __TEXT __tk_rsrc $(REZ_COLLECTOR_DIR)/$(PRODUCT_NAME).rsrc -sectcreate __TEXT __info_plist $(DERIVED_FILE_DIR)/tk/Wish-Info.plist $(OTHER_LDFLAGS)
+OTHER_LDFLAGS = -headerpad_max_install_names -sectcreate __TEXT __info_plist $(DERIVED_FILE_DIR)/tk/Wish-Info.plist $(OTHER_LDFLAGS)
+OTHER_LDFLAGS_AQUA = -sectcreate __TEXT __tk_rsrc $(REZ_COLLECTOR_DIR)/$(PRODUCT_NAME).rsrc
 INSTALL_PATH = "$(BINDIR)"
 GCC_PREFIX_HEADER = $(DERIVED_FILE_DIR)/tk/tkConfig.h
 OTHER_CFLAGS = -imacros $(DERIVED_FILE_DIR)/tcl/tclConfig.h $(OTHER_CFLAGS)

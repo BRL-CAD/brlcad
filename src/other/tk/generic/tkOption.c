@@ -261,7 +261,8 @@ Tk_AddOption(
     Element newEl;
     register CONST char *p;
     CONST char *field;
-    int count, firstField, length;
+    int count, firstField;
+    ptrdiff_t length;
 #define TMP_SIZE 100
     char tmp[TMP_SIZE+1];
     ThreadSpecificData *tsdPtr = (ThreadSpecificData *)

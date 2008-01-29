@@ -7515,32 +7515,34 @@ CharUndisplayProc(
 {
     CharInfo *ciPtr = (CharInfo *) chunkPtr->clientData;
 
+    if (ciPtr) {
 #if TK_LAYOUT_WITH_BASE_CHUNKS
-    if (chunkPtr == ciPtr->baseChunkPtr) {
-	/*
-	 * Basechunks are undisplayed first, when DLines are freed or
-	 * partially freed, so this makes sure we don't access their data any
-	 * more.
-	 */
+	if (chunkPtr == ciPtr->baseChunkPtr) {
+	    /*
+	     * Basechunks are undisplayed first, when DLines are freed or
+	     * partially freed, so this makes sure we don't access their data
+	     * any more.
+	     */
 
-	FreeBaseChunk(chunkPtr);
-    } else if (ciPtr->baseChunkPtr != NULL) {
-	/*
-	 * When other char chunks are undisplayed, drop their characters from
-	 * the base chunk. This usually happens, when they are last in a line
-	 * and need to be re-layed out.
-	 */
+	    FreeBaseChunk(chunkPtr);
+	} else if (ciPtr->baseChunkPtr != NULL) {
+	    /*
+	     * When other char chunks are undisplayed, drop their characters
+	     * from the base chunk. This usually happens, when they are last
+	     * in a line and need to be re-layed out.
+	     */
 
-	RemoveFromBaseChunk(chunkPtr);
-    }
+	    RemoveFromBaseChunk(chunkPtr);
+	}
 
-    ciPtr->baseChunkPtr = NULL;
-    ciPtr->chars = NULL;
-    ciPtr->numBytes = 0;
+	ciPtr->baseChunkPtr = NULL;
+	ciPtr->chars = NULL;
+	ciPtr->numBytes = 0;
 #endif /* TK_LAYOUT_WITH_BASE_CHUNKS */
 
-    ckfree((char *) ciPtr);
-    chunkPtr->clientData = NULL;
+	ckfree((char *) ciPtr);
+	chunkPtr->clientData = NULL;
+    }
 }
 
 /*

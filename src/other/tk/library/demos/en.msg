@@ -5,8 +5,10 @@
 ::msgcat::mcset en "&About..."
 ::msgcat::mcset en "<F1>"
 ::msgcat::mcset en "&Quit"
-::msgcat::mcset en "Meta-Q"		;# Displayed hotkey
+::msgcat::mcset en "Meta+Q"		;# Displayed hotkey
 ::msgcat::mcset en "Meta-q"		;# Actual binding sequence
+::msgcat::mcset en "Ctrl+Q"		;# Displayed hotkey
+::msgcat::mcset en "Control-q"		;# Actual binding sequence
 ::msgcat::mcset en "Variable values"
 ::msgcat::mcset en "Variable values:"
 ::msgcat::mcset en "OK"

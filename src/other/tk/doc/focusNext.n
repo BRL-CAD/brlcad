@@ -24,8 +24,9 @@ tk_focusNext, tk_focusPrev, tk_focusFollowsMouse \- Utility procedures for manag
 .SH DESCRIPTION
 .PP
 \fBtk_focusNext\fR is a utility procedure used for keyboard traversal.
-It returns the ``next'' window after \fIwindow\fR in focus order.
-The focus order is determined by
+It returns the
+.QW next
+window after \fIwindow\fR in focus order. The focus order is determined by
 the stacking order of windows and the structure of the window hierarchy.
 Among siblings, the focus order is the same as the stacking order, with the
 lowest window being first.
@@ -52,7 +53,7 @@ The \fBfocus\fR command may be used to move the focus to a window
 other than the one under the mouse, but as soon as the mouse moves
 into a new window the focus will jump to that window.
 Note: at present there is no built-in support for returning the
-application to an explicit focus model;  to do this you'll have
+application to an explicit focus model;  to do this you will have
 to write a script that deletes the bindings created by
 \fBtk_focusFollowsMouse\fR.
 

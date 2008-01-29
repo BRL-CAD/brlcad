@@ -15,7 +15,6 @@ console \- Control the console on systems without a real console
 .SH SYNOPSIS
 \fBconsole\fR \fIsubcommand\fR ?\fIarg ...\fR?
 .BE
-
 .SH DESCRIPTION
 .PP
 The console window is a replacement for a real console to allow input
@@ -24,7 +23,13 @@ a real console.  It is implemented as a separate interpreter with the
 Tk toolkit loaded, and control over this interpreter is given through
 the \fBconsole\fR command.  The behaviour of the console window is
 defined mainly through the contents of the \fIconsole.tcl\fR file in
-the Tk library.
+the Tk library. Except for TkAqua, this command is not available when
+Tk is loaded into a tclsh interpreter with
+.QW "\fBpackage require Tk\fR" ,
+as a conventional terminal is expected to be present in that case.
+In TkAqua, this command is ony available when stdin is \fB/dev/null\fR
+(as is the case e.g. when the application embedding Tk is started
+from the Mac OS X Finder).
 .PP
 .TP
 \fBconsole eval \fIscript\fR
