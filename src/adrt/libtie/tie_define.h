@@ -27,7 +27,7 @@
  * capable of doing either without recompilation.
  */
 #ifndef TIE_PRECISION
-# define TIE_PRECISION DOUBLE_PRECISION
+# define TIE_PRECISION TIE_DOUBLE_PRECISION
 #endif
 
 #define	TIE_TAB1		"\1\0\0\2\2\1"	/* Triangle Index Table */
