@@ -4,8 +4,6 @@
 lib_LTLIBRARIES = librt.la
 noinst_LTLIBRARIES = librt_nil.la
 
-if WITH_OPENNURBS
-
 BREP_SRCS = g_brep.cpp opennurbs_ext.cpp
 BREP_TEST = brep_test
 BREP_CPPFLAGS = @SSE@ -DOBJ_BREP=1 $(TNT_CPPFLAGS) $(OPENNURBS_CPPFLAGS)
@@ -16,15 +14,6 @@ brep_test_SOURCES = brep_test.cpp
 brep_test_CXXFLAGS = ${SSE}
 brep_test_LDADD = \
 	librt.la
-
-else # !WITH_OPENNURBS
-
-BREP_SRCS =
-BREP_TEST =
-BREP_CPPFLAGS =
-BREP_LIBADD =
-
-endif # WITH_OPENNURBS
 
 # cannot set per-target CPPFLAGS until automake 1.7+
 AM_CPPFLAGS = \
@@ -230,11 +219,7 @@ EXTRA_DIST = \
 	timerunix.c \
 	vshoot.c
 
-if BUILD_OPENNURBS
 DEPADD=src/other/openNURBS
-else
-DEPADD=
-endif
 DEPENDS = src/libbn src/libsysv $(DEPADD)
 
 include $(top_srcdir)/misc/Makefile.defs

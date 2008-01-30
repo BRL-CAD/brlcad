@@ -1743,15 +1743,13 @@ if test "xyes" = "xyes" ; then
     dnl check for -fno-common (libtcl needs it on darwin)
     BC_COMPILER_AND_LINKER_RECOGNIZES([-fno-common])
 
-    dnl check for -fexceptions (if yes or auto).
+    dnl check for -fexceptions
     dnl this is needed to resolve __Unwind_Resume when compiling and
     dnl linking against openNURBS in librt for some binaries, for
     dnl example rttherm (i.e. any -static binaries)
-    if test "x$bc_build_opennurbs" != "xno" ; then
-	dnl go ahead and enable for everyone regardless
-	BC_COMPILER_AND_LINKER_RECOGNIZES([-fexceptions], [fexceptions])
-    fi
+    BC_COMPILER_AND_LINKER_RECOGNIZES([-fexceptions], [fexceptions])
 
+    dnl dynamic SSE optimizations for NURBS processing
     BC_COMPILER_AND_LINKER_RECOGNIZES([-msse], [msse], [nokeep])
     MSSE=""
     if test "x$bc_msse_works" = "xyes" ; then
@@ -2403,7 +2401,9 @@ else
     if test "x$bc_build_opennurbs" = "xno" ; then
 	if test "x$opennurbs_works" != "xyes" ; then
 	    AC_MSG_NOTICE([openNURBS was disabled, but no system openNURBS library was found])
-	    build_brlcad_opennurbs="no (doing without, BREP unsupported)"
+	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+	    AC_MSG_NOTICE([Try adding --enable-opennurbs-build])
+	    AC_MSG_ERROR([*** openNURBS was disabled, yet no usable system openNURBS was found ***])
 	fi
     else
 	dnl automatic detection
@@ -3366,11 +3366,7 @@ fi
 dnl search the BRL-CAD include directory (required for non-srcdir builds).
 dnl should come after the system services checks otherwise or our headers
 dnl may conflict.
-CPPFLAGS="$CPPFLAGS -DBRLCADBUILD=1 -I\${top_srcdir}/include"
-
-dnl opennurbs header files are required when compiling C++ files due
-dnl to the brep.h header
-dnl CPPFLAGS ="$CPPFLAGS $OPENNURBS_CPPFLAGS"
+CPPFLAGS="$CPPFLAGS -DBRLCADBUILD=1 -I\${top_srcdir}/include $OPENNURBS_CPPFLAGS"
 
 # make sure ECHO and ECHO_N got defined and substituted
 if test "x$ECHO" = "x" ; then
@@ -3423,9 +3419,6 @@ AM_CONDITIONAL(WITH_TK, [test "xyes" = "xno"])
 AM_CONDITIONAL(WITH_JAVA, [test "x$build_against_java" != "xno"])
 AM_CONDITIONAL(WITH_PROE, [test "x$build_against_proe" != "xno"])
 AM_CONDITIONAL(WITH_PARSERS, [test "x$build_parsers" != "xno"])
-
-# FIXME: this needs to be actually set up above
-AM_CONDITIONAL(WITH_OPENNURBS, [test "x$build_against_opennurbs" != "xno"])
 
 AM_CONDITIONAL(INSTALL_MODELS, [test "x$bc_install_geometry" = "xyes"])
 AM_CONDITIONAL(ONLY_BENCHMARK, [test "x$bc_only_benchmark" != "xno"])
