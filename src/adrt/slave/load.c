@@ -34,13 +34,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef HAVE_MYSQL
-# include <mysql.h>
-# define ADRT_MYSQL_USER         "adrt"
-# define ADRT_MYSQL_PASS         "adrt"
-# define ADRT_MYSQL_DB           "adrt"
-  MYSQL slave_load_mysql_db;
-#endif
 
 #include "tienet.h"
 #include "umath.h"
@@ -70,10 +63,17 @@ slave_load_free ()
 #endif
 }
 
+#ifdef HAVE_MYSQL
+# include <mysql.h>
+# define ADRT_MYSQL_USER         "adrt"
+# define ADRT_MYSQL_PASS         "adrt"
+# define ADRT_MYSQL_DB           "adrt"
+  MYSQL slave_load_mysql_db;
+
+
 void
 slave_load_MySQL (uint32_t pid, tie_t *tie, const char *hostname)
 {
-#ifdef HAVE_MYSQL
   MYSQL_RES *res;
   MYSQL_ROW row;
   TIE_3 *vlist, **tlist;
@@ -168,7 +168,7 @@ slave_load_MySQL (uint32_t pid, tie_t *tie, const char *hostname)
         tlist[i] = &vlist[f32list[i]];
 
       /* assign the current mesh to group of triangles */
-      tie_push (tie, tlist, f32num, &slave_load_mesh_list[mind], 0);
+	tie_push (tie, tlist, f32num, &slave_load_mesh_list[mind], 0);
     }
     else
     {
@@ -183,7 +183,7 @@ slave_load_MySQL (uint32_t pid, tie_t *tie, const char *hostname)
         tlist[i] = &vlist[f16list[i]];
 
       /* assign the current mesh to group of triangles */
-      tie_push (tie, tlist, f16num, &slave_load_mesh_list[mind], 0);
+	tie_push (tie, tlist, f16num, &slave_load_mesh_list[mind], 0);
     }
 
     bu_free (tlist, "tlist");
@@ -215,9 +215,7 @@ slave_load_MySQL (uint32_t pid, tie_t *tie, const char *hostname)
       {
         res = mysql_use_result (&slave_load_mysql_db);
         while ((row = mysql_fetch_row (res)))
-        {
           sscanf(row[0], "%f %f %f", &slave_load_mesh_list[i].attributes->color.v[0], &slave_load_mesh_list[i].attributes->color.v[1], &slave_load_mesh_list[i].attributes->color.v[2]);
-        }
 
         mysql_free_result (res);
       }
@@ -242,40 +240,21 @@ slave_load_MySQL (uint32_t pid, tie_t *tie, const char *hostname)
   mysql_free_result (res);
 
   mysql_close (&slave_load_mysql_db);
-#endif
   return;
 }
+#endif
 
 void
 slave_load (tie_t *tie, void *data, uint32_t dlen)
 {
-  uint32_t pid, ind;
-  uint8_t c, fmt;
-  char hostname[32];
-
-  ind = 0;
-
   TIE_VAL(tie_check_degenerate) = 0;
 
-  memcpy(&fmt, &((char *)data)[ind], 1);
-  ind += 1;
-
-  switch(fmt) {
+  switch(*(char *)data) {
+#if HAVE_MYSQL
       case 0x0:	/* mysql float */
-	  /* hostname */
-	  memcpy(&c, &((char *)data)[ind], 1);
-	  ind += 1;
-	  memcpy(hostname, &((char *)data)[ind], c);
-	  ind += c;
-
-	  /* project id */
-	  memcpy(&pid, &((char *)data)[ind], sizeof(uint32_t));
-	  ind += sizeof(uint32_t);
-
-	  /* Process the geometry data */
-	  slave_load_MySQL (pid, tie, hostname);
-
+	  slave_load_MySQL ( *(uint32_t *)((int)data + 2 + *((char *)data+1)), tie, (char *)data + 2);
 	  break;
+#endif
       default:
 	  fprintf(stderr, "Unknown load format\n");
 	  exit(-1);
