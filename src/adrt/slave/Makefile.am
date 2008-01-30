@@ -1,26 +1,25 @@
 # $Id$
 
-bin_PROGRAMS = isst_slave
+bin_PROGRAMS = adrt_slave
 
-isst_slave_SOURCES = \
+adrt_slave_SOURCES = \
 	load.c \
 	main.c \
 	slave.c
 
-isst_slave_CFLAGS = \
+adrt_slave_CFLAGS = \
 	-I${top_srcdir}/src/adrt \
 	-I${top_srcdir}/src/adrt/libtie \
 	-I${top_srcdir}/src/adrt/libtienet \
 	-I${top_srcdir}/src/adrt/libtexture \
 	-I${top_srcdir}/src/adrt/librender \
 	-I${top_srcdir}/src/adrt/libutil \
-	-I${top_srcdir}/src/adrt/isst \
 	${LIBZ_CPPFLAGS} \
 	${TCL_CPPFLAGS}
 
 #-DHAVE_MYSQL=0 -I/usr/local/include/mysql
 
-isst_slave_LDADD = \
+adrt_slave_LDADD = \
 	${LIBTHREAD} \
 	${top_builddir}/src/adrt/librender/librender.la \
 	${top_builddir}/src/adrt/libutil/libtieutil.la \

@@ -1,14 +1,14 @@
 # $Id$
 
-bin_PROGRAMS = isst_master
+bin_PROGRAMS = adrt_master
 
-isst_master_SOURCES = \
+adrt_master_SOURCES = \
 	compnet.c \
 	dispatcher.c \
 	master.c \
 	main.c
 
-isst_master_CFLAGS = \
+adrt_master_CFLAGS = \
 	-I${top_srcdir}/src/adrt \
 	-I${top_srcdir}/src/adrt/libtie \
 	-I${top_srcdir}/src/adrt/libtienet \
@@ -16,7 +16,7 @@ isst_master_CFLAGS = \
 	-I${top_srcdir}/src/adrt/librender \
 	${LIBZ_CPPFLAGS}
 
-isst_master_LDADD = \
+adrt_master_LDADD = \
 	${top_builddir}/src/adrt/libtienet/libtienet.la \
 	${LIBTHREAD} \
 	${LIBM} \
