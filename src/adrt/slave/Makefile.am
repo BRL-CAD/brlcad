@@ -22,7 +22,6 @@ isst_slave_CFLAGS = \
 
 isst_slave_LDADD = \
 	${LIBTHREAD} \
-	${top_builddir}/src/adrt/libcommon/libcommon.la \
 	${top_builddir}/src/adrt/librender/librender.la \
 	${top_builddir}/src/adrt/libutil/libtieutil.la \
 	${LIBM} \
