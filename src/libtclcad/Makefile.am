@@ -24,6 +24,6 @@ libtclcad_la_LIBADD = ${TCLCAD_LIBS}
 
 EXTRA_DIST = libtclcad.dsp
 
-DEPS=src/libfb
+DEPS=src/libfb src/other/blt
 
 include $(top_srcdir)/misc/Makefile.defs
