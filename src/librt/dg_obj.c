@@ -1729,9 +1729,6 @@ dgo_rtcheck_vector_handler(ClientData clientData, int mask)
 		/* wait for the forked process */
 		WaitForSingleObject( rtcp->hProcess, INFINITE );
 
-/*		while ((rpid = wait(&retcode)) != rtcp->pid && rpid != -1)
-			dgo_wait_status(rtcp->interp, retcode);*/
-
 		dgo_notify(rtcp->dgop, rtcp->interp);
 
 		/* free rtcp */
@@ -3927,7 +3924,7 @@ dgo_rt_output_handler(ClientData	clientData,
     /* Get data from rt */
     count = read((int)run_rtp->fd, line, RT_MAXLINE);
     if (count <= 0) {
-	int retcode;
+	int retcode = 0;
 	int rpid;
 	int aborted;
 
@@ -3951,6 +3948,9 @@ dgo_rt_output_handler(ClientData	clientData,
 	    if (aborted)
 		bu_vls_printf(&vls, "%s \"Raytrace aborted.\n\"",
 			      drcdp->dgop->dgo_outputHandler);
+	    else if (retcode)
+		bu_vls_printf(&vls, "%s \"Raytrace failed.\n\"",
+			      drcdp->dgop->dgo_outputHandler);
 	    else
 		bu_vls_printf(&vls, "%s \"Raytrace complete.\n\"",
 			      drcdp->dgop->dgo_outputHandler);
@@ -3960,6 +3960,8 @@ dgo_rt_output_handler(ClientData	clientData,
 	} else {
 	    if (aborted)
 		bu_log("Raytrace aborted.\n");
+	    else if (retcode)
+		bu_log("Raytrace failed.\n");
 	    else
 		bu_log("Raytrace complete.\n");
 	}
@@ -4012,6 +4014,7 @@ dgo_rt_output_handler(ClientData	clientData,
     if (Tcl_Eof(run_rtp->chan) ||
 	(!ReadFile(run_rtp->fd, line, 10240, &count, 0))) {
 	int aborted;
+	DWORD result;
 
 	Tcl_DeleteChannelHandler(run_rtp->chan,
 				 dgo_rt_output_handler,
@@ -4023,13 +4026,16 @@ dgo_rt_output_handler(ClientData	clientData,
 	 * there is no need to block indefinately
 	 */
 	WaitForSingleObject( run_rtp->hProcess, 120 );
-	/* !!! need to observer implications of being non-infinate
+	/* !!! need to observe implications of being non-infinate
 	 *	WaitForSingleObject( run_rtp->hProcess, INFINITE );
 	 */
 
 	if (GetLastError() == ERROR_PROCESS_ABORTED) {
 	    run_rtp->aborted = 1;
 	}
+
+	GetExitCodeProcess( run_rtp->hProcess, &retcode );
+	/* may be useful to try pr_wait_status() here */
 
 	aborted = run_rtp->aborted;
 
@@ -4041,6 +4047,9 @@ dgo_rt_output_handler(ClientData	clientData,
 	    if (aborted)
 		bu_vls_printf(&vls, "%s \"Raytrace aborted.\n\"",
 			      drcdp->dgop->dgo_outputHandler);
+	    else if (retcode)
+		bu_vls_printf(&vls, "%s \"Raytrace failed.\n\"",
+			      drcdp->dgop->dgo_outputHandler);
 	    else
 		bu_vls_printf(&vls, "%s \"Raytrace complete.\n\"",
 			      drcdp->dgop->dgo_outputHandler);
@@ -4050,6 +4059,8 @@ dgo_rt_output_handler(ClientData	clientData,
 	} else {
 	    if (aborted)
 		bu_log("Raytrace aborted.\n");
+	    else if (retcode)
+		bu_log("Raytrace failed.\n");
 	    else
 		bu_log("Raytrace complete.\n");
 	}

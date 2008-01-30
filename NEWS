@@ -11,6 +11,7 @@ entire history of the project is available through SVN.
 --- 2007-11-XX  Release 7.11.0                                     ---
 ----------------------------------------------------------------------
 
+* mged reports failure if ray-tracer returns non-zero - Sean Morrison
 * improved mged corrupt geometry file handling - Sean Morrison
 * improved dbconcat object suffix and prefix options - Sean Morrison
 * Tcl/Tk updated to 8.5 final from 8.5b1 - Erik Greenwald

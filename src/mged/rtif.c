@@ -465,7 +465,10 @@ rt_output_handler(ClientData clientData, int mask)
     line[sizeof(line)-1] = '\0'; /* sanity */
 
     if (count <= 0) {
-	int retcode;
+#ifndef DWORD
+#  define DWORD int
+#endif
+	DWORD retcode = 0;
 	int rpid;
 	int aborted;
 
@@ -490,6 +493,8 @@ rt_output_handler(ClientData clientData, int mask)
 	if (GetLastError() == ERROR_PROCESS_ABORTED) {
 	    run_rtp->aborted = 1;
 	}
+	GetExitCodeProcess( run_rtp->hProcess, &retcode );
+	/* may be useful to try pr_wait_status() here */
 #endif
 
 	aborted = run_rtp->aborted;
@@ -500,6 +505,8 @@ rt_output_handler(ClientData clientData, int mask)
 
 	if (aborted)
 	    bu_log("Raytrace aborted.\n");
+	else if (retcode)
+	    bu_log("Raytrace failed.\n");
 	else
 	    bu_log("Raytrace complete.\n");
 	return;
@@ -1856,12 +1863,13 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     FILE *fp_out, *fp_err;
     int pid;
     int rpid;
-    int retcode;
 #  ifndef _WIN32
+    int retcode;
     int pipe_in[2] = {0, 0};
     int pipe_out[2] = {0, 0};
     int pipe_err[2] = {0, 0};
 #  else
+    DWORD retcode;
     HANDLE pipe_in[2], hSaveStdin, pipe_inDup;
     HANDLE pipe_out[2], hSaveStdout, pipe_outDup;
     HANDLE pipe_err[2], hSaveStderr, pipe_errDup;
@@ -2320,7 +2328,7 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 #ifndef _WIN32
 
-    /* Wait for program to finish */
+    /* wait for program to finish */
     while ((rpid = wait(&retcode)) != pid && rpid != -1)
 	;	/* NULL */
 
@@ -2329,6 +2337,8 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 #else
     /* Wait for program to finish */
     WaitForSingleObject( pi.hProcess, INFINITE );
+    GetExitCodeProcess( pi.hProcess, &retcode );
+    /* may be useful to try pr_wait_status() here */
 
 #endif
 
