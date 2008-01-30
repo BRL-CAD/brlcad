@@ -37,15 +37,12 @@
 #include "umath.h"
 #include "adrt_struct.h"
 
+#include "bu.h"
 
 void texture_clouds_init(texture_t *texture, tfloat size, int octaves, int absolute, TIE_3 scale, TIE_3 translate) {
   texture_clouds_t *td;
 
-  texture->data = malloc(sizeof(texture_clouds_t));
-  if (!texture->data) {
-      perror("texture->data");
-      exit(1);
-  }
+  texture->data = bu_malloc(sizeof(texture_clouds_t), "cloud data");
   texture->free = texture_clouds_free;
   texture->work = (texture_work_t *)texture_clouds_work;
 
@@ -65,7 +62,7 @@ void texture_clouds_free(texture_t *texture) {
 
   td = (texture_clouds_t*)texture->data;
   texture_perlin_free(&td->perlin);
-  free(texture->data);
+  bu_free(texture->data, "cloud data");
 }
 
 

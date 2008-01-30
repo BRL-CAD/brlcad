@@ -37,13 +37,13 @@ static void tie_kdtree_free_node(tie_kdtree_t *node)
     /* Node Data is KDTREE Children, Recurse */
     tie_kdtree_free_node(&((tie_kdtree_t *)(((intptr_t)(node_aligned->data)) & ~0x7L))[0]);
     tie_kdtree_free_node(&((tie_kdtree_t *)(((intptr_t)(node_aligned->data)) & ~0x7L))[1]);
-    free((void*)((intptr_t)(node_aligned->data) & ~0x7L));
+    bu_free((void*)((intptr_t)(node_aligned->data) & ~0x7L), __FUNCTION__);
   }
   else
   {
     /* This node points to a geometry node, free it */
-    free(((tie_geom_t *)((intptr_t)(node_aligned->data) & ~0x7L))->tri_list);
-    free((void *)((intptr_t)(node_aligned->data) & ~0x7L));
+    bu_free(((tie_geom_t *)((intptr_t)(node_aligned->data) & ~0x7L))->tri_list, __FUNCTION__);
+    bu_free((void *)((intptr_t)(node_aligned->data) & ~0x7L), __FUNCTION__);
   }
 }
 
@@ -55,13 +55,13 @@ static void tie_kdtree_cache_free_node(tie_t *tie, tie_kdtree_t *node, void **ca
 
   /*
   * If the available size for this cache is under 1MB, then grow it 4MB larger.
-  * This reduces the number of realloc's required.  Makes things much much faster
-  * on systems like FreeBSD that do a full copy for each realloc.
+  * This reduces the number of bu_realloc's required.  Makes things much much faster
+  * on systems like FreeBSD that do a full copy for each bu_realloc.
   */
   if (*mem - *size < 1<<20)
   {
     (*mem) += 1<<23;
-    *cache = realloc(*cache, *mem);
+    *cache = bu_realloc(*cache, *mem, __FUNCTION__);
   }
 
   if (((intptr_t)(node_aligned->data)) & 0x4)
@@ -81,7 +81,7 @@ static void tie_kdtree_cache_free_node(tie_t *tie, tie_kdtree_t *node, void **ca
     /* Node Data is KDTREE Children, Recurse */
     tie_kdtree_cache_free_node(tie, &((tie_kdtree_t *)(((intptr_t)(node_aligned->data)) & ~0x7L))[0], cache, size, mem);
     tie_kdtree_cache_free_node(tie, &((tie_kdtree_t *)(((intptr_t)(node_aligned->data)) & ~0x7L))[1], cache, size, mem);
-    free((void *)((intptr_t)(node_aligned->data) & ~0x7L));
+    bu_free((void *)((intptr_t)(node_aligned->data) & ~0x7L), __FUNCTION__);
   }
   else
   {
@@ -106,8 +106,8 @@ static void tie_kdtree_cache_free_node(tie_t *tie, tie_kdtree_t *node, void **ca
     }
 
     /* This node points to a geometry node, free it */
-    free(((tie_geom_t *)((intptr_t)(node_aligned->data) & ~0x7L))->tri_list);
-    free((void *)((intptr_t)(node_aligned->data) & ~0x7L));
+    bu_free(((tie_geom_t *)((intptr_t)(node_aligned->data) & ~0x7L))->tri_list, __FUNCTION__);
+    bu_free((void *)((intptr_t)(node_aligned->data) & ~0x7L), __FUNCTION__);
   }
 }
 
@@ -123,14 +123,14 @@ static void tie_kdtree_prep_head(tie_t *tie, tie_tri_t *tri_list, int tri_num)
 
   /* Insert all triangles into the Head Node */
   if (!tie->kdtree) {
-    tie->kdtree = (tie_kdtree_t *)malloc(sizeof(tie_kdtree_t));
-    tie->kdtree->data = (void *)malloc(sizeof(tie_geom_t));
+    tie->kdtree = (tie_kdtree_t *)bu_malloc(sizeof(tie_kdtree_t), __FUNCTION__);
+    tie->kdtree->data = (void *)bu_malloc(sizeof(tie_geom_t), __FUNCTION__);
     g = ((tie_geom_t *)(tie->kdtree->data));
     g->tri_num = 0;
 
     MATH_BBOX(tie->min, tie->max, tri_list[0].data[0], tri_list[0].data[1], tri_list[0].data[2]);
 
-    g->tri_list = (tie_tri_t **)malloc(sizeof(tie_tri_t *) * tri_num);
+    g->tri_list = (tie_tri_t **)bu_malloc(sizeof(tie_tri_t *) * tri_num, __FUNCTION__);
 
     /* form bounding box of scene */
     for (i = 0; i < tri_num; i++) {
@@ -601,18 +601,18 @@ else if (tie->kdmethod == TIE_KDTREE_OPTIMAL) {
 
 
   /* Allocate 2 children nodes for the parent node */
-  node->data = (void *)malloc(2 * sizeof(tie_kdtree_t));
-  ((tie_kdtree_t *)(node->data))[0].data = malloc(sizeof(tie_geom_t));
-  ((tie_kdtree_t *)(node->data))[1].data = malloc(sizeof(tie_geom_t));
+  node->data = (void *)bu_malloc(2 * sizeof(tie_kdtree_t), __FUNCTION__);
+  ((tie_kdtree_t *)(node->data))[0].data = bu_malloc(sizeof(tie_geom_t), __FUNCTION__);
+  ((tie_kdtree_t *)(node->data))[1].data = bu_malloc(sizeof(tie_geom_t), __FUNCTION__);
 
   /* Initialize Triangle List */
   child[0] = ((tie_geom_t *)(((tie_kdtree_t *)(node->data))[0].data));
   child[1] = ((tie_geom_t *)(((tie_kdtree_t *)(node->data))[1].data));
 
-  child[0]->tri_list = (tie_tri_t **)malloc(sizeof(tie_tri_t *) * node_gd->tri_num);
+  child[0]->tri_list = (tie_tri_t **)bu_malloc(sizeof(tie_tri_t *) * node_gd->tri_num, __FUNCTION__);
   child[0]->tri_num = 0;
 
-  child[1]->tri_list = (tie_tri_t **)malloc(sizeof(tie_tri_t *) * node_gd->tri_num);
+  child[1]->tri_list = (tie_tri_t **)bu_malloc(sizeof(tie_tri_t *) * node_gd->tri_num, __FUNCTION__);
   child[1]->tri_num = 0;
 
 
@@ -655,7 +655,7 @@ else if (tie->kdmethod == TIE_KDTREE_OPTIMAL) {
     }
 
     /* Resize Tri List to actual ammount of memory used */
-    child[n]->tri_list = (tie_tri_t **)realloc(child[n]->tri_list, sizeof(tie_tri_t *)*child[n]->tri_num);
+    child[n]->tri_list = (tie_tri_t **)bu_realloc(child[n]->tri_list, sizeof(tie_tri_t *)*child[n]->tri_num, __FUNCTION__);
   }
 
   /*
@@ -663,8 +663,8 @@ else if (tie->kdmethod == TIE_KDTREE_OPTIMAL) {
   * free the triangle list on this node.
   */
   node_gd->tri_num = 0;
-  free(node_gd->tri_list);
-  free(node_gd);
+  bu_free(node_gd->tri_list, __FUNCTION__);
+  bu_free(node_gd, __FUNCTION__);
 
   /* Push each child through the same process. */
   tie_kdtree_build(tie, &((tie_kdtree_t *)(node->data))[0], depth+1, cmin[0], cmax[0], cnt[0], cnt[1]);
@@ -685,7 +685,7 @@ TIE_FUNC(void tie_kdtree_free, tie_t *tie)
   /* prevent tie from crashing when a tie_free() is called right after a tie_init() */
   if (tie->kdtree)
     tie_kdtree_free_node(tie->kdtree);
-  free(tie->kdtree);
+  bu_free(tie->kdtree, __FUNCTION__);
 }
 
 TIE_FUNC(uint32_t tie_kdtree_cache_free, tie_t *tie, void **cache)
@@ -707,9 +707,9 @@ TIE_FUNC(uint32_t tie_kdtree_cache_free, tie_t *tie, void **cache)
   tie_kdtree_cache_free_node(tie, tie->kdtree, cache, &size, &mem);
 
   /* Resize the array back to it's real value */
-  *cache = realloc(*cache, size);
+  *cache = bu_realloc(*cache, size, __FUNCTION__);
 
-  free(tie->kdtree);
+  bu_free(tie->kdtree, __FUNCTION__);
   tie->kdtree = NULL;
 
   return(size);
@@ -736,13 +736,13 @@ TIE_FUNC(void tie_kdtree_cache_load, tie_t *tie, void *cache, uint32_t size)
 
     if (type) {
       /* Geometry Node - Allocate a tie_geom_t and assign to node->data. */
-      node->data = malloc(sizeof(tie_geom_t));
+      node->data = bu_malloc(sizeof(tie_geom_t), __FUNCTION__);
       geom = (tie_geom_t *)node->data;
 
       TCOPY(uint32_t, cache, index, &(geom->tri_num), 0);
       index += sizeof(uint32_t);
 
-      geom->tri_list = (tie_tri_t **)malloc(geom->tri_num * sizeof(tie_tri_t *));
+      geom->tri_list = (tie_tri_t **)bu_malloc(geom->tri_num * sizeof(tie_tri_t *), __FUNCTION__);
       for (i = 0; i < geom->tri_num; i++) {
         TCOPY(uint32_t, cache, index, &tri_ind, 0);
         index += sizeof(uint32_t);
@@ -758,7 +758,7 @@ TIE_FUNC(void tie_kdtree_cache_load, tie_t *tie, void *cache, uint32_t size)
     } else {
       /* KD-Tree Node */
       if (!tie->kdtree) {
-        tie->kdtree = (tie_kdtree_t *)malloc(sizeof(tie_kdtree_t));
+        tie->kdtree = (tie_kdtree_t *)bu_malloc(sizeof(tie_kdtree_t), __FUNCTION__);
         node = tie->kdtree;
       }
 
@@ -771,7 +771,7 @@ TIE_FUNC(void tie_kdtree_cache_load, tie_t *tie, void *cache, uint32_t size)
       index += 1;
 
       /* Allocate memory for 2 child nodes */
-      node->data = malloc(2 * sizeof(tie_kdtree_t));
+      node->data = bu_malloc(2 * sizeof(tie_kdtree_t), __FUNCTION__);
 
       /* Push B on the stack and Process A */
       stack[stack_ind] = &((tie_kdtree_t *)node->data)[1];
@@ -818,7 +818,7 @@ TIE_FUNC(void tie_kdtree_prep, tie_t *tie)
 
   /* Trim KDTREE to number of actual triangles if it's not that size already. */
   if (!already_built)
-    ((tie_geom_t *)(tie->kdtree->data))->tri_list = (tie_tri_t **)realloc(((tie_geom_t *)(tie->kdtree->data))->tri_list, sizeof(tie_tri_t *) * ((tie_geom_t *)(tie->kdtree->data))->tri_num);
+    ((tie_geom_t *)(tie->kdtree->data))->tri_list = (tie_tri_t **)bu_realloc(((tie_geom_t *)(tie->kdtree->data))->tri_list, sizeof(tie_tri_t *) * ((tie_geom_t *)(tie->kdtree->data))->tri_num, __FUNCTION__);
 
   /*
   * Compute Floating Fuzz Precision Value

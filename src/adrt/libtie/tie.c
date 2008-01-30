@@ -11,7 +11,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
 #include "tie_struct.h"
+
+#include <bu.h>
 
 #ifdef TIE_SSE
 # include <xmmintrin.h>
@@ -21,6 +24,7 @@
 # include <stdint.h>
 #endif
 
+#define TIE_DEGENERATE_THRESHOLD 0.0001 
 TIE_VAL(int tie_check_degenerate) = 1;
 
 /*************************************************************
@@ -98,7 +102,7 @@ TIE_FUNC(void tie_init, tie_t *tie, unsigned int tri_num, int kdmethod)
   tie->kdmethod = kdmethod;
   tie->tri_num = 0;
   tie->tri_num_alloc = tri_num;
-  tie->tri_list = (tie_tri_t *)malloc(sizeof(tie_tri_t) * tri_num);
+  tie->tri_list = (tie_tri_t *)bu_malloc(sizeof(tie_tri_t) * tri_num, "tie_init");
   tie->stat = 0;
   tie->rays_fired = 0;
 }
@@ -118,8 +122,8 @@ TIE_FUNC(void tie_free, tie_t *tie)
 
   /* Free Triangle Data */
   for (i = 0; i < tie->tri_num; i++)
-    free ((void *)((intptr_t)(tie->tri_list[i].v) & ~0x7L));
-  free (tie->tri_list);
+    bu_free ((void *)((intptr_t)(tie->tri_list[i].v) & ~0x7L), "tri_list.v in tie_free");
+  bu_free (tie->tri_list, "tie_free");
 
   /* Free KDTREE Nodes */
   tie_kdtree_free (tie);
@@ -381,12 +385,17 @@ TIE_FUNC(void tie_push, tie_t *tie, TIE_3 **tlist, int tnum, void *plist, int ps
 {
   int i;
 
+  /* expand the tri buffer if needed */
   if (tnum + tie->tri_num > tie->tri_num_alloc) {
-    tie->tri_list = (tie_tri_t *)realloc(tie->tri_list, sizeof(tie_tri_t) * (tie->tri_num + tnum));
+    tie->tri_list = (tie_tri_t *)bu_realloc(
+		    tie->tri_list, 
+		    sizeof(tie_tri_t) * (tie->tri_num + tnum),
+		    "tri_list during tie_push");
     tie->tri_num_alloc += tnum;
   }
 
   for (i = 0; i < tnum; i++) {
+
     if (tie_check_degenerate) {
       TIE_3 u, v, w;
 
@@ -394,18 +403,23 @@ TIE_FUNC(void tie_push, tie_t *tie, TIE_3 **tlist, int tnum, void *plist, int ps
       MATH_VEC_SUB(v, (*tlist[i*3+2]), (*tlist[i*3+0]));
       MATH_VEC_CROSS(w, u, v);
 
-      if (fabs(w.v[0]) < 0.0001 && fabs(w.v[1]) < 0.0001 && fabs(w.v[2]) < 0.0001)
+      if (MAGNITUDE(w.v) < 0.0001 * 0.0001)
         continue;
     }
+
+    /* pack pack pack */
     tie->tri_list[tie->tri_num].data[0] = *tlist[i*3+0];
     tie->tri_list[tie->tri_num].data[1] = *tlist[i*3+1];
     tie->tri_list[tie->tri_num].data[2] = *tlist[i*3+2];
-    if (plist) {
-      tie->tri_list[tie->tri_num].ptr = plist;
+
+    /* set the association pointer */
+    tie->tri_list[tie->tri_num].ptr = plist;
+    if (plist)
       plist = (void *)((intptr_t)plist + pstride);
-    } else
-      tie->tri_list[tie->tri_num].ptr = NULL;
-    tie->tri_list[tie->tri_num].v = (tfloat *)malloc(2*sizeof(tfloat));
+
+    /* XXX this looks like it might cause fragmentation? use a memory pool? */
+    tie->tri_list[tie->tri_num].v = (tfloat *)bu_malloc(2*sizeof(tfloat),"");
     tie->tri_num++;
   }
+  return;
 }

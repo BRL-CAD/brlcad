@@ -26,9 +26,13 @@
 
 #include "spall.h"
 #include "render_util.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "bu.h"
+
 #include "adrt_struct.h"
 #include "hit.h"
 
@@ -56,7 +60,7 @@ void render_spall_init(render_t *render, TIE_3 ray_pos, TIE_3 ray_dir, tfloat an
   render->work = render_spall_work;
   render->free = render_spall_free;
 
-  render->data = (render_spall_t *)malloc(sizeof(render_spall_t));
+  render->data = (render_spall_t *)bu_malloc(sizeof(render_spall_t), "render_spall_init");
   if (!render->data) {
       perror("render->data");
       exit(1);
@@ -86,16 +90,8 @@ void render_spall_init(render_t *render, TIE_3 ray_pos, TIE_3 ray_dir, tfloat an
   /******************/
   /* The spall Cone */
   /******************/
-  vec_list = (TIE_3 *)malloc(sizeof(TIE_3) * TESSELATION);
-  if (!vec_list) {
-      perror("vec_list");
-      exit(1);
-  }
-  tri_list = (TIE_3 *)malloc(sizeof(TIE_3) * TESSELATION * 3);
-  if (!tri_list) {
-      perror("tri_list");
-      exit(1);
-  }
+  vec_list = (TIE_3 *)bu_malloc(sizeof(TIE_3) * TESSELATION, "vec_list");
+  tri_list = (TIE_3 *)bu_malloc(sizeof(TIE_3) * TESSELATION * 3, "tri_list");
 
   render_util_spall_vec(ray_dir, angle, TESSELATION, vec_list);
 
@@ -118,13 +114,13 @@ void render_spall_init(render_t *render, TIE_3 ray_pos, TIE_3 ray_dir, tfloat an
 /*  tie_push(&d->tie, tri_list, TESSELATION, NULL, 0);   */
   tie_prep(&d->tie);
 
-  free(vec_list);
-  free(tri_list);
+  bu_free(vec_list, "vec_list");
+  bu_free(tri_list, "tri_list");
 }
 
 
 void render_spall_free(render_t *render) {
-  free(render->data);
+  bu_free(render->data, "render data");
 }
 
 

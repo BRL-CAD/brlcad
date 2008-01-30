@@ -36,15 +36,12 @@
 #include <stdlib.h>
 #include "umath.h"
 
+#include "bu.h"
 
 void texture_bump_init(texture_t *texture, TIE_3 coef) {
   texture_bump_t *sd;
 
-  texture->data = malloc(sizeof(texture_bump_t));
-  if (!texture->data) {
-      perror("texture->data");
-      exit(1);
-  }
+  texture->data = bu_malloc(sizeof(texture_bump_t), "texture data");
   texture->free = texture_bump_free;
   texture->work = (texture_work_t *)texture_bump_work;
 
@@ -54,7 +51,7 @@ void texture_bump_init(texture_t *texture, TIE_3 coef) {
 
 
 void texture_bump_free(texture_t *texture) {
-  free(texture->data);
+  bu_free(texture->data, "texture data");
 }
 
 

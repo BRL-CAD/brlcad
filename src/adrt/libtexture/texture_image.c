@@ -40,26 +40,19 @@
 #include "umath.h"
 #include "adrt_struct.h"
 
+#include "bu.h"
 
 void texture_image_init(texture_t *texture, short w, short h, unsigned char *image) {
   texture_image_t *td;
 
-  texture->data = malloc(sizeof(texture_image_t));
-  if (!texture->data) {
-      perror("texture->data");
-      exit(1);
-  }
+  texture->data = bu_malloc(sizeof(texture_image_t), "texture data");
   texture->free = texture_image_free;
   texture->work = (texture_work_t *)texture_image_work;
 
   td = (texture_image_t *)texture->data;
   td->w = w;
   td->h = h;
-  td->image = (unsigned char *)malloc(3*w*h);
-  if (!td->image) {
-      perror("td->image");
-      exit(1);
-  }
+  td->image = (unsigned char *)bu_malloc(3*w*h, "texture image");
   memcpy(td->image, image, 3*w*h);
 }
 
@@ -68,8 +61,8 @@ void texture_image_free(texture_t *texture) {
   texture_image_t *td;
 
   td = (texture_image_t *)texture->data;
-  free(td->image);
-  free(texture->data);
+  bu_free(td->image, "texture image");
+  bu_free(texture->data, "texture data");
 }
 
 

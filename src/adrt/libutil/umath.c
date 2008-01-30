@@ -32,17 +32,11 @@
  */
 
 #include "umath.h"
+
 #include <string.h>
 #include <stdlib.h>
 
-
-void math_math_init(void);
-void math_math_free(void);
-void math_mat_ident(tfloat *M, int S);
-void math_mat_mult(tfloat *A, int Ar, int Ac, tfloat *B, int Br, int Bc, tfloat *C);
-void MATH_SWAP_rows(tfloat m[16], int r1, int r2);
-void math_mat_invert(tfloat *D, tfloat *M, int S);
-
+#include "bu.h"
 
 void math_mat_ident(tfloat *M, int S) {
   int	i, j;
@@ -58,7 +52,7 @@ void math_mat_mult(tfloat *A, int Ar, int Ac, tfloat *B, int Br, int Bc, tfloat 
   tfloat	*M;
 
   if (Ac == Br) {
-    M = (tfloat*)malloc(sizeof(tfloat)*Ar*Bc);
+    M = (tfloat*)bu_malloc(sizeof(tfloat)*Ar*Bc, "math_mat_mult");
     if (!M) {
 	perror("malloc");
 	exit(1);
@@ -70,7 +64,7 @@ void math_mat_mult(tfloat *A, int Ar, int Ac, tfloat *B, int Br, int Bc, tfloat 
 	  M[j*Bc+i] += A[j*Ac+k]*B[k*Bc+i];
       }
     memcpy(C, M, sizeof(tfloat)*Ar*Bc);
-    free(M);
+    bu_free(M, "math_mat_mult");
   }
 }
 

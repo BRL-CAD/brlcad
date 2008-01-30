@@ -35,14 +35,12 @@
 #include "texture_blend.h"
 #include <stdlib.h>
 
+#include "bu.h"
+
 void texture_blend_init(texture_t *texture, TIE_3 color1, TIE_3 color2) {
   texture_blend_t *sd;
 
-  texture->data = malloc(sizeof(texture_blend_t));
-  if (!texture->data) {
-      perror("texture->data");
-      exit(1);
-  }
+  texture->data = bu_malloc(sizeof(texture_blend_t), "texture data");
   texture->free = texture_blend_free;
   texture->work = (texture_work_t *)texture_blend_work;
 
@@ -53,7 +51,7 @@ void texture_blend_init(texture_t *texture, TIE_3 color1, TIE_3 color2) {
 
 
 void texture_blend_free(texture_t *texture) {
-  free(texture->data);
+  bu_free(texture->data, "texture data");
 }
 
 

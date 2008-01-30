@@ -37,15 +37,12 @@
 #include "umath.h"
 #include "adrt_struct.h"
 
+#include "bu.h"
 
 void texture_checker_init(texture_t *texture, int tile) {
   texture_checker_t   *td;
 
-  texture->data = malloc(sizeof(texture_checker_t));
-  if (!texture->data) {
-      perror("texture->data");
-      exit(1);
-  }
+  texture->data = bu_malloc(sizeof(texture_checker_t), "checker data");
   texture->free = texture_checker_free;
   texture->work = (texture_work_t *)texture_checker_work;
 
@@ -55,7 +52,7 @@ void texture_checker_init(texture_t *texture, int tile) {
 
 
 void texture_checker_free(texture_t *texture) {
-  free(texture->data);
+  bu_free(texture->data, "checker data");
 }
 
 

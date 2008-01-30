@@ -37,14 +37,12 @@
 #include "umath.h"
 #include "adrt_struct.h"
 
+#include "bu.h"
+
 void texture_camo_init(texture_t *texture, tfloat size, int octaves, int absolute, TIE_3 color1, TIE_3 color2, TIE_3 color3) {
   texture_camo_t   *sd;
 
-  texture->data = malloc(sizeof(texture_camo_t));
-  if (!texture->data) {
-      perror("texture->data");
-      exit(1);
-  }
+  texture->data = bu_malloc(sizeof(texture_camo_t), "camo data");
   texture->free = texture_camo_free;
   texture->work = (texture_work_t *)texture_camo_work;
 
@@ -65,7 +63,7 @@ void texture_camo_free(texture_t *texture) {
 
   td = (texture_camo_t *)texture->data;
   texture_perlin_free(&td->perlin);
-  free(texture->data);
+  bu_free(texture->data, "camo data");
 }
 
 
@@ -79,9 +77,9 @@ void texture_camo_work(__TEXTURE_WORK_PROTOTYPE__) {
 
   /* Transform the Point */
   MATH_VEC_TRANSFORM(pt, id->pos, ADRT_MESH(mesh)->matinv);
-  if (td->absolute) {
+  if (td->absolute)
     p = id->pos;
-  } else {
+  else {
     p.v[0] = ADRT_MESH(mesh)->max.v[0] - ADRT_MESH(mesh)->min.v[0] > TIE_PREC ? (pt.v[0] - ADRT_MESH(mesh)->min.v[0]) / (ADRT_MESH(mesh)->max.v[0] - ADRT_MESH(mesh)->min.v[0]) : 0.0;
     p.v[1] = ADRT_MESH(mesh)->max.v[1] - ADRT_MESH(mesh)->min.v[1] > TIE_PREC ? (pt.v[1] - ADRT_MESH(mesh)->min.v[1]) / (ADRT_MESH(mesh)->max.v[1] - ADRT_MESH(mesh)->min.v[1]) : 0.0;
     p.v[2] = ADRT_MESH(mesh)->max.v[2] - ADRT_MESH(mesh)->min.v[2] > TIE_PREC ? (pt.v[2] - ADRT_MESH(mesh)->min.v[2]) / (ADRT_MESH(mesh)->max.v[2] - ADRT_MESH(mesh)->min.v[2]) : 0.0;
@@ -90,11 +88,10 @@ void texture_camo_work(__TEXTURE_WORK_PROTOTYPE__) {
   sum1 = fabs(texture_perlin_noise3(&td->perlin, p, td->size*1.0, td->octaves));
   sum2 = fabs(texture_perlin_noise3(&td->perlin, p, td->size*0.8, td->octaves+1));
 
-  if (sum1 < 0.3) {
+  if (sum1 < 0.3)
     *pixel = td->color1;
-  } else {
+  else
     *pixel = td->color2;
-  }
 
   if (sum2 < 0.3)
     *pixel = td->color3;

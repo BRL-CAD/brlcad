@@ -44,17 +44,18 @@
 #  include <stdint.h>
 #endif
 
+#include "bu.h"
 
 #define TIENET_BUFFER_INIT(_b) { \
 	_b.data = NULL; \
 	_b.size = 0; \
 	_b.ind = 0; }
 
-#define TIENET_BUFFER_FREE(_b) free(_b.data);
+#define TIENET_BUFFER_FREE(_b) bu_free(_b.data, "tienet buffer");
 
 #define TIENET_BUFFER_SIZE(_b, _s) { \
 	if (_s > _b.size) { \
-	  _b.data = realloc(_b.data, _s); \
+	  _b.data = bu_realloc(_b.data, _s, "tienet buffer size"); \
 	  _b.size = _s; \
         } }
 

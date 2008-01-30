@@ -332,7 +332,7 @@ master_networking (void *ptr)
   }
 
   /* initialize socket list */
-  master.socklist = (master_socket_t *)malloc(sizeof(master_socket_t));
+  master.socklist = (master_socket_t *)bu_malloc(sizeof(master_socket_t), "master socket list");
   master.socklist->next = NULL;
   master.socklist->prev = NULL;
   master.socklist->num = master_socket;
@@ -384,7 +384,7 @@ master_networking (void *ptr)
         if (new_socket >= 0)
         {
           tmp = master.socklist;
-          master.socklist = (master_socket_t *)malloc(sizeof(master_socket_t));
+          master.socklist = (master_socket_t *)bu_malloc(sizeof(master_socket_t), "master socket connection");
           master.socklist->num = new_socket;
           master.socklist->controller = master.active_connections ? 0 : 1;
           master.socklist->active = 1;
@@ -416,7 +416,7 @@ master_networking (void *ptr)
           master.socklist = master.socklist->next;
         close(sock->num);
         sock = sock->next;
-        free(tmp);
+        bu_free(tmp, "tmp socket");
         master.active_connections--;
         continue;
       }
@@ -462,10 +462,10 @@ master_networking (void *ptr)
             void *mesg;
 
             tienet_recv (sock->num, &size, 4, 0);
-            mesg = malloc (size);
+            mesg = bu_malloc (size, "message buffer");
             tienet_recv (sock->num, mesg, size, 0);
             tienet_master_broadcast(mesg, size);
-            free(mesg);
+            bu_free(mesg, "message");
           }
           break;
 
@@ -576,7 +576,7 @@ master_networking (void *ptr)
 
   /* free master.socklist */
   for (sock = master.socklist->next; sock; sock = sock->next)
-    free(sock->prev);
+    bu_free(sock->prev, "master socket list");
 
   return 0;
 }

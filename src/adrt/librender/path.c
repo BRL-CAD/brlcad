@@ -29,19 +29,23 @@
 #endif
 
 #include "path.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+
 #include "umath.h"
 #include "hit.h"
 #include "adrt_struct.h"
+
+#include "bu.h"
 
 void render_path_init(render_t *render, int samples) {
   render_path_t *d;
 
   render->work = render_path_work;
   render->free = render_path_free;
-  render->data = (render_path_t *)malloc(sizeof(render_path_t));
+  render->data = (render_path_t *)bu_malloc(sizeof(render_path_t), "render_path_init");
   if (!render->data) {
       perror("render->data");
       exit(1);
@@ -53,7 +57,7 @@ void render_path_init(render_t *render, int samples) {
 
 
 void render_path_free(render_t *render) {
-  free(render->data);
+  bu_free(render->data, "render_path_free");
 }
 
 

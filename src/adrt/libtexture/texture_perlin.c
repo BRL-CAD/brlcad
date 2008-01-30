@@ -36,6 +36,8 @@
 #include <stdlib.h>
 #include "umath.h"
 
+#include "bu.h"
+
 
 #define	B	0x100
 #define	BM	0xff
@@ -57,16 +59,8 @@ tfloat	texture_perlin_omega(texture_perlin_t *P, TIE_3 V);
 void texture_perlin_init(texture_perlin_t *P) {
   int i, j, k;
 
-  P->PV = (int *)malloc(sizeof(int)*(2*B+2));
-  if (!P->PV) {
-      perror("P->PV");
-      exit(1);
-  }
-  P->RV = (TIE_3 *)malloc(sizeof(TIE_3)*(2*B+2));
-  if (!P->RV) {
-      perror("P->RV");
-      exit(1);
-  }
+  P->PV = (int *)bu_malloc(sizeof(int)*(2*B+2), "PV");
+  P->RV = (TIE_3 *)bu_malloc(sizeof(TIE_3)*(2*B+2), "RV");
 
   /* Generate Random Vectors */
   for (i = 0; i < B; i++) {
@@ -92,8 +86,8 @@ void texture_perlin_init(texture_perlin_t *P) {
 
 
 void texture_perlin_free(texture_perlin_t *P) {
-  free(P->PV);
-  free(P->RV);
+  bu_free(P->PV, "PV");
+  bu_free(P->RV, "RV");
 }
 
 

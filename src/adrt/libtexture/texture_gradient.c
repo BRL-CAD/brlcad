@@ -37,15 +37,12 @@
 #include "umath.h"
 #include "adrt_struct.h"
 
+#include "bu.h"
 
 void texture_gradient_init(texture_t *texture, int axis) {
   texture_gradient_t *td;
 
-  texture->data = malloc(sizeof(texture_gradient_t));
-  if (!texture->data) {
-      perror("texture->data");
-      exit(1);
-  }
+  texture->data = bu_malloc(sizeof(texture_gradient_t), "gradient data");
   texture->free = texture_gradient_free;
   texture->work = (texture_work_t *)texture_gradient_work;
 
@@ -55,7 +52,7 @@ void texture_gradient_init(texture_t *texture, int axis) {
 
 
 void texture_gradient_free(texture_t *texture) {
-  free(texture->data);
+  bu_free(texture->data, "gradient data");
 }
 
 

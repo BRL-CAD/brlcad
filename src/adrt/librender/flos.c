@@ -38,16 +38,18 @@
 #include "flos.h"
 #include "hit.h"
 #include "adrt_struct.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "bu.h"
 
 void render_flos_init(render_t *render, TIE_3 frag_pos) {
   render_flos_t *d;
 
   render->work = render_flos_work;
   render->free = render_flos_free;
-  render->data = (render_flos_t *)malloc(sizeof(render_flos_t));
+  render->data = (render_flos_t *)bu_malloc(sizeof(render_flos_t), "render_flos_init");
   d = (render_flos_t *)render->data;
   d->frag_pos = frag_pos;
 }

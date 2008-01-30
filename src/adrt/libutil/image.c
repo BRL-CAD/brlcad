@@ -32,6 +32,8 @@
  * $Id$
  */
 
+#if 0
+
 #include "image.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -157,6 +159,8 @@ void util_image_convert_32to24(void *image24, const void *image32, const int w, 
     }
   }
 }
+
+#endif
 
 /*
  * Local Variables:

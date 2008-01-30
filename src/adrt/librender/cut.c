@@ -28,6 +28,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "bu.h"
+
 #include "adrt.h"
 #include "adrt_struct.h"
 #include "hit.h"
@@ -55,7 +58,7 @@ void render_cut_init(render_t *render, TIE_3 ray_pos, TIE_3 ray_dir) {
   render->work = render_cut_work;
   render->free = render_cut_free;
 
-  render->data = (render_cut_t *)malloc(sizeof(render_cut_t));
+  render->data = (render_cut_t *)bu_malloc(sizeof(render_cut_t), "render_cut_init");
   if (!render->data) {
       perror("render->data");
       exit(1);
@@ -119,12 +122,12 @@ void render_cut_free(render_t *render) {
 
   d = (render_cut_t *)render->data;
   tie_free(&d->tie);
-  free(render->data);
+  bu_free(render->data, "render_cut_free");
 }
 
 
 static void* render_arrow_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr) {
-  return(tri);
+  return tri;
 }
 
 
@@ -133,7 +136,7 @@ void* render_cut_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr) {
 
   hit->id = *id;
   hit->mesh = (adrt_mesh_t *)(tri->ptr);
-  return( hit );
+  return hit ;
 }
 
 

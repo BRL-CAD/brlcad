@@ -37,15 +37,12 @@
 #include "umath.h"
 #include "adrt_struct.h"
 
+#include "bu.h"
 
 void texture_mix_init(texture_t *texture, texture_t *texture1, texture_t *texture2, tfloat coef) {
   texture_mix_t *td;
 
-  texture->data = malloc(sizeof(texture_mix_t));
-  if (!texture->data) {
-      perror("texture->data");
-      exit(1);
-  }
+  texture->data = bu_malloc(sizeof(texture_mix_t), "texture data");
   texture->free = texture_mix_free;
   texture->work = (texture_work_t *)texture_mix_work;
 
@@ -57,7 +54,7 @@ void texture_mix_init(texture_t *texture, texture_t *texture1, texture_t *textur
 
 
 void texture_mix_free(texture_t *texture) {
-  free(texture->data);
+  bu_free(texture->data, "texture data");
 }
 
 

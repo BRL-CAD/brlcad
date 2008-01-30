@@ -35,15 +35,13 @@
 #include "texture_stack.h"
 #include <stdlib.h>
 
+#include "bu.h"
+
 
 void texture_stack_init(texture_t *texture) {
   texture_stack_t *td;
 
-  texture->data = malloc(sizeof(texture_stack_t));
-  if (!texture->data) {
-      perror("texture->data");
-      exit(1);
-  }
+  texture->data = bu_malloc(sizeof(texture_stack_t), "texture data");
   texture->free = texture_stack_free;
   texture->work = (texture_work_t *)texture_stack_work;
 
@@ -57,8 +55,8 @@ void texture_stack_free(texture_t *texture) {
   texture_stack_t *td;
 
   td = (texture_stack_t *)texture->data;
-  free(td->list);
-  free(texture->data);
+  bu_free(td->list, "texture stack");
+  bu_free(texture->data, "texture data");
 }
 
 
@@ -78,7 +76,7 @@ void texture_stack_push(texture_t *texture, texture_t *texture_new) {
 
   td = (texture_stack_t *)texture->data;
 
-  td->list = (texture_t **)realloc(td->list, sizeof(texture_t *)*(td->num+1));
+  td->list = (texture_t **)bu_realloc(td->list, sizeof(texture_t *)*(td->num+1), "texture data");
   td->list[td->num++] = texture_new;
 }
 

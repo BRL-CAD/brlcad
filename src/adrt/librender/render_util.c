@@ -31,6 +31,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "bu.h"
 
 typedef struct render_segment_s {
   adrt_mesh_t *mesh;
@@ -104,7 +105,7 @@ static void* shot_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr) {
 
   if (!found) {
     /* Grow the shotline */
-    shotline->seglist = (render_segment_t *)realloc(shotline->seglist, (shotline->segnum + 1) * sizeof(render_segment_t));
+    shotline->seglist = (render_segment_t *)bu_realloc(shotline->seglist, (shotline->segnum + 1) * sizeof(render_segment_t), "Growing shotline in shot_hit");
 
     /* Assign */
     shotline->seglist[shotline->segnum].mesh = mesh;
@@ -142,12 +143,12 @@ void render_util_shotline_list(tie_t *tie, tie_ray_t *ray, void **data, int *dle
   *dlen = 0;
 
   /* in-hit */
-  *data = realloc(*data, sizeof(TIE_3));
+  *data = bu_realloc(*data, sizeof(TIE_3), "render_util_shotline_list: Growing in-hit");
   memcpy(&((char *)*data)[*dlen], &shotline.in_hit, sizeof(TIE_3));
   *dlen = sizeof(TIE_3);
 
   /* number of segments */
-  *data = realloc(*data, *dlen + sizeof(uint32_t));
+  *data = bu_realloc(*data, *dlen + sizeof(uint32_t), "render_util_shotline_list: Growing segment count");
   memcpy(&((char *)*data)[*dlen], &shotline.segnum, sizeof(uint32_t));
   *dlen += sizeof(uint32_t);
 
@@ -156,7 +157,7 @@ void render_util_shotline_list(tie_t *tie, tie_ray_t *ray, void **data, int *dle
     c = strlen(shotline.seglist[i].mesh->name) + 1;
 
     /* Grow the data */
-    *data = realloc(*data, *dlen + 1 + c + sizeof(uint32_t));
+    *data = bu_realloc(*data, *dlen + 1 + c + sizeof(uint32_t), "render_util_shotline_list");
 
     /* length of string */
     memcpy(&((char *)*data)[*dlen], &c, 1);
@@ -172,7 +173,7 @@ void render_util_shotline_list(tie_t *tie, tie_ray_t *ray, void **data, int *dle
   }
 
   /* Free shotline data */
-  free(shotline.seglist);
+  bu_free(shotline.seglist, "render_util_shotline_list: shotline data");
 }
 
 

@@ -32,6 +32,7 @@
  * $Id$
  */
 
+#if 0
 #include "camera.h"
 #include <pthread.h>
 #include <stdio.h>
@@ -491,6 +492,8 @@ void util_camera_render(util_camera_t *camera, common_db_t *db, tie_t *tie, void
 
   pthread_mutex_destroy(&td.mut);
 }
+
+#endif
 
 /*
  * Local Variables:

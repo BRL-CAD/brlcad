@@ -32,18 +32,20 @@
 #include "surfel.h"
 #include "hit.h"
 #include "adrt_struct.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "bu.h"
 
 void render_surfel_init(render_t *render, uint32_t num, render_surfel_pt_t *list) {
   render_surfel_t *d;
 
   render->work = render_surfel_work;
   render->free = render_surfel_free;
-  render->data = (render_surfel_t *)malloc(sizeof(render_surfel_t));
+  render->data = (render_surfel_t *)bu_malloc(sizeof(render_surfel_t), "render data");
   d = (render_surfel_t *)render->data;
-  d->list = (render_surfel_pt_t *)malloc(num * sizeof(render_surfel_pt_t));
+  d->list = (render_surfel_pt_t *)bu_malloc(num * sizeof(render_surfel_pt_t), "data list");
   d->num = num;
   d->list = list;
 }
@@ -53,8 +55,8 @@ void render_surfel_free(render_t *render) {
   render_surfel_t *d;
 
   d = (render_surfel_t *)render->data;
-  free(d->list);
-  free(render->data);
+  bu_free(d->list, "data list");
+  bu_free(render->data, "render data");
 }
 
 

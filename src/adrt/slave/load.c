@@ -119,7 +119,7 @@ slave_load_MySQL (uint32_t pid, tie_t *tie, const char *hostname)
   * Process geometry data
   */
   slave_load_mesh_num = mnum;
-  slave_load_mesh_list = (adrt_mesh_t *) realloc (slave_load_mesh_list, slave_load_mesh_num * sizeof(adrt_mesh_t));
+  slave_load_mesh_list = (adrt_mesh_t *) bu_realloc (slave_load_mesh_list, slave_load_mesh_num * sizeof(adrt_mesh_t), "mesh list");
   mind = 0;
 
   /* skip over endian */
@@ -130,7 +130,7 @@ slave_load_MySQL (uint32_t pid, tie_t *tie, const char *hostname)
   {
     slave_load_mesh_list[mind].texture = NULL;
     slave_load_mesh_list[mind].flags = 0;
-    slave_load_mesh_list[mind].attributes = (adrt_mesh_attributes_t *)malloc(sizeof(adrt_mesh_attributes_t));
+    slave_load_mesh_list[mind].attributes = (adrt_mesh_attributes_t *)bu_malloc(sizeof(adrt_mesh_attributes_t), "mesh attributes");
 
     /* length of name string */
     memcpy(&c, &((char *)gdata)[gind], 1);
@@ -163,7 +163,7 @@ slave_load_MySQL (uint32_t pid, tie_t *tie, const char *hostname)
       f32list = (uint32_t *)&((char *)gdata)[gind];
       gind += 3 * f32num * sizeof(uint32_t);
 
-      tlist = (TIE_3 **)malloc(3 * f32num * sizeof(TIE_3 *));
+      tlist = (TIE_3 **)bu_malloc(3 * f32num * sizeof(TIE_3 *), "tlist32");
       for (i = 0; i < 3*f32num; i++)
         tlist[i] = &vlist[f32list[i]];
 
@@ -178,7 +178,7 @@ slave_load_MySQL (uint32_t pid, tie_t *tie, const char *hostname)
       f16list = (uint16_t *)&((char *)gdata)[gind];
       gind += 3 * f16num * sizeof(uint16_t);
 
-      tlist = (TIE_3 **)malloc(3 * f16num * sizeof(TIE_3 *));
+      tlist = (TIE_3 **)bu_malloc(3 * f16num * sizeof(TIE_3 *), "tlist16");
       for (i = 0; i < 3*f16num; i++)
         tlist[i] = &vlist[f16list[i]];
 
@@ -186,7 +186,7 @@ slave_load_MySQL (uint32_t pid, tie_t *tie, const char *hostname)
       tie_push (tie, tlist, f16num, &slave_load_mesh_list[mind], 0);
     }
 
-    free (tlist);
+    bu_free (tlist, "tlist");
     mind++;
   }
 

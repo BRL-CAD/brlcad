@@ -52,7 +52,7 @@ void render_camera_init(render_camera_t *camera, int threads)
   camera->type = RENDER_CAMERA_PERSPECTIVE;
 
   camera->view_num = 1;
-  camera->view_list = (render_camera_view_t *) malloc (sizeof(render_camera_view_t));
+  camera->view_list = (render_camera_view_t *) bu_malloc (sizeof(render_camera_view_t), "render_camera_init");
   camera->dof = 0;
   camera->tilt = 0;
 
@@ -66,14 +66,14 @@ void render_camera_init(render_camera_t *camera, int threads)
 
   render_tlist = NULL;
   if (camera->thread_num > 1)
-    render_tlist = (pthread_t *)malloc(sizeof(pthread_t) * camera->thread_num);
+    render_tlist = (pthread_t *)bu_malloc(sizeof(pthread_t) * camera->thread_num, "render_tlist");
 }
 
 
 void render_camera_free(render_camera_t *camera)
 {
   if (camera->thread_num > 1)
-    free(render_tlist);
+    bu_free(render_tlist, "render_tlist");
 }
 
 
@@ -374,7 +374,7 @@ void render_camera_prep(render_camera_t *camera)
     {
       /* Generate camera positions for depth of field - Handle this better */
       camera->view_num = RENDER_CAMERA_DOF_SAMPLES*RENDER_CAMERA_DOF_SAMPLES;
-      camera->view_list = (render_camera_view_t *)malloc(sizeof(render_camera_view_t) * camera->view_num);
+      camera->view_list = (render_camera_view_t *)bu_malloc(sizeof(render_camera_view_t) * camera->view_num, "camera view");
 
       render_camera_prep_persp_dof(camera);
     }

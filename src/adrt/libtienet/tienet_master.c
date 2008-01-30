@@ -137,7 +137,7 @@ void tienet_master_init(int port, void fcb_result(tienet_buffer_t *result), char
   tienet_master_port = port;
   tienet_master_verbose = verbose;
   tienet_master_buffer_size = buffer_size;
-  tienet_master_buffer = (tienet_master_data_t *)malloc(sizeof(tienet_master_data_t) * tienet_master_buffer_size);
+  tienet_master_buffer = (tienet_master_data_t *)bu_malloc(sizeof(tienet_master_data_t) * tienet_master_buffer_size, "initial tienet buffer");
 
   tienet_master_fcb_result = fcb_result;
   tienet_master_active_slaves = 0;
@@ -201,13 +201,13 @@ void tienet_master_free()
 #if TN_COMPRESSION
   TIENET_BUFFER_FREE(tienet_master_result_buffer_bomp);
 #endif
-  free(tienet_master_buffer);
+  bu_free(tienet_master_buffer, "tienet master buffer");
 
   for (i = 0; i < tienet_master_buffer_size; i++)
-    free(tienet_master_buffer[i].data);
+    bu_free(tienet_master_buffer[i].data, "tienet master buffer data");
 
   for (sock = tienet_master_socket_list->next; sock; sock = sock->next)
-    free(sock->prev);
+    bu_free(sock->prev, "master socket");
 }
 
 
@@ -227,7 +227,7 @@ void tienet_master_push(const void *data, size_t size)
   if (sizeof(short) + sizeof(int) + size > tienet_master_buffer[tienet_master_pos_fill].size)
   {
     tienet_master_buffer[tienet_master_pos_fill].size = sizeof(short) + sizeof(int) + size;
-    tienet_master_buffer[tienet_master_pos_fill].data = realloc(tienet_master_buffer[tienet_master_pos_fill].data, tienet_master_buffer[tienet_master_pos_fill].size);
+    tienet_master_buffer[tienet_master_pos_fill].data = bu_realloc(tienet_master_buffer[tienet_master_pos_fill].data, tienet_master_buffer[tienet_master_pos_fill].size, "master buffer data");
   }
   TCOPY(short, &op, 0, tienet_master_buffer[tienet_master_pos_fill].data, 0);
   TCOPY(int, &size, 0, tienet_master_buffer[tienet_master_pos_fill].data, sizeof(short));
@@ -247,7 +247,7 @@ void tienet_master_push(const void *data, size_t size)
     if (sizeof(short) + sizeof(int) + size > tienet_master_buffer[tienet_master_pos_fill].size)
     {
       tienet_master_buffer[tienet_master_pos_fill].size = sizeof(short) + sizeof(int) + size;
-      tienet_master_buffer[tienet_master_pos_fill].data = realloc(tienet_master_buffer[tienet_master_pos_fill].data, tienet_master_buffer[tienet_master_pos_fill].size);
+      tienet_master_buffer[tienet_master_pos_fill].data = bu_realloc(tienet_master_buffer[tienet_master_pos_fill].data, tienet_master_buffer[tienet_master_pos_fill].size, "master buffer data");
     }
     memcpy(tienet_master_buffer[tienet_master_pos_fill].data, socket->work.data, sizeof(short) + sizeof(int) + size);
 
@@ -259,8 +259,8 @@ void tienet_master_push(const void *data, size_t size)
       tienet_master_dead_socket_list = tienet_master_dead_socket_list->next;
     socket = socket->next;
 
-    free(tmp->work.data);
-    free(tmp);
+    bu_free(tmp->work.data, "work data");
+    bu_free(tmp, "tmp socket");
 
     tienet_sem_post(&tienet_master_sem_read);
   }
@@ -385,7 +385,7 @@ void tienet_master_connect_slaves(fd_set *readfds)
 
               /* Append to select list */
               tmp = tienet_master_socket_list;
-              tienet_master_socket_list = (tienet_master_socket_t *)malloc(sizeof(tienet_master_socket_t));
+              tienet_master_socket_list = (tienet_master_socket_t *)bu_malloc(sizeof(tienet_master_socket_t), "socket list");
               tienet_master_socket_list->next = tmp;
               tienet_master_socket_list->prev = NULL;
               tienet_master_socket_list->work.data = NULL;
@@ -446,7 +446,7 @@ void* tienet_master_listener(void *ptr)
   }
 
   /* Set first socket as master, rest are slaves - LIFO Stack - Always gets processed last */
-  tienet_master_socket_list = (tienet_master_socket_t *)malloc(sizeof(tienet_master_socket_t));
+  tienet_master_socket_list = (tienet_master_socket_t *)bu_malloc(sizeof(tienet_master_socket_t), "socket list");
   tienet_master_socket_list->next = NULL;
   tienet_master_socket_list->prev = NULL;
   tienet_master_socket_list->work.data = NULL;
@@ -497,7 +497,7 @@ void* tienet_master_listener(void *ptr)
             if (tienet_master_verbose)
               printf ("The slave %s has connected on port: %d, sock_num: %d\n", inet_ntoa(slave.sin_addr), tienet_master_port, slave_socket);
             tmp = tienet_master_socket_list;
-            tienet_master_socket_list = (tienet_master_socket_t *)malloc(sizeof(tienet_master_socket_t));
+            tienet_master_socket_list = (tienet_master_socket_t *)bu_malloc(sizeof(tienet_master_socket_t), "master socket list");
             tienet_master_socket_list->next = tmp;
             tienet_master_socket_list->prev = NULL;
             tienet_master_socket_list->work.data = NULL;
@@ -648,7 +648,7 @@ void tienet_master_send_work(tienet_master_socket_t *sock)
     tienet_send(sock->num, &sock->mesg.size, sizeof(int), 0);
     tienet_send(sock->num, sock->mesg.data, sock->mesg.size, 0);
 
-    free(sock->mesg.data);
+    bu_free(sock->mesg.data, "message data");
     sock->mesg.data = NULL;
     sock->mesg.size = 0;
 
@@ -675,7 +675,7 @@ void tienet_master_send_work(tienet_master_socket_t *sock)
     if (sizeof(short) + sizeof(int) + size > sock->work.size)
     {
       sock->work.size = sizeof(short) + sizeof(int) + size;
-      sock->work.data = realloc(sock->work.data, sock->work.size);
+      sock->work.data = bu_realloc(sock->work.data, sock->work.size, "work data");
     }
 
     /* Make a copy of this data in the slave list */
@@ -811,7 +811,7 @@ void tienet_master_broadcast(const void *mesg, size_t mesg_len)
     if (socket->next)
     {
       socket->mesg.size = mesg_len;
-      socket->mesg.data = malloc(mesg_len);
+      socket->mesg.data = bu_malloc(mesg_len, "message data");
       memcpy(socket->mesg.data, mesg, mesg_len);
     }
   }
