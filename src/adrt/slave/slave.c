@@ -95,7 +95,7 @@ isst_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
     case ADRT_WORK_INIT:
       {
         render_camera_init (&isst_workspace_list[wid].camera, isst_slave_threads);
-        slave_load_sql (&isst_workspace_list[wid].tie, &work->data[ind], wlen-ind);
+        slave_load (&isst_workspace_list[wid].tie, &work->data[ind], wlen-ind);
         render_camera_prep (&isst_workspace_list[wid].camera);
         printf ("ready.\n");
         result->ind = 0;

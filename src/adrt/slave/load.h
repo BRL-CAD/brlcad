@@ -32,7 +32,7 @@
 #include "adrt.h"
 #include "adrt_struct.h"
 
-void slave_load_sql(tie_t *tie, void *data, uint32_t dlen);
+void slave_load(tie_t *tie, void *data, uint32_t dlen);
 
 extern uint32_t slave_load_mesh_num;
 extern adrt_mesh_t *slave_load_mesh_list;

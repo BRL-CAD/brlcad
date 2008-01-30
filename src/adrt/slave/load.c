@@ -71,7 +71,7 @@ slave_load_free ()
 }
 
 void
-slave_load_geom (uint32_t pid, tie_t *tie)
+slave_load_MySQL (uint32_t pid, tie_t *tie, const char *hostname)
 {
 #ifdef HAVE_MYSQL
   MYSQL_RES *res;
@@ -82,6 +82,13 @@ slave_load_geom (uint32_t pid, tie_t *tie)
   uint16_t f16num, *f16list;
   uint8_t c, ftype;
   void *gdata;
+
+  /* establish mysql connection */
+  mysql_init (&slave_load_mysql_db);
+
+  /* establish connection to database */
+  mysql_real_connect (&slave_load_mysql_db, hostname, ADRT_MYSQL_USER, ADRT_MYSQL_PASS, ADRT_MYSQL_DB, 0, 0, 0);
+
 
   /* Obtain the geometry id for this project id */
   sprintf (query, "select gid from project where pid = '%d'", pid);
@@ -199,11 +206,11 @@ slave_load_geom (uint32_t pid, tie_t *tie)
       strncpy (attr, row[0], 48-1);
       attr[48-1] = '\0'; /* sanity */
 
-//printf("attr: %s\n", attr);
+/* printf("attr: %s\n", attr); */
       mysql_free_result (res);
 
       snprintf (query, 256, "select data from attribute where gid='%d' and name='%s' and type='color'", gid, attr);
-//printf("query[%d]: %s\n", i, query);
+/* printf("query[%d]: %s\n", i, query); */
       if (!mysql_query (&slave_load_mysql_db, query))
       {
         res = mysql_use_result (&slave_load_mysql_db);
@@ -233,48 +240,47 @@ slave_load_geom (uint32_t pid, tie_t *tie)
   tie_prep (tie);
 
   mysql_free_result (res);
+
+  mysql_close (&slave_load_mysql_db);
 #endif
+  return;
 }
 
 void
-slave_load_sql (tie_t *tie, void *data, uint32_t dlen)
+slave_load (tie_t *tie, void *data, uint32_t dlen)
 {
-#ifdef HAVE_MYSQL
   uint32_t pid, ind;
-  uint8_t c;
+  uint8_t c, fmt;
   char hostname[32];
 
   ind = 0;
 
   TIE_VAL(tie_check_degenerate) = 0;
 
-  /* hostname */
-  memcpy(&c, &((char *)data)[ind], 1);
+  memcpy(&fmt, &((char *)data)[ind], 1);
   ind += 1;
-  memcpy(hostname, &((char *)data)[ind], c);
-  ind += c;
 
-  /* project id */
-  memcpy(&pid, &((char *)data)[ind], sizeof(uint32_t));
-  ind += sizeof(uint32_t);
+  switch(fmt) {
+      case 0x0:	/* mysql float */
+	  /* hostname */
+	  memcpy(&c, &((char *)data)[ind], 1);
+	  ind += 1;
+	  memcpy(hostname, &((char *)data)[ind], c);
+	  ind += c;
 
-  /* establish mysql connection */
-  mysql_init (&slave_load_mysql_db);
+	  /* project id */
+	  memcpy(&pid, &((char *)data)[ind], sizeof(uint32_t));
+	  ind += sizeof(uint32_t);
 
-  /* establish connection to database */
-  mysql_real_connect (&slave_load_mysql_db, hostname, ADRT_MYSQL_USER, ADRT_MYSQL_PASS, ADRT_MYSQL_DB, 0, 0, 0);
+	  /* Process the geometry data */
+	  slave_load_MySQL (pid, tie, hostname);
 
-#if 0
-printf("hostname: %s\n", hostname);
-printf("pid: %d\n", pid);
-printf("CP:A:%s\n", mysql_error(&slave_load_mysql_db));
-#endif
-
-  /* Process the geometry data */
-  slave_load_geom (pid, tie);
-
-  mysql_close (&slave_load_mysql_db);
-#endif
+	  break;
+      default:
+	  fprintf(stderr, "Unknown load format\n");
+	  exit(-1);
+    }
+  return; 
 }
 
 /*
