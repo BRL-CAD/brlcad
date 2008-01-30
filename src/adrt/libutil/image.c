@@ -32,7 +32,6 @@
  * $Id$
  */
 
-#if 0
 
 #include "image.h"
 #include <stdio.h>
@@ -48,6 +47,7 @@
 #endif
 
 
+#if 0
 void util_image_init() {
 }
 
@@ -87,6 +87,7 @@ void util_image_load_raw(const char* filename, void* image, int* w, int* h) {
   }
 }
 
+#endif
 
 void util_image_save_ppm(const char* filename, const void* image, const int w, const int h) {
   FILE *fh;
@@ -105,6 +106,7 @@ void util_image_save_ppm(const char* filename, const void* image, const int w, c
   fclose(fh);
 }
 
+#if 0
 /*
 * Format, 128-bit image, 4 floats, RGBA
 */
