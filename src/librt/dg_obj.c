@@ -4015,6 +4015,7 @@ dgo_rt_output_handler(ClientData	clientData,
 	(!ReadFile(run_rtp->fd, line, 10240, &count, 0))) {
 	int aborted;
 	DWORD result;
+	int retcode;
 
 	Tcl_DeleteChannelHandler(run_rtp->chan,
 				 dgo_rt_output_handler,
