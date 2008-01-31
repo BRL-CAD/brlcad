@@ -4658,6 +4658,9 @@ RT_EXPORT BU_EXTERN(void nmg_stash_model_to_file,
 		     const char *title));
 RT_EXPORT BU_EXTERN(int nmg_unbreak_region_edges,
 		    (long *magic_p));
+RT_EXPORT BU_EXTERN(void nmg_vlist_to_eu,
+		    (struct bu_list *vlist,
+		     struct shell *s));
 /* rt_dist_pt3_line3 */
 RT_EXPORT BU_EXTERN(int nmg_mv_shell_to_region,
 		    (struct shell *s,
