@@ -3220,6 +3220,8 @@ process_spline_entities_code( int code )
 	process_entities_code[curr_state->sub_state]( code );
 	break;
     }
+
+    return( 0 );
 }
 static int
 process_3dface_entities_code( int code )
@@ -3517,7 +3519,7 @@ main( int argc, char *argv[] )
 	dxf_file = argv[bu_optind++];
 	output_file = argv[bu_optind];
 
-	if ( (dxf=fopen( dxf_file, "r")) == NULL ) {
+	if ( (dxf=fopen( dxf_file, "rb")) == NULL ) {
 		perror( dxf_file );
 		bu_exit( 1, "Cannot open DXF file (%s)\n", dxf_file );
 	}

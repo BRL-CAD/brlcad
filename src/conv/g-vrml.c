@@ -640,11 +640,13 @@ main(int argc, char **argv)
 		bu_exit(1, "db_dirbuild() failed!\n" );
 	}
 
-	if ( out_file == NULL )
-		fp_out = stdout;
-	else
-	{
-		if ((fp_out = fopen( out_file, "w")) == NULL)
+	if (out_file == NULL) {
+	    fp_out = stdout;
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	    setmode(fileno(fp_out), O_BINARY);
+#endif
+	} else {
+		if ((fp_out = fopen( out_file, "wb")) == NULL)
 		{
 			perror( argv[0] );
 			bu_exit(1, "Cannot open %s\n", out_file );
@@ -882,13 +884,10 @@ nmg_2_vrml(FILE *fp, struct db_full_path *pathp, struct model *m, struct mater_i
 				long bytes_read=0;
 				unsigned char tex_buf[TXT_BUF_LEN*3];
 
-				if ( (tex_fd = open( mat.tx_file, O_RDONLY )) == (-1) )
-				{
-					bu_log( "Cannot open texture file (%s)\n", mat.tx_file );
-					perror( "g-vrml: " );
-				}
-				else
-				{
+				if ((tex_fd = open(mat.tx_file, O_RDONLY | O_BINARY)) == (-1)) {
+				    bu_log( "Cannot open texture file (%s)\n", mat.tx_file );
+				    perror( "g-vrml: " );
+				} else {
 					/* Johns note - need to check (test) the texture stuff */
 					fprintf( fp, "\t\t\t\ttextureTransform TextureTransform {\n");
 					fprintf( fp, "\t\t\t\t\tscale 1.33333 1.33333\n\t\t\t\t}\n");

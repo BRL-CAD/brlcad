@@ -53,6 +53,11 @@ main(int argc, char *argv[])
 
 	printf( "$03" );
 
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	setmode(fileno(stdin), O_BINARY);
+	setmode(fileno(stdout), O_BINARY);
+#endif
+
 	while ( bu_fgets( str, sizeof(str), stdin ) )
 	{
 		sscanf( str, "%d %d %d %d %d %f", &face_no, &npts, &face_type, &e, &ident, &a );

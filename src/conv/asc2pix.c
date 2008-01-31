@@ -52,6 +52,10 @@ main(void)
 	register int	a, b;
 	register int	i;
 
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	setmode(fileno(stdin), O_BINARY);
+	setmode(fileno(stdout), O_BINARY);
+#endif
 	/* Init map */
 	for (i=0;i<256;i++) rmap[i] = -1;		/* Unused entries */
 	for (i=0; i<10; i++)  rmap['0'+i] = i;

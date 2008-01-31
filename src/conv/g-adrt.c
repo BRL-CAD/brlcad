@@ -49,7 +49,11 @@
 
 
 #ifndef HUGE
+#if 1
+#define HUGE MAX_FASTF
+#else
 #define HUGE 3.40282347e+38F
+#endif
 #endif
 #define ADRT_GEOMETRY_REVISION 2
 #define ADRT_MAX_NAMESIZE 256
@@ -537,7 +541,7 @@ int main(int argc, char *argv[]) {
   bu_strlcpy(filename, argv[1], ADRT_MAX_NAMESIZE);
   bu_strlcat(filename, ".adrt", ADRT_MAX_NAMESIZE);
 
-  adrt_fh = fopen(filename, "w");
+  adrt_fh = fopen(filename, "wb");
   printf("converting: %s\n", argv[0]);
 
   /* write 2-byte endian */
@@ -595,7 +599,7 @@ int main(int argc, char *argv[]) {
   bu_strlcpy(filename, argv[1], ADRT_MAX_NAMESIZE);
   bu_strlcat(filename, ".env", ADRT_MAX_NAMESIZE);
 
-  adrt_fh = fopen(filename, "w");
+  adrt_fh = fopen(filename, "wb");
 
   fprintf(adrt_fh, "geometry_file,%s.adrt\n", argv[1]);
   fprintf(adrt_fh, "properties_file,%s.properties\n", argv[1]);
@@ -612,7 +616,7 @@ int main(int argc, char *argv[]) {
   */
   bu_strlcpy(filename, argv[1], ADRT_MAX_NAMESIZE);
   bu_strlcat(filename, ".properties", ADRT_MAX_NAMESIZE);
-  adrt_fh = fopen(filename, "w");
+  adrt_fh = fopen(filename, "wb");
   fprintf(adrt_fh, "properties,default\n");
   fprintf(adrt_fh, "color,0.8,0.8,0.8\n");
   fprintf(adrt_fh, "gloss,0.2\n");
@@ -630,7 +634,7 @@ int main(int argc, char *argv[]) {
   bu_strlcpy(filename, argv[1], ADRT_MAX_NAMESIZE);
   bu_strlcat(filename, ".textures", ADRT_MAX_NAMESIZE);
 
-  adrt_fh = fopen(filename, "w");
+  adrt_fh = fopen(filename, "wb");
   fclose(adrt_fh);
 
   /*
@@ -657,7 +661,7 @@ int main(int argc, char *argv[]) {
   bu_strlcpy(filename, argv[1], ADRT_MAX_NAMESIZE);
   bu_strlcat(filename, ".frames", ADRT_MAX_NAMESIZE);
 
-  adrt_fh = fopen(filename, "w");
+  adrt_fh = fopen(filename, "wb");
   fprintf(adrt_fh, "frame,1\n");
   fprintf(adrt_fh, "camera,10.0,10.0,10.0,0.0,0.0,0.0,0.0,20.0,0.0\n");
   fclose(adrt_fh);

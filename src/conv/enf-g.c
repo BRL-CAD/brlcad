@@ -78,8 +78,7 @@ static struct vert_root *tree_root;
 
 static int verbose=0;
 
-extern char *bu_optarg;
-extern int bu_optind, bu_opterr, optopt;
+extern int optopt;
 
 struct obj_info {
 	char obj_type;			/* type of this object (from defines below) */
@@ -662,10 +661,10 @@ main( int argc, char *argv[] )
 	input_file = bu_strdup( argv[bu_optind] );
 	output_file = bu_strdup( argv[bu_optind+1] );
 
-	if ( (fd_in=fopen( input_file, "r" )) == NULL ) {
-		bu_log( "Cannot open %s for reading\n", input_file );
-		perror( argv[0] );
-		bu_exit( 1, NULL );
+	if ((fd_in=fopen(input_file, "rb")) == NULL) {
+	    bu_log( "Cannot open %s for reading\n", input_file );
+	    perror( argv[0] );
+	    bu_exit( 1, NULL );
 	}
 
 	if ( (fd_out=wdb_fopen( output_file )) == NULL ) {
@@ -680,6 +679,10 @@ main( int argc, char *argv[] )
 			perror( argv[0] );
 			bu_exit( 1, NULL );
 		}
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+		setmode(fileno(fd_parts), _O_BINARY);
+#endif
 		create_name_hash( fd_parts );
 	}
 

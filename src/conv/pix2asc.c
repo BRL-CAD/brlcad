@@ -38,6 +38,10 @@ char map[18] = "0123456789ABCDEFx";
 int
 main(void)
 {
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	setmode(fileno(stdin), O_BINARY);
+	setmode(fileno(stdout), O_BINARY);
+#endif
 	while ( !feof(stdin) &&
 	    fread( (char *)pix, sizeof(pix), 1, stdin) == 1 )  {
 		putc( map[pix[0]>>4], stdout );

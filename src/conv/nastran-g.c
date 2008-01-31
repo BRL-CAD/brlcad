@@ -1197,7 +1197,7 @@ main(int argc, char **argv)
 				break;
 			case 'i':
 				nastran_file = bu_optarg;
-				fpin = fopen( bu_optarg, "r" );
+				fpin = fopen( bu_optarg, "rb" );
 				if ( fpin == (FILE *)NULL )
 				{
 					bu_log( "Cannot open NASTRAN file (%s) for reading!\n", bu_optarg );

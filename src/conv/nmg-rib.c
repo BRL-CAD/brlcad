@@ -46,8 +46,6 @@
 
 /* declarations to support use of bu_getopt() system call */
 char *options = "ht";
-extern char *bu_optarg;
-extern int bu_optind, bu_opterr, bu_getopt(int, char *const *, const char *);
 
 char *progname = "(noname)";
 int triangulate = 0;

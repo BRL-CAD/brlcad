@@ -194,7 +194,7 @@ char	*argv[];
 		bu_exit(1, "No output file specified!\n" );
 	} else {
 		/* Open output file */
-		if ( (fpf=fopen( output_file, "w+" )) == NULL ) {
+		if ( (fpf=fopen( output_file, "wb+" )) == NULL ) {
 			perror( argv[0] );
 			bu_exit(1, "Cannot open output file (%s) for writing\n", output_file );
 		}
@@ -204,13 +204,14 @@ char	*argv[];
 	fp = bu_temp_file(NULL, 0);
 
 	/* Open error log file */
-	if ( !error_file)
-		fpe = stderr;
-	else
-	if ( (fpe=fopen( error_file, "w" )) == NULL )
-	{
-		perror( argv[0] );
-		bu_exit(1, "Cannot open output file (%s) for writing\n", error_file );
+	if (!error_file) {
+	    fpe = stderr;
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	    setmode(fileno(fpe), O_BINARY);
+#endif
+	} else if ((fpe=fopen( error_file, "wb")) == NULL) {
+	    perror( argv[0] );
+	    bu_exit(1, "Cannot open output file (%s) for writing\n", error_file );
 	}
 
 	/* Open BRL-CAD database */

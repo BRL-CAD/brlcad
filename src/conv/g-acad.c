@@ -62,8 +62,6 @@
 
 BU_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
 
-extern double nmg_eue_dist;		/* from nmg_plot.c */
-
 static char	usage[] = "\
 Usage: %s [-v][-i][-xX lvl][-a abs_tess_tol][-r rel_tess_tol][-n norm_tess_tol]\n\
 [-e error_file ][-D dist_calc_tol] -o output_file_name brlcad_db.g object(s)\n";
@@ -178,27 +176,30 @@ main(int argc, char **argv)
 		bu_exit(1, usage, argv[0]);
 	}
 
-	if ( !output_file )
-		fp = stdout;
-	else
-	{
-		/* Open output file */
-		if ( (fp=fopen( output_file, "w+" )) == NULL )
-		{
-			perror( argv[0] );
-			bu_exit(1, "Cannot open output file (%s) for writing\n", output_file );
-		}
+	if (!output_file) {
+	    fp = stdout;
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	    setmode(fileno(fp), O_BINARY);
+#endif
+	} else {
+	    /* Open output file */
+	    if ((fp=fopen( output_file, "wb+")) == NULL) {
+		perror(argv[0]);
+		bu_exit(1, "Cannot open output file (%s) for writing\n", output_file);
+	    }
 	}
 
 	/* Open g-acad error log file */
-	if ( !error_file)
-		fpe = stderr;
-	else
-	if ( (fpe=fopen( error_file, "w" )) == NULL )
-	{
-		perror( argv[0] );
-		bu_exit(1, "Cannot open output file (%s) for writing\n", error_file );
+	if (!error_file) {
+	    fpe = stderr;
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	    setmode(fileno(fpe), O_BINARY);
+#endif
+	} else if ((fpe=fopen( error_file, "wb")) == NULL) {
+	    perror(argv[0]);
+	    bu_exit(1, "Cannot open output file (%s) for writing\n", error_file);
 	}
+
 
 	/* Open BRL-CAD database */
 	argc -= bu_optind;

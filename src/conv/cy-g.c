@@ -71,11 +71,10 @@ main(int argc, char **argv)
 		return 1;
 	}
 
-	if ( (infp=fopen( argv[1], "r" )) == NULL )
-	{
-		bu_log( "Cannot open input file (%s)\n", argv[1] );
-		bu_log( "%s", usage );
-		return 1;
+	if ((infp=fopen( argv[1], "rb")) == NULL) {
+	    bu_log( "Cannot open input file (%s)\n", argv[1] );
+	    bu_log( "%s", usage );
+	    return 1;
 	}
 
 	if ( (outfp = wdb_fopen( argv[2] )) == NULL )

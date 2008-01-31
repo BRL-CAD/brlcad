@@ -70,7 +70,7 @@ main(int argc, char **argv)
 		printf("Usage: conv-vg2g file.vg file.g\n");
 		return 11;
 	}
-	if ( (ifd = open( argv[1], 0 )) < 0 )  {
+	if ((ifd = open( argv[1], O_BINARY)) < 0) {
 		perror(argv[1]);
 		return 12;
 	}
@@ -78,6 +78,10 @@ main(int argc, char **argv)
 		perror(argv[2]);
 		return 13;
 	}
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	setmode(ofd, O_BINARY);
+#endif
 
 	/* check for conversion from version 3 to version 4 */
 	i = read(ifd, &rec, sizeof rec);

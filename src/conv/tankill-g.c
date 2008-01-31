@@ -214,7 +214,7 @@ main(int argc, char **argv)
 				tol.dist_sq = tol.dist * tol.dist;
 				break;
 			case 'i': /* input file name */
-				if ( (in_fp = fopen( bu_optarg, "r" )) == NULL )
+				if ( (in_fp = fopen( bu_optarg, "rb" )) == NULL )
 				{
 					fprintf( stderr, "Cannot open %s\n", bu_optarg );
 					perror( "tankill-g" );

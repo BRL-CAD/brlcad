@@ -260,7 +260,7 @@ void write_dxf(struct rt_bot_internal *bot, char *name)
 
     snprintf(Value, 32, "%s.dxf", name);
     if (debug&DEBUG_NAMES) fprintf(stderr, "Writing DXF: %s\n", Value);
-    FH= fopen(Value, "w");
+    FH= fopen(Value, "wb");
 
 
     /* Write Header */

@@ -111,7 +111,7 @@ int main(int ac, char *av[])
 	FILE *fh;
 
 
-	fh = fopen(av[2], "w");
+	fh = fopen(av[2], "wb");
 
 	MAT_IDN(mat);
 

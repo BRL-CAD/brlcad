@@ -1768,10 +1768,6 @@ main(int argc, char **argv)
 
 	bu_debug = BU_DEBUG_COREDUMP;
 
-#ifdef _WIN32
-	_fmode = _O_BINARY;
-#endif
-
 	bu_setlinebuf( stderr );
 
 	/* These need to be improved */
@@ -1921,7 +1917,7 @@ main(int argc, char **argv)
 
 	if ( plotfile )
 	{
-		if ( (fd_plot=fopen( plotfile, "w")) == NULL )
+		if ( (fd_plot=fopen( plotfile, "wb")) == NULL )
 		{
 			perror( argv[0] );
 			bu_exit(1, "ERROR: Cannot open plot file (%s)\n", plotfile );

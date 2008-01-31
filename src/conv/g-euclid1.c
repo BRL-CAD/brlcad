@@ -598,10 +598,9 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 		return  curtree;
 
 	dir = DB_FULL_PATH_CUR_DIR( pathp );
-	if ( (fp_out = fopen( dir->d_namep, "w" )) == NULL )
-	{
-		perror( "g-euclid" );
-		bu_exit(1, "ERROR: Cannot open file %s\n", dir->d_namep);
+	if ((fp_out = fopen( dir->d_namep, "wb")) == NULL) {
+	    perror( "g-euclid" );
+	    bu_exit(1, "ERROR: Cannot open file %s\n", dir->d_namep);
 	}
 
 	bu_log( "\n\nProcessing region %s:\n", dir->d_namep );
@@ -614,7 +613,9 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 		/* Error, bail out */
 		BU_UNSETJUMP;		/* Relinquish the protection */
 
+#ifdef SIGALRM
 		(void)alarm( 0 );
+#endif
 
 		/* Sometimes the NMG library adds debugging bits when
 		 * it detects an internal error, before bombing out.
@@ -650,9 +651,10 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 	if ( verbose )
 		bu_log( "\tEvaluating region\n" );
 
+#ifdef SIGALRM
 	signal( SIGALRM, handler );
-
 	(void)alarm( alarm_secs );
+#endif
 
 	(void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
 	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);	/* librt/nmg_bool.c */
@@ -662,7 +664,9 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 	else
 		r = (struct nmgregion *)NULL;
 
+#ifdef SIGALRM
 	(void)alarm( 0 );
+#endif
 
 	BU_UNSETJUMP;		/* Relinquish the protection */
 	regions_converted++;

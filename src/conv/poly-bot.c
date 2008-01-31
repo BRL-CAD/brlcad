@@ -83,14 +83,23 @@ main(int argc, char **argv)
 	tol.perp = 1e-6;
 	tol.para = 1 - tol.perp;
 
-	if ( argc >= 3 ) {
-		ifp = fopen(argv[1], "r");
-		if ( !ifp )  perror(argv[1]);
-		ofp = fopen(argv[2], "w");
-		if ( !ofp )  perror(argv[2]);
-		if (ifp == NULL || ofp == NULL) {
-			bu_exit(1, "poly-bot: can't open files.");
-		}
+	if (argc >= 3) {
+	    ifp = fopen(argv[1], "rb");
+	    if (!ifp)
+		perror(argv[1]);
+
+	    ofp = fopen(argv[2], "wb");
+	    if (!ofp)
+		perror(argv[2]);
+
+	    if (ifp == NULL || ofp == NULL) {
+		bu_exit(1, "poly-bot: can't open files.");
+	    }
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	} else {
+	    setmode(ifp, O_BINARY);
+	    setmode(ofp, O_BINARY);
+#endif
 	}
 	if (isatty(fileno(ifp))) {
 		bu_exit(1, "%s", usage);

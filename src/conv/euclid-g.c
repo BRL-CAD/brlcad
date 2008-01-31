@@ -195,6 +195,10 @@ main(int argc, char **argv)
 		}
 	}
 
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	setmode(fileno(stdin), O_BINARY);
+#endif
+
 	/* Output BRL-CAD database header.  No problem if more than one. */
 	if ( efile == NULL )
 		snprintf( title, BRLCAD_TITLE_LENGTH, "Conversion from EUCLID (tolerance distance = %gmm)", tol.dist );

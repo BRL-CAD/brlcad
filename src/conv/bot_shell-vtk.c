@@ -437,7 +437,7 @@ char *argv[];
 
 	if ( output_file )
 	{
-		if ( (fd_out=fopen( output_file, "w" )) == NULL )
+		if ((fd_out=fopen( output_file, "wb")) == NULL)
 		{
 			perror( argv[0] );
 			bu_exit(1, "Cannot open output file (%s)\n", output_file);
@@ -445,6 +445,7 @@ char *argv[];
 	}
 	else
 		bu_exit(1, "Output file must be specified!\n");
+
 
 	/* Open BRL-CAD database */
 	database_index = bu_optind;
