@@ -87,6 +87,7 @@
  */
 #include <windows.h>
 #include <io.h>
+#include <fcntl.h>
 
 #ifndef S_IFMT
 #  define S_IFMT _S_IFMT
@@ -154,8 +155,10 @@
 #define O_RDWR _O_RDWR
 #define O_TRUNC _O_TRUNC
 #define O_WRONLY _O_WRONLY
+#define SIGALRM SIGTERM
 
 #define access _access
+#define alarm(_sec) -1
 #define chmod _chmod
 #define close _close
 #define commit _commit
@@ -207,6 +210,9 @@
 #define uid_t unsigned int
 #define gid_t unsigned int
 #define fmax max
+#define uint8_t unsigned char
+#define uint16_t unsigned short
+#define uint32_t unsigned int
 
 #if defined(_MSC_VER) && (_MSC_VER <= 1200) /* MSVC 6.0 and before */
 #   define for if (0) {} else for           /* proper for-scope */
