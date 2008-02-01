@@ -65,17 +65,13 @@ void
 open_file(FILE **fp, char *name)
 {
 	/* check for special names */
-	if ( strcmp( name, "-" ) == 0 ) {
+	if ( strcmp( name, "-" ) == 0 )
 		*fp = stdin;
-		return;
-	} else if ( strcmp( name, "." ) == 0 ) {
+	else if ( strcmp( name, "." ) == 0 )
 		*fp = fopen( "/dev/null", "r" );
-		return;
-	}
-
-	if ( (*fp = fopen( name, "r" )) == NULL ) {
-		bu_log(2, "bwdiff: Can't open \"%s\"\n", name );
-	}
+	else if ( (*fp = fopen( name, "r" )) == NULL )
+		bu_exit(2, "bwdiff: Can't open \"%s\"\n", name );
+	return;
 }
 
 
