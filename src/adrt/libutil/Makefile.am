@@ -1,7 +1,7 @@
 # $Id$
 
 lib_LTLIBRARIES = libtieutil.la
-libtieutil_la_SOURCES = camera.c image.c rand.c umath.c
+libtieutil_la_SOURCES = camera.c rand.c umath.c
 
 AM_CFLAGS = \
 	-I${top_srcdir}/src/adrt \
@@ -18,6 +18,6 @@ libtieutil_la_LIBADD= \
 noinst_HEADERS = camera.h font.h
 
 tieincludedir = $(includedir)/tie
-tieinclude_HEADERS = image.h umath.h rand.h 
+tieinclude_HEADERS = umath.h rand.h 
 
 include $(top_srcdir)/misc/Makefile.defs
