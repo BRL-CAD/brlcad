@@ -2753,7 +2753,7 @@ struct bu_image_file {
     int fd;
     int format;			/* BU_IMAGE_* */
     int width, height, depth;	/* pixel, pixel, byte */
-    char *data;
+    unsigned char *data;
     unsigned long flags;
 };
 
@@ -2773,7 +2773,7 @@ BU_EXPORT BU_EXTERN(int bu_image_save_close,
 		    (struct bu_image_file *bif));
 
 BU_EXPORT BU_EXTERN(int bu_image_save,
-		    (char *data,
+		    (unsigned char *data,
 		     int width,
 		     int height,
 		     int depth,

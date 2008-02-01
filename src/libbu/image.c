@@ -60,9 +60,9 @@
 
 /* flip an image vertically */
 static int
-image_flip(char *buf, int width, int height)
+image_flip(unsigned char *buf, int width, int height)
 {
-    char *buf2;
+    unsigned char *buf2;
     int i, pitch = width * 3 * sizeof(char);
 
     buf2 = bu_malloc (height * pitch, "image flip");
@@ -115,7 +115,7 @@ guess_file_format(char *filename, char *trimmedname)
 }
 
 static int
-png_save(int fd, char *rgb, int width, int height)
+png_save(int fd, unsigned char *rgb, int width, int height)
 {
     png_structp png_ptr = NULL;
     png_infop info_ptr = NULL;
@@ -129,7 +129,8 @@ png_save(int fd, char *rgb, int width, int height)
     }
 
     png_ptr = png_create_write_struct (PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-    if (png_ptr == NULL) return 0;
+    if (png_ptr == NULL)
+	return 0;
 
     info_ptr = png_create_info_struct (png_ptr);
     if (info_ptr == NULL || setjmp (png_jmpbuf (png_ptr))) {
@@ -152,7 +153,7 @@ png_save(int fd, char *rgb, int width, int height)
 }
 
 static int
-bmp_save(int fd, char *rgb, int width, int height)
+bmp_save(int fd, unsigned char *rgb, int width, int height)
 {
     FILE *fh;
 
@@ -172,7 +173,7 @@ bmp_save(int fd, char *rgb, int width, int height)
 }
 
 static int
-pix_save(int fd, char *rgb, int size)
+pix_save(int fd, unsigned char *rgb, int size)
 {
     write(fd, rgb, (unsigned)size);
     return 2;
@@ -181,7 +182,7 @@ pix_save(int fd, char *rgb, int size)
 /* size is bytes of PIX data, bw output file will be 1/3 this size.
  * Also happens to munge up the contents of rgb. */
 static int
-bw_save(int fd, char *rgb, int size)
+bw_save(int fd, unsigned char *rgb, int size)
 {
     int bwsize = size/3, i;
 
@@ -199,7 +200,7 @@ bw_save(int fd, char *rgb, int size)
 }
 
 static int
-ppm_save(int fd, char *rgb, int width, int height)
+ppm_save(int fd, unsigned char *rgb, int width, int height)
 {
     int i,j;
     char buf[BUFSIZ];
@@ -218,20 +219,20 @@ ppm_save(int fd, char *rgb, int width, int height)
 int
 bu_image_load()
 {
+    bu_log("bu_image_load not implemented\n");
     return 0;
 }
 
 int
-bu_image_save(char *data, int width, int height, int depth, char *filename, int filetype)
+bu_image_save(unsigned char *data, int width, int height, int depth, char *filename, int filetype)
 {
     int i;
     struct bu_image_file *bif = bu_image_save_open(filename, filetype, width, height, depth);
-    if (bif==NULL) return -1;
-    for (i=0;i<height;++i) {
-	if (bu_image_save_writeline(bif, i, (unsigned char*)(data+i*width*depth))==-1) {
+    if (bif==NULL)
+	return -1;
+    for (i=0;i<height;++i)
+	if (bu_image_save_writeline(bif, i, (unsigned char*)(data+i*width*depth))==-1)
 	    bu_log("Uh?");
-	}
-    }
     return bu_image_save_close(bif);
 }
 
@@ -262,14 +263,17 @@ bu_image_save_open(char *filename, int format, int width, int height, int depth)
     bif->width = width;
     bif->height = height;
     bif->depth = depth;
-    bif->data = (char *)bu_malloc((size_t)(width*height*depth), "bu_image_file data");
+    bif->data = (unsigned char *)bu_malloc((size_t)(width*height*depth), "bu_image_file data");
     return bif;
 }
 
 int
 bu_image_save_writeline(struct bu_image_file *bif, int y, unsigned char *data)
 {
-    if (bif==NULL) { printf("trying to write a line with a null bif\n"); return -1; }
+    if (bif==NULL) {
+	printf("trying to write a line with a null bif\n");
+	return -1;
+    }
     memcpy(bif->data + bif->width*bif->depth*y, data, (size_t)bif->width*bif->depth);
     return 0;
 }
