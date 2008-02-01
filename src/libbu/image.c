@@ -58,6 +58,21 @@
 
 /* private functions */
 
+/* flip an image vertically */
+static int
+image_flip(char *buf, int width, int height)
+{
+    char *buf2;
+    int i, pitch = width * 3 * sizeof(char);
+
+    buf2 = bu_malloc (height * pitch, "image flip");
+    for(i=0 ; i<height ; i++)
+	memcpy (buf2+i*pitch, buf+(height-i)*pitch, pitch);
+    memcpy (buf, buf2, height * pitch);
+    bu_free (buf2, "image flip");
+    return 0;
+}
+
 /* Save functions use the return value not only for success/failure, but also to
  * note if further action is needed.
  *   0 - failure.
@@ -80,6 +95,7 @@ guess_file_format(char *filename, char *trimmedname)
 #define CMP(name) if (!strncmp(filename, #name":", strlen(#name))) {bu_strlcpy(trimmedname, filename+strlen(#name)+1, BUFSIZ);return BU_IMAGE_##name; }
     CMP(PIX);
     CMP(PNG);
+    CMP(PPM);
     CMP(BMP);
     CMP(BW);
 #undef CMP
@@ -90,6 +106,7 @@ guess_file_format(char *filename, char *trimmedname)
     /* and guess based on extension */
 #define CMP(name, ext) if (!strncmp(filename+strlen(filename)-strlen(#name)-1, "."#ext, strlen(#name)+1)) return BU_IMAGE_##name;
     CMP(PNG, png);
+    CMP(PPM, ppm);
     CMP(BMP, bmp);
     CMP(BW, bw);
 #undef CMP
@@ -181,6 +198,19 @@ bw_save(int fd, char *rgb, int size)
     return 2;
 }
 
+static int
+ppm_save(int fd, char *rgb, int width, int height)
+{
+    int i,j;
+    char buf[BUFSIZ];
+
+    image_flip(rgb,width,height);
+    snprintf(buf, BUFSIZ, "P6 %d %d 255\n", width, height);
+    write(fd, buf, strlen(buf));
+    write(fd, rgb, 3*width*height);
+    return 2;
+}
+
 /* end if private functions */
 
 /* begin public functions */
@@ -251,6 +281,7 @@ bu_image_save_close(struct bu_image_file *bif)
     switch (bif->format) {
 	case BU_IMAGE_BMP: r = bmp_save(bif->fd, bif->data, bif->width, bif->height); break;
 	case BU_IMAGE_PNG: r = png_save(bif->fd, bif->data, bif->width, bif->height); break;
+	case BU_IMAGE_PPM: r = ppm_save(bif->fd, bif->data, bif->width, bif->height); break;
 	case BU_IMAGE_PIX: r = pix_save(bif->fd, bif->data, bif->width*bif->height*bif->depth); break;
 	case BU_IMAGE_BW: r = bw_save(bif->fd, bif->data, bif->width*bif->height*bif->depth); break;
     }
