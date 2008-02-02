@@ -1465,7 +1465,6 @@ AC_CHECK_HEADERS( \
 	Carbon/Carbon.h \
 	curses.h \
 	dslib.h \
-	fcntl.h \
 	getopt.h \
 	gl/device.h \
 	grp.h \

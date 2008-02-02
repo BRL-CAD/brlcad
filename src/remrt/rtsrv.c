@@ -56,7 +56,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_SYS_WAIT_H
 #  include <sys/wait.h>
 #endif
-#ifdef HAVE_FCNTL_H
+#ifdef HAVE_SYS_FCNTL_H
 #  include <sys/fcntl.h>
 #endif
 
