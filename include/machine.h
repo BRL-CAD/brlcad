@@ -40,8 +40,8 @@
  *
  *      genptr_t - A portable way of declaring a "generic" pointer
  *      that is wide enough to point to anything, which can be used on
- *      both *ANSI C and K&R C environments.  On some machines,
- *      pointers to *functions can be wider than pointers to data
+ *      both ANSI C and K&R C environments.  On some machines,
+ *      pointers to functions can be wider than pointers to data
  *      bytes, so a declaration of "char*" isn't generic enough.
  *      DEPRECATED: use void* and char* pointers
  *
