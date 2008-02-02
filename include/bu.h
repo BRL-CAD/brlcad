@@ -104,7 +104,11 @@ __BEGIN_DECLS
  * but if it isn't set, we create it.
  */
 #ifndef MAXPATHLEN
-#  define MAXPATHLEN 1024
+#  ifdef _MAX_PATH
+#    define MAXPATHLEN _MAX_PATH
+#  else
+#    define MAXPATHLEN 1024
+#  endif
 #endif
 
 /**

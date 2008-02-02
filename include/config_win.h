@@ -242,8 +242,6 @@ typedef unsigned short uint16_t;
 #define X_OK 1
 #define F_OK 0
 
-#define MAXPATHLEN _MAX_PATH
-
 #undef DELETE
 #undef IN
 #undef OUT
