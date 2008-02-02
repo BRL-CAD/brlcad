@@ -22,24 +22,28 @@
 /** @{ */
 /** @file config_win.h
  *
+ * This file is used for compilation on the Windows platform in place
+ * of using the auto-generated brlcad_config.h header.
+ *
  */
+
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
 
 #ifndef IGNORE_CONFIG_H
 #if defined(_WIN32)
 
-/* XXX - This is temporary (atleast until a brlcad_config.h is
- * auto-generated on windows)
- */
-#define __STDC__ 1
-#define USE_PROTOTYPES 1
+/* XXX - should not rely on config_win.h providing these headers. */
+#include <windows.h>
+#include <fcntl.h>
+#include <io.h>
 
-#pragma warning( disable : 4244 4305 4018)
 /*  4244 conversion from type 1 to type 2
-    4305 truncation
-	4018 signed/unsigned mismatch
-*/
+ *  4305 truncation
+ *  4018 signed/unsigned mismatch
+ */
+#pragma warning( disable : 4244 4305 4018)
+
 /*
  * Ensure that Project Settings / Project Options includes
  *	/Za		for ANSI C
@@ -53,8 +57,15 @@
 #  define EXPAND_IN_STRING_INTERN(x) #x
 #endif
 
+/* XXX - this is bogus, fixed path should not be in any source file */
 #define INSTALL_DIRECTORY    "C:/brlcad" MAJOR_VERSION_STRING "_" MINOR_VERSION_STRING "_" PATCH_VERSION_STRING
+
+/* XXX - this is bogus, should not need to manually set the version in here */
 #define IWIDGETS_VERSION  "4.0.2"
+
+/*
+ * declare results of configure tests
+ */
 
 #define REVERSE_IEEE		yes
 #define HAS_OPENGL		1
@@ -82,12 +93,80 @@
 #define HAVE_SBRK 1
 #define sbrk(i) (NULL)
 
-/* XXX - do not rely on config_win.h providing these headers.  they
- * will be removed at some point.
+/* #define __STDC__ 1 */
+#define USE_PROTOTYPES		1
+
+/*
+ * functions declared in io.h
  */
-#include <windows.h>
-#include <io.h>
-#include <fcntl.h>
+
+#define access _access
+#define chmod _chmod
+#define chsize _chsize
+#define close _close
+#define commit _commit
+#define creat _creat
+#define dup _dup
+#define dup2 _dup2
+#define eof _eof
+/* #define filelength _filelength */
+#define isatty _isatty
+#define locking _locking
+#define lseek _lseek
+/* #define mktemp _mktemp */
+#define open _open
+#define unlink _unlink
+/* why not just #define pipe _pipe? */
+#define pipe(_FD) (_pipe((_FD), 256, _O_TEXT))
+#define read _read
+#define setmode _setmode
+/* #define tell _tell */
+#define umask _umask
+#define write _write
+
+/*
+ * other functions declared elsewhere (many in stdio.h)
+ */
+
+#define	isnan _isnan
+#define execvp _execvp
+#define fdopen _fdopen
+#define fileno _fileno
+#define fstat _fstat
+#define getpid _getpid
+#define hypot _hypot
+#define isascii __isascii
+#define pclose _pclose
+#define popen _popen
+#define putenv _putenv
+#define snprintf _snprintf
+#define snprintf _snprintf
+#define sopen _sopen
+#define stat _stat
+#define strcasecmp _stricmp
+#define strdup _strdup
+#define sys_errlist _sys_errlist
+#define sys_nerr _sys_nerr
+
+#define fmax max
+#define ioctl ioctlsocket
+
+/*
+ * types
+ */
+
+typedef _off_t off_t;
+typedef int pid_t;
+typedef int socklen_t;
+typedef unsigned char uint8_t;
+typedef unsigned int gid_t;
+typedef unsigned int uid_t;
+typedef unsigned int uint32_t;
+typedef unsigned short uint16_t;
+
+/*
+ * for chmod()
+ */
 
 #ifndef S_IFMT
 #  define S_IFMT _S_IFMT
@@ -141,12 +220,10 @@
 #  define S_IXOTH      ((S_IXUSR)>>6)
 #endif
 
-#define	isnan _isnan
-#define R_OK 4
-#define W_OK 2
-#define X_OK 1
-#define F_OK 0
-#define MAXPATHLEN _MAX_PATH
+/*
+ * for open()
+ */
+
 #define O_APPEND _O_APPEND
 #define O_BINARY _O_BINARY
 #define O_CREAT _O_CREAT
@@ -156,62 +233,32 @@
 #define O_TRUNC _O_TRUNC
 #define O_WRONLY _O_WRONLY
 
-#define access _access
-#define chmod _chmod
-#define close _close
-#define commit _commit
-#define creat _creat
-#define dup _dup
-#define dup2 _dup2
-#define execvp _execvp
-#define fdopen _fdopen
-#define fileno _fileno
-#define fork() -1
-#define fstat _fstat
-#define getpid _getpid
-#define getprogname() _pgmptr
-#define hypot _hypot
-#define ioctl ioctlsocket
-#define isascii __isascii
-#define isatty _isatty
-#define locking _locking
-#define lseek _lseek
-#define off_t _off_t
-#define open _open
-#define pclose _pclose
-#define pipe(_FD) (_pipe((_FD), 256, _O_TEXT))
-#define popen _popen
-#define putenv _putenv
-#define read _read
-#define rint(_X) (floor((_X) + 0.5))
-#define setmode _setmode
-#define sleep(_SECONDS) (Sleep(1000 * (_SECONDS)))
-#define snprintf _snprintf
-#define sopen _sopen
-#define stat _stat
-#define strcasecmp _stricmp
-#define strdup _strdup
-#define sys_errlist _sys_errlist
-#define sys_nerr _sys_nerr
-#define snprintf _snprintf
-#define umask _umask
-#define unlink _unlink
-#define write _write
+/*
+ * for access()
+ */
+
+#define R_OK 4
+#define W_OK 2
+#define X_OK 1
+#define F_OK 0
+
+#define MAXPATHLEN _MAX_PATH
+
 #undef DELETE
 #undef IN
 #undef OUT
 #undef complex
 #undef rad1
 #undef rad2
-#define pid_t int
-#define socklen_t int
-#define uid_t unsigned int
-#define gid_t unsigned int
-#define fmax max
 
-typedef unsigned char uint8_t;
-typedef unsigned short uint16_t;
-typedef unsigned int uint32_t;
+/*
+ * faking it
+ */
+
+#define fork() -1
+#define getprogname() _pgmptr
+#define rint(_X) (floor((_X) + 0.5))
+#define sleep(_SECONDS) (Sleep(1000 * (_SECONDS)))
 
 #if defined(_MSC_VER) && (_MSC_VER <= 1200) /* MSVC 6.0 and before */
 #   define for if (0) {} else for           /* proper for-scope */
