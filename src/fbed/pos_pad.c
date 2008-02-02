@@ -31,9 +31,6 @@ static const char RCSid[] = "@(#) pos_pad.c 2.1, modified 12/9/86 at 15:54:52, a
 #ifdef HAVE_TERMIO_H
 #  include <termio.h>
 #endif
-#ifdef HAVE_FCNTL_H
-#  include <fcntl.h>
-#endif
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif

@@ -46,10 +46,6 @@
 #include "machine.h"
 #include "bu.h"
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
-#  include <fcntl.h>
-#  include <io.h>
-#endif
 
 char *progname = "(noname)";
 

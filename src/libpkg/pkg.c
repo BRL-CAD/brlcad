@@ -76,7 +76,6 @@
 #ifdef HAVE_WINSOCK_H
 #  include <process.h>
 #  include <winsock.h>
-#  include <fcntl.h>
 #else
 #  include <sys/socket.h>
 #  include <sys/ioctl.h>		/* for FIONBIO */

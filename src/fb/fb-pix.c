@@ -44,7 +44,6 @@
 
 #ifdef HAVE_WINSOCK_H
 #  include <winsock.h>
-#  include <fcntl.h>
 #endif
 
 static unsigned char	*scanline;		/* 1 scanline pixel buffer */

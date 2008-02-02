@@ -43,27 +43,18 @@
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
 #endif
-
 #ifdef HAVE_SYS_TIMES_H
 #  include <sys/times.h>
 #endif
-
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
-
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
-
-#ifdef HAVE_FCNTL_H
-#  include <fcntl.h>
-#endif
-
 #ifdef HAVE_PROCESS_H
 #  include <process.h>
 #endif
-
 #ifdef HAVE_SYS_SELECT_H
 #  include <sys/select.h>
 #endif

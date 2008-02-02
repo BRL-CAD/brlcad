@@ -56,11 +56,6 @@
 #include "machine.h"
 #include "bu.h"
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
-#  include <fcntl.h>
-#  include <io.h>
-#endif
-
 
 #define NFILES		4		/* Two in, two out */
 #define EL_WIDTH	32		/* Max width of one element */

@@ -47,10 +47,6 @@
 #include "machine.h"
 #include "bu.h"
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
-#  include <fcntl.h>
-#  include <io.h>
-#endif
 
 unsigned char	ibuf[3*1024], obuf[1024];
 

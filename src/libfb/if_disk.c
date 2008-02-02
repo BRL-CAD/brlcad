@@ -37,13 +37,8 @@
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
-
 #ifdef HAVE_SYS_FILE_H
 #  include <sys/file.h>
-#endif
-
-#ifdef HAVE_FCNTL_H
-#  include <fcntl.h>
 #endif
 
 #include "machine.h"

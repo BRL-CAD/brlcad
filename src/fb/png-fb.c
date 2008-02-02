@@ -44,7 +44,6 @@
 
 #ifdef HAVE_WINSOCK_H
 #  include <winsock.h>
-#  include <fcntl.h>
 #endif
 
 static png_color_16 def_backgrd={ 0, 0, 0, 0, 0 };

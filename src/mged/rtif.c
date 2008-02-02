@@ -80,10 +80,6 @@
 #include "./qray.h"
 #include "./cmd.h"
 
-#ifdef HAVE_FCNTL_H
-#  include <fcntl.h>
-#endif
-
 
 extern int mged_svbase(void);
 extern void set_perspective(); /* from set.c */

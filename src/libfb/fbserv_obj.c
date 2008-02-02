@@ -49,8 +49,6 @@
 #ifdef HAVE_WINSOCK_H
 #  include <process.h>
 #  include <winsock.h>
-#  include <fcntl.h>
-#  include <io.h>
 #else
 #  include <sys/socket.h>
 #  include <netinet/in.h>		/* For htonl(), etc */

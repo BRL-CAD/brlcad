@@ -43,9 +43,6 @@
 #    include <sys/unistd.h>
 #  endif
 #endif
-#ifdef HAVE_FCNTL_H
-#  include <fcntl.h>
-#endif
 
 /* interface headers */
 #include "machine.h"

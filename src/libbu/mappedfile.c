@@ -48,20 +48,13 @@
  *
  */
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
-#  include <fcntl.h>
-#  include <io.h>
-#endif
-
 #include "common.h"
 
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
+#include <fcntl.h>
 
-#ifdef HAVE_FCNTL_H
-#  include <fcntl.h>
-#endif
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif

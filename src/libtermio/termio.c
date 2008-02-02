@@ -30,10 +30,6 @@
 #  include <sys/file.h>
 #endif
 
-#ifdef HAVE_FCNTL_H
-#  include <fcntl.h>
-#endif
-
 #if HAVE_SYS_IOCTL_COMPAT_H
 #	include <sys/ioctl_compat.h>
 #	define TAB3 (TAB1|TAB2)
