@@ -51,19 +51,20 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <unistd.h>
 #include <time.h>
 #include <sys/types.h>
 #include <string.h>
+#include <fcntl.h>
 
-#if defined(USE_SYS_TIME_H)
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
+#ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
 #endif
 
 #ifdef HAVE_SYS_MMAN_H
-#  include <unistd.h>
 #  include <sys/mman.h>
-#  include <fcntl.h>
 #  define CAN_LINGER 1
 #  undef HAVE_SYS_SHM_H		/* Don't use both ways, mmap is preferred. */
 #else

@@ -25,9 +25,11 @@
 #include "common.h"
 
 #include <string.h>
-#include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 
 #include "machine.h"
 #include "fb.h"

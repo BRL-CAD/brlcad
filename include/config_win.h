@@ -1,4 +1,3 @@
-
 /*                          C O N F I G _ W I N . H
  * BRL-CAD
  *

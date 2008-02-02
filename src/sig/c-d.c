@@ -21,10 +21,14 @@
  *
  */
 
-#include <unistd.h>
+#include "common.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 
 static const char usage[] = "\
 Usage: c-d -r -i -m -p -z < complex_data > doubles\n";

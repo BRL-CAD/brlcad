@@ -51,12 +51,14 @@
 
 #include "common.h"
 
-#include <stdio.h>		/* Direct the output to stdout */
-
 /* without OBJ_BREP, this entire procedural example is disabled */
 #ifdef OBJ_BREP
 
-#include <unistd.h>
+#include <stdio.h>		/* Direct the output to stdout */
+
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {

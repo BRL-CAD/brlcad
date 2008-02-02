@@ -31,16 +31,19 @@
  * $Id$
  */
 
+#include "common.h"
+
 #include "pack.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
+
 #include "umath.h"
 #include "texture.h"
 #include "tienet.h"
-
-#include "common.h"
 
 #define K *1024
 #define M *1024 K

@@ -10,11 +10,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 
 #include "tie_struct.h"
 
-#include <bu.h>
+#include "bu.h"
 
 #ifdef TIE_SSE
 # include <xmmintrin.h>

@@ -38,7 +38,9 @@
 
 /* does not include common.h so it may remain stand-alone */
 
-#include <unistd.h>
+#ifndef _WIN32
+#  include <unistd.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

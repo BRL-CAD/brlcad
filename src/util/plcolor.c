@@ -26,11 +26,13 @@
  *
  */
 
-#include <stdio.h>
-#include <unistd.h>
-#include <stdlib.h>
-
 #include "common.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 
 #include "machine.h"
 #include "bu.h"

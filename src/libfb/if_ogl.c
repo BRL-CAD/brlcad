@@ -51,7 +51,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <ctype.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
@@ -59,6 +58,9 @@
 #include <errno.h>
 #include <X11/keysym.h>
 #include <X11/StringDefs.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 #ifdef HAVE_GL_GLX_H
 #  include <GL/glx.h>
 #endif

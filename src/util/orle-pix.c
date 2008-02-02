@@ -28,8 +28,10 @@
 #include "common.h"
 
 #include <stdio.h>
-#include <unistd.h>
 #include <string.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 
 #include "machine.h"
 #include "fb.h"		/* For Pixel typedef */

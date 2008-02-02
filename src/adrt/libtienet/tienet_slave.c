@@ -35,13 +35,17 @@
 #include "tienet_slave.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <sys/socket.h>
 #include <sys/select.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <netdb.h>
 #include <string.h>
+
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
+
 #include "tie.h"
 #include "tienet_define.h"
 #include "tienet_util.h"

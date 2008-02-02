@@ -41,7 +41,6 @@
 #include "raytrace.h"
 #include "wdb.h"
 
-#include <unistd.h>
 #include <uf.h>
 #include <uf_ui.h>
 #include <uf_disp.h>
@@ -58,7 +57,10 @@
 #include <uf_eval.h>
 #include <uf_sket.h>
 #include <uf_error.h>
-#include <malloc.h>
+
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 
 #include "./conv.h"
 #include "./ug_misc.h"

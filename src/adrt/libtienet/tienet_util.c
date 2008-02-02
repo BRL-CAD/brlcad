@@ -32,10 +32,13 @@
  * $Id$
  */
 
-#include <unistd.h>
-#include <sys/select.h>
 #include "tienet_util.h"
 
+#include <sys/select.h>
+
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 
 void tienet_flip(void* src, void* dest, size_t size) {
   size_t i;

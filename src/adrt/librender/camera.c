@@ -30,7 +30,9 @@
 #include <string.h>
 #include <sys/time.h>
 #include <time.h>
-#include <unistd.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 
 #include "bu.h"
 

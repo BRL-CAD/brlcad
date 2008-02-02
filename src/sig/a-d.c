@@ -28,8 +28,10 @@
 #include <stdio.h>
 #include <math.h>
 #include <ctype.h>
-#include <unistd.h>
 #include <string.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 
 #include "machine.h"
 #include "bu.h"

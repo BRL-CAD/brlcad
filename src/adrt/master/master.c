@@ -42,7 +42,9 @@
 #include <sys/select.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <unistd.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 #if ADRT_USE_COMPRESSION
   #include <zlib.h>
 #endif

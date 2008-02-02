@@ -32,11 +32,16 @@
  */
 
 #include "env.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
+
 #include "render.h"
+
 
 #if 0
 void common_env_init(common_env_t *env);

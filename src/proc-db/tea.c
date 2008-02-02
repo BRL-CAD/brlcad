@@ -26,7 +26,10 @@
 #include "common.h"
 
 #include <stdio.h>		/* Direct the output to stdout */
-#include <unistd.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
+
 #include "machine.h"		/* BRL-CAD specific machine data types */
 #include "vmath.h"		/* BRL-CAD Vector macros */
 #include "nurb.h"		/* BRL-CAD Spline data structures */

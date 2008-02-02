@@ -25,10 +25,14 @@
  * $Id$
  */
 
+#include "common.h"
+
 #include <stdlib.h>
-#include <unistd.h>
 #include <stdio.h>
 #include <math.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 
 #define TABSIZE	512
 double	sintab[TABSIZE];

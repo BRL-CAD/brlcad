@@ -38,28 +38,32 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <unistd.h>
 #include <ctype.h>
 #include <fcntl.h>
 #include <string.h>
 
-#include "machine.h"
-#include "fb.h"
-
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 #include <X11/X.h>
 #ifdef HAVE_XOSDEFS_H
-#include <X11/Xfuncproto.h>
-#include <X11/Xosdefs.h>
+#  include <X11/Xfuncproto.h>
+#  include <X11/Xosdefs.h>
 #endif
-#if defined(linux)
-#	undef	X_NOT_STDC_ENV
-#	undef	X_NOT_POSIX
+#ifdef linux
+#  undef X_NOT_STDC_ENV
+#  undef X_NOT_POSIX
 #endif
 #define XLIB_ILLEGAL_ACCESS	/* necessary on facist SGI 5.0.1 */
+
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/cursorfont.h>
 #include <X11/Xatom.h>		/* for XA_RGB_BEST_MAP */
+
+#include "machine.h"
+#include "fb.h"
+
 
 HIDDEN	void	slowrect(FBIO *ifp, int xmin, int xmax, int ymin, int ymax);
 HIDDEN	int	x_linger(FBIO *ifp);

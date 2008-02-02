@@ -28,7 +28,9 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h>
-#include <unistd.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 
 int	nflag = 0;
 
