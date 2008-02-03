@@ -38,234 +38,243 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "../librt/debug.h"
 
 
 #define LINE_LEN 256
 
-static char *usage="Usage:\n\tcy-g input_laser_scan_file output_brlcad_file.g\n";
+static const char usage[] = "Usage:\n\tcy-g input_laser_scan_file.cy output_brlcad_file.g\n";
 
 int
 main(int argc, char **argv)
 {
-	FILE *infp;
-	struct rt_wdb *outfp;
-	char line[LINE_LEN];
-	char *cptr;
-	int rshift=5;
-	int nlg=512, nlt=256;
-	int x, y;
-	fastf_t delta_z=0;
-	fastf_t delta_angle;
-	fastf_t angle=0.0;
-	fastf_t *sins, *coss;
-	fastf_t **curves;
-	fastf_t *ptr;
-	int first_non_zero=30000;
-	int last_non_zero=(-1);
-	int new_last=0;
+    FILE *infp;
+    struct rt_wdb *outfp;
+    char line[LINE_LEN];
+    char name[LINE_LEN];
+    char *cptr;
+    int rshift=5;
+    int nlg=512, nlt=256;
+    int x, y;
+    fastf_t delta_z=0;
+    fastf_t delta_angle;
+    fastf_t angle=0.0;
+    fastf_t *sins, *coss;
+    fastf_t **curves;
+    fastf_t *ptr;
+    int first_non_zero=30000;
+    int last_non_zero=(-1);
+    int new_last=0;
+    
+    if (argc != 3) {
+	bu_exit(1, "%s", usage);
+    }
 
-	if ( argc != 3 )
-	{
-		bu_log( "%s", usage );
-		return 1;
+    if ((infp=fopen(argv[1], "rb")) == NULL) {
+	bu_log("Cannot open input file (%s)\n", argv[1]);
+	bu_exit(1, "%s", usage);
+    }
+
+    if ((outfp = wdb_fopen(argv[2])) == NULL) {
+	bu_log("Cannot open output file (%s)\n", argv[2]);
+	bu_exit(1, "%s", usage);
+    }
+
+    /* read first line, should identify */
+    if (bu_fgets(line, LINE_LEN, infp) == NULL) {
+	bu_exit(1, "Unexpected EOF encounterd while looking for file identifier\n");
+    }
+    if (line[strlen(line)-1] == '\n') {
+	line[strlen(line)-1] = '\0';
+    }
+    if (strcmp(line, "Cyberware Digitizer Data") != 0) {
+	bu_log("WARNING: Input file does not seem to be Cyberware Digitizer Data\n");
+	bu_log("Trying to continue regardless...\n");
+    }
+    mk_id(outfp, line);
+
+    /* initialize some values */
+    snprintf(name, sizeof(name), "DATA");
+
+    /* read ASCII header section */
+    while (1) {
+	if (bu_fgets(line, LINE_LEN, infp) == NULL) {
+	    bu_exit(1, "Unexpected EOF encountered while looking for data\n");
+	}
+	if (line[strlen(line)-1] == '\n') {
+	    line[strlen(line)-1] = '\0';
 	}
 
-	if ((infp=fopen( argv[1], "rb")) == NULL) {
-	    bu_log( "Cannot open input file (%s)\n", argv[1] );
-	    bu_log( "%s", usage );
-	    return 1;
+	if (strncmp("DATA", line, 4) == 0) {
+	    bu_log("Processing DATA\n");
+	    break;
+	} else if (strncmp("SPACE", line, 5) == 0) {
+	    if (strstr(line, "CYLINDRICAL") == 0) {
+		bu_log("Encountered %s\n", line);
+		bu_exit(1, "%s can only handle cylindrical scans right now\n", argv[0]);
+	    }
+	    db5_update_attribute("_GLOBAL", "SPACE", "CYLINDRICAL", outfp->dbip);
+	    bu_log("%s\n", line);
+	} else if (strncmp("NLG", line, 3) == 0) {
+	    cptr = strchr(line, '=');
+	    if (!cptr) {
+		bu_exit(1, "Error parsing NLG line: %s\n", line);
+	    }
+	    nlg = atoi(++cptr);
+	    db5_update_attribute("_GLOBAL", "NLG", cptr, outfp->dbip);
+	    bu_log("NLG=%d\n", nlg);
+	} else if (strncmp("NLT", line, 3) == 0) {
+	    cptr = strchr(line, '=');
+	    if (!cptr) {
+		bu_exit(1, "Error parsing NLT line: %s\n", line);
+	    }
+	    nlt = atoi(++cptr);
+	    db5_update_attribute("_GLOBAL", "NLT", cptr, outfp->dbip);
+	    bu_log("NLT=%d\n",nlt);
+	} else if (strncmp("LTINCR", line, 6) == 0) {
+	    int tmp;
+
+	    cptr = strchr(line, '=');
+	    if (!cptr) {
+		bu_exit(1, "Error parsing LTINCR line: %s\n", line);
+	    }
+
+	    tmp = atoi(++cptr);
+	    delta_z = (fastf_t)(tmp)/1000.0;
+	    db5_update_attribute("_GLOBAL", "LTINCR", cptr, outfp->dbip);
+	    bu_log("LTINCR=%d\n", tmp);
+	} else if (strncmp("RSHIFT", line, 6) == 0) {
+	    cptr = strchr(line, '=');
+	    if (!cptr) {
+		bu_exit(1, "Error parsing RSHIFT line: %s\n", line);
+	    }
+	    rshift = atoi(++cptr);
+	    db5_update_attribute("_GLOBAL", "RSHIFT", cptr, outfp->dbip);
+	    bu_log("RSHIFT=%d\n", rshift);
+	} else if (strncmp("NAME", line, 4) == 0) {
+	    cptr = strchr(line, '=');
+	    if (!cptr) {
+		bu_exit(1, "Error parsing NAME line: %s\n", line);
+	    }
+	    cptr++;
+	    snprintf(name, sizeof(name), "%s", cptr);
+	    bu_log("NAME=%s\n", name);
+	} else if (strncmp("DATE", line, 4) == 0) {
+	    cptr = strchr(line, '=');
+	    if (!cptr) {
+		bu_exit(1, "Error parsing DATE line: %s\n", line);
+	    }
+	    ++cptr;
+	    db5_update_attribute("_GLOBAL", "DATE", cptr, outfp->dbip);
+	} else {
+	    bu_log("IGNORING: %s\n", line);
 	}
+    }
 
-	if ( (outfp = wdb_fopen( argv[2] )) == NULL )
-	{
-		bu_log( "Cannot open output file (%s)\n", argv[2] );
-		bu_log( "%s", usage );
-		return 1;
+
+    /* calculate angle between longitudinal measurements */
+    delta_angle = bn_twopi/(fastf_t)nlg;
+
+    /* allocate memory to hold vertices */
+    curves = (fastf_t **)bu_malloc((nlt+2)*sizeof(fastf_t **), "ars curve pointers");
+    for (y=0; y<nlt+2; y++) {
+	curves[y] = (fastf_t *)bu_calloc((nlg+1)*3, sizeof(fastf_t), "ars curve");
+    }
+
+    /* allocate memory for a table os sines and cosines */
+    sins = (fastf_t *)bu_calloc(nlg+1, sizeof(fastf_t), "sines");
+    coss = (fastf_t *)bu_calloc(nlg+1, sizeof(fastf_t), "cosines");
+
+    /* fill in the sines and cosines table */
+    for (x=0; x<nlg; x++) {
+	angle = delta_angle * (fastf_t)x;
+	sins[x] = sin(angle);
+	coss[x] = cos(angle);
+    }
+    sins[nlg] = sins[0];
+    coss[nlg] = coss[0];
+
+    /* read the actual data */
+    for (x=0; x<nlg; x++) {
+	fastf_t z=0.0;
+
+	for (y=0; y<nlt; y++) {
+	    short r;
+	    long radius;
+	    fastf_t rad;
+
+	    ptr = &curves[y+1][x*3];
+
+	    if (fread(&r, 2, 1, infp) != 1)
+		bu_exit(1, "Unexpected end-of-file encountered in [%s]\n", argv[1]);
+	    if (r < 0) {
+		rad = 0.0;
+	    } else {
+		if (y < first_non_zero)
+		    first_non_zero = y;
+		radius = (long)(r) << rshift;
+		rad = (fastf_t)radius/1000.0;
+		if (y > last_non_zero)
+		    last_non_zero = y;
+	    }
+	    *ptr = rad * coss[x];
+	    *(ptr+1) = rad * sins[x];
+	    *(ptr+2) = z;
+/*			bu_log("%d %d: %g (%d) (%g %g %g)\n", x, y, rad, r, V3ARGS(ptr)); */
+
+	    /* duplicate the first point at the end of the curve */
+	    if (x == 0) {
+		ptr = &curves[y+1][nlg*3];
+		*ptr = rad * coss[x];
+		*(ptr+1) = rad * sins[x];
+		*(ptr+2) = z;
+	    }
+	    z += delta_z;
 	}
+    }
 
+    /* finished with input file */
+    fclose(infp);
 
-	/* read ASCII header section */
-	while ( 1 )
-	{
-		if ( bu_fgets( line, LINE_LEN, infp ) == NULL )
-		{
-			bu_log( "Unexpected EOF while loking for data\n" );
-			return 1;
-		}
-		printf( "%s", line );
-		if ( !strncmp( "DATA", line, 4 ) )
-		{
-			bu_log( "Found DATA\n" );
-			break;
-		}
-		else if ( !strncmp( "SPACE", line, 5 ) )
-		{
-			if ( !strstr( line, "CYLINDRICAL" ) )
-			{
-				bu_log( "Can only handle cylindrical scans right now!\n" );
-				return 1;
-			}
-		}
-		else if ( !strncmp( "NLG", line, 3 ) )
-		{
-			cptr = strchr( line, '=' );
-			if ( !cptr )
-			{
-				bu_log( "Error in setting NLG\n" );
-				return 1;
-			}
-			nlg = atoi( ++cptr );
-		}
-		else if ( !strncmp( "NLT", line, 3 ) )
-		{
-			cptr = strchr( line, '=' );
-			if ( !cptr )
-			{
-				bu_log( "Error in setting NLT\n" );
-				return 1;
-			}
-			nlt = atoi( ++cptr );
-		}
-		else if ( !strncmp( "LTINCR", line, 6 ) )
-		{
-			int tmp;
+    /* eliminate single vertex spikes on each curve */
+    for (y=first_non_zero; y<=last_non_zero; y++) {
+	int is_zero=1;
 
-			cptr = strchr( line, '=' );
-			if ( !cptr )
-			{
-				bu_log( "Error in setting LTINCR\n" );
-				return 1;
-			}
-			tmp = atoi( ++cptr );
-			delta_z = (fastf_t)(tmp)/1000.0;
+	for (x=0; x<nlg; x++) {
+	    fastf_t *next, *prev;
+
+	    ptr = &curves[y][x*3];
+	    if (x == 0)
+		prev = &curves[y][nlg*3];
+	    else
+		prev = ptr - 3;
+	    next = ptr + 3;
+
+	    if (ptr[0] != 0.0 || ptr[1] != 0.0) {
+		if (prev[0] == 0.0 && prev[1] == 0.0 &&
+		     next[0] == 0.0 && next[1] == 0.0) {
+		    ptr[0] = 0.0;
+		    ptr[1] = 0.0;
+		} else {
+		    is_zero = 0;
 		}
-		else if ( !strncmp( "RSHIFT", line, 6 ) )
-		{
-			cptr = strchr( line, '=' );
-			if ( !cptr )
-			{
-				bu_log( "Error in setting RSHIFT\n" );
-				return 1;
-			}
-			rshift = atoi( ++cptr );
-		}
+	    }
 	}
+	if (is_zero && first_non_zero == y)
+	    first_non_zero = y + 1;
+	else
+	    new_last = y;
+    }
 
-	/* calculate angle between longitudinal measurements */
-	delta_angle = bn_twopi/(fastf_t)nlg;
+    last_non_zero = new_last;
 
-	/* allocate memory to hold vertices */
-	curves = (fastf_t **)bu_malloc( (nlt+2)*sizeof( fastf_t ** ), "ars curve pointers" );
-	for ( y=0; y<nlt+2; y++ )
-		curves[y] = (fastf_t *)bu_calloc( (nlg+1)*3,
-			sizeof(fastf_t), "ars curve" );
-
-	/* allocate memory for a table os sines and cosines */
-	sins = (fastf_t *)bu_calloc( nlg+1, sizeof( fastf_t ), "sines" );
-	coss = (fastf_t *)bu_calloc( nlg+1, sizeof( fastf_t ), "cosines" );
-
-	/* fill in the sines and cosines table */
-	for ( x=0; x<nlg; x++ )
-	{
-		angle = delta_angle * (fastf_t)x;
-		sins[x] = sin(angle);
-		coss[x] = cos(angle);
-	}
-	sins[nlg] = sins[0];
-	coss[nlg] = coss[0];
-
-	/* read the actual data */
-	for ( x=0; x<nlg; x++ )
-	{
-		fastf_t z=0.0;
-
-		for ( y=0; y<nlt; y++ )
-		{
-			short r;
-			long radius;
-			fastf_t rad;
-
-			ptr = &curves[y+1][x*3];
-
-			if ( fread( &r, 2, 1, infp ) != 1 )
-				bu_exit(1, "Unexpected end-of-file encountered in [%s]\n", argv[1]);
-			if ( r < 0 )
-				rad = 0.0;
-			else
-			{
-				if ( y < first_non_zero )
-					first_non_zero = y;
-				radius = (long)(r) << rshift;
-				rad = (fastf_t)radius/1000.0;
-				if ( y > last_non_zero )
-					last_non_zero = y;
-			}
-			*ptr = rad * coss[x];
-			*(ptr+1) = rad * sins[x];
-			*(ptr+2) = z;
-/*			bu_log( "%d %d: %g (%d) (%g %g %g)\n", x, y, rad, r, V3ARGS( ptr ) ); */
-
-			/* duplicate the first point at the end of the curve */
-			if ( x == 0 )
-			{
-				ptr = &curves[y+1][nlg*3];
-				*ptr = rad * coss[x];
-				*(ptr+1) = rad * sins[x];
-				*(ptr+2) = z;
-			}
-			z += delta_z;
-		}
-	}
-
-	/* finished with input file */
-	fclose( infp );
-
-	/* eliminate single vertex spikes on each curve */
-	for ( y=first_non_zero; y<=last_non_zero; y++ )
-	{
-		int is_zero=1;
-
-		for ( x=0; x<nlg; x++ )
-		{
-			fastf_t *next, *prev;
-
-			ptr = &curves[y][x*3];
-			if ( x == 0 )
-				prev = &curves[y][nlg*3];
-			else
-				prev = ptr - 3;
-			next = ptr + 3;
-
-			if ( ptr[0] != 0.0 || ptr[1] != 0.0 )
-			{
-				if ( prev[0] == 0.0 && prev[1] == 0.0 &&
-				    next[0] == 0.0 && next[1] == 0.0 )
-				{
-					ptr[0] = 0.0;
-					ptr[1] = 0.0;
-				}
-				else
-					is_zero = 0;
-			}
-		}
-		if ( is_zero && first_non_zero == y )
-			first_non_zero = y + 1;
-		else
-			new_last = y;
-	}
-
-	last_non_zero = new_last;
-
-	/* write out ARS solid
-	 * First curve is all zeros (first_non_zero - 1)
-	 * Last curve is all zeros (last_non_zero + 1 )
-	 * Number of curves is (last_non_zero - first_non_zero + 2)
-	 */
-	mk_id( outfp, "Laser Scan" );
-	mk_ars( outfp, "laser_scan", last_non_zero - first_non_zero + 2, nlg, &curves[first_non_zero-1] );
-	wdb_close( outfp );
-	return 0;
+    /* write out ARS solid
+     * First curve is all zeros (first_non_zero - 1)
+     * Last curve is all zeros (last_non_zero + 1)
+     * Number of curves is (last_non_zero - first_non_zero + 2)
+     */
+    mk_ars(outfp, name, last_non_zero - first_non_zero + 2, nlg, &curves[first_non_zero-1]);
+    wdb_close(outfp);
+    return 0;
 }
 
 /*
