@@ -134,7 +134,7 @@ vas_open(void)
 	vtty.c_iflag |= IGNBRK|IGNPAR;
 
 	vtty.c_oflag &= ~(OPOST|ONLCR|OCRNL);    /* Turn off all post-processing */
-	vtty.c_oflag |= OXTABS;		/* output tab expansion ON */
+	vtty.c_oflag |= TAB3;		/* output tab expansion ON */
 	vtty.c_cc[VMIN] = 1;
 	vtty.c_cc[VTIME] = 0;
 
