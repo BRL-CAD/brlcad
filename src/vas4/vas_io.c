@@ -40,28 +40,20 @@
 
 #if defined(HAVE_XOPEN)
 #  include <termios.h>
-
 static struct termios	vtty;
-
-#  if defined(__bsdi__)
-#    include <sys/ioctl_compat.h>
-#    define TAB3 (TAB1|TAB2)
-#    define OCRNL   0000010
+#  ifndef TAB3
+#    define TAB3	OXTABS
 #  endif
-
-#else	/* !defined(HAVE_XOPEN) */
-
-#  ifdef HAVE_TERMIO_H
-#    include <termio.h>
+#  ifndef OCRNL
+#    define OCRNL	0000010		/* XXX can we just do this? */
+#  endif
+#elif defined(HAVE_TERMIO_H)
+#  include <termio.h>
 struct termio vtty;
-#  else /* !HAVE_TERMIO_H */
-#    ifdef HAVE_SGTTY_H
-#      include <sgtty.h>
+#elif defined(HAVE_SGTTY_H)
+#  include <sgtty.h>
 struct sgttyb vtty;
-#    endif
-#  endif /* HAVE_TERMIO_H */
-
-#endif /* HAVE_XOPEN */
+#endif
 
 #include "./vas4.h"
 
@@ -90,7 +82,7 @@ vas_open(void)
 
 	/* Setup VAS line */
 
-#ifdef HAVE_TERMIO_H
+#if defined(HAVE_XOPEN)
 
 	vtty.c_cflag = BAUD | CS8;      /* Character size = 8 bits */
 	vtty.c_cflag &= ~CSTOPB;         /* One stop bit */
@@ -118,7 +110,7 @@ vas_open(void)
 	vtty.c_lflag &= ~ISIG;           /* Signals OFF */
 	vtty.c_lflag &= ~(ECHO|ECHOE|ECHOK);     /* Echo mode OFF */
 
-	if ( ioctl(vas_fd, TCSETA, &vtty) < 0 ) {
+	if ( tsetattr(vas_fd, TCSAFLUSH, &vtty) < 0 ) {
 		perror(VAS_PORT);
 		bu_exit(1, NULL);
 	}
@@ -129,19 +121,8 @@ vas_open(void)
 		bu_exit(2, NULL);
 	}
 
-#else /* !HAVE_TERMIO_H */
-#  ifdef HAVE_SGTTY_H
+#elif defined(HAVE_TERMIO_H)
 
-	vtty.sg_ispeed = BAUD;
-	vtty.sg_ospeed = BAUD;
-	vtty.sg_flags = RAW|EVENP|ODDP;
-	ioctl(vas_fd, TIOCSETP, &vtty);
-	ioctl(vas_fd, TIOCEXCL, &vtty);	/* exclusive use */
-
-#  endif /* HAVE_SGTTY_H */
-#endif /* HAVE_TERMIO_H */
-
-#ifdef HAVE_XOPEN
 	vtty.c_cflag = BAUD | CS8;      /* Character size = 8 bits */
 	vtty.c_cflag &= ~CSTOPB;         /* One stop bit */
 	vtty.c_cflag |= CREAD;           /* Enable the reader */
@@ -153,7 +134,7 @@ vas_open(void)
 	vtty.c_iflag |= IGNBRK|IGNPAR;
 
 	vtty.c_oflag &= ~(OPOST|ONLCR|OCRNL);    /* Turn off all post-processing */
-	vtty.c_oflag |= TAB3;		/* output tab expansion ON */
+	vtty.c_oflag |= OXTABS;		/* output tab expansion ON */
 	vtty.c_cc[VMIN] = 1;
 	vtty.c_cc[VTIME] = 0;
 
@@ -161,7 +142,7 @@ vas_open(void)
 	vtty.c_lflag &= ~ISIG;           /* Signals OFF */
 	vtty.c_lflag &= ~(ECHO|ECHOE|ECHOK);     /* Echo mode OFF */
 
-	if ( tcsetattr( vas_fd, TCSAFLUSH, &vtty ) < 0 )  {
+	if ( ioctl(vas_fd, TCSETA, &vtty) < 0 )  {
 		perror(VAS_PORT);
 		bu_exit(1, NULL);
 	}
@@ -171,6 +152,15 @@ vas_open(void)
 		perror(VAS_PORT);
 		bu_exit(2, NULL);
 	}
+
+#elif defined(HAVE_SGTTY_H)
+
+	vtty.sg_ispeed = BAUD;
+	vtty.sg_ospeed = BAUD;
+	vtty.sg_flags = RAW|EVENP|ODDP;
+	ioctl(vas_fd,TIOCSETP,&vtty);
+	ioctl(vas_fd,TIOCEXCL,&vtty);	/* exclusive use */
+
 #endif
 }
 
