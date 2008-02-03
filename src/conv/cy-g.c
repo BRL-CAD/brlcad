@@ -31,6 +31,7 @@
 #include <math.h>
 #include <string.h>
 #include <errno.h>
+#include <ctype.h>
 
 #include "machine.h"
 #include "vmath.h"
@@ -53,6 +54,7 @@ main(int argc, char **argv)
     char name[LINE_LEN];
     char *cptr;
     int rshift=5;
+    int lgshift=0;
     int nlg=512, nlt=256;
     int x, y;
     fastf_t delta_z=0;
@@ -98,62 +100,116 @@ main(int argc, char **argv)
 
     /* read ASCII header section */
     while (1) {
+	/* get a line from the header, strip the newline */
 	if (bu_fgets(line, LINE_LEN, infp) == NULL) {
 	    bu_exit(1, "Unexpected EOF encountered while looking for data\n");
 	}
-	if (line[strlen(line)-1] == '\n') {
+	while (isspace(line[strlen(line)-1])) {
 	    line[strlen(line)-1] = '\0';
 	}
 
 	if (strncmp("DATA", line, 4) == 0) {
+
 	    bu_log("Processing DATA\n");
 	    break;
+
 	} else if (strncmp("NAME", line, 4) == 0) {
+
 	    cptr = strchr(line, '=');
 	    if (!cptr) {
 		bu_exit(1, "Error parsing NAME line: %s\n", line);
 	    }
 	    cptr++;
+
 	    snprintf(name, sizeof(name), "%s", cptr);
 	    bu_log("NAME=%s\n", name);
+
 	} else if (strncmp("DATE", line, 4) == 0) {
+
 	    cptr = strchr(line, '=');
 	    if (!cptr) {
 		bu_exit(1, "Error parsing DATE line: %s\n", line);
 	    }
 	    ++cptr;
+
 	    db5_update_attribute("_GLOBAL", "DATE", cptr, outfp->dbip);
 	    bu_log("DATE=%s\n", cptr);
+
 	} else if (strncmp("SPACE", line, 5) == 0) {
+
 	    if (strstr(line, "CYLINDRICAL") == 0) {
 		bu_log("Encountered %s\n", line);
 		bu_exit(1, "%s can only handle cylindrical scans right now\n", argv[0]);
 	    }
+
 	    db5_update_attribute("_GLOBAL", "SPACE", "CYLINDRICAL", outfp->dbip);
 	    bu_log("%s\n", line);
+
 	} else if (strncmp("COLOR", line, 4) == 0) {
+
 	    cptr = strchr(line, '=');
 	    if (!cptr) {
 		bu_exit(1, "Error parsing DATE line: %s\n", line);
 	    }
 	    ++cptr;
+
 	    db5_update_attribute("_GLOBAL", "DATE", cptr, outfp->dbip);
+
 	} else if (strncmp("NLG", line, 3) == 0) {
+
 	    cptr = strchr(line, '=');
 	    if (!cptr) {
 		bu_exit(1, "Error parsing NLG line: %s\n", line);
 	    }
+
 	    nlg = atoi(++cptr);
 	    db5_update_attribute("_GLOBAL", "NLG", cptr, outfp->dbip);
 	    bu_log("NLG=%d\n", nlg);
+
 	} else if (strncmp("NLT", line, 3) == 0) {
+
 	    cptr = strchr(line, '=');
 	    if (!cptr) {
 		bu_exit(1, "Error parsing NLT line: %s\n", line);
 	    }
+
 	    nlt = atoi(++cptr);
 	    db5_update_attribute("_GLOBAL", "NLT", cptr, outfp->dbip);
 	    bu_log("NLT=%d\n",nlt);
+
+	} else if (strncmp("LGINCR", line, 6) == 0) {
+
+	    cptr = strchr(line, '=');
+	    if (!cptr) {
+		bu_exit(1, "Error parsing LGINCR line: %s\n", line);
+	    }
+	    ++cptr;
+
+	    db5_update_attribute("_GLOBAL", "LGINCR", cptr, outfp->dbip);
+	    bu_log("LGINCR=%s (ignored)\n", cptr);
+
+	} else if (strncmp("LGMIN", line, 5) == 0) {
+
+	    cptr = strchr(line, '=');
+	    if (!cptr) {
+		bu_exit(1, "Error parsing LGMIN line: %s\n", line);
+	    }
+	    ++cptr;
+
+	    db5_update_attribute("_GLOBAL", "LGMIN", cptr, outfp->dbip);
+	    bu_log("LGMIN=%s (ignored)\n", cptr);
+
+	} else if (strncmp("LGMAX", line, 5) == 0) {
+
+	    cptr = strchr(line, '=');
+	    if (!cptr) {
+		bu_exit(1, "Error parsing LGMAX line: %s\n", line);
+	    }
+	    ++cptr;
+
+	    db5_update_attribute("_GLOBAL", "LGMAX", cptr, outfp->dbip);
+	    bu_log("LGMAX=%s (ignored)\n", cptr);
+
 	} else if (strncmp("LTINCR", line, 6) == 0) {
 	    int tmp;
 
@@ -166,14 +222,95 @@ main(int argc, char **argv)
 	    delta_z = (fastf_t)(tmp)/1000.0;
 	    db5_update_attribute("_GLOBAL", "LTINCR", cptr, outfp->dbip);
 	    bu_log("LTINCR=%d\n", tmp);
+
+	} else if (strncmp("LTMIN", line, 5) == 0) {
+
+	    cptr = strchr(line, '=');
+	    if (!cptr) {
+		bu_exit(1, "Error parsing LTMIN line: %s\n", line);
+	    }
+	    ++cptr;
+
+	    db5_update_attribute("_GLOBAL", "LTMIN", cptr, outfp->dbip);
+	    bu_log("LTMIN=%s (ignored)\n", cptr);
+
+	} else if (strncmp("LTMAX", line, 5) == 0) {
+
+	    cptr = strchr(line, '=');
+	    if (!cptr) {
+		bu_exit(1, "Error parsing LTMAX line: %s\n", line);
+	    }
+	    ++cptr;
+
+	    db5_update_attribute("_GLOBAL", "LTMAX", cptr, outfp->dbip);
+	    bu_log("LTMAX=%s (ignored)\n", cptr);
+
+	} else if (strncmp("RMIN", line, 4) == 0) {
+
+	    cptr = strchr(line, '=');
+	    if (!cptr) {
+		bu_exit(1, "Error parsing RMIN line: %s\n", line);
+	    }
+	    ++cptr;
+
+	    db5_update_attribute("_GLOBAL", "RMIN", cptr, outfp->dbip);
+	    bu_log("RMIN=%s (ignored)\n", cptr);
+
+	} else if (strncmp("RMAX", line, 4) == 0) {
+
+	    cptr = strchr(line, '=');
+	    if (!cptr) {
+		bu_exit(1, "Error parsing RMAX line: %s\n", line);
+	    }
+	    ++cptr;
+
+	    db5_update_attribute("_GLOBAL", "RMAX", cptr, outfp->dbip);
+	    bu_log("RMAX=%s (ignored)\n", cptr);
+
 	} else if (strncmp("RSHIFT", line, 6) == 0) {
+
 	    cptr = strchr(line, '=');
 	    if (!cptr) {
 		bu_exit(1, "Error parsing RSHIFT line: %s\n", line);
 	    }
+
 	    rshift = atoi(++cptr);
 	    db5_update_attribute("_GLOBAL", "RSHIFT", cptr, outfp->dbip);
 	    bu_log("RSHIFT=%d\n", rshift);
+
+	} else if (strncmp("LGSHIFT", line, 6) == 0) {
+
+	    cptr = strchr(line, '=');
+	    if (!cptr) {
+		bu_exit(1, "Error parsing LGSHIFT line: %s\n", line);
+	    }
+
+	    lgshift = atoi(++cptr);
+	    db5_update_attribute("_GLOBAL", "LGSHIFT", cptr, outfp->dbip);
+	    bu_log("LGSHIFT=%d (ignored)\n", lgshift);
+
+	} else if (strncmp("SCALE", line, 5) == 0) {
+
+	    cptr = strchr(line, '=');
+	    if (!cptr) {
+		bu_exit(1, "Error parsing SCALE line: %s\n", line);
+	    }
+	    ++cptr;
+
+	    db5_update_attribute("_GLOBAL", "SCALE", cptr, outfp->dbip);
+	    bu_log("SCALE=%s (ignored)\n", cptr);
+
+	} else if (strncmp("RPROP", line, 5) == 0) {
+
+	    cptr = strchr(line, '=');
+	    if (!cptr) {
+		bu_exit(1, "Error parsing RPROP line: %s\n", line);
+	    }
+	    ++cptr;
+
+	    db5_update_attribute("_GLOBAL", "RPROP", cptr, outfp->dbip);
+	    bu_log("RPROP=%s (ignored)\n", cptr);
+
 	} else {
 	    bu_log("IGNORING: %s\n", line);
 	}
