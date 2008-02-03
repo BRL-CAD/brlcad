@@ -92,6 +92,12 @@ extern "C" {
 #   endif
 #endif /* __WIN32__ */
 
+/* quell shadow warnings */
+#ifdef index
+#  undef index
+#endif
+#define index tcl_scoped_index
+
 /*
  * Utility macros: STRINGIFY takes an argument and wraps it in "" (double
  * quotation marks), JOIN joins two arguments.
@@ -177,13 +183,13 @@ extern "C" {
 #ifdef STATIC_BUILD
 #   define DLLIMPORT
 #   define DLLEXPORT
-#   if HAVE_DECLSPEC && defined(_DLL)
+#   if defined(HAVE_DECLSPEC) && defined(_DLL)
 #	define CRTIMPORT __declspec(dllimport)
 #   else
 #	define CRTIMPORT
 #   endif
 #else
-#   if HAVE_DECLSPEC
+#   ifdef HAVE_DECLSPEC
 #	define DLLIMPORT __declspec(dllimport)
 #	define DLLEXPORT __declspec(dllexport)
 #	define CRTIMPORT __declspec(dllimport)
@@ -2435,6 +2441,9 @@ EXTERN int		Tcl_AppInit _ANSI_ARGS_((Tcl_Interp *interp));
 #ifdef __cplusplus
 }
 #endif
+
+/* quell shadow warnings */
+#undef index
 
 #endif /* _TCL */
 
