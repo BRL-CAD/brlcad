@@ -51,6 +51,8 @@ new names should be listed for reference.
 ----
 src/libbu/parallel.c
 	bu_get_load_average(), remove [deprecated 7.12]
+src/vas4
+	vas4, remove [deprecated 7.12]
 
 7.10
 ----

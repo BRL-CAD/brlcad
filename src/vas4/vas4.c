@@ -119,6 +119,18 @@ main(int argc, char **argv)
 
 	exit_code = 0;
 
+	bu_log(""
+"*** WARNING *** WARNING *** WARNING *** WARNING *** WARNING ***\n"
+"\n"
+"This tool is deprecated and under consideration for removal from\n"
+"BRL-CAD.  If you use this tool, please contact the developers via\n"
+"devs@brlcad.org to express your interest and justification for not\n"
+"removing this tool.  Otherwise, this tool will likely be removed from\n"
+"a future release of BRL-CAD.\n"
+"\n"
+"*** WARNING *** WARNING *** WARNING *** WARNING *** WARNING ***\n"
+"\n");
+
 	if ( !get_args( argc, argv ) )  {
 		usage();
 		bu_exit( 1, NULL );
