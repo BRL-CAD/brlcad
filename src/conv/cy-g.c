@@ -91,6 +91,7 @@ main(int argc, char **argv)
 	bu_log("Trying to continue regardless...\n");
     }
     mk_id(outfp, line);
+    bu_log("%s\n", line);
 
     /* initialize some values */
     snprintf(name, sizeof(name), "DATA");
@@ -107,6 +108,22 @@ main(int argc, char **argv)
 	if (strncmp("DATA", line, 4) == 0) {
 	    bu_log("Processing DATA\n");
 	    break;
+	} else if (strncmp("NAME", line, 4) == 0) {
+	    cptr = strchr(line, '=');
+	    if (!cptr) {
+		bu_exit(1, "Error parsing NAME line: %s\n", line);
+	    }
+	    cptr++;
+	    snprintf(name, sizeof(name), "%s", cptr);
+	    bu_log("NAME=%s\n", name);
+	} else if (strncmp("DATE", line, 4) == 0) {
+	    cptr = strchr(line, '=');
+	    if (!cptr) {
+		bu_exit(1, "Error parsing DATE line: %s\n", line);
+	    }
+	    ++cptr;
+	    db5_update_attribute("_GLOBAL", "DATE", cptr, outfp->dbip);
+	    bu_log("DATE=%s\n", cptr);
 	} else if (strncmp("SPACE", line, 5) == 0) {
 	    if (strstr(line, "CYLINDRICAL") == 0) {
 		bu_log("Encountered %s\n", line);
@@ -114,6 +131,13 @@ main(int argc, char **argv)
 	    }
 	    db5_update_attribute("_GLOBAL", "SPACE", "CYLINDRICAL", outfp->dbip);
 	    bu_log("%s\n", line);
+	} else if (strncmp("COLOR", line, 4) == 0) {
+	    cptr = strchr(line, '=');
+	    if (!cptr) {
+		bu_exit(1, "Error parsing DATE line: %s\n", line);
+	    }
+	    ++cptr;
+	    db5_update_attribute("_GLOBAL", "DATE", cptr, outfp->dbip);
 	} else if (strncmp("NLG", line, 3) == 0) {
 	    cptr = strchr(line, '=');
 	    if (!cptr) {
@@ -150,21 +174,6 @@ main(int argc, char **argv)
 	    rshift = atoi(++cptr);
 	    db5_update_attribute("_GLOBAL", "RSHIFT", cptr, outfp->dbip);
 	    bu_log("RSHIFT=%d\n", rshift);
-	} else if (strncmp("NAME", line, 4) == 0) {
-	    cptr = strchr(line, '=');
-	    if (!cptr) {
-		bu_exit(1, "Error parsing NAME line: %s\n", line);
-	    }
-	    cptr++;
-	    snprintf(name, sizeof(name), "%s", cptr);
-	    bu_log("NAME=%s\n", name);
-	} else if (strncmp("DATE", line, 4) == 0) {
-	    cptr = strchr(line, '=');
-	    if (!cptr) {
-		bu_exit(1, "Error parsing DATE line: %s\n", line);
-	    }
-	    ++cptr;
-	    db5_update_attribute("_GLOBAL", "DATE", cptr, outfp->dbip);
 	} else {
 	    bu_log("IGNORING: %s\n", line);
 	}
@@ -177,12 +186,12 @@ main(int argc, char **argv)
     /* allocate memory to hold vertices */
     curves = (fastf_t **)bu_malloc((nlt+2)*sizeof(fastf_t **), "ars curve pointers");
     for (y=0; y<nlt+2; y++) {
-	curves[y] = (fastf_t *)bu_calloc((nlg+1)*3, sizeof(fastf_t), "ars curve");
+	curves[y] = (fastf_t *)bu_calloc((size_t)(nlg+1)*3, sizeof(fastf_t), "ars curve");
     }
 
     /* allocate memory for a table os sines and cosines */
-    sins = (fastf_t *)bu_calloc(nlg+1, sizeof(fastf_t), "sines");
-    coss = (fastf_t *)bu_calloc(nlg+1, sizeof(fastf_t), "cosines");
+    sins = (fastf_t *)bu_calloc((size_t)nlg+1, sizeof(fastf_t), "sines");
+    coss = (fastf_t *)bu_calloc((size_t)nlg+1, sizeof(fastf_t), "cosines");
 
     /* fill in the sines and cosines table */
     for (x=0; x<nlg; x++) {
@@ -249,9 +258,12 @@ main(int argc, char **argv)
 		prev = ptr - 3;
 	    next = ptr + 3;
 
-	    if (ptr[0] != 0.0 || ptr[1] != 0.0) {
-		if (prev[0] == 0.0 && prev[1] == 0.0 &&
-		     next[0] == 0.0 && next[1] == 0.0) {
+	    if (!NEAR_ZERO(ptr[0], SMALL_FASTF) || !NEAR_ZERO(ptr[1], SMALL_FASTF)) {
+		if (NEAR_ZERO(prev[0], SMALL_FASTF) &&
+		    NEAR_ZERO(prev[1], SMALL_FASTF) &&
+		    NEAR_ZERO(next[0], SMALL_FASTF) &&
+		    NEAR_ZERO(next[1], SMALL_FASTF))
+		{
 		    ptr[0] = 0.0;
 		    ptr[1] = 0.0;
 		} else {
