@@ -11,6 +11,7 @@ entire history of the project is available through SVN.
 --- 2007-11-XX  Release 7.11.0                                     ---
 ----------------------------------------------------------------------
 
+* fixed browser-based mged help on Mac OS X - Sean Morrison
 * added rest of BRL-CAD's geometry converters for Windows - Bob Parker
 * added more missing framebuffer tools to Windows port - Bob Parker
 * rtwizard enhancments for ghosting and display - Bob Parker
