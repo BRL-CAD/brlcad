@@ -103,10 +103,6 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat;f90;for;f;fpp"
 			>
 			<File
-				RelativePath="..\..\..\src\other\tk\generic\tkStubImg.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\src\other\tk\generic\tkStubLib.c"
 				>
 			</File>
