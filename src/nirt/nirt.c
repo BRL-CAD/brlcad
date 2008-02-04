@@ -291,7 +291,7 @@ static void run_scripts (struct bu_list *sl)
 	    interact(READING_STRING, cp);
 	    break;
 	case READING_FILE:
-	    if ((fPtr = fopen(cp, "r")) == NULL) {
+	    if ((fPtr = fopen(cp, "rb")) == NULL) {
 		bu_log("Cannot open script file '%s'\n", cp);
 	    } else {
 		interact(READING_FILE, fPtr);
