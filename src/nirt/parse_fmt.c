@@ -44,7 +44,7 @@
 
 
 /* The table of output values */
-const outval ValTab[] = {
+outval ValTab[] = {
     { 0, VTI_LITERAL },
     { "x_orig", VTI_X_ORIG, OIT_FLOAT },
     { "y_orig", VTI_Y_ORIG, OIT_FLOAT },
@@ -534,12 +534,12 @@ fopenrc(void)
     FILE	*fPtr;
     int len;
 
-    if ((fPtr = fopen(DEF_RCF_NAME, "r")) == NULL) {
+    if ((fPtr = fopen(DEF_RCF_NAME, "rb")) == NULL) {
 	if ((home = getenv("HOME")) != NULL) {
 	    len = strlen(home) + strlen(DEF_RCF_NAME) + 2;
 	    rc_file_name = bu_malloc(len, "rc_file_name");
 	    snprintf(rc_file_name, len, "%s/%s", home, DEF_RCF_NAME);
-	    fPtr = fopen(rc_file_name, "r");
+	    fPtr = fopen(rc_file_name, "rb");
 	}
     }
     return (fPtr);
@@ -746,7 +746,7 @@ dump_state(const char *buffer, com_table *ctp)
     int		f;
     outitem	*oip;		/* Pointer into list of output items */
 
-    if ((sfPtr = fopen(sf_name, "w")) == NULL) {
+    if ((sfPtr = fopen(sf_name, "wb")) == NULL) {
 	fprintf(stderr, "Cannot open statefile '%s'\n", sf_name);
 	return;
     }
@@ -790,7 +790,7 @@ load_state(char *buffer, com_table *ctp)
 {
     FILE	*sfPtr;
 
-    if ((sfPtr = fopen(sf_name, "r")) == NULL) {
+    if ((sfPtr = fopen(sf_name, "rb")) == NULL) {
 	fprintf(stderr, "Cannot open statefile '%s'\n", sf_name);
 	return;
     }
