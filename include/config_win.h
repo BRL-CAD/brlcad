@@ -32,6 +32,9 @@
 #ifndef IGNORE_CONFIG_H
 #if defined(_WIN32)
 
+#define __STDC__ 1
+#define USE_PROTOTYPES 1
+
 /* XXX - should not rely on config_win.h providing these headers. */
 #include <windows.h>
 #include <fcntl.h>
@@ -92,9 +95,6 @@
 #define HAVE_SBRK 1
 #define sbrk(i) (NULL)
 
-/* #define __STDC__ 1 */
-#define USE_PROTOTYPES		1
-
 /*
  * functions declared in io.h
  */
@@ -107,7 +107,9 @@
 #define creat _creat
 #define dup _dup
 #define dup2 _dup2
+#if 0
 #define eof _eof
+#endif
 /* #define filelength _filelength */
 #define isatty _isatty
 #define locking _locking
@@ -154,7 +156,11 @@
  * types
  */
 
+#if 0
 typedef _off_t off_t;
+#else
+#define off_t _off_t
+#endif
 typedef int pid_t;
 typedef int socklen_t;
 typedef unsigned char uint8_t;
