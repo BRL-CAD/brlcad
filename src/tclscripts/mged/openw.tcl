@@ -58,11 +58,9 @@ if {![info exists mged_default(tran_factor)]} {
 	set mged_default(tran_factor) 0.01
 }
 
-if {![info exists mged_default(html_dir)]} {
-    set mged_default(html_dir) [file normalize [bu_brlcad_data "html/manuals/mged"]]
-    if {![file exists $mged_default(html_dir)]} {
-	set mged_default(html_dir) [file normalize [bu_brlcad_data "doc/html/manuals/mged"]]
-    }
+set mged_default(html_dir) [file normalize [bu_brlcad_data "html/manuals/mged"]]
+if {![file exists $mged_default(html_dir)]} {
+    set mged_default(html_dir) [file normalize [bu_brlcad_data "doc/html/manuals/mged"]]
 }
 
 if {[info exists env(MGED_HTML_DIR)]} {
@@ -220,7 +218,7 @@ if {![info exists mged_browser]} {
 					break;
 				} elseif { ($::tcl_platform(os) == "Darwin") && [file exists $path/open] } {
 					set mged_browser $path/open
-					break
+				    	break;
 				}
 			}
 		}
@@ -2080,11 +2078,11 @@ hoc_register_menu_data "ViewRing" "Add View" "Add View"\
 	{ see_also "apropos" } }
 
 	if {$tcl_platform(os) == "Windows NT"} {
-		set web_cmd "exec \$mged_browser \
-			\$mged_html_dir/index.html &"
+		set web_cmd "exec \$mged_browser \$mged_html_dir/index.html &"
+	} elseif {$tcl_platform(os) == "Darwin"} {
+		set web_cmd "exec \$mged_browser \$mged_html_dir/index.html"
 	} else {
-		set web_cmd "exec \$mged_browser -display $screen \
-			\$mged_html_dir/index.html 2> /dev/null &"
+		set web_cmd "exec \$mged_browser -display $screen \$mged_html_dir/index.html 2> /dev/null &"
 	}
 
 	.$id.menubar.help add command -label "Manual" -underline 0 -command $web_cmd
