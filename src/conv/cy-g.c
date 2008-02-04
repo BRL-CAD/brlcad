@@ -42,30 +42,51 @@
 
 
 #define LINE_LEN 256
+#define CY_DATA "CY_DATA"
 
 static const char usage[] = "Usage:\n\tcy-g input_laser_scan_file.cy output_brlcad_file.g\n";
 
 int
 main(int argc, char **argv)
 {
-    FILE *infp;
-    struct rt_wdb *outfp;
-    char line[LINE_LEN];
-    char name[LINE_LEN];
-    char *cptr;
-    int rshift=5;
-    int lgshift=0;
-    int nlg=512, nlt=256;
-    int x, y;
-    fastf_t delta_z=0;
-    fastf_t delta_angle;
-    fastf_t angle=0.0;
-    fastf_t *sins, *coss;
-    fastf_t **curves;
-    fastf_t *ptr;
-    int first_non_zero=30000;
-    int last_non_zero=(-1);
-    int new_last=0;
+    FILE *infp = NULL;
+    struct rt_wdb *outfp = NULL;
+
+    char *cptr = NULL;
+    char line[LINE_LEN] = {0};
+    char name[LINE_LEN] = {0};
+    char date[LINE_LEN] = {0};
+    char space[LINE_LEN] = {0};
+    char color[LINE_LEN] = {0};
+
+    int x = 0;
+    int y = 0;
+    int nlg = 512;
+    int nlt = 256;
+    int lgshift = 0;
+    int rshift = 5;
+    int rmax = 0;
+    int rmin = 0;
+    int lgincr = 0;
+    int lgmin = 0;
+    int lgmax = 0;
+    int ltincr = 0;
+    int ltmin = 0;
+    int ltmax = 0;
+    int first_non_zero = 30000;
+    int last_non_zero = -1;
+    int new_last = 0;
+
+    fastf_t delta_z = 0.0;
+    fastf_t delta_angle = 0.0;
+    fastf_t angle = 0.0;
+    fastf_t scale = 1000.0;
+    fastf_t rprop = 100.0;
+
+    fastf_t *sins = NULL;
+    fastf_t *coss = NULL;
+    fastf_t **curves = NULL;
+    fastf_t *ptr = NULL;
     
     if (argc != 3) {
 	bu_exit(1, "%s", usage);
@@ -96,7 +117,7 @@ main(int argc, char **argv)
     bu_log("%s\n", line);
 
     /* initialize some values */
-    snprintf(name, sizeof(name), "DATA");
+    snprintf(name, sizeof(name), CY_DATA);
 
     /* read ASCII header section */
     while (1) {
@@ -109,53 +130,80 @@ main(int argc, char **argv)
 	}
 
 	if (strncmp("DATA", line, 4) == 0) {
+	    /* start of the scan data */
 
 	    bu_log("Processing DATA\n");
 	    break;
 
 	} else if (strncmp("NAME", line, 4) == 0) {
+	    /* name of the scan */
 
 	    cptr = strchr(line, '=');
 	    if (!cptr) {
 		bu_exit(1, "Error parsing NAME line: %s\n", line);
 	    }
-	    cptr++;
 
-	    snprintf(name, sizeof(name), "%s", cptr);
-	    bu_log("NAME=%s\n", name);
+	    snprintf(name, sizeof(name), "%s", ++cptr);
+
+	    if (strlen(name) <= 0) {
+		bu_log("Encountered empty NAME, using \"%s\" as object name\n", CY_DATA);
+		snprintf(name, sizeof(name), "%s", CY_DATA);
+	    } else {
+		db5_update_attribute("_GLOBAL", "NAME", cptr, outfp->dbip);
+		bu_log("NAME=%s\n", name);
+	    }
 
 	} else if (strncmp("DATE", line, 4) == 0) {
+	    /* date the scan was performed */
 
 	    cptr = strchr(line, '=');
 	    if (!cptr) {
 		bu_exit(1, "Error parsing DATE line: %s\n", line);
 	    }
-	    ++cptr;
 
-	    db5_update_attribute("_GLOBAL", "DATE", cptr, outfp->dbip);
-	    bu_log("DATE=%s\n", cptr);
+	    snprintf(date, sizeof(date), "%s", ++cptr);
+	    if (strlen(date) <= 0) {
+		bu_log("Encountered empty DATE, ignoring\n");
+	    } else {
+		db5_update_attribute("_GLOBAL", "DATE", cptr, outfp->dbip);
+		bu_log("DATE=%s\n", date);
+	    }
 
 	} else if (strncmp("SPACE", line, 5) == 0) {
-
-	    if (strstr(line, "CYLINDRICAL") == 0) {
-		bu_log("Encountered %s\n", line);
-		bu_exit(1, "%s can only handle cylindrical scans right now\n", argv[0]);
-	    }
-
-	    db5_update_attribute("_GLOBAL", "SPACE", "CYLINDRICAL", outfp->dbip);
-	    bu_log("%s\n", line);
-
-	} else if (strncmp("COLOR", line, 4) == 0) {
+	    /* what kind of scan */
 
 	    cptr = strchr(line, '=');
 	    if (!cptr) {
-		bu_exit(1, "Error parsing DATE line: %s\n", line);
+		bu_exit(1, "Error parsing SPACE line: %s\n", line);
 	    }
-	    ++cptr;
 
-	    db5_update_attribute("_GLOBAL", "DATE", cptr, outfp->dbip);
+	    snprintf(space, sizeof(date), "%s", ++cptr);
+	    db5_update_attribute("_GLOBAL", "SPACE", cptr, outfp->dbip);
+	    bu_log("SPACE=%s\n", space);
+
+	    if (strcmp(space, "CYLINDRICAL") != 0) {
+		bu_log("Encountered SPACE=%s\n", space);
+		bu_exit(1, "%s only supports CYLINDRICAL scans\n", argv[0]);
+	    }
+
+	} else if (strncmp("COLOR", line, 4) == 0) {
+	    /* color space */
+
+	    cptr = strchr(line, '=');
+	    if (!cptr) {
+		bu_exit(1, "Error parsing COLOR line: %s\n", line);
+	    }
+
+	    snprintf(color, sizeof(date), "%s", ++cptr);
+	    db5_update_attribute("_GLOBAL", "COLOR", cptr, outfp->dbip);
+	    bu_log("COLOR=%s (ignored)\n", color);
+
+	    if (strcmp(color, "SGI") != 0) {
+		bu_log("Encountered unknown COLOR, ignoring\n");
+	    }
 
 	} else if (strncmp("NLG", line, 3) == 0) {
+	    /* number of longitude values */
 
 	    cptr = strchr(line, '=');
 	    if (!cptr) {
@@ -167,6 +215,7 @@ main(int argc, char **argv)
 	    bu_log("NLG=%d\n", nlg);
 
 	} else if (strncmp("NLT", line, 3) == 0) {
+	    /* number of latitude values */
 
 	    cptr = strchr(line, '=');
 	    if (!cptr) {
@@ -175,99 +224,106 @@ main(int argc, char **argv)
 
 	    nlt = atoi(++cptr);
 	    db5_update_attribute("_GLOBAL", "NLT", cptr, outfp->dbip);
-	    bu_log("NLT=%d\n",nlt);
+	    bu_log("NLT=%d\n", nlt);
 
 	} else if (strncmp("LGINCR", line, 6) == 0) {
+	    /* longitude increment */
 
 	    cptr = strchr(line, '=');
 	    if (!cptr) {
 		bu_exit(1, "Error parsing LGINCR line: %s\n", line);
 	    }
-	    ++cptr;
 
+	    lgincr = atoi(++cptr);
 	    db5_update_attribute("_GLOBAL", "LGINCR", cptr, outfp->dbip);
-	    bu_log("LGINCR=%s (ignored)\n", cptr);
+	    bu_log("LGINCR=%d (ignored)\n", lgincr);
 
 	} else if (strncmp("LGMIN", line, 5) == 0) {
+	    /* minimum longitude */
 
 	    cptr = strchr(line, '=');
 	    if (!cptr) {
 		bu_exit(1, "Error parsing LGMIN line: %s\n", line);
 	    }
-	    ++cptr;
 
+	    lgmin = atoi(++cptr);
 	    db5_update_attribute("_GLOBAL", "LGMIN", cptr, outfp->dbip);
-	    bu_log("LGMIN=%s (ignored)\n", cptr);
+	    bu_log("LGMIN=%d (ignored)\n", lgmin);
 
 	} else if (strncmp("LGMAX", line, 5) == 0) {
+	    /* maximum longitude */
 
 	    cptr = strchr(line, '=');
 	    if (!cptr) {
 		bu_exit(1, "Error parsing LGMAX line: %s\n", line);
 	    }
-	    ++cptr;
 
+	    lgmax = atoi(++cptr);
 	    db5_update_attribute("_GLOBAL", "LGMAX", cptr, outfp->dbip);
-	    bu_log("LGMAX=%s (ignored)\n", cptr);
+	    bu_log("LGMAX=%d (ignored)\n", lgmax);
 
 	} else if (strncmp("LTINCR", line, 6) == 0) {
-	    int tmp;
+	    /* latitude increment */
 
 	    cptr = strchr(line, '=');
 	    if (!cptr) {
 		bu_exit(1, "Error parsing LTINCR line: %s\n", line);
 	    }
 
-	    tmp = atoi(++cptr);
-	    delta_z = (fastf_t)(tmp)/1000.0;
+	    ltincr = atoi(++cptr);
 	    db5_update_attribute("_GLOBAL", "LTINCR", cptr, outfp->dbip);
-	    bu_log("LTINCR=%d\n", tmp);
+	    bu_log("LTINCR=%d\n", ltincr);
 
 	} else if (strncmp("LTMIN", line, 5) == 0) {
+	    /* minimum latitude */
 
 	    cptr = strchr(line, '=');
 	    if (!cptr) {
 		bu_exit(1, "Error parsing LTMIN line: %s\n", line);
 	    }
-	    ++cptr;
 
+	    ltmin = atoi(++cptr);
 	    db5_update_attribute("_GLOBAL", "LTMIN", cptr, outfp->dbip);
-	    bu_log("LTMIN=%s (ignored)\n", cptr);
+	    bu_log("LTMIN=%d (ignored)\n", ltmin);
 
 	} else if (strncmp("LTMAX", line, 5) == 0) {
+	    /* maximum latitude */
 
 	    cptr = strchr(line, '=');
 	    if (!cptr) {
 		bu_exit(1, "Error parsing LTMAX line: %s\n", line);
 	    }
-	    ++cptr;
 
+	    ltmax = atoi(++cptr);
 	    db5_update_attribute("_GLOBAL", "LTMAX", cptr, outfp->dbip);
-	    bu_log("LTMAX=%s (ignored)\n", cptr);
+	    bu_log("LTMAX=%d (ignored)\n", ltmax);
 
 	} else if (strncmp("RMIN", line, 4) == 0) {
+	    /* minimum radius */
 
 	    cptr = strchr(line, '=');
 	    if (!cptr) {
 		bu_exit(1, "Error parsing RMIN line: %s\n", line);
 	    }
-	    ++cptr;
 
+	    rmin = atoi(++cptr);
 	    db5_update_attribute("_GLOBAL", "RMIN", cptr, outfp->dbip);
-	    bu_log("RMIN=%s (ignored)\n", cptr);
+	    bu_log("RMIN=%d (ignored)\n", rmin);
 
 	} else if (strncmp("RMAX", line, 4) == 0) {
+	    /* maximum radius */
 
 	    cptr = strchr(line, '=');
 	    if (!cptr) {
 		bu_exit(1, "Error parsing RMAX line: %s\n", line);
 	    }
-	    ++cptr;
 
+	    rmax = atoi(++cptr);
 	    db5_update_attribute("_GLOBAL", "RMAX", cptr, outfp->dbip);
-	    bu_log("RMAX=%s (ignored)\n", cptr);
+	    bu_log("RMAX=%d (ignored)\n", rmax);
 
 	} else if (strncmp("RSHIFT", line, 6) == 0) {
+	    /* radius left shift (scale radius values by 2^RSHIFT) */
 
 	    cptr = strchr(line, '=');
 	    if (!cptr) {
@@ -279,6 +335,7 @@ main(int argc, char **argv)
 	    bu_log("RSHIFT=%d\n", rshift);
 
 	} else if (strncmp("LGSHIFT", line, 6) == 0) {
+	    /* longitude left shift (scale longitude values 2^LGSHIFT) */
 
 	    cptr = strchr(line, '=');
 	    if (!cptr) {
@@ -290,32 +347,36 @@ main(int argc, char **argv)
 	    bu_log("LGSHIFT=%d (ignored)\n", lgshift);
 
 	} else if (strncmp("SCALE", line, 5) == 0) {
+	    /* scan value scaling factor */
 
 	    cptr = strchr(line, '=');
 	    if (!cptr) {
 		bu_exit(1, "Error parsing SCALE line: %s\n", line);
 	    }
-	    ++cptr;
 
+	    scale = atof(++cptr);
 	    db5_update_attribute("_GLOBAL", "SCALE", cptr, outfp->dbip);
-	    bu_log("SCALE=%s (ignored)\n", cptr);
+	    bu_log("SCALE=%lf\n", scale);
 
 	} else if (strncmp("RPROP", line, 5) == 0) {
+	    /* radius scaling factor */
 
 	    cptr = strchr(line, '=');
 	    if (!cptr) {
 		bu_exit(1, "Error parsing RPROP line: %s\n", line);
 	    }
-	    ++cptr;
 
+	    rprop = atof(++cptr);
 	    db5_update_attribute("_GLOBAL", "RPROP", cptr, outfp->dbip);
-	    bu_log("RPROP=%s (ignored)\n", cptr);
+	    bu_log("RPROP=%lf\n", rprop);
 
 	} else {
-	    bu_log("IGNORING: %s\n", line);
+	    bu_log("UNKNOWN HEADER LINE: %s (skipping)\n", line);
 	}
     }
 
+
+    delta_z = (fastf_t)(ltincr)/scale;
 
     /* calculate angle between longitudinal measurements */
     delta_angle = bn_twopi/(fastf_t)nlg;
@@ -358,7 +419,7 @@ main(int argc, char **argv)
 		if (y < first_non_zero)
 		    first_non_zero = y;
 		radius = (long)(r) << rshift;
-		rad = (fastf_t)radius/1000.0;
+		rad = (fastf_t)radius/rprop;
 		if (y > last_non_zero)
 		    last_non_zero = y;
 	    }
