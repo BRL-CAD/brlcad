@@ -32,9 +32,6 @@
  *    bu_bomb		Called during unexpected fatal errors.
  *    bu_exit		Causes termination of the application.
  *
- *  @author -
- *    Michael John Muuss
- *    Christopher Sean Morrison
  */
 
 #include "common.h"
@@ -44,6 +41,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <stdarg.h>
+#include <fcntl.h>
 
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
