@@ -498,7 +498,7 @@ BU_EXPORT BU_EXTERN(int bu_cv_htonul,
 /**@{*/
 
 struct bu_list {
-    long		magic;		/**< @brief Magic # for mem id/check */
+    unsigned long	magic;		/**< @brief Magic # for mem id/check */
     struct bu_list	*forw;		/**< @brief "forward", "next" */
     struct bu_list	*back;		/**< @brief "back", "last" */
 };
@@ -929,7 +929,7 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
  * @brief histogram support
  */
 struct bu_hist  {
-    long		magic;		/**< @brief magic # for id/check  */
+    unsigned long	magic;		/**< @brief magic # for id/check  */
     fastf_t		hg_min;		/**< @brief minimum value  */
     fastf_t		hg_max;		/**< @brief maximum value  */
     fastf_t		hg_clumpsize;	/**< @brief (max-min+1)/nbins+1  */
@@ -1117,11 +1117,11 @@ struct bu_attribute_value_pair {
  *  freed.
  */
 struct bu_attribute_value_set {
-	long				magic;
+    unsigned long		magic;
     unsigned int		count;	/**< @brief # valid entries in avp  */
     unsigned int		max;	/**< @brief # allocated slots in avp  */
-	genptr_t			readonly_min;
-	genptr_t			readonly_max;
+    genptr_t			readonly_min;
+    genptr_t			readonly_max;
     struct bu_attribute_value_pair	*avp;	/**< @brief array[max]  */
 };
 #define BU_AVS_MAGIC		0x41765321	/* AvS! */
@@ -1149,11 +1149,11 @@ struct bu_attribute_value_set {
  *  Variable Length Strings: bu_vls support
  */
 struct bu_vls  {
-	long	vls_magic;
-    char	*vls_str;	/**< @brief Dynamic memory for buffer  */
+    unsigned long	vls_magic;
+    char		*vls_str;	/**< @brief Dynamic memory for buffer  */
     int	vls_offset;	/**< @brief Offset into vls_str where data is good  */
     int	vls_len;	/**< @brief Length, not counting the null  */
-	int	vls_max;
+    int	vls_max;
 };
 #define BU_VLS_MAGIC		0x89333bbb
 #define BU_CK_VLS(_vp)		BU_CKMAG(_vp, BU_VLS_MAGIC, "bu_vls")
@@ -1190,7 +1190,7 @@ BU_EXPORT extern jmp_buf	bu_jmpbuf;			/* for BU_SETJMP() */
  */
 
 struct bu_mro {
-	long		magic;
+	unsigned long	magic;
 	struct bu_vls	string_rep;
 	char		long_rep_is_valid;
 	long		long_rep;
@@ -1419,9 +1419,9 @@ struct bu_structparse {
  * structure or other block of arbitrary data.
  */
 struct bu_external  {
-	long	ext_magic;
-	long	ext_nbytes;
-	genptr_t ext_buf;
+    unsigned long	ext_magic;
+    long	ext_nbytes;
+    genptr_t ext_buf;
 };
 #define BU_EXTERNAL_MAGIC	0x768dbbd0
 #define BU_INIT_EXTERNAL(_p)	{(_p)->ext_magic = BU_EXTERNAL_MAGIC; \
@@ -1438,8 +1438,8 @@ struct bu_external  {
 
 struct bu_color
 {
-    long	buc_magic;
-    fastf_t	buc_rgb[3];
+    unsigned long buc_magic;
+    fastf_t buc_rgb[3];
 };
 #define	BU_COLOR_MAGIC		0x6275636c
 #define	BU_COLOR_NULL		((struct bu_color *) 0)
@@ -1504,7 +1504,7 @@ struct bu_rb_list
 typedef struct
 {
     /* CLASS I - Applications may read directly. */
-    long	 	rbt_magic;	  /**< @brief  Magic no. for integrity check */
+    unsigned long 	rbt_magic;	  /**< @brief  Magic no. for integrity check */
     int			rbt_nm_nodes;	  /**< @brief  Number of nodes */
     /* CLASS II - Applications may read/write directly. */
     void		(*rbt_print)();	  /**< @brief  Data pretty-print function */
@@ -1547,7 +1547,7 @@ typedef struct
  */
 struct bu_rb_package
 {
-    long		rbp_magic;	/**< @brief Magic no. for integrity check  */
+    unsigned long	rbp_magic;	/**< @brief Magic no. for integrity check  */
     struct bu_rb_node	**rbp_node;	/**< @brief Containing nodes  */
     struct bu_rb_list	*rbp_list_pos;	/**< @brief Place in the list of all pkgs.  */
     void		*rbp_data;	/**< @brief Application data  */
@@ -1566,7 +1566,7 @@ struct bu_rb_package
  */
 struct bu_rb_node
 {
-    long		rbn_magic;	/**< @brief Magic no. for integrity check  */
+    unsigned long	rbn_magic;	/**< @brief Magic no. for integrity check  */
     bu_rb_tree		*rbn_tree;	/**< @brief Tree containing this node  */
     struct bu_rb_node	**rbn_parent;	/**< @brief Parents  */
     struct bu_rb_node	**rbn_left;	/**< @brief Left subtrees  */
@@ -1890,7 +1890,7 @@ BU_EXPORT BU_EXTERN(void bu_ck_list,
 BU_EXPORT BU_EXTERN(void bu_ck_list_magic,
 		    (const struct bu_list *hd,
 		     const char *str,
-		     const long magic));
+		     const unsigned long magic));
 
 /** @} */
 /** @addtogroup bu_log */
@@ -1934,7 +1934,7 @@ BU_EXPORT BU_EXTERN(void bu_flog, (FILE *, char *, ... )) __BU_ATTR_FORMAT23;
 
 /* magic.c */
 BU_EXPORT BU_EXTERN(const char *bu_identify_magic,
-		    (long magic));
+		    (unsigned long magic));
 
 /** @} */
 /** @addtogroup malloc */
@@ -2469,11 +2469,11 @@ BU_EXPORT BU_EXTERN(void bu_observer_free,
 /* The presence of Tcl_Interp as an arg prevents giving arg list */
 BU_EXPORT BU_EXTERN(void bu_badmagic_tcl,
 		    (Tcl_Interp	*interp,
-		     const unsigned long	*ptr,
-		     unsigned long	magic,
+		     const unsigned long *ptr,
+		     unsigned long magic,
 		     const char	*str,
 		     const char	*file,
-		     int	line));
+		     int line));
 
 BU_EXPORT BU_EXTERN(void bu_structparse_get_terse_form,
 		    (Tcl_Interp	*interp,
@@ -2665,7 +2665,7 @@ BU_EXPORT BU_EXTERN(void bu_mro_free,
 
 /* hash.c */
 struct bu_hash_entry {
-	long magic;
+	unsigned long magic;
 	unsigned char *key;
 	unsigned char *value;
 	int key_len;
@@ -2673,7 +2673,7 @@ struct bu_hash_entry {
 };
 
 struct bu_hash_tbl {
-	long magic;
+	unsigned long magic;
 	unsigned long mask;
 	unsigned long num_lists;
 	unsigned long num_entries;
@@ -2681,7 +2681,7 @@ struct bu_hash_tbl {
 };
 
 struct bu_hash_record {
-	long magic;
+	unsigned long magic;
 	struct bu_hash_tbl *tbl;
 	unsigned long index;
 	struct bu_hash_entry *hsh_entry;
@@ -2752,7 +2752,7 @@ enum {
 #define BU_IMAGE_FILE_MAGIC 0x6269666d /* bifm */
 
 struct bu_image_file {
-    int magic;
+    unsigned long magic;
     char *filename;
     int fd;
     int format;			/* BU_IMAGE_* */
