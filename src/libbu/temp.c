@@ -38,6 +38,9 @@
 #ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h>
 #endif
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 
 #include "machine.h"
 #include "bu.h"
@@ -216,7 +219,7 @@ mkstemp(char *file_template)
 @endcode
  */
 FILE *
-bu_temp_file(char *filepath, int len)
+bu_temp_file(char *filepath, size_t len)
 {
     FILE *fp = NULL;
     int i;
