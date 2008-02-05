@@ -39,7 +39,7 @@
 .\"
 .\".\".\"
 .SH NAME
-cy-g \- CY Translator (Cyberware Digitizer Data to BRL-CAD)
+cy-g \- Cyberware Echo file format to BRL-CAD converter
 .SH SYNOPSIS
 .B cy-g
 input_cy_file database.g
@@ -49,11 +49,11 @@ converts the specified
 .I input_cy_file
 to a BRL-CAD
 .I database.g
-file. The input data must be Cyberware digitizer data in cylindrical scan format.
-The result of the conversion is a single
+file. The input data must be Cyberware digitizer data in the Cyberware
+Echo (.cy) file format.  Support is limited to scans in cylindrical
+scan format.  The result of the conversion is a single
 .I ARS
-(Arbitrary faceted solid) solid named
-.I laser_scan.
+(Arbitrary faceted solid) solid.
 .SH EXAMPLE
 .RS
 $ \|\fIcy-g \|sample.cy \|sample.g\fP
