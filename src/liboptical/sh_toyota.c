@@ -203,7 +203,7 @@ toyota_setup(register struct region *rp, struct bu_vls *matparm, char **dtp, str
 
 	/* Read in reflectance data. */
 	bu_strlcpy(mfile, tp->material, sizeof(mfile));
-	if ((fp = fopen(mfile, "r")) == NULL) {
+	if ((fp = fopen(mfile, "rb")) == NULL) {
 		perror(mfile);
 		bu_log("reflectance: cannot open %s for reading.", mfile);
 		bu_bomb("");
@@ -1842,7 +1842,7 @@ absorp_coeff(fastf_t lambda, char *material)
 
 	/* Do nothing, user has his own absorption data. */
 	bu_strlcpy(mfile, material, sizeof(mfile));
-	if ((fp = fopen(mfile, "r")) == NULL) {
+	if ((fp = fopen(mfile, "rb")) == NULL) {
 		fprintf(stderr,
 			"absorp_coeff: cannot open %s for reading.", mfile);
 		bu_bomb("");

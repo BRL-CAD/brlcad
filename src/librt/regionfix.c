@@ -94,7 +94,8 @@ rt_regionfix(struct rt_i *rtip)
 		file = bu_vls_addr(&name);
 	}
 
-	if ( (fp = fopen( file, "r" )) == NULL )	 {
+	fp = fopen( file, "rb" );
+	if ( fp == NULL ) {
 		if ( rtip->rti_region_fix_file ) perror(file);
 		bu_vls_free(&name);
 		return;

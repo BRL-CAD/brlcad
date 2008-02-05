@@ -300,7 +300,7 @@ ps_open(Tcl_Interp *interp, int argc, char **argv)
 	bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars.priv_vars)->fname, argv[0]);
 
 	if ((((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp =
-	     fopen(bu_vls_addr(&((struct ps_vars *)dmp->dm_vars.priv_vars)->fname), "w")) == NULL) {
+	     fopen(bu_vls_addr(&((struct ps_vars *)dmp->dm_vars.priv_vars)->fname), "wb")) == NULL) {
 		Tcl_AppendStringsToObj(obj, "f_ps: Error opening file - ",
 				 ((struct ps_vars *)dmp->dm_vars.priv_vars)->fname,
 				 "\n", (char *)NULL);

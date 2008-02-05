@@ -341,7 +341,7 @@ plot_ray_img(struct application	*ap,
 
     sprintf(name, "bbd_%d.pl", plot_num++);
     bu_log("plotting %s\n", name);
-    if ((pfd = fopen(name, "w")) == (FILE *)NULL) {
+    if ((pfd = fopen(name, "wb")) == (FILE *)NULL) {
 	bu_bomb("can't open plot file\n");
     }
 

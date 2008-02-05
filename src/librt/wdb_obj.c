@@ -9256,7 +9256,7 @@ wdb_binary_cmd(struct rt_wdb	*wdbp,
 	return TCL_OK;
 
     } else if ( output_mode ) {
-	FILE *fd;
+	FILE *fp;
 
 	file_name = *argv;
 
@@ -9279,56 +9279,53 @@ wdb_binary_cmd(struct rt_wdb	*wdbp,
 	    return TCL_ERROR;
 	}
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
-	if ( (fd=fopen( file_name, "w+b")) == NULL ) {
-#else
-	    if ( (fd=fopen( file_name, "w+")) == NULL ) {
-#endif
-		Tcl_AppendResult(interp, "Error: cannot open file ", file_name,
-				 " for writing", (char *)NULL );
-		return TCL_ERROR;
-	    }
-
-	    if ( rt_db_get_internal( &intern, dp, wdbp->dbip, NULL,
-				    &rt_uniresource ) < 0 ) {
-		Tcl_AppendResult(interp, "Error reading ", dp->d_namep,
-				 " from database", (char *)NULL );
-		fclose( fd );
-		return TCL_ERROR;
-	    }
-
-	    RT_CK_DB_INTERNAL( &intern );
-
-	    bip = (struct rt_binunif_internal *)intern.idb_ptr;
-	    if ( bip->count < 1 ) {
-		Tcl_AppendResult(interp, obj_name, " has no contents", (char *)NULL );
-		fclose( fd );
-		rt_db_free_internal( &intern, &rt_uniresource );
-		return TCL_ERROR;
-	    }
-
-	    if ( fwrite( bip->u.int8, bip->count * db5_type_sizeof_h_binu( bip->type ),
-			1, fd) != 1 ) {
-		Tcl_AppendResult(interp, "Error writing contents to file",
-				 (char *)NULL );
-		fclose( fd );
-		rt_db_free_internal( &intern, &rt_uniresource );
-		return TCL_ERROR;
-	    }
-
-	    fclose( fd );
-	    rt_db_free_internal( &intern, &rt_uniresource );
-	    return TCL_OK;
-	} else {
-	    bu_vls_init(&vls);
-	    bu_vls_printf(&vls, "helplib_alias wdb_binary %s", cname);
-	    Tcl_Eval(interp, bu_vls_addr(&vls));
-	    bu_vls_free(&vls);
+	fp = fopen( file_name, "w+b");
+	if (fp == NULL) {
+	    Tcl_AppendResult(interp, "Error: cannot open file ", file_name,
+			     " for writing", (char *)NULL );
 	    return TCL_ERROR;
 	}
 
-	/* should never get here */
-	/* return TCL_ERROR; */
+	if ( rt_db_get_internal( &intern, dp, wdbp->dbip, NULL,
+				 &rt_uniresource ) < 0 ) {
+	    Tcl_AppendResult(interp, "Error reading ", dp->d_namep,
+			     " from database", (char *)NULL );
+	    fclose( fp );
+	    return TCL_ERROR;
+	}
+
+	RT_CK_DB_INTERNAL( &intern );
+
+	bip = (struct rt_binunif_internal *)intern.idb_ptr;
+	if ( bip->count < 1 ) {
+	    Tcl_AppendResult(interp, obj_name, " has no contents", (char *)NULL );
+	    fclose( fp );
+	    rt_db_free_internal( &intern, &rt_uniresource );
+	    return TCL_ERROR;
+	}
+	
+	if ( fwrite( bip->u.int8, bip->count * db5_type_sizeof_h_binu( bip->type ),
+		     1, fp) != 1 ) {
+	    Tcl_AppendResult(interp, "Error writing contents to file",
+			     (char *)NULL );
+	    fclose( fp );
+	    rt_db_free_internal( &intern, &rt_uniresource );
+	    return TCL_ERROR;
+	}
+	
+	fclose( fp );
+	rt_db_free_internal( &intern, &rt_uniresource );
+	return TCL_OK;
+    } else {
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "helplib_alias wdb_binary %s", cname);
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
+    }
+
+    /* should never get here */
+    /* return TCL_ERROR; */
 }
 
 /**

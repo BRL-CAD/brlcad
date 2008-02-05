@@ -223,7 +223,7 @@ parsArgv(int argc, register char **argv)
 			    );
 			bu_exit( 1, NULL );
 		}
-		if ( (fp = fopen( argv[bu_optind], "w" )) == NULL )
+		if ( (fp = fopen( argv[bu_optind], "wb" )) == NULL )
 		{
 			perror(argv[bu_optind]);
 			return	0;

@@ -318,7 +318,7 @@ void tienet_master_connect_slaves(fd_set *readfds)
   int				daemon_socket, port, slave_ver_key;
 
 
-  fh = fopen(tienet_master_list, "r");
+  fh = fopen(tienet_master_list, "rb");
   if (fh)
   {
     while (!feof(fh))

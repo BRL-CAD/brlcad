@@ -134,9 +134,9 @@ int main(int argc, char **argv)
 	(void)scanf("%25s", errfile);
 
 	/*  Open files.  */
-	fpw = fopen(outfile, "w");
-	fpw1 = fopen(errfile, "w");
-	fpw2 = fopen(lwxfile, "w");
+	fpw = fopen(outfile, "wt");
+	fpw1 = fopen(errfile, "wt");
+	fpw2 = fopen(lwxfile, "wt");
 
 	/*  Write info to output & error file.  */
 	(void)fprintf(fpw, "\n.g file used:  %s\n", argv[1]);

@@ -44,6 +44,7 @@
 #include "umath.h"
 #include "texture.h"
 #include "tienet.h"
+#include "bu.h"
 
 #define K *1024
 #define M *1024 K
@@ -206,7 +207,7 @@ void common_pack_prop(void** app_data, int* app_ind, const char* filename) {
   }
 
   prop_num = 0;
-  while (fgets(line, ADRT_NAME_SIZE, fh)) {
+  while (bu_fgets(line, ADRT_NAME_SIZE, fh)) {
     token = strtok(line, ",");
     if (!strcmp("properties", token)) {
 
@@ -300,7 +301,7 @@ void common_pack_texture(void** app_data, int* app_ind, const char* filename) {
   }
 
 
-  while (fgets(line, 256, fh)) {
+  while (bu_fgets(line, 256, fh)) {
     token = strtok(line, ",");
     if (!strcmp("texture", token)) {
       token = strtok(NULL, ",");

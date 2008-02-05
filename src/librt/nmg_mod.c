@@ -2446,7 +2446,7 @@ nmg_cut_loop(struct vertexuse *vu1, struct vertexuse *vu2)
 
 			(void)sprintf(name, "Before_cutloop%d.pl", ++i);
 			bu_log("nmg_cut_loop() plotting %s\n", name);
-			if ((fd = fopen(name, "w")) == (FILE *)NULL) {
+			if ((fd = fopen(name, "wb")) == (FILE *)NULL) {
 				(void)perror(name);
 				bu_bomb("unable to open file for writing");
 			}
@@ -2518,7 +2518,7 @@ nmg_cut_loop(struct vertexuse *vu1, struct vertexuse *vu2)
 
 		(void)sprintf(name, "After_cutloop%d.pl", i);
 		bu_log("nmg_cut_loop() plotting %s\n", name);
-		if ((fd = fopen(name, "w")) == (FILE *)NULL) {
+		if ((fd = fopen(name, "wb")) == (FILE *)NULL) {
 			(void)perror(name);
 			bu_bomb("unable to open file for writing");
 		}

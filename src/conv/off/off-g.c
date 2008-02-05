@@ -170,7 +170,7 @@ int off2nmg(FILE *fpin, struct rt_wdb *fpout)
 	if (strlen(geom_fname) < (unsigned)1)
 		bu_exit(1, "ERROR: no geometry filename given");
 
-	if ((fgeom = fopen(geom_fname, "r")) == NULL) {
+	if ((fgeom = fopen(geom_fname, "rb")) == NULL) {
 		bu_exit(1, "off2nmg: cannot open %s (geometry description) for reading\n",
 			geom_fname);
 	}

@@ -48,7 +48,7 @@ int loadfont(char *ff)
 	struct header	lochdr;
 
 	/* Open the file and read in the header information. */
-	if ( (newff = fopen( ff, "r" )) == NULL )
+	if ( (newff = fopen( ff, "rb" )) == NULL )
 		{
 		MvCursor( 1, 4 );
 		prnt_Debug( "Error opening font file '%s'", ff );

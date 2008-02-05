@@ -149,7 +149,7 @@ get_args(int argc, register char **argv)
 				argv[bu_optind] );
 			bu_exit( 1, NULL );
 		}
-		if ( (outfp = fopen( argv[bu_optind], "w" )) == NULL )  {
+		if ( (outfp = fopen( argv[bu_optind], "wb" )) == NULL )  {
 			perror(argv[bu_optind]);
 			return	0;
 		}

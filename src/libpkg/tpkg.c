@@ -241,7 +241,7 @@ run_client(const char *server, int port, const char *file)
     buffer = bu_calloc(TPKG_BUFSIZE, 1, "buffer allocation");
 
     /* make sure the file can be opened */
-    fp = fopen(file, "r");
+    fp = fopen(file, "rb");
     if (fp == NULL) {
 	bu_log("Unable to open %s\n", file);
 	bu_bomb("Unable to read file\n");

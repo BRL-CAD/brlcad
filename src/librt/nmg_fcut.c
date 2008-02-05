@@ -1576,7 +1576,7 @@ nmg_special_wedge_processing(struct nmg_vu_stuff *vs, int start, int end, double
 			nmg_pr_lu_briefly(lu,0);
 		}
 		sprintf(buf, "wedge%d.pl", num++);
-		fp = fopen(buf, "w");
+		fp = fopen(buf, "wb");
 		rt_plot_vlblock( fp, vbp );
 		fclose(fp);
 		bu_log("wrote %s\n", buf);
@@ -4108,7 +4108,7 @@ nmg_face_state_transition(struct nmg_ray_state *rs, int pos, int multi, int othe
 		nmg_pl_comb_fu( 0, 1, lu->up.fu_p );
 		nmg_plot_lu_ray(lu, rs->vu[0], rs->vu[rs->nvu-1], rs->left );
 		{
-			FILE	*fp = fopen("error.pl", "w");
+			FILE	*fp = fopen("error.pl", "wb");
 			nmg_pl_m(fp, nmg_find_model((long *)lu));
 			fclose(fp);
 			bu_log("wrote error.pl\n");

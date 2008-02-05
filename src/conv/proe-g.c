@@ -1272,7 +1272,7 @@ main(int argc, char **argv)
 	rt_init_resource( &rt_uniresource, 0, NULL );
 
 	input_file = argv[bu_optind];
-	if ( (fd_in=fopen( input_file, "r")) == NULL )
+	if ( (fd_in=fopen( input_file, "rb")) == NULL )
 	{
 		bu_log( "Cannot open input file (%s)\n", input_file );
 		perror( argv[0] );

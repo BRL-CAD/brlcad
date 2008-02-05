@@ -115,7 +115,7 @@ int PvsV(struct trap *p, struct trap *v)
 
 
 static struct pt2d *find_pt2d(struct bu_list *tbl2d, struct vertexuse *vu);
-static FILE *plot_fd;
+static FILE *plot_fp;
 
 static void
 print_2d_eu(char *s, struct edgeuse *eu, struct bu_list *tbl2d)
@@ -192,7 +192,7 @@ static void
 nmg_tri_plfu(struct faceuse *fu, struct bu_list *tbl2d)
 {
 	static int file_number=0;
-	FILE *fd;
+	FILE *fp;
 	char name[25];
 	char buf[80];
 	long *b;
@@ -205,7 +205,8 @@ nmg_tri_plfu(struct faceuse *fu, struct bu_list *tbl2d)
 	NMG_CK_FACEUSE(fu);
 
 	sprintf(name, "tri%02d.pl", file_number++);
-	if ((fd=fopen(name, "w")) == (FILE *)NULL) {
+	fp=fopen(name, "wb");
+	if (fp == (FILE *)NULL) {
 		perror(name);
 		abort();
 	}
@@ -214,8 +215,8 @@ nmg_tri_plfu(struct faceuse *fu, struct bu_list *tbl2d)
 	b = (long *)bu_calloc( fu->s_p->r_p->m_p->maxindex,
 		sizeof(long), "bit vec"),
 
-	pl_erase(fd);
-	pd_3space(fd,
+	pl_erase(fp);
+	pd_3space(fp,
 		fu->f_p->min_pt[0]-1.0,
 		fu->f_p->min_pt[1]-1.0,
 		fu->f_p->min_pt[2]-1.0,
@@ -223,7 +224,7 @@ nmg_tri_plfu(struct faceuse *fu, struct bu_list *tbl2d)
 		fu->f_p->max_pt[1]+1.0,
 		fu->f_p->max_pt[2]+1.0);
 
-	nmg_pl_fu(fd, fu, b, 255, 255, 255);
+	nmg_pl_fu(fp, fu, b, 255, 255, 255);
 
 	for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 		NMG_CK_LOOPUSE(lu);
@@ -231,13 +232,13 @@ nmg_tri_plfu(struct faceuse *fu, struct bu_list *tbl2d)
 			bu_log("Empty child list for loopuse %s %d\n", __FILE__, __LINE__);
 		} else if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
 			vu = BU_LIST_FIRST(vertexuse, &lu->down_hd);
-			pdv_3move(fd, vu->v_p->vg_p->coord);
+			pdv_3move(fp, vu->v_p->vg_p->coord);
 			if ( (p=find_pt2d(tbl2d, vu)) ) {
 				sprintf(buf, "%g, %g",
 					p->coord[0], p->coord[1]);
-				pl_label(fd, buf);
+				pl_label(fp, buf);
 			} else
-				pl_label(fd, "X, Y (no 2D coords)");
+				pl_label(fp, "X, Y (no 2D coords)");
 
 		} else {
 			eu = BU_LIST_FIRST(edgeuse, &lu->down_hd);
@@ -245,20 +246,20 @@ nmg_tri_plfu(struct faceuse *fu, struct bu_list *tbl2d)
 
 			for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 				if ( (p=find_pt2d(tbl2d, eu->vu_p)) ) {
-					pdv_3move(fd, eu->vu_p->v_p->vg_p->coord);
+					pdv_3move(fp, eu->vu_p->v_p->vg_p->coord);
 
 					sprintf(buf, "%g, %g",
 						p->coord[0], p->coord[1]);
-					pl_label(fd, buf);
+					pl_label(fp, buf);
 				} else
-					pl_label(fd, "X, Y (no 2D coords)");
+					pl_label(fp, "X, Y (no 2D coords)");
 			}
 		}
 	}
 
 
 	bu_free((char *)b, "plot table");
-	fclose(fd);
+	fclose(fp);
 }
 
 
@@ -1683,7 +1684,7 @@ cut_mapped_loop(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const i
 			char name[32];
 			static int iter=0;
 			vect_t cut_vect, cut_start, cut_end;
-			FILE *fd;
+			FILE *fp;
 
 			bu_log("parent loops are not the same %s %d\n",
 				__FILE__, __LINE__);
@@ -1694,7 +1695,8 @@ cut_mapped_loop(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const i
 				V3ARGS(p2->vu_p->v_p->vg_p->coord) );
 
 			sprintf(name, "bad_tri_cut%d.g", iter++);
-			if ((fd=fopen("bad_tri_cut.pl", "w")) == (FILE *)NULL)
+			fp=fopen("bad_tri_cut.pl", "wb");
+			if (fp == (FILE *)NULL)
 				bu_bomb("cut_mapped_loop() goodnight 2\n");
 
 			VSUB2(cut_vect, p2->vu_p->v_p->vg_p->coord, p1->vu_p->v_p->vg_p->coord);
@@ -1703,14 +1705,14 @@ cut_mapped_loop(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const i
 			/* vector starts before start point by 25% */
 			VJOIN1(cut_start, p1->vu_p->v_p->vg_p->coord, -0.25, cut_vect);
 
-			pl_color(fd, 100, 100, 100);
-			pdv_3line(fd, cut_start, p1->vu_p->v_p->vg_p->coord);
-			pl_color(fd, 255, 255, 255);
-			pdv_3line(fd, p1->vu_p->v_p->vg_p->coord, p2->vu_p->v_p->vg_p->coord);
-			pl_color(fd, 100, 100, 100);
-			pdv_3line(fd, p2->vu_p->v_p->vg_p->coord, cut_end);
+			pl_color(fp, 100, 100, 100);
+			pdv_3line(fp, cut_start, p1->vu_p->v_p->vg_p->coord);
+			pl_color(fp, 255, 255, 255);
+			pdv_3line(fp, p1->vu_p->v_p->vg_p->coord, p2->vu_p->v_p->vg_p->coord);
+			pl_color(fp, 100, 100, 100);
+			pdv_3line(fp, p2->vu_p->v_p->vg_p->coord, cut_end);
 
-			(void)fclose(fd);
+			(void)fclose(fp);
 			nmg_stash_model_to_file( "bad_tri_cut.g",
 						 nmg_find_model(&p1->vu_p->l.magic), buf );
 
@@ -1718,9 +1720,9 @@ cut_mapped_loop(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const i
 		}
 	}
 
-	if (plot_fd) {
-		pl_color(plot_fd, V3ARGS(color) );
-		pdv_3line(plot_fd, p1->coord, p2->coord);
+	if (plot_fp) {
+		pl_color(plot_fp, V3ARGS(color) );
+		pdv_3line(plot_fp, p1->coord, p2->coord);
 	}
 
 	old_lu = p1->vu_p->up.eu_p->up.lu_p;
@@ -1928,9 +1930,9 @@ join_mapped_loops(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const
 	}
 
 	vu = nmg_join_2loops(vu1, vu2);
-	if (plot_fd) {
-		pl_color(plot_fd, V3ARGS(color) );
-		pdv_3line(plot_fd, p1->coord,  p2->coord);
+	if (plot_fp) {
+		pl_color(plot_fp, V3ARGS(color) );
+		pdv_3line(plot_fp, p1->coord,  p2->coord);
 	}
 
 
@@ -2397,12 +2399,15 @@ nmg_plot_flat_face(struct faceuse *fu, struct bu_list *tbl2d)
 	NMG_CK_TBL2D(tbl2d);
 	NMG_CK_FACEUSE(fu);
 
-	if (!plot_fd && (plot_fd = fopen("triplot.pl", "w")) == (FILE *)NULL) {
-		bu_log( "cannot open triplot.pl\n");
+	if (!plot_fp) {
+	    plot_fp = fopen("triplot.pl", "wb");
+	    if (plot_fp == (FILE *)NULL) {
+		bu_bomb("ERROR: cannot open triplot.pl\n");
+	    }
 	}
 
-	pl_erase(plot_fd);
-	pd_3space(plot_fd,
+	pl_erase(plot_fp);
+	pd_3space(plot_fp,
 		fu->f_p->min_pt[0]-1.0,
 		fu->f_p->min_pt[1]-1.0,
 		fu->f_p->min_pt[2]-1.0,
@@ -2419,14 +2424,14 @@ nmg_plot_flat_face(struct faceuse *fu, struct bu_list *tbl2d)
 				bu_log( "lone vert @ %g %g %g\n",
 					V3ARGS(vu->v_p->vg_p->coord) );
 
-			pl_color(plot_fd, 200, 200, 100);
+			pl_color(plot_fp, 200, 200, 100);
 
 			if (! (p=find_pt2d(tbl2d, vu)) )
 				bu_bomb("didn't find vertexuse in list!\n");
 
-			pdv_3point(plot_fd, p->coord);
+			pdv_3point(plot_fp, p->coord);
 			sprintf(buf, "%g, %g", p->coord[0], p->coord[1]);
-			pl_label(plot_fd, buf);
+			pl_label(plot_fp, buf);
 
 			continue;
 		}
@@ -2454,12 +2459,12 @@ nmg_plot_flat_face(struct faceuse *fu, struct bu_list *tbl2d)
 			VSCALE(pt, pt, 0.80);
 			VADD2(pt, p->coord, pt);
 
-			pl_color(plot_fd, 200, 200, 200);
-			pdv_3line(plot_fd, p->coord, pt);
-			pd_3move(plot_fd, V3ARGS(p->coord));
+			pl_color(plot_fp, 200, 200, 200);
+			pdv_3line(plot_fp, p->coord, pt);
+			pd_3move(plot_fp, V3ARGS(p->coord));
 
 			sprintf(buf, "%g, %g", p->coord[0], p->coord[1]);
-			pl_label(plot_fd, buf);
+			pl_label(plot_fp, buf);
 		}
 	}
 }

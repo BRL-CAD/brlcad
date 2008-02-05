@@ -674,15 +674,12 @@ main( int argc, char *argv[] )
 	}
 
 	if ( use_part_name_hash ) {
-		if ( (fd_parts=fopen( part_name_file, "r" )) == NULL ) {
+		if ( (fd_parts=fopen( part_name_file, "rb" )) == NULL ) {
 			bu_log( "Cannot open part name file (%s)\n", part_name_file );
 			perror( argv[0] );
 			bu_exit( 1, NULL );
 		}
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
-		setmode(fileno(fd_parts), _O_BINARY);
-#endif
 		create_name_hash( fd_parts );
 	}
 

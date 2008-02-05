@@ -626,7 +626,7 @@ nmg_s_radial_check( sB, tol );
 	if (nmg_check_closed_shell(sA, tol)) {
 		if (rt_g.NMG_debug & DEBUG_BOOL &&
 		    rt_g.NMG_debug & DEBUG_PLOTEM) {
-			if ((fp=fopen("Unclosed.pl", "w")) != (FILE *)NULL) {
+			if ((fp=fopen("Unclosed.pl", "wb")) != (FILE *)NULL) {
 				bu_log("Plotting unclosed NMG shell\n");
 				nmg_pl_s(fp, sA);
 				fclose(fp);
@@ -641,7 +641,7 @@ nmg_s_radial_check( sB, tol );
 	if (nmg_check_closed_shell(sB, tol)) {
 		if (rt_g.NMG_debug & DEBUG_BOOL &&
 		    rt_g.NMG_debug & DEBUG_PLOTEM) {
-			if ((fp=fopen("Unclosed.pl", "w")) != (FILE *)NULL) {
+			if ((fp=fopen("Unclosed.pl", "wb")) != (FILE *)NULL) {
 				bu_log("Plotting unclosed NMG shell\n");
 				nmg_pl_s(fp, sB);
 				fclose(fp);
@@ -654,7 +654,7 @@ nmg_s_radial_check( sB, tol );
 
 
 	if (rt_g.NMG_debug & DEBUG_BOOL && rt_g.NMG_debug & DEBUG_PLOTEM) {
-		if ((fp=fopen("shellA.pl", "w")) == (FILE*)NULL) {
+		if ((fp=fopen("shellA.pl", "wb")) == (FILE*)NULL) {
 			(void)perror("shellA.pl");
 			bu_bomb("unable to open shellA.pl for writing");
 		}
@@ -662,7 +662,7 @@ nmg_s_radial_check( sB, tol );
 		nmg_pl_s(fp, sA);
 		fclose(fp);
 
-		if ((fp=fopen("shellB.pl", "w")) == (FILE*)NULL) {
+		if ((fp=fopen("shellB.pl", "wb")) == (FILE*)NULL) {
 			(void)perror("shellB.pl");
 			bu_bomb("unable to open shellB.pl for writing");
 		}
@@ -868,7 +868,7 @@ nmg_s_radial_check( sB, tol );
 
 	if (rt_g.NMG_debug & DEBUG_BOOL) {
 		if (rt_g.NMG_debug & DEBUG_PLOTEM) {
-			if ((fd = fopen("Cracked_Shells.pl", "w")) == (FILE *)NULL) {
+			if ((fd = fopen("Cracked_Shells.pl", "wb")) == (FILE *)NULL) {
 				(void)perror("Cracked_Shells");
 				bu_bomb("unable to open Cracked_Shells.pl for writing");
 			}

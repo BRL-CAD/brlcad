@@ -416,7 +416,7 @@ static bool get_OK(void)
     int		c;
     FILE	*infp;
 
-    if ((infp = fopen("/dev/tty", "r")) == NULL)
+    if ((infp = fopen("/dev/tty", "rb")) == NULL)
     {
 	bu_log("Cannot open /dev/tty for reading\n");
 	return (false);
@@ -937,7 +937,7 @@ static bool pars_Argv (register int argc, register char **argv)
 
     if (argc == bu_optind + 1)
     {
-	if ((filep = fopen(argv[bu_optind], "r")) == NULL)
+	if ((filep = fopen(argv[bu_optind], "rb")) == NULL)
 	{
 	    bu_log("Cannot open file '%s'\n", argv[bu_optind]);
 	    return (false);

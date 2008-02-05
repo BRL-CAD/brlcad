@@ -234,7 +234,7 @@ spm_load(spm_map_t *mapp, char *filename)
 		fp = stdin;
 	else  {
 		bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
-		fp = fopen( filename, "r" );
+		fp = fopen( filename, "rb" );
 		bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
 		if ( fp == NULL )
 			return( -1 );
@@ -274,7 +274,7 @@ spm_save(spm_map_t *mapp, char *filename)
 		fp = stdout;
 	else  {
 		bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
-		fp = fopen( filename, "w" );			/* res_syscall */
+		fp = fopen( filename, "wb" );			/* res_syscall */
 		bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
 		if ( fp == NULL )
 			return( -1 );
@@ -327,7 +327,7 @@ spm_px_load(spm_map_t *mapp, char *filename, int nx, int ny)
 		fp = stdin;
 	else  {
 		bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
-		fp = fopen( filename, "r" );
+		fp = fopen( filename, "rb" );
 		bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
 		if ( fp == NULL )
 			return( -1 );
@@ -395,7 +395,7 @@ spm_px_save(spm_map_t *mapp, char *filename, int nx, int ny)
 		fp = stdout;
 	else  {
 		bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
-		fp = fopen( filename, "w" );
+		fp = fopen( filename, "wb" );
 		bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
 		if ( fp == NULL )
 			return( -1 );

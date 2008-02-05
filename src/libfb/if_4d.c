@@ -1396,7 +1396,7 @@ FBIO	*ifp;
 	(void)signal( SIGALRM, SIG_IGN );
 
 	/* Line up at the "complaints window", just in case... */
-	fp = fopen("/dev/console", "w");
+	fp = fopen("/dev/console", "wb");
 
 	kill(SGI(ifp)->mi_parent, SIGUSR1);	/* zap the lurking parent */
 

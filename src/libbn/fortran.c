@@ -116,7 +116,7 @@ F(ifdopn, IFDOPN)( plotfp, fd )
 FILE	**plotfp;
 int	*fd;
 {
-	if ( (*plotfp = fdopen(*fd, "w")) == NULL )
+	if ( (*plotfp = fdopen(*fd, "wb")) == NULL )
 		perror("IFDOPN/fdopen");
 }
 
@@ -133,7 +133,7 @@ char	*name;
 	char	buf[128];
 
 	pl_strncpy( buf, name, (int)sizeof(buf) );
-	if ( (*plotfp = fopen(buf, "w")) == NULL )
+	if ( (*plotfp = fopen(buf, "wb")) == NULL )
 		perror(buf);
 }
 

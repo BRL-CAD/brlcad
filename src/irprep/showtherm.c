@@ -185,7 +185,7 @@ int main(int argc, char **argv)
       /*  Open generic file and read number of regions if necessary.  */
       if (itype == 1)
 	{
-	  fpr = fopen(filetmp, "r");
+	  fpr = fopen(filetmp, "rb");
 	  (void)bu_fgets(line, 150, fpr);
 	  (void)sscanf(line, "%d", &numreg);
 	}
@@ -213,7 +213,7 @@ int main(int argc, char **argv)
       /*  Now read the temperature file.  */
       if (itype == 0)	/*  PRISM file.  */
 	{							/*  START # 2  */
-	  fpr = fopen(filetmp, "r");
+	  fpr = fopen(filetmp, "rb");
 
 	  /*  Read date and print out.  */
 	  (void)bu_fgets(line, 150, fpr);
@@ -332,7 +332,7 @@ int main(int argc, char **argv)
       (void)fclose(fpr);
 
       /*  Read the region # & name file.  */
-      fpr = fopen(filernn, "r");
+      fpr = fopen(filernn, "rb");
       (void)printf("Region # & name file opened.\n");
       (void)fflush(stdout);
       numreg_read = 1;
@@ -479,7 +479,7 @@ int main(int argc, char **argv)
       ap.a_resource = 0;		/*  Address of resource struct.  */
 
       /*  Open output file.  */
-      fpw = fopen(fileout, "w");
+      fpw = fopen(fileout, "wb");
 
       /*  User enters grid size.  */
       (void)fprintf(stderr, "Enter grid size.\n\t");

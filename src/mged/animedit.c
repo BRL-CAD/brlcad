@@ -1897,7 +1897,7 @@ f_jload(int argc, char **argv)
 	bu_vls_init(instring);
 
 	while (argc) {
-		fip = fopen(*argv, "r");
+		fip = fopen(*argv, "rb");
 		if (fip == NULL) {
 		  Tcl_AppendResult(interp, "joint load: unable to open '", *argv,
 				   "'.\n", (char *)NULL);
@@ -2034,7 +2034,7 @@ f_jsave(int argc, char **argv)
 	  Tcl_AppendResult(interp, "joint save: missing file name", (char *)NULL);
 	  return CMD_BAD;
 	}
-	fop = fopen(*argv, "w");
+	fop = fopen(*argv, "wb");
 	if (!fop) {
 	  Tcl_AppendResult(interp, "joint save: unable to open '", *argv,
 			   "' for writing.\n", (char *)NULL);

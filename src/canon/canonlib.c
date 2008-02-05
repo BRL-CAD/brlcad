@@ -449,7 +449,7 @@ ipu_put_image(struct dsreq *dsp,
     u_char *scanline, *red, *grn, *blu, *r, *g, *b;
     struct timeval tp1, tp2;
     struct timezone tz;
-    FILE *fd;
+    FILE *fp;
 
     saved_debug = dsdebug;
     dsdebug = 0;
@@ -458,7 +458,7 @@ ipu_put_image(struct dsreq *dsp,
 	fprintf(stderr, "ipu_put_image(id:%d, w:%d  h:%d)\n",
 		id, w, h);
 	if (dsdebug)
-	    fd = fopen("put_image", "w");
+	    fp = fopen("put_image", "wb");
     }
     bytes_per_line = w * ipu_bytes_per_pixel;
     lines_per_buf = BUFSIZE / bytes_per_line;
@@ -515,7 +515,7 @@ ipu_put_image(struct dsreq *dsp,
 	}
 
 	if (dsdebug)
-	    fwrite(ipubuf, bytes_per_buf, 1, fd);
+	    fwrite(ipubuf, bytes_per_buf, 1, fp);
 
 	/* send buffer to IPU */
 	ipu_put_image_frag(dsp, id, 0, h-img_line, w, lines_per_buf, ipubuf);
@@ -554,7 +554,7 @@ ipu_put_image(struct dsreq *dsp,
 	}
 
 	if (dsdebug)
-	    fwrite(ipubuf, orphan_lines*bytes_per_line, 1, fd);
+	    fwrite(ipubuf, orphan_lines*bytes_per_line, 1, fp);
 
 	/* send buffer to IPU
 	 * y offset is implicitly 0
@@ -573,7 +573,7 @@ ipu_put_image(struct dsreq *dsp,
     }
 
     if (dsdebug)
-	fclose(fd);
+	fclose(fp);
     free(ipubuf);
     dsdebug = saved_debug;
 }

@@ -190,13 +190,13 @@ main(int argc, char *argv[])
 
     if (strcmp(argv[0], "-") == 0 ) {
 	f1 = stdin;
-    } else if ((f1 = fopen(argv[0], "r")) == NULL)  {
+    } else if ((f1 = fopen(argv[0], "rb")) == NULL)  {
 	perror(argv[1]);
 	exit(FILE_ERROR);
     }
     if ((argc < 2) || (strcmp(argv[1], "-") == 0)) {
 	f2 = stdin;
-    } else if ((f2 = fopen(argv[1], "r")) == NULL) {
+    } else if ((f2 = fopen(argv[1], "rb")) == NULL) {
 	perror(argv[1]);
 	exit(FILE_ERROR);
     }

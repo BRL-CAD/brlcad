@@ -751,7 +751,7 @@ get_densities_from_file(char *name)
     struct stat sb;
     char *buf;
 
-    if ((fp=fopen(name, "r")) == (FILE *)NULL) {
+    if ((fp=fopen(name, "rb")) == (FILE *)NULL) {
 	perror(name);
 	return 1;
     }
@@ -1504,7 +1504,7 @@ options_prep(struct rt_i *rtip, vect_t span)
 	} else
 	    bu_log("volume tolerance   %g\n", volume_tolerance);
 	if ( plot_files )
-	    if ( (plot_volume=fopen(name, "w")) == (FILE *)NULL)
+	    if ( (plot_volume=fopen(name, "wb")) == (FILE *)NULL)
 		bu_exit(EXIT_FAILURE, "cannot open plot file %s\n", name);
     }
     if (analysis_flags & ANALYSIS_WEIGHT) {
@@ -1526,7 +1526,7 @@ options_prep(struct rt_i *rtip, vect_t span)
     if (analysis_flags & ANALYSIS_GAP) {
 	char *name = "gaps.pl";
 	if ( plot_files )
-	    if ( (plot_gaps=fopen(name, "w")) == (FILE *)NULL)
+	    if ( (plot_gaps=fopen(name, "wb")) == (FILE *)NULL)
 		bu_exit(EXIT_FAILURE, "cannot open plot file %s\n", name);
     }
     if (analysis_flags & ANALYSIS_OVERLAPS) {
@@ -1534,7 +1534,7 @@ options_prep(struct rt_i *rtip, vect_t span)
 	    bu_log("overlap tolerance to %g\n", overlap_tolerance);
 	if ( plot_files ) {
 	    char *name = "overlaps.pl";
-	    if ((plot_overlaps=fopen(name, "w")) == (FILE *)NULL)
+	    if ((plot_overlaps=fopen(name, "wb")) == (FILE *)NULL)
 		bu_exit(EXIT_FAILURE, "cannot open plot file %s\n", name);
 	}
     }
@@ -1546,14 +1546,14 @@ options_prep(struct rt_i *rtip, vect_t span)
     if ( analysis_flags & ANALYSIS_ADJ_AIR)
 	if (plot_files) {
 	    char *name = "adj_air.pl";
-	    if ( (plot_adjair=fopen(name, "w")) == (FILE *)NULL)
+	    if ( (plot_adjair=fopen(name, "wb")) == (FILE *)NULL)
 		bu_exit(EXIT_FAILURE, "cannot open plot file %s\n", name);
 	}
 
     if ( analysis_flags & ANALYSIS_EXP_AIR)
 	if (plot_files) {
 	    char *name = "exp_air.pl";
-	    if ( (plot_expair=fopen(name, "w")) == (FILE *)NULL)
+	    if ( (plot_expair=fopen(name, "wb")) == (FILE *)NULL)
 		bu_exit(EXIT_FAILURE, "cannot open plot file %s\n", name);
 	}
 

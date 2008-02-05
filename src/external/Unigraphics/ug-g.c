@@ -5772,7 +5772,7 @@ main(int ac, char *av[])
     }
 
     if ( use_part_name_hash ) {
-	    if ( (fd_parts=fopen( part_name_file, "r" )) == NULL ) {
+	    if ( (fd_parts=fopen( part_name_file, "rb" )) == NULL ) {
 		    perror( av[0] );
 		    bu_exit(1, "Cannot open part name file (%s)\n", part_name_file );
 	    }

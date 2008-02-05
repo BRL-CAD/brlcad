@@ -151,7 +151,7 @@ db_open(const char *name, const char *mode)
 	/* old method */
 	if ( (dbip->dbi_fd = open( name, O_RDWR )) < 0 )
 	    goto fail;
-	if ( (dbip->dbi_fp = fdopen( dbip->dbi_fd, "r+w" )) == NULL )
+	if ( (dbip->dbi_fp = fdopen( dbip->dbi_fd, "r+b" )) == NULL )
 	    goto fail;
 #endif
 

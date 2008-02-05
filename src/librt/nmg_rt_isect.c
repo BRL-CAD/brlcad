@@ -134,14 +134,15 @@ static int plot_file_number=0;
 static void
 nmg_rt_isect_plfu(struct faceuse *fu, fastf_t *pt, fastf_t *plane_pt)
 {
-	FILE *fd;
+	FILE *fp;
 	char name[25];
 	long *b;
 
 	NMG_CK_FACEUSE(fu);
 
 	sprintf(name, "ray%02d.pl", plot_file_number++);
-	if ((fd=fopen(name, "w")) == (FILE *)NULL) {
+	fp=fopen(name, "wb");
+	if (fp == (FILE *)NULL) {
 		perror(name);
 		bu_bomb("unable to open file for writing");
 	}
@@ -150,8 +151,8 @@ nmg_rt_isect_plfu(struct faceuse *fu, fastf_t *pt, fastf_t *plane_pt)
 	b = (long *)bu_calloc( fu->s_p->r_p->m_p->maxindex,
 		sizeof(long), "bit vec"),
 
-	pl_erase(fd);
-	pd_3space(fd,
+	pl_erase(fp);
+	pd_3space(fp,
 		fu->f_p->min_pt[0]-1.0,
 		fu->f_p->min_pt[1]-1.0,
 		fu->f_p->min_pt[2]-1.0,
@@ -159,19 +160,19 @@ nmg_rt_isect_plfu(struct faceuse *fu, fastf_t *pt, fastf_t *plane_pt)
 		fu->f_p->max_pt[1]+1.0,
 		fu->f_p->max_pt[2]+1.0);
 
-	nmg_pl_fu(fd, fu, b, 255, 255, 255);
+	nmg_pl_fu(fp, fu, b, 255, 255, 255);
 
-	pl_color(fd, 255, 50, 50);
-	pdv_3line(fd, pt, plane_pt);
+	pl_color(fp, 255, 50, 50);
+	pdv_3line(fp, pt, plane_pt);
 
 	bu_free((char *)b, "bit vec");
-	fclose(fd);
+	fclose(fp);
 }
 
 static void
 pleu(struct edgeuse *eu, fastf_t *pt, fastf_t *plane_pt)
 {
-	FILE *fd;
+	FILE *fp;
 	char name[25];
 	long *b;
 	point_t min_pt, max_pt;
@@ -179,7 +180,8 @@ pleu(struct edgeuse *eu, fastf_t *pt, fastf_t *plane_pt)
 	struct model *m;
 
 	sprintf(name, "ray%02d.pl", plot_file_number++);
-	if ((fd=fopen(name, "w")) == (FILE *)NULL) {
+	fp=fopen(name, "wb");
+	if (fp == (FILE *)NULL) {
 		perror(name);
 		bu_bomb("unable to open file for writing");
 	}
@@ -188,7 +190,7 @@ pleu(struct edgeuse *eu, fastf_t *pt, fastf_t *plane_pt)
 	m = nmg_find_model( eu->up.magic_p );
 	b = (long *)bu_calloc( m->maxindex, sizeof(long), "bit vec");
 
-	pl_erase(fd);
+	pl_erase(fp);
 
 	VMOVE(min_pt, eu->vu_p->v_p->vg_p->coord);
 
@@ -200,15 +202,15 @@ pleu(struct edgeuse *eu, fastf_t *pt, fastf_t *plane_pt)
 			max_pt[i] = eu->eumate_p->vu_p->v_p->vg_p->coord[i];
 		}
 	}
-	pd_3space(fd,
+	pd_3space(fp,
 		min_pt[0]-1.0, min_pt[1]-1.0, min_pt[2]-1.0,
 		max_pt[0]+1.0, max_pt[1]+1.0, max_pt[2]+1.0);
 
-	nmg_pl_eu(fd, eu, b, 255, 255, 255);
-	pl_color(fd, 255, 50, 50);
-	pdv_3line(fd, pt, plane_pt);
+	nmg_pl_eu(fp, eu, b, 255, 255, 255);
+	pl_color(fp, 255, 50, 50);
+	pdv_3line(fp, pt, plane_pt);
 	bu_free((char *)b, "bit vec");
-	fclose(fd);
+	fclose(fp);
 }
 static void
 plvu(struct vertexuse *vu)
@@ -580,13 +582,14 @@ static void
 plot_neighborhood(fastf_t *North_Pole, fastf_t *North_pl_pt, fastf_t *North_pca, fastf_t *South_Pole, fastf_t *South_pl_pt, fastf_t *South_pca, fastf_t *pointA, fastf_t *pointB, fastf_t *norm, fastf_t *pt, fastf_t *leftA, fastf_t *leftB)
 {
 	static int plotnum=0;
-	FILE *pfd;
+	FILE *pfp;
 	char name[64];
 	point_t my_pt;
 	vect_t ray;
 
 	sprintf(name, "vert%03d.pl", plotnum++);
-	if ((pfd=fopen(name, "w")) == (FILE *)NULL) {
+	pfp=fopen(name, "wb");
+	if (pfp == (FILE *)NULL) {
 		bu_log("Error opening %s\n", name);
 		return;
 	} else
@@ -594,53 +597,52 @@ plot_neighborhood(fastf_t *North_Pole, fastf_t *North_pl_pt, fastf_t *North_pca,
 
 
 	/* draw the ray */
-	pl_color(pfd, 255, 55, 55);
-	pdv_3line(pfd, North_Pole, South_Pole);
+	pl_color(pfp, 255, 55, 55);
+	pdv_3line(pfp, North_Pole, South_Pole);
 
 	/* draw the area of the face */
-	pl_color(pfd, 55, 255, 55);
-	pdv_3move(pfd, pt);
-	pdv_3cont(pfd, pointA);
-	pdv_3cont(pfd, pointB);
-	pdv_3cont(pfd, pt);
+	pl_color(pfp, 55, 255, 55);
+	pdv_3move(pfp, pt);
+	pdv_3cont(pfp, pointA);
+	pdv_3cont(pfp, pointB);
+	pdv_3cont(pfp, pt);
 
 	/* draw the projections of the pole points */
-	pl_color(pfd, 255, 255, 55);
-	pdv_3line(pfd, North_Pole, North_pl_pt);
+	pl_color(pfp, 255, 255, 55);
+	pdv_3line(pfp, North_Pole, North_pl_pt);
 	if ( ! VEQUAL(North_pca, North_pl_pt) ) {
-		pdv_3line(pfd, North_Pole, North_pca);
-		pdv_3line(pfd, North_pl_pt, North_pca);
+		pdv_3line(pfp, North_Pole, North_pca);
+		pdv_3line(pfp, North_pl_pt, North_pca);
 	}
 	VSUB2(ray, South_Pole, North_Pole);
 	VSCALE(ray, ray, -0.125);
 	VADD2(my_pt, North_Pole, ray);
-	pdv_3move(pfd, my_pt);
-	pl_label(pfd, "N");
+	pdv_3move(pfp, my_pt);
+	pl_label(pfp, "N");
 
-	pl_color(pfd, 55, 255, 255);
-	pdv_3line(pfd, South_Pole, South_pl_pt);
+	pl_color(pfp, 55, 255, 255);
+	pdv_3line(pfp, South_Pole, South_pl_pt);
 	if ( ! VEQUAL(South_pca, South_pl_pt) ) {
-		pdv_3line(pfd, South_Pole, South_pca);
-		pdv_3line(pfd, South_pl_pt, South_pca);
+		pdv_3line(pfp, South_Pole, South_pca);
+		pdv_3line(pfp, South_pl_pt, South_pca);
 	}
 	VREVERSE(ray, ray);
 	VADD2(my_pt, South_Pole, ray);
-	pdv_3move(pfd, my_pt);
-	pl_label(pfd, "S");
+	pdv_3move(pfp, my_pt);
+	pl_label(pfp, "S");
 
-	pl_color(pfd, 128, 128, 128);
+	pl_color(pfp, 128, 128, 128);
 	VADD2(my_pt, pt, norm);
-	pdv_3line(pfd, pt, my_pt);
+	pdv_3line(pfp, pt, my_pt);
 
-	pl_color(pfd, 192, 192, 192);
+	pl_color(pfp, 192, 192, 192);
 	VADD2(my_pt, pointA, leftA);
-	pdv_3line(pfd, pointA, my_pt);
+	pdv_3line(pfp, pointA, my_pt);
 
 	VADD2(my_pt, pointB, leftB);
-	pdv_3line(pfd, pointB, my_pt);
+	pdv_3line(pfp, pointB, my_pt);
 
-
-	fclose(pfd);
+	fclose(pfp);
 }
 
 
@@ -2546,7 +2548,8 @@ nmg_pl_hitmiss_list(const char *str, int num, const struct bu_list *hd, const st
 		return;
 	}
 
-	if ( (fp = fopen(buf, "w")) == (FILE *)NULL )  {
+	fp = fopen(buf, "wb");
+	if ( fp == (FILE *)NULL )  {
 		perror(buf);
 		return;
 	}

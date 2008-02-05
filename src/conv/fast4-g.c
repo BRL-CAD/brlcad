@@ -3422,7 +3422,7 @@ read_fast4_colors(char *color_file)
     int r, g, b;
     struct fast4_color *color;
 
-    if ((fp = fopen(color_file, "r")) == (FILE *)NULL) {
+    if ((fp = fopen(color_file, "rb")) == (FILE *)NULL) {
 	bu_log("Cannot open color file (%s)\n", color_file);
 	return;
     }
@@ -3468,7 +3468,7 @@ main(int argc, char **argv)
 			quiet = 1;
 			break;
 		    case 'm':
-			if ( (fp_muves=fopen( bu_optarg, "w" )) == (FILE *)NULL )
+			if ( (fp_muves=fopen( bu_optarg, "wb" )) == (FILE *)NULL )
 			    {
 				bu_log( "Unable to open MUVES file (%s)\n\tno MUVES file created\n",
 					bu_optarg );
@@ -3513,7 +3513,7 @@ main(int argc, char **argv)
 
     rt_init_resource( &rt_uniresource, 0, NULL );
 
-    if ( (fpin=fopen( argv[bu_optind], "r" )) == (FILE *)NULL )
+    if ( (fpin=fopen( argv[bu_optind], "rb" )) == (FILE *)NULL )
 	{
 	    perror( "fast4-g" );
 	    bu_exit(1, "Cannot open FASTGEN4 file (%s)\n", argv[bu_optind]);
@@ -3527,7 +3527,7 @@ main(int argc, char **argv)
 
     if ( plot_file )
 	{
-	    if ( (fp_plot=fopen( plot_file, "w")) == NULL )
+	    if ( (fp_plot=fopen( plot_file, "wb")) == NULL )
 		{
 		    bu_log( "Cannot open plot file (%s)\n", plot_file );
 		    bu_exit(1, usage);

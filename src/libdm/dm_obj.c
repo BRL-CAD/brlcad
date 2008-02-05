@@ -2962,7 +2962,7 @@ dmo_png_cmd(struct dm_obj	*dmop,
 	return TCL_ERROR;
     }
 
-    if ((fp = fopen(argv[1], "w")) == NULL) {
+    if ((fp = fopen(argv[1], "wb")) == NULL) {
 	Tcl_AppendResult(interp, "png: cannot open \"", argv[1], " for writing\n", (char *)NULL);
 	return TCL_ERROR;
     }

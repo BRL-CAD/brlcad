@@ -129,7 +129,7 @@ print_seg_list(struct seg *seghead, int seg_count, char *s)
 static void
 pl_ray(struct ray_data *rd)
 {
-	FILE *fd;
+	FILE *fp;
 	char name[80];
 	static int plot_file_number=0;
 	struct hitmiss *a_hit;
@@ -141,7 +141,8 @@ pl_ray(struct ray_data *rd)
 	int old_cond = 0;
 
 	sprintf(name, "nmg_ray%02d.pl", plot_file_number++);
-	if ((fd=fopen(name, "w")) == (FILE *)NULL) {
+	fp=fopen(name, "wb");
+	if (fp == (FILE *)NULL) {
 		perror(name);
 		bu_bomb("unable to open file for writing");
 	} else {
@@ -161,42 +162,42 @@ pl_ray(struct ray_data *rd)
 		if (in_state == old_state) {
 			switch (in_state) {
 			case NMG_RAY_STATE_INSIDE:
-				pl_color(fd, 55, 255, 55);
-				pdv_3line(fd, old_point, a_hit->hit.hit_point);
+				pl_color(fp, 55, 255, 55);
+				pdv_3line(fp, old_point, a_hit->hit.hit_point);
 				break;
 			case NMG_RAY_STATE_ON:
-				pl_color(fd, 155, 155, 255);
-				pdv_3line(fd, old_point, a_hit->hit.hit_point);
+				pl_color(fp, 155, 155, 255);
+				pdv_3line(fp, old_point, a_hit->hit.hit_point);
 				break;
 			case NMG_RAY_STATE_OUTSIDE:
-				pl_color(fd, 255, 255, 255);
-				pdv_3line(fd, old_point, a_hit->hit.hit_point);
+				pl_color(fp, 255, 255, 255);
+				pdv_3line(fp, old_point, a_hit->hit.hit_point);
 				break;
 			}
 			old_cond = 0;
 		} else {
 			if (old_cond) {
-				pl_color(fd, 255, 155, 255);
+				pl_color(fp, 255, 155, 255);
 				old_cond = 0;
 			} else {
-				pl_color(fd, 255, 55, 255);
+				pl_color(fp, 255, 55, 255);
 				old_cond = 1;
 			}
-			pdv_3line(fd, old_point, a_hit->hit.hit_point);
+			pdv_3line(fp, old_point, a_hit->hit.hit_point);
 		}
 		VMOVE(old_point, a_hit->hit.hit_point);
 		old_state = out_state;
 	}
 
 	if (old_state == NMG_RAY_STATE_OUTSIDE)
-		pl_color(fd, 255, 255, 255);
+		pl_color(fp, 255, 255, 255);
 	else
-		pl_color(fd, 255, 55, 255);
+		pl_color(fp, 255, 55, 255);
 
 	VADD2(end_point, old_point, rd->rp->r_dir);
-	pdv_3line(fd, old_point, end_point);
+	pdv_3line(fp, old_point, end_point);
 
-	fclose(fd);
+	fclose(fp);
 }
 
 /*

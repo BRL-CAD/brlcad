@@ -782,6 +782,7 @@ fb_ogl_open(FBIO *ifp, char *file, int width, int height)
 
 	signal( SIGUSR1, sigkid);
 
+#if 0
 	if ( (f = fork()) != 0 )  {
 	    /* Parent process */
 	    int k;
@@ -806,6 +807,7 @@ fb_ogl_open(FBIO *ifp, char *file, int width, int height)
 	    return(-1);
 	}
 	/* Child Process falls through */
+#endif
     }
 
     if ( (ifp->if_mode & MODE_3MASK) == MODE_3FULLSCR )  {

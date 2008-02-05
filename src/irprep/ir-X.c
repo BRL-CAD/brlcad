@@ -354,7 +354,7 @@ main(void)
    (void)fflush(stdout);
 
    /*  Open file for reading.  */
-   fpr = fopen(file, "r");
+   fpr = fopen(file, "rb");
 
    /*  Check for non-existant file.  */
    while (fpr == NULL)
@@ -362,7 +362,7 @@ main(void)
 	(void)printf("\nThis file does not exist, please try again.\n");
 	(void)fflush(stdout);
 	(void)scanf("%25s", file);
-	fpr = fopen(file, "r");
+	fpr = fopen(file, "rb");
    }
 
    /*  Read width and height of window.  */
@@ -729,7 +729,7 @@ main(void)
 		if (flag_pix == 1)
 		{					/*  START # 1.  */
 		   /*  Open pix file to be written to.  */
-		   fpw = fopen(file_pix, "w");
+		   fpw = fopen(file_pix, "wb");
 
 		   /*  Write colors to file.  */
 		   for (i=high; i>0; i--)

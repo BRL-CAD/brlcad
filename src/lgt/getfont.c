@@ -60,7 +60,7 @@ get_Font(const char* fontname)
 		bu_strlcpy( fname, fontname, sizeof(fname) );
 
 	/* Open the file and read in the header information. */
-	if ( (newff = fopen( fname, "r" )) == NULL )
+	if ( (newff = fopen( fname, "rb" )) == NULL )
 		{
 		bu_log( "Error opening font file '%s'\n", fname );
 		ffdes = NULL;

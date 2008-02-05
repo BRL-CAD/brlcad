@@ -42,6 +42,7 @@
 
 #include "tie.h"
 #include "umath.h"
+#include "bu.h"
 
 
 int common_anim_read(common_anim_t *anim, const char *frames_file) {
@@ -58,7 +59,7 @@ int common_anim_read(common_anim_t *anim, const char *frames_file) {
   anim->frame_list = NULL;
 
 
-  while (fgets(line, 256, fh)) {
+  while (bu_fgets(line, 256, fh)) {
     token = strtok(line, ",");
 
     if (!strcmp("frame", token)) {

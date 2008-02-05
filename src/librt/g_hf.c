@@ -1987,7 +1987,7 @@ err1:
 		FILE	*fp;
 
 		bu_semaphore_acquire( BU_SEM_SYSCALL );
-		fp = fopen( xip->cfile, "r" );
+		fp = fopen( xip->cfile, "rb" );
 		bu_semaphore_release( BU_SEM_SYSCALL );
 		if ( !fp )  {
 			perror(xip->cfile);

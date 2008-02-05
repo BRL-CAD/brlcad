@@ -188,7 +188,7 @@ int main(int argc, char **argv)
 	  (void)fprintf(stdout, "Enter name of output file (15 char max).  ");
 	  (void)fflush(stdout);
 	  (void)scanf("%15s", filename);
-	  fp3 = fopen(filename, "w");
+	  fp3 = fopen(filename, "wb");
 	}
 
       /*  Which file that has second pass information in it?  */
@@ -304,7 +304,7 @@ int main(int argc, char **argv)
 	}
 
       /*  Read thermal conductivity file.  */
-      fp5 = fopen(filemat, "r");
+      fp5 = fopen(filemat, "rb");
       for (i=0; i<41; i++)
 	{
 	  (void)bu_fgets(line, 151, fp5);
@@ -397,7 +397,7 @@ int main(int argc, char **argv)
       (void)fflush(stdout);
 
       /*  Now open file with second pass information in it.  */
-      fp = fopen(spfile, "r");
+      fp = fopen(spfile, "rb");
       (void)fprintf(stdout, "second pass file opened\n");
       (void)fflush(stdout);
 
@@ -811,7 +811,7 @@ int main(int argc, char **argv)
       /*  Open conductivity file to be used with PRISM if needed.  */
       if (typeout == 0)
 	{
-	  fp1=fopen(confile, "w");
+	  fp1=fopen(confile, "wb");
 	  (void)fprintf(fp1, "Conductivity file for use with PRISM.\n");
 	  (void)fflush(fp1);
 	}
@@ -961,7 +961,7 @@ int main(int argc, char **argv)
       if (typeout == 1)
 	{
 	  /*  Open file.  */
-	  fp6 = fopen(genfile, "w");
+	  fp6 = fopen(genfile, "wb");
 	  (void)printf("Opened generic file.\n");
 	  (void)fflush(stdout);
 
@@ -1018,7 +1018,7 @@ int main(int argc, char **argv)
 
       /*  Open conductivity table file and write information to  */
       /*  it.  All units will be in meters or square meters.  */
-      fp2=fopen(tblfile, "w");
+      fp2=fopen(tblfile, "wb");
       (void)fprintf(fp2, "Conductivity table.  Units are in meters or ");
       (void)fprintf(fp2, "square meters.\n");
 
@@ -1100,7 +1100,7 @@ int main(int argc, char **argv)
       /*------------------------------------------------------------------*/
 
       /*  Open error file.  */
-      fp4 = fopen(fileerr, "w");
+      fp4 = fopen(fileerr, "wb");
 
       /*  Write errors to error file.  */
       (void)fprintf(fp4, "\nERRORS from secpass\n\n");

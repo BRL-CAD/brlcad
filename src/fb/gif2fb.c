@@ -159,7 +159,7 @@ main(int argc, char **argv)
 		fp = stdin;
 	} else {
 		file_name = argv[bu_optind];
-		if ( (fp = fopen(file_name, "r")) == NULL )  {
+		if ( (fp = fopen(file_name, "rb")) == NULL )  {
 			(void)fprintf( stderr,
 			    "%s: cannot open \"%s\" for reading\n", argv[0],
 			    file_name );

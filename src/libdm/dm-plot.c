@@ -242,7 +242,7 @@ plot_open(Tcl_Interp *interp, int argc, char **argv)
 				 "\n", (char *)NULL);
 	} else {
 		if ((((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp =
-		     fopen( bu_vls_addr(&((struct plot_vars *)dmp->dm_vars.priv_vars)->vls), "w" )) == NULL) {
+		     fopen( bu_vls_addr(&((struct plot_vars *)dmp->dm_vars.priv_vars)->vls), "wb" )) == NULL) {
 			perror(bu_vls_addr(&((struct plot_vars *)dmp->dm_vars.priv_vars)->vls));
 			(void)plot_close(dmp);
 			Tcl_SetObjResult(interp, obj);

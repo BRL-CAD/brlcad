@@ -80,11 +80,11 @@ vfont_get(char *font)
 		font = DEFAULT_FONT;
 
 	/* Open the file and read in the header information. */
-	if ( (fp = fopen( font, "r" )) == NULL )  {
+	if ( (fp = fopen( font, "rb" )) == NULL )  {
 		snprintf( fname, FONTNAMESZ, "%s/%s", (char *)bu_brlcad_data("vfont", 0), font );
-		if ( (fp = fopen( fname, "r" )) == NULL )  {
+		if ( (fp = fopen( fname, "rb" )) == NULL )  {
 			snprintf( fname, FONTNAMESZ, "%s/%s", FONTDIR2, font );
-			if ( (fp = fopen( fname, "r" )) == NULL )  {
+			if ( (fp = fopen( fname, "rb" )) == NULL )  {
 				return(VFONT_NULL);
 			}
 		}

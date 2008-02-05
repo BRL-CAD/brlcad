@@ -475,7 +475,7 @@ rt_vol_import(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 	vip->map = (unsigned char *)bu_calloc( 1, nbytes, "vol_import bitmap" );
 
 	bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
-	if ( (fp = fopen(vip->file, "r")) == NULL )  {
+	if ( (fp = fopen(vip->file, "rb")) == NULL )  {
 		perror(vip->file);
 		bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
 		return(-1);
@@ -608,7 +608,7 @@ rt_vol_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	vip->map = (unsigned char *)bu_calloc( 1, nbytes, "vol_import bitmap" );
 
 	bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
-	if ( (fp = fopen(vip->file, "r")) == NULL )  {
+	if ( (fp = fopen(vip->file, "rb")) == NULL )  {
 		perror(vip->file);
 		bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
 		return(-1);

@@ -486,7 +486,7 @@ main(int argc, char **argv)
 	} else {
 		for (; bu_optind < argc; bu_optind++ )  {
 			register FILE *fp;
-			if ( (fp = fopen(argv[bu_optind], "r")) == NULL )  {
+			if ( (fp = fopen(argv[bu_optind], "rb")) == NULL )  {
 				perror(argv[bu_optind]);
 				continue;
 			}

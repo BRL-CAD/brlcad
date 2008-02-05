@@ -121,7 +121,7 @@ points_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, str
 		goto fail;
 
 	/* read in the data */
-	if ((fp = fopen(ptp->pt_file, "r")) == NULL ) {
+	if ((fp = fopen(ptp->pt_file, "rb")) == NULL ) {
 		bu_log("points_setup: can't open \"%s\"\n", ptp->pt_file);
 		goto fail;
 	}

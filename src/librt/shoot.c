@@ -2041,7 +2041,8 @@ rt_plot_cell(const union cutter *cutp, const struct rt_shootray_status *ssp, str
 	ap = ssp->ap;
 
 	sprintf( buf, "cell%d.pl", fnum++ );
-	if ( (fp = fopen( buf, "w" )) == NULL )  {
+	fp = fopen( buf, "wb" );
+	if ( fp == NULL )  {
 		perror(buf);
 	}
 

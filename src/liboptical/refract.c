@@ -182,7 +182,7 @@ rr_render(register struct application *ap,
 		char		name[128];
 		if ( plotfp && plotfp != stdout )  fclose(plotfp);
 		sprintf(name, "rr%d.pl", count++);
-		if ( (plotfp = fopen( name, "w" )) == NULL )  {
+		if ( (plotfp = fopen( name, "wb" )) == NULL )  {
 			perror(name);
 			plotfp = stdout;
 		}

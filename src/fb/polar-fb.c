@@ -747,7 +747,7 @@ LoadNPF (char *FileName, double *Table, int Quantum, double convert, double arc_
     /* Open the file, if necessary */
     if (*FileName == '\0')
 	fPtr = stdin;
-    else if ((fPtr = fopen(FileName, "r")) == NULL)
+    else if ((fPtr = fopen(FileName, "rb")) == NULL)
     {
 	(void) fprintf(stderr, "%s:  Cannot open input file '%s'\n",
 	    ProgName, FileName);

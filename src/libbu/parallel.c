@@ -549,8 +549,8 @@ bu_get_public_cpus(void)
     int	public_cpus = 1;
     FILE	*fp;
 
-    if ( (fp = fopen(PUBLIC_CPUS1, "r")) != NULL ||
-	(fp = fopen(PUBLIC_CPUS2, "r")) != NULL
+    if ( (fp = fopen(PUBLIC_CPUS1, "rb")) != NULL ||
+	(fp = fopen(PUBLIC_CPUS2, "rb")) != NULL
 	)  {
 	(void)fscanf( fp, "%d", &public_cpus );
 	fclose(fp);
@@ -561,8 +561,8 @@ bu_get_public_cpus(void)
 
     (void)unlink(PUBLIC_CPUS1);
     (void)unlink(PUBLIC_CPUS2);
-    if ( (fp = fopen(PUBLIC_CPUS1, "w")) != NULL ||
-	(fp = fopen(PUBLIC_CPUS2, "w")) != NULL
+    if ( (fp = fopen(PUBLIC_CPUS1, "wb")) != NULL ||
+	(fp = fopen(PUBLIC_CPUS2, "wb")) != NULL
 	)  {
 	fprintf(fp, "%d\n", avail_cpus);
 	fchmod(fileno(fp), 0666);

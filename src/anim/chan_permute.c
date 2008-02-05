@@ -100,7 +100,7 @@ main(int argc, char **argv)
 		(x)->i_o = 1;
 		if ( ! strcmp(argv[i], "stdin") )
 		    x->file = stdin;
-		else if ( !(x->file = fopen(argv[i], "r")) )
+		else if ( !(x->file = fopen(argv[i], "rb")) )
 		    fprintf(stderr, "Channel: can't open %s\n", argv[i]);
 	    }
 	    else if (argv[i][1] == 'o') {
@@ -108,7 +108,7 @@ main(int argc, char **argv)
 		(x)->i_o = 0;
 		if ( ! strcmp(argv[i], "stdout") )
 		    x->file = stdout;
-		else if ( !(x->file = fopen(argv[i], "w")) )
+		else if ( !(x->file = fopen(argv[i], "wb")) )
 		    fprintf(stderr, "Channel: can't write to %s\n", argv[i]);
 	    }
 	    else {

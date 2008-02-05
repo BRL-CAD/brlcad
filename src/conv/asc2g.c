@@ -120,9 +120,6 @@ int
 main(int argc, char *argv[])
 {
     char c1[3];
-#ifdef _WIN32
-    _fmode = _O_BINARY;
-#endif
 
     bu_debug = BU_DEBUG_COREDUMP;
 
@@ -131,7 +128,7 @@ main(int argc, char *argv[])
 
     Tcl_FindExecutable(argv[0]);
 
-    ifp = fopen(argv[1], "r");
+    ifp = fopen(argv[1], "rb");
     if ( !ifp )  perror(argv[1]);
 
     ofp = wdb_fopen(argv[2]);

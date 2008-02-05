@@ -135,7 +135,7 @@ get_args(int argc, register char **argv)
 		}
 	}
 	if ( argv[bu_optind] != NULL )  {
-		if ( (infp = fopen( (infile=argv[bu_optind]), "r" )) == NULL )  {
+		if ( (infp = fopen( (infile=argv[bu_optind]), "rb" )) == NULL )  {
 			perror(infile);
 			return	0;
 		}

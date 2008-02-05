@@ -227,7 +227,7 @@ server_ciao(struct pkg_conn *connection, char *buf)
 
     if (DBIP != NULL) {
 	/* uncomment to avoid an in-mem dbip close bug */
-	/* DBIP->dbi_fp = fopen("/dev/null", "r");*/
+	/* DBIP->dbi_fp = fopen("/dev/null", "rb");*/
 	db_close(DBIP);
 	DBIP = NULL;
     }

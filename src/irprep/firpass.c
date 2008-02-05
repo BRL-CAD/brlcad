@@ -268,7 +268,7 @@ int main(int argc, char **argv)
 	  (void)printf("to (15 char max).  ");
 	  (void)fflush(stdout);
 	  (void)scanf("%15s", filename);
-	  fp=fopen(filename, "w");
+	  fp=fopen(filename, "wb");
 	}
 
       /*  Get error file name.  */
@@ -369,7 +369,7 @@ int main(int argc, char **argv)
       (void)fflush(stdout);
 
       /*  Open & read material id file.  */
-      fp4=fopen(fileden, "r");
+      fp4=fopen(fileden, "rb");
       /*
        *	(void)printf("Materail id file open for reading.\n");
        *	(void)fflush(stdout);
@@ -1456,7 +1456,7 @@ int main(int argc, char **argv)
 
       /****************************************************************************/
       /*  Write region # & name file, for use with shapefact.  */
-      fp7 = fopen(filernn, "w");
+      fp7 = fopen(filernn, "wb");
       for (i=0; i<num; i++)
 	{
 	  (void)fprintf(fp7, "%d\t%s\n", (i+1), region[i].regname);
@@ -1467,7 +1467,7 @@ int main(int argc, char **argv)
       if ( typeout == 0 ) {			/*  START # 11 */
 
 	/*  Open facet file for writing to .  */
-	fp1=fopen(facfile, "w");
+	fp1=fopen(facfile, "wb");
 
 	/*  Print type number of file (02) and description.  */
 	(void)fprintf(fp1, "02\tFacet file for use with PRISM.\n");
@@ -1686,7 +1686,7 @@ int main(int argc, char **argv)
       if (typeout == 1)
 	{						/*  START # 12  */
 	  /*  Open generic file.  */
-	  fp5 = fopen(filegen, "w");
+	  fp5 = fopen(filegen, "wb");
 
 	  /*  Write out # 1 information.  */
 	  for (i=0; i<num; i++)
@@ -1820,7 +1820,7 @@ int main(int argc, char **argv)
 	{						/*  START # 13  */
 
 	  /*  Open geometry file.  */
-	  fp6 = fopen(filegeo, "w");
+	  fp6 = fopen(filegeo, "wb");
 
 	  /*  Readable geometric file.  */
 
@@ -2063,7 +2063,7 @@ int main(int argc, char **argv)
       /****************************************************************************/
 
       /*  Open second pass file.  */
-      fp2 = fopen(spfile, "w");
+      fp2 = fopen(spfile, "wb");
 
       /*  Write info to second pass file.  */
       /*  Write number of regions to file.  */
@@ -2096,7 +2096,7 @@ int main(int argc, char **argv)
       /****************************************************************************/
 
       /*  Open error file.  */
-      fp3=fopen(fileerr, "w");
+      fp3=fopen(fileerr, "wb");
 
       /*  Write errors to error file.  */
       (void)fprintf(fp3, "\nERRORS from firpass\n\n");

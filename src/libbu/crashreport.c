@@ -71,7 +71,7 @@ bu_crashreport(const char *filename)
 	return 0;
     }
 
-    fp = fopen(filename, "a");
+    fp = fopen(filename, "ab");
     if (!fp) {
 	perror("unable to open crash report file");
 	bu_log("ERROR: Unable to open crash report file [%s]\n", filename);

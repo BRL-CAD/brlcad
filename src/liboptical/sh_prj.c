@@ -475,7 +475,7 @@ prj_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
 
 
 	if (rdebug&RDEBUG_SHADE) {
-	  if ((prj_sp->prj_plfd=fopen("prj.pl", "w")) == (FILE *)NULL) {
+	  if ((prj_sp->prj_plfd=fopen("prj.pl", "wb")) == (FILE *)NULL) {
 	    bu_log("ERROR creating plot file prj.pl");
 	  }
 	} else {

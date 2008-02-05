@@ -306,14 +306,14 @@ main(int argc, char **argv)
 	}
 
 	if ( labelfile != (char *)0 )  {
-		if (( gfp = fopen( labelfile, "r" )) == NULL ) {
+		if (( gfp = fopen( labelfile, "rb" )) == NULL ) {
 			perror(labelfile);
 			bu_exit(1, "ERROR: unable to open labelfile (%s)\n", labelfile);
 		}
 	}
 
 	if ( matfile != (char *)0 ) {
-		if (( mfp = fopen( matfile, "r" )) == NULL ) {
+		if (( mfp = fopen( matfile, "rb" )) == NULL ) {
 			perror(matfile);
 			bu_exit(1, "ERROR: unable to open matfile (%s)\n", matfile);
 		}

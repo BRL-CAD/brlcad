@@ -1372,7 +1372,8 @@ nmg_pl_isect(const char *filename, const struct shell *s, const struct bn_tol *t
 	NMG_CK_SHELL(s);
 	BN_CK_TOL(tol);
 
-	if ((fp=fopen(filename, "w")) == (FILE *)NULL) {
+	fp=fopen(filename, "wb");
+	if (fp == (FILE *)NULL) {
 		(void)perror(filename);
 		bu_bomb("unable to open file for writing");
 	}
@@ -1450,7 +1451,8 @@ nmg_pl_comb_fu(int num1, int num2, const struct faceuse *fu1)
 
 	if ( do_plot )  {
 		(void)sprintf(name, "comb%d.%d.pl", num1, num2);
-		if ((fp=fopen(name, "w")) == (FILE *)NULL) {
+		fp=fopen(name, "wb");
+		if (fp == (FILE *)NULL) {
 			(void)perror(name);
 			return;
 		}
@@ -1513,7 +1515,8 @@ nmg_pl_2fu(const char *str, int unused, const struct faceuse *fu1, const struct 
 	if ( rt_g.NMG_debug & DEBUG_PLOTEM )  {
 		snprintf(name, 32, str, num++);
 		bu_log("overlay %s\n", name);
-		if ((fp=fopen(name, "w")) == (FILE *)NULL)  {
+		fp=fopen(name, "wb");
+		if (fp == (FILE *)NULL)  {
 			perror(name);
 			return;
 		}
@@ -1954,7 +1957,8 @@ nmg_show_broken_classifier_stuff(long int *p, long int **classlist, int all_new,
 		FILE		*fp;
 
 		sprintf( buf, "cbroke%d.pl", num++ );
-		if ( (fp = fopen(buf, "w")) )  {
+		fp = fopen(buf, "wb");
+		if (fp) {
 			rt_plot_vlblock(fp, vbp);
 			fclose(fp);
 			bu_log("overlay %s for %s\n", buf, a_string);
@@ -2002,7 +2006,8 @@ nmg_face_plot(const struct faceuse *fu)
 	if ( rt_g.NMG_debug & DEBUG_PLOTEM )  {
 		(void)sprintf(name, "face%d.pl", num++);
 		bu_log("overlay %s\n", name);
-		if ((fp=fopen(name, "w")) == (FILE *)NULL)  {
+		fp=fopen(name, "wb");
+		if (fp == (FILE *)NULL)  {
 			perror(name);
 			return;
 		}
@@ -2097,7 +2102,8 @@ nmg_face_lu_plot(const struct loopuse *lu, const struct vertexuse *vu1, const st
 	m = nmg_find_model((long *)lu);
 	sprintf(buf, "loop%d.pl", num++ );
 
-	if ( (fp = fopen(buf, "w")) == NULL )  {
+	fp = fopen(buf, "wb");
+	if ( fp == NULL )  {
 		perror(buf);
 		return;
 	}
@@ -2147,7 +2153,8 @@ nmg_plot_lu_ray(const struct loopuse *lu, const struct vertexuse *vu1, const str
 	m = nmg_find_model((long *)lu);
 	sprintf(buf, "loop%d.pl", num++ );
 
-	if ( (fp = fopen(buf, "w")) == NULL )  {
+	fp = fopen(buf, "wb");
+	if (fp == NULL)  {
 		perror(buf);
 		return;
 	}
@@ -2182,7 +2189,7 @@ nmg_plot_lu_ray(const struct loopuse *lu, const struct vertexuse *vu1, const str
 void
 nmg_plot_ray_face(const char *fname, fastf_t *pt, const fastf_t *dir, const struct faceuse *fu)
 {
-	FILE *fd;
+	FILE *fp;
 	long *b;
 	point_t pp;
 	static int i=0;
@@ -2192,7 +2199,8 @@ nmg_plot_ray_face(const char *fname, fastf_t *pt, const fastf_t *dir, const stru
 		return;
 
 	snprintf(name, 1024, "%s%0d.pl", fname, i++);
-	if ((fd = fopen(name, "w")) == (FILE *)NULL) {
+	fp = fopen(name, "w");
+	if (fp == (FILE *)NULL) {
 		perror(name);
 		bu_log("plot_ray_face cannot open %s", name);
 		bu_bomb("aborting");
@@ -2200,14 +2208,14 @@ nmg_plot_ray_face(const char *fname, fastf_t *pt, const fastf_t *dir, const stru
 
 	b = (long *)bu_calloc( fu->s_p->r_p->m_p->maxindex, sizeof(long), "bit vec");
 
-	nmg_pl_fu(fd, fu, b, 200, 200, 200);
+	nmg_pl_fu(fp, fu, b, 200, 200, 200);
 
 	bu_free((char *)b, "bit vec");
 
 	VSCALE(pp, dir, 1000.0);
 	VADD2(pp, pt, pp);
-	pdv_3line( fd, pt, pp );
-	(void)fclose(fd);
+	pdv_3line( fp, pt, pp );
+	(void)fclose(fp);
 	bu_log("overlay %s\n", name);
 }
 
@@ -2234,7 +2242,8 @@ nmg_plot_lu_around_eu(const char *prefix, const struct edgeuse *eu, const struct
 
 	snprintf(file, 256, "%s%0d.pl", prefix, num++);
 	bu_log("overlay %s\n", file);
-	if ((fp = fopen(file, "w")) == (FILE *)NULL) {
+	fp = fopen(file, "wb");
+	if (fp == (FILE *)NULL) {
 		bu_log("plot_lu_around_eu() cannot open %s", file);
 		return;
 	}

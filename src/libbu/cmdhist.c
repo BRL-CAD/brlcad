@@ -136,7 +136,7 @@ bu_cmdhist_history(ClientData clientData, Tcl_Interp *interp, int argc, char **a
 				Tcl_AppendResult(interp, "history: I need a file name\n", (char *)NULL);
 				return TCL_ERROR;
 			} else {
-				fp = fopen( argv[3], "a+" );
+				fp = fopen( argv[3], "ab+" );
 				if (fp == NULL) {
 					Tcl_AppendResult(interp, "history: error opening file", (char *)NULL);
 					return TCL_ERROR;

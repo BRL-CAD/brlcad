@@ -209,7 +209,7 @@ main(int argc, char **argv)
 	}
 	bu_vls_strcat( &fig_file, ".fig");	/* Add required Jack suffix. */
 
-	if ((fp_fig = fopen(bu_vls_addr(&fig_file), "w")) == NULL)  {
+	if ((fp_fig = fopen(bu_vls_addr(&fig_file), "wb")) == NULL)  {
 		perror(bu_vls_addr(&fig_file));
 		bu_exit(2, "Unable to open fig file [%s]\n", bu_vls_addr(&fig_file));
 	}
@@ -373,7 +373,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 		bu_vls_strcat(&file, ".pss");	/* Required Jack suffix. */
 
 		/* Write psurf to .pss file. */
-		if ((fp_psurf = fopen(bu_vls_addr(&file), "w")) == NULL)
+		if ((fp_psurf = fopen(bu_vls_addr(&file), "wb")) == NULL)
 			perror(bu_vls_addr(&file));
 		else {
 			nmg_to_psurf(r, fp_psurf);
@@ -388,7 +388,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 			bu_vls_vlscat(&file, &file_base);
 			bu_vls_strcat(&file, ".pl");
 
-			if ((fp = fopen(bu_vls_addr(&file), "w")) == NULL)
+			if ((fp = fopen(bu_vls_addr(&file), "wb")) == NULL)
 				perror(bu_vls_addr(&file));
 			else {
 				struct bu_list	vhead;

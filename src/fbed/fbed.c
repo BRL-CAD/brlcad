@@ -984,7 +984,7 @@ f_Rd_Macros_From_File(char *buf)
 		char scratch[MAX_LN];
 	if ( buf != NULL )
 		{
-		if ( (macro_fp = fopen( buf, "r" )) == NULL )
+		if ( (macro_fp = fopen( buf, "rb" )) == NULL )
 			return 1;
 		else
 			prnt_Event( "Reading macros from file \"%s\".", buf );
@@ -993,7 +993,7 @@ f_Rd_Macros_From_File(char *buf)
 		{
 		if ( ! get_Input( scratch, MAX_LN, "Read macros from file : " ) )
 			return 0;
-		if ( (macro_fp = fopen( scratch, "r" )) == NULL )
+		if ( (macro_fp = fopen( scratch, "rb" )) == NULL )
 			{
 			fb_log( "Can't open \"%s\" for reading.\n", scratch );
 			return 0;
@@ -1020,7 +1020,7 @@ f_Write_Macros_To_File(char *buf)
 		register int key;
 	if ( ! get_Input( macro_file, MAX_LN, "Write macros to file : " ) )
 		return 0;
-	if ( (macro_fp = fopen( macro_file, "w" )) == NULL )
+	if ( (macro_fp = fopen( macro_file, "wb" )) == NULL )
 		{
 		fb_log( "Can't open \"%s\" for writing.\n", macro_file );
 		return 0;
@@ -1464,7 +1464,7 @@ f_Restore_RLE(char *buf) /* Restore Run-Length Encoded image. */
 		return 0;
 		}
 	else
-	if ( (rle_fp = fopen( rle_file_nm, "r" )) == NULL )
+	if ( (rle_fp = fopen( rle_file_nm, "rb" )) == NULL )
 		{
 		fb_log( "Can't open \"%s\".\n", rle_file_nm );
 		return 0;

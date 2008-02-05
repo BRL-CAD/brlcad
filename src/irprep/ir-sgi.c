@@ -295,7 +295,7 @@ main()
    (void)fflush(stdout);
 
    /*  Open file for reading.  */
-   fpr = fopen(file, "r");
+   fpr = fopen(file, "rb");
 
    /*  Check for existance of file.  */
    while (fpr == NULL)
@@ -303,7 +303,7 @@ main()
 	(void)printf("\nThe file does not exist, try again.\n");
 	(void)fflush(stdout);
 	(void)scanf("%25s", file);
-	fpr = fopen(file, "r");
+	fpr = fopen(file, "rb");
    }
 
    /*  Read width and height of window.  */
@@ -554,7 +554,7 @@ main()
    if (flag_pix == 1)
    {						/*  START # 20.  */
 	/*  Open pix file.  */
-	fpw = fopen(file_pix, "w");
+	fpw = fopen(file_pix, "wb");
 
 	for (i=high; i>0; i--)
 	{					/*  START # 21.  */

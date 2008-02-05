@@ -77,7 +77,7 @@ int
 mat_Rd_Db(char *file)
 {	register Mat_Db_Entry	*entry;
 		register FILE		*fp;
-	if ( (fp = fopen( file, "r" )) == NULL )
+	if ( (fp = fopen( file, "rb" )) == NULL )
 		return	0;
 	/* Mark all entries as NULL.					*/
 	for ( entry = mat_db_table; entry < &mat_db_table[MAX_MAT_DB]; entry++ )
@@ -176,7 +176,7 @@ int
 mat_Save_Db(char *file)
 {	register Mat_Db_Entry	*entry;
 		register FILE		*fp;
-	if ( (fp = fopen( file, "w" )) == NULL )
+	if ( (fp = fopen( file, "wb" )) == NULL )
 		return	0;
 	setbuf( fp, bu_malloc( BUFSIZ, "buffer" ) );
 	for (	entry = mat_db_table;

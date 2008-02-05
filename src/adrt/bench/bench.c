@@ -231,7 +231,7 @@ void bench(char* proj, int cache, int image) {
     tie_kdtree_cache_free(&tie, &kdcache);
     memcpy(&size, kdcache, sizeof(unsigned int));
     printf("saving kd-tree cache: %d bytes\n", size);
-    fh = fopen("kdtree.cache", "w");
+    fh = fopen("kdtree.cache", "wb");
       fwrite(kdcache, size, 1, fh);
     fclose(fh);
     free(kdcache);

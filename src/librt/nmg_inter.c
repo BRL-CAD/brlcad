@@ -4534,7 +4534,7 @@ fixup:
 					char buf[128];
 					FILE *fp;
 					sprintf(buf, "Itopo%d.pl", num++);
-					if ( (fp=fopen(buf, "w")) != NULL )  {
+					if ( (fp=fopen(buf, "wb")) != NULL )  {
 						pl_color(fp, 255, 0, 0);
 						pdv_3ray( fp, is->on_eg->e_pt, is->on_eg->e_dir, 1.0 );
 						pdv_3cont( fp, hit_v->vg_p->coord );
@@ -7555,14 +7555,14 @@ cplanar:
 		nmg_face_plot( fu2 );
 
 		sprintf(name, "shellA%d.pl", nshell);
-		if ( (fp = fopen(name, "w")) != NULL )  {
+		if ( (fp = fopen(name, "wb")) != NULL )  {
 			bu_log("overlay %s\n", name);
 			nmg_pl_s( fp, fu1->s_p );
 			fclose(fp);
 		}
 
 		sprintf(name, "shellB%d.pl", nshell++);
-		if ( (fp = fopen(name, "w")) != NULL )  {
+		if ( (fp = fopen(name, "wb")) != NULL )  {
 			bu_log("overlay %s\n", name);
 			nmg_pl_s( fp, fu2->s_p );
 			fclose(fp);

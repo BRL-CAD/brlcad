@@ -104,7 +104,7 @@ init_Icon_Texture(char *file, Mat_Db_Entry *entry)
 		icon_t	*iconmap;
 		int	wid = entry->df_rgb[0] << 3;
 		int	hgt = entry->df_rgb[1] << 3;
-	if ( (iconfp = fopen( file, "r" )) == NULL )
+	if ( (iconfp = fopen( file, "rb" )) == NULL )
 		{
 		bu_log( "Can't open icon texture \"%s\" for reading.\n",
 			file );

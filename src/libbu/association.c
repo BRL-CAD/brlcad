@@ -70,7 +70,7 @@ bu_association (const char *fname,
 
 	/* XXX NONPARALLEL */
 	/* I'd prefer using "bu_open_mapped_file()" here instead, I think  -Mike */
-    if ((fp = fopen(fname, "r")) == NULL) {
+    if ((fp = fopen(fname, "rb")) == NULL) {
 	/*	XXX
 	 *	Should we be exiting here?
 	 *	I don't want to just return 0,

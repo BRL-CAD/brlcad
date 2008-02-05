@@ -228,7 +228,7 @@ int main(int argc, char **argv)
 
       /*  Read region # & name file.  */
       rnnnum = 0;
-      fp1 = fopen(rnnfile, "r");
+      fp1 = fopen(rnnfile, "rb");
       /*
        *	 (void)printf("Region # & name file opened.\n");
        *	 (void)fflush(stdout);
@@ -613,7 +613,7 @@ int main(int argc, char **argv)
 
       /*  Check for reciprocity.  */
       /*  Open error file.  */
-      fp2 = fopen(errfile, "w");
+      fp2 = fopen(errfile, "wb");
       (void)fprintf(fp2, "\nError file for shapefact.\n");
       (void)fprintf(fp2, "Shape factor file created:  %s\n\n", outfile);
       (void)fprintf(fp2, "Regions with reciprocity errors greater ");
@@ -653,7 +653,7 @@ int main(int argc, char **argv)
       /*  Print out shape factor to regular output file.  */
       if (itype == 0)
 	{
-	  fp = fopen(outfile, "w");
+	  fp = fopen(outfile, "wb");
 	  (void)fprintf(fp, "Number of forward rays fired:  %f\n\n", loops);
 	  (void)fflush(fp);
 
@@ -715,7 +715,7 @@ int main(int argc, char **argv)
       /*  Create and write to generic shape factor file.  */
       if (itype == 1)
 	{
-	  fp = fopen(outfile, "w");
+	  fp = fopen(outfile, "wb");
 	  for (i=0; i<numreg; i++)
 	    {
 	      /*  Count the number of shape factors.  */

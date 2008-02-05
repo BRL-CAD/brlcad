@@ -115,7 +115,7 @@ int
 lgt_Rd_Db(char *file)
 {	register Lgt_Source	*entry;
 		register FILE		*fp;
-	if ( (fp = fopen( file, "r" )) == NULL )
+	if ( (fp = fopen( file, "rb" )) == NULL )
 		return	0;
 	lgt_db_size = 0;
 	for (	entry = lgts;
@@ -138,7 +138,7 @@ lgt_Save_Db(char *file)
 	register Lgt_Source	*entry;
 	register FILE		*fp;
 
-	if ( (fp = fopen( file, "w" )) == NULL )
+	if ( (fp = fopen( file, "wb" )) == NULL )
 		return	0;
 	setbuf( fp, bu_malloc( BUFSIZ, "buffer" ) );
 	for (	entry = lgts;

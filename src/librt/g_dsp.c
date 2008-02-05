@@ -345,7 +345,7 @@ draw_dsp_bb(int *plotnum,
     struct dsp_bb bb;
 
     sprintf(buf, "dsp_bb%03d.pl", (*plotnum)++);
-    if ( (fp=fopen(buf, "w")) == (FILE *)NULL) {
+    if ( (fp=fopen(buf, "wb")) == (FILE *)NULL) {
 	perror(buf);
 	bu_bomb("");
     }
@@ -386,7 +386,7 @@ plot_layers(struct dsp_specific *dsp_sp)
     for (l=0; l < dsp_sp->layers; l++) {
 	bu_semaphore_acquire( BU_SEM_SYSCALL);
 	sprintf(buf, "Dsp_layer%d.pl", l);
-	fp=fopen(buf, "w");
+	fp=fopen(buf, "wb");
 	bu_semaphore_release( BU_SEM_SYSCALL);
 	if ( fp == (FILE *)NULL ) {
 	    bu_log("%s:%d error opening %s\n", __FILE__, __LINE__,
@@ -462,7 +462,7 @@ plot_cell_top(struct isect_stuff *isect,
     else
 	sprintf(buf, "dsp_cell_top%04d.pl", plotcnt++);
 
-    fp=fopen(buf, "w");
+    fp=fopen(buf, "wb");
 
     bu_semaphore_release( BU_SEM_SYSCALL);
 
@@ -1042,7 +1042,7 @@ plot_seg(struct isect_stuff *isect,
 	/* plot the bounding box and the seg */
 	bu_semaphore_acquire( BU_SEM_SYSCALL);
 	sprintf(fname, "dsp_seg%04d.pl", segnum++);
-	fp=fopen(fname, "w");
+	fp=fopen(fname, "wb");
 	bu_semaphore_release( BU_SEM_SYSCALL);
 
 	if (fp != (FILE *)NULL) {
@@ -1333,7 +1333,7 @@ isect_ray_triangle(struct isect_stuff *isect,
 
 	bu_semaphore_acquire( BU_SEM_SYSCALL);
 	sprintf(buf, "dsp_tri%03d.pl", plotnum++);
-	fp=fopen(buf, "w");
+	fp=fopen(buf, "wb");
 	bu_semaphore_release( BU_SEM_SYSCALL);
 
 	if ( fp == (FILE *)NULL) {

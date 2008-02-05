@@ -137,7 +137,7 @@ stxt_read(register struct stxt_specific *stp)
 
 		snprintf(name, 256, "%s.%d", stp->stx_file, frame);
 
-		if ((fp = fopen(name, "r")) == NULL )  {
+		if ((fp = fopen(name, "rb")) == NULL )  {
 			bu_log("stxt_read(%s):  can't open\n", name);
 			stp->stx_file[0] = '\0';
 			return(0);

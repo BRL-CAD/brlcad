@@ -341,7 +341,7 @@ pars_Argv(int argc, register char **argv)
 		} /* end while */
 
 	if ( argv[bu_optind] != NULL )
-		if ( (fp = fopen( argv[bu_optind], "r" )) == NULL )
+		if ( (fp = fopen( argv[bu_optind], "rb" )) == NULL )
 			{
 			(void) fprintf( stderr,
 					"Can't open %s for reading!\n",

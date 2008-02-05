@@ -255,7 +255,7 @@ nmg_evaluate_boolean(struct shell *sA, struct shell *sB, int op, long int **clas
 	if (rt_g.NMG_debug & DEBUG_BOOLEVAL && rt_g.NMG_debug & DEBUG_PLOTEM) {
 		FILE	*fp;
 
-		if ((fp=fopen("bool_ans.pl", "w")) == (FILE *)NULL) {
+		if ((fp=fopen("bool_ans.pl", "wb")) == (FILE *)NULL) {
 			(void)perror("bool_ans.pl");
 			bu_bomb("unable to open bool_ans.pl for writing");
 		}
@@ -632,7 +632,7 @@ nmg_eval_plot(struct nmg_bool_state *bs, int num, int delay)
 
 	if ( do_plot )  {
 		sprintf(fname, "nmg_eval%d.pl", num);
-		if ( (fp = fopen(fname, "w")) == NULL )  {
+		if ( (fp = fopen(fname, "wb")) == NULL )  {
 			perror(fname);
 			return;
 		}

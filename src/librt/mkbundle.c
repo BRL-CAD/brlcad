@@ -103,7 +103,7 @@ rt_raybundle_maker(struct xray *rp, double radius, const fastf_t *avec, const fa
 #if 0
 main()
 {
-	FILE	*fp = fopen("bundle.pl", "w");
+	FILE	*fp = fopen("bundle.pl", "wb");
 	int	rays_per_ring=5;
 	int	nring=3;
 	fastf_t bundle_radius=1000.0;

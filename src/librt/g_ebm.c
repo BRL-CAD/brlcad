@@ -1635,7 +1635,7 @@ main( int argc, char * *argv )
 		arg = atoi(argv[1]);
 	}
 
-	plotfp = fopen( "ebm.pl", "w" );
+	plotfp = fopen( "ebm.pl", "wb" );
 
 	RT_DIR_SET_NAMEP(&Tdir, "Tsolid");
 	Tsolid.st_dp = &Tdir;
@@ -1659,7 +1659,7 @@ main( int argc, char * *argv )
 	outline( Tsolid.st_matp, &rec );
 
 #if 1
-	if ( (fp = fopen("ebm.rays", "r")) == NULL )  {
+	if ( (fp = fopen("ebm.rays", "rb")) == NULL )  {
 		perror("ebm.rays");
 		bu_exit(1, "ERROR: unable to open ebm.rays\n");
 	}

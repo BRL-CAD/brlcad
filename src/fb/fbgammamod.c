@@ -74,14 +74,14 @@ do_file(void)
 	FILE	*ifp, *ofp;
 	int	i;
 
-	if ( (ifp = fopen( input_file, "r" )) == NULL )  {
+	if ( (ifp = fopen( input_file, "rb" )) == NULL )  {
 		perror(input_file);
 		bu_exit(1, NULL);
 	}
 	output_file = (char *)bu_malloc( strlen(input_file)+10, "output_file" );
 	snprintf(output_file, strlen(input_file)+9, "MOD_%s", input_file);
 
-	if ( (ofp = fopen( output_file, "w" )) == NULL )  {
+	if ( (ofp = fopen( output_file, "wb" )) == NULL )  {
 		perror(output_file);
 		bu_exit(2, NULL);
 	}

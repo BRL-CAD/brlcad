@@ -134,34 +134,23 @@ main(int argc, char **argv)
 #endif
 
 	iname = "-";
-#ifdef _WIN32
-	ifp = fopen(iname, "r");
-#else
 	ifp = stdin;
-#endif
 	ofp = stdout;
 
 	bu_debug = BU_DEBUG_COREDUMP;
-
-#if 0
-	if ( argc > 1 && strcmp( argv[1], "-d" ) == 0 )  {
-		argc--; argv++;
-		debug = 1;
-	}
-#endif
 
 	if ( argc >= 3 ) {
 		iname = argv[1];
 		if ( strcmp(iname, "-") == 0 )  {
 			ifp = stdin;
 		} else {
-			ifp = fopen(iname, "r");
+			ifp = fopen(iname, "rb");
 		}
 		if ( !ifp )  perror(iname);
 		if ( strcmp(argv[2], "-") == 0 )  {
 			ofp = stdout;
 		} else {
-			ofp = fopen(argv[2], "w");
+			ofp = fopen(argv[2], "wb");
 		}
 		if ( !ofp )  perror(argv[2]);
 		if (ifp == NULL || ofp == NULL) {

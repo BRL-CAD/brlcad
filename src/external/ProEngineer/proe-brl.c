@@ -3083,7 +3083,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	}
 
 	/* open output file */
-	if ( (outfp=fopen( output_file, "w" ) ) == NULL ) {
+	if ( (outfp=fopen( output_file, "wb" ) ) == NULL ) {
 		(void)ProMessageDisplay(MSGFIL, "USER_ERROR", "Cannot open output file" );
 		ProMessageClear();
 		fprintf( stderr, "Cannot open output file\n" );
@@ -3096,7 +3096,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	if ( strlen( log_file ) > 0 ) {
 		if ( strcmp( log_file, "stderr" ) == 0 ) {
 			logger = stderr;
-		} else if ( (logger=fopen( log_file, "w" ) ) == NULL ) {
+		} else if ( (logger=fopen( log_file, "wb" ) ) == NULL ) {
 			(void)ProMessageDisplay(MSGFIL, "USER_ERROR", "Cannot open log file" );
 			ProMessageClear();
 			fprintf( stderr, "Cannot open log file\n" );
@@ -3116,7 +3116,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 			fprintf( logger, "Opening part name map file (%s)\n", name_file );
 		}
 
-		if ( (name_fd=fopen( name_file, "r" ) ) == NULL ) {
+		if ( (name_fd=fopen( name_file, "rb" ) ) == NULL ) {
 			struct bu_vls error_msg;
 			int dialog_return=0;
 			wchar_t w_error_msg[512];

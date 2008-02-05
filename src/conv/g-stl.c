@@ -222,7 +222,7 @@ char	*argv[];
 	} else if ( output_file ) {
 		if ( !binary ) {
 			/* Open ASCII output file */
-			if ( (fp=fopen( output_file, "w+" )) == NULL )
+			if ( (fp=fopen( output_file, "wb+" )) == NULL )
 			{
 				perror( argv[0] );
 				bu_exit(1, "Cannot open ASCII output file (%s) for writing\n", output_file );
@@ -378,7 +378,7 @@ int material_id;
 		bu_vls_strcat( &file_name, ".stl" );
 		if ( !binary ) {
 			/* Open ASCII output file */
-			if ( (fp=fopen( bu_vls_addr( &file_name ), "w+" )) == NULL )
+			if ( (fp=fopen( bu_vls_addr( &file_name ), "wb+" )) == NULL )
 			{
 				perror( "g-stl" );
 				bu_exit(1, "Cannot open ASCII output file (%s) for writing\n", bu_vls_addr( &file_name ) );
@@ -387,11 +387,7 @@ int material_id;
 			char buf[81] = {0};	/* need exactly 80 char for header */
 
 			/* Open binary output file */
-#ifdef _WIN32
-			if ((bfd=open(bu_vls_addr(&file_name), _O_WRONLY|_O_CREAT|_O_TRUNC, _S_IREAD|_S_IWRITE)) < 0)
-#else
-			if ( (bfd=open( bu_vls_addr( &file_name ), O_WRONLY|O_CREAT|O_TRUNC, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)) < 0 )
-#endif
+			if ( (bfd=open( bu_vls_addr( &file_name ), O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)) < 0 )
 			{
 				perror( "g-stl" );
 				bu_log( "ERROR: Cannot open binary output file (%s) for writing\n", bu_vls_addr( &file_name ) );

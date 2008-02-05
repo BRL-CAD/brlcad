@@ -4697,7 +4697,7 @@ dgo_tree_cmd(struct dg_obj	*dgop,
 		    cflag = 1;
 			break;
 		case 'o':
-		    if ( (fdout = fopen( bu_optarg, "w+" )) == NULL ) {
+		    if ( (fdout = fopen( bu_optarg, "w+b" )) == NULL ) {
 			Tcl_SetErrno( errno );
 			Tcl_AppendResult( interp, "Failed to open output file, ",
 					  strerror( errno ), (char *)NULL );

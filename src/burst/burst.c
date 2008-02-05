@@ -185,21 +185,16 @@ main( int argc, char *argv[] )
 {
     bu_setlinebuf(stderr);
 
-    if (	tmpnam( tmpfname ) == NULL
-	||	(tmpfp = fopen( tmpfname, "w" )) == (FILE *) NULL
-	)
-	{
-	    perror( tmpfname );
-	    (void) fprintf( stderr,
-			    "Write access denied for file (%s).\n",
-			    tmpfname );
-	    goto	death;
-	}
-    if ( ! parsArgv( argc, argv ) )
-	{
-	    prntUsage();
-	    goto	clean;
-	}
+    if ((tmpnam( tmpfname ) == NULL) ||
+	((tmpfp = fopen( tmpfname, "wb" )) == (FILE *) NULL))
+    {
+	perror( tmpfname );
+	bu_exit(EXIT_FAILURE, "Write access denied for file (%s).\n", tmpfname);
+    }
+    if ( ! parsArgv( argc, argv ) ) {
+	prntUsage();
+	goto	clean;
+    }
 
     setupSigs();
     if ( ! initUi() ) /* must be called before any output is produced */
@@ -219,7 +214,7 @@ main( int argc, char *argv[] )
     exitCleanly( EXIT_SUCCESS );
  clean:
     (void) unlink( tmpfname );
- death:
+
     return EXIT_FAILURE;
 }
 

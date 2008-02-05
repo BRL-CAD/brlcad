@@ -1675,7 +1675,7 @@ f_Rd_Raw_IR(HMitem *itemp, char **args)
 		bu_log( "No default, must specify file name!\n" );
 		return	-1;
 		}
-	if ( (ir_fp = fopen( ir_file, "r" )) == NULL )
+	if ( (ir_fp = fopen( ir_file, "rb" )) == NULL )
 		{
 		bu_log( "Can not open \"%s\" for reading.\n", ir_file );
 		return	-1;
@@ -1832,7 +1832,7 @@ f_Movie(HMitem *itemp, char **args)
 		if ( svkey_file[0] == '\0' )
 			movie.m_keys_fp = NULL; /* Will use STDIN. */
 		else
-		if ( (movie.m_keys_fp = fopen( svkey_file, "r" )) == NULL )
+		if ( (movie.m_keys_fp = fopen( svkey_file, "rb" )) == NULL )
 			{
 			bu_log( "Can't open \"%s\" for reading.", svkey_file );
 			ret = -1;
@@ -2202,7 +2202,7 @@ f_Wrt_IR_Db(HMitem *itemp, char **args)
 		bu_log( "No default, must specify file name!\n" );
 		return	-1;
 		}
-	if ( (ir_fp = fopen( ir_db_file, "w" )) == NULL )
+	if ( (ir_fp = fopen( ir_db_file, "wb" )) == NULL )
 		{
 		bu_log( "Can not open \"%s\" for writing.\n", ir_db_file );
 		return	-1;
@@ -2513,7 +2513,7 @@ f_Rd_IR_Db(HMitem *itemp, char **args)
 		bu_log( "No default, must specify file name!\n" );
 		return	-1;
 		}
-	if ( (ir_fp = fopen( ir_db_file, "r" )) == NULL )
+	if ( (ir_fp = fopen( ir_db_file, "rb" )) == NULL )
 		{
 		bu_log( "Can not open \"%s\" for reading.\n", ir_db_file );
 		return	-1;
@@ -2700,7 +2700,7 @@ f_Key_Frame(HMitem *itemp, char **args)
 	if ( args != NULL && args[1] != NULL )
 		{
 		bu_strlcpy( svkey_file, args[1], MAX_LN );
-		if ( (svkey_fp = fopen( svkey_file, "r" )) == NULL )
+		if ( (svkey_fp = fopen( svkey_file, "rb" )) == NULL )
 			{
 			bu_log( "Can't open \"%s\" for reading.", svkey_file );
 			return	-1;
@@ -2732,7 +2732,7 @@ f_Key_Frame(HMitem *itemp, char **args)
 			bu_log( "No default, must specify file name!\n" );
 			return	-1;
 			}
-		if ( (svkey_fp = fopen( svkey_file, "r" )) == NULL )
+		if ( (svkey_fp = fopen( svkey_file, "rb" )) == NULL )
 			{
 			bu_log( "Can't open \"%s\" for reading.", svkey_file );
 			return	-1;
@@ -3561,7 +3561,7 @@ make_Script(char *file)
 		}
 	(void) close( tmp_fd );
 	}
-	if ( (run_fp = fopen( script_file, "w" )) == NULL )
+	if ( (run_fp = fopen( script_file, "wb" )) == NULL )
 		{
 		bu_log( "Can't open '%s' for writing.\n", script_file );
 		return	-1;

@@ -170,7 +170,7 @@ main(int argc, char **argv)
 			break;
 		case 'i':
 			efile = bu_optarg;
-			if ((fpin = fopen(efile, "r")) == NULL)
+			if ((fpin = fopen(efile, "rb")) == NULL)
 			{
 				perror( argv[0] );
 				bu_exit(1, "%s: cannot open %s for reading\n",
@@ -396,8 +396,8 @@ build_groups(struct rt_wdb *fpout)
 void
 euclid_to_brlcad(FILE *fpin, struct rt_wdb *fpout)
 {
-	char	str[80];
-	int	reg_id;
+	char	str[80] = {0};
+	int	reg_id = -1;
 
 	/* skip first string in file (what is it??) */
 	if ( fscanf( fpin, "%80s", str ) == EOF )

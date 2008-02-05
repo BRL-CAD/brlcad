@@ -878,7 +878,7 @@ bn_table_write(const char *filename, const struct bn_table *tabp)
 	BN_CK_TABLE(tabp);
 
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
-	fp = fopen( filename, "w" );
+	fp = fopen( filename, "wb" );
 	bu_semaphore_release( BU_SEM_SYSCALL );
 
 	if ( fp == NULL )  {
@@ -916,7 +916,7 @@ bn_table_read(const char *filename)
 	if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_read(%s)\n", filename);
 
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
-	fp = fopen( filename, "r" );
+	fp = fopen( filename, "rb" );
 	bu_semaphore_release( BU_SEM_SYSCALL );
 
 	if ( fp == NULL )  {
@@ -1005,7 +1005,7 @@ bn_print_table_and_tabdata(const char *filename, const struct bn_tabdata *data)
 	BN_CK_TABLE(tabp);
 
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
-	fp = fopen( filename, "w" );
+	fp = fopen( filename, "wb" );
 	bu_semaphore_release( BU_SEM_SYSCALL );
 
 	if ( fp == NULL )  {
@@ -1048,7 +1048,7 @@ bn_read_table_and_tabdata(const char *filename)
 	if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_read_table_and_tabdata(%s)\n", filename);
 
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
-	fp = fopen( filename, "r" );
+	fp = fopen( filename, "rb" );
 	bu_semaphore_release( BU_SEM_SYSCALL );
 
 	if ( fp == NULL )  {
@@ -1072,7 +1072,7 @@ bn_read_table_and_tabdata(const char *filename)
 
 	/* Second pass:  Read only as much data as storage was allocated for */
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
-	fp = fopen( filename, "r" );
+	fp = fopen( filename, "rb" );
 	for ( i=0; i < count; i++ )  {
 		buf[0] = '\0';
 		if ( bu_fgets( buf, sizeof(buf), fp ) == NULL )  {

@@ -190,7 +190,7 @@ int	width, height;
 		return(-1);
 	}
 
-	if ( (fp = fopen(FBSAVE, "r")) != NULL ) {
+	if ( (fp = fopen(FBSAVE, "rb")) != NULL ) {
 		fread( ugbuf, 4, height*width, fp );
 		fclose( fp );
 		unlink(FBSAVE);
@@ -207,7 +207,7 @@ FBIO	*ifp;
 	FILE	*fp;
 
 	/* save image to file */
-	if ( (fp = fopen(FBSAVE, "w")) != NULL ) {
+	if ( (fp = fopen(FBSAVE, "wb")) != NULL ) {
 		fwrite( ugbuf, 4, ifp->if_height*ifp->if_width, fp );
 		fclose( fp );
 	} else {

@@ -590,7 +590,7 @@ get_args(int argc, register char **argv)
     } else {
 	/* open file */
 	filename = argv[bu_optind];
-	if ( (pfin = fopen(filename, "r")) == NULL ) {
+	if ( (pfin = fopen(filename, "rb")) == NULL ) {
 	    fprintf( stderr,
 		     "pl-fb: Can't open file \"%s\"\n", filename );
 	    return(0);

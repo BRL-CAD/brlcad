@@ -134,7 +134,7 @@ main(int argc, char **argv)
 				break;
 			case 'c': /* input coordinates file name */
 				bu_strlcpy( coords_name, bu_optarg, sizeof(coords_name) );
-				if ( (coords = fopen( coords_name, "r" )) == NULL )
+				if ( (coords = fopen( coords_name, "rb" )) == NULL )
 				{
 					bu_log( "Cannot open %s\n", coords_name );
 					perror( "viewpoint-g" );
@@ -143,7 +143,7 @@ main(int argc, char **argv)
 				break;
 			case 'e': /* input elements file name */
 				bu_strlcpy( elems_name, bu_optarg, sizeof(elems_name) );
-				if ( (elems = fopen( elems_name, "r" )) == NULL )
+				if ( (elems = fopen( elems_name, "rb" )) == NULL )
 				{
 					bu_log( "Cannot open %s\n", elems_name );
 					perror( "viewpoint-g" );

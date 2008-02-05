@@ -266,7 +266,7 @@ pl_pt_e(fpi, ei)
 struct fpi *fpi;
 struct edge_info *ei;
 {
-	FILE *fd;
+	FILE *fp;
 	char name[25];
 	long *b;
 	point_t pca;
@@ -279,7 +279,8 @@ struct edge_info *ei;
 	NMG_CK_EI(ei);
 
 	sprintf(name, "pt_e%02d.pl", plot_file_number++);
-	if ((fd=fopen(name, "w")) == (FILE *)NULL) {
+	fp=fopen(name, "wb");
+	if (fp == (FILE *)NULL) {
 		perror(name);
 		bu_bomb("unable to open file for writing");
 	}
@@ -288,8 +289,8 @@ struct edge_info *ei;
 	b = (long *)bu_calloc( fpi->fu_p->s_p->r_p->m_p->maxindex,
 		sizeof(long), "bit vec"),
 
-	pl_erase(fd);
-	pd_3space(fd,
+	pl_erase(fp);
+	pd_3space(fp,
 		fpi->fu_p->f_p->min_pt[0]-1.0,
 		fpi->fu_p->f_p->min_pt[1]-1.0,
 		fpi->fu_p->f_p->min_pt[2]-1.0,
@@ -297,7 +298,7 @@ struct edge_info *ei;
 		fpi->fu_p->f_p->max_pt[1]+1.0,
 		fpi->fu_p->f_p->max_pt[2]+1.0);
 
-	nmg_pl_eu(fd, ei->eu_p, b, 255, 255, 255);
+	nmg_pl_eu(fp, ei->eu_p, b, 255, 255, 255);
 
 	tmp_tol.magic = BN_TOL_MAGIC;
 	tmp_tol.dist = 0.005;
@@ -307,11 +308,11 @@ struct edge_info *ei;
 
 	(void)bn_dist_pt3_lseg3( &dist, pca, ei->eu_p->vu_p->v_p->vg_p->coord,
 		ei->eu_p->eumate_p->vu_p->v_p->vg_p->coord, fpi->pt, &tmp_tol );
-	pl_color(fd, 255, 255, 50);
-	pdv_3line(fd, pca, fpi->pt);
+	pl_color(fp, 255, 255, 50);
+	pdv_3line(fp, pca, fpi->pt);
 
 	bu_free((char *)b, "bit vec");
-	fclose(fd);
+	fclose(fp);
 }
 #endif
 static int
@@ -913,7 +914,7 @@ HIDDEN void make_near_list( struct edge_info *edge_list, struct bu_list *near1)
 static void
 pl_pt_lu(struct fpi *fpi, const struct loopuse *lu, struct edge_info *ei)
 {
-	FILE *fd;
+	FILE *fp;
 	char name[25];
 	long *b;
 	static int plot_file_number=0;
@@ -929,7 +930,8 @@ pl_pt_lu(struct fpi *fpi, const struct loopuse *lu, struct edge_info *ei)
 	NMG_CK_EI(ei);
 
 	sprintf(name, "pt_lu%02d.pl", plot_file_number++);
-	if ((fd=fopen(name, "w")) == (FILE *)NULL) {
+	fp=fopen(name, "wb");
+	if (fp == (FILE *)NULL) {
 		perror(name);
 		bu_bomb("unable to open file for writing");
 	}
@@ -938,8 +940,8 @@ pl_pt_lu(struct fpi *fpi, const struct loopuse *lu, struct edge_info *ei)
 	b = (long *)bu_calloc( fpi->fu_p->s_p->r_p->m_p->maxindex,
 		sizeof(long), "bit vec"),
 
-	pl_erase(fd);
-	pd_3space(fd,
+	pl_erase(fp);
+	pd_3space(fp,
 		fpi->fu_p->f_p->min_pt[0]-1.0,
 		fpi->fu_p->f_p->min_pt[1]-1.0,
 		fpi->fu_p->f_p->min_pt[2]-1.0,
@@ -947,7 +949,7 @@ pl_pt_lu(struct fpi *fpi, const struct loopuse *lu, struct edge_info *ei)
 		fpi->fu_p->f_p->max_pt[1]+1.0,
 		fpi->fu_p->f_p->max_pt[2]+1.0);
 
-	nmg_pl_lu(fd, lu, b, 255, 255, 255);
+	nmg_pl_lu(fp, lu, b, 255, 255, 255);
 
 	tmp_tol.magic = BN_TOL_MAGIC;
 	tmp_tol.dist = 0.005;
@@ -958,10 +960,10 @@ pl_pt_lu(struct fpi *fpi, const struct loopuse *lu, struct edge_info *ei)
 	(void)bn_dist_pt3_lseg3( &dist, pca, ei->eu_p->vu_p->v_p->vg_p->coord,
 		ei->eu_p->eumate_p->vu_p->v_p->vg_p->coord, fpi->pt, &tmp_tol );
 
-	pl_color(fd, 255, 255, 50);
-	pdv_3line(fd, pca, fpi->pt);
+	pl_color(fp, 255, 255, 50);
+	pdv_3line(fp, pca, fpi->pt);
 
-	pl_color(fd, 255, 64, 255);
+	pl_color(fp, 255, 64, 255);
 
 	/* make a nice axis-cross at the point in question */
 	for (i=0; i < 3; i++) {
@@ -969,11 +971,11 @@ pl_pt_lu(struct fpi *fpi, const struct loopuse *lu, struct edge_info *ei)
 		p1[i] -= 1.0;
 		VMOVE(p2, fpi->pt);
 		p2[i] += 1.0;
-		pdv_3line(fd, p1, p2);
+		pdv_3line(fp, p1, p2);
 	}
 
 	bu_free((char *)b, "bit vec");
-	fclose(fd);
+	fclose(fp);
 }
 
 
@@ -1259,15 +1261,14 @@ plot_parity_error(const struct faceuse *fu, const fastf_t *pt)
 
 	NMG_CK_FACEUSE(fu);
 
-	if (!(fp=fopen("pt_fu_parity_error.pl", "w")) )
+	fp=fopen("pt_fu_parity_error.pl", "wb");
+	if (!fp)
 		bu_bomb("error opening pt_fu_parity_error.pl\n");
-
 
 	bu_log("overlay pt_fu_parity_error.pl\n");
 
 	b = (long *)bu_calloc( fu->s_p->r_p->m_p->maxindex,
 			      sizeof(long), "bit vec"),
-
 
 	pl_erase(fp);
 	pd_3space(fp,

@@ -382,7 +382,8 @@ out:
 		fu = eu->up.lu_p->up.fu_p;
 		bits = (long *)bu_calloc( nmg_find_model(&fu->l.magic)->maxindex, sizeof(long), "bits[]");
 		sprintf(buf, "faceclass%d.pl", num++);
-		if ( (fp = fopen(buf, "w")) == NULL) bu_bomb(buf);
+		if ( (fp = fopen(buf, "wb")) == NULL)
+		    bu_bomb(buf);
 		nmg_pl_fu( fp, fu, bits, 0, 0, 255 );	/* blue */
 		pl_color( fp, 0, 255, 0 );	/* green */
 		pdv_3line( fp, pca, pt );
@@ -911,7 +912,8 @@ class_eu_vs_s(struct edgeuse *eu, struct shell *s, long int **classlist, const s
 		FILE	*fp;
 
 		sprintf(buf, "class%d.pl", num++ );
-		if ( (fp = fopen(buf, "w")) == NULL ) bu_bomb(buf);
+		if ( (fp = fopen(buf, "wb")) == NULL )
+		    bu_bomb(buf);
 		nmg_pl_s( fp, s );
 		/* A yellow line for the angry edge */
 		pl_color(fp, 255, 255, 0);
@@ -1192,12 +1194,12 @@ class_eu_vs_s(struct edgeuse *eu, struct shell *s, long int **classlist, const s
 #endif
 			nmg_pr_fu_around_eu( eu, tol );
 			VPRINT("class_eu_vs_s: midpoint of edge", pt);
-			if ( (fp = fopen("shell1.pl", "w")) )  {
+			if ( (fp = fopen("shell1.pl", "wb")) )  {
 				nmg_pl_s(fp, s);
 				fclose(fp);
 				bu_log("wrote shell1.pl\n");
 			}
-			if ( (fp = fopen("shell2.pl", "w")) )  {
+			if ( (fp = fopen("shell2.pl", "wb")) )  {
 				nmg_pl_shell(fp, eu->up.lu_p->up.fu_p->s_p, 1 );
 				fclose(fp);
 				bu_log("wrote shell2.pl\n");
@@ -1777,7 +1779,7 @@ retry:
 			}
 
 			sprintf(buf, "badloop%d.pl", num++);
-			if ((fp=fopen(buf, "w")) != NULL) {
+			if ((fp=fopen(buf, "wb")) != NULL) {
 				nmg_pl_lu(fp, lu, b, 255, 255, 255);
 				nmg_pl_s(fp, s);
 				fclose(fp);

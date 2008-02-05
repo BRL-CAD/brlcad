@@ -41,6 +41,7 @@
 #endif
 
 #include "render.h"
+#include "bu.h"
 
 
 #if 0
@@ -87,7 +88,7 @@ void common_env_read(common_env_t *env, const char *fpath) {
     exit(1);
   }
 
-  while (fgets(line, 256, fh)) {
+  while (bu_fgets(line, 256, fh)) {
     token = strtok(line, ",");
 
     if (!strcmp("geometry_file", token)) {

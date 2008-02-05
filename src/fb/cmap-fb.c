@@ -71,7 +71,7 @@ main(int argc, char **argv)
 	}
 
 	if ( argc > 1 ) {
-		if ( (fp = fopen(argv[1], "r")) == NULL ) {
+		if ( (fp = fopen(argv[1], "rb")) == NULL ) {
 			fprintf( stderr, "cmap-fb: can't open \"%s\"\n", argv[1] );
 			bu_exit(2, "%s", usage );
 		}

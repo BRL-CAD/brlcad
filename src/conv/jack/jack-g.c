@@ -101,7 +101,7 @@ main(int argc, char **argv)
 		fpin = stdin;
 	} else {
 		jfile = argv[bu_optind];
-		if ((fpin = fopen(jfile, "r")) == NULL) {
+		if ((fpin = fopen(jfile, "rb")) == NULL) {
 		    bu_exit(1, "%s: cannot open %s for reading\n",
 			    argv[0], jfile);
 		}
