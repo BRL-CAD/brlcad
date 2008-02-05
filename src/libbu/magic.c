@@ -60,7 +60,7 @@
  *  as to what sort of pointer error might have been made.
  */
 const char *
-bu_identify_magic(register long int magic)
+bu_identify_magic(register unsigned long magic)
 {
 	switch (magic)  {
 	case 0:

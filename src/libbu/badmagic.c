@@ -67,7 +67,7 @@ bu_badmagic(const unsigned long *ptr, unsigned long magic, const char *str, cons
 		snprintf(buf, MAGICBUFSIZ, "ERROR: bad pointer x%lx: s/b %s(x%lx), was %s(x%lx), file %s, line %d\n",
 			(unsigned long)ptr,
 			str, magic,
-			bu_identify_magic( (long)*(ptr) ), *(ptr),
+			bu_identify_magic( (unsigned long)*(ptr) ), *(ptr),
 			file, line );
 		bu_bomb(buf);
 	}

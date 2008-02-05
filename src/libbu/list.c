@@ -232,7 +232,7 @@ bu_ck_list(const struct bu_list *hd, const char *str)
  *	all elements in the linked list
  */
 void
-bu_ck_list_magic(const struct bu_list *hd, const char *str, const long int magic)
+bu_ck_list_magic(const struct bu_list *hd, const char *str, const unsigned long magic)
 {
 	register const struct bu_list	*cur;
 	int	head_count = 0;
