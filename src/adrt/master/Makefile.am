@@ -14,6 +14,7 @@ adrt_master_CFLAGS = \
 	-I${top_srcdir}/src/adrt/libtienet \
 	-I${top_srcdir}/src/adrt/libtexture \
 	-I${top_srcdir}/src/adrt/librender \
+	${TCL_CPPFLAGS} \
 	${LIBZ_CPPFLAGS}
 
 adrt_master_LDADD = \
