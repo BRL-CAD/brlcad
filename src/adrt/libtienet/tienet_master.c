@@ -51,6 +51,8 @@
 #include "tienet_define.h"
 #include "tienet_util.h"
 
+#include "bu.h"
+
 #if TN_COMPRESSION
 # include <zlib.h>
 #endif
@@ -321,7 +323,7 @@ void tienet_master_connect_slaves(fd_set *readfds)
   {
     while (!feof(fh))
     {
-      fgets(host, 64, fh);
+      bu_fgets(host, 64, fh);
       if (host[0])
       {
         port = TN_SLAVE_PORT;
