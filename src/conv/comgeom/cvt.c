@@ -120,7 +120,7 @@ get_args(int argc, register char **argv)
 	return(0);		/* FAIL */
     } else {
 	file_name = argv[bu_optind++];
-	if ( (infp = fopen(file_name, "r")) == NULL )  {
+	if ( (infp = fopen(file_name, "rb")) == NULL )  {
 	    perror(file_name);
 	    return(0);
 	}
