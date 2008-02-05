@@ -19,9 +19,11 @@
  *
  */
 /** @file cy-g.c
+ *
  *	This routine converts Cyberware Digitizer Data (laser scan data)
  *	to a single BRL-CAD ARS solid. The data must be in cylindrical scan
- *	format.
+ *	format (Cyberware Echo file format).
+ *
  */
 
 #include "common.h"
@@ -64,6 +66,7 @@ main(int argc, char **argv)
     int nlg = 512;
     int nlt = 256;
     int lgshift = 0;
+    int ltshift = 0;
     int rshift = 5;
     int rmax = 0;
     int rmin = 0;
@@ -187,7 +190,7 @@ main(int argc, char **argv)
 	    }
 
 	} else if (strncmp("COLOR", line, 4) == 0) {
-	    /* color space */
+	    /* whether texture mode is RGB, Luminance, or None */
 
 	    cptr = strchr(line, '=');
 	    if (!cptr) {
@@ -196,7 +199,7 @@ main(int argc, char **argv)
 
 	    snprintf(color, sizeof(date), "%s", ++cptr);
 	    db5_update_attribute("_GLOBAL", "COLOR", cptr, outfp->dbip);
-	    bu_log("COLOR=%s (ignored)\n", color);
+	    bu_log("COLOR=%s (IGNORED)\n", color);
 
 	    if (strcmp(color, "SGI") != 0) {
 		bu_log("Encountered unknown COLOR, ignoring\n");
@@ -227,7 +230,12 @@ main(int argc, char **argv)
 	    bu_log("NLT=%d\n", nlt);
 
 	} else if (strncmp("LGINCR", line, 6) == 0) {
-	    /* longitude increment */
+	    /* longitude increment (in microradians) 
+	     *
+	     * For a cylindrical scan, the longitude increment is the
+	     * angle between each of the profiles. With 512, this is
+	     * 0.703125f or 12227 microradians.
+	     */
 
 	    cptr = strchr(line, '=');
 	    if (!cptr) {
@@ -263,7 +271,13 @@ main(int argc, char **argv)
 	    bu_log("LGMAX=%d (ignored)\n", lgmax);
 
 	} else if (strncmp("LTINCR", line, 6) == 0) {
-	    /* latitude increment */
+	    /* latitude increment (in microns)
+	     *
+	     * The latitude increment is the separation between the
+	     * 450 evenly spaced samples along the vertical axis. This
+	     * separation is typically 1/450 of the 300 millimeter
+	     * high field of view, or about 700 microns.
+	     */
 
 	    cptr = strchr(line, '=');
 	    if (!cptr) {
@@ -335,7 +349,7 @@ main(int argc, char **argv)
 	    bu_log("RSHIFT=%d\n", rshift);
 
 	} else if (strncmp("LGSHIFT", line, 6) == 0) {
-	    /* longitude left shift (scale longitude values 2^LGSHIFT) */
+	    /* rotate longitude values by (+/-) N positions */
 
 	    cptr = strchr(line, '=');
 	    if (!cptr) {
@@ -344,7 +358,21 @@ main(int argc, char **argv)
 
 	    lgshift = atoi(++cptr);
 	    db5_update_attribute("_GLOBAL", "LGSHIFT", cptr, outfp->dbip);
-	    bu_log("LGSHIFT=%d (ignored)\n", lgshift);
+	    bu_log("LGSHIFT=%d (IGNORED)\n", lgshift);
+
+	} else if (strncmp("LTSHIFT", line, 6) == 0) {
+	    /* translate latitude values by (+/-) N positions,
+	     * wrapping around at the latitude limit.
+	     */
+
+	    cptr = strchr(line, '=');
+	    if (!cptr) {
+		bu_exit(1, "Error parsing LTSHIFT line: %s\n", line);
+	    }
+
+	    ltshift = atoi(++cptr);
+	    db5_update_attribute("_GLOBAL", "LTSHIFT", cptr, outfp->dbip);
+	    bu_log("LTSHIFT=%d (IGNORED)\n", ltshift);
 
 	} else if (strncmp("SCALE", line, 5) == 0) {
 	    /* scan value scaling factor */
