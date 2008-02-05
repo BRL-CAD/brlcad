@@ -76,7 +76,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="ws2_32.lib libbu.lib libbn.lib libsysv.lib librt.lib libfb.lib libutahrle.lib"
-				OutputFile="Release/fb2rle.exe"
+				OutputFile="Release/fb-rle.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="../../../brlcadInstall/lib"

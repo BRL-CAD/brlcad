@@ -76,7 +76,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="ws2_32.lib opengl32.lib tcl85.lib tk85.lib libbu.lib libbn.lib libsysv.lib librt.lib libfb.lib libpkg.lib"
-				OutputFile="Release/fb2cmap.exe"
+				OutputFile="Release/fb-cmap.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="../../../brlcadInstall/lib"
