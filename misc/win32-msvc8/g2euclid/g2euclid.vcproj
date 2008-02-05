@@ -76,7 +76,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="libbu.lib libbn.lib libsysv.lib librt.lib tcl85.lib"
-				OutputFile="Release/g2euclid.exe"
+				OutputFile="Release/g-euclid.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="../../../brlcadInstall/lib"
