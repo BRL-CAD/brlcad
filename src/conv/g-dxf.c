@@ -473,7 +473,7 @@ main(argc, argv)
 #endif
     } else {
 	/* Open output file */
-	if ((fp=fopen(output_file, "wb+")) == NULL) {
+	if ((fp=fopen(output_file, "w+b")) == NULL) {
 	    perror( argv[0] );
 	    bu_exit(1, " Cannot open output file (%s) for writing\n", output_file);
 	}
@@ -506,9 +506,9 @@ main(argc, argv)
     }
 
     /* output DXF header and start of TABLES section */
-    fprintf( fp,
-	     "0\nSECTION\n2\nHEADER\n999\n%s\n0\nENDSEC\n0\nSECTION\n2\nTABLES\n0\nTABLE\n2\nLAYER\n",
-	     argv[bu_optind] );
+    fprintf(fp,
+	    "0\nSECTION\n2\nHEADER\n999\n%s\n0\nENDSEC\n0\nSECTION\n2\nTABLES\n0\nTABLE\n2\nLAYER\n",
+	    argv[argc-1]);
 
     /* Walk indicated tree(s) just for layer names to put in TABLES section */
     (void) db_walk_tree(dbip, argc-1, (const char **)(argv+1),
