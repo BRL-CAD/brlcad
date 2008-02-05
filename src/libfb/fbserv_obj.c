@@ -243,11 +243,23 @@ fbserv_makeconn(int fd,
 		const struct pkg_switch *switchp)
 {
     register struct pkg_conn *pc;
+#ifdef HAVE_WINSOCK_H
+    WORD wVersionRequested;		/* initialize Windows socket networking, increment reference count */
+    WSADATA wsaData;
+#endif
 
     if ((pc = (struct pkg_conn *)malloc(sizeof(struct pkg_conn))) == PKC_NULL) {
 	comm_error("fbserv_makeconn: malloc failure\n");
 	return(PKC_ERROR);
     }
+
+#ifdef HAVE_WINSOCK_H
+    wVersionRequested = MAKEWORD(1, 1);
+    if (WSAStartup(wVersionRequested, &wsaData) != 0) {
+	comm_error("fbserv_makeconn:  could not find a usable WinSock DLL\n");
+	return(PKC_ERROR);
+    }
+#endif
 
     memset((char *)pc, 0, sizeof(struct pkg_conn));
     pc->pkc_magic = PKG_MAGIC;
