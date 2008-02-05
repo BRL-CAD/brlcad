@@ -132,7 +132,7 @@ struct bu_semaphores {
 /*
  * multithreading support for SunOS 5.X / Solaris 2.x
  */
-#if SUNOS >= 52
+#if defined(SUNOS) && SUNOS >= 52
 #	include <sys/unistd.h>
 #	include <thread.h>
 #	include <synch.h>
@@ -322,7 +322,7 @@ bu_semaphore_init(unsigned int nsemaphores)
 	}
 #	endif
 
-#	if SUNOS
+#	ifdef SUNOS
 	for ( i=0; i < nsemaphores; i++ )  {
 		bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
 		if (mutex_init( &bu_semaphores[i].mu, USYNC_THREAD, NULL)) {
@@ -406,7 +406,7 @@ bu_semaphore_acquire(unsigned int i)
 	uswsetlock( bu_semaphores[i].ltp, 1000);
 #	endif
 
-#	if SUNOS
+#	ifdef SUNOS
 	if (mutex_lock(&bu_semaphores[i].mu)) {
 		fprintf(stderr, "bu_semaphore_acquire(): mutex_lock() failed on [%d]\n", i);
 		bu_bomb("fatal semaphore acquisition failure");
@@ -474,7 +474,7 @@ bu_semaphore_release(unsigned int i)
 	usunsetlock( bu_semaphores[i].ltp );
 #	endif
 
-#	if SUNOS
+#	ifdef SUNOS
 	if ( mutex_unlock( &bu_semaphores[i].mu ) )  {
 		fprintf(stderr, "bu_semaphore_acquire(): mutex_unlock() failed on [%d]\n", i);
 		bu_bomb("fatal semaphore acquisition failure");

@@ -63,9 +63,10 @@ static int
 image_flip(unsigned char *buf, int width, int height)
 {
     unsigned char *buf2;
-    int i, pitch = width * 3 * sizeof(char);
+    int i;
+    size_t pitch = width * 3 * sizeof(char);
 
-    buf2 = bu_malloc (height * pitch, "image flip");
+    buf2 = (unsigned char *)bu_malloc((size_t)(height * pitch), "image flip");
     for(i=0 ; i<height ; i++)
 	memcpy (buf2+i*pitch, buf+(height-i)*pitch, pitch);
     memcpy (buf, buf2, height * pitch);
@@ -202,13 +203,12 @@ bw_save(int fd, unsigned char *rgb, int size)
 static int
 ppm_save(int fd, unsigned char *rgb, int width, int height)
 {
-    int i,j;
     char buf[BUFSIZ];
 
     image_flip(rgb,width,height);
     snprintf(buf, BUFSIZ, "P6 %d %d 255\n", width, height);
     write(fd, buf, strlen(buf));
-    write(fd, rgb, 3*width*height);
+    write(fd, rgb, (size_t)(3*width*height));
     return 2;
 }
 

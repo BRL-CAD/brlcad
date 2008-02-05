@@ -179,6 +179,9 @@ cho_open(ClientData clientData, Tcl_Interp *interp, char *name)
 {
 	struct bu_cmdhist_obj *chop;
 
+	/* quell compilation warning */
+	clientData = clientData;
+
 	/* check to see if command history object exists */
 	for (BU_LIST_FOR(chop, bu_cmdhist_obj, &HeadCmdHistObj.l)) {
 		if (strcmp(name, bu_vls_addr(&chop->cho_name)) == 0) {

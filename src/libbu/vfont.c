@@ -107,8 +107,8 @@ vfont_get(char *font)
 
 	/* Read in the bit maps */
 	vfp = (struct vfont *)bu_malloc(sizeof(struct vfont), "vfont");
-	vfp->vf_bits = (char *)bu_malloc(size, "vfont bits");
-	if ( fread( vfp->vf_bits, size, 1, fp ) != 1 )  {
+	vfp->vf_bits = (char *)bu_malloc((size_t)size, "vfont bits");
+	if ( fread( vfp->vf_bits, (size_t)size, 1, fp ) != 1 )  {
 		fprintf(stderr, "vfont_get(%s):  bitmap read error\n", fname );
 		fclose(fp);
 		bu_free( vfp->vf_bits, "vfont bits" );

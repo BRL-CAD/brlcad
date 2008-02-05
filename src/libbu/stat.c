@@ -37,6 +37,7 @@
 #include "common.h"
 
 #include <stdio.h>
+#include <string.h>
 
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
@@ -172,7 +173,7 @@ bu_same_fd(int fd1, int fd2)
  * specified file.
  */
 static int
-_bu_file_access(const char *path, int access)
+_bu_file_access(const char *path, int access_level)
 {
     struct stat sb;
     int mask;
@@ -195,13 +196,13 @@ _bu_file_access(const char *path, int access)
 	return 0;
     }
 
-    if (access & R_OK) {
+    if (access_level & R_OK) {
 	mask = S_IRUSR | S_IRGRP | S_IROTH;
     }
-    if (access & W_OK) {
+    if (access_level & W_OK) {
 	mask = S_IWUSR | S_IWGRP | S_IWOTH;
     }
-    if (access & X_OK) {
+    if (access_level & X_OK) {
 	mask = S_IXUSR | S_IXGRP | S_IXOTH;
     }
 

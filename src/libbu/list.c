@@ -202,7 +202,7 @@ bu_ck_list(const struct bu_list *hd, const char *str)
 		}
 		if ( cur->forw->back != cur )  {
 			bu_log("bu_ck_list(%s) cur=x%x, cur->forw=x%x, cur->forw->back=x%x, hd=x%x\n",
-				str, (unsigned)cur, (unsigned)cur->forw, (unsigned)cur->forw->back, hd );
+				str, (unsigned)cur, (unsigned)cur->forw, (unsigned)cur->forw->back, (unsigned)hd );
 			bu_bomb("bu_ck_list() forw->back\n");
 		}
 		if ( !cur->back )  {
@@ -272,7 +272,7 @@ bu_ck_list_magic(const struct bu_list *hd, const char *str, const unsigned long 
 		}
 		if ( cur->back->forw != cur )  {
 			bu_log("bu_ck_list_magic(%s) cur=x%x, cur->back=x%x, cur->back->forw=x%x, hd=x%x, item=%d\n",
-				str, (unsigned)cur, (unsigned)cur->back, (unsigned)cur->back->forw, hd, item );
+				str, (unsigned)cur, (unsigned)cur->back, (unsigned)cur->back->forw, (unsigned)hd, item );
 			bu_bomb("bu_ck_list_magic() cur->back->forw != cur\n");
 		}
 		cur = cur->forw;

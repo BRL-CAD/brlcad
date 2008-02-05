@@ -225,6 +225,10 @@ bu_mm_cvt(register const struct bu_structparse *sdp, register const char *name, 
 {
 	register double *p = (double *)(base+sdp->sp_offset);
 
+	if (!name) {
+	    bu_log("bu_mm_cvt: NULL name encountered\n");
+	}
+
 	/* reconvert with optional units */
 	*p = bu_mm_value(value);
 }

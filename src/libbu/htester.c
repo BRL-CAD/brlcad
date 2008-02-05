@@ -58,7 +58,7 @@ flpr(unsigned char *cp)
 }
 
 int
-ckbytes(unsigned char *a, unsigned char *b, int n)
+ckbytes(unsigned char *a, unsigned char *b, unsigned int n)
 {
 #ifndef vax
 	while ( n-- > 0 )  {

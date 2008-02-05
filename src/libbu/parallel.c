@@ -561,11 +561,10 @@ bu_get_public_cpus(void)
 
     (void)unlink(PUBLIC_CPUS1);
     (void)unlink(PUBLIC_CPUS2);
-    if ( (fp = fopen(PUBLIC_CPUS1, "wb")) != NULL ||
-	(fp = fopen(PUBLIC_CPUS2, "wb")) != NULL
-	)  {
+    if ((fp = fopen(PUBLIC_CPUS1, "wb")) != NULL ||
+	(fp = fopen(PUBLIC_CPUS2, "wb")) != NULL)
+    {
 	fprintf(fp, "%d\n", avail_cpus);
-	fchmod(fileno(fp), 0666);
 	fclose(fp);
     }
 #endif
@@ -1143,12 +1142,12 @@ bu_parallel( func, ncpu, arg )
 	    fprintf(stderr, "ERROR parallel.c/bu_parallel(): thr_create(0x0, 0x0, 0x%lx, 0x0, 0, 0x%lx) failed on processor %d\n",
 		    (unsigned long int)bu_parallel_interface, (unsigned long int)&thread, x);
 	    bu_log("ERROR parallel.c/bu_parallel(): thr_create(0x0, 0x0, 0x%x, 0x0, 0, 0x%x) failed on processor %d\n",
-		   bu_parallel_interface, &thread, x);
+		   (unsigned int)bu_parallel_interface, (unsigned int)&thread, x);
 	    /* Not much to do, lump it */
 	} else {
 	    if ( bu_debug & BU_DEBUG_PARALLEL ) {
-		bu_log("bu_parallel(): created thread: (thread: %d) (loop:%d) (nthreadc:%d)\n",
-		       thread, x, nthreadc);
+		bu_log("bu_parallel(): created thread: (thread: 0x%x) (loop:%d) (nthreadc:%d)\n",
+		       (unsigned int)thread, x, nthreadc);
 	    }
 
 	    thread_tbl[nthreadc] = thread;
@@ -1159,8 +1158,8 @@ bu_parallel( func, ncpu, arg )
 
     if ( bu_debug & BU_DEBUG_PARALLEL ) {
 	for (i = 0; i < nthreadc; i++) {
-	    bu_log("bu_parallel(): thread_tbl[%d] = %d\n",
-		   i, thread_tbl[i]);
+	    bu_log("bu_parallel(): thread_tbl[%d] = 0x%x\n",
+		   i, (unsigned int)thread_tbl[i]);
 	}
 #    ifdef SIGINFO
 	/* may be BSD-only (calls _thread_dump_info()) */
@@ -1179,7 +1178,7 @@ bu_parallel( func, ncpu, arg )
 
 	if ( bu_debug & BU_DEBUG_PARALLEL )
 	    bu_log("bu_parallel(): waiting for thread x%x to complete:\t(loop:%d) (nthreadc:%d) (nthreade:%d)\n",
-		   thread_tbl[x], x, nthreadc, nthreade);
+		   (unsigned int)thread_tbl[x], x, nthreadc, nthreade);
 
 	if ( (ret = pthread_join(thread_tbl[x], NULL)) != 0) {
 	    /* badness happened */
@@ -1189,8 +1188,8 @@ bu_parallel( func, ncpu, arg )
 	thread_tbl[x] = (rt_thread_t)-1;
 
 	if ( bu_debug & BU_DEBUG_PARALLEL )
-	    bu_log("bu_parallel(): thread completed: (thread: %d)\t(loop:%d) (nthreadc:%d) (nthreade:%d)\n",
-		   thread, x, nthreadc, nthreade);
+	    bu_log("bu_parallel(): thread completed: (thread: 0x%x)\t(loop:%d) (nthreadc:%d) (nthreade:%d)\n",
+		   (unsigned int)thread, x, nthreadc, nthreade);
     }
 
     if ( bu_debug & BU_DEBUG_PARALLEL )

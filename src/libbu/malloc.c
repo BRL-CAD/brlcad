@@ -415,12 +415,12 @@ bu_realloc(register genptr_t ptr, size_t cnt, const char *str)
 		/* Pad, plus full long for magic number */
 		cnt = (cnt+2*sizeof(long)-1)&(~(sizeof(long)-1));
 	} else if ( bu_debug&BU_DEBUG_MEM_QCHECK ) {
-		struct memqdebug *mp = ((struct memqdebug *)ptr)-1;
+		struct memqdebug *mqp = ((struct memqdebug *)ptr)-1;
 
 		cnt = (cnt + 2*sizeof(struct memqdebug) - 1)
 		    &(~(sizeof(struct memqdebug)-1));
 
-		if (BU_LIST_MAGIC_WRONG(&(mp->q), MDB_MAGIC)) {
+		if (BU_LIST_MAGIC_WRONG(&(mqp->q), MDB_MAGIC)) {
 			fprintf(stderr, "ERROR bu_realloc(x%lx, %s) pointer bad, "
 				"or not allocated with bu_malloc!  Ignored.\n",
 				(long)ptr, str);
@@ -431,8 +431,8 @@ bu_realloc(register genptr_t ptr, size_t cnt, const char *str)
 			 */
 			return ptr;
 		}
-		ptr = (genptr_t)mp;
-		BU_LIST_DEQUEUE(&(mp->q));
+		ptr = (genptr_t)mqp;
+		BU_LIST_DEQUEUE(&(mqp->q));
 	}
 
 	original_ptr = ptr;
@@ -472,17 +472,17 @@ bu_realloc(register genptr_t ptr, size_t cnt, const char *str)
 		*((long *)(((char *)ptr)+cnt-sizeof(long))) = MDB_MAGIC;
 		bu_semaphore_release(BU_SEM_SYSCALL);
 	} else if ( bu_debug&BU_DEBUG_MEM_QCHECK && ptr ) {
-		struct memqdebug *mp;
+		struct memqdebug *mqp;
 		bu_semaphore_acquire(BU_SEM_SYSCALL);
-		mp = (struct memqdebug *)ptr;
+		mqp = (struct memqdebug *)ptr;
 		ptr = (genptr_t)(((struct memqdebug *)ptr)+1);
-		mp->m.magic = MDB_MAGIC;
-		mp->m.mdb_addr = ptr;
-		mp->m.mdb_len = cnt;
-		mp->m.mdb_str = str;
+		mqp->m.magic = MDB_MAGIC;
+		mqp->m.mdb_addr = ptr;
+		mqp->m.mdb_len = cnt;
+		mqp->m.mdb_str = str;
 		BU_ASSERT(bu_memq != BU_LIST_NULL);
-		BU_LIST_APPEND(bu_memq, &(mp->q));
-		BU_LIST_MAGIC_SET(&(mp->q), MDB_MAGIC);
+		BU_LIST_APPEND(bu_memq, &(mqp->q));
+		BU_LIST_MAGIC_SET(&(mqp->q), MDB_MAGIC);
 		bu_semaphore_release(BU_SEM_SYSCALL);
 	}
 	bu_n_realloc++;
@@ -665,9 +665,8 @@ bu_ck_malloc_ptr(genptr_t ptr, const char *str)
 	fprintf(stderr, "WARNING: bu_ck_malloc_ptr(x%lx, %s)\
 	pointer not in table of allocated memory.\n", (long)ptr, str);
 	} else if (bu_debug&BU_DEBUG_MEM_QCHECK) {
-		struct memqdebug *mp = (struct memqdebug *)ptr;
-		if (BU_LIST_MAGIC_WRONG(&(mp->q), MDB_MAGIC)
-		    || mp->m.magic != MDB_MAGIC) {
+		struct memqdebug *mqp = (struct memqdebug *)ptr;
+		if (BU_LIST_MAGIC_WRONG(&(mqp->q), MDB_MAGIC) || mqp->m.magic != MDB_MAGIC) {
 			fprintf(stderr, "WARNING: bu_ck_malloc_ptr(x%lx, %s)"
 				" memory corrupted.\n", (long)ptr, str);
 		}

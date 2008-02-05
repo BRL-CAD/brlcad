@@ -231,7 +231,7 @@ bu_cmdhist_prev(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib cmdhist_prev");
+		bu_vls_printf(&vls, "helplib %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -260,7 +260,7 @@ bu_cmdhist_curr(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib cmdhist_curr");
+		bu_vls_printf(&vls, "helplib %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -287,7 +287,7 @@ bu_cmdhist_next(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib cmdhist_next");
+		bu_vls_printf(&vls, "helplib %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;

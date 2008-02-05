@@ -156,6 +156,16 @@ bu_observer_show_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *
 	struct bu_observer *headp = (struct bu_observer *)clientData;
 	struct bu_observer *op;
 
+	if (argc != 1) {
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib %s", argv[0]);
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
 	for (BU_LIST_FOR(op, bu_observer, &headp->l)) {
 		Tcl_AppendResult(interp, bu_vls_addr(&op->observer), " - ",
 				 bu_vls_addr(&op->cmd), "\n", (char *)NULL);

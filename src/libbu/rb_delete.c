@@ -130,7 +130,7 @@ static void _rb_delete (bu_rb_tree *tree, struct bu_rb_node *node, int order)
 
     if (tree -> rbt_debug & BU_RB_DEBUG_DELETE)
 	bu_log("_rb_delete(%x,%x,%d): data=x%x\n",
-	    tree, node, order, bu_rb_data(node, order));
+	    (unsigned int)tree, (unsigned int)node, order, (unsigned int)bu_rb_data(node, order));
 
     if ((bu_rb_left_child(node, order) == bu_rb_null(tree))
      || (bu_rb_right_child(node, order) == bu_rb_null(tree)))

@@ -622,12 +622,12 @@ bu_structparse_argv(Tcl_Interp			*interp,
 
 
 /**
- *	bu_tcl_mem_barriercheck
+ * bu_tcl_mem_barriercheck
  *
- *	A tcl wrapper for bu_mem_barriercheck.
+ * A tcl wrapper for bu_mem_barriercheck.
  *
  * @param clientData	- associated data/state
- * @param interp		- tcl interpreter in which this command was registered.
+ * @param interp	- tcl interpreter in which this command was registered.
  * @param argc		- number of elements in argv
  * @param argv		- command name and arguments
  *
@@ -640,6 +640,14 @@ bu_tcl_mem_barriercheck(ClientData	clientData,
 			char		**argv)
 {
 	int	ret;
+
+	/* quell usage warning */
+	clientData = clientData;
+
+	if ( argc > 1 )  {
+		Tcl_AppendResult( interp, "Usage: ", argv[0], "\n", (char *)NULL);
+		return TCL_ERROR;
+	}
 
 	ret = bu_mem_barriercheck();
 	if (ret < 0) {
@@ -668,6 +676,9 @@ bu_tcl_ck_malloc_ptr(ClientData		clientData,
 		     int		argc,
 		     char		**argv)
 {
+	/* quell usage warning */
+	clientData = clientData;
+
 	if ( argc != 3 )  {
 		Tcl_AppendResult( interp, "Usage: bu_ck_malloc_ptr ascii-ptr description\n");
 		return TCL_ERROR;
@@ -696,6 +707,9 @@ bu_tcl_malloc_len_roundup(ClientData	clientData,
 			  char		**argv)
 {
 	int	val;
+
+	/* quell usage warning */
+	clientData = clientData;
 
 	if ( argc != 2 )  {
 		Tcl_AppendResult(interp, "Usage: bu_malloc_len_roundup nbytes\n", NULL);
@@ -726,10 +740,14 @@ bu_tcl_prmem(ClientData	clientData,
 	     int	argc,
 	     char	**argv)
 {
+	/* quell usage warning */
+	clientData = clientData;
+
 	if (argc != 2) {
 		Tcl_AppendResult(interp, "Usage: bu_prmem title\n");
 		return TCL_ERROR;
 	}
+
 	bu_prmem(argv[1]);
 	return TCL_OK;
 }
@@ -754,6 +772,9 @@ bu_tcl_printb(ClientData	clientData,
 	      char		**argv)
 {
 	struct bu_vls	str;
+
+	/* quell usage warning */
+	clientData = clientData;
 
 	if (argc != 4) {
 		Tcl_AppendResult(interp, "Usage: bu_printb title integer-to-format bit-format-string\n", NULL);
@@ -804,6 +825,9 @@ bu_get_value_by_keyword(ClientData	clientData,
 	register char	*iwant;
 	char	**tofree = (char **)NULL;
 	int	i;
+
+	/* quell usage warning */
+	clientData = clientData;
 
 	if ( argc < 3 )  {
 		char	buf[TINYBUFSIZ];
@@ -926,6 +950,9 @@ bu_get_all_keyword_values(ClientData	clientData,
 	char	**tofree = (char **)NULL;
 	int	i;
 
+	/* quell usage warning */
+	clientData = clientData;
+
 	if ( argc < 2 )  {
 		char	buf[TINYBUFSIZ];
 		snprintf(buf, TINYBUFSIZ, "%d", argc);
@@ -1018,6 +1045,9 @@ bu_tcl_rgb_to_hsv(ClientData	clientData,
 	fastf_t		hsv[3];
 	struct bu_vls	result;
 
+	/* quell usage warning */
+	clientData = clientData;
+
 	bu_vls_init(&result);
 	if ( argc != 4 )  {
 		Tcl_AppendResult( interp, "Usage: bu_rgb_to_hsv R G B\n",
@@ -1071,6 +1101,9 @@ bu_tcl_hsv_to_rgb(ClientData	clientData,
 	unsigned char	rgb[3];
 	struct bu_vls	result;
 
+	/* quell usage warning */
+	clientData = clientData;
+
 	if ( argc != 4 )  {
 		Tcl_AppendResult( interp, "Usage: bu_hsv_to_rgb H S V\n",
 		    (char *)NULL );
@@ -1118,6 +1151,9 @@ bu_tcl_key_eq_to_key_val(ClientData	clientData,
 	char *next;
 	int i=0;
 
+	/* quell usage warning */
+	clientData = clientData;
+
 	bu_vls_init( &vls );
 
 	while ( ++i < argc )
@@ -1162,6 +1198,14 @@ bu_tcl_shader_to_key_val(ClientData	clientData,
 {
 	struct bu_vls vls;
 
+	/* quell usage warning */
+	clientData = clientData;
+
+	if ( argc < 2 )  {
+		Tcl_AppendResult( interp, "Usage: ", argv[0], " shader [key1=value ...]\n", (char *)NULL );
+		return TCL_ERROR;
+	}
+
 	bu_vls_init( &vls );
 
 	if ( bu_shader_to_tcl_list( argv[1], &vls ) )
@@ -1199,6 +1243,9 @@ bu_tcl_key_val_to_key_eq(ClientData	clientData,
 {
 	int i=0;
 
+	/* quell usage warning */
+	clientData = clientData;
+
 	for ( i=1; i<argc; i += 2 )
 	{
 		if ( i+1 < argc-1 )
@@ -1232,11 +1279,17 @@ bu_tcl_shader_to_key_eq(ClientData	clientData,
 {
 	struct bu_vls vls;
 
+	/* quell usage warning */
+	clientData = clientData;
+
+	if ( argc < 2 )  {
+		Tcl_AppendResult( interp, "Usage: ", argv[0], " shader { tcl list }\n", (char *)NULL );
+		return TCL_ERROR;
+	}
 
 	bu_vls_init( &vls );
 
-	if ( bu_shader_to_key_eq( argv[1], &vls ) )
-	{
+	if ( bu_shader_to_key_eq( argv[1], &vls ) ) {
 		bu_vls_free( &vls );
 		return TCL_ERROR;
 	}
@@ -1267,6 +1320,9 @@ bu_tcl_brlcad_root(ClientData	clientData,
 		   int		 argc,
 		   char		**argv)
 {
+	/* quell usage warning */
+	clientData = clientData;
+
 	if (argc != 2) {
 		Tcl_AppendResult(interp, "Usage: bu_brlcad_root subdir\n",
 				 (char *)NULL);
@@ -1295,6 +1351,9 @@ bu_tcl_brlcad_data(ClientData	clientData,
 		   int		 argc,
 		   char		**argv)
 {
+	/* quell usage warning */
+	clientData = clientData;
+
 	if (argc != 2) {
 		Tcl_AppendResult(interp, "Usage: bu_brlcad_data subdir\n",
 				 (char *)NULL);
@@ -1325,6 +1384,9 @@ bu_tcl_units_conversion(ClientData	clientData,
 {
 	double conv_factor;
 	struct bu_vls result;
+
+	/* quell usage warning */
+	clientData = clientData;
 
 	if (argc != 2) {
 		Tcl_AppendResult(interp, "Usage: bu_units_conversion units_string\n",

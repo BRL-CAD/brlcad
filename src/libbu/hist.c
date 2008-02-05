@@ -47,14 +47,19 @@
 void
 bu_hist_free(struct bu_hist *histp)
 {
-	if ( histp && histp->magic == 0 )  return;
-	if ( histp->magic == -1 ) return;
+	if ( (histp==(struct bu_hist *)NULL) ||
+	     (histp && (histp->magic == 0 || histp->magic == (unsigned int)-1)) )
+	{
+	    return;
+	}
+
 	BU_CK_HIST(histp);
+
 	if ( histp->hg_bins )
 		bu_free( (char *)histp->hg_bins, "old bu_hist bins");
 	histp->hg_bins = (long *)0;
 	histp->hg_nbins = 0;
-	histp->magic = -1;	/* sanity */
+	histp->magic = (unsigned int)-1;	/* sanity */
 }
 
 /**
@@ -149,7 +154,7 @@ bu_hist_pr_suppress(register const struct bu_hist *histp, const char *title, int
 	}
 
 	/* 12345678 12345678 123 .... */
-	bu_log("\nHistogram of %s\nmin=%g, max=%g, nbins=%d, clumpsize=%g\n%d samples collected, highest count was %d\n\n Value      Count Rel%%|  Bar Graph\n",
+	bu_log("\nHistogram of %s\nmin=%g, max=%g, nbins=%ld, clumpsize=%g\n%ld samples collected, highest count was %ld\n\n Value      Count Rel%%|  Bar Graph\n",
 		title,
 		histp->hg_min, histp->hg_max,
 		histp->hg_nbins, histp->hg_clumpsize,
@@ -169,7 +174,7 @@ bu_hist_pr_suppress(register const struct bu_hist *histp, const char *title, int
 		if ( mark_count <= 0 && histp->hg_bins[i] > 0 )
 			mark_count = 1;
 		if ( mark_count > NMARKS )  {
-			bu_log("mark_count = %d, NMARKS=%d, hg_bins[%d]=%d, maxcount\n",
+			bu_log("mark_count=%d, NMARKS=%d, hg_bins[%d]=%ld, maxcount=%ld\n",
 				mark_count, NMARKS, i, histp->hg_bins[i], maxcount);
 			bu_bomb("bu_hist_pr() bogus mark_count\n");
 		}
@@ -180,7 +185,7 @@ bu_hist_pr_suppress(register const struct bu_hist *histp, const char *title, int
 			buf[mark_count] = '\0';
 		}
 		val = histp->hg_min + i*histp->hg_clumpsize;
-		bu_log("%8g %8d %3d |%s\n",
+		bu_log("%8g %8ld %3d |%s\n",
 			val,
 			histp->hg_bins[i], percent, buf );
 	}
