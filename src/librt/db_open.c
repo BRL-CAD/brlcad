@@ -123,9 +123,10 @@ db_open(const char *name, const char *mode)
 	dbip->dbi_eof = mfp->buflen;
 	dbip->dbi_inmem = mfp->buf;
 	dbip->dbi_mf->apbuf = (genptr_t)dbip;
+	dbip->dbi_fd = -1;
 
 	/* Do this too, so we can seek around on the file */
-	if ( (dbip->dbi_fp = fopen( name, "rb")) == NULL )
+	if ((dbip->dbi_fp = fopen( name, "rb")) == NULL)
 	    goto fail;
 	dbip->dbi_fd = fileno(dbip->dbi_fp);
 
@@ -142,6 +143,7 @@ db_open(const char *name, const char *mode)
 	/* Read-write mode */
 	BU_GETSTRUCT( dbip, db_i );
 	dbip->dbi_eof = -1L;
+	dbip->dbi_fd = -1;
 
 	if ( (dbip->dbi_fp = fopen( name, "r+b")) == NULL )
 	    goto fail;
