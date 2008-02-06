@@ -145,6 +145,7 @@
 #define sopen _sopen
 #define stat _stat
 #define strcasecmp _stricmp
+#define strncasecmp _strnicmp
 #define strdup _strdup
 #define sys_errlist _sys_errlist
 #define sys_nerr _sys_nerr
