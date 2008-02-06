@@ -46,6 +46,11 @@
 #define LINE_LEN 256
 #define CY_DATA "CY_DATA"
 
+#define INDEX(lt, lg) ((lg) * nlt + (lt))
+
+#define VOIDVAL (0xffff8000 << rshift)
+#define MAXVAL (0x00007fff << rshift)
+
 static const char usage[] = "Usage:\n\tcy-g input_laser_scan_file.cy output_brlcad_file.g\n";
 
 int
@@ -53,6 +58,8 @@ main(int argc, char **argv)
 {
     FILE *infp = NULL;
     struct rt_wdb *outfp = NULL;
+
+    short *data = NULL;
 
     char *cptr = NULL;
     char line[LINE_LEN] = {0};
@@ -63,6 +70,8 @@ main(int argc, char **argv)
 
     int x = 0;
     int y = 0;
+    int lt = 0;
+    int lg = 0;
     int nlg = 512;
     int nlt = 256;
     int lgshift = 0;
@@ -271,7 +280,7 @@ main(int argc, char **argv)
 	    }
 
 	} else if (strncasecmp("LGMIN=", line, 6) == 0) {
-	    /* minimum longitude */
+	    /* minimum longitude data window (inclusive) */
 
 	    cptr = line+6;
 	    lgmin = atoi(cptr);
@@ -279,7 +288,7 @@ main(int argc, char **argv)
 	    bu_log("LGMIN=%d\n", lgmin);
 
 	} else if (strncasecmp("LGMAX=", line, 6) == 0) {
-	    /* maximum longitude */
+	    /* maximum longitude data window (inclusive) */
 
 	    cptr = line+6;
 	    lgmax = atoi(cptr);
@@ -287,7 +296,7 @@ main(int argc, char **argv)
 	    bu_log("LGMAX=%d\n", lgmax);
 
 	} else if (strncasecmp("LTMIN=", line, 6) == 0) {
-	    /* minimum latitude */
+	    /* minimum latitude data window (inclusive) */
 
 	    cptr = line+6;
 	    ltmin = atoi(cptr);
@@ -295,7 +304,7 @@ main(int argc, char **argv)
 	    bu_log("LTMIN=%d\n", ltmin);
 
 	} else if (strncasecmp("LTMAX=", line, 6) == 0) {
-	    /* maximum latitude */
+	    /* maximum latitude data window (inclusive) */
 
 	    cptr = line+6;
 	    ltmax = atoi(cptr);
@@ -406,10 +415,24 @@ main(int argc, char **argv)
     sins[nlg] = sins[0];
     coss[nlg] = coss[0];
 
-    /* DATA contains NLT * NLG * 2 values
-     *
-     * 
-     */
+    /* DATA contains NLT * NLG * 2 bytes data values */
+    data = (short *)bu_malloc(nlt * nlg * sizeof(short), "data");
+/*
+    bu_log("VOIDVAL is %d\n", VOIDVAL);
+    bu_log("MAXVAL is %d\n", MAXVAL);
+*/
+
+    /* read int the actual data values */
+    for (lg=0; lg<nlg; lg++) {
+	for (lt=0; lt<nlt; lt++) {
+	    short r;
+
+	    if (fread(&r, sizeof(short), 1, infp) != 1)
+		bu_exit(1, "Unexpected end-of-file encountered in [%s]\n", argv[1]);
+
+	    data[INDEX(lt, lg)] = r;
+	}
+    }
 
     /* read the actual data */
     for (x=0; x<nlg; x++) {
@@ -422,9 +445,12 @@ main(int argc, char **argv)
 
 	    ptr = &curves[y+1][x*3];
 
-	    if (fread(&r, 2, 1, infp) != 1)
-		bu_exit(1, "Unexpected end-of-file encountered in [%s]\n", argv[1]);
-	    if (r < 0) {
+	    r = data[INDEX(y,x)];
+	    if ((r << rshift) == VOIDVAL) {
+		/* skip void values */
+		continue;
+	    } else if (r < 0) {
+/*		bu_log("FOUND NEGATIVE VALUE at %d,%d\n", x, y);*/
 		rad = 0.0;
 	    } else {
 		if (y < first_non_zero)
@@ -494,6 +520,8 @@ main(int argc, char **argv)
      * Number of curves is (last_non_zero - first_non_zero + 2)
      */
     mk_ars(outfp, name, last_non_zero - first_non_zero + 2, nlg, &curves[first_non_zero-1]);
+
+    bu_free(data, "data");
     wdb_close(outfp);
     return 0;
 }
