@@ -40,6 +40,8 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------
 
+* (re)verify rtarea results, fix naming convention
+
 * rtarea report local units by default and have option for override
 
 * verify/finish clone mirror support
