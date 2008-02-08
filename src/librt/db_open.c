@@ -21,15 +21,11 @@
 /** @{ */
 /** @file db_open.c
  *
- * Functions -
- *	db_open		Open the database
- *	db_create	Create a new database
- *	db_close	Close a database, releasing dynamic memory
- *	db_clone_dbi	Clone a given database instance
- *
- *  Authors -
- *	Michael John Muuss
- *	Robert Jon Reschly Jr.
+ * Routines for opening, creating, and replicating BRL-CAD geometry
+ * database files.  BRL-CAD geometry database files are managed in a
+ * given application through a "database instance" (dbi).  An
+ * application may maintain multiple database instances open to a
+ * given geometry database file.
  *
  */
 
@@ -58,7 +54,7 @@
 #include "./debug.h"
 
 #ifndef SEEK_SET
-# define SEEK_SET	0
+#  define SEEK_SET	0
 #endif
 
 #define DEFAULT_DB_TITLE "Untitled BRL-CAD Database"
@@ -92,12 +88,17 @@ db_open(const char *name, const char *mode)
     }
 
     if (mode && mode[0] == 'r' && mode[1] == '\0') {
+	/* Read-only mode */
+
 	struct bu_mapped_file	*mfp;
 
-	/* Read-only mode */
 	mfp = bu_open_mapped_file( name, "db_i" );
-	if (mfp == NULL)
-	    goto fail;
+	if (mfp == NULL) {
+	    if (RT_G_DEBUG & DEBUG_DB) {
+		bu_log("db_open(%s) FAILED, unable to open as a mapped file\n", name);
+	    }
+	    return DBI_NULL;
+	}
 
 	/* Is this a re-use of a previously mapped file? */
 	if (mfp->apbuf) {
@@ -126,36 +127,33 @@ db_open(const char *name, const char *mode)
 	dbip->dbi_fd = -1;
 
 	/* Do this too, so we can seek around on the file */
-	if ((dbip->dbi_fp = fopen( name, "rb")) == NULL)
-	    goto fail;
-	dbip->dbi_fd = fileno(dbip->dbi_fp);
+	if ((dbip->dbi_fp = fopen( name, "rb")) == NULL) {
+	    if (RT_G_DEBUG & DEBUG_DB) {
+		bu_log("db_open(%s) FAILED, unable to open file for reading\n", name);
+	    }
+	    bu_free( (char *)dbip, "struct db_i" );
+	    return DBI_NULL;
+	}
 
-#if 0
-	/* old method */
-	if ( (dbip->dbi_fd = open( name, O_RDONLY )) < 0 )
-	    goto fail;
-	if ( (dbip->dbi_fp = fdopen( dbip->dbi_fd, "rb" )) == NULL )
-	    goto fail;
-#endif
+	dbip->dbi_fd = fileno(dbip->dbi_fp); /* deprecated, do not use */
 
 	dbip->dbi_read_only = 1;
     }  else  {
 	/* Read-write mode */
+
 	BU_GETSTRUCT( dbip, db_i );
 	dbip->dbi_eof = -1L;
 	dbip->dbi_fd = -1;
 
-	if ( (dbip->dbi_fp = fopen( name, "r+b")) == NULL )
-	    goto fail;
-	dbip->dbi_fd = fileno(dbip->dbi_fp);
+	if ( (dbip->dbi_fp = fopen( name, "r+b")) == NULL ) {
+	    if (RT_G_DEBUG & DEBUG_DB) {
+		bu_log("db_open(%s) FAILED, unable to open file for reading/writing\n", name);
+	    }
+	    bu_free( (char *)dbip, "struct db_i" );
+	    return DBI_NULL;
+	}
 
-#if 0
-	/* old method */
-	if ( (dbip->dbi_fd = open( name, O_RDWR )) < 0 )
-	    goto fail;
-	if ( (dbip->dbi_fp = fdopen( dbip->dbi_fd, "r+b" )) == NULL )
-	    goto fail;
-#endif
+	dbip->dbi_fd = fileno(dbip->dbi_fp); /* deprecated, do not use */
 
 	dbip->dbi_read_only = 0;
     }
@@ -190,27 +188,8 @@ db_open(const char *name, const char *mode)
     }
 
     return dbip;
-
- fail:
-    if (RT_G_DEBUG & DEBUG_DB) {
-	bu_log("db_open(%s) FAILED\n", name);
-    }
-
-    if (dbip && dbip->dbi_fd >= 0) {
-	(void)close(dbip->dbi_fd);
-	dbip->dbi_fd = -1;
-    }
-    if (dbip && dbip->dbi_fp) {
-	(void)fclose(dbip->dbi_fp);
-	dbip->dbi_fp = (FILE *)NULL;
-    }
-
-    if (dbip) {
-	bu_free( (char *)dbip, "struct db_i" );
-    }
-
-    return DBI_NULL;
 }
+
 
 /**
  *			D B _ C R E A T E
@@ -269,6 +248,7 @@ db_create(const char *name,
     return dbip;
 }
 
+
 /**
  *			D B _ C L O S E _ C L I E N T
  *
@@ -284,6 +264,7 @@ db_close_client(struct db_i *dbip, long int *client)
     }
     db_close(dbip);
 }
+
 
 /**
  *			D B _ C L O S E
@@ -386,6 +367,7 @@ db_close(register struct db_i *dbip)
     bu_free( (char *)dbip, "struct db_i" );
 }
 
+
 /**
  *			D B _ D U M P
  *
@@ -430,6 +412,7 @@ db_dump(struct rt_wdb *wdbp, struct db_i *dbip)
     return 0;
 }
 
+
 /**
  *			D B _ C L O N E _ D B I
  *
@@ -447,6 +430,7 @@ db_clone_dbi(struct db_i *dbip, long int *client)
     }
     return dbip;
 }
+
 
 /**
  *			D B _ S Y N C
