@@ -124,7 +124,6 @@ db_open(const char *name, const char *mode)
 	dbip->dbi_eof = mfp->buflen;
 	dbip->dbi_inmem = mfp->buf;
 	dbip->dbi_mf->apbuf = (genptr_t)dbip;
-	dbip->dbi_fd = -1;
 
 	/* Do this too, so we can seek around on the file */
 	if ((dbip->dbi_fp = fopen( name, "rb")) == NULL) {
@@ -135,15 +134,12 @@ db_open(const char *name, const char *mode)
 	    return DBI_NULL;
 	}
 
-	dbip->dbi_fd = fileno(dbip->dbi_fp); /* deprecated, do not use */
-
 	dbip->dbi_read_only = 1;
     }  else  {
 	/* Read-write mode */
 
 	BU_GETSTRUCT( dbip, db_i );
 	dbip->dbi_eof = -1L;
-	dbip->dbi_fd = -1;
 
 	if ( (dbip->dbi_fp = fopen( name, "r+b")) == NULL ) {
 	    if (RT_G_DEBUG & DEBUG_DB) {
@@ -152,8 +148,6 @@ db_open(const char *name, const char *mode)
 	    bu_free( (char *)dbip, "struct db_i" );
 	    return DBI_NULL;
 	}
-
-	dbip->dbi_fd = fileno(dbip->dbi_fp); /* deprecated, do not use */
 
 	dbip->dbi_read_only = 0;
     }
@@ -314,8 +308,6 @@ db_close(register struct db_i *dbip)
 
     if (dbip->dbi_fp) {
 	fclose( dbip->dbi_fp );
-    } else if (dbip->dbi_fd > 0) {
-	(void)close( dbip->dbi_fd );
     }
 
     if ( dbip->dbi_title )
@@ -450,7 +442,7 @@ db_sync(struct db_i *dbip)
 
 #ifdef HAVE_FSYNC
     /* make sure it's written out */
-    (void)fsync(dbip->dbi_fd);
+    (void)fsync(fileno(dbip->dbi_fp));
 #else
 #  ifdef HAVE_SYNC
     /* try the whole filesystem if sans fsync() */

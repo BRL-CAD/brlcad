@@ -67,7 +67,6 @@ db_open_inmem(void)
 
     BU_GETSTRUCT( dbip, db_i );
     dbip->dbi_eof = -1L;
-    dbip->dbi_fd = -1;
     dbip->dbi_fp = NULL;
     dbip->dbi_mf = NULL;
     dbip->dbi_read_only = 1;

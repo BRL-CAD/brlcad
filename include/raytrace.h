@@ -769,7 +769,6 @@ struct db_i  {
 	char			*const*dbi_filepath; /**< @brief search path for aux file opens (convenience var) */
 	/* THESE ELEMENTS ARE FOR LIBRT ONLY, AND MAY CHANGE */
 	struct directory	*dbi_Head[RT_DBNHASH];
-	int			dbi_fd;		/**< @brief UNIX file descriptor */
 	FILE			*dbi_fp;	/**< @brief standard file pointer */
 	long			dbi_eof;	/**< @brief End+1 pos after db_scan() */
 	long			dbi_nrec;	/**< @brief # records after db_scan() */

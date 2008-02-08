@@ -96,15 +96,6 @@ db_read(const struct db_i *dbip, genptr_t addr, long int count, long int offset)
 		bu_bomb("db_read: fseek error\n");
 	got = fread( addr, 1, count, dbip->dbi_fp );
 
-#if 0
-	/* old method */
-	if ((s=(long)lseek( dbip->dbi_fd, (off_t)offset, 0 )) != offset) {
-		bu_log("db_read: lseek returns %d not %d\n", s, offset);
-		bu_bomb("db_read: Goodbye");
-	}
-	got = read( dbip->dbi_fd, addr, count );
-#endif
-
 	bu_semaphore_release( BU_SEM_SYSCALL );
 
 	if ( got != count )  {
@@ -248,12 +239,6 @@ db_write(struct db_i *dbip, const genptr_t addr, long int count, long int offset
 		return(-1);
 	}
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
-
-#if 0
-	/* old method */
-	(void)lseek( dbip->dbi_fd, offset, 0 );
-	got = write( dbip->dbi_fd, addr, count );
-#endif
 
 	(void)fseek( dbip->dbi_fp, offset, 0 );
 	got = fwrite( addr, 1, count, dbip->dbi_fp );
