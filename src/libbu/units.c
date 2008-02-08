@@ -145,27 +145,32 @@ bu_units_string(register const double mm)
 {
 	register const struct cvt_tab	*tp;
 
-	if ( mm <= 0 )  return (char *)NULL;
+	if (mm <= 0)
+	    return (char *)NULL;
 
 	/* Search for this string in the table */
-	for ( tp=bu_units_tab; tp->name[0]; tp++ )  {
+	for (tp=bu_units_tab; tp->name[0]; tp++)  {
 		fastf_t	diff, bigger;
-		if ( mm == tp->val )  return tp->name;
+
+		if (mm == tp->val)
+		    return tp->name;
 
 		/* Check for near-miss */
-		if ( mm > tp->val )  {
+		if (mm > tp->val) {
 			bigger = mm;
 			diff = mm - tp->val;
-		}  else  {
+		} else {
 			bigger = tp->val;
 			diff = tp->val - mm;
 		}
 
 		/* Absolute difference less than 0.1 angstrom */
-		if ( diff < 1.0e-8 )  return tp->name;
+		if (diff < 1.0e-8)
+		    return tp->name;
 
 		/* Relative difference less than 1 part per billion */
-		if ( diff < 0.000000001 * bigger )  return tp->name;
+		if (diff < 0.000000001 * bigger)
+		    return tp->name;
 	}
 	return (char *)NULL;
 }
