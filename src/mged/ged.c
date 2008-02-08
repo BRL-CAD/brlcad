@@ -258,7 +258,7 @@ main(int argc, char **argv)
 #endif
     int	parent_pipe[2];
     int	use_pipe = 0;
-    int run_in_foreground=0;
+    int run_in_foreground=1;
 
     Tcl_Channel chan;
 
@@ -269,7 +269,7 @@ main(int argc, char **argv)
 
     bu_setprogname(argv[0]);
 
-    while ((c = bu_getopt(argc, argv, "d:hficnrx:X:")) != EOF)
+    while ((c = bu_getopt(argc, argv, "d:hbicnrx:X:")) != EOF)
 	{
 	    switch ( c )
 		{
@@ -289,14 +289,14 @@ main(int argc, char **argv)
 		    case 'X':
 			sscanf( bu_optarg, "%x", (unsigned int *)&bu_debug );
 			break;
-		    case 'f':
-			run_in_foreground = 1;  /* run in foreground */
+		    case 'b':
+			run_in_foreground = 0;  /* run in background */
 			break;
 		    default:
 			fprintf( stdout, "Unrecognized option (%c)\n", c );
 			/* Fall through to help */
 		    case 'h':
-			fprintf(stdout, "Usage:  %s [-c] [-d display] [-h] [-r] [-x#] [-X#] [database [command]]\n", argv[0]);
+			fprintf(stdout, "Usage:  %s [-b] [-c] [-d display] [-h] [-r] [-x#] [-X#] [database [command]]\n", argv[0]);
 			fflush(stdout);
 			return(1);
 		}

@@ -108,8 +108,7 @@ is used.
 .PP
 Whether or not mged presents a multiple window GUI depends on whether
 or not it is running in "classic" mode.  By default, it will create a
-multiple window GUI and automatically detach from the executing
-terminal so it may run as a background process.
+multiple window GUI.
 .SH MODES
 The "set" command can be used to select various operating modes for
 .I mged\^.
@@ -140,11 +139,10 @@ option to
 will run in "classic" mode.
 .PP
 The
-.I -f
+.I -b
 option to
 .I mged
-will prevent the application from automatically detaching and running
-in the background.
+will cause the application to automatically detach and run in the background.
 .SH "X11 NOTES"
 When using
 .I mged\^
