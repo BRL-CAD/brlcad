@@ -17,26 +17,27 @@ http://sf.net/pm/?group_id=105292
 THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------
 
-* fix rt parallel crash
-  (true ; while [ $? -eq 0 ] ; do rt -o /dev/null moss.g all.g ; done)
-
-* fix parallel crash report generation (multiple BU_MAPPED_FILE's
-  getting acquired)
-
-* fix incrTcl pathing issues when only using system tcl/tk
-  (get incrTcl subconfigure to work like was done for Tcl)
-
 * fix mged I/O (puts/gets stdout/stdin fail)
 
 * fix mged text flood hang (e.g. large rtarea report)
 
 * add mged background option, disable auto-background
 
-* fix opengl framebuffer
+* fix opengl framebuffer, it's related to the fork() and closure of
+  file descriptors.  still need to pinpoint why it's now a problem.
 
 
 THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------
+
+* fix incrTcl pathing issues when only using system tcl/tk
+  (get incrTcl subconfigure to work like was done for Tcl)
+
+* fix rt parallel crash
+  (true ; while [ $? -eq 0 ] ; do rt -o /dev/null moss.g all.g ; done)
+
+* fix parallel crash report generation (multiple BU_MAPPED_FILE's
+  getting acquired)
 
 * (re)verify rtarea results, fix naming convention
 
