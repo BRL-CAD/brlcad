@@ -58,12 +58,11 @@ EXTRA_DIST = \
 	Y2KINFO \
 	aclocal.m4 \
 	autogen.sh \
-	config.h.in  \
 	config.h.in \
 	configure \
 	contrib \
 	example.c \
-	libpng-1.2.22.txt \
+	libpng-1.2.24.txt \
 	pngbar.jpg \
 	pngbar.png \
 	pngnow.png \
