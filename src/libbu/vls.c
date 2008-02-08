@@ -798,28 +798,31 @@ int
 bu_vls_gets(register struct bu_vls *vp, register FILE *fp)
 {
     int	startlen;
-    int c;
+    int endlen;
+    char buffer[BUFSIZ*10] = {0};
+    char *bufp;
 
     BU_CK_VLS(vp);
 
     startlen = bu_vls_strlen(vp);
-    bu_vls_extend(vp, BUFSIZ); /* Ensure room to grow */
-    for (;;)  {
-	bu_semaphore_acquire( BU_SEM_SYSCALL );
-	c = getc(fp);
-	bu_semaphore_release( BU_SEM_SYSCALL );
 
-	/* XXX Alternatively, code up something with bu_fgets(), chunking */
+    bufp = bu_fgets(buffer, BUFSIZ*10, fp);
 
-	if ( c == EOF || c == '\n' )  break;
-	bu_vls_putc( vp, c );
-    }
-
-    if ( c == EOF && bu_vls_strlen(vp) <= startlen )
+    if (!bufp)
 	return -1;
 
-    vp->vls_str[vp->vls_offset + vp->vls_len] = '\0'; /* force null termination */
-    return bu_vls_strlen(vp);
+    /* strip the trailing newline */
+    if (bufp[strlen(bufp)-1] == '\n')
+	bufp[strlen(bufp)-1] = '\0';
+
+    bu_vls_printf(vp, "%s", buffer);
+
+    /* sanity check */
+    endlen = bu_vls_strlen(vp);
+    if (endlen < startlen )
+	return -1;
+
+    return endlen;
 }
 
 
