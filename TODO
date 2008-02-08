@@ -21,8 +21,6 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * fix mged text flood hang (e.g. large rtarea report)
 
-* add mged background option, disable auto-background
-
 * fix opengl framebuffer, it's related to the fork() and closure of
   file descriptors.  still need to pinpoint why it's now a problem.
 
