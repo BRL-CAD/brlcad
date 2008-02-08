@@ -24,8 +24,9 @@ A \fBttk::notebook\fR widget manages a collection of windows
 and displays a single one at a time.
 Each slave window is associated with a \fItab\fR,
 which the user may select to change the currently-displayed window.
-.SO
-\-class	\-cursor	\-takefocus	\-style
+.SO ttk_widget
+\-class	\-cursor	\-takefocus
+\-style
 .SE
 .SH "WIDGET-SPECIFIC OPTIONS"
 .OP \-height height Height

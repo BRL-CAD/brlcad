@@ -15,7 +15,6 @@ dict \- Manipulate dictionaries
 .SH SYNOPSIS
 \fBdict \fIoption arg \fR?\fIarg ...\fR?
 .BE
-
 .SH DESCRIPTION
 .PP
 Performs one of several operations on dictionary values or variables
@@ -214,6 +213,7 @@ when \fIbody\fR terminates.
 .SH "DICTIONARY VALUES"
 Dictionaries are values that contain an efficient, order-preserving
 mapping from arbitrary keys to arbitrary values.
+Each key in the dictionary maps to a single value.
 They have a textual format that is exactly that of any list with an
 even number of elements, with each mapping in the dictionary being
 represented as two items in the list. When a command takes a
@@ -221,6 +221,13 @@ dictionary and produces a new dictionary based on it (either returning
 it or writing it back into the variable that the starting dictionary
 was read from) the new dictionary will have the same order of keys,
 modulo any deleted keys and with new keys added on to the end.
+When a string is interpreted as a dictionary and it would otherwise
+have duplicate keys, only the last value for a particular key is used;
+the others are ignored, meaning that,
+.QW "apple banana"
+and
+.QW "apple carrot apple banana"
+are equivalent dictionaries (with different string representations).
 .SH EXAMPLES
 Constructing and using nested dictionaries:
 .CS
@@ -254,7 +261,7 @@ foreach id [\fBdict keys\fR $employeeInfo] {
    puts "Hello, [\fBdict get\fR $employeeInfo $id forenames]!"
 }
 .CE
-
+.PP
 A localizable version of \fBstring toupper\fR:
 .CS
 # Set up the basic C locale
@@ -274,9 +281,7 @@ foreach c [split {abcdefghijklmnopqrstuvwxyz} ""] {
 set upperCaseMap [\fBdict get\fR $capital $env(LANG)]
 set upperCase [string map $upperCaseMap $string]
 .CE
-
 .SH "SEE ALSO"
 append(n), array(n), foreach(n), incr(n), list(n), lappend(n), set(n)
-
 .SH KEYWORDS
 dictionary, create, update, lookup, iterate, filter

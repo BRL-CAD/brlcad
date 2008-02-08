@@ -92,10 +92,6 @@ typedef int ptrdiff_t;
 #    endif
 #endif
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
-#  define inline
-#endif
-
 /*
  * Used to tag functions that are only to be visible within the module being
  * built and not outside it (where this is supported by the linker).
@@ -2451,7 +2447,6 @@ MODULE_SCOPE void       TclDeleteNamespaceVars(Namespace *nsPtr);
 /* TIP #280 - Modified token based evulation, with line information */
 MODULE_SCOPE int        TclEvalEx(Tcl_Interp *interp, const char *script,
 			    int numBytes, int flags, int line);
-MODULE_SCOPE void	TclExpandTokenArray(Tcl_Parse *parsePtr);
 MODULE_SCOPE int	TclFileAttrsCmd(Tcl_Interp *interp,
 			    int objc, Tcl_Obj *const objv[]);
 MODULE_SCOPE int	TclFileCopyCmd(Tcl_Interp *interp,
@@ -2524,12 +2519,7 @@ MODULE_SCOPE void	TclInitLimitSupport(Tcl_Interp *interp);
 MODULE_SCOPE void	TclInitNamespaceSubsystem(void);
 MODULE_SCOPE void	TclInitNotifier(void);
 MODULE_SCOPE void	TclInitObjSubsystem(void);
-#ifdef _WIN32
-/* This is a quick hack for BLT on Windows */
-EXTERN void	TclInitSubsystems(void);
-#else
 MODULE_SCOPE void	TclInitSubsystems(void);
-#endif
 MODULE_SCOPE int	TclInterpReady(Tcl_Interp *interp);
 MODULE_SCOPE int	TclIsLocalScalar(const char *src, int len);
 MODULE_SCOPE int	TclJoinThread(Tcl_ThreadId id, int *result);
@@ -3509,6 +3499,52 @@ MODULE_SCOPE void	TclDbInitNewObj(Tcl_Obj *objPtr);
 	}\
 	objPtr->bytes = NULL;\
     }\
+
+/*
+ *----------------------------------------------------------------
+ * Macros used by the Tcl core to grow Tcl_Token arrays.  They use
+ * the same growth algorithm as used in tclStringObj.c for growing
+ * strings.  The ANSI C "prototype" for this macro is:
+ *
+ * MODULE_SCOPE void	TclGrowTokenArray(Tcl_Token *tokenPtr, int used,
+ *				int available, int append,
+ *				Tcl_Token *staticPtr);
+ * MODULE_SCOPE void	TclGrowParseTokenArray(Tcl_Parse *parsePtr,
+ *				int append);
+ *----------------------------------------------------------------
+ */
+
+#define TCL_MIN_TOKEN_GROWTH 50
+#define TclGrowTokenArray(tokenPtr, used, available, append, staticPtr)	\
+{									\
+    int needed = (used) + (append);					\
+    if (needed > (available)) {						\
+	int allocated = 2 * needed;					\
+	Tcl_Token *oldPtr = (tokenPtr);					\
+	Tcl_Token *newPtr;						\
+	if (oldPtr == (staticPtr)) {					\
+	    oldPtr = NULL;						\
+	}								\
+	newPtr = (Tcl_Token *) attemptckrealloc( (char *) oldPtr,	\
+		(unsigned int) (allocated * sizeof(Tcl_Token)));	\
+	if (newPtr == NULL) {						\
+	    allocated = needed + (append) + TCL_MIN_TOKEN_GROWTH;	\
+	    newPtr = (Tcl_Token *) ckrealloc( (char *) oldPtr,		\
+		    (unsigned int) (allocated * sizeof(Tcl_Token)));	\
+	}								\
+	(available) = allocated;					\
+	if (oldPtr == NULL) {						\
+	    memcpy((VOID *) newPtr, (VOID *) staticPtr,			\
+		    (size_t) ((used) * sizeof(Tcl_Token)));		\
+	}								\
+	(tokenPtr) = newPtr;						\
+    }									\
+}
+
+#define TclGrowParseTokenArray(parsePtr, append)			\
+    TclGrowTokenArray((parsePtr)->tokenPtr, (parsePtr)->numTokens,	\
+	    (parsePtr)->tokensAvailable, (append),			\
+	    (parsePtr)->staticTokens)
 
 /*
  *----------------------------------------------------------------

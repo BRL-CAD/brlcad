@@ -3953,12 +3953,6 @@ Tcl_GetsObj(
     char *dst, *dstEnd, *eol, *eof;
     Tcl_EncodingState oldState;
 
-    /*
-     * This operation should occur at the top of a channel stack.
-     */
-
-    chanPtr = statePtr->topChanPtr;
-
     if (CheckChannelErrors(statePtr, TCL_READABLE) != 0) {
 	copiedTotal = -1;
 	goto done;
@@ -3975,6 +3969,12 @@ Tcl_GetsObj(
 		    || (statePtr->inputTranslation == TCL_TRANSLATE_CR))) {
 	return TclGetsObjBinary(chan, objPtr);
     }
+
+    /*
+     * This operation should occur at the top of a channel stack.
+     */
+
+    chanPtr = statePtr->topChanPtr;
 
     bufPtr = statePtr->inQueueHead;
     encoding = statePtr->encoding;
@@ -4315,6 +4315,12 @@ TclGetsObjBinary(
     int inEofChar, skip, copiedTotal, oldLength, oldFlags, oldRemoved;
     int rawLen, byteLen, eolChar;
     unsigned char *dst, *dstEnd, *eol, *eof, *byteArray;
+
+    /*
+     * This operation should occur at the top of a channel stack.
+     */
+
+    chanPtr = statePtr->topChanPtr;
 
     bufPtr = statePtr->inQueueHead;
 

@@ -17,13 +17,12 @@ canvas \- Create and manipulate canvas widgets
 .SH SYNOPSIS
 \fBcanvas\fR \fIpathName \fR?\fIoptions\fR?
 .SO
-\-background	\-insertborderwidth	\-selectborderwidth
-\-borderwidth	\-insertofftime	\-selectforeground
-\-cursor	\-insertontime	\-takefocus
-\-highlightbackground	\-insertwidth	\-xscrollcommand
-\-highlightcolor	\-relief	\-yscrollcommand
-\-highlightthickness	\-state
-\-insertbackground	\-selectbackground
+\-background	\-borderwidth	\-cursor
+\-highlightbackground	\-highlightcolor	\-highlightthickness
+\-insertbackground	\-insertborderwidth	\-insertofftime
+\-insertontime	\-insertwidth	\-relief
+\-selectbackground	\-selectborderwidth	\-selectforeground
+\-takefocus	\-xscrollcommand	\-yscrollcommand
 .SE
 .SH "WIDGET-SPECIFIC OPTIONS"
 .OP \-closeenough closeEnough CloseEnough
@@ -83,7 +82,6 @@ are selected) will also be \fByScrollIncrement\fR.  If the value of
 this option is less than or equal to zero, then vertical scrolling
 is unconstrained.
 .BE
-
 .SH INTRODUCTION
 .PP
 The \fBcanvas\fR command creates a new window (given
@@ -155,7 +153,8 @@ all the items in the canvas.
 The tag \fBcurrent\fR is managed automatically by Tk;
 it applies to the \fIcurrent item\fR, which is the
 topmost item whose drawn area covers the position of
-the mouse cursor.
+the mouse cursor (different item types interpret this in varying ways; see the
+individual item type documentation for details).
 If the mouse is not in the canvas widget or is not over
 an item, then no item has the \fBcurrent\fR tag.
 .PP
@@ -1195,7 +1194,9 @@ After the coordinates there may be any number of \fIoption\fR\-\fIvalue\fR
 pairs, each of which sets one of the configuration options
 for the item.  These same \fIoption\fR\-\fIvalue\fR pairs may be
 used in \fBitemconfigure\fR widget commands to change the item's
-configuration.
+configuration. An arc item becomes the current item when the mouse pointer is
+over any part that is painted or (when fully transparent) that would be
+painted if both the \fB\-fill\fR and \fB\-outline\fR options were non-empty.
 .PP
 The following standard options are supported by arcs:
 .CS
@@ -1259,14 +1260,16 @@ Bitmaps are created with widget commands of the following form:
 \fIpathName \fBcreate bitmap \fIx y \fR?\fIoption value option value ...\fR?
 \fIpathName \fBcreate bitmap \fIcoordList\fR ?\fIoption value option value ...\fR?
 .CE
-The arguments \fIx\fR and \fIy\fR or \fIcoordList\fR specify the coordinates of a
+The arguments \fIx\fR and \fIy\fR or \fIcoordList\fR (which must have two
+elements) specify the coordinates of a
 point used to position the bitmap on the display (see the \fB\-anchor\fR
 option below for more information on how bitmaps are displayed).
 After the coordinates there may be any number of \fIoption\fR\-\fIvalue\fR
 pairs, each of which sets one of the configuration options
 for the item.  These same \fIoption\fR\-\fIvalue\fR pairs may be
 used in \fBitemconfigure\fR widget commands to change the item's
-configuration.
+configuration. A bitmap item becomes the current item when the mouse pointer
+is over any part of its bounding box.
 .PP
 The following standard options are supported by bitmaps:
 .CS
@@ -1332,7 +1335,8 @@ After the coordinates there may be any number of \fIoption\fR\-\fIvalue\fR
 pairs, each of which sets one of the configuration options
 for the item.  These same \fIoption\fR\-\fIvalue\fR pairs may be
 used in \fBitemconfigure\fR widget commands to change the item's
-configuration.
+configuration. An image item becomes the current item when the mouse pointer
+is over any part of its bounding box.
 .PP
 The following standard options are supported by images:
 .CS
@@ -1377,7 +1381,9 @@ After the coordinates there may be any number of \fIoption\fR\-\fIvalue\fR
 pairs, each of which sets one of the configuration options
 for the item.  These same \fIoption\fR\-\fIvalue\fR pairs may be
 used in \fBitemconfigure\fR widget commands to change the item's
-configuration.
+configuration. A line item is the current item whenever the mouse pointer is
+over any segment of the line, whether drawn or not and whether or not the line
+is smoothed.
 .PP
 The following standard options are supported by lines:
 .CS
@@ -1489,7 +1495,9 @@ After the coordinates there may be any number of \fIoption\fR\-\fIvalue\fR
 pairs, each of which sets one of the configuration options
 for the item.  These same \fIoption\fR\-\fIvalue\fR pairs may be
 used in \fBitemconfigure\fR widget commands to change the item's
-configuration.
+configuration. An oval item becomes the current item when the mouse pointer is
+over any part that is painted or (when fully transparent) that would be
+painted if both the \fB\-fill\fR and \fB\-outline\fR options were non-empty.
 .PP
 The following standard options are supported by ovals:
 .CS
@@ -1537,7 +1545,9 @@ After the coordinates there may be any number of \fIoption\fR\-\fIvalue\fR
 pairs, each of which sets one of the configuration options
 for the item.  These same \fIoption\fR\-\fIvalue\fR pairs may be
 used in \fBitemconfigure\fR widget commands to change the item's
-configuration.
+configuration. A polygon item is the current item whenever the mouse pointer
+is over any part of the polygon, whether drawn or not and whether or not the
+outline is smoothed.
 .PP
 The following standard options are supported by polygons:
 .CS
@@ -1622,7 +1632,8 @@ following form:
 \fIpathName \fBcreate rectangle \fIx1 y1 x2 y2 \fR?\fIoption value option value ...\fR?
 \fIpathName \fBcreate rectangle \fIcoordList\fR ?\fIoption value option value ...\fR?
 .CE
-The arguments \fIx1\fR, \fIy1\fR, \fIx2\fR, and \fIy2\fR or \fIcoordList\fR give
+The arguments \fIx1\fR, \fIy1\fR, \fIx2\fR, and \fIy2\fR or \fIcoordList\fR
+(which must have four elements) give
 the coordinates of two diagonally opposite corners of the rectangle
 (the rectangle will include its upper and left edges but not
 its lower or right edges).
@@ -1630,7 +1641,10 @@ After the coordinates there may be any number of \fIoption\fR\-\fIvalue\fR
 pairs, each of which sets one of the configuration options
 for the item.  These same \fIoption\fR\-\fIvalue\fR pairs may be
 used in \fBitemconfigure\fR widget commands to change the item's
-configuration.
+configuration. A rectangle item becomes the current item when the mouse
+pointer is over any part that is painted or (when fully transparent) that
+would be painted if both the \fB\-fill\fR and \fB\-outline\fR options were
+non-empty.
 .PP
 The following standard options are supported by rectangles:
 .CS
@@ -1672,14 +1686,16 @@ form:
 \fIpathName \fBcreate text \fIx y \fR?\fIoption value option value ...\fR?
 \fIpathName \fBcreate text \fIcoordList\fR ?\fIoption value option value ...\fR?
 .CE
-The arguments \fIx\fR and \fIy\fR or \fIcoordList\fR specify the coordinates of a
+The arguments \fIx\fR and \fIy\fR or \fIcoordList\fR (which must have two
+elements) specify the coordinates of a
 point used to position the text on the display (see the options
 below for more information on how text is displayed).
 After the coordinates there may be any number of \fIoption\fR\-\fIvalue\fR
 pairs, each of which sets one of the configuration options
 for the item.  These same \fIoption\fR\-\fIvalue\fR pairs may be
 used in \fBitemconfigure\fR widget commands to change the item's
-configuration.
+configuration. A text item becomes the current item when the mouse pointer
+is over any part of its bounding box.
 .PP
 The following standard options are supported by text items:
 .CS
@@ -1753,14 +1769,18 @@ Window items are created with widget commands of the following form:
 \fIpathName \fBcreate window \fIx y \fR?\fIoption value option value ...\fR?
 \fIpathName \fBcreate window \fIcoordList\fR ?\fIoption value option value ...\fR?
 .CE
-The arguments \fIx\fR and \fIy\fR or \fIcoordList\fR specify the coordinates of a
+The arguments \fIx\fR and \fIy\fR or \fIcoordList\fR (which must have two
+elements) specify the coordinates of a
 point used to position the window on the display (see the \fB\-anchor\fR
 option below for more information on how bitmaps are displayed).
 After the coordinates there may be any number of \fIoption\fR\-\fIvalue\fR
 pairs, each of which sets one of the configuration options
 for the item.  These same \fIoption\fR\-\fIvalue\fR pairs may be
 used in \fBitemconfigure\fR widget commands to change the item's
-configuration.
+configuration. Theoretically, a window item becomes the current item when the
+mouse pointer is over any part of its bounding box, but in practice this
+typically does not happen because the mouse pointer ceases to be over the
+canvas at that point.
 .PP
 The following standard options are supported by window items:
 .CS
@@ -1801,7 +1821,11 @@ the canvas widget or a child of some ancestor of the canvas widget.
 Note:  due to restrictions in the ways that windows are managed, it is not
 possible to draw other graphical items (such as lines and images) on top
 of window items.  A window item always obscures any graphics that
-overlap it, regardless of their order in the display list.
+overlap it, regardless of their order in the display list. Also note that
+window items, unlike other canvas items, are not clipped for display by their
+containing canvas's border, and are instead clipped by the parent widget of
+the window specified by the \fB\-window\fR option; when the parent widget is
+the canvas, this means that the window item can overlap the canvas's border.
 .SH "APPLICATION-DEFINED ITEM TYPES"
 .PP
 It is possible for individual applications to define new item
@@ -1819,9 +1843,7 @@ Tk's canvas widget is a blatant ripoff of ideas from Joel Bartlett's
 environment and preceded canvases by a year or two.  Its simple
 mechanisms for placing and animating graphical objects inspired the
 functions of canvases.
-
 .SH "SEE ALSO"
 bind(n), font(n), image(n), scrollbar(n)
-
 .SH KEYWORDS
 canvas, widget

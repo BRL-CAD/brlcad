@@ -21,10 +21,8 @@ int
 int
 \fBTk_TextWidth(\fItkfont, string, numBytes\fB)\fR
 .sp
-void
 \fBTk_DrawChars(\fIdisplay, drawable, gc, tkfont, string, numBytes, x, y\fB)\fR
 .sp
-void
 \fBTk_UnderlineChars(\fIdisplay, drawable, gc, tkfont, string, x, y, firstByte, lastByte\fB)\fR
 .sp
 .SH ARGUMENTS
@@ -77,7 +75,6 @@ The index of the first byte of the last character up to which the
 underline will be drawn.  The character specified by \fIlastByte\fR
 will not itself be underlined.
 .BE
-
 .SH DESCRIPTION
 .PP
 These routines are for measuring and displaying simple single-font,
@@ -126,6 +123,7 @@ have been displayed previously by \fBTk_DrawChars\fR); it just draws the
 underline.  This procedure is used to underline a few characters without
 having to construct an underlined font.  To produce natively underlined
 text, the appropriate underlined font should be constructed and used. 
-
+.SH "SEE ALSO"
+font(n), FontId(3)
 .SH KEYWORDS
-font
+font, measurement

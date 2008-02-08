@@ -1,3 +1,208 @@
+2008-02-04  Don Porter	<dgp@users.sourceforge.net>
+
+	*** 8.5.1 TAGGED FOR RELEASE ***
+
+	* changes:		Updated for 8.5.1 release.
+
+	* generic/tcl.h:	Bump to 8.5.1 for release.
+	* library/init.tcl:
+	* tools/tcl.wse.in:
+	* unix/configure.in:
+	* unix/tcl.spec:
+	* win/configure.in:
+
+	* unix/configure:	autoconf-2.59
+	* win/configure:
+
+2008-02-04  Miguel Sofer  <msofer@users.sf.net>
+
+	* generic/tclExecute.c (INST_CONCAT1): fix optimisation for
+	in-place concatenation (was going over String type)
+
+2008-02-02  Daniel Steffen  <das@users.sourceforge.net>
+
+	* unix/configure.in (Darwin):	correct Info.plist year substitution in
+					non-framework builds.
+
+	* unix/configure:		autoconf-2.59
+
+2008-01-30  Miguel Sofer  <msofer@users.sf.net>
+
+	* generic/tclInterp.c (Tcl_GetAlias): fix for [Bug 1882373],
+	thanks go to an00na
+
+2008-01-30  Donal K. Fellows  <donal.k.fellows@man.ac.uk>
+
+	* tools/tcltk-man2html.tcl: Reworked manual page scraper to do a
+	proper job of handling references to Ttk options. [Tk Bug 1876493]
+
+2008-01-29  Donal K. Fellows  <donal.k.fellows@man.ac.uk>
+
+	* doc/man.macros (SO, SE): Adjusted macros so that it is possible for
+	Ttk to have its "standard options" on a manual page that is not called
+	"options". [Tk Bug 1876493]
+
+2008-01-25  Don Porter	<dgp@users.sourceforge.net>
+
+	* changes:		Updated for 8.5.1 release.
+
+2008-01-23  Don Porter	<dgp@users.sourceforge.net>
+
+	* generic/tclInt.h:		New macro TclGrowParseTokenArray() to
+	* generic/tclCompCmds.c:	simplify code that might need to grow
+	* generic/tclCompExpr.c:	an array of Tcl_Tokens in the parsePtr
+	* generic/tclParse.c:		field of a Tcl_Parse. Replaces the
+	TclExpandTokenArray() routine via replacing:
+		int needed = parsePtr->numTokens + growth;
+		while (needed > parsePtr->tokensAvailable) {
+		    TclExpandTokenArray(parsePtr);
+		}
+	with:
+		TclGrowParseTokenArray(parsePtr, growth);
+	This revision merged over from dgp-refactor branch.
+
+	* generic/tclCompile.h:	Demote TclCompEvalObj() from internal stubs to
+	* generic/tclInt.decls:	a MODULE_SCOPE routine declared in
+	tclCompile.h.
+
+	* generic/tclIntDecls.h:	make genstubs
+	* generic/tclStubInit.c:
+
+2008-01-22  Don Porter	<dgp@users.sourceforge.net>
+
+	* generic/tclTimer.c (AfterProc):	Replace Tcl_EvalEx() with
+	Tcl_EvalObjEx() to evaluate [after] callbacks. Part of trend to favor
+	compiled execution over direct evaluation.
+
+2008-01-22  Miguel Sofer  <msofer@users.sf.net>
+
+	* generic/tclCmdIl.c (Tcl_LreverseObjCmd): 
+	* tests/cmdIL.test (cmdIL-7.7): fix crash on reversing an empty list.
+	[Bug 1876793]
+
+2008-01-20  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* unix/README: minor typo fixes [Bug 1853072]
+
+	* generic/tclIO.c (TclGetsObjBinary): operate on topmost channel.
+	[Bug 1869405] (Ficicchia)
+
+2008-01-17  Don Porter	<dgp@users.sourceforge.net>
+
+	* generic/tclCompExpr.c:	Revision to preserve parsed intreps of
+	numeric and boolean literals when compiling expressions with (optimize
+	== 1).
+
+2008-01-15  Miguel Sofer  <msofer@users.sf.net>
+
+	* generic/tclCompExpr.c: add an 'optimize' argument to 
+	* generic/tclCompile.c:  TclCompileExpr() to profit from better
+	* generic/tclCompile.h:  literal management according to usage.
+	* generic/tclExecute.c:
+
+	
+	* generic/tclCompExpr.c: Fix literal leak in exprs [Bug 1869989] (dgp)
+	* generic/tclExecute.c:
+	* tests/compExpr.test:
+	
+	* doc/proc.n: changed wording for access to non-local variables; added
+	mention to [namespace upvar]. Lame attempt at dealing with
+	documentation. [Bug 1872708]
+	
+2008-01-15  Miguel Sofer  <msofer@users.sf.net>
+
+	* generic/tclBasic.c:    Replacing 'operator' by 'op' in the def of
+	* generic/tclCompExpr.c: struct TclOpCmdClientData to accommodate C++
+	* generic/tclCompile.h:  compilers. [Bug 1855644]
+	
+2008-01-13  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* win/tclWinSerial.c (SerialCloseProc, TclWinOpenSerialChannel): use
+	critical section for read & write side. [Bug 1353846] (newman)
+
+2008-01-11  Miguel Sofer  <msofer@users.sf.net>
+
+	* unix/tclUnixThrd.c (TclpThreadGetStackSize): restore stack checking
+	functionality in freebsd. [Bug 1850424]
+
+	* unix/tclUnixThrd.c (TclpThreadGetStackSize): fix for crash in
+	freebsd. [Bug 1860425]
+
+2008-01-10  Don Porter	<dgp@users.sourceforge.net>
+
+	* generic/tclStringObj.c (Tcl_AppendFormatToObj):  Correct failure to
+	* tests/format.test:	account for big.used == 0 corner case in the
+	%ll(idox) format directives. [Bug 1867855]
+
+2008-01-09  George Peter Staplin <georgeps@xmission.com>
+
+	* doc/vwait.n: add a missing be to fix a typo.
+
+2008-01-04  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* tools/tcltk-man2html.tcl (make-man-pages): make man page title use
+	more specific info on lhs to improve tabbed browser view titles.
+
+2008-01-02  Donal K. Fellows  <dkf@users.sf.net>
+
+	* doc/binary.n: Fixed documentation bug reported on tcl-core, and
+	reordered documentation to discourage people from using the hex
+	formatter that is hardly ever useful.
+
+2008-01-02  Don Porter	<dgp@users.sourceforge.net>
+
+	* generic/tcl.h:	Bump version number to 8.5.1b1 to distinguish
+	* library/init.tcl:	CVS development snapshots from the 8.5.0 and
+	* unix/configure.in:	8.5.1 releases.
+	* unix/tcl.spec:
+	* win/configure.in:
+	* README
+
+	* unix/configure:	autoconf (2.59)
+	* win/configure:
+
+2007-12-31  Donal K. Fellows  <dkf@users.sf.net>
+
+	* doc/dict.n: Clarified meaning of dictionary values following
+	discussion on comp.lang.tcl.
+
+2007-12-26  Miguel Sofer  <msofer@users.sf.net>
+
+	* generic/tclCmdIL.c: more [lsort] data handling streamlines. The
+	function MergeSort is gone, essentially inlined into Tcl_LsortObjCmd.
+	It is not a straight inlining, two loops over all lists elements where
+	merged in the process: the linked list elements are now built and
+	merged into the temporary sublists in the same pass.
+
+2007-12-25  Miguel Sofer  <msofer@users.sf.net>
+
+	* generic/tclCmdIL.c: more [lsort] data handling streamlines. Extra
+	mem reqs of latest patches removed, restored to previous mem profile.
+	Improved -unique handling, now eliminating repeated elems immediately
+	instead of marking them to avoid reinsertion at the end.
+
+2007-12-23  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* generic/tclCompCmds.c (TclCompileRegexpCmd):  TCL_REG_NOSUB cannot
+	* tests/regexp.test (regexp-22.2):		be used because it
+	* tests/regexpComp.test:	[Bug 1857126]	disallows backrefs.
+
+2007-12-21  Miguel Sofer  <msofer@users.sf.net>
+
+	* generic/tclCmdIL.c: speed patch for lsort [Patch 1856994].
+
+2007-12-21  Miguel Sofer  <msofer@users.sf.net>
+
+	* generic/tclCmdIL.c (Tcl_LsortObjCmd, Tcl_LsearchObjCmd): avoid
+	calling SelectObjFromSublist when there are no sublists.
+
+2007-12-21  Miguel Sofer  <msofer@users.sf.net>
+
+	* generic/tclCmdIL.c (Tcl_LsortObjCmd): preallocate a listObj of
+	sufficient length for the sorted list instead of growing it. Second
+	commit replaces calls to Tcl_ListObjAppenElement with direct access to
+	the internal rep.
+
 2007-12-19  Don Porter	<dgp@users.sourceforge.net>
 
 	*** 8.5.0 TAGGED FOR RELEASE ***

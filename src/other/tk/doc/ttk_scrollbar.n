@@ -26,8 +26,9 @@ document visible in the associated window.
 The thumb may be dragged by the user to control the visible region.
 Depending on the theme, two or more arrow buttons may also be present;
 these are used to scroll the visible region in discrete units.
-.SO
-\-class	\-cursor	\-style	\-takefocus
+.SO ttk_widget
+\-class	\-cursor	\-style
+\-takefocus
 .SE
 .SH "WIDGET-SPECIFIC OPTIONS"
 .OP \-command command Command

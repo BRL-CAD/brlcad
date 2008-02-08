@@ -43,9 +43,9 @@ and control the appearance of the item.
 Treeview widgets support horizontal and vertical scrolling with the
 standard \fB\-\fR[\fBxy\fR]\fBscrollcommand\fR options 
 and [\fBxy\fR]\fBview\fR widget commands.
-.SO
-\-class	\-cursor	\-takefocus	\-style
-\-xscrollcommand	\-yscrollcommand
+.SO ttk_widget
+\-class	\-cursor	\-takefocus
+\-style	\-xscrollcommand	\-yscrollcommand
 .SE
 .SH "WIDGET-SPECIFIC OPTIONS"
 .OP \-columns columns Columns

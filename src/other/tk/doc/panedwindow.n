@@ -16,9 +16,8 @@ panedwindow \- Create and manipulate panedwindow widgets
 .SH SYNOPSIS
 \fBpanedwindow\fR \fIpathName \fR?\fIoptions\fR?
 .SO
-\-background	\-height	\-width
-\-borderwidth	\-orient
-\-cursor	\-relief
+\-background	\-borderwidth	\-cursor
+\-orient	\-relief
 .SE
 .SH "WIDGET-SPECIFIC OPTIONS"
 .OP \-handlepad handlePad HandlePad
@@ -28,6 +27,10 @@ which to draw the handle.  May be any value accepted by \fBTk_GetPixels\fR.
 .OP \-handlesize handleSize HandleSize
 Specifies the side length of a sash handle.  Handles are always
 drawn as squares.  May be any value accepted by \fBTk_GetPixels\fR.
+.OP \-height height Height
+Specifies a desired height for the overall panedwindow widget. May be any
+value accepted by \fBTk_GetPixels\fR. If an empty string, the widget will be
+made high enough to allow all contained widgets to have their natural height.
 .OP \-opaqueresize opaqueResize OpaqueResize
 Specifies whether panes should be resized as a sash is moved (true),
 or if resizing should be deferred until the sash is placed (false).
@@ -47,6 +50,10 @@ Specifies the width of each sash.  May be any value accepted by
 .OP \-showhandle showHandle ShowHandle
 Specifies whether sash handles should be shown.  May be any valid Tcl
 boolean value.
+.OP \-width width Width
+Specifies a desired width for the overall panedwindow widget. May be any
+value accepted by \fBTk_GetPixels\fR. If an empty string, the widget will be
+made wide enough to allow all contained widgets to have their natural width.
 .BE
 .SH DESCRIPTION
 .PP

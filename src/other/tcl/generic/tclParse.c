@@ -198,7 +198,7 @@ static int		ParseWhiteSpace(const char *src, int numBytes,
 void
 TclParseInit(
     Tcl_Interp *interp,		/* Interpreter to use for error reporting */
-    const char *string,		/* String to be parsed. */
+    const char *start,		/* Start of string to be parsed. */
     int numBytes,		/* Total number of bytes in string. If < 0,
 				 * the script consists of all bytes up to the
 				 * first null character. */
@@ -208,8 +208,8 @@ TclParseInit(
     parsePtr->tokenPtr = parsePtr->staticTokens;
     parsePtr->numTokens = 0;
     parsePtr->tokensAvailable = NUM_STATIC_TOKENS;
-    parsePtr->string = string;
-    parsePtr->end = string + numBytes;
+    parsePtr->string = start;
+    parsePtr->end = start + numBytes;
     parsePtr->term = parsePtr->end;
     parsePtr->interp = interp;
     parsePtr->incomplete = 0;
@@ -315,9 +315,7 @@ Tcl_ParseCommand(
 	 * Create the token for the word.
 	 */
 
-	if (parsePtr->numTokens == parsePtr->tokensAvailable) {
-	    TclExpandTokenArray(parsePtr);
-	}
+	TclGrowParseTokenArray(parsePtr, 1);
 	wordIndex = parsePtr->numTokens;
 	tokenPtr = &parsePtr->tokenPtr[wordIndex];
 	tokenPtr->type = TCL_TOKEN_WORD;
@@ -493,12 +491,14 @@ Tcl_ParseCommand(
 		     * tokens representing the expanded list.
 		     */
 
+		    int growthNeeded = wordIndex + 2*elemCount
+			    - parsePtr->numTokens;
 		    parsePtr->numWords += elemCount - 1;
-		    parsePtr->numTokens = wordIndex + 2*elemCount;
-		    while (parsePtr->numTokens >= parsePtr->tokensAvailable) {
-			TclExpandTokenArray(parsePtr);
+		    if (growthNeeded > 0) {
+			TclGrowParseTokenArray(parsePtr, growthNeeded);
+			tokenPtr = &parsePtr->tokenPtr[wordIndex];
 		    }
-		    tokenPtr = &parsePtr->tokenPtr[wordIndex];
+		    parsePtr->numTokens = wordIndex + 2*elemCount;
 
 		    /*
 		     * Generate a TCL_TOKEN_SIMPLE_WORD token sequence for
@@ -1039,7 +1039,7 @@ ParseTokens(
 				 * termination information. */
 {
     char type;
-    int originalTokens, varToken;
+    int originalTokens;
     int noSubstCmds = !(flags & TCL_SUBST_COMMANDS);
     int noSubstVars = !(flags & TCL_SUBST_VARIABLES);
     int noSubstBS = !(flags & TCL_SUBST_BACKSLASHES);
@@ -1054,9 +1054,7 @@ ParseTokens(
 
     originalTokens = parsePtr->numTokens;
     while (numBytes && !((type = CHAR_TYPE(*src)) & mask)) {
-	if (parsePtr->numTokens == parsePtr->tokensAvailable) {
-	    TclExpandTokenArray(parsePtr);
-	}
+	TclGrowParseTokenArray(parsePtr, 1);
 	tokenPtr = &parsePtr->tokenPtr[parsePtr->numTokens];
 	tokenPtr->start = src;
 	tokenPtr->numComponents = 0;
@@ -1075,6 +1073,8 @@ ParseTokens(
 	    tokenPtr->size = src - tokenPtr->start;
 	    parsePtr->numTokens++;
 	} else if (*src == '$') {
+	    int varToken;
+
 	    if (noSubstVars) {
 		tokenPtr->type = TCL_TOKEN_TEXT;
 		tokenPtr->size = 1;
@@ -1085,7 +1085,7 @@ ParseTokens(
 	    }
 
 	    /*
-	     * This is a variable reference. Call Tcl_ParseVarName to do all
+	     * This is a variable reference.  Call Tcl_ParseVarName to do all
 	     * the dirty work of parsing the name.
 	     */
 
@@ -1109,7 +1109,7 @@ ParseTokens(
 	    }
 
 	    /*
-	     * Command substitution. Call Tcl_ParseCommand recursively (and
+	     * Command substitution.  Call Tcl_ParseCommand recursively (and
 	     * repeatedly) to parse the nested command(s), then throw away the
 	     * parse information.
 	     */
@@ -1225,9 +1225,7 @@ ParseTokens(
 	 * empty range, so that there is always at least one token added.
 	 */
 
-	if (parsePtr->numTokens == parsePtr->tokensAvailable) {
-	    TclExpandTokenArray(parsePtr);
-	}
+	TclGrowParseTokenArray(parsePtr, 1);
 	tokenPtr = &parsePtr->tokenPtr[parsePtr->numTokens];
 	tokenPtr->start = src;
 	tokenPtr->numComponents = 0;
@@ -1268,46 +1266,6 @@ Tcl_FreeParse(
 	ckfree((char *) parsePtr->tokenPtr);
 	parsePtr->tokenPtr = parsePtr->staticTokens;
     }
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * TclExpandTokenArray --
- *
- *	This function is invoked when the current space for tokens in a
- *	Tcl_Parse structure fills up; it allocates memory to grow the token
- *	array
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	Memory is allocated for a new larger token array; the memory for the
- *	old array is freed, if it had been dynamically allocated.
- *
- *----------------------------------------------------------------------
- */
-
-void
-TclExpandTokenArray(
-    Tcl_Parse *parsePtr)	/* Parse structure whose token space has
-				 * overflowed. */
-{
-    int newCount = parsePtr->tokensAvailable*2;
-
-    if (parsePtr->tokenPtr != parsePtr->staticTokens) {
-	parsePtr->tokenPtr = (Tcl_Token *) ckrealloc((char *)
-		parsePtr->tokenPtr, newCount * sizeof(Tcl_Token));
-    } else {
-	Tcl_Token *newPtr = (Tcl_Token *)
-		ckalloc(newCount * sizeof(Tcl_Token));
-
-	memcpy(newPtr, parsePtr->tokenPtr,
-		(size_t) parsePtr->tokensAvailable * sizeof(Tcl_Token));
-	parsePtr->tokenPtr = newPtr;
-    }
-    parsePtr->tokensAvailable = newCount;
 }
 
 /*
@@ -1377,9 +1335,7 @@ Tcl_ParseVarName(
      */
 
     src = start;
-    if (parsePtr->numTokens+2 > parsePtr->tokensAvailable) {
-	TclExpandTokenArray(parsePtr);
-    }
+    TclGrowParseTokenArray(parsePtr, 2);
     tokenPtr = &parsePtr->tokenPtr[parsePtr->numTokens];
     tokenPtr->type = TCL_TOKEN_VARIABLE;
     tokenPtr->start = src;
@@ -1671,9 +1627,7 @@ Tcl_ParseBraces(
     src = start;
     startIndex = parsePtr->numTokens;
 
-    if (parsePtr->numTokens == parsePtr->tokensAvailable) {
-	TclExpandTokenArray(parsePtr);
-    }
+    TclGrowParseTokenArray(parsePtr, 1);
     tokenPtr = &parsePtr->tokenPtr[startIndex];
     tokenPtr->type = TCL_TOKEN_TEXT;
     tokenPtr->start = src+1;
@@ -1736,9 +1690,7 @@ Tcl_ParseBraces(
 		if (tokenPtr->size != 0) {
 		    parsePtr->numTokens++;
 		}
-		if ((parsePtr->numTokens+1) >= parsePtr->tokensAvailable) {
-		    TclExpandTokenArray(parsePtr);
-		}
+		TclGrowParseTokenArray(parsePtr, 2);
 		tokenPtr = &parsePtr->tokenPtr[parsePtr->numTokens];
 		tokenPtr->type = TCL_TOKEN_BS;
 		tokenPtr->start = src;
@@ -2070,9 +2022,7 @@ Tcl_SubstObj(
 		 * got parsed.
 		 */
 
-		if (parsePtr->numTokens == parsePtr->tokensAvailable) {
-		    TclExpandTokenArray(parsePtr);
-		}
+		TclGrowParseTokenArray(parsePtr, 1);
 		tokenPtr = &(parsePtr->tokenPtr[parsePtr->numTokens]);
 		tokenPtr->start = parsePtr->term;
 		tokenPtr->numComponents = 0;

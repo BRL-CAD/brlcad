@@ -48,6 +48,7 @@ The following commands are a subset of the full Dynamic Data Exchange
 set of commands.
 .TP
 \fBdde servername \fR?\fB\-force\fR? ?\fB\-handler \fIproc\fR? ?\fB\-\|\-\fR? ?\fItopic\fR?
+.
 \fBdde servername\fR registers the interpreter as a DDE server with
 the service name \fBTclEval\fR and the topic name specified by \fItopic\fR.
 If no \fItopic\fR is given, \fBdde servername\fR returns the name
@@ -61,14 +62,17 @@ is appended to the name to make it
 unique. The command's result will be the name actually used. The
 \fB\-force\fR option is used to force registration of precisely the
 given \fItopic\fR name.
-.IP
+.RS
+.PP
 The \fB\-handler\fR option specifies a Tcl procedure that will be called to
 process calls to the dde server. If the package has been loaded into a
 safe interpreter then a \fB\-handler\fR procedure must be defined. The
 procedure is called with all the arguments provided by the remote
 call.
+.RE
 .TP
 \fBdde execute\fR ?\fB\-async\fR? \fIservice topic data\fR
+.
 \fBdde execute\fR takes the \fIdata\fR and sends it to the server indicated
 by \fIservice\fR with the topic indicated by \fItopic\fR. Typically,
 \fIservice\fR is the name of an application, and \fItopic\fR is a file to
@@ -80,6 +84,7 @@ script did not run, unless the \fB\-async\fR flag was used, in which case
 the command returns immediately with no error.
 .TP
 \fBdde poke \fIservice topic item data\fR
+.
 \fBdde poke\fR passes the \fIdata\fR to the server indicated by
 \fIservice\fR using the \fItopic\fR and \fIitem\fR specified.  Typically,
 \fIservice\fR is the name of an application.  \fItopic\fR is application
@@ -89,6 +94,7 @@ it must always be non-null.  The \fIdata\fR field is given to the remote
 application.
 .TP
 \fBdde request\fR ?\fB\-binary\fR? \fIservice topic item\fR
+.
 \fBdde request\fR is typically used to get the value of something; the
 value of a cell in Microsoft Excel or the text of a selection in
 Microsoft Word. \fIservice\fR is typically the name of an application,
@@ -99,6 +105,7 @@ string with terminating null.  If \fB\-binary\fR is specified, the
 result is returned as a byte array.
 .TP
 \fBdde services \fIservice topic\fR
+.
 \fBdde services\fR returns a list of service-topic pairs that
 currently exist on the machine. If \fIservice\fR and \fItopic\fR are
 both empty strings ({}), then all service-topic pairs currently
@@ -110,6 +117,7 @@ service-topic pair currently exists, it is returned; otherwise, an
 empty string is returned.
 .TP
 \fBdde eval\fR ?\fB\-async\fR? \fItopic cmd \fR?\fIarg arg ...\fR?
+.
 \fBdde eval\fR evaluates a command and its arguments using the interpreter
 specified by \fItopic\fR. The DDE service must be the \fBTclEval\fR
 service.  The \fB\-async\fR option requests asynchronous invocation.  The
@@ -155,9 +163,7 @@ particularly important website:
 package require dde
 \fBdde execute\fR iexplore WWW_OpenURL http://www.tcl.tk/
 .CE
-
 .SH "SEE ALSO"
 tk(n), winfo(n), send(n)
-
 .SH KEYWORDS
 application, dde, name, remote execution

@@ -11,6 +11,7 @@ entire history of the project is available through SVN.
 --- 2007-11-XX  Release 7.11.0                                     ---
 ----------------------------------------------------------------------
 
+* TCL/TK updated to 8.5.1 - Erik Greenwald
 * MGED now runs in the foreground by default - Erik Greenwald
 * fixed g-dxf bug where incorrect object name is assigned - Bob Parker
 * fixed browser-based mged help on Mac OS X - Sean Morrison

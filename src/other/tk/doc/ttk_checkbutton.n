@@ -18,10 +18,11 @@ ttk::checkbutton \- On/off widget
 A \fBttk::checkbutton\fR widget is used to show or change a setting.
 It has two states, selected and deselected.  
 The state of the checkbutton may be linked to a Tcl variable.
-.SO
-\-class	\-compound	\-cursor	\-image
-\-state	\-style	\-takefocus	\-text
-\-textvariable	\-underline	\-width
+.SO ttk_widget
+\-class	\-compound	\-cursor
+\-image	\-state	\-style
+\-takefocus	\-text	\-textvariable
+\-underline	\-width
 .SE
 .SH "WIDGET-SPECIFIC OPTIONS"
 .OP \-command command Command

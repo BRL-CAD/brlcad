@@ -232,17 +232,8 @@ WidgetCleanup(char *memPtr)
  *	It turns out this is impossible to do correctly in a binding script,
  *	because Tk filters out focus events with detail == NotifyInferior.
  *
- *	For Deactivate/Activate pseudo-events, clear/set the background state flag.
- *
- *	<<NOTE-REALIZED>> On the first ConfigureNotify event
- *	(which indicates that the window has just been created),
- *	update the layout.  This is to work around two problems:
- *	(1) Virtual events aren't delivered to unrealized widgets
- *	(see bug #835997), so any intervening <<ThemeChanged>> events
- *	will not have been processed.
- *
- *	(2) Geometry calculations in the XP theme don't work
- *	until the widget is realized.
+ *	For Deactivate/Activate pseudo-events, set/clear the background state
+ *	flag.
  */
 
 static const unsigned CoreEventMask
@@ -260,12 +251,6 @@ static void CoreEventProc(ClientData clientData, XEvent *eventPtr)
     switch (eventPtr->type)
     {
 	case ConfigureNotify :
-	    if (!(corePtr->flags & WIDGET_REALIZED)) {
-		/* See <<NOTE-REALIZED>> */
-		(void)UpdateLayout(corePtr->interp, corePtr);
-		SizeChanged(corePtr);
-		corePtr->flags |= WIDGET_REALIZED;
-	    }
 	    TtkRedisplayWidget(corePtr);
 	    break;
 	case Expose :
@@ -443,6 +428,8 @@ int TtkWidgetConstructorObjCmd(
 
     SizeChanged(corePtr);
     Tk_CreateEventHandler(tkwin, CoreEventMask, CoreEventProc, recordPtr);
+
+    Tk_MakeWindowExist(tkwin);
 
     Tcl_SetObjResult(interp, Tcl_NewStringObj(Tk_PathName(tkwin), -1));
 

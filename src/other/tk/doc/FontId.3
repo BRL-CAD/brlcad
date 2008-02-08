@@ -19,12 +19,10 @@ fonts
 Font
 \fBTk_FontId(\fItkfont\fB)\fR
 .sp
-void
 \fBTk_GetFontMetrics(\fItkfont, fmPtr\fB)\fR
 .sp
 int
 \fBTk_PostscriptFontName(\fItkfont, dsPtr\fB)\fR
-
 .SH ARGUMENTS
 .AS Tk_FontMetrics *dsPtr
 .AP Tk_Font tkfont in
@@ -32,12 +30,11 @@ Opaque font token being queried.  Must have been returned by a previous
 call to \fBTk_GetFont\fR.
 .AP Tk_FontMetrics *fmPtr out
 Pointer to structure in which the font metrics for \fItkfont\fR will
-be stored.
+be stored. See \fBDATA STRUCTURES\fR below for details.
 .AP Tcl_DString *dsPtr out
 Pointer to an initialized \fBTcl_DString\fR to which the name of the
 Postscript font that corresponds to \fItkfont\fR will be appended.
 .BE
-
 .SH DESCRIPTION
 .PP
 Given a \fItkfont\fR, \fBTk_FontId\fR returns the token that should be
@@ -70,13 +67,13 @@ following screen font families should print correctly:
 Any other font families may not print correctly because the computed
 Postscript font name may be incorrect or not exist on the printer.
 .SH "DATA STRUCTURES"
-The Tk_FontMetrics data structure is used by Tk_GetFontMetrics to return 
-information about a font and is defined as follows:
+The \fBTk_FontMetrics\fR data structure is used by \fBTk_GetFontMetrics\fR to
+return information about a font and is defined as follows:
 .CS
 typedef struct Tk_FontMetrics {
-    int ascent;
-    int descent;
-    int linespace;
+    int \fIascent\fR;
+    int \fIdescent\fR;
+    int \fIlinespace\fR;
 } Tk_FontMetrics;
 .CE
 .PP
@@ -92,5 +89,7 @@ The \fIlinespace\fR is the sum of the ascent and descent.  How far
 apart two lines of text in the same font should be placed so that none
 of the characters in one line overlap any of the characters in the
 other line.
+.SH "SEE ALSO"
+font(n), MeasureChar(3)
 .SH KEYWORDS
-font
+font, measurement, Postscript

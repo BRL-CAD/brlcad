@@ -60,10 +60,10 @@ extern "C" {
 #define TCL_MAJOR_VERSION   8
 #define TCL_MINOR_VERSION   5
 #define TCL_RELEASE_LEVEL   TCL_FINAL_RELEASE
-#define TCL_RELEASE_SERIAL  0
+#define TCL_RELEASE_SERIAL  1
 
 #define TCL_VERSION	    "8.5"
-#define TCL_PATCH_LEVEL	    "8.5.0"
+#define TCL_PATCH_LEVEL	    "8.5.1"
 
 /*
  * The following definitions set up the proper options for Windows compilers.
@@ -91,12 +91,6 @@ extern "C" {
 #	define STRICT
 #   endif
 #endif /* __WIN32__ */
-
-/* quell shadow warnings */
-#ifdef index
-#  undef index
-#endif
-#define index tcl_scoped_index
 
 /*
  * Utility macros: STRINGIFY takes an argument and wraps it in "" (double
@@ -183,13 +177,13 @@ extern "C" {
 #ifdef STATIC_BUILD
 #   define DLLIMPORT
 #   define DLLEXPORT
-#   if defined(HAVE_DECLSPEC) && defined(_DLL)
+#   if HAVE_DECLSPEC && defined(_DLL)
 #	define CRTIMPORT __declspec(dllimport)
 #   else
 #	define CRTIMPORT
 #   endif
 #else
-#   ifdef HAVE_DECLSPEC
+#   if HAVE_DECLSPEC
 #	define DLLIMPORT __declspec(dllimport)
 #	define DLLEXPORT __declspec(dllexport)
 #	define CRTIMPORT __declspec(dllimport)
@@ -2441,9 +2435,6 @@ EXTERN int		Tcl_AppInit _ANSI_ARGS_((Tcl_Interp *interp));
 #ifdef __cplusplus
 }
 #endif
-
-/* quell shadow warnings */
-#undef index
 
 #endif /* _TCL */
 

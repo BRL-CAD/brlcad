@@ -48,7 +48,7 @@ proc ttk::clickToFocus {w} {
 #
 # See also: tk::FocusOK
 #
-# Note: This routine doesn't implement the same fallback heuristics 
+# Note: This routine doesn't implement the same fallback heuristics
 #	as tk::FocusOK.
 #
 proc ttk::takesFocus {w} {
@@ -78,8 +78,8 @@ proc ttk::takesFocus {w} {
 #
 
 proc ttk::focusFirst {w} {
-    if {[ttk::takesFocus $w]} { 
-	return $w 
+    if {[ttk::takesFocus $w]} {
+	return $w
     }
     foreach child [winfo children $w] {
 	if {[set c [ttk::focusFirst $child]] ne ""} {
@@ -239,7 +239,7 @@ proc ttk::CancelRepeat {} {
     after cancel $Repeat(timer)
 }
 
-### Miscellaneous.
+### Bindings.
 #
 
 ## ttk::copyBindings $from $to --
@@ -248,6 +248,58 @@ proc ttk::CancelRepeat {} {
 proc ttk::copyBindings {from to} {
     foreach event [bind $from] {
 	bind $to $event [bind $from $event]
+    }
+}
+
+## Standard mousewheel bindings.
+#
+# Usage: [ttk::copyBindings TtkScrollable $bindtag]
+# adds mousewheel support to a scrollable widget.
+#
+# Platform inconsistencies:
+#
+# On X11, the server typically maps the mouse wheel to Button4 and Button5.
+#
+# On OSX, Tk generates sensible values for the %D field in <MouseWheel> events.
+#
+# On Windows, %D must be scaled by a factor of 120.
+# In addition, Tk redirects mousewheel events to the window with
+# keyboard focus instead of sending them to the window under the pointer.
+# We do not attempt to fix that here, see also TIP#171.
+#
+# OSX conventionally uses Shift+MouseWheel for horizontal scrolling,
+# and Option+MouseWheel for accelerated scrolling.
+#
+# The Shift+MouseWheel behavior is not conventional on Windows or most
+# X11 toolkits, but it's useful.
+#
+# MouseWheel scrolling is accelerated on X11, which is conventional
+# for Tk and appears to be conventional for other toolkits (although
+# Gtk+ and Qt do not appear to use as large a factor).
+#
+
+switch -- [tk windowingsystem] {
+    x11 {
+	bind TtkScrollable <ButtonPress-4>       { %W yview scroll -5 units }
+	bind TtkScrollable <ButtonPress-5>       { %W yview scroll  5 units }
+	bind TtkScrollable <Shift-ButtonPress-4> { %W xview scroll -5 units }
+	bind TtkScrollable <Shift-ButtonPress-5> { %W xview scroll  5 units }
+    }
+    win32 {
+	bind TtkScrollable <MouseWheel> \
+	    { %W yview scroll [expr {-(%D/120)}] units }
+	bind TtkScrollable <Shift-MouseWheel> \
+	    { %W xview scroll [expr {-(%D/120)}] units }
+    }
+    aqua {
+	bind TtkScrollable <MouseWheel> \
+	    { %W yview scroll [expr {-(%D)}] units }
+	bind TtkScrollable <Shift-MouseWheel> \
+	    { %W xview scroll [expr {-(%D)}] units }
+	bind TtkScrollable <Option-MouseWheel> \
+	    { %W yview scroll  [expr {-10*(%D)}] units }
+	bind TtkScrollable <Shift-Option-MouseWheel> \
+	    { %W xview scroll [expr {-10*(%D)}] units }
     }
 }
 

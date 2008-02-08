@@ -18,8 +18,9 @@ ttk::combobox \- text field with popdown selection list
 A \fBttk::combobox\fR combines a text field with a pop-down list of values;
 the user may select the value of the text field from among the 
 values in the list.
-.SO
-\-class	\-cursor	\-takefocus	\-style
+.SO ttk_widget
+\-class	\-cursor	\-takefocus
+\-style
 .SE
 .\" ALSO: Other entry widget options
 .SH "WIDGET-SPECIFIC OPTIONS"

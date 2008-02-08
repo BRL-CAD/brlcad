@@ -175,6 +175,9 @@ test cmdIL-3.3 {SortCompare procedure, -index option} {
 } {1 {element 2 missing from sublist "20 10"}}
 test cmdIL-3.4 {SortCompare procedure, -index option} {
     list [catch {lsort -integer -index 2 "{a b c} \\\{"} msg] $msg
+} {1 {expected integer but got "c"}}
+test cmdIL-3.4.1 {SortCompare procedure, -index option} {
+    list [catch {lsort -integer -index 2 "{1 2 3} \\\{"} msg] $msg
 } {1 {unmatched open brace in list}}
 test cmdIL-3.5 {SortCompare procedure, -index option} {
     list [catch {lsort -integer -index 2 {{20 10 13} {15}}} msg] $msg
@@ -747,6 +750,9 @@ test cmdIL-7.5 {lreverse command - unshared object} {
 test cmdIL-7.6 {lreverse command - unshared object [Bug 1672585]} {
     lreverse [set x {1 2 3}][unset x]
 } {3 2 1}
+test cmdIL-7.7 {lreverse command - empty object [Bug 1876793]} {
+    lreverse [list]
+} {}
 
 testConstraint testobj [llength [info commands testobj]]
 test cmdIL-7.7 {lreverse command - shared intrep [Bug 1675044]} -setup {

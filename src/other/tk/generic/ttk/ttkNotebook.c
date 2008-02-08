@@ -239,6 +239,7 @@ static int ConfigureTab(
 
     Tk_FreeSavedOptions(&savedOptions);
     Ttk_ManagerSizeChanged(nb->notebook.mgr);
+    TtkRedisplayWidget(&nb->core);
 
     return TCL_OK;
 error:
@@ -982,6 +983,7 @@ static int NotebookForgetCommand(
     }
 
     Ttk_ForgetSlave(nb->notebook.mgr, index);
+    TtkRedisplayWidget(&nb->core);
 
     return TCL_OK;
 }
@@ -1010,6 +1012,8 @@ static int NotebookHideCommand(
     if (index == nb->notebook.currentIndex) {
 	SelectNearestTab(nb);
     }
+
+    TtkRedisplayWidget(&nb->core);
 
     return TCL_OK;
 }
@@ -1183,7 +1187,6 @@ static int NotebookTabCommand(
 	SelectNearestTab(nb);
     }
 
-    TtkResizeWidget(&nb->core);
     return TCL_OK;
 }
 

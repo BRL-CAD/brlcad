@@ -1755,7 +1755,7 @@ Tcl_FSEvalFileEx(
     const char *encodingName)	/* If non-NULL, then use this encoding for the
 				 * file. NULL means use the system encoding. */
 {
-    int result, length;
+    int length, result = TCL_ERROR;
     Tcl_StatBuf statBuf;
     Tcl_Obj *oldScriptFile;
     Interp *iPtr;
@@ -1764,25 +1764,21 @@ Tcl_FSEvalFileEx(
     Tcl_Obj *objPtr;
 
     if (Tcl_FSGetNormalizedPath(interp, pathPtr) == NULL) {
-	return TCL_ERROR;
+	return result;
     }
-
-    result = TCL_ERROR;
-    objPtr = Tcl_NewObj();
-    Tcl_IncrRefCount(objPtr);
 
     if (Tcl_FSStat(pathPtr, &statBuf) == -1) {
 	Tcl_SetErrno(errno);
 	Tcl_AppendResult(interp, "couldn't read file \"",
 		Tcl_GetString(pathPtr), "\": ", Tcl_PosixError(interp), NULL);
-	goto end;
+	return result;
     }
     chan = Tcl_FSOpenFileChannel(interp, pathPtr, "r", 0644);
     if (chan == (Tcl_Channel) NULL) {
 	Tcl_ResetResult(interp);
 	Tcl_AppendResult(interp, "couldn't read file \"",
 		Tcl_GetString(pathPtr), "\": ", Tcl_PosixError(interp), NULL);
-	goto end;
+	return result;
     }
 
     /*
@@ -1801,10 +1797,12 @@ Tcl_FSEvalFileEx(
 	if (Tcl_SetChannelOption(interp, chan, "-encoding", encodingName)
 		!= TCL_OK) {
 	    Tcl_Close(interp,chan);
-	    goto end;
+	    return result;
 	}
     }
 
+    objPtr = Tcl_NewObj();
+    Tcl_IncrRefCount(objPtr);
     if (Tcl_ReadChars(chan, objPtr, -1, 0) < 0) {
 	Tcl_Close(interp, chan);
 	Tcl_AppendResult(interp, "couldn't read file \"",

@@ -17,8 +17,9 @@ ttk::frame \- Simple container widget
 .SH DESCRIPTION
 A \fBttk::frame\fR widget is a container, used to group other widgets
 together.
-.SO
-\-class	\-cursor	\-takefocus	\-style
+.SO ttk_widget
+\-class	\-cursor	\-takefocus
+\-style
 .SE
 .SH "WIDGET-SPECIFIC OPTIONS"
 .OP \-borderwidth borderWidth BorderWidth

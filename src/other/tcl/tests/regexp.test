@@ -659,6 +659,9 @@ test regexp-22.1 {Bug 1810038} {
     regexp ($|^X)* {}
 } 1
 
+test regexp-22.2 {regexp compile and backrefs, Bug 1857126} {
+    regexp -- {([bc])\1} bb
+} 1
 
 # cleanup
 ::tcltest::cleanupTests

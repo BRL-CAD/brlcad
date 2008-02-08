@@ -1228,7 +1228,7 @@ Tcl_ExprObj(
 	const char *string = TclGetStringFromObj(objPtr, &length);
 
 	TclInitCompileEnv(interp, &compEnv, string, length, NULL, 0);
-	TclCompileExpr(interp, string, length, &compEnv);
+	TclCompileExpr(interp, string, length, &compEnv, 0);
 
 	/*
 	 * Successful compilation. If the expression yielded no instructions,
@@ -1339,8 +1339,8 @@ TclCompEvalObj(
 
     iPtr->numLevels++;
     if (TclInterpReady(interp) == TCL_ERROR) {
-	iPtr->numLevels--;
-	return TCL_ERROR;
+	result = TCL_ERROR;
+	goto done;
     }
 
     namespacePtr = iPtr->varFramePtr->nsPtr;
@@ -1404,8 +1404,7 @@ TclCompEvalObj(
 	if (codePtr->refCount <= 0) {
 	    TclCleanupByteCode(codePtr);
 	}
-	iPtr->numLevels--;
-	return result;
+	goto done;
     }
 
     recompileObj:
@@ -1424,6 +1423,10 @@ TclCompEvalObj(
     iPtr->invokeCmdFramePtr = NULL;
     codePtr = (ByteCode *) objPtr->internalRep.otherValuePtr;
     goto runCompiledObj;
+
+    done:
+    iPtr->numLevels--;
+    return result;
 }
 
 /*
@@ -2047,17 +2050,19 @@ TclExecuteByteCode(
 	 * If the first object is shared, we need a new obj for the result;
 	 * otherwise, we can reuse the first object. In any case, make sure it
 	 * has enough room to accomodate all the concatenated bytes. Note that
-	 * if it is unshared its bytes are already copied by
-	 * Tcl_SetObjectLength, so that we set the loop parameters to avoid
-	 * copying them again: p points to the end of the already copied
-	 * bytes, currPtr to the second object.
+	 * if it is unshared its bytes are copied by ckrealloc, so that we set
+	 * the loop parameters to avoid copying them again: p points to the
+	 * end of the already copied bytes, currPtr to the second object.
 	 */
 
 	objResultPtr = OBJ_AT_DEPTH(opnd-1);
 	bytes = TclGetStringFromObj(objResultPtr, &length);
 #if !TCL_COMPILE_DEBUG
-	if (!Tcl_IsShared(objResultPtr)) {
-	    Tcl_SetObjLength(objResultPtr, (length + appendLen));
+	if (bytes != tclEmptyStringRep && !Tcl_IsShared(objResultPtr)) {
+	    TclFreeIntRep(objResultPtr);
+	    objResultPtr->typePtr = NULL;
+	    objResultPtr->bytes = ckrealloc(bytes, (length + appendLen + 1));
+	    objResultPtr->length = length + appendLen;
 	    p = TclGetString(objResultPtr) + length;
 	    currPtr = &OBJ_AT_DEPTH(opnd - 2);
 	} else {
@@ -2404,7 +2409,7 @@ TclExecuteByteCode(
 	 * context.
 	 */
 
-	result = TclCompEvalObj(interp, objPtr, NULL,0);
+	result = TclCompEvalObj(interp, objPtr, NULL, 0);
 	CACHE_STACK_INFO();
 	if (result == TCL_OK) {
 	    /*

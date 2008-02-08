@@ -3195,10 +3195,9 @@ TclCompileRegexpCmd(
 	/*
 	 * Pass correct RE compile flags.  We use only Int1 (8-bit), but
 	 * that handles all the flags we want to pass.
-	 * Use TCL_REG_NOSUB as we don't have capture vars.
+	 * Don't use TCL_REG_NOSUB as we may have backrefs.
 	 */
-	int cflags = TCL_REG_ADVANCED | TCL_REG_NOSUB
-	    | (nocase ? TCL_REG_NOCASE : 0);
+	int cflags = TCL_REG_ADVANCED | (nocase ? TCL_REG_NOCASE : 0);
 	TclEmitInstInt1(INST_REGEXP, cflags, envPtr);
     }
 
@@ -4442,8 +4441,8 @@ TclCompileSwitchCmd(
 		    /*
 		     * Pass correct RE compile flags.  We use only Int1
 		     * (8-bit), but that handles all the flags we want to
-		     * pass.
-		     * Don't use TCL_REG_NOSUB as we may have capture vars.
+		     * pass.  Don't use TCL_REG_NOSUB as we may have backrefs
+		     * or capture vars.
 		     */
 		    int cflags = TCL_REG_ADVANCED
 			| (noCase ? TCL_REG_NOCASE : 0);
@@ -6142,7 +6141,7 @@ TclCompileEnsemble(
 				 * compiled. */
     CompileEnv *envPtr)		/* Holds resulting instructions. */
 {
-    Tcl_Token *tokenPtr, *argTokensPtr;
+    Tcl_Token *tokenPtr;
     Tcl_Obj *mapObj, *subcmdObj, *targetCmdObj, *listObj, **elems;
     Tcl_Command ensemble = (Tcl_Command) cmdPtr;
     Tcl_Parse synthetic;
@@ -6340,18 +6339,10 @@ TclCompileEnsemble(
      * do that, we have to perform some trickery to rewrite the arguments.
      */
 
-    argTokensPtr = TokenAfter(tokenPtr);
-    memcpy(&synthetic, parsePtr, sizeof(Tcl_Parse));
-    synthetic.numWords -= 2 - len;
-    synthetic.numTokens -= (argTokensPtr - parsePtr->tokenPtr) - 2*len;
-    if (synthetic.numTokens <= NUM_STATIC_TOKENS) {
-	synthetic.tokenPtr = synthetic.staticTokens;
-	synthetic.tokensAvailable = NUM_STATIC_TOKENS;
-    } else {
-	synthetic.tokenPtr =
-		TclStackAlloc(interp, sizeof(Tcl_Token) * synthetic.numTokens);
-	synthetic.tokensAvailable = synthetic.numTokens;
-    }
+    TclParseInit(interp, NULL, 0, &synthetic);
+    synthetic.numWords = parsePtr->numWords - 2 + len;
+    TclGrowParseTokenArray(&synthetic, 2*len);
+    synthetic.numTokens = 2*len;
 
     /*
      * Now we have the space to work in, install something rewritten. Note
@@ -6379,8 +6370,15 @@ TclCompileEnsemble(
      * Copy over the real argument tokens.
      */
 
-    memcpy(synthetic.tokenPtr + 2*len, argTokensPtr,
-	    sizeof(Tcl_Token) * (synthetic.numTokens - 2*len));
+    for (i=len; i<synthetic.numWords; i++) {
+	int toCopy;
+	tokenPtr = TokenAfter(tokenPtr);
+	toCopy = tokenPtr->numComponents + 1;
+	TclGrowParseTokenArray(&synthetic, toCopy);
+	memcpy(synthetic.tokenPtr + synthetic.numTokens, tokenPtr,
+		sizeof(Tcl_Token) * toCopy);
+	synthetic.numTokens += toCopy;
+    }
 
     /*
      * Hand off compilation to the subcommand compiler. At last!
@@ -6392,9 +6390,7 @@ TclCompileEnsemble(
      * Clean up if necessary.
      */
 
-    if (synthetic.tokenPtr != synthetic.staticTokens) {
-	TclStackFree(interp, synthetic.tokenPtr);
-    }
+    Tcl_FreeParse(&synthetic);
     return result;
 }
 

@@ -20,10 +20,11 @@ a set of mutually-exclusive options.
 Radiobuttons are linked to a Tcl variable,
 and have an associated value; when a radiobutton is clicked,
 it sets the variable to its associated value.
-.SO
-\-class	\-compound	\-cursor	\-image
-\-state	\-style	\-takefocus	\-text
-\-textvariable	\-underline	\-width
+.SO ttk_widget
+\-class	\-compound	\-cursor
+\-image	\-state	\-style
+\-takefocus	\-text	\-textvariable
+\-underline	\-width
 .SE
 .SH "WIDGET-SPECIFIC OPTIONS"
 .OP \-command command Command

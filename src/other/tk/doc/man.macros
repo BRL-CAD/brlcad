@@ -42,15 +42,14 @@
 .\" .DE
 .\"	End of indented unfilled display.
 .\"
-.\" .SO
-.\"	Start of list of standard options for a Tk widget.  The
-.\"	options follow on successive lines, in three columns separated
-.\"	by tabs.
-.\"
-.\" .SE ?manpage?
-.\"	End of list of standard options for a Tk widget. The manpage
+.\" .SO ?manpage?
+.\"	Start of list of standard options for a Tk widget. The manpage
 .\"	argument defines where to look up the standard options; if
-.\"	omitted, defaults to "options".
+.\"	omitted, defaults to "options". The options follow on successive
+.\"	lines, in three columns separated by tabs.
+.\"
+.\" .SE
+.\"	End of list of standard options for a Tk widget.
 .\"
 .\" .OP cmdName dbName dbClass
 .\"	Start of description of a specific option.  cmdName gives the
@@ -83,7 +82,7 @@
 .\}
 .ta \\n()Au \\n()Bu
 .ie !"\\$3"" \{\
-\&\\$1	\\fI\\$2\\fP	(\\$3)
+\&\\$1 \\fI\\$2\\fP (\\$3)
 .\".b
 .\}
 .el \{\
@@ -205,6 +204,8 @@
 ..
 .\"	# SO - start of list of standard options
 .de SO
+'ie '\\$1'' .ds So \\fBoptions\\fR
+'el .ds So \\fB\\$1\\fR
 .SH "STANDARD OPTIONS"
 .LP
 .nf
@@ -216,10 +217,7 @@
 .fi
 .ft R
 .LP
-See the
-.ie '\\$1'' \\fBoptions\\fR
-.el \\fB\\$1\\fR
-manual entry for details on the standard options.
+See the \\*(So manual entry for details on the standard options.
 ..
 .\"	# OP - start of full description for a single option
 .de OP

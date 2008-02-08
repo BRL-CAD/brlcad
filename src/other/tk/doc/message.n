@@ -16,12 +16,11 @@ message \- Create and manipulate message widgets
 .SH SYNOPSIS
 \fBmessage\fR \fIpathName \fR?\fIoptions\fR?
 .SO
-\-anchor	\-highlightbackground	\-takefocus
-\-background	\-highlightcolor	\-text
-\-borderwidth	\-highlightthickness	\-textvariable
-\-cursor	\-padx	\-width
-\-font	\-pady
-\-foreground	\-relief
+\-anchor	\-background	\-borderwidth
+\-cursor	\-font	\-foreground
+\-highlightbackground	\-highlightcolor	\-highlightthickness
+\-padx	\-pady	\-relief
+\-takefocus	\-text	\-textvariable
 .SE
 .SH "WIDGET-SPECIFIC OPTIONS"
 .OP \-aspect aspect Aspect
@@ -63,7 +62,6 @@ length.
 If this option has a value less than or equal to zero, then
 the \fBaspect\fR option determines the line length.
 .BE
-
 .SH DESCRIPTION
 .PP
 The \fBmessage\fR command creates a new window (given by the
@@ -142,5 +140,7 @@ messages are intended for output purposes only.
 .PP
 Tabs do not work very well with text that is centered or right-justified.
 The most common result is that the line is justified wrong.
+.SH "SEE ALSO"
+label(n)
 .SH KEYWORDS
 message, widget

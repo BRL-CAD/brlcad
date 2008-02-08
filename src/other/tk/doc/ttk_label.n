@@ -18,10 +18,11 @@ ttk::label \- Display a text string and/or image
 A \fBttk::label\fR widget displays a textual label and/or image.
 The label may be linked to a Tcl variable 
 to automatically change the displayed text.
-.SO
-\-class	\-compound	\-cursor	\-image
-\-style	\-takefocus	\-text	\-textvariable
-\-underline	\-width
+.SO ttk_widget
+\-class	\-compound	\-cursor
+\-image	\-style	\-takefocus
+\-text	\-textvariable	\-underline
+\-width
 .SE
 .SH "WIDGET-SPECIFIC OPTIONS"
 .OP \-anchor anchor Anchor

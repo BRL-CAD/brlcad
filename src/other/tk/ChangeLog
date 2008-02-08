@@ -1,3 +1,134 @@
+2008-02-04  Don Porter  <dgp@users.sourceforge.net>
+
+	*** 8.5.1 TAGGED FOR RELEASE ***
+
+	* generic/tk.h:		Bump to 8.5.1 for release.
+	* library/tk.tcl:
+	* unix/configure.in:
+	* unix/tk.spec:
+	* win/configure.in:
+
+	* unix/configure:	autoconf-2.59
+	* win/configure:
+
+2008-02-04  Donal K. Fellows  <donal.k.fellows@man.ac.uk>
+
+	* doc/MeasureChar.3, doc/FontId.3: Minor improvements (formatting,
+	keywords).
+
+2008-02-02  Daniel Steffen  <das@users.sourceforge.net>
+
+	* macosx/Wish-Info.plist.in:	add CFBundleLocalizations key, listing
+	* unix/configure.in (Darwin): 	all library/msgs locales.
+
+	* unix/configure.in (Darwin):	correct Info.plist year substitution in
+					non-framework builds.
+
+	* unix/configure:		autoconf-2.59
+
+2008-02-01  Don Porter  <dgp@users.sourceforge.net>
+
+	* changes:	Updates for 8.5.1 release.
+
+2008-02-01  Reinhard Max  <max@suse.de>
+
+	* generic/tkImgGIF.c: Fixed a buffer overflow (CVE-2008-0553).
+	* tests/imgPhoto.test: Added a test for the above.
+
+2008-01-31  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* library/msgbox.tcl (::tk::MessageBox): don't use ttk::label in
+	low depth/aqua fallback, as it doesn't support -bitmap.
+
+	* win/tkWinDialog.c (Tk_MessageBoxObjCmd): pass "" instead of NULL
+	when -title isn't set.  [Bug 1881892]
+
+2008-01-31  Donal K. Fellows  <donal.k.fellows@man.ac.uk>
+
+	* doc/panedwindow.n: Added proper description of -height and -width
+	options, which aren't "standard". Last of fallout from [Bug 1882495].
+
+2008-01-30  Donal K. Fellows  <donal.k.fellows@man.ac.uk>
+
+	* doc/canvas.n, doc/listbox.n, doc/message.n: Fix erroneous listing of
+	"standard" options. [Bug 1882495]
+
+2008-01-29  Joe English  <jenglish@users.sourceforge.net>
+
+	* library/treeview.tcl: Fix bug in Shift-ButtonPress-1 binding (error
+	if no current focus item; reported on c.l.t.)
+
+2008-01-29  Donal K. Fellows  <donal.k.fellows@man.ac.uk>
+
+	* doc/ttk_*.n: Adjusted handling of the standard options part of the
+	Ttk manual pages so that they are documented in the correct location.
+	[Bug 1876493]
+
+2008-01-28  Joe English  <jenglish@users.sourceforge.net>
+
+	* unix/tkUnixRFont.c: Re-fix strict-aliasing warnings reintroduced by
+	last patch.
+
+2008-01-27  Joe English  <jenglish@users.sourceforge.net>
+
+	* generic/ttk/ttkNotebook.c: Make sure to schedule a redisplay when
+	adding and/or hiding tabs. [Bug 1878298]
+
+2008-01-27  Joe English  <jenglish@users.sourceforge.net>
+
+	* unix/tkUnixRFont.c: Merged common code from InitFont() and
+	TkpGetFontAttrsForChar(), factored into GetTkFontAttributes() and
+	GetTkFontMetrics(). Removed write-only struct UnixFtFont member
+	'drawable'. Removed unneeded double-pointer indirections. Ensure that
+	TkFontAttributes.family member is a Tk_Uid, as specified. Use
+	FcTypeDouble for XFT_SIZE attribute. Finally: fix [Bug 1835848]
+
+2008-01-25  Don Porter  <dgp@users.sourceforge.net>
+
+	* changes:	Updates for 8.5.1 release.
+
+2008-01-08  Joe English  <jenglish@users.sourceforge.net>
+
+	* generic/ttk/ttkFrame.c: BUGFIX: fix crash in [ttk::labelframe] when
+	-style option specified. [Bug 1867122]
+
+2008-01-08  Joe English  <jenglish@users.sourceforge.net>
+
+	* win/ttkWinTheme.c: Add tristate support to checkbuttons and
+	radiobuttons. [Bug 1865898]
+	Fix check and radio indicator size. [Bug 1679067]
+
+2008-01-06  Joe English  <jenglish@users.sourceforge.net>
+
+	* generic/ttk/ttkWidget.c, generic/ttk/ttkWidget.h: Call
+	Tk_MakeWindowExist() in widget constructor. Removed now-unnecessary
+	initial ConfigureNotify processing.
+
+2008-01-06  Joe English  <jenglish@users.sourceforge.net>
+
+	* library/ttk/treeview.tcl, library/ttk/utils.tcl: Fix MouseWheel
+	bindings for ttk::treeview widget. [Bugs 1442006, 1821939, 1862692]
+
+2008-01-02  Don Porter  <dgp@users.sourceforge.net>
+
+	* generic/tk.h:		Bump version number to 8.5.1b1 to distinguish
+	* library/tk.tcl:	CVS development snapshots from the 8.5.0 and
+	* unix/configure.in:	8.5.1 releases.
+	* unix/tk.spec:
+	* win/configure.in:
+
+	* unix/configure:	autoconf (2.59)
+	* win/configure:
+
+2007-12-30  Donal K. Fellows  <dkf@users.sf.net>
+
+	* doc/canvas.n: Documented exact behaviour of items with respect to
+	when they are the current item. [Bug 1774593] Also documented the
+	clipping behaviour of window items.
+
+	* library/demos/nl.msg: Corrected following testing "in the field" by
+	Arjen Markus. [Bug 1860802]
+
 2007-12-17  Donal K. Fellows  <donal.k.fellows@manchester.ac.uk>
 
 	*** 8.5.0 TAGGED FOR RELEASE ***
@@ -10,7 +141,7 @@
 
 2007-12-14  Joe English  <jenglish@users.sourceforge.net>
 
-	* doc/ttk_treeview.n: Fix typo [Bug 1850713].
+	* doc/ttk_treeview.n: Fix typo. [Bug 1850713]
 
 2007-12-14  Pat Thoyts  <patthoyts@users.sourceforge.net>
 
@@ -209,9 +340,9 @@
 	handling of bad file names. [Bug 1822076] Thanks to Christoph Bauer
 	(fridolin@users.sf.net) for the patch.
 	* tests/filebox.test (filebox-7.1, filebox-7.2): Added test cases that
-	exercise [Bug 1822076].
-	* tests/imgPPM.test (imgPPM-4.1): Added test case that exercises [Bug
-	1822391].
+	exercise. [Bug 1822076]
+	* tests/imgPPM.test (imgPPM-4.1): Added test case that exercises. [Bug
+	1822391]
 
 2007-11-25  Joe English  <jenglish@users.sourceforge.net>
 
@@ -657,7 +788,7 @@
 
 2007-10-25  Joe English  <jenglish@users.sourceforge.net>
 
-	* generic/ttk/ttkNotebook.c: [Bug 1817596].
+	* generic/ttk/ttkNotebook.c: [Bug 1817596]
 
 2007-10-25  Jeff Hobbs  <jeffh@ActiveState.com>
 
@@ -1047,7 +1178,7 @@
 2007-09-17  Joe English  <jenglish@users.sourceforge.net>
 
 	* library/ttk/combobox.tcl:  Try to improve combobox appearance on
-	OSX + Tk 8.5 [Bug 1780286].
+	OSX + Tk 8.5. [Bug 1780286]
 
 2007-09-15  Daniel Steffen  <das@users.sourceforge.net>
 
@@ -2904,7 +3035,7 @@
 	* win/makefile.vc: from seeing version numbers which may contain a/b
 	information, and then balking on them. This could otherwise happen
 	when Tcl/Tk 8.4 and 8.5 are installed in the same directory, seeing
-	each other. [Bug 1566418].
+	each other. [Bug 1566418]
 
 2006-09-22  Andreas Kupries  <andreask@activestate.com>
 
@@ -3145,7 +3276,7 @@
 
 	* generic/tkScale.c: Revised variable writing logic to account for
 	[scale]'s design that it deals with its value as a formatted string,
-	and not as a double. [Bug 891141].
+	and not as a double. [Bug 891141]
 
 2006-06-14  Daniel Steffen  <das@users.sourceforge.net>
 
@@ -3862,7 +3993,7 @@
 	* unix/Makefile.in: fix dist target for manifest dir change
 
 	* generic/tkTextTag.c (TkTextTagCmd): use correct arraySize for peered
-	text widgets in [$text tag names]. [Bug 1375069 1374935]
+	text widgets in [$text tag names]. [Bugs 1375069, 1374935]
 
 2005-12-08  Daniel Steffen  <das@users.sourceforge.net>
 
@@ -3871,7 +4002,7 @@
 	* macosx/tkMacOSXInit.c:  only remaining tcl internals in TkAqua are
 	* macosx/tkMacOSXNotify.c:TclServiceIdle() in tkMacOSXScrlbr.c and
 	* macosx/tkMacOSXScrlbr.c:Tcl_Get/SetStartupScript() in tkMacOSXInit.c
-				  [RFE 1336531].
+				  [RFE 1336531]
 
 	* macosx/tkMacOSXInt.h: sync comments with core-8-4-branch.
 
@@ -4118,7 +4249,7 @@
 2005-11-15  Joe English  <jenglish@users.sourceforge.net>
 
 	* unix/tkUnixWm.c, tests/unixWm.test, doc/wm.n: Support for [wm
-	attributes] on X11 [TIP#231, Patch 1062022].
+	attributes] on X11. [TIP#231, Patch 1062022]
 
 2005-11-14  Joe English  <jenglish@users.sourceforge.net>
 
@@ -4565,7 +4696,7 @@
 
 2005-07-05  Don Porter	<dgp@users.sourceforge.net>
 
-	* unix/Makefile.in:	Purged use of TCLTESTARGS [RFE 1161550].
+	* unix/Makefile.in:	Purged use of TCLTESTARGS. [RFE 1161550]
 
 2005-06-23  Daniel Steffen  <das@users.sourceforge.net>
 
@@ -4962,7 +5093,7 @@
 
 	* generic/tkText.c:
 	* tests/text.test: fix to elide searching problems [Bug 1174269] and
-	disappearing cursor with insertofftime 0 [Bug 1169429].
+	disappearing cursor with insertofftime 0. [Bug 1169429]
 
 2005-04-03  Peter Spjuth  <peter.spjuth@space.se>
 
@@ -5247,7 +5378,7 @@
 2005-01-10  Joe English	 <jenglish@users.sourceforge.net>
 
 	* unix/Makefile.in, unix/configure.in, unix/tkConfig.sh.in:
-	Remove ${DBGX}, ${TK_DBGX} from Tk build system [Patch 1081595].
+	Remove ${DBGX}, ${TK_DBGX} from Tk build system. [Patch 1081595]
 	* unix/tcl.m4: re-synced with tcl/unix/tcl.m4
 	* unix/configure: Regenerated.
 

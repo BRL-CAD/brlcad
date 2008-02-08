@@ -18,8 +18,8 @@ menu, tk_menuSetFocus \- Create and manipulate menu widgets
 \fBmenu\fR \fIpathName \fR?\fIoptions\fR?
 \fBtk_menuSetFocus\fR \fIpathName\fR
 .SO
-\-activebackground	\-borderwidth		\-foreground
-\-activeborderwidth	\-cursor		\-relief
+\-activebackground	\-borderwidth	\-foreground
+\-activeborderwidth	\-cursor	\-relief
 \-activeforeground	\-disabledforeground	\-takefocus
 \-background	\-font
 .SE

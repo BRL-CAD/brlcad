@@ -35,17 +35,25 @@ elements specifies
 one argument.  Each argument specifier is also a list with either
 one or two fields.  If there is only a single field in the specifier
 then it is the name of the argument; if there are two fields, then
-the first is the argument name and the second is its default value.
+the first is the argument name and the second is its default value. 
+Arguments with default values that are followed by non-defaulted
+arguments become required arguments.  In 8.6 this will be considered an 
+error. 
 .PP
 When \fIname\fR is invoked a local variable
 will be created for each of the formal arguments to the procedure; its
 value will be the value of corresponding argument in the invoking command
 or the argument's default value.
+Actual arguments are assigned to formal arguments strictly in order.
 Arguments with default values need not be
 specified in a procedure invocation.  However, there must be enough
 actual arguments for all the
 formal arguments that do not have defaults, and there must not be any extra
-actual arguments.  There is one special case to permit procedures with
+actual arguments.  
+Arguments with default values that are followed by non-defaulted
+arguments become required arguments (in 8.6 it will be considered an 
+error).
+There is one special case to permit procedures with
 variable numbers of arguments.  If the last formal argument has the name
 \fBargs\fR, then a call to the procedure may contain more actual arguments
 than the procedure has formals.  In this case, all of the actual arguments
@@ -57,10 +65,8 @@ When \fIbody\fR is being executed, variable names normally refer to
 local variables, which are created automatically when referenced and
 deleted when the procedure returns.  One local variable is automatically
 created for each of the procedure's arguments.
-Global variables can only be accessed by invoking
-the \fBglobal\fR command or the \fBupvar\fR command.
-Namespace variables can only be accessed by invoking
-the \fBvariable\fR command or the \fBupvar\fR command.
+Other variables can only be accessed by invoking one of the \fBglobal\fR, 
+\fBvariable\fR, \fBupvar\fR or \fBnamespace upvar\fR commands.
 .PP
 The \fBproc\fR command returns an empty string.  When a procedure is
 invoked, the procedure's return value is the value specified in a

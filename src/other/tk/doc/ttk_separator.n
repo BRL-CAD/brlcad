@@ -17,9 +17,9 @@ ttk::separator \- Separator bar
 .SH DESCRIPTION
 A \fBttk::separator\fR widget displays a horizontal or vertical separator
 bar.
-.SO
-\-class	\-cursor	\-state	\-style	
-\-takefocus
+.SO ttk_widget
+\-class	\-cursor	\-state
+\-style	\-takefocus
 .SE
 .SH "WIDGET-SPECIFIC OPTIONS"
 .OP \-orient orient Orient

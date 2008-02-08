@@ -6465,3 +6465,21 @@ use (hobbs)
 Several documentation and release notes improvements
 
 --- Released 8.5.0, December 18, 2007 --- See ChangeLog for details ---
+
+2007-12-30 (bug fix)[1860802] fixed Dutch message catalog (markus,fellows)
+
+2008-01-06 (bug fix)[1442006,1821939,18862692] MouseWheel for treeview (english)
+
+2008-01-08 (bug fix)[1865898,1679067] button size & state (english)
+
+2008-01-08 (bug fix)[1867122] [labelframe -style] crash (english,rib)
+
+2008-01-27 (bug fix)[1835848] size value returned by [font actual] (english)
+
+2008-01-27 (bug fix)[1878298] [notebook] redraws on tab visibility (english)
+
+2008-01-31 (bug fix)[1881892] messagebox default title (hobbs)
+
+2008-02-01 (bug fix)[CVE-2008-0553] buffer overflow in GIF format (max)
+
+--- Released 8.5.1, February 5, 2008 --- See ChangeLog for details ---

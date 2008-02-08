@@ -27,16 +27,15 @@ typedef struct {
     FramePart	frame;
 } Frame;
 
-static Tk_OptionSpec FrameOptionSpecs[] =
-{
+static Tk_OptionSpec FrameOptionSpecs[] = {
     {TK_OPTION_PIXELS, "-borderwidth", "borderWidth", "BorderWidth", NULL,
 	Tk_Offset(Frame,frame.borderWidthObj), -1,
 	TK_OPTION_NULL_OK,0,GEOMETRY_CHANGED },
     {TK_OPTION_STRING, "-padding", "padding", "Pad", NULL,
-	Tk_Offset(Frame,frame.paddingObj), -1, 
+	Tk_Offset(Frame,frame.paddingObj), -1,
 	TK_OPTION_NULL_OK,0,GEOMETRY_CHANGED },
     {TK_OPTION_RELIEF, "-relief", "relief", "Relief", NULL,
-	Tk_Offset(Frame,frame.reliefObj), -1, 
+	Tk_Offset(Frame,frame.reliefObj), -1,
 	TK_OPTION_NULL_OK,0,0 },
     {TK_OPTION_PIXELS, "-width", "width", "Width", "0",
 	Tk_Offset(Frame,frame.widthObj), -1,
@@ -48,8 +47,7 @@ static Tk_OptionSpec FrameOptionSpecs[] =
     WIDGET_INHERIT_OPTIONS(ttkCoreOptionSpecs)
 };
 
-static WidgetCommandSpec FrameCommands[] =
-{
+static WidgetCommandSpec FrameCommands[] = {
     { "configure",	TtkWidgetConfigureCommand },
     { "cget",		TtkWidgetCgetCommand },
     { "instate",	TtkWidgetInstateCommand },
@@ -70,7 +68,7 @@ static Ttk_Padding FrameMargins(Frame *framePtr)
     /* Check -padding:
      */
     if (framePtr->frame.paddingObj) {
-	Ttk_GetPaddingFromObj(NULL, 
+	Ttk_GetPaddingFromObj(NULL,
 	    framePtr->core.tkwin, framePtr->frame.paddingObj, &margins);
     }
 
@@ -78,7 +76,7 @@ static Ttk_Padding FrameMargins(Frame *framePtr)
      */
     if (framePtr->frame.borderWidthObj) {
 	int border = 0;
-	Tk_GetPixelsFromObj(NULL, 
+	Tk_GetPixelsFromObj(NULL,
 	    framePtr->core.tkwin, framePtr->frame.borderWidthObj, &border);
 	margins = Ttk_AddPadding(margins, Ttk_UniformPadding((short)border));
     }
@@ -99,7 +97,7 @@ static int FrameSize(void *recordPtr, int *widthPtr, int *heightPtr)
 
 /*
  * FrameConfigure -- configure hook.
- *	<<NOTE-SIZE>> Usually the size of a frame is controlled by 
+ *	<<NOTE-SIZE>> Usually the size of a frame is controlled by
  *	a geometry manager (pack, grid); the -width and -height
  *	options are only effective if geometry propagation is turned
  *	off or if the [place] GM is used for child widgets.
@@ -135,7 +133,7 @@ static int FrameConfigure(Tcl_Interp *interp, void *recordPtr, int mask)
 	    interp,framePtr->core.tkwin,framePtr->frame.widthObj,&width)
        || TCL_OK != Tk_GetPixelsFromObj(
 	    interp,framePtr->core.tkwin,framePtr->frame.heightObj,&height)
-       ) 
+       )
     {
 	return TCL_ERROR;
     }
@@ -147,8 +145,7 @@ static int FrameConfigure(Tcl_Interp *interp, void *recordPtr, int mask)
     return TtkCoreConfigure(interp, recordPtr, mask);
 }
 
-static WidgetSpec FrameWidgetSpec =
-{
+static WidgetSpec FrameWidgetSpec = {
     "TFrame",			/* className */
     sizeof(Frame),		/* recordSize */
     FrameOptionSpecs,		/* optionSpecs */
@@ -190,7 +187,7 @@ int TtkGetLabelAnchorFromObj(
 	case 's' : flags = TTK_PACK_BOTTOM; 	break;
 	default  : goto error;
     }
-    
+
     /* Remaining characters are as per -sticky:
      */
     while ((c = *string++) != '\0') {
@@ -251,16 +248,15 @@ typedef struct {
 
 #define LABELWIDGET_CHANGED 0x100
 
-static Tk_OptionSpec LabelframeOptionSpecs[] =
-{
+static Tk_OptionSpec LabelframeOptionSpecs[] = {
     {TK_OPTION_STRING, "-labelanchor", "labelAnchor", "LabelAnchor",
 	"nw", Tk_Offset(Labelframe, label.labelAnchorObj),-1,
         0,0,GEOMETRY_CHANGED},
     {TK_OPTION_STRING, "-text", "text", "Text", "",
-	Tk_Offset(Labelframe,label.textObj), -1, 
-	0,0,GEOMETRY_CHANGED }, 
+	Tk_Offset(Labelframe,label.textObj), -1,
+	0,0,GEOMETRY_CHANGED },
     {TK_OPTION_INT, "-underline", "underline", "Underline",
-	"-1", Tk_Offset(Labelframe,label.underlineObj), -1, 
+	"-1", Tk_Offset(Labelframe,label.underlineObj), -1,
 	0,0,0 },
     {TK_OPTION_WINDOW, "-labelwidget", "labelWidget", "LabelWidget", NULL,
 	-1, Tk_Offset(Labelframe,label.labelWidget),
@@ -303,10 +299,10 @@ static void LabelframeStyleOptions(Labelframe *lf, LabelframeStyle *style)
 	Ttk_GetBorderFromObj(NULL, objPtr, &style->labelMargins);
     } else {
 	if (style->labelAnchor & (TTK_PACK_TOP|TTK_PACK_BOTTOM)) {
-	    style->labelMargins = 
+	    style->labelMargins =
 		Ttk_MakePadding(DEFAULT_LABELINSET,0,DEFAULT_LABELINSET,0);
 	} else {
-	    style->labelMargins = 
+	    style->labelMargins =
 		Ttk_MakePadding(0,DEFAULT_LABELINSET,0,DEFAULT_LABELINSET);
 	}
     }
@@ -321,16 +317,19 @@ static void LabelframeStyleOptions(Labelframe *lf, LabelframeStyle *style)
  * 	Extract the requested width and height of the labelframe's label:
  * 	taken from the label widget if specified, otherwise the text label.
  */
-static void 
+static void
 LabelframeLabelSize(Labelframe *lframePtr, int *widthPtr, int *heightPtr)
 {
     Tk_Window labelWidget = lframePtr->label.labelWidget;
+    Ttk_Layout labelLayout = lframePtr->label.labelLayout;
 
     if (labelWidget) {
 	*widthPtr = Tk_ReqWidth(labelWidget);
 	*heightPtr = Tk_ReqHeight(labelWidget);
+    } else if (labelLayout) {
+	Ttk_LayoutSize(labelLayout, 0, widthPtr, heightPtr);
     } else {
-	Ttk_LayoutSize(lframePtr->label.labelLayout, 0, widthPtr, heightPtr);
+	*widthPtr = *heightPtr = 0;
     }
 }
 
@@ -371,14 +370,14 @@ static int LabelframeSize(void *recordPtr, int *widthPtr, int *heightPtr)
 
     /* Request minimum size based on border width and label size:
      */
-    Tk_SetMinimumRequestSize(corePtr->tkwin, 
+    Tk_SetMinimumRequestSize(corePtr->tkwin,
 	    labelWidth + 2*style.borderWidth,
 	    labelHeight + 2*style.borderWidth);
 
     return 0;
 }
 
-/* 
+/*
  * LabelframeGetLayout --
  * 	Getlayout widget hook.
  */
@@ -410,7 +409,7 @@ static Ttk_Layout LabelframeGetLayout(
 
 /*
  * LabelframeDoLayout --
- * 	Labelframe layout hook.  
+ * 	Labelframe layout hook.
  *
  * Side effects: Computes labelParcel.
  */
@@ -447,11 +446,14 @@ static void LabelframeDoLayout(void *recordPtr)
 	}
     }
 
-    /* 
+    /*
      * Place border and label:
      */
     Ttk_PlaceLayout(corePtr->layout, corePtr->state, borderParcel);
-    Ttk_PlaceLayout(lframePtr->label.labelLayout, corePtr->state, labelParcel);
+    if (lframePtr->label.labelLayout) {
+	Ttk_PlaceLayout(
+	    lframePtr->label.labelLayout, corePtr->state, labelParcel);
+    }
     /* labelWidget placed in LabelframePlaceSlaves GM hook */
     lframePtr->label.labelParcel = labelParcel;
 }
@@ -460,14 +462,16 @@ static void LabelframeDisplay(void *recordPtr, Drawable d)
 {
     Labelframe *lframePtr = recordPtr;
     Ttk_DrawLayout(lframePtr->core.layout, lframePtr->core.state, d);
-    Ttk_DrawLayout(lframePtr->label.labelLayout, lframePtr->core.state, d);
+    if (lframePtr->label.labelLayout) {
+	Ttk_DrawLayout(lframePtr->label.labelLayout, lframePtr->core.state, d);
+    }
 }
 
 /* +++ Labelframe geometry manager hooks.
  */
 
 /* LabelframePlaceSlaves --
- * 	Sets the position and size of the labelwidget.  
+ * 	Sets the position and size of the labelwidget.
  */
 static void LabelframePlaceSlaves(void *recordPtr)
 {
@@ -534,7 +538,7 @@ static void LabelframeCleanup(void *recordPtr)
 }
 
 /* RaiseLabelWidget --
- * 	Raise the -labelwidget to ensure that the labelframe doesn't 
+ * 	Raise the -labelwidget to ensure that the labelframe doesn't
  * 	obscure it (if it's not a direct child), or bring it to
  * 	the top of the stacking order (if it is).
  */
@@ -605,8 +609,7 @@ static int LabelframeConfigure(Tcl_Interp *interp,void *recordPtr,int mask)
     return TCL_OK;
 }
 
-static WidgetSpec LabelframeWidgetSpec =
-{
+static WidgetSpec LabelframeWidgetSpec = {
     "TLabelframe",		/* className */
     sizeof(Labelframe),		/* recordSize */
     LabelframeOptionSpecs, 	/* optionSpecs */
@@ -641,7 +644,7 @@ void TtkFrame_Init(Tcl_Interp *interp)
 
     Ttk_RegisterLayout(theme, "TFrame", FrameLayout);
     Ttk_RegisterLayout(theme, "TLabelframe", LabelframeLayout);
-    Ttk_RegisterLayout(theme, "TLabelframe.Label", LabelSublayout);
+    Ttk_RegisterLayout(theme, "Label", LabelSublayout);
 
     RegisterWidget(interp, "ttk::frame", &FrameWidgetSpec);
     RegisterWidget(interp, "ttk::labelframe", &LabelframeWidgetSpec);

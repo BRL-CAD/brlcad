@@ -25,9 +25,9 @@ The value of the string may be linked to a Tcl variable
 with the \fB\-textvariable\fR option.
 Entry widgets support horizontal scrolling with the 
 standard \fB\-xscrollcommand\fR option and \fBxview\fR widget command.
-.SO
-\-class	\-cursor	\-style	\-takefocus
-\-xscrollcommand
+.SO ttk_widget
+\-class	\-cursor	\-style
+\-takefocus	\-xscrollcommand
 .SE
 .SH "WIDGET-SPECIFIC OPTIONS"
 .OP \-exportselection exportSelection ExportSelection

@@ -17,10 +17,11 @@ ttk::menubutton \- Widget that pops down a menu when pressed
 .SH DESCRIPTION
 A \fBttk::menubutton\fR widget displays a textual label and/or image,
 and displays a menu when pressed.
-.SO
-\-class	\-compound	\-cursor	\-image
-\-state	\-style	\-takefocus	\-text
-\-textvariable	\-underline	\-width
+.SO ttk_widget
+\-class	\-compound	\-cursor
+\-image	\-state	\-style
+\-takefocus	\-text	\-textvariable
+\-underline	\-width
 .SE
 .SH "WIDGET-SPECIFIC OPTIONS"
 .OP \-direction direction Direction

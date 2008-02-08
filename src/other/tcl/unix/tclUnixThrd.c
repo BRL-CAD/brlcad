@@ -223,16 +223,13 @@ TclpThreadGetStackSize(void)
 #if defined(HAVE_PTHREAD_ATTR_SETSTACKSIZE) && defined(TclpPthreadGetAttrs)
     pthread_attr_t threadAttr;	/* This will hold the thread attributes for
 				 * the current thread. */
-    static int initialized = 0;
-
+#ifdef __GLIBC__ 
     /*
      * Fix for [Bug 1815573]
      *
      * DESCRIPTION:
      * On linux TclpPthreadGetAttrs (which is pthread_attr_get_np) may return
-     * bogus values on the initial thread. We have a choice: either use the
-     * default thread stack (first branch in the #if below), or return 0 and
-     * let getrlimit do its thing. 
+     * bogus values on the initial thread. 
      *
      * ASSUMPTIONS:
      * There seems to be no api to determine if we are on the initial
@@ -247,20 +244,23 @@ TclpThreadGetStackSize(void)
      *      second Tcl interp will be created only after the first call to
      *      Tcl_CreateInterp returns.
      *
-     * These assumptions are satisfied by tclsh. Embedders may want to check
-     * their validity, and possibly adapt the code on failing to meet them.
+     * These assumptions are satisfied by tclsh. Embedders on linux may want
+     * to check their validity, and possibly adapt the code on failing to meet
+     * them.
      */
+
+    static int initialized = 0;
 
     if (!initialized) {
 	initialized = 1;
-#if 0
-	if (pthread_attr_init(&threadAttr) != 0) {
-	    return 0;
-	}
-#else
 	return 0;
-#endif
     } else {
+#else
+    {
+#endif
+	if (pthread_attr_init(&threadAttr) != 0) {
+	    return -1;
+	}
 	if (TclpPthreadGetAttrs(pthread_self(), &threadAttr) != 0) {
 	    pthread_attr_destroy(&threadAttr);
 	    return (size_t)-1;

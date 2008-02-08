@@ -25,6 +25,7 @@ This document describes the facilities for locating and loading Tcl
 Modules. The following commands are supported:
 .TP
 \fB::tcl::tm::path\fR \fBadd\fR \fIpath\fR...
+.
 The paths are added at the head to the list of module paths, in order
 of appearance. This means that the last argument ends up as the new
 head of the list.
@@ -46,14 +47,17 @@ looked at first.
 .RE
 .TP
 \fB::tcl::tm::path\fR \fBremove\fR \fIpath\fR...
+.
 Removes the paths from the list of module paths. The command silently
 ignores all paths which are not on the list.
 .TP
 \fB::tcl::tm::path\fR \fBlist\fR
+.
 Returns a list containing all registered module paths, in the order
 that they are searched for modules.
 .TP
 \fB::tcl::tm::roots\fR \fIpath\fR...
+.
 Similar to \fBpath add\fR, and layered on top of it. This command
 takes a list of paths, extends each with
 .QW "\fBtcl\fIX\fB/site-tcl\fR" ,
@@ -109,9 +113,11 @@ of the command \fB::tcl::tm::path list\fR.
 This is called the \fIModule path\fR. Neither the \fBauto_path\fR nor
 the \fBtcl_pkgPath\fR variables are used.
 All directories on the module path have to obey one restriction:
-.IP
+.RS
+.PP
 For any two directories, neither is an ancestor directory of the
 other.
+.RE
 .PP
 This is required to avoid ambiguities in package naming. If for
 example the two directories
@@ -125,19 +131,23 @@ obscuring a package named \fBice\fR, unqualified.
 .PP
 Before the search is started, the name of the requested package is
 translated into a partial path, using the following algorithm:
-.IP
+.RS
+.PP
 All occurrences of
 .QW "\fB::\fR"
 in the package name are replaced by
 the appropriate directory separator character for the platform we are
 on. On Unix, for example, this is
 .QW "\fB/\fR" .
+.RE
 .PP
 Example:
-.IP
+.RS
+.PP
 The requested package is \fBencoding::base64\fR. The generated
 partial path is
 .QW "\fIencoding/base64\fR" .
+.RE
 .PP
 After this translation the package is looked for in all module paths,
 by combining them one-by-one, first to last with the partial path to
@@ -207,6 +217,7 @@ are found in the variable.
 .SS "SYSTEM SPECIFIC PATHS"
 .TP
 \fBfile normalize [info library]/../tcl\fIX\fB/\fIX\fB.\fIy\fR
+.
 In other words, the interpreter will look into a directory specified
 by its major version and whose minor versions are less than or equal
 to the minor version of the interpreter.
@@ -227,6 +238,7 @@ can also be used by all interpreters which have the same major number
 .RE
 .TP
 \fBfile normalize EXEC/tcl\fIX\fB/\fIX\fB.\fIy\fR
+.
 Where \fBEXEC\fR is \fBfile normalize [info nameofexecutable]/../lib\fR
 or \fBfile normalize [::tcl::pkgconfig get libdir,runtime]\fR
 .RS
@@ -239,11 +251,13 @@ identical.
 .SS "SITE SPECIFIC PATHS"
 .TP
 \fBfile normalize [info library]/../tcl\fIX\fB/site-tcl\fR
+.
 Note that this is always a single entry because \fIX\fR is always a
 specific value (the current major version of Tcl).
 .SS "USER SPECIFIC PATHS"
 .TP
 \fB$::env(TCL\fIX\fB.\fIy\fB_TM_PATH)\fR
+.
 A list of paths, separated by either \fB:\fR (Unix) or \fB;\fR
 (Windows). This is user and site specific as this environment variable
 can be set not only by the user's profile, but by system configuration

@@ -149,26 +149,27 @@ proc manerror {msg} {
     global manual
     set name {}
     set subj {}
+    set procname [lindex [info level -1] 0]
     if {[info exists manual(name)]} {
 	set name $manual(name)
     }
     if {[info exists manual(section)] && [string length $manual(section)]} {
-	puts stderr "$name: $manual(section):  $msg"
+	puts stderr "$name: $manual(section): $procname: $msg"
     } else {
-	puts stderr "$name: $msg"
+	puts stderr "$name: $procname: $msg"
     }
 }
 
 proc manreport {level msg} {
     global manual
     if {$level < $manual(report-level)} {
-	manerror $msg
+	uplevel 1 [list manerror $msg]
     }
 }
 
 proc fatal {msg} {
     global manual
-    manerror $msg
+    uplevel 1 [list manerror $msg]
     exit 1
 }
 
@@ -390,12 +391,12 @@ proc process-text {text} {
 	    || [regsub {^([^\\]*)\\fR([^\\]*)\\fR(.*)$} $text \
 		    {\1\\fR\2\3} ntext]
 	} then {
-	    manerror "process-text: impotent font change: $text"
+	    manerror "impotent font change: $text"
 	    set text $ntext
 	    continue
 	}
 	# unrecognized
-	manerror "process-text: uncaught backslash: $text"
+	manerror "uncaught backslash: $text"
 	set text [string map [list "\\" "&#92;"] $text]
     }
     return $text
@@ -515,35 +516,40 @@ proc long-toc {text} {
 proc option-toc {name class switch} {
     global manual
     if {[string match "*OPTIONS" $manual(section)]} {
-	# link the defined option into the long table of contents
-	set link [long-toc "$switch, $name, $class"]
-	regsub -- "$switch, $name, $class" $link "$switch" link
-	return $link
-    } elseif {"$manual(name):$manual(section)" eq "options:DESCRIPTION"} {
-	# link the defined standard option to the long table of
-	# contents and make a target for the standard option references
-	# from other man pages.
-	set first [lindex $switch 0]
-	set here M$first
-	set there L[incr manual(long-toc-n)]
-	set manual(standard-option-$first) "<A HREF=\"$manual(name).htm#$here\">$switch, $name, $class</A>"
-	lappend manual(section-toc) "<DD><A HREF=\"$manual(name).htm#$here\" NAME=\"$there\">$switch, $name, $class</A>"
-	return "<A NAME=\"$here\">$switch</A>"
-    } else {
+	if {$manual(name) ne "ttk_widget"} {
+	    # link the defined option into the long table of contents
+	    set link [long-toc "$switch, $name, $class"]
+	    regsub -- "$switch, $name, $class" $link "$switch" link
+	    return $link
+	}
+    } elseif {"$manual(name):$manual(section)" ne "options:DESCRIPTION"} {
 	error "option-toc in $manual(name) section $manual(section)"
     }
+
+    # link the defined standard option to the long table of contents and make
+    # a target for the standard option references from other man pages.
+
+    set first [lindex $switch 0]
+    set here M$first
+    set there L[incr manual(long-toc-n)]
+    set manual(standard-option-$manual(name)-$first) \
+	"<A HREF=\"$manual(name).htm#$here\">$switch, $name, $class</A>"
+    lappend manual(section-toc) \
+	"<DD><A HREF=\"$manual(name).htm#$here\" NAME=\"$there\">$switch, $name, $class</A>"
+    return "<A NAME=\"$here\">$switch</A>"
 }
-proc std-option-toc {name} {
+proc std-option-toc {name page} {
     global manual
-    if {[info exists manual(standard-option-$name)]} {
-	lappend manual(section-toc) <DD>$manual(standard-option-$name)
-	return $manual(standard-option-$name)
+    if {[info exists manual(standard-option-$page-$name)]} {
+	lappend manual(section-toc) <DD>$manual(standard-option-$page-$name)
+	return $manual(standard-option-$page-$name)
     }
+    manerror "missing reference to \"$name\" in $page.n"
     set here M[incr manual(section-toc-n)]
     set there L[incr manual(long-toc-n)]
     set other M$name
-    lappend manual(section-toc) "<DD><A HREF=\"options.htm#$other\">$name</A>"
-    return "<A HREF=\"options.htm#$other\">$name</A>"
+    lappend manual(section-toc) "<DD><A HREF=\"$page.htm#$other\">$name</A>"
+    return "<A HREF=\"$page.htm#$other\">$name</A>"
 }
 ##
 ## process the widget option section
@@ -1248,18 +1254,14 @@ proc output-directive {line} {
 	    return
 	}
 	.SO {
+	    set targetPage $rest
 	    if {[match-text @stuff .SE]} {
 		output-directive {.SH STANDARD OPTIONS}
-		set opts {}
-		foreach line [split $stuff \n] {
-		    foreach option [split $line \t] {
-			lappend opts $option
-		    }
-		}
+		set opts [split $stuff \n\t]
 		man-puts <DL>
 		lappend manual(section-toc) <DL>
 		foreach option [lsort -dictionary $opts] {
-		    man-puts "<DT><B>[std-option-toc $option]</B>"
+		    man-puts "<DT><B>[std-option-toc $option $targetPage]</B>"
 		}
 		man-puts </DL>
 		lappend manual(section-toc) </DL>
@@ -1527,6 +1529,10 @@ proc make-man-pages {html args} {
 	set manual(long-toc-n) 1
 	# get the manual pages for this section
 	set manual(pages) [lsort -dictionary [glob $manual(wing-glob)]]
+	set n [lsearch -glob $manual(pages) */ttk_widget.n]
+	if {$n >= 0} {
+	    set manual(pages) "[lindex $manual(pages) $n] [lreplace $manual(pages) $n $n]"
+	}
 	set n [lsearch -glob $manual(pages) */options.n]
 	if {$n >= 0} {
 	    set manual(pages) "[lindex $manual(pages) $n] [lreplace $manual(pages) $n $n]"
@@ -1666,7 +1672,11 @@ proc make-man-pages {html args} {
 		    .SO {
 			flushbuffer
 			incr manual(.SO)
-			lappend manual(text) $code
+			if {[llength $rest] == 0} {
+			    lappend manual(text) "$code options"
+			} else {
+			    lappend manual(text) "$code [unquote $rest]"
+			}
 		    }
 		    .SE {
 			flushbuffer
@@ -1731,7 +1741,7 @@ proc make-man-pages {html args} {
 		set manual($manual(name)-title) \
 			"[lrange $rest 1 end] [lindex $rest 0] manual page"
 	    } elseif {[next-op-is .TH rest]} {
-		set manual($manual(name)-title) "[lrange $rest 4 end] - [lindex $rest 0] manual page"
+		set manual($manual(name)-title) "[lindex $rest 0] manual page - [lrange $rest 4 end]"
 	    } else {
 		set haserror 1
 		manerror "no .HS or .TH record found"

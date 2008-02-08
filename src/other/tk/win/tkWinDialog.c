@@ -2202,7 +2202,7 @@ Tk_MessageBoxObjCmd(
     tsdPtr->hMsgBoxHook = SetWindowsHookEx(WH_CBT, MsgBoxCBTProc, NULL,
 	    GetCurrentThreadId());
     winCode = MessageBoxW(hWnd, Tcl_GetUnicode(tmpObj),
-	    titleObj ? Tcl_GetUnicode(titleObj) : NULL, flags);
+	    titleObj ? Tcl_GetUnicode(titleObj) : L"", flags);
     UnhookWindowsHookEx(tsdPtr->hMsgBoxHook);
     (void) Tcl_SetServiceMode(oldMode);
 

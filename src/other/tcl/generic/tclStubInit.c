@@ -295,7 +295,7 @@ TclIntStubs tclIntStubs = {
     NULL, /* 194 */
     NULL, /* 195 */
     NULL, /* 196 */
-    TclCompEvalObj, /* 197 */
+    NULL, /* 197 */
     TclObjGetFrame, /* 198 */
     NULL, /* 199 */
     TclpObjRemoveDirectory, /* 200 */

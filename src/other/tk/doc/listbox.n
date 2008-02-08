@@ -16,14 +16,12 @@ listbox \- Create and manipulate listbox widgets
 .SH SYNOPSIS
 \fBlistbox\fR \fIpathName \fR?\fIoptions\fR?
 .SO
-\-activestyle	\-height	\-selectforeground
-\-background	\-highlightbackground	\-setgrid
-\-borderwidth	\-highlightcolor	\-state
-\-cursor	\-highlightthickness	\-takefocus
-\-disabledforeground	\-relief	\-width
-\-exportselection	\-selectbackground	\-xscrollcommand
-\-font	\-selectborderwidth	\-yscrollcommand
-\-foreground
+\-background	\-borderwidth	\-cursor
+\-disabledforeground	\-exportselection	\-font
+\-foreground	\-highlightbackground	\-highlightcolor
+\-highlightthickness	\-relief	\-selectbackground
+\-selectborderwidth	\-selectforeground	\-setgrid
+\-takefocus	\-xscrollcommand	\-yscrollcommand
 .SE
 .SH "WIDGET-SPECIFIC OPTIONS"
 .OP \-activestyle activeStyle ActiveStyle
@@ -61,7 +59,6 @@ is used in translating from character units to screen units.
 If zero or less, then the desired width for the window is made just
 large enough to hold all the elements in the listbox.
 .BE
-
 .SH DESCRIPTION
 .PP
 The \fBlistbox\fR command creates a new window (given by the
@@ -93,7 +90,6 @@ may be used to change the view in the window.  Listboxes allow
 scrolling in both directions using the standard \fBxScrollCommand\fR
 and \fByScrollCommand\fR options.
 They also support scanning, as described below.
-
 .SH "INDICES"
 .PP
 Many of the widget commands for listboxes take one or more indices
@@ -130,7 +126,6 @@ point is used.
 In the widget command descriptions below, arguments named \fIindex\fR,
 \fIfirst\fR, and \fIlast\fR always contain text indices in one of
 the above forms.
-
 .SH "WIDGET COMMAND"
 .PP
 The \fBlistbox\fR command creates a new Tcl command whose
@@ -406,7 +401,6 @@ If \fInumber\fR is negative then earlier elements
 become visible;  if it is positive then later elements
 become visible.
 .RE
-
 .SH "DEFAULT BINDINGS"
 .PP
 Tk automatically creates class bindings for listboxes that give them
@@ -537,10 +531,10 @@ Control-backslash deselects everything in the widget, except in
 The F16 key (labelled Copy on many Sun workstations) or Meta-w
 copies the selection in the widget to the clipboard, if there is
 a selection.
-
 .PP
 The behavior of listboxes can be changed by defining new bindings for
 individual widgets or by redefining the class bindings.
-
+.SH "SEE ALSO"
+ttk_listbox(n)
 .SH KEYWORDS
 listbox, widget

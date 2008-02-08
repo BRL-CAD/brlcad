@@ -662,7 +662,6 @@ SerialCloseProc(
 
 	CloseHandle(serialPtr->writeThread);
 	CloseHandle(serialPtr->osWrite.hEvent);
-	DeleteCriticalSection(&serialPtr->csWrite);
 	CloseHandle(serialPtr->evWritable);
 	CloseHandle(serialPtr->evStartWriter);
 	CloseHandle(serialPtr->evStopWriter);
@@ -671,6 +670,8 @@ SerialCloseProc(
 	PurgeComm(serialPtr->handle, PURGE_TXABORT | PURGE_TXCLEAR);
     }
     serialPtr->validMask &= ~TCL_WRITABLE;
+
+    DeleteCriticalSection(&serialPtr->csWrite);
 
     /*
      * Don't close the Win32 handle if the handle is a standard channel during
@@ -1520,6 +1521,7 @@ TclWinOpenSerialChannel(
 
     SetCommTimeouts(handle, &no_timeout);
 
+    InitializeCriticalSection(&infoPtr->csWrite);
     if (permissions & TCL_READABLE) {
 	infoPtr->osRead.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
     }
@@ -1532,7 +1534,6 @@ TclWinOpenSerialChannel(
 	infoPtr->evWritable = CreateEvent(NULL, TRUE, TRUE, NULL);
 	infoPtr->evStartWriter = CreateEvent(NULL, FALSE, FALSE, NULL);
 	infoPtr->evStopWriter = CreateEvent(NULL, FALSE, FALSE, NULL);
-	InitializeCriticalSection(&infoPtr->csWrite);
 	infoPtr->writeThread = CreateThread(NULL, 256, SerialWriterThread,
 		infoPtr, 0, &id);
     }

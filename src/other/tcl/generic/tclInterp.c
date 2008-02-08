@@ -1193,7 +1193,7 @@ Tcl_GetAlias(
 	*argvPtr = (const char **)
 		ckalloc((unsigned) sizeof(const char *) * (objc - 1));
 	for (i = 1; i < objc; i++) {
-	    *argvPtr[i - 1] = TclGetString(objv[i]);
+	    (*argvPtr)[i - 1] = TclGetString(objv[i]);
 	}
     }
     return TCL_OK;

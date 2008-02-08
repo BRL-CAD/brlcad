@@ -23,8 +23,9 @@ ttk::panedwindow \- Multi-pane container window
 A \fBttk::panedwindow\fR widget displays a number of subwindows, stacked
 either vertically or horizontally.  The user may adjust the relative sizes
 of the subwindows by dragging the sash between panes.
-.SO
-\-class	\-cursor	\-takefocus	\-style
+.SO ttk_widget
+\-class	\-cursor	\-takefocus
+\-style
 .SE
 .SH "WIDGET-SPECIFIC OPTIONS"
 .OP \-orient orient Orient

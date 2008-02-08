@@ -889,13 +889,7 @@ EXTERN struct tm *	TclpGmtime (CONST time_t * clock);
 /* Slot 194 is reserved */
 /* Slot 195 is reserved */
 /* Slot 196 is reserved */
-#ifndef TclCompEvalObj_TCL_DECLARED
-#define TclCompEvalObj_TCL_DECLARED
-/* 197 */
-EXTERN int		TclCompEvalObj (Tcl_Interp * interp, 
-				Tcl_Obj * objPtr, CONST CmdFrame* invoker, 
-				int word);
-#endif
+/* Slot 197 is reserved */
 #ifndef TclObjGetFrame_TCL_DECLARED
 #define TclObjGetFrame_TCL_DECLARED
 /* 198 */
@@ -1308,7 +1302,7 @@ typedef struct TclIntStubs {
     void *reserved194;
     void *reserved195;
     void *reserved196;
-    int (*tclCompEvalObj) (Tcl_Interp * interp, Tcl_Obj * objPtr, CONST CmdFrame* invoker, int word); /* 197 */
+    void *reserved197;
     int (*tclObjGetFrame) (Tcl_Interp * interp, Tcl_Obj * objPtr, CallFrame ** framePtrPtr); /* 198 */
     void *reserved199;
     int (*tclpObjRemoveDirectory) (Tcl_Obj * pathPtr, int recursive, Tcl_Obj ** errorPtr); /* 200 */
@@ -1966,10 +1960,7 @@ extern TclIntStubs *tclIntStubsPtr;
 /* Slot 194 is reserved */
 /* Slot 195 is reserved */
 /* Slot 196 is reserved */
-#ifndef TclCompEvalObj
-#define TclCompEvalObj \
-	(tclIntStubsPtr->tclCompEvalObj) /* 197 */
-#endif
+/* Slot 197 is reserved */
 #ifndef TclObjGetFrame
 #define TclObjGetFrame \
 	(tclIntStubsPtr->tclObjGetFrame) /* 198 */

@@ -17,7 +17,6 @@ binary \- Insert and extract fields from binary strings
 .br
 \fBbinary scan \fIstring formatString \fR?\fIvarName varName ...\fR?
 .BE
-
 .SH DESCRIPTION
 .PP
 This command provides facilities for manipulating binary data.  The
@@ -139,13 +138,13 @@ high-to-low order within each byte.  For example,
 .CE
 will return a string equivalent to \fB\exe0\exe1\exa0\fR.
 .RE
-.IP \fBh\fR 5
-Stores a string of \fIcount\fR hexadecimal digits in low-to-high
+.IP \fBH\fR 5
+Stores a string of \fIcount\fR hexadecimal digits in high-to-low
 within each byte in the output string.  \fIArg\fR must contain a
 sequence of characters in the set
 .QW 0123456789abcdefABCDEF .
 The resulting bytes are emitted in first to last order with the hex digits
-being formatted in low-to-high order within each byte.  If \fIarg\fR
+being formatted in high-to-low order within each byte.  If \fIarg\fR
 has fewer than \fIcount\fR digits, then zeros will be used for the
 remaining digits.  If \fIarg\fR has more than the specified number of
 digits, the extra digits will be ignored.  If \fIcount\fR is
@@ -155,18 +154,18 @@ number of digits formatted does not end at a byte boundary, the
 remaining bits of the last byte will be zeros.  For example,
 .RS
 .CS
-\fBbinary format\fR h3h* AB def
+\fBbinary format\fR H3H*H2 ab DEF 987
 .CE
-will return a string equivalent to \fB\exba\ex00\exed\ex0f\fR.
+will return a string equivalent to \fB\exab\ex00\exde\exf0\ex98\fR.
 .RE
-.IP \fBH\fR 5
-This form is the same as \fBh\fR except that the digits are stored in
-high-to-low order within each byte.  For example,
+.IP \fBh\fR 5
+This form is the same as \fBH\fR except that the digits are stored in
+low-to-high order within each byte. This is seldom required. For example,
 .RS
 .CS
-\fBbinary format\fR H3H* ab DEF
+\fBbinary format\fR h3h*h2 AB def 987
 .CE
-will return a string equivalent to \fB\exab\ex00\exde\exf0\fR.
+will return a string equivalent to \fB\exba\ex00\exed\ex0f\ex89\fR.
 .RE
 .IP \fBc\fR 5
 Stores one or more 8-bit integer values in the output string.  If no
@@ -534,7 +533,7 @@ scanned. For example,
 .CS
 \fBbinary scan\fR \ex07\exC6\ex05\ex1f\ex34 H3H* var1 var2
 .CE
-will return \fB2\fR with \fB0c8\fR stored in \fIvar1\fR and
+will return \fB2\fR with \fB07c\fR stored in \fIvar1\fR and
 \fB051f34\fR stored in \fIvar2\fR.
 .RE
 .IP \fBh\fR 5
@@ -809,9 +808,7 @@ proc \fIreadString\fR {channel} {
     return [encoding convertfrom utf-8 $data]
 }
 .CE
-
 .SH "SEE ALSO"
 format(n), scan(n), tclvars(n)
-
 .SH KEYWORDS
 binary, format, scan

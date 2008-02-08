@@ -20,8 +20,9 @@ operation.  They can operate in two modes: \fIdeterminate\fR mode shows the
 amount completed relative to the total amount of work to be done, and
 \fIindeterminate\fR mode provides an animated display to let the user know
 that something is happening.
-.SO
-\-class	\-cursor	\-takefocus	\-style
+.SO ttk_widget
+\-class	\-cursor	\-takefocus
+\-style
 .SE
 .SH "WIDGET-SPECIFIC OPTIONS"
 .OP \-orient orient Orient

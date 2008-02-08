@@ -29,12 +29,14 @@ as a corrupted registry can leave your system in an unusable state.
 .PP
 \fIKeyName\fR is the name of a registry key.  Registry keys must be
 one of the following forms:
-.IP
+.RS
+.PP
 \fB\e\e\fIhostname\fB\e\fIrootname\fB\e\fIkeypath\fR
-.IP
+.PP
 \fIrootname\fB\e\fIkeypath\fR
-.IP
+.PP
 \fIrootname\fR
+.RE
 .PP
 \fIHostname\fR specifies the name of any valid Windows
 host that exports its registry.  The \fIrootname\fR component must be
