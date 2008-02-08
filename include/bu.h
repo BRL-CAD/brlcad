@@ -2307,14 +2307,14 @@ BU_EXPORT BU_EXTERN(void bu_vls_strcpy,
 BU_EXPORT BU_EXTERN(void bu_vls_strncpy,
 		    (struct bu_vls *vp,
 		     const char *s,
-		     long n));
+		     size_t n));
 BU_EXPORT BU_EXTERN(void bu_vls_strcat,
 		    (struct bu_vls *vp,
 		     const char *s));
 BU_EXPORT BU_EXTERN(void bu_vls_strncat,
 		    (struct bu_vls *vp,
 		     const char *s,
-		     long n));
+		     size_t n));
 BU_EXPORT BU_EXTERN(void bu_vls_vlscat,
 		    (struct bu_vls *dest,
 		     const struct bu_vls *src));
@@ -2327,7 +2327,7 @@ BU_EXPORT BU_EXTERN(int bu_vls_strcmp,
 BU_EXPORT BU_EXTERN(int bu_vls_strncmp,
 		    (struct bu_vls *s1,
 		     struct bu_vls *s2,
-		     long n));
+		     size_t n));
 BU_EXPORT BU_EXTERN(void bu_vls_from_argv,
 		    (struct bu_vls *vp,
 		     int argc,
