@@ -296,13 +296,14 @@ package:
 	@$(ECHO) "  make tar	-	Builds a uncompressed tape archive"
 	@$(ECHO)
 
-# delete files that should not be in the distribution
+# make sure all files are in the repository are also in the dist.
+# make sure files that should not be in the distribution in fact are
+# not included.
 dist-hook:
-	echo "This is probably busted horribly.  FIXME to use SVN entries."
-	files="`find . -name Entries -exec grep -v '^D' {} /dev/null \; | sed 's/:\(\/[^\/]*\)\/.*/\1/g' | sed 's/\/CVS\/Entries//g' | grep -v 'brlcad-' | grep -v .cvsignore`" ; \
+	files="`find . -name entries -exec grep 'name=' {} /dev/null \; | sed 's/:[[:space:]]*name=\"\(.*\)\"/\1/g' | sed 's/\/\.svn\/entries/\//g' | grep -v 'brlcad-' | grep -v '\/$$'`" ; \
 	missing=0 ; \
 	for file in $$files ; do \
-		if test ! -f $(distdir)/$$file ; then \
+		if test ! -e $(distdir)/$$file ; then \
 			missing=1 ; \
 			echo "MISSING FROM DIST: $$file" ; \
 		fi ; \
