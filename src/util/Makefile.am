@@ -136,7 +136,9 @@ AM_CPPFLAGS = ${TCL_CPPFLAGS}
 # noinst_PROGRAMS = pl-dm
 noinst_PROGRAMS = roots_example
 
-dist_bin_SCRIPTS = rtwizard morphedit.tcl
+dist_bin_SCRIPTS = \
+	rtwizard \
+	morphedit.tcl
 
 
 ##########################################
@@ -640,7 +642,8 @@ sample_applications_DATA = \
 EXTRA_DIST = \
 	$(man_MANS) \
 	$(sample_applications_DATA) \
-	${PL_X_EXTRA}
+	${PL_X_EXTRA} \
+	rtwizard.bat
 
 DEPS=src/liborle src/libdm src/libfb
 
