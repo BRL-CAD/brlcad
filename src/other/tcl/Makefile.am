@@ -338,7 +338,6 @@ EXTRA_DIST = \
 	unix/dltest/pkgc.c \
 	unix/dltest/pkgd.c \
 	unix/dltest/pkge.c \
-	unix/dltest/pkgf.c \
 	unix/dltest/pkgua.c \
 	unix/install-sh \
 	unix/installManPage \
