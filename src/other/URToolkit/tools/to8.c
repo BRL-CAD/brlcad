@@ -176,7 +176,7 @@ char **argv;
 	 * Give it a background color of black, since the real background
 	 * will be dithered anyway.
 	 */
-	if ( in_hdr.background != NULL )
+	if ( in_hdr.background != 0 )
 	{
 	    out_hdr.bg_color = (int *)malloc( sizeof( int ) );
 	    RLE_CHECK_ALLOC( cmd_name( argv ), out_hdr.bg_color, 0 );

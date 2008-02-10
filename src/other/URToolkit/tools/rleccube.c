@@ -68,7 +68,7 @@ rleccube()			Tag the file.
  * Algorithm:
  * 	Pretty simple.
  */
-void
+int
 main( argc, argv)
 int argc;
 char **argv;
