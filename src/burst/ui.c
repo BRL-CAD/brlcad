@@ -608,7 +608,7 @@ HmItem *itemp;
 		bu_strlcpy( airfile, ip->buffer, LNBUFSZ );
 	else
 		airfile[0] = NUL;
-	if ( (airfp = fopen( airfile, "r" )) == NULL )
+	if ( (airfp = fopen( airfile, "rb" )) == NULL )
 		{
 		    (void) snprintf( scrbuf, LNBUFSZ, 
 				"Read access denied for \"%s\"",
@@ -641,7 +641,7 @@ HmItem *itemp;
 		bu_strlcpy( armorfile, ip->buffer, LNBUFSZ );
 	else
 		armorfile[0] = NUL;
-	if ( (armorfp = fopen( armorfile, "r" )) == NULL )
+	if ( (armorfp = fopen( armorfile, "rb" )) == NULL )
 		{
 		    (void) snprintf( scrbuf, LNBUFSZ, 
 				"Read access denied for \"%s\"",
@@ -691,7 +691,7 @@ HmItem *itemp;
 		bu_strlcpy( outfile, ip->buffer, LNBUFSZ );
 	else
 		outfile[0] = NUL;
-	if ( (outfp = fopen( outfile, "w" )) == NULL )
+	if ( (outfp = fopen( outfile, "wb" )) == NULL )
 		{
 		    (void) snprintf( scrbuf, LNBUFSZ, 
 				"Write access denied for \"%s\"",
@@ -739,7 +739,7 @@ HmItem *itemp;
 		bu_strlcpy( colorfile, ip->buffer, LNBUFSZ );
 	else
 		colorfile[0] = NUL;
-	if ( (colorfp = fopen( colorfile, "r" )) == NULL )
+	if ( (colorfp = fopen( colorfile, "rb" )) == NULL )
 		{
 		    (void) snprintf( scrbuf, LNBUFSZ, 
 				"Read access denied for \"%s\"",
@@ -813,7 +813,7 @@ HmItem *itemp;
 		bu_strlcpy( critfile, ip->buffer, LNBUFSZ );
 	else
 		critfile[0] = NUL;
-	if ( (critfp = fopen( critfile, "r" )) == NULL )
+	if ( (critfp = fopen( critfile, "rb" )) == NULL )
 		{
 		    (void) snprintf( scrbuf, LNBUFSZ, 
 				"Read access denied for \"%s\"",
@@ -923,7 +923,7 @@ HmItem *itemp;
 	else
 		bu_strlcpy( errfile, "/dev/tty", LNBUFSZ );
 	/* insure that error log is truncated */
-	errfd = open( errfile, O_TRUNC|O_CREAT|O_WRONLY, 0644 );
+	errfd = open( errfile, O_BINARY|O_TRUNC|O_CREAT|O_WRONLY, 0644 );
 	if (errfd == -1)
 		{
 		locPerror( errfile );
@@ -1075,7 +1075,7 @@ HmItem *itemp;
 		bu_strlcpy( gridfile, ip->buffer, LNBUFSZ );
 	else
 		histfile[0] = NUL;
-	if ( (gridfp = fopen( gridfile, "w" )) == NULL )
+	if ( (gridfp = fopen( gridfile, "wb" )) == NULL )
 		{
 		    (void) snprintf( scrbuf, LNBUFSZ, 
 				"Write access denied for \"%s\"",
@@ -1148,7 +1148,7 @@ HmItem *itemp;
 		bu_strlcpy( histfile, ip->buffer, LNBUFSZ );
 	else
 		histfile[0] = NUL;
-	if ( (histfp = fopen( histfile, "w" )) == NULL )
+	if ( (histfp = fopen( histfile, "wb" )) == NULL )
 		{
 		    (void) snprintf( scrbuf, LNBUFSZ, 
 				"Write access denied for \"%s\"",
@@ -1324,7 +1324,7 @@ HmItem *itemp;
 		bu_strlcpy( plotfile, ip->buffer, LNBUFSZ );
 	else
 		plotfile[0] = NUL;
-	if ( (plotfp = fopen( plotfile, "w" )) == NULL )
+	if ( (plotfp = fopen( plotfile, "wb" )) == NULL )
 		{
 		    (void) snprintf( scrbuf, LNBUFSZ, 
 				"Write access denied for \"%s\"",
@@ -1350,7 +1350,7 @@ HmItem *itemp;
 		register Input *ip = input;
 	if ( getInput( ip ) )
 		bu_strlcpy( shotfile, ip->buffer, LNBUFSZ );
-	if ( (shotfp = fopen( shotfile, "r" )) == NULL )
+	if ( (shotfp = fopen( shotfile, "rb" )) == NULL )
 		{
 		    (void) snprintf( scrbuf, LNBUFSZ, 
 				"Read access denied for \"%s\"",
@@ -1377,7 +1377,7 @@ HmItem *itemp;
 		register Input *ip = input;
 	if ( getInput( ip ) )
 		bu_strlcpy( shotfile, ip->buffer, LNBUFSZ );
-	if ( (shotfp = fopen( shotfile, "r" )) == NULL )
+	if ( (shotfp = fopen( shotfile, "rb" )) == NULL )
 		{
 		    (void) snprintf( scrbuf, LNBUFSZ, 
 				"Read access denied for \"%s\"",
@@ -1404,7 +1404,7 @@ HmItem *itemp;
 		register Input *ip = input;
 	if ( getInput( ip ) )
 		bu_strlcpy( burstfile, ip->buffer, LNBUFSZ );
-	if ( (burstfp = fopen( burstfile, "r" )) == NULL )
+	if ( (burstfp = fopen( burstfile, "rb" )) == NULL )
 		{
 		    (void) snprintf( scrbuf, LNBUFSZ, 
 				"Read access denied for \"%s\"",
@@ -1433,7 +1433,7 @@ HmItem *itemp;
 		FILE *cmdfp;
 	if ( getInput( ip ) )
 		bu_strlcpy( cmdfile, ip->buffer, LNBUFSZ );
-	if ( (cmdfp = fopen( cmdfile, "r" )) == NULL )
+	if ( (cmdfp = fopen( cmdfile, "rb" )) == NULL )
 		{
 		    (void) snprintf( scrbuf, LNBUFSZ, 
 				"Read access denied for \"%s\"",
@@ -1459,7 +1459,7 @@ HmItem *itemp;
 		bu_strlcpy( shotlnfile, ip->buffer, LNBUFSZ );
 	else
 		shotlnfile[0] = NUL;
-	if ( (shotlnfp = fopen( shotlnfile, "w" )) == NULL )
+	if ( (shotlnfp = fopen( shotlnfile, "wb" )) == NULL )
 		{
 		    (void) snprintf( scrbuf, LNBUFSZ,
 				"Write access denied for \"%s\"",
@@ -1555,7 +1555,7 @@ HmItem *itemp;
 		FILE *inpfp;
 	if ( getInput( ip ) )
 		bu_strlcpy( cmdfile, ip->buffer, LNBUFSZ );
-	if ( (cmdfp = fopen( cmdfile, "w" )) == NULL )
+	if ( (cmdfp = fopen( cmdfile, "wb" )) == NULL )
 		{
 		    (void) snprintf( scrbuf, LNBUFSZ, 
 				"Write access denied for \"%s\"",
@@ -1563,7 +1563,7 @@ HmItem *itemp;
 		warning( scrbuf );
 		return;
 		}
-	if ( (inpfp = fopen( tmpfname, "r" )) == NULL )
+	if ( (inpfp = fopen( tmpfname, "rb" )) == NULL )
 		{
 		    (void) snprintf( scrbuf, LNBUFSZ, 
 				"Read access denied for \"%s\"",

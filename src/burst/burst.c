@@ -185,20 +185,18 @@ main( int argc, char *argv[] )
 {
     bu_setlinebuf(stderr);
 
-    if ((tmpnam( tmpfname ) == NULL) ||
-	((tmpfp = fopen( tmpfname, "wb" )) == (FILE *) NULL))
-    {
-	perror( tmpfname );
-	bu_exit(EXIT_FAILURE, "Write access denied for file (%s).\n", tmpfname);
+    tmpfp = bu_temp_file(tmpfname, TIMER_LEN);
+    if (!tmpfp) {
+	bu_exit(EXIT_FAILURE, "ERROR: Unable to create temporary file.\n");
     }
     if ( ! parsArgv( argc, argv ) ) {
 	prntUsage();
-	goto	clean;
+	return EXIT_FAILURE;
     }
 
     setupSigs();
     if ( ! initUi() ) /* must be called before any output is produced */
-	goto	clean;
+	return EXIT_FAILURE;
 
 #if DEBUG_BURST
     prntTrie( cmdtrie, 0 );
@@ -212,10 +210,9 @@ main( int argc, char *argv[] )
     if ( tty )
 	(void) HmHit( mainhmenu );
     exitCleanly( EXIT_SUCCESS );
- clean:
-    (void) unlink( tmpfname );
 
-    return EXIT_FAILURE;
+    /* not reached */
+    return EXIT_SUCCESS;
 }
 
 /*
