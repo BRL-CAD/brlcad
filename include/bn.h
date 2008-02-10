@@ -516,7 +516,7 @@ BN_EXPORT BU_EXTERN(int bn_mat_is_non_unif,
  */
 
 struct bn_unif {
-	long	magic;
+	unsigned long magic;
 	long	msr_seed;
 	int	msr_double_ptr;
 	double	*msr_doubles;
@@ -537,7 +537,7 @@ struct bn_unif {
  * msr_gauss_fill.
  */
 struct bn_gauss {
-	long	magic;
+	unsigned long	magic;
 	long	msr_gauss_seed;
 	int	msr_gauss_dbl_ptr;
 	double	*msr_gauss_doubles;
@@ -861,7 +861,7 @@ BN_EXPORT BU_EXTERN(int bn_isect_planes,
  *  Polynomial data type
  */
 typedef  struct bn_poly {
-	long		magic;
+	unsigned long	magic;
 	int		dgr;
 	double		cf[BN_MAX_POLY_DEGREE+1];
 }  bn_poly_t;
@@ -1360,7 +1360,7 @@ BN_EXPORT extern const double bn_radtodeg;
  *	spectrum.h, spectrum.c
  */
 struct bn_table {
-	long		magic;
+	unsigned long	magic;
 	int		nx;
 	fastf_t		x[1];	/**< @brief array of nx+1 wavelengths, dynamically sized */
 };
@@ -1387,7 +1387,7 @@ struct bn_table {
 #endif
 
 struct bn_tabdata {
-	long		magic;
+	unsigned long	magic;
 	int		ny;
 	const struct bn_table *table;	/**< @brief Up pointer to definition of X axis */
 	fastf_t		y[1];		/**< @brief array of ny samples, dynamically sized */
@@ -1649,7 +1649,7 @@ struct bn_vlist  {
  *  blocks of vlists, each with an associated color.
  */
 struct bn_vlblock {
-	long		magic;
+	unsigned long	magic;
 	int		nused;
 	int		max;
 	long		*rgb;		/**< @brief  rgb[max] variable size array */
@@ -1686,7 +1686,7 @@ BN_EXPORT BU_EXTERN(void bn_vlist_2string,
  * holds all the required info for a single vertex tree
  */
 struct vert_root {
-	long magic;
+	unsigned long magic;
 	int tree_type;			/**< @brief  vertices or vertices with normals */
 	union vert_tree *the_tree;	/**< @brief  the actual vertex tree */
 	fastf_t *the_array;		/**< @brief  the array of vertices */

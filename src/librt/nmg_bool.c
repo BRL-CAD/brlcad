@@ -87,7 +87,7 @@ nmg_dangling_handler(long int *longp, genptr_t state, int first)
  *	!0	Has dangling faces
  */
 int
-nmg_has_dangling_faces(long int *magic_p, const char *manifolds)
+nmg_has_dangling_faces(unsigned long *magic_p, const char *manifolds)
 {
 	struct model			*m;
 	struct dangling_faceuse_state	st;
@@ -788,11 +788,11 @@ nmg_s_radial_check( sB, tol );
 	}
 #if 1
 	/* Temporary search */
-	if ( nmg_has_dangling_faces( (long *)rA, (char *)NULL ) )
+	if ( nmg_has_dangling_faces( (unsigned long *)rA, (char *)NULL ) )
 		bu_log("Dangling faces detected in rA before classification\n");
-	if ( nmg_has_dangling_faces( (long *)rB, (char *)NULL ) )
+	if ( nmg_has_dangling_faces( (unsigned long *)rB, (char *)NULL ) )
 		bu_log("Dangling faces detected in rB before classification\n");
-	if ( nmg_has_dangling_faces( (long *)m, (char *)NULL ) )
+	if ( nmg_has_dangling_faces( (unsigned long *)m, (char *)NULL ) )
 		bu_log("Dangling faces detected in model before classification\n");
 #endif
 
@@ -925,9 +925,9 @@ nmg_s_radial_check( sB, tol );
 #endif
 	nmg_class_nothing_broken = 1;
 	if (rt_g.NMG_debug & (DEBUG_GRAPHCL|DEBUG_PL_LOOP)) {
-		nmg_show_broken_classifier_stuff((long *)sA, &classlist[0],
+		nmg_show_broken_classifier_stuff((unsigned long *)sA, &classlist[0],
 			nmg_class_nothing_broken, 1, "unclassed sA");
-		nmg_show_broken_classifier_stuff((long *)sB, &classlist[4], 1, 1, "unclassed sB");
+		nmg_show_broken_classifier_stuff((unsigned long *)sB, &classlist[4], 1, 1, "unclassed sB");
 	}
 
 	/*
@@ -954,8 +954,8 @@ nmg_s_radial_check( sB, tol );
 		nmg_show_each_loop(sB, &classlist[4], 1, 0, "sB lu");
 
 		/* Show each shell as a whole */
-		nmg_show_broken_classifier_stuff((long *)sA, &classlist[0], 1, 0, "sA classed");
-		nmg_show_broken_classifier_stuff((long *)sB, &classlist[4], 1, 0, "sB classed");
+		nmg_show_broken_classifier_stuff((unsigned long *)sA, &classlist[0], 1, 0, "sA classed");
+		nmg_show_broken_classifier_stuff((unsigned long *)sB, &classlist[4], 1, 0, "sB classed");
 	}
 #if 1
 	if ( rt_g.NMG_debug & DEBUG_BOOL )
@@ -998,11 +998,11 @@ nmg_s_radial_check( sB, tol );
 	if ( !nmg_shell_is_empty(sA) )  {
 nmg_s_radial_check( sA, tol );
 		/* Temporary search */
-		if ( nmg_has_dangling_faces( (long *)rA, (char *)NULL ) )
+		if ( nmg_has_dangling_faces( (unsigned long *)rA, (char *)NULL ) )
 		bu_log("Dangling faces detected in rA after boolean\n");
-		if ( nmg_has_dangling_faces( (long *)rB, (char *)NULL ) )
+		if ( nmg_has_dangling_faces( (unsigned long *)rB, (char *)NULL ) )
 			bu_log("Dangling faces detected in rB after boolean\n");
-		if ( nmg_has_dangling_faces( (long *)m, (char *)NULL ) )  {
+		if ( nmg_has_dangling_faces( (unsigned long *)m, (char *)NULL ) )  {
 			if (rt_g.NMG_debug)
 				nmg_stash_model_to_file( "dangle.g", m, "After Boolean" );
 			bu_bomb("nmg_bool() Dangling faces detected after boolean\n");
@@ -1013,7 +1013,7 @@ nmg_s_radial_check( sA, tol );
 			nmg_class_nothing_broken = 1;
 
 			/* Show final result of the boolean */
-			nmg_show_broken_classifier_stuff((long *)sA, &classlist[0], 1, 0, "sA result");
+			nmg_show_broken_classifier_stuff((unsigned long *)sA, &classlist[0], 1, 0, "sA result");
 		}
 
 		/*  Go back and combine loops

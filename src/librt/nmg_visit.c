@@ -81,7 +81,7 @@ nmg_visit_vertexuse(struct vertexuse *vu, const struct nmg_visit_handlers *htab,
 	nmg_visit_vertex( vu->v_p, htab, state );
 
 	if (htab->vis_vertexuse_a && vu->a.magic_p)
-		htab->vis_vertexuse_a( vu->a.magic_p, state, 0 );
+		htab->vis_vertexuse_a( (long *)vu->a.magic_p, state, 0 );
 
 	if (htab->aft_vertexuse) htab->aft_vertexuse( (long *)vu, state, 1 );
 }
@@ -117,7 +117,7 @@ nmg_visit_edgeuse(struct edgeuse *eu, const struct nmg_visit_handlers *htab, gen
 	nmg_visit_edge( eu->e_p, htab, state );
 
 	if (htab->vis_edge_g && eu->g.magic_p)
-		htab->vis_edge_g( eu->g.magic_p, state, 0 );
+		htab->vis_edge_g( (long *)eu->g.magic_p, state, 0 );
 
 	if (htab->aft_edgeuse) htab->aft_edgeuse( (long *)eu, state, 1 );
 }
@@ -289,7 +289,7 @@ nmg_visit_model(struct model *model, const struct nmg_visit_handlers *htab, genp
  *			N M G _ V I S I T
  */
 void
-nmg_visit(const long int *magicp, const struct nmg_visit_handlers *htab, genptr_t state)
+nmg_visit(const unsigned long *magicp, const struct nmg_visit_handlers *htab, genptr_t state)
 						/* Handler's private state */
 {
 	switch ( *magicp )  {

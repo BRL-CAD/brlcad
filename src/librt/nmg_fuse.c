@@ -81,8 +81,8 @@ nmg_is_common_bigloop(const struct face *f1, const struct face *f2)
 	const struct faceuse	*fu1;
 	const struct loopuse	*lu1;
 	const struct edgeuse	*eu1;
-	const long		*magic1 = (long *)NULL;
-	const long		*magic2 = (long *)NULL;
+	const unsigned long	*magic1 = (unsigned long *)NULL;
+	const unsigned long	*magic2 = (unsigned long *)NULL;
 	int	nverts;
 	int	nbadv;
 	int	got_three;
@@ -99,8 +99,8 @@ nmg_is_common_bigloop(const struct face *f1, const struct face *f2)
 			continue;
 		nverts = 0;
 		nbadv = 0;
-		magic1 = (long *)NULL;
-		magic2 = (long *)NULL;
+		magic1 = (unsigned long *)NULL;
+		magic2 = (unsigned long *)NULL;
 		got_three = 0;
 		for ( BU_LIST_FOR( eu1, edgeuse, &lu1->down_hd ) )  {
 			nverts++;
@@ -1733,7 +1733,7 @@ nmg_model_face_fuse(struct model *m, const struct bn_tol *tol)
 }
 
 int
-nmg_break_all_es_on_v(long int *magic_p, struct vertex *v, const struct bn_tol *tol)
+nmg_break_all_es_on_v(unsigned long *magic_p, struct vertex *v, const struct bn_tol *tol)
 {
 	struct bu_ptbl eus;
 	int i;
@@ -1891,7 +1891,7 @@ nmg_model_break_e_on_v(struct model *m, const struct bn_tol *tol)
 				/* Break edge on vertex, but don't fuse yet. */
 				new_eu = nmg_ebreak( v, eu );
 				/* Put new edges into follow-on list */
-				bu_ptbl_ins( &new_edgeuses, &new_eu->l.magic );
+				bu_ptbl_ins( &new_edgeuses, (long *)&new_eu->l.magic );
 
 				/* reset vertex vb */
 				vb = eu->eumate_p->vu_p->v_p;
@@ -2263,7 +2263,7 @@ nmg_radial_build_list(struct bu_list *hd, struct bu_ptbl *shell_tbl, int existin
 		BU_LIST_INSERT( hd, &(rad->l) );
 
 		/* Add to list of all shells involved at this edge */
-		if (shell_tbl) bu_ptbl_ins_unique( shell_tbl, &(rad->s->l.magic) );
+		if (shell_tbl) bu_ptbl_ins_unique( shell_tbl, (long *)&(rad->s->l.magic) );
 
 		/* Advance to next edgeuse pair */
 		teu = teu->radial_p->eumate_p;

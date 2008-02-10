@@ -1072,7 +1072,7 @@ nmg_hollow_shell(struct shell *s, const fastf_t thick, const int approximate, co
 		return;
 	}
 
-	m = nmg_find_model( (long *)s );
+	m = nmg_find_model( (unsigned long *)s );
 
 	/* remember region where this shell came from */
 	old_r = s->r_p;

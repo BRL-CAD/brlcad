@@ -2067,7 +2067,7 @@ isect_ray_snurb_face(struct ray_data *rd, struct faceuse *fu, struct face_g_snur
 			GET_HITMISS(myhit, rd->ap);
 			NMG_INDEX_ASSIGN(rd->hitmiss, fu->f_p, myhit);
 			myhit->hit.hit_private = (genptr_t)fu->f_p;
-			myhit->inbound_use = myhit->outbound_use = &fu->l.magic;
+			myhit->inbound_use = myhit->outbound_use = (long *)&fu->l.magic;
 
 			/* calculate actual hit point (x y z) */
 			if ( planar )
@@ -2247,7 +2247,7 @@ isect_ray_planar_face(struct ray_data *rd, struct faceuse *fu_p, struct face_g_p
 	GET_HITMISS(myhit, rd->ap);
 	NMG_INDEX_ASSIGN(rd->hitmiss, fu_p->f_p, myhit);
 	myhit->hit.hit_private = (genptr_t)fu_p->f_p;
-	myhit->inbound_use = myhit->outbound_use = &fu_p->l.magic;
+	myhit->inbound_use = myhit->outbound_use = (long *)&fu_p->l.magic;
 
 
 	switch (pt_class) {

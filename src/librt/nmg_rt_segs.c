@@ -988,7 +988,7 @@ visitor(long int *l_p, genptr_t tbl, int after)
  *	Add an element provided by nmg_visit to a bu_ptbl struct.
  */
 static void
-build_topo_list(long int *l_p, struct bu_ptbl *tbl)
+build_topo_list(unsigned long *l_p, struct bu_ptbl *tbl)
 {
 	struct loopuse *lu;
 	struct edgeuse *eu;
@@ -1197,13 +1197,13 @@ check_hitstate(struct hitmiss *hd, struct ray_data *rd)
 #ifndef FAST_NMG
 			NMG_CK_HITMISS(a_hit);
 #endif
-			build_topo_list(a_hit->outbound_use, a_tbl);
+			build_topo_list((unsigned long *)a_hit->outbound_use, a_tbl);
 
 			bu_ptbl_reset(next_tbl);
 #ifndef FAST_NMG
 			NMG_CK_HITMISS(next_hit);
 #endif
-			build_topo_list(next_hit->outbound_use, next_tbl);
+			build_topo_list((unsigned long *)next_hit->outbound_use, next_tbl);
 
 
 			/* If the tables have elements in common,

@@ -46,7 +46,7 @@
  *  The interface to the various material property & texture routines.
  */
 struct mfuncs {
-	long		mf_magic;	/**< @brief  To validate structure */
+	unsigned long	mf_magic;	/**< @brief  To validate structure */
 	char		*mf_name;	/**< @brief  Keyword for material */
 	struct mfuncs	*mf_forw;	/**< @brief  Forward link */
 	int		mf_inputs;	/**< @brief  shadework inputs needed */

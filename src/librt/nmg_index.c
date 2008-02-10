@@ -58,7 +58,7 @@
  *	 -2	error:  unknown magic number
  */
 int
-nmg_index_of_struct(register const long int *p)
+nmg_index_of_struct(register const unsigned long *p)
 {
 	switch (*p)  {
 	case NMG_MODEL_MAGIC:
@@ -129,7 +129,7 @@ nmg_index_of_struct(register const long int *p)
  *  Helper routine
  */
 static void
-nmg_mark_edge_g(long int *magic_p)
+nmg_mark_edge_g(unsigned long *magic_p)
 {
 	if ( !magic_p )  bu_bomb("nmg_mark_edge_g bad magic\n");
 	switch ( *magic_p )  {
@@ -541,7 +541,7 @@ nmg_pr_struct_counts(const struct nmg_struct_counts *ctr, const char *str)
  *	indexed by nmg structure index.
  *	Caller is responsible for freeing it.
  */
-long **
+unsigned long **
 nmg_m_struct_count(register struct nmg_struct_counts *ctr, const struct model *m)
 {
 	struct nmgregion	*r;
@@ -554,16 +554,16 @@ nmg_m_struct_count(register struct nmg_struct_counts *ctr, const struct model *m
 	struct edge		*e;
 	struct vertexuse	*vu;
 	struct vertex		*v;
-	register long		**ptrs;
+	register unsigned long	**ptrs;
 
 #define NMG_UNIQ_INDEX(_p, _type)	\
 	if ( (_p)->index > m->maxindex )  { \
 		bu_log("x%x (%s) has index %d, m->maxindex=%d\n", (_p), \
-			bu_identify_magic(*((long *)(_p))), (_p)->index, m->maxindex ); \
+			bu_identify_magic(*((unsigned long *)(_p))), (_p)->index, m->maxindex ); \
 		bu_bomb("nmg_m_struct_count index overflow\n"); \
 	} \
-	if ( ptrs[(_p)->index] == (long *)0 )  { \
-		ptrs[(_p)->index] = (long *)(_p); \
+	if ( ptrs[(_p)->index] == (unsigned long *)0 )  { \
+		ptrs[(_p)->index] = (unsigned long *)(_p); \
 		ctr->_type++; \
 	}
 
@@ -590,7 +590,7 @@ nmg_m_struct_count(register struct nmg_struct_counts *ctr, const struct model *m
 	NMG_CK_MODEL(m);
 	memset((char *)ctr, 0, sizeof(*ctr));
 
-	ptrs = (long **)bu_calloc( m->maxindex+1, sizeof(long *), "nmg_m_count ptrs[]" );
+	ptrs = (unsigned long **)bu_calloc( m->maxindex+1, sizeof(unsigned long *), "nmg_m_count ptrs[]" );
 
 	NMG_UNIQ_INDEX(m, model);
 	ctr->max_structs = m->maxindex;
@@ -739,12 +739,12 @@ void
 nmg_struct_counts(const struct model *m, const char *str)
 {
 	struct nmg_struct_counts	cnts;
-	long	**tab;
+	unsigned long	**tab;
 
 	NMG_CK_MODEL(m);
 
 	tab = nmg_m_struct_count( &cnts, m );
-	bu_free( (char *)tab, "nmg_m_struct_count" );
+	bu_free( (genptr_t)tab, "nmg_m_struct_count" );
 	nmg_pr_struct_counts( &cnts, str );
 }
 

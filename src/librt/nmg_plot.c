@@ -662,7 +662,7 @@ static void nmg_eu_next_base(const struct edgeuse *eu, fastf_t *next_base)
  *			N M G _ P L _ V
  */
 void
-nmg_pl_v(FILE *fp, const struct vertex *v, long int *b)
+nmg_pl_v(FILE *fp, const struct vertex *v, long *b)
 {
 	pointp_t p;
 	static char label[128];
@@ -686,7 +686,7 @@ nmg_pl_v(FILE *fp, const struct vertex *v, long int *b)
  *			N M G _ P L _ E
  */
 void
-nmg_pl_e(FILE *fp, const struct edge *e, long int *b, int red, int green, int blue)
+nmg_pl_e(FILE *fp, const struct edge *e, long *b, int red, int green, int blue)
 {
 	pointp_t	p0, p1;
 	point_t		end0, end1;
@@ -724,7 +724,7 @@ nmg_pl_e(FILE *fp, const struct edge *e, long int *b, int red, int green, int bl
  *			M N G _ P L _ E U
  */
 void
-nmg_pl_eu(FILE *fp, const struct edgeuse *eu, long int *b, int red, int green, int blue)
+nmg_pl_eu(FILE *fp, const struct edgeuse *eu, long *b, int red, int green, int blue)
 {
 	point_t base, tip;
 	point_t	radial_tip;
@@ -778,7 +778,7 @@ nmg_pl_eu(FILE *fp, const struct edgeuse *eu, long int *b, int red, int green, i
  *			N M G _ P L _ L U
  */
 void
-nmg_pl_lu(FILE *fp, const struct loopuse *lu, long int *b, int red, int green, int blue)
+nmg_pl_lu(FILE *fp, const struct loopuse *lu, long *b, int red, int green, int blue)
 {
 	struct bn_vlblock	*vbp;
 
@@ -792,7 +792,7 @@ nmg_pl_lu(FILE *fp, const struct loopuse *lu, long int *b, int red, int green, i
  *			M N G _ P L _ F U
  */
 void
-nmg_pl_fu(FILE *fp, const struct faceuse *fu, long int *b, int red, int green, int blue)
+nmg_pl_fu(FILE *fp, const struct faceuse *fu, long *b, int red, int green, int blue)
 {
 	struct loopuse		*lu;
 	struct bn_vlblock	*vbp;
@@ -879,7 +879,7 @@ nmg_pl_m(FILE *fp, const struct model *m)
  *			N M G _ V L B L O C K _ V
  */
 void
-nmg_vlblock_v(struct bn_vlblock *vbp, const struct vertex *v, long int *tab)
+nmg_vlblock_v(struct bn_vlblock *vbp, const struct vertex *v, long *tab)
 {
 	pointp_t p;
 	struct bu_list	*vh;
@@ -910,7 +910,7 @@ nmg_vlblock_v(struct bn_vlblock *vbp, const struct vertex *v, long int *tab)
  *			N M G _ V L B L O C K _ E
  */
 void
-nmg_vlblock_e(struct bn_vlblock *vbp, const struct edge *e, long int *tab, int red, int green, int blue, int fancy)
+nmg_vlblock_e(struct bn_vlblock *vbp, const struct edge *e, long *tab, int red, int green, int blue, int fancy)
 {
 	pointp_t p0, p1;
 	point_t end0, end1;
@@ -952,7 +952,7 @@ nmg_vlblock_e(struct bn_vlblock *vbp, const struct edge *e, long int *tab, int r
  *			M N G _ V L B L O C K _ E U
  */
 void
-nmg_vlblock_eu(struct bn_vlblock *vbp, const struct edgeuse *eu, long int *tab, int red, int green, int blue, int fancy, int loopnum)
+nmg_vlblock_eu(struct bn_vlblock *vbp, const struct edgeuse *eu, long *tab, int red, int green, int blue, int fancy, int loopnum)
 {
 	point_t base, tip;
 	point_t	radial_tip;
@@ -1113,7 +1113,7 @@ nmg_vlblock_euleft(struct bu_list *vh, const struct edgeuse *eu, const fastf_t *
  *  that the printed output can be cross-referenced to this display.
  */
 void
-nmg_vlblock_around_eu(struct bn_vlblock *vbp, const struct edgeuse *arg_eu, long int *tab, int fancy, const struct bn_tol *tol)
+nmg_vlblock_around_eu(struct bn_vlblock *vbp, const struct edgeuse *arg_eu, long *tab, int fancy, const struct bn_tol *tol)
 {
 	const struct edgeuse		*orig_eu;
 	register const struct edgeuse	*eu;
@@ -1180,10 +1180,10 @@ nmg_vlblock_around_eu(struct bn_vlblock *vbp, const struct edgeuse *arg_eu, long
  *			N M G _ V L B L O C K _ L U
  */
 void
-nmg_vlblock_lu(struct bn_vlblock *vbp, const struct loopuse *lu, long int *tab, int red, int green, int blue, int fancy, int loopnum)
+nmg_vlblock_lu(struct bn_vlblock *vbp, const struct loopuse *lu, long *tab, int red, int green, int blue, int fancy, int loopnum)
 {
 	struct edgeuse	*eu;
-	long		magic1;
+	unsigned long magic1;
 	struct vertexuse *vu;
 
 	BN_CK_VLBLOCK(vbp);
@@ -1208,7 +1208,7 @@ nmg_vlblock_lu(struct bn_vlblock *vbp, const struct loopuse *lu, long int *tab, 
  *			M N G _ V L B L O C K _ F U
  */
 void
-nmg_vlblock_fu(struct bn_vlblock *vbp, const struct faceuse *fu, long int *tab, int fancy)
+nmg_vlblock_fu(struct bn_vlblock *vbp, const struct faceuse *fu, long *tab, int fancy)
 {
 	struct loopuse *lu;
 	int 		loopnum = 0;
@@ -1238,7 +1238,7 @@ nmg_vlblock_s(struct bn_vlblock *vbp, const struct shell *s, int fancy)
 	struct loopuse *lu;
 	struct edgeuse *eu;
 	struct model	*m;
-	long		*tab;
+	long	*tab;
 
 	BN_CK_VLBLOCK(vbp);
 	NMG_CK_SHELL(s);
@@ -1247,8 +1247,7 @@ nmg_vlblock_s(struct bn_vlblock *vbp, const struct shell *s, int fancy)
 	NMG_CK_MODEL(m);
 
 	/* get space for list of items processed */
-	tab = (long *)bu_calloc( m->maxindex+1, sizeof(long),
-		"nmg_vlblock_s tab[]");
+	tab = (long *)bu_calloc( m->maxindex+1, sizeof(long), "nmg_vlblock_s tab[]");
 
 	for ( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )  {
 		NMG_CK_FACEUSE(fu);
@@ -1326,7 +1325,7 @@ nmg_vlblock_m(struct bn_vlblock *vbp, const struct model *m, int fancy)
  *  uses around this edge.
  */
 void
-nmg_pl_edges_in_2_shells(struct bn_vlblock *vbp, long int *b, const struct edgeuse *eu, int fancy, const struct bn_tol *tol)
+nmg_pl_edges_in_2_shells(struct bn_vlblock *vbp, long *b, const struct edgeuse *eu, int fancy, const struct bn_tol *tol)
 {
 	const struct edgeuse	*eur;
 	const struct shell	*s;
@@ -1364,9 +1363,9 @@ nmg_pl_isect(const char *filename, const struct shell *s, const struct bn_tol *t
 	struct faceuse		*fu;
 	struct loopuse		*lu;
 	struct edgeuse		*eu;
-	long			*b;
+	long		*b;
 	FILE			*fp;
-	long			magic1;
+	unsigned long		magic1;
 	struct bn_vlblock	*vbp;
 
 	NMG_CK_SHELL(s);
@@ -1836,7 +1835,7 @@ nmg_plot_sigstepalong(int i)
  * that this is a graphical display of classifier operation.
  */
 void
-nmg_show_broken_classifier_stuff(long int *p, long int **classlist, int all_new, int fancy, const char *a_string)
+nmg_show_broken_classifier_stuff(unsigned long *p, long int **classlist, int all_new, int fancy, const char *a_string)
 {
 	struct model *m;
 
@@ -1991,7 +1990,7 @@ nmg_face_plot(const struct faceuse *fu)
 
 	NMG_CK_FACEUSE(fu);
 
-	m = nmg_find_model( (long *)fu );
+	m = nmg_find_model( (unsigned long *)fu );
 	NMG_CK_MODEL(m);
 
 	/* get space for list of items processed */
@@ -2050,7 +2049,7 @@ nmg_2face_plot(const struct faceuse *fu1, const struct faceuse *fu2)
 	NMG_CK_FACEUSE(fu1);
 	NMG_CK_FACEUSE(fu2);
 
-	m = nmg_find_model( (long *)fu1 );
+	m = nmg_find_model( (unsigned long *)fu1 );
 	NMG_CK_MODEL(m);
 
 	/* get space for list of items processed */
@@ -2099,7 +2098,7 @@ nmg_face_lu_plot(const struct loopuse *lu, const struct vertexuse *vu1, const st
 	NMG_CK_VERTEXUSE(vu1);
 	NMG_CK_VERTEXUSE(vu2);
 
-	m = nmg_find_model((long *)lu);
+	m = nmg_find_model((unsigned long *)lu);
 	sprintf(buf, "loop%d.pl", num++ );
 
 	fp = fopen(buf, "wb");
@@ -2150,7 +2149,7 @@ nmg_plot_lu_ray(const struct loopuse *lu, const struct vertexuse *vu1, const str
 	NMG_CK_VERTEXUSE(vu1);
 	NMG_CK_VERTEXUSE(vu2);
 
-	m = nmg_find_model((long *)lu);
+	m = nmg_find_model((unsigned long *)lu);
 	sprintf(buf, "loop%d.pl", num++ );
 
 	fp = fopen(buf, "wb");
@@ -2248,7 +2247,7 @@ nmg_plot_lu_around_eu(const char *prefix, const struct edgeuse *eu, const struct
 		return;
 	}
 
-	m = nmg_find_model( (long *)eu );
+	m = nmg_find_model( (unsigned long *)eu );
 	NMG_CK_MODEL(m);
 	tab = (long *)bu_calloc( m->maxindex, sizeof(long), "bit vec");
 

@@ -76,9 +76,9 @@
 #include "raytrace.h"
 #include "nurb.h"
 
-static struct vertexuse *nmg_mvu BU_ARGS( (struct vertex *v, long *upptr,
+static struct vertexuse *nmg_mvu BU_ARGS( (struct vertex *v, unsigned long *upptr,
 					 struct model *m) );
-static struct vertexuse *nmg_mvvu BU_ARGS( (long *upptr, struct model *m) );
+static struct vertexuse *nmg_mvvu BU_ARGS( (unsigned long *upptr, struct model *m) );
 
 
 /************************************************************************
@@ -511,7 +511,7 @@ nmg_mf(struct loopuse *lu1)
  * The v==NULL convention is used only in nmg_mod.c.
  */
 struct loopuse *
-nmg_mlv(long int *magic, struct vertex *v, int orientation)
+nmg_mlv(unsigned long *magic, struct vertex *v, int orientation)
 {
 	struct loop	*l;
 	struct loopuse	*lu1, *lu2;
@@ -522,7 +522,7 @@ nmg_mlv(long int *magic, struct vertex *v, int orientation)
 	union {
 		struct shell *s;
 		struct faceuse *fu;
-		long *magic_p;
+		unsigned long *magic_p;
 	} p;
 
 	p.magic_p = magic;
@@ -624,7 +624,7 @@ nmg_mlv(long int *magic, struct vertex *v, int orientation)
  *  structure.  This is "bad" and requires the caller to fix.
  */
 static struct vertexuse *
-nmg_mvu(struct vertex *v, long int *upptr, struct model *m)
+nmg_mvu(struct vertex *v, unsigned long *upptr, struct model *m)
 
 				/* pointer to parent struct */
 
@@ -670,7 +670,7 @@ nmg_mvu(struct vertex *v, long int *upptr, struct model *m)
  *  structure.  This is "bad" and requires the caller to fix.
  */
 static struct vertexuse *
-nmg_mvvu(long int *upptr, struct model *m)
+nmg_mvvu(unsigned long *upptr, struct model *m)
 {
 	struct vertex	*v;
 	struct vertexuse *ret_vu;
@@ -1141,7 +1141,7 @@ nmg_kvu(register struct vertexuse *vu)
 	}
 
 	/* erase existence of this vertexuse from parent */
-	if (vu->up.magic_p != (long *)NULL) {
+	if (vu->up.magic_p != (unsigned long *)NULL) {
 	    if (*vu->up.magic_p == NMG_SHELL_MAGIC)  {
 		if (vu->up.s_p) {
 		    vu->up.s_p->vu_p = (struct vertexuse *)NULL;
@@ -1176,7 +1176,7 @@ nmg_kvu(register struct vertexuse *vu)
  *  Internal routine to release face geometry when no more faces use it.
  */
 static void
-nmg_kfg(long int *magic_p)
+nmg_kfg(unsigned long *magic_p)
 {
 	switch ( *magic_p ) {
 	case NMG_FACE_G_PLANE_MAGIC:
@@ -1285,7 +1285,7 @@ int
 nmg_klu(struct loopuse *lu1)
 {
 	struct loopuse *lu2;
-	long	magic1;
+	unsigned long	magic1;
 	int	ret = 0;
 
 	NMG_CK_LOOPUSE(lu1);
@@ -1377,7 +1377,7 @@ nmg_keg(struct edgeuse *eu)
 		{
 			struct edge_g_lseg	*lp;
 			lp = eu->g.lseg_p;
-			eu->g.magic_p = (long *)NULL;
+			eu->g.magic_p = (unsigned long *)NULL;
 			if ( BU_LIST_NON_EMPTY( &lp->eu_hd2 ) )  return 0;
 			FREE_EDGE_G_LSEG(lp);
 		}
@@ -1386,7 +1386,7 @@ nmg_keg(struct edgeuse *eu)
 		{
 			struct edge_g_cnurb	*eg;
 			eg = eu->g.cnurb_p;
-			eu->g.magic_p = (long *)NULL;
+			eu->g.magic_p = (unsigned long *)NULL;
 			if ( BU_LIST_NON_EMPTY( &eg->eu_hd2 ) )  return 0;
 			if ( eg->order != 0 )  {
 				bu_free( (char *)eg->k.knots, "nmg_keg cnurb knots[]");
@@ -2073,7 +2073,7 @@ nmg_edge_g_cnurb_plinear(struct edgeuse *eu)
  *	1	If the old edge geometry has been destroyed. Caller beware!
  */
 int
-nmg_use_edge_g(struct edgeuse *eu, long int *magic_p)
+nmg_use_edge_g(struct edgeuse *eu, unsigned long *magic_p)
 {
 	struct edge_g_lseg	*old;
 	/* eg->eu_hd2 is a pun for eu_hd2 in either _lseg or _cnurb */
@@ -2121,7 +2121,7 @@ nmg_use_edge_g(struct edgeuse *eu, long int *magic_p)
 
 		BU_LIST_DEQUEUE( &eu->l2 );
 		ndead += nmg_keg( eu );
-		eu->g.magic_p = (long *)NULL;
+		eu->g.magic_p = (unsigned long *)NULL;
 	}
 	if ( eu->g.lseg_p != eg )  {
 		BU_LIST_INSERT( &eg->eu_hd2, &(eu->l2) );
@@ -2137,7 +2137,7 @@ nmg_use_edge_g(struct edgeuse *eu, long int *magic_p)
 
 		BU_LIST_DEQUEUE( &mate->l2 );
 		ndead += nmg_keg( mate );
-		mate->g.magic_p = (long *)NULL;
+		mate->g.magic_p = (unsigned long *)NULL;
 	}
 
 	if ( eu->eumate_p->g.lseg_p != eg )  {
@@ -2169,7 +2169,7 @@ nmg_loop_g(struct loop *l, const struct bn_tol *tol)
 	struct loop_g	*lg;
 	struct loopuse	*lu;
 	struct model	*m;
-	long		magic1;
+	unsigned long	magic1;
 	fastf_t	thickening;
 
 	NMG_CK_LOOP(l);

@@ -423,7 +423,7 @@ nmg_enlist_vu(struct nmg_inter_struct *is, const struct vertexuse *vu, struct ve
  *  'assoc_use' is either a pointer to a faceuse, or an edgeuse.
  */
 static void
-nmg_get_2d_vertex(fastf_t *v2d, struct vertex *v, struct nmg_inter_struct *is, const long int *assoc_use)
+nmg_get_2d_vertex(fastf_t *v2d, struct vertex *v, struct nmg_inter_struct *is, const unsigned long *assoc_use)
 					/* a 3-tuple */
 
 
@@ -432,7 +432,7 @@ nmg_get_2d_vertex(fastf_t *v2d, struct vertex *v, struct nmg_inter_struct *is, c
 	register fastf_t	*pt2d;
 	point_t			pt;
 	struct vertex_g		*vg;
-	long			*this;
+	unsigned long		*this;
 
 	NMG_CK_INTER_STRUCT(is);
 	NMG_CK_VERTEX(v);
@@ -444,14 +444,14 @@ nmg_get_2d_vertex(fastf_t *v2d, struct vertex *v, struct nmg_inter_struct *is, c
 
 	if ( *assoc_use == NMG_FACEUSE_MAGIC )  {
 		this = &((struct faceuse *)assoc_use)->f_p->l.magic;
-		if ( this != is->twod )
+		if ( this != (unsigned long *)is->twod )
 			goto bad;
 	} else if ( *assoc_use == NMG_EDGEUSE_MAGIC )  {
 		this = &((struct edgeuse *)assoc_use)->e_p->magic;
-		if ( this != is->twod )
+		if ( this != (unsigned long *)is->twod )
 			goto bad;
 	} else {
-		this = (long *)NULL;
+		this = (unsigned long *)NULL;
 bad:
 		bu_log("nmg_get_2d_vertex(, assoc_use=%x %s) this=x%x %s, is->twod=%x %s\n",
 			assoc_use, bu_identify_magic(*assoc_use),
@@ -555,7 +555,7 @@ bad:
  * This will allow the 2D routines to operate on wires.
  */
 void
-nmg_isect2d_prep(struct nmg_inter_struct *is, const long int *assoc_use)
+nmg_isect2d_prep(struct nmg_inter_struct *is, const unsigned long *assoc_use)
 {
 	struct model	*m;
 	struct face_g_plane	*fg;
@@ -568,10 +568,10 @@ nmg_isect2d_prep(struct nmg_inter_struct *is, const long int *assoc_use)
 	NMG_CK_INTER_STRUCT(is);
 
 	if ( *assoc_use == NMG_FACEUSE_MAGIC )  {
-		if ( &((struct faceuse *)assoc_use)->f_p->l.magic == is->twod )
+		if ( &((struct faceuse *)assoc_use)->f_p->l.magic == (unsigned long *)is->twod )
 			return;		/* Already prepped */
 	} else if ( *assoc_use == NMG_EDGEUSE_MAGIC )  {
-		if ( &((struct edgeuse *)assoc_use)->e_p->magic == is->twod )
+		if ( &((struct edgeuse *)assoc_use)->e_p->magic == (unsigned long *)is->twod )
 			return;		/* Already prepped */
 	} else {
 		bu_bomb("nmg_isect2d_prep() bad assoc_use magic\n");
@@ -592,7 +592,7 @@ nmg_isect2d_prep(struct nmg_inter_struct *is, const long int *assoc_use)
 		f1 = fu1->f_p;
 		fg = f1->g.plane_p;
 		NMG_CK_FACE_G_PLANE(fg);
-		is->twod = &f1->l.magic;
+		is->twod = (long *)&f1->l.magic;
 		if ( f1->flip )  {
 			VREVERSE( n, fg->N );
 			n[3] = -fg->N[3];
@@ -629,7 +629,7 @@ nmg_isect2d_prep(struct nmg_inter_struct *is, const long int *assoc_use)
 		NMG_CK_EDGE(e1);
 		eg = eu1->g.lseg_p;
 		NMG_CK_EDGE_G_LSEG(eg);
-		is->twod = &e1->magic;
+		is->twod = (long *)&e1->magic;
 
 		/*
 		 *  Rotate so that eg's eg_dir vector points up +X.
@@ -805,8 +805,8 @@ nmg_isect_3vertex_3face(struct nmg_inter_struct *is, struct vertexuse *vu, struc
 	vup=nmg_find_v_in_face(vu->v_p, fu);
 	if (vup) {
 		if (rt_g.NMG_debug & DEBUG_POLYSECT) bu_log("\tvu lies in face (topology 1)\n");
-		(void)bu_ptbl_ins_unique(is->l1, &vu->l.magic);
-		(void)bu_ptbl_ins_unique(is->l2, &vup->l.magic);
+		(void)bu_ptbl_ins_unique(is->l1, (long *)&vu->l.magic);
+		(void)bu_ptbl_ins_unique(is->l2, (long *)&vup->l.magic);
 		return;
 	}
 
@@ -1272,9 +1272,9 @@ nmg_isect_2colinear_edge2p(struct edgeuse *eu1, struct edgeuse *eu2, struct face
 			if ( eu[neu] )  {
 				nmg_enlist_vu( is, eu[neu]->vu_p, vu[j], MAX_FASTF );
 				if ( l1 && eu[neu]->e_p == eu1->e_p )
-					bu_ptbl_ins_unique(l1, &eu[neu]->l.magic );
+					bu_ptbl_ins_unique(l1, (long *)&eu[neu]->l.magic );
 				else if ( l2 && eu[neu]->e_p == eu2->e_p )
-					bu_ptbl_ins_unique(l2, &eu[neu]->l.magic );
+					bu_ptbl_ins_unique(l2, (long *)&eu[neu]->l.magic );
 				neu++;
 			}
 		}
@@ -1825,8 +1825,8 @@ nmg_isect_wireedge3p_face3p(struct nmg_inter_struct *is, struct edgeuse *eu1, st
 			if (rt_g.NMG_debug & DEBUG_POLYSECT)
 				bu_log("\tEdge start vertex lies on other face (2d topology).\n");
 			vu1_final = eu1->vu_p;
-			(void)bu_ptbl_ins_unique(is->l1, &vu1_final->l.magic);
-			(void)bu_ptbl_ins_unique(is->l2, &vu2_final->l.magic);
+			(void)bu_ptbl_ins_unique(is->l1, (long *)&vu1_final->l.magic);
+			(void)bu_ptbl_ins_unique(is->l2, (long *)&vu2_final->l.magic);
 		}
 		/* XXX HACK HACK -- shut off error checking */
 		vu1_final = vu2_final = (struct vertexuse *)NULL;
@@ -1853,8 +1853,8 @@ nmg_isect_wireedge3p_face3p(struct nmg_inter_struct *is, struct edgeuse *eu1, st
 				vu1_final, vu1_final->v_p,
 				vu2_final, vu2_final->v_p);
 		}
-		(void)bu_ptbl_ins_unique(is->l1, &vu1_final->l.magic);
-		(void)bu_ptbl_ins_unique(is->l2, &vu2_final->l.magic);
+		(void)bu_ptbl_ins_unique(is->l1, (long *)&vu1_final->l.magic);
+		(void)bu_ptbl_ins_unique(is->l2, (long *)&vu2_final->l.magic);
 		goto out;
 	}
 
@@ -3298,7 +3298,7 @@ enlist:
  *  If the fuser did it's job, there should be only one.
  */
 struct edge_g_lseg *
-nmg_find_eg_on_line(const long int *magic_p, const fastf_t *pt, const fastf_t *dir, const struct bn_tol *tol)
+nmg_find_eg_on_line(const unsigned long *magic_p, const fastf_t *pt, const fastf_t *dir, const struct bn_tol *tol)
 {
 	struct bu_ptbl	eutab;
 	struct edgeuse	**eup;
@@ -4858,7 +4858,7 @@ hit_b:
 						bu_bomb("About to make 0-length edge!\n");
 				}
 				new_eu = nmg_ebreaker(hit_v, eu1, &is->tol);
-				bu_ptbl_ins_unique( eu1_list, &new_eu->l.magic );
+				bu_ptbl_ins_unique( eu1_list, (long *)&new_eu->l.magic );
 				/* "eu1" must now be considered invalid */
 				vu1_midpt = new_eu->vu_p;
 				if ( !hit_v )  {
@@ -4943,7 +4943,7 @@ hit_b:
 			/* eu1 is from fu1 and on the intersection line */
 			new_eu = nmg_break_eu_on_v( eu1, vu1->v_p, fu1, is );
 			if ( !new_eu )  continue;
-			bu_ptbl_ins_unique( eu1_list, &new_eu->l.magic );
+			bu_ptbl_ins_unique( eu1_list, (long *)&new_eu->l.magic );
 			nmg_enlist_vu(is, new_eu->vu_p, 0, MAX_FASTF );
 		}
 
@@ -4960,7 +4960,7 @@ hit_b:
 			/* eu2 is from fu2 and on the intersection line */
 			new_eu = nmg_break_eu_on_v( eu2, vu1->v_p, fu1, is );
 			if ( !new_eu )  continue;
-			bu_ptbl_ins_unique( eu2_list, &new_eu->l.magic );
+			bu_ptbl_ins_unique( eu2_list, (long *)&new_eu->l.magic );
 			nmg_enlist_vu(is, new_eu->vu_p, 0, MAX_FASTF );
 		}
 #endif
@@ -5160,7 +5160,7 @@ restart:
  *	eu	Yes, here is one edgeuse that does.  There may be more.
  */
 struct edgeuse *
-nmg_does_fu_use_eg(const struct faceuse *fu1, const long int *eg)
+nmg_does_fu_use_eg(const struct faceuse *fu1, const unsigned long *eg)
 {
 	const struct loopuse	*lu1;
 	register struct edgeuse	*eu1;
@@ -7765,8 +7765,8 @@ nmg_isect_vertex3_edge3p(struct nmg_inter_struct *is, struct vertexuse *vu1, str
 	}
 	/* Make sure verts are shared at hit point. They _should_ already be. */
 	nmg_jv( vu1->v_p, vu2->v_p );
-	(void)bu_ptbl_ins_unique(is->l1, &vu1->l.magic);
-	(void)bu_ptbl_ins_unique(is->l2, &vu2->l.magic);
+	(void)bu_ptbl_ins_unique(is->l1, (long *)&vu1->l.magic);
+	(void)bu_ptbl_ins_unique(is->l2, (long *)&vu2->l.magic);
 }
 
 /**

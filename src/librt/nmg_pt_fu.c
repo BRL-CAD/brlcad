@@ -52,7 +52,7 @@
  */
 struct ve_dist {
 	struct bu_list	l;
-	long		*magic_p;/* pointer to edge/vertex structure */
+	unsigned long	*magic_p;/* pointer to edge/vertex structure */
 	double		dist;	/* distance squared from point to edge */
 	struct vertex	*v1;
 	struct vertex	*v2;
@@ -75,7 +75,7 @@ struct edge_info {
 #define NMG_CK_EI(_p)	NMG_CKMAG(_p, NMG_EDGE_INFO_MAGIC, "edge_info")
 
 struct fpi {
-	long			magic;
+	unsigned long		magic;
 	const struct bn_tol	*tol;
 	const struct faceuse	*fu_p;
 	struct bu_list	ve_dh;		/* ve_dist list head */

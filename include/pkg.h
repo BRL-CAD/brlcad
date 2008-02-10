@@ -100,7 +100,7 @@ struct pkg_conn {
     unsigned short	pkc_type;	/**< @brief pkg_type, in host order */
     /* OUTPUT BUFFER */
     char	pkc_stream[PKG_STREAMLEN]; /**< @brief output stream */
-    int		pkc_magic;	/**< @brief for validating pointers */
+    unsigned int	pkc_magic;	/**< @brief for validating pointers */
     int		pkc_strpos;	/**< @brief index into stream buffer */
     /* FIRST LEVEL INPUT BUFFER */
     char		*pkc_inbuf;	/**< @brief input stream buffer */

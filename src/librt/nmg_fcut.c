@@ -378,7 +378,7 @@ top:
 				continue;
 			if ( tfu != fu )  continue;
 			/* tvu is in fu.  Is tvu on the line? */
-			if ( bu_ptbl_locate(p, &tvu->l.magic ) >= 0 )  continue;
+			if ( bu_ptbl_locate(p, (long *)&tvu->l.magic ) >= 0 )  continue;
 			/* No, not on list */
 			bu_log("ERROR: vu=x%x v=x%x %s=x%x is on isect line, tvu=x%x %s=x%x isn't.\n",
 				vu, v,
@@ -392,7 +392,7 @@ top:
 			bu_bomb("nmg_ck_vu_ptbl() missing vertexuse\n");
 /* XXXXXXXXXXXXXXXXXXXXXXXX Horrible temporizing measure */
 			/* Another strategy:  add it in! */
-			(void)bu_ptbl_ins( p, &tvu->l.magic );
+			(void)bu_ptbl_ins( p, (long *)&tvu->l.magic );
 			ret++;
 			goto top;
 		}
@@ -1561,7 +1561,7 @@ nmg_special_wedge_processing(struct nmg_vu_stuff *vs, int start, int end, double
 		VPRINT("\tvertex", vs[start].vu->v_p->vg_p->coord);
 
 		/* Plot all the loops that touch here. */
-		m = nmg_find_model((long *)vs[start].vu);
+		m = nmg_find_model((unsigned long *)vs[start].vu);
 		b = (long *)bu_calloc( m->maxindex, sizeof(long), "nmg_special_wedge_processing flag[]" );
 		vbp = rt_vlblock_init();
 		for ( i=start; i < end; i++ )  {
@@ -2183,7 +2183,7 @@ nmg_edge_geom_isect_line(struct edgeuse *eu, struct nmg_ray_state *rs, const cha
 			rs->eg_p = eg;
 		} else {
 			NMG_CK_EDGE_G_LSEG(rs->eg_p);
-			nmg_use_edge_g( eu, (long *)rs->eg_p );
+			nmg_use_edge_g( eu, (unsigned long *)rs->eg_p );
 		}
 		goto out;
 	}

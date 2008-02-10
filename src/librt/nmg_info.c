@@ -64,12 +64,12 @@
  *  unmodified;  this may aid debugging in event of a core dump.
  */
 struct model *
-nmg_find_model(const long int *magic_p_arg)
+nmg_find_model(const unsigned long *magic_p_arg)
 {
-	register const long	*magic_p = magic_p_arg;
+	register const unsigned long *magic_p = magic_p_arg;
 
 top:
-	if ( magic_p == (long *)0 )  {
+	if ( magic_p == (unsigned long *)0 )  {
 		bu_log("nmg_find_model(x%x) enountered null pointer\n",
 			magic_p_arg );
 		bu_bomb("nmg_find_model() null pointer\n");
@@ -1210,7 +1210,7 @@ nmg_find_e_pt2_handler(long int *lp, genptr_t state, int first)
  *  Useful for finding the edge nearest a mouse click, for example.
  */
 struct edge *
-nmg_find_e_nearest_pt2(long int *magic_p, const fastf_t *pt2, const fastf_t *mat, const struct bn_tol *tol)
+nmg_find_e_nearest_pt2(unsigned long *magic_p, const fastf_t *pt2, const fastf_t *mat, const struct bn_tol *tol)
 
 				/* 2d point */
 				/* 3d to 3d xform */
@@ -1605,7 +1605,7 @@ nmg_find_pt_in_lu(const struct loopuse *lu, const fastf_t *pt, const struct bn_t
 	vect_t			delta;
 	struct vertex		*v;
 	register struct vertex_g *vg;
-	int			magic1;
+	unsigned long		magic1;
 
 	magic1 = BU_LIST_FIRST_MAGIC( &lu->down_hd );
 	if (magic1 == NMG_VERTEXUSE_MAGIC) {
@@ -1956,7 +1956,7 @@ int
 nmg_is_edge_in_looplist(const struct edge *e, const struct bu_list *hd)
 {
 	register const struct loopuse	*lu;
-	long			magic1;
+	unsigned long			magic1;
 
 	NMG_CK_EDGE(e);
 	for ( BU_LIST_FOR( lu, loopuse, hd ) )  {
@@ -2060,7 +2060,7 @@ nmg_2rvf_handler(long int *vp, genptr_t state, int first)
  *  pointer from there on "down" in the model, each one listed exactly once.
  */
 void
-nmg_vertex_tabulate(struct bu_ptbl *tab, const long int *magic_p)
+nmg_vertex_tabulate(struct bu_ptbl *tab, const unsigned long *magic_p)
 {
 	struct model		*m;
 	struct vf_state		st;
@@ -2115,7 +2115,7 @@ nmg_vert_a_handler(long int *vp, genptr_t state, int first)
  *  pointer from there on "down" in the model, each one listed exactly once.
  */
 void
-nmg_vertexuse_normal_tabulate(struct bu_ptbl *tab, const long int *magic_p)
+nmg_vertexuse_normal_tabulate(struct bu_ptbl *tab, const unsigned long *magic_p)
 {
 	struct model		*m;
 	struct vf_state		st;
@@ -2167,7 +2167,7 @@ nmg_2edgeuse_handler(long int *eup, genptr_t state, int first)
  *  pointer from there on "down" in the model, each one listed exactly once.
  */
 void
-nmg_edgeuse_tabulate(struct bu_ptbl *tab, const long int *magic_p)
+nmg_edgeuse_tabulate(struct bu_ptbl *tab, const unsigned long *magic_p)
 {
 	struct model		*m;
 	struct vf_state		st;
@@ -2219,7 +2219,7 @@ nmg_2edge_handler(long int *ep, genptr_t state, int first)
  *  pointer from there on "down" in the model, each one listed exactly once.
  */
 void
-nmg_edge_tabulate(struct bu_ptbl *tab, const long int *magic_p)
+nmg_edge_tabulate(struct bu_ptbl *tab, const unsigned long *magic_p)
 {
 	struct model		*m;
 	struct vf_state		st;
@@ -2280,7 +2280,7 @@ nmg_edge_g_handler(long int *ep, genptr_t state, int first)
  *  pointer from there on "down" in the model, each one listed exactly once.
  */
 void
-nmg_edge_g_tabulate(struct bu_ptbl *tab, const long int *magic_p)
+nmg_edge_g_tabulate(struct bu_ptbl *tab, const unsigned long *magic_p)
 {
 	struct model		*m;
 	struct vf_state		st;
@@ -2332,7 +2332,7 @@ nmg_2face_handler(long int *fp, genptr_t state, int first)
  *  pointer from there on "down" in the model, each one listed exactly once.
  */
 void
-nmg_face_tabulate(struct bu_ptbl *tab, const long int *magic_p)
+nmg_face_tabulate(struct bu_ptbl *tab, const unsigned long *magic_p)
 {
 	struct model		*m;
 	struct vf_state		st;
@@ -2449,7 +2449,7 @@ nmg_line_handler(long int *longp, genptr_t state, int first)
  *  The caller will have to wrestle with the added fuzz.
  */
 void
-nmg_edgeuse_on_line_tabulate(struct bu_ptbl *tab, const long int *magic_p, const fastf_t *pt, const fastf_t *dir, const struct bn_tol *tol)
+nmg_edgeuse_on_line_tabulate(struct bu_ptbl *tab, const unsigned long *magic_p, const fastf_t *pt, const fastf_t *dir, const struct bn_tol *tol)
 {
 	struct model		*m;
 	struct edge_line_state		st;
@@ -2538,7 +2538,7 @@ nmg_v_handler(long int *longp, genptr_t state, int first)
  *  NMG entity indicated by magic_p.
  */
 void
-nmg_e_and_v_tabulate(struct bu_ptbl *eutab, struct bu_ptbl *vtab, const long int *magic_p)
+nmg_e_and_v_tabulate(struct bu_ptbl *eutab, struct bu_ptbl *vtab, const unsigned long *magic_p)
 {
 	struct model			*m;
 	struct e_and_v_state		st;

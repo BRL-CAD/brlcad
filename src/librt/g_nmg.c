@@ -946,7 +946,7 @@ rt_nmg_reindex(genptr_t p, struct nmg_exp_counts *ecnt)
 		ret = 0;
 		index = 0;	/* sanity */
 	} else {
-		index = nmg_index_of_struct((long *)(p));
+		index = nmg_index_of_struct((unsigned long *)(p));
 		if ( index == -1 )  {
 			ret = DISK_INDEX_LISTHEAD; /* FLAG:  special list head */
 		} else if ( index < -1 ) {
@@ -1375,7 +1375,7 @@ rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int index, d
  *  Transform geometry by given matrix.
  */
 int
-rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int index, long int **ptrs, const fastf_t *mat, const unsigned char *basep)
+rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int index, unsigned long **ptrs, const fastf_t *mat, const unsigned char *basep)
 				/* ptr to in-memory structure */
 				/* base of disk array */
 
@@ -1481,7 +1481,7 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int index, l
 			RT_CK_DISKMAGIC( d->magic, DISK_FACE_MAGIC );
 			INDEX( d, f, faceuse, fu_p );
 			g_index = bu_glong(d->g);
-			f->g.magic_p = (long *)ptrs[g_index];
+			f->g.magic_p = ptrs[g_index];
 			f->flip = bu_glong( d->flip );
 			/* Enrole this face on fg's list of users */
 			NMG_CK_FACE_G_EITHER(f->g.magic_p);
@@ -1541,7 +1541,7 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int index, l
 			NMG_CK_LOOPUSE(lu);
 			RT_CK_DISKMAGIC( d->magic, DISK_LOOPUSE_MAGIC );
 			up_index = bu_glong(d->up);
-			lu->up.magic_p = (long *)ptrs[up_index];
+			lu->up.magic_p = ptrs[up_index];
 			INDEX( d, lu, loopuse, lumate_p );
 			lu->orientation = bu_glong( d->orientation );
 			INDEX( d, lu, loop, l_p );
@@ -1593,7 +1593,7 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int index, l
 			NMG_CK_EDGEUSE(eu);
 			RT_CK_DISKMAGIC( d->magic, DISK_EDGEUSE_MAGIC );
 			up_index = bu_glong(d->up);
-			eu->up.magic_p = (long *)ptrs[up_index];
+			eu->up.magic_p = ptrs[up_index];
 			INDEX( d, eu, edgeuse, eumate_p );
 			INDEX( d, eu, edgeuse, radial_p );
 			INDEX( d, eu, edge, e_p );
@@ -1605,7 +1605,7 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int index, l
 			} else if ( up_kind == NMG_KIND_SHELL )  {
 				INDEXL_HD( d, eu, l, eu->up.s_p->eu_hd );
 			} else bu_log("bad edgeuse up, index=%d, kind=%d\n", up_index, up_kind);
-			eu->g.magic_p = (long *)ptrs[bu_glong(d->g)];
+			eu->g.magic_p = ptrs[bu_glong(d->g)];
 			NMG_CK_EDGE(eu->e_p);
 			NMG_CK_EDGEUSE(eu->eumate_p);
 			NMG_CK_EDGEUSE(eu->radial_p);
@@ -1700,9 +1700,9 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int index, l
 			d = &((struct disk_vertexuse *)ip)[iindex];
 			NMG_CK_VERTEXUSE(vu);
 			RT_CK_DISKMAGIC( d->magic, DISK_VERTEXUSE_MAGIC );
-			vu->up.magic_p = (long *)ptrs[bu_glong(d->up)];
+			vu->up.magic_p = ptrs[bu_glong(d->up)];
 			INDEX( d, vu, vertex, v_p );
-			vu->a.magic_p = (long *)ptrs[bu_glong(d->a)];
+			vu->a.magic_p = ptrs[bu_glong(d->a)];
 			NMG_CK_VERTEX(vu->v_p);
 			if (vu->a.magic_p)NMG_CK_VERTEXUSE_A_EITHER(vu->a.magic_p);
 			INDEXL_HD( d, vu, l, vu->v_p->vu_hd );
@@ -1767,8 +1767,8 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int index, l
  *  using the GET_xxx() macros, so that m->maxindex, etc,
  *  are all appropriately handled.
  */
-struct model *
-rt_nmg_ialloc(long int **ptrs, struct nmg_exp_counts *ecnt, int *kind_counts)
+HIDDEN struct model *
+rt_nmg_ialloc(unsigned long **ptrs, struct nmg_exp_counts *ecnt, int *kind_counts)
 {
 	struct model		*m = (struct model *)0;
 	int			subscript;
@@ -1787,7 +1787,7 @@ rt_nmg_ialloc(long int **ptrs, struct nmg_exp_counts *ecnt, int *kind_counts)
 				m = nmg_mm();
 				/* Keep disk indices & new indices equal... */
 				m->maxindex++;
-				ptrs[subscript] = (long *)m;
+				ptrs[subscript] = (unsigned long *)m;
 				break;
 			case NMG_KIND_NMGREGION:
 				{
@@ -1795,7 +1795,7 @@ rt_nmg_ialloc(long int **ptrs, struct nmg_exp_counts *ecnt, int *kind_counts)
 					GET_REGION( r, m );
 					r->l.magic = NMG_REGION_MAGIC;
 					BU_LIST_INIT( &r->s_hd );
-					ptrs[subscript] = (long *)r;
+					ptrs[subscript] = (unsigned long *)r;
 				}
 				break;
 			case NMG_KIND_NMGREGION_A:
@@ -1803,7 +1803,7 @@ rt_nmg_ialloc(long int **ptrs, struct nmg_exp_counts *ecnt, int *kind_counts)
 					struct nmgregion_a		*ra;
 					GET_REGION_A( ra, m );
 					ra->magic = NMG_REGION_A_MAGIC;
-					ptrs[subscript] = (long *)ra;
+					ptrs[subscript] = (unsigned long *)ra;
 				}
 				break;
 			case NMG_KIND_SHELL:
@@ -1814,7 +1814,7 @@ rt_nmg_ialloc(long int **ptrs, struct nmg_exp_counts *ecnt, int *kind_counts)
 					BU_LIST_INIT( &s->fu_hd );
 					BU_LIST_INIT( &s->lu_hd );
 					BU_LIST_INIT( &s->eu_hd );
-					ptrs[subscript] = (long *)s;
+					ptrs[subscript] = (unsigned long *)s;
 				}
 				break;
 			case NMG_KIND_SHELL_A:
@@ -1822,7 +1822,7 @@ rt_nmg_ialloc(long int **ptrs, struct nmg_exp_counts *ecnt, int *kind_counts)
 					struct shell_a	*sa;
 					GET_SHELL_A( sa, m );
 					sa->magic = NMG_SHELL_A_MAGIC;
-					ptrs[subscript] = (long *)sa;
+					ptrs[subscript] = (unsigned long *)sa;
 				}
 				break;
 			case NMG_KIND_FACEUSE:
@@ -1831,7 +1831,7 @@ rt_nmg_ialloc(long int **ptrs, struct nmg_exp_counts *ecnt, int *kind_counts)
 					GET_FACEUSE( fu, m );
 					fu->l.magic = NMG_FACEUSE_MAGIC;
 					BU_LIST_INIT( &fu->lu_hd );
-					ptrs[subscript] = (long *)fu;
+					ptrs[subscript] = (unsigned long *)fu;
 				}
 				break;
 			case NMG_KIND_FACE:
@@ -1839,7 +1839,7 @@ rt_nmg_ialloc(long int **ptrs, struct nmg_exp_counts *ecnt, int *kind_counts)
 					struct face	*f;
 					GET_FACE( f, m );
 					f->l.magic = NMG_FACE_MAGIC;
-					ptrs[subscript] = (long *)f;
+					ptrs[subscript] = (unsigned long *)f;
 				}
 				break;
 			case NMG_KIND_FACE_G_PLANE:
@@ -1848,7 +1848,7 @@ rt_nmg_ialloc(long int **ptrs, struct nmg_exp_counts *ecnt, int *kind_counts)
 					GET_FACE_G_PLANE( fg, m );
 					fg->magic = NMG_FACE_G_PLANE_MAGIC;
 					BU_LIST_INIT( &fg->f_hd );
-					ptrs[subscript] = (long *)fg;
+					ptrs[subscript] = (unsigned long *)fg;
 				}
 				break;
 			case NMG_KIND_FACE_G_SNURB:
@@ -1857,7 +1857,7 @@ rt_nmg_ialloc(long int **ptrs, struct nmg_exp_counts *ecnt, int *kind_counts)
 					GET_FACE_G_SNURB( fg, m );
 					fg->l.magic = NMG_FACE_G_SNURB_MAGIC;
 					BU_LIST_INIT( &fg->f_hd );
-					ptrs[subscript] = (long *)fg;
+					ptrs[subscript] = (unsigned long *)fg;
 				}
 				break;
 			case NMG_KIND_LOOPUSE:
@@ -1866,7 +1866,7 @@ rt_nmg_ialloc(long int **ptrs, struct nmg_exp_counts *ecnt, int *kind_counts)
 					GET_LOOPUSE( lu, m );
 					lu->l.magic = NMG_LOOPUSE_MAGIC;
 					BU_LIST_INIT( &lu->down_hd );
-					ptrs[subscript] = (long *)lu;
+					ptrs[subscript] = (unsigned long *)lu;
 				}
 				break;
 			case NMG_KIND_LOOP:
@@ -1874,7 +1874,7 @@ rt_nmg_ialloc(long int **ptrs, struct nmg_exp_counts *ecnt, int *kind_counts)
 					struct loop	*l;
 					GET_LOOP( l, m );
 					l->magic = NMG_LOOP_MAGIC;
-					ptrs[subscript] = (long *)l;
+					ptrs[subscript] = (unsigned long *)l;
 				}
 				break;
 			case NMG_KIND_LOOP_G:
@@ -1882,7 +1882,7 @@ rt_nmg_ialloc(long int **ptrs, struct nmg_exp_counts *ecnt, int *kind_counts)
 					struct loop_g	*lg;
 					GET_LOOP_G( lg, m );
 					lg->magic = NMG_LOOP_G_MAGIC;
-					ptrs[subscript] = (long *)lg;
+					ptrs[subscript] = (unsigned long *)lg;
 				}
 				break;
 			case NMG_KIND_EDGEUSE:
@@ -1891,7 +1891,7 @@ rt_nmg_ialloc(long int **ptrs, struct nmg_exp_counts *ecnt, int *kind_counts)
 					GET_EDGEUSE( eu, m );
 					eu->l.magic = NMG_EDGEUSE_MAGIC;
 					eu->l2.magic = NMG_EDGEUSE2_MAGIC;
-					ptrs[subscript] = (long *)eu;
+					ptrs[subscript] = (unsigned long *)eu;
 				}
 				break;
 			case NMG_KIND_EDGE:
@@ -1899,7 +1899,7 @@ rt_nmg_ialloc(long int **ptrs, struct nmg_exp_counts *ecnt, int *kind_counts)
 					struct edge	*e;
 					GET_EDGE( e, m );
 					e->magic = NMG_EDGE_MAGIC;
-					ptrs[subscript] = (long *)e;
+					ptrs[subscript] = (unsigned long *)e;
 				}
 				break;
 			case NMG_KIND_EDGE_G_LSEG:
@@ -1908,7 +1908,7 @@ rt_nmg_ialloc(long int **ptrs, struct nmg_exp_counts *ecnt, int *kind_counts)
 					GET_EDGE_G_LSEG( eg, m );
 					eg->l.magic = NMG_EDGE_G_LSEG_MAGIC;
 					BU_LIST_INIT( &eg->eu_hd2 );
-					ptrs[subscript] = (long *)eg;
+					ptrs[subscript] = (unsigned long *)eg;
 				}
 				break;
 			case NMG_KIND_EDGE_G_CNURB:
@@ -1917,7 +1917,7 @@ rt_nmg_ialloc(long int **ptrs, struct nmg_exp_counts *ecnt, int *kind_counts)
 					GET_EDGE_G_CNURB( eg, m );
 					eg->l.magic = NMG_EDGE_G_CNURB_MAGIC;
 					BU_LIST_INIT( &eg->eu_hd2 );
-					ptrs[subscript] = (long *)eg;
+					ptrs[subscript] = (unsigned long *)eg;
 				}
 				break;
 			case NMG_KIND_VERTEXUSE:
@@ -1925,7 +1925,7 @@ rt_nmg_ialloc(long int **ptrs, struct nmg_exp_counts *ecnt, int *kind_counts)
 					struct vertexuse	*vu;
 					GET_VERTEXUSE( vu, m );
 					vu->l.magic = NMG_VERTEXUSE_MAGIC;
-					ptrs[subscript] = (long *)vu;
+					ptrs[subscript] = (unsigned long *)vu;
 				}
 				break;
 			case NMG_KIND_VERTEXUSE_A_PLANE:
@@ -1933,7 +1933,7 @@ rt_nmg_ialloc(long int **ptrs, struct nmg_exp_counts *ecnt, int *kind_counts)
 					struct vertexuse_a_plane	*vua;
 					GET_VERTEXUSE_A_PLANE( vua, m );
 					vua->magic = NMG_VERTEXUSE_A_PLANE_MAGIC;
-					ptrs[subscript] = (long *)vua;
+					ptrs[subscript] = (unsigned long *)vua;
 				}
 				break;
 			case NMG_KIND_VERTEXUSE_A_CNURB:
@@ -1941,7 +1941,7 @@ rt_nmg_ialloc(long int **ptrs, struct nmg_exp_counts *ecnt, int *kind_counts)
 					struct vertexuse_a_cnurb	*vua;
 					GET_VERTEXUSE_A_CNURB( vua, m );
 					vua->magic = NMG_VERTEXUSE_A_CNURB_MAGIC;
-					ptrs[subscript] = (long *)vua;
+					ptrs[subscript] = (unsigned long *)vua;
 				}
 				break;
 			case NMG_KIND_VERTEX:
@@ -1950,7 +1950,7 @@ rt_nmg_ialloc(long int **ptrs, struct nmg_exp_counts *ecnt, int *kind_counts)
 					GET_VERTEX( v, m );
 					v->magic = NMG_VERTEX_MAGIC;
 					BU_LIST_INIT( &v->vu_hd );
-					ptrs[subscript] = (long *)v;
+					ptrs[subscript] = (unsigned long *)v;
 				}
 				break;
 			case NMG_KIND_VERTEX_G:
@@ -1958,12 +1958,12 @@ rt_nmg_ialloc(long int **ptrs, struct nmg_exp_counts *ecnt, int *kind_counts)
 					struct vertex_g	*vg;
 					GET_VERTEX_G( vg, m );
 					vg->magic = NMG_VERTEX_G_MAGIC;
-					ptrs[subscript] = (long *)vg;
+					ptrs[subscript] = (unsigned long *)vg;
 				}
 				break;
 			default:
 				bu_log("bad kind = %d\n", kind);
-				ptrs[subscript] = (long *)0;
+				ptrs[subscript] = (unsigned long *)0;
 				break;
 			}
 
@@ -2040,13 +2040,13 @@ rt_nmg_import_internal(struct rt_db_internal *ip, const struct bu_external *ep, 
 	union record			*rp;
 	int				kind_counts[NMG_N_KINDS];
 	unsigned char			*cp;
-	long				**real_ptrs;
-	long				**ptrs;
+	unsigned long			**real_ptrs;
+	unsigned long			**ptrs;
 	struct nmg_exp_counts		*ecnt;
 	int				i;
 	int				maxindex;
 	int				kind;
-	static long			bad_magic = 0x999;
+	static unsigned long		bad_magic = 0x999;
 
 	BU_CK_EXTERNAL( ep );
 	BN_CK_TOL( tol );
@@ -2078,12 +2078,12 @@ rt_nmg_import_internal(struct rt_db_internal *ip, const struct bu_external *ep, 
 	/* Collect overall new subscripts, and structure-specific indices */
 	ecnt = (struct nmg_exp_counts *)bu_calloc( maxindex+3,
 		sizeof(struct nmg_exp_counts), "ecnt[]" );
-	real_ptrs = (long **)bu_calloc( maxindex+3,
-		sizeof(long *), "ptrs[]" );
+	real_ptrs = (unsigned long **)bu_calloc( maxindex+3,
+		sizeof(unsigned long *), "ptrs[]" );
 	/* So that indexing [-1] gives an appropriately bogus magic # */
 	ptrs = real_ptrs+1;
 	ptrs[-1] = &bad_magic;		/* [-1] gives bad magic */
-	ptrs[0] = (long *)0;		/* [0] gives NULL */
+	ptrs[0] = (unsigned long *)NULL;	/* [0] gives NULL */
 	ptrs[maxindex] = &bad_magic;	/* [maxindex] gives bad magic */
 	ptrs[maxindex+1] = &bad_magic;	/* [maxindex+1] gives bad magic */
 
@@ -2177,7 +2177,7 @@ rt_nmg_export_internal(struct bu_external *ep, const struct rt_db_internal *ip, 
 	struct model			*m;
 	union record			*rp;
 	struct nmg_struct_counts	cntbuf;
-	long				**ptrs;
+	unsigned long			**ptrs;
 	struct nmg_exp_counts		*ecnt;
 	int				i;
 	int				subscript;
@@ -2208,7 +2208,7 @@ rt_nmg_export_internal(struct bu_external *ep, const struct rt_db_internal *ip, 
 	double_count = 0;
 	fastf_byte_count = 0;
 	for ( i=0; i < m->maxindex; i++ )  {
-		if ( ptrs[i] == (long *)0 )  {
+		if ( ptrs[i] == (unsigned long *)NULL )  {
 			ecnt[i].kind = -1;
 			continue;
 		}
@@ -2267,14 +2267,14 @@ rt_nmg_export_internal(struct bu_external *ep, const struct rt_db_internal *ip, 
 			 * Instead, use DISK_INDEX_NULL, yielding null ptrs.
 			 */
 			for ( i=0; i < m->maxindex; i++ )  {
-				if ( ptrs[i] == (long *)0 )  continue;
+				if ( ptrs[i] == (unsigned long *)NULL )  continue;
 				if ( ecnt[i].kind != kind )  continue;
 				ecnt[i].new_subscript = DISK_INDEX_NULL;
 			}
 			continue;
 		}
 		for ( i=0; i < m->maxindex; i++ )  {
-			if ( ptrs[i] == (long *)0 )  continue;
+			if ( ptrs[i] == (unsigned long *)NULL )  continue;
 			if ( ecnt[i].kind != kind )  continue;
 			ecnt[i].new_subscript = subscript++;
 		}
@@ -2285,10 +2285,10 @@ rt_nmg_export_internal(struct bu_external *ep, const struct rt_db_internal *ip, 
 
 	/* Sanity checking */
 	for ( i=0; i < m->maxindex; i++ )  {
-		if ( ptrs[i] == (long *)0 )  continue;
+		if ( ptrs[i] == (unsigned long *)NULL )  continue;
 		if ( nmg_index_of_struct(ptrs[i]) != i )  {
 			bu_log("***ERROR, ptrs[%d]->index = %d\n",
-				i, nmg_index_of_struct(ptrs[i]) );
+				i, nmg_index_of_struct((unsigned long *)ptrs[i]) );
 		}
 		if ( rt_nmg_magic_to_kind(*ptrs[i]) != ecnt[i].kind )  {
 			bu_log("@@@ERROR, ptrs[%d] kind(%d) != %d\n",
@@ -2335,15 +2335,15 @@ rt_nmg_export_internal(struct bu_external *ep, const struct rt_db_internal *ip, 
 
 	/* Convert all the structures to their disk versions */
 	for ( i = m->maxindex-1; i >= 0; i-- )  {
-		if ( ptrs[i] == (long *)0 )  continue;
+		if ( ptrs[i] == (unsigned long *)NULL )  continue;
 		kind = ecnt[i].kind;
 		if ( kind_counts[kind] <= 0 )  continue;
 		rt_nmg_edisk( (genptr_t)(disk_arrays[kind]),
 			(genptr_t)(ptrs[i]), ecnt, i, local2mm );
 	}
 
-	bu_free( (char *)ptrs, "ptrs[]" );
-	bu_free( (char *)ecnt, "ecnt[]" );
+	bu_free( (genptr_t)ptrs, "ptrs[]" );
+	bu_free( (genptr_t)ecnt, "ecnt[]" );
 
 	return(0);
 }
@@ -2408,11 +2408,11 @@ rt_nmg_import5( struct rt_db_internal	*ip,
 	int			kind_counts[NMG_N_KINDS];
 	unsigned char		*dp;		/* data pointer */
 	genptr_t		startdata;	/* data pointer */
-	long			**real_ptrs;
-	long			**ptrs;
+	unsigned long		**real_ptrs;
+	unsigned long		**ptrs;
 	struct nmg_exp_counts	*ecnt;
 	register int		i;
-	static long		bad_magic = 0x999;
+	static unsigned long	bad_magic = 0x999;
 
 	BU_CK_EXTERNAL( ep );
 	dp = (genptr_t)ep->ext_buf;
@@ -2445,11 +2445,11 @@ rt_nmg_import5( struct rt_db_internal	*ip,
 	/* Collect overall new subscripts, and structure-specific indices */
 	ecnt = (struct nmg_exp_counts *) bu_calloc( maxindex+3,
 		sizeof(struct nmg_exp_counts), "ecnt[]");
-	real_ptrs = (long **)bu_calloc( maxindex+3, sizeof(long *), "ptrs[]");
+	real_ptrs = (unsigned long **)bu_calloc( maxindex+3, sizeof(unsigned long *), "ptrs[]");
 	/* some safety checking.  Indexing by, -1, 0, n+1, N+2 give interesting results */
 	ptrs = real_ptrs+1;
 	ptrs[-1] = &bad_magic;
-	ptrs[0] = (long *)0;
+	ptrs[0] = (unsigned long *)NULL;
 	ptrs[maxindex] = &bad_magic;
 	ptrs[maxindex+1] = &bad_magic;
 
@@ -2521,7 +2521,7 @@ rt_nmg_export5(
 {
 	struct model			*m;
 	char				*dp;
-	long				**ptrs;
+	unsigned long			**ptrs;
 	struct nmg_struct_counts	cntbuf;
 	struct nmg_exp_counts		*ecnt;
 	int				kind_counts[NMG_N_KINDS];
@@ -2549,7 +2549,7 @@ rt_nmg_export5(
 	double_count = 0;
 	fastf_byte_count = 0;
 	for (i=0; i< m->maxindex; i++) {
-		if (ptrs[i] == (long *)0 ) {
+		if (ptrs[i] == (unsigned long *)NULL ) {
 			ecnt[i].kind = -1;
 			continue;
 		}
@@ -2603,7 +2603,7 @@ rt_nmg_export5(
 		     kind == NMG_KIND_SHELL_A ||
 		     kind == NMG_KIND_LOOP_G ) {
 			for (i=0; i<m->maxindex; i++) {
-				if (ptrs[i] == (long *)0) continue;
+				if (ptrs[i] == (unsigned long *)NULL) continue;
 				if (ecnt[i].kind != kind) continue;
 				ecnt[i].new_subscript = DISK_INDEX_NULL;
 			}
@@ -2611,7 +2611,7 @@ rt_nmg_export5(
 		}
 #endif
 		for (i=0; i< m->maxindex;i++) {
-			if (ptrs[i] == (long *)0) continue;
+			if (ptrs[i] == (unsigned long *)NULL) continue;
 			if (ecnt[i].kind != kind) continue;
 			ecnt[i].new_subscript = subscript++;
 		}
@@ -2622,7 +2622,7 @@ rt_nmg_export5(
 
 	/* Now do some checking to make sure the world is not totally mad */
 	for (i=0; i<m->maxindex; i++) {
-		if (ptrs[i] == (long *)0) continue;
+		if (ptrs[i] == (unsigned long *)NULL) continue;
 
 		if (nmg_index_of_struct(ptrs[i]) != i) {
 			bu_log("***ERROR, ptrs[%d]->index = %d\n",
@@ -2669,7 +2669,7 @@ rt_nmg_export5(
 	rt_nmg_fastf_p = (unsigned char*)disk_arrays[NMG_KIND_DOUBLE_ARRAY];
 
 	for (i = m->maxindex-1;i >=0; i--) {
-		if (ptrs[i] == (long *)0) continue;
+		if (ptrs[i] == (unsigned long *)NULL) continue;
 		kind = ecnt[i].kind;
 		if (kind_counts[kind] <= 0) continue;
 		rt_nmg_edisk((genptr_t)(disk_arrays[kind]),
@@ -2703,7 +2703,7 @@ rt_nmg_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 #if 0
 	{
 	struct nmg_struct_counts	count;
-	long			**ptrs;
+	unsigned long			**ptrs;
 	/* This really is not useful for the MGED overlay! */
 	ptrs = nmg_m_struct_count( &count, m );
 

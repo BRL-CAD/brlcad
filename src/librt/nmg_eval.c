@@ -283,8 +283,8 @@ static int	nmg_eval_count = 0;	/* debug -- plot file numbering */
  *  (XXX In the future, this should be done with one big array).
  *  Then, return the action code for an item of that classification.
  */
-int
-nmg_eval_action(long int *ptr, register struct nmg_bool_state *bs)
+HIDDEN int
+nmg_eval_action(unsigned long *ptr, register struct nmg_bool_state *bs)
 {
 	register int	ret;
 	register int	class;
@@ -367,7 +367,7 @@ out:
  *
  *  Note that there is no moving of items from one shell to another.
  */
-static void
+HIDDEN void
 nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
 {
 	struct faceuse	*fu;
@@ -614,7 +614,7 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
  *
  *  Located here because definition of nmg_bool_state is local to this module.
  */
-static void
+HIDDEN void
 nmg_eval_plot(struct nmg_bool_state *bs, int num, int delay)
 {
 	FILE	*fp;

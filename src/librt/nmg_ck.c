@@ -87,7 +87,7 @@ nmg_vvertex(const struct vertex *v, const struct vertexuse *vup)
 
 /* Verify vertex attributes */
 void
-nmg_vvua(const long int *vua)
+nmg_vvua(const unsigned long *vua)
 {
 	NMG_CK_VERTEXUSE_A_EITHER(vua);
 }
@@ -98,9 +98,9 @@ nmg_vvua(const long int *vua)
  *  Verify vertexuse
  */
 void
-nmg_vvu(const struct vertexuse *vu, const long int *up_magic_p)
+nmg_vvu(const struct vertexuse *vu, const unsigned long *up_magic_p)
 {
-	long	magic;
+	unsigned long	magic;
 
 	NMG_CK_VERTEXUSE(vu);
 	if (vu->up.magic_p != up_magic_p)  {
@@ -127,7 +127,7 @@ nmg_vvu(const struct vertexuse *vu, const long int *up_magic_p)
 
 /* Verify edge geometry */
 void
-nmg_veg(const long int *eg)
+nmg_veg(const unsigned long *eg)
 {
 	struct bu_list	*eu2;
 
@@ -236,12 +236,12 @@ nmg_vedge(const struct edge *e, const struct edgeuse *eup)
  *  Verify edgeuse list.
  */
 void
-nmg_veu(const struct bu_list *hp, const long int *up_magic_p)
+nmg_veu(const struct bu_list *hp, const unsigned long *up_magic_p)
 {
 	struct edgeuse	*eu;
 	struct edgeuse	*eunext;
 	struct edgeuse	*eulast;
-	long		up_magic;
+	unsigned long	up_magic;
 
 	bu_ck_list_magic( hp, "nmg_veu() edegeuse list head", NMG_EDGEUSE_MAGIC );
 
@@ -412,7 +412,7 @@ nmg_vloop(const struct loop *l, const struct loopuse *lup)
  *  Verify loopuse
  */
 void
-nmg_vlu(const struct bu_list *hp, const long int *up)
+nmg_vlu(const struct bu_list *hp, const unsigned long *up)
 {
 	struct loopuse *lu;
 
@@ -731,7 +731,7 @@ nmg_ck_e(const struct edgeuse *eu, const struct edge *e, const char *str)
  *			N M G _ C K _ V U
  */
 void
-nmg_ck_vu(const long int *parent, const struct vertexuse *vu, const char *str)
+nmg_ck_vu(const unsigned long *parent, const struct vertexuse *vu, const char *str)
 {
 	char *errstr;
 	int len = strlen(str)+128;
@@ -751,7 +751,7 @@ nmg_ck_vu(const long int *parent, const struct vertexuse *vu, const char *str)
  *			N M G _ C K _ E U
  */
 void
-nmg_ck_eu(const long int *parent, const struct edgeuse *eu, const char *str)
+nmg_ck_eu(const unsigned long *parent, const struct edgeuse *eu, const char *str)
 {
 	char *errstr;
 	struct edgeuse *eur, *eu_next, *eu_last;
@@ -874,14 +874,14 @@ nmg_ck_l(const struct loopuse *lu, const struct loop *l, const char *str)
  *			N M G _ C K _ L U
  */
 void
-nmg_ck_lu(const long int *parent, const struct loopuse *lu, const char *str)
+nmg_ck_lu(const unsigned long *parent, const struct loopuse *lu, const char *str)
 {
 	struct edgeuse *eu;
 	struct vertexuse *vu;
 	char *errstr;
 	int l;
 	int edgeuse_num=0;
-	long	magic1;
+	unsigned long magic1;
 	int len = strlen(str)+128;
 
 	errstr = bu_calloc(len, 1, "nmg_ck_lu error str");
@@ -1126,10 +1126,10 @@ nmg_ck_geometry(const struct model *m, const struct bn_tol *tol)
 
 	for ( i=0; i<BU_PTBL_END( &g_tbl ); i++ )
 	{
-		long *ep;
+		unsigned long *ep;
 		struct edge_g_lseg *eg;
 
-		ep = BU_PTBL_GET( &g_tbl, i );
+		ep = (unsigned long *)BU_PTBL_GET( &g_tbl, i );
 		switch ( *ep )
 		{
 			case NMG_EDGE_G_LSEG_MAGIC:
@@ -1535,7 +1535,7 @@ nmg_ck_closed_surf(const struct shell *s, const struct bn_tol *tol)
 	struct loopuse *lu;
 	struct edgeuse *eu;
 	int		status = 0;
-	long		magic1;
+	unsigned long	magic1;
 
 	NMG_CK_SHELL(s);
 	BN_CK_TOL(tol);
@@ -1630,11 +1630,11 @@ nmg_ck_v_in_2fus(const struct vertex *vp, const struct faceuse *fu1, const struc
 	if ( !found1 || !found2 )
 	{
 		bu_vls_init( &str );
-		bu_vls_printf( &str, "nmg_ck_v_in_2fus: vertex x%lx not used in", (long)vp );
+		bu_vls_printf( &str, "nmg_ck_v_in_2fus: vertex x%lx not used in", (unsigned long)vp );
 		if ( !found1 )
-			bu_vls_printf( &str, " faceuse x%lx", (long)fu1 );
+			bu_vls_printf( &str, " faceuse x%lx", (unsigned long)fu1 );
 		if ( !found2 )
-			bu_vls_printf( &str, " faceuse x%lx", (long)fu2 );
+			bu_vls_printf( &str, " faceuse x%lx", (unsigned long)fu2 );
 		bu_bomb( bu_vls_addr( &str ) );
 	}
 
@@ -1648,11 +1648,11 @@ nmg_ck_v_in_2fus(const struct vertex *vp, const struct faceuse *fu1, const struc
 	{
 		bu_vls_init( &str );
 		bu_vls_printf( &str, "nmg_ck_v_in_2fus: vertex x%lx ( %g %g %g ) not in plane of" ,
-				(long)vp, V3ARGS( vp->vg_p->coord ) );
+				(unsigned long)vp, V3ARGS( vp->vg_p->coord ) );
 		if ( !NEAR_ZERO( dist1, tol->dist ) )
-			bu_vls_printf( &str, " faceuse x%lx (off by %g)", (long)fu1, dist1 );
+			bu_vls_printf( &str, " faceuse x%lx (off by %g)", (unsigned long)fu1, dist1 );
 		if ( !NEAR_ZERO( dist2, tol->dist ) )
-			bu_vls_printf( &str, " faceuse x%lx (off by %g)", (long)fu2, dist2 );
+			bu_vls_printf( &str, " faceuse x%lx (off by %g)", (unsigned long)fu2, dist2 );
 		bu_bomb( bu_vls_addr( &str ) );
 	}
 
@@ -1672,7 +1672,7 @@ struct v_ck_state {
 };
 
 static void
-nmg_ck_v_in_fus(long int *vp, genptr_t state, int first)
+nmg_ck_v_in_fus(long *vp, genptr_t state, int first)
 {
 	register struct v_ck_state *sp = (struct v_ck_state *)state;
 	register struct vertex  *v = (struct vertex *)vp;
