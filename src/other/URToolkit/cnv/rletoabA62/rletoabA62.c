@@ -160,7 +160,7 @@ main(int argc,char *argv[])
 	exit(1);
     }
     if (optind < argc) {
-	if ((file = open(argv[optind], 0)) == NULL) {
+	if ((file = open(argv[optind], 0)) < 0) {
 	    perror(argv[optind]);
 	    exit(1);
 	}

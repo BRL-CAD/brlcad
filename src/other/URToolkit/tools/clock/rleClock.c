@@ -599,7 +599,7 @@ struct {
     { TRUE,  "-tf", STRING, "Text area format string", 	          (char *)&FormatString },
     { FALSE, "-Xm", BOOL,   "Output the alpha channel on RGB",    (char *)&DebugAlpha },
     { FALSE, "-D",  BOOL,   "Turn on debugging",	          (char *)&Debug },
-    NULL
+    { FALSE, NULL, INT, NULL, NULL}
 };
 
 void
