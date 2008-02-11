@@ -257,27 +257,22 @@ Engineering Company, 2002):</para>
 	  <tbody>
 	    <row>
 	      <entry>ACAD</entry>
-	      <entry>Y</entry>
 	      <entry>N</entry>
+	      <entry>Y</entry>
 	    </row>
 	    <row>
 	      <entry>ASCII</entry>
-	      <entry>N</entry>
-	      <entry>N</entry>
-	    </row>
-	    <row>
-	      <entry>AutoCAD DXF</entry>
-	      <entry>N</entry>
-	      <entry>N</entry>
-	    </row>
-	    <row>
-	      <entry>Elysium Neutral</entry>
-	      <entry>N</entry>
+	      <entry>Y</entry>
 	      <entry>Y</entry>
 	    </row>
 	    <row>
-	      <entry>Facetted</entry>
-	      <entry>N</entry>
+	      <entry>AutoCAD DXF</entry>
+	      <entry>Y</entry>
+	      <entry>Y</entry>
+	    </row>
+	    <row>
+	      <entry>Elysium Neutral Facetted</entry>
+	      <entry>Y</entry>
 	      <entry>N</entry>
 	    </row>
 	    <row>
@@ -285,68 +280,68 @@ Engineering Company, 2002):</para>
 		  <para>Conversion is to/from the ASCII EUCLID decoded format, not native format.</para>
 		</footnote>
   </entry>
-	      <entry>N</entry>
+	      <entry>Y</entry>
 	      <entry>Y</entry>
 	    </row>
 	    <row>
 	      <entry>FASGEN</entry>
-	      <entry>N</entry>
 	      <entry>Y</entry>
+	      <entry>N</entry>
 	    </row>
 	    <row>
 	      <entry>IGES</entry>
-	      <entry>N</entry>
-	      <entry>N</entry>
+	      <entry>Y</entry>
+	      <entry>Y</entry>
 	    </row>
 	    <row>
 	      <entry>Jack</entry>
-	      <entry>N</entry>
-	      <entry>N</entry>
+	      <entry>Y</entry>
+	      <entry>Y</entry>
 	    </row>
 	    <row>
 	      <entry>NASTRAN</entry>
-	      <entry>N</entry>
 	      <entry>Y</entry>
+	      <entry>N</entry>
 	    </row>
 	    <row>
 	      <entry>Pro/E</entry>
-	      <entry>N</entry>
 	      <entry>Y</entry>
+	      <entry>N</entry>
 	    </row>
 	    <row>
 	      <entry>STL</entry>
-	      <entry>N</entry>
-	      <entry>N</entry>
+	      <entry>Y</entry>
+	      <entry>Y</entry>
 	    </row>
 	    <row>
 	      <entry>TANKILL</entry>
-	      <entry>N</entry>
-	      <entry>N</entry>
+	      <entry>Y</entry>
+	      <entry>Y</entry>
 	    </row>
 	    <row>
 	      <entry>Unigraphics</entry>
-	      <entry>N</entry>
 	      <entry>Y</entry>
+	      <entry>N</entry>
 	    </row>
 	    <row>
 	      <entry>Viewpoint</entry>
-	      <entry>N</entry>
 	      <entry>Y</entry>
+	      <entry>N</entry>
 	    </row>
 	    <row>
 	      <entry>VRML</entry>
-	      <entry>Y</entry>
 	      <entry>N</entry>
+	      <entry>Y</entry>
 	    </row>
 	    <row>
 	      <entry>Wavefront (.obj)</entry>
-	      <entry>Y</entry>
 	      <entry>N</entry>
+	      <entry>Y</entry>
 	    </row>
 	    <row>
 	      <entry>X3D</entry>
-	      <entry>Y</entry>
 	      <entry>N</entry>
+	      <entry>Y</entry>
 	    </row>
 	  </tbody>
 	</tgroup>
