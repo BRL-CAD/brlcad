@@ -886,6 +886,12 @@ fb_ogl_open(FBIO *ifp, char *file, int width, int height)
 	OGL(ifp)->glxc = glXCreateContext(OGL(ifp)->dispp,
 					  OGL(ifp)->vip, 0, True);
     }
+
+    if (OGL(ifp)->glxc == NULL) {
+	fb_log("ERROR: Couldn't create an OpenGL context!\n");
+	return -1;
+    }
+
     direct = glXIsDirect(OGL(ifp)->dispp, OGL(ifp)->glxc);
     if (!direct) {
 	/* we failed to get a direct context, so we must acquire/release the context */
