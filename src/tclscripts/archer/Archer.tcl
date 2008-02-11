@@ -2844,7 +2844,7 @@ package provide Archer 1.0
 		    -helpstr "Export to VRML"
 	    }
 	separator sep0
-#	command rt -label "Raytrace Control Panel..." \
+	command rt -label "Raytrace Control Panel..." \
 		 -helpstr "Launch Ray Trace Panel"
 #	command png -label "Export Geometry to PNG..." \
 		 -helpstr "Launch PNG Export Panel"
