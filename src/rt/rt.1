@@ -452,6 +452,15 @@ which can be invoked directly, or via the
 .B rt
 command in
 .IR mged (1).
+.SH "SIGNALS"
+.PP
+You can obtain progress information from a running rt process by
+sending it a SIGUSR1 or SIGINFO signal.  The raytracer will report
+progress via details about the ray sample being processed at the time
+of the signal.  The progres is reported to stderr in a form similar
+to:
+.br
+	frame 0, xy=1516,2466 on cpu 0, samp=0
 .SH "ANIMATION SCRIPTS"
 .PP
 For information on the animation script language accepted by
