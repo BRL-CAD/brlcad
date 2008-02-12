@@ -92,7 +92,6 @@ bot_minpieces(char *buffer, com_table *ctp )
     }
 }
 
-
 void
 az_el(char *buffer, com_table *ctp)
 {
@@ -145,7 +144,6 @@ az_el(char *buffer, com_table *ctp)
     ae2dir();
 }
 
-
 void
 sh_esc (char *buffer)
 {
@@ -172,7 +170,6 @@ sh_esc (char *buffer)
 	(void) system(shell);
     }
 }
-
 
 void
 grid_coor(char *buffer, com_table *ctp)
@@ -232,7 +229,6 @@ grid_coor(char *buffer, com_table *ctp)
     grid2targ();
 }
 
-
 void
 target_coor(char *buffer, com_table *ctp)
 {
@@ -284,7 +280,6 @@ target_coor(char *buffer, com_table *ctp)
     targ2grid();
 }
 
-
 void
 dir_vect(char *buffer, com_table *ctp)
 {
@@ -335,7 +330,6 @@ dir_vect(char *buffer, com_table *ctp)
     dir2ae();
 }
 
-
 void
 quit()
 {
@@ -343,7 +337,6 @@ quit()
 	(void) fputs("Quitting...\n", stdout);
     bu_exit (0, NULL);
 }
-
 
 void
 show_menu(char *buffer)
@@ -354,11 +347,11 @@ show_menu(char *buffer)
 	(void) bu_log("%*s %s\n", -14, ctp -> com_name, ctp -> com_desc);
 }
 
-
 void
 shoot(char *buffer, int ctp)
 {
     int		i;
+    double	bov = 0.0;	/* back out value */
 
     extern void	init_ovlp();
 
@@ -367,15 +360,11 @@ shoot(char *buffer, int ctp)
 	do_rt_gettrees(rtip, NULL, 0);
     }
 
-
-    if (do_backout) {
-	backout();
-#if 0
-	do_backout = 0;
-#endif
-    }
+    if (do_backout)
+	bov = bsphere_diameter;
 
     for (i = 0; i < 3; ++i) {
+	target(i) = target(i) + ( bov * -direct(i) );
 	ap.a_ray.r_pt[i] = target(i);
 	ap.a_ray.r_dir[i] = direct(i);
     }
@@ -383,7 +372,6 @@ shoot(char *buffer, int ctp)
     init_ovlp();
     (void) rt_shootray( &ap );
 }
-
 
 void
 use_air(char *buffer, com_table *ctp)
@@ -448,7 +436,6 @@ use_air(char *buffer, com_table *ctp)
     set_diameter(ap.a_rt_i);
 }
 
-
 void
 nirt_units (char *buffer, com_table *ctp)
 {
@@ -483,7 +470,6 @@ nirt_units (char *buffer, com_table *ctp)
 	base2local = 1.0 / tmp_dbl;
     }
 }
-
 
 void
 do_overlap_claims (char *buffer, com_table *ctp)
@@ -522,7 +508,6 @@ do_overlap_claims (char *buffer, com_table *ctp)
     bu_log("Invalid overlap_claims specification: '%s'\n", buffer + i);
 }
 
-
 void
 cm_attr(char *buffer, com_table *ctp)
 {
@@ -546,7 +531,6 @@ cm_attr(char *buffer, com_table *ctp)
     attrib_add(buffer);
 }
 
-
 void
 cm_debug(char *buffer, com_table *ctp)
 {
@@ -569,7 +553,6 @@ cm_debug(char *buffer, com_table *ctp)
 	com_usage(ctp);
     }
 }
-
 
 void
 cm_libdebug(char *buffer, com_table *ctp)
@@ -597,51 +580,11 @@ cm_libdebug(char *buffer, com_table *ctp)
     }
 }
 
-
 void
-backout(char *buffer, int ctp)
+backout(char *buffer, com_table *ctp)
 {
-    int		i;
-
-    int		(*phc)();	/* Previous hit callback */
-    int		(*pmc)();	/* Previous miss callback */
-    int		(*poc)();	/* Previous overlap callback */
-    int		if_bhit();	/* Backout hit callback */
-    int		if_bmiss();	/* Backout miss callback */
-    int		if_boverlap();	/* Backout overlap callback */
-    /*
-     *	Record previous callbacks
-     */
-    phc = ap.a_hit;
-    pmc = ap.a_miss;
-    poc = ap.a_overlap;
-
-    /*
-     *	Prepare to fire the backing-out ray
-     */
-    for (i = 0; i < 3; ++i) {
-	ap.a_ray.r_pt[i] = target(i);
-	ap.a_ray.r_dir[i] = -direct(i);
-    }
-    ap.a_hit = if_bhit;
-    ap.a_miss = if_bmiss;
-    ap.a_overlap = if_boverlap;
-    if (nirt_debug & DEBUG_BACKOUT) {
-	bu_log("Backing out from (%g %g %g) via (%g %g %g)\n",
-	       ap.a_ray.r_pt[0] * base2local,
-	       ap.a_ray.r_pt[1] * base2local,
-	       ap.a_ray.r_pt[2] * base2local,
-	       V3ARGS(ap.a_ray.r_dir));
-    }
-
-    (void) rt_shootray( &ap );
-
-    /*
-     *	Reset the callbacks the way we found them
-     */
-    ap.a_hit = phc;
-    ap.a_miss = pmc;
-    ap.a_overlap = poc;
+    do_backout = 1;
+    return;
 }
 
 /*
