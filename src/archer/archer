@@ -227,8 +227,16 @@ proc main {} {
 		[file join [bu_brlcad_data "html"] manuals archer archer.ico]
 	}
 	set size [wm maxsize $::ArcherCore::application]
-        set width [expr {[lindex $size 0] - 8}]
-        set height [expr {[lindex $size 1] - 40}]
+	set w [lindex $size 0]
+	set h [lindex $size 1]
+	if {2048 < $w} {
+	    set w 2048
+	}
+	if {1600 < $h} {
+	    set h 1600
+	}
+        set width [expr {$w - 8}]
+        set height [expr {$h - 40}]
 	wm geometry $::ArcherCore::application "$width\x$height+0+0"
 	wm protocol $::ArcherCore::application WM_DELETE_WINDOW {exitArcher $::ArcherCore::application}
     } else {
@@ -239,8 +247,16 @@ proc main {} {
 	}
 	set ::ArcherCore::application [Archer .\#auto]
 	set size [wm maxsize .]
-        set width [expr {[lindex $size 0] - 8}]
-        set height [expr {[lindex $size 1] - 40}]
+	set w [lindex $size 0]
+	set h [lindex $size 1]
+	if {2048 < $w} {
+	    set w 2048
+	}
+	if {1600 < $h} {
+	    set h 1600
+	}
+        set width [expr {$w - 8}]
+        set height [expr {$h - 40}]
 	pack $::ArcherCore::application -expand yes -fill both
 	wm geometry . "$width\x$height+0+0"
 	wm protocol . WM_DELETE_WINDOW [list exitArcher $::ArcherCore::application]
