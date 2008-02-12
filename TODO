@@ -61,8 +61,6 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 
 * expose nmg_fix_normals through a set of mesh repair routines
 
-* investigate rt_shootray/nirt backing out
-
 * add high dynamic range image support to the framebuffers
 
 * add alpha channel support to the framebuffers
