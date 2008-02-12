@@ -3353,8 +3353,10 @@ Popup Menu    Right or Ctrl-Left
 	dbCmd vdraw open groundPlaneMinor
 	dbCmd vdraw send
     } else {
-	dbCmd erase _VDRWgroundPlaneMajor
-	dbCmd erase _VDRWgroundPlaneMinor
+	set phonyList [dbCmd who p]
+	if {[lsearch $phonyList _VDRWgroundPlaneMajor] != -1} {
+	    dbCmd erase _VDRWgroundPlaneMajor _VDRWgroundPlaneMinor
+	}
     }
 
     if {$savePwd != ""} {
