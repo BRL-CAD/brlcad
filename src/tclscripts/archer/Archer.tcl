@@ -149,6 +149,10 @@ package provide Archer 1.0
 	method importFg4Sections   {_slist _wlist _delta}
 	method purgeHistory        {}
 	method reverseNormals      {args}
+
+	# ArcherCore Override Section
+	method updateTheme {}
+	method Load {_type _target}
     }
 
     protected {
@@ -175,7 +179,6 @@ package provide Archer 1.0
 	method fillTree {{_node ""}}
 	method initDefaultBindings {}
 	method initMged {}
-	method Load {_type _target}
 	method loadMenu {_menu _snode}
 	method newDb {}
 	method openDb {}
@@ -207,7 +210,6 @@ package provide Archer 1.0
 	method menuStatusCB {_w}
 	method updateCreationButtons {_on}
 	method updateModesMenu {}
-	method updateTheme {}
 
 	# Modes Section
 	method setAdvancedMode {}
