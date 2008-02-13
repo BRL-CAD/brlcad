@@ -799,6 +799,15 @@ BU_EXPORT BU_EXTERN(struct bu_list *bu_list_pop, (struct bu_list *hp));
  */
 /** @addtogroup bitv */
 /**@{*/
+
+/**
+ * bitv_t - The widest fast integer type available, used to implement
+ * bit vectors.  On most machines, this is "long", but on some
+ * machines a vendor-specific type such as "long long" can give
+ * access to wider integers.
+ */
+typedef long bitv_t;
+
 /**
  *
  * @brief

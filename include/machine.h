@@ -88,11 +88,6 @@
  *	produce a zero result.
  *      TODO: macro function syntax instead of constant (DEPRECATED)
  *
- *	bitv_t - The widest fast integer type available, used to
- *	implement bit vectors.  On most machines, this is "long", but
- *	on some machines a vendor-specific type such as "long long"
- *	can give access to wider integers.
- *
  *	BITV_SHIFT - log2( bits_wide(bitv_t) ).  Used to determine how
  *	many bits of a bit-vector subscript are index-of-bit in bitv_t
  *	word, and how many bits of the subscript are for word index.
@@ -159,7 +154,6 @@ typedef long bitv_t;
  ********************************/
 #define IBM_FLOAT 1		/* Uses IBM style floating point */
 typedef double	fastf_t;	/* double|float, "Fastest" float type */
-typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
 
 #define MAX_PSW		128	/* Max number of process streams */
@@ -178,7 +172,6 @@ typedef long	bitv_t;		/* largest integer type */
 #	define LITTLE_ENDIAN	1	/* Under the influence of Intel Corp */
 #endif
 typedef double	fastf_t;	/* double|float, "Fastest" float type */
-typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
 
 #define MAX_PSW		1	/* only one processor, max */
@@ -192,7 +185,6 @@ typedef long	bitv_t;		/* largest integer type */
  *				*
  ********************************/
 typedef double	fastf_t;	/* double|float, "Fastest" float type */
-typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 
 #define MAX_PSW		8	/* Max number of processors */
@@ -209,7 +201,6 @@ typedef long	bitv_t;		/* largest integer type */
  ********************************/
 #define LITTLE_ENDIAN	1	/* Under the influence of Intel Corp */
 typedef double	fastf_t;	/* double|float, "Fastest" float type */
-typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 
 #define MAX_PSW		28	/* Max number of processors */
@@ -226,7 +217,6 @@ typedef long	bitv_t;		/* largest integer type */
  *				*
  ********************************/
 typedef double	fastf_t;	/* double|float, "Fastest" float type */
-typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
 
 #define MAX_PSW		4	/* Max number of processors */
@@ -241,10 +231,8 @@ typedef long	bitv_t;		/* largest integer type */
  ********************************/
 typedef double		fastf_t;/* double|float, "Fastest" float type */
 #if 1
-typedef long long	bitv_t;	/* largest integer type */
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
 #else
-typedef long		bitv_t;
 #define BITV_SHIFT	5
 #endif
 
@@ -260,7 +248,6 @@ typedef long		bitv_t;
  *				*
  ********************************/
 typedef double	fastf_t;	/* double|float, "Fastest" float type */
-typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 
 #define MAX_PSW		4	/* # processors, max */
@@ -277,7 +264,6 @@ typedef long	bitv_t;		/* largest integer type */
 #define __unix	1		/* It really is unix */
 #define LITTLE_ENDIAN	1	/* Under the influence of Intel Corp */
 typedef double	fastf_t;	/* double|float, "Fastest" float type */
-typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 
 #define MAX_PSW		1	/* only one processor, max */
@@ -295,7 +281,6 @@ typedef long	bitv_t;		/* largest integer type */
  *				*
  ********************************/
 typedef double	fastf_t;	/* double|float, "Fastest" float type */
-typedef long	bitv_t;		/* largest integer type */
 #if defined( _MIPS_SZLONG ) && _MIPS_SZLONG == 64
 #  define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
 #else
@@ -314,7 +299,6 @@ typedef long	bitv_t;		/* largest integer type */
  *				*
  ********************************/
 typedef double	fastf_t;	/* double|float, "Fastest" float type */
-typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 
 #define MAX_PSW		1	/* only one processor, max */
@@ -329,7 +313,6 @@ typedef long	bitv_t;		/* largest integer type */
  ********************************/
 #define LITTLE_ENDIAN	1	/* Under the influence of National Semiconductor */
 typedef double	fastf_t;	/* double|float, "Fastest" float type */
-typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 
 #define MAX_PSW		32	/* This number is uncertain */
@@ -346,7 +329,6 @@ typedef long	bitv_t;		/* largest integer type */
  ********************************/
 
 typedef double	fastf_t;	/* double|float, "Fastest" float type */
-typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 
 #define MAX_PSW		256	/* need to increase this for Super Dragon? */
@@ -363,7 +345,6 @@ typedef long	bitv_t;		/* largest integer type */
  ********************************/
 
 typedef double	fastf_t;	/* double|float, "Fastest" float type */
-typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 #define MAX_PSW		1	/* only one processor, max */
 #endif
@@ -375,7 +356,6 @@ typedef long	bitv_t;		/* largest integer type */
  *                              *
  ********************************/
 typedef double  fastf_t;        /* double|float, "Fastest" float type */
-typedef long    bitv_t;         /* could use long long */
 #define BITV_SHIFT      5       /* log2( bits_wide(bitv_t) ) */
 #define MAX_PSW         512       /* Unused, but useful for thread debugging */
 #define PARALLEL        1
@@ -388,7 +368,6 @@ typedef long    bitv_t;         /* could use long long */
  *                              *
  ********************************/
 typedef double  fastf_t;        /* double|float, "Fastest" float type */
-typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 #define MAX_PSW		32     	/* they can go 32-way per single image */
 #define	PARALLEL	1
@@ -401,7 +380,6 @@ typedef long	bitv_t;		/* largest integer type */
  *                              *
  ********************************/
 typedef double  fastf_t;        /* double|float, "Fastest" float type */
-typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
 #define MAX_PSW		256
 #define	PARALLEL	1
@@ -414,7 +392,6 @@ typedef long	bitv_t;		/* largest integer type */
  *                              *
  ********************************/
 typedef double  fastf_t;        /* double|float, "Fastest" float type */
-typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
 #define MAX_PSW		256
 #define	PARALLEL	1
@@ -427,7 +404,6 @@ typedef long	bitv_t;		/* largest integer type */
  *                              *
  ********************************/
 typedef double  fastf_t;        /* double|float, "Fastest" float type */
-typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
 #define MAX_PSW		256
 #define	PARALLEL	1
@@ -440,7 +416,6 @@ typedef long	bitv_t;		/* largest integer type */
  *                              *
  ********************************/
 typedef double fastf_t;       /* double|float, "Fastest" float type */
-typedef long bitv_t;          /* could use long long */
 #define BITV_SHIFT      5      /* log2( bits_wide(bitv_t) ) */
 #define MAX_PSW         16
 #define PARALLEL        1
@@ -453,7 +428,6 @@ typedef long bitv_t;          /* could use long long */
  ********************************/
 #if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
 typedef double		fastf_t;	/* double|float, "Fastest" float type */
-typedef long		bitv_t;		/* largest integer type */
 # define	PARALLEL	1
 
 /* amd64 */
@@ -475,7 +449,6 @@ typedef long		bitv_t;		/* largest integer type */
  *				*
  ********************************/
 typedef double	fastf_t;	/* double|float, "Fastest" float type */
-typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 
 #define MAX_PSW		4	/* allow for a dual core dual */
