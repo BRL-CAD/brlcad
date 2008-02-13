@@ -18,7 +18,9 @@
  * information.
  */
 /** @file do_options.c
- *	Author:		Gary S. Moss
+ *
+ * Handle lgt command-line options.
+ *
  */
 
 #include "common.h"
@@ -43,6 +45,7 @@
 #include "./tree.h"
 #include "./screen.h"
 #include "./cursors.h"
+
 
 #define SGI_USEKEYBD	(tty && sgi_usemouse && sgi_console)
 
@@ -2144,40 +2147,40 @@ f_Tracking_Cursor(HMitem *itemp, char **args)
 	return	1;
 	}
 
-/*	f _ P a r a l l e l ( ) */
-/*ARGSUSED*/
+/**
+ * f _ P a r a l l e l
+ *
+ * returns the number of processors or negative on user input error
+ */
 static int
 f_Parallel(HMitem *itemp, char **args)
 {
-#ifdef PARALLEL
-		int maxpsw = bu_avail_cpus();
-	if ( maxpsw > MAX_PSW )
-		maxpsw = MAX_PSW;
-	if ( args == NULL )
-		{
-		(void) sprintf( prompt,
-				"Number of parallel processors ? [1 to %d](%d) ",
-				maxpsw,
-				npsw
-				);
-		if (	get_Input( input_ln, MAX_LN, prompt ) != NULL
-		    &&	sscanf( input_ln, "%d", &npsw ) != 1
-			)
-			return	-1;
-		}
-	else
-	if ( args[1] == NULL || sscanf( args[1], "%d", &npsw ) != 1 )
-		return	-1;
-	npsw = npsw > maxpsw ? maxpsw : npsw;
-	if ( npsw > 1 )
-		rt_g.rtg_parallel = 1;
-	else
-		rt_g.rtg_parallel = 0;
+    int maxpsw = bu_avail_cpus();
+    if (maxpsw > MAX_PSW)
+	maxpsw = MAX_PSW;
 
-	bu_semaphore_init( RT_SEM_LAST );
-#endif
-	return	1;
-	}
+    if (args == NULL) {
+	sprintf(prompt, "Number of parallel processors ? [1 to %d](%d) ", maxpsw, npsw);
+
+	if (get_Input( input_ln, MAX_LN, prompt ) == NULL)
+	    return -1; /* input error */
+	if (sscanf( input_ln, "%d", &npsw ) != 1)
+	    return -1; /* input error */
+    } else {
+	if (args[1] == NULL || sscanf( args[1], "%d", &npsw ) != 1)
+	    return -1; /* input error */
+    }
+
+    npsw = npsw > maxpsw ? maxpsw : npsw;
+    if( npsw > 1 )
+	rt_g.rtg_parallel = 1;
+    else
+	rt_g.rtg_parallel = 0;
+    
+    bu_semaphore_init( RT_SEM_LAST );
+    
+    return 1;
+}
 
 /*	f _ W r t _ I R _ D b ( ) */
 /*ARGSUSED*/
