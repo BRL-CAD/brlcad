@@ -622,8 +622,7 @@ bu_set_realtime(void)
  *			B U _ W O R K E R _ T B L _ N O T _ E M P T Y
  */
 static int
-bu_worker_tbl_not_empty(tbl)
-     int tbl[MAX_PSW];
+bu_worker_tbl_not_empty(int tbl[MAX_PSW])
 {
     register int i;
     register int children=0;
@@ -638,8 +637,7 @@ bu_worker_tbl_not_empty(tbl)
  *			B U _ K I L L _ W O R K E R S
  */
 static void
-bu_kill_workers(tbl)
-     int tbl[MAX_PSW];
+bu_kill_workers(int tbl[MAX_PSW])
 {
     register int i;
 
