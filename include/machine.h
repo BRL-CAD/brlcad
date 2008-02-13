@@ -128,30 +128,6 @@
 
 #include "common.h"
 
-/* needed for FOPEN_MAX */
-#include <stdio.h>
-
-
-/*
- * Figure out the maximum number of files that can simultaneously be open
- * by a process.
- */
-
-#if !defined(FOPEN_MAX) && defined(_NFILE)
-#	define FOPEN_MAX	_NFILE
-#endif
-#if !defined(FOPEN_MAX) && defined(NOFILE)
-#	define FOPEN_MAX	NOFILE
-#endif
-#if !defined(FOPEN_MAX) && defined(OPEN_MAX)
-#	define FOPEN_MAX	OPEN_MAX
-#endif
-#if !defined(FOPEN_MAX) && defined(_SYS_OPEN)
-#	define FOPEN_MAX	_SYS_OPEN
-#endif
-#if !defined(FOPEN_MAX)
-#	define FOPEN_MAX	32
-#endif
 
 /**********************************
  *                                *

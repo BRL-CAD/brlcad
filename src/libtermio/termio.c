@@ -19,7 +19,6 @@
  */
 /** @file termio.c
  *
- *	Author:		Gary S. Moss
  */
 
 #include "common.h"
@@ -39,8 +38,6 @@
 #endif
 
 
-#include "machine.h"
-
 /*
  *  This file will work IFF one of these three flags is set:
  *	HAVE_TERMIOS_H	use POXIX termios and tcsetattr() call with XOPEN flags
@@ -51,6 +48,29 @@
 #if defined(HAVE_MEMORY_H)
 #  include <memory.h>
 #endif
+
+
+/*
+ * Figure out the maximum number of files that can simultaneously be open
+ * by a process.
+ */
+
+#if !defined(FOPEN_MAX) && defined(_NFILE)
+#	define FOPEN_MAX	_NFILE
+#endif
+#if !defined(FOPEN_MAX) && defined(NOFILE)
+#	define FOPEN_MAX	NOFILE
+#endif
+#if !defined(FOPEN_MAX) && defined(OPEN_MAX)
+#	define FOPEN_MAX	OPEN_MAX
+#endif
+#if !defined(FOPEN_MAX) && defined(_SYS_OPEN)
+#	define FOPEN_MAX	_SYS_OPEN
+#endif
+#if !defined(FOPEN_MAX)
+#	define FOPEN_MAX	32
+#endif
+
 
 #if defined(HAVE_TERMIOS_H)
 #  undef SYSV

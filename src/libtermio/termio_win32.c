@@ -29,7 +29,7 @@
 #include "machine.h"
 #include "libtermio.h"
 
-static int		fileStatus[FOPEN_MAX];
+
 void			prnt_Tio();
 static void		copy_Tio();
 
