@@ -2159,6 +2159,11 @@ f_Parallel(HMitem *itemp, char **args)
     if (maxpsw > MAX_PSW)
 	maxpsw = MAX_PSW;
 
+    if (maxpsw == 1) {
+	rt_g.rtg_parallel = 0;
+	return 1;
+    }
+
     if (args == NULL) {
 	sprintf(prompt, "Number of parallel processors ? [1 to %d](%d) ", maxpsw, npsw);
 
