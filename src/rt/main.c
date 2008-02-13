@@ -193,7 +193,6 @@ int main(int argc, char **argv)
 
 	/* Before option processing, get default number of processors */
 	npsw = bu_avail_cpus();		/* Use all that are present */
-	if ( npsw > DEFAULT_PSW )  npsw = DEFAULT_PSW;
 	if ( npsw > MAX_PSW )  npsw = MAX_PSW;
 
 	/* Before option processing, do application-specific initialization */

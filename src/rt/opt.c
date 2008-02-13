@@ -466,10 +466,10 @@ int get_args( int argc, register char **argv )
 
 				    if ((bu_debug & BU_DEBUG_PARALLEL) ||
 					(RT_G_DEBUG & DEBUG_PARALLEL)) {
-					fprintf(stderr, ", but allowing due to debug flag\n", DEFAULT_PSW);
+					fprintf(stderr, ", but allowing due to debug flag\n");
 				    } else {
-					fprintf(stderr, ", using -P%d\n", DEFAULT_PSW);
-					npsw = DEFAULT_PSW;
+					fprintf(stderr, ", using -P1\n");
+					npsw = 1;
 				    }
 				}
 			}

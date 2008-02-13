@@ -411,10 +411,6 @@ main(int argc, char **argv)
     struct lineseg *lines;
     register long int i;
     long int autosize;
-#if 0
-    npsw = bu_avail_cpus();
-    if (npsw > DEFAULT_PSW) npsw = DEFAULT_PSW;
-#endif
 
     autosize = 1L;
     pa_width = pa_height = 0;

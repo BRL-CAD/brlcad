@@ -121,17 +121,6 @@
  *		rt_avail_cpus().
  *              TODO: moving to a libbu function (DEPRECATED)
  *
- *	DEFAULT_PSW -
- *		The number of processors to use when the user has not
- *		specifically indicated the number of processors desired.
- *		On some machines like the Alliant, this should be MAX_PSW,
- *		because the parallel complex is allocated as a unit.
- *		On timesharing machines like the Cray, this should be 1,
- *		because running multi-tasking consumes special resources
- *		(and sometimes requires special queues/privs), so ordinary
- *		runs should just stay serial.
- *              TODO: moving to a libbu function (DEPRECATED)
- *
  *	MALLOC_NOT_MP_SAFE -
  *		Defined when the system malloc() routine can not be
  *		safely used in a multi-processor (MP) execution.
@@ -188,7 +177,6 @@ typedef long bitv_t;
 #define BITV_SHIFT	5
 /* assume only one processor for now */
 #define MAX_PSW	4
-#define DEFAULT_PSW	1
 #define MALLOC_NOT_MP_SAFE 1
 
 #endif /* _WIN32 */
@@ -206,7 +194,6 @@ typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
 
 #define MAX_PSW		128	/* Max number of process streams */
-#define DEFAULT_PSW	MAX_PSW
 #define PARALLEL	1
 #endif
 
@@ -227,7 +214,6 @@ typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
 
 #define MAX_PSW		1	/* only one processor, max */
-#define DEFAULT_PSW	1
 #endif
 
 
@@ -243,7 +229,6 @@ typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 
 #define MAX_PSW		8	/* Max number of processors */
-#define DEFAULT_PSW	MAX_PSW
 #define PARALLEL	1
 
 #endif
@@ -262,7 +247,6 @@ typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 
 #define MAX_PSW		28	/* Max number of processors */
-#define DEFAULT_PSW	MAX_PSW
 #define PARALLEL	1
 
 #endif
@@ -280,7 +264,6 @@ typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
 
 #define MAX_PSW		4	/* Max number of processors */
-#define DEFAULT_PSW	1
 #define PARALLEL	1
 #endif /* CRAY */
 
@@ -300,7 +283,6 @@ typedef long		bitv_t;
 #endif
 
 #define MAX_PSW		4	/* Max number of processors */
-#define DEFAULT_PSW	1	/* for now */
 #define PARALLEL	1
 #endif
 
@@ -316,7 +298,6 @@ typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 
 #define MAX_PSW		4	/* # processors, max */
-#define DEFAULT_PSW	1
 #define PARALLEL	1
 #endif
 
@@ -334,7 +315,6 @@ typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 
 #define MAX_PSW		1	/* only one processor, max */
-#define DEFAULT_PSW	1
 #endif
 
 #if	(defined(__sgi) && defined(__mips))
@@ -357,7 +337,6 @@ typedef long	bitv_t;		/* largest integer type */
 #  define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 #endif
 #define MAX_PSW		1024
-#define DEFAULT_PSW	MAX_PSW
 #define PARALLEL	1
 
 #endif
@@ -374,7 +353,6 @@ typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 
 #define MAX_PSW		1	/* only one processor, max */
-#define DEFAULT_PSW	1
 #define MALLOC_NOT_MP_SAFE 1
 
 #endif
@@ -393,7 +371,6 @@ typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 
 #define MAX_PSW		32	/* This number is uncertain */
-#define DEFAULT_PSW	1
 #define PARALLEL	1
 #define MALLOC_NOT_MP_SAFE 1
 #endif
@@ -413,7 +390,6 @@ typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 
 #define MAX_PSW		256	/* need to increase this for Super Dragon? */
-#define DEFAULT_PSW	bu_avail_cpus()
 #define PARALLEL	1
 
 #endif
@@ -431,7 +407,6 @@ typedef double	fastf_t;	/* double|float, "Fastest" float type */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 #define MAX_PSW		1	/* only one processor, max */
-#define DEFAULT_PSW	1
 #define MALLOC_NOT_MP_SAFE 1
 
 #endif
@@ -448,7 +423,6 @@ typedef double  fastf_t;        /* double|float, "Fastest" float type */
 typedef long    bitv_t;         /* could use long long */
 #define BITV_SHIFT      5       /* log2( bits_wide(bitv_t) ) */
 #define MAX_PSW         512       /* Unused, but useful for thread debugging */
-#define DEFAULT_PSW     bu_avail_cpus()	/* use as many as we can */
 #define PARALLEL        1
 /* #define MALLOC_NOT_MP_SAFE 1 -- not confirmed */
 #endif
@@ -458,7 +432,6 @@ typedef double  fastf_t;        /* double|float, "Fastest" float type */
 typedef long    bitv_t;         /* could use long long */
 #define BITV_SHIFT      5      /* log2( bits_wide(bitv_t) ) */
 #define MAX_PSW         512       /* Unused, but useful for thread debugging */
-#define DEFAULT_PSW     bu_avail_cpus()	/* use as many as we can */
 #define PARALLEL        1
 #endif
 
@@ -474,17 +447,9 @@ typedef long    bitv_t;         /* could use long long */
 typedef double  fastf_t;        /* double|float, "Fastest" float type */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
-
-#if 1	/* Multi-CPU SP3 build */
-#	define MAX_PSW		32     	/* they can go 32-way per single image */
-#	define DEFAULT_PSW	bu_avail_cpus()	/* use as many as are configured by default */
-#	define	PARALLEL	1
-#	define	MALLOC_NOT_MP_SAFE	1	/* XXX Not sure about this */
-#else	/* 1 CPU SP3 build */
-#	define MAX_PSW		1	/* only one processor, max */
-#	define DEFAULT_PSW	1
-#endif
-
+#define MAX_PSW		32     	/* they can go 32-way per single image */
+#define	PARALLEL	1
+#define	MALLOC_NOT_MP_SAFE	1	/* XXX Not sure about this */
 #endif
 
 #ifdef __ia64__
@@ -499,13 +464,11 @@ typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
 
 #if 1	/* Multi-CPU Altix build */
-#	define DEFAULT_PSW	bu_avail_cpus()
 #	define MAX_PSW		256
 #	define	PARALLEL	1
 #	define MALLOC_NOT_MP_SAFE	1	/* XXX Not sure about this */
 #else	/* 1 CPU Altix build */
 #	define MAX_PSW		1	/* only one processor, max */
-#	define DEFAULT_PSW	1
 #	define MALLOC_NOT_MP_SAFE	1	/* XXX Not sure about this */
 #endif
 
@@ -522,7 +485,6 @@ typedef long	bitv_t;		/* largest integer type */
 typedef double  fastf_t;        /* double|float, "Fastest" float type */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
-#define DEFAULT_PSW	bu_avail_cpus()
 #define MAX_PSW		256
 #define	PARALLEL	1
 #define MALLOC_NOT_MP_SAFE	1	/* XXX Not sure about this */
@@ -540,7 +502,6 @@ typedef long	bitv_t;		/* largest integer type */
 typedef double  fastf_t;        /* double|float, "Fastest" float type */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
-#define DEFAULT_PSW	bu_avail_cpus()
 #define MAX_PSW		256
 #define	PARALLEL	1
 #define MALLOC_NOT_MP_SAFE	1	/* XXX Not sure about this */
@@ -566,14 +527,12 @@ typedef long bitv_t;          /* could use long long */
 # if 1 /* multi-cpu linux build */
 
 # define MAX_PSW         16
-# define DEFAULT_PSW     bu_avail_cpus()	/* use as many processors as are available */
 # define PARALLEL        1
 # define MALLOC_NOT_MP_SAFE 1   /* uncertain, but this is safer for now */
 
 # else  /* 1 CPU Linux build */
 
 # define MAX_PSW        1	/* only one processor, max */
-# define DEFAULT_PSW	1
 
 # endif
 #endif /* linux */
@@ -588,7 +547,6 @@ typedef long bitv_t;          /* could use long long */
 typedef double		fastf_t;	/* double|float, "Fastest" float type */
 typedef long		bitv_t;		/* largest integer type */
 # define IEEE_FLOAT	1		/* Uses IEEE style floating point */
-# define DEFAULT_PSW	bu_avail_cpus()
 # define	PARALLEL	1
 # define MALLOC_NOT_MP_SAFE	1	/* XXX Not sure about this */
 
@@ -615,7 +573,6 @@ typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 
 #define MAX_PSW		4	/* allow for a dual core dual */
-#define DEFAULT_PSW	bu_avail_cpus()	/* use as many as are available by default */
 
 #endif
 

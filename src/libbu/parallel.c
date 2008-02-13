@@ -292,11 +292,7 @@ bu_avail_cpus(void)
 {
     int ncpu = -1;
 
-#ifndef PARALLEL 
-
-    return 1;
-
-#else
+#ifdef PARALLEL 
 
 #  if defined(_SC_NPROCESSORS_ONLN)
     /* SUNOS and linux */
@@ -476,13 +472,7 @@ bu_avail_cpus(void)
 
  DONE_NCPU:  ; /* allows debug and final validity check */
 
-
-#  if defined(HAVE_PTHREAD_H)
-    /* if they have threading and we could not detect properly, claim two */
-    if (ncpu < 0) {
-	ncpu = 2;
-    }
-#  endif
+#endif /* PARALLEL */
 
     if (bu_debug & BU_DEBUG_PARALLEL) {
 	/* do not use bu_log() here, this can get called before semaphores are initialized */
@@ -493,10 +483,8 @@ bu_avail_cpus(void)
 	return ncpu;
     }
 
-    return( DEFAULT_PSW );
-
-#endif /* PARALLEL */
-
+    /* non-PARALLEL */
+    return 1;
 }
 
 

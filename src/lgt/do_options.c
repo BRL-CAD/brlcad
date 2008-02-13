@@ -3634,8 +3634,6 @@ make_Script(char *file)
 		(void) fprintf( run_fp,	" -w%s", mat_db_file );
 	if ( lgt_db_file[0] != '\0' )
 		(void) fprintf( run_fp,	" -v%s", lgt_db_file );
-	/*if( npsw != DEFAULT_PSW )
-		(void) fprintf( run_fp, " -n%d", npsw );  (XXX) */
 	if ( fb_file[0] != '\0' )
 		(void) fprintf( run_fp,	" -o%s", fb_file );
 	if ( ir_offset )
