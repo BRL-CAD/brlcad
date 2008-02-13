@@ -165,8 +165,7 @@ rtxray_SOURCES = \
 
 noinst_HEADERS = \
 	ext.h \
-	rad.h \
-	scat.h
+	rad.h
 
 man_MANS = \
 	reshoot.1 \
