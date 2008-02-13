@@ -121,11 +121,6 @@
  *		rt_avail_cpus().
  *              TODO: moving to a libbu function (DEPRECATED)
  *
- *	MALLOC_NOT_MP_SAFE -
- *		Defined when the system malloc() routine can not be
- *		safely used in a multi-processor (MP) execution.
- *		If defined, LIBBU will protect with BU_SEM_SYSCALL.
- *              TODO: move to a configure test (DEPRECATED)
  */
 
 #ifndef __MACHINE_H__
@@ -177,8 +172,6 @@ typedef long bitv_t;
 #define BITV_SHIFT	5
 /* assume only one processor for now */
 #define MAX_PSW	4
-#define MALLOC_NOT_MP_SAFE 1
-
 #endif /* _WIN32 */
 
 
@@ -349,8 +342,6 @@ typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 
 #define MAX_PSW		1	/* only one processor, max */
-#define MALLOC_NOT_MP_SAFE 1
-
 #endif
 
 
@@ -367,7 +358,6 @@ typedef long	bitv_t;		/* largest integer type */
 
 #define MAX_PSW		32	/* This number is uncertain */
 #define PARALLEL	1
-#define MALLOC_NOT_MP_SAFE 1
 #endif
 
 
@@ -400,15 +390,12 @@ typedef double	fastf_t;	/* double|float, "Fastest" float type */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 #define MAX_PSW		1	/* only one processor, max */
-#define MALLOC_NOT_MP_SAFE 1
-
 #endif
 
 #ifdef __APPLE__
-#ifdef __ppc__
 /********************************
  *                              *
- *      Macintosh PowerPC       *
+ *      Mac OS X                *
  *                              *
  ********************************/
 typedef double  fastf_t;        /* double|float, "Fastest" float type */
@@ -416,16 +403,6 @@ typedef long    bitv_t;         /* could use long long */
 #define BITV_SHIFT      5       /* log2( bits_wide(bitv_t) ) */
 #define MAX_PSW         512       /* Unused, but useful for thread debugging */
 #define PARALLEL        1
-/* #define MALLOC_NOT_MP_SAFE 1 -- not confirmed */
-#endif
-#if defined(__i686__) || defined(__i386__)
-typedef double  fastf_t;        /* double|float, "Fastest" float type */
-typedef long    bitv_t;         /* could use long long */
-#define BITV_SHIFT      5      /* log2( bits_wide(bitv_t) ) */
-#define MAX_PSW         512       /* Unused, but useful for thread debugging */
-#define PARALLEL        1
-#endif
-
 #endif
 
 #ifdef __sp3__
@@ -439,7 +416,6 @@ typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 #define MAX_PSW		32     	/* they can go 32-way per single image */
 #define	PARALLEL	1
-#define	MALLOC_NOT_MP_SAFE	1	/* XXX Not sure about this */
 #endif
 
 #ifdef __ia64__
@@ -451,19 +427,10 @@ typedef long	bitv_t;		/* largest integer type */
 typedef double  fastf_t;        /* double|float, "Fastest" float type */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
-
-#if 1	/* Multi-CPU Altix build */
-#	define MAX_PSW		256
-#	define	PARALLEL	1
-#	define MALLOC_NOT_MP_SAFE	1	/* XXX Not sure about this */
-#else	/* 1 CPU Altix build */
-#	define MAX_PSW		1	/* only one processor, max */
-#	define MALLOC_NOT_MP_SAFE	1	/* XXX Not sure about this */
+#define MAX_PSW		256
+#define	PARALLEL	1
 #endif
 
-#endif
-
-/* TODO: should this be looking for solaris/sunos tags? */
 #if defined(__sparc64__) && !defined(__FreeBSD__)
 /********************************
  *                              *
@@ -475,10 +442,7 @@ typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
 #define MAX_PSW		256
 #define	PARALLEL	1
-#define MALLOC_NOT_MP_SAFE	1	/* XXX Not sure about this */
-
 #endif
-
 
 #if defined(linux) && defined(__x86_64__)
 /********************************
@@ -491,8 +455,6 @@ typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
 #define MAX_PSW		256
 #define	PARALLEL	1
-#define MALLOC_NOT_MP_SAFE	1	/* XXX Not sure about this */
-
 #endif
 
 #if defined (linux) && !defined(__ia64__) && !defined(__x86_64__) && !defined(__sparc64__)
@@ -501,28 +463,12 @@ typedef long	bitv_t;		/* largest integer type */
  *        Linux on IA32         *
  *                              *
  ********************************/
-#define BITV_SHIFT      5      /* log2( bits_wide(bitv_t) ) */
-
 typedef double fastf_t;       /* double|float, "Fastest" float type */
 typedef long bitv_t;          /* could use long long */
-
-/*
- * Note that by default a Linux installation supports parallel using
- * pthreads. For a 1 cpu installation, toggle these blocks
- */
-# if 1 /* multi-cpu linux build */
-
-# define MAX_PSW         16
-# define PARALLEL        1
-# define MALLOC_NOT_MP_SAFE 1   /* uncertain, but this is safer for now */
-
-# else  /* 1 CPU Linux build */
-
-# define MAX_PSW        1	/* only one processor, max */
-
-# endif
+#define BITV_SHIFT      5      /* log2( bits_wide(bitv_t) ) */
+#define MAX_PSW         16
+#define PARALLEL        1
 #endif /* linux */
-
 
 /********************************
  *                              *
@@ -533,7 +479,6 @@ typedef long bitv_t;          /* could use long long */
 typedef double		fastf_t;	/* double|float, "Fastest" float type */
 typedef long		bitv_t;		/* largest integer type */
 # define	PARALLEL	1
-# define MALLOC_NOT_MP_SAFE	1	/* XXX Not sure about this */
 
 /* amd64 */
 # if defined(__x86_64__) || defined(__sparc64__) || defined(__ia64__)

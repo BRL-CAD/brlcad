@@ -29,22 +29,6 @@
  *  the bu_vls() routines which depend on bu_malloc().  So it goes direct
  *  to stderr, semaphore protected.
  *
- * @par  Functions
- *	bu_malloc	Allocate storage, with visibility & checking
- * @n	bu_free		Similarly, free storage
- * @n	bu_realloc	Reallocate storage, with visibility & checking
- * @n	bu_calloc	Allocate zero'ed storage
- * @n	bu_prmem	When debugging, print memory map
- * @n	bu_malloc_len_roundup	Optimize sizing of malloc() requests
- * @n	bu_free_array	free elements of an array
- *
- *
- *  @author	Michael John Muuss
- *  @author      Christopher Sean Morrison
- *
- * @par  Source -
- *	The U. S. Army Research Laboratory
- * @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"
@@ -59,6 +43,10 @@
 
 #include "machine.h"
 #include "bu.h"
+
+/** this controls whether to semaphore protect malloc calls */
+#define MALLOC_NOT_MP_SAFE 1
+
 
 /** this variable controls the libbu debug level */
 int	bu_debug = 0;
