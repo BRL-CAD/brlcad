@@ -292,8 +292,13 @@ bu_avail_cpus(void)
 {
     int ncpu = -1;
 
+#ifndef PARALLEL 
 
-#if defined(_SC_NPROCESSORS_ONLN)
+    return 1;
+
+#else
+
+#  if defined(_SC_NPROCESSORS_ONLN)
     /* SUNOS and linux */
     ncpu = sysconf(_SC_NPROCESSORS_ONLN);
     if (ncpu < 0) {
@@ -301,14 +306,14 @@ bu_avail_cpus(void)
 	ncpu = 1;
     }
     goto DONE_NCPU;
-#elif defined(_SC_NPROC_ONLN)
+#  elif defined(_SC_NPROC_ONLN)
     ncpu = sysconf(_SC_NPROC_ONLN);
     if (ncpu < 0) {
 	perror("Unable to get the number of available CPUs");
 	ncpu = 1;
     }
     goto DONE_NCPU;
-#elif defined(_SC_CRAY_NCPU)
+#  elif defined(_SC_CRAY_NCPU)
     /* cray */
     ncpu = sysconf(_SC_CRAY_NCPU);
     if (ncpu < 0) {
@@ -316,10 +321,10 @@ bu_avail_cpus(void)
 	ncpu = 1;
     }
     goto DONE_NCPU;
-#endif
+#  endif
 
 
-#ifdef SGI_4D
+#  ifdef SGI_4D
     /* XXX LAB 04 June 2002
      * The call prctl(PR_MAXPPROCS) is supposed to indicate the number
      * of processors this process can use.  Unfortuantely, this returns
@@ -330,33 +335,33 @@ bu_avail_cpus(void)
      * configured processors.  This will have to suffice until SGI
      * comes up with a fix.
      */
-#  ifdef HAVE_SYSMP
+#    ifdef HAVE_SYSMP
     ncpu = sysmp(MP_NPROCS);
-#  elif defined(HAVE_PRCTL)
+#    elif defined(HAVE_PRCTL)
     ncpu = (int)prctl(PR_MAXPPROCS);
-#  endif
+#    endif
     goto DONE_NCPU;
-#endif /* SGI_4D */
+#  endif /* SGI_4D */
 
 
-#ifdef alliant
+#  ifdef alliant
     {
 	long	memsize, ipnum, cenum, detnum, attnum;
 
-#  if !defined(i860)
+#    if !defined(i860)
 	/* FX/8 */
 	lib_syscfg( &memsize, &ipnum, &cenum, &detnum, &attnum );
-#  else
+#    else
 	/* FX/2800 */
 	attnum = 28;
-#  endif /* i860 */
+#    endif /* i860 */
 	ncpu = attnum;		/* # of CEs attached to parallel Complex */
 	goto DONE_NCPU;
     }
-#endif /* alliant */
+#  endif /* alliant */
 
 
-#if defined(__sp3__)
+#  if defined(__sp3__)
     {
 	int status;
 	int cmd;
@@ -371,17 +376,17 @@ bu_avail_cpus(void)
 	ncpu = p.v_ncpus;
 	goto DONE_NCPU;
     }
-#endif	/* __sp3__ */
+#  endif	/* __sp3__ */
 
 
-#if defined(n16)
+#  if defined(n16)
     if ( (ncpu = sysadmin( SADMIN_NUMCPUS, 0 )) < 0 )
 	perror("sysadmin");
     goto DONE_NCPU;
-#endif /* n16 */
+#  endif /* n16 */
 
 
-#ifdef __FreeBSD__
+#  ifdef __FreeBSD__
     {
 	int maxproc;
 	size_t len;
@@ -394,10 +399,10 @@ bu_avail_cpus(void)
 	}
 	goto DONE_NCPU;
     }
-#endif
+#  endif
 
 
-#if defined(__APPLE__)
+#  if defined(__APPLE__)
     {
 	int mib[2], maxproc;
 	size_t len;
@@ -413,16 +418,16 @@ bu_avail_cpus(void)
 	}
 	goto DONE_NCPU;
     }
-#endif /* __ppc__ */
+#  endif /* __ppc__ */
 
 
-#if defined(HAVE_GET_NPROCS)
+#  if defined(HAVE_GET_NPROCS)
     ncpu = get_nprocs(); /* GNU extension from sys/sysinfo.h */
     goto DONE_NCPU;
-#endif
+#  endif
 
 
-#if defined(linux) && 0
+#  if defined(linux) && 0
     {
 	/* old retired linux method */
 	/*
@@ -431,7 +436,7 @@ bu_avail_cpus(void)
 	 * /proc/cpuinfo!
 	 */
 
-#	define CPUINFO_FILE "/proc/cpuinfo"
+#    define CPUINFO_FILE "/proc/cpuinfo"
 	FILE *fp;
 	char buf[128];
 
@@ -456,9 +461,9 @@ bu_avail_cpus(void)
 	}
 	goto DONE_NCPU;
     }
-#endif
+#  endif
 
-#if defined(_WIN32)
+#  if defined(_WIN32)
     /* Windows */
     {
 	SYSTEM_INFO sysinfo;
@@ -467,17 +472,17 @@ bu_avail_cpus(void)
 	ncpu = (int)sysinfo.dwNumberOfProcessors;
 	goto DONE_NCPU;
     }
-#endif
+#  endif
 
  DONE_NCPU:  ; /* allows debug and final validity check */
 
 
-#if defined(HAVE_PTHREAD_H)
+#  if defined(HAVE_PTHREAD_H)
     /* if they have threading and we could not detect properly, claim two */
     if (ncpu < 0) {
 	ncpu = 2;
     }
-#endif
+#  endif
 
     if (bu_debug & BU_DEBUG_PARALLEL) {
 	/* do not use bu_log() here, this can get called before semaphores are initialized */
@@ -489,6 +494,9 @@ bu_avail_cpus(void)
     }
 
     return( DEFAULT_PSW );
+
+#endif /* PARALLEL */
+
 }
 
 
@@ -617,7 +625,7 @@ bu_set_realtime(void)
 #endif
 
 
-#if defined(PARALLEL)
+#ifdef PARALLEL
 
 /* bu_worker_tbl_not_empty and bu_kill_workers are only used by the sgi arch */
 #  ifdef SGI_4D
@@ -769,8 +777,15 @@ bu_parallel( func, ncpu, arg )
      int		ncpu;
      genptr_t	arg;
 {
-#if defined(PARALLEL)
-    int	avail_cpus;
+    int	avail_cpus = 1;
+
+#ifndef PARALLEL
+
+    bu_log("bu_parallel( x%lx, %d., x%lx ):  Not compiled for PARALLEL machine, running single-threaded\n", (long)func, ncpu, (long)arg );
+    /* do the work anyways */
+    (*func)(0, arg);
+
+#else
 
 #  if defined(alliant) && !defined(i860) && !__STDC__
     register int d7;	/* known to be in d7 */
@@ -1230,11 +1245,7 @@ bu_parallel( func, ncpu, arg )
 #  endif
     bu_pid_of_initiating_thread = 0;	/* No threads any more */
 
-#else	/* PARALLEL */
-    bu_log("bu_parallel( x%lx, %d., x%lx ):  Not compiled for PARALLEL machine, running single-threaded\n", (long)func, ncpu, (long)arg );
-    /* do the work anyways */
-    (*func)(0, arg);
-#endif	/* PARALLEL */
+#endif /* PARALLEL */
 
     return;
 }
