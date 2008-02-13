@@ -204,7 +204,6 @@ typedef long	bitv_t;		/* largest integer type */
  *	  DEC Alpha (AXP)	*
  *				*
  ********************************/
-#define IEEE_FLOAT 1		/* Uses IEEE style floating point */
 #if !defined(LITTLE_ENDIAN)
 	/* Often defined in <alpha/endian.h> */
 #	define LITTLE_ENDIAN	1	/* Under the influence of Intel Corp */
@@ -223,7 +222,6 @@ typedef long	bitv_t;		/* largest integer type */
  *	Alliant FX/8		*
  *				*
  ********************************/
-#define IEEE_FLOAT 1		/* Uses IEEE style floating point */
 typedef double	fastf_t;	/* double|float, "Fastest" float type */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
@@ -240,7 +238,6 @@ typedef long	bitv_t;		/* largest integer type */
  *	Alliant FX/2800		*
  *				*
  ********************************/
-#define IEEE_FLOAT 1		/* Uses IEEE style floating point */
 #define LITTLE_ENDIAN	1	/* Under the influence of Intel Corp */
 typedef double	fastf_t;	/* double|float, "Fastest" float type */
 typedef long	bitv_t;		/* largest integer type */
@@ -328,7 +325,6 @@ typedef long	bitv_t;		/* largest integer type */
  *  SGI 4D, multi-processor	*
  *				*
  ********************************/
-#define IEEE_FLOAT 1		/* Uses IEEE style floating point */
 typedef double	fastf_t;	/* double|float, "Fastest" float type */
 typedef long	bitv_t;		/* largest integer type */
 #if defined( _MIPS_SZLONG ) && _MIPS_SZLONG == 64
@@ -364,7 +360,6 @@ typedef long	bitv_t;		/* largest integer type */
  *     Encore Multi-Max		*
  *				*
  ********************************/
-#define IEEE_FLOAT	1	/* Uses IEEE style floating point */
 #define LITTLE_ENDIAN	1	/* Under the influence of National Semiconductor */
 typedef double	fastf_t;	/* double|float, "Fastest" float type */
 typedef long	bitv_t;		/* largest integer type */
@@ -384,7 +379,6 @@ typedef long	bitv_t;		/* largest integer type */
  *				*
  ********************************/
 
-#define IEEE_FLOAT 1		/* Uses IEEE style floating point */
 typedef double	fastf_t;	/* double|float, "Fastest" float type */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
@@ -402,7 +396,6 @@ typedef long	bitv_t;		/* largest integer type */
  *				*
  ********************************/
 
-#define IEEE_FLOAT 1		/* Uses IEEE style floating point */
 typedef double	fastf_t;	/* double|float, "Fastest" float type */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
@@ -418,7 +411,6 @@ typedef long	bitv_t;		/* largest integer type */
  *      Macintosh PowerPC       *
  *                              *
  ********************************/
-#define IEEE_FLOAT      1       /* Uses IEEE style floating point */
 typedef double  fastf_t;        /* double|float, "Fastest" float type */
 typedef long    bitv_t;         /* could use long long */
 #define BITV_SHIFT      5       /* log2( bits_wide(bitv_t) ) */
@@ -427,7 +419,6 @@ typedef long    bitv_t;         /* could use long long */
 /* #define MALLOC_NOT_MP_SAFE 1 -- not confirmed */
 #endif
 #if defined(__i686__) || defined(__i386__)
-#define IEEE_FLOAT      1      /* Uses IEEE style floating point */
 typedef double  fastf_t;        /* double|float, "Fastest" float type */
 typedef long    bitv_t;         /* could use long long */
 #define BITV_SHIFT      5      /* log2( bits_wide(bitv_t) ) */
@@ -443,7 +434,6 @@ typedef long    bitv_t;         /* could use long long */
  *      IBM SP3                 *
  *                              *
  ********************************/
-#define IEEE_FLOAT      1       /* Uses IEEE style floating point */
 typedef double  fastf_t;        /* double|float, "Fastest" float type */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
@@ -458,7 +448,6 @@ typedef long	bitv_t;		/* largest integer type */
  *      SGI Altix               *
  *                              *
  ********************************/
-#define IEEE_FLOAT      1       /* Uses IEEE style floating point */
 typedef double  fastf_t;        /* double|float, "Fastest" float type */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
@@ -481,7 +470,6 @@ typedef long	bitv_t;		/* largest integer type */
  *      Sparc 64       		*
  *                              *
  ********************************/
-#define IEEE_FLOAT      1       /* Uses IEEE style floating point */
 typedef double  fastf_t;        /* double|float, "Fastest" float type */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
@@ -498,7 +486,6 @@ typedef long	bitv_t;		/* largest integer type */
  *      AMD Opteron Linux       *
  *                              *
  ********************************/
-#define IEEE_FLOAT      1       /* Uses IEEE style floating point */
 typedef double  fastf_t;        /* double|float, "Fastest" float type */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
@@ -514,7 +501,6 @@ typedef long	bitv_t;		/* largest integer type */
  *        Linux on IA32         *
  *                              *
  ********************************/
-#define IEEE_FLOAT      1      /* Uses IEEE style floating point */
 #define BITV_SHIFT      5      /* log2( bits_wide(bitv_t) ) */
 
 typedef double fastf_t;       /* double|float, "Fastest" float type */
@@ -546,7 +532,6 @@ typedef long bitv_t;          /* could use long long */
 #if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
 typedef double		fastf_t;	/* double|float, "Fastest" float type */
 typedef long		bitv_t;		/* largest integer type */
-# define IEEE_FLOAT	1		/* Uses IEEE style floating point */
 # define	PARALLEL	1
 # define MALLOC_NOT_MP_SAFE	1	/* XXX Not sure about this */
 

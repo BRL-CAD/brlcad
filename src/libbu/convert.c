@@ -355,19 +355,17 @@ bu_cv_optimize(register int cookie)
 
 	switch (fmt)  {
 	case CV_D:
-#		if IEEE_FLOAT
-			cookie |= CV_HOST_MASK;	/* host uses network fmt */
-#		endif
-		return cookie;
+	    cookie |= CV_HOST_MASK;	/* host uses network fmt */
+	    return cookie;
 	case CV_8:
-		return cookie | CV_HOST_MASK;	/* bytes already host format */
+	    return cookie | CV_HOST_MASK;	/* bytes already host format */
 	case CV_16:
 	case CV_32:
 	case CV_64:
-		/* host is big-endian, so is network */
-		if ( Endian == END_BIG )
-			cookie |= CV_HOST_MASK;
-		return cookie;
+	    /* host is big-endian, so is network */
+	    if ( Endian == END_BIG )
+		cookie |= CV_HOST_MASK;
+	    return cookie;
 	}
 	return 0;			/* ERROR */
 }
