@@ -18,14 +18,24 @@
  * information.
  */
 /** @file resource.c
-	Author:		Gary S. Moss
-*/
+ *
+ * Lgt multiprocessor locking mechanism.  SMP-only.
+ *
+ */
+
+#include "common.h"
+
 #include <stdio.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
+
 #include "./extern.h"
+
+
 #ifdef PARALLEL
+
 static int	lock_tab[12];		/* Lock usage counters */
 static char	*all_title[12] = {
 	"malloc",
@@ -36,8 +46,8 @@ static char	*all_title[12] = {
 	"???"
 };
 
-/*
- *			L O C K _ P R
+/**
+ * L O C K _ P R
  */
 lock_pr()
 {
@@ -48,8 +58,8 @@ lock_pr()
 	}
 }
 
-/*
- *			R E S _ P R
+/**
+ * R E S _ P R
  */
 res_pr()
 {
@@ -69,7 +79,8 @@ res_pr()
 			res->re_bitvlen, res->re_bitvget, res->re_bitvfree );
 	}
 }
-#endif PARALLEL
+
+#endif /* PARALLEL */
 
 /*
  * Local Variables:
