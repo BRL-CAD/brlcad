@@ -22,7 +22,6 @@ brlcadinclude_wanted = \
 	brep.h \
 	brlcad.h \
 	cmd.h \
-	conf.h \
 	db.h \
 	db5.h \
 	dm-Null.h \
@@ -42,7 +41,6 @@ brlcadinclude_wanted = \
 	fbserv_obj.h \
 	libtermio.h \
 	light.h \
-	machine.h \
 	mater.h \
 	nmg.h \
 	nurb.h \
@@ -71,7 +69,9 @@ brlcadinclude_wanted = \
 # headers used by multiple packages but still considered private
 noinst_HEADERS = \
 	brlcad_version.h \
+	conf.h \
 	fbmsg.h \
+	machine.h \
 	sysv.h
 
 EXTRA_DIST = \
