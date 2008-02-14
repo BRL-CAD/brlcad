@@ -38,21 +38,6 @@
  *  in other BRL-CAD header files, such as vmath.h.
  *  Look for those routines in LIBBN.
  *
- *  @author Michael John Muuss
- *
- *  @par Source
- *	The U. S. Army Research Laboratory 			@n
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA	@n
- *
- *  Proper include Sequencing -
-@code
-	#include "common.h"
-	#include <stdio.h>
-	#include "bu.h"
-@endcode
- *
- *  @par Libraries Used -
- *	-lm -lc
  */
 #ifndef __BU_H__
 #define __BU_H__
@@ -926,6 +911,19 @@ struct bu_bitv {
 
 #define BU_BITV_MAGIC		0x62697476	/* 'bitv' */
 #define BU_CK_BITV(_vp)		BU_CKMAG(_vp, BU_BITV_MAGIC, "bu_bitv")
+
+/**
+ * b u _ b i t v _ s h i f t
+ *
+ * returns floor(log2(sizeof(bitv_t)*8.0)), i.e. the number of bits
+ * required with base-2 encoding to index any bit in an array of
+ * length sizeof(bitv_t)*8.0 bits long.  users should not call this
+ * directly, instead calling the BU_BITV_SHIFT macro instead.
+ */
+BU_EXPORT BU_EXTERN(inline int bu_bitv_shift, ());
+
+/** Bit vector index size */
+#define BU_BITV_SHIFT bu_bitv_shift()
 
 /** Bit vector mask */
 #define BU_BITV_MASK	((1<<BU_BITV_SHIFT)-1)

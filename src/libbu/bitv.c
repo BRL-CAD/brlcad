@@ -45,6 +45,55 @@
 #include "machine.h"
 #include "bu.h"
 
+
+/**
+ * private 32-bit recursive reduction using "SIMD Within A Register"
+ * (SWAR) to count the number of one bits in a given integer.  the
+ * first step is mapping 2-bit values into sum of 2 1-bit values in
+ * sneaky way.  this technique was taken from the University of
+ * Kentucky's Aggregate Magic Algorithms collection.
+ */
+static inline unsigned int
+count_ones32(register unsigned int x)
+{
+    x -= ((x >> 1) & 0x55555555);
+    x  = (((x >> 2) & 0x33333333) + (x & 0x33333333));
+    x  = (((x >> 4) + x) & 0x0f0f0f0f);
+    x += (x >> 8);
+    x += (x >> 16);
+    return x & 0x0000003f;
+}
+
+/**
+ * private 32-bit recursive reduction using "SIMD Within A Register"
+ * (SWAR) to compute a base-2 integer logarithm for a given integer.
+ * this technique was taken from the University of Kentucky's
+ * Aggregate Magic Algorithms collection.
+ */
+static inline unsigned int
+floor_ilog2(register unsigned int x)
+{
+    x |= (x >> 1);
+    x |= (x >> 2);
+    x |= (x >> 4);
+    x |= (x >> 8);
+    x |= (x >> 16);
+    return count_ones32(x >> 1);
+}
+
+
+/**
+ * wrap the above private routines for computing the bitv shift size.
+ * users should not call this directly, instead calling the
+ * BU_BITV_SHIFT macro instead.
+ */
+inline int
+bu_bitv_shift()
+{
+    return (floor_ilog2(sizeof(bitv_t)*8));
+}
+
+
 /**
  *			B U _ B I T V _ N E W
  * @brief

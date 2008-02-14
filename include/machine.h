@@ -71,7 +71,6 @@
  *  Windows Windows		*
  *				*
  ********************************/
-#define BU_BITV_SHIFT	5
 /* assume only one processor for now */
 #endif /* _WIN32 */
 
@@ -82,7 +81,6 @@
  *  Denelcor HEP H-1000		*
  *				*
  ********************************/
-#define BU_BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
 #define PARALLEL	1
 #endif
 
@@ -97,7 +95,6 @@
 	/* Often defined in <alpha/endian.h> */
 #	define LITTLE_ENDIAN	1	/* Under the influence of Intel Corp */
 #endif
-#define BU_BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
 #endif
 
 
@@ -107,7 +104,6 @@
  *	Alliant FX/8		*
  *				*
  ********************************/
-#define BU_BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 #define PARALLEL	1
 #endif
 
@@ -119,7 +115,6 @@
  *				*
  ********************************/
 #define LITTLE_ENDIAN	1	/* Under the influence of Intel Corp */
-#define BU_BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 #define PARALLEL	1
 #endif
 
@@ -131,7 +126,6 @@
  *  Cray-2 under "UNICOS"	*
  *				*
  ********************************/
-#define BU_BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
 #define PARALLEL	1
 #endif /* CRAY */
 
@@ -141,11 +135,6 @@
  *  Convex C1 & C2		*
  *				*
  ********************************/
-#if 1
-#define BU_BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
-#else
-#define BU_BITV_SHIFT	5
-#endif
 #define PARALLEL	1
 #endif
 
@@ -156,7 +145,6 @@
  *  "Titan" Workstation		*
  *				*
  ********************************/
-#define BU_BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 #define PARALLEL	1
 #endif
 
@@ -169,7 +157,6 @@
  ********************************/
 #define __unix	1		/* It really is unix */
 #define LITTLE_ENDIAN	1	/* Under the influence of Intel Corp */
-#define BU_BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 #endif
 
 #if	(defined(__sgi) && defined(__mips))
@@ -183,11 +170,6 @@
  *  SGI 4D, multi-processor	*
  *				*
  ********************************/
-#if defined( _MIPS_SZLONG ) && _MIPS_SZLONG == 64
-#  define BU_BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
-#else
-#  define BU_BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
-#endif
 #define PARALLEL	1
 #endif
 
@@ -198,7 +180,6 @@
  *  with SR 10			*
  *				*
  ********************************/
-#define BU_BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 #endif
 
 
@@ -209,7 +190,6 @@
  *				*
  ********************************/
 #define LITTLE_ENDIAN	1	/* Under the influence of National Semiconductor */
-#define BU_BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 #define PARALLEL	1
 #endif
 
@@ -221,7 +201,6 @@
  *   aka SunOS 5.X              *
  *				*
  ********************************/
-#define BU_BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 #define PARALLEL	1
 #endif
 
@@ -232,7 +211,6 @@
  *   Running HP-UX 9.1          *
  *				*
  ********************************/
-#define BU_BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 #endif
 
 #ifdef __APPLE__
@@ -241,7 +219,6 @@
  *      Mac OS X                *
  *                              *
  ********************************/
-#define BU_BITV_SHIFT      5       /* log2( bits_wide(bitv_t) ) */
 #define PARALLEL        1
 #endif
 
@@ -251,7 +228,6 @@
  *      IBM SP3                 *
  *                              *
  ********************************/
-#define BU_BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 #define	PARALLEL	1
 #endif
 
@@ -261,7 +237,6 @@
  *      SGI Altix               *
  *                              *
  ********************************/
-#define BU_BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
 #define	PARALLEL	1
 #endif
 
@@ -271,7 +246,6 @@
  *      Sparc 64       		*
  *                              *
  ********************************/
-#define BU_BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
 #define	PARALLEL	1
 #endif
 
@@ -281,7 +255,6 @@
  *      AMD Opteron Linux       *
  *                              *
  ********************************/
-#define BU_BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
 #define	PARALLEL	1
 #endif
 
@@ -291,7 +264,6 @@
  *        Linux on IA32         *
  *                              *
  ********************************/
-#define BU_BITV_SHIFT      5      /* log2( bits_wide(bitv_t) ) */
 #define PARALLEL        1
 #endif /* linux */
 
@@ -303,23 +275,8 @@
 #if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
 # define	PARALLEL	1
 /* amd64 */
-# if defined(__x86_64__) || defined(__sparc64__) || defined(__ia64__)
-#  define BU_BITV_SHIFT	6
-/* ia32 */
-# else
-#  define BU_BITV_SHIFT	5
-# endif
 #endif /* BSD */
 
-#ifndef BU_BITV_SHIFT
-/********************************
- *				*
- * Default 32-bit uniprocessor	*
- *  VAX, Gould, SUN, SGI	*
- *				*
- ********************************/
-#define BU_BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
-#endif
 
 /*
  *  Definitions for big-endian -vs- little-endian.
