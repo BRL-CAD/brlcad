@@ -88,12 +88,24 @@ endif
 
 
 if ONLY_BENCHMARK
-SUBDIRS = ${TCLDIR}
+SUBDIRS = \
+	${ZDIR} \
+	${PNGDIR} \
+	${REGEXDIR} \
+	${TCLDIR} \
+	${OPENNURBSDIR} \
+	${TNTDIR}
 
 else !ONLY_BENCHMARK
 
 if ONLY_RTS
-SUBDIRS = ${TCLDIR}
+SUBDIRS = \
+	${ZDIR} \
+	${PNGDIR} \
+	${REGEXDIR} \
+	${TCLDIR} \
+	${OPENNURBSDIR} \
+	${TNTDIR}
 
 else !ONLY_RTS
 # do not sort SUBDIRS
