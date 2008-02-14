@@ -277,7 +277,57 @@ proc transpose { w } {
     cursor_highlight $w
 }
 
-proc execute_cmd { w } {
+rename gets tcl_gets
+
+proc gets {channelId args} {
+    global getsVal
+
+    set len [llength $args]
+    if {$len != 0 && $len != 1} {
+	error "Usage: gets channelId ?varName?"
+    }
+
+    if {$channelId != "stdin"} {
+	return [tcl_gets $channelId $args]
+    }
+
+    rename execute_cmd execute_cmd_save
+    rename gets_execute_cmd execute_cmd
+
+    vwait getsVal
+    if {$len == 1} {
+	upvar $args vname
+	set lines [split $getsVal "\n"]
+	if {[lindex $lines end] == {}} {
+	    set lines [lreplace $lines end end]
+	}
+
+	if {[llength $lines] == 1} {
+	    set vname [lindex $lines 0]
+	} else {
+	    set vname [lindex $lines 1]
+	}
+
+	return [string length $vname]
+    }
+}
+
+proc gets_execute_cmd {w} {
+    global getsVal
+
+    rename execute_cmd gets_execute_cmd
+    rename execute_cmd_save execute_cmd
+
+    $w mark set insert {end - 2c}
+    $w insert insert \n
+
+    $w see insert
+    update
+
+    set getsVal [$w get promptEnd insert]
+}
+
+proc execute_cmd {w} {
     global mged_gui
 
     $w mark set insert {end - 2c}
