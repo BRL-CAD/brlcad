@@ -21,7 +21,7 @@
 
 #include "common.h"
 
-#include "machine.h"
+#include "bu.h"
 
 const fastf_t	turb_table[20][20][20] = {
 	 {{ 0.105489192064851520, -0.203732953406870370, -0.001023580785840750, -0.418433680199086670,

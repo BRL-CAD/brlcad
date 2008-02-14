@@ -66,23 +66,6 @@
  *  user-provided parameters.  For example:
  *	{ register double _f; stuff; }
  *
- *  @author Michael John Muuss
- *
- *
- *  @par Source
- *	The U. S. Army Research Laboratory
- * @n	Aberdeen Proving Ground, Maryland  21005
- *
- *  Include Sequencing -
-@code
-	#include <stdio.h>
-	#include <math.h>
-	#include "machine.h"	/_* For fastf_t definition on this machine *_/
-	#include "vmath.h"
-@endcode
- *
- * @par  Libraries Used
- *	-lm -lc
  */
 
 #ifndef __VMATH_H__
@@ -95,6 +78,10 @@
 
 /* for floating point tolerances and other math constants */
 #include <float.h>
+
+/* for fastf_t */
+#include "bu.h"
+
 
 __BEGIN_DECLS
 

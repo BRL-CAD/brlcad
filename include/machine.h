@@ -38,24 +38,6 @@
  *
  *  General Symbols and Types Defined -
  *
- *      genptr_t - A portable way of declaring a "generic" pointer
- *      that is wide enough to point to anything, which can be used on
- *      both ANSI C and K&R C environments.  On some machines,
- *      pointers to functions can be wider than pointers to data
- *      bytes, so a declaration of "char*" isn't generic enough.
- *      DEPRECATED: use void* and char* pointers
- *
- *	fastf_t - Intended to be the fastest floating point data type
- *	on the current machine, with at least 64 bits of precision.
- *	On 16 and 32 bit machine, this is typically "double", but on
- *	64 bit machines, it is often "float".  Virtually all floating
- *	point variables (and more complicated data types, like vect_t
- *	and mat_t) are defined as fastf_t.  The one exception is when
- *	a subroutine return is a floating point value; that is always
- *	declared as "double".
- *      TODO: If used pervasively, it should eventually be possible to
- *      make fastf_t a GMP C++ type for fixed-precision computations.
- *
  *	HIDDEN - Functions intended to be local to one module should
  *	be declared HIDDEN.  For production use, and lint, it will be
  *	defined as "static", but for debugging it can be defined as
@@ -138,8 +120,6 @@
  *  Windows Windows		*
  *				*
  ********************************/
-typedef double fastf_t;
-typedef long bitv_t;
 #define BITV_SHIFT	5
 /* assume only one processor for now */
 #define MAX_PSW	4
@@ -153,9 +133,7 @@ typedef long bitv_t;
  *				*
  ********************************/
 #define IBM_FLOAT 1		/* Uses IBM style floating point */
-typedef double	fastf_t;	/* double|float, "Fastest" float type */
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
-
 #define MAX_PSW		128	/* Max number of process streams */
 #define PARALLEL	1
 #endif
@@ -171,9 +149,7 @@ typedef double	fastf_t;	/* double|float, "Fastest" float type */
 	/* Often defined in <alpha/endian.h> */
 #	define LITTLE_ENDIAN	1	/* Under the influence of Intel Corp */
 #endif
-typedef double	fastf_t;	/* double|float, "Fastest" float type */
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
-
 #define MAX_PSW		1	/* only one processor, max */
 #endif
 
@@ -184,12 +160,9 @@ typedef double	fastf_t;	/* double|float, "Fastest" float type */
  *	Alliant FX/8		*
  *				*
  ********************************/
-typedef double	fastf_t;	/* double|float, "Fastest" float type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
-
 #define MAX_PSW		8	/* Max number of processors */
 #define PARALLEL	1
-
 #endif
 
 
@@ -200,12 +173,9 @@ typedef double	fastf_t;	/* double|float, "Fastest" float type */
  *				*
  ********************************/
 #define LITTLE_ENDIAN	1	/* Under the influence of Intel Corp */
-typedef double	fastf_t;	/* double|float, "Fastest" float type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
-
 #define MAX_PSW		28	/* Max number of processors */
 #define PARALLEL	1
-
 #endif
 
 
@@ -216,9 +186,7 @@ typedef double	fastf_t;	/* double|float, "Fastest" float type */
  *  Cray-2 under "UNICOS"	*
  *				*
  ********************************/
-typedef double	fastf_t;	/* double|float, "Fastest" float type */
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
-
 #define MAX_PSW		4	/* Max number of processors */
 #define PARALLEL	1
 #endif /* CRAY */
@@ -229,13 +197,11 @@ typedef double	fastf_t;	/* double|float, "Fastest" float type */
  *  Convex C1 & C2		*
  *				*
  ********************************/
-typedef double		fastf_t;/* double|float, "Fastest" float type */
 #if 1
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
 #else
 #define BITV_SHIFT	5
 #endif
-
 #define MAX_PSW		4	/* Max number of processors */
 #define PARALLEL	1
 #endif
@@ -247,9 +213,7 @@ typedef double		fastf_t;/* double|float, "Fastest" float type */
  *  "Titan" Workstation		*
  *				*
  ********************************/
-typedef double	fastf_t;	/* double|float, "Fastest" float type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
-
 #define MAX_PSW		4	/* # processors, max */
 #define PARALLEL	1
 #endif
@@ -263,9 +227,7 @@ typedef double	fastf_t;	/* double|float, "Fastest" float type */
  ********************************/
 #define __unix	1		/* It really is unix */
 #define LITTLE_ENDIAN	1	/* Under the influence of Intel Corp */
-typedef double	fastf_t;	/* double|float, "Fastest" float type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
-
 #define MAX_PSW		1	/* only one processor, max */
 #endif
 
@@ -280,7 +242,6 @@ typedef double	fastf_t;	/* double|float, "Fastest" float type */
  *  SGI 4D, multi-processor	*
  *				*
  ********************************/
-typedef double	fastf_t;	/* double|float, "Fastest" float type */
 #if defined( _MIPS_SZLONG ) && _MIPS_SZLONG == 64
 #  define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
 #else
@@ -288,7 +249,6 @@ typedef double	fastf_t;	/* double|float, "Fastest" float type */
 #endif
 #define MAX_PSW		1024
 #define PARALLEL	1
-
 #endif
 
 #ifdef apollo
@@ -298,9 +258,7 @@ typedef double	fastf_t;	/* double|float, "Fastest" float type */
  *  with SR 10			*
  *				*
  ********************************/
-typedef double	fastf_t;	/* double|float, "Fastest" float type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
-
 #define MAX_PSW		1	/* only one processor, max */
 #endif
 
@@ -312,9 +270,7 @@ typedef double	fastf_t;	/* double|float, "Fastest" float type */
  *				*
  ********************************/
 #define LITTLE_ENDIAN	1	/* Under the influence of National Semiconductor */
-typedef double	fastf_t;	/* double|float, "Fastest" float type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
-
 #define MAX_PSW		32	/* This number is uncertain */
 #define PARALLEL	1
 #endif
@@ -327,13 +283,9 @@ typedef double	fastf_t;	/* double|float, "Fastest" float type */
  *   aka SunOS 5.X              *
  *				*
  ********************************/
-
-typedef double	fastf_t;	/* double|float, "Fastest" float type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
-
 #define MAX_PSW		256	/* need to increase this for Super Dragon? */
 #define PARALLEL	1
-
 #endif
 
 #if defined(hppa)
@@ -343,8 +295,6 @@ typedef double	fastf_t;	/* double|float, "Fastest" float type */
  *   Running HP-UX 9.1          *
  *				*
  ********************************/
-
-typedef double	fastf_t;	/* double|float, "Fastest" float type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 #define MAX_PSW		1	/* only one processor, max */
 #endif
@@ -355,7 +305,6 @@ typedef double	fastf_t;	/* double|float, "Fastest" float type */
  *      Mac OS X                *
  *                              *
  ********************************/
-typedef double  fastf_t;        /* double|float, "Fastest" float type */
 #define BITV_SHIFT      5       /* log2( bits_wide(bitv_t) ) */
 #define MAX_PSW         512       /* Unused, but useful for thread debugging */
 #define PARALLEL        1
@@ -367,7 +316,6 @@ typedef double  fastf_t;        /* double|float, "Fastest" float type */
  *      IBM SP3                 *
  *                              *
  ********************************/
-typedef double  fastf_t;        /* double|float, "Fastest" float type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 #define MAX_PSW		32     	/* they can go 32-way per single image */
 #define	PARALLEL	1
@@ -379,7 +327,6 @@ typedef double  fastf_t;        /* double|float, "Fastest" float type */
  *      SGI Altix               *
  *                              *
  ********************************/
-typedef double  fastf_t;        /* double|float, "Fastest" float type */
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
 #define MAX_PSW		256
 #define	PARALLEL	1
@@ -391,7 +338,6 @@ typedef double  fastf_t;        /* double|float, "Fastest" float type */
  *      Sparc 64       		*
  *                              *
  ********************************/
-typedef double  fastf_t;        /* double|float, "Fastest" float type */
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
 #define MAX_PSW		256
 #define	PARALLEL	1
@@ -403,7 +349,6 @@ typedef double  fastf_t;        /* double|float, "Fastest" float type */
  *      AMD Opteron Linux       *
  *                              *
  ********************************/
-typedef double  fastf_t;        /* double|float, "Fastest" float type */
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
 #define MAX_PSW		256
 #define	PARALLEL	1
@@ -415,7 +360,6 @@ typedef double  fastf_t;        /* double|float, "Fastest" float type */
  *        Linux on IA32         *
  *                              *
  ********************************/
-typedef double fastf_t;       /* double|float, "Fastest" float type */
 #define BITV_SHIFT      5      /* log2( bits_wide(bitv_t) ) */
 #define MAX_PSW         16
 #define PARALLEL        1
@@ -427,9 +371,7 @@ typedef double fastf_t;       /* double|float, "Fastest" float type */
  *                              *
  ********************************/
 #if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
-typedef double		fastf_t;	/* double|float, "Fastest" float type */
 # define	PARALLEL	1
-
 /* amd64 */
 # if defined(__x86_64__) || defined(__sparc64__) || defined(__ia64__)
 #  define BITV_SHIFT	6
@@ -448,11 +390,8 @@ typedef double		fastf_t;	/* double|float, "Fastest" float type */
  *  VAX, Gould, SUN, SGI	*
  *				*
  ********************************/
-typedef double	fastf_t;	/* double|float, "Fastest" float type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
-
 #define MAX_PSW		4	/* allow for a dual core dual */
-
 #endif
 
 /*
@@ -461,51 +400,15 @@ typedef double	fastf_t;	/* double|float, "Fastest" float type */
  *	LITTLE_ENDIAN:	Byte [0] is on right side of word (lsb).
  */
 #ifdef vax
-# define LITTLE_ENDIAN	1
+#  define LITTLE_ENDIAN	1
 #endif
 
 #if !defined(BIG_ENDIAN) && !defined(LITTLE_ENDIAN)
-# define BIG_ENDIAN	1	/* The common case */
+#  define BIG_ENDIAN	1	/* The common case */
 #endif
 
 /*  Bit vector mask */
 #define BITV_MASK	((1<<BITV_SHIFT)-1)
-
-/*
- * Definitions about limits of floating point representation
- * Eventually, should be tied to type of hardware (IEEE, IBM, Cray)
- * used to implement the fastf_t type.
- */
-#if defined(vax) || (defined(sgi) && !defined(mips))
-	/* DEC VAX "D" format, the most restrictive */
-#define MAX_FASTF		1.0e37	/* Very close to the largest number */
-#define SQRT_MAX_FASTF		1.0e18	/* This squared just avoids overflow */
-#define SMALL_FASTF		1.0e-37	/* Anything smaller is zero */
-#define SQRT_SMALL_FASTF	1.0e-18	/* This squared gives zero */
-#else
-	/* IBM format, being the next most restrictive format */
-#define MAX_FASTF		1.0e73	/* Very close to the largest number */
-#define SQRT_MAX_FASTF		1.0e36	/* This squared just avoids overflow */
-#define SMALL_FASTF		1.0e-77	/* Anything smaller is zero */
-#if defined(aux)
-#  define SQRT_SMALL_FASTF	1.0e-40 /* _doprnt error in libc */
-#else
-#  define SQRT_SMALL_FASTF	1.0e-39	/* This squared gives zero */
-#endif
-#endif
-#define SMALL			SQRT_SMALL_FASTF
-
-/*
- *  Definition of a "generic" pointer that can hold a pointer to anything.
- *  According to tradition, a (char *) was generic, but the ANSI folks
- *  worry about machines where (int *) might be wider than (char *),
- *  so here is the clean way of handling it.
- */
-#if !defined(GENPTR_NULL)
-typedef void *genptr_t;
-#  define GENPTR_NULL	((genptr_t)0)
-#endif
-
 
 /* Functions local to one file should be declared HIDDEN:  (nil)|static */
 /* To aid in using ADB, generally leave this as nil. */

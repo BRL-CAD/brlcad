@@ -28,7 +28,7 @@
 #include "common.h"
 
 /* for genptr_t */
-#include "machine.h"
+#include "bu.h"
 
 
 /* NSIG not always defined in <signal.h> */

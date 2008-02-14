@@ -31,7 +31,7 @@
 
 #include <stdio.h>
 
-#include "machine.h"
+#include "bu.h"
 
 fastf_t
 splinef( c, s )

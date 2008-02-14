@@ -325,6 +325,19 @@ __BEGIN_DECLS
 BU_EXPORT BU_EXTERN(const char *bu_version, (void));
 
 
+/**
+ * genptr_t - A portable way of declaring a "generic" pointer that is
+ * wide enough to point to anything, which can be used on both ANSI C
+ * and K&R C environments.  On some machines, pointers to functions
+ * can be wider than pointers to data bytes, so a declaration of
+ * "char*" isn't generic enough.
+ */
+#if !defined(GENPTR_NULL)
+typedef void *genptr_t;
+#  define GENPTR_NULL	((genptr_t)0)
+#endif
+
+
 /*----------------------------------------------------------------------*/
 /** @addtogroup hton */
 /** @{ */
@@ -792,6 +805,50 @@ BU_EXPORT BU_EXTERN(struct bu_list *bu_list_pop, (struct bu_list *hp));
 #define BU_LIST_MAIN_PTR(_type, _ptr2, _name2)	\
 	((struct _type *)(((char *)(_ptr2)) - offsetof(struct _type, _name2.magic)))
 /** @} */
+
+
+/**
+ * fastf_t - Intended to be the fastest floating point data type on
+ * the current machine, with at least 64 bits of precision.  On 16 and
+ * 32 bit machine, this is typically "double", but on 64 bit machines,
+ * it is often "float".  Virtually all floating point variables (and
+ * more complicated data types, like vect_t and mat_t) are defined as
+ * fastf_t.  The one exception is when a subroutine return is a
+ * floating point value; that is always declared as "double".
+ *
+ * TODO: If used pervasively, it should eventually be possible to make
+ * fastf_t a GMP C++ type for fixed-precision computations.
+ */
+typedef double fastf_t;
+
+/**
+ * Definitions about limits of floating point representation
+ * Eventually, should be tied to type of hardware (IEEE, IBM, Cray)
+ * used to implement the fastf_t type.
+ */
+#if defined(vax) || (defined(sgi) && !defined(mips))
+   /* DEC VAX "D" format, the most restrictive */
+#  define MAX_FASTF		1.0e37	/* Very close to the largest number */
+#  define SQRT_MAX_FASTF	1.0e18	/* This squared just avoids overflow */
+#  define SMALL_FASTF		1.0e-37	/* Anything smaller is zero */
+#  define SQRT_SMALL_FASTF	1.0e-18	/* This squared gives zero */
+#else
+   /* IBM format, being the next most restrictive format */
+#  define MAX_FASTF		1.0e73	/* Very close to the largest number */
+#  define SQRT_MAX_FASTF	1.0e36	/* This squared just avoids overflow */
+#  define SMALL_FASTF		1.0e-77	/* Anything smaller is zero */
+#  if defined(aux)
+#    define SQRT_SMALL_FASTF	1.0e-40 /* _doprnt error in libc */
+#  else
+#    define SQRT_SMALL_FASTF	1.0e-39	/* This squared gives zero */
+#  endif
+#endif
+
+/** deprecated, do not use */
+#define SMALL			SQRT_SMALL_FASTF
+
+
+
 /*----------------------------------------------------------------------*/
 /* bitv.c */
 /*

@@ -30,7 +30,7 @@
 
 #include <stdio.h>
 
-#include "machine.h"
+#include "bu.h"
 
 fastf_t brlabs( a )
 register const fastf_t a;

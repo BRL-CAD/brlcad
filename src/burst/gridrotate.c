@@ -19,14 +19,17 @@
  *
  */
 /** @file gridrotate.c
- *	Author:		Jeff Hanes
- *	Modified:	Gary S. Moss	(Added roll rotation.)
+ *
  */
+
+#include "common.h"
+
 #include <math.h>
-#include "machine.h"
+
+#include "bu.h"
+
 #include "./vecmath.h"
 
-void	gridRotate();
 
 /*
 	void	gridRotate( fastf_t azim, fastf_t elev, fastf_t roll,
@@ -44,33 +47,34 @@ void	gridRotate();
 
  */
 void
-gridRotate( azim, elev, roll, des_H, des_V )
-fastf_t	azim, elev, roll;
-register fastf_t	*des_H, *des_V;
-	{	fastf_t	sn_azm = sin( azim );
-		fastf_t	cs_azm = cos( azim );
-		fastf_t	sn_elv = sin( elev );
-	des_H[0] = -sn_azm;
-	des_H[1] =  cs_azm;
-	des_H[2] =  0.0;
-	des_V[0] = -sn_elv*cs_azm;
-	des_V[1] = -sn_elv*sn_azm;
-	des_V[2] =  cos( elev );
-
-	if ( roll != 0.0 )
-		{	fastf_t	tmp_V[3], tmp_H[3], prime_V[3];
-			fastf_t	sn_roll = sin( roll );
-			fastf_t	cs_roll = cos( roll );
-		Scale2Vec( des_V, cs_roll, tmp_V );
-		Scale2Vec( des_H, sn_roll, tmp_H );
-		Add2Vec( tmp_V, tmp_H, prime_V );
-		Scale2Vec( des_V, -sn_roll, tmp_V );
-		Scale2Vec( des_H, cs_roll, tmp_H );
-		Add2Vec( tmp_V, tmp_H, des_H );
-		CopyVec( des_V, prime_V );
-		}
-	return;
-	}
+gridRotate( fastf_t azim, fastf_t elev, fastf_t roll, fastf_t *des_H, fastf_t *des_V )
+{
+    fastf_t sn_azm = sin( azim );
+    fastf_t cs_azm = cos( azim );
+    fastf_t sn_elv = sin( elev );
+    
+    des_H[0] = -sn_azm;
+    des_H[1] =  cs_azm;
+    des_H[2] =  0.0;
+    des_V[0] = -sn_elv*cs_azm;
+    des_V[1] = -sn_elv*sn_azm;
+    des_V[2] =  cos( elev );
+    
+    if ( roll != 0.0 ) {
+	fastf_t tmp_V[3], tmp_H[3], prime_V[3];
+	fastf_t sn_roll = sin( roll );
+	fastf_t cs_roll = cos( roll );
+	
+	Scale2Vec( des_V, cs_roll, tmp_V );
+	Scale2Vec( des_H, sn_roll, tmp_H );
+	Add2Vec( tmp_V, tmp_H, prime_V );
+	Scale2Vec( des_V, -sn_roll, tmp_V );
+	Scale2Vec( des_H, cs_roll, tmp_H );
+	Add2Vec( tmp_V, tmp_H, des_H );
+	CopyVec( des_V, prime_V );
+    }
+    return;
+}
 
 /*
  * Local Variables:
