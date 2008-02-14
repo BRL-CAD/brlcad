@@ -406,28 +406,6 @@
 #  define BIG_ENDIAN	1	/* The common case */
 #endif
 
-/*  Bit vector mask */
-#define BITV_MASK	((1<<BITV_SHIFT)-1)
-
-/*
- *  ANSI and POSIX do not seem to have prototypes for the hypot() routine,
- *  but several vendors include it in their -lm math library.
- */
-#if defined(_POSIX_SOURCE) && !defined(__USE_MISC)
-	/* But the sgi -lm does have a hypot routine so lets use it */
-#if defined(__sgi) || defined(__convexc__)
-	extern double hypot(double, double);
-#else
-#  include <math.h>
-#  define hypot(x, y)      sqrt( (x)*(x)+(y)*(y) )
-#endif
-#endif
-
-#if defined(SUNOS) && SUNOS >= 52
-#  include <math.h>
-	extern double hypot(double, double);
-#endif
-
 #endif  /* __MACHINE_H__ */
 
 /** @} */

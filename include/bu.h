@@ -865,6 +865,9 @@ typedef double fastf_t;
  */
 typedef long bitv_t;
 
+/**  Bit vector mask */
+#define BITV_MASK	((1<<BITV_SHIFT)-1)
+
 /**
  *
  * @brief
