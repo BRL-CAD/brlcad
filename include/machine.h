@@ -132,7 +132,6 @@
  *  Denelcor HEP H-1000		*
  *				*
  ********************************/
-#define IBM_FLOAT 1		/* Uses IBM style floating point */
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
 #define MAX_PSW		128	/* Max number of process streams */
 #define PARALLEL	1
