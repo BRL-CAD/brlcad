@@ -709,6 +709,16 @@ main(int argc, char **argv)
 	bu_vls_free(&vls);
 
 #if !defined(_WIN32) || defined(__CYGWIN__)
+	/* Redirect stdout */
+	(void)close(1);
+	(void)dup(pipe_out[1]);
+	(void)close(pipe_out[1]);
+
+	/* Redirect stderr */
+	(void)close(2);
+	(void)dup(pipe_err[1]);
+	(void)close(pipe_err[1]);
+
 	out = (ClientData)(size_t)pipe_out[0];
 	chan = Tcl_MakeFileChannel(out, TCL_READABLE);
 	Tcl_CreateChannelHandler(chan, TCL_READABLE, std_out_or_err, out);
