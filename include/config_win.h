@@ -34,6 +34,7 @@
 
 #define __STDC__ 1
 #define USE_PROTOTYPES 1
+#define inline
 
 /* XXX - should not rely on config_win.h providing these headers. */
 #include <windows.h>
