@@ -21,9 +21,6 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * fix mged text flood hang (e.g. large rtarea report)
 
-* fix opengl framebuffer, it's related to the fork() and closure of
-  file descriptors.  still need to pinpoint why it's now a problem.
-
 
 THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------
@@ -50,6 +47,9 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 * fix the "(type)(size_t)val" hacks (using ints like ptrs, etc)
 
 * implement graphical crash reporter tool (bombardier)
+
+* fix opengl framebuffer, some SMP problem causing crash during first
+  OpenGL draw into the glx context (only tested on Mac OS X).
 
 
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES

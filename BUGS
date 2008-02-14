@@ -21,7 +21,10 @@ Recent Bugs
 
 * mged tab-completion doesn't work if the object names have spaces
 
-* OpenGL framebuffer crashes
+* OpenGL framebuffer crashes.  Problem was traced down to a problem
+  with using the if_ogl interface with SMP enabled under Mac OS X.
+  With PARALLEL turned off, everything works just fine.  The crash
+  occurs during the very first OpenGL call into the glx context.
 
 * OpenGL display manager doesn't refresh automatically when the
   context is invalidated (on Mac OS X) any more
