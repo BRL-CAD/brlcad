@@ -920,6 +920,13 @@ struct bu_bitv {
  * directly, instead calling the BU_BITV_SHIFT macro instead.
  */
 BU_EXPORT BU_EXTERN(inline int bu_bitv_shift, ());
+#if 0
+#if defined(_WIN32) && !defined(__CYGWIN__)
+BU_EXPORT BU_EXTERN(int bu_bitv_shift, ());
+#else
+BU_EXPORT BU_EXTERN(inline int bu_bitv_shift, ());
+#endif
+#endif
 
 /** Bit vector index size */
 #define BU_BITV_SHIFT bu_bitv_shift()
