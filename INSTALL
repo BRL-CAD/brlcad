@@ -494,6 +494,12 @@ Aliases:
 	--enable-profile
 	--enable-profiled
 
+--enable-parallel turns on support for SMP architectures.  Default is "yes".
+Aliases:
+	--enable-parallel-build
+	--enable-smp
+	--enable-smp-build
+
 --enable-dtrace turns on Sun dtrace support.  Default is "no".
 Aliases:
 	None

@@ -382,6 +382,9 @@ BC_ARG_ENABLE([use_debug], [debug], [Enable debug symbols], [auto])
 # profiling
 BC_ARG_ENABLE([use_profiling], [profiling], [Enable profiling], [no])
 
+# parallel
+BC_ARG_ENABLE([build_parallel], [parallel], [Compile for SMP architectures], [yes])
+
 # Sun dtrace
 BC_ARG_ENABLE([use_dtrace], [dtrace], [Enable dtrace support], [no])
 
@@ -590,6 +593,11 @@ BC_ARG_ALIAS([use_debug], [debugging])
 # profiling aliases (help uses profiling)
 BC_ARG_ALIAS([use_profiling], [profile])
 BC_ARG_ALIAS([use_profiling], [profiled])
+
+# parallel aliases (help uses parallel)
+BC_ARG_ALIAS([build_parallel], [parallel-build])
+BC_ARG_ALIAS([build_parallel], [smp])
+BC_ARG_ALIAS([build_parallel], [smp-build])
 
 # verbose output (help uses verbose)
 BC_ARG_ALIAS([build_verbose], [verbosity])
@@ -845,6 +853,9 @@ AC_MSG_RESULT($bc_use_debug)
 
 AC_MSG_CHECKING(whether to enable profile mode compilation)
 AC_MSG_RESULT($bc_use_profiling)
+
+AC_MSG_CHECKING(whether to enable support for SMP architectures)
+AC_MSG_RESULT($bc_build_parallel)
 
 AC_MSG_CHECKING(whether to enable verbose output)
 AC_MSG_RESULT($bc_build_verbose)
@@ -3467,6 +3478,11 @@ else
 	AC_DEFINE(NDEBUG, 1, [Define to indicate non-debug code (assert utilizes)])
 fi
 
+dnl SMP-aware (i.e. PARALLEL) build
+if test "x$bc_build_parallel" != "xno" ; then
+	AC_DEFINE(PARALLEL, 1, [Define to enable SMP architecture parallel computation support ])
+fi
+
 AC_DEFINE_UNQUOTED([USE_FBSERV], [1], [Required for libdm/mged to allow direct fbserv render connections])
 
 
@@ -3933,6 +3949,7 @@ AC_MSG_RESULT([Build 64-bit release .................: $build_brlcad_64bit])
 AC_MSG_RESULT([Build optimized release ..............: $bc_use_optimized])
 AC_MSG_RESULT([Build debug release ..................: $bc_use_debug])
 AC_MSG_RESULT([Build profile release ................: $bc_use_profiling])
+AC_MSG_RESULT([Build SMP-capable release ............: $bc_build_parallel])
 AC_MSG_RESULT([Build static libraries ...............: $enable_static])
 AC_MSG_RESULT([Build shared/dynamic libraries .......: $enable_shared])
 AC_MSG_RESULT([Print verbose compilation warnings ...: $bc_build_warnings])
