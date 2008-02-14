@@ -980,7 +980,7 @@ fb_ogl_open(FBIO *ifp, char *file, int width, int height)
 	(valuemask & CWCursor) ? printf(" cursor = %08X ", (long)((attributes)->cursor)) : 0, \
 	printf(" }\n")) > 0 ? XCreateWindow(display, parent, x, y, width, height, border_width, depth, class, visual, valuemask, attributes) : -1;
 
-    OGL(ifp)->wind = XCreateWindowDebug(OGL(ifp)->dispp,
+    OGL(ifp)->wind = XCreateWindow(OGL(ifp)->dispp,
 				   RootWindow(OGL(ifp)->dispp,
 					      OGL(ifp)->vip->screen),
 				   0, 0, ifp->if_width, ifp->if_height, 0,
