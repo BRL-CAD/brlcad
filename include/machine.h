@@ -29,55 +29,13 @@
  *  used throughout the BRL-CAD Package.  Virtually all other BRL-CAD
  *  header files depend on this header file being included first.
  *
- *  Many of these fundamental data types are machine (vendor) dependent.
- *  Some may assume different values on the same machine, depending on
- *  which version of the compiler is being used.
- *
- *  Additions will need to be made here when porting BRL-CAD to a new machine
- *  which is anything but a 32-bit big-endian uniprocessor.
- *
  *  General Symbols and Types Defined -
- *
- *	HIDDEN - Functions intended to be local to one module should
- *	be declared HIDDEN.  For production use, and lint, it will be
- *	defined as "static", but for debugging it can be defined as
- *	NIL, so that the routine names can be made available to the
- *	debugger.
- *
- *	MAX_FASTF - Very close to the largest value that can be held
- *	by a fastf_t without overflow.  Typically specified as an
- *	integer power of ten, to make the value easy to spot when
- *	printed.
- *      TODO: macro function syntax instead of constant, move to libbn
- *      (DEPRECATED)
- *
- *	SQRT_MAX_FASTF - sqrt(MAX_FASTF), or slightly smaller.  Any
- *	number larger than this, if squared, can be expected to
- *	produce an overflow.
- *      TODO: macro function syntax instead of constant (DEPRECATED)
- *
- *	SMALL_FASTF - Very close to the smallest value that can be
- *	represented while still being greater than zero.  Any number
- *	smaller than this (and non-negative) can be considered to be
- *	zero; dividing by such a number can be expected to produce a
- *	divide-by-zero error.  All divisors should be checked against
- *	this value before actual division is performed.
- *      TODO: macro function sytax instead of constant (DEPRECATED)
- *
- *	SQRT_SMALL_FASTF -sqrt(SMALL_FASTF), or slightly larger.  The
- *	value of this is quite a lot larger than that of SMALL_FASTF.
- *	Any number smaller than this, when squared, can be expected to
- *	produce a zero result.
- *      TODO: macro function syntax instead of constant (DEPRECATED)
  *
  *	BITV_SHIFT - log2( bits_wide(bitv_t) ).  Used to determine how
  *	many bits of a bit-vector subscript are index-of-bit in bitv_t
  *	word, and how many bits of the subscript are for word index.
  *	On a 32-bit machine, BITV_SHIFT is 5.
  *      DEPRECATED: needs to be detected at run-time
- *
- *	XXX The BYTE_ORDER handling needs to change to match the POSIX
- *	XXX recommendations.
  *
  *  Parallel Computation Symbols -
  *
