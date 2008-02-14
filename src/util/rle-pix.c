@@ -36,11 +36,17 @@
 #  include <unistd.h>
 #endif
 
-#include "rle.h"
-
 #include "fb.h"
 #include "bu.h"
 
+/* 
+ * system installed RLE reports a re-define, so undef it to quell the
+ * warning
+ */
+#ifdef USE_PROTOTYPES
+# undef USE_PROTOTYPES
+#endif
+#include "rle.h"
 
 static FILE	*infp;
 static char	*infile;

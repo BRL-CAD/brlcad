@@ -40,6 +40,14 @@
 
 #include "bu.h"
 #include "fb.h"
+
+/* 
+ * system installed RLE reports a re-define, so undef it to quell the
+ * warning
+ */
+#ifdef USE_PROTOTYPES
+# undef USE_PROTOTYPES
+#endif
 #include "rle.h"
 
 static FILE	*infp;
