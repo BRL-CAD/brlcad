@@ -55,7 +55,6 @@
 #include <fcntl.h>
 #include <signal.h>
 
-#include "machine.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"

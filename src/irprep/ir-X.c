@@ -53,7 +53,6 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
-#include "machine.h"
 #include "bu.h"
 
 

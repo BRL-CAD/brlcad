@@ -46,7 +46,6 @@
 #  define ITK_VERSION ITCL_VERSION
 #endif
 
-#include "machine.h"
 #include "bu.h"
 #include "tclcad.h"
 

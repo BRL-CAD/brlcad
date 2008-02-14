@@ -58,7 +58,6 @@
 #include <math.h>
 #include <setjmp.h>
 
-#include "machine.h"
 #include "vmath.h"
 #include "db.h"
 #include "nmg.h"

@@ -35,7 +35,6 @@
 #  include <sys/types.h>
 #endif
 
-#include "machine.h"
 #include "bu.h"
 
 

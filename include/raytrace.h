@@ -29,31 +29,6 @@
  *  provided for the convenience of applications builders.  However,
  *  the internal data structures are subject to change in each release.
  *
- *  @author
- *	Michael John Muuss
- *
- *  @par Source
- *	The U. S. Army Research Laboratory
- *@n	Aberdeen Proving Ground, Maryland  21005 USA
- *
- *  Include Sequencing -
-@code
-	# include "common.h"	/_* Must come before system <> includes *_/
-	# include <stdio.h>
-	# include <string.h>
-	# include <math.h>
-	# include "machine.h"	/_* For fastf_t definition on this machine *_/
-	# include "bu.h"
-	# include "vmath.h"	/_* For vect_t definition *_/
-	# include "bn.h"
-	# include "db.h"		/_* OPTIONAL, precedes raytrace.h when used *_/
-	# include "nmg.h"	/_* OPTIONAL, precedes raytrace.h when used *_/
-	# include "raytrace.h"
-	# include "nurb.h"	/_* OPTIONAL, follows raytrace.h when used *_/
-@endcode
- *
- *  Libraries Used -
- *	LIBRT LIBRT_LIBES -lm -lc
  */
 
 #ifndef __RAYTRACE_H__

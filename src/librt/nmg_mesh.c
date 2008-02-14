@@ -37,7 +37,6 @@
 
 #include <stdio.h>
 #include <math.h>
-#include "machine.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"

@@ -32,7 +32,6 @@
 #include <math.h>
 #include <signal.h>
 
-#include "machine.h"
 #include "vmath.h"
 #include "mater.h"
 #include "raytrace.h"

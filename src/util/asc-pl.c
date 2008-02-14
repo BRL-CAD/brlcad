@@ -38,7 +38,6 @@
 #  include <unistd.h>
 #endif
 
-#include "machine.h"
 #include "plot3.h"
 #include "bu.h"
 

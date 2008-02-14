@@ -31,7 +31,6 @@
 
 #include "common.h"
 
-#include "machine.h"
 #include "bu.h"
 #include "bn.h"
 #include "raytrace.h"

@@ -37,7 +37,6 @@
 #include <math.h>
 #include <ctype.h>
 
-#include "machine.h"
 #include "tcl.h"
 #include "vmath.h"
 #include "nmg.h"

@@ -26,21 +26,12 @@
  * 	Non Rational Uniform B-Spline (NURB)
  *	curves and surfaces.
  *
- *
- *  @author	Paul Randal Stay
- *
  */
 
 #ifndef __NURB_H__
 #define __NURB_H__
 
 #include "common.h"
-
-/* make sure all the prerequisite include files have been included
- */
-#ifndef MACHINE_H
-# include "machine.h"
-#endif
 
 #ifndef VMATH_H
 # include "vmath.h"

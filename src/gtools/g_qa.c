@@ -42,7 +42,6 @@
 #include <math.h>
 #include <limits.h>			/* home of INT_MAX aka MAXINT */
 
-#include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"

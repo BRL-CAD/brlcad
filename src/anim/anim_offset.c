@@ -38,13 +38,11 @@
 
 #include <math.h>
 #include <stdio.h>
-#include "machine.h"
+
 #include "vmath.h"
 #include "bu.h"
 #include "anim.h"
 
-extern int bu_optind;
-extern char *bu_optarg;
 
 int full_print = 0;
 vect_t offset;

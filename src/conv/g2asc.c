@@ -42,7 +42,6 @@
 #  include <unistd.h>
 #endif
 
-#include "machine.h"
 #include "vmath.h"
 #include "db.h"
 #include "raytrace.h"

@@ -45,7 +45,6 @@
 
 #include "tcl.h"
 
-#include "machine.h"
 #include "cmd.h"
 
 /*

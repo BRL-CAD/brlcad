@@ -34,7 +34,6 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
-#include "machine.h"
 #include "bu.h"
 
 static int bu_lex_reading_comment = 0;

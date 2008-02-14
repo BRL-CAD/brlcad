@@ -74,7 +74,6 @@ struct	termio	tty;
 
 #endif /* _POSIX_SOURCE */
 
-#include "machine.h"
 #include "bu.h"
 
 

@@ -52,7 +52,6 @@
 #    endif
 #  endif
 #endif
-#include "machine.h"
 #include "fb.h"
 #include "fbmsg.h"
 #include "pkg.h"

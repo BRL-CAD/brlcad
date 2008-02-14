@@ -35,7 +35,6 @@
 #include <math.h>
 #include <string.h>
 
-#include "machine.h"
 #include "tcl.h"
 #include "vmath.h"
 #include "db.h"

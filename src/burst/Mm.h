@@ -31,7 +31,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "machine.h"
 #include "bu.h"
 
 #define MmAllo( typ )		(typ *) bu_malloc( sizeof(typ), BU_FLSTR )

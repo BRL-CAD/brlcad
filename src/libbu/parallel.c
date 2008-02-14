@@ -46,7 +46,6 @@
 #include <string.h>
 #include <signal.h>
 
-#include "machine.h"
 #include "bu.h"
 
 #ifdef linux

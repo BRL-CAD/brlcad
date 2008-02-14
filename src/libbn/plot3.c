@@ -45,7 +45,6 @@
 
 #include <stdio.h>
 
-#include "machine.h"
 #include "vmath.h"
 #include "plot3.h"
 

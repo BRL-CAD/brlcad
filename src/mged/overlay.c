@@ -36,7 +36,6 @@
 #include <math.h>
 #include <signal.h>
 #include <stdio.h>
-#include "machine.h"
 #include "vmath.h"
 #include "mater.h"
 

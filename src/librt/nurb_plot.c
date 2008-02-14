@@ -41,7 +41,6 @@
 #include <sys/types.h>
 #include <fcntl.h>
 
-#include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "nurb.h"

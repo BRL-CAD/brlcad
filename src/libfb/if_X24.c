@@ -90,7 +90,6 @@
 
 #include <ctype.h>
 
-#include "machine.h"
 #include "fb.h"
 
 

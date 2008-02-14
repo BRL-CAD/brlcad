@@ -36,7 +36,6 @@
 #  include <unistd.h>
 #endif
 
-#include "machine.h"
 #include "fb.h"
 
 #define	MYMETHOD	on

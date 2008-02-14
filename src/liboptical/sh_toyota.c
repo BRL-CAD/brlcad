@@ -48,7 +48,6 @@
 #include <math.h>
 #include <string.h>
 
-#include "machine.h"
 #include "vmath.h"
 #include "mater.h"
 #include "raytrace.h"

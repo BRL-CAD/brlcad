@@ -48,7 +48,6 @@
 #  include <sys/time.h>		/* For struct timeval */
 #endif
 
-#include "machine.h"
 #include "bu.h"
 #include "fb.h"
 

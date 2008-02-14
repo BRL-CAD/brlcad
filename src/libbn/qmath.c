@@ -60,7 +60,6 @@
 
 #include <stdio.h>		/* DEBUG need stderr for now... */
 #include <math.h>
-#include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"

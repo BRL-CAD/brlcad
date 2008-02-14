@@ -38,7 +38,6 @@
 
 #include "tcl.h"
 
-#include "machine.h"
 #include "cmd.h"
 
 /* bu_cmdhist routines are defined in libbu/cmdhist.c */

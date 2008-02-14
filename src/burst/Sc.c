@@ -49,7 +49,6 @@
 #  include <term.h>
 #endif
 
-#include "machine.h"
 #include "bu.h"
 
 #include "./Sc.h"

@@ -38,7 +38,6 @@
 #  include <unistd.h>
 #endif
 
-#include "machine.h"
 #include "bu.h"
 
 #define	IBUFSIZE 1024		/* Max read size */

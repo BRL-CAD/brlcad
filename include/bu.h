@@ -51,7 +51,6 @@ __BEGIN_DECLS
 #include <stddef.h> /* for size_t */
 
 /* common interface headers */
-#include "machine.h"	/* required for fastf_t, genptr_t */
 #include "tcl.h"	/* Included for Tcl_Interp definition */
 
 

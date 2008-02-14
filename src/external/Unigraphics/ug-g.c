@@ -33,7 +33,6 @@
 #include <math.h>
 #include <string.h>
 
-#include "machine.h"
 #include "db.h"
 #include "vmath.h"
 #include "nmg.h"

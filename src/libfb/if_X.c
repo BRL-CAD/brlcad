@@ -61,7 +61,6 @@
 #include <X11/cursorfont.h>
 #include <X11/Xatom.h>		/* for XA_RGB_BEST_MAP */
 
-#include "machine.h"
 #include "fb.h"
 
 

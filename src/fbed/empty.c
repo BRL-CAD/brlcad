@@ -29,7 +29,6 @@ static const char RCSid[] = "@(#) empty.c 2.3, modified 1/5/87 at 16:52:54, arch
 #include <stdio.h>
 #include <sys/time.h>
 
-#include "machine.h"
 #include "fb.h"
 
 /*	e m p t y ( )

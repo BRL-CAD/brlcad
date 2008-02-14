@@ -38,7 +38,6 @@
 #  include <unistd.h>
 #endif
 
-#include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"

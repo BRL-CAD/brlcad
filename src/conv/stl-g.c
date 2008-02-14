@@ -37,7 +37,6 @@
 #include <ctype.h>
 #include <errno.h>
 
-#include "machine.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rtgeom.h"

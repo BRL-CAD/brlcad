@@ -31,7 +31,6 @@
 #include <stdio.h>
 #include <ctype.h> /* for isspace() */
 
-#include "machine.h"
 #include "bu.h"
 
 #include "./count.h"

@@ -21,26 +21,11 @@
 /** @{ */
 /** @file nmg.h
  *
- *
- *  @author	Lee A. Butler
- *  @author	Michael John Muuss
- *
  * @brief
  *  Definition of data structures for "Non-Manifold Geometry Modelling."
  *  Developed from "Non-Manifold Geometric Boundary Modeling" by
  *  Kevin Weiler, 5/7/87 (SIGGraph 1989 Course #20 Notes)
  *
- *  Include Sequencing -
- *	#  include <stdio.h>
- *	# include <math.h>
- *	# include "machine.h"	/_* For fastf_t definition on this machine *_/
- *	# include "vmath.h"	/_* For vect_t definition *_/
- *	# include "nmg.h"
- *	# include "raytrace.h"
- *	# include "nurb.h"	/_* OPTIONAL, follows raytrace.h when used *_/
- *
- *  @par Libraries Used -
- *	LIBRT LIBRT_LIBES -lm -lc
  */
 
 #ifndef __NMG_H__
@@ -49,7 +34,6 @@
 #include "common.h"
 
 /* interface headers */
-#include "machine.h"
 #include "vmath.h"
 #include "bu.h"
 

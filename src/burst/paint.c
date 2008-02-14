@@ -29,12 +29,11 @@
 
 #include "common.h"
 
-#include "./vecmath.h"
-#include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
 
+#include "./vecmath.h"
 #include "./extern.h"
 
 

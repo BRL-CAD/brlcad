@@ -34,7 +34,6 @@
 
 #include <tcl.h>
 
-#include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "rtprivate.h"

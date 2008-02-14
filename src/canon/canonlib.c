@@ -40,7 +40,6 @@
 #  include <sys/time.h>
 #endif
 
-#include "machine.h"
 #include "bu.h"
 
 #include "./canon.h"

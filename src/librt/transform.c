@@ -23,7 +23,6 @@
 
 #include "common.h"
 
-#include "machine.h"
 #include "raytrace.h"
 
 

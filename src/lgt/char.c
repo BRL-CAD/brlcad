@@ -31,7 +31,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "machine.h"
 #include "fb.h"
 #include "vmath.h"
 #include "raytrace.h"

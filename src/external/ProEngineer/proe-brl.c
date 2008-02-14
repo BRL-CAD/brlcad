@@ -52,7 +52,6 @@
 #include "ProHole.h"
 #include "ProNotify.h"
 #include "prodev_light.h"
-#include "machine.h"
 #include "vmath.h"
 #include "bu.h"
 #include "bn.h"

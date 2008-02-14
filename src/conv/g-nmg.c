@@ -43,7 +43,6 @@
 #endif
 
 /* interface headers */
-#include "machine.h"
 #include "vmath.h"
 #include "bu.h"
 #include "nmg.h"

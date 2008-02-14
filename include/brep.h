@@ -51,7 +51,6 @@ extern "C++" {
 extern "C" {
 #endif
 
-#include "machine.h"
 #include "vmath.h"
 #include "bu.h"
 

@@ -37,7 +37,6 @@
 #  include <unistd.h>
 #endif
 
-#include "machine.h"
 #include "bu.h"
 
 double	*data;			/* Input buffer */

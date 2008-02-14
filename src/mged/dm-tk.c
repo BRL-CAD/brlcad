@@ -40,7 +40,6 @@
 
 #include "tk.h"
 
-#include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "mater.h"

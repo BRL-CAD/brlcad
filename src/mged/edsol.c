@@ -49,7 +49,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"

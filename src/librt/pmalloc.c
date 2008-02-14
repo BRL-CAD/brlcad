@@ -75,7 +75,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-#include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"

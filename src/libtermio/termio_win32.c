@@ -26,7 +26,6 @@
 
 #include <stdio.h>
 
-#include "machine.h"
 #include "libtermio.h"
 
 

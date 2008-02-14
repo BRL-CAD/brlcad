@@ -34,7 +34,6 @@
 #include <stdlib.h>
 #include <math.h>
 
-#include "machine.h"		/* to define "sgi" on ANSI compilers */
 #include "bu.h"
 
 

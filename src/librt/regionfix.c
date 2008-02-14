@@ -44,7 +44,6 @@
 #  include <regex.h>
 #endif
 
-#include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 

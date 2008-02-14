@@ -42,7 +42,6 @@
 #include <string.h>
 #include <math.h>
 
-#include "machine.h"		/* machine specific definitions */
 #include "vmath.h"		/* vector math macros */
 #include "raytrace.h"		/* librt interface definitions */
 #include "rtgeom.h"

@@ -65,7 +65,6 @@
 #include <math.h>
 
 /*  Need the following for rt_shootray.  */
-#include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 

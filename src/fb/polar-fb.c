@@ -33,7 +33,6 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "machine.h"
 #include "bu.h"
 #include "fb.h"
 

@@ -59,7 +59,6 @@
 #  include <unistd.h>
 #endif
 
-#include "machine.h"
 #include "tcl.h"
 #include "cmd.h"			/* includes bu.h */
 #include "vmath.h"

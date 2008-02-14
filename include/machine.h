@@ -29,7 +29,7 @@
 #ifndef __MACHINE_H__
 #define __MACHINE_H__
 
-/* #warning "The machine.h header is deprecated -- use common.h and/or bu.h instead" */
+#warning "The machine.h header is deprecated -- use common.h and/or bu.h instead"
 
 #include "common.h"
 #include "bu.h"

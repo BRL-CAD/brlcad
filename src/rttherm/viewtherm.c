@@ -46,7 +46,6 @@
 #  include <sys/stat.h>
 #endif
 
-#include "machine.h"
 #include "vmath.h"
 #include "mater.h"
 #include "raytrace.h"

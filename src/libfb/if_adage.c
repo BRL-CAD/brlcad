@@ -52,7 +52,6 @@
 #include <ctype.h>
 #include <sys/ioctl.h>
 
-#include "machine.h"
 #include "fb.h"
 
 #include "./adage.h"

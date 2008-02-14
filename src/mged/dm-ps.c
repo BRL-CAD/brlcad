@@ -36,7 +36,6 @@
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>		/* for struct timeval */
 #endif
-#include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "mater.h"

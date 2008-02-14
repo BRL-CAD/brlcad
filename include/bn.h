@@ -28,15 +28,6 @@
  *  vector math, matrix math, quaternion math, complex math,
  *  synthetic division, root finding, etc.
  *
- *  Include Sequencing -
-@code
-	# include "common.h"
-	# include <stdio.h>
-	# include <math.h>
-	# include "machine.h"	/_* For fastf_t definition on this machine *_/
-	# include "bn.h"
-@endcode
- *
  */
 
 #ifndef __BN_H__
@@ -47,7 +38,6 @@
 __BEGIN_DECLS
 
 /* interface headers */
-#include "machine.h"	/* required for fastf_t */
 #include "bu.h"		/* required for BU_EXTERN, BU_CKMAG */
 #include "vmath.h"	/* required for mat_t, vect_t */
 

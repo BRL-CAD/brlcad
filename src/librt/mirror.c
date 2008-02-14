@@ -33,7 +33,6 @@
 
 #include <string.h>
 
-#include "machine.h"
 #include "raytrace.h"
 #include "rtgeom.h"
 #include "wdb.h"

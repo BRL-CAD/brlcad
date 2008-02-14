@@ -57,7 +57,6 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "machine.h"
 #include "vmath.h"
 #include "plot3.h"
 #include "vectfont.h"

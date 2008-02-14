@@ -65,8 +65,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "machine.h"
-
 #include "./canon.h"
 
 #ifdef IPU_FULL_LIB

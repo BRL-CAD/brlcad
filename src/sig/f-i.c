@@ -40,7 +40,6 @@
 #  include <unistd.h>
 #endif
 
-#include "machine.h"
 #include "bu.h"
 
 float	ibuf[512];

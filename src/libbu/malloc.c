@@ -41,7 +41,6 @@
 #  include <unistd.h>
 #endif
 
-#include "machine.h"
 #include "bu.h"
 
 /** this controls whether to semaphore protect malloc calls */

@@ -36,7 +36,6 @@
 #include <string.h>
 
 /* common headers */
-#include "machine.h"
 #include "bu.h"
 #include "bn.h"
 #include "raytrace.h"

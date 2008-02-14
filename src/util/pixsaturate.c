@@ -48,7 +48,6 @@
 #include <stdlib.h>
 #include <math.h>
 
-#include "machine.h"
 #include "bu.h"
 
 

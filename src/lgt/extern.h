@@ -25,8 +25,7 @@
 
 	#include <assert.h>
 
-	#include "machine.h"
-	#include "vmath.h"
+		#include "vmath.h"
 	#include "raytrace.h"
 	#include "fb.h"
 	#include "./hmenu.h"

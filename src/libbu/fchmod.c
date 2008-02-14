@@ -40,7 +40,6 @@
 #  include <sys/stat.h>
 #endif
 
-#include "machine.h"
 #include "bu.h"
 
 

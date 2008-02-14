@@ -36,10 +36,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "anim.h"
+
 
 #define GIVEN		0
 #define CALCULATED	1

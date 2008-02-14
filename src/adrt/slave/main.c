@@ -37,7 +37,6 @@
 #  include <getopt.h>
 #endif
 
-#include "machine.h"
 #include "bu.h"
 
 #include "adrt.h"

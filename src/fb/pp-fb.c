@@ -65,7 +65,6 @@
 #  include <sys/stat.h>
 #endif
 
-#include "machine.h"
 #include "bu.h"
 #include "fb.h"
 #include "libtermio.h"

@@ -36,7 +36,6 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "machine.h"
 #include "fb.h"
 
 

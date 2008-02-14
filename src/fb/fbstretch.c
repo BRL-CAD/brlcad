@@ -89,7 +89,6 @@
 #  include <unistd.h>
 #endif
 
-#include "machine.h"
 #include "bu.h"
 #include "fb.h"			/* BRL-CAD package libfb.a interface */
 

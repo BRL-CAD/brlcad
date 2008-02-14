@@ -80,7 +80,6 @@
 #include <math.h>
 #include <stddef.h>
 
-#include "machine.h"		/* machine specific definitions */
 #include "vmath.h"		/* vector math macros */
 #include "bu.h"
 #include "raytrace.h"		/* librt interface definitions */

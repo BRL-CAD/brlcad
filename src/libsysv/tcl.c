@@ -10,7 +10,6 @@
 
 #include "tcl.h"
 #include <stdio.h>
-#include "machine.h"
 
 
 #ifndef SYSV_EXPORT

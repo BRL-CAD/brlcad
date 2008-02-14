@@ -38,14 +38,10 @@
 #include <math.h>
 #include <stdio.h>
 
-#include "machine.h"
 #include "vmath.h"
 #include "bu.h"
 #include "raytrace.h"
 
-
-extern int bu_optind;
-extern char *bu_optarg;
 
 #define MAXLEN		64
 #define DIVIDE_TOL	(1.0e-10)

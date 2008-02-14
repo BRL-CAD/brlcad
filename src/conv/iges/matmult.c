@@ -29,7 +29,6 @@
 
 #include <stdio.h>
 
-#include "machine.h"
 #include "vmath.h"
 
 void Matmult( a, b, c )

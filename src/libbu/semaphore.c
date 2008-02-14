@@ -40,7 +40,6 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <math.h>
-#include "machine.h"
 #include "bu.h"
 
 #ifdef CRAY
@@ -100,7 +99,7 @@ struct bu_semaphores {
 # define DEFINED_BU_SEMAPHORES	1
 #endif /* SGI_4D */
 
-/* XXX Probably need to set _SGI_MP_SOURCE in machine.h */
+/* XXX May need to set _SGI_MP_SOURCE */
 
 #ifdef ardent
 #	include <thread.h>

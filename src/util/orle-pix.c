@@ -33,7 +33,6 @@
 #  include <unistd.h>
 #endif
 
-#include "machine.h"
 #include "fb.h"		/* For Pixel typedef */
 #include "orle.h"
 #include "bu.h"

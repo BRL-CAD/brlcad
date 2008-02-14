@@ -48,7 +48,6 @@
 #  include "tcl.h"
 #endif
 
-#include "machine.h"
 #include "cmd.h"
 #include "libtermio.h"
 

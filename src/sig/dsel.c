@@ -30,7 +30,6 @@
 #  include <unistd.h>
 #endif
 
-#include "machine.h"
 #include "bu.h"
 
 #define INTEGER_MAX ( ((int) ~0) >> 1 )

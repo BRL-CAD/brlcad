@@ -23,12 +23,14 @@
  */
 #include <stdio.h>
 #include <signal.h>
-#include "machine.h"
+
 #include "vmath.h"
 #include "fb.h"
 #include "raytrace.h"
+
 #include "./burst.h"
 #include "./extern.h"
+
 
 Colors	colorids;	/* ident range to color mappings for plots */
 FBIO *fbiop = NULL;	/* frame buffer specific access from libfb */

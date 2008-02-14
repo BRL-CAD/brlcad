@@ -29,7 +29,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "machine.h"
 #include "bu.h"
 
 #include "./font.h"

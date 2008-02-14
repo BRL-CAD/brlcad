@@ -90,7 +90,6 @@
 #  include <unistd.h>
 #endif
 
-#include "machine.h"
 
 
 /* Not all systems with "BSD Networking" include UNIX Domain sockets */

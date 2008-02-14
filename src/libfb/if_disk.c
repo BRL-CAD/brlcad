@@ -41,7 +41,6 @@
 #  include <sys/file.h>
 #endif
 
-#include "machine.h"
 #include "fb.h"
 
 

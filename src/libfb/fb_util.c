@@ -34,7 +34,6 @@
 
 #include <stdio.h>
 
-#include "machine.h"
 #include "fb.h"
 
 

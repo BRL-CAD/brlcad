@@ -62,7 +62,6 @@
 #include <math.h>
 
 /* interface headers */
-#include "machine.h"
 #include "vmath.h"
 #include "db.h"
 #include "nmg.h"

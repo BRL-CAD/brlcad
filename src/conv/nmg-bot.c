@@ -37,7 +37,6 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "machine.h"
 #include "vmath.h"
 #include "db.h"
 #include "bu.h"

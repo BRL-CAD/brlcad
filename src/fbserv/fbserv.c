@@ -95,7 +95,6 @@
 #  include <sys/time.h>		/* For struct timeval */
 #endif
 
-#include "machine.h"
 #include "fb.h"
 #include "pkg.h"
 #include "bu.h"

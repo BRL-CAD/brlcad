@@ -44,7 +44,6 @@
 #include <stdio.h>
 #include <fcntl.h>
 
-#include "machine.h"
 #include "fb.h"
 
 

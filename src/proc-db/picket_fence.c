@@ -28,7 +28,6 @@
 #include <math.h>
 #include <string.h>
 
-#include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "wdb.h"

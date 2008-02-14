@@ -37,7 +37,6 @@
 #include "common.h"
 
 #include <stdio.h>
-#include "machine.h"
 #include "vmath.h"
 #include "bu.h"
 #include "raytrace.h"

@@ -52,7 +52,6 @@
 #include <string.h>
 #include <stdarg.h>
 
-#include "machine.h"
 #include "bu.h"
 
 BU_EXTERN(void	bu_vls_vprintf, (struct bu_vls *vls, const char *fmt, va_list ap));

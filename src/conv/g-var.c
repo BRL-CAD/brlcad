@@ -48,7 +48,6 @@
 #include <math.h>
 
 /* interface headers */
-#include "machine.h"		/* machine specific definitions */
 #include "wdb.h"
 #include "raytrace.h"
 

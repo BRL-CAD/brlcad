@@ -34,7 +34,6 @@
 #  include <unistd.h>
 #endif
 
-#include "machine.h"
 
 /*
  * Buffering stuff

@@ -28,7 +28,6 @@
 #include <stdio.h>
 #include <signal.h>
 
-#include "machine.h"
 #include "bu.h"
 
 #include "./burst.h"

@@ -42,7 +42,6 @@
 #include <ctype.h>
 #include <gdslib.h>
 
-#include "machine.h"
 #include "fb.h"
 
 

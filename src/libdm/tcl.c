@@ -34,7 +34,6 @@
 
 #include <math.h>
 #include "tcl.h"
-#include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "dm.h"

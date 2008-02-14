@@ -45,7 +45,6 @@
 #include <ctype.h>
 
 #include "tcl.h"
-#include "machine.h"
 #include "vmath.h"
 #include "db.h"
 #include "nmg.h"

@@ -33,7 +33,6 @@
 #include "common.h"
 
 #include <stdio.h>
-#include "machine.h"
 #include "plot3.h"
 
 char	buf[2048];

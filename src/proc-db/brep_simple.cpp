@@ -64,7 +64,6 @@
 extern "C" {
 #endif
 
-#include "machine.h"		/* BRL-CAD specific machine data types */
 #include "vmath.h"		/* BRL-CAD Vector macros */
 #include "wdb.h"
 

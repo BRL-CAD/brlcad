@@ -44,7 +44,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "spectrum.h"

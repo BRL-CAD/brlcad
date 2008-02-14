@@ -57,7 +57,6 @@
 #endif
 
 /* interface headers */
-#include "machine.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rtgeom.h"

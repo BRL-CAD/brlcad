@@ -41,7 +41,6 @@
 
 #include "tcl.h"
 
-#include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"

@@ -39,7 +39,6 @@
 #  include <unistd.h>
 #endif
 
-#include "machine.h"
 #include "dm.h" /* for dm_applicationfocus() */
 #include "bu.h"
 

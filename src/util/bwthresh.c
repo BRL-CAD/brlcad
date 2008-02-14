@@ -37,7 +37,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "machine.h"
 #include "bu.h"
 
 

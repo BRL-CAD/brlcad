@@ -35,7 +35,6 @@
 #include "common.h"
 
 #include <stdio.h>
-#include "machine.h"
 #include "vfont-if.h"
 #include "bu.h"
 

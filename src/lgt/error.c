@@ -38,7 +38,6 @@
 #include <stdarg.h>
 #include <assert.h>
 
-#include "machine.h"
 #include "vmath.h"
 #include "bu.h"
 #include "raytrace.h"

@@ -109,7 +109,6 @@ Acknowledgements:
 #include <signal.h>
 #include "tcl.h"
 
-#include "machine.h"
 #include "cmd.h"
 #include "vmath.h"
 #include "mater.h"

@@ -27,7 +27,6 @@
 #include <string.h>
 #include <stdarg.h>
 
-#include "machine.h"
 #include "fb.h"
 
 #include "./std.h"

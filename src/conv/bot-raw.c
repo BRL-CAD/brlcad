@@ -28,7 +28,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "machine.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rtgeom.h"

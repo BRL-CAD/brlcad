@@ -46,7 +46,6 @@
 #include <string.h>
 #include <stdarg.h>
 
-#include "machine.h"
 #include "bu.h"
 
 #include "./vld_std.h"

@@ -42,7 +42,6 @@
 #include <itk.h>
 #include <blt.h>
 
-#include "machine.h"
 #include "bu.h"
 #include "dm.h"
 #include "fb.h"

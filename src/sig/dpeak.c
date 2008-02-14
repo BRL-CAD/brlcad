@@ -33,7 +33,6 @@
 #  include <unistd.h>
 #endif
 
-#include "machine.h"
 
 #define	BSIZE	2048		/* Must be AT LEAST 2*Points in spectrum */
 double	data[BSIZE];		/* Input buffer */

@@ -42,7 +42,6 @@
 #  include <unistd.h>
 #endif
 
-#include "machine.h"
 #include "db.h"
 #include "vmath.h"
 #include "nmg.h"

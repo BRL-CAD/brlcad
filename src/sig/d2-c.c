@@ -30,7 +30,6 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "machine.h"
 #include "bu.h"
 
 double	obuf[2*1024];

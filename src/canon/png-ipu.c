@@ -64,9 +64,7 @@
 
 #include <png.h>
 
-#include "machine.h"
 #include "bu.h"
-
 
 #include "./canon.h"
 

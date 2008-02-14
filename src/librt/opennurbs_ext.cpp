@@ -34,7 +34,6 @@
 #include "tnt.h"
 #include "jama_lu.h"
 
-#include "machine.h"
 #include "vmath.h"
 #include "bu.h"
 #include "vector.h"

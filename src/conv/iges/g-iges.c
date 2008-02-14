@@ -49,7 +49,6 @@ static const char RCSrev[] = "$Revision$";
 #  include <unistd.h>
 #endif
 
-#include "machine.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"

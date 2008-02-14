@@ -38,7 +38,6 @@
 #  include <getopt.h>
 #endif
 
-#include "machine.h"
 #include "bu.h"
 
 #include "./bench.h"

@@ -38,7 +38,6 @@
 #include <string.h>
 
 #include "tcl.h"
-#include "machine.h"
 #include "cmd.h"                  /* includes bu.h */
 
 static int bu_observer_attach_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);

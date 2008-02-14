@@ -36,7 +36,6 @@
 
 #include "common.h"
 
-#include "machine.h"
 #include "bu.h"
 
 

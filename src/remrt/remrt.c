@@ -67,7 +67,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 		if (FD_ISSET(_i, b)) FD_SET(_i, a); else FD_CLR(_i, a); }
 #endif
 
-#include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"

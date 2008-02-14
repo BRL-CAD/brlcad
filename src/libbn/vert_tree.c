@@ -45,7 +45,6 @@
 #include <ctype.h>
 #include <errno.h>
 
-#include "machine.h"
 #include "bn.h"
 
 

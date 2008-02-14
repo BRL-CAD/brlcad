@@ -25,7 +25,6 @@
 
 #include <stdio.h>
 #include <X11/Xlib.h>
-#include "machine.h"
 #include "bu.h"
 #include "dm_color.h"
 

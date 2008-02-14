@@ -43,7 +43,6 @@
 #include <ctype.h>
 
 #include "tcl.h"
-#include "machine.h"
 #include "cmd.h"		/* this includes bu.h */
 #include "vmath.h"
 #include "bn.h"

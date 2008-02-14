@@ -38,7 +38,6 @@
 #include <math.h>
 #include <limits.h>
 
-#include "machine.h"
 #include "bu.h"
 #include "bn.h"
 #include "vmath.h"

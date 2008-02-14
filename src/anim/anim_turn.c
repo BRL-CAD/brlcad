@@ -38,10 +38,11 @@
 
 #include <math.h>
 #include <stdio.h>
-#include "machine.h"
+
 #include "vmath.h"
 #include "bu.h"
 #include "anim.h"
+
 
 #ifndef M_PI
 #define M_PI	3.14159265358979323846

@@ -38,7 +38,6 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 
-#include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"

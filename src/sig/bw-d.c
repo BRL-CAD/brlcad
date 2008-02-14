@@ -39,7 +39,6 @@
 #  include <unistd.h>
 #endif
 
-#include "machine.h"
 #include "bu.h"
 
 unsigned char	ibuf[512];

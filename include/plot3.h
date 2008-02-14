@@ -25,18 +25,6 @@
  * This header file will also work if called by a "traditional" C
  * compiler.
  *
- *  For best results, before the
-@code
-     #include "plot3.h"
-@endcode
- * there should be:
- *
-@code
-	#include "machine.h"
-	#include "vmath.h"
-@endcode
- *
- *  although not doing this should not be fatal.
  */
 #ifndef	PLOT3_H
 #define	PLOT3_H

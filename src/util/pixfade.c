@@ -56,7 +56,6 @@
 
 #include <math.h>
 
-#include "machine.h"
 #include "vmath.h"
 #include "bu.h"
 #include "bn.h"

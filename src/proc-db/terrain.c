@@ -43,7 +43,6 @@
 #  include <unistd.h>
 #endif
 
-#include "machine.h"		/* BRL-CAD specific machine data types */
 #include "bu.h"
 #include "vmath.h"		/* BRL-CAD Vector macros */
 #include "nurb.h"		/* BRL-CAD Spline data structures */

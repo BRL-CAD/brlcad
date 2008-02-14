@@ -31,7 +31,6 @@
 #include <math.h>
 #include <signal.h>
 
-#include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"

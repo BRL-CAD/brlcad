@@ -43,7 +43,6 @@
 #endif
 
 #include "tcl.h"
-#include "machine.h"
 #include "bu.h"
 #include "cmd.h"
 #include "vmath.h"

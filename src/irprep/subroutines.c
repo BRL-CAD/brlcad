@@ -31,7 +31,6 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "machine.h"
 
 #if !defined(PI)
 #define PI 3.14159265358979323846264		/*  Pi.  */

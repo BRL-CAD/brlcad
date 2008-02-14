@@ -42,7 +42,6 @@
 #include <errno.h>
 #include <ultra/ugraf.h>
 
-#include "machine.h"
 #include "fb.h"
 
 

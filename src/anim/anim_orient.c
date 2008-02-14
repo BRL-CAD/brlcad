@@ -48,8 +48,8 @@
 #  include <unistd.h>
 #endif
 
-#include "machine.h"
 #include "vmath.h"
+
 
 #ifndef M_PI
 #define M_PI	3.14159265358979323846

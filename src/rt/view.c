@@ -55,7 +55,6 @@
 #include <string.h>
 #include <math.h>
 
-#include "machine.h"
 #include "vmath.h"
 #include "mater.h"
 #include "raytrace.h"

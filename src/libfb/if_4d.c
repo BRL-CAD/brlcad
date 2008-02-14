@@ -72,7 +72,6 @@
 #include <gl/addrs.h>
 #include <gl/cg2vme.h>
 
-#include "machine.h"
 #include "fb.h"
 
 

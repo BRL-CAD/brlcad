@@ -59,7 +59,6 @@
 
 #undef VMIN		/* is used in vmath.h, too */
 
-#include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"

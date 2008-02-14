@@ -42,7 +42,6 @@
 #  include <unistd.h>
 #endif
 
-#include "machine.h"
 #include "bu.h"
 
 #define _TF_FAIL "WARNING: Unable to create a temporary file\n"

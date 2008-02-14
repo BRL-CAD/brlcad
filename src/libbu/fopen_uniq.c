@@ -47,7 +47,6 @@
 #  include <sys/param.h>
 #endif
 
-#include "machine.h"
 #include "bu.h"
 
 /**

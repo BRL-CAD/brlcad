@@ -33,7 +33,6 @@
 #include <stdio.h>
 #include <math.h>		/* XXX - temp debug */
 
-#include "machine.h"
 #include "fb.h"
 
 #define	MYMETHOD	on

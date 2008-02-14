@@ -27,9 +27,6 @@
  *  This library contains convenience routines for preparing and
  *  initializing Tcl.
  *
- *  @par Source
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #ifndef __TCLCAD_H__
@@ -38,7 +35,6 @@
 #include "common.h"
 
 #include "tcl.h"
-#include "machine.h"
 
 __BEGIN_DECLS
 

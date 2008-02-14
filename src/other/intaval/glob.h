@@ -48,7 +48,6 @@
 
 #include "common.h"
 
-#include "machine.h"
 #include "vmath.h"
 
 

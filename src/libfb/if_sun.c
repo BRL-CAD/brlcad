@@ -77,7 +77,6 @@
 #include <suntool/sunview.h>
 #include <suntool/canvas.h>
 
-#include "machine.h"
 #include "fb.h"
 
 

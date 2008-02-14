@@ -39,7 +39,6 @@
 #include <tcl.h>
 #include <tk.h>
 
-#include "machine.h"
 #include "fb.h"
 
 

@@ -27,9 +27,10 @@
 
 #include <math.h>
 #include <stdio.h>
-#include "machine.h"
+
 #include "vmath.h"
 #include "anim.h"
+
 
 #define MAX_REACHED	0
 #define SOLVED		1

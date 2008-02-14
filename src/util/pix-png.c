@@ -47,7 +47,6 @@
 #include "pngconf.h"
 #include "png.h"
 
-#include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"

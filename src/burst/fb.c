@@ -29,7 +29,6 @@
 #include <memory.h>
 #include <signal.h>
 
-#include "machine.h"
 #include "fb.h"
 #include "bu.h"
 

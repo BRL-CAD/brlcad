@@ -52,7 +52,6 @@
 #endif
 
 /* interface headers */
-#include "machine.h"
 #include "db.h"
 #include "vmath.h"
 #include "nmg.h"

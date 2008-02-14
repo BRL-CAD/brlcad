@@ -43,11 +43,6 @@
 #include <stdio.h>
 #include <math.h>
 
-/* machine definitions such as smp parameters.  this header will
- * eventually go away.
- */
-#include "machine.h"
-
 /* basic utilities */
 #include "bu.h"
 

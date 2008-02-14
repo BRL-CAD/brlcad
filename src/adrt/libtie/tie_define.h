@@ -14,7 +14,6 @@
 #  include <stdint.h>
 #endif
 
-#include "machine.h"
 #include "vmath.h"
 
 #define TIE_SINGLE_PRECISION 0

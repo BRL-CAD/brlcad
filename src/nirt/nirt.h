@@ -34,7 +34,6 @@
 
 #include "common.h"
 
-#include "machine.h"
 #include "raytrace.h" /* for DEBUG_FORMAT */
 
 #include "./usrfmt.h" /* Needed for some struct definitions */

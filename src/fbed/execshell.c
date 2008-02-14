@@ -37,7 +37,6 @@
 #  include <unistd.h>
 #endif
 
-#include "machine.h"
 #include "fb.h"
 
 #include "./std.h"

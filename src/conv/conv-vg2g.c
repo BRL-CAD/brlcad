@@ -43,7 +43,6 @@
 #  include <unistd.h>
 #endif
 
-#include "machine.h"
 #include "db.h"
 #include "bu.h"
 

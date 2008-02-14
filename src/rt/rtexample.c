@@ -38,7 +38,6 @@
 #include <math.h>
 #include <string.h>
 
-#include "machine.h"		/* machine specific definitions */
 #include "vmath.h"		/* vector math macros */
 #include "raytrace.h"		/* librt interface definitions */
 #include "rtprivate.h"

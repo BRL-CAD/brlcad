@@ -29,21 +29,6 @@
  *  generic pointer idb_ptr points at,
  *  based on idb_type indicating a solid id ID_xxx, such as ID_TGC.
  *
- *  Depends on having machine.h, bu.h, vmath.h, and bn.h included first.
- *
- *  The proper order for including them all is:
- *	#  include <stdio.h>
- *	# include <math.h>
- *	# include "machine.h"
- *	# include "bu.h"
- *	# include "vmath.h"
- *	# include "nmg.h"
- *	# include "raytrace.h"
- *	# include "nurb.h"
- *	# include "rtgeom.h"
- *
- *  @author
- *	Michael John Muuss
  */
 
 #ifndef __RTGEOM_H__
@@ -51,7 +36,6 @@
 
 #include "common.h"
 
-#include "machine.h"
 #include "vmath.h"
 #include "bu.h"
 

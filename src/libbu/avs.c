@@ -36,7 +36,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "machine.h"
 #include "bu.h"
 
 #define AVS_ALLOCATION_INCREMENT 32

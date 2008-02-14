@@ -49,7 +49,6 @@
 #endif
 #include "libtermio.h"
 
-#include "machine.h"
 #include "bu.h"
 
 /* defined in input.c */

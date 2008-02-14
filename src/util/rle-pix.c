@@ -38,7 +38,6 @@
 
 #include "rle.h"
 
-#include "machine.h"
 #include "fb.h"
 #include "bu.h"
 

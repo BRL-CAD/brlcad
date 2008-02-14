@@ -59,7 +59,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "machine.h"
 
 extern int Debug;
 extern double Beta;

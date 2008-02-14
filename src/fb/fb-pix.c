@@ -36,7 +36,6 @@
 #endif
 #include <sys/stat.h>
 
-#include "machine.h"
 #include "bu.h"
 #include "fb.h"
 

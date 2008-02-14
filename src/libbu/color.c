@@ -56,7 +56,6 @@ static const char libbu_color_RCSid[] = "@(#)$Header$ (BRL)";
 #include <string.h>
 #include <stdarg.h>
 
-#include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 

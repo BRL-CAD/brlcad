@@ -43,7 +43,6 @@
 #include "tcl.h"
 #include "tk.h"
 
-#include "machine.h"
 #include "bu.h"
 
 #include "./mgedtcl.h"

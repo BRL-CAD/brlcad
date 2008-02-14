@@ -56,7 +56,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "machine.h"
 
 #define	DLEVEL	1
 extern int Debug;

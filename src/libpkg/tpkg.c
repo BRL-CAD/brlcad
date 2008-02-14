@@ -41,7 +41,6 @@
 #endif
 
 /* interface headers */
-#include "machine.h"
 #include "bu.h"
 #include "pkg.h"
 

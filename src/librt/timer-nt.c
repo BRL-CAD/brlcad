@@ -30,7 +30,6 @@
 #include <string.h>
 #include <time.h>
 
-#include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 

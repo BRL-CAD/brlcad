@@ -31,7 +31,6 @@
 #  include <unistd.h>
 #endif
 
-#include "machine.h"
 #include "fb.h"
 
 #define	MAXPTS 4096

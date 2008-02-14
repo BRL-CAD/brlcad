@@ -34,7 +34,6 @@
 #include <math.h>
 #include <setjmp.h>
 
-#include "machine.h"
 #include "vmath.h"
 #include "rtstring.h"
 #include "raytrace.h"

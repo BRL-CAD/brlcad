@@ -52,7 +52,6 @@
 #include <math.h>
 #include <string.h> /* for memcpy */
 
-#include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "rtprivate.h"

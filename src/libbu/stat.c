@@ -55,7 +55,6 @@
 #  include <grp.h>
 #endif
 
-#include "machine.h"
 #include "bu.h"
 
 #ifndef R_OK

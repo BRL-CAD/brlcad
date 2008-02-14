@@ -62,7 +62,6 @@
 
 /* interface headers */
 #include "tcl.h"
-#include "machine.h"
 #include "bu.h"
 #include "libtermio.h"
 

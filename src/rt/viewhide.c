@@ -52,7 +52,6 @@
 #include <stdlib.h>
 #include <math.h>
 
-#include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "plot3.h"

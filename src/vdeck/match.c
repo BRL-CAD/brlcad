@@ -29,7 +29,6 @@
 #include <string.h>
 #include <setjmp.h>
 
-#include "machine.h"
 
 #define NUL	'\0'
 

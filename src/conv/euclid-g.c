@@ -44,7 +44,6 @@
 #include <errno.h>
 
 /* interface headers */
-#include "machine.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"

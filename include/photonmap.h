@@ -24,8 +24,6 @@
  * @brief
  *  Declarations related to Photon Mapping
  *
- * @author Justin Shumaker
- *
  */
 
 #include "common.h"
@@ -34,7 +32,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include "machine.h"
+
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"

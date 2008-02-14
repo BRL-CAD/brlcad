@@ -70,7 +70,6 @@
 
 #include <stdio.h>
 
-#include "machine.h"
 #include "plot3.h"
 /**
  *			P L _ S T R N C P Y

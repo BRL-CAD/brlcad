@@ -14,7 +14,6 @@
 
 #include "common.h"
 
-#include "machine.h"
 
 #if defined(HAVE_REGEX)
 #ifndef lint

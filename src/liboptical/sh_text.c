@@ -36,7 +36,6 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "rtprivate.h"

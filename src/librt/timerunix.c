@@ -57,7 +57,6 @@
 #	define	DEFAULT_HZ	yes
 #endif
 
-#include "machine.h"
 #include "bu.h"
 
 /* Standard System V stuff */

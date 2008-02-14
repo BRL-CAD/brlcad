@@ -19,27 +19,20 @@
  */
 /** @file bsphere.c
  *
- * compute bounding sphere
- *
- * Author:
- *   Natalie L. Barker
- *
- * Date:
- *   Jan 90
+ * compute a bounding sphere
  *
  */
 
 #include "common.h"
 
-#include	<stdio.h>
-#include	<math.h>
+#include <stdio.h>
+#include <math.h>
 
-#include	"machine.h"
-#include	"vmath.h"
-#include	"raytrace.h"
+#include "vmath.h"
+#include "raytrace.h"
 
-#include	"./nirt.h"
-#include	"./usrfmt.h"
+#include "./nirt.h"
+#include "./usrfmt.h"
 
 
 fastf_t	bsphere_diameter;

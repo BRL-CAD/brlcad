@@ -47,7 +47,6 @@
 #  include <sys/types.h>
 #endif
 
-#include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"

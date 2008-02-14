@@ -53,7 +53,6 @@
 #  include <sys/socket.h>
 #endif
 
-#include "machine.h"
 #include "pkg.h"
 #include "fb.h"
 #include "fbmsg.h"

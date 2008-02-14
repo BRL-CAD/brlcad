@@ -31,7 +31,6 @@
 #include <stdlib.h>
 #include <strings.h>
 
-#include "machine.h"
 #include "bu.h"
 
 

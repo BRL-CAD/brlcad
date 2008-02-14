@@ -67,7 +67,6 @@
 #include <gl2/immed.h>
 #undef RED
 
-#include "machine.h"
 #include "fb.h"
 
 
