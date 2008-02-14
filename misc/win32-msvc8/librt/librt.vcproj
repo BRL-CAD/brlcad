@@ -152,10 +152,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\comb.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\src\librt\cut.c"
 				>
 			</File>
@@ -597,10 +593,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\librt\oslo_map.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\librt\parse.c"
 				>
 			</File>
 			<File
