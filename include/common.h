@@ -74,6 +74,17 @@
 #  define O_BINARY 0
 #endif
 
+/* Functions local to one file should be declared HIDDEN.  This is
+ * sometimes helpful to debuggers.
+ */
+#if !defined(HIDDEN)
+#  if defined(lint)
+#    define HIDDEN	static
+#  else
+#    define HIDDEN	/***/
+#  endif
+#endif
+
 #endif  /* __COMMON_H__ */
 /** @} */
 /*

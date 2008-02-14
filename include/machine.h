@@ -409,17 +409,6 @@
 /*  Bit vector mask */
 #define BITV_MASK	((1<<BITV_SHIFT)-1)
 
-/* Functions local to one file should be declared HIDDEN:  (nil)|static */
-/* To aid in using ADB, generally leave this as nil. */
-#if !defined(HIDDEN)
-#  if defined(lint)
-#    define HIDDEN	static
-#  else
-#    define HIDDEN	/***/
-#  endif
-#endif
-
-
 /*
  *  ANSI and POSIX do not seem to have prototypes for the hypot() routine,
  *  but several vendors include it in their -lm math library.
