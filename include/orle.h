@@ -9,12 +9,8 @@
  * Date:	Mon Aug  9 1982
  * Copyright (c) 1982 Spencer W. Thomas
  */
-/*
- *	Modified by :		Gary S. Moss
- *
- */
 
-#include "machine.h"		/* for BIG_ENDIAN definition */
+#include "common.h"
 
 #ifndef ORLE_EXPORT
 #  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
@@ -28,10 +24,10 @@
 #  endif
 #endif
 
-#ifdef BIG_ENDIAN
-#define SWAB(shrt)  (shrt = ((shrt >> 8) & 0xff) | ((shrt << 8) & 0xff00))
+#ifdef NATURAL_IEEE
+#  define SWAB(shrt)  (shrt = ((shrt >> 8) & 0xff) | ((shrt << 8) & 0xff00))
 #else
-#define	SWAB(shrt)
+#  define SWAB(shrt)
 #endif
 
 /* Opcode definitions.							*/

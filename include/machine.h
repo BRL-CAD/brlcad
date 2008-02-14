@@ -17,37 +17,12 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup fixme */
+/** @addtogroup deprecated */
 /** @{ */
 /** @file machine.h
  *
- * @brief
- *  This header file defines all the
- *	fundamental data types (lower case names, created with "typedef")
- *  and
- *	fundamental manifest constants (upper case, created with "#define")
- *  used throughout the BRL-CAD Package.  Virtually all other BRL-CAD
- *  header files depend on this header file being included first.
- *
- *  General Symbols and Types Defined -
- *
- *	BU_BITV_SHIFT - log2( bits_wide(bitv_t) ).  Used to determine how
- *	many bits of a bit-vector subscript are index-of-bit in bitv_t
- *	word, and how many bits of the subscript are for word index.
- *	On a 32-bit machine, BU_BITV_SHIFT is 5.
- *      DEPRECATED: needs to be detected at run-time
- *
- *  Parallel Computation Symbols -
- *
- *    These are used only for applications linked with LIBRT and
- *    LIBBU.  XXX These are likely to get new, more descriptive names
- *    sometime, consider them all DEPRECATED.
- *
- *	PARALLEL -
- *		When defined, the code is being compiled for a parallel processor.
- *		This has implications for signal handling, math library
- *		exception handling, etc.
- *
+ * @deprecated
+ * The machine.h header is DEPRECATED -- use bu.h instead.
  *
  */
 
@@ -85,19 +60,6 @@
 #endif
 
 
-#if defined(__alpha)
-/********************************
- *				*
- *	  DEC Alpha (AXP)	*
- *				*
- ********************************/
-#if !defined(LITTLE_ENDIAN)
-	/* Often defined in <alpha/endian.h> */
-#	define LITTLE_ENDIAN	1	/* Under the influence of Intel Corp */
-#endif
-#endif
-
-
 #if defined(alliant) && !defined(i860)
 /********************************
  *				*
@@ -114,7 +76,6 @@
  *	Alliant FX/2800		*
  *				*
  ********************************/
-#define LITTLE_ENDIAN	1	/* Under the influence of Intel Corp */
 #define PARALLEL	1
 #endif
 
@@ -156,7 +117,6 @@
  *				*
  ********************************/
 #define __unix	1		/* It really is unix */
-#define LITTLE_ENDIAN	1	/* Under the influence of Intel Corp */
 #endif
 
 #if	(defined(__sgi) && defined(__mips))
@@ -189,7 +149,6 @@
  *     Encore Multi-Max		*
  *				*
  ********************************/
-#define LITTLE_ENDIAN	1	/* Under the influence of National Semiconductor */
 #define PARALLEL	1
 #endif
 
@@ -276,20 +235,6 @@
 # define	PARALLEL	1
 /* amd64 */
 #endif /* BSD */
-
-
-/*
- *  Definitions for big-endian -vs- little-endian.
- *	BIG_ENDIAN:	Byte [0] is on left side of word (msb).
- *	LITTLE_ENDIAN:	Byte [0] is on right side of word (lsb).
- */
-#ifdef vax
-#  define LITTLE_ENDIAN	1
-#endif
-
-#if !defined(BIG_ENDIAN) && !defined(LITTLE_ENDIAN)
-#  define BIG_ENDIAN	1	/* The common case */
-#endif
 
 #endif  /* __MACHINE_H__ */
 
