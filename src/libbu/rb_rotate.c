@@ -68,7 +68,7 @@ void _rb_rot_left (struct bu_rb_node *x, int order)
     y = bu_rb_right_child(x, order);
 
     if (tree -> rbt_debug & BU_RB_DEBUG_ROTATE)
-	bu_log("_rb_rot_left(<%x>, %d)...\n", (unsigned int)x, order);
+	bu_log("_rb_rot_left(<%p>, %d)...\n", x, order);
 
     bu_rb_right_child(x, order) = beta = bu_rb_left_child(y, order);
     if (beta != bu_rb_null(tree))
@@ -88,8 +88,8 @@ void _rb_rot_left (struct bu_rb_node *x, int order)
 	bu_rb_size(bu_rb_left_child(x, order), order) +
 	bu_rb_size(bu_rb_right_child(x, order), order) + 1;
     if (tree -> rbt_debug & BU_RB_DEBUG_OS)
-	bu_log("After rotation, size(%x, %d)=%d, size(%x, %d)=%d\n",
-	       (unsigned int)x, order, bu_rb_size(x, order), (unsigned int)y, order, bu_rb_size(y, order));
+	bu_log("After rotation, size(%p, %d)=%d, size(%p, %d)=%d\n",
+	       x, order, bu_rb_size(x, order), y, order, bu_rb_size(y, order));
 }
 
 /**		    _ R B _ R O T _ R I G H T ( )
@@ -116,7 +116,7 @@ void _rb_rot_right (struct bu_rb_node *y, int order)
     x = bu_rb_left_child(y, order);
 
     if (tree -> rbt_debug & BU_RB_DEBUG_ROTATE)
-	bu_log("_rb_rot_right(<%x>, %d)...\n", (unsigned int)y, order);
+	bu_log("_rb_rot_right(<%p>, %d)...\n", y, order);
 
     bu_rb_left_child(y, order) = beta = bu_rb_right_child(x, order);
     if (beta != bu_rb_null(tree))
@@ -136,8 +136,8 @@ void _rb_rot_right (struct bu_rb_node *y, int order)
 	bu_rb_size(bu_rb_left_child(y, order), order) +
 	bu_rb_size(bu_rb_right_child(y, order), order) + 1;
     if (tree -> rbt_debug & BU_RB_DEBUG_OS)
-	bu_log("After rotation, size(%x, %d)=%d, size(%x, %d)=%d\n",
-	       (unsigned int)x, order, bu_rb_size(x, order), (unsigned int)y, order, bu_rb_size(y, order));
+	bu_log("After rotation, size(%p, %d)=%d, size(%p, %d)=%d\n",
+	       x, order, bu_rb_size(x, order), y, order, bu_rb_size(y, order));
 }
 /** @} */
 /*

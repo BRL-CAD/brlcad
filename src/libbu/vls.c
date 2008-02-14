@@ -1054,6 +1054,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 		}
 		break;
 	    case 'd':
+	    case 'p':
 	    case 'x':
 		if (flags & LONGINT) {
 		    /* Long int */

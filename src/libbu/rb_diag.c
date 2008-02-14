@@ -65,13 +65,13 @@ static void describe_node (struct bu_rb_node *node, int depth)
     package = (node->rbn_package)[d_order];
     pp = tree->rbt_print;
 
-    bu_log("%*snode <%x>...\n", depth * 2, "", (unsigned int)node);
-    bu_log("%*s  tree:   <%x>\n", depth * 2, "", (unsigned int)node->rbn_tree);
-    bu_log("%*s  parent: <%x>\n", depth * 2, "", (unsigned int)bu_rb_parent(node, d_order));
-    bu_log("%*s  left:   <%x>\n", depth * 2, "", (unsigned int)bu_rb_left_child(node, d_order));
-    bu_log("%*s  right:  <%x>\n", depth * 2, "", (unsigned int)bu_rb_right_child(node, d_order));
-    bu_log("%*s  color:  %s\n", depth * 2, "", (unsigned int) (bu_rb_get_color(node, d_order) == BU_RB_RED) ? "RED" : (bu_rb_get_color(node, d_order) == BU_RB_BLACK) ? "BLACK" : "Huh?");
-    bu_log("%*s  package: <%x> ", depth * 2, "", (unsigned int)package);
+    bu_log("%*snode <%p>...\n", depth * 2, "", node);
+    bu_log("%*s  tree:   <%p>\n", depth * 2, "", node->rbn_tree);
+    bu_log("%*s  parent: <%p>\n", depth * 2, "", bu_rb_parent(node, d_order));
+    bu_log("%*s  left:   <%p>\n", depth * 2, "", bu_rb_left_child(node, d_order));
+    bu_log("%*s  right:  <%p>\n", depth * 2, "", bu_rb_right_child(node, d_order));
+    bu_log("%*s  color:  %s\n", depth * 2, "", (bu_rb_get_color(node, d_order) == BU_RB_RED) ? "RED" : (bu_rb_get_color(node, d_order) == BU_RB_BLACK) ? "BLACK" : "Huh?");
+    bu_log("%*s  package: <%p> ", depth * 2, "", package);
 
     if ((pp != 0) && (package != BU_RB_PKG_NULL))
 	(*pp)(package->rbp_data);
@@ -92,11 +92,11 @@ void bu_rb_diagnose_tree (bu_rb_tree *tree, int order, int trav_type)
     BU_CKMAG(tree, BU_RB_TREE_MAGIC, "red-black tree");
     BU_RB_CKORDER(tree, order);
 
-    bu_log("-------- Red-black tree <%x> contents --------\n", (unsigned int)tree);
+    bu_log("-------- Red-black tree <%p> contents --------\n", tree);
     bu_log("Description: '%s'\n", tree->rbt_description);
     bu_log("Order:       %d of %d\n", order, tree->rbt_nm_orders);
-    bu_log("Current:     <%x>\n", (unsigned int)tree->rbt_current);
-    bu_log("Empty node:  <%x>\n", (unsigned int)tree->rbt_empty_node);
+    bu_log("Current:     <%p>\n", tree->rbt_current);
+    bu_log("Empty node:  <%p>\n", tree->rbt_empty_node);
     bu_log("Uniqueness:  %d\n", bu_rb_get_uniqueness(tree, order));
     d_order = order;
     _rb_walk(tree, order, describe_node, WALK_NODES, trav_type);
@@ -117,25 +117,25 @@ void bu_rb_summarize_tree (bu_rb_tree *tree)
 
     BU_CKMAG(tree, BU_RB_TREE_MAGIC, "red-black tree");
 
-    bu_log("-------- Red-black tree <%x> summary --------\n", (unsigned int)tree);
+    bu_log("-------- Red-black tree <%p> summary --------\n", tree);
     bu_log("Description:      '%s'\n", tree->rbt_description);
-    bu_log("Current:          <%x>\n", (unsigned int)tree->rbt_current);
-    bu_log("Empty node:       <%x>\n", (unsigned int)tree->rbt_empty_node);
+    bu_log("Current:          <%p>\n", tree->rbt_current);
+    bu_log("Empty node:       <%p>\n", tree->rbt_empty_node);
     bu_log("Size (in nodes):  %d\n", tree->rbt_nm_nodes);
     bu_log("Number of orders: %d\n", tree->rbt_nm_orders);
-    bu_log("Debug bits:       <%x>\n", (unsigned int)tree->rbt_debug);
+    bu_log("Debug bits:       <%p>\n", tree->rbt_debug);
     if ((tree->rbt_nm_orders > 0) && (tree->rbt_nm_nodes > 0))
     {
 	bu_log("i    Order[i]   Uniq[i]  Root[i]      Package[i]     Data[i]\n");
 	for (i = 0; i < tree->rbt_nm_orders; ++i)
 	{
-	    bu_log("%-3d  <%x>    %c      <%x>    <%x>    <%x>\n",
+	    bu_log("%-3d  <%p>    %c      <%p>    <%p>    <%p>\n",
 		   i,
-		   (unsigned int)bu_rb_order_func(tree, i),
+		   bu_rb_order_func(tree, i),
 		   bu_rb_get_uniqueness(tree, i) ? 'Y' : 'N',
-		   (unsigned int)bu_rb_root(tree, i),
-		   (bu_rb_root(tree, i) == BU_RB_NODE_NULL) ? 0 : (unsigned int)(bu_rb_root(tree, i)->rbn_package)[i],
-		   (bu_rb_root(tree, i) == BU_RB_NODE_NULL) ? 0 : (unsigned int)bu_rb_data(bu_rb_root(tree, i), i));
+		   bu_rb_root(tree, i),
+		   (bu_rb_root(tree, i) == BU_RB_NODE_NULL) ? 0 : (bu_rb_root(tree, i)->rbn_package)[i],
+		   (bu_rb_root(tree, i) == BU_RB_NODE_NULL) ? 0 : bu_rb_data(bu_rb_root(tree, i), i));
 	}
     }
     bu_log("-------------------------------------------------\n");
