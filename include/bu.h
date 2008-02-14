@@ -338,6 +338,16 @@ typedef void *genptr_t;
 #endif
 
 
+/**
+ * MAX_PSW - The maximum number of processors that can be expected on
+ * this hardware.  Used to allocate application-specific per-processor
+ * tables at compile-time and represent a hard limit on the number of
+ * processors/threads that may be spawned. The actual number of
+ * available processors is found at runtime by calling rt_avail_cpus()
+ */
+#define MAX_PSW	1024
+
+
 /*----------------------------------------------------------------------*/
 /** @addtogroup hton */
 /** @{ */

@@ -48,13 +48,6 @@
  *		This has implications for signal handling, math library
  *		exception handling, etc.
  *
- *	MAX_PSW -
- *		The maximum number of processors that can be expected on
- *		this hardware.  Used to allocate application-specific
- *		per-processor tables.
- *		The actual number of processors is found at runtime by calling
- *		rt_avail_cpus().
- *              TODO: moving to a libbu function (DEPRECATED)
  *
  */
 
@@ -80,7 +73,6 @@
  ********************************/
 #define BITV_SHIFT	5
 /* assume only one processor for now */
-#define MAX_PSW	4
 #endif /* _WIN32 */
 
 
@@ -91,7 +83,6 @@
  *				*
  ********************************/
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
-#define MAX_PSW		128	/* Max number of process streams */
 #define PARALLEL	1
 #endif
 
@@ -107,7 +98,6 @@
 #	define LITTLE_ENDIAN	1	/* Under the influence of Intel Corp */
 #endif
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
-#define MAX_PSW		1	/* only one processor, max */
 #endif
 
 
@@ -118,7 +108,6 @@
  *				*
  ********************************/
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
-#define MAX_PSW		8	/* Max number of processors */
 #define PARALLEL	1
 #endif
 
@@ -131,7 +120,6 @@
  ********************************/
 #define LITTLE_ENDIAN	1	/* Under the influence of Intel Corp */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
-#define MAX_PSW		28	/* Max number of processors */
 #define PARALLEL	1
 #endif
 
@@ -144,7 +132,6 @@
  *				*
  ********************************/
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
-#define MAX_PSW		4	/* Max number of processors */
 #define PARALLEL	1
 #endif /* CRAY */
 
@@ -159,7 +146,6 @@
 #else
 #define BITV_SHIFT	5
 #endif
-#define MAX_PSW		4	/* Max number of processors */
 #define PARALLEL	1
 #endif
 
@@ -171,7 +157,6 @@
  *				*
  ********************************/
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
-#define MAX_PSW		4	/* # processors, max */
 #define PARALLEL	1
 #endif
 
@@ -185,7 +170,6 @@
 #define __unix	1		/* It really is unix */
 #define LITTLE_ENDIAN	1	/* Under the influence of Intel Corp */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
-#define MAX_PSW		1	/* only one processor, max */
 #endif
 
 #if	(defined(__sgi) && defined(__mips))
@@ -204,7 +188,6 @@
 #else
 #  define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 #endif
-#define MAX_PSW		1024
 #define PARALLEL	1
 #endif
 
@@ -216,7 +199,6 @@
  *				*
  ********************************/
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
-#define MAX_PSW		1	/* only one processor, max */
 #endif
 
 
@@ -228,7 +210,6 @@
  ********************************/
 #define LITTLE_ENDIAN	1	/* Under the influence of National Semiconductor */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
-#define MAX_PSW		32	/* This number is uncertain */
 #define PARALLEL	1
 #endif
 
@@ -241,7 +222,6 @@
  *				*
  ********************************/
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
-#define MAX_PSW		256	/* need to increase this for Super Dragon? */
 #define PARALLEL	1
 #endif
 
@@ -253,7 +233,6 @@
  *				*
  ********************************/
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
-#define MAX_PSW		1	/* only one processor, max */
 #endif
 
 #ifdef __APPLE__
@@ -263,7 +242,6 @@
  *                              *
  ********************************/
 #define BITV_SHIFT      5       /* log2( bits_wide(bitv_t) ) */
-#define MAX_PSW         512       /* Unused, but useful for thread debugging */
 #define PARALLEL        1
 #endif
 
@@ -274,7 +252,6 @@
  *                              *
  ********************************/
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
-#define MAX_PSW		32     	/* they can go 32-way per single image */
 #define	PARALLEL	1
 #endif
 
@@ -285,7 +262,6 @@
  *                              *
  ********************************/
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
-#define MAX_PSW		256
 #define	PARALLEL	1
 #endif
 
@@ -296,7 +272,6 @@
  *                              *
  ********************************/
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
-#define MAX_PSW		256
 #define	PARALLEL	1
 #endif
 
@@ -307,7 +282,6 @@
  *                              *
  ********************************/
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
-#define MAX_PSW		256
 #define	PARALLEL	1
 #endif
 
@@ -318,7 +292,6 @@
  *                              *
  ********************************/
 #define BITV_SHIFT      5      /* log2( bits_wide(bitv_t) ) */
-#define MAX_PSW         16
 #define PARALLEL        1
 #endif /* linux */
 
@@ -332,11 +305,9 @@
 /* amd64 */
 # if defined(__x86_64__) || defined(__sparc64__) || defined(__ia64__)
 #  define BITV_SHIFT	6
-#  define MAX_PSW		256
 /* ia32 */
 # else
 #  define BITV_SHIFT	5
-#  define MAX_PSW	16
 # endif
 #endif /* BSD */
 
@@ -348,7 +319,6 @@
  *				*
  ********************************/
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
-#define MAX_PSW		4	/* allow for a dual core dual */
 #endif
 
 /*
