@@ -900,9 +900,6 @@ typedef double fastf_t;
  */
 typedef long bitv_t;
 
-/**  Bit vector mask */
-#define BITV_MASK	((1<<BITV_SHIFT)-1)
-
 /**
  *
  * @brief
@@ -930,17 +927,22 @@ struct bu_bitv {
 #define BU_BITV_MAGIC		0x62697476	/* 'bitv' */
 #define BU_CK_BITV(_vp)		BU_CKMAG(_vp, BU_BITV_MAGIC, "bu_bitv")
 
+/** Bit vector mask */
+#define BU_BITV_MASK	((1<<BU_BITV_SHIFT)-1)
+
 /*
  *  Bit-string manipulators for arbitrarily long bit strings
  *  stored as an array of bitv_t's.
  */
 #define BU_BITS2BYTES(_nb)	(BU_BITS2WORDS(_nb)*sizeof(bitv_t))
-#define BU_BITS2WORDS(_nb)	(((_nb)+BITV_MASK)>>BITV_SHIFT)
+#define BU_BITS2WORDS(_nb)	(((_nb)+BU_BITV_MASK)>>BU_BITV_SHIFT)
 #define BU_WORDS2BITS(_nw)	((_nw)*sizeof(bitv_t)*8)
+
+
 
 #if 1
 #define BU_BITTEST(_bv, bit)	\
-	(((_bv)->bits[(bit)>>BITV_SHIFT] & (((bitv_t)1)<<((bit)&BITV_MASK)))!=0)
+	(((_bv)->bits[(bit)>>BU_BITV_SHIFT] & (((bitv_t)1)<<((bit)&BU_BITV_MASK)))!=0)
 #else
 static __inline__ int BU_BITTEST(volatile void * addr, int nr)
 {
@@ -955,9 +957,9 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
 #endif
 
 #define BU_BITSET(_bv, bit)	\
-	((_bv)->bits[(bit)>>BITV_SHIFT] |= (((bitv_t)1)<<((bit)&BITV_MASK)))
+	((_bv)->bits[(bit)>>BU_BITV_SHIFT] |= (((bitv_t)1)<<((bit)&BU_BITV_MASK)))
 #define BU_BITCLR(_bv, bit)	\
-	((_bv)->bits[(bit)>>BITV_SHIFT] &= ~(((bitv_t)1)<<((bit)&BITV_MASK)))
+	((_bv)->bits[(bit)>>BU_BITV_SHIFT] &= ~(((bitv_t)1)<<((bit)&BU_BITV_MASK)))
 #define BU_BITV_ZEROALL(_bv)	\
 	{ memset((char *)((_bv)->bits), 0, BU_BITS2BYTES( (_bv)->nbits )); }
 
@@ -1006,14 +1008,14 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
 		register int	_b;	/* Current bit-in-word number */  \
 		register bitv_t	_val;	/* Current word value */  \
 		if ((_val = (_bv)->bits[_wd])==0) continue;  \
-		for (_b=0; _b < BITV_MASK+1; _b++, _val >>= 1 ) { \
+		for (_b=0; _b < BU_BITV_MASK+1; _b++, _val >>= 1 ) { \
 			if ( !(_val & 1) )  continue;
 
 /**
  *  This macro is valid only between a BU_BITV_LOOP_START/LOOP_END pair,
  *  and gives the bit number of the current iteration.
  */
-#define BU_BITV_LOOP_INDEX	((_wd << BITV_SHIFT) | _b)
+#define BU_BITV_LOOP_INDEX	((_wd << BU_BITV_SHIFT) | _b)
 
 #define BU_BITV_LOOP_END	\
 		} /* end for (_b) */ \

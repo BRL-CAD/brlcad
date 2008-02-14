@@ -310,9 +310,10 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
 	 *  Include enough extra space for an extra bitv_t's worth of bits,
 	 *  to handle round-up.
 	 */
-	rtip->rti_Solids = (struct soltab **)bu_calloc(
-		rtip->nsolids + (1<<BITV_SHIFT), sizeof(struct soltab *),
-		"rtip->rti_Solids[]" );
+	rtip->rti_Solids =
+	    (struct soltab **)bu_calloc(rtip->nsolids + (1<<BU_BITV_SHIFT),
+					sizeof(struct soltab *),
+					"rtip->rti_Solids[]");
 	/*
 	 *  Build array of solid table pointers indexed by solid ID.
 	 *  Last element for each kind will be found in
