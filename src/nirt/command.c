@@ -342,8 +342,8 @@ show_menu(char *buffer)
 {
     com_table	*ctp;
 
-    for (ctp = ComTab; ctp -> com_name; ++ctp)
-	(void) bu_log("%*s %s\n", -14, ctp -> com_name, ctp -> com_desc);
+    for (ctp = ComTab; ctp->com_name; ++ctp)
+	(void) bu_log("%*s %s\n", -14, ctp->com_name, ctp->com_desc);
 }
 
 void
@@ -399,7 +399,7 @@ use_air(char *buffer, com_table *ctp)
 	++buffer;
     if (*buffer == '\0') {
 	/* display current value of use_of_air */
-	bu_log("use_air = %d\n", ap.a_rt_i -> useair);
+	bu_log("use_air = %d\n", ap.a_rt_i->useair);
 	return;
     }
     if (!isdigit(*buffer)) {
@@ -426,7 +426,7 @@ use_air(char *buffer, com_table *ctp)
 	while ((*rp == ' ') || (*rp == '\t'))
 	    ++rp;
 	if ((*rp != 'y') && (*rp != 'Y')) {
-	    bu_log("useair remains %d\n", ap.a_rt_i -> useair);
+	    bu_log("useair remains %d\n", ap.a_rt_i->useair);
 	    return;
 	}
 	bu_log("Building the directory...");
@@ -436,8 +436,8 @@ use_air(char *buffer, com_table *ctp)
 	    bu_exit(1, NULL);
 	}
 	rti_tab[new_use] = rtip;
-	rtip -> useair = new_use;
-	rtip -> rti_save_overlaps = (overlap_claims > 0);
+	rtip->useair = new_use;
+	rtip->rti_save_overlaps = (overlap_claims > 0);
 	
 	bu_log("Prepping the geometry...");
 	do_rt_gettrees(rtip, NULL, 0);
@@ -468,8 +468,8 @@ nirt_units (char *buffer, com_table *ctp)
 	com_usage(ctp);
 	return;
     } else if (strcmp(buffer + i, "default") == 0) {
-	base2local = rtip -> rti_dbip -> dbi_base2local;
-	local2base = rtip -> rti_dbip -> dbi_local2base;
+	base2local = rtip->rti_dbip->dbi_base2local;
+	local2base = rtip->rti_dbip->dbi_local2base;
 	bu_strlcpy(local_u_name, bu_units_string(base2local), sizeof(local_u_name));
     } else {
 	if ((tmp_dbl = bu_units_conversion(buffer + i)) == 0.0) {
@@ -511,7 +511,7 @@ do_overlap_claims (char *buffer, com_table *ctp)
 	    overlap_claims = j;
 	    for (k = 0; k < 2; ++k)
 		if (rti_tab[k] != RTI_NULL)
-		    rti_tab[k] -> rti_save_overlaps = (j > 0);
+		    rti_tab[k]->rti_save_overlaps = (j > 0);
 	    return;
 	}
     }

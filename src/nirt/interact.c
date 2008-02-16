@@ -192,7 +192,7 @@ interact(int input_source, void *sPtr)
 		    "Invalid command name '%s'.  Enter '?' for help\n",
 		    line_buffer);
 	} else {
-	    (*(ctp -> com_func)) (&line_buffer[key_len], ctp);
+	    (*(ctp->com_func)) (&line_buffer[key_len], ctp);
 	}
     }
 }
@@ -204,12 +204,12 @@ get_comtab_ent (char *pattern, int pat_len)
     com_table	*ctp;
     int		len;
 
-    for (ctp = ComTab; ctp -> com_name; ++ctp) {
-	len = fmax(pat_len, (int)strlen(ctp -> com_name));
-	if ((strncmp (pattern, ctp -> com_name, len)) == 0)
+    for (ctp = ComTab; ctp->com_name; ++ctp) {
+	len = fmax(pat_len, (int)strlen(ctp->com_name));
+	if ((strncmp (pattern, ctp->com_name, len)) == 0)
 	    break;
     }
-    return ((ctp -> com_name) ? ctp : CT_NULL);
+    return ((ctp->com_name) ? ctp : CT_NULL);
 }
 
 /*
