@@ -50,7 +50,7 @@ url="http://brlcad.org"
 license=('custom:BDL' 'BSD' 'LGPL')
 install=brlcad.install
 arch=('i686')
-depends=('libpng' 'zlib' 'libgl' 'jove' 'tk-devel')
+depends=('libpng' 'zlib' 'libgl' 'jove' 'tk>=8.5')
 
 # TODO: Make separate packages for itcl, itk, iwidgets
 #depends=('libpng' 'zlib' 'libgl' 'jove' 'tk' 'blt' 'itcl' )
@@ -61,13 +61,11 @@ md5sums=('6e46ccfca93dd363d931c25ab21ac512')
 
 build() {
     cd $startdir/src/$pkgname-$pkgver
-    ./configure --enable-optimized --disable-sdltest --prefix=@BRLCAD_ROOT@
+    ./configure --prefix=@BRLCAD_ROOT@ --enable-optimized --disable-sdltest \
+    --disable-jove-build
     make || return 1
     make DESTDIR=$startdir/pkg install || return 1
 
-    # Specify proper share directory
-    echo -e "export BRLCAD_DATA=\$BRLCADDIR/share/brlcad/$pkgver\n" >> \
-      $startdir/src/brlcad.sh
     mkdir -p $startdir/pkg/etc/profile.d
     install -m755 $startdir/src/brlcad.sh $startdir/pkg/etc/profile.d
 
