@@ -50,7 +50,7 @@
 #if !defined(PI)
 #  define	PI		3.141592654
 #endif
-#define	BACKOUT_DIST	1000.0
+
 #define	OFF		0
 #define	ON		1
 #define	YES		1
@@ -92,7 +92,7 @@
 
 /** MACROS WITH ARGUMENTS */
 #define	com_usage(c)	fprintf (stderr, "Usage:  %s %s\n", \
-				c -> com_name, c -> com_args);
+				c->com_name, c->com_args);
 
 /** DATA STRUCTURES */
 typedef struct {

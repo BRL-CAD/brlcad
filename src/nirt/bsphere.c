@@ -42,7 +42,7 @@ set_diameter(struct rt_i *rtip)
 {
     vect_t	diag;
 
-    VSUB2(diag, rtip -> mdl_max, rtip -> mdl_min);
+    VSUB2(diag, rtip->mdl_max, rtip->mdl_min);
     bsphere_diameter = MAGNITUDE(diag);
 }
 
