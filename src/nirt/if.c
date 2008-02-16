@@ -307,56 +307,6 @@ if_overlap(register struct application *ap, register struct partition *pp, struc
 }
 
 
-/**
- * The callbacks used by backup()
- */
-int if_bhit(struct application *ap, struct partition *part_head, struct seg *finished_segs)
-{
-    struct partition	*part;
-    vect_t		dir;
-    point_t		point;
-    int			i;
-
-    if ((part = part_head -> pt_back) == part_head)
-	bu_exit (1, "if_bhit() got empty partition list.  Shouldn't happen\n");
-
-    /* calculate exit point */
-    VJOIN1(part->pt_outhit->hit_point, ap->a_ray.r_pt, part->pt_outhit->hit_dist, ap->a_ray.r_dir);
-
-    if (nirt_debug & DEBUG_BACKOUT) {
-	bu_log("Backmost region is '%s'\n", part->pt_regionp->reg_name);
-	bu_log("Backout ray exits at (%g %g %g)\n",
-	       part->pt_outhit->hit_point[0] * base2local,
-	       part->pt_outhit->hit_point[1] * base2local,
-	       part->pt_outhit->hit_point[2] * base2local);
-    }
-
-    for (i = 0; i < 3; ++i)
-	dir[i] = -direct(i);
-    VJOIN1(point, part -> pt_outhit -> hit_point, BACKOUT_DIST, dir);
-
-    if (nirt_debug & DEBUG_BACKOUT)
-	bu_log("Point %g beyond is (%g %g %g)\n",
-	       BACKOUT_DIST,
-	       point[0] * base2local,
-	       point[1] * base2local,
-	       point[2] * base2local);
-
-    for (i = 0; i < 3; ++i)
-	target(i) = point[i];
-    targ2grid();
-
-    return( HIT );
-}
-
-
-int
-if_bmiss(void)
-{
-    return ( MISS );
-}
-
-
 fastf_t
 get_obliq(fastf_t *ray, fastf_t *normal)
 {
@@ -419,12 +369,6 @@ init_ovlp(void)
     ovlp_list.forw = ovlp_list.backw = &ovlp_list;
 }
 
-
-int
-if_boverlap(register struct application *ap, register struct partition *pp, struct region *reg1, struct region *reg2)
-{
-    return 1;
-}
 
 /*
  * Local Variables:
