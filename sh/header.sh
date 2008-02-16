@@ -735,8 +735,6 @@ if [ "x$wrap" = "x1" ] ; then
  *
  * Brief description
  *
- * Author -
- *   Unknown
  */
 
 " >> $FILE
