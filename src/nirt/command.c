@@ -359,13 +359,25 @@ shoot(char *buffer, int ctp)
 	do_rt_gettrees(rtip, NULL, 0);
     }
 
-    if (do_backout)
+    if (do_backout) {
+	if (bsphere_diameter < 0)
+	    set_diameter(rtip);
 	bov = bsphere_diameter;
+    }
 
     for (i = 0; i < 3; ++i) {
 	target(i) = target(i) + ( bov * -direct(i) );
 	ap.a_ray.r_pt[i] = target(i);
 	ap.a_ray.r_dir[i] = direct(i);
+    }
+
+    if (nirt_debug & DEBUG_BACKOUT) {
+	bu_log("Backing out %g units to (%g %g %g), shooting dir is (%g %g %g)\n",
+	       bov * base2local,
+	       ap.a_ray.r_pt[0] * base2local,
+	       ap.a_ray.r_pt[1] * base2local,
+	       ap.a_ray.r_pt[2] * base2local,
+	       V3ARGS(ap.a_ray.r_dir));
     }
 
     init_ovlp();

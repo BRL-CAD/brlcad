@@ -35,7 +35,7 @@
 #include "./usrfmt.h"
 
 
-fastf_t	bsphere_diameter;
+fastf_t	bsphere_diameter = (fastf_t)-1.0;
 
 void
 set_diameter(struct rt_i *rtip)
