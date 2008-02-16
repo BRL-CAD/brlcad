@@ -35,6 +35,7 @@
 #include "common.h"
 
 #include "raytrace.h" /* for DEBUG_FORMAT */
+#include "vmath.h"
 
 #include "./usrfmt.h" /* Needed for some struct definitions */
 
@@ -67,7 +68,6 @@
 #define	NO_AIR		0
 #define	READING_FILE	1
 #define	READING_STRING	2
-#define	deg2rad		0.01745329
 
 /** FLAG VALUES FOR overlap_claims */
 #define	OVLP_RESOLVE		0

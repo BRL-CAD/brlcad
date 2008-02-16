@@ -80,8 +80,8 @@ void read_mat (void)
 	    quat_quat2mat(m, q);
 	    if (nirt_debug & DEBUG_MAT)
 		bn_mat_print("view matrix", m);
-	    azimuth() = atan2(-m[0], m[1]) / deg2rad;
-	    elevation() = atan2(m[10], m[6]) / deg2rad;
+	    azimuth() = atan2(-m[0], m[1]) / DEG2RAD;
+	    elevation() = atan2(m[10], m[6]) / DEG2RAD;
 	    status |= RMAT_SAW_ORI;
 	} else if (strncmp(buf, "viewrot", 7) == 0) {
 	    if (sscanf(buf + 7,
@@ -94,8 +94,8 @@ void read_mat (void)
 	    }
 	    if (nirt_debug & DEBUG_MAT)
 		bn_mat_print("view matrix", m);
-	    azimuth() = atan2(-m[0], m[1]) / deg2rad;
-	    elevation() = atan2(m[10], m[6]) / deg2rad;
+	    azimuth() = atan2(-m[0], m[1]) / DEG2RAD;
+	    elevation() = atan2(m[10], m[6]) / DEG2RAD;
 	    status |= RMAT_SAW_VR;
 	}
     }

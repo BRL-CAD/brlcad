@@ -48,18 +48,18 @@ dir2ae(void)
     double square;
 
     azimuth() = ((direct(Y) == 0) && (direct(X) == 0)) ? 0.0 :
-	atan2 ( -(direct(Y)), -(direct(X)) ) / deg2rad;
+	atan2 ( -(direct(Y)), -(direct(X)) ) / DEG2RAD;
 
     square = sqrt(direct(X) * direct(X) + direct(Y) * direct(Y));
-    elevation() = atan2 (-(direct(Z)), square) / deg2rad;
+    elevation() = atan2 (-(direct(Z)), square) / DEG2RAD;
 }
 
 
 void
 grid2targ(void)
 {
-    double	ar = azimuth() * deg2rad;
-    double	er = elevation() * deg2rad;
+    double	ar = azimuth() * DEG2RAD;
+    double	er = elevation() * DEG2RAD;
     
     target(X) = - grid(HORZ) * sin(ar)
 	- grid(VERT) * cos(ar) * sin(er)
@@ -75,8 +75,8 @@ grid2targ(void)
 void
 targ2grid(void)
 {
-    double	ar = azimuth() * deg2rad;
-    double	er = elevation() * deg2rad;
+    double	ar = azimuth() * DEG2RAD;
+    double	er = elevation() * DEG2RAD;
     
     grid(HORZ) = - target(X) * sin(ar)
 	+ target(Y) * cos(ar);
@@ -92,8 +92,8 @@ targ2grid(void)
 void
 ae2dir(void)
 {
-    double	ar = azimuth() * deg2rad;
-    double	er = elevation() * deg2rad;
+    double	ar = azimuth() * DEG2RAD;
+    double	er = elevation() * DEG2RAD;
     
     int		i;
     vect_t	dir;
