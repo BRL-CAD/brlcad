@@ -17,8 +17,6 @@ http://sf.net/pm/?group_id=105292
 THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------
 
-* fix mged I/O (puts/gets stdout/stdin fail)
-
 * fix mged text flood hang (e.g. large rtarea report)
 
 
