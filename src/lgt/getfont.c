@@ -26,7 +26,6 @@
 #include "common.h"
 
 #include <stdio.h>
-#include <assert.h>
 
 #include "fb.h"
 
