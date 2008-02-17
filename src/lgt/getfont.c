@@ -18,11 +18,9 @@
  * information.
  */
 /** @file getfont.c
-	Authors:	Paul R. Stay	(original author)
-			Gary S. Moss	(port to big-endian machine)
-*/
-/*
-	getfont.c - Load a new font by reading in the header and directory.
+ *
+ * Load a new font by reading in the header and directory.
+ *
  */
 
 #include "common.h"
@@ -30,12 +28,8 @@
 #include <stdio.h>
 #include <assert.h>
 
-#include "vmath.h"
-#include "raytrace.h"
 #include "fb.h"
-#include "./hmenu.h"
-#include "./lgt.h"
-#include "./extern.h"
+
 #include "./font.h"
 
 /* Variables controlling the font itself */
@@ -76,7 +70,7 @@ get_Font(const char* fontname)
 		}
 	SWAB( lochdr.magic );
 	SWAB( lochdr.size );
-	SWAB( lochdr.maxx );
+	SWAB( lochdr.maoxx );
 	SWAB( lochdr.maxy );
 	SWAB( lochdr.xtend );
 

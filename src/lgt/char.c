@@ -40,6 +40,10 @@
 #include "./extern.h"
 #include "./font.h"
 
+#define FONTCOLOR_RED  0.0
+#define FONTCOLOR_GRN  0.0
+#define FONTCOLOR_BLU  0.0
+
 #define BUFFSIZ 200
 static int	bitx(register char *bitstring, register int posn);
 static void	do_char(int c, register int xpos, register int ypos);

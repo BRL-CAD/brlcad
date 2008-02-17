@@ -18,30 +18,27 @@
  * information.
  */
 /** @file getfont.c
-	Load a new font by reading in the header and directory.
-
-	Authors:	Paul R. Stay	(original author)
-			Gary S. Moss	(port to big-endian machine)
-*/
+ *
+ * Load a new font by reading in the header and directory.
+ *
+ */
 
 #include "common.h"
 
 #include <stdio.h>
-#include <string.h>
 
-#include "bu.h"
+#include "fb.h"
 
 #include "./font.h"
 
 /* Variables controlling the font itself */
 FILE		*ffdes;		/* File pointer for current font. */
-int offset;		/* Current offset to character data. */
+long		offset;		/* Current offset to character data. */
 struct header	hdr;		/* Header for font file. */
 struct dispatch	dir[256];	/* Directory for character font. */
-int width = 0,	/* Size of current character. */
+int		width = 0,	/* Size of current character. */
 		height = 0;
 
-extern void fb_log(const char* fmt, ...);
 
 int
 get_Font(const char* fontname)
