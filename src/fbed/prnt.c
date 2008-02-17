@@ -31,7 +31,6 @@
 
 #include "./std.h"
 #include "./ascii.h"
-#include "./font.h"
 #include "./try.h"
 #include "./extern.h"
 

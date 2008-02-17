@@ -37,9 +37,11 @@
 
 #include "fb.h"
 
+/* FIXME */
+#include "../vfont/font.h"
+
 #include "./std.h"
 #include "./ascii.h"
-#include "./font.h"
 #include "./try.h"
 #include "./extern.h"
 
@@ -352,7 +354,7 @@ main(int argc, char **argv)
     fb_Wind();
     init_Tty();
     init_Try();
-    get_Font( "nonie.r.12" );
+    get_font( "nonie.r.12", fb_log );
     {
 	static char default_macro_file[MAX_LN];
 	char *home;
@@ -1677,7 +1679,7 @@ f_Rd_Font(char *buf) /* Set current font. */
     static char fontname[FONTNAMESZ];
     if ( ! get_Input( fontname, FONTNAMESZ, "Enter font name : " ) )
 	return 0;
-    get_Font( fontname );
+    get_font( fontname, fb_log );
     return 1;
 }
 

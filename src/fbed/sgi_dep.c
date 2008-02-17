@@ -35,7 +35,6 @@ static const char RCSid[] = "@(#) sgi_dep.c 2.3, modified 1/5/87 at 16:57:35, ar
 
 #include "./std.h"
 #include "./ascii.h"
-#include "./font.h"
 #include "./try.h"
 #include "./extern.h"
 

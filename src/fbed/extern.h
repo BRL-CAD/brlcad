@@ -103,7 +103,6 @@ extern void prnt_Event( const char *fmt, ... );
 extern void prnt_Rectangle(const char *str, register Rectangle *rectp);
 extern void do_Key_Cmd(register int key, register int n);
 extern int InitTermCap();
-extern int get_Font(const char *fontname);
 extern void prnt_Prompt(const char *msg);
 extern int empty(int fd);
 extern int get_Char(void);

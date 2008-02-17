@@ -28,8 +28,10 @@
 
 #include "fb.h"
 
+/* FIXME */
+#include "../vfont/font.h"
+
 #include "./std.h"
-#include "./font.h"
 #include "./ascii.h"
 #include "./try.h"
 #include "./extern.h"
