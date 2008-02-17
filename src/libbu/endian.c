@@ -36,7 +36,9 @@ bu_byteorder()
 	unsigned char c[sizeof(unsigned long)];
     } b = {1};
     
-/* give run-time test preference to compile-time endian */
+/* give run-time test preference to compile-time endian, tested much
+ * faster than stashing in a static.
+ */
 #ifdef WORDS_BIGENDIAN
     if (b.c[sizeof(unsigned long)-1])
 	return BU_BIG_ENDIAN;
