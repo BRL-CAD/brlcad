@@ -431,6 +431,7 @@ BU_EXPORT BU_EXTERN(int bu_cv_htonul,
 #define CV_NORMAL	0x2000
 #define CV_LIT		0x4000
 
+/** deprecated */
 #define	END_NOTSET	0
 #define END_BIG		1	/* PowerPC/MIPS */
 #define END_LITTLE	2	/* Intel */
@@ -443,6 +444,25 @@ BU_EXPORT BU_EXTERN(int bu_cv_htonul,
 #define IND_LITTLE	2
 #define IND_ILL		3
 #define IND_CRAY	4
+
+
+/*----------------------------------------------------------------------*/
+/* endian.c */
+
+typedef enum {
+    BU_LITTLE_ENDIAN	= 1234, /* LSB first: i386, VAX order */
+    BU_BIG_ENDIAN	= 4321, /* MSB first: 68000, IBM, network order */
+    BU_PDP_ENDIAN	= 3412  /* LSB first in word, MSW first in long */
+} bu_endian_t;
+
+
+/**
+ * b u _ b y t e o r d e r
+ *
+ * returns the platform byte ordering (e.g., big-/little-endian)
+ */
+BU_EXPORT BU_EXTERN(inline bu_endian_t bu_byteorder, (void));
+
 
 /**@}*/
 
