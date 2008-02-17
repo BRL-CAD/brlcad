@@ -19,13 +19,12 @@
  *
  */
 /** @file stl-g.c
- *		S T L - G
  *
- * Code to convert Stereolithography format files to BRL-CAD
- *	Note that binary STL format is Little-endian (bytes at lower addresses have lower significance)
+ * Convert Stereolithography format files to BRL-CAD .g binary format
  *
- *  Author -
- *	John R. Anderson
+ * Note that binary STL format use a little-endian byte ordering where
+ * bytes at lower addresses have lower significance.
+ *
  */
 
 #include "common.h"
