@@ -55,7 +55,7 @@ do_line(int xpos, int ypos, register char *line)
 		register int	len = strlen( line );
 	if ( ffdes == NULL )
 		{
-		bu_log( "ERROR: do_line() called before get_Font().\n" );
+		bu_log( "ERROR: do_line() called before get_font().\n" );
 		return;
 		}
 	currx = xpos;

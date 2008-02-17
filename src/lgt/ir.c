@@ -126,7 +126,7 @@ display_Temps(int xmin, int ymin)
 				}
 			}
 		}
-	if ( ! get_Font( (char *) NULL ) )
+	if ( ! get_font( (char *) NULL, bu_log ) )
 		{
 		bu_log( "Could not load font.\n" );
 		fb_flush( fbiop );

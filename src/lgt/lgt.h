@@ -194,7 +194,6 @@ int		ClrEOL();
 int		ResetScrlReg();
 int		DeleteLn();
 int		init_Temp_To_RGB();
-int		get_Font();
 int		do_More();
 int		append_PtList();
 int		delete_Node_OcList();

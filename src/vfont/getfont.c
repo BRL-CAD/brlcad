@@ -40,64 +40,69 @@ int		width = 0,	/* Size of current character.		*/
 		height = 0;
 
 int
-get_Font(const char* fontname)
+get_font(const char* fontname, void (*log)(const char *fmt, ...))
 {
-    FILE		*newff;
-		struct header	lochdr;
-		static char	fname[FONTNAMESZ];
-	if ( fontname == NULL )
-		fontname = FONTNAME;
-	if ( fontname[0] != '/' )		/* absolute path */
-		(void) snprintf( fname, sizeof(fname), "%s/%s", FONTDIR, fontname );
+    FILE *newff;
+    struct header	lochdr;
+    static char	fname[FONTNAMESZ];
+    if (fontname == NULL)
+	fontname = FONTNAME;
+    if (fontname[0] != '/')		/* absolute path */
+	(void) snprintf(fname, sizeof(fname), "%s/%s", FONTDIR, fontname);
+    else
+	bu_strlcpy(fname, fontname, sizeof(fname));
+    
+    /* Open the file and read in the header information. */
+    if ((newff = fopen(fname, "rb")) == NULL)
+    {
+	if (log)
+	    log("Error opening font file '%s'\n", fname);
 	else
-		bu_strlcpy( fname, fontname, sizeof(fname) );
-
-	/* Open the file and read in the header information. */
-	if ( (newff = fopen( fname, "rb" )) == NULL )
-		{
-		bu_log( "Error opening font file '%s'\n", fname );
-		ffdes = NULL;
-		return	0;
-		}
-	if ( ffdes != NULL )
-		(void) fclose(ffdes);
-	ffdes = newff;
-	if ( fread( (char *) &lochdr, (int) sizeof(struct header), 1, ffdes ) != 1 )
-		{
-		bu_log( "get_Font() read failed!\n" );
-		ffdes = NULL;
-		return	0;
-		}
-	SWAB( lochdr.magic );
-	SWAB( lochdr.size );
-	SWAB( lochdr.maoxx );
-	SWAB( lochdr.maxy );
-	SWAB( lochdr.xtend );
-
-	if ( lochdr.magic != 0436 )
-		{
-		bu_log( "Not a font file \"%s\": magic=0%o\n",
-			fname, (int) lochdr.magic
-			);
-		ffdes = NULL;
-		return	0;
-		}
-	hdr = lochdr;
-
-	/* Read in the directory for the font. */
-	if ( fread( (char *) dir, (int) sizeof(struct dispatch), 256, ffdes ) != 256 )
-		{
-		bu_log( "get_Font() read failed!\n" );
-		ffdes = NULL;
-		return	0;
-		}
-	/* Addresses of characters in the file are relative to
-		point in the file after the directory, so grab the
-		current position.
-	 */
-	offset = ftell( ffdes );
-	return	1;
-	}
+	    log("Loaded font file '%s'\n", fname);
+	    
+	ffdes = NULL;
+	return	0;
+    }
+    if (ffdes != NULL)
+	(void) fclose(ffdes);
+    ffdes = newff;
+    if (fread((char *) &lochdr, (int) sizeof(struct header), 1, ffdes) != 1)
+    {
+	if (log)
+	    log("get_Font() read failed!\n");
+	ffdes = NULL;
+	return	0;
+    }
+    SWAB(lochdr.magic);
+    SWAB(lochdr.size);
+    SWAB(lochdr.maoxx);
+    SWAB(lochdr.maxy);
+    SWAB(lochdr.xtend);
+    
+    if (lochdr.magic != 0436)
+    {
+	if (log)
+	    log("Not a font file \"%s\": magic=0%o\n", fname, (int) lochdr.magic);
+	ffdes = NULL;
+	return	0;
+    }
+    hdr = lochdr;
+    
+    /* Read in the directory for the font. */
+    if (fread((char *) dir, (int) sizeof(struct dispatch), 256, ffdes) != 256)
+    {
+	if (log)
+	    log("get_Font() read failed!\n");
+	ffdes = NULL;
+	return	0;
+    }
+    /* Addresses of characters in the file are relative to
+       point in the file after the directory, so grab the
+       current position.
+    */
+    offset = ftell(ffdes);
+    return	1;
+}
 
 /*
  * Local Variables:
