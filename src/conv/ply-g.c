@@ -173,10 +173,7 @@ log_elements()
 int
 get_endianness()
 {
-	int i = 0x87654321;
-	unsigned char* a = (unsigned char*) &i;
-
-	if (*a != 0x21) {
+	if (bu_byteorder() == BU_BIG_ENDIAN) {
 		/* big Endian */
 		return PLY_BIN_BIG_ENDIAN;
 	} else {
