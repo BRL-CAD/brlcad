@@ -10,7 +10,6 @@ lgt_SOURCES = \
 	error.c \
 	execshell.c \
 	fb.c \
-	getfont.c \
 	glob.c \
 	grid_rotate.c \
 	hmenu.c \
@@ -29,7 +28,6 @@ noinst_HEADERS = \
 	ascii.h \
 	cursors.h \
 	extern.h \
-	font.h \
 	hmenu.h \
 	lgt.h \
 	mat_db.h \
@@ -39,6 +37,7 @@ noinst_HEADERS = \
 	vecmath.h
 
 lgt_LDADD = \
+	$(top_builddir)/src/vfont/libvfont_nil.la \
 	${RT} \
 	${FB} \
 	${TERMIO} \

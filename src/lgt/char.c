@@ -38,7 +38,7 @@
 #include "./hmenu.h"
 #include "./lgt.h"
 #include "./extern.h"
-#include "./font.h"
+#include "../vfont/font.h"
 
 #define FONTCOLOR_RED  0.0
 #define FONTCOLOR_GRN  0.0

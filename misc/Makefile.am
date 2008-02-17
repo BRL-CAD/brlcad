@@ -7,7 +7,6 @@ SUBDIRS = \
 	macosx \
 	nsis \
 	pkgconfig \
-	vfont \
 	win32-msvc \
 	win32-msvc7 \
 	win32-msvc8

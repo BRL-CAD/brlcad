@@ -3662,7 +3662,6 @@ AC_CONFIG_FILES([
 	misc/pkgconfig/pkg.pc
 	misc/pkgconfig/rt.pc
 	misc/pkgconfig/wdb.pc
-	misc/vfont/Makefile
 	misc/win32-msvc/Dll/Makefile
 	misc/win32-msvc/Makefile
 	misc/win32-msvc/aPrep/Makefile
@@ -3843,6 +3842,7 @@ AC_CONFIG_FILES([
 	src/util/Makefile
 	src/vas4/Makefile
 	src/vdeck/Makefile
+	src/vfont/Makefile
 ])
 
 AC_OUTPUT

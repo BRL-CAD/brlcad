@@ -77,7 +77,8 @@ kitchensink_dirs = \
 	tclscripts \
 	util \
 	vas4 \
-	vdeck
+	vdeck \
+	vfont
 
 #######################
 # put it all together #
