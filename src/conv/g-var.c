@@ -76,11 +76,6 @@ static char		*object = NULL;
 static FILE		*fp_out;
 static struct db_i	*dbip;
 
-#ifndef WORDS_BIGENDIAN
-static uint8_t		endian = 0;
-#else
-static uint8_t		endian = 1;
-#endif
 static uint8_t		format_version = MESH_FORMAT_VERSION;
 static struct mesh	*head = NULL;
 static struct mesh	*curr = NULL;
@@ -148,6 +143,7 @@ void dealloc_mesh_list()
 void write_header( struct db_i *dbip )
 {
     uint16_t len;
+    char endian;
     /*
       Header format:
       Endian (1 byte) {0=little; !0=big}
@@ -160,7 +156,13 @@ void write_header( struct db_i *dbip )
     */
 
     /* endian */
+    if (bu_byteorder() == BU_BIG_ENDIAN) {
+	endian = 1;
+    } else {
+	endian = 0;
+    }
     fwrite( &endian, sizeof(char), 1, fp_out );
+
     /* format version */
     fwrite( &format_version, sizeof(char), 1, fp_out );
     len = strlen( dbip->dbi_title );
