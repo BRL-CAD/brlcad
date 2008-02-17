@@ -292,6 +292,18 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libbu\endian.c"
+				>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libbu\fchmod.c"
 				>
 			</File>

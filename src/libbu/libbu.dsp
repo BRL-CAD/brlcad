@@ -249,6 +249,10 @@ SOURCE=.\dirname.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\endian.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\fchmod.c
 # End Source File
 # Begin Source File
