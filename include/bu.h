@@ -2052,8 +2052,8 @@ BU_EXPORT BU_EXTERN(void bu_log_delete_hook,
 		    (bu_hook_t func,
 		     genptr_t clientdata));
 BU_EXPORT BU_EXTERN(void bu_putchar, (int c));
-BU_EXPORT BU_EXTERN(void bu_log, (char *, ... )) __BU_ATTR_FORMAT12;
-BU_EXPORT BU_EXTERN(void bu_flog, (FILE *, char *, ... )) __BU_ATTR_FORMAT23;
+BU_EXPORT BU_EXTERN(void bu_log, (const char *, ... )) __BU_ATTR_FORMAT12;
+BU_EXPORT BU_EXTERN(void bu_flog, (FILE *, const char *, ... )) __BU_ATTR_FORMAT23;
 
 /** @} */
 /** @addtogroup magic */
@@ -2488,10 +2488,10 @@ BU_EXPORT BU_EXTERN(void bu_vls_vprintf,
 
 BU_EXPORT BU_EXTERN(void bu_vls_printf,
 		    (struct bu_vls *vls,
-		     char *fmt, ...)) __BU_ATTR_FORMAT23;
+		     const char *fmt, ...)) __BU_ATTR_FORMAT23;
 BU_EXPORT BU_EXTERN(void bu_vls_sprintf,
 		    (struct bu_vls *vls,
-		     char *fmt, ...)) __BU_ATTR_FORMAT23;
+		     const char *fmt, ...)) __BU_ATTR_FORMAT23;
 
 BU_EXPORT BU_EXTERN(void bu_vls_spaces,
 		    (struct bu_vls *vp,

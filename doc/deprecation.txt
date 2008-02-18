@@ -68,6 +68,11 @@ src/librt/bomb.c
 
 7.12.0
 ------
+include/bu.h
+	bu_log(char *, ...) -> bu_log(const char *, ...) [const]
+	bu_flog(FILE *, char *, ...) -> bu_flog(FILE *, const char *, ...) [const]
+	bu_vls_printf(struct bu_vls *, char *) -> bu_vls_printf(struct bu_vls *, const char *) [const]
+	bu_vls_sprintf(struct bu_vls *, char *) -> bu_vls_sprintf(struct bu_vls *, const char *) [const]
 include/wdb.h
 	removed mk_poly() [deprecated pre-7.0]
 	removed mk_polysolid() [deprecated pre-7.0]

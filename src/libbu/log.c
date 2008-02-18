@@ -192,7 +192,7 @@ bu_log_call_hooks(genptr_t buf)
  */
 
 HIDDEN void
-bu_log_do_indent_level(struct bu_vls *new, register char *old)
+bu_log_do_indent_level(struct bu_vls *new, register const char *old)
 {
     register int i;
 
@@ -259,7 +259,7 @@ bu_putchar(int c)
  *  Log a library event in the Standard way.
  */
 void
-bu_log(char *fmt, ...)
+bu_log(const char *fmt, ...)
 {
     va_list ap;
 
@@ -340,7 +340,7 @@ bu_log(char *fmt, ...)
  *  Log a library event in the Standard way, to a specified file.
  */
 void
-bu_flog(FILE *fp, char *fmt, ...)
+bu_flog(FILE *fp, const char *fmt, ...)
 {
     va_list ap;
 

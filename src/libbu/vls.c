@@ -1119,7 +1119,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
  * Initializes the va_list, then calls the above bu_vls_vprintf.
  */
 void
-bu_vls_printf(struct bu_vls *vls, char *fmt, ...)
+bu_vls_printf(struct bu_vls *vls, const char *fmt, ...)
 {
     va_list ap;
     va_start(ap, fmt);
@@ -1143,7 +1143,7 @@ bu_vls_printf(struct bu_vls *vls, char *fmt, ...)
  * %S is a pointer to a (struct bu_vls *) string.
  */
 void
-bu_vls_sprintf(struct bu_vls *vls, char *fmt, ...)
+bu_vls_sprintf(struct bu_vls *vls, const char *fmt, ...)
 {
     va_list ap;
     va_start(ap, fmt);
