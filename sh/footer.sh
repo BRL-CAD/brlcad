@@ -114,8 +114,8 @@ case $FILE in
 	echo "$FILE is a C header"
 	mode="C"
 	mode_vars=""
-	wrap=0
-	commentchar="//"
+	wrap=1
+	commentchar="*"
 	;;
     *.cc | *.cp | *.cxx | *.cpp | *.CPP | *.c++ | *.C )
 	echo "$FILE is a C++ source file"
