@@ -109,7 +109,6 @@ get_Try(register char *name, register Try *tryp)
 				name++;
 			}
 		}
-	assert( curp != NULL ); /* can't happen */
 
 	/* Clobber key-stroke, and return it. */
 	--name;

@@ -56,6 +56,7 @@ empty(int fd)
 #else
 	/* On most machines we aren't supporting the mouse, so no need to
 		not block on keyboard input. */
+	fd = fd; /* quell warning */
 	return 0;
 #endif
 	}

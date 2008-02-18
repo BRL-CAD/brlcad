@@ -135,7 +135,7 @@ get_Input(char* inbuf, size_t bufsz, const char* msg)
 			p += strlen( p );
 			break;
 		case Ctrl('F') : /* Cursor forward one character. */
-			if ( *p == NUL || p-buffer >= bufsz-2 )
+			if ( *p == NUL || (size_t)(p-buffer) >= (size_t)(bufsz-2) )
 				{
 				ring_Bell();
 				break;
@@ -370,7 +370,7 @@ get_Func_Name(char* inbuf, size_t bufsz, const char* msg)
 			p += strlen( p );
 			break;
 		case Ctrl('F') : /* Cursor forward one character. */
-			if ( *p == NUL || p-buffer >= bufsz-2 )
+			if ( *p == NUL || (size_t)(p-buffer) >= (size_t)(bufsz-2) )
 				{
 				ring_Bell();
 				break;

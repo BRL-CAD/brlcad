@@ -18,15 +18,12 @@
  * information.
  */
 /** @file sgi_dep.c
-	Author:		Gary S. Moss
-*/
-#if ! defined( lint )
-static const char RCSid[] = "@(#) sgi_dep.c 2.3, modified 1/5/87 at 16:57:35, archive /vld/moss/src/fbed/s.sgi_dep.c";
-#endif
+ *
+ */
 
 #include "common.h"
 
-#if HAS_SGIGL
+#if defined(HAS_SGIGL)
 
 #include <stdio.h>
 #include <device.h>

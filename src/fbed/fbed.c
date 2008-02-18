@@ -73,19 +73,21 @@ struct pointstack
 
 struct vfont font;
 
-bool AproxEqColor(unsigned char a, unsigned char b, int t)
+bool AproxEqColor(unsigned int a, unsigned int b, long t)
 {
-    int	c = a-b;
+    long c = a-b;
     if ( Abs( c ) > t )
 	return false;
     else
 	return true;
 }
 
-#define AproxPixel(a, b, t) \
-	(AproxEqColor((a)[RED], (b)[RED], t) && \
-	 AproxEqColor((a)[GRN], (b)[GRN], t) && \
-	 AproxEqColor((a)[BLU], (b)[BLU], t))
+bool AproxPixel(RGBpixel a, RGBpixel b, int t)
+{
+    return (AproxEqColor(a[RED], b[RED], t) &&
+	    AproxEqColor(a[GRN], b[GRN], t) &&
+	    AproxEqColor(a[BLU], b[BLU], t));
+}
 
 #define Fgets_Bomb() \
 		fb_log( "\%s\"(%d) EOF encountered prematurely.\n", \
@@ -124,71 +126,72 @@ HIDDEN void get_Rectangle(char *name, register Rectangle *rectp);
 HIDDEN void fillRectangle(register Rectangle *rectp, register RGBpixel (*pixelp));
 HIDDEN void fix_Rectangle(register Rectangle *rectp);
 HIDDEN void pushPoint(Point *pt, PtStack **spp);
-HIDDEN void put_Fb_Panel(register Rectangle *rectp, register RGBpixel (*panel));
+HIDDEN void put_Fb_Panel(register Rectangle *, register RGBpixel *);
 
-HIDDEN int	/* ^X  */ f_Exec_Function(char *buf),
-    /* ^I  */ f_Nop(char *buf),
-    /* ^H  */ f_Win_Lft(char *buf),
-    /* ^J  */ f_Win_Dwn(char *buf),
-    /* ^K  */ f_Win_Up(char *buf),
-    /* ^L  */ f_Win_Rgt(char *buf),
-    /* ^M  */ f_Reset_View(char *buf),
-    /* ^R  */ f_Redraw(char *buf),
-    /* ^Z  */ f_Stop(char *buf),
-    /* ESC */ f_Iterations(char *buf),
-    /* SP  */ f_Press(char *buf),
-    /* #   */ f_Comment(char *buf),
-    /* ,   */ f_Dec_Brush_Size(char *buf),
-    /* .   */ f_Inc_Brush_Size(char *buf),
-    /* <   */ f_Dec_Step_Size(char *buf),
-    /* >   */ f_Inc_Step_Size(char *buf),
-    /* ?   */ f_Menu(char *buf),
-    /* A   */ f_Start_Macro(char *buf),
-    /* B   */ f_Bind_Macro_To_Key(char *buf),
-    /* C   */ f_Crunch_Image(char *buf),
-    /* E   */ f_Erase_Fb(char *buf),
-    /* F   */ f_Flip_Resolution(char *buf),
-    /* G   */ f_Get_Panel(char *buf),
-    /* H   */ f_Jump_Lft(char *buf),
-    /* J   */ f_Jump_Dwn(char *buf),
-    /* K   */ f_Jump_Up(char *buf),
-    /* L   */ f_Jump_Rgt(char *buf),
-    /* N   */ f_Name_Keyboard_Macro(char *buf),
-    /* P   */ f_Put_Panel(char *buf),
-    /* R   */ f_Restore_RLE(char *buf),
-    /* S   */ f_Save_RLE(char *buf),
-    /* T   */ f_Transliterate(char *buf),
-    /* U   */ f_Write_Macros_To_File(char *buf),
-    /* V   */ f_FillRegion(char *buf),
-    /* W   */ f_Fill_Panel(char *buf),
-    /* X   */ f_Bind_Key_To_Key(char *buf),
-    /* Y   */ f_Bind_Name_To_Key(char *buf),
-    /* Z   */ f_Stop_Macro(char *buf),
-    /* a   */ f_Enter_Macro_Definition(char *buf),
-    /* b   */ f_Set_Rectangle(char *buf),
-    /* c   */ f_Center_Window(char *buf),
-    /* d   */ f_DrawLine(char *buf),
-    /* f   */ f_Rd_Font(char *buf),
-    /* g   */ f_Set_Pixel(char *buf),
-    /* h   */ f_Move_Lft(char *buf),
-    /* i   */ f_Zoom_In(char *buf),
-    /* j   */ f_Move_Dwn(char *buf),
-    /* k   */ f_Move_Up(char *buf),
-    /* l   */ f_Move_Rgt(char *buf),
-    /* m   */ f_Status_Monitor(char *buf),
-    /* n   */ f_Tolerance(char *buf),
-    /* o   */ f_Zoom_Out(char *buf),
-    /* p   */ f_Key_Set_Pixel(char *buf),
-    /* q   */ f_Quit(char *buf),
-    /* r   */ f_Rd_Fb(char *buf),
-    /* s   */ f_String(char *buf),
-    /* t   */ f_ChngRegionColor(char *buf),
-    /* u   */ f_Rd_Macros_From_File(char *buf),
-    /* v   */ f_DrawRectangle(char *buf),
-    /* w   */ f_Put_Pixel(char *buf),
-    /* x   */ f_Set_X_Pos(char *buf),
-    /* y   */ f_Set_Y_Pos(char *buf),
-    /* Unbound */ f_Exec_Macro(char *buf);
+HIDDEN int
+    /* ^X  */ f_Exec_Function(),
+    /* ^I  */ f_Nop(),
+    /* ^H  */ f_Win_Lft(),
+    /* ^J  */ f_Win_Dwn(),
+    /* ^K  */ f_Win_Up(),
+    /* ^L  */ f_Win_Rgt(),
+    /* ^M  */ f_Reset_View(),
+    /* ^R  */ f_Redraw(),
+    /* ^Z  */ f_Stop(),
+    /* ESC */ f_Iterations(),
+    /* SP  */ f_Press(),
+    /* #   */ f_Comment(),
+    /* ,   */ f_Dec_Brush_Size(),
+    /* .   */ f_Inc_Brush_Size(),
+    /* <   */ f_Dec_Step_Size(),
+    /* >   */ f_Inc_Step_Size(),
+    /* ?   */ f_Menu(),
+    /* A   */ f_Start_Macro(),
+    /* B   */ f_Bind_Macro_To_Key(),
+    /* C   */ f_Crunch_Image(),
+    /* E   */ f_Erase_Fb(),
+    /* F   */ f_Flip_Resolution(),
+    /* G   */ f_Get_Panel(),
+    /* H   */ f_Jump_Lft(),
+    /* J   */ f_Jump_Dwn(),
+    /* K   */ f_Jump_Up(),
+    /* L   */ f_Jump_Rgt(),
+    /* N   */ f_Name_Keyboard_Macro(),
+    /* P   */ f_Put_Panel(),
+    /* R   */ f_Restore_RLE(),
+    /* S   */ f_Save_RLE(),
+    /* T   */ f_Transliterate(),
+    /* U   */ f_Write_Macros_To_File(),
+    /* V   */ f_FillRegion(),
+    /* W   */ f_Fill_Panel(),
+    /* X   */ f_Bind_Key_To_Key(),
+    /* Y   */ f_Bind_Name_To_Key(),
+    /* Z   */ f_Stop_Macro(),
+    /* a   */ f_Enter_Macro_Definition(),
+    /* b   */ f_Set_Rectangle(),
+    /* c   */ f_Center_Window(),
+    /* d   */ f_DrawLine(),
+    /* f   */ f_Rd_Font(),
+    /* g   */ f_Set_Pixel(),
+    /* h   */ f_Move_Lft(),
+    /* i   */ f_Zoom_In(),
+    /* j   */ f_Move_Dwn(),
+    /* k   */ f_Move_Up(),
+    /* l   */ f_Move_Rgt(),
+    /* m   */ f_Status_Monitor(),
+    /* n   */ f_Tolerance(),
+    /* o   */ f_Zoom_Out(),
+    /* p   */ f_Key_Set_Pixel(),
+    /* q   */ f_Quit(),
+    /* r   */ f_Rd_Fb(),
+    /* s   */ f_String(),
+    /* t   */ f_ChngRegionColor(),
+    /* u   */ f_Rd_Macros_From_File(char *),
+    /* v   */ f_DrawRectangle(),
+    /* w   */ f_Put_Pixel(),
+    /* x   */ f_Set_X_Pos(),
+    /* y   */ f_Set_Y_Pos(),
+    /* Unbound */ f_Exec_Macro(char *);
 
 Func_Tab func_tab[] =
 {
@@ -652,7 +655,7 @@ getColor(unsigned char *pixelp, char *prompt, char *buffer)
 
 HIDDEN int
 /*ARGSUSED*/
-f_Tolerance(char *buf)
+f_Tolerance()
 {	
     static char tol_str[4];
     if ( ! get_Input( tol_str, 4, "Enter tolerance for color match : " ) )
@@ -665,7 +668,7 @@ f_Tolerance(char *buf)
 
 HIDDEN int
 /*ARGSUSED*/
-f_ChngRegionColor(char *buf)
+f_ChngRegionColor()
 {
     static int xoff1[] = { 0, 1,  0, -1 };
     static int yoff1[] = { 1, 0, -1,  0 };
@@ -697,7 +700,7 @@ f_ChngRegionColor(char *buf)
 
 HIDDEN int
 /*ARGSUSED*/
-f_FillRegion(char *buf)
+f_FillRegion()
 {
     static int xoff1[] = { 0, 1,  0, -1 };
     static int yoff1[] = { 1, 0, -1,  0 };
@@ -729,7 +732,7 @@ f_FillRegion(char *buf)
 
 HIDDEN int
 /*ARGSUSED*/
-f_Nop(char *buf)
+f_Nop()
 {
     fb_log( "Unbound(%s).\n", char_To_String( last_key ) );
     putchar( BEL );
@@ -738,7 +741,7 @@ f_Nop(char *buf)
 
 HIDDEN int
 /*ARGSUSED*/
-f_Win_Lft(char *buf) /* Move window left. */
+f_Win_Lft() /* Move window left. */
 
 {
     windo_center.p_x += gain;
@@ -749,7 +752,7 @@ f_Win_Lft(char *buf) /* Move window left. */
 
 HIDDEN int
 /*ARGSUSED*/
-f_Win_Dwn(char *buf) /* Move window down. */
+f_Win_Dwn() /* Move window down. */
 
 {
     windo_center.p_y -= gain;
@@ -760,7 +763,7 @@ f_Win_Dwn(char *buf) /* Move window down. */
 
 HIDDEN int
 /*ARGSUSED*/
-f_Win_Up(char *buf) /* Move window up. */
+f_Win_Up() /* Move window up. */
 
 {
     windo_center.p_y += gain;
@@ -771,7 +774,7 @@ f_Win_Up(char *buf) /* Move window up. */
 
 HIDDEN int
 /*ARGSUSED*/
-f_Win_Rgt(char *buf) /* Move window right. */
+f_Win_Rgt() /* Move window right. */
 
 {
     windo_center.p_x -= gain;
@@ -782,7 +785,7 @@ f_Win_Rgt(char *buf) /* Move window right. */
 
 HIDDEN int
 /*ARGSUSED*/
-f_Reset_View(char *buf) /* Restore normal view. */
+f_Reset_View() /* Restore normal view. */
 
 {
     cursor_pos.p_x = image_center.p_x;
@@ -795,7 +798,7 @@ f_Reset_View(char *buf) /* Restore normal view. */
 
 HIDDEN int
 /*ARGSUSED*/
-f_Redraw(char *buf) /* Redraw screen. */
+f_Redraw() /* Redraw screen. */
 
 {
     init_Status();
@@ -805,7 +808,7 @@ f_Redraw(char *buf) /* Redraw screen. */
 
 HIDDEN int
 /*ARGSUSED*/
-f_Stop(char *buf) /* Stop program. */
+f_Stop() /* Stop program. */
 {
     int sig = 17;
     int pid = bu_process_id();
@@ -834,7 +837,7 @@ f_Stop(char *buf) /* Stop program. */
 
 HIDDEN int
 /*ARGSUSED*/
-f_Exec_Function(char *buf)
+f_Exec_Function()
 {	
     Func_Tab	*ftbl;
     static char name[MAX_LN];
@@ -853,7 +856,7 @@ f_Exec_Function(char *buf)
 #define MAX_DIGITS	4
 HIDDEN int
 /*ARGSUSED*/
-f_Iterations(char *buf) /* Specify number of iterations of next command. */
+f_Iterations() /* Specify number of iterations of next command. */
 
 {
     char iterate_buf[MAX_DIGITS+1];
@@ -885,7 +888,7 @@ f_Iterations(char *buf) /* Specify number of iterations of next command. */
 
 HIDDEN int
 /*ARGSUSED*/
-f_Press(char *buf)
+f_Press()
 {
     pointpicked = true;
     return 1;
@@ -893,7 +896,7 @@ f_Press(char *buf)
 
 HIDDEN int
 /*ARGSUSED*/
-f_Comment(char *buf) /* Print comment. */
+f_Comment() /* Print comment. */
 {
     static char comment[MAX_LN];
     if ( ! get_Input( comment, MAX_LN, "Enter comment : " ) )
@@ -904,7 +907,7 @@ f_Comment(char *buf) /* Print comment. */
 
 HIDDEN int
 /*ARGSUSED*/
-f_Dec_Brush_Size(char *buf) /* Decrement brush size. */
+f_Dec_Brush_Size() /* Decrement brush size. */
 {
     if ( brush_sz > 0 )
 	brush_sz -= 2;
@@ -913,7 +916,7 @@ f_Dec_Brush_Size(char *buf) /* Decrement brush size. */
 
 HIDDEN int
 /*ARGSUSED*/
-f_Inc_Brush_Size(char *buf) /* Increment brush size. */
+f_Inc_Brush_Size() /* Increment brush size. */
 {
     if ( brush_sz < size_viewport )
 	brush_sz += 2;
@@ -922,7 +925,7 @@ f_Inc_Brush_Size(char *buf) /* Increment brush size. */
 
 HIDDEN int
 /*ARGSUSED*/
-f_Menu(char *buf) /* Print menu. */
+f_Menu() /* Print menu. */
 {
     register int lines = (PROMPT_LINE-BOTTOM_STATUS_AREA)-1;
     register int done = false;
@@ -973,7 +976,7 @@ f_Menu(char *buf) /* Print menu. */
 
 HIDDEN int
 /*ARGSUSED*/
-f_Dec_Step_Size(char *buf) /* Decrement gain on move operations. */
+f_Dec_Step_Size() /* Decrement gain on move operations. */
 {
     if ( gain > 1 )
 	gain--;
@@ -982,7 +985,7 @@ f_Dec_Step_Size(char *buf) /* Decrement gain on move operations. */
 
 HIDDEN int
 /*ARGSUSED*/
-f_Inc_Step_Size(char *buf) /* Increment gain on move operations. */
+f_Inc_Step_Size() /* Increment gain on move operations. */
 {
     if ( gain < size_viewport )
 	gain++;
@@ -1001,7 +1004,8 @@ HIDDEN int
 f_Rd_Macros_From_File(char *buf)
 {
     register FILE	*macro_fp;
-    register int nread = 1, room;
+    register int nread = 1;
+    size_t room;
     char scratch[MAX_LN];
     if ( buf != NULL )
     {
@@ -1035,7 +1039,7 @@ f_Rd_Macros_From_File(char *buf)
 
 HIDDEN int
 /*ARGSUSED*/
-f_Write_Macros_To_File(char *buf)
+f_Write_Macros_To_File()
 {
     static char macro_file[MAX_LN];
     register FILE	*macro_fp;
@@ -1100,7 +1104,7 @@ f_Write_Macros_To_File(char *buf)
 
 HIDDEN int
 /*ARGSUSED*/
-f_Start_Macro(char *buf)
+f_Start_Macro()
 {
     if ( remembering )
     {
@@ -1116,7 +1120,7 @@ f_Start_Macro(char *buf)
 
 HIDDEN int
 /*ARGSUSED*/
-f_Bind_Macro_To_Key(char *buf)
+f_Bind_Macro_To_Key()
 {
     char key[2];
     if ( macro_entry == FT_NULL )
@@ -1140,7 +1144,7 @@ f_Bind_Macro_To_Key(char *buf)
 
 HIDDEN int
 /*ARGSUSED*/
-f_Name_Keyboard_Macro(char *buf)
+f_Name_Keyboard_Macro()
 {
     static char macro_name[MAX_LN];
     if ( macro_entry == FT_NULL )
@@ -1162,7 +1166,7 @@ f_Name_Keyboard_Macro(char *buf)
 
 HIDDEN int
 /*ARGSUSED*/
-f_Crunch_Image(char *buf) /* Average image to half its size. */
+f_Crunch_Image() /* Average image to half its size. */
 
 {
     char answer[2];
@@ -1207,7 +1211,7 @@ f_Crunch_Image(char *buf) /* Average image to half its size. */
 
 HIDDEN int
 /*ARGSUSED*/
-f_DrawLine(char *buf)
+f_DrawLine()
 {
     Rectangle lineseg;
     register int majdelta;
@@ -1279,14 +1283,14 @@ f_DrawLine(char *buf)
 
 HIDDEN int
 /*ARGSUSED*/
-f_DrawRectangle(char *buf) /* Draw current rectangle with "paint" color. */
+f_DrawRectangle() /* Draw current rectangle with "paint" color. */
 {
     return drawRectangle( &current, (unsigned char *) paint ) ? 1 : 0;
 }
 
 HIDDEN int
 /*ARGSUSED*/
-f_Fill_Panel(char *buf) /* Fill current rectangle with "paint" color. */
+f_Fill_Panel() /* Fill current rectangle with "paint" color. */
 {
     fillRectangle( &current, (RGBpixel *) paint );
     return 1;
@@ -1294,7 +1298,7 @@ f_Fill_Panel(char *buf) /* Fill current rectangle with "paint" color. */
 
 HIDDEN int
 /*ARGSUSED*/
-f_Bind_Key_To_Key(char *buf) /* Bind new key to same function as old key. */
+f_Bind_Key_To_Key() /* Bind new key to same function as old key. */
 {
     char old_key[2], new_key[2];
     if ( ! get_Input( new_key, 2, "Bind new key : " ) )
@@ -1315,7 +1319,7 @@ f_Bind_Key_To_Key(char *buf) /* Bind new key to same function as old key. */
 
 HIDDEN int
 /*ARGSUSED*/
-f_Bind_Name_To_Key(char *buf) /* Bind key to function or macro. */
+f_Bind_Name_To_Key() /* Bind key to function or macro. */
 {
     char key[2];
     static char name[MAX_LN];
@@ -1347,7 +1351,7 @@ f_Bind_Name_To_Key(char *buf) /* Bind key to function or macro. */
 
 HIDDEN int
 /*ARGSUSED*/
-f_Erase_Fb(char *buf) /* Erase (clear) framebuffer. */
+f_Erase_Fb() /* Erase (clear) framebuffer. */
 
 {
     char answer[2];
@@ -1363,7 +1367,7 @@ f_Erase_Fb(char *buf) /* Erase (clear) framebuffer. */
 
 HIDDEN int
 /*ARGSUSED*/
-f_Flip_Resolution(char *buf) /* Flip framebuffer resolution. */
+f_Flip_Resolution() /* Flip framebuffer resolution. */
 
 {
     char answer[2];
@@ -1390,7 +1394,7 @@ f_Flip_Resolution(char *buf) /* Flip framebuffer resolution. */
 
 HIDDEN int
 /*ARGSUSED*/
-f_Get_Panel(char *buf) /* Grab panel from framebuffer. */
+f_Get_Panel() /* Grab panel from framebuffer. */
 {
     if ( panel.n_buf != (RGBpixel *) NULL )
 	free( (char *) panel.n_buf );
@@ -1404,7 +1408,7 @@ f_Get_Panel(char *buf) /* Grab panel from framebuffer. */
 
 HIDDEN int
 /*ARGSUSED*/
-f_Jump_Lft(char *buf) /* Move cursor left (big steps). */
+f_Jump_Lft() /* Move cursor left (big steps). */
 {
     if ( cursor_pos.p_x >= JUMP )
 	cursor_pos.p_x -= JUMP;
@@ -1416,7 +1420,7 @@ f_Jump_Lft(char *buf) /* Move cursor left (big steps). */
 
 HIDDEN int
 /*ARGSUSED*/
-f_Jump_Dwn(char *buf) /* Move cursor down. */
+f_Jump_Dwn() /* Move cursor down. */
 {
     if ( cursor_pos.p_y >= JUMP )
 	cursor_pos.p_y -= JUMP;
@@ -1428,7 +1432,7 @@ f_Jump_Dwn(char *buf) /* Move cursor down. */
 
 HIDDEN int
 /*ARGSUSED*/
-f_Jump_Up(char *buf) /* Move cursor up. */
+f_Jump_Up() /* Move cursor up. */
 {
     if ( cursor_pos.p_y < fb_getheight(fbp) - JUMP )
 	cursor_pos.p_y += JUMP;
@@ -1440,7 +1444,7 @@ f_Jump_Up(char *buf) /* Move cursor up. */
 
 HIDDEN int
 /*ARGSUSED*/
-f_Jump_Rgt(char *buf) /* Move cursor right. */
+f_Jump_Rgt() /* Move cursor right. */
 {
     if ( cursor_pos.p_x <= fb_getwidth(fbp) - JUMP )
 	cursor_pos.p_x += JUMP;
@@ -1452,7 +1456,7 @@ f_Jump_Rgt(char *buf) /* Move cursor right. */
 
 HIDDEN int
 /*ARGSUSED*/
-f_Put_Panel(char *buf) /* Put grabbed panel to framebuffer. */
+f_Put_Panel() /* Put grabbed panel to framebuffer. */
 {
     if ( panel.n_buf == (RGBpixel *) NULL )
     {
@@ -1468,7 +1472,7 @@ f_Put_Panel(char *buf) /* Put grabbed panel to framebuffer. */
 
 HIDDEN int
 /*ARGSUSED*/
-f_Restore_RLE(char *buf) /* Restore Run-Length Encoded image. */
+f_Restore_RLE() /* Restore Run-Length Encoded image. */
 {
     static char rle_file_nm[MAX_LN];
     static FILE	*rle_fp;
@@ -1506,7 +1510,7 @@ f_Restore_RLE(char *buf) /* Restore Run-Length Encoded image. */
 
 HIDDEN int
 /*ARGSUSED*/
-f_Save_RLE(char *buf) /* Save framebuffer image with Run-Length Encoding. */
+f_Save_RLE() /* Save framebuffer image with Run-Length Encoding. */
 {
     static char rle_file_nm[MAX_LN];
     static char *args[4] =
@@ -1554,7 +1558,7 @@ f_Save_RLE(char *buf) /* Save framebuffer image with Run-Length Encoding. */
 
 HIDDEN int
 /*ARGSUSED*/
-f_Transliterate(char *buf) /* Transliterate pixels of color1 to target color2.*/
+f_Transliterate() /* Transliterate pixels of color1 to target color2.*/
 {
     RGBpixel old, new, cur;
     static char oldbuf[CLR_LEN];
@@ -1588,7 +1592,7 @@ f_Transliterate(char *buf) /* Transliterate pixels of color1 to target color2.*/
 
 HIDDEN int
 /*ARGSUSED*/
-f_Stop_Macro(char *buf)
+f_Stop_Macro()
 {
     if ( ! remembering )
     {
@@ -1622,7 +1626,7 @@ f_Stop_Macro(char *buf)
 
 HIDDEN int
 /*ARGSUSED*/
-f_Enter_Macro_Definition(char *buf)
+f_Enter_Macro_Definition()
 {
     register int interactive = *cptr == NUL;
     macro_ptr = macro_buf;
@@ -1658,7 +1662,7 @@ f_Enter_Macro_Definition(char *buf)
 
 HIDDEN int
 /*ARGSUSED*/
-f_Set_Rectangle(char *buf) /* Set current rectangle. */
+f_Set_Rectangle() /* Set current rectangle. */
 {
     get_Rectangle( "rectangle", &current );
     return 1;
@@ -1666,7 +1670,7 @@ f_Set_Rectangle(char *buf) /* Set current rectangle. */
 
 HIDDEN int
 /*ARGSUSED*/
-f_Center_Window(char *buf) /* Center window around cursor. */
+f_Center_Window() /* Center window around cursor. */
 {
     fb_Wind();
     reposition_cursor = true;
@@ -1675,7 +1679,7 @@ f_Center_Window(char *buf) /* Center window around cursor. */
 
 HIDDEN int
 /*ARGSUSED*/
-f_Rd_Font(char *buf) /* Set current font. */
+f_Rd_Font() /* Set current font. */
 {
     static char fontname[FONTNAMESZ];
     if ( ! get_Input( fontname, FONTNAMESZ, "Enter font name : " ) )
@@ -1686,7 +1690,7 @@ f_Rd_Font(char *buf) /* Set current font. */
 
 HIDDEN int
 /*ARGSUSED*/
-f_Set_Pixel(char *buf) /* Set "paint" pixel color. */
+f_Set_Pixel() /* Set "paint" pixel color. */
 {
     fb_Get_Pixel( paint );
     return 1;
@@ -1694,7 +1698,7 @@ f_Set_Pixel(char *buf) /* Set "paint" pixel color. */
 
 HIDDEN int
 /*ARGSUSED*/
-f_Move_Lft(char *buf) /* Move cursor left. */
+f_Move_Lft() /* Move cursor left. */
 {
     if ( cursor_pos.p_x >= step )
 	cursor_pos.p_x -= step;
@@ -1706,7 +1710,7 @@ f_Move_Lft(char *buf) /* Move cursor left. */
 
 HIDDEN int
 /*ARGSUSED*/
-f_Zoom_In(char *buf) /* Halve window size. */
+f_Zoom_In() /* Halve window size. */
 {
     if ( size_viewport > fb_getwidth(fbp) / 16 ) {
 	size_viewport /= 2;
@@ -1718,7 +1722,7 @@ f_Zoom_In(char *buf) /* Halve window size. */
 
 HIDDEN int
 /*ARGSUSED*/
-f_Move_Dwn(char *buf) /* Move cursor down. */
+f_Move_Dwn() /* Move cursor down. */
 {
     if ( cursor_pos.p_y >= step )
 	cursor_pos.p_y -= step;
@@ -1730,7 +1734,7 @@ f_Move_Dwn(char *buf) /* Move cursor down. */
 
 HIDDEN int
 /*ARGSUSED*/
-f_Move_Up(char *buf) /* Move cursor up. */
+f_Move_Up() /* Move cursor up. */
 {
     if ( cursor_pos.p_y <= fb_getheight(fbp) - step )
 	cursor_pos.p_y += step;
@@ -1742,7 +1746,7 @@ f_Move_Up(char *buf) /* Move cursor up. */
 
 HIDDEN int
 /*ARGSUSED*/
-f_Move_Rgt(char *buf) /* Move cursor right. */
+f_Move_Rgt() /* Move cursor right. */
 {
     if ( cursor_pos.p_x <= fb_getwidth(fbp) - step )
 	cursor_pos.p_x += step;
@@ -1754,7 +1758,7 @@ f_Move_Rgt(char *buf) /* Move cursor right. */
 
 HIDDEN int
 /*ARGSUSED*/
-f_Status_Monitor(char *buf) /* Toggle status monitoring. */
+f_Status_Monitor() /* Toggle status monitoring. */
 {
     Toggle( report_status );
     if ( report_status )
@@ -1764,7 +1768,7 @@ f_Status_Monitor(char *buf) /* Toggle status monitoring. */
 
 HIDDEN int
 /*ARGSUSED*/
-f_Zoom_Out(char *buf) /* Double window size. */
+f_Zoom_Out() /* Double window size. */
 {
     if ( size_viewport < fb_getwidth(fbp) ) {
 	size_viewport *= 2;
@@ -1776,7 +1780,7 @@ f_Zoom_Out(char *buf) /* Double window size. */
 
 HIDDEN int
 /*ARGSUSED*/
-f_Key_Set_Pixel(char *buf) /* User types in paint color. */
+f_Key_Set_Pixel() /* User types in paint color. */
 {
     static char buffer[CLR_LEN];
     if ( ! getColor( paint, "Enter color", buffer ) )
@@ -1786,7 +1790,7 @@ f_Key_Set_Pixel(char *buf) /* User types in paint color. */
 
 HIDDEN int
 /*ARGSUSED*/
-f_Quit(char *buf)
+f_Quit()
 {
     prnt_Event( "Bye..." );
     restore_Tty();
@@ -1796,7 +1800,7 @@ f_Quit(char *buf)
 
 HIDDEN int
 /*ARGSUSED*/
-f_Rd_Fb(char *buf) /* Read frame buffer image from file. */
+f_Rd_Fb() /* Read frame buffer image from file. */
 {
     static char image[MAX_LN];
     static FBIO *imp;
@@ -1818,7 +1822,7 @@ f_Rd_Fb(char *buf) /* Read frame buffer image from file. */
     {
 	register int y;
 	unsigned char *scanbuf;
-	if ( (scanbuf = (unsigned char *)malloc(fb_getwidth(imp)*3)) == RGBPIXEL_NULL ) {
+	if ( (scanbuf = (unsigned char *)malloc((size_t)fb_getwidth(imp)*3)) == RGBPIXEL_NULL ) {
 	    fb_log(	"malloc failure\n");
 	    return 0;
 	}
@@ -1841,7 +1845,7 @@ f_Rd_Fb(char *buf) /* Read frame buffer image from file. */
 
 HIDDEN int
 /*ARGSUSED*/
-f_String(char *buf) /* Place label on picture. */
+f_String() /* Place label on picture. */
 {
     static char label[MAX_LN];
     if ( ! get_Input( label, MAX_LN, "Enter text string : " ) )
@@ -1853,7 +1857,7 @@ f_String(char *buf) /* Place label on picture. */
 
 HIDDEN int
 /*ARGSUSED*/
-f_Put_Pixel(char *buf) /* Put pixel. */
+f_Put_Pixel() /* Put pixel. */
 {
     register int rectwid = brush_sz / 2;
     /* If brush size is 2 or more, fill rectangle. */
@@ -1878,7 +1882,7 @@ f_Put_Pixel(char *buf) /* Put pixel. */
 
 HIDDEN int
 /*ARGSUSED*/
-f_Set_X_Pos(char *buf) /* Move cursor's X location (image space). */
+f_Set_X_Pos() /* Move cursor's X location (image space). */
 {
     static char x_str[5];
     if ( ! get_Input( x_str, 5, "Enter X coordinate : " ) )
@@ -1907,7 +1911,7 @@ f_Set_X_Pos(char *buf) /* Move cursor's X location (image space). */
 
 HIDDEN int
 /*ARGSUSED*/
-f_Set_Y_Pos(char *buf) /* Move cursor's Y location (image space). */
+f_Set_Y_Pos() /* Move cursor's Y location (image space). */
 {
     static char y_str[5];
     if ( ! get_Input( y_str, 5, "Enter Y coordinate : " ) )
@@ -1939,7 +1943,7 @@ pars_Argv(int argc, register char **argv)
 {
     register int c;
     extern int bu_optind;
-    extern char *bu_optarg;
+
     /* Parse options. */
     while ( (c = bu_getopt( argc, argv, "hp" )) != EOF )
     {
@@ -2070,7 +2074,7 @@ general_Handler(int sig)
 	case SIGCLD :
 	    break;
 #endif
-#if defined(SIGCHLD) && (SIGCLD != SIGCHLD)
+#if defined(SIGCHLD)
 	case SIGCHLD :
 	    break;
 #endif
@@ -2105,7 +2109,7 @@ init_Tty(void)
     clr_Tabs( tty_fd );
     clr_Echo( tty_fd );
     clr_CRNL( tty_fd );
-#if HAS_SGIGL
+#if defined(HAS_SGIGL)
     if ( isSGI )
 	sgi_Init();
 #endif
@@ -2146,7 +2150,7 @@ get_Fb_Panel( rectp )
     register int rectwid;
     int recthgt;
     int btm, lft, rgt;
-    RGBpixel *panel;
+    RGBpixel *rgbpanel;
     unsigned	u;
     lft = rectp->r_origin.p_x;
     rgt = rectp->r_corner.p_x;
@@ -2163,29 +2167,29 @@ get_Fb_Panel( rectp )
     rectwid = rgt-lft + 1;
     recthgt = top-btm + 1;
     u = (rectwid*recthgt) * sizeof(RGBpixel);
-    if ( (panel = (RGBpixel *) malloc( u )) == (RGBpixel *)RGBPIXEL_NULL )
+    if ( (rgbpanel = (RGBpixel *) malloc( u )) == (RGBpixel *)RGBPIXEL_NULL )
 	fb_log(	"\"%s\" (%d), get_Fb_Panel() : malloc %d (%d*%d) failed.\n",
 		__FILE__, __LINE__,
 		u, rectwid, recthgt
 	    );
     else {
 	register int y = btm;
-	RGBpixel *pixelp = panel;
+	RGBpixel *pixelp = rgbpanel;
 	for (; y <= top; y++, pixelp += rectwid ) {
 	    if ( fb_read( fbp, lft, y, (unsigned char *)pixelp, rectwid ) == -1 ) {
 		fb_log( "Read of %d pixels from <%d,%d> failed.\n",
 			rectwid, lft, y
 		    );
-		return panel;
+		return rgbpanel;
 	    }
 	}
     }
-    return panel;
+    return rgbpanel;
 }
 
 /*	p u t _ F b _ P a n e l ( ) */
 HIDDEN void
-put_Fb_Panel(register Rectangle *rectp, register RGBpixel (*panel))
+put_Fb_Panel(register Rectangle *rectp, register RGBpixel *rgbpanel)
 {
     register int top, rectwid, y;
     int lft, rgt, btm;
@@ -2195,8 +2199,8 @@ put_Fb_Panel(register Rectangle *rectp, register RGBpixel (*panel))
     rgt = rectp->r_corner.p_x;
     btm = rectp->r_origin.p_y;
     top = rectp->r_corner.p_y;
-    for ( y = btm; y <= top; y++, panel += rectwid ) {
-	if ( fb_write( fbp, lft, y, (unsigned char *)panel, rgt-lft+1 ) == -1 ) {
+    for ( y = btm; y <= top; y++, rgbpanel += rectwid ) {
+	if ( fb_write( fbp, lft, y, (unsigned char *)rgbpanel, rgt-lft+1 ) == -1 ) {
 	    fb_log( "Write of %d pixels to <%d,%d> failed.\n",
 		    rectwid, lft, btm
 		);
@@ -2334,7 +2338,7 @@ get_Mouse_Pos(Point *pointp)
     if ( pad_flag )
 	return do_Bitpad( pointp );
     else
-#if HAS_SGIGL
+#if defined(HAS_SGIGL)
 	if ( isSGI )
 	    return sgi_Mouse_Pos( &cursor_pos );
 	else

@@ -53,7 +53,7 @@ fill_buf(register int wid, register int *buf)
 	if ( font.ffdes == NULL )
 		return;
 	/* Read the row, rounding width up to nearest byte value. */
-	if ( (int)fread( bitrow, (wid / 8) + ((wid % 8 == 0) ? 0 : 1), 1, font.ffdes)
+	if ( (int)fread( bitrow, (size_t)(wid / 8) + ((wid % 8 == 0) ? 0 : 1), 1, font.ffdes)
 		< 1
 		)
 		{
