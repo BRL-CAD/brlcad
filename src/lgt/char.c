@@ -32,7 +32,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 
-#include "../vfont/font.h"
+#include "../vfont/vfont.h"
 
 #include "./hmenu.h"
 #include "./lgt.h"

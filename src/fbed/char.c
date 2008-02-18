@@ -29,7 +29,7 @@
 #include "fb.h"
 
 /* FIXME */
-#include "../vfont/font.h"
+#include "../vfont/vfont.h"
 
 #include "./std.h"
 #include "./ascii.h"

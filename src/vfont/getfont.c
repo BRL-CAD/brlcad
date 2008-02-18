@@ -29,7 +29,7 @@
 
 #include "fb.h"
 
-#include "./font.h"
+#include "./vfont.h"
 
 
 struct vfont

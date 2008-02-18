@@ -32,7 +32,7 @@
 #include "raytrace.h"
 #include "fb.h"
 
-#include "../vfont/font.h"
+#include "../vfont/vfont.h"
 
 #include "./hmenu.h"
 #include "./lgt.h"
