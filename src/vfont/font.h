@@ -87,7 +87,7 @@ struct vfont {
  * load was successful or not.
  */
 struct vfont
-get_font(const char* fontname, void (*log)(const char *fmt, ...));
+get_font(const char* fontname, void (*vfont_log)(const char *fmt, ...));
 
 
 #endif /* VFONT_FONT_H */

@@ -33,7 +33,7 @@
 
 
 struct vfont
-get_font(const char* fontname, void (*log)(const char *fmt, ...))
+get_font(const char* fontname, void (*vfont_log)(const char *fmt, ...))
 {
     struct vfont font;
     struct header lochdr;
@@ -55,16 +55,16 @@ get_font(const char* fontname, void (*log)(const char *fmt, ...))
     /* Open the file and read in the header information. */
     font.ffdes = fopen(fname, "rb");
     if (font.ffdes == NULL) {
-	if (log)
-	    log("Error opening font file '%s'\n", fname);
+	if (vfont_log)
+	    vfont_log("Error opening font file '%s'\n", fname);
 	    
 	font.ffdes = NULL;
 	return font;
     }
 
     if (fread((char *)&lochdr, (int)sizeof(struct header), 1, font.ffdes) != 1) {
-	if (log)
-	    log("get_Font() read failed!\n");
+	if (vfont_log)
+	    vfont_log("get_Font() read failed!\n");
 	font.ffdes = NULL;
 	return font;
     }
@@ -76,8 +76,8 @@ get_font(const char* fontname, void (*log)(const char *fmt, ...))
     SWAB(lochdr.xtend);
     
     if (lochdr.magic != 0436) {
-	if (log)
-	    log("Not a font file \"%s\": magic=0%o\n", fname, (int)lochdr.magic);
+	if (vfont_log)
+	    vfont_log("Not a font file \"%s\": magic=0%o\n", fname, (int)lochdr.magic);
 	font.ffdes = NULL;
 	return font;
     }
@@ -85,8 +85,8 @@ get_font(const char* fontname, void (*log)(const char *fmt, ...))
     
     /* Read in the directory for the font. */
     if (fread((char *) font.dir, (int)sizeof(struct dispatch), 256, font.ffdes) != 256) {
-	if (log)
-	    log("get_Font() read failed!\n");
+	if (vfont_log)
+	    vfont_log("get_Font() read failed!\n");
 	font.ffdes = NULL;
 	return font;
     }
