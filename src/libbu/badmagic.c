@@ -27,12 +27,6 @@
  *  Routines involved with handling "magic numbers" used to identify
  *  various in-memory data structures.
  *
- *  @author Lee A. Butler
- *  @author Michael John Muuss
- *
- *  @par Source -
- *	The U. S. Army Research Laboratory			@n
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

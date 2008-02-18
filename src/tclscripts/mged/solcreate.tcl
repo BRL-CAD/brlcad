@@ -18,25 +18,10 @@
 # information.
 #
 ###
-#			S O L C R E A T E . T C L
-#
-# Author -
-#	Glenn Durfee
-#
-# Source -
-#	The U. S. Army Ballistic Research Laboratory
-#	Aberdeen Proving Ground, Maryland  21005
-#
-#
 #
 # Description -
 #       Program to allow automated generation and interactive placement of new
 #       solids with user-selectable default values.
-#
-# Modifications -
-#        (Bob Parker):
-#             Generalized the code to accommodate multiple instances of the
-#             user interface.
 #
 
 #=============================================================================

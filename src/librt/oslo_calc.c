@@ -23,15 +23,6 @@
  *
  * Calculate the Oslo refinement matrix.
  *
- * Author -
- *     Paul R. Stay
- *
- * Source -
- *     SECAD/VLD Computing Consortium, Bldg 394
- *     The U.S. Army Ballistic Research Laboratory
- *     Aberdeen Proving Ground, Maryland 21005
- *
- *
  * This algorithm was taken from the paper
  * "Making the Oslo Algorithm More Efficient" by T. Lyche and K. Morken
  * The algorithm referenced in the paper is algorithm 1 since we will be

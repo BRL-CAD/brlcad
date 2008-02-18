@@ -35,15 +35,10 @@
  *  points.  The functions should be evaluated at non-integer locations for
  *  their nature to be realized.
  *
- *
- *  @author	Lee A. Butler
- *  @par Contributed code from
+ *  Conatins contributed code from:
  *	F. Kenton Musgrave
- *@n  	Robert Skinner
+ *  	Robert Skinner
  *
- *  @par Source -
- *	The U. S. Army Research Laboratory
- *@	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

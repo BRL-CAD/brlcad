@@ -23,22 +23,13 @@
  *
  *     Find the bounding box for the a NURB surface.
  *
- * Author -
- *     Paul R. Stay
- *
- * Source -
- *     SECAD/VLD Computing Consortium, Bldg 394
- *     The U.S. Army Ballistic Research Laboratory
- *     Aberdeen Proving Ground, Maryland 21005
- *
- */
-/** @} */
-
-/* Since a B-Spline surface follows the convex hull property
+ * Since a B-Spline surface follows the convex hull property
  * the bounding box can be found by taking the min and max of
  * all points in the control  If the surface mesh contains
  * homogeneous points (i.e. [XYZW]) then divide out the W first.
+ *
  */
+/** @} */
 
 #include "common.h"
 

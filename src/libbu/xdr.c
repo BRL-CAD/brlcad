@@ -30,14 +30,6 @@
  *  Uses encoding compatible with routines found in libpkg,
  *  and BSD system routines ntohl(), ntons(), ntohl(), ntohs().
  *
- *
- *  @author
- *	Michael John Muuss
- *
- *  @par Source -
- *	The U. S. Army Research Laboratory
- *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
  */
 
 #include "common.h"

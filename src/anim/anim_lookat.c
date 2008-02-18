@@ -25,12 +25,6 @@
  * possible. When looking vertically up or down, the exact orientation
  * depends on the previous orientation.
  *
- *  Author -
- *	Carl J. Nuzman
- *
- *  Source -
- *      The U. S. Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

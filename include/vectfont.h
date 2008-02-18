@@ -24,13 +24,6 @@
  *  Vector font definitions, for TIG-PACK fonts.
  *  Used by LIBPLOT3 and LIBRT for simple vector fonts.
  *
- *  @author
- *	Michael John Muuss
- *	Douglas A. Gwyn
- *
- *  @par Source
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 /*

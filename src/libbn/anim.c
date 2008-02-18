@@ -20,20 +20,8 @@
 /** @addtogroup anim */
 /** @{ */
 /** @file anim.c
- * @brief
- *	Routines useful in animation programs.
  *
- *  @author
- *	Carl J. Nuzman
- *
- *  @par Source -
- *      The U. S. Army Research Laboratory
- *@n      Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
- *
- *
- *
- ***********************************************************************
+ * Routines useful in animation programs.
  *
  * @par This file includes the following routines:
  * @li anim_v_permute()	apply camera animation permutation

@@ -25,12 +25,6 @@
  *
  *  Generic bu_list routines.
  *
- *  @author	Michael John Muuss
- *  @author	Lee A. Butler
- *
- *  @par Source -
- *  @n	The U. S. Army Research Laboratory
- *  @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

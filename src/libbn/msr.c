@@ -29,12 +29,6 @@
  * @n	"Random number generators: good ones are hard to find"
  * @n	CACM vol 31 no 10, Oct 88
  *
- *  @author
- *	Christopher T. Johnson - 90/04/20
- *
- * @par Source -
- *	The U. S. Army Research Laboratory
- *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

@@ -37,12 +37,6 @@
  * See the flat_parse_tab structure for details on the symantics of other
  * attribute shorthands/alternatives.
  *
- * Author -
- * Christopher Sean Morrison
- *
- * Source -
- * The U.S. Army Research Laboratory
- * Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

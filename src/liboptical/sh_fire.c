@@ -53,12 +53,6 @@
  *	Note:  The fire shader provides its own color.  It does not read any
  *		color information from the region definition.
  *
- *  Author -
- *	Lee A. Butler
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

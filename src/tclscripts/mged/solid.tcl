@@ -18,19 +18,6 @@
 # information.
 #
 ###
-##
-#				S O L I D . T C L
-#
-# Authors -
-#	Bob Parker
-#
-# Source -
-#	The U. S. Army Research Laboratory
-#	Aberdeen Proving Ground, Maryland  21005
-#
-#
-# Contributors -
-#
 #
 # Description -
 #	solid_data_vv_pairs - an array that holds the default variable/value pairs.

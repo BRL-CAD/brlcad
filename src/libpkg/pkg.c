@@ -40,16 +40,6 @@
  *	pkg_bwaitfor	Wait for specific msg, malloc buf, processing others
  *	pkg_block	Wait until a full message has been read
  *
- *  Authors -
- *	Michael John Muuss
- *	Charles M. Kennedy
- *	Phillip Dykstra
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
  */
 
 #include "common.h"

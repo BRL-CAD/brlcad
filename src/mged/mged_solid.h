@@ -18,19 +18,9 @@
  * information.
  */
 /** @file mged_solid.h
- *  			S O L I D . H
  *
  *	Solids structure definition
  *
- *  Author -
- *	Michael John Muuss
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
- *  $Header$
  */
 
 #include "solid.h"

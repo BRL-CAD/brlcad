@@ -18,14 +18,6 @@
 # information.
 #
 ###
-# Author -
-#	Bob Parker
-#
-# Source -
-#	The U. S. Army Research Laboratory
-#	Aberdeen Proving Ground, Maryland  21005
-#
-#
 #
 # Description -
 #	Tcl/Tk interface to MGED's "make" command.

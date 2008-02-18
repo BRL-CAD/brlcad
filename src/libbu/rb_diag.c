@@ -23,12 +23,6 @@
  *
  *	Diagnostic routines for red-black tree maintenance
  *
- *  @author
- *	Paul J. Tanenbaum
- *
- *  @par Source
- *	The U. S. Army Research Laboratory
- *  @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

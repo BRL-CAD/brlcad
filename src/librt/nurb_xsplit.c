@@ -25,13 +25,6 @@
  * 	of the surface order in a given direction and return the
  *	resulting surfaces.
  *
- * Author-
- *	Paul Randal Stay
- *
- * Source
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The US Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland 21005
  */
 /** @} */
 

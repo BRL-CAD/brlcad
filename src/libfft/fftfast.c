@@ -18,6 +18,7 @@
  * information.
  */
 /** @file fftfast.c
+ *
  * Complex Number and FFT Library
  *
  * "Fast" Version - Function calls to complex math routines removed.
@@ -28,13 +29,6 @@
  *	        N-1
  *	Xf(k) = Sum x(n)( cos(2PI(nk/N)) - isin(2PI(nk/N)) )
  *	        n=0
- *
- *  Author -
- *	Phil Dykstra, 12 Oct 84 and beyond.
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *
  */
 

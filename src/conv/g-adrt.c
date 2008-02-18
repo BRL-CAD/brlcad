@@ -1,7 +1,5 @@
 /*                     G - A D R T . C
  *
- * @file g-adrt.c
- *
  * BRL-CAD
  *
  * Copyright (c) 2002-2008 United States Government as represented by
@@ -20,16 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  *
+ */
+/** @file g-adrt.c
+ *
  *  BRL-CAD -> ADRT Converter
  *
- *  Author -
- *      Justin L. Shumaker
- *
- *  Source -
- *      The U. S. Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
- * $Id$
  */
 
 #include "common.h"

@@ -34,13 +34,6 @@
  *  parameter allows this to be changed as desired, although scale
  *  factors less than 10.0 are unlikely to be legible.
  *
- *  @author
- *	Michael John Muuss
- *
- *  @par Source -
- *	The U. S. Army Research Laboratory
- *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
  */
 
 #include "common.h"

@@ -26,13 +26,6 @@
  *	db_ident	Update database IDENT record
  *      db_conversions  Update unit conversion factors
  *
- *
- *  Author -
- *	Michael John Muuss
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

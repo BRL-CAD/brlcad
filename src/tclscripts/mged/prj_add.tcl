@@ -19,24 +19,8 @@
 #
 ###
 #
-# "more arguments needed::[lindex $prompts $i]"
-# Author -
-#	Lee A. Butler
-#
-# Source -
-#	The U. S. Army Research Laboratory
-#	Aberdeen Proving Ground, Maryland  21005
-#
-#
 # Description -
 #	helper proc to build input files for the "prj" shader
-#
-# Modifications -
-#	Bob Parker:
-#	     Added code to prompt user for input using the
-#		   "more arguments needed::" hack.
-#	     Replaced combination of "puts" and return with "error"
-#		   so that a calling script will know an error occured.
 #
 # Usage: prj_add shaderfile image_filename image_width image_height
 #

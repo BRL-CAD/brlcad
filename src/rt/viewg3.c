@@ -36,15 +36,6 @@
  *  At present, the main use for this format ray file is
  *  to drive the JTCG-approved COVART2 and COVART3 applications.
  *
- *  Authors -
- *	Susanne L. Muuss, J.D.
- *	Michael John Muuss
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
  */
 
 #include "common.h"

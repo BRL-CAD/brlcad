@@ -51,12 +51,6 @@
  *  This of course requires that the rotation portion be computed
  *  using somewhat different formulas (see buildHrot for both kinds).
  *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
- *  $Header$
  */
 
 #ifndef __GED_H__

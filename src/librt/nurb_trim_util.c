@@ -23,13 +23,6 @@
  *
  * Trimming curve Utilities.
  *
- * Author:  Paul R. Stay
- * Source
- * 	SECAD/VLD Computing Consortium, Bldg 394
- * 	The US Army Ballistic Research Laboratory
- * 	Aberdeen Proving Ground, Maryland 21005
- *
- * Date: Mon July 3, 1995
  */
 /** @} */
 

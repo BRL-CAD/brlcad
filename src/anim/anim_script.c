@@ -19,18 +19,13 @@
  *
  */
 /** @file anim_script.c
+ *
  *	Turn an animation table into an animation script suitable for
  *  use by rt. Anim_script.c makes a script for one object at a time (or the
  *  virtual camera). Some of the available options include rotation
  *  only, translation only, automatic steering, and specifying reference
  *  coordinates.
  *
- *  Author -
- *	Carl J. Nuzman
- *
- *  Source -
- *      The U. S. Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

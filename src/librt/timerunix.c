@@ -27,14 +27,6 @@
  *	Version 6 & 7 should also be able to use this (untested).
  *	The time() and times() sys-calls are used for all timing.
  *
- *  Author -
- *	Michael John Muuss
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
  */
 
 #include "common.h"

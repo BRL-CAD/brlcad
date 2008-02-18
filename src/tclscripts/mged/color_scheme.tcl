@@ -18,16 +18,6 @@
 # information.
 #
 ###
-##
-#				C O L O R _ S C H E M E . T C L
-#
-# Author -
-#	Robert G. Parker
-#
-# Source -
-#       The U. S. Army Research Laboratory
-#       Aberdeen Proving Ground, Maryland  21005
-#
 #
 # Description -
 #	GUI for setting the color scheme for display manager windows.

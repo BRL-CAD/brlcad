@@ -19,21 +19,6 @@
  */
 /** @file dodraw.c
  *
- * Functions -
- *	drawtrees	Add a set of tree hierarchies to the active set
- *	drawHsolid	Manage the drawing of a COMGEOM solid
- *	pathHmat	Find matrix across a given path
- *	replot_original_solid	Replot vector list for a solid
- *	replot_modified_solid	Replot solid, given matrix and db record.
- *	invent_solid		Turn list of vectors into phony solid
- *
- *  Author -
- *	Michael John Muuss
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
  */
 
 #include "common.h"

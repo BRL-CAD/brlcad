@@ -21,15 +21,6 @@
 #
 # Utility routines called by MGED's Tcl/Tk command window(s).
 #
-# Author -
-#	Bob Parker
-#
-# Source -
-#	The U. S. Army Ballistic Research Laboratory
-#	Aberdeen Proving Ground, Maryland  21005
-#
-# $Revision$
-#
 
 proc distribute_text { w cmd str } {
     global mged_players

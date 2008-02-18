@@ -39,13 +39,6 @@
  *
  *  for K ranging from 0 to +infinity.  There is no looking backwards.
  *
- *  Authors -
- *	Michael John Muuss
- *	Glenn Durfee
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

@@ -19,17 +19,6 @@
 #
 ###
 #
-#			E D I T _ M E N U . T C L
-#
-# Author -
-#	Bob Parker
-#
-# Source -
-#	The U. S. Army Research Laboratory
-#	Aberdeen Proving Ground, Maryland  21005
-#
-#
-#
 # Description -
 #	Routines for implementing Tcl/Tk edit menus.
 #

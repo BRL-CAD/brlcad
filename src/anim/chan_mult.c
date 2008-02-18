@@ -19,14 +19,9 @@
  *
  */
 /** @file chan_mult.c
+ *
  *  Multiply specified columns of data by a given factor.
  *
- *  Author -
- *	Carl J. Nuzman
- *
- *  Source -
- *      The U. S. Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

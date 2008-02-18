@@ -19,17 +19,6 @@
 #
 ###
 #
-# Authors -
-#	Glenn Durfee
-#	Carl Nuzman
-#	Lee A. Butler
-#
-# Source -
-#	The U. S. Army Ballistic Research Laboratory
-#	Aberdeen Proving Ground, Maryland  21005
-#
-#
-#
 # Description -
 # 	Simple interpreted functions for doing vmath stuff (see ../h/vmath.h
 #	for the C preprocessor equivalents and comments!  Much of this was

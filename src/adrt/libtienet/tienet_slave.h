@@ -22,14 +22,6 @@
  *  Comments -
  *      TIE Networking Slave Header
  *
- *  Author -
- *      Justin L. Shumaker
- *
- *  Source -
- *      The U. S. Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
- * $Id$
  */
 #ifndef _TIENET_SLAVE_H
 #define _TIENET_SLAVE_H

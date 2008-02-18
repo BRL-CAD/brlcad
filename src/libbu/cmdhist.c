@@ -27,16 +27,6 @@
  * The history routines were borrowed from mged/history.c
  * and modified to work with command history objects.
  *
- *  @author   Robert G. Parker
- *
- *  @par Authors of mged/history.c
- *	   Glenn Durfee 				@n
- *	   Robert G. Parker
- *
- *  @par Source -
- *	The U. S. Army Research Laboratory			@n
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
  */
 
 #include "common.h"

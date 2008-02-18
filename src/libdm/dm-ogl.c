@@ -21,14 +21,6 @@
  *
  *  An X11 OpenGL Display Manager.
  *
- *  Authors -
- *	Carl Nuzman
- *	Robert G. Parker
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
  */
 
 #include "common.h"

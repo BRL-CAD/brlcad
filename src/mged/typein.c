@@ -23,45 +23,6 @@
  * This module contains functions which allow solid parameters to
  * be entered by keyboard.
  *
- * Functions -
- *	f_in		decides what solid needs to be entered and
- *			calls the appropriate solid parameter reader
- *	arb_in		reads ARB params from keyboard
- *	sph_in		reads sphere params from keyboard
- *	ell_in		reads params for all ELLs
- *	tor_in		gets params for torus from keyboard
- *	tgc_in		reads params for TGC from keyboard
- *	rcc_in		reads params for RCC from keyboard
- *	rec_in		reads params for REC from keyboard
- *	tec_in		reads params for TEC from keyboard
- *	trc_in		reads params for TRC from keyboard
- *	box_in		gets params for BOX and RAW from keyboard
- *	rpp_in		gets params for RPP from keyboard
- *	ars_in		gets ARS param from keyboard
- *	half_in		gets HALFSPACE params from keyboard
- *	rpc_in		reads right parabolic cylinder params from keyboard
- *	rhc_in		reads right hyperbolic cylinder params from keyboard
- *	epa_in		reads elliptical paraboloid params from keyboard
- *	ehy_in		reads elliptical hyperboloid params from keyboard
- *	eto_in		reads elliptical torus params from keyboard
- *	part_in		reads particle params from keyboard
- *	binunif_in	creates a binary object from a datafile
- *	extrude_in	reads extrude params from keyboard
- *	superell_in	reads params for all SUPERELLs
- *	metaball_in	reads params for a metaball grouping
- *	checkv		checks for zero vector from keyboard
- *
- * Authors -
- *	Charles M. Kennedy
- *	Keith A. Applin
- *	Michael J. Muuss
- *	Michael J. Markowski
- *	Erik Greenwald
- *
- * Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
  */
 
 #include "common.h"

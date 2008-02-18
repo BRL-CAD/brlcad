@@ -18,16 +18,9 @@
  * information.
  */
 /** @file rtserverTest.c
- *		R T S E R V E R . C
  *
- *	library for BRL-CAD raytrace server
+ * library for BRL-CAD raytrace server
  *
- *  Author -
- *      John R. Anderson
- *
- *  Source -
- *      The U. S. Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

@@ -24,14 +24,6 @@
  * @brief
  *  Data structures and manifest constants for use with the PKG library.
  *
- *
- * @author	Michael John Muuss
- * @author	Charles M. Kennedy
- * @author	Phillip Dykstra
- *
- * @par Source
- *	The U. S. Army Research Laboratory
- * @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #ifndef __PKG_H__

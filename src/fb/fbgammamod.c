@@ -22,13 +22,6 @@
  *
  *  Program to rapidly compute per-color gamma ramps and linear corrections.
  *
- *  Author -
- *	Michael John Muuss
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
  */
 
 #include "common.h"

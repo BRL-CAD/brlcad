@@ -25,12 +25,6 @@
  *  as a result, the Tcl name for the function should be exactly
  *  the same as the C name for the underlying function.
  *
- *  Author -
- *	Michael John Muuss
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

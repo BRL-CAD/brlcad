@@ -25,14 +25,6 @@
  * Mostly, used for making viewgraphs and photographs
  * of an editing session.
  *
- *  Author -
- *	Michael John Muuss
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
  */
 
 #include "common.h"

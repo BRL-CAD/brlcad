@@ -25,12 +25,6 @@
  *
  * This is the most basic shader.
  *
- * Author -
- * Christopher Sean Morrison
- *
- * Source -
- * The U.S. Army Research Laboratory
- * Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

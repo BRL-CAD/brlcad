@@ -26,13 +26,6 @@
  *	and where some (or all) of the parameters of that data file
  *	may be read in from an external control file.
  *
- *  Authors -
- *	Michael John Muuss
- *	(Christopher T. Johnson, GSI)
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

@@ -44,13 +44,6 @@
  *	   they will still be seen with pl-sgi and mged. Later
  *	   this will be handled by scale.c as an fread() and fwrite().
  *
- *  Authors -
- *	Susanne L. Muuss, J.D.
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg. 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
  */
 
 #include "common.h"

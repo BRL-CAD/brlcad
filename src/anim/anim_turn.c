@@ -19,6 +19,7 @@
  *
  */
 /** @file anim_turn.c
+ *
  *	Animate front-wheel steered vehicles.
  *
  *  This is a filter which operates on animation tables. Given an
@@ -26,12 +27,6 @@
  *  an animation table for position and orientation. Options provide for
  *  animating the wheels and/or steering wheel.
  *
- *  Author -
- *	Carl J. Nuzman
- *
- *  Source -
- *      The U. S. Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

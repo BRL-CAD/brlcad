@@ -40,13 +40,6 @@
 # will process just a single file so that it may be used in
 # conjunction with find or be used to update files manually.
 #
-# Author -
-#   Christopher Sean Morrison
-#
-# Source -
-#   The U.S. Army Research Laboratory
-#   Aberdeen Proving Ground, Maryland 21005-5068  USA
-#
 ###
 
 files="$*"

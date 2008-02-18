@@ -19,26 +19,6 @@
  */
 /** @file dir.c
  *
- * Functions -
- *	f_memprint	Debug, print memory & db free maps
- *	dir_nref	Count number of times each db element referenced
- *	dir_summary	Summarize contents of directory by categories
- *	f_tops		Prints top level items in database
- *	cmd_glob	Does regular expression expansion
- *	f_prefix	Prefix each occurence of a specified object name
- *	f_keep		Save named objects in specified file
- *	f_tree		Print out a tree of all members of an object
- *
- *  Authors -
- *	Michael John Muuss
- *	Keith A. Applin
- *	Richard Romanelli
- *	Robert Jon Reschly Jr.
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
  */
 
 #include "common.h"

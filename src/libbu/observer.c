@@ -24,13 +24,6 @@
  * @brief
  * Routines for implementing the observer pattern.
  *
- * @par Source
- *	SLAD CAD Team
- * @n	The U. S. Army Research Laboratory
- * @n	Aberdeen Proving Ground, Maryland  21005
- *
- * @author
- *	Robert G. Parker
  */
 
 #include "common.h"

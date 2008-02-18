@@ -22,14 +22,6 @@
  *  Comments -
  *      Utilities Library - Camera
  *
- *  Author -
- *      Justin L. Shumaker
- *
- *  Source -
- *      The U. S. Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
- * $Id$
  */
 
 #if 0

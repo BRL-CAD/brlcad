@@ -37,13 +37,6 @@
  *  VLBLOCKS, and converting that to UNIX-plot files or other formats
  *  as appropriate.
  *
- *  Authors -
- *	Lee A. Butler
- *	Michael John Muuss
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 /** @} */
 

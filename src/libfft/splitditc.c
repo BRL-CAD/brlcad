@@ -18,14 +18,8 @@
  * information.
  */
 /** @file splitditc.c
+ *
  *  Real valued, split-radix, decimation in time FFT code generator.
- *
- *  Author -
- *	Phil Dykstra
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *
  */
 

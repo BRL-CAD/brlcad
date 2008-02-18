@@ -19,17 +19,6 @@
  */
 /** @file update.c
  *
- *  Author -
- *	Bob Parker
- *
- *  Functions -
- *      mged_update	- turns the Tcl crank via event_check, then calls refresh
- *	f_update	- Tcl wrapper for mged_update
- *	f_wait		- modified version of tkwait
- *
- *  Source -
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
  */
 
 #include "common.h"

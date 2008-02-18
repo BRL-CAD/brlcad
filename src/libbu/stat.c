@@ -25,13 +25,6 @@
  *  directories such as whether they exist or are the same as another
  *  given file.
  *
- *  @author
- *	Christopher Sean Morrison
- *
- * @par  Source -
- *	The U. S. Army Research Laboratory
- * @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
  */
 
 #include "common.h"

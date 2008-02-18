@@ -28,12 +28,6 @@
  * for convenient use by routines such as "mk_bot".
  * The binary search tree stores indices into the array.
  *
- * @author
- *	John R. Anderson
- *
- * @par  Source -
- *	The U. S. Army Research Laboratory
- * @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

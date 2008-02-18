@@ -27,17 +27,6 @@
  *              experimental.  this primitive will exhibit several
  *              instabilities in the existing root solver method.
  *
- *
- *
- *  Authors -
- *      Christopher Sean Morrison (Programming)
- *      Edwin O. Davisson (Mathematics)
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
  */
 /** @} */
 

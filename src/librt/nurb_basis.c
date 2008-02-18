@@ -25,21 +25,6 @@
  *
  */
 
-/*
- *	N U R B _ B A S I S . C
- *
- * nurb_basis.c - Evaluate the B-Spline Basis Functions.
- *
- *
- * Author:  Paul R. Stay
- * Source
- * 	SECAD/VLD Computing Consortium, Bldg 394
- * 	The US Army Ballistic Research Laboratory
- * 	Aberdeen Proving Ground, Maryland 21005
- *
- * Date: Mon June 4, 1990
- */
-
 #include "common.h"
 
 #include <stdio.h>

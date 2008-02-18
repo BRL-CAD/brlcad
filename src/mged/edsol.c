@@ -19,24 +19,6 @@
  */
 /** @file edsol.c
  *
- * Functions -
- *	init_sedit	set up for a Solid Edit
- *	sedit		Apply Solid Edit transformation(s)
- *	pscale		Partial scaling of a solid
- *	init_oedit	set up for object edit?
- *	f_dextrude()	extrude a drawing (nmg wire loop) to create a solid
- *	f_eqn		change face of GENARB8 to new equation
- *
- *  Authors -
- *	Keith A. Applin
- *	Bob Suckling
- *	Michael John Muuss
- *	Erik Greenwald
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
  */
 
 #include "common.h"

@@ -23,18 +23,6 @@
  *
  *	Intersect a ray with a Generalized Ellipsoid.
  *
- *  Authors -
- *	Edwin O. Davisson	(Analysis)
- *	Michael John Muuss	(Programming)
- *	Peter F. Stiller	(Curvature Analysis)
- *	Phillip Dykstra		(RPPs, Curvature)
- *	Dave Becker		(Vectorization)
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
  */
 
 #include "common.h"

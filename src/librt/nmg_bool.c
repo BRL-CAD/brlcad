@@ -21,19 +21,13 @@
 /** @addgroup nmg */
 /** @{ */
 /** @file nmg_bool.c
+ *
  *	Support for boolean operations on NMG objects.  Most of the routines
  *	in here are static/local to this file.  The interfaces here are the
  *	functions "nmg_do_bool" and "nmg_mesh_faces".  The former does boolean
  *	operations on a pair of shells.  The latter is a function to make
  *	edges shared between two faces whenever possible.
  *
- *  Authors -
- *	Lee A. Butler
- *	Michael John Muuss
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

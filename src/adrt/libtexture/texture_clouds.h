@@ -22,14 +22,6 @@
  *  Comments -
  *      Texture Library - Perlin Clouds Header
  *
- *  Author -
- *      Justin L. Shumaker
- *
- *  Source -
- *      The U. S. Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
- * $Id$
  */
 
 #ifndef _TEXTURE_CLOUDS_H

@@ -18,19 +18,9 @@
  * information.
  */
 /** @file objdir.h
- *			D I R . H
  *
  * The in-core object directory
  *
- *  Author -
- *	Michael John Muuss
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
- *  $Header$
  */
 
 struct directory  {

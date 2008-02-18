@@ -19,16 +19,9 @@
  *
  */
 /** @file tankill-g.c
- *                      T A N K I L L - G
  *
  *  Program to convert the UK TANKILL format to BRL-CAD.
  *
- *  Author -
- *      John R. Anderson
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

@@ -20,22 +20,9 @@
 /** @addtogroup libtermio */
 /** @{ */
 /** @file libtermio.h
- *			T E R M I O . H
  *
  *  Externs for the BRL-CAD library LIBTERMIO
  *
- *  @author
- *	Gary S. Moss
- *
- *  @par Source
- *	The U. S. Army Research Laboratory
- *  @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
- *  @par Include Sequencing -
-@code	#include "common.h"
-	#include <stdio.h>
-	#include "termio.h"
-@endcode
  */
 
 void clr_Cbreak( int fd );

@@ -18,19 +18,10 @@
  * information.
  */
 /** @file sh_cook.c
- *			C O O K
  *
  *  Notes -
  *	The normals on all surfaces point OUT of the solid.
  *	The incomming light rays point IN.  Thus the sign change.
- *
- *  Authors -
- *	Phillip Dykstra
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
  *
  */
 

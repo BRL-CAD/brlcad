@@ -30,14 +30,7 @@
  *      plant is generated recursively with random probabilities (there is
  *      a seed that may be set for repeatability) and growth parameters.
  *
- *  Author -
- *      Christopher Sean Morrison
- *
- *  Source -
- *      The U. S. Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
- ***********************************************************************/
+ */
 
 #include "./vegitation.h"
 

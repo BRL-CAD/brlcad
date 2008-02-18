@@ -29,13 +29,6 @@
  *  Typing "rt_" is no hardship when writing Tcl procs, and
  *  clarifies the origin of the routine.
  *
- *  Authors -
- *	Michael John Muuss
- *      Glenn Durfee
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 /** @} */
 

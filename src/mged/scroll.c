@@ -19,18 +19,6 @@
  */
 /** @file scroll.c
  *
- * Functions -
- *	scroll_display		Add a list of items to the display list
- *	scroll_select		Called by usepen() for pointing
- *
- * Authors -
- *	Bill Mermagen Jr.
- *	Michael John Muuss
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
  */
 
 #include "common.h"

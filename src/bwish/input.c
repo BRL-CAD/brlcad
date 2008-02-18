@@ -23,23 +23,6 @@
  * Input handling routines. Some of this code was borrowed from mged/ged.c
  * and modified for use in this application.
  *
- *  Author -
- *	  Robert G. Parker
- *
- *  Authors of mged/ged.c -
- *	Michael John Muuss
- *	Charles M Kennedy
- *	Douglas A Gwyn
- *	Bob Suckling
- *	Gary Steven Moss
- *	Earl P Weaver
- *	Phil Dykstra
- *	Bob Parker
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
  */
 
 #include "common.h"

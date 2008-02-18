@@ -19,19 +19,6 @@
  */
 /** @file color_scheme.c
  *
- * Functions -
- *	cs_set_dirty_flag	mark any display managers using the current color_scheme as dirty
- *	cs_update		update all colors according to the mode
- *	cs_set_bg		tell the display manager what color to use for the background
- *
- * Author -
- *	Robert G. Parker
- *
- * Source -
- *	SLAD/BND/ACST
- *	The U.S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
  */
 
 #include "common.h"

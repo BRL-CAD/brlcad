@@ -18,17 +18,6 @@
 # information.
 #
 ###
-##
-#				M E N U _ O V E R R I D E . T C L
-#
-# Author -
-#	Bob Parker
-#
-# Source -
-#	The U. S. Army Research Laboratory
-#	Aberdeen Proving Ground, Maryland  21005
-#
-#
 #
 # Description -
 #	The proc's below were copied from libtk/menu.tcl and modified.

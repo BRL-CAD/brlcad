@@ -22,13 +22,6 @@
  *  RT-View-Module for printing out the hit point of a ray and the ray's
  *  direction on a user-specified grid.
  *
- *  Author -
- *	Susanne L. Muuss, J.D.
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
  */
 
 #include "common.h"

@@ -38,12 +38,6 @@
  *  time x y z yaw pitch roll
  * unless specified otherwise by options.
  *
- *  Author -
- *	Carl J. Nuzman
- *
- *  Source -
- *      The U. S. Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

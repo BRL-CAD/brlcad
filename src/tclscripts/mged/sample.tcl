@@ -19,15 +19,6 @@
 #
 ###
 #
-# Author -
-#	Bob Parker
-#
-# Source -
-#	The U. S. Army Research Laboratory
-#	Aberdeen Proving Ground, Maryland  21005
-#
-#
-#
 # Description -
 #	Routines that demonstrate the oddities of Tcl programming in MGED.
 #

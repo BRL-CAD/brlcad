@@ -22,24 +22,6 @@
  * This module contains functions which change the tree structure
  * of the model, and delete solids or combinations or combination elements.
  *
- * Functions -
- *	f_name		rename an object
- *	f_copy		copy a solid
- *	f_instance	create an instance of something
- *	f_region	add solids to a region or create the region
- *	f_kill		remove an object or several from the description
- *	f_group		"grouping" command
- *	f_rm		delete members of a combination
- *	f_copy_inv	copy cyl and position at "end" of original cyl
- *
- *  Authors -
- *	Michael John Muuss
- *	Keith A Applin
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
  */
 
 #include "common.h"

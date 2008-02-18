@@ -33,14 +33,6 @@
  *  This code is basically a port of the 4d Framebuffer interface from
  *  IRIS GL to OpenGL.
  *
- *  Authors -
- *	Carl Nuzman
- *	Bob Parker
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
  */
 /** @} */
 

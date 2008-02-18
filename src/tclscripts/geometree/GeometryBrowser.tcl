@@ -26,13 +26,6 @@
 # that "is" the geometree browser.  It generates a hierarchical view of
 # geometry database objects.
 #
-# Author -
-# 	Christopher Sean Morrison
-#
-# Source -
-#		The U.S. Army Research Laboratory
-#		Aberdeen Proving Ground, Maryland  21005
-#
 # Bugs -
 #
 # Besides a whole slew of them that have been run into with the hierarchy

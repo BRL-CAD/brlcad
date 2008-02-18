@@ -24,14 +24,6 @@
  *     Returns two polygons from a NURB surface.
  *     Asumes that the surface is flat.
  *
- * Author -
- *     Paul R. Stay
- *
- * Source -
- *     SECAD/VLD Computing Consortium, Bldg 394
- *     The U.S. Army Ballistic Research Laboratory
- *     Aberdeen Proving Ground, Maryland 21005
- *
  */
 /** @} */
 

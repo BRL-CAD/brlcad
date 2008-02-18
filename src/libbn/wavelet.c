@@ -137,17 +137,6 @@
  *
  *  bn_wlt_haar_1d_*_reconstruct(tbuffer, buffer, dimen, channels, sub_sz, limit)
  *
- *
- *  @author
- *	Lee A. Butler
- *
- *  @par Modifications
- *      Christopher Sean Morrison
- *
- *  @par Source -
- *	The U. S. Army Research Laboratory
- *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
  */
 /** @} */
 

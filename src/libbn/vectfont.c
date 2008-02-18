@@ -40,15 +40,6 @@
  *  remote Houston Instruments pen plotter package for the
  *  GE Tymeshare system.
  *
- *  Author -
- *	Bruce Henriksen
- *	Stephen Wolff
- *	Michael John Muuss
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
  */
 /** @} */
 

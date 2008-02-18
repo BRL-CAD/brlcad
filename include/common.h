@@ -31,12 +31,6 @@
  *  are either detected via configure or hand crafted, as is the case
  *  for the win32 platform.
  *
- *  @author
- *	Christopher Sean Morrison
- *
- *  @par Source
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #ifndef __COMMON_H__

@@ -47,13 +47,6 @@
  *		bu_log("%g (%g %g %g)\n", p, V3ARGS(v));
  *	}
  *
- *  Author -
- *	Lee A. Butler
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
  */
 /** @} */
 

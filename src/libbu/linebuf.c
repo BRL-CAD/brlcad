@@ -26,14 +26,6 @@
  *
  *	A portable way of doing setlinebuf().
  *
- *  @author	Doug A. Gwyn
- *  @author	Michael John Muuss
- *  @author	Christopher Sean Morrison
- *
- *  @par Source -
- *  @n	The U. S. Army Research Laboratory
- *  @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
  */
 
 #include "common.h"

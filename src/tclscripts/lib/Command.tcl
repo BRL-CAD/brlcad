@@ -19,15 +19,6 @@
 #
 ###
 #
-# Author -
-#	Bob Parker
-#
-# Source -
-#	The U. S. Army Research Laboratory
-#	Aberdeen Proving Ground, Maryland  21005
-#
-#
-#
 # Description -
 #	The Command class implements a command window with command line
 #       editing and command history.

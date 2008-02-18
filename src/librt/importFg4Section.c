@@ -20,17 +20,12 @@
 /** @addtogroup librt */
 /** @{ */
 /** @file importFg4Section.c
+ *
  *      Some of this code was taken from conv/fast4-g.c and libwdb/bot.c
  *      and modified to behave as a method of the BRL-CAD database object
  *      that imports a Fastgen4 section from a string. This section can
  *      only contain GRIDs, CTRIs and CQUADs.
  *
- *  Author of fast4-g.c -
- *      John R. Anderson
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

@@ -23,13 +23,6 @@
  *  This file provides the main() function for
  *  BWISH and BTCLSH on Unix platforms.
  *
- *  Author -
- *	  Robert G. Parker
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
  */
 /*
  * This file originated from Sun Microsystems, Inc. and was

@@ -44,14 +44,6 @@
  *	4) Note: two pixel files (one lo-res, one hi-res) will be registered
  *	   later in a slightly different way.
  *
- *  Authors -
- *	Susanne L. Muuss, J.D.
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg. 394
- *	The U. S. Army Ballistic Reasearch Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
  */
 
 #include "common.h"

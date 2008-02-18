@@ -23,17 +23,6 @@
  *
  *	Intersect a ray with a Torus
  *
- * Authors -
- *	Edwin O. Davisson	(Analysis)
- *	Jeff Hanes		(Programming)
- *	Michael John Muuss	(RT adaptation)
- *	Gary S. Moss		(Improvement)
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
  */
 /** @} */
 

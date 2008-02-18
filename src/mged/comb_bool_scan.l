@@ -1,17 +1,28 @@
-/*									*/
-/*		C O M B _ B O O L _ S C A N . L				*/
-/*									*/
-/*	LEX(1) specifiation to scan Boolean expressions for		*/
-/*			the 'c' command					*/
-/*									*/
-/*  Author -								*/
-/*	Paul Tanenbaum							*/
-/*									*/
-/*  Source -								*/
-/*	The U. S. Army Research Laboratory				*/
-/*	Aberdeen Proving Ground, Maryland  21005-5068  USA		*/
-/*									*/
-/*									*/
+/*                C O M B _ B O O L _ S C A N . L
+ * BRL-CAD
+ *
+ * Copyright (c) 2008 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file comb_bool_scan.l
+ *
+ *	LEX(1) specifiation to scan Boolean expressions for
+ *			the 'c' command
+ *
+ */
 
 /*	Regular definitions	*/
 open		"("
@@ -48,3 +59,13 @@ white		[ \t\n]+
 {white}		;
 
 %%
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

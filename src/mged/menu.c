@@ -19,20 +19,6 @@
  */
 /** @file menu.c
  *
- * Functions -
- *	mmenu_init		Clear global menu data
- *	mmenu_display		Add a list of items to the display list
- *	mmenu_select		Called by usepen() for menu pointing
- *	mmenu_pntr		Reset the pointer to a menu item
- *
- * Authors -
- *	Bob Suckling
- *	Michael John Muuss
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
  */
 
 #include "common.h"

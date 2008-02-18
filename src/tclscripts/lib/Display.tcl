@@ -19,15 +19,6 @@
 #
 ###
 #
-# Author -
-#	Bob Parker
-#
-# Source -
-#	The U. S. Army Research Laboratory
-#	Aberdeen Proving Ground, Maryland  21005
-#
-#
-#
 # Description -
 #	The Display class inherits from View and Dm. This
 #       class also maintains a list of drawable geometry objects

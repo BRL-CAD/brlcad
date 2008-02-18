@@ -18,7 +18,6 @@
  * information.
  */
 /** @file sh_toyota.c
- *			T O Y O T A
  *
  *  Notes -
  *	Implementation of model developed by Atsushi Takagi, Hitoshi
@@ -30,14 +29,6 @@
  *
  *	The normals on all surfaces point OUT of the solid.
  *	The incoming light rays point IN.  Thus the sign change.
- *
- *  Author -
- *	Michael Markowski
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
  *
  */
 

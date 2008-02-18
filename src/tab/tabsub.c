@@ -27,12 +27,6 @@
  *  This program follows "tabinterp", and is the last step in creating
  *  RT animation scripts.
  *
- *  Author -
- *	Michael John Muuss
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

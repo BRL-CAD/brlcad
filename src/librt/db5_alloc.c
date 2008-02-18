@@ -23,12 +23,6 @@
  *
  *  Handle disk space allocation in the BRL-CAD v5 database.
  *
- *  @Author
- *	Michael John Muuss
- *
- *  @par Source -
- *	The U. S. Army Research Laboratory
- *  @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

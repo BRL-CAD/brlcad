@@ -19,45 +19,6 @@
  */
 /** @file chgview.c
  *
- * Functions -
- *	f_view		(DEBUG) force view size
- *	f_evedit	Evaluated edit something (add to visible display)
- *	f_debug		(DEBUG) print solid info?
- *	f_regdebug	toggle debugging state
- *	cmd_list	list object information
- *	f_status	print view info
- *	eraseobj	Drop an object from the visible list
- *	pr_schain	Print info about visible list
- *	f_ill		illuminate the named object
- *	f_sed		simulate pressing "solid edit" then illuminate
- *	f_knob		simulate knob twist
- *	f_slewview	Slew the view
- *	slewview	guts for f_setview
- *	f_setview	Set the current view
- *	setview		guts for f_setview
- *	usejoy		Apply joystick to viewing perspective
- *      absview_v       Absolute view rotation about view center
- *      f_vrot_center   Set the center of rotation -- not ready yet
- *      cmd_getknob     returns knob/slider value
- *      f_svbase        Set view base references (i.e. i_Viewscale and orig_pos)
- *      mged_svbase     Guts for f_svbase
- *      mged_tran       Guts for f_tran
- *      f_qvrot         Set view from direction vector and twist angle
- *      cmd_orientation   Set current view direction from a quaternion
- *      cmd_zoom          zoom view
- *      mged_zoom       guts for f_zoom
- *      abs_zoom        absolute zoom
- *      f_tol           set or display tolerance
- *      knob_tran       handle translations for f_knob
- *      f_aetview       set view using azimuth, elevation and twist angles
- *
- *  Author -
- *	Michael John Muuss
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
  */
 
 #include "common.h"

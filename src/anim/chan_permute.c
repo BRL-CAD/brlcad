@@ -30,12 +30,6 @@
  *to, and each id is a small positive integer identifying a channel. All of the
  *input id's should be distinct integers, or the results are not guaranteed.
  *
- *  Author -
- *	Carl J. Nuzman
- *
- *  Source -
- *      The U. S. Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

@@ -18,13 +18,6 @@
  * information.
  */
 /** @file make_nurb_face.c
- *  Authors -
- *	John R. Anderson
- *
- *  Source -
- *	SLAD/BVLD/VMB
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
  *
  */
 

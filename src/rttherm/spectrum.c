@@ -19,19 +19,10 @@
  */
 /** @file spectrum.c
  *
- *  Version from RTTHERM/spectrum.c
  *  These are all the routines that are not ready to be moved to
  *  LIBRT/spectrum.c
  *
  *  An application of the 'tabdata' package to spectral data.
- *
- *  Author -
- *	Michael John Muuss
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
  *
  *  Inspired by -
  *	Roy Hall and his book "Illumination and Color in Computer

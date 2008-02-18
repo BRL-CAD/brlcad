@@ -18,16 +18,6 @@
 # information.
 #
 ###
-##
-#				C A L L B A C K S . T C L
-#
-# Authors -
-#	Bob Parker
-#
-# Source -
-#	The U. S. Army Research Laboratory
-#	Aberdeen Proving Ground, Maryland  21005
-#
 #
 # Description -
 #	This file contains the standard mged callback proc's.

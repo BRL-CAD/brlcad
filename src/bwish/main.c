@@ -24,13 +24,6 @@
  *  While initializing Tcl, Itcl and various BRL-CAD libraries it sets
  *  things up to provide command history and command line editing.
  *
- *  Author -
- *	  Robert G. Parker
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
  */
 
 #include "common.h"

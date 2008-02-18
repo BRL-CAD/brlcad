@@ -20,9 +20,7 @@
  */
 /** @file gif2fb.c
  *
- */
-
-/*	G I F - F B	Gif to Frame Buffer
+ * Gif to Frame Buffer
  *
  * Gif-fb takes a GIF file and writes it to a frame buffer.
  * GIF files contain one or more 1, 2, 4, or 8 bit deep pictures
@@ -36,15 +34,6 @@
  *
  * Exit:
  *	the named gif file has been displayed
- *
- * Author:
- *	Christopher T. Johnson - 89/02/23
- *	The decompress algorithem was taken from compress.c
- *
- * Source:
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5066
  *
  */
 

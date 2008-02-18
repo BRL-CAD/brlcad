@@ -23,12 +23,6 @@
  *  Program to convert a BRL-CAD model (in a .g file) to a DXF file
  *  by calling on the NMG booleans.  Based on g-acad.c.
  *
- *  Authors -
- *	John R. Anderson
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068
  */
 
 #include "common.h"

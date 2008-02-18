@@ -18,16 +18,9 @@
  * information.
  */
 /** @file photonmap.c
- *			P H O T O N M A P. C
  *
  *  Implemention of Photon Mapping
  *
- *  Author -
- *	Justin L. Shumaker
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

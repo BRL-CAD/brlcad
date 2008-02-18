@@ -18,16 +18,6 @@
 # information.
 #
 ###
-##
-#			C O L O R . T C L
-#
-# Author -
-#	Robert G. Parker
-#
-# Source -
-#       The U. S. Army Research Laboratory
-#       Aberdeen Proving Ground, Maryland  21005
-#
 #
 # Description -
 #	Color utilities.

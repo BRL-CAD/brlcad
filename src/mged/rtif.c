@@ -21,27 +21,6 @@
  *
  *  Routines to interface to RT, and RT-style command files
  *
- * Functions -
- *	cmd_rt		ray-trace
- *	cmd_rrt		ray-trace using any program
- *	cmd_rtabort     abort ray-traces started through mged
- *	cmd_rtcheck	ray-trace to check for overlaps
- *	cmd_rtarea	ray-trace to report exposed area
- *	cmd_rtedge	ray-trace edges for an outline view
- *	cmd_rtweight	ray-trace to report weight/moments
- *	f_saveview	save the current view parameters
- *	f_loadview	load view parameters from a saveview file
- *	f_rmats		load views from a file
- *	f_savekey	save keyframe in file
- *	f_nirt          trace a single ray from current view
- *
- *  Author -
- *	Michael John Muuss
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
  */
 
 #include "common.h"

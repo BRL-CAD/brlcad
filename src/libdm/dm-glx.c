@@ -39,20 +39,10 @@
    noborder
    keepaspect
    prefposition
-*/
-/*
- *			D M - G L X . C
+ *
  *
  *  This display manager started out with the guts from DM-4D which
  *  was modified to use mixed-mode (i.e. gl and X )
- *
- *  Authors -
- *      Robert G. Parker
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
  *
  */
 

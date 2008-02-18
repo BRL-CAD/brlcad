@@ -18,16 +18,6 @@
 # information.
 #
 ###
-##
-#				M U V E S . T C L
-#
-# Authors -
-#	Bob Parker
-#
-# Source -
-#	The U. S. Army Research Laboratory
-#	Aberdeen Proving Ground, Maryland  21005
-#
 #
 # Description - routines for looking at MUVES final results files.
 #

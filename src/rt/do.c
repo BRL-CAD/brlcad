@@ -22,14 +22,6 @@
  *  Routines that process the various commands, and manage
  *  the overall process of running the raytracing process.
  *
- *  Author -
- *	Michael John Muuss
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
  */
 
 #include "common.h"

@@ -22,16 +22,6 @@
  *
  *  Print a BRL-CAD .pix or .bw file on the Canon CLC-500 scanner.
  *
- *  Authors -
- *	Lee A. Butler
- *	Michael John Muuss
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
- *
- *
  *	Options
  *	a	autosize image file
  *	c	clear framebuffer first

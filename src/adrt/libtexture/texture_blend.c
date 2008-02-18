@@ -22,14 +22,6 @@
  *  Comments -
  *      Texture Library - Uses the R and B channels to blend 2 colors
  *
- *  Author -
- *      Justin L. Shumaker
- *
- *  Source -
- *      The U. S. Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
- * $Id$
  */
 
 #include "texture_blend.h"

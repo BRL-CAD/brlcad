@@ -33,11 +33,6 @@
  * The method of conversion is to convert up to double then back down the
  * the expected output format.
  *
- * @author Christopher T. Johnson
- *
- *  @par Source
- *	The U. S. Army Research Laboratory			@n
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

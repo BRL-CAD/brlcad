@@ -19,15 +19,6 @@
 #
 ###
 #
-# Author -
-#	 Robert G. Parker
-#
-# Source -
-#	The U. S. Army Research Laboratory
-#	Aberdeen Proving Ground, Maryland  21005
-#
-#
-#
 # Description -
 #	Routines for handling database upgrades.
 #

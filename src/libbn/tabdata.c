@@ -30,14 +30,6 @@
  *
  *  One application is for storing spectral curves, see spectrum.c
  *
- *  @author
- *	Michael John Muuss
- *
- *  @par Source
- *	The U. S. Army Research Laboratory
- *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
- *
  *  @par Inspired by -
  *	Roy Hall and his book "Illumination and Color in Computer
  *@n	Generated Imagery", Springer Verlag, New York, 1989.

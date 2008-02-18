@@ -24,12 +24,6 @@
  *  Subroutines to simulate the fb_readrect() and fb_writerect()
  *  capabilities for displays that do not presently handle it.
  *
- *  Author -
- *	Michael John Muuss
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 /** @} */
 

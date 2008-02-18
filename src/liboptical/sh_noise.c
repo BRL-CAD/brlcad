@@ -26,12 +26,6 @@
  *	fbmbump		fbm noise applied to surface normal
  *	fbmcolor	fbm noise applied to color
  *
- *  Author -
- *	Lee A. Butler
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

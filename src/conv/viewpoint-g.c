@@ -19,7 +19,6 @@
  *
  */
 /** @file viewpoint-g.c
- *	V I E W P O I N T - G
  *
  *  Converter from Viewpoint Datalabs coor/elem format
  *  to BRL-CAD format.  Will assign vertex normals if they
@@ -27,12 +26,6 @@
  *  one containing vertex coordinates (and optional normals)
  *  and the second which lists the vertex numbers for each polygonal face.
  *
- *  Author:
- *	John R. Anderson
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

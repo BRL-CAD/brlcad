@@ -23,12 +23,6 @@
  * for each pixel rendered. If the random number is less than the threshold
  * value, the pixel is rendered as 100% transparent
  *
- *  Author -
- *	John R. Anderson
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

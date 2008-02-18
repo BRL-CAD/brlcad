@@ -19,29 +19,11 @@
 #
 ###
 #
-# Author -
-#	Glenn Durfee
-#
-# Source -
-#	The U. S. Army Ballistic Research Laboratory
-#	Aberdeen Proving Ground, Maryland  21005
-#
-#
-#
 # Description -
 #	"cad_dialog" and "cad_input_dialog" are based off of the
 #	"tk_dialog" that comes with Tk 4.0.
 #
-# Modifications -
-#        (Bob Parker):
-#		*- mods to pop up the dialog box near the pointer.
-#		*- mods to cad_dialog (i.e. use text widget with
-#		   scrollbar if string length becomes too large).
-#		*- add ::tk::Priv(wait_cmd) and use in all dialogs
-#	 (John Anderson):
-#		*- added cad_radio proc
-#
-#==============================================================================
+###############################################################################
 
 if {![info exists ::tk::Priv(wait_cmd)]} {
     set ::tk::Priv(wait_cmd) tkwait

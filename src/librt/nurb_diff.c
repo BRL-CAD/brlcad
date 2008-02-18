@@ -22,13 +22,6 @@
 /** @file nurb_diff.c
  *
  *	Differentiate a Non Uniform Rational B-Spline (NURB) Surface.
- *  Author -
- *	Paul Randal Stay
- *
- *  Source -
- * 	SECAD/VLD Computing Consortium, Bldg 394
- *	The U.S. Army Ballistic Research Laboratory
- * 	Aberdeen Proving Ground, Maryland 21005
  *
  */
 /** @} */

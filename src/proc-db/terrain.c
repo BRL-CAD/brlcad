@@ -18,21 +18,12 @@
  * information.
  */
 /** @file terrain.c
+ *
  * Create a random terrain spline model database.
  * Future additions to this program would be to include
  * random trees and objects to be inserted into the database.
  *
- * Author -
- *	Paul R. Stay
- *
- * Source
- *     SECAD/VLD Computing Consortium, Bldg 394
- *     The U.S. Army Ballistic Research Laboratory
- *     Aberdeen Proving Ground, Maryland 21005
  */
-
-
-/* Header files which are used for this example */
 
 #include "common.h"
 

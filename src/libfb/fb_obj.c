@@ -24,18 +24,6 @@
  * A framebuffer object contains the attributes and
  * methods for controlling  framebuffers.
  *
- * Source -
- *	SLAD CAD Team
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
- * Authors -
- *	Robert G. Parker
- *	Ronald Bowers
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 /** @} */
 

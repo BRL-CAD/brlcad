@@ -23,27 +23,6 @@
  * model, generally on a single solid or combination.
  * Changes to the tree structure of the model are done in chgtree.c
  *
- * Functions -
- *	f_itemair	add/modify item and air codes of a region
- *	f_mater		modify material information
- *	f_mirror	mirror image
- *	f_edcomb	modify combination record info
- *	f_units		change local units of description
- *	f_title		change current title of description
- *	aexists		announce already exists
- *	f_make		create new solid of given type
- *	f_rot_obj	allow precise changes to object rotation
- *	f_sc_obj	allow precise changes to object scaling
- *	f_tr_obj	allow precise changes to object translation
- *
- *  Author -
- *	Michael John Muuss
- *	Keith A. Applin
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
  */
 
 #include "common.h"

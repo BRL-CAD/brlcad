@@ -19,24 +19,9 @@
 #
 ###
 #
-# Author -
-#	Glenn Durfee
-#
-# Source -
-#	The U. S. Army Ballistic Research Laboratory
-#	Aberdeen Proving Ground, Maryland  21005
-#
-#
-#
 # Description -
 #       Sample user interface for MGED
 #
-#  $Revision$
-#
-# Modifications -
-#        (Bob Parker):
-#             Generalized the code to accommodate multiple instances of this
-#             user interface.
 
 if ![info exists mged_players] {
     set mged_players {}
@@ -421,9 +406,7 @@ proc do_About_MGED { id } {
     cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "About MGED..." \
 	    "$version
 MGED (Multi-device Geometry EDitor) is part
-of the BRL-CAD(TM) package.
-Developed by the U. S. Army Research Laboratory
-Aberdeen Proving Ground, Maryland  21005-5068  USA
+of the BRL-CAD Open Source package.
 
 Note - html documentation can be found in
 $mged_default(html_dir)" \

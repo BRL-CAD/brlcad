@@ -18,18 +18,11 @@
  * information.
  */
 /** @file pix-ppm.c
+ *
  * convert BRL .pix files to ppm
- * sahayman 1991 01 18
  *
  * Pixels run left-to-right, from the bottom of the screen to the top.
  *
- *  Authors -
- *	Steve Hayman <sahayman@iuvax.cs.indiana.edu>
- *	Michael John Muuss
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

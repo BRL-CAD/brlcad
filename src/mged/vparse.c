@@ -23,15 +23,6 @@
  *	Routines for interfacing with the LIBBU struct parsing
  *	utilities.
  *
- * Source -
- *      SLAD CAD Team
- *      The U. S. Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005
- *
- * Authors -
- *      Robert G. Parker
- *	Lee A. Butler
- *      Glenn Durfee
  */
 
 #include "common.h"

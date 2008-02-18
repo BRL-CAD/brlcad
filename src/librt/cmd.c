@@ -26,14 +26,6 @@
  *  read this type of command stream;  the routines to handle
  *  the various keywords should go in application-specific modules.
  *
- *  Author -
- *	Michael John Muuss
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
  */
 /** @} */
 

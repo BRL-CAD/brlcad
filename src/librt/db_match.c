@@ -28,13 +28,6 @@
  *	db_update_nref		Updates the d_nref fields of each member of
  *				the directory in the given database.
  *
- *  Author -
- *	Michael John Muuss
- *	Glenn Durfee
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

@@ -19,6 +19,7 @@
  *
  */
 /** @file anim_orient.c
+ *
  *	Convert between different orientation formats. The formats are:
  *  quaternion, yaw-pitch-roll, azimuth-elevation-twist, xyz angles,
  *  pre-multiplication rotation matrices, and transposed matrices (inverses).
@@ -31,12 +32,6 @@
  *  and then converting that matrix to the desired output form.
  *	Angles may be specified in radians or degrees.
  *
- *  Author -
- *	Carl J. Nuzman
- *
- *  Source -
- *      The U. S. Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

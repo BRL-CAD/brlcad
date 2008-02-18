@@ -24,12 +24,6 @@
  *	Routines to extract mins, maxes, adjacent, and current nodes
  *			from a red-black tree
  *
- *  @author
- *	Paul J. Tanenbaum
- *
- *  @par Source -
- *	The U. S. Army Research Laboratory
- *  @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 /** @} */
 

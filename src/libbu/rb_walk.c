@@ -23,13 +23,6 @@
  *
  *	    Routines for traversal of red-black trees
  *
- *  @author -
- *	Paul J. Tanenbaum
- *
- *  @par Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
  *	The function bu_rb_walk() is defined in terms of the function
  *	_rb_walk(), which, in turn, calls any of the six functions
  *

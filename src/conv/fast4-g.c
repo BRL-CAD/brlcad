@@ -19,16 +19,9 @@
  *
  */
 /** @file fast4-g.c
- *                      F A S T 4 - G
  *
  *  Program to convert the FASTGEN4 format to BRL-CAD.
  *
- *  Author -
- *      John R. Anderson
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

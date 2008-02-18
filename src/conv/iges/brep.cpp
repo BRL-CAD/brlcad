@@ -18,12 +18,7 @@
  * information.
  */
 /** @file brep.c
- *  Authors -
- *	John R. Anderson
  *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "./iges_struct.h"

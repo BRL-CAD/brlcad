@@ -23,13 +23,6 @@
  *
  * Trimming curve routines.
  *
- * Author:  Paul R. Stay
- * Source
- * 	SECAD/VLD Computing Consortium, Bldg 394
- * 	The US Army Ballistic Research Laboratory
- * 	Aberdeen Proving Ground, Maryland 21005
- *
- * Date: Mon June 1, 1992
  */
 /** @} */
 

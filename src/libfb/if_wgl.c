@@ -32,13 +32,6 @@
  *
  *  This code is basically a port of if_ogl.c from OpenGL to Windows GL
  *
- *  Authors -
- *	Bob Parker
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
  */
 /** @} */
 

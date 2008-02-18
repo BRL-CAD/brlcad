@@ -19,15 +19,6 @@
 #
 ###
 #
-# Author -
-#	Bob Parker
-#
-# Source -
-#	The U. S. Army Research Laboratory
-#	Aberdeen Proving Ground, Maryland  21005
-#
-#
-#
 # Description -
 #	The raytrace control panel is designed to be used with an
 #	Mged object. It probably should be an inner class of the Mged

@@ -24,12 +24,6 @@
  * Ray Tracing library database tree walker.
  *  Collect and prepare regions and solids for subsequent ray-tracing.
  *
- *  Author -
- *	Michael John Muuss
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 /** @} */
 

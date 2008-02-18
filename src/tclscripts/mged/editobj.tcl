@@ -19,31 +19,9 @@
 #
 ###
 #
-# Author -
-#	Glen Durfee
-#
-# Source -
-#	The U. S. Army Research Laboratory
-#	Aberdeen Proving Ground, Maryland  21005
-#
-#
 # Description -
 #	Generic object editor for MGED
 #
-# Modifications -
-#	(Bob Parker):
-#		- Generalized the code to accommodate multiple instances
-#		  of the user interface.
-#		- added eoformat_string to control format of entry strings
-#		- added eoinc_operation and eodec_operation to control increment
-#		  and decrement of entry values
-#		- when checking for the existence of the editor, instead of complaining,
-#		  raise the editor and return
-#		- when creating for the first time, make the editor appear to the
-#		  lower right of mouse pointer
-#		- modify eoinc and eodec to NOT apply changes, that's what the "Apply"
-#		  button is for.
-#		- display info in local units and assume the same when applying to database
 #
 
 set eoname(V) "Vertex"

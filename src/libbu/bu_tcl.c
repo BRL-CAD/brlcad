@@ -27,11 +27,6 @@
  *	Remember that in MGED you need to say "set glob_compat_mode 0"
  *	to get [] to work with TCL semantics rather than MGED glob semantics.
  *
- * @author Michael John Muuss
- *
- * @par Source -
- *	The U. S. Army Research Laboratory			@n
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

@@ -22,16 +22,7 @@
  * Convert the Utah Teapot description from the IEEE CG&A database to the
  * BRL-CAD t-NURBS NMG format. (Note that this has the closed bottom)
  *
- *  Authors -
- *	John R. Anderson
- *	Paul R. Stay
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-
-/* Header files which are used for this example */
 
 #include "common.h"
 

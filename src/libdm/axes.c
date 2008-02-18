@@ -22,13 +22,6 @@
  * Functions -
  *	draw_axes	Common axes drawing routine that draws axes at the
  *			specifed point and orientation.
- * Author -
- *	Robert G. Parker
- *
- * Source -
- *	SLAD CAD Team
- *	The U. S. Army Research Laboratory
- *	berdeen Proving Ground, Maryland  21005
  *
  */
 

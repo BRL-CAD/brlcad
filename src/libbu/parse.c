@@ -36,16 +36,6 @@
  *  @arg	export	struct elements to machine-independent binary
  *  @arg	import	machine-independent binary to struct elements
  *
- *
- *
- *  @authors	Michael John Muuss
- *  @authors	Lee A. Butler
- *
- *  @par Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- * @n	The U. S. Army Ballistic Research Laboratory
- * @n	Aberdeen Proving Ground, Maryland  21005
- *
  */
 
 #include "common.h"

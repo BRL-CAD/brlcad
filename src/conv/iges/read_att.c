@@ -18,23 +18,16 @@
  * information.
  */
 /** @file read_att.c
- *  Author -
- *	John R. Anderson
  *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
- */
-
-/*
- *	This routine reads the IGES attribute instance entity
- *	at DE (att_de) and stores the values in the structure (att)
  */
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+/**
+ * This routine reads the IGES attribute instance entity at DE
+ * (att_de) and stores the values in the structure (att)
+ */
 void
 Read_att( att_de, att )
 int att_de;

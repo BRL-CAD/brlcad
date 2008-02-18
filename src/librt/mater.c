@@ -31,14 +31,6 @@
  *	color_addrec	Called by rt_dirbuild on startup
  *	color_map	Map one region reference to a material
  *
- *  Author -
- *	Michael John Muuss
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
  */
 /** @} */
 

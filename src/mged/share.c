@@ -22,17 +22,6 @@
  * Description -
  *	Routines for sharing resources among display managers.
  *
- * Functions -
- *	f_share				command to share/unshare resources
- *	f_rset				command to set resources
- *
- * Source -
- *      SLAD CAD Team
- *      The U. S. Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005
- *
- * Author -
- *      Robert G. Parker
  */
 
 #include "common.h"

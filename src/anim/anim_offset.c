@@ -25,13 +25,6 @@
  *  one object, anim_offset produces a similar table specifying the
  *  position of an object rigidly attached to it.
  *
- *
- *  Author -
- *	Carl J. Nuzman
- *
- *  Source -
- *      The U. S. Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

@@ -19,18 +19,6 @@
  */
 /** @file usepen.c
  *
- * Functions -
- *	usepen		Use x, y data from data tablet
- *	buildHrot	Generate rotation matrix
- *	wrt_view	Modify xform matrix with respect to current view
- *
- *  Author -
- *	Michael John Muuss
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
  */
 
 #include "common.h"

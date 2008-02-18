@@ -24,13 +24,6 @@
  *  Wrapper routines to help fire multiple rays in parallel,
  *  without exposing the caller to the details of running in parallel.
  *
- *  Authors -
- *	Michael John Muuss
- *	Christopher T. Johnson
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 /** @} */
 

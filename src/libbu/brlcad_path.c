@@ -25,12 +25,6 @@
  *  A support routine to provide the executable code with the path
  *  to where the BRL-CAD programs and libraries are installed.
  *
- * @author	Christopher Sean Morrison
- * @author	Michael John Muuss
- *
- * @par Source
- *	The U. S. Army Research Laboratory			@n
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

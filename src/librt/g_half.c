@@ -38,15 +38,6 @@
  *  where N[3] stores the value d.
  *  See the remarks in h/vmath.h for more details.
  *
- *  Authors -
- *	Michael John Muuss
- *	Dave Becker		(Vectorization)
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
  */
 
 #include "common.h"

@@ -18,14 +18,9 @@
  * information.
  */
 /** @file pix-png.c
- *	Convert pix file to PNG (Portable Network Graphics) format
  *
- *	Author -
- *		John R. Anderson
+ * Convert pix file to PNG (Portable Network Graphics) format
  *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

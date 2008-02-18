@@ -19,15 +19,6 @@
 #
 ###
 #
-# Author -
-#	Bob Parker
-#
-# Source -
-#	The U. S. Army Research Laboratory
-#	Aberdeen Proving Ground, Maryland  21005
-#
-#
-#
 # Description -
 #       This class comprises a collection of methods for querying/modifying tables.
 #       For the purposes of this class, a table is a list of lists with each sublist

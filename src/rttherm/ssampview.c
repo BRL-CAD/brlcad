@@ -22,13 +22,6 @@
  *  Program to display spectral curves on the framebuffer.
  *  Uses a Tcl script to handle the GUI.
  *
- *  Author -
- *	Michael John Muuss
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
  */
 
 #include "common.h"

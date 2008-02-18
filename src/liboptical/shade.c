@@ -25,15 +25,6 @@
  *	The normals on all surfaces point OUT of the solid.
  *	The incomming light rays point IN.
  *
- *  Authors -
- *	Michael John Muuss
- *	Phil Dykstra
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
  */
 
 #include "common.h"

@@ -23,13 +23,6 @@
  *
  * @brief scale geometry points.
  *
- * @author
- *	Michael John Muuss
- *
- * @par Source
- *	The U. S. Army Research Laboratory
- * @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
  *	@note
  *	This file is a candidate for deletion.
  *	Nothing else in BRL-CAD uses this.

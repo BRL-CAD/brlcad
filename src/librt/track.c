@@ -21,16 +21,7 @@
 /** @{ */
 /** @file track.c
  *
- * f_amtrack():	Adds "tracks" to the data file given the required info
- *
- *  Author -
- *	Keith A. Applin
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
- *
+ * Adds "tracks" to the data file given the required info
  *
  * Acknowledgements:
  * Modifications by Bob Parker (SURVICE Engineering):

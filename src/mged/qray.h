@@ -18,21 +18,17 @@
  * information.
  */
 /** @file qray.h
- */
-#ifndef SEEN_QRAY_H
-#define SEEN_QRAY_H
-
-/*
- *
- *			Q R A Y . H
  *
  * Header file for "Query Ray" variables.
  *
- * Source -
- *	SLAD CAD Team
- *      The U. S. Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005
  */
+
+#ifndef SEEN_QRAY_H
+#define SEEN_QRAY_H
+
+#include "common.h"
+
+#include "bu.h"
 
 #define QRAY_BASENAME "query_ray"
 #define QRAY_TEXT	(qray_effects == 't' ||\

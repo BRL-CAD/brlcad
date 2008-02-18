@@ -24,16 +24,6 @@
  * to an array of menu items.  The first ([0]) menu item is the title
  * for the menu, and the remaining items are individual menu entries.
  *
- *  Authors -
- *	Bob Suckling
- *	Mike Muuss
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
- * $Header$
  */
 #ifndef SEEN_MENU_H
 #define SEEN_MENU_H

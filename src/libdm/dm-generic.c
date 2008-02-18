@@ -21,13 +21,6 @@
  *
  * Generic display manager routines.
  *
- * Source -
- *	SLAD CAD Team
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
- * Author -
- *	Robert G. Parker
  */
 
 #include "common.h"

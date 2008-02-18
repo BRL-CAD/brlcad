@@ -36,18 +36,8 @@
  *  list, which points to a loop of a single vertex.  These points
  *  need to be incorporated into the final face.
  *
- *  Authors -
- *	Michael John Muuss
- *	Lee A. Butler
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 /** @} */
-
-
-#define PLOT_BOTH_FACES	1
 
 #include "common.h"
 
@@ -58,6 +48,9 @@
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
+
+
+#define PLOT_BOTH_FACES	1
 
 
 /* States of the state machine */

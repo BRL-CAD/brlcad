@@ -19,16 +19,9 @@
  *
  */
 /** @file canonize.c
- *			C A N O N I Z E
  *
  *  Queue an image to a Canon CLC500 via qpr/MDQS
  *
- *  Author -
- *	Lee A. Butler
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

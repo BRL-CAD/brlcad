@@ -23,14 +23,6 @@
  *  Walk a path *without running into any geometry*,
  *  given the start and goal points.
  *
- *  Authors -
- *	Michael John Muuss
- *	Robert J. Reschly, Jr.
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
  */
 
 #include "common.h"

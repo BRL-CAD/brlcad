@@ -32,15 +32,6 @@
  *  ToDo: It would be nice if we could pass in (1) an overlap depth
  *  tolerance, (2) choose either region pair or solid pair grouping.
  *
- *  Authors -
- *	Michael John Muuss
- *	Gary S. Moss
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
  */
 
 #include "common.h"

@@ -19,20 +19,6 @@
  */
 /** @file axes.c
  *
- * Functions -
- *	draw_axes	Common axes drawing routine that draws axes at the
- *				specifed point and orientation.
- *	draw_e_axes	Draw the edit axes.
- *	draw_m_axes	Draw the model axes.
- *	draw_v_axes	Draw the view axes.
- *
- * Author -
- *	Robert G. Parker
- *
- * Source -
- *	SLAD CAD Team
- *	The U. S. Army Research Laboratory
- *	berdeen Proving Ground, Maryland  21005
  */
 
 #include "common.h"

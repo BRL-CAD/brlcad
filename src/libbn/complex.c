@@ -21,18 +21,6 @@
 /** @{ */
 /** @file complex.c
  *
- *  @par Functions:
- *  @li bn_cx_div		Complex Division
- *  @li  bn_cx_sqrt	Complex Square Root
- *
- *
- * @author	Douglas A Gwyn		(Original Version)
- * @author	Michael John Muuss	(Macro Version)
- *
- * @par Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- * @n	The U. S. Army Ballistic Research Laboratory
- * @n	Aberdeen Proving Ground, Maryland  21005
  */
 /** @} */
 

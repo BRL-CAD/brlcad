@@ -23,16 +23,6 @@
  *  which holds all the information necessary for solid editing.
  *  Storage is actually allocated in edsol.c
  *
- *  Author -
- *	Keith A Applin
- *	Michael John Muuss
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
- *  $Header$
  */
 
 #define MGED_SMALL_SCALE 1.0e-10

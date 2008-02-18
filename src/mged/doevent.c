@@ -21,14 +21,6 @@
  *
  * X event handling routines for MGED.
  *
- * Author -
- *     Robert G. Parker
- *
- * Source -
- *	SLAD CAD Team
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
  */
 
 #include "common.h"

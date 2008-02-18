@@ -2115,13 +2115,6 @@ struct rt_shootray_status {
  *	moved here to use rt_g.rtg_nmgfree freelist for hitmiss structs.         *
  *********************************************************************************
  *			N M G _ R T . H
- *
- *  @author
- *	Lee A. Butler
- *
- *  @par Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 /* defining the following flag will improve NMG raytrace speed by eliminating some checking

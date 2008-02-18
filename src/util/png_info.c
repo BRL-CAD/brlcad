@@ -18,14 +18,9 @@
  * information.
  */
 /** @file png_info.c
- *	Display info about a PNG (Portable Network Graphics) format file
  *
- *	Author -
- *		John R. Anderson
+ * Display info about a PNG (Portable Network Graphics) format file
  *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

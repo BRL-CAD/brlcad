@@ -27,13 +27,6 @@
  *  to control the severity of banking. Looping behavior can be toggled
  *  with another option.
  *
- *
- *  Author -
- *	Carl J. Nuzman
- *
- *  Source -
- *      The U. S. Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

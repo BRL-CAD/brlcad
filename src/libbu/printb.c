@@ -23,12 +23,6 @@
  *
  * @brief print bitfields
  *
- * @author	Michael John Muuss
- *
- * @par  Source -
- *	The U. S. Army Research Laboratory
- * @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
  */
 
 #include "common.h"

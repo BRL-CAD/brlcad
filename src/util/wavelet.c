@@ -38,16 +38,7 @@
  *	-S		level/limit of transform ...
  *	-W			(size of avg img in transformed data output)
  *
- *
- *  Author -
- *      Lee Butler
- *      Christopher Sean Morrison
- *
- *  Source -
- *      The U. S. Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
- ***********************************************************************/
+ */
 
 #include "common.h"
 

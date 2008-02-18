@@ -52,14 +52,6 @@
  *
  *     preVector (vect_t)	 Matrix (mat_t)    postVector (vect_t)
  *
- *
- * @author	Robert S. Miles
- * @author	Michael John Muuss
- * @author	Lee A. Butler
- *
- * @par Source
- *	The U. S. Army Research Laboratory
- *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 /** @} */

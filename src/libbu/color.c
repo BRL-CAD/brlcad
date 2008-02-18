@@ -21,16 +21,6 @@
 /** @{ */
 /** @file color.c
  *
- *  Routines to convert between various color models.
- *
- *  @author
- *	Paul Tanenbaum
- *
- *  @par Source
- *	The U. S. Army Research Laboratory			@n
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
- *
  *		Convert between RGB and HSV color models
  *
  *	R, G, and B are in {0, 1, ..., 255},
@@ -44,8 +34,6 @@
  *	_Computer graphics: principles and practice_, 2nd ed., Addison-Wesley,
  *	Reading, MA, 1990.
  */
-
-static const char libbu_color_RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 

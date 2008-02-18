@@ -18,26 +18,10 @@
  * information.
  */
 /** @file inside.c
- *			I N S I D E
  *
  *	Given an outside solid and desired thicknesses, finds
  *	an inside solid to produce those thicknesses.
  *
- * Functions -
- *	f_inside	reads all the input required
- *	arbin		finds inside of arbs
- *	tgcin		finds inside of tgcs
- *	ellgin		finds inside of ellgs
- *	torin		finds inside of tors
- *
- *  Authors -
- *	Keith A Applin
- *	Michael Markowski
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
  */
 
 #include "common.h"

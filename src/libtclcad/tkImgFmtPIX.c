@@ -36,13 +36,6 @@
  *
  *      A photo image file handler for BRL-CAD(tm) ".pix" format files.
  *
- *  Author -
- *	Glenn Durfee
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
  * Based on:
  *	tkImgFmtPPM.c --
  *

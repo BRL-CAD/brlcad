@@ -19,14 +19,8 @@
  */
 /** @file imgdims.c
  *
- *			Guess the dimensions of an image
+ * Guess the dimensions of an image
  *
- *  Author -
- *	Paul J. Tanenbaum
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068
  */
 
 #include "common.h"

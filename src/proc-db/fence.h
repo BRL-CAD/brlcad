@@ -19,16 +19,10 @@
  */
 /** @file fence.h
  *
- *      This is the header file to the program that generages a
- *      chain-link fence.  Every parameter of the fence may be adjusted
- *      by changing the #defined macros below.
+ * This is the header file to the program that generages a chain-link
+ * fence.  Every parameter of the fence may be adjusted by changing
+ * the #defined macros below.
  *
- *  Author -
- *      Christopher Sean Morrison
- *
- *  Source -
- *      The U. S. Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #ifndef __FENCE_H__

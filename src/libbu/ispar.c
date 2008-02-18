@@ -30,12 +30,6 @@
  *  the loader to drag in all the parallel processing stuff from
  *  the vendor library.
  *
- *  @author
- *	Michael John Muuss
- *
- *  @par Source -
- *  @n	The U. S. Army Research Laboratory
- *  @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

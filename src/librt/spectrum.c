@@ -25,13 +25,6 @@
  *
  *  (Note that there is also a rttherm/spectrum.c)
  *
- *  Author -
- *	Michael John Muuss
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
  *  Inspired by -
  *	Roy Hall and his book "Illumination and Color in Computer
  *	Generated Imagery", Springer Verlag, New York, 1989.

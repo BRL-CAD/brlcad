@@ -22,12 +22,6 @@
  *  Animate the links and wheels of a tracked vehicle. It is assumed
  *  that the wheels do not translate with respect to the vehicle.
  *
- *  Author -
- *	Carl J. Nuzman
- *
- *  Source -
- *      The U. S. Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

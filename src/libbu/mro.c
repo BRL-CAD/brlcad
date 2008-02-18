@@ -24,11 +24,6 @@
  * @brief
  * The Multiply Represented Object package.
  *
- * @author	John R. Anderson
- *
- * @par  Source -
- *      The U. S. Army Research Laboratory
- * @n   Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 static const char libbu_vls_RCSid[] = "@(#)$Header$ (BRL)";

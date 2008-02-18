@@ -18,16 +18,8 @@
  * information.
  */
 /** @file do_subfigs.c
- *  Authors -
- *	John R. Anderson
- *
- *  Source -
- *	SLAD/BVLD/VMB
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
  *
  */
-
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"

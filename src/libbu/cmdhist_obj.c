@@ -24,12 +24,6 @@
  * A cmdhist object contains the attributes and
  * methods for maintaining command history.
  *
- *  @author
- *	  Robert G. Parker
- *
- *  @par Source -
- *	The U. S. Army Research Laboratory			@n
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

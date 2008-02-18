@@ -25,13 +25,6 @@
  *  there is an object in front, it will reduce the exposed area, but
  *  not the presented area.
  *
- *  Authors -
- *    Christopher Sean Morrison
- *    John R. Anderson
- *
- *  Source -
- *    The U. S. Army Research Laboratory
- *    Aberdeen Proving Ground, Maryland  21005
  */
 
 #include "common.h"

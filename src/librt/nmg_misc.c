@@ -24,15 +24,6 @@
  *	As the name implies, these are miscellaneous routines that work with
  *	the NMG structures.
  *
- *
- *  Authors -
- *	John R. Anderson
- *	Lee A. Butler
- *	Michael John Muuss
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 /** @} */
 

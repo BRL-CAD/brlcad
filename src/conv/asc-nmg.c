@@ -23,14 +23,6 @@
  *  Program to convert an ascii description of an NMG into a BRL-CAD
  *  NMG model.
  *
- *  Authors -
- *	Michael Markowski
- *	Lee A. Butler
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
  */
 
 #include "common.h"

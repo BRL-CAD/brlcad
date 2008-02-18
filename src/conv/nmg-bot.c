@@ -22,12 +22,6 @@
  *
  * Routine to convert all the NMG solids in a BRL-CAD model to BoTs.
  *
- *  Author -
- *      John R. Anderson
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

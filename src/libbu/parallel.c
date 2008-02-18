@@ -26,13 +26,6 @@
  *  Machine-specific routines for parallel processing.
  *  Primarily calling functions in multiple threads on multiple CPUs.
  *
- *  @author  Michael John Muuss
- *
- *
- *  @par Source -
- *	The U. S. Army Research Laboratory
- *  @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
  */
 
 #include "common.h"

@@ -19,20 +19,6 @@
  */
 /** @file tedit.c
  *
- * Functions -
- *	f_tedit		Run text editor on numerical parameters of solid
- *	writesolid	Write numerical parameters of solid into a file
- *	readsolid	Read numerical parameters of solid from file
- *	editit		Run $EDITOR on temp file
- *
- *  Author -
- *	Michael John Muuss
- *	(Inspired by 4.2 BSD program "vipw")
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
  */
 
 #include "common.h"

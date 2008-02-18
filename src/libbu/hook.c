@@ -24,16 +24,6 @@
  * @brief
  * BRL-CAD support library's hook utility.
  *
- *  @author
- *  @n	Robert G. Parker
- *  @n	Michael John Muuss
- *  @n	Glenn Durfee
- *
- *  @par Source
- *  @n	The U. S. Army Research Laboratory
- *  @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
- *
  * @par Acknowledgements
  *	This builds on the work in libbu/log.c.
  *

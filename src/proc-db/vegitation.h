@@ -25,12 +25,6 @@
  *      The plants are generated based on specification of growth
  *      parameters such as growth and branching rates.
  *
- *  Author -
- *      Christopher Sean Morrison
- *
- *  Source -
- *      The U. S. Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 #ifndef __VEGITATION_H__
 #define __VEGITATION_H__

@@ -21,22 +21,6 @@
  *
  *  A set of routines for printing columns of data.
  *
- * Functions -
- *	col_item	Called to print an item
- *	col_putchar	Called to annotate an item
- *	col_eol		Called to end a line
- *	cmpdirname	Comparison function for col_pr4v
- *	col_pr4v	Called to sort and print directory entry names
- *			  vertically in four columns (ala "ls -C")
- *
- *  Authors -
- *	Michael John Muuss
- *	Robert Jon Reschly Jr.
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
  */
 
 #include "common.h"

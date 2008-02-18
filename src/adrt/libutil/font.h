@@ -22,17 +22,7 @@
  *  Comments -
  *      Utilities Library - 8x15 character Font
  *
- *  Author -
- *      Justin L. Shumaker
- *
- *  Source -
- *      The U. S. Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
- * $Id$
  */
-
-/* GIMP RGBA C-Source image dump (font.h) */
 
 static const struct {
   int	width;

@@ -25,18 +25,6 @@
  * methods for implementing an fbserv. This code was developed
  * in large part by modifying the stand-alone version of fbserv.
  *
- * Source -
- *	SLAD CAD Team
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
- * Author -
- *	Robert G. Parker
- *
- * Authors of fbserv -
- *	Phillip Dykstra
- *	Michael John Muuss
- *
  */
 /** @} */
 

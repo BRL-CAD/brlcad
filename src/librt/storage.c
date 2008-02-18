@@ -23,16 +23,6 @@
  *
  * Ray Tracing program, storage manager.
  *
- *  Functions -
- *	rt_get_seg	Invoked by GET_SEG() macro
- *
- *  Author -
- *	Michael John Muuss
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
  */
 /** @} */
 

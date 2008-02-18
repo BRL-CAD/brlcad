@@ -26,12 +26,6 @@
  *  convert RGB to YUV, then apply different filter kernels;  use 3x3 for Y,
  *  5x5 for U and V.
  *
- *  Author -
- *	Michael John Muuss
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

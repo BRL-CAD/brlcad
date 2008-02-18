@@ -26,12 +26,6 @@
 # The development version codename is "geometree"
 # The final version will be "geometree" :-)
 #
-# Author -
-# 	Christopher Sean Morrison
-#
-# Source -
-#		The U.S. Army Research Laboratory
-#		Aberdeen Proving Ground, Maryland  21005
 #
 
 #

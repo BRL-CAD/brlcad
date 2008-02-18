@@ -21,19 +21,6 @@
  *
  * Routines to implement MGED's snap to grid capability.
  *
- * Functions -
- *	draw_grid			Draw the grid according to user specifications
- *	snap_to_grid			Snap values to the nearest grid point
- *	snap_view_center_to_grid	Make the grid point nearest the view center
- *					the new view center.
- *
- * Source -
- *	SLAD CAD Team
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
- * Author -
- *	Robert G. Parker
  */
 
 #include "common.h"

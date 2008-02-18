@@ -24,17 +24,6 @@
  * The history routines were borrowed from mged/history.c
  * and modified for use in this application.
  *
- *  Author -
- *	   Robert G. Parker
- *
- *  Authors of mged/history.c -
- *	   Glenn Durfee
- *	   Bob Parker
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
  */
 
 #include "common.h"

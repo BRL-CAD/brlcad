@@ -85,12 +85,6 @@
  *  determine if two wavelengths from different curves were the "same",
  *  without introducing a wavelength "tolerance" notion.  Ugh.
  *
- *  @author
- *	Michael John Muuss
- *
- *  @par Source
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

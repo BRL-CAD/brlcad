@@ -27,13 +27,6 @@
  *
  *  Transactions on Acoustics, Speech, and Signal Processing, June 1987.
  *
- *  Author -
- *	Phil Dykstra
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
  */
 
 #include "common.h"

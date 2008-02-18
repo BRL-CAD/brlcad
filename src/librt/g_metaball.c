@@ -26,15 +26,6 @@
  * NOTICE: this primitive is incomplete and should be considered
  *	  experimental.
  *
- * Authors -
- *	Erik Greenwald <erikg@arl.army.mil>
- *	Edwin O. Davisson  - corrections to normal routine.
- *
- * Source -
- *	ARL/SLAD/SDB Bldg 238
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
  */
 /** @} */
 

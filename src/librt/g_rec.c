@@ -128,15 +128,6 @@
  *  The normal for a hit on the bottom plate is -Hunit, and
  *  the normal for a hit on the top plate is +Hunit.
  *
- *  Authors -
- *	Edwin O. Davisson	(Analysis)
- *	Michael John Muuss	(Programming)
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
  */
 
 #include "common.h"

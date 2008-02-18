@@ -49,12 +49,6 @@
 #
 #   find src -type f \( -name \*.c -or -name \*.h \) -not -regex '.*src/lib.*' -exec sh/header.sh BSD {} \;
 #
-# Author -
-#   Christopher Sean Morrison
-#
-# Source -
-#   The U.S. Army Research Laboratory
-#   Aberdeen Proving Ground, Maryland 21005-5068  USA
 ###
 
 LICE="$1"

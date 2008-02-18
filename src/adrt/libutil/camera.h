@@ -22,14 +22,6 @@
  *  Comments -
  *      Utilities Library - Camera Header
  *
- *  Author -
- *      Justin L. Shumaker
- *
- *  Source -
- *      The U. S. Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
- * $Id$
  */
 
 #ifndef _UTIL_CAMERA_H

@@ -23,19 +23,6 @@
  *
  *  Routines to interface to nirt.
  *
- *  Functions -
- *	dgo_nirt_cmd          trace a single ray from current view
- *
- *  Author -
- *	Michael John Muuss
- *	Robert G. Parker
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
- *
  *  Description -
  *	This code was imported from MGED's/rtif.c and modified to work as part
  * 	of the drawable geometry object.

@@ -18,16 +18,6 @@
 # information.
 #
 ###
-##
-#				E D I T _ S O L I D . T C L
-#
-# Authors -
-#	Bob Parker
-#
-# Source -
-#	The U. S. Army Research Laboratory
-#	Aberdeen Proving Ground, Maryland  21005
-#
 #
 # Description -
 #	This is a primitive editor for MGED that can be used to both edit and

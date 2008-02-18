@@ -21,12 +21,6 @@
  *
  *	Add a 1-pixel-wide border to regions of a specified color.
  *
- *  Author -
- *	Paul J. Tanenbaum
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

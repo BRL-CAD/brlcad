@@ -18,16 +18,6 @@
 # information.
 #
 ###
-##
-#                       G R I D . T C L
-#
-# Author -
-#	Robert G. Parker
-#
-# Source -
-#	The U. S. Army Research Laboratory
-#	Aberdeen Proving Ground, Maryland  21005
-#
 #
 # Description -
 #	Control Panel for MGED's grid.

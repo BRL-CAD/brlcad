@@ -37,12 +37,6 @@
  *	bu_log_add_hook		Start catching log events (used by mged/cmd.c)
  * @n	bu_putchar
  *
- *  @author	Michael John Muuss
- *  @author	Glenn Durfee
- *
- * @par  Source -
- *	The U. S. Army Research Laboratory
- * @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

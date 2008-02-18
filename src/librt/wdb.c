@@ -24,12 +24,6 @@
  *  Routines to allow libwdb to use librt's import/export interface,
  *  rather than having to know about the database formats directly.
  *
- *  Author -
- *	Michael John Muuss
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 /** @} */
 

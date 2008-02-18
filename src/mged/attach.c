@@ -19,21 +19,6 @@
  */
 /** @file attach.c
  *
- * Functions -
- *	f_refresh	request display refresh
- *	f_attach	attach display device
- *	attach		attach to a given display processor
- *	f_release	release display device
- *	release		guts for f_release
- *      gui_setup	called by loadtk to initialize the gui
- *
- *  Author -
- *	Michael John Muuss
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
  */
 
 #if defined(_WIN32) && !defined(__CYGWIN__)

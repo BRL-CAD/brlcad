@@ -21,16 +21,6 @@
  *
  *  Library for dynamically changing BRL-CAD geometry (i.e., changing already prepped geometry )
  *
- *
- *  Author -
- *	John R. Anderson
- *
- *  Source -
- *      The U. S. Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005-5068
- *
- *
- *
  *  NOTES:
  *	The typical use of dynamic geometry involves these steps:
  *	1. Normal use of " db_dirbuild", "gettrees", and "prep".

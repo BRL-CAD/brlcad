@@ -22,14 +22,6 @@
  *  Comments -
  *      Texture Library - Checker pattern with tile parameter
  *
- *  Author -
- *      Justin L. Shumaker
- *
- *  Source -
- *      The U. S. Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
- * $Id$
  */
 
 #include "texture_checker.h"

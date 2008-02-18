@@ -21,12 +21,6 @@
 /** @{ */
 /** @file anim.h
  *
- *  @author
- *	Carl J. Nuzman
- *
- * @par Source
- *      The U. S. Army Research Laboratory
- *@n      Aberdeen Proving Ground, Maryland  21005-5068  USA
  *
  */
 

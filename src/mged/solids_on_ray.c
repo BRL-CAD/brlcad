@@ -21,15 +21,6 @@
  *
  *	Routines to implement the click-to-pick-an-edit-solid feature.
  *
- *  Functions -
- *	skewer_solids		fire a ray and list the solids hit
- *
- *  Author -
- *	Paul Tanenbaum
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

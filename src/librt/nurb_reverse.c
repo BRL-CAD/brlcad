@@ -24,14 +24,6 @@
  *  	Reverse the direction of a nurb surface
  *	by transposing the control points
  *
- *  Author -
- *	Paul R. Stay
- *
- *  Source -
- *     SECAD/VLD Computing Consortium, Bldg 394
- *     The U.S. Army Ballistic Research Laboratory
- *     Aberdeen Proving Ground, Maryland 21005
- *
  */
 /** @} */
 

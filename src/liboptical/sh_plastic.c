@@ -18,19 +18,11 @@
  * information.
  */
 /** @file sh_plastic.c
- *			P L A S T I C
  *
  *  Notes -
  *	The normals on all surfaces point OUT of the solid.
  *	The incomming light rays point IN.  Thus the sign change.
  *
- *  Authors -
- *	Michael John Muuss
- *	Gary S. Moss
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

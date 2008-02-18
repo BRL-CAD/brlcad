@@ -24,15 +24,6 @@
  *	Intersect a ray with a Sphere.
  *	Special case of the Generalized Ellipsoid
  *
- *  Authors -
- *	Phillip Dykstra
- *	Dave Becker		(Vectorization)
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
  */
 /** @} */
 

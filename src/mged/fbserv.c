@@ -19,19 +19,9 @@
  */
 /** @file fbserv.c
  *
- *  This code was developed by modifying the stand-alone version of fbserv to work
- *  within MGED.
+ * This code was developed by modifying the stand-alone version of
+ * fbserv to work within MGED.
  *
- *  Author -
- *	Robert Parker
- *
- *  Authors of the stand-alone fbserv -
- *	Phillip Dykstra
- *	Michael John Muuss
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

@@ -19,16 +19,6 @@
 #
 ###
 #
-#			B O T _ F A C E _ S E L E C T . T C L
-#
-# Author -
-#	John Anderson
-#
-# Source -
-#	The U. S. Army Research Laboratory
-#	Aberdeen Proving Ground, Maryland  21005
-#
-#
 # Description -
 #	rouintes for displaying a Tcl/Tk widget for selecting a BOT face
 #

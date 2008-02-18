@@ -19,17 +19,6 @@
 #
 ###
 #
-# Author -
-#	Bob Parker
-#
-# Source -
-#	The U. S. Army Research Laboratory
-#	Aberdeen Proving Ground, Maryland  21005
-#
-#       Survice Engineering Co. (www.survice.com)
-#
-#
-#
 # Description -
 #	The TableView mega-widget provides a mechanism for viewing a table
 #	of data. The number of data rows may change dynamically, either

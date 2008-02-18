@@ -22,12 +22,6 @@
  *	Sample some BRL-CAD geometry, reporting overlaps
  *	and potential problems with air regions.
  *
- *  Author -
- *	Paul Tanenbaum
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

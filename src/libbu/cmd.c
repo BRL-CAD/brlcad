@@ -24,13 +24,6 @@
  * @brief
  *	Utility routines for handling commands.
  *
- * @author	Robert G. Parker
- *
- * @par Source -
- *	SLAD CAD Team					@n
- *	The U. S. Army Research Laboratory		@n
- *	Aberdeen Proving Ground, Maryland  21005
- *
  */
 
 #include "common.h"

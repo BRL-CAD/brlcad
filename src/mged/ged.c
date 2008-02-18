@@ -21,30 +21,6 @@
  *
  * Mainline portion of the graphics editor
  *
- *  Functions -
- *	pr_prompt	print prompt
- *	main		Mainline portion of the graphics editor
- *	refresh		Internal routine to perform displaylist output writing
- *	log_event	Log an event in the log file
- *	mged_finish	Terminate with logging.  To be used instead of exit().
- *	quit		General Exit routine
- *	sig2		user interrupt catcher
- *	new_mats	derive inverse and editing matrices, as required
- *
- *  Authors -
- *	Michael John Muuss
- *	Charles M Kennedy
- *	Douglas A Gwyn
- *	Bob Suckling
- *	Gary Steven Moss
- *	Earl P Weaver
- *	Phil Dykstra
- *	Bob Parker
- *      Christopher Sean Morrison
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

@@ -24,14 +24,6 @@
  *  	Calulate and return the normal of a surface given the
  *	U, V parametric values.
  *
- *  Author -
- *	Paul R. Stay
- *
- *  Source -
- *     SECAD/VLD Computing Consortium, Bldg 394
- *     The U.S. Army Ballistic Research Laboratory
- *     Aberdeen Proving Ground, Maryland 21005
- *
  */
 /** @} */
 

@@ -23,15 +23,6 @@
  *
  *  Handle counting and re-indexing of NMG data structures.
  *
- *  Authors -
- *	Michael John Muuss
- *	Lee A. Butler
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
  */
 /** @} */
 

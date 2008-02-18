@@ -19,16 +19,6 @@
 #
 ###
 #
-#                       M G E D R C . T C L
-#
-# Author -
-#	Robert G. Parker
-#
-# Source -
-#	The U. S. Army Research Laboratory
-#	Aberdeen Proving Ground, Maryland  21005
-#
-#
 # Description -
 #	Procedure for dumping state to the user's .mgedrc file.
 #

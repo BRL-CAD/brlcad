@@ -24,21 +24,11 @@
  *	The constants, macro functions, etc. need within LIBBU(3)
  *	to handle the red-black tree utilities.
  *
- *  @author
- *	Paul J. Tanenbaum
- *
- *  @par Source -
- *	The U. S. Army Research Laboratory
- *  @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
- *  $Header$
  */
 
 #include "common.h"
 
-#ifndef SEEN_BU_H
-#  include "bu.h"
-#endif
+#include "bu.h"
 
 #ifndef BU_RB_INTERNALS_H
 #define BU_RB_INTERNALS_H seen

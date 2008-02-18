@@ -19,23 +19,6 @@
  */
 /** @file edarb.c
  *
- * Functions -
- *	editarb		edit ARB edge (and move points)
- *	planeqn		finds plane equation given 3 points
- *	intersect	finds intersection point of three planes
- *	mv_edge		moves an arb edge
- *	f_extrude	"extrude" command -- project an ARB face
- *	f_arbdef	define ARB8 using rot fb angles to define face
- *	f_mirface	mirror an ARB face
- *	f_permute	permute ARB vertex labels
- *
- *  Author -
- *	Keith A. Applin
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
  */
 
 #include "common.h"

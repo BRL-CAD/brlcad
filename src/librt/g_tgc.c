@@ -26,21 +26,6 @@
  * Method -
  *	TGC:  solve quartic equation of cone and line
  *
- * Authors -
- *	Edwin O. Davisson	(Analysis)
- *	Jeff Hanes		(Programming)
- *	Gary Moss		(Improvement)
- *	Mike Muuss		(Optimization)
- *	Peter F. Stiller	(Curvature)
- *	Phillip Dykstra		(Curvature)
- *	Bill Homer		(Vectorization)
- *	Paul Stay		(Convert to tnurbs)
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
  */
 /** @} */
 

@@ -23,15 +23,6 @@
  *
  *	Intersect a ray with an Elliptical Torus.
  *
- * Authors -
- *	Michael Markowski	(Programming)
- *	ERIM GIFT code		(ETO Eqn)
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
  */
 
 #include "common.h"

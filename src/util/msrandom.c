@@ -18,16 +18,11 @@
  * information.
  */
 /** @file msrandom.c
+ *
  * Generate a random number between the two values given. The number can be
  * uniform across the entire range or it can be a gaussian distrubution
  * around the center of the range (or a named center.)
  *
- *  Author -
- *	Christopher T. Johnson - 94/02/06
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

@@ -19,15 +19,10 @@
  *
  */
 /** @file anim_track.c
+ *
  *  Animate the links and wheels of a tracked vehicle. Handles tracks that
  *  change in shape during the animation.
  *
- *  Author -
- *	Carl J. Nuzman
- *
- *  Source -
- *      The U. S. Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

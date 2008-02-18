@@ -21,14 +21,8 @@
 /** @{ */
 /** @file wdb_comb_std.c
  *
- *	Code to implement the database objects "c" command.
+ * Code to implement the database objects "c" command.
  *
- *  Author -
- *      John R. Anderson
- *
- *  Source -
- *      The U. S. Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

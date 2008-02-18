@@ -25,15 +25,6 @@
  *	The volume is described as a concatenation of
  *	bw(5) files.
  *
- *  Authors -
- *	Michael John Muuss
- *	Phil Dykstra
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
  */
 /** @} */
 

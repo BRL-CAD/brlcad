@@ -20,17 +20,10 @@
 /** @addtogroup db5 */
 /** @{ */
 /** @file db5.h
+ *
  * @brief
  *  Definition of the BRL-CAD "v5" database format used for new ".g" files.
  *
- * @author	Michael John Muuss
- * @author	Lee A. Butler
- * @author	Paul J. Tanenbaum
- * @author	John R. Anderson
- *
- *  @par Source
- *	The U. S. Army Research Laboratory
- *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #ifndef __DB5_H__

@@ -39,13 +39,6 @@
  *  an EBM and a height field, they will be assigned different mapped file
  *  structures, so that the "apbuf" pointers are distinct.
  *
- *
- *  @author	Michael John Muuss
- *
- *  @par Source -
- *	The U. S. Army Research Laboratory
- * @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
  */
 
 #include "common.h"

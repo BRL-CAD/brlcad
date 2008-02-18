@@ -19,13 +19,6 @@
  */
 /** @file memalloc.c
  *
- * Functions -
- *	memalloc	allocate 'size' of memory from a given map
- *	memget		allocate 'size' of memory from map at 'place'
- *	memfree		return 'size' of memory to map at 'place'
- *	mempurge	free everything on current memory chain
- *	memprint	print a map
- *
  * The structure of the displaylist memory map chains
  * consists of non-zero count and base address of that many contiguous units.
  * The addresses are increasing and the list is terminated with the
@@ -41,14 +34,6 @@
  *	the mapping buffer is taken off from the respective queue and
  *	returned to the `freemap' queue.
  *
- *  Authors -
- *	George E. Toth
- *	Michael John Muuss
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
  */
 
 #include "common.h"

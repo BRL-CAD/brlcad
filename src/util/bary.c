@@ -19,12 +19,6 @@
  */
 /** @file bary.c
  *
- *  Author -
- *	Paul J. Tanenbaum
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

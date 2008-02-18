@@ -18,23 +18,17 @@
  * information.
  */
 /** @file get_att.c
- *  Author -
- *	John R. Anderson
  *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
- */
-
-/*	This routine loops through all the directory entries and looks
- *	at attribute definition entities, searching for a BRL-CAD
- *	attribute definition
  */
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+/**
+ * This routine loops through all the directory entries and looks at
+ * attribute definition entities, searching for a BRL-CAD attribute
+ * definition.
+ */
 void
 Get_att()
 {

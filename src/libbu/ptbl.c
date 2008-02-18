@@ -31,14 +31,6 @@
  *  Pointers to be operated on (inserted, deleted,
  *  searched for) are passed as a "pointer to long".
  *
- *
- *  @authors	Lee A. Butler
- *  @authors	Michael John Muuss
- *
- * @par  Source -
- *	The U. S. Army Research Laboratory
- *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
  */
 
 #include "common.h"

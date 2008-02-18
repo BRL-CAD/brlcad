@@ -27,12 +27,6 @@
  *	For a .g file, the specified changes are made to that file;
  *	For a TANKILL file, a modified model is written to stdout.
  *
- *  Author -
- *	Paul J. Tanenbaum
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"

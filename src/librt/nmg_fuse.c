@@ -25,13 +25,6 @@
  *  (within tolerance) into entities that share underlying geometry
  *  structures, so that the relationship is explicit.
  *
- *  Authors -
- *	Michael John Muuss
- *	John R Anderson
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 /** @} */
 

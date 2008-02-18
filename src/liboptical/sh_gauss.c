@@ -38,12 +38,6 @@
  *	5) replace this list with a description of the shader, its parameters
  *		and use.
  *
- *  Author -
- *	Lee A. Butler
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"
