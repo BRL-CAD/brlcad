@@ -32,6 +32,8 @@
 #include "raytrace.h"
 #include "fb.h"
 
+#include "../vfont/font.h"
+
 #include "./hmenu.h"
 #include "./lgt.h"
 #include "./extern.h"
@@ -47,6 +49,7 @@
 static RGBpixel	black = { 0, 0, 0 };
 static int	ir_max_index = -1;
 RGBpixel	*ir_table = (RGBpixel *)RGBPIXEL_NULL;
+struct vfont	font = { NULL };
 
 static void	temp_To_RGB(unsigned char *rgb, int temp);
 
@@ -126,7 +129,8 @@ display_Temps(int xmin, int ymin)
 				}
 			}
 		}
-	if ( ! get_font( (char *) NULL, bu_log ) )
+	font = get_font( (char *) NULL, bu_log );
+	if ( font.ffdes == NULL )
 		{
 		bu_log( "Could not load font.\n" );
 		fb_flush( fbiop );

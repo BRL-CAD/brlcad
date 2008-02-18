@@ -21,11 +21,7 @@
  *
  * Two routines for filling the buffers used in the filtering.
  *
- *	Author:		Paul R. Stay
  */
-#if ! defined( lint )
-static const char RCSid[] = "@(#) fill_buf.c 2.1, modified 12/9/86 at 15:55:48, archive /vld/moss/src/fbed/s.fill_buf.c";
-#endif
 
 #include "common.h"
 
@@ -41,10 +37,12 @@ static const char RCSid[] = "@(#) fill_buf.c 2.1, modified 12/9/86 at 15:55:48, 
 #include "./try.h"
 #include "./extern.h"
 
-/*	f i l l _ b u f ( )
-	Fills in the buffer by reading a row of a bitmap from the
-	character font file.  The file pointer is assumed to be in the
-	correct position.
+/**
+ * f i l l _ b u f
+ *
+ * Fills in the buffer by reading a row of a bitmap from the character
+ * font file.  The file pointer is assumed to be in the correct
+ * position.
  */
 void
 fill_buf(register int wid, register int *buf)
@@ -52,10 +50,10 @@ fill_buf(register int wid, register int *buf)
 	char    bitrow[FONTBUFSZ];
 	register int     j;
 
-	if ( ffdes == NULL )
+	if ( font.ffdes == NULL )
 		return;
 	/* Read the row, rounding width up to nearest byte value. */
-	if ( (int)fread( bitrow, (wid / 8) + ((wid % 8 == 0) ? 0 : 1), 1, ffdes)
+	if ( (int)fread( bitrow, (wid / 8) + ((wid % 8 == 0) ? 0 : 1), 1, font.ffdes)
 		< 1
 		)
 		{

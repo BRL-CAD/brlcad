@@ -18,7 +18,7 @@
  * information.
  */
 /** @file fbed.c
- *	Author:		Gary S. Moss
+ *
  */
 
 #include "common.h"
@@ -71,6 +71,7 @@ struct pointstack
     PtStack *next;
 };
 
+struct vfont font;
 
 bool AproxEqColor(unsigned char a, unsigned char b, int t)
 {
@@ -103,29 +104,29 @@ static int last_key;
 static int pointpicked;
 static int tolerance = 0;
 
-STATIC RGBpixel *pixel_Avg();
-STATIC bool drawRectangle(Rectangle *rectp, unsigned char *pixelp);
-STATIC bool getColor(unsigned char *pixelp, char *prompt, char *buffer);
-STATIC bool paintNonBorder(unsigned char *borderpix, Point *pt);
-STATIC bool paintSolidRegion(unsigned char *regionpix, Point *pt);
-STATIC bool popPoint(Point *pt, register PtStack **spp);
-STATIC int do_Bitpad(register Point *pointp);
-STATIC int fb_Setup(void);
-STATIC int pars_Argv(int argc, register char **argv);
-STATIC int push_Macro(char *buf);
-STATIC void general_Handler(int sig);
-STATIC void init_Try(void);
-STATIC void fb_Paint(register int x0, register int y0, register int x1, register int y1, RGBpixel (*color));
-STATIC void fb_Wind(void);
-STATIC void get_Point(char *msg, register Point *pointp);
-STATIC void clip_Rectangle(register Rectangle *rectp);
-STATIC void get_Rectangle(char *name, register Rectangle *rectp);
-STATIC void fillRectangle(register Rectangle *rectp, register RGBpixel (*pixelp));
-STATIC void fix_Rectangle(register Rectangle *rectp);
-STATIC void pushPoint(Point *pt, PtStack **spp);
-STATIC void put_Fb_Panel(register Rectangle *rectp, register RGBpixel (*panel));
+HIDDEN RGBpixel *pixel_Avg();
+HIDDEN bool drawRectangle(Rectangle *rectp, unsigned char *pixelp);
+HIDDEN bool getColor(unsigned char *pixelp, char *prompt, char *buffer);
+HIDDEN bool paintNonBorder(unsigned char *borderpix, Point *pt);
+HIDDEN bool paintSolidRegion(unsigned char *regionpix, Point *pt);
+HIDDEN bool popPoint(Point *pt, register PtStack **spp);
+HIDDEN int do_Bitpad(register Point *pointp);
+HIDDEN int fb_Setup(void);
+HIDDEN int pars_Argv(int argc, register char **argv);
+HIDDEN int push_Macro(char *buf);
+HIDDEN void general_Handler(int sig);
+HIDDEN void init_Try(void);
+HIDDEN void fb_Paint(register int x0, register int y0, register int x1, register int y1, RGBpixel (*color));
+HIDDEN void fb_Wind(void);
+HIDDEN void get_Point(char *msg, register Point *pointp);
+HIDDEN void clip_Rectangle(register Rectangle *rectp);
+HIDDEN void get_Rectangle(char *name, register Rectangle *rectp);
+HIDDEN void fillRectangle(register Rectangle *rectp, register RGBpixel (*pixelp));
+HIDDEN void fix_Rectangle(register Rectangle *rectp);
+HIDDEN void pushPoint(Point *pt, PtStack **spp);
+HIDDEN void put_Fb_Panel(register Rectangle *rectp, register RGBpixel (*panel));
 
-STATIC int	/* ^X  */ f_Exec_Function(char *buf),
+HIDDEN int	/* ^X  */ f_Exec_Function(char *buf),
     /* ^I  */ f_Nop(char *buf),
     /* ^H  */ f_Win_Lft(char *buf),
     /* ^J  */ f_Win_Dwn(char *buf),
@@ -428,7 +429,7 @@ main(int argc, char **argv)
     return 0; /* shut up stupid compilers */
 }
 
-STATIC bool
+HIDDEN bool
 drawRectangle(Rectangle *rectp, unsigned char *pixelp)
 {	
     register int x, y;
@@ -449,7 +450,7 @@ drawRectangle(Rectangle *rectp, unsigned char *pixelp)
     return true;
 }
 
-STATIC void
+HIDDEN void
 fillRectangle(register Rectangle *rectp, register RGBpixel (*pixelp))
 {
     register int btm = rectp->r_origin.p_y;
@@ -482,7 +483,7 @@ fillRectangle(register Rectangle *rectp, register RGBpixel (*pixelp))
     }
 }
 
-STATIC bool
+HIDDEN bool
 paintNonBorder(unsigned char *borderpix, Point *pt)
 {
     RGBpixel currentpix;
@@ -503,7 +504,7 @@ paintNonBorder(unsigned char *borderpix, Point *pt)
 		return true;
 }
 
-STATIC bool
+HIDDEN bool
 paintSolidRegion(unsigned char *regionpix, Point *pt)
 {
     RGBpixel currentpix;
@@ -521,7 +522,7 @@ paintSolidRegion(unsigned char *regionpix, Point *pt)
 	    return true;
 }
 
-STATIC void
+HIDDEN void
 pushPoint(Point *pt, PtStack **spp)
 {	
     register PtStack *new;
@@ -536,7 +537,7 @@ pushPoint(Point *pt, PtStack **spp)
     *spp = new;
 }
 
-STATIC bool
+HIDDEN bool
 popPoint(Point *pt, register PtStack **spp)
 {
     register PtStack *next;
@@ -552,7 +553,7 @@ popPoint(Point *pt, register PtStack **spp)
 /*	i n i t _ T r y ( )
 	Initialize "try" tree of function names, with key bindings.
 */
-STATIC void
+HIDDEN void
 init_Try(void)
 {
     register int key;
@@ -575,7 +576,7 @@ init_Try(void)
     return;
 }
 
-STATIC int
+HIDDEN int
 push_Macro(char *buf)
 {
     register int curlen = strlen( cptr );
@@ -621,7 +622,7 @@ do_Key_Cmd(register int key, register int n)
     return;
 }
 
-STATIC bool
+HIDDEN bool
 getColor(unsigned char *pixelp, char *prompt, char *buffer)
 {
     static char promptbuf[PROMPT_LEN];
@@ -649,7 +650,7 @@ getColor(unsigned char *pixelp, char *prompt, char *buffer)
     return true;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Tolerance(char *buf)
 {	
@@ -662,7 +663,7 @@ f_Tolerance(char *buf)
     return 1;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_ChngRegionColor(char *buf)
 {
@@ -694,7 +695,7 @@ f_ChngRegionColor(char *buf)
     return 1;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_FillRegion(char *buf)
 {
@@ -726,7 +727,7 @@ f_FillRegion(char *buf)
     return 1;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Nop(char *buf)
 {
@@ -735,7 +736,7 @@ f_Nop(char *buf)
     return -1;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Win_Lft(char *buf) /* Move window left. */
 
@@ -746,7 +747,7 @@ f_Win_Lft(char *buf) /* Move window left. */
 	1 : 0;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Win_Dwn(char *buf) /* Move window down. */
 
@@ -757,7 +758,7 @@ f_Win_Dwn(char *buf) /* Move window down. */
 	1 : 0;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Win_Up(char *buf) /* Move window up. */
 
@@ -768,7 +769,7 @@ f_Win_Up(char *buf) /* Move window up. */
 	1 : 0;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Win_Rgt(char *buf) /* Move window right. */
 
@@ -779,7 +780,7 @@ f_Win_Rgt(char *buf) /* Move window right. */
 	1 : 0;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Reset_View(char *buf) /* Restore normal view. */
 
@@ -792,7 +793,7 @@ f_Reset_View(char *buf) /* Restore normal view. */
     return 1;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Redraw(char *buf) /* Redraw screen. */
 
@@ -802,7 +803,7 @@ f_Redraw(char *buf) /* Redraw screen. */
     return 1;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Stop(char *buf) /* Stop program. */
 {
@@ -831,7 +832,7 @@ f_Stop(char *buf) /* Stop program. */
     return 1;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Exec_Function(char *buf)
 {	
@@ -850,7 +851,7 @@ f_Exec_Function(char *buf)
 }
 
 #define MAX_DIGITS	4
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Iterations(char *buf) /* Specify number of iterations of next command. */
 
@@ -882,7 +883,7 @@ f_Iterations(char *buf) /* Specify number of iterations of next command. */
     return 1;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Press(char *buf)
 {
@@ -890,7 +891,7 @@ f_Press(char *buf)
     return 1;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Comment(char *buf) /* Print comment. */
 {
@@ -901,7 +902,7 @@ f_Comment(char *buf) /* Print comment. */
     return 1;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Dec_Brush_Size(char *buf) /* Decrement brush size. */
 {
@@ -910,7 +911,7 @@ f_Dec_Brush_Size(char *buf) /* Decrement brush size. */
     return 1;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Inc_Brush_Size(char *buf) /* Increment brush size. */
 {
@@ -919,7 +920,7 @@ f_Inc_Brush_Size(char *buf) /* Increment brush size. */
     return 1;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Menu(char *buf) /* Print menu. */
 {
@@ -970,7 +971,7 @@ f_Menu(char *buf) /* Print menu. */
     return 1;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Dec_Step_Size(char *buf) /* Decrement gain on move operations. */
 {
@@ -979,7 +980,7 @@ f_Dec_Step_Size(char *buf) /* Decrement gain on move operations. */
     return 1;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Inc_Step_Size(char *buf) /* Increment gain on move operations. */
 {
@@ -988,14 +989,14 @@ f_Inc_Step_Size(char *buf) /* Increment gain on move operations. */
     return 1;
 }
 
-STATIC int
+HIDDEN int
 f_Exec_Macro(char *buf)
 {
     push_Macro( buf );
     return 1;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Rd_Macros_From_File(char *buf)
 {
@@ -1032,7 +1033,7 @@ f_Rd_Macros_From_File(char *buf)
     return 1;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Write_Macros_To_File(char *buf)
 {
@@ -1097,7 +1098,7 @@ f_Write_Macros_To_File(char *buf)
     return 1;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Start_Macro(char *buf)
 {
@@ -1113,7 +1114,7 @@ f_Start_Macro(char *buf)
     return 1;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Bind_Macro_To_Key(char *buf)
 {
@@ -1137,7 +1138,7 @@ f_Bind_Macro_To_Key(char *buf)
     return 1;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Name_Keyboard_Macro(char *buf)
 {
@@ -1159,7 +1160,7 @@ f_Name_Keyboard_Macro(char *buf)
     return 1;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Crunch_Image(char *buf) /* Average image to half its size. */
 
@@ -1204,7 +1205,7 @@ f_Crunch_Image(char *buf) /* Average image to half its size. */
     return 1;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_DrawLine(char *buf)
 {
@@ -1276,14 +1277,14 @@ f_DrawLine(char *buf)
     return 1;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_DrawRectangle(char *buf) /* Draw current rectangle with "paint" color. */
 {
     return drawRectangle( &current, (unsigned char *) paint ) ? 1 : 0;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Fill_Panel(char *buf) /* Fill current rectangle with "paint" color. */
 {
@@ -1291,7 +1292,7 @@ f_Fill_Panel(char *buf) /* Fill current rectangle with "paint" color. */
     return 1;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Bind_Key_To_Key(char *buf) /* Bind new key to same function as old key. */
 {
@@ -1312,7 +1313,7 @@ f_Bind_Key_To_Key(char *buf) /* Bind new key to same function as old key. */
     return 1;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Bind_Name_To_Key(char *buf) /* Bind key to function or macro. */
 {
@@ -1344,7 +1345,7 @@ f_Bind_Name_To_Key(char *buf) /* Bind key to function or macro. */
     }
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Erase_Fb(char *buf) /* Erase (clear) framebuffer. */
 
@@ -1360,7 +1361,7 @@ f_Erase_Fb(char *buf) /* Erase (clear) framebuffer. */
     return 1;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Flip_Resolution(char *buf) /* Flip framebuffer resolution. */
 
@@ -1387,7 +1388,7 @@ f_Flip_Resolution(char *buf) /* Flip framebuffer resolution. */
     return 1;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Get_Panel(char *buf) /* Grab panel from framebuffer. */
 {
@@ -1401,7 +1402,7 @@ f_Get_Panel(char *buf) /* Grab panel from framebuffer. */
     return 1;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Jump_Lft(char *buf) /* Move cursor left (big steps). */
 {
@@ -1413,7 +1414,7 @@ f_Jump_Lft(char *buf) /* Move cursor left (big steps). */
     return 1;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Jump_Dwn(char *buf) /* Move cursor down. */
 {
@@ -1425,7 +1426,7 @@ f_Jump_Dwn(char *buf) /* Move cursor down. */
     return 1;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Jump_Up(char *buf) /* Move cursor up. */
 {
@@ -1437,7 +1438,7 @@ f_Jump_Up(char *buf) /* Move cursor up. */
     return 1;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Jump_Rgt(char *buf) /* Move cursor right. */
 {
@@ -1449,7 +1450,7 @@ f_Jump_Rgt(char *buf) /* Move cursor right. */
     return 1;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Put_Panel(char *buf) /* Put grabbed panel to framebuffer. */
 {
@@ -1465,7 +1466,7 @@ f_Put_Panel(char *buf) /* Put grabbed panel to framebuffer. */
     return 1;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Restore_RLE(char *buf) /* Restore Run-Length Encoded image. */
 {
@@ -1503,7 +1504,7 @@ f_Restore_RLE(char *buf) /* Restore Run-Length Encoded image. */
     return 1;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Save_RLE(char *buf) /* Save framebuffer image with Run-Length Encoding. */
 {
@@ -1551,7 +1552,7 @@ f_Save_RLE(char *buf) /* Save framebuffer image with Run-Length Encoding. */
     return 1;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Transliterate(char *buf) /* Transliterate pixels of color1 to target color2.*/
 {
@@ -1585,7 +1586,7 @@ f_Transliterate(char *buf) /* Transliterate pixels of color1 to target color2.*/
     return 1;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Stop_Macro(char *buf)
 {
@@ -1619,7 +1620,7 @@ f_Stop_Macro(char *buf)
     return 1;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Enter_Macro_Definition(char *buf)
 {
@@ -1655,7 +1656,7 @@ f_Enter_Macro_Definition(char *buf)
     return 1;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Set_Rectangle(char *buf) /* Set current rectangle. */
 {
@@ -1663,7 +1664,7 @@ f_Set_Rectangle(char *buf) /* Set current rectangle. */
     return 1;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Center_Window(char *buf) /* Center window around cursor. */
 {
@@ -1672,7 +1673,7 @@ f_Center_Window(char *buf) /* Center window around cursor. */
     return 1;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Rd_Font(char *buf) /* Set current font. */
 {
@@ -1683,7 +1684,7 @@ f_Rd_Font(char *buf) /* Set current font. */
     return 1;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Set_Pixel(char *buf) /* Set "paint" pixel color. */
 {
@@ -1691,7 +1692,7 @@ f_Set_Pixel(char *buf) /* Set "paint" pixel color. */
     return 1;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Move_Lft(char *buf) /* Move cursor left. */
 {
@@ -1703,7 +1704,7 @@ f_Move_Lft(char *buf) /* Move cursor left. */
     return 1;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Zoom_In(char *buf) /* Halve window size. */
 {
@@ -1715,7 +1716,7 @@ f_Zoom_In(char *buf) /* Halve window size. */
     return 1;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Move_Dwn(char *buf) /* Move cursor down. */
 {
@@ -1727,7 +1728,7 @@ f_Move_Dwn(char *buf) /* Move cursor down. */
     return 1;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Move_Up(char *buf) /* Move cursor up. */
 {
@@ -1739,7 +1740,7 @@ f_Move_Up(char *buf) /* Move cursor up. */
     return 1;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Move_Rgt(char *buf) /* Move cursor right. */
 {
@@ -1751,7 +1752,7 @@ f_Move_Rgt(char *buf) /* Move cursor right. */
     return 1;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Status_Monitor(char *buf) /* Toggle status monitoring. */
 {
@@ -1761,7 +1762,7 @@ f_Status_Monitor(char *buf) /* Toggle status monitoring. */
     return 1;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Zoom_Out(char *buf) /* Double window size. */
 {
@@ -1773,7 +1774,7 @@ f_Zoom_Out(char *buf) /* Double window size. */
     return 1;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Key_Set_Pixel(char *buf) /* User types in paint color. */
 {
@@ -1783,7 +1784,7 @@ f_Key_Set_Pixel(char *buf) /* User types in paint color. */
     return 1;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Quit(char *buf)
 {
@@ -1793,7 +1794,7 @@ f_Quit(char *buf)
     /*NOTREACHED*/
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Rd_Fb(char *buf) /* Read frame buffer image from file. */
 {
@@ -1838,7 +1839,7 @@ f_Rd_Fb(char *buf) /* Read frame buffer image from file. */
     return 1;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_String(char *buf) /* Place label on picture. */
 {
@@ -1850,7 +1851,7 @@ f_String(char *buf) /* Place label on picture. */
     return 1;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Put_Pixel(char *buf) /* Put pixel. */
 {
@@ -1875,7 +1876,7 @@ f_Put_Pixel(char *buf) /* Put pixel. */
     return 1;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Set_X_Pos(char *buf) /* Move cursor's X location (image space). */
 {
@@ -1904,7 +1905,7 @@ f_Set_X_Pos(char *buf) /* Move cursor's X location (image space). */
     return 1;
 }
 
-STATIC int
+HIDDEN int
 /*ARGSUSED*/
 f_Set_Y_Pos(char *buf) /* Move cursor's Y location (image space). */
 {
@@ -1933,7 +1934,7 @@ f_Set_Y_Pos(char *buf) /* Move cursor's Y location (image space). */
 }
 
 /*	p a r s _ A r g v ( ) */
-STATIC int
+HIDDEN int
 pars_Argv(int argc, register char **argv)
 {
     register int c;
@@ -1962,7 +1963,7 @@ pars_Argv(int argc, register char **argv)
 }
 
 /*	f b _ S e t u p ( ) */
-STATIC int
+HIDDEN int
 fb_Setup(void)
 {
     if ( (fbp = fb_open( NULL, cur_width, cur_width )) == FBIO_NULL ) {
@@ -1989,7 +1990,7 @@ fb_Setup(void)
 }
 
 /*	f b _ W i n d ( ) */
-STATIC void
+HIDDEN void
 fb_Wind(void)
 {
     zoom_factor = fb_getwidth(fbp) / size_viewport;
@@ -2001,7 +2002,7 @@ fb_Wind(void)
 }
 
 /*	f b _ P a i n t ( ) */
-STATIC void
+HIDDEN void
 fb_Paint(register int x0, register int y0, register int x1, register int y1, RGBpixel (*color))
 {
     Rectangle clipped_rect;
@@ -2015,7 +2016,7 @@ fb_Paint(register int x0, register int y0, register int x1, register int y1, RGB
 }
 
 /*	g e n e r a l _ H a n d l e r ( ) */
-STATIC void
+HIDDEN void
 general_Handler(int sig)
 {
     switch ( sig )
@@ -2183,7 +2184,7 @@ get_Fb_Panel( rectp )
 }
 
 /*	p u t _ F b _ P a n e l ( ) */
-STATIC void
+HIDDEN void
 put_Fb_Panel(register Rectangle *rectp, register RGBpixel (*panel))
 {
     register int top, rectwid, y;
@@ -2206,7 +2207,7 @@ put_Fb_Panel(register Rectangle *rectp, register RGBpixel (*panel))
 }
 
 /*	g e t _ P o i n t ( ) */
-STATIC void
+HIDDEN void
 get_Point(char *msg, register Point *pointp)
 {
     register int tag_point = -1;
@@ -2258,7 +2259,7 @@ get_Point(char *msg, register Point *pointp)
 }
 
 /*	g e t _ R e c t a n g l e ( ) */
-STATIC void
+HIDDEN void
 get_Rectangle(char *name, register Rectangle *rectp)
 {
     char buf[MAX_LN];
@@ -2270,7 +2271,7 @@ get_Rectangle(char *name, register Rectangle *rectp)
     return;
 }
 
-STATIC void
+HIDDEN void
 fix_Rectangle(register Rectangle *rectp)
 {
     register int i;
@@ -2287,7 +2288,7 @@ fix_Rectangle(register Rectangle *rectp)
     return;
 }
 
-STATIC void
+HIDDEN void
 clip_Rectangle(register Rectangle *rectp)
 {
     rectp->r_origin.p_x = rectp->r_origin.p_x < 0 ? 0 : rectp->r_origin.p_x;
@@ -2297,7 +2298,7 @@ clip_Rectangle(register Rectangle *rectp)
     return;
 }
 
-STATIC RGBpixel *
+HIDDEN RGBpixel *
 pixel_Avg( RGBpixel *p1, RGBpixel *p2, RGBpixel *p3, RGBpixel *p4 )
 {
     static RGBpixel p_avg;
@@ -2342,7 +2343,7 @@ get_Mouse_Pos(Point *pointp)
 }
 
 /*	d o _ B i t p a d ( ) */
-STATIC int
+HIDDEN int
 do_Bitpad(register Point *pointp)
 {
     int press;

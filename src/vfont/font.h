@@ -25,8 +25,8 @@
 
 #include "common.h"
 
-#ifndef LGT_FONT_H
-#define LGT_FONT_H
+#ifndef VFONT_FONT_H
+#define VFONT_FONT_H
 
 #if defined(WORDS_BIGENDIAN)
 #  define SWAB(shrt)	(shrt=(((shrt)>>8) & 0xff) | (((shrt)<<8) & 0xff00))
@@ -37,9 +37,6 @@
 #endif
 
 #define FONTBUFSZ 200
-#ifndef FONTDIR
-#  define FONTDIR	"/usr/lib/vfont" /* default font directory */
-#endif
 #define FONTNAME	"times.r.6"		/* Default font name.	*/
 #define FONTNAMESZ	128
 
@@ -56,31 +53,44 @@
 #  define SignedChar(chr)	chr
 #endif
 
-/*	vfont.h	4.1	83/05/03 from 4.2 Berkley */
 /* The structures header and dispatch define the format of a font file. */
 struct header {
-	short		magic;
-	unsigned short	size;
-	short		maxx;
-	short		maxy;
-	short		xtend;
+    short		magic;
+    unsigned short	size;
+    short		maxx;
+    short		maxy;
+    short		xtend;
 };
-struct dispatch
-	{
-	unsigned short	addr;
-	short		nbytes;
-	char up, down, left, right;
-	short		width;
-	};
 
-/* Variables controlling the font itself. */
-extern FILE *ffdes;		/* Fontfile file descriptor. */
-extern long offset;		/* Offset to data in the file. */
-extern struct header hdr;	/* Header for font file. */
-extern struct dispatch dir[256];/* Directory for character font. */
-extern int width, height;	/* Width and height of current char. */
+struct dispatch {
+    unsigned short	addr;
+    short		nbytes;
+    char up, down, left, right;
+    short		width;
+};
 
-#endif /* LGT_FONT_H */
+struct vfont {
+    FILE		*ffdes;		/* File pointer for current font.	*/
+    long		offset;		/* Current offset to character data.	*/
+    struct header	hdr;		/* Header for font file.		*/
+    struct dispatch	dir[256];	/* Directory for character font.	*/
+    int			width;		/* Current character width.		*/
+    int			height;		/* Current character height.		*/
+};
+
+
+/**
+ * get_font validates and loads the specified fontname, logging any
+ * error messages via the provided log callback.
+ *
+ * the ffdes field of the returned struct vfont indicates whether the
+ * load was successful or not.
+ */
+struct vfont
+get_font(const char* fontname, void (*log)(const char *fmt, ...));
+
+
+#endif /* VFONT_FONT_H */
 
 /*
  * Local Variables:

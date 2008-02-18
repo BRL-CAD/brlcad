@@ -18,13 +18,13 @@
  * information.
  */
 /** @file extern.h
- *	Author:		Gary S. Moss
+ *
  */
 
-/* For production use, set to "static" */
-#ifndef STATIC
-#define STATIC static
-#endif
+#include "common.h"
+
+#ifndef FBED_EXTERN_H
+#define FBED_EXTERN_H
 
 #define MAX_LN			81
 #define Toggle(f)		(f) = ! (f)
@@ -83,6 +83,8 @@ extern int tty_fd;
 extern int zoom_factor;
 extern int LI, CO;
 
+extern struct vfont font;
+
 extern Func_Tab	*get_Func_Name(char* inbuf, size_t bufsz, const char* msg);
 extern RGBpixel *get_Fb_Panel();
 extern char *char_To_String(int i);
@@ -127,6 +129,8 @@ extern int ClrEOL();
 extern int SetScrlReg();
 extern int ResetScrlReg();
 extern void set_HUPCL();
+
+#endif /* FBED_EXTERN_H */
 
 /*
  * Local Variables:

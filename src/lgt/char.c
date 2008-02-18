@@ -20,10 +20,7 @@
 /** @file char.c
  *
  * routines for displaying a string on a frame buffer.
-
-	Authors:	Paul R. Stay
-			Gary S. Moss
-			Doug A. Gwyn
+ *
  */
 
 #include "common.h"
@@ -35,10 +32,11 @@
 #include "vmath.h"
 #include "raytrace.h"
 
+#include "../vfont/font.h"
+
 #include "./hmenu.h"
 #include "./lgt.h"
 #include "./extern.h"
-#include "../vfont/font.h"
 
 #define FONTCOLOR_RED  0.0
 #define FONTCOLOR_GRN  0.0
@@ -53,7 +51,7 @@ do_line(int xpos, int ypos, register char *line)
 {	register int    currx;
 		register int    char_count, char_id;
 		register int	len = strlen( line );
-	if ( ffdes == NULL )
+	if ( font.ffdes == NULL )
 		{
 		bu_log( "ERROR: do_line() called before get_font().\n" );
 		return;
@@ -69,30 +67,30 @@ do_line(int xpos, int ypos, register char *line)
 		 */
 		if ( char_id == ' ' )
 			{
-			currx += (SWABV(dir['0'].width) + 2) / ir_aperture;
+			currx += (SWABV(font.dir['0'].width) + 2) / ir_aperture;
 			continue;
 			}
 
 		/* locate the bitmap for the character in the file */
-		if ( fseek( ffdes, (long)(SWABV(dir[char_id].addr)+offset), 0 )
+		if ( fseek( font.ffdes, (long)(SWABV(font.dir[char_id].addr)+font.offset), 0 )
 			== EOF
 			)
 			{
 			bu_log( "fseek() to %ld failed.\n",
-				(long)(SWABV(dir[char_id].addr) + offset)
+				(long)(SWABV(font.dir[char_id].addr) + font.offset)
 				);
 			return;
 			}
 
 		/* Read in the dimensions for the character */
-		width = dir[char_id].right + dir[char_id].left;
-		height = dir[char_id].up + dir[char_id].down;
+		font.width = font.dir[char_id].right + font.dir[char_id].left;
+		font.height = font.dir[char_id].up + font.dir[char_id].down;
 
-		if ( currx + width > fb_getwidth( fbiop ) - 1 )
+		if ( currx + font.width > fb_getwidth( fbiop ) - 1 )
 			break;		/* won't fit on screen */
 
 		do_char( char_id, currx, ypos );
-		currx += (SWABV(dir[char_id].width) + 2) / ir_aperture;
+		currx += (SWABV(font.dir[char_id].width) + 2) / ir_aperture;
 		}
 	return;
 	}
@@ -104,16 +102,16 @@ do_line(int xpos, int ypos, register char *line)
  */
 static void
 do_char(int c, register int xpos, register int ypos)
-{	int     	up = dir[c].up / ir_aperture;
-		int		left = dir[c].left / ir_aperture;
+{	int     	up = font.dir[c].up / ir_aperture;
+		int		left = font.dir[c].left / ir_aperture;
 		static char	bitbuf[BUFFSIZ][BUFFSIZ];
 		static RGBpixel	pixel;
 		register int    h, i, j;
 		int		k, x;
-	for ( k = 0; k < height; k++ )
+	for ( k = 0; k < font.height; k++ )
 		{
 		/* Read row, rounding width up to nearest byte value. */
-		if ( fread( bitbuf[k], width/8+(width % 8 == 0 ? 0 : 1), 1, ffdes )
+		if ( fread( bitbuf[k], font.width/8+(font.width % 8 == 0 ? 0 : 1), 1, font.ffdes )
 			!= 1 )
 			{
 			bu_log( "\"%s\" (%d) read of character from font failed.\n",
@@ -122,10 +120,10 @@ do_char(int c, register int xpos, register int ypos)
 			return;
 			}
 		}
-	for ( k = 0; k < height; k += ir_aperture, ypos-- )
+	for ( k = 0; k < font.height; k += ir_aperture, ypos-- )
 		{
 		x = xpos - left;
-		for ( j = 0; j < width; j += ir_aperture, x++ )
+		for ( j = 0; j < font.width; j += ir_aperture, x++ )
 			{	register int	sum;
 				fastf_t		weight;
 			/* The bitx routine extracts the bit value.

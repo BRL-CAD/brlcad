@@ -10,7 +10,6 @@ fbed_SOURCES = \
 	fill_buf.c \
 	getinput.c \
 	glob.c \
-	loadfont.c \
 	pos_pad.c \
 	prnt.c \
 	sgi_dep.c \
