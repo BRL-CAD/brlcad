@@ -775,7 +775,7 @@ bu_log_indent_vls(struct bu_vls *v)
  *  This version buffers a full line, to save network traffic.
  */
 void
-bu_log( char *fmt, ... )
+bu_log( const char *fmt, ... )
 {
 	va_list ap;
 	char buf[512];		/* a generous output line.  Must be AUTO, else non-PARALLEL. */
