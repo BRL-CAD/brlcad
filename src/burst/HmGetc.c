@@ -30,7 +30,6 @@
 #include "./burst.h"
 #include "./Hm.h"
 
-/*LINTLIBRARY*/
 int
 HmGetchar( void )
 {

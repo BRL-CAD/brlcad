@@ -118,9 +118,9 @@ display_Temps(int xmin, int ymin)
 				{	int	temp = AMBIENT+percent*RANGE;
 					register int	lgtindex = temp - ir_min;
 				pixel = (RGBpixel *) ir_table[Min(lgtindex, ir_max_index)];
-					/* LINT: this should be an &ir_table...,
-						allowed by ANSI C, but not current
-						compilers. */
+				/* this should be an &ir_table...,
+				   allowed by ANSI C, but not K&R
+				   compilers. */
 				(void) fb_wpixel( fbiop, (unsigned char *) black );
 				}
 			else

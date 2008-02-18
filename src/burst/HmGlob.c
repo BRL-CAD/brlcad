@@ -19,11 +19,13 @@
  *
  */
 /** @file HmGlob.c
- *	Author:	Gary S. Moss
+ *
  */
 
-/*LINTLIBRARY*/
+#include "common.h"
+
 #include <stdio.h>
+
 FILE	*HmTtyFp = NULL;   /* read keyboard, not stdin */
 int	HmLftMenu = 1;	   /* default top-level menu position */
 int	HmTopMenu = 1;
