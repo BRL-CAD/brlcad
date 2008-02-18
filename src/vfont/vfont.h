@@ -23,18 +23,15 @@
  *
  */
 
-#include "common.h"
-
 #ifndef VFONT_FONT_H
 #define VFONT_FONT_H
 
-#if defined(WORDS_BIGENDIAN)
-#  define SWAB(shrt)	(shrt=(((shrt)>>8) & 0xff) | (((shrt)<<8) & 0xff00))
-#  define SWABV(shrt)	((((shrt)>>8) & 0xff) | (((shrt)<<8) & 0xff00))
-#else
-#  define SWAB(shrt)
-#  define SWABV(shrt)	(shrt)
-#endif
+#include "common.h"
+
+#include "bu.h"
+
+#define SWAB(shrt)	if (bu_byteorder() == BU_BIG_ENDIAN) (shrt=(((shrt)>>8) & 0xff) | (((shrt)<<8) & 0xff00))
+#define SWABV(shrt)	(bu_byteorder() == BU_BIG_ENDIAN) ? ((((shrt)>>8) & 0xff) | (((shrt)<<8) & 0xff00)) : (shrt)
 
 #define FONTBUFSZ 200
 #define FONTNAME	"times.r.6"		/* Default font name.	*/

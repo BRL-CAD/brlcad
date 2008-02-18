@@ -4,7 +4,7 @@ noinst_LTLIBRARIES = libvfont_nil.la
 
 libvfont_nil_la_SOURCES = getfont.c
 
-noinst_HEADERS = font.h
+noinst_HEADERS = vfont.h
 
 fontdir = $(BRLCAD_DATA)/vfont
 font_DATA = \
