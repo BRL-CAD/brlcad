@@ -18,11 +18,9 @@
  * information.
  */
 /** @file joints.h
+ *
  * Joint and constrant information.
  *
- * RCSid "$Header$"
- */
-/*
  * A joint has to contain all the information to describe how two
  * segments move in relationship to each other.
  *

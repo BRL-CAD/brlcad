@@ -1593,14 +1593,14 @@ rt_ct_optim(struct rt_i *rtip, register union cutter *cutp, int depth)
 	rt_ct_optim( rtip, cutp->cn.cn_r, depth+1 );
 }
 
-/*
- *			R T _ C T _ O L D _ A S S E S S
+/**
+ * R T _ C T _ O L D _ A S S E S S
  *
- *  From RCS revision 9.4
- *  NOTE:  Changing from rt_ct_assess() to this seems to result
- *  in a *massive* change in cut tree size.
- *	This version results in nbins=22, maxlen=3, avg=1.09,
- *  while new vewsion results in nbins=42, maxlen=3, avg=1.667 (on moss.g).
+ * NOTE: Changing from rt_ct_assess() to this seems to result in a
+ * *massive* change in cut tree size.
+ *
+ * This version results in nbins=22, maxlen=3, avg=1.09, while new
+ * vewsion results in nbins=42, maxlen=3, avg=1.667 (on moss.g).
  */
 HIDDEN int
 rt_ct_old_assess(register union cutter *cutp, register int axis, double *where_p, double *offcenter_p)

@@ -18,12 +18,8 @@
  * information.
  */
 /** @file pos_pad.c
-	Author:		Douglas P. Kingston III
-			Gary S. Moss
-*/
-#if ! defined( lint )
-static const char RCSid[] = "@(#) pos_pad.c 2.1, modified 12/9/86 at 15:54:52, archive /vld/moss/src/fbed/s.pos_pad.c";
-#endif
+ *
+ */
 
 #include "common.h"
 

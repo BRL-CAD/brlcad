@@ -22,19 +22,12 @@
  *  Program to convert a BRL-CAD model (in a .g file) to an IGES BREP file
  *  or an IGES CSG file
  *
- *  Authors -
- *	John R. Anderson
- *	Michael J. Markowski
- *
  *  Some stupid secret codes:
  *	dp->d_uses - contains the negative of the DE number for the object
  *		     non-negative means it hasn't been written to the IGES file
  *	dp->d_nref - contains a one if the object is written to the IGES file as a BREP,
  *		     zero otherwise.
  */
-
-static const char RCSid[] = "$Header$";
-static const char RCSrev[] = "$Revision$";
 
 #include "common.h"
 
@@ -318,7 +311,7 @@ main(int argc, char *argv[])
 		}
 
 		/* Write start and global sections of the IGES file */
-		w_start_global( fp_dir, fp_param, argv[0], prog_name, output_file, RCSid, RCSrev );
+		w_start_global( fp_dir, fp_param, argv[0], prog_name, output_file, __DATE__, brlcad_version() );
 	}
 	else
 	{
@@ -615,7 +608,7 @@ genptr_t		client_data;
 			iges_init( &tol, &ttol, verbose, dbip );
 
 			/* Write start and global sections of the IGES file */
-			w_start_global( fp_dir, fp_param, db_name, prog_name, output_file, RCSid, RCSrev );
+			w_start_global( fp_dir, fp_param, db_name, prog_name, output_file, __DATE__, brlcad_version() );
 		}
 
 		if ( mode == FACET_MODE )

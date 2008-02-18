@@ -1,8 +1,27 @@
-/*
- *  tie_kdtree.h
+/*                    T I E _ K D T R E E . H
+ * BRL-CAD
  *
- *  RCSid:          $Id$
-*/
+ * Copyright (c) 2008 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file tie_kdtree.h
+ *
+ * Brief description
+ *
+ */
 
 #ifndef _TIE_KDTREE_H
 #define _TIE_KDTREE_H
@@ -13,7 +32,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 
 TIE_FUNC(void tie_kdtree_free, tie_t *tie);
 TIE_FUNC(uint32_t tie_kdtree_cache_free, tie_t *tie, void **cache);
@@ -33,3 +51,13 @@ TIE_VAL(extern tfloat TIE_PREC);
 #endif
 
 #endif
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

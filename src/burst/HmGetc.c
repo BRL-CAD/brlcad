@@ -19,16 +19,17 @@
  *
  */
 /** @file HmGetc.c
- *	Author:		Gary S. Moss
+ *
  */
 
-#if ! defined( lint )
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
+#include "common.h"
+
 #include <stdio.h>
 #include <signal.h>
+
 #include "./burst.h"
 #include "./Hm.h"
+
 /*LINTLIBRARY*/
 int
 HmGetchar( void )

@@ -18,11 +18,8 @@
  * information.
  */
 /** @file try.c
- *	Author:		Gary S. Moss
+ *
  */
-#if ! defined( lint )
-static const char RCSid[] = "@(#) try.c 2.1, modified 12/9/86 at 15:54:34, archive /vld/moss/src/fbed/s.try.c";
-#endif
 
 #include "common.h"
 

@@ -27,7 +27,6 @@
  *  and storing the results in files and/or a framebuffer.
  *
  */
-static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
