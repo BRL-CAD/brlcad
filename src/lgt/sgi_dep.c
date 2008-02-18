@@ -29,7 +29,7 @@
 
 #include <stdio.h>
 
-#if HAS_SGIGL
+#if defined(HAS_SGIGL)
 #include <gl.h>
 #include <device.h>
 #include <string.h>

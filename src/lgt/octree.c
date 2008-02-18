@@ -295,7 +295,7 @@ void
 prnt_Node_Octree(Octree *parentp, int level)
 {	register PtList	*ptp;
 		register int ptcount = 0;
-	bu_log( "%s[%2d](%8.3f,%8.3f,%8.3f)bits=0%o temp=%04d trie=%05x sibling=%05x child=%05x\n",
+	bu_log( "%s[%2d](%8.3f,%8.3f,%8.3f)bits=0%o temp=%04d trie=%p sibling=%p child=%p\n",
 		parentp->o_child != OCTREE_NULL ? "NODE" : "LEAF",
 		level,
 		parentp->o_points->c_point[X],
@@ -425,11 +425,11 @@ ir_shootray_octree(struct application *ap)
 {	vect_t	inv_dir;	/* Inverses of ap->a_ray.r_dir	*/
 		Octree	*leafp = NULL;	/* Intersected octree leaf.	*/
 	inv_dir[X] = inv_dir[Y] = inv_dir[Z] = INFINITY;
-	if ( ap->a_ray.r_dir[X] != 0.0 )
+	if ( !NEAR_ZERO(ap->a_ray.r_dir[X], SMALL_FASTF) )
 		inv_dir[X] = 1.0 / ap->a_ray.r_dir[X];
-	if ( ap->a_ray.r_dir[Y] != 0.0 )
+	if ( !NEAR_ZERO(ap->a_ray.r_dir[Y], SMALL_FASTF) )
 		inv_dir[Y] = 1.0 / ap->a_ray.r_dir[Y];
-	if ( ap->a_ray.r_dir[Z] != 0.0 )
+	if ( !NEAR_ZERO(ap->a_ray.r_dir[Z], SMALL_FASTF) )
 		inv_dir[Z] = 1.0 / ap->a_ray.r_dir[Z];
 	/* Descend octree from root to find the closest intersected leaf node.
 		Store minimum hit distance in "a_uvec[0]" field of application

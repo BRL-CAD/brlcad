@@ -49,8 +49,8 @@
 		}
 #define Toggle(f)	(f) = !(f)
 #define Malloc_Bomb( _bytes_ ) \
-		fb_log( "\"%s\"(%d) : allocation of %d bytes failed.\n", \
-				__FILE__, __LINE__, _bytes_ )
+		fb_log( "\"%s\"(%d) : allocation of %lu bytes failed.\n", \
+				__FILE__, __LINE__, (unsigned long)(_bytes_) )
 
 /* Guess whether or not a frame buffer name is a disk file. (XXX) */
 #define DiskFile(fil)	(*fil != '\0'\

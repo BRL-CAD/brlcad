@@ -159,60 +159,60 @@ int
 lgt_Edit_Db_Entry(int id)
 {	register Lgt_Source	*entry;
 		char			input_buf[MAX_LN];
-		char			prompt[MAX_LN];
+		char			editprompt[MAX_LN];
 		int			red, grn, blu;
 	if ( id < 0 || id >= MAX_LGTS )
 		return	-1;
 	lgt_db_size = Max( lgt_db_size, id+1 );
 	entry = &lgts[id];
-	(void) snprintf( prompt, MAX_LN, "light source name ? (%s) ", entry->name );
-	if ( get_Input( input_buf, MAX_LN, prompt ) != NULL )
+	(void) snprintf( editprompt, MAX_LN, "light source name ? (%s) ", entry->name );
+	if ( get_Input( input_buf, MAX_LN, editprompt ) != NULL )
 		bu_strlcpy( entry->name, input_buf, MAX_LGT_NM );
-	(void) sprintf( prompt, "manual override ? [y|n](%c) ",
+	(void) sprintf( editprompt, "manual override ? [y|n](%c) ",
 			entry->over ? 'y' : 'n' );
-	if ( get_Input( input_buf, MAX_LN, prompt ) != NULL )
+	if ( get_Input( input_buf, MAX_LN, editprompt ) != NULL )
 		entry->over = input_buf[0] != 'n';
 	if ( entry->over || entry->stp == SOLTAB_NULL )
 		{
-		(void) sprintf( prompt, "azimuth ? (%g) ",
+		(void) sprintf( editprompt, "azimuth ? (%g) ",
 				entry->azim*DEGRAD );
-		if ( get_Input( input_buf, MAX_LN, prompt ) != NULL )
+		if ( get_Input( input_buf, MAX_LN, editprompt ) != NULL )
 			{
 			(void) sscanf( input_buf, "%lf", &entry->azim );
 			entry->azim /= DEGRAD;
 			}
-		(void) sprintf( prompt, "elevation ? (%g) ",
+		(void) sprintf( editprompt, "elevation ? (%g) ",
 				entry->elev*DEGRAD );
-		if ( get_Input( input_buf, MAX_LN, prompt ) != NULL )
+		if ( get_Input( input_buf, MAX_LN, editprompt ) != NULL )
 			{
 			(void) sscanf( input_buf, "%lf", &entry->elev );
 			entry->elev /= DEGRAD;
 			}
-		(void) sprintf( prompt, "distance ? (%g) ", entry->dist );
-		if ( get_Input( input_buf, MAX_LN, prompt ) != NULL )
+		(void) sprintf( editprompt, "distance ? (%g) ", entry->dist );
+		if ( get_Input( input_buf, MAX_LN, editprompt ) != NULL )
 			(void) sscanf( input_buf, "%lf", &entry->dist );
 		}
-	(void) sprintf( prompt, "gaussian beam ? [y|n](%c) ",
+	(void) sprintf( editprompt, "gaussian beam ? [y|n](%c) ",
 			entry->beam ? 'y' : 'n' );
-	if ( get_Input( input_buf, MAX_LN, prompt ) != NULL )
+	if ( get_Input( input_buf, MAX_LN, editprompt ) != NULL )
 		entry->beam = input_buf[0] != 'n';
 	if ( entry->beam )
 		{
-		(void) sprintf( prompt, "radius of beam ? (%g) ",
+		(void) sprintf( editprompt, "radius of beam ? (%g) ",
 				entry->radius );
-		if ( get_Input( input_buf, MAX_LN, prompt ) != NULL )
+		if ( get_Input( input_buf, MAX_LN, editprompt ) != NULL )
 			(void) sscanf( input_buf, "%lf", &entry->radius );
 		}
-	(void) sprintf( prompt, "intensity ? [0.0 to 1.0](%g) ",
+	(void) sprintf( editprompt, "intensity ? [0.0 to 1.0](%g) ",
 			entry->energy );
-	if ( get_Input( input_buf, MAX_LN, prompt ) != NULL )
+	if ( get_Input( input_buf, MAX_LN, editprompt ) != NULL )
 		(void) sscanf( input_buf, "%lf", &entry->energy );
-	(void) sprintf( prompt, "color ? [0 to 255](%d %d %d) ",
+	(void) sprintf( editprompt, "color ? [0 to 255](%d %d %d) ",
 			entry->rgb[RED],
 			entry->rgb[GRN],
 			entry->rgb[BLU]
 			);
-	if (	get_Input( input_buf, MAX_LN, prompt ) != NULL
+	if (	get_Input( input_buf, MAX_LN, editprompt ) != NULL
 	     &&	sscanf( input_buf, "%d %d %d", &red, &grn, &blu ) == 3
 		)
 		{

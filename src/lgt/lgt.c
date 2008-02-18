@@ -183,7 +183,7 @@ interpolate_Frame(int frame)
     else
 	{
 	    lgts[0].over = 0;
-	    if ( movie.m_pers_beg == 0.0 && movie.m_pers_end == 0.0 )
+	    if ( NEAR_ZERO(movie.m_pers_beg, SMALL_FASTF) && NEAR_ZERO(movie.m_pers_end, SMALL_FASTF) )
 		{
 		    rel_perspective = 0.0;
 		    grid_dist = movie.m_grid_beg +
@@ -249,7 +249,6 @@ ready_Output_Device(int frame)
 void
 close_Output_Device(int frame)
 {
-    assert( fbiop != FBIO_NULL );
 #if SGI_WINCLOSE_BUG
     if ( strncmp( fbiop->if_name, "/dev/sgi", 8 ) != 0 )
 #endif
@@ -265,6 +264,7 @@ close_Output_Device(int frame)
 static void
 intr_sig(int sig)
 {
+    sig = sig;
     (void) signal( SIGINT, intr_sig );
     return;
 }

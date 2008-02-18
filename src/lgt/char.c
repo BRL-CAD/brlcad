@@ -111,7 +111,7 @@ do_char(int c, register int xpos, register int ypos)
 	for ( k = 0; k < font.height; k++ )
 		{
 		/* Read row, rounding width up to nearest byte value. */
-		if ( fread( bitbuf[k], font.width/8+(font.width % 8 == 0 ? 0 : 1), 1, font.ffdes )
+		if ( fread( bitbuf[k], (size_t)font.width/8+(font.width % 8 == 0 ? 0 : 1), 1, font.ffdes )
 			!= 1 )
 			{
 			bu_log( "\"%s\" (%d) read of character from font failed.\n",

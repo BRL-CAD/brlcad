@@ -117,8 +117,7 @@ add_Trie(const char *name, register Trie **triepp)
 			{ /* Name is subset of another name.		*/
 			return	add_Trie( name, &(*triepp)->n.t_altr );
 			}
-		else
-			; /* Name already inserted, so do nothing.	*/
+
 		return	*triepp;
 		}
 	for (	curp = *triepp;
@@ -143,7 +142,7 @@ add_Trie(const char *name, register Trie **triepp)
 OcList	*
 get_Trie(register char *name, register Trie *triep)
 {	register Trie *curp = triep; /* initialize to shutup compiler */
-	assert( triep != NULL );
+
 	/* Traverse next links to end of region name.			*/
 	for (; triep != TRIE_NULL; triep = triep->n.t_next )
 		{
@@ -186,7 +185,7 @@ get_Trie(register char *name, register Trie *triep)
 	--name;
 	*name = NUL;
 	/* It is caller's responsibility to free this linked-list. */
-	assert( curp != NULL );
+
 	return copy_OcList( curp->l.t_octp );
 	}
 
@@ -537,7 +536,7 @@ get_Region_Name(char *inbuf, int bufsz, char *msg)
 				ring_Bell();
 				break;
 				}
-			bu_strlcpy( p, inbuf, bufsz );
+			bu_strlcpy( p, inbuf, (size_t)bufsz );
 			printf( "%s", p );
 			p += len;
 			break;
@@ -602,7 +601,7 @@ get_Region_Name(char *inbuf, int bufsz, char *msg)
 				}
 			else
 				{
-				bu_strlcpy( inbuf, buffer, bufsz );
+				bu_strlcpy( inbuf, buffer, (size_t)bufsz );
 				prnt_Event( "" );
 				goto clean_return;
 				}

@@ -47,8 +47,6 @@ fb_Setup(char *file, int size)
 		static int	sgi_open = FALSE;
 		static int	sgi_size;
 		static FBIO	*sgi_iop;
-#else
-	assert( fbiop == FBIO_NULL );
 #endif
 	if ( strcmp( file, "/dev/remote" ) == 0 )
 		file = "/dev/debug";

@@ -308,14 +308,14 @@ prnt_Menu(void)
 
 /*	p r n t _ P r o m p t ( )					*/
 void
-prnt_Prompt(const char* prompt)
+prnt_Prompt(const char* prprompt)
 {
 	if ( tty )
 		{
 		PROMPT_MOVE();
 		(void) ClrEOL();
 		SetStandout();
-		(void) printf( "%s", prompt );
+		(void) printf( "%s", prprompt );
 		(void) ClrStandout();
 		(void) fflush( stdout );
 		}

@@ -49,7 +49,7 @@
 static RGBpixel	black = { 0, 0, 0 };
 static int	ir_max_index = -1;
 RGBpixel	*ir_table = (RGBpixel *)RGBPIXEL_NULL;
-struct vfont	font = { NULL };
+struct vfont	font;
 
 static void	temp_To_RGB(unsigned char *rgb, int temp);
 
@@ -116,8 +116,8 @@ display_Temps(int xmin, int ymin)
 			percent = D_XPOS / xrange;
 			if ( D_XPOS % interval == 0 )
 				{	int	temp = AMBIENT+percent*RANGE;
-					register int	index = temp - ir_min;
-				pixel = (RGBpixel *) ir_table[Min(index, ir_max_index)];
+					register int	lgtindex = temp - ir_min;
+				pixel = (RGBpixel *) ir_table[Min(lgtindex, ir_max_index)];
 					/* LINT: this should be an &ir_table...,
 						allowed by ANSI C, but not current
 						compilers. */
@@ -213,7 +213,7 @@ read_IR(FILE *fp)
 			{	int	fah;
 				int	sum = 0;
 				register int	i;
-				register int	index;
+				register int	lgtindex;
 				RGBpixel	*pixel;
 			for ( i = 0; i < ir_aperture; i++ )
 				{	register int	j;
@@ -231,14 +231,14 @@ read_IR(FILE *fp)
 					}
 				}
 			fah = Avg_Fah( sum );
-			if ( (index = fah-ir_min) > ir_max_index || index < 0 )
+			if ( (lgtindex = fah-ir_min) > ir_max_index || lgtindex < 0 )
 				{
 				bu_log( "temperature out of range (%d)\n",
 					fah
 					);
 				return	0;
 				}
-			pixel = (RGBpixel *) ir_table[index];
+			pixel = (RGBpixel *) ir_table[lgtindex];
 			(void) fb_wpixel( fbiop, (unsigned char *)pixel );
 			}
 		}
@@ -260,7 +260,7 @@ temp_To_RGB(unsigned char *rgb, int temp)
 		register int	h = (int) hue;	/* integral part	*/
 		register int	f = (int)(256.0 * (hue - (fastf_t)h));
 					/* fractional part * 256	*/
-	if ( t == ABSOLUTE_ZERO )
+	if ( NEAR_ZERO(t - ABSOLUTE_ZERO, SMALL_FASTF) )
 		rgb[RED] = rgb[GRN] = rgb[BLU] = 0;
 	else
 	switch ( h )
@@ -361,48 +361,48 @@ same_Hue(register RGBpixel (*pixel1p), register RGBpixel (*pixel2p))
 	rval2 = (*pixel2p)[RED];
 	gval2 = (*pixel2p)[GRN];
 	bval2 = (*pixel2p)[BLU];
-	if ( rval1 == 0.0 )
+	if ( NEAR_ZERO(rval1, SMALL_FASTF) )
 		{
-		if ( rval2 != 0.0 )
+		if ( !NEAR_ZERO(rval2, SMALL_FASTF) )
 			return	0;
 		else /* Both red values are zero. */
 			rratio = 0.0;
 		}
 	else
-	if ( rval2 == 0.0 )
+	if ( NEAR_ZERO(rval2, SMALL_FASTF) )
 		return	0;
 	else /* Neither red value is zero. */
 		rratio = rval1/rval2;
-	if ( gval1 == 0.0 )
+	if ( NEAR_ZERO(gval1, SMALL_FASTF) )
 		{
-		if ( gval2 != 0.0 )
+		if ( !NEAR_ZERO(gval2, SMALL_FASTF) )
 			return	0;
 		else /* Both green values are zero. */
 			gratio = 0.0;
 		}
 	else
-	if ( gval2 == 0.0 )
+	if ( NEAR_ZERO(gval2, SMALL_FASTF) )
 		return	0;
 	else /* Neither green value is zero. */
 		gratio = gval1/gval2;
-	if ( bval1 == 0.0 )
+	if ( NEAR_ZERO(bval1, SMALL_FASTF) )
 		{
-		if ( bval2 != 0.0 )
+		if ( !NEAR_ZERO(bval2, SMALL_FASTF) )
 			return	0;
 		else /* Both blue values are zero. */
 			bratio = 0.0;
 		}
 	else
-	if ( bval2 == 0.0 )
+	if ( NEAR_ZERO(bval2, SMALL_FASTF) )
 		return	0;
 	else /* Neither blue value is zero. */
 		bratio = bval1/bval2;
-	if ( rratio == 0.0 )
+	if ( NEAR_ZERO(rratio, SMALL_FASTF) )
 		{
-		if ( gratio == 0.0 )
+		if ( NEAR_ZERO(gratio, SMALL_FASTF) )
 			return	1;
 		else
-		if ( bratio == 0.0 )
+		if ( NEAR_ZERO(bratio, SMALL_FASTF) )
 			return	1;
 		else
 		if ( AproxEq( gratio, bratio, HUE_TOL ) )
@@ -411,9 +411,9 @@ same_Hue(register RGBpixel (*pixel1p), register RGBpixel (*pixel2p))
 			return	0;
 		}
 	else
-	if ( gratio == 0.0 )
+	if ( NEAR_ZERO(gratio, SMALL_FASTF) )
 		{
-		if ( bratio == 0.0 )
+		if ( NEAR_ZERO(bratio, SMALL_FASTF) )
 			return	1;
 		else
 		if ( AproxEq( bratio, rratio, HUE_TOL ) )
@@ -422,7 +422,7 @@ same_Hue(register RGBpixel (*pixel1p), register RGBpixel (*pixel2p))
 			return	0;
 		}
 	else
-	if ( bratio == 0.0 )
+	if ( NEAR_ZERO(bratio, SMALL_FASTF) )
 		{
 		if ( AproxEq( rratio, gratio, HUE_TOL ) )
 			return	1;
@@ -538,21 +538,21 @@ f_IR_Model(register struct application *ap, Octree *op)
 	{	/* Factor in reflectance from "ambient" light source.	*/
 		fastf_t	intensity = Dot( norml, lgts[0].dir );
 		/* Calculate index into false-color table.		*/
-		register int	index = op->o_temp - ir_min;
-	if ( index > ir_max_index )
+		register int	lgtindex = op->o_temp - ir_min;
+	if ( lgtindex > ir_max_index )
 		{
 		bu_log( "Temperature (%d) above range of data.\n", op->o_temp );
 		return	-1;
 		}
-	if ( index < 0 )
+	if ( lgtindex < 0 )
 		/* Un-assigned octants get colored grey.		*/
 		ap->a_color[0] = ap->a_color[1] = ap->a_color[2] = intensity;
 	else	/* Lookup false-coloring for octant's temperature.	*/
 		{
 		intensity *= RGB_INVERSE;
-		ap->a_color[0] = (fastf_t) (ir_table[index][RED]) * intensity;
-		ap->a_color[1] = (fastf_t) (ir_table[index][GRN]) * intensity;
-		ap->a_color[2] = (fastf_t) (ir_table[index][BLU]) * intensity;
+		ap->a_color[0] = (fastf_t) (ir_table[lgtindex][RED]) * intensity;
+		ap->a_color[1] = (fastf_t) (ir_table[lgtindex][GRN]) * intensity;
+		ap->a_color[2] = (fastf_t) (ir_table[lgtindex][BLU]) * intensity;
 		}
 	}
 	return	1;

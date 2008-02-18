@@ -198,7 +198,7 @@ int
 mat_Edit_Db_Entry(int id)
 {	register Mat_Db_Entry	*entry;
 		char			input_buf[MAX_LN];
-		char			prompt[MAX_LN];
+		char			editprompt[MAX_LN];
 		int			red, grn, blu;
 	if ( id < 0 )
 		return	-1;
@@ -212,41 +212,41 @@ mat_Edit_Db_Entry(int id)
 		bu_log( "Material table full, MAX_DB_ENTRY too small.\n" );
 		return	0;
 		}
-	(void) snprintf( prompt, MAX_LN, "material name ? (%s) ", entry->name );
-	if ( get_Input( input_buf, MAX_LN, prompt ) != NULL )
+	(void) snprintf( editprompt, MAX_LN, "material name ? (%s) ", entry->name );
+	if ( get_Input( input_buf, MAX_LN, editprompt ) != NULL )
 		bu_strlcpy( entry->name, input_buf, MAX_MAT_NM );
-	(void) sprintf( prompt, "shine ? [1 to n](%d) ", entry->shine );
-	if ( get_Input( input_buf, MAX_LN, prompt ) != NULL )
+	(void) sprintf( editprompt, "shine ? [1 to n](%d) ", entry->shine );
+	if ( get_Input( input_buf, MAX_LN, editprompt ) != NULL )
 		(void) sscanf( input_buf, "%d", &entry->shine );
-	(void) sprintf( prompt, "specular weighting ? [0.0 to 1.0](%g) ",
+	(void) sprintf( editprompt, "specular weighting ? [0.0 to 1.0](%g) ",
 			entry->wgt_specular );
-	if ( get_Input( input_buf, MAX_LN, prompt  ) != NULL )
+	if ( get_Input( input_buf, MAX_LN, editprompt  ) != NULL )
 		(void) sscanf( input_buf, "%lf", &entry->wgt_specular );
-	(void) sprintf( prompt, "diffuse weighting ? [0.0 to 1.0](%g) ",
+	(void) sprintf( editprompt, "diffuse weighting ? [0.0 to 1.0](%g) ",
 			entry->wgt_diffuse );
-	if ( get_Input( input_buf, MAX_LN, prompt ) != NULL )
+	if ( get_Input( input_buf, MAX_LN, editprompt ) != NULL )
 		(void) sscanf( input_buf, "%lf", &entry->wgt_diffuse );
-	(void) sprintf( prompt, "transparency ? [0.0 to 1.0](%g) ",
+	(void) sprintf( editprompt, "transparency ? [0.0 to 1.0](%g) ",
 			entry->transparency );
-	if ( get_Input( input_buf, MAX_LN, prompt ) != NULL )
+	if ( get_Input( input_buf, MAX_LN, editprompt ) != NULL )
 		(void) sscanf( input_buf, "%lf", &entry->transparency );
-	(void) sprintf( prompt, "reflectivity ? [0.0 to 1.0](%g) ",
+	(void) sprintf( editprompt, "reflectivity ? [0.0 to 1.0](%g) ",
 			entry->reflectivity );
-	if ( get_Input( input_buf, MAX_LN, prompt ) != NULL )
+	if ( get_Input( input_buf, MAX_LN, editprompt ) != NULL )
 		(void) sscanf( input_buf, "%lf", &entry->reflectivity );
-	(void) sprintf( prompt, "refractive index ? [0.9 to 5.0](%g) ",
+	(void) sprintf( editprompt, "refractive index ? [0.9 to 5.0](%g) ",
 			entry->refrac_index );
-	if ( get_Input( input_buf, MAX_LN, prompt ) != NULL )
+	if ( get_Input( input_buf, MAX_LN, editprompt ) != NULL )
 		(void) sscanf( input_buf, "%lf", &entry->refrac_index );
 
 	if ( strncmp( TEX_KEYWORD, entry->name, TEX_KEYLEN ) != 0 )
 		{
-		(void) sprintf( prompt, "diffuse RGB values ? [0 to 255](%d %d %d) ",
+		(void) sprintf( editprompt, "diffuse RGB values ? [0 to 255](%d %d %d) ",
 				entry->df_rgb[RED],
 				entry->df_rgb[GRN],
 				entry->df_rgb[BLU]
 				);
-		if (	get_Input( input_buf, MAX_LN, prompt ) != NULL
+		if (	get_Input( input_buf, MAX_LN, editprompt ) != NULL
 		     &&	sscanf( input_buf, "%d %d %d", &red, &grn, &blu ) == 3
 			)
 			{
@@ -257,11 +257,11 @@ mat_Edit_Db_Entry(int id)
 		}
 	else
 		{
-		(void) sprintf( prompt, "texture : width and height? [0 to 1024](%d %d) ",
+		(void) sprintf( editprompt, "texture : width and height? [0 to 1024](%d %d) ",
 				entry->df_rgb[0]<<3,
 				entry->df_rgb[1]<<3
 				);
-		if (	get_Input( input_buf, MAX_LN, prompt ) != NULL
+		if (	get_Input( input_buf, MAX_LN, editprompt ) != NULL
 		    &&	sscanf( input_buf, "%d %d", &red, &grn ) == 2
 			)
 			{

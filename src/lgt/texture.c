@@ -109,14 +109,14 @@ init_Icon_Texture(char *file, Mat_Db_Entry *entry)
 			file );
 		return	NULL;
 		}
-	iconmap = (icon_t *) bu_malloc( BYTES_WIDE*hgt, "iconmap" );
+	iconmap = (icon_t *) bu_malloc( (size_t)BYTES_WIDE*hgt, "iconmap" );
 #if DEBUG_TEXTURE
 	bu_log( "init_Icon_Texture(%s) wid=%d hgt=%d\n", file, wid, hgt );
 	bu_log( "%d bytes allocated for texture map.\n",
 		BYTES_WIDE*hgt );
 #endif
 	if ( fread( iconmap, sizeof(icon_t), ITEMS_WIDE*hgt, iconfp )
-		== -1 )
+		!= ITEMS_WIDE*hgt )
 		{
 		bu_log( "Read of icon texture map failed.\n" );
 		return	NULL;

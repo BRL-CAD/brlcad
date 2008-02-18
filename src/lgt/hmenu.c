@@ -223,17 +223,18 @@ hm_Put_Item(register HWindow *win, register HMitem *itemp, int flag)
 		}
 
 static void
-hm_Put_Border(register HWindow *win, register int row, char mark)
-{	register int	i;
+hm_Put_Border(register HWindow *win, register int row, int mark)
+{
+	register int	i;
 		register int	bit = 1;
 		register int	col = win->menux;
 		register int	bitmap = win->dirty[row - win->menuy];
 		static char	buf[MAXLINE];
 		register char	*p = buf;
-	*p++ = mark;
+	*p++ = (char)mark;
 	for ( i = 0; i < win->width; i++ )
 		*p++ = '-';
-	*p++ = mark;
+	*p++ = (char)mark;
 	*p = '\0';
 	if ( bitmap == ~0 )
 		{
@@ -295,7 +296,7 @@ hm_Draw_Win(register HWindow *win)
 				ENTRY == win->menup->prevhit ? P_ON : P_OFF
 				);
 	height = Min( MAXVISABLE, win->height );
-	hm_Put_Border( win, win->menuy+height+1, ENTRY < win->height ? 'v' : '+' );
+	hm_Put_Border( win, win->menuy+height+1, (char)(ENTRY < win->height ? 'v' : '+') );
 	hm_Clrmap( win );
 	(void) fflush( stdout );
 	return;

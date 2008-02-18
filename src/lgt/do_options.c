@@ -77,62 +77,62 @@ char	template[][TEMPLATE_COLS] = {
 static int	noframes = 1;
 
 static int	make_Script(char *file);
-static int	f_Nop(HMitem *itemp, char **ar);		/* default */
-static int	f_Exec_Shell(HMitem *itemp, char **args);		/* ! */
-static int	f_Comment(HMitem *itemp, char **ar);		/* # */
-static int	f_Menu(HMitem *itemp, char **ar);		/* ? */
-static int	f_Buffer(HMitem *itemp, char **args);		/* . */
-static int	f_Anti_Aliasing(HMitem *itemp, char **args);	/* A */
-static int	f_Batch(HMitem *itemp, char **args);		/* B */
-static int	f_Cursor_Module(HMitem *itemp, char **args);	/* C */
-static int	f_Display_Origin(HMitem *itemp, char **args);	/* D */
-static int	f_Fbclear(HMitem *itemp, char **args);		/* E */
-static int	f_Animate(HMitem *itemp, char **args);		/* F */
-static int	f_GridConfig(HMitem *itemp, char **args);		/* G */
-static int	f_Wrt_Fb(HMitem *itemp, char **args);		/* H */
-static int	f_Rd_Raw_IR(HMitem *itemp, char **args);		/* I */
-static int	f_Movie(HMitem *itemp, char **args);		/* J */
-static int	f_Max_Bounce(HMitem *itemp, char **args);		/* K */
-static int	f_Entr_Lgt_Db(HMitem *itemp, char **args);	/* L */
-static int	f_Entr_Mat_Db(HMitem *itemp, char **args);	/* M */
-static int	f_Set_IR_Paint(HMitem *itemp, char **args);	/* N */
-static int	f_Err_File(HMitem *itemp, char **args);		/* O */
-static int	f_Prnt_Regions(HMitem *itemp, char **args);	/* P */
-static int	f_Set_Region_IR(HMitem *itemp, char **args);	/* Q */
-static int	f_Raytrace(HMitem *itemp, char **ar);		/* R */
-static int	f_Script(HMitem *itemp, char **args);		/* S */
-static int	f_SetFbSize(HMitem *itemp, char **args);		/* T */
-static int	f_Wrt_IR_Db(HMitem *itemp, char **args);		/* U */
-static int	f_Wrt_Lgt_Db(HMitem *itemp, char **args);		/* V */
-static int	f_Wrt_Mat_Db(HMitem *itemp, char **args);		/* W */
-static int	f_Overlaps(HMitem *itemp, char **args);		/* X */
-static int	f_Show_IR(HMitem *itemp, char **args);		/* Z */
-static int	f_Grid_Roll(HMitem *itemp, char **args);		/* a */
-static int	f_Background(HMitem *itemp, char **args);		/* b */
-static int	f_Tracking_Cursor(HMitem *itemp, char **args);	/* c */
-static int	f_IR_Offset(HMitem *itemp, char **args);		/* d */
-static int	f_Debug(HMitem *itemp, char **args);		/* e */
-static int	f_Dist_Grid(HMitem *itemp, char **args);		/* f */
-static int	f_Scale_Grid(HMitem *itemp, char **args);		/* g */
-static int	f_Rd_Fb(HMitem *itemp, char **args);		/* h */
-static int	f_IR_Noise(HMitem *itemp, char **args);		/* i */
-static int	f_Key_Frame(HMitem *itemp, char **args);		/* j */
-static int	f_Hidden_Ln_Draw(HMitem *itemp, char **args);	/* k */
-static int	f_Prnt_Lgt_Db(HMitem *itemp, char **args);	/* l */
-static int	f_Prnt_Mat_Db(HMitem *itemp, char **args);	/* m */
-static int	f_Parallel(HMitem *itemp, char **args);		/* n */
-static int	f_Raster_File(HMitem *itemp, char **args);	/* o */
-static int	f_Perspective(HMitem *itemp, char **args);	/* p */
-static int	f_Quit(HMitem *itemp, int args);		/* q */
-static int	f_Redraw(HMitem *itemp, char **args);		/* r */
-static int	f_IRmodule(HMitem *itemp, char **args);		/* s */
-static int	f_Grid_Translate(HMitem *itemp, char **args);	/* t */
-static int	f_Rd_IR_Db(HMitem *itemp, char **args);		/* u */
-static int	f_Rd_Lgt_Db(HMitem *itemp, char **args);		/* v */
-static int	f_Rd_Mat_Db(HMitem *itemp, char **args);		/* w */
-int		f_Grid_X_Pos(HMitem *itemp, char **args);		/* x */
-int		f_Grid_Y_Pos(HMitem *itemp, char **args);		/* y */
-static int	f_Shadows(HMitem *itemp, char **args);		/* z */
+static int	f_Nop(char **ar);		/* default */
+static int	f_Exec_Shell(char **args);	/* ! */
+static int	f_Comment(char **ar);		/* # */
+static int	f_Menu();			/* ? */
+static int	f_Buffer(char **args);		/* . */
+static int	f_Anti_Aliasing();		/* A */
+static int	f_Batch();			/* B */
+static int	f_Cursor_Module();		/* C */
+static int	f_Display_Origin(char **args);	/* D */
+static int	f_Fbclear();			/* E */
+static int	f_Animate();			/* F */
+static int	f_GridConfig(char **args);	/* G */
+static int	f_Wrt_Fb(char **args);		/* H */
+static int	f_Rd_Raw_IR(char **args);	/* I */
+static int	f_Movie();			/* J */
+static int	f_Max_Bounce(char **args);	/* K */
+static int	f_Entr_Lgt_Db(char **args);	/* L */
+static int	f_Entr_Mat_Db(char **args);	/* M */
+static int	f_Set_IR_Paint(char **args);	/* N */
+static int	f_Err_File(char **args);	/* O */
+static int	f_Prnt_Regions();		/* P */
+static int	f_Set_Region_IR();		/* Q */
+static int	f_Raytrace();			/* R */
+static int	f_Script(char **args);		/* S */
+static int	f_SetFbSize(char **args);	/* T */
+static int	f_Wrt_IR_Db(char **args);	/* U */
+static int	f_Wrt_Lgt_Db(char **args);	/* V */
+static int	f_Wrt_Mat_Db(char **args);	/* W */
+static int	f_Overlaps(char **args);	/* X */
+static int	f_Show_IR(char **args);		/* Z */
+static int	f_Grid_Roll(char **args);	/* a */
+static int	f_Background(char **args);	/* b */
+static int	f_Tracking_Cursor(char **args);	/* c */
+static int	f_IR_Offset(char **args);	/* d */
+static int	f_Debug(char **args);		/* e */
+static int	f_Dist_Grid(char **args);	/* f */
+static int	f_Scale_Grid();			/* g */
+static int	f_Rd_Fb(char **args);		/* h */
+static int	f_IR_Noise(char **args);	/* i */
+static int	f_Key_Frame(char **args);	/* j */
+static int	f_Hidden_Ln_Draw(char **args);	/* k */
+static int	f_Prnt_Lgt_Db(char **args);	/* l */
+static int	f_Prnt_Mat_Db(char **args);	/* m */
+static int	f_Parallel(char **args);	/* n */
+static int	f_Raster_File(char **args);	/* o */
+static int	f_Perspective(char **args);	/* p */
+static int	f_Quit();			/* q */
+static int	f_Redraw();			/* r */
+static int	f_IRmodule(char **args);	/* s */
+static int	f_Grid_Translate(char **args);	/* t */
+static int	f_Rd_IR_Db(char **args);	/* u */
+static int	f_Rd_Lgt_Db(char **args);	/* v */
+static int	f_Rd_Mat_Db(char **args);	/* w */
+int		f_Grid_X_Pos(char **args);	/* x */
+int		f_Grid_Y_Pos(char **args);	/* y */
+static int	f_Shadows(char **args);		/* z */
 
 typedef struct
 	{
@@ -355,7 +355,7 @@ HMenu	ir_hmenu = { ir_items, 0, 0, 0, 1, 0 };
 
 HMitem	special_items[] =
 	{
-	{ "infrared modeling", "3-d mapping of infrared data", &ir_hmenu, 0, 0, 0 },
+	{ "infrared modeling", "3-d mapping of infrared data", &ir_hmenu, 0, 0, 0, 0 },
 	{ "hidden-line drawing", "Image produced will be a line drawing.", 0, 0, 0, f_Hidden_Ln_Draw, 0 },
 	{ 0, 0, 0, 0, 0, 0, 0 }
 	};
@@ -376,10 +376,10 @@ user_Cmd(char **ar)
 	}
 
 static int
-user_Opt(char opt, char *arg)
+user_Opt(int opt, char *arg)
 {	char	buf[2], *local_argv[MAX_ARGS];
 		register int	i;
-	buf[0] = opt;
+	buf[0] = (char)opt;
 	buf[1] = '\0';
 	/* Set up argument vector for function. */
 	local_argv[0] = buf;
@@ -408,7 +408,7 @@ user_Pop(int i)
 	}
 
 static int
-f_Nop(HMitem *itemp, char **ar)
+f_Nop(char **ar)
 {
 	if ( *ar[0] > ' ' && *ar[0] <= '~' )
 		bu_log( "Unbound (%c)\n", *ar[0] );
@@ -420,7 +420,7 @@ f_Nop(HMitem *itemp, char **ar)
 
 /*ARGSUSED*/
 static int
-f_Comment(HMitem *itemp, char **ar)
+f_Comment(char **ar)
 {
 	bu_log( "%s\n", ar[0] );
 	return	1;
@@ -428,7 +428,7 @@ f_Comment(HMitem *itemp, char **ar)
 
 /*ARGSUSED*/
 static int
-f_Menu(HMitem *itemp, char **ar)
+f_Menu()
 {
 	prnt_Menu();
 	return 1;
@@ -436,14 +436,14 @@ f_Menu(HMitem *itemp, char **ar)
 
 /*ARGSUSED*/
 static int
-f_Script(HMitem *itemp, char **args)
+f_Script(char **args)
 {
 	return	make_Script( args != (char **) NULL ? args[1] : (char *) NULL );
 	}
 
 /*ARGSUSED*/
 static int
-f_SetFbSize(HMitem *itemp, char **args)
+f_SetFbSize(char **args)
 {
 	if ( args != NULL && args[1] != NULL )
 		{
@@ -479,7 +479,7 @@ f_SetFbSize(HMitem *itemp, char **args)
 
 /*ARGSUSED*/
 static int
-f_Raytrace(HMitem *itemp, char **ar)
+f_Raytrace()
 {
 	if ( rt_g.rtg_parallel )
 		bu_log( "Will use %d processors.\n", npsw );
@@ -518,9 +518,9 @@ HMenu	buffer_hmenu = { buffer_items, 0, 0, 0, 0, prnt_Status };
  */
 /*ARGSUSED*/
 static int
-f_Buffer(HMitem *itemp, char **args)
+f_Buffer(char **args)
 {
-#if HAS_SGIGL
+#if defined(HAS_SGIGL)
 	if ( (args == NULL || args[1] == NULL) && sgi_usemouse )
 		{	extern long	buffering_menu;
 			int		rc;
@@ -581,9 +581,9 @@ HMenu	debug_hmenu = { debug_items, 0, 0, 0, 0, prnt_Status };
  */
 /*ARGSUSED*/
 static int
-f_Debug(HMitem *itemp, char **args)
+f_Debug(char **args)
 {
-#if HAS_SGIGL
+#if defined(HAS_SGIGL)
 	if ( (args == NULL || args[1] == NULL) && sgi_usemouse )
 		{	extern long	debugging_menu;
 			int		flag;
@@ -624,7 +624,7 @@ f_Debug(HMitem *itemp, char **args)
 	int f_Grid_Roll( HMItem *itemp, char **args )
  */
 static int
-f_Grid_Roll(HMitem *itemp, char **args)
+f_Grid_Roll(char **args)
 {
 	if ( args == NULL || args[1] == NULL || sscanf( args[1], "%lf", &grid_roll ) != 1 )
 		{
@@ -649,7 +649,7 @@ f_Grid_Roll(HMitem *itemp, char **args)
 
 /*	f _ A n t i _ A l i a s i n g ( ) */
 static int
-f_Anti_Aliasing(HMitem *itemp, char **args)
+f_Anti_Aliasing(char **args)
 {
 	if (	args == NULL || args[1] == NULL
 	     ||	sscanf( args[1], "%d", &aperture_sz ) != 1
@@ -683,7 +683,7 @@ f_Anti_Aliasing(HMitem *itemp, char **args)
 /*	f _ B a t c h ( ) */
 /*ARGSUSED*/
 static int
-f_Batch(HMitem *itemp, char **args)
+f_Batch()
 {
 	static char	*batch_com[8];
 	char		script[MAXPATHLEN];
@@ -757,10 +757,10 @@ pt_Select(register int x, register int y, register int *xp, register int *yp, re
 		*yp = y;
 		(void) sprintf( args[1], "%d", x - x_fb_origin );
 		(void) sprintf( args[2], "%d", grid_x_fin );
-		(void) f_Grid_X_Pos( (HMitem *) 0, args );
+		(void) f_Grid_X_Pos( args );
 		(void) sprintf( args[1], "%d", y - y_fb_origin );
 		(void) sprintf( args[2], "%d", grid_y_fin );
-		(void) f_Grid_Y_Pos( (HMitem *) 0, args );
+		(void) f_Grid_Y_Pos( args );
 		}
 	else
 		{	int	x_fin, y_fin;
@@ -776,10 +776,10 @@ pt_Select(register int x, register int y, register int *xp, register int *yp, re
 			}
 		(void) sprintf( args[1], "%d", grid_x_org );
 		(void) sprintf( args[2], "%d", x_fin );
-		(void) f_Grid_X_Pos( (HMitem *) 0, args );
+		(void) f_Grid_X_Pos( args );
 		(void) sprintf( args[1], "%d", grid_y_org );
 		(void) sprintf( args[2], "%d", y_fin );
-		(void) f_Grid_Y_Pos( (HMitem *) 0, args );
+		(void) f_Grid_Y_Pos( args );
 		}
 	Toggle( *originp );
 	return;
@@ -802,14 +802,14 @@ setCellSize(void)
 	}
 
 void
-setGridSize(int size)
+setGridSize()
 {	char	buf[10];
 		char	*ar[3];
 	ar[1] = "0";
 	ar[2] = buf;
 	(void) sprintf( ar[2], "%d", grid_sz-1 );
-	(void) f_Grid_X_Pos( (HMitem *) 0, ar );
-	(void) f_Grid_Y_Pos( (HMitem *) 0, ar );
+	(void) f_Grid_X_Pos( ar );
+	(void) f_Grid_Y_Pos( ar );
 	return;
 	}
 
@@ -844,7 +844,7 @@ static int	popups = FALSE;	/* Are pop-up menus being used? */
 /*	f_Cursor_Module() */
 /*ARGSUSED*/
 static int
-f_Cursor_Module(HMitem *itemp, char **args)
+f_Cursor_Module()
 {	static int	x = -1, y = -1;
 		register int	c;
 		int		origin = TRUE;
@@ -877,7 +877,7 @@ f_Cursor_Module(HMitem *itemp, char **args)
 			int		in_windowing = FALSE;
 			int		out_windowing = FALSE;
 			HMitem		*itemptr;
-#if HAS_SGIGL
+#if defined(HAS_SGIGL)
 		if ( sgi_usemouse )
 			{
 			switch ( sgi_Cursor_Input( x, y, &mx, &my, xx0, yy0, origin ) )
@@ -931,7 +931,7 @@ f_Cursor_Module(HMitem *itemp, char **args)
 			Toggle( query_region );
 			break;
 			}
-#if HAS_SGIGL
+#if defined(HAS_SGIGL)
 keybd_input :
 #endif
 		prnt_Event( "" );
@@ -1129,7 +1129,7 @@ keybd_input :
 					ar[1] = buf;
 					ar[2] = NULL;
 					(void) sprintf( ar[1], "%d", grid_sz );
-					(void) f_GridConfig( (HMitem *) 0, ar );
+					(void) f_GridConfig( ar );
 					}
 				reset_Tty( 0 );
 				user_interrupt = FALSE;
@@ -1180,7 +1180,7 @@ exit_cm :	;
 /*	f _ D i s p l a y _ O r i g i n ( ) */
 /*ARGSUSED*/
 static int
-f_Display_Origin(HMitem *itemp, char **args)
+f_Display_Origin(char **args)
 {
 	if (	args == NULL ||
 		args[1] == NULL || sscanf( args[1], "%d", &x_fb_origin ) != 1
@@ -1207,7 +1207,7 @@ f_Display_Origin(HMitem *itemp, char **args)
 /*	f _ A n i m a t e ( ) */
 /*ARGSUSED*/
 static int
-f_Animate(HMitem *itemp, char **args)
+f_Animate()
 {
 	(void) sprintf( prompt, "Full-screen animation ? [y|n](%c) ", movie.m_fullscreen ? 'y' : 'n' );
 	if ( get_Input( input_ln, MAX_LN, prompt ) != NULL )
@@ -1283,7 +1283,7 @@ f_Animate(HMitem *itemp, char **args)
 		close_Output_Device( 0 );
 		return	1;
 		}
-#if HAS_SGIGL
+#if defined(HAS_SGIGL)
 	{	extern void	sgi_Animate();
 		static int	fps = 30;
 	(void) sprintf( prompt, "Frame size ? (%d) ", movie.m_frame_sz );
@@ -1325,7 +1325,7 @@ f_Animate(HMitem *itemp, char **args)
  */
 /*ARGSUSED*/
 static int
-f_GridConfig(HMitem *itemp, char **args)
+f_GridConfig(char **args)
 {
 	if ( args != NULL && args[1] != NULL && args[2] == NULL )
 		{ /* Old style 'G' command for upward compatibility of
@@ -1438,7 +1438,7 @@ f_GridConfig(HMitem *itemp, char **args)
 /*	f _ W r t _ F b ( ) */
 /*ARGSUSED*/
 static int
-f_Wrt_Fb(HMitem *itemp, char **args)
+f_Wrt_Fb(char **args)
 {	register int y;
 		static char save_fb_file[MAX_LN] = { 0 };
 		FBIO *save_fbiop;
@@ -1506,7 +1506,7 @@ f_Wrt_Fb(HMitem *itemp, char **args)
 /*	f _ R d _ F b ( ) */
 /*ARGSUSED*/
 static int
-f_Rd_Fb(HMitem *itemp, char **args)
+f_Rd_Fb(char **args)
 {	register int y;
 		static char save_fb_file[MAX_LN] = { 0 };
 		FBIO *save_fbiop;
@@ -1576,16 +1576,16 @@ static void
 wait_For_User(void)
 {
 	(void) get_Input( input_ln, MAX_LN, "Continue ? [<return>] " );
-	(void) f_Redraw( (HMitem *) 0, (char **) 0 );
+	(void) f_Redraw( (char **) 0 );
 	return;
 	}
 
 /*	f _ P r n t _ L g t _ D b ( ) */
 /*ARGSUSED*/
 static int
-f_Prnt_Lgt_Db(HMitem *itemp, char **args)
+f_Prnt_Lgt_Db(char **args)
 {	static int	light_id = -1;
-#if HAS_SGIGL
+#if defined(HAS_SGIGL)
 	if ( (args == NULL || args[1] == NULL) && sgi_usemouse )
 		{	extern long	lgts_prnt_menu;
 		light_id = dopup( lgts_prnt_menu );
@@ -1624,7 +1624,7 @@ f_Prnt_Lgt_Db(HMitem *itemp, char **args)
 /*	f _ P r n t _ M a t _ D b ( ) */
 /*ARGSUSED*/
 static int
-f_Prnt_Mat_Db(HMitem *itemp, char **args)
+f_Prnt_Mat_Db(char **args)
 {	static int	material_id = -1;
 	if ( (args == NULL || args[1] == NULL) && tty )
 		{
@@ -1657,7 +1657,7 @@ f_Prnt_Mat_Db(HMitem *itemp, char **args)
 /*	f _ R d _ R a w _ I R ( ) */
 /*ARGSUSED*/
 static int
-f_Rd_Raw_IR(HMitem *itemp, char **args)
+f_Rd_Raw_IR(char **args)
 {	FILE	*ir_fp;
 	if ( args != NULL && args[1] != NULL )
 		bu_strlcpy( ir_file, args[1], MAX_LN );
@@ -1746,7 +1746,7 @@ read_Frame(FILE *fp)
 /*	f _ M o v i e ( ) */
 /*ARGSUSED*/
 static int
-f_Movie(HMitem *itemp, char **args)
+f_Movie()
 {	int		ret = TRUE;
 		char		buf[10];
 		char		*locargs[3];
@@ -1783,7 +1783,7 @@ f_Movie(HMitem *itemp, char **args)
 	locargs[1] = buf;
 	locargs[1] = strtok( input_ln, " \t\n\r" );
 	locargs[2] = NULL; /* XXX old-style grid configuration. */
-	(void) f_GridConfig( (HMitem *) 0, locargs );
+	(void) f_GridConfig( locargs );
 	(void) sprintf( prompt, "Number of frames ? (%d) ", noframes );
 	if ( get_Input( input_ln, MAX_LN, prompt ) != NULL )
 		{
@@ -1967,7 +1967,7 @@ f_Movie(HMitem *itemp, char **args)
 			ret = -1;
 			goto	error_exit;
 			}
-		if ( movie.m_pers_beg == 0.0 && movie.m_pers_end == 0.0 )
+		if ( NEAR_ZERO(movie.m_pers_beg, SMALL_FASTF) && NEAR_ZERO(movie.m_pers_end, SMALL_FASTF) )
 			{
 			(void) sprintf( prompt,
 				"Starting and ending grid distance ? (%g %g) ",
@@ -1999,7 +1999,7 @@ error_exit :
 /*	f _ M a x _ B o u n c e ( ) */
 /*ARGSUSED*/
 static int
-f_Max_Bounce(HMitem *itemp, char **args)
+f_Max_Bounce(char **args)
 {
 	if ( ir_mapping )
 		{
@@ -2031,7 +2031,7 @@ f_Max_Bounce(HMitem *itemp, char **args)
 /*	f _ P r n t _ R e g i o n s ( )  */
 /*ARGSUSED*/
 static int
-f_Prnt_Regions(HMitem *itemp, char **args)
+f_Prnt_Regions()
 {
 	prnt_Trie( reg_triep, 0 );
 	if ( popups )
@@ -2042,7 +2042,7 @@ f_Prnt_Regions(HMitem *itemp, char **args)
 /*	f _ S e t _ R e g i o n _ I R ( ) */
 /*ARGSUSED*/
 static int
-f_Set_Region_IR(HMitem *itemp, char **args)
+f_Set_Region_IR()
 {	register OcList	*ocp;
 		OcList		*oclist;
 		static char	reg_name[MAX_LN];
@@ -2065,7 +2065,7 @@ f_Set_Region_IR(HMitem *itemp, char **args)
 /*	f _ E r r _ F i l e ( ) */
 /*ARGSUSED*/
 static int
-f_Err_File(HMitem *itemp, char **args)
+f_Err_File(char **args)
 {	static int	err_fd = -1;
 	if ( args != NULL && args[1] != NULL )
 		bu_strlcpy( err_file, args[1], MAX_LN );
@@ -2105,7 +2105,7 @@ f_Err_File(HMitem *itemp, char **args)
  */
 /*ARGSUSED*/
 static int
-f_Shadows(HMitem *itemp, char **args)
+f_Shadows(char **args)
 {
 	if ( args == NULL )
 		{
@@ -2127,7 +2127,7 @@ f_Shadows(HMitem *itemp, char **args)
 /*	f _ T r a c k i n g _ C u r s o r ( ) */
 /*ARGSUSED*/
 static int
-f_Tracking_Cursor(HMitem *itemp, char **args)
+f_Tracking_Cursor(char **args)
 {
 	if ( args == NULL )
 		{
@@ -2152,7 +2152,7 @@ f_Tracking_Cursor(HMitem *itemp, char **args)
  * returns the number of processors or negative on user input error
  */
 static int
-f_Parallel(HMitem *itemp, char **args)
+f_Parallel(char **args)
 {
     int maxpsw = bu_avail_cpus();
     if (maxpsw > MAX_PSW)
@@ -2189,7 +2189,7 @@ f_Parallel(HMitem *itemp, char **args)
 /*	f _ W r t _ I R _ D b ( ) */
 /*ARGSUSED*/
 static int
-f_Wrt_IR_Db(HMitem *itemp, char **args)
+f_Wrt_IR_Db(char **args)
 {	FILE		*ir_fp;
 	if ( args != NULL && args[1] != NULL )
 		bu_strlcpy( ir_db_file, args[1], MAX_LN );
@@ -2230,7 +2230,7 @@ f_Wrt_IR_Db(HMitem *itemp, char **args)
 /*	f _ W r t _ L g t _ D b ( ) */
 /*ARGSUSED*/
 static int
-f_Wrt_Lgt_Db(HMitem *itemp, char **args)
+f_Wrt_Lgt_Db(char **args)
 {
 	if ( args != NULL && args[1] != NULL )
 		bu_strlcpy( lgt_db_file, args[1], MAX_LN );
@@ -2261,7 +2261,7 @@ f_Wrt_Lgt_Db(HMitem *itemp, char **args)
 /*	f _ W r t _ M a t _ D b ( ) */
 /*ARGSUSED*/
 static int
-f_Wrt_Mat_Db(HMitem *itemp, char **args)
+f_Wrt_Mat_Db(char **args)
 {
 	if ( args != NULL && args[1] != NULL )
 		bu_strlcpy( mat_db_file, args[1], MAX_LN );
@@ -2287,7 +2287,7 @@ f_Wrt_Mat_Db(HMitem *itemp, char **args)
 /*	f _ G r i d _ T r a n s l a t e ( ) */
 /*ARGSUSED*/
 static int
-f_Grid_Translate(HMitem *itemp, char **args)
+f_Grid_Translate(char **args)
 {
 #if SINGLE_PRECISION
 	if (	args == NULL || args[1] == NULL || args[2] == NULL
@@ -2323,7 +2323,7 @@ f_Grid_Translate(HMitem *itemp, char **args)
 
 /*ARGSUSED*/
 static int
-f_Overlaps(HMitem *itemp, char **args)
+f_Overlaps(char **args)
 {
 	if ( args == NULL )
 		{
@@ -2349,7 +2349,7 @@ f_Overlaps(HMitem *itemp, char **args)
 /*	f _ S h o w _ I R ( ) */
 /*ARGSUSED*/
 static int
-f_Show_IR(HMitem *itemp, char **args)
+f_Show_IR(char **args)
 {	int	x, y;
 	if ( args == NULL || args[1] == NULL )
 		{
@@ -2376,7 +2376,7 @@ f_Show_IR(HMitem *itemp, char **args)
 /*	f _ B a c k g r o u n d ( ) */
 /*ARGSUSED*/
 static int
-f_Background(HMitem *itemp, char **args)
+f_Background(char **args)
 {
 	if (	args == NULL || args[1] == NULL
 	     ||	args[2] == NULL
@@ -2467,7 +2467,7 @@ note_IRmapping(void)
 /*	f _ I R m o d u l e ( ) */
 /*ARGSUSED*/
 static int
-f_IRmodule(HMitem *itemp, char **args)
+f_IRmodule(char **args)
 {	int	menuval = -1;
 	if ( args == NULL || args[1] == NULL )
 		{	HMitem	*itemptr;
@@ -2477,7 +2477,7 @@ f_IRmodule(HMitem *itemp, char **args)
 				*args[0] );
 			return	-1;
 			}
-#if HAS_SGIGL
+#if defined(HAS_SGIGL)
 		if ( sgi_usemouse )
 			{	extern long	irflags_menu;
 			menuval = dopup( irflags_menu );
@@ -2502,7 +2502,7 @@ f_IRmodule(HMitem *itemp, char **args)
 /*	f _ R d _ I R _ D b ( ) */
 /*ARGSUSED*/
 static int
-f_Rd_IR_Db(HMitem *itemp, char **args)
+f_Rd_IR_Db(char **args)
 {	FILE	*ir_fp;
 	if ( args != NULL && args[1] != NULL )
 		bu_strlcpy( ir_db_file, args[1], MAX_LN );
@@ -2545,7 +2545,7 @@ f_Rd_IR_Db(HMitem *itemp, char **args)
 /*	f _ R d _ L g t _ D b ( ) */
 /*ARGSUSED*/
 static int
-f_Rd_Lgt_Db(HMitem *itemp, char **args)
+f_Rd_Lgt_Db(char **args)
 {
 	if ( args != NULL && args[1] != NULL )
 		bu_strlcpy( lgt_db_file, args[1], MAX_LN );
@@ -2574,7 +2574,7 @@ f_Rd_Lgt_Db(HMitem *itemp, char **args)
 /*	f _ R d _ M a t _ D b ( ) */
 /*ARGSUSED*/
 static int
-f_Rd_Mat_Db(HMitem *itemp, char **args)
+f_Rd_Mat_Db(char **args)
 {
 	if ( args != NULL && args[1] != NULL )
 		bu_strlcpy( mat_db_file, args[1], MAX_LN );
@@ -2603,7 +2603,7 @@ f_Rd_Mat_Db(HMitem *itemp, char **args)
 /*	f _ I R _ O f f s e t ( ) */
 /*ARGSUSED*/
 static int
-f_IR_Offset(HMitem *itemp, char **args)
+f_IR_Offset(char **args)
 {
 	if (	args == NULL || args[1] == NULL || sscanf( args[1], "%d", &ir_mapx ) != 1
 	     ||	args[2] == NULL || sscanf( args[2], "%d", &ir_mapy ) != 1
@@ -2617,7 +2617,7 @@ f_IR_Offset(HMitem *itemp, char **args)
 /*	f _ D i s t _ G r i d ( ) */
 /*ARGSUSED*/
 static int
-f_Dist_Grid(HMitem *itemp, char **args)
+f_Dist_Grid(char **args)
 {
 	if (	args != NULL && args[1] != NULL
 #if SINGLE_PRECISION
@@ -2662,7 +2662,7 @@ f_Dist_Grid(HMitem *itemp, char **args)
 /*	f _ S c a l e _ G r i d ( ) */
 /*ARGSUSED*/
 static int
-f_Scale_Grid(HMitem *itemp, char **args)
+f_Scale_Grid()
 {
 	bu_log( "The -g option is obsolete, use -G to set view size.\n" );
 	return	1;
@@ -2671,7 +2671,7 @@ f_Scale_Grid(HMitem *itemp, char **args)
 /*	f _ I R _ N o i s e ( ) */
 /*ARGSUSED*/
 static int
-f_IR_Noise(HMitem *itemp, char **args)
+f_IR_Noise(char **args)
 {
 	if (	args == NULL || args[1] == NULL
 	    ||	sscanf( args[1], "%d", &ir_noise ) != 1
@@ -2701,7 +2701,7 @@ f_IR_Noise(HMitem *itemp, char **args)
  */
 /*ARGSUSED*/
 static int
-f_Key_Frame(HMitem *itemp, char **args)
+f_Key_Frame(char **args)
 {	fastf_t		model2view[16], to_eye[16];
 		FILE		*svkey_fp=NULL;
 	if ( args != NULL && args[1] != NULL )
@@ -2779,7 +2779,7 @@ f_Key_Frame(HMitem *itemp, char **args)
 
 /*ARGSUSED*/
 static int
-f_Hidden_Ln_Draw(HMitem *itemp, char **args)
+f_Hidden_Ln_Draw(char **args)
 {
 	if ( args == NULL )
 		{
@@ -2826,9 +2826,9 @@ f_Hidden_Ln_Draw(HMitem *itemp, char **args)
 /*	f _ E n t r _ L g t _ D b ( ) */
 /*ARGSUSED*/
 static int
-f_Entr_Lgt_Db(HMitem *itemp, char **args)
+f_Entr_Lgt_Db(char **args)
 {	static int	light_id = 0;
-#if HAS_SGIGL
+#if defined(HAS_SGIGL)
 	if ( (args == NULL || args[1] == NULL) && sgi_usemouse )
 		{	extern long	lgts_edit_menu;
 			int		rc;
@@ -2868,7 +2868,7 @@ f_Entr_Lgt_Db(HMitem *itemp, char **args)
 /*	f _ E n t r _ M a t _ D b ( ) */
 /*ARGSUSED*/
 static int
-f_Entr_Mat_Db(HMitem *itemp, char **args)
+f_Entr_Mat_Db(char **args)
 {	static int	material_id = 0;
 	if ( (args == NULL || args[1] == NULL) && tty )
 		{
@@ -2900,9 +2900,9 @@ f_Entr_Mat_Db(HMitem *itemp, char **args)
 /*	f _ S e t _ I R _ P a i n t ( ) */
 /*ARGSUSED*/
 static int
-f_Set_IR_Paint(HMitem *itemp, char **args)
+f_Set_IR_Paint(char **args)
 {
-#if HAS_SGIGL
+#if defined(HAS_SGIGL)
 	if ( (args == NULL || args[1] == NULL) && sgi_usemouse )
 		{	extern long	irpaint_menu;
 		ir_doing_paint = dopup( irpaint_menu );
@@ -2936,7 +2936,7 @@ f_Set_IR_Paint(HMitem *itemp, char **args)
 /*	f _ R a s t e r _ F i l e ( ) */
 /*ARGSUSED*/
 static int
-f_Raster_File(HMitem *itemp, char **args)
+f_Raster_File(char **args)
 {
 	if ( args != NULL && args[1] != NULL )
 		bu_strlcpy( fb_file, args[1], MAX_LN );
@@ -2957,7 +2957,7 @@ f_Raster_File(HMitem *itemp, char **args)
 /*	f _ P e r s p e c t i v e ( ) */
 /*ARGSUSED*/
 static int
-f_Perspective(HMitem *itemp, char **args)
+f_Perspective(char **args)
 {
 #if SINGLE_PRECISION
 	if ( args == NULL || args[1] == NULL || sscanf( args[1], "%f", &rel_perspective ) != 1 )
@@ -2989,7 +2989,7 @@ f_Perspective(HMitem *itemp, char **args)
 /*	f _ Q u i t ( ) */
 /*ARGSUSED*/
 static int
-f_Quit(HMitem *itemp, int args)
+f_Quit()
 {
 	exit_Neatly( 0 );
 	/*NOTREACHED*/
@@ -2999,7 +2999,7 @@ f_Quit(HMitem *itemp, int args)
 /*	f _ R e d r a w ( ) */
 /*ARGSUSED*/
 static int
-f_Redraw(HMitem *itemp, char **args)
+f_Redraw()
 {
 	if ( tty )
 		{
@@ -3014,7 +3014,7 @@ f_Redraw(HMitem *itemp, char **args)
 /*	f _ G r i d _ X _ P o s  ( ) */
 /*ARGSUSED*/
 int
-f_Grid_X_Pos(HMitem *itemp, char **args)
+f_Grid_X_Pos(char **args)
 {
 	if (	args != NULL && args[1] != NULL && args[2] != NULL
 	    &&	(	sscanf( args[1], "%d", &grid_x_org ) != 1
@@ -3055,7 +3055,7 @@ f_Grid_X_Pos(HMitem *itemp, char **args)
 /*	f _ G r i d _ Y _ P o s  ( ) */
 /*ARGSUSED*/
 int
-f_Grid_Y_Pos(HMitem *itemp, char **args)
+f_Grid_Y_Pos(char **args)
 {
 	if (	args != NULL && args[1] != NULL && args[2] != NULL
 	    &&	(	sscanf( args[1], "%d", &grid_y_org ) != 1
@@ -3096,7 +3096,7 @@ f_Grid_Y_Pos(HMitem *itemp, char **args)
 /*	f _ F b c l e a r ( ) */
 /*ARGSUSED*/
 static int
-f_Fbclear(HMitem *itemp, char **args)
+f_Fbclear()
 {	static RGBpixel	black = { 0, 0, 0 };
 	if ( ! ready_Output_Device( 0 ) )
 		return	-1;
@@ -3108,7 +3108,7 @@ f_Fbclear(HMitem *itemp, char **args)
 /*	f _ E x e c _ S h e l l ( ) */
 /*ARGSUSED*/
 static int
-f_Exec_Shell(HMitem *itemp, char **args)
+f_Exec_Shell(char **args)
 {	register int	i;
 		int	exit_status;
 	if ( args == NULL )
@@ -3171,9 +3171,9 @@ exec_start :
 			args[1] = NULL;
 			goto	exec_start;
 			}
-		(void) f_Redraw( (HMitem *) 0, (char **) 0 );
+		(void) f_Redraw( (char **) 0 );
 		}
-#if HAS_SGIGL
+#if defined(HAS_SGIGL)
 	if ( SGI_USEKEYBD )
 		{
 		qreset();
@@ -3238,7 +3238,7 @@ user_Interaction(void)
 		register int	ret;
 	local_argv[1] = NULL; /* Truncate argument list initially. */
 	/* Set up user options. */
-#if HAS_SGIGL
+#if defined(HAS_SGIGL)
 	if ( sgi_usemouse )
 		sgi_User_Input( local_argv );
 	else
@@ -3293,7 +3293,7 @@ setup_Lgts(int frame)
 		/* Eye location specified by saved view, grid location
 			depends on whether we want perspective or not.
 		 */
-		if ( rel_perspective != 0.0 )
+		if ( !NEAR_ZERO(rel_perspective, SMALL_FASTF) )
 			{ /* Perspective used in animation. */
 				fastf_t	grid_delta[3], f;
 			f = EYE_SIZE * rel_perspective;
@@ -3392,7 +3392,7 @@ setup_Lgts(int frame)
 			     grid_hor, grid_ver );
 		/* Unit vector from center of model toward eye. */
 		cons_Vector( lgts[0].dir, lgts[0].azim, lgts[0].elev );
-		if ( rel_perspective == 0.0 )
+		if ( NEAR_ZERO(rel_perspective, SMALL_FASTF) )
 			{
 			VJOIN1( grid_loc, modl_cntr, grid_dist, lgts[0].dir );
 			VMOVE( lgts[0].loc, grid_loc );
@@ -3603,7 +3603,7 @@ make_Script(char *file)
 				x_fb_origin, y_fb_origin );
 	if ( max_bounce )
 		(void) fprintf( run_fp,	" -K%d", max_bounce );
-	if ( grid_roll != 0.0 )
+	if ( !NEAR_ZERO(grid_roll, SMALL_FASTF) )
 		(void) fprintf( run_fp,	" -a%g", grid_roll*DEGRAD );
 	if ( background[0] || background[1] || background[2] )
 		(void) fprintf( run_fp,
@@ -3627,7 +3627,7 @@ make_Script(char *file)
 	if ( force_fbsz )
 		(void) fprintf( run_fp, " -T%d", fb_size );
 
-	if ( x_grid_offset != 0.0 || y_grid_offset != 0.0 )
+	if ( !NEAR_ZERO(x_grid_offset, SMALL_FASTF) || !NEAR_ZERO(y_grid_offset, SMALL_FASTF) )
 		(void) fprintf( run_fp,	" -t\"%g %g\"", x_grid_offset, y_grid_offset );
 	if ( mat_db_file[0] != '\0' )
 		(void) fprintf( run_fp,	" -w%s", mat_db_file );
@@ -3637,7 +3637,7 @@ make_Script(char *file)
 		(void) fprintf( run_fp,	" -o%s", fb_file );
 	if ( ir_offset )
 		(void) fprintf( run_fp, " -d\"%d %d\"", ir_mapx, ir_mapy );
-	if ( rel_perspective != 0.25 )
+	if ( !NEAR_ZERO(rel_perspective - 0.25, SMALL_FASTF) )
 		(void) fprintf( run_fp, " -p%g", rel_perspective );
 	if ( ir_mapping ) /* MUST precede -I option. */
 		(void) fprintf( run_fp, " -s%d", ir_mapping );
@@ -3670,7 +3670,7 @@ pars_Argv(int argc, register char **argv)
 		InitTermCap( stdout );
 		li = LI;	/* Default window size from termcap. */
 		co = CO;
-		(void) f_Redraw( (HMitem *) 0, (char **) 0 );
+		(void) f_Redraw( (char **) 0 );
 		(void) fflush( stdout );
 		}
 	rt_prep_timer();
@@ -3686,7 +3686,7 @@ pars_Argv(int argc, register char **argv)
 		switch ( c )
 			{
 		default :
-			if ( ! user_Opt(	c, bu_optarg ) )
+			if ( ! user_Opt(c, bu_optarg) )
 				{
 				(void) printf( "Failure of user_Opt(%c)", c );
 				return	0;
@@ -3784,7 +3784,7 @@ stop_sig(int sig)
 #endif
 
     (void) signal( sig, stop_sig );
-    (void) f_Redraw( (HMitem *) 0, (char **) 0 );
+    (void) f_Redraw( (char **) 0 );
     return;
 }
 
@@ -3795,7 +3795,7 @@ int
 key_Frame(void)
 {	static char	*local_argv[2];
 	local_argv[0] = local_argv[1] = NULL;
-	return	f_Key_Frame( (HMitem *) 0, local_argv );
+	return	f_Key_Frame( local_argv );
 	}
 
 /*	g e t _ I n p u t ( )
@@ -3804,7 +3804,7 @@ key_Frame(void)
 char	*
 get_Input(char *inbuf, int bufsz, char *msg)
 {
-#if HAS_SGIGL
+#if defined(HAS_SGIGL)
 		extern char	*sgi_GetInput();
 	if ( sgi_console && sgi_usemouse )
 		return	sgi_GetInput( inbuf, bufsz, msg );
@@ -3827,7 +3827,7 @@ get_Input(char *inbuf, int bufsz, char *msg)
 int
 hm_getchar(void)
 {
-#if HAS_SGIGL
+#if defined(HAS_SGIGL)
 	if ( SGI_USEKEYBD )
 		return	sgi_Getchar();
 #endif
@@ -3841,7 +3841,7 @@ hm_getchar(void)
 int
 hm_ungetchar(int c)
 {
-#if HAS_SGIGL
+#if defined(HAS_SGIGL)
 	if ( SGI_USEKEYBD )
 		return	sgi_Ungetchar();
 #endif

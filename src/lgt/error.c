@@ -63,7 +63,6 @@ bu_bomb(const char *str)
 	if ( pix_buffered == B_PAGE )
 		(void) fb_flush( fbiop ); /* Write out buffered image.	*/
 	(void) abort();			  /* Should dump.		*/
-	bu_exit(12, NULL);
 }
 
 void

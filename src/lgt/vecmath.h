@@ -95,7 +95,7 @@
 /* Scale vector 'a' to have magnitude 'l'.				*/
 #define V_Length( a, l ) \
 		{	double f, m; \
-		if ( (m=Mag(a)) == 0.0 ) \
+		if ( NEAR_ZERO((m=Mag(a)), SMALL_FASTF) ) \
 			(void) fprintf( stderr, "Magnitude is zero!\n" ); \
 		else \
 			{ \

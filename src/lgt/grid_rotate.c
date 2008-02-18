@@ -18,9 +18,8 @@
  * information.
  */
 /** @file grid_rotate.c
-	Author:		Jeff Hanes
-	Modified:	Gary S. Moss	(Added roll rotation.)
-*/
+ *
+ */
 
 #include "common.h"
 
@@ -31,23 +30,24 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
+
 #include "./hmenu.h"
 #include "./lgt.h"
 #include "./extern.h"
 #include "./vecmath.h"
-void	grid_Rotate(fastf_t azim, fastf_t elev, fastf_t roll, register fastf_t *des_H, register fastf_t *des_V);
 
-/*	g r i d _ R o t a t e ( )
-	Creates the unit vectors H and V which are the horizontal
-	and vertical components of the grid in target coordinates.
-	The vectors are found from the azimuth and elivation of the
-	viewing angle according to a simplification of the rotation
-	matrix from grid coordinates to target coordinates.
-	To see that the vectors are, indeed, unit vectors, recall
-	the trigonometric relation:
 
-		sin( A )^2  +  cos( A )^2  =  1 .
-
+/**
+ * g r i d _ R o t a t e
+ *
+ * Creates the unit vectors H and V which are the horizontal and
+ * vertical components of the grid in target coordinates.  The vectors
+ * are found from the azimuth and elivation of the viewing angle
+ * according to a simplification of the rotation matrix from grid
+ * coordinates to target coordinates.  To see that the vectors are,
+ * indeed, unit vectors, recall the trigonometric relation:
+ *
+ *		sin( A )^2  +  cos( A )^2  =  1 .
  */
 void
 grid_Rotate(fastf_t azim, fastf_t elev, fastf_t roll, register fastf_t *des_H, register fastf_t *des_V)
@@ -61,7 +61,7 @@ grid_Rotate(fastf_t azim, fastf_t elev, fastf_t roll, register fastf_t *des_H, r
 	des_V[1] = -sn_elv*sn_azm;
 	des_V[2] =  cos( elev );
 
-	if ( roll != 0.0 )
+	if ( !NEAR_ZERO(roll, 0.0) )
 		{	fastf_t	tmp_V[3], tmp_H[3], prime_V[3];
 			fastf_t	sn_roll = sin( roll );
 			fastf_t	cs_roll = cos( roll );
