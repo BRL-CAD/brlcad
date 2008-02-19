@@ -2075,8 +2075,7 @@ general_Handler(int sig)
 #if defined(SIGCLD)
 	case SIGCLD :
 	    break;
-#endif
-#if defined(SIGCHLD)
+#elif defined(SIGCHLD)
 	case SIGCHLD :
 	    break;
 #endif
