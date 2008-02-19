@@ -22,14 +22,6 @@
  *  Comments -
  *      Texture Library - Perlin Utility Header
  *
- *  Author -
- *      Justin L. Shumaker
- *
- *  Source -
- *      The U. S. Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
- * $Id$
  */
 
 #ifndef _TEXTURE_PERLIN_H
@@ -38,8 +30,8 @@
 #include "texture_internal.h"
 
 typedef struct texture_perlin_s {
-  int *PV;
-  TIE_3 *RV;
+    int *PV;
+    TIE_3 *RV;
 } texture_perlin_t;
 
 extern	void	texture_perlin_init(texture_perlin_t *P);
