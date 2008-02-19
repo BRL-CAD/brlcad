@@ -28,13 +28,15 @@
 
 char *
 endstr(char *str)
-{	while ( *str != 0 )	*str++;
+{
+	while ( *str != 0 )	*str++;
 	return( str );
 }
 
 strappend(char *s, char *t)	/* === */
 
-{	s = endstr( s );
+{
+	s = endstr( s );
 	while ( (*s++ = *t++) != '\0' );
 	*s = '\0';
 }

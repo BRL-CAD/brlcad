@@ -52,7 +52,8 @@
 
 int
 main(int argc, char **argv)
-{							/*  START # 1  */
+{
+							/*  START # 1  */
    struct rt_wdb *fpw;		/*  File to be written to.  */
    char filemged[26];		/*  Mged file create.  */
    double hgt, wid, dpt;		/*  Height, width, & depth of handle.  */
@@ -99,7 +100,8 @@ main(int argc, char **argv)
 
    /*  If there are no arguments ask questions.  */
    if (argc == 1)
-   {							/*  START # 3  */
+   {
+   							/*  START # 3  */
 
    /*  Print info about the window.  */
    (void)printf("\nThe windows are composed of 2 arb8s and 4 cylinders.\n");
@@ -129,7 +131,8 @@ main(int argc, char **argv)
 
    /*  If there are arguments get answers from arguments.  */
    else
-   {							/*  START # 4  */
+   {
+   							/*  START # 4  */
 	/*  List options.  */
 	/*	-fname - name = mged file name.  */
 	/*	-n# - # = number of windows.  */
@@ -139,17 +142,20 @@ main(int argc, char **argv)
 	/*	-r# - # = radius of window corner in mm.  */
 
 	for (i=1; i<argc; i++)
-	{						/*  START # 5  */
+	{
+							/*  START # 5  */
 	   /*  Put argument in temporary character string.  */
 	   temp = argv[i];
 
 	   /*  -f - mged file.  */
 	   if (temp[1] == 'f')
-	   {						/*  START # 6  */
+	   {
+	   						/*  START # 6  */
 		j = 2;
 		k = 0;
 		while ( (temp[j] != '\0') && (k < 25) )
-		{					/*  START # 7  */
+		{
+							/*  START # 7  */
 		   filemged[k] = temp[j];
 		   j++;
 		   k++;
@@ -159,12 +165,14 @@ main(int argc, char **argv)
 
 	   /*  All other options.  */
 	   else
-	   {						/*  START # 8  */
+	   {
+	   						/*  START # 8  */
 		/*  Set up temporary character string.  */
 		j = 2;
 		k = 0;
 		while ( (temp[j] != '\0') && (k < 15) )
-		{					/*  START # 9  */
+		{
+							/*  START # 9  */
 		   temp1[k] = temp[j];
 		   j++;
 		   k++;
@@ -199,7 +207,8 @@ main(int argc, char **argv)
    mk_id(fpw, "windows");
 
    for (i=0; i<numwin; i++)
-   {							/*  START # 2  */
+   {
+   							/*  START # 2  */
 	/*  Create first arb8.  */
 	pts[0][0] = (fastf_t)0.;
 	pts[0][1] = (fastf_t) (wid / 2. - rds);

@@ -112,7 +112,8 @@ main(int argc, char **argv)
 			    if ( ! tty )
 				abort_sig = SIG_IGN;
 			    else
-				{ /* MEX windows on IRIS (other than
+				{
+				 /* MEX windows on IRIS (other than
 				     the console) ignore SIGINT. */
 				    prnt_Scroll( "WARNING: Signal 1 was being ignored!" );
 				    goto	tty_sig;
@@ -151,7 +152,8 @@ interpolate_Frame(int frame)
     if ( movie.m_noframes == 1 )
 	return	1;
     if ( ! movie.m_fullscreen )
-	{	register int	frames_across;
+	{
+		register int	frames_across;
 	register int	size;
 	size = MovieSize( movie.m_frame_sz, movie.m_noframes );
 	frames_across = size / movie.m_frame_sz;
@@ -229,7 +231,8 @@ ready_Output_Device(int frame)
 	else
 	    size = grid_sz; /* just 1 pixel/ray */
     if ( movie.m_noframes > 1 && movie.m_fullscreen )
-	{	char	framefile[MAX_LN];
+	{
+		char	framefile[MAX_LN];
 	/* We must be doing full-screen frames. */
 	size = grid_sz;
 	(void) snprintf( framefile, MAX_LN, "%s.%04d", prefix, frame );

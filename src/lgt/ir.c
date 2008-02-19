@@ -78,7 +78,8 @@ ir_Chk_Table(void)
 
 static int
 adjust_Page(int y)
-{	int	scans_per_page = fbiop->if_ppixels/fbiop->if_width;
+{
+	int	scans_per_page = fbiop->if_ppixels/fbiop->if_width;
 		int	newy = y - (y % scans_per_page);
 	return	newy;
 	}
@@ -86,7 +87,8 @@ adjust_Page(int y)
 #define D_XPOS	(x-xmin)
 void
 display_Temps(int xmin, int ymin)
-{	register int	x, y;
+{
+	register int	x, y;
 		register int	interval = ((grid_sz*3+2)/4)/(S_BINS+2);
 		register int	xmax = xmin+(interval*S_BINS);
 		register int	ymax;
@@ -111,11 +113,13 @@ display_Temps(int xmin, int ymin)
 			return;
 			}
 		for (; x <= xmax + interval; x++ )
-			{	fastf_t	percent;
+			{
+				fastf_t	percent;
 				static RGBpixel	*pixel;
 			percent = D_XPOS / xrange;
 			if ( D_XPOS % interval == 0 )
-				{	int	temp = AMBIENT+percent*RANGE;
+				{
+					int	temp = AMBIENT+percent*RANGE;
 					register int	lgtindex = temp - ir_min;
 				pixel = (RGBpixel *) ir_table[Min(lgtindex, ir_max_index)];
 				/* this should be an &ir_table...,
@@ -138,7 +142,8 @@ display_Temps(int xmin, int ymin)
 		}
 	y = ymin;
 	for ( x = xmin; x <= xmax; x += interval )
-		{	char	tempstr[4];
+		{
+			char	tempstr[4];
 			fastf_t	percent = D_XPOS / xrange;
 			int	temp = AMBIENT+percent*RANGE;
 			int	shrinkfactor = fb_getwidth( fbiop )/grid_sz;
@@ -166,7 +171,8 @@ get_IR(int x, int y, int *fahp, FILE *fp)
 	}
 int
 read_IR(FILE *fp)
-{	register int	fy;
+{
+	register int	fy;
 		register int	rx, ry;
 		int		min, max;
 	if (	fread( (char *) &min, (int) sizeof(int), 1, fp ) != 1
@@ -182,12 +188,14 @@ read_IR(FILE *fp)
 			min, max
 			);
 		if ( ir_min == ABSOLUTE_ZERO )
-			{ /* Temperature range not set.			*/
+			{
+			 /* Temperature range not set.			*/
 			ir_min = min;
 			ir_max = max;
 			}
 		else
-			{ /* Merge with existing range.			*/
+			{
+			 /* Merge with existing range.			*/
 			ir_min = Min( ir_min, min );
 			ir_max = Max( ir_max, max );
 			bu_log(	"Global temperature range is %d to %d\n",
@@ -210,13 +218,15 @@ read_IR(FILE *fp)
 			return	0;
 			}
 		for ( rx = 0; rx < IR_DATA_WID; rx += ir_aperture )
-			{	int	fah;
+			{
+				int	fah;
 				int	sum = 0;
 				register int	i;
 				register int	lgtindex;
 				RGBpixel	*pixel;
 			for ( i = 0; i < ir_aperture; i++ )
-				{	register int	j;
+				{
+					register int	j;
 				for ( j = 0; j < ir_aperture; j++ )
 					{
 					if ( get_IR( rx+j, ry+i, &fah, fp ) )
@@ -252,7 +262,8 @@ read_IR(FILE *fp)
  */
 static void
 temp_To_RGB(unsigned char *rgb, int temp)
-{	fastf_t		scale = 4.0 / RANGE;
+{
+	fastf_t		scale = 4.0 / RANGE;
 		fastf_t		t = temp;
 		fastf_t		hue = 4.0 - ((t < AMBIENT ? AMBIENT :
 					      t > HOTTEST ? HOTTEST :
@@ -312,7 +323,8 @@ temp_To_RGB(unsigned char *rgb, int temp)
  */
 int
 init_Temp_To_RGB(void)
-{	register int	temp, i;
+{
+	register int	temp, i;
 		RGBpixel	rgb;
 	if ( (ir_aperture = fb_getwidth( fbiop )/grid_sz) < 1 )
 		{
@@ -347,7 +359,8 @@ init_Temp_To_RGB(void)
 
 int
 same_Hue(register RGBpixel (*pixel1p), register RGBpixel (*pixel2p))
-{	fastf_t	rval1, gval1, bval1;
+{
+	fastf_t	rval1, gval1, bval1;
 		fastf_t	rval2, gval2, bval2;
 		fastf_t	rratio, gratio, bratio;
 	if (	(*pixel1p)[RED] == (*pixel2p)[RED]
@@ -460,7 +473,8 @@ pixel_To_Temp(register RGBpixel (*pixelp))
 
 int
 f_IR_Model(register struct application *ap, Octree *op)
-{	fastf_t		octnt_min[3], octnt_max[3];
+{
+	fastf_t		octnt_min[3], octnt_max[3];
 		fastf_t		delta = modl_radius / pow_Of_2( ap->a_level );
 		fastf_t		point[3]; /* Intersection point.	*/
 		fastf_t		norml[3]; /* Unit normal at point.	*/
@@ -535,7 +549,8 @@ f_IR_Model(register struct application *ap, Octree *op)
 		norml[Z] = 1.0;
 		}
 
-	{	/* Factor in reflectance from "ambient" light source.	*/
+	{
+		/* Factor in reflectance from "ambient" light source.	*/
 		fastf_t	intensity = Dot( norml, lgts[0].dir );
 		/* Calculate index into false-color table.		*/
 		register int	lgtindex = op->o_temp - ir_min;

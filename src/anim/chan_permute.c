@@ -116,9 +116,11 @@ main(int argc, char **argv)
     }
     arrayd = (Word *) bu_calloc(argc, sizeof(Word), "Word"); /*may use more memory than absolutely necessary*/
     num_done = 0;
-    while (num_done < icount ) { /* go until all in files are done */
+    while (num_done < icount ) {
+  /* go until all in files are done */
 	num_done = 0;
-	for (x=y;x<y+ocount+icount;x++) { /* do one line */
+	for (x=y;x<y+ocount+icount;x++) {
+  /* do one line */
 	    if (num_done >= icount)
 		;/*chill - all in files done */
 	    else if (x->i_o == 1) {

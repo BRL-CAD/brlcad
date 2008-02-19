@@ -269,7 +269,8 @@ rle_rhdr(FILE *fp, int *flags, register unsigned char *bgpixel)
     }
     SWAB( x_magic );
     if ( x_magic != XtndRMAGIC )
-    { Old_Rle_Header	setup;
+    {
+     Old_Rle_Header	setup;
     if ( fread( (char *) &setup, sizeof(setup), 1, fp ) != 1 )
     {
 	(void) fprintf( stderr, "Read of Old RLE header failed!\n" );

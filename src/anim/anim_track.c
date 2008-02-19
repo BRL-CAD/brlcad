@@ -143,7 +143,8 @@ main(int argc, char **argv)
     if (!get_args(argc, argv))
 	fprintf(stderr, "Anim_track: Argument error.\n");
 
-    if (axes || cent ) { /* vehicle has own reference frame */
+    if (axes || cent ) {
+  /* vehicle has own reference frame */
 	anim_add_trans(m_axes, centroid, zero);
 	anim_add_trans(m_rev_axes, zero, rcentroid);
     }
@@ -284,7 +285,8 @@ main(int argc, char **argv)
 	    /*determine distance traveled*/
 	    VMOVE(wheel_prev, wheel_now);
 	    MAT4X3PNT(wheel_now, mat_x, to_track);
-	    if (frame > first_frame) { /* increment distance by distance moved*/
+	    if (frame > first_frame) {
+  /* increment distance by distance moved*/
 		VSUB2(vdelta, wheel_now, wheel_prev);
 		MAT3X3VEC(temp, mat_x, to_front);/*new front of vehicle*/
 		distance += VDOT(temp, vdelta);/*portion of vdelta in line with track*/
@@ -312,7 +314,8 @@ main(int argc, char **argv)
 		    (void) get_link(position, &y_rot, distance+tracklen*count/num_links+init_dist);
 		    anim_y_p_r2mat(wmat, 0.0, y_rot, 0.0);
 		    anim_add_trans(wmat, position, zero);
-		    if (axes || cent) { /* link moved to vehicle coords */
+		    if (axes || cent) {
+  /* link moved to vehicle coords */
 			MAT_MOVE(mat_x, wmat);
 			bn_mat_mul(wmat, m_axes, mat_x);
 		    }
@@ -522,12 +525,14 @@ int track_prep(void)
 	arc_angle = x[i].w.ang0 - x[i].w.ang1;
 	while (arc_angle < 0.0)
 	    arc_angle += 2.0*M_PI;
-	if (arc_angle > M_PI) { /* concave */
+	if (arc_angle > M_PI) {
+  /* concave */
 	    x[i].w.ang0 = 0.5*(x[i].w.ang0 + x[i].w.ang1);
 	    x[i].w.ang1 = x[i].w.ang0;
 	    x[i].w.arc = 0.0;
 	}
-	else { /* convex - angles are already correct */
+	else {
+  /* convex - angles are already correct */
 	    x[i].w.arc = arc_angle;
 	}
     }
@@ -566,7 +571,8 @@ int track_prep(void)
 
     /* calculate geometry of hyperbolic segment */
     hyperlen = tracklen - linearlen;
-    if (hyperlen < x[0].t.len) { /* desired length of hyperbola less than straight line*/
+    if (hyperlen < x[0].t.len) {
+  /* desired length of hyperbola less than straight line*/
 	if ((len_mode==TRACK_ELASTIC)||(len_mode==TRACK_STRETCH)) {
 	    tracklen += (x[0].t.len-hyperlen);
 	    hyperlen = tracklen - linearlen;
@@ -643,7 +649,8 @@ int get_link(fastf_t *pos, fastf_t *angle_p, fastf_t dist)
 	pos[X] += curve_c;
 	*angle_p = hyper_get_ang(curve_a, curve_c, pos[X]);
     }
-    else { /* practically linear */
+    else {
+  /* practically linear */
 	VSCALE(temp, (x[0].t.dir), dist);
 	VADD2(pos, x[0].t.pos0, temp);
 	*angle_p = atan2(x[0].t.dir[Z], x[0].t.dir[X]);

@@ -385,7 +385,8 @@ main(int argc, char **argv)
 	{
 		nread = read(fd, buf, sizeof(buf));     /* read one line of file into a buffer  */
 
-		if (nread > 0) {         /*  For valid reads, assign values to the input array  */
+		if (nread > 0) {
+          /*  For valid reads, assign values to the input array  */
 
 			sscanf(buf, "%lf %lf %lf %c %d %d %d %d %d %d %d %d %d %d %d %d %d %d",
 			    &in[i].x, &in[i].y, &in[i].z, &in[i].surf_mode, &in[i].surf_type,
@@ -425,7 +426,8 @@ main(int argc, char **argv)
 				done = 1;
 				in[i].cc = -1;
 			}
-		} else {     	/*  Read hit EOF, set flag and process one last time.    */
+		} else {
+      	/*  Read hit EOF, set flag and process one last time.    */
 		    if (nread < 0) {
 			perror("READ ERROR");
 		    }
@@ -452,7 +454,8 @@ main(int argc, char **argv)
 			if ( RT_G_DEBUG&DEBUG_MEM_FULL )
 				bu_prmem( "At start of component" );
 
-			switch (in[i-1].surf_type) {    /* Key on surface types. */
+			switch (in[i-1].surf_type) {
+     /* Key on surface types. */
 
 			case 0:  	/* triangle approximation */
 			case 1:  	/* triangle approximation (thickness + 1") */
@@ -2321,7 +2324,8 @@ proc_wedge(int cnt)
 			VMOVE(inpt8[7], inpt8[6]);
 			VMOVE(inpt8[5], inpt8[4]);
 
-			if ( ret == 0 ) { /* valid record */
+			if ( ret == 0 ) {
+  /* valid record */
 
 				mk_arb8( outfp, name, &inpt8[0][X] );
 				(void)mk_addmember(name, &head.l, NULL, WMOP_SUBTRACT);
@@ -2432,7 +2436,8 @@ proc_wedge(int cnt)
 			VMOVE(inpt8[7], inpt8[6]);
 			VMOVE(inpt8[5], inpt8[4]);
 
-			if ( ret == 0 ) { /* valid record */
+			if ( ret == 0 ) {
+  /* valid record */
 
 				mk_arb8( outfp, name, &inpt8[0][X] );
 				(void)mk_addmember(name, &head.l, NULL, WMOP_SUBTRACT);
@@ -3211,7 +3216,8 @@ proc_cylin(int cnt)
 	}
 
 
-	for (k=0; k < (cnt-1); k+=3) {	 /* For all sub-cylinders in this cc */
+	for (k=0; k < (cnt-1); k+=3) {
+ 	 /* For all sub-cylinders in this cc */
 
 		/* name solids */
 		shflg = 'c';
@@ -3251,7 +3257,8 @@ proc_cylin(int cnt)
 
 			j = (int)(in[k+2].z/mmtin);
 
-			if (in[k].surf_mode== '-') {     /* Plate mode */
+			if (in[k].surf_mode== '-') {
+      /* Plate mode */
 				vect_t unit_h;
 				fastf_t sin_ang;
 				fastf_t rad1_tmp, rad2_tmp;
@@ -3551,7 +3558,8 @@ proc_cylin(int cnt)
 
 			j = (int)(in[k+2].z/mmtin);
 
-			if (in[k].surf_mode== '-') { 	/* Plate mode */
+			if (in[k].surf_mode== '-') {
+  	/* Plate mode */
 				vect_t unit_h;
 				fastf_t sin_ang;
 				fastf_t rad1_tmp, rad2_tmp;
@@ -4035,7 +4043,8 @@ proc_label(char *labelfile)
 	char gname[NAMESIZE+1], mgname[NAMESIZE+1];	/* group, mirrored group names */
 	static int cur_series = -1;
 
-	if ( cur_series == -1 ) {		/* first time */
+	if ( cur_series == -1 ) {
+ 		/* first time */
 		cur_series = in[0].cc / 1000;
 		set_color( cur_series );
 		proc_label(labelfile);

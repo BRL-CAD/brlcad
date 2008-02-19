@@ -257,7 +257,8 @@ rt_hf_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	 * get the normal.
 	 */
 	dot = VDOT(hf->hf_X, hf->hf_Y);
-	if (fabs(dot) >tol->perp) {	/* not perpendicular, bad hf */
+	if (fabs(dot) >tol->perp) {
+ 	/* not perpendicular, bad hf */
 		bu_log("Hf(%s): X not perpendicular to Y.\n", stp->st_name);
 		bu_free((genptr_t)hf, "struct hf");
 		stp->st_specific = (genptr_t) 0;
@@ -842,7 +843,8 @@ memset(hits, 0, sizeof(hits));
 			bu_log("hf: dn=%g, dxbdn=%g, ", dn, dxbdn);
 		}
 
-		if (dn < -SQRT_SMALL_FASTF) {		/* Leaving */
+		if (dn < -SQRT_SMALL_FASTF) {
+ 		/* Leaving */
 			allDist[allIndex] = s = dxbdn/dn;
 			if ( out > s ) {
 				out = s;
@@ -851,7 +853,8 @@ memset(hits, 0, sizeof(hits));
 			if (RT_G_DEBUG & DEBUG_HF) {
 				bu_log("s=%g out=%g\n", s, out);
 			}
-		} else if (dn > SQRT_SMALL_FASTF) {	/* entering */
+		} else if (dn > SQRT_SMALL_FASTF) {
+ 	/* entering */
 			allDist[allIndex] = s = dxbdn/dn;
 			if ( in < s ) {
 				in = s;
@@ -939,7 +942,8 @@ memset(hits, 0, sizeof(hits));
 		VUNITIZE(tmp);
 		cosine = VDOT(tmp, hf->hf_X);
 	}
-	if (fabs(cosine) <= SMALL_FASTF) {	/* near enough to Z */
+	if (fabs(cosine) <= SMALL_FASTF) {
+ 	/* near enough to Z */
 		vect_t tmp;
 		int xCell, yCell, r;
 		if (RT_G_DEBUG & DEBUG_HF) {
@@ -1830,7 +1834,8 @@ rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tes
 				VJOIN2( cur, start, x, xbasis, *sp, zbasis );
 				RT_ADD_VLIST(vhead, cur, BN_VLIST_LINE_DRAW );
 			}
-		} else { /* doubles */
+		} else {
+  /* doubles */
 			dp = &HF_GET((double *)xip->mp->apbuf, x, y );
 			VJOIN2( cur, start, x, xbasis, *dp, zbasis );
 			RT_ADD_VLIST(vhead, cur, BN_VLIST_LINE_MOVE );
@@ -1871,7 +1876,8 @@ rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tes
 				RT_ADD_VLIST(vhead, cur, BN_VLIST_LINE_DRAW );
 			}
 		}
-	} else { /* doubles */
+	} else {
+  /* doubles */
 		for ( x = half_step; x < xip->w-half_step; x += step )  {
 			VJOIN1( start, xip->v, x, xbasis );
 			y = 0;

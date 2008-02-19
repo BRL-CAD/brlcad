@@ -3177,7 +3177,8 @@ printf("blit: xi_flags & FLG_VMASK = 0x%x\n", xi->xi_flags & FLG_VMASK );
 						}
 					}
 
-				} else { /* LSB order */
+				} else {
+  /* LSB order */
 					if (xi->xi_image->bits_per_pixel == 16) {
 						while (pxwd--)   {
 							*p++ = a_pixel & 0xff;

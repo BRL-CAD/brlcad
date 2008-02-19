@@ -165,7 +165,8 @@ rt_nurb_doolittle(fastf_t *mat_1, fastf_t *mat_2, int row, int coords)
 		max_pivot = k;
 
 		for (i = k; i < row; i ++)	/* check to see if rows need */
-		{				/* to be swaped */
+		{
+						/* to be swaped */
 			ds[i] = d[i] * s[ i * row + k];
 			if (ds[max_pivot] < ds[i])
 				max_pivot = i;
@@ -197,7 +198,8 @@ rt_nurb_doolittle(fastf_t *mat_1, fastf_t *mat_2, int row, int coords)
 		for (i = k + 1; i < row; i++)	/* lower matrix */
 			mat_1[i * row + k] = (float)(s[i* row + k] / s[k* row +k]);
 
-		for (j = k + 1; j < row; j++) {	/* upper matrix */
+		for (j = k + 1; j < row; j++) {
+ 	/* upper matrix */
 			tmp = 0;
 			for ( i = 0; i <= k - 1; i++)
 				tmp += mat_1[ k * row + i] * mat_1[ i* row + j];

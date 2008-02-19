@@ -53,7 +53,8 @@ do_line(int xpos, int ypos, register const char* line, RGBpixel (*menu_border))
 
 
 		       /* Menu outline color, if NULL, do filtering. */
-	{	register int    currx;
+	{
+		register int    currx;
 		register int    char_count, char_id;
 		register int len = strlen( line );
 #if DEBUG_STRINGS
@@ -120,7 +121,8 @@ static int filterbuf[FONTBUFSZ][FONTBUFSZ];
 
 HIDDEN void
 do_Char(int c, int xpos, int ypos, int odd)
-{	register int    i, j;
+{
+	register int    i, j;
 		int base;
 		int     	totwid = font.width;
 		int     	down;
@@ -159,7 +161,8 @@ do_Char(int c, int xpos, int ypos, int odd)
 			);
 		fb_read( fbp, xpos, ypos - down + i, (unsigned char *)fbline, totwid+3);
 		for (j = 0; j < (totwid + 3) - 1; j++)
-			{	register int tmp;
+			{
+				register int tmp;
 			/* EDITOR'S NOTE : do not rearrange this code,
 				the SUN compiler can't handle more
 				complex expressions. */
@@ -183,7 +186,8 @@ do_Char(int c, int xpos, int ypos, int odd)
 
 void
 menu_char(int x_adjust, int menu_wid, int odd, register unsigned char *menu_border)
-{	register int    i, j, k;
+{
+	register int    i, j, k;
 		int embold = 1;
 		int base;
 		int totwid = font.width;
@@ -205,7 +209,8 @@ menu_char(int x_adjust, int menu_wid, int odd, register unsigned char *menu_bord
 
 	/* Change bits in menu that correspond to character bitmap. */
 	for (i = font.height + base, k = 0; i >= base; i--, k++)
-		{	register RGBpixel *menu;
+		{
+			register RGBpixel *menu;
 		menu = menu_addr + k * menu_wid + x_adjust;
 		for (j = 0; j < (totwid + 3) - 1; j++, menu++ )
 			if ( filterbuf[i][j] )

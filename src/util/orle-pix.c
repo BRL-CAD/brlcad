@@ -155,7 +155,8 @@ main(int argc, char **argv)
 /*	p a r s _ A r g v ( )						*/
 static int
 pars_Argv(int argc, register char **argv)
-{	register int	c;
+{
+	register int	c;
 		extern int	bu_optind;
 		extern char	*bu_optarg;
 	/* Parse options.						*/
@@ -230,7 +231,8 @@ pars_Argv(int argc, register char **argv)
  */
 static void
 prnt_Usage(void)
-{	register char	**p = usage;
+{
+	register char	**p = usage;
 	while ( *p )
 		(void) fprintf( stderr, "%s\n", *p++ );
 	return;
@@ -238,7 +240,8 @@ prnt_Usage(void)
 
 static void
 prnt_Cmap(ColorMap *cmap)
-{	register unsigned short	*cp;
+{
+	register unsigned short	*cp;
 		register int	i;
 	(void) fprintf( stderr, "\t\t\t_________ Color map __________\n" );
 	(void) fprintf( stderr, "Red segment :\n" );

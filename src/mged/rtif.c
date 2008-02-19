@@ -501,7 +501,8 @@ rt_set_eye_model(fastf_t *eye_model)
 
 	VSET( temp, 0.0, 0.0, 1.0 );
 	MAT4X3PNT(eye_model, view_state->vs_vop->vo_view2model, temp);
-    } else { /* not doing zclipping, so back out of geometry */
+    } else {
+  /* not doing zclipping, so back out of geometry */
 	register struct solid *sp;
 	register int i;
 	double  t;

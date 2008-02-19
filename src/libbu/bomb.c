@@ -51,7 +51,8 @@
 
 
 struct bu_hook_list bu_bomb_hook_list = {
-    {	BU_LIST_HEAD_MAGIC,
+    {
+    	BU_LIST_HEAD_MAGIC,
 	&bu_bomb_hook_list.l,
 	&bu_bomb_hook_list.l
     },

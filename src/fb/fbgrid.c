@@ -148,7 +148,8 @@ main(int argc, char **argv)
 		grid( fbp, grey_line, 64 );
 		/* White line every 128 */
 		grid( fbp, white_line, 128 );
-	} else { /* DECIMAL */
+	} else {
+  /* DECIMAL */
 		/* Dark lines every 10 */
 		grid( fbp, dark_line, 10 );
 		/* Grey lines every 50 */

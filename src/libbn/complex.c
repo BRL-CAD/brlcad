@@ -109,7 +109,8 @@ bn_cx_sqrt(bn_complex_t *op, register const bn_complex_t *ip)
 		if ( re_sign > 0 )  {
 			op->re = sqrt( ip->re );
 			op->im = 0.0;
-		}  else  {		/* re_sign < 0 */
+		}  else  {
+  		/* re_sign < 0 */
 			op->im = sqrt( -ip->re );
 			op->re = 0.0;
 		}

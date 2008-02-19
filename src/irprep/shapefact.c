@@ -170,7 +170,8 @@ int main(int argc, char **argv)
       (void)fprintf(stderr, "\nusage:  %s file.g objects\n\n", *argv);
     }
   else
-    {						/*  START # 1  */
+    {
+    						/*  START # 1  */
 
       /*  Ask what type of file is to be created - regualar  */
       /*  or generic.  */
@@ -361,7 +362,8 @@ int main(int argc, char **argv)
       dump = 1000000.;	/*  Used for dumping info.  */
 
       for (r=0; r<loops; r++)	/*  Number of rays fired.  */
-	{					/*  START # 2  */
+	{
+						/*  START # 2  */
 	  /*
 	   *	   (void)fprintf(stderr, "loop # %f\n", r);
 	   */
@@ -522,7 +524,8 @@ int main(int argc, char **argv)
 			   (r+1));
 	      (void)fflush(stdout);
 	      if (idump == 1)
-		{						/*  START # 3  */
+		{
+								/*  START # 3  */
 		  (void)printf("\n****************************************");
 		  (void)printf("****************************************\n");
 		  (void)fflush(stdout);
@@ -753,7 +756,8 @@ int main(int argc, char **argv)
 /*  User supplied hit function.  */
 int
 hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *segp)
-{						/*  START # 0H  */
+{
+						/*  START # 0H  */
   extern struct table info[];	/*  Structure is external.  */
   register struct partition *pp;
   register struct hit *hitp;
@@ -782,7 +786,8 @@ hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *
 
   pp = PartHeadp->pt_forw;
   for (; pp != PartHeadp;  pp = pp->pt_forw)
-    {						/*  START # 1H  */
+    {
+    						/*  START # 1H  */
       /*
        *	(void)printf("Region %d - %s - %d - %d - %d - \n",
        *		pp->pt_regionp->reg_bit,
@@ -794,14 +799,16 @@ hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *
        */
 
       if (iair == 1)	/*  Ray comes from nothing (exterior air).  */
-	{					/*  START # 2H  */
+	{
+						/*  START # 2H  */
 	  /*
 	   *	   (void)printf("Ray comes from exterior air (1).\n");
 	   *	   (void)fflush(stdout);
 	   */
 
 	  if (pp->pt_regionp->reg_regionid > (short)0)	/*  Hit region.  */
-	    {					/*  START # 3H  */
+	    {
+	    					/*  START # 3H  */
 	      /*  Region number hit.  */
 	      icur = (int)(pp->pt_regionp->reg_bit);
 
@@ -820,20 +827,23 @@ hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *
 	    }					/*  END # 3H  */
 
 	  else	/*  Hit air.  */
-	    {					/*  START # 4H  */
+	    {
+	    					/*  START # 4H  */
 	      iair = pp->pt_regionp->reg_aircode;
 	    }					/*  END # 4H  */
 	}					/*  END # 2H  */
 
       else if (iair == 5)	/*  Ray comes from engine air.  */
-	{					/*  START # 5H  */
+	{
+						/*  START # 5H  */
 	  /*
 	   *	   (void)printf("Ray comes from engine air (5).\n");
 	   *	   (void)fflush(stdout);
 	   */
 
 	  if (pp->pt_regionp->reg_regionid > (short)0)	/*  Hit region.  */
-	    {					/*  START # 6H  */
+	    {
+	    					/*  START # 6H  */
 	      /*  Region number hit.  */
 	      icur = (int)(pp->pt_regionp->reg_bit);
 
@@ -891,14 +901,16 @@ hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *
 	}					/*  END # 5H  */
 
       else if (iair == 0)	/*  Ray comes from a region.  */
-	{					/*  START # 7H  */
+	{
+						/*  START # 7H  */
 	  /*
 	   *	   (void)printf("Ray comes from region (0).\n");
 	   *	   (void)fflush(stdout);
 	   */
 
 	  if (pp->pt_regionp->reg_regionid > (short)0)	/*  Hit a region.  */
-	    {					/*  START # 8H  */
+	    {
+	    					/*  START # 8H  */
 	      /*  Region number hit.  */
 	      icur = (int)(pp->pt_regionp->reg_bit);
 
@@ -917,7 +929,8 @@ hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *
 	    }					/*  END # 8H  */
 
 	  else	/*  Hit air.  */
-	    {					/*  START # 9H  */
+	    {
+	    					/*  START # 9H  */
 	      /*  Increment allvrays if the ray is leaving through  */
 	      /*  engine air.  Make sure this is only done once.  */
 	      if ( (iair != 5) && (pp->pt_regionp->reg_aircode == 5) )
@@ -928,14 +941,16 @@ hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *
 	}					/*  END # 7H  */
 
       else	/*  Ray comes from any interior air.  */
-	{					/*  START # 10H  */
+	{
+						/*  START # 10H  */
 	  /*
 	   *	   (void)printf("Ray comes from interior air (not 0, 1, 5).\n");
 	   *	   (void)fflush(stdout);
 	   */
 
 	  if (pp->pt_regionp->reg_regionid > (short)0)	/*  Hits region.  */
-	    {					/*  START # 11H  */
+	    {
+	    					/*  START # 11H  */
 	      /*  Region number hit.  */
 	      icur = (int)(pp->pt_regionp->reg_bit);
 

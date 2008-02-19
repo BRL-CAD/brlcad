@@ -1515,11 +1515,13 @@ int	count;
 		}
 	} else {
 		/* Normal case -- multi-pixel write */
-		if ( SGI(ifp)->mi_doublebuffer) { /* refresh whole screen */
+		if ( SGI(ifp)->mi_doublebuffer) {
+  /* refresh whole screen */
 			wgl_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
 			SwapBuffers( WGL(ifp)->hdc);
 		}
-		else { /* just write rectangle */
+		else {
+  /* just write rectangle */
 			wgl_xmit_scanlines( ifp, ybase, y-ybase, 0, ifp->if_width );
 			if (WGL(ifp)->copy_flag) {
 				backbuffer_to_screen(ifp, -1);
@@ -1590,11 +1592,13 @@ wgl_writerect(FBIO *ifp,
 	}
 	}
 
-	if ( SGI(ifp)->mi_doublebuffer) { /* refresh whole screen */
+	if ( SGI(ifp)->mi_doublebuffer) {
+  /* refresh whole screen */
 		wgl_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
 		SwapBuffers( WGL(ifp)->hdc);
 	}
-	else { /* just write rectangle*/
+	else {
+  /* just write rectangle*/
 		wgl_xmit_scanlines( ifp, ymin, height, xmin, width );
 		if (WGL(ifp)->copy_flag) {
 			backbuffer_to_screen(ifp, -1);
@@ -1664,11 +1668,13 @@ wgl_bwwriterect(FBIO *ifp,
 	}
 	}
 
-	if ( SGI(ifp)->mi_doublebuffer) { /* refresh whole screen */
+	if ( SGI(ifp)->mi_doublebuffer) {
+  /* refresh whole screen */
 		wgl_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
 		SwapBuffers( WGL(ifp)->hdc);
 	}
-	else { /* just write rectangle*/
+	else {
+  /* just write rectangle*/
 		wgl_xmit_scanlines( ifp, ymin, height, xmin, width );
 		if (WGL(ifp)->copy_flag) {
 			backbuffer_to_screen(ifp, -1);
@@ -2227,7 +2233,8 @@ backbuffer_to_screen(register FBIO *ifp,
 
 	if (one_y > clp->ypixmax) {
 		return;
-	} else if (one_y < 0) { /* do whole visible screen */
+	} else if (one_y < 0) {
+  /* do whole visible screen */
 
 		/* Blank out area left of image */
 		glColor3b( 0, 0, 0 );
@@ -2272,7 +2279,8 @@ backbuffer_to_screen(register FBIO *ifp,
 
 	} else if (one_y < clp->ypixmin) {
 		return;
-	} else { /* draw one scanline */
+	} else {
+  /* draw one scanline */
 		glRasterPos2i(clp->xpixmin, one_y);
 		glCopyPixels(SGI(ifp)->mi_xoff + clp->xpixmin,
 			SGI(ifp)->mi_yoff + one_y,

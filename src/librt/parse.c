@@ -146,7 +146,8 @@ bu_structprint(const char *title, const struct bu_structparse *parsetab, const c
 			}
 			break;
 		case 'i':
-			{	register int i = sdp->sp_count;
+			{
+				register int i = sdp->sp_count;
 				register short *sp = (short *)loc;
 
 				bu_log( " %s=%hd", sdp->sp_name, *sp++ );
@@ -157,7 +158,8 @@ bu_structprint(const char *title, const struct bu_structparse *parsetab, const c
 			}
 			break;
 		case 'd':
-			{	register int i = sdp->sp_count;
+			{
+				register int i = sdp->sp_count;
 				register int *dp = (int *)loc;
 
 				bu_log( " %s=%d", sdp->sp_name, *dp++ );
@@ -168,7 +170,8 @@ bu_structprint(const char *title, const struct bu_structparse *parsetab, const c
 			}
 			break;
 		case 'f':
-			{	register int i = sdp->sp_count;
+			{
+				register int i = sdp->sp_count;
 				register double *dp = (double *)loc;
 
 				if (sdp->sp_count == ELEMENTS_PER_MAT) {
@@ -196,7 +199,8 @@ bu_structprint(const char *title, const struct bu_structparse *parsetab, const c
 			}
 			break;
 		case 'x':
-			{	register int i = sdp->sp_count;
+			{
+				register int i = sdp->sp_count;
 				register int *dp = (int *)loc;
 
 				bu_log( " %s=%08x", sdp->sp_name, *dp++ );
@@ -332,7 +336,8 @@ bu_struct_lookup(register const struct bu_structparse *sdp, register const char 
 		switch ( sdp->sp_fmt[1] )  {
 		case 'c':
 		case 's':
-			{	register int i, j;
+			{
+				register int i, j;
 
 				/* copy the string, converting escaped
 				 * double quotes to just double quotes
@@ -349,13 +354,15 @@ bu_struct_lookup(register const struct bu_structparse *sdp, register const char 
 			}
 			break;
 		case 'S':
-			{	struct bu_vls *vls = (struct bu_vls *)loc;
+			{
+				struct bu_vls *vls = (struct bu_vls *)loc;
 				bu_vls_init_if_uninit( vls );
 				bu_vls_strcpy(vls, value);
 			}
 			break;
 		case 'i':
-			{	register short *ip = (short *)loc;
+			{
+				register short *ip = (short *)loc;
 				register short tmpi;
 				register const char *cp;
 				for (i=0; i < sdp->sp_count && *value; ++i) {
@@ -386,7 +393,8 @@ bu_struct_lookup(register const struct bu_structparse *sdp, register const char 
 			}
 			break;
 		case 'd':
-			{	register int *ip = (int *)loc;
+			{
+				register int *ip = (int *)loc;
 				register int tmpi;
 				register char const *cp;
 				/* Special case:  '=!' toggles a boolean */

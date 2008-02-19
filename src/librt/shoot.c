@@ -1923,7 +1923,8 @@ rt_vstub(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct 
 
 	/* go through each ray/solid pair and call a scalar function */
 	for (i = 0; i < n; i++) {
-		if (stp[i] != 0) { /* skip call if solid table pointer is NULL */
+		if (stp[i] != 0) {
+  /* skip call if solid table pointer is NULL */
 			/* do scalar call, place results in segp array */
 			if ( rt_functab[stp[i]->st_id].ft_shot(stp[i], rp[i], ap, &seghead) <= 0 )  {
 				SEG_MISS(segp[i]);

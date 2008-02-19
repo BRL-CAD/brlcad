@@ -213,7 +213,8 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	      status = TCL_ERROR;
 	      goto end;
 	    }
-	  if ( argc < 7 ) {  	/* total # of args under this option */
+	  if ( argc < 7 ) {
+   	/* total # of args under this option */
 	    Tcl_AppendResult(interp, MORE_ARGS_STR, p_pleqn[argc-3], (char *)NULL);
 	    status = TCL_ERROR;
 	    goto end;
@@ -228,7 +229,8 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	      status = TCL_ERROR;
 	      goto end;
 	    }
-	  if ( argc < 12 ) {           /* total # of args under this option */
+	  if ( argc < 12 ) {
+            /* total # of args under this option */
 	    struct bu_vls tmp_vls;
 
 	     bu_vls_init(&tmp_vls);
@@ -246,7 +248,8 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	case 'c':
 	  /* special case for arb7, because of 2 4-pt planes meeting */
 	  if ( es_type == 7 && (plane != 0 && plane != 3) ) {
-	    if ( argc < 5 ) { 	/* total # of args under this option */
+	    if ( argc < 5 ) {
+  	/* total # of args under this option */
 	      Tcl_AppendResult(interp, MORE_ARGS_STR, p_rotfb[argc-3], (char *)NULL);
 	      status = TCL_ERROR;
 	      goto end;
@@ -271,7 +274,8 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	      status = TCL_ERROR;
 	      goto end;
 	    }
-	  if ( argc < 6 ) {  	/* total # of args under this option */
+	  if ( argc < 6 ) {
+   	/* total # of args under this option */
 	    Tcl_AppendResult(interp, MORE_ARGS_STR, p_nupnt[argc-3], (char *)NULL);
 	    status = TCL_ERROR;
 	    goto end;
@@ -394,11 +398,13 @@ get_rotfb(fastf_t *plane, char **argv, const struct rt_arb_internal *arb)
 	plane[1] = cos(fb) * sin(rota);
 	plane[2] = sin(fb);
 
-	if ( argv[2][0] == 'v' ) {     	/* vertex given */
+	if ( argv[2][0] == 'v' ) {
+      	/* vertex given */
 		/* strip off 'v', subtract 1 */
 		temp = atoi(argv[2]+1) - 1;
 		plane[3]= VDOT(&plane[0], arb->pt[temp]);
-	} else {		         /* definite point given */
+	} else {
+ 		         /* definite point given */
 		for (i=0; i<3; i++)
 			pt[i]=atof(argv[2+i]) * local2base;
 		plane[3]=VDOT(&plane[0], pt);

@@ -1146,7 +1146,8 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     VMOVE(verts[0], s.k[0].pt);
     olen = 2*len;
 
-    for (i = 0; (fabs(olen-len) >= VUNITIZE_TOL) && (i < 250); i++) { /* number of track iterations */
+    for (i = 0; (fabs(olen-len) >= VUNITIZE_TOL) && (i < 250); i++) {
+  /* number of track iterations */
 	fprintf(stdout, ".");
 	fflush(stdout);
 	for (j = 0; j < n_links; j++) /* set length of each link based on current track length */
@@ -1156,7 +1157,8 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	mid = 0;
 
 	for (j = 0; j < n_verts+1; j++) /* around the track once */
-	    for (k = 0; k < n_links; k++) { /* for each sub-link */
+	    for (k = 0; k < n_links; k++) {
+  /* for each sub-link */
 		if ((k == 0) && (j == 0)) {continue;} /* the first sub-link of the first link is already in position */
 		min = mid;
 		max = s.t[s.n_segs];

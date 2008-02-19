@@ -376,7 +376,8 @@ int get_args( int argc, register char **argv )
 				item= strtok(bu_optarg, ",");
 				lightmodel= atoi(item);
 
-				if (lightmodel == 7) {					/* Process the photon mapping arguments */
+				if (lightmodel == 7) {
+ 					/* Process the photon mapping arguments */
 					item= strtok(NULL, ",");
 					pmargs[0]= item ? atoi(item) : 16384;		/* Number of Global Photons */
 					item= strtok(NULL, ",");

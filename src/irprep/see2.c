@@ -547,14 +547,17 @@ main()
 
    /*  Write pix file if necessary.  */
    if (flag_pix == 1)
-   {						/*  START # 20.  */
+   {
+   						/*  START # 20.  */
 	/*  Open pix file.  */
 	fpw = fopen(file_pix, "wb");
 
 	for (i=high; i>0; i--)
-	{					/*  START # 21.  */
+	{
+						/*  START # 21.  */
 	   for (j=0; j<wide; j++)
-	   {					/*  START # 22.  */
+	   {
+	   					/*  START # 22.  */
 		d = (unsigned char)(rgbcol[icolor[j][i-1]][0]);
 		putc(d, fpw);
 		d = (unsigned char)(rgbcol[icolor[j][i-1]][1]);

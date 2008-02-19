@@ -485,7 +485,8 @@ struct termio	*tio_ptr;
 #ifdef HAVE_TERMIOS_H
 struct termios	*tio_ptr;
 #endif
-	{	register int	i;
+	{
+		register int	i;
 	(void) fprintf( stderr, "%s :\n\r", msg );
 #ifdef BSD
 	(void) fprintf( stderr, "\tsg_ispeed=%d\n\r", (int) tio_ptr->sg_ispeed );

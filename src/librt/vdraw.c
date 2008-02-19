@@ -169,7 +169,8 @@ vdraw_write_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 		Tcl_AppendResult(interp, "vdraw write: not enough args\n", (char *)NULL);
 		return TCL_ERROR;
 	}
-	if (argv[1][0] == 'n') { /* next */
+	if (argv[1][0] == 'n') {
+  /* next */
 		for (REV_BU_LIST_FOR(vp, bn_vlist, &(dgop->dgo_currVHead->vdc_vhd))) {
 			if (vp->nused > 0) {
 				break;
@@ -645,7 +646,8 @@ vdraw_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		}
 	}
 
-	if (!dgop->dgo_currVHead) { /* create new entry */
+	if (!dgop->dgo_currVHead) {
+  /* create new entry */
 		BU_GETSTRUCT(rcp, vd_curve);
 		BU_LIST_APPEND(&dgop->dgo_headVDraw, &(rcp->l));
 
@@ -659,7 +661,8 @@ vdraw_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		/* 1 means new entry */
 		Tcl_AppendResult(interp, "1", (char *)NULL);
 		return TCL_OK;
-	} else { /* entry already existed */
+	} else {
+  /* entry already existed */
 		if (BU_LIST_IS_EMPTY(&(dgop->dgo_currVHead->vdc_vhd))) {
 			RT_GET_VLIST(vp);
 			BU_LIST_APPEND(&(dgop->dgo_currVHead->vdc_vhd), &(vp->l));

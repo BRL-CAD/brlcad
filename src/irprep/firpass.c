@@ -717,7 +717,8 @@ int main(int argc, char **argv)
 
       /*  Set up to fire 2nd & 3rd set of rays if appropriate.  */
       if (ifire == 0)
-	{						/*  START # 1000  */
+	{
+							/*  START # 1000  */
 	  /*  Set up & fire 2nd set of arrays.  */
 	  (void)printf("\nSHOOTING DOWN THE 2nd AXIS\n");
 	  (void)fflush(stdout);
@@ -912,11 +913,13 @@ int main(int argc, char **argv)
 	  /*  Check for variance of volume & find volume.  */
 	  flag=0;
 	  if (ifire == 0)
-	    {					/*  START # 1040  */
+	    {
+	    					/*  START # 1040  */
 	      if ( (region[i].cumvol[0] != 0.) &&
 		  (region[i].cumvol[1] != 0.) &&
 		  (region[i].cumvol[2] != 0.) )
-		{					/*  START # 1045  */
+		{
+							/*  START # 1045  */
 		  diff = region[i].cumvol[0] - region[i].cumvol[1];
 		  if (diff < 0.) diff = (-diff);
 		  if ( (diff / region[i].cumvol[0]) > VOLVAR) flag = 1;
@@ -973,11 +976,13 @@ int main(int argc, char **argv)
 	  /*  surface area.  */
 	  flag=0;
 	  if (ifire == 0)
-	    {					/*  START # 1050  */
+	    {
+	    					/*  START # 1050  */
 	      if ( (region[i].surarea[0] != 0.) &&
 		  (region[i].surarea[1] != 0.) &&
 		  (region[i].surarea[2] != 0.) )
-		{					/*  START # 1055  */
+		{
+							/*  START # 1055  */
 		  diff = region[i].surarea[0] - region[i].surarea[1];
 		  if (diff < 0.) diff = (-diff);
 		  if ( (diff / region[i].surarea[0]) > VOLVAR) flag = 1;
@@ -1046,11 +1051,13 @@ int main(int argc, char **argv)
 		   */
 		  flag = 0;
 		  if (ifire == 0)
-		    {				/*  START # 1060  */
+		    {
+		    				/*  START # 1060  */
 		      if ( (region[i].ssurarea[0][j] != 0.) &&
 			  (region[i].ssurarea[1][j] != 0.) &&
 			  (region[i].ssurarea[2][j] != 0.) )
-			{				/*  START # 1065  */
+			{
+							/*  START # 1065  */
 			  diff = region[i].ssurarea[0][j]
 			    - region[i].ssurarea[1][j];
 			  if (diff < 0.) diff = (-diff);
@@ -1122,14 +1129,17 @@ int main(int argc, char **argv)
 	  /*  crew, engine, closed compartment, exhaust, generic  */
 	  /*  1 & generic 2) & find area.  */
 	  for (k=0; k<7; k++)
-	    {					/*  START # 1070  */
+	    {
+	    					/*  START # 1070  */
 	      flag = 0;
 	      if (ifire == 0)
-		{					/*  START # 1080  */
+		{
+							/*  START # 1080  */
 		  if ( (region[i].cumfs[k][0] != 0.) &&
 		      (region[i].cumfs[k][1] != 0.) &&
 		      (region[i].cumfs[k][2] != 0.) )
-		    {				/*  START # 1090  */
+		    {
+		    				/*  START # 1090  */
 		      diff = region[i].cumfs[k][0]
 			- region[i].cumfs[k][1];
 		      if (diff < 0.) diff = (-diff);
@@ -1320,7 +1330,8 @@ int main(int argc, char **argv)
 	    i++;
 	  } }
       if (iwrite == 1)
-	{ i=0;
+	{
+	 i=0;
 	while ( i < num )
 	  {
 	    (void)fprintf(fp, "region #:  %d, name:  %s\n",
@@ -1463,7 +1474,8 @@ int main(int argc, char **argv)
 	}
       (void)fclose(fp7);
       /****************************************************************************/
-      if ( typeout == 0 ) {			/*  START # 11 */
+      if ( typeout == 0 ) {
+ 			/*  START # 11 */
 
 	/*  Open facet file for writing to .  */
 	fp1=fopen(facfile, "wb");
@@ -1683,7 +1695,8 @@ int main(int argc, char **argv)
       /*	   surface area  surface normal (X Y Z)  absorptivity  */
 
       if (typeout == 1)
-	{						/*  START # 12  */
+	{
+							/*  START # 12  */
 	  /*  Open generic file.  */
 	  fp5 = fopen(filegen, "wb");
 
@@ -1816,7 +1829,8 @@ int main(int argc, char **argv)
       /*  Open and write to geometric file if needed.  */
 
       if ( (typeout == 2) || (typeout==3) )
-	{						/*  START # 13  */
+	{
+							/*  START # 13  */
 
 	  /*  Open geometry file.  */
 	  fp6 = fopen(filegeo, "wb");
@@ -2143,9 +2157,11 @@ int main(int argc, char **argv)
 	    }
 
 	  for (j=0; j<7; j++)
-	    {						/*  START # 2000  */
+	    {
+	    						/*  START # 2000  */
 	      if (region[i].cumfs[j][1] == 1.)
-		{					/*  START # 2010  */
+		{
+							/*  START # 2010  */
 		  if (j == 0)
 		    {
 		      (void)fprintf(fp3, "\treg %d - large variance ", i);

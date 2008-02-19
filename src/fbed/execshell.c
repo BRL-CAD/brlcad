@@ -63,7 +63,8 @@ exec_Shell(char **args)
 	register int child_pid;
 
 	if ( args[0] == NULL )
-		{ char *arg_sh = getenv( "SHELL" );
+		{
+		 char *arg_sh = getenv( "SHELL" );
 		/* $SHELL, if set, DFL_SHELL otherwise. */
 		if ( arg_sh == NULL )
 			arg_sh = DFL_SHELL;
@@ -83,7 +84,8 @@ exec_Shell(char **args)
 			fb_log( "%s : could not execute.\n", args[0] );
 			bu_exit( 1, NULL );
 		default :
-			{	register int pid;
+			{
+				register int pid;
 				int stat_loc;
 				register void (*istat)(), (*qstat)(), (*cstat)();
 			istat = signal(SIGINT, SIG_IGN);

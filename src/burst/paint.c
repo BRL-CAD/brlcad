@@ -114,7 +114,8 @@ paintCellFb( ap, pixpaint, pixexpendable )
 register struct application	*ap;
 unsigned char			*pixpaint;
 unsigned char			*pixexpendable;
-	{	int		gx, gy;
+	{
+		int		gx, gy;
 		register int	gyfin, gxfin;
 		register int	gxorg, gyorg;
 		register int	x, y;
@@ -174,7 +175,8 @@ unsigned char			*pixexpendable;
 void
 paintSpallFb( ap )
 register struct application	*ap;
-	{	unsigned char pixel[3];
+	{
+		unsigned char pixel[3];
 		int x, y;
 		int err;
 		fastf_t	celldist;

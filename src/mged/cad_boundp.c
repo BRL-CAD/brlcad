@@ -485,7 +485,8 @@ PutList(register coords *coop) 			/* return -> point in list */
 
 	p = LookUp( coop );		/* may already be there */
 	if ( p == NULL )		/* not yet in list */
-	{			/* start new point group */
+	{
+				/* start new point group */
 #ifdef	DEBUG
 		fprintf(stderr, "new point group (%g,%g)",
 		    (double)coop->x, (double)coop->y
@@ -746,7 +747,8 @@ Input(register segment *inp)				/* input stroke record */
 	char			inbuf[82];	/* record buffer */
 
 	while ( bu_fgets( inbuf, (int)sizeof inbuf, stdin ) != NULL )
-	{			/* scan input record */
+	{
+				/* scan input record */
 		register int	cvt;	/* # fields converted */
 
 #ifdef	DEBUG

@@ -171,7 +171,8 @@ main(int argc, char **argv)
 	}
 
 	gvalue = 0.0;
-	if (!iflg && !rflg) {   /* Default action: interpolate by 50% */
+	if (!iflg && !rflg) {
+    /* Default action: interpolate by 50% */
 	    iflg = 1;
 	    value = 0.5;
 	}

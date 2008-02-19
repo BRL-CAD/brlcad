@@ -543,12 +543,14 @@ polydata(void)	/* Print out Polydata record information */
 
 	(void)fprintf(ofp, "%c ", record.q.q_id );		/* Q */
 	(void)fprintf(ofp, "%d", record.q.q_count );		/* # of vertices <= 5 */
-	for ( i = 0; i < 5; i++ )  {			/* [5][3] vertices */
+	for ( i = 0; i < 5; i++ )  {
+  			/* [5][3] vertices */
 		for ( j = 0; j < 3; j++ ) {
 			(void)fprintf(ofp, " %.12e", record.q.q_verts[i][j] );
 		}
 	}
-	for ( i = 0; i < 5; i++ )  {			/* [5][3] normals */
+	for ( i = 0; i < 5; i++ )  {
+  			/* [5][3] normals */
 		for ( j = 0; j < 3; j++ ) {
 			(void)fprintf(ofp, " %.12e", record.q.q_norms[i][j] );
 		}
@@ -984,7 +986,8 @@ arsbdump(void)	/* Print out ARS B record information */
 	(void)fprintf(ofp, "%d ", record.b.b_type );		/* primitive type */
 	(void)fprintf(ofp, "%d ", record.b.b_n );		/* current curve # */
 	(void)fprintf(ofp, "%d", record.b.b_ngranule );	/* current granule */
-	for ( i = 0; i < 24; i++ )  {			/* [8*3] vectors */
+	for ( i = 0; i < 24; i++ )  {
+  			/* [8*3] vectors */
 		(void)fprintf(ofp, " %.12e", record.b.b_values[i] );
 	}
 	(void)fprintf(ofp, "\n");			/* Terminate w/ a newline */

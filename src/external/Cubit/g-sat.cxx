@@ -254,7 +254,8 @@ main(int argc, char *argv[])
 	if (body_id  >= 0) {
 	    all_region_bodies.append(gqt->get_body(body_id));
 	}
-	else if (body_id == -1) { // {empty}
+	else if (body_id == -1) {
+  // {empty}
 	    cout << "DEBUG: {empty}" << endl;
 	}
 	else {

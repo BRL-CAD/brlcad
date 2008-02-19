@@ -350,7 +350,8 @@ rt_comb_import4(
 		}
 #endif
 	}
-	else {	/* set some reasonable defaults */
+	else {
+ 	/* set some reasonable defaults */
 		comb->region_id = 0;
 		comb->aircode = 0;
 		comb->GIFTmater = 0;

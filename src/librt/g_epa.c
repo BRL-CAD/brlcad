@@ -575,7 +575,8 @@ rt_epa_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 	switch ( hitp->hit_surfno )  {
 	case EPA_NORM_BODY:
 		/* top plate, polar coords */
-		if (pprime[Z] == -1.0) {	/* bottom pt of body */
+		if (pprime[Z] == -1.0) {
+ 	/* bottom pt of body */
 			uvp->uv_u = 0;
 		} else {
 			len = sqrt(pprime[X]*pprime[X] + pprime[Y]*pprime[Y]);
@@ -835,7 +836,8 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	}
 
 	/* connect ellipses */
-	for (i = nell-2; i >= 0; i--) {	/* skip top ellipse */
+	for (i = nell-2; i >= 0; i--) {
+ 	/* skip top ellipse */
 		int bottom, top;
 
 		top = i + 1;
@@ -1250,7 +1252,8 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	(void)nmg_mark_edges_real( &outfaceuses[0]->l.magic );
 
 	/* connect ellipses with triangles */
-	for (i = nell-2; i >= 0; i--) {	/* skip top ellipse */
+	for (i = nell-2; i >= 0; i--) {
+ 	/* skip top ellipse */
 		int bottom, top;
 
 		top = i + 1;

@@ -49,11 +49,14 @@ Trie	*
 addTrie( name, triepp )
 register char *name;
 register Trie **triepp;
-	{	register Trie *curp;
+	{
+		register Trie *curp;
 	if ( *name == NUL )
-		{ /* End of name, see if name already exists. */
+		{
+		 /* End of name, see if name already exists. */
 		if ( *triepp == TRIE_NULL )
-			{ /* Name does not exist, make leaf node. */
+			{
+			 /* Name does not exist, make leaf node. */
 			NewTrie( *triepp );
 			(*triepp)->l.t_altr = (*triepp)->l.t_next
 					    = TRIE_NULL;
@@ -73,7 +76,8 @@ register Trie **triepp;
 		)
 		;
 	if ( curp == TRIE_NULL )
-		{ /* No Match, this level, so create new alternate. */
+		{
+		 /* No Match, this level, so create new alternate. */
 		curp = *triepp;
 		NewTrie( *triepp );
 		(*triepp)->n.t_altr = curp;
@@ -90,7 +94,8 @@ Func	*
 getTrie( name, triep )
 register char	*name;
 register Trie	*triep;
-	{	register Trie *curp = NULL;
+	{
+		register Trie *curp = NULL;
 	assert( triep != TRIE_NULL );
 
 	/* Traverse next links to end of region name. */
@@ -98,7 +103,8 @@ register Trie	*triep;
 		{
 		curp = triep;
 		if ( *name == NUL )
-			{ /* End of user-typed name. */
+			{
+			 /* End of user-typed name. */
 			if ( triep->n.t_altr != TRIE_NULL )
 				/* Ambiguous at this point. */
 				return	NULL_FUNC;
@@ -143,7 +149,8 @@ register Trie	*triep;
 static Func	*
 matchTrie( triep )
 register Trie	*triep;
-	{	Func	*func;
+	{
+		Func	*func;
 	if ( triep == TRIE_NULL )
 		func = NULL_FUNC;
 	else
@@ -161,7 +168,8 @@ void
 prntTrie( triep, level )
 Trie	*triep;
 int	level;
-	{	register Trie	*tp = triep;
+	{
+		register Trie	*tp = triep;
 		static char	name_buf[MAX_TRIE_LEVEL+1], *namep;
 #if DEBUG_TRIE
 	brst_log( "prntTrie(triep=0x%x, level=%d)\n", triep, level );
@@ -193,7 +201,8 @@ writeTrie( triep, level, fp )
 Trie	*triep;
 int	level;
 FILE	*fp;
-	{	register Trie	*tp = triep;
+	{
+		register Trie	*tp = triep;
 		static char	name_buf[MAX_TRIE_LEVEL+1], *namep;
 	if ( tp == TRIE_NULL )
 		return	1;
@@ -221,7 +230,8 @@ int
 readTrie( fp, triepp )
 FILE	*fp;
 Trie	**triepp;
-	{	static char	name_buf[MAX_TRIE_LEVEL+1];
+	{
+		static char	name_buf[MAX_TRIE_LEVEL+1];
 	while ( bu_fgets( name_buf, MAX_TRIE_LEVEL, fp ) != NULL )
 		{
 		name_buf[strlen(name_buf)-1] = '\0'; /* Clobber new-line. */
@@ -240,7 +250,8 @@ ring_Bell()
 char	*
 char_To_String( i )
 int	i;
-	{	static char	buf[4];
+	{
+		static char	buf[4];
 	if ( i >= SP && i < DEL )
 		{
 		buf[0] = i;
@@ -273,7 +284,8 @@ char	 *inbuf;
 int	 bufsz;
 char	*msg;
 Trie	**triepp;
-	{	static char	buffer[BUFSIZ];
+	{
+		static char	buffer[BUFSIZ];
 		register char	*p = buffer;
 		register int	c;
 		Func		*funcp;
@@ -326,7 +338,8 @@ Trie	**triepp;
 			--p;
 			break;
 		case Ctrl('D') : /* Delete character under cursor. */
-			{	register char	*q = p;
+			{
+				register char	*q = p;
 			if ( *p == NUL )
 				{
 				ring_Bell();
@@ -372,7 +385,8 @@ Trie	**triepp;
 			*p = NUL;
 			break;
 		case Ctrl('P') : /* Yank previous contents of "inbuf". */
-			{	register int	len = strlen( inbuf );
+			{
+				register int	len = strlen( inbuf );
 			if ( (p + len) - buffer >= BUFSIZ )
 				{
 				ring_Bell();
@@ -390,7 +404,8 @@ Trie	**triepp;
 				break;
 				}
 			for (; p > buffer; --p )
-				{	register char	*q = p;
+				{
+					register char	*q = p;
 				(void) putchar( BS );
 				for (; *(q-1) != NUL; ++q )
 					{
@@ -402,7 +417,8 @@ Trie	**triepp;
 				}
 			break;
 		case Ctrl('R') : /* Print line, cursor doesn't move. */
-			{	register int	i;
+			{
+				register int	i;
 			if ( buffer[0] == NUL )
 				break;
 			for ( i = p - buffer; i > 0; i-- )
@@ -413,7 +429,8 @@ Trie	**triepp;
 			break;
 			}
 		case DEL : /* Delete character behind cursor. */
-			{	register char	*q = p;
+			{
+				register char	*q = p;
 			if ( p == buffer )
 				{
 				ring_Bell();
@@ -452,7 +469,8 @@ Trie	**triepp;
 			c = hm_getchar();
 			/* Fall through to default case! */
 		default : /* Insert character at cursor. */
-			{	register char	*q = p;
+			{
+				register char	*q = p;
 				register int	len = strlen( p );
 			/* Scroll characters forward. */
 			if ( c >= NUL && c < SP )

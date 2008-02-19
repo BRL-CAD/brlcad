@@ -1633,7 +1633,8 @@ f_red(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	 * until here so that red may be used to view objects.
 	 */
 	if (!dbip->dbi_read_only) {
-	    if ((node_count = checkcomb()) < 0) { /* Do some quick checking on the edited file */
+	    if ((node_count = checkcomb()) < 0) {
+  /* Do some quick checking on the edited file */
 		Tcl_AppendResult(interp, "Error in edited region, no changes made\n", (char *)NULL);
 		if (comb)
 		    rt_comb_ifree(&intern, &rt_uniresource);
@@ -1642,7 +1643,8 @@ f_red(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    }
 
 	    if (comb) {
-		if (save_comb(dp)) { /* Save combination to a temp name */
+		if (save_comb(dp)) {
+  /* Save combination to a temp name */
 		    Tcl_AppendResult(interp, "No changes made\n", (char *)NULL);
 		    rt_comb_ifree(&intern, &rt_uniresource);
 		    (void)unlink(red_tmpfil);

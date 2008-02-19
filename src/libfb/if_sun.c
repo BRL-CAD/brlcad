@@ -407,7 +407,8 @@ unsigned char rmap[], gmap[], bmap[];
 		rmap[b] = gmap[b] = 0;
 	}
 
-	for (r=246; r < 256; ++r) {		/* grey */
+	for (r=246; r < 256; ++r) {
+ 		/* grey */
 		rmap[r] = gmap[r] =
 		bmap[r] = primary[r-246];
 	}
@@ -595,7 +596,8 @@ RGBpixel	*pp;
 			register int	i, j;
 			for ( i = 0; i < DITHERSZ; i++ )
 				for ( j = 0; j < DITHERSZ; j++ )
-					{	register int	op;
+					{
+						register int	op;
 					op = (value < dither[j][i]*3) ?
 						PIX_SET : PIX_CLR;
 					pr_rop( &dither_mpr, j, i, 1, 1, op,

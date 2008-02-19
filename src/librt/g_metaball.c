@@ -195,7 +195,8 @@ rt_metaball_print(register const struct soltab *stp)
 	struct rt_metaball_internal *mb;
 	struct wdb_metaballpt *mbpt;
 
-	if (stp==NULL) { bu_log("soltab is null\n"); return; }
+	if (stp==NULL) {
+  bu_log("soltab is null\n"); return; }
 	mb = (struct rt_metaball_internal *)stp->st_specific;
 	RT_METABALL_CK_MAGIC(mb);
 	for ( BU_LIST_FOR( mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)) ++metaball_count;

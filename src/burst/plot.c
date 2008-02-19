@@ -40,7 +40,8 @@
 
 void
 plotInit()
-	{	int	x1, y1, z1, x2, y2, z2;
+	{
+		int	x1, y1, z1, x2, y2, z2;
 	if ( plotfp == NULL )
 		return;
 	x1 = (int) rtip->mdl_min[X] - 1;
@@ -67,7 +68,8 @@ register fastf_t	*r_pt;
 void
 plotRay( rayp )
 register struct xray	*rayp;
-	{	int	endpoint[3];
+	{
+		int	endpoint[3];
 	if ( plotfp == NULL )
 		return;
 	VJOIN1( endpoint, rayp->r_pt, cellsz, rayp->r_dir );

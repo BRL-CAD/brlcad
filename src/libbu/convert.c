@@ -97,7 +97,8 @@ bu_cv_cookie(char *in)			/* input format */
 	if (!*p) return 0;
 	if (*p == 'u') {
 		++p;
-	} else if (*p == 's') {	/* could be 'signed' or 'short' */
+	} else if (*p == 's') {
+ 	/* could be 'signed' or 'short' */
 		char *p2;
 		p2 = p+1;
 		if (*p2 && (islower(*p2) || isdigit(*p2))) {
@@ -748,7 +749,8 @@ bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incoo
 			 * inIsHost != HOST then outIsHost must be host format.
 			 */
 
-		} else if (inIsHost != CV_HOST_MASK) { /* net format */
+		} else if (inIsHost != CV_HOST_MASK) {
+  /* net format */
 			switch (incookie & (CV_SIGNED_MASK | CV_TYPE_MASK)) {
 			case CV_SIGNED_MASK | CV_16:
 		    return(	bu_cv_ntohss((signed short *)out, size, in, count));
@@ -848,7 +850,8 @@ bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incoo
 		 * this means that there will be at least two conversions taking place
 		 * if the input is in net format.  (from net to host then at least one cast)
 		 */
-		if (inIsHost != CV_HOST_MASK) { /* net format */
+		if (inIsHost != CV_HOST_MASK) {
+  /* net format */
 			switch (incookie & (CV_SIGNED_MASK | CV_TYPE_MASK)) {
 			case CV_SIGNED_MASK | CV_16:
 				(void) bu_cv_ntohss((short *)t1, bufsize, from, work_count);

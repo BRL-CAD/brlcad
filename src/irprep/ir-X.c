@@ -632,7 +632,8 @@ main(void)
 	   case Expose:		/*  Code for expose event.  */
 	     /*  Draw the picture if the picture window is exposed.  */
 	     if (event_received.xexpose.window == wind_pic)
-	     {						/*  START # 1  */
+	     {
+	     						/*  START # 1  */
 		/*  Send groups of color to screen.  */
 		for (k=0; k<MAXCOL; k++)
 		{
@@ -674,7 +675,8 @@ main(void)
 
 	     /*  If exit window is exposed write label.  */
 	     else if (event_received.xexpose.window == wind_exit)
-	     {						/*  START # 2  */
+	     {
+	     						/*  START # 2  */
 		XSetForeground(my_display, my_gc, white);
 		font = XLoadFont(my_display, "8x13bold");
 		XSetFont(my_display, my_gc, font);
@@ -726,15 +728,18 @@ main(void)
 
 		/*  Create pix file if necessary.  */
 		if (flag_pix == 1)
-		{					/*  START # 1.  */
+		{
+							/*  START # 1.  */
 		   /*  Open pix file to be written to.  */
 		   fpw = fopen(file_pix, "wb");
 
 		   /*  Write colors to file.  */
 		   for (i=high; i>0; i--)
-		   {					/*  START # 2.  */
+		   {
+		   					/*  START # 2.  */
 			for (j=0; j<wide; j++)
-			{				/*  START # 3.  */
+			{
+							/*  START # 3.  */
 			   c = (unsigned char)( (int)(colval[color[j][i-1]].red
 				/ 256) );
 			   putc(c, fpw);

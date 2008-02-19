@@ -81,7 +81,8 @@ int read_faces(struct model *m, FILE *fgeom)
 	s = BU_LIST_FIRST(shell, &r->s_hd);
 
 
-	for (i = 0; i < nfaces; i++) {		/* Read in each of the faces */
+	for (i = 0; i < nfaces; i++) {
+ 		/* Read in each of the faces */
 		struct vertex **vlist;
 		int *pinds;
 
@@ -92,7 +93,8 @@ int read_faces(struct model *m, FILE *fgeom)
 		vlist = (struct vertex **) bu_malloc(sizeof(struct vertex *) * nedges, "vertex list");
 		pinds = (int *) bu_malloc(sizeof(int) * nedges, "point indicies");
 
-		for (j = 0; j < nedges; j++) {			/* Read list of point indicies. */
+		for (j = 0; j < nedges; j++) {
+ 			/* Read list of point indicies. */
 			if (fscanf(fgeom, "%d", &pinds[j]) != 1) {
 				bu_exit(1, "Not enough points on face.\n");
 			}
@@ -150,7 +152,8 @@ int off2nmg(FILE *fpin, struct rt_wdb *fpout)
 	title[0] = geom_fname[0] = '\0';
 
 	bu_fgets(buf, sizeof(buf), fpin);
-	while (!feof(fpin)) {				/* Retrieve the important data */
+	while (!feof(fpin)) {
+ 				/* Retrieve the important data */
 		if (sscanf(buf, "name %[^\n]s", buf2) > 0)
 			bu_strlcpy(title, buf2, sizeof(title));
 		if (sscanf(buf, "geometry %200[^\n]s", buf2) > 0) {

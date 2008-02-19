@@ -39,7 +39,8 @@
 
 boolean
 imageInit()
-	{	boolean needopen = 0;
+	{
+		boolean needopen = 0;
 		static char lastfbfile[LNBUFSZ]={0}; /* last fbfile */
 	devwid = 512;
 	devhgt = 512;
@@ -84,7 +85,8 @@ imageInit()
 boolean
 openFbDevice( devname )
 char	*devname;
-	{	boolean	ret = 1;
+	{
+		boolean	ret = 1;
 	notify( "Opening frame buffer", NOTIFY_APPEND );
 	if ( zoom < 1 )
 		{
@@ -143,7 +145,8 @@ safe_exit : notify( NULL, NOTIFY_DELETE );
 
 boolean
 closFbDevice()
-	{	int	ret;
+	{
+		int	ret;
 	notify( "Closing frame buffer", NOTIFY_APPEND );
 	if ( fb_close( fbiop ) == -1 )
 		ret = 0;

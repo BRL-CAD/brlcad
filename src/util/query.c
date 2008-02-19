@@ -147,7 +147,8 @@ main(int argc, char **argv)
 		} else if (flag == NULL) {
 			(void) fputs(Response, stdout);
 			break;
-		} else { /* good response */
+		} else {
+  /* good response */
 			eol = strlen(line) + line;
 			if (*(eol-1) == '\n') {
 				--eol;

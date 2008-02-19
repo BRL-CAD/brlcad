@@ -83,13 +83,16 @@ void render_path_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel
     /* Terminate if depth is too great. */
     while (propogate) {
       if ((new_mesh = (adrt_mesh_t *)tie_work(tie, &new_ray, &new_id, render_hit, NULL)) && new_ray.depth < RENDER_MAX_DEPTH) {
-        if (new_mesh->attributes->ior != 1.0) {	/* Refractive Caustic */
+        if (new_mesh->attributes->ior != 1.0) {
+ 	/* Refractive Caustic */
           /* Deal with refractive-fu */
-        } else if (new_mesh->attributes->emission > 0.0) {	/* Emitting Light Source */
+        } else if (new_mesh->attributes->emission > 0.0) {
+ 	/* Emitting Light Source */
           T = new_mesh->attributes->color;
           MATH_VEC_MUL_SCALAR(T, T, new_mesh->attributes->emission);
           propogate = 0;
-        } else {	/* Diffuse */
+        } else {
+ 	/* Diffuse */
           if (new_mesh->texture) {
             new_mesh->texture->work(new_mesh->texture, new_mesh, &new_ray, &new_id, &T);
           } else {

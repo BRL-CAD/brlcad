@@ -1755,7 +1755,8 @@ ell_in(char **cmd_argvs, struct rt_db_internal *intern)
 		vals[i] = atof(cmd_argvs[3+i]) * local2base;
 	}
 
-	if (!strcmp("ell", cmd_argvs[2])) {	/* everything's ok */
+	if (!strcmp("ell", cmd_argvs[2])) {
+ 	/* everything's ok */
 		/* V, A, B, C */
 		VMOVE( eip->v, &vals[0] );
 		VMOVE( eip->a, &vals[3] );
@@ -2119,7 +2120,8 @@ box_in(char **cmd_argvs, struct rt_db_internal *intern)
 		VADD3( aip->pt[5], Vrtx, Dpth, Wdth );
 		VADD4( aip->pt[6], Vrtx, Dpth, Wdth, Hgt );
 		VADD3( aip->pt[7], Vrtx, Dpth, Hgt );
-	} else { /* "raw" */
+	} else {
+  /* "raw" */
 		VADD2( aip->pt[0], Vrtx, Wdth );
 		VADD2( aip->pt[1], Vrtx, Hgt );
 		VADD2( aip->pt[2], aip->pt[1], Dpth );

@@ -121,7 +121,8 @@ int	x, y;
 RGBpixel	*pixelp;
 int	count;
 {
-	{	register RGBpixel *memp;
+	{
+		register RGBpixel *memp;
 	for ( 	memp = (RGBpixel *)
 			(&ifp->if_mem[(y*ifp->if_width+x)*sizeof(RGBpixel)]);
 		count > 0;
@@ -197,7 +198,8 @@ int	x, y;
 RGBpixel	*pixelp;
 int	count;
 {
-	{	register RGBpixel *memp;
+	{
+		register RGBpixel *memp;
 	for ( 	memp = (RGBpixel *)
 			(&ifp->if_mem[(y*ifp->if_width+x)*sizeof(RGBpixel)]);
 		count > 0;

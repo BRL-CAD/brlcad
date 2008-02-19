@@ -72,19 +72,23 @@ clip (fastf_t *xp1, fastf_t *yp1, fastf_t *xp2, fastf_t *yp2)
 			*yp2 = temp;
 		}
 
-		if (code1 & 01)  {	/* Push toward left edge */
+		if (code1 & 01)  {
+  	/* Push toward left edge */
 			*yp1 = *yp1 + (*yp2-*yp1)*(GED_MIN-*xp1)/(*xp2-*xp1);
 			*xp1 = GED_MIN;
 		}
-		else if (code1 & 02)  {	/* Push toward right edge */
+		else if (code1 & 02)  {
+  	/* Push toward right edge */
 			*yp1 = *yp1 + (*yp2-*yp1)*(GED_MAX-*xp1)/(*xp2-*xp1);
 			*xp1 = GED_MAX;
 		}
-		else if (code1 & 04)  {	/* Push toward bottom edge */
+		else if (code1 & 04)  {
+  	/* Push toward bottom edge */
 			*xp1 = *xp1 + (*xp2-*xp1)*(GED_MIN-*yp1)/(*yp2-*yp1);
 			*yp1 = GED_MIN;
 		}
-		else if (code1 & 010)  {	/* Push toward top edge */
+		else if (code1 & 010)  {
+  	/* Push toward top edge */
 			*xp1 = *xp1 + (*xp2-*xp1)*(GED_MAX-*yp1)/(*yp2-*yp1);
 			*yp1 = GED_MAX;
 		}

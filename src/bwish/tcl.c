@@ -140,7 +140,8 @@ Cad_Main(int argc, char **argv, Tcl_AppInitProc (*appInitProc), Tcl_Interp *inte
 #ifndef BWISH
 	Cad_Exit(status);
 #endif
-    } else { /* We're running interactively. */
+    } else {
+  /* We're running interactively. */
 	/* Set up to handle commands from user as well as
 	   provide a command line editing capability. */
 	initInput();

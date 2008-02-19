@@ -461,7 +461,8 @@ fillRectangle(register Rectangle *rectp, register RGBpixel (*pixelp))
     register int rgt = rectp->r_corner.p_x;
     int lft = rectp->r_origin.p_x;
     if ( isSGI )
-    { /* More efficient on IRIS. */
+    {
+     /* More efficient on IRIS. */
 	if ( top - btm < 10 || rgt - lft < 10 )
 	{
 	    for (; btm <= top; btm++ )
@@ -688,7 +689,8 @@ f_ChngRegionColor()
 	register int i;
 	register int length = sizeof(xoff1)/sizeof(int);
 	for ( i = 0; i < length; i++ )
-	{	Point neighbor;
+	{
+		Point neighbor;
 	neighbor.p_x = pivot.p_x + xoff1[i];
 	neighbor.p_y = pivot.p_y + yoff1[i];
 	if ( paintSolidRegion( currentpix, &neighbor ) )

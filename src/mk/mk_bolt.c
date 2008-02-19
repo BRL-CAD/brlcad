@@ -113,7 +113,8 @@ main(int argc, char **argv)
 
    /*  If there are no arguments ask questions.  */
    if (argc == 1)
-   {							/*  START # 1  */
+   {
+   							/*  START # 1  */
 
    /*  Find type of bolt to build.  */
    (void)printf("Enter option:\n");
@@ -161,7 +162,8 @@ main(int argc, char **argv)
    /*  If there are arguments do not ask any questions.  Get the  */
    /*  answers from the arguments.  */
    else
-   {							/*  START # 2  */
+   {
+   							/*  START # 2  */
 
 	/*  List of options.  */
 	/*	-o# - # = 1 => bolt head  */
@@ -178,13 +180,15 @@ main(int argc, char **argv)
 	/*	-sh# - # = stem height  */
 
 	for (i=1; i<argc; i++)
-	{						/*  START # 3  */
+	{
+							/*  START # 3  */
 	   /*  Put argument into temporary character string.  */
 	   temp = argv[i];
 
 	   /*  -o - set type of bolt to make.  */
 	   if (temp[1] == 'o')
-	   {						/*  START # 4  */
+	   {
+	   						/*  START # 4  */
 		if (temp[2] == '1') iopt = 1;
 		if (temp[2] == '2') iopt = 2;
 		if (temp[2] == '3') iopt = 3;
@@ -194,11 +198,13 @@ main(int argc, char **argv)
 
 	   /*  -f - mged file name.  */
 	   else if (temp[1] == 'f')
-	   {						/*  START # 5  */
+	   {
+	   						/*  START # 5  */
 		j = 2;
 		k = 0;
 		while ( (temp[j] != '\0') && (k < 25) )
-		{					/*  START # 6  */
+		{
+							/*  START # 6  */
 		   filemged[k] = temp[j];
 		   j++;
 		   k++;
@@ -208,7 +214,8 @@ main(int argc, char **argv)
 
 	   /*  -n - number of bolts to be created.  */
 	   else if (temp[1] == 'n')
-	   {						/*  START # 6.05  */
+	   {
+	   						/*  START # 6.05  */
 		/*  Set up temporary character string, temp1.  */
 		j = 2;
 		k = 0;
@@ -225,7 +232,8 @@ main(int argc, char **argv)
 
 	   /*  Take care of all other arguments.  */
 	   else
-	   {						/*  START # 6.1  */
+	   {
+	   						/*  START # 6.1  */
 		/*  Set temporary character string, temp1.  */
 		j = 3;
 		k = 0;
@@ -239,7 +247,8 @@ main(int argc, char **argv)
 
 		/*  -hd & -hh - head diameter & height.  */
 		if (temp[1] == 'h')
-		{					/*  START # 7  */
+		{
+							/*  START # 7  */
 		   if (temp[2] == 'd')	/*  Head diameter.  */
 		   {
 			(void)sscanf(temp1, "%lf", &hd);
@@ -252,7 +261,8 @@ main(int argc, char **argv)
 
 		/*  -wd & -wh - washer diameter & height.  */
 		else if (temp[1] == 'w')
-		{					/*  START # 8  */
+		{
+							/*  START # 8  */
 		   if (temp[2] == 'd')	/*  Washer diameter.  */
 		   {
 			(void)sscanf(temp1, "%lf", &wd);
@@ -265,7 +275,8 @@ main(int argc, char **argv)
 
 		/*  -sd & -sh - stem washer diameter & height.  */
 		else if (temp[1] == 's')
-		{					/*  START # 9  */
+		{
+							/*  START # 9  */
 		   if (temp[2] == 'd')	/*  Stem diameter.  */
 		   {
 			(void)sscanf(temp1, "%lf", &sd);
@@ -300,7 +311,8 @@ main(int argc, char **argv)
    mk_id(fpw, "bolts");
 
    for (i=0; i<numblt; i++)	/*  Loop for each bolt created.  */
-   {							/*  START # 20  */
+   {
+   							/*  START # 20  */
 
    /*  Create all solids needed.  */
    /*  Create solids of bolt head.  */

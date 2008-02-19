@@ -56,7 +56,8 @@ rt_nurb_s_refine(const struct face_g_snurb *srf, int dir, struct knot_vector *kv
 
 	NMG_CK_SNURB(srf);
 
-	if (dir == RT_NURB_SPLIT_ROW) {		/* Row (u) direction */
+	if (dir == RT_NURB_SPLIT_ROW) {
+ 		/* Row (u) direction */
 		GET_SNURB(nurb_srf);
 		nurb_srf->order[0] = srf->order[0];
 		nurb_srf->order[1] = srf->order[1];
@@ -97,7 +98,8 @@ rt_nurb_s_refine(const struct face_g_snurb *srf, int dir, struct knot_vector *kv
 
 		rt_nurb_free_oslo(oslo, res);
 
-	} else 	{		/* Col (v) direction */
+	} else 	{
+ 			/* Col (v) direction */
 		GET_SNURB(nurb_srf);
 		nurb_srf->order[0] = srf->order[0];
 		nurb_srf->order[1] = srf->order[1];

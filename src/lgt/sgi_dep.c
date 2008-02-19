@@ -98,7 +98,8 @@ static char	*winpupstr[] =
 static bool
 tryGetOrigin( xp, yp )
 long *xp, *yp;
-	{	char *fbtype = fb_gettype( fbiop );
+	{
+		char *fbtype = fb_gettype( fbiop );
 	if ( strcmp( fbtype, "Remote Device Interface" ) == 0 )	/* trouble */
 		{
 		prnt_Scroll( "Can't get window origin from remote device.\n" );
@@ -308,7 +309,8 @@ int	size;
 
 static void
 sgi_Pup_Strs()
-	{	register int	i, ypos = PUPHGT-WINBANNER-WINBORDER;
+	{
+		register int	i, ypos = PUPHGT-WINBANNER-WINBORDER;
 		long	gid = winget();
 	winset( popup_gid );
 	color( CYAN );
@@ -325,7 +327,8 @@ sgi_Pup_Strs()
 static void
 sgi_Pt_Select( x, y, xp, yp, originp )
 register int	x, y, *xp, *yp, *originp;
-	{	char		*args[3];
+	{
+		char		*args[3];
 		char		buf1[5], buf2[5];
 		long		xwin, ywin;
 	if ( ! tryGetOrigin( &xwin, &ywin ) )
@@ -344,7 +347,8 @@ register int	x, y, *xp, *yp, *originp;
 		(void) f_Grid_Y_Pos( (HMitem *) 0, args );
 		}
 	else
-		{	int	x_fin, y_fin;
+		{
+			int	x_fin, y_fin;
 		x_fin = SGI_XCVT( x ) + x_fb_origin;
 		y_fin = SGI_YCVT( y ) + y_fb_origin;
 		if ( x_fin < grid_x_org )
@@ -368,7 +372,8 @@ register int	x, y, *xp, *yp, *originp;
 
 static void
 sgi_Pup_Redraw()
-	{	long	gid = winget();
+	{
+		long	gid = winget();
 	winset( popup_gid );
 	reshapeviewport();
 	sgi_Pup_Strs();
@@ -379,7 +384,8 @@ sgi_Pup_Redraw()
 static int
 sgi_Tag_Pixel( origin, x, y, x0, y0 )
 int	origin, x, y, x0, y0;
-	{	short	val;
+	{
+		short	val;
 		long	xwin, ywin;
 		int	flag = tracking_cursor;
 	tracking_cursor = FALSE; /* Disable tracking cursor.		*/
@@ -443,7 +449,8 @@ int	origin, x, y, x0, y0;
 static int
 sgi_Sweep_Rect( origin, x, y, x0, y0 )
 int	origin, x, y, x0, y0;
-	{	short	val;
+	{
+		short	val;
 		long	xwin, ywin;
 	if ( ! tryGetOrigin( &xwin, &ywin ) )
 		return -1; /* XXX */
@@ -484,7 +491,8 @@ int	origin, x, y, x0, y0;
 				/* Done sweeping.	*/
 				(void) fb_setcursor( fbiop, target1, 16, 16, 8, 8 );
 			else
-				{ /* Sweeping a rectangle.*/
+				{
+				 /* Sweeping a rectangle.*/
 				sgi_OL_Erase();
 				(void) fb_setcursor( fbiop, sweeportrack, 16, 16, 0, 15 );
 				}
@@ -529,7 +537,8 @@ int	origin, x, y, x0, y0;
 static int
 sgi_Window_In( origin, x, y, x0, y0, out_flag )
 int	origin, x, y, x0, y0, out_flag;
-	{	short		val;
+	{
+		short		val;
 		register long	dx = 0, dy = 0, dw = 0;
 		double		relscale;
 		double		x_translate, y_translate;
@@ -593,11 +602,13 @@ int	origin, x, y, x0, y0, out_flag;
 		case MIDDLEMOUSE :
 			Toggle( origin );
 			if ( origin )
-				{ /* Done framing window. */
+				{
+				 /* Done framing window. */
 				(void) fb_setcursor( fbiop, target1, 16, 16, 8, 8 );
 				}
 			else
-				{ /* Framing a window. */
+				{
+				 /* Framing a window. */
 				x0 = x;
 				y0 = y;
 				sgi_OL_Erase();
@@ -655,7 +666,8 @@ char	**args;
 	for (;;)
 		{
 		if ( qtest() )
-			{	short	val;
+			{
+				short	val;
 				long	dev = qread( &val );
 			switch ( dev )
 				{
@@ -701,7 +713,8 @@ int	origin;
 		{
 		(void) fb_setcursor( fbiop, menucursor, 16, 16, 0, 0 );
 		if ( qtest() )
-			{	short	val;
+			{
+				short	val;
 				long	dev = qread( &val );
 				int	ret;
 			switch ( dev )
@@ -816,7 +829,8 @@ x  120	y  121	z  122
  */
 int
 sgi_Init_Popup_Menu()
-	{	long	grid_cntl_menu;
+	{
+		long	grid_cntl_menu;
 		long	file_name_menu;
 		long	light_src_menu;
 		long	special_menu;
@@ -1008,7 +1022,8 @@ void
 sgi_Animate( framesz, fps )
 int	framesz;
 int	fps;
-	{	register int	i, j;
+	{
+		register int	i, j;
 		register int	wid;
 		register int	xpos, ypos;
 		static long	movie_gid = -1;
@@ -1068,7 +1083,8 @@ int	fps;
 			{
 			sginap( HZ/(long)fps );
 			if ( qtest() )
-				{	short	val;
+				{
+					short	val;
 				switch ( qread( &val ) )
 					{
 				case MENUBUTTON :
@@ -1109,7 +1125,8 @@ sgi_GetInput( inbuf, bufsz, msg )
 char	 *inbuf;
 int	 bufsz;
 char	*msg;
-	{	static char	buffer[BUFSIZ];
+	{
+		static char	buffer[BUFSIZ];
 		register char	*p = buffer;
 		register int	c;
 	prnt_Prompt( msg );
@@ -1139,7 +1156,8 @@ char	*msg;
 			--p;
 			break;
 		case Ctrl('D') : /* Delete character under cursor.	*/
-			{	register char	*q = p;
+			{
+				register char	*q = p;
 			if ( *p == NUL )
 				{
 				ring_Bell();
@@ -1186,7 +1204,8 @@ char	*msg;
 			*p = NUL;
 			break;
 		case Ctrl('P') : /* Yank previous contents of "inbuf".	*/
-			{	register int	len = strlen( inbuf );
+			{
+				register int	len = strlen( inbuf );
 			if ( (p + len) - buffer >= BUFSIZ )
 				{
 				ring_Bell();
@@ -1204,7 +1223,8 @@ char	*msg;
 				break;
 				}
 			for (; p > buffer; --p )
-				{	register char	*q = p;
+				{
+					register char	*q = p;
 				(void) putchar( BS );
 				for (; *(q-1) != NUL; ++q )
 					{
@@ -1216,7 +1236,8 @@ char	*msg;
 				}
 			break;
 		case Ctrl('R') : /* Print line, cursor doesn't move.	*/
-			{	register int	i;
+			{
+				register int	i;
 			if ( buffer[0] == NUL )
 				break;
 			for ( i = p - buffer; i > 0; i-- )
@@ -1227,7 +1248,8 @@ char	*msg;
 			break;
 			}
 		case DEL : /* Delete character behind cursor.		*/
-			{	register char	*q = p;
+			{
+				register char	*q = p;
 			if ( p == buffer )
 				{
 				ring_Bell();
@@ -1258,7 +1280,8 @@ char	*msg;
 			c = hm_getchar();
 			/* Fall through to default case!		*/
 		default : /* Insert character at cursor.		*/
-			{	register char	*q = p;
+			{
+				register char	*q = p;
 				register int	len = strlen( p );
 			/* Print control characters as strings.		*/
 			if ( c >= NUL && c < SP )
@@ -1290,7 +1313,8 @@ char	*msg;
 static void
 sgi_Read_Keyboard( args )
 char	**args;
-	{	register int	i;
+	{
+		register int	i;
 		register char	*eof_flag;
 	(void) get_Input( input_ln, BUFSIZ, ": " );
 	if ( (args[0] = strtok( input_ln, " \t" )) == NULL )
@@ -1306,7 +1330,8 @@ char	**args;
 
 int
 sgi_Getchar()
-	{	short	val;
+	{
+		short	val;
 	(void) winattach();
 	while ( ! qtest() || qread( &val ) != KEYBD )
 		;
@@ -1316,7 +1341,8 @@ sgi_Getchar()
 int
 sgi_Ungetchar( c )
 int	c;
-	{	short	val = c;
+	{
+		short	val = c;
 	qenter( KEYBD, val );
 	return c;
 	}

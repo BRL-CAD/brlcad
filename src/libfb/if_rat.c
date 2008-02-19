@@ -146,7 +146,8 @@ rat_open(FBIO *ifp, char *file, int width, int height)
 	_fbfd = ifp->if_fd;
 	_fbsize = width;
 	if ( width == 1024)
-		{ ifp->if_width = width;
+		{
+		 ifp->if_width = width;
 		  ifp->if_height = height; }
 	_rat_init(ifp);
 	return ifp->if_fd;
@@ -204,7 +205,8 @@ rat_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), int count)
 
 	/* If first scanline is a partial, input it seperately.		*/
 	if ( x > 0 || x + count <= _fbsize )
-		{	register int	i;
+		{
+			register int	i;
 		if ( ! movabs( x, y ) )
 			return	-1;
 		y++;
@@ -240,7 +242,8 @@ rat_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), int count)
 		}
 	/* Do all full scanlines.					*/
 	while ( (nrows = count / _fbsize) != 0 )
-		{	register int	i;
+		{
+			register int	i;
 		if ( ! movabs( 0, y ) )
 			return	-1;
 		if ( nrows * _fbsize * 3 > MAX_RAT_BUFF )
@@ -257,7 +260,8 @@ rat_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), int count)
 				load = MAX_RAT_READ;
 			else
 				load = bytes;
-			{ register int	ii;
+			{
+			 register int	ii;
 			for ( ii = 0; ii < load; ii++ )
 				p[ii] = 100;
 			}
@@ -281,7 +285,8 @@ rat_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), int count)
 			}
 		}
 	if ( count > 0 )
-		{ /* Do partial scanline.				*/
+		{
+		 /* Do partial scanline.				*/
 			register int	i;
 			register u_char	*p = pix_buf;
 
@@ -331,7 +336,8 @@ rat_write(FBIO *ifp, int x, int y, RGBpixel (*pixelp), int count)
 
 	/* If first scanline is a partial, output it separately.	*/
 	if ( x > 0 || x + count <= _fbsize )
-		{	register int	bytes, i;
+		{
+			register int	bytes, i;
 			register u_char	*p = pix_buf;
 		if ( ! movabs( x, y ) )
 			return	-1;
@@ -351,7 +357,8 @@ rat_write(FBIO *ifp, int x, int y, RGBpixel (*pixelp), int count)
 		}
 	/* Do all full scanlines.					*/
 	while ( (nrows = count / _fbsize) != 0 )
-		{	register int	bytes, i, j;
+		{
+			register int	bytes, i, j;
 			register u_char	*p = pix_buf, *p1;
 		if ( nrows * _fbsize * 3 > MAX_RAT_BUFF )
 			nrows = MAX_RAT_BUFF / (_fbsize * 3);
@@ -374,7 +381,8 @@ rat_write(FBIO *ifp, int x, int y, RGBpixel (*pixelp), int count)
 		}
 	/* If partial scanline remains, finish up.			*/
 	if ( count > 0 )
-		{	register int	bytes, i;
+		{
+			register int	bytes, i;
 			register u_char	*p = pix_buf;
 		if ( ! movabs( 0, y ) )
 			return	-1;

@@ -2702,17 +2702,25 @@ compute_normal_at_gridpoint(vect_t N,
     }
     VSET(tmp, x, y, DSP(&dsp->dsp_i, x, y));
 
-    if (x == 0) {	VMOVE(A, tmp); }
-    else {		VSET(A, x-1, y, DSP(&dsp->dsp_i, x-1, y) );	}
+    if (x == 0) {
+ 	VMOVE(A, tmp); }
+    else {
+ 		VSET(A, x-1, y, DSP(&dsp->dsp_i, x-1, y) );	}
 
-    if (x >= XSIZ(dsp)) { VMOVE(C, tmp); }
-    else {		  VSET(C, x+1, y,  DSP(&dsp->dsp_i, x+1, y) );}
+    if (x >= XSIZ(dsp)) {
+  VMOVE(C, tmp); }
+    else {
+ 		  VSET(C, x+1, y,  DSP(&dsp->dsp_i, x+1, y) );}
 
-    if (y == 0) {	VMOVE(D, tmp); }
-    else {		VSET(D, x, y-1, DSP(&dsp->dsp_i, x, y-1) );	}
+    if (y == 0) {
+ 	VMOVE(D, tmp); }
+    else {
+ 		VSET(D, x, y-1, DSP(&dsp->dsp_i, x, y-1) );	}
 
-    if (y >= YSIZ(dsp)) { VMOVE(E, tmp); }
-    else {		 VSET(E, x, y+1, DSP(&dsp->dsp_i, x, y+1) );	}
+    if (y >= YSIZ(dsp)) {
+  VMOVE(E, tmp); }
+    else {
+ 		 VSET(E, x, y+1, DSP(&dsp->dsp_i, x, y+1) );	}
 
     MAT4X3PNT(pt, dsp->dsp_i.dsp_stom, tmp);
 

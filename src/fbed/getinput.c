@@ -47,7 +47,8 @@ ring_Bell(void)
  */
 int
 get_Input(char* inbuf, size_t bufsz, const char* msg)
-{	static char buffer[BUFSIZ];
+{
+	static char buffer[BUFSIZ];
 		register char *p = buffer;
 		register int c;
 	if ( *cptr != NUL && *cptr != '@' )
@@ -110,7 +111,8 @@ get_Input(char* inbuf, size_t bufsz, const char* msg)
 			--p;
 			break;
 		case Ctrl('D') : /* Delete character under cursor. */
-			{	register char *q = p;
+			{
+				register char *q = p;
 			if ( *p == NUL )
 				{
 				ring_Bell();
@@ -157,7 +159,8 @@ get_Input(char* inbuf, size_t bufsz, const char* msg)
 			*p = NUL;
 			break;
 		case Ctrl('P') : /* Yank previous contents of "inbuf". */
-			{	register int len = strlen( inbuf );
+			{
+				register int len = strlen( inbuf );
 			if ( (p + len) - buffer >= BUFSIZ )
 				{
 				ring_Bell();
@@ -175,7 +178,8 @@ get_Input(char* inbuf, size_t bufsz, const char* msg)
 				break;
 				}
 			for (; p > buffer; --p )
-				{	register char *q = p;
+				{
+					register char *q = p;
 				(void) putchar( BS );
 				for (; *(q-1) != NUL; ++q )
 					{
@@ -187,7 +191,8 @@ get_Input(char* inbuf, size_t bufsz, const char* msg)
 				}
 			break;
 		case Ctrl('R') : /* Print line, cursor doesn't move. */
-			{	register int i;
+			{
+				register int i;
 			if ( buffer[0] == NUL )
 				break;
 			for ( i = p - buffer; i > 0; i-- )
@@ -198,7 +203,8 @@ get_Input(char* inbuf, size_t bufsz, const char* msg)
 			break;
 			}
 		case DEL : /* Delete character behind cursor. */
-			{	register char *q = p;
+			{
+				register char *q = p;
 			if ( p == buffer )
 				{
 				ring_Bell();
@@ -231,7 +237,8 @@ get_Input(char* inbuf, size_t bufsz, const char* msg)
 				}
 			/* Fall through to default case! */
 		default : /* Insert character at cursor. */
-			{	register char *q = p;
+			{
+				register char *q = p;
 				register int len = strlen( p );
 			/* Print control characters as strings. */
 			if ( c >= NUL && c < SP )
@@ -264,7 +271,8 @@ get_Input(char* inbuf, size_t bufsz, const char* msg)
  */
 Func_Tab *
 get_Func_Name(char* inbuf, size_t bufsz, const char* msg)
-{	extern Try	*try_rootp;
+{
+	extern Try	*try_rootp;
 		extern Func_Tab	*get_Try(register char *name, register Try *tryp);
 		static char buffer[BUFSIZ];
 		register char *p = buffer;
@@ -345,7 +353,8 @@ get_Func_Name(char* inbuf, size_t bufsz, const char* msg)
 			--p;
 			break;
 		case Ctrl('D') : /* Delete character under cursor. */
-			{	register char *q = p;
+			{
+				register char *q = p;
 			if ( *p == NUL )
 				{
 				ring_Bell();
@@ -392,7 +401,8 @@ get_Func_Name(char* inbuf, size_t bufsz, const char* msg)
 			*p = NUL;
 			break;
 		case Ctrl('P') : /* Yank previous contents of "inbuf". */
-			{	register int len = strlen( inbuf );
+			{
+				register int len = strlen( inbuf );
 			if ( (p + len) - buffer >= BUFSIZ )
 				{
 				ring_Bell();
@@ -410,7 +420,8 @@ get_Func_Name(char* inbuf, size_t bufsz, const char* msg)
 				break;
 				}
 			for (; p > buffer; --p )
-				{	register char *q = p;
+				{
+					register char *q = p;
 				(void) putchar( BS );
 				for (; *(q-1) != NUL; ++q )
 					{
@@ -422,7 +433,8 @@ get_Func_Name(char* inbuf, size_t bufsz, const char* msg)
 				}
 			break;
 		case Ctrl('R') : /* Print line, cursor doesn't move. */
-			{	register int i;
+			{
+				register int i;
 			if ( buffer[0] == NUL )
 				break;
 			for ( i = p - buffer; i > 0; i-- )
@@ -433,7 +445,8 @@ get_Func_Name(char* inbuf, size_t bufsz, const char* msg)
 			break;
 			}
 		case DEL : /* Delete character behind cursor. */
-			{	register char *q = p;
+			{
+				register char *q = p;
 			if ( p == buffer )
 				{
 				ring_Bell();
@@ -475,7 +488,8 @@ get_Func_Name(char* inbuf, size_t bufsz, const char* msg)
 				}
 			/* Fall through to default case! */
 		default : /* Insert character at cursor. */
-			{	register char *q = p;
+			{
+				register char *q = p;
 				register int len = strlen( p );
 			/* Scroll characters forward. */
 			if ( c >= NUL && c < SP )

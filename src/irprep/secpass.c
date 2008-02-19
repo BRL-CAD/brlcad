@@ -106,7 +106,8 @@ double enterpt[3];		/*  point where ray enters  */
 double leavept[3];		/*  point where ray leaves  */
 
 int main(int argc, char **argv)
-{	/*  START # 1  */
+{
+	/*  START # 1  */
   struct application ap;	/*  Structure passed between functions.  */
 
   static struct rt_i *rtip;	/*  *rtip pointer to structure of  */
@@ -174,7 +175,8 @@ int main(int argc, char **argv)
     }
 
   else
-    {	/*  START # 2  */
+    {
+    	/*  START # 2  */
 
 	/*  Ask if output goes to standard out or to a file.  */
       (void)fprintf(stdout, "Write output to standard out (0) or a file(1) ");
@@ -580,7 +582,8 @@ int main(int argc, char **argv)
       ap.a_ray.r_dir[Z] = r[Z];
 
       while (strtpt[Z] <= zmax)
-	{	/*  START # 3  */
+	{
+		/*  START # 3  */
 
 	  iprev = (-1);	/*  No previous shots.  */
 
@@ -608,7 +611,8 @@ int main(int argc, char **argv)
 
       /*  Shoot down 2nd & 3rd axes if necessary.  */
       if (ifire == 0)
-	{						/*  START # 1000  */
+	{
+							/*  START # 1000  */
 	  /*  Set up & shoot down the 2nd axis (y-axis).  */
 	  (void)printf("\nShooting down the 2nd axis.\n");
 	  (void)fflush(stdout);
@@ -639,7 +643,8 @@ int main(int argc, char **argv)
 	  ap.a_ray.r_dir[Z] = r[Z];
 
 	  while (strtpt[Z] <= zmax)
-	    {						/*  START # 1010  */
+	    {
+	    						/*  START # 1010  */
 	      iprev = (-1);		/*  No previous shots.  */
 
 	      /*  Call rt_shootray.  */
@@ -686,7 +691,8 @@ int main(int argc, char **argv)
 	  ap.a_ray.r_pt[Z] = r[Z];
 
 	  while (strtpt[Y] <= ymax)
-	    {						/*  START # 1020  */
+	    {
+	    						/*  START # 1020  */
 	      iprev = (-1);		/*  No previous shots.  */
 
 	      /*  Call rt_shootray.  */
@@ -817,16 +823,19 @@ int main(int argc, char **argv)
 
       /*  Make calculations & write to conductivity file.  */
       for (i=0; i<numreg; i++)
-	{	/*  START # 6  */
+	{
+		/*  START # 6  */
 
 	  /*  Make conductivity file triangular.  This program still  */
 	  /*  computes the ENTIRE matrix.  */
 
 	  for (j=(i+1); j<numreg; j++)
-	    {	/*  START # 7  */
+	    {
+	    	/*  START # 7  */
 
 	      if ( (cond[i].avglen[j] != 0) )
-		{	/*  START # 8  */
+		{
+			/*  START # 8  */
 		  /*  Find correct thermal conductivity.  */
 		  /*  If ki or kj = 0 => rk = 0.  */
 		  ki = k[cond[i].mat];
@@ -893,7 +902,8 @@ int main(int argc, char **argv)
 		  /*  may be zero.  */
 
 		  /*  Print only if PRISM file is to be created.  */
-		  if (typeout == 0) {		/*  START # 8A  */
+		  if (typeout == 0) {
+ 		/*  START # 8A  */
 		    if ( (itype == 1) && (cond[i].shrarea[j] > ZEROTOL) )
 		      {
 			if (prmrel == 2)
@@ -1030,11 +1040,14 @@ int main(int argc, char **argv)
       (void)fflush(fp2);
 
       for (i=0; i<numreg; i++)
-	{	/*  START # 9  */
+	{
+		/*  START # 9  */
 	  for (j=0; j<numreg; j++)
-	    {	/*  START # 10  */
+	    {
+	    	/*  START # 10  */
 	      if (cond[i].shrarea[j] != 0)
-		{	/*  START # 11  */
+		{
+			/*  START # 11  */
 		  a1 = cond[i].shrarea[j] * 1.e-6;
 		  l1 = cond[i].avglen[j] * 1.e-3;
 		  l2 = cond[i].rmslen[j] * 1.e-3;
@@ -1157,7 +1170,8 @@ int main(int argc, char **argv)
 /*  User supplied hit function.  */
 int
 hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *segp)
-{	/*  START # 1H  */
+{
+	/*  START # 1H  */
 
   register struct partition *pp;
   register struct hit *hitp;
@@ -1175,7 +1189,8 @@ hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *
 
   pp = PartHeadp->pt_forw;
   for (; pp != PartHeadp; pp = pp->pt_forw)
-    {	/*  START # 2H  */
+    {
+    	/*  START # 2H  */
       icur = pp->pt_regionp->reg_bit;	/*  Number of region hit.  */
 
       /*  Find hit point of entering ray.  */
@@ -1189,7 +1204,8 @@ hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *
       /*  Find lengths between centroids and adjacent surface areas.  */
 
       if (iprev >= 0)
-	{	/*  START # 3H  */
+	{
+		/*  START # 3H  */
 	  d[X] = enterpt[X] - leavept[X];
 	  if (d[X] < 0) d[X] = (-d[X]);
 	  d[Y] = enterpt[Y] - leavept[Y];
@@ -1198,7 +1214,8 @@ hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *
 	  if (d[Z] < 0) d[Z] = (-d[Z]);
 
 	  if ( (d[X] < ADJTOL) && (d[Y] < ADJTOL) && (d[Z] < ADJTOL) )
-	    {	/*  START # 4H  */
+	    {
+	    	/*  START # 4H  */
 		/*  Find length for previous region. */
 	      dist = ( (cond[iprev].centroid[X] - enterpt[X])
 		       * (cond[iprev].centroid[X] - enterpt[X]) ) +
@@ -1304,7 +1321,8 @@ hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *
 /*  User supplied miss function.  */
 int
 miss(register struct application *ap_p)
-{	/*  START # 1M  */
+{
+	/*  START # 1M  */
 
   /*
    * (void)fprintf(stdout, "In miss function.\n");

@@ -198,7 +198,8 @@ shell( char *args[] )
 	if ( (pid = fork()) == -1 ) {
 		perror( "shell()" );
 		return( -1 );
-	} else	if ( pid == 0 ) { /*
+	} else	if ( pid == 0 ) {
+  /*
 				  * CHILD process - execs a shell command
 					  */
 		(void) signal( SIGINT, SIG_DFL );
@@ -319,7 +320,8 @@ insert( char *args[], int ct )
 
 	/* For each argument (does not include args[0]).			*/
 	for ( i = 1; i < ct; i++ )
-	{ /* If object is in table of contents, insert in current list.	*/
+	{
+	 /* If object is in table of contents, insert in current list.	*/
 		nomatch = YES;
 		for ( j = 0; j < ndir; j++ )
 		{

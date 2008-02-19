@@ -207,7 +207,8 @@ getbits(register FILE *fp)
 		return getc(fp);
 	}
 	c = getc(fp);
-	if (c & 0x80) {			/* repeated character count */
+	if (c & 0x80) {
+ 			/* repeated character count */
 		rep = 0x100 - c;	/* byte length 2's comp + 1 */
 					/* 	allow for this call */
 		chr = getc(fp);		/* character to repeat */

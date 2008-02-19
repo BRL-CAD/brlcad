@@ -19,7 +19,8 @@ main(int argc, char** argv)
   printf("using fpu vectorization\n");
 #endif
 
-  { // test correctness
+  {
+   // test correctness
     double _a[8] VEC_ALIGN = {0,1,2,3, 4, 5, 6, 7};
     double _b[8] VEC_ALIGN = {2,4,6,8,10,12,14,16};
     dvec<8> a(_a, true);

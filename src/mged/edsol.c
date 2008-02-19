@@ -3892,7 +3892,8 @@ sedit(void)
 				 * to desired new location.
 				 */
 #ifdef TRY_EDIT_NEW_WAY
-			  if (mged_variables->mv_context) { /* move solid so that es_keypoint is at position es_para */
+			  if (mged_variables->mv_context) {
+  /* move solid so that es_keypoint is at position es_para */
 			    vect_t raw_para;
 
 			    MAT4X3PNT(raw_para, es_invmat, es_para);
@@ -3900,7 +3901,8 @@ sedit(void)
 			    VSUB2( delta, work, raw_para );
 			    MAT_IDN( xlatemat );
 			    MAT_DELTAS_VEC_NEG( xlatemat, delta );
-			  } else { /* move solid to position es_para */
+			  } else {
+  /* move solid to position es_para */
 			    /* move solid to position es_para */
 			    MAT4X3PNT(work, es_invmat, es_keypoint);
 			    VSUB2( delta, work, es_para );
@@ -5806,8 +5808,10 @@ sedit(void)
 		}
 		break;
 	case ECMD_METABALL_PT_MOV:
-		if (!es_metaballpt) { bu_log("Must select a point to move"); break; }
-		if (inpara != 3) { bu_log("Must provide dx dy dz"); break; }
+		if (!es_metaballpt) {
+  bu_log("Must select a point to move"); break; }
+		if (inpara != 3) {
+  bu_log("Must provide dx dy dz"); break; }
 		VADD2(es_metaballpt->coord, es_metaballpt->coord, es_para);
 		break;
 	case ECMD_METABALL_PT_DEL:
@@ -5837,7 +5841,8 @@ sedit(void)
 		    struct rt_metaball_internal *metaball= (struct rt_metaball_internal *)es_int.idb_ptr;
 		    struct wdb_metaballpt *n = (struct wdb_metaballpt *)malloc(sizeof(struct wdb_metaballpt));
 
-		    if ( inpara != 3 ) { bu_log("Must provide x y z"); break; }
+		    if ( inpara != 3 ) {
+  bu_log("Must provide x y z"); break; }
 
 		    es_metaballpt = BU_LIST_FIRST( wdb_metaballpt, &metaball->metaball_ctrl_head );
 		    VMOVE( n->coord, es_para );

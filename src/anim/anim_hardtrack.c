@@ -141,7 +141,8 @@ main(int argc, char **argv)
 	return(-1);
     }
 
-    if (axes || cent ) { /* vehicle has own reference frame */
+    if (axes || cent ) {
+  /* vehicle has own reference frame */
 	anim_add_trans(m_axes, centroid, zero);
 	anim_add_trans(m_rev_axes, zero, rcentroid);
     }
@@ -216,17 +217,21 @@ main(int argc, char **argv)
 	    anim_dy_p_r2mat(mat_v, yaw, pitch, roll);
 	    anim_add_trans(mat_v, p3, rcentroid);
 	}
-	else { /* analyze positions for steering */
+	else {
+  /* analyze positions for steering */
 	    /*get useful direction unit vectors*/
-	    if (frame == first_frame) { /* first frame*/
+	    if (frame == first_frame) {
+  /* first frame*/
 		VSUBUNIT(dir, p3, p2);
 		VMOVE(dir2, dir);
 	    }
-	    else if (val < 3) { /*last frame*/
+	    else if (val < 3) {
+  /*last frame*/
 		VSUBUNIT(dir, p2, p1);
 		VMOVE(dir2, dir);
 	    }
-	    else if (frame > first_frame) { /*normal*/
+	    else if (frame > first_frame) {
+  /*normal*/
 		VSUBUNIT(dir, p3, p1);
 		VSUBUNIT(dir2, p2, p1);/*needed for vertical case*/
 	    }
@@ -240,7 +245,8 @@ main(int argc, char **argv)
 	/*determine distance traveled*/
 	VMOVE(wheel_prev, wheel_now);
 	MAT4X3PNT(wheel_now, mat_v, to_track);
-	if (frame > first_frame) {  /* increment distance by distance moved */
+	if (frame > first_frame) {
+   /* increment distance by distance moved */
 	    VSUB2(vdelta, wheel_now, wheel_prev);
 	    MAT3X3VEC(temp, mat_v, to_front);/*new front of vehicle*/
 	    distance += VDOT(temp, vdelta);/*portion of vdelta in line with track*/
@@ -258,11 +264,13 @@ main(int argc, char **argv)
 		    (void) get_link(position, &y_rot, distance+tracklen*count/num_links+init_dist);
 		    anim_y_p_r2mat(wmat, 0.0, y_rot+r[count].ang, 0.0);
 		    anim_add_trans(wmat, position, r[count].pos);
-		    if ((axes || cent) && links_placed) { /* link moved from vehicle coords */
+		    if ((axes || cent) && links_placed) {
+  /* link moved from vehicle coords */
 			bn_mat_mul(mat_x, wmat, m_rev_axes);
 			bn_mat_mul(wmat, m_axes, mat_x);
 		    }
-		    else if (axes || cent) { /* link moved to vehicle coords */
+		    else if (axes || cent) {
+  /* link moved to vehicle coords */
 			MAT_MOVE(mat_x, wmat);
 			bn_mat_mul(wmat, m_axes, mat_x);
 		    }
@@ -334,12 +342,14 @@ int track_prep(void)/*run once at the beginning to establish important track inf
 	arc_angle = x[i].w.ang0 - x[i].w.ang1;
 	while (arc_angle < 0.0)
 	    arc_angle += 2.0*M_PI;
-	if (arc_angle > M_PI) { /* concave */
+	if (arc_angle > M_PI) {
+  /* concave */
 	    x[i].w.ang0 = 0.5*(x[i].w.ang0 + x[i].w.ang1);
 	    x[i].w.ang1 = x[i].w.ang0;
 	    x[i].w.arc = 0.0;
 	}
-	else { /* convex - angles are already correct */
+	else {
+  /* convex - angles are already correct */
 	    x[i].w.arc = arc_angle;
 	}
     }

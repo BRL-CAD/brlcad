@@ -134,7 +134,8 @@ int		ClrStandout(void), ClrEOL(void), ClrText(void),
  */
 int
 InitTermCap(FILE *fp)
-{	char	*term; /* Name of terminal from environment ($TERM).*/
+{
+	char	*term; /* Name of terminal from environment ($TERM).*/
 	out_fp = fp;
 #ifdef TIOCGWINSZ
 	fd_stdout = fileno( out_fp );

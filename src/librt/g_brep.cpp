@@ -379,7 +379,8 @@ brep_get_plane_ray(ON_Ray& r, plane_ray& pr)
     VMOVE(v1, r.m_dir);
     fastf_t min = MAX_FASTF;
     int index = -1;
-    for (int i = 0; i < 3; i++) { // find the smallest component
+    for (int i = 0; i < 3; i++) {
+  // find the smallest component
 	if (fabs(v1[i]) < min) {
 	    min = fabs(v1[i]);
 	    index = i;
@@ -478,7 +479,8 @@ brep_newton_iterate(const ON_Surface* surf, plane_ray& pr, pt2d_t R, ON_3dVector
     mat2d_t jacob = { VDOT(pr.n1,((fastf_t*)su)), VDOT(pr.n1,((fastf_t*)sv)),
 		      VDOT(pr.n2,((fastf_t*)su)), VDOT(pr.n2,((fastf_t*)sv)) };
     mat2d_t inv_jacob;
-    if (mat2d_inverse(inv_jacob, jacob)) { // check inverse validity
+    if (mat2d_inverse(inv_jacob, jacob)) {
+  // check inverse validity
 	pt2d_t tmp;
 	mat2d_pt2d_mul(tmp, inv_jacob, R);
 	pt2dsub(out_uv, uv, tmp);
@@ -735,7 +737,8 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
     TRACE("---");
     num = 0;
     for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
-	if ((i->trimmed && !i->closeToEdge) || i->oob || NEAR_ZERO(VDOT(i->normal,rp->r_dir),RT_DOT_TOL)) { // remove what we were removing earlier
+	if ((i->trimmed && !i->closeToEdge) || i->oob || NEAR_ZERO(VDOT(i->normal,rp->r_dir),RT_DOT_TOL)) {
+  // remove what we were removing earlier
 	    if (i->oob) {
 		TRACE("\toob u: " << i->uv[0] << ", " << IVAL(i->sbv->m_u));
 		TRACE("\toob v: " << i->uv[1] << ", " << IVAL(i->sbv->m_v));
@@ -827,7 +830,8 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	    }
 #endif
 
-// 	    if ((num == 0 && dot > 0) || sign(dot) == lastSign) { // remove hits with "bad" normals
+// 	    if ((num == 0 && dot > 0) || sign(dot) == lastSign) {
+  // remove hits with "bad" normals
 // 		i = hits.erase(i);
 // 		--i;
 // 		TRACE("removed a hit!");

@@ -185,7 +185,8 @@ main(int argc, char **argv)
 			for ( x = 0; x < nxin; x++ ) {
 				obp = obuf;
 				bp = &buffer[ (lasty-firsty)*scanbytes + x*pixbytes ];
-				for ( y = lasty; y >= yin; y-- ) { /* firsty? */
+				for ( y = lasty; y >= yin; y-- ) {
+  /* firsty? */
 					for ( j = 0; j < pixbytes; j++ )
 						*obp++ = *bp++;
 					bp = bp - scanbytes - pixbytes;

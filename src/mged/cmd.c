@@ -1064,7 +1064,8 @@ mged_compat(struct bu_vls *dest, struct bu_vls *src, int use_first)
 
 	start = end = bu_vls_addr( src );
 	firstword = 1;
-	while ( *end != '\0' ) {            /* Run through entire string */
+	while ( *end != '\0' ) {
+             /* Run through entire string */
 
 		/* First, pass along leading whitespace. */
 

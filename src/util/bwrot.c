@@ -205,7 +205,8 @@ main(int argc, char **argv)
 			for ( x = 0; x < nxin; x++ ) {
 				obp = obuf;
 				bp = &buffer[ (lasty-firsty)*scanbytes + x ];
-				for ( y = lasty; y >= yin; y-- ) { /* firsty? */
+				for ( y = lasty; y >= yin; y-- ) {
+  /* firsty? */
 					*obp++ = *bp;
 					bp -= scanbytes;
 				}

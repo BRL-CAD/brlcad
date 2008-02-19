@@ -203,7 +203,8 @@ struct region_pair {
  * of code protected by SEM_LIST
  */
 
-static struct region_pair gapList = { /* list of gaps */
+static struct region_pair gapList = {
+  /* list of gaps */
     {
 	BU_LIST_HEAD_MAGIC,
 	(struct bu_list *)&gapList,
@@ -215,7 +216,8 @@ static struct region_pair gapList = { /* list of gaps */
     (double)0.0,
     {0.0, 0.0, 0.0, }
 };
-static struct region_pair adjAirList = { /* list of adjacent air */
+static struct region_pair adjAirList = {
+  /* list of adjacent air */
     {
 	BU_LIST_HEAD_MAGIC,
 	(struct bu_list *)&adjAirList,
@@ -227,7 +229,8 @@ static struct region_pair adjAirList = { /* list of adjacent air */
     (double)0.0,
     {0.0, 0.0, 0.0, }
 };
-static struct region_pair exposedAirList = { /* list of exposed air */
+static struct region_pair exposedAirList = {
+  /* list of exposed air */
     {
 	BU_LIST_HEAD_MAGIC,
 	(struct bu_list *)&exposedAirList,
@@ -239,7 +242,8 @@ static struct region_pair exposedAirList = { /* list of exposed air */
     (double)0.0,
     {0.0, 0.0, 0.0, }
 };
-static struct region_pair overlapList = { /* list of overlaps */
+static struct region_pair overlapList = {
+  /* list of overlaps */
     {
 	BU_LIST_HEAD_MAGIC,
 	(struct bu_list *)&overlapList,
@@ -266,7 +270,8 @@ struct cvt_tab {
 };
 
 static const struct cvt_tab units_tab[3][40] = {
-    { /* length, stolen from bu/units.c with the  "none" value removed
+    {
+     /* length, stolen from bu/units.c with the  "none" value removed
        * Values for converting from given units to mm
        */
 	{1.0,		"mm"}, /* default */
@@ -309,7 +314,8 @@ static const struct cvt_tab units_tab[3][40] = {
 	{3.085678e+19,	"parsec"},
 	{0.0,		""}			/* LAST ENTRY */
     },
-    {/* volume
+    {
+    /* volume
       * Values for converting from given units to mm^3
       */
 	{1.0, "cu mm"}, /* default */
@@ -345,7 +351,8 @@ static const struct cvt_tab units_tab[3][40] = {
 
 	{0.0,		""}			/* LAST ENTRY */
     },
-    { /* weight
+    {
+     /* weight
        * Values for converting given units to grams
        */
 	{1.0, "grams"}, /* default */

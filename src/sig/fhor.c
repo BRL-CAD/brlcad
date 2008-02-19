@@ -131,7 +131,8 @@ fhnewz(int *f, int num)
 					Intersect( Xprev, Yprev, x, y, lower, &Xi, &Yi );
 					Draw( Xi, Yi, x, y );
 					Horizon( Xi, Yi, x, y );
-				} else { /* previously BELOW */
+				} else {
+  /* previously BELOW */
 					Intersect( Xprev, Yprev, x, y, lower, &Xi, &Yi );
 					Draw( Xprev, Yprev, Xi, Yi );
 					Horizon( Xprev, Yprev, Xi, Yi );
@@ -146,7 +147,8 @@ fhnewz(int *f, int num)
 					Intersect( Xprev, Yprev, x, y, lower, &Xi, &Yi );
 					Draw( Xi, Yi, x, y );
 					Horizon( Xi, Yi, x, y );
-				} else { /* previously ABOVE */
+				} else {
+  /* previously ABOVE */
 					Intersect( Xprev, Yprev, x, y, upper, &Xi, &Yi );
 					Draw( Xprev, Yprev, Xi, Yi );
 					Horizon( Xprev, Yprev, Xi, Yi );

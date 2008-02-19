@@ -2193,7 +2193,8 @@ background_light(fastf_t lambda, struct toyota_specific *ts, fastf_t *Refl, fast
 	/* Find horizontal component of reflected light. */
 	if (!NEAR_ZERO(VDOT(swp->sw_hit.hit_normal, Refl)-1, MIKE_TOL)) {
 		VCROSS(Yaxis, swp->sw_hit.hit_normal, Refl);
-	} else {	/* R and N are the same vector. */
+	} else {
+ 	/* R and N are the same vector. */
 		bn_vec_ortho(Yaxis, swp->sw_hit.hit_normal);
 	}
 	VCROSS(Horiz, Yaxis, swp->sw_hit.hit_normal);

@@ -113,7 +113,8 @@ main(int argc, char **argv)
 		}
 	    }
 	    if (number==frame_number) {
-		if (!success) { /*first successful match*/
+		if (!success) {
+  /*first successful match*/
 		    printf("%s", line);
 		    if (!suppressed) printf("clean;\n");
 		    success = 1;

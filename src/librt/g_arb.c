@@ -209,7 +209,8 @@ rt_arb_get_cgtype(
 				unique = NO;
 			}
 		}
-		if ( unique == NO ) {  	/* point i not unique */
+		if ( unique == NO ) {
+   	/* point i not unique */
 			if ( si > 2 && si < 6 ) {
 				svec[0] = si - 1;
 				if (si == 5 && svec[5] >= 6)

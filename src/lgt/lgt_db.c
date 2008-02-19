@@ -42,7 +42,8 @@ static int	get_Lgt_Entry(register Lgt_Source *entry, FILE *fp), put_Lgt_Entry(re
  */
 int
 lgt_Print_Db(int id)
-{	register Lgt_Source	*entry;
+{
+	register Lgt_Source	*entry;
 		register int		stop;
 		int			lines =	(PROMPT_LINE-TOP_SCROLL_WIN);
 	if ( id >= lgt_db_size )
@@ -112,7 +113,8 @@ lgt_Print_Db(int id)
  */
 int
 lgt_Rd_Db(char *file)
-{	register Lgt_Source	*entry;
+{
+	register Lgt_Source	*entry;
 		register FILE		*fp;
 	if ( (fp = fopen( file, "rb" )) == NULL )
 		return	0;
@@ -157,7 +159,8 @@ lgt_Save_Db(char *file)
  */
 int
 lgt_Edit_Db_Entry(int id)
-{	register Lgt_Source	*entry;
+{
+	register Lgt_Source	*entry;
 		char			input_buf[MAX_LN];
 		char			editprompt[MAX_LN];
 		int			red, grn, blu;
@@ -225,7 +228,8 @@ lgt_Edit_Db_Entry(int id)
 
 static int
 get_Lgt_Entry(register Lgt_Source *entry, FILE *fp)
-{	register char	*ptr;
+{
+	register char	*ptr;
 		int		red, grn, blu;
 	if ( bu_fgets( entry->name, MAX_LGT_NM, fp ) == NULL )
 		return	0;

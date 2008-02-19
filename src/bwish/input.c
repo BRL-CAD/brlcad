@@ -397,7 +397,8 @@ processChar(char ch)
 	escaped = bracketed = 0;
 	break;
     case 'd':
-	if (escaped) {                /* delete-word */
+	if (escaped) {
+                 /* delete-word */
 	    char *start;
 	    char *curr;
 	    int i;
@@ -429,7 +430,8 @@ processChar(char ch)
 	escaped = bracketed = 0;
 	break;
     case 'f':
-	if (escaped) {                /* forward-word */
+	if (escaped) {
+                 /* forward-word */
 	    char *start;
 	    char *curr;
 
@@ -458,7 +460,8 @@ processChar(char ch)
 	escaped = bracketed = 0;
 	break;
     case 'b':
-	if (escaped) {                /* backward-word */
+	if (escaped) {
+                 /* backward-word */
 	    char *start;
 	    char *curr;
 

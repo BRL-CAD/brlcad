@@ -870,10 +870,12 @@ fb_ogl_open(FBIO *ifp, char *file, int width, int height)
     }
 
     /* Open an OpenGL context with this visual*/
-    if (multiple_windows) {	/* force indirect context */
+    if (multiple_windows) {
+ 	/* force indirect context */
 	OGL(ifp)->glxc = glXCreateContext(OGL(ifp)->dispp,
 					  OGL(ifp)->vip, 0, False);
-    } else {		/* try direct context */
+    } else {
+ 		/* try direct context */
 	OGL(ifp)->glxc = glXCreateContext(OGL(ifp)->dispp,
 					  OGL(ifp)->vip, 0, True);
     }
@@ -913,7 +915,8 @@ fb_ogl_open(FBIO *ifp, char *file, int width, int height)
 	    color_cell[i].flags = DoRed | DoGreen | DoBlue;
 	}
 	XStoreColors(OGL(ifp)->dispp, OGL(ifp)->xcmap, color_cell, 256);
-    } else { /* read only colormap */
+    } else {
+  /* read only colormap */
 	if ( CJDEBUG ) {
 	    printf("Allocating read-only colormap.");
 	}
@@ -1613,11 +1616,13 @@ ogl_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, int co
 	    }
 	} else {
 	    /* Normal case -- multi-pixel write */
-	    if ( SGI(ifp)->mi_doublebuffer) { /* refresh whole screen */
+	    if ( SGI(ifp)->mi_doublebuffer) {
+  /* refresh whole screen */
 		ogl_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
 		glXSwapBuffers( OGL(ifp)->dispp, OGL(ifp)->wind);
 	    }
-	    else { /* just write rectangle */
+	    else {
+  /* just write rectangle */
 		ogl_xmit_scanlines( ifp, ybase, y-ybase, 0, ifp->if_width );
 		if (OGL(ifp)->copy_flag) {
 		    backbuffer_to_screen(ifp, -1);
@@ -1683,11 +1688,13 @@ ogl_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsign
 	    }
 	}
 
-	if ( SGI(ifp)->mi_doublebuffer) { /* refresh whole screen */
+	if ( SGI(ifp)->mi_doublebuffer) {
+  /* refresh whole screen */
 	    ogl_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
 	    glXSwapBuffers( OGL(ifp)->dispp, OGL(ifp)->wind);
 	}
-	else { /* just write rectangle*/
+	else {
+  /* just write rectangle*/
 	    ogl_xmit_scanlines( ifp, ymin, height, xmin, width );
 	    if (OGL(ifp)->copy_flag) {
 		backbuffer_to_screen(ifp, -1);
@@ -1752,11 +1759,13 @@ ogl_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsi
 	    }
 	}
 
-	if ( SGI(ifp)->mi_doublebuffer) { /* refresh whole screen */
+	if ( SGI(ifp)->mi_doublebuffer) {
+  /* refresh whole screen */
 	    ogl_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
 	    glXSwapBuffers( OGL(ifp)->dispp, OGL(ifp)->wind);
 	}
-	else { /* just write rectangle*/
+	else {
+  /* just write rectangle*/
 	    ogl_xmit_scanlines( ifp, ymin, height, xmin, width );
 	    if (OGL(ifp)->copy_flag) {
 		backbuffer_to_screen(ifp, -1);
@@ -2416,7 +2425,8 @@ backbuffer_to_screen(register FBIO *ifp, int one_y)
 
     if (one_y > clp->ypixmax) {
 	return;
-    } else if (one_y < 0) { /* do whole visible screen */
+    } else if (one_y < 0) {
+  /* do whole visible screen */
 
 	/* Blank out area left of image */
 	glColor3b( 0, 0, 0 );
@@ -2457,7 +2467,8 @@ backbuffer_to_screen(register FBIO *ifp, int one_y)
 
     } else if (one_y < clp->ypixmin) {
 	return;
-    } else { /* draw one scanline */
+    } else {
+  /* draw one scanline */
 	glRasterPos2i(clp->xpixmin, one_y);
 	glCopyPixels(SGI(ifp)->mi_xoff + clp->xpixmin,
 		     SGI(ifp)->mi_yoff + one_y,

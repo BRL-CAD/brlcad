@@ -335,7 +335,8 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
 			bytes_used += ip->sp_count * 2;
 			break;
 		case 's':
-			{	/* char array transmitted as a
+			{
+				/* char array transmitted as a
 				 * 4 byte character count, followed by a
 				 * null terminated, word padded char array
 				 *
@@ -621,7 +622,8 @@ bu_struct_lookup(register const struct bu_structparse *sdp, register const char 
 		switch ( sdp->sp_fmt[1] )  {
 		case 'c':
 		case 's':
-			{	register int i, j;
+			{
+				register int i, j;
 
 				/* copy the string, converting escaped
 				 * double quotes to just double quotes
@@ -644,13 +646,15 @@ bu_struct_lookup(register const struct bu_structparse *sdp, register const char 
 			}
 			break;
 		case 'S':
-			{	struct bu_vls *vls = (struct bu_vls *)loc;
+			{
+				struct bu_vls *vls = (struct bu_vls *)loc;
 				bu_vls_init_if_uninit( vls );
 				bu_vls_strcpy(vls, value);
 			}
 			break;
 		case 'i':
-			{	register short *ip = (short *)loc;
+			{
+				register short *ip = (short *)loc;
 				register short tmpi;
 				register const char *cp;
 				register const char *pv = value;
@@ -683,7 +687,8 @@ bu_struct_lookup(register const struct bu_structparse *sdp, register const char 
 			}
 			break;
 		case 'd':
-			{	register int *ip = (int *)loc;
+			{
+				register int *ip = (int *)loc;
 				register int tmpi;
 				register char const *cp;
 				register const char *pv = value;
@@ -1073,7 +1078,8 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 			}
 			break;
 		case 'i':
-			{	register int i = sdp->sp_count;
+			{
+				register int i = sdp->sp_count;
 				register short *sp = (short *)loc;
 
 				bu_log( " %s=%d", sdp->sp_name, *sp++ );
@@ -1084,7 +1090,8 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 			}
 			break;
 		case 'd':
-			{	register int i = sdp->sp_count;
+			{
+				register int i = sdp->sp_count;
 				register int *dp = (int *)loc;
 
 				bu_log( " %s=%d", sdp->sp_name, *dp++ );
@@ -1095,7 +1102,8 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 			}
 			break;
 		case 'f':
-			{	register int i = sdp->sp_count;
+			{
+				register int i = sdp->sp_count;
 				register double *dp = (double *)loc;
 
 				if (sdp->sp_count == 16) {
@@ -1123,7 +1131,8 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 			}
 			break;
 		case 'x':
-			{	register int i = sdp->sp_count;
+			{
+				register int i = sdp->sp_count;
 				register int *dp = (int *)loc;
 
 				bu_log( " %s=%08x", sdp->sp_name, *dp++ );
@@ -1287,7 +1296,8 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 			}
 			break;
 		case 'i':
-			{	register int i = sdp->sp_count;
+			{
+				register int i = sdp->sp_count;
 				register short *sp = (short *)loc;
 				register int tmpi;
 
@@ -1311,7 +1321,8 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 			}
 			break;
 		case 'd':
-			{	register int i = sdp->sp_count;
+			{
+				register int i = sdp->sp_count;
 				register int *dp = (int *)loc;
 				register int tmpi;
 
@@ -1417,7 +1428,8 @@ bu_vls_struct_print2(struct bu_vls			*vls_out,
 			}
 			break;
 		case 'i':
-			{	register int i = sdp->sp_count;
+			{
+				register int i = sdp->sp_count;
 				register short *sp = (short *)loc;
 
 				bu_vls_printf(vls_out, " %s=%d", sdp->sp_name, *sp++ );
@@ -1429,7 +1441,8 @@ bu_vls_struct_print2(struct bu_vls			*vls_out,
 			}
 			break;
 		case 'd':
-			{	register int i = sdp->sp_count;
+			{
+				register int i = sdp->sp_count;
 				register int *dp = (int *)loc;
 
 				bu_vls_printf(vls_out, " %s=%d", sdp->sp_name, *dp++ );
@@ -1441,7 +1454,8 @@ bu_vls_struct_print2(struct bu_vls			*vls_out,
 			}
 			break;
 		case 'f':
-			{	register int i = sdp->sp_count;
+			{
+				register int i = sdp->sp_count;
 				register double *dp = (double *)loc;
 
 				if (sdp->sp_count == 16) {
@@ -1471,7 +1485,8 @@ bu_vls_struct_print2(struct bu_vls			*vls_out,
 			}
 			break;
 		case 'x':
-			{	register int i = sdp->sp_count;
+			{
+				register int i = sdp->sp_count;
 				register int *dp = (int *)loc;
 
 				bu_vls_printf(vls_out, " %s=%08x", sdp->sp_name, *dp++ );

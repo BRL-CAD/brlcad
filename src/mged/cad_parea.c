@@ -75,9 +75,11 @@ main(int argc, char **argv)			/* "cad_parea" entry point */
 	sum = 0.0;
 
 	while ( Input( &current ) )
-	{			/* scan input record */
+	{
+				/* scan input record */
 		if ( !saved )
-		{		/* first input only */
+		{
+				/* first input only */
 			first = current;
 			saved = true;
 		}
@@ -166,7 +168,8 @@ Input(register point *coop)				/* input a coordinate record */
 	char		inbuf[82];	/* input record buffer */
 
 	while ( bu_fgets( inbuf, (int)sizeof inbuf, stdin ) != NULL )
-	{			/* scan input record */
+	{
+				/* scan input record */
 		register int	cvt;	/* # converted fields */
 
 		cvt = sscanf( inbuf, " %le %le", &coop->x, &coop->y );

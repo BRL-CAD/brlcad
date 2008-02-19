@@ -218,7 +218,8 @@ compare_hit(register struct application *ap, struct partition *partHeadp, struct
     /* we could be halfway through evaluating a partition
      * finish evaluating it before proceeding */
     if (status == STATUS_PP) {
-	if (pp->pt_outhit->hit_dist > fstate->a_len) { /* trim ray */
+	if (pp->pt_outhit->hit_dist > fstate->a_len) {
+  /* trim ray */
 	    fstate->diff += fstate->a_len - lastpt;
 	    lastpt = fstate->a_len;
 	} else {
@@ -239,7 +240,8 @@ compare_hit(register struct application *ap, struct partition *partHeadp, struct
 	mp = BU_LIST_FORW(part, &mp->l);
     }
     while (pp != partHeadp && pp->pt_inhit->hit_dist < fstate->a_len) {
-	if (pp->pt_outhit->hit_dist > fstate->a_len) { /* trim bounding box */
+	if (pp->pt_outhit->hit_dist > fstate->a_len) {
+  /* trim bounding box */
 	    fstate->diff += fstate->a_len - pp->pt_inhit->hit_dist;
 	    lastpt = fstate->a_len;
 	} else {

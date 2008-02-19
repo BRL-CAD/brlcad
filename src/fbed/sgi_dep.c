@@ -37,7 +37,8 @@
 
 int
 sgi_Empty()
-	{	short	val;
+	{
+		short	val;
 		long	dev;
 	winattach();
 	if ( qtest() )
@@ -63,10 +64,12 @@ sgi_Init()
 
 int
 sgi_Getchar()
-	{	short	val;
+	{
+		short	val;
 	winattach();
 	for (;;)
-		{	long	dev = qread( &val );
+		{
+			long	dev = qread( &val );
 		switch ( dev )
 			{
 		case KEYBD :
@@ -78,7 +81,8 @@ sgi_Getchar()
 int
 sgi_Mouse_Pos( pointp )
 register Point *pointp;
-	{	static Point mouse;
+	{
+		static Point mouse;
 		Point image;
 		long	ox, oy;
 		int change_flag = false;

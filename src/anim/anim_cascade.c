@@ -282,7 +282,8 @@ int get_args(int argc, char **argv)
 		output_mode = CASCADE_R;
 	    } else if (d == 'f') {
 		output_mode = CASCADE_F;
-	    } else if (d == 'a') { /* default */
+	    } else if (d == 'a') {
+  /* default */
 		output_mode = CASCADE_A;
 	    } else {
 		fprintf(stderr, "anim_cascade: unknown option -i%c\n", d);

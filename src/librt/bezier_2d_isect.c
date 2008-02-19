@@ -384,10 +384,12 @@ FindRoots(
     point2d_t	eval_pt;
 
     switch (CrossingCount(w, degree, ray_start, ray_dir, ray_perp)) {
-	case 0 : {      /* No solutions here    */
+	case 0 : {
+       /* No solutions here    */
 	     return 0;
 	}
-	case 1 : {      /* Unique solution      */
+	case 1 : {
+       /* Unique solution      */
 	    /* Stop recursion when the tree is deep enough      */
 	    /* if deep enough, return 1 solution at midpoint    */
 	    if (depth >= MAXDEPTH) {

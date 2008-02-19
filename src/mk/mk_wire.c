@@ -50,7 +50,8 @@
 
 int
 main(int argc, char **argv)
-{							/*  START # 1  */
+{
+							/*  START # 1  */
    struct rt_wdb *fpw;		/*  File to be created.  */
    char filemged[26];		/*  Mged file name.  */
    double numseg;		/*  Number of segments.  */
@@ -165,9 +166,11 @@ main(int argc, char **argv)
 
    /*  Enter starting & ending points of segments & radi.  */
    for (i=0; i<numseg; i++)
-   {							/*  START # 2  */
+   {
+   							/*  START # 2  */
 	if (i == 0)
-	{						/*  START # 3  */
+	{
+							/*  START # 3  */
 	   (void)printf("Enter starting point of segment # %d.\n\t", (i+1));
 	   (void)fflush(stdout);
 	   (void)scanf("%lf %lf %lf", &strtpt[i][0], &strtpt[i][1],
@@ -186,7 +189,8 @@ main(int argc, char **argv)
 	}						/*  END # 3  */
 
 	else
-	{						/*  START # 4  */
+	{
+							/*  START # 4  */
 	   strtpt[i][0] = endpt[i - 1][0];
 	   strtpt[i][1] = endpt[i - 1][1];
 	   strtpt[i][2] = endpt[i - 1][2];
@@ -207,7 +211,8 @@ main(int argc, char **argv)
 
    /*  Print out coordinates of segments.  */
    for (i=0; i<numseg; i++)
-   {							/*  START # 5  */
+   {
+   							/*  START # 5  */
 	(void)printf("Segment # %d:  ", (i+1));
 	(void)printf("(%f,%f,%f)", strtpt[i][0], strtpt[i][1], strtpt[i][2]);
 	(void)printf(" %f\n", strtrad[i]);
@@ -227,7 +232,8 @@ main(int argc, char **argv)
 
    /*  Create solid for each segment.  */
    for (i=0; i<numseg; i++)
-   {							/*  START # 10  */
+   {
+   							/*  START # 10  */
 	/*  Base of cone.  */
 	bs[0] = (fastf_t)strtpt[i][0];
 	bs[1] = (fastf_t)strtpt[i][1];
@@ -254,17 +260,20 @@ main(int argc, char **argv)
 	/*  Fill in correct number in solid name.  */
 	(void)sprintf(temp, "%d", i);
 	if (i < 10)
-	{						/*  START # 11  */
+	{
+							/*  START # 11  */
 	   solcyl[5] = '0';
 	   solcyl[6] = temp[0];
 	}						/*  END # 11  */
 	else if ( (10 <= i) || (i < 100) )
-	{						/*  START # 12  */
+	{
+							/*  START # 12  */
 	   solcyl[5] = temp[0];
 	   solcyl[6] = temp[1];
 	}						/*  END # 12  */
 	else
-	{						/*  START # 13  */
+	{
+							/*  START # 13  */
 	   (void)printf("** ERROR ** i = %d\n", i);
 	   (void)fflush(stdout);
 	}						/*  END # 13  */
@@ -280,7 +289,8 @@ main(int argc, char **argv)
    /*  Sphere 0 does not exist since there is one less sphere  */
    /*  than segment.  */
 
-   {							/*  START # 20  */
+   {
+   							/*  START # 20  */
 	/*  Center of sphere.  */
 	cent[0] = (fastf_t)strtpt[i][0];
 	cent[1] = (fastf_t)strtpt[i][1];
@@ -292,17 +302,20 @@ main(int argc, char **argv)
 	/*  Fill in correct number in solid name.  */
 	(void)sprintf(temp, "%d", i);
 	if (i < 10)
-	{						/*  START # 21  */
+	{
+							/*  START # 21  */
 	   solsph[5] = '0';
 	   solsph[6] = temp[0];
 	}						/*  END # 21  */
 	else if ( (10 <= i) || (i < 100) )
-	{						/*  START # 22  */
+	{
+							/*  START # 22  */
 	   solsph[5] = temp[0];
 	   solsph[6] = temp[1];
 	}						/*  END # 22  */
 	else
-	{						/*  START # 23  */
+	{
+							/*  START # 23  */
 	   (void)printf("** ERROR ** i = %d\n", i);
 	   (void)fflush(stdout);
 	}						/*  END # 23  */
@@ -319,27 +332,32 @@ main(int argc, char **argv)
    /*  Create region for each segment.  */
 
    for (i=0; i<numseg; i++)
-   {							/*  START # 30  */
+   {
+   							/*  START # 30  */
 	/*  Fill in correct number in region & solid names.  */
 	(void)sprintf(temp, "%d", i);
 	(void)sprintf(temp1, "%d", (i+1));
 
 	if (i < 10)
-	{						/*  START # 31  */
+	{
+							/*  START # 31  */
 	   solcyl[5] = '0';
 	   solcyl[6] = temp[0];
 	   regcyl[5] = '0';
 	   regcyl[6] = temp[0];
 
 	   if (i < (numseg - 1) )
-	   {						/*  START # 32  */
+	   {
+	   						/*  START # 32  */
 		if ( (i + 1) < 10)
-		{					/*  START # 33  */
+		{
+							/*  START # 33  */
 		   solsub1[5] = '0';
 		   solsub1[6] = temp1[0];
 		}					/*  END # 33  */
 		else
-		{					/*  START # 34  */
+		{
+							/*  START # 34  */
 		   solsub1[5] = temp1[0];
 		   solsub1[6] = temp1[1];
 		}					/*  END # 34  */
@@ -347,21 +365,24 @@ main(int argc, char **argv)
 	}						/*  END # 31  */
 
 	else if ( (10 <= i) || (i < 100) )
-	{						/*  START # 35  */
+	{
+							/*  START # 35  */
 	   solcyl[5] = temp[0];
 	   solcyl[6] = temp[1];
 	   regcyl[5] = temp[0];
 	   regcyl[6] = temp[1];
 
 	   if (i < (numseg - 1) )
-	   {						/*  START # 36  */
+	   {
+	   						/*  START # 36  */
 		solsub1[5] = temp1[0];
 		solsub1[6] = temp1[1];
 	   }						/*  END # 36  */
 	}						/*  END # 35  */
 
 	else
-	{						/*  START # 37  */
+	{
+							/*  START # 37  */
 	   (void)printf("** ERROR ** i = %d\n", i);
 	   (void)fflush(stdout);
 	}						/*  END # 37  */
@@ -369,7 +390,8 @@ main(int argc, char **argv)
 	(void)mk_addmember(solcyl, &comb.l, NULL, WMOP_INTERSECT);
 
 	if (i < (numseg - 1) )
-	{						/*  START # 38  */
+	{
+							/*  START # 38  */
 	   (void)mk_addmember(solsub1, &comb.l, NULL, WMOP_SUBTRACT);
 	}						/*  END # 38  */
 
@@ -378,13 +400,15 @@ main(int argc, char **argv)
 
    /*  Create region for each sphere.  */
    for (i=1; i<numseg; i++)
-   {							/*  START # 40  */
+   {
+   							/*  START # 40  */
 	/*  Fill in correct region & solid names.  */
 	(void)sprintf(temp, "%d", i);
 	(void)sprintf(temp1, "%d", (i - 1));
 
 	if (i < 10)
-	{						/*  START # 41  */
+	{
+							/*  START # 41  */
 	   solsph[5] = '0';
 	   solsph[6] = temp[0];
 	   regsph[5] = '0';
@@ -396,7 +420,8 @@ main(int argc, char **argv)
 	}						/*  END # 41  */
 
 	else if ( (10 <= i) || (i < 100) )
-	{						/*  START # 42  */
+	{
+							/*  START # 42  */
 	   solsph[5] = temp[0];
 	   solsph[6] = temp[1];
 	   regsph[5] = temp[0];
@@ -408,7 +433,8 @@ main(int argc, char **argv)
 	}						/*  END # 42  */
 
 	else
-	{						/*  START # 43  */
+	{
+							/*  START # 43  */
 	   (void)printf("** ERROR ** i = %d\n", i);
 	   (void)fflush(stdout);
 	}						/*  END # 43  */
@@ -426,22 +452,26 @@ main(int argc, char **argv)
    BU_LIST_INIT(&comb1.l);
 
    for (i=0; i<numseg; i++)
-   {							/*  START # 50  */
+   {
+   							/*  START # 50  */
 	(void)sprintf(temp, "%d", i);
 
 	if (i < 10)
-	{						/*  START # 51  */
+	{
+							/*  START # 51  */
 	   regcyl[5] = '0';
 	   regcyl[6] = temp[0];
 	   if (i != 0)
-	   {						/*  START # 52  */
+	   {
+	   						/*  START # 52  */
 		regsph[5] = '0';
 		regsph[6] = temp[0];
 	   }						/*  END # 52  */
 	}						/*  END # 51  */
 
 	else if ( (10 <= i) || (i < 100) )
-	{						/*  START # 53  */
+	{
+							/*  START # 53  */
 	   regcyl[5] = temp[0];
 	   regcyl[6] = temp[1];
 	   regsph[5] = temp[0];
@@ -449,7 +479,8 @@ main(int argc, char **argv)
 	}						/*  END # 53  */
 
 	else
-	{						/*  START # 54  */
+	{
+							/*  START # 54  */
 	   (void)printf("** ERROR ** i = %d\n", i);
 	   (void)fflush(stdout);
 	}						/*  END # 54  */

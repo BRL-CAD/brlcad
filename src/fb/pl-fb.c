@@ -404,7 +404,8 @@ Raster(register stroke *vp, register struct band *np)
 	    COPYRGB( pp, vp->col );
 	}
 
-	if ( vp->major-- == 0 ) { /* done! */
+	if ( vp->major-- == 0 ) {
+  /* done! */
 	    FREE_STROKE( vp );	/* return to "malloc" */
 	    return;
 	}
@@ -973,7 +974,8 @@ DoFile(void)	/* returns vpl status code */
 		    c = getc( pfin );
 		    if ( debug > 1 )  fprintf(stderr, "%c\n", c);
 		    switch ( c )
-			{	/* record type */
+			{
+				/* record type */
 			    case EOF:
 				if ( debug ) fprintf( stderr, "EOF\n");
 

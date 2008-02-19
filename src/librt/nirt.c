@@ -400,7 +400,8 @@ done:
 	    /* skip commands */
 	    if (strstr(dgop->dgo_rt_cmd[i], "-e") != NULL)
 		++i;
-	    else { /* append other arguments (i.e. options, file and obj(s)) */
+	    else {
+  /* append other arguments (i.e. options, file and obj(s)) */
 		snprintf(name, 1024, "\"%s\" ", dgop->dgo_rt_cmd[i]);
 		if (rem - strlen(name) < 1) {
 		    bu_log("Ran out of buffer space!");

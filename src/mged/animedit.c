@@ -2063,7 +2063,8 @@ f_jsave(int argc, char **argv)
 				fprintf(fop, "/%s", jp->path.original[i]);
 			}
 			fprintf(fop, "-%s;\n", jp->path.original[i]);
-		} else { /* ARC_ARC */
+		} else {
+  /* ARC_ARC */
 			fprintf(fop, "\tarc = %s", jp->path.arc[0]);
 			for (i=1;i<jp->path.arc_last;i++) {
 				fprintf(fop, "/%s", jp->path.arc[i]);
@@ -2779,7 +2780,8 @@ Middle:
 			jh->flag |= (1 << ssp->freedom);
 			i &= jh->flag;
 		}
-		if (i == ((2<<6)-1)) {	/* All joints, all freedoms */
+		if (i == ((2<<6)-1)) {
+ 	/* All joints, all freedoms */
 			test_hold->flag |= HOLD_FLAG_TRIED;
 		}
 		reject_move();

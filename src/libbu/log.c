@@ -79,7 +79,8 @@ bu_log_indent_vls(struct bu_vls *v)
 
 #if 1
 struct bu_hook_list bu_log_hook_list = {
-	{	BU_LIST_HEAD_MAGIC,
+	{
+		BU_LIST_HEAD_MAGIC,
 		&bu_log_hook_list.l,
 		&bu_log_hook_list.l
 	},

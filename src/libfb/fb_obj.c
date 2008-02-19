@@ -396,11 +396,13 @@ fbo_refresh_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 		return TCL_ERROR;
 	}
 
-	if (argc == 2) {  /* refresh the whole display */
+	if (argc == 2) {
+   /* refresh the whole display */
 		x = y = 0;
 		w = fbop->fbo_fbs.fbs_fbp->if_width;
 		h = fbop->fbo_fbs.fbs_fbp->if_height;
-	} else if (sscanf(argv[2], "%d %d %d %d", &x, &y, &w, &h) != 4) { /* refresh rectanglar area */
+	} else if (sscanf(argv[2], "%d %d %d %d", &x, &y, &w, &h) != 4) {
+  /* refresh rectanglar area */
 		Tcl_AppendResult(interp, "fb_refresh: bad rectangle - ",
 				 argv[2], (char *)NULL);
 		return TCL_ERROR;

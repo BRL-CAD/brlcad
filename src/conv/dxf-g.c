@@ -2148,7 +2148,8 @@ drawString( char *theText, point_t firstAlignmentPoint, point_t secondAlignmentP
     bu_free( theText, "theText" );
     stringLength = strlen( copyOfText );
 
-    if ( horizAlignment == FIT && vertAlignment == BASELINE ) {	/* fit along baseline */
+    if ( horizAlignment == FIT && vertAlignment == BASELINE ) {
+ 	/* fit along baseline */
 	VSUB2( diff, firstAlignmentPoint, secondAlignmentPoint );
 	allowedLength = MAGNITUDE( diff );
 	xScale = allowedLength / stringLength;
@@ -3370,7 +3371,8 @@ nmg_wire_edges_to_sketch( struct model *m )
 	    /* add all the vertices in this shell to the sketch */
 	    bu_ptbl_reset( &vertices );
 	    nmg_vertex_tabulate( &vertices, &s->l.magic );
-	    if ( BU_PTBL_LEN( &vertices ) < 2 ) { /* an empty shell will have a single vertex */
+	    if ( BU_PTBL_LEN( &vertices ) < 2 ) {
+  /* an empty shell will have a single vertex */
 		continue;
 	    }
 	    index_offset = skt->vert_count;;

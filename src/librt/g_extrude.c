@@ -61,7 +61,8 @@ struct extrude_specific {
 	struct curve crv;	/* copy of the referenced curve */
 };
 
-static struct bn_tol extr_tol={			/* a fake tolerance structure for the intersection routines */
+static struct bn_tol extr_tol={
+			/* a fake tolerance structure for the intersection routines */
 	BN_TOL_MAGIC,
 	RT_LEN_TOL,
 	RT_LEN_TOL*RT_LEN_TOL,
@@ -235,7 +236,8 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
 		if ( csg->magic != CURVE_CARC_MAGIC )
 			continue;
 
-		if ( csg->radius <= 0.0 ) {	/* full circle */
+		if ( csg->radius <= 0.0 ) {
+ 	/* full circle */
 			point_t start;
 			fastf_t radius;
 
@@ -258,7 +260,8 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
 				VADD2( tmp, tmp, eip->h );
 				VMINMAX( stp->st_min, stp->st_max, tmp );
 			}
-		} else {	/* circular arc */
+		} else {
+ 	/* circular arc */
 			point_t start, end, mid;
 			vect_t s_to_m;
 			vect_t bisector;
@@ -1319,11 +1322,13 @@ get_seg_midpoint( genptr_t seg, struct rt_sketch_internal *skt, point2d_t pt )
 				}
 				start_ang = atan2( start2d[Y]-center2d[Y], start2d[X]-center2d[X] );
 				end_ang = atan2( end2d[Y]-center2d[Y], end2d[X]-center2d[X] );
-				if ( csg->orientation ) { /* clock-wise */
+				if ( csg->orientation ) {
+  /* clock-wise */
 					while ( end_ang > start_ang )
 						end_ang -= 2.0 * M_PI;
 				}
-				else { /* counter-clock-wise */
+				else {
+  /* counter-clock-wise */
 					while ( end_ang < start_ang )
 						end_ang += 2.0 * M_PI;
 				}

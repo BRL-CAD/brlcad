@@ -1103,7 +1103,8 @@ char	**argv;
 
   new_mats();
 
-  if (argc == 4) { /* twist angle supplied */
+  if (argc == 4) {
+  /* twist angle supplied */
     double x, y, z;
 
     x = y = 0.0;

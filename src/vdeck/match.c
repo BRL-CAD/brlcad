@@ -66,7 +66,8 @@ match(register char *pattern, register char *string)
 				unless first is a '!', then match
 				any character not inside brackets.
 			   */
-			{ register char	*rgtBracket;
+			{
+			 register char	*rgtBracket;
 			  static int	negation;
 
 			++pattern; /* Skip over left bracket.		*/

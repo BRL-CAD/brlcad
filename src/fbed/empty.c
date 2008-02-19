@@ -42,7 +42,8 @@ empty(int fd)
 	else
 #endif
 #if defined( sgi )
-		{	static struct timeval	timeout = { 0L, 600L };
+		{
+			static struct timeval	timeout = { 0L, 600L };
 			fd_set		readfds;
 			register int nfound;
 		FD_ZERO( &readfds );

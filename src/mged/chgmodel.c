@@ -221,9 +221,11 @@ f_mater(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    /* leave color as is */
 		comb->rgb_valid = 0;
 		skip_args = 2;
-	  } else if (argc < 6) {	/* prompt for color */
+	  } else if (argc < 6) {
+ 	/* prompt for color */
 	    goto color_prompt;
-	  } else {	/* change color */
+	  } else {
+ 	/* change color */
 	    sscanf(argv[3], "%d", &r);
 	    sscanf(argv[4], "%d", &g);
 	    sscanf(argv[5], "%d", &b);

@@ -107,7 +107,8 @@ main(int argc, char **argv)
 	    val=scanf("%lf %lf %lf", &yaw, &pitch, &roll);
 	}
 
-	if (val < 3) { /* ie. scanf not completely successful */
+	if (val < 3) {
+  /* ie. scanf not completely successful */
 	    /* with steering option, must go extra loop after end of file */
 	    if (steer && !last_steer)
 		last_steer = 1;
@@ -132,12 +133,14 @@ main(int argc, char **argv)
 	    anim_v_unpermute(a);
 
 	/* make final matrix, including translation etc */
-	if (axes) { /* add pre-rotation from original axes */
+	if (axes) {
+  /* add pre-rotation from original axes */
 	    bn_mat_mul(m_x, a, m_rev_axes);
 	    MAT_MOVE(a, m_x);
 	}
 	anim_add_trans(a, point, rcentroid); /* add translation */
-	if (axes && relative_a) { /* add post-rotation back to original axes */
+	if (axes && relative_a) {
+  /* add post-rotation back to original axes */
 	    bn_mat_mul(m_x, m_axes, a);
 	    MAT_MOVE(a, m_x);
 	}

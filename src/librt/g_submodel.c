@@ -376,7 +376,8 @@ rt_submodel_a_hit(struct application *ap, struct partition *PartHeadp, struct se
 			outseg->seg_stp,
 			outseg->seg_out.hit_rayp );
 /* XXX error checking */
-	{ fastf_t cosine = fabs(VDOT( ap->a_ray.r_dir, inseg->seg_in.hit_normal ));
+	{
+	 fastf_t cosine = fabs(VDOT( ap->a_ray.r_dir, inseg->seg_in.hit_normal ));
 		if ( cosine > 1.00001 )  {
 			bu_log("rt_submodel_a_hit() cos=1+%g, %s surfno=%d\n",
 				cosine-1,
@@ -388,7 +389,8 @@ rt_submodel_a_hit(struct application *ap, struct partition *PartHeadp, struct se
 		MAT3X3VEC( up_segp->seg_in.hit_normal, submodel->subm2m,
 			inseg->seg_in.hit_normal );
 /* XXX error checking */
-	{ fastf_t cosine = fabs(VDOT( up_ap->a_ray.r_dir, up_segp->seg_in.hit_normal ));
+	{
+	 fastf_t cosine = fabs(VDOT( up_ap->a_ray.r_dir, up_segp->seg_in.hit_normal ));
 		if ( cosine > 1.00001 )  {
 			bu_log("rt_submodel_a_hit() cos=1+%g, %s surfno=%d\n",
 				cosine-1,
@@ -554,7 +556,8 @@ rt_submodel_norm(register struct hit *hitp, struct soltab *stp, register struct 
 	/* hitp->hit_point is already valid */
 	/* hitp->hit_normal is already valid */
 /* XXX error checking */
-	{ fastf_t cosine = fabs(VDOT( rp->r_dir, hitp->hit_normal ));
+	{
+	 fastf_t cosine = fabs(VDOT( rp->r_dir, hitp->hit_normal ));
 		if ( cosine > 1.00001 )  {
 			bu_log("rt_submodel_norm() cos=1+%g, %s surfno=%d\n",
 				cosine-1,

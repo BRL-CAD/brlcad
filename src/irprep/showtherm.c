@@ -78,7 +78,8 @@ extern int overlap(struct application *ap, struct partition *pp, struct region *
 
 
 int main(int argc, char **argv)
-{							/*  START # 1  */
+{
+							/*  START # 1  */
   struct application ap;	/*  Application struct, passed between functions.  */
 
   int index;		/*  Index for rt_dirbuild & rt_gettree.  */
@@ -137,7 +138,8 @@ int main(int argc, char **argv)
     }
 
   else
-    {							/*  START # 4  */
+    {
+    							/*  START # 4  */
       /*  Get beginning info such as name of temperature file,  */
       /*  name of region # & name file, type of temperature file  */
       /*  using.  */
@@ -211,7 +213,8 @@ int main(int argc, char **argv)
 
       /*  Now read the temperature file.  */
       if (itype == 0)	/*  PRISM file.  */
-	{							/*  START # 2  */
+	{
+								/*  START # 2  */
 	  fpr = fopen(filetmp, "rb");
 
 	  /*  Read date and print out.  */
@@ -302,7 +305,8 @@ int main(int argc, char **argv)
 	}							/*  END # 2  */
 
       else		/*  Read generic file.  */
-	{							/*  START # 3  */
+	{
+								/*  START # 3  */
 	  /*  File is alread open.  */
 	  /*  Read elapsed time.  */
 	  (void)bu_fgets(line, 150, fpr);

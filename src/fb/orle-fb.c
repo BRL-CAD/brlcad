@@ -72,7 +72,8 @@ void		fill_Buffer(register char *dest, register char *src, register int scan_byt
 /*	m a i n ( )							*/
 int
 main(int argc, char **argv)
-{	register int	y;
+{
+	register int	y;
 		register int	lines_per_buffer;
 		register unsigned char *scanbuf;
 		static RGBpixel	bg_scan[8192+1];
@@ -174,7 +175,8 @@ main(int argc, char **argv)
 		}
 	/* Fill a DMA buffer buffer with background */
 	if ( ! olflag && (get_flags & NO_BOX_SAVE) )
-		{	register int	i;
+		{
+			register int	i;
 			register RGBpixel	*to;
 		to = bg_scan;
 		for ( i = 0; i < width; i++, to++ )  {
@@ -183,7 +185,8 @@ main(int argc, char **argv)
 		}
 
 #ifndef SIMPLE
-	{	register int	page_fault = 1;
+	{
+		register int	page_fault = 1;
 		register int	dirty_flag = 1;
 		int		ymax = ypos + (ylen-1);
 		int		start_y = 0;
@@ -256,7 +259,8 @@ main(int argc, char **argv)
  */
 void
 fill_Buffer(register char *dest, register char *src, register int scan_bytes, register int repeat)
-{	register int	i;
+{
+	register int	i;
 	for ( i = 0; i < repeat; ++i )
 		{
 		memcpy(dest, src, scan_bytes);
@@ -268,7 +272,8 @@ fill_Buffer(register char *dest, register char *src, register int scan_bytes, re
 /*	p a r s _ A r g v ( )						*/
 static int
 pars_Argv(int argc, register char **argv)
-{	register int	c;
+{
+	register int	c;
 	/* Parse options.						*/
 	while ( (c = bu_getopt( argc, argv, "tOF:b:dp:v" )) != EOF )
 		{
@@ -361,7 +366,8 @@ pars_Argv(int argc, register char **argv)
  */
 static void
 prnt_Usage(void)
-{	register char	**p = usage;
+{
+	register char	**p = usage;
 	while ( *p )
 		(void) fprintf( stderr, "%s\n", *p++ );
 	return;
@@ -369,7 +375,8 @@ prnt_Usage(void)
 
 static void
 prnt_Cmap(ColorMap *cmap)
-{	register unsigned short	*cp;
+{
+	register unsigned short	*cp;
 		register int	i;
 	(void) fprintf( stderr, "\t\t\t_________ Color map __________\n" );
 	(void) fprintf( stderr, "Red segment :\n" );

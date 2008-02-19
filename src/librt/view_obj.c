@@ -398,7 +398,8 @@ vo_aet_cmd(struct view_obj	*vop,
 	vect_t		aet;
 	int		iflag = 0;
 
-	if (argc == 1) { /* get aet */
+	if (argc == 1) {
+  /* get aet */
 		bu_vls_init(&vls);
 		bn_encode_vect(&vls, vop->vo_aet);
 		Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
@@ -414,7 +415,8 @@ vo_aet_cmd(struct view_obj	*vop,
 		--argc;
 	}
 
-	if (argc == 2) {  /* set aet */
+	if (argc == 2) {
+   /* set aet */
 		int n;
 
 		if ((n = bn_decode_vect(aet, argv[1])) == 2)
@@ -499,14 +501,16 @@ vo_rmat_cmd(struct view_obj	*vop,
 	struct bu_vls vls;
 	mat_t rotation;
 
-	if (argc == 1) { /* get rotation matrix */
+	if (argc == 1) {
+  /* get rotation matrix */
 		bu_vls_init(&vls);
 		bn_encode_mat(&vls, vop->vo_rotation);
 		Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 		bu_vls_free(&vls);
 
 		return TCL_OK;
-	} else if (argc == 2) {  /* set rotation matrix */
+	} else if (argc == 2) {
+   /* set rotation matrix */
 		if (bn_decode_mat(rotation, argv[1]) != 16)
 			return TCL_ERROR;
 

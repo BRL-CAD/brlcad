@@ -307,7 +307,8 @@ void GetMaterial(char *MS, vect_t spec, fastf_t *refi, fastf_t *transmit) {
 
     /* Initialize spec and refi */
     spec[0]= spec[1]= spec[2]= *refi= *transmit= 0;
-    if (CheckMaterial("plastic", MS)) { /* Checks that the first 7 chars match any of the characters found in plastic */
+    if (CheckMaterial("plastic", MS)) {
+  /* Checks that the first 7 chars match any of the characters found in plastic */
 	/* Plastic Shader */
 	phong_sp->magic= PL_MAGIC;
 	phong_sp->shine= 10;
@@ -1310,7 +1311,8 @@ void LocatePhotons(struct PhotonSearch *Search, struct PNode *Root) {
     angle= VDOT(Search->Normal, Root->P.Normal);
     Node.P= Root->P;
     Node.Dist= (Root->P.Pos[0] - Search->Pos[0])*(Root->P.Pos[0] - Search->Pos[0]) + (Root->P.Pos[1] - Search->Pos[1])*(Root->P.Pos[1] - Search->Pos[1]) + (Root->P.Pos[2] - Search->Pos[2])*(Root->P.Pos[2] - Search->Pos[2]);
-    if (Node.Dist < Search->RadSq && angle > GPM_ATOL) { /* Check that Result is within Radius and Angular Tolerance */
+    if (Node.Dist < Search->RadSq && angle > GPM_ATOL) {
+  /* Check that Result is within Radius and Angular Tolerance */
 	if (Search->Found < Search->Max) {
 	    Push(Search, Node);
 	} else {
@@ -1327,7 +1329,8 @@ void LocatePhotons(struct PhotonSearch *Search, struct PNode *Root) {
     Dist= (Root->P.Pos[0] - Search->Pos[0])*(Root->P.Pos[0] - Search->Pos[0]) + (Root->P.Pos[1] - Search->Pos[1])*(Root->P.Pos[1] - Search->Pos[1]) + (Root->P.Pos[2] - Search->Pos[2])*(Root->P.Pos[2] - Search->Pos[2]);
 
     angle= VDOT(Search->Normal, Root->P.Normal);
-    if (Dist < Search->RadSq && angle > GPM_ATOL) { /* Check that Result is within Radius and Angular Tolerance */
+    if (Dist < Search->RadSq && angle > GPM_ATOL) {
+  /* Check that Result is within Radius and Angular Tolerance */
 	/*  if (Dist < NP->RadSq) {*/
 	if (Search->Found < Search->Max) {
 	    Search->List[Search->Found++].P= Root->P;

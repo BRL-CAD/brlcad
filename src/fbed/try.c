@@ -41,9 +41,11 @@
 			}
 int
 add_Try(Func_Tab* ftbl, register const char* name, register Try** trypp)
-{	register Try	*curp;
+{
+	register Try	*curp;
 	if ( *name == NUL )
-		{ /* We are finished, make leaf node. */
+		{
+		 /* We are finished, make leaf node. */
 		NewTry( *trypp );
 		(*trypp)->l.t_altr = (*trypp)->l.t_next = TRY_NULL;
 		(*trypp)->l.t_ftbl = ftbl;
@@ -55,7 +57,8 @@ add_Try(Func_Tab* ftbl, register const char* name, register Try** trypp)
 		)
 		;
 	if ( curp == TRY_NULL )
-		{ /* No Match, this level, so create new alternate. */
+		{
+		 /* No Match, this level, so create new alternate. */
 		curp = *trypp;
 		NewTry( *trypp );
 		(*trypp)->n.t_altr = curp;
@@ -71,13 +74,15 @@ add_Try(Func_Tab* ftbl, register const char* name, register Try** trypp)
 
 Func_Tab *
 get_Try(register char *name, register Try *tryp)
-{	register Try *curp = NULL; /* initialize to shutup compiler. */
+{
+	register Try *curp = NULL; /* initialize to shutup compiler. */
 	/* Traverse next links to end of function name. */
 	for (; tryp != TRY_NULL; tryp = tryp->n.t_next )
 		{
 		curp = tryp;
 		if ( *name == NUL )
-			{ /* End of user-typed name. */
+			{
+			 /* End of user-typed name. */
 			if ( tryp->n.t_altr != TRY_NULL )
 				/* Ambiguous at this point. */
 				return FT_NULL;

@@ -47,11 +47,13 @@
 static char promptbuf[LNBUFSZ];
 static const char *bannerp = "BURST (2.2)";
 
-#define AddCmd( nm, f )\
-	{	Trie	*p;\
-	if ( (p = addTrie( nm, &cmdtrie )) == TRIE_NULL )\
-		prntScr( "BUG: addTrie(%s) returned NULL.", nm );\
-	else	p->l.t_func = f;\
+#define AddCmd( nm, f ) \
+	{ \
+		Trie	*p; \
+		if ( (p = addTrie( nm, &cmdtrie )) == TRIE_NULL ) \
+			prntScr( "BUG: addTrie(%s) returned NULL.", nm ); \
+		else \
+			p->l.t_func = f; \
 	}
 
 #define GetBool( var, ptr ) \
@@ -73,40 +75,34 @@ static const char *bannerp = "BURST (2.2)";
 
 #define GetVar( var, ptr, conv )\
 	{\
-	if ( ! batchmode )\
-		{\
-		(void) snprintf( (ptr)->buffer, LNBUFSZ, (ptr)->fmt, var*conv );\
-		(void) getInput( ptr );\
-		if ( (sscanf( (ptr)->buffer, (ptr)->fmt, &(var) )) != 1 )\
+		if ( ! batchmode ) {\
+			(void) snprintf( (ptr)->buffer, LNBUFSZ, (ptr)->fmt, var*conv );\
+			(void) getInput( ptr );\
+			if ( (sscanf( (ptr)->buffer, (ptr)->fmt, &(var) )) != 1 )\
 			{\
-			bu_strlcpy( (ptr)->buffer, "", LNBUFSZ );\
-			return;\
+				bu_strlcpy( (ptr)->buffer, "", LNBUFSZ );\
+				return;\
 			}\
-		(ptr)++;\
-		}\
-	else\
-		{	char *tokptr = strtok( cmdptr, WHITESPACE );\
-		if (	tokptr == NULL\
-		    ||	sscanf( tokptr, (ptr)->fmt, &(var) ) != 1 )\
-			{\
-			brst_log( "ERROR -- command syntax:\n" );\
-			brst_log( "\t%s\n", cmdbuf );\
-			brst_log( "\tcommand (%s): argument (%s) is of wrong type, %s expected.\n", \
-				cmdptr, tokptr == NULL ? "(null)" : tokptr, \
-				(ptr)->fmt );\
+			(ptr)++;\
+		} else {\
+			char *tokptr = strtok( cmdptr, WHITESPACE );\
+			if (tokptr == NULL || sscanf( tokptr, (ptr)->fmt, &(var) ) != 1 ) {\
+				brst_log( "ERROR -- command syntax:\n" );\
+				brst_log( "\t%s\n", cmdbuf );\
+				brst_log( "\tcommand (%s): argument (%s) is of wrong type, %s expected.\n", \
+						cmdptr, tokptr == NULL ? "(null)" : tokptr, \
+						(ptr)->fmt );\
 			}\
-		cmdptr = NULL;\
+			cmdptr = NULL;\
 		}\
 	}
 
-typedef struct
-	{
-	char *prompt;
-	char buffer[LNBUFSZ];
-	char *fmt;
-	char *range;
-	}
-Input;
+typedef struct {
+    char *prompt;
+    char buffer[LNBUFSZ];
+    char *fmt;
+    char *range;
+} Input;
 
 /* local menu functions, names all start with M */
 static void MattackDir();
@@ -382,7 +378,8 @@ HmItem *itemp;
 static HmMenu *
 addMenu( tp )
 Ftable *tp;
-	{	register HmMenu	*menup;
+	{
+		register HmMenu	*menup;
 		register HmItem *itemp;
 		register Ftable	*ftp = tp;
 		register int cnt;
@@ -437,7 +434,8 @@ getInput( ip )
 Input *ip;
 	{
 	if ( ! batchmode )
-		{	register int c;
+		{
+			register int c;
 			register char *p;
 			char *defaultp = ip->buffer;
 		if ( *defaultp == NUL )
@@ -458,7 +456,8 @@ Input *ip;
 		prompt( (char *) NULL );
 		}
 	else
-		{	char *str = strtok( cmdptr, WHITESPACE );
+		{
+			char *str = strtok( cmdptr, WHITESPACE );
 		if ( str == NULL )
 			return	0;
 		bu_strlcpy( ip->buffer, str, LNBUFSZ );
@@ -546,7 +545,8 @@ char *str;
 static void
 MattackDir( itemp )
 HmItem *itemp;
-	{	static Input input[] =
+	{
+		static Input input[] =
 			{
 			{ "Attack azimuth", "", "%lf", "degrees" },
 			{ "Attack elevation", "", "%lf", "degrees" },
@@ -567,7 +567,8 @@ HmItem *itemp;
 static void
 MautoBurst( itemp )
 HmItem *itemp;
-	{	static Input input[] =
+	{
+		static Input input[] =
 			{
 			{ "Burst along shotline", "n", "%d", "y or n" },
 			{ "Require burst air", "y", "%d", "y or n" }
@@ -597,7 +598,8 @@ HmItem *itemp;
 static void
 MburstAir( itemp )
 HmItem *itemp;
-	{	static Input input[] =
+	{
+		static Input input[] =
 			{
 			{ "Name of burst air file", "", "%s", 0 },
 			};
@@ -630,7 +632,8 @@ HmItem *itemp;
 static void
 MburstArmor( itemp )
 HmItem *itemp;
-	{	static Input input[] =
+	{
+		static Input input[] =
 			{
 			{ "Name of burst armor file", "", "%s", 0 },
 			};
@@ -663,7 +666,8 @@ HmItem *itemp;
 static void
 MburstDist( itemp )
 HmItem *itemp;
-	{	static Input input[] =
+	{
+		static Input input[] =
 			{
 			{ "Burst distance", "", "%lf", 0 },
 			};
@@ -681,7 +685,8 @@ HmItem *itemp;
 static void
 MburstFile( itemp )
 HmItem *itemp;
-	{	static Input input[] =
+	{
+		static Input input[] =
 			{
 			{ "Name of burst output file", "", "%s", 0 },
 			};
@@ -709,7 +714,8 @@ HmItem *itemp;
 static void
 McellSize( itemp )
 HmItem *itemp;
-	{	static Input input[] =
+	{
+		static Input input[] =
 			{
 			{ "Cell size", "", "%lf", 0 }
 			};
@@ -727,7 +733,8 @@ HmItem *itemp;
 static void
 McolorFile( itemp )
 HmItem *itemp;
-	{	static Input input[] =
+	{
+		static Input input[] =
 			{
 			{ "Name of ident-to-color mapping file",
 				"", "%s", 0 },
@@ -760,7 +767,8 @@ HmItem *itemp;
 static void
 Mcomment( itemp )
 HmItem *itemp;
-	{	static Input input[] =
+	{
+		static Input input[] =
 			{
 			{ "Comment", " ", "%s", 0 },
 			};
@@ -784,7 +792,8 @@ HmItem *itemp;
 static void
 MconeHalfAngle( itemp )
 HmItem *itemp;
-	{	static Input input[] =
+	{
+		static Input input[] =
 			{
 			{ "Cone angle", "", "%lf", "degrees" },
 			};
@@ -802,7 +811,8 @@ HmItem *itemp;
 static void
 McritComp( itemp )
 HmItem *itemp;
-	{	static Input input[] =
+	{
+		static Input input[] =
 			{
 			{ "Name of critical component file", "", "%s", 0 },
 			};
@@ -836,7 +846,8 @@ HmItem *itemp;
 static void
 MdeflectSpallCone( itemp )
 HmItem *itemp;
-	{	static Input input[] =
+	{
+		static Input input[] =
 			{
 			{ "Deflect cone", "n", "%d", "y or n" },
 			};
@@ -853,7 +864,8 @@ HmItem *itemp;
 static void
 Mdither( itemp )
 HmItem *itemp;
-	{	static Input input[] =
+	{
+		static Input input[] =
 			{
 			{ "Dither cells", "n", "%d", "y or n" },
 			};
@@ -870,7 +882,8 @@ HmItem *itemp;
 static void
 MenclosePortion( itemp )
 HmItem *itemp;
-	{	static Input input[] =
+	{
+		static Input input[] =
 			{
 			{ "Left border of grid", "", "%lf", 0 },
 			{ "Right border of grid", "", "%lf", 0 },
@@ -911,7 +924,8 @@ HmItem *itemp;
 static void
 MerrorFile( itemp )
 HmItem *itemp;
-	{	static Input input[] =
+	{
+		static Input input[] =
 			{
 			{ "Name of error output file", "", "%s", 0 },
 			};
@@ -945,7 +959,8 @@ HmItem *itemp;
 static void
 Mexecute( itemp )
 HmItem *itemp;
-	{	static boolean	gottree = 0;
+	{
+		static boolean	gottree = 0;
 		boolean		loaderror = 0;
 		(void) snprintf( scrbuf, LNBUFSZ, 
 			"%s",
@@ -972,7 +987,8 @@ HmItem *itemp;
 	 */
 	rtip->useair = 1;
 	if ( ! gottree )
-		{	char *ptr, *obj;
+		{
+			char *ptr, *obj;
 		rt_prep_timer();
 		for (	ptr = objects;
 			(obj = strtok( ptr, WHITESPACE )) != NULL;
@@ -1017,7 +1033,8 @@ HmItem *itemp;
 static void
 MfbFile( itemp )
 HmItem *itemp;
-	{	static Input input[] =
+	{
+		static Input input[] =
 			{
 			{ "Name of frame buffer device", "", "%s", 0 },
 			};
@@ -1065,7 +1082,8 @@ HmItem *itemp;
 static void
 MgridFile( itemp )
 HmItem *itemp;
-	{	static Input input[] =
+	{
+		static Input input[] =
 			{
 			{ "Name of grid file", "", "%s", 0 },
 			};
@@ -1093,7 +1111,8 @@ HmItem *itemp;
 static void
 MgroundPlane( itemp )
 HmItem *itemp;
-	{	static Input input[] =
+	{
+		static Input input[] =
 			{
 			{ "Activate ground plane bursting",
 				"n", "%d", "y or n" },
@@ -1138,7 +1157,8 @@ HmItem *itemp;
 static void
 MhistFile( itemp )
 HmItem *itemp;
-	{	static Input input[] =
+	{
+		static Input input[] =
 			{
 			{ "Name of histogram file", "", "%s", 0 },
 			};
@@ -1165,7 +1185,8 @@ HmItem *itemp;
 static void
 MinputBurst( itemp )
 HmItem *itemp;
-	{	static Input input[] =
+	{
+		static Input input[] =
 			{
 			{ "X-coordinate of burst point", "", "%lf", 0 },
 			{ "Y-coordinate of burst point", "", "%lf", 0 },
@@ -1190,7 +1211,8 @@ HmItem *itemp;
 static void
 Minput2dShot( itemp )
 HmItem *itemp;
-	{	static Input input[] =
+	{
+		static Input input[] =
 			{
 			{ "Y'-coordinate of shotline", "", "%lf", 0 },
 			{ "Z'-coordinate of shotline", "", "%lf", 0 },
@@ -1212,7 +1234,8 @@ HmItem *itemp;
 static void
 Minput3dShot( itemp )
 HmItem *itemp;
-	{	static Input input[] =
+	{
+		static Input input[] =
 			{
 			{ "X-coordinate of shotline", "", "%lf", 0 },
 			{ "Y-coordinate of shotline", "", "%lf", 0 },
@@ -1245,7 +1268,8 @@ HmItem *itemp;
 static void
 Mobjects( itemp )
 HmItem *itemp;
-	{	static Input input[] =
+	{
+		static Input input[] =
 			{
 			{ "List of objects from target file", "", "%s", 0 },
 			};
@@ -1263,7 +1287,8 @@ HmItem *itemp;
 static void
 Moverlaps( itemp )
 HmItem *itemp;
-	{	static Input input[] =
+	{
+		static Input input[] =
 			{
 			{ "Report overlaps", "y", "%d", "y or n" },
 			};
@@ -1280,7 +1305,8 @@ HmItem *itemp;
 static void
 MmaxBarriers( itemp )
 HmItem *itemp;
-	{	static Input input[] =
+	{
+		static Input input[] =
 			{
 			{ "Maximum spall barriers per ray", "", "%d", 0 },
 			};
@@ -1297,7 +1323,8 @@ HmItem *itemp;
 static void
 MmaxSpallRays( itemp )
 HmItem *itemp;
-	{	static Input input[] =
+	{
+		static Input input[] =
 			{
 			{ "Maximum rays per burst", "", "%d", 0 },
 			};
@@ -1314,7 +1341,8 @@ HmItem *itemp;
 static void
 MplotFile( itemp )
 HmItem *itemp;
-	{	static Input input[] =
+	{
+		static Input input[] =
 			{
 			{ "Name of UNIX plot file", "", "%s", 0 },
 			};
@@ -1342,7 +1370,8 @@ HmItem *itemp;
 static void
 Mread2dShotFile( itemp )
 HmItem *itemp;
-	{	static Input input[] =
+	{
+		static Input input[] =
 			{
 			{ "Name of 2-D shot input file", "", "%s", 0 },
 			};
@@ -1369,7 +1398,8 @@ HmItem *itemp;
 static void
 Mread3dShotFile( itemp )
 HmItem *itemp;
-	{	static Input input[] =
+	{
+		static Input input[] =
 			{
 			{ "Name of 3-D shot input file", "", "%s", 0 },
 			};
@@ -1396,7 +1426,8 @@ HmItem *itemp;
 static void
 MreadBurstFile( itemp )
 HmItem *itemp;
-	{	static Input input[] =
+	{
+		static Input input[] =
 			{
 			{ "Name of 3-D burst input file", "", "%s", 0 },
 			};
@@ -1423,7 +1454,8 @@ HmItem *itemp;
 static void
 MreadCmdFile( itemp )
 HmItem *itemp;
-	{	static Input input[] =
+	{
+		static Input input[] =
 			{
 			{ "Name of command file", "", "%s", 0 },
 			};
@@ -1449,7 +1481,8 @@ HmItem *itemp;
 static void
 MshotlineFile( itemp )
 HmItem *itemp;
-	{	static Input input[] =
+	{
+		static Input input[] =
 			{
 			{ "Name of shotline output file", "", "%s", 0 },
 			};
@@ -1475,19 +1508,24 @@ HmItem *itemp;
 
 HmItem units_items[] =
 	{
-	{ UNITS_MILLIMETERS,
+	{
+	 UNITS_MILLIMETERS,
 		"interpret inputs and convert outputs to millimeters",
 		0, 0, 0, Mnop },
-	{ UNITS_CENTIMETERS,
+	{
+	 UNITS_CENTIMETERS,
 		"interpret inputs and convert outputs to centimeters",
 		0, 0, 0, Mnop },
-	{ UNITS_METERS,
+	{
+	 UNITS_METERS,
 		"interpret inputs and convert outputs to meters",
 		0, 0, 0, Mnop },
-	{ UNITS_INCHES,
+	{
+	 UNITS_INCHES,
 		"interpret inputs and convert outputs to inches",
 		0, 0, 0, Mnop },
-	{ UNITS_FEET,
+	{
+	 UNITS_FEET,
 		"interpret inputs and convert outputs to feet",
 		0, 0, 0, Mnop },
 	{ 0 }
@@ -1498,7 +1536,8 @@ HmMenu	units_hmenu = { units_items, 0, 0, 0, 0 };
 static void
 Munits( itemp )
 HmItem *itemp;
-	{	char *unitstr;
+	{
+		char *unitstr;
 		HmItem *itemptr;
 	if ( itemp != NULL )
 		{
@@ -1544,7 +1583,8 @@ HmItem *itemp;
 static void
 MwriteCmdFile( itemp )
 HmItem *itemp;
-	{	static Input input[] =
+	{
+		static Input input[] =
 			{
 			{ "Name of command file", "", "%s", 0 },
 			};
@@ -1580,7 +1620,8 @@ HmItem *itemp;
 
 void
 intr_sig( int sig )
-	{	static Input input[] =
+	{
+		static Input input[] =
 			{
 			{ "Really quit ? ", "n", "%d", "y or n" },
 			};

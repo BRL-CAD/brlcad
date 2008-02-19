@@ -619,7 +619,8 @@ main(int argc, char **argv)
 	    } /* status -- gui initialized */
 	} /* classic */
 
-    } else { /* !interactive */
+    } else {
+  /* !interactive */
 
 	if ( !run_in_foreground && use_pipe ) {
 	    notify_parent_done(parent_pipe[1]);
@@ -1048,7 +1049,8 @@ mged_process_char(char ch)
 		curr_cmd_list = &head_cmd_list;
 		if (curr_cmd_list->cl_tie)
 		    curr_dm_list = curr_cmd_list->cl_tie;
-		if (cmdline_hook) {  /* Command-line hooks don't do CMD_MORE */
+		if (cmdline_hook) {
+   /* Command-line hooks don't do CMD_MORE */
 		    reset_Tty(fileno(stdin));
 
 		    if ((*cmdline_hook)(&input_str_prefix))
@@ -1293,7 +1295,8 @@ mged_process_char(char ch)
 	    escaped = bracketed = 0;
 	    break;
 	case 'd':
-	    if (escaped) {                /* delete-word */
+	    if (escaped) {
+                 /* delete-word */
 		char *start;
 		char *curr;
 		int i;
@@ -1325,7 +1328,8 @@ mged_process_char(char ch)
 	    escaped = bracketed = 0;
 	    break;
 	case 'f':
-	    if (escaped) {                /* forward-word */
+	    if (escaped) {
+                 /* forward-word */
 		char *start;
 		char *curr;
 
@@ -1354,7 +1358,8 @@ mged_process_char(char ch)
 	    escaped = bracketed = 0;
 	    break;
 	case 'b':
-	    if (escaped) {                /* backward-word */
+	    if (escaped) {
+                 /* backward-word */
 		char *start;
 		char *curr;
 
@@ -2459,7 +2464,8 @@ f_opendb(
 			return TCL_OK;
 		    }
 		}
-	    } else { /* not initializing mged */
+	    } else {
+  /* not initializing mged */
 		if (argc == 2) {
 		    /* need to reset this before returning */
 		    dbip = save_dbip;

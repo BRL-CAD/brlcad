@@ -71,7 +71,8 @@ struct fb_texture
 
 static char	*
 suffix(register char *str)
-{	register char	*p = str + strlen( str ) - 1;
+{
+	register char	*p = str + strlen( str ) - 1;
 	while ( *p != '.' && p != str )
 		p--;
 	if ( *p == '.' )
@@ -84,7 +85,8 @@ static RGBpixel	*
 icon_Lookup( iconp, u, v )
 struct icon_texture	*iconp;
 int	u, v;
-	{	static int	word_sz = sizeof(icon_t) * BITS_PER_BYTE;
+	{
+		static int	word_sz = sizeof(icon_t) * BITS_PER_BYTE;
 		static RGBpixel	black_pixel = { 0, 0, 0 };
 		static RGBpixel	white_pixel = { 255, 255, 255 };
 		int	offset = (iconp->hgt-1-v)*iconp->wid/word_sz + u/word_sz;
@@ -98,7 +100,8 @@ int	u, v;
 
 static struct icon_texture	*
 init_Icon_Texture(char *file, Mat_Db_Entry *entry)
-{	FILE	*iconfp;
+{
+	FILE	*iconfp;
 		register struct icon_texture	*iconp;
 		icon_t	*iconmap;
 		int	wid = entry->df_rgb[0] << 3;
@@ -131,10 +134,12 @@ init_Icon_Texture(char *file, Mat_Db_Entry *entry)
 	iconp->next = icons;
 	icons = iconp;
 #if DEBUG_TEXTURE
-	{ register int	u, v;
+	{
+	 register int	u, v;
 	for ( v = 0; v < hgt; v++ )
 		for ( u = 0; u < wid; u++ )
-			{	RGBpixel	*pixel;
+			{
+				RGBpixel	*pixel;
 			pixel = icon_Lookup( iconp, u, v );
 			prnt_Pixel( *pixel, u, v );
 			}
@@ -146,7 +151,8 @@ init_Icon_Texture(char *file, Mat_Db_Entry *entry)
 
 static struct fb_texture	*
 init_Fb_Texture(char *file, Mat_Db_Entry *entry)
-{	FBIO		*txfbiop;
+{
+	FBIO		*txfbiop;
 		register struct fb_texture	*fbp;
 		RGBpixel	*fbmap;
 		int		wid = entry->df_rgb[0] << 3;
@@ -173,10 +179,12 @@ init_Fb_Texture(char *file, Mat_Db_Entry *entry)
 	fbp->next = fbs;
 	fbs = fbp;
 #if DEBUG_TEXTURE
-	{ register int	u, v;
+	{
+	 register int	u, v;
 	for ( v = 0; v < hgt; v++ )
 		for ( u = 0; u < wid; u++ )
-			{	RGBpixel	*pixel;
+			{
+				RGBpixel	*pixel;
 			pixel = Fb_Lookup( fbp, u, v );
 			prnt_Pixel( pixel, u, v );
 			}
@@ -200,7 +208,8 @@ tex_Entry(struct uvcoord *uvp, Mat_Db_Entry *entry)
 
 int
 icon_Entry(struct uvcoord *uvp, Mat_Db_Entry *entry)
-{	int	ui;
+{
+	int	ui;
 		int	vi;
 		register RGBpixel		*pixel;
 		register struct icon_texture	*iconp;
@@ -236,7 +245,8 @@ icon_Entry(struct uvcoord *uvp, Mat_Db_Entry *entry)
 
 int
 fb_Entry(struct uvcoord *uvp, Mat_Db_Entry *entry)
-{	int				ui;
+{
+	int				ui;
 		int				vi;
 		register RGBpixel		*pixel;
 		register struct fb_texture	*fbp;

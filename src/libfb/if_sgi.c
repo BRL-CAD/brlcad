@@ -1444,7 +1444,8 @@ sgw_dopen( ifp, file, width, height )
 FBIO	*ifp;
 char	*file;
 int	width, height;
-{	register Colorindex i;
+{
+	register Colorindex i;
 
 	if ( (SGIL(ifp) = (char *)calloc( 1, sizeof(struct sgiinfo) )) == NULL )  {
 		fb_log("sgw_dopen:  sgiinfo malloc failed\n");

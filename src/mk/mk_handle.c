@@ -53,7 +53,8 @@
 
 int
 main(int argc, char **argv)
-{							/*  START # 1  */
+{
+							/*  START # 1  */
    struct rt_wdb *fpw;			/*  File to be written to.  */
    char filemged[26];		/*  Mged file create.  */
    double hgt, len;		/*  Height & length of handle.  */
@@ -103,7 +104,8 @@ main(int argc, char **argv)
 
    /*  If there are no arguments ask questions.  */
    if (argc == 1)
-   {							/*  START # 3  */
+   {
+   							/*  START # 3  */
 
    /*  Explain makings of handle.  */
    (void)printf("\nThis program constructs a handle with the base centered\n");
@@ -141,7 +143,8 @@ main(int argc, char **argv)
 
    /*  if there are arguments get the answers from the arguments.  */
    else
-   {							/*  START # 4  */
+   {
+   							/*  START # 4  */
 	/*  List of options.  */
 	/*	-fname - name = name of .g file.  */
 	/*	-n# - # = number of handles.  */
@@ -151,17 +154,20 @@ main(int argc, char **argv)
 	/*	-r2# - # = r2 radius of torus & cylinder.  */
 
 	for (i=1; i<argc; i++)
-	{						/*  START # 5  */
+	{
+							/*  START # 5  */
 	   /*  Put argument into temporary character string.  */
 	   temp = argv[i];
 
 	   /*  -f - mged file name.  */
 	   if (temp[1] == 'f')
-	   {						/*  START # 6  */
+	   {
+	   						/*  START # 6  */
 		j = 2;
 		k = 0;
 		while ( (temp[j] != '\0') && (k < 25) )
-		{					/*  START # 7  */
+		{
+							/*  START # 7  */
 		   filemged[k] = temp[j];
 		   j++;
 		   k++;
@@ -171,12 +177,14 @@ main(int argc, char **argv)
 
 	   /*  -n - # of handles to be created.  */
 	   else if (temp[1] == 'n')
-	   {						/*  START # 8  */
+	   {
+	   						/*  START # 8  */
 		/*  Set up temporary character string.  */
 		j = 2;
 		k = 0;
 		while ( (temp[j] != '\0') && (k < 15) )
-		{					/*  START # 9  */
+		{
+							/*  START # 9  */
 		   temp1[k] = temp[j];
 		   j++;
 		   k++;
@@ -188,12 +196,14 @@ main(int argc, char **argv)
 
 	   /*  -l or -h - length and height of handle in mm.  */
 	   else if ( (temp[1] == 'l') || (temp[1] == 'h') )
-	   {						/*  START # 10  */
+	   {
+	   						/*  START # 10  */
 		/*  Set up temporary character string.  */
 		j = 2;
 		k = 0;
 		while ( (temp[j] != '\0') && (k < 15) )
-		{					/*  START # 11  */
+		{
+							/*  START # 11  */
 		   temp1[k] = temp[j];
 		   j++;
 		   k++;
@@ -205,12 +215,14 @@ main(int argc, char **argv)
 
 	   /*  -r1 or -r2 - radii for torus.  */
 	   else if (temp[1] == 'r')
-	   {						/*  START # 12  */
+	   {
+	   						/*  START # 12  */
 		/*  Set up temporary character string.  */
 		j = 3;
 		k = 0;
 		while ( (temp[j] != '\0') && (k < 15) )
-		{					/*  START # 13  */
+		{
+							/*  START # 13  */
 		   temp1[k] = temp[j];
 		   j++;
 		   k++;
@@ -238,7 +250,8 @@ main(int argc, char **argv)
    mk_id(fpw, "handles");
 
    for (i=0; i<numhan; i++)
-   {							/*  START # 2  */
+   {
+   							/*  START # 2  */
 
    /*  Create solids for handle.  */
 

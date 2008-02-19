@@ -67,7 +67,8 @@ void prnt_Rectangle(const char *str, register Rectangle *rectp);
 /*	p r n t _ S t a t u s ( ) */
 void
 prnt_Status(void)
-{	RGBpixel pixel;
+{
+	RGBpixel pixel;
 	if ( ! tty )
 		return;
 	fb_Get_Pixel( pixel );
@@ -100,7 +101,8 @@ static char *screen_template[] = {
 /*	i n i t _ S t a t u s ( ) */
 void
 init_Status(void)
-{	register char **p = screen_template;
+{
+	register char **p = screen_template;
 		register int template_co;
 		char buf[MAX_LN];
 		extern int CO;
@@ -130,7 +132,8 @@ init_Status(void)
  */
 void
 prnt_Usage(void)
-{	register char **p = usage;
+{
+	register char **p = usage;
 	while ( *p )
 		(void) fprintf( stderr, "%s\n", *p++ );
 	return;
@@ -173,7 +176,8 @@ fb_log (const char *fmt, ...)	/* de-macro'd due to fmt now being const */
 			}
 		else
 		if ( CS != NULL )
-			{ /* This scrolling region stuff doesn't work
+			{
+			 /* This scrolling region stuff doesn't work
 				correctly (XXX). */
 			SetScrlReg( TOP_SCROLL_WIN, PROMPT_LINE - 1 );
 			SCROLL_PR_MOVE();
@@ -212,7 +216,8 @@ Va_Decl( prnt_Scroll )
 			}
 		else
 		if ( CS != NULL )
-			{ /* This scrolling region stuff doesn't work
+			{
+			 /* This scrolling region stuff doesn't work
 				correctly (XXX). */
 			SetScrlReg( TOP_SCROLL_WIN, PROMPT_LINE - 1 );
 			SCROLL_PR_MOVE();
@@ -282,7 +287,8 @@ Va_Decl( prnt_Event )
 #ifdef never
 void
 prnt_FBC()
-	{	extern struct ik_fbc	ikfbcmem;
+	{
+		extern struct ik_fbc	ikfbcmem;
 	prnt_Scroll(	"viewport:\t\tx [%4d]\ty [%4d]\n",
 			ikfbcmem.fbc_xviewport,
 			ikfbcmem.fbc_yviewport
@@ -327,7 +333,8 @@ prnt_Prompt(const char *msg)
 
 void
 prnt_Macro(register char *bufp)
-{	char prnt_buf[BUFSIZ];
+{
+	char prnt_buf[BUFSIZ];
 		register char *p;
 	for ( p = prnt_buf; *bufp != '\0'; bufp++ )
 		{

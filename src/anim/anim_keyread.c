@@ -84,7 +84,8 @@ main(int argc, char **argv)
     if (!get_args(argc, argv))
 	fprintf(stderr, "anim_keyread: get_args error");
 
-    while (!feof(stdin)) {  /* read one keyframe */
+    while (!feof(stdin)) {
+   /* read one keyframe */
 	scanf("%lf", &time);
 	scanf("%lf", &viewsize);
 	scanf("%lf %lf %lf", eyept, eyept+1, eyept+2);

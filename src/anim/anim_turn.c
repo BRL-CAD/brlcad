@@ -80,7 +80,8 @@ main(int argc, char **argv)
     if (!get_args(argc, argv))
 	fprintf(stderr, "ascript: Get_args error");
 
-    if (!angle_set) { /* set angle if not yet done */
+    if (!angle_set) {
+  /* set angle if not yet done */
 	scanf("%*f%*[^-0123456789]");
 	VSCAN(temp1);
 	scanf("%*f%*[^-0123456789]");
@@ -99,7 +100,8 @@ main(int argc, char **argv)
 
 	/*update to and from matrices */
 
-	if (count) { /* not first time through */
+	if (count) {
+  /* not first time through */
 	    /* calculate matrices corrsponding to last position*/
 	    anim_y_p_r2mat(m_to_world, angle, 0.0, 0.0);
 	    anim_add_trans(m_to_world, front, zero);
@@ -124,7 +126,8 @@ main(int argc, char **argv)
 	    VSUB2(temp1, front, back);
 	    angle = bn_atan2(temp1[1], temp1[0]);
 	}
-	else { /*first time through */
+	else {
+  /*first time through */
 	    /*angle is already determined*/
 	    VMOVE(front, point);
 	}
@@ -143,7 +146,8 @@ main(int argc, char **argv)
 	    if (!(count%print_int))
 		printf("%.10g %.10g %.10g 0.0\n", time, factor*RTOD*yaw, RTOD*roll_ang);
 	}
-	else { /* print position and orientation of vehicle */
+	else {
+  /* print position and orientation of vehicle */
 	    if (!(count%print_int))
 		printf("%.10g %.10g %.10g %.10g %.10g 0.0 0.0\n", time, front[0], front[1], front[2], RTOD * angle);
 	}

@@ -69,7 +69,8 @@ double drand48() {
 #endif
 
 int main(int argc, char **argv)
-{							/*  START # 99  */
+{
+							/*  START # 99  */
    struct application ap;  /*  Structure passed between functions.  */
    struct rt_i *rtip;	/*  Used to build directory.  */
    int index;		/*  Index for rt_dirbuild & rt_gettree.  */
@@ -113,7 +114,8 @@ int main(int argc, char **argv)
    }
 
    else
-   {							/*  START # 100  */
+   {
+   							/*  START # 100  */
 
 	/*  Find name of output file.  */
 	(void)printf("Enter name of output file (25 char max).\n\t");
@@ -191,7 +193,8 @@ int main(int argc, char **argv)
 
 	/*  Zero all arrays.  */
 	for (i=0; i<numreg; i++)
-	{						/*  START # 110  */
+	{
+							/*  START # 110  */
 	   info[i].name = "\0";
 	   info[i].lvrays = 0.;
 	   for (j=0; j<numreg; j++)
@@ -324,7 +327,8 @@ int main(int argc, char **argv)
 
 	   /*  Loop through for each ray fired.  */
 	   for (r=0; r<rayfir; r++)
-	   {						/*  START # 150  */
+	   {
+	   						/*  START # 150  */
 /*
  *		(void)printf("In loop - %f\n", r);
  *		(void)fflush(stdout);
@@ -416,25 +420,29 @@ int main(int argc, char **argv)
  */
 
 	   for (i=0; i<numreg; i++)
-	   {						/*  START # 160  */
+	   {
+	   						/*  START # 160  */
 	   /*  Write region names to output file.  */
 	   (void)fprintf(fpw, "Region %d:  %s\n", (i+1), info[i].name);
 	   (void)fflush(fpw);
 
 	   /*  Find shape factors & print.  */
 	   if (info[i].lvrays == 0)
-	   {						/*  START # 1060  */
+	   {
+	   						/*  START # 1060  */
 		(void)fprintf(fpw1, "**  ERROR - # or rays hitting region ");
 		(void)fprintf(fpw1, "%d is 0.  **\n", i);
 		(void)fflush(fpw1);
 	   }						/*  END # 1060  */
 
 	   else
-	   {						/*  START # 1070  */
+	   {
+	   						/*  START # 1070  */
 		/*  Must divide by 2. since looking forwards & backwards.  */
 		info[i].regarea = info[i].lvrays / rayfir * areaall / 2.;
 		for (j=0; j<numreg; j++)
-		{					/*  START # 1080  */
+		{
+							/*  START # 1080  */
 			info[i].sf[j] = info[i].intrays[j] / info[i].lvrays;
 			(void)fprintf(fpw, "\t%d   %d   %f\n",
 				(i + 1), (j + 1), info[i].sf[j]);
@@ -458,7 +466,8 @@ int main(int argc, char **argv)
 	   (void)fprintf(fpw2, "TEMIS\n\n");
 
 	   for (i=0; i<numreg; i++)
-	   {						/*  START # 1090  */
+	   {
+	   						/*  START # 1090  */
 		(void)fprintf(fpw2, "Region\tArea\tEmissivity\n");
 		/*  Area is put into square meters.  */
 		(void)fprintf(fpw2, "%d\t%f\n", (i + 1),
@@ -475,14 +484,17 @@ int main(int argc, char **argv)
 		/*  Print shape factors.  */
 		m = 0;
 		for (j=0; j<numreg; j++)
-		{					/*  START # 1100  */
+		{
+							/*  START # 1100  */
 		   if (info[i].sf[j] != 0.)
-		   {					/*  START # 1110  */
+		   {
+		   					/*  START # 1110  */
 			(void)fprintf(fpw2, "%4d   %.4f   ", (j + 1),
 				info[i].sf[j]);
 			m++;
 			if (m == 5)
-			{				/*  START # 1120  */
+			{
+							/*  START # 1120  */
 			   m = 0;
 			   (void)fprintf(fpw2, "\n");
 			}				/*  END # 1120  */
@@ -517,7 +529,8 @@ int main(int argc, char **argv)
 /*  User supplied hit function.  */
 int
 hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *segp)
-{							/*  START # 1000  */
+{
+							/*  START # 1000  */
    register struct partition *pp;
    register struct hit *hitp;
    register struct soltab *stp;
@@ -549,9 +562,11 @@ hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *
    pp = PartHeadp->pt_forw;
 
    for (; pp != PartHeadp; pp=pp->pt_forw)
-   {							/*  START # 1010  */
+   {
+   							/*  START # 1010  */
 	if ( (rh1 == (-1)) && (rh2 == (-1)) )
-	{						/*  START # 1020  */
+	{
+							/*  START # 1020  */
 	   /*  First time through; therefore, find the region hit for  */
 	   /*  the first region.  */
 
@@ -577,7 +592,8 @@ hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *
 	}						/*  END # 1020  */
 
 	else
-	{						/*  START # 1030  */
+	{
+							/*  START # 1030  */
 	   /*  Any time but the first time through.  Find the region hit  */
 	   /*  for the second region.  */
 	   rh2 = (int)pp->pt_regionp->reg_bit;
@@ -610,7 +626,8 @@ hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *
 	   }
 
 	   else
-	   {						/*  START # 1040  */
+	   {
+	   						/*  START # 1040  */
 		/*  The points are not the same; therefore, increment  */
 		/*  appropriately.  */
 		info[rh1].lvrays += 1.;
@@ -650,7 +667,8 @@ hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *
 /*  User supplied hit function.  */
 int
 miss(struct application *ap)
-{							/*  START # 2000  */
+{
+							/*  START # 2000  */
    return(1);
 }							/*  END # 2000  */
 
@@ -658,7 +676,8 @@ miss(struct application *ap)
 /*  User supplied overlap function.  */
 int
 overlap(struct application *ap, struct partition *pp, struct region *r1, struct region *r2, struct partition *hp)
-{							/*  START # 3000  */
+{
+							/*  START # 3000  */
    return(2);
 }							/*  END # 3000  */
 

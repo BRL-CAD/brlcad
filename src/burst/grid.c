@@ -91,7 +91,8 @@ void
 colorPartition( regp, type )
 register struct region *regp;
 int type;
-	{	Colors	*colorp;
+	{
+		Colors	*colorp;
 	if ( plotfile[0] == NUL )
 		return;
 	assert( plotfp != NULL );
@@ -149,7 +150,8 @@ int type;
  */
 static boolean
 doBursts()
-	{	boolean			status = 1;
+	{
+		boolean			status = 1;
 	noverlaps = 0;
 	CopyVec( ag.a_ray.r_dir, viewdir ); /* XXX -- could be done up in
 						gridModel() */
@@ -189,9 +191,11 @@ static void
 enforceLOS( ap, pt_headp )
 register struct application	*ap;
 register struct partition	*pt_headp;
-	{	register struct partition	*pp;
+	{
+		register struct partition	*pp;
 	for ( pp = pt_headp->pt_forw; pp != pt_headp; )
-		{	register struct partition *nextpp = pp->pt_forw;
+		{
+			register struct partition *nextpp = pp->pt_forw;
 		if ( pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist
 			<= LOS_TOL )
 			{
@@ -218,7 +222,8 @@ f_BurstHit( ap, pt_headp, segp )
 struct application *ap;
 struct partition *pt_headp;
 struct seg *segp;
-	{	Pt_Queue *qshield = PT_Q_NULL;
+	{
+		Pt_Queue *qshield = PT_Q_NULL;
 		register struct partition *cpp, *spp;
 		register int nbar;
 		register int ncrit = 0;
@@ -236,12 +241,14 @@ struct seg *segp;
 		cpp != pt_headp && nbar <= nbarriers;
 		cpp = cpp->pt_forw
 		)
-		{	register struct region *regp = cpp->pt_regionp;
+		{
+			register struct region *regp = cpp->pt_regionp;
 			struct xray *rayp = &ap->a_ray;
 		if ( Air( regp ) )
 			continue; /* Air doesn't matter here. */
 		if ( findIdents( regp->reg_regionid, &critids ) )
-			{	fastf_t entrynorm[3], exitnorm[3];
+			{
+				fastf_t entrynorm[3], exitnorm[3];
 			if ( ncrit == 0 )
 				prntRayHeader( ap->a_ray.r_dir, viewdir,
 						ap->a_user );
@@ -304,7 +311,8 @@ struct application *ap;
 struct partition *pp;
 struct region *reg1, *reg2;
 struct partition *pheadp;
-	{	fastf_t depth;
+	{
+		fastf_t depth;
 	depth = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
 	if ( depth >= OVERLAP_TOL )
 		noverlaps++;
@@ -314,7 +322,8 @@ struct partition *pheadp;
 		/* reg1 was air, replace with reg2 */
 		return 2;
 	if ( pp->pt_back != pheadp )
-		{ /* Repeat a prev region, if that is a choice */
+		{
+		 /* Repeat a prev region, if that is a choice */
 		if ( pp->pt_back->pt_regionp == reg1 )
 			return 1;
 		if ( pp->pt_back->pt_regionp == reg2 )
@@ -348,7 +357,8 @@ struct application *ap;
 struct partition *pp;
 struct region *reg1, *reg2;
 struct partition *pheadp;
-	{	fastf_t depth;
+	{
+		fastf_t depth;
 		point_t pt;
 	depth = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
 	if ( depth >= OVERLAP_TOL )
@@ -376,7 +386,8 @@ struct partition *pheadp;
 		/* reg1 was air, replace with reg2 */
 		return 2;
 	if ( pp->pt_back != pheadp )
-		{ /* Repeat a prev region, if that is a choice */
+		{
+		 /* Repeat a prev region, if that is a choice */
 		if ( pp->pt_back->pt_regionp == reg1 )
 			return 1;
 		if ( pp->pt_back->pt_regionp == reg2 )
@@ -405,7 +416,8 @@ f_ShotHit( ap, pt_headp, segp )
 struct application *ap;
 struct partition *pt_headp;
 struct seg *segp;
-	{	register struct partition *pp;
+	{
+		register struct partition *pp;
 		struct partition *bp = PT_NULL;
 		fastf_t burstnorm[3]; /* normal at burst point */
 #if DEBUG_GRID
@@ -438,14 +450,16 @@ struct seg *segp;
 		and imagined (implicit).
 	 */
 	for ( pp = pt_headp->pt_forw; pp != pt_headp; pp = pp->pt_forw )
-		{	fastf_t	los = 0.0;
+		{
+			fastf_t	los = 0.0;
 			int	voidflag = 0;
 			register struct partition *np = pp->pt_forw;
 			register struct partition *cp;
 			register struct region *regp = pp->pt_regionp;
 			register struct region *nregp = pp->pt_forw->pt_regionp;
 		/* Fill in entry and exit points into hit structures. */
-		{	register struct hit *ihitp = pp->pt_inhit;
+		{
+			register struct hit *ihitp = pp->pt_inhit;
 			register struct hit *ohitp = pp->pt_outhit;
 			register struct xray *rayp = &ap->a_ray;
 		VJOIN1( ihitp->hit_point, rayp->r_pt, ihitp->hit_dist,
@@ -533,7 +547,8 @@ struct seg *segp;
 		/* Check for possible phantom armor before internal air,
 			that is if it is the first thing hit. */
 		if ( pp->pt_back == pt_headp && InsideAir( regp ) )
-			{	fastf_t	slos;
+			{
+				fastf_t	slos;
 			/* If adjacent partitions are the same air, extend
 				the first on to include them. */
 #if DEBUG_GRID
@@ -559,7 +574,8 @@ struct seg *segp;
 			}
 		else
 		if ( ! Air( regp ) ) /* If we have a component, output it. */
-			{	fastf_t entrynorm[3];	/* normal at entry */
+			{
+				fastf_t entrynorm[3];	/* normal at entry */
 				fastf_t exitnorm[3];	/* normal at exit */
 			/* Get entry normal. */
 			getRtHitNorm( pp->pt_inhit, pp->pt_inseg->seg_stp,
@@ -593,7 +609,8 @@ struct seg *segp;
 				if (	bp == PT_NULL && ! reqburstair
 				    &&	findIdents( regp->reg_regionid,
 							&armorids ) )
-					{ /* Bursting on armor/void (ouchh). */
+					{
+					 /* Bursting on armor/void (ouchh). */
 					bp = pp;
 					CopyVec( burstnorm, exitnorm );
 					}
@@ -675,7 +692,8 @@ struct seg *segp;
 #endif
 			/* See if inside air follows impl. outside air. */
 			if ( voidflag && InsideAir( nregp ) )
-				{	fastf_t	slos =
+				{
+					fastf_t	slos =
 						np->pt_outhit->hit_dist -
 						np->pt_inhit->hit_dist;
 #if DEBUG_GRID
@@ -691,7 +709,8 @@ struct seg *segp;
 			    &&	Air( nregp )
 			    &&	DiffAir( nregp, regp )
 				)
-				{	fastf_t slos = np->pt_outhit->hit_dist -
+				{
+					fastf_t slos = np->pt_outhit->hit_dist -
 						 np->pt_inhit->hit_dist;
 #if DEBUG_GRID
 				brst_log( "\t\tdiffering airs are adjacent\n" );
@@ -714,10 +733,12 @@ struct seg *segp;
 		return	1;
 
 	if ( bp != PT_NULL )
-		{	fastf_t burstpt[3];
+		{
+			fastf_t burstpt[3];
 		/* This is a burst point, calculate coordinates. */
 		if ( bdist > 0.0 )
-			{ /* Exterior burst point (i.e. case-fragmenting
+			{
+			 /* Exterior burst point (i.e. case-fragmenting
 				munition with contact-fuzed set-back device):
 				location is bdist prior to entry point. */
 			VJOIN1( burstpt, bp->pt_inhit->hit_point, -bdist,
@@ -725,7 +746,8 @@ struct seg *segp;
 			}
 		else
 		if ( bdist < 0.0 )
-			{ /* Interior burst point (i.e. case-fragment
+			{
+			 /* Interior burst point (i.e. case-fragment
 				munition with delayed fuzing): location is
 				the magnitude of bdist beyond the exit
 				point. */
@@ -772,7 +794,8 @@ struct partition *pp;
 struct xray *rayp;
 fastf_t normvec[3];
 char *purpose;
-	{	fastf_t f;
+	{
+		fastf_t f;
 		static int flipct = 0;
 		static int totalct = 0;
 		struct soltab *stp = pp->pt_inseg->seg_stp;
@@ -822,7 +845,8 @@ struct partition *pp;
 struct xray *rayp;
 fastf_t normvec[3];
 char *purpose;
-	{	fastf_t f;
+	{
+		fastf_t f;
 		static int flipct = 0;
 		static int totalct = 0;
 		struct soltab *stp = pp->pt_outseg->seg_stp;
@@ -878,7 +902,8 @@ f_ShotMiss( ap )
 register struct application *ap;
 	{
 	if ( groundburst )
-		{	fastf_t dist;
+		{
+			fastf_t dist;
 			fastf_t	hitpoint[3];
 		/* first find intersection of shot with ground plane */
 		if ( ap->a_ray.r_dir[Z] >= 0.0 )
@@ -904,13 +929,15 @@ register struct application *ap;
 				paintCellFb( ap, pixghit,
 					zoom == 1 ? pixblack : pixbkgr );
 			if ( bdist > 0.0 )
-				{ /* simulate standoff fuzing */
+				{
+				 /* simulate standoff fuzing */
 				VJOIN1( hitpoint, hitpoint, -bdist,
 					ap->a_ray.r_dir );
 				}
 			else
 			if ( bdist < 0.0 )
-				{ /* interior burst not implemented in ground */
+				{
+				 /* interior burst not implemented in ground */
 				brst_log( "User error: %s %s.\n",
 					"negative burst distance can not be",
 					"specified with ground plane bursting"
@@ -963,7 +990,8 @@ register struct application *ap;
 static int
 getRayOrigin( ap )
 register struct application	*ap;
-	{	register fastf_t	*vec = ap->a_uvec;
+	{
+		register fastf_t	*vec = ap->a_uvec;
 		fastf_t			gridyinc[3], gridxinc[3];
 		fastf_t			scalecx, scalecy;
 	if ( TSTBIT(firemode, FM_SHOT) )
@@ -980,7 +1008,8 @@ register struct application	*ap;
 		else	/* Single shot specified. */
 			CopyVec( vec, fire );
 		if ( TSTBIT(firemode, FM_3DIM) )
-			{	fastf_t	hitpoint[3];
+			{
+				fastf_t	hitpoint[3];
 			/* Project 3-d hit-point back into grid space. */
 			CopyVec( hitpoint, vec );
 			vec[X] = Dot( gridhor, hitpoint );
@@ -992,7 +1021,8 @@ register struct application	*ap;
 		scalecy = vec[Y];
 		}
 	else
-		{	fastf_t xoffset = 0.0;
+		{
+			fastf_t xoffset = 0.0;
 			fastf_t yoffset = 0.0;
 		ap->a_x = currshot % gridwidth + gridxorg;
 		ap->a_y = currshot / gridwidth + gridyorg;
@@ -1075,7 +1105,8 @@ gridInit()
 	gridRotate( viewazim, viewelev, 0.0, gridhor, gridver );
 
 	if ( yaw != 0.0 || pitch != 0.0 )
-		{	fastf_t	negsinyaw = -sin( yaw );
+		{
+			fastf_t	negsinyaw = -sin( yaw );
 			fastf_t	sinpitch = sin( pitch );
 			fastf_t	xdeltavec[3], ydeltavec[3];
 #if DEBUG_SHOT
@@ -1101,10 +1132,12 @@ gridInit()
 		border of grid, and grid indices at borders of grid.
 	 */
 	if ( ! TSTBIT(firemode, FM_PART) )
-		{	fastf_t modelmin[3];
+		{
+			fastf_t modelmin[3];
 			fastf_t modelmax[3];
 		if ( groundburst )
-			{ /* extend grid to include ground platform */
+			{
+			 /* extend grid to include ground platform */
 			modelmax[X] = Max( rtip->mdl_max[X], grndfr );
 			modelmin[X] = Min( rtip->mdl_min[X], -grndbk );
 			modelmax[Y] = Max( rtip->mdl_max[Y], grndlf );
@@ -1113,7 +1146,8 @@ gridInit()
 			modelmin[Z] = Min( rtip->mdl_min[Z], -grndht );
 			}
 		else
-			{ /* size grid by model RPP */
+			{
+			 /* size grid by model RPP */
 			CopyVec( modelmin, rtip->mdl_min );
 			CopyVec( modelmax, rtip->mdl_max );
 			}
@@ -1262,7 +1296,8 @@ gridModel()
 	ag.a_logoverlap = rt_silent_logoverlap;
 	ag.a_rt_i = rtip;
 	if ( ! TSTBIT(firemode, FM_BURST) )
-		{ /* set up for shotlines */
+		{
+		 /* set up for shotlines */
 		ag.a_hit = f_ShotHit;
 		ag.a_miss = f_ShotMiss;
 		}
@@ -1311,7 +1346,8 @@ endvu:	view_end();
  */
 static boolean
 gridShot()
-	{	boolean status = 1;
+	{
+		boolean status = 1;
 		struct application a;
 	a = ag;
 	a.a_resource = RESOURCE_NULL;
@@ -1370,7 +1406,8 @@ struct partition *pp;
 struct hit *hitp;
 struct xray *rayp;
 fastf_t surfnorm[3];
-	{	Colors  *colorp;
+	{
+		Colors  *colorp;
 		fastf_t intensity = -Dot( viewdir, surfnorm );
 	if ( intensity < 0.0 )
 		intensity = -intensity;
@@ -1429,7 +1466,8 @@ fastf_t	a, b;
 static int
 readBurst( vec )
 register fastf_t	*vec;
-	{	int	items;
+	{
+		int	items;
 	assert( burstfp != (FILE *) NULL );
 	/* read 3D firing coordinates from input stream */
 	if ( (items =
@@ -1473,7 +1511,8 @@ register fastf_t	*vec;
 	{
 	assert( shotfp != (FILE *) NULL );
 	if ( ! TSTBIT(firemode, FM_3DIM) ) /* absence of 3D flag means 2D */
-		{	int	items;
+		{
+			int	items;
 		/* read 2D firing coordinates from input stream */
 		if ( (items =
 #if SINGLE_PRECISION
@@ -1499,7 +1538,8 @@ register fastf_t	*vec;
 		}
 	else
 	if ( TSTBIT(firemode, FM_3DIM) ) /* 3D coordinates */
-		{	int	items;
+		{
+			int	items;
 		/* read 3D firing coordinates from input stream */
 		if ( (items =
 #if SINGLE_PRECISION
@@ -1539,7 +1579,8 @@ register fastf_t	*vec;
 	RETURN CODES: the nearest integer to f.
  */
 int roundToInt( fastf_t f )
-	{	register int a;
+	{
+		register int a;
 	a = f;
 	if ( f - a >= 0.5 )
 		return	a + 1;
@@ -1563,7 +1604,8 @@ int roundToInt( fastf_t f )
  */
 void
 spallInit()
-	{	fastf_t	theta;	 /* solid angle of spall sampling cone */
+	{
+		fastf_t	theta;	 /* solid angle of spall sampling cone */
 		fastf_t phi;	 /* angle between ray and cone axis */
 		fastf_t philast; /* guard against floating point error */
 		int spallct = 0; /* actual no. of sampling rays */
@@ -1587,7 +1629,8 @@ spallInit()
 		generated.
 	 */
 	for ( phi = 0.0; phi <= philast; phi += phiinc )
-		{	fastf_t	sinphi = sin( phi );
+		{
+			fastf_t	sinphi = sin( phi );
 			fastf_t	gamma, gammainc, gammalast;
 			int m;
 		sinphi = Abs( sinphi );
@@ -1658,7 +1701,8 @@ register fastf_t *bpt; /* burst point coordinates */
 
 static boolean
 burstRay()
-	{ /* Need local copy of all but readonly variables for concurrent
+	{
+	 /* Need local copy of all but readonly variables for concurrent
 		threads of execution. */
 		struct application	a_spall;
 		fastf_t			phi;
@@ -1666,7 +1710,8 @@ burstRay()
 	a_spall = a_burst;
 	a_spall.a_resource = RESOURCE_NULL;
 	for (; ! userinterrupt;)
-		{	fastf_t	sinphi;
+		{
+			fastf_t	sinphi;
 			fastf_t	gamma, gammainc, gammalast;
 			register int done;
 			int m;
@@ -1683,7 +1728,8 @@ burstRay()
 		gammainc = TWO_PI / m;
 		gammalast = TWO_PI - gammainc + EPSILON;
 		for ( gamma = 0.0; gamma <= gammalast; gamma += gammainc )
-			{	register int	ncrit;
+			{
+				register int	ncrit;
 			spallVec( a_burst.a_ray.r_dir, a_spall.a_ray.r_dir,
 				 phi, gamma );
 			plotRay( &a_spall.a_ray );
@@ -1724,7 +1770,8 @@ static void
 spallVec( dvec, s_rdir, phi, gamma )
 register fastf_t	*dvec, *s_rdir;
 fastf_t			phi, gamma;
-	{	fastf_t			cosphi = cos( phi );
+	{
+		fastf_t			cosphi = cos( phi );
 		fastf_t			singamma = sin( gamma );
 		fastf_t			cosgamma = cos( gamma );
 		fastf_t			csgaphi, ssgaphi;
@@ -1760,7 +1807,8 @@ static void
 consVector( vec, azim, elev )
 register fastf_t	*vec;
 fastf_t	azim, elev;
-	{ /* Store cosine of the elevation to save calculating twice. */
+	{
+	 /* Store cosine of the elevation to save calculating twice. */
 		fastf_t	cosE;
 	cosE = cos( elev );
 	vec[0] = cos( azim ) * cosE;
@@ -1786,7 +1834,8 @@ static fastf_t
 ipow( d, n )
 register fastf_t	d;
 register int	n;
-	{	register fastf_t	result = 1.0;
+	{
+		register fastf_t	result = 1.0;
 	if ( d == 0.0 )
 		return	0.0;
 	while ( n-- > 0 )

@@ -286,7 +286,8 @@ Expand( c )
 	{
 	if ( c < compress_code )	/* "atomic", i.e. raw color index */
 		PutPixel( k = c );	/* first atom in string */
-	else	{			/* "molecular"; follow chain */
+	else	{
+				/* "molecular"; follow chain */
 		Expand( table[c].pfx );
 		PutPixel( table[c].ext );
 		}
@@ -377,7 +378,8 @@ LZW(void)
 					c, next_code, c-next_code);
 
 			if ( c == next_code )
-				{	/* KwKwK special case */
+				{
+					/* KwKwK special case */
 				if ( w < 0 )	/* w supposedly previous code */
 					Fatal(fbp, "initial LZW KwKwK code??" );
 

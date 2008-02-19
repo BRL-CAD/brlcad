@@ -325,7 +325,8 @@ static long read_Cell_Data(void)
 	if (color_flag)
 	    bu_strlcat(format, " %d %d %d", sizeof(format));
 	else
-	{   /* Skip to field of interest */
+	{
+	   /* Skip to field of interest */
 	    for (i = 1; i < field; i++)
 		bu_strlcat(format, " %*lf", sizeof(format));
 	    bu_strlcat(format, " %lf", sizeof(format));

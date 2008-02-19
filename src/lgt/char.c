@@ -48,7 +48,8 @@ static void	do_char(int c, register int xpos, register int ypos);
 
 void
 do_line(int xpos, int ypos, register char *line)
-{	register int    currx;
+{
+	register int    currx;
 		register int    char_count, char_id;
 		register int	len = strlen( line );
 	if ( font.ffdes == NULL )
@@ -102,7 +103,8 @@ do_line(int xpos, int ypos, register char *line)
  */
 static void
 do_char(int c, register int xpos, register int ypos)
-{	int     	up = font.dir[c].up / ir_aperture;
+{
+	int     	up = font.dir[c].up / ir_aperture;
 		int		left = font.dir[c].left / ir_aperture;
 		static char	bitbuf[BUFFSIZ][BUFFSIZ];
 		static RGBpixel	pixel;
@@ -124,7 +126,8 @@ do_char(int c, register int xpos, register int ypos)
 		{
 		x = xpos - left;
 		for ( j = 0; j < font.width; j += ir_aperture, x++ )
-			{	register int	sum;
+			{
+				register int	sum;
 				fastf_t		weight;
 			/* The bitx routine extracts the bit value.
 				Can't just use the j-th bit because

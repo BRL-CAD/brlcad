@@ -198,12 +198,14 @@ bu_lex(
 		 *	dec   -- [0-9][0-9]*
 		 *	dbl   -- [0-9][0-9]*.[0-9]*{{E|e}{+|-}[0-9][0-9]*}
 		 */
-		if (*unit == '0') { 	/* any of the above */
+		if (*unit == '0') {
+  	/* any of the above */
 			/*
 			 * 	octal -- 0[0-7]*
 			 */
 			for (cp=unit; *cp && *cp>='0' && *cp <='7'; cp++);
-			if (!*cp) {	/* We have an octal value */
+			if (!*cp) {
+ 	/* We have an octal value */
 				token->type = BU_LEX_INT;
 				sscanf(unit, "%o", (unsigned int *)&token->t_int.value);
 				bu_free(unit, "unit token");
@@ -264,7 +266,8 @@ bu_lex(
 	 * We either have an identifier, keyword, or symbol.
 	 */
 	if (symbols) {
-		if (!*(unit+1) ) {	/* single character, good choice for a symbol. */
+		if (!*(unit+1) ) {
+ 	/* single character, good choice for a symbol. */
 			register struct bu_lex_key *sp;
 			for (sp=symbols;sp->tok_val;sp++) {
 				if (*sp->string == *unit) {

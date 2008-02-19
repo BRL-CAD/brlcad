@@ -60,7 +60,8 @@ struct _interior_line {
 #define CASE_B 		2
 #define CASE_C 		3
 
-int quad_table[16]  = {		/* A = 0, B = 2, C = 3 */
+int quad_table[16]  = {
+ 		/* A = 0, B = 2, C = 3 */
 0, 0, 0, 0, 0, 3, 0, 3, 0, 2, 3, 3, 0, 3, 3, 3
 };
 

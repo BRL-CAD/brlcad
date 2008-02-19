@@ -36,10 +36,12 @@ f2a(float f, char *s, int w, int d)
 			/* INPUT	===*/
 			/* OUTPUT	===*/
 			/* length	===*/
-{ int	c, i, j;
+{
+ int	c, i, j;
   long	n, sign;
 	if ( w <= d + 2 )
-	{	printf( "ftoascii: incorrect format  need w.df\n");
+	{
+		printf( "ftoascii: incorrect format  need w.df\n");
 		printf( "w must be at least 2 bigger then d.\n" );
 		printf( "w= %f\t d= %f\n", w, d );
 		printf( "STOP\n");
@@ -51,11 +53,13 @@ f2a(float f, char *s, int w, int d)
 	n = f;					/* truncate.*/
 	if ( (sign = n) < 0 )	n = -n;		/* get sign.*/
 	i = 0;			/* CONVERT to ASCII.*/
-	do {	s[i++] = n % 10 + '0';
+	do {
+ 	s[i++] = n % 10 + '0';
 		if ( i == d )	s[i++] = '.';
 	} while ( (n /= 10) > 0 );
 	if ( i < d )		/* zero fill the d field if (f < 1).*/
-	{	for ( j = i; j < d; j++ )	s[j] = '0';
+	{
+		for ( j = i; j < d; j++ )	s[j] = '0';
 		s[j++] = '.';
 		i = j;
 	}
@@ -67,7 +71,8 @@ f2a(float f, char *s, int w, int d)
 	for (	i = 0,	j = w - 1;		/* reverse the array.*/
 		i < j;
 		i++,	j-- )
-	{	c    = s[i];	s[i] = s[j];	s[j] =    c;	}
+	{
+		c    = s[i];	s[i] = s[j];	s[j] =    c;	}
 }
 
 /*

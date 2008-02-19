@@ -1341,7 +1341,8 @@ HIDDEN void genmap(unsigned char *rmap, unsigned char *gmap, unsigned char *bmap
 		rmap[b] = gmap[b] = 0;
 	}
 
-	for (r=246; r < 256; ++r) {		/* grey */
+	for (r=246; r < 256; ++r) {
+ 		/* grey */
 		rmap[r] = gmap[r] =
 		bmap[r] = primary[r-246];
 	}

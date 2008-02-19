@@ -304,7 +304,8 @@ bu_structparse_argv(Tcl_Interp			*interp,
 				register short *sh = (short *)loc;
 				register int tmpi;
 
-				if ( argc < 1 ) { /* XXX - when was ii defined */
+				if ( argc < 1 ) {
+  /* XXX - when was ii defined */
 					bu_vls_trunc( &str, 0 );
 					bu_vls_printf( &str,
       "not enough values for \"%s\" argument: should have %ld",
@@ -387,7 +388,8 @@ bu_structparse_argv(Tcl_Interp			*interp,
 				register int *ip = (int *)loc;
 				register int tmpi;
 
-				if ( argc < 1 ) { /* XXX - when was ii defined */
+				if ( argc < 1 ) {
+  /* XXX - when was ii defined */
 					bu_vls_trunc( &str, 0 );
 					bu_vls_printf( &str,
       "not enough values for \"%s\" argument: should have %ld",

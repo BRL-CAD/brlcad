@@ -71,7 +71,8 @@ getCommand( char *name, char *buf, int len, FILE *fp )
 			continue;
 		}
 	    else
-		{ /* Generate comment command. */
+		{
+		 /* Generate comment command. */
 		    bu_strlcpy( name, CMD_COMMENT, LNBUFSZ );
 		    return	1;
 		}
@@ -122,7 +123,8 @@ setupSigs( void )
 */
 static int
 parsArgv( int argc, char **argv )
-{	register int c;
+{
+	register int c;
 /* Parse options.						*/
  while ( (c = bu_getopt( argc, argv, "b" )) != EOF )
      {
@@ -149,9 +151,11 @@ readBatchInput( FILE *fp )
     assert( fp != (FILE *) NULL );
     batchmode = 1;
     while ( getCommand( cmdname, cmdbuf, LNBUFSZ, fp ) )
-	{	Func	*cmdfunc;
+	{
+		Func	*cmdfunc;
 	if ( (cmdfunc = getTrie( cmdname, cmdtrie )) == NULL )
-	    {	register int i, len = strlen( cmdname );
+	    {
+	    	register int i, len = strlen( cmdname );
 	    brst_log( "ERROR -- command syntax:\n" );
 	    brst_log( "\t%s\n", cmdbuf );
 	    brst_log( "\t" );
@@ -161,13 +165,15 @@ readBatchInput( FILE *fp )
 	    }
 	else
 	    if ( strcmp( cmdname, CMD_COMMENT ) == 0 )
-		{ /* special handling for comments */
+		{
+		 /* special handling for comments */
 		    cmdptr = cmdbuf;
 		    cmdbuf[strlen(cmdbuf)-1] = '\0'; /* clobber newline */
 		    (*cmdfunc)( (HmItem *) 0 );
 		}
 	    else
-		{ /* Advance pointer past nul at end of
+		{
+		 /* Advance pointer past nul at end of
 		     command name. */
 		    cmdptr = cmdbuf + strlen( cmdname ) + 1;
 		    (*cmdfunc)( (HmItem *) 0 );

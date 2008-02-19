@@ -96,14 +96,16 @@ boolean
 readIdents( idlist, fp )
 Ids *idlist;
 FILE *fp;
-	{	char input_buf[BUFSIZ];
+	{
+		char input_buf[BUFSIZ];
 		int lower, upper;
 		register Ids *idp;
 	freeIdents( idlist ); /* free old list if it exists */
 	for (	idp = idlist;
 		bu_fgets( input_buf, BUFSIZ, fp ) != NULL;
 		)
-		{	char *token;
+		{
+			char *token;
 		token = strtok( input_buf, ",-:; \t" );
 		if ( token == NULL || sscanf( token, "%d", &lower ) < 1 )
 			continue;
@@ -127,14 +129,16 @@ boolean
 readColors( colorlist, fp )
 Colors	*colorlist;
 FILE	*fp;
-	{	char input_buf[BUFSIZ];
+	{
+		char input_buf[BUFSIZ];
 		int lower, upper;
 		int rgb[3];
 		register Colors	*colp;
 	for (	colp = colorlist;
 		bu_fgets( input_buf, BUFSIZ, fp ) != NULL;
 		)
-		{	int items;
+		{
+			int items;
 		if ( (items =
 			sscanf(	input_buf,
 				"%d %d %d %d %d\n",

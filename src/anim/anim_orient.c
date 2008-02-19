@@ -146,7 +146,8 @@ main(int argc, char **argv)
 	}
 	/* end of input conversion, begin output conversion*/
 
-	if (upright) { /* force right-side up */
+	if (upright) {
+  /* force right-side up */
 	    VSET(temp, matrix[0], matrix[4], matrix[8]);
 	    VSET(temp2, matrix[1], matrix[5], matrix[9]);
 	    anim_dirn2mat(matrix, temp, temp2);
@@ -215,7 +216,8 @@ int parse_args(int argc, char **argv)
     output_inv = 0;
     length = 4;
 
-    if (argc > 2) { /*read output mode */
+    if (argc > 2) {
+  /*read output mode */
 	cp = argv[2];
 	while ( (c=*cp++) ) {
 	    switch (c) {
@@ -252,7 +254,8 @@ int parse_args(int argc, char **argv)
 	    }
 	}
     }
-    if (argc > 1) { /*read input mode */
+    if (argc > 1) {
+  /*read input mode */
 	cp = argv[1];
 	while ( (c=*cp++) ) {
 	    switch (c) {

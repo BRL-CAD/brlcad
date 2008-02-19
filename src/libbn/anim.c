@@ -207,7 +207,8 @@ int anim_mat2zyx(const mat_t viewrot, vect_t angle)
 	id_x  = (fabs(sin_x) > fabs(cos_x)) ? 1 : 0;
 	big_x = id_x ? sin_x : cos_x;
 
-	if (fabs(big_x*big_z) < VDIVIDE_TOL) { /* this should be impossible*/
+	if (fabs(big_x*big_z) < VDIVIDE_TOL) {
+  /* this should be impossible*/
 		/* unable to calculate pitch*/
 		return(ERROR2);
 	}
@@ -276,7 +277,8 @@ int anim_mat2ypr(mat_t viewrot, vect_t angle)
 	id_r  = (fabs(sin_r) > fabs(cos_r)) ? 1 : 0;
 	big_r = id_r ? sin_r : cos_r;
 
-	if (fabs(big_y*big_r) < VDIVIDE_TOL) { /* this should not happen */
+	if (fabs(big_y*big_r) < VDIVIDE_TOL) {
+  /* this should not happen */
 		/* unable to calculate pitch*/
 		return(ERROR2);
 	}
@@ -745,10 +747,12 @@ void anim_dir2mat(mat_t m, const vect_t d, const vect_t d2b)
 	VMOVE( d2, d2b );
 	sign = 1.0;
 	hypotenuse = sqrt(d[0]*d[0]+d[1]*d[1]);
-	if (hypotenuse < VDIVIDE_TOL) { /* vertical direction - use d2 to
+	if (hypotenuse < VDIVIDE_TOL) {
+  /* vertical direction - use d2 to
 					* determine roll */
 		hypotenuse = sqrt(d2[0]*d2[0]+d2[1]*d2[1]);
-		if (hypotenuse < VDIVIDE_TOL) { /* use x-axis as default*/
+		if (hypotenuse < VDIVIDE_TOL) {
+  /* use x-axis as default*/
 			VSET(d2, 1, 0, 0);
 			hypotenuse = 1;
 		}
@@ -761,7 +765,8 @@ void anim_dir2mat(mat_t m, const vect_t d, const vect_t d2b)
 		m[8] = sign;
 		m[0]=m[4]=m[9]=m[10]=0.0;
 	}
-	else { /* normal - no roll*/
+	else {
+  /* normal - no roll*/
 		m[0] = d[0];
 		m[1] = -d[1]/hypotenuse;
 		m[2] = -d[0]*d[2]/hypotenuse;
@@ -805,7 +810,8 @@ void anim_dirn2mat(mat_t m, const vect_t dx2, const vect_t dn)
 	dx[1] *= inv;
 	dx[2] *= inv;
 	hyp = sqrt(dx[0]*dx[0]+dx[1]*dx[1]);
-	if (hyp < VDIVIDE_TOL) { /* vertical - special handling */
+	if (hyp < VDIVIDE_TOL) {
+  /* vertical - special handling */
 		sign = (dx[2] < 0) ? -1.0 : 1.0;
 		VSET(temp, dn[0], dn[1], 0.0);
 		mag = MAGNITUDE(temp);

@@ -51,7 +51,8 @@
  */
 void
 grid_Rotate(fastf_t azim, fastf_t elev, fastf_t roll, register fastf_t *des_H, register fastf_t *des_V)
-{	fastf_t	sn_azm = sin( azim );
+{
+	fastf_t	sn_azm = sin( azim );
 		fastf_t	cs_azm = cos( azim );
 		fastf_t	sn_elv = sin( elev );
 	des_H[0] = -sn_azm;
@@ -62,7 +63,8 @@ grid_Rotate(fastf_t azim, fastf_t elev, fastf_t roll, register fastf_t *des_H, r
 	des_V[2] =  cos( elev );
 
 	if ( !NEAR_ZERO(roll, 0.0) )
-		{	fastf_t	tmp_V[3], tmp_H[3], prime_V[3];
+		{
+			fastf_t	tmp_V[3], tmp_H[3], prime_V[3];
 			fastf_t	sn_roll = sin( roll );
 			fastf_t	cs_roll = cos( roll );
 		Scale2Vec( des_V, cs_roll, tmp_V );

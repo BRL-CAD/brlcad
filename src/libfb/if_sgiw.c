@@ -218,7 +218,8 @@ sgw_dopen( ifp, file, width, height )
 FBIO	*ifp;
 char	*file;
 int	width, height;
-{	register Colorindex i;
+{
+	register Colorindex i;
 
 	if ( file != NULL )  {
 		register char *cp;
@@ -333,25 +334,29 @@ FBIO	*ifp;
 register int	x, y;
 register RGBpixel	*pixelp;
 int	count;
-{	register union gepipe *hole = GEPIPE;
+{
+	register union gepipe *hole = GEPIPE;
 	short scan_count;
 	Colorindex colors[1025];
 	register int i;
 
 	x *= xzoom;
 	while ( count > 0 )
-		{	register short	ypos = y*yzoom;
+		{
+			register short	ypos = y*yzoom;
 		if ( count >= ifp->if_width )
 			scan_count = ifp->if_width;
 		else
 			scan_count = count;
 		if ( (xzoom == 1 && yzoom == 1) || special_zoom )
-			{ /* No pixel replication, so read scan of pixels. */
+			{
+			 /* No pixel replication, so read scan of pixels. */
 			CMOV2S( hole, x, ypos );
 			readpixels( scan_count, colors );
 			}
 		else
-			{ /* We are sampling from rectangles
+			{
+			 /* We are sampling from rectangles
 				(replicated pixels). */
 			for ( i = 0; i < scan_count; i++ )
 				{
@@ -395,23 +400,27 @@ FBIO	*ifp;
 register int	x, y;
 register RGBpixel	*pixelp;
 int	count;
-	{	register union gepipe *hole = GEPIPE;
+	{
+		register union gepipe *hole = GEPIPE;
 		short scan_count;
 		register int i;
 
 	writemask( 0x3FF );
 	x *= xzoom;
 	while ( count > 0 )
-		{	register short	ypos = y*yzoom;
+		{
+			register short	ypos = y*yzoom;
 		if ( count >= ifp->if_width )
 			scan_count = ifp->if_width;
 		else
 			scan_count = count;
 		if ( (xzoom == 1 && yzoom == 1) || special_zoom )
-			{	register Colorindex	colori;
+			{
+				register Colorindex	colori;
 			CMOV2S( hole, x, ypos );
 			for ( i = scan_count; i > 0; )
-				{	register int	chunk;
+				{
+					register int	chunk;
 				if ( i <= 127 )
 					chunk = i;
 				else
@@ -437,7 +446,8 @@ int	count;
 			}
 		else
 			for ( i = 0; i < scan_count; i++, pixelp++ )
-				{	register Colorindex	col;
+				{
+					register Colorindex	col;
 					register Coord	r = x + xzoom - 1,
 							t = ypos + yzoom - 1;
 				CMOV2S( hole, x, ypos );
@@ -546,7 +556,8 @@ FBIO	*ifp;
 unsigned char	*bits;
 int		xbits, ybits;
 int		xorig, yorig;
-	{	register int	y;
+	{
+		register int	y;
 		register int	xbytes;
 		Cursor		newcursor;
 	/* Check size of cursor.					*/
@@ -576,7 +587,8 @@ sgw_cmemory_addr( ifp, mode, x, y )
 FBIO	*ifp;
 int	mode;
 int	x, y;
-	{	static Colorindex	cursor_color = YELLOW;
+	{
+		static Colorindex	cursor_color = YELLOW;
 			/* Color and bitmask ignored under MEX.	*/
 	if ( ! mode )
 		{
