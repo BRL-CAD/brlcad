@@ -1,9 +1,9 @@
 
 /* pngrutil.c - utilities to read a PNG file
  *
- * Last changed in libpng 1.2.23 [November 6, 2007]
+ * Last changed in libpng 1.2.25 [February 18, 2008]
  * For conditions of distribution and use, see copyright notice in png.h
- * Copyright (c) 1998-2007 Glenn Randers-Pehrson
+ * Copyright (c) 1998-2008 Glenn Randers-Pehrson
  * (Version 0.96 Copyright (c) 1996, 1997 Andreas Dilger)
  * (Version 0.88 Copyright (c) 1995, 1996 Guy Eric Schalnat, Group 42, Inc.)
  *
@@ -230,7 +230,7 @@ png_decompress_chunk(png_structp png_ptr, int comp_type,
             text_size = (png_size_t)(chunklength - (text - chunkdata) - 1);
             text_size = png_sizeof(msg) > text_size ? text_size :
                png_sizeof(msg);
-            png_memcpy(text + prefix_size, msg, text_size + 1);
+            png_memcpy(text + prefix_size, msg, text_size);
             break;
          }
          if (!png_ptr->zstream.avail_out || ret == Z_STREAM_END)
@@ -1393,7 +1393,7 @@ png_handle_bKGD(png_structp png_ptr, png_infop info_ptr, png_uint_32 length)
    if (png_ptr->color_type == PNG_COLOR_TYPE_PALETTE)
    {
       png_ptr->background.index = buf[0];
-      if(info_ptr->num_palette)
+      if (info_ptr && info_ptr->num_palette)
       {
           if(buf[0] > info_ptr->num_palette)
           {
@@ -1792,7 +1792,7 @@ png_handle_sCAL(png_structp png_ptr, png_infop info_ptr, png_uint_32 length)
 #else
 #ifdef PNG_FIXED_POINT_SUPPORTED
    sheight = (png_charp)png_malloc_warn(png_ptr, png_strlen(ep) + 1);
-   if (swidth == NULL)
+   if (sheight == NULL)
      {
        png_warning(png_ptr, "Out of memory while processing sCAL chunk height");
        return;
@@ -2249,9 +2249,9 @@ png_handle_unknown(png_structp png_ptr, png_infop info_ptr, png_uint_32 length)
                &png_ptr->unknown_chunk, 1);
           }
        }
-#else
-       png_set_unknown_chunks(png_ptr, info_ptr, &png_ptr->unknown_chunk, 1);
+       else
 #endif
+         png_set_unknown_chunks(png_ptr, info_ptr, &png_ptr->unknown_chunk, 1);
        png_free(png_ptr, png_ptr->unknown_chunk.data);
        png_ptr->unknown_chunk.data = NULL;
    }
