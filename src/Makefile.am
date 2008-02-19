@@ -60,6 +60,7 @@ kitchensink_dirs = \
 	bwish \
 	canon \
 	fb \
+	vfont \
 	fbed \
 	gtools \
 	halftone \
@@ -77,8 +78,7 @@ kitchensink_dirs = \
 	tclscripts \
 	util \
 	vas4 \
-	vdeck \
-	vfont
+	vdeck
 
 #######################
 # put it all together #
