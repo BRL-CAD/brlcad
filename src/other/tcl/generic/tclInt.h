@@ -93,7 +93,9 @@ typedef int ptrdiff_t;
 #endif
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
-#  define inline
+#  if !defined(__cplusplus) && !defined(inline)
+#    define inline __inline
+#  endif
 #endif
 
 /*
