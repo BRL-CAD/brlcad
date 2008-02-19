@@ -13,4 +13,6 @@ font_DATA = \
 
 EXTRA_DIST = $(font_DATA)
 
+AM_CPPFLAGS = ${TCL_CPPFLAGS}
+
 include $(top_srcdir)/misc/Makefile.defs
