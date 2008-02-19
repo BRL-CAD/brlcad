@@ -474,11 +474,10 @@ interfaces.  The following functions should be used:
 
 The code should strive to achieve conformance with the GNU coding
 standard with a few exceptions.  One such exception is NOT utilizing
-the GNU indentation style, but instead utilizing the K&R indentation
-style (also commonly recognized as the primary Java coding style as
-published by Sun) is utilized for brace placement indentation, and
-most code formatting convention.  The following examples should be
-strictly adhered to, if only for the sake of being consistent.
+the GNU indentation style, but instead utilizing the BSD KNF
+indentation style which is basically the K&R indentation style with 4
+character indents.  The following examples should be strictly adhered
+to, if only for the sake of being consistent.
 
 1) Whitespace
 
@@ -502,32 +501,42 @@ A similar block can be used on source and script files in other
 languages (such as Tcl, Shell, Perl, etc).  See the local variable
 footer script in sh/footer.sh to automatically set/update files.
 
-Space around operators and before multiple statements.
-  a = (b + c) * d;  /* ok */
-  b = 2; c = 3;     /* ok */
+Space around operators and between multiple statements.
+  a = (b + c) * d;                  /* ok */
+  b = 2; c = 3;                     /* ok */
 
 No space immediately inside parentheses.
-  while (1) { ...   /* ok */
+  while (1) { ...                   /* ok */
   for (i = 0; i < max; i++) { ...   /* ok */
-  while ( max ) { ... /* discouraged */
+  while ( max ) { ...               /* discouraged */
 
 Commas and semicolons are followed by whitespace.
   int main(int argc, char *argv[]); /* ok */
   for (i = 0; i < max; i++) { ...   /* ok */
 
+Native language statements (if, while, for, switch, and return)
+have a separating space, functions do not.
+  int my_function(int i) { ...      /* ok, no space */
+  while (argc--) ...                /* ok, has space */
+  if( var == val )                  /* discouraged */
+
 2) Braces
 
-Opening braces should be on the same line as their statement, close
-braces should line up with that same statement.  This is intently not
-the GNU or BSD indent style, but rather the K&R style (see
-http://en.wikipedia.org/wiki/Indent_style for details).
+BRL-CAD uses the "The One True Brace Style" from BSD KNF and K&R.
+Opening braces should be on the same line as their statement, closing
+braces should line up with that same statement.  Functions, however,
+are treated special and place the opening brace on a separate line.
+See http://en.wikipedia.org/wiki/Indent_style for details.
 
-  for (i = 0; i < 100; i++) {
-    if (i % 10 == 0) {
-      j += 1;
-    } else {
-      j -= 1;
-    }
+  int some_function(char *j)
+  {
+      for (i = 0; i < 100; i++) {
+          if (i % 10 == 0) {
+              j += 1;
+          } else {
+              j -= 1;
+          }
+      }
   }
 
 3) Names
