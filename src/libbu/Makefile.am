@@ -110,7 +110,7 @@ else
 PNGDEP =
 endif
 
-DEPENDS = $(TCLDEP) $(PNGDEP)
+DEPENDS = include $(TCLDEP) $(PNGDEP)
 
 include $(top_srcdir)/misc/Makefile.defs
 

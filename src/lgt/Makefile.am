@@ -48,6 +48,8 @@ lgt_CFLAGS = -DBEHIND_ME_TOL=0.05
 
 dist_man_MANS = lgt.1
 
+DEPENDS = src/librt src/libfb src/vfont
+
 include $(top_srcdir)/misc/Makefile.defs
 
 FAST_OBJECTS = \

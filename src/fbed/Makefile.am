@@ -43,6 +43,8 @@ EXTRA_DIST = \
 	$(man_MANS) \
 	font.doc
 
+DEPENDS = src/vfont
+
 include $(top_srcdir)/misc/Makefile.defs
 
 FAST_OBJECTS = \
