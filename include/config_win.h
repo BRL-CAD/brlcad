@@ -34,7 +34,6 @@
 
 #define __STDC__ 1
 #define USE_PROTOTYPES 1
-#define inline
 
 /* XXX - should not rely on config_win.h providing these headers. */
 #include <windows.h>
@@ -291,6 +290,9 @@ typedef unsigned short uint16_t;
             return (_value1 < _value2 ? _value2 : _value1);
         }
 #   endif
+#else
+/*  ignore C99 inline specifier */
+#   define inline
 #endif /* __cplusplus */
 
 #endif /* if defined(_WIN32) */
