@@ -204,8 +204,8 @@ puts "copy [file join $rootDir README] [file join $shareDir]"
 file copy [file join $rootDir README] [file join $shareDir]
 puts "copy [file join $rootDir misc fortran_example.f] [file join $shareDir sample_applications]"
 file copy [file join $rootDir misc fortran_example.f] [file join $shareDir sample_applications]
-puts "copy [file join $rootDir misc vfont] [file join $shareDir]"
-file copy [file join $rootDir misc vfont] [file join $shareDir]
+puts "copy [file join $rootDir src vfont] [file join $shareDir]"
+file copy [file join $rootDir src vfont] [file join $shareDir]
 puts "copy [file join $rootDir src tclscripts] [file join $shareDir]"
 file copy [file join $rootDir src tclscripts] [file join $shareDir]
 puts "copy [file join $rootDir src archer plugins utility.tcl] [file join $shareDir plugins archer]"
