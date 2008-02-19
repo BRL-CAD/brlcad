@@ -23,13 +23,6 @@
  *
  * XXX Move to db_tree.c when complete.
  *
- *  Authors -
- *	John R. Anderson
- *	Michael John Muuss
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 /** @} */
 
