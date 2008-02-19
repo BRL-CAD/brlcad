@@ -44,6 +44,12 @@
 
 #include "common.h"
 
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#  if !defined(__cplusplus) && !defined(inline)
+#    define inline __inline
+#  endif
+#endif
+
 __BEGIN_DECLS
 
 /* system interface headers */
@@ -939,11 +945,7 @@ struct bu_bitv {
  * length sizeof(bitv_t)*8.0 bits long.  users should not call this
  * directly, instead calling the BU_BITV_SHIFT macro instead.
  */
-#if defined(_WIN32) && !defined(__CYGWIN__)
-BU_EXPORT BU_EXTERN(int bu_bitv_shift, ());
-#else
 BU_EXPORT BU_EXTERN(inline int bu_bitv_shift, ());
-#endif
 
 /** Bit vector index size */
 #define BU_BITV_SHIFT bu_bitv_shift()
