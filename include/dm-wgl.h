@@ -39,32 +39,32 @@
 #define Wgl_MV_O(_m) offsetof(struct modifiable_wgl_vars, _m)
 
 struct modifiable_wgl_vars {
-  int cueing_on;
-  int zclipping_on;
-  int zbuffer_on;
-  int lighting_on;
-  int transparency_on;
-  int fastfog;
-  double fogdensity;
-  int zbuf;
-  int rgb;
-  int doublebuffer;
-  int depth;
-  int debug;
-  double bound;
-  int boundFlag;
+    int cueing_on;
+    int zclipping_on;
+    int zbuffer_on;
+    int lighting_on;
+    int transparency_on;
+    int fastfog;
+    double fogdensity;
+    int zbuf;
+    int rgb;
+    int doublebuffer;
+    int depth;
+    int debug;
+    double bound;
+    int boundFlag;
 };
 
 struct wgl_vars {
-  HGLRC glxc;
-  GLdouble faceplate_mat[16];
-  int face_flag;
-  int *perspective_mode;
-  int fontOffset;
-  int ovec;		/* Old color map entry number */
-  char is_direct;
-  GLclampf r, g, b;
-  struct modifiable_wgl_vars mvars;
+    HGLRC glxc;
+    GLdouble faceplate_mat[16];
+    int face_flag;
+    int *perspective_mode;
+    int fontOffset;
+    int ovec;		/* Old color map entry number */
+    char is_direct;
+    GLclampf r, g, b;
+    struct modifiable_wgl_vars mvars;
 };
 
 extern void wgl_fogHint();

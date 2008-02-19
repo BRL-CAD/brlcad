@@ -15,7 +15,7 @@ __BEGIN_DECLS
  * Signature: ([Ljava/lang/String;)I
  */
 JNIEXPORT jint JNICALL Java_mil_army_arl_services_RtService_rtsInit
-  (JNIEnv *, jobject, jobjectArray);
+(JNIEnv *, jobject, jobjectArray);
 
 /*
  * Class:     mil_army_arl_services_RtService
@@ -23,7 +23,7 @@ JNIEXPORT jint JNICALL Java_mil_army_arl_services_RtService_rtsInit
  * Signature: ()Ljava/lang/String;
  */
 JNIEXPORT jstring JNICALL Java_mil_army_arl_services_RtService_getDbTitle
-  (JNIEnv *, jobject);
+(JNIEnv *, jobject);
 
 /*
  * Class:     mil_army_arl_services_RtService
@@ -31,7 +31,7 @@ JNIEXPORT jstring JNICALL Java_mil_army_arl_services_RtService_getDbTitle
  * Signature: ()Ljava/lang/String;
  */
 JNIEXPORT jstring JNICALL Java_mil_army_arl_services_RtService_getLibraryVersion
-  (JNIEnv *, jclass);
+(JNIEnv *, jclass);
 
 /*
  * Class:     mil_army_arl_services_RtService
@@ -39,7 +39,7 @@ JNIEXPORT jstring JNICALL Java_mil_army_arl_services_RtService_getLibraryVersion
  * Signature: ()I
  */
 JNIEXPORT jint JNICALL Java_mil_army_arl_services_RtService_openSession
-  (JNIEnv *, jobject);
+(JNIEnv *, jobject);
 
 /*
  * Class:     mil_army_arl_services_RtService
@@ -47,7 +47,7 @@ JNIEXPORT jint JNICALL Java_mil_army_arl_services_RtService_openSession
  * Signature: (I)V
  */
 JNIEXPORT void JNICALL Java_mil_army_arl_services_RtService_closeSession
-  (JNIEnv *, jobject, jint);
+(JNIEnv *, jobject, jint);
 
 /*
  * Class:     mil_army_arl_services_RtService
@@ -55,7 +55,7 @@ JNIEXPORT void JNICALL Java_mil_army_arl_services_RtService_closeSession
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_mil_army_arl_services_RtService_shutdownNative
-  (JNIEnv *, jobject);
+(JNIEnv *, jobject);
 
 /*
  * Class:     mil_army_arl_services_RtService
@@ -63,7 +63,7 @@ JNIEXPORT void JNICALL Java_mil_army_arl_services_RtService_shutdownNative
  * Signature: (Lmil/army/arl/muves/math/Point;Lmil/army/arl/muves/math/Vector3;I)Lmil/army/arl/muves/rtserver/RayResult;
  */
 JNIEXPORT jobject JNICALL Java_mil_army_arl_services_RtService_shootRay
-  (JNIEnv *, jobject, jobject, jobject, jint);
+(JNIEnv *, jobject, jobject, jobject, jint);
 
 /*
  * Class:     mil_army_arl_services_RtService
@@ -71,7 +71,7 @@ JNIEXPORT jobject JNICALL Java_mil_army_arl_services_RtService_shootRay
  * Signature: (Lmil/army/arl/muves/math/Point;Lmil/army/arl/muves/math/Vector3;Lmil/army/arl/muves/math/Vector3;Lmil/army/arl/muves/math/Vector3;IIII)[Lmil/army/arl/muves/rtserver/RayResult;
  */
 JNIEXPORT jobjectArray JNICALL Java_mil_army_arl_services_RtService_shootArray
-  (JNIEnv *, jobject, jobject, jobject, jobject, jobject, jint, jint, jint, jint);
+(JNIEnv *, jobject, jobject, jobject, jobject, jobject, jint, jint, jint, jint);
 
 /*
  * Class:     mil_army_arl_services_RtService
@@ -79,7 +79,7 @@ JNIEXPORT jobjectArray JNICALL Java_mil_army_arl_services_RtService_shootArray
  * Signature: (I)Lmil/army/arl/muves/rtserver/ItemTree;
  */
 JNIEXPORT jobject JNICALL Java_mil_army_arl_services_RtService_getItemTree
-  (JNIEnv *, jobject, jint);
+(JNIEnv *, jobject, jint);
 
 /*
  * Class:     mil_army_arl_services_RtService
@@ -87,7 +87,7 @@ JNIEXPORT jobject JNICALL Java_mil_army_arl_services_RtService_getItemTree
  * Signature: (I)Lmil/army/arl/muves/math/BoundingBox;
  */
 JNIEXPORT jobject JNICALL Java_mil_army_arl_services_RtService_getBoundingBox
-  (JNIEnv *, jobject, jint);
+(JNIEnv *, jobject, jint);
 
 __END_DECLS
 

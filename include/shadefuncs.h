@@ -44,15 +44,15 @@
  *  The interface to the various material property & texture routines.
  */
 struct mfuncs {
-	unsigned long	mf_magic;	/**< @brief  To validate structure */
-	char		*mf_name;	/**< @brief  Keyword for material */
-	struct mfuncs	*mf_forw;	/**< @brief  Forward link */
-	int		mf_inputs;	/**< @brief  shadework inputs needed */
-	int		mf_flags;	/**< @brief  Flags describing shader */
-	int		(*mf_setup)();	/**< @brief  Routine for preparing */
-	int		(*mf_render)();	/**< @brief  Routine for rendering */
-	void		(*mf_print)();	/**< @brief  Routine for printing */
-	void		(*mf_free)();	/**< @brief  Routine for releasing storage */
+    unsigned long	mf_magic;	/**< @brief  To validate structure */
+    char		*mf_name;	/**< @brief  Keyword for material */
+    struct mfuncs	*mf_forw;	/**< @brief  Forward link */
+    int		mf_inputs;	/**< @brief  shadework inputs needed */
+    int		mf_flags;	/**< @brief  Flags describing shader */
+    int		(*mf_setup)();	/**< @brief  Routine for preparing */
+    int		(*mf_render)();	/**< @brief  Routine for rendering */
+    void		(*mf_print)();	/**< @brief  Routine for printing */
+    void		(*mf_free)();	/**< @brief  Routine for releasing storage */
 };
 #define MF_MAGIC	0x55968058
 #define MF_NULL		((struct mfuncs *)0)

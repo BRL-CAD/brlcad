@@ -35,18 +35,18 @@
 #define PLOT_TO_GED(x)	(x)
 
 struct plot_vars {
-  struct bu_list l;
-  FILE *up_fp;
-  char ttybuf[BUFSIZ];
-  int floating;
-  int zclip;
-  int grid;
-  int is_3D;
-  int is_pipe;
-  int debug;
-  vect_t clipmin;
-  vect_t clipmax;
-  struct bu_vls vls;
+    struct bu_list l;
+    FILE *up_fp;
+    char ttybuf[BUFSIZ];
+    int floating;
+    int zclip;
+    int grid;
+    int is_3D;
+    int is_pipe;
+    int debug;
+    vect_t clipmin;
+    vect_t clipmax;
+    struct bu_vls vls;
 };
 
 extern struct plot_vars head_plot_vars;

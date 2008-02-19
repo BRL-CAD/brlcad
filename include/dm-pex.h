@@ -41,34 +41,34 @@
 
 struct modifiable_pex_vars {
 #if TRY_DEPTHCUE
-  int cue;
+    int cue;
 #endif
-  int perspective_mode;
-  int dummy_perspective;
+    int perspective_mode;
+    int dummy_perspective;
 };
 
 struct pex_vars {
-  struct bu_list l;
-  Display *dpy;
-  Window win;
-  Tk_Window xtkwin;
-  int width;
-  int height;
-  int omx, omy;
-  unsigned int mb_mask;
-  int perspective_angle;
-  XFontStruct *fontstruct;
-  GC gc;
+    struct bu_list l;
+    Display *dpy;
+    Window win;
+    Tk_Window xtkwin;
+    int width;
+    int height;
+    int omx, omy;
+    unsigned int mb_mask;
+    int perspective_angle;
+    XFontStruct *fontstruct;
+    GC gc;
 #ifdef DOUBLE_BUFFERING_WITH_PIXMAPS
-  Pixmap pix;
-  int pix_width, pix_height;
+    Pixmap pix;
+    int pix_width, pix_height;
 #endif
-  PEXRenderer renderer;
-  PEXRendererAttributes rattrs;
-  int is_monochrome;
-  unsigned long black, gray, white, yellow, red, blue;
-  unsigned long bd, bg, fg;   /* color of border, background, foreground */
-  struct modifiable_pex_vars mvars;
+    PEXRenderer renderer;
+    PEXRendererAttributes rattrs;
+    int is_monochrome;
+    unsigned long black, gray, white, yellow, red, blue;
+    unsigned long bd, bg, fg;   /* color of border, background, foreground */
+    struct modifiable_pex_vars mvars;
 };
 
 extern void Pex_configure_window_shape();

@@ -32,36 +32,36 @@
 #define Glx_MV_O(_m) offsetof(struct modifiable_glx_vars, _m)
 
 struct modifiable_glx_vars {
-  int cueing_on;
-  int zclipping_on;
-  int zbuffer_on;
-  int lighting_on;
-  int debug;
-  int zbuf;
-  int rgb;
-  int doublebuffer;
-  int min_scr_z;       /* based on getgdesc(GD_ZMIN) */
-  int max_scr_z;       /* based on getgdesc(GD_ZMAX) */
+    int cueing_on;
+    int zclipping_on;
+    int zbuffer_on;
+    int lighting_on;
+    int debug;
+    int zbuf;
+    int rgb;
+    int doublebuffer;
+    int min_scr_z;       /* based on getgdesc(GD_ZMIN) */
+    int max_scr_z;       /* based on getgdesc(GD_ZMAX) */
 };
 
 struct glx_vars {
-  struct bu_list l;
-  Display *dpy;
-  Window win;
-  Tk_Window top;
-  Tk_Window xtkwin;
-  int depth;
-  int omx, omy;
-  unsigned int mb_mask;
-  Colormap cmap;
-  XVisualInfo *vip;
-  int devmotionnotify;
-  int devbuttonpress;
-  int devbuttonrelease;
-  int knobs[8];
-  int stereo_is_on;
-  int is_gt;
-  struct modifiable_glx_vars mvars;
+    struct bu_list l;
+    Display *dpy;
+    Window win;
+    Tk_Window top;
+    Tk_Window xtkwin;
+    int depth;
+    int omx, omy;
+    unsigned int mb_mask;
+    Colormap cmap;
+    XVisualInfo *vip;
+    int devmotionnotify;
+    int devbuttonpress;
+    int devbuttonrelease;
+    int knobs[8];
+    int stereo_is_on;
+    int is_gt;
+    struct modifiable_glx_vars mvars;
 };
 
 extern void glx_clearToBlack();

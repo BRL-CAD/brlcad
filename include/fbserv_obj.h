@@ -54,12 +54,12 @@ struct fbserv_client {
 };
 
 struct fbserv_obj {
-  FBIO				*fbs_fbp;			/**< @brief framebuffer pointer */
-  Tcl_Interp			*fbs_interp;			/**< @brief tcl interpreter */
-  struct fbserv_listener	fbs_listener;			/**< @brief data for listening */
-  struct fbserv_client		fbs_clients[MAX_CLIENTS];	/**< @brief connected clients */
-  void				(*fbs_callback)();		/**< @brief callback function */
-  genptr_t			fbs_clientData;
+    FBIO			*fbs_fbp;			/**< @brief framebuffer pointer */
+    Tcl_Interp			*fbs_interp;			/**< @brief tcl interpreter */
+    struct fbserv_listener	fbs_listener;			/**< @brief data for listening */
+    struct fbserv_client	fbs_clients[MAX_CLIENTS];	/**< @brief connected clients */
+    void			(*fbs_callback)();		/**< @brief callback function */
+    genptr_t			fbs_clientData;
 };
 
 FB_EXPORT extern int fbs_open();

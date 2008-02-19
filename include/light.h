@@ -52,41 +52,41 @@
 __BEGIN_DECLS
 
 struct light_pt {
-	point_t	lp_pt;
-	vect_t	lp_norm;
+    point_t	lp_pt;
+    vect_t	lp_norm;
 };
 #define LPT_MAGIC 0x327649
 #define SOME_LIGHT_SAMPLES 128
 
 struct light_specific {
-	struct bu_list	l;	/**< @brief doubly linked list */
-	/* User-specified fields */
-	vect_t	lt_target;	/**< @brief explicit coordinate aim point */
-	fastf_t	lt_intensity;	/**< @brief Intensity Lumens (cd*sr): total output */
-	fastf_t	lt_angle;	/**< @brief beam dispersion angle (degrees) 0..180 */
-	fastf_t	lt_fraction;	/**< @brief fraction of total light */
-	int	lt_shadows;	/**< @brief !0 if this light casts shadows, # of rays*/
-	int	lt_infinite;	/**< @brief !0 if infinitely distant */
-	int	lt_visible;	/**< @brief 0 if implicitly modeled or invisible */
-	int	lt_invisible;	/**< @brief 0 if implicitly modeled or invisible */
-	int	lt_exaim;	/**< @brief !0 if explicit aim in lt_target */
-	fastf_t lt_obscure;	/**< @brief percentage obscuration of light */
-	/* Internal fields */
+    struct bu_list	l;	/**< @brief doubly linked list */
+    /* User-specified fields */
+    vect_t	lt_target;	/**< @brief explicit coordinate aim point */
+    fastf_t	lt_intensity;	/**< @brief Intensity Lumens (cd*sr): total output */
+    fastf_t	lt_angle;	/**< @brief beam dispersion angle (degrees) 0..180 */
+    fastf_t	lt_fraction;	/**< @brief fraction of total light */
+    int	lt_shadows;	/**< @brief !0 if this light casts shadows, # of rays*/
+    int	lt_infinite;	/**< @brief !0 if infinitely distant */
+    int	lt_visible;	/**< @brief 0 if implicitly modeled or invisible */
+    int	lt_invisible;	/**< @brief 0 if implicitly modeled or invisible */
+    int	lt_exaim;	/**< @brief !0 if explicit aim in lt_target */
+    fastf_t lt_obscure;	/**< @brief percentage obscuration of light */
+    /* Internal fields */
 #ifdef RT_MULTISPECTRAL
-	struct bn_tabdata *lt_spectrum;	/**< @brief Units?  mw*sr ? */
+    struct bn_tabdata *lt_spectrum;	/**< @brief Units?  mw*sr ? */
 #else
-	vect_t	lt_color;	/**< @brief RGB, as 0..1 */
+    vect_t	lt_color;	/**< @brief RGB, as 0..1 */
 #endif
-	fastf_t	lt_radius;	/**< @brief approximate radius of spherical light */
-	fastf_t	lt_cosangle;	/**< @brief cos of lt_angle */
-	vect_t	lt_pos;		/**< @brief location in space of light */
-	vect_t	lt_vec;		/**< @brief Unit vector from origin to light */
-	vect_t	lt_aim;		/**< @brief Unit vector - light beam direction */
-	char	*lt_name;	/**< @brief identifying string */
-	struct	region *lt_rp;	/**< @brief our region of origin */
-	int	lt_pt_count;	/**< @brief count of how many lt_sample_pts have been set */
-	struct light_pt *lt_sample_pts; /**< @brief dynamically allocated list of light sample points */
-	fastf_t lt_parse_pt[6];
+    fastf_t	lt_radius;	/**< @brief approximate radius of spherical light */
+    fastf_t	lt_cosangle;	/**< @brief cos of lt_angle */
+    vect_t	lt_pos;		/**< @brief location in space of light */
+    vect_t	lt_vec;		/**< @brief Unit vector from origin to light */
+    vect_t	lt_aim;		/**< @brief Unit vector - light beam direction */
+    char	*lt_name;	/**< @brief identifying string */
+    struct	region *lt_rp;	/**< @brief our region of origin */
+    int	lt_pt_count;	/**< @brief count of how many lt_sample_pts have been set */
+    struct light_pt *lt_sample_pts; /**< @brief dynamically allocated list of light sample points */
+    fastf_t lt_parse_pt[6];
 };
 #define LIGHT_NULL	((struct light_specific *)0)
 #define LIGHT_MAGIC	0xdbddbdb7

@@ -177,13 +177,13 @@ OPTICAL_EXPORT extern int max_bounces;
 OPTICAL_EXPORT extern int max_ireflect;
 
 struct floatpixel {
-	double	ff_dist;		/**< @brief range to ff_hitpt[], <-INFINITY for miss */
-	float	ff_hitpt[3];
-	struct region *ff_regp;
-	int	ff_frame;		/**< @brief >= 0 means pixel was reprojected */
-	short	ff_x;			/**< @brief screen x, y coords of first location */
-	short	ff_y;
-	char	ff_color[3];
+    double	ff_dist;		/**< @brief range to ff_hitpt[], <-INFINITY for miss */
+    float	ff_hitpt[3];
+    struct region *ff_regp;
+    int	ff_frame;		/**< @brief >= 0 means pixel was reprojected */
+    short	ff_x;			/**< @brief screen x, y coords of first location */
+    short	ff_y;
+    char	ff_color[3];
 };
 
 __END_DECLS

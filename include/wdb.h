@@ -73,10 +73,10 @@ __BEGIN_DECLS
  *  In-memory form of database combinations
  */
 struct wmember  {
-	struct bu_list	l;
-	int		wm_op;		/**< @brief  Boolean operation */
-	mat_t		wm_mat;		/**< @brief  XXX Should be matp_t !!! */
-	char		*wm_name;
+    struct bu_list	l;
+    int		wm_op;		/**< @brief  Boolean operation */
+    mat_t		wm_mat;		/**< @brief  XXX Should be matp_t !!! */
+    char		*wm_name;
 };
 #define WMEMBER_NULL	((struct wmember *)0)
 #define WMEMBER_MAGIC	0x43128912
@@ -88,23 +88,23 @@ struct wmember  {
  */
 
 struct wdb_pipept {
-	struct bu_list	l;		/**< @brief  doubly linked list support */
-	point_t		pp_coord;	/**< @brief  "control" point for pipe solid */
-	fastf_t		pp_id;		/**< @brief  inner diam, <=0 if solid (wire) */
-	fastf_t		pp_od;		/**< @brief  pipe outer diam */
-	fastf_t		pp_bendradius;	/**< @brief  bend radius to use for a bend at this point */
+    struct bu_list	l;		/**< @brief  doubly linked list support */
+    point_t		pp_coord;	/**< @brief  "control" point for pipe solid */
+    fastf_t		pp_id;		/**< @brief  inner diam, <=0 if solid (wire) */
+    fastf_t		pp_od;		/**< @brief  pipe outer diam */
+    fastf_t		pp_bendradius;	/**< @brief  bend radius to use for a bend at this point */
 };
 
 #define WDB_PIPESEG_NULL	((struct wdb_pipeseg *)0)
 #define WDB_PIPESEG_MAGIC	0x9723ffef
 
 struct wdb_metaballpt {
-	struct bu_list	l;
-	int		type;
-	fastf_t		fldstr;		/**< @brief  field strength */
-	fastf_t		sweat;		/**< @brief  beta value used for metaball and blob evaluation */
-	point_t		coord;
-	point_t		coord2;
+    struct bu_list	l;
+    int		type;
+    fastf_t		fldstr;		/**< @brief  field strength */
+    fastf_t		sweat;		/**< @brief  beta value used for metaball and blob evaluation */
+    point_t		coord;
+    point_t		coord2;
 };
 #define WDB_METABALLPT_TYPE_POINT 0x0
 #define WDB_METABALLPT_TYPE_LINE 0x1
@@ -115,9 +115,9 @@ struct wdb_metaballpt {
 WDB_EXPORT WDB_EXTERN(int mk_id, (struct rt_wdb *fp, const char *title) );
 WDB_EXPORT WDB_EXTERN(int mk_id_units, (struct rt_wdb *fp, const char *title, const char *units) );
 WDB_EXPORT int mk_id_editunits(
-	struct rt_wdb *fp,
-	const char *title,
-	double local2mm );
+    struct rt_wdb *fp,
+    const char *title,
+    double local2mm );
 
 /*
  *  Solid conversion routines
@@ -125,82 +125,82 @@ WDB_EXPORT int mk_id_editunits(
 /* libwdb/wdb.c */
 WDB_EXPORT WDB_EXTERN(int mk_half, (struct rt_wdb *fp, const char *name, const vect_t norm, double d) );
 WDB_EXPORT int mk_grip(
-	struct rt_wdb *wdbp,
-	const char *name,
-	const point_t center,
-	const vect_t normal,
-	const fastf_t magnitude );
+    struct rt_wdb *wdbp,
+    const char *name,
+    const point_t center,
+    const vect_t normal,
+    const fastf_t magnitude );
 WDB_EXPORT WDB_EXTERN(int mk_rpp, (struct rt_wdb *fp, const char *name, const point_t min,
-			const point_t max) );
+				   const point_t max) );
 WDB_EXPORT WDB_EXTERN(int mk_wedge, (struct rt_wdb *fp, const char *name, const point_t vert,
-			const vect_t xdirv, const vect_t zdirv,
-			fastf_t xlen, fastf_t ylen, fastf_t zlen,
-			fastf_t x_top_len) );
+				     const vect_t xdirv, const vect_t zdirv,
+				     fastf_t xlen, fastf_t ylen, fastf_t zlen,
+				     fastf_t x_top_len) );
 WDB_EXPORT WDB_EXTERN(int mk_arb4, (struct rt_wdb *fp, const char *name, const fastf_t *pts4) );
 WDB_EXPORT WDB_EXTERN(int mk_arb8, (struct rt_wdb *fp, const char *name, const fastf_t *pts8) );
 WDB_EXPORT WDB_EXTERN(int mk_sph, (struct rt_wdb *fp, const char *name, const point_t center,
-			fastf_t radius) );
+				   fastf_t radius) );
 WDB_EXPORT WDB_EXTERN(int mk_ell, (struct rt_wdb *fp, const char *name, const point_t center,
-			const vect_t a, const vect_t b, const vect_t c) );
+				   const vect_t a, const vect_t b, const vect_t c) );
 WDB_EXPORT WDB_EXTERN(int mk_tor, (struct rt_wdb *fp, const char *name, const point_t center,
-			const vect_t inorm, double r1, double r2) );
+				   const vect_t inorm, double r1, double r2) );
 WDB_EXPORT WDB_EXTERN(int mk_rcc, (struct rt_wdb *fp, const char *name, const point_t base,
-			const vect_t height, fastf_t radius) );
+				   const vect_t height, fastf_t radius) );
 WDB_EXPORT WDB_EXTERN(int mk_tgc, (struct rt_wdb *fp, const char *name, const point_t base,
-			const vect_t height, const vect_t a, const vect_t b,
-			const vect_t c, const vect_t d) );
+				   const vect_t height, const vect_t a, const vect_t b,
+				   const vect_t c, const vect_t d) );
 WDB_EXPORT WDB_EXTERN(int mk_cone, (struct rt_wdb *fp, const char *name, const point_t base,
-			const vect_t dirv, fastf_t height, fastf_t rad1,
-			fastf_t rad2) );
+				    const vect_t dirv, fastf_t height, fastf_t rad1,
+				    fastf_t rad2) );
 #define mk_trc(wrong)	+++error_obsolete_libwdb_routine+++	/* This routine no longer exists */
 WDB_EXPORT WDB_EXTERN(int mk_trc_h, (struct rt_wdb *fp, const char *name, const point_t base,
-			const vect_t height, fastf_t radbase, fastf_t radtop) );
+				     const vect_t height, fastf_t radbase, fastf_t radtop) );
 WDB_EXPORT WDB_EXTERN(int mk_trc_top, (struct rt_wdb *fp, const char *name, const point_t ibase,
-			const point_t itop, fastf_t radbase, fastf_t radtop) );
+				       const point_t itop, fastf_t radbase, fastf_t radtop) );
 WDB_EXPORT int mk_rpc(
-	struct rt_wdb *wdbp,
-	const char *name,
-	const point_t vert,
-	const vect_t height,
-	const vect_t breadth,
-	double half_w );
+    struct rt_wdb *wdbp,
+    const char *name,
+    const point_t vert,
+    const vect_t height,
+    const vect_t breadth,
+    double half_w );
 WDB_EXPORT int mk_rhc(
-	struct rt_wdb *wdbp,
-	const char *name,
-	const point_t vert,
-	const vect_t height,
-	const vect_t breadth,
-	fastf_t	half_w,
-	fastf_t asymp );
+    struct rt_wdb *wdbp,
+    const char *name,
+    const point_t vert,
+    const vect_t height,
+    const vect_t breadth,
+    fastf_t	half_w,
+    fastf_t asymp );
 WDB_EXPORT int mk_epa(
-	struct rt_wdb *wdbp,
-	const char *name,
-	const point_t vert,
-	const vect_t height,
-	const vect_t breadth,
-	fastf_t r1,
-	fastf_t r2 );
+    struct rt_wdb *wdbp,
+    const char *name,
+    const point_t vert,
+    const vect_t height,
+    const vect_t breadth,
+    fastf_t r1,
+    fastf_t r2 );
 WDB_EXPORT int mk_ehy(
-	struct rt_wdb *wdbp,
-	const char *name,
-	const point_t vert,
-	const vect_t height,
-	const vect_t breadth,
-	fastf_t r1,
-	fastf_t r2,
-	fastf_t c );
+    struct rt_wdb *wdbp,
+    const char *name,
+    const point_t vert,
+    const vect_t height,
+    const vect_t breadth,
+    fastf_t r1,
+    fastf_t r2,
+    fastf_t c );
 WDB_EXPORT int mk_eto(
-	struct rt_wdb *wdbp,
-	const char *name,
-	const point_t vert,
-	const vect_t norm,
-	const vect_t smajor,
-	fastf_t rrot,
-	fastf_t sminor );
+    struct rt_wdb *wdbp,
+    const char *name,
+    const point_t vert,
+    const vect_t norm,
+    const vect_t smajor,
+    fastf_t rrot,
+    fastf_t sminor );
 
 WDB_EXPORT WDB_EXTERN(int mk_arbn, (struct rt_wdb *fp, const char *name, int neqn, plane_t eqn[]) );
 WDB_EXPORT WDB_EXTERN(int mk_ars, (struct rt_wdb *fp, const char *name, int ncurves, int pts_per_curve,
-			fastf_t	*curves[]) );
+				   fastf_t	*curves[]) );
 
 typedef enum {
     WDB_BINUNIF_FLOAT,
@@ -252,41 +252,41 @@ WDB_EXPORT WDB_EXTERN(int mk_binunif, (struct rt_wdb *fp, const char *name, cons
 /* bot.c */
 WDB_EXPORT int
 mk_bot(
-	struct rt_wdb *fp,
-	const char *name,
-	unsigned char	mode,
-	unsigned char	orientation,
-	unsigned char	error_mode,	/**<  may be used to indicate error handling (ignored for now) */
-	int		num_vertices,
-	int		num_faces,
-	fastf_t		*vertices,	/**<  array of floats for vertices [num_vertices*3] */
-	int		*faces,		/**<  array of ints for faces [num_faces*3] */
-	fastf_t		*thickness,	/**<  array of plate mode thicknesses (corresponds to array of faces)
+    struct rt_wdb *fp,
+    const char *name,
+    unsigned char	mode,
+    unsigned char	orientation,
+    unsigned char	error_mode,	/**<  may be used to indicate error handling (ignored for now) */
+    int		num_vertices,
+    int		num_faces,
+    fastf_t		*vertices,	/**<  array of floats for vertices [num_vertices*3] */
+    int		*faces,		/**<  array of ints for faces [num_faces*3] */
+    fastf_t		*thickness,	/**<  array of plate mode thicknesses (corresponds to array of faces)
 					 * NULL for modes RT_BOT_SURFACE and RT_BOT_SOLID.
 					 */
-	struct bu_bitv	*face_mode );	/**<  a flag for each face indicating thickness is appended to hit point,
+    struct bu_bitv	*face_mode );	/**<  a flag for each face indicating thickness is appended to hit point,
 					 * otherwise thickness is centered about hit point
 					 */
 WDB_EXPORT int
 mk_bot_w_normals(
-	struct rt_wdb *fp,
-	const char *name,
-	unsigned char	mode,
-	unsigned char	orientation,
-	unsigned char	flags,
-	int		num_vertices,
-	int		num_faces,
-	fastf_t		*vertices,	/**<  array of floats for vertices [num_vertices*3] */
-	int		*faces,		/**<  array of ints for faces [num_faces*3] */
-	fastf_t		*thickness,	/**<  array of plate mode thicknesses (corresponds to array of faces)
+    struct rt_wdb *fp,
+    const char *name,
+    unsigned char	mode,
+    unsigned char	orientation,
+    unsigned char	flags,
+    int		num_vertices,
+    int		num_faces,
+    fastf_t		*vertices,	/**<  array of floats for vertices [num_vertices*3] */
+    int		*faces,		/**<  array of ints for faces [num_faces*3] */
+    fastf_t		*thickness,	/**<  array of plate mode thicknesses (corresponds to array of faces)
 					 * NULL for modes RT_BOT_SURFACE and RT_BOT_SOLID.
 					 */
-	struct bu_bitv	*face_mode,	/**<  a flag for each face indicating thickness is appended to hit point,
+    struct bu_bitv	*face_mode,	/**<  a flag for each face indicating thickness is appended to hit point,
 					 * otherwise thickness is centered about hit point
 					 */
-	int		num_normals,	/**<  number of unit normals in normals array */
-	fastf_t		*normals,	/**<  array of floats for normals [num_normals*3] */
-	int		*face_normals );	/**<  array of ints (indices into normals array), must have 3*num_faces entries */
+    int		num_normals,	/**<  number of unit normals in normals array */
+    fastf_t		*normals,	/**<  array of floats for normals [num_normals*3] */
+    int		*face_normals );	/**<  array of ints (indices into normals array), must have 3*num_faces entries */
 
 /* brep.cpp */
 WDB_EXPORT int mk_brep( struct rt_wdb* wdbp, const char* name, ON_Brep* brep );
@@ -301,53 +301,53 @@ WDB_EXPORT int mk_bot_from_nmg( struct rt_wdb *ofp, const char *name, struct she
 
 /* skt.c */
 WDB_EXPORT int mk_sketch(
-	struct rt_wdb *fp,
-	const char *name,
-	struct rt_sketch_internal *skt );
+    struct rt_wdb *fp,
+    const char *name,
+    struct rt_sketch_internal *skt );
 
 /* extr.c */
 WDB_EXPORT int mk_extrusion(
-	struct rt_wdb *fp,
-	const char *name,
-	const char *sketch_name,
-	const point_t V,
-	const vect_t h,
-	const vect_t u_vec,
-	const vect_t v_vec,
-	int keypoint );
+    struct rt_wdb *fp,
+    const char *name,
+    const char *sketch_name,
+    const point_t V,
+    const vect_t h,
+    const vect_t u_vec,
+    const vect_t v_vec,
+    int keypoint );
 
 /* cline.c */
 WDB_EXPORT int mk_cline(
-	struct rt_wdb *fp,
-	const char *name,
-	const point_t V,
-	const vect_t height,
-	fastf_t radius,
-	fastf_t thickness );
+    struct rt_wdb *fp,
+    const char *name,
+    const point_t V,
+    const vect_t height,
+    fastf_t radius,
+    fastf_t thickness );
 
 /* pipe.c */
 WDB_EXPORT WDB_EXTERN(int mk_particle, (struct rt_wdb *fp, const char *name, point_t vertex,
-			vect_t height, double vradius, double hradius) );
+					vect_t height, double vradius, double hradius) );
 WDB_EXPORT WDB_EXTERN(int mk_pipe, (struct rt_wdb *fp, const char *name, struct bu_list *headp) );
 WDB_EXPORT void mk_pipe_free( struct bu_list *headp );
 WDB_EXPORT void mk_add_pipe_pt(
-	struct bu_list *headp,
-	const point_t coord,
-	double od,
-	double id,
-	double bendradius );
+    struct bu_list *headp,
+    const point_t coord,
+    double od,
+    double id,
+    double bendradius );
 WDB_EXPORT void mk_pipe_init( struct bu_list *headp );
 
 /* strsol primitives */
 WDB_EXPORT WDB_EXTERN(int mk_dsp, (struct rt_wdb *fp, const char *name, const char *file,
-			int xdim, int ydim, const matp_t mat));
+				   int xdim, int ydim, const matp_t mat));
 WDB_EXPORT WDB_EXTERN(int mk_ebm, (struct rt_wdb *fp, const char *name, const char *file,
-			int xdim, int ydim, fastf_t tallness, const matp_t mat));
+				   int xdim, int ydim, fastf_t tallness, const matp_t mat));
 WDB_EXPORT WDB_EXTERN(int mk_vol, (struct rt_wdb *fp, const char *name, const char *file,
-			int xdim, int ydim, int zdim, int lo, int hi,
-			const vect_t cellsize, const matp_t mat));
+				   int xdim, int ydim, int zdim, int lo, int hi,
+				   const vect_t cellsize, const matp_t mat));
 WDB_EXPORT WDB_EXTERN(int mk_submodel, (struct rt_wdb *fp, const char *name, const char *file,
-			const char *treetop, int meth));
+					const char *treetop, int meth));
 #define mk_strsol(fp, name, solid, arg)	+++error_obsolete_libwdb_routine+++
 
 
@@ -383,34 +383,34 @@ WDB_EXPORT WDB_EXTERN (struct wmember *mk_addmember,
 		rgb, id, air, material, los, inherit_flag, 0, 0 )
 
 WDB_EXPORT int mk_comb(
-	struct rt_wdb		*wdbp,
-	const char		*combname,
-	struct bu_list		*headp,		/**<  Made by mk_addmember() */
-	int			region_kind,	/**<  1 => region.  'P' and 'V' for FASTGEN */
-	const char		*shadername,	/**<  shader name, or NULL */
-	const char		*shaderargs,	/**<  shader args, or NULL */
-	const unsigned char	*rgb,		/**<  NULL => no color */
-	int			id,		/**<  region_id */
-	int			air,		/**<  aircode */
-	int			material,	/**<  GIFTmater */
-	int			los,
-	int			inherit,
-	int			append_ok,	/**<  0 = obj must not exit */
-	int			gift_semantics);	/**<  0 = pure, 1 = gift */
+    struct rt_wdb		*wdbp,
+    const char		*combname,
+    struct bu_list		*headp,		/**<  Made by mk_addmember() */
+    int			region_kind,	/**<  1 => region.  'P' and 'V' for FASTGEN */
+    const char		*shadername,	/**<  shader name, or NULL */
+    const char		*shaderargs,	/**<  shader args, or NULL */
+    const unsigned char	*rgb,		/**<  NULL => no color */
+    int			id,		/**<  region_id */
+    int			air,		/**<  aircode */
+    int			material,	/**<  GIFTmater */
+    int			los,
+    int			inherit,
+    int			append_ok,	/**<  0 = obj must not exit */
+    int			gift_semantics);	/**<  0 = pure, 1 = gift */
 
 /** Convenience routines for quickly making combinations */
 WDB_EXPORT int mk_comb1( struct rt_wdb *fp,
-	const char *combname,
-	const char *membname,
-	int regflag );
+			 const char *combname,
+			 const char *membname,
+			 int regflag );
 WDB_EXPORT int
 mk_region1(
-	struct rt_wdb *fp,
-	const char *combname,
-	const char *membname,
-	const char *shadername,
-	const char *shaderargs,
-	const unsigned char *rgb );
+    struct rt_wdb *fp,
+    const char *combname,
+    const char *membname,
+    const char *shadername,
+    const char *shaderargs,
+    const unsigned char *rgb );
 
 #define mk_fastgen_region(fp, name, headp, mode, shadername, shaderargs, rgb, id, air, material, los, inherit)	\
 	mk_comb(fp, name, headp, mode, shadername, shaderargs, rgb, id, air, \
@@ -456,18 +456,18 @@ WDB_EXPORT void mk_freemembers( struct bu_list *headp );
  *	Dynamic geometry routines
  */
 WDB_EXPORT WDB_EXTERN( int make_hole, ( struct rt_wdb *wdbp,
-			     point_t hole_start,
-			     vect_t hole_depth,
-			     fastf_t hole_radius,
-			     int num_objs,
-			     struct directory **dp ) );
+					point_t hole_start,
+					vect_t hole_depth,
+					fastf_t hole_radius,
+					int num_objs,
+					struct directory **dp ) );
 
 WDB_EXPORT WDB_EXTERN( int make_hole_in_prepped_regions, ( struct rt_wdb *wdbp,
-						struct rt_i *rtip,
-						point_t hole_start,
-						vect_t hole_depth,
-						fastf_t radius,
-						struct bu_ptbl *regions ) );
+							   struct rt_i *rtip,
+							   point_t hole_start,
+							   vect_t hole_depth,
+							   fastf_t radius,
+							   struct bu_ptbl *regions ) );
 
 
 __END_DECLS

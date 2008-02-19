@@ -44,12 +44,12 @@
 #endif
 
 typedef	struct	{
-	unsigned long magic;
-	int	ny;		/**< @brief  Number of "y" bins */
-	int	*nx;		/**< @brief  Number of "x" bins per "y" bin */
-	int	elsize;		/**< @brief  Size of each bin element */
-	unsigned char **xbin;	/**< @brief  staring addresses of "x" bins */
-	unsigned char *_data;	/**< @brief  For freeing purposes, start of data */
+    unsigned long magic;
+    int	ny;		/**< @brief  Number of "y" bins */
+    int	*nx;		/**< @brief  Number of "x" bins per "y" bin */
+    int	elsize;		/**< @brief  Size of each bin element */
+    unsigned char **xbin;	/**< @brief  staring addresses of "x" bins */
+    unsigned char *_data;	/**< @brief  For freeing purposes, start of data */
 } spm_map_t;
 
 #define	SPM_NULL (spm_map_t *)0

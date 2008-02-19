@@ -130,11 +130,11 @@ __BEGIN_DECLS
  *  The setting of USE_PROTOTYPES is determined during configure
  */
 #if __STDC__ || USE_PROTOTYPES
-#	define	BU_EXTERN(type_and_name, args)	extern type_and_name args
-#	define	BU_ARGS(args)			args
+#  define	BU_EXTERN(type_and_name, args)	extern type_and_name args
+#  define	BU_ARGS(args)			args
 #else
-#	define	BU_EXTERN(type_and_name, args)	extern type_and_name()
-#	define	BU_ARGS(args)			()
+#  define	BU_EXTERN(type_and_name, args)	extern type_and_name()
+#  define	BU_ARGS(args)			()
 #endif
 
 /**
@@ -1174,7 +1174,7 @@ struct bu_ptbl {
  */
 /** @{ */
 struct bu_mapped_file {
-	struct bu_list	l;
+    struct bu_list	l;
     char		*name;		/**< @brief bu_strdup() of file name  */
     genptr_t	buf;		/**< @brief In-memory copy of file (may be mmapped)  */
     long		buflen;		/**< @brief # bytes in 'buf'  */
@@ -1317,12 +1317,12 @@ BU_EXPORT extern jmp_buf	bu_jmpbuf;			/* for BU_SETJMP() */
  */
 
 struct bu_mro {
-	unsigned long	magic;
-	struct bu_vls	string_rep;
-	char		long_rep_is_valid;
-	long		long_rep;
-	char		double_rep_is_valid;
-	double		double_rep;
+    unsigned long	magic;
+    struct bu_vls	string_rep;
+    char		long_rep_is_valid;
+    long		long_rep;
+    char		double_rep_is_valid;
+    double		double_rep;
 };
 
 #define BU_MRO_MAGIC	0x4D524F4F	/* MROO */
@@ -1729,9 +1729,9 @@ struct bu_rb_node
  *
  */
 struct bu_observer {
-  struct bu_list	l;
-  struct bu_vls		observer;
-  struct bu_vls		cmd;
+    struct bu_list	l;
+    struct bu_vls		observer;
+    struct bu_vls		cmd;
 };
 #define BU_OBSERVER_NULL	((struct bu_observer *)0)
 
@@ -1739,8 +1739,8 @@ struct bu_observer {
  *			B U _ C M D T A B
  */
 struct bu_cmdtab {
-  char *ct_name;
-  int (*ct_func)();
+    char *ct_name;
+    int (*ct_func)();
 };
 
 /*----------------------------------------------------------------------*/
@@ -2728,37 +2728,37 @@ BU_EXPORT BU_EXTERN(int Bu_Init,
 /* lex.c */
 #define BU_LEX_ANY	0	/* pseudo type */
 struct bu_lex_t_int {
-	int type;
-	int value;
+    int type;
+    int value;
 };
 #define BU_LEX_INT	1
 struct bu_lex_t_dbl {
-	int	type;
-	double	value;
+    int	type;
+    double	value;
 };
 #define BU_LEX_DOUBLE	2
 struct bu_lex_t_key {
-	int	type;
-	int	value;
+    int	type;
+    int	value;
 };
 #define BU_LEX_SYMBOL	3
 #define BU_LEX_KEYWORD	4
 struct bu_lex_t_id {
-	int	type;
-	char 	*value;
+    int	type;
+    char 	*value;
 };
 #define BU_LEX_IDENT	5
 #define BU_LEX_NUMBER	6	/* Pseudo type */
 union bu_lex_token {
-	int			type;
-	struct	bu_lex_t_int	t_int;
-	struct	bu_lex_t_dbl	t_dbl;
-	struct	bu_lex_t_key	t_key;
-	struct	bu_lex_t_id	t_id;
+    int			type;
+    struct	bu_lex_t_int	t_int;
+    struct	bu_lex_t_dbl	t_dbl;
+    struct	bu_lex_t_key	t_key;
+    struct	bu_lex_t_id	t_id;
 };
 struct bu_lex_key {
-	int	tok_val;
-	char	*string;
+    int	tok_val;
+    char	*string;
 };
 #define BU_LEX_NEED_MORE	0
 
@@ -2792,26 +2792,26 @@ BU_EXPORT BU_EXTERN(void bu_mro_free,
 
 /* hash.c */
 struct bu_hash_entry {
-	unsigned long magic;
-	unsigned char *key;
-	unsigned char *value;
-	int key_len;
-	struct bu_hash_entry *next;
+    unsigned long magic;
+    unsigned char *key;
+    unsigned char *value;
+    int key_len;
+    struct bu_hash_entry *next;
 };
 
 struct bu_hash_tbl {
-	unsigned long magic;
-	unsigned long mask;
-	unsigned long num_lists;
-	unsigned long num_entries;
-	struct bu_hash_entry **lists;
+    unsigned long magic;
+    unsigned long mask;
+    unsigned long num_lists;
+    unsigned long num_entries;
+    struct bu_hash_entry **lists;
 };
 
 struct bu_hash_record {
-	unsigned long magic;
-	struct bu_hash_tbl *tbl;
-	unsigned long index;
-	struct bu_hash_entry *hsh_entry;
+    unsigned long magic;
+    struct bu_hash_tbl *tbl;
+    unsigned long index;
+    struct bu_hash_entry *hsh_entry;
 };
 
 #define BU_HASH_TBL_MAGIC	0x48415348	/* "HASH" */

@@ -31,16 +31,16 @@
 
 /* Local information */
 struct phong_specific {
-	unsigned long magic;
-	int	shine;
-	double	wgt_specular;
-	double	wgt_diffuse;
-	double	transmit;       /**< @brief Moss "transparency" */
-	double	reflect;        /**< @brief Moss "transmission" */
-	double	refrac_index;
-	double	extinction;
-	double	emission[3];
-	struct	mfuncs *mfp;
+    unsigned long magic;
+    int	shine;
+    double	wgt_specular;
+    double	wgt_diffuse;
+    double	transmit;       /**< @brief Moss "transparency" */
+    double	reflect;        /**< @brief Moss "transmission" */
+    double	refrac_index;
+    double	extinction;
+    double	emission[3];
+    struct	mfuncs *mfp;
 };
 
 extern struct bu_structparse phong_parse[];

@@ -66,20 +66,20 @@
 #define	SXT(c)		((c)|((c&0x80)?(~0xFF):0))
 
 struct vfont_dispatch  {
-	unsigned short	vd_addr;
-	short		vd_nbytes;
-	short		vd_up;
-	short		vd_down;
-	short		vd_left;
-	short		vd_right;
-	short		vd_width;
+    unsigned short	vd_addr;
+    short		vd_nbytes;
+    short		vd_up;
+    short		vd_down;
+    short		vd_left;
+    short		vd_right;
+    short		vd_width;
 };
 struct vfont {
-	short	vf_maxx;
-	short	vf_maxy;
-	short	vf_xtend;
-	struct vfont_dispatch	vf_dispatch[256];
-	char	*vf_bits;
+    short	vf_maxx;
+    short	vf_maxy;
+    short	vf_xtend;
+    struct vfont_dispatch	vf_dispatch[256];
+    char	*vf_bits;
 };
 #define	VFONT_NULL	((struct vfont *)NULL)
 

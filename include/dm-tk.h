@@ -33,12 +33,12 @@
 #define ColormapNull (Colormap *)NULL
 
 struct tk_vars {
-  GC gc;
-  Pixmap pix;
-  mat_t xmat;
-  int is_trueColor;
-  unsigned long bd, bg, fg;   /* color of border, background, foreground */
-  unsigned long pixels[NUM_PIXELS];
+    GC gc;
+    Pixmap pix;
+    mat_t xmat;
+    int is_trueColor;
+    unsigned long bd, bg, fg;   /* color of border, background, foreground */
+    unsigned long pixels[NUM_PIXELS];
 };
 
 #endif /* __DM_TK__ */

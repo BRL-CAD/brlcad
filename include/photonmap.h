@@ -58,18 +58,18 @@
  *  Photon Map Data Structure
  */
 struct Photon {
-  int			Axis;		/**< @brief Splitting Plane */
-  point_t		Pos;		/**< @brief Photon Position */
-  vect_t		Dir;		/**< @brief Photon Direction */
-  vect_t		Normal;		/**< @brief Normal at Intersection */
-  vect_t		Power;		/**< @brief Photon Power */
-  vect_t		Irrad;		/**< @brief Irradiance */
+    int			Axis;		/**< @brief Splitting Plane */
+    point_t		Pos;		/**< @brief Photon Position */
+    vect_t		Dir;		/**< @brief Photon Direction */
+    vect_t		Normal;		/**< @brief Normal at Intersection */
+    vect_t		Power;		/**< @brief Photon Power */
+    vect_t		Irrad;		/**< @brief Irradiance */
 };
 
 
 struct PSN {
-  struct	Photon	P;
-  fastf_t		Dist;
+    struct	Photon	P;
+    fastf_t		Dist;
 };
 
 
@@ -77,49 +77,49 @@ struct PSN {
  *  Photon Search Structure
  */
 struct PhotonSearch {
-  int			Max;		/**< @brief Max Number of Photons */
-  int			Found;		/**< @brief Number of Photons Found */
-  vect_t		Normal;		/**< @brief Normal */
-  fastf_t		RadSq;		/**< @brief Search Radius Sq */
-  point_t		Pos;		/**< @brief Search Position */
-  struct	PSN	*List;		/**< @brief Located Photon List */
+    int			Max;		/**< @brief Max Number of Photons */
+    int			Found;		/**< @brief Number of Photons Found */
+    vect_t		Normal;		/**< @brief Normal */
+    fastf_t		RadSq;		/**< @brief Search Radius Sq */
+    point_t		Pos;		/**< @brief Search Position */
+    struct	PSN	*List;		/**< @brief Located Photon List */
 };
 
 
 struct NearestPhotons {
-  int			Max;		/**< @brief Max Number of Photons */
-  int			Found;		/**< @brief Number of Photons Found */
-  vect_t		Normal;		/**< @brief Normal */
-  fastf_t		RadSq;		/**< @brief Search Radius Sq */
-  point_t		Pos;		/**< @brief Search Position */
-  struct	Photon	*List;		/**< @brief Located Photon List */
+    int			Max;		/**< @brief Max Number of Photons */
+    int			Found;		/**< @brief Number of Photons Found */
+    vect_t		Normal;		/**< @brief Normal */
+    fastf_t		RadSq;		/**< @brief Search Radius Sq */
+    point_t		Pos;		/**< @brief Search Position */
+    struct	Photon	*List;		/**< @brief Located Photon List */
 };
 
 
 struct PNode {
-  struct	Photon	P;
-  struct	PNode	*L;
-  struct	PNode	*R;
-  int			C;		/**< @brief For Threading Purposes to see if it's been computed yet */
+    struct	Photon	P;
+    struct	PNode	*L;
+    struct	PNode	*R;
+    int			C;		/**< @brief For Threading Purposes to see if it's been computed yet */
 };
 
 
 struct PhotonMap {
-  int			StoredPhotons;
-  int			MaxPhotons;
-  struct	PNode	*Root;
+    int			StoredPhotons;
+    int			MaxPhotons;
+    struct	PNode	*Root;
 };
 
 
 struct IrradNode {
-  point_t		Pos;
-  vect_t		RGB;
+    point_t		Pos;
+    vect_t		RGB;
 };
 
 
 struct IrradCache {
-  int				Num;
-  struct	IrradNode	*List;
+    int				Num;
+    struct	IrradNode	*List;
 };
 
 

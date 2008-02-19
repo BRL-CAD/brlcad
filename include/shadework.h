@@ -22,6 +22,7 @@
 /** @file shadework.h
  *
  */
+
 #ifndef SHADEWORK_H
 #define SHADEWORK_H
 
@@ -30,41 +31,41 @@
 
 #define SW_NLIGHTS	16		/* Max # of light sources */
 
-/*
- *			S H A D E W O R K
+/**
+ * S H A D E W O R K
  */
 struct shadework {
 /* XXX At least the first three of these need to be spectral curves */
-	fastf_t		sw_transmit;	/**< @brief  0.0 -> 1.0 */
-	fastf_t		sw_reflect;	/**< @brief  0.0 -> 1.0 */
-	fastf_t		sw_extinction;	/**< @brief  extinction coeff, mm^-1 */
-	fastf_t		sw_refrac_index;
-	fastf_t		sw_temperature;
+    fastf_t		sw_transmit;	/**< @brief  0.0 -> 1.0 */
+    fastf_t		sw_reflect;	/**< @brief  0.0 -> 1.0 */
+    fastf_t		sw_extinction;	/**< @brief  extinction coeff, mm^-1 */
+    fastf_t		sw_refrac_index;
+    fastf_t		sw_temperature;
 #ifdef RT_MULTISPECTRAL
-	struct bn_tabdata *msw_color;
-	struct bn_tabdata *msw_basecolor;
+    struct bn_tabdata *msw_color;
+    struct bn_tabdata *msw_basecolor;
 #else
-	fastf_t		sw_color[3];	/**< @brief  shaded color */
-	fastf_t		sw_basecolor[3]; /**< @brief  base color */
+    fastf_t		sw_color[3];	/**< @brief  shaded color */
+    fastf_t		sw_basecolor[3]; /**< @brief  base color */
 #endif
-	struct hit	sw_hit;		/**< @brief  ray hit (dist, point, normal) */
-	struct uvcoord	sw_uv;
+    struct hit		sw_hit;		/**< @brief  ray hit (dist, point, normal) */
+    struct uvcoord	sw_uv;
 #ifdef RT_MULTISPECTRAL
-	struct bn_tabdata *msw_intensity[SW_NLIGHTS];
+    struct bn_tabdata *	msw_intensity[SW_NLIGHTS];
 #else
-	fastf_t		sw_intensity[3*SW_NLIGHTS]; /**< @brief  light intensities */
+    fastf_t		sw_intensity[3*SW_NLIGHTS]; /**< @brief  light intensities */
 #endif
-	fastf_t		sw_tolight[3*SW_NLIGHTS];   /**< @brief  light directions */
-	struct light_specific	*sw_visible[SW_NLIGHTS]; /**< @brief  visibility flags/ptrs */
-	fastf_t		sw_lightfract[SW_NLIGHTS];/**< @brief  % light visible */
-	int		sw_xmitonly;	/**< @brief  flag: need sw_transmit only */
-					/**< @brief  sw_xmitonly=1, compute transmission only */
-					/**< @brief  sw_xmitonly=2, want parameters only, not even transmission */
-	int		sw_inputs;	/**< @brief  fields from mf_inputs actually filled */
-	int		sw_frame;	/**< @brief  # of current frame */
-	fastf_t		sw_frametime;	/**< @brief  frame time delta off 1st frame */
-	fastf_t		sw_pixeltime;	/**< @brief  pixel time delta off 1st pixel of 1st frame */
-	struct seg	*sw_segs;	/**< @brief  segs which made partition */
+    fastf_t		sw_tolight[3*SW_NLIGHTS];   /**< @brief  light directions */
+    struct light_specific *sw_visible[SW_NLIGHTS]; /**< @brief  visibility flags/ptrs */
+    fastf_t		sw_lightfract[SW_NLIGHTS];/**< @brief  % light visible */
+    int			sw_xmitonly;	/**< @brief  flag: need sw_transmit only */
+    /**< @brief  sw_xmitonly=1, compute transmission only */
+    /**< @brief  sw_xmitonly=2, want parameters only, not even transmission */
+    int			sw_inputs;	/**< @brief  fields from mf_inputs actually filled */
+    int			sw_frame;	/**< @brief  # of current frame */
+    fastf_t		sw_frametime;	/**< @brief  frame time delta off 1st frame */
+    fastf_t		sw_pixeltime;	/**< @brief  pixel time delta off 1st pixel of 1st frame */
+    struct seg *	sw_segs;	/**< @brief  segs which made partition */
 /*
  * The following is experimental.  DO NOT USE
  */
@@ -74,19 +75,20 @@ struct shadework {
 #define SW_SET_EXTINCTION	0x10
 #define SW_SET_AMBIENT		0x20
 #define SW_SET_EMISSION		0x40
-	int		sw_phong_set_vector;
-	fastf_t		sw_phong_transmit;
-	fastf_t		sw_phong_reflect;
-	fastf_t		sw_phong_ri;
-	fastf_t		sw_phong_extinction;
-	fastf_t		sw_phong_ambient;
-	fastf_t		sw_phong_emission;
+    int			sw_phong_set_vector;
+    fastf_t		sw_phong_transmit;
+    fastf_t		sw_phong_reflect;
+    fastf_t		sw_phong_ri;
+    fastf_t		sw_phong_extinction;
+    fastf_t		sw_phong_ambient;
+    fastf_t		sw_phong_emission;
 /*
  * End of experimental
  */
 };
 
-BU_EXTERN(void		pr_shadework, (const char *str, const struct shadework *swp));
+BU_EXTERN(void pr_shadework, (const char *str, const struct shadework *swp));
+
 #endif
 /** @} */
 /*

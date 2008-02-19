@@ -42,18 +42,18 @@
 #define CMDHIST_OBJ_NULL (struct bu_cmdhist_obj *)NULL
 
 struct bu_cmdhist {
-  struct bu_list l;
-  struct bu_vls h_command;
-  struct timeval h_start;
-  struct timeval h_finish;
-  int h_status;
+    struct bu_list l;
+    struct bu_vls h_command;
+    struct timeval h_start;
+    struct timeval h_finish;
+    int h_status;
 };
 
 struct bu_cmdhist_obj {
-  struct bu_list l;
-  struct bu_vls cho_name;
-  struct bu_cmdhist cho_head;
-  struct bu_cmdhist *cho_curr;
+    struct bu_list l;
+    struct bu_vls cho_name;
+    struct bu_cmdhist cho_head;
+    struct bu_cmdhist *cho_curr;
 };
 
 BU_EXPORT BU_EXTERN(int bu_cmd,

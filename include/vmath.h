@@ -37,10 +37,10 @@
  *
  *  Furthermore, additional transformations are multiplied on the left, ie:
  *
-<tt> @code
+ <tt> @code
  *		vec'  =  T1 * vec
  *		vec'' =  T2 * T1 * vec  =  T2 * vec'
-@endcode </tt>
+ @endcode </tt>
  *
  *  The most notable implication of this is the location of the
  *  "delta" (translation) values in the matrix, ie:
@@ -50,7 +50,7 @@
  *        y' =   ( R4   R5   R6   Dy )   *  y
  *        z'     ( R8   R9   R10  Dz )      z
  *        w'     (  0    0    0   1/s)      w
-@endcode </tt>
+ @endcode </tt>
  *
  *  @par Note -
  *  	vect_t objects are 3-tuples
@@ -353,9 +353,9 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 	(m)[12] = (m)[13] = (m)[14] = (m)[15] = 0.0;}
 
 /* # define MAT_ZERO(m)	{\
-	register int _j; \
-	for (_j=0; _j<16; _j++) (m)[_j]=0.0; }
-  */
+   register int _j; \
+   for (_j=0; _j<16; _j++) (m)[_j]=0.0; }
+*/
 
 /** @brief set matrix to identity */
 #define MAT_IDN(m)	{\
@@ -365,9 +365,9 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 	(m)[0] = (m)[5] = (m)[10] = (m)[15] = 1.0;}
 
 /* #define MAT_IDN(m)	{\
-	int _j;	for (_j=0;_j<16;_j++) (m)[_j]=0.0;\
-	(m)[0] = (m)[5] = (m)[10] = (m)[15] = 1.0;}
-  */
+   int _j;	for (_j=0;_j<16;_j++) (m)[_j]=0.0;\
+   (m)[0] = (m)[5] = (m)[10] = (m)[15] = 1.0;}
+*/
 
 /** @brief copy a matrix */
 #define MAT_COPY( d, s )	{ \
@@ -426,7 +426,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 
 /** @brief move a 2D vector.
  * This naming convention seems better than the VMOVE_2D version below
-*/
+ */
 #define V2MOVE(a, b)	{ \
 			(a)[X] = (b)[X];\
 			(a)[Y] = (b)[Y]; }
@@ -1197,7 +1197,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 /** @brief
  *  Compute quaternion product a = b * c
  *	a[W] = b[W]*c[W] - VDOT(b, c);
-	VCROSS( temp, b, c );
+ VCROSS( temp, b, c );
  *	VJOIN2( a, temp, b[W], c, c[W], b );
  */
 #define QMUL(a, b, c)	{ \

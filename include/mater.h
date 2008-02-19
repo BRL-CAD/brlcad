@@ -45,20 +45,20 @@
 #endif
 
 struct mater {
-	short		mt_low;		/**< @brief bounds of region IDs, inclusive */
-	short		mt_high;
-	unsigned char	mt_r;		/**< @brief color */
-	unsigned char	mt_g;
-	unsigned char	mt_b;
-	long		mt_daddr;	/**< @brief db address, for updating */
-	struct mater	*mt_forw;	/**< @brief next in chain */
+    short		mt_low;		/**< @brief bounds of region IDs, inclusive */
+    short		mt_high;
+    unsigned char	mt_r;		/**< @brief color */
+    unsigned char	mt_g;
+    unsigned char	mt_b;
+    long		mt_daddr;	/**< @brief db address, for updating */
+    struct mater	*mt_forw;	/**< @brief next in chain */
 };
 #define MATER_NULL	((struct mater *)0)
 #define MATER_NO_ADDR	(-1L)		/**< @brief invalid mt_daddr */
 
 RT_EXPORT extern struct mater *rt_material_head; /**< @brief defined in mater.c */
 RT_EXPORT BU_EXTERN(void rt_insert_color,
-		       (struct mater *newp));
+		    (struct mater *newp));
 /** @} */
 /*
  * Local Variables:

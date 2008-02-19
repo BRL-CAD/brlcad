@@ -166,7 +166,7 @@ brlcad_ident(const char *title)
 		 brlcad_version(), label,
 		 BRLCAD_DATE, BRLCAD_COUNT,
 		 BRLCAD_USER, BRLCAD_HOST, BRLCAD_PATH
-		 );
+	    );
     }
 
     /* quell use warnings, never true */

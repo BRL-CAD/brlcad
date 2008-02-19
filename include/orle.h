@@ -61,54 +61,54 @@
 #endif
 
 typedef struct	/* Extended format RLE header.				*/
-	{
-	short	h_xpos, h_ypos;	/* Lower-left corner of image.		*/
-	short	h_xlen, h_ylen;	/* Size of saved box.			*/
-	char	h_flags;	/* Some flags.				*/
+{
+    short	h_xpos, h_ypos;	/* Lower-left corner of image.		*/
+    short	h_xlen, h_ylen;	/* Size of saved box.			*/
+    char	h_flags;	/* Some flags.				*/
 #define	H_CLEARFIRST	0x1	/* Clear the fb to background first.	*/
 #define H_BOXSAVE	0x0	/* Straight box save.			*/
-	char	h_ncolors;	/* Number of color channels.		*/
+    char	h_ncolors;	/* Number of color channels.		*/
 #define H_LD_CMAP_ONLY	0	/* Load only the color map (if present).*/
 #define H_B_W		1	/* We have a black and white image.	*/
 #define H_RGB		3	/* We have a normal color image.	*/
-	char	h_pixelbits;	/* Bits per pixel per channel.		*/
-	char	h_ncmap;	/* Channels in color map (map present).	*/
-	char	h_cmaplen;	/* Log base 2 of entries in color map.	*/
-	unsigned char  h_background[3]; /* Background color.		*/
+    char	h_pixelbits;	/* Bits per pixel per channel.		*/
+    char	h_ncmap;	/* Channels in color map (map present).	*/
+    char	h_cmaplen;	/* Log base 2 of entries in color map.	*/
+    unsigned char  h_background[3]; /* Background color.		*/
 } Xtnd_Rle_Header;
 
 typedef struct	/* Old format RLE header minus magic number field.	*/
-	{
+{
 /***	short	magic;  Read seperately ***/
-	short	xpos, ypos;	/* Lower-left corner of image.		*/
-	short	xsize, ysize;	/* Size of saved box.			*/
-	unsigned char 	bg_r;	/* Background colors.			*/
-	unsigned char	bg_g;
-	unsigned char	bg_b;
-	char	map;		/* Flag for map presence.		*/
-	} Old_Rle_Header;
+    short	xpos, ypos;	/* Lower-left corner of image.		*/
+    short	xsize, ysize;	/* Size of saved box.			*/
+    unsigned char 	bg_r;	/* Background colors.			*/
+    unsigned char	bg_g;
+    unsigned char	bg_b;
+    char	map;		/* Flag for map presence.		*/
+} Old_Rle_Header;
 
 typedef struct /* Old RLE format instruction.				*/
-	{
+{
 #if __STDC__ || defined(__convexc__)
-	/* XXX This won't match the file format, but will at least compile */
-	/* ANSI insists that bit-field must be of type signed int, unsigned int or int */
-	unsigned int datum:12, opcode:4;
+    /* XXX This won't match the file format, but will at least compile */
+    /* ANSI insists that bit-field must be of type signed int, unsigned int or int */
+    unsigned int datum:12, opcode:4;
 #else
-	unsigned short datum:12, opcode:4;
+    unsigned short datum:12, opcode:4;
 #endif
-	} Old_Inst;
+} Old_Inst;
 
 typedef struct /* Old RLE format instruction.				*/
-	{
+{
 #if __STDC__ || defined(__convexc__)
-	/* XXX This won't match the file format, but will at least compile */
-	/* ANSI insists that bit-field must be of type signed int, unsigned int or int */
-	int	opcode:8, datum:8;
+    /* XXX This won't match the file format, but will at least compile */
+    /* ANSI insists that bit-field must be of type signed int, unsigned int or int */
+    int	opcode:8, datum:8;
 #else
-	short	opcode:8, datum:8;
+    short	opcode:8, datum:8;
 #endif
-	} Xtnd_Inst;
+} Xtnd_Inst;
 
 typedef unsigned char RLEpixel[3];
 

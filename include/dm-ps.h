@@ -34,19 +34,19 @@
 #define	GED_TO_PS(x)	((int)((x)+2048))
 
 struct ps_vars {
-  struct bu_list l;
-  FILE *ps_fp;
-  char ttybuf[BUFSIZ];
-  vect_t clipmin;
-  vect_t clipmax;
-  struct bu_vls fname;
-  struct bu_vls font;
-  struct bu_vls title;
-  struct bu_vls creator;
-  fastf_t scale;
-  int linewidth;
-  int zclip;
-  int debug;
+    struct bu_list l;
+    FILE *ps_fp;
+    char ttybuf[BUFSIZ];
+    vect_t clipmin;
+    vect_t clipmax;
+    struct bu_vls fname;
+    struct bu_vls font;
+    struct bu_vls title;
+    struct bu_vls creator;
+    fastf_t scale;
+    int linewidth;
+    int zclip;
+    int debug;
 };
 
 extern struct ps_vars head_ps_vars;

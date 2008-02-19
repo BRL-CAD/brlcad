@@ -52,54 +52,54 @@
 
 
 struct rtserver_job {
-	struct bu_list l;		/* for linking */
-	int exit_flag;			/* flag, non-zero means the running thread should exit */
-	int sessionid;			/* index into sessions (rts_geometry array) */
-	int rtjob_id;			/* identifying number, assigned by the rt server */
-	int maxHits;			/* Max number of hits to consider along each ray (zero means take all of them) */
-	struct bu_ptbl rtjob_rays;	/* list of pointers to rays to be fired */
+    struct bu_list l;		/* for linking */
+    int exit_flag;			/* flag, non-zero means the running thread should exit */
+    int sessionid;			/* index into sessions (rts_geometry array) */
+    int rtjob_id;			/* identifying number, assigned by the rt server */
+    int maxHits;			/* Max number of hits to consider along each ray (zero means take all of them) */
+    struct bu_ptbl rtjob_rays;	/* list of pointers to rays to be fired */
 };
 
 struct ray_hit {
-	struct bu_list l;
-	struct region *regp;		/* pointer to containing region */
-	int comp_id;			/* index into component list */
-	fastf_t hit_dist;		/* distance along ray to hit point */
-	fastf_t los;			/* line of sight distance through this component */
-	vect_t enter_normal;		/* normal vector at entrance hit */
-	vect_t exit_normal;		/* normal vector at exit hit */
+    struct bu_list l;
+    struct region *regp;		/* pointer to containing region */
+    int comp_id;			/* index into component list */
+    fastf_t hit_dist;		/* distance along ray to hit point */
+    fastf_t los;			/* line of sight distance through this component */
+    vect_t enter_normal;		/* normal vector at entrance hit */
+    vect_t exit_normal;		/* normal vector at exit hit */
 };
 
 struct ray_result {
-	struct bu_list l;
-	struct xray the_ray;		/* the originating ray */
-	struct ray_hit hitHead;		/* the list of components hit along this ray */
+    struct bu_list l;
+    struct xray the_ray;		/* the originating ray */
+    struct ray_hit hitHead;		/* the list of components hit along this ray */
 };
 
 struct rtserver_result {
-	struct bu_list l;		/* for linked list */
-	int got_some_hits;		/* flag 0-> no hits in results */
-	struct rtserver_job *the_job;	/* the originating job */
-	struct ray_result resultHead;	/* the list of results, one for each ray */
+    struct bu_list l;		/* for linked list */
+    int got_some_hits;		/* flag 0-> no hits in results */
+    struct rtserver_job *the_job;	/* the originating job */
+    struct ray_result resultHead;	/* the list of results, one for each ray */
 };
 
 struct rtserver_rti {
-	struct rt_i *rtrti_rtip;	/* pointer to an rti structure */
-	char *rtrti_name;		/* name of this "assembly" (bu_malloc'd storage) */
-	int rtrti_num_trees;		/* number of trees in this rti structure */
-	char **rtrti_trees;		/* array of pointers to tree-top names trees[num_trees] (bu_malloc'd storage) */
-	matp_t rtrti_xform;		/* transformation matrix from global coords to this rt instance (NULL -> identity) */
-	matp_t rtrti_inv_xform;		/* inverse of above xform (NULL -> identity) */
+    struct rt_i *rtrti_rtip;	/* pointer to an rti structure */
+    char *rtrti_name;		/* name of this "assembly" (bu_malloc'd storage) */
+    int rtrti_num_trees;		/* number of trees in this rti structure */
+    char **rtrti_trees;		/* array of pointers to tree-top names trees[num_trees] (bu_malloc'd storage) */
+    matp_t rtrti_xform;		/* transformation matrix from global coords to this rt instance (NULL -> identity) */
+    matp_t rtrti_inv_xform;		/* inverse of above xform (NULL -> identity) */
 };
 
 struct rtserver_geometry {
-	int rts_number_of_rtis;		/* number of rtserver_rti structures */
-	struct rtserver_rti **rts_rtis;	/* array of pointers to rtserver_rti
+    int rts_number_of_rtis;		/* number of rtserver_rti structures */
+    struct rtserver_rti **rts_rtis;	/* array of pointers to rtserver_rti
 					   structures rts_rtis[rts_number_of_rtis] (bu_malloc'd storage ) */
-	point_t		rts_mdl_min;	/* min corner of model bounding RPP */
-	point_t		rts_mdl_max;	/* max corner of model bounding RPP */
-	double		rts_radius;	/* radius of model bounding sphere */
-	Tcl_HashTable	*rts_comp_names;	/* A Tcl hash table containing ident numbers as keys
+    point_t		rts_mdl_min;	/* min corner of model bounding RPP */
+    point_t		rts_mdl_max;	/* max corner of model bounding RPP */
+    double		rts_radius;	/* radius of model bounding sphere */
+    Tcl_HashTable	*rts_comp_names;	/* A Tcl hash table containing ident numbers as keys
 						   and component names as values */
 };
 
