@@ -107,12 +107,23 @@
 
 #include "bltMath.h"
 
-#undef INLINE
-#ifdef __GNUC__
-#define INLINE inline
-#else
-#define INLINE
+#ifdef INLINE
+#  undef INLINE
 #endif
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#  if !defined(__cplusplus) && !defined(inline)
+#    define INLINE __inline
+#  else
+#    define INLINE inline
+#  endif
+#else
+#  ifdef __GNUC__
+#    define INLINE inline
+#  else
+#    define INLINE
+#  endif
+#endif
+
 #undef EXPORT
 #define EXPORT
 
