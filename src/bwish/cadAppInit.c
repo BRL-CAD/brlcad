@@ -54,7 +54,7 @@
 #define IMPORT_ITK	0
 #define IMPORT_IWIDGETS	0
 
-
+int
 Cad_AppInit(Tcl_Interp *interp)
 {
     /* Locate the BRL-CAD-specific Tcl scripts, set the auto_path */
