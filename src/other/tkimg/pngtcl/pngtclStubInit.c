@@ -205,10 +205,10 @@ PngtclStubs pngtclStubs = {
     png_read_end, /* 59 */
     png_destroy_info_struct, /* 60 */
     png_destroy_read_struct, /* 61 */
-    png_read_destroy, /* 62 */
+    NULL, /* 62 */
     png_destroy_write_struct, /* 63 */
     NULL, /* 64 */
-    png_write_destroy, /* 65 */
+    NULL, /* 65 */
     png_set_crc_action, /* 66 */
     png_set_filter, /* 67 */
 #if !defined(PNG_WRITE_WEIGHTED_FILTER_SUPPORTED) || !defined(PNG_FLOATING_POINT_SUPPORTED)

@@ -220,16 +220,20 @@ EXTERN void		png_destroy_read_struct _ANSI_ARGS_((
 				png_structpp png_ptr_ptr,
 				png_infopp info_ptr_ptr,
 				png_infopp end_info_ptr_ptr));
+#if 0
 /* 62 */
 EXTERN void		png_read_destroy _ANSI_ARGS_((png_structp png_ptr,
 				png_infop info_ptr, png_infop end_info_ptr));
+#endif
 /* 63 */
 EXTERN void		png_destroy_write_struct _ANSI_ARGS_((
 				png_structpp png_ptr_ptr,
 				png_infopp info_ptr_ptr));
 /* Slot 64 is reserved */
+#if 0
 /* 65 */
 EXTERN void		png_write_destroy _ANSI_ARGS_((png_structp png_ptr));
+#endif
 /* 66 */
 EXTERN void		png_set_crc_action _ANSI_ARGS_((png_structp png_ptr,
 				int crit_action, int ancil_action));
