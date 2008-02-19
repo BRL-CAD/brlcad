@@ -52,7 +52,7 @@
 /* Private headers */
 #include "brlcad_version.h"
 
-
+int
 Tclcad_Init(Tcl_Interp *interp)
 {
 #if 0
