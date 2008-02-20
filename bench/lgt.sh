@@ -43,8 +43,8 @@ path_to_lgt_sh=`dirname $0`
 
 expected="$path_to_lgt_sh/../src/lgt/lgt"
 if ! test -f "$expected" ; then
-  echo "Can't find LGT"
-  exit 1
+    echo "Can't find LGT"
+    exit 1
 fi
 
 # force locale setting to C so things like date output as expected
@@ -55,22 +55,22 @@ DB="$path_to_lgt_sh/../db"
 
 CMP="$path_to_lgt_sh/pixcmp"
 if test ! -f $CMP ; then
-  cake pixcmp
+    cake pixcmp
 fi
 
 # Alliant NFS hack
 if test x${MACHINE} = xfx ; then
-  cp ${LGT} /tmp/lgt
-  cp ${CMP} /tmp/pixcmp
-  LGT=/tmp/lgt
-  CMP=/tmp/pixcmp
+    cp ${LGT} /tmp/lgt
+    cp ${CMP} /tmp/pixcmp
+    LGT=/tmp/lgt
+    CMP=/tmp/pixcmp
 fi
 
 # This test of LGT assumes a "live" framebuffer here.
 if test x$FB_FILE = x ; then
-  echo "Environment variable FB_FILE must be set to a real framebuffer"
-  echo "for this test of LGT to operate correctly."
-  exit 1
+    echo "Environment variable FB_FILE must be set to a real framebuffer"
+    echo "for this test of LGT to operate correctly."
+    exit 1
 fi
 
 # Run the first set of tests
@@ -154,10 +154,10 @@ o
 q
 EOF
 if test $? = 0 ; then
-  :
+    :
 else
-  echo "Abnormal lgt exit"
-  exit 1
+    echo "Abnormal lgt exit"
+    exit 1
 fi
 
 # Run the second set of tests.  The scripts were created above.
@@ -167,23 +167,23 @@ fi
 
 FAIL=0
 for i in 1 2 3 ; do
-  if ${CMP} "$path_to_lgt_sh/../pix/lgt${i}.pix" lgt${i}a.pix ; then
-    :
-  else
-    echo "Test $i A failed."
-    FAIL=1
-  fi
-  if ${CMP} "$path_to_lgt_sh/../pix/lgt${i}.pix" lgt${i}b.pix
-    then
-    :
-  else
-    echo "Test $i B failed."
-    FAIL=1
-  fi
+    if ${CMP} "$path_to_lgt_sh/../pix/lgt${i}.pix" lgt${i}a.pix ; then
+	:
+    else
+	echo "Test $i A failed."
+	FAIL=1
+    fi
+    if ${CMP} "$path_to_lgt_sh/../pix/lgt${i}.pix" lgt${i}b.pix
+	then
+	:
+    else
+	echo "Test $i B failed."
+	FAIL=1
+    fi
 done
 if test "$FAIL" -eq 0 ; then
-  echo "LGT Tested OK."
-  exit 0
+    echo "LGT Tested OK."
+    exit 0
 fi
 echo "*** LGT does NOT work on this platform ***"
 exit 2
