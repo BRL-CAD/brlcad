@@ -44,12 +44,6 @@
 
 #include "common.h"
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
-#  if !defined(__cplusplus) && !defined(inline)
-#    define inline __inline
-#  endif
-#endif
-
 __BEGIN_DECLS
 
 /* system interface headers */

@@ -291,8 +291,8 @@ typedef unsigned short uint16_t;
         }
 #   endif
 #else
-/*  ignore C99 inline specifier */
-#   define inline
+/*  Microsoft specific inline specifier */
+#   define inline __inline
 #endif /* __cplusplus */
 
 #endif /* if defined(_WIN32) */
