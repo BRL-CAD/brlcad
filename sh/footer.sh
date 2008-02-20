@@ -337,7 +337,7 @@ for mv in $mode_vars ; do
 done
 variables=( ${variables[@]} indent-tabs-mode )
 values=( ${values[@]} t )
-if [ "x$mode" = "xC" ] ; then
+if [ "x$mode" = "xC" -o "x$mode" = "xC++" ] ; then
     variables=( ${variables[@]} c-file-style )
     values=( ${values[@]} "\"stroustrup\"" )
 fi
