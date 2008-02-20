@@ -60,6 +60,7 @@ EXTRA_DIST = \
 	autogen.sh \
 	config.h.in \
 	configure \
+	configure.ac \
 	contrib \
 	example.c \
 	libpng-1.2.25.txt \

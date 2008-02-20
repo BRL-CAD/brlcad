@@ -50,6 +50,7 @@ EXTRA_DIST = \
 	algorithm.txt \
 	amiga \
 	as400 \
+	configure \
 	contrib \
 	examples \
 	libz.dsp \

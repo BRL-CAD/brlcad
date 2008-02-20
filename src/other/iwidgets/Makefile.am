@@ -13,6 +13,7 @@ EXTRA_DIST = \
 	$(brlcadscript_SCRIPTS) \
 	CHANGES \
 	aclocal.m4 \
+	configure.in \
 	demos \
 	incoming \
 	outgoing \

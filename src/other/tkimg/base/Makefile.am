@@ -22,6 +22,7 @@ tkimgb_la_SOURCES = \
 
 EXTRA_DIST = \
 	aclocal.m4 \
+	configure.in \
 	pkgIndex.tcl.in \
 	tclconfig \
 	tkimg.decls \
