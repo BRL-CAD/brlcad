@@ -486,7 +486,7 @@ namespace brlcad {
 /*
  * Local Variables:
  * tab-width: 8
- * mode: C
+ * mode: C++
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:
