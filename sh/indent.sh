@@ -103,6 +103,7 @@ if [ "x$files" = "x" ] ; then
 	grep -v '/doc/' | \
 	grep -v '/m4/' | \
 	grep -v '/misc/' | \
+	grep -v '/sh/' | \
 	grep -v '/other/' | \
 	grep -v 'aclocal.m4' \
 	`"
