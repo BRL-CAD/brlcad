@@ -79,10 +79,10 @@ case "x$ARG_1" in
     x-[sS][eE][cC][oO][nN][dD][sS]) ONLY_SECONDS=yes ; shift ;;
     x--[sS][eE][cC][oO][nN][dD][sS]) ONLY_SECONDS=yes ; shift ;;
     x-*) usage="Usage: $0 time"
-	echo "$usage" 1>&2
-	echo "Unrecognized option [$1]"
-	exit 1
-	;;
+    echo "$usage" 1>&2
+    echo "Unrecognized option [$1]"
+    exit 1
+    ;;
 esac
 if test "x$ONLY_SECONDS" = "xyes" ; then
     ARGS="$*"
@@ -97,19 +97,19 @@ LC_ALL=C
 
 # make sure an argument is given
 if test "x$CONFIG_TIME" = "x" ; then
-	usage="Usage: $0 time"
-	echo "$usage" 1>&2
-	exit 1
+    usage="Usage: $0 time"
+    echo "$usage" 1>&2
+    exit 1
 fi
 
 # if there is no second argument, assume it's just the time
 if test "x$ARG_2" = "x" ; then
-	CONFIG_TIME="`echo $ARGS | tr : ' '`"
+    CONFIG_TIME="`echo $ARGS | tr : ' '`"
 fi
 
 # if there is a fourth, assume date format string
 if test ! "x$ARG_4" = "x" ; then
-	CONFIG_TIME="`echo $ARGS | awk '{print $4}' | tr : ' '`"
+    CONFIG_TIME="`echo $ARGS | awk '{print $4}' | tr : ' '`"
 fi
 
 # parse the end time and convert to a seconds count
@@ -134,8 +134,8 @@ if test "x$pre_sec" = "x" ; then
     if test "x$pre_min" = "x" ; then
 	# presume single value in CONFIG_TIME is elapsed seconds
 	if test ! "x$pre_hour" = "x" ; then
-	   pre_sec="`expr $post_sec - $pre_hour`"
-	   pre_hour=""
+	    pre_sec="`expr $post_sec - $pre_hour`"
+	    pre_hour=""
 	fi
     fi
 fi
@@ -173,50 +173,50 @@ fi
 
 min_elapsed="0"
 if test ! "x$sec_elapsed" = "x0" ; then
-	min_elapsed="`expr $sec_elapsed / 60`"
-	sec_elapsed2="`expr $min_elapsed \* 60`"
-	sec_elapsed="`expr $sec_elapsed - $sec_elapsed2`"
+    min_elapsed="`expr $sec_elapsed / 60`"
+    sec_elapsed2="`expr $min_elapsed \* 60`"
+    sec_elapsed="`expr $sec_elapsed - $sec_elapsed2`"
 fi
 hour_elapsed="0"
 if test ! "x$min_elapsed" = "x0" ; then
-	hour_elapsed="`expr $min_elapsed / 60`"
-	min_elapsed2="`expr $hour_elapsed \* 60`"
-	min_elapsed="`expr $min_elapsed - $min_elapsed2`"
+    hour_elapsed="`expr $min_elapsed / 60`"
+    min_elapsed2="`expr $hour_elapsed \* 60`"
+    min_elapsed="`expr $min_elapsed - $min_elapsed2`"
 fi
 
 # generate a human-readable elapsed time message
 time_elapsed=""
 if test ! "x$hour_elapsed" = "x0" ; then
-	if test "x$hour_elapsed" = "x1" ; then
-	       time_elapsed="$hour_elapsed hour"
-	else
-	       time_elapsed="$hour_elapsed hours"
-	fi
+    if test "x$hour_elapsed" = "x1" ; then
+	time_elapsed="$hour_elapsed hour"
+    else
+	time_elapsed="$hour_elapsed hours"
+    fi
 fi
 if test ! "x$min_elapsed" = "x0" ; then
-	if test ! "x$time_elapsed" = "x" ; then
-	       time_elapsed="${time_elapsed}, "
-	fi
-	time_elapsed="${time_elapsed}${min_elapsed}"
-	if test "x$min_elapsed" = "x1" ; then
-	       time_elapsed="${time_elapsed} minute"
-	else
-	       time_elapsed="${time_elapsed} minutes"
-	fi
+    if test ! "x$time_elapsed" = "x" ; then
+	time_elapsed="${time_elapsed}, "
+    fi
+    time_elapsed="${time_elapsed}${min_elapsed}"
+    if test "x$min_elapsed" = "x1" ; then
+	time_elapsed="${time_elapsed} minute"
+    else
+	time_elapsed="${time_elapsed} minutes"
+    fi
 fi
 if test ! "x$sec_elapsed" = "x0" ; then
-	if test ! "x$time_elapsed" = "x" ; then
-		  time_elapsed="${time_elapsed}, "
-	fi
-	time_elapsed="${time_elapsed}${sec_elapsed}"
-	if test "x$sec_elapsed" = "x1" ; then
-	       time_elapsed="${time_elapsed} second"
-	else
-	       time_elapsed="${time_elapsed} seconds"
-	fi
+    if test ! "x$time_elapsed" = "x" ; then
+	time_elapsed="${time_elapsed}, "
+    fi
+    time_elapsed="${time_elapsed}${sec_elapsed}"
+    if test "x$sec_elapsed" = "x1" ; then
+	time_elapsed="${time_elapsed} second"
+    else
+	time_elapsed="${time_elapsed} seconds"
+    fi
 fi
 if test "x$time_elapsed" = "x" ; then
-	time_elapsed="0 seconds"
+    time_elapsed="0 seconds"
 fi
 
 # output the time elapsed

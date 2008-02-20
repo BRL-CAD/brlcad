@@ -97,14 +97,14 @@ if [ "x$WS_SUCCESSIVE" = "x" ] ; then
 fi
 if [ ! "x$WS_TABSTOPS" = "x" ] ; then
     echo "\
-Overriding the default *system* tabstop of 8 is highly discouraged for
-cross-platform and cross-software compatibility reasons.  Display of
-tabs is generally best left at the default, and instead modifying your
-software's indentation level or tab *display* width instead.
+	Overriding the default *system* tabstop of 8 is highly discouraged for
+	cross-platform and cross-software compatibility reasons.  Display of
+	tabs is generally best left at the default, and instead modifying your
+	software's indentation level or tab *display* width instead.
 
-This script will not change the indentation levels of your file.
-There are other/better tools for that job.
-"
+	This script will not change the indentation levels of your file.
+	There are other/better tools for that job.
+	"
 else
     # default tabtops for inserting real tabs
     WS_TABSTOPS=8
@@ -126,51 +126,51 @@ fi
 # arguments were provided.
 if [ "x$files" = "x" ] ; then
     files="`find . -type f -and \( \
-	    -name '*.[0-9n]' -or \
-	    -name '*.[aA][cC]' -or \
-	    -name '*.[aA][mM]' -or \
-	    -name '*.[cC]' -or \
-	    -name '*.[cC]++' -or \
-	    -name '*.[cC][cC]' -or \
-	    -name '*.[cC][pP]' -or \
-	    -name '*.[cC][pP][pP]' -or \
-	    -name '*.[cC][xX][xX]' -or \
-	    -name '*.[dD][sS][pP]' -or \
-	    -name '*.[eE][lL]' -or \
-	    -name '*.[fF]' -or \
-	    -name '*.[fF][mM][tT]' -or \
-	    -name '*.[hH]' -or \
-	    -name '*.[hH][hH]' -or \
-	    -name '*.[iI][tT][cC][lL]' -or \
-	    -name '*.[iI][tT][kK]' -or \
-	    -name '*.[jJ][aA][vV][aA]' -or \
-	    -name '*.[mM]' -or \
-	    -name '*.[mM]4' -or \
-	    -name '*.[mM][mM]' -or \
-	    -name '*.[pP][lL]' -or \
-	    -name '*.[sS][hH]' -or \
-	    -name '*.[tT][cC][lL]' -or \
-	    -name '*.[tT][kK]' -or \
-	    -name '*.[tT][xX][tT]' -or \
-	    -name 'AUTHORS*' -or \
-	    -name 'COPYING*' -or \
-	    -name 'DEVINFO*' -or \
-	    -name 'HACKING*' -or \
-	    -name 'NEWS*' -or \
-	    -name 'README*' -or \
-	    -name 'TODO*' \
-	    \) | \
-	    grep -v '/other/' | \
-	    grep -v '/CVS/' | \
-	    grep -v '/\.svn/' | \
-	    grep -v '/\.deps/' | \
-	    grep -v '/\.libs/' | \
-	    grep -v 'autom4te.cache' | \
-	    grep -v 'aclocal.m4' | \
-	    grep -v '.ws.bak' | \
-	    grep -v '.ws.expand' | \
-	    grep -v '.ws.new' \
-	  `"
+	-name '*.[0-9n]' -or \
+	-name '*.[aA][cC]' -or \
+	-name '*.[aA][mM]' -or \
+	-name '*.[cC]' -or \
+	-name '*.[cC]++' -or \
+	-name '*.[cC][cC]' -or \
+	-name '*.[cC][pP]' -or \
+	-name '*.[cC][pP][pP]' -or \
+	-name '*.[cC][xX][xX]' -or \
+	-name '*.[dD][sS][pP]' -or \
+	-name '*.[eE][lL]' -or \
+	-name '*.[fF]' -or \
+	-name '*.[fF][mM][tT]' -or \
+	-name '*.[hH]' -or \
+	-name '*.[hH][hH]' -or \
+	-name '*.[iI][tT][cC][lL]' -or \
+	-name '*.[iI][tT][kK]' -or \
+	-name '*.[jJ][aA][vV][aA]' -or \
+	-name '*.[mM]' -or \
+	-name '*.[mM]4' -or \
+	-name '*.[mM][mM]' -or \
+	-name '*.[pP][lL]' -or \
+	-name '*.[sS][hH]' -or \
+	-name '*.[tT][cC][lL]' -or \
+	-name '*.[tT][kK]' -or \
+	-name '*.[tT][xX][tT]' -or \
+	-name 'AUTHORS*' -or \
+	-name 'COPYING*' -or \
+	-name 'DEVINFO*' -or \
+	-name 'HACKING*' -or \
+	-name 'NEWS*' -or \
+	-name 'README*' -or \
+	-name 'TODO*' \
+	\) | \
+	grep -v '/other/' | \
+	grep -v '/CVS/' | \
+	grep -v '/\.svn/' | \
+	grep -v '/\.deps/' | \
+	grep -v '/\.libs/' | \
+	grep -v 'autom4te.cache' | \
+	grep -v 'aclocal.m4' | \
+	grep -v '.ws.bak' | \
+	grep -v '.ws.expand' | \
+	grep -v '.ws.new' \
+	`"
 fi
 
 # successive lines step c preparation
@@ -236,21 +236,21 @@ for file in $files ; do
 	case x$step in
 	    x[aA])
 		# remove whitespace on lines with only whitespace
-		if [ "x$WS_PROGRESS" = "xyes" ] ; then
+	        if [ "x$WS_PROGRESS" = "xyes" ] ; then
 		    echo -n "a"
 		fi
 		perl -pi -e 's/^[ \t]*$//g' "$file.ws.new"
 		;;
 	    x[bB])
 		# remove whitespace at end of all lines
-		if [ "x$WS_PROGRESS" = "xyes" ] ; then
+	        if [ "x$WS_PROGRESS" = "xyes" ] ; then
 		    echo -n "b"
 		fi
 		perl -pi -e 's/[ \t]*$//g' "$file.ws.new"
 		;;
 	    x[cC])
 		# remove successive blank lines
-		if [ "x$WS_PROGRESS" = "xyes" ] ; then
+	        if [ "x$WS_PROGRESS" = "xyes" ] ; then
 		    echo -n "c"
 		fi
 		cmd="perl -0777 -pi -e $step_c_regex \"$file.ws.new\""
@@ -258,21 +258,21 @@ for file in $files ; do
 		;;
 	    x[dD])
 		# remove all blank lines from end of file
-		if [ "x$WS_PROGRESS" = "xyes" ] ; then
+	        if [ "x$WS_PROGRESS" = "xyes" ] ; then
 		    echo -n "d"
 		fi
 		perl -0777 -pi -e 's/\n\n*$/\n/' "$file.ws.new"
 		;;
 	    x[eE])
 		# ensure there is a trailing newline
-		if [ "x$WS_PROGRESS" = "xyes" ] ; then
+	        if [ "x$WS_PROGRESS" = "xyes" ] ; then
 		    echo -n "e"
 		fi
 		perl -0777 -pi -e 's/\([^\n]\)$/\1\n/' "$file.ws.new"
 		;;
 	    x[fF])
 		# convert embedded tabs to spaces
-		if [ "x$WS_PROGRESS" = "xyes" ] ; then
+	        if [ "x$WS_PROGRESS" = "xyes" ] ; then
 		    echo -n "f"
 		fi
 		if [ -f "$file.ws.expand" ] ; then
@@ -286,12 +286,12 @@ for file in $files ; do
 		;;
 	    x[gG])
 		# convert leading whitespace and tabs, insert tabs
-		if [ "x$WS_PROGRESS" = "xyes" ] ; then
+	        if [ "x$WS_PROGRESS" = "xyes" ] ; then
 		    echo -n "g"
 		fi
 		cmd1="perl -pi -e $step_g_regex1 \"$file.ws.new\""
 		cmd2="perl -pi -e $step_g_regex2 \"$file.ws.new\""
-
+		
 		# regex woes, nasty hack -- iterate to clean up
 		# indentation one tab at a time.
 		count=0
@@ -302,7 +302,7 @@ for file in $files ; do
 		done
 		;;
 	esac
-
+	
     done
 
     # if the file changed, move it into place and keep a backup

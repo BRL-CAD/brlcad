@@ -52,37 +52,37 @@ LC_ALL=C
 # files, CVS foo, or known binary files.
 if [ "x$files" = "x" ] ; then
     files="`find . -type f | \
-	    grep -v '/.#' | \
-	    grep -v '.deps/' | \
-	    grep -v '.libs/' | \
-	    grep -v '.svn/' | \
-	    grep -v 'CVS' | \
-	    grep -v 'Makefile$' |\
-	    grep -v 'Makefile.in$' |\
-	    grep -v 'autom4te.cache' | \
-	    grep -v 'config.cache' | \
-	    grep -v 'config.status' | \
-	    grep -v 'misc/enigma/' | \
-	    grep -v 'misc/vfont/' | \
-	    grep -v 'other/' | \
-	    grep -v '\.bak$' |\
-	    grep -v '\.bmp$' |\
-	    grep -v '\.dll$' |\
-	    grep -v '\.g$' | \
-	    grep -v '\.gif$' |\
-	    grep -v '\.ico$' |\
-	    grep -v '\.jpg$' |\
-	    grep -v '\.lo$' |\
-	    grep -v '\.log' |\
-	    grep -v '\.mpg$' |\
-	    grep -v '\.o$' |\
-	    grep -v '\.old$' |\
-	    grep -v '\.pdf$' |\
-	    grep -v '\.pix' |\
-	    grep -v '\.png$' |\
-	    grep -v '#$' |\
-	    grep -v '~$' \
-	  `"
+	grep -v '/.#' | \
+	grep -v '.deps/' | \
+	grep -v '.libs/' | \
+	grep -v '.svn/' | \
+	grep -v 'CVS' | \
+	grep -v 'Makefile$' |\
+	grep -v 'Makefile.in$' |\
+	grep -v 'autom4te.cache' | \
+	grep -v 'config.cache' | \
+	grep -v 'config.status' | \
+	grep -v 'misc/enigma/' | \
+	grep -v 'misc/vfont/' | \
+	grep -v 'other/' | \
+	grep -v '\.bak$' |\
+	grep -v '\.bmp$' |\
+	grep -v '\.dll$' |\
+	grep -v '\.g$' | \
+	grep -v '\.gif$' |\
+	grep -v '\.ico$' |\
+	grep -v '\.jpg$' |\
+	grep -v '\.lo$' |\
+	grep -v '\.log' |\
+	grep -v '\.mpg$' |\
+	grep -v '\.o$' |\
+	grep -v '\.old$' |\
+	grep -v '\.pdf$' |\
+	grep -v '\.pix' |\
+	grep -v '\.png$' |\
+	grep -v '#$' |\
+	grep -v '~$' \
+	`"
 fi
 
 # process the files

@@ -43,38 +43,34 @@
 PATH=$PATH:/vld/mike/.bin.4d:
 export PATH
 
-if test "$1" = ""
-then
-	echo "Usage: any-png.sh [-r] image_file [flags]"
-	exit 1
+if test "$1" = "" ; then
+    echo "Usage: any-png.sh [-r] image_file [flags]"
+    exit 1
 fi
 
 FILTER=
-if test "$1" = "-r"
-then
+if test "$1" = "-r" ; then
 	# Reverse black and white.
-	FILTER="pixelswap 0 0 0 255 255 255 |"
-	shift
+    FILTER="pixelswap 0 0 0 255 255 255 |"
+    shift
 fi
 
 OLDFILE=$1
 shift
 FLAGS="$*"
 
-if test ! -f $OLDFILE
-then
-	echo "$0: $OLDFILE does not exist"
-	exit 1
+if test ! -f $OLDFILE ; then
+    echo "$0: $OLDFILE does not exist"
+    exit 1
 fi
 
 eval `pixinfo.sh $OLDFILE`      # sets BASE, SUFFIX, WIDTH, HEIGHT
 
 NEWFILE=${BASE}.png
-if test -f $NEWFILE
-then
-	ls -l $NEWFILE
-	echo "$0: $NEWFILE already exists, aborting"
-	exit 1
+if test -f $NEWFILE ; then
+    ls -l $NEWFILE
+    echo "$0: $NEWFILE already exists, aborting"
+    exit 1
 fi
 
 # The "r" (pre-read) flag to /dev/mem is essential to make stdin reading work.
@@ -83,28 +79,27 @@ PNGIFY="$FILTER fb-png -F\"/dev/memr -\" -w$WIDTH -n$HEIGHT "
 # set -x
 
 case $SUFFIX in
-pix)
+    pix)
 	eval "< $OLDFILE $PNGIFY $NEWFILE";;
-bw)
+    bw)
 	bw-pix $OLDFILE | eval $PNGIFY -#1 $NEWFILE;;
-rle)
+    rle)
 	rle-pix $OLDFILE | eval $PNGIFY $NEWFILE;;
-jpg|jpeg)
+    jpg|jpeg)
 	jpeg-fb -F"/dev/mem -" $OLDFILE | eval $PNGIFY $NEWFILE;;
-png)
+    png)
 	# This can sometimes be useful as a way of getting more compression.
 	png-pix $OLDFILE | eval $PNGIFY $NEWFILE;;
-gif)
+    gif)
 	gif-fb -c -F"/dev/mem -" $OLDFILE | eval $PNGIFY $NEWFILE;;
-*)
+    *)
 	echo "Image type /$SUFFIX/ is not supported by $0, aborting."
 	exit 1;;
 esac
 
-if test $? -ne 0
-then
-	echo "*** ERROR *** $OLDFILE not converted. ***"
-	exit 1
+if test $? -ne 0 ; then
+    echo "*** ERROR *** $OLDFILE not converted. ***"
+    exit 1
 fi
 
 chmod 444 $NEWFILE

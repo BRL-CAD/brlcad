@@ -69,13 +69,13 @@ usage ( ) {
     fi
 
     cat <<EOF
-Usage: $0 base_root stable_release
+    Usage: $0 base_root stable_release
 
-	base_root is a base directory that will contain your links
-	stable_release is the root directory to link "stable"
+    base_root is a base directory that will contain your links
+    stable_release is the root directory to link "stable"
 
-linkroot.sh installation support script by Christopher Sean Morrison
-revised 3-clause BSD-license, copyright (c) $__copyright
+    linkroot.sh installation support script by Christopher Sean Morrison
+    revised 3-clause BSD-license, copyright (c) $__copyright
 EOF
     exit 1
 }

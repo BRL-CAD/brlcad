@@ -47,15 +47,11 @@
 #
 #       eval `pixinfo.sh $FILE`         # Sets BASE, SUFFIX, WIDTH, HEIGHT
 #
-#  -Mike Muuss, BRL, 11-Sept-92.
-#
-#  $Header$
 
-if test "$1" = ""
-then
-	echo "Usage: pixinfo.sh filename"
-	echo "  gives /bin/sh definitions for BASE SUFFIX WIDTH HEIGHT"
-	exit 1
+if test "$1" = "" ; then
+    echo "Usage: pixinfo.sh filename"
+    echo "  gives /bin/sh definitions for BASE SUFFIX WIDTH HEIGHT"
+    exit 1
 fi
 
 FILE="$1"
@@ -64,54 +60,54 @@ FILE="$1"
 # This primarily affects the returned BASE string.
 # LHS is added in a second step, in case there is no dot at all.
 eval `basename "$FILE" | tr '&;$!=' '+,---' | \
-	sed -e 's/\\(.*\\)\\.\\(.*\\)/\\1;SUFFIX=\\2;/' -e 's/^/LHS=/' `
+    sed -e 's/\\(.*\\)\\.\\(.*\\)/\\1;SUFFIX=\\2;/' -e 's/^/LHS=/' `
 
 # First, see if size is encoded in the name.
 BASE=
 case "$SUFFIX" in
-pix|bw)
+    pix|bw)
 	eval `echo $LHS|sed \
--e 's/\\(.*\\)-w\\([0-9]*\\)-n\\([0-9]*\\)/;BASE=\\1;WIDTH=\\2;HEIGHT=\\3;/' \
--e 's/^/GOOP=/' `
+	-e 's/\\(.*\\)-w\\([0-9]*\\)-n\\([0-9]*\\)/;BASE=\\1;WIDTH=\\2;HEIGHT=\\3;/' \
+	-e 's/^/GOOP=/' `
 	# if BASE is not set, then the file name is not of this form,
 	# and GOOP will have the full string in it.
 	;;
 esac
 
 if test "$BASE" = ""
-then
-	BASE="$LHS"
+    then
+    BASE="$LHS"
 fi
 
 # Second, see if some program can tell us more about this file,
 # usually giving -w -n style info.
 ARGS=""
 case "$SUFFIX" in
-pix)
+    pix)
 	eval `pixautosize -b 3 -f $FILE`;;      # Sets WIDTH, HEIGHT
-bw)
+    bw)
 	eval `pixautosize -b 1 -f $FILE`;;      # Sets WIDTH, HEIGHT
-dpix)
+    dpix)
 	eval `pixautosize -b 24 -f $FILE`;;     # Sets WIDTH, HEIGHT
-dbw)
+    dbw)
 	eval `pixautosize -b 8 -f $FILE`;;      # Sets WIDTH, HEIGHT
-yuv)
+    yuv)
 	eval `pixautosize -b 2 -f $FILE`;;      # Sets WIDTH, HEIGHT
-png)
+    png)
 	eval `png-fb -H $FILE`;;                # Sets WIDTH, HEIGHT
-jpg|jpeg)
+    jpg|jpeg)
 	ARGS=`jpeg-fb -h $FILE` ;;
-rle)
+    rle)
 	ARGS=`rle-pix -H $FILE` ;;
-gif)
+    gif)
 	ARGS=`gif2fb -h $FILE 2>&1 ` ;;
-pr|ras)
+    pr|ras)
 	ARGS=`sun-pix -h $FILE` ;;
-"")
+    "")
 	# No suffix given, this is a problem.
 	ARGS="-w0 -n0"
 	SUFFIX=unknown ;;
-*)
+    *)
 	#  Suffix not recognized, just act innocent.
 	#  Calling routine may know what to do anyway, and just wants
 	#  the BASE and SUFFIX strings
@@ -119,21 +115,20 @@ pr|ras)
 esac
 
 set -- `getopt hs:S:w:n:W:N: $ARGS`
-while :
-do
-	case $1 in
+while : ; do
+    case $1 in
 	-h)
-		WIDTH=1024; HEIGHT=1024;;
+	    WIDTH=1024; HEIGHT=1024;;
 	-s|-S)
-		WIDTH=$2; HEIGHT=$2; shift;;
+	    WIDTH=$2; HEIGHT=$2; shift;;
 	-w|-W)
-		WIDTH=$2; shift;;
+	    WIDTH=$2; shift;;
 	-n|-N)
-		HEIGHT=$2; shift;;
+	    HEIGHT=$2; shift;;
 	--)
-		break;
-	esac
-	shift
+	    break;
+    esac
+    shift
 done
 
 echo "BASE=$BASE; SUFFIX=$SUFFIX; WIDTH=$WIDTH; HEIGHT=$HEIGHT"

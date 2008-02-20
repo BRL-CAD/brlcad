@@ -85,7 +85,7 @@ set -- `getopt C:SH:F:D:MA:x:X:s:f:a:e:l:O:o:p:P:Bb:n:w:iIJ "$@"`
 
 # If no compute server specified in users environment, use default.
 if test x$COMPUTE_SERVER = x
-then
+    then
     echo "need to set the COMPUTE_SERVER environment variable"
     exit 1
 fi
@@ -93,8 +93,8 @@ fi
 # If no framebuffer is specified in the users environment,
 # then route the image back over the network to the local display.
 if test x$FB_FILE = x
-then
-	FB_FILE=`hostname`:
+    then
+    FB_FILE=`hostname`:
 fi
 
 # The "rrt" command in MGED provides only user-specified option overrides.
@@ -106,21 +106,20 @@ ARGS="-M -I -s256"
 
 # Grind through all the options, looking out specially for -F (framebuffer)
 # and -C (override compute-server)
-while :
-do
-	case $1 in
+while : ; do
+    case $1 in
 	-S|-M|-B|-i|-I|-J)
-		ARGS="$ARGS $1";;
+	    ARGS="$ARGS $1";;
 	-H|-D|-A|-x|-X|-s|-f|-a|-e|-l|-O|-o|-p|-P|-b|-n|-w)
-		ARGS="$ARGS $1 $2"; shift;;
+	    ARGS="$ARGS $1 $2"; shift;;
 	-F)
-		FB_FILE="$2"; shift;;
+	    FB_FILE="$2"; shift;;
 	-C)
-		COMPUTE_SERVER="$2"; shift;;
+	    COMPUTE_SERVER="$2"; shift;;
 	--)
-		break;;
-	esac
-	shift
+	    break;;
+    esac
+    shift
 done
 shift                   # eliminate getopt provided "--" from $1
 
@@ -129,18 +128,17 @@ ARGS="-F $FB_FILE $ARGS"
 
 # Make certain that a database and at least one option are specified
 if test $# -lt 2
-then
-	echo 'Usage:  $PROG_NAME [rt opts] database.g object(s)'
-	exit 1
+    then
+    echo 'Usage:  $PROG_NAME [rt opts] database.g object(s)'
+    exit 1
 fi
 
 DBASE=$1; shift
 OBJS=$*
 
-if test ! -f $DBASE
-then
-	echo "$PROG_NAME -- $DBASE unreadable"
-	exit 1
+if test ! -f $DBASE ; then
+    echo "$PROG_NAME -- $DBASE unreadable"
+    exit 1
 fi
 
 echo ""
@@ -155,8 +153,8 @@ REM_MAT="/tmp/${USER}mat"
 g2asc < $DBASE | rsh $COMPUTE_SERVER "rm -f $REM_DB; asc2g > $REM_DB"
 
 RCMD="cat > $REM_MAT; \
-	rt $ARGS $REM_DB $OBJS < $REM_MAT; \
-	rm -f $REM_DB $REM_MAT"
+rt $ARGS $REM_DB $OBJS < $REM_MAT; \
+rm -f $REM_DB $REM_MAT"
 
 # Uses stdin from invoker, typ. MGED rrt command
 # Note that RT needs to be able to seek backwards in the matrix file,

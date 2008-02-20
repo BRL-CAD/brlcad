@@ -73,7 +73,7 @@ sum() {
 	for _num in $* ; do
 	    _total="`expr $_total \+ $_num`"
 	done
-   fi
+    fi
     echo $_total
 }
 

@@ -159,15 +159,15 @@ days ( ) {
 
     _dys=0
     case $_mon in
-	 1) _dys=0 ;;
-	 2) _dys=31 ;;
-	 3) _dys=59 ;;
-	 4) _dys=90 ;;
-	 5) _dys=120 ;;
-	 6) _dys=151 ;;
-	 7) _dys=181 ;;
-	 8) _dys=212 ;;
-	 9) _dys=243 ;;
+	1) _dys=0 ;;
+	2) _dys=31 ;;
+	3) _dys=59 ;;
+	4) _dys=90 ;;
+	5) _dys=120 ;;
+	6) _dys=151 ;;
+	7) _dys=181 ;;
+	8) _dys=212 ;;
+	9) _dys=243 ;;
 	10) _dys=273 ;;
 	11) _dys=304 ;;
 	12) _dys=334 ;;
@@ -617,14 +617,14 @@ for _item in $_itemURLS ; do
 	    if [ "x$DELETED" = "xyes" -o "x$_itemStatus" = "xClosed" ] ; then
 		# add the item to the output list
 		_itemLines="$_itemLines
-$_itemLine"
+	$_itemLine"
 		wrote=$(($wrote + 1))
 	    fi
 	fi
     else
 	# add the item to the output list
 	_itemLines="$_itemLines
-$_itemLine"
+	$_itemLine"
 	wrote=$(($wrote + 1))
     fi
 

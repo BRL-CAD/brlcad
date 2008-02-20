@@ -45,12 +45,12 @@
 
 export IGNOREEOF=10
 if [ $# -lt 1 -o $# -gt 2 ] ; then
-    echo "Usage: $0 database.g [tol]"
-    exit -1
+	echo "Usage: $0 database.g [tol]"
+	exit -1
 fi
 
 if [ $# -eq 2 ] ; then
-    export TOL=$2
+	export TOL=$2
 else
     TOL="rel 0.01"
 fi
@@ -61,8 +61,8 @@ STATUS=1
 while [ X$STATUS != X0 ] ; do
 
     mged -c $1 <<EOF
-tol $TOL
-facetize_all_regions $1.fail
+    tol $TOL
+    facetize_all_regions $1.fail
 EOF
     STATUS=$?
 
