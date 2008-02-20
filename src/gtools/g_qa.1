@@ -171,7 +171,7 @@ Other analysis in the error detection category behave in a similar manner.
 .SH OPTIONS
 .TP
 .B \-A \fR\fIanalysis_flags\fR
-Specifies which computations are to be performed and reported.
+\fRSpecifies which computations are to be performed and reported.
 The
 .I analysis_flags
 parameter is one or more of the following:
@@ -260,7 +260,7 @@ specified on the command line.
 .B \-a \fR\fIazimuth_deg\fR
 .B Not Implemented.
 .br
-Sets a rotation (in degrees) of the coordinate system by a given amount about the Z axis.
+\fRSets a rotation (in degrees) of the coordinate system by a given amount about the Z axis.
 The default is 0.
 See also:
 .B \-e
@@ -268,19 +268,19 @@ See also:
 .B \-e \fR\fIelevation_deg\fR
 .B Not Implemented.
 .br
-Sets a rotation (in degrees) of the coordinate system by a given elevation from the XY plane (rotation about X axis?).
+\fRSets a rotation (in degrees) of the coordinate system by a given elevation from the XY plane (rotation about X axis?).
 The default is 0.
 See also
 .B \-a
 .TP
 .B \-f \fR\fIfilename\fR
-Specifies that density values should be taken from an external file instead of from the
+\fRSpecifies that density values should be taken from an external file instead of from the
 .B _DENSITIES
 object in the database.
 This option can be useful when developing the density table with a text editor, prior to importing it to the geometric database.
 .TP
 .B \-g \fR\fI[initial_grid_spacing-]grid_spacing_limit\fR
-Specifies a limit on how far the grid can be refined
+\fRSpecifies a limit on how far the grid can be refined
 and optionally the initial spacing between rays in the grids.
 The first value (if present) indicates the inital spacing between grid rays.
 The mandatory argument, "\fIgrid_spacing_limit\fR",
@@ -343,7 +343,7 @@ The last item is an object to represent the overlapping area so that it can be e
 The default is that no groups are created.
 .TP
 .B \-n \fR\fInum_hits\fR
-Specifies that the grid be refined until each region has at least
+\fRSpecifies that the grid be refined until each region has at least
 .I num_hits
 ray intersections.  Applies only when Weight or Volume calculations are being performed.
 This limit is not applied per-view, but rather per-analysis.
@@ -353,7 +353,7 @@ The default is 1.
 Hence, each region must be intersected by a ray at least once during the analysis.
 .TP
 .B \-N \fR\fInum_views\fR
-Specifies that only the first
+\fRSpecifies that only the first
 .I num_views
 should be computed.  This is principly a debugging option.
 .TP
@@ -368,7 +368,7 @@ command to help visualize the analysis results.
 Each of the different analysis types write to a separate plot file and use different colors for drawing.
 .TP
 .B \-P \fR\fIncpu\fR
-Specifies that
+\fRSpecifies that
 .I ncpu
 CPUs should be used for performing the calculation.
 By default, all local CPUs are utilized.
@@ -383,7 +383,7 @@ Indicates that
 should print per-region statistics for weight and volume as well as the values for the objects specified on the command line.
 .TP
 .B \-S \fR\fIsamples_per_model_axis\fR
-Specifies that the grid spacing will be initially refined so that at least
+\fRSpecifies that the grid spacing will be initially refined so that at least
 .I samples_per_axis_min
 will be shot along each axis of the bounding box of the model.
 For example, if the objects specified have a bounding box of 0 0 0 -> 4 3 2 and the grid spacing is 1.0, specifying the option
@@ -392,7 +392,7 @@ will cause the initial grid spacing to be adjusted to 0.5 so that 4 samples will
 The default is to assure 1 rays per model grid axis.
 .TP
 .B \-t \fR\fIoverlap_tolerance\fR
-Sets the tolerance for computing overlaps.  the
+\fRSets the tolerance for computing overlaps.  the
 .I overlap_tolerance
 must be a positive number equal to or greater than 0.0.
 Any overlap smaller than the value specified will be ignored.
@@ -403,7 +403,7 @@ or
 .B -t 0.25in.
 .TP
 .B \-U \fR\fIuse_air\fR
-Specifies the Boolean value (0 or 1) for
+\fRSpecifies the Boolean value (0 or 1) for
 .I use_air
 which indicates whether regions which are marked as "air" should be retained and included in the raytrace.
 .B Unlike other BRL-CAD raytracing applications the default is to retain air in the raytracing.
@@ -415,7 +415,7 @@ If you turn off use_air, and request any analysis that requires it (see
 above) then the program will exit with an error message.
 .TP
 .B \-u \fR\fIdistane,volume,weight\fR
-Specify the units used when reporting values.  Values must be comma delimited and provided in the order
+\fRSpecify the units used when reporting values.  Values must be comma delimited and provided in the order
 \fIdistance\fR,\fIvolume\fR,\fIweight\fR.  For example:
 .B \-u ``cm,cu ft,kg''
 or \fB\-u ,,kg\fR (the latter example sets only the weight units).
@@ -431,7 +431,7 @@ learning how the computation is progressing, and what tolerances are causing
 further computation to be necessary.
 .TP
 .B \-V \fR\fIvolume_tolerance[units]\fR
-Specifies a volumetric tolerance value that the three view computations must be within for computation to complete.
+\fRSpecifies a volumetric tolerance value that the three view computations must be within for computation to complete.
 If volume calculation is selected and this option is not set, then the tolerance is set to
 1/10,000 of the volume of the model.
 For large, complex objets (such as entire vehicles), this value might need to be
@@ -440,7 +440,7 @@ Given the approximate sampling nature of the algorithm, the
 three separate view computations will not usually produce identical results.
 .TP
 .B \-W \fR\fIweight_tolerance[units]\fR
-This is like the volume tolerance, \fB\-T\fR, but is applied to the weight computation results,
+\fRThis is like the volume tolerance, \fB\-T\fR, but is applied to the weight computation results,
 not the volume computation results.
 
 The weight computation tolerance is probably more appropriate when doing whole-vehicle analysis.
