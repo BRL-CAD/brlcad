@@ -36,6 +36,7 @@
 #define USE_PROTOTYPES 1
 
 /* XXX - should not rely on config_win.h providing these headers. */
+#define NOMINMAX
 #include <windows.h>
 #include <fcntl.h>
 #include <io.h>
