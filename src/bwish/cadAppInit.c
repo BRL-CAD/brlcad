@@ -26,16 +26,10 @@
 
 #include "common.h"
 
-#ifdef BWISH
-#  include "itk.h"
-#else
-#  if defined(_WIN32) && !defined(__CYGWIN__)
-#    include <windows.h>
-#  endif
-#  include "itcl.h"
-#endif
+#include "itcl.h"
 
 #ifdef BWISH
+#  include "itk.h"
 #  include "dm.h"
 #  include "fb.h"
 #  include "blt.h"
