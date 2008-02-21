@@ -46,13 +46,18 @@ extern "C++" {
 #include "opennurbs_ext.h"
 #include <iostream>
 #include <fstream>
-
 }
 extern "C" {
 #endif
 
 #include "vmath.h"
 #include "bu.h"
+
+#if 0
+#ifdef __cplusplus
+extern "C" {
+#endif
+#endif
 
 #ifndef __cplusplus
 typedef struct _on_brep_placeholder {
