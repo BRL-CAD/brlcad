@@ -151,7 +151,7 @@
 #define sys_errlist _sys_errlist
 #define sys_nerr _sys_nerr
 
-#define fmax max
+#define fmax __max
 #define ioctl ioctlsocket
 
 /*
