@@ -1093,7 +1093,7 @@ rt_brep_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
  * file-based archiving operations. This implies the
  */
 
-class ON_CLASS RT_MemoryArchive : public ON_BinaryArchive
+class RT_MemoryArchive : public ON_BinaryArchive
 {
 public:
   RT_MemoryArchive();
