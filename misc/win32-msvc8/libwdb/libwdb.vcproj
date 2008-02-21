@@ -48,8 +48,8 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="../../../src/other/tcl/generic;../../../src/other/tcl/win;../../../include"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;WDB_EXPORT_DLL;TCL_THREADS=1;__win32;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;_CRT_SECURE_NO_WARNINGS"
+				AdditionalIncludeDirectories="../../../src/other/tcl/generic;../../../src/other/tcl/win;../../../include;../../../src/other/libz;../../../src/other/opennurbs"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;__win32;ON_DLL_IMPORTS;WDB_EXPORT_DLL;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;OBJ_BREP=1;TCL_THREADS=1;_CRT_SECURE_NO_WARNINGS"
 				StringPooling="true"
 				BasicRuntimeChecks="0"
 				RuntimeLibrary="2"
@@ -79,7 +79,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="tcl85.lib libbu.lib libbn.lib librt.lib"
+				AdditionalDependencies="tcl85.lib libbu.lib libbn.lib librt.lib opennurbs.lib"
 				OutputFile=".\Release/libwdb.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
@@ -133,6 +133,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\libwdb\bot.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libwdb\brep.cpp"
 				>
 			</File>
 			<File

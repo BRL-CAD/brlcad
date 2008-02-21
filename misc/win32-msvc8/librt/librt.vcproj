@@ -4,6 +4,7 @@
 	Version="8.00"
 	Name="librt"
 	ProjectGUID="{EA0BB405-25E2-4B31-92D7-97316770F32B}"
+	RootNamespace="librt"
 	>
 	<Platforms>
 		<Platform
@@ -48,13 +49,14 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="../../../include;../../../src/librt;../../../src/other/tcl/generic;../../../src/other/tcl/win"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;RT_EXPORT_DLL;DB5_EXPORT_DLL;TCL_THREADS=1;__win32;BRLCAD_DLL;NEW_TOPS_BEHAVIOR;HAVE_CONFIG_H;BRLCADBUILD;_CRT_SECURE_NO_WARNINGS"
+				AdditionalIncludeDirectories="../../../include;../../../src/librt;../../../src/other/tcl/generic;../../../src/other/tcl/win;../../../src/other/libz;../../../src/other/opennurbs;../../../src/other/tnt"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;__win32;ON_DLL_IMPORTS;RT_EXPORT_DLL;DB5_EXPORT_DLL;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;NEW_TOPS_BEHAVIOR;OBJ_BREP=1;TCL_THREADS=1;_CRT_SECURE_NO_WARNINGS"
 				StringPooling="true"
 				BasicRuntimeChecks="0"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				TreatWChar_tAsBuiltInType="false"
+				RuntimeTypeInfo="true"
 				UsePrecompiledHeader="0"
 				PrecompiledHeaderFile=".\Release/librt.pch"
 				AssemblerListingLocation=".\Release/"
@@ -79,7 +81,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="tcl85.lib libbu.lib libbn.lib libsysv.lib libregex.lib"
+				AdditionalDependencies="tcl85.lib libbu.lib libbn.lib libsysv.lib libregex.lib opennurbs.lib"
 				OutputFile=".\Release/librt.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
@@ -261,6 +263,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\librt\g_bot.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\g_brep.cpp"
 				>
 			</File>
 			<File
@@ -585,6 +591,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\librt\nurb_xsplit.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\opennurbs_ext.cpp"
 				>
 			</File>
 			<File
