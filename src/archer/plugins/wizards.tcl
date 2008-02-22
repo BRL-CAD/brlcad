@@ -27,9 +27,9 @@
 #
 
 if [ file exists Wizards ] {
-  cd Wizards
-  Archer::pluginLoadCWDFiles
-  cd ..
+    cd Wizards
+    Archer::pluginLoadCWDFiles
+    cd ..
 }
 
 

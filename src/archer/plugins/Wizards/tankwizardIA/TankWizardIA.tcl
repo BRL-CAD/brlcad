@@ -562,8 +562,8 @@
 ::itcl::body TankWizardIA::buildParameterView {parent} {
     itk_component add paramScroll {
 	iwidgets::scrolledframe $parent.paramScroll \
-		    -hscrollmode dynamic \
-		    -vscrollmode dynamic
+	    -hscrollmode dynamic \
+	    -vscrollmode dynamic
     } {}
     set newParent [$itk_component(paramScroll) childsite]
 
@@ -1079,8 +1079,8 @@
     } {}
     itk_component add frontArmorCB {
 	iwidgets::combobox $parent.frontArmorCB \
-		-textvariable [::itcl::scope frontArmorType] \
-		-selectioncommand [::itcl::code $this setFrontArmorThickness]
+	    -textvariable [::itcl::scope frontArmorType] \
+	    -selectioncommand [::itcl::code $this setFrontArmorThickness]
     } {
 	usual
     }
@@ -1093,8 +1093,8 @@
     } {}
     itk_component add sideArmorCB {
 	iwidgets::combobox $parent.sideArmorCB \
-		-textvariable [::itcl::scope sideArmorType] \
-		-selectioncommand [::itcl::code $this setSideArmorThickness]
+	    -textvariable [::itcl::scope sideArmorType] \
+	    -selectioncommand [::itcl::code $this setSideArmorThickness]
     } {
 	usual
     }
@@ -1107,8 +1107,8 @@
     } {}
     itk_component add sponsonArmorCB {
 	iwidgets::combobox $parent.sponsonsArmorCB \
-		-textvariable [::itcl::scope sponsonArmorType] \
-		-selectioncommand [::itcl::code $this setSponsonArmorThickness]
+	    -textvariable [::itcl::scope sponsonArmorType] \
+	    -selectioncommand [::itcl::code $this setSponsonArmorThickness]
     } {
 	usual
     }
@@ -1121,8 +1121,8 @@
     } {}
     itk_component add rearArmorCB {
 	iwidgets::combobox $parent.rearArmorCB \
-		-textvariable [::itcl::scope rearArmorType] \
-		-selectioncommand [::itcl::code $this setRearArmorThickness]
+	    -textvariable [::itcl::scope rearArmorType] \
+	    -selectioncommand [::itcl::code $this setRearArmorThickness]
     } {
 	usual
     }
@@ -1135,8 +1135,8 @@
     } {}
     itk_component add roofArmorCB {
 	iwidgets::combobox $parent.roofArmorCB \
-		-textvariable [::itcl::scope roofArmorType] \
-		-selectioncommand [::itcl::code $this setRoofArmorThickness]
+	    -textvariable [::itcl::scope roofArmorType] \
+	    -selectioncommand [::itcl::code $this setRoofArmorThickness]
     } {
 	usual
     }
@@ -1218,7 +1218,7 @@
     } {}
     itk_component add $prefix\Label {
 	label $itk_component($prefix).label -text $text \
-		-anchor w
+	    -anchor w
     } {}
     itk_component add $prefix\View {
 	frame $itk_component($prefix).$prefix\View
@@ -1228,8 +1228,8 @@
     grid $itk_component($prefix\Label) -row 0 -column 1 -sticky w
     grid columnconfigure $itk_component($prefix) 1 -weight 1
     $itk_component($prefix\Arrow) configure -command [::itcl::code $this toggle \
-	    $itk_component($prefix\Arrow) $itk_component($prefix\View) -row 1 \
-	    -column 1 -sticky nsew]
+							  $itk_component($prefix\Arrow) $itk_component($prefix\View) -row 1 \
+							  -column 1 -sticky nsew]
 }
 
 ::itcl::body TankWizardIA::addWizardAttrs {obj {onlyTop 1}} {
@@ -1491,8 +1491,8 @@
     set v7 [vectorScale [vectorAdd $v7 $tankCenter] $local2base]
     set v8 [vectorScale [vectorAdd $v8 $tankCenter] $local2base]
     $archersMged put $wizardTop\_hull_rear.s arb8 \
-	    V1 $v1 V2 $v2 V3 $v3 V4 $v4 \
-	    V5 $v5 V6 $v6 V7 $v7 V8 $v8
+	V1 $v1 V2 $v2 V3 $v3 V4 $v4 \
+	V5 $v5 V6 $v6 V7 $v7 V8 $v8
 
     # build front of hull
     set v1 [list $extHalfLength -$extHalfWidth [expr {-$extHalfHeight + $convHeight}]]
@@ -1500,42 +1500,42 @@
     set v1 [vectorScale [vectorAdd $v1 $tankCenter] $local2base]
     set v2 [vectorScale [vectorAdd $v2 $tankCenter] $local2base]
     $archersMged put $wizardTop\_hull_front.s arb8 \
-	    V1 $v5 V2 $v8 V3 $v7 V4 $v6 \
-	    V5 $v1 V6 $v1 V7 $v2 V8 $v2
+	V1 $v5 V2 $v8 V3 $v7 V4 $v6 \
+	V5 $v1 V6 $v1 V7 $v2 V8 $v2
 
     # make right side wheel well cut solid
     set v1 [list \
-	    -$extHalfLength \
-	    -$extHalfWidth \
-	    -$extHalfHeight]
+		-$extHalfLength \
+		-$extHalfWidth \
+		-$extHalfHeight]
     set v2 [list \
-	    -$extHalfLength \
-	    [expr {-$extHalfWidth + $wwDepth}] \
-	    -$extHalfHeight]
+		-$extHalfLength \
+		[expr {-$extHalfWidth + $wwDepth}] \
+		-$extHalfHeight]
     set v3 [list \
-	    -$extHalfLength \
-	    [expr {-$extHalfWidth + $wwDepth}] \
-	    [expr {-$extHalfHeight + $wwHeight}]]
+		-$extHalfLength \
+		[expr {-$extHalfWidth + $wwDepth}] \
+		[expr {-$extHalfHeight + $wwHeight}]]
     set v4 [list \
-	    -$extHalfLength \
-	    -$extHalfWidth \
-	    [expr {-$extHalfHeight + $wwHeight}]]
+		-$extHalfLength \
+		-$extHalfWidth \
+		[expr {-$extHalfHeight + $wwHeight}]]
     set v5 [list \
-	    $extHalfLength \
-	    -$extHalfWidth \
-	    -$extHalfHeight]
+		$extHalfLength \
+		-$extHalfWidth \
+		-$extHalfHeight]
     set v6 [list \
-	    $extHalfLength \
-	    [expr {-$extHalfWidth + $wwDepth}] \
-	    -$extHalfHeight]
+		$extHalfLength \
+		[expr {-$extHalfWidth + $wwDepth}] \
+		-$extHalfHeight]
     set v7 [list \
-	    $extHalfLength \
-	    [expr {-$extHalfWidth + $wwDepth}] \
-	    [expr {-$extHalfHeight + $wwHeight}]]
+		$extHalfLength \
+		[expr {-$extHalfWidth + $wwDepth}] \
+		[expr {-$extHalfHeight + $wwHeight}]]
     set v8 [list \
-	    $extHalfLength \
-	    -$extHalfWidth \
-	    [expr {-$extHalfHeight + $wwHeight}]]
+		$extHalfLength \
+		-$extHalfWidth \
+		[expr {-$extHalfHeight + $wwHeight}]]
     set v1 [vectorScale [vectorAdd $v1 $tankCenter] $local2base]
     set v2 [vectorScale [vectorAdd $v2 $tankCenter] $local2base]
     set v3 [vectorScale [vectorAdd $v3 $tankCenter] $local2base]
@@ -1545,8 +1545,8 @@
     set v7 [vectorScale [vectorAdd $v7 $tankCenter] $local2base]
     set v8 [vectorScale [vectorAdd $v8 $tankCenter] $local2base]
     $archersMged put $wizardTop\_re_wwcut.s arb8 \
-	    V1 $v1 V2 $v2 V3 $v3 V4 $v4 \
-	    V5 $v5 V6 $v6 V7 $v7 V8 $v8
+	V1 $v1 V2 $v2 V3 $v3 V4 $v4 \
+	V5 $v5 V6 $v6 V7 $v7 V8 $v8
 
     # make left side wheel well cut solid
     set v1 [list -$extHalfLength $extHalfWidth -$extHalfHeight]
@@ -1806,37 +1806,37 @@
     for {set i 0} {$i < 3} {incr i} {
 	for {set j 0} {$j < 3} {incr j} {
 	    set v1 [list \
-		    [expr {-$extHalfLength + $i * $zoneLengthDelta}] \
-		    [expr {-$extHalfWidth + $j * $zoneWidthDelta}] \
-		    -$extHalfHeight]
+			[expr {-$extHalfLength + $i * $zoneLengthDelta}] \
+			[expr {-$extHalfWidth + $j * $zoneWidthDelta}] \
+			-$extHalfHeight]
 	    set v2 [list \
-		    [expr {-$extHalfLength + $i * $zoneLengthDelta}] \
-		    [expr {-$extHalfWidth + ($j + 1) * $zoneWidthDelta}] \
-		    -$extHalfHeight]
+			[expr {-$extHalfLength + $i * $zoneLengthDelta}] \
+			[expr {-$extHalfWidth + ($j + 1) * $zoneWidthDelta}] \
+			-$extHalfHeight]
 	    set v3 [list \
-		    [expr {-$extHalfLength + $i * $zoneLengthDelta}] \
-		    [expr {-$extHalfWidth + ($j + 1) * $zoneWidthDelta}] \
-		    [expr {-$extHalfHeight + $wwHeight}]]
+			[expr {-$extHalfLength + $i * $zoneLengthDelta}] \
+			[expr {-$extHalfWidth + ($j + 1) * $zoneWidthDelta}] \
+			[expr {-$extHalfHeight + $wwHeight}]]
 	    set v4 [list \
-		    [expr {-$extHalfLength + $i * $zoneLengthDelta}] \
-		    [expr {-$extHalfWidth + $j * $zoneWidthDelta}] \
-		    [expr {-$extHalfHeight + $wwHeight}]]
+			[expr {-$extHalfLength + $i * $zoneLengthDelta}] \
+			[expr {-$extHalfWidth + $j * $zoneWidthDelta}] \
+			[expr {-$extHalfHeight + $wwHeight}]]
 	    set v5 [list \
-		    [expr {-$extHalfLength + ($i + 1) * $zoneLengthDelta}] \
-		    [expr {-$extHalfWidth + $j * $zoneWidthDelta}] \
-		    -$extHalfHeight]
+			[expr {-$extHalfLength + ($i + 1) * $zoneLengthDelta}] \
+			[expr {-$extHalfWidth + $j * $zoneWidthDelta}] \
+			-$extHalfHeight]
 	    set v6 [list \
-		    [expr {-$extHalfLength + ($i + 1) * $zoneLengthDelta}] \
-		    [expr {-$extHalfWidth + ($j + 1) * $zoneWidthDelta}] \
-		    -$extHalfHeight]
+			[expr {-$extHalfLength + ($i + 1) * $zoneLengthDelta}] \
+			[expr {-$extHalfWidth + ($j + 1) * $zoneWidthDelta}] \
+			-$extHalfHeight]
 	    set v7 [list \
-		    [expr {-$extHalfLength + ($i + 1) * $zoneLengthDelta}] \
-		    [expr {-$extHalfWidth + ($j + 1) * $zoneWidthDelta}] \
-		    [expr {-$extHalfHeight + $wwHeight}]]
+			[expr {-$extHalfLength + ($i + 1) * $zoneLengthDelta}] \
+			[expr {-$extHalfWidth + ($j + 1) * $zoneWidthDelta}] \
+			[expr {-$extHalfHeight + $wwHeight}]]
 	    set v8 [list \
-		    [expr {-$extHalfLength + ($i + 1) * $zoneLengthDelta}] \
-		    [expr {-$extHalfWidth + $j * $zoneWidthDelta}] \
-		    [expr {-$extHalfHeight + $wwHeight}]]
+			[expr {-$extHalfLength + ($i + 1) * $zoneLengthDelta}] \
+			[expr {-$extHalfWidth + $j * $zoneWidthDelta}] \
+			[expr {-$extHalfHeight + $wwHeight}]]
 
 	    set v1 [vectorScale [vectorAdd $v1 $tankCenter] $local2base]
 	    set v2 [vectorScale [vectorAdd $v2 $tankCenter] $local2base]
@@ -1872,10 +1872,10 @@
 	    }
 
 	    $archersMged put $wizardTop\_$zdir$xdir$ydir\_hullZone.s arb8 \
-		    V1 $v1 V2 $v2 V3 $v3 V4 $v4 \
-		    V5 $v5 V6 $v6 V7 $v7 V8 $v8
+		V1 $v1 V2 $v2 V3 $v3 V4 $v4 \
+		V5 $v5 V6 $v6 V7 $v7 V8 $v8
 	    $archersMged c $wizardTop\_$zdir$xdir$ydir\_hullZone.r \
-		    $wizardTop\_hullInterior.c + $wizardTop\_$zdir$xdir$ydir\_hullZone.s
+		$wizardTop\_hullInterior.c + $wizardTop\_$zdir$xdir$ydir\_hullZone.s
 
 	    $archersMged adjust $wizardTop\_$zdir$xdir$ydir\_hullZone.r \
 		region yes \
@@ -1903,37 +1903,37 @@
 	for {set i 0} {$i < 3} {incr i} {
 	    for {set j 0} {$j < 3} {incr j} {
 		set v1 [list \
-			[expr {-$extHalfLength + $i * $zoneLengthDelta}] \
-			[expr {-$extHalfWidth + $j * $zoneWidthDelta}] \
-			[expr {-$extHalfHeight + $wwHeight + $h * $zoneUpperHeightDelta}]]
+			    [expr {-$extHalfLength + $i * $zoneLengthDelta}] \
+			    [expr {-$extHalfWidth + $j * $zoneWidthDelta}] \
+			    [expr {-$extHalfHeight + $wwHeight + $h * $zoneUpperHeightDelta}]]
 		set v2 [list \
-			[expr {-$extHalfLength + $i * $zoneLengthDelta}] \
-			[expr {-$extHalfWidth + ($j + 1) * $zoneWidthDelta}] \
-			[expr {-$extHalfHeight + $wwHeight + $h * $zoneUpperHeightDelta}]]
+			    [expr {-$extHalfLength + $i * $zoneLengthDelta}] \
+			    [expr {-$extHalfWidth + ($j + 1) * $zoneWidthDelta}] \
+			    [expr {-$extHalfHeight + $wwHeight + $h * $zoneUpperHeightDelta}]]
 		set v3 [list \
-			[expr {-$extHalfLength + $i * $zoneLengthDelta}] \
-			[expr {-$extHalfWidth + ($j + 1) * $zoneWidthDelta}] \
-			[expr {-$extHalfHeight + $wwHeight + ($h + 1) * $zoneUpperHeightDelta}]]
+			    [expr {-$extHalfLength + $i * $zoneLengthDelta}] \
+			    [expr {-$extHalfWidth + ($j + 1) * $zoneWidthDelta}] \
+			    [expr {-$extHalfHeight + $wwHeight + ($h + 1) * $zoneUpperHeightDelta}]]
 		set v4 [list \
-			[expr {-$extHalfLength + $i * $zoneLengthDelta}] \
-			[expr {-$extHalfWidth + $j * $zoneWidthDelta}] \
-			[expr {-$extHalfHeight + $wwHeight + ($h + 1) * $zoneUpperHeightDelta}]]
+			    [expr {-$extHalfLength + $i * $zoneLengthDelta}] \
+			    [expr {-$extHalfWidth + $j * $zoneWidthDelta}] \
+			    [expr {-$extHalfHeight + $wwHeight + ($h + 1) * $zoneUpperHeightDelta}]]
 		set v5 [list \
-			[expr {-$extHalfLength + ($i + 1) * $zoneLengthDelta}] \
-			[expr {-$extHalfWidth + $j * $zoneWidthDelta}] \
-			[expr {-$extHalfHeight + $wwHeight + $h * $zoneUpperHeightDelta}]]
+			    [expr {-$extHalfLength + ($i + 1) * $zoneLengthDelta}] \
+			    [expr {-$extHalfWidth + $j * $zoneWidthDelta}] \
+			    [expr {-$extHalfHeight + $wwHeight + $h * $zoneUpperHeightDelta}]]
 		set v6 [list \
-			[expr {-$extHalfLength + ($i + 1) * $zoneLengthDelta}] \
-			[expr {-$extHalfWidth + ($j + 1) * $zoneWidthDelta}] \
-			[expr {-$extHalfHeight + $wwHeight + $h * $zoneUpperHeightDelta}]]
+			    [expr {-$extHalfLength + ($i + 1) * $zoneLengthDelta}] \
+			    [expr {-$extHalfWidth + ($j + 1) * $zoneWidthDelta}] \
+			    [expr {-$extHalfHeight + $wwHeight + $h * $zoneUpperHeightDelta}]]
 		set v7 [list \
-			[expr {-$extHalfLength + ($i + 1) * $zoneLengthDelta}] \
-			[expr {-$extHalfWidth + ($j + 1) * $zoneWidthDelta}] \
-			[expr {-$extHalfHeight + $wwHeight + ($h + 1) * $zoneUpperHeightDelta}]]
+			    [expr {-$extHalfLength + ($i + 1) * $zoneLengthDelta}] \
+			    [expr {-$extHalfWidth + ($j + 1) * $zoneWidthDelta}] \
+			    [expr {-$extHalfHeight + $wwHeight + ($h + 1) * $zoneUpperHeightDelta}]]
 		set v8 [list \
-			[expr {-$extHalfLength + ($i + 1) * $zoneLengthDelta}] \
-			[expr {-$extHalfWidth + $j * $zoneWidthDelta}] \
-			[expr {-$extHalfHeight + $wwHeight + ($h + 1) * $zoneUpperHeightDelta}]]
+			    [expr {-$extHalfLength + ($i + 1) * $zoneLengthDelta}] \
+			    [expr {-$extHalfWidth + $j * $zoneWidthDelta}] \
+			    [expr {-$extHalfHeight + $wwHeight + ($h + 1) * $zoneUpperHeightDelta}]]
 
 		set v1 [vectorScale [vectorAdd $v1 $tankCenter] $local2base]
 		set v2 [vectorScale [vectorAdd $v2 $tankCenter] $local2base]
@@ -2164,8 +2164,8 @@
     set roadWheelRadius [expr {$roadWheelDiameter * 0.5}]
     set tlen [expr {$hullLength - $lowerOffset}]
     set dx [expr {($tlen - $roadWheelDiameter - \
-	    $idlerWheelDiameter - $sprocketDiameter - 2 * $trackThickness) / \
-	    double($numRoadWheels - 1)}]
+		       $idlerWheelDiameter - $sprocketDiameter - 2 * $trackThickness) / \
+		      double($numRoadWheels - 1)}]
 
     set ly $extHalfWidth
     set ry -$extHalfWidth
@@ -2240,9 +2240,9 @@
 
     if {$l_rwtree != {}} {
 	$archersMged put $wizardTop\_l_roadWheels comb \
-		region no tree $l_rwtree
+	    region no tree $l_rwtree
 	$archersMged put $wizardTop\_r_roadWheels comb \
-		region no tree $r_rwtree
+	    region no tree $r_rwtree
 	$archersMged put $wizardTop\_roadWheels comb \
 	    region no tree \
 	    [list u \
@@ -2331,9 +2331,9 @@
 
     if {$l_iwtree != {}} {
 	$archersMged put $wizardTop\_l_idlerWheels comb \
-		region no tree $l_iwtree
+	    region no tree $l_iwtree
 	$archersMged put $wizardTop\_r_idlerWheels comb \
-		region no tree $r_iwtree
+	    region no tree $r_iwtree
 	$archersMged put $wizardTop\_idlerWheels comb \
 	    region no tree \
 	    [list u \

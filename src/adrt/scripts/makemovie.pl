@@ -29,13 +29,13 @@
 ############################################################
 
 if($ARGV[2] eq "") {
-  print "usage: ./makemovie.pl width height quality movie.mpeg\n";
-  print "       * Quality: 1 == low, 2 == medium, 3 == high.\n";
-  print "       * Must be run from directory containing PNG images.\n";
-  print "       * Assumes input images are of the format image_0000.png.\n";
-  print "       * Assumes Image Magick (convert) is installed and in your Path.\n";
-  print "       * Assumes (mpeg2encode) is installed and in your Path.\n";
-  exit;
+    print "usage: ./makemovie.pl width height quality movie.mpeg\n";
+    print "       * Quality: 1 == low, 2 == medium, 3 == high.\n";
+    print "       * Must be run from directory containing PNG images.\n";
+    print "       * Assumes input images are of the format image_0000.png.\n";
+    print "       * Assumes Image Magick (convert) is installed and in your Path.\n";
+    print "       * Assumes (mpeg2encode) is installed and in your Path.\n";
+    exit;
 }
 
 $width = $ARGV[0];
@@ -43,11 +43,11 @@ $height = $ARGV[1];
 $bitrate = 1152000.0;
 $buffers = 16;
 if($ARGV[2] == 2) {
-  $bitrate *= 2;
-  $buffers *= 2;
+    $bitrate *= 2;
+    $buffers *= 2;
 } elsif($ARGV[2] == 3) {
-  $bitrate *= 4;
-  $buffers *= 4;
+    $bitrate *= 4;
+    $buffers *= 4;
 }
 $movie = $ARGV[2];
 
@@ -56,36 +56,36 @@ $list = qx(echo *.ppm);
 $num_frames = @images;
 
 sub phase_1 {
-  print "Phase 1: Converting (".@images.") images.\n";
+    print "Phase 1: Converting (".@images.") images.\n";
 
-  $i = 1;
+    $i = 1;
 
-  foreach $image (@images) {
-    ($filename, $ext) = split("_", $image);
-    ($num, $ext) = split('\.', $ext);
+    foreach $image (@images) {
+	($filename, $ext) = split("_", $image);
+	($num, $ext) = split('\.', $ext);
 
-    $num = int($num);
-    $newimage = $filename."_"."$num".".ppm";
+	$num = int($num);
+	$newimage = $filename."_"."$num".".ppm";
 
 #    system("convert $image $newimage");
-    system("mv $image $newimage");
-    $status = 100 * $i / $num_frames;
-    $status = substr($status, 0, 4);
-    print "  status: ".$status."%     \r";
-    $| = 1; # flush stdout
-    $i++;
-  }
+	system("mv $image $newimage");
+	$status = 100 * $i / $num_frames;
+	$status = substr($status, 0, 4);
+	print "  status: ".$status."%     \r";
+	$| = 1; # flush stdout
+	$i++;
+    }
 }
 
 sub phase_2 {
-  print "\n";
-  print "Phase 2: Generate MPEG movie (".$movie.").\n";
+    print "\n";
+    print "Phase 2: Generate MPEG movie (".$movie.").\n";
 
-  open(fh, ">mpeg.par");
-  print fh <<eol;
-mpeg2encode
-image_%d  /* name of source files */
--         /* name of reconstructed images ("-": don't store) */
+    open(fh, ">mpeg.par");
+    print fh <<eol;
+    mpeg2encode
+	image_%d  /* name of source files */
+	-         /* name of reconstructed images ("-": don't store) */
 -         /* name of intra quant matrix file     ("-": default matrix) */
 -         /* name of non intra quant matrix file ("-": default matrix) */
 stat.out  /* name of statistics file ("-": stdout ) */
@@ -145,12 +145,12 @@ eol
 }
 
 sub phase_3 {
-  printf("Phase 3: Cleanup.\n");
+    printf("Phase 3: Cleanup.\n");
 
-  ###  Clean up
-  system("rm *.ppm");
-  system("rm mpeg.par");
-  system("rm stat.out");
+    ###  Clean up
+    system("rm *.ppm");
+    system("rm mpeg.par");
+    system("rm stat.out");
 }
 
 ### MAIN ###

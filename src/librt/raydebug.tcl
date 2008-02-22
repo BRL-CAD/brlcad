@@ -42,7 +42,7 @@
 ####
 
 # The next line restarts the shell script using BRL-CAD's WISH \
-exec bwish "$0" "$@"
+    exec bwish "$0" "$@"
 
 puts "running raydebug.tcl"
 
@@ -62,25 +62,25 @@ pack .number .reset_button -side left -in .number_fr
 
 puts "mged_sense"
 if { [catch { send mged echo NIL } status] } {
-	puts "send to MGED failed, status=$status"
-	puts "MGED's window needs to be opened with 'openw' command."
-	puts "or issue 'tk appname mged' to MGED."
-	puts "Also, check your DISPLAY = $env(DISPLAY)"
-	exit
+    puts "send to MGED failed, status=$status"
+    puts "MGED's window needs to be opened with 'openw' command."
+    puts "or issue 'tk appname mged' to MGED."
+    puts "Also, check your DISPLAY = $env(DISPLAY)"
+    exit
 }
 
 proc do_advance {} {
-	global num
+    global num
 
-	incr num
-	send mged "Z; overlay cell$num.pl"
+    incr num
+    send mged "Z; overlay cell$num.pl"
 }
 
 proc do_reverse {} {
-	global num
+    global num
 
-	incr num -1
-	send mged "Z; overlay cell$num.pl"
+    incr num -1
+    send mged "Z; overlay cell$num.pl"
 }
 
 # Local Variables:

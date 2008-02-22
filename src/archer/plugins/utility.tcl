@@ -27,9 +27,9 @@
 #
 
 if [ file exists Utility ] {
-  cd Utility
-  Archer::pluginLoadCWDFiles
-  cd ..
+    cd Utility
+    Archer::pluginLoadCWDFiles
+    cd ..
 }
 
 # Local Variables:

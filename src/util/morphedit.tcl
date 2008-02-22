@@ -31,11 +31,11 @@
 
 # Use the bwish that's in the same bin directory as morphedit.tcl
 # this is a comment \
-CADPATH=`dirname $0`
+    CADPATH=`dirname $0`
 # this is a comment \
-BWISH=$CADPATH/bwish
+    BWISH=$CADPATH/bwish
 # the next line restarts using bwish \
-exec $BWISH "$0" "$@"
+    exec $BWISH "$0" "$@"
 
 set brlcad_path [bu_brlcad_root bin]
 set PIXFB [file join $brlcad_path pix-fb]
@@ -55,7 +55,7 @@ proc usage {} {
     global argv0
 
     puts \
- "Usage: [file tail $argv0] \[-w width\] \[-n height\] \[-a align\] picA.pix picB.pix linesfile"
+	"Usage: [file tail $argv0] \[-w width\] \[-n height\] \[-a align\] picA.pix picB.pix linesfile"
     puts "   where align is one of the following:"
     puts "     horizontal   : images are arranged horizontally in a single window"
     puts "     vertical     : images are arranged vertically in a single window"
@@ -74,11 +74,11 @@ set align ""
 while { $argc > 3 } {
     switch -glob -- [lindex $argv 0] {
 	-w { set width [lindex $argv 1];
-	     incr argc -1; set argv [lrange $argv 1 end] }
+	    incr argc -1; set argv [lrange $argv 1 end] }
 	-n { set height [lindex $argv 1];
-	     incr argc -1; set argv [lrange $argv 1 end] }
+	    incr argc -1; set argv [lrange $argv 1 end] }
 	-a { set align [lindex $argv 1];
-	     incr argc -1; set argv [lrange $argv 1 end] }
+	    incr argc -1; set argv [lrange $argv 1 end] }
 	-w* { scan [lindex $argv 0] -w%d width }
 	-n* { scan [lindex $argv 0] -n%d height }
 	-a* { scan [lindex $argv 0] -a%s align }
@@ -225,26 +225,26 @@ proc lineseg2screen { lineseg } {
     global width height
 
     return [list [expr round([lindex $lineseg 0]*$width)] \
-		 [expr round((1-[lindex $lineseg 1])*$height)] \
-		 [expr round([lindex $lineseg 2]*$width)] \
-		 [expr round((1-[lindex $lineseg 3])*$height)] \
-		 [expr round([lindex $lineseg 4]*$width)] \
-		 [expr round((1-[lindex $lineseg 5])*$height)] \
-		 [expr round([lindex $lineseg 6]*$width)] \
-		 [expr round((1-[lindex $lineseg 7])*$height)]]
+		[expr round((1-[lindex $lineseg 1])*$height)] \
+		[expr round([lindex $lineseg 2]*$width)] \
+		[expr round((1-[lindex $lineseg 3])*$height)] \
+		[expr round([lindex $lineseg 4]*$width)] \
+		[expr round((1-[lindex $lineseg 5])*$height)] \
+		[expr round([lindex $lineseg 6]*$width)] \
+		[expr round((1-[lindex $lineseg 7])*$height)]]
 }
 
 proc screen2lineseg { slineseg } {
     global width height
 
     return [list [expr double([lindex $slineseg 0])/$width] \
-		 [expr 1.0-double([lindex $slineseg 1])/$height] \
-		 [expr double([lindex $slineseg 2])/$width] \
-		 [expr 1.0-double([lindex $slineseg 3])/$height] \
-		 [expr double([lindex $slineseg 4])/$width] \
-		 [expr 1.0-double([lindex $slineseg 5])/$height] \
-		 [expr double([lindex $slineseg 6])/$width] \
-		 [expr 1.0-double([lindex $slineseg 7])/$height]]
+		[expr 1.0-double([lindex $slineseg 1])/$height] \
+		[expr double([lindex $slineseg 2])/$width] \
+		[expr 1.0-double([lindex $slineseg 3])/$height] \
+		[expr double([lindex $slineseg 4])/$width] \
+		[expr 1.0-double([lindex $slineseg 5])/$height] \
+		[expr double([lindex $slineseg 6])/$width] \
+		[expr 1.0-double([lindex $slineseg 7])/$height]]
 }
 
 # create items for existing line segments
@@ -252,12 +252,12 @@ proc screen2lineseg { slineseg } {
 set citems {}
 foreach line $linesegs {
     scan [lineseg2screen $line] "%d %d %d %d %d %d %d %d" x1A y1A x1B y1B \
-							  x2A y2A x2B y2B
+	x2A y2A x2B y2B
 
     set line1 [$canv(0) create line $x1A $y1A $x1B $y1B -fill $colors(normal) \
-				  -width $LINEWID -tags lineseg]
+		   -width $LINEWID -tags lineseg]
     set line2 [$canv(1) create line $x2A $y2A $x2B $y2B -fill $colors(normal) \
-				  -width $LINEWID -tags lineseg]
+		   -width $LINEWID -tags lineseg]
     set pt1A [$canv(0) create rectangle [expr $x1A-$POINTRAD] \
 		  [expr $y1A-$POINTRAD] [expr $x1A+$POINTRAD] \
 		  [expr $y1A+$POINTRAD] -fill $colors(normal) -tags endpt]
@@ -272,7 +272,7 @@ foreach line $linesegs {
 		  [expr $y2B+$POINTRAD] -fill $colors(normal) -tags endpt]
 
     lappend citems [list [list $line1 $line2] \
-	    [list $pt1A $pt2A] [list $pt1B $pt2B]]
+			[list $pt1A $pt2A] [list $pt1B $pt2B]]
 }
 
 proc nop_mode {} {
@@ -310,12 +310,12 @@ proc selected_endpt_mode { index pindex item itempair itemrecord } {
 
     foreach i { 0 1 } {
 	bind $canv($i) <ButtonPress-1> \
-	 [list press_endpt $i $index $pindex $item $itempair $itemrecord %x %y]
+	    [list press_endpt $i $index $pindex $item $itempair $itemrecord %x %y]
 	bind $canv($i) <B1-Motion> {}
 	bind $canv($i) <ButtonRelease-1> {}
 	$canv($i) bind endpt <Enter> {}
 	$canv($i) bind endpt <Leave> \
-	       [list leave_endpt $i $pindex $index $item $itempair $itemrecord]
+	    [list leave_endpt $i $pindex $index $item $itempair $itemrecord]
 	$canv($i) bind lineseg <Enter> {}
 	$canv($i) bind lineseg <Leave> {}
     }
@@ -327,11 +327,11 @@ proc held_endpt_mode { index pindex item itempair itemrecord deltax deltay } {
     foreach i { 0 1 } {
 	bind $canv($i) <ButtonPress-1> {}
 	bind $canv($i) <B1-Motion> \
-	       [list drag_endpt $i $index $pindex $item $itempair $itemrecord \
-				$deltax $deltay %x %y]
+	    [list drag_endpt $i $index $pindex $item $itempair $itemrecord \
+		 $deltax $deltay %x %y]
 	bind $canv($i) <ButtonRelease-1> \
-	       [list release_endpt $i $index $pindex $item $itempair \
-				   $itemrecord $deltax $deltay %x %y]
+	    [list release_endpt $i $index $pindex $item $itempair \
+		 $itemrecord $deltax $deltay %x %y]
 	$canv($i) bind endpt <Enter> {}
 	$canv($i) bind endpt <Leave> {}
 	$canv($i) bind lineseg <Enter> {}
@@ -344,14 +344,14 @@ proc selected_lineseg_mode { index item itempair itemrecord } {
 
     foreach i { 0 1 } {
 	bind $canv($i) <ButtonPress-1> \
-	       [list press_lineseg $i $index $item $itempair $itemrecord %x %y]
+	    [list press_lineseg $i $index $item $itempair $itemrecord %x %y]
 	bind $canv($i) <B1-Motion> {}
 	bind $canv($i) <ButtonRelease-1> {}
 	$canv($i) bind endpt <Enter> {}
 	$canv($i) bind endpt <Leave> {}
 	$canv($i) bind lineseg <Enter> {}
 	$canv($i) bind lineseg <Leave> \
-	       [list leave_lineseg $i $index $item $itempair $itemrecord]
+	    [list leave_lineseg $i $index $item $itempair $itemrecord]
     }
 }
 
@@ -361,11 +361,11 @@ proc held_lineseg_mode { index item itempair itemrecord dx1 dy1 dx2 dy2 } {
     foreach i { 0 1 } {
 	bind $canv($i) <ButtonPress-1> {}
 	bind $canv($i) <B1-Motion> \
-		[list drag_lineseg $i $index $item $itempair $itemrecord \
-				   $dx1 $dy1 $dx2 $dy2 %x %y]
+	    [list drag_lineseg $i $index $item $itempair $itemrecord \
+		 $dx1 $dy1 $dx2 $dy2 %x %y]
 	bind $canv($i) <ButtonRelease-1> \
-		[list release_lineseg $i $index $item $itempair $itemrecord \
-				   $dx1 $dy1 $dx2 $dy2 %x %y]
+	    [list release_lineseg $i $index $item $itempair $itemrecord \
+		 $dx1 $dy1 $dx2 $dy2 %x %y]
 	$canv($i) bind endpt <Enter> {}
 	$canv($i) bind endpt <Leave> {}
 	$canv($i) bind lineseg <Enter> {}
@@ -376,7 +376,7 @@ proc held_lineseg_mode { index item itempair itemrecord dx1 dy1 dx2 dy2 } {
 proc find_item { ci tcl_id indexp pindexp itempairp itemrecordp } {
     global citems building
     upvar $indexp index $pindexp pindex $itempairp itempair \
-	    $itemrecordp itemrecord
+	$itemrecordp itemrecord
 
     set index -1
     set pindex -1
@@ -420,7 +420,7 @@ proc enter_endpt { ci } {
 
     if { $index==-1 } then return
 
-# To prevent infinite loops, disable entry/exit events while raising.
+    # To prevent infinite loops, disable entry/exit events while raising.
 
     nop_mode
     foreach pair $itemrecord {
@@ -428,7 +428,7 @@ proc enter_endpt { ci } {
 	$canv(1) raise [lindex $pair 1]
     }
 
-# Highlight both the point on this canvas and the point on the other canvas.
+    # Highlight both the point on this canvas and the point on the other canvas.
 
     $canv(0) itemconfigure [lindex $itempair 0] -fill $colors(highlighted)
     $canv(1) itemconfigure [lindex $itempair 1] -fill $colors(highlighted)
@@ -457,10 +457,10 @@ proc press_endpt { ci index pindex item itempair itemrecord x y } {
     $canv($ci) itemconfigure $item -fill $colors(held)
     if { $pindex==1 } then { set qindex 2 } else { set qindex 1 }
     $canv($ci) itemconfigure [lindex [lindex $itemrecord $qindex] $ci] \
-	    -fill $colors(other)
-#    $canv($ci) coords [lindex [lindex $itemrecord 0] $ci] \
-#	    [expr $xbase-$POINTRAD] [expr $ybase-$POINTRAD] \
-#	    [expr $xbase+$POINTRAD] [expr $ybase+$POINTRAD]
+	-fill $colors(other)
+    #    $canv($ci) coords [lindex [lindex $itemrecord 0] $ci] \
+	#	    [expr $xbase-$POINTRAD] [expr $ybase-$POINTRAD] \
+	#	    [expr $xbase+$POINTRAD] [expr $ybase+$POINTRAD]
 
     held_endpt_mode $index $pindex $item $itempair $itemrecord $deltax $deltay
 }
@@ -474,11 +474,11 @@ proc drag_endpt { ci index pindex item itempair itemrecord dx dy x y } {
     if { $pindex!="building" } then {
 	set coords [$canv($ci) coords [lindex [lindex $itemrecord 0] $ci]]
 	set coords [lreplace $coords [expr 2*$pindex-2] [expr 2*$pindex-1] \
-			     $nx $ny]
+			$nx $ny]
 	eval $canv($ci) coords [lindex [lindex $itemrecord 0] $ci] $coords
     }
     $canv($ci) coords $item [expr $nx-$POINTRAD] [expr $ny-$POINTRAD] \
-			    [expr $nx+$POINTRAD] [expr $ny+$POINTRAD]
+	[expr $nx+$POINTRAD] [expr $ny+$POINTRAD]
     $canv($ci) raise $item
 }
 
@@ -497,19 +497,19 @@ proc release_endpt { ci index pindex item itempair itemrecord dx dy x y } {
     }
 
     set line [lreplace [lineseg2screen [lindex $linesegs $index]] \
-	    [expr 4*$ci+2*$pindex-2] [expr 4*$ci+2*$pindex-1] $nx $ny]
+		  [expr 4*$ci+2*$pindex-2] [expr 4*$ci+2*$pindex-1] $nx $ny]
     set linesegs [lreplace $linesegs $index $index [screen2lineseg $line]]
 
     $canv(0) itemconfigure [lindex $itempair 0] -fill $colors(highlighted)
     $canv(1) itemconfigure [lindex $itempair 1] -fill $colors(highlighted)
     if { $pindex==1 } then { set qindex 2 } else { set qindex 1 }
     $canv($ci) itemconfigure [lindex [lindex $itemrecord $qindex] $ci] \
-	    -fill $colors(normal)
+	-fill $colors(normal)
 
     eval $canv($ci) coords [lindex [lindex $itemrecord 0] $ci] \
-	    [lrange $line [expr 4*$ci] [expr 4*$ci+3]]
+	[lrange $line [expr 4*$ci] [expr 4*$ci+3]]
     $canv($ci) coords $item [expr $nx-$POINTRAD] [expr $ny-$POINTRAD] \
-			    [expr $nx+$POINTRAD] [expr $ny+$POINTRAD]
+	[expr $nx+$POINTRAD] [expr $ny+$POINTRAD]
 
     selected_endpt_mode $index $pindex $item $itempair $itemrecord
 }
@@ -522,7 +522,7 @@ proc enter_lineseg { ci } {
 
     if { $index==-1 } then return
 
-# Highlight all parts current item
+    # Highlight all parts current item
 
     nop_mode
 
@@ -592,9 +592,9 @@ proc drag_lineseg { ci index item itempair itemrecord dx1 dy1 dx2 dy2 x y } {
 
     $canv($ci) coords $item $nx1 $ny1 $nx2 $ny2
     $canv($ci) coords $pt1 [expr $nx1-$POINTRAD] [expr $ny1-$POINTRAD] \
-			   [expr $nx1+$POINTRAD] [expr $ny1+$POINTRAD]
+	[expr $nx1+$POINTRAD] [expr $ny1+$POINTRAD]
     $canv($ci) coords $pt2 [expr $nx2-$POINTRAD] [expr $ny2-$POINTRAD] \
-			   [expr $nx2+$POINTRAD] [expr $ny2+$POINTRAD]
+	[expr $nx2+$POINTRAD] [expr $ny2+$POINTRAD]
     $canv($ci) raise $pt1
     $canv($ci) raise $pt2
 }
@@ -611,7 +611,7 @@ proc release_lineseg { ci index item itempair itemrecord dx1 dy1 dx2 dy2 x y} {
     set pt2 [lindex [lindex $itemrecord 2] $ci]
 
     set line [lreplace [lineseg2screen [lindex $linesegs $index]] \
-	    [expr 4*$ci] [expr 3+4*$ci] $nx1 $ny1 $nx2 $ny2]
+		  [expr 4*$ci] [expr 3+4*$ci] $nx1 $ny1 $nx2 $ny2]
     set linesegs [lreplace $linesegs $index $index [screen2lineseg $line]]
 
     $canv($ci) itemconfigure $item -fill $colors(highlighted)
@@ -620,9 +620,9 @@ proc release_lineseg { ci index item itempair itemrecord dx1 dy1 dx2 dy2 x y} {
 
     $canv($ci) coords $item $nx1 $ny1 $nx2 $ny2
     $canv($ci) coords $pt1 [expr $nx1-$POINTRAD] [expr $ny1-$POINTRAD] \
-			   [expr $nx1+$POINTRAD] [expr $ny1+$POINTRAD]
+	[expr $nx1+$POINTRAD] [expr $ny1+$POINTRAD]
     $canv($ci) coords $pt2 [expr $nx2-$POINTRAD] [expr $ny2-$POINTRAD] \
-			   [expr $nx2+$POINTRAD] [expr $ny2+$POINTRAD]
+	[expr $nx2+$POINTRAD] [expr $ny2+$POINTRAD]
     $canv($ci) raise $pt1
     $canv($ci) raise $pt2
 
@@ -633,16 +633,16 @@ proc press_normal { ci x y } {
     global building citems canv colors POINTRAD LINEWID n linesegs
 
     set newpt(0) [$canv(0) create rectangle [expr $x-$POINTRAD] \
-	    [expr $y-$POINTRAD] [expr $x+$POINTRAD] [expr $y+$POINTRAD] \
-	    -fill $colors(held) -tags endpt]
+		      [expr $y-$POINTRAD] [expr $x+$POINTRAD] [expr $y+$POINTRAD] \
+		      -fill $colors(held) -tags endpt]
     set newpt(1) [$canv(1) create rectangle [expr $x-$POINTRAD] \
-	    [expr $y-$POINTRAD] [expr $x+$POINTRAD] [expr $y+$POINTRAD] \
-	    -fill $colors(held) -tags endpt]
+		      [expr $y-$POINTRAD] [expr $x+$POINTRAD] [expr $y+$POINTRAD] \
+		      -fill $colors(held) -tags endpt]
 
     if { $building=="" } then {
 	set building [list $newpt(0) $newpt(1) $x $y $x $y]
 	held_endpt_mode "building" "building" $newpt($ci) \
-		[list $newpt(0) $newpt(1)] {} 0 0
+	    [list $newpt(0) $newpt(1)] {} 0 0
     } else {
 	set x1A [lindex $building 2]
 	set y1A [lindex $building 3]
@@ -656,22 +656,22 @@ proc press_normal { ci x y } {
 	nop_mode
 
 	set line0 [$canv(0) create line $x1A $y1A $x1B $y1B \
-		-fill $colors(normal) -width $LINEWID -tags lineseg]
+		       -fill $colors(normal) -width $LINEWID -tags lineseg]
 	set line1 [$canv(1) create line $x2A $y2A $x2B $y2B \
-		-fill $colors(normal) -width $LINEWID -tags lineseg]
+		       -fill $colors(normal) -width $LINEWID -tags lineseg]
 	$canv(0) raise $newpt(0)
 	$canv(1) raise $newpt(1)
 
 	set newrecord [list [list $line0 $line1] [lrange $building 0 1] \
-		[list $newpt(0) $newpt(1)]]
+			   [list $newpt(0) $newpt(1)]]
 	set newlineseg [screen2lineseg [list $x1A $y1A $x1B $y1B \
-					     $x2A $y2A $x2B $y2B]]
+					    $x2A $y2A $x2B $y2B]]
 
 	lappend citems $newrecord
 	lappend linesegs $newlineseg
 
 	held_endpt_mode $n 2 $newpt($ci) [list $newpt(0) $newpt(1)] \
-		$newrecord 0 0
+	    $newrecord 0 0
 	incr n
 	set building {}
     }
