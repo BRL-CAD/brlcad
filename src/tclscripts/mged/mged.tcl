@@ -59,9 +59,9 @@ if ![info exists mged_default(html_dir)] {
 
 
 if [info exists env(MGED_HTML_DIR)] {
-	set mged_html_dir $env(MGED_HTML_DIR)
+    set mged_html_dir $env(MGED_HTML_DIR)
 } else {
-	set mged_html_dir $mged_default(html_dir)
+    set mged_html_dir $mged_default(html_dir)
 }
 
 proc ia_help { parent screen cmds } {
@@ -83,7 +83,7 @@ proc ia_help { parent screen cmds } {
 	$w.l insert end $cmd
     }
 
-#    bind $w.l <Button-1> "mged_help %W $screen"
+    #    bind $w.l <Button-1> "mged_help %W $screen"
     bind $w.l <Button-1> "handle_select %W %y; mged_help %W $screen; break"
     bind $w.l <Button-2> "handle_select %W %y; mged_help %W $screen; break"
     bind $w.l <Return> "mged_help %W $screen; break"
@@ -112,8 +112,8 @@ proc ia_apropos { parent screen } {
 
     catch { destroy $w }
     if { [cad_input_dialog $w $screen Apropos \
-	   "Enter keyword to search for:" keyword ""\
-	   0 {{ summary "This is where the keyword, on which to search,
+	      "Enter keyword to search for:" keyword ""\
+	      0 {{ summary "This is where the keyword, on which to search,
 is entered. The keyword is used to search
 for commands whose descriptions contains the
 given keyword."} { see_also apropos }} OK Cancel] == 1 } {
@@ -140,10 +140,10 @@ proc ia_changestate { args } {
     } else {
 	if {$mged_display(state) == "OBJ PATH"} {
 	    set mged_gui($id,illum_label) [format "Illuminated path: %s/__MATRIX__%s" \
-		    $mged_display(path_lhs) $mged_display(path_rhs)]
+					       $mged_display(path_lhs) $mged_display(path_rhs)]
 	} else {
 	    set mged_gui($id,illum_label) [format "Illuminated path: %s    %s" \
-		    $mged_display(path_lhs) $mged_display(path_rhs)]
+					       $mged_display(path_lhs) $mged_display(path_rhs)]
 	}
     }
 }
@@ -181,11 +181,11 @@ proc do_New { id } {
     global ::tk::Priv
 
     set ret [cad_input_dialog .$id.new $mged_gui($id,screen)\
-	    "New MGED Database" \
-	    "Enter new database filename:" ia_filename "${mged_gui(databaseDir)}/" \
-	    0 {{ summary "Enter a new database name. Note - a database
+		 "New MGED Database" \
+		 "Enter new database filename:" ia_filename "${mged_gui(databaseDir)}/" \
+		 0 {{ summary "Enter a new database name. Note - a database
 must not exist by this name."}}\
-	    OK Cancel]
+		 OK Cancel]
 
     if {$ia_filename != "" && $ret == 0} {
 	# save the directory
@@ -193,7 +193,7 @@ must not exist by this name."}}\
 	    # the split followed by the join removes extra /'s
 	    set mged_gui(databaseDir) [eval file join [file split $ia_filename]]
 	    cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "Not a database." \
-		    "$ia_filename is a directory!" info 0 OK
+		"$ia_filename is a directory!" info 0 OK
 	    return
 	} else {
 	    set mged_gui(databaseDir) [file dirname $ia_filename]
@@ -201,15 +201,15 @@ must not exist by this name."}}\
 
 	if [file exists $ia_filename] {
 	    cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "Existing Database" \
-		    "$ia_filename already exists" info 0 OK
+		"$ia_filename already exists" info 0 OK
 	} else {
 	    set ret [catch {opendb $ia_filename y} msg]
 	    if {$ret} {
 		cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "Error" \
-			$msg info 0 OK
+		    $msg info 0 OK
 	    } else {
 		cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "File created" \
-			$msg info 0 OK
+		    $msg info 0 OK
 	    }
 	}
     }
@@ -221,7 +221,7 @@ proc do_Open { id } {
 
     set ftypes {{{MGED Database} {.g}} {{All Files} {*}}}
     set filename [tk_getOpenFile -parent .$id -filetypes $ftypes \
-	    -initialdir $mged_gui(databaseDir) -title "Open MGED Database"]
+		      -initialdir $mged_gui(databaseDir) -title "Open MGED Database"]
 
     if {$filename != ""} {
 	# save the directory
@@ -230,10 +230,10 @@ proc do_Open { id } {
 	set ret [catch {opendb $filename} msg]
 	if {$ret} {
 	    cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "Error" \
-		    $msg info 0 OK
+		$msg info 0 OK
 	} else {
 	    cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "File loaded" \
-		    $msg info 0 OK
+		$msg info 0 OK
 	}
     }
 }
@@ -257,7 +257,7 @@ proc getFile { parent dir ftypes title } {
     }
 
     set filename [tk_getOpenFile -parent $parent -filetypes $ftypes \
-	    -initialdir $path -title $title]
+		      -initialdir $path -title $title]
 
     # warn about filenames whose lengths are larger than 127 characters
     if {[string length $filename] > 127} {
@@ -265,7 +265,7 @@ proc getFile { parent dir ftypes title } {
 	    set parent ""
 	}
 	cad_dialog $::tk::Priv(cad_dialog) $parent "Error" \
-		"Length of path is greater than 127 bytes." info 0 OK
+	    "Length of path is greater than 127 bytes." info 0 OK
 	return ""
     }
 
@@ -283,22 +283,22 @@ proc do_Concat { id } {
 
     if {[opendb] == ""} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
-		"No database has been opened!" info 0 OK
+	    "No database has been opened!" info 0 OK
 	return
     }
 
     set ftypes {{{MGED Database} {.g}} {{All Files} {*}}}
     set filename [tk_getOpenFile -parent .$id -filetypes $ftypes \
-	    -initialdir $mged_gui(databaseDir) \
-	    -title "Insert MGED Database"]
+		      -initialdir $mged_gui(databaseDir) \
+		      -title "Insert MGED Database"]
 
     if {$filename != ""} {
 	# save the directory
 	set mged_gui(databaseDir) [file dirname $filename]
 
 	set ret [cad_input_dialog .$id.prefix $mged_gui($id,screen) "Prefix" \
-		"Enter prefix (optional):" prefix ""\
-		0 {{ summary "
+		     "Enter prefix (optional):" prefix ""\
+		     0 {{ summary "
 This is where to enter a prefix. The prefix,
 if entered, is prepended to each object of
 the database being inserted."} { see_also dbconcat } } OK Cancel]
@@ -314,97 +314,97 @@ the database being inserted."} { see_also dbconcat } } OK Cancel]
 }
 
 proc do_LoadScript { id } {
-	global mged_gui
-	global ::tk::Priv
+    global mged_gui
+    global ::tk::Priv
 
-	set ftypes {{{All Readable Scripts} {.tcl .sh .rt}} {{Raytrace Scripts} {.rt .sh}} {{Tcl Scripts} {.tcl}} {{All Files} {*}}}
-	set ia_filename [tk_getOpenFile -parent .$id -filetypes $ftypes -initialdir $mged_gui(loadScriptDir) -title "Load Script"]
+    set ftypes {{{All Readable Scripts} {.tcl .sh .rt}} {{Raytrace Scripts} {.rt .sh}} {{Tcl Scripts} {.tcl}} {{All Files} {*}}}
+    set ia_filename [tk_getOpenFile -parent .$id -filetypes $ftypes -initialdir $mged_gui(loadScriptDir) -title "Load Script"]
 
-	if {$ia_filename != ""} {
-		# save the directory
-		set mged_gui(loadScriptDir) [file dirname $ia_filename]
+    if {$ia_filename != ""} {
+	# save the directory
+	set mged_gui(loadScriptDir) [file dirname $ia_filename]
 
-		# read in the first two lines of the script file
-		# XXX this is not the best thing to do if we have a big script file..
-		set ret [ catch { open $ia_filename } scriptfd ]
-		if {$ret} {
-			cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "Error" $scriptfd info 0 OK
-		}
-		set ret [ catch { read $scriptfd } scriptsource ]
-		if {$ret} {
-			cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "Error" $scriptsource info 0 OK
-		}
-		set ret [ catch { close $scriptfd } msg ]
-		if {$ret} {
-			cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "Error" $msg info 0 OK
-		}
-
-		# the script should now be stored in scriptsource. attempt to determine some basic types
-		if [ regexp {^#!/bin/sh.*?\nrt} $scriptsource ] {
-			# handle "saveview" raytrace script
-
-			# attempt to loadview
-			set ret [catch { loadview $ia_filename } output ]
-
-		} elseif [ regexp {^#!/.*\n} $scriptsource ] {
-			# handle other shell scripts by simply loading them
-
-			set ret [ catch { exec $ia_filename } output ]
-
-		} else {
-			# assume we have a tcl script
-
-			set ret [catch {source $ia_filename} output ]
-
-		}
-		# end iteration over script detection
-
-		# output a result dialog
-		if {$ret} {
-			cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "Error" $output info 0 OK
-		} else {
-			cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "Script loaded" "Script successfully loaded!" info 0 OK
-		}
+	# read in the first two lines of the script file
+	# XXX this is not the best thing to do if we have a big script file..
+	set ret [ catch { open $ia_filename } scriptfd ]
+	if {$ret} {
+	    cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "Error" $scriptfd info 0 OK
 	}
-	# end check if filename was given
-}
+	set ret [ catch { read $scriptfd } scriptsource ]
+	if {$ret} {
+	    cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "Error" $scriptsource info 0 OK
+	}
+	set ret [ catch { close $scriptfd } msg ]
+	if {$ret} {
+	    cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "Error" $msg info 0 OK
+	}
 
-proc do_Units { id } {
-    global mged_gui
-    global mged_display
-    global ::tk::Priv
+	# the script should now be stored in scriptsource. attempt to determine some basic types
+	if [ regexp {^#!/bin/sh.*?\nrt} $scriptsource ] {
+	    # handle "saveview" raytrace script
 
-    if {[opendb] == ""} {
-	set mged_display(units) ""
-	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
-		"No database has been opened!" info 0 OK
-	return
-    }
+	    # attempt to loadview
+	    set ret [catch { loadview $ia_filename } output ]
 
-    _mged_units $mged_display(units)
-}
+	} elseif [ regexp {^#!/.*\n} $scriptsource ] {
+	    # handle other shell scripts by simply loading them
 
-proc do_rt_script { id } {
-    global mged_gui
-    global ::tk::Priv
+	    set ret [ catch { exec $ia_filename } output ]
 
-    set ia_filename [fs_dialog .$id.rtscript .$id "./*"]
-    if {[string length $ia_filename] > 0} {
-	saveview $ia_filename
-    } else {
-	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "Error" \
-		"No such file exists." warning 0 OK
-    }
-}
+	} else {
+	    # assume we have a tcl script
 
-proc do_About_MGED { id } {
-    global mged_gui
-    global mged_default
-    global version
-    global ::tk::Priv
+	    set ret [catch {source $ia_filename} output ]
 
-    cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "About MGED..." \
-	    "$version
+	}
+		   # end iteration over script detection
+
+		   # output a result dialog
+		   if {$ret} {
+		       cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "Error" $output info 0 OK
+		   } else {
+		       cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "Script loaded" "Script successfully loaded!" info 0 OK
+		   }
+	       }
+	     # end check if filename was given
+	 }
+
+	proc do_Units { id } {
+	    global mged_gui
+	    global mged_display
+	    global ::tk::Priv
+
+	    if {[opendb] == ""} {
+		set mged_display(units) ""
+		cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
+		    "No database has been opened!" info 0 OK
+		return
+	    }
+
+	    _mged_units $mged_display(units)
+	}
+
+	proc do_rt_script { id } {
+	    global mged_gui
+	    global ::tk::Priv
+
+	    set ia_filename [fs_dialog .$id.rtscript .$id "./*"]
+	    if {[string length $ia_filename] > 0} {
+		saveview $ia_filename
+	    } else {
+		cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "Error" \
+		    "No such file exists." warning 0 OK
+	    }
+	}
+
+	proc do_About_MGED { id } {
+	    global mged_gui
+	    global mged_default
+	    global version
+	    global ::tk::Priv
+
+	    cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "About MGED..." \
+		"$version
 MGED (Multi-device Geometry EDitor) is part
 of the BRL-CAD Open Source package.
 
@@ -454,10 +454,10 @@ proc ia_invoke { w } {
 	}
 
 	if {$glob_compat_mode == 0} {
-	    set result [catch { uplevel #0 $cmd } ia_msg]
+	    set result [catch { uplevel \#0 $cmd } ia_msg]
 	} else {
 	    catch { db_glob $cmd } globbed_cmd
-	    set result [catch { uplevel #0 $globbed_cmd } ia_msg]
+	    set result [catch { uplevel \#0 $globbed_cmd } ia_msg]
 	}
 
 	if { ![winfo exists $w] } {
@@ -513,8 +513,8 @@ proc man_goto { w screen } {
     global ::tk::Priv
 
     cad_input_dialog $::tk::Priv(cad_dialog) $screen "Go To" "Enter filename to read:" \
-	    filename $ia_url(current) \
-	    0 {{ summary "Enter a filename or URL."}} OK
+	filename $ia_url(current) \
+	0 {{ summary "Enter a filename or URL."}} OK
 
     if { [file exists $filename]!=0 } {
 	if { [string match /* $filename] } {
@@ -526,7 +526,7 @@ proc man_goto { w screen } {
 	HMlink_callback $w.text $new_url
     } else {
 	cad_dialog $::tk::Priv(cad_dialog) $screen "Error reading file" \
-		"Cannot read file $filename." error 0 OK
+	    "Cannot read file $filename." error 0 OK
     }
 }
 
@@ -553,7 +553,7 @@ proc ia_man { parent screen } {
     scrollbar $w.scrolly -command "$w.text yview"
     scrollbar $w.scrollx -command "$w.text xview" -orient horizontal
     text $w.text -relief ridge -yscroll "$w.scrolly set" \
-	    -xscroll "$w.scrollx set"
+	-xscroll "$w.scrollx set"
     pack $w.scrolly -side right -fill y
     pack $w.text -side top -fill both -expand yes
     pack $w.scrollx -side bottom -fill x
@@ -581,11 +581,11 @@ proc HMlink_callback { w href } {
     }
 
     # Remove tags
-    regsub {#[0-9a-zA-Z]*} $new_url {} ia_url(current)
+    regsub {"#[0-9a-zA-Z]*"} $new_url {} ia_url(current)
     lappend ia_url(last) $ia_url(current)
     set ia_url(backtrack) [lrange $ia_url(last) 0 \
-	    [expr [llength $ia_url(last)]-2]]
-
+			       [expr [llength $ia_url(last)]-2]]
+    
     HMreset_win $w
     HMparse_html [ia_get_html $ia_url(current)] "HMrender $w"
     update
@@ -600,7 +600,7 @@ proc ia_man_back { w } {
 
     set new_url [lindex $ia_url(backtrack) end]
     set ia_url(backtrack) [lrange $ia_url(backtrack) 0 \
-	    [expr [llength $ia_url(backtrack)]-2]]
+			       [expr [llength $ia_url(backtrack)]-2]]
 
     HMreset_win $w
     HMparse_html [ia_get_html $new_url] "HMrender $w"

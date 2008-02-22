@@ -35,7 +35,7 @@ proc init_psTool { id } {
 
     if {[opendb] == ""} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
-		"No database has been opened!" info 0 OK
+	    "No database has been opened!" info 0 OK
 	return
     }
 
@@ -231,9 +231,9 @@ proc do_ps { id } {
     if {$ps_control($id,file) != ""} {
 	if {[file exists $ps_control($id,file)]} {
 	    set result [cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
-		    "Overwrite $ps_control($id,file)?"\
-		    "Overwrite $ps_control($id,file)?"\
-		    "" 0 OK Cancel]
+			    "Overwrite $ps_control($id,file)?"\
+			    "Overwrite $ps_control($id,file)?"\
+			    "" 0 OK Cancel]
 
 	    if {$result} {
 		return
@@ -241,9 +241,9 @@ proc do_ps { id } {
 	}
     } else {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
-		"No file name specified!"\
-		"No file name specified!"\
-		"" 0 OK
+	    "No file name specified!"\
+	    "No file name specified!"\
+	    "" 0 OK
 	return
     }
 
@@ -252,19 +252,19 @@ proc do_ps { id } {
     }
 
     if {$ps_control($id,creator) != ""} {
-	 append ps_cmd " -c \"$ps_control($id,creator)\""
+	append ps_cmd " -c \"$ps_control($id,creator)\""
     }
 
     if {$ps_control($id,font) != ""} {
-	 append ps_cmd " -f $ps_control($id,font)"
+	append ps_cmd " -f $ps_control($id,font)"
     }
 
     if {$ps_control($id,size) != ""} {
-	 append ps_cmd " -s $ps_control($id,size)"
+	append ps_cmd " -s $ps_control($id,size)"
     }
 
     if {$ps_control($id,linewidth) != ""} {
-	 append ps_cmd " -l $ps_control($id,linewidth)"
+	append ps_cmd " -l $ps_control($id,linewidth)"
     }
 
     if {$ps_control($id,zclip) != 0} {

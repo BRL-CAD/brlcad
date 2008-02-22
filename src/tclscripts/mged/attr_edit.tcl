@@ -84,7 +84,7 @@ class Attr_editor {
 	set num_args [llength $args]
 	if { $num_args > 1 } {
 	    tk_messageBox -icon error -type ok -title "Error"\
-		    -message "Incorrect number of arguments"
+		-message "Incorrect number of arguments"
 	    destroy $itk_component(hull)
 	    return
 	}
@@ -113,9 +113,9 @@ class Attr_editor {
 	entry $itk_interior.fr_obj.obj_e -textvariable [scope obj_name]
 	set objb $itk_interior.fr_obj.obj_e
 	pack $itk_interior.fr_obj.obj_l \
-		    -expand no -side left -anchor w
+	    -expand no -side left -anchor w
 	pack $itk_interior.fr_obj.obj_e \
-		    -expand yes -fill x -side left -anchor w
+	    -expand yes -fill x -side left -anchor w
 	grid $itk_interior.fr_obj -row 0 -column 0 -sticky new -padx 3 -pady 3
 
 
@@ -129,16 +129,16 @@ class Attr_editor {
 	set fnew [frame $itk_interior.fr_attr.fr_new -relief flat -bd 3]
 
 	button $fnew.new -text "New Attribute"\
-		-command [code $this new_attr]
+	    -command [code $this new_attr]
 	label $fnew.attr_l -textvariable [scope attr_entry_label] -width 19 -anchor e
 	entry $fnew.attr_e\
-		-textvariable [scope cur_attr_name]
+	    -textvariable [scope cur_attr_name]
 	set attrn $fnew.attr_e
 	grid $fnew.new -row 0 -column 0 -padx 3 -pady 3
 	grid $fnew.attr_l -row 0 -column 1 -padx 3\
-		-pady 3 -sticky e
+	    -pady 3 -sticky e
 	grid $fnew.attr_e -row 0 -column 2 -padx 3\
-		-pady 3 -sticky ew
+	    -pady 3 -sticky ew
 	grid $fnew -row 0 -column 0 -sticky ew -padx 3 -pady 3
 	grid columnconfigure $fnew 2 -weight 1 -pad 3
 
@@ -146,14 +146,14 @@ class Attr_editor {
 
 	# paned widget to contain attribute names listbox and values text
 	iwidgets::panedwindow $fr_pane.pane_attrs -orient vertical \
-		-height 150 -width 250 -thickness 3 -sashborderwidth 3
+	    -height 150 -width 250 -thickness 3 -sashborderwidth 3
 
 	$fr_pane.pane_attrs add names
 	set name_pane [$fr_pane.pane_attrs childsite names]
 	label $name_pane.lbl -text "Attribute Names"
 	listbox $name_pane.attrs -height 10 -listvar [scope cur_attrs]\
-		-yscrollcommand [code $name_pane.asb set]\
-		-exportselection false
+	    -yscrollcommand [code $name_pane.asb set]\
+	    -exportselection false
 	set listb $name_pane.attrs
 	scrollbar $name_pane.asb -command [code $name_pane.attrs yview]
 
@@ -161,7 +161,7 @@ class Attr_editor {
 	set value_pane [$fr_pane.pane_attrs childsite values]
 	label $value_pane.lbl -text "Attribute Value"
 	text $value_pane.txt -width 40 -height 10\
-		-yscrollcommand [code $value_pane.sbt set]
+	    -yscrollcommand [code $value_pane.sbt set]
 	set textb $value_pane.txt
 	scrollbar $value_pane.sbt -command [code $value_pane.txt yview]
 
@@ -178,7 +178,7 @@ class Attr_editor {
 	$fr_pane.pane_attrs fraction 40 60
 
 	grid $fr_pane.pane_attrs -row 0 -column 0\
-		-sticky nsew
+	    -sticky nsew
 	grid rowconfigure $fr_pane.pane_attrs 0 -weight 1
 	grid columnconfigure $fr_pane.pane_attrs 0 -weight 1
 
@@ -190,15 +190,15 @@ class Attr_editor {
 	frame $itk_interior.fr_attr.frc1 -relief flat -bd 3
 
 	button $itk_interior.fr_attr.frc1.reset_all -text "reset all"\
-		-command [code $this do_reset_all]
+	    -command [code $this do_reset_all]
 	button $itk_interior.fr_attr.frc1.reset_sel -text "reset selected"\
-		-command [code $this do_reset_selected]
+	    -command [code $this do_reset_selected]
 	button $itk_interior.fr_attr.frc1.delete_selected -text "delete selected"\
-		-command [code $this do_delete_sel]
+	    -command [code $this do_delete_sel]
 	grid $itk_interior.fr_attr.frc1.reset_all -row 0 -column 0 -padx 3 -pady 3
 	grid $itk_interior.fr_attr.frc1.reset_sel -row 0 -column 1 -padx 3 -pady 3
 	grid $itk_interior.fr_attr.frc1.delete_selected -row 0 -column 2\
-		-padx 3 -pady 3
+	    -padx 3 -pady 3
 	grid columnconfigure $itk_interior.fr_attr.frc1 { 0 1 2 } -weight 1 -pad 3
 	grid $itk_interior.fr_attr.frc1 -row 2 -column 0 -sticky sew -padx 3 -pady 3
 
@@ -354,7 +354,7 @@ class Attr_editor {
     }
 
     method create_new_attribute {} {
-#	grab release $fnew.attr_e
+	#	grab release $fnew.attr_e
 	if { [string length $cur_attr_name] == 0 } {
 	    # restore normal binding for attribute name entry widget
 	    bind $fnew.attr_e <Key-Return> [code $this update_cur_attr_name]
@@ -364,8 +364,8 @@ class Attr_editor {
 	}
 
 	if { [attr_name_is_valid $cur_attr_name] == 0 } {
-	   tk_messageBox -icon error -type ok -title "Error: illegal attribute name"\
-	      -message "Attribute names must not have imbedded white space nor non-printable characters"
+	    tk_messageBox -icon error -type ok -title "Error: illegal attribute name"\
+		-message "Attribute names must not have imbedded white space nor non-printable characters"
 	    return
 	}
 
@@ -395,7 +395,7 @@ class Attr_editor {
 	$listb selection clear 0 end
 
 	bind $fnew.attr_e <Key-Return> [code $this create_new_attribute]
-#	grab set $fnew.attr_e
+	#	grab set $fnew.attr_e
 	focus $fnew.attr_e
 	$fnew.attr_e configure -bg #f3c846
 	set attr_entry_label "New Attribute Name:"
@@ -434,8 +434,8 @@ class Attr_editor {
 	}
 
 	if { [attr_name_is_valid $cur_attr_name] == 0 } {
-	   tk_messageBox -icon error -type ok -title "Error: illegal attribute name"\
-	      -message "Attribute names must not have imbedded white space nor non-printable characters"
+	    tk_messageBox -icon error -type ok -title "Error: illegal attribute name"\
+		-message "Attribute names must not have imbedded white space nor non-printable characters"
 	    return
 	}
 
@@ -494,7 +494,7 @@ class Attr_editor {
 	# remove ALL attributes from this object
 	# first get an up-to-date list of attributes for the object
 	if [catch {attr get $obj_name} ret] {
-	   tk_messageBox -icon error -type ok -title "Error getting current attributes" -message $ret
+	    tk_messageBox -icon error -type ok -title "Error getting current attributes" -message $ret
 	    return 1
 	}
 
@@ -506,7 +506,7 @@ class Attr_editor {
 
 	# and remove them
 	if [catch {eval attr rm $obj_name $attr_names} ret ] {
-	   tk_messageBox -icon error -type ok -title "Error removing old attributes" -message $ret
+	    tk_messageBox -icon error -type ok -title "Error removing old attributes" -message $ret
 	    return 1
 	}
 
@@ -518,7 +518,7 @@ class Attr_editor {
 
 	# and set them
 	if [catch {eval attr set $obj_name $attr_val_list} ret] {
-	   tk_messageBox -icon error -type ok -title "Error saving attributes" -message $ret
+	    tk_messageBox -icon error -type ok -title "Error saving attributes" -message $ret
 	    return 1
 	}
 

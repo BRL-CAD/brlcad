@@ -93,14 +93,7 @@
 #    create the registry for the plugin
 #
 ###############################################################################
-::itcl::body Plugin::constructor {majorType minorType name class file \
-				      {description ""} \
-				      {version "1.0"} \
-				      {developer ""} \
-				      {icon ""} \
-				      {toolTip ""} \
-				      {action ""} \
-				      {xmlAction ""}} {
+::itcl::body Plugin::constructor {majorType minorType name class file {description ""} {version "1.0"} {developer ""} {icon ""} {toolTip ""} {action ""} {xmlAction ""}} {
     set msMajorType $majorType
     set msMinorType $minorType
     set msName $name

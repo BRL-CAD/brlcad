@@ -31,7 +31,7 @@
 set solc(types) {arb8 sph ell ellg tor tgc rec half rpc rhc epa ehy eto part}
 set solc(descr_arb8) "Arbitrary 8-vertex polyhedron"
 set solc(default_arb8) {V1 {1 -1 -1}  V2 {1 1 -1}  V3 {1 1 1}  V4 {1 -1 1} \
-	V5 {-1 -1 -1} V6 {-1 1 -1} V7 {-1 1 1} V8 {-1 -1 1}}
+			    V5 {-1 -1 -1} V6 {-1 1 -1} V7 {-1 1 1} V8 {-1 -1 1}}
 set solc(descr_sph)  "Sphere"
 set solc(default_sph)  {V {0 0 0} A {1 0 0} B {0 1 0} C {0 0 1}}
 set solc(descr_ell)  "Ellipsoid"
@@ -42,10 +42,10 @@ set solc(descr_tor)  "Torus"
 set solc(default_tor)  {V {0 0 0} H {1 0 0} r_h 2 r_a 1}
 set solc(descr_tgc)  "Truncated General Cone"
 set solc(default_tgc)  {V {0 0 0} H {0 0 4} A {1 0 0} B {0 .5 0} \
-	C {.5 0 0} D {0 1 0}}
+			    C {.5 0 0} D {0 1 0}}
 set solc(descr_rec)  "Right Elliptical Cylinder"
 set solc(default_rec)  {V {0 0 0} H {0 0 4} A {1 0 0} B {0 .5 0} \
-	C {1 0 0} D {0 .5 0}}
+			    C {1 0 0} D {0 .5 0}}
 set solc(descr_half) "Halfspace"
 set solc(default_half) {N {0 0 1} d -1}
 set solc(descr_rpc)  "Right Parabolic Cylinder"
@@ -56,7 +56,7 @@ set solc(descr_epa)  "Elliptical Paraboloid"
 set solc(default_epa)  {V {-1 -1 -1.5} H {0 0 1} A {0 1 0} r_1 .5 r_2 .25}
 set solc(descr_ehy)  "Right Hyperbolic Cylinder"
 set solc(default_ehy)  {V {-1 -1 -1.5} H {0 0 1} A {0 1 0} r_1 .5 r_2 .25 \
-			 c .25}
+			    c .25}
 set solc(descr_eto)  "Elliptical Torus"
 set solc(default_eto)  {V {-1 -1 -1} N {0 0 1} C {.1 0 .1} r .5 r_d .05}
 set solc(descr_part) "Particle Primitive"
@@ -138,7 +138,7 @@ proc solcreate { id args } {
     label $w.t.l.type     -text "Primitive type" -relief raised -bd 1 -anchor w
 
     pack $w.t.l.format $w.t.l.indexvar $w.t.l.index $w.t.l.oper $w.t.l.type \
-	    -side top -fill both -expand yes -anchor w
+	-side top -fill both -expand yes -anchor w
 
     # For the "Primitive type" label, allow left-clicking to get a list of solids
 
@@ -167,7 +167,7 @@ proc solcreate { id args } {
     bind $w.t.r.type     <Return> "solc_defaults $w $w.m"
 
     pack $w.t.r.format $w.t.r.indexvar $w.t.r.index $w.t.r.oper $w.t.r.type \
-	    -side top -fill x -expand yes
+	-side top -fill x -expand yes
 
     solc_defaults $w $w.m
 
@@ -332,14 +332,14 @@ proc solc_defaults { w wfr } {
 		pack $wfr.r.f$attr.e$num -side left -fill x -expand yes
 		$wfr.r.f$attr.e$num insert insert [lindex $defvals $num]
 		set solc($w,do) [eval concat \[set solc($w,do)\] \
-			\\\[$wfr.r.f$attr.e$num get\\\]]
+				     \\\[$wfr.r.f$attr.e$num get\\\]]
 	    }
 	}
 
 	set solc($w,do) [eval concat \[set solc($w,do)\] \\\]]
 
 	if { [catch { label $wfr.l.l$attr -text "$solc(label,$attr)" \
-		-anchor w}]!=0 } then {
+			  -anchor w}]!=0 } then {
 	    label $wfr.l.l$attr -text "$attr" -anchor w
 	}
 

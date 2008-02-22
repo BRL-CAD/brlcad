@@ -158,10 +158,10 @@ proc apply_lgt_mat { args } {
 		set old_rgb [db get $comb "rgb"]
 		if { [string compare $old_rgb "invalid"] == 0 } {
 		    attr set $comb "lgt_mdb_params" $shader \
-			    "old_inherit" [db get $comb "inherit"]
+			"old_inherit" [db get $comb "inherit"]
 		} else {
 		    attr set $comb "lgt_mdb_params" $shader "old_rgb"\
-			    $old_rgb "old_inherit" [db get $comb "inherit"]
+			$old_rgb "old_inherit" [db get $comb "inherit"]
 		}
 	    }
 
@@ -195,7 +195,7 @@ proc make_lgt_light { args } {
 	# light object does not exist, create a new one
 	set light_solid [make_name s.light@]
 	db put $light_solid sph V "$x $y $z" A { 0.1 0 0 } \
-		B { 0 0.1 0 } C { 0 0 0.1 }
+	    B { 0 0.1 0 } C { 0 0 0.1 }
 	db put $light comb region yes id 1 shader light tree "l $light_solid"
     } else {
 	# move existing light to the LGT default position

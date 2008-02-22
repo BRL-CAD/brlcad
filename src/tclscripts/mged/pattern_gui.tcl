@@ -152,7 +152,7 @@ body pattern_control::constructor {} {
     $itk_component(tn) select 0
 
 
-# R E C T _ T A B
+    # R E C T _ T A B
 
     #Combo Label
     itk_component add l_combo_r {
@@ -483,25 +483,25 @@ body pattern_control::constructor {} {
 
 
     foreach obj { l_combo_r \
-		  l_group_r \
-		  l_xdir_r  \
-		  l_ydir_r  \
-		  l_zdir_r  \
-		  rb_dir_r  \
-		  l_nxdir_r \
-		  l_nydir_r \
-		  l_nzdir_r \
-		  l_dxdir_r \
-		  l_dydir_r \
-		  l_dzdir_r \
-		  l_incr_r  \
-		  l_sstring_r \
-		  l_rstring_r \
-		  l_obj_r \
-		  rb_list_r \
-		  l_xlist_r \
-		  l_ylist_r \
-		  l_zlist_r} {
+		      l_group_r \
+		      l_xdir_r  \
+		      l_ydir_r  \
+		      l_zdir_r  \
+		      rb_dir_r  \
+		      l_nxdir_r \
+		      l_nydir_r \
+		      l_nzdir_r \
+		      l_dxdir_r \
+		      l_dydir_r \
+		      l_dzdir_r \
+		      l_incr_r  \
+		      l_sstring_r \
+		      l_rstring_r \
+		      l_obj_r \
+		      rb_list_r \
+		      l_xlist_r \
+		      l_ylist_r \
+		      l_zlist_r} {
 
 	bind $itk_component($obj) <Leave> " set [list [scope helpvar]] {} "
     }
@@ -511,7 +511,7 @@ body pattern_control::constructor {} {
     update
 
 
-# S P H _ T A B
+    # S P H _ T A B
     itk_component add l_combo_s {
 	label $itk_interior.l_combo_s -text "Depth of Duplication:"
     }
@@ -728,7 +728,7 @@ body pattern_control::constructor {} {
 	entry $itk_interior.e_obj_s -relief sunken -textvariable [scope obj_s]
     }
 
- #String Replacement
+    #String Replacement
     itk_component add l_sstring_s {
 	label $itk_interior.l_sstring_s -text "Source String:"
     }
@@ -901,9 +901,9 @@ body pattern_control::constructor {} {
 	bind $itk_component($obj) <Leave> " set [list [scope helpvar]] {} "
     }
 
-#CYL TAB
+    #CYL TAB
 
-     itk_component add l_combo_c {
+    itk_component add l_combo_c {
 	label $itk_interior.l_combo_c -text "Depth of Duplication:"
     }
 
@@ -1160,7 +1160,7 @@ body pattern_control::constructor {} {
 
     grid $itk_component(f_lnum_c)    -in $itk_component(f_height_c) -row 3 -column 0 -columnspan 2 -sticky nsew -padx $pad(x) -pady $pad(y)
 
- #String Replacement
+    #String Replacement
     itk_component add l_sstring_c {
 	label $itk_interior.l_sstring_c -text "Source String:"
     }
@@ -1369,34 +1369,34 @@ body pattern_control::constructor {} {
     bind $itk_component(l_rstring_c) <Enter> " set [list [scope helpvar]] {Enter the string you want to replace the above string with (empty is OK)}"
     bind $itk_component(l_incr_c) <Enter> " set [list [scope helpvar]] {Enter value to use in incrementing primitive/region numbers (0 is OK)}"
 
-     foreach obj { l_combo_c \
-		   l_group_c \
-		   l_cbase_c \
-		   l_cobj_c \
-		   cb_rot_c \
-		   l_numaz_c \
-		   l_delaz_c \
-		   cb_list_c \
-		   l_listaz_c \
-		   l_startr_c \
-		   rb_radius_c \
-		   l_radius_c \
-		   l_delta_c \
-		   rb_radlist_c \
-		   l_radlist_c  \
-		   l_startaz_c \
-		   l_heightdir_c \
-		   l_starth_c \
-		   l_obj_c \
-		   rb_height_c \
-		   l_hnum_c \
-		   l_dnum_c \
-		   rb_lnum_c \
-		   l_lnum_c \
-		   l_sstring_c \
-		   l_rstring_c \
-		   l_incr_c \
-		   rb_num_c} {
+    foreach obj { l_combo_c \
+		      l_group_c \
+		      l_cbase_c \
+		      l_cobj_c \
+		      cb_rot_c \
+		      l_numaz_c \
+		      l_delaz_c \
+		      cb_list_c \
+		      l_listaz_c \
+		      l_startr_c \
+		      rb_radius_c \
+		      l_radius_c \
+		      l_delta_c \
+		      rb_radlist_c \
+		      l_radlist_c  \
+		      l_startaz_c \
+		      l_heightdir_c \
+		      l_starth_c \
+		      l_obj_c \
+		      rb_height_c \
+		      l_hnum_c \
+		      l_dnum_c \
+		      rb_lnum_c \
+		      l_lnum_c \
+		      l_sstring_c \
+		      l_rstring_c \
+		      l_incr_c \
+		      rb_num_c} {
 
 	bind $itk_component($obj) <Leave> " set [list [scope helpvar]] {} "
     }
@@ -1618,11 +1618,11 @@ body pattern_control::frame_disable { frame_name } {
     switch -- $frame_name {
 	"f_list_r" {
 	    foreach obj { l_xlist_r \
-			  l_ylist_r \
-			  l_zlist_r \
-			  e_xlist_r \
-			  e_ylist_r \
-			  e_zlist_r  } {
+			      l_ylist_r \
+			      l_zlist_r \
+			      e_xlist_r \
+			      e_ylist_r \
+			      e_zlist_r  } {
 
 		$itk_component($obj) configure -state disabled
 	    }
@@ -1630,103 +1630,103 @@ body pattern_control::frame_disable { frame_name } {
 	}
 	"f_dir_r" {
 	    foreach obj { l_nxdir_r \
-			  l_nydir_r \
-			  l_nzdir_r \
-			  e_nxdir_r \
-			  e_nydir_r \
-			  e_nzdir_r \
-			  l_dxdir_r \
-			  l_dydir_r \
-			  l_dzdir_r \
-			  e_dxdir_r \
-			  e_dydir_r \
-			  e_dzdir_r } {
+			      l_nydir_r \
+			      l_nzdir_r \
+			      e_nxdir_r \
+			      e_nydir_r \
+			      e_nzdir_r \
+			      l_dxdir_r \
+			      l_dydir_r \
+			      l_dzdir_r \
+			      e_dxdir_r \
+			      e_dydir_r \
+			      e_dzdir_r } {
 
 		$itk_component($obj) configure -state disabled
 	    }
 	}
 	"f_num_s" {
 	    foreach obj { l_numaz_s \
-			  e_numaz_s \
-			  l_numel_s \
-			  e_numel_s \
-			  l_delaz_s \
-			  e_delaz_s \
-			  l_delel_s \
-			  e_delel_s } {
+			      e_numaz_s \
+			      l_numel_s \
+			      e_numel_s \
+			      l_delaz_s \
+			      e_delaz_s \
+			      l_delel_s \
+			      e_delel_s } {
 
 		$itk_component($obj) configure -state disabled
 	    }
 	}
 	"f_list_s" {
 	    foreach obj { l_listaz_s \
-			  e_listaz_s \
-			  l_listel_s \
-			  e_listel_s } {
+			      e_listaz_s \
+			      l_listel_s \
+			      e_listel_s } {
 
 		$itk_component($obj) configure -state disabled
 	    }
 	}
 	"f_radius_s" {
 	    foreach obj { l_radius_s \
-			  e_radius_s \
-			  l_delta_s  \
-			  e_delta_s  } {
+			      e_radius_s \
+			      l_delta_s  \
+			      e_delta_s  } {
 
 		$itk_component($obj) configure -state disabled
 	    }
 	}
 	"f_radlist_s" {
 	    foreach obj { l_radlist_s \
-			  e_radlist_s } {
+			      e_radlist_s } {
 
 		$itk_component($obj) configure -state disabled
 	    }
 	}
 	"f_num_c" {
 	    foreach obj { l_numaz_c \
-			  e_numaz_c \
-			  l_delaz_c \
-			  e_delaz_c } {
+			      e_numaz_c \
+			      l_delaz_c \
+			      e_delaz_c } {
 
 		$itk_component($obj) configure -state disabled
 	    }
 	}
 	"f_list_c" {
 	    foreach obj { l_listaz_c \
-			  e_listaz_c } {
+			      e_listaz_c } {
 
 		$itk_component($obj) configure -state disabled
 	    }
 	}
 	"f_height_c" {
 	    foreach obj { l_hnum_c \
-			  e_hnum_c \
-			  l_dnum_c \
-			  e_dnum_c } {
+			      e_hnum_c \
+			      l_dnum_c \
+			      e_dnum_c } {
 
 		$itk_component($obj) configure -state disabled
 	    }
 	}
 	"f_radius_c" {
 	    foreach obj { l_radius_c \
-			  e_radius_c \
-			  l_delta_c  \
-			  e_delta_c } {
+			      e_radius_c \
+			      l_delta_c  \
+			      e_delta_c } {
 
 		$itk_component($obj) configure -state disabled
 	    }
 	}
 	"f_radlist_c" {
 	    foreach obj { l_radlist_c \
-			  e_radlist_c } {
+			      e_radlist_c } {
 
 		$itk_component($obj) configure -state disabled
 	    }
 	}
 	"f_lnum_c" {
 	    foreach obj { l_lnum_c \
-			  e_lnum_c } {
+			      e_lnum_c } {
 
 		$itk_component($obj) configure -state disabled
 	    }
@@ -1742,11 +1742,11 @@ body pattern_control::frame_enable { frame_name } {
     switch -- $frame_name {
 	"f_list_r" {
 	    foreach obj { l_xlist_r \
-			  l_ylist_r \
-			  l_zlist_r \
-			  e_xlist_r \
-			  e_ylist_r \
-			  e_zlist_r  } {
+			      l_ylist_r \
+			      l_zlist_r \
+			      e_xlist_r \
+			      e_ylist_r \
+			      e_zlist_r  } {
 
 		$itk_component($obj) configure -state normal
 	    }
@@ -1754,103 +1754,103 @@ body pattern_control::frame_enable { frame_name } {
 	}
 	"f_dir_r" {
 	    foreach obj { l_nxdir_r \
-			  l_nydir_r \
-			  l_nzdir_r \
-			  e_nxdir_r \
-			  e_nydir_r \
-			  e_nzdir_r \
-			  l_dxdir_r \
-			  l_dydir_r \
-			  l_dzdir_r \
-			  e_dxdir_r \
-			  e_dydir_r \
-			  e_dzdir_r } {
+			      l_nydir_r \
+			      l_nzdir_r \
+			      e_nxdir_r \
+			      e_nydir_r \
+			      e_nzdir_r \
+			      l_dxdir_r \
+			      l_dydir_r \
+			      l_dzdir_r \
+			      e_dxdir_r \
+			      e_dydir_r \
+			      e_dzdir_r } {
 
 		$itk_component($obj) configure -state normal
 	    }
 	}
 	"f_num_s" {
 	    foreach obj { l_numaz_s \
-			  e_numaz_s \
-			  l_numel_s \
-			  e_numel_s \
-			  l_delaz_s \
-			  e_delaz_s \
-			  l_delel_s \
-			  e_delel_s } {
+			      e_numaz_s \
+			      l_numel_s \
+			      e_numel_s \
+			      l_delaz_s \
+			      e_delaz_s \
+			      l_delel_s \
+			      e_delel_s } {
 
 		$itk_component($obj) configure -state normal
 	    }
 	}
 	"f_list_s" {
 	    foreach obj { l_listaz_s \
-			  e_listaz_s \
-			  l_listel_s \
-			  e_listel_s } {
+			      e_listaz_s \
+			      l_listel_s \
+			      e_listel_s } {
 
 		$itk_component($obj) configure -state normal
 	    }
 	}
 	"f_radius_s" {
 	    foreach obj { l_radius_s \
-			  e_radius_s \
-			  l_delta_s  \
-			  e_delta_s  } {
+			      e_radius_s \
+			      l_delta_s  \
+			      e_delta_s  } {
 
 		$itk_component($obj) configure -state normal
 	    }
 	}
 	"f_radlist_s" {
 	    foreach obj { l_radlist_s \
-			  e_radlist_s } {
+			      e_radlist_s } {
 
 		$itk_component($obj) configure -state normal
 	    }
 	}
 	"f_num_c" {
 	    foreach obj { l_numaz_c \
-			  e_numaz_c \
-			  l_delaz_c \
-			  e_delaz_c } {
+			      e_numaz_c \
+			      l_delaz_c \
+			      e_delaz_c } {
 
 		$itk_component($obj) configure -state normal
 	    }
 	}
 	"f_list_c" {
 	    foreach obj { l_listaz_c \
-			  e_listaz_c } {
+			      e_listaz_c } {
 
 		$itk_component($obj) configure -state normal
 	    }
 	}
 	"f_height_c" {
 	    foreach obj { l_hnum_c \
-			  e_hnum_c \
-			  l_dnum_c \
-			  e_dnum_c } {
+			      e_hnum_c \
+			      l_dnum_c \
+			      e_dnum_c } {
 
 		$itk_component($obj) configure -state normal
 	    }
 	}
 	"f_radius_c" {
 	    foreach obj { l_radius_c \
-			  e_radius_c \
-			  l_delta_c  \
-			  e_delta_c } {
+			      e_radius_c \
+			      l_delta_c  \
+			      e_delta_c } {
 
 		$itk_component($obj) configure -state normal
 	    }
 	}
 	"f_radlist_c" {
 	    foreach obj { l_radlist_c \
-			  e_radlist_c } {
+			      e_radlist_c } {
 
 		$itk_component($obj) configure -state normal
 	    }
 	}
 	"f_lnum_c" {
 	    foreach obj { l_lnum_c \
-			  e_lnum_c } {
+			      e_lnum_c } {
 
 		$itk_component($obj) configure -state normal
 	    }

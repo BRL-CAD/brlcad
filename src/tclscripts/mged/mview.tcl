@@ -246,7 +246,7 @@ proc setupmv { id } {
     global faceplate
 
     set_default_views $id
-#    mged_apply_local $id "set faceplate $mged_default(faceplate)"
+    #    mged_apply_local $id "set faceplate $mged_default(faceplate)"
 
     grid columnconfigure $mged_gui($id,dmc) 0 -weight 1
     grid columnconfigure $mged_gui($id,dmc) 1 -weight 1
@@ -290,7 +290,7 @@ proc setmv { id } {
 
 	unpackmv $id
 	grid $mged_gui($id,dmc).$mged_gui($id,dm_loc)\F -in $mged_gui($id,dmc) \
-		-sticky "nsew" -row 0 -column 0
+	    -sticky "nsew" -row 0 -column 0
     }
 }
 

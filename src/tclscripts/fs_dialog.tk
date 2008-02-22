@@ -73,19 +73,19 @@ proc fs_dialog {w parent pattern} {
     # The filter entry panel
     #
     frame $w.filter
-	frame $w.filter.hdr
-	    label $w.filter.hdr.lbl -relief flat -bd 0
-	    pack  $w.filter.hdr.lbl -side left -anchor w
+    frame $w.filter.hdr
+    label $w.filter.hdr.lbl -relief flat -bd 0
+    pack  $w.filter.hdr.lbl -side left -anchor w
 
-	    label $w.filter.hdr.file -textvariable fs_glob(pat_file)
-	    pack  $w.filter.hdr.file -side right -anchor e
+    label $w.filter.hdr.file -textvariable fs_glob(pat_file)
+    pack  $w.filter.hdr.file -side right -anchor e
 
-	    label $w.filter.hdr.dir -textvariable fs_glob(pat_dir)
-	    pack  $w.filter.hdr.dir -side right -anchor e
-	pack  $w.filter.hdr -side top -anchor w -expand 1 -fill x
+    label $w.filter.hdr.dir -textvariable fs_glob(pat_dir)
+    pack  $w.filter.hdr.dir -side right -anchor e
+    pack  $w.filter.hdr -side top -anchor w -expand 1 -fill x
 
-	entry $w.filter.ent -textvariable fs_glob(filter)
-	pack  $w.filter.ent -side top -anchor w -expand 1 -fill x
+    entry $w.filter.ent -textvariable fs_glob(filter)
+    pack  $w.filter.ent -side top -anchor w -expand 1 -fill x
 
     pack $w.filter -side top -expand 1 -fill x -padx 5 -pady 5
 
@@ -93,50 +93,50 @@ proc fs_dialog {w parent pattern} {
     #  The file/directory panel
     #
     frame $w.m
-	#
-	# File panel
-	frame $w.m.files -relief ridge -bd 1
-	    label $w.m.files.lbl
-	    pack  $w.m.files.lbl -side top -anchor w
-	    scrollbar $w.m.files.sb -command "$w.m.files.lb yview"
-	    pack $w.m.files.sb -side right -fill y
-	    set fs_glob(listbox_file) [listbox $w.m.files.lb -yscrollcommand "$w.m.files.sb set" -selectmode single]
-	    pack $w.m.files.lb -side right
-	pack  $w.m.files -side right -anchor e
+    #
+    # File panel
+    frame $w.m.files -relief ridge -bd 1
+    label $w.m.files.lbl
+    pack  $w.m.files.lbl -side top -anchor w
+    scrollbar $w.m.files.sb -command "$w.m.files.lb yview"
+    pack $w.m.files.sb -side right -fill y
+    set fs_glob(listbox_file) [listbox $w.m.files.lb -yscrollcommand "$w.m.files.sb set" -selectmode single]
+    pack $w.m.files.lb -side right
+    pack  $w.m.files -side right -anchor e
 
-	#
-	# Directory panel
-	frame $w.m.dirs -relief ridge -bd 1
-	    label $w.m.dirs.lbl -relief flat
-	    pack  $w.m.dirs.lbl -side top -anchor w
-	    scrollbar $w.m.dirs.sb -command "$w.m.dirs.lb yview"
-	    pack $w.m.dirs.sb -side right -fill y
-	    set fs_glob(listbox_dir) [listbox $w.m.dirs.lb -yscrollcommand "$w.m.dirs.sb set" -selectmode single]
-	    pack $w.m.dirs.lb -side right
-	pack  $w.m.dirs -side left -anchor w
+    #
+    # Directory panel
+    frame $w.m.dirs -relief ridge -bd 1
+    label $w.m.dirs.lbl -relief flat
+    pack  $w.m.dirs.lbl -side top -anchor w
+    scrollbar $w.m.dirs.sb -command "$w.m.dirs.lb yview"
+    pack $w.m.dirs.sb -side right -fill y
+    set fs_glob(listbox_dir) [listbox $w.m.dirs.lb -yscrollcommand "$w.m.dirs.sb set" -selectmode single]
+    pack $w.m.dirs.lb -side right
+    pack  $w.m.dirs -side left -anchor w
     pack $w.m -side top -expand 1 -fill x -padx 5
 
     #
     # Selection Panel
     #
     frame $w.sel
-	label $w.sel.lbl
-	pack  $w.sel.lbl -side top -anchor w
-	entry $w.sel.ent -textvariable fs_glob(selection)
-	pack  $w.sel.ent -side top -anchor w -expand 1 -fill x
+    label $w.sel.lbl
+    pack  $w.sel.lbl -side top -anchor w
+    entry $w.sel.ent -textvariable fs_glob(selection)
+    pack  $w.sel.ent -side top -anchor w -expand 1 -fill x
     pack $w.sel -side top -expand 1 -fill x -padx 5
 
     #
     # Button Panel
     #
     frame $w.btns -bd 1 -relief ridge
-	button $w.btns.ok -command {set fs_glob(button) 1}
-	pack $w.btns.ok -side left -expand 1 -pady 8
-	button $w.btns.filter -command \
-		{fs_dialog_filterstring $fs_glob(filter)}
-	pack $w.btns.filter -side left -expand 1
-	button $w.btns.cancel -command {set fs_glob(button) 0}
-	pack $w.btns.cancel -side left -expand 1
+    button $w.btns.ok -command {set fs_glob(button) 1}
+    pack $w.btns.ok -side left -expand 1 -pady 8
+    button $w.btns.filter -command \
+	{fs_dialog_filterstring $fs_glob(filter)}
+    pack $w.btns.filter -side left -expand 1
+    button $w.btns.cancel -command {set fs_glob(button) 0}
+    pack $w.btns.cancel -side left -expand 1
     pack  $w.btns -side bottom -expand 1 -fill x -padx 5 -pady 5
 
     update idletasks
@@ -318,53 +318,53 @@ proc fs_dialog_click_file {} {
 #  get the selection, build a new pattern, and call fs_dialog_filterstring
 #
 proc fs_dialog_click_dir {y} {
-	global fs_glob
+    global fs_glob
 
-	set newdir [$fs_glob(listbox_dir) get [$fs_glob(listbox_dir) nearest $y]]
+    set newdir [$fs_glob(listbox_dir) get [$fs_glob(listbox_dir) nearest $y]]
 
-	if { $fs_glob(fully_qualified) == 1} {
-		# Fully qualified path stored in directory widget
-		# Just replace the pattern with the selection
+    if { $fs_glob(fully_qualified) == 1} {
+	# Fully qualified path stored in directory widget
+	# Just replace the pattern with the selection
 
-		set fs_glob(pat_dir) $newdir/
-		set fs_glob(filter) $newdir/$fs_glob(pat_file)
-		fs_dialog_rescan
-		return
-	}
-
-	# if we've selected ".." do relative/absolute raise
-	# else just add selection to the end of the directory pattern
-
-	if {[regexp {^/} $fs_glob(pat_dir)]} {
-		# Absolute Path (Begins with "/")
-		if {$newdir == ".."} {
-			# Delete last directory from path
-			regsub {[^/]+/$} $fs_glob(pat_dir) {} fs_glob(pat_dir)
-		} else {
-			# Add new directory to path
-			set fs_glob(pat_dir) $fs_glob(pat_dir)$newdir/
-		}
-	} else {
-		# Relative Path (Begins with "./" or "../"
-
-		set pat_minus_one [file dirname $fs_glob(pat_dir)]/
-		set pat_plus_one $fs_glob(pat_dir)$newdir/
-		file stat $pat_minus_one pmo
-		file stat $pat_plus_one ppo
-
-		if { $pmo(ino) == $ppo(ino) } {
-			# raising up path we descended or
-			# descending path we raised through
-			set fs_glob(pat_dir) $pat_minus_one
-		} else {
-			# Raising up higher
-			set fs_glob(pat_dir) $fs_glob(pat_dir)$newdir/
-		}
-	}
-
-	set fs_glob(filter) $fs_glob(pat_dir)$fs_glob(pat_file)
-
+	set fs_glob(pat_dir) $newdir/
+	set fs_glob(filter) $newdir/$fs_glob(pat_file)
 	fs_dialog_rescan
+	return
+    }
+
+    # if we've selected ".." do relative/absolute raise
+    # else just add selection to the end of the directory pattern
+
+    if {[regexp {^/} $fs_glob(pat_dir)]} {
+	# Absolute Path (Begins with "/")
+	if {$newdir == ".."} {
+	    # Delete last directory from path
+	    regsub {[^/]+/$} $fs_glob(pat_dir) {} fs_glob(pat_dir)
+	} else {
+	    # Add new directory to path
+	    set fs_glob(pat_dir) $fs_glob(pat_dir)$newdir/
+	}
+    } else {
+	# Relative Path (Begins with "./" or "../"
+
+	set pat_minus_one [file dirname $fs_glob(pat_dir)]/
+	set pat_plus_one $fs_glob(pat_dir)$newdir/
+	file stat $pat_minus_one pmo
+	file stat $pat_plus_one ppo
+
+	if { $pmo(ino) == $ppo(ino) } {
+	    # raising up path we descended or
+	    # descending path we raised through
+	    set fs_glob(pat_dir) $pat_minus_one
+	} else {
+	    # Raising up higher
+	    set fs_glob(pat_dir) $fs_glob(pat_dir)$newdir/
+	}
+    }
+
+    set fs_glob(filter) $fs_glob(pat_dir)$fs_glob(pat_file)
+
+    fs_dialog_rescan
 }
 
 #
@@ -373,12 +373,12 @@ proc fs_dialog_click_dir {y} {
 #  set bindings for widgets
 #
 proc fs_dialog_bindings {} {
-	global fs_glob
+    global fs_glob
 
-	bind $fs_glob(win).filter.ent <KeyPress-Return> \
-		{fs_dialog_filterstring $fs_glob(filter)}
-	bind $fs_glob(listbox_file) <Double-Button-1> {fs_dialog_click_file}
-	bind $fs_glob(listbox_dir) <Double-Button-1> {fs_dialog_click_dir %y}
+    bind $fs_glob(win).filter.ent <KeyPress-Return> \
+	{fs_dialog_filterstring $fs_glob(filter)}
+    bind $fs_glob(listbox_file) <Double-Button-1> {fs_dialog_click_file}
+    bind $fs_glob(listbox_dir) <Double-Button-1> {fs_dialog_click_dir %y}
 }
 
 #
@@ -387,39 +387,39 @@ proc fs_dialog_bindings {} {
 #  Short little application that uses fs_dialog
 #
 proc fs_dialog_test {} {
+    global pattern
+    frame .main
+    label .main.lbl -text Pattern
+    pack .main.lbl -side left
+
+    set pattern [exec pwd]/*
+    entry .main.ent -textvariable pattern
+    pack .main.ent -side left -expand 1 -fill x
+
+    button .main.browse -text "Browse" -command {doit}
+    pack .main.browse -side left
+
+    button .main.exit -text "Exit" -command exit
+    pack .main.exit -side left
+
+    pack .main -expand 1 -fill x -side top
+
+    proc doit {} {
 	global pattern
-	frame .main
-	label .main.lbl -text Pattern
-	pack .main.lbl -side left
 
-	set pattern [exec pwd]/*
-	entry .main.ent -textvariable pattern
-	pack .main.ent -side left -expand 1 -fill x
-
-	button .main.browse -text "Browse" -command {doit}
-	pack .main.browse -side left
-
-	button .main.exit -text "Exit" -command exit
-	pack .main.exit -side left
-
-	pack .main -expand 1 -fill x -side top
-
-	proc doit {} {
-		global pattern
-
-		.msg delete 1.0 end
-		set new_file [fs_dialog .w .main $pattern]
-		if { $new_file == "" } {
-			.msg insert end "User Cancelled"
-		} else {
-			.msg insert end "User file: $new_file"
-		}
+	.msg delete 1.0 end
+	set new_file [fs_dialog .w .main $pattern]
+	if { $new_file == "" } {
+	    .msg insert end "User Cancelled"
+	} else {
+	    .msg insert end "User file: $new_file"
 	}
+    }
 
-	bind .main.ent <KeyPress-Return> {doit}
+    bind .main.ent <KeyPress-Return> {doit}
 
-	text .msg -width 40 -height 2
-	pack .msg -side bottom -expand 1 -fill x
+    text .msg -width 40 -height 2
+    pack .msg -side bottom -expand 1 -fill x
 }
 
 # Local Variables:

@@ -60,25 +60,25 @@ namespace eval RtWizard {
     #
     itk::usual Wizard {
 	keep -activebackground \
-		-activerelief \
-		-background \
-		-borderwidth -cursor \
-		-elementborderwidth \
-		-foreground \
-		-highlightcolor \
-		-highlightthickness \
-		-insertbackground \
-		-insertborderwidth \
-		-insertofftime \
-		-insertontime \
-		-insertwidth \
-		-jump \
-		-labelfont \
-		-selectbackground \
-		-selectborderwidth \
-		-textbackground \
-		-textfont \
-		-troughcolor
+	    -activerelief \
+	    -background \
+	    -borderwidth -cursor \
+	    -elementborderwidth \
+	    -foreground \
+	    -highlightcolor \
+	    -highlightthickness \
+	    -insertbackground \
+	    -insertborderwidth \
+	    -insertofftime \
+	    -insertontime \
+	    -insertwidth \
+	    -jump \
+	    -labelfont \
+	    -selectbackground \
+	    -selectborderwidth \
+	    -textbackground \
+	    -textfont \
+	    -troughcolor
     }
 
     #
@@ -176,7 +176,7 @@ namespace eval RtWizard {
 	#
 	itk_component add menubar {
 	    iwidgets::menubar $itk_interior.menubar \
-		    -helpvariable [ itcl::scope helpVar ]
+		-helpvariable [ itcl::scope helpVar ]
 	} {
 	    usual
 	}
@@ -191,8 +191,8 @@ namespace eval RtWizard {
 	#
 	itk_component add notebook {
 	    iwidgets::notebook $itk_interior.notebook \
-		    -width $DEF_WIDTH \
-		    -height 500
+		-width $DEF_WIDTH \
+		-height 500
 	} {
 	    usual
 	}
@@ -202,10 +202,10 @@ namespace eval RtWizard {
 	#
 	itk_component add helpThing {
 	    label $itk_interior.helpThing \
-		    -anchor w \
-		    -textvariable [itcl::scope helpVar] \
-		    -width 40 \
-		    -relief sunken
+		-anchor w \
+		-textvariable [itcl::scope helpVar] \
+		-width 40 \
+		-relief sunken
 	} {
 	    usual
 	}
@@ -232,48 +232,48 @@ namespace eval RtWizard {
 	# File menu
 	#
 	$itk_component(menubar) add menubutton file \
-		-text File \
-		-menu {
-	    options -tearoff false -selectcolor blue
-	}
+	    -text File \
+	    -menu {
+		options -tearoff false -selectcolor blue
+	    }
 
 	$itk_component(menubar) add command .file.goNew \
-		-label "New" \
-		-helpstr "Create a new images." \
-		-command {puts "New Selected"}
+	    -label "New" \
+	    -helpstr "Create a new images." \
+	    -command {puts "New Selected"}
 
 	$itk_component(menubar) menuconfigure .file.goNew \
-		-state disabled
+	    -state disabled
 
 	$itk_component(menubar) add command .file.goOpen \
-		-label "Open BRL-CAD Database" \
-		-helpstr "Open a BRL-CAD database." \
-		-command {puts "Open Selected"}
+	    -label "Open BRL-CAD Database" \
+	    -helpstr "Open a BRL-CAD database." \
+	    -command {puts "Open Selected"}
 
 	$itk_component(menubar) menuconfigure .file.goOpen \
-		-state disabled
+	    -state disabled
 
 	$itk_component(menubar) add separator .file.sep
 
 	$itk_component(menubar) add command .file.Quit \
-		-label "Quit" -underline 0 \
-		-helpstr "Quit the RtWizard." \
-		-command {exit}
+	    -label "Quit" -underline 0 \
+	    -helpstr "Quit the RtWizard." \
+	    -command {exit}
 
 	#
 	# Image Menu
 	#
 	$itk_component(menubar) add menubutton image \
-		-text "Image" \
-		-state disabled \
-		-menu {
-	    options -tearoff false -selectcolor blue
-	}
+	    -text "Image" \
+	    -state disabled \
+	    -menu {
+		options -tearoff false -selectcolor blue
+	    }
 
 	$itk_component(menubar) add command .image.SelectType \
-		-label "New Image..." \
-		-helpstr "View examples of different image types." \
-		-command "[itcl::code $this select exp]"
+	    -label "New Image..." \
+	    -helpstr "View examples of different image types." \
+	    -command "[itcl::code $this select exp]"
 
 	$itk_component(menubar) add separator .image.sep1
 
@@ -285,41 +285,41 @@ namespace eval RtWizard {
 	# Render Menu
 	#
 	$itk_component(menubar) add menubutton render \
-		-text "Render" \
-		-state disabled \
-		-menu {
-	    options -tearoff false -selectcolor blue
-	}
+	    -text "Render" \
+	    -state disabled \
+	    -menu {
+		options -tearoff false -selectcolor blue
+	    }
 
 	$itk_component(menubar) add command .render.preview \
-		-label "Preview" \
-		-helpstr "Generate a quarter-size preview image" \
-		-command "[itcl::code $this preview]"
+	    -label "Preview" \
+	    -helpstr "Generate a quarter-size preview image" \
+	    -command "[itcl::code $this preview]"
 
 	$itk_component(menubar) add command .render.render \
-		-label "Full-Size" \
-		-helpstr "Generate a full-size picture with the current." \
-		-command "[itcl::code $this fullSize]"
+	    -label "Full-Size" \
+	    -helpstr "Generate a full-size picture with the current." \
+	    -command "[itcl::code $this fullSize]"
 
 	#
 	# Help menu
 	#
 	$itk_component(menubar) add menubutton help \
-		-text Help \
-		-state disabled \
-		-menu {
-	    options -tearoff true -selectcolor green
-	}
+	    -text Help \
+	    -state disabled \
+	    -menu {
+		options -tearoff true -selectcolor green
+	    }
 
 	$itk_component(menubar) add command .help.goHelp \
-		-label "Help..." \
-		-helpstr "Detailed help" \
-		-command "[::itcl::code $this select] help"
+	    -label "Help..." \
+	    -helpstr "Detailed help" \
+	    -command "[::itcl::code $this select] help"
 
 	$itk_component(menubar) add command .help.goAbout \
-		-label "About..." \
-		-helpstr "About the RtWizard" \
-		-command {puts "selected: About..."}
+	    -label "About..." \
+	    -helpstr "About the RtWizard" \
+	    -command {puts "selected: About..."}
     }
 
     #
@@ -347,25 +347,25 @@ namespace eval RtWizard {
 	#
 	# Instantiate the page, pass the arguments.
 	#
-	set pageName [ eval $type ${path}.#auto $args ]
+	set pageName [ eval $type ${path}.\#auto $args ]
 
 	#
 	# Add to the pages array
 	#
 	set pages($token) $pageName
-
+	
 	#
 	# Pack it!
 	#
 	pack $pageName \
-		-fill both -expand 1
+	    -fill both -expand 1
 	pack propagate $pageName
-
+	
 	set currentPageToken $token
-
+	
 	return $pageName
     }
-
+    
     #
     # select
     #
@@ -434,12 +434,12 @@ namespace eval RtWizard {
 	#
 	if { $stepName != "No Step" } {
 	    $itk_component(menubar) insert .$currentStepMenu.sep2 \
-		    checkbutton $token \
-		    -label $stepName \
-		    -variable $stepVar \
-		    -command "[itcl::code $this select] $token" \
-		    -selectcolor green \
-		    -helpstr [concat "Go to the \" " $stepName "\" page"]
+		checkbutton $token \
+		-label $stepName \
+		-variable $stepVar \
+		-command "[itcl::code $this select] $token" \
+		-selectcolor green \
+		-helpstr [concat "Go to the \" " $stepName "\" page"]
 
 	    #
 	    # Add status variable to the list
@@ -447,7 +447,7 @@ namespace eval RtWizard {
 	    lappend statusVariables $stepVar
 
 	} else {
-	#    puts "Page does not require user interaction"
+	    #    puts "Page does not require user interaction"
 	}
 
 	lappend enabledPages $token
@@ -505,24 +505,24 @@ namespace eval RtWizard {
 	set statusVariables ""
 
 	$itk_component(menubar) add menubutton $stepMenu \
-		-text Steps \
-		-menu {
-	    options -tearoff true -selectcolor blue
-	}
+	    -text Steps \
+	    -menu {
+		options -tearoff true -selectcolor blue
+	    }
 
 	$itk_component(menubar) add command .$stepMenu.goGreet \
-		-label "Greeting" \
-		-helpstr "Return to the greeting page." \
-		-command "[itcl::code $this select intro]"
+	    -label "Greeting" \
+	    -helpstr "Return to the greeting page." \
+	    -command "[itcl::code $this select intro]"
 
 	$itk_component(menubar) add separator .$stepMenu.sep1
 
 	$itk_component(menubar) add separator .$stepMenu.sep2
 
 	$itk_component(menubar) add command .$stepMenu.fb \
-		-label "Configure Framebuffer" \
-		-helpstr "Configure the framebuffer" \
-		-command "[itcl::code $this select fbp]"
+	    -label "Configure Framebuffer" \
+	    -helpstr "Configure the framebuffer" \
+	    -command "[itcl::code $this select fbp]"
     }
 
     #
@@ -590,10 +590,10 @@ namespace eval RtWizard {
 
 	if {$state == 1} {
 	    $itk_component(menubar) menuconfigure render \
-		    -state normal
+		-state normal
 	} else {
 	    $itk_component(menubar) menuconfigure render \
-		    -state disabled
+		-state disabled
 	}
     }
 

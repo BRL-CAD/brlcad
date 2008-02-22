@@ -29,7 +29,7 @@ proc mged_bind_dm { w } {
 
     set hot_key 65478
 
-#make this the current display manager
+    #make this the current display manager
     if { $::tcl_platform(platform) != "windows" && $::tcl_platform(os) != "Darwin" } {
 	bind $w <Enter> "winset $w; focus $w;"
     } else {
@@ -37,10 +37,10 @@ proc mged_bind_dm { w } {
 	bind $w <Enter> "winset $w;"
     }
 
-#default mouse bindings
+    #default mouse bindings
     default_mouse_bindings $w
 
-#default key bindings
+    #default key bindings
     set forwarding_key($w) 0
     default_key_bindings $w
 }
@@ -148,7 +148,7 @@ proc default_key_bindings { w } {
     bind $w <F6> "winset $w; set toggle_perspective !; break"
     bind $w <F7> "winset $w; set faceplate !; update_gui $w faceplate \$faceplate; break"
     bind $w <F8> "winset $w; set orig_gui !; update_gui $w orig_gui \$orig_gui; break"
-# KeySym for <F9> --> 0xffc6 --> 65478
+    # KeySym for <F9> --> 0xffc6 --> 65478
     bind $w <F9> "toggle_forward_key_bindings $w; update_gui $w forward_keys \$forwarding_key($w); break"
     bind $w <F12> "winset $w; knob zero; break"
 
@@ -207,7 +207,7 @@ proc forward_key_bindings { w } {
 	return
     }
 
-# First, unset the default key bindings
+    # First, unset the default key bindings
     bind $w a {}
     bind $w e {}
     bind $w m {}
@@ -261,8 +261,8 @@ proc forward_key_bindings { w } {
     bind $w <Control-p> {}
     bind $w <Control-t> {}
 
-# The focus commands in the binding below are necessary to insure
-# that .$id.t gets the event.
+    # The focus commands in the binding below are necessary to insure
+    # that .$id.t gets the event.
     bind $w <KeyPress> "\
 	    focus .$id.t;\
 	    set mged_gui(.$id.t,insert_char_flag) 1;\
@@ -316,7 +316,7 @@ proc default_mouse_bindings { w } {
 	bind $w <Shift-Control-ButtonPress-3> "winset $w; dm adc d %x %y; \
 		shift_grip_hints $w \"Translate Tick Distance\"; break"
 
-#constrained adc defaults
+	#constrained adc defaults
 	bind $w <Alt-Shift-ButtonPress-1> "winset $w; dm con a x %x %y; \
 		shift_grip_hints $w \"X Translate ADC\"; break"
 	bind $w <Alt-Shift-ButtonPress-2> "winset $w; dm con a y %x %y; \
@@ -359,7 +359,7 @@ proc default_mouse_bindings { w } {
 	bind $w <Shift-Control-ButtonPress-3> "winset $w; dm am s %x %y; \
 		shift_grip_hints $w Scale/Zoom; break"
 
-#constrained defaults
+	#constrained defaults
 	bind $w <Alt-Shift-ButtonPress-1> "winset $w; dm con t x %x %y; \
 		shift_grip_hints $w \"X Translation\"; break"
 	bind $w <Alt-Shift-ButtonPress-2> "winset $w; dm con t y %x %y; \

@@ -103,19 +103,19 @@
 
 ::itcl::body ViewAxesControl::packIt {} {
     grid $itk_component(sizeL) $itk_component(sizeCB) -sticky nsew \
-	    -padx 2 -pady 1
+	-padx 2 -pady 1
     grid $itk_component(positionL) $itk_component(positionCB) -sticky nsew \
-	    -padx 2 -pady 1
+	-padx 2 -pady 1
     grid $itk_component(lineWidthL) $itk_component(lineWidthCB) -sticky nsew \
-	    -padx 2 -pady 1
+	-padx 2 -pady 1
     grid $itk_component(axesColorL) $itk_component(axesColorCB) -sticky nsew \
-	    -padx 2 -pady 1
+	-padx 2 -pady 1
     grid $itk_component(axesLabelColorL) $itk_component(axesLabelColorCB) -sticky nsew \
-	    -padx 2 -pady 1
+	-padx 2 -pady 1
     grid $itk_component(sep) -columnspan 2 -sticky nsew \
-	    -padx 2 -pady 2
+	-padx 2 -pady 2
     grid $itk_component(dismissB) -columnspan 2 -sticky ns \
-	    -padx 2 -pady 1
+	-padx 2 -pady 1
 
     grid columnconfigure $itk_component(hull) 1 -weight 1
 
@@ -137,13 +137,13 @@
     $itk_component(sizeCB) entryConfigure -state disabled
 
     $itk_component(sizeCB) add command -label "Small" \
-	    -command [::itcl::code $this setSizeCB "Small"]
+	-command [::itcl::code $this setSizeCB "Small"]
     $itk_component(sizeCB) add command -label "Medium" \
-	    -command [::itcl::code $this setSizeCB "Medium"]
+	-command [::itcl::code $this setSizeCB "Medium"]
     $itk_component(sizeCB) add command -label "Large" \
-	    -command [::itcl::code $this setSizeCB "Large"]
+	-command [::itcl::code $this setSizeCB "Large"]
     $itk_component(sizeCB) add command -label "X-Large" \
-	    -command [::itcl::code $this setSizeCB "X-Large"]
+	-command [::itcl::code $this setSizeCB "X-Large"]
 }
 
 ::itcl::body ViewAxesControl::buildPosition {} {
@@ -162,15 +162,15 @@
     $itk_component(positionCB) entryConfigure -state disabled
 
     $itk_component(positionCB) add command -label "Center" \
-	    -command [::itcl::code $this setPositionCB "Center"]
+	-command [::itcl::code $this setPositionCB "Center"]
     $itk_component(positionCB) add command -label "Upper Left" \
-	    -command [::itcl::code $this setPositionCB "Upper Left"]
+	-command [::itcl::code $this setPositionCB "Upper Left"]
     $itk_component(positionCB) add command -label "Upper Right" \
-	    -command [::itcl::code $this setPositionCB "Upper Right"]
+	-command [::itcl::code $this setPositionCB "Upper Right"]
     $itk_component(positionCB) add command -label "Lower Left" \
-	    -command [::itcl::code $this setPositionCB "Lower Left"]
+	-command [::itcl::code $this setPositionCB "Lower Left"]
     $itk_component(positionCB) add command -label "Lower Right" \
-	    -command [::itcl::code $this setPositionCB "Lower Right"]
+	-command [::itcl::code $this setPositionCB "Lower Right"]
 }
 
 ::itcl::body ViewAxesControl::buildLineWidth {} {
@@ -189,11 +189,11 @@
     $itk_component(lineWidthCB) entryConfigure -state disabled
 
     $itk_component(lineWidthCB) add command -label "1" \
-	    -command [::itcl::code $this setLineWidthCB "1"]
+	-command [::itcl::code $this setLineWidthCB "1"]
     $itk_component(lineWidthCB) add command -label "2" \
-	    -command [::itcl::code $this setLineWidthCB "2"]
+	-command [::itcl::code $this setLineWidthCB "2"]
     $itk_component(lineWidthCB) add command -label "3" \
-	    -command [::itcl::code $this setLineWidthCB "3"]
+	-command [::itcl::code $this setLineWidthCB "3"]
 }
 
 ::itcl::body ViewAxesControl::buildAxesColor {} {
@@ -211,23 +211,23 @@
 
     $itk_component(axesColorCB) entryConfigure -state disabled
     $itk_component(axesColorCB) add command -label "Black" \
-	    -command [::itcl::code $this setAxesColorCB "Black"]
+	-command [::itcl::code $this setAxesColorCB "Black"]
     $itk_component(axesColorCB) add command -label "Blue" \
-	    -command [::itcl::code $this setAxesColorCB "Blue"]
+	-command [::itcl::code $this setAxesColorCB "Blue"]
     $itk_component(axesColorCB) add command -label "Cyan" \
-	    -command [::itcl::code $this setAxesColorCB "Cyan"]
+	-command [::itcl::code $this setAxesColorCB "Cyan"]
     $itk_component(axesColorCB) add command -label "Green" \
-	    -command [::itcl::code $this setAxesColorCB "Green"]
+	-command [::itcl::code $this setAxesColorCB "Green"]
     $itk_component(axesColorCB) add command -label "Magenta" \
-	    -command [::itcl::code $this setAxesColorCB "Magenta"]
+	-command [::itcl::code $this setAxesColorCB "Magenta"]
     $itk_component(axesColorCB) add command -label "Red" \
-	    -command [::itcl::code $this setAxesColorCB "Red"]
+	-command [::itcl::code $this setAxesColorCB "Red"]
     $itk_component(axesColorCB) add command -label "White" \
-	    -command [::itcl::code $this setAxesColorCB "White"]
+	-command [::itcl::code $this setAxesColorCB "White"]
     $itk_component(axesColorCB) add command -label "Yellow" \
-	    -command [::itcl::code $this setAxesColorCB "Yellow"]
+	-command [::itcl::code $this setAxesColorCB "Yellow"]
     $itk_component(axesColorCB) add command -label "Triple" \
-	    -command [::itcl::code $this setAxesColorCB "Triple"]
+	-command [::itcl::code $this setAxesColorCB "Triple"]
 }
 
 ::itcl::body ViewAxesControl::buildAxesLabelColor {} {
@@ -245,27 +245,27 @@
 
     $itk_component(axesLabelColorCB) entryConfigure -state disabled
     $itk_component(axesLabelColorCB) add command -label "Black" \
-	    -command [::itcl::code $this setAxesLabelColorCB "Black"]
+	-command [::itcl::code $this setAxesLabelColorCB "Black"]
     $itk_component(axesLabelColorCB) add command -label "Blue" \
-	    -command [::itcl::code $this setAxesLabelColorCB "Blue"]
+	-command [::itcl::code $this setAxesLabelColorCB "Blue"]
     $itk_component(axesLabelColorCB) add command -label "Cyan" \
-	    -command [::itcl::code $this setAxesLabelColorCB "Cyan"]
+	-command [::itcl::code $this setAxesLabelColorCB "Cyan"]
     $itk_component(axesLabelColorCB) add command -label "Green" \
-	    -command [::itcl::code $this setAxesLabelColorCB "Green"]
+	-command [::itcl::code $this setAxesLabelColorCB "Green"]
     $itk_component(axesLabelColorCB) add command -label "Magenta" \
-	    -command [::itcl::code $this setAxesLabelColorCB "Magenta"]
+	-command [::itcl::code $this setAxesLabelColorCB "Magenta"]
     $itk_component(axesLabelColorCB) add command -label "Red" \
-	    -command [::itcl::code $this setAxesLabelColorCB "Red"]
+	-command [::itcl::code $this setAxesLabelColorCB "Red"]
     $itk_component(axesLabelColorCB) add command -label "White" \
-	    -command [::itcl::code $this setAxesLabelColorCB "White"]
+	-command [::itcl::code $this setAxesLabelColorCB "White"]
     $itk_component(axesLabelColorCB) add command -label "Yellow" \
-	    -command [::itcl::code $this setAxesLabelColorCB "Yellow"]
+	-command [::itcl::code $this setAxesLabelColorCB "Yellow"]
 }
 
 ::itcl::body ViewAxesControl::buildButtons {} {
     itk_component add dismissB {
 	::button $itk_interior.dismissB -relief raised -text "Dismiss" \
-		-command [::itcl::code $this hide]
+	    -command [::itcl::code $this hide]
     } {
 	usual
     }

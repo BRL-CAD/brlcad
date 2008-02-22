@@ -48,7 +48,7 @@
 	variable mGift ""
 	variable mRgb ""
 	variable mShader ""
-#	variable mMaterial ""
+	#	variable mMaterial ""
 	variable mInherit ""
 
 	method buildGeneralGUI {parent tabs ti}
@@ -158,11 +158,11 @@
 
     $itk_component(combShader) initShader $mShader
 
-#    if {![catch {bu_get_value_by_keyword material $gdata} _material]} {
-#	set mMaterial $_material
-#    } else {
-#	set mMaterial ""
-#    }
+    #    if {![catch {bu_get_value_by_keyword material $gdata} _material]} {
+    #	set mMaterial $_material
+    #    } else {
+    #	set mMaterial ""
+    #    }
 
     if {![catch {bu_get_value_by_keyword inherit $gdata} _inherit]} {
 	set mInherit $_inherit
@@ -205,30 +205,30 @@
     if {$mAir != ""} {
 	lappend _attrs air $mAir
     } else {
-#	catch {$itk_option(-mged) attr rm $itk_option(-geometryObject) aircode}
+	#	catch {$itk_option(-mged) attr rm $itk_option(-geometryObject) aircode}
     }
 
     if {$mLos != ""} {
 	lappend _attrs los $mLos
     } else {
-#	catch {$itk_option(-mged) attr rm $itk_option(-geometryObject) los}
+	#	catch {$itk_option(-mged) attr rm $itk_option(-geometryObject) los}
     }
 
     if {$mGift != ""} {
 	lappend _attrs GIFTmater $mGift
     } else {
-#	catch {$itk_option(-mged) attr rm $itk_option(-geometryObject) material_id}
+	#	catch {$itk_option(-mged) attr rm $itk_option(-geometryObject) material_id}
     }
 
     if {[GeometryEditFrame::validateColor $mRgb]} {
 	lappend _attrs rgb $mRgb
     } else {
 	set mRgb ""
-#	catch {$itk_option(-mged) attr rm $itk_option(-geometryObject) rgb}
+	#	catch {$itk_option(-mged) attr rm $itk_option(-geometryObject) rgb}
     }
 
     lappend _attrs shader $mShader
-#    lappend _attrs material $mMaterial
+    #    lappend _attrs material $mMaterial
 
     if {$mInherit != ""} {
 	lappend _attrs inherit $mInherit
@@ -359,32 +359,32 @@
     } {
 	rename -font -entryFont entryFont Font
     }
-#    itk_component add combMaterialL {
-#	::label $parent.combmaterialL \
-#	    -text "Material:" \
-#	    -anchor e
-#    } {
-#	rename -font -labelFont labelFont Font
-#    }
-#    itk_component add combMaterialE {
-#	::entry $parent.combmaterialE \
-#	    -textvariable [::itcl::scope mMaterial]
-#    } {
-#	rename -font -entryFont entryFont Font
-#    }
-#    itk_component add combInheritL {
-#	::label $parent.combinheritL \
-#	    -text "Inherit:" \
-#	    -anchor e
-#    } {
-#	rename -font -labelFont labelFont Font
-#    }
-#    itk_component add combInheritE {
-#	::entry $parent.combinheritE \
-#	    -textvariable [::itcl::scope mInherit]
-#    } {
-#	rename -font -entryFont entryFont Font
-#    }
+    #    itk_component add combMaterialL {
+    #	::label $parent.combmaterialL \
+	#	    -text "Material:" \
+	#	    -anchor e
+    #    } {
+    #	rename -font -labelFont labelFont Font
+    #    }
+    #    itk_component add combMaterialE {
+    #	::entry $parent.combmaterialE \
+	#	    -textvariable [::itcl::scope mMaterial]
+    #    } {
+    #	rename -font -entryFont entryFont Font
+    #    }
+    #    itk_component add combInheritL {
+    #	::label $parent.combinheritL \
+	#	    -text "Inherit:" \
+	#	    -anchor e
+    #    } {
+    #	rename -font -labelFont labelFont Font
+    #    }
+    #    itk_component add combInheritE {
+    #	::entry $parent.combinheritE \
+	#	    -textvariable [::itcl::scope mInherit]
+    #    } {
+    #	rename -font -entryFont entryFont Font
+    #    }
     GeometryEditFrame::buildComboBox $parent \
 	combInherit \
 	combInherit \
@@ -425,10 +425,10 @@
     grid $itk_component(combRgbL) $itk_component(combRgbE) \
 	-row $row \
 	-sticky nsew
-#    incr row
-#    grid $itk_component(combMaterialL) $itk_component(combMaterialE) \
-#	-row $row \
-#	-sticky nsew
+    #    incr row
+    #    grid $itk_component(combMaterialL) $itk_component(combMaterialE) \
+	#	-row $row \
+	#	-sticky nsew
     incr row
     grid $itk_component(combInheritL) \
 	-row $row \
@@ -438,14 +438,14 @@
 	-row $row \
 	-column 1 \
 	-sticky nsew
-#    grid $itk_component(combInheritL) $itk_component(combInheritE) \
+    #    grid $itk_component(combInheritL) $itk_component(combInheritE) \
 	-row $row \
 	-sticky nsew
     grid columnconfigure $parent 1 -weight 1
     pack $itk_component(combGeneralF) -expand yes -fill x -anchor n
-#    pack $itk_component(combGeneralF) -expand yes -fill both
-#    pack $parent -expand yes -fill x -anchor n
-#    grid columnconfigure [namespace tail $this] 1 -weight 1
+    #    pack $itk_component(combGeneralF) -expand yes -fill both
+    #    pack $parent -expand yes -fill x -anchor n
+    #    grid columnconfigure [namespace tail $this] 1 -weight 1
 
     $tabs tab configure $tabIndex \
 	-window $itk_component(combGeneralF) \
@@ -465,8 +465,8 @@
     bind $itk_component(combGiftE) <Tab> [::itcl::code $this updateGeometryIfMod]
     bind $itk_component(combRgbE) <Tab> [::itcl::code $this updateGeometryIfMod]
 
-#    bind $itk_component(combMaterialE) <Return> [::itcl::code $this updateGeometryIfMod]
-#    bind $itk_component(combInheritE) <Return> [::itcl::code $this updateGeometryIfMod]
+    #    bind $itk_component(combMaterialE) <Return> [::itcl::code $this updateGeometryIfMod]
+    #    bind $itk_component(combInheritE) <Return> [::itcl::code $this updateGeometryIfMod]
 }
 
 ::itcl::body CombEditFrame::buildShaderGUI {parent tabs ti} {
@@ -479,7 +479,7 @@
 	-window $itk_component(combShader) \
 	-fill both
 
-#    bind $itk_component(combShaderE) <Return> [::itcl::code $this updateGeometryIfMod]
+    #    bind $itk_component(combShaderE) <Return> [::itcl::code $this updateGeometryIfMod]
 }
 
 ::itcl::body CombEditFrame::buildTreeGUI {parent tabs ti} {
@@ -498,16 +498,16 @@
     grid $itk_component(combTreeT) \
 	-row 0 \
 	-sticky nsew
-#    pack $itk_component(combTreeT) -expand yes -fill both
+    #    pack $itk_component(combTreeT) -expand yes -fill both
     pack $itk_component(combTreeF) -expand yes -fill both
 
     $tabs tab configure $ti \
 	-window $itk_component(combTreeF) \
 	-fill both
 
-#    bind $itk_component(combTreeT) <Leave> [::itcl::code $this updateGeometryIfMod]
-#    bind $itk_component(combTreeT) <Return> [::itcl::code $this updateGeometryIfMod]
-#    bind $itk_component(combTreeT) <FocusOut> [::itcl::code $this updateGeometryIfMod]
+    #    bind $itk_component(combTreeT) <Leave> [::itcl::code $this updateGeometryIfMod]
+    #    bind $itk_component(combTreeT) <Return> [::itcl::code $this updateGeometryIfMod]
+    #    bind $itk_component(combTreeT) <FocusOut> [::itcl::code $this updateGeometryIfMod]
     bind $itk_component(combTreeT) <KeyRelease> [::itcl::code $this updateGeometryIfMod]
 }
 
@@ -559,11 +559,11 @@
 	set _mShader ""
     }
 
-#    if {![catch {bu_get_value_by_keyword material $gdata} _material]} {
-#	set _mMaterial $_material
-#    } else {
-#	set _mMaterial ""
-#    }
+    #    if {![catch {bu_get_value_by_keyword material $gdata} _material]} {
+    #	set _mMaterial $_material
+    #    } else {
+    #	set _mMaterial ""
+    #    }
 
     if {![catch {bu_get_value_by_keyword inherit $gdata} _inherit]} {
 	set _mInherit $_inherit
@@ -583,7 +583,7 @@
 	set mInherit ""
     }
 
-#	$_mMaterial != $mMaterial ||
+    #	$_mMaterial != $mMaterial ||
     if {$_mRegion != $mRegion ||
 	$_mId != $mId ||
 	$_mAir != $mAir ||

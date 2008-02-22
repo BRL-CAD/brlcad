@@ -92,13 +92,13 @@ proc ::swidgets::tooltip {args} {
     }
 
     set frm [::frame $itk_interior.frm -relief groove\
-	    -borderwidth 1]
+		 -borderwidth 1]
 
     # textm & scrollbar
     itk_component add text {
 	::text $frm.text -wrap word \
-		-state disabled \
-		-height 15 -width 60
+	    -state disabled \
+	    -height 15 -width 60
     } {
 	keep -font
 	rename -background -textbackground textBackground Background
@@ -115,7 +115,7 @@ proc ::swidgets::tooltip {args} {
     # checkbutton
     itk_component add check {
 	::checkbutton $itk_interior.check -text "Show tips at startup" \
-		-onvalue 1 -offvalue 0 -variable [::itcl::scope itk_option(-showtip)]
+	    -onvalue 1 -offvalue 0 -variable [::itcl::scope itk_option(-showtip)]
     } {
 	keep -selectcolor
     }
@@ -129,19 +129,19 @@ proc ::swidgets::tooltip {args} {
 
     itk_component add next {
 	::button $itk_component(bbox).next -text "Next" \
-		-width 15 -command [::itcl::code $this next]
+	    -width 15 -command [::itcl::code $this next]
     } {
     }
 
     itk_component add intro {
 	::button $itk_component(bbox).intro -text "Introduction" \
-		-width 15 -command [::itcl::code $this intro]
+	    -width 15 -command [::itcl::code $this intro]
     } {
     }
 
     itk_component add close {
 	::button $itk_component(bbox).close -text "Close" \
-		-width 15 -command [::itcl::code $this Close]
+	    -width 15 -command [::itcl::code $this Close]
     } {
     }
 
@@ -174,7 +174,7 @@ proc ::swidgets::tooltip {args} {
 	$itk_component(text) delete 1.0 end
 	$itk_component(text) insert 1.0 "[lindex $itk_option(-tips) $index]"
 	$itk_component(text) configure -state disabled
-     }
+    }
 }
 
 ::itcl::body swidgets::Tooltip::destructor {} {

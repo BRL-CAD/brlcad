@@ -59,11 +59,11 @@ namespace eval RtWizard {
 		# Build the help text
 		#
 		$itk_component(helpPanel) insert insert \
-			"\nUse this page to select the items that you wish to render in a full-color image." \
-			HelpTag
+		    "\nUse this page to select the items that you wish to render in a full-color image." \
+		    HelpTag
 
 		$itk_component(helpPanel) tag configure HelpTag \
-			-font {helvetica 10 bold}
+		    -font {helvetica 10 bold}
 
 		configure -onSelectCallback [itcl::code $this onSelect2]
 		configure -onDeselectCallback [itcl::code $this onDeselect2]
@@ -103,9 +103,9 @@ namespace eval RtWizard {
 	# Add to the the options menu
 	#
 	$::wizardInstance menubar add command .$optionsMenu.bg \
-		-label "Background Color..." \
-		-helpstr "Set the background color" \
-		-command "[itcl::code $this backgroundColorChooser]"
+	    -label "Background Color..." \
+	    -helpstr "Set the background color" \
+	    -command "[itcl::code $this backgroundColorChooser]"
     }
 
     #

@@ -86,8 +86,8 @@ proc ::swidgets::selectlists {args} {
     # LISTBOX 1
     itk_component add listbox1 {
 	iwidgets::scrolledlistbox $frame.lstbox1 -vscrollmode static \
-		-hscrollmode dynamic -selectmode single \
-		-dblclickcommand [::itcl::code $this _dblclick "listbox1"]
+	    -hscrollmode dynamic -selectmode single \
+	    -dblclickcommand [::itcl::code $this _dblclick "listbox1"]
     } {
 	keep -textbackground
 	rename -labelpos -labelpos1 labelPos1 Position
@@ -97,8 +97,8 @@ proc ::swidgets::selectlists {args} {
     # LISTBOX 2
     itk_component add listbox2 {
 	iwidgets::scrolledlistbox $frame.lstbox2 -vscrollmode static \
-		-hscrollmode dynamic -selectmode single \
-		-dblclickcommand [::itcl::code $this _dblclick "listbox2"]
+	    -hscrollmode dynamic -selectmode single \
+	    -dblclickcommand [::itcl::code $this _dblclick "listbox2"]
     } {
 	keep -textbackground
 	rename -labelpos -labelpos2 labelPos2 Position
@@ -228,10 +228,10 @@ proc ::swidgets::selectlists {args} {
     # check for empty listbox1
     if {[$itk_component(listbox1) get 0] == ""} {
 	$itk_component(btn_all) configure -text "Remove All" \
-		-command [::itcl::code $this _removeall]
+	    -command [::itcl::code $this _removeall]
     } else {
 	$itk_component(btn_all) configure -text "Select All" \
-		-command [::itcl::code $this _addall]
+	    -command [::itcl::code $this _addall]
     }
 
     if {$itk_option(-sortlist2) == "true"} {
@@ -258,10 +258,10 @@ proc ::swidgets::selectlists {args} {
     # check for empty listbox1
     if {[$itk_component(listbox1) get 0] == ""} {
 	$itk_component(btn_all) configure -text "Remove All" \
-		-command [::itcl::code $this _removeall]
+	    -command [::itcl::code $this _removeall]
     } else {
 	$itk_component(btn_all) configure -text "Select All" \
-		-command [::itcl::code $this _addall]
+	    -command [::itcl::code $this _addall]
     }
 
     if {$itk_option(-sortlist1) == "true"} {
@@ -282,7 +282,7 @@ proc ::swidgets::selectlists {args} {
     }
 
     $itk_component(btn_all) configure -text "Remove All" \
-	    -command [::itcl::code $this _removeall]
+	-command [::itcl::code $this _removeall]
 
     if {$itk_option(-sortlist2) == "true"} {
 	$itk_component(listbox2) sort ascending
@@ -302,7 +302,7 @@ proc ::swidgets::selectlists {args} {
     }
 
     $itk_component(btn_all) configure -text "Select All" \
-	    -command [::itcl::code $this _addall]
+	-command [::itcl::code $this _addall]
 
     if {$itk_option(-sortlist1) == "true"} {
 	$itk_component(listbox1) sort ascending
@@ -339,7 +339,7 @@ proc ::swidgets::selectlists {args} {
 		# eliminate non-unique items if necessary
 		if {$itk_option(-unique) == "true"} {
 		    if {[lsearch [$itk_component(listbox1) get 0 end] $item] != -1 ||
-		    [lsearch [$itk_component(listbox2) get 0 end] $item] != -1} {
+			[lsearch [$itk_component(listbox2) get 0 end] $item] != -1} {
 			continue
 		    }
 		}
@@ -354,7 +354,7 @@ proc ::swidgets::selectlists {args} {
 		# eliminate non-unique items if necessary
 		if {$itk_option(-unique) == "true"} {
 		    if {[lsearch [$itk_component(listbox1) get 0 end] $item] != -1 ||
-		    [lsearch [$itk_component(listbox2) get 0 end] $item] != -1} {
+			[lsearch [$itk_component(listbox2) get 0 end] $item] != -1} {
 			continue
 		    }
 		}

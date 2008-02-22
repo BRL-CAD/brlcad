@@ -54,7 +54,7 @@ proc raypick { } {
 	set i 0
 	foreach solid $solids {
 	    button .raypick.s$i -text $solid \
-		    -command "destroy .raypick; sed $solid"
+		-command "destroy .raypick; sed $solid"
 	    pack .raypick.s$i -side top -fill x
 	    incr i
 	}

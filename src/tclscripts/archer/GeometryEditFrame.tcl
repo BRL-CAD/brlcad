@@ -429,11 +429,11 @@
     itk_component add $prefix\Arrow {
 	::swidgets::togglearrow $itk_component($prefix).arrow
     } {
-#	usual
+	#	usual
     }
     itk_component add $prefix\Label {
 	label $itk_component($prefix).label -text $text \
-		-anchor w
+	    -anchor w
     } {
 	usual
     }
@@ -447,8 +447,8 @@
     grid $itk_component($prefix\Label) -row 0 -column 1 -sticky w
     grid columnconfigure $itk_component($prefix) 1 -weight 1
     $itk_component($prefix\Arrow) configure -command [itcl::code $this toggleArrow \
-	    $itk_component($prefix\Arrow) $itk_component($prefix\View) -row 1 \
-	    -column 1 -sticky nsew]
+							  $itk_component($prefix\Arrow) $itk_component($prefix\View) -row 1 \
+							  -column 1 -sticky nsew]
 }
 
 itcl::body GeometryEditFrame::toggleArrow {arrow view args} {

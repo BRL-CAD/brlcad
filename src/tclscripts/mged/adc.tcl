@@ -30,7 +30,7 @@ proc init_adc_control { id } {
 
     if {[opendb] == ""} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
-		"No database has been opened!" info 0 OK
+	    "No database has been opened!" info 0 OK
 	return
     }
 
@@ -62,40 +62,40 @@ proc init_adc_control { id } {
 
     frame $top.gridF1
     menubutton $top.coordsMB -textvariable mged_adc_control($id,coords_text)\
-	    -menu $top.coordsMB.m -indicatoron 1
+	-menu $top.coordsMB.m -indicatoron 1
     menu $top.coordsMB.m -title "Coordinates" -tearoff 0
     $top.coordsMB.m add radiobutton -value model -variable mged_adc_control($id,coords)\
-	    -label "Model" -command "adc_adjust_coords $id"
+	-label "Model" -command "adc_adjust_coords $id"
     hoc_register_menu_data "Coordinates" "Model" "Model Coordinates"\
-	    { { summary "Set coordinate system type to model.
+	{ { summary "Set coordinate system type to model.
 The model coordinate system is the
 coordinate system that the MGED
 database lives in." } }
     $top.coordsMB.m add radiobutton -value grid -variable mged_adc_control($id,coords)\
-	    -label "Grid" -command "adc_adjust_coords $id"
+	-label "Grid" -command "adc_adjust_coords $id"
     hoc_register_menu_data "Coordinates" "Grid" "Grid Coordinates"\
-	    { { summary "Set coordinate system type to grid.
+	{ { summary "Set coordinate system type to grid.
 The grid coordinate system is 2D and
 lives in the view plane. The origin
 of this system is located by projecting
 the model origin onto the view plane." } }
     menubutton $top.interpvalMB -textvariable mged_adc_control($id,interpval_text)\
-	    -menu $top.interpvalMB.m -indicatoron 1
+	-menu $top.interpvalMB.m -indicatoron 1
     hoc_register_data $top.interpvalMB "Value Interpretation Type"\
-	    { { summary "This is a menu of the interpretation types.
+	{ { summary "This is a menu of the interpretation types.
 There are two interpretation types - absolute
 and relative. With absolute, the value is used
 as is. However, with relative the value is treated
 as an offset." } }
     menu $top.interpvalMB.m -title "Interpretation" -tearoff 0
     $top.interpvalMB.m add radiobutton -value abs -variable mged_adc_control($id,interpval)\
-	    -label "Absolute" -command "adc_interpval $id"
+	-label "Absolute" -command "adc_interpval $id"
     hoc_register_menu_data "Interpretation" "Absolute" "Interpret as absolute."\
-	    { { summary "Interpret values at face value." } }
+	{ { summary "Interpret values at face value." } }
     $top.interpvalMB.m add radiobutton -value rel -variable mged_adc_control($id,interpval)\
-	    -label "Relative" -command "adc_interpval $id"
+	-label "Relative" -command "adc_interpval $id"
     hoc_register_menu_data "Interpretation" "Relative" "Interpret as relative."\
-	    { { summary "Interpret values as relative to current ADC values." } }
+	{ { summary "Interpret values as relative to current ADC values." } }
     grid $top.coordsMB x $top.interpvalMB x -sticky "nw" -in $top.gridF1 -padx $padx
     grid columnconfigure $top.gridF1 3 -weight 1
 
@@ -141,15 +141,15 @@ from the ADC position to one of its ticks." } }
     label $top.anchorL -text "Anchor Points"
     label $top.enableL -text "Enable"
     hoc_register_data $top.enableL "Enable"\
-	    { { summary "The \"Enable\" checkbuttons are used
+	{ { summary "The \"Enable\" checkbuttons are used
 to toggle anchoring for the participating
 ADC attributes." } }
     label $top.anchor_xyzL -text "Position" -anchor e
     entry $top.anchor_xyzE -relief sunken -textvar mged_adc_control($id,pos)
     checkbutton $top.anchor_xyzCB -relief flat\
-	    -offvalue 0 -onvalue 1 -variable mged_adc_control($id,anchor_pos)
+	-offvalue 0 -onvalue 1 -variable mged_adc_control($id,anchor_pos)
     hoc_register_data $top.anchor_xyzCB "Anchor Position"\
-	    { { summary "Toggle anchoring of the ADC position.
+	{ { summary "Toggle anchoring of the ADC position.
 If anchoring is enabled, the ADC will remain
 positioned at the anchor point. So if the view
 changes while the ADC position is anchored, the
@@ -157,9 +157,9 @@ ADC will move with respect to the view." } }
     label $top.anchor_tickL -text "Tick Distance" -anchor e
     entry $top.anchor_tickE -relief sunken -textvar mged_adc_control($id,anchor_pt_dst)
     checkbutton $top.anchor_tickCB -relief flat\
-	    -offvalue 0 -onvalue 1 -variable mged_adc_control($id,anchor_dst)
+	-offvalue 0 -onvalue 1 -variable mged_adc_control($id,anchor_dst)
     hoc_register_data $top.anchor_tickCB "Tick Distance Anchor Point"\
-	    { { summary "Toggle anchoring of the tick distance.
+	{ { summary "Toggle anchoring of the tick distance.
 If anchoring is enabled, the tick is drawn at
 a distance from the ADC center position that is
 equal to the distance between the ADC center
@@ -167,17 +167,17 @@ position and the anchor point." } }
     label $top.anchor_a1L -text "Angle 1" -anchor e
     entry $top.anchor_a1E -relief sunken -textvar mged_adc_control($id,anchor_pt_a1)
     checkbutton $top.anchor_a1CB -relief flat\
-	    -offvalue 0 -onvalue 1 -variable mged_adc_control($id,anchor_a1)
+	-offvalue 0 -onvalue 1 -variable mged_adc_control($id,anchor_a1)
     hoc_register_data $top.anchor_a1CB "Angle 1 Anchor Point"\
-	    { { summary "Toggle anchoring of angle 1. If anchoring
+	{ { summary "Toggle anchoring of angle 1. If anchoring
 is enabled, angle 1 is always drawn through
 its anchor point." } }
     label $top.anchor_a2L -text "Angle 2" -anchor e
     entry $top.anchor_a2E -relief sunken -textvar mged_adc_control($id,anchor_pt_a2)
     checkbutton $top.anchor_a2CB -relief flat\
-	    -offvalue 0 -onvalue 1 -variable mged_adc_control($id,anchor_a2)
+	-offvalue 0 -onvalue 1 -variable mged_adc_control($id,anchor_a2)
     hoc_register_data $top.anchor_a2CB "Angle 2 Anchor Point"\
-	    { { summary "Toggle anchoring of angle 2. If anchoring
+	{ { summary "Toggle anchoring of angle 2. If anchoring
 is enabled, angle 2 is always drawn through
 its anchor point." } }
     grid $top.anchorL - $top.enableL -sticky "ew" -in $top.gridFF3
@@ -196,39 +196,39 @@ its anchor point." } }
 
     frame $top.gridF4
     checkbutton $top.drawB -relief flat -text "Draw"\
-	    -offvalue 0 -onvalue 1 -variable mged_adc_control($id,draw)
+	-offvalue 0 -onvalue 1 -variable mged_adc_control($id,draw)
     hoc_register_data $top.drawB "Draw"\
-	    { { summary "Toggle drawing of the angle distance cursor." } }
+	{ { summary "Toggle drawing of the angle distance cursor." } }
     grid $top.drawB -in $top.gridF4
 
     frame $top.gridF5
     button $top.okB -relief raised -text "OK"\
-	    -command "adc_ok $id $top"
+	-command "adc_ok $id $top"
     hoc_register_data $top.okB "OK"\
-	    { { summary "Apply the values in the ADC control panel
+	{ { summary "Apply the values in the ADC control panel
 to the angle distance cursor then close
 the control panel."} }
     button $top.applyB -relief raised -text "Apply"\
-	    -command "mged_apply $id \"adc_apply $id\";\
+	-command "mged_apply $id \"adc_apply $id\";\
 	    if {\$mged_adc_control($id,interpval) == \"abs\"} {
 		adc_load $id
 	    }"
     hoc_register_data $top.applyB "Apply"\
-	    { { summary "Apply the values in the ADC control panel
+	{ { summary "Apply the values in the ADC control panel
 to the angle distance cursor." } }
     button $top.resetB -relief raised -text "Reset"\
-	    -command "mged_apply $id \"adc reset\";\
+	-command "mged_apply $id \"adc reset\";\
 	    if {\$mged_adc_control($id,interpval) == \"abs\"} {
 		adc_load $id
 	    }"
     hoc_register_data $top.resetB "Reset"\
-	    { { summary "Reset the angle distance cursor to its
+	{ { summary "Reset the angle distance cursor to its
 default values." } }
     button $top.loadB -relief raised
     button $top.dismissB -relief raised -text "Dismiss"\
-	    -command "catch { destroy $top; set mged_adc_control($id) 0 }"
+	-command "catch { destroy $top; set mged_adc_control($id) 0 }"
     hoc_register_data $top.dismissB "Dismiss"\
-	    { { summary "Dismiss/close the ADC control panel." } }
+	{ { summary "Dismiss/close the ADC control panel." } }
     grid $top.okB $top.applyB x $top.resetB $top.loadB x $top.dismissB -sticky "ew" -in $top.gridF5
     grid columnconfigure $top.gridF5 2 -weight 1
     grid columnconfigure $top.gridF5 5 -weight 1
@@ -395,25 +395,25 @@ proc convert_coords { id } {
 	model {
 	    if { $mged_adc_control($id,last_coords) == "grid" } {
 		set mged_adc_control($id,pos) [eval format \"%.4f %.4f %.4f\"\
-			[eval grid2model_lu $mged_adc_control($id,pos)]]
+						   [eval grid2model_lu $mged_adc_control($id,pos)]]
 		set mged_adc_control($id,anchor_pt_dst) [eval format \"%.4f %.4f %.4f\"\
-			[eval grid2model_lu $mged_adc_control($id,anchor_pt_dst)]]
+							     [eval grid2model_lu $mged_adc_control($id,anchor_pt_dst)]]
 		set mged_adc_control($id,anchor_pt_a1) [eval format \"%.4f %.4f %.4f\"\
-			[eval grid2model_lu $mged_adc_control($id,anchor_pt_a1)]]
+							    [eval grid2model_lu $mged_adc_control($id,anchor_pt_a1)]]
 		set mged_adc_control($id,anchor_pt_a2) [eval format \"%.4f %.4f %.4f\"\
-			[eval grid2model_lu $mged_adc_control($id,anchor_pt_a2)]]
+							    [eval grid2model_lu $mged_adc_control($id,anchor_pt_a2)]]
 	    }
 	}
 	grid {
 	    if { $mged_adc_control($id,last_coords) == "model" } {
 		set mged_adc_control($id,pos) [eval format \"%.4f %.4f\"\
-			[eval model2grid_lu $mged_adc_control($id,pos)]]
+						   [eval model2grid_lu $mged_adc_control($id,pos)]]
 		set mged_adc_control($id,anchor_pt_dst) [eval format \"%.4f %.4f\"\
-			[eval model2grid_lu $mged_adc_control($id,anchor_pt_dst)]]
+							     [eval model2grid_lu $mged_adc_control($id,anchor_pt_dst)]]
 		set mged_adc_control($id,anchor_pt_a1) [eval format \"%.4f %.4f\"\
-			[eval model2grid_lu $mged_adc_control($id,anchor_pt_a1)]]
+							    [eval model2grid_lu $mged_adc_control($id,anchor_pt_a1)]]
 		set mged_adc_control($id,anchor_pt_a2) [eval format \"%.4f %.4f\"\
-			[eval model2grid_lu $mged_adc_control($id,anchor_pt_a2)]]
+							    [eval model2grid_lu $mged_adc_control($id,anchor_pt_a2)]]
 	    }
 	}
     }
@@ -430,7 +430,7 @@ proc adc_adjust_coords { id } {
 	model {
 	    set mged_adc_control($id,coords_text) "Model Coords"
 	    hoc_register_data $top.coordsMB "Coordinate System Type"\
-		    { { summary "This is a menu of the two coordinate system
+		{ { summary "This is a menu of the two coordinate system
 types - model and grid. The current coordinate
 system type is model. This is the coordinate system
 type that the MGED database lives in." } }
@@ -550,22 +550,22 @@ proc adc_interpval { id } {
     switch $mged_adc_control($id,interpval) {
 	abs {
 	    $top.loadB configure -text "Load"\
-		    -command "adc_load $id"
+		-command "adc_load $id"
 	    set mged_adc_control($id,interpval_text) "Absolute"
 	    adc_load $id
 
 	    hoc_register_data $top.loadB "Load"\
-		    { { summary "Load the ADC control panel with
+		{ { summary "Load the ADC control panel with
 values from the angle distance cursor." } }
 	}
 	rel {
 	    $top.loadB configure -text "Clear"\
-		    -command "adc_clear $id"
+		-command "adc_clear $id"
 	    set mged_adc_control($id,interpval_text) "Relative"
 	    adc_clear $id
 
 	    hoc_register_data $top.loadB "Clear"\
-		    { { summary "Clear all relative values to zero." } }
+		{ { summary "Clear all relative values to zero." } }
 	}
     }
 }
@@ -602,7 +602,7 @@ proc adc_CBHandler { id } {
     if {[opendb] == ""} {
 	set mged_gui($id,adc_draw) 0
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
-		"No database has been opened!" info 0 OK
+	    "No database has been opened!" info 0 OK
 	return
     }
 

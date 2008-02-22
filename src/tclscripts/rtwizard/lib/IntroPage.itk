@@ -55,25 +55,25 @@ namespace eval RtWizard {
     #
     ::itk::usual IntroPage {
 	keep    -background \
-		-borderwidth \
-		-cursor \
-		-elementborderwidth \
-		-foreground \
-		-highlightcolor \
-		-highlightthickness \
-		-insertbackground \
-		-insertborderwidth \
-		-insertofftime \
-		-insertontime \
-		-insertwidth \
-		-jump \
-		-labelfont \
-		-selectbackground \
-		-selectborderwidth \
-		-textbackground \
-		-textfont \
-		-troughcolor \
-		-stepName
+	    -borderwidth \
+	    -cursor \
+	    -elementborderwidth \
+	    -foreground \
+	    -highlightcolor \
+	    -highlightthickness \
+	    -insertbackground \
+	    -insertborderwidth \
+	    -insertofftime \
+	    -insertontime \
+	    -insertwidth \
+	    -jump \
+	    -labelfont \
+	    -selectbackground \
+	    -selectborderwidth \
+	    -textbackground \
+	    -textfont \
+	    -troughcolor \
+	    -stepName
     }
 
     #
@@ -96,7 +96,7 @@ namespace eval RtWizard {
 	#
 
 	itk_option define -greeting greeting Greeting \
-		"Welcome to the RtWizard."
+	    "Welcome to the RtWizard."
 
 	public {
 	    #
@@ -146,12 +146,12 @@ namespace eval RtWizard {
 	#
 	itk_component add greetPanel {
 	    ::iwidgets::scrolledtext $cs.gp \
-		    -vscrollmode dynamic \
-		    -hscrollmode dynamic \
-		    -wrap word \
-		    -visibleitems 75x30 \
-		    -textfont {helvetica 10 bold} \
-		    -relief sunken
+		-vscrollmode dynamic \
+		-hscrollmode dynamic \
+		-wrap word \
+		-visibleitems 75x30 \
+		-textfont {helvetica 10 bold} \
+		-relief sunken
 
 	} {
 	    usual
@@ -161,9 +161,9 @@ namespace eval RtWizard {
 	# Next
 	itk_component add next {
 	    button $cs.next \
-		    -text Next \
-		    -width 8 \
-		    -command "[itcl::code $this goNext]"
+		-text Next \
+		-width 8 \
+		-command "[itcl::code $this goNext]"
 	} {
 	    usual
 	}

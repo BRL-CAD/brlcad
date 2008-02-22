@@ -73,7 +73,7 @@ namespace eval RtWizard {
 
     set dbFile ""
     set helpFont {-family helvetica -size 12 \
-	    -slant italic}
+		      -slant italic}
 
 
     #
@@ -86,10 +86,10 @@ namespace eval RtWizard {
 	#
 	# Create the Feedback
 	#
-	set fb [ FeedbackDialog .#auto \
-		-title "Loading RtWizard ..." \
-		-width 250 \
-		-height 100 ]
+	set fb [ FeedbackDialog .\#auto \
+		     -title "Loading RtWizard ..." \
+		     -width 250 \
+		     -height 100 ]
 
 	$fb center
 	$fb activate
@@ -98,7 +98,7 @@ namespace eval RtWizard {
 	#
 	# Create the wizard
 	#
-	set w [ RtWizard::Wizard .#auto ]
+	set w [ RtWizard::Wizard .\#auto ]
 	$fb inform "Wizard megawidget created" 5
 
 	#
@@ -207,7 +207,7 @@ namespace eval RtWizard {
 	# We load the database ourselves and hand it to the
 	# pages.
 	#
-	set ::mgedObj [Mged .#auto $::RtWizard::dbFile]
+	set ::mgedObj [Mged .\#auto $::RtWizard::dbFile]
 	$::mgedObj configure -multi_pane 0
 	$fb inform "MGED object instantiated." 40
 

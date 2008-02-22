@@ -57,25 +57,25 @@ namespace eval RtWizard {
 
     ::itk::usual MGEDpage {
 	keep    -background \
-		-borderwidth \
-		-cursor \
-		-elementborderwidth \
-		-foreground \
-		-highlightcolor \
-		-highlightthickness \
-		-insertbackground \
-		-insertborderwidth \
-		-insertofftime \
-		-insertontime \
-		-insertwidth \
-		-jump \
-		-labelfont \
-		-selectbackground \
-		-selectborderwidth \
-		-textbackground \
-		-textfont \
-		-troughcolor \
-		-stepName
+	    -borderwidth \
+	    -cursor \
+	    -elementborderwidth \
+	    -foreground \
+	    -highlightcolor \
+	    -highlightthickness \
+	    -insertbackground \
+	    -insertborderwidth \
+	    -insertofftime \
+	    -insertontime \
+	    -insertwidth \
+	    -jump \
+	    -labelfont \
+	    -selectbackground \
+	    -selectborderwidth \
+	    -textbackground \
+	    -textfont \
+	    -troughcolor \
+	    -stepName
     }
 
     ::itcl::class MGEDpage {
@@ -90,17 +90,17 @@ namespace eval RtWizard {
 	itk_option define -helpText helptext HelpText ""
 
 	itk_option define -onSelectCallback \
-		onselectcallback \
-		OnSelectCallback \
-		{}
+	    onselectcallback \
+	    OnSelectCallback \
+	    {}
 	itk_option define -onDeselectCallback \
-		ondeselectcallback \
-		OnDeselectCallback \
-		{}
+	    ondeselectcallback \
+	    OnDeselectCallback \
+	    {}
 	itk_option define -statusCallback \
-		statuscallback \
-		StatusCallback \
-		{}
+	    statuscallback \
+	    StatusCallback \
+	    {}
 
 	#
 	# All pages must support these methods
@@ -192,10 +192,10 @@ namespace eval RtWizard {
 	    variable currentSize 2000
 	    variable currentCenter {0 0 0}
 	    variable currentRmat \
-		    {-0.573576  0.819152  0         0  \
-		    -0.346189 -0.242404  0.906308  0  \
-		    0.742404  0.519837  0.422618  0  \
-		    0         0         0         1}
+		{-0.573576  0.819152  0         0  \
+		     -0.346189 -0.242404  0.906308  0  \
+		     0.742404  0.519837  0.422618  0  \
+		     0         0         0         1}
 	    variable currentAzimuth 35
 	    variable currentElevation 25
 	    variable currentPerspective 0
@@ -270,12 +270,12 @@ namespace eval RtWizard {
 	#
 	itk_component add helpPanel {
 	    ::iwidgets::scrolledtext $cs.helpPanel \
-		    -hscrollmode none \
-		    -vscrollmode dynamic \
-		    -visibleitems 80x3 \
-		    -wrap word \
-		    -relief flat\
-		    -textfont {helvetica 12 italic}
+		-hscrollmode none \
+		-vscrollmode dynamic \
+		-visibleitems 80x3 \
+		-wrap word \
+		-relief flat\
+		-textfont {helvetica 12 italic}
 	} {
 	    usual
 	    ignore -textbackground
@@ -288,7 +288,7 @@ namespace eval RtWizard {
 	#
 	itk_component add midFrame {
 	    frame $cs.midFrame \
-		    -relief flat
+		-relief flat
 	} {
 	    usual
 	}
@@ -298,7 +298,7 @@ namespace eval RtWizard {
 	#
 	itk_component add mgedFrame {
 	    frame $itk_component(midFrame).mgedFrame \
-		    -relief flat
+		-relief flat
 	} {
 	    usual
 	}
@@ -315,7 +315,7 @@ namespace eval RtWizard {
 	#
 	itk_component add hierFrame {
 	    frame $itk_component(midFrame).hierFrame \
-		    -relief flat
+		-relief flat
 	} {
 	    usual
 	}
@@ -325,19 +325,19 @@ namespace eval RtWizard {
 	#
 	itk_component add conFrame {
 	    iwidgets::labeledframe $itk_component(hierFrame).conFrame \
-		    -background #666699 \
-		    -relief groove \
-		    -labeltext {} \
-		    -labelpos se
+		-background #666699 \
+		-relief groove \
+		-labeltext {} \
+		-labelpos se
 	}
 	set conFrameCS [ $itk_component(conFrame) childsite ]
 
 	# Refresh
 	itk_component add refresh {
 	    button $conFrameCS.refresh \
-		    -text Refresh \
-		    -width 8 \
-		    -command "[itcl::code $this refreshDisplay]"
+		-text Refresh \
+		-width 8 \
+		-command "[itcl::code $this refreshDisplay]"
 	} {
 	    usual
 	}
@@ -345,9 +345,9 @@ namespace eval RtWizard {
 	# Clear
 	itk_component add clear {
 	    button $conFrameCS.clear \
-		    -text Clear \
-		    -width 8 \
-		    -command "[itcl::code $this clearDisplay]"
+		-text Clear \
+		-width 8 \
+		-command "[itcl::code $this clearDisplay]"
 	} {
 	    usual
 	}
@@ -357,47 +357,47 @@ namespace eval RtWizard {
 	#
 	itk_component add useMe {
 	    radiobutton $conFrameCS.useMe \
-		    -text "Use this view for image" \
-		    -variable ::RtWizard::ExamplePage::viewPage \
-		    -value $this
+		-text "Use this view for image" \
+		-variable ::RtWizard::ExamplePage::viewPage \
+		-value $this
 	} {
 	    usual
 	}
 
-#	# Previous
-#	itk_component add prev {
-#	    button $conFrameCS.prev \
-#		    -text "Previous" \
-#		    -width 8 \
-#		    -command "[itcl::code $this goPrev]"
-#	} {
-#	    usual
-#	}
+	#	# Previous
+	#	itk_component add prev {
+	#	    button $conFrameCS.prev \
+	    #		    -text "Previous" \
+	    #		    -width 8 \
+	    #		    -command "[itcl::code $this goPrev]"
+	#	} {
+	#	    usual
+	#	}
 
-#	# Next
-#	itk_component add next {
-#	    button $conFrameCS.next \
-#		    -text Next \
-#		    -width 8 \
-#		    -command "[itcl::code $this goNext]"
-#	} {
-#	    usual
-#	}
+	#	# Next
+	#	itk_component add next {
+	#	    button $conFrameCS.next \
+	    #		    -text Next \
+	    #		    -width 8 \
+	    #		    -command "[itcl::code $this goNext]"
+	#	} {
+	#	    usual
+	#	}
 
 	#
 	# Create the hierarchy browser
 	#
 	itk_component add hier {
 	    hierarchy $itk_component(hierFrame).#auto \
-		    -querycommand  "[itcl::code $this getChildren] %n " \
-		    -selectcommand "[itcl::code $this selectNode] %n %s " \
-		    -alwaysquery 0 \
-		    -expanded 0 \
-		    -visibleitems 30x20 \
-		    -vscrollmode dynamic \
-		    -hscrollmode dynamic \
-		    -labeltext $database \
-		    -labelpos nw
+		-querycommand  "[itcl::code $this getChildren] %n " \
+		-selectcommand "[itcl::code $this selectNode] %n %s " \
+		-alwaysquery 0 \
+		-expanded 0 \
+		-visibleitems 30x20 \
+		-vscrollmode dynamic \
+		-hscrollmode dynamic \
+		-labeltext $database \
+		-labelpos nw
 
 	} {
 	    usual
@@ -417,23 +417,23 @@ namespace eval RtWizard {
 	# Grid/Pack the items
 	#
 	grid $itk_component(clear) \
-		-row 0 \
-		-column 0 \
-		-padx 10 \
-		-pady 5
+	    -row 0 \
+	    -column 0 \
+	    -padx 10 \
+	    -pady 5
 	grid $itk_component(refresh) \
-		-row 0 \
-		-column 1 \
-		-padx 10 \
-		-pady 5
+	    -row 0 \
+	    -column 1 \
+	    -padx 10 \
+	    -pady 5
 	grid $itk_component(useMe) \
-		-row 1 \
-		-column 0 \
-		-columnspan 2 \
-		-padx 10 \
-		-pady 5
-#	grid $itk_component(prev) -row 2 -column 0
-#	grid $itk_component(next) -row 2 -column 1
+	    -row 1 \
+	    -column 0 \
+	    -columnspan 2 \
+	    -padx 10 \
+	    -pady 5
+	#	grid $itk_component(prev) -row 2 -column 0
+	#	grid $itk_component(next) -row 2 -column 1
 
 	pack $itk_component(hier) -expand 1 -fill both -anchor w
 	pack $itk_component(conFrame) -anchor s
@@ -483,9 +483,9 @@ namespace eval RtWizard {
 	# Pack the mged object in _my_ mged frame
 	#
 	pack $::mgedObj \
-		-in $itk_component(mgedFrame) \
-		 -anchor e \
-		 -expand 1 -fill both
+	    -in $itk_component(mgedFrame) \
+	    -anchor e \
+	    -expand 1 -fill both
 
 	#
 	# Create menus - use the singleton
@@ -502,26 +502,26 @@ namespace eval RtWizard {
 	incr viewCount
 
 	$w menubar add menubutton $viewMenu \
-		-text "View" \
-		-menu {
-	    options -tearoff true -selectcolor green
-	}
+	    -text "View" \
+	    -menu {
+		options -tearoff true -selectcolor green
+	    }
 
 	$w menubar add command .$viewMenu.azimuth -label "Azimuth..." \
-		-helpstr "Set azimuth value" \
-		-command "[::itcl::code $this azimuthDialogReveal]"
+	    -helpstr "Set azimuth value" \
+	    -command "[::itcl::code $this azimuthDialogReveal]"
 
 	$w menubar add command .$viewMenu.elevation -label "Elevation..." \
-		-helpstr "Set elevation value" \
-		-command "[::itcl::code $this elevationDialogReveal]"
+	    -helpstr "Set elevation value" \
+	    -command "[::itcl::code $this elevationDialogReveal]"
 
 	$w menubar add command .$viewMenu.size -label "Size..." \
-		-helpstr "Set view size" \
-		-command "[::itcl::code $this sizeDialogReveal]"
+	    -helpstr "Set view size" \
+	    -command "[::itcl::code $this sizeDialogReveal]"
 
 	$w menubar add command .$viewMenu.perspective -label "Perspective..." \
-	       -helpstr "Set view perspective" \
-	       -command "[::itcl::code $this perspectiveDialogReveal]"
+	    -helpstr "Set view perspective" \
+	    -command "[::itcl::code $this perspectiveDialogReveal]"
 
 	#
 	# Do the options menu, callback to the child
@@ -532,10 +532,10 @@ namespace eval RtWizard {
 	incr optionsCount
 
 	$w menubar add menubutton $optionsMenu \
-		-text "Options" \
-		-menu {
-	    options -selectcolor green
-	}
+	    -text "Options" \
+	    -menu {
+		options -selectcolor green
+	    }
 
 	if {[cget -onSelectCallback] != ""} {
 	    eval [cget -onSelectCallback] $optionsMenu
@@ -869,16 +869,16 @@ namespace eval RtWizard {
 
 	itk_component add azimuth {
 	    scale $cs.az \
-		    -orient horizontal \
-		    -from 0 \
-		    -to 360 \
-		    -length 360 \
-		    -resolution 1\
-		    -tickinterval 45 \
-		    -font {Helvetica 8  bold} \
-		    -repeatinterval 3000 \
-		    -repeatdelay 3000 \
-		    -command {}
+		-orient horizontal \
+		-from 0 \
+		-to 360 \
+		-length 360 \
+		-resolution 1\
+		-tickinterval 45 \
+		-font {Helvetica 8  bold} \
+		-repeatinterval 3000 \
+		-repeatdelay 3000 \
+		-command {}
 	    #		-command "[itcl::code $this setAzEl]"
 	} {
 	    usual
@@ -887,11 +887,11 @@ namespace eval RtWizard {
 	$itk_component(azimuth) set [ getAzimuth ]
 	$itk_component(azimuthDialog) hide Help
 	$itk_component(azimuthDialog) buttonconfigure OK \
-		-command "[::itcl::code $this azimuthDialogOK]"
+	    -command "[::itcl::code $this azimuthDialogOK]"
 	$itk_component(azimuthDialog) buttonconfigure Apply \
-		-command "[::itcl::code $this azimuthDialogApply]"
+	    -command "[::itcl::code $this azimuthDialogApply]"
 	$itk_component(azimuthDialog) buttonconfigure Cancel \
-		-command "[::itcl::code $this azimuthDialogCancel]"
+	    -command "[::itcl::code $this azimuthDialogCancel]"
 	pack $itk_component(azimuth)
 	$itk_component(azimuthDialog) deactivate
     }
@@ -952,16 +952,16 @@ namespace eval RtWizard {
 
 	itk_component add elevation {
 	    scale $cs.el \
-		    -orient vertical \
-		    -from 90 \
-		    -to -90 \
-		    -length 180 \
-		    -resolution 1\
-		    -tickinterval 30 \
-		    -font {Helvetica 8  bold} \
-		    -repeatinterval 3000 \
-		    -repeatdelay 3000 \
-		    -command {}
+		-orient vertical \
+		-from 90 \
+		-to -90 \
+		-length 180 \
+		-resolution 1\
+		-tickinterval 30 \
+		-font {Helvetica 8  bold} \
+		-repeatinterval 3000 \
+		-repeatdelay 3000 \
+		-command {}
 	    #		-command "[itcl::code $this setAzEl]"
 	} {
 	    usual
@@ -970,11 +970,11 @@ namespace eval RtWizard {
 	$itk_component(elevation) set [ getElevation ]
 	$itk_component(elevationDialog) hide Help
 	$itk_component(elevationDialog) buttonconfigure OK \
-		-command "[::itcl::code $this elevationDialogOK]"
+	    -command "[::itcl::code $this elevationDialogOK]"
 	$itk_component(elevationDialog) buttonconfigure Apply \
-		-command "[::itcl::code $this elevationDialogApply]"
+	    -command "[::itcl::code $this elevationDialogApply]"
 	$itk_component(elevationDialog) buttonconfigure Cancel \
-		-command "[::itcl::code $this elevationDialogCancel]"
+	    -command "[::itcl::code $this elevationDialogCancel]"
 	pack $itk_component(elevation)
 	$itk_component(elevationDialog) deactivate
     }
@@ -1052,8 +1052,8 @@ namespace eval RtWizard {
 	#
 	itk_component add sizeLabel {
 	    labeledwidget $cs.scl \
-		    -labeltext "Current Size:" \
-		    -labelpos "w"
+		-labeltext "Current Size:" \
+		-labelpos "w"
 	} {
 	    usual
 	}
@@ -1062,15 +1062,15 @@ namespace eval RtWizard {
 
 	itk_component add sizeCurrent {
 	    label $cs2.l1 \
-		    -text $currSize \
-		    -width 10
+		-text $currSize \
+		-width 10
 	} {
 	    usual
 	}
 
 	itk_component add sizeUnits1 {
 	    label $cs2.l2 \
-		    -text $units
+		-text $units
 	} {
 	    usual
 	}
@@ -1080,10 +1080,10 @@ namespace eval RtWizard {
 	#
 	itk_component add sizeEntry {
 	    entryfield $cs.sze \
-		    -labeltext "Desired Size:" \
-		    -labelpos w \
-		    -width 10\
-		    -command "[::itcl::code $this sizeDialogApply]"
+		-labeltext "Desired Size:" \
+		-labelpos w \
+		-width 10\
+		-command "[::itcl::code $this sizeDialogApply]"
 	} {
 	    usual
 	}
@@ -1093,7 +1093,7 @@ namespace eval RtWizard {
 	# units
 	itk_component add sizeUnits2 {
 	    label $cs3.l1 \
-		    -text $units
+		-text $units
 	} {
 	    usual
 	}
@@ -1101,11 +1101,11 @@ namespace eval RtWizard {
 
 	$itk_component(sizeDialog) hide Help
 	$itk_component(sizeDialog) buttonconfigure OK \
-		-command "[::itcl::code $this sizeDialogOK]"
+	    -command "[::itcl::code $this sizeDialogOK]"
 	$itk_component(sizeDialog) buttonconfigure Apply \
-		-command "[::itcl::code $this sizeDialogApply]"
+	    -command "[::itcl::code $this sizeDialogApply]"
 	$itk_component(sizeDialog) buttonconfigure Cancel \
-		-command "[::itcl::code $this sizeDialogCancel]"
+	    -command "[::itcl::code $this sizeDialogCancel]"
 
 	pack $itk_component(sizeCurrent) -side left
 	pack $itk_component(sizeUnits1)
@@ -1119,8 +1119,8 @@ namespace eval RtWizard {
 	# Align the widgets
 	#
 	eval iwidgets::Labeledwidget::alignlabels \
-		$itk_component(sizeLabel) \
-		$itk_component(sizeEntry)
+	    $itk_component(sizeLabel) \
+	    $itk_component(sizeEntry)
 
 	$itk_component(sizeDialog) deactivate
     }
@@ -1184,16 +1184,16 @@ namespace eval RtWizard {
 
 	itk_component add perspective {
 	    scale $cs.el \
-		    -orient horizontal \
-		    -from 0 \
-		    -to 180 \
-		    -length 180 \
-		    -resolution 1\
-		    -tickinterval 45 \
-		    -font {Helvetica 8  bold} \
-		    -repeatinterval 3000 \
-		    -repeatdelay 3000 \
-		    -command {}
+		-orient horizontal \
+		-from 0 \
+		-to 180 \
+		-length 180 \
+		-resolution 1\
+		-tickinterval 45 \
+		-font {Helvetica 8  bold} \
+		-repeatinterval 3000 \
+		-repeatdelay 3000 \
+		-command {}
 	} {
 	    usual
 	}
@@ -1201,11 +1201,11 @@ namespace eval RtWizard {
 	$itk_component(perspective) set [ getPerspective ]
 	$itk_component(perspectiveDialog) hide Help
 	$itk_component(perspectiveDialog) buttonconfigure OK \
-		-command "[::itcl::code $this perspectiveDialogOK]"
+	    -command "[::itcl::code $this perspectiveDialogOK]"
 	$itk_component(perspectiveDialog) buttonconfigure Apply \
-		-command "[::itcl::code $this perspectiveDialogApply]"
+	    -command "[::itcl::code $this perspectiveDialogApply]"
 	$itk_component(perspectiveDialog) buttonconfigure Cancel \
-		-command "[::itcl::code $this perspectiveDialogCancel]"
+	    -command "[::itcl::code $this perspectiveDialogCancel]"
 	pack $itk_component(perspective)
 	$itk_component(perspectiveDialog) deactivate
     }
@@ -1265,8 +1265,8 @@ namespace eval RtWizard {
 	set inColor $lineColor
 
 	set outColor [tk_chooseColor \
-		-initialcolor $inColor \
-		-title "Line Color"]
+			  -initialcolor $inColor \
+			  -title "Line Color"]
 
 	if {[string length $outColor] == 7 } {
 	    set lineColor $outColor
@@ -1294,8 +1294,8 @@ namespace eval RtWizard {
 	set inColor $nonLineColor
 
 	set outColor [tk_chooseColor \
-		-initialcolor $inColor \
-		-title "Non-Line Color"]
+			  -initialcolor $inColor \
+			  -title "Non-Line Color"]
 
 	if {[string length $outColor] == 7 } {
 	    set nonLineColor $outColor
@@ -1319,8 +1319,8 @@ namespace eval RtWizard {
 	set inColor $backgroundColor
 
 	set outColor [tk_chooseColor \
-		-initialcolor $inColor \
-		-title "Background Color"]
+			  -initialcolor $inColor \
+			  -title "Background Color"]
 
 	if {[string length $outColor] == 7 } {
 	    set backgroundColor $outColor
@@ -1353,28 +1353,28 @@ namespace eval RtWizard {
 	#
 	itk_component add occModeRB {
 	    radiobox $cs.rb \
-		    -labeltext "Select the Occlusion Mode:" \
-		    -labelpos "nw" \
-		    -ipady 10
+		-labeltext "Select the Occlusion Mode:" \
+		-labelpos "nw" \
+		-ipady 10
 	} {
 	    usual
 	}
 
 	$itk_component(occModeRB) add "mode1" \
-		-text "Draw foreground lines only"
+	    -text "Draw foreground lines only"
 	$itk_component(occModeRB) add "mode2" \
-		-text "Also draw non-line surfaces in the background color"
+	    -text "Also draw non-line surfaces in the background color"
 	$itk_component(occModeRB) add "mode3" \
-		-text "Dither the non-line surfaces (semi-transparent)"
+	    -text "Dither the non-line surfaces (semi-transparent)"
 	$itk_component(occModeRB) select mode1
 
 	$itk_component(occModeDialog) hide Help
 	$itk_component(occModeDialog) buttonconfigure OK \
-		-command "[::itcl::code $this occModeDialogOK]"
+	    -command "[::itcl::code $this occModeDialogOK]"
 	$itk_component(occModeDialog) buttonconfigure Apply \
-		-command "[::itcl::code $this occModeDialogApply]"
+	    -command "[::itcl::code $this occModeDialogApply]"
 	$itk_component(occModeDialog) buttonconfigure Cancel \
-		-command "[::itcl::code $this occModeDialogCancel]"
+	    -command "[::itcl::code $this occModeDialogCancel]"
 
 	pack $itk_component(occModeRB)
 
@@ -1462,11 +1462,11 @@ namespace eval RtWizard {
 	set intensity $oldIntensity
 	$itk_component(intensityDialog) hide Help
 	$itk_component(intensityDialog) buttonconfigure OK \
-		-command "[::itcl::code $this intensityDialogOK]"
+	    -command "[::itcl::code $this intensityDialogOK]"
 	$itk_component(intensityDialog) buttonconfigure Apply \
-		-command "[::itcl::code $this intensityDialogApply]"
+	    -command "[::itcl::code $this intensityDialogApply]"
 	$itk_component(intensityDialog) buttonconfigure Cancel \
-		-command "[::itcl::code $this intensityDialogCancel]"
+	    -command "[::itcl::code $this intensityDialogCancel]"
 	pack $itk_component(intensity)
 	$itk_component(intensityDialog) deactivate
     }

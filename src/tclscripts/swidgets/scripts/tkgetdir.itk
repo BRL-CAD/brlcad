@@ -78,15 +78,15 @@ image create photo b_dir -data {
     BAEAAAQALAAAAAAQABAAAAM2SLrc/jA2QKkEIWcAsdZVpQBCaZ4lMBDk525r+34qK8x0fOOwzfcy
 (op    Xi2IG4aOoRVhwGw6nYQEADs=
 }
-
+    
 event add <<RetEnt>> <Return> <KP_Enter>
-
+    
 itcl::class swidgets::tkgetdir {
     inherit itk::Toplevel
-
+    
     constructor {args} {}
     destructor  {}
-
+    
     itk_option define -initialdir initialDir InitialDir ""
     itk_option define -ok ok Text " OK "
     itk_option define -open open Text "Open"
@@ -194,7 +194,7 @@ itcl::class swidgets::tkgetdir {
 
     # set text field
     [$itk_component(chosen) component entry] configure \
-	    -foreground $itk_option(-textforeground)
+	-foreground $itk_option(-textforeground)
 }
 
 ::itcl::configbody swidgets::tkgetdir::upimg {
@@ -226,7 +226,7 @@ itcl::class swidgets::tkgetdir {
     }
     pack $itk_component(up) -side right -padx 4 -pady 4
     pack $itk_component(directory) -side right -padx 4 \
-	    -pady 4 -fill x -expand true
+	-pady 4 -fill x -expand true
     pack $frame -fill x
 
     # FRAME 2
@@ -241,9 +241,9 @@ itcl::class swidgets::tkgetdir {
     }
     set scw 16
     place $itk_component(canvas) -x 0 -relwidth 1.0 -width [expr -$scw] -y 0 \
-	    -relheight 1.0
+	-relheight 1.0
     place $itk_component(scroll) -relx 1.0 -x [expr -$scw] -width $scw -y 0 \
-	    -relheight 1.0
+	-relheight 1.0
     unset scw
     pack $frame -fill both -expand true -padx 6 -pady 6
 
@@ -362,7 +362,7 @@ itcl::class swidgets::tkgetdir {
     $itk_component(directory) insert end $dir
     $itk_component(open) configure -state disabled
     $itk_component(chosen) delete 0 end; # added 4/2/02, if removed need to copy this line
-					 # before all _show_dir func calls except constructor
+    # before all _show_dir func calls except constructor
     $itk_component(chosen) insert 0 $dir; # added 4/2/02
 
     set curlst [file split $dir]
@@ -416,11 +416,11 @@ itcl::class swidgets::tkgetdir {
     foreach file $sldir {
 	if [file isdirectory $file] {
 	    $itk_component(canvas) create image 2 [expr $ind * $hi] \
-		    -anchor nw -image $itk_option(-dirimg) -tags IMG
+		-anchor nw -image $itk_option(-dirimg) -tags IMG
 	    $itk_component(canvas) create text $wi1 [expr ($ind * $hi) + $offset] \
-		    -anchor nw -text $file \
-		    -fill $itk_option(-textforeground) \
-		    -font $font -tags TXT
+		-anchor nw -text $file \
+		-fill $itk_option(-textforeground) \
+		-font $font -tags TXT
 	    set ind [expr $ind + 1]
 	}
     }
@@ -483,9 +483,9 @@ itcl::class swidgets::tkgetdir {
     $itk_component(canvas) itemconfigure $id -fill $itk_option(-highlightforeground)
     set bxr [$itk_component(canvas) bbox $id]
     eval $itk_component(canvas) create rectangle $bxr \
-	    -fill $itk_option(-highlightbackground) \
-	    -outline $itk_option(-highlightbackground) \
-	    -tags HILIT
+	-fill $itk_option(-highlightbackground) \
+	-outline $itk_option(-highlightbackground) \
+	-tags HILIT
     $itk_component(canvas) lower HILIT
 }
 
@@ -522,9 +522,9 @@ itcl::class swidgets::tkgetdir {
     $itk_component(canvas) addtag HASBOX withtag $id
     $itk_component(canvas) itemconfigure $id -fill $itk_option(-selectforeground)
     eval $itk_component(canvas) create rectangle $bxr \
-	    -fill $itk_option(-selectbackground) \
-	    -outline $itk_option(-selectbackground) \
-	    -tags BOX
+	-fill $itk_option(-selectbackground) \
+	-outline $itk_option(-selectbackground) \
+	-tags BOX
     $itk_component(open) configure -state normal
     $itk_component(canvas) lower BOX
     set nam [$itk_component(canvas) itemcget $id -text]
@@ -549,16 +549,16 @@ itcl::class swidgets::tkgetdir {
 
 ::itcl::body swidgets::tkgetdir::get {} {
     return [$itk_component(chosen) get]
-# altered 4/2/02
-#    set nnam [$itk_component(chosen) get]
-#    if {[string trim $nnam] == ""} {
-#	switch $itk_option(-autovalid) {
-#	    0 {return ""}
-#	    1 {return $curdir}
-#	}
-#    } else {
-#	return [file join $curdir $nnam]
-#    }
+    # altered 4/2/02
+    #    set nnam [$itk_component(chosen) get]
+    #    if {[string trim $nnam] == ""} {
+    #	switch $itk_option(-autovalid) {
+    #	    0 {return ""}
+    #	    1 {return $curdir}
+    #	}
+    #    } else {
+    #	return [file join $curdir $nnam]
+    #    }
 }
 
 ::itcl::body swidgets::tkgetdir::Close {} {

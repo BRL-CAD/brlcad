@@ -31,7 +31,7 @@ proc do_grid_spacing { id spacing_type } {
 
     if {[opendb] == ""} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
-		"No database has been opened!" info 0 OK
+	    "No database has been opened!" info 0 OK
 	return
     }
 
@@ -58,7 +58,7 @@ proc do_grid_spacing { id spacing_type } {
     } elseif {$spacing_type == "b"} {
 	label $top.resL -text "Horiz. & Vert." -anchor w
 	hoc_register_data $top.resL "Horiz. & Vert."\
-		{ { summary "The tick spacing and major spacing are set
+	    { { summary "The tick spacing and major spacing are set
 for both horizontal and vertical directions." } }
 
 	set hoc_data { { summary "Tick spacing, here, is the distance between each
@@ -81,31 +81,31 @@ ticks are drawn." } }
     }
 
     button $top.okB -relief raised -text "OK"\
-	    -command "grid_spacing_ok $id $spacing_type $top"
+	-command "grid_spacing_ok $id $spacing_type $top"
     hoc_register_data $top.okB "OK"\
-	    { { summary "Apply the grid spacing settings
+	{ { summary "Apply the grid spacing settings
 to the grid, then close the grid
 spacing control panel." } }
     button $top.applyB -relief raised -text "Apply"\
-	    -command "grid_spacing_apply $id $spacing_type"
+	-command "grid_spacing_apply $id $spacing_type"
     hoc_register_data $top.applyB "Apply"\
-	    { { summary "Apply the grid spacing settings
+	{ { summary "Apply the grid spacing settings
 to the grid." } }
     button $top.resetB -relief raised -text "Reset"\
-	    -command "grid_spacing_reset $id $spacing_type"
+	-command "grid_spacing_reset $id $spacing_type"
     hoc_register_data $top.resetB "Reset"\
-	    { { summary "Reset the control panel from the grid." } }
+	{ { summary "Reset the control panel from the grid." } }
     button $top.autosizeB -relief raised -text "Autosize"\
-	    -command "grid_spacing_autosize $id"
+	-command "grid_spacing_autosize $id"
     hoc_register_data $top.autosizeB "Autosize"\
-	    { { summary "Set the grid spacing according to the view
+	{ { summary "Set the grid spacing according to the view
 size. The number of ticks will be between 20
 and 200. The tick spacing will be a power of
 10 in local units." } }
     button $top.dismissB -relief raised -text "Dismiss"\
-	    -command "catch { destroy $top }"
+	-command "catch { destroy $top }"
     hoc_register_data $top.dismissB "Dismiss"\
-	    { { summary "Dismiss/close the grid spacing control panel." } }
+	{ { summary "Dismiss/close the grid spacing control panel." } }
 
     grid x $top.tickSpacingL x $top.majorSpacingL -in $top.gridF1 -padx 8 -pady 8
     grid $top.resL $top.resE x $top.maj_resE -sticky "ew" -in $top.gridF1 -padx 8 -pady 8
@@ -138,7 +138,7 @@ proc do_grid_anchor { id } {
 
     if {[opendb] == ""} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
-		"No database has been opened!" info 0 OK
+	    "No database has been opened!" info 0 OK
 	return
     }
 
@@ -176,26 +176,26 @@ accuracy when snapping." } }
     hoc_register_data $top.anchorE "Anchor Point" $hoc_data
 
     button $top.okB -relief raised -text "OK"\
-	    -command "mged_apply $id \"rset grid anchor \\\$grid_control_anchor($id)\";
+	-command "mged_apply $id \"rset grid anchor \\\$grid_control_anchor($id)\";
 		      catch { destroy $top }"
     hoc_register_data $top.okB "OK"\
-	    { { summary "Apply the grid anchor control panel
+	{ { summary "Apply the grid anchor control panel
 settings to the grid, then close the
 control panel." } }
     button $top.applyB -relief raised -text "Apply"\
-	    -command "mged_apply $id \"rset grid anchor \\\$grid_control_anchor($id)\""
+	-command "mged_apply $id \"rset grid anchor \\\$grid_control_anchor($id)\""
     hoc_register_data $top.applyB "Apply"\
-	    { { summary "Apply the grid anchor control panel
+	{ { summary "Apply the grid anchor control panel
 settings to the grid." } }
     button $top.resetB -relief raised -text "Reset"\
-	    -command "winset \$mged_gui($id,active_dm);\
+	-command "winset \$mged_gui($id,active_dm);\
 	    set grid_control_anchor($id) \[rset grid anchor\]"
     hoc_register_data $top.resetB "Reset"\
-	    { { summary "Reset the control panel from the grid." } }
+	{ { summary "Reset the control panel from the grid." } }
     button $top.dismissB -relief raised -text "Dismiss"\
-	    -command "catch { destroy $top }"
+	-command "catch { destroy $top }"
     hoc_register_data $top.dismissB "Dismiss"\
-	    { { summary "Dismiss/close the grid anchor control panel." } }
+	{ { summary "Dismiss/close the grid anchor control panel." } }
 
     grid $top.anchorL $top.anchorE -sticky "ew" -in $top.anchorF
     grid columnconfigure $top.anchorF 1 -weight 1
@@ -226,7 +226,7 @@ proc init_grid_control { id } {
 
     if {[opendb] == ""} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
-		"No database has been opened!" info 0 OK
+	    "No database has been opened!" info 0 OK
 	return
     }
 
@@ -251,22 +251,22 @@ proc init_grid_control { id } {
 
     menu $top.menubar -tearoff $mged_default(tearoff_menus)
     $top.menubar add cascade -label "Apply To" -underline 0\
-	    -menu $top.menubar.applyTo
+	-menu $top.menubar.applyTo
     menu $top.menubar.applyTo -title "Apply To"\
-	    -tearoff $mged_default(tearoff_menus)
+	-tearoff $mged_default(tearoff_menus)
     # The help on context for the applyTo menu was already defined in openw.tcl
     $top.menubar.applyTo add radiobutton -value 0\
-	    -variable mged_gui($id,apply_to)\
-	    -label "Active Pane" -underline 0
+	-variable mged_gui($id,apply_to)\
+	-label "Active Pane" -underline 0
     $top.menubar.applyTo add radiobutton -value 1\
-	    -variable mged_gui($id,apply_to)\
-	    -label "Local Panes" -underline 0
+	-variable mged_gui($id,apply_to)\
+	-label "Local Panes" -underline 0
     $top.menubar.applyTo add radiobutton -value 2\
-	    -variable mged_gui($id,apply_to)\
-	    -label "Listed Panes" -underline 1
+	-variable mged_gui($id,apply_to)\
+	-label "Listed Panes" -underline 1
     $top.menubar.applyTo add radiobutton -value 3\
-	    -variable mged_gui($id,apply_to)\
-	    -label "All Panes" -underline 4
+	-variable mged_gui($id,apply_to)\
+	-label "All Panes" -underline 4
 
     frame $top.gridF1
     frame $top.gridFF1 -relief groove -bd 2
@@ -285,11 +285,11 @@ proc init_grid_control { id } {
 
     label $top.tickSpacingL -text "Tick Spacing\n($localunit/tick)"
     hoc_register_data $top.tickSpacingL "Tick Spacing"\
-	    { { summary "Tick spacing is the distance between each tick
+	{ { summary "Tick spacing is the distance between each tick
 in either the horizontal or vertical direction." } }
     label $top.majorSpacingL -text "Major Spacing\n(ticks/major)"
     hoc_register_data $top.majorSpacingL "Major Spacing"\
-	    { { summary "Major spacing is measured in ticks and determines
+	{ { summary "Major spacing is measured in ticks and determines
 how often lines of ticks are drawn." } }
 
     set hoc_data { { summary "This row is for horizontal tick spacing
@@ -301,41 +301,41 @@ drawn and how snapping is performed." } }
     entry $top.hE -relief flat -width 12 -textvar grid_control($id,rh)
     hoc_register_data $top.hE "Horizontal Tick Spacing" $hoc_data
     menubutton $top.hMB -relief raised -bd 2\
-	    -menu $top.hMB.spacing -indicatoron 1
+	-menu $top.hMB.spacing -indicatoron 1
     hoc_register_data $top.hMB "Horizontal Tick Spacings"\
-	    { { summary "Pops up a menu of distances to choose
+	{ { summary "Pops up a menu of distances to choose
 from for horizontal tick spacing." } }
     menu $top.hMB.spacing -title "Grid Spacing" -tearoff 0
     $top.hMB.spacing add command -label "Micrometer" -underline 4\
-	    -command "set_grid_spacing_htick $id micrometer"
+	-command "set_grid_spacing_htick $id micrometer"
     $top.hMB.spacing add command -label "Millimeter" -underline 2\
-	    -command "set_grid_spacing_htick $id millimeter"
+	-command "set_grid_spacing_htick $id millimeter"
     $top.hMB.spacing add command -label "Centimeter" -underline 0\
-	    -command "set_grid_spacing_htick $id centimeter"
+	-command "set_grid_spacing_htick $id centimeter"
     $top.hMB.spacing add command -label "Decimeter" -underline 0\
-	    -command "set_grid_spacing_htick $id decimeter"
+	-command "set_grid_spacing_htick $id decimeter"
     $top.hMB.spacing add command -label "Meter" -underline 0\
-	    -command "set_grid_spacing_htick $id meter"
+	-command "set_grid_spacing_htick $id meter"
     $top.hMB.spacing add command -label "Kilometer" -underline 0\
-	    -command "set_grid_spacing_htick $id kilometer"
+	-command "set_grid_spacing_htick $id kilometer"
     $top.hMB.spacing add separator
     $top.hMB.spacing add command -label "1/10 Inch" -underline 0\
-	    -command "set_grid_spacing_htick $id \"1/10 inch\""
+	-command "set_grid_spacing_htick $id \"1/10 inch\""
     $top.hMB.spacing add command -label "1/4 Inch" -underline 2\
-	    -command "set_grid_spacing_htick $id \"1/4 inch\""
+	-command "set_grid_spacing_htick $id \"1/4 inch\""
     $top.hMB.spacing add command -label "1/2 Inch" -underline 2\
-	    -command "set_grid_spacing_htick $id \"1/2 inch\""
+	-command "set_grid_spacing_htick $id \"1/2 inch\""
     $top.hMB.spacing add command -label "Inch" -underline 0\
-	    -command "set_grid_spacing_htick $id inch"
+	-command "set_grid_spacing_htick $id inch"
     $top.hMB.spacing add command -label "Foot" -underline 0\
-	    -command "set_grid_spacing_htick $id foot"
+	-command "set_grid_spacing_htick $id foot"
     $top.hMB.spacing add command -label "Yard" -underline 0\
-	    -command "set_grid_spacing_htick $id yard"
+	-command "set_grid_spacing_htick $id yard"
     $top.hMB.spacing add command -label "Mile" -underline 3\
-	    -command "set_grid_spacing_htick $id mile"
+	-command "set_grid_spacing_htick $id mile"
     entry $top.maj_hE -relief flat -width 12 -textvar grid_control($id,mrh)
     hoc_register_data $top.maj_hE "Horizontal Major Spacing"\
-	    { { summary "Enter horizontal major spacing here." } }
+	{ { summary "Enter horizontal major spacing here." } }
 
     set hoc_data { { summary "This row is for vertical tick spacing
 and vertical major spacing. These two
@@ -346,48 +346,48 @@ is drawn and how snapping is performed." } }
     entry $top.vE -relief flat -width 12 -textvar grid_control($id,rv)
     hoc_register_data $top.vE "Vertical Tick Spacing" $hoc_data
     menubutton $top.vMB -relief raised -bd 2\
-	    -menu $top.vMB.spacing -indicatoron 1
+	-menu $top.vMB.spacing -indicatoron 1
     hoc_register_data $top.vMB "Vertical Tick Spacings"\
-	    { { summary "Pops up a menu of distances to choose from for
+	{ { summary "Pops up a menu of distances to choose from for
 vertical tick spacing." } }
     menu $top.vMB.spacing -title "Grid Spacing" -tearoff 0
     $top.vMB.spacing add command -label "Micrometer" -underline 4\
-	    -command "set_grid_spacing_vtick $id micrometer"
+	-command "set_grid_spacing_vtick $id micrometer"
     $top.vMB.spacing add command -label "Millimeter" -underline 2\
-	    -command "set_grid_spacing_vtick $id millimeter"
+	-command "set_grid_spacing_vtick $id millimeter"
     $top.vMB.spacing add command -label "Centimeter" -underline 0\
-	    -command "set_grid_spacing_vtick $id centimeter"
+	-command "set_grid_spacing_vtick $id centimeter"
     $top.vMB.spacing add command -label "Decimeter" -underline 0\
-	    -command "set_grid_spacing_vtick $id decimeter"
+	-command "set_grid_spacing_vtick $id decimeter"
     $top.vMB.spacing add command -label "Meter" -underline 0\
-	    -command "set_grid_spacing_vtick $id meter"
+	-command "set_grid_spacing_vtick $id meter"
     $top.vMB.spacing add command -label "Kilometer" -underline 0\
-	    -command "set_grid_spacing_vtick $id kilometer"
+	-command "set_grid_spacing_vtick $id kilometer"
     $top.vMB.spacing add separator
     $top.vMB.spacing add command -label "1/10 Inch" -underline 0\
-	    -command "set_grid_spacing_vtick $id \"1/10 inch\""
+	-command "set_grid_spacing_vtick $id \"1/10 inch\""
     $top.vMB.spacing add command -label "1/4 Inch" -underline 2\
-	    -command "set_grid_spacing_vtick $id \"1/4 inch\""
+	-command "set_grid_spacing_vtick $id \"1/4 inch\""
     $top.vMB.spacing add command -label "1/2 Inch" -underline 2\
-	    -command "set_grid_spacing_vtick $id \"1/2 inch\""
+	-command "set_grid_spacing_vtick $id \"1/2 inch\""
     $top.vMB.spacing add command -label "Inch" -underline 0\
-	    -command "set_grid_spacing_vtick $id inch"
+	-command "set_grid_spacing_vtick $id inch"
     $top.vMB.spacing add command -label "Foot" -underline 0\
-	    -command "set_grid_spacing_vtick $id foot"
+	-command "set_grid_spacing_vtick $id foot"
     $top.vMB.spacing add command -label "Yard" -underline 0\
-	    -command "set_grid_spacing_vtick $id yard"
+	-command "set_grid_spacing_vtick $id yard"
     $top.vMB.spacing add command -label "Mile" -underline 3\
-	    -command "set_grid_spacing_vtick $id mile"
+	-command "set_grid_spacing_vtick $id mile"
     entry $top.maj_vE -relief flat -width 12 -textvar grid_control($id,mrv)
     hoc_register_data $top.maj_vE "Vertical Major Spacing"\
-	    { { summary "Enter vertical major spacing here." } }
+	{ { summary "Enter vertical major spacing here." } }
 
     checkbutton $top.squareGridCB -relief flat -text "Square Grid"\
-	    -offvalue 0 -onvalue 1 -variable grid_control($id,square)\
-	    -command "set_grid_square $id"
+	-offvalue 0 -onvalue 1 -variable grid_control($id,square)\
+	-command "set_grid_square $id"
     hoc_register_data $top.squareGridCB "Square Grid"\
-	    { { synopsis "Toggle square grid mode." }
-	      { description "In square grid mode the horizontal and
+	{ { synopsis "Toggle square grid mode." }
+	    { description "In square grid mode the horizontal and
 vertical attributes are the same. For
 example, if the horizontal tick spacing
 is 12 inches, then the vertical tick spacing
@@ -411,15 +411,15 @@ accuracy when snapping." } }
 
     label $top.gridEffectsL -text "Grid Effects" -anchor w
     hoc_register_data $top.gridEffectsL "Grid Effects"\
-	    { { summary "The grid can be drawn on the screen and
+	{ { summary "The grid can be drawn on the screen and
 it can be used for snapping. Note - the
 grid exists whether it is drawn or not." } }
 
     checkbutton $top.drawCB -relief flat -text "Draw"\
-	    -offvalue 0 -onvalue 1 -variable grid_control($id,draw)
+	-offvalue 0 -onvalue 1 -variable grid_control($id,draw)
     hoc_register_data $top.drawCB "Draw Grid"\
-	    { { synopsis "Toggle drawing the grid." }
-	      { description "The grid is a lattice of points over the pane
+	{ { synopsis "Toggle drawing the grid." }
+	    { description "The grid is a lattice of points over the pane
 (geometry window). The regular spacing between
 the points gives the user accurate visual cues
 regarding dimension. This spacing can be set by
@@ -595,7 +595,7 @@ proc grid_control_reset { id } {
     set grid_control($id,mrv) [rset grid mrv]
 
     if {$grid_control($id,rh) != $grid_control($id,rv) ||\
-	$grid_control($id,mrh) != $grid_control($id,mrv)} {
+	    $grid_control($id,mrh) != $grid_control($id,mrv)} {
 	set grid_control($id,square) 0
 	set_grid_square $id
     }
@@ -660,11 +660,11 @@ proc grid_autosize {} {
 
     if {[opendb] == ""} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
-		"No database has been opened!" info 0 OK
+	    "No database has been opened!" info 0 OK
 	return
     }
 
-# Gives between 20 and 200 ticks in user units
+    # Gives between 20 and 200 ticks in user units
     set lower [expr log10(20)]
     set upper [expr $lower+1]
     set s [expr log10([_mged_view size])]
@@ -687,7 +687,7 @@ proc grid_spacing_autosize { id } {
 
     if {[opendb] == ""} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
-		"No database has been opened!" info 0 OK
+	    "No database has been opened!" info 0 OK
 	return
     }
 
@@ -760,7 +760,7 @@ proc set_grid_spacing { id grid_unit apply } {
 
     if {[opendb] == ""} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
-		"No database has been opened!" info 0 OK
+	    "No database has been opened!" info 0 OK
 	return
     }
 
@@ -784,7 +784,7 @@ proc set_grid_spacing_htick { id grid_unit } {
 
     if {[opendb] == ""} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
-		"No database has been opened!" info 0 OK
+	    "No database has been opened!" info 0 OK
 	return
     }
 
@@ -806,7 +806,7 @@ proc set_grid_spacing_vtick { id grid_unit } {
 
     if {[opendb] == ""} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
-		"No database has been opened!" info 0 OK
+	    "No database has been opened!" info 0 OK
 	return
     }
 

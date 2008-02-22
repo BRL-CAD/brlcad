@@ -810,8 +810,8 @@ option add *QuadDisplay.height 400 widgetDefault
 	set z [lindex $map 2]
 
 	return [list [expr {$x * $mm2local}] \
-		     [expr {$y * $mm2local}] \
-		     [expr {$z * $mm2local}]]
+		    [expr {$y * $mm2local}] \
+		    [expr {$z * $mm2local}]]
     }
 }
 

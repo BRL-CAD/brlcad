@@ -247,7 +247,7 @@
 
 		eval lappend newtable [lrange $table 0 [expr {$i1 - 1}]]
 		eval lappend newtable [lrange $table [expr {$i1 + 1}] \
-						     [expr {$i2 - 1}]]
+					   [expr {$i2 - 1}]]
 		lappend newtable $rdata
 		eval lappend newtable [lrange $table $i2 end]
 	    } else {
@@ -257,7 +257,7 @@
 		eval lappend newtable [lrange $table 0 [expr {$i1 - 1}]]
 		lappend newtable $rdata
 		eval lappend newtable [lrange $table $i1 \
-						     [expr {$i2 - 1}]]
+					   [expr {$i2 - 1}]]
 		eval lappend newtable [lrange $table [expr {$i2 + 1}] end]
 	    }
 

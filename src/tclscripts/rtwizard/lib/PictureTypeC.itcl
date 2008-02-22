@@ -91,7 +91,7 @@ namespace eval RtWizard {
 	#
 	set hp [$::wizardInstance enable highlighted]
 	[$hp component useMe] select
-   }
+    }
 
     #
     # deactivate - called when this picture type is deselected.

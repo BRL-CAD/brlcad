@@ -35,33 +35,33 @@ foreach cmd $extern_commands {
 
 
 proc  remat { args } {
-  if { [llength $args] != 2 } {
-    puts "Usage: remat assembly GIFTmater"
-    return
-  }
-
-  set name [lindex $args 0]
-  set matid [lindex $args 1]
-
-  set objData [db get $name]
-  if { [lindex $objData 0] != "comb" } {
-    return
-  }
-
-  set children [lt $name]
-  while { $children != "" } {
-    foreach node $children {
-      set child [lindex $node 1]
-
-      if { [lindex [db get $child] 2] == "yes" } {
-	attr set $child material_id $matid
-      } else {
-	set children [concat $children [lt $child]]
-      }
-
-      set children [lrange $children 1 end]
+    if { [llength $args] != 2 } {
+	puts "Usage: remat assembly GIFTmater"
+	return
     }
-  }
+
+    set name [lindex $args 0]
+    set matid [lindex $args 1]
+
+    set objData [db get $name]
+    if { [lindex $objData 0] != "comb" } {
+	return
+    }
+
+    set children [lt $name]
+    while { $children != "" } {
+	foreach node $children {
+	    set child [lindex $node 1]
+
+	    if { [lindex [db get $child] 2] == "yes" } {
+		attr set $child material_id $matid
+	    } else {
+		set children [concat $children [lt $child]]
+	    }
+
+	    set children [lrange $children 1 end]
+	}
+    }
 }
 
 # Local Variables:

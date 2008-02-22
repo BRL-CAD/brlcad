@@ -143,8 +143,8 @@ proc init_edit_solid_int { id } {
 
     incr row
     checkbutton $w.contextCB -relief flat -bd 2 -text "Context Edit"\
-	     -offvalue 0 -onvalue 1 -variable esolint_control($id,cflag)\
-	     -command "esolint_toggle_context $id $w"
+	-offvalue 0 -onvalue 1 -variable esolint_control($id,cflag)\
+	-command "esolint_toggle_context $id $w"
     grid $w.contextCB -row $row -column 0 -sticky nsew -padx 8
     grid rowconfigure $w $row -weight 0
 
@@ -213,7 +213,7 @@ proc esolint_build_form { id w name type vals state_val do_gui do_cmd do_entries
 
 	if $do_gui {
 	    if { [catch { label $sform._$attr\L -text "$solid_data(labels,$attr)" \
-		    -anchor w }]!=0 } {
+			      -anchor w }]!=0 } {
 		label $sform._$attr\L -text "$attr" -anchor w
 	    }
 	    grid $sform._$attr\L -row $row -column 0 -sticky nsew
@@ -250,7 +250,7 @@ proc esolint_build_form { id w name type vals state_val do_gui do_cmd do_entries
 			$sform._$attr\E$num configure -state normal
 			$sform._$attr\E$num delete 0 end
 			$sform._$attr\E$num insert insert \
-				[lindex [lindex $vals $i] $num]
+			    [lindex [lindex $vals $i] $num]
 			$sform._$attr\E$num configure -state $save_state
 		    }
 
@@ -270,9 +270,9 @@ proc esolint_build_form { id w name type vals state_val do_gui do_cmd do_entries
 		%*d {
 		    if $do_gui {
 			button $sform._$attr\decB$num -text \- -command \
-				"esolint_dec_int $id $sform._$attr\E$num"
+			    "esolint_dec_int $id $sform._$attr\E$num"
 			button $sform._$attr\incB$num -text \+ -command \
-				"esolint_inc_int $id $sform._$attr\E$num"
+			    "esolint_inc_int $id $sform._$attr\E$num"
 			entry $sform._$attr\E$num -width 6 -relief sunken
 
 			grid $sform._$attr\decB$num -row $row -column [expr $tnum * 3 + 1] -sticky nsew
@@ -310,9 +310,9 @@ proc esolint_build_form { id w name type vals state_val do_gui do_cmd do_entries
 		%*f {
 		    if $do_gui {
 			button $sform._$attr\decB$num -text \- -command \
-				"esolint_dec $id $sform._$attr\E$num"
+			    "esolint_dec $id $sform._$attr\E$num"
 			button $sform._$attr\incB$num -text \+ -command \
-				"esolint_inc $id $sform._$attr\E$num"
+			    "esolint_inc $id $sform._$attr\E$num"
 			entry $sform._$attr\E$num -width 6 -relief sunken
 
 			grid $sform._$attr\decB$num -row $row -column [expr $tnum * 3 + 1] -sticky nsew
@@ -329,8 +329,8 @@ proc esolint_build_form { id w name type vals state_val do_gui do_cmd do_entries
 			$sform._$attr\E$num configure -state normal
 			$sform._$attr\E$num delete 0 end
 			$sform._$attr\E$num insert insert \
-				[format $esolint_control($id,format_string) [expr [lindex \
-				[lindex $vals $i] $num] * $base2local]]
+			    [format $esolint_control($id,format_string) [expr [lindex \
+										   [lindex $vals $i] $num] * $base2local]]
 			$sform._$attr\E$num configure -state $save_state
 		    }
 
@@ -486,18 +486,18 @@ proc esolint_toggle_context { id w } {
 
     if $esolint_control($id,cflag) {
 	esolint_build_form $id $w.sformF \
-		"** SOLID -- $esolint_control(name): $esolint_control(type)" \
-		$esolint_control(type) {} disabled 0 0 0 1
+	    "** SOLID -- $esolint_control(name): $esolint_control(type)" \
+	    $esolint_control(type) {} disabled 0 0 0 1
 	esolint_build_form $id $w.scformF \
-		"** PATH -- $esolint_control(pathname): $esolint_control(type)" \
-		$esolint_control(type) {} normal 0 0 0 1
+	    "** PATH -- $esolint_control(pathname): $esolint_control(type)" \
+	    $esolint_control(type) {} normal 0 0 0 1
     } else {
 	esolint_build_form $id $w.sformF \
-		"** SOLID -- $esolint_control(name): $esolint_control(type)" \
-		$esolint_control(type) {} normal 0 0 0 1
+	    "** SOLID -- $esolint_control(name): $esolint_control(type)" \
+	    $esolint_control(type) {} normal 0 0 0 1
 	esolint_build_form $id $w.scformF \
-		"** PATH -- $esolint_control(pathname): $esolint_control(type)" \
-		$esolint_control(type) {} disabled 0 0 0 1
+	    "** PATH -- $esolint_control(pathname): $esolint_control(type)" \
+	    $esolint_control(type) {} disabled 0 0 0 1
     }
 }
 
@@ -523,13 +523,13 @@ proc esolint_update {} {
 
 	# set entries for non-context form
 	esolint_build_form $id $w.sformF \
-		"** SOLID -- $esolint_control(name): $esolint_control(type)" \
-		$esolint_control(type) $esolint_vals {} 0 0 1 0
+	    "** SOLID -- $esolint_control(name): $esolint_control(type)" \
+	    $esolint_control(type) $esolint_vals {} 0 0 1 0
 
 	# set entries for context form
 	esolint_build_form $id $w.scformF \
-		"** PATH -- $esolint_control(pathname): $esolint_control(type)" \
-		$esolint_control(type) $esolint_cvals {} 0 0 1 0
+	    "** PATH -- $esolint_control(pathname): $esolint_control(type)" \
+	    $esolint_control(type) $esolint_cvals {} 0 0 1 0
     }
 }
 

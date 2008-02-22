@@ -57,26 +57,26 @@ namespace eval RtWizard {
     #
     ::itk::usual FbPage {
 	keep -activebackground \
-		-activerelief \
-		-background \
-		-borderwidth \
-		-cursor \
-		-elementborderwidth \
-		-foreground \
-		-highlightcolor \
-		-highlightthickness \
-		-insertbackground \
-		-insertborderwidth \
-		-insertofftime \
-		-insertontime \
-		-insertwidth \
-		-jump \
-		-labelfont \
-		-selectbackground \
-		-selectborderwidth \
-		-textbackground \
-		-textfont \
-		-troughcolor
+	    -activerelief \
+	    -background \
+	    -borderwidth \
+	    -cursor \
+	    -elementborderwidth \
+	    -foreground \
+	    -highlightcolor \
+	    -highlightthickness \
+	    -insertbackground \
+	    -insertborderwidth \
+	    -insertofftime \
+	    -insertontime \
+	    -insertwidth \
+	    -jump \
+	    -labelfont \
+	    -selectbackground \
+	    -selectborderwidth \
+	    -textbackground \
+	    -textfont \
+	    -troughcolor
     }
 
     #
@@ -164,12 +164,12 @@ namespace eval RtWizard {
 	#
 	itk_component add helpPanel {
 	    ::iwidgets::scrolledtext $cs.#auto \
-		    -hscrollmode none \
-		    -vscrollmode none \
-		    -visibleitems 80x3 \
-		    -wrap word \
-		    -relief flat \
-		    -textfont {avantgarde 12 italic}
+		-hscrollmode none \
+		-vscrollmode none \
+		-visibleitems 80x3 \
+		-wrap word \
+		-relief flat \
+		-textfont {avantgarde 12 italic}
 	} {
 	    usual
 	    ignore -textbackground
@@ -177,7 +177,7 @@ namespace eval RtWizard {
 	loadHelpText $itk_component(helpPanel);
 
 	pack $itk_component(helpPanel) \
-		-side top
+	    -side top
 
 	#
 	# Add a frame to facilitate packing the remainder of the
@@ -185,7 +185,7 @@ namespace eval RtWizard {
 	#
 	itk_component add sfm {
 	    frame $cs.fm \
-		    -relief flat
+		-relief flat
 	} {
 	    usual
 	}
@@ -211,20 +211,20 @@ namespace eval RtWizard {
 	#
 	itk_component add szFrame {
 	    iwidgets::labeledframe $itk_component(ltFrame).szFrame \
-		    -labeltext "Size" \
-		    -labelpos nw \
-		    -relief groove
+		-labeltext "Size" \
+		-labelpos nw \
+		-relief groove
 	}
 
 	set szCs [$itk_component(szFrame) childsite]
 
 	itk_component add width {
 	    iwidgets::spinner $szCs.width \
-		    -labeltext "Width:" \
-		    -width 6 \
-		    -labelmargin 2 \
-		    -increment "[::itcl::code $this incrWidth]" \
-		    -decrement "[::itcl::code $this decrWidth]"
+		-labeltext "Width:" \
+		-width 6 \
+		-labelmargin 2 \
+		-increment "[::itcl::code $this incrWidth]" \
+		-decrement "[::itcl::code $this decrWidth]"
 	} {
 	    ignore -textfont
 	    keep -textbackground
@@ -235,10 +235,10 @@ namespace eval RtWizard {
 
 	itk_component add height {
 	    iwidgets::spinint $szCs.height \
-		    -labeltext "Height:" \
-		    -width 6 \
-		    -increment "[::itcl::code $this incrHeight]" \
-		    -decrement "[::itcl::code $this decrHeight]"
+		-labeltext "Height:" \
+		-width 6 \
+		-increment "[::itcl::code $this incrHeight]" \
+		-decrement "[::itcl::code $this decrHeight]"
 	} {
 	    ignore -textfont
 	    keep -textbackground
@@ -252,9 +252,9 @@ namespace eval RtWizard {
 	#
 	itk_component add devFrame {
 	    iwidgets::labeledframe $itk_component(rtFrame).devFrame \
-		    -labeltext "Device" \
-		    -labelpos nw \
-		    -relief groove
+		-labeltext "Device" \
+		-labelpos nw \
+		-relief groove
 
 	} {
 	    usual
@@ -263,40 +263,40 @@ namespace eval RtWizard {
 
 	itk_component add radBox {
 	    iwidgets::radiobox $devCs.radBox \
-		    -relief flat
+		-relief flat
 	} {
 	    usual
 	}
 
 	$itk_component(radBox) add toScreen \
-		-text "Display on Screen" \
-		-selectcolor green \
-		-command "[::itcl::code $this onToScreen]"
+	    -text "Display on Screen" \
+	    -selectcolor green \
+	    -command "[::itcl::code $this onToScreen]"
 
 	$itk_component(radBox) add toFile \
-		    -text "Write to File" \
-		    -selectcolor green \
-		    -command "[::itcl::code $this onToFile]"
+	    -text "Write to File" \
+	    -selectcolor green \
+	    -command "[::itcl::code $this onToFile]"
 
 	itk_component add fileName {
 	    iwidgets::entryfield $devCs.fileName \
-		    -labeltext "File:" -width 48 \
-		    -textvariable [::itcl::scope fbFile]
+		-labeltext "File:" -width 48 \
+		-textvariable [::itcl::scope fbFile]
 	} {
 	    usual
 	}
 
 	itk_component add fsd {
 	    iwidgets::fileselectiondialog .fsd \
-		    -modality application
+		-modality application
 	} {
 	    usual
 	}
 
 	itk_component add browse {
 	    button $devCs.browse \
-		    -text "Browse" \
-		    -command "[::itcl::code $this selectFbFile]"
+		-text "Browse" \
+		-command "[::itcl::code $this selectFbFile]"
 	} {
 	    usual
 	}
@@ -311,8 +311,8 @@ namespace eval RtWizard {
 	}
 
 	$itk_component(bbox) add OK \
-		-text "OK" \
-		-command "[::itcl::code $::wizardInstance] selectPrev"
+	    -text "OK" \
+	    -command "[::itcl::code $::wizardInstance] selectPrev"
 
 	#
 	# Pack the items
@@ -325,8 +325,8 @@ namespace eval RtWizard {
 	pack $itk_component(height)
 
 	eval iwidgets::Labeledwidget::alignlabels \
-		$itk_component(height) \
-		$itk_component(width)
+	    $itk_component(height) \
+	    $itk_component(width)
 
 	#
 	# Pack the contents of the devFrame
@@ -434,8 +434,8 @@ namespace eval RtWizard {
 	#
 	set mode [$itk_component(radBox) get]
 	if { [string match $mode "toFile"] && \
-		[string length $fbFile] > 0 && \
-		[string match $screenOnly "false"] } {
+		 [string length $fbFile] > 0 && \
+		 [string match $screenOnly "false"] } {
 	    return $fbFile
 	}
 	set binpath [bu_brlcad_root bin]

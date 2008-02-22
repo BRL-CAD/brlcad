@@ -235,17 +235,16 @@
 }
 
 ::itcl::body Drawable::help_init {} {
-    set help [cadwidgets::Help #auto]
+    set help [cadwidgets::Help \#auto]
 
     $help add autoview		{{view_obj} {set the view object's size and center}}
-    $help add E			{{[-s] <objects>} {evaluated edit of objects. Option 's' provides a slower,
-	but better fidelity evaluation}}
-    $help add blast		{{-C#/#/# <objects>} {clear screen, draw objects}}
+    $help add E			{{[-s] <objects>} {evaluated edit of objects. Option 's' provides a slower, but better fidelity evaluation}}
+    $help add blast		{{"-C#/#/# <objects>"} {clear screen, draw objects}}
     $help add clear		{{} {clear screen}}
-    $help add draw		{{-C#/#/# <objects>} {draw objects}}
+    $help add draw		{{"-C#/#/# <objects>"} {draw objects}}
     $help add erase		{{<objects>} {remove objects from the screen}}
     $help add erase_all		{{<objects>} {remove all occurrences of object(s) from the screen}}
-    $help add ev		{{[-dfnqstuvwT] [-P #] <objects>} {evaluate objects via NMG tessellation}}
+    $help add ev		{{"[-dfnqstuvwT] [-P #] <objects>"} {evaluate objects via NMG tessellation}}
     $help add get_autoview	{{} {get view parameters that shows drawn geometry}}
     $help add how		{{obj} {returns how an object is being displayed}}
     $help add illum		{{name} {illuminate object}}

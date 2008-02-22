@@ -35,7 +35,7 @@ proc init_rtScriptTool { id } {
 
     if {[opendb] == ""} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
-		"No database has been opened!" info 0 OK
+	    "No database has been opened!" info 0 OK
 	return
     }
 
@@ -114,9 +114,9 @@ proc do_rtScript { id } {
     if {$rts_control($id,file) != ""} {
 	if [file exists $rts_control($id,file)] {
 	    set result [cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
-		    "Append $rts_control($id,file)?"\
-		    "Append $rts_control($id,file)?"\
-		    "" 0 OK Cancel]
+			    "Append $rts_control($id,file)?"\
+			    "Append $rts_control($id,file)?"\
+			    "" 0 OK Cancel]
 
 	    if {$result} {
 		return
@@ -124,9 +124,9 @@ proc do_rtScript { id } {
 	}
     } else {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
-		"No file name specified!"\
-		"No file name specified!"\
-		"" 0 OK
+	    "No file name specified!"\
+	    "No file name specified!"\
+	    "" 0 OK
 
 	return
     }

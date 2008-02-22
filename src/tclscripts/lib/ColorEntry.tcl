@@ -48,24 +48,24 @@
 
 ::itcl::body cadwidgets::ColorEntry::constructor {args} {
     $itk_component(menu) add command -label black \
-	    -command [::itcl::code $this setColor 0 0 0]
+	-command [::itcl::code $this setColor 0 0 0]
     $itk_component(menu) add command -label white \
-	    -command [::itcl::code $this setColor 255 255 255]
+	-command [::itcl::code $this setColor 255 255 255]
     $itk_component(menu) add command -label red \
-	    -command [::itcl::code $this setColor 255 0 0]
+	-command [::itcl::code $this setColor 255 0 0]
     $itk_component(menu) add command -label green \
-	    -command [::itcl::code $this setColor 0 255 0]
+	-command [::itcl::code $this setColor 0 255 0]
     $itk_component(menu) add command -label blue\
-	    -command [::itcl::code $this setColor 0 0 255]
+	-command [::itcl::code $this setColor 0 0 255]
     $itk_component(menu) add command -label yellow \
-	    -command [::itcl::code $this setColor 255 255 0]
+	-command [::itcl::code $this setColor 255 255 0]
     $itk_component(menu) add command -label cyan \
-	    -command [::itcl::code $this setColor 0 255 255]
+	-command [::itcl::code $this setColor 0 255 255]
     $itk_component(menu) add command -label magenta \
-	    -command [::itcl::code $this setColor 255 0 255]
+	-command [::itcl::code $this setColor 255 0 255]
     $itk_component(menu) add separator
     $itk_component(menu) add command -label "Color Tool..." \
-	    -command [::itcl::code $this chooser]
+	-command [::itcl::code $this chooser]
 
     eval itk_initialize $args
     bind $itk_component(entry) <Return> [::itcl::code $this updateColor]
@@ -99,7 +99,7 @@
 
     setText "$r $g $b"
     $itk_component(menubutton) configure \
-	    -bg [format "#%02x%02x%02x" $r $g $b]
+	-bg [format "#%02x%02x%02x" $r $g $b]
 }
 
 ::itcl::body cadwidgets::ColorEntry::updateColor {} {
@@ -108,13 +108,13 @@
 
 ::itcl::body cadwidgets::ColorEntry::rgbValid {r g b} {
     if {![string is integer $r]} {
-	    return 0
+	return 0
     }
     if {![string is integer $g]} {
-	    return 0
+	return 0
     }
     if {![string is integer $b]} {
-	    return 0
+	return 0
     }
     if {$r < 0 || 255 < $r} {
 	return 0

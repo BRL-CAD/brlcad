@@ -60,79 +60,79 @@ package require Iwidgets
 package provide GeometryBrowser 1.0
 
 class GeometryBrowser {
-	inherit itk::Toplevel
+    inherit itk::Toplevel
 
-	constructor {} {}
-	destructor {}
+    constructor {} {}
+    destructor {}
 
-	public {
-		method getNodeChildren { { node "" } { updateLists "no" } } {}
-		method toggleNode { { string "" } } {}
-		method updateGeometryLists { { node "" } } {}
+    public {
+	method getNodeChildren { { node "" } { updateLists "no" } } {}
+	method toggleNode { { string "" } } {}
+	method updateGeometryLists { { node "" } } {}
 
-		method displayNode { { node "" } { display "appended" } } {}
-		method undisplayNode { { node "" } } {}
+	method displayNode { { node "" } { display "appended" } } {}
+	method undisplayNode { { node "" } } {}
 
-		method setNodeColor { { node "" } { color "" } } {}
-		method setDisplayedToColor { { color "" } } {}
+	method setNodeColor { { node "" } { color "" } } {}
+	method setDisplayedToColor { { color "" } } {}
 
-		method clearDisplay {} {}
-		method autosizeDisplay {} {}
-		method zoomDisplay { { zoom "in" } } {}
+	method clearDisplay {} {}
+	method autosizeDisplay {} {}
+	method zoomDisplay { { zoom "in" } } {}
 
-		method renderPreview { {rtoptions "-P4 -R -B" } } {}
-		method raytracePanel {} {}
-		method raytraceWizard {} {}
+	method renderPreview { {rtoptions "-P4 -R -B" } } {}
+	method raytracePanel {} {}
+	method raytraceWizard {} {}
 
-		method toggleAutosizing { { state "" } } {}
-		method toggleAutorender { { state "" } } {}
+	method toggleAutosizing { { state "" } } {}
+	method toggleAutorender { { state "" } } {}
 
-	}
+    }
 
-	protected {
-		# hook to the idle loop callback for automatic updates
-		variable _updateHook
+    protected {
+	# hook to the idle loop callback for automatic updates
+	variable _updateHook
 
-		# menu toggle options
-		variable _showAllGeometry
-		variable _autoRender
+	# menu toggle options
+	variable _showAllGeometry
+	variable _autoRender
 
-		# hooks to the heirarchy pop-up menus
-		variable _itemMenu
-		variable _bgMenu
+	# hooks to the heirarchy pop-up menus
+	variable _itemMenu
+	variable _bgMenu
 
-		# list of geometry to validate against on events, if something changes
-		# we need to redraw asap
-		variable _goodGeometry
-		variable _badGeometry
+	# list of geometry to validate against on events, if something changes
+	# we need to redraw asap
+	variable _goodGeometry
+	variable _badGeometry
 
-		method prepNodeMenu {} {}
-		method getObjectType { node } {}
-		method validateGeometry {} {}
-	}
+	method prepNodeMenu {} {}
+	method getObjectType { node } {}
+	method validateGeometry {} {}
+    }
 
-	private {
-		variable _debug
+    private {
+	variable _debug
 
-		# track certain menu items that are dynamic
-		variable _displayItemMenuIndex
-		variable _setcolorItemMenuIndex
-		variable _autosizeItemMenuIndex
-		variable _autosizeBgMenuIndex
-		variable _autorenderItemMenuIndex
-		variable _autorenderBgMenuIndex
+	# track certain menu items that are dynamic
+	variable _displayItemMenuIndex
+	variable _setcolorItemMenuIndex
+	variable _autosizeItemMenuIndex
+	variable _autosizeBgMenuIndex
+	variable _autorenderItemMenuIndex
+	variable _autorenderBgMenuIndex
 
-		# port used for preview fbserv rendering
-		variable _fbservPort
-		variable _weStartedFbserv
+	# port used for preview fbserv rendering
+	variable _fbservPort
+	variable _weStartedFbserv
 
-		# save the mged framebuffer name
-		variable _mgedFramebufferId
+	# save the mged framebuffer name
+	variable _mgedFramebufferId
 
-		method rgbToHex { { rgb "0 0 0" } } {}
-		method checkAutoRender {} {}
-		method extractNodeName { { node "" } } {}
-	}
+	method rgbToHex { { rgb "0 0 0" } } {}
+	method checkAutoRender {} {}
+	method extractNodeName { { node "" } } {}
+    }
 }
 
 
@@ -141,344 +141,344 @@ class GeometryBrowser {
 ###########
 
 body GeometryBrowser::constructor {} {
-	# used to determine the mged port number
-	global port
-	global mged_players
+    # used to determine the mged port number
+    global port
+    global mged_players
 
-	# set to 1/0 to turn call path debug messages on/off
-	set _debug 0
+    # set to 1/0 to turn call path debug messages on/off
+    set _debug 0
 
-	set _showAllGeometry 0
-	set _autoRender 0
-	set _popup ""
+    set _showAllGeometry 0
+    set _autoRender 0
+    set _popup ""
 
-	set _goodGeometry ""
-	set _badGeometry ""
+    set _goodGeometry ""
+    set _badGeometry ""
 
-	# pick some randomly high port for preview rendering and hope it, or one of
-	# its neighbors is open.
+    # pick some randomly high port for preview rendering and hope it, or one of
+    # its neighbors is open.
 
-	if [ catch { set port } _fbservPort ] {
-		set _fbservPort 0
-	}
+    if [ catch { set port } _fbservPort ] {
+	set _fbservPort 0
+    }
 
-	set _weStartedFbserv 0
+    set _weStartedFbserv 0
 
-	# determine the framebuffer window id
-	if { [ catch { set mged_players } _mgedFramebufferId ] } {
-		puts $_mgedFramebufferId
-		puts "assuming default mged framebuffer id: id_0"
-		set _mgedFramebufferId "id_0"
-	}
-	# just in case there are more than one returned
-	set _mgedFramebufferId [ lindex $_mgedFramebufferId 0 ]
+    # determine the framebuffer window id
+    if { [ catch { set mged_players } _mgedFramebufferId ] } {
+	puts $_mgedFramebufferId
+	puts "assuming default mged framebuffer id: id_0"
+	set _mgedFramebufferId "id_0"
+    }
+    # just in case there are more than one returned
+    set _mgedFramebufferId [ lindex $_mgedFramebufferId 0 ]
 
-	# set the window title
-	$this configure -title "Geometry Browser"
+    # set the window title
+    $this configure -title "Geometry Browser"
 
-	itk_component add menubar {
-		menu $itk_interior.menubar
-	}
+    itk_component add menubar {
+	menu $itk_interior.menubar
+    }
 
-	menu $itk_interior.menubar.close -title "Close"
-	$itk_interior.menubar.close add command -label "Close" -underline 0 -command ""
+    menu $itk_interior.menubar.close -title "Close"
+    $itk_interior.menubar.close add command -label "Close" -underline 0 -command ""
 
-	# set up the adjustable sliding pane with a left and right side
-	itk_component add pw_pane {
-		panedwindow $itk_interior.pw_pane -orient vertical -height 512 -width 256
-	}
+    # set up the adjustable sliding pane with a left and right side
+    itk_component add pw_pane {
+	panedwindow $itk_interior.pw_pane -orient vertical -height 512 -width 256
+    }
 
-	$itk_interior.pw_pane add left -margin 5
-	$itk_interior.pw_pane add right -margin 5 -minimum 5
-	# XXX keep the left side hidden away for now...
-	$itk_interior.pw_pane hide right
-	set children [$itk_interior.pw_pane childsite]
-	set pane(0) [lindex $children 0]
-#	set pane(1) [lindex $children 1]
+    $itk_interior.pw_pane add left -margin 5
+    $itk_interior.pw_pane add right -margin 5 -minimum 5
+    # XXX keep the left side hidden away for now...
+    $itk_interior.pw_pane hide right
+    set children [$itk_interior.pw_pane childsite]
+    set pane(0) [lindex $children 0]
+    #	set pane(1) [lindex $children 1]
 
-	itk_component add cadtree {
-		Hierarchy $itk_interior.cadtree \
-				-labeltext "...loading..." \
-				-querycommand [ code $this getNodeChildren %n yes ] \
-				-imagecommand [ code $this updateGeometryLists %n ] \
-				-dblclickcommand [ code $this displayNode %n ] \
-				-textmenuloadcommand [ code $this prepNodeMenu ] \
-				-imagemenuloadcommand [ code $this prepNodeMenu ] \
-				-markforeground blue \
-				-markbackground red   \
-				-selectforeground black \
-				-selectbackground yellow \
-				-visibleitems 20x40 \
-				-alwaysquery 1
-	}
-#				-imagemenuloadcommand [ code $this prepNodeMenu ]
-#				-selectcommand [ code $this toggleNode %n ]
-#				-imagedblcommand [ code $this displayNode %n ]
+    itk_component add cadtree {
+	Hierarchy $itk_interior.cadtree \
+	    -labeltext "...loading..." \
+	    -querycommand [ code $this getNodeChildren %n yes ] \
+	    -imagecommand [ code $this updateGeometryLists %n ] \
+	    -dblclickcommand [ code $this displayNode %n ] \
+	    -textmenuloadcommand [ code $this prepNodeMenu ] \
+	    -imagemenuloadcommand [ code $this prepNodeMenu ] \
+	    -markforeground blue \
+	    -markbackground red   \
+	    -selectforeground black \
+	    -selectbackground yellow \
+	    -visibleitems 20x40 \
+	    -alwaysquery 1
+    }
+    #				-imagemenuloadcommand [ code $this prepNodeMenu ]
+    #				-selectcommand [ code $this toggleNode %n ]
+    #				-imagedblcommand [ code $this displayNode %n ]
 
-	# save hooks to the cadtree pop-up menus for efficiency and convenience
-	set _itemMenu [ $itk_interior.cadtree component itemMenu ]
-	set _bgMenu [ $itk_interior.cadtree component bgMenu ]
-
-
-	# itemMenu and bgMenu are the two pop-up menus available from hierarchy class
-	# XXX for some reason, the current call is not returing a value properly
-	$_itemMenu add command \
-			-label "Display" \
-			-command [ code $this displayNode [ $itk_interior.cadtree current ] "appended" ]
-	# save the index of the menu entry so we may modify its label later
-	set _displayItemMenuIndex [ $_itemMenu index end ]
-
-	$_itemMenu add command \
-			-label "Clear & Display" \
-			-command [ code $this displayNode [ $itk_interior.cadtree current ] "alone" ]
-
-	$_itemMenu add separator
-
-	# configure the color drop down menu for the pop-up
-	itk_component add colorMenu {
-		menu $_itemMenu.colorMenu -tearoff 0
-	} {
-		usual
-		ignore -tearoff
-		rename -cursor -menucursor menuCursor Cursor
-	}
-
-	$_itemMenu.colorMenu add command \
-			-label "Blue" -background [ $this rgbToHex "0 0 255" ] \
-			-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "0 0 255" ]
-	$_itemMenu.colorMenu add command \
-			-label "Cyan" -background [ $this rgbToHex "0 255 255" ] \
-			-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "0 255 255" ]
-	$_itemMenu.colorMenu add command \
-			-label "Dark Blue" -background [ $this rgbToHex "50 0 175" ] \
-			-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "50 0 175" ]
-	$_itemMenu.colorMenu add command \
-			-label "Dark Red" -background [ $this rgbToHex "79 47 47" ] \
-			-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "79 47 47" ]
-	$_itemMenu.colorMenu add command \
-			-label "Forest Green" -background [ $this rgbToHex "50 145 20" ] \
-			-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "50 145 20" ]
-	$_itemMenu.colorMenu add command \
-			-label "Green" -background [ $this rgbToHex "0 255 0" ] \
-			-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "0 255 0" ]
-	$_itemMenu.colorMenu add command \
-			-label "Grey" -background [ $this rgbToHex "80 80 80" ] \
-			-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "80 80 80" ]
-	$_itemMenu.colorMenu add command \
-			-label "Light Brown" -background [ $this rgbToHex "159 159 95" ] \
-			-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "159 159 95" ]
-	$_itemMenu.colorMenu add command \
-			-label "Lime Green" -background [ $this rgbToHex "50 204 50" ] \
-			-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "50 204 50" ]
-	$_itemMenu.colorMenu add command \
-			-label "Magenta" -background [ $this rgbToHex "255 0 255" ] \
-			-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "255 0 255" ]
-	$_itemMenu.colorMenu add command \
-			-label "Orange" -background [ $this rgbToHex "204 50 50" ] \
-			-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "204 50 50" ]
-	$_itemMenu.colorMenu add command \
-			-label "Peach" -background [ $this rgbToHex "234 100 30" ] \
-			-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "234 100 30" ]
-	$_itemMenu.colorMenu add command \
-			-label "Pink" -background [ $this rgbToHex "255 145 145" ] \
-			-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "255 145 145" ]
-	$_itemMenu.colorMenu add command \
-			-label "Red" -background [ $this rgbToHex "255 0 0" ] \
-			-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "255 0 0" ]
-	$_itemMenu.colorMenu add command \
-			-label "Redish" -background [ $this rgbToHex "255 50 50" ] \
-			-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "255 50 50" ]
-	$_itemMenu.colorMenu add command \
-			-label "Tan" -background [ $this rgbToHex "200 150 100" ] \
-			-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "200 150 100" ]
-	$_itemMenu.colorMenu add command \
-			-label "Yellow" -background [ $this rgbToHex "255 255 0" ] \
-			-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "255 255 0" ]
+    # save hooks to the cadtree pop-up menus for efficiency and convenience
+    set _itemMenu [ $itk_interior.cadtree component itemMenu ]
+    set _bgMenu [ $itk_interior.cadtree component bgMenu ]
 
 
-	$_itemMenu add cascade -label "Set Color" -menu $_itemMenu.colorMenu
-	set _setcolorItemMenuIndex [ $_itemMenu index end ]
+    # itemMenu and bgMenu are the two pop-up menus available from hierarchy class
+    # XXX for some reason, the current call is not returing a value properly
+    $_itemMenu add command \
+	-label "Display" \
+	-command [ code $this displayNode [ $itk_interior.cadtree current ] "appended" ]
+    # save the index of the menu entry so we may modify its label later
+    set _displayItemMenuIndex [ $_itemMenu index end ]
 
-	$_itemMenu add command \
-			-label "Edit" -state disabled \
-			-command [ code $this editNode [ $itk_interior.cadtree current ] ]
+    $_itemMenu add command \
+	-label "Clear & Display" \
+	-command [ code $this displayNode [ $itk_interior.cadtree current ] "alone" ]
 
-#	$_itemMenu add separator
+    $_itemMenu add separator
 
-#	$_itemMenu add command \
-#			-label "Render Preview" -command "[ code $this renderPreview ]"
-#	$_itemMenu add command \
-#			-label "Raytrace Panel" -command "[ code $this raytracePanel ]"
-#	$_itemMenu add command \
-#			-label "Raytrace Wizard" -command "[ code $this raytraceWizard ]"
+    # configure the color drop down menu for the pop-up
+    itk_component add colorMenu {
+	menu $_itemMenu.colorMenu -tearoff 0
+    } {
+	usual
+	ignore -tearoff
+	rename -cursor -menucursor menuCursor Cursor
+    }
 
-#	$_itemMenu add separator
+    $_itemMenu.colorMenu add command \
+	-label "Blue" -background [ $this rgbToHex "0 0 255" ] \
+	-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "0 0 255" ]
+    $_itemMenu.colorMenu add command \
+	-label "Cyan" -background [ $this rgbToHex "0 255 255" ] \
+	-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "0 255 255" ]
+    $_itemMenu.colorMenu add command \
+	-label "Dark Blue" -background [ $this rgbToHex "50 0 175" ] \
+	-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "50 0 175" ]
+    $_itemMenu.colorMenu add command \
+	-label "Dark Red" -background [ $this rgbToHex "79 47 47" ] \
+	-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "79 47 47" ]
+    $_itemMenu.colorMenu add command \
+	-label "Forest Green" -background [ $this rgbToHex "50 145 20" ] \
+	-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "50 145 20" ]
+    $_itemMenu.colorMenu add command \
+	-label "Green" -background [ $this rgbToHex "0 255 0" ] \
+	-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "0 255 0" ]
+    $_itemMenu.colorMenu add command \
+	-label "Grey" -background [ $this rgbToHex "80 80 80" ] \
+	-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "80 80 80" ]
+    $_itemMenu.colorMenu add command \
+	-label "Light Brown" -background [ $this rgbToHex "159 159 95" ] \
+	-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "159 159 95" ]
+    $_itemMenu.colorMenu add command \
+	-label "Lime Green" -background [ $this rgbToHex "50 204 50" ] \
+	-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "50 204 50" ]
+    $_itemMenu.colorMenu add command \
+	-label "Magenta" -background [ $this rgbToHex "255 0 255" ] \
+	-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "255 0 255" ]
+    $_itemMenu.colorMenu add command \
+	-label "Orange" -background [ $this rgbToHex "204 50 50" ] \
+	-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "204 50 50" ]
+    $_itemMenu.colorMenu add command \
+	-label "Peach" -background [ $this rgbToHex "234 100 30" ] \
+	-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "234 100 30" ]
+    $_itemMenu.colorMenu add command \
+	-label "Pink" -background [ $this rgbToHex "255 145 145" ] \
+	-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "255 145 145" ]
+    $_itemMenu.colorMenu add command \
+	-label "Red" -background [ $this rgbToHex "255 0 0" ] \
+	-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "255 0 0" ]
+    $_itemMenu.colorMenu add command \
+	-label "Redish" -background [ $this rgbToHex "255 50 50" ] \
+	-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "255 50 50" ]
+    $_itemMenu.colorMenu add command \
+	-label "Tan" -background [ $this rgbToHex "200 150 100" ] \
+	-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "200 150 100" ]
+    $_itemMenu.colorMenu add command \
+	-label "Yellow" -background [ $this rgbToHex "255 255 0" ] \
+	-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "255 255 0" ]
 
-#	$_itemMenu add command \
-#			-label "Fit the View" -command "[ code $this autosizeDisplay ]"
-#	$_itemMenu add command \
-#			-label "Zoom In" -command "[ code $this zoomDisplay in ]"
-#	$_itemMenu add command \
-#			-label "Zoom Out" -command "[ code $this zoomDisplay out ]"
-#	$_itemMenu add command \
-#			-label "Clear View" -command "[ code $this clearDisplay ]"
 
-#	$_itemMenu add separator
+    $_itemMenu add cascade -label "Set Color" -menu $_itemMenu.colorMenu
+    set _setcolorItemMenuIndex [ $_itemMenu index end ]
 
-#	$_itemMenu add command \
-#			-label [ $this toggleAutosizing same ] \
-#			-command "[ code $this toggleAutosizing  ]"
-#	# save the index of this menu entry so we may modify its label later
-#	set _autosizeItemMenuIndex [ $_itemMenu index end ]
-#	$_itemMenu add command \
-#			-label [ $this toggleAutorender same ] \
-#			-command "[ code $this toggleAutorender  ]"
-#	# save the index of this menu entry so we may modify its label later
-#	set _autorenderItemMenuIndex [ $_itemMenu index end ]
+    $_itemMenu add command \
+	-label "Edit" -state disabled \
+	-command [ code $this editNode [ $itk_interior.cadtree current ] ]
+
+    #	$_itemMenu add separator
+
+    #	$_itemMenu add command \
+	#			-label "Render Preview" -command "[ code $this renderPreview ]"
+    #	$_itemMenu add command \
+	#			-label "Raytrace Panel" -command "[ code $this raytracePanel ]"
+    #	$_itemMenu add command \
+	#			-label "Raytrace Wizard" -command "[ code $this raytraceWizard ]"
+
+    #	$_itemMenu add separator
+
+    #	$_itemMenu add command \
+	#			-label "Fit the View" -command "[ code $this autosizeDisplay ]"
+    #	$_itemMenu add command \
+	#			-label "Zoom In" -command "[ code $this zoomDisplay in ]"
+    #	$_itemMenu add command \
+	#			-label "Zoom Out" -command "[ code $this zoomDisplay out ]"
+    #	$_itemMenu add command \
+	#			-label "Clear View" -command "[ code $this clearDisplay ]"
+
+    #	$_itemMenu add separator
+
+    #	$_itemMenu add command \
+	#			-label [ $this toggleAutosizing same ] \
+	#			-command "[ code $this toggleAutosizing  ]"
+    #	# save the index of this menu entry so we may modify its label later
+    #	set _autosizeItemMenuIndex [ $_itemMenu index end ]
+    #	$_itemMenu add command \
+	#			-label [ $this toggleAutorender same ] \
+	#			-command "[ code $this toggleAutorender  ]"
+    #	# save the index of this menu entry so we may modify its label later
+    #	set _autorenderItemMenuIndex [ $_itemMenu index end ]
 
 
-	# configure the color drop down menu for the pop-up
-	itk_component add bgColorMenu {
-		menu $_bgMenu.bgColorMenu -tearoff 0
-	} {
-		usual
-		ignore -tearoff
-		rename -cursor -menucursor menuCursor Cursor
-	}
+    # configure the color drop down menu for the pop-up
+    itk_component add bgColorMenu {
+	menu $_bgMenu.bgColorMenu -tearoff 0
+    } {
+	usual
+	ignore -tearoff
+	rename -cursor -menucursor menuCursor Cursor
+    }
 
-	$_bgMenu.bgColorMenu add command \
-			-label "Blue" -background [ $this rgbToHex "0 0 255" ] \
-			-command [ code $this setDisplayedToColor "0 0 255" ]
-	$_bgMenu.bgColorMenu add command \
-			-label "Cyan" -background [ $this rgbToHex "0 255 255" ] \
-			-command [ code $this setDisplayedToColor "0 255 255" ]
-	$_bgMenu.bgColorMenu add command \
-			-label "Dark Blue" -background [ $this rgbToHex "50 0 175" ] \
-			-command [ code $this setDisplayedToColor "50 0 175" ]
-	$_bgMenu.bgColorMenu add command \
-			-label "Dark Red" -background [ $this rgbToHex "79 47 47" ] \
-			-command [ code $this setDisplayedToColor "79 47 47" ]
-	$_bgMenu.bgColorMenu add command \
-			-label "Green" -background [ $this rgbToHex "50 145 20" ] \
-			-command [ code $this setDisplayedToColor "50 145 20" ]
-	$_bgMenu.bgColorMenu add command \
-			-label "Grey" -background [ $this rgbToHex "80 80 80" ] \
-			-command [ code $this setDisplayedToColor "80 80 80" ]
-	$_bgMenu.bgColorMenu add command \
-			-label "Light Brown" -background [ $this rgbToHex "159 159 95" ] \
-			-command [ code $this setDisplayedToColor "159 159 95" ]
-	$_bgMenu.bgColorMenu add command \
-			-label "Lime Green" -background [ $this rgbToHex "50 204 50" ] \
-			-command [ code $this setDisplayedToColor "50 204 50" ]
-	$_bgMenu.bgColorMenu add command \
-			-label "Magenta" -background [ $this rgbToHex "255 0 255" ] \
-			-command [ code $this setDisplayedToColor "255 0 255" ]
-	$_bgMenu.bgColorMenu add command \
-			-label "Orange" -background [ $this rgbToHex "204 50 50" ] \
-			-command [ code $this setDisplayedToColor "204 50 50" ]
-	$_bgMenu.bgColorMenu add command \
-			-label "Peach" -background [ $this rgbToHex "234 100 30" ] \
-			-command [ code $this setDisplayedToColor "234 100 30" ]
-	$_bgMenu.bgColorMenu add command \
-			-label "Pink" -background [ $this rgbToHex "255 145 145" ] \
-			-command [ code $this setDisplayedToColor "255 145 145" ]
-	$_bgMenu.bgColorMenu add command \
-			-label "Red" -background [ $this rgbToHex "255 0 0" ] \
-			-command [ code $this setDisplayedToColor "255 0 0" ]
-	$_bgMenu.bgColorMenu add command \
-			-label "Redish" -background [ $this rgbToHex "255 50 50" ] \
-			-command [ code $this setDisplayedToColor "255 50 50" ]
-	$_bgMenu.bgColorMenu add command \
-			-label "Tan" -background [ $this rgbToHex "200 150 100" ] \
-			-command [ code $this setDisplayedToColor "200 150 100" ]
-	$_bgMenu.bgColorMenu add command \
-			-label "Yellow" -background [ $this rgbToHex "255 255 0" ] \
-			-command [ code $this setDisplayedToColor "255 255 0" ]
+    $_bgMenu.bgColorMenu add command \
+	-label "Blue" -background [ $this rgbToHex "0 0 255" ] \
+	-command [ code $this setDisplayedToColor "0 0 255" ]
+    $_bgMenu.bgColorMenu add command \
+	-label "Cyan" -background [ $this rgbToHex "0 255 255" ] \
+	-command [ code $this setDisplayedToColor "0 255 255" ]
+    $_bgMenu.bgColorMenu add command \
+	-label "Dark Blue" -background [ $this rgbToHex "50 0 175" ] \
+	-command [ code $this setDisplayedToColor "50 0 175" ]
+    $_bgMenu.bgColorMenu add command \
+	-label "Dark Red" -background [ $this rgbToHex "79 47 47" ] \
+	-command [ code $this setDisplayedToColor "79 47 47" ]
+    $_bgMenu.bgColorMenu add command \
+	-label "Green" -background [ $this rgbToHex "50 145 20" ] \
+	-command [ code $this setDisplayedToColor "50 145 20" ]
+    $_bgMenu.bgColorMenu add command \
+	-label "Grey" -background [ $this rgbToHex "80 80 80" ] \
+	-command [ code $this setDisplayedToColor "80 80 80" ]
+    $_bgMenu.bgColorMenu add command \
+	-label "Light Brown" -background [ $this rgbToHex "159 159 95" ] \
+	-command [ code $this setDisplayedToColor "159 159 95" ]
+    $_bgMenu.bgColorMenu add command \
+	-label "Lime Green" -background [ $this rgbToHex "50 204 50" ] \
+	-command [ code $this setDisplayedToColor "50 204 50" ]
+    $_bgMenu.bgColorMenu add command \
+	-label "Magenta" -background [ $this rgbToHex "255 0 255" ] \
+	-command [ code $this setDisplayedToColor "255 0 255" ]
+    $_bgMenu.bgColorMenu add command \
+	-label "Orange" -background [ $this rgbToHex "204 50 50" ] \
+	-command [ code $this setDisplayedToColor "204 50 50" ]
+    $_bgMenu.bgColorMenu add command \
+	-label "Peach" -background [ $this rgbToHex "234 100 30" ] \
+	-command [ code $this setDisplayedToColor "234 100 30" ]
+    $_bgMenu.bgColorMenu add command \
+	-label "Pink" -background [ $this rgbToHex "255 145 145" ] \
+	-command [ code $this setDisplayedToColor "255 145 145" ]
+    $_bgMenu.bgColorMenu add command \
+	-label "Red" -background [ $this rgbToHex "255 0 0" ] \
+	-command [ code $this setDisplayedToColor "255 0 0" ]
+    $_bgMenu.bgColorMenu add command \
+	-label "Redish" -background [ $this rgbToHex "255 50 50" ] \
+	-command [ code $this setDisplayedToColor "255 50 50" ]
+    $_bgMenu.bgColorMenu add command \
+	-label "Tan" -background [ $this rgbToHex "200 150 100" ] \
+	-command [ code $this setDisplayedToColor "200 150 100" ]
+    $_bgMenu.bgColorMenu add command \
+	-label "Yellow" -background [ $this rgbToHex "255 255 0" ] \
+	-command [ code $this setDisplayedToColor "255 255 0" ]
 
-	$_bgMenu add cascade \
-			-label "Set Color All Displayed" -menu $_bgMenu.bgColorMenu
+    $_bgMenu add cascade \
+	-label "Set Color All Displayed" -menu $_bgMenu.bgColorMenu
 
-	$_bgMenu add separator
+    $_bgMenu add separator
 
-	# Non node menu
-	$_bgMenu add command \
-			-label "Render Preview" -command [ code $this renderPreview ]
-	$_bgMenu add command \
-			-label "Raytrace Panel" -command [ code $this raytracePanel ]
-	$_bgMenu add command \
-			-label "Raytrace Wizard" -command [ code $this raytraceWizard ] -state disabled
+    # Non node menu
+    $_bgMenu add command \
+	-label "Render Preview" -command [ code $this renderPreview ]
+    $_bgMenu add command \
+	-label "Raytrace Panel" -command [ code $this raytracePanel ]
+    $_bgMenu add command \
+	-label "Raytrace Wizard" -command [ code $this raytraceWizard ] -state disabled
 
-	$_bgMenu add separator
+    $_bgMenu add separator
 
-	$_bgMenu add command \
-			-label "Fit the View" -command "[ code $this autosizeDisplay ]"
-	$_bgMenu add command \
-			-label "Zoom In" -command "[ code $this zoomDisplay in ]"
-	$_bgMenu add command \
-			-label "Zoom Out" -command "[ code $this zoomDisplay out ]"
-	$_bgMenu add command \
-			-label "Clear View" -command "[ code $this clearDisplay ]"
+    $_bgMenu add command \
+	-label "Fit the View" -command "[ code $this autosizeDisplay ]"
+    $_bgMenu add command \
+	-label "Zoom In" -command "[ code $this zoomDisplay in ]"
+    $_bgMenu add command \
+	-label "Zoom Out" -command "[ code $this zoomDisplay out ]"
+    $_bgMenu add command \
+	-label "Clear View" -command "[ code $this clearDisplay ]"
 
-	$_bgMenu add separator
+    $_bgMenu add separator
 
-	$_bgMenu add command \
-			-label [ $this toggleAutosizing same ] \
-			-command "[ code $this toggleAutosizing  ]"
-	# save the index of this menu entry so we may modify its label later
-	set _autosizeBgMenuIndex [ $_bgMenu index end ]
+    $_bgMenu add command \
+	-label [ $this toggleAutosizing same ] \
+	-command "[ code $this toggleAutosizing  ]"
+    # save the index of this menu entry so we may modify its label later
+    set _autosizeBgMenuIndex [ $_bgMenu index end ]
 
-	$_bgMenu add command \
-			-label [ $this toggleAutorender same ] \
-			-command "[ code $this toggleAutorender  ]"
-	# save the index of this menu entry so we may modify its label later
-	set _autorenderBgMenuIndex [ $_bgMenu index end ]
+    $_bgMenu add command \
+	-label [ $this toggleAutorender same ] \
+	-command "[ code $this toggleAutorender  ]"
+    # save the index of this menu entry so we may modify its label later
+    set _autorenderBgMenuIndex [ $_bgMenu index end ]
 
-#	itk_component add t_info {
-#		text $pane(1).t_info -relief sunken -bd 1 -yscrollcommand "$pane(1).s_info set"
-#	}
+    #	itk_component add t_info {
+    #		text $pane(1).t_info -relief sunken -bd 1 -yscrollcommand "$pane(1).s_info set"
+    #	}
 
-#	itk_component add s_info {
-#		scrollbar $pane(1).s_info -command "$itk_component(t_info) yview"
-#	}
+    #	itk_component add s_info {
+    #		scrollbar $pane(1).s_info -command "$itk_component(t_info) yview"
+    #	}
 
-	grid $itk_component(cadtree) -sticky nsew -in $pane(0) -row 0 -column 0
-#	grid $itk_component(t_info) -sticky nsew -in $pane(1) -row 0 -column 0
-#	grid $itk_component(s_info) -sticky ns -in $pane(1) -row 0 -column 1
-	grid $itk_component(pw_pane) -sticky nsew
+    grid $itk_component(cadtree) -sticky nsew -in $pane(0) -row 0 -column 0
+    #	grid $itk_component(t_info) -sticky nsew -in $pane(1) -row 0 -column 0
+    #	grid $itk_component(s_info) -sticky ns -in $pane(1) -row 0 -column 1
+    grid $itk_component(pw_pane) -sticky nsew
 
-	grid rowconfigure $itk_interior 0 -weight 1
-	grid columnconfigure $itk_interior 0 -weight 1
-	grid rowconfigure $pane(0) 0 -weight 1
-	grid columnconfigure $pane(0) 0 -weight 1
-#	grid rowconfigure $pane(1) 0 -weight 1
-#	grid columnconfigure $pane(1) 0 -weight 1
+    grid rowconfigure $itk_interior 0 -weight 1
+    grid columnconfigure $itk_interior 0 -weight 1
+    grid rowconfigure $pane(0) 0 -weight 1
+    grid columnconfigure $pane(0) 0 -weight 1
+    #	grid rowconfigure $pane(1) 0 -weight 1
+    #	grid columnconfigure $pane(1) 0 -weight 1
 
-	# run redraw now and start initial updateHook
-	$this validateGeometry
+    # run redraw now and start initial updateHook
+    $this validateGeometry
 }
 
 
 body GeometryBrowser::destructor {} {
-	if { $_debug } {
-		puts "destructor"
+    if { $_debug } {
+	puts "destructor"
+    }
+
+    #	itk_component delete [ $itk_interior component colorMenu ]
+    #	itk_component delete [ $itk_interior component menubar ]
+    #	itk_component delete [ $itk_interior component cadtree ]
+    #	itk_component delete [ $itk_interior component pw_pane ]
+
+    # destroy the framebuffer, if we opened it
+    if { $_weStartedFbserv } {
+	puts "cleaning up fbserv"
+	if { [ catch { exec fbfree -F $_fbservPort } error ] } {
+	    puts $error
+	    puts "Unable to properly clean up after our fbserv"
 	}
+    }
 
-#	itk_component delete [ $itk_interior component colorMenu ]
-#	itk_component delete [ $itk_interior component menubar ]
-#	itk_component delete [ $itk_interior component cadtree ]
-#	itk_component delete [ $itk_interior component pw_pane ]
-
-	# destroy the framebuffer, if we opened it
-	if { $_weStartedFbserv } {
-		puts "cleaning up fbserv"
-		if { [ catch { exec fbfree -F $_fbservPort } error ] } {
-			puts $error
-			puts "Unable to properly clean up after our fbserv"
-		}
-	}
-
-	# cancel our callback if it is pending
-	after cancel $_updateHook
+    # cancel our callback if it is pending
+    after cancel $_updateHook
 
 }
 
@@ -504,131 +504,131 @@ body GeometryBrowser::destructor {} {
 # maintained or whether we are merely getting a list of children at a point
 #
 body GeometryBrowser::getNodeChildren { { node "" } { updateLists "no" }} {
-	if { $_debug } {
-		puts "getNodeChildren $node $updateLists"
-	}
+    if { $_debug } {
+	puts "getNodeChildren $node $updateLists"
+    }
 
-	# get a list of children for the current node.  the result in childList
-	# should be a list of adorned children nodes.
-	set childList ""
-	if {$node == ""} {
+    # get a list of children for the current node.  the result in childList
+    # should be a list of adorned children nodes.
+    set childList ""
+    if {$node == ""} {
 
-		# figure out what title to put in the label space.  XXX we could use
-		# the format command to generate a nicely formatted paragraph, but
-		# it's behavior is not consistent.  Plus... the titles could potentially
-		# be huge and we'd still need to trim, so just trim short anyways.
-		set titleLabel ""
-		if [ catch { title } tit ] {
-			set titleLabel "No database open"
-		} else {
-			set titleLabel "$tit"
-		}
-		if { [ string length $titleLabel ] >= 32 } {
-			set titleLabel "[ format "%32.32s" [ title ] ]..."
-		}
-		$itk_interior.cadtree configure -labeltext $titleLabel
-
-		# process top geometry
-
-		if { $_showAllGeometry } {
-			set topsCommand "tops -n"
-		} else {
-			# XXX the -u option only works on v6.0.1+
-			set topsCommand "tops -n -u"
-		}
-
-		if [ catch $topsCommand roots ] {
-			# puts $roots
-			set _goodGeometry ""
-			set _badGeometry ""
-			return
-		}
-
-		# the children are all of the top geometry
-		set childList ""
-		foreach topItem $roots {
-			# XXX handle the case where tops returns decorated paths
-			if { [ llength [ split $topItem / ] ] >= 2 } {
-				set topItem [ lindex [ split $topItem / ] 0 ]
-			}
-			lappend childList "/$topItem"
-		}
-
+	# figure out what title to put in the label space.  XXX we could use
+	# the format command to generate a nicely formatted paragraph, but
+	# it's behavior is not consistent.  Plus... the titles could potentially
+	# be huge and we'd still need to trim, so just trim short anyways.
+	set titleLabel ""
+	if [ catch { title } tit ] {
+	    set titleLabel "No database open"
 	} else {
-		# process some combination or region or primitive
+	    set titleLabel "$tit"
+	}
+	if { [ string length $titleLabel ] >= 32 } {
+	    set titleLabel "[ format "%32.32s" [ title ] ]..."
+	}
+	$itk_interior.cadtree configure -labeltext $titleLabel
 
-		set parentName [ lindex [ split $node / ] end ]
+	# process top geometry
 
-		set childrenPairs ""
-		if [ catch { lt $parentName } childrenPairs ] {
-			set childrenPairs ""
-		}
-
-		foreach child $childrenPairs {
-			lappend childList "$node/[ lindex $child 1 ]"
-		}
+	if { $_showAllGeometry } {
+	    set topsCommand "tops -n"
+	} else {
+	    # XXX the -u option only works on v6.0.1+
+	    set topsCommand "tops -n -u"
 	}
 
-	# generate the final child list including determining whether the object is a
-	# primitive or a combinatorial (branch or leaf node).
-	set children ""
-	foreach child $childList {
-
-		set childName [ lindex [ split $child / ] end ]
-
-		# we do not call getObjectType for performance reasons (big directories
-		# can choke.  Sides, we do not need to know the type, just whether the
-		# node is a branch or not.
-		if { [ catch { ls $childName } lsName ] } {
-			puts "$lsName"
-			if { [ string compare $updateLists "yes" ] == 0 } {
-				if { [ lsearch -exact $_badGeometry $childName ] == -1 } {
-					lappend _badGeometry "$childName"
-				}
-			}
-			continue
-		}
-
-		# if the node could not be stat'd with ls, mark it (in red)
-		if { [ string compare $lsName "" ] == 0 } {
-			# !!! for some reason the mark blabbers back that the node is not valid?!?
-			# WTF?!?  And, of course, it works if type the exact same thing into mged..
-			#			puts "WANT TO MARK NODE INVALID BUT CANNOT (hierarchy widget command fails):\n$itk_interior.cadtree mark add $node/$childName"
-			# $itk_interior.cadtree mark add $node/$childName
-
-			if { [ string compare $updateLists "yes" ] == 0 } {
-				if { [ lsearch -exact $_badGeometry $childName ] == -1 } {
-					lappend _badGeometry "$childName"
-				}
-			}
-		}
-
-		set nodeType leaf
-		if { [ string compare "/" [ string index $lsName end-1 ] ] == 0 } {
-			set nodeType branch
-		} elseif { [ string compare "R" [ string index $lsName end-1 ] ] == 0 } {
-			if { [ string compare "/" [ string index $lsName end-2 ] ] == 0 } {
-				set nodeType branch
-			}
-		}
-
-		# check whether to update good/bad lists
-		if { [ string compare $updateLists "yes" ] == 0 } {
-			# if we did not just add it as bad geometry, it must be good..
-			if { [ string compare [ lindex $_badGeometry end ] $childName ] != 0 } {
-
-				# make sure it is not a repeat
-				if { [ lsearch -exact $_goodGeometry $childName ] == -1 } {
-					lappend _goodGeometry "$childName"
-				}
-			}
-		}
-
-		lappend children [ list "$node/$childName" "$childName" $nodeType ]
+	if [ catch $topsCommand roots ] {
+	    # puts $roots
+	    set _goodGeometry ""
+	    set _badGeometry ""
+	    return
 	}
-	# done iterating over children
 
-	return $children
+	# the children are all of the top geometry
+	set childList ""
+	foreach topItem $roots {
+	    # XXX handle the case where tops returns decorated paths
+	    if { [ llength [ split $topItem / ] ] >= 2 } {
+		set topItem [ lindex [ split $topItem / ] 0 ]
+	    }
+	    lappend childList "/$topItem"
+	}
+
+    } else {
+	# process some combination or region or primitive
+
+	set parentName [ lindex [ split $node / ] end ]
+
+	set childrenPairs ""
+	if [ catch { lt $parentName } childrenPairs ] {
+	    set childrenPairs ""
+	}
+
+	foreach child $childrenPairs {
+	    lappend childList "$node/[ lindex $child 1 ]"
+	}
+    }
+
+    # generate the final child list including determining whether the object is a
+    # primitive or a combinatorial (branch or leaf node).
+    set children ""
+    foreach child $childList {
+
+	set childName [ lindex [ split $child / ] end ]
+
+	# we do not call getObjectType for performance reasons (big directories
+	# can choke.  Sides, we do not need to know the type, just whether the
+	# node is a branch or not.
+	if { [ catch { ls $childName } lsName ] } {
+	    puts "$lsName"
+	    if { [ string compare $updateLists "yes" ] == 0 } {
+		if { [ lsearch -exact $_badGeometry $childName ] == -1 } {
+		    lappend _badGeometry "$childName"
+		}
+	    }
+	    continue
+	}
+
+	# if the node could not be stat'd with ls, mark it (in red)
+	if { [ string compare $lsName "" ] == 0 } {
+	    # !!! for some reason the mark blabbers back that the node is not valid?!?
+	    # WTF?!?  And, of course, it works if type the exact same thing into mged..
+	    #			puts "WANT TO MARK NODE INVALID BUT CANNOT (hierarchy widget command fails):\n$itk_interior.cadtree mark add $node/$childName"
+	    # $itk_interior.cadtree mark add $node/$childName
+
+	    if { [ string compare $updateLists "yes" ] == 0 } {
+		if { [ lsearch -exact $_badGeometry $childName ] == -1 } {
+		    lappend _badGeometry "$childName"
+		}
+	    }
+	}
+
+	set nodeType leaf
+	if { [ string compare "/" [ string index $lsName end-1 ] ] == 0 } {
+	    set nodeType branch
+	} elseif { [ string compare "R" [ string index $lsName end-1 ] ] == 0 } {
+	    if { [ string compare "/" [ string index $lsName end-2 ] ] == 0 } {
+		set nodeType branch
+	    }
+	}
+
+	# check whether to update good/bad lists
+	if { [ string compare $updateLists "yes" ] == 0 } {
+	    # if we did not just add it as bad geometry, it must be good..
+	    if { [ string compare [ lindex $_badGeometry end ] $childName ] != 0 } {
+
+		# make sure it is not a repeat
+		if { [ lsearch -exact $_goodGeometry $childName ] == -1 } {
+		    lappend _goodGeometry "$childName"
+		}
+	    }
+	}
+
+	lappend children [ list "$node/$childName" "$childName" $nodeType ]
+    }
+    # done iterating over children
+
+    return $children
 }
 
 
@@ -638,13 +638,13 @@ body GeometryBrowser::getNodeChildren { { node "" } { updateLists "no" }} {
 # will be able to display the appropriate details to the info panel.
 #
 body GeometryBrowser::toggleNode { { node "" } } {
-	if { $_debug } {
-		puts "toggleNode [ lindex $node 0 ]"
-	}
+    if { $_debug } {
+	puts "toggleNode [ lindex $node 0 ]"
+    }
 
-	$itk_interior.cadtree toggle [ lindex $node 1 ]
+    $itk_interior.cadtree toggle [ lindex $node 1 ]
 
-	return
+    return
 }
 
 
@@ -655,68 +655,68 @@ body GeometryBrowser::toggleNode { { node "" } } {
 # this routine removes them as they are collapsed.
 #
 body GeometryBrowser::updateGeometryLists { { node "" } } {
-	if { $_debug } {
-		puts "updateGeometryLists $node"
-	}
+    if { $_debug } {
+	puts "updateGeometryLists $node"
+    }
 
-	if { $_showAllGeometry } {
-		set topsCommand "tops -n"
-	} else {
-		# XXX the -u option only works on v6.0.1+
-		set topsCommand "tops -n -u"
-	}
+    if { $_showAllGeometry } {
+	set topsCommand "tops -n"
+    } else {
+	# XXX the -u option only works on v6.0.1+
+	set topsCommand "tops -n -u"
+    }
 
-	if [ catch $topsCommand objs ] {
-		puts $objs
-		return
-	}
-	set objects ""
-	foreach obj $objs {
-
-		# XXX handle the case where tops returns decorated paths
-		if { [ llength [ split $obj / ] ] >= 2 } {
-			set obj [ lindex [ split $obj / ] 0 ]
-		}
-		lappend objects $obj
-	}
-
-	# iterate over nodes displayed and generate list of geometry
-	foreach currentNode [ $itk_interior.cadtree expState ] {
-		set children [ $this getNodeChildren $currentNode no ]
-		foreach child $children {
-			set childName [ lindex $child 1 ]
-			if { [ lsearch -exact $objects $childName ] == -1 } {
-				lappend objects $childName
-			}
-		}
-	}
-
-	#regenerate good/bad lists
-	set _goodGeometry ""
-	set _badGeometry ""
-	foreach object $objects {
-
-		# catch an ls failure (should not happen)
-		if { [ catch { ls $object } lsName ] } {
-			puts "$lsName"
-			if { [ lsearch -exact $_badGeometry $object ] == -1 } {
-				lappend _badGeometry $object
-			}
-			continue
-		}
-		# if the node could not be stat'd with ls, add to bad list
-		if { [ string compare $lsName "" ] == 0 } {
-			if { [ lsearch -exact $_badGeometry $object ] == -1 } {
-				lappend _badGeometry $object
-			}
-		} else {
-			if { [ lsearch -exact $_goodGeometry $object ] == -1 } {
-				lappend _goodGeometry $object
-			}
-		}
-	}
-
+    if [ catch $topsCommand objs ] {
+	puts $objs
 	return
+    }
+    set objects ""
+    foreach obj $objs {
+
+	# XXX handle the case where tops returns decorated paths
+	if { [ llength [ split $obj / ] ] >= 2 } {
+	    set obj [ lindex [ split $obj / ] 0 ]
+	}
+	lappend objects $obj
+    }
+
+    # iterate over nodes displayed and generate list of geometry
+    foreach currentNode [ $itk_interior.cadtree expState ] {
+	set children [ $this getNodeChildren $currentNode no ]
+	foreach child $children {
+	    set childName [ lindex $child 1 ]
+	    if { [ lsearch -exact $objects $childName ] == -1 } {
+		lappend objects $childName
+	    }
+	}
+    }
+
+    #regenerate good/bad lists
+    set _goodGeometry ""
+    set _badGeometry ""
+    foreach object $objects {
+
+	# catch an ls failure (should not happen)
+	if { [ catch { ls $object } lsName ] } {
+	    puts "$lsName"
+	    if { [ lsearch -exact $_badGeometry $object ] == -1 } {
+		lappend _badGeometry $object
+	    }
+	    continue
+	}
+	# if the node could not be stat'd with ls, add to bad list
+	if { [ string compare $lsName "" ] == 0 } {
+	    if { [ lsearch -exact $_badGeometry $object ] == -1 } {
+		lappend _badGeometry $object
+	    }
+	} else {
+	    if { [ lsearch -exact $_goodGeometry $object ] == -1 } {
+		lappend _goodGeometry $object
+	    }
+	}
+    }
+
+    return
 }
 
 
@@ -733,43 +733,43 @@ body GeometryBrowser::updateGeometryLists { { node "" } } {
 # in the wrong place (non root nodes are in the wrong order)
 #
 body GeometryBrowser::displayNode { { node "" } { display "appended" } } {
-	if { $_debug } {
-		puts "displayNode $node $display"
-	}
+    if { $_debug } {
+	puts "displayNode $node $display"
+    }
 
-	# XXX hack to handle the pop-up window since it does not call current properly
-	if { $node == "" } {
-		set node [ $itk_interior.cadtree current ]
-	} elseif { [ string compare $node "/" ] == 0 } {
-		set node ""
-	}
+    # XXX hack to handle the pop-up window since it does not call current properly
+    if { $node == "" } {
+	set node [ $itk_interior.cadtree current ]
+    } elseif { [ string compare $node "/" ] == 0 } {
+	set node ""
+    }
 
-	# if we are still empty, we need to stop
-	if { $node == "" } {
-		error "Must specify a node!"
-	}
+    # if we are still empty, we need to stop
+    if { $node == "" } {
+	error "Must specify a node!"
+    }
 
-	if { [ string compare $display "" ] == 0 } {
-		set display "appended"
-	}
+    if { [ string compare $display "" ] == 0 } {
+	set display "appended"
+    }
 
-	set nodeName [ $this extractNodeName $node ]
+    set nodeName [ $this extractNodeName $node ]
 
-	# output so the user can see the effective text-command being used
-	if { [ string compare $display "alone" ] == 0 } {
-		puts "B $nodeName"
-		set retval [ B $nodeName ]
-		$this checkAutoRender
-		return $retval
-	}
-
-	puts "draw $nodeName"
-	if { [ catch { draw $nodeName } retval ] } {
-		puts $retval
-		return
-	}
+    # output so the user can see the effective text-command being used
+    if { [ string compare $display "alone" ] == 0 } {
+	puts "B $nodeName"
+	set retval [ B $nodeName ]
 	$this checkAutoRender
 	return $retval
+    }
+
+    puts "draw $nodeName"
+    if { [ catch { draw $nodeName } retval ] } {
+	puts $retval
+	return
+    }
+    $this checkAutoRender
+    return $retval
 }
 
 
@@ -779,26 +779,26 @@ body GeometryBrowser::displayNode { { node "" } { display "appended" } } {
 # is displayed.
 #
 body GeometryBrowser::undisplayNode { { node "" } } {
-	if { $_debug } {
-		puts "undisplayNode $node"
-	}
+    if { $_debug } {
+	puts "undisplayNode $node"
+    }
 
-	# XXX hack to handle the pop-up window since it does not call current properly
-	if { $node == "" } {
-		set node [ $itk_interior.cadtree current ]
-	}
+    # XXX hack to handle the pop-up window since it does not call current properly
+    if { $node == "" } {
+	set node [ $itk_interior.cadtree current ]
+    }
 
-	set nodeName [ $this extractNodeName $node ]
+    set nodeName [ $this extractNodeName $node ]
 
-	# still empty? -- cannot undisplay root so we return
-	if { $nodeName == "" } {
-		return
-	}
+    # still empty? -- cannot undisplay root so we return
+    if { $nodeName == "" } {
+	return
+    }
 
-	puts "erase $nodeName"
-	set retval [ erase $nodeName ]
-	$this checkAutoRender
-	return $retval
+    puts "erase $nodeName"
+    set retval [ erase $nodeName ]
+    $this checkAutoRender
+    return $retval
 }
 
 # setNodeColor -- used by pop-up menu
@@ -808,46 +808,46 @@ body GeometryBrowser::undisplayNode { { node "" } } {
 # color is expected to be 3 rgb values like "255 0 0".
 #
 body GeometryBrowser::setNodeColor { { node "" } { color "" } } {
-	if { $_debug } {
-		puts "setNodeColor $node $color"
-	}
+    if { $_debug } {
+	puts "setNodeColor $node $color"
+    }
 
-	# if we did not get a node, assume we were clicked on by the popup window
-	# just like displayNode() does.
-	if { [ string compare $node "" ] == 0 } {
-		set node [ $itk_interior.cadtree current ]
-	}
+    # if we did not get a node, assume we were clicked on by the popup window
+    # just like displayNode() does.
+    if { [ string compare $node "" ] == 0 } {
+	set node [ $itk_interior.cadtree current ]
+    }
 
-	set nodeName [ $this extractNodeName $node ]
+    set nodeName [ $this extractNodeName $node ]
 
-	# if no color was given, we unset the color
-	if { [ string compare $color "" ] == 0 } {
-		puts "attr rm $nodeName rgb"
-		set retval [ attr rm $nodeName rgb ]
-		$this checkAutoRender
-		return $retval
-	}
+    # if no color was given, we unset the color
+    if { [ string compare $color "" ] == 0 } {
+	puts "attr rm $nodeName rgb"
+	set retval [ attr rm $nodeName rgb ]
+	$this checkAutoRender
+	return $retval
+    }
 
-	# use comb_color if the color was specified in triplet form
-	if { [ llength $color ] == 3 } {
-		scan $color {%d %d %d} r g b
-		puts "comb_color $nodeName $r $g $b"
-		set retval [ comb_color $nodeName $r $g $b ]
-		$this checkAutoRender
-		return $retval
-	}
+    # use comb_color if the color was specified in triplet form
+    if { [ llength $color ] == 3 } {
+	scan $color {%d %d %d} r g b
+	puts "comb_color $nodeName $r $g $b"
+	set retval [ comb_color $nodeName $r $g $b ]
+	$this checkAutoRender
+	return $retval
+    }
 
-	# check if we have a "slashed" color value
-	if { [ llength [ split $rgb "/" ] ] == 3 } {
-		puts "attr set $nodeName $rgb"
-		set retval [ attr set $nodeName $rgb ]
-		$this checkAutoRender
-		return $retval
-	}
+    # check if we have a "slashed" color value
+    if { [ llength [ split $rgb "/" ] ] == 3 } {
+	puts "attr set $nodeName $rgb"
+	set retval [ attr set $nodeName $rgb ]
+	$this checkAutoRender
+	return $retval
+    }
 
-	# color is unknown
-	puts "Unrecognized color format.  Expecting either space or slash separated values (e.g. \"255 0 0\")"
-	return
+    # color is unknown
+    puts "Unrecognized color format.  Expecting either space or slash separated values (e.g. \"255 0 0\")"
+    return
 }
 
 
@@ -858,20 +858,20 @@ body GeometryBrowser::setNodeColor { { node "" } { color "" } } {
 # "slashed" style ala 255/0/0.
 #
 body GeometryBrowser::setDisplayedToColor { { color "" } } {
-	if { $_debug } {
-		puts "setDisplayedToColor $color"
-	}
+    if { $_debug } {
+	puts "setDisplayedToColor $color"
+    }
 
-	if { [ catch { who } displayed ] } {
-		puts "$displayed"
-		return
-	}
-
-	foreach object $displayed {
-		$this setNodeColor "$object" "$color"
-	}
-
+    if { [ catch { who } displayed ] } {
+	puts "$displayed"
 	return
+    }
+
+    foreach object $displayed {
+	$this setNodeColor "$object" "$color"
+    }
+
+    return
 }
 
 
@@ -880,15 +880,15 @@ body GeometryBrowser::setDisplayedToColor { { color "" } } {
 # simply clears any displayed nodes from the graphics window
 #
 body GeometryBrowser::clearDisplay {} {
-	if { $_debug } {
-		puts "clearDisplay"
-	}
+    if { $_debug } {
+	puts "clearDisplay"
+    }
 
-	# verbosely describe what we are doing
-	puts "Z"
-	set retval [ Z ]
-	$this checkAutoRender
-	return $retval
+    # verbosely describe what we are doing
+    puts "Z"
+    set retval [ Z ]
+    $this checkAutoRender
+    return $retval
 }
 
 
@@ -897,15 +897,15 @@ body GeometryBrowser::clearDisplay {} {
 # auto-fits the currently displayed objects to the current view size
 #
 body GeometryBrowser::autosizeDisplay {} {
-	if { $_debug } {
-		puts "autosizeDisplay"
-	}
+    if { $_debug } {
+	puts "autosizeDisplay"
+    }
 
-	# verbosely describe what we are doing
-	puts "autoview"
-	set retval [ autoview ]
-	$this checkAutoRender
-	return $retval
+    # verbosely describe what we are doing
+    puts "autoview"
+    set retval [ autoview ]
+    $this checkAutoRender
+    return $retval
 }
 
 
@@ -915,30 +915,30 @@ body GeometryBrowser::autosizeDisplay {} {
 # or via a specified amount.
 #
 body GeometryBrowser::zoomDisplay { { zoom "in"} } {
-	if { $_debug } {
-		puts "zoomDisplay $zoom"
-	}
+    if { $_debug } {
+	puts "zoomDisplay $zoom"
+    }
 
-	if { [ string compare $zoom "" ] == 0 } {
-		set zoom "in"
-	}
+    if { [ string compare $zoom "" ] == 0 } {
+	set zoom "in"
+    }
 
-	if { [ string compare $zoom "in" ] == 0 } {
-		puts "zoomin"
-		return [ zoomin ]
-	} elseif { [ string compare $zoom "out" ] == 0 } {
-		puts "zoomout"
-		set retval [ zoomout ]
-		$this checkAutoRender
-		return $retval
-	}
-
-
-	# XXX we do not check if the value is a valid number, we should
-	puts "zoom $zoom"
-	set retval [ zoom $zoom ]
+    if { [ string compare $zoom "in" ] == 0 } {
+	puts "zoomin"
+	return [ zoomin ]
+    } elseif { [ string compare $zoom "out" ] == 0 } {
+	puts "zoomout"
+	set retval [ zoomout ]
 	$this checkAutoRender
 	return $retval
+    }
+
+
+    # XXX we do not check if the value is a valid number, we should
+    puts "zoom $zoom"
+    set retval [ zoom $zoom ]
+    $this checkAutoRender
+    return $retval
 }
 
 
@@ -949,145 +949,145 @@ body GeometryBrowser::zoomDisplay { { zoom "in"} } {
 #
 body GeometryBrowser::renderPreview { { rtoptions "-P4 -R -B" } } {
 
-	# mged provides the port number it has available
-	global port
-	global mged_gui
+    # mged provides the port number it has available
+    global port
+    global mged_gui
 
-	set size 128
-	set device /dev/X
-	set rgb "255 255 255"
-	set rtrun ""
+    set size 128
+    set device /dev/X
+    set rgb "255 255 255"
+    set rtrun ""
 
-	# see if we can try to use the mged graphics window instead of firing up our own framebuffer
-	set useMgedWindow 0
-	if { [ set mged_gui($_mgedFramebufferId,fb) ] == 1 } {
-		if { [ set mged_gui($_mgedFramebufferId,listen) ] == 1 } {
-			set useMgedWindow 1
-		}
+    # see if we can try to use the mged graphics window instead of firing up our own framebuffer
+    set useMgedWindow 0
+    if { [ set mged_gui($_mgedFramebufferId,fb) ] == 1 } {
+	if { [ set mged_gui($_mgedFramebufferId,listen) ] == 1 } {
+	    set useMgedWindow 1
 	}
+    }
 
-	if { $_debug } {
-		if { $useMgedWindow } {
-			puts "Using MGED Graphics Window for raytrace"
-		} else {
-			puts "Attempting to use our own fbserv"
-		}
-	}
-
+    if { $_debug } {
 	if { $useMgedWindow } {
-
-		# if we previously started up a framebuffer, shut it down
-		if { $_weStartedFbserv } {
-			puts "cleaning up fbserv"
-			if { [ catch { exec fbfree -F $_fbservPort } error ] } {
-				puts $error
-				puts "Unable to properly clean up after our fbserv"
-			}
-			set _weStartedFbserv 0
-		}
-
-		# if we got here, then we should be able to attach to a running framebuffer.
-		scan $rgb {%d %d %d} r g b
-
-		# make sure we are using the mged framebuffer port
-		set _fbservPort [ set port ]
-
-		# get the image dimensions of the mged graphics window
-		set windowSize [ rt_set_fb_size $_mgedFramebufferId ]
-		set windowWidth [ lindex [ split $windowSize x ] 0 ]
-		set windowHeight [ lindex [ split $windowSize x ] 1 ]
-
-		# scale the image to the proportional window dimensions so that the raytrace
-		# "matches" the proportion size of the window.
-		if { $windowWidth > $windowHeight } {
-			set scaledHeight [ expr round(double($size) / double($windowWidth) * double($windowHeight)) ]
-			set rtrun "rt [ split $rtoptions ] -F $_fbservPort -w$size -n$scaledHeight -C$r/$g/$b"
-		} else {
-			set scaledWidth [ expr round(double($size) / double($windowHeight) * double($windowWidth)) ]
-			set rtrun "rt [ split $rtoptions ] -F $_fbservPort -w$scaledWidth -n$size -C$r/$g/$b"
-		}
-
+	    puts "Using MGED Graphics Window for raytrace"
 	} else {
-		# cannot use mged graphics window for whatever reason, so make do.
-		# try to fire up our own framebuffer.
-
-		# see if there is an fbserv running
-		if { [ catch { exec fbclear -c -F $_fbservPort -s$size $rgb } error ] } {
-
-			if { $_debug } {
-				puts "$error"
-			}
-
-			# failed, so try to start one
-			puts "exec fbserv -S $size -p $_fbservPort -F $device > /dev/null &"
-			exec fbserv -S $size -p $_fbservPort -F $device > /dev/null &
-			exec sleep 1
-
-			# keep track of the fact that we started this fbserv, so we have to clean up
-			set _weStartedFbserv 1
-
-			# try again
-			if { [ catch { exec fbclear -c -F $_fbservPort $rgb } error ] } {
-
-				if { $_debug } {
-				puts "$error"
-				}
-
-				# try the next port
-				incr _fbservPort
-
-				# still failing, try to start one again
-				puts "exec fbserv -S $size -p $_fbservPort -F $device > /dev/null &"
-				exec fbserv -S $size -p $_fbservPort -F $device > /dev/null &
-				exec sleep 1
-
-				# try again
-				if { [ catch { exec fbclear -c -F $_fbservPort $rgb } error ] } {
-
-					if { $_debug } {
-						puts "$error"
-					}
-
-					incr _fbservPort
-
-					# still failing, try to start one again
-					puts "exec fbserv -S $size -p $_fbservPort -F $device > /dev/null &"
-					exec fbserv -S $size $_fbservPort $device > /dev/null &
-					exec sleep 1
-
-					# last try
-					if { [ catch { exec fbclear -c -F $_fbservPort $rgb } error ] } {
-						# strike three, give up!
-						puts $error
-						puts "Unable to attach to a framebuffer"
-
-						# guess we did not really get to start it
-						set _weStartedFbserv 0
-
-						return
-					}
-				}
-				# end try three
-			}
-			# end try two
-		}
-		# end try one
-
-		# write out some status lines for status-rendering cheesily via exec.
-		# these hang for some reason if sent to the mged graphics window through
-		# mged (though they work fine via command-line).
-		exec fbline -F $_fbservPort -r 255 -g 0 -b 0 [expr $size - 1] 0 [expr $size - 1] [expr $size - 1]
-		exec fbline -F $_fbservPort -r 0 -g 255 -b 0 [expr $size - 2] 0 [expr $size - 2] [expr $size - 1]
-		exec fbline -F $_fbservPort -r 0 -g 0 -b 255 [expr $size - 3] 0 [expr $size - 3] [expr $size - 1]
-
-		# if we got here, then we were able to attach to a running framebuffer..
-		scan $rgb {%d %d %d} r g b
-		set rtrun "rt [ split $rtoptions ] -F $_fbservPort -s$size -C$r/$g/$b"
+	    puts "Attempting to use our own fbserv"
 	}
-	# end check for using mged graphics window or using fbserv
+    }
 
-	puts "$rtrun"
-	return [ eval $rtrun ]
+    if { $useMgedWindow } {
+
+	# if we previously started up a framebuffer, shut it down
+	if { $_weStartedFbserv } {
+	    puts "cleaning up fbserv"
+	    if { [ catch { exec fbfree -F $_fbservPort } error ] } {
+		puts $error
+		puts "Unable to properly clean up after our fbserv"
+	    }
+	    set _weStartedFbserv 0
+	}
+
+	# if we got here, then we should be able to attach to a running framebuffer.
+	scan $rgb {%d %d %d} r g b
+
+	# make sure we are using the mged framebuffer port
+	set _fbservPort [ set port ]
+
+	# get the image dimensions of the mged graphics window
+	set windowSize [ rt_set_fb_size $_mgedFramebufferId ]
+	set windowWidth [ lindex [ split $windowSize x ] 0 ]
+	set windowHeight [ lindex [ split $windowSize x ] 1 ]
+
+	# scale the image to the proportional window dimensions so that the raytrace
+	# "matches" the proportion size of the window.
+	if { $windowWidth > $windowHeight } {
+	    set scaledHeight [ expr round(double($size) / double($windowWidth) * double($windowHeight)) ]
+	    set rtrun "rt [ split $rtoptions ] -F $_fbservPort -w$size -n$scaledHeight -C$r/$g/$b"
+	} else {
+	    set scaledWidth [ expr round(double($size) / double($windowHeight) * double($windowWidth)) ]
+	    set rtrun "rt [ split $rtoptions ] -F $_fbservPort -w$scaledWidth -n$size -C$r/$g/$b"
+	}
+
+    } else {
+	# cannot use mged graphics window for whatever reason, so make do.
+	# try to fire up our own framebuffer.
+
+	# see if there is an fbserv running
+	if { [ catch { exec fbclear -c -F $_fbservPort -s$size $rgb } error ] } {
+
+	    if { $_debug } {
+		puts "$error"
+	    }
+
+	    # failed, so try to start one
+	    puts "exec fbserv -S $size -p $_fbservPort -F $device > /dev/null &"
+	    exec fbserv -S $size -p $_fbservPort -F $device > /dev/null &
+	    exec sleep 1
+
+	    # keep track of the fact that we started this fbserv, so we have to clean up
+	    set _weStartedFbserv 1
+
+	    # try again
+	    if { [ catch { exec fbclear -c -F $_fbservPort $rgb } error ] } {
+
+		if { $_debug } {
+		    puts "$error"
+		}
+
+		# try the next port
+		incr _fbservPort
+
+		# still failing, try to start one again
+		puts "exec fbserv -S $size -p $_fbservPort -F $device > /dev/null &"
+		exec fbserv -S $size -p $_fbservPort -F $device > /dev/null &
+		exec sleep 1
+
+		# try again
+		if { [ catch { exec fbclear -c -F $_fbservPort $rgb } error ] } {
+
+		    if { $_debug } {
+			puts "$error"
+		    }
+
+		    incr _fbservPort
+
+		    # still failing, try to start one again
+		    puts "exec fbserv -S $size -p $_fbservPort -F $device > /dev/null &"
+		    exec fbserv -S $size $_fbservPort $device > /dev/null &
+		    exec sleep 1
+
+		    # last try
+		    if { [ catch { exec fbclear -c -F $_fbservPort $rgb } error ] } {
+			# strike three, give up!
+			puts $error
+			puts "Unable to attach to a framebuffer"
+
+			# guess we did not really get to start it
+			set _weStartedFbserv 0
+
+			return
+		    }
+		}
+		# end try three
+	    }
+	    # end try two
+	}
+	# end try one
+
+	# write out some status lines for status-rendering cheesily via exec.
+	# these hang for some reason if sent to the mged graphics window through
+	# mged (though they work fine via command-line).
+	exec fbline -F $_fbservPort -r 255 -g 0 -b 0 [expr $size - 1] 0 [expr $size - 1] [expr $size - 1]
+	exec fbline -F $_fbservPort -r 0 -g 255 -b 0 [expr $size - 2] 0 [expr $size - 2] [expr $size - 1]
+	exec fbline -F $_fbservPort -r 0 -g 0 -b 255 [expr $size - 3] 0 [expr $size - 3] [expr $size - 1]
+
+	# if we got here, then we were able to attach to a running framebuffer..
+	scan $rgb {%d %d %d} r g b
+	set rtrun "rt [ split $rtoptions ] -F $_fbservPort -s$size -C$r/$g/$b"
+    }
+    # end check for using mged graphics window or using fbserv
+
+    puts "$rtrun"
+    return [ eval $rtrun ]
 }
 
 
@@ -1097,9 +1097,9 @@ body GeometryBrowser::renderPreview { { rtoptions "-P4 -R -B" } } {
 #
 body GeometryBrowser::raytracePanel {} {
 
-	init_Raytrace $_mgedFramebufferId
+    init_Raytrace $_mgedFramebufferId
 
-	return
+    return
 }
 
 
@@ -1108,8 +1108,8 @@ body GeometryBrowser::raytracePanel {} {
 # simply fires off rtwizard
 #
 body GeometryBrowser::raytraceWizard {} {
-	puts "exec rtwizard &"
-	return [ exec rtwizard & ]
+    puts "exec rtwizard &"
+    return [ exec rtwizard & ]
 }
 
 
@@ -1120,45 +1120,45 @@ body GeometryBrowser::raytraceWizard {} {
 # it should really be reorganized.
 #
 body GeometryBrowser::toggleAutosizing { { state "" } } {
-	if { $_debug } {
-		puts "toggleAutosizing $state"
-	}
+    if { $_debug } {
+	puts "toggleAutosizing $state"
+    }
 
-	global autosize
+    global autosize
 
-	# handle different states
-	if { [ string compare $state "same" ] == 0 } {
-		# this one is used by the constructor to set the label to the current state
-		# we return the current state as the label
-		if { [ set autosize ] == 0 } {
-			return "Turn Autosizing On"
-		}
-		return "Turn Autosizing Off"
-
-	} elseif { [ string compare $state "off" ] == 0 } {
-		# specifically turning the thing off
-#		$_itemMenu entryconfigure $_autosizeItemMenuIndex -label "Turn Autosizing On"
-		$_bgMenu entryconfigure $_autosizeBgMenuIndex -label "Turn Autosizing On"
-		puts "set autosize 0"
-		return [ set autosize 0 ]
-	} elseif { [ string compare $state "on" ] == 0 } {
-#		$_itemMenu entryconfigure $_autosizeItemMenuIndex -label "Turn Autosizing Off"
-		$_bgMenu entryconfigure $_autosizeBgMenuIndex -label "Turn Autosizing Off"
-		puts "set autosize 1"
-		return [ set autosize 1 ]
-	}
-
+    # handle different states
+    if { [ string compare $state "same" ] == 0 } {
+	# this one is used by the constructor to set the label to the current state
+	# we return the current state as the label
 	if { [ set autosize ] == 0 } {
-#		$_itemMenu entryconfigure $_autosizeItemMenuIndex -label "Turn Autosizing Off"
-		$_bgMenu entryconfigure $_autosizeBgMenuIndex -label "Turn Autosizing Off"
-		puts "set autosize 1"
-		return [ set autosize 1 ]
+	    return "Turn Autosizing On"
 	}
+	return "Turn Autosizing Off"
 
-#	$_itemMenu entryconfigure $_autosizeItemMenuIndex -label "Turn Autosizing On"
+    } elseif { [ string compare $state "off" ] == 0 } {
+	# specifically turning the thing off
+	#		$_itemMenu entryconfigure $_autosizeItemMenuIndex -label "Turn Autosizing On"
 	$_bgMenu entryconfigure $_autosizeBgMenuIndex -label "Turn Autosizing On"
 	puts "set autosize 0"
 	return [ set autosize 0 ]
+    } elseif { [ string compare $state "on" ] == 0 } {
+	#		$_itemMenu entryconfigure $_autosizeItemMenuIndex -label "Turn Autosizing Off"
+	$_bgMenu entryconfigure $_autosizeBgMenuIndex -label "Turn Autosizing Off"
+	puts "set autosize 1"
+	return [ set autosize 1 ]
+    }
+
+    if { [ set autosize ] == 0 } {
+	#		$_itemMenu entryconfigure $_autosizeItemMenuIndex -label "Turn Autosizing Off"
+	$_bgMenu entryconfigure $_autosizeBgMenuIndex -label "Turn Autosizing Off"
+	puts "set autosize 1"
+	return [ set autosize 1 ]
+    }
+
+    #	$_itemMenu entryconfigure $_autosizeItemMenuIndex -label "Turn Autosizing On"
+    $_bgMenu entryconfigure $_autosizeBgMenuIndex -label "Turn Autosizing On"
+    puts "set autosize 0"
+    return [ set autosize 0 ]
 }
 
 
@@ -1169,55 +1169,55 @@ body GeometryBrowser::toggleAutosizing { { state "" } } {
 # it should really be reorganized.
 #
 body GeometryBrowser::toggleAutorender { { state "" } } {
-	if { $_debug } {
-		puts "toggleAutorender $state"
-	}
+    if { $_debug } {
+	puts "toggleAutorender $state"
+    }
 
-	# handle different states
-	if { [ string compare $state "same" ] == 0 } {
-		# this one is used by the constructor to set the label to the current state
-		# we return the current state as the label
-		if { [ set _autoRender ] == 0 } {
-			return "Turn Auto-Render On"
-		}
-		return "Turn Auto-Render Off"
-
-	} elseif { [ string compare $state "off" ] == 0 } {
-		# specifically turning the thing off
-#		$_itemMenu entryconfigure $_autorenderItemMenuIndex -label "Turn Auto-Render On"
-		$_bgMenu entryconfigure $_autorenderBgMenuIndex -label "Turn Auto-Render On"
-		puts "set _autoRender 0"
-		set retval [ set _autoRender 0 ]
-		$this checkAutoRender
-		return $retval
-
-	} elseif { [ string compare $state "on" ] == 0 } {
-#		$_itemMenu entryconfigure $_autorenderItemMenuIndex -label "Turn Auto-Render Off"
-		$_bgMenu entryconfigure $_autorenderBgMenuIndex -label "Turn Auto-Render Off"
-		puts "set _autoRender 1"
-		set retval [ set _autoRender 1 ]
-		$this checkAutoRender
-		return $retval
-	}
-
-	# we are not handling a specific request, so really toggle whatever the real
-	# value is.
-
+    # handle different states
+    if { [ string compare $state "same" ] == 0 } {
+	# this one is used by the constructor to set the label to the current state
+	# we return the current state as the label
 	if { [ set _autoRender ] == 0 } {
-#		$_itemMenu entryconfigure $_autorenderItemMenuIndex -label "Turn Auto-Render Off"
-		$_bgMenu entryconfigure $_autorenderBgMenuIndex -label "Turn Auto-Render Off"
-		puts "set _autoRender 1"
-		set retval [ set _autoRender 1 ]
-		$this checkAutoRender
-		return $retval
+	    return "Turn Auto-Render On"
 	}
+	return "Turn Auto-Render Off"
 
-#	$_itemMenu entryconfigure $_autorenderItemMenuIndex -label "Turn Auto-Render On"
+    } elseif { [ string compare $state "off" ] == 0 } {
+	# specifically turning the thing off
+	#		$_itemMenu entryconfigure $_autorenderItemMenuIndex -label "Turn Auto-Render On"
 	$_bgMenu entryconfigure $_autorenderBgMenuIndex -label "Turn Auto-Render On"
 	puts "set _autoRender 0"
 	set retval [ set _autoRender 0 ]
 	$this checkAutoRender
 	return $retval
+
+    } elseif { [ string compare $state "on" ] == 0 } {
+	#		$_itemMenu entryconfigure $_autorenderItemMenuIndex -label "Turn Auto-Render Off"
+	$_bgMenu entryconfigure $_autorenderBgMenuIndex -label "Turn Auto-Render Off"
+	puts "set _autoRender 1"
+	set retval [ set _autoRender 1 ]
+	$this checkAutoRender
+	return $retval
+    }
+
+    # we are not handling a specific request, so really toggle whatever the real
+    # value is.
+
+    if { [ set _autoRender ] == 0 } {
+	#		$_itemMenu entryconfigure $_autorenderItemMenuIndex -label "Turn Auto-Render Off"
+	$_bgMenu entryconfigure $_autorenderBgMenuIndex -label "Turn Auto-Render Off"
+	puts "set _autoRender 1"
+	set retval [ set _autoRender 1 ]
+	$this checkAutoRender
+	return $retval
+    }
+
+    #	$_itemMenu entryconfigure $_autorenderItemMenuIndex -label "Turn Auto-Render On"
+    $_bgMenu entryconfigure $_autorenderBgMenuIndex -label "Turn Auto-Render On"
+    puts "set _autoRender 0"
+    set retval [ set _autoRender 0 ]
+    $this checkAutoRender
+    return $retval
 }
 
 ##########
@@ -1235,50 +1235,50 @@ body GeometryBrowser::toggleAutorender { { state "" } } {
 # based on what was selected.  e.g. it handles the dynamic menu items.
 #
 body GeometryBrowser::prepNodeMenu { } {
-	if { $_debug } {
-		puts "prepNodeMenu"
-	}
+    if { $_debug } {
+	puts "prepNodeMenu"
+    }
 
-	set node "[ $itk_interior.cadtree current ]"
+    set node "[ $itk_interior.cadtree current ]"
 
-	set nodeName [ $this extractNodeName $node ]
+    set nodeName [ $this extractNodeName $node ]
 
-	# see if we are a primitive, comb, or region
-	if { [ catch { $this getObjectType $nodeName } type ] } {
-		puts "$type"
-		return
-	}
-
-	# we are a primitive, don't allow user to set color
-	if { [ string compare $type "p" ] == 0 } {
-		$_itemMenu entryconfigure $_setcolorItemMenuIndex -state disabled
-	} else {
-		$_itemMenu entryconfigure $_setcolorItemMenuIndex -state normal
-	}
-
-	# get a list of what is displayed
-	if { [ catch { who } displayed ] } {
-		puts "$displayed"
-		return
-	}
-
-	# iterate over the displayed objects and see if our selected node is one
-	foreach object $displayed {
-		if { [ string compare $object $nodeName ] == 0 } {
-			# match ! -- need to update menu to be "Remove from display"
-
-			# update the menu entry and modify the command to use undisplayNode
-			$_itemMenu entryconfigure $_displayItemMenuIndex -label "Remove from Display"
-			$_itemMenu entryconfigure $_displayItemMenuIndex -command [ code $this undisplayNode $node ]
-			return
-		}
-	}
-
-	# did not find it, so make sure the menu is proper
-	$_itemMenu entryconfigure $_displayItemMenuIndex -label "Display"
-	$_itemMenu entryconfigure $_displayItemMenuIndex -command [ code $this displayNode $node ]
-
+    # see if we are a primitive, comb, or region
+    if { [ catch { $this getObjectType $nodeName } type ] } {
+	puts "$type"
 	return
+    }
+
+    # we are a primitive, don't allow user to set color
+    if { [ string compare $type "p" ] == 0 } {
+	$_itemMenu entryconfigure $_setcolorItemMenuIndex -state disabled
+    } else {
+	$_itemMenu entryconfigure $_setcolorItemMenuIndex -state normal
+    }
+
+    # get a list of what is displayed
+    if { [ catch { who } displayed ] } {
+	puts "$displayed"
+	return
+    }
+
+    # iterate over the displayed objects and see if our selected node is one
+    foreach object $displayed {
+	if { [ string compare $object $nodeName ] == 0 } {
+	    # match ! -- need to update menu to be "Remove from display"
+
+	    # update the menu entry and modify the command to use undisplayNode
+	    $_itemMenu entryconfigure $_displayItemMenuIndex -label "Remove from Display"
+	    $_itemMenu entryconfigure $_displayItemMenuIndex -command [ code $this undisplayNode $node ]
+	    return
+	}
+    }
+
+    # did not find it, so make sure the menu is proper
+    $_itemMenu entryconfigure $_displayItemMenuIndex -label "Display"
+    $_itemMenu entryconfigure $_displayItemMenuIndex -command [ code $this displayNode $node ]
+
+    return
 }
 
 
@@ -1289,30 +1289,30 @@ body GeometryBrowser::prepNodeMenu { } {
 # combination, or region.
 #
 body GeometryBrowser::getObjectType { node } {
-	if { $_debug } {
-		puts "getObjectType $node"
-	}
+    if { $_debug } {
+	puts "getObjectType $node"
+    }
 
-	# get just the name, drop the path, if it is there
-	set nodeName [ lindex [ split [ lindex $node 0 ] / ] end ]
+    # get just the name, drop the path, if it is there
+    set nodeName [ lindex [ split [ lindex $node 0 ] / ] end ]
 
-	if { [ catch { ls $nodeName } lsName ] } {
-		error $lsName
-	}
-	if { $lsName == "" } {
-		puts "Unable to perform ls command on $nodeName"
-		return "E"
-	}
+    if { [ catch { ls $nodeName } lsName ] } {
+	error $lsName
+    }
+    if { $lsName == "" } {
+	puts "Unable to perform ls command on $nodeName"
+	return "E"
+    }
 
-	set nodeType "leaf"
-	if { [ string compare "/" [ string index $lsName end-1 ] ] == 0 } {
-		return "c"
-	} elseif { [ string compare "R" [ string index $lsName end-1 ] ] == 0 } {
-		if { [ string compare "/" [ string index $lsName end-2 ] ] == 0 } {
-			return "r"
-		}
+    set nodeType "leaf"
+    if { [ string compare "/" [ string index $lsName end-1 ] ] == 0 } {
+	return "c"
+    } elseif { [ string compare "R" [ string index $lsName end-1 ] ] == 0 } {
+	if { [ string compare "/" [ string index $lsName end-2 ] ] == 0 } {
+	    return "r"
 	}
-	return "p"
+    }
+    return "p"
 }
 
 # validateGeometry
@@ -1325,80 +1325,80 @@ body GeometryBrowser::getObjectType { node } {
 # periodically.
 #
 body GeometryBrowser::validateGeometry { } {
-	if { $_debug } {
-		puts "validateGeometry"
-	}
+    if { $_debug } {
+	puts "validateGeometry"
+    }
 
-	set redraw 0
-	set dbNotOpen 0
+    set redraw 0
+    set dbNotOpen 0
 
-	# see if the database is open
-	if [ catch { opendb } notopen ] {
-		set dbNotOpen 1
-	}
-	if { [ string compare $notopen "" ] == 0 } {
-		set dbNotOpen 1
-	}
+    # see if the database is open
+    if [ catch { opendb } notopen ] {
+	set dbNotOpen 1
+    }
+    if { [ string compare $notopen "" ] == 0 } {
+	set dbNotOpen 1
+    }
 
-	# do nothing until a database is open
-	if { $dbNotOpen == 0 } {
+    # do nothing until a database is open
+    if { $dbNotOpen == 0 } {
 
-		# if there is no good or bad geometry listed, try to redraw regardless
-		if { $_goodGeometry == "" } {
-			incr redraw
-		} else {
-			# make sure our lists match up, the lists are maintained by getNodeChildren
-			# and updateGeometryLists.
-			foreach geom $_goodGeometry {
-				# only need one redraw command
-				if { $redraw == 0 } {
-					if { [ catch { ls $geom } shouldFind ] } {
-						incr redraw
-					}
-					if { $shouldFind == "" } {
-						incr redraw
-					}
-				}
-			}
-#  XXX we need a better way than "ls" to stat objects to avoid the garbage
-#  that is output.
-#			foreach geom $_badGeometry {
-#				if { $redraw == 0 } {
-#					if { ! [ catch { ls $geom } shouldNot ] } {
-#						incr redraw
-#					}
-#				}
-#			}
-		}
-
-		# redraw, invokes a recall of getNodeChildren for all displayed nodes
-		if { $redraw > 0 } {
-			# if a database is open, recompute the display lists
-			if { $dbNotOpen == 0 } {
-				$this updateGeometryLists
-			} else {
-				set _goodGeometry ""
-				set _badGeometry ""
-			}
-			# !!! for some reason, one fails, but two is ok.. (!)
-			# heh.. silly tcl, tk's for kids.
-			$itk_interior.cadtree draw
-			$itk_interior.cadtree draw
-		}
-	}
-
-	# cancel any prior pending hook
-	after cancel _updateHook
-
-	# if the database is not open, poll a little slower
-	if { $dbNotOpen == 1 } {
-		# set up the next hook for 7 seconds
-		set _updateHook [ after 7000 [ code $this validateGeometry ] ]
+	# if there is no good or bad geometry listed, try to redraw regardless
+	if { $_goodGeometry == "" } {
+	    incr redraw
 	} else {
-		# set up the next hook for 4 seconds
-		set _updateHook [ after 4000 [ code $this validateGeometry ] ]
+	    # make sure our lists match up, the lists are maintained by getNodeChildren
+	    # and updateGeometryLists.
+	    foreach geom $_goodGeometry {
+		# only need one redraw command
+		if { $redraw == 0 } {
+		    if { [ catch { ls $geom } shouldFind ] } {
+			incr redraw
+		    }
+		    if { $shouldFind == "" } {
+			incr redraw
+		    }
+		}
+	    }
+	    #  XXX we need a better way than "ls" to stat objects to avoid the garbage
+	    #  that is output.
+	    #			foreach geom $_badGeometry {
+	    #				if { $redraw == 0 } {
+	    #					if { ! [ catch { ls $geom } shouldNot ] } {
+	    #						incr redraw
+	    #					}
+	    #				}
+	    #			}
 	}
-	return
+
+	# redraw, invokes a recall of getNodeChildren for all displayed nodes
+	if { $redraw > 0 } {
+	    # if a database is open, recompute the display lists
+	    if { $dbNotOpen == 0 } {
+		$this updateGeometryLists
+	    } else {
+		set _goodGeometry ""
+		set _badGeometry ""
+	    }
+	    # !!! for some reason, one fails, but two is ok.. (!)
+	    # heh.. silly tcl, tk's for kids.
+	    $itk_interior.cadtree draw
+	    $itk_interior.cadtree draw
+	}
+    }
+
+    # cancel any prior pending hook
+    after cancel _updateHook
+
+    # if the database is not open, poll a little slower
+    if { $dbNotOpen == 1 } {
+	# set up the next hook for 7 seconds
+	set _updateHook [ after 7000 [ code $this validateGeometry ] ]
+    } else {
+	# set up the next hook for 4 seconds
+	set _updateHook [ after 4000 [ code $this validateGeometry ] ]
+    }
+    return
 }
 
 
@@ -1416,39 +1416,39 @@ body GeometryBrowser::validateGeometry { } {
 # color entity that tcl understands.
 #
 body GeometryBrowser::rgbToHex { { rgb "0 0 0" } } {
-	if { $_debug } {
-		puts "rgbToHex $rgb"
-	}
+    if { $_debug } {
+	puts "rgbToHex $rgb"
+    }
 
-	if { [ string compare $rgb "" ] == 0 } {
-		set rgb "0 0 0"
-	}
+    if { [ string compare $rgb "" ] == 0 } {
+	set rgb "0 0 0"
+    }
 
-	scan $rgb {%d %d %d} r g b
+    scan $rgb {%d %d %d} r g b
 
-	# clamp the values between 0 and 255
-	if { [ expr $r > 255 ] } {
-		set r 255
-	} elseif { [ expr $r < 0 ] } {
-		set r 0
-	}
-	if { [ expr $g > 255 ] } {
-		set g 255
-	} elseif { [ expr $g < 0 ] } {
-		set g 0
-	}
-	if { [ expr $b > 255 ] } {
-		set b 255
-	} elseif { [ expr $b < 0 ] } {
-		set b 0
-	}
+    # clamp the values between 0 and 255
+    if { [ expr $r > 255 ] } {
+	set r 255
+    } elseif { [ expr $r < 0 ] } {
+	set r 0
+    }
+    if { [ expr $g > 255 ] } {
+	set g 255
+    } elseif { [ expr $g < 0 ] } {
+	set g 0
+    }
+    if { [ expr $b > 255 ] } {
+	set b 255
+    } elseif { [ expr $b < 0 ] } {
+	set b 0
+    }
 
-	if [ catch { format {#%02x%02x%02x} $r $g $b } color ] {
-		puts $color
-		return "#000000"
-	}
+    if [ catch { format {"#%02x%02x%02x"} $r $g $b } color ] {
+	puts $color
+	return "#000000"
+    }
 
-	return $color
+    return $color
 }
 
 
@@ -1457,15 +1457,15 @@ body GeometryBrowser::rgbToHex { { rgb "0 0 0" } } {
 # simply checks if a render needs to occur automatically
 #
 body GeometryBrowser::checkAutoRender {} {
-	if { $_debug } {
-		puts "checkAutoRender"
-	}
+    if { $_debug } {
+	puts "checkAutoRender"
+    }
 
-	if { $_autoRender == 1 } {
-		$this renderPreview
-	}
+    if { $_autoRender == 1 } {
+	$this renderPreview
+    }
 
-	return
+    return
 }
 
 # extractNodeName
@@ -1476,28 +1476,28 @@ body GeometryBrowser::checkAutoRender {} {
 # "leaf" identifier. (XXX roots are preceeded, children are followed.. ! )
 #
 body GeometryBrowser::extractNodeName { { node "" } } {
-	if { $_debug } {
-		puts "extractNodeName $node"
-	}
+    if { $_debug } {
+	puts "extractNodeName $node"
+    }
 
-	# assume empty is root node
-	if { [ string compare $node "" ] == 0 } {
-		set $node "/"
-	}
+    # assume empty is root node
+    if { [ string compare $node "" ] == 0 } {
+	set $node "/"
+    }
 
-	# handle the extra nodetype keyword nastiness
-	set wordOne [ lindex [ split [ lindex $node 0 ] / ] end ]
-	set wordTwo [ lindex [ split [ lindex $node 1 ] / ] end ]
-	set nodeName "$wordOne"
-	if { [ llength $node ] > 0 } {
-		if { [ string compare "branch" $wordOne ] == 0 } {
-			set nodeName $wordTwo
-		} elseif { [ string compare "leaf" $wordOne ] == 0 } {
-			set nodeName $wordTwo
-		}
+    # handle the extra nodetype keyword nastiness
+    set wordOne [ lindex [ split [ lindex $node 0 ] / ] end ]
+    set wordTwo [ lindex [ split [ lindex $node 1 ] / ] end ]
+    set nodeName "$wordOne"
+    if { [ llength $node ] > 0 } {
+	if { [ string compare "branch" $wordOne ] == 0 } {
+	    set nodeName $wordTwo
+	} elseif { [ string compare "leaf" $wordOne ] == 0 } {
+	    set nodeName $wordTwo
 	}
+    }
 
-	return $nodeName
+    return $nodeName
 }
 
 ##########

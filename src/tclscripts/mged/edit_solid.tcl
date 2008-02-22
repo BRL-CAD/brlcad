@@ -38,7 +38,7 @@ proc init_edit_solid { id args } {
 
     if {[opendb] == ""} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
-		"No database has been opened!" info 0 OK
+	    "No database has been opened!" info 0 OK
 	return
     }
 
@@ -96,21 +96,21 @@ within a database." } }
     frame $w.typeF
     label $w.typeL -text "Type:" -anchor e
     hoc_register_data $w.typeL "Primitive Type"\
-	    { { summary "The supported primitive types are: arb8, sph,
+	{ { summary "The supported primitive types are: arb8, sph,
 ell, tor, rec, half, rpc, rhc, epa, ehy, eto
 part, dsp, ebm and vol." } }
     menubutton $w.typeMB -relief raised -bd 2 -textvariable esol_control($id,type)\
-	    -menu $w.typeMB.m -indicatoron 1
+	-menu $w.typeMB.m -indicatoron 1
     hoc_register_data $w.typeMB "Primitive Type"\
-	    { { summary "Indicates the current primitive type. Note that
+	{ { summary "Indicates the current primitive type. Note that
 the left mouse button will pop up a menu
 of the supported primitive types." } }
     menu $w.typeMB.m -title "Primitive Type" -tearoff 0
     foreach type $solid_data(types) {
 	$w.typeMB.m add command -label $type\
-		-command "esol_process_type $id $w.sformF $type"
+	    -command "esol_process_type $id $w.sformF $type"
 	hoc_register_menu_data "Primitive Type" $type "Primitive Type - $type"\
-		"\"synopsis \\\"Change primitive type to $type.\\\"\"
+	    "\"synopsis \\\"Change primitive type to $type.\\\"\"
 		 \"description \\\"$solid_data(hoc,$type)\\\"\""
     }
     grid $w.typeL $w.typeMB -in $w.typeF
@@ -164,7 +164,7 @@ somewhere in the equation." } }
     set hoc_data { { summary "This string is used with the Tcl
 format command to format the values
 of the primitive parameter entries." }
-	      { see_also format } }
+	{ see_also format } }
     label $w.fmtL -text "format:" -width 9 -anchor e
     hoc_register_data $w.fmtL "Format" $hoc_data
     entry $w.fmtE -relief sunken -bd 2 -textvar esol_control($id,format_string)
@@ -184,9 +184,9 @@ of the primitive parameter entries." }
 
     incr row
     checkbutton $w.drawCB -relief flat -bd 2 -text "Draw"\
-	    -offvalue 0 -onvalue 1 -variable esol_control($id,draw)
+	-offvalue 0 -onvalue 1 -variable esol_control($id,draw)
     hoc_register_data $w.drawCB "Draw"\
-	    { { summary "Toggle drawing/updating the primitive
+	{ { summary "Toggle drawing/updating the primitive
 in the panes (geometry windows)." } }
     grid $w.drawCB -row $row -column 0 -sticky nsew -padx 8
     grid rowconfigure $w $row -weight 0
@@ -286,7 +286,7 @@ proc esol_build_form { id w type vals do_gui do_cmd do_entries } {
 
 	if $do_gui {
 	    if { [catch { label $sform._$attr\L -text "$solid_data(labels,$attr)" \
-		    -anchor w }]!=0 } {
+			      -anchor w }]!=0 } {
 		label $sform._$attr\L -text "$attr" -anchor w
 	    }
 	    grid $sform._$attr\L -row $row -column 0 -sticky nsew
@@ -321,7 +321,7 @@ proc esol_build_form { id w type vals do_gui do_cmd do_entries } {
 		    if $do_entries {
 			$sform._$attr\E$num delete 0 end
 			$sform._$attr\E$num insert insert \
-				[lindex [lindex $vals $i] $num]
+			    [lindex [lindex $vals $i] $num]
 		    }
 
 		    if $do_cmd {
@@ -331,9 +331,9 @@ proc esol_build_form { id w type vals do_gui do_cmd do_entries } {
 		%*d {
 		    if $do_gui {
 			button $sform._$attr\decB$num -text \- -command \
-				"esol_dec_int $id $sform._$attr\E$num"
+			    "esol_dec_int $id $sform._$attr\E$num"
 			button $sform._$attr\incB$num -text \+ -command \
-				"esol_inc_int $id $sform._$attr\E$num"
+			    "esol_inc_int $id $sform._$attr\E$num"
 			entry $sform._$attr\E$num -width 6 -relief sunken
 
 			grid $sform._$attr\decB$num -row $row -column [expr $tnum * 3 + 1] -sticky nsew
@@ -356,9 +356,9 @@ proc esol_build_form { id w type vals do_gui do_cmd do_entries } {
 		%*f {
 		    if $do_gui {
 			button $sform._$attr\decB$num -text \- -command \
-				"esol_dec $id $sform._$attr\E$num"
+			    "esol_dec $id $sform._$attr\E$num"
 			button $sform._$attr\incB$num -text \+ -command \
-				"esol_inc $id $sform._$attr\E$num"
+			    "esol_inc $id $sform._$attr\E$num"
 			entry $sform._$attr\E$num -width 6 -relief sunken
 
 			grid $sform._$attr\decB$num -row $row -column [expr $tnum * 3 + 1] -sticky nsew
@@ -372,8 +372,8 @@ proc esol_build_form { id w type vals do_gui do_cmd do_entries } {
 		    if $do_entries {
 			$sform._$attr\E$num delete 0 end
 			$sform._$attr\E$num insert insert \
-				[format $esol_control($id,format_string) [expr [lindex \
-				[lindex $vals $i] $num] * $base2local]]
+			    [format $esol_control($id,format_string) [expr [lindex \
+										[lindex $vals $i] $num] * $base2local]]
 		    }
 
 		    if $do_cmd {
@@ -434,7 +434,7 @@ proc esol_apply { id w sform } {
 	if $solid_exists {
 	    if {$esol_control($id,type) == [lindex $vals 0]} {
 		set tmp_db_cmd [lreplace $esol_control($id,cmd)\
-			0 $last db adjust $esol_control($id,name)]
+				    0 $last db adjust $esol_control($id,name)]
 	    } else {
 		set tmp_db_cmd "kill $esol_control($id,name);\
 			[lreplace $esol_control($id,cmd)\
@@ -443,7 +443,7 @@ proc esol_apply { id w sform } {
 	} else {
 	    # This primitive doesn't exist.
 	    set tmp_db_cmd [lreplace $esol_control($id,cmd)\
-		    0 $last db put $esol_control($id,name) $esol_control($id,type)]
+				0 $last db put $esol_control($id,name) $esol_control($id,type)]
 	}
 
 	# fix the broken command list

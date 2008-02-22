@@ -30,12 +30,12 @@
 
 ::itk::usual TableView {
     keep -borderwidth -cursor -foreground -highlightcolor \
-	 -highlightthickness -insertbackground -insertborderwidth \
-	 -insertofftime -insertontime -insertwidth -justify \
-	 -relief -selectbackground -selectborderwidth \
-	 -selectforeground -show \
-	 -colfont -rowfont -background -entrybackground \
-	 -rlborderwidth
+	-highlightthickness -insertbackground -insertborderwidth \
+	-insertofftime -insertontime -insertwidth -justify \
+	-relief -selectbackground -selectborderwidth \
+	-selectforeground -show \
+	-colfont -rowfont -background -entrybackground \
+	-rlborderwidth
 }
 
 ::itcl::class TableView {
@@ -234,13 +234,13 @@
 
 	# entry options
 	variable entryOptionsList { \
-	       -bg -cursor -disabledbackground -disabledforeground \
-	       -exportselection -fg -font \
-	       -highlightbackground -highlightcolor -highlightthickness \
-	       -insertborderwidth -insertofftime -insertbackground \
-	       -insertontime -insertwidth -invcmd -justify -relief \
-	       -selectbackground -selectborderwidth -selectforeground \
-	       -show -state -validate -vcmd -width -xscrollcommand
+					-bg -cursor -disabledbackground -disabledforeground \
+					-exportselection -fg -font \
+					-highlightbackground -highlightcolor -highlightthickness \
+					-insertborderwidth -insertofftime -insertbackground \
+					-insertontime -insertwidth -invcmd -justify -relief \
+					-selectbackground -selectborderwidth -selectforeground \
+					-show -state -validate -vcmd -width -xscrollcommand
 	}
 
 	# label options
@@ -267,7 +267,7 @@
     }
 
     private {
-#	variable watchingTables 0
+	#	variable watchingTables 0
 	variable doingInit 1
 	variable useTextEntry 0
 	variable textEntryWidth 20
@@ -313,7 +313,7 @@
 	return
     }
 
-#    after idle [::itcl::code $this handleConfigure]
+    #    after idle [::itcl::code $this handleConfigure]
     after idle [::itcl::code catch [list $this handleConfigure]]
 }
 
@@ -322,7 +322,7 @@
 	return
     }
 
-#    after idle [::itcl::code $this handleConfigure]
+    #    after idle [::itcl::code $this handleConfigure]
     after idle [::itcl::code catch [list $this handleConfigure]]
 }
 
@@ -1461,17 +1461,17 @@
 	    # Here we need to view a separator, but we have widgets
 	    # packed for viewing data.
 	    if {[grid info $itk_component(rl$gi)] != ""} {
-#		grid $itk_component(sl$gi) -row $gi -column 1 -columnspan [expr {$vcols - 1}] -sticky nsew
+		#		grid $itk_component(sl$gi) -row $gi -column 1 -columnspan [expr {$vcols - 1}] -sticky nsew
 		raise $itk_component(sl$gi)
 
 
 		set j 1
 		foreach val $row {
-#		    grid forget $itk_component(e$gi,$j)
+		    #		    grid forget $itk_component(e$gi,$j)
 		    incr j
 		}
 
-#		grid forget $itk_component(rl$gi)
+		#		grid forget $itk_component(rl$gi)
 		# update row label
 		#$itk_component(rl$gi) configure -text ""
 		set rlvar($gi) ""
@@ -1483,13 +1483,13 @@
 	    # for viewing a separator.
 	    if {[grid info $itk_component(sl$gi)] != ""} {
 		# pack row label
-#		grid $itk_component(rl$gi) -row $gi -column 0 -sticky nsew
+		#		grid $itk_component(rl$gi) -row $gi -column 0 -sticky nsew
 		raise $itk_component(rl$gi)
 
 		set j 1
 		foreach val $row {
 		    # pack row entry
-#		    grid $itk_component(e$gi,$j) -row $gi -column $j -sticky nsew
+		    #		    grid $itk_component(e$gi,$j) -row $gi -column $j -sticky nsew
 		    raise $itk_component(e$gi,$j)
 
 		    set evar($gi,$j) $val
@@ -1500,7 +1500,7 @@
 		    incr j
 		}
 
-#		grid forget $itk_component(sl$gi)
+		#		grid forget $itk_component(sl$gi)
 	    } else {
 		set j 1
 		foreach val $row {
@@ -1562,7 +1562,7 @@
     set drows [$table cget -rows]
 
     if {$vrows < $drows} {
-#	set invdrows [expr {1.0 / double($drows - 1)}]
+	#	set invdrows [expr {1.0 / double($drows - 1)}]
 	set invdrows [expr {1.0 / double($drows)}]
 	set vshown [expr {$vrows * $invdrows}]
     } else {
@@ -1652,7 +1652,7 @@
     # height of visable rows
     set height [expr {$winh - $clh - $hsh}]
 
-#    set nrows [expr {int($height / double($erh))}]
+    #    set nrows [expr {int($height / double($erh))}]
     set nrows [expr {$height / $erh}]
 
     if {$nrows < 3} {
@@ -1785,7 +1785,7 @@
 #
 ::itcl::body TableView::configureTable {} {
     $itk_component(canvas) configure \
-	    -scrollregion [$itk_component(canvas) bbox tableTag]
+	-scrollregion [$itk_component(canvas) bbox tableTag]
 }
 
 ::itcl::body TableView::checkIfAllColumnsDisabled {} {
@@ -1846,7 +1846,7 @@
 
 ::itcl::body TableView::deleteEntry {i j} {
     # deactivate the text variable
-#    unset evar($i,$j)
+    #    unset evar($i,$j)
 
     grid forget $itk_component(table).e$i,$j
     itk_component delete e$i,$j
@@ -1864,16 +1864,16 @@
 		-width $textEntryWidth \
 		-height $textEntryHeight
 	} {
-#	    keep -borderwidth -cursor -foreground -highlightcolor \
-		-highlightthickness -insertbackground -insertborderwidth \
-		-insertofftime -insertontime -insertwidth -justify \
-		-relief -selectbackground -selectborderwidth \
-		-selectforeground -show
+	    #	    keep -borderwidth -cursor -foreground -highlightcolor \
+	       -highlightthickness -insertbackground -insertborderwidth \
+		   -insertofftime -insertontime -insertwidth -justify \
+		   -relief -selectbackground -selectborderwidth \
+		   -selectforeground -show
 
-	    rename -font -rowfont rowfont Font
-	    rename -highlightbackground -background background Background
-	    rename -background -entrybackground entryBackground Background
-	}
+	       rename -font -rowfont rowfont Font
+	       rename -highlightbackground -background background Background
+	       rename -background -entrybackground entryBackground Background
+	   }
 
 	# Is this ugly or what?
 	::bind $itk_component(e$i,$j) <KeyPress> \
@@ -1905,9 +1905,9 @@
 }
 
 ::itcl::body TableView::buildRow {i} {
-#    if {$doingConfigure} {
-#	return
-#    }
+    #    if {$doingConfigure} {
+    #	return
+    #    }
 
     # create row label
     itk_component add rl$i {
@@ -1974,10 +1974,10 @@
 ::itcl::body TableView::buildTable {} {
     itk_component add canvas {
 	::canvas $itk_interior.canvas \
-		-height 1.0 -width 1.0 \
-		-scrollregion "0 0 1 1" \
-		-xscrollcommand [::itcl::code $this hscroll] \
-		-highlightthickness 0 -takefocus 0
+	    -height 1.0 -width 1.0 \
+	    -scrollregion "0 0 1 1" \
+	    -xscrollcommand [::itcl::code $this hscroll] \
+	    -highlightthickness 0 -takefocus 0
     } {
 	ignore -highlightcolor -highlightthickness
 	keep -background -cursor
@@ -1996,7 +1996,7 @@
     # create row label 0
     itk_component add rl0 {
 	::entry $itk_component(rowLabels).rl0  -textvariable [::itcl::scope rlvar(0)] \
-		-width 4 -justify right -state disabled -relief flat
+	    -width 4 -justify right -state disabled -relief flat
 
 	#::label $itk_component(rowLabels).rl0 -text ""
     } {
@@ -2024,7 +2024,7 @@
 
     pack $itk_component(table) -expand yes -fill both
     $itk_component(canvas) create window 0 0 -tags tableTag \
-	    -window $itk_component(table) -anchor nw
+	-window $itk_component(table) -anchor nw
     grid $itk_component(rowLabels) -row 0 -column 0 -sticky nw
     grid $itk_component(canvas) -row 0 -column 1 -sticky nsew
 
@@ -2058,12 +2058,12 @@
 #        classes evar variable.
 #
 ::itcl::body TableView::watchTable {var index op} {
-#puts "watchTable: var - $var, index - $index"
-#    if {$watchingTables} {
-#	return
-#    }
+    #puts "watchTable: var - $var, index - $index"
+    #    if {$watchingTables} {
+    #	return
+    #    }
 
-#    set watchingTables 1
+    #    set watchingTables 1
 
     set tindex [split $index ,]
     set i [expr {[lindex $tindex 0] + $firstrow - 1}]
@@ -2072,7 +2072,7 @@
     # update entry i,j in table
     $table setEntry $i $j $evar($index)
 
-#    set watchingTables 0
+    #    set watchingTables 0
 }
 
 ::itcl::body TableView::doTextEntryKeyPress {W K} {

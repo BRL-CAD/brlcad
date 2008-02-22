@@ -39,9 +39,9 @@ proc cadColorWidget { mode parent child args } {
 
     if ![winfo exists $parent] {
 	cad_dialog $::tk::Priv(cad_dialog) [winfo screen .]\
-		"cadColorWidget: parent does not exist"\
-		"cadColorWidget: parent does not exist - $parent"\
-		"" 0 OK
+	    "cadColorWidget: parent does not exist"\
+	    "cadColorWidget: parent does not exist - $parent"\
+	    "" 0 OK
 
 	return {}
     }
@@ -68,7 +68,7 @@ proc cadColorWidget { mode parent child args } {
     # Note that the colorBars may be of any width.
     # However, NUM_COLOR_SEGMENTS must be a number that evenly divides 256.
     # Such as 256, 128, 64, etc.
-#    set data(NUM_COLOR_SEGMENTS) 8
+    #    set data(NUM_COLOR_SEGMENTS) 8
     set data(NUM_COLOR_SEGMENTS) 16
 
     # COLORBARS_WIDTH is the number of pixels wide the color bar portion of the
@@ -93,7 +93,7 @@ proc cadColorWidget { mode parent child args } {
     toplevel $w -class ::tk::dialog::color:: -screen [winfo screen $parent]
     cadColorWidget_Build $w $mode
 
-#    wm transient $w $parent
+    #    wm transient $w $parent
 
     # 5. Withdraw the window, then update all the geometry information
     # so we know how big it wants to be.
@@ -165,7 +165,7 @@ proc cadColorWidget_InitValues { w doColor } {
     # canvasWidth is the width of the entire canvas, including the indents
     #
     set data(canvasWidth) [expr $data(COLORBARS_WIDTH) + \
-	$data(PLGN_WIDTH)]
+			       $data(PLGN_WIDTH)]
 
     # Set the initial color, specified by -initialcolor, or the
     # color chosen by the user the last time.
@@ -240,22 +240,22 @@ proc cadColorWidget_Build { w mode } {
     frame $topFrame.cmF
     label $topFrame.cmL -text "Color Model:"
     hoc_register_data $topFrame.cmL "Color Model"\
-	    { { summary "Select a color model from the menu. Currently, there
+	{ { summary "Select a color model from the menu. Currently, there
 are two choices: RGB and HSV." } }
     menubutton $topFrame.cmMB -relief raised -bd 2\
-	    -menu $topFrame.cmMB.m -indicatoron 1 -textvariable $w\(colorModel\)
+	-menu $topFrame.cmMB.m -indicatoron 1 -textvariable $w\(colorModel\)
     hoc_register_data $topFrame.cmMB "Color Model"\
-	    { { summary "Select a color model from the menu. Currently, there
+	{ { summary "Select a color model from the menu. Currently, there
 are two choices: RGB and HSV." } }
     menu $topFrame.cmMB.m -title "Color Model" -tearoff 0
     $topFrame.cmMB.m add radiobutton -value RGB -variable $w\(colorModel\) \
-	    -label "RGB" -command  "cadColorWidget_setColorModel $w"
+	-label "RGB" -command  "cadColorWidget_setColorModel $w"
     hoc_register_menu_data "Color Model" "RGB" "Color Model - RGB"\
-	    { { summary "Change the color model to RGB." } }
+	{ { summary "Change the color model to RGB." } }
     $topFrame.cmMB.m add radiobutton -value HSV -variable $w\(colorModel\) \
-	    -label "HSV" -command  "cadColorWidget_setColorModel $w"
+	-label "HSV" -command  "cadColorWidget_setColorModel $w"
     hoc_register_menu_data "Color Model" "HSV" "Color Model - HSV"\
-	    { { summary "Change the color model to HSV." } }
+	{ { summary "Change the color model to HSV." } }
     grid $topFrame.cmL $topFrame.cmMB -in $topFrame.cmF -padx 2
 
     # StripsFrame contains the colorstrips and the individual RGB entries
@@ -272,25 +272,25 @@ are two choices: RGB and HSV." } }
 	label $box.label -text $colorBar: -width 9 -under 0 -anchor ne
 	entry $box.entry -textvariable $w\($colorBar\) -width 7
 	hoc_register_data $box.entry "Color Entry"\
-		{ { summary "Enter the color component indicated by
+	    { { summary "Enter the color component indicated by
 the label." } }
 	grid $box.label $box.entry -sticky w
 	grid columnconfigure $box 0 -weight 0
 	grid columnconfigure $box 1 -weight 0
 
 	set height [expr \
-	    [winfo reqheight $box.entry] - \
-	    2*([$box.entry cget -highlightthickness] + [$box.entry cget -bd])]
+			[winfo reqheight $box.entry] - \
+			2*([$box.entry cget -highlightthickness] + [$box.entry cget -bd])]
 
 	canvas $f.color -height $height\
 	    -width $data(COLORBARS_WIDTH) -relief sunken -bd 2
 	hoc_register_data $f.color "Color Ramp"\
-		{ { summary "This is a color ramp that indicates
+	    { { summary "This is a color ramp that indicates
 the choice of colors." } }
 	canvas $f.sel -height $data(PLGN_HEIGHT) \
 	    -width $data(canvasWidth) -highlightthickness 0
 	hoc_register_data $f.sel "Color Selector"\
-		{ { summary "This is a color selector which is used
+	    { { summary "This is a color selector which is used
 to select colors from the color ramp." } }
 	grid $box -row $row -column 0 -sticky w
 	grid $f.color -row $row -column 1 -sticky ew -padx $data(indent)
@@ -330,7 +330,7 @@ to select colors from the color ramp." } }
     set f1 [frame $topFrame.f1 -relief sunken -bd 2]
     set data(finalCanvas) [frame $f1.demo -bd 0 -width 100 -height 70]
     hoc_register_data $f1.demo "Color Demo"\
-	    { { summary "This area is used to demonstrate
+	{ { summary "This area is used to demonstrate
 what the specified color looks like." } }
 
     grid $data(finalCanvas) -sticky nsew -in $f1
@@ -352,7 +352,7 @@ what the specified color looks like." } }
     label $midFrame.selF.lab -text "Name or Hex String:" -underline 0 -anchor sw
     entry $midFrame.selF.ent -textvariable $w\(selection\)
     hoc_register_data $midFrame.selF.ent "Color Entry"\
-		{ { summary "
+	{ { summary "
 Enter the composite color specification in either
 hex format or using a string from the X color
 database (i.e. /usr/X11/lib/X11/rgb.txt). For
@@ -404,15 +404,15 @@ proc cadColorWidget_SelectDismissButtons { w botFrame } {
     upvar #0 $w data
 
     button $botFrame.apply -text Select -width 8 -under 0 \
-	    -command "cadColorWidget_ApplyCmd $w"
+	-command "cadColorWidget_ApplyCmd $w"
     hoc_register_data $botFrame.apply "Select Color"\
-	    { { summary "Select the color from the composite color entry.
+	{ { summary "Select the color from the composite color entry.
 Once selected, the color can be pasted to any
 window that implements the X selection protocol." } }
     button $botFrame.dismiss -text Dismiss -width 8 -under 0 \
-	    -command "cadColorWidget_DismissCmd $w"
+	-command "cadColorWidget_DismissCmd $w"
     hoc_register_data $botFrame.dismiss "Dismiss Editor"\
-	    { { summary "Dismiss the color editor." } }
+	{ { summary "Dismiss the color editor." } }
 
     set data(applyBtn)      $botFrame.apply
     set data(dismissBtn)  $botFrame.dismiss
@@ -433,14 +433,14 @@ proc cadColorWidget_OkCancelButtons { w botFrame } {
     upvar #0 $w data
 
     button $botFrame.ok -text OK -width 8 -under 0 \
-	    -command "cadColorWidget_OkCmd $w"
+	-command "cadColorWidget_OkCmd $w"
     hoc_register_data $botFrame.ok "Color Editor - Ok"\
-	    { { summary "Dismiss the color editor and apply
+	{ { summary "Dismiss the color editor and apply
 the color." } }
     button $botFrame.cancel -text Cancel -width 8 -under 0 \
-	    -command "cadColorWidget_CancelCmd $w"
+	-command "cadColorWidget_CancelCmd $w"
     hoc_register_data $botFrame.cancel "Color Editor - Cancel"\
-	    { { summary "Dismiss the color editor, but do not
+	{ { summary "Dismiss the color editor, but do not
 apply the color." } }
 
     set data(okBtn)      $botFrame.ok
@@ -557,8 +557,8 @@ proc cadColorWidget_DrawColorScale {w colorBar {create 0}} {
 	if { $data(lines,$colorBar,last) > $data(lines,$colorBar,start)} {
 	    for {set i $data(lines,$colorBar,start)} \
 		{$i <= $data(lines,$colorBar,last)} { incr i} {
-		$sel delete $i
-	    }
+		    $sel delete $i
+		}
 	}
 	# Delete the selector if it exists
 	if [info exists data($colorBar,index)] {
@@ -570,14 +570,14 @@ proc cadColorWidget_DrawColorScale {w colorBar {create 0}} {
 
 	if { 0 } {
 	    $sel bind $data($colorBar,index) <ButtonPress-1> \
-		    "cadColorWidget_StartMove $w $sel $colorBar %x $data(selPad) 1"
+		"cadColorWidget_StartMove $w $sel $colorBar %x $data(selPad) 1"
 	    $sel bind $data($colorBar,index) <B1-Motion> \
-		    "cadColorWidget_MoveSelector $w $sel $colorBar %x $data(selPad)"
+		"cadColorWidget_MoveSelector $w $sel $colorBar %x $data(selPad)"
 	} else {
 	    $sel bind $data($colorBar,index) <ButtonPress-1> \
-		    "cadColorWidget_ReleaseMouse $w $sel $colorBar %x $data(selPad)"
+		"cadColorWidget_ReleaseMouse $w $sel $colorBar %x $data(selPad)"
 	    $sel bind $data($colorBar,index) <B1-Motion> \
-		    "cadColorWidget_ReleaseMouse $w $sel $colorBar %x $data(selPad)"
+		"cadColorWidget_ReleaseMouse $w $sel $colorBar %x $data(selPad)"
 	}
 	$sel bind $data($colorBar,index) <ButtonRelease-1> \
 	    "cadColorWidget_ReleaseMouse $w $sel $colorBar %x $data(selPad)"
@@ -586,32 +586,32 @@ proc cadColorWidget_DrawColorScale {w colorBar {create 0}} {
 	# Create an invisible region under the colorstrip to catch mouse clicks
 	# that aren't on the selector.
 	set data($colorBar,clickRegion) [$sel create rectangle 0 0 \
-	    $data(canvasWidth) $height -fill {} -outline {}]
+					     $data(canvasWidth) $height -fill {} -outline {}]
 
 	if { 0 } {
 	    bind $col <ButtonPress-1> \
-		    "cadColorWidget_StartMove $w $sel $colorBar %x $data(colorPad)"
+		"cadColorWidget_StartMove $w $sel $colorBar %x $data(colorPad)"
 	    bind $col <B1-Motion> \
-		    "cadColorWidget_MoveSelector $w $sel $colorBar %x $data(colorPad)"
+		"cadColorWidget_MoveSelector $w $sel $colorBar %x $data(colorPad)"
 	} else {
 	    bind $col <ButtonPress-1> \
-		    "cadColorWidget_ReleaseMouse $w $sel $colorBar %x $data(colorPad)"
+		"cadColorWidget_ReleaseMouse $w $sel $colorBar %x $data(colorPad)"
 	    bind $col <B1-Motion> \
-		    "cadColorWidget_ReleaseMouse $w $sel $colorBar %x $data(colorPad)"
+		"cadColorWidget_ReleaseMouse $w $sel $colorBar %x $data(colorPad)"
 	}
 	bind $col <ButtonRelease-1> \
 	    "cadColorWidget_ReleaseMouse $w $sel $colorBar %x $data(colorPad)"
 
 	if { 0 } {
 	    $sel bind $data($colorBar,clickRegion) <ButtonPress-1> \
-		    "cadColorWidget_StartMove $w $sel $colorBar %x $data(selPad)"
+		"cadColorWidget_StartMove $w $sel $colorBar %x $data(selPad)"
 	    $sel bind $data($colorBar,clickRegion) <B1-Motion> \
-		    "cadColorWidget_MoveSelector $w $sel $colorBar %x $data(selPad)"
+		"cadColorWidget_MoveSelector $w $sel $colorBar %x $data(selPad)"
 	} else {
 	    $sel bind $data($colorBar,clickRegion) <ButtonPress-1> \
-		    "cadColorWidget_ReleaseMouse $w $sel $colorBar %x $data(selPad)"
+		"cadColorWidget_ReleaseMouse $w $sel $colorBar %x $data(selPad)"
 	    $sel bind $data($colorBar,clickRegion) <B1-Motion> \
-		    "cadColorWidget_ReleaseMouse $w $sel $colorBar %x $data(selPad)"
+		"cadColorWidget_ReleaseMouse $w $sel $colorBar %x $data(selPad)"
 	}
 	$sel bind $data($colorBar,clickRegion) <ButtonRelease-1> \
 	    "cadColorWidget_ReleaseMouse $w $sel $colorBar %x $data(selPad)"
@@ -665,15 +665,15 @@ proc cadColorWidget_DrawHSVColorBars { w colorBar create l } {
 	}
 
 	set color [format "#%02x%02x%02x" \
-		[lindex $rgb 0] \
-		[lindex $rgb 1] \
-		[lindex $rgb 2]]
+		       [lindex $rgb 0] \
+		       [lindex $rgb 1] \
+		       [lindex $rgb 2]]
 
 	if $create {
 	    set index [$col create rect $startx $highlightW \
-		    [expr round(($i + 1) * $data(colorSegmentWidth) + $highlightW)] \
-		    [expr [winfo height $col] + $highlightW]\
-		    -fill $color -outline $color]
+			   [expr round(($i + 1) * $data(colorSegmentWidth) + $highlightW)] \
+			   [expr [winfo height $col] + $highlightW]\
+			   -fill $color -outline $color]
 	} else {
 	    $col itemconf $l -fill $color -outline $color
 	    incr l
@@ -714,9 +714,9 @@ proc cadColorWidget_DrawRGBColorBars { w colorBar create l } {
 
 	if $create {
 	    set index [$col create rect $startx $highlightW \
-		    [expr round(($i + 1) * $data(colorSegmentWidth) + $highlightW)] \
-		    [expr [winfo height $col] + $highlightW]\
-		    -fill $color -outline $color]
+			   [expr round(($i + 1) * $data(colorSegmentWidth) + $highlightW)] \
+			   [expr [winfo height $col] + $highlightW]\
+			   -fill $color -outline $color]
 	} else {
 	    $col itemconf $l -fill $color -outline $color
 	    incr l
@@ -739,9 +739,9 @@ proc cadColorWidget_CreateSelector { w sel colorBar } {
     upvar #0 $w data
 
     set data($colorBar,index) [$sel create polygon \
-	0 $data(PLGN_HEIGHT) \
-	$data(PLGN_WIDTH) $data(PLGN_HEIGHT) \
-	$data(indent) 0]
+				   0 $data(PLGN_HEIGHT) \
+				   $data(PLGN_WIDTH) $data(PLGN_HEIGHT) \
+				   $data(indent) 0]
 
     switch $data(colorModel) {
 	RGB {

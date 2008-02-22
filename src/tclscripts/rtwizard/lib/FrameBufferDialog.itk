@@ -48,26 +48,26 @@ namespace eval RtWizard {
     #
     ::itk::usual FrameBufferDialog {
 	keep -activebackground \
-		-activerelief \
-		-background \
-		-borderwidth \
-		-cursor \
-		-elementborderwidth \
-		-foreground \
-		-highlightcolor \
-		-highlightthickness \
-		-insertbackground \
-		-insertborderwidth \
-		-insertofftime \
-		-insertontime \
-		-insertwidth \
-		-jump \
-		-labelfont \
-		-selectbackground \
-		-selectborderwidth \
-		-textbackground \
-		-textfont \
-		-troughcolor
+	    -activerelief \
+	    -background \
+	    -borderwidth \
+	    -cursor \
+	    -elementborderwidth \
+	    -foreground \
+	    -highlightcolor \
+	    -highlightthickness \
+	    -insertbackground \
+	    -insertborderwidth \
+	    -insertofftime \
+	    -insertontime \
+	    -insertwidth \
+	    -jump \
+	    -labelfont \
+	    -selectbackground \
+	    -selectborderwidth \
+	    -textbackground \
+	    -textfont \
+	    -troughcolor
     }
 
     ::itcl::class FrameBufferDialog {
@@ -99,7 +99,7 @@ namespace eval RtWizard {
     #
     ::itcl::body FrameBufferDialog::constructor {args} {
 
-#	set cs [$this childsite]
+	#	set cs [$this childsite]
 
 	#
 	# Add the Dm widget

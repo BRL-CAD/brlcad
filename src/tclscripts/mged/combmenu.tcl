@@ -62,9 +62,9 @@ proc build_comb_menu_all_displayed {} {
     set paths [_mged_x -1]
     if {![llength $paths]} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
-		"No combinations are being displayed!"\
-		"No combinations are being displayed!"\
-		"" 0 OK
+	    "No combinations are being displayed!"\
+	    "No combinations are being displayed!"\
+	    "" 0 OK
 	return
     }
 
@@ -129,26 +129,26 @@ proc build_comb_menu { id combs } {
     set mged_gui($id,edit_menu) $top
 
     bind_listbox $top "<B1-Motion>"\
+	"set comb \[%W get @%x,%y\];\
+	    set spath \[comb_get_solid_path \$comb\];\
+	    set path_pos \[comb_get_path_pos \$spath \$comb\];\
+	    matrix_illum \$spath \$path_pos"
+    if 0 {
+	bind_listbox $top "<ButtonPress-1>"\
 	    "set comb \[%W get @%x,%y\];\
 	    set spath \[comb_get_solid_path \$comb\];\
 	    set path_pos \[comb_get_path_pos \$spath \$comb\];\
 	    matrix_illum \$spath \$path_pos"
-if 0 {
-    bind_listbox $top "<ButtonPress-1>"\
-	    "set comb \[%W get @%x,%y\];\
-	    set spath \[comb_get_solid_path \$comb\];\
-	    set path_pos \[comb_get_path_pos \$spath \$comb\];\
-	    matrix_illum \$spath \$path_pos"
-    bind_listbox $top "<Double-1>"\
+	bind_listbox $top "<Double-1>"\
 	    "set comb_control($id,name) \[%W get @%x,%y\];\
 	    comb_reset $id;\
 	    destroy $top"
-} else {
-    bind_listbox $top "<ButtonPress-1>" \
+    } else {
+	bind_listbox $top "<ButtonPress-1>" \
 	    "lbdcHack %W %x %y %t $id c2 junkpath"
-}
+    }
     bind_listbox $top "<ButtonRelease-1>"\
-	    "%W selection clear 0 end;\
+	"%W selection clear 0 end;\
 	    _mged_press reject"
 }
 
@@ -192,17 +192,17 @@ proc build_comb_menu2 { id combs } {
     create_listbox $top $screen Combination $combs "destroy $top"
     set mged_gui($id,edit_menu) $top
 
-if 0 {
-    bind_listbox $top "<Double-1>"\
+    if 0 {
+	bind_listbox $top "<Double-1>"\
 	    "set comb_control($id,name) \[%W get @%x,%y\];\
 	    comb_reset $id;\
 	    destroy $top"
-} else {
-    bind_listbox $top "<ButtonPress-1>" \
+    } else {
+	bind_listbox $top "<ButtonPress-1>" \
 	    "lbdcHack %W %x %y %t $id c3 junkpath"
-}
+    }
     bind_listbox $top "<ButtonRelease-1>"\
-	    "%W selection clear 0 end"
+	"%W selection clear 0 end"
 }
 
 proc build_comb_list { paths } {

@@ -35,7 +35,7 @@ proc init_extractTool { id } {
 
     if {[opendb] == ""} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
-		"No database has been opened!" info 0 OK
+	    "No database has been opened!" info 0 OK
 	return
     }
 
@@ -115,9 +115,9 @@ proc do_extract { id } {
     if {$ex_control($id,file) != ""} {
 	if [file exists $ex_control($id,file)] {
 	    set result [cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
-		    "Append to $ex_control($id,file)?"\
-		    "Append to $ex_control($id,file)?"\
-		    "" 0 OK Cancel]
+			    "Append to $ex_control($id,file)?"\
+			    "Append to $ex_control($id,file)?"\
+			    "" 0 OK Cancel]
 
 	    if {$result} {
 		return
@@ -125,9 +125,9 @@ proc do_extract { id } {
 	}
     } else {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
-		"No file name specified!"\
-		"No file name specified!"\
-		"" 0 OK
+	    "No file name specified!"\
+	    "No file name specified!"\
+	    "" 0 OK
 
 	return
     }
@@ -139,9 +139,9 @@ proc do_extract { id } {
 	append ex_cmd " $globbed_str"
     } else {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
-		"No objects specified!"\
-		"No objects specified!"\
-		"" 0 OK
+	    "No objects specified!"\
+	    "No objects specified!"\
+	    "" 0 OK
 
 	return
     }

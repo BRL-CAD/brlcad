@@ -53,25 +53,25 @@ namespace eval RtWizard {
     #
     ::itk::usual DbPage {
 	keep -activebackground \
-		-activerelief \
-		-background \
-		-borderwidth \
-		-cursor \
-		-elementborderwidth \
-		-foreground \
-		-highlightcolor \
-		-highlightthickness \
-		-insertbackground \
-		-insertborderwidth \
-		-insertofftime \
-		-insertontime \
-		-insertwidth \
-		-jump \
-		-labelfont \
-		-selectbackground \
-		-selectborderwidth \
-		-textbackground \
-		-troughcolor
+	    -activerelief \
+	    -background \
+	    -borderwidth \
+	    -cursor \
+	    -elementborderwidth \
+	    -foreground \
+	    -highlightcolor \
+	    -highlightthickness \
+	    -insertbackground \
+	    -insertborderwidth \
+	    -insertofftime \
+	    -insertontime \
+	    -insertwidth \
+	    -jump \
+	    -labelfont \
+	    -selectbackground \
+	    -selectborderwidth \
+	    -textbackground \
+	    -troughcolor
     }
 
     #
@@ -130,12 +130,12 @@ namespace eval RtWizard {
 	#
 	itk_component add helpPanel {
 	    ::iwidgets::scrolledtext $cs.#auto \
-		    -hscrollmode none \
-		    -vscrollmode none \
-		    -visibleitems 80x3 \
-		    -wrap word \
-		    -relief flat \
-		    -textfont $::RtWizard::helpFont
+		-hscrollmode none \
+		-vscrollmode none \
+		-visibleitems 80x3 \
+		-wrap word \
+		-relief flat \
+		-textfont $::RtWizard::helpFont
 	} {
 	    usual
 	    ignore -textbackground
@@ -146,9 +146,9 @@ namespace eval RtWizard {
 	# Add the help text.
 	#
 	$itk_component(helpPanel) insert end \
-		"Please select the BRL-CAD database that contains the "
+	    "Please select the BRL-CAD database that contains the "
 	$itk_component(helpPanel) insert end \
-		"objects that you wish to render."
+	    "objects that you wish to render."
 	$itk_component(helpPanel) configure -state disabled
 
 	#
@@ -183,8 +183,8 @@ namespace eval RtWizard {
 	    -state disabled
 
 	$itk_component(bbox) add cancel \
-		-text "Cancel" \
-		-command "[::itcl::code $this onCancel]"
+	    -text "Cancel" \
+	    -command "[::itcl::code $this onCancel]"
 
 	$itk_component(bbox) default cancel
 
@@ -192,18 +192,18 @@ namespace eval RtWizard {
 	# Pack the items
 	#
 	pack $itk_component(helpPanel) \
-		-side top \
-		-fill x \
-		-expand 1
+	    -side top \
+	    -fill x \
+	    -expand 1
 	pack $itk_component(fileSelect) \
-		-fill both \
-		-expand yes \
-		-padx 4 \
-		-pady 4
+	    -fill both \
+	    -expand yes \
+	    -padx 4 \
+	    -pady 4
 	pack $itk_component(bbox) \
-		-side right \
-		-expand 0 \
-		-pady 2
+	    -side right \
+	    -expand 0 \
+	    -pady 2
 
 	#
 	# Configure the labeled widget
@@ -276,7 +276,7 @@ namespace eval RtWizard {
     #
     itcl::body DbPage::onCancel {} {
 	exit
-#	$::wizardInstance selectPrev
+	#	$::wizardInstance selectPrev
     }
 
     #

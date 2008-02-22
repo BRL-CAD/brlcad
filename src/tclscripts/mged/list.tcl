@@ -142,7 +142,7 @@ proc lbdcHack {w x y t id type path} {
 	    }
 	    o {
 		bind $w <ButtonRelease-1> \
-			"destroy [winfo parent $w]; build_matrix_menu $id $item; break"
+		    "destroy [winfo parent $w]; build_matrix_menu $id $item; break"
 		set mged_gui($id,lastButtonPress) $t
 		set mged_gui($id,lastItem) $item
 		return
@@ -173,7 +173,7 @@ proc lbdcHack {w x y t id type path} {
 	}
 
 	bind $w <ButtonRelease-1> \
-		"destroy [winfo parent $w]; break"
+	    "destroy [winfo parent $w]; break"
     }
 
     set mged_gui($id,lastButtonPress) $t

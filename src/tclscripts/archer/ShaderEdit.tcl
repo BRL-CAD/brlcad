@@ -728,7 +728,7 @@
     if {$slen > 0} {
 	set stype [lindex $shaderSpec 0]
 
-#	set ignoreShaderSpec 1
+	#	set ignoreShaderSpec 1
 
 	if {$shaderType == $stype} {
 	    updateForm_$stype $id
@@ -747,7 +747,7 @@
 	    }
 	}
 
-#	set ignoreShaderSpec 0
+	#	set ignoreShaderSpec 0
     } else {
 	destroyCurrentShader
 	set shaderType ""

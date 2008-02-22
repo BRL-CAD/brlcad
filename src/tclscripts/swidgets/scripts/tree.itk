@@ -193,11 +193,11 @@ itcl::class swidgets::Tree {
 	common c_minusbmp  [file join $::swidgets::library "images" "minus.xbm"]
 	common c_plusbmp   [file join $::swidgets::library "images" "plus.xbm"]
 	common c_closedimg [image create photo -file \
-		[file join $::swidgets::library "images" closed.gif]]
+				[file join $::swidgets::library "images" closed.gif]]
 	common c_openimg   [image create photo -file \
-		[file join $::swidgets::library "images" open.gif]]
+				[file join $::swidgets::library "images" open.gif]]
 	common c_leafimg   [image create photo -file \
-		[file join $::swidgets::library "images" leaf.gif]]
+				[file join $::swidgets::library "images" leaf.gif]]
 	variable treeheight 0
 	variable root
 	variable selnode {}
@@ -247,11 +247,11 @@ proc ::swidgets::tree {args} {
     set frame [::frame $itk_interior.frame -borderwidth 2 -relief sunken]
     itk_component add canvas {
 	::iwidgets::scrolledcanvas $frame.canvas \
-		-scrollmargin 0 \
-		-hscrollmode static \
-		-vscrollmode static \
-		-autoresize 0 \
-		-borderwidth 0
+	    -scrollmargin 0 \
+	    -hscrollmode static \
+	    -vscrollmode static \
+	    -autoresize 0 \
+	    -borderwidth 0
     } {
 	keep -xscrollincrement
 	keep -xscrollincrement
@@ -497,10 +497,10 @@ proc ::swidgets::tree {args} {
 	}
 	# draw cross
 	$itk_component(canvas) create bitmap $x $y \
-		-bitmap     @$bmp \
-		-background $itk_option(-background) \
-		-foreground black -anchor c \
-		-tags       [list cross c:$node]
+	    -bitmap     @$bmp \
+	    -background $itk_option(-background) \
+	    -foreground black -anchor c \
+	    -tags       [list cross c:$node]
 	_bind_cross <Button-1> [list eval [::itcl::code $this toggle]]
     }
 
@@ -547,14 +547,14 @@ proc ::swidgets::tree {args} {
     # draw image
     if {$dimg != ""} {
 	$itk_component(canvas) create image $x1 $y \
-		-image $img \
-		-disabledimage $dimg \
-		-anchor w \
-		-tags [list img i:$node]
+	    -image $img \
+	    -disabledimage $dimg \
+	    -anchor w \
+	    -tags [list img i:$node]
     } else {
 	$itk_component(canvas) create image $x1 $y -image $img \
-		-anchor w \
-		-tags [list img i:$node]
+	    -anchor w \
+	    -tags [list img i:$node]
     }
 
     if {[$node get -type] != "leaf"} {
@@ -566,10 +566,10 @@ proc ::swidgets::tree {args} {
 
 	# draw cross
 	$itk_component(canvas) create bitmap $x $y \
-		-bitmap     @$bmp \
-		-background $itk_option(-background) \
-		-foreground black -anchor c \
-		-tags       [list cross c:$node]
+	    -bitmap     @$bmp \
+	    -background $itk_option(-background) \
+	    -foreground black -anchor c \
+	    -tags       [list cross c:$node]
 	_bind_cross <Button-1> [list eval [::itcl::code $this toggle]]
     } else {
     }
@@ -641,10 +641,10 @@ proc ::swidgets::tree {args} {
 
     if {[llength $node] && $itk_option(-showlines)} {
 	set id [$itk_component(canvas) create line $x $y $x \
-		[expr $yp+$nodeheight] \
-		-fill    $itk_option(-linefill) \
-		-stipple $itk_option(-linestipple) \
-		-tags    line]
+		    [expr $yp+$nodeheight] \
+		    -fill    $itk_option(-linefill) \
+		    -stipple $itk_option(-linestipple) \
+		    -tags    line]
 
 	$itk_component(canvas) lower $id
     }
@@ -879,7 +879,7 @@ proc ::swidgets::tree {args} {
 	    }
 
 	    if {$itk_option(-selectmode) == "single" ||
-	    $selnode == {}} {
+		$selnode == {}} {
 		selection set $node
 		return
 	    }
@@ -987,9 +987,9 @@ proc ::swidgets::tree {args} {
 
 		# Create the selection box
 		set selectBox [$itk_component(canvas) create rectangle -10 -10 -10 -10 \
-			-tags selectBox_$node \
-			-fill $itk_option(-foreground) \
-			-outline $itk_option(-foreground)]
+				   -tags selectBox_$node \
+				   -fill $itk_option(-foreground) \
+				   -outline $itk_option(-foreground)]
 
 		# Save the fill color
 		set snode [lindex [split $node :] 1]
@@ -999,7 +999,7 @@ proc ::swidgets::tree {args} {
 		set coords [$itk_component(canvas) bbox $node]
 		eval $itk_component(canvas) coords selectBox_$node $coords
 		$itk_component(canvas) itemconfigure $node \
-			-fill $itk_option(-background)
+		    -fill $itk_option(-background)
 		$itk_component(canvas) lower selectBox_$node
 	    }
 	}

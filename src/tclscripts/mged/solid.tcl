@@ -197,7 +197,7 @@ has the following input fields:
     { label,r_1 "Radius 1" }
     { label,r_2 "Radius 2" }
     { attr,arb8 {V1 {1 -1 -1}  V2 {1 1 -1}  V3 {1 1 1}  V4 {1 -1 1} \
-	    V5 {-1 -1 -1} V6 {-1 1 -1} V7 {-1 1 1} V8 {-1 -1 1}} }
+		     V5 {-1 -1 -1} V6 {-1 1 -1} V7 {-1 1 1} V8 {-1 -1 1}} }
     { attr,sph  {V {0 0 0} A {1 0 0} B {0 1 0} C {0 0 1}} }
     { attr,ell  {V {0 0 0} A {2 0 0} B {0 1 0} C {0 0 1}} }
     { attr,tor  {V {0 0 0} H {1 0 0} r_h 2 r_a 1} }
@@ -212,7 +212,7 @@ has the following input fields:
     { attr,part {V {0 0 0} H {0 0 1} r_v 0.5 r_h 0.25} }
     { attr,dsp  {file "" sm 1 w 1 n 1 stom {1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1}} }
     { attr,hf   {cfile "" dfile "" fmt "" w 1 n 1 shorts 1 file2mm 1.0 v {0 0 0} \
-	    x {0 0 0} y {0 0 0} xlen 1 ylen 1 zscale 1} }
+		     x {0 0 0} y {0 0 0} xlen 1 ylen 1 zscale 1} }
     { attr,ebm  {file "" w 1 n 1 d 1 mat {1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1}} }
     { attr,vol  {file "" w 1 n 1 d 1 lo 0 hi 1 size {1 1 1} mat {1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1}} }
     { name,indexvar index }

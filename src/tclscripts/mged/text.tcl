@@ -136,7 +136,7 @@ proc end_word { w } {
 }
 
 proc backward_delete_char { w } {
-#    catch {$w tag remove sel sel.first promptEnd}
+    #    catch {$w tag remove sel sel.first promptEnd}
     if [$w compare insert > promptEnd] {
 	$w mark set insert {insert - 1c}
 	$w delete insert
@@ -145,7 +145,7 @@ proc backward_delete_char { w } {
 }
 
 proc delete_char { w } {
-#    catch {$w tag remove sel sel.first promptEnd}
+    #    catch {$w tag remove sel sel.first promptEnd}
     if {[$w compare insert >= promptEnd] && [$w compare insert < {end - 2c}]} {
 	$w delete insert
 	cursor_highlight $w
@@ -211,7 +211,7 @@ proc next_command { w } {
 	$w delete promptEnd {end - 2c}
 	$w mark set insert promptEnd
 	$w insert insert [string range $msg 0 \
-		[expr [string length $msg]-2]]
+			      [expr [string length $msg]-2]]
 
 	cursor_highlight $w
 	$w see insert
@@ -220,7 +220,7 @@ proc next_command { w } {
 	    $w delete promptEnd {end - 2c}
 	    $w mark set insert promptEnd
 	    $w insert insert [string range $mged_gui($w,scratchline) 0\
-		    [expr [string length $mged_gui($w,scratchline)] - 1]]
+				  [expr [string length $mged_gui($w,scratchline)] - 1]]
 	    set mged_gui($w,freshline) 1
 	    cursor_highlight $w
 	}
@@ -244,7 +244,7 @@ proc prev_command { w } {
 	$w mark set insert promptEnd
 
 	$w insert insert [string range $msg 0 \
-		[expr [string length $msg]-2]]
+			      [expr [string length $msg]-2]]
 
 	cursor_highlight $w
 	$w see insert
@@ -494,7 +494,7 @@ proc vi_insert_mode { w } {
 	%W edit separator
 	vi_edit_mode %W
 	break
-}
+    }
 
     bind $w <KeyPress> {
 	if {$vi_state(%W,dot_flag)} {
@@ -522,7 +522,7 @@ proc vi_reset_cmd { w } {
     set vi_state($w,pos_count) 1
     set vi_state($w,tmp_count) 1
     set vi_state($w,cmd_list) [list]
-    }
+}
 
 # vi_finish_cmd is meant to be called whenever an edit-mode command is
 # complete.  Insert mode is entered if applicable, the cursor is highlit,
@@ -579,9 +579,9 @@ proc vi_finish_hsrch { w dir } {
 
     if {$vi_state($w,hsrch_type)=="/"} {
 	set result [catch {hist $prev $vi_state($w,hsrch_buf)} msg]
-		} else {
+    } else {
 	set result [catch {hist $next $vi_state($w,hsrch_buf)} msg]
-		}
+    }
 
     $w delete promptEnd {end - 2c}
     $w mark set insert promptEnd
@@ -598,7 +598,7 @@ proc vi_finish_hsrch { w dir } {
 	}
     } else {
 	set mged_gui($w,freshline) 0
-	    }
+    }
 
     if {$result==0} {
 	$w insert insert [string range $msg 0 [expr [string length $msg]-2]]
@@ -614,7 +614,7 @@ proc vi_append_hsrch { w c } {
     if {$vi_state($w,hsrch_flag)} {
 	set vi_state($w,hsrch_buf) ""
 	set vi_state($w,hsrch_flag) 0
-	}
+    }
     append vi_state($w,hsrch_buf) $c
     $w insert insert $c
 }
@@ -660,9 +660,9 @@ proc vi_word_search { w c } {
 	    }
 	    if [string is lower $c] {
 		if {   ([string is space $cc] && [string is punct $nc])
-		    || ([string is space $cc] && [string is wordchar $nc])
-		    || ([string is punct $cc] && [string is wordchar $nc])
-		    || ([string is wordchar $cc] && [string is punct $nc])} {
+		       || ([string is space $cc] && [string is wordchar $nc])
+		       || ([string is punct $cc] && [string is wordchar $nc])
+		       || ([string is wordchar $cc] && [string is punct $nc])} {
 		    break
 		}
 	    } else {
@@ -685,16 +685,16 @@ proc vi_word_search { w c } {
 
     # Correct for expected "y/cw" behaviour, retrace whitespace.
     if {   $newindex != ""
-	&& (   $vi_state($w,change_flag)
-	    || ($vi_state($w,yank_flag) && !$vi_state($w,delete_flag)))
-	&& "w" == [string tolower $c]} {
+	   && (   $vi_state($w,change_flag)
+		  || ($vi_state($w,yank_flag) && !$vi_state($w,delete_flag)))
+	   && "w" == [string tolower $c]} {
 	for { set newindex [$w index "$newindex - 1c"] } \
 	    { [string is space [$w get $newindex]] } \
 	    { if [$w compare $newindex > insert ] {
 		set newindex [$w index "$newindex - 1c"]
-	      } else {
+	    } else {
 		break
-	      }
+	    }
 	    } { }
 	# Yank/change operate across chars, so increment newindex.
 	set newindex [$w index "$newindex + 1c"]
@@ -709,7 +709,7 @@ proc vi_word_search { w c } {
 	}
     }
 
-	    if {$newindex != ""} {
+    if {$newindex != ""} {
 	# Save the indicated range in the cut_buf.
 	if {$vi_state($w,yank_flag)} {
 	    if {$bward} {
@@ -719,23 +719,23 @@ proc vi_word_search { w c } {
 	    }
 	}
 	# Delete the indicated range.
-		if {$vi_state($w,delete_flag)} {
+	if {$vi_state($w,delete_flag)} {
 	    $w edit separator
 	    if {$bward} {
-		    $w delete $newindex insert
-		} else {
+		$w delete $newindex insert
+	    } else {
 		$w delete insert $newindex
 	    }
 	}
 	# Or just move the insert gnomon.
 	if {!$vi_state($w,yank_flag)} {
-		    $w mark set insert $newindex
-		}
+	    $w mark set insert $newindex
+	}
 	vi_finish_cmd $w
     } else {
 	vi_kill_cmd $w
     }
-	    }
+}
 
 proc vi_process_edit_cmd { w c k state } {
     global mged_gui
@@ -745,8 +745,8 @@ proc vi_process_edit_cmd { w c k state } {
 
     # Throw away all control characters
     if {[string is control $c] || $state > 1} {
-	    return
-	}
+	return
+    }
 
     if {$vi_state($w,overwrite_flag)} {
 	set vi_state($w,overwrite_flag) 0
@@ -798,23 +798,23 @@ proc vi_process_edit_cmd { w c k state } {
     if {$vi_state($w,count_flag)} {
 	switch -glob -- $c {
 	    [0-9] {
-	    # Ignore counts; handled below.
+		# Ignore counts; handled below.
 	    }
 	    [+,-;BEFTWbefhjkltw] {
-	    # These position specifiers happily take counts.
+		# These position specifiers happily take counts.
 		set vi_state($w,pos_count) $vi_state($w,tmp_count)
 		set vi_state($w,count_flag) 0
 		set vi_state($w,tmp_count) 1
 	    }
 	    [Xrsux~] {
-	    # These commands happily take counts.
+		# These commands happily take counts.
 		set vi_state($w,cmd_count) $vi_state($w,tmp_count)
 		set vi_state($w,count_flag) 0
 		set vi_state($w,tmp_count) 1
 	    }
 	    [cdy] {
-	    # "c..", "d..", and "y.." can take a cmd_count, but "cc" and "dd"
-	    # do not. (in CLE; in real VI "cc" and "dd" do take counts.)
+		# "c..", "d..", and "y.." can take a cmd_count, but "cc" and "dd"
+		# do not. (in CLE; in real VI "cc" and "dd" do take counts.)
 		if {!$vi_state($w,yank_flag)} {
 		    set vi_state($w,cmd_count) $vi_state($w,tmp_count)
 		} else {
@@ -824,7 +824,7 @@ proc vi_process_edit_cmd { w c k state } {
 		set vi_state($w,tmp_count) 1
 	    }
 	    [$./?ACDINPRY^_ainp] {
-	    # These commands ignore counts.
+		# These commands ignore counts.
 		set vi_state($w,count_flag) 0
 		set vi_state($w,tmp_count) 1
 	    }
@@ -836,37 +836,37 @@ proc vi_process_edit_cmd { w c k state } {
     if {$vi_state($w,yank_flag)} {
 	switch -glob -- $c {
 	    [0] {
-	    # if we are counting, ignore; begining-of-line ignores counts.
+		# if we are counting, ignore; begining-of-line ignores counts.
 		if {!$vi_state($w,count_flag)} {
 		    set vi_state($w,cmd_count) 1
 		}
 	    }
 	    [1-9] {
-	    # Ignore numbers; counts are dealt with below.
+		# Ignore numbers; counts are dealt with below.
 	    }
 	    [cdy] {
-	    # "c.." and "d.." are legit in change and delete modes
-	    # respectively, otherwise they are in error.
+		# "c.." and "d.." are legit in change and delete modes
+		# respectively, otherwise they are in error.
 		if {   ("c" == $c && !$vi_state($w,change_flag))
-		    || ("d" == $c && $vi_state($w,change_flag))} {
+		       || ("d" == $c && $vi_state($w,change_flag))} {
 		    vi_kill_cmd $w
 		    return
 		}
 	    }
 	    [+,-;BEFTWbefhltw] {
-	    # These positional specifiers can occur in y/c/d modes.
-	    # Multiply pos_count by cmd_count (2d2w means delete FOUR words.)
+		# These positional specifiers can occur in y/c/d modes.
+		# Multiply pos_count by cmd_count (2d2w means delete FOUR words.)
 		set vi_state($w,pos_count) [expr {$vi_state($w,pos_count) * $vi_state($w,cmd_count)}]
 		set vi_state($w,cmd_count) 1
 	    }
 	    [./?ACDXINPRYadijknprsux~] {
-	    # These commands cannot occur in y/c/d modes.
+		# These commands cannot occur in y/c/d modes.
 		vi_kill_cmd $w
 		return
 	    }
 	    [$^_] {
-	    # End-of-line, start-of-line occurs in y/c/d modes, ignores counts.
-		    set vi_state($w,cmd_count) 1
+		# End-of-line, start-of-line occurs in y/c/d modes, ignores counts.
+		set vi_state($w,cmd_count) 1
 	    }
 	}
     }
@@ -877,11 +877,11 @@ proc vi_process_edit_cmd { w c k state } {
 
     switch -glob -- $c {
 	$ {
-	# Motion to the end of the line.
+	    # Motion to the end of the line.
 	    if {$vi_state($w,yank_flag)} {
 		set vi_state($w,cut_buf) [$w get insert {end - 2c}]
 	    }
-			if {$vi_state($w,delete_flag)} {
+	    if {$vi_state($w,delete_flag)} {
 		$w edit separator
 		$w delete insert {end - 2c}
 	    }
@@ -891,7 +891,7 @@ proc vi_process_edit_cmd { w c k state } {
 	    vi_finish_cmd $w
 	}
 	% {
-	# Motion to matching brace.
+	    # Motion to matching brace.
 	    set newindex [$w index insert]
 	    set om [$w get insert]
 	    set bward 0
@@ -899,19 +899,19 @@ proc vi_process_edit_cmd { w c k state } {
 		[{] {
 		    set cm "\}"
 		}
-		[}] {
-		    set cm $om
-		    set om "\{"
-		    set bward 1
-		}
+		 [}] {
+		     set cm $om
+		     set om "\{"
+		     set bward 1
+		 }
 		[(] {
 		    set cm "\)"
 		}
-		[)] {
-		    set cm $om
-		    set om "\("
-		    set bward 1
-		}
+		 [)] {
+		     set cm $om
+		     set om "\("
+		     set bward 1
+		 }
 		[\[] {
 		    set cm "\]"
 		}
@@ -929,32 +929,32 @@ proc vi_process_edit_cmd { w c k state } {
 	    if [string length $om] {
 		for { set dc 0 } {1} \
 		    {
-			if {$bward} {
-			    if [$w compare $newindex < promptEnd] {
-				set newindex ""
-				break
-			    }
-			    set newindex [$w index "$newindex - 1c"]
-			} else {
-			    if [$w compare $newindex > {end - 2c}] {
-				set newindex ""
-				break
-			}
-			    set newindex [$w index "$newindex + 1c"]
-			}
-		    } {
-			set cc [$w get $newindex]
-			if {$cc == $cm} {
-			    set dc [expr $dc - 1]
-			} elseif {$cc == $om} {
-			    incr dc
-			}
-			if {!$dc} {
+		    if {$bward} {
+			if [$w compare $newindex < promptEnd] {
+			    set newindex ""
 			    break
+			}
+			set newindex [$w index "$newindex - 1c"]
+		    } else {
+			if [$w compare $newindex > {end - 2c}] {
+			    set newindex ""
+			    break
+			}
+			set newindex [$w index "$newindex + 1c"]
+		    }
+		} {
+		    set cc [$w get $newindex]
+		    if {$cc == $cm} {
+			set dc [expr $dc - 1]
+		    } elseif {$cc == $om} {
+			incr dc
+		    }
+		    if {!$dc} {
+			break
 		    }
 		}
 
-		    if {$newindex != ""} {
+		if {$newindex != ""} {
 		    # Save the indicated range in the cut_buf, and delete it.
 		    if {$vi_state($w,yank_flag)} {
 			if {!$bward} {
@@ -963,7 +963,7 @@ proc vi_process_edit_cmd { w c k state } {
 			    set vi_state($w,cut_buf) [$w get $newindex {insert + 1c}]
 			}
 		    }
-			if {$vi_state($w,delete_flag)} {
+		    if {$vi_state($w,delete_flag)} {
 			$w edit separator
 			if {!$bward} {
 			    $w delete insert "$newindex + 1c"
@@ -972,7 +972,7 @@ proc vi_process_edit_cmd { w c k state } {
 			}
 		    }
 		    if {!$vi_state($w,yank_flag)} {
-		    # Or just move the insert gnomon.
+			# Or just move the insert gnomon.
 			$w mark set insert $newindex
 		    }
 		    vi_finish_cmd $w
@@ -982,8 +982,8 @@ proc vi_process_edit_cmd { w c k state } {
 	    }
 	}
 	[,;] {
-	# ";" Previous char search in the direction it was indicated.
-	# "," Previous char search in the direction opposite that indicated.
+	    # ";" Previous char search in the direction it was indicated.
+	    # "," Previous char search in the direction opposite that indicated.
 	    if {$vi_state($w,search_char) == ""} {
 		vi_kill_cmd $w
 		return
@@ -993,7 +993,7 @@ proc vi_process_edit_cmd { w c k state } {
 
 	    # Forward searches...
 	    if {   (";" == $c && [string is lower $vi_state($w,search_type)])
-		|| ("," == $c && [string is upper $vi_state($w,search_type)])} {
+		   || ("," == $c && [string is upper $vi_state($w,search_type)])} {
 
 		# do while pos_count is gte one and seach_char is found
 		for { set newindex [$w index {insert}] } {1} {
@@ -1005,7 +1005,7 @@ proc vi_process_edit_cmd { w c k state } {
 		} {
 		    set newindex [$w search $vi_state($w,search_char) "$newindex +1c" {end - 2c}]
 		}
-		    if {$newindex != ""} {
+		if {$newindex != ""} {
 		    # Save the indicated range in the cut_buf.
 		    if {$vi_state($w,yank_flag)} {
 			if {!$to_search} {
@@ -1023,14 +1023,14 @@ proc vi_process_edit_cmd { w c k state } {
 			}
 		    }
 		    if {!$vi_state($w,yank_flag)} {
-		    # Just move the insert gnomon.
-			    $w mark set insert $newindex
+			# Just move the insert gnomon.
+			$w mark set insert $newindex
 			if {$to_search} {
 			    $w mark set insert {insert - 1c}
 			}
 		    }
 		}
-	    # Backward searches...
+		# Backward searches...
 	    } else {
 		# do while pos_count is gte one and seach_char is found
 		for { set newindex [$w index {insert}] } {1} {
@@ -1042,7 +1042,7 @@ proc vi_process_edit_cmd { w c k state } {
 		} {
 		    set newindex [$w search -backwards $vi_state($w,search_char) "$newindex" promptEnd]
 		}
-		    if {$newindex != ""} {
+		if {$newindex != ""} {
 		    # Save the indicated range in the cut_buf, and delete it.
 		    if {$vi_state($w,yank_flag)} {
 			if {!$to_search} {
@@ -1051,7 +1051,7 @@ proc vi_process_edit_cmd { w c k state } {
 			    set vi_state($w,cut_buf) [$w get "$newindex + 1c" insert]
 			}
 		    }
-			if {$vi_state($w,delete_flag)} {
+		    if {$vi_state($w,delete_flag)} {
 			$w edit separator
 			$w delete "$newindex + 1c" insert
 			if {!$to_search} {
@@ -1059,8 +1059,8 @@ proc vi_process_edit_cmd { w c k state } {
 			}
 		    }
 		    if {!$vi_state($w,yank_flag)} {
-		    # Just move the insert gnomon.
-			    $w mark set insert $newindex
+			# Just move the insert gnomon.
+			$w mark set insert $newindex
 			if {$to_search} {
 			    $w mark set insert {insert + 1c}
 			}
@@ -1074,15 +1074,15 @@ proc vi_process_edit_cmd { w c k state } {
 	    }
 	}
 	. {
-	# Redo last command.
+	    # Redo last command.
 	    if {![llength $vi_state($w,dot_list)]} {
 		vi_kill_cmd $w
 	    } else {
 		set script [subst {
 		    set vi_state($w,dot_flag) 1
-		    set range \[llength \$vi_state($w,dot_list)]
+		    set range \[llength \$vi_state($w,dot_list)\]
 		    for {set i 0} {\$i < \$range} {incr i} {
-			event generate $w <KeyPress> -state $state -keysym \[lindex \$vi_state($w,dot_list) \$i]
+			event generate $w <KeyPress> -state $state -keysym \[lindex \$vi_state($w,dot_list) \$i\]
 		    }
 		}]
 		vi_finish_cmd $w
@@ -1090,7 +1090,7 @@ proc vi_process_edit_cmd { w c k state } {
 	    }
 	}
 	/ {
-	# Search backwards for command.
+	    # Search backwards for command.
 	    set vi_state($w,hsrch_type) "/"
 	    # hsrch_flag controls deletion of hsrch_buf. An empty search
 	    # is the same as "n".
@@ -1104,14 +1104,14 @@ proc vi_process_edit_cmd { w c k state } {
 	    vi_hsrch_mode $w
 	}
 	0 {
-	# Motion to begining of line (or zero in a command or position count.)
+	    # Motion to begining of line (or zero in a command or position count.)
 	    if {$vi_state($w,count_flag)} {
 		set vi_state($w,tmp_count) [expr $vi_state($w,tmp_count) * 10]
 	    } else {
 		if {$vi_state($w,yank_flag)} {
 		    set vi_state($w,cut_buf) [$w get promptEnd insert]
 		}
-	    if {$vi_state($w,delete_flag)} {
+		if {$vi_state($w,delete_flag)} {
 		    $w edit separator
 		    $w delete promptEnd insert
 		}
@@ -1122,7 +1122,7 @@ proc vi_process_edit_cmd { w c k state } {
 	    }
 	}
 	[1-9] {
-	# Part of a command or position count.
+	    # Part of a command or position count.
 	    if {$vi_state($w,count_flag)} {
 		set vi_state($w,tmp_count) [expr $vi_state($w,tmp_count) * 10 + $c]
 	    } else {
@@ -1131,7 +1131,7 @@ proc vi_process_edit_cmd { w c k state } {
 	    }
 	}
 	[?] {
-	# Search forwards for command.
+	    # Search forwards for command.
 	    set vi_state($w,hsrch_type) "?"
 	    # hsrch_flag controls deletion of hsrch_buf. An empty search
 	    # is the same as "n".
@@ -1145,18 +1145,18 @@ proc vi_process_edit_cmd { w c k state } {
 	    vi_hsrch_mode $w
 	}
 	A {
-	# Append to the end of line.
+	    # Append to the end of line.
 	    $w mark set insert {end - 2c}
 	    $w edit separator
 	    set vi_state($w,change_flag) 1
 	    vi_finish_cmd $w
 	}
 	B {
-	# Backwards motion to the start of a word/punct string.
+	    # Backwards motion to the start of a word/punct string.
 	    vi_word_search $w "B"
 	}
 	C {
-	# Change to the end of the line.
+	    # Change to the end of the line.
 	    set vi_state($w,cut_buf) [$w get insert {end - 2c}]
 	    $w edit separator
 	    $w delete insert {end - 2c}
@@ -1164,7 +1164,7 @@ proc vi_process_edit_cmd { w c k state } {
 	    vi_finish_cmd $w
 	}
 	D {
-	# Delete to the end of the line.
+	    # Delete to the end of the line.
 	    set vi_state($w,cut_buf) [$w get insert {end - 2c}]
 	    $w edit separator
 	    $w delete insert {end - 2c}
@@ -1172,26 +1172,26 @@ proc vi_process_edit_cmd { w c k state } {
 	    vi_finish_cmd $w
 	}
 	E {
-	# Forwards motion to the end of a word/punct string.
+	    # Forwards motion to the end of a word/punct string.
 	    vi_word_search $w "E"
 	}
 	F {
-	# Find the previous ocurrence of a char.
+	    # Find the previous ocurrence of a char.
 	    set vi_state($w,search_flag) "F"
 	}
 	I {
-	# Insert at the beginning of the line.
+	    # Insert at the beginning of the line.
 	    $w mark set insert promptEnd
 	    $w edit separator
 	    set vi_state($w,change_flag) 1
 	    vi_finish_cmd $w
 	}
 	N {
-	# Next command search in opposite to original direction.
+	    # Next command search in opposite to original direction.
 	    vi_finish_hsrch $w $c
 	}
 	P {
-	# Insert cut but before cursor
+	    # Insert cut but before cursor
 	    if [string length $vi_state($w,cut_buf)] {
 		$w edit separator
 		$w insert insert $vi_state($w,cut_buf)
@@ -1203,16 +1203,16 @@ proc vi_process_edit_cmd { w c k state } {
 	    }
 	}
 	R {
-	# Replace chars, overwrite mode.
+	    # Replace chars, overwrite mode.
 	    vi_overwrite_mode $w
 	    vi_finish_cmd $w
 	}
 	T {
-	# Motion "back to" an indicated char.
+	    # Motion "back to" an indicated char.
 	    set vi_state($w,search_flag) "T"
 	}
 	U {
-	# Reset the edit buffer.
+	    # Reset the edit buffer.
 	    set tmp_reset_buf $vi_state($w,reset_buf)
 	    set vi_state($w,reset_buf) [$w get promptEnd {end - 2c}]
 	    $w delete promptEnd {end - 2c}
@@ -1222,11 +1222,11 @@ proc vi_process_edit_cmd { w c k state } {
 	    vi_finish_cmd $w
 	}
 	W {
-	# Backwards motion to the start of a word.
+	    # Backwards motion to the start of a word.
 	    vi_word_search $w "W"
 	}
 	X {
-	# Backwards delete of cmd_num chars.
+	    # Backwards delete of cmd_num chars.
 	    set newindex [$w index [subst "insert - $vi_state($w,cmd_count)c"]]
 	    if [$w compare $newindex < promptEnd] {
 		set newindex [$w index promptEnd]
@@ -1241,14 +1241,14 @@ proc vi_process_edit_cmd { w c k state } {
 		set vi_state($w,delete_flag) 1
 	    }
 	    vi_finish_cmd $w
-	    }
+	}
 	Y {
-	# Yank the entire line.
+	    # Yank the entire line.
 	    set vi_state($w,cut_buf) [$w get promptEnd {end - 2c}]
 	}
 	^ -
 	_ {
-	# Motion to first non-white-space char on the line.
+	    # Motion to first non-white-space char on the line.
 	    for { set newindex [$w index promptEnd] } \
 		{ [string is space [$w get $newindex]] } \
 		{
@@ -1262,7 +1262,7 @@ proc vi_process_edit_cmd { w c k state } {
 	    vi_finish_cmd $w
 	}
 	a {
-	# Append after the cursor.
+	    # Append after the cursor.
 	    if [$w compare insert < {end - 2c}] {
 		$w mark set insert {insert + 1c}
 	    }
@@ -1271,11 +1271,11 @@ proc vi_process_edit_cmd { w c k state } {
 	    vi_finish_cmd $w
 	}
 	b {
-	# Backwards motion to the start of a word.
+	    # Backwards motion to the start of a word.
 	    vi_word_search $w "b"
 	}
 	c {
-	# Change... or change line in the case of "cc".
+	    # Change... or change line in the case of "cc".
 	    if {$vi_state($w,change_flag)} {
 		set vi_state($w,cut_buf) [$w get promptEnd {end - 2c}]
 		$w edit separator
@@ -1288,7 +1288,7 @@ proc vi_process_edit_cmd { w c k state } {
 	    }
 	}
 	d {
-	# Delete... or delete lind in the case of "dd".
+	    # Delete... or delete lind in the case of "dd".
 	    if {$vi_state($w,delete_flag)} {
 		set vi_state($w,cut_buf) [$w get promptEnd {end - 2c}]
 		$w edit separator
@@ -1300,15 +1300,15 @@ proc vi_process_edit_cmd { w c k state } {
 	    }
 	}
 	e {
-	# Forwards motion to the end of a word.
+	    # Forwards motion to the end of a word.
 	    vi_word_search $w "e"
 	}
 	f {
-	# Find the next ocurrence of a char.
+	    # Find the next ocurrence of a char.
 	    set vi_state($w,search_flag) "f"
 	}
 	h {
-	# Motion one char left.
+	    # Motion one char left.
 	    set newindex [$w index [subst "insert - $vi_state($w,pos_count)c"]]
 	    if [$w compare $newindex < promptEnd] {
 		set newindex [$w index {promptEnd}]
@@ -1325,14 +1325,14 @@ proc vi_process_edit_cmd { w c k state } {
 		# Warn if too few chars to traverse. ("h" only, not "l".)
 		if [$w compare $newindex == insert] {
 		    set vi_state($w,warn_flag) 1
-	    } else {
+		} else {
 		    $w mark set insert $newindex
 		}
 	    }
 	    vi_finish_cmd $w
 	}
 	i {
-	# Enter insert mode.
+	    # Enter insert mode.
 	    $w edit separator
 	    set vi_state($w,change_flag) 1
 	    # set delete_flag so cmd_list is saved.
@@ -1341,7 +1341,7 @@ proc vi_process_edit_cmd { w c k state } {
 	}
 	+ -
 	j {
-	# Motion down one line.
+	    # Motion down one line.
 	    if {$mged_gui($w,freshline)} {
 		vi_kill_cmd $w
 	    } else {
@@ -1352,8 +1352,8 @@ proc vi_process_edit_cmd { w c k state } {
 			set vi_state($w,pos_count) [expr {$vi_state($w,pos_count) - 1}]
 		    }
 		} {
-	    next_command $w
-	}
+		    next_command $w
+		}
 		set vi_state($w,reset_buf) [$w get promptEnd {end - 2c}]
 		$w edit reset
 		vi_finish_cmd $w
@@ -1361,7 +1361,7 @@ proc vi_process_edit_cmd { w c k state } {
 	}
 	- -
 	k {
-	# Motion up one line.
+	    # Motion up one line.
 	    for { } {1} {
 		if {1 == $vi_state($w,pos_count)} {
 		    break
@@ -1382,7 +1382,7 @@ proc vi_process_edit_cmd { w c k state } {
 	    }
 	}
 	l {
-	# Motion one char right.
+	    # Motion one char right.
 	    set newindex [$w index [subst "insert + $vi_state($w,pos_count)c"]]
 	    if [$w compare $newindex > {end - 2c}] {
 		set newindex [$w index {end - 2c}]
@@ -1398,18 +1398,18 @@ proc vi_process_edit_cmd { w c k state } {
 	    if {!$vi_state($w,yank_flag)} {
 		if [$w compare $newindex == insert] {
 		    set vi_state($w,warn_flag) 1
-	    } else {
+		} else {
 		    $w mark set insert $newindex
 		}
 	    }
 	    vi_finish_cmd $w
 	}
 	n {
-	# Next command search in original direction.
+	    # Next command search in original direction.
 	    vi_finish_hsrch $w $c
 	}
 	p {
-	# Insert cut but after cursor
+	    # Insert cut but after cursor
 	    if [string length $vi_state($w,cut_buf)] {
 		$w edit separator
 		if [$w compare insert < {end - 2c}] {
@@ -1425,11 +1425,11 @@ proc vi_process_edit_cmd { w c k state } {
 	    }
 	}
 	r {
-	# Overwrite cmd_num chars.
+	    # Overwrite cmd_num chars.
 	    set vi_state($w,overwrite_flag) 1
 	}
 	s {
-	# Substitute cmd_num chars.
+	    # Substitute cmd_num chars.
 	    set newindex [$w index [subst "insert + $vi_state($w,cmd_count)c"]]
 	    if [$w compare $newindex > {end - 2c}] {
 		set newindex [$w index {end - 2c}]
@@ -1442,59 +1442,59 @@ proc vi_process_edit_cmd { w c k state } {
 	    vi_finish_cmd $w
 	}
 	t {
-	# Motion "to" an indicated char.
+	    # Motion "to" an indicated char.
 	    set vi_state($w,search_flag) "t"
 	}
 	u {
-	# Undo cmd_num edit actions.
+	    # Undo cmd_num edit actions.
 	    for {} {1} {
 		if {1 == $vi_state($w,cmd_count) || $caught} {
 		    break
-	    } else {
+		} else {
 		    set vi_state($w,cmd_count) [expr {$vi_state($w,cmd_count) - 1}]
-	    }
+		}
 	    } {
 		set caught [catch {$w edit undo}]
-	}
+	    }
 
 	    if {$caught} {
 		set vi_state($w,warn_flag) 1
-	}
+	    }
 	    vi_finish_cmd $w
 	}
 	w {
-	# Forwards motion to the beginning of the next word.
+	    # Forwards motion to the beginning of the next word.
 	    vi_word_search $w "w"
 	}
 	x {
-	# Delete cmd_count chars.
+	    # Delete cmd_count chars.
 	    set newindex [$w index [subst "insert + $vi_state($w,cmd_count)c"]]
 	    if [$w compare $newindex > {end - 2c}] {
 		set newindex [$w index {end - 2c}]
-	}
+	    }
 	    if [$w compare $newindex == insert] {
 		set vi_state($w,warn_flag) 1
 	    } else {
 		set vi_state($w,cut_buf) [$w get insert $newindex]
 		$w edit separator
 		$w delete insert $newindex
-	}
+	    }
 	    # Set delete_flag to indicate the buffer modification.
 	    set vi_state($w,delete_flag) 1
 	    vi_finish_cmd $w
 	}
 	y {
-	# Yank...
+	    # Yank...
 	    if { $vi_state($w,yank_flag) } {
-	    # "yy" means yank the entire line.
+		# "yy" means yank the entire line.
 		set vi_state($w,cut_buf) [$w get promptEnd {end - 2c}]
 		vi_finish_cmd $w
 	    } else {
 		set vi_state($w,yank_flag) 1
-	}
+	    }
 	}
 	~ {
-	# Switch character case.
+	    # Switch character case.
 	    set newindex [$w index [subst "insert + $vi_state($w,cmd_count)c"]]
 	    if [$w compare $newindex > {end - 2c}] {
 		set newindex [$w index {end - 2c}]
@@ -1513,7 +1513,7 @@ proc vi_process_edit_cmd { w c k state } {
 		    $w edit separator
 		    $w delete insert
 		    $w insert insert [string tolower $ch]
-	    } else {
+		} else {
 		    $w mark set insert {insert + 1c}
 		}
 	    }
@@ -1914,7 +1914,7 @@ proc set_text_key_bindings { id } {
 	    }
 	}
 	default
-	    -
+	-
 	emacs {
 	    bind $w <Escape> {
 		break
@@ -1968,7 +1968,7 @@ proc set_text_key_bindings { id } {
 	}
     }
 
-# Common Key Bindings
+    # Common Key Bindings
     bind $w <Control-a> "\
 	if {\$mged_gui($id,edit_style) == \"vi\"} {\
 	    first_char_in_line %W\

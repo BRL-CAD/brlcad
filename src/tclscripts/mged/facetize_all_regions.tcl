@@ -109,7 +109,7 @@ proc facetize_all_regions {filename} {
 		puts "expanding $reg"
 		expand_comb ${reg}_ $reg 0
 		puts "sub-facetizing $reg"
-#		facetize_failed_comb ${reg}_ $reg_fail $fail
+		#		facetize_failed_comb ${reg}_ $reg_fail $fail
 	    }
 	    2 { # previous failure
 		puts "$reg failed before"

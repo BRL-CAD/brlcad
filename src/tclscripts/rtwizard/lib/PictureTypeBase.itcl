@@ -85,10 +85,10 @@ namespace eval RtWizard {
 	protected {
 	    method rtCmd {objPage width height fb} {}
 	    method rtedgeCmd \
-		    {objPage fb width height \
-		    {overlay 0} \
-		    {occMode 0} \
-		    {occObjsPage {}}}  {}
+		{objPage fb width height \
+		     {overlay 0} \
+		     {occMode 0} \
+		     {occObjsPage {}}}  {}
 	    method hexToRGB {hexRGB} {}
 
 	    variable title
@@ -189,7 +189,7 @@ namespace eval RtWizard {
     #
     itcl::body PictureTypeBase::activate { } {
 	append msg "PictureTypeBase::activate called" \
-		" - should be overloaded by derived class."
+	    " - should be overloaded by derived class."
 	error $msg
     }
 
@@ -198,7 +198,7 @@ namespace eval RtWizard {
     #
     itcl::body PictureTypeBase::deactivate { } {
 	append msg "PictureTypeBase::deactivate called" \
-		" - should be overloaded by derived class."
+	    " - should be overloaded by derived class."
 	error $msg
     }
 
@@ -207,7 +207,7 @@ namespace eval RtWizard {
     #
     itcl::body PictureTypeBase::preview { } {
 	append msg "PictureTypeBase::preview called" \
-		" - should be overloaded by derived class."
+	    " - should be overloaded by derived class."
 	error $msg
     }
 
@@ -216,7 +216,7 @@ namespace eval RtWizard {
     #
     itcl::body PictureTypeBase::fullSize { } {
 	append msg "PictureTypeBase::fullSize called" \
-		" - should be overloaded by derived class."
+	    " - should be overloaded by derived class."
 	error $msg
     }
 
@@ -229,138 +229,138 @@ namespace eval RtWizard {
     #         because they differ for fullSize and preview
     #
     itcl::body PictureTypeBase::rtCmd \
-	    {objPage fb width height } {
-	#
-	# Get the page that contains the view information.
-	#
-	set viewPage [$::exp getViewPage]
+	{objPage fb width height } {
+	    #
+	    # Get the page that contains the view information.
+	    #
+	    set viewPage [$::exp getViewPage]
 
-	#
-	# Get the view info
-	#
-	set viewInfo [$viewPage getEyeModel]
+	    #
+	    # Get the view info
+	    #
+	    set viewInfo [$viewPage getEyeModel]
 
-	#
-	# Get the background color
-	#
-	set bgHex [$objPage getBackgroundColor]
-	set bg [hexToRGB $bgHex]
+	    #
+	    # Get the background color
+	    #
+	    set bgHex [$objPage getBackgroundColor]
+	    set bg [hexToRGB $bgHex]
 
-	#
-	# Get the object list, the file is global
-	#
-	set objects [$objPage getObjects]
+	    #
+	    # Get the object list, the file is global
+	    #
+	    set objects [$objPage getObjects]
 
-	#
-	# compute the aspect ratio. Note how floating point
-	# math is forced.
-	#
-	set ar [ expr $width.0 / $height.0 ]
+	    #
+	    # compute the aspect ratio. Note how floating point
+	    # math is forced.
+	    #
+	    set ar [ expr $width.0 / $height.0 ]
 
-	#
-	# Assemble the rt command - note that it is a
-	# full-blown script.
-	#
-	set cmd [list rt -M -R -F $fb -w $width \
-		-n $height -V $ar -A 0.9 \
-		-C [lindex $bg 0]/[lindex $bg 1]/[lindex $bg 2] \
-		$::RtWizard::dbFile]
+	    #
+	    # Assemble the rt command - note that it is a
+	    # full-blown script.
+	    #
+	    set cmd [list rt -M -R -F $fb -w $width \
+			 -n $height -V $ar -A 0.9 \
+			 -C [lindex $bg 0]/[lindex $bg 1]/[lindex $bg 2] \
+			 $::RtWizard::dbFile]
 
-	foreach obj $objects {
-	    lappend cmd $obj
+	    foreach obj $objects {
+		lappend cmd $obj
+	    }
+
+	    runRtCmd $cmd $viewInfo
 	}
-
-	runRtCmd $cmd $viewInfo
-    }
 
     #
     # rtedgeCmd - formats an rtedge command to generate a picture.
     #
     itcl::body PictureTypeBase::rtedgeCmd \
-	    {objPage fb width height \
-	    {overlay 0} \
-	    {occMode 0} \
-	    {occObjsPage {}}} {
-	#
-	# Get the page that contains the view information.
-	#
-	set viewPage [$::exp getViewPage]
+	{objPage fb width height \
+	     {overlay 0} \
+	     {occMode 0} \
+	     {occObjsPage {}}} {
+		 #
+		 # Get the page that contains the view information.
+		 #
+		 set viewPage [$::exp getViewPage]
 
-	#
-	# Get the view info
-	#
-	set viewInfo [$viewPage getEyeModel]
+		 #
+		 # Get the view info
+		 #
+		 set viewInfo [$viewPage getEyeModel]
 
-	#
-	# Get the edge color color
-	#
-	set lineHex [$objPage getLineColor]
-	set l [hexToRGB $lineHex]
+		 #
+		 # Get the edge color color
+		 #
+		 set lineHex [$objPage getLineColor]
+		 set l [hexToRGB $lineHex]
 
-	#
-	# Get the non-line color
-	#
-	set nonLineHex [$objPage getNonLineColor]
-	set nl [hexToRGB $nonLineHex]
+		 #
+		 # Get the non-line color
+		 #
+		 set nonLineHex [$objPage getNonLineColor]
+		 set nl [hexToRGB $nonLineHex]
 
-	#
-	# Get the object list, the file is global
-	#
-	set objects [$objPage getObjects]
+		 #
+		 # Get the object list, the file is global
+		 #
+		 set objects [$objPage getObjects]
 
-	#
-	# compute the aspect ratio. Note how floating point
-	# math is forced.
-	#
-	set ar [ expr $width.0 / $height.0 ]
+		 #
+		 # compute the aspect ratio. Note how floating point
+		 # math is forced.
+		 #
+		 set ar [ expr $width.0 / $height.0 ]
 
-	#
-	# Determine if region colors were requested, if so, use them.
-	# Otherwise, use the specified foreground colors.
-	#
-	if {[$objPage getRegionColorFlag] == "true"} {
-	    set fgMode [list set rc=1]
-	} else {
-	    set fgMode [list set fg=[lindex $l 0],[lindex $l 1],[lindex $l 2]]
-	}
+		 #
+		 # Determine if region colors were requested, if so, use them.
+		 # Otherwise, use the specified foreground colors.
+		 #
+		 if {[$objPage getRegionColorFlag] == "true"} {
+		     set fgMode [list set rc=1]
+		 } else {
+		     set fgMode [list set fg=[lindex $l 0],[lindex $l 1],[lindex $l 2]]
+		 }
 
-	#
-	# Assemble the rtedge command - note that it is a
-	# full-blown script.
-	#
-	if {$occMode != 0} {
-	    #
-	    # If required, get occlusion objects
-	    #
-	    set occObjects [$occObjsPage getObjects]
+		 #
+		 # Assemble the rtedge command - note that it is a
+		 # full-blown script.
+		 #
+		 if {$occMode != 0} {
+		     #
+		     # If required, get occlusion objects
+		     #
+		     set occObjects [$occObjsPage getObjects]
 
-	    set cmd [list rtedge -M -R -F $fb -w $width \
-		    -n $height -V $ar -A 0.9 \
-		    -c "$fgMode" \
-		    -c "set bg=[lindex $nl 0],[lindex $nl 1],[lindex $nl 2]" \
-		    -c "set om=$occMode" \
-		    -c "set oo=\"$occObjects\"" \
-		    $::RtWizard::dbFile]
-	} else {
+		     set cmd [list rtedge -M -R -F $fb -w $width \
+				  -n $height -V $ar -A 0.9 \
+				  -c "$fgMode" \
+				  -c "set bg=[lindex $nl 0],[lindex $nl 1],[lindex $nl 2]" \
+				  -c "set om=$occMode" \
+				  -c "set oo=\"$occObjects\"" \
+				  $::RtWizard::dbFile]
+		 } else {
 
-	    set cmd [list rtedge -M -R -F $fb -w $width \
-		    -n $height -V $ar -A 0.9 \
-		    -c "$fgMode" \
-		    -c "set bg=[lindex $nl 0],[lindex $nl 1],[lindex $nl 2]" \
-		    -c "set ov=$overlay" \
-		    $::RtWizard::dbFile]
-	}
+		     set cmd [list rtedge -M -R -F $fb -w $width \
+				  -n $height -V $ar -A 0.9 \
+				  -c "$fgMode" \
+				  -c "set bg=[lindex $nl 0],[lindex $nl 1],[lindex $nl 2]" \
+				  -c "set ov=$overlay" \
+				  $::RtWizard::dbFile]
+		 }
 
-	#
-	# Add the objects
-	#
-	foreach obj $objects {
-	    lappend cmd $obj
-	}
+		 #
+		 # Add the objects
+		 #
+		 foreach obj $objects {
+		     lappend cmd $obj
+		 }
 
-	runRtCmd $cmd $viewInfo
+		 runRtCmd $cmd $viewInfo
 
-    }
+	     }
 
 
     #
@@ -398,9 +398,9 @@ namespace eval RtWizard {
 	#
 	# Set up a callback for readable events, and wait!
 	#
-# 	fileevent $pipe readable [ list testRead $pipe ]
-#	fileevent $pipe writable [ list testWrite $pipe ]
-#	vwait ::waiting
+	# 	fileevent $pipe readable [ list testRead $pipe ]
+	#	fileevent $pipe writable [ list testWrite $pipe ]
+	#	vwait ::waiting
 	fconfigure $pipe -blocking true
 
 	catch "close $pipe" catchResult
@@ -420,7 +420,7 @@ namespace eval RtWizard {
 # TestRead - pipe fileevent callback
 #
 proc testRead {pipe} {
-	set ::waiting "Done"
+    set ::waiting "Done"
 }
 
 #

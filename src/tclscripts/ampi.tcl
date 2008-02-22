@@ -20,9 +20,9 @@
 #
 ###
 # This is a comment \
-/bin/echo "This is not a shell script"
+    /bin/echo "This is not a shell script"
 # This is a comment \
-exit
+    exit
 
 # make the pkgIndex.tcl
 if {![info exists argv]} {

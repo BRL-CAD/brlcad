@@ -56,7 +56,7 @@ proc build_edit_menu_all { type } {
 
     if {[opendb] == ""} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
-		"No database has been opened!" info 0 OK
+	    "No database has been opened!" info 0 OK
 	return
     }
 
@@ -68,9 +68,9 @@ proc build_edit_menu_all { type } {
     set paths [_mged_x -1]
     if {![llength $paths]} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
-		"No primitives are being displayed!"\
-		"No primitives are being displayed!"\
-		"" 0 OK
+	    "No primitives are being displayed!"\
+	    "No primitives are being displayed!"\
+	    "" 0 OK
 	return
     }
 
@@ -102,9 +102,9 @@ proc ray_build_edit_menu { type x y } {
 
     if {![llength $paths]} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
-		"Nothing was hit!"\
-		"Nothing was hit!"\
-		"" 0 OK
+	    "Nothing was hit!"\
+	    "Nothing was hit!"\
+	    "" 0 OK
 	return
     }
 
@@ -168,12 +168,12 @@ proc build_solid_menu { type id paths } {
     set mged_gui($id,edit_menu) $top
 
     bind_listbox $top <B1-Motion> \
-	    "set item \[get_listbox_entry %W %x %y\];\
+	"set item \[get_listbox_entry %W %x %y\];\
 	    solid_illum \$item"
     bind_listbox $top "<ButtonPress-1>" \
-	    "lbdcHack %W %x %y %t $id $type junkpath"
+	"lbdcHack %W %x %y %t $id $type junkpath"
     bind_listbox $top "<ButtonRelease-1>" \
-	    "%W selection clear 0 end; _mged_press reject"
+	"%W selection clear 0 end; _mged_press reject"
 }
 
 proc build_matrix_menu { id path } {
@@ -202,12 +202,12 @@ proc build_matrix_menu { id path } {
     set mged_gui($id,edit_menu) $top
 
     bind_listbox $top "<B1-Motion>" \
-	    "set path_pos \[%W index @%x,%y\];\
+	"set path_pos \[%W index @%x,%y\];\
 	    matrix_illum $path \$path_pos"
     bind_listbox $top "<ButtonPress-1>" \
-	    "lbdcHack %W %x %y %t $id m1 $path"
+	"lbdcHack %W %x %y %t $id m1 $path"
     bind_listbox $top "<ButtonRelease-1>" \
-	    "%W selection clear 0 end; _mged_press reject"
+	"%W selection clear 0 end; _mged_press reject"
 }
 
 # Local Variables:

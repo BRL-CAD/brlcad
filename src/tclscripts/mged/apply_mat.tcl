@@ -36,59 +36,59 @@
 # Returns a new tree with the matrix applied
 
 proc apply_mat_to_regions { tree mat } {
-	set op [lindex $tree 0]
-	switch -- $op {
-		l
-		{
-			set leaf [lindex $tree 1]
-			set new_leaf [db get $leaf]
-			set type [lindex $new_leaf 0]
-			if { $type != "comb" } {
-				puts "WARNING: encountered primitive ($leaf) above region level!!!, ignoring"
-				return $tree
-			}
-			if { [llength $tree] == 3 } {
-				set old_mat [lindex $tree 2]
-				set new_mat [mat_mul $mat $old_mat]
-			} else {
-				set new_mat $mat
-			}
-			set index [lsearch -exact $new_leaf "region"]
-			if { $index < 0 } {
-				error "ERROR: 'region' attribute missing from combination $leaf"
-			}
-			incr index
-			set region [lindex $new_leaf $index]
-			set index [lsearch -exact $new_leaf "tree"]
-			if { $index < 0 } {
-				error "ERROR: no tree for combination $leaf"
-			}
-			incr index
-			set sub_tree [lindex $new_leaf $index]
-			if { $region == "yes" } {
-				set new_tree [apply_mat_comb $sub_tree $new_mat]
-			} else {
-				set new_tree [apply_mat_to_regions $sub_tree $new_mat]
-			}
-			set new_leaf [lreplace $new_leaf $index $index $new_tree]
-			set command [concat db adjust $leaf [lrange $new_leaf 1 end]]
-			if { [catch $command ret] } {
-				error "ERROR: 'db adjust' failed for combination $leaf\n\t$ret"
-			}
-			return [list l $leaf]
-		}
-		- -
-		+ -
-		u -
-		n
-		{
-			set left [lindex $tree 1]
-			set right [lindex $tree 2]
-			set new_left [apply_mat_to_regions $left $mat]
-			set new_right [apply_mat_to_regions $right $mat]
-			return [list $op $new_left $new_right]
-		}
+    set op [lindex $tree 0]
+    switch -- $op {
+	l
+	{
+	    set leaf [lindex $tree 1]
+	    set new_leaf [db get $leaf]
+	    set type [lindex $new_leaf 0]
+	    if { $type != "comb" } {
+		puts "WARNING: encountered primitive ($leaf) above region level!!!, ignoring"
+		return $tree
+	    }
+	    if { [llength $tree] == 3 } {
+		set old_mat [lindex $tree 2]
+		set new_mat [mat_mul $mat $old_mat]
+	    } else {
+		set new_mat $mat
+	    }
+	    set index [lsearch -exact $new_leaf "region"]
+	    if { $index < 0 } {
+		error "ERROR: 'region' attribute missing from combination $leaf"
+	    }
+	    incr index
+	    set region [lindex $new_leaf $index]
+	    set index [lsearch -exact $new_leaf "tree"]
+	    if { $index < 0 } {
+		error "ERROR: no tree for combination $leaf"
+	    }
+	    incr index
+	    set sub_tree [lindex $new_leaf $index]
+	    if { $region == "yes" } {
+		set new_tree [apply_mat_comb $sub_tree $new_mat]
+	    } else {
+		set new_tree [apply_mat_to_regions $sub_tree $new_mat]
+	    }
+	    set new_leaf [lreplace $new_leaf $index $index $new_tree]
+	    set command [concat db adjust $leaf [lrange $new_leaf 1 end]]
+	    if { [catch $command ret] } {
+		error "ERROR: 'db adjust' failed for combination $leaf\n\t$ret"
+	    }
+	    return [list l $leaf]
 	}
+	- -
+	+ -
+	u -
+	n
+	{
+	    set left [lindex $tree 1]
+	    set right [lindex $tree 2]
+	    set new_left [apply_mat_to_regions $left $mat]
+	    set new_right [apply_mat_to_regions $right $mat]
+	    return [list $op $new_left $new_right]
+	}
+    }
 }
 
 #
@@ -100,31 +100,31 @@ proc apply_mat_to_regions { tree mat } {
 # Returns the modified tree
 
 proc apply_mat_comb { tree mat } {
-	set op [lindex $tree 0]
-	switch -- $op {
-		l
-		{
-			set leaf [lindex $tree 1]
-			if { [llength $tree] == 3 } {
-				set old_mat [lindex $tree 2]
-				set new_mat [mat_mul $mat $old_mat]
-			} else {
-				set new_mat $mat
-			}
-			return [list "l" $leaf $new_mat]
-		}
-		- -
-		+ -
-		u -
-		n
-		{
-			set left [lindex $tree 1]
-			set right [lindex $tree 2]
-			set new_left [apply_mat_comb $left $mat]
-			set new_right [apply_mat_comb $right $mat]
-			return [list $op $new_left $new_right]
-		}
+    set op [lindex $tree 0]
+    switch -- $op {
+	l
+	{
+	    set leaf [lindex $tree 1]
+	    if { [llength $tree] == 3 } {
+		set old_mat [lindex $tree 2]
+		set new_mat [mat_mul $mat $old_mat]
+	    } else {
+		set new_mat $mat
+	    }
+	    return [list "l" $leaf $new_mat]
 	}
+	- -
+	+ -
+	u -
+	n
+	{
+	    set left [lindex $tree 1]
+	    set right [lindex $tree 2]
+	    set new_left [apply_mat_comb $left $mat]
+	    set new_right [apply_mat_comb $right $mat]
+	    return [list $op $new_left $new_right]
+	}
+    }
 }
 
 #
@@ -148,86 +148,86 @@ proc apply_mat_comb { tree mat } {
 # Returns TCL_ERROR or TCL_OK
 
 proc apply_mat { args } {
-	set usage "Usage:\n\tapply_mat \[-primitives | -regions | -top\] matrix object1 \[object2 object3 ...\]"
-	set argc [llength $args]
-	if { $argc < 1 } {
-		error $usage
+    set usage "Usage:\n\tapply_mat \[-primitives | -regions | -top\] matrix object1 \[object2 object3 ...\]"
+    set argc [llength $args]
+    if { $argc < 1 } {
+	error $usage
+    }
+    set mat {}
+    set objs {}
+    set depth "top"
+    set index 0
+    while { $index < $argc } {
+	set opt [lindex $args $index]
+	switch -- $opt {
+	    "-primitives" {
+		set depth "primitives"
+		incr index
+	    }
+	    "-regions" {
+		set depth "regions"
+		incr index
+	    }
+	    "-top" {
+		set depth "top"
+		incr index
+	    }
+	    default {
+		break
+	    }
 	}
-	set mat {}
-	set objs {}
-	set depth "top"
-	set index 0
-	while { $index < $argc } {
-		set opt [lindex $args $index]
-		switch -- $opt {
-			"-primitives" {
-				set depth "primitives"
-				incr index
-			}
-			"-regions" {
-				set depth "regions"
-				incr index
-			}
-			"-top" {
-				set depth "top"
-				incr index
-			}
-			default {
-				break
-			}
-		}
-	}
-	if { $index >= $argc } {
-		error "No matrix or objects specified!!!\n$usage"
-	}
-	set mat [lindex $args $index]
-	incr index
-	if { $index >= $argc } {
-		error "No objects specified!!!!\n$usage"
+    }
+    if { $index >= $argc } {
+	error "No matrix or objects specified!!!\n$usage"
+    }
+    set mat [lindex $args $index]
+    incr index
+    if { $index >= $argc } {
+	error "No objects specified!!!!\n$usage"
+    }
+
+    foreach obj [lrange $args $index end] {
+	if { [catch "db get $obj" obj_db] } {
+	    puts $obj_db
+	    puts "WARNING: $obj does not exist, ignoring!!"
+	    continue
 	}
 
-	foreach obj [lrange $args $index end] {
-		if { [catch "db get $obj" obj_db] } {
-			puts $obj_db
-			puts "WARNING: $obj does not exist, ignoring!!"
-			continue
-		}
-
-		set type [lindex $obj_db 0]
-		if { $type != "comb" } {
-			# this is a primitive, so just apply the matrix
-			# using a temporary combination and a "push"
-			set tmp [make_name ____]
-			db put $tmp comb region no tree [list l $obj $mat]
-			push $tmp
-			kill $tmp
-			continue
-		}
-
-		# The object is a combination
-		set indx [lsearch -exact $obj_db tree]
-		if { $indx < 0 } {
-			error "$obj does not have a Boolean tree!!!!"
-		}
-		incr indx
-		set obj_tree [lindex $obj_db $indx]
-
-		switch $depth {
-			"primitives" {
-				set new_tree [apply_mat_comb $obj_tree $mat]
-				db adjust $obj tree $new_tree
-				xpush $obj
-			}
-			"regions" {
-				set new_tree [apply_mat_to_regions $obj_tree $mat]
-				db adjust $obj tree $new_tree
-			}
-			"top" {
-				set new_tree [apply_mat_comb $obj_tree $mat]
-				db adjust $obj tree $new_tree
-			}
-		}
+	set type [lindex $obj_db 0]
+	if { $type != "comb" } {
+	    # this is a primitive, so just apply the matrix
+	    # using a temporary combination and a "push"
+	    set tmp [make_name ____]
+	    db put $tmp comb region no tree [list l $obj $mat]
+	    push $tmp
+	    kill $tmp
+	    continue
 	}
+
+	# The object is a combination
+	set indx [lsearch -exact $obj_db tree]
+	if { $indx < 0 } {
+	    error "$obj does not have a Boolean tree!!!!"
+	}
+	incr indx
+	set obj_tree [lindex $obj_db $indx]
+
+	switch $depth {
+	    "primitives" {
+		set new_tree [apply_mat_comb $obj_tree $mat]
+		db adjust $obj tree $new_tree
+		xpush $obj
+	    }
+	    "regions" {
+		set new_tree [apply_mat_to_regions $obj_tree $mat]
+		db adjust $obj tree $new_tree
+	    }
+	    "top" {
+		set new_tree [apply_mat_comb $obj_tree $mat]
+		db adjust $obj tree $new_tree
+	    }
+	}
+    }
 }
 
 # Local Variables:

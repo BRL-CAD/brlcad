@@ -93,7 +93,7 @@ proc ::sdialogs::entrydialog {pathName args} {
 
     itk_component add entryfield {
 	::iwidgets::entryfield $csite.entryfield \
-		-labelvariable [::itcl::scope itk_option(-label)]
+	    -labelvariable [::itcl::scope itk_option(-label)]
     } {
 	keep -textbackground -labelpos -labelfont
 	rename -width -textwidth textWidth Width

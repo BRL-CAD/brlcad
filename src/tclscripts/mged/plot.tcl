@@ -35,7 +35,7 @@ proc init_plotTool { id } {
 
     if {[opendb] == ""} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
-		"No database has been opened!" info 0 OK
+	    "No database has been opened!" info 0 OK
 	return
     }
 
@@ -86,9 +86,9 @@ proc init_plotTool { id } {
     }
 
     entry $top.fileE -width 12 -textvar pl_control($id,file)\
-	    -state $file_state
+	-state $file_state
     hoc_register_data $top.fileE "File Name"\
-	    {{summary "Enter a filename specifying where
+	{{summary "Enter a filename specifying where
 to put the UNIX-plot of the displayed
 geometry."} {see_also pl}}
     radiobutton $top.fileRB -text "File Name" -anchor w\
@@ -181,9 +181,9 @@ proc do_plot { id } {
 	if {$pl_control($id,file) != ""} {
 	    if [file exists $pl_control($id,file)] {
 		set result [cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
-			"Overwrite $pl_control($id,file)?"\
-			"Overwrite $pl_control($id,file)?"\
-			"" 0 OK Cancel]
+				"Overwrite $pl_control($id,file)?"\
+				"Overwrite $pl_control($id,file)?"\
+				"" 0 OK Cancel]
 
 		if {$result} {
 		    return
@@ -191,9 +191,9 @@ proc do_plot { id } {
 	    }
 	} else {
 	    cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
-		    "No file name specified!"\
-		    "No file name specified!"\
-		    "" 0 OK
+		"No file name specified!"\
+		"No file name specified!"\
+		"" 0 OK
 
 	    return
 	}
@@ -202,9 +202,9 @@ proc do_plot { id } {
     } else {
 	if {$pl_control($id,filter) == ""} {
 	    cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
-		    "No filter specified!"\
-		    "No filter specified!"\
-		    "" 0 OK
+		"No filter specified!"\
+		"No filter specified!"\
+		"" 0 OK
 
 	    return
 	}

@@ -70,14 +70,14 @@ proc rcc-cap {args} {
 	    set end [lindex $args 2]
 	}
     } else {
-       set height [expr [bu_units_conversion $mged_display(units)] *[lindex $args 2]]
-       set end [lindex $args 3]
+	set height [expr [bu_units_conversion $mged_display(units)] *[lindex $args 2]]
+	set end [lindex $args 3]
     }
-  #Choices for $end are either "b" (base) or "t" (top)
+    #Choices for $end are either "b" (base) or "t" (top)
     if {$end != "b" && $end != "t"} {
 	error "bad end '$end' : must be b or t"
     }
-  #Set Variables
+    #Set Variables
     set hv [db get $rccname H]
     set uhv [vunitize $hv]
     set ellheight [vscale $uhv $height]
@@ -93,7 +93,7 @@ proc rcc-cap {args} {
     }
     set Alist [db get $rccname $vec1]
     set Blist [db get $rccname $vec2]
-  #Create ELL
+    #Create ELL
     db put $newname ell V "$vertex" A "$Alist" B "$Blist" C "$ellheight"
     e $newname
     return $newname
@@ -124,11 +124,11 @@ proc rcc-tgc {args} {
     } else {
 	set end [lindex $args 5]
     }
-  #Choices for $end are either "b" (base) or "t" (top)
+    #Choices for $end are either "b" (base) or "t" (top)
     if {$end != "b" && $end != "t"} {
 	error "bad end '$end' : must be b or t"
     }
-  #Set Variables
+    #Set Variables
     if {$end == "t"} {
 	set vec1 C
 	set vec2 D
@@ -141,15 +141,15 @@ proc rcc-tgc {args} {
     set vector1 [db get $rccname $vec1]
     set vector2 [db get $rccname $vec2]
     set scalar .000001
-#    set apex [list $ptx $pty $ptz]
+    #    set apex [list $ptx $pty $ptz]
     set apex ""
     foreach pt {$ptx $pty $ptz} {
 	set result [expr $pt*[bu_units_conversion $mged_display(units)]]
 	lappend apex $result
     }
     set height [vsub2 $apex $vertex]
-  #Create TGC
-  #in order to create properly, convert to display units
+    #Create TGC
+    #in order to create properly, convert to display units
     foreach param {vertex height vector1 vector2} val "{$vertex} {$height} {$vector1} {$vector2}" {
 	set result ""
 	foreach coord $val {
@@ -179,12 +179,12 @@ proc tor-rcc {args} {
     }
     set torname [lindex $args 0]
     set newname [lindex $args 1]
-  #Get TOR coordinates
+    #Get TOR coordinates
     foreach {tvx tvy tvz} [db get $torname V] {}
     foreach {thx thy thz} [db get $torname H] {}
     set radius1 [db get $torname r_a]
     set radius2 [db get $torname r_h]
-  #Set RCC coordinates
+    #Set RCC coordinates
     foreach coord {rvx rvy rvz} vval {$tvx $tvy $tvz} hval {$thx $thy $thz} {
 	set $coord [expr $vval + $hval * $radius2]
     }
@@ -192,8 +192,8 @@ proc tor-rcc {args} {
     foreach coord {rhx rhy rhz} hval {$thx $thy $thz} {
 	set $coord [expr $scale * $hval]
     }
-  #Create RCC
-  #in order to create properly, have to use display units
+    #Create RCC
+    #in order to create properly, have to use display units
     foreach param {rvx rvy rvz rhx rhy rhz radius1} val "$rvx $rvy $rvz $rhx $rhy $rhz $radius1" {
 	set $param [expr $val/[bu_units_conversion $mged_display(units)]]
     }
@@ -217,14 +217,14 @@ proc rcc-tor {args} {
     }
     set rccname [lindex $args 0]
     set newname [lindex $args 1]
-  #Get RCC coordinates
+    #Get RCC coordinates
     foreach {rvx rvy rvz} [db get $rccname V] {}
     foreach {rax ray raz} [db get $rccname A] {}
     foreach {rhx rhy rhz} [db get $rccname H] {}
-  #Set TOR coordinates
+    #Set TOR coordinates
     set radius1 [expr sqrt($rax*$rax + $ray*$ray + $raz*$raz)]
     set radius2 [expr sqrt($rhx*$rhx + $rhy*$rhy + $rhz*$rhz)*.5]
-  #TOR not made if RCC is at least twice as high as it is wide
+    #TOR not made if RCC is at least twice as high as it is wide
     if {$radius2 >= $radius1} {
 	error "RCC is at least twice as high as it is wide -- \n \
 		\t radius2 > radius1 : TOR not made!"
@@ -232,8 +232,8 @@ proc rcc-tor {args} {
     foreach coord {tvx tvy tvz} vval {$rvx $rvy $rvz} hval {$rhx $rhy $rhz} {
 	set $coord [expr $vval + $hval*.5]
     }
-  #Create TOR
-  #in order to create properly, have to use display units
+    #Create TOR
+    #in order to create properly, have to use display units
     foreach param {tvx tvy tvz rhx rhy rhz radius1 radius2} val "$tvx $tvy $tvz $rhx $rhy $rhz $radius1 $radius2" {
 	set $param [expr $val/[bu_units_conversion $mged_display(units)]]
     }
@@ -265,15 +265,15 @@ proc rcc-blend {args} {
     } else {
 	set end [lindex $args 3]
     }
-  #Choices for $end are either "b" (base) or "t" (top)
+    #Choices for $end are either "b" (base) or "t" (top)
     if {$end != "b" && $end != "t"} {
 	error "bad end '$end': must be b or t"
     }
-  #Get RCC coordinates
+    #Get RCC coordinates
     foreach {rvx rvy rvz} [db get $rccname1 V] {}
     foreach {rhx rhy rhz} [db get $rccname1 H] {}
     foreach {rax ray raz} [db get $rccname1 A] {}
-  #Set Variables
+    #Set Variables
     set amag [expr $thickness + (sqrt($rax*$rax + $ray*$ray + $raz*$raz))]
     set hmag [expr sqrt($rhx*$rhx + $rhy*$rhy + $rhz*$rhz)]
     set num [expr $hmag-$thickness]
@@ -287,22 +287,22 @@ proc rcc-blend {args} {
 	    set $coord [expr $vval + $hval * $thickness/$hmag]
 	}
     }
-  #Create TOR
+    #Create TOR
     set torname [make_name $newname]
     set hscale [expr $thickness/$hmag]
-  #In order to make TOR properly, have to convert parameters to display units
+    #In order to make TOR properly, have to convert parameters to display units
     foreach param {tvx tvy tvz rhx rhy rhz amag thickness} val "$tvx $tvy $tvz $rhx $rhy $rhz $amag $thickness" {
 	set $param [expr $val/[bu_units_conversion $mged_display(units)]]
     }
     in $torname tor $tvx $tvy $tvz $rhx $rhy $rhz $amag $thickness
-  #Create RCC2
+    #Create RCC2
     set rccname2 [make_name $newname]
-  #In order to make TOR properly, have to convert parameters to display units
+    #In order to make TOR properly, have to convert parameters to display units
     foreach param {rvx rvy rvz } val "$rvx $rvy $rvz" {
 	set $param [expr $val/[bu_units_conversion $mged_display(units)]]
     }
     in $rccname2 rcc $rvx $rvy $rvz [expr $hscale*$rhx] [expr $hscale*$rhy] [expr $hscale*$rhz] $amag
-  #Create Flange
+    #Create Flange
     r $newname u $rccname2 - $torname - $rccname1
     d $torname $rccname2
     e $newname
@@ -317,12 +317,12 @@ proc rcc-blend {args} {
 #
 #
 proc rpp-cap {args} {
-#If orient = 0, the peaks of the ARB6 are drawn at the midpoint between the
-# first and second points and the midpoint between the third and fourth points
-# of the specified face
-#If orient = 1, the peaks of the ARB6 are drawn at the midpoint between the
-# first and fourth points and the midpoint between the second and third points
-# of the specified face
+    #If orient = 0, the peaks of the ARB6 are drawn at the midpoint between the
+    # first and second points and the midpoint between the third and fourth points
+    # of the specified face
+    #If orient = 1, the peaks of the ARB6 are drawn at the midpoint between the
+    # first and fourth points and the midpoint between the second and third points
+    # of the specified face
     global mged_display
     set usage "Usage: rpp-cap rppname newname face height \[0|1\] \n \
 	       \t(create a cap (arb6) at a face of an rpp)"
@@ -339,11 +339,11 @@ proc rpp-cap {args} {
     } else {
 	set orient [lindex $args 4]
     }
-  #Choices for orient are either "0" or "1"
+    #Choices for orient are either "0" or "1"
     if {$orient != 0 && $orient != 1} {
 	error "bad orient '$orient': must be 0 or 1"
     }
-  #Set Constants
+    #Set Constants
     foreach pt {a b c d} index {0 1 2 3} {
 	set $pt [string index $face $index]
     }
@@ -351,12 +351,12 @@ proc rpp-cap {args} {
 	set $vert [eval db get $rppname V$pt]
     }
 
-  #Determine Normal
+    #Determine Normal
     set u1 [vunitize [vsub $V4 $V3]]
     set u2 [vunitize [vsub $V2 $V3]]
     set normal [vunitize [vcross $u1 $u2]]
     set hvector [vscale $normal $height]
-  #Determine Midpoint
+    #Determine Midpoint
     if {$orient == 0} {
 	set rise1 [vadd2 $V1 $V2]
 	set rise2 [vadd2 $V3 $V4]
@@ -379,7 +379,7 @@ proc rpp-cap {args} {
     foreach coord {r2x r2y r2z} index {0 1 2} {
 	set $coord [expr [lindex $rise2 $index] * .5]
     }
-  #Choose the first point (1-8) not on the specified face
+    #Choose the first point (1-8) not on the specified face
     set pt 1
     set index 0
     while {$index <= 3 && $pt <= 8} {
@@ -390,22 +390,22 @@ proc rpp-cap {args} {
 	    incr index
 	}
     }
-  #Determine direction of hvector
-  #Form vector from a point on the specified face and a point not on the face
+    #Determine direction of hvector
+    #Form vector from a point on the specified face and a point not on the face
     set direct [vunitize [vsub $V1 [db get $rppname V$pt]]]
     set dp [vdot $normal $direct]
     if {$dp < 0} {
 	set hvector [vreverse $hvector]
     }
-  #Set ARB6 coordinates
+    #Set ARB6 coordinates
     foreach coord {r1x r1y r1z} value {$r1x $r1y $r1z} index {0 1 2} {
 	set $coord [expr $value + [lindex $hvector $index]]
     }
     foreach coord {r2x r2y r2z} value {$r2x $r2y $r2z} index {0 1 2} {
 	set $coord [expr $value + [lindex $hvector $index]]
     }
-  #Create ARB6
-  #in order to create properly, convert to display units
+    #Create ARB6
+    #in order to create properly, convert to display units
     foreach param {P1 P2 P3 P4} val "{$P1} {$P2} {$P3} {$P4}" {
 	set result ""
 	foreach coord $val {
@@ -441,19 +441,19 @@ proc rpp-arch {args} {
     set rppname [lindex $args 0]
     set newname [lindex $args 1]
     set face [lindex $args 2]
-  #Set Constants
+    #Set Constants
     foreach pt {a b c d} index {0 1 2 3} {
 	set $pt [string index $face $index]
     }
     foreach vert {V1 V2 V3 V4} pt {$a $b $c $d} {
 	set $vert [eval db get $rppname V$pt]
     }
-  #Set Variables
+    #Set Variables
     set height  [vsub2 $V2 $V1]
     set vertex [vscale [vadd2 $V4 $V1] .5]
     set radius [vmagnitude [vsub2 $vertex $V4]]
-  #Create RCC
-  #in order to create properly, have to use display units
+    #Create RCC
+    #in order to create properly, have to use display units
     foreach param {vertex height radius} val "{$vertex} {$height} {$radius}" {
 	set result ""
 	foreach coord $val {
@@ -483,22 +483,22 @@ proc sph-part {args} {
     set sphname1 [lindex $args 0]
     set sphname2 [lindex $args 1]
     set newname [lindex $args 2]
-  #Get SPH coordinates
+    #Get SPH coordinates
     foreach {vx1 vy1 vz1} [db get $sphname1 V] {}
     foreach {vx2 vy2 vz2} [db get $sphname2 V] {}
     foreach {ax1 ay1 az1} [db get $sphname1 A] {}
     foreach {ax2 ay2 az2} [db get $sphname2 A] {}
-  #Set Variables
+    #Set Variables
     set radius1 [expr sqrt($ax1*$ax1 + $ay1*$ay1 + $az1*$az1)]
     set radius2 [expr sqrt($ax2*$ax2 + $ay2*$ay2 + $az2*$az2)]
     set hx [expr $vx2-$vx1]
     set hy [expr $vy2-$vy1]
     set hz [expr $vz2-$vz1]
-  #in order to create properly, convert to display units
+    #in order to create properly, convert to display units
     foreach param {vx1 vy1 vz1 hx hy hz radius1 radius2} val "$vx1 $vy1 $vz1 $hx $hy $hz $radius1 $radius2" {
 	set $param [expr $val/[bu_units_conversion $mged_display(units)]]
     }
-  #Create PART
+    #Create PART
     in $newname part $vx1 $vy1 $vz1 $hx $hy $hz $radius1 $radius2
     return $newname
 }

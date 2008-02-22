@@ -347,17 +347,17 @@ namespace eval ArcherCore {
 	variable mObjViewMode 0
 
 	variable mCadCommands { \
-	    cd clear copy cp dbExpand delete draw exit \
-	    g get group kill ls move mv ocenter orotate \
-	    oscale otranslate packTree pwd rm units \
-	    whichid who unpackTree Z zap
+				    cd clear copy cp dbExpand delete draw exit \
+				    g get group kill ls move mv ocenter orotate \
+				    oscale otranslate packTree pwd rm units \
+				    whichid who unpackTree Z zap
 	}
 	variable mMgedCommands { \
-	    bot2pipe \
-	    adjust attr blast c comb concat copyeval E erase_all \
-	    ev find hide killall killtree \
-	    make_bb make_name mvall push put r report track \
-	    unhide vdraw
+				     bot2pipe \
+				     adjust attr blast c comb concat copyeval E erase_all \
+				     ev find hide killall killtree \
+				     make_bb make_name mvall push put r report track \
+				     unhide vdraw
 	}
 	variable mDbSpecificCommands {}
 	variable mUnwrappedDbCommands {}
@@ -575,11 +575,11 @@ Popup Menu    Right or Ctrl-Left
     # horizontal panes
     itk_component add hpane {
 	::iwidgets::panedwindow $itk_interior.hpane \
-		-orient horizontal \
-		-thickness 5 \
-		-sashborderwidth 1 \
-		-sashcursor sb_v_double_arrow \
-		-showhandle 0
+	    -orient horizontal \
+	    -thickness 5 \
+	    -sashborderwidth 1 \
+	    -sashcursor sb_v_double_arrow \
+	    -showhandle 0
     } {}
 
     $itk_component(hpane) add topView
@@ -644,11 +644,11 @@ Popup Menu    Right or Ctrl-Left
     set parent [$itk_component(hpane) childsite topView]
     itk_component add vpane {
 	::iwidgets::panedwindow $parent.vpane \
-		-orient vertical \
-		-thickness 5 \
-		-sashborderwidth 1 \
-		-sashcursor sb_h_double_arrow \
-		-showhandle 0
+	    -orient vertical \
+	    -thickness 5 \
+	    -sashborderwidth 1 \
+	    -sashcursor sb_h_double_arrow \
+	    -showhandle 0
     } {}
 
     $itk_component(vpane) add hierarchyView
@@ -928,7 +928,7 @@ Popup Menu    Right or Ctrl-Left
 
     updateTheme
 
-#    eval itk_initialize $args
+    #    eval itk_initialize $args
 }
 
 # ------------------------------------------------------------
@@ -1038,27 +1038,27 @@ Popup Menu    Right or Ctrl-Left
 ::itcl::body ArcherCore::buildCanvasMenubar {}  {
     # View Menu
     $itk_component(canvas_menu) add menubutton view \
-	    -text "View" -menu {
-	options -tearoff 1
+	-text "View" -menu {
+	    options -tearoff 1
 
-	command front -label "Front" \
+	    command front -label "Front" \
 		-helpstr "Set view to front"
-	command rear -label "Rear" \
+	    command rear -label "Rear" \
 		-helpstr "Set view to rear"
-	command port -label "Port" \
+	    command port -label "Port" \
 		-helpstr "Set view to port/left"
-	command starboard -label "Starboard" \
+	    command starboard -label "Starboard" \
 		-helpstr "Set view to starboard/right"
-	command top -label "Top" \
+	    command top -label "Top" \
 		-helpstr "Set view to top"
-	command bottom -label "Bottom" \
+	    command bottom -label "Bottom" \
 		-helpstr "Set view to bottom"
-	separator sep0
-	command 35,25 -label "35,25" \
+	    separator sep0
+	    command 35,25 -label "35,25" \
 		-helpstr "Set view to az=35, el=25"
-	command 45,45 -label "45,45" \
+	    command 45,45 -label "45,45" \
 		-helpstr "Set view to az=45, el=45"
-    }
+	}
 
     $itk_component(canvas_menu) menuconfigure .view.front \
 	-command [::itcl::code $this doAe 0 0] \
@@ -1087,31 +1087,31 @@ Popup Menu    Right or Ctrl-Left
 
     # Background Menu
     $itk_component(canvas_menu) add menubutton background \
-	    -text "Background" -menu {
-	options -tearoff 1
+	-text "Background" -menu {
+	    options -tearoff 1
 
-	command black -label "Black" \
+	    command black -label "Black" \
 		-helpstr "Set background color black"
-	command grey -label "Grey" \
+	    command grey -label "Grey" \
 		-helpstr "Set background color grey"
-	command white -label "White" \
+	    command white -label "White" \
 		-helpstr "Set background color white"
-	command lblue -label "Light Blue" \
+	    command lblue -label "Light Blue" \
 		-helpstr "Set background color light blue"
-	command dblue -label "Dark Blue" \
+	    command dblue -label "Dark Blue" \
 		-helpstr "Set background color dark blue"
-    }
+	}
 
     $itk_component(canvas_menu) menuconfigure .background.black \
-	    -command [::itcl::code $this backgroundColor 0 0 0]
+	-command [::itcl::code $this backgroundColor 0 0 0]
     $itk_component(canvas_menu) menuconfigure .background.grey \
-	    -command [::itcl::code $this backgroundColor 100 100 100]
+	-command [::itcl::code $this backgroundColor 100 100 100]
     $itk_component(canvas_menu) menuconfigure .background.white \
-	    -command [::itcl::code $this backgroundColor 255 255 255]
+	-command [::itcl::code $this backgroundColor 255 255 255]
     $itk_component(canvas_menu) menuconfigure .background.lblue \
-	    -command [::itcl::code $this backgroundColor 0 198 255]
+	-command [::itcl::code $this backgroundColor 0 198 255]
     $itk_component(canvas_menu) menuconfigure .background.dblue \
-	    -command [::itcl::code $this backgroundColor 0 0 160]
+	-command [::itcl::code $this backgroundColor 0 0 160]
 
     # Raytrace Menu
     if {!$mViewOnly} {
@@ -1235,14 +1235,14 @@ Popup Menu    Right or Ctrl-Left
     set parent [$itk_component(vpane) childsite hierarchyView]
     itk_component add tree_frm {
 	::frame $parent.tree_frm \
-		-bd 1 \
-		-relief sunken
+	    -bd 1 \
+	    -relief sunken
     } {
     }
 
     itk_component add tree_title {
 	::label $itk_component(tree_frm).tree_title \
-		-text "Hierarchy" -font $mFontText
+	    -text "Hierarchy" -font $mFontText
     } {
     }
 
@@ -1259,14 +1259,14 @@ Popup Menu    Right or Ctrl-Left
 
     itk_component add tree {
 	::swidgets::tree $itk_component(tree_frm).tree \
-		-background white \
-		-selectfill 1 \
-		-selectbackground black \
-		-selectforeground $SystemWindow \
-		-querycmd [::itcl::code $this fillTree %n] \
-		-selectcmd [::itcl::code $this selectNode %n] \
-		-dblselectcmd [::itcl::code $this dblClick %n] \
-		-textmenuloadcommand [::itcl::code $this loadMenu]
+	    -background white \
+	    -selectfill 1 \
+	    -selectbackground black \
+	    -selectforeground $SystemWindow \
+	    -querycmd [::itcl::code $this fillTree %n] \
+	    -selectcmd [::itcl::code $this selectNode %n] \
+	    -dblselectcmd [::itcl::code $this dblClick %n] \
+	    -textmenuloadcommand [::itcl::code $this loadMenu]
     } {
     }
 
@@ -1329,38 +1329,38 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(rtcntrl) update_fb_mode
 
     # create view axes control panel
-#    itk_component add vac {
-#	ViewAxesControl $itk_interior.vac -mged $itk_component(mged)
-#    } {
-#	usual
-#    }
+    #    itk_component add vac {
+    #	ViewAxesControl $itk_interior.vac -mged $itk_component(mged)
+    #    } {
+    #	usual
+    #    }
 
     # create model axes control panel
-#    itk_component add mac {
-#	ModelAxesControl $itk_interior.mac -mged $itk_component(mged)
-#    } {
-#	usual
-#    }
+    #    itk_component add mac {
+    #	ModelAxesControl $itk_interior.mac -mged $itk_component(mged)
+    #    } {
+    #	usual
+    #    }
 
-#    wm protocol $itk_component(vac) WM_DELETE_WINDOW "$itk_component(vac) hide"
-#    wm protocol $itk_component(mac) WM_DELETE_WINDOW "$itk_component(mac) hide"
+    #    wm protocol $itk_component(vac) WM_DELETE_WINDOW "$itk_component(vac) hide"
+    #    wm protocol $itk_component(mac) WM_DELETE_WINDOW "$itk_component(mac) hide"
 
-#    $itk_component(mged) configure -unitsCallback "$itk_component(mac) updateControlPanel"
+    #    $itk_component(mged) configure -unitsCallback "$itk_component(mac) updateControlPanel"
     $itk_component(mged) configure -paneCallback [::itcl::code $this updateActivePane]
 
     # Override axes hot keys in the Mged widget
-#    bind [$itk_component(mged) component ul component dm] m [::itcl::code $this toggleModelAxes ul]
-#    bind [$itk_component(mged) component ur component dm] m [::itcl::code $this toggleModelAxes ur]
-#    bind [$itk_component(mged) component ll component dm] m [::itcl::code $this toggleModelAxes ll]
-#    bind [$itk_component(mged) component lr component dm] m [::itcl::code $this toggleModelAxes lr]
-#    bind [$itk_component(mged) component ul component dm] T [::itcl::code $this toggleModelAxesTicks ul]
-#    bind [$itk_component(mged) component ur component dm] T [::itcl::code $this toggleModelAxesTicks ur]
-#    bind [$itk_component(mged) component ll component dm] T [::itcl::code $this toggleModelAxesTicks ll]
-#    bind [$itk_component(mged) component lr component dm] T [::itcl::code $this toggleModelAxesTicks lr]
-#    bind [$itk_component(mged) component ul component dm] v [::itcl::code $this toggleViewAxes ul]
-#    bind [$itk_component(mged) component ur component dm] v [::itcl::code $this toggleViewAxes ur]
-#    bind [$itk_component(mged) component ll component dm] v [::itcl::code $this toggleViewAxes ll]
-#    bind [$itk_component(mged) component lr component dm] v [::itcl::code $this toggleViewAxes lr]
+    #    bind [$itk_component(mged) component ul component dm] m [::itcl::code $this toggleModelAxes ul]
+    #    bind [$itk_component(mged) component ur component dm] m [::itcl::code $this toggleModelAxes ur]
+    #    bind [$itk_component(mged) component ll component dm] m [::itcl::code $this toggleModelAxes ll]
+    #    bind [$itk_component(mged) component lr component dm] m [::itcl::code $this toggleModelAxes lr]
+    #    bind [$itk_component(mged) component ul component dm] T [::itcl::code $this toggleModelAxesTicks ul]
+    #    bind [$itk_component(mged) component ur component dm] T [::itcl::code $this toggleModelAxesTicks ur]
+    #    bind [$itk_component(mged) component ll component dm] T [::itcl::code $this toggleModelAxesTicks ll]
+    #    bind [$itk_component(mged) component lr component dm] T [::itcl::code $this toggleModelAxesTicks lr]
+    #    bind [$itk_component(mged) component ul component dm] v [::itcl::code $this toggleViewAxes ul]
+    #    bind [$itk_component(mged) component ur component dm] v [::itcl::code $this toggleViewAxes ur]
+    #    bind [$itk_component(mged) component ll component dm] v [::itcl::code $this toggleViewAxes ll]
+    #    bind [$itk_component(mged) component lr component dm] v [::itcl::code $this toggleViewAxes lr]
 
 
     # Other bindings for mged
@@ -1417,8 +1417,8 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body ArcherCore::closeMged {} {
     catch {delete object $itk_component(rtcntrl)}
-#    catch {delete object $itk_component(vac)}
-#    catch {delete object $itk_component(mac)}
+    #    catch {delete object $itk_component(vac)}
+    #    catch {delete object $itk_component(mac)}
     catch {delete object $itk_component(mged)}
 }
 
@@ -1443,9 +1443,9 @@ Popup Menu    Right or Ctrl-Left
     #XXX This is not quite right, but it gets us
     #    enough of the behavior we want (for the moment).
     set target [tk_getSaveFile -parent $itk_interior \
-	    -initialdir $mLastSelectedDir \
-	    -title "Create a New Database" \
-	    -filetypes $typelist]
+		    -initialdir $mLastSelectedDir \
+		    -title "Create a New Database" \
+		    -filetypes $typelist]
 
     if {$target == ""} {
 	return
@@ -1477,9 +1477,9 @@ Popup Menu    Right or Ctrl-Left
     }
 
     set target [tk_getOpenFile -parent $itk_interior \
-	    -initialdir $mLastSelectedDir \
-	    -title "Open Database" \
-	    -filetypes $typelist]
+		    -initialdir $mLastSelectedDir \
+		    -title "Open Database" \
+		    -filetypes $typelist]
 
     if {$target == ""} {
 	return
@@ -1633,7 +1633,7 @@ Popup Menu    Right or Ctrl-Left
     set node ""
     foreach t $tags {
 	if {[string compare [string trim $t] "leaf"] != 0 &&
-	[string compare [string trim $t] "branch"] != 0} {
+	    [string compare [string trim $t] "branch"] != 0} {
 	    set node $t
 	}
     }
@@ -1666,12 +1666,12 @@ Popup Menu    Right or Ctrl-Left
     # build the shift grip mode toolbar
     itk_component add viewToolbar {
 	::iwidgets::toolbar $itk_component(east).viewToolbar \
-		-helpvariable [::itcl::scope mStatusStr] \
-		-balloonfont "{CG Times} 8" \
-		-balloonbackground \#ffffdd \
-		-borderwidth 1 \
-		-orient vertical \
-		-state disabled
+	    -helpvariable [::itcl::scope mStatusStr] \
+	    -balloonfont "{CG Times} 8" \
+	    -balloonbackground \#ffffdd \
+	    -borderwidth 1 \
+	    -orient vertical \
+	    -state disabled
     } {
 	# XXX If uncommented, the following line hoses things
 	#usual
@@ -2029,9 +2029,9 @@ Popup Menu    Right or Ctrl-Left
 
     if {![info exists itk_component(mged)]} {
 	set color [getTkColor \
-		[lindex $mBackground 0] \
-		[lindex $mBackground 1] \
-		[lindex $mBackground 2]]
+		       [lindex $mBackground 0] \
+		       [lindex $mBackground 1] \
+		       [lindex $mBackground 2]]
 	$itk_component(canvas) configure -background $color
     } else {
 	eval dbCmd bgAll $mBackground
@@ -2164,10 +2164,10 @@ Popup Menu    Right or Ctrl-Left
 		    if {[lsearch $subcmd $mUnwrappedDbCommands] == -1 &&
 			[lsearch $subcmd $mDbSpecificCommands] == -1 &&
 			[lsearch $subcmd $mCadCommands] == -1} {
-			 error "ArcherCore::cmd: unrecognized command - $subcmd"
-		     } else {
-			 return
-		     }
+			error "ArcherCore::cmd: unrecognized command - $subcmd"
+		    } else {
+			return
+		    }
 		} else {
 		    return [eval list $mCadCommands $mDbSpecificCommands $mUnwrappedDbCommands]
 		}
@@ -2399,8 +2399,8 @@ Popup Menu    Right or Ctrl-Left
 	{"All Files" {*}}
     }
     set filename [tk_getSaveFile -parent $itk_interior \
-	    -title "Export Geometry to PNG" \
-	    -initialdir $mLastSelectedDir -filetypes $typelist]
+		      -title "Export Geometry to PNG" \
+		      -initialdir $mLastSelectedDir -filetypes $typelist]
 
     if {$filename != ""} {
 	set mLastSelectedDir [file dirname $finename]
@@ -2830,11 +2830,11 @@ Popup Menu    Right or Ctrl-Left
 	}
 
 	$menu add radiobutton -label "Off" \
-		-indicatoron 1 -value -1 -variable [::itcl::scope mRenderMode] \
-		-command [::itcl::code $this render $node -1 1 1]
+	    -indicatoron 1 -value -1 -variable [::itcl::scope mRenderMode] \
+	    -command [::itcl::code $this render $node -1 1 1]
     } else {
 	$menu add command -label "Wireframe" \
-		-command [::itcl::code $this render $node 0 1 1]
+	    -command [::itcl::code $this render $node 0 1 1]
 
 	$menu add command -label "Shaded (Mode 1)" \
 	    -command [::itcl::code $this render $node 1 1 1]
@@ -2848,17 +2848,17 @@ Popup Menu    Right or Ctrl-Left
 	}
 
 	$menu add command -label "Off" \
-		-command [::itcl::code $this render $node -1 1 1]
+	    -command [::itcl::code $this render $node -1 1 1]
     }
 
-#XXX need to copy over
-#    $menu add separator
-#    $menu add command -label "Copy" \
-#	    -command [::itcl::code $this alterObj "Copy" $mSelectedComp]
-#    $menu add command -label "Rename" \
-#	    -command [::itcl::code $this alterObj "Rename" $mSelectedComp]
-#    $menu add command -label "Delete" \
-#	    -command [::itcl::code $this deleteObj $mSelectedComp]
+    #XXX need to copy over
+    #    $menu add separator
+    #    $menu add command -label "Copy" \
+	#	    -command [::itcl::code $this alterObj "Copy" $mSelectedComp]
+    #    $menu add command -label "Rename" \
+	#	    -command [::itcl::code $this alterObj "Rename" $mSelectedComp]
+    #    $menu add command -label "Delete" \
+	#	    -command [::itcl::code $this deleteObj $mSelectedComp]
 
 
     $menu add separator
@@ -2901,31 +2901,31 @@ Popup Menu    Right or Ctrl-Left
 	    -background $SystemButtonFace
 
 	$trans add command -label "0%" \
-		-command [::itcl::code $this setTransparency $node 1.0]
+	    -command [::itcl::code $this setTransparency $node 1.0]
 	#$trans add command -label "25%" \
-	#	-command [::itcl::code $this setTransparency $node 0.75]
+	    #	-command [::itcl::code $this setTransparency $node 0.75]
 	#$trans add command -label "50%" \
-	#	-command [::itcl::code $this setTransparency $node 0.5]
+	    #	-command [::itcl::code $this setTransparency $node 0.5]
 	#$trans add command -label "75%" \
-	#	-command [::itcl::code $this setTransparency $node 0.25]
+	    #	-command [::itcl::code $this setTransparency $node 0.25]
 	$trans add command -label "10%" \
-		-command [::itcl::code $this setTransparency $node 0.9]
+	    -command [::itcl::code $this setTransparency $node 0.9]
 	$trans add command -label "20%" \
-		-command [::itcl::code $this setTransparency $node 0.8]
+	    -command [::itcl::code $this setTransparency $node 0.8]
 	$trans add command -label "30%" \
-		-command [::itcl::code $this setTransparency $node 0.7]
+	    -command [::itcl::code $this setTransparency $node 0.7]
 	$trans add command -label "40%" \
-		-command [::itcl::code $this setTransparency $node 0.6]
+	    -command [::itcl::code $this setTransparency $node 0.6]
 	$trans add command -label "50%" \
-		-command [::itcl::code $this setTransparency $node 0.5]
+	    -command [::itcl::code $this setTransparency $node 0.5]
 	$trans add command -label "60%" \
-		-command [::itcl::code $this setTransparency $node 0.4]
+	    -command [::itcl::code $this setTransparency $node 0.4]
 	$trans add command -label "70%" \
-		-command [::itcl::code $this setTransparency $node 0.3]
+	    -command [::itcl::code $this setTransparency $node 0.3]
 	$trans add command -label "80%" \
-		-command [::itcl::code $this setTransparency $node 0.2]
+	    -command [::itcl::code $this setTransparency $node 0.2]
 	$trans add command -label "90%" \
-		-command [::itcl::code $this setTransparency $node 0.1]
+	    -command [::itcl::code $this setTransparency $node 0.1]
     }
 
     # set up bindings for status
@@ -3456,15 +3456,15 @@ Popup Menu    Right or Ctrl-Left
     switch -- $state {
 	"open" {
 	    $itk_component(tree_expand) configure -image [image create photo -file \
-		    [file join $mImgDir Themes $mTheme "pane_blank.png"]] \
-		    -state disabled
-#	    $itk_component(vpane) show hierarchyView
+							      [file join $mImgDir Themes $mTheme "pane_blank.png"]] \
+		-state disabled
+	    #	    $itk_component(vpane) show hierarchyView
 	}
 	"close" {
 	    $itk_component(tree_expand) configure -image [image create photo -file \
-		    [file join $mImgDir Themes $mTheme "pane_expand.png"]] \
-		    -state normal
-#	    $itk_component(vpane) hide hierarchyView
+							      [file join $mImgDir Themes $mTheme "pane_expand.png"]] \
+		-state normal
+	    #	    $itk_component(vpane) hide hierarchyView
 	}
     }
 }
@@ -3491,7 +3491,7 @@ Popup Menu    Right or Ctrl-Left
     switch -- $state {
 	"open" {
 	    $itk_component(vpane) paneconfigure attrView \
-		    -minimum 200
+		-minimum 200
 	    set fraction3 $mVPaneToggle5
 	    switch -- [$itk_component(tree_expand) cget -state] {
 		"normal" {
@@ -3507,7 +3507,7 @@ Popup Menu    Right or Ctrl-Left
 	"close" {
 	    # adjust minimum size to zero
 	    $itk_component(vpane) paneconfigure attrView \
-		    -minimum 0
+		-minimum 0
 
 	    set fraction3 0
 	    switch -- [$itk_component(tree_expand) cget -state] {
@@ -3531,13 +3531,13 @@ Popup Menu    Right or Ctrl-Left
     switch -- $state {
 	"open" {
 	    $itk_component(attr_expand) configure -image [image create photo -file \
-		    [file join $mImgDir Themes $mTheme "pane_blank.png"]] \
-		    -state disabled
+							      [file join $mImgDir Themes $mTheme "pane_blank.png"]] \
+		-state disabled
 	}
 	"close" {
 	    $itk_component(attr_expand) configure -image [image create photo -file \
-		    [file join $mImgDir Themes $mTheme "pane_collapse.png"]] \
-		    -state normal
+							      [file join $mImgDir Themes $mTheme "pane_collapse.png"]] \
+		-state normal
 	}
     }
 }
@@ -3763,7 +3763,7 @@ Popup Menu    Right or Ctrl-Left
 
 	    foreach i $mi {
 		lappend tobjects [lindex $lsItems $i]
-		}
+	    }
 	} else {
 	    set path [file dirname $obj]
 	    incr len -1
@@ -4059,7 +4059,7 @@ Popup Menu    Right or Ctrl-Left
     } elseif {$len == 18} {
 	set tree "l [lindex $line 1] [lrange $line 2 end]"
     } else {
-#	error "packTree: malformed line - $line"
+	#	error "packTree: malformed line - $line"
     }
 
     for {set n 1} {$n < $nlines} {incr n} {
@@ -4076,7 +4076,7 @@ Popup Menu    Right or Ctrl-Left
 	} elseif {$len == 18} {
 	    set tree "[lindex $line 0] [list $tree] [list [list l [lindex $line 1] [lrange $line 2 end]]]"
 	} else {
-#	    error "packTree: malformed line - $line"
+	    #	    error "packTree: malformed line - $line"
 	    continue
 	}
     }
@@ -4145,20 +4145,20 @@ Popup Menu    Right or Ctrl-Left
 
     switch -- $mZClipMode \
 	$ZCLIP_SMALL_CUBE { \
-	    $itk_component(mged) zclipAll 1; \
-	    $itk_component(mged) boundsAll {-4096 4095 -4096 4095 -4096 4095}; \
-	} \
+				$itk_component(mged) zclipAll 1; \
+				$itk_component(mged) boundsAll {-4096 4095 -4096 4095 -4096 4095}; \
+			    } \
 	$ZCLIP_MEDIUM_CUBE { \
-	    $itk_component(mged) zclipAll 1; \
-	    $itk_component(mged) boundsAll {-8192 8191 -8192 8191 -8192 8191}; \
-	} \
+				 $itk_component(mged) zclipAll 1; \
+				 $itk_component(mged) boundsAll {-8192 8191 -8192 8191 -8192 8191}; \
+			     } \
 	$ZCLIP_LARGE_CUBE { \
-	    $itk_component(mged) zclipAll 1; \
-	    $itk_component(mged) boundsAll {-16384 16363 -16384 16363 -16384 16363}; \
-	} \
+				$itk_component(mged) zclipAll 1; \
+				$itk_component(mged) boundsAll {-16384 16363 -16384 16363 -16384 16363}; \
+			    } \
 	$ZCLIP_NONE { \
-	    $itk_component(mged) zclipAll 0; \
-	}
+			  $itk_component(mged) zclipAll 0; \
+		      }
 }
 
 
@@ -4200,7 +4200,7 @@ Popup Menu    Right or Ctrl-Left
     } {}
     $itk_component($name\Info) insert 0.0 $info
     wm geometry $itk_component($name) $size
-#    wm overrideredirect $itk_component($name) 1
+    #    wm overrideredirect $itk_component($name) 1
 
     after idle "$itk_component($name\Info) configure -state disabled"
     after idle "$itk_component($name) center"

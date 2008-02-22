@@ -151,7 +151,7 @@
 }
 
 ::itcl::body Dm::destructor {} {
-#    $tkwin listen -1
+    #    $tkwin listen -1
     rename $tkwin ""
 
     catch {delete object $help}
@@ -586,7 +586,7 @@ if {$tcl_platform(os) != "Windows NT"} {
 
 ::itcl::body Dm::handle_configure {} {
     $itk_component(dm) configure
-#    [namespace tail $itk_component(dm)] configure
+    #    [namespace tail $itk_component(dm)] configure
 
     set itk_option(-dmsize) [$itk_component(dm) size]
     set width [lindex $itk_option(-dmsize) 0]
@@ -599,7 +599,7 @@ if {$tcl_platform(os) != "Windows NT"} {
 
 ::itcl::body Dm::changeType {type} {
     if {$type != $priv_type} {
-#	$itk_component(dm) listen -1
+	#	$itk_component(dm) listen -1
 
 	# the close method no longer exists
 	#$itk_component(dm) close
@@ -679,7 +679,7 @@ if {$tcl_platform(os) != "Windows NT"} {
 }
 
 ::itcl::body Dm::helpInit {} {
-    set help [cadwidgets::Help #auto]
+    set help [cadwidgets::Help \#auto]
 
     $help add png		{{file} {Dump contents of window to a png file}}
 }

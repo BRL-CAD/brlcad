@@ -202,7 +202,7 @@ proc init_comb { id } {
 
     if {[opendb] == ""} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
-		"No database has been opened!" info 0 OK
+	    "No database has been opened!" info 0 OK
 	return
     }
 
@@ -320,25 +320,25 @@ proc init_comb { id } {
 			  -text "Show Shader" \
 			  -command "toggle_bool_shade_frame $id Bool"]
     if { 0 } {
-    set bool_shade_mb [menubutton $top.region_inherit_frame.bool_shade_menuB \
-			   -text "Select View" \
-			   -indicatoron true \
-			   -relief raised]
+	set bool_shade_mb [menubutton $top.region_inherit_frame.bool_shade_menuB \
+			       -text "Select View" \
+			       -indicatoron true \
+			       -relief raised]
 
-    # create menu for above menubutton
-    menu $bool_shade_mb.menu -tearoff false
-    $bool_shade_mb.menu add command \
-	-label "Show Boolean" \
-	-command "toggle_bool_shade_frame $id Bool"
-    $bool_shade_mb.menu add command \
-	-label "Show Shader" \
-	-command "toggle_bool_shade_frame $id Shade"
-    $bool_shade_mb configure -menu $bool_shade_mb.menu
+	# create menu for above menubutton
+	menu $bool_shade_mb.menu -tearoff false
+	$bool_shade_mb.menu add command \
+	    -label "Show Boolean" \
+	    -command "toggle_bool_shade_frame $id Bool"
+	$bool_shade_mb.menu add command \
+	    -label "Show Shader" \
+	    -command "toggle_bool_shade_frame $id Shade"
+	$bool_shade_mb configure -menu $bool_shade_mb.menu
 
-    # help for above menubutton
-    set hoc_data { { summary "Use this button to select whether the Boolean
+	# help for above menubutton
+	set hoc_data { { summary "Use this button to select whether the Boolean
 expression or the Shader parameters is displayed" } }
-    hoc_register_data $bool_shade_mb "Select View" $hoc_data
+	hoc_register_data $bool_shade_mb "Select View" $hoc_data
     }
 
     set hoc_data { { summary "Use this button to select whether the Boolean
@@ -361,9 +361,9 @@ contain many different materials." } }
 
     # create menubutton for selecting combination
     menubutton $top.nameMB -relief raised -bd 2\
-	    -menu $top.nameMB.m -indicatoron 1
+	-menu $top.nameMB.m -indicatoron 1
     hoc_register_data $top.nameMB "Combination Selection"\
-	    { { summary "This pops up a menu of methods for selecting
+	{ { summary "This pops up a menu of methods for selecting
 a combination name." } }
 
     # create menu for above menubutton
@@ -371,10 +371,10 @@ a combination name." } }
 
     # add menu items
     $top.nameMB.m add command -label "Select From All Displayed"\
-	    -command "winset \$mged_gui($id,active_dm); build_comb_menu_all_displayed"
+	-command "winset \$mged_gui($id,active_dm); build_comb_menu_all_displayed"
     hoc_register_menu_data "Combination Selection Method" "Select From All Displayed"\
-	    "Select Combination From All Displayed"\
-	    { { summary "This pops up a listbox containing the combinations
+	"Select Combination From All Displayed"\
+	{ { summary "This pops up a listbox containing the combinations
 currently being displayed in the geometry window. The
 user can select from among the combinations listed here.
 Note - When selecting items from this listbox, a left buttonpress
@@ -382,10 +382,10 @@ highlights the combination in question until the button is
 released. To select a combination, double click with the left
 mouse button." } }
     $top.nameMB.m add command -label "Select Along Ray"\
-	    -command "winset \$mged_gui($id,active_dm); set mouse_behavior c"
+	-command "winset \$mged_gui($id,active_dm); set mouse_behavior c"
     hoc_register_menu_data "Combination Selection Method" "Select Along Ray"\
-	    "Select Combination Along Ray"\
-	    { { summary "This method allows the user to use the
+	"Select Combination Along Ray"\
+	{ { summary "This method allows the user to use the
 mouse to fire a ray at the combination of interest.
 If only one combination is hit, that combination is
 selected. If nothing is hit the user can simply fire
@@ -397,29 +397,29 @@ the combination in question until the button is
 released. To select a combination, double click with
 the left mouse button." } }
     $top.nameMB.m add command -label "Select From All"\
-	    -command "build_comb_menu_all"
+	-command "build_comb_menu_all"
     hoc_register_menu_data "Combination Selection Method" "Select From All"\
-	    "Select Combination From All"\
-	    { { summary "This pops up a listbox containing all the
+	"Select Combination From All"\
+	{ { summary "This pops up a listbox containing all the
 combinations in the database. The user can select
 from among the combinations listed here. Note - To select
 a combination, double click with the left mouse button." } }
     $top.nameMB.m add command -label "Select From All Regions"\
-	    -command "build_comb_menu_all_regions"
+	-command "build_comb_menu_all_regions"
     hoc_register_menu_data "Combination Selection Method" "Select From All Regions"\
-	    "Select Combination From All Regions"\
-	    { { summary "This pops up a listbox containing all the
+	"Select Combination From All Regions"\
+	{ { summary "This pops up a listbox containing all the
 regions in the database. The user can select
 from among the regions listed here. Note - To select
 a region, double click with the left mouse button." } }
     $top.nameMB.m add command -label "Autoname"\
-	    -command "set comb_control($id,name) \[_mged_make_name comb@\]"
+	-command "set comb_control($id,name) \[_mged_make_name comb@\]"
     hoc_register_menu_data "Combination Selection Method" "Autoname"\
-	    "Automatically generate a combination name."\
-	    { { summary "This automatically generates a combination
+	"Automatically generate a combination name."\
+	{ { summary "This automatically generates a combination
 name of the form 'comb@' where '@' represents
 the counter used by make_name." }
-	      { see_also "make_name" } }
+	    { see_also "make_name" } }
 
     # create label for region id
     label $top.idL -text "Region Id:" -anchor e
@@ -482,7 +482,7 @@ then the region is considered to be composed of
     # create label for color
     label $top.colorL -text "Color" -anchor e
     hoc_register_data $top.colorL "Color"\
-	    { { summary "Material color is used by the ray tracer
+	{ { summary "Material color is used by the ray tracer
 when rendering. It is also used by MGED
 when determining what color to use when
 drawing an object" } }
@@ -491,9 +491,9 @@ drawing an object" } }
     # $top.colorF is the name of the container created by color_entry_build
     # that contains the entry and menubutton for specifying a color
     color_entry_build $top color comb_control($id,color)\
-	    "color_entry_chooser $id $top color \"Combination Color\"\
+	"color_entry_chooser $id $top color \"Combination Color\"\
 	    comb_control $id,color"\
-	    12 $comb_control($id,color) not_rt
+	12 $comb_control($id,color) not_rt
 
     # create "shader" label
     label $top.shaderL -text "Shader" -anchor e
@@ -514,9 +514,9 @@ GUI will automatically be updated." } }
 
     # create menubutton to select from all the shaders
     menubutton $top.shaderMB -relief raised -bd 2\
-	    -menu $top.shaderMB.m -indicatoron 1
+	-menu $top.shaderMB.m -indicatoron 1
     hoc_register_data $top.shaderMB "Menu of Shaders"\
-	    { { summary "This pops up a menu of shader types.
+	{ { summary "This pops up a menu of shader types.
 Selecting a shader from the menu will
 reconfigure the shader's GUI to take on
 the form of the selected shader type." } }
@@ -524,52 +524,52 @@ the form of the selected shader type." } }
     # create menu for above menubutton
     menu $top.shaderMB.m -title "Shader" -tearoff 0
     $top.shaderMB.m add command -label plastic \
-	    -command "comb_shader_gui $id plastic"
+	-command "comb_shader_gui $id plastic"
     hoc_register_menu_data "Shader" plastic "Shader - Plastic" \
-	    { { summary "Set shader parameters to make this object appear as plastic." } }
+	{ { summary "Set shader parameters to make this object appear as plastic." } }
 
     # add all the shaders to the above menu
     $top.shaderMB.m add command -label mirror \
-	    -command "comb_shader_gui $id mirror"
+	-command "comb_shader_gui $id mirror"
     hoc_register_menu_data "Shader" mirror "Shader - Mirror" \
-	    { { summary "Set shader parameters to make this object appear as a mirror." } }
+	{ { summary "Set shader parameters to make this object appear as a mirror." } }
     $top.shaderMB.m add command -label glass \
-	    -command "comb_shader_gui $id glass"
+	-command "comb_shader_gui $id glass"
     hoc_register_menu_data "Shader" glass "Shader - Glass" \
-	    { { summary "Set shader parameters to make this object appear as glass." } }
+	{ { summary "Set shader parameters to make this object appear as glass." } }
 
 
     $top.shaderMB.m add command -label light \
-	    -command "comb_shader_gui $id light"
+	-command "comb_shader_gui $id light"
     hoc_register_menu_data "Shader" light "Shader - Light" \
-	    { { summary "Set shader parameters to make this object appear as a light source." } }
+	{ { summary "Set shader parameters to make this object appear as a light source." } }
 
 
     $top.shaderMB.m add command -label "texture (color)" \
-	    -command "comb_shader_gui $id texture"
+	-command "comb_shader_gui $id texture"
     hoc_register_menu_data "Shader" "texture (color)" "Shader - Texture (color)"\
-	    { { summary "Map a color texture on this object." } }
+	{ { summary "Map a color texture on this object." } }
     $top.shaderMB.m add command -label "texture (b/w)" \
-	    -command "comb_shader_gui $id bwtexture"
+	-command "comb_shader_gui $id bwtexture"
     hoc_register_menu_data "Shader" "texture (b/w)" "Shader - Texture (b/w)" \
-	    { { summary "Map a black and white texture on this object." } }
+	{ { summary "Map a black and white texture on this object." } }
     $top.shaderMB.m add command -label "bump map" \
-	    -command "comb_shader_gui $id bump"
+	-command "comb_shader_gui $id bump"
     hoc_register_menu_data "Shader" "bump map" "Shader - Bump" \
-		{ { summary "Apply a bump map to perturb the surface normals of this object." } }
+	{ { summary "Apply a bump map to perturb the surface normals of this object." } }
     $top.shaderMB.m add command -label "checker" \
-	    -command "comb_shader_gui $id checker"
+	-command "comb_shader_gui $id checker"
     hoc_register_menu_data "Shader" "checker" "Shader - Checker" \
-		{ { summary "texture map a checkerboard pattern on this object." } }
+	{ { summary "texture map a checkerboard pattern on this object." } }
     $top.shaderMB.m add command -label "test map" \
-	    -command "comb_shader_gui $id testmap"
+	-command "comb_shader_gui $id testmap"
     hoc_register_menu_data "Shader" "test map" "Shader - testmap" \
-		{ { summary "Map a red and blue gradient on this object proportional to 'uv'\n\
+	{ { summary "Map a red and blue gradient on this object proportional to 'uv'\n\
 			texture map coordinates." } }
     $top.shaderMB.m add command -label "fake star pattern" \
-	    -command "comb_shader_gui $id fakestar"
+	-command "comb_shader_gui $id fakestar"
     hoc_register_menu_data "Shader" "fake star pattern" "Shader - fakestar" \
-		{ { summary "Map a fake star field on this object." } }
+	{ { summary "Map a fake star field on this object." } }
     $top.shaderMB.m add command -label "cloud" \
 	-command "comb_shader_gui $id cloud"
     hoc_register_menu_data "Shader" "cloud" "Shader - cloud" \
@@ -623,8 +623,8 @@ or group." } }
 
     # create text widget to hold the Boolean expression
     text $top.combT -relief sunken -bd 2 -width 40 -height 10\
-	    -yscrollcommand "$top.combS set" -setgrid true \
-	    -tabs {3c}
+	-yscrollcommand "$top.combS set" -setgrid true \
+	-tabs {3c}
     hoc_register_data $top.combT "Edit Boolean Expression" $hoc_data
 
     # may need a vertical scrollbar for complex expressions
@@ -632,8 +632,8 @@ or group." } }
 
     # create "Is Region" checkbutton
     checkbutton $top.isRegionCB -relief raised -text "Is Region"\
-	    -offvalue No -onvalue Yes -variable comb_control($id,isRegion)\
-	    -command "comb_toggle_isRegion $id"
+	-offvalue No -onvalue Yes -variable comb_control($id,isRegion)\
+	-command "comb_toggle_isRegion $id"
     hoc_register_data $top.isRegionCB "Is Region" \
 	{ { summary "Toggle the region flag on/off. If the
 region flag is toggled on \(i.e. checkbutton
@@ -648,9 +648,9 @@ of the same material\)." } }
 
     # create "Inherit" checkbutton
     checkbutton $top.inheritCB -relief raised -text "Inherit"\
-	    -offvalue No -onvalue Yes -variable comb_control($id,inherit)
+	-offvalue No -onvalue Yes -variable comb_control($id,inherit)
     hoc_register_data $top.inheritCB "Inherit"\
-	    { { summary "Toggle inheritance on/off. If inheritance
+	{ { summary "Toggle inheritance on/off. If inheritance
 is on, everything in the group takes on
 the characteristics of the group. Note -
 setting the inheritance for a region has
@@ -660,25 +660,25 @@ region\)." } }
 
     # create the control buttons (OK, Apply, ...)
     button $top.okB -relief raised -text "OK"\
-	    -command "comb_ok $id $top"
+	-command "comb_ok $id $top"
     hoc_register_data $top.okB "OK"\
-	    { { summary "Apply the data in the \"Combination Editor\"
+	{ { summary "Apply the data in the \"Combination Editor\"
 to the combination then close the
 \"Combination Editor\"." } }
     button $top.applyB -relief raised -text "Apply"\
-	    -command "comb_apply $id"
+	-command "comb_apply $id"
     hoc_register_data $top.applyB "Apply"\
-	    { { summary "Apply the data in the \"Combination Editor\"
+	{ { summary "Apply the data in the \"Combination Editor\"
 to the combination." } }
     button $top.resetB -relief raised -text "Reset"\
-	    -command "comb_reset $id"
+	-command "comb_reset $id"
     hoc_register_data $top.resetB "Reset"\
-	    { { summary "Reset the \"Combination Editor\" with data
+	{ { summary "Reset the \"Combination Editor\" with data
 from the combination." } }
     button $top.dismissB -relief raised -text "Dismiss" \
-	    -command "comb_dismiss $id $top"
+	-command "comb_dismiss $id $top"
     hoc_register_data $top.dismissB "Dismiss" \
-	    { { summary "Dismiss (close) the \"Combination Editor\"." } }
+	{ { summary "Dismiss (close) the \"Combination Editor\"." } }
 
     # put name label, entry, and menu button in "name_stuff" frame
     grid $top.nameE $top.nameMB -sticky "ew" -in $top.name_entry_and_menu_frame
@@ -709,13 +709,13 @@ from the combination." } }
 
     # put id_los_air_mater into the "Boolean" frame
     grid $top.id_los_air_mater -in $bool_frame \
-	     -padx $comb_control($id,padx) \
-	     -pady $comb_control($id,pady) \
-	     -sticky new -row 0 -column 0
+	-padx $comb_control($id,padx) \
+	-pady $comb_control($id,pady) \
+	-sticky new -row 0 -column 0
     grid $top.bool_expr_frame -in $bool_frame \
-	     -padx $comb_control($id,padx) \
-	     -pady $comb_control($id,pady) \
-	     -sticky nsew -row 1 -column 0
+	-padx $comb_control($id,padx) \
+	-pady $comb_control($id,pady) \
+	-sticky nsew -row 1 -column 0
     grid columnconfigure $bool_frame 0 -weight 1
     grid rowconfigure $bool_frame 0 -weight 0
     grid rowconfigure $bool_frame 1 -weight 1
@@ -723,21 +723,21 @@ from the combination." } }
     # put the color label and the frame built by
     # "color_entry_build" into "color_frame"
     grid $top.colorL \
-	    -row 0 -column 0 \
-	    -sticky "e" \
-	    -in $top.color_frame \
-	    -pady $comb_control($id,pady)
+	-row 0 -column 0 \
+	-sticky "e" \
+	-in $top.color_frame \
+	-pady $comb_control($id,pady)
     grid $top.colorF \
-	    -row 0 -column 1 \
-	    -sticky "w" \
-	    -in $top.color_frame \
-	    -pady $comb_control($id,pady)
+	-row 0 -column 1 \
+	-sticky "w" \
+	-in $top.color_frame \
+	-pady $comb_control($id,pady)
 
     # puts shader entry widget and shader selector menubutton into the
     # "shader_entry_and_menu_frame"
     grid $top.shaderE $top.shaderMB \
-	    -sticky "ew" \
-	    -in $top.shader_entry_and_menu_frame
+	-sticky "ew" \
+	-in $top.shader_entry_and_menu_frame
     grid columnconfigure $top.shader_entry_and_menu_frame 0 -weight 1
 
     # combine the above frame and the shader label
@@ -754,10 +754,10 @@ from the combination." } }
 
     # puts the above frame in the "shader_top_frame"
     grid $top.shader_label_entry_frame \
-	    -sticky "new" \
-	    -in $top.shader_top_frame\
-	    -padx $comb_control($id,padx) \
-	    -pady $comb_control($id,pady)
+	-sticky "new" \
+	-in $top.shader_top_frame\
+	-padx $comb_control($id,padx) \
+	-pady $comb_control($id,pady)
 
     grid rowconfigure $top.shader_top_frame 0 -weight 0
     grid rowconfigure $top.shader_top_frame 1 -weight 1
@@ -765,15 +765,15 @@ from the combination." } }
 
     # puts color frame into "Shader" labeledframe
     grid $top.color_frame -in $shade_frame \
-	     -padx $comb_control($id,padx) \
-	     -pady $comb_control($id,pady) \
-	     -sticky new -row 0 -column 0
+	-padx $comb_control($id,padx) \
+	-pady $comb_control($id,pady) \
+	-sticky new -row 0 -column 0
 
     # add the actual shader frame to the "Shader" labeledframe
     grid $top.shader_top_frame -in $shade_frame \
-	     -padx $comb_control($id,padx) \
-	     -pady $comb_control($id,pady) \
-	     -sticky nsew -row 1 -column 0
+	-padx $comb_control($id,padx) \
+	-pady $comb_control($id,pady) \
+	-sticky nsew -row 1 -column 0
 
     grid rowconfigure $shade_frame 0 -weight 0
     grid rowconfigure $shade_frame 1 -weight 1
@@ -785,17 +785,17 @@ from the combination." } }
     # put the display selection menubutton, the "Is Region" checkbutton,
     # and the "Inherit" checkbutton in the "region_inherit_frame"
     grid $bool_shade_b \
-	    -row 0 -column 0 \
-	    -sticky "w" \
-	    -in $top.region_inherit_frame
+	-row 0 -column 0 \
+	-sticky "w" \
+	-in $top.region_inherit_frame
     grid $top.isRegionCB \
-	    -row 0 -column 2 \
-	    -sticky "nse" \
-	    -in $top.region_inherit_frame
+	-row 0 -column 2 \
+	-sticky "nse" \
+	-in $top.region_inherit_frame
     grid $top.inheritCB \
-	    -row 0 -column 3 \
-	    -sticky "nse" \
-	    -in $top.region_inherit_frame
+	-row 0 -column 3 \
+	-sticky "nse" \
+	-in $top.region_inherit_frame
     grid columnconfigure $top.region_inherit_frame 1 -weight 1
     grid rowconfigure $top.region_inherit_frame 0 -weight 0
 
@@ -811,35 +811,35 @@ from the combination." } }
 
     # put the control buttons into the "control_buttons_frame"
     grid $top.okB $top.applyB x $top.resetB x $top.dismissB -sticky "ew"\
-	    -in $top.control_buttons_frame -pady $comb_control($id,pady)
+	-in $top.control_buttons_frame -pady $comb_control($id,pady)
     grid columnconfigure $top.control_buttons_frame 2 -weight 1
     grid columnconfigure $top.control_buttons_frame 4 -weight 1
 
     # grid the remaining frames
     grid $top.name_stuff \
-	 -sticky "ew" \
-	 -padx $comb_control($id,padx) \
-	 -pady $comb_control($id,pady) \
-	 -row 0 -column 0
+	-sticky "ew" \
+	-padx $comb_control($id,padx) \
+	-pady $comb_control($id,pady) \
+	-row 0 -column 0
 
     grid $top.region_inherit_frame \
-	 -padx $comb_control($id,padx) \
-	 -pady $comb_control($id,pady) \
-	 -sticky new -row 1 -column 0
+	-padx $comb_control($id,padx) \
+	-pady $comb_control($id,pady) \
+	-sticky new -row 1 -column 0
 
     grid $my_tabbed_frame \
-	  -sticky "nsew" \
-	  -padx $comb_control($id,padx) \
-	  -pady $comb_control($id,pady) \
-	  -row 2 -column 0
+	-sticky "nsew" \
+	-padx $comb_control($id,padx) \
+	-pady $comb_control($id,pady) \
+	-row 2 -column 0
     grid rowconfigure $my_tabbed_frame 0 -weight 1
     grid columnconfigure $my_tabbed_frame 0 -weight 1
 
     grid $top.control_buttons_frame \
-	 -sticky "ew" \
-	 -padx $comb_control($id,padx) \
-	 -pady $comb_control($id,pady) \
-	 -row 3 -column 0
+	-sticky "ew" \
+	-padx $comb_control($id,padx) \
+	-pady $comb_control($id,pady) \
+	-row 3 -column 0
 
     grid rowconfigure $top 0 -weight 0
     grid rowconfigure $top 2 -weight 1
@@ -885,9 +885,9 @@ proc comb_apply { id } {
     # overwriting an existing object
     if {$comb_control($id,dirty_name) && [db_exist $comb_control($id,name)]} {
 	set ret [cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
-		"Warning!"\
-		"Warning: about to overwrite $comb_control($id,name)"\
-		"" 0 OK Cancel]
+		     "Warning!"\
+		     "Warning: about to overwrite $comb_control($id,name)"\
+		     "" 0 OK Cancel]
 
 	if {$ret} {
 	    return 1
@@ -901,18 +901,18 @@ proc comb_apply { id } {
 	if {$comb_control($id,id) < 0} {
 	    # region id is less than zero!!!!
 	    cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
-		    "Bad region id!"\
-		    "Region id must be >= 0"\
-		    "" 0 OK
+		"Bad region id!"\
+		"Region id must be >= 0"\
+		"" 0 OK
 	    return 1
 	}
 
 	if {$comb_control($id,air) < 0} {
 	    # air code is less than zero!!!
 	    cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
-		    "Bad air code!"\
-		    "Air code must be >= 0"\
-		    "" 0 OK
+		"Bad air code!"\
+		"Air code must be >= 0"\
+		"" 0 OK
 	    return 1
 	}
 
@@ -920,9 +920,9 @@ proc comb_apply { id } {
 	    $comb_control($id,id) != 0 && $comb_control($id,air) != 0} {
 	    # exactly one of region id and air code should be set
 	    set ret [cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
-		    "Warning: both region id and air code are set/unset"\
-		    "Warning: both region id and air code are set/unset"\
-		    "" 0 OK Cancel]
+			 "Warning: both region id and air code are set/unset"\
+			 "Warning: both region id and air code are set/unset"\
+			 "" 0 OK Cancel]
 
 	    if {$ret} {
 		return 1
@@ -938,15 +938,15 @@ proc comb_apply { id } {
 
 	# actually apply the edist to the combination on disk
 	set ret [catch {put_comb $comb_control($id,name) $comb_control($id,isRegion) \
-		$comb_control($id,id) $comb_control($id,air) $comb_control($id,material) \
-		$comb_control($id,los) $color $comb_control($id,shader) \
-		$comb_control($id,inherit) $comb_control($id,comb)} comb_error]
+			    $comb_control($id,id) $comb_control($id,air) $comb_control($id,material) \
+			    $comb_control($id,los) $color $comb_control($id,shader) \
+			    $comb_control($id,inherit) $comb_control($id,comb)} comb_error]
 
 	if {$ret} {
 	    cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) \
-		    "comb_apply: Error"\
-		    $comb_error\
-		    "" 0 OK
+		"comb_apply: Error"\
+		$comb_error\
+		"" 0 OK
 	}
 
 	# set any attributes that we have saved
@@ -954,9 +954,9 @@ proc comb_apply { id } {
 
 	if {$ret} {
 	    cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) \
-		    "comb_apply: Error"\
-		    $comb_error\
-		    "" 0 OK
+		"comb_apply: Error"\
+		$comb_error\
+		"" 0 OK
 	}
 
 	return $ret
@@ -974,14 +974,14 @@ proc comb_apply { id } {
 
     # actually apply the edits to the combination on disk
     set ret [catch {put_comb $comb_control($id,name) $comb_control($id,isRegion)\
-	    $color $comb_control($id,shader) $comb_control($id,inherit)\
-	    $comb_control($id,comb)} comb_error]
+			$color $comb_control($id,shader) $comb_control($id,inherit)\
+			$comb_control($id,comb)} comb_error]
 
     if {$ret} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) \
-		"comb_apply: Error"\
-		$comb_error\
-		"" 0 OK
+	    "comb_apply: Error"\
+	    $comb_error\
+	    "" 0 OK
     }
 
     # set any attributes that we have saved
@@ -1008,9 +1008,9 @@ proc comb_reset { id } {
 
     if {$comb_control($id,name) == ""} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
-		"You must specify a region/combination name!"\
-		"You must specify a region/combination name!"\
-		"" 0 OK
+	    "You must specify a region/combination name!"\
+	    "You must specify a region/combination name!"\
+	    "" 0 OK
 	return
     }
 
@@ -1019,9 +1019,9 @@ proc comb_reset { id } {
     set result [catch {get_comb $comb_control($id,name)} comb_defs]
     if {$result == 1} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
-		"comb_reset: Error"\
-		$comb_defs\
-		"" 0 OK
+	    "comb_reset: Error"\
+	    $comb_defs\
+	    "" 0 OK
 	return
     }
 
@@ -1029,9 +1029,9 @@ proc comb_reset { id } {
     set result [catch {attr get $comb_control($id,name)} comb_attrs]
     if { $result == 1 } {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
-		"comb_reset: Error"\
-		$comb_attrs\
-		"" 0 OK
+	    "comb_reset: Error"\
+	    $comb_attrs\
+	    "" 0 OK
 	return
     }
 
@@ -1117,13 +1117,13 @@ proc comb_reset { id } {
 
     if { [llength $comb_control($id,shader)] > 0 } {
 	set comb_control($id,shader_gui) [do_shader comb_control($id,shader) $id \
-		$comb_control($id,shader_frame)]
+					      $comb_control($id,shader_frame)]
 	grid $comb_control($id,shader_frame) \
-		-row 1 \
-		-sticky "nsew" \
-		-in $top.shader_top_frame \
-		-padx $comb_control($id,padx) \
-		-pady $comb_control($id,pady)
+	    -row 1 \
+	    -sticky "nsew" \
+	    -in $top.shader_top_frame \
+	    -padx $comb_control($id,padx) \
+	    -pady $comb_control($id,pady)
 	grid rowconfigure $top.shader_top_frame 0 -weight 0
 	grid rowconfigure $top.shader_top_frame 1 -weight 1
 	grid columnconfigure $top.shader_top_frame 0 -weight 1
@@ -1174,13 +1174,13 @@ proc comb_shader_gui { id shader_type } {
     }
 
     set comb_control($id,shader_gui) [do_shader comb_control($id,shader) $id \
-	    $comb_control($id,shader_frame)]
+					  $comb_control($id,shader_frame)]
     grid $comb_control($id,shader_frame) \
-	    -row 1 \
-	    -sticky "nsew" \
-	    -in $top.shader_top_frame \
-	    -padx $comb_control($id,padx) \
-	    -pady $comb_control($id,pady)
+	-row 1 \
+	-sticky "nsew" \
+	-in $top.shader_top_frame \
+	-padx $comb_control($id,padx) \
+	-pady $comb_control($id,pady)
 
     grid rowconfigure $top.shader_top_frame 0 -weight 0
     grid rowconfigure $top.shader_top_frame 1 -weight 1
@@ -1228,9 +1228,9 @@ proc comb_handle_trace {id name1 name2 op} {
 #    entry $top.materialE -width 12 -textvar comb_control($id,material_list)
 #
 #    button $top.resetB -relief raised -text "Reset"\
-#	    -command "load_material $id"
+    #	    -command "load_material $id"
 #    button $top.dismissB -relief raised -text "Dismiss"\
-#	    -command "catch { destroy $top }"
+    #	    -command "catch { destroy $top }"
 #
 #    grid $top.materialLB $top.materialS -sticky "nsew" -in $top.gridF
 #    grid rowconfigure $top.gridF1 0 -weight 1

@@ -108,7 +108,7 @@ namespace eval RtWizard {
 	$::wizardInstance closeSteps
     }
 
-  #
+    #
     # preview - generates a 1/4 size preview image, limited to on-screen
     #
     itcl::body PictureTypeB::preview { } {

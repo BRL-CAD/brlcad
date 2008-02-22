@@ -138,7 +138,7 @@ option add *RtControl*tearoff 0 widgetDefault
     } {
 	usual
     }
-#    $this component hull configure -menu $itk_component(menubar)
+    #    $this component hull configure -menu $itk_component(menubar)
     $this configure -menu $itk_component(menubar)
 
     itk_component add fbM {
@@ -161,14 +161,14 @@ option add *RtControl*tearoff 0 widgetDefault
     }
 
     $itk_component(fbM) add radiobutton -value 2 -variable [::itcl::scope fb_mode] \
-	    -label "Overlay" -underline 0 \
-	    -command [::itcl::code $this fb_mode]
+	-label "Overlay" -underline 0 \
+	-command [::itcl::code $this fb_mode]
     $itk_component(fbM) add radiobutton -value 1 -variable [::itcl::scope fb_mode] \
-	    -label "Underlay" -underline 0 \
-	    -command [::itcl::code $this fb_mode]
+	-label "Underlay" -underline 0 \
+	-command [::itcl::code $this fb_mode]
     $itk_component(fbM) add radiobutton -value 0 -variable [::itcl::scope fb_mode] \
-	    -label "Inactive" -underline 0 \
-	    -command [::itcl::code $this fb_mode]
+	-label "Inactive" -underline 0 \
+	-command [::itcl::code $this fb_mode]
 
     itk_component add srcL {
 	::label $itk_interior.srcL -text "Source" -anchor e
@@ -187,16 +187,16 @@ option add *RtControl*tearoff 0 widgetDefault
 
     # populate source's combobox menu
     $itk_component(srcCB) add command -label "Active Pane" \
-	    -command [::itcl::code $this set_src active]
+	-command [::itcl::code $this set_src active]
     $itk_component(srcCB) add separator
     $itk_component(srcCB) add command -label "Upper Left" \
-	    -command [::itcl::code $this set_src ul]
+	-command [::itcl::code $this set_src ul]
     $itk_component(srcCB) add command -label "Upper Right" \
-	    -command [::itcl::code $this set_src ur]
+	-command [::itcl::code $this set_src ur]
     $itk_component(srcCB) add command -label "Lower Left" \
-	    -command [::itcl::code $this set_src ll]
+	-command [::itcl::code $this set_src ll]
     $itk_component(srcCB) add command -label "Lower Right" \
-	    -command [::itcl::code $this set_src lr]
+	-command [::itcl::code $this set_src lr]
 
     itk_component add destL {
 	::label $itk_interior.destL -text "Destination" -anchor e
@@ -217,18 +217,18 @@ option add *RtControl*tearoff 0 widgetDefault
 
     # populate destination's combobox menu
     $itk_component(destCB) add command -label "Active Pane" \
-	    -command [::itcl::code $this set_dest active]
+	-command [::itcl::code $this set_dest active]
     $itk_component(destCB) add separator
     $itk_component(destCB) add command -label "Upper Left" \
-	    -command [::itcl::code $this set_dest ul]
+	-command [::itcl::code $this set_dest ul]
     $itk_component(destCB) add command -label "Upper Right" \
-	    -command [::itcl::code $this set_dest ur]
+	-command [::itcl::code $this set_dest ur]
     $itk_component(destCB) add command -label "Lower Left" \
-	    -command [::itcl::code $this set_dest ll]
+	-command [::itcl::code $this set_dest ll]
     $itk_component(destCB) add command -label "Lower Right" \
-	    -command [::itcl::code $this set_dest lr]
+	-command [::itcl::code $this set_dest lr]
 
-#    bind [$itk_component(destCB) component entry] <KeyRelease> [::itcl::code $this cook_dest]
+    #    bind [$itk_component(destCB) component entry] <KeyRelease> [::itcl::code $this cook_dest]
 
     itk_component add sizeL {
 	::label $itk_interior.sizeL -text "Size" -anchor e
@@ -249,19 +249,19 @@ option add *RtControl*tearoff 0 widgetDefault
 
     # populate size's combobox
     $itk_component(sizeCB) add command -label "Size of Pane" \
-	    -command [::itcl::code $this set_size "Size of Pane"]
+	-command [::itcl::code $this set_size "Size of Pane"]
     $itk_component(sizeCB) add command -label "128" \
-	    -command [::itcl::code $this set_size 128]
+	-command [::itcl::code $this set_size 128]
     $itk_component(sizeCB) add command -label "256" \
-	    -command [::itcl::code $this set_size 256]
+	-command [::itcl::code $this set_size 256]
     $itk_component(sizeCB) add command -label "512" \
-	    -command [::itcl::code $this set_size 512]
+	-command [::itcl::code $this set_size 512]
     $itk_component(sizeCB) add command -label "640x480" \
-	    -command [::itcl::code $this set_size "640x480"]
+	-command [::itcl::code $this set_size "640x480"]
     $itk_component(sizeCB) add command -label "720x486" \
-	    -command [::itcl::code $this set_size "720x486"]
+	-command [::itcl::code $this set_size "720x486"]
     $itk_component(sizeCB) add command -label "1024" \
-	    -command [::itcl::code $this set_size 1024]
+	-command [::itcl::code $this set_size 1024]
 
     itk_component add bgcolorL {
 	::label $itk_interior.bgcolorL -text "Background Color" -anchor e
@@ -282,7 +282,7 @@ option add *RtControl*tearoff 0 widgetDefault
 
     itk_component add advB {
 	::button $itk_interior.advB -relief raised -text "Advanced Settings..." \
-		-command [::itcl::code $this activate_adv]
+	    -command [::itcl::code $this activate_adv]
     } {
 	usual
     }
@@ -291,7 +291,7 @@ option add *RtControl*tearoff 0 widgetDefault
 
     itk_component add okB {
 	::button $itk_interior.okB  -relief raised -text "Ok" \
-		-command [::itcl::code $this ok]
+	    -command [::itcl::code $this ok]
     } {
 	usual
     }
@@ -300,7 +300,7 @@ option add *RtControl*tearoff 0 widgetDefault
 
     itk_component add raytraceB {
 	::button $itk_interior.raytraceB  -relief raised -text "Raytrace" \
-		-command [::itcl::code $this raytrace]
+	    -command [::itcl::code $this raytrace]
     } {
 	usual
     }
@@ -309,7 +309,7 @@ option add *RtControl*tearoff 0 widgetDefault
 
     itk_component add abortB {
 	::button $itk_interior.abortB  -relief raised -text "Abort" \
-		-command [::itcl::code $this abort]
+	    -command [::itcl::code $this abort]
     } {
 	usual
     }
@@ -318,7 +318,7 @@ option add *RtControl*tearoff 0 widgetDefault
 
     itk_component add clearB {
 	::button $itk_interior.clearB  -relief raised -text "Clear" \
-		-command [::itcl::code $this clear]
+	    -command [::itcl::code $this clear]
     } {
 	usual
     }
@@ -327,7 +327,7 @@ option add *RtControl*tearoff 0 widgetDefault
 
     itk_component add dismissB {
 	::button $itk_interior.dismissB  -relief raised -text "Dismiss" \
-		-command [::itcl::code $this deactivate]
+	    -command [::itcl::code $this deactivate]
     } {
 	usual
     }
@@ -357,8 +357,8 @@ option add *RtControl*tearoff 0 widgetDefault
     grid rowconfigure $itk_component(gridF2) 0 -weight 1
 
     grid $itk_component(okB) $itk_component(raytraceB) \
-	    $itk_component(abortB) x $itk_component(clearB) x \
-	    $itk_component(dismissB) -sticky "nsew" -in $itk_component(gridF3)
+	$itk_component(abortB) x $itk_component(clearB) x \
+	$itk_component(dismissB) -sticky "nsew" -in $itk_component(gridF3)
     grid columnconfigure $itk_component(gridF3) 3 -weight 1
     grid columnconfigure $itk_component(gridF3) 5 -weight 1
 
@@ -411,7 +411,7 @@ option add *RtControl*tearoff 0 widgetDefault
 
     itk_component add adv_nprocE {
 	::entry $itk_component(adv).nprocE -relief sunken -bd 2 -width 2 \
-		-textvar [::itcl::scope itk_option(-nproc)]
+	    -textvar [::itcl::scope itk_option(-nproc)]
     } {
 	usual
     }
@@ -426,7 +426,7 @@ option add *RtControl*tearoff 0 widgetDefault
 
     itk_component add adv_hsampleE {
 	::entry $itk_component(adv).hsampleE -relief sunken -bd 2 -width 2 \
-		-textvar [::itcl::scope itk_option(-hsample)]
+	    -textvar [::itcl::scope itk_option(-hsample)]
     } {
 	usual
     }
@@ -450,13 +450,13 @@ option add *RtControl*tearoff 0 widgetDefault
 
     # populate jitter's combobox menu
     $itk_component(adv_jitterCB) add command -label "None" \
-	    -command [::itcl::code $this set_jitter 0]
+	-command [::itcl::code $this set_jitter 0]
     $itk_component(adv_jitterCB) add command -label "Cell" \
-	    -command [::itcl::code $this set_jitter 1]
+	-command [::itcl::code $this set_jitter 1]
     $itk_component(adv_jitterCB) add command -label "Frame" \
-	    -command [::itcl::code $this set_jitter 2]
+	-command [::itcl::code $this set_jitter 2]
     $itk_component(adv_jitterCB) add command -label "Both" \
-	    -command [::itcl::code $this set_jitter 3]
+	-command [::itcl::code $this set_jitter 3]
 
     itk_component add adv_lmodelL {
 	::label $itk_component(adv).lightL -text "Light Model" -anchor e
@@ -475,17 +475,17 @@ option add *RtControl*tearoff 0 widgetDefault
 
     # populate lmodel's combobox menu
     $itk_component(adv_lmodelCB) add command -label "Full" \
-	    -command [::itcl::code $this set_lmodel 0]
+	-command [::itcl::code $this set_lmodel 0]
     $itk_component(adv_lmodelCB) add command -label "Diffuse" \
-	    -command [::itcl::code $this set_lmodel 1]
+	-command [::itcl::code $this set_lmodel 1]
     $itk_component(adv_lmodelCB) add command -label "Surface Normals" \
-	    -command [::itcl::code $this set_lmodel 2]
+	-command [::itcl::code $this set_lmodel 2]
     $itk_component(adv_lmodelCB) add command -label "Diffuse - 3 light" \
-	    -command [::itcl::code $this set_lmodel 3]
+	-command [::itcl::code $this set_lmodel 3]
     $itk_component(adv_lmodelCB) add command -label "Curvature - inverse radius" \
-	    -command [::itcl::code $this set_lmodel 4]
+	-command [::itcl::code $this set_lmodel 4]
     $itk_component(adv_lmodelCB) add command -label "Curvature - direction vector" \
-	    -command [::itcl::code $this set_lmodel 5]
+	-command [::itcl::code $this set_lmodel 5]
 
     itk_component add adv_otherL {
 	::label $itk_component(adv).otherL -text "Other Options" -anchor e
@@ -495,7 +495,7 @@ option add *RtControl*tearoff 0 widgetDefault
 
     itk_component add adv_otherE {
 	::entry $itk_component(adv).otherE -relief sunken -bd 2 -width 2 \
-		-textvar [::itcl::scope itk_option(-other)]
+	    -textvar [::itcl::scope itk_option(-other)]
     } {
 	usual
     }
@@ -504,7 +504,7 @@ option add *RtControl*tearoff 0 widgetDefault
 
     itk_component add adv_dismissB {
 	::button $itk_component(adv).buttonB -relief raised -text "Dismiss" \
-		-command [::itcl::code $this deactivate_adv]
+	    -command [::itcl::code $this deactivate_adv]
     } {
 	usual
     }
@@ -522,15 +522,15 @@ option add *RtControl*tearoff 0 widgetDefault
     grid forget [$itk_component(adv_lmodelCB) component label]
 
     grid $itk_component(adv_lmodelL) $itk_component(adv_lmodelCB) \
-	    -sticky nsew -pady 1 -in $itk_component(adv_gridF1)
+	-sticky nsew -pady 1 -in $itk_component(adv_gridF1)
     grid $itk_component(adv_jitterL) $itk_component(adv_jitterCB) \
-	    -sticky nsew -pady 1 -in $itk_component(adv_gridF1)
+	-sticky nsew -pady 1 -in $itk_component(adv_gridF1)
     grid $itk_component(adv_nprocL) $itk_component(adv_nprocE) \
-	    -sticky nsew -pady 1 -in $itk_component(adv_gridF1)
+	-sticky nsew -pady 1 -in $itk_component(adv_gridF1)
     grid $itk_component(adv_hsampleL) $itk_component(adv_hsampleE) \
-	    -sticky nsew -pady 1 -in $itk_component(adv_gridF1)
+	-sticky nsew -pady 1 -in $itk_component(adv_gridF1)
     grid $itk_component(adv_otherL) $itk_component(adv_otherE) \
-	    -sticky nsew -pady 1 -in $itk_component(adv_gridF1)
+	-sticky nsew -pady 1 -in $itk_component(adv_gridF1)
     grid columnconfigure $itk_component(adv_gridF1) 1 -weight 1
     grid rowconfigure $itk_component(adv_gridF1) 0 -weight 1
     grid rowconfigure $itk_component(adv_gridF1) 1 -weight 1
@@ -793,7 +793,7 @@ option add *RtControl*tearoff 0 widgetDefault
 
     if {$itk_option(-size) != ""} {
 	set result [regexp "^(\[ \]*\[0-9\]+)((\[ \]*\[xX\]?\[ \]*)|(\[ \]+))(\[0-9\]*\[ \]*)$"\
-		$itk_option(-size) smatch width junkA junkB junkC height]
+			$itk_option(-size) smatch width junkA junkB junkC height]
 	if {$result} {
 	    if {$height != ""} {
 		append rt_cmd " -w $width -n $height"
@@ -922,16 +922,16 @@ option add *RtControl*tearoff 0 widgetDefault
 	error "Raytrace Control Panel($this) is not associated with an Mged object"
     }
 
-#    if {![$itk_option(-mged) fb_active]} {
-	# Framebuffer is not active, so activate it
-	# by putting it in "Underlay" mode.
-#	$itk_option(-mged) fb_active 1
-#	set fb_mode 1
-#    }
+    #    if {![$itk_option(-mged) fb_active]} {
+    # Framebuffer is not active, so activate it
+    # by putting it in "Underlay" mode.
+    #	$itk_option(-mged) fb_active 1
+    #	set fb_mode 1
+    #    }
 
     set pane [$itk_option(-mged) pane]
     $itk_component(srcCB) setText $pane
-#    $itk_component(destCB) setText $pane
+    #    $itk_component(destCB) setText $pane
     set itk_option(-dest) $pane
     set_size "Size of Pane"
 

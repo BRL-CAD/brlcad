@@ -41,41 +41,41 @@
 
 ::itcl::body sdialogs::Stddlgs::errordlg {title message {buttons "ok"} {args ""}} {
     return [Stddlgs::messagedlg $title \
-	    error \
-	    $buttons \
-	    $message \
-	    $args]
+		error \
+		$buttons \
+		$message \
+		$args]
 }
 
 ::itcl::body sdialogs::Stddlgs::warningdlg {title message {buttons "ok"} {args ""}} {
     return [Stddlgs::messagedlg $title \
-	    warning \
-	    $buttons \
-	    $message \
-	    $args]
+		warning \
+		$buttons \
+		$message \
+		$args]
 }
 
 ::itcl::body sdialogs::Stddlgs::infodlg {title message {buttons "ok"} {args ""}} {
     return [Stddlgs::messagedlg $title \
-	    info \
-	    $buttons \
-	    $message \
-	    $args]
+		info \
+		$buttons \
+		$message \
+		$args]
 }
 
 ::itcl::body sdialogs::Stddlgs::questiondlg {title message {buttons "yesno"} {args ""}} {
     return [Stddlgs::messagedlg $title \
-	    question \
-	    $buttons \
-	    $message \
-	    $args]
+		question \
+		$buttons \
+		$message \
+		$args]
 }
 
 ::itcl::body sdialogs::Stddlgs::messagedlg {title icon buttons message {args ""}} {
     return [eval tk_messageBox -title {$title} \
-	    -icon {$icon} \
-	    -type {$buttons} \
-	    -message {$message} [lindex $args 0]]
+		-icon {$icon} \
+		-type {$buttons} \
+		-message {$message} [lindex $args 0]]
 }
 
 

@@ -44,9 +44,9 @@ namespace eval RtWizard {
 
 	itk_component add fb {
 	    iwidgets::feedback $cs.fb \
-		    -barcolor "#9999cc" \
-		    -steps 100 \
-		    -labelpos n
+		-barcolor "#9999cc" \
+		-steps 100 \
+		-labelpos n
 	}
 
 	pack $itk_component(fb) -fill x -expand 1
@@ -56,7 +56,7 @@ namespace eval RtWizard {
 
     itcl::body FeedbackDialog::inform { comment steps } {
 	$itk_component(fb) configure \
-		-labeltext $comment
+	    -labeltext $comment
 	$itk_component(fb) step $steps
 	update idletasks
     }

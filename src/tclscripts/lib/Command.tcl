@@ -150,23 +150,23 @@
 }
 
 ::itcl::configbody Command::selection_color {
-	$itk_component(text) tag configure sel -foreground $itk_option(-selection_color)
+    $itk_component(text) tag configure sel -foreground $itk_option(-selection_color)
 }
 
 ::itcl::configbody Command::prompt_color {
-	$itk_component(text) tag configure prompt -foreground $itk_option(-prompt_color)
+    $itk_component(text) tag configure prompt -foreground $itk_option(-prompt_color)
 }
 
 ::itcl::configbody Command::cmd_color {
-	$itk_component(text) tag configure cmd -foreground $itk_option(-cmd_color)
+    $itk_component(text) tag configure cmd -foreground $itk_option(-cmd_color)
 }
 
 ::itcl::configbody Command::oldcmd_color {
-	$itk_component(text) tag configure oldcmd -foreground $itk_option(-oldcmd_color)
+    $itk_component(text) tag configure oldcmd -foreground $itk_option(-oldcmd_color)
 }
 
 ::itcl::configbody Command::result_color {
-	$itk_component(text) tag configure result -foreground $itk_option(-result_color)
+    $itk_component(text) tag configure result -foreground $itk_option(-result_color)
 }
 
 ::itcl::configbody Command::maxlines {
@@ -317,7 +317,7 @@
     }
 
     if {[info complete $cmd]} {
-	set result [catch {uplevel #0 $cmd} msg]
+	set result [catch {uplevel \#0 $cmd} msg]
 
 	if {$result != 0} {
 	    $itk_component(text) tag add oldcmd promptEnd insert
@@ -420,7 +420,7 @@
 
 ::itcl::body Command::backward_delete_char {} {
     set w $itk_component(text)
-#    catch {$w tag remove sel sel.first promptEnd}
+    #    catch {$w tag remove sel sel.first promptEnd}
     if [$w compare insert > promptEnd] {
 	$w mark set insert {insert - 1c}
 	$w delete insert
@@ -430,7 +430,7 @@
 
 ::itcl::body Command::delete_char {} {
     set w $itk_component(text)
-#    catch {$w tag remove sel sel.first promptEnd}
+    #    catch {$w tag remove sel sel.first promptEnd}
     if {[$w compare insert >= promptEnd] && [$w compare insert < {end - 2c}]} {
 	$w delete insert
 	cursor_highlight
@@ -498,7 +498,7 @@
 	$w delete promptEnd {end - 2c}
 	$w mark set insert promptEnd
 	$w insert insert [string range $msg 0 \
-		[expr [string length $msg]-2]]
+			      [expr [string length $msg]-2]]
 
 	cursor_highlight
 	$w see insert
@@ -507,7 +507,7 @@
 	    $w delete promptEnd {end - 2c}
 	    $w mark set insert promptEnd
 	    $w insert insert [string range $scratchline 0\
-		    [expr [string length $scratchline] - 1]]
+				  [expr [string length $scratchline] - 1]]
 	    set freshline 1
 	    cursor_highlight
 	}
@@ -528,7 +528,7 @@
 	$w mark set insert promptEnd
 
 	$w insert insert [string range $msg 0 \
-		[expr [string length $msg]-2]]
+			      [expr [string length $msg]-2]]
 
 	cursor_highlight
 	$w see insert
@@ -1104,7 +1104,7 @@
 	    bind $w <Control-u> "[::itcl::code $this delete_beginning_of_line]; break"
 	}
 	default
-	    -
+	-
 	emacs {
 	    bind $w <Escape> "break"
 	    bind $w <Control-d> "[::itcl::code $this delete_char]; break"
@@ -1115,7 +1115,7 @@
 	}
     }
 
-# Common Key Bindings
+    # Common Key Bindings
     bind $w <Return> "[::itcl::code $this doReturn]; break"
     bind $w <KP_Enter> "[::itcl::code $this doReturn]; break"
     bind $w <Delete> "[::itcl::code $this backward_delete_char]; break"

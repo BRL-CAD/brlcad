@@ -591,7 +591,7 @@
 	return
     }
 
-#    $itk_option(-mged) put $obj arb8 \
+    #    $itk_option(-mged) put $obj arb8 \
 	V1 [list $mXmin $mYmin $mZmin] \
 	V2 [list $mXmax $mYmin $mZmin] \
 	V3 [list $mXmax $mYmin $mZmax] \
@@ -726,129 +726,129 @@
 ::itcl::body Arb4EditFrame::updateValuePanel {} {
     switch -- $mEditMode \
 	$movePoint1 { \
-	    set mValueX $mV1x; \
-	    set mValueY $mV1y; \
-	    set mValueZ $mV1z \
-	} \
+			  set mValueX $mV1x; \
+			  set mValueY $mV1y; \
+			  set mValueZ $mV1z \
+		      } \
 	$movePoint2 { \
-	    set mValueX $mV2x; \
-	    set mValueY $mV2y; \
-	    set mValueZ $mV2z \
-	} \
+			  set mValueX $mV2x; \
+			  set mValueY $mV2y; \
+			  set mValueZ $mV2z \
+		      } \
 	$movePoint3 { \
-	    set mValueX $mV3x; \
-	    set mValueY $mV3y; \
-	    set mValueZ $mV3z \
-	} \
+			  set mValueX $mV3x; \
+			  set mValueY $mV3y; \
+			  set mValueZ $mV3z \
+		      } \
 	$movePoint4 { \
-	    set mValueX $mV5x; \
-	    set mValueY $mV5y; \
-	    set mValueZ $mV5z \
-	} \
+			  set mValueX $mV5x; \
+			  set mValueY $mV5y; \
+			  set mValueZ $mV5z \
+		      } \
 	$moveFace123 { \
-	    set mValueX $mV1x; \
-	    set mValueY $mV1y; \
-	    set mValueZ $mV1z \
-	} \
+			   set mValueX $mV1x; \
+			   set mValueY $mV1y; \
+			   set mValueZ $mV1z \
+		       } \
 	$moveFace124 { \
-	    set mValueX $mV1x; \
-	    set mValueY $mV1y; \
-	    set mValueZ $mV1z \
-	} \
+			   set mValueX $mV1x; \
+			   set mValueY $mV1y; \
+			   set mValueZ $mV1z \
+		       } \
 	$moveFace234 { \
-	    set mValueX $mV2x; \
-	    set mValueY $mV2y; \
-	    set mValueZ $mV2z \
-	} \
+			   set mValueX $mV2x; \
+			   set mValueY $mV2y; \
+			   set mValueZ $mV2z \
+		       } \
 	$moveFace134 { \
-	    set mValueX $mV1x; \
-	    set mValueY $mV1y; \
-	    set mValueZ $mV1z \
-	} \
+			   set mValueX $mV1x; \
+			   set mValueY $mV1y; \
+			   set mValueZ $mV1z \
+		       } \
 	$rotateFace123 { \
-	    set mValueX 0; \
-	    set mValueY 0; \
-	    set mValueZ 0 \
-	} \
+			     set mValueX 0; \
+			     set mValueY 0; \
+			     set mValueZ 0 \
+			 } \
 	$rotateFace124 { \
-	    set mValueX 0; \
-	    set mValueY 0; \
-	    set mValueZ 0 \
-	} \
+			     set mValueX 0; \
+			     set mValueY 0; \
+			     set mValueZ 0 \
+			 } \
 	$rotateFace234 { \
-	    set mValueX 0; \
-	    set mValueY 0; \
-	    set mValueZ 0 \
-	} \
+			     set mValueX 0; \
+			     set mValueY 0; \
+			     set mValueZ 0 \
+			 } \
 	$rotateFace134 { \
-	    set mValueX 0; \
-	    set mValueY 0; \
-	    set mValueZ 0 \
-	}
+			     set mValueX 0; \
+			     set mValueY 0; \
+			     set mValueZ 0 \
+			 }
 }
 
 ::itcl::body Arb4EditFrame::initValuePanel {} {
     switch -- $mEditMode \
 	$movePoint1 { \
-	    set mVIndex 0; \
-	    configure -valueUnits "mm"; \
-	    updateUpperPanel {} {1 2 3 4} \
-	} \
+			  set mVIndex 0; \
+			  configure -valueUnits "mm"; \
+			  updateUpperPanel {} {1 2 3 4} \
+		      } \
 	$movePoint2 { \
-	    set mVIndex 0; \
-	    configure -valueUnits "mm"; \
-	    updateUpperPanel {} {1 2 3 4} \
-	} \
+			  set mVIndex 0; \
+			  configure -valueUnits "mm"; \
+			  updateUpperPanel {} {1 2 3 4} \
+		      } \
 	$movePoint3 { \
-	    set mVIndex 0; \
-	    configure -valueUnits "mm"; \
-	    updateUpperPanel {} {1 2 3 4} \
-	} \
+			  set mVIndex 0; \
+			  configure -valueUnits "mm"; \
+			  updateUpperPanel {} {1 2 3 4} \
+		      } \
 	$movePoint4 { \
-	    set mVIndex 0; \
-	    configure -valueUnits "mm"; \
-	    updateUpperPanel {} {1 2 3 4} \
-	} \
+			  set mVIndex 0; \
+			  configure -valueUnits "mm"; \
+			  updateUpperPanel {} {1 2 3 4} \
+		      } \
 	$moveFace123 { \
-	    set mVIndex 0; \
-	    configure -valueUnits "mm"; \
-	    updateUpperPanel {} {1 2 3 4} \
-	} \
+			   set mVIndex 0; \
+			   configure -valueUnits "mm"; \
+			   updateUpperPanel {} {1 2 3 4} \
+		       } \
 	$moveFace124 { \
-	    set mVIndex 0; \
-	    configure -valueUnits "mm"; \
-	    updateUpperPanel {} {1 2 3 4} \
-	} \
+			   set mVIndex 0; \
+			   configure -valueUnits "mm"; \
+			   updateUpperPanel {} {1 2 3 4} \
+		       } \
 	$moveFace234 { \
-	    set mVIndex 0; \
-	    configure -valueUnits "mm"; \
-	    updateUpperPanel {} {1 2 3 4} \
-	} \
+			   set mVIndex 0; \
+			   configure -valueUnits "mm"; \
+			   updateUpperPanel {} {1 2 3 4} \
+		       } \
 	$moveFace134 { \
-	    set mVIndex 0; \
-	    configure -valueUnits "mm"; \
-	    updateUpperPanel {} {1 2 3 4} \
-	} \
+			   set mVIndex 0; \
+			   configure -valueUnits "mm"; \
+			   updateUpperPanel {} {1 2 3 4} \
+		       } \
 	$rotateFace123 { \
-	    set mVIndex 1; \
-	    configure -valueUnits "deg"; \
-	    updateUpperPanel {1 2 3} {4} \
-	} \
+			     set mVIndex 1; \
+			     configure -valueUnits "deg"; \
+			     updateUpperPanel {1 2 3} {4} \
+			 } \
 	$rotateFace124 { \
-	    set mVIndex 1; \
-	    configure -valueUnits "deg"; \
-	    updateUpperPanel {1 2 4} {3} \
-	} \
+			     set mVIndex 1; \
+			     configure -valueUnits "deg"; \
+			     updateUpperPanel {1 2 4} {3} \
+			 } \
 	$rotateFace234 { \
-	    set mVIndex 2; \
-	    configure -valueUnits "deg"; \
-	    updateUpperPanel {2 3 4} {1} \
-	} \
+			     set mVIndex 2; \
+			     configure -valueUnits "deg"; \
+			     updateUpperPanel {2 3 4} {1} \
+			 } \
 	$rotateFace134 { \
-	    set mVIndex 1; \
-	    configure -valueUnits "deg"; \
-	    updateUpperPanel {1 3 4} {2} \
-	}
+			     set mVIndex 1; \
+			     configure -valueUnits "deg"; \
+			     updateUpperPanel {1 3 4} {2} \
+			 }
 
     updateValuePanel
 }

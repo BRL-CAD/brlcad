@@ -344,7 +344,7 @@
 }
 
 ::itcl::body View::size {args} {
-#    eval $view size $args
+    #    eval $view size $args
     return [eval $view size $args]
 }
 
@@ -435,7 +435,7 @@
 }
 
 ::itcl::body View::help_init {} {
-    set help [cadwidgets::Help #auto]
+    set help [cadwidgets::Help \#auto]
 
     $help add ae		{{["az el tw"]} {set/get the azimuth, elevation and twist}}
     $help add ae2dir		{{[-i] az el} {return the view direction}}

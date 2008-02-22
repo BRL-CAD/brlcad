@@ -75,20 +75,20 @@ proc ::sdialogs::listdialog {pathName args} {
 
     # configure OK & Cancel
     buttonconfigure OK \
-	    -defaultring no \
-	    -borderwidth 1 \
-	    -pady 0
+	-defaultring no \
+	-borderwidth 1 \
+	-pady 0
     buttonconfigure Cancel \
-	    -defaultring no \
-	    -borderwidth 1 \
-	    -pady 0
+	-defaultring no \
+	-borderwidth 1 \
+	-pady 0
 
     # add entry widget
     set csite [childsite]
 
     itk_component add listbox {
 	::iwidgets::scrolledlistbox $csite.listbox \
-		-labelvariable [::itcl::scope itk_option(-label)]
+	    -labelvariable [::itcl::scope itk_option(-label)]
     } {
 	keep -textbackground -labelpos -labelfont
 	keep -vscrollmode -hscrollmode -selectmode

@@ -43,31 +43,31 @@ package require GeometryBrowser
 
 # All GeometryBrowser stuff is in the GeometryBrowser namespace
 proc geometree { } {
-	global mged_gui
-	global ::tk::Priv
-	global mged_players
+    global mged_gui
+    global ::tk::Priv
+    global mged_players
 
-	# determine the framebuffer window id
-	if { [ catch { set mged_players } _mgedFramebufferId ] } {
-		puts $_mgedFramebufferId
-		puts "assuming default mged framebuffer id: id_0"
-		set _mgedFramebufferId "id_0"
-	}
-	# just in case there are more than one returned
-	set _mgedFramebufferId [ lindex $_mgedFramebufferId 0 ]
+    # determine the framebuffer window id
+    if { [ catch { set mged_players } _mgedFramebufferId ] } {
+	puts $_mgedFramebufferId
+	puts "assuming default mged framebuffer id: id_0"
+	set _mgedFramebufferId "id_0"
+    }
+    # just in case there are more than one returned
+    set _mgedFramebufferId [ lindex $_mgedFramebufferId 0 ]
 
-	set gt .$_mgedFramebufferId.geometree
+    set gt .$_mgedFramebufferId.geometree
 
-	# see if the window is already open.  If so, just raise it up.
-	if [ winfo exists $gt ] {
-		raise $gt
-		return
-	}
+    # see if the window is already open.  If so, just raise it up.
+    if [ winfo exists $gt ] {
+	raise $gt
+	return
+    }
 
-	# just to quell the tk name returned and report fatal errors
-	if [ catch { GeometryBrowser $gt } gbName ] {
-		puts $gbName
-	}
+    # just to quell the tk name returned and report fatal errors
+    if [ catch { GeometryBrowser $gt } gbName ] {
+	puts $gbName
+    }
 }
 
 # Local Variables:

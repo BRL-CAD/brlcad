@@ -105,11 +105,11 @@
     wm geometry [namespace tail $this] "250x280"
 
     grid $itk_component(tabs) -sticky nsew \
-	    -padx 2 -pady 1
+	-padx 2 -pady 1
     grid $itk_component(sep) -columnspan 2 -sticky nsew \
-	    -padx 2 -pady 2
+	-padx 2 -pady 2
     grid $itk_component(dismissB) -sticky ns \
-	    -padx 2 -pady 1
+	-padx 2 -pady 1
 
     grid rowconfigure $itk_component(hull) 0 -weight 1
     grid columnconfigure $itk_component(hull) 0 -weight 1
@@ -149,33 +149,33 @@
     buildPosition $parent
     buildLineWidth $parent
     buildColor $parent axesColorL axesColorCB "Axes Color" \
-	    axesColor -modelAxesColor -modelAxesTripleColor
+	axesColor -modelAxesColor -modelAxesTripleColor
     buildColor $parent axesLabelColorL axesLabelColorCB "Axes Label Color" \
-	    axesLabelColor -modelAxesLabelColor ""
+	axesLabelColor -modelAxesLabelColor ""
 
     if {0} {
-    itk_component add tickEnableCB {
-	::checkbutton $parent.tickEnableCB -text "Ticks Enabled" -variable tickEnable \
+	itk_component add tickEnableCB {
+	    ::checkbutton $parent.tickEnableCB -text "Ticks Enabled" -variable tickEnable \
 		-command [::itcl::code $this handleTickEnable]
-    } {
-	usual
-    }
+	} {
+	    usual
+	}
 
-    # pack everything in this tab
-    grid $itk_component(tickEnableCB) -sticky nsew \
+	# pack everything in this tab
+	grid $itk_component(tickEnableCB) -sticky nsew \
 	    -padx 2 -pady 8
     }
 
     grid $itk_component(sizeL) $itk_component(sizeCB) -sticky nsew \
-	    -padx 2 -pady 1
+	-padx 2 -pady 1
     grid $itk_component(positionL) $itk_component(positionCB) -sticky nsew \
-	    -padx 2 -pady 1
+	-padx 2 -pady 1
     grid $itk_component(lineWidthL) $itk_component(lineWidthCB) -sticky nsew \
-	    -padx 2 -pady 1
+	-padx 2 -pady 1
     grid $itk_component(axesColorL) $itk_component(axesColorCB) -sticky nsew \
-	    -padx 2 -pady 1
+	-padx 2 -pady 1
     grid $itk_component(axesLabelColorL) $itk_component(axesLabelColorCB) -sticky nsew \
-	    -padx 2 -pady 1
+	-padx 2 -pady 1
 
     grid columnconfigure $parent 1 -weight 1
 }
@@ -189,25 +189,25 @@
     buildTickLength $parent
     buildMajorTickLength $parent
     buildColor $parent tickColorL tickColorCB "Tick Color" \
-	    tickColor -modelAxesTickColor ""
+	tickColor -modelAxesTickColor ""
     buildColor $parent majorTickColorL majorTickColorCB "Major Tick Color" \
-	    majorTickColor -modelAxesTickMajorColor ""
+	majorTickColor -modelAxesTickMajorColor ""
 
     # pack everything in this tab
     grid $itk_component(tickIntervalL) $itk_component(tickIntervalCB) -sticky nsew \
-	    -padx 2 -pady 1
+	-padx 2 -pady 1
     grid $itk_component(ticksPerMajorL) $itk_component(ticksPerMajorCB) -sticky nsew \
-	    -padx 2 -pady 1
+	-padx 2 -pady 1
     grid $itk_component(tickThresholdL) $itk_component(tickThresholdCB) -sticky nsew \
-	    -padx 2 -pady 1
+	-padx 2 -pady 1
     grid $itk_component(tickLenL) $itk_component(tickLenCB) -sticky nsew \
-	    -padx 2 -pady 1
+	-padx 2 -pady 1
     grid $itk_component(majorTickLenL) $itk_component(majorTickLenCB) -sticky nsew \
-	    -padx 2 -pady 1
+	-padx 2 -pady 1
     grid $itk_component(tickColorL) $itk_component(tickColorCB) -sticky nsew \
-	    -padx 2 -pady 1
+	-padx 2 -pady 1
     grid $itk_component(majorTickColorL) $itk_component(majorTickColorCB) -sticky nsew \
-	    -padx 2 -pady 1
+	-padx 2 -pady 1
 
     grid columnconfigure $parent 1 -weight 1
 }
@@ -228,21 +228,21 @@
     $itk_component(sizeCB) entryConfigure -state disabled
 
     $itk_component(sizeCB) add command -label "Small" \
-	    -command [::itcl::code $this setSizeCB "Small"]
+	-command [::itcl::code $this setSizeCB "Small"]
     $itk_component(sizeCB) add command -label "Medium" \
-	    -command [::itcl::code $this setSizeCB "Medium"]
+	-command [::itcl::code $this setSizeCB "Medium"]
     $itk_component(sizeCB) add command -label "Large" \
-	    -command [::itcl::code $this setSizeCB "Large"]
+	-command [::itcl::code $this setSizeCB "Large"]
     $itk_component(sizeCB) add command -label "X-Large" \
-	    -command [::itcl::code $this setSizeCB "X-Large"]
+	-command [::itcl::code $this setSizeCB "X-Large"]
     $itk_component(sizeCB) add command -label "View (1x)" \
-	    -command [::itcl::code $this setSizeCB "View (1x)"]
+	-command [::itcl::code $this setSizeCB "View (1x)"]
     $itk_component(sizeCB) add command -label "View (2x)" \
-	    -command [::itcl::code $this setSizeCB "View (2x)"]
+	-command [::itcl::code $this setSizeCB "View (2x)"]
     $itk_component(sizeCB) add command -label "View (4x)" \
-	    -command [::itcl::code $this setSizeCB "View (4x)"]
+	-command [::itcl::code $this setSizeCB "View (4x)"]
     $itk_component(sizeCB) add command -label "View (8x)" \
-	    -command [::itcl::code $this setSizeCB "View (8x)"]
+	-command [::itcl::code $this setSizeCB "View (8x)"]
 }
 
 ::itcl::body ModelAxesControl::buildPosition {parent} {
@@ -262,7 +262,7 @@
     grid forget [$itk_component(positionCB) component menubutton]
 
     $itk_component(positionCB) entryConfigure -validate key \
-	    -validatecommand [::itcl::code $this validatePosition %P]
+	-validatecommand [::itcl::code $this validatePosition %P]
 }
 
 ::itcl::body ModelAxesControl::buildLineWidth {parent} {
@@ -281,11 +281,11 @@
     $itk_component(lineWidthCB) entryConfigure -state disabled
 
     $itk_component(lineWidthCB) add command -label "1" \
-	    -command [::itcl::code $this setLineWidthCB "1"]
+	-command [::itcl::code $this setLineWidthCB "1"]
     $itk_component(lineWidthCB) add command -label "2" \
-	    -command [::itcl::code $this setLineWidthCB "2"]
+	-command [::itcl::code $this setLineWidthCB "2"]
     $itk_component(lineWidthCB) add command -label "3" \
-	    -command [::itcl::code $this setLineWidthCB "3"]
+	-command [::itcl::code $this setLineWidthCB "3"]
 }
 
 ## - buildColor
@@ -307,25 +307,25 @@
 
     $itk_component($nameCB) entryConfigure -state disabled
     $itk_component($nameCB) add command -label "Black" \
-	    -command [::itcl::code $this setColorCB $var $option $toption "Black"]
+	-command [::itcl::code $this setColorCB $var $option $toption "Black"]
     $itk_component($nameCB) add command -label "Blue" \
-	    -command [::itcl::code $this setColorCB $var $option $toption "Blue"]
+	-command [::itcl::code $this setColorCB $var $option $toption "Blue"]
     $itk_component($nameCB) add command -label "Cyan" \
-	    -command [::itcl::code $this setColorCB $var $option $toption "Cyan"]
+	-command [::itcl::code $this setColorCB $var $option $toption "Cyan"]
     $itk_component($nameCB) add command -label "Green" \
-	    -command [::itcl::code $this setColorCB $var $option $toption "Green"]
+	-command [::itcl::code $this setColorCB $var $option $toption "Green"]
     $itk_component($nameCB) add command -label "Magenta" \
-	    -command [::itcl::code $this setColorCB $var $option $toption "Magenta"]
+	-command [::itcl::code $this setColorCB $var $option $toption "Magenta"]
     $itk_component($nameCB) add command -label "Red" \
-	    -command [::itcl::code $this setColorCB $var $option $toption "Red"]
+	-command [::itcl::code $this setColorCB $var $option $toption "Red"]
     $itk_component($nameCB) add command -label "White" \
-	    -command [::itcl::code $this setColorCB $var $option $toption "White"]
+	-command [::itcl::code $this setColorCB $var $option $toption "White"]
     $itk_component($nameCB) add command -label "Yellow" \
-	    -command [::itcl::code $this setColorCB $var $option $toption "Yellow"]
+	-command [::itcl::code $this setColorCB $var $option $toption "Yellow"]
 
     if {$toption != ""} {
 	$itk_component($nameCB) add command -label "Triple" \
-		-command [::itcl::code $this setColorCB $var $toption $toption "Triple"]
+	    -command [::itcl::code $this setColorCB $var $toption $toption "Triple"]
     }
 }
 
@@ -346,7 +346,7 @@
     grid forget [$itk_component(tickIntervalCB) component menubutton]
 
     $itk_component(tickIntervalCB) entryConfigure -validate key \
-	    -validatecommand [::itcl::code $this validateTickInterval %P]
+	-validatecommand [::itcl::code $this validateTickInterval %P]
 }
 
 ::itcl::body ModelAxesControl::buildTicksPerMajor {parent} {
@@ -365,21 +365,21 @@
     $itk_component(ticksPerMajorCB) entryConfigure -state disabled
 
     $itk_component(ticksPerMajorCB) add command -label "2" \
-	    -command [::itcl::code $this setTicksPerMajorCB "2"]
+	-command [::itcl::code $this setTicksPerMajorCB "2"]
     $itk_component(ticksPerMajorCB) add command -label "3" \
-	    -command [::itcl::code $this setTicksPerMajorCB "3"]
+	-command [::itcl::code $this setTicksPerMajorCB "3"]
     $itk_component(ticksPerMajorCB) add command -label "4" \
-	    -command [::itcl::code $this setTicksPerMajorCB "4"]
+	-command [::itcl::code $this setTicksPerMajorCB "4"]
     $itk_component(ticksPerMajorCB) add command -label "5" \
-	    -command [::itcl::code $this setTicksPerMajorCB "5"]
+	-command [::itcl::code $this setTicksPerMajorCB "5"]
     $itk_component(ticksPerMajorCB) add command -label "6" \
-	    -command [::itcl::code $this setTicksPerMajorCB "6"]
+	-command [::itcl::code $this setTicksPerMajorCB "6"]
     $itk_component(ticksPerMajorCB) add command -label "8" \
-	    -command [::itcl::code $this setTicksPerMajorCB "8"]
+	-command [::itcl::code $this setTicksPerMajorCB "8"]
     $itk_component(ticksPerMajorCB) add command -label "10" \
-	    -command [::itcl::code $this setTicksPerMajorCB "10"]
+	-command [::itcl::code $this setTicksPerMajorCB "10"]
     $itk_component(ticksPerMajorCB) add command -label "12" \
-	    -command [::itcl::code $this setTicksPerMajorCB "12"]
+	-command [::itcl::code $this setTicksPerMajorCB "12"]
 }
 
 ::itcl::body ModelAxesControl::buildTickThreshold {parent} {
@@ -398,15 +398,15 @@
     $itk_component(tickThresholdCB) entryConfigure -state disabled
 
     $itk_component(tickThresholdCB) add command -label "4" \
-	    -command [::itcl::code $this setTickThresholdCB "4"]
+	-command [::itcl::code $this setTickThresholdCB "4"]
     $itk_component(tickThresholdCB) add command -label "8" \
-	    -command [::itcl::code $this setTickThresholdCB "8"]
+	-command [::itcl::code $this setTickThresholdCB "8"]
     $itk_component(tickThresholdCB) add command -label "16" \
-	    -command [::itcl::code $this setTickThresholdCB "16"]
+	-command [::itcl::code $this setTickThresholdCB "16"]
     $itk_component(tickThresholdCB) add command -label "32" \
-	    -command [::itcl::code $this setTickThresholdCB "32"]
+	-command [::itcl::code $this setTickThresholdCB "32"]
     $itk_component(tickThresholdCB) add command -label "64" \
-	    -command [::itcl::code $this setTickThresholdCB "64"]
+	-command [::itcl::code $this setTickThresholdCB "64"]
 }
 
 ::itcl::body ModelAxesControl::buildTickLength {parent} {
@@ -425,13 +425,13 @@
     $itk_component(tickLenCB) entryConfigure -state disabled
 
     $itk_component(tickLenCB) add command -label "2" \
-	    -command [::itcl::code $this setTickLengthCB "2"]
+	-command [::itcl::code $this setTickLengthCB "2"]
     $itk_component(tickLenCB) add command -label "4" \
-	    -command [::itcl::code $this setTickLengthCB "4"]
+	-command [::itcl::code $this setTickLengthCB "4"]
     $itk_component(tickLenCB) add command -label "8" \
-	    -command [::itcl::code $this setTickLengthCB "8"]
+	-command [::itcl::code $this setTickLengthCB "8"]
     $itk_component(tickLenCB) add command -label "16" \
-	    -command [::itcl::code $this setTickLengthCB "16"]
+	-command [::itcl::code $this setTickLengthCB "16"]
 }
 
 ::itcl::body ModelAxesControl::buildMajorTickLength {parent} {
@@ -450,19 +450,19 @@
     $itk_component(majorTickLenCB) entryConfigure -state disabled
 
     $itk_component(majorTickLenCB) add command -label "2" \
-	    -command [::itcl::code $this setMajorTickLengthCB "2"]
+	-command [::itcl::code $this setMajorTickLengthCB "2"]
     $itk_component(majorTickLenCB) add command -label "4" \
-	    -command [::itcl::code $this setMajorTickLengthCB "4"]
+	-command [::itcl::code $this setMajorTickLengthCB "4"]
     $itk_component(majorTickLenCB) add command -label "8" \
-	    -command [::itcl::code $this setMajorTickLengthCB "8"]
+	-command [::itcl::code $this setMajorTickLengthCB "8"]
     $itk_component(majorTickLenCB) add command -label "16" \
-	    -command [::itcl::code $this setMajorTickLengthCB "16"]
+	-command [::itcl::code $this setMajorTickLengthCB "16"]
 }
 
 ::itcl::body ModelAxesControl::buildButtons {parent} {
     itk_component add dismissB {
 	::button $parent.dismissB -relief raised -text "Dismiss" \
-		-command [::itcl::code $this hide]
+	    -command [::itcl::code $this hide]
     } {
 	usual
     }
@@ -548,14 +548,14 @@
 		return true
 	    } else {
 		if {![string is double $x] && \
-		     [string length $x] == 1 && \
-		     $x == "-"} {
+			[string length $x] == 1 && \
+			$x == "-"} {
 		    return true
 		}
 
 		if {![string is double $y] && \
-		     [string length $y] == 1 && \
-		     $y == "-"} {
+			[string length $y] == 1 && \
+			$y == "-"} {
 		    return true
 		}
 
@@ -575,20 +575,20 @@
 		return true
 	    } else {
 		if {![string is double $x] && \
-		     [string length $x] == 1 && \
-		     $x == "-"} {
+			[string length $x] == 1 && \
+			$x == "-"} {
 		    return true
 		}
 
 		if {![string is double $y] && \
-		     [string length $y] == 1 && \
-		     $y == "-"} {
+			[string length $y] == 1 && \
+			$y == "-"} {
 		    return true
 		}
 
 		if {![string is double $z] && \
-		     [string length $z] == 1 && \
-		     $z == "-"} {
+			[string length $z] == 1 && \
+			$z == "-"} {
 		    return true
 		}
 
