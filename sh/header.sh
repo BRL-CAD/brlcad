@@ -155,6 +155,11 @@ case $FILE in
 	wrap=1
 	commentprefix=" *"
 	;;
+    *.java )
+	echo "$FILE is a Java header"
+	wrap=1
+	commentprefix=" *"
+	;;
     *.l )
 	echo "$FILE is a Lex/Flex lexer source file"
 	wrap=1

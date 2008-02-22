@@ -131,6 +131,13 @@ case $FILE in
 	wrap=0
 	commentchar="//"
 	;;
+    *.java )
+	echo "$FILE is a Java source file"
+	mode="Java"
+	mode_vars="c-basic-offset"
+	wrap=0
+	commentchar="//"
+	;;
     *.m )
 	echo "$FILE is an Objective C-source file"
 	mode="objc"
