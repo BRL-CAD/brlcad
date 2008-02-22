@@ -62,3 +62,11 @@ public class BrlcadGeometryServer implements GeometryServer {
 	return false;
     }
 }
+
+// Local Variables:
+// tab-width: 8
+// mode: Java
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// End:
+// ex: shiftwidth=4 tabstop=8
