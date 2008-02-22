@@ -115,10 +115,6 @@ MGED_EXTERN(int cmd_rrt, (ClientData clientData, Tcl_Interp *interp, int argc, c
 MGED_EXTERN(int cmd_rt, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_rt_gettrees, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_rtabort, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
-MGED_EXTERN(int cmd_rtarea, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
-MGED_EXTERN(int cmd_rtcheck, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
-MGED_EXTERN(int cmd_rtedge, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
-MGED_EXTERN(int cmd_rtweight, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_sca, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_set_more_default, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_setview, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));

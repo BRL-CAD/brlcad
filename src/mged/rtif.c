@@ -753,6 +753,8 @@ run_rt(void)
 
 /**
  *  C M D _ R T
+ *
+ *  rt, rtarea, rtweight, rtcheck, and rtedge all use this.
  */
 int
 cmd_rt(ClientData	clientData,
@@ -886,126 +888,6 @@ rtcheck_output_handler(ClientData clientData, int mask)
     bu_log("%s", line);
 }
 #endif
-
-
-/**
- *  C M D _ R T C H E C K
- *
- *  Run rtcheck command on the current view.
- */
-int
-cmd_rtcheck(ClientData	clientData,
-	    Tcl_Interp	*interp,
-	    int		argc,
-	    char	**argv)
-{
-    const char *ptr;
-    char buf[256] = {0};
-
-    CHECK_DBI_NULL;
-
-    ptr = bu_brlcad_root("bin", 1);
-    if (ptr) {
-#ifdef _WIN32
-	snprintf(buf, 256, "\"%s/%s\"", ptr, argv[0]);
-#else
-	snprintf(buf, 256, "%s/%s", ptr, argv[0]);
-#endif
-	argv[0] = buf;
-    }
-
-    return dgo_rtcheck_cmd(dgop, view_state->vs_vop, interp, argc, argv);
-}
-
-
-/**
- *  C M D _ R T A R E A
- *
- *  Run rtarea command on the current view.
- */
-int
-cmd_rtarea(ClientData	clientData,
-	   Tcl_Interp	*interp,
-	   int		argc,
-	   char	**argv)
-{
-    const char *ptr;
-    char buf[256] = {0};
-
-    CHECK_DBI_NULL;
-
-    ptr = bu_brlcad_root("bin", 1);
-    if (ptr) {
-#ifdef _WIN32
-	snprintf(buf, 256, "\"%s/%s\"", ptr, argv[0]);
-#else
-	snprintf(buf, 256, "%s/%s", ptr, argv[0]);
-#endif
-	argv[0] = buf;
-    }
-
-    return dgo_rt_cmd(dgop, view_state->vs_vop, interp, argc, argv);
-}
-
-
-/**
- *  C M D _ R T E D G E
- *
- *  Run rtedge command on the current view.
- */
-int
-cmd_rtedge(ClientData	clientData,
-	   Tcl_Interp	*interp,
-	   int		argc,
-	   char	**argv)
-{
-    const char *ptr;
-    char buf[256] = {0};
-
-    CHECK_DBI_NULL;
-
-    ptr = bu_brlcad_root("bin", 1);
-    if (ptr) {
-#ifdef _WIN32
-	snprintf(buf, 256, "\"%s/%s\"", ptr, argv[0]);
-#else
-	snprintf(buf, 256, "%s/%s", ptr, argv[0]);
-#endif
-	argv[0] = buf;
-    }
-
-    return dgo_rt_cmd(dgop, view_state->vs_vop, interp, argc, argv);
-}
-
-
-/**
- *  C M D _ R T W E I G H T
- *
- *  Run rtweight command on the current view.
- */
-int
-cmd_rtweight(ClientData	clientData,
-	     Tcl_Interp	*interp,
-	     int	argc,
-	     char	**argv)
-{
-    const char *ptr;
-    char buf[256] = {0};
-
-    CHECK_DBI_NULL;
-
-    ptr = bu_brlcad_root("bin", 1);
-    if (ptr) {
-#ifdef _WIN32
-	snprintf(buf, 256, "\"%s/%s\"", ptr, argv[0]);
-#else
-	snprintf(buf, 256, "%s/%s", ptr, argv[0]);
-#endif
-	argv[0] = buf;
-    }
-
-    return dgo_rt_cmd(dgop, view_state->vs_vop, interp, argc, argv);
-}
 
 
 /**
