@@ -30,55 +30,55 @@
 
 int
 sphere( entityno )
-int entityno;
+    int entityno;
 {
-	fastf_t		radius=0.0;
-	point_t		center;
-	fastf_t		x;
-	fastf_t		y;
-	fastf_t		z;
-	int		sol_num;		/* IGES solid type number */
+    fastf_t		radius=0.0;
+    point_t		center;
+    fastf_t		x;
+    fastf_t		y;
+    fastf_t		z;
+    int		sol_num;		/* IGES solid type number */
 
-	/* Set Defaults */
+    /* Set Defaults */
 
-	x = 0.0;
-	y = 0.0;
-	z = 0.0;
+    x = 0.0;
+    y = 0.0;
+    z = 0.0;
 
-	/* Acquiring Data */
+    /* Acquiring Data */
 
-	if ( dir[entityno]->param <= pstart )
-	{
-		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
-				dir[entityno]->direct, dir[entityno]->name );
-		return(0);
-	}
-	Readrec( dir[entityno]->param );
-	Readint( &sol_num, "" );
-	Readcnv( &radius, "" );
-	Readcnv( &x, "" );
-	Readcnv( &y, "" );
-	Readcnv( &z, "" );
+    if ( dir[entityno]->param <= pstart )
+    {
+	bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
+		dir[entityno]->direct, dir[entityno]->name );
+	return(0);
+    }
+    Readrec( dir[entityno]->param );
+    Readint( &sol_num, "" );
+    Readcnv( &radius, "" );
+    Readcnv( &x, "" );
+    Readcnv( &y, "" );
+    Readcnv( &z, "" );
 
-	if ( radius <= 0.0 )
-	{
-		bu_log( "Illegal parameters for entity D%07d (%s)\n" ,
-				dir[entityno]->direct, dir[entityno]->name );
-		return(0);
-	}
+    if ( radius <= 0.0 )
+    {
+	bu_log( "Illegal parameters for entity D%07d (%s)\n" ,
+		dir[entityno]->direct, dir[entityno]->name );
+	return(0);
+    }
 
 
-	/*
-	 * Making the necessaries. First an id is made for the new entity, then
-	 * the x, y, z coordinates for its vertices are converted to vectors with
-	 * VSET(), and finally the libwdb routine that makes an analogous BRL-CAD
-	 * solid is called.
-	 */
+    /*
+     * Making the necessaries. First an id is made for the new entity, then
+     * the x, y, z coordinates for its vertices are converted to vectors with
+     * VSET(), and finally the libwdb routine that makes an analogous BRL-CAD
+     * solid is called.
+     */
 
-	VSET(center, x, y, z);
-	mk_sph(fdout, dir[entityno]->name, center, radius);
+    VSET(center, x, y, z);
+    mk_sph(fdout, dir[entityno]->name, center, radius);
 
-	return( 1 );
+    return( 1 );
 }
 
 /*

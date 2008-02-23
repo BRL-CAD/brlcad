@@ -77,11 +77,11 @@ static int pixel_size (char *buf)
 	int	size;
     }			*ap;
     static struct assoc	a_tbl[] =
-			{
-			    {"bw", 1},
-			    {"pix", 3},
-			    {0, 0}
-			};
+	{
+	    {"bw", 1},
+	    {"pix", 3},
+	    {0, 0}
+	};
 
     if ((ep = strrchr(buf, '.')) == NULL)
 	return (DFLT_PIXEL_SIZE);
@@ -141,7 +141,7 @@ main (int argc, char **argv)
 
     argument = argv[bu_optind];
     if ((stat(argument, &stat_buf) != 0)
-     && (!grab_number(argument, &nm_bytes)))
+	&& (!grab_number(argument, &nm_bytes)))
     {
 	bu_log("Cannot find file '%s'\n", argument);
 	print_usage();
@@ -153,7 +153,7 @@ main (int argc, char **argv)
      */
     if (nm_bytes == -1) {
 	if ((how == BELIEVE_NAME)
-	 && fb_common_name_size(&width, &height, argument))
+	    && fb_common_name_size(&width, &height, argument))
 	    goto done;
 	else
 	{
@@ -173,7 +173,7 @@ main (int argc, char **argv)
     if (!fb_common_image_size(&width, &height, nm_pixels))
 	bu_exit (0, NULL);
 
-done:
+ done:
     bu_exit (0, "%lu %lu\n", width, height);
 }
 

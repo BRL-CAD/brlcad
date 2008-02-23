@@ -88,7 +88,7 @@ int
 rt_brep_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, char **argv);
 
 #ifdef __cplusplus
-  }
+}
 #endif
 
 /********************************************************************************
@@ -137,9 +137,9 @@ brep_bvh_subdivide(BBNode* parent, const std::list<SurfaceTree*>& face_trees)
 {
     // XXX this needs to handle a threshold and some reasonable space
     // partitioning
-//     for (BVList::const_iterator i = face_bvs.begin(); i != face_bvs.end(); i++) {
-// 	parent->gs_insert(*i);
-//     }
+    //     for (BVList::const_iterator i = face_bvs.begin(); i != face_bvs.end(); i++) {
+    // 	parent->gs_insert(*i);
+    //     }
     for (std::list<SurfaceTree*>::const_iterator i = face_trees.begin(); i != face_trees.end(); i++) {
 	parent->addChild((*i)->getRootNode());
     }
@@ -380,7 +380,7 @@ brep_get_plane_ray(ON_Ray& r, plane_ray& pr)
     fastf_t min = MAX_FASTF;
     int index = -1;
     for (int i = 0; i < 3; i++) {
-  // find the smallest component
+	// find the smallest component
 	if (fabs(v1[i]) < min) {
 	    min = fabs(v1[i]);
 	    index = i;
@@ -480,7 +480,7 @@ brep_newton_iterate(const ON_Surface* surf, plane_ray& pr, pt2d_t R, ON_3dVector
 		      VDOT(pr.n2,((fastf_t*)su)), VDOT(pr.n2,((fastf_t*)sv)) };
     mat2d_t inv_jacob;
     if (mat2d_inverse(inv_jacob, jacob)) {
-  // check inverse validity
+	// check inverse validity
 	pt2d_t tmp;
 	mat2d_pt2d_mul(tmp, inv_jacob, R);
 	pt2dsub(out_uv, uv, tmp);
@@ -577,7 +577,7 @@ brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const ON_Su
 	    diverge_iter++;
 	    if (diverge_iter > 10)
 		break;
-		//return brep_edge_check(found, sbv, face, surf, ray, hits);
+	    //return brep_edge_check(found, sbv, face, surf, ray, hits);
 	}
 	brep_newton_iterate(surf, pr, Rcurr, su, sv, uv, new_uv);
 	move(uv, new_uv);
@@ -594,8 +594,8 @@ brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const ON_Su
 	hits.back().sbv = sbv;
 
  	if (!sbv->m_u.Includes(uv[0]) || !sbv->m_v.Includes(uv[1])) {
-// 	    if (!sbv->m_u.Includes(uv[0]-BREP_SAME_POINT_TOLERANCE) ||
-// 		!sbv->m_v.Includes(uv[1]-BREP_SAME_POINT_TOLERANCE)) {
+	    // 	    if (!sbv->m_u.Includes(uv[0]-BREP_SAME_POINT_TOLERANCE) ||
+	    // 		!sbv->m_v.Includes(uv[1]-BREP_SAME_POINT_TOLERANCE)) {
 	    hits.back().oob = true;
 	    return BREP_INTERSECT_OOB;
 	}
@@ -738,7 +738,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
     num = 0;
     for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
 	if ((i->trimmed && !i->closeToEdge) || i->oob || NEAR_ZERO(VDOT(i->normal,rp->r_dir),RT_DOT_TOL)) {
-  // remove what we were removing earlier
+	    // remove what we were removing earlier
 	    if (i->oob) {
 		TRACE("\toob u: " << i->uv[0] << ", " << IVAL(i->sbv->m_u));
 		TRACE("\toob v: " << i->uv[1] << ", " << IVAL(i->sbv->m_v));
@@ -778,8 +778,8 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
     }
 
     // remove "duplicate" points
-//     HitList::iterator new_end = unique(hits.begin(), hits.end());
-//     hits.erase(new_end, hits.end());
+    //     HitList::iterator new_end = unique(hits.begin(), hits.end());
+    //     hits.erase(new_end, hits.end());
 
     if (hits.size() > 1 && (hits.size() % 2) != 0) {
 	cerr << "WTF???" << endl;
@@ -830,15 +830,15 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	    }
 #endif
 
-// 	    if ((num == 0 && dot > 0) || sign(dot) == lastSign) {
-  // remove hits with "bad" normals
-// 		i = hits.erase(i);
-// 		--i;
-// 		TRACE("removed a hit!");
-// 		continue;
-// 	    } else {
-// 		lastSign = sign(dot);
-// 	    }
+	    // 	    if ((num == 0 && dot > 0) || sign(dot) == lastSign) {
+	    // remove hits with "bad" normals
+	    // 		i = hits.erase(i);
+	    // 		--i;
+	    // 		TRACE("removed a hit!");
+	    // 		continue;
+	    // 	    } else {
+	    // 		lastSign = sign(dot);
+	    // 	    }
 
 	    TRACE("hit " << num << ": " << ON_PRINT3(i->point) << " [" << dot << "]");
 	    while (m->first == num) {
@@ -930,7 +930,7 @@ rt_brep_curve(register struct curvature *cvp, register struct hit *hitp, struct 
 int
 rt_brep_class()
 {
-  return RT_CLASSIFY_UNIMPLEMENTED;
+    return RT_CLASSIFY_UNIMPLEMENTED;
 }
 
 
@@ -964,35 +964,35 @@ rt_brep_free(register struct soltab *stp)
 
 void
 plot_bbnode(BBNode* node, struct bu_list* vhead) {
-  ON_3dPoint min = node->m_node.m_min;
-  ON_3dPoint max = node->m_node.m_max;
-  point_t verts[] = {{min[0],min[1],min[2]},
-		     {min[0],max[1],min[2]},
-		     {min[0],max[1],max[2]},
-		     {min[0],min[1],max[2]},
-		     {max[0],min[1],min[2]},
-		     {max[0],max[1],min[2]},
-		     {max[0],max[1],max[2]},
-		     {max[0],min[1],max[2]}};
+    ON_3dPoint min = node->m_node.m_min;
+    ON_3dPoint max = node->m_node.m_max;
+    point_t verts[] = {{min[0],min[1],min[2]},
+		       {min[0],max[1],min[2]},
+		       {min[0],max[1],max[2]},
+		       {min[0],min[1],max[2]},
+		       {max[0],min[1],min[2]},
+		       {max[0],max[1],min[2]},
+		       {max[0],max[1],max[2]},
+		       {max[0],min[1],max[2]}};
 
-  if (node->isLeaf()) {
+    if (node->isLeaf()) {
 
-  for (int i = 0; i <= 4; i++) {
-    RT_ADD_VLIST(vhead, verts[i%4], (i == 0) ? BN_VLIST_LINE_MOVE : BN_VLIST_LINE_DRAW);
-  }
-  for (int i = 0; i <= 4; i++) {
-    RT_ADD_VLIST(vhead, verts[(i%4)+4], (i == 0) ? BN_VLIST_LINE_MOVE : BN_VLIST_LINE_DRAW);
-  }
-  for (int i = 0; i < 4; i++) {
-    RT_ADD_VLIST(vhead, verts[i], BN_VLIST_LINE_MOVE);
-    RT_ADD_VLIST(vhead, verts[i+4], BN_VLIST_LINE_DRAW);
-  }
+	for (int i = 0; i <= 4; i++) {
+	    RT_ADD_VLIST(vhead, verts[i%4], (i == 0) ? BN_VLIST_LINE_MOVE : BN_VLIST_LINE_DRAW);
+	}
+	for (int i = 0; i <= 4; i++) {
+	    RT_ADD_VLIST(vhead, verts[(i%4)+4], (i == 0) ? BN_VLIST_LINE_MOVE : BN_VLIST_LINE_DRAW);
+	}
+	for (int i = 0; i < 4; i++) {
+	    RT_ADD_VLIST(vhead, verts[i], BN_VLIST_LINE_MOVE);
+	    RT_ADD_VLIST(vhead, verts[i+4], BN_VLIST_LINE_DRAW);
+	}
 
-  }
+    }
 
-  for (int i = 0; i < node->m_children.size(); i++) {
-    plot_bbnode(node->m_children[i], vhead);
-  }
+    for (int i = 0; i < node->m_children.size(); i++) {
+	plot_bbnode(node->m_children[i], vhead);
+    }
 }
 
 /**
@@ -1039,11 +1039,11 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
     ON_Brep* brep = bi->brep;
 
     point_t pt1, pt2;
-//     for (int i = 0; i < brep->m_F.Count(); i++) {
-//       ON_BrepFace& f = brep->m_F[i];
-//       SurfaceTree st(&f);
-//       plot_bbnode(st.getRootNode(), vhead);
-//     }
+    //     for (int i = 0; i < brep->m_F.Count(); i++) {
+    //       ON_BrepFace& f = brep->m_F[i];
+    //       SurfaceTree st(&f);
+    //       plot_bbnode(st.getRootNode(), vhead);
+    //     }
 
     for (int i = 0; i < bi->brep->m_E.Count(); i++) {
 	ON_BrepEdge& e = brep->m_E[i];
@@ -1096,45 +1096,45 @@ rt_brep_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 class RT_MemoryArchive : public ON_BinaryArchive
 {
 public:
-  RT_MemoryArchive();
-  RT_MemoryArchive(genptr_t memory, size_t len);
-  virtual ~RT_MemoryArchive();
+    RT_MemoryArchive();
+    RT_MemoryArchive(genptr_t memory, size_t len);
+    virtual ~RT_MemoryArchive();
 
-  // ON_BinaryArchive overrides
-  size_t CurrentPosition() const;
-  bool SeekFromCurrentPosition(int);
-  bool SeekFromStart(size_t);
-  bool AtEnd() const;
+    // ON_BinaryArchive overrides
+    size_t CurrentPosition() const;
+    bool SeekFromCurrentPosition(int);
+    bool SeekFromStart(size_t);
+    bool AtEnd() const;
 
-  size_t Size() const;
-  /**
-   * Generate a byte-array copy of this memory archive.
-   * Allocates memory using bu_malloc, so must be freed with bu_free
-   */
-  genptr_t CreateCopy() const;
+    size_t Size() const;
+    /**
+     * Generate a byte-array copy of this memory archive.
+     * Allocates memory using bu_malloc, so must be freed with bu_free
+     */
+    genptr_t CreateCopy() const;
 
 protected:
-  size_t Read(size_t, void*);
-  size_t Write(size_t, const void*);
-  bool Flush();
+    size_t Read(size_t, void*);
+    size_t Write(size_t, const void*);
+    bool Flush();
 
 private:
-  size_t pos;
-  std::vector<char> m_buffer;
+    size_t pos;
+    std::vector<char> m_buffer;
 };
 
 RT_MemoryArchive::RT_MemoryArchive()
-  : ON_BinaryArchive(ON::write3dm), pos(0)
+    : ON_BinaryArchive(ON::write3dm), pos(0)
 {
 }
 
 RT_MemoryArchive::RT_MemoryArchive(genptr_t memory, size_t len)
-  : ON_BinaryArchive(ON::read3dm), pos(0)
+    : ON_BinaryArchive(ON::read3dm), pos(0)
 {
-  m_buffer.reserve(len);
-  for (int i = 0; i < len; i++) {
-    m_buffer.push_back(((char*)memory)[i]);
-  }
+    m_buffer.reserve(len);
+    for (int i = 0; i < len; i++) {
+	m_buffer.push_back(((char*)memory)[i]);
+    }
 }
 
 RT_MemoryArchive::~RT_MemoryArchive()
@@ -1144,46 +1144,46 @@ RT_MemoryArchive::~RT_MemoryArchive()
 size_t
 RT_MemoryArchive::CurrentPosition() const
 {
-  return pos;
+    return pos;
 }
 
 bool
 RT_MemoryArchive::SeekFromCurrentPosition(int seek_to)
 {
-  if (pos + seek_to > m_buffer.size()) return false;
-  pos += seek_to;
-  return true;
+    if (pos + seek_to > m_buffer.size()) return false;
+    pos += seek_to;
+    return true;
 }
 
 bool
 RT_MemoryArchive::SeekFromStart(size_t seek_to)
 {
-  if (seek_to > m_buffer.size()) return false;
-  pos = seek_to;
-  return true;
+    if (seek_to > m_buffer.size()) return false;
+    pos = seek_to;
+    return true;
 }
 
 bool
 RT_MemoryArchive::AtEnd() const
 {
-  return pos >= m_buffer.size();
+    return pos >= m_buffer.size();
 }
 
 size_t
 RT_MemoryArchive::Size() const
 {
-  return m_buffer.size();
+    return m_buffer.size();
 }
 
 genptr_t
 RT_MemoryArchive::CreateCopy() const
 {
-  genptr_t memory = (genptr_t)bu_malloc(m_buffer.size()*sizeof(char),"rt_memoryarchive createcopy");
-  const int size = m_buffer.size();
-  for (int i = 0; i < size; i++) {
-    ((char*)memory)[i] = m_buffer[i];
-  }
-  return memory;
+    genptr_t memory = (genptr_t)bu_malloc(m_buffer.size()*sizeof(char),"rt_memoryarchive createcopy");
+    const int size = m_buffer.size();
+    for (int i = 0; i < size; i++) {
+	((char*)memory)[i] = m_buffer[i];
+    }
+    return memory;
 }
 
 size_t
@@ -1215,7 +1215,7 @@ RT_MemoryArchive::Write(const size_t amount, const void* buf)
 bool
 RT_MemoryArchive::Flush()
 {
-  return true;
+    return true;
 }
 
 #include <iostream>
@@ -1385,6 +1385,7 @@ rt_brep_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, c
  * tab-width: 8
  * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

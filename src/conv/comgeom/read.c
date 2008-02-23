@@ -51,26 +51,26 @@ void	namecvt(register int n, register char **cp, int c);
 int
 get_line(register char *cp, int buflen, char *title)
 {
-	register int	c;
-	register int	count = buflen;
+    register int	c;
+    register int	count = buflen;
 
-	while ( (c = fgetc(infp)) == '\n' ) /* Skip blank lines.		*/
-		;
-	while ( c != EOF && c != '\n' )  {
-		*cp++ = c;
-		count--;
-		if ( count <= 0 )  {
-			printf("get_line(x%lx, %d) input record overflows buffer for %s\n",
-			       (unsigned long)cp, buflen, title);
-			break;
-		}
-		c = fgetc(infp);
+    while ( (c = fgetc(infp)) == '\n' ) /* Skip blank lines.		*/
+	;
+    while ( c != EOF && c != '\n' )  {
+	*cp++ = c;
+	count--;
+	if ( count <= 0 )  {
+	    printf("get_line(x%lx, %d) input record overflows buffer for %s\n",
+		   (unsigned long)cp, buflen, title);
+	    break;
 	}
-	if ( c == EOF )
-		return	EOF;
-	while ( count-- > 0 )
-		*cp++ = 0;
-	return	c;
+	c = fgetc(infp);
+    }
+    if ( c == EOF )
+	return	EOF;
+    while ( count-- > 0 )
+	*cp++ = 0;
+    return	c;
 }
 
 /*
@@ -79,13 +79,13 @@ get_line(register char *cp, int buflen, char *title)
 int
 getint(char *cp, int start, int len)
 {
-	char	buf[128];
+    char	buf[128];
 
-	if (len > sizeof(buf))
-	    len = sizeof(buf);
+    if (len > sizeof(buf))
+	len = sizeof(buf);
 
-	bu_strlcpy( buf, cp+start, len );
-	return atoi(buf);
+    bu_strlcpy( buf, cp+start, len );
+    return atoi(buf);
 }
 
 /*
@@ -94,23 +94,23 @@ getint(char *cp, int start, int len)
 double
 getdouble(char *cp, int start, int len)
 {
-	char	buf[128];
+    char	buf[128];
 
-	if (len > sizeof(buf))
-	    len = sizeof(buf);
+    if (len > sizeof(buf))
+	len = sizeof(buf);
 
-	bu_strlcpy( buf, cp+start, len );
-	return atof(buf);
+    bu_strlcpy( buf, cp+start, len );
+    return atof(buf);
 }
 
 /*		N A M E C V T	 */
 void
 namecvt(register int n, register char **cp, int c)
 {
-	char str[16];
+    char str[16];
 
-	sprintf( str, "%c%d%.13s", (char)c, n, name_it );
-	*cp = bu_strdup( str );
+    sprintf( str, "%c%d%.13s", (char)c, n, name_it );
+    *cp = bu_strdup( str );
 }
 
 /*

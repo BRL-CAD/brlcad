@@ -72,13 +72,13 @@ static void print_usage (void)
 static void print_debug_usage (void)
 {
     static char	*flag_denotation[] =
-		{
-		    "",
-		    "color table",
-		    "finding best pixel match",
-		    "writing the pixels out",
-		    0
-		};
+	{
+	    "",
+	    "color table",
+	    "finding best pixel match",
+	    "writing the pixels out",
+	    0
+	};
     int		i;
 
     bu_log("Debug bits and their meanings...\n");
@@ -99,8 +99,8 @@ static void add_to_table (unsigned char *rgb)
 	color_tbl_size *= 2;
 	color_tbl = (unsigned char (*)[3])
 	    bu_realloc((genptr_t) color_tbl,
-			color_tbl_size * 3 * sizeof(unsigned char),
-			"color table");
+		       color_tbl_size * 3 * sizeof(unsigned char),
+		       "color table");
     }
     VMOVE(color_tbl[next_color], rgb);
     ++next_color;
@@ -119,7 +119,7 @@ static void fill_table (char *f_name)
 
     bu_vls_init(&v);
     for (line_nm = 1; bu_vls_gets(&v, fp) != -1;
-	++line_nm, bu_vls_trunc(&v, 0))
+	 ++line_nm, bu_vls_trunc(&v, 0))
     {
 	for (bp = bu_vls_addr(&v); (*bp == ' ') || (*bp == '\t'); ++bp)
 	    ;
@@ -138,7 +138,7 @@ static void print_table (void)
     bu_log("-----------\nColor Table\n-----------\n");
     for (i = 0; i < next_color; ++i)
 	bu_log("%3d %3d %3d\n",
-	    color_tbl[i][RED], color_tbl[i][GRN], color_tbl[i][BLU]);
+	       color_tbl[i][RED], color_tbl[i][GRN], color_tbl[i][BLU]);
     bu_log("-----------\n");
 }
 
@@ -159,7 +159,7 @@ static int color_diff (unsigned char *pix, int i)
 	(pix[RED] - cte[RED]) * (pix[RED] - cte[RED]) +
 	(pix[GRN] - cte[GRN]) * (pix[GRN] - cte[GRN]) +
 	(pix[BLU] - cte[BLU]) * (pix[BLU] - cte[BLU])
-    );
+	);
 }
 
 
@@ -290,18 +290,18 @@ main (int argc, char **argv)
 	    }
 	    if (debug & PC_DEBUG_MATCH)
 		bu_log("p=%3d/%3d/%3d, t=%d %3d/%3d/%3d,  b=%d, %3d/%3d/%3d\n",
-		    pixbuf[RED], pixbuf[GRN], pixbuf[BLU],
-		    i,
-		    color_tbl[i][RED],
-		    color_tbl[i][GRN],
-		    color_tbl[i][BLU],
-		    best_color,
-		    color_tbl[best_color][RED],
-		    color_tbl[best_color][GRN],
-		    color_tbl[best_color][BLU]);
+		       pixbuf[RED], pixbuf[GRN], pixbuf[BLU],
+		       i,
+		       color_tbl[i][RED],
+		       color_tbl[i][GRN],
+		       color_tbl[i][BLU],
+		       best_color,
+		       color_tbl[best_color][RED],
+		       color_tbl[best_color][GRN],
+		       color_tbl[best_color][BLU]);
 	}
 	if (fwrite((genptr_t) color_tbl[best_color],
-		    3 * sizeof(unsigned char), 1, outfp) != 1)
+		   3 * sizeof(unsigned char), 1, outfp) != 1)
 	    bu_exit(1, "pixclump:  Error writing pixel to file '%s'\n", outf_name);
     }
     return 0;

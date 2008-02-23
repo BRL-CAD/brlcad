@@ -26,27 +26,27 @@
 
 struct iges_vertex *
 Get_iges_vertex( v )
-struct vertex *v;
+    struct vertex *v;
 {
-	struct iges_vertex_list *vert_list;
+    struct iges_vertex_list *vert_list;
 
-	NMG_CK_VERTEX( v );
+    NMG_CK_VERTEX( v );
 
-	vert_list = vertex_root;
+    vert_list = vertex_root;
 
-	while ( vert_list )
+    while ( vert_list )
+    {
+	int vert_no;
+
+	for ( vert_no=0; vert_no < vert_list->no_of_verts; vert_no++ )
 	{
-		int vert_no;
-
-		for ( vert_no=0; vert_no < vert_list->no_of_verts; vert_no++ )
-		{
-			if ( vert_list->i_verts[vert_no].v == v )
-				return( &(vert_list->i_verts[vert_no]) );
-		}
-		vert_list = vert_list->next;
+	    if ( vert_list->i_verts[vert_no].v == v )
+		return( &(vert_list->i_verts[vert_no]) );
 	}
+	vert_list = vert_list->next;
+    }
 
-	return( (struct iges_vertex *)NULL );
+    return( (struct iges_vertex *)NULL );
 }
 
 /*

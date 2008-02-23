@@ -32,20 +32,20 @@
 
 
 /*
-	void	gridRotate( fastf_t azim, fastf_t elev, fastf_t roll,
-			register fastf_t *des_H, register fastf_t *des_V )
+  void	gridRotate( fastf_t azim, fastf_t elev, fastf_t roll,
+  register fastf_t *des_H, register fastf_t *des_V )
 
-	Creates the unit vectors H and V which are the horizontal
-	and vertical components of the grid in target coordinates.
-	The vectors are found from the azimuth and elivation of the
-	viewing angle according to a simplification of the rotation
-	matrix from grid coordinates to target coordinates.
-	To see that the vectors are, indeed, unit vectors, recall
-	the trigonometric relation:
+  Creates the unit vectors H and V which are the horizontal
+  and vertical components of the grid in target coordinates.
+  The vectors are found from the azimuth and elivation of the
+  viewing angle according to a simplification of the rotation
+  matrix from grid coordinates to target coordinates.
+  To see that the vectors are, indeed, unit vectors, recall
+  the trigonometric relation:
 
-		sin( A )^2  +  cos( A )^2  =  1 .
+  sin( A )^2  +  cos( A )^2  =  1 .
 
- */
+*/
 void
 gridRotate( fastf_t azim, fastf_t elev, fastf_t roll, fastf_t *des_H, fastf_t *des_V )
 {

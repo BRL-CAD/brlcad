@@ -229,7 +229,7 @@ tclcad_auto_path(Tcl_Interp *interp)
 		if (*cp == '\\') 
 		    *cp = '/';
  	}
-     }
+    }
 #endif
 
     bu_vls_init(&auto_path);

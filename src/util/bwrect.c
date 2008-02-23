@@ -44,40 +44,40 @@ char	*buf;			/* output scanline buffer, malloc'd */
 int
 main(int argc, char **argv)
 {
-	FILE	*ifp, *ofp;
-	int	row;
-	long	offset;
+    FILE	*ifp, *ofp;
+    int	row;
+    long	offset;
 
-	if (argc < 3) {
-		bu_exit(1, "usage: bwrect infile outfile (I prompt!)\n");
-	}
-	if ((ifp = fopen(argv[1], "r")) == NULL) {
-		bu_exit(2, "pixrect: can't open %s\n", argv[1]);
-	}
-	if ((ofp = fopen(argv[2], "w")) == NULL) {
-		bu_exit(3, "pixrect: can't open %s\n", argv[1]);
-	}
+    if (argc < 3) {
+	bu_exit(1, "usage: bwrect infile outfile (I prompt!)\n");
+    }
+    if ((ifp = fopen(argv[1], "r")) == NULL) {
+	bu_exit(2, "pixrect: can't open %s\n", argv[1]);
+    }
+    if ((ofp = fopen(argv[2], "w")) == NULL) {
+	bu_exit(3, "pixrect: can't open %s\n", argv[1]);
+    }
 
-	/* Get info */
-	printf( "Area to extract (x, y) in pixels " );
-	scanf( "%d%d", &xnum, &ynum );
-	printf( "Origin to extract from (0, 0 is lower left) " );
-	scanf( "%d%d", &xorig, &yorig );
-	printf( "Scan line length of input file " );
-	scanf( "%d", &linelen );
+    /* Get info */
+    printf( "Area to extract (x, y) in pixels " );
+    scanf( "%d%d", &xnum, &ynum );
+    printf( "Origin to extract from (0, 0 is lower left) " );
+    scanf( "%d%d", &xorig, &yorig );
+    printf( "Scan line length of input file " );
+    scanf( "%d", &linelen );
 
-	buf = (char *)bu_malloc( xnum, "buffer" );
+    buf = (char *)bu_malloc( xnum, "buffer" );
 
-	/* Move all points */
-	for (row = 0+yorig; row < ynum+yorig; row++) {
-		offset = row * linelen + xorig;
-		fseek(ifp, offset, 0);
-		fread(buf, sizeof(*buf), xnum, ifp);
-		fwrite(buf, sizeof(*buf), xnum, ofp);
-	}
+    /* Move all points */
+    for (row = 0+yorig; row < ynum+yorig; row++) {
+	offset = row * linelen + xorig;
+	fseek(ifp, offset, 0);
+	fread(buf, sizeof(*buf), xnum, ifp);
+	fwrite(buf, sizeof(*buf), xnum, ofp);
+    }
 
-	bu_free(buf, "buffer");
-	return 0;
+    bu_free(buf, "buffer");
+    return 0;
 }
 
 /*

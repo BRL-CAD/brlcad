@@ -220,7 +220,7 @@ static void enqueue_script (struct bu_list *qp, int type, char *string)
     BU_CK_LIST_HEAD(qp);
 
     srp = (struct script_rec *)
-	    bu_malloc(sizeof(struct script_rec), "script record");
+	bu_malloc(sizeof(struct script_rec), "script record");
     srp->sr_magic = SCRIPT_REC_MAGIC;
     srp->sr_type = type;
     bu_vls_init(&(srp->sr_script));
@@ -246,10 +246,10 @@ static void show_scripts (struct bu_list *sl, char *text)
 	BU_CKMAG(srp, SCRIPT_REC_MAGIC, "script record");
 
 	bu_log("%d. script %s '%s'\n",
-	    ++i,
-	    (srp->sr_type == READING_STRING) ? "string" :
-	    (srp->sr_type == READING_FILE) ? "file" : "???",
-	    bu_vls_addr(&(srp->sr_script)));
+	       ++i,
+	       (srp->sr_type == READING_STRING) ? "string" :
+	       (srp->sr_type == READING_FILE) ? "file" : "???",
+	       bu_vls_addr(&(srp->sr_script)));
     }
     bu_log("- - - - - - - - - - - - - - - - - - - - - - - - - -\n");
 }
@@ -286,19 +286,19 @@ static void run_scripts (struct bu_list *sl)
 	}
 
 	switch (srp->sr_type) {
-	case READING_STRING:
-	    interact(READING_STRING, cp);
-	    break;
-	case READING_FILE:
-	    if ((fPtr = fopen(cp, "rb")) == NULL) {
-		bu_log("Cannot open script file '%s'\n", cp);
-	    } else {
-		interact(READING_FILE, fPtr);
-		fclose(fPtr);
-	    }
-	    break;
-	default:
-	    bu_exit (1, "%s:%d: script of type %d.  This shouldn't happen\n", __FILE__, __LINE__, srp->sr_type);
+	    case READING_STRING:
+		interact(READING_STRING, cp);
+		break;
+	    case READING_FILE:
+		if ((fPtr = fopen(cp, "rb")) == NULL) {
+		    bu_log("Cannot open script file '%s'\n", cp);
+		} else {
+		    interact(READING_FILE, fPtr);
+		    fclose(fPtr);
+		}
+		break;
+	    default:
+		bu_exit (1, "%s:%d: script of type %d.  This shouldn't happen\n", __FILE__, __LINE__, srp->sr_type);
 	}
 	free_script(srp);
     }
@@ -368,64 +368,64 @@ main (int argc, char **argv)
     /* Handle command-line options */
     while ((Ch = bu_getopt(argc, argv, OPT_STRING)) != EOF) {
 	switch (Ch) {
-	case 'A':
-	    attrib_add(bu_optarg);
-	    break;
-	case 'B':
-	    rt_bot_minpieces = atoi( bu_optarg );
-	    break;
-	case 'b':
-	    do_backout = 1;
-	    break;
-	case 'E':
-	    if (nirt_debug & DEBUG_SCRIPTS)
-		show_scripts(&script_list, "before erasure");
-	    while (BU_LIST_WHILE(srp, script_rec, &script_list)) {
-		BU_LIST_DEQUEUE(&(srp->l));
-		free_script(srp);
-	    }
-	    if (nirt_debug & DEBUG_SCRIPTS)
-		show_scripts(&script_list, "after erasure");
-	    break;
-	case 'e':
-	    enqueue_script(&script_list, READING_STRING, bu_optarg);
-	    if (nirt_debug & DEBUG_SCRIPTS)
-		show_scripts(&script_list, "after enqueueing a literal");
-	    break;
-	case 'f':
-	    enqueue_script(&script_list, READING_FILE, bu_optarg);
-	    if (nirt_debug & DEBUG_SCRIPTS)
-		show_scripts(&script_list, "after enqueueing a file name");
-	    break;
-	case 'M':
-	    mat_flag = 1;
-	    break;
-	case 'O':
-	    sscanf(bu_optarg, "%1024s", ocastring);
-	    break;
-	case 's':
-	    silent_flag = SILENT_YES;	/* Positively yes */
-	    break;
-	case 'v':
-	    silent_flag = SILENT_NO;	/* Positively no */
-	    break;
-	case 'x':
-	    sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
-	    break;
-	case 'X':
-	    sscanf( bu_optarg, "%x", (unsigned int *)&nirt_debug );
-	    break;
-	case 'u':
-	    if (sscanf(bu_optarg, "%d", &use_of_air) != 1) {
-		(void) fprintf(stderr,
-			       "Illegal use-air specification: '%s'\n", bu_optarg);
-		return 1;
-	    }
-	    break;
-	case '?':
-	default:
-	    printusage();
-	    bu_exit (Ch != '?', NULL);
+	    case 'A':
+		attrib_add(bu_optarg);
+		break;
+	    case 'B':
+		rt_bot_minpieces = atoi( bu_optarg );
+		break;
+	    case 'b':
+		do_backout = 1;
+		break;
+	    case 'E':
+		if (nirt_debug & DEBUG_SCRIPTS)
+		    show_scripts(&script_list, "before erasure");
+		while (BU_LIST_WHILE(srp, script_rec, &script_list)) {
+		    BU_LIST_DEQUEUE(&(srp->l));
+		    free_script(srp);
+		}
+		if (nirt_debug & DEBUG_SCRIPTS)
+		    show_scripts(&script_list, "after erasure");
+		break;
+	    case 'e':
+		enqueue_script(&script_list, READING_STRING, bu_optarg);
+		if (nirt_debug & DEBUG_SCRIPTS)
+		    show_scripts(&script_list, "after enqueueing a literal");
+		break;
+	    case 'f':
+		enqueue_script(&script_list, READING_FILE, bu_optarg);
+		if (nirt_debug & DEBUG_SCRIPTS)
+		    show_scripts(&script_list, "after enqueueing a file name");
+		break;
+	    case 'M':
+		mat_flag = 1;
+		break;
+	    case 'O':
+		sscanf(bu_optarg, "%1024s", ocastring);
+		break;
+	    case 's':
+		silent_flag = SILENT_YES;	/* Positively yes */
+		break;
+	    case 'v':
+		silent_flag = SILENT_NO;	/* Positively no */
+		break;
+	    case 'x':
+		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
+		break;
+	    case 'X':
+		sscanf( bu_optarg, "%x", (unsigned int *)&nirt_debug );
+		break;
+	    case 'u':
+		if (sscanf(bu_optarg, "%d", &use_of_air) != 1) {
+		    (void) fprintf(stderr,
+				   "Illegal use-air specification: '%s'\n", bu_optarg);
+		    return 1;
+		}
+		break;
+	    case '?':
+	    default:
+		printusage();
+		bu_exit (Ch != '?', NULL);
 	}
     } /* end while getopt */
 
@@ -452,40 +452,40 @@ main (int argc, char **argv)
     }
 
     switch (*ocastring) {
-    case '\0':
-	overlap_claims = OVLP_RESOLVE;
-	break;
-    case '0':
-    case '1':
-    case '2':
-    case '3':
-	if (ocastring[1] == '\0') {
-	    sscanf(ocastring, "%d", &overlap_claims);
-	} else {
-	    fprintf(stderr,
-		    "Illegal overlap_claims specification: '%s'\n", ocastring);
-	    return 1;
-	}
-	break;
-    case 'r':
-	if (strcmp(ocastring, "resolve") == 0)
+	case '\0':
 	    overlap_claims = OVLP_RESOLVE;
-	else if (strcmp(ocastring, "rebuild_fastgen") == 0)
-	    overlap_claims = OVLP_REBUILD_FASTGEN;
-	else if (strcmp(ocastring, "rebuild_all") == 0)
-	    overlap_claims = OVLP_REBUILD_ALL;
-	else if (strcmp(ocastring, "retain") == 0)
-	    overlap_claims = OVLP_RETAIN;
-	else {
+	    break;
+	case '0':
+	case '1':
+	case '2':
+	case '3':
+	    if (ocastring[1] == '\0') {
+		sscanf(ocastring, "%d", &overlap_claims);
+	    } else {
+		fprintf(stderr,
+			"Illegal overlap_claims specification: '%s'\n", ocastring);
+		return 1;
+	    }
+	    break;
+	case 'r':
+	    if (strcmp(ocastring, "resolve") == 0)
+		overlap_claims = OVLP_RESOLVE;
+	    else if (strcmp(ocastring, "rebuild_fastgen") == 0)
+		overlap_claims = OVLP_REBUILD_FASTGEN;
+	    else if (strcmp(ocastring, "rebuild_all") == 0)
+		overlap_claims = OVLP_REBUILD_ALL;
+	    else if (strcmp(ocastring, "retain") == 0)
+		overlap_claims = OVLP_RETAIN;
+	    else {
+		fprintf(stderr,
+			"Illegal overlap_claims specification: '%s'\n", ocastring);
+		return 1;
+	    }
+	    break;
+	default:
 	    fprintf(stderr,
 		    "Illegal overlap_claims specification: '%s'\n", ocastring);
 	    return 1;
-	}
-	break;
-    default:
-	fprintf(stderr,
-		"Illegal overlap_claims specification: '%s'\n", ocastring);
-	return 1;
     }
 
     db_name = argv[bu_optind];
@@ -546,9 +546,9 @@ main (int argc, char **argv)
     local2base = rtip->rti_dbip->dbi_local2base;
     tmp_str = bu_units_string(local2base);
     if ( tmp_str ) {
-	    bu_strlcpy(local_u_name, bu_units_string(local2base), sizeof(local_u_name));
+	bu_strlcpy(local_u_name, bu_units_string(local2base), sizeof(local_u_name));
     } else {
-	    strcpy( local_u_name, "Unknown units" );
+	strcpy( local_u_name, "Unknown units" );
     }
 
     if (silent_flag != SILENT_YES) {

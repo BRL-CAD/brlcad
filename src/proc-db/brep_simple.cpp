@@ -127,7 +127,7 @@ TwistedCubeSideSurface(const ON_3dPoint& SW, const ON_3dPoint& SE, const ON_3dPo
 							 2, // v order,
 							 2, // number of control vertices in u
 							 2 // number of control verts in v
-							 );
+	);
     pNurbsSurface->SetCV(0, 0, SW);
     pNurbsSurface->SetCV(1, 0, SE);
     pNurbsSurface->SetCV(1, 1, NE);
@@ -145,7 +145,7 @@ TwistedCubeSideSurface(const ON_3dPoint& SW, const ON_3dPoint& SE, const ON_3dPo
 ON_Curve*
 TwistedCubeTrimmingCurve(const ON_Surface& s,
 			 int side // 0 = SW to SE, 1 = SE to NE, 2 = NE to NW, 3 = NW, SW
-			 )
+    )
 {
     // a trimming curve is a 2d curve whose image lies in the surface's
     // domain. The "active" portion of the surface is to the left of the
@@ -493,6 +493,7 @@ main(int argc, char *argv[])
  * mode: C++
  * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

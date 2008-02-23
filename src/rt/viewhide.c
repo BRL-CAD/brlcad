@@ -56,11 +56,11 @@
 #define ID_BACKGROUND (-999)
 
 struct cell {
-	float	c_dist;			/* distance from emanation plane to in_hit */
-	int	c_id;			/* region_id of component hit */
-	point_t	c_hit;			/* 3-space hit point of ray */
-	vect_t	c_normal;		/* surface normal at the hit point */
-	vect_t	c_rdir;			/* ray direction, permits perspective */
+    float	c_dist;			/* distance from emanation plane to in_hit */
+    int	c_id;			/* region_id of component hit */
+    point_t	c_hit;			/* 3-space hit point of ray */
+    vect_t	c_normal;		/* surface normal at the hit point */
+    vect_t	c_rdir;			/* ray direction, permits perspective */
 };
 
 extern	int	width;			/* # of pixels in X; picture width */
@@ -84,7 +84,7 @@ int		using_mlib = 0;		/* Material routines NOT used */
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
-	{"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL }
+    {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL }
 };
 
 
@@ -121,13 +121,13 @@ int
 view_init(register struct application *ap, char *file, char *obj, int minus_o)
 {
 
-	ap->a_hit = rayhit;
-	ap->a_miss = raymiss;
-	ap->a_onehit = 1;
+    ap->a_hit = rayhit;
+    ap->a_miss = raymiss;
+    ap->a_onehit = 1;
 
-	output_is_binary = 1;		/* output is binary */
+    output_is_binary = 1;		/* output is binary */
 
-	return(0);			/* No framebuffer needed */
+    return(0);			/* No framebuffer needed */
 }
 
 /*
@@ -147,78 +147,78 @@ void
 view_2init(struct application *ap)
 {
 
-	if ( outfp == NULL )
-		bu_exit(EXIT_FAILURE, "outfp is NULL\n");
+    if ( outfp == NULL )
+	bu_exit(EXIT_FAILURE, "outfp is NULL\n");
 
-	/*
-	 *  For now, RTHIDE does not operate in parallel, while ray-tracing.
-	 *  However, not dropping out of parallel mode until here permits
-	 *  tree walking and database prepping to still be done in parallel.
-	 */
-	if ( npsw >= 1 )  {
-		bu_log("Note: changing from %d cpus to 1 cpu\n", npsw );
-		npsw = 1;		/* Disable parallel processing */
-	}
+    /*
+     *  For now, RTHIDE does not operate in parallel, while ray-tracing.
+     *  However, not dropping out of parallel mode until here permits
+     *  tree walking and database prepping to still be done in parallel.
+     */
+    if ( npsw >= 1 )  {
+	bu_log("Note: changing from %d cpus to 1 cpu\n", npsw );
+	npsw = 1;		/* Disable parallel processing */
+    }
 
-	/* malloc() two buffers that have room for as many struct cell 's
-	 * as the incoming file is wide (width), plus two for the border.
-	 * Rather than using malloc(), though, bu_malloc() is used.  This
-	 * has the advantage of inbuild error-checking and automatic aborting
-	 * if there is no memory.  Also, bu_malloc() takes a string as its
-	 * final parameter: this tells the usr exactly where memory ran out.
-	 * The file_height is counted by using ap->a_y directly. The benefit
-	 * of this is WHAT?
-	 */
-
-
-	botp = (struct cell *)bu_malloc(sizeof(struct cell) * (width + 2),
-		"bottom cell buffer" );
-	topp = (struct cell *)bu_malloc(sizeof(struct cell) * (width + 2),
-		"top cell buffer" );
-
-	/* Clear both in-buffers to ensure abscence of garbage.  Note
-	 * that the zero-filled "bottom" buffer now provides the first
-	 * in-memory buffer for comparisons.
-	 */
-
-	cleanline(botp, width);
-	cleanline(topp, width);
+    /* malloc() two buffers that have room for as many struct cell 's
+     * as the incoming file is wide (width), plus two for the border.
+     * Rather than using malloc(), though, bu_malloc() is used.  This
+     * has the advantage of inbuild error-checking and automatic aborting
+     * if there is no memory.  Also, bu_malloc() takes a string as its
+     * final parameter: this tells the usr exactly where memory ran out.
+     * The file_height is counted by using ap->a_y directly. The benefit
+     * of this is WHAT?
+     */
 
 
-	/* Determine the angle between surface normal below which shading
-	 * will take place.  The default is the for less than the cosine
-	 * of 5 degrees, there will be shading.  With the -A option, the
-	 * user can specify other number of degrees below which he wants
-	 * shading to take place.  Note that the option for ambient light
-	 * intensity had been reused since that will not be needed here.
-	 * The default of 5 degrees is used when AmbientIntensity is less
-	 * than 0.5 because it's default is set to 0.4, and the permissible
-	 * range for light intensity is 0 -> 1.
-	 */
+    botp = (struct cell *)bu_malloc(sizeof(struct cell) * (width + 2),
+				    "bottom cell buffer" );
+    topp = (struct cell *)bu_malloc(sizeof(struct cell) * (width + 2),
+				    "top cell buffer" );
 
-	if ( AmbientIntensity <= 0.5 )  {
-		maxangle = cos( 5.0 * bn_degtorad);
-	} else {
-		maxangle = cos( AmbientIntensity * bn_degtorad);
-	}
+    /* Clear both in-buffers to ensure abscence of garbage.  Note
+     * that the zero-filled "bottom" buffer now provides the first
+     * in-memory buffer for comparisons.
+     */
 
-	/* Obtain the bounding boxes for the model from the rt_i(stance)
-	 * structure and feed the maximum and minimum coordinates to
-	 * pdv_3space.  This will allow the image to appear in the plot
-	 * starting with the same size as the model.
-	 */
+    cleanline(botp, width);
+    cleanline(topp, width);
 
-	pdv_3space(outfp, ap->a_rt_i->rti_pmin, ap->a_rt_i->rti_pmax);
 
-	/* Now calculated and store the minimun depth change that will
-	 * trigger the drawing of "pits" and "pendula" (mountains).  In
-	 * this case, a change in distance of 2 pixels was picked.  Note
-	 * that the distance of one pixel in model space is MAGNITUDE(dx_model).
-	 * This is calculated once per frame dx_model may be different in
-	 * another frame.
-	 */
+    /* Determine the angle between surface normal below which shading
+     * will take place.  The default is the for less than the cosine
+     * of 5 degrees, there will be shading.  With the -A option, the
+     * user can specify other number of degrees below which he wants
+     * shading to take place.  Note that the option for ambient light
+     * intensity had been reused since that will not be needed here.
+     * The default of 5 degrees is used when AmbientIntensity is less
+     * than 0.5 because it's default is set to 0.4, and the permissible
+     * range for light intensity is 0 -> 1.
+     */
 
-	pit_depth = 4 * MAGNITUDE( dx_model );
+    if ( AmbientIntensity <= 0.5 )  {
+	maxangle = cos( 5.0 * bn_degtorad);
+    } else {
+	maxangle = cos( AmbientIntensity * bn_degtorad);
+    }
+
+    /* Obtain the bounding boxes for the model from the rt_i(stance)
+     * structure and feed the maximum and minimum coordinates to
+     * pdv_3space.  This will allow the image to appear in the plot
+     * starting with the same size as the model.
+     */
+
+    pdv_3space(outfp, ap->a_rt_i->rti_pmin, ap->a_rt_i->rti_pmax);
+
+    /* Now calculated and store the minimun depth change that will
+     * trigger the drawing of "pits" and "pendula" (mountains).  In
+     * this case, a change in distance of 2 pixels was picked.  Note
+     * that the distance of one pixel in model space is MAGNITUDE(dx_model).
+     * This is calculated once per frame dx_model may be different in
+     * another frame.
+     */
+
+    pit_depth = 4 * MAGNITUDE( dx_model );
 
 
 }
@@ -235,32 +235,32 @@ int
 raymiss(register struct application *ap)
 {
 
-	struct	cell	*posp;		/* store the current cell position */
+    struct	cell	*posp;		/* store the current cell position */
 
-	/* Getting defensive.... just in case. */
-	if (ap->a_x > width)  {
-		bu_exit(EXIT_FAILURE, "raymiss: pixels exceed width\n");
-	}
+    /* Getting defensive.... just in case. */
+    if (ap->a_x > width)  {
+	bu_exit(EXIT_FAILURE, "raymiss: pixels exceed width\n");
+    }
 
-	posp = &(topp[ap->a_x + 1]);
+    posp = &(topp[ap->a_x + 1]);
 
-	/*
-	 * cleanline() zero-fills a buffer.  Therefore, it is possible to
-	 * let this "line scrubber" do all the zero-filling for raymiss()
-	 * by calling it before EVERY new topbuff is filled.  This would
-	 * result in very inefficient code.  Thus, even on a miss, raymiss()
-	 * will do its own zero-filling of the distance, region_id, surface
-	 * normal, and the hit distance.  This prevents the image from being
-	 * "smeared".
-	 */
+    /*
+     * cleanline() zero-fills a buffer.  Therefore, it is possible to
+     * let this "line scrubber" do all the zero-filling for raymiss()
+     * by calling it before EVERY new topbuff is filled.  This would
+     * result in very inefficient code.  Thus, even on a miss, raymiss()
+     * will do its own zero-filling of the distance, region_id, surface
+     * normal, and the hit distance.  This prevents the image from being
+     * "smeared".
+     */
 
-	posp->c_id = ID_BACKGROUND;
-	posp->c_dist = 0;
-	VSET(posp->c_hit, 0, 0, 0);
-	VSET(posp->c_normal, 0, 0, 0);
-	VSET(posp->c_rdir, 0, 0, 0);
+    posp->c_id = ID_BACKGROUND;
+    posp->c_dist = 0;
+    VSET(posp->c_hit, 0, 0, 0);
+    VSET(posp->c_normal, 0, 0, 0);
+    VSET(posp->c_rdir, 0, 0, 0);
 
-	return(0);
+    return(0);
 }
 
 /*
@@ -272,7 +272,7 @@ raymiss(register struct application *ap)
 void
 view_pixel(void)
 {
-	return;
+    return;
 }
 
 void view_setup(void) {}
@@ -291,65 +291,65 @@ void view_cleanup(void) {}
 int
 rayhit(struct application *ap, register struct partition *PartHeadp, struct seg *segp)
 {
-	register struct partition *pp = PartHeadp->pt_forw;
-	struct	cell	*posp;			/* stores current cell position */
-	register struct hit	*hitp;		/* which hit */
+    register struct partition *pp = PartHeadp->pt_forw;
+    struct	cell	*posp;			/* stores current cell position */
+    register struct hit	*hitp;		/* which hit */
 
-	if ( pp == PartHeadp )
-		return(0);		/* nothing was actually hit?? */
-
-
-	/* Getting defensive.... just in case. */
-	if (ap->a_x > width)  {
-		bu_exit(EXIT_FAILURE, "rayhit: pixels exceed width\n");
-	}
-
-	posp = &(topp[ap->a_x + 1]);
-
-	/* Ensure that inhit is in front of emanation plane */
-	for ( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
-		if ( pp->pt_inhit->hit_dist >= 0.0 )  break;
-	if ( pp == PartHeadp )  {
-		bu_log("rthide/rayhit:  no hit out front? x%d y%d lvl%d\n",
-			ap->a_x, ap->a_y, ap->a_level);
-		return(0);
-	}
-	hitp = pp->pt_inhit;
-
-	VMOVE(posp->c_rdir, ap->a_ray.r_dir);
-	VJOIN1( posp->c_hit, ap->a_ray.r_pt, hitp->hit_dist, ap->a_ray.r_dir );
-
-	/* Calculate the hit normal and the hit distance. */
-	RT_HIT_NORMAL( posp->c_normal, hitp, pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip);
+    if ( pp == PartHeadp )
+	return(0);		/* nothing was actually hit?? */
 
 
-	/* Now store the distance and the region_id in the appropriate
-	 * cell struct: i.e., ap->a_x (the x-coordinate) +1 within the
-	 * array of cell structs.
-	 * Extract the hit distance and the hit normals from the hit structure
-	 * and store in the cell structure.
-	 * Since repeatedly computing topp[ap->a_x + 1] is very inefficient,
-	 * the value of ap->a_x + 1 will be stored in a struct cell pointer
-	 * to vitiate the need to recompute this value repeatedly. LATER.
-	 */
-	posp->c_dist = hitp->hit_dist;
+    /* Getting defensive.... just in case. */
+    if (ap->a_x > width)  {
+	bu_exit(EXIT_FAILURE, "rayhit: pixels exceed width\n");
+    }
 
-	/*
-	 * Output the ray data: screen plane (pixel) coordinates
-	 * for x and y positions of a ray, region_id, and hit_distance.
-	 * The x and y positions are represented by ap->a_x and ap->a_y.
-	 *
-	 *  Assume all rays are parallel.
-	 */
+    posp = &(topp[ap->a_x + 1]);
 
-	posp->c_id = pp->pt_regionp->reg_regionid;
-
-	/* make sure that if there is a hit, the region_id is not the
-	 * same as the background.  If it is, set to 1.
-	 */
-	if (posp->c_id == ID_BACKGROUND)
-		posp->c_id = 1;
+    /* Ensure that inhit is in front of emanation plane */
+    for ( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
+	if ( pp->pt_inhit->hit_dist >= 0.0 )  break;
+    if ( pp == PartHeadp )  {
+	bu_log("rthide/rayhit:  no hit out front? x%d y%d lvl%d\n",
+	       ap->a_x, ap->a_y, ap->a_level);
 	return(0);
+    }
+    hitp = pp->pt_inhit;
+
+    VMOVE(posp->c_rdir, ap->a_ray.r_dir);
+    VJOIN1( posp->c_hit, ap->a_ray.r_pt, hitp->hit_dist, ap->a_ray.r_dir );
+
+    /* Calculate the hit normal and the hit distance. */
+    RT_HIT_NORMAL( posp->c_normal, hitp, pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip);
+
+
+    /* Now store the distance and the region_id in the appropriate
+     * cell struct: i.e., ap->a_x (the x-coordinate) +1 within the
+     * array of cell structs.
+     * Extract the hit distance and the hit normals from the hit structure
+     * and store in the cell structure.
+     * Since repeatedly computing topp[ap->a_x + 1] is very inefficient,
+     * the value of ap->a_x + 1 will be stored in a struct cell pointer
+     * to vitiate the need to recompute this value repeatedly. LATER.
+     */
+    posp->c_dist = hitp->hit_dist;
+
+    /*
+     * Output the ray data: screen plane (pixel) coordinates
+     * for x and y positions of a ray, region_id, and hit_distance.
+     * The x and y positions are represented by ap->a_x and ap->a_y.
+     *
+     *  Assume all rays are parallel.
+     */
+
+    posp->c_id = pp->pt_regionp->reg_regionid;
+
+    /* make sure that if there is a hit, the region_id is not the
+     * same as the background.  If it is, set to 1.
+     */
+    if (posp->c_id == ID_BACKGROUND)
+	posp->c_id = 1;
+    return(0);
 }
 
 /*
@@ -367,18 +367,18 @@ void	view_eol(struct application *ap)
 {
 
 
-	/* Now add 2 pixels to file_width to convert it to memory_width
-	 * for doing the comparisons and determining the boundaries around
-	 * the picture.  Note that the file_height is simply expressed as
-	 * ap->a_y.  It is not necessary to add 2 pixels to it for the
-	 * boundary because that is taken care of by originally allocating
-	 * the bottom cell buffer, and at the end by doing one extra top
-	 * cell buffer.
-	 */
+    /* Now add 2 pixels to file_width to convert it to memory_width
+     * for doing the comparisons and determining the boundaries around
+     * the picture.  Note that the file_height is simply expressed as
+     * ap->a_y.  It is not necessary to add 2 pixels to it for the
+     * boundary because that is taken care of by originally allocating
+     * the bottom cell buffer, and at the end by doing one extra top
+     * cell buffer.
+     */
 
-	horiz_cmp(botp, width + 2, ap->a_y);
-	vert_cmp(botp, topp, width + 2, ap->a_y);
-	swapbuff(&botp, &topp);
+    horiz_cmp(botp, width + 2, ap->a_y);
+    vert_cmp(botp, topp, width + 2, ap->a_y);
+    swapbuff(&botp, &topp);
 
 }
 
@@ -398,11 +398,11 @@ void
 view_end(struct application *ap)
 {
 
-	cleanline(topp, width);
-	horiz_cmp(botp, width + 2, ap->a_y);
-	vert_cmp(botp, topp, width + 2, ap->a_y);
+    cleanline(topp, width);
+    horiz_cmp(botp, width + 2, ap->a_y);
+    vert_cmp(botp, topp, width + 2, ap->a_y);
 
-	fflush(outfp);
+    fflush(outfp);
 }
 
 
@@ -423,76 +423,76 @@ view_end(struct application *ap)
 void
 horiz_cmp(struct cell *botp, int mem_width, int y)
 {
-	int		x;
-	struct	cell	*cellp;
-	vect_t		start;		/* start of vector */
-	vect_t		stop;		/* end of vector */
+    int		x;
+    struct	cell	*cellp;
+    vect_t		start;		/* start of vector */
+    vect_t		stop;		/* end of vector */
 
-	for (x=0; x < (mem_width-1); x++, botp++)  {
+    for (x=0; x < (mem_width-1); x++, botp++)  {
 
-		/* If the region_ids of neighboring pixels do
-		 * not match, compare their hit distances.  If
-		 * either distance is zero, select the non-zero
-		 * distance for plotting; otherwise, select the
-		 * lesser of the two distances.
-		 * Check the angle between surface normals to see
-		 * whether a line needs to be drawn.  This is accomplished
-		 * by finding the cosine of the angle between the two
-		 * vectors with VDOT(), the dot product.  The result
-		 * is compared against maxangle, which must be determined
-		 * experimentally.  This scheme will prevent curved surfaces,
-		 * on which practically "every point is a surface", from
-		 * being represented as dark blobs.
-		 * Note that maxangle needs to be greater than the cosine
-		 * of the angle between the two vectors because as the angle
-		 * between the increases, the cosine of said angle decreases.
-		 * Also of interest is that one needs to say: plot if id's
-		 * are not the same OR if either id is not 0 AND the cosine
-		 * of the angle between the normals is less than maxangle.
-		 * This test prevents the background from being shaded in.
-		 * Furthermore, it is necessary to select the hit_point.
-		 * Check for pits and pendula.  The below if statement can
-		 * be translated as follows: if (ids don't match ||
-		 * (cur_id is not 0 && ( (there's a pit) || (there's a mtn) ).
-		 */
+	/* If the region_ids of neighboring pixels do
+	 * not match, compare their hit distances.  If
+	 * either distance is zero, select the non-zero
+	 * distance for plotting; otherwise, select the
+	 * lesser of the two distances.
+	 * Check the angle between surface normals to see
+	 * whether a line needs to be drawn.  This is accomplished
+	 * by finding the cosine of the angle between the two
+	 * vectors with VDOT(), the dot product.  The result
+	 * is compared against maxangle, which must be determined
+	 * experimentally.  This scheme will prevent curved surfaces,
+	 * on which practically "every point is a surface", from
+	 * being represented as dark blobs.
+	 * Note that maxangle needs to be greater than the cosine
+	 * of the angle between the two vectors because as the angle
+	 * between the increases, the cosine of said angle decreases.
+	 * Also of interest is that one needs to say: plot if id's
+	 * are not the same OR if either id is not 0 AND the cosine
+	 * of the angle between the normals is less than maxangle.
+	 * This test prevents the background from being shaded in.
+	 * Furthermore, it is necessary to select the hit_point.
+	 * Check for pits and pendula.  The below if statement can
+	 * be translated as follows: if (ids don't match ||
+	 * (cur_id is not 0 && ( (there's a pit) || (there's a mtn) ).
+	 */
 
-		if (botp->c_id != (botp+1)->c_id ||
-		   ( botp->c_id != ID_BACKGROUND &&
-		   ( (botp->c_dist + pit_depth < (botp+1)->c_dist) ||
-		     ((botp+1)->c_dist + pit_depth < botp->c_dist)  ||
-		     (VDOT(botp->c_normal, (botp + 1)->c_normal) < maxangle))))  {
+	if (botp->c_id != (botp+1)->c_id ||
+	    ( botp->c_id != ID_BACKGROUND &&
+	      ( (botp->c_dist + pit_depth < (botp+1)->c_dist) ||
+		((botp+1)->c_dist + pit_depth < botp->c_dist)  ||
+		(VDOT(botp->c_normal, (botp + 1)->c_normal) < maxangle))))  {
 
-			cellp = find_cell(botp, (botp+1));
+	    cellp = find_cell(botp, (botp+1));
 
-			/* Note that the coordinates must be expressed
-			 * as MODEL coordinates.  This can be done by
-			 * adding offsets to the hit_point.  Thus, 0.5*
-			 * dx_model means moving 0.5 of a cell in model
-			 * space, and replaces (x -1 +0.5) representing
-			 * backing up one whole cell and then moving to
-			 * the center of the new cell in file coordinates.
-			 * In that case, the x represented the screen coords.
-			 * Now, make the beginning point and the ending point.
-			 */
+	    /* Note that the coordinates must be expressed
+	     * as MODEL coordinates.  This can be done by
+	     * adding offsets to the hit_point.  Thus, 0.5*
+	     * dx_model means moving 0.5 of a cell in model
+	     * space, and replaces (x -1 +0.5) representing
+	     * backing up one whole cell and then moving to
+	     * the center of the new cell in file coordinates.
+	     * In that case, the x represented the screen coords.
+	     * Now, make the beginning point and the ending point.
+	     */
 
-			/* To make sure that all the vertical lines are in the
-			 * correct place, if cellp is the same as botp, then
-			 * to start, move half a cell right to start, else move half a
-			 * cell left; and to end, move right and up one half cell.
-			 */
+	    /* To make sure that all the vertical lines are in the
+	     * correct place, if cellp is the same as botp, then
+	     * to start, move half a cell right to start, else move half a
+	     * cell left; and to end, move right and up one half cell.
+	     */
 
-			if (botp == cellp)  {
-				VJOIN2(start, cellp->c_hit, 0.5, dx_model, -0.5, dy_model);
-				VJOIN2(stop, cellp->c_hit, 0.5, dx_model, 0.5, dy_model);
-			} else {
-				VJOIN2(start, cellp->c_hit, -0.5, dx_model, -0.5, dy_model);
-				VJOIN2(stop, cellp->c_hit, -0.5, dx_model, 0.5, dy_model);
-			}
+	    if (botp == cellp)  {
+		VJOIN2(start, cellp->c_hit, 0.5, dx_model, -0.5, dy_model);
+		VJOIN2(stop, cellp->c_hit, 0.5, dx_model, 0.5, dy_model);
+	    } else {
+		VJOIN2(start, cellp->c_hit, -0.5, dx_model, -0.5, dy_model);
+		VJOIN2(stop, cellp->c_hit, -0.5, dx_model, 0.5, dy_model);
+	    }
 
-			pdv_3line(outfp, start, stop);
+	    pdv_3line(outfp, start, stop);
 
-		}
 	}
+    }
 }
 
 /*
@@ -513,119 +513,119 @@ void
 vert_cmp(struct cell *botp, struct cell *topp, int mem_width, int y)
 {
 
-	register int	x;
-	struct	 cell	*cellp;
-	struct	 cell	*start_cellp;
-	int		state;
-	vect_t		start;
-	vect_t		stop;
+    register int	x;
+    struct	 cell	*cellp;
+    struct	 cell	*start_cellp;
+    int		state;
+    vect_t		start;
+    vect_t		stop;
 
-	VSET(start, 0, 0, 0);	/* cleans out start point... a safety */
+    VSET(start, 0, 0, 0);	/* cleans out start point... a safety */
 
-	state = SEEKING_START_PT;
+    state = SEEKING_START_PT;
 
-	/* If the region_ids are not equal OR either region_id is not 0 AND
-	 * the cosine of the angle between the normals is less than maxangle,
-	 * plot a line or shade the plot to produce surface normals or give
-	 * a sense of curvature.
+    /* If the region_ids are not equal OR either region_id is not 0 AND
+     * the cosine of the angle between the normals is less than maxangle,
+     * plot a line or shade the plot to produce surface normals or give
+     * a sense of curvature.
+     */
+
+    for (x=0; x < mem_width; x++, botp++, topp++)  {
+
+	/* If the id's are not the same, or if bottom id is not
+	 * zero, find pits (botp->c_dist+pit_depth < topp->c_dist)
+	 * and mountains (topp->c_dist+pit_depth < botp->c_dist).
 	 */
 
-	for (x=0; x < mem_width; x++, botp++, topp++)  {
+	if (botp->c_id != topp->c_id ||
+	    ( botp->c_id != ID_BACKGROUND &&
+	      ((botp->c_dist + pit_depth < topp->c_dist) ||
+	       (topp->c_dist + pit_depth < botp->c_dist) ||
+	       (VDOT(botp->c_normal, topp->c_normal) < maxangle))))  {
+	    if ( state == FOUND_START_PT ) {
+		continue;
+	    } else {
+		/* find the correct cell. */
+		start_cellp = find_cell(botp, topp);
 
-		/* If the id's are not the same, or if bottom id is not
-		 * zero, find pits (botp->c_dist+pit_depth < topp->c_dist)
-		 * and mountains (topp->c_dist+pit_depth < botp->c_dist).
+		/* Move to and remember left point.  If start_cellp
+		 * is botp, then move left and up half a cell.
 		 */
 
-		if (botp->c_id != topp->c_id ||
-		   ( botp->c_id != ID_BACKGROUND &&
-		     ((botp->c_dist + pit_depth < topp->c_dist) ||
-		      (topp->c_dist + pit_depth < botp->c_dist) ||
-		      (VDOT(botp->c_normal, topp->c_normal) < maxangle))))  {
-			if ( state == FOUND_START_PT ) {
-				continue;
-			} else {
-				/* find the correct cell. */
-				start_cellp = find_cell(botp, topp);
-
-				/* Move to and remember left point.  If start_cellp
-				 * is botp, then move left and up half a cell.
-				 */
-
-				if (botp == start_cellp)  {
-					VJOIN2(start, start_cellp->c_hit, -0.5, dx_model, 0.5, dy_model);
-				} else  {
-					VJOIN2(start, start_cellp->c_hit, -0.5, dx_model, -0.5, dy_model);
-				}
-
-				state = FOUND_START_PT;
-			}
-		} else {
-			/* points are the same */
-
-			if (state == FOUND_START_PT) {
-
-				/* Draw to current left edge
-				 * Note that x and y must be converted back
-				 * to file coordinates so that the file
-				 * picture gets plotted.  The 0.5 factors
-				 * are for centering. This is for (x-1-0.5),
-				 * y-1+0.5).  These file coordinate must then
-				 * be expressed in model space.  That is done
-				 * by starting at the hit_pt and adding or
-				 * subtracting 0.5 cell for centering.
-				 */
-
-				cellp = find_cell( (botp-1), (topp-1) );
-
-				/* If botp-1 is cellp, then move right and up
-				 * by half a cell.  Otherwise, move right and down
-				 * by half a cell.
-				 */
-
-				if ( (botp-1) == cellp)  {
-					VJOIN2(stop, cellp->c_hit, 0.5, dx_model, 0.5, dy_model);
-				} else {
-					VJOIN2(stop, cellp->c_hit, 0.5, dx_model, -0.5, dy_model);
-				}
-
-				pdv_3line(outfp, start, stop);
-				state = SEEKING_START_PT;
-			} else {
-				continue;
-			}
+		if (botp == start_cellp)  {
+		    VJOIN2(start, start_cellp->c_hit, -0.5, dx_model, 0.5, dy_model);
+		} else  {
+		    VJOIN2(start, start_cellp->c_hit, -0.5, dx_model, -0.5, dy_model);
 		}
-	}
 
-	/* Now check for end of scan-line. */
-	if (state == FOUND_START_PT) {
+		state = FOUND_START_PT;
+	    }
+	} else {
+	    /* points are the same */
 
-			/* Note that x and y must be converted back
-			 * to file coordinates so that the file
-			 * picture gets plotted.  The 0.5 factors
-			 * are for centering.  This is for (x-1-0.5), (y-1+0.5).
-			 * These file coordinates must then be expressed in
-			 * model space.  That is done by starting at the
-			 * hit_pt and adding or subtracting 0.5 cell for
-			 * centering.
-			 */
+	    if (state == FOUND_START_PT) {
+
+		/* Draw to current left edge
+		 * Note that x and y must be converted back
+		 * to file coordinates so that the file
+		 * picture gets plotted.  The 0.5 factors
+		 * are for centering. This is for (x-1-0.5),
+		 * y-1+0.5).  These file coordinate must then
+		 * be expressed in model space.  That is done
+		 * by starting at the hit_pt and adding or
+		 * subtracting 0.5 cell for centering.
+		 */
 
 		cellp = find_cell( (botp-1), (topp-1) );
 
-			/* If botp-1 is cellp, then move right and up
-			 * by half a cell.  Otherwise, move right and down
-			 * by half a cell.
-			 */
+		/* If botp-1 is cellp, then move right and up
+		 * by half a cell.  Otherwise, move right and down
+		 * by half a cell.
+		 */
 
 		if ( (botp-1) == cellp)  {
-			VJOIN2(stop, cellp->c_hit, 0.5, dx_model, 0.5, dy_model);
+		    VJOIN2(stop, cellp->c_hit, 0.5, dx_model, 0.5, dy_model);
 		} else {
-			VJOIN2(stop, cellp->c_hit, 0.5, dx_model, -0.5, dy_model);
+		    VJOIN2(stop, cellp->c_hit, 0.5, dx_model, -0.5, dy_model);
 		}
 
 		pdv_3line(outfp, start, stop);
 		state = SEEKING_START_PT;
+	    } else {
+		continue;
+	    }
 	}
+    }
+
+    /* Now check for end of scan-line. */
+    if (state == FOUND_START_PT) {
+
+	/* Note that x and y must be converted back
+	 * to file coordinates so that the file
+	 * picture gets plotted.  The 0.5 factors
+	 * are for centering.  This is for (x-1-0.5), (y-1+0.5).
+	 * These file coordinates must then be expressed in
+	 * model space.  That is done by starting at the
+	 * hit_pt and adding or subtracting 0.5 cell for
+	 * centering.
+	 */
+
+	cellp = find_cell( (botp-1), (topp-1) );
+
+	/* If botp-1 is cellp, then move right and up
+	 * by half a cell.  Otherwise, move right and down
+	 * by half a cell.
+	 */
+
+	if ( (botp-1) == cellp)  {
+	    VJOIN2(stop, cellp->c_hit, 0.5, dx_model, 0.5, dy_model);
+	} else {
+	    VJOIN2(stop, cellp->c_hit, 0.5, dx_model, -0.5, dy_model);
+	}
+
+	pdv_3line(outfp, start, stop);
+	state = SEEKING_START_PT;
+    }
 }
 
 
@@ -647,18 +647,18 @@ vert_cmp(struct cell *botp, struct cell *topp, int mem_width, int y)
 struct	cell	*
 find_cell (struct cell *cur_cellp, struct cell *next_cellp)
 {
-	struct cell	*cellp;
+    struct cell	*cellp;
 
-	if (cur_cellp->c_dist == 0)
-		cellp = next_cellp;
-	else if (next_cellp->c_dist == 0)
-		cellp = cur_cellp;
-	else if (cur_cellp->c_dist < next_cellp->c_dist )
-		cellp = cur_cellp;
-	else
-		cellp = next_cellp;
+    if (cur_cellp->c_dist == 0)
+	cellp = next_cellp;
+    else if (next_cellp->c_dist == 0)
+	cellp = cur_cellp;
+    else if (cur_cellp->c_dist < next_cellp->c_dist )
+	cellp = cur_cellp;
+    else
+	cellp = next_cellp;
 
-	return (cellp);
+    return (cellp);
 }
 
 
@@ -677,16 +677,16 @@ find_cell (struct cell *cur_cellp, struct cell *next_cellp)
 
 void
 swapbuff(struct cell **onepp, struct cell **twopp)
-					/* caveat: variables must start w/ letters */
+    /* caveat: variables must start w/ letters */
 
 
 {
 
-	struct cell	*temp_p;	/* caveat: hyphens are read as "minus" */
+    struct cell	*temp_p;	/* caveat: hyphens are read as "minus" */
 
-	temp_p = *onepp;
-	*onepp = *twopp;
-	*twopp = temp_p;
+    temp_p = *onepp;
+    *onepp = *twopp;
+    *twopp = temp_p;
 
 }
 
@@ -702,15 +702,15 @@ void
 cleanline(struct cell *inbuffp, int file_width)
 {
 
-	int	i;
+    int	i;
 
-	for (i = 0; i < file_width + 2; i++, inbuffp++)  {
-		inbuffp->c_id = ID_BACKGROUND;
-		inbuffp->c_dist = 0;
-		VSET(inbuffp->c_hit, 0, 0, 0);
-		VSET(inbuffp->c_normal, 0, 0, 0);
-		VSET(inbuffp->c_rdir, 0, 0, 0);
-	}
+    for (i = 0; i < file_width + 2; i++, inbuffp++)  {
+	inbuffp->c_id = ID_BACKGROUND;
+	inbuffp->c_dist = 0;
+	VSET(inbuffp->c_hit, 0, 0, 0);
+	VSET(inbuffp->c_normal, 0, 0, 0);
+	VSET(inbuffp->c_rdir, 0, 0, 0);
+    }
 }
 
 void application_init (void) {}

@@ -53,7 +53,7 @@ typedef struct outval_tag {
 	fastf_t	fval;
 	const char	*sval;
 	int	ival;
-	}		value;
+    }		value;
 }					outval;
 
 typedef struct ovlp_tag {

@@ -62,44 +62,44 @@ void	get_tape_position(void);
 int
 get_args(int argc, register char **argv)
 {
-	register int c;
+    register int c;
 
-	while ( (c = bu_getopt( argc, argv, "dhF:s:S:w:W:n:N:" )) != EOF )  {
-		switch ( c )  {
-		case 'd':
-			debug = 1;
-			break;
+    while ( (c = bu_getopt( argc, argv, "dhF:s:S:w:W:n:N:" )) != EOF )  {
+	switch ( c )  {
+	    case 'd':
+		debug = 1;
+		break;
 
-		case 'h':
-			/* high-res */
-			scr_height = scr_width = 1024;
-			break;
-		case 'F':
-			framebuffer = bu_optarg;
-			break;
-		case 'S':
-		case 's':
-			/* square file size */
-			scr_height = scr_width = atoi(bu_optarg);
-			break;
-		case 'w':
-		case 'W':
-			scr_width = atoi(bu_optarg);
-			break;
-		case 'n':
-		case 'N':
-			scr_height = atoi(bu_optarg);
-			break;
+	    case 'h':
+		/* high-res */
+		scr_height = scr_width = 1024;
+		break;
+	    case 'F':
+		framebuffer = bu_optarg;
+		break;
+	    case 'S':
+	    case 's':
+		/* square file size */
+		scr_height = scr_width = atoi(bu_optarg);
+		break;
+	    case 'w':
+	    case 'W':
+		scr_width = atoi(bu_optarg);
+		break;
+	    case 'n':
+	    case 'N':
+		scr_height = atoi(bu_optarg);
+		break;
 
-		default:		/* '?' */
-			return(0);
-		}
-	}
-
-	if ( bu_optind >= argc )
+	    default:		/* '?' */
 		return(0);
+	}
+    }
 
-	return(1);		/* OK */
+    if ( bu_optind >= argc )
+	return(0);
+
+    return(1);		/* OK */
 }
 
 /*
@@ -108,268 +108,268 @@ get_args(int argc, register char **argv)
 int
 main(int argc, char **argv)
 {
-	register FBIO	*fbp = FBIO_NULL;
-	int scene_number = 1;
-	int start_frame = 1;
-	int number_of_frames=0;
-	int number_of_images=0;
-	int start_seq_number=0;
-	int	exit_code;
+    register FBIO	*fbp = FBIO_NULL;
+    int scene_number = 1;
+    int start_frame = 1;
+    int number_of_frames=0;
+    int number_of_images=0;
+    int start_seq_number=0;
+    int	exit_code;
 
-	exit_code = 0;
+    exit_code = 0;
 
-	bu_log(""
-"*** WARNING *** WARNING *** WARNING *** WARNING *** WARNING ***\n"
-"\n"
-"This tool is deprecated and under consideration for removal from\n"
-"BRL-CAD.  If you use this tool, please contact the developers via\n"
-"devs@brlcad.org to express your interest and justification for not\n"
-"removing this tool.  Otherwise, this tool will likely be removed from\n"
-"a future release of BRL-CAD.\n"
-"\n"
-"*** WARNING *** WARNING *** WARNING *** WARNING *** WARNING ***\n"
-"\n");
+    bu_log(""
+	   "*** WARNING *** WARNING *** WARNING *** WARNING *** WARNING ***\n"
+	   "\n"
+	   "This tool is deprecated and under consideration for removal from\n"
+	   "BRL-CAD.  If you use this tool, please contact the developers via\n"
+	   "devs@brlcad.org to express your interest and justification for not\n"
+	   "removing this tool.  Otherwise, this tool will likely be removed from\n"
+	   "a future release of BRL-CAD.\n"
+	   "\n"
+	   "*** WARNING *** WARNING *** WARNING *** WARNING *** WARNING ***\n"
+	   "\n");
 
-	if ( !get_args( argc, argv ) )  {
-		usage();
-		bu_exit( 1, NULL );
-	}
+    if ( !get_args( argc, argv ) )  {
+	usage();
+	bu_exit( 1, NULL );
+    }
 
-	argc -= (bu_optind-1);
-	argv += (bu_optind-1);
+    argc -= (bu_optind-1);
+    argv += (bu_optind-1);
 
-	/*
-	 *  First group of commands.
-	 *  No checking of VAS IV status is performed first.
-	 */
-	if (strcmp(argv[1], "init") == 0) {
-		vas_open();
-		if ( get_vas_status() < 0 )
-			bu_exit(1, NULL);
-		vas_putc(C_INIT);
-		vas_await(R_INIT, 5);
-		if ( get_vtr_status(0) < 0 )
-			exit_code = 1;
-		goto done;
-	}
-	else if (strcmp(argv[1], "status") == 0) {
-		vas_open();
-		(void)get_vas_status();
-		(void)get_vtr_status(1);
-		get_tape_position();
-		(void)get_frame_code();
-		goto done;
-	}
-	else if (strcmp(argv[1], "sequence") == 0) {
-		if (argc == 2) {
-			number_of_images = 1;
-			number_of_frames = 1;
-			start_seq_number = 1;
-		}
-		else if (argc == 4) {
-			number_of_images = atoi(argv[2]);
-			if (number_of_images < 1)
-				usage_seq();
-			number_of_frames = str2frames(argv[3]);
-			if (number_of_frames < 1)
-				usage_seq();
-			start_seq_number = 1;
-		}
-		else if (argc == 5) {
-			number_of_images = atoi(argv[2]);
-			if (number_of_images < 1)
-				usage_seq();
-			number_of_frames = str2frames(argv[3]);
-			if (number_of_frames < 1)
-				usage_seq();
-			start_seq_number = atoi(argv[4]);
-		}
-		else
-			usage_seq();
-
-
-		record_seq(number_of_images, number_of_frames, start_seq_number);
-		goto done;
-	}
-
-	/*
-	 *  Second group of commands.
-	 *  VAS IV is opened, and status of VAS is checked first
-	 *  but VTR is not queried.
-	 */
+    /*
+     *  First group of commands.
+     *  No checking of VAS IV status is performed first.
+     */
+    if (strcmp(argv[1], "init") == 0) {
 	vas_open();
 	if ( get_vas_status() < 0 )
-		bu_exit(1, NULL);
+	    bu_exit(1, NULL);
+	vas_putc(C_INIT);
+	vas_await(R_INIT, 5);
+	if ( get_vtr_status(0) < 0 )
+	    exit_code = 1;
+	goto done;
+    }
+    else if (strcmp(argv[1], "status") == 0) {
+	vas_open();
+	(void)get_vas_status();
+	(void)get_vtr_status(1);
+	get_tape_position();
+	(void)get_frame_code();
+	goto done;
+    }
+    else if (strcmp(argv[1], "sequence") == 0) {
+	if (argc == 2) {
+	    number_of_images = 1;
+	    number_of_frames = 1;
+	    start_seq_number = 1;
+	}
+	else if (argc == 4) {
+	    number_of_images = atoi(argv[2]);
+	    if (number_of_images < 1)
+		usage_seq();
+	    number_of_frames = str2frames(argv[3]);
+	    if (number_of_frames < 1)
+		usage_seq();
+	    start_seq_number = 1;
+	}
+	else if (argc == 5) {
+	    number_of_images = atoi(argv[2]);
+	    if (number_of_images < 1)
+		usage_seq();
+	    number_of_frames = str2frames(argv[3]);
+	    if (number_of_frames < 1)
+		usage_seq();
+	    start_seq_number = atoi(argv[4]);
+	}
+	else
+	    usage_seq();
 
-	if (strcmp(argv[1], "rewind") == 0) {
-		vas_putc(C_REWIND);
-		goto done;
-	}
-	else if (strcmp(argv[1], "play") == 0) {
-		vas_putc(C_PLAY);
-		goto done;
-	}
-	else if (strcmp(argv[1], "stop") == 0) {
-		vas_putc(C_STOP);
-		goto done;
-	}
-	else if (strcmp(argv[1], "fforward") == 0) {
-		vas_putc(C_FFORWARD);
-		goto done;
-	}
 
-	/*
-	 *  Third group of commands.
-	 *  VAS IV is opened and checked above,
-	 *  and VTR status is checked here.
-	 */
-	if ( get_vtr_status(0) < 0 )  {
-		exit_code = 1;
-		goto done;
-	}
-	if ( strcmp(argv[1], "search") == 0 )  {
-		if ( argc >= 3 )
-			start_frame = str2frames(argv[2]);
-		else
-			start_frame = 1;
-		exit_code = search_frame(start_frame);
-		goto done;
-	}
-	else if ( strcmp(argv[1], "time0") == 0 )  {
-		exit_code = time0();
-		goto done;
-	}
-	else if ( strcmp( argv[1], "reset_time" ) == 0 )  {
-		exit_code = reset_tape_time();
-		goto done;
-	}
+	record_seq(number_of_images, number_of_frames, start_seq_number);
+	goto done;
+    }
 
-	/*
-	 *  If this is running on a workstation, and a window has to be
-	 *  opened to cause image to be re-displayed, do so now.
-	 */
-	if ( framebuffer != (char *)0 )  {
-		if ( (fbp = fb_open( framebuffer, scr_width, scr_height )) == FBIO_NULL )  {
-			exit_code = 12;
-			goto done;
-		}
-	}
+    /*
+     *  Second group of commands.
+     *  VAS IV is opened, and status of VAS is checked first
+     *  but VTR is not queried.
+     */
+    vas_open();
+    if ( get_vas_status() < 0 )
+	bu_exit(1, NULL);
 
-	/*
-	 *  Commands that will actually record some image onto tape
-	 */
-	if (strcmp(argv[1], "new") == 0) {
-		if ( argc >= 4 )  {
-			if ( (start_frame = str2frames(argv[3])) < 1 )
-				usage_new();
-		}
-		if (argc >= 3) {
-			if ( (scene_number = atoi(argv[2])) < 1 )
-				usage_new();
-		}
-		else if (argc == 2) {
-			scene_number = 1;
-		}
-		else {
-			usage_new();
-		}
-		program_recording(1, scene_number, start_frame);
-		goto done;
-	}
-	else if (strcmp(argv[1], "old") == 0) {
-		if ( argc >= 4 )  {
-			if ( (start_frame = str2frames(argv[3])) < 1 )
-				usage_new();
-		}
-		if (argc >= 3) {
-			if ( (scene_number = atoi(argv[2])) < 1 )
-				usage_new();
-		}
-		else if (argc == 2) {
-			scene_number = 1;
-		}
-		else {
-			usage_new();
-		}
-		/* May need one more parameter here, eventually */
-		program_recording(0, scene_number, start_frame);
-		goto done;
-	}
-	else if (strcmp(argv[1], "record") == 0) {
-		if (argc == 3) {
-			number_of_frames = str2frames(argv[2]);
-			if (number_of_frames < 1) {
-				usage_record();
-			}
-		}
-		else if (argc == 2) {
-			number_of_frames = 1;
-		}
-		else {
-			usage_record();
-		}
-		record_add_to_scene(number_of_frames);
-		goto done;
-	} else {
-		/* None of the above */
-		usage();
-		exit_code = 1;
-	}
+    if (strcmp(argv[1], "rewind") == 0) {
+	vas_putc(C_REWIND);
+	goto done;
+    }
+    else if (strcmp(argv[1], "play") == 0) {
+	vas_putc(C_PLAY);
+	goto done;
+    }
+    else if (strcmp(argv[1], "stop") == 0) {
+	vas_putc(C_STOP);
+	goto done;
+    }
+    else if (strcmp(argv[1], "fforward") == 0) {
+	vas_putc(C_FFORWARD);
+	goto done;
+    }
 
-done:
-	vas_close();
-	if (fbp) fb_close(fbp);
-	bu_exit(exit_code, NULL);
+    /*
+     *  Third group of commands.
+     *  VAS IV is opened and checked above,
+     *  and VTR status is checked here.
+     */
+    if ( get_vtr_status(0) < 0 )  {
+	exit_code = 1;
+	goto done;
+    }
+    if ( strcmp(argv[1], "search") == 0 )  {
+	if ( argc >= 3 )
+	    start_frame = str2frames(argv[2]);
+	else
+	    start_frame = 1;
+	exit_code = search_frame(start_frame);
+	goto done;
+    }
+    else if ( strcmp(argv[1], "time0") == 0 )  {
+	exit_code = time0();
+	goto done;
+    }
+    else if ( strcmp( argv[1], "reset_time" ) == 0 )  {
+	exit_code = reset_tape_time();
+	goto done;
+    }
+
+    /*
+     *  If this is running on a workstation, and a window has to be
+     *  opened to cause image to be re-displayed, do so now.
+     */
+    if ( framebuffer != (char *)0 )  {
+	if ( (fbp = fb_open( framebuffer, scr_width, scr_height )) == FBIO_NULL )  {
+	    exit_code = 12;
+	    goto done;
+	}
+    }
+
+    /*
+     *  Commands that will actually record some image onto tape
+     */
+    if (strcmp(argv[1], "new") == 0) {
+	if ( argc >= 4 )  {
+	    if ( (start_frame = str2frames(argv[3])) < 1 )
+		usage_new();
+	}
+	if (argc >= 3) {
+	    if ( (scene_number = atoi(argv[2])) < 1 )
+		usage_new();
+	}
+	else if (argc == 2) {
+	    scene_number = 1;
+	}
+	else {
+	    usage_new();
+	}
+	program_recording(1, scene_number, start_frame);
+	goto done;
+    }
+    else if (strcmp(argv[1], "old") == 0) {
+	if ( argc >= 4 )  {
+	    if ( (start_frame = str2frames(argv[3])) < 1 )
+		usage_new();
+	}
+	if (argc >= 3) {
+	    if ( (scene_number = atoi(argv[2])) < 1 )
+		usage_new();
+	}
+	else if (argc == 2) {
+	    scene_number = 1;
+	}
+	else {
+	    usage_new();
+	}
+	/* May need one more parameter here, eventually */
+	program_recording(0, scene_number, start_frame);
+	goto done;
+    }
+    else if (strcmp(argv[1], "record") == 0) {
+	if (argc == 3) {
+	    number_of_frames = str2frames(argv[2]);
+	    if (number_of_frames < 1) {
+		usage_record();
+	    }
+	}
+	else if (argc == 2) {
+	    number_of_frames = 1;
+	}
+	else {
+	    usage_record();
+	}
+	record_add_to_scene(number_of_frames);
+	goto done;
+    } else {
+	/* None of the above */
+	usage();
+	exit_code = 1;
+    }
+
+ done:
+    vas_close();
+    if (fbp) fb_close(fbp);
+    bu_exit(exit_code, NULL);
 }
 
 void
 usage(void)
 {
-	fprintf(stderr, "Usage: vas4 [-d] [-h] [-F framebuffer]\n");
-	fprintf(stderr, "	[-{sS} squarescrsize] [-{wW} scr_width] [-{nN} scr_height]\n");
-	fprintf(stderr, "	keyword [options]\n");
-	fprintf(stderr, "Keywords:\n");
-	fprintf(stderr, "  init\n");
-	fprintf(stderr, "  status\n");
-	fprintf(stderr, "  stop\n");
-	fprintf(stderr, "  play\n");
-	fprintf(stderr, "  rewind\n");
-	fprintf(stderr, "  fforward\n");
-	fprintf(stderr, "  new [scene_number [start_frame]]\n");
-	fprintf(stderr, "  old [scene_number [start_frame]]\n");
-	fprintf(stderr, "  record [n_frames]\n");
-	fprintf(stderr, "  sequence [n_images n_frames [start_seq]]\n");
-	fprintf(stderr, "  search [frame]\n");
-	fprintf(stderr, "  time0\n");
-	fprintf(stderr, "  reset_time\n");
-	bu_exit(1, NULL);
+    fprintf(stderr, "Usage: vas4 [-d] [-h] [-F framebuffer]\n");
+    fprintf(stderr, "	[-{sS} squarescrsize] [-{wW} scr_width] [-{nN} scr_height]\n");
+    fprintf(stderr, "	keyword [options]\n");
+    fprintf(stderr, "Keywords:\n");
+    fprintf(stderr, "  init\n");
+    fprintf(stderr, "  status\n");
+    fprintf(stderr, "  stop\n");
+    fprintf(stderr, "  play\n");
+    fprintf(stderr, "  rewind\n");
+    fprintf(stderr, "  fforward\n");
+    fprintf(stderr, "  new [scene_number [start_frame]]\n");
+    fprintf(stderr, "  old [scene_number [start_frame]]\n");
+    fprintf(stderr, "  record [n_frames]\n");
+    fprintf(stderr, "  sequence [n_images n_frames [start_seq]]\n");
+    fprintf(stderr, "  search [frame]\n");
+    fprintf(stderr, "  time0\n");
+    fprintf(stderr, "  reset_time\n");
+    bu_exit(1, NULL);
 }
 
 void
 usage_new(void)
 {
-	fprintf(stderr, "Usage: vas4 new [sn]\n");
-	fprintf(stderr, "\t[sn]\tscene number must be >= 1\n");
-	bu_exit(1, NULL);
+    fprintf(stderr, "Usage: vas4 new [sn]\n");
+    fprintf(stderr, "\t[sn]\tscene number must be >= 1\n");
+    bu_exit(1, NULL);
 }
 
 void
 usage_record(void)
 {
-	fprintf(stderr, "Usage: vas4 record [nf]\n");
-	fprintf(stderr, "\t[nf]\tnumber of frames must be >= 1\n");
-	bu_exit(1, NULL);
+    fprintf(stderr, "Usage: vas4 record [nf]\n");
+    fprintf(stderr, "\t[nf]\tnumber of frames must be >= 1\n");
+    bu_exit(1, NULL);
 }
 
 void
 usage_seq(void)
 {
-	fprintf(stderr, "Usage: vas4 sequence [n nf] [start]\n");
-	fprintf(stderr, "\t[n nf]\tthe number of images n must be > 1\n");
-	fprintf(stderr, "\t\tand the number of frames nf  must be > 1\n");
-	fprintf(stderr, "\t[start] is the starting sequence number\n");
-	fprintf(stderr, "\t\tIf start is specified, n and nf must also be specified\n");
-	bu_exit(1, NULL);
+    fprintf(stderr, "Usage: vas4 sequence [n nf] [start]\n");
+    fprintf(stderr, "\t[n nf]\tthe number of images n must be > 1\n");
+    fprintf(stderr, "\t\tand the number of frames nf  must be > 1\n");
+    fprintf(stderr, "\t[start] is the starting sequence number\n");
+    fprintf(stderr, "\t\tIf start is specified, n and nf must also be specified\n");
+    bu_exit(1, NULL);
 }
 
 
@@ -379,47 +379,47 @@ usage_seq(void)
 void
 program_recording(int new, int scene_number, int start_frame)
 {
-	int number_of_frames = 1;
+    int number_of_frames = 1;
 
-	/* Enter VAS IV program mode */
-	vas_putc(C_PROGRAM);
-	vas_await(R_PROGRAM, 0);
+    /* Enter VAS IV program mode */
+    vas_putc(C_PROGRAM);
+    vas_await(R_PROGRAM, 0);
 
-	vas_putnum(number_of_frames);
+    vas_putnum(number_of_frames);
+    vas_putc(C_ENTER);
+
+    vas_putnum(scene_number);
+    vas_putc(C_ENTER);
+
+    /* New or Old scene */
+    if ( new )  {
+	vas_putnum(1);
 	vas_putc(C_ENTER);
 
-	vas_putnum(scene_number);
+	vas_putnum(start_frame);
+	vas_putc(C_ENTER);
+    } else {
+	vas_putnum(0);
 	vas_putc(C_ENTER);
 
-	/* New or Old scene */
-	if ( new )  {
-		vas_putnum(1);
-		vas_putc(C_ENTER);
+	vas_putnum(start_frame);	/* First frame */
+	vas_putc(C_ENTER);
 
-		vas_putnum(start_frame);
-		vas_putc(C_ENTER);
-	} else {
-		vas_putnum(0);
-		vas_putc(C_ENTER);
+	/* I believe this is used only to initiate a search */
+	vas_putnum(start_frame);	/* Last recorded frame */
+	vas_putc(C_ENTER);
+    }
+    vas_await(R_SEARCH, 120);
 
-		vas_putnum(start_frame);	/* First frame */
-		vas_putc(C_ENTER);
+    /* E/E light should now be flashing, Press E/E */
+    vas_putc(C_EE);
+    vas_await(R_RECORD, 30);
 
-		/* I believe this is used only to initiate a search */
-		vas_putnum(start_frame);	/* Last recorded frame */
-		vas_putc(C_ENTER);
-	}
-	vas_await(R_SEARCH, 120);
-
-	/* E/E light should now be flashing, Press E/E */
-	vas_putc(C_EE);
-	vas_await(R_RECORD, 30);
-
-	/* New scene only records 4 sec matte */
-	if ( new )  {
-		fprintf(stderr, "Recording built-in title matte\n");
-		do_record(1);
-	}
+    /* New scene only records 4 sec matte */
+    if ( new )  {
+	fprintf(stderr, "Recording built-in title matte\n");
+	do_record(1);
+    }
 }
 
 /*
@@ -428,13 +428,13 @@ program_recording(int new, int scene_number, int start_frame)
 void
 record_add_to_scene(int number_of_frames)
 {
-	vas_putc(C_FRAME_CHANGE);
-	vas_putnum(number_of_frames);
-	vas_putc(C_ENTER);
+    vas_putc(C_FRAME_CHANGE);
+    vas_putnum(number_of_frames);
+    vas_putc(C_ENTER);
 
-	fprintf(stderr, "Recording %d frames, %g seconds\n",
-		number_of_frames, (double)number_of_frames/30.);
-	do_record(0);
+    fprintf(stderr, "Recording %d frames, %g seconds\n",
+	    number_of_frames, (double)number_of_frames/30.);
+    do_record(0);
 }
 
 /*
@@ -460,42 +460,42 @@ record_add_to_scene(int number_of_frames)
 void
 do_record(int wait)
 {
-	register int c;
+    register int c;
 
-	vas_putc(C_RECORD);
-	for (;;)  {
-		c = vas_getc();
-		if (debug) vas_response(c);
-		switch ( c )  {
-		case R_RECORD:
-			/* Completely done, ready to record next frame */
-			break;
-		case R_DONE:
-			if ( wait )  {
-				continue;
-			} else {
-				/* Don't wait for tape backspacing */
-				break;
-			}
-		case R_MISSED:
-			/*
-			 * Preroll failed (typ. due to timer),
-			 * VAS is backspacing for retry, wait for GO.
-			 */
-			vas_await(R_RECORD, 99);
-			vas_putc(C_RECORD);
-			continue;
-		case R_CUT_IN:
-		case R_CUT_OUT:
-			/* These are for info only */
-			continue;
-		default:
-			if (!debug) vas_response(c);
-			continue;
-		}
+    vas_putc(C_RECORD);
+    for (;;)  {
+	c = vas_getc();
+	if (debug) vas_response(c);
+	switch ( c )  {
+	    case R_RECORD:
+		/* Completely done, ready to record next frame */
 		break;
+	    case R_DONE:
+		if ( wait )  {
+		    continue;
+		} else {
+		    /* Don't wait for tape backspacing */
+		    break;
+		}
+	    case R_MISSED:
+		/*
+		 * Preroll failed (typ. due to timer),
+		 * VAS is backspacing for retry, wait for GO.
+		 */
+		vas_await(R_RECORD, 99);
+		vas_putc(C_RECORD);
+		continue;
+	    case R_CUT_IN:
+	    case R_CUT_OUT:
+		/* These are for info only */
+		continue;
+	    default:
+		if (!debug) vas_response(c);
+		continue;
 	}
-	return;
+	break;
+    }
+    return;
 }
 
 /*
@@ -506,17 +506,17 @@ do_record(int wait)
 int
 search_frame(int frame)
 {
-	int	reply;
+    int	reply;
 
-	vas_putc(C_SEARCH);
-	vas_putnum(frame);
-	vas_putc(C_ENTER);
-	reply = vas_getc();
-	if ( reply == 'L' )
-		return(0);	/* OK */
-	/* 'K' is expected failure code */
-	vas_response(reply);
-	return(-1);		/* fail */
+    vas_putc(C_SEARCH);
+    vas_putnum(frame);
+    vas_putc(C_ENTER);
+    reply = vas_getc();
+    if ( reply == 'L' )
+	return(0);	/* OK */
+    /* 'K' is expected failure code */
+    vas_response(reply);
+    return(-1);		/* fail */
 }
 
 /*
@@ -529,8 +529,8 @@ search_frame(int frame)
 int
 reset_tape_time(void)
 {
-	vas_putc(C_RESET_TAPETIME);
-	return(0);
+    vas_putc(C_RESET_TAPETIME);
+    return(0);
 }
 
 /*
@@ -544,15 +544,15 @@ reset_tape_time(void)
 int
 time0(void)
 {
-	int	reply;
+    int	reply;
 
-	vas_putc(C_SEARCH);
-	vas_putc(C_SEARCH);
-	reply = vas_getc();
-	if ( reply == 'L' )
-		return(0);	/* OK */
-	vas_response(reply);
-	return(-1);		/* fail */
+    vas_putc(C_SEARCH);
+    vas_putc(C_SEARCH);
+    reply = vas_getc();
+    if ( reply == 'L' )
+	return(0);	/* OK */
+    vas_response(reply);
+    return(-1);		/* fail */
 }
 
 /*
@@ -565,13 +565,13 @@ time0(void)
 int
 get_vas_status(void)
 {
-	int	reply;
+    int	reply;
 
-	vas_rawputc(C_ACTIVITY);
-	reply = vas_getc();		/* Needs timeout */
-	if (debug) vas_response(reply);
-	if ( reply < 0x60 || reply > 0x78 )  return(-1);
-	return(reply);
+    vas_rawputc(C_ACTIVITY);
+    reply = vas_getc();		/* Needs timeout */
+    if (debug) vas_response(reply);
+    if ( reply < 0x60 || reply > 0x78 )  return(-1);
+    return(reply);
 }
 
 /*
@@ -588,81 +588,81 @@ get_vas_status(void)
 int
 get_vtr_status(int chatter)
 {
-	char	buf[4];
+    char	buf[4];
 
-	vas_rawputc(C_VTR_STATUS);
-	buf[0] = vas_getc();
-	buf[1] = vas_getc();
-	buf[2] = vas_getc();
-	buf[3] = vas_getc();
+    vas_rawputc(C_VTR_STATUS);
+    buf[0] = vas_getc();
+    buf[1] = vas_getc();
+    buf[2] = vas_getc();
+    buf[3] = vas_getc();
 
-	if ( buf[0] != 'V' )  {
-		fprintf(stderr, "Link to VTR is not working\n");
-		return(-1);
+    if ( buf[0] != 'V' )  {
+	fprintf(stderr, "Link to VTR is not working\n");
+	return(-1);
+    }
+    if ( buf[1] != 'R' )  {
+	if ( buf[1] == 'L' )  {
+	    fprintf(stderr, "VTR is in Local mode, can not be program controlled\n");
+	    return(-1);
 	}
-	if ( buf[1] != 'R' )  {
-		if ( buf[1] == 'L' )  {
-			fprintf(stderr, "VTR is in Local mode, can not be program controlled\n");
-			return(-1);
-		}
-		fprintf(stderr, "VTR is in unknown mode\n");
-		return(-1);
-	}
-	if ( buf[2] == 'R' )  {
-		if (chatter) fprintf(stderr, "VTR is online and ready to roll\n");
-		return(1);	/* very OK */
-	} else if (  buf[2] == 'N' )  {
-		if (chatter) fprintf(stderr, "VTR is online and stopped\n");
-		return(0);	/* OK */
-	} else {
-		fprintf(stderr, "VTR is online and has unknown ready status\n");
-		return(-1);
-	}
-	/* [3] is S for stop, P for play,
-	 *   L for shuttle var speed, W for slow speed */
+	fprintf(stderr, "VTR is in unknown mode\n");
+	return(-1);
+    }
+    if ( buf[2] == 'R' )  {
+	if (chatter) fprintf(stderr, "VTR is online and ready to roll\n");
+	return(1);	/* very OK */
+    } else if (  buf[2] == 'N' )  {
+	if (chatter) fprintf(stderr, "VTR is online and stopped\n");
+	return(0);	/* OK */
+    } else {
+	fprintf(stderr, "VTR is online and has unknown ready status\n");
+	return(-1);
+    }
+    /* [3] is S for stop, P for play,
+     *   L for shuttle var speed, W for slow speed */
 }
 
 int
 get_frame_code(void)
 {
-	int	status;
-	char	scene[4];
-	char	frame[7];
+    int	status;
+    char	scene[4];
+    char	frame[7];
 
-	vas_rawputc(C_SEND_FRAME_CODE);
-	status = vas_getc();
-	scene[0] = vas_getc();
-	scene[1] = vas_getc();
-	scene[2] = vas_getc();
-	scene[3] = '\0';
-	frame[0] = vas_getc();
-	frame[1] = vas_getc();
-	frame[2] = vas_getc();
-	frame[3] = vas_getc();
-	frame[4] = vas_getc();
-	frame[5] = vas_getc();
-	frame[6] = '\0';
-	if ( status != 'C' && status != '<' )  {
-		fprintf(stderr, "get_frame_code:  unable to acquire\n");
-		return(-1);
-	}
-	fprintf(stderr, "Scene %s, Frame %s\n", scene, frame);
-	/* May want to do something more here */
-	return(0);
+    vas_rawputc(C_SEND_FRAME_CODE);
+    status = vas_getc();
+    scene[0] = vas_getc();
+    scene[1] = vas_getc();
+    scene[2] = vas_getc();
+    scene[3] = '\0';
+    frame[0] = vas_getc();
+    frame[1] = vas_getc();
+    frame[2] = vas_getc();
+    frame[3] = vas_getc();
+    frame[4] = vas_getc();
+    frame[5] = vas_getc();
+    frame[6] = '\0';
+    if ( status != 'C' && status != '<' )  {
+	fprintf(stderr, "get_frame_code:  unable to acquire\n");
+	return(-1);
+    }
+    fprintf(stderr, "Scene %s, Frame %s\n", scene, frame);
+    /* May want to do something more here */
+    return(0);
 }
 
 void
 get_tape_position(void)
 {
-	char	buf[9];
-	int	i;
+    char	buf[9];
+    int	i;
 
-	vas_rawputc(C_SEND_TAPE_POS);
-	for ( i=0; i<8; i++ )
-		buf[i] = vas_getc();
-	buf[8] = '\0';
-	fprintf(stderr, "Tape counter is at %s\n", buf);
-	/* May want to do more here */
+    vas_rawputc(C_SEND_TAPE_POS);
+    for ( i=0; i<8; i++ )
+	buf[i] = vas_getc();
+    buf[8] = '\0';
+    fprintf(stderr, "Tape counter is at %s\n", buf);
+    /* May want to do more here */
 }
 
 /*
@@ -682,26 +682,26 @@ get_tape_position(void)
 int
 str2frames(char *str)
 {
-	int	num;
-	char	suffix[33];
+    int	num;
+    char	suffix[33];
 
-	suffix[0] = '\0';
-	sscanf( str, "%d%32s", &num, suffix );
-	switch ( suffix[0] )  {
+    suffix[0] = '\0';
+    sscanf( str, "%d%32s", &num, suffix );
+    switch ( suffix[0] )  {
 	case 'f':
 	case '\0':
-		break;
+	    break;
 	case 's':
-		num *= 30;
-		break;
+	    num *= 30;
+	    break;
 	case 'm':
-		num *= 60 * 30;
-		break;
+	    num *= 60 * 30;
+	    break;
 	default:
-		fprintf(stderr, "str2frames:  suffix '%s' unknown\n", str);
-		break;
-	}
-	return(num);
+	    fprintf(stderr, "str2frames:  suffix '%s' unknown\n", str);
+	    break;
+    }
+    return(num);
 }
 
 /*

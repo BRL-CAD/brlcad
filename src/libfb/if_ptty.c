@@ -21,10 +21,10 @@
 /** @{ */
 /** @file if_ptty.c
 
-   Author -
-	Gary S. Moss
+Author -
+Gary S. Moss
 
- */
+*/
 /** @} */
 
 #include "common.h"
@@ -46,60 +46,60 @@
 static int	over_sampl;
 
 HIDDEN int	ptty_open(FBIO *ifp, char *ptty_name, int width, int height),
-		ptty_close(FBIO *ifp),
-		ptty_clear(FBIO *ifp, RGBpixel (*bgpp)),
-		ptty_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), long int ct),
-		ptty_write(register FBIO *ifp, int x, int y, RGBpixel (*pixelp), long int ct),
-		ptty_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom),
-		ptty_window_set(FBIO *ifp, int x, int y),	/* OLD */
-		ptty_zoom_set(FBIO *ifp, int x, int y),	/* OLD */
-		ptty_cursor(FBIO *ifp, int mode, int x, int y),
-		ptty_background_set(),
-		ptty_animate(),
-		ptty_setsize(FBIO *ifp, int width, int height),
-		ptty_help(FBIO *ifp);
+    ptty_close(FBIO *ifp),
+    ptty_clear(FBIO *ifp, RGBpixel (*bgpp)),
+    ptty_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), long int ct),
+    ptty_write(register FBIO *ifp, int x, int y, RGBpixel (*pixelp), long int ct),
+    ptty_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom),
+    ptty_window_set(FBIO *ifp, int x, int y),	/* OLD */
+    ptty_zoom_set(FBIO *ifp, int x, int y),	/* OLD */
+    ptty_cursor(FBIO *ifp, int mode, int x, int y),
+    ptty_background_set(),
+    ptty_animate(),
+    ptty_setsize(FBIO *ifp, int width, int height),
+    ptty_help(FBIO *ifp);
 
 FBIO ptty_interface = {
-	0,
-	ptty_open,
-	ptty_close,
-	ptty_clear,
-	ptty_read,
-	ptty_write,
-	fb_null,			/* read colormap */
-	fb_null,			/* write colormap */
-	ptty_view,
-	fb_sim_getview,
-	fb_null,			/* curs_set */
-	ptty_cursor,
-	fb_sim_getcursor,
-	fb_sim_readrect,
-	fb_sim_writerect,
-	fb_sim_bwreadrect,
-	fb_sim_bwwriterect,
-	fb_null,			/* poll */
-	fb_null,			/* flush */
-	ptty_close,			/* free */
-	ptty_help,
-	"Unix pseudo-tty Interface",
-	800,
-	1024,
-	"/dev/tty",
-	800,			/* XXX - are these good defaults? */
-	1024,
-	-1,			/* select fd */
-	-1,
-	1, 1,			/* zoom */
-	400, 512,		/* window center */
-	0, 0, 0,		/* cursor */
-	PIXEL_NULL,
-	PIXEL_NULL,
-	PIXEL_NULL,
-	-1,
-	0,
-	0L,
-	0L,
-	0
+    0,
+    ptty_open,
+    ptty_close,
+    ptty_clear,
+    ptty_read,
+    ptty_write,
+    fb_null,			/* read colormap */
+    fb_null,			/* write colormap */
+    ptty_view,
+    fb_sim_getview,
+    fb_null,			/* curs_set */
+    ptty_cursor,
+    fb_sim_getcursor,
+    fb_sim_readrect,
+    fb_sim_writerect,
+    fb_sim_bwreadrect,
+    fb_sim_bwwriterect,
+    fb_null,			/* poll */
+    fb_null,			/* flush */
+    ptty_close,			/* free */
+    ptty_help,
+    "Unix pseudo-tty Interface",
+    800,
+    1024,
+    "/dev/tty",
+    800,			/* XXX - are these good defaults? */
+    1024,
+    -1,			/* select fd */
+    -1,
+    1, 1,			/* zoom */
+    400, 512,		/* window center */
+    0, 0, 0,		/* cursor */
+    PIXEL_NULL,
+    PIXEL_NULL,
+    PIXEL_NULL,
+    -1,
+    0,
+    0L,
+    0L,
+    0
 };
 
 HIDDEN	int	output_Scan(FBIO *ifp, register RGBpixel (*pixels), int ct);
@@ -110,58 +110,58 @@ HIDDEN int	rgb_To_Dither_Val(register RGBpixel (*pixel));
 HIDDEN int
 ptty_open(FBIO *ifp, char *ptty_name, int width, int height)
 {
-	FB_CK_FBIO(ifp);
+    FB_CK_FBIO(ifp);
 
-	/* Check for default size */
-	if ( width == 0 )
-		width = ifp->if_width;
-	if ( height == 0 )
-		height = ifp->if_height;
+    /* Check for default size */
+    if ( width == 0 )
+	width = ifp->if_width;
+    if ( height == 0 )
+	height = ifp->if_height;
 
-	ifp->if_width = width;
-	ifp->if_height = height;
-	over_sampl = ifp->if_width / MAX_DIMENSION;
-	if ( (ifp->if_fd = open( ptty_name, O_RDWR, 0 )) == -1 )
-		return	-1;
-	(void) ptty_setsize( ifp, width, height );
-	return	ifp->if_fd;
+    ifp->if_width = width;
+    ifp->if_height = height;
+    over_sampl = ifp->if_width / MAX_DIMENSION;
+    if ( (ifp->if_fd = open( ptty_name, O_RDWR, 0 )) == -1 )
+	return	-1;
+    (void) ptty_setsize( ifp, width, height );
+    return	ifp->if_fd;
 }
 
 HIDDEN int
 ptty_close(FBIO *ifp)
 {
-	return	close( ifp->if_fd ) == -1 ? -1 : 0;
+    return	close( ifp->if_fd ) == -1 ? -1 : 0;
 }
 
 HIDDEN int
 ptty_clear(FBIO *ifp, RGBpixel (*bgpp))
 {
-	static char	ptty_buf[2] = { PT_CLEAR, NULL };
+    static char	ptty_buf[2] = { PT_CLEAR, NULL };
 
-	return	write( ifp->if_fd, ptty_buf, 1 ) < 1 ? -1 : 0;
+    return	write( ifp->if_fd, ptty_buf, 1 ) < 1 ? -1 : 0;
 }
 
 HIDDEN int
 ptty_write(register FBIO *ifp, int x, int y, RGBpixel (*pixelp), long int ct)
 {
-	static char	ptty_buf[10];
-	register int	scan_ct;
+    static char	ptty_buf[10];
+    register int	scan_ct;
 
 /*	y = ifp->if_width-1-y;		/* 1st quadrant */
-	(void) sprintf( ptty_buf, "%c%04d%04d", PT_SEEK, CVT2DMD( x ), CVT2DMD( y ));
-	if ( write( ifp->if_fd, ptty_buf, 9 ) < 9 )
-		return	-1;
-	for (; ct > 0; pixelp += scan_ct, x = 0 )
-		{
-		if ( ct > ifp->if_width - x )
-			scan_ct = ifp->if_width - x;
-		else
-			scan_ct = ct;
-		if ( output_Scan( ifp, pixelp, scan_ct ) == -1 )
-			return	-1;
-		ct -= scan_ct;
-		}
-	return	0;
+    (void) sprintf( ptty_buf, "%c%04d%04d", PT_SEEK, CVT2DMD( x ), CVT2DMD( y ));
+    if ( write( ifp->if_fd, ptty_buf, 9 ) < 9 )
+	return	-1;
+    for (; ct > 0; pixelp += scan_ct, x = 0 )
+    {
+	if ( ct > ifp->if_width - x )
+	    scan_ct = ifp->if_width - x;
+	else
+	    scan_ct = ct;
+	if ( output_Scan( ifp, pixelp, scan_ct ) == -1 )
+	    return	-1;
+	ct -= scan_ct;
+    }
+    return	0;
 }
 
 HIDDEN int
@@ -169,79 +169,79 @@ ptty_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), long int ct)
 {
 /*	y = ifp->if_width-1-y;		/* 1st quadrant */
 #if 0 /* Not yet implemented. */
-	if ( read( ifp->if_fd, (char *) pixelp, (int)(sizeof(RGBpixel)*ct) ) < sizeof(RGBpixel)*ct)
-	    return -1;
+    if ( read( ifp->if_fd, (char *) pixelp, (int)(sizeof(RGBpixel)*ct) ) < sizeof(RGBpixel)*ct)
+	return -1;
 #endif
-	return	0;
+    return	0;
 }
 
 HIDDEN int
 ptty_setsize(FBIO *ifp, int width, int height)
 {
-	static char	ptty_buf[10];
+    static char	ptty_buf[10];
 
-	width = CVT2DMD( width );
-	height = CVT2DMD( height );
-	(void) sprintf( ptty_buf, "%c%04d%04d", PT_SETSIZE, width, height );
-	return	write( ifp->if_fd, ptty_buf, 9 ) == 9 ? 0 : -1;
+    width = CVT2DMD( width );
+    height = CVT2DMD( height );
+    (void) sprintf( ptty_buf, "%c%04d%04d", PT_SETSIZE, width, height );
+    return	write( ifp->if_fd, ptty_buf, 9 ) == 9 ? 0 : -1;
 }
 
 HIDDEN int
 ptty_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
-	fb_sim_view(ifp, xcenter, ycenter, xzoom, yzoom);
-	ptty_window_set(ifp, xcenter, ycenter);
-	ptty_zoom_set(ifp, xzoom, yzoom);
-	return	0;
+    fb_sim_view(ifp, xcenter, ycenter, xzoom, yzoom);
+    ptty_window_set(ifp, xcenter, ycenter);
+    ptty_zoom_set(ifp, xzoom, yzoom);
+    return	0;
 }
 
 HIDDEN int
 ptty_window_set(FBIO *ifp, int x, int y)
 {
-	static char	ptty_buf[10];
+    static char	ptty_buf[10];
 
 /*	y = ifp->if_width-1-y;		/* 1st quadrant */
-	(void) sprintf(	ptty_buf, "%c%04d%04d", PT_WINDOW, CVT2DMD( x ), CVT2DMD( y ) );
-	return	write( ifp->if_fd, ptty_buf, 9 ) == 9 ? 0 : -1;
+    (void) sprintf(	ptty_buf, "%c%04d%04d", PT_WINDOW, CVT2DMD( x ), CVT2DMD( y ) );
+    return	write( ifp->if_fd, ptty_buf, 9 ) == 9 ? 0 : -1;
 }
 
 HIDDEN int
 ptty_zoom_set(FBIO *ifp, int x, int y)
 {
-	static char	ptty_buf[10];
+    static char	ptty_buf[10];
 
-	x /= over_sampl; /* Correct for scale-down.	*/
-	y /= over_sampl;
-	(void) sprintf( ptty_buf, "%c%04d%04d", PT_ZOOM, x, y );
-	return	write( ifp->if_fd, ptty_buf, 9 ) == 9 ? 0 : -1;
+    x /= over_sampl; /* Correct for scale-down.	*/
+    y /= over_sampl;
+    (void) sprintf( ptty_buf, "%c%04d%04d", PT_ZOOM, x, y );
+    return	write( ifp->if_fd, ptty_buf, 9 ) == 9 ? 0 : -1;
 }
 
 HIDDEN int
 ptty_cursor(FBIO *ifp, int mode, int x, int y)
 {
-	static char	ptty_buf[11];
+    static char	ptty_buf[11];
 
 /*	y = ifp->if_width-1-y;		/* 1st quadrant */
-	fb_sim_cursor(ifp, mode, x, y);
-	(void) sprintf(	ptty_buf,
+    fb_sim_cursor(ifp, mode, x, y);
+    (void) sprintf(	ptty_buf,
 			"%c%1d%04d%04d",
 			PT_CURSOR, mode, CVT2DMD( x ), CVT2DMD( y )
-			);
-	return	write( ifp->if_fd, ptty_buf, 10 ) == 10 ? 0 : -1;
+	);
+    return	write( ifp->if_fd, ptty_buf, 10 ) == 10 ? 0 : -1;
 }
 
 #ifdef never
 HIDDEN int
 ptty_animate( ifp, nframes, framesz, fps )
-FBIO	*ifp;
-int	nframes, framesz, fps;
+    FBIO	*ifp;
+    int	nframes, framesz, fps;
 {
-	static char	ptty_buf[14];
-	(void) sprintf(	ptty_buf,
+    static char	ptty_buf[14];
+    (void) sprintf(	ptty_buf,
 			"%c%04d%04d%04d",
 			PT_ANIMATE, nframes, framesz, fps
-			);
-	return	write( ifp->if_fd, ptty_buf, 13 ) == 13 ? 0 : -1;
+	);
+    return	write( ifp->if_fd, ptty_buf, 13 ) == 13 ? 0 : -1;
 }
 #endif
 
@@ -249,91 +249,91 @@ int	nframes, framesz, fps;
 	Take care of conversion to monochrome image, and run-length encoding
 	of 1 scan line of 'ct' pixels.
 	Output to stdout.
- */
+*/
 HIDDEN int
 output_Scan(FBIO *ifp, register RGBpixel (*pixels), int ct)
 {
-	register int	i, j;
-	static char	output_buf[MAX_DIMENSION+1];
-	register char	*p = output_buf;
-	static int	line_ct = 1;
+    register int	i, j;
+    static char	output_buf[MAX_DIMENSION+1];
+    register char	*p = output_buf;
+    static int	line_ct = 1;
 
-	/* Reduce image through pixel averaging to 256 x 256.		*/
-	for ( i = 0; i < ct; i += over_sampl, p++ ) {
-		register int	val;
-		for ( j = 0, val = 0; j < over_sampl; j++, pixels++ )
-			val += rgb_To_Dither_Val( pixels );
-		val /= over_sampl;	/* Avg. horizontal summation.	*/
-		if ( line_ct == 1 )
-			*p = val;
-		else
-			*p += val;
-		if ( line_ct == over_sampl )
-			*p /= over_sampl;	/* Avg. vertical sum.	*/
-	}
-	if ( line_ct < over_sampl ) {
-		line_ct++;
-		return	0;
-	}
+    /* Reduce image through pixel averaging to 256 x 256.		*/
+    for ( i = 0; i < ct; i += over_sampl, p++ ) {
+	register int	val;
+	for ( j = 0, val = 0; j < over_sampl; j++, pixels++ )
+	    val += rgb_To_Dither_Val( pixels );
+	val /= over_sampl;	/* Avg. horizontal summation.	*/
+	if ( line_ct == 1 )
+	    *p = val;
 	else
-		line_ct = 1;
-	*p = '\0';
+	    *p += val;
+	if ( line_ct == over_sampl )
+	    *p /= over_sampl;	/* Avg. vertical sum.	*/
+    }
+    if ( line_ct < over_sampl ) {
+	line_ct++;
+	return	0;
+    }
+    else
+	line_ct = 1;
+    *p = '\0';
 
-	/* Output buffer as run-length encoded byte stream.		*/
-	{
+    /* Output buffer as run-length encoded byte stream.		*/
+    {
 	register int	byte_ct;
 	for ( i = 0, p = output_buf, byte_ct = 1; i < 256; i++, p++ ) {
-		if ( *p == *(p+1) )
-			byte_ct++;
-		else {
-			if ( put_Run( ifp, byte_ct, (int) *p ) == -1 )
-				return	-1;
-			byte_ct = 1;
-		}
+	    if ( *p == *(p+1) )
+		byte_ct++;
+	    else {
+		if ( put_Run( ifp, byte_ct, (int) *p ) == -1 )
+		    return	-1;
+		byte_ct = 1;
+	    }
 	}
 	if ( byte_ct > 1 && put_Run( ifp, byte_ct, (int) p[-1] ) == -1 )
-		return	-1;
-	}
-	return	write( ifp->if_fd, "\n", 1 );
+	    return	-1;
+    }
+    return	write( ifp->if_fd, "\n", 1 );
 }
 
 HIDDEN int
 put_Run(register FBIO *ifp, register int ct, int val)
 {
-	static char	ptty_buf[4];
+    static char	ptty_buf[4];
 /*	(void) fprintf( stderr, "put_Run( %d, %d )\n", ct, val ); */
-	while ( ct > 0 ) {
-		(void) sprintf(	ptty_buf,
-				"%c%c%c",
-				PT_WRITE, (ct >= 64 ? 64 : ct ) + ' ',
-				val+'0'
-				);
-		if ( write( ifp->if_fd, ptty_buf, 3 ) < 3 )
-			return	-1;
-		ct -= 64;
-	}
-	return	0;
+    while ( ct > 0 ) {
+	(void) sprintf(	ptty_buf,
+			"%c%c%c",
+			PT_WRITE, (ct >= 64 ? 64 : ct ) + ' ',
+			val+'0'
+	    );
+	if ( write( ifp->if_fd, ptty_buf, 3 ) < 3 )
+	    return	-1;
+	ct -= 64;
+    }
+    return	0;
 }
 
 HIDDEN int
 rgb_To_Dither_Val(register RGBpixel (*pixel))
 {
-	return	(R_NTSC * (*pixel)[RED] + G_NTSC * (*pixel)[GRN]
-		+ B_NTSC * (*pixel)[BLU]);
+    return	(R_NTSC * (*pixel)[RED] + G_NTSC * (*pixel)[GRN]
+		 + B_NTSC * (*pixel)[BLU]);
 }
 
 HIDDEN int
 ptty_help(FBIO *ifp)
 {
-	fb_log( "Description: %s\n", ptty_interface.if_type );
-	fb_log( "Device: %s\n", ifp->if_name );
-	fb_log( "Max width/height: %d %d\n",
-		ptty_interface.if_max_width,
-		ptty_interface.if_max_height );
-	fb_log( "Default width/height: %d %d\n",
-		ptty_interface.if_width,
-		ptty_interface.if_height );
-	return(0);
+    fb_log( "Description: %s\n", ptty_interface.if_type );
+    fb_log( "Device: %s\n", ifp->if_name );
+    fb_log( "Max width/height: %d %d\n",
+	    ptty_interface.if_max_width,
+	    ptty_interface.if_max_height );
+    fb_log( "Default width/height: %d %d\n",
+	    ptty_interface.if_width,
+	    ptty_interface.if_height );
+    return(0);
 }
 
 /*

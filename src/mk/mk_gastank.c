@@ -52,93 +52,93 @@
 int
 main(int argc, char **argv)
 {
-							/*  START # 1  */
-   struct rt_wdb *fpw;		/*  File to be written to.  */
-   char filemged[26];		/*  Mged file create.  */
-   double hgt, wid, dpt;		/*  Height, width, & depth of gas tank.  */
-   double rds;			/*  Radius of the corner of gas tank.  */
-   point_t pts[8];		/*  Points for arb8.  */
-   point_t bs;			/*  Base of cylinder.  */
-   vect_t ht;			/*  Height of cylinder.  */
-   fastf_t rad;			/*  Radius of cylinder & sphere.  */
-   point_t cent;		/*  Center of sphere.  */
+    /*  START # 1  */
+    struct rt_wdb *fpw;		/*  File to be written to.  */
+    char filemged[26];		/*  Mged file create.  */
+    double hgt, wid, dpt;		/*  Height, width, & depth of gas tank.  */
+    double rds;			/*  Radius of the corner of gas tank.  */
+    point_t pts[8];		/*  Points for arb8.  */
+    point_t bs;			/*  Base of cylinder.  */
+    vect_t ht;			/*  Height of cylinder.  */
+    fastf_t rad;			/*  Radius of cylinder & sphere.  */
+    point_t cent;		/*  Center of sphere.  */
 
-   /*  point_t and vect_t are set using typedef of type fastf_t.  */
-   /*  fastf_t is a type that is machine dependent.  */
+    /*  point_t and vect_t are set using typedef of type fastf_t.  */
+    /*  fastf_t is a type that is machine dependent.  */
 
-   char *temp;			/*  Temporary character string.  */
-   char temp1[16];		/*  Temporary character string.  */
+    char *temp;			/*  Temporary character string.  */
+    char temp1[16];		/*  Temporary character string.  */
 
-   char solnam[9];		/*  Solid name.  */
-   char regnam[9];		/*  Region name.  */
-   char grpnam[5];		/*  Group name.  */
-   int numtnk;			/*  Number of gas tanks to be created  */
+    char solnam[9];		/*  Solid name.  */
+    char regnam[9];		/*  Region name.  */
+    char grpnam[5];		/*  Group name.  */
+    int numtnk;			/*  Number of gas tanks to be created  */
 				/*  (<=26).  */
 
-   struct wmember comb;		/*  Used to make regions.  */
-   struct wmember comb1;	/*  Used to make groups.  */
+    struct wmember comb;		/*  Used to make regions.  */
+    struct wmember comb1;	/*  Used to make groups.  */
 
-   int i, j, k;			/*  Loop counters.  */
+    int i, j, k;			/*  Loop counters.  */
 
-   /*  Set up solid, region, and group names.  */
-   solnam[0] = 's';
-   solnam[1] = '.';
-   solnam[2] = 't';
-   solnam[3] = 'n';
-   solnam[4] = 'k';
-   solnam[5] = ' ';
-   solnam[6] = '#';
-   solnam[7] = '#';
-   solnam[8] = '\0';
-   regnam[0] = 'r';
-   regnam[1] = '.';
-   regnam[2] = 't';
-   regnam[3] = 'n';
-   regnam[4] = 'k';
-   regnam[5] = ' ';
-   regnam[6] = '#';
-   regnam[7] = '#';
-   regnam[8] = '\0';
-   grpnam[0] = 't';
-   grpnam[1] = 'n';
-   grpnam[2] = 'k';
-   grpnam[3] = ' ';
-   grpnam[4] = '\0';
+    /*  Set up solid, region, and group names.  */
+    solnam[0] = 's';
+    solnam[1] = '.';
+    solnam[2] = 't';
+    solnam[3] = 'n';
+    solnam[4] = 'k';
+    solnam[5] = ' ';
+    solnam[6] = '#';
+    solnam[7] = '#';
+    solnam[8] = '\0';
+    regnam[0] = 'r';
+    regnam[1] = '.';
+    regnam[2] = 't';
+    regnam[3] = 'n';
+    regnam[4] = 'k';
+    regnam[5] = ' ';
+    regnam[6] = '#';
+    regnam[7] = '#';
+    regnam[8] = '\0';
+    grpnam[0] = 't';
+    grpnam[1] = 'n';
+    grpnam[2] = 'k';
+    grpnam[3] = ' ';
+    grpnam[4] = '\0';
 
-   /*  If there are no arguments ask questions.  */
-   if (argc == 1)
-   {
-   							/*  START # 3  */
+    /*  If there are no arguments ask questions.  */
+    if (argc == 1)
+    {
+	/*  START # 3  */
 
-   /*  Print info about the window.  */
-   (void)printf("\nThis program constructs a solid gas tank with all\n");
-   (void)printf("edges and corners rounded.\n\n");
+	/*  Print info about the window.  */
+	(void)printf("\nThis program constructs a solid gas tank with all\n");
+	(void)printf("edges and corners rounded.\n\n");
 
-   /*  Find name of mged file to be created.  */
-   (void)printf("Enter the mged file to be created (25 char max).\n\t");
-   (void)fflush(stdout);
-   (void)scanf("%26s", filemged);
+	/*  Find name of mged file to be created.  */
+	(void)printf("Enter the mged file to be created (25 char max).\n\t");
+	(void)fflush(stdout);
+	(void)scanf("%26s", filemged);
 
-   /*  Find the number of gas tanks to create.  */
-   (void)printf("Enter the number of gas tanks to create (26 max).\n\t");
-   (void)fflush(stdout);
-   (void)scanf("%d", &numtnk);
-   if (numtnk > 26) numtnk = 26;
+	/*  Find the number of gas tanks to create.  */
+	(void)printf("Enter the number of gas tanks to create (26 max).\n\t");
+	(void)fflush(stdout);
+	(void)scanf("%d", &numtnk);
+	if (numtnk > 26) numtnk = 26;
 
-   /*  Find the dimensions of the gas tanks.  */
-   (void)printf("Enter the height, width, and depth of the gas tank.\n\t");
-   (void)fflush(stdout);
-   (void)scanf("%lf %lf %lf", &hgt, &wid, &dpt);
-   (void)printf("Enter the radius of the corners.\n\t");
-   (void)fflush(stdout);
-   (void)scanf("%lf", &rds);
+	/*  Find the dimensions of the gas tanks.  */
+	(void)printf("Enter the height, width, and depth of the gas tank.\n\t");
+	(void)fflush(stdout);
+	(void)scanf("%lf %lf %lf", &hgt, &wid, &dpt);
+	(void)printf("Enter the radius of the corners.\n\t");
+	(void)fflush(stdout);
+	(void)scanf("%lf", &rds);
 
-   }							/*  END # 3  */
+    }							/*  END # 3  */
 
-   /*  If there are arguments get answers from arguments.  */
-   else
-   {
-   							/*  START # 4  */
+    /*  If there are arguments get answers from arguments.  */
+    else
+    {
+	/*  START # 4  */
 	/*  List options.  */
 	/*	-fname - name = mged file name.  */
 	/*	-n# - # = number of gas tanks.  */
@@ -149,72 +149,72 @@ main(int argc, char **argv)
 
 	for (i=1; i<argc; i++)
 	{
-							/*  START # 5  */
-	   /*  Put argument in temporary character string.  */
-	   temp = argv[i];
+	    /*  START # 5  */
+	    /*  Put argument in temporary character string.  */
+	    temp = argv[i];
 
-	   /*  -f - mged file.  */
-	   if (temp[1] == 'f')
-	   {
-	   						/*  START # 6  */
+	    /*  -f - mged file.  */
+	    if (temp[1] == 'f')
+	    {
+		/*  START # 6  */
 		j = 2;
 		k = 0;
 		while ( (temp[j] != '\0') && (k < 25) )
 		{
-							/*  START # 7  */
-		   filemged[k] = temp[j];
-		   j++;
-		   k++;
+		    /*  START # 7  */
+		    filemged[k] = temp[j];
+		    j++;
+		    k++;
 		}					/*  END # 7  */
 		filemged[k] = '\0';
-	   }						/*  END # 6  */
+	    }						/*  END # 6  */
 
-	   /*  All other options.  */
-	   else
-	   {
-	   						/*  START # 8  */
+	    /*  All other options.  */
+	    else
+	    {
+		/*  START # 8  */
 		/*  Set up temporary character string.  */
 		j = 2;
 		k = 0;
 		while ( (temp[j] != '\0') && (k < 15) )
 		{
-							/*  START # 9  */
-		   temp1[k] = temp[j];
-		   j++;
-		   k++;
+		    /*  START # 9  */
+		    temp1[k] = temp[j];
+		    j++;
+		    k++;
 		}					/*  END # 9  */
 		temp1[k] = '\0';
 		if (temp[1] == 'n')
 		{
-		   (void)sscanf(temp1, "%d", &numtnk);
-		   if (numtnk > 26) numtnk = 26;
+		    (void)sscanf(temp1, "%d", &numtnk);
+		    if (numtnk > 26) numtnk = 26;
 		}
 		else if (temp[1] == 'h') (void)sscanf(temp1, "%lf", &hgt);
 		else if (temp[1] == 'w') (void)sscanf(temp1, "%lf", &wid);
 		else if (temp[1] == 'd') (void)sscanf(temp1, "%lf", &dpt);
 		else if (temp[1] == 'r') (void)sscanf(temp1, "%lf", &rds);
-	   }						/*  END # 8  */
+	    }						/*  END # 8  */
 	}						/*  END # 5  */
-   }							/*  END # 4  */
+    }							/*  END # 4  */
 
-   /*  Print out all info.  */
-   (void)printf("\nmged file:  %s\n", filemged);
-   (void)printf("height of gas tank:  %f mm\n", hgt);
-   (void)printf("width of gas tank:  %f mm\n", wid);
-   (void)printf("depth of gas tank:  %f mm\n", dpt);
-   (void)printf("radius of corner:  %f mm\n", rds);
-   (void)printf("number of gas tanks:  %d\n\n", numtnk);
-   (void)fflush(stdout);
+    /*  Print out all info.  */
+    (void)printf("\nmged file:  %s\n", filemged);
+    (void)printf("height of gas tank:  %f mm\n", hgt);
+    (void)printf("width of gas tank:  %f mm\n", wid);
+    (void)printf("depth of gas tank:  %f mm\n", dpt);
+    (void)printf("radius of corner:  %f mm\n", rds);
+    (void)printf("number of gas tanks:  %d\n\n", numtnk);
+    (void)fflush(stdout);
 
-   /*  Open mged file.  */
-   fpw = wdb_fopen(filemged);
+    /*  Open mged file.  */
+    fpw = wdb_fopen(filemged);
 
-   /*  Write ident record.  */
-   mk_id(fpw, "windows");
+    /*  Write ident record.  */
+    mk_id(fpw, "windows");
 
-   for (i=0; i<numtnk; i++)
-   {
-   							/*  START # 2  */
+    for (i=0; i<numtnk; i++)
+    {
+	/*  START # 2  */
 
 	/*  Create all solids.  */
 
@@ -757,11 +757,11 @@ main(int argc, char **argv)
 	grpnam[3] = 97 + i;
 	mk_lfcomb(fpw, grpnam, &comb1, 0);
 
-   }							/*  START # 2  */
+    }							/*  START # 2  */
 
-   /*  Close file.  */
-   wdb_close(fpw);
-   return 0;
+    /*  Close file.  */
+    wdb_close(fpw);
+    return 0;
 }							/*  END # 1  */
 
 /*

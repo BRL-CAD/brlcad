@@ -356,190 +356,190 @@ phong_render(register struct application *ap, struct partition *pp, struct shade
 #ifndef RT_MULTISPECTRAL
     if (!PM_Visualize)
 #endif
-	{
-	    /* Diffuse reflectance from "Ambient" light source (at eye) */
-	    if ((cosine = -VDOT( swp->sw_hit.hit_normal, ap->a_ray.r_dir )) > 0.0 )  {
-		if (cosine > 1.00001 )  {
-		    bu_log("cosAmb=1+%g %s surfno=%d (x%d, y%d, lvl%d)\n",
-			   cosine-1,
-			   pp->pt_inseg->seg_stp->st_dp->d_namep,
-			   swp->sw_hit.hit_surfno,
-			   ap->a_x, ap->a_y, ap->a_level);
-		    VPRINT(" normal", swp->sw_hit.hit_normal);
-		    VPRINT(" r_dir ", ap->a_ray.r_dir);
-		    cosine = 1;
-		}
+    {
+	/* Diffuse reflectance from "Ambient" light source (at eye) */
+	if ((cosine = -VDOT( swp->sw_hit.hit_normal, ap->a_ray.r_dir )) > 0.0 )  {
+	    if (cosine > 1.00001 )  {
+		bu_log("cosAmb=1+%g %s surfno=%d (x%d, y%d, lvl%d)\n",
+		       cosine-1,
+		       pp->pt_inseg->seg_stp->st_dp->d_namep,
+		       swp->sw_hit.hit_surfno,
+		       ap->a_x, ap->a_y, ap->a_level);
+		VPRINT(" normal", swp->sw_hit.hit_normal);
+		VPRINT(" r_dir ", ap->a_ray.r_dir);
+		cosine = 1;
+	    }
 #if SW_SET_TRANSMIT
-		if (swp->sw_phong_set_vector & SW_SET_AMBIENT) {
-		    cosine *= swp->sw_phong_ambient;
-		} else {
-		    cosine *= AmbientIntensity;
-		}
-#else
-		cosine *= AmbientIntensity;
-#endif
-#ifdef RT_MULTISPECTRAL
-		bn_tabdata_scale( swp->msw_color, ms_matcolor, cosine );
-#else
-		VSCALE( swp->sw_color, matcolor, cosine );
-#endif
+	    if (swp->sw_phong_set_vector & SW_SET_AMBIENT) {
+		cosine *= swp->sw_phong_ambient;
 	    } else {
-#ifdef RT_MULTISPECTRAL
-		bn_tabdata_constval( swp->msw_color, 0.0 );
-#else
-		VSETALL( swp->sw_color, 0 );
-#endif
+		cosine *= AmbientIntensity;
 	    }
+#else
+	    cosine *= AmbientIntensity;
+#endif
+#ifdef RT_MULTISPECTRAL
+	    bn_tabdata_scale( swp->msw_color, ms_matcolor, cosine );
+#else
+	    VSCALE( swp->sw_color, matcolor, cosine );
+#endif
+	} else {
+#ifdef RT_MULTISPECTRAL
+	    bn_tabdata_constval( swp->msw_color, 0.0 );
+#else
+	    VSETALL( swp->sw_color, 0 );
+#endif
+	}
 
-	    /* Emission.  0..1 is normal range, -1..0 sucks light out, like OpenGL */
+	/* Emission.  0..1 is normal range, -1..0 sucks light out, like OpenGL */
 #ifdef RT_MULTISPECTRAL
-	    {
-		float emission[3];
-		struct bn_tabdata	*ms_emission = BN_TABDATA_NULL;
-		VMOVE(emission, ps->emission);
-#if SW_SET_TRANSMIT
-		if (swp->sw_phong_set_vector & SW_SET_EMISSION) {
-		    VSETALL(emission, swp->sw_phong_emission);
-		}
-#endif
-		/* XXX Really should get a curve at prep, not expand RGB samples */
-		BN_GET_TABDATA( ms_emission, spectrum );
-		rt_spect_reflectance_rgb( ms_emission, emission );
-		bn_tabdata_add( swp->msw_color, swp->msw_color, ms_emission );
-		bn_tabdata_free( ms_emission );
-	    }
-#else
+	{
+	    float emission[3];
+	    struct bn_tabdata	*ms_emission = BN_TABDATA_NULL;
+	    VMOVE(emission, ps->emission);
 #if SW_SET_TRANSMIT
 	    if (swp->sw_phong_set_vector & SW_SET_EMISSION) {
-		vect_t tmp;
-		VSETALL(tmp, swp->sw_phong_emission);
-		VADD2( swp->sw_color, swp->sw_color, tmp);
-	    } else {
-		VADD2( swp->sw_color, swp->sw_color, ps->emission );
+		VSETALL(emission, swp->sw_phong_emission);
 	    }
+#endif
+	    /* XXX Really should get a curve at prep, not expand RGB samples */
+	    BN_GET_TABDATA( ms_emission, spectrum );
+	    rt_spect_reflectance_rgb( ms_emission, emission );
+	    bn_tabdata_add( swp->msw_color, swp->msw_color, ms_emission );
+	    bn_tabdata_free( ms_emission );
+	}
 #else
+#if SW_SET_TRANSMIT
+	if (swp->sw_phong_set_vector & SW_SET_EMISSION) {
+	    vect_t tmp;
+	    VSETALL(tmp, swp->sw_phong_emission);
+	    VADD2( swp->sw_color, swp->sw_color, tmp);
+	} else {
 	    VADD2( swp->sw_color, swp->sw_color, ps->emission );
+	}
+#else
+	VADD2( swp->sw_color, swp->sw_color, ps->emission );
 #endif /* SW_SET_TRANSMIT */
 #endif
 
-	    /* With the advent of procedural shaders, the caller can no longer
-	     * provide us reliable light visibility information.  The hit point
-	     * may have been changed by another shader in a stack.  There is no
-	     * way that anyone else can tell us whether lights are visible.
-	     */
-	    light_obs(ap, swp, ps->mfp->mf_inputs);
+	/* With the advent of procedural shaders, the caller can no longer
+	 * provide us reliable light visibility information.  The hit point
+	 * may have been changed by another shader in a stack.  There is no
+	 * way that anyone else can tell us whether lights are visible.
+	 */
+	light_obs(ap, swp, ps->mfp->mf_inputs);
 
-	    /* Consider effects of each light source */
-	    for ( i=ap->a_rt_i->rti_nlights-1; i>=0; i-- )  {
+	/* Consider effects of each light source */
+	for ( i=ap->a_rt_i->rti_nlights-1; i>=0; i-- )  {
 
-		if ((lp = (struct light_specific *)swp->sw_visible[i]) == LIGHT_NULL )
-		    continue;
+	    if ((lp = (struct light_specific *)swp->sw_visible[i]) == LIGHT_NULL )
+		continue;
 
-		if ( rdebug & RDEBUG_LIGHT )  {
-		    bu_log("phong_render light=%s lightfract=%g\n",
-			   lp->lt_name, swp->sw_lightfract[i] );
+	    if ( rdebug & RDEBUG_LIGHT )  {
+		bu_log("phong_render light=%s lightfract=%g\n",
+		       lp->lt_name, swp->sw_lightfract[i] );
+	    }
+
+	    /* Light is not shadowed -- add this contribution */
+#ifndef RT_MULTISPECTRAL
+	    intensity = swp->sw_intensity+3*i;
+#endif
+	    to_light = swp->sw_tolight+3*i;
+
+	    /* Diffuse reflectance from this light source. */
+	    if ((cosine=VDOT(swp->sw_hit.hit_normal, to_light)) > 0.0 )  {
+		if (cosine > 1.00001 )  {
+		    bu_log("cosI=1+%g (x%d, y%d, lvl%d)\n", cosine-1,
+			   ap->a_x, ap->a_y, ap->a_level);
+		    cosine = 1;
 		}
-
-		/* Light is not shadowed -- add this contribution */
+		/* Get Obj Hit Point For Attenuation */
 #ifndef RT_MULTISPECTRAL
-		intensity = swp->sw_intensity+3*i;
+		if (pp && PM_Activated) {
+		    VJOIN1(pt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist, ap->a_ray.r_dir)
+			dist= sqrt((pt[0]-lp->lt_pos[0])*(pt[0]-lp->lt_pos[0]) + (pt[1]-lp->lt_pos[1])*(pt[1]-lp->lt_pos[1]) + (pt[2]-lp->lt_pos[2])*(pt[2]-lp->lt_pos[2]))/1000.0;
+		    dist= (1.0/(0.1 + 1.0*dist + 0.01*dist*dist));
+		    refl= dist * ps->wgt_diffuse * cosine * swp->sw_lightfract[i] * lp->lt_intensity;
+		    /*				bu_log("pt: [%.3f][%.3f,%.3f,%.3f]\n", dist, pt[0], pt[1], pt[2]);*/
+		} else
 #endif
-		to_light = swp->sw_tolight+3*i;
-
-		/* Diffuse reflectance from this light source. */
-		if ((cosine=VDOT(swp->sw_hit.hit_normal, to_light)) > 0.0 )  {
-		    if (cosine > 1.00001 )  {
-			bu_log("cosI=1+%g (x%d, y%d, lvl%d)\n", cosine-1,
-			       ap->a_x, ap->a_y, ap->a_level);
-			cosine = 1;
-		    }
-		    /* Get Obj Hit Point For Attenuation */
-#ifndef RT_MULTISPECTRAL
-		    if (pp && PM_Activated) {
-			VJOIN1(pt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist, ap->a_ray.r_dir)
-			    dist= sqrt((pt[0]-lp->lt_pos[0])*(pt[0]-lp->lt_pos[0]) + (pt[1]-lp->lt_pos[1])*(pt[1]-lp->lt_pos[1]) + (pt[2]-lp->lt_pos[2])*(pt[2]-lp->lt_pos[2]))/1000.0;
-			dist= (1.0/(0.1 + 1.0*dist + 0.01*dist*dist));
-			refl= dist * ps->wgt_diffuse * cosine * swp->sw_lightfract[i] * lp->lt_intensity;
-			/*				bu_log("pt: [%.3f][%.3f,%.3f,%.3f]\n", dist, pt[0], pt[1], pt[2]);*/
-		    } else
-#endif
-			{
-			    refl= ps->wgt_diffuse * swp->sw_lightfract[i] * cosine * lp->lt_fraction;
-			}
+		{
+		    refl= ps->wgt_diffuse * swp->sw_lightfract[i] * cosine * lp->lt_fraction;
+		}
 
 #ifdef RT_MULTISPECTRAL
-		    bn_tabdata_incr_mul3_scale( swp->msw_color,
-						lp->lt_spectrum,
-						swp->msw_intensity[i],
-						ms_matcolor,
-						refl );
+		bn_tabdata_incr_mul3_scale( swp->msw_color,
+					    lp->lt_spectrum,
+					    swp->msw_intensity[i],
+					    ms_matcolor,
+					    refl );
 #else
-		    VELMUL3( work, matcolor, lp->lt_color, intensity );
-		    VJOIN1( swp->sw_color, swp->sw_color, refl, work );
+		VELMUL3( work, matcolor, lp->lt_color, intensity );
+		VJOIN1( swp->sw_color, swp->sw_color, refl, work );
 #endif
-		}
+	    }
 
-		/* Calculate specular reflectance.
-		 *	Reflected ray = (2 * cos(i) * Normal) - Incident ray.
-		 * 	Cos(s) = Reflected ray DOT Incident ray.
-		 */
-		cosine *= 2;
-		VSCALE( work, swp->sw_hit.hit_normal, cosine );
-		VSUB2( reflected, work, to_light );
-		if ((cosine = -VDOT( reflected, ap->a_ray.r_dir )) > 0 )  {
-		    if (cosine > 1.00001 )  {
-			bu_log("cosS=1+%g (x%d, y%d, lvl%d)\n", cosine-1,
-			       ap->a_x, ap->a_y, ap->a_level);
-			cosine = 1;
-		    }
-		    refl = ps->wgt_specular * swp->sw_lightfract[i] *
-			lp->lt_fraction *
+	    /* Calculate specular reflectance.
+	     *	Reflected ray = (2 * cos(i) * Normal) - Incident ray.
+	     * 	Cos(s) = Reflected ray DOT Incident ray.
+	     */
+	    cosine *= 2;
+	    VSCALE( work, swp->sw_hit.hit_normal, cosine );
+	    VSUB2( reflected, work, to_light );
+	    if ((cosine = -VDOT( reflected, ap->a_ray.r_dir )) > 0 )  {
+		if (cosine > 1.00001 )  {
+		    bu_log("cosS=1+%g (x%d, y%d, lvl%d)\n", cosine-1,
+			   ap->a_x, ap->a_y, ap->a_level);
+		    cosine = 1;
+		}
+		refl = ps->wgt_specular * swp->sw_lightfract[i] *
+		    lp->lt_fraction *
 #ifdef PHAST_PHONG
-			/* It is unnecessary to compute the actual
-			 * exponential here since phong is just a
-			 * gross hack.  We approximate re:
-			 *  Graphics Gems IV "A Fast Alternative to
-			 *  Phong's Specular Model" Pg 385
-			 */
-			cosine /
-			(ps->shine - ps->shine*cosine + cosine);
+		    /* It is unnecessary to compute the actual
+		     * exponential here since phong is just a
+		     * gross hack.  We approximate re:
+		     *  Graphics Gems IV "A Fast Alternative to
+		     *  Phong's Specular Model" Pg 385
+		     */
+		    cosine /
+		    (ps->shine - ps->shine*cosine + cosine);
 #else
-		    phg_ipow(cosine, ps->shine);
+		phg_ipow(cosine, ps->shine);
 #endif /* PHAST_PHONG */
 #ifdef RT_MULTISPECTRAL
-		    bn_tabdata_incr_mul2_scale( swp->msw_color,
-						lp->lt_spectrum,
-						swp->msw_intensity[i],
-						refl );
+		bn_tabdata_incr_mul2_scale( swp->msw_color,
+					    lp->lt_spectrum,
+					    swp->msw_intensity[i],
+					    refl );
 #else
-		    VELMUL( work, lp->lt_color, intensity );
-		    VJOIN1( swp->sw_color, swp->sw_color, refl, work );
+		VELMUL( work, lp->lt_color, intensity );
+		VJOIN1( swp->sw_color, swp->sw_color, refl, work );
 #endif
-		}
 	    }
+	}
 
 #ifndef RT_MULTISPECTRAL
-	    if (PM_Activated) {
-		IrradianceEstimate(ap, work, swp->sw_hit.hit_point, swp->sw_hit.hit_normal, 100, 100);
-		VELMUL(work, work, color);
-		VADD2(swp->sw_color, work, swp->sw_color);
-		if (swp->sw_color[0] > 1.0) swp->sw_color[0]= 1.0;
-		if (swp->sw_color[1] > 1.0) swp->sw_color[1]= 1.0;
-		if (swp->sw_color[2] > 1.0) swp->sw_color[2]= 1.0;
-	    }
-
-	} else {
-
-	    if (PM_Activated) {
-		/*  IrradianceEstimate(work, swp->sw_hit.hit_point, swp->sw_hit.hit_normal, 100, 100);
-		    VELMUL(swp->sw_color, work, color);*/
-		IrradianceEstimate(ap, swp->sw_color, swp->sw_hit.hit_point, swp->sw_hit.hit_normal, 100, 100);
-		if (swp->sw_color[0] > 1.0) swp->sw_color[0]= 1.0;
-		if (swp->sw_color[1] > 1.0) swp->sw_color[1]= 1.0;
-		if (swp->sw_color[2] > 1.0) swp->sw_color[2]= 1.0;
-	    }
-#endif
+	if (PM_Activated) {
+	    IrradianceEstimate(ap, work, swp->sw_hit.hit_point, swp->sw_hit.hit_normal, 100, 100);
+	    VELMUL(work, work, color);
+	    VADD2(swp->sw_color, work, swp->sw_color);
+	    if (swp->sw_color[0] > 1.0) swp->sw_color[0]= 1.0;
+	    if (swp->sw_color[1] > 1.0) swp->sw_color[1]= 1.0;
+	    if (swp->sw_color[2] > 1.0) swp->sw_color[2]= 1.0;
 	}
+
+    } else {
+
+	if (PM_Activated) {
+	    /*  IrradianceEstimate(work, swp->sw_hit.hit_point, swp->sw_hit.hit_normal, 100, 100);
+		VELMUL(swp->sw_color, work, color);*/
+	    IrradianceEstimate(ap, swp->sw_color, swp->sw_hit.hit_point, swp->sw_hit.hit_normal, 100, 100);
+	    if (swp->sw_color[0] > 1.0) swp->sw_color[0]= 1.0;
+	    if (swp->sw_color[1] > 1.0) swp->sw_color[1]= 1.0;
+	    if (swp->sw_color[2] > 1.0) swp->sw_color[2]= 1.0;
+	}
+#endif
+    }
 
 
     if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
@@ -560,8 +560,8 @@ phong_render(register struct application *ap, struct partition *pp, struct shade
  */
 double
 phg_ipow( d, cnt )
-     double d;
-     register int cnt;
+    double d;
+    register int cnt;
 {
     fastf_t input, result;
 

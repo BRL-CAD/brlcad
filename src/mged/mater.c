@@ -191,40 +191,40 @@ f_edcolor(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 void
 color_putrec(register struct mater *mp)
 {
-	struct directory dir;
-	union record rec;
+    struct directory dir;
+    union record rec;
 
-	if (dbip == DBI_NULL)
-	  return;
+    if (dbip == DBI_NULL)
+	return;
 
-	if ( dbip->dbi_read_only )
-		return;
+    if ( dbip->dbi_read_only )
+	return;
 
-	if (dbip->dbi_version >= 5) {
-	    bu_log("color_putrec does not work on db5 or later databases");
-	    return;
-	}
+    if (dbip->dbi_version >= 5) {
+	bu_log("color_putrec does not work on db5 or later databases");
+	return;
+    }
 
-	rec.md.md_id = ID_MATERIAL;
-	rec.md.md_low = mp->mt_low;
-	rec.md.md_hi = mp->mt_high;
-	rec.md.md_r = mp->mt_r;
-	rec.md.md_g = mp->mt_g;
-	rec.md.md_b = mp->mt_b;
+    rec.md.md_id = ID_MATERIAL;
+    rec.md.md_low = mp->mt_low;
+    rec.md.md_hi = mp->mt_high;
+    rec.md.md_r = mp->mt_r;
+    rec.md.md_g = mp->mt_g;
+    rec.md.md_b = mp->mt_b;
 
-	/* Fake up a directory entry for db_* routines */
-	dir.d_namep = "color_putrec";
-	dir.d_magic = RT_DIR_MAGIC;
-	dir.d_flags = 0;
-	if ( mp->mt_daddr == MATER_NO_ADDR )  {
-		/* Need to allocate new database space */
-		if ( db_alloc( dbip, &dir, 1 ) < 0 )  ALLOC_ERR_return;
-		mp->mt_daddr = dir.d_addr;
-	} else {
-		dir.d_addr = mp->mt_daddr;
-		dir.d_len = 1;
-	}
-	if ( db_put( dbip, &dir, &rec, 0, 1 ) < 0 )  WRITE_ERR_return;
+    /* Fake up a directory entry for db_* routines */
+    dir.d_namep = "color_putrec";
+    dir.d_magic = RT_DIR_MAGIC;
+    dir.d_flags = 0;
+    if ( mp->mt_daddr == MATER_NO_ADDR )  {
+	/* Need to allocate new database space */
+	if ( db_alloc( dbip, &dir, 1 ) < 0 )  ALLOC_ERR_return;
+	mp->mt_daddr = dir.d_addr;
+    } else {
+	dir.d_addr = mp->mt_daddr;
+	dir.d_len = 1;
+    }
+    if ( db_put( dbip, &dir, &rec, 0, 1 ) < 0 )  WRITE_ERR_return;
 }
 
 /*
@@ -235,20 +235,20 @@ color_putrec(register struct mater *mp)
 void
 color_zaprec(register struct mater *mp)
 {
-	struct directory dir;
+    struct directory dir;
 
-	if (dbip == DBI_NULL)
-	  return;
+    if (dbip == DBI_NULL)
+	return;
 
-	if ( dbip->dbi_read_only || mp->mt_daddr == MATER_NO_ADDR )
-		return;
-	dir.d_magic = RT_DIR_MAGIC;
-	dir.d_namep = "color_zaprec";
-	dir.d_len = 1;
-	dir.d_addr = mp->mt_daddr;
-	dir.d_flags = 0;
-	if ( db_delete( dbip, &dir ) < 0 )  DELETE_ERR_return("color_zaprec");
-	mp->mt_daddr = MATER_NO_ADDR;
+    if ( dbip->dbi_read_only || mp->mt_daddr == MATER_NO_ADDR )
+	return;
+    dir.d_magic = RT_DIR_MAGIC;
+    dir.d_namep = "color_zaprec";
+    dir.d_len = 1;
+    dir.d_addr = mp->mt_daddr;
+    dir.d_flags = 0;
+    if ( db_delete( dbip, &dir ) < 0 )  DELETE_ERR_return("color_zaprec");
+    mp->mt_daddr = MATER_NO_ADDR;
 }
 
 /*
@@ -260,48 +260,48 @@ color_zaprec(register struct mater *mp)
 void
 color_soltab(void)
 {
-	register struct solid *sp;
-	register struct mater *mp;
+    register struct solid *sp;
+    register struct mater *mp;
 
-	FOR_ALL_SOLIDS( sp, &dgop->dgo_headSolid )  {
-		sp->s_cflag = 0;
+    FOR_ALL_SOLIDS( sp, &dgop->dgo_headSolid )  {
+	sp->s_cflag = 0;
 
-		/* the user specified the color, so use it */
-		if ( sp->s_uflag ) {
-			sp->s_color[0] = sp->s_basecolor[0];
-			sp->s_color[1] = sp->s_basecolor[1];
-			sp->s_color[2] = sp->s_basecolor[2];
-			goto done;
-		}
-
-		for ( mp = rt_material_head; mp != MATER_NULL; mp = mp->mt_forw )  {
-			if ( sp->s_regionid <= mp->mt_high &&
-			    sp->s_regionid >= mp->mt_low ) {
-				sp->s_color[0] = mp->mt_r;
-				sp->s_color[1] = mp->mt_g;
-				sp->s_color[2] = mp->mt_b;
-				goto done;
-			}
-		}
-
-		/*
-		 *  There is no region-id-based coloring entry in the
-		 *  table, so use the combination-record ("mater"
-		 *  command) based color if one was provided. Otherwise,
-		 *  use the default wireframe color.
-		 *  This is the "new way" of coloring things.
-		 */
-
-		/* use wireframe_default_color */
-		if (sp->s_dflag)
-		  sp->s_cflag = 1;
-		/* Be conservative and copy color anyway, to avoid black */
-		sp->s_color[0] = sp->s_basecolor[0];
-		sp->s_color[1] = sp->s_basecolor[1];
-		sp->s_color[2] = sp->s_basecolor[2];
-done: ;
+	/* the user specified the color, so use it */
+	if ( sp->s_uflag ) {
+	    sp->s_color[0] = sp->s_basecolor[0];
+	    sp->s_color[1] = sp->s_basecolor[1];
+	    sp->s_color[2] = sp->s_basecolor[2];
+	    goto done;
 	}
-	update_views = 1;		/* re-write control list with new colors */
+
+	for ( mp = rt_material_head; mp != MATER_NULL; mp = mp->mt_forw )  {
+	    if ( sp->s_regionid <= mp->mt_high &&
+		 sp->s_regionid >= mp->mt_low ) {
+		sp->s_color[0] = mp->mt_r;
+		sp->s_color[1] = mp->mt_g;
+		sp->s_color[2] = mp->mt_b;
+		goto done;
+	    }
+	}
+
+	/*
+	 *  There is no region-id-based coloring entry in the
+	 *  table, so use the combination-record ("mater"
+	 *  command) based color if one was provided. Otherwise,
+	 *  use the default wireframe color.
+	 *  This is the "new way" of coloring things.
+	 */
+
+	/* use wireframe_default_color */
+	if (sp->s_dflag)
+	    sp->s_cflag = 1;
+	/* Be conservative and copy color anyway, to avoid black */
+	sp->s_color[0] = sp->s_basecolor[0];
+	sp->s_color[1] = sp->s_basecolor[1];
+	sp->s_color[2] = sp->s_basecolor[2];
+    done: ;
+    }
+    update_views = 1;		/* re-write control list with new colors */
 }
 
 /*

@@ -146,8 +146,8 @@ void print_bridge (struct bridge *bp)
     BU_CKMAG(bp, BRIDGE_MAGIC, "bridge");
 
     bu_log(" bridge <x%x> %d... <x%x> and <x%x>, weight = %g\n",
-	bp, bp -> b_index,
-	bp -> b_vert_civ, bp -> b_vert_unciv, bp -> b_weight);
+	   bp, bp -> b_index,
+	   bp -> b_vert_civ, bp -> b_vert_unciv, bp -> b_weight);
 }
 
 /*
@@ -192,17 +192,17 @@ void print_vertex (void *v, int depth)
     BU_CKMAG(vp, VERTEX_MAGIC, "vertex");
 
     bu_log(" vertex <x%x> %d '%s' %s...\n",
-	vp, vp -> v_index, vp -> v_label,
-	vp -> v_civilized ? "civilized" : "uncivilized");
+	   vp, vp -> v_index, vp -> v_label,
+	   vp -> v_civilized ? "civilized" : "uncivilized");
     for (BU_LIST_FOR(np, neighbor, &(vp -> v_neighbors)))
     {
 	BU_CKMAG(np, NEIGHBOR_MAGIC, "neighbor");
 	BU_CKMAG(np -> n_vertex, VERTEX_MAGIC, "vertex");
 
 	bu_log("  is a neighbor <x%x> of vertex <x%x> %d '%s' at cost %g\n",
-	    np, np -> n_vertex,
-	    np -> n_vertex -> v_index, np -> n_vertex -> v_label,
-	    np -> n_weight);
+	       np, np -> n_vertex,
+	       np -> n_vertex -> v_index, np -> n_vertex -> v_label,
+	       np -> n_weight);
     }
 }
 
@@ -301,7 +301,7 @@ int compare_bridge_weights (void *v1, void *v2)
     delta = b1 -> b_weight  -  b2 -> b_weight;
     return ((delta <  0.0) ? -1 :
 	    (delta == 0.0) ?  0 :
-			      1);
+	    1);
 }
 
 /*
@@ -418,7 +418,7 @@ void del_from_prioq (struct vertex *vp)
 
     if (debug)
 	bu_log("del_from_prioq(<x%x>... bridge <x%x> %d)\n",
-	    vp, vp -> v_bridge, vp -> v_bridge -> b_index);
+	       vp, vp -> v_bridge, vp -> v_bridge -> b_index);
     if (bu_rb_search(prioq, PRIOQ_INDEX, (void *) (vp -> v_bridge)) == NULL)
     {
 	bu_exit(1, "del_from_prioq: Cannot find bridge <x%x>.", vp -> v_bridge);
@@ -455,10 +455,10 @@ struct bridge *extract_min (void)
 int get_edge (FILE *fp, long int *index, char **label, double *w, int numeric)
 
 
-			/* Indices of edge endpoints */
-			/* Labels of edge endpoints */
-			/* Weight */
-			/* Use indices instead of labels? */
+    /* Indices of edge endpoints */
+    /* Labels of edge endpoints */
+    /* Weight */
+    /* Use indices instead of labels? */
 
 {
     char		*bp;
@@ -498,7 +498,7 @@ int get_edge (FILE *fp, long int *index, char **label, double *w, int numeric)
 		if (*bep == '\0')
 		{
 		    bu_log("Illegal input on line %d: '%s'\n",
-			line_nm, bu_vls_addr(&buf));
+			   line_nm, bu_vls_addr(&buf));
 		    return (-1);
 		}
 	    *bep = '\0';
@@ -508,14 +508,14 @@ int get_edge (FILE *fp, long int *index, char **label, double *w, int numeric)
 		if (*bep == '\0')
 		{
 		    bu_log("Illegal input on line %d: '%s'\n",
-			line_nm, bu_vls_addr(&buf));
+			   line_nm, bu_vls_addr(&buf));
 		    return (-1);
 		}
 	    for (bep = bp; (*++bep != ' ') && (*bep != '\t'); ++bep)
 		if (*bep == '\0')
 		{
 		    bu_log("Illegal input on line %d: '%s'\n",
-			line_nm, bu_vls_addr(&buf));
+			   line_nm, bu_vls_addr(&buf));
 		    return (-1);
 		}
 	    *bep = '\0';
@@ -524,7 +524,7 @@ int get_edge (FILE *fp, long int *index, char **label, double *w, int numeric)
 	    if (sscanf(bep + 1, "%lg", w) != 1)
 	    {
 		bu_log("Illegal input on line %d: '%s'\n",
-		    line_nm, bu_vls_addr(&buf));
+		       line_nm, bu_vls_addr(&buf));
 		return (-1);
 	    }
 	    else
@@ -586,8 +586,8 @@ main (int argc, char **argv)
      *	Initialize the dictionary
      */
     dictionary = bu_rb_create1("Dictionary of vertices",
-		    numeric ? compare_vertex_indices
-			    : compare_vertex_labels);
+			       numeric ? compare_vertex_indices
+			       : compare_vertex_labels);
     bu_rb_uniq_on1(dictionary);
 
     /*
@@ -651,10 +651,10 @@ main (int argc, char **argv)
 	    BU_CKMAG(vcp, VERTEX_MAGIC, "vertex");
 	    if (numeric)
 		(void) printf("%ld %ld %g\n",
-		    vcp -> v_index, vup -> v_index, bp -> b_weight);
+			      vcp -> v_index, vup -> v_index, bp -> b_weight);
 	    else
 		(void) printf("%s %s %g\n",
-		    vcp -> v_label, vup -> v_label, bp -> b_weight);
+			      vcp -> v_label, vup -> v_label, bp -> b_weight);
 	    weight += bp -> b_weight;
 	}
 	free_bridge(bp);
@@ -681,7 +681,7 @@ main (int argc, char **argv)
 		    if (debug)
 		    {
 			bu_log("After the deletion of bridge <x%x>...\n",
-			    up -> v_bridge);
+			       up -> v_bridge);
 			print_prioq();
 		    }
 		    up -> v_bridge -> b_vert_civ = vup;
@@ -690,14 +690,14 @@ main (int argc, char **argv)
 		    if (debug)
 		    {
 			bu_log("Reduced bridge <x%x> weight to %g\n",
-			    up -> v_bridge,
-			    up -> v_bridge -> b_weight);
+			       up -> v_bridge,
+			       up -> v_bridge -> b_weight);
 			print_prioq();
 		    }
 		}
 		else if (debug)
 		    bu_log("bridge <x%x>'s weight of %g stands up\n",
-			    up -> v_bridge, up -> v_bridge -> b_weight);
+			   up -> v_bridge, up -> v_bridge -> b_weight);
 	    }
 	    else if (debug)
 		bu_log("Skipping civilized neighbor <x%x>\n", up);

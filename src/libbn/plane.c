@@ -46,10 +46,10 @@
 double
 bn_dist_pt3_pt3(const fastf_t *a, const fastf_t *b)
 {
-	vect_t	diff;
+    vect_t	diff;
 
-	VSUB2( diff, a, b );
-	return MAGNITUDE( diff );
+    VSUB2( diff, a, b );
+    return MAGNITUDE( diff );
 }
 
 /**
@@ -62,12 +62,12 @@ bn_dist_pt3_pt3(const fastf_t *a, const fastf_t *b)
 int
 bn_pt3_pt3_equal(const fastf_t *a, const fastf_t *b, const struct bn_tol *tol)
 {
-	vect_t	diff;
+    vect_t	diff;
 
-	BN_CK_TOL(tol);
-	VSUB2( diff, b, a );
-	if ( MAGSQ( diff ) < tol->dist_sq )  return 1;
-	return 0;
+    BN_CK_TOL(tol);
+    VSUB2( diff, b, a );
+    if ( MAGSQ( diff ) < tol->dist_sq )  return 1;
+    return 0;
 }
 
 /**
@@ -80,12 +80,12 @@ bn_pt3_pt3_equal(const fastf_t *a, const fastf_t *b, const struct bn_tol *tol)
 int
 bn_pt2_pt2_equal(const fastf_t *a, const fastf_t *b, const struct bn_tol *tol)
 {
-	vect_t	diff;
+    vect_t	diff;
 
-	BN_CK_TOL(tol);
-	VSUB2_2D( diff, b, a );
-	if ( MAGSQ_2D( diff ) < tol->dist_sq )  return 1;
-	return 0;
+    BN_CK_TOL(tol);
+    VSUB2_2D( diff, b, a );
+    if ( MAGSQ_2D( diff ) < tol->dist_sq )  return 1;
+    return 0;
 }
 
 /**
@@ -102,55 +102,55 @@ bn_pt2_pt2_equal(const fastf_t *a, const fastf_t *b, const struct bn_tol *tol)
 int
 bn_3pts_collinear(fastf_t *a, fastf_t *b, fastf_t *c, const struct bn_tol *tol)
 {
-	fastf_t	mag_ab, mag_bc, mag_ca, max_len, dist_sq;
-	fastf_t cos_a, cos_b, cos_c;
-	vect_t	ab, bc, ca;
-	int max_edge_no;
+    fastf_t	mag_ab, mag_bc, mag_ca, max_len, dist_sq;
+    fastf_t cos_a, cos_b, cos_c;
+    vect_t	ab, bc, ca;
+    int max_edge_no;
 
-	VSUB2(ab, b, a);
-	VSUB2(bc, c, b);
-	VSUB2(ca, a, c);
-	mag_ab = MAGNITUDE(ab);
-	mag_bc = MAGNITUDE(bc);
-	mag_ca = MAGNITUDE(ca);
+    VSUB2(ab, b, a);
+    VSUB2(bc, c, b);
+    VSUB2(ca, a, c);
+    mag_ab = MAGNITUDE(ab);
+    mag_bc = MAGNITUDE(bc);
+    mag_ca = MAGNITUDE(ca);
 
-	/* find longest edge */
-	max_len = mag_ab;
-	max_edge_no = 1;
+    /* find longest edge */
+    max_len = mag_ab;
+    max_edge_no = 1;
 
-	if ( mag_bc > max_len )
-	{
-		max_len = mag_bc;
-		max_edge_no = 2;
-	}
+    if ( mag_bc > max_len )
+    {
+	max_len = mag_bc;
+	max_edge_no = 2;
+    }
 
-	if ( mag_ca > max_len )
-	{
-		max_len = mag_ca;
-		max_edge_no = 3;
-	}
+    if ( mag_ca > max_len )
+    {
+	max_len = mag_ca;
+	max_edge_no = 3;
+    }
 
-	switch ( max_edge_no )
-	{
-		default:
-		case 1:
-			cos_b = (-VDOT( ab, bc ))/(mag_ab * mag_bc );
-			dist_sq = mag_bc*mag_bc*( 1.0 - cos_b*cos_b);
-			break;
-		case 2:
-			cos_c = (-VDOT( bc, ca ))/(mag_bc * mag_ca );
-			dist_sq = mag_ca*mag_ca*(1.0 - cos_c*cos_c);
-			break;
-		case 3:
-			cos_a = (-VDOT( ca, ab ))/(mag_ca * mag_ab );
-			dist_sq = mag_ab*mag_ab*(1.0 - cos_a*cos_a);
-			break;
-	}
+    switch ( max_edge_no )
+    {
+	default:
+	case 1:
+	    cos_b = (-VDOT( ab, bc ))/(mag_ab * mag_bc );
+	    dist_sq = mag_bc*mag_bc*( 1.0 - cos_b*cos_b);
+	    break;
+	case 2:
+	    cos_c = (-VDOT( bc, ca ))/(mag_bc * mag_ca );
+	    dist_sq = mag_ca*mag_ca*(1.0 - cos_c*cos_c);
+	    break;
+	case 3:
+	    cos_a = (-VDOT( ca, ab ))/(mag_ca * mag_ab );
+	    dist_sq = mag_ab*mag_ab*(1.0 - cos_a*cos_a);
+	    break;
+    }
 
-	if ( dist_sq <= tol->dist_sq )
-		return( 1 );
-	else
-		return( 0 );
+    if ( dist_sq <= tol->dist_sq )
+	return( 1 );
+    else
+	return( 0 );
 }
 
 
@@ -168,18 +168,18 @@ bn_3pts_collinear(fastf_t *a, fastf_t *b, fastf_t *c, const struct bn_tol *tol)
 int
 bn_3pts_distinct(const fastf_t *a, const fastf_t *b, const fastf_t *c, const struct bn_tol *tol)
 {
-	vect_t	B_A;
-	vect_t	C_A;
-	vect_t	C_B;
+    vect_t	B_A;
+    vect_t	C_A;
+    vect_t	C_B;
 
-	BN_CK_TOL(tol);
-	VSUB2( B_A, b, a );
-	if ( MAGSQ( B_A ) <= tol->dist_sq )  return(0);
-	VSUB2( C_A, c, a );
-	if ( MAGSQ( C_A ) <= tol->dist_sq )  return(0);
-	VSUB2( C_B, c, b );
-	if ( MAGSQ( C_B ) <= tol->dist_sq )  return(0);
-	return(1);
+    BN_CK_TOL(tol);
+    VSUB2( B_A, b, a );
+    if ( MAGSQ( B_A ) <= tol->dist_sq )  return(0);
+    VSUB2( C_A, c, a );
+    if ( MAGSQ( C_A ) <= tol->dist_sq )  return(0);
+    VSUB2( C_B, c, b );
+    if ( MAGSQ( C_B ) <= tol->dist_sq )  return(0);
+    return(1);
 }
 
 /**
@@ -192,7 +192,7 @@ bn_3pts_distinct(const fastf_t *a, const fastf_t *b, const fastf_t *c, const str
  *  This follows the BRL-CAD outward-pointing normal convention, and the
  *  right-hand rule for cross products.
  *
-@verbatim
+ @verbatim
  *
  *			C
  *	                *
@@ -209,7 +209,7 @@ bn_3pts_distinct(const fastf_t *a, const fastf_t *b, const fastf_t *c, const str
  *	                A         B
  *			   ----->
  *		            B-A
-@endverbatim
+ @endverbatim
  *
  *  If the points are given in the order A B C (eg, *counter*-clockwise),
  *  then the outward pointing surface normal N = (B-A) x (C-A).
@@ -232,44 +232,44 @@ bn_mk_plane_3pts(fastf_t *plane,
 		 const fastf_t *c,
 		 const struct bn_tol *tol)
 {
-	vect_t	B_A;
-	vect_t	C_A;
-	vect_t	C_B;
-	register fastf_t mag;
+    vect_t	B_A;
+    vect_t	C_A;
+    vect_t	C_B;
+    register fastf_t mag;
 
-	BN_CK_TOL(tol);
+    BN_CK_TOL(tol);
 
-	VSUB2( B_A, b, a );
-	if ( MAGSQ( B_A ) <= tol->dist_sq )  return(-1);
-	VSUB2( C_A, c, a );
-	if ( MAGSQ( C_A ) <= tol->dist_sq )  return(-1);
-	VSUB2( C_B, c, b );
-	if ( MAGSQ( C_B ) <= tol->dist_sq )  return(-1);
+    VSUB2( B_A, b, a );
+    if ( MAGSQ( B_A ) <= tol->dist_sq )  return(-1);
+    VSUB2( C_A, c, a );
+    if ( MAGSQ( C_A ) <= tol->dist_sq )  return(-1);
+    VSUB2( C_B, c, b );
+    if ( MAGSQ( C_B ) <= tol->dist_sq )  return(-1);
 
-	VCROSS( plane, B_A, C_A );
+    VCROSS( plane, B_A, C_A );
 
-	/* Ensure unit length normal */
-	if ( (mag = MAGNITUDE(plane)) <= SMALL_FASTF )
-		return(-1);	/* FAIL */
-	mag = 1/mag;
-	VSCALE( plane, plane, mag );
+    /* Ensure unit length normal */
+    if ( (mag = MAGNITUDE(plane)) <= SMALL_FASTF )
+	return(-1);	/* FAIL */
+    mag = 1/mag;
+    VSCALE( plane, plane, mag );
 
-	/* Find distance from the origin to the plane */
-	/* XXX Should do with pt that has smallest magnitude (closest to origin) */
-	plane[3] = VDOT( plane, a );
+    /* Find distance from the origin to the plane */
+    /* XXX Should do with pt that has smallest magnitude (closest to origin) */
+    plane[3] = VDOT( plane, a );
 
 #if 0
-	/* Check to be sure that angle between A-Origin and N vect < 89 degrees */
-	/* XXX Could complain for pts on axis-aligned plane, far from origin */
-	mag = MAGSQ(a);
-	if ( mag > tol->dist_sq )  {
-		/* cos(89 degrees) = 0.017452406, reciprocal is 57.29 */
-		if ( plane[3]/sqrt(mag) < 0.017452406 )  {
-			bu_log("bn_mk_plane_3pts() WARNING: plane[3] value is suspect\n");
-		}
+    /* Check to be sure that angle between A-Origin and N vect < 89 degrees */
+    /* XXX Could complain for pts on axis-aligned plane, far from origin */
+    mag = MAGSQ(a);
+    if ( mag > tol->dist_sq )  {
+	/* cos(89 degrees) = 0.017452406, reciprocal is 57.29 */
+	if ( plane[3]/sqrt(mag) < 0.017452406 )  {
+	    bu_log("bn_mk_plane_3pts() WARNING: plane[3] value is suspect\n");
 	}
+    }
 #endif
-	return(0);		/* OK */
+    return(0);		/* OK */
 }
 
 /**
@@ -279,7 +279,7 @@ bn_mk_plane_3pts(fastf_t *plane,
  *  if any.
  *
  *  Find the solution to a system of three equations in three unknowns:
-@verbatim
+ @verbatim
  *	Px * Ax + Py * Ay + Pz * Az = -A3;
  *	Px * Bx + Py * By + Pz * Bz = -B3;
  *	Px * Cx + Py * Cy + Pz * Cz = -C3;
@@ -290,7 +290,7 @@ bn_mk_plane_3pts(fastf_t *plane,
  *	[ Bx  By  Bz ] * [ Py ] = [ -B3 ]
  *	[ Cx  Cy  Cz ]   [ Pz ]   [ -C3 ]
  *
-@endverbatim
+ @endverbatim
  *
  *
  * @return	 0	OK
@@ -304,28 +304,28 @@ bn_mk_plane_3pts(fastf_t *plane,
 int
 bn_mkpoint_3planes(fastf_t *pt, const fastf_t *a, const fastf_t *b, const fastf_t *c)
 {
-	vect_t	v1, v2, v3;
-	register fastf_t det;
+    vect_t	v1, v2, v3;
+    register fastf_t det;
 
-	/* Find a vector perpendicular to both planes B and C */
-	VCROSS( v1, b, c );
+    /* Find a vector perpendicular to both planes B and C */
+    VCROSS( v1, b, c );
 
-	/*  If that vector is perpendicular to A,
-	 *  then A is parallel to either B or C, and no intersection exists.
-	 *  This dot&cross product is the determinant of the matrix M.
-	 *  (I suspect there is some deep significance to this!)
-	 */
-	det = VDOT( a, v1 );
-	if ( NEAR_ZERO( det, SMALL_FASTF ) )  return(-1);
+    /*  If that vector is perpendicular to A,
+     *  then A is parallel to either B or C, and no intersection exists.
+     *  This dot&cross product is the determinant of the matrix M.
+     *  (I suspect there is some deep significance to this!)
+     */
+    det = VDOT( a, v1 );
+    if ( NEAR_ZERO( det, SMALL_FASTF ) )  return(-1);
 
-	VCROSS( v2, a, c );
-	VCROSS( v3, a, b );
+    VCROSS( v2, a, c );
+    VCROSS( v3, a, b );
 
-	det = 1/det;
-	pt[X] = det*(a[3]*v1[X] - b[3]*v2[X] + c[3]*v3[X]);
-	pt[Y] = det*(a[3]*v1[Y] - b[3]*v2[Y] + c[3]*v3[Y]);
-	pt[Z] = det*(a[3]*v1[Z] - b[3]*v2[Z] + c[3]*v3[Z]);
-	return(0);
+    det = 1/det;
+    pt[X] = det*(a[3]*v1[X] - b[3]*v2[X] + c[3]*v3[X]);
+    pt[Y] = det*(a[3]*v1[Y] - b[3]*v2[Y] + c[3]*v3[Y]);
+    pt[Z] = det*(a[3]*v1[Z] - b[3]*v2[Z] + c[3]*v3[Z]);
+    return(0);
 }
 
 /**
@@ -347,42 +347,42 @@ bn_2line3_colinear(const fastf_t *p1,
 		   double range,
 		   const struct bn_tol *tol)
 {
-	fastf_t		mag1;
-	fastf_t		mag2;
-	point_t		tail;
+    fastf_t		mag1;
+    fastf_t		mag2;
+    point_t		tail;
 
-	BN_CK_TOL(tol);
+    BN_CK_TOL(tol);
 
-	if (!p1 || !d1 || !p2 || !d2) {
-	    goto fail;
-	}
+    if (!p1 || !d1 || !p2 || !d2) {
+	goto fail;
+    }
 
-	if ( (mag1 = MAGNITUDE(d1)) < SMALL_FASTF )  bu_bomb("bn_2line3_colinear() mag1 zero\n");
-	if ( (mag2 = MAGNITUDE(d2)) < SMALL_FASTF )  bu_bomb("bn_2line3_colinear() mag2 zero\n");
+    if ( (mag1 = MAGNITUDE(d1)) < SMALL_FASTF )  bu_bomb("bn_2line3_colinear() mag1 zero\n");
+    if ( (mag2 = MAGNITUDE(d2)) < SMALL_FASTF )  bu_bomb("bn_2line3_colinear() mag2 zero\n");
 
-	/* Impose a general angular tolerance to reject "obviously" non-parallel lines */
-	/* tol->para and RT_DOT_TOL are too tight a tolerance.  0.1 is 5 degrees */
-	if ( fabs(VDOT(d1, d2)) < 0.9 * mag1 * mag2  )  goto fail;
+    /* Impose a general angular tolerance to reject "obviously" non-parallel lines */
+    /* tol->para and RT_DOT_TOL are too tight a tolerance.  0.1 is 5 degrees */
+    if ( fabs(VDOT(d1, d2)) < 0.9 * mag1 * mag2  )  goto fail;
 
-	/* See if start points are within tolerance of other line */
-	if ( bn_distsq_line3_pt3( p1, d1, p2 ) > tol->dist_sq )  goto fail;
-	if ( bn_distsq_line3_pt3( p2, d2, p1 ) > tol->dist_sq )  goto fail;
+    /* See if start points are within tolerance of other line */
+    if ( bn_distsq_line3_pt3( p1, d1, p2 ) > tol->dist_sq )  goto fail;
+    if ( bn_distsq_line3_pt3( p2, d2, p1 ) > tol->dist_sq )  goto fail;
 
-	VJOIN1( tail, p1, range/mag1, d1 );
-	if ( bn_distsq_line3_pt3( p2, d2, tail ) > tol->dist_sq )  goto fail;
+    VJOIN1( tail, p1, range/mag1, d1 );
+    if ( bn_distsq_line3_pt3( p2, d2, tail ) > tol->dist_sq )  goto fail;
 
-	VJOIN1( tail, p2, range/mag2, d2 );
-	if ( bn_distsq_line3_pt3( p1, d1, tail ) > tol->dist_sq )  goto fail;
+    VJOIN1( tail, p2, range/mag2, d2 );
+    if ( bn_distsq_line3_pt3( p1, d1, tail ) > tol->dist_sq )  goto fail;
 
-	if ( bu_debug & BU_DEBUG_MATH )  {
-		bu_log("bn_2line3colinear(range=%g) ret=1\n", range);
-	}
-	return 1;
-fail:
-	if ( bu_debug & BU_DEBUG_MATH )  {
-		bu_log("bn_2line3colinear(range=%g) ret=0\n", range);
-	}
-	return 0;
+    if ( bu_debug & BU_DEBUG_MATH )  {
+	bu_log("bn_2line3colinear(range=%g) ret=1\n", range);
+    }
+    return 1;
+ fail:
+    if ( bu_debug & BU_DEBUG_MATH )  {
+	bu_log("bn_2line3colinear(range=%g) ret=0\n", range);
+    }
+    return 0;
 }
 
 /**
@@ -414,36 +414,36 @@ bn_isect_line3_plane(fastf_t *dist,
 		     const fastf_t *plane,
 		     const struct bn_tol *tol)
 {
-	register fastf_t	slant_factor;
-	register fastf_t	norm_dist;
-	register fastf_t	dot;
-	vect_t			local_dir;
+    register fastf_t	slant_factor;
+    register fastf_t	norm_dist;
+    register fastf_t	dot;
+    vect_t			local_dir;
 
-	BN_CK_TOL(tol);
+    BN_CK_TOL(tol);
 
-	norm_dist = plane[3] - VDOT( plane, pt );
-	slant_factor = VDOT( plane, dir );
-	VMOVE( local_dir, dir )
+    norm_dist = plane[3] - VDOT( plane, pt );
+    slant_factor = VDOT( plane, dir );
+    VMOVE( local_dir, dir )
 	VUNITIZE( local_dir )
 	dot = VDOT( plane, local_dir );
 
-	if ( slant_factor < -SMALL_FASTF && dot < -tol->perp  )  {
-		*dist = norm_dist/slant_factor;
-		return 1;			/* HIT, entering */
-	} else if ( slant_factor > SMALL_FASTF && dot > tol->perp )  {
-		*dist = norm_dist/slant_factor;
-		return 2;			/* HIT, leaving */
-	}
+    if ( slant_factor < -SMALL_FASTF && dot < -tol->perp  )  {
+	*dist = norm_dist/slant_factor;
+	return 1;			/* HIT, entering */
+    } else if ( slant_factor > SMALL_FASTF && dot > tol->perp )  {
+	*dist = norm_dist/slant_factor;
+	return 2;			/* HIT, leaving */
+    }
 
-	/*
-	 *  Ray is parallel to plane when dir.N == 0.
-	 */
-	*dist = 0;		/* sanity */
-	if ( norm_dist < -tol->dist )
-		return -2;	/* missed, outside */
-	if ( norm_dist > tol->dist )
-		return -1;	/* missed, inside */
-	return 0;		/* Ray lies in the plane */
+    /*
+     *  Ray is parallel to plane when dir.N == 0.
+     */
+    *dist = 0;		/* sanity */
+    if ( norm_dist < -tol->dist )
+	return -2;	/* missed, outside */
+    if ( norm_dist > tol->dist )
+	return -1;	/* missed, inside */
+    return 0;		/* Ray lies in the plane */
 }
 
 /**
@@ -480,79 +480,79 @@ bn_isect_2planes(fastf_t *pt,
 		 const fastf_t *rpp_min,
 		 const struct bn_tol *tol)
 {
-	vect_t		abs_dir;
-	plane_t		pl;
-	int			i;
+    vect_t		abs_dir;
+    plane_t		pl;
+    int			i;
 
-	if ( (i = bn_coplanar( a, b, tol )) != 0 )  {
-		if ( i > 0 )
-			return(-1);	/* FAIL -- coplanar */
-		return(-2);		/* FAIL -- parallel & distinct */
-	}
+    if ( (i = bn_coplanar( a, b, tol )) != 0 )  {
+	if ( i > 0 )
+	    return(-1);	/* FAIL -- coplanar */
+	return(-2);		/* FAIL -- parallel & distinct */
+    }
 
-	/* Direction vector for ray is perpendicular to both plane normals */
-	VCROSS( dir, a, b );
-	VUNITIZE( dir );		/* safety */
+    /* Direction vector for ray is perpendicular to both plane normals */
+    VCROSS( dir, a, b );
+    VUNITIZE( dir );		/* safety */
 
-	/*
-	 *  Select an axis-aligned plane which has it's normal pointing
-	 *  along the same axis as the largest magnitude component of
-	 *  the direction vector.
-	 *  If the largest magnitude component is negative, reverse the
-	 *  direction vector, so that model is "in front" of start point.
-	 */
-	abs_dir[X] = (dir[X] >= 0) ? dir[X] : (-dir[X]);
-	abs_dir[Y] = (dir[Y] >= 0) ? dir[Y] : (-dir[Y]);
-	abs_dir[Z] = (dir[Z] >= 0) ? dir[Z] : (-dir[Z]);
+    /*
+     *  Select an axis-aligned plane which has it's normal pointing
+     *  along the same axis as the largest magnitude component of
+     *  the direction vector.
+     *  If the largest magnitude component is negative, reverse the
+     *  direction vector, so that model is "in front" of start point.
+     */
+    abs_dir[X] = (dir[X] >= 0) ? dir[X] : (-dir[X]);
+    abs_dir[Y] = (dir[Y] >= 0) ? dir[Y] : (-dir[Y]);
+    abs_dir[Z] = (dir[Z] >= 0) ? dir[Z] : (-dir[Z]);
 
-	if ( abs_dir[X] >= abs_dir[Y] )  {
-		if ( abs_dir[X] >= abs_dir[Z] )  {
-			VSET( pl, 1, 0, 0 );	/* X */
-			pl[3] = rpp_min[X];
-			if ( dir[X] < 0 )  {
-				VREVERSE( dir, dir );
-			}
-		} else {
-			VSET( pl, 0, 0, 1 );	/* Z */
-			pl[3] = rpp_min[Z];
-			if ( dir[Z] < 0 )  {
-				VREVERSE( dir, dir );
-			}
-		}
+    if ( abs_dir[X] >= abs_dir[Y] )  {
+	if ( abs_dir[X] >= abs_dir[Z] )  {
+	    VSET( pl, 1, 0, 0 );	/* X */
+	    pl[3] = rpp_min[X];
+	    if ( dir[X] < 0 )  {
+		VREVERSE( dir, dir );
+	    }
 	} else {
-		if ( abs_dir[Y] >= abs_dir[Z] )  {
-			VSET( pl, 0, 1, 0 );	/* Y */
-			pl[3] = rpp_min[Y];
-			if ( dir[Y] < 0 )  {
-				VREVERSE( dir, dir );
-			}
-		} else {
-			VSET( pl, 0, 0, 1 );	/* Z */
-			pl[3] = rpp_min[Z];
-			if ( dir[Z] < 0 )  {
-				VREVERSE( dir, dir );
-			}
-		}
+	    VSET( pl, 0, 0, 1 );	/* Z */
+	    pl[3] = rpp_min[Z];
+	    if ( dir[Z] < 0 )  {
+		VREVERSE( dir, dir );
+	    }
 	}
+    } else {
+	if ( abs_dir[Y] >= abs_dir[Z] )  {
+	    VSET( pl, 0, 1, 0 );	/* Y */
+	    pl[3] = rpp_min[Y];
+	    if ( dir[Y] < 0 )  {
+		VREVERSE( dir, dir );
+	    }
+	} else {
+	    VSET( pl, 0, 0, 1 );	/* Z */
+	    pl[3] = rpp_min[Z];
+	    if ( dir[Z] < 0 )  {
+		VREVERSE( dir, dir );
+	    }
+	}
+    }
 
-	/* Intersection of the 3 planes defines ray start point */
-	if ( bn_mkpoint_3planes( pt, pl, a, b ) < 0 )
-		return(-3);	/* FAIL -- no intersection */
+    /* Intersection of the 3 planes defines ray start point */
+    if ( bn_mkpoint_3planes( pt, pl, a, b ) < 0 )
+	return(-3);	/* FAIL -- no intersection */
 
-	return(0);		/* OK */
+    return(0);		/* OK */
 }
 
 /**
  *			B N _ I S E C T _ L I N E 2 _ L I N E 2
  *
  *  Intersect two lines, each in given in parametric form:
-@verbatim
+ @verbatim
 
-	X = P + t * D
-   and
-	X = A + u * C
+ X = P + t * D
+ and
+ X = A + u * C
 
-@endverbatim
+ @endverbatim
  *  While the parametric form is usually used to denote a ray
  *  (ie, positive values of the parameter only), in this case
  *  the full line is considered.
@@ -586,184 +586,184 @@ bn_isect_2planes(fastf_t *pt,
  */
 int
 bn_isect_line2_line2(fastf_t *dist, const fastf_t *p, const fastf_t *d, const fastf_t *a, const fastf_t *c, const struct bn_tol *tol)
-						/* dist[2] */
+    /* dist[2] */
 
 
 {
-	fastf_t			hx, hy;		/* A - P */
-	register fastf_t	det;
-	register fastf_t	det1;
-	vect_t			unit_d;
-	vect_t			unit_c;
-	vect_t			unit_h;
-	int			parallel;
-	int			parallel1;
+    fastf_t			hx, hy;		/* A - P */
+    register fastf_t	det;
+    register fastf_t	det1;
+    vect_t			unit_d;
+    vect_t			unit_c;
+    vect_t			unit_h;
+    int			parallel;
+    int			parallel1;
 
-	BN_CK_TOL(tol);
-	if ( bu_debug & BU_DEBUG_MATH )  {
-		bu_log("bn_isect_line2_line2() p=(%g,%g), d=(%g,%g)\n\t\t\ta=(%g,%g), c=(%g,%g)\n",
-			V2ARGS(p), V2ARGS(d), V2ARGS(a), V2ARGS(c) );
-	}
+    BN_CK_TOL(tol);
+    if ( bu_debug & BU_DEBUG_MATH )  {
+	bu_log("bn_isect_line2_line2() p=(%g,%g), d=(%g,%g)\n\t\t\ta=(%g,%g), c=(%g,%g)\n",
+	       V2ARGS(p), V2ARGS(d), V2ARGS(a), V2ARGS(c) );
+    }
 
-	/*
-	 *  From the two components q and r, form a system
-	 *  of 2 equations in 2 unknowns.
-	 *  Solve for t and u in the system:
-	 *
-	 *	Px + t * Dx = Ax + u * Cx
-	 *	Py + t * Dy = Ay + u * Cy
-	 *  or
-	 *	t * Dx - u * Cx = Ax - Px
-	 *	t * Dy - u * Cy = Ay - Py
-	 *
-	 *  Let H = A - P, resulting in:
-	 *
-	 *	t * Dx - u * Cx = Hx
-	 *	t * Dy - u * Cy = Hy
-	 *
-	 *  or
-	 *
-	 *	[ Dx  -Cx ]   [ t ]   [ Hx ]
-	 *	[         ] * [   ] = [    ]
-	 *	[ Dy  -Cy ]   [ u ]   [ Hy ]
-	 *
-	 *  This system can be solved by direct substitution, or by
-	 *  finding the determinants by Cramers rule:
-	 *
-	 *	             [ Dx  -Cx ]
-	 *	det(M) = det [         ] = -Dx * Cy + Cx * Dy
-	 *	             [ Dy  -Cy ]
-	 *
-	 *  If det(M) is zero, then the lines are parallel (perhaps colinear).
-	 *  Otherwise, exactly one solution exists.
-	 */
-	det = c[X] * d[Y] - d[X] * c[Y];
+    /*
+     *  From the two components q and r, form a system
+     *  of 2 equations in 2 unknowns.
+     *  Solve for t and u in the system:
+     *
+     *	Px + t * Dx = Ax + u * Cx
+     *	Py + t * Dy = Ay + u * Cy
+     *  or
+     *	t * Dx - u * Cx = Ax - Px
+     *	t * Dy - u * Cy = Ay - Py
+     *
+     *  Let H = A - P, resulting in:
+     *
+     *	t * Dx - u * Cx = Hx
+     *	t * Dy - u * Cy = Hy
+     *
+     *  or
+     *
+     *	[ Dx  -Cx ]   [ t ]   [ Hx ]
+     *	[         ] * [   ] = [    ]
+     *	[ Dy  -Cy ]   [ u ]   [ Hy ]
+     *
+     *  This system can be solved by direct substitution, or by
+     *  finding the determinants by Cramers rule:
+     *
+     *	             [ Dx  -Cx ]
+     *	det(M) = det [         ] = -Dx * Cy + Cx * Dy
+     *	             [ Dy  -Cy ]
+     *
+     *  If det(M) is zero, then the lines are parallel (perhaps colinear).
+     *  Otherwise, exactly one solution exists.
+     */
+    det = c[X] * d[Y] - d[X] * c[Y];
 
-	/*
-	 *  det(M) is non-zero, so there is exactly one solution.
-	 *  Using Cramer's rule, det1(M) replaces the first column
-	 *  of M with the constant column vector, in this case H.
-	 *  Similarly, det2(M) replaces the second column.
-	 *  Computation of the determinant is done as before.
-	 *
-	 *  Now,
-	 *
-	 *	                  [ Hx  -Cx ]
-	 *	              det [         ]
-	 *	    det1(M)       [ Hy  -Cy ]   -Hx * Cy + Cx * Hy
-	 *	t = ------- = --------------- = ------------------
-	 *	     det(M)       det(M)        -Dx * Cy + Cx * Dy
-	 *
-	 *  and
-	 *
-	 *	                  [ Dx   Hx ]
-	 *	              det [         ]
-	 *	    det2(M)       [ Dy   Hy ]    Dx * Hy - Hx * Dy
-	 *	u = ------- = --------------- = ------------------
-	 *	     det(M)       det(M)        -Dx * Cy + Cx * Dy
-	 */
-	hx = a[X] - p[X];
-	hy = a[Y] - p[Y];
-	det1 = (c[X] * hy - hx * c[Y]);
+    /*
+     *  det(M) is non-zero, so there is exactly one solution.
+     *  Using Cramer's rule, det1(M) replaces the first column
+     *  of M with the constant column vector, in this case H.
+     *  Similarly, det2(M) replaces the second column.
+     *  Computation of the determinant is done as before.
+     *
+     *  Now,
+     *
+     *	                  [ Hx  -Cx ]
+     *	              det [         ]
+     *	    det1(M)       [ Hy  -Cy ]   -Hx * Cy + Cx * Hy
+     *	t = ------- = --------------- = ------------------
+     *	     det(M)       det(M)        -Dx * Cy + Cx * Dy
+     *
+     *  and
+     *
+     *	                  [ Dx   Hx ]
+     *	              det [         ]
+     *	    det2(M)       [ Dy   Hy ]    Dx * Hy - Hx * Dy
+     *	u = ------- = --------------- = ------------------
+     *	     det(M)       det(M)        -Dx * Cy + Cx * Dy
+     */
+    hx = a[X] - p[X];
+    hy = a[Y] - p[Y];
+    det1 = (c[X] * hy - hx * c[Y]);
 
-	unit_d[0] = d[0];
-	unit_d[1] = d[1];
-	unit_d[2] = 0.0;
-	VUNITIZE( unit_d );
-	unit_c[0] = c[0];
-	unit_c[1] = c[1];
-	unit_c[2] = 0.0;
-	VUNITIZE( unit_c );
-	unit_h[0] = hx;
-	unit_h[1] = hy;
-	unit_h[2] = 0.0;
-	VUNITIZE( unit_h );
+    unit_d[0] = d[0];
+    unit_d[1] = d[1];
+    unit_d[2] = 0.0;
+    VUNITIZE( unit_d );
+    unit_c[0] = c[0];
+    unit_c[1] = c[1];
+    unit_c[2] = 0.0;
+    VUNITIZE( unit_c );
+    unit_h[0] = hx;
+    unit_h[1] = hy;
+    unit_h[2] = 0.0;
+    VUNITIZE( unit_h );
 
-	if ( fabs( VDOT( unit_d, unit_c ) ) >= tol->para )
-		parallel = 1;
-	else
-		parallel = 0;
+    if ( fabs( VDOT( unit_d, unit_c ) ) >= tol->para )
+	parallel = 1;
+    else
+	parallel = 0;
 
-	if ( fabs( VDOT( unit_h, unit_c ) ) >= tol->para )
-		parallel1 = 1;
-	else
-		parallel1 = 0;
+    if ( fabs( VDOT( unit_h, unit_c ) ) >= tol->para )
+	parallel1 = 1;
+    else
+	parallel1 = 0;
 
-	/* XXX This zero tolerance here should actually be
-	 * XXX determined by something like
-	 * XXX max(c[X], c[Y], d[X], d[Y]) / MAX_FASTF_DYNAMIC_RANGE
-	 * XXX In any case, nothing smaller than 1e-16
-	 */
+    /* XXX This zero tolerance here should actually be
+     * XXX determined by something like
+     * XXX max(c[X], c[Y], d[X], d[Y]) / MAX_FASTF_DYNAMIC_RANGE
+     * XXX In any case, nothing smaller than 1e-16
+     */
 #define DETERMINANT_TOL		1.0e-14		/* XXX caution on non-IEEE machines */
-	if ( parallel || NEAR_ZERO( det, DETERMINANT_TOL ) )  {
-		/* Lines are parallel */
-		if ( !parallel1 && !NEAR_ZERO( det1, DETERMINANT_TOL ) )  {
-			/* Lines are NOT co-linear, just parallel */
-			if ( bu_debug & BU_DEBUG_MATH )  {
-				bu_log("\tparallel, not co-linear.  det=%e, det1=%g\n", det, det1);
-			}
-			return -1;	/* parallel, no intersection */
-		}
+    if ( parallel || NEAR_ZERO( det, DETERMINANT_TOL ) )  {
+	/* Lines are parallel */
+	if ( !parallel1 && !NEAR_ZERO( det1, DETERMINANT_TOL ) )  {
+	    /* Lines are NOT co-linear, just parallel */
+	    if ( bu_debug & BU_DEBUG_MATH )  {
+		bu_log("\tparallel, not co-linear.  det=%e, det1=%g\n", det, det1);
+	    }
+	    return -1;	/* parallel, no intersection */
+	}
 
-		/*
-		 *  Lines are co-linear.
-		 *  Determine t as distance from P to A.
-		 *  Determine u as distance from P to (A+C).  [special!]
-		 *  Use largest direction component, for numeric stability
-		 *  (and avoiding division by zero).
-		 */
-		if ( fabs(d[X]) >= fabs(d[Y]) )  {
-			dist[0] = hx/d[X];
-			dist[1] = (hx + c[X]) / d[X];
-		} else {
-			dist[0] = hy/d[Y];
-			dist[1] = (hy + c[Y]) / d[Y];
-		}
-		if ( bu_debug & BU_DEBUG_MATH )  {
-			bu_log("\tcolinear, t = %g, u = %g\n", dist[0], dist[1] );
-		}
-		return 0;	/* Lines co-linear */
+	/*
+	 *  Lines are co-linear.
+	 *  Determine t as distance from P to A.
+	 *  Determine u as distance from P to (A+C).  [special!]
+	 *  Use largest direction component, for numeric stability
+	 *  (and avoiding division by zero).
+	 */
+	if ( fabs(d[X]) >= fabs(d[Y]) )  {
+	    dist[0] = hx/d[X];
+	    dist[1] = (hx + c[X]) / d[X];
+	} else {
+	    dist[0] = hy/d[Y];
+	    dist[1] = (hy + c[Y]) / d[Y];
 	}
 	if ( bu_debug & BU_DEBUG_MATH )  {
-		/* XXX This print is temporary */
-bu_log("\thx=%g, hy=%g, det=%g, det1=%g, det2=%g\n", hx, hy, det, det1, (d[X] * hy - hx * d[Y]) );
+	    bu_log("\tcolinear, t = %g, u = %g\n", dist[0], dist[1] );
 	}
-	det = 1/det;
-	dist[0] = det * det1;
-	dist[1] = det * (d[X] * hy - hx * d[Y]);
-	if ( bu_debug & BU_DEBUG_MATH )  {
-		bu_log("\tintersection, t = %g, u = %g\n", dist[0], dist[1] );
-	}
+	return 0;	/* Lines co-linear */
+    }
+    if ( bu_debug & BU_DEBUG_MATH )  {
+	/* XXX This print is temporary */
+	bu_log("\thx=%g, hy=%g, det=%g, det1=%g, det2=%g\n", hx, hy, det, det1, (d[X] * hy - hx * d[Y]) );
+    }
+    det = 1/det;
+    dist[0] = det * det1;
+    dist[1] = det * (d[X] * hy - hx * d[Y]);
+    if ( bu_debug & BU_DEBUG_MATH )  {
+	bu_log("\tintersection, t = %g, u = %g\n", dist[0], dist[1] );
+    }
 
 #if 0
-	/* XXX This isn't any good.
-	 * 1)  Sometimes, dist[0] is very large.  Only caller can tell whether
-	 *     that is useful to him or not.
-	 * 2)  Sometimes, the difference between the two hit points is
-	 *     not much more than tol->dist.  Either hit point is perfectly
-	 *     good;  the caller just needs to be careful and not use *both*.
-	 */
-	{
-		point_t		hit1, hit2;
-		vect_t		diff;
-		fastf_t		dist_sq;
+    /* XXX This isn't any good.
+     * 1)  Sometimes, dist[0] is very large.  Only caller can tell whether
+     *     that is useful to him or not.
+     * 2)  Sometimes, the difference between the two hit points is
+     *     not much more than tol->dist.  Either hit point is perfectly
+     *     good;  the caller just needs to be careful and not use *both*.
+     */
+    {
+	point_t		hit1, hit2;
+	vect_t		diff;
+	fastf_t		dist_sq;
 
-		VJOIN1_2D( hit1, p, dist[0], d );
-		VJOIN1_2D( hit2, a, dist[1], c );
-		VSUB2_2D( diff, hit1, hit2 );
-		dist_sq = MAGSQ_2D( diff );
-		if ( dist_sq >= tol->dist_sq )  {
-			if ( bu_debug & BU_DEBUG_MATH || dist_sq < 100*tol->dist_sq )  {
-				bu_log("bn_isect_line2_line2(): dist=%g >%g, inconsistent solution, hit1=(%g,%g), hit2=(%g,%g)\n",
-					sqrt(dist_sq), tol->dist,
-					hit1[X], hit1[Y], hit2[X], hit2[Y]);
-			}
-			return -2;	/* s/b -1? */
-		}
+	VJOIN1_2D( hit1, p, dist[0], d );
+	VJOIN1_2D( hit2, a, dist[1], c );
+	VSUB2_2D( diff, hit1, hit2 );
+	dist_sq = MAGSQ_2D( diff );
+	if ( dist_sq >= tol->dist_sq )  {
+	    if ( bu_debug & BU_DEBUG_MATH || dist_sq < 100*tol->dist_sq )  {
+		bu_log("bn_isect_line2_line2(): dist=%g >%g, inconsistent solution, hit1=(%g,%g), hit2=(%g,%g)\n",
+		       sqrt(dist_sq), tol->dist,
+		       hit1[X], hit1[Y], hit2[X], hit2[Y]);
+	    }
+	    return -2;	/* s/b -1? */
 	}
+    }
 #endif
 
-	return 1;		/* Intersection found */
+    return 1;		/* Intersection found */
 }
 
 /**
@@ -812,172 +812,172 @@ bn_isect_line2_lseg2(fastf_t *dist,
 		     const fastf_t *c,
 		     const struct bn_tol *tol)
 {
-	register fastf_t f;
-	fastf_t		ctol;
-	int		ret;
-	point_t		b;
+    register fastf_t f;
+    fastf_t		ctol;
+    int		ret;
+    point_t		b;
 
-	BN_CK_TOL(tol);
+    BN_CK_TOL(tol);
+    if ( bu_debug & BU_DEBUG_MATH )  {
+	bu_log("bn_isect_line2_lseg2() p=(%g,%g), pdir=(%g,%g)\n\t\t\ta=(%g,%g), adir=(%g,%g)\n",
+	       V2ARGS(p), V2ARGS(d), V2ARGS(a), V2ARGS(c) );
+    }
+
+    /*
+     *  To keep the values of u between 0 and 1,
+     *  C should NOT be scaled to have unit length.
+     *  However, it is a good idea to make sure that
+     *  C is a non-zero vector, (ie, that A and B are distinct).
+     */
+    if ( (ctol = MAGSQ_2D(c)) <= tol->dist_sq )  {
+	ret = -4;		/* points A and B are not distinct */
+	goto out;
+    }
+
+    /*
+     *  Detecting colinearity is difficult, and very very important.
+     *  As a first step, check to see if both points A and B lie
+     *  within tolerance of the line.  If so, then the line segment AC
+     *  is ON the line.
+     */
+    VADD2_2D( b, a, c );
+    if ( bn_distsq_line2_point2( p, d, a ) <= tol->dist_sq  &&
+	 (ctol=bn_distsq_line2_point2( p, d, b )) <= tol->dist_sq )  {
 	if ( bu_debug & BU_DEBUG_MATH )  {
-		bu_log("bn_isect_line2_lseg2() p=(%g,%g), pdir=(%g,%g)\n\t\t\ta=(%g,%g), adir=(%g,%g)\n",
-			V2ARGS(p), V2ARGS(d), V2ARGS(a), V2ARGS(c) );
+	    bu_log("b=(%g, %g), b_dist_sq=%g\n", V2ARGS(b), ctol);
+	    bu_log("bn_isect_line2_lseg2() pts A and B within tol of line\n");
 	}
+	/* Find the parametric distance along the ray */
+	dist[0] = bn_dist_pt2_along_line2( p, d, a );
+	dist[1] = bn_dist_pt2_along_line2( p, d, b );
+	ret = 0;		/* Colinear */
+	goto out;
+    }
 
-	/*
-	 *  To keep the values of u between 0 and 1,
-	 *  C should NOT be scaled to have unit length.
-	 *  However, it is a good idea to make sure that
-	 *  C is a non-zero vector, (ie, that A and B are distinct).
-	 */
-	if ( (ctol = MAGSQ_2D(c)) <= tol->dist_sq )  {
-		ret = -4;		/* points A and B are not distinct */
-		goto out;
-	}
-
-	/*
-	 *  Detecting colinearity is difficult, and very very important.
-	 *  As a first step, check to see if both points A and B lie
-	 *  within tolerance of the line.  If so, then the line segment AC
-	 *  is ON the line.
-	 */
-	VADD2_2D( b, a, c );
-	if ( bn_distsq_line2_point2( p, d, a ) <= tol->dist_sq  &&
-	    (ctol=bn_distsq_line2_point2( p, d, b )) <= tol->dist_sq )  {
-		if ( bu_debug & BU_DEBUG_MATH )  {
-bu_log("b=(%g, %g), b_dist_sq=%g\n", V2ARGS(b), ctol);
-			bu_log("bn_isect_line2_lseg2() pts A and B within tol of line\n");
-		}
-		/* Find the parametric distance along the ray */
-		dist[0] = bn_dist_pt2_along_line2( p, d, a );
-		dist[1] = bn_dist_pt2_along_line2( p, d, b );
-		ret = 0;		/* Colinear */
-		goto out;
-	}
-
-	if ( (ret = bn_isect_line2_line2( dist, p, d, a, c, tol )) < 0 )  {
-		/* Lines are parallel, non-colinear */
-		ret = -3;		/* No intersection found */
-		goto out;
-	}
-	if ( ret == 0 )  {
-		fastf_t	dtol;
-		/*  Lines are colinear */
-		/*  If P within tol of either endpoint (0, 1), make exact. */
-		dtol = tol->dist / sqrt(MAGSQ_2D(d));
-		if ( bu_debug & BU_DEBUG_MATH )  {
-			bu_log("bn_isect_line2_lseg2() dtol=%g, dist[0]=%g, dist[1]=%g\n",
-				dtol, dist[0], dist[1]);
-		}
-		if ( dist[0] > -dtol && dist[0] < dtol )  dist[0] = 0;
-		else if ( dist[0] > 1-dtol && dist[0] < 1+dtol ) dist[0] = 1;
-
-		if ( dist[1] > -dtol && dist[1] < dtol )  dist[1] = 0;
-		else if ( dist[1] > 1-dtol && dist[1] < 1+dtol ) dist[1] = 1;
-		ret = 0;		/* Colinear */
-		goto out;
-	}
-
-	/*
-	 *  The two lines are claimed to intersect at a point.
-	 *  First, validate that hit point represented by dist[0]
-	 *  is in fact on and between A--B.
-	 *  (Nearly parallel lines can result in odd situations here).
-	 *  The performance hit of doing this is vastly preferable
-	 *  to returning wrong answers.  Know a faster algorithm?
-	 */
-	{
-		fastf_t		ab_dist = 0;
-		point_t		hit_pt;
-		point_t		hit2;
-
-		VJOIN1_2D( hit_pt, p, dist[0], d );
-		VJOIN1_2D( hit2, a, dist[1], c );
-		/* Check both hit point value calculations */
-		if ( bn_pt2_pt2_equal( a, hit_pt, tol ) ||
-		    bn_pt2_pt2_equal( a, hit2, tol ) )  {
-			dist[1] = 0;
-			ret = 1;	/* Intersect is at A */
-		}
-		if ( bn_pt2_pt2_equal( b, hit_pt, tol ) ||
-		    bn_pt2_pt2_equal( b, hit_pt, tol ) )  {
-			dist[1] = 1;
-			ret = 2;	/* Intersect is at B */
-		}
-
-		ret = bn_isect_pt2_lseg2( &ab_dist, a, b, hit_pt, tol );
-		if ( bu_debug & BU_DEBUG_MATH )  {
-			/* XXX This is temporary */
-			V2PRINT("a", a);
-			V2PRINT("hit", hit_pt);
-			V2PRINT("b", b);
-			bu_log("bn_isect_pt2_lseg2() hit2d=(%g,%g) ab_dist=%g, ret=%d\n", hit_pt[X], hit_pt[Y], ab_dist, ret);
-			bu_log("\tother hit2d=(%g,%g)\n", hit2[X], hit2[Y] );
-		}
-		if ( ret <= 0 )  {
-			if ( ab_dist < 0 )  {
-				ret = -2;	/* Intersection < A */
-			} else {
-				ret = -1;	/* Intersection >B */
-			}
-			goto out;
-		}
-		if ( ret == 1 )  {
-			dist[1] = 0;
-			ret = 1;	/* Intersect is at A */
-			goto out;
-		}
-		if ( ret == 2 )  {
-			dist[1] = 1;
-			ret = 2;	/* Intersect is at B */
-			goto out;
-		}
-		/* ret == 3, hit_pt is between A and B */
-
-		if ( !bn_between( a[X], hit_pt[X], b[X], tol ) ||
-		    !bn_between( a[Y], hit_pt[Y], b[Y], tol ) ) {
-			bu_bomb("bn_isect_line2_lseg2() hit_pt not between A and B!\n");
-		}
-	}
-
-	/*
-	 *  If the dist[1] parameter is outside the range (0..1),
-	 *  reject the intersection, because it falls outside
-	 *  the line segment A--B.
-	 *
-	 *  Convert the tol->dist into allowable deviation in terms of
-	 *  (0..1) range of the parameters.
-	 */
-	ctol = tol->dist / sqrt(ctol);
+    if ( (ret = bn_isect_line2_line2( dist, p, d, a, c, tol )) < 0 )  {
+	/* Lines are parallel, non-colinear */
+	ret = -3;		/* No intersection found */
+	goto out;
+    }
+    if ( ret == 0 )  {
+	fastf_t	dtol;
+	/*  Lines are colinear */
+	/*  If P within tol of either endpoint (0, 1), make exact. */
+	dtol = tol->dist / sqrt(MAGSQ_2D(d));
 	if ( bu_debug & BU_DEBUG_MATH )  {
-		bu_log("bn_isect_line2_lseg2() ctol=%g, dist[1]=%g\n", ctol, dist[1]);
+	    bu_log("bn_isect_line2_lseg2() dtol=%g, dist[0]=%g, dist[1]=%g\n",
+		   dtol, dist[0], dist[1]);
 	}
-	if ( dist[1] < -ctol )  {
-		ret = -2;		/* Intersection < A */
-		goto out;
+	if ( dist[0] > -dtol && dist[0] < dtol )  dist[0] = 0;
+	else if ( dist[0] > 1-dtol && dist[0] < 1+dtol ) dist[0] = 1;
+
+	if ( dist[1] > -dtol && dist[1] < dtol )  dist[1] = 0;
+	else if ( dist[1] > 1-dtol && dist[1] < 1+dtol ) dist[1] = 1;
+	ret = 0;		/* Colinear */
+	goto out;
+    }
+
+    /*
+     *  The two lines are claimed to intersect at a point.
+     *  First, validate that hit point represented by dist[0]
+     *  is in fact on and between A--B.
+     *  (Nearly parallel lines can result in odd situations here).
+     *  The performance hit of doing this is vastly preferable
+     *  to returning wrong answers.  Know a faster algorithm?
+     */
+    {
+	fastf_t		ab_dist = 0;
+	point_t		hit_pt;
+	point_t		hit2;
+
+	VJOIN1_2D( hit_pt, p, dist[0], d );
+	VJOIN1_2D( hit2, a, dist[1], c );
+	/* Check both hit point value calculations */
+	if ( bn_pt2_pt2_equal( a, hit_pt, tol ) ||
+	     bn_pt2_pt2_equal( a, hit2, tol ) )  {
+	    dist[1] = 0;
+	    ret = 1;	/* Intersect is at A */
 	}
-	if ( (f=(dist[1]-1)) > ctol )  {
-		ret = -1;		/* Intersection > B */
-		goto out;
+	if ( bn_pt2_pt2_equal( b, hit_pt, tol ) ||
+	     bn_pt2_pt2_equal( b, hit_pt, tol ) )  {
+	    dist[1] = 1;
+	    ret = 2;	/* Intersect is at B */
 	}
 
-	/* Check for ctoly intersection with one of the verticies */
-	if ( dist[1] < ctol )  {
-		dist[1] = 0;
-		ret = 1;		/* Intersection at A */
-		goto out;
-	}
-	if ( f >= -ctol )  {
-		dist[1] = 1;
-		ret = 2;		/* Intersection at B */
-		goto out;
-	}
-	ret = 3;			/* Intersection between A and B */
-out:
+	ret = bn_isect_pt2_lseg2( &ab_dist, a, b, hit_pt, tol );
 	if ( bu_debug & BU_DEBUG_MATH )  {
-		bu_log("bn_isect_line2_lseg2() dist[0]=%g, dist[1]=%g, ret=%d\n",
-			dist[0], dist[1], ret);
+	    /* XXX This is temporary */
+	    V2PRINT("a", a);
+	    V2PRINT("hit", hit_pt);
+	    V2PRINT("b", b);
+	    bu_log("bn_isect_pt2_lseg2() hit2d=(%g,%g) ab_dist=%g, ret=%d\n", hit_pt[X], hit_pt[Y], ab_dist, ret);
+	    bu_log("\tother hit2d=(%g,%g)\n", hit2[X], hit2[Y] );
 	}
-	return ret;
+	if ( ret <= 0 )  {
+	    if ( ab_dist < 0 )  {
+		ret = -2;	/* Intersection < A */
+	    } else {
+		ret = -1;	/* Intersection >B */
+	    }
+	    goto out;
+	}
+	if ( ret == 1 )  {
+	    dist[1] = 0;
+	    ret = 1;	/* Intersect is at A */
+	    goto out;
+	}
+	if ( ret == 2 )  {
+	    dist[1] = 1;
+	    ret = 2;	/* Intersect is at B */
+	    goto out;
+	}
+	/* ret == 3, hit_pt is between A and B */
+
+	if ( !bn_between( a[X], hit_pt[X], b[X], tol ) ||
+	     !bn_between( a[Y], hit_pt[Y], b[Y], tol ) ) {
+	    bu_bomb("bn_isect_line2_lseg2() hit_pt not between A and B!\n");
+	}
+    }
+
+    /*
+     *  If the dist[1] parameter is outside the range (0..1),
+     *  reject the intersection, because it falls outside
+     *  the line segment A--B.
+     *
+     *  Convert the tol->dist into allowable deviation in terms of
+     *  (0..1) range of the parameters.
+     */
+    ctol = tol->dist / sqrt(ctol);
+    if ( bu_debug & BU_DEBUG_MATH )  {
+	bu_log("bn_isect_line2_lseg2() ctol=%g, dist[1]=%g\n", ctol, dist[1]);
+    }
+    if ( dist[1] < -ctol )  {
+	ret = -2;		/* Intersection < A */
+	goto out;
+    }
+    if ( (f=(dist[1]-1)) > ctol )  {
+	ret = -1;		/* Intersection > B */
+	goto out;
+    }
+
+    /* Check for ctoly intersection with one of the verticies */
+    if ( dist[1] < ctol )  {
+	dist[1] = 0;
+	ret = 1;		/* Intersection at A */
+	goto out;
+    }
+    if ( f >= -ctol )  {
+	dist[1] = 1;
+	ret = 2;		/* Intersection at B */
+	goto out;
+    }
+    ret = 3;			/* Intersection between A and B */
+ out:
+    if ( bu_debug & BU_DEBUG_MATH )  {
+	bu_log("bn_isect_line2_lseg2() dist[0]=%g, dist[1]=%g, ret=%d\n",
+	       dist[0], dist[1], ret);
+    }
+    return ret;
 }
 
 /**
@@ -1023,66 +1023,66 @@ bn_isect_lseg2_lseg2(fastf_t *dist,
 		     const fastf_t *qdir,
 		     const struct bn_tol *tol)
 {
-	fastf_t	ptol, qtol;	/* length in parameter space == tol->dist */
-	int	status;
+    fastf_t	ptol, qtol;	/* length in parameter space == tol->dist */
+    int	status;
 
-	BN_CK_TOL(tol);
-	if ( bu_debug & BU_DEBUG_MATH )  {
-		bu_log("bn_isect_lseg2_lseg2() p=(%g,%g), pdir=(%g,%g)\n\t\tq=(%g,%g), qdir=(%g,%g)\n",
-			V2ARGS(p), V2ARGS(pdir), V2ARGS(q), V2ARGS(qdir) );
-	}
+    BN_CK_TOL(tol);
+    if ( bu_debug & BU_DEBUG_MATH )  {
+	bu_log("bn_isect_lseg2_lseg2() p=(%g,%g), pdir=(%g,%g)\n\t\tq=(%g,%g), qdir=(%g,%g)\n",
+	       V2ARGS(p), V2ARGS(pdir), V2ARGS(q), V2ARGS(qdir) );
+    }
 
-	status = bn_isect_line2_line2( dist, p, pdir, q, qdir, tol );
-	if ( status < 0 )  {
-		/* Lines are parallel, non-colinear */
-		return -1;	/* No intersection */
-	}
-	if ( status == 0 )  {
-		int	nogood = 0;
-		/* Lines are colinear */
-		/*  If P within tol of either endpoint (0, 1), make exact. */
-		ptol = tol->dist / sqrt( MAGSQ_2D(pdir) );
-		if ( bu_debug & BU_DEBUG_MATH )  {
-			bu_log("ptol=%g\n", ptol);
-		}
-		if ( dist[0] > -ptol && dist[0] < ptol )  dist[0] = 0;
-		else if ( dist[0] > 1-ptol && dist[0] < 1+ptol ) dist[0] = 1;
-
-		if ( dist[1] > -ptol && dist[1] < ptol )  dist[1] = 0;
-		else if ( dist[1] > 1-ptol && dist[1] < 1+ptol ) dist[1] = 1;
-
-		if ( dist[1] < 0 || dist[1] > 1 )  nogood = 1;
-		if ( dist[0] < 0 || dist[0] > 1 )  nogood++;
-		if ( nogood >= 2 )
-			return -1;	/* colinear, but not overlapping */
-		if ( bu_debug & BU_DEBUG_MATH )  {
-			bu_log("  HIT colinear!\n");
-		}
-		return 0;		/* colinear and overlapping */
-	}
-	/* Lines intersect */
-	/*  If within tolerance of an endpoint (0, 1), make exact. */
+    status = bn_isect_line2_line2( dist, p, pdir, q, qdir, tol );
+    if ( status < 0 )  {
+	/* Lines are parallel, non-colinear */
+	return -1;	/* No intersection */
+    }
+    if ( status == 0 )  {
+	int	nogood = 0;
+	/* Lines are colinear */
+	/*  If P within tol of either endpoint (0, 1), make exact. */
 	ptol = tol->dist / sqrt( MAGSQ_2D(pdir) );
+	if ( bu_debug & BU_DEBUG_MATH )  {
+	    bu_log("ptol=%g\n", ptol);
+	}
 	if ( dist[0] > -ptol && dist[0] < ptol )  dist[0] = 0;
 	else if ( dist[0] > 1-ptol && dist[0] < 1+ptol ) dist[0] = 1;
 
-	qtol = tol->dist / sqrt( MAGSQ_2D(qdir) );
-	if ( dist[1] > -qtol && dist[1] < qtol )  dist[1] = 0;
-	else if ( dist[1] > 1-qtol && dist[1] < 1+qtol ) dist[1] = 1;
+	if ( dist[1] > -ptol && dist[1] < ptol )  dist[1] = 0;
+	else if ( dist[1] > 1-ptol && dist[1] < 1+ptol ) dist[1] = 1;
 
+	if ( dist[1] < 0 || dist[1] > 1 )  nogood = 1;
+	if ( dist[0] < 0 || dist[0] > 1 )  nogood++;
+	if ( nogood >= 2 )
+	    return -1;	/* colinear, but not overlapping */
 	if ( bu_debug & BU_DEBUG_MATH )  {
-		bu_log("ptol=%g, qtol=%g\n", ptol, qtol);
+	    bu_log("  HIT colinear!\n");
 	}
-	if ( dist[0] < 0 || dist[0] > 1 || dist[1] < 0 || dist[1] > 1 ) {
-		if ( bu_debug & BU_DEBUG_MATH )  {
-			bu_log("  MISS\n");
-		}
-		return -1;		/* missed */
-	}
+	return 0;		/* colinear and overlapping */
+    }
+    /* Lines intersect */
+    /*  If within tolerance of an endpoint (0, 1), make exact. */
+    ptol = tol->dist / sqrt( MAGSQ_2D(pdir) );
+    if ( dist[0] > -ptol && dist[0] < ptol )  dist[0] = 0;
+    else if ( dist[0] > 1-ptol && dist[0] < 1+ptol ) dist[0] = 1;
+
+    qtol = tol->dist / sqrt( MAGSQ_2D(qdir) );
+    if ( dist[1] > -qtol && dist[1] < qtol )  dist[1] = 0;
+    else if ( dist[1] > 1-qtol && dist[1] < 1+qtol ) dist[1] = 1;
+
+    if ( bu_debug & BU_DEBUG_MATH )  {
+	bu_log("ptol=%g, qtol=%g\n", ptol, qtol);
+    }
+    if ( dist[0] < 0 || dist[0] > 1 || dist[1] < 0 || dist[1] > 1 ) {
 	if ( bu_debug & BU_DEBUG_MATH )  {
-		bu_log("  HIT!\n");
+	    bu_log("  MISS\n");
 	}
-	return 1;			/* hit, normal intersection */
+	return -1;		/* missed */
+    }
+    if ( bu_debug & BU_DEBUG_MATH )  {
+	bu_log("  HIT!\n");
+    }
+    return 1;			/* hit, normal intersection */
 }
 
 /**
@@ -1125,73 +1125,73 @@ bn_isect_lseg3_lseg3(fastf_t *dist,
 		     const fastf_t *qdir,
 		     const struct bn_tol *tol)
 {
-	fastf_t	ptol, qtol;	/* length in parameter space == tol->dist */
-	fastf_t	pmag, qmag;
-	int	status;
+    fastf_t	ptol, qtol;	/* length in parameter space == tol->dist */
+    fastf_t	pmag, qmag;
+    int	status;
 
-	BN_CK_TOL(tol);
-	if ( bu_debug & BU_DEBUG_MATH )  {
-		bu_log("bn_isect_lseg3_lseg3() p=(%g,%g), pdir=(%g,%g)\n\t\tq=(%g,%g), qdir=(%g,%g)\n",
-			V2ARGS(p), V2ARGS(pdir), V2ARGS(q), V2ARGS(qdir) );
-	}
+    BN_CK_TOL(tol);
+    if ( bu_debug & BU_DEBUG_MATH )  {
+	bu_log("bn_isect_lseg3_lseg3() p=(%g,%g), pdir=(%g,%g)\n\t\tq=(%g,%g), qdir=(%g,%g)\n",
+	       V2ARGS(p), V2ARGS(pdir), V2ARGS(q), V2ARGS(qdir) );
+    }
 
-	status = bn_isect_line3_line3( &dist[0], &dist[1], p, pdir, q, qdir, tol );
-	if ( status < 0 )  {
-		/* Lines are parallel, non-colinear */
-		return -1;	/* No intersection */
-	}
-	pmag = MAGNITUDE(pdir);
-	if ( pmag < SMALL_FASTF )
-		bu_bomb("bn_isect_lseg3_lseg3: |p|=0\n");
-	if ( status == 0 )  {
-		int	nogood = 0;
-		/* Lines are colinear */
-		/*  If P within tol of either endpoint (0, 1), make exact. */
-		ptol = tol->dist / pmag;
-		if ( bu_debug & BU_DEBUG_MATH )  {
-			bu_log("ptol=%g\n", ptol);
-		}
-		if ( dist[0] > -ptol && dist[0] < ptol )  dist[0] = 0;
-		else if ( dist[0] > 1-ptol && dist[0] < 1+ptol ) dist[0] = 1;
-
-		if ( dist[1] > -ptol && dist[1] < ptol )  dist[1] = 0;
-		else if ( dist[1] > 1-ptol && dist[1] < 1+ptol ) dist[1] = 1;
-
-		if ( dist[1] < 0 || dist[1] > 1 )  nogood = 1;
-		if ( dist[0] < 0 || dist[0] > 1 )  nogood++;
-		if ( nogood >= 2 )
-			return -1;	/* colinear, but not overlapping */
-		if ( bu_debug & BU_DEBUG_MATH )  {
-			bu_log("  HIT colinear!\n");
-		}
-		return 0;		/* colinear and overlapping */
-	}
-	/* Lines intersect */
-	/*  If within tolerance of an endpoint (0, 1), make exact. */
+    status = bn_isect_line3_line3( &dist[0], &dist[1], p, pdir, q, qdir, tol );
+    if ( status < 0 )  {
+	/* Lines are parallel, non-colinear */
+	return -1;	/* No intersection */
+    }
+    pmag = MAGNITUDE(pdir);
+    if ( pmag < SMALL_FASTF )
+	bu_bomb("bn_isect_lseg3_lseg3: |p|=0\n");
+    if ( status == 0 )  {
+	int	nogood = 0;
+	/* Lines are colinear */
+	/*  If P within tol of either endpoint (0, 1), make exact. */
 	ptol = tol->dist / pmag;
+	if ( bu_debug & BU_DEBUG_MATH )  {
+	    bu_log("ptol=%g\n", ptol);
+	}
 	if ( dist[0] > -ptol && dist[0] < ptol )  dist[0] = 0;
 	else if ( dist[0] > 1-ptol && dist[0] < 1+ptol ) dist[0] = 1;
 
-	qmag = MAGNITUDE(qdir);
-	if ( qmag < SMALL_FASTF )
-		bu_bomb("bn_isect_lseg3_lseg3: |q|=0\n");
-	qtol = tol->dist / qmag;
-	if ( dist[1] > -qtol && dist[1] < qtol )  dist[1] = 0;
-	else if ( dist[1] > 1-qtol && dist[1] < 1+qtol ) dist[1] = 1;
+	if ( dist[1] > -ptol && dist[1] < ptol )  dist[1] = 0;
+	else if ( dist[1] > 1-ptol && dist[1] < 1+ptol ) dist[1] = 1;
 
+	if ( dist[1] < 0 || dist[1] > 1 )  nogood = 1;
+	if ( dist[0] < 0 || dist[0] > 1 )  nogood++;
+	if ( nogood >= 2 )
+	    return -1;	/* colinear, but not overlapping */
 	if ( bu_debug & BU_DEBUG_MATH )  {
-		bu_log("ptol=%g, qtol=%g\n", ptol, qtol);
+	    bu_log("  HIT colinear!\n");
 	}
-	if ( dist[0] < 0 || dist[0] > 1 || dist[1] < 0 || dist[1] > 1 ) {
-		if ( bu_debug & BU_DEBUG_MATH )  {
-			bu_log("  MISS\n");
-		}
-		return -1;		/* missed */
-	}
+	return 0;		/* colinear and overlapping */
+    }
+    /* Lines intersect */
+    /*  If within tolerance of an endpoint (0, 1), make exact. */
+    ptol = tol->dist / pmag;
+    if ( dist[0] > -ptol && dist[0] < ptol )  dist[0] = 0;
+    else if ( dist[0] > 1-ptol && dist[0] < 1+ptol ) dist[0] = 1;
+
+    qmag = MAGNITUDE(qdir);
+    if ( qmag < SMALL_FASTF )
+	bu_bomb("bn_isect_lseg3_lseg3: |q|=0\n");
+    qtol = tol->dist / qmag;
+    if ( dist[1] > -qtol && dist[1] < qtol )  dist[1] = 0;
+    else if ( dist[1] > 1-qtol && dist[1] < 1+qtol ) dist[1] = 1;
+
+    if ( bu_debug & BU_DEBUG_MATH )  {
+	bu_log("ptol=%g, qtol=%g\n", ptol, qtol);
+    }
+    if ( dist[0] < 0 || dist[0] > 1 || dist[1] < 0 || dist[1] > 1 ) {
 	if ( bu_debug & BU_DEBUG_MATH )  {
-		bu_log("  HIT!\n");
+	    bu_log("  MISS\n");
 	}
-	return 1;			/* hit, normal intersection */
+	return -1;		/* missed */
+    }
+    if ( bu_debug & BU_DEBUG_MATH )  {
+	bu_log("  HIT!\n");
+    }
+    return 1;			/* hit, normal intersection */
 }
 
 /**
@@ -1245,212 +1245,212 @@ bn_isect_line3_line3(fastf_t *t,
 		     const fastf_t *c,
 		     const struct bn_tol *tol)
 {
-	vect_t		n;
-	vect_t		abs_n;
-	vect_t		h;
-	register fastf_t	det;
-	register fastf_t	det1;
-	register short int	q, r, s;
+    vect_t		n;
+    vect_t		abs_n;
+    vect_t		h;
+    register fastf_t	det;
+    register fastf_t	det1;
+    register short int	q, r, s;
 
-	BN_CK_TOL(tol);
+    BN_CK_TOL(tol);
 
-	/*
-	 *  Any intersection will occur in the plane with surface
-	 *  normal D cross C, which may not have unit length.
-	 *  The plane containing the two lines will be a constant
-	 *  distance from a plane with the same normal that contains
-	 *  the origin.  Therfore, the projection of any point on the
-	 *  plane along N has the same length.
-	 *  Verify that this holds for P and A.
-	 *  If N dot P != N dot A, there is no intersection, because
-	 *  P and A must lie on parallel planes that are different
-	 *  distances from the origin.
-	 */
-	VCROSS( n, d, c );
-	det = VDOT( n, p ) - VDOT( n, a );
-	if ( !NEAR_ZERO( det, tol->dist ) )  {
-		return(-1);		/* No intersection */
-	}
+    /*
+     *  Any intersection will occur in the plane with surface
+     *  normal D cross C, which may not have unit length.
+     *  The plane containing the two lines will be a constant
+     *  distance from a plane with the same normal that contains
+     *  the origin.  Therfore, the projection of any point on the
+     *  plane along N has the same length.
+     *  Verify that this holds for P and A.
+     *  If N dot P != N dot A, there is no intersection, because
+     *  P and A must lie on parallel planes that are different
+     *  distances from the origin.
+     */
+    VCROSS( n, d, c );
+    det = VDOT( n, p ) - VDOT( n, a );
+    if ( !NEAR_ZERO( det, tol->dist ) )  {
+	return(-1);		/* No intersection */
+    }
+
+    if ( NEAR_ZERO( MAGSQ( n ), SMALL_FASTF ) )
+    {
+	vect_t a_to_p;
+
+	/* lines are parallel, must find another way to get normal vector */
+	VSUB2( a_to_p, p, a );
+	VCROSS( n, a_to_p, d );
 
 	if ( NEAR_ZERO( MAGSQ( n ), SMALL_FASTF ) )
-	{
-		vect_t a_to_p;
+	    bn_vec_ortho( n, d );
+    }
 
-		/* lines are parallel, must find another way to get normal vector */
-		VSUB2( a_to_p, p, a );
-		VCROSS( n, a_to_p, d );
-
-		if ( NEAR_ZERO( MAGSQ( n ), SMALL_FASTF ) )
-			bn_vec_ortho( n, d );
-	}
-
-	/*
-	 *  Solve for t and u in the system:
-	 *
-	 *	Px + t * Dx = Ax + u * Cx
-	 *	Py + t * Dy = Ay + u * Cy
-	 *	Pz + t * Dz = Az + u * Cz
-	 *
-	 *  This system is over-determined, having 3 equations in 2 unknowns.
-	 *  However, the intersection problem is really only a 2-dimensional
-	 *  problem, being located in the surface of a plane.
-	 *  Therefore, the "least important" of these equations can
-	 *  be initially ignored, leaving a system of 2 equations in
-	 *  2 unknowns.
-	 *
-	 *  Find the component of N with the largest magnitude.
-	 *  This component will have the least effect on the parameters
-	 *  in the system, being most nearly perpendicular to the plane.
-	 *  Denote the two remaining components by the
-	 *  subscripts q and r, rather than x, y, z.
-	 *  Subscript s is the smallest component, used for checking later.
-	 */
-	abs_n[X] = (n[X] >= 0) ? n[X] : (-n[X]);
-	abs_n[Y] = (n[Y] >= 0) ? n[Y] : (-n[Y]);
-	abs_n[Z] = (n[Z] >= 0) ? n[Z] : (-n[Z]);
-	if ( abs_n[X] >= abs_n[Y] )  {
-		if ( abs_n[X] >= abs_n[Z] )  {
-			/* X is largest in magnitude */
-			q = Y;
-			r = Z;
-			s = X;
-		} else {
-			/* Z is largest in magnitude */
-			q = X;
-			r = Y;
-			s = Z;
-		}
+    /*
+     *  Solve for t and u in the system:
+     *
+     *	Px + t * Dx = Ax + u * Cx
+     *	Py + t * Dy = Ay + u * Cy
+     *	Pz + t * Dz = Az + u * Cz
+     *
+     *  This system is over-determined, having 3 equations in 2 unknowns.
+     *  However, the intersection problem is really only a 2-dimensional
+     *  problem, being located in the surface of a plane.
+     *  Therefore, the "least important" of these equations can
+     *  be initially ignored, leaving a system of 2 equations in
+     *  2 unknowns.
+     *
+     *  Find the component of N with the largest magnitude.
+     *  This component will have the least effect on the parameters
+     *  in the system, being most nearly perpendicular to the plane.
+     *  Denote the two remaining components by the
+     *  subscripts q and r, rather than x, y, z.
+     *  Subscript s is the smallest component, used for checking later.
+     */
+    abs_n[X] = (n[X] >= 0) ? n[X] : (-n[X]);
+    abs_n[Y] = (n[Y] >= 0) ? n[Y] : (-n[Y]);
+    abs_n[Z] = (n[Z] >= 0) ? n[Z] : (-n[Z]);
+    if ( abs_n[X] >= abs_n[Y] )  {
+	if ( abs_n[X] >= abs_n[Z] )  {
+	    /* X is largest in magnitude */
+	    q = Y;
+	    r = Z;
+	    s = X;
 	} else {
-		if ( abs_n[Y] >= abs_n[Z] )  {
-			/* Y is largest in magnitude */
-			q = X;
-			r = Z;
-			s = Y;
-		} else {
-			/* Z is largest in magnitude */
-			q = X;
-			r = Y;
-			s = Z;
-		}
+	    /* Z is largest in magnitude */
+	    q = X;
+	    r = Y;
+	    s = Z;
 	}
+    } else {
+	if ( abs_n[Y] >= abs_n[Z] )  {
+	    /* Y is largest in magnitude */
+	    q = X;
+	    r = Z;
+	    s = Y;
+	} else {
+	    /* Z is largest in magnitude */
+	    q = X;
+	    r = Y;
+	    s = Z;
+	}
+    }
 
 #if 0
-	/* XXX Use bn_isect_line2_line2() here */
-	/* move the 2d vectors around */
-	bn_isect_line2_line2( &dist, p, d, a, c, tol );
+    /* XXX Use bn_isect_line2_line2() here */
+    /* move the 2d vectors around */
+    bn_isect_line2_line2( &dist, p, d, a, c, tol );
 #endif
 
-	/*
-	 *  From the two components q and r, form a system
-	 *  of 2 equations in 2 unknowns:
-	 *
-	 *	Pq + t * Dq = Aq + u * Cq
-	 *	Pr + t * Dr = Ar + u * Cr
-	 *  or
-	 *	t * Dq - u * Cq = Aq - Pq
-	 *	t * Dr - u * Cr = Ar - Pr
-	 *
-	 *  Let H = A - P, resulting in:
-	 *
-	 *	t * Dq - u * Cq = Hq
-	 *	t * Dr - u * Cr = Hr
-	 *
-	 *  or
-	 *
-	 *	[ Dq  -Cq ]   [ t ]   [ Hq ]
-	 *	[         ] * [   ] = [    ]
-	 *	[ Dr  -Cr ]   [ u ]   [ Hr ]
-	 *
-	 *  This system can be solved by direct substitution, or by
-	 *  finding the determinants by Cramers rule:
-	 *
-	 *	             [ Dq  -Cq ]
-	 *	det(M) = det [         ] = -Dq * Cr + Cq * Dr
-	 *	             [ Dr  -Cr ]
-	 *
-	 *  If det(M) is zero, then the lines are parallel (perhaps colinear).
-	 *  Otherwise, exactly one solution exists.
-	 */
-	VSUB2( h, a, p );
-	det = c[q] * d[r] - d[q] * c[r];
-	det1 = (c[q] * h[r] - h[q] * c[r]);		/* see below */
-	/* XXX This should be no smaller than 1e-16.  See bn_isect_line2_line2 for details */
-	if ( NEAR_ZERO( det, DETERMINANT_TOL ) )  {
-		/* Lines are parallel */
-		if ( !NEAR_ZERO( det1, DETERMINANT_TOL ) )  {
-			/* Lines are NOT co-linear, just parallel */
-			return -2;	/* parallel, no intersection */
-		}
-
-		/* Lines are co-linear */
-		/* Compute t for u=0 as a convenience to caller */
-		*u = 0;
-		/* Use largest direction component */
-		if ( fabs(d[q]) >= fabs(d[r]) )  {
-			*t = h[q]/d[q];
-		} else {
-			*t = h[r]/d[r];
-		}
-		return(0);	/* Lines co-linear */
+    /*
+     *  From the two components q and r, form a system
+     *  of 2 equations in 2 unknowns:
+     *
+     *	Pq + t * Dq = Aq + u * Cq
+     *	Pr + t * Dr = Ar + u * Cr
+     *  or
+     *	t * Dq - u * Cq = Aq - Pq
+     *	t * Dr - u * Cr = Ar - Pr
+     *
+     *  Let H = A - P, resulting in:
+     *
+     *	t * Dq - u * Cq = Hq
+     *	t * Dr - u * Cr = Hr
+     *
+     *  or
+     *
+     *	[ Dq  -Cq ]   [ t ]   [ Hq ]
+     *	[         ] * [   ] = [    ]
+     *	[ Dr  -Cr ]   [ u ]   [ Hr ]
+     *
+     *  This system can be solved by direct substitution, or by
+     *  finding the determinants by Cramers rule:
+     *
+     *	             [ Dq  -Cq ]
+     *	det(M) = det [         ] = -Dq * Cr + Cq * Dr
+     *	             [ Dr  -Cr ]
+     *
+     *  If det(M) is zero, then the lines are parallel (perhaps colinear).
+     *  Otherwise, exactly one solution exists.
+     */
+    VSUB2( h, a, p );
+    det = c[q] * d[r] - d[q] * c[r];
+    det1 = (c[q] * h[r] - h[q] * c[r]);		/* see below */
+    /* XXX This should be no smaller than 1e-16.  See bn_isect_line2_line2 for details */
+    if ( NEAR_ZERO( det, DETERMINANT_TOL ) )  {
+	/* Lines are parallel */
+	if ( !NEAR_ZERO( det1, DETERMINANT_TOL ) )  {
+	    /* Lines are NOT co-linear, just parallel */
+	    return -2;	/* parallel, no intersection */
 	}
 
-	/*
-	 *  det(M) is non-zero, so there is exactly one solution.
-	 *  Using Cramer's rule, det1(M) replaces the first column
-	 *  of M with the constant column vector, in this case H.
-	 *  Similarly, det2(M) replaces the second column.
-	 *  Computation of the determinant is done as before.
-	 *
-	 *  Now,
-	 *
-	 *	                  [ Hq  -Cq ]
-	 *	              det [         ]
-	 *	    det1(M)       [ Hr  -Cr ]   -Hq * Cr + Cq * Hr
-	 *	t = ------- = --------------- = ------------------
-	 *	     det(M)       det(M)        -Dq * Cr + Cq * Dr
-	 *
-	 *  and
-	 *
-	 *	                  [ Dq   Hq ]
-	 *	              det [         ]
-	 *	    det2(M)       [ Dr   Hr ]    Dq * Hr - Hq * Dr
-	 *	u = ------- = --------------- = ------------------
-	 *	     det(M)       det(M)        -Dq * Cr + Cq * Dr
-	 */
-	det = 1/det;
-	*t = det * det1;
-	*u = det * (d[q] * h[r] - h[q] * d[r]);
-
-	/*
-	 *  Check that these values of t and u satisfy the 3rd equation
-	 *  as well!
-	 *  XXX It isn't clear that "det" is exactly a model-space distance.
-	 */
-	det = *t * d[s] - *u * c[s] - h[s];
-	if ( !NEAR_ZERO( det, tol->dist ) )  {
-		/* XXX This tolerance needs to be much less loose than
-		 * XXX SQRT_SMALL_FASTF.  What about DETERMINANT_TOL?
-		 */
-		/* Inconsistent solution, lines miss each other */
-		return(-1);
+	/* Lines are co-linear */
+	/* Compute t for u=0 as a convenience to caller */
+	*u = 0;
+	/* Use largest direction component */
+	if ( fabs(d[q]) >= fabs(d[r]) )  {
+	    *t = h[q]/d[q];
+	} else {
+	    *t = h[r]/d[r];
 	}
+	return(0);	/* Lines co-linear */
+    }
 
-	/*  To prevent errors, check the answer.
-	 *  Not returning bogus results to our caller is worth the extra time.
+    /*
+     *  det(M) is non-zero, so there is exactly one solution.
+     *  Using Cramer's rule, det1(M) replaces the first column
+     *  of M with the constant column vector, in this case H.
+     *  Similarly, det2(M) replaces the second column.
+     *  Computation of the determinant is done as before.
+     *
+     *  Now,
+     *
+     *	                  [ Hq  -Cq ]
+     *	              det [         ]
+     *	    det1(M)       [ Hr  -Cr ]   -Hq * Cr + Cq * Hr
+     *	t = ------- = --------------- = ------------------
+     *	     det(M)       det(M)        -Dq * Cr + Cq * Dr
+     *
+     *  and
+     *
+     *	                  [ Dq   Hq ]
+     *	              det [         ]
+     *	    det2(M)       [ Dr   Hr ]    Dq * Hr - Hq * Dr
+     *	u = ------- = --------------- = ------------------
+     *	     det(M)       det(M)        -Dq * Cr + Cq * Dr
+     */
+    det = 1/det;
+    *t = det * det1;
+    *u = det * (d[q] * h[r] - h[q] * d[r]);
+
+    /*
+     *  Check that these values of t and u satisfy the 3rd equation
+     *  as well!
+     *  XXX It isn't clear that "det" is exactly a model-space distance.
+     */
+    det = *t * d[s] - *u * c[s] - h[s];
+    if ( !NEAR_ZERO( det, tol->dist ) )  {
+	/* XXX This tolerance needs to be much less loose than
+	 * XXX SQRT_SMALL_FASTF.  What about DETERMINANT_TOL?
 	 */
-	{
-		point_t		hit1, hit2;
+	/* Inconsistent solution, lines miss each other */
+	return(-1);
+    }
 
-		VJOIN1( hit1, p, *t, d );
-		VJOIN1( hit2, a, *u, c );
-		if ( !bn_pt3_pt3_equal( hit1, hit2, tol ) )  {
+    /*  To prevent errors, check the answer.
+     *  Not returning bogus results to our caller is worth the extra time.
+     */
+    {
+	point_t		hit1, hit2;
+
+	VJOIN1( hit1, p, *t, d );
+	VJOIN1( hit2, a, *u, c );
+	if ( !bn_pt3_pt3_equal( hit1, hit2, tol ) )  {
 /*			bu_log("bn_isect_line3_line3(): BOGUS RESULT, hit1=(%g,%g,%g), hit2=(%g,%g,%g)\n",
-				hit1[X], hit1[Y], hit1[Z], hit2[X], hit2[Y], hit2[Z]); */
-			return -1;
-		}
+			hit1[X], hit1[Y], hit1[Z], hit2[X], hit2[Y], hit2[Z]); */
+	    return -1;
 	}
+    }
 
-	return(1);		/* Intersection found */
+    return(1);		/* Intersection found */
 }
 
 /**
@@ -1489,73 +1489,73 @@ bn_isect_line3_line3(fastf_t *t,
 int
 bn_isect_line_lseg(fastf_t *t, const fastf_t *p, const fastf_t *d, const fastf_t *a, const fastf_t *b, const struct bn_tol *tol)
 {
-	vect_t	c;		/* Direction vector from A to B */
-	auto fastf_t	u;		/* As in, A + u * C = X */
-	register fastf_t f;
-	register int	ret;
-	fastf_t		fuzz;
+    vect_t	c;		/* Direction vector from A to B */
+    auto fastf_t	u;		/* As in, A + u * C = X */
+    register fastf_t f;
+    register int	ret;
+    fastf_t		fuzz;
 
-	BN_CK_TOL(tol);
+    BN_CK_TOL(tol);
 
-	VSUB2( c, b, a );
-	/*
-	 *  To keep the values of u between 0 and 1,
-	 *  C should NOT be scaled to have unit length.
-	 *  However, it is a good idea to make sure that
-	 *  C is a non-zero vector, (ie, that A and B are distinct).
-	 */
-	if ( (fuzz = MAGSQ(c)) < tol->dist_sq )  {
-		return(-4);		/* points A and B are not distinct */
+    VSUB2( c, b, a );
+    /*
+     *  To keep the values of u between 0 and 1,
+     *  C should NOT be scaled to have unit length.
+     *  However, it is a good idea to make sure that
+     *  C is a non-zero vector, (ie, that A and B are distinct).
+     */
+    if ( (fuzz = MAGSQ(c)) < tol->dist_sq )  {
+	return(-4);		/* points A and B are not distinct */
+    }
+
+    /*
+     *  Detecting colinearity is difficult, and very very important.
+     *  As a first step, check to see if both points A and B lie
+     *  within tolerance of the line.  If so, then the line segment AC
+     *  is ON the line.
+     */
+    if ( bn_distsq_line3_pt3( p, d, a ) <= tol->dist_sq  &&
+	 bn_distsq_line3_pt3( p, d, b ) <= tol->dist_sq )  {
+	if ( bu_debug & BU_DEBUG_MATH )  {
+	    bu_log("bn_isect_line3_lseg3() pts A and B within tol of line\n");
 	}
+	/* Find the parametric distance along the ray */
+	*t = bn_dist_pt3_along_line3( p, d, a );
+	/*** dist[1] = bn_dist_pt3_along_line3( p, d, b ); ***/
+	return 0;		/* Colinear */
+    }
 
-	/*
-	 *  Detecting colinearity is difficult, and very very important.
-	 *  As a first step, check to see if both points A and B lie
-	 *  within tolerance of the line.  If so, then the line segment AC
-	 *  is ON the line.
-	 */
-	if ( bn_distsq_line3_pt3( p, d, a ) <= tol->dist_sq  &&
-	    bn_distsq_line3_pt3( p, d, b ) <= tol->dist_sq )  {
-		if ( bu_debug & BU_DEBUG_MATH )  {
-			bu_log("bn_isect_line3_lseg3() pts A and B within tol of line\n");
-		}
-		/* Find the parametric distance along the ray */
-		*t = bn_dist_pt3_along_line3( p, d, a );
-		/*** dist[1] = bn_dist_pt3_along_line3( p, d, b ); ***/
-		return 0;		/* Colinear */
-	}
+    if ( (ret = bn_isect_line3_line3( t, &u, p, d, a, c, tol )) < 0 )  {
+	/* No intersection found */
+	return( -1 );
+    }
+    if ( ret == 0 )  {
+	/* co-linear (t was computed for point A, u=0) */
+	return( 0 );
+    }
 
-	if ( (ret = bn_isect_line3_line3( t, &u, p, d, a, c, tol )) < 0 )  {
-		/* No intersection found */
-		return( -1 );
-	}
-	if ( ret == 0 )  {
-		/* co-linear (t was computed for point A, u=0) */
-		return( 0 );
-	}
+    /*
+     *  The two lines intersect at a point.
+     *  If the u parameter is outside the range (0..1),
+     *  reject the intersection, because it falls outside
+     *  the line segment A--B.
+     *
+     *  Convert the tol->dist into allowable deviation in terms of
+     *  (0..1) range of the parameters.
+     */
+    fuzz = tol->dist / sqrt(fuzz);
+    if ( u < -fuzz )
+	return(-3);		/* Intersection < A */
+    if ( (f=(u-1)) > fuzz )
+	return(-2);		/* Intersection > B */
 
-	/*
-	 *  The two lines intersect at a point.
-	 *  If the u parameter is outside the range (0..1),
-	 *  reject the intersection, because it falls outside
-	 *  the line segment A--B.
-	 *
-	 *  Convert the tol->dist into allowable deviation in terms of
-	 *  (0..1) range of the parameters.
-	 */
-	fuzz = tol->dist / sqrt(fuzz);
-	if ( u < -fuzz )
-		return(-3);		/* Intersection < A */
-	if ( (f=(u-1)) > fuzz )
-		return(-2);		/* Intersection > B */
+    /* Check for fuzzy intersection with one of the verticies */
+    if ( u < fuzz )
+	return( 1 );		/* Intersection at A */
+    if ( f >= -fuzz )
+	return( 2 );		/* Intersection at B */
 
-	/* Check for fuzzy intersection with one of the verticies */
-	if ( u < fuzz )
-		return( 1 );		/* Intersection at A */
-	if ( f >= -fuzz )
-		return( 2 );		/* Intersection at B */
-
-	return(3);			/* Intersection between A and B */
+    return(3);			/* Intersection between A and B */
 }
 
 /**
@@ -1577,26 +1577,26 @@ bn_isect_line_lseg(fastf_t *t, const fastf_t *p, const fastf_t *d, const fastf_t
 double
 bn_dist_line3_pt3(const fastf_t *pt, const fastf_t *dir, const fastf_t *a)
 {
-	vect_t		f;
-	register fastf_t	FdotD;
+    vect_t		f;
+    register fastf_t	FdotD;
 
-	if ( (FdotD = MAGNITUDE(dir)) <= SMALL_FASTF )  {
-		FdotD = 0.0;
-		goto out;
-	}
-	VSUB2( f, a, pt );
-	FdotD = VDOT( f, dir ) / FdotD;
-	FdotD = MAGSQ( f ) - FdotD * FdotD;
-	if ( FdotD <= SMALL_FASTF )  {
-		FdotD = 0.0;
-		goto out;
-	}
-	FdotD = sqrt(FdotD);
-out:
-	if ( bu_debug & BU_DEBUG_MATH )  {
-		bu_log("bn_dist_line3_pt3() ret=%g\n", FdotD);
-	}
-	return FdotD;
+    if ( (FdotD = MAGNITUDE(dir)) <= SMALL_FASTF )  {
+	FdotD = 0.0;
+	goto out;
+    }
+    VSUB2( f, a, pt );
+    FdotD = VDOT( f, dir ) / FdotD;
+    FdotD = MAGSQ( f ) - FdotD * FdotD;
+    if ( FdotD <= SMALL_FASTF )  {
+	FdotD = 0.0;
+	goto out;
+    }
+    FdotD = sqrt(FdotD);
+ out:
+    if ( bu_debug & BU_DEBUG_MATH )  {
+	bu_log("bn_dist_line3_pt3() ret=%g\n", FdotD);
+    }
+    return FdotD;
 }
 
 /**
@@ -1613,23 +1613,23 @@ out:
 double
 bn_distsq_line3_pt3(const fastf_t *pt, const fastf_t *dir, const fastf_t *a)
 {
-	vect_t		f;
-	register fastf_t	FdotD;
+    vect_t		f;
+    register fastf_t	FdotD;
 
-	VSUB2( f, pt, a );
-	if ( (FdotD = MAGNITUDE(dir)) <= SMALL_FASTF )  {
-		FdotD = 0.0;
-		goto out;
-	}
-	FdotD = VDOT( f, dir ) / FdotD;
-	if ( (FdotD = VDOT( f, f ) - FdotD * FdotD ) <= SMALL_FASTF )  {
-		FdotD = 0.0;
-	}
-out:
-	if ( bu_debug & BU_DEBUG_MATH )  {
-		bu_log("bn_distsq_line3_pt3() ret=%g\n", FdotD);
-	}
-	return FdotD;
+    VSUB2( f, pt, a );
+    if ( (FdotD = MAGNITUDE(dir)) <= SMALL_FASTF )  {
+	FdotD = 0.0;
+	goto out;
+    }
+    FdotD = VDOT( f, dir ) / FdotD;
+    if ( (FdotD = VDOT( f, f ) - FdotD * FdotD ) <= SMALL_FASTF )  {
+	FdotD = 0.0;
+    }
+ out:
+    if ( bu_debug & BU_DEBUG_MATH )  {
+	bu_log("bn_distsq_line3_pt3() ret=%g\n", FdotD);
+    }
+    return FdotD;
 }
 
 /**
@@ -1645,14 +1645,14 @@ out:
 double
 bn_dist_line_origin(const fastf_t *pt, const fastf_t *dir)
 {
-	register fastf_t	PTdotD;
+    register fastf_t	PTdotD;
 
-	if ( (PTdotD = MAGNITUDE(dir)) <= SMALL_FASTF )
-		return 0.0;
-	PTdotD = VDOT( pt, dir ) / PTdotD;
-	if ( (PTdotD = VDOT( pt, pt ) - PTdotD * PTdotD ) <= SMALL_FASTF )
-		return(0.0);
-	return( sqrt(PTdotD) );
+    if ( (PTdotD = MAGNITUDE(dir)) <= SMALL_FASTF )
+	return 0.0;
+    PTdotD = VDOT( pt, dir ) / PTdotD;
+    if ( (PTdotD = VDOT( pt, pt ) - PTdotD * PTdotD ) <= SMALL_FASTF )
+	return(0.0);
+    return( sqrt(PTdotD) );
 }
 /**
  *			B N _ D I S T _ L I N E 2 _ P O I N T 2
@@ -1667,16 +1667,16 @@ bn_dist_line_origin(const fastf_t *pt, const fastf_t *dir)
 double
 bn_dist_line2_point2(const fastf_t *pt, const fastf_t *dir, const fastf_t *a)
 {
-	vect_t		f;
-	register fastf_t	FdotD;
+    vect_t		f;
+    register fastf_t	FdotD;
 
-	VSUB2_2D( f, pt, a );
-	if ( (FdotD = sqrt(MAGSQ_2D(dir))) <= SMALL_FASTF )
-		return 0.0;
-	FdotD = VDOT_2D( f, dir ) / FdotD;
-	if ( (FdotD = VDOT_2D( f, f ) - FdotD * FdotD ) <= SMALL_FASTF )
-		return(0.0);
-	return( sqrt(FdotD) );
+    VSUB2_2D( f, pt, a );
+    if ( (FdotD = sqrt(MAGSQ_2D(dir))) <= SMALL_FASTF )
+	return 0.0;
+    FdotD = VDOT_2D( f, dir ) / FdotD;
+    if ( (FdotD = VDOT_2D( f, f ) - FdotD * FdotD ) <= SMALL_FASTF )
+	return(0.0);
+    return( sqrt(FdotD) );
 }
 
 /**
@@ -1693,16 +1693,16 @@ bn_dist_line2_point2(const fastf_t *pt, const fastf_t *dir, const fastf_t *a)
 double
 bn_distsq_line2_point2(const fastf_t *pt, const fastf_t *dir, const fastf_t *a)
 {
-	vect_t		f;
-	register fastf_t	FdotD;
+    vect_t		f;
+    register fastf_t	FdotD;
 
-	VSUB2_2D( f, pt, a );
-	if ( (FdotD = sqrt(MAGSQ_2D(dir))) <= SMALL_FASTF )
-		return 0.0;
-	FdotD = VDOT_2D( f, dir ) / FdotD;
-	if ( (FdotD = VDOT_2D( f, f ) - FdotD * FdotD ) <= SMALL_FASTF )
-		return(0.0);
-	return( FdotD );
+    VSUB2_2D( f, pt, a );
+    if ( (FdotD = sqrt(MAGSQ_2D(dir))) <= SMALL_FASTF )
+	return 0.0;
+    FdotD = VDOT_2D( f, dir ) / FdotD;
+    if ( (FdotD = VDOT_2D( f, f ) - FdotD * FdotD ) <= SMALL_FASTF )
+	return(0.0);
+    return( FdotD );
 }
 
 /**
@@ -1714,23 +1714,23 @@ bn_distsq_line2_point2(const fastf_t *pt, const fastf_t *dir, const fastf_t *a)
 double
 bn_area_of_triangle(register const fastf_t *a, register const fastf_t *b, register const fastf_t *c)
 {
-	register double	t;
-	register double	area;
+    register double	t;
+    register double	area;
 
-	t =	a[Y] * (b[Z] - c[Z]) -
-		b[Y] * (a[Z] - c[Z]) +
-		c[Y] * (a[Z] - b[Z]);
-	area  = t*t;
-	t =	a[Z] * (b[X] - c[X]) -
-		b[Z] * (a[X] - c[X]) +
-		c[Z] * (a[X] - b[X]);
-	area += t*t;
-	t = 	a[X] * (b[Y] - c[Y]) -
-		b[X] * (a[Y] - c[Y]) +
-		c[X] * (a[Y] - b[Y]);
-	area += t*t;
+    t =	a[Y] * (b[Z] - c[Z]) -
+	b[Y] * (a[Z] - c[Z]) +
+	c[Y] * (a[Z] - b[Z]);
+    area  = t*t;
+    t =	a[Z] * (b[X] - c[X]) -
+	b[Z] * (a[X] - c[X]) +
+	c[Z] * (a[X] - b[X]);
+    area += t*t;
+    t = 	a[X] * (b[Y] - c[Y]) -
+	b[X] * (a[Y] - c[Y]) +
+	c[X] * (a[Y] - b[Y]);
+    area += t*t;
 
-	return( 0.5 * sqrt(area) );
+    return( 0.5 * sqrt(area) );
 }
 
 
@@ -1747,20 +1747,20 @@ bn_area_of_triangle(register const fastf_t *a, register const fastf_t *b, regist
  * @return	1	P is at A
  * @return	2	P is at B
  * @return	3	P is on AB, dist = distance from A to P on line.
-@verbatim
-     B *
-	|
-     P'*-tol-*P
-	|    /  _
-     dist  /   /|
-	|  /   /
-	| /   / AtoP
-	|/   /
-     A *   /
+ @verbatim
+ B *
+ |
+ P'*-tol-*P
+ |    /  _
+ dist  /   /|
+ |  /   /
+ | /   / AtoP
+ |/   /
+ A *   /
 
-	tol = distance limit from line to pt P;
-	dist = parametric distance from A to P' (in terms of A to B)
-@endverbatim
+ tol = distance limit from line to pt P;
+ dist = parametric distance from A to P' (in terms of A to B)
+ @endverbatim
  *
  * @param p	point
  * @param a	start of lseg
@@ -1773,56 +1773,56 @@ int bn_isect_pt_lseg(fastf_t *dist,
 		     const fastf_t *b,
 		     const fastf_t *p,
 		     const struct bn_tol *tol)
-					/* distance along line from A to P */
-					/* points for line and intersect */
+    /* distance along line from A to P */
+    /* points for line and intersect */
 
 {
-	vect_t	AtoP,
-		BtoP,
-		AtoB,
-		ABunit;	/* unit vector from A to B */
-	fastf_t	APprABunit;	/* Mag of projection of AtoP onto ABunit */
-	fastf_t	distsq;
+    vect_t	AtoP,
+	BtoP,
+	AtoB,
+	ABunit;	/* unit vector from A to B */
+    fastf_t	APprABunit;	/* Mag of projection of AtoP onto ABunit */
+    fastf_t	distsq;
 
-	BN_CK_TOL(tol);
+    BN_CK_TOL(tol);
 
-	VSUB2(AtoP, p, a);
-	if (MAGSQ(AtoP) < tol->dist_sq)
-		return(1);	/* P at A */
+    VSUB2(AtoP, p, a);
+    if (MAGSQ(AtoP) < tol->dist_sq)
+	return(1);	/* P at A */
 
-	VSUB2(BtoP, p, b);
-	if (MAGSQ(BtoP) < tol->dist_sq)
-		return(2);	/* P at B */
+    VSUB2(BtoP, p, b);
+    if (MAGSQ(BtoP) < tol->dist_sq)
+	return(2);	/* P at B */
 
-	VSUB2(AtoB, b, a);
-	VMOVE(ABunit, AtoB);
-	distsq = MAGSQ(ABunit);
-	if ( distsq < tol->dist_sq )
-		return -1;	/* A equals B, and P isn't there */
-	distsq = 1/sqrt(distsq);
-	VSCALE( ABunit, ABunit, distsq );
+    VSUB2(AtoB, b, a);
+    VMOVE(ABunit, AtoB);
+    distsq = MAGSQ(ABunit);
+    if ( distsq < tol->dist_sq )
+	return -1;	/* A equals B, and P isn't there */
+    distsq = 1/sqrt(distsq);
+    VSCALE( ABunit, ABunit, distsq );
 
-	/* Similar to bn_dist_line_pt, except we
-	 * never actually have to do the sqrt that the other routine does.
-	 */
+    /* Similar to bn_dist_line_pt, except we
+     * never actually have to do the sqrt that the other routine does.
+     */
 
-	/* find dist as a function of ABunit, actually the projection
-	 * of AtoP onto ABunit
-	 */
-	APprABunit = VDOT(AtoP, ABunit);
+    /* find dist as a function of ABunit, actually the projection
+     * of AtoP onto ABunit
+     */
+    APprABunit = VDOT(AtoP, ABunit);
 
-	/* because of pythgorean theorem ... */
-	distsq = MAGSQ(AtoP) - APprABunit * APprABunit;
-	if (distsq > tol->dist_sq)
-		return(-1);	/* dist pt to line too large */
+    /* because of pythgorean theorem ... */
+    distsq = MAGSQ(AtoP) - APprABunit * APprABunit;
+    if (distsq > tol->dist_sq)
+	return(-1);	/* dist pt to line too large */
 
-	/* Distance from the point to the line is within tolerance. */
-	*dist = VDOT(AtoP, AtoB) / MAGSQ(AtoB);
+    /* Distance from the point to the line is within tolerance. */
+    *dist = VDOT(AtoP, AtoB) / MAGSQ(AtoB);
 
-	if (*dist > 1.0 || *dist < 0.0)	/* P outside AtoB */
-		return(-2);
+    if (*dist > 1.0 || *dist < 0.0)	/* P outside AtoB */
+	return(-2);
 
-	return(3);	/* P on AtoB */
+    return(3);	/* P on AtoB */
 }
 
 /**
@@ -1838,82 +1838,82 @@ int bn_isect_pt_lseg(fastf_t *dist,
  * @return	1	P is at A
  * @return	2	P is at B
  * @return	3	P is on AB, dist = distance from A to P on line.
-@verbatim
-     B *
-	|
-     P'*-tol-*P
-	|    /  _
-     dist  /   /|
-	|  /   /
-	| /   / AtoP
-	|/   /
-     A *   /
+ @verbatim
+ B *
+ |
+ P'*-tol-*P
+ |    /  _
+ dist  /   /|
+ |  /   /
+ | /   / AtoP
+ |/   /
+ A *   /
 
-	tol = distance limit from line to pt P;
-	dist = distance from A to P'
-@endverbatim
- */
+ tol = distance limit from line to pt P;
+ dist = distance from A to P'
+ @endverbatim
+*/
 int
 bn_isect_pt2_lseg2(fastf_t *dist, const fastf_t *a, const fastf_t *b, const fastf_t *p, const struct bn_tol *tol)
-					/* distance along line from A to P */
-					/* points for line and intersect */
+    /* distance along line from A to P */
+    /* points for line and intersect */
 
 {
-	vect_t	AtoP,
-		BtoP,
-		AtoB,
-		ABunit;	/* unit vector from A to B */
-	fastf_t	APprABunit;	/* Mag of projection of AtoP onto ABunit */
-	fastf_t	distsq;
+    vect_t	AtoP,
+	BtoP,
+	AtoB,
+	ABunit;	/* unit vector from A to B */
+    fastf_t	APprABunit;	/* Mag of projection of AtoP onto ABunit */
+    fastf_t	distsq;
 
-	BN_CK_TOL(tol);
+    BN_CK_TOL(tol);
 
-	VSUB2_2D(AtoP, p, a);
-	if (MAGSQ_2D(AtoP) < tol->dist_sq)
-		return(1);	/* P at A */
+    VSUB2_2D(AtoP, p, a);
+    if (MAGSQ_2D(AtoP) < tol->dist_sq)
+	return(1);	/* P at A */
 
-	VSUB2_2D(BtoP, p, b);
-	if (MAGSQ_2D(BtoP) < tol->dist_sq)
-		return(2);	/* P at B */
+    VSUB2_2D(BtoP, p, b);
+    if (MAGSQ_2D(BtoP) < tol->dist_sq)
+	return(2);	/* P at B */
 
-	VSUB2_2D(AtoB, b, a);
-	VMOVE_2D(ABunit, AtoB);
-	distsq = MAGSQ_2D(ABunit);
-	if ( distsq < tol->dist_sq )  {
-		if ( bu_debug & BU_DEBUG_MATH )  {
-			bu_log("distsq A=%g\n", distsq);
-		}
-		return -1;	/* A equals B, and P isn't there */
+    VSUB2_2D(AtoB, b, a);
+    VMOVE_2D(ABunit, AtoB);
+    distsq = MAGSQ_2D(ABunit);
+    if ( distsq < tol->dist_sq )  {
+	if ( bu_debug & BU_DEBUG_MATH )  {
+	    bu_log("distsq A=%g\n", distsq);
 	}
-	distsq = 1/sqrt(distsq);
-	VSCALE_2D( ABunit, ABunit, distsq );
+	return -1;	/* A equals B, and P isn't there */
+    }
+    distsq = 1/sqrt(distsq);
+    VSCALE_2D( ABunit, ABunit, distsq );
 
-	/* Similar to bn_dist_line_pt, except we
-	 * never actually have to do the sqrt that the other routine does.
-	 */
+    /* Similar to bn_dist_line_pt, except we
+     * never actually have to do the sqrt that the other routine does.
+     */
 
-	/* find dist as a function of ABunit, actually the projection
-	 * of AtoP onto ABunit
-	 */
-	APprABunit = VDOT_2D(AtoP, ABunit);
+    /* find dist as a function of ABunit, actually the projection
+     * of AtoP onto ABunit
+     */
+    APprABunit = VDOT_2D(AtoP, ABunit);
 
-	/* because of pythgorean theorem ... */
-	distsq = MAGSQ_2D(AtoP) - APprABunit * APprABunit;
-	if (distsq > tol->dist_sq) {
-		if ( bu_debug & BU_DEBUG_MATH )  {
-			V2PRINT("ABunit", ABunit);
-			bu_log("distsq B=%g\n", distsq);
-		}
-		return(-1);	/* dist pt to line too large */
+    /* because of pythgorean theorem ... */
+    distsq = MAGSQ_2D(AtoP) - APprABunit * APprABunit;
+    if (distsq > tol->dist_sq) {
+	if ( bu_debug & BU_DEBUG_MATH )  {
+	    V2PRINT("ABunit", ABunit);
+	    bu_log("distsq B=%g\n", distsq);
 	}
+	return(-1);	/* dist pt to line too large */
+    }
 
-	/* Distance from the point to the line is within tolerance. */
-	*dist = VDOT_2D(AtoP, AtoB) / MAGSQ_2D(AtoB);
+    /* Distance from the point to the line is within tolerance. */
+    *dist = VDOT_2D(AtoP, AtoB) / MAGSQ_2D(AtoB);
 
-	if (*dist > 1.0 || *dist < 0.0)	/* P outside AtoB */
-		return(-2);
+    if (*dist > 1.0 || *dist < 0.0)	/* P outside AtoB */
+	return(-2);
 
-	return(3);	/* P on AtoB */
+    return(3);	/* P on AtoB */
 }
 
 /**
@@ -1921,7 +1921,7 @@ bn_isect_pt2_lseg2(fastf_t *dist, const fastf_t *a, const fastf_t *b, const fast
  *@brief
  *  Find the distance from a point P to a line segment described
  *  by the two endpoints A and B, and the point of closest approach (PCA).
-@verbatim
+ @verbatim
  *
  *			P
  *		       *
@@ -1933,7 +1933,7 @@ bn_isect_pt2_lseg2(fastf_t *dist, const fastf_t *a, const fastf_t *b, const fast
  *		 /     .
  *		*------*--------*
  *		A      PCA	B
-@endverbatim
+ @endverbatim
  *
  * @return	0	P is within tolerance of lseg AB.  *dist isn't 0: (SPECIAL!!!)
  *		  *dist = parametric dist = |PCA-A| / |B-A|.  pca=computed.
@@ -1956,88 +1956,88 @@ bn_dist_pt3_lseg3(fastf_t *dist,
 		  const fastf_t *p,
 		  const struct bn_tol *tol)
 {
-	vect_t	PtoA;		/* P-A */
-	vect_t	PtoB;		/* P-B */
-	vect_t	AtoB;		/* B-A */
-	fastf_t	P_A_sq;		/* |P-A|**2 */
-	fastf_t	P_B_sq;		/* |P-B|**2 */
-	fastf_t	B_A;		/* |B-A| */
-	fastf_t	t;		/* distance along ray of projection of P */
+    vect_t	PtoA;		/* P-A */
+    vect_t	PtoB;		/* P-B */
+    vect_t	AtoB;		/* B-A */
+    fastf_t	P_A_sq;		/* |P-A|**2 */
+    fastf_t	P_B_sq;		/* |P-B|**2 */
+    fastf_t	B_A;		/* |B-A| */
+    fastf_t	t;		/* distance along ray of projection of P */
 
-	BN_CK_TOL(tol);
+    BN_CK_TOL(tol);
 
-	if ( bu_debug & BU_DEBUG_MATH )  {
-		bu_log("bn_dist_pt3_lseg3() a=(%g,%g,%g) b=(%g,%g,%g)\n\tp=(%g,%g,%g), tol->dist=%g sq=%g\n",
-			V3ARGS(a),
-			V3ARGS(b),
-			V3ARGS(p),
-			tol->dist, tol->dist_sq );
+    if ( bu_debug & BU_DEBUG_MATH )  {
+	bu_log("bn_dist_pt3_lseg3() a=(%g,%g,%g) b=(%g,%g,%g)\n\tp=(%g,%g,%g), tol->dist=%g sq=%g\n",
+	       V3ARGS(a),
+	       V3ARGS(b),
+	       V3ARGS(p),
+	       tol->dist, tol->dist_sq );
+    }
+
+    /* Check proximity to endpoint A */
+    VSUB2(PtoA, p, a);
+    if ( (P_A_sq = MAGSQ(PtoA)) < tol->dist_sq )  {
+	/* P is within the tol->dist radius circle around A */
+	VMOVE( pca, a );
+	if ( bu_debug & BU_DEBUG_MATH )  bu_log("  at A\n");
+	*dist = 0.0;
+	return 1;
+    }
+
+    /* Check proximity to endpoint B */
+    VSUB2(PtoB, p, b);
+    if ( (P_B_sq = MAGSQ(PtoB)) < tol->dist_sq )  {
+	/* P is within the tol->dist radius circle around B */
+	VMOVE( pca, b );
+	if ( bu_debug & BU_DEBUG_MATH )  bu_log("  at B\n");
+	*dist = 0.0;
+	return 2;
+    }
+
+    VSUB2(AtoB, b, a);
+    B_A = sqrt( MAGSQ(AtoB) );
+
+    /* compute distance (in actual units) along line to PROJECTION of
+     * point p onto the line: point pca
+     */
+    t = VDOT(PtoA, AtoB) / B_A;
+    if ( bu_debug & BU_DEBUG_MATH )  {
+	bu_log("bn_dist_pt3_lseg3() B_A=%g, t=%g\n",
+	       B_A, t );
+    }
+
+    if ( t <= 0 )  {
+	/* P is "left" of A */
+	if ( bu_debug & BU_DEBUG_MATH )  bu_log("  left of A\n");
+	VMOVE( pca, a );
+	*dist = sqrt(P_A_sq);
+	return 3;
+    }
+    if ( t < B_A )  {
+	/* PCA falls between A and B */
+	register fastf_t	dsq;
+	fastf_t			param_dist;	/* parametric dist */
+
+	/* Find PCA */
+	param_dist = t / B_A;		/* Range 0..1 */
+	VJOIN1(pca, a, param_dist, AtoB);
+
+	/* Find distance from PCA to line segment (Pythagorus) */
+	if ( (dsq = P_A_sq - t * t ) <= tol->dist_sq )  {
+	    if ( bu_debug & BU_DEBUG_MATH )  bu_log("  ON lseg\n");
+	    /* Distance from PCA to lseg is zero, give param instead */
+	    *dist = param_dist;	/* special! */
+	    return 0;
 	}
-
-	/* Check proximity to endpoint A */
-	VSUB2(PtoA, p, a);
-	if ( (P_A_sq = MAGSQ(PtoA)) < tol->dist_sq )  {
-		/* P is within the tol->dist radius circle around A */
-		VMOVE( pca, a );
-		if ( bu_debug & BU_DEBUG_MATH )  bu_log("  at A\n");
-		*dist = 0.0;
-		return 1;
-	}
-
-	/* Check proximity to endpoint B */
-	VSUB2(PtoB, p, b);
-	if ( (P_B_sq = MAGSQ(PtoB)) < tol->dist_sq )  {
-		/* P is within the tol->dist radius circle around B */
-		VMOVE( pca, b );
-		if ( bu_debug & BU_DEBUG_MATH )  bu_log("  at B\n");
-		*dist = 0.0;
-		return 2;
-	}
-
-	VSUB2(AtoB, b, a);
-	B_A = sqrt( MAGSQ(AtoB) );
-
-	/* compute distance (in actual units) along line to PROJECTION of
-	 * point p onto the line: point pca
-	 */
-	t = VDOT(PtoA, AtoB) / B_A;
-	if ( bu_debug & BU_DEBUG_MATH )  {
-		bu_log("bn_dist_pt3_lseg3() B_A=%g, t=%g\n",
-			B_A, t );
-	}
-
-	if ( t <= 0 )  {
-		/* P is "left" of A */
-		if ( bu_debug & BU_DEBUG_MATH )  bu_log("  left of A\n");
-		VMOVE( pca, a );
-		*dist = sqrt(P_A_sq);
-		return 3;
-	}
-	if ( t < B_A )  {
-		/* PCA falls between A and B */
-		register fastf_t	dsq;
-		fastf_t			param_dist;	/* parametric dist */
-
-		/* Find PCA */
-		param_dist = t / B_A;		/* Range 0..1 */
-		VJOIN1(pca, a, param_dist, AtoB);
-
-		/* Find distance from PCA to line segment (Pythagorus) */
-		if ( (dsq = P_A_sq - t * t ) <= tol->dist_sq )  {
-			if ( bu_debug & BU_DEBUG_MATH )  bu_log("  ON lseg\n");
-			/* Distance from PCA to lseg is zero, give param instead */
-			*dist = param_dist;	/* special! */
-			return 0;
-		}
-		if ( bu_debug & BU_DEBUG_MATH )  bu_log("  closest to lseg\n");
-		*dist = sqrt(dsq);
-		return 5;
-	}
-	/* P is "right" of B */
-	if ( bu_debug & BU_DEBUG_MATH )  bu_log("  right of B\n");
-	VMOVE(pca, b);
-	*dist = sqrt(P_B_sq);
-	return 4;
+	if ( bu_debug & BU_DEBUG_MATH )  bu_log("  closest to lseg\n");
+	*dist = sqrt(dsq);
+	return 5;
+    }
+    /* P is "right" of B */
+    if ( bu_debug & BU_DEBUG_MATH )  bu_log("  right of B\n");
+    VMOVE(pca, b);
+    *dist = sqrt(P_B_sq);
+    return 4;
 }
 
 /**
@@ -2045,7 +2045,7 @@ bn_dist_pt3_lseg3(fastf_t *dist,
  *@brief
  *  Find the distance from a point P to a line segment described
  *  by the two endpoints A and B, and the point of closest approach (PCA).
-@verbatim
+ @verbatim
  *			P
  *		       *
  *		      /.
@@ -2056,7 +2056,7 @@ bn_dist_pt3_lseg3(fastf_t *dist,
  *		 /     .
  *		*------*--------*
  *		A      PCA	B
-@endverbatim
+ @endverbatim
  *  There are six distinct cases, with these return codes -
  * @return	0	P is within tolerance of lseg AB.  *dist isn't 0: (SPECIAL!!!)
  *		  *dist = parametric dist = |PCA-A| / |B-A|.  pca=computed.
@@ -2072,89 +2072,89 @@ bn_dist_pt3_lseg3(fastf_t *dist,
 int
 bn_dist_pt2_lseg2(fastf_t *dist_sq, fastf_t *pca, const fastf_t *a, const fastf_t *b, const fastf_t *p, const struct bn_tol *tol)
 {
-	vect_t	PtoA;		/* P-A */
-	vect_t	PtoB;		/* P-B */
-	vect_t	AtoB;		/* B-A */
-	fastf_t	P_A_sq;		/* |P-A|**2 */
-	fastf_t	P_B_sq;		/* |P-B|**2 */
-	fastf_t	B_A;		/* |B-A| */
-	fastf_t	t;		/* distance along ray of projection of P */
+    vect_t	PtoA;		/* P-A */
+    vect_t	PtoB;		/* P-B */
+    vect_t	AtoB;		/* B-A */
+    fastf_t	P_A_sq;		/* |P-A|**2 */
+    fastf_t	P_B_sq;		/* |P-B|**2 */
+    fastf_t	B_A;		/* |B-A| */
+    fastf_t	t;		/* distance along ray of projection of P */
 
-	BN_CK_TOL(tol);
+    BN_CK_TOL(tol);
 
-	if ( bu_debug & BU_DEBUG_MATH )  {
-		bu_log("bn_dist_pt3_lseg3() a=(%g,%g,%g) b=(%g,%g,%g)\n\tp=(%g,%g,%g), tol->dist=%g sq=%g\n",
-			V3ARGS(a),
-			V3ARGS(b),
-			V3ARGS(p),
-			tol->dist, tol->dist_sq );
+    if ( bu_debug & BU_DEBUG_MATH )  {
+	bu_log("bn_dist_pt3_lseg3() a=(%g,%g,%g) b=(%g,%g,%g)\n\tp=(%g,%g,%g), tol->dist=%g sq=%g\n",
+	       V3ARGS(a),
+	       V3ARGS(b),
+	       V3ARGS(p),
+	       tol->dist, tol->dist_sq );
+    }
+
+
+    /* Check proximity to endpoint A */
+    VSUB2_2D(PtoA, p, a);
+    if ( (P_A_sq = MAGSQ_2D(PtoA)) < tol->dist_sq )  {
+	/* P is within the tol->dist radius circle around A */
+	V2MOVE( pca, a );
+	if ( bu_debug & BU_DEBUG_MATH )  bu_log("  at A\n");
+	*dist_sq = 0.0;
+	return 1;
+    }
+
+    /* Check proximity to endpoint B */
+    VSUB2_2D(PtoB, p, b);
+    if ( (P_B_sq = MAGSQ_2D(PtoB)) < tol->dist_sq )  {
+	/* P is within the tol->dist radius circle around B */
+	V2MOVE( pca, b );
+	if ( bu_debug & BU_DEBUG_MATH )  bu_log("  at B\n");
+	*dist_sq = 0.0;
+	return 2;
+    }
+
+    VSUB2_2D(AtoB, b, a);
+    B_A = sqrt( MAGSQ_2D(AtoB) );
+
+    /* compute distance (in actual units) along line to PROJECTION of
+     * point p onto the line: point pca
+     */
+    t = VDOT_2D(PtoA, AtoB) / B_A;
+    if ( bu_debug & BU_DEBUG_MATH )  {
+	bu_log("bn_dist_pt3_lseg3() B_A=%g, t=%g\n",
+	       B_A, t );
+    }
+
+    if ( t <= 0 )  {
+	/* P is "left" of A */
+	if ( bu_debug & BU_DEBUG_MATH )  bu_log("  left of A\n");
+	V2MOVE( pca, a );
+	*dist_sq = P_A_sq;
+	return 3;
+    }
+    if ( t < B_A )  {
+	/* PCA falls between A and B */
+	register fastf_t	dsq;
+	fastf_t			param_dist;	/* parametric dist */
+
+	/* Find PCA */
+	param_dist = t / B_A;		/* Range 0..1 */
+	V2JOIN1(pca, a, param_dist, AtoB);
+
+	/* Find distance from PCA to line segment (Pythagorus) */
+	if ( (dsq = P_A_sq - t * t ) <= tol->dist_sq )  {
+	    if ( bu_debug & BU_DEBUG_MATH )  bu_log("  ON lseg\n");
+	    /* Distance from PCA to lseg is zero, give param instead */
+	    *dist_sq = param_dist;	/* special! Not squared. */
+	    return 0;
 	}
-
-
-	/* Check proximity to endpoint A */
-	VSUB2_2D(PtoA, p, a);
-	if ( (P_A_sq = MAGSQ_2D(PtoA)) < tol->dist_sq )  {
-		/* P is within the tol->dist radius circle around A */
-		V2MOVE( pca, a );
-		if ( bu_debug & BU_DEBUG_MATH )  bu_log("  at A\n");
-		*dist_sq = 0.0;
-		return 1;
-	}
-
-	/* Check proximity to endpoint B */
-	VSUB2_2D(PtoB, p, b);
-	if ( (P_B_sq = MAGSQ_2D(PtoB)) < tol->dist_sq )  {
-		/* P is within the tol->dist radius circle around B */
-		V2MOVE( pca, b );
-		if ( bu_debug & BU_DEBUG_MATH )  bu_log("  at B\n");
-		*dist_sq = 0.0;
-		return 2;
-	}
-
-	VSUB2_2D(AtoB, b, a);
-	B_A = sqrt( MAGSQ_2D(AtoB) );
-
-	/* compute distance (in actual units) along line to PROJECTION of
-	 * point p onto the line: point pca
-	 */
-	t = VDOT_2D(PtoA, AtoB) / B_A;
-	if ( bu_debug & BU_DEBUG_MATH )  {
-		bu_log("bn_dist_pt3_lseg3() B_A=%g, t=%g\n",
-			B_A, t );
-	}
-
-	if ( t <= 0 )  {
-		/* P is "left" of A */
-		if ( bu_debug & BU_DEBUG_MATH )  bu_log("  left of A\n");
-		V2MOVE( pca, a );
-		*dist_sq = P_A_sq;
-		return 3;
-	}
-	if ( t < B_A )  {
-		/* PCA falls between A and B */
-		register fastf_t	dsq;
-		fastf_t			param_dist;	/* parametric dist */
-
-		/* Find PCA */
-		param_dist = t / B_A;		/* Range 0..1 */
-		V2JOIN1(pca, a, param_dist, AtoB);
-
-		/* Find distance from PCA to line segment (Pythagorus) */
-		if ( (dsq = P_A_sq - t * t ) <= tol->dist_sq )  {
-			if ( bu_debug & BU_DEBUG_MATH )  bu_log("  ON lseg\n");
-			/* Distance from PCA to lseg is zero, give param instead */
-			*dist_sq = param_dist;	/* special! Not squared. */
-			return 0;
-		}
-		if ( bu_debug & BU_DEBUG_MATH )  bu_log("  closest to lseg\n");
-		*dist_sq = dsq;
-		return 5;
-	}
-	/* P is "right" of B */
-	if ( bu_debug & BU_DEBUG_MATH )  bu_log("  right of B\n");
-	V2MOVE(pca, b);
-	*dist_sq = P_B_sq;
-	return 4;
+	if ( bu_debug & BU_DEBUG_MATH )  bu_log("  closest to lseg\n");
+	*dist_sq = dsq;
+	return 5;
+    }
+    /* P is "right" of B */
+    if ( bu_debug & BU_DEBUG_MATH )  bu_log("  right of B\n");
+    V2MOVE(pca, b);
+    *dist_sq = P_B_sq;
+    return 4;
 }
 
 /**
@@ -2169,22 +2169,22 @@ bn_dist_pt2_lseg2(fastf_t *dist_sq, fastf_t *pca, const fastf_t *a, const fastf_
 void
 bn_rotate_bbox(fastf_t *omin, fastf_t *omax, const fastf_t *mat, const fastf_t *imin, const fastf_t *imax)
 {
-	point_t	local;		/* vertex point in local coordinates */
-	point_t	model;		/* vertex point in model coordinates */
+    point_t	local;		/* vertex point in local coordinates */
+    point_t	model;		/* vertex point in model coordinates */
 
 #define ROT_VERT( a, b, c )  \
 	VSET( local, a[X], b[Y], c[Z] ); \
 	MAT4X3PNT( model, mat, local ); \
 	VMINMAX( omin, omax, model ) \
 
-	ROT_VERT( imin, imin, imin );
-	ROT_VERT( imin, imin, imax );
-	ROT_VERT( imin, imax, imin );
-	ROT_VERT( imin, imax, imax );
-	ROT_VERT( imax, imin, imin );
-	ROT_VERT( imax, imin, imax );
-	ROT_VERT( imax, imax, imin );
-	ROT_VERT( imax, imax, imax );
+    ROT_VERT( imin, imin, imin );
+    ROT_VERT( imin, imin, imax );
+    ROT_VERT( imin, imax, imin );
+    ROT_VERT( imin, imax, imax );
+    ROT_VERT( imax, imin, imin );
+    ROT_VERT( imax, imin, imax );
+    ROT_VERT( imax, imax, imin );
+    ROT_VERT( imax, imax, imax );
 #undef ROT_VERT
 }
 
@@ -2196,23 +2196,23 @@ bn_rotate_bbox(fastf_t *omin, fastf_t *omax, const fastf_t *mat, const fastf_t *
 void
 bn_rotate_plane(fastf_t *oplane, const fastf_t *mat, const fastf_t *iplane)
 {
-	point_t		orig_pt;
-	point_t		new_pt;
+    point_t		orig_pt;
+    point_t		new_pt;
 
-	/* First, pick a point that lies on the original halfspace */
-	VSCALE( orig_pt, iplane, iplane[3] );
+    /* First, pick a point that lies on the original halfspace */
+    VSCALE( orig_pt, iplane, iplane[3] );
 
-	/* Transform the surface normal */
-	MAT4X3VEC( oplane, mat, iplane );
+    /* Transform the surface normal */
+    MAT4X3VEC( oplane, mat, iplane );
 
-	/* Transform the point from original to new halfspace */
-	MAT4X3PNT( new_pt, mat, orig_pt );
+    /* Transform the point from original to new halfspace */
+    MAT4X3PNT( new_pt, mat, orig_pt );
 
-	/*
-	 *  The transformed normal is all that is required.
-	 *  The new distance is found from the transformed point on the plane.
-	 */
-	oplane[3] = VDOT( new_pt, oplane );
+    /*
+     *  The transformed normal is all that is required.
+     *  The new distance is found from the transformed point on the plane.
+     */
+    oplane[3] = VDOT( new_pt, oplane );
 }
 
 /**
@@ -2230,35 +2230,35 @@ bn_rotate_plane(fastf_t *oplane, const fastf_t *mat, const fastf_t *iplane)
 int
 bn_coplanar(const fastf_t *a, const fastf_t *b, const struct bn_tol *tol)
 {
-	register fastf_t	f;
-	register fastf_t	dot;
+    register fastf_t	f;
+    register fastf_t	dot;
 
-	BN_CK_TOL(tol);
+    BN_CK_TOL(tol);
 
-	/* Check to see if the planes are parallel */
-	dot = VDOT( a, b );
-	if ( dot >= 0 )  {
-		/* Normals head in generally the same directions */
-		if ( dot < tol->para )
-			return(0);	/* Planes intersect */
+    /* Check to see if the planes are parallel */
+    dot = VDOT( a, b );
+    if ( dot >= 0 )  {
+	/* Normals head in generally the same directions */
+	if ( dot < tol->para )
+	    return(0);	/* Planes intersect */
 
-		/* Planes have "exactly" the same normal vector */
-		f = a[3] - b[3];
-		if ( NEAR_ZERO( f, tol->dist ) )  {
-			return(1);	/* Coplanar, same direction */
-		}
-		return(-1);		/* Parallel but distinct */
-	}
-	/* Normals head in generally opposite directions */
-	if ( -dot < tol->para )
-		return(0);		/* Planes intersect */
-
-	/* Planes have "exactly" opposite normal vectors */
-	f = a[3] + b[3];
+	/* Planes have "exactly" the same normal vector */
+	f = a[3] - b[3];
 	if ( NEAR_ZERO( f, tol->dist ) )  {
-		return(2);		/* Coplanar, opposite directions */
+	    return(1);	/* Coplanar, same direction */
 	}
-	return(-1);			/* Parallel but distinct */
+	return(-1);		/* Parallel but distinct */
+    }
+    /* Normals head in generally opposite directions */
+    if ( -dot < tol->para )
+	return(0);		/* Planes intersect */
+
+    /* Planes have "exactly" opposite normal vectors */
+    f = a[3] + b[3];
+    if ( NEAR_ZERO( f, tol->dist ) )  {
+	return(2);		/* Coplanar, opposite directions */
+    }
+    return(-1);			/* Parallel but distinct */
 }
 
 /**
@@ -2295,27 +2295,27 @@ bn_coplanar(const fastf_t *a, const fastf_t *b, const struct bn_tol *tol)
 double
 bn_angle_measure(fastf_t *vec, const fastf_t *x_dir, const fastf_t *y_dir)
 {
-	fastf_t		xproj, yproj;
-	fastf_t		gamma;
-	fastf_t		ang;
+    fastf_t		xproj, yproj;
+    fastf_t		gamma;
+    fastf_t		ang;
 
-	xproj = -VDOT( vec, x_dir );
-	yproj = -VDOT( vec, y_dir );
-	gamma = atan2( yproj, xproj );	/* -pi..+pi */
-	ang = bn_pi + gamma;		/* 0..+2pi */
-	if ( ang < 0 )  {
-		do {
-			ang += bn_twopi;
-		} while ( ang < 0 );
-	} else if ( ang > bn_twopi )  {
-		do {
-			ang -= bn_twopi;
-		} while ( ang > bn_twopi );
-	}
-	if ( ang < 0 || ang > bn_twopi )
-	    bu_bomb("bn_angle_measure() angle out of range\n");
+    xproj = -VDOT( vec, x_dir );
+    yproj = -VDOT( vec, y_dir );
+    gamma = atan2( yproj, xproj );	/* -pi..+pi */
+    ang = bn_pi + gamma;		/* 0..+2pi */
+    if ( ang < 0 )  {
+	do {
+	    ang += bn_twopi;
+	} while ( ang < 0 );
+    } else if ( ang > bn_twopi )  {
+	do {
+	    ang -= bn_twopi;
+	} while ( ang > bn_twopi );
+    }
+    if ( ang < 0 || ang > bn_twopi )
+	bu_bomb("bn_angle_measure() angle out of range\n");
 
-	return ang;
+    return ang;
 }
 
 /**
@@ -2329,10 +2329,10 @@ bn_angle_measure(fastf_t *vec, const fastf_t *x_dir, const fastf_t *y_dir)
 double
 bn_dist_pt3_along_line3(const fastf_t *p, const fastf_t *d, const fastf_t *x)
 {
-	vect_t	x_p;
+    vect_t	x_p;
 
-	VSUB2( x_p, x, p );
-	return VDOT( x_p, d );
+    VSUB2( x_p, x, p );
+    return VDOT( x_p, d );
 }
 
 
@@ -2347,19 +2347,19 @@ bn_dist_pt3_along_line3(const fastf_t *p, const fastf_t *d, const fastf_t *x)
 double
 bn_dist_pt2_along_line2(const fastf_t *p, const fastf_t *d, const fastf_t *x)
 {
-	vect_t	x_p;
-	double	ret;
+    vect_t	x_p;
+    double	ret;
 
-	VSUB2_2D( x_p, x, p );
-	ret = VDOT_2D( x_p, d );
-	if ( bu_debug & BU_DEBUG_MATH )  {
-		bu_log("bn_dist_pt2_along_line2() p=(%g, %g), d=(%g, %g), x=(%g, %g) ret=%g\n",
-			V2ARGS(p),
-			V2ARGS(d),
-			V2ARGS(x),
-			ret );
-	}
-	return ret;
+    VSUB2_2D( x_p, x, p );
+    ret = VDOT_2D( x_p, d );
+    if ( bu_debug & BU_DEBUG_MATH )  {
+	bu_log("bn_dist_pt2_along_line2() p=(%g, %g), d=(%g, %g), x=(%g, %g) ret=%g\n",
+	       V2ARGS(p),
+	       V2ARGS(d),
+	       V2ARGS(x),
+	       ret );
+    }
+    return ret;
 }
 
 /**
@@ -2370,29 +2370,29 @@ bn_dist_pt2_along_line2(const fastf_t *p, const fastf_t *d, const fastf_t *x)
 int
 bn_between(double left, double mid, double right, const struct bn_tol *tol)
 {
-	BN_CK_TOL(tol);
+    BN_CK_TOL(tol);
 
-	if ( left < right )  {
-		if ( NEAR_ZERO(left-right, tol->dist*0.1) )  {
-			left -= tol->dist*0.1;
-			right += tol->dist*0.1;
-		}
-		if ( mid < left || mid > right )  goto fail;
-		return 1;
-	}
-	/* The 'right' value is lowest */
+    if ( left < right )  {
 	if ( NEAR_ZERO(left-right, tol->dist*0.1) )  {
-		right -= tol->dist*0.1;
-		left += tol->dist*0.1;
+	    left -= tol->dist*0.1;
+	    right += tol->dist*0.1;
 	}
-	if ( mid < right || mid > left )  goto fail;
+	if ( mid < left || mid > right )  goto fail;
 	return 1;
-fail:
-	if ( bu_debug & BU_DEBUG_MATH )  {
-		bu_log("bn_between( %.17e, %.17e, %.17e ) ret=0 FAIL\n",
-			left, mid, right);
-	}
-	return 0;
+    }
+    /* The 'right' value is lowest */
+    if ( NEAR_ZERO(left-right, tol->dist*0.1) )  {
+	right -= tol->dist*0.1;
+	left += tol->dist*0.1;
+    }
+    if ( mid < right || mid > left )  goto fail;
+    return 1;
+ fail:
+    if ( bu_debug & BU_DEBUG_MATH )  {
+	bu_log("bn_between( %.17e, %.17e, %.17e ) ret=0 FAIL\n",
+	       left, mid, right);
+    }
+    return 0;
 }
 
 /**
@@ -2404,51 +2404,51 @@ fail:
  */
 int
 bn_does_ray_isect_tri(
-	const point_t pt,
-	const vect_t dir,
-	const point_t V,
-	const point_t A,
-	const point_t B,
-	point_t	inter)			/* output variable */
+    const point_t pt,
+    const vect_t dir,
+    const point_t V,
+    const point_t A,
+    const point_t B,
+    point_t	inter)			/* output variable */
 {
-	vect_t VP, VA, VB, AB, AP, N;
-	fastf_t NdotDir;
-	plane_t pl;
-	fastf_t dist;
+    vect_t VP, VA, VB, AB, AP, N;
+    fastf_t NdotDir;
+    plane_t pl;
+    fastf_t dist;
 
-	/* insersect with plane */
+    /* insersect with plane */
 
-	VSUB2( VA, A, V );
-	VSUB2( VB, B, V );
-	VCROSS( pl, VA, VB );
-	VUNITIZE( pl );
+    VSUB2( VA, A, V );
+    VSUB2( VB, B, V );
+    VCROSS( pl, VA, VB );
+    VUNITIZE( pl );
 
-	NdotDir = VDOT( pl, dir );
-	if ( NEAR_ZERO( NdotDir, SMALL_FASTF ) )
-		return( 0 );
+    NdotDir = VDOT( pl, dir );
+    if ( NEAR_ZERO( NdotDir, SMALL_FASTF ) )
+	return( 0 );
 
-	pl[3] = VDOT( pl, V );
+    pl[3] = VDOT( pl, V );
 
-	dist = (pl[3] - VDOT( pl, pt ))/NdotDir;
-	VJOIN1( inter, pt, dist, dir );
+    dist = (pl[3] - VDOT( pl, pt ))/NdotDir;
+    VJOIN1( inter, pt, dist, dir );
 
-	/* determine if point is within triangle */
-	VSUB2( VP, inter, V );
-	VCROSS( N, VA, VP );
-	if ( VDOT( N, pl ) < 0.0 )
-		return( 0 );
+    /* determine if point is within triangle */
+    VSUB2( VP, inter, V );
+    VCROSS( N, VA, VP );
+    if ( VDOT( N, pl ) < 0.0 )
+	return( 0 );
 
-	VCROSS( N, VP, VB );
-	if ( VDOT( N, pl ) < 0.0 )
-		return( 0 );
+    VCROSS( N, VP, VB );
+    if ( VDOT( N, pl ) < 0.0 )
+	return( 0 );
 
-	VSUB2( AB, B, A );
-	VSUB2( AP, inter, A );
-	VCROSS( N, AB, AP );
-	if ( VDOT( N, pl ) < 0.0 )
-		return( 0 );
+    VSUB2( AB, B, A );
+    VSUB2( AP, inter, A );
+    VCROSS( N, AB, AP );
+    if ( VDOT( N, pl ) < 0.0 )
+	return( 0 );
 
-	return( 1 );
+    return( 1 );
 }
 
 #if 0
@@ -2495,67 +2495,67 @@ bn_does_ray_isect_tri(
  */
 int
 bn_isect_ray_tri(dist_p, N_p, Alpha_p, Beta_p, pt, dir, V, A, B)
-fastf_t *dist_p;
-fastf_t *N_p;
-fastf_t *Alpha_p;
-fastf_t *Beta_p;
-const point_t pt;
-const vect_t dir;
-const point_t V;
-const point_t A;
-const point_t B;
+    fastf_t *dist_p;
+    fastf_t *N_p;
+    fastf_t *Alpha_p;
+    fastf_t *Beta_p;
+    const point_t pt;
+    const vect_t dir;
+    const point_t V;
+    const point_t A;
+    const point_t B;
 {
-	vect_t VA;	/* V -> A vector */
-	vect_t VB;	/* V -> B vector */
-	vect_t pt_V;	/* Ray_origin -> V  vector */
-	vect_t N;	/* Triangle Normal */
-	vect_t VPP;	/* perpendicular to vector V -> P */
-	fastf_t alpha;	/* parametric distance along VA */
-	fastf_t beta;	/* parametric distance along VB */
-	fastf_t NdotDir;
-	fastf_t entleave;
-	fastf_t k;
+    vect_t VA;	/* V -> A vector */
+    vect_t VB;	/* V -> B vector */
+    vect_t pt_V;	/* Ray_origin -> V  vector */
+    vect_t N;	/* Triangle Normal */
+    vect_t VPP;	/* perpendicular to vector V -> P */
+    fastf_t alpha;	/* parametric distance along VA */
+    fastf_t beta;	/* parametric distance along VB */
+    fastf_t NdotDir;
+    fastf_t entleave;
+    fastf_t k;
 
-	/* form edge vectors of triangle */
-	VSUB2(VB, B, V);
-	VSUB2(VA, A, V);
+    /* form edge vectors of triangle */
+    VSUB2(VB, B, V);
+    VSUB2(VA, A, V);
 
-	/* form triangle normal */
-	VCROSS( N, VA, VB );
+    /* form triangle normal */
+    VCROSS( N, VA, VB );
 
-	NdotDir = VDOT( N, dir );
-	if (fabs(NdotDir) < SQRT_SMALL_FASTF)
-		return 0;	/* ray parallel to triangle */
+    NdotDir = VDOT( N, dir );
+    if (fabs(NdotDir) < SQRT_SMALL_FASTF)
+	return 0;	/* ray parallel to triangle */
 
-	if (NdotDir >= 0.0) entleave = -1;	/* leaving */
-	else entleave = 1;			/* entering */
+    if (NdotDir >= 0.0) entleave = -1;	/* leaving */
+    else entleave = 1;			/* entering */
 
-	VSUB2( pt_V, V, pt );
-	VCROSS( VPP, pt_V, dir );
+    VSUB2( pt_V, V, pt );
+    VCROSS( VPP, pt_V, dir );
 
-	/* alpha is projection of VPP onto VA (not necessaily in plane)
-	 * If alpha < 0.0 then p is "before" point V on line V->A
-	 * No-one can figure out why alpha > NdotDir is important.
-	 */
-	alpha = VDOT( VA, VPP ) * entleave;
-	if (alpha < 0.0 || alpha > fabs(NdotDir) ) return 0;
+    /* alpha is projection of VPP onto VA (not necessaily in plane)
+     * If alpha < 0.0 then p is "before" point V on line V->A
+     * No-one can figure out why alpha > NdotDir is important.
+     */
+    alpha = VDOT( VA, VPP ) * entleave;
+    if (alpha < 0.0 || alpha > fabs(NdotDir) ) return 0;
 
 
-	/* beta is projection of VPP onto VB (not necessaily in plane) */
-	beta = VDOT(VB, VPP ) * (-1 * entleave);
-	if (beta < 0.0 || beta > fabs(NdotDir)) return 0;
+    /* beta is projection of VPP onto VB (not necessaily in plane) */
+    beta = VDOT(VB, VPP ) * (-1 * entleave);
+    if (beta < 0.0 || beta > fabs(NdotDir)) return 0;
 
-	k = VDOT(VPP, N) / NdotDir;
+    k = VDOT(VPP, N) / NdotDir;
 
-	if (dist_p) *dist_p = k;
-	if (N_p) {
-		VUNITIZE(N);
-		VMOVE(N_p, N);
-	}
-	if (Alpha_p) *Alpha_p = alpha;
-	if (Beta_p) *Beta_p = beta;
+    if (dist_p) *dist_p = k;
+    if (N_p) {
+	VUNITIZE(N);
+	VMOVE(N_p, N);
+    }
+    if (Alpha_p) *Alpha_p = alpha;
+    if (Beta_p) *Beta_p = beta;
 
-	return entleave;
+    return entleave;
 }
 #endif
 
@@ -2573,8 +2573,8 @@ const point_t B;
 int
 bn_hlf_class(const fastf_t *half_eqn, const fastf_t *min, const fastf_t *max, const struct bn_tol *tol)
 {
-	int	class;	/* current classification */
-	fastf_t d;
+    int	class;	/* current classification */
+    fastf_t d;
 
 #define CHECK_PT( x, y, z ) \
 	d = (x)*half_eqn[0] + (y)*half_eqn[1] + (z)*half_eqn[2] - half_eqn[3];\
@@ -2588,21 +2588,21 @@ bn_hlf_class(const fastf_t *half_eqn, const fastf_t *min, const fastf_t *max, co
 		else class = BN_CLASSIFY_OUTSIDE; \
 	} else return BN_CLASSIFY_OVERLAPPING
 
-	class = BN_CLASSIFY_UNIMPLEMENTED;
-	CHECK_PT( min[X], min[Y], min[Z] );
-	CHECK_PT( min[X], min[Y], max[Z] );
-	CHECK_PT( min[X], max[Y], min[Z] );
-	CHECK_PT( min[X], max[Y], max[Z] );
-	CHECK_PT( max[X], min[Y], min[Z] );
-	CHECK_PT( max[X], min[Y], max[Z] );
-	CHECK_PT( max[X], max[Y], min[Z] );
-	CHECK_PT( max[X], max[Y], max[Z] );
-	if ( class == BN_CLASSIFY_UNIMPLEMENTED )
-		bu_log( "bn_hlf_class: error in implementation\
+    class = BN_CLASSIFY_UNIMPLEMENTED;
+    CHECK_PT( min[X], min[Y], min[Z] );
+    CHECK_PT( min[X], min[Y], max[Z] );
+    CHECK_PT( min[X], max[Y], min[Z] );
+    CHECK_PT( min[X], max[Y], max[Z] );
+    CHECK_PT( max[X], min[Y], min[Z] );
+    CHECK_PT( max[X], min[Y], max[Z] );
+    CHECK_PT( max[X], max[Y], min[Z] );
+    CHECK_PT( max[X], max[Y], max[Z] );
+    if ( class == BN_CLASSIFY_UNIMPLEMENTED )
+	bu_log( "bn_hlf_class: error in implementation\
 min = (%g, %g, %g), max = (%g, %g, %g), half_eqn = (%d, %d, %d, %d)\n",
-			V3ARGS(min), V3ARGS(max), V3ARGS(half_eqn),
-			half_eqn[3]);
-	return class;
+		V3ARGS(min), V3ARGS(max), V3ARGS(half_eqn),
+		half_eqn[3]);
+    return class;
 }
 
 /**		B N _ D I S T S Q _ L I N E 3 _ L I N E 3
@@ -2631,57 +2631,57 @@ min = (%g, %g, %g), max = (%g, %g, %g), half_eqn = (%d, %d, %d, %d)\n",
 int
 bn_distsq_line3_line3(fastf_t *dist, fastf_t *P, fastf_t *d_in, fastf_t *Q, fastf_t *e_in, fastf_t *pt1, fastf_t *pt2)
 {
-	fastf_t de, denom;
-	vect_t diff, PmQ, tmp;
-	vect_t d, e;
-	fastf_t len_e, inv_len_e, len_d, inv_len_d;
-	int ret=0;
+    fastf_t de, denom;
+    vect_t diff, PmQ, tmp;
+    vect_t d, e;
+    fastf_t len_e, inv_len_e, len_d, inv_len_d;
+    int ret=0;
 
-	len_e = MAGNITUDE( e_in );
-	if ( NEAR_ZERO( len_e, SMALL_FASTF ) )
-		bu_bomb( "bn_distsq_line3_line3() called with zero length vector\n");
-	inv_len_e = 1.0 / len_e;
+    len_e = MAGNITUDE( e_in );
+    if ( NEAR_ZERO( len_e, SMALL_FASTF ) )
+	bu_bomb( "bn_distsq_line3_line3() called with zero length vector\n");
+    inv_len_e = 1.0 / len_e;
 
-	len_d = MAGNITUDE( d_in );
-	if ( NEAR_ZERO( len_d, SMALL_FASTF ) )
-		bu_bomb( "bn_distsq_line3_line3() called with zero length vector\n");
-	inv_len_d = 1.0 / len_d;
+    len_d = MAGNITUDE( d_in );
+    if ( NEAR_ZERO( len_d, SMALL_FASTF ) )
+	bu_bomb( "bn_distsq_line3_line3() called with zero length vector\n");
+    inv_len_d = 1.0 / len_d;
 
-	VSCALE( e, e_in, inv_len_e );
-	VSCALE( d, d_in, inv_len_d );
-	de = VDOT( d, e );
+    VSCALE( e, e_in, inv_len_e );
+    VSCALE( d, d_in, inv_len_d );
+    de = VDOT( d, e );
 
-	if ( NEAR_ZERO( de, SMALL_FASTF ) )
+    if ( NEAR_ZERO( de, SMALL_FASTF ) )
+    {
+	/* lines are perpendicular */
+	dist[0] = VDOT( Q, d ) - VDOT( P, d );
+	dist[1] = VDOT( P, e ) - VDOT( Q, e );
+    }
+    else
+    {
+	VSUB2( PmQ, P, Q );
+	denom = 1.0 - de*de;
+	if ( NEAR_ZERO( denom, SMALL_FASTF ) )
 	{
-		/* lines are perpendicular */
-		dist[0] = VDOT( Q, d ) - VDOT( P, d );
-		dist[1] = VDOT( P, e ) - VDOT( Q, e );
+	    /* lines are parallel */
+	    dist[0] = 0.0;
+	    dist[1] = VDOT( PmQ, d );
+	    ret = 1;
 	}
 	else
 	{
-		VSUB2( PmQ, P, Q );
-		denom = 1.0 - de*de;
-		if ( NEAR_ZERO( denom, SMALL_FASTF ) )
-		{
-			/* lines are parallel */
-			dist[0] = 0.0;
-			dist[1] = VDOT( PmQ, d );
-			ret = 1;
-		}
-		else
-		{
-			VBLEND2( tmp, 1.0, e, -de, d );
-			dist[1] = VDOT( PmQ, tmp )/denom;
-			dist[0] = dist[1] * de - VDOT( PmQ, d );
-		}
+	    VBLEND2( tmp, 1.0, e, -de, d );
+	    dist[1] = VDOT( PmQ, tmp )/denom;
+	    dist[0] = dist[1] * de - VDOT( PmQ, d );
 	}
-	VJOIN1( pt1, P, dist[0], d );
-	VJOIN1( pt2, Q, dist[1], e );
-	VSUB2( diff, pt1, pt2 );
-	dist[0] *= inv_len_d;
-	dist[1] *= inv_len_e;
-	dist[2] =  MAGSQ( diff );
-	return( ret );
+    }
+    VJOIN1( pt1, P, dist[0], d );
+    VJOIN1( pt2, Q, dist[1], e );
+    VSUB2( diff, pt1, pt2 );
+    dist[0] *= inv_len_d;
+    dist[1] *= inv_len_e;
+    dist[2] =  MAGSQ( diff );
+    return( ret );
 }
 
 /**
@@ -2712,51 +2712,51 @@ bn_distsq_line3_line3(fastf_t *dist, fastf_t *P, fastf_t *d_in, fastf_t *Q, fast
 int
 bn_isect_planes(fastf_t *pt, const fastf_t (*planes)[4], const int pl_count)
 {
-	mat_t matrix;
-	mat_t inverse;
-	vect_t hpq;
-	fastf_t det;
-	int i;
+    mat_t matrix;
+    mat_t inverse;
+    vect_t hpq;
+    fastf_t det;
+    int i;
 
-	if ( bu_debug & BU_DEBUG_MATH )  {
-		bu_log( "bn_isect_planes:\n" );
-		for ( i=0; i<pl_count; i++ )
-		{
-			bu_log( "Plane #%d (%f %f %f %f)\n", i, V4ARGS( planes[i] ) );
-		}
-	}
-
-	MAT_ZERO( matrix );
-	VSET( hpq, 0.0, 0.0, 0.0 );
-
+    if ( bu_debug & BU_DEBUG_MATH )  {
+	bu_log( "bn_isect_planes:\n" );
 	for ( i=0; i<pl_count; i++ )
 	{
-		matrix[0] += planes[i][X] * planes[i][X];
-		matrix[5] += planes[i][Y] * planes[i][Y];
-		matrix[10] += planes[i][Z] * planes[i][Z];
-		matrix[1] += planes[i][X] * planes[i][Y];
-		matrix[2] += planes[i][X] * planes[i][Z];
-		matrix[6] += planes[i][Y] * planes[i][Z];
-		hpq[X] += planes[i][X] * planes[i][H];
-		hpq[Y] += planes[i][Y] * planes[i][H];
-		hpq[Z] += planes[i][Z] * planes[i][H];
+	    bu_log( "Plane #%d (%f %f %f %f)\n", i, V4ARGS( planes[i] ) );
 	}
+    }
 
-	matrix[4] = matrix[1];
-	matrix[8] = matrix[2];
-	matrix[9] = matrix[6];
-	matrix[15] = 1.0;
+    MAT_ZERO( matrix );
+    VSET( hpq, 0.0, 0.0, 0.0 );
 
-	/* Check that we don't have a singular matrix */
-	det = bn_mat_determinant( matrix );
-	if ( NEAR_ZERO( det, SMALL_FASTF ) )
-		return( 1 );
+    for ( i=0; i<pl_count; i++ )
+    {
+	matrix[0] += planes[i][X] * planes[i][X];
+	matrix[5] += planes[i][Y] * planes[i][Y];
+	matrix[10] += planes[i][Z] * planes[i][Z];
+	matrix[1] += planes[i][X] * planes[i][Y];
+	matrix[2] += planes[i][X] * planes[i][Z];
+	matrix[6] += planes[i][Y] * planes[i][Z];
+	hpq[X] += planes[i][X] * planes[i][H];
+	hpq[Y] += planes[i][Y] * planes[i][H];
+	hpq[Z] += planes[i][Z] * planes[i][H];
+    }
 
-	bn_mat_inv( inverse, matrix );
+    matrix[4] = matrix[1];
+    matrix[8] = matrix[2];
+    matrix[9] = matrix[6];
+    matrix[15] = 1.0;
 
-	MAT4X3PNT( pt, inverse, hpq );
+    /* Check that we don't have a singular matrix */
+    det = bn_mat_determinant( matrix );
+    if ( NEAR_ZERO( det, SMALL_FASTF ) )
+	return( 1 );
 
-	return( 0 );
+    bn_mat_inv( inverse, matrix );
+
+    MAT4X3PNT( pt, inverse, hpq );
+
+    return( 0 );
 
 }
 
@@ -2786,62 +2786,62 @@ bn_isect_lseg_rpp(fastf_t *a,
 		  register fastf_t *min,
 		  register fastf_t *max)
 {
-	auto vect_t	diff;
-	register fastf_t *pt = &a[0];
-	register fastf_t *dir = &diff[0];
-	register int i;
-	register double sv;
-	register double st;
-	register double mindist, maxdist;
+    auto vect_t	diff;
+    register fastf_t *pt = &a[0];
+    register fastf_t *dir = &diff[0];
+    register int i;
+    register double sv;
+    register double st;
+    register double mindist, maxdist;
 
-	mindist = -MAX_FASTF;
-	maxdist = MAX_FASTF;
-	VSUB2( diff, b, a );
+    mindist = -MAX_FASTF;
+    maxdist = MAX_FASTF;
+    VSUB2( diff, b, a );
 
-	for ( i=0; i < 3; i++, pt++, dir++, max++, min++ )  {
-		if ( *dir < -SQRT_SMALL_FASTF )  {
-			if ( (sv = (*min - *pt) / *dir) < 0.0 )
-				return(0);	/* MISS */
-			if (maxdist > sv)
-				maxdist = sv;
-			if ( mindist < (st = (*max - *pt) / *dir) )
-				mindist = st;
-		}  else if ( *dir > SQRT_SMALL_FASTF )  {
-			if ( (st = (*max - *pt) / *dir) < 0.0 )
-				return(0);	/* MISS */
-			if (maxdist > st)
-				maxdist = st;
-			if ( mindist < ((sv = (*min - *pt) / *dir)) )
-				mindist = sv;
-		}  else  {
-			/*
-			 *  If direction component along this axis is NEAR 0,
-			 *  (ie, this ray is aligned with this axis),
-			 *  merely check against the boundaries.
-			 */
-			if ( (*min > *pt) || (*max < *pt) )
-				return(0);	/* MISS */;
-		}
+    for ( i=0; i < 3; i++, pt++, dir++, max++, min++ )  {
+	if ( *dir < -SQRT_SMALL_FASTF )  {
+	    if ( (sv = (*min - *pt) / *dir) < 0.0 )
+		return(0);	/* MISS */
+	    if (maxdist > sv)
+		maxdist = sv;
+	    if ( mindist < (st = (*max - *pt) / *dir) )
+		mindist = st;
+	}  else if ( *dir > SQRT_SMALL_FASTF )  {
+	    if ( (st = (*max - *pt) / *dir) < 0.0 )
+		return(0);	/* MISS */
+	    if (maxdist > st)
+		maxdist = st;
+	    if ( mindist < ((sv = (*min - *pt) / *dir)) )
+		mindist = sv;
+	}  else  {
+	    /*
+	     *  If direction component along this axis is NEAR 0,
+	     *  (ie, this ray is aligned with this axis),
+	     *  merely check against the boundaries.
+	     */
+	    if ( (*min > *pt) || (*max < *pt) )
+		return(0);	/* MISS */;
 	}
-	if ( mindist >= maxdist )
-		return(0);	/* MISS */
+    }
+    if ( mindist >= maxdist )
+	return(0);	/* MISS */
 
-	if ( mindist > 1 || maxdist < 0 )
-		return(0);	/* MISS */
+    if ( mindist > 1 || maxdist < 0 )
+	return(0);	/* MISS */
 
-	if ( mindist >= 0 && maxdist <= 1 )
-		return(1);	/* HIT within box, no clipping needed */
+    if ( mindist >= 0 && maxdist <= 1 )
+	return(1);	/* HIT within box, no clipping needed */
 
-	/* Don't grow one end of a contained segment */
-	if ( mindist < 0 )
-		mindist = 0;
-	if ( maxdist > 1 )
-		maxdist = 1;
+    /* Don't grow one end of a contained segment */
+    if ( mindist < 0 )
+	mindist = 0;
+    if ( maxdist > 1 )
+	maxdist = 1;
 
-	/* Compute actual intercept points */
-	VJOIN1( b, a, maxdist, diff );		/* b must go first */
-	VJOIN1( a, a, mindist, diff );
-	return(1);		/* HIT */
+    /* Compute actual intercept points */
+    VJOIN1( b, a, maxdist, diff );		/* b must go first */
+    VJOIN1( a, a, mindist, diff );
+    return(1);		/* HIT */
 }
 
 /** @} */

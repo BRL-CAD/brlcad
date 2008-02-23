@@ -39,8 +39,8 @@ static long time0;
 void
 rt_prep_timer(void)
 {
-	(void)time(&time0);
-	(void)intime_();
+    (void)time(&time0);
+    (void)intime_();
 }
 
 
@@ -51,20 +51,20 @@ rt_prep_timer(void)
 double
 rt_read_timer(char *str, int len)
 {
-	long now;
-	double usert;
-	long htime[6];
-	char line[132];
+    long now;
+    double usert;
+    long htime[6];
+    char line[132];
 
-	(void)stats_(htime);
-	(void)time(&now);
-	usert = ((double)htime[0]) / 10000000.0;
-	if ( usert < 0.00001 )  usert = 0.00001;
-	sprintf(line, "%f secs: %ld wave, %ld fp, %ld dmem, %ld other",
-		usert,
-		htime[0], htime[1], htime[2], htime[3], htime[4] );
-	bu_strlcpy( str, line, len );
-	return( usert );
+    (void)stats_(htime);
+    (void)time(&now);
+    usert = ((double)htime[0]) / 10000000.0;
+    if ( usert < 0.00001 )  usert = 0.00001;
+    sprintf(line, "%f secs: %ld wave, %ld fp, %ld dmem, %ld other",
+	    usert,
+	    htime[0], htime[1], htime[2], htime[3], htime[4] );
+    bu_strlcpy( str, line, len );
+    return( usert );
 }
 
 /** @} */

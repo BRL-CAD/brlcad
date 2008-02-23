@@ -38,34 +38,34 @@
 
 main(void)
 {
-   int ichoice;			/*  Choice.  */
-   char *irX = "ir-X";		/*  Calls ir-X program.  */
-   char showtherm[125];		/*  Calls showtherm program.  */
-   char gfile[16];		/*  .g file.  */
-   char group[26];		/*  Group names.  */
-   int ngrp;			/*  Number of groups.  */
-   int i, j, k;			/*  Loop counters.  */
+    int ichoice;			/*  Choice.  */
+    char *irX = "ir-X";		/*  Calls ir-X program.  */
+    char showtherm[125];		/*  Calls showtherm program.  */
+    char gfile[16];		/*  .g file.  */
+    char group[26];		/*  Group names.  */
+    int ngrp;			/*  Number of groups.  */
+    int i, j, k;			/*  Loop counters.  */
 
-   /*  Find option.  */
-   (void)printf("This takes a BRL-CAD mged model with a PRISM\n");
-   (void)printf("temperature output file and raytrace and/or\n");
-   (void)printf("display it using X-Windows graphics.  Make\n");
-   (void)printf("your selection.\n");
-   (void)printf("\t0 - raytrace & store file\n");
-   (void)printf("\t1 - raytrace, store, & showtherm file\n");
-   (void)printf("\t2 - showtherm file\n");
-   (void)fflush(stdout);
-   (void)scanf("%d", &ichoice);
+    /*  Find option.  */
+    (void)printf("This takes a BRL-CAD mged model with a PRISM\n");
+    (void)printf("temperature output file and raytrace and/or\n");
+    (void)printf("display it using X-Windows graphics.  Make\n");
+    (void)printf("your selection.\n");
+    (void)printf("\t0 - raytrace & store file\n");
+    (void)printf("\t1 - raytrace, store, & showtherm file\n");
+    (void)printf("\t2 - showtherm file\n");
+    (void)fflush(stdout);
+    (void)scanf("%d", &ichoice);
 
-   while ( (ichoice !=0 ) && (ichoice != 1) &&(ichoice != 2) )
-   {
+    while ( (ichoice !=0 ) && (ichoice != 1) &&(ichoice != 2) )
+    {
 	(void)printf("Your choice was not 0, 1, or 2, enter again!!\n");
 	(void)fflush(stdout);
 	(void)scanf("%d", &ichoice);
-   }
+    }
 
-   if ( (ichoice == 0) || (ichoice == 1) )
-   {
+    if ( (ichoice == 0) || (ichoice == 1) )
+    {
 	/*  Start setting showtherm variable.  */
 	showtherm[0] = 's';
 	showtherm[1] = 'h';
@@ -90,31 +90,31 @@ main(void)
 	j = 0;
 	while ( (gfile[j] != '\0') && (i < 123) )
 	{
-	   showtherm[i] = gfile[j];
-	   i++;
-	   j++;
+	    showtherm[i] = gfile[j];
+	    i++;
+	    j++;
 	}
 	for (j=0; j<ngrp; j++)
 	{
-	   (void)printf("Enter group %d (25 char max).\n\t", j);
-	   (void)fflush(stdout);
-	   (void)scanf("%25s", group);
-	   showtherm[i] = ' ';
-	   i++;
-	   k = 0;
-	   while ( (group[k] != '\0') && (i < 123) )
-	   {
+	    (void)printf("Enter group %d (25 char max).\n\t", j);
+	    (void)fflush(stdout);
+	    (void)scanf("%25s", group);
+	    showtherm[i] = ' ';
+	    i++;
+	    k = 0;
+	    while ( (group[k] != '\0') && (i < 123) )
+	    {
 		showtherm[i] = group[k];
 		i++;
 		k++;
-	   }
+	    }
 	}
 	showtherm[i] = '\0';
 	if (i >= 123)
 	{
-	   (void)printf("There are too many characters for showtherm,\n");
-	   (void)printf("please revise pictx.\n");
-	   (void)fflush(stdout);
+	    (void)printf("There are too many characters for showtherm,\n");
+	    (void)printf("please revise pictx.\n");
+	    (void)fflush(stdout);
 	}
 
 	/*  Call the program showtherm with the appropriate options.  */
@@ -123,10 +123,10 @@ main(void)
 	(void)printf("\nThe program showtherm is now being run.\n\n");
 	(void)fflush(stdout);
 	system(showtherm);
-   }
+    }
 
-   if ( (ichoice == 1) || (ichoice == 2) )
-   {
+    if ( (ichoice == 1) || (ichoice == 2) )
+    {
 	/*  Call the program ir-X so that a file that has been raytraced  */
 	/*  may be displayed using X-Windows.  */
 	(void)printf("\nThe program ir-X in now being run.  If option\n");
@@ -135,7 +135,7 @@ main(void)
 	(void)printf("stored.\n\n");
 	(void)fflush(stdout);
 	system(irX);
-   }
+    }
 
 }
 

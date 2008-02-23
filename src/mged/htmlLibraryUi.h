@@ -18,9 +18,9 @@
  * information.
  */
 /** @file htmlLibraryUi.h
-# Simple HTML display library by Stephen Uhler (stephen.uhler@sun.com)
-# Copyright (c) 1995 by Sun Microsystems
-# Version 0.1 Thu Jul 20 09:06:28 PDT 1995
+    # Simple HTML display library by Stephen Uhler (stephen.uhler@sun.com)
+    # Copyright (c) 1995 by Sun Microsystems
+    # Version 0.1 Thu Jul 20 09:06:28 PDT 1995
 */
 char *html_library_ui_str = "\
 array set HMtag_map {\

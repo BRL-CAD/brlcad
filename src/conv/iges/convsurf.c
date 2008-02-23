@@ -38,40 +38,40 @@ void
 Convsurfs()
 {
 
-	int i, totsurfs=0, convsurf=0;
-	struct face_g_snurb **surfs;
-	struct face_g_snurb *srf;
+    int i, totsurfs=0, convsurf=0;
+    struct face_g_snurb **surfs;
+    struct face_g_snurb *srf;
 
-	bu_log( "\n\nConverting NURB entities:\n" );
+    bu_log( "\n\nConverting NURB entities:\n" );
 
-	/* First count the number of surfaces */
-	for ( i=0; i<totentities; i++ )
-	{
-		if ( dir[i]->type == 128 )
-			totsurfs ++;
+    /* First count the number of surfaces */
+    for ( i=0; i<totentities; i++ )
+    {
+	if ( dir[i]->type == 128 )
+	    totsurfs ++;
+    }
+
+    surfs = (struct face_g_snurb **)bu_calloc( totsurfs+1, sizeof( struct face_g_snurb *), "surfs" );
+
+    for ( i=0; i<totentities; i++ )
+    {
+	if ( dir[i]->type == 128 ) {
+	    if ( spline( i, &srf ) )
+		surfs[convsurf++] = srf;
 	}
+    }
 
-	surfs = (struct face_g_snurb **)bu_calloc( totsurfs+1, sizeof( struct face_g_snurb *), "surfs" );
+    if ( totsurfs )
+    {
+	if ( curr_file->obj_name )
+	    mk_bspline( fdout, curr_file->obj_name, surfs );
+	else
+	    mk_bspline( fdout, "nurb.s", surfs );
+    }
 
-	for ( i=0; i<totentities; i++ )
-	{
-		if ( dir[i]->type == 128 ) {
-			if ( spline( i, &srf ) )
-				surfs[convsurf++] = srf;
-		}
-	}
-
-	if ( totsurfs )
-	{
-		if ( curr_file->obj_name )
-			mk_bspline( fdout, curr_file->obj_name, surfs );
-		else
-			mk_bspline( fdout, "nurb.s", surfs );
-	}
-
-	bu_log( "Converted %d NURBS successfully out of %d total NURBS\n", convsurf, totsurfs );
-	if ( convsurf )
-		bu_log( "\tCaution: All NURBS are assumed to be part of the same solid\n" );
+    bu_log( "Converted %d NURBS successfully out of %d total NURBS\n", convsurf, totsurfs );
+    if ( convsurf )
+	bu_log( "\tCaution: All NURBS are assumed to be part of the same solid\n" );
 }
 
 /*

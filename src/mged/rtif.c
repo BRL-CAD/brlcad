@@ -72,22 +72,22 @@ struct run_rt head_run_rt;
 
 struct rtcheck {
 #ifdef _WIN32
-	HANDLE			fd;
-	HANDLE			hProcess;
-	DWORD			pid;
+    HANDLE			fd;
+    HANDLE			hProcess;
+    DWORD			pid;
 #  ifdef TCL_OK
-	Tcl_Channel		chan;
+    Tcl_Channel		chan;
 #  else
-	genptr_t		chan;
+    genptr_t		chan;
 #  endif
 #else /* _WIN32 */
-       int			fd;
-       int			pid;
+    int			fd;
+    int			pid;
 #endif /* _WIN32 */
-	   FILE			*fp;
-       struct bn_vlblock	*vbp;
-       struct bu_list		*vhead;
-       double			csize;
+    FILE			*fp;
+    struct bn_vlblock	*vbp;
+    struct bu_list		*vhead;
+    double			csize;
 };
 
 static vect_t	rtif_eye_model;
@@ -502,7 +502,7 @@ rt_set_eye_model(fastf_t *eye_model)
 	VSET( temp, 0.0, 0.0, 1.0 );
 	MAT4X3PNT(eye_model, view_state->vs_vop->vo_view2model, temp);
     } else {
-  /* not doing zclipping, so back out of geometry */
+	/* not doing zclipping, so back out of geometry */
 	register struct solid *sp;
 	register int i;
 	double  t;
@@ -707,15 +707,15 @@ run_rt(void)
 
 
     if (CreateProcess( NULL,
-		      line,
-		      NULL,
-		      NULL,
-		      TRUE,
-		      DETACHED_PROCESS,
-		      NULL,
-		      NULL,
-		      &si,
-		      &pi )) {
+		       line,
+		       NULL,
+		       NULL,
+		       TRUE,
+		       DETACHED_PROCESS,
+		       NULL,
+		       NULL,
+		       &si,
+		       &pi )) {
 
 	SetStdHandle(STD_INPUT_HANDLE, hSaveStdin);
 	SetStdHandle(STD_OUTPUT_HANDLE, hSaveStderr);
@@ -1335,7 +1335,7 @@ f_rmats(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_OK;
 #endif
     while ( !feof( fp ) &&
-	   rt_read( fp, &scale, eye_model, rot ) >= 0 )  {
+	    rt_read( fp, &scale, eye_model, rot ) >= 0 )  {
 	switch (mode)  {
 	    case -1:
 		/* First step:  put eye in center */
@@ -1606,20 +1606,20 @@ f_preview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		rtif_mode = 3;	/* Like "ev" */
 		break;
 	    default:
-		{
-		    struct bu_vls tmp_vls;
+	    {
+		struct bu_vls tmp_vls;
 
-		    bu_vls_init(&tmp_vls);
-		    bu_vls_printf(&tmp_vls, "option '%c' unknown\n", c);
-		    bu_vls_printf(&tmp_vls, "        -d#     inter-frame delay\n");
-		    bu_vls_printf(&tmp_vls, "        -v      polygon rendering (visual)\n");
-		    bu_vls_printf(&tmp_vls, "        -D#     desired starting frame\n");
-		    bu_vls_printf(&tmp_vls, "        -K#     final frame\n");
-		    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-		    bu_vls_free(&tmp_vls);
-		}
+		bu_vls_init(&tmp_vls);
+		bu_vls_printf(&tmp_vls, "option '%c' unknown\n", c);
+		bu_vls_printf(&tmp_vls, "        -d#     inter-frame delay\n");
+		bu_vls_printf(&tmp_vls, "        -v      polygon rendering (visual)\n");
+		bu_vls_printf(&tmp_vls, "        -D#     desired starting frame\n");
+		bu_vls_printf(&tmp_vls, "        -K#     final frame\n");
+		Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		bu_vls_free(&tmp_vls);
+	    }
 
-		break;
+	    break;
 	}
     }
     argc -= bu_optind-1;
@@ -1658,7 +1658,7 @@ f_preview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	/* Hack to prevent running framedone scripts prematurely */
 	if ( cmd[0] == '!' )  {
 	    if ( rtif_currentframe < rtif_desiredframe ||
-		(rtif_finalframe && rtif_currentframe > rtif_finalframe) )  {
+		 (rtif_finalframe && rtif_currentframe > rtif_finalframe) )  {
 		bu_free( (genptr_t)cmd, "preview ! cmd" );
 		continue;
 	    }
@@ -1784,8 +1784,8 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     /* swipe x, y, z off the end if present */
     if (argc > 3) {
 	if (sscanf(argv[argc-3], "%lf", &center_model[X]) == 1 &&
-	   sscanf(argv[argc-2], "%lf", &center_model[Y]) == 1 &&
-	   sscanf(argv[argc-1], "%lf", &center_model[Z]) == 1) {
+	    sscanf(argv[argc-2], "%lf", &center_model[Y]) == 1 &&
+	    sscanf(argv[argc-1], "%lf", &center_model[Z]) == 1) {
 	    use_input_orig = 1;
 	    argc -= 3;
 	    VSCALE(center_model, center_model, local2base);
@@ -2137,7 +2137,7 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    BU_LIST_APPEND(HeadQRayData.l.back, &ndlp->l);
 
 	    if (sscanf(line, "%le %le %le %le",
-		      &ndlp->x_in, &ndlp->y_in, &ndlp->z_in, &ndlp->los) != 4)
+		       &ndlp->x_in, &ndlp->y_in, &ndlp->z_in, &ndlp->los) != 4)
 		break;
 	}
 
@@ -2158,7 +2158,7 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    BU_LIST_APPEND(HeadQRayData.l.back, &ndlp->l);
 
 	    if (sscanf(line, "%le %le %le %le",
-		      &ndlp->x_in, &ndlp->y_in, &ndlp->z_in, &ndlp->los) != 4)
+		       &ndlp->x_in, &ndlp->y_in, &ndlp->z_in, &ndlp->los) != 4)
 		break;
 	}
 	vbp = rt_vlblock_init();
@@ -2263,7 +2263,7 @@ f_vnirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
      * arguments are passed straight through to nirt.
      */
     if (sscanf(argv[argc-2], "%lf", &view_ray_orig[X]) != 1 ||
-       sscanf(argv[argc-1], "%lf", &view_ray_orig[Y]) != 1) {
+	sscanf(argv[argc-1], "%lf", &view_ray_orig[Y]) != 1) {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -2600,24 +2600,24 @@ cmd_solids_on_ray (ClientData clientData, Tcl_Interp *interp, int argc, char **a
     }
 
     if ((argc != 1) && (argc != 3))
-	{
-	    Tcl_AppendResult(interp, "Usage: 'solids_on_ray [h v]'", (char *)NULL);
-	    return (TCL_ERROR);
-	}
+    {
+	Tcl_AppendResult(interp, "Usage: 'solids_on_ray [h v]'", (char *)NULL);
+	return (TCL_ERROR);
+    }
     if ((argc == 3) &&
 	((Tcl_GetInt(interp, argv[1], &h) != TCL_OK)
 	 || (Tcl_GetInt(interp, argv[2], &v) != TCL_OK)))
-	{
-	    Tcl_AppendResult(interp, "\nUsage: 'solids_on_ray h v'", NULL);
-	    return (TCL_ERROR);
-	}
+    {
+	Tcl_AppendResult(interp, "\nUsage: 'solids_on_ray h v'", NULL);
+	return (TCL_ERROR);
+    }
 
     if (((int)GED_MIN > h)  || (h > (int)GED_MAX) || ((int)GED_MIN > v)  || (v > (int)GED_MAX))
-	{
-	    Tcl_AppendResult(interp, "Screen coordinates out of range\n",
-			     "Must be between +/-2048", NULL);
-	    return (TCL_ERROR);
-	}
+    {
+	Tcl_AppendResult(interp, "Screen coordinates out of range\n",
+			 "Must be between +/-2048", NULL);
+	return (TCL_ERROR);
+    }
 
     VSET(ray_orig, -view_state->vs_vop->vo_center[MDX],
 	 -view_state->vs_vop->vo_center[MDY], -view_state->vs_vop->vo_center[MDZ]);
@@ -2626,10 +2626,10 @@ cmd_solids_on_ray (ClientData clientData, Tcl_Interp *interp, int argc, char **a
      * Borrowed from size_reset() in chgview.c
      */
     for (i = 0; i < 3; ++i)
-	{
-	    extremum[0][i] = INFINITY;
-	    extremum[1][i] = -INFINITY;
-	}
+    {
+	extremum[0][i] = INFINITY;
+	extremum[1][i] = -INFINITY;
+    }
     FOR_ALL_SOLIDS (sp, &dgop->dgo_headSolid)
 	{
 	    minus[X] = sp->s_center[X] - sp->s_size;
@@ -2652,19 +2652,19 @@ cmd_solids_on_ray (ClientData clientData, Tcl_Interp *interp, int argc, char **a
 	(ray_orig[Y] <= extremum[1][Y]) &&
 	(ray_orig[Z] >= extremum[0][Z]) &&
 	(ray_orig[Z] <= extremum[1][Z]))
+    {
+	t_in = -INFINITY;
+	for (i = 0; i < 6; ++i)
 	{
-	    t_in = -INFINITY;
-	    for (i = 0; i < 6; ++i)
-		{
-		    if (ray_dir[i%3] == 0)
-			continue;
-		    t = (extremum[i/3][i%3] - ray_orig[i%3]) /
-			ray_dir[i%3];
-		    if ((t < 0) && (t > t_in))
-			t_in = t;
-		}
-	    VJOIN1(ray_orig, ray_orig, t_in, ray_dir);
+	    if (ray_dir[i%3] == 0)
+		continue;
+	    t = (extremum[i/3][i%3] - ray_orig[i%3]) /
+		ray_dir[i%3];
+	    if ((t < 0) && (t > t_in))
+		t_in = t;
 	}
+	VJOIN1(ray_orig, ray_orig, t_in, ray_dir);
+    }
 
     VMOVEN(unit_H, view_state->vs_vop->vo_model2view, 3);
     VMOVEN(unit_V, view_state->vs_vop->vo_model2view + 4, 3);
@@ -2682,12 +2682,12 @@ cmd_solids_on_ray (ClientData clientData, Tcl_Interp *interp, int argc, char **a
     stop_catching_output(&vls);
 
     if (snames == 0)
-	{
-	    Tcl_AppendResult(interp, "Error executing skewer_solids: ", (char *)NULL);
-	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-	    bu_vls_free(&vls);
-	    return (TCL_ERROR);
-	}
+    {
+	Tcl_AppendResult(interp, "Error executing skewer_solids: ", (char *)NULL);
+	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
+	return (TCL_ERROR);
+    }
 
     bu_vls_free(&vls);
 

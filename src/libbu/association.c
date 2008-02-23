@@ -44,9 +44,9 @@
  *	This function reads the specified file, searches for the
  *	first line of the form
  *
-@code
-		    <value><field_sep>...
-@endcode
+ @code
+ <value><field_sep>...
+ @endcode
  *
  *	and returns the rest of the line beyond the field separator.
  */
@@ -61,8 +61,8 @@ bu_association (const char *fname,
     struct bu_vls	*vp = 0;
     struct bu_vls	buffer;
 
-	/* XXX NONPARALLEL */
-	/* I'd prefer using "bu_open_mapped_file()" here instead, I think  -Mike */
+    /* XXX NONPARALLEL */
+    /* I'd prefer using "bu_open_mapped_file()" here instead, I think  -Mike */
     if ((fp = fopen(fname, "rb")) == NULL) {
 	/*	XXX
 	 *	Should we be exiting here?
@@ -90,7 +90,7 @@ bu_association (const char *fname,
     bu_vls_init(vp);
     bu_vls_strcpy(vp, cp + len + 1);
 
-wrap_up:
+ wrap_up:
     bu_vls_trunc(&buffer, 0);
     fclose(fp);
     return (vp);

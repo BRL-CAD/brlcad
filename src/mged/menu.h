@@ -29,9 +29,9 @@
 #define SEEN_MENU_H
 
 struct	menu_item  {
-	char	*menu_string;
-	void	(*menu_func)();
-	int	menu_arg;
+    char	*menu_string;
+    void	(*menu_func)();
+    int	menu_arg;
 };
 
 

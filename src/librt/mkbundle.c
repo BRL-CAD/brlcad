@@ -54,38 +54,38 @@
 void
 rt_raybundle_maker(struct xray *rp, double radius, const fastf_t *avec, const fastf_t *bvec, int rays_per_ring, int nring)
 {
-	register struct xray	*rayp = rp+1;
-	int	ring;
-	double	fraction = 1.0;
-	double	theta;
-	double	delta;
-	double	radial_scale;
-	int	count = 0;
+    register struct xray	*rayp = rp+1;
+    int	ring;
+    double	fraction = 1.0;
+    double	theta;
+    double	delta;
+    double	radial_scale;
+    int	count = 0;
 
-	rp[0].index = count++;
-	rp[0].magic =RT_RAY_MAGIC;
+    rp[0].index = count++;
+    rp[0].magic =RT_RAY_MAGIC;
 
-	for ( ring=0; ring < nring; ring++ )  {
-		register int i;
+    for ( ring=0; ring < nring; ring++ )  {
+	register int i;
 
-		theta = 0;
-		delta = bn_twopi / rays_per_ring;
-		fraction = ((double)(ring+1)) / nring;
-		theta = delta * fraction;	/* spiral skew */
-		radial_scale = radius * fraction;
-		for ( i=0; i < rays_per_ring; i++ )  {
-			register double	ct, st;
-			/* pt = V + cos(theta) * A + sin(theta) * B */
-			ct = cos(theta) * radial_scale;
-			st = sin(theta) * radial_scale;
-			VJOIN2( rayp->r_pt, rp[0].r_pt, ct, avec, st, bvec );
-			VMOVE( rayp->r_dir, rp[0].r_dir );
-			rayp->index = count++;
-			rayp->magic = RT_RAY_MAGIC;
-			theta += delta;
-			rayp++;
-		}
+	theta = 0;
+	delta = bn_twopi / rays_per_ring;
+	fraction = ((double)(ring+1)) / nring;
+	theta = delta * fraction;	/* spiral skew */
+	radial_scale = radius * fraction;
+	for ( i=0; i < rays_per_ring; i++ )  {
+	    register double	ct, st;
+	    /* pt = V + cos(theta) * A + sin(theta) * B */
+	    ct = cos(theta) * radial_scale;
+	    st = sin(theta) * radial_scale;
+	    VJOIN2( rayp->r_pt, rp[0].r_pt, ct, avec, st, bvec );
+	    VMOVE( rayp->r_dir, rp[0].r_dir );
+	    rayp->index = count++;
+	    rayp->magic = RT_RAY_MAGIC;
+	    theta += delta;
+	    rayp++;
 	}
+    }
 }
 
 /*
@@ -95,36 +95,36 @@ rt_raybundle_maker(struct xray *rp, double radius, const fastf_t *avec, const fa
 #if 0
 main()
 {
-	FILE	*fp = fopen("bundle.pl", "wb");
-	int	rays_per_ring=5;
-	int	nring=3;
-	fastf_t bundle_radius=1000.0;
-	int	i;
-	vect_t avec, bvec;
-	struct xray *rp;
-	vect_t dir;
+    FILE	*fp = fopen("bundle.pl", "wb");
+    int	rays_per_ring=5;
+    int	nring=3;
+    fastf_t bundle_radius=1000.0;
+    int	i;
+    vect_t avec, bvec;
+    struct xray *rp;
+    vect_t dir;
 
 
-	VSET( dir, 0, 0, -1 );
-	/* create orthogonal rays for basis of bundle */
-	bn_vec_ortho( avec, dir );
-	VCROSS( bvec, dir, avec );
-	VUNITIZE( bvec );
+    VSET( dir, 0, 0, -1 );
+    /* create orthogonal rays for basis of bundle */
+    bn_vec_ortho( avec, dir );
+    VCROSS( bvec, dir, avec );
+    VUNITIZE( bvec );
 
-	rp = (struct xray *)bu_calloc( sizeof( struct xray ),
-				       (rays_per_ring * nring) + 1,
-				       "ray bundle" );
-	VSET( rp[0].r_pt, 0, 0, 2000);
-	VMOVE( rp[0].r_dir, dir );
-	rt_raybundle_maker( rp, bundle_radius, avec, bvec, rays_per_ring, nring );
+    rp = (struct xray *)bu_calloc( sizeof( struct xray ),
+				   (rays_per_ring * nring) + 1,
+				   "ray bundle" );
+    VSET( rp[0].r_pt, 0, 0, 2000);
+    VMOVE( rp[0].r_dir, dir );
+    rt_raybundle_maker( rp, bundle_radius, avec, bvec, rays_per_ring, nring );
 
 
-	for ( i=0; i <= rays_per_ring * nring; i++ )  {
-		point_t	tip;
-		VJOIN1( tip, rp[i].r_pt, 3500, rp[i].r_dir );
-		pdv_3line( fp, rp[i].r_pt, tip );
-	}
-	fclose(fp);
+    for ( i=0; i <= rays_per_ring * nring; i++ )  {
+	point_t	tip;
+	VJOIN1( tip, rp[i].r_pt, 3500, rp[i].r_dir );
+	pdv_3line( fp, rp[i].r_pt, tip );
+    }
+    fclose(fp);
 }
 #endif
 

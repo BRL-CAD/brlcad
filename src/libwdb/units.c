@@ -52,10 +52,10 @@ double	mk_conv2mm = 1.0;		/* Conversion factor to mm */
 int
 mk_conversion(char *str)
 {
-	double	d;
+    double	d;
 
-	if ( (d = bu_units_conversion(str)) <= 0.0 )  return(-1);
-	return( mk_set_conversion(d) );
+    if ( (d = bu_units_conversion(str)) <= 0.0 )  return(-1);
+    return( mk_set_conversion(d) );
 }
 
 /*
@@ -70,9 +70,9 @@ mk_conversion(char *str)
 int
 mk_set_conversion(double val)
 {
-	if ( val <= 0.0 )  return(-1);
-	mk_conv2mm = val;
-	return(0);
+    if ( val <= 0.0 )  return(-1);
+    mk_conv2mm = val;
+    return(0);
 }
 
 /*

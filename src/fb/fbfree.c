@@ -48,28 +48,28 @@ Usage: fbfree [-F framebuffer]\n";
 int
 main(int argc, char **argv)
 {
-	register int c;
-	FBIO	*fbp;
+    register int c;
+    FBIO	*fbp;
 
-	while ( (c = bu_getopt( argc, argv, "F:" )) != EOF ) {
-		switch ( c ) {
-		case 'F':
-			framebuffer = bu_optarg;
-			break;
-		default:		/* '?' */
-			(void)fputs(usage, stderr);
-			return 1;
-		}
+    while ( (c = bu_getopt( argc, argv, "F:" )) != EOF ) {
+	switch ( c ) {
+	    case 'F':
+		framebuffer = bu_optarg;
+		break;
+	    default:		/* '?' */
+		(void)fputs(usage, stderr);
+		return 1;
 	}
-	if ( argc > ++bu_optind ) {
-		(void)fprintf( stderr, "fbfree: excess argument(s) ignored\n" );
-	}
+    }
+    if ( argc > ++bu_optind ) {
+	(void)fprintf( stderr, "fbfree: excess argument(s) ignored\n" );
+    }
 
-	if ( (fbp = fb_open( framebuffer, 0, 0 )) == FBIO_NULL ) {
-		fprintf( stderr, "fbfree: Can't open frame buffer\n" );
-		return	1;
-	}
-	return	fb_free( fbp );
+    if ( (fbp = fb_open( framebuffer, 0, 0 )) == FBIO_NULL ) {
+	fprintf( stderr, "fbfree: Can't open frame buffer\n" );
+	return	1;
+    }
+    return	fb_free( fbp );
 }
 
 /*

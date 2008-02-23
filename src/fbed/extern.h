@@ -40,25 +40,25 @@
 		return 0;
 
 typedef struct
-	{
-	int p_x;
-	int p_y;
-	}
+{
+    int p_x;
+    int p_y;
+}
 Point;
 
 typedef struct
-	{
-	Point r_origin;
-	Point r_corner;
-	}
+{
+    Point r_origin;
+    Point r_corner;
+}
 Rectangle;
 
 typedef struct
-	{
-	RGBpixel *n_buf;
-	int n_wid;
-	int n_hgt;
-	}
+{
+    RGBpixel *n_buf;
+    int n_wid;
+    int n_hgt;
+}
 Panel;
 
 extern FBIO *fbp;

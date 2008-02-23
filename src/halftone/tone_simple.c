@@ -65,13 +65,13 @@ extern struct bn_unif *RandomFlag;
 int
 tone_simple(int pix, int x, int y, int nx, int ny, int new)
 {
-	register int threshold;
-	if (RandomFlag) {
-		threshold = THRESHOLD + BN_UNIF_DOUBLE(RandomFlag)*127;
-	} else {
-		threshold = THRESHOLD;
-	}
-	return((pix*Levels + threshold) / 256 );
+    register int threshold;
+    if (RandomFlag) {
+	threshold = THRESHOLD + BN_UNIF_DOUBLE(RandomFlag)*127;
+    } else {
+	threshold = THRESHOLD;
+    }
+    return((pix*Levels + threshold) / 256 );
 }
 
 /*

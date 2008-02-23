@@ -62,7 +62,7 @@ static struct bu_rb_node *_rb_extreme (struct bu_rb_node *root, int order, int s
 	BU_RB_CKORDER(tree, order);
 
 	child = (sense == SENSE_MIN) ? bu_rb_left_child(root, order) :
-				       bu_rb_right_child(root, order);
+	    bu_rb_right_child(root, order);
 	if (child == empty_node)
 	    break;
 	root = child;
@@ -97,7 +97,7 @@ void *bu_rb_extreme (bu_rb_tree *tree, int order, int sense)
 
     /* Wade throught the tree */
     node = _rb_extreme(bu_rb_root(tree, order), order, sense,
-			bu_rb_null(tree));
+		       bu_rb_null(tree));
 
     if (node == bu_rb_null(tree))
 	return (NULL);
@@ -129,7 +129,7 @@ struct bu_rb_node *_rb_neighbor (struct bu_rb_node *node, int order, int sense)
     empty_node = bu_rb_null(tree);
 
     child = (sense == SENSE_MIN) ? bu_rb_left_child(node, order) :
-				   bu_rb_right_child(node, order);
+	bu_rb_right_child(node, order);
     if (child != empty_node)
 	return (_rb_extreme(child, order, 1 - sense, empty_node));
     parent = bu_rb_parent(node, order);

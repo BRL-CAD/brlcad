@@ -110,27 +110,27 @@ static void Ogl_establish_lighting();
 #endif
 
 struct cmdtab {
-  char *ct_name;
-  int (*ct_func)();
+    char *ct_name;
+    int (*ct_func)();
 };
 
 static struct cmdtab cmdtab[] = {
-"ae", cmd_aetview,
-"clear", cmd_clear,
-"closepl", cmd_closepl,
-"dm", cmd_dm,
-"draw", cmd_draw,
-"erase", cmd_erase,
-"exit", cmd_exit,
-"ls", cmd_list,
-"openpl", cmd_openpl,
-"q", cmd_exit,
-"reset", cmd_reset,
-"sv", cmd_slewview,
-"t", cmd_list,
-"vrot", cmd_vrot,
-"zoom", cmd_zoom,
-(char *)NULL, (int (*)())NULL
+    "ae", cmd_aetview,
+    "clear", cmd_clear,
+    "closepl", cmd_closepl,
+    "dm", cmd_dm,
+    "draw", cmd_draw,
+    "erase", cmd_erase,
+    "exit", cmd_exit,
+    "ls", cmd_list,
+    "openpl", cmd_openpl,
+    "q", cmd_exit,
+    "reset", cmd_reset,
+    "sv", cmd_slewview,
+    "t", cmd_list,
+    "vrot", cmd_vrot,
+    "zoom", cmd_zoom,
+    (char *)NULL, (int (*)())NULL
 };
 
 #define MAXARGS 9000
@@ -162,11 +162,11 @@ static int windowbounds[6] = { 2047, -2048, 2047, -2048, 2047, -2048 };
 double degtorad =  0.01745329251994329573;
 
 struct plot_list{
-  struct bu_list l;
-  int pl_draw;
-  int pl_edit;
-  struct bu_vls pl_name;
-  struct bn_vlblock *pl_vbp;
+    struct bu_list l;
+    int pl_draw;
+    int pl_edit;
+    struct bu_vls pl_name;
+    struct bn_vlblock *pl_vbp;
 };
 
 struct plot_list HeadPlot;
@@ -181,30 +181,30 @@ int dm_type = DM_TYPE_X;
 
 #ifdef DM_WGL
 struct bu_structparse Wgl_vparse[] = {
-  {"%d",  1, "depthcue",	Wgl_MV_O(cueing_on),	Wgl_colorchange },
-  {"%d",  1, "zclip",		Wgl_MV_O(zclipping_on),	refresh },
-  {"%d",  1, "zbuffer",		Wgl_MV_O(zbuffer_on),	Wgl_establish_zbuffer },
-  {"%d",  1, "lighting",	Wgl_MV_O(lighting_on),	Wgl_establish_lighting },
-  {"%d",  1, "debug",		Wgl_MV_O(debug),	BU_STRUCTPARSE_FUNC_NULL },
-  {"",	0,  (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%d",  1, "depthcue",	Wgl_MV_O(cueing_on),	Wgl_colorchange },
+    {"%d",  1, "zclip",		Wgl_MV_O(zclipping_on),	refresh },
+    {"%d",  1, "zbuffer",		Wgl_MV_O(zbuffer_on),	Wgl_establish_zbuffer },
+    {"%d",  1, "lighting",	Wgl_MV_O(lighting_on),	Wgl_establish_lighting },
+    {"%d",  1, "debug",		Wgl_MV_O(debug),	BU_STRUCTPARSE_FUNC_NULL },
+    {"",	0,  (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
 #elif DM_OGL
 struct bu_structparse Ogl_vparse[] = {
-  {"%d",  1, "depthcue",	Ogl_MV_O(cueing_on),	Ogl_colorchange },
-  {"%d",  1, "zclip",		Ogl_MV_O(zclipping_on),	refresh },
-  {"%d",  1, "zbuffer",		Ogl_MV_O(zbuffer_on),	Ogl_establish_zbuffer },
-  {"%d",  1, "lighting",	Ogl_MV_O(lighting_on),	Ogl_establish_lighting },
-  {"%d",  1, "debug",		Ogl_MV_O(debug),	BU_STRUCTPARSE_FUNC_NULL },
-  {"",	0,  (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%d",  1, "depthcue",	Ogl_MV_O(cueing_on),	Ogl_colorchange },
+    {"%d",  1, "zclip",		Ogl_MV_O(zclipping_on),	refresh },
+    {"%d",  1, "zbuffer",		Ogl_MV_O(zbuffer_on),	Ogl_establish_zbuffer },
+    {"%d",  1, "lighting",	Ogl_MV_O(lighting_on),	Ogl_establish_lighting },
+    {"%d",  1, "debug",		Ogl_MV_O(debug),	BU_STRUCTPARSE_FUNC_NULL },
+    {"",	0,  (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
 #else  /* !DM_WGL && !DM_OGL */
 
 struct bu_structparse X_vparse[] = {
-  {"%d",  1, "zclip",             X_MV_O(zclip),        refresh},
-  {"%d",  1, "debug",             X_MV_O(debug),        BU_STRUCTPARSE_FUNC_NULL },
-  {"",	0,  (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%d",  1, "zclip",             X_MV_O(zclip),        refresh},
+    {"%d",  1, "debug",             X_MV_O(debug),        BU_STRUCTPARSE_FUNC_NULL },
+    {"",	0,  (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
 #endif  /* DM_WGL */
@@ -218,8 +218,8 @@ static char usage[] = "Usage: pl-dm [-t o|X] plot_file(s)\n";
  */
 static int
 output_catch(clientdata, str)
-genptr_t clientdata;
-genptr_t str;
+    genptr_t clientdata;
+    genptr_t str;
 {
     register struct bu_vls *vp = (struct bu_vls *)clientdata;
     register int len;
@@ -240,7 +240,7 @@ genptr_t str;
  */
 void
 start_catching_output(vp)
-struct bu_vls *vp;
+    struct bu_vls *vp;
 {
     bu_log_add_hook(output_catch, (genptr_t)vp);
 }
@@ -252,193 +252,193 @@ struct bu_vls *vp;
  */
 void
 stop_catching_output(vp)
-struct bu_vls *vp;
+    struct bu_vls *vp;
 {
     bu_log_delete_hook(output_catch, (genptr_t)vp);
 }
 
 int
 get_args( argc, argv )
-register char **argv;
+    register char **argv;
 {
-  register int c;
+    register int c;
 
-  while ((c = bu_getopt( argc, argv, "t:" )) != EOF) {
-    switch (c) {
-    case 't':
-      switch (*bu_optarg) {
-      case 'w':
-      case 'W':
-	dm_type = DM_TYPE_WGL;
-	break;
-      case 'o':
-      case 'O':
-	dm_type = DM_TYPE_OGL;
-	break;
-      case 'x':
-      case 'X':
-	dm_type = DM_TYPE_X;
-	break;
-      default:
-	dm_type = DM_TYPE_X;
-	break;
-      }
-      break;
-    default:		/* '?' */
-      return(0);
+    while ((c = bu_getopt( argc, argv, "t:" )) != EOF) {
+	switch (c) {
+	    case 't':
+		switch (*bu_optarg) {
+		    case 'w':
+		    case 'W':
+			dm_type = DM_TYPE_WGL;
+			break;
+		    case 'o':
+		    case 'O':
+			dm_type = DM_TYPE_OGL;
+			break;
+		    case 'x':
+		    case 'X':
+			dm_type = DM_TYPE_X;
+			break;
+		    default:
+			dm_type = DM_TYPE_X;
+			break;
+		}
+		break;
+	    default:		/* '?' */
+		return(0);
+	}
     }
-  }
 
-  if (bu_optind >= argc) {
-    if (isatty(fileno(stdin)))
-      return(0);
-  }
+    if (bu_optind >= argc) {
+	if (isatty(fileno(stdin)))
+	    return(0);
+    }
 
-  return(1);		/* OK */
+    return(1);		/* OK */
 }
 
 int
 main(argc, argv)
-int argc;
-char *argv[];
+    int argc;
+    char *argv[];
 {
-  int n;
-  char *file;
-  FILE *fp;
-  struct plot_list *plp;
+    int n;
+    char *file;
+    FILE *fp;
+    struct plot_list *plp;
 
-  if (!get_args(argc, argv))
-    bu_exit (1, "%s", usage);
+    if (!get_args(argc, argv))
+	bu_exit (1, "%s", usage);
 
-  memset((void *)&HeadPlot, 0, sizeof(struct plot_list));
-  BU_LIST_INIT(&HeadPlot.l);
+    memset((void *)&HeadPlot, 0, sizeof(struct plot_list));
+    BU_LIST_INIT(&HeadPlot.l);
 
-  MAT_IDN(toViewcenter);
-  MAT_IDN(Viewrot);
-  MAT_IDN(model2view);
-  MAT_IDN(view2model);
+    MAT_IDN(toViewcenter);
+    MAT_IDN(Viewrot);
+    MAT_IDN(model2view);
+    MAT_IDN(view2model);
 
-  if (cmd_openpl((ClientData)NULL, (Tcl_Interp *)NULL,
+    if (cmd_openpl((ClientData)NULL, (Tcl_Interp *)NULL,
 		   argc-bu_optind+1, argv+bu_optind-1) == TCL_ERROR)
-    bu_exit (1, NULL);
+	bu_exit (1, NULL);
 
-  argv[1] = (char *)NULL;
-  Tk_Main(1, argv, appInit);
+    argv[1] = (char *)NULL;
+    Tk_Main(1, argv, appInit);
 
-  bu_exit (0, NULL);
+    bu_exit (0, NULL);
 }
 
 static int
 appInit(_interp)
-Tcl_Interp *_interp;
+    Tcl_Interp *_interp;
 {
-  char *filename;
-  struct bu_vls str;
-  struct bu_vls str2;
+    char *filename;
+    struct bu_vls str;
+    struct bu_vls str2;
 
-  /* libdm uses interp */
-  interp = _interp;
+    /* libdm uses interp */
+    interp = _interp;
 
-  switch (dm_type) {
+    switch (dm_type) {
 #ifdef DM_WGL
-  case DM_TYPE_WGL:
-    cmd_hook = Wgl_dm;
-    break;
+	case DM_TYPE_WGL:
+	    cmd_hook = Wgl_dm;
+	    break;
 #endif
 #ifdef DM_OGL
-  case DM_TYPE_OGL:
-    cmd_hook = Ogl_dm;
-    break;
+	case DM_TYPE_OGL:
+	    cmd_hook = Ogl_dm;
+	    break;
 #endif
-  case DM_TYPE_X:
-  default:
-    cmd_hook = X_dm;
-    break;
-  }
+	case DM_TYPE_X:
+	default:
+	    cmd_hook = X_dm;
+	    break;
+    }
 
-  /* Evaluates init.tcl */
-  if (Tcl_Init(interp) == TCL_ERROR)
-    bu_exit (1, "Tcl_Init error %s\n", Tcl_GetStringResult(interp));
+    /* Evaluates init.tcl */
+    if (Tcl_Init(interp) == TCL_ERROR)
+	bu_exit (1, "Tcl_Init error %s\n", Tcl_GetStringResult(interp));
 
-  /*
-   * Creates the main window and registers all of Tk's commands
-   * into the interpreter.
-   */
-  if (Tk_Init(interp) == TCL_ERROR)
-    bu_exit (1, "Tk_Init error %s\n", Tcl_GetStringResult(interp));
+    /*
+     * Creates the main window and registers all of Tk's commands
+     * into the interpreter.
+     */
+    if (Tk_Init(interp) == TCL_ERROR)
+	bu_exit (1, "Tk_Init error %s\n", Tcl_GetStringResult(interp));
 
-  if ((tkwin = Tk_MainWindow(interp)) == NULL)
-    bu_exit (1, "appInit: Failed to get main window.\n");
+    if ((tkwin = Tk_MainWindow(interp)) == NULL)
+	bu_exit (1, "appInit: Failed to get main window.\n");
 
-  /* Locate the BRL-CAD-specific Tcl scripts */
-  filename = bu_brlcad_data( "tclscripts", 0 );
+    /* Locate the BRL-CAD-specific Tcl scripts */
+    filename = bu_brlcad_data( "tclscripts", 0 );
 
-  bu_vls_init(&str);
-  bu_vls_init(&str2);
-  bu_vls_printf(&str2, "%s/pl-dm", filename);
-  bu_vls_printf(&str, "wm withdraw .; set auto_path [linsert $auto_path 0 %s %s]",
-		bu_vls_addr(&str2), filename);
-  (void)Tcl_Eval(interp, bu_vls_addr(&str));
-  bu_vls_free(&str);
-  bu_vls_free(&str2);
+    bu_vls_init(&str);
+    bu_vls_init(&str2);
+    bu_vls_printf(&str2, "%s/pl-dm", filename);
+    bu_vls_printf(&str, "wm withdraw .; set auto_path [linsert $auto_path 0 %s %s]",
+		  bu_vls_addr(&str2), filename);
+    (void)Tcl_Eval(interp, bu_vls_addr(&str));
+    bu_vls_free(&str);
+    bu_vls_free(&str2);
 
-  /* register application commands */
-  cmd_setup(interp, cmdtab);
+    /* register application commands */
+    cmd_setup(interp, cmdtab);
 
-  /* open display manager */
-  switch (dm_type) {
+    /* open display manager */
+    switch (dm_type) {
 #ifdef DM_WGL
-  case DM_TYPE_WGL:
-    return Wgl_dmInit();
+	case DM_TYPE_WGL:
+	    return Wgl_dmInit();
 #endif
 #ifdef DM_OGL
-  case DM_TYPE_OGL:
-    return Ogl_dmInit();
+	case DM_TYPE_OGL:
+	    return Ogl_dmInit();
 #endif
-  case DM_TYPE_X:
-  default:
-    return X_dmInit();
-  }
+	case DM_TYPE_X:
+	default:
+	    return X_dmInit();
+    }
 }
 
 static void
 refresh() {
-  int i;
-  struct plot_list *plp;
+    int i;
+    struct plot_list *plp;
 
-  DM_DRAW_BEGIN(dmp);
-  DM_LOADMATRIX(dmp, model2view, 0);
+    DM_DRAW_BEGIN(dmp);
+    DM_LOADMATRIX(dmp, model2view, 0);
 
-  for (BU_LIST_FOR(plp, plot_list, &HeadPlot.l)) {
-    if (plp->pl_draw)
-      for (i=0; i < plp->pl_vbp->nused; i++) {
-	if (plp->pl_vbp->rgb[i] != 0) {
-	  long rgb;
+    for (BU_LIST_FOR(plp, plot_list, &HeadPlot.l)) {
+	if (plp->pl_draw)
+	    for (i=0; i < plp->pl_vbp->nused; i++) {
+		if (plp->pl_vbp->rgb[i] != 0) {
+		    long rgb;
 
-	  rgb = plp->pl_vbp->rgb[i];
-	  DM_SET_FGCOLOR(dmp, (rgb>>16) & 0xFF, (rgb>>8) & 0xFF, rgb & 0xFF, 0, (fastf_t)0.0);
-	}
+		    rgb = plp->pl_vbp->rgb[i];
+		    DM_SET_FGCOLOR(dmp, (rgb>>16) & 0xFF, (rgb>>8) & 0xFF, rgb & 0xFF, 0, (fastf_t)0.0);
+		}
 
-	DM_DRAW_VLIST(dmp, (struct bn_vlist *)&plp->pl_vbp->head[i]);
-      }
-  }
+		DM_DRAW_VLIST(dmp, (struct bn_vlist *)&plp->pl_vbp->head[i]);
+	    }
+    }
 
-  DM_NORMAL(dmp);
-  DM_DRAW_END(dmp);
+    DM_NORMAL(dmp);
+    DM_DRAW_END(dmp);
 }
 
 static void
 vrot(x, y, z)
-double x, y, z;
+    double x, y, z;
 {
-  mat_t newrot;
+    mat_t newrot;
 
-  MAT_IDN( newrot );
-  buildHrot( newrot,
-	     x * degtorad,
-	     y * degtorad,
-	     z * degtorad );
-  bn_mat_mul2( newrot, Viewrot );
+    MAT_IDN( newrot );
+    buildHrot( newrot,
+	       x * degtorad,
+	       y * degtorad,
+	       z * degtorad );
+    bn_mat_mul2( newrot, Viewrot );
 }
 
 /*
@@ -452,58 +452,58 @@ double x, y, z;
  */
 static void
 setview(a1, a2, a3)
-double a1, a2, a3;		/* DOUBLE angles, in degrees */
+    double a1, a2, a3;		/* DOUBLE angles, in degrees */
 {
-  point_t model_pos;
-  point_t new_pos;
+    point_t model_pos;
+    point_t new_pos;
 
-  buildHrot(Viewrot, a1 * degtorad, a2 * degtorad, a3 * degtorad);
+    buildHrot(Viewrot, a1 * degtorad, a2 * degtorad, a3 * degtorad);
 }
 
 static int
 islewview(vdiff)
-vect_t vdiff;
+    vect_t vdiff;
 {
-  vect_t old_model_pos;
-  vect_t old_view_pos;
-  vect_t view_pos;
+    vect_t old_model_pos;
+    vect_t old_view_pos;
+    vect_t view_pos;
 
-  MAT_DELTAS_GET_NEG(old_model_pos, toViewcenter);
-  MAT4X3PNT(old_view_pos, model2view, old_model_pos);
-  VSUB2(view_pos, old_view_pos, vdiff);
+    MAT_DELTAS_GET_NEG(old_model_pos, toViewcenter);
+    MAT4X3PNT(old_view_pos, model2view, old_model_pos);
+    VSUB2(view_pos, old_view_pos, vdiff);
 
-  return slewview(view_pos);
+    return slewview(view_pos);
 }
 
 static int
 slewview(view_pos)
-vect_t view_pos;
+    vect_t view_pos;
 {
-  vect_t new_model_pos;
+    vect_t new_model_pos;
 
-  MAT4X3PNT( new_model_pos, view2model, view_pos );
-  MAT_DELTAS_VEC_NEG( toViewcenter, new_model_pos );
+    MAT4X3PNT( new_model_pos, view2model, view_pos );
+    MAT_DELTAS_VEC_NEG( toViewcenter, new_model_pos );
 
-  return TCL_OK;
+    return TCL_OK;
 }
 
 static int
 zoom(interp, val)
-Tcl_Interp *interp;
-double val;
+    Tcl_Interp *interp;
+    double val;
 {
-  if ( val < SMALL_FASTF || val > INFINITY )  {
-    Tcl_AppendResult(interp,
-		     "zoom: scale factor out of range\n", (char *)NULL);
-    return TCL_ERROR;
-  }
+    if ( val < SMALL_FASTF || val > INFINITY )  {
+	Tcl_AppendResult(interp,
+			 "zoom: scale factor out of range\n", (char *)NULL);
+	return TCL_ERROR;
+    }
 
-  if ( Viewscale < SMALL_FASTF || INFINITY < Viewscale )
-    return TCL_ERROR;
+    if ( Viewscale < SMALL_FASTF || INFINITY < Viewscale )
+	return TCL_ERROR;
 
-  Viewscale /= val;
+    Viewscale /= val;
 
-  return TCL_OK;
+    return TCL_OK;
 }
 
 /*
@@ -516,59 +516,59 @@ double val;
 static void
 size_reset()
 {
-  int i;
-  register struct bn_vlist *tvp;
-  vect_t min, max;
-  vect_t center;
-  vect_t radial;
-  struct plot_list *plp;
+    int i;
+    register struct bn_vlist *tvp;
+    vect_t min, max;
+    vect_t center;
+    vect_t radial;
+    struct plot_list *plp;
 
-  VSETALL( min,  INFINITY );
-  VSETALL( max, -INFINITY );
+    VSETALL( min,  INFINITY );
+    VSETALL( max, -INFINITY );
 
-  for (BU_LIST_FOR(plp, plot_list, &HeadPlot.l)) {
-    struct bn_vlblock *vbp;
+    for (BU_LIST_FOR(plp, plot_list, &HeadPlot.l)) {
+	struct bn_vlblock *vbp;
 
-    vbp = plp->pl_vbp;
-    for (i=0; i < vbp->nused; i++) {
-      register struct bn_vlist *vp = (struct bn_vlist *)&vbp->head[i];
+	vbp = plp->pl_vbp;
+	for (i=0; i < vbp->nused; i++) {
+	    register struct bn_vlist *vp = (struct bn_vlist *)&vbp->head[i];
 
-      for (BU_LIST_FOR(tvp, bn_vlist, &vp->l)) {
-	register int j;
-	register int nused = tvp->nused;
-	register int *cmd = tvp->cmd;
-	register point_t *pt = tvp->pt;
+	    for (BU_LIST_FOR(tvp, bn_vlist, &vp->l)) {
+		register int j;
+		register int nused = tvp->nused;
+		register int *cmd = tvp->cmd;
+		register point_t *pt = tvp->pt;
 
-	for (j = 0; j < nused; j++, cmd++, pt++ ) {
-	  switch (*cmd) {
-	  case BN_VLIST_POLY_START:
-	  case BN_VLIST_POLY_VERTNORM:
-	    break;
-	  case BN_VLIST_POLY_MOVE:
-	  case BN_VLIST_LINE_MOVE:
-	  case BN_VLIST_POLY_DRAW:
-	  case BN_VLIST_POLY_END:
-	  case BN_VLIST_LINE_DRAW:
-	    VMIN(min, *pt);
-	    VMAX(max, *pt);
-	    break;
-	  }
+		for (j = 0; j < nused; j++, cmd++, pt++ ) {
+		    switch (*cmd) {
+			case BN_VLIST_POLY_START:
+			case BN_VLIST_POLY_VERTNORM:
+			    break;
+			case BN_VLIST_POLY_MOVE:
+			case BN_VLIST_LINE_MOVE:
+			case BN_VLIST_POLY_DRAW:
+			case BN_VLIST_POLY_END:
+			case BN_VLIST_LINE_DRAW:
+			    VMIN(min, *pt);
+			    VMAX(max, *pt);
+			    break;
+		    }
+		}
+	    }
 	}
-      }
     }
-  }
 
-  VADD2SCALE( center, max, min, 0.5 );
-  VSUB2( radial, max, center );
+    VADD2SCALE( center, max, min, 0.5 );
+    VSUB2( radial, max, center );
 
-  if ( VNEAR_ZERO( radial, SQRT_SMALL_FASTF ) )
-    VSETALL( radial, 1.0 );
+    if ( VNEAR_ZERO( radial, SQRT_SMALL_FASTF ) )
+	VSETALL( radial, 1.0 );
 
-  MAT_IDN( toViewcenter );
-  MAT_DELTAS_VEC_NEG( toViewcenter, center);
-  Viewscale = radial[X];
-  V_MAX( Viewscale, radial[Y] );
-  V_MAX( Viewscale, radial[Z] );
+    MAT_IDN( toViewcenter );
+    MAT_DELTAS_VEC_NEG( toViewcenter, center);
+    Viewscale = radial[X];
+    V_MAX( Viewscale, radial[Y] );
+    V_MAX( Viewscale, radial[Z] );
 }
 
 /*
@@ -580,9 +580,9 @@ size_reset()
 static void
 new_mats()
 {
-  bn_mat_mul( model2view, Viewrot, toViewcenter );
-  model2view[15] = Viewscale;
-  bn_mat_inv( view2model, model2view );
+    bn_mat_mul( model2view, Viewrot, toViewcenter );
+    model2view[15] = Viewscale;
+    bn_mat_inv( view2model, model2view );
 }
 
 /*
@@ -596,55 +596,55 @@ new_mats()
  */
 static void
 buildHrot( mat, alpha, beta, ggamma )
-register matp_t mat;
-double alpha, beta, ggamma;
+    register matp_t mat;
+    double alpha, beta, ggamma;
 {
-  static fastf_t calpha, cbeta, cgamma;
-  static fastf_t salpha, sbeta, sgamma;
+    static fastf_t calpha, cbeta, cgamma;
+    static fastf_t salpha, sbeta, sgamma;
 
-  calpha = cos( alpha );
-  cbeta = cos( beta );
-  cgamma = cos( ggamma );
+    calpha = cos( alpha );
+    cbeta = cos( beta );
+    cgamma = cos( ggamma );
 
-  salpha = sin( alpha );
-  sbeta = sin( beta );
-  sgamma = sin( ggamma );
+    salpha = sin( alpha );
+    sbeta = sin( beta );
+    sgamma = sin( ggamma );
 
-  /*
-   * compute the new rotation to apply to the previous
-   * viewing rotation.
-   * Alpha is angle of rotation about the X axis, and is done third.
-   * Beta is angle of rotation about the Y axis, and is done second.
-   * Gamma is angle of rotation about Z axis, and is done first.
-   */
+    /*
+     * compute the new rotation to apply to the previous
+     * viewing rotation.
+     * Alpha is angle of rotation about the X axis, and is done third.
+     * Beta is angle of rotation about the Y axis, and is done second.
+     * Gamma is angle of rotation about Z axis, and is done first.
+     */
 #ifdef m_RZ_RY_RX
-  /* view = model * RZ * RY * RX (Neuman+Sproul, premultiply) */
-  mat[0] = cbeta * cgamma;
-  mat[1] = -cbeta * sgamma;
-  mat[2] = -sbeta;
+    /* view = model * RZ * RY * RX (Neuman+Sproul, premultiply) */
+    mat[0] = cbeta * cgamma;
+    mat[1] = -cbeta * sgamma;
+    mat[2] = -sbeta;
 
-  mat[4] = -salpha * sbeta * cgamma + calpha * sgamma;
-  mat[5] = salpha * sbeta * sgamma + calpha * cgamma;
-  mat[6] = -salpha * cbeta;
+    mat[4] = -salpha * sbeta * cgamma + calpha * sgamma;
+    mat[5] = salpha * sbeta * sgamma + calpha * cgamma;
+    mat[6] = -salpha * cbeta;
 
-  mat[8] = calpha * sbeta * cgamma + salpha * sgamma;
-  mat[9] = -calpha * sbeta * sgamma + salpha * cgamma;
-  mat[10] = calpha * cbeta;
+    mat[8] = calpha * sbeta * cgamma + salpha * sgamma;
+    mat[9] = -calpha * sbeta * sgamma + salpha * cgamma;
+    mat[10] = calpha * cbeta;
 #endif
-  /* This is the correct form for this version of GED */
-  /* view = RX * RY * RZ * model (Rodgers, postmultiply) */
-  /* Point thumb along axis of rotation.  +Angle as hand closes */
-  mat[0] = cbeta * cgamma;
-  mat[1] = -cbeta * sgamma;
-  mat[2] = sbeta;
+    /* This is the correct form for this version of GED */
+    /* view = RX * RY * RZ * model (Rodgers, postmultiply) */
+    /* Point thumb along axis of rotation.  +Angle as hand closes */
+    mat[0] = cbeta * cgamma;
+    mat[1] = -cbeta * sgamma;
+    mat[2] = sbeta;
 
-  mat[4] = salpha * sbeta * cgamma + calpha * sgamma;
-  mat[5] = -salpha * sbeta * sgamma + calpha * cgamma;
-  mat[6] = -salpha * cbeta;
+    mat[4] = salpha * sbeta * cgamma + calpha * sgamma;
+    mat[5] = -salpha * sbeta * sgamma + calpha * cgamma;
+    mat[6] = -salpha * cbeta;
 
-  mat[8] = -calpha * sbeta * cgamma + salpha * sgamma;
-  mat[9] = calpha * sbeta * sgamma + salpha * cgamma;
-  mat[10] = calpha * cbeta;
+    mat[8] = -calpha * sbeta * cgamma + salpha * sgamma;
+    mat[9] = calpha * sbeta * sgamma + salpha * cgamma;
+    mat[10] = calpha * cbeta;
 }
 
 /*
@@ -652,89 +652,89 @@ double alpha, beta, ggamma;
  */
 static int
 cmd_openpl(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int     argc;
-char    **argv;
+    ClientData clientData;
+    Tcl_Interp *interp;
+    int     argc;
+    char    **argv;
 {
-  static int not_first = 0;
-  int i;
-  int do_size_reset;
-  int read_file;
-  char *file;
-  FILE *fp;
-  struct plot_list *plp;
+    static int not_first = 0;
+    int i;
+    int do_size_reset;
+    int read_file;
+    char *file;
+    FILE *fp;
+    struct plot_list *plp;
 
-  if (argc < 2) {
-    struct bu_vls vls;
+    if (argc < 2) {
+	struct bu_vls vls;
 
-    bu_vls_init(&vls);
-    bu_vls_strcpy(&vls, "help openpl");
-    (void)Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
-
-  /* check to see if we should resize the view */
-  if (BU_LIST_IS_EMPTY(&HeadPlot.l))
-    do_size_reset = 1;
-  else
-    do_size_reset = 0;
-
-  /* read plot files */
-  for (read_file=0, i=1; i < argc; ++i) {
-    char *bnp;
-
-    file = argv[i];
-    if ((fp = fopen(file, "r")) == NULL) {
-      bu_log("%s: can't open \"%s\"\n", argv[0], file);
-      continue;
+	bu_vls_init(&vls);
+	bu_vls_strcpy(&vls, "help openpl");
+	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
     }
 
-    ++read_file;
-
-    /* skip path */
-    bnp = strrchr(argv[i], '/');
-    if (bnp == (char *)NULL)
-      bnp = argv[i];
+    /* check to see if we should resize the view */
+    if (BU_LIST_IS_EMPTY(&HeadPlot.l))
+	do_size_reset = 1;
     else
-      ++bnp;
+	do_size_reset = 0;
 
-    /* check for existing objects with same name as argv[i] */
-    for (BU_LIST_FOR(plp, plot_list, &HeadPlot.l)) {
-      /* found object with same name */
-      if (!strcmp(bu_vls_addr(&plp->pl_name), bnp)) {
-	rt_vlblock_free(plp->pl_vbp);
-	goto up_to_vl;
-      }
+    /* read plot files */
+    for (read_file=0, i=1; i < argc; ++i) {
+	char *bnp;
+
+	file = argv[i];
+	if ((fp = fopen(file, "r")) == NULL) {
+	    bu_log("%s: can't open \"%s\"\n", argv[0], file);
+	    continue;
+	}
+
+	++read_file;
+
+	/* skip path */
+	bnp = strrchr(argv[i], '/');
+	if (bnp == (char *)NULL)
+	    bnp = argv[i];
+	else
+	    ++bnp;
+
+	/* check for existing objects with same name as argv[i] */
+	for (BU_LIST_FOR(plp, plot_list, &HeadPlot.l)) {
+	    /* found object with same name */
+	    if (!strcmp(bu_vls_addr(&plp->pl_name), bnp)) {
+		rt_vlblock_free(plp->pl_vbp);
+		goto up_to_vl;
+	    }
+	}
+
+	BU_GETSTRUCT(plp, plot_list);
+	BU_LIST_APPEND(&HeadPlot.l, &plp->l);
+	bu_vls_init(&plp->pl_name);
+	bu_vls_strcpy(&plp->pl_name, bnp);
+
+    up_to_vl:
+	plp->pl_vbp = rt_vlblock_init();
+	rt_uplot_to_vlist(plp->pl_vbp, fp, 0.001);
+	plp->pl_draw = 1;
+	fclose( fp );
     }
 
-    BU_GETSTRUCT(plp, plot_list);
-    BU_LIST_APPEND(&HeadPlot.l, &plp->l);
-    bu_vls_init(&plp->pl_name);
-    bu_vls_strcpy(&plp->pl_name, bnp);
+    if (!read_file)
+	return TCL_ERROR;
 
-  up_to_vl:
-    plp->pl_vbp = rt_vlblock_init();
-    rt_uplot_to_vlist(plp->pl_vbp, fp, 0.001);
-    plp->pl_draw = 1;
-    fclose( fp );
-  }
+    if (do_size_reset) {
+	size_reset();
+	new_mats();
+    }
 
-  if (!read_file)
-    return TCL_ERROR;
+    if (not_first)
+	refresh();
+    else
+	not_first = 1;
 
-  if (do_size_reset) {
-    size_reset();
-    new_mats();
-  }
-
-  if (not_first)
-    refresh();
-  else
-    not_first = 1;
-
-  return TCL_OK;
+    return TCL_OK;
 }
 
 /*
@@ -742,28 +742,28 @@ char    **argv;
  */
 static int
 cmd_vrot(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int     argc;
-char    **argv;
+    ClientData clientData;
+    Tcl_Interp *interp;
+    int     argc;
+    char    **argv;
 {
-  mat_t newrot;
+    mat_t newrot;
 
-  if (argc != 4) {
-    struct bu_vls vls;
+    if (argc != 4) {
+	struct bu_vls vls;
 
-    bu_vls_init(&vls);
-    bu_vls_strcpy(&vls, "help vrot");
-    (void)Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
+	bu_vls_init(&vls);
+	bu_vls_strcpy(&vls, "help vrot");
+	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
+    }
 
-  vrot(atof(argv[1]), atof(argv[2]), atof(argv[3]));
-  new_mats();
-  refresh();
+    vrot(atof(argv[1]), atof(argv[2]), atof(argv[3]));
+    new_mats();
+    refresh();
 
-  return TCL_OK;
+    return TCL_OK;
 }
 
 /*
@@ -771,27 +771,27 @@ char    **argv;
  */
 static int
 cmd_dm(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int     argc;
-char    **argv;
+    ClientData clientData;
+    Tcl_Interp *interp;
+    int     argc;
+    char    **argv;
 {
-  int status;
+    int status;
 
-  if (argc < 2 || MAXARGS < argc) {
-    struct bu_vls vls;
+    if (argc < 2 || MAXARGS < argc) {
+	struct bu_vls vls;
 
-    bu_vls_init(&vls);
-    bu_vls_strcpy(&vls, "help dm");
-    (void)Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
+	bu_vls_init(&vls);
+	bu_vls_strcpy(&vls, "help dm");
+	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
+    }
+
+    if (cmd_hook)
+	return cmd_hook(argc-1, argv+1);
+
     return TCL_ERROR;
-  }
-
-  if (cmd_hook)
-    return cmd_hook(argc-1, argv+1);
-
-  return TCL_ERROR;
 }
 
 /*
@@ -799,28 +799,28 @@ char    **argv;
  */
 static int
 cmd_clear(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int     argc;
-char    **argv;
+    ClientData clientData;
+    Tcl_Interp *interp;
+    int     argc;
+    char    **argv;
 {
-  struct plot_list *plp;
+    struct plot_list *plp;
 
-  if (argc != 1) {
-    struct bu_vls vls;
+    if (argc != 1) {
+	struct bu_vls vls;
 
-    bu_vls_init(&vls);
-    bu_vls_strcpy(&vls, "help clear");
-    (void)Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
+	bu_vls_init(&vls);
+	bu_vls_strcpy(&vls, "help clear");
+	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
+    }
 
-  for (BU_LIST_FOR(plp, plot_list, &HeadPlot.l))
-    plp->pl_draw = 0;
+    for (BU_LIST_FOR(plp, plot_list, &HeadPlot.l))
+	plp->pl_draw = 0;
 
-  refresh();
-  return TCL_OK;
+    refresh();
+    return TCL_OK;
 }
 
 /*
@@ -828,38 +828,38 @@ char    **argv;
  */
 static int
 cmd_closepl(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int     argc;
-char    **argv;
+    ClientData clientData;
+    Tcl_Interp *interp;
+    int     argc;
+    char    **argv;
 {
-  int i;
-  struct plot_list *plp;
+    int i;
+    struct plot_list *plp;
 
-  if (argc < 2) {
-    struct bu_vls vls;
+    if (argc < 2) {
+	struct bu_vls vls;
 
-    bu_vls_init(&vls);
-    bu_vls_strcpy(&vls, "help closepl");
-    (void)Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
-
-  for (i=1; i < argc; ++i) {
-    for (BU_LIST_FOR(plp, plot_list, &HeadPlot.l)) {
-      if (!strcmp(argv[i], bu_vls_addr(&plp->pl_name))) {
-	BU_LIST_DEQUEUE(&plp->l);
-	bu_vls_free(&plp->pl_name);
-	rt_vlblock_free(plp->pl_vbp);
-	bu_free((genptr_t)plp, "cmd_closepl");
-	break;
-      }
+	bu_vls_init(&vls);
+	bu_vls_strcpy(&vls, "help closepl");
+	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
     }
-  }
 
-  refresh();
-  return TCL_OK;
+    for (i=1; i < argc; ++i) {
+	for (BU_LIST_FOR(plp, plot_list, &HeadPlot.l)) {
+	    if (!strcmp(argv[i], bu_vls_addr(&plp->pl_name))) {
+		BU_LIST_DEQUEUE(&plp->l);
+		bu_vls_free(&plp->pl_name);
+		rt_vlblock_free(plp->pl_vbp);
+		bu_free((genptr_t)plp, "cmd_closepl");
+		break;
+	    }
+	}
+    }
+
+    refresh();
+    return TCL_OK;
 }
 
 /*
@@ -867,35 +867,35 @@ char    **argv;
  */
 static int
 cmd_draw(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int     argc;
-char    **argv;
+    ClientData clientData;
+    Tcl_Interp *interp;
+    int     argc;
+    char    **argv;
 {
-  int i;
-  struct plot_list *plp;
+    int i;
+    struct plot_list *plp;
 
-  if (argc < 2) {
-    struct bu_vls vls;
+    if (argc < 2) {
+	struct bu_vls vls;
 
-    bu_vls_init(&vls);
-    bu_vls_strcpy(&vls, "help draw");
-    (void)Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
-
-  for (i=1; i < argc; ++i) {
-    for (BU_LIST_FOR(plp, plot_list, &HeadPlot.l)) {
-      if (!strcmp(argv[i], bu_vls_addr(&plp->pl_name))) {
-	plp->pl_draw = 1;
-	break;
-      }
+	bu_vls_init(&vls);
+	bu_vls_strcpy(&vls, "help draw");
+	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
     }
-  }
 
-  refresh();
-  return TCL_OK;
+    for (i=1; i < argc; ++i) {
+	for (BU_LIST_FOR(plp, plot_list, &HeadPlot.l)) {
+	    if (!strcmp(argv[i], bu_vls_addr(&plp->pl_name))) {
+		plp->pl_draw = 1;
+		break;
+	    }
+	}
+    }
+
+    refresh();
+    return TCL_OK;
 }
 
 /*
@@ -903,35 +903,35 @@ char    **argv;
  */
 static int
 cmd_erase(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int     argc;
-char    **argv;
+    ClientData clientData;
+    Tcl_Interp *interp;
+    int     argc;
+    char    **argv;
 {
-  int i;
-  struct plot_list *plp;
+    int i;
+    struct plot_list *plp;
 
-  if (argc < 2) {
-    struct bu_vls vls;
+    if (argc < 2) {
+	struct bu_vls vls;
 
-    bu_vls_init(&vls);
-    bu_vls_strcpy(&vls, "help erase");
-    (void)Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
-
-  for (i=1; i < argc; ++i) {
-    for (BU_LIST_FOR(plp, plot_list, &HeadPlot.l)) {
-      if (!strcmp(argv[i], bu_vls_addr(&plp->pl_name))) {
-	plp->pl_draw = 0;
-	break;
-      }
+	bu_vls_init(&vls);
+	bu_vls_strcpy(&vls, "help erase");
+	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
     }
-  }
 
-  refresh();
-  return TCL_OK;
+    for (i=1; i < argc; ++i) {
+	for (BU_LIST_FOR(plp, plot_list, &HeadPlot.l)) {
+	    if (!strcmp(argv[i], bu_vls_addr(&plp->pl_name))) {
+		plp->pl_draw = 0;
+		break;
+	    }
+	}
+    }
+
+    refresh();
+    return TCL_OK;
 }
 
 /*
@@ -939,42 +939,42 @@ char    **argv;
  */
 static int
 cmd_list(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+    ClientData clientData;
+    Tcl_Interp *interp;
+    int	argc;
+    char	**argv;
 {
-  struct plot_list *plp;
-  int len;
-  int linelen=0;
+    struct plot_list *plp;
+    int len;
+    int linelen=0;
 
-  if (argc != 1) {
-    struct bu_vls vls;
+    if (argc != 1) {
+	struct bu_vls vls;
 
-    bu_vls_init(&vls);
-    bu_vls_strcpy(&vls, "help ls");
-    (void)Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
+	bu_vls_init(&vls);
+	bu_vls_strcpy(&vls, "help ls");
+	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
+    }
 
-  for (BU_LIST_FOR(plp, plot_list, &HeadPlot.l)) {
-    len = strlen(bu_vls_addr(&plp->pl_name));
+    for (BU_LIST_FOR(plp, plot_list, &HeadPlot.l)) {
+	len = strlen(bu_vls_addr(&plp->pl_name));
 
-    if (len < 13)
-      len = 16;
-    else
-      len += 4;
+	if (len < 13)
+	    len = 16;
+	else
+	    len += 4;
 
-    linelen += len;
-    if (linelen > 80)
-      bu_log("\n%-*S", len, &plp->pl_name);
-    else
-      bu_log("%-*S", len, &plp->pl_name);
-  }
+	linelen += len;
+	if (linelen > 80)
+	    bu_log("\n%-*S", len, &plp->pl_name);
+	else
+	    bu_log("%-*S", len, &plp->pl_name);
+    }
 
-  bu_log("\n");
-  return TCL_OK;
+    bu_log("\n");
+    return TCL_OK;
 }
 
 /*
@@ -985,44 +985,44 @@ char	**argv;
  */
 static int
 cmd_zoom(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+    ClientData clientData;
+    Tcl_Interp *interp;
+    int	argc;
+    char	**argv;
 {
-  int status;
-  double	val;
+    int status;
+    double	val;
 
-  if (argc != 2) {
-    struct bu_vls vls;
+    if (argc != 2) {
+	struct bu_vls vls;
 
-    bu_vls_init(&vls);
-    bu_vls_strcpy(&vls, "help zoom");
-    (void)Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
+	bu_vls_init(&vls);
+	bu_vls_strcpy(&vls, "help zoom");
+	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
+    }
 
-  val = atof(argv[1]);
-  status = zoom(interp, val);
-  new_mats();
-  refresh();
+    val = atof(argv[1]);
+    status = zoom(interp, val);
+    new_mats();
+    refresh();
 
-  return status;
+    return status;
 }
 
 static int
 cmd_reset(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int     argc;
-char    **argv;
+    ClientData clientData;
+    Tcl_Interp *interp;
+    int     argc;
+    char    **argv;
 {
-  size_reset();
-  new_mats();
-  refresh();
+    size_reset();
+    new_mats();
+    refresh();
 
-  return TCL_OK;
+    return TCL_OK;
 }
 
 /*
@@ -1033,94 +1033,94 @@ char    **argv;
  */
 static int
 cmd_slewview(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int     argc;
-char    **argv;
+    ClientData clientData;
+    Tcl_Interp *interp;
+    int     argc;
+    char    **argv;
 {
-  int status;
-  vect_t view_pos;
+    int status;
+    vect_t view_pos;
 
-  if (argc != 3) {
-    struct bu_vls vls;
+    if (argc != 3) {
+	struct bu_vls vls;
 
-    bu_vls_init(&vls);
-    bu_vls_strcpy(&vls, "help sv");
-    (void)Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
+	bu_vls_init(&vls);
+	bu_vls_strcpy(&vls, "help sv");
+	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
+    }
 
-  view_pos[X] = atof(argv[1]) / 2047.0;
-  view_pos[Y] = atof(argv[2]) / 2047.0;
-  view_pos[Z] = 0.0;
+    view_pos[X] = atof(argv[1]) / 2047.0;
+    view_pos[Y] = atof(argv[2]) / 2047.0;
+    view_pos[Z] = 0.0;
 
-  status = slewview(view_pos);
-  new_mats();
-  refresh();
+    status = slewview(view_pos);
+    new_mats();
+    refresh();
 
-  return status;
+    return status;
 }
 
 /* set view using azimuth, elevation and twist angles */
 static int
 cmd_aetview(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+    ClientData clientData;
+    Tcl_Interp *interp;
+    int	argc;
+    char	**argv;
 {
-  int iflag = 0;
-  fastf_t o_twist;
+    int iflag = 0;
+    fastf_t o_twist;
 
-  if (argc < 3 || 5 < argc) {
-    struct bu_vls vls;
+    if (argc < 3 || 5 < argc) {
+	struct bu_vls vls;
 
-    bu_vls_init(&vls);
-    bu_vls_strcpy(&vls, "help ae");
-    (void)Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
+	bu_vls_init(&vls);
+	bu_vls_strcpy(&vls, "help ae");
+	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
+    }
 
-  /* Check for -i option */
-  if (argv[1][0] == '-' && argv[1][1] == 'i') {
-    iflag = 1;  /* treat arguments as incremental values */
-    ++argv;
-    --argc;
-  }
+    /* Check for -i option */
+    if (argv[1][0] == '-' && argv[1][1] == 'i') {
+	iflag = 1;  /* treat arguments as incremental values */
+	++argv;
+	--argc;
+    }
 
-  /* grab old twist angle before it's lost */
-  o_twist = twist;
+    /* grab old twist angle before it's lost */
+    o_twist = twist;
 
-  /* set view using azimuth and elevation angles */
-  if (iflag)
-    setview(270.0 + atof(argv[2]) + elevation,
-	    0.0,
-	    270.0 - atof(argv[1]) - azimuth);
-  else
-    setview(270.0 + atof(argv[2]), 0.0, 270.0 - atof(argv[1]));
-
-  new_mats();
-
-  if (argc == 4) {
-  /* twist angle supplied */
-    double x, y, z;
-
-    x = y = 0.0;
-    twist = atof(argv[3]);
-
+    /* set view using azimuth and elevation angles */
     if (iflag)
-      z = -o_twist - twist;
+	setview(270.0 + atof(argv[2]) + elevation,
+		0.0,
+		270.0 - atof(argv[1]) - azimuth);
     else
-      z = -twist;
+	setview(270.0 + atof(argv[2]), 0.0, 270.0 - atof(argv[1]));
 
-    vrot(x, y, z);
     new_mats();
-  }
 
-  refresh();
-  return TCL_OK;
+    if (argc == 4) {
+	/* twist angle supplied */
+	double x, y, z;
+
+	x = y = 0.0;
+	twist = atof(argv[3]);
+
+	if (iflag)
+	    z = -o_twist - twist;
+	else
+	    z = -twist;
+
+	vrot(x, y, z);
+	new_mats();
+    }
+
+    refresh();
+    return TCL_OK;
 }
 
 /*
@@ -1128,18 +1128,18 @@ char	**argv;
  */
 static int
 cmd_exit(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int     argc;
-char    **argv;
+    ClientData clientData;
+    Tcl_Interp *interp;
+    int     argc;
+    char    **argv;
 {
-  if (dmp != DM_NULL)
-    DM_CLOSE(dmp);
+    if (dmp != DM_NULL)
+	DM_CLOSE(dmp);
 
-  bu_exit (0, NULL);
+    bu_exit (0, NULL);
 
-  /* not reached */
-  return TCL_OK;
+    /* not reached */
+    return TCL_OK;
 }
 
 
@@ -1148,15 +1148,15 @@ char    **argv;
  */
 static void
 cmd_setup(interp, commands)
-Tcl_Interp *interp;
-struct cmdtab commands[];
+    Tcl_Interp *interp;
+    struct cmdtab commands[];
 {
-  register struct cmdtab *ctp;
+    register struct cmdtab *ctp;
 
-  for (ctp = commands; ctp->ct_name; ctp++) {
-    (void)Tcl_CreateCommand(interp, ctp->ct_name, ctp->ct_func,
-			    (ClientData)ctp, (Tcl_CmdDeleteProc *)NULL);
-  }
+    for (ctp = commands; ctp->ct_name; ctp++) {
+	(void)Tcl_CreateCommand(interp, ctp->ct_name, ctp->ct_func,
+				(ClientData)ctp, (Tcl_CmdDeleteProc *)NULL);
+    }
 }
 
 
@@ -1170,24 +1170,24 @@ struct cmdtab commands[];
 static int
 X_dmInit()
 {
-  char *av[4];
+    char *av[4];
 
-  av[0] = "X_open";
-  av[1] = "-i";
-  av[2] = "sampler_bind_dm";
-  av[3] = (char *)NULL;
+    av[0] = "X_open";
+    av[1] = "-i";
+    av[2] = "sampler_bind_dm";
+    av[3] = (char *)NULL;
 
-  if ((dmp = DM_OPEN(DM_TYPE_X, 3, av)) == DM_NULL) {
-    Tcl_AppendResult(interp, "Failed to open a display manager\n", (char *)NULL);
-    return TCL_ERROR;
-  }
+    if ((dmp = DM_OPEN(DM_TYPE_X, 3, av)) == DM_NULL) {
+	Tcl_AppendResult(interp, "Failed to open a display manager\n", (char *)NULL);
+	return TCL_ERROR;
+    }
 
-  ((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.zclip = 0;
-  Tk_CreateGenericHandler(X_doEvent, (ClientData)DM_TYPE_X);
-  dm_configureWindowShape(dmp);
-  DM_SET_WIN_BOUNDS(dmp, windowbounds);
+    ((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.zclip = 0;
+    Tk_CreateGenericHandler(X_doEvent, (ClientData)DM_TYPE_X);
+    dm_configureWindowShape(dmp);
+    DM_SET_WIN_BOUNDS(dmp, windowbounds);
 
-  return TCL_OK;
+    return TCL_OK;
 }
 
 /*
@@ -1195,68 +1195,68 @@ X_dmInit()
  */
 static int
 X_doEvent(clientData, eventPtr)
-ClientData clientData;
-XEvent *eventPtr;
+    ClientData clientData;
+    XEvent *eventPtr;
 {
-  if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
-    refresh();
-  } else if (eventPtr->type == ConfigureNotify) {
-    dm_configureWindowShape(dmp);
-    refresh();
-  } else if ( eventPtr->type == MotionNotify ) {
-    int mx, my;
-
-    mx = eventPtr->xmotion.x;
-    my = eventPtr->xmotion.y;
-
-    switch (mouse_mode) {
-    case MOUSE_MODE_ROTATE:
-      vrot((my - omy) * app_scale,
-	   (mx - omx) * app_scale,
-	   0.0);
-      new_mats();
-      refresh();
-
-      break;
-    case MOUSE_MODE_TRANSLATE:
-      {
-	vect_t vdiff;
-
-	vdiff[X] = (mx - omx) /
-	  (fastf_t)dmp->dm_width * 2.0;
-	vdiff[Y] = (omy - my) /
-	  (fastf_t)dmp->dm_height * 2.0;
-	vdiff[Z] = 0.0;
-
-	(void)islewview(vdiff);
-	new_mats();
+    if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
 	refresh();
-      }
-
-      break;
-    case MOUSE_MODE_ZOOM:
-      {
-	double val;
-
-	val = 1.0 + (omy - my) /
-	  (fastf_t)dmp->dm_height;
-
-	zoom(interp, val);
-	new_mats();
+    } else if (eventPtr->type == ConfigureNotify) {
+	dm_configureWindowShape(dmp);
 	refresh();
-      }
+    } else if ( eventPtr->type == MotionNotify ) {
+	int mx, my;
 
-      break;
-    case MOUSE_MODE_IDLE:
-    default:
-      break;
+	mx = eventPtr->xmotion.x;
+	my = eventPtr->xmotion.y;
+
+	switch (mouse_mode) {
+	    case MOUSE_MODE_ROTATE:
+		vrot((my - omy) * app_scale,
+		     (mx - omx) * app_scale,
+		     0.0);
+		new_mats();
+		refresh();
+
+		break;
+	    case MOUSE_MODE_TRANSLATE:
+	    {
+		vect_t vdiff;
+
+		vdiff[X] = (mx - omx) /
+		    (fastf_t)dmp->dm_width * 2.0;
+		vdiff[Y] = (omy - my) /
+		    (fastf_t)dmp->dm_height * 2.0;
+		vdiff[Z] = 0.0;
+
+		(void)islewview(vdiff);
+		new_mats();
+		refresh();
+	    }
+
+	    break;
+	    case MOUSE_MODE_ZOOM:
+	    {
+		double val;
+
+		val = 1.0 + (omy - my) /
+		    (fastf_t)dmp->dm_height;
+
+		zoom(interp, val);
+		new_mats();
+		refresh();
+	    }
+
+	    break;
+	    case MOUSE_MODE_IDLE:
+	    default:
+		break;
+	}
+
+	omx = mx;
+	omy = my;
     }
 
-    omx = mx;
-    omy = my;
-  }
-
-  return TCL_OK;
+    return TCL_OK;
 }
 
 /*
@@ -1264,109 +1264,109 @@ XEvent *eventPtr;
  */
 static int
 X_dm(argc, argv)
-int argc;
-char *argv[];
+    int argc;
+    char *argv[];
 {
-  int status;
+    int status;
 
-  if ( !strcmp( argv[0], "set" )) {
-    struct bu_vls tmp_vls;
-    struct bu_vls vls;
+    if ( !strcmp( argv[0], "set" )) {
+	struct bu_vls tmp_vls;
+	struct bu_vls vls;
 
-    bu_vls_init(&vls);
-    bu_vls_init(&tmp_vls);
-    start_catching_output(&tmp_vls);
+	bu_vls_init(&vls);
+	bu_vls_init(&tmp_vls);
+	start_catching_output(&tmp_vls);
 
-    if ( argc < 2 )  {
-      /* Bare set command, print out current settings */
-      bu_struct_print("X internal variables", X_vparse, (const char *)&((struct x_vars *)dmp->dm_vars.priv_vars)->mvars);
-    } else if ( argc == 2 ) {
-      bu_vls_struct_item_named( &vls, X_vparse, argv[1], (const char *)&((struct x_vars *)dmp->dm_vars.priv_vars)->mvars, ',');
-      bu_log( "%S\n", &vls );
-    } else {
-      bu_vls_printf( &vls, "%s=\"", argv[1] );
-      bu_vls_from_argv( &vls, argc-2, argv+2 );
-      bu_vls_putc( &vls, '\"' );
-      bu_struct_parse( &vls, X_vparse, (char *)&((struct x_vars *)dmp->dm_vars.priv_vars)->mvars);
+	if ( argc < 2 )  {
+	    /* Bare set command, print out current settings */
+	    bu_struct_print("X internal variables", X_vparse, (const char *)&((struct x_vars *)dmp->dm_vars.priv_vars)->mvars);
+	} else if ( argc == 2 ) {
+	    bu_vls_struct_item_named( &vls, X_vparse, argv[1], (const char *)&((struct x_vars *)dmp->dm_vars.priv_vars)->mvars, ',');
+	    bu_log( "%S\n", &vls );
+	} else {
+	    bu_vls_printf( &vls, "%s=\"", argv[1] );
+	    bu_vls_from_argv( &vls, argc-2, argv+2 );
+	    bu_vls_putc( &vls, '\"' );
+	    bu_struct_parse( &vls, X_vparse, (char *)&((struct x_vars *)dmp->dm_vars.priv_vars)->mvars);
+	}
+
+	bu_vls_free(&vls);
+
+	stop_catching_output(&tmp_vls);
+	Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	bu_vls_free(&tmp_vls);
+	return TCL_OK;
     }
 
-    bu_vls_free(&vls);
+    if ( !strcmp( argv[0], "m")) {
+	vect_t view_pos;
 
-    stop_catching_output(&tmp_vls);
-    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-    bu_vls_free(&tmp_vls);
-    return TCL_OK;
-  }
-
-  if ( !strcmp( argv[0], "m")) {
-    vect_t view_pos;
-
-    if ( argc < 4) {
-      Tcl_AppendResult(interp, "dm m: need more parameters\n",
-		       "dm m button 1|0 xpos ypos\n", (char *)NULL);
-      return TCL_ERROR;
-    }
+	if ( argc < 4) {
+	    Tcl_AppendResult(interp, "dm m: need more parameters\n",
+			     "dm m button 1|0 xpos ypos\n", (char *)NULL);
+	    return TCL_ERROR;
+	}
 
 #if 0
-    /* This assumes a 3-button mouse */
-    switch (*argv[1]) {
-    case '1':
-      ((struct x_vars *)dmp->dm_vars)->mb_mask = Button1Mask;
-      break;
-    case '2':
-      ((struct x_vars *)dmp->dm_vars)->mb_mask = Button2Mask;
-      break;
-    case '3':
-      ((struct x_vars *)dmp->dm_vars)->mb_mask = Button3Mask;
-      break;
-    default:
-      return TCL_ERROR;
-    }
+	/* This assumes a 3-button mouse */
+	switch (*argv[1]) {
+	    case '1':
+		((struct x_vars *)dmp->dm_vars)->mb_mask = Button1Mask;
+		break;
+	    case '2':
+		((struct x_vars *)dmp->dm_vars)->mb_mask = Button2Mask;
+		break;
+	    case '3':
+		((struct x_vars *)dmp->dm_vars)->mb_mask = Button3Mask;
+		break;
+	    default:
+		return TCL_ERROR;
+	}
 #endif
 
-    view_pos[X] = dm_Xx2Normal(dmp, atoi(argv[3]));
-    view_pos[Y] = dm_Xy2Normal(dmp, atoi(argv[4]), 0);
-    view_pos[Z] = 0.0;
-    status = slewview(view_pos);
-    new_mats();
-    refresh();
+	view_pos[X] = dm_Xx2Normal(dmp, atoi(argv[3]));
+	view_pos[Y] = dm_Xy2Normal(dmp, atoi(argv[4]), 0);
+	view_pos[Z] = 0.0;
+	status = slewview(view_pos);
+	new_mats();
+	refresh();
 
-    return status;
-  }
-
-  if ( !strcmp( argv[0], "am" )) {
-    int buttonpress;
-
-    if ( argc < 5) {
-      Tcl_AppendResult(interp, "dm am: need more parameters\n",
-		       "dm am <r|t|z> 1|0 xpos ypos\n", (char *)NULL);
-      return TCL_ERROR;
+	return status;
     }
 
-    buttonpress = atoi(argv[2]);
-    omx = atoi(argv[3]);
-    omy = atoi(argv[4]);
+    if ( !strcmp( argv[0], "am" )) {
+	int buttonpress;
 
-    if (buttonpress) {
-      switch (*argv[1]) {
-      case 'r':
-	mouse_mode = MOUSE_MODE_ROTATE;
-	break;
-      case 't':
-	mouse_mode = MOUSE_MODE_TRANSLATE;
-	break;
-      case 'z':
-	mouse_mode = MOUSE_MODE_ZOOM;
-	break;
-      default:
-	mouse_mode = MOUSE_MODE_IDLE;
-	break;
-      }
-    } else
-      mouse_mode = MOUSE_MODE_IDLE;
-  }
+	if ( argc < 5) {
+	    Tcl_AppendResult(interp, "dm am: need more parameters\n",
+			     "dm am <r|t|z> 1|0 xpos ypos\n", (char *)NULL);
+	    return TCL_ERROR;
+	}
 
-  return TCL_OK;
+	buttonpress = atoi(argv[2]);
+	omx = atoi(argv[3]);
+	omy = atoi(argv[4]);
+
+	if (buttonpress) {
+	    switch (*argv[1]) {
+		case 'r':
+		    mouse_mode = MOUSE_MODE_ROTATE;
+		    break;
+		case 't':
+		    mouse_mode = MOUSE_MODE_TRANSLATE;
+		    break;
+		case 'z':
+		    mouse_mode = MOUSE_MODE_ZOOM;
+		    break;
+		default:
+		    mouse_mode = MOUSE_MODE_IDLE;
+		    break;
+	    }
+	} else
+	    mouse_mode = MOUSE_MODE_IDLE;
+    }
+
+    return TCL_OK;
 }
 
 #ifdef DM_OGL
@@ -1380,27 +1380,27 @@ char *argv[];
 static int
 Ogl_dmInit()
 {
-  char *av[4];
-  GLdouble lw_range[2];       /* line width range */
-  GLdouble lw_gran;    /* line width granularity */
+    char *av[4];
+    GLdouble lw_range[2];       /* line width range */
+    GLdouble lw_gran;    /* line width granularity */
 
-  av[0] = "ogl_open";
-  av[1] = "-i";
-  av[2] = "sampler_bind_dm";
-  av[3] = (char *)NULL;
+    av[0] = "ogl_open";
+    av[1] = "-i";
+    av[2] = "sampler_bind_dm";
+    av[3] = (char *)NULL;
 
-  if ((dmp = DM_OPEN(DM_TYPE_OGL, 3, av)) == DM_NULL) {
-    Tcl_AppendResult(interp, "Failed to open a display manager\n", (char *)NULL);
-    return TCL_ERROR;
-  }
+    if ((dmp = DM_OPEN(DM_TYPE_OGL, 3, av)) == DM_NULL) {
+	Tcl_AppendResult(interp, "Failed to open a display manager\n", (char *)NULL);
+	return TCL_ERROR;
+    }
 
-  dmp->dm_vp = &Viewscale;
-  ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zclipping_on = 0;
-  Tk_CreateGenericHandler(Ogl_doEvent, (ClientData)DM_TYPE_OGL);
-  dm_configureWindowShape(dmp);
-  DM_SET_WIN_BOUNDS(dmp, windowbounds);
+    dmp->dm_vp = &Viewscale;
+    ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zclipping_on = 0;
+    Tk_CreateGenericHandler(Ogl_doEvent, (ClientData)DM_TYPE_OGL);
+    dm_configureWindowShape(dmp);
+    DM_SET_WIN_BOUNDS(dmp, windowbounds);
 
-  return TCL_OK;
+    return TCL_OK;
 }
 
 /*
@@ -1408,71 +1408,71 @@ Ogl_dmInit()
  */
 static int
 Ogl_doEvent(clientData, eventPtr)
-ClientData clientData;
-XEvent *eventPtr;
+    ClientData clientData;
+    XEvent *eventPtr;
 {
-  if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
-    glClearColor(0.0, 0.0, 0.0, 0.0);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
+	glClearColor(0.0, 0.0, 0.0, 0.0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    refresh();
-  } else if (eventPtr->type == ConfigureNotify) {
-    dm_configureWindowShape(dmp);
-    refresh();
-  } else if ( eventPtr->type == MotionNotify ) {
-    int mx, my;
-
-    mx = eventPtr->xmotion.x;
-    my = eventPtr->xmotion.y;
-
-    switch (mouse_mode) {
-    case MOUSE_MODE_ROTATE:
-      vrot((my - omy) * app_scale,
-	   (mx - omx) * app_scale,
-	   0.0);
-      new_mats();
-      refresh();
-
-      break;
-    case MOUSE_MODE_TRANSLATE:
-      {
-	vect_t vdiff;
-
-	vdiff[X] = (mx - omx) /
-	  (fastf_t)dmp->dm_width * 2.0;
-	vdiff[Y] = (omy - my) /
-	  (fastf_t)dmp->dm_height * 2.0;
-	vdiff[Z] = 0.0;
-
-	(void)islewview(vdiff);
-	new_mats();
 	refresh();
-      }
-
-      break;
-    case MOUSE_MODE_ZOOM:
-      {
-	double val;
-
-	val = 1.0 + (omy - my) /
-	  (fastf_t)dmp->dm_height;
-
-	zoom(interp, val);
-	new_mats();
+    } else if (eventPtr->type == ConfigureNotify) {
+	dm_configureWindowShape(dmp);
 	refresh();
-      }
+    } else if ( eventPtr->type == MotionNotify ) {
+	int mx, my;
 
-      break;
-    case MOUSE_MODE_IDLE:
-    default:
-      break;
+	mx = eventPtr->xmotion.x;
+	my = eventPtr->xmotion.y;
+
+	switch (mouse_mode) {
+	    case MOUSE_MODE_ROTATE:
+		vrot((my - omy) * app_scale,
+		     (mx - omx) * app_scale,
+		     0.0);
+		new_mats();
+		refresh();
+
+		break;
+	    case MOUSE_MODE_TRANSLATE:
+	    {
+		vect_t vdiff;
+
+		vdiff[X] = (mx - omx) /
+		    (fastf_t)dmp->dm_width * 2.0;
+		vdiff[Y] = (omy - my) /
+		    (fastf_t)dmp->dm_height * 2.0;
+		vdiff[Z] = 0.0;
+
+		(void)islewview(vdiff);
+		new_mats();
+		refresh();
+	    }
+
+	    break;
+	    case MOUSE_MODE_ZOOM:
+	    {
+		double val;
+
+		val = 1.0 + (omy - my) /
+		    (fastf_t)dmp->dm_height;
+
+		zoom(interp, val);
+		new_mats();
+		refresh();
+	    }
+
+	    break;
+	    case MOUSE_MODE_IDLE:
+	    default:
+		break;
+	}
+
+	omx = mx;
+	omy = my;
     }
 
-    omx = mx;
-    omy = my;
-  }
-
-  return TCL_OK;
+    return TCL_OK;
 }
 
 /*
@@ -1480,137 +1480,137 @@ XEvent *eventPtr;
  */
 static int
 Ogl_dm(argc, argv)
-int argc;
-char *argv[];
+    int argc;
+    char *argv[];
 {
-  int status;
+    int status;
 
-  if ( !strcmp( argv[0], "set" ) )  {
-    struct bu_vls tmp_vls;
-    struct bu_vls vls;
+    if ( !strcmp( argv[0], "set" ) )  {
+	struct bu_vls tmp_vls;
+	struct bu_vls vls;
 
-    bu_vls_init(&vls);
-    bu_vls_init(&tmp_vls);
-    start_catching_output(&tmp_vls);
+	bu_vls_init(&vls);
+	bu_vls_init(&tmp_vls);
+	start_catching_output(&tmp_vls);
 
-    if ( argc < 2 )  {
-      /* Bare set command, print out current settings */
-      bu_struct_print("dm_ogl internal variables", Ogl_vparse, (const char *)&((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars );
-    } else if ( argc == 2 ) {
-      bu_vls_struct_item_named( &vls, Ogl_vparse, argv[1], (const char *)&((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars, ',');
-      bu_log( "%S\n", &vls );
-    } else {
-      bu_vls_printf( &vls, "%s=\"", argv[1] );
-      bu_vls_from_argv( &vls, argc-2, argv+2 );
-      bu_vls_putc( &vls, '\"' );
-      bu_struct_parse( &vls, Ogl_vparse, (char *)&((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars );
+	if ( argc < 2 )  {
+	    /* Bare set command, print out current settings */
+	    bu_struct_print("dm_ogl internal variables", Ogl_vparse, (const char *)&((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars );
+	} else if ( argc == 2 ) {
+	    bu_vls_struct_item_named( &vls, Ogl_vparse, argv[1], (const char *)&((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars, ',');
+	    bu_log( "%S\n", &vls );
+	} else {
+	    bu_vls_printf( &vls, "%s=\"", argv[1] );
+	    bu_vls_from_argv( &vls, argc-2, argv+2 );
+	    bu_vls_putc( &vls, '\"' );
+	    bu_struct_parse( &vls, Ogl_vparse, (char *)&((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars );
+	}
+
+	bu_vls_free(&vls);
+
+	stop_catching_output(&tmp_vls);
+	Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	bu_vls_free(&tmp_vls);
+	return TCL_OK;
     }
 
-    bu_vls_free(&vls);
+    if ( !strcmp( argv[0], "m")) {
+	vect_t view_pos;
 
-    stop_catching_output(&tmp_vls);
-    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-    bu_vls_free(&tmp_vls);
-    return TCL_OK;
-  }
-
-  if ( !strcmp( argv[0], "m")) {
-    vect_t view_pos;
-
-    if ( argc < 4) {
-      Tcl_AppendResult(interp, "dm m: need more parameters\n",
-		       "dm m button 1|0 xpos ypos\n", (char *)NULL);
-      return TCL_ERROR;
-    }
+	if ( argc < 4) {
+	    Tcl_AppendResult(interp, "dm m: need more parameters\n",
+			     "dm m button 1|0 xpos ypos\n", (char *)NULL);
+	    return TCL_ERROR;
+	}
 
 #if 0
-    /* This assumes a 3-button mouse */
-    switch (*argv[1]) {
-    case '1':
-      ((struct ogl_vars *)dmp->dm_vars)->mb_mask = Button1Mask;
-      break;
-    case '2':
-      ((struct ogl_vars *)dmp->dm_vars)->mb_mask = Button2Mask;
-      break;
-    case '3':
-      ((struct ogl_vars *)dmp->dm_vars)->mb_mask = Button3Mask;
-      break;
-    default:
-      return TCL_ERROR;
-    }
+	/* This assumes a 3-button mouse */
+	switch (*argv[1]) {
+	    case '1':
+		((struct ogl_vars *)dmp->dm_vars)->mb_mask = Button1Mask;
+		break;
+	    case '2':
+		((struct ogl_vars *)dmp->dm_vars)->mb_mask = Button2Mask;
+		break;
+	    case '3':
+		((struct ogl_vars *)dmp->dm_vars)->mb_mask = Button3Mask;
+		break;
+	    default:
+		return TCL_ERROR;
+	}
 #endif
 
-    view_pos[X] = dm_Xx2Normal(dmp, atoi(argv[3]));
-    view_pos[Y] = dm_Xy2Normal(dmp, atoi(argv[4]), 0);
-    view_pos[Z] = 0.0;
-    status = slewview(view_pos);
-    new_mats();
-    refresh();
+	view_pos[X] = dm_Xx2Normal(dmp, atoi(argv[3]));
+	view_pos[Y] = dm_Xy2Normal(dmp, atoi(argv[4]), 0);
+	view_pos[Z] = 0.0;
+	status = slewview(view_pos);
+	new_mats();
+	refresh();
 
-    return status;
-  }
-
-  if ( !strcmp( argv[0], "am" )) {
-    int buttonpress;
-
-    if ( argc < 5) {
-      Tcl_AppendResult(interp, "dm am: need more parameters\n",
-		       "dm am <r|t|z> 1|0 xpos ypos\n", (char *)NULL);
-      return TCL_ERROR;
+	return status;
     }
 
-    buttonpress = atoi(argv[2]);
-    omx = atoi(argv[3]);
-    omy = atoi(argv[4]);
+    if ( !strcmp( argv[0], "am" )) {
+	int buttonpress;
 
-    if (buttonpress) {
-      switch (*argv[1]) {
-      case 'r':
-	mouse_mode = MOUSE_MODE_ROTATE;
-	break;
-      case 't':
-	mouse_mode = MOUSE_MODE_TRANSLATE;
-	break;
-      case 'z':
-	mouse_mode = MOUSE_MODE_ZOOM;
-	break;
-      default:
-	mouse_mode = MOUSE_MODE_IDLE;
-	break;
-      }
-    } else
-      mouse_mode = MOUSE_MODE_IDLE;
-  }
+	if ( argc < 5) {
+	    Tcl_AppendResult(interp, "dm am: need more parameters\n",
+			     "dm am <r|t|z> 1|0 xpos ypos\n", (char *)NULL);
+	    return TCL_ERROR;
+	}
 
-  return TCL_OK;
+	buttonpress = atoi(argv[2]);
+	omx = atoi(argv[3]);
+	omy = atoi(argv[4]);
+
+	if (buttonpress) {
+	    switch (*argv[1]) {
+		case 'r':
+		    mouse_mode = MOUSE_MODE_ROTATE;
+		    break;
+		case 't':
+		    mouse_mode = MOUSE_MODE_TRANSLATE;
+		    break;
+		case 'z':
+		    mouse_mode = MOUSE_MODE_ZOOM;
+		    break;
+		default:
+		    mouse_mode = MOUSE_MODE_IDLE;
+		    break;
+	    }
+	} else
+	    mouse_mode = MOUSE_MODE_IDLE;
+    }
+
+    return TCL_OK;
 }
 
 static void
 Ogl_colorchange()
 {
-  if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.cueing_on) {
-    glEnable(GL_FOG);
-  } else {
-    glDisable(GL_FOG);
-  }
+    if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.cueing_on) {
+	glEnable(GL_FOG);
+    } else {
+	glDisable(GL_FOG);
+    }
 
-  refresh();
+    refresh();
 }
 
 static void
 Ogl_establish_zbuffer()
 {
-  dm_zbuffer(dmp,
-	     ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuffer_on);
-  refresh();
+    dm_zbuffer(dmp,
+	       ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuffer_on);
+    refresh();
 }
 
 static void
 Ogl_establish_lighting()
 {
-  dm_lighting(dmp,
-	      ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.lighting_on);
-  refresh();
+    dm_lighting(dmp,
+		((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.lighting_on);
+    refresh();
 }
 #endif
 
@@ -1626,27 +1626,27 @@ Ogl_establish_lighting()
 static int
 Wgl_dmInit()
 {
-  char *av[4];
-  GLdouble lw_range[2];       /* line width range */
-  GLdouble lw_gran;    /* line width granularity */
+    char *av[4];
+    GLdouble lw_range[2];       /* line width range */
+    GLdouble lw_gran;    /* line width granularity */
 
-  av[0] = "wgl_open";
-  av[1] = "-i";
-  av[2] = "sampler_bind_dm";
-  av[3] = (char *)NULL;
+    av[0] = "wgl_open";
+    av[1] = "-i";
+    av[2] = "sampler_bind_dm";
+    av[3] = (char *)NULL;
 
-  if ((dmp = DM_OPEN(DM_TYPE_WGL, 3, av)) == DM_NULL) {
-    Tcl_AppendResult(interp, "Failed to open a display manager\n", (char *)NULL);
-    return TCL_ERROR;
-  }
+    if ((dmp = DM_OPEN(DM_TYPE_WGL, 3, av)) == DM_NULL) {
+	Tcl_AppendResult(interp, "Failed to open a display manager\n", (char *)NULL);
+	return TCL_ERROR;
+    }
 
-  dmp->dm_vp = &Viewscale;
-  ((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.zclipping_on = 0;
-  Tk_CreateGenericHandler(Wgl_doEvent, (ClientData)DM_TYPE_WGL);
-  dm_configureWindowShape(dmp);
-  DM_SET_WIN_BOUNDS(dmp, windowbounds);
+    dmp->dm_vp = &Viewscale;
+    ((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.zclipping_on = 0;
+    Tk_CreateGenericHandler(Wgl_doEvent, (ClientData)DM_TYPE_WGL);
+    dm_configureWindowShape(dmp);
+    DM_SET_WIN_BOUNDS(dmp, windowbounds);
 
-  return TCL_OK;
+    return TCL_OK;
 }
 
 /*
@@ -1654,71 +1654,71 @@ Wgl_dmInit()
  */
 static int
 Wgl_doEvent(clientData, eventPtr)
-ClientData clientData;
-XEvent *eventPtr;
+    ClientData clientData;
+    XEvent *eventPtr;
 {
-  if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
-    glClearColor(0.0, 0.0, 0.0, 0.0);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
+	glClearColor(0.0, 0.0, 0.0, 0.0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    refresh();
-  } else if (eventPtr->type == ConfigureNotify) {
-    dm_configureWindowShape(dmp);
-    refresh();
-  } else if ( eventPtr->type == MotionNotify ) {
-    int mx, my;
-
-    mx = eventPtr->xmotion.x;
-    my = eventPtr->xmotion.y;
-
-    switch (mouse_mode) {
-    case MOUSE_MODE_ROTATE:
-      vrot((my - omy) * app_scale,
-	   (mx - omx) * app_scale,
-	   0.0);
-      new_mats();
-      refresh();
-
-      break;
-    case MOUSE_MODE_TRANSLATE:
-      {
-	vect_t vdiff;
-
-	vdiff[X] = (mx - omx) /
-	  (fastf_t)dmp->dm_width * 2.0;
-	vdiff[Y] = (omy - my) /
-	  (fastf_t)dmp->dm_height * 2.0;
-	vdiff[Z] = 0.0;
-
-	(void)islewview(vdiff);
-	new_mats();
 	refresh();
-      }
-
-      break;
-    case MOUSE_MODE_ZOOM:
-      {
-	double val;
-
-	val = 1.0 + (omy - my) /
-	  (fastf_t)dmp->dm_height;
-
-	zoom(interp, val);
-	new_mats();
+    } else if (eventPtr->type == ConfigureNotify) {
+	dm_configureWindowShape(dmp);
 	refresh();
-      }
+    } else if ( eventPtr->type == MotionNotify ) {
+	int mx, my;
 
-      break;
-    case MOUSE_MODE_IDLE:
-    default:
-      break;
+	mx = eventPtr->xmotion.x;
+	my = eventPtr->xmotion.y;
+
+	switch (mouse_mode) {
+	    case MOUSE_MODE_ROTATE:
+		vrot((my - omy) * app_scale,
+		     (mx - omx) * app_scale,
+		     0.0);
+		new_mats();
+		refresh();
+
+		break;
+	    case MOUSE_MODE_TRANSLATE:
+	    {
+		vect_t vdiff;
+
+		vdiff[X] = (mx - omx) /
+		    (fastf_t)dmp->dm_width * 2.0;
+		vdiff[Y] = (omy - my) /
+		    (fastf_t)dmp->dm_height * 2.0;
+		vdiff[Z] = 0.0;
+
+		(void)islewview(vdiff);
+		new_mats();
+		refresh();
+	    }
+
+	    break;
+	    case MOUSE_MODE_ZOOM:
+	    {
+		double val;
+
+		val = 1.0 + (omy - my) /
+		    (fastf_t)dmp->dm_height;
+
+		zoom(interp, val);
+		new_mats();
+		refresh();
+	    }
+
+	    break;
+	    case MOUSE_MODE_IDLE:
+	    default:
+		break;
+	}
+
+	omx = mx;
+	omy = my;
     }
 
-    omx = mx;
-    omy = my;
-  }
-
-  return TCL_OK;
+    return TCL_OK;
 }
 
 /*
@@ -1726,137 +1726,137 @@ XEvent *eventPtr;
  */
 static int
 Wgl_dm(argc, argv)
-int argc;
-char *argv[];
+    int argc;
+    char *argv[];
 {
-  int status;
+    int status;
 
-  if ( !strcmp( argv[0], "set" ) )  {
-    struct bu_vls tmp_vls;
-    struct bu_vls vls;
+    if ( !strcmp( argv[0], "set" ) )  {
+	struct bu_vls tmp_vls;
+	struct bu_vls vls;
 
-    bu_vls_init(&vls);
-    bu_vls_init(&tmp_vls);
-    start_catching_output(&tmp_vls);
+	bu_vls_init(&vls);
+	bu_vls_init(&tmp_vls);
+	start_catching_output(&tmp_vls);
 
-    if ( argc < 2 )  {
-      /* Bare set command, print out current settings */
-      bu_struct_print("dm_wgl internal variables", Wgl_vparse, (const char *)&((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars );
-    } else if ( argc == 2 ) {
-      bu_vls_struct_item_named( &vls, Wgl_vparse, argv[1], (const char *)&((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars, ',');
-      bu_log( "%S\n", &vls );
-    } else {
-      bu_vls_printf( &vls, "%s=\"", argv[1] );
-      bu_vls_from_argv( &vls, argc-2, argv+2 );
-      bu_vls_putc( &vls, '\"' );
-      bu_struct_parse( &vls, Wgl_vparse, (char *)&((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars );
+	if ( argc < 2 )  {
+	    /* Bare set command, print out current settings */
+	    bu_struct_print("dm_wgl internal variables", Wgl_vparse, (const char *)&((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars );
+	} else if ( argc == 2 ) {
+	    bu_vls_struct_item_named( &vls, Wgl_vparse, argv[1], (const char *)&((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars, ',');
+	    bu_log( "%S\n", &vls );
+	} else {
+	    bu_vls_printf( &vls, "%s=\"", argv[1] );
+	    bu_vls_from_argv( &vls, argc-2, argv+2 );
+	    bu_vls_putc( &vls, '\"' );
+	    bu_struct_parse( &vls, Wgl_vparse, (char *)&((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars );
+	}
+
+	bu_vls_free(&vls);
+
+	stop_catching_output(&tmp_vls);
+	Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	bu_vls_free(&tmp_vls);
+	return TCL_OK;
     }
 
-    bu_vls_free(&vls);
+    if ( !strcmp( argv[0], "m")) {
+	vect_t view_pos;
 
-    stop_catching_output(&tmp_vls);
-    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-    bu_vls_free(&tmp_vls);
-    return TCL_OK;
-  }
-
-  if ( !strcmp( argv[0], "m")) {
-    vect_t view_pos;
-
-    if ( argc < 4) {
-      Tcl_AppendResult(interp, "dm m: need more parameters\n",
-		       "dm m button 1|0 xpos ypos\n", (char *)NULL);
-      return TCL_ERROR;
-    }
+	if ( argc < 4) {
+	    Tcl_AppendResult(interp, "dm m: need more parameters\n",
+			     "dm m button 1|0 xpos ypos\n", (char *)NULL);
+	    return TCL_ERROR;
+	}
 
 #if 0
-    /* This assumes a 3-button mouse */
-    switch (*argv[1]) {
-    case '1':
-      ((struct wgl_vars *)dmp->dm_vars)->mb_mask = Button1Mask;
-      break;
-    case '2':
-      ((struct wgl_vars *)dmp->dm_vars)->mb_mask = Button2Mask;
-      break;
-    case '3':
-      ((struct wgl_vars *)dmp->dm_vars)->mb_mask = Button3Mask;
-      break;
-    default:
-      return TCL_ERROR;
-    }
+	/* This assumes a 3-button mouse */
+	switch (*argv[1]) {
+	    case '1':
+		((struct wgl_vars *)dmp->dm_vars)->mb_mask = Button1Mask;
+		break;
+	    case '2':
+		((struct wgl_vars *)dmp->dm_vars)->mb_mask = Button2Mask;
+		break;
+	    case '3':
+		((struct wgl_vars *)dmp->dm_vars)->mb_mask = Button3Mask;
+		break;
+	    default:
+		return TCL_ERROR;
+	}
 #endif
 
-    view_pos[X] = dm_Xx2Normal(dmp, atoi(argv[3]));
-    view_pos[Y] = dm_Xy2Normal(dmp, atoi(argv[4]), 0);
-    view_pos[Z] = 0.0;
-    status = slewview(view_pos);
-    new_mats();
-    refresh();
+	view_pos[X] = dm_Xx2Normal(dmp, atoi(argv[3]));
+	view_pos[Y] = dm_Xy2Normal(dmp, atoi(argv[4]), 0);
+	view_pos[Z] = 0.0;
+	status = slewview(view_pos);
+	new_mats();
+	refresh();
 
-    return status;
-  }
-
-  if ( !strcmp( argv[0], "am" )) {
-    int buttonpress;
-
-    if ( argc < 5) {
-      Tcl_AppendResult(interp, "dm am: need more parameters\n",
-		       "dm am <r|t|z> 1|0 xpos ypos\n", (char *)NULL);
-      return TCL_ERROR;
+	return status;
     }
 
-    buttonpress = atoi(argv[2]);
-    omx = atoi(argv[3]);
-    omy = atoi(argv[4]);
+    if ( !strcmp( argv[0], "am" )) {
+	int buttonpress;
 
-    if (buttonpress) {
-      switch (*argv[1]) {
-      case 'r':
-	mouse_mode = MOUSE_MODE_ROTATE;
-	break;
-      case 't':
-	mouse_mode = MOUSE_MODE_TRANSLATE;
-	break;
-      case 'z':
-	mouse_mode = MOUSE_MODE_ZOOM;
-	break;
-      default:
-	mouse_mode = MOUSE_MODE_IDLE;
-	break;
-      }
-    } else
-      mouse_mode = MOUSE_MODE_IDLE;
-  }
+	if ( argc < 5) {
+	    Tcl_AppendResult(interp, "dm am: need more parameters\n",
+			     "dm am <r|t|z> 1|0 xpos ypos\n", (char *)NULL);
+	    return TCL_ERROR;
+	}
 
-  return TCL_OK;
+	buttonpress = atoi(argv[2]);
+	omx = atoi(argv[3]);
+	omy = atoi(argv[4]);
+
+	if (buttonpress) {
+	    switch (*argv[1]) {
+		case 'r':
+		    mouse_mode = MOUSE_MODE_ROTATE;
+		    break;
+		case 't':
+		    mouse_mode = MOUSE_MODE_TRANSLATE;
+		    break;
+		case 'z':
+		    mouse_mode = MOUSE_MODE_ZOOM;
+		    break;
+		default:
+		    mouse_mode = MOUSE_MODE_IDLE;
+		    break;
+	    }
+	} else
+	    mouse_mode = MOUSE_MODE_IDLE;
+    }
+
+    return TCL_OK;
 }
 
 static void
 Wgl_colorchange()
 {
-  if (((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.cueing_on) {
-    glEnable(GL_FOG);
-  } else {
-    glDisable(GL_FOG);
-  }
+    if (((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.cueing_on) {
+	glEnable(GL_FOG);
+    } else {
+	glDisable(GL_FOG);
+    }
 
-  refresh();
+    refresh();
 }
 
 static void
 Wgl_establish_zbuffer()
 {
-  dm_zbuffer(dmp,
-	     ((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuffer_on);
-  refresh();
+    dm_zbuffer(dmp,
+	       ((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuffer_on);
+    refresh();
 }
 
 static void
 Wgl_establish_lighting()
 {
-  dm_lighting(dmp,
-	      ((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.lighting_on);
-  refresh();
+    dm_lighting(dmp,
+		((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.lighting_on);
+    refresh();
 }
 #endif
 

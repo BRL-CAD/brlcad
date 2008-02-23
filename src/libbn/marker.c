@@ -27,7 +27,7 @@
  * the right of the current position, as characters usually go).
  * Calling sequence:
  *
-@code
+ @code
  *	char c		is the character to be used for a marker,
  *			or one of the following special markers -
  *				1 = plus
@@ -35,7 +35,7 @@
  *				3 = a triangle
  *				4 = a square
  *				5 = an hourglass
-@endcode
+ @endcode
  *
  *  @author	Mike Muuss
  *@n	August 04, 1978
@@ -54,26 +54,26 @@
 void
 tp_2marker(FILE *fp, register int c, double x, double y, double scale)
 {
-	char	mark_str[4];
+    char	mark_str[4];
 
-	mark_str[0] = (char)c;
-	mark_str[1] = '\0';
+    mark_str[0] = (char)c;
+    mark_str[1] = '\0';
 
-	/* Draw the marker */
-	tp_2symbol( fp, mark_str,
+    /* Draw the marker */
+    tp_2symbol( fp, mark_str,
 		(x - scale*0.5), (y - scale*0.5),
 		scale, 0.0 );
 }
 
 void
 PL_FORTRAN(f2mark, F2MARK)( fp, c, x, y, scale )
-FILE	**fp;
-int	*c;
-float	*x;
-float	*y;
-float	*scale;
+    FILE	**fp;
+    int	*c;
+    float	*x;
+    float	*y;
+    float	*scale;
 {
-	tp_2marker( *fp, *c, *x, *y, *scale );
+    tp_2marker( *fp, *c, *x, *y, *scale );
 }
 
 /*
@@ -82,27 +82,27 @@ float	*scale;
 void
 tp_3marker(FILE *fp, register int c, double x, double y, double z, double scale)
 {
-	char	mark_str[4];
-	mat_t	mat;
-	vect_t	p;
+    char	mark_str[4];
+    mat_t	mat;
+    vect_t	p;
 
-	mark_str[0] = (char)c;
-	mark_str[1] = '\0';
-	MAT_IDN( mat );
-	VSET( p, x - scale*0.5, y - scale*0.5, z );
-	tp_3symbol( fp, mark_str, p, mat, scale );
+    mark_str[0] = (char)c;
+    mark_str[1] = '\0';
+    MAT_IDN( mat );
+    VSET( p, x - scale*0.5, y - scale*0.5, z );
+    tp_3symbol( fp, mark_str, p, mat, scale );
 }
 
 void
 PL_FORTRAN(f3mark, F3MARK)( fp, c, x, y, z, scale )
-FILE	**fp;
-int	*c;
-float	*x;
-float	*y;
-float	*z;
-float	*scale;
+    FILE	**fp;
+    int	*c;
+    float	*x;
+    float	*y;
+    float	*z;
+    float	*scale;
 {
-	tp_3marker( *fp, *c, *x, *y, *z, *scale );
+    tp_3marker( *fp, *c, *x, *y, *z, *scale );
 }
 
 /** @} */

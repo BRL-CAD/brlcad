@@ -48,11 +48,11 @@
  */
 int
 db5_scan(
-	 struct db_i	*dbip,
-	 void		(*handler)(struct db_i *,
+    struct db_i	*dbip,
+    void		(*handler)(struct db_i *,
 				   const struct db5_raw_internal *,
 				   long addr, genptr_t client_data ),
-	 genptr_t	client_data )
+    genptr_t	client_data )
 {
     unsigned char	header[8];
     struct db5_raw_internal	raw;
@@ -94,7 +94,7 @@ db5_scan(
 	/* In a totally portable way, read the database with stdio */
 	rewind( dbip->dbi_fp );
 	if ( fread( header, sizeof header, 1, dbip->dbi_fp ) != 1  ||
-	    db5_header_is_valid( header ) == 0 )  {
+	     db5_header_is_valid( header ) == 0 )  {
 	    bu_log("db5_scan ERROR:  %s is lacking a proper BRL-CAD v5 database header\n", dbip->dbi_filename);
 	    goto fatal;
 	}
@@ -126,14 +126,14 @@ db5_scan(
 
 struct directory *
 db_diradd5(
-	   struct db_i				*dbip,
-	   const char				*name,
-	   long					laddr,
-	   unsigned char			major_type,
-	   unsigned char 			minor_type,
-	   unsigned char			name_hidden,
-	   long					object_length,
-	   struct bu_attribute_value_set	*avs)
+    struct db_i				*dbip,
+    const char				*name,
+    long					laddr,
+    unsigned char			major_type,
+    unsigned char 			minor_type,
+    unsigned char			name_hidden,
+    long					object_length,
+    struct bu_attribute_value_set	*avs)
 {
     struct directory **headp;
     register struct directory *dp;
@@ -285,10 +285,10 @@ db5_diradd(struct db_i			*dbip,
  */
 HIDDEN void
 db5_diradd_handler(
-		   struct db_i		*dbip,
-		   const struct db5_raw_internal *rip,
-		   long			laddr,
-		   genptr_t		client_data )	/* unused client_data from db5_scan() */
+    struct db_i		*dbip,
+    const struct db5_raw_internal *rip,
+    long			laddr,
+    genptr_t		client_data )	/* unused client_data from db5_scan() */
 {
     RT_CK_DBI(dbip);
 

@@ -48,27 +48,27 @@
 #endif
 
 struct qray_color {
-  unsigned char r;
-  unsigned char g;
-  unsigned char b;
+    unsigned char r;
+    unsigned char g;
+    unsigned char b;
 };
 
 struct qray_fmt {
-  char type;
-  struct bu_vls fmt;
+    char type;
+    struct bu_vls fmt;
 };
 
 struct qray_fmt_data {
-  char type;
-  char *fmt;
+    char type;
+    char *fmt;
 };
 
 struct qray_dataList {
-  struct bu_list l;
-  fastf_t x_in;
-  fastf_t y_in;
-  fastf_t z_in;
-  fastf_t los;
+    struct bu_list l;
+    fastf_t x_in;
+    fastf_t y_in;
+    fastf_t z_in;
+    fastf_t los;
 };
 
 extern struct bu_vls qray_basename;

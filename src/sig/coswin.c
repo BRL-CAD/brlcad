@@ -46,58 +46,58 @@ static double	*coswintab = NULL;
 int
 init_coswintab(int size)
 {
-	int	i;
-	double	theta;
+    int	i;
+    double	theta;
 
-	if ( size > maxinitlen ) {
-		if ( coswintab != NULL ) {
-			bu_free( coswintab, "coswintab" );
-			maxinitlen = 0;
-		}
-		coswintab = (double *)bu_malloc(size*sizeof(double), "coswintab");
-		maxinitlen = size;
+    if ( size > maxinitlen ) {
+	if ( coswintab != NULL ) {
+	    bu_free( coswintab, "coswintab" );
+	    maxinitlen = 0;
 	}
+	coswintab = (double *)bu_malloc(size*sizeof(double), "coswintab");
+	maxinitlen = size;
+    }
 
-	/* Check for odd lengths? XXX */
+    /* Check for odd lengths? XXX */
 
-	/*
-	 * Size is okay.  Set up tables.
-	 */
-	for ( i = 0; i < size; i++ ) {
-		theta = M_PI * i / (double)(size);
-		coswintab[ i ] = 0.5 - 0.5 * cos( theta );
-	}
+    /*
+     * Size is okay.  Set up tables.
+     */
+    for ( i = 0; i < size; i++ ) {
+	theta = M_PI * i / (double)(size);
+	coswintab[ i ] = 0.5 - 0.5 * cos( theta );
+    }
 
-	/*
-	 * Mark size and return success.
-	 */
-	_init_length = size;
-	return( 1 );
+    /*
+     * Mark size and return success.
+     */
+    _init_length = size;
+    return( 1 );
 }
 
 
 void
 coswin(double *data, int length, double percent)
 {
-	int	num, i;
+    int	num, i;
 
-	num = percent * length/2 + 0.5;
+    num = percent * length/2 + 0.5;
 
-	/* Check for window table initialization */
-	if ( num != _init_length ) {
-		if ( init_coswintab( num ) == 0 ) {
-			/* Can't do requested size */
-			return;
-		}
+    /* Check for window table initialization */
+    if ( num != _init_length ) {
+	if ( init_coswintab( num ) == 0 ) {
+	    /* Can't do requested size */
+	    return;
 	}
+    }
 
-	/* Do window - could use pointers here... */
-	for ( i = 0; i < num; i++ ) {
-		data[i] *= coswintab[i];
-		data[length-i-1] *= coswintab[i];
-	}
+    /* Do window - could use pointers here... */
+    for ( i = 0; i < num; i++ ) {
+	data[i] *= coswintab[i];
+	data[length-i-1] *= coswintab[i];
+    }
 
-	bu_free(coswintab, "coswintab");
+    bu_free(coswintab, "coswintab");
 }
 
 /*
@@ -106,25 +106,25 @@ coswin(double *data, int length, double percent)
 void
 ccoswin(bn_complex_t *data, int length, double percent)
 {
-	int	num, i;
+    int	num, i;
 
-	num = percent * length/2 + 0.5;
+    num = percent * length/2 + 0.5;
 
-	/* Check for window table initialization */
-	if ( num != _init_length ) {
-		if ( init_coswintab( num ) == 0 ) {
-			/* Can't do requested size */
-			return;
-		}
+    /* Check for window table initialization */
+    if ( num != _init_length ) {
+	if ( init_coswintab( num ) == 0 ) {
+	    /* Can't do requested size */
+	    return;
 	}
+    }
 
-	/* Do window - could use pointers here... */
-	for ( i = 0; i < num; i++ ) {
-		data[i].re *= coswintab[i];
-		data[length-i-1].re *= coswintab[i];
-	}
+    /* Do window - could use pointers here... */
+    for ( i = 0; i < num; i++ ) {
+	data[i].re *= coswintab[i];
+	data[length-i-1].re *= coswintab[i];
+    }
 
-	bu_free(coswintab, "coswintab");
+    bu_free(coswintab, "coswintab");
 }
 
 /*

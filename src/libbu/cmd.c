@@ -60,36 +60,36 @@ bu_cmd(ClientData	clientData,
        struct bu_cmdtab	*cmds,
        int		cmd_index)
 {
-	register struct bu_cmdtab *ctp;
+    register struct bu_cmdtab *ctp;
 
-	/* sanity */
-	if (cmd_index >= argc) {
-		Tcl_AppendResult(interp,
-				 "missing command; must be one of:",
-				 (char *)NULL);
-		goto missing_cmd;
-	}
-
-	for (ctp = cmds; ctp->ct_name != (char *)NULL; ctp++) {
-		if (ctp->ct_name[0] == argv[cmd_index][0] &&
-		    strcmp(ctp->ct_name, argv[cmd_index]) == 0) {
-			return (*ctp->ct_func)(clientData, interp, argc, argv);
-		}
-	}
-
+    /* sanity */
+    if (cmd_index >= argc) {
 	Tcl_AppendResult(interp,
-			 "unknown command: ",
-			 argv[cmd_index], ";",
-			 " must be one of: ",
+			 "missing command; must be one of:",
 			 (char *)NULL);
+	goto missing_cmd;
+    }
 
-missing_cmd:
-	for (ctp = cmds; ctp->ct_name != (char *)NULL; ctp++) {
-		Tcl_AppendResult(interp, " ", ctp->ct_name, (char *)NULL);
+    for (ctp = cmds; ctp->ct_name != (char *)NULL; ctp++) {
+	if (ctp->ct_name[0] == argv[cmd_index][0] &&
+	    strcmp(ctp->ct_name, argv[cmd_index]) == 0) {
+	    return (*ctp->ct_func)(clientData, interp, argc, argv);
 	}
-	Tcl_AppendResult(interp, "\n", (char *)NULL);
+    }
 
-	return TCL_ERROR;
+    Tcl_AppendResult(interp,
+		     "unknown command: ",
+		     argv[cmd_index], ";",
+		     " must be one of: ",
+		     (char *)NULL);
+
+ missing_cmd:
+    for (ctp = cmds; ctp->ct_name != (char *)NULL; ctp++) {
+	Tcl_AppendResult(interp, " ", ctp->ct_name, (char *)NULL);
+    }
+    Tcl_AppendResult(interp, "\n", (char *)NULL);
+
+    return TCL_ERROR;
 }
 
 /**
@@ -110,11 +110,11 @@ void
 bu_register_cmds(Tcl_Interp		*interp,
 		 struct bu_cmdtab	*cmds)
 {
-	register struct bu_cmdtab *ctp;
+    register struct bu_cmdtab *ctp;
 
-	for (ctp = cmds; ctp->ct_name != (char *)NULL; ctp++)
-		(void)Tcl_CreateCommand(interp, ctp->ct_name, ctp->ct_func,
-					(ClientData)ctp, (Tcl_CmdDeleteProc *)NULL);
+    for (ctp = cmds; ctp->ct_name != (char *)NULL; ctp++)
+	(void)Tcl_CreateCommand(interp, ctp->ct_name, ctp->ct_func,
+				(ClientData)ctp, (Tcl_CmdDeleteProc *)NULL);
 }
 /** @} */
 /*

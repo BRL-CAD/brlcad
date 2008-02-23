@@ -59,24 +59,24 @@ getCommand( char *name, char *buf, int len, FILE *fp )
     assert( buf != NULL );
     assert( fp != NULL );
     while ( bu_fgets( buf, len, fp ) != NULL )
+    {
+	if ( buf[0] != CHAR_COMMENT )
 	{
-	    if ( buf[0] != CHAR_COMMENT )
-		{
-		    if ( sscanf( buf, "%1330s", name ) == 1 ) /* LNBUFSZ */
-			{
-			    buf[strlen(buf)-1] = NUL; /* clobber newline */
-			    return	1;
-			}
-		    else /* Skip over blank lines. */
-			continue;
-		}
-	    else
-		{
-		 /* Generate comment command. */
-		    bu_strlcpy( name, CMD_COMMENT, LNBUFSZ );
-		    return	1;
-		}
+	    if ( sscanf( buf, "%1330s", name ) == 1 ) /* LNBUFSZ */
+	    {
+		buf[strlen(buf)-1] = NUL; /* clobber newline */
+		return	1;
+	    }
+	    else /* Skip over blank lines. */
+		continue;
 	}
+	else
+	{
+	    /* Generate comment command. */
+	    bu_strlcpy( name, CMD_COMMENT, LNBUFSZ );
+	    return	1;
+	}
+    }
     return	0; /* EOF */
 }
 
@@ -92,27 +92,27 @@ setupSigs( void )
     register int i;
     for ( i = 0; i < NSIG; i++ )
 	switch ( i )
-	    {
-		case SIGINT :
-		    if ( (norml_sig = signal( i, SIG_IGN )) == SIG_IGN )
-			abort_sig = SIG_IGN;
-		    else
-			{
-			    norml_sig = intr_sig;
-			    abort_sig = abort_RT;
-			    (void) signal( i,  norml_sig );
-			}
-		    break;
-		case SIGCHLD :
-		    break; /* leave SIGCLD alone */
-		case SIGPIPE :
-		    (void) signal( i, SIG_IGN );
-		    break;
-		case SIGQUIT :
-		    break;
-		case SIGTSTP :
-		    break;
-	    }
+	{
+	    case SIGINT :
+		if ( (norml_sig = signal( i, SIG_IGN )) == SIG_IGN )
+		    abort_sig = SIG_IGN;
+		else
+		{
+		    norml_sig = intr_sig;
+		    abort_sig = abort_RT;
+		    (void) signal( i,  norml_sig );
+		}
+		break;
+	    case SIGCHLD :
+		break; /* leave SIGCLD alone */
+	    case SIGPIPE :
+		(void) signal( i, SIG_IGN );
+		break;
+	    case SIGQUIT :
+		break;
+	    case SIGTSTP :
+		break;
+	}
     return;
 }
 
@@ -124,20 +124,20 @@ setupSigs( void )
 static int
 parsArgv( int argc, char **argv )
 {
-	register int c;
+    register int c;
 /* Parse options.						*/
- while ( (c = bu_getopt( argc, argv, "b" )) != EOF )
-     {
-	 switch ( c )
-	     {
-		 case 'b' :
-		     tty = 0;
-		     break;
-		 case '?' :
-		     return	0;
-	     }
-     }
- return	1;
+    while ( (c = bu_getopt( argc, argv, "b" )) != EOF )
+    {
+	switch ( c )
+	{
+	    case 'b' :
+		tty = 0;
+		break;
+	    case '?' :
+		return	0;
+	}
+    }
+    return	1;
 }
 
 /*
@@ -151,34 +151,34 @@ readBatchInput( FILE *fp )
     assert( fp != (FILE *) NULL );
     batchmode = 1;
     while ( getCommand( cmdname, cmdbuf, LNBUFSZ, fp ) )
-	{
-		Func	*cmdfunc;
+    {
+	Func	*cmdfunc;
 	if ( (cmdfunc = getTrie( cmdname, cmdtrie )) == NULL )
-	    {
-	    	register int i, len = strlen( cmdname );
+	{
+	    register int i, len = strlen( cmdname );
 	    brst_log( "ERROR -- command syntax:\n" );
 	    brst_log( "\t%s\n", cmdbuf );
 	    brst_log( "\t" );
 	    for ( i = 0; i < len; i++ )
 		brst_log( " " );
 	    brst_log( "^\n" );
-	    }
+	}
 	else
 	    if ( strcmp( cmdname, CMD_COMMENT ) == 0 )
-		{
-		 /* special handling for comments */
-		    cmdptr = cmdbuf;
-		    cmdbuf[strlen(cmdbuf)-1] = '\0'; /* clobber newline */
-		    (*cmdfunc)( (HmItem *) 0 );
-		}
+	    {
+		/* special handling for comments */
+		cmdptr = cmdbuf;
+		cmdbuf[strlen(cmdbuf)-1] = '\0'; /* clobber newline */
+		(*cmdfunc)( (HmItem *) 0 );
+	    }
 	    else
-		{
-		 /* Advance pointer past nul at end of
-		     command name. */
-		    cmdptr = cmdbuf + strlen( cmdname ) + 1;
-		    (*cmdfunc)( (HmItem *) 0 );
-		}
-	}
+	    {
+		/* Advance pointer past nul at end of
+		   command name. */
+		cmdptr = cmdbuf + strlen( cmdname ) + 1;
+		(*cmdfunc)( (HmItem *) 0 );
+	    }
+    }
     batchmode = 0;
     return;
 }

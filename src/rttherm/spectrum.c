@@ -40,75 +40,75 @@
 #include "spectrum.h"
 
 static const double rt_NTSC_R[][2] = {
-	{543, 0.0001},
-	{552, 0.05},
-	{562, 0.2},
-	{572, 0.4},
-	{577, 0.6},
-	{580, 0.8},
-	{583, 0.9},
-	{587, 0.95},
-	{590, 1.0},
-	{598, 1.0},
-	{601, 0.95},
-	{605, 0.9},
-	{610, 0.8},
-	{620, 0.6},
-	{630, 0.4},
-	{640, 0.26},
-	{650, 0.2},
-	{670, 0.1},
-	{690, 0.05},
-	{730, 0.0001},
-	{-1, -1}
+    {543, 0.0001},
+    {552, 0.05},
+    {562, 0.2},
+    {572, 0.4},
+    {577, 0.6},
+    {580, 0.8},
+    {583, 0.9},
+    {587, 0.95},
+    {590, 1.0},
+    {598, 1.0},
+    {601, 0.95},
+    {605, 0.9},
+    {610, 0.8},
+    {620, 0.6},
+    {630, 0.4},
+    {640, 0.26},
+    {650, 0.2},
+    {670, 0.1},
+    {690, 0.05},
+    {730, 0.0001},
+    {-1, -1}
 };
 
 static const double rt_NTSC_G[][2] = {
-	{456, 0.0001},
-	{475, 0.05},
-	{480, 0.1},
-	{492, 0.2},
-	{507, 0.4},
-	{515, 0.6},
-	{522, 0.8},
-	{528, 0.9},
-	{531, 0.95},
-	{537, 1.0},
-	{545, 1.0},
-	{548, 0.95},
-	{551, 0.9},
-	{555, 0.8},
-	{562, 0.6},
-	{572, 0.4},
-	{582, 0.2},
-	{591, 0.1},
-	{603, 0.05},
-	{630, 0.0001},
-	{-1, -1}
+    {456, 0.0001},
+    {475, 0.05},
+    {480, 0.1},
+    {492, 0.2},
+    {507, 0.4},
+    {515, 0.6},
+    {522, 0.8},
+    {528, 0.9},
+    {531, 0.95},
+    {537, 1.0},
+    {545, 1.0},
+    {548, 0.95},
+    {551, 0.9},
+    {555, 0.8},
+    {562, 0.6},
+    {572, 0.4},
+    {582, 0.2},
+    {591, 0.1},
+    {603, 0.05},
+    {630, 0.0001},
+    {-1, -1}
 };
 
 static const double rt_NTSC_B[][2] = {
-	{347, 0.0001},
-	{373, 0.05},
-	{385, 0.1},
-	{396, 0.2},
-	{409, 0.4},
-	{415, 0.6},
-	{423, 0.8},
-	{430, 0.9},
-	{433, 0.95},
-	{440, 1.0},
-	{450, 1.0},
-	{457, 0.95},
-	{460, 0.9},
-	{466, 0.8},
-	{470, 0.6},
-	{479, 0.4},
-	{492, 0.2},
-	{503, 0.1},
-	{515, 0.05},
-	{543, 0.0001},
-	{-1, -1}
+    {347, 0.0001},
+    {373, 0.05},
+    {385, 0.1},
+    {396, 0.2},
+    {409, 0.4},
+    {415, 0.6},
+    {423, 0.8},
+    {430, 0.9},
+    {433, 0.95},
+    {440, 1.0},
+    {450, 1.0},
+    {457, 0.95},
+    {460, 0.9},
+    {466, 0.8},
+    {470, 0.6},
+    {479, 0.4},
+    {492, 0.2},
+    {503, 0.1},
+    {515, 0.05},
+    {543, 0.0001},
+    {-1, -1}
 };
 
 struct bn_tabdata *rt_NTSC_r_tabdata;
@@ -132,31 +132,31 @@ rt_spect_make_NTSC_RGB(struct bn_tabdata		**rp,
 		       struct bn_tabdata		**bp,
 		       const struct bn_table		*tabp)
 {
-	BN_CK_TABLE(tabp);
+    BN_CK_TABLE(tabp);
 
-	/* Convert array of number pairs into bn_tabdata & bn_table */
-	rt_NTSC_r_tabdata = bn_tabdata_from_array( &rt_NTSC_R[0][0] );
-	rt_NTSC_g_tabdata = bn_tabdata_from_array( &rt_NTSC_G[0][0] );
-	rt_NTSC_b_tabdata = bn_tabdata_from_array( &rt_NTSC_B[0][0] );
+    /* Convert array of number pairs into bn_tabdata & bn_table */
+    rt_NTSC_r_tabdata = bn_tabdata_from_array( &rt_NTSC_R[0][0] );
+    rt_NTSC_g_tabdata = bn_tabdata_from_array( &rt_NTSC_G[0][0] );
+    rt_NTSC_b_tabdata = bn_tabdata_from_array( &rt_NTSC_B[0][0] );
 
-bu_log("ntsc_R: area=%g\n", bn_tabdata_area2(rt_NTSC_r_tabdata) );
-	bn_print_table_and_tabdata( "/dev/tty", rt_NTSC_r_tabdata );
-bu_log("ntsc_G: area=%g\n", bn_tabdata_area2(rt_NTSC_g_tabdata) );
-	bn_print_table_and_tabdata( "/dev/tty", rt_NTSC_g_tabdata );
-bu_log("ntsc_B: area=%g\n", bn_tabdata_area2(rt_NTSC_b_tabdata) );
-	bn_print_table_and_tabdata( "/dev/tty", rt_NTSC_b_tabdata );
+    bu_log("ntsc_R: area=%g\n", bn_tabdata_area2(rt_NTSC_r_tabdata) );
+    bn_print_table_and_tabdata( "/dev/tty", rt_NTSC_r_tabdata );
+    bu_log("ntsc_G: area=%g\n", bn_tabdata_area2(rt_NTSC_g_tabdata) );
+    bn_print_table_and_tabdata( "/dev/tty", rt_NTSC_g_tabdata );
+    bu_log("ntsc_B: area=%g\n", bn_tabdata_area2(rt_NTSC_b_tabdata) );
+    bn_print_table_and_tabdata( "/dev/tty", rt_NTSC_b_tabdata );
 
-	/* Resample original NTSC curves to match given bn_table sampling */
+    /* Resample original NTSC curves to match given bn_table sampling */
 #if 0
-	/* just to test the routine */
-	*rp = bn_tabdata_resample_avg( tabp, rt_NTSC_r_tabdata );
-	*gp = bn_tabdata_resample_avg( tabp, rt_NTSC_g_tabdata );
-	*bp = bn_tabdata_resample_avg( tabp, rt_NTSC_b_tabdata );
+    /* just to test the routine */
+    *rp = bn_tabdata_resample_avg( tabp, rt_NTSC_r_tabdata );
+    *gp = bn_tabdata_resample_avg( tabp, rt_NTSC_g_tabdata );
+    *bp = bn_tabdata_resample_avg( tabp, rt_NTSC_b_tabdata );
 #else
-	/* use this one for real */
-	*rp = bn_tabdata_resample_max( tabp, rt_NTSC_r_tabdata );
-	*gp = bn_tabdata_resample_max( tabp, rt_NTSC_g_tabdata );
-	*bp = bn_tabdata_resample_max( tabp, rt_NTSC_b_tabdata );
+    /* use this one for real */
+    *rp = bn_tabdata_resample_max( tabp, rt_NTSC_r_tabdata );
+    *gp = bn_tabdata_resample_max( tabp, rt_NTSC_g_tabdata );
+    *bp = bn_tabdata_resample_max( tabp, rt_NTSC_b_tabdata );
 #endif
 }
 
@@ -200,67 +200,67 @@ int
 rt_clr__cspace_to_xyz (const point_t	cspace[4],
 		       mat_t		rgb2xyz)
 {
-	int     ii, jj, kk, tmp_i, ind[3];
-	fastf_t  mult, white[3], scale[3];
-	mat_t	t_mat;
+    int     ii, jj, kk, tmp_i, ind[3];
+    fastf_t  mult, white[3], scale[3];
+    mat_t	t_mat;
 
-	/* Might want to enforce X+Y+Z=1 for 4 inputs.  Roy does, on pg 229. */
+    /* Might want to enforce X+Y+Z=1 for 4 inputs.  Roy does, on pg 229. */
 
-	/* normalize the white point to Y=1 */
+    /* normalize the white point to Y=1 */
 #define WHITE	3
-	if (cspace[WHITE][Y] <= 0.0) return 0;
-	white[0] = cspace[WHITE][X] / cspace[WHITE][Y];
-	white[1] = 1.0;
-	white[2] = cspace[WHITE][Z] / cspace[WHITE][Y];
+    if (cspace[WHITE][Y] <= 0.0) return 0;
+    white[0] = cspace[WHITE][X] / cspace[WHITE][Y];
+    white[1] = 1.0;
+    white[2] = cspace[WHITE][Z] / cspace[WHITE][Y];
 
 #define tmat(a, b)	t_mat[(a)*4+(b)]
-	MAT_IDN(t_mat);
-	for (ii=0; ii<=2; ii++) {
-		tmat(0, ii) = cspace[ii][X];
-		tmat(1, ii) = cspace[ii][Y];
-		tmat(2, ii) = cspace[ii][Z];
-		ind[ii] = ii;
+    MAT_IDN(t_mat);
+    for (ii=0; ii<=2; ii++) {
+	tmat(0, ii) = cspace[ii][X];
+	tmat(1, ii) = cspace[ii][Y];
+	tmat(2, ii) = cspace[ii][Z];
+	ind[ii] = ii;
+    }
+
+    /* gaussian elimination  with partial pivoting */
+    for (ii=0; ii<2; ii++) {
+	for (jj=ii+1; jj<=2; jj++)  {
+	    if (fabs(tmat(ind[jj], ii)) > fabs(tmat(ind[ii], ii))) {
+		tmp_i=ind[jj];
+		ind[jj]=ind[ii];
+		ind[ii]=tmp_i;
+	    }
 	}
+	if (tmat(ind[ii], ii) == 0.0) return 0;
 
-	/* gaussian elimination  with partial pivoting */
-	for (ii=0; ii<2; ii++) {
-		for (jj=ii+1; jj<=2; jj++)  {
-			if (fabs(tmat(ind[jj], ii)) > fabs(tmat(ind[ii], ii))) {
-				tmp_i=ind[jj];
-				ind[jj]=ind[ii];
-				ind[ii]=tmp_i;
-			}
-		}
-		if (tmat(ind[ii], ii) == 0.0) return 0;
-
-		for (jj=ii+1; jj<=2; jj++) {
-			mult = tmat(ind[jj], ii) / tmat(ind[ii], ii);
-			for (kk=ii+1; kk<=2; kk++)
-			tmat(ind[jj], kk) -= tmat(ind[ii], kk) * mult;
-			white[ind[jj]] -= white[ind[ii]] * mult;
-		}
+	for (jj=ii+1; jj<=2; jj++) {
+	    mult = tmat(ind[jj], ii) / tmat(ind[ii], ii);
+	    for (kk=ii+1; kk<=2; kk++)
+		tmat(ind[jj], kk) -= tmat(ind[ii], kk) * mult;
+	    white[ind[jj]] -= white[ind[ii]] * mult;
 	}
-	if (tmat(ind[2], 2) == 0.0) return 0;
+    }
+    if (tmat(ind[2], 2) == 0.0) return 0;
 
-	/* back substitution to solve for scale */
-	scale[ind[2]] = white[ind[2]] / tmat(ind[2], 2);
-	scale[ind[1]] = (white[ind[1]] - (tmat(ind[1], 2) *
-			scale[ind[2]])) / tmat(ind[1], 1);
-	scale[ind[0]] = (white[ind[0]] - (tmat(ind[0], 1) *
-			scale[ind[1]]) - (tmat(ind[0], 2) *
-			scale[ind[2]])) / tmat(ind[0], 0);
+    /* back substitution to solve for scale */
+    scale[ind[2]] = white[ind[2]] / tmat(ind[2], 2);
+    scale[ind[1]] = (white[ind[1]] - (tmat(ind[1], 2) *
+				      scale[ind[2]])) / tmat(ind[1], 1);
+    scale[ind[0]] = (white[ind[0]] - (tmat(ind[0], 1) *
+				      scale[ind[1]]) - (tmat(ind[0], 2) *
+							scale[ind[2]])) / tmat(ind[0], 0);
 
-	/* build matrix.  Embed 3x3 in BRL-CAD 4x4 */
-	for (ii=0; ii<=2; ii++) {
-		rgb2xyz[0*4+ii] = cspace[ii][X] * scale[ii];
-		rgb2xyz[1*4+ii] = cspace[ii][Y] * scale[ii];
-		rgb2xyz[2*4+ii] = cspace[ii][Z] * scale[ii];
-			rgb2xyz[3*4+ii] = 0;
-	}
-	rgb2xyz[12] = rgb2xyz[13] = rgb2xyz[14];
-	rgb2xyz[15] = 1;
+    /* build matrix.  Embed 3x3 in BRL-CAD 4x4 */
+    for (ii=0; ii<=2; ii++) {
+	rgb2xyz[0*4+ii] = cspace[ii][X] * scale[ii];
+	rgb2xyz[1*4+ii] = cspace[ii][Y] * scale[ii];
+	rgb2xyz[2*4+ii] = cspace[ii][Z] * scale[ii];
+	rgb2xyz[3*4+ii] = 0;
+    }
+    rgb2xyz[12] = rgb2xyz[13] = rgb2xyz[14];
+    rgb2xyz[15] = 1;
 
-	return 1;
+    return 1;
 }
 
 /*
@@ -274,54 +274,54 @@ rt_clr__cspace_to_xyz (const point_t	cspace[4],
 void
 rt_make_ntsc_xyz2rgb(fastf_t *xyz2rgb)
 {
-	mat_t	rgb2xyz;
-	point_t	tst, new;
+    mat_t	rgb2xyz;
+    point_t	tst, new;
 
-	if ( rt_clr__cspace_to_xyz( rgb_NTSC, rgb2xyz ) == 0 )
-		bu_exit(EXIT_FAILURE, "rt_make_ntsc_xyz2rgb() can't initialize color space\n");
-	bn_mat_inv( xyz2rgb, rgb2xyz );
+    if ( rt_clr__cspace_to_xyz( rgb_NTSC, rgb2xyz ) == 0 )
+	bu_exit(EXIT_FAILURE, "rt_make_ntsc_xyz2rgb() can't initialize color space\n");
+    bn_mat_inv( xyz2rgb, rgb2xyz );
 
 #if 1
-	/* Verify that it really works, I'm a skeptic */
-	VSET( tst, 1, 1, 1 );
-	MAT3X3VEC( new, rgb2xyz, tst );
-	VPRINT( "white_rgb (i)", tst );
-	VPRINT( "white_xyz (o)", new );
+    /* Verify that it really works, I'm a skeptic */
+    VSET( tst, 1, 1, 1 );
+    MAT3X3VEC( new, rgb2xyz, tst );
+    VPRINT( "white_rgb (i)", tst );
+    VPRINT( "white_xyz (o)", new );
 
-	VSET( tst, 0.313,     0.329,      0.358);
-	MAT3X3VEC( new, xyz2rgb, tst );
-	VPRINT( "white_xyz (i)", tst );
-	VPRINT( "white_rgb (o)", new );
+    VSET( tst, 0.313,     0.329,      0.358);
+    MAT3X3VEC( new, xyz2rgb, tst );
+    VPRINT( "white_xyz (i)", tst );
+    VPRINT( "white_rgb (o)", new );
 
-	VSET( tst, 1, 0, 0 );
-	MAT3X3VEC( new, rgb2xyz, tst );
-	VPRINT( "red_rgb (i)", tst );
-	VPRINT( "red_xyz (o)", new );
+    VSET( tst, 1, 0, 0 );
+    MAT3X3VEC( new, rgb2xyz, tst );
+    VPRINT( "red_rgb (i)", tst );
+    VPRINT( "red_xyz (o)", new );
 
-	VSET( tst, 0.670,     0.330,      0.000);
-	MAT3X3VEC( new, xyz2rgb, tst );
-	VPRINT( "red_xyz (i)", tst );
-	VPRINT( "red_rgb (o)", new );
+    VSET( tst, 0.670,     0.330,      0.000);
+    MAT3X3VEC( new, xyz2rgb, tst );
+    VPRINT( "red_xyz (i)", tst );
+    VPRINT( "red_rgb (o)", new );
 
-	VSET( tst, 0, 1, 0 );
-	MAT3X3VEC( new, rgb2xyz, tst );
-	VPRINT( "grn_rgb (i)", tst );
-	VPRINT( "grn_xyz (o)", new );
+    VSET( tst, 0, 1, 0 );
+    MAT3X3VEC( new, rgb2xyz, tst );
+    VPRINT( "grn_rgb (i)", tst );
+    VPRINT( "grn_xyz (o)", new );
 
-	VSET( tst, 0.210,     0.710,      0.080);
-	MAT3X3VEC( new, xyz2rgb, tst );
-	VPRINT( "grn_xyz (i)", tst );
-	VPRINT( "grn_rgb (o)", new );
+    VSET( tst, 0.210,     0.710,      0.080);
+    MAT3X3VEC( new, xyz2rgb, tst );
+    VPRINT( "grn_xyz (i)", tst );
+    VPRINT( "grn_rgb (o)", new );
 
-	VSET( tst, 0, 0, 1 );
-	MAT3X3VEC( new, rgb2xyz, tst );
-	VPRINT( "blu_rgb (i)", tst );
-	VPRINT( "blu_xyz (o)", new );
+    VSET( tst, 0, 0, 1 );
+    MAT3X3VEC( new, rgb2xyz, tst );
+    VPRINT( "blu_rgb (i)", tst );
+    VPRINT( "blu_xyz (o)", new );
 
-	VSET( tst, 0.140,     0.080,      0.780);
-	MAT3X3VEC( new, xyz2rgb, tst );
-	VPRINT( "blu_xyz (i)", tst );
-	VPRINT( "blu_rgb (o)", new );
+    VSET( tst, 0.140,     0.080,      0.780);
+    MAT3X3VEC( new, xyz2rgb, tst );
+    VPRINT( "blu_xyz (i)", tst );
+    VPRINT( "blu_rgb (o)", new );
 #endif
 }
 
@@ -336,33 +336,33 @@ rt_make_ntsc_xyz2rgb(fastf_t *xyz2rgb)
  */
 void
 rt_spect_curve_to_xyz(
-		      point_t			xyz,
-		      const struct bn_tabdata	*tabp,
-		      const struct bn_tabdata	*cie_x,
-		      const struct bn_tabdata	*cie_y,
-		      const struct bn_tabdata	*cie_z)
+    point_t			xyz,
+    const struct bn_tabdata	*tabp,
+    const struct bn_tabdata	*cie_x,
+    const struct bn_tabdata	*cie_y,
+    const struct bn_tabdata	*cie_z)
 {
-	fastf_t	tab_area;
+    fastf_t	tab_area;
 
-	BN_CK_TABDATA(tabp);
+    BN_CK_TABDATA(tabp);
 
 #if 0
-	tab_area = bn_tabdata_area2( tabp );
-	bu_log(" tab_area = %g\n", tab_area);
-	if ( fabs(tab_area) < VDIVIDE_TOL )  {
-		bu_log("rt_spect_curve_to_xyz(): Area = 0 (no luminance) in this part of the spectrum\n");
-		VSETALL( xyz, 0 );
-		return;
-	}
-	tab_area = 1 / tab_area;
+    tab_area = bn_tabdata_area2( tabp );
+    bu_log(" tab_area = %g\n", tab_area);
+    if ( fabs(tab_area) < VDIVIDE_TOL )  {
+	bu_log("rt_spect_curve_to_xyz(): Area = 0 (no luminance) in this part of the spectrum\n");
+	VSETALL( xyz, 0 );
+	return;
+    }
+    tab_area = 1 / tab_area;
 #else
-	/* This is what Roy says to do, but I'm not certain */
-	tab_area = 1;
+    /* This is what Roy says to do, but I'm not certain */
+    tab_area = 1;
 #endif
 
-	xyz[X] = bn_tabdata_mul_area2( tabp, cie_x ) * tab_area;
-	xyz[Y] = bn_tabdata_mul_area2( tabp, cie_y ) * tab_area;
-	xyz[Z] = bn_tabdata_mul_area2( tabp, cie_z ) * tab_area;
+    xyz[X] = bn_tabdata_mul_area2( tabp, cie_x ) * tab_area;
+    xyz[Y] = bn_tabdata_mul_area2( tabp, cie_y ) * tab_area;
+    xyz[Z] = bn_tabdata_mul_area2( tabp, cie_z ) * tab_area;
 }
 
 /*
@@ -378,10 +378,10 @@ rt_spect_curve_to_xyz(
 void
 rt_spect_rgb_to_curve(struct bn_tabdata *tabp, const fastf_t *rgb, const struct bn_tabdata *ntsc_r, const struct bn_tabdata *ntsc_g, const struct bn_tabdata *ntsc_b)
 {
-	bn_tabdata_blend3( tabp,
-		rgb[0], ntsc_r,
-		rgb[1], ntsc_g,
-		rgb[2], ntsc_b );
+    bn_tabdata_blend3( tabp,
+		       rgb[0], ntsc_r,
+		       rgb[1], ntsc_g,
+		       rgb[2], ntsc_b );
 }
 
 /*
@@ -391,16 +391,16 @@ rt_spect_rgb_to_curve(struct bn_tabdata *tabp, const fastf_t *rgb, const struct 
  *  caller must scale into meaningful units.
  *
  *  Convenience routine.
-XXX This routine is probably wrong.  Or at least, it needs different curves.
-XXX Converting rgb to a curve, directly, should be easy.
- */
+ XXX This routine is probably wrong.  Or at least, it needs different curves.
+ XXX Converting rgb to a curve, directly, should be easy.
+*/
 void
 rt_spect_xyz_to_curve(struct bn_tabdata *tabp, const fastf_t *xyz, const struct bn_tabdata *cie_x, const struct bn_tabdata *cie_y, const struct bn_tabdata *cie_z)
 {
-	bn_tabdata_blend3( tabp,
-		xyz[X], cie_x,
-		xyz[Y], cie_y,
-		xyz[Z], cie_z );
+    bn_tabdata_blend3( tabp,
+		       xyz[X], cie_x,
+		       xyz[Y], cie_y,
+		       xyz[Z], cie_z );
 }
 
 /*
@@ -411,52 +411,52 @@ rt_spect_xyz_to_curve(struct bn_tabdata *tabp, const fastf_t *xyz, const struct 
 struct bn_table *
 bn_table_make_visible_and_uniform(int num, double first, double last, int vis_nsamp)
 {
-	struct bn_table	*new;
-	struct bn_table *uniform;
-	struct bn_table	*vis;
+    struct bn_table	*new;
+    struct bn_table *uniform;
+    struct bn_table	*vis;
 
-	if ( vis_nsamp < 10 )  vis_nsamp = 10;
-	uniform = bn_table_make_uniform( num, first, last );
-	vis = bn_table_make_uniform( vis_nsamp, 340.0, 700.0 );
+    if ( vis_nsamp < 10 )  vis_nsamp = 10;
+    uniform = bn_table_make_uniform( num, first, last );
+    vis = bn_table_make_uniform( vis_nsamp, 340.0, 700.0 );
 
-	new = bn_table_merge2( uniform, vis );
-	bn_ck_table(new);
+    new = bn_table_merge2( uniform, vis );
+    bn_ck_table(new);
 
-	bn_table_free(uniform);
-	bn_table_free(vis);
+    bn_table_free(uniform);
+    bn_table_free(vis);
 
-	return new;
+    return new;
 }
 
 #if 0
 main()
 {
-	struct bn_tabdata	*x, *y, *z;
-	struct bn_table	*tabp;
+    struct bn_tabdata	*x, *y, *z;
+    struct bn_table	*tabp;
 
 #if 0
-	tabp = bn_table_make_uniform( 200, 360.0, 800.0 );
+    tabp = bn_table_make_uniform( 200, 360.0, 800.0 );
 
-	rt_spect_make_CIE_XYZ( &x, &y, &z, tabp );
+    rt_spect_make_CIE_XYZ( &x, &y, &z, tabp );
 
-	bn_print_table_and_tabdata( "/tmp/x", x );
-	bn_print_table_and_tabdata( "/tmp/y", y );
-	bn_print_table_and_tabdata( "/tmp/z", z );
+    bn_print_table_and_tabdata( "/tmp/x", x );
+    bn_print_table_and_tabdata( "/tmp/y", y );
+    bn_print_table_and_tabdata( "/tmp/z", z );
 #endif
 
-	tabp = bn_table_make_uniform( 100, 3.0, 3000.0 );
+    tabp = bn_table_make_uniform( 100, 3.0, 3000.0 );
 
-	BN_GET_TABDATA( x, tabp );
-	rt_spect_black_body_points( x, 10000.0 );
-	bn_print_table_and_tabdata( "/tmp/x", x );
+    BN_GET_TABDATA( x, tabp );
+    rt_spect_black_body_points( x, 10000.0 );
+    bn_print_table_and_tabdata( "/tmp/x", x );
 
-	BN_GET_TABDATA( y, tabp );
-	rt_spect_black_body( y, 10000.0, 3 );
-	bn_print_table_and_tabdata( "/tmp/y", y );
+    BN_GET_TABDATA( y, tabp );
+    rt_spect_black_body( y, 10000.0, 3 );
+    bn_print_table_and_tabdata( "/tmp/y", y );
 
-	BN_GET_TABDATA( z, tabp );
-	rt_spect_black_body_fast( z, 10000.0 );
-	bn_print_table_and_tabdata( "/tmp/z", z );
+    BN_GET_TABDATA( z, tabp );
+    rt_spect_black_body_fast( z, 10000.0 );
+    bn_print_table_and_tabdata( "/tmp/z", z );
 }
 #endif
 

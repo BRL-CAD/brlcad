@@ -26,21 +26,21 @@
 
 char *
 iges_type( type )
-int type;
+    int type;
 {
-	int i;
-	int type_no=0;
+    int i;
+    int type_no=0;
 
-	for ( i=1; i<ntypes; i++ )
+    for ( i=1; i<ntypes; i++ )
+    {
+	if ( typecount[i].type == type )
 	{
-		if ( typecount[i].type == type )
-		{
-			type_no = i;
-			break;
-		}
+	    type_no = i;
+	    break;
 	}
+    }
 
-	return( typecount[type_no].name );
+    return( typecount[type_no].name );
 }
 
 /*

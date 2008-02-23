@@ -94,7 +94,7 @@ void *bu_rb_select (bu_rb_tree *tree, int order, int k)
 	       tree, order, k, bu_rb_root(tree, order));
 
     bu_rb_current(tree) = node
-			= _rb_select(bu_rb_root(tree, order), order, k);
+	= _rb_select(bu_rb_root(tree, order), order, k);
     return (bu_rb_data(node, order));
 }
 

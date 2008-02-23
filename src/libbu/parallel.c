@@ -538,7 +538,7 @@ bu_get_public_cpus(void)
     FILE	*fp;
 
     if ( (fp = fopen(PUBLIC_CPUS1, "rb")) != NULL ||
-	(fp = fopen(PUBLIC_CPUS2, "rb")) != NULL
+	 (fp = fopen(PUBLIC_CPUS2, "rb")) != NULL
 	)  {
 	(void)fscanf( fp, "%d", &public_cpus );
 	fclose(fp);
@@ -586,7 +586,7 @@ bu_set_realtime(void)
 	if ( sched_setscheduler( 0,
 				 SCHED_RR,		/* policy */
 				 &bu_param
-				 ) >= 0 )  {
+		 ) >= 0 )  {
 	    return 1;		/* realtime */
 	}
 	/* Fall through to return 0 */
@@ -715,8 +715,8 @@ bu_parallel_interface(void)
  */
 void
 bu_pr_FILE(title, fp)
-     char	*title;
-     FILE	*fp;
+    char	*title;
+    FILE	*fp;
 {
     bu_log("FILE structure '%s', at x%x:\n", title, fp );
     bu_log(" _cnt = x%x\n", fp->_cnt);
@@ -751,9 +751,9 @@ bu_pr_FILE(title, fp)
  */
 void
 bu_parallel( func, ncpu, arg )
-     void		(*func) BU_ARGS((int, genptr_t));
-     int		ncpu;
-     genptr_t	arg;
+    void		(*func) BU_ARGS((int, genptr_t));
+    int		ncpu;
+    genptr_t	arg;
 {
     int	avail_cpus = 1;
 
@@ -926,7 +926,7 @@ bu_parallel( func, ncpu, arg )
 #      else
 		       4*1024*1024 - 32*1024
 #      endif
-		       );
+	    );
 #    endif
 	if ( new < 0 )  {
 	    perror("sproc");

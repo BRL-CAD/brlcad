@@ -83,187 +83,187 @@ static void	illuminate(int y);
  */
 int
 f_mouse(
-	ClientData clientData,
-	Tcl_Interp *interp,
-	int	argc,
-	char	**argv)
+    ClientData clientData,
+    Tcl_Interp *interp,
+    int	argc,
+    char	**argv)
 {
-	vect_t	mousevec;		/* float pt -1..+1 mouse pos vect */
-	int	isave;
-	int	up;
-	int	xpos;
-	int	ypos;
+    vect_t	mousevec;		/* float pt -1..+1 mouse pos vect */
+    int	isave;
+    int	up;
+    int	xpos;
+    int	ypos;
 
-	if (argc < 4 || 4 < argc) {
-	  struct bu_vls vls;
+    if (argc < 4 || 4 < argc) {
+	struct bu_vls vls;
 
-	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "help M");
-	  Tcl_Eval(interp, bu_vls_addr(&vls));
-	  bu_vls_free(&vls);
-	  return TCL_ERROR;
-	}
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "help M");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
+    }
 
-	up = atoi(argv[1]);
-	xpos = atoi(argv[2]);
-	ypos = atoi(argv[3]);
+    up = atoi(argv[1]);
+    xpos = atoi(argv[2]);
+    ypos = atoi(argv[3]);
 
-	/* Build floating point mouse vector, -1 to +1 */
-	mousevec[X] =  xpos * INV_GED;
-	mousevec[Y] =  ypos * INV_GED;
-	mousevec[Z] = 0;
+    /* Build floating point mouse vector, -1 to +1 */
+    mousevec[X] =  xpos * INV_GED;
+    mousevec[Y] =  ypos * INV_GED;
+    mousevec[Z] = 0;
 
-	if (mged_variables->mv_faceplate && mged_variables->mv_orig_gui && up) {
-	  /*
-	   * If mouse press is in scroll area, see if scrolling, and if so,
-	   * divert this mouse press.
-	   */
-	  if ( (xpos >= MENUXLIM) || scroll_active )  {
+    if (mged_variables->mv_faceplate && mged_variables->mv_orig_gui && up) {
+	/*
+	 * If mouse press is in scroll area, see if scrolling, and if so,
+	 * divert this mouse press.
+	 */
+	if ( (xpos >= MENUXLIM) || scroll_active )  {
 	    register int i;
 
 	    if (scroll_active)
-	      ypos = scroll_y;
+		ypos = scroll_y;
 
 	    if ( (i = scroll_select( xpos, ypos, 1 )) < 0 )  {
-	      Tcl_AppendResult(interp,
-			       "mouse press outside valid scroll area\n",
-			       (char *)NULL);
-	      return TCL_ERROR;
+		Tcl_AppendResult(interp,
+				 "mouse press outside valid scroll area\n",
+				 (char *)NULL);
+		return TCL_ERROR;
 	    }
 
 	    if ( i > 0 )  {
-	      scroll_active = 1;
-	      scroll_y = ypos;
+		scroll_active = 1;
+		scroll_y = ypos;
 
-	      /* Scroller bars claimed button press */
-	      return TCL_OK;
+		/* Scroller bars claimed button press */
+		return TCL_OK;
 	    }
 	    /* Otherwise, fall through */
-	  }
-
-	  /*
-	   * If menu is active, and mouse press is in menu area,
-	   * divert this mouse press for menu purposes.
-	   */
-	  if ( xpos < MENUXLIM )  {
-	    register int i;
-
-	    if ( (i = mmenu_select( ypos, 1 )) < 0 )  {
-	      Tcl_AppendResult(interp,
-			       "mouse press outside valid menu\n",
-			       (char *)NULL);
-	      return TCL_ERROR;
-	    }
-
-	    if ( i > 0 )  {
-	      /* Menu claimed button press */
-	      return TCL_OK;
-	    }
-	    /* Otherwise, fall through */
-	  }
 	}
 
 	/*
-	 *  In the best of all possible worlds, nothing should happen
-	 *  when the mouse is not pressed;  this would relax the requirement
-	 *  for the host being informed when the mouse changes position.
-	 *  However, for now, illuminate mode makes this impossible.
+	 * If menu is active, and mouse press is in menu area,
+	 * divert this mouse press for menu purposes.
 	 */
-	if ( up == 0 )  switch ( state )  {
+	if ( xpos < MENUXLIM )  {
+	    register int i;
+
+	    if ( (i = mmenu_select( ypos, 1 )) < 0 )  {
+		Tcl_AppendResult(interp,
+				 "mouse press outside valid menu\n",
+				 (char *)NULL);
+		return TCL_ERROR;
+	    }
+
+	    if ( i > 0 )  {
+		/* Menu claimed button press */
+		return TCL_OK;
+	    }
+	    /* Otherwise, fall through */
+	}
+    }
+
+    /*
+     *  In the best of all possible worlds, nothing should happen
+     *  when the mouse is not pressed;  this would relax the requirement
+     *  for the host being informed when the mouse changes position.
+     *  However, for now, illuminate mode makes this impossible.
+     */
+    if ( up == 0 )  switch ( state )  {
 
 	case ST_VIEW:
 	case ST_S_EDIT:
 	case ST_O_EDIT:
 	default:
-	  return TCL_OK;		/* Take no action in these states */
+	    return TCL_OK;		/* Take no action in these states */
 
 	case ST_O_PICK:
 	case ST_S_PICK:
-	  /*
-	   * Use the mouse for illuminating a solid
-	   */
-	  illuminate( ypos );
-	  return TCL_OK;
+	    /*
+	     * Use the mouse for illuminating a solid
+	     */
+	    illuminate( ypos );
+	    return TCL_OK;
 
 	case ST_O_PATH:
-	  /*
-	   * Convert DT position to path element select
-	   */
-	  isave = ipathpos;
-	  ipathpos = illump->s_fullpath.fp_len-1 - (
-	       (ypos+(int)GED_MAX) * (illump->s_fullpath.fp_len) / (int)GED_RANGE);
-	  if ( ipathpos != isave )
-	    view_state->vs_flag = 1;
-	  return TCL_OK;
+	    /*
+	     * Convert DT position to path element select
+	     */
+	    isave = ipathpos;
+	    ipathpos = illump->s_fullpath.fp_len-1 - (
+		(ypos+(int)GED_MAX) * (illump->s_fullpath.fp_len) / (int)GED_RANGE);
+	    if ( ipathpos != isave )
+		view_state->vs_flag = 1;
+	    return TCL_OK;
 
-	} else switch ( state )  {
+    } else switch ( state )  {
 
 	case ST_VIEW:
-	  /*
-	   * Use the DT for moving view center.
-	   * Make indicated point be new view center (NEW).
-	   */
-	  slewview( mousevec );
-	  return TCL_OK;
+	    /*
+	     * Use the DT for moving view center.
+	     * Make indicated point be new view center (NEW).
+	     */
+	    slewview( mousevec );
+	    return TCL_OK;
 
 	case ST_O_PICK:
-	  ipathpos = 0;
-	  (void)chg_state( ST_O_PICK, ST_O_PATH, "mouse press");
-	  view_state->vs_flag = 1;
-	  return TCL_OK;
+	    ipathpos = 0;
+	    (void)chg_state( ST_O_PICK, ST_O_PATH, "mouse press");
+	    view_state->vs_flag = 1;
+	    return TCL_OK;
 
 	case ST_S_PICK:
-	  /* Check details, Init menu, set state */
-	  init_sedit();		/* does chg_state */
-	  view_state->vs_flag = 1;
-	  return TCL_OK;
+	    /* Check details, Init menu, set state */
+	    init_sedit();		/* does chg_state */
+	    view_state->vs_flag = 1;
+	    return TCL_OK;
 
 	case ST_S_EDIT:
-	  if ((SEDIT_TRAN || SEDIT_SCALE || SEDIT_PICK) && mged_variables->mv_transform == 'e')
-	    sedit_mouse( mousevec );
-	  else
-	    slewview( mousevec );
-	  return TCL_OK;
+	    if ((SEDIT_TRAN || SEDIT_SCALE || SEDIT_PICK) && mged_variables->mv_transform == 'e')
+		sedit_mouse( mousevec );
+	    else
+		slewview( mousevec );
+	    return TCL_OK;
 
 	case ST_O_PATH:
-		/*
-		 * Set combination "illuminate" mode.  This code
-		 * assumes that the user has already illuminated
-		 * a single solid, and wishes to move a collection of
-		 * objects of which the illuminated solid is a part.
-		 * The whole combination will not illuminate (to save
-		 * vector drawing time), but all the objects should
-		 * move/scale in unison.
-		 */
-		{
-			char	*av[3];
-			char	num[8];
-			(void)sprintf(num, "%d", ipathpos);
-			av[0] = "matpick";
-			av[1] = num;
-			av[2] = (char *)NULL;
-			(void)f_matpick( clientData, interp, 2, av );
-			/* How to record this in the journal file? */
-			return TCL_OK;
-		}
+	    /*
+	     * Set combination "illuminate" mode.  This code
+	     * assumes that the user has already illuminated
+	     * a single solid, and wishes to move a collection of
+	     * objects of which the illuminated solid is a part.
+	     * The whole combination will not illuminate (to save
+	     * vector drawing time), but all the objects should
+	     * move/scale in unison.
+	     */
+	{
+	    char	*av[3];
+	    char	num[8];
+	    (void)sprintf(num, "%d", ipathpos);
+	    av[0] = "matpick";
+	    av[1] = num;
+	    av[2] = (char *)NULL;
+	    (void)f_matpick( clientData, interp, 2, av );
+	    /* How to record this in the journal file? */
+	    return TCL_OK;
+	}
 
 	case ST_S_VPICK:
-		sedit_vpick( mousevec );
-		return TCL_OK;
+	    sedit_vpick( mousevec );
+	    return TCL_OK;
 
 	case ST_O_EDIT:
-	  if ((OEDIT_TRAN || OEDIT_SCALE) && mged_variables->mv_transform == 'e')
-	    objedit_mouse( mousevec );
-	  else
-	    slewview( mousevec );
+	    if ((OEDIT_TRAN || OEDIT_SCALE) && mged_variables->mv_transform == 'e')
+		objedit_mouse( mousevec );
+	    else
+		slewview( mousevec );
 
-	  return TCL_OK;
+	    return TCL_OK;
 
 	default:
-		state_err( "mouse press" );
-		return TCL_ERROR;
-	}
-	/* NOTREACHED */
+	    state_err( "mouse press" );
+	    return TCL_ERROR;
+    }
+    /* NOTREACHED */
 }
 
 /*
@@ -275,30 +275,30 @@ f_mouse(
  */
 static void
 illuminate(int y) {
-	register int count;
-	register struct solid *sp;
+    register int count;
+    register struct solid *sp;
 
-	/*
-	 * Divide the mouse into 'ndrawn' VERTICAL zones, and use the
-	 * zone number as a sequential position among solids
-	 * which are drawn.
-	 */
-	count = ((fastf_t)y + GED_MAX) * ndrawn / GED_RANGE;
+    /*
+     * Divide the mouse into 'ndrawn' VERTICAL zones, and use the
+     * zone number as a sequential position among solids
+     * which are drawn.
+     */
+    count = ((fastf_t)y + GED_MAX) * ndrawn / GED_RANGE;
 
-	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)  {
-		/* Only consider solids which are presently in view */
-		if ( sp->s_flag == UP )  {
-			if ( count-- == 0 ) {
-				sp->s_iflag = UP;
-				illump = sp;
-			}  else  {
-				/* All other solids have s_iflag set DOWN */
-				sp->s_iflag = DOWN;
-			}
-		}
+    FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)  {
+	/* Only consider solids which are presently in view */
+	if ( sp->s_flag == UP )  {
+	    if ( count-- == 0 ) {
+		sp->s_iflag = UP;
+		illump = sp;
+	    }  else  {
+		/* All other solids have s_iflag set DOWN */
+		sp->s_iflag = DOWN;
+	    }
 	}
+    }
 
-	update_views = 1;
+    update_views = 1;
 }
 
 /*
@@ -308,66 +308,66 @@ illuminate(int y) {
  */
 int
 f_aip(
-	ClientData clientData,
-	Tcl_Interp *interp,
-	int argc,
-	char **argv)
+    ClientData clientData,
+    Tcl_Interp *interp,
+    int argc,
+    char **argv)
 {
-  register struct solid *sp;
+    register struct solid *sp;
 
-  if (argc < 1 || 2 < argc) {
-    struct bu_vls vls;
+    if (argc < 1 || 2 < argc) {
+	struct bu_vls vls;
 
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "helpdevel aip");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
-
-  if (!ndrawn) {
-	  return TCL_OK;
-  } else if (state != ST_S_PICK && state != ST_O_PICK  && state != ST_O_PATH) {
-	  return TCL_OK;
-  }
-
-  if (state == ST_O_PATH) {
-    if (argc == 1 || *argv[1] == 'f') {
-      ++ipathpos;
-      if (ipathpos >= illump->s_fullpath.fp_len)
-	ipathpos = 0;
-    } else if (*argv[1] == 'b') {
-      --ipathpos;
-      if (ipathpos < 0)
-	ipathpos = illump->s_fullpath.fp_len-1;
-    } else {
-      Tcl_AppendResult(interp, "aip: bad parameter - ", argv[1], "\n", (char *)NULL);
-      return TCL_ERROR;
-    }
-  } else {
-    sp = illump;
-    sp->s_iflag = DOWN;
-    if (argc == 1 || *argv[1] == 'f') {
-      if (BU_LIST_NEXT_IS_HEAD(sp, &dgop->dgo_headSolid))
-	sp = BU_LIST_NEXT(solid, &dgop->dgo_headSolid);
-      else
-	sp = BU_LIST_PNEXT(solid, sp);
-    } else if (*argv[1] == 'b') {
-      if (BU_LIST_PREV_IS_HEAD(sp, &dgop->dgo_headSolid))
-	sp = BU_LIST_PREV(solid, &dgop->dgo_headSolid);
-      else
-	sp = BU_LIST_PLAST(solid, sp);
-    } else {
-      Tcl_AppendResult(interp, "aip: bad parameter - ", argv[1], "\n", (char *)NULL);
-      return TCL_ERROR;
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "helpdevel aip");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
     }
 
-    sp->s_iflag = UP;
-    illump = sp;
-  }
+    if (!ndrawn) {
+	return TCL_OK;
+    } else if (state != ST_S_PICK && state != ST_O_PICK  && state != ST_O_PATH) {
+	return TCL_OK;
+    }
 
-  update_views = 1;
-  return TCL_OK;
+    if (state == ST_O_PATH) {
+	if (argc == 1 || *argv[1] == 'f') {
+	    ++ipathpos;
+	    if (ipathpos >= illump->s_fullpath.fp_len)
+		ipathpos = 0;
+	} else if (*argv[1] == 'b') {
+	    --ipathpos;
+	    if (ipathpos < 0)
+		ipathpos = illump->s_fullpath.fp_len-1;
+	} else {
+	    Tcl_AppendResult(interp, "aip: bad parameter - ", argv[1], "\n", (char *)NULL);
+	    return TCL_ERROR;
+	}
+    } else {
+	sp = illump;
+	sp->s_iflag = DOWN;
+	if (argc == 1 || *argv[1] == 'f') {
+	    if (BU_LIST_NEXT_IS_HEAD(sp, &dgop->dgo_headSolid))
+		sp = BU_LIST_NEXT(solid, &dgop->dgo_headSolid);
+	    else
+		sp = BU_LIST_PNEXT(solid, sp);
+	} else if (*argv[1] == 'b') {
+	    if (BU_LIST_PREV_IS_HEAD(sp, &dgop->dgo_headSolid))
+		sp = BU_LIST_PREV(solid, &dgop->dgo_headSolid);
+	    else
+		sp = BU_LIST_PLAST(solid, sp);
+	} else {
+	    Tcl_AppendResult(interp, "aip: bad parameter - ", argv[1], "\n", (char *)NULL);
+	    return TCL_ERROR;
+	}
+
+	sp->s_iflag = UP;
+	illump = sp;
+    }
+
+    update_views = 1;
+    return TCL_OK;
 }
 
 /*
@@ -380,15 +380,15 @@ f_aip(
 void
 wrt_view( mat_t out, const mat_t change, const mat_t in )
 {
-	static mat_t t1, t2;
+    static mat_t t1, t2;
 
-	bn_mat_mul(t1, view_state->vs_vop->vo_center, in);
-	bn_mat_mul(t2, change, t1);
+    bn_mat_mul(t1, view_state->vs_vop->vo_center, in);
+    bn_mat_mul(t2, change, t1);
 
-	/* Build "fromViewcenter" matrix */
-	MAT_IDN(t1);
-	MAT_DELTAS(t1, -view_state->vs_vop->vo_center[MDX], -view_state->vs_vop->vo_center[MDY], -view_state->vs_vop->vo_center[MDZ]);
-	bn_mat_mul(out, t1, t2);
+    /* Build "fromViewcenter" matrix */
+    MAT_IDN(t1);
+    MAT_DELTAS(t1, -view_state->vs_vop->vo_center[MDX], -view_state->vs_vop->vo_center[MDY], -view_state->vs_vop->vo_center[MDZ]);
+    bn_mat_mul(out, t1, t2);
 }
 
 /*
@@ -401,14 +401,14 @@ wrt_view( mat_t out, const mat_t change, const mat_t in )
 void
 wrt_point( mat_t out, const mat_t change, const mat_t in, const point_t point )
 {
-	mat_t	t;
+    mat_t	t;
 
-	bn_mat_xform_about_pt( t, change, point );
+    bn_mat_xform_about_pt( t, change, point );
 
-	if (out == in)
-	  bn_mat_mul2( t, out );
-	else
-	  bn_mat_mul( out, t, in );
+    if (out == in)
+	bn_mat_mul2( t, out );
+    else
+	bn_mat_mul( out, t, in );
 }
 
 /*
@@ -421,36 +421,36 @@ wrt_point( mat_t out, const mat_t change, const mat_t in, const point_t point )
 void
 wrt_point_direc( mat_t out, const mat_t change, const mat_t in, const point_t point, const vect_t direc )
 {
-	static mat_t	t1;
-	static mat_t	pt_to_origin, origin_to_pt;
-	static mat_t	d_to_zaxis, zaxis_to_d;
-	static vect_t	zaxis;
+    static mat_t	t1;
+    static mat_t	pt_to_origin, origin_to_pt;
+    static mat_t	d_to_zaxis, zaxis_to_d;
+    static vect_t	zaxis;
 
-	/* build "point to origin" matrix */
-	MAT_IDN( pt_to_origin );
-	MAT_DELTAS_VEC_NEG(pt_to_origin, point);
+    /* build "point to origin" matrix */
+    MAT_IDN( pt_to_origin );
+    MAT_DELTAS_VEC_NEG(pt_to_origin, point);
 
-	/* build "origin to point" matrix */
-	MAT_IDN( origin_to_pt );
-	MAT_DELTAS_VEC_NEG(origin_to_pt, point);
+    /* build "origin to point" matrix */
+    MAT_IDN( origin_to_pt );
+    MAT_DELTAS_VEC_NEG(origin_to_pt, point);
 
-	/* build "direc to zaxis" matrix */
-	VSET(zaxis, 0.0, 0.0, 1.0);
-	bn_mat_fromto(d_to_zaxis, direc, zaxis);
+    /* build "direc to zaxis" matrix */
+    VSET(zaxis, 0.0, 0.0, 1.0);
+    bn_mat_fromto(d_to_zaxis, direc, zaxis);
 
-	/* build "zaxis to direc" matrix */
-	bn_mat_inv(zaxis_to_d, d_to_zaxis);
+    /* build "zaxis to direc" matrix */
+    bn_mat_inv(zaxis_to_d, d_to_zaxis);
 
-	/* apply change matrix...
-	 *	t1 = change * d_to_zaxis * pt_to_origin * in
-	 */
-	bn_mat_mul4( t1, change, d_to_zaxis, pt_to_origin, in );
+    /* apply change matrix...
+     *	t1 = change * d_to_zaxis * pt_to_origin * in
+     */
+    bn_mat_mul4( t1, change, d_to_zaxis, pt_to_origin, in );
 
-	/* apply origin_to_pt matrix:
-	 *	out = origin_to_pt * zaxis_to_d *
-	 *		change * d_to_zaxis * pt_to_origin * in
-	 */
-	bn_mat_mul3( out, origin_to_pt, zaxis_to_d, t1 );
+    /* apply origin_to_pt matrix:
+     *	out = origin_to_pt * zaxis_to_d *
+     *		change * d_to_zaxis * pt_to_origin * in
+     */
+    bn_mat_mul3( out, origin_to_pt, zaxis_to_d, t1 );
 }
 
 /*
@@ -468,96 +468,96 @@ wrt_point_direc( mat_t out, const mat_t change, const mat_t in, const point_t po
  */
 int
 f_matpick(
-	ClientData clientData,
-	Tcl_Interp *interp,
-	int	argc,
-	char	**argv)
+    ClientData clientData,
+    Tcl_Interp *interp,
+    int	argc,
+    char	**argv)
 {
-	register struct solid	*sp;
-	char			*cp;
-	register int		j;
-	int			illum_only = 0;
+    register struct solid	*sp;
+    char			*cp;
+    register int		j;
+    int			illum_only = 0;
 
-	CHECK_DBI_NULL;
+    CHECK_DBI_NULL;
 
-	if (argc < 2 || 3 < argc) {
-	  struct bu_vls vls;
+    if (argc < 2 || 3 < argc) {
+	struct bu_vls vls;
 
-	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "help matpick");
-	  Tcl_Eval(interp, bu_vls_addr(&vls));
-	  bu_vls_free(&vls);
-	  return TCL_ERROR;
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "help matpick");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
+    }
+
+    if (!strcmp("-n", argv[1])) {
+	illum_only = 1;
+	--argc;
+	++argv;
+    }
+
+    if (argc != 2) {
+	struct bu_vls vls;
+
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "help matpick");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
+    }
+
+    if ( not_state( ST_O_PATH, "Object Edit matrix pick" ) )
+	return TCL_ERROR;
+
+    if ( (cp = strchr( argv[1], '/' )) != NULL )  {
+	struct directory	*d0, *d1;
+	if ( (d1 = db_lookup( dbip, cp+1, LOOKUP_NOISY )) == DIR_NULL )
+	    return TCL_ERROR;
+	*cp = '\0';		/* modifies argv[1] */
+	if ( (d0 = db_lookup( dbip, argv[1], LOOKUP_NOISY )) == DIR_NULL )
+	    return TCL_ERROR;
+	/* Find arc on illump path which runs from d0 to d1 */
+	for ( j=1; j < illump->s_fullpath.fp_len; j++ )  {
+	    if ( DB_FULL_PATH_GET(&illump->s_fullpath, j-1) != d0 )  continue;
+	    if ( DB_FULL_PATH_GET(&illump->s_fullpath, j-0) != d1 )  continue;
+	    ipathpos = j;
+	    goto got;
 	}
-
-	if (!strcmp("-n", argv[1])) {
-	  illum_only = 1;
-	  --argc;
-	  ++argv;
+	Tcl_AppendResult(interp, "matpick: unable to find arc ", d0->d_namep,
+			 "/", d1->d_namep, " in current selection.  Re-specify.\n",
+			 (char *)NULL);
+	return TCL_ERROR;
+    } else {
+	ipathpos = atoi(argv[1]);
+	if ( ipathpos < 0 )  ipathpos = 0;
+	else if ( ipathpos >= illump->s_fullpath.fp_len )
+	    ipathpos = illump->s_fullpath.fp_len-1;
+    }
+ got:
+    /* Include all solids with same tree top */
+    FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)  {
+	for ( j = 0; j <= ipathpos; j++ )  {
+	    if ( DB_FULL_PATH_GET(&sp->s_fullpath, j) !=
+		 DB_FULL_PATH_GET(&illump->s_fullpath, j) )
+		break;
 	}
+	/* Only accept if top of tree is identical */
+	if ( j == ipathpos+1 )
+	    sp->s_iflag = UP;
+	else
+	    sp->s_iflag = DOWN;
+    }
 
-	if (argc != 2) {
-	  struct bu_vls vls;
+    if (!illum_only) {
+	(void)chg_state( ST_O_PATH, ST_O_EDIT, "mouse press" );
+	chg_l2menu(ST_O_EDIT);
 
-	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "help matpick");
-	  Tcl_Eval(interp, bu_vls_addr(&vls));
-	  bu_vls_free(&vls);
-	  return TCL_ERROR;
-	}
+	/* begin object editing - initialize */
+	init_oedit();
+    }
 
-	if ( not_state( ST_O_PATH, "Object Edit matrix pick" ) )
-	  return TCL_ERROR;
-
-	if ( (cp = strchr( argv[1], '/' )) != NULL )  {
-		struct directory	*d0, *d1;
-		if ( (d1 = db_lookup( dbip, cp+1, LOOKUP_NOISY )) == DIR_NULL )
-		  return TCL_ERROR;
-		*cp = '\0';		/* modifies argv[1] */
-		if ( (d0 = db_lookup( dbip, argv[1], LOOKUP_NOISY )) == DIR_NULL )
-		  return TCL_ERROR;
-		/* Find arc on illump path which runs from d0 to d1 */
-		for ( j=1; j < illump->s_fullpath.fp_len; j++ )  {
-			if ( DB_FULL_PATH_GET(&illump->s_fullpath, j-1) != d0 )  continue;
-			if ( DB_FULL_PATH_GET(&illump->s_fullpath, j-0) != d1 )  continue;
-			ipathpos = j;
-			goto got;
-		}
-		Tcl_AppendResult(interp, "matpick: unable to find arc ", d0->d_namep,
-				 "/", d1->d_namep, " in current selection.  Re-specify.\n",
-				 (char *)NULL);
-		return TCL_ERROR;
-	} else {
-		ipathpos = atoi(argv[1]);
-		if ( ipathpos < 0 )  ipathpos = 0;
-		else if ( ipathpos >= illump->s_fullpath.fp_len )
-			ipathpos = illump->s_fullpath.fp_len-1;
-	}
-got:
-	/* Include all solids with same tree top */
-	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)  {
-		for ( j = 0; j <= ipathpos; j++ )  {
-			if ( DB_FULL_PATH_GET(&sp->s_fullpath, j) !=
-			    DB_FULL_PATH_GET(&illump->s_fullpath, j) )
-				break;
-		}
-		/* Only accept if top of tree is identical */
-		if ( j == ipathpos+1 )
-		  sp->s_iflag = UP;
-		else
-		  sp->s_iflag = DOWN;
-	}
-
-	if (!illum_only) {
-	  (void)chg_state( ST_O_PATH, ST_O_EDIT, "mouse press" );
-	  chg_l2menu(ST_O_EDIT);
-
-	  /* begin object editing - initialize */
-	  init_oedit();
-	}
-
-	update_views = 1;
-	return TCL_OK;
+    update_views = 1;
+    return TCL_OK;
 }
 
 /*

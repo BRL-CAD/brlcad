@@ -68,10 +68,10 @@ pop_init (struct population *p, int size)
 
     /* pre-compute indidvidual names */
     /*
-    for (i = 0; i < size; i++) {
-	p->name[i] = bu_malloc(sizeof(char *) * 256, "name");
-	snprintf(p->name[i], 256, "ind%.3d", i);
-    }
+      for (i = 0; i < size; i++) {
+      p->name[i] = bu_malloc(sizeof(char *) * 256, "name");
+      snprintf(p->name[i], 256, "ind%.3d", i);
+      }
     */
 
 
@@ -118,9 +118,9 @@ pop_spawn (struct population *p)
 
 	BU_LIST_INIT(&wm_hd.l);
 	/*
-	VSET(p1, -5, -5, -5);
-	VSET(p2, 5, 5, 5);
-	r1 = r2 = 2.5;
+	  VSET(p1, -5, -5, -5);
+	  VSET(p2, 5, 5, 5);
+	  r1 = r2 = 2.5;
 	*/
 	for (j = 0; j < 6; j++) {
 	    /* VSETALL(p1, -10+pop_rand()*10); */
@@ -172,15 +172,15 @@ pop_spawn (struct population *p)
  *	TODO: Don't overwrite previous parents, one .g file per generation
  */
 /*
-void
-pop_add(struct individual *i, struct rt_wdb *db_fp)
-{
-    switch (i->type)
-    {
-    case GEO_SPHERE:
-	mk_sph(db_fp, i->id, i->p, i->r);
-    }
-}
+  void
+  pop_add(struct individual *i, struct rt_wdb *db_fp)
+  {
+  switch (i->type)
+  {
+  case GEO_SPHERE:
+  mk_sph(db_fp, i->id, i->p, i->r);
+  }
+  }
 */
 
 
@@ -261,22 +261,22 @@ pop_find_nodes(	union tree *tp)
 	    n1 = pop_find_nodes(tp->tr_b.tb_left);
 	    if (n1 == crossover_node) {
 		if (tp->tr_b.tb_left->tr_op & crossover_op) {
-		add = bu_malloc(sizeof(struct node), "node");
-		add->s_parent = &tp->tr_b.tb_left;
-		add->s_child = tp->tr_b.tb_left;
-		BU_LIST_INSERT(&node->l, &add->l);
-		++num_nodes;
+		    add = bu_malloc(sizeof(struct node), "node");
+		    add->s_parent = &tp->tr_b.tb_left;
+		    add->s_child = tp->tr_b.tb_left;
+		    BU_LIST_INSERT(&node->l, &add->l);
+		    ++num_nodes;
 		}
 	    }
 	    crossover_parent = &tp->tr_b.tb_right;
 	    n2 = pop_find_nodes(tp->tr_b.tb_right);
 	    if (n2 == crossover_node) {
 		if (tp->tr_b.tb_right->tr_op & crossover_op) {
-		add = bu_malloc(sizeof(struct node), "node");
-		add->s_parent = &tp->tr_b.tb_right;
-		add->s_child = tp->tr_b.tb_right;
-		BU_LIST_INSERT(&node->l, &add->l);
-		++num_nodes;
+		    add = bu_malloc(sizeof(struct node), "node");
+		    add->s_parent = &tp->tr_b.tb_right;
+		    add->s_child = tp->tr_b.tb_right;
+		    BU_LIST_INSERT(&node->l, &add->l);
+		    ++num_nodes;
 		}
 	    }
 	    /* include current node as part of the count to
@@ -323,10 +323,10 @@ pop_mutate(int type, genptr_t ptr)
 
 void
 pop_functree(struct db_i *dbi_p, struct db_i *dbi_c,
-		    union tree *tp,
-		    struct resource *resp,
-		    char *name
-	)
+	     union tree *tp,
+	     struct resource *resp,
+	     char *name
+    )
 {
     struct directory *dp;
     struct rt_db_internal in;
@@ -390,7 +390,7 @@ pop_functree(struct db_i *dbi_p, struct db_i *dbi_c,
 	    /* mutate CSG operation */
 	    if (mutate)
 		if (node_idx == crossover_node) {
-		  /*  tp->tr_op = (int)(2+pop_rand()*3);//FIXME: pop_rand() can be 1!*/
+		    /*  tp->tr_op = (int)(2+pop_rand()*3);//FIXME: pop_rand() can be 1!*/
 		}
 
 	    /* if we're performing, save parent as it's right or left pointer will need
@@ -525,7 +525,7 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
 	    node = 0;
 	    //find node
 	    pop_functree(dbi_p, dbi_c, parent1->tree, resp, NULL);
-*/
+	    */
 
 
 

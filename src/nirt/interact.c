@@ -112,9 +112,9 @@ interact(int input_source, void *sPtr)
 
     if (nirt_debug & DEBUG_INTERACT) {
 	bu_log("interact(%s, %x)...\n",
-	    (input_source == READING_FILE) ? "READING_FILE" :
-	    (input_source == READING_STRING) ? "READING_STRING" : "???",
-	    sPtr);
+	       (input_source == READING_FILE) ? "READING_FILE" :
+	       (input_source == READING_STRING) ? "READING_STRING" : "???",
+	       sPtr);
     }
 
     /* Prime the pump when reading from a string */

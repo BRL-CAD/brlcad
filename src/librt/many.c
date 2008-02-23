@@ -40,14 +40,14 @@
 
 /* For communication between interface routine and each of the threads */
 struct rt_many_internal  {
-	long			magic;
-	long			cur_index;		/* semaphored */
-	long			max_index;
-	const struct application *proto_ap;
-	struct resource		*resources;
-	int			(*callback) BU_ARGS((struct application *, int index));
-	int			stop_worker;
-	int			sem_chunk;
+    long			magic;
+    long			cur_index;		/* semaphored */
+    long			max_index;
+    const struct application *proto_ap;
+    struct resource		*resources;
+    int			(*callback) BU_ARGS((struct application *, int index));
+    int			stop_worker;
+    int			sem_chunk;
 };
 #define RT_MANY_INTERNAL_MAGIC	0x526d6970	/* Rmip */
 #define RT_CK_RMI(_p)	BU_CKMAG(_p, RT_MANY_INTERNAL_MAGIC, "rt_many_internal")
@@ -64,52 +64,52 @@ struct rt_many_internal  {
 void
 rt_shoot_many_rays_worker(int cpu, genptr_t arg)
 {
-	struct application app;
-	struct rt_many_internal *rmip = (struct rt_many_internal *)arg;
+    struct application app;
+    struct rt_many_internal *rmip = (struct rt_many_internal *)arg;
 
-	if ( cpu >= MAX_PSW )  {
-		bu_log("rt_shoot_many_rays_worker() cpu %d > MAX_PSW %d, array overrun\n", cpu, MAX_PSW);
-		bu_bomb("rt_shoot_many_rays_worker() cpu > MAX_PSW, array overrun\n");
+    if ( cpu >= MAX_PSW )  {
+	bu_log("rt_shoot_many_rays_worker() cpu %d > MAX_PSW %d, array overrun\n", cpu, MAX_PSW);
+	bu_bomb("rt_shoot_many_rays_worker() cpu > MAX_PSW, array overrun\n");
+    }
+
+    RT_CK_RMI(rmip);
+    RT_CK_RESOURCE( &rmip->resources[cpu] );
+    RT_CK_APPLICATION( rmip->proto_ap );
+
+    app = *rmip->proto_ap;			/* struct copy */
+    app.a_resource = &rmip->resources[cpu];
+
+    while (1)  {
+	register long	index;
+	register long	lim;
+
+	if ( rmip->stop_worker )  break;
+
+	bu_semaphore_acquire( RT_SEM_WORKER );
+	index = rmip->cur_index;
+	rmip->cur_index += rmip->sem_chunk;
+	bu_semaphore_release( RT_SEM_WORKER );
+
+	lim = index + rmip->sem_chunk;
+	for (; index < lim; index++ )  {
+	    if ( index >= rmip->max_index )  return;
+
+	    /*
+	     * a_x is set here to get differentiated LIBRT
+	     * debugging messages even from a trivial callback.
+	     * The callback may, of course, override it.
+	     */
+	    app.a_x = index;
+
+	    /* Allow our user to do per-ray init of application struct */
+	    if ( (*rmip->callback)( &app, index ) < 0 )  {
+		rmip->stop_worker = 1;
+		break;
+	    }
+
+	    (void)rt_shootray( &app );
 	}
-
-	RT_CK_RMI(rmip);
-	RT_CK_RESOURCE( &rmip->resources[cpu] );
-	RT_CK_APPLICATION( rmip->proto_ap );
-
-	app = *rmip->proto_ap;			/* struct copy */
-	app.a_resource = &rmip->resources[cpu];
-
-	while (1)  {
-		register long	index;
-		register long	lim;
-
-		if ( rmip->stop_worker )  break;
-
-		bu_semaphore_acquire( RT_SEM_WORKER );
-		index = rmip->cur_index;
-		rmip->cur_index += rmip->sem_chunk;
-		bu_semaphore_release( RT_SEM_WORKER );
-
-		lim = index + rmip->sem_chunk;
-		for (; index < lim; index++ )  {
-			if ( index >= rmip->max_index )  return;
-
-			/*
-			 * a_x is set here to get differentiated LIBRT
-			 * debugging messages even from a trivial callback.
-			 * The callback may, of course, override it.
-			 */
-			app.a_x = index;
-
-			/* Allow our user to do per-ray init of application struct */
-			if ( (*rmip->callback)( &app, index ) < 0 )  {
-				rmip->stop_worker = 1;
-				break;
-			}
-
-			(void)rt_shootray( &app );
-		}
-	}
+    }
 }
 
 /*
@@ -150,31 +150,31 @@ void
 rt_shoot_many_rays(const struct application *proto_ap, int (*callback) (struct application *, int), int ncpus, long int nrays, struct resource *resources)
 
 
-					/* resources[ncpus] */
+    /* resources[ncpus] */
 {
-	struct rt_many_internal	rmi;
-	int	i;
+    struct rt_many_internal	rmi;
+    int	i;
 
-	RT_CK_APPLICATION(proto_ap);
-	for ( i=0; i < ncpus; i++ )  {
-		RT_CK_RESOURCE( &resources[i] );
-	}
-	rmi.resources = resources;
+    RT_CK_APPLICATION(proto_ap);
+    for ( i=0; i < ncpus; i++ )  {
+	RT_CK_RESOURCE( &resources[i] );
+    }
+    rmi.resources = resources;
 
-	rmi.magic = RT_MANY_INTERNAL_MAGIC;
-	rmi.stop_worker = 0;
-	rmi.cur_index = 0;
-	rmi.max_index = nrays;
-	rmi.proto_ap = proto_ap;
-	rmi.callback = callback;
-	rmi.sem_chunk = ncpus;
+    rmi.magic = RT_MANY_INTERNAL_MAGIC;
+    rmi.stop_worker = 0;
+    rmi.cur_index = 0;
+    rmi.max_index = nrays;
+    rmi.proto_ap = proto_ap;
+    rmi.callback = callback;
+    rmi.sem_chunk = ncpus;
 
-	if ( !rt_g.rtg_parallel || ncpus <= 1 )  {
-		/* The 1-cpu case is supported for testing & generality. */
-		rt_shoot_many_rays_worker( 0, (genptr_t)&rmi );
-	} else {
-		bu_parallel( rt_shoot_many_rays_worker, ncpus, (genptr_t)&rmi );
-	}
+    if ( !rt_g.rtg_parallel || ncpus <= 1 )  {
+	/* The 1-cpu case is supported for testing & generality. */
+	rt_shoot_many_rays_worker( 0, (genptr_t)&rmi );
+    } else {
+	bu_parallel( rt_shoot_many_rays_worker, ncpus, (genptr_t)&rmi );
+    }
 }
 
 /*

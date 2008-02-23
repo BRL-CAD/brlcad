@@ -53,25 +53,25 @@
  *  This structure is used for MSG_PIXELS messages
  */
 struct line_info  {
-	int	li_startpix;
-	int	li_endpix;
-	int	li_frame;
-	int	li_nrays;
-	double	li_cpusec;
-	double	li_percent;	/* percent of system actually consumed */
-	/* A scanline is attached after here */
+    int	li_startpix;
+    int	li_endpix;
+    int	li_frame;
+    int	li_nrays;
+    double	li_cpusec;
+    double	li_percent;	/* percent of system actually consumed */
+    /* A scanline is attached after here */
 };
 
 #define LINE_O(x)	bu_offsetof(struct  line_info, x)
 
 struct bu_structparse desc_line_info[] =  {
-	{"%d", 1, "li_startpix", LINE_O(li_startpix),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%d", 1, "li_endpix",	LINE_O(li_endpix),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%d", 1, "li_frame",	LINE_O(li_frame),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%d", 1, "li_nrays",	LINE_O(li_nrays),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%f", 1, "li_cpusec",	LINE_O(li_cpusec),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%f", 1, "li_percent",	LINE_O(li_percent),	BU_STRUCTPARSE_FUNC_NULL },
-	{"",	0,			0 }
+    {"%d", 1, "li_startpix", LINE_O(li_startpix),	BU_STRUCTPARSE_FUNC_NULL },
+    {"%d", 1, "li_endpix",	LINE_O(li_endpix),	BU_STRUCTPARSE_FUNC_NULL },
+    {"%d", 1, "li_frame",	LINE_O(li_frame),	BU_STRUCTPARSE_FUNC_NULL },
+    {"%d", 1, "li_nrays",	LINE_O(li_nrays),	BU_STRUCTPARSE_FUNC_NULL },
+    {"%f", 1, "li_cpusec",	LINE_O(li_cpusec),	BU_STRUCTPARSE_FUNC_NULL },
+    {"%f", 1, "li_percent",	LINE_O(li_percent),	BU_STRUCTPARSE_FUNC_NULL },
+    {"",	0,			0 }
 };
 
 #endif  /* __PROTOCOL_H__ */

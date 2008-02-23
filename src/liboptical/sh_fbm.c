@@ -35,52 +35,52 @@
 
 
 struct fbm_specific {
-	double	lacunarity;
-	double	h_val;
-	double	octaves;
-	double	offset;
-	double	gain;
-	double	distortion;
-	point_t	scale;	/* scale coordinate space */
+    double	lacunarity;
+    double	h_val;
+    double	octaves;
+    double	offset;
+    double	gain;
+    double	distortion;
+    point_t	scale;	/* scale coordinate space */
 };
 
 static struct fbm_specific fbm_defaults = {
-	2.1753974,	/* lacunarity */
-	1.0,		/* h_val */
-	4,		/* octaves */
-	0.0,		/* offset */
-	0.0,		/* gain */
-	1.0,		/* distortion */
-	{ 1.0, 1.0, 1.0 }	/* scale */
-	};
+    2.1753974,	/* lacunarity */
+    1.0,		/* h_val */
+    4,		/* octaves */
+    0.0,		/* offset */
+    0.0,		/* gain */
+    1.0,		/* distortion */
+    { 1.0, 1.0, 1.0 }	/* scale */
+};
 
 #define FBM_NULL	((struct fbm_specific *)0)
 #define FBM_O(m)	bu_offsetof(struct fbm_specific, m)
 #define FBM_AO(m)	bu_offsetofarray(struct fbm_specific, m)
 
 struct bu_structparse fbm_parse[] = {
-	{"%f",	1, "lacunarity",	FBM_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",	1, "H", 		FBM_O(h_val),		BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",	1, "octaves", 		FBM_O(octaves),		BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",	1, "gain",		FBM_O(gain),		BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",	1, "distortion",	FBM_O(distortion),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",	1, "l",			FBM_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%d",	1, "o", 		FBM_O(octaves),		BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",	1, "g",			FBM_O(gain),		BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",	1, "d",			FBM_O(distortion),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",  3, "scale",		FBM_AO(scale),		BU_STRUCTPARSE_FUNC_NULL },
-	{"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%f",	1, "lacunarity",	FBM_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL },
+    {"%f",	1, "H", 		FBM_O(h_val),		BU_STRUCTPARSE_FUNC_NULL },
+    {"%f",	1, "octaves", 		FBM_O(octaves),		BU_STRUCTPARSE_FUNC_NULL },
+    {"%f",	1, "gain",		FBM_O(gain),		BU_STRUCTPARSE_FUNC_NULL },
+    {"%f",	1, "distortion",	FBM_O(distortion),	BU_STRUCTPARSE_FUNC_NULL },
+    {"%f",	1, "l",			FBM_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL },
+    {"%d",	1, "o", 		FBM_O(octaves),		BU_STRUCTPARSE_FUNC_NULL },
+    {"%f",	1, "g",			FBM_O(gain),		BU_STRUCTPARSE_FUNC_NULL },
+    {"%f",	1, "d",			FBM_O(distortion),	BU_STRUCTPARSE_FUNC_NULL },
+    {"%f",  3, "scale",		FBM_AO(scale),		BU_STRUCTPARSE_FUNC_NULL },
+    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
 HIDDEN int	fbm_setup(register struct region *rp, struct bu_vls *matparm, char **dpp), fbm_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
 HIDDEN void	fbm_print(register struct region *rp, char *dp), fbm_free(char *cp);
 
 struct mfuncs fbm_mfuncs[] = {
-  {MF_MAGIC,	"bump_fbm",		0,	MFI_NORMAL|MFI_HIT|MFI_UV,	0,
-   fbm_setup,	 fbm_render,	fbm_print,	fbm_free },
+    {MF_MAGIC,	"bump_fbm",		0,	MFI_NORMAL|MFI_HIT|MFI_UV,	0,
+     fbm_setup,	 fbm_render,	fbm_print,	fbm_free },
 
-  {0,		(char*)0,		0,				0,	0,
-   0,		0,			0,				0}
+    {0,		(char*)0,		0,				0,	0,
+     0,		0,			0,				0}
 };
 
 
@@ -90,23 +90,23 @@ struct mfuncs fbm_mfuncs[] = {
 HIDDEN int
 fbm_setup(register struct region *rp, struct bu_vls *matparm, char **dpp)
 {
-	register struct fbm_specific *fbm;
+    register struct fbm_specific *fbm;
 
-	BU_CK_VLS( matparm );
-	BU_GETSTRUCT( fbm, fbm_specific );
-	*dpp = (char *)fbm;
+    BU_CK_VLS( matparm );
+    BU_GETSTRUCT( fbm, fbm_specific );
+    *dpp = (char *)fbm;
 
-	memcpy(fbm, &fbm_defaults, sizeof(struct fbm_specific));
-	if (rdebug&RDEBUG_SHADE)
-		bu_log("fbm_setup\n");
+    memcpy(fbm, &fbm_defaults, sizeof(struct fbm_specific));
+    if (rdebug&RDEBUG_SHADE)
+	bu_log("fbm_setup\n");
 
-	if (bu_struct_parse( matparm, fbm_parse, (char *)fbm ) < 0 )
-		return(-1);
+    if (bu_struct_parse( matparm, fbm_parse, (char *)fbm ) < 0 )
+	return(-1);
 
-	if (rdebug&RDEBUG_SHADE)
-		bu_struct_print( rp->reg_name, fbm_parse, (char *)fbm );
+    if (rdebug&RDEBUG_SHADE)
+	bu_struct_print( rp->reg_name, fbm_parse, (char *)fbm );
 
-	return(1);
+    return(1);
 }
 
 /*
@@ -115,7 +115,7 @@ fbm_setup(register struct region *rp, struct bu_vls *matparm, char **dpp)
 HIDDEN void
 fbm_print(register struct region *rp, char *dp)
 {
-	bu_struct_print( rp->reg_name, fbm_parse, (char *)dp );
+    bu_struct_print( rp->reg_name, fbm_parse, (char *)dp );
 }
 
 /*
@@ -124,7 +124,7 @@ fbm_print(register struct region *rp, char *dp)
 HIDDEN void
 fbm_free(char *cp)
 {
-	bu_free( cp, "fbm_specific" );
+    bu_free( cp, "fbm_specific" );
 }
 
 /*
@@ -133,32 +133,32 @@ fbm_free(char *cp)
 int
 fbm_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
 {
-	register struct fbm_specific *fbm_sp =
-		(struct fbm_specific *)dp;
-	vect_t v_noise;
-	point_t pt;
+    register struct fbm_specific *fbm_sp =
+	(struct fbm_specific *)dp;
+    vect_t v_noise;
+    point_t pt;
 
-	if (rdebug&RDEBUG_SHADE)
-		bu_struct_print( "foo", fbm_parse, (char *)fbm_sp );
+    if (rdebug&RDEBUG_SHADE)
+	bu_struct_print( "foo", fbm_parse, (char *)fbm_sp );
 
-	pt[0] = swp->sw_hit.hit_point[0] * fbm_sp->scale[0];
-	pt[1] = swp->sw_hit.hit_point[1] * fbm_sp->scale[1];
-	pt[2] = swp->sw_hit.hit_point[2] * fbm_sp->scale[2];
+    pt[0] = swp->sw_hit.hit_point[0] * fbm_sp->scale[0];
+    pt[1] = swp->sw_hit.hit_point[1] * fbm_sp->scale[1];
+    pt[2] = swp->sw_hit.hit_point[2] * fbm_sp->scale[2];
 
-	bn_noise_vec(pt, v_noise);
+    bn_noise_vec(pt, v_noise);
 
-	VSCALE(v_noise, v_noise, fbm_sp->distortion);
+    VSCALE(v_noise, v_noise, fbm_sp->distortion);
 
-	if (rdebug&RDEBUG_SHADE)
-		bu_log("fbm_render: point (%g %g %g) becomes (%g %g %g)\n\tv_noise (%g %g %g)\n",
-			V3ARGS(swp->sw_hit.hit_point),
-			V3ARGS(pt),
-			V3ARGS(v_noise));
+    if (rdebug&RDEBUG_SHADE)
+	bu_log("fbm_render: point (%g %g %g) becomes (%g %g %g)\n\tv_noise (%g %g %g)\n",
+	       V3ARGS(swp->sw_hit.hit_point),
+	       V3ARGS(pt),
+	       V3ARGS(v_noise));
 
-	VADD2(swp->sw_hit.hit_normal, swp->sw_hit.hit_normal, v_noise);
-	VUNITIZE(swp->sw_hit.hit_normal);
+    VADD2(swp->sw_hit.hit_normal, swp->sw_hit.hit_normal, v_noise);
+    VUNITIZE(swp->sw_hit.hit_normal);
 
-	return(1);
+    return(1);
 }
 
 /*

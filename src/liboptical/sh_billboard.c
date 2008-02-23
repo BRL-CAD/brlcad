@@ -150,9 +150,9 @@ void new_image(register const struct bu_structparse	*sdp,	/*struct desc*/
     BU_GETSTRUCT(bbdi, bbd_img);
 
     bbdi->img_mf = bu_open_mapped_file_with_path(
-						 bbd_sp->rtip->rti_dbip->dbi_filepath,
-						 bu_vls_addr(&bbd_sp->img_filename),
-						 NULL);
+	bbd_sp->rtip->rti_dbip->dbi_filepath,
+	bu_vls_addr(&bbd_sp->img_filename),
+	NULL);
 
     if (!bbdi->img_mf) {
 	bu_log("error opening image %s\n", bu_vls_addr(&bbd_sp->img_filename));
@@ -186,7 +186,7 @@ bbd_setup( struct region *rp,
 	   char **dpp, /* pointer to reg_udata in *rp */
 	   struct mfuncs *mfp,
 	   struct rt_i *rtip
-	   )
+    )
 {
     register struct bbd_specific	*bbd_sp;
     struct rt_db_internal intern;
@@ -566,8 +566,8 @@ bbd_render( struct application *ap, struct partition *pp, struct shadework *swp,
 	id[i].index = i;
 	id[i].bi = bi;
 	id[i].status = bn_isect_line3_plane(&id[i].dist,
-					 ap->a_ray.r_pt, ap->a_ray.r_dir,
-					 bi->img_plane, &ap->a_rt_i->rti_tol);
+					    ap->a_ray.r_pt, ap->a_ray.r_dir,
+					    bi->img_plane, &ap->a_rt_i->rti_tol);
 	i++;
     }
 

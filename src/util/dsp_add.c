@@ -59,11 +59,11 @@ int style = ADD_STYLE_INT;
  */
 void usage(char *s)
 {
-	if (s) (void)fputs(s, stderr);
+    if (s) (void)fputs(s, stderr);
 
-	(void) fprintf(stderr, "Usage: %s [ -%s ] dsp_1 dsp_2 > dsp_3\n",
-			progname, options);
-	bu_exit (1, NULL);
+    (void) fprintf(stderr, "Usage: %s [ -%s ] dsp_1 dsp_2 > dsp_3\n",
+		   progname, options);
+    bu_exit (1, NULL);
 }
 
 /*
@@ -71,36 +71,36 @@ void usage(char *s)
  */
 int parse_args(int ac, char *av[])
 {
-	int  c;
-	char *strrchr(const char *, int);
+    int  c;
+    char *strrchr(const char *, int);
 
-	if (  ! (progname=strrchr(*av, '/'))  )
-		progname = *av;
-	else
-		++progname;
+    if (  ! (progname=strrchr(*av, '/'))  )
+	progname = *av;
+    else
+	++progname;
 
-	/* Turn off bu_getopt's error messages */
-	bu_opterr = 0;
+    /* Turn off bu_getopt's error messages */
+    bu_opterr = 0;
 
-	/* get all the option flags from the command line */
-	while ((c=bu_getopt(ac, av, options)) != EOF)
-		switch (c) {
-		case '?'	:
-		case 'h'	:
-		default		: usage("Bad or help flag specified\n"); break;
-		}
+    /* get all the option flags from the command line */
+    while ((c=bu_getopt(ac, av, options)) != EOF)
+	switch (c) {
+	    case '?'	:
+	    case 'h'	:
+	    default		: usage("Bad or help flag specified\n"); break;
+	}
 
-	return(bu_optind);
+    return(bu_optind);
 }
 
 
 void
 swap_bytes(unsigned short *buf, unsigned long count)
 {
-	register unsigned short *p;
+    register unsigned short *p;
 
-	for (p = &buf[count-1]; p >= buf; p--)
-		*p = ((*p << 8) & 0x0ff00) | (*p >> 8);
+    for (p = &buf[count-1]; p >= buf; p--)
+	*p = ((*p << 8) & 0x0ff00) | (*p >> 8);
 }
 
 
@@ -113,33 +113,33 @@ swap_bytes(unsigned short *buf, unsigned long count)
 void
 add_float(unsigned short *buf1, unsigned short *buf2, unsigned long count)
 {
-	register unsigned short *p, *q, *e;
-	register double *dbuf, *d;
-	double min, max, k;
+    register unsigned short *p, *q, *e;
+    register double *dbuf, *d;
+    double min, max, k;
 
-	dbuf = bu_malloc(sizeof(double) * count, "buffer of double");
+    dbuf = bu_malloc(sizeof(double) * count, "buffer of double");
 
-	min = MAX_FASTF;
-	max = -MAX_FASTF;
-	e = &buf1[count];
+    min = MAX_FASTF;
+    max = -MAX_FASTF;
+    e = &buf1[count];
 
-	/* add everything, keeping track of the min/max values found */
-	for (d=dbuf, p=buf1, q=buf2; p < e; p++, q++, d++) {
-		*d = *p + *q;
-		if (*d > max) max = *d;
-		if (*d < min) min = *d;
-	}
+    /* add everything, keeping track of the min/max values found */
+    for (d=dbuf, p=buf1, q=buf2; p < e; p++, q++, d++) {
+	*d = *p + *q;
+	if (*d > max) max = *d;
+	if (*d < min) min = *d;
+    }
 
-	/* now we convert back to unsigned shorts in the range 1 .. 65535 */
+    /* now we convert back to unsigned shorts in the range 1 .. 65535 */
 
-	k = 65534.0 / (max - min);
+    k = 65534.0 / (max - min);
 
-	bu_log("min: %g scale: %g\n", min - k, k);
+    bu_log("min: %g scale: %g\n", min - k, k);
 
-	for (d=dbuf, p=buf1, q=buf2; p < e; p++, q++, d++)
-		*p = (unsigned short)  ((*d - min) * k) + 1;
+    for (d=dbuf, p=buf1, q=buf2; p < e; p++, q++, d++)
+	*p = (unsigned short)  ((*d - min) * k) + 1;
 
-	bu_free(dbuf, "buffer of double");
+    bu_free(dbuf, "buffer of double");
 }
 
 /*
@@ -153,20 +153,20 @@ add_float(unsigned short *buf1, unsigned short *buf2, unsigned long count)
 void
 add_int(unsigned short *buf1, unsigned short *buf2, unsigned long count)
 {
-	register int int_value;
-	int i;
-	unsigned short s;
+    register int int_value;
+    int i;
+    unsigned short s;
 
-	for (i=0; i < count; i++) {
-		int_value = buf1[i] + buf2[i];
-		s = (unsigned short)int_value;
+    for (i=0; i < count; i++) {
+	int_value = buf1[i] + buf2[i];
+	s = (unsigned short)int_value;
 
-		if (s != int_value) {
-			bu_log("overflow (%d+%d) == %d at %d\n",
-			       buf1[i], buf2[i], int_value, i );
-		}
-		buf1[i] = s;
+	if (s != int_value) {
+	    bu_log("overflow (%d+%d) == %d at %d\n",
+		   buf1[i], buf2[i], int_value, i );
 	}
+	buf1[i] = s;
+    }
 
 }
 
@@ -180,89 +180,89 @@ add_int(unsigned short *buf1, unsigned short *buf2, unsigned long count)
 int
 main(int ac, char *av[])
 {
-	int next_arg;
-	FILE *in1, *in2;
-	unsigned short *buf1, *buf2;
-	unsigned long count;
-	int in_cookie, out_cookie;
-	int conv;
-	struct stat sb;
+    int next_arg;
+    FILE *in1, *in2;
+    unsigned short *buf1, *buf2;
+    unsigned long count;
+    int in_cookie, out_cookie;
+    int conv;
+    struct stat sb;
 
-	next_arg = parse_args(ac, av);
+    next_arg = parse_args(ac, av);
 
-	if (isatty(fileno(stdout))) usage("Redirect standard output\n");
+    if (isatty(fileno(stdout))) usage("Redirect standard output\n");
 
-	if (next_arg >= ac) usage("No files specified\n");
-
-
-	/* Open the files */
-
-	if (stat(av[next_arg], &sb) ||
-	    (in1 = fopen(av[next_arg], "r"))  == (FILE *)NULL) {
-		perror(av[next_arg]);
-		return -1;
-	}
-
-	count = (unsigned long)sb.st_size;
-	buf1 = bu_malloc((size_t)sb.st_size, "buf1");
-
-	next_arg++;
-
-	if (stat(av[next_arg], &sb) ||
-	    (in2 = fopen(av[next_arg], "r"))  == (FILE *)NULL) {
-		perror(av[next_arg]);
-		return -1;
-	}
-
-	if (sb.st_size != count)
-		bu_exit( EXIT_FAILURE, "**** ERROR **** file size mis-match\n");
-
-	buf2 = bu_malloc((size_t)sb.st_size, "buf2");
-
-	count = count >> 1; /* convert count of char to count of short */
-
-	/* Read the terrain data */
-	fread(buf1, sizeof(short), count, in1);
-	fclose(in1);
-
-	fread(buf2, sizeof(short), count, in2);
-	fclose(in2);
+    if (next_arg >= ac) usage("No files specified\n");
 
 
-	/* Convert from network to host format */
-	in_cookie = bu_cv_cookie("nus");
-	out_cookie = bu_cv_cookie("hus");
-	conv = (bu_cv_optimize(in_cookie) != bu_cv_optimize(out_cookie));
+    /* Open the files */
 
-	if (conv) {
-		swap_bytes(buf1, count);
-		swap_bytes(buf2, count);
-	}
+    if (stat(av[next_arg], &sb) ||
+	(in1 = fopen(av[next_arg], "r"))  == (FILE *)NULL) {
+	perror(av[next_arg]);
+	return -1;
+    }
+
+    count = (unsigned long)sb.st_size;
+    buf1 = bu_malloc((size_t)sb.st_size, "buf1");
+
+    next_arg++;
+
+    if (stat(av[next_arg], &sb) ||
+	(in2 = fopen(av[next_arg], "r"))  == (FILE *)NULL) {
+	perror(av[next_arg]);
+	return -1;
+    }
+
+    if (sb.st_size != count)
+	bu_exit( EXIT_FAILURE, "**** ERROR **** file size mis-match\n");
+
+    buf2 = bu_malloc((size_t)sb.st_size, "buf2");
+
+    count = count >> 1; /* convert count of char to count of short */
+
+    /* Read the terrain data */
+    fread(buf1, sizeof(short), count, in1);
+    fclose(in1);
+
+    fread(buf2, sizeof(short), count, in2);
+    fclose(in2);
 
 
-	/* add the two datasets together */
+    /* Convert from network to host format */
+    in_cookie = bu_cv_cookie("nus");
+    out_cookie = bu_cv_cookie("hus");
+    conv = (bu_cv_optimize(in_cookie) != bu_cv_optimize(out_cookie));
 
-	switch (style) {
+    if (conv) {
+	swap_bytes(buf1, count);
+	swap_bytes(buf2, count);
+    }
+
+
+    /* add the two datasets together */
+
+    switch (style) {
 	case ADD_STYLE_FLOAT	: add_float(buf1, buf2, count); break;
 	case ADD_STYLE_INT	: add_int(buf1, buf2, count); break;
 	default			: fprintf(stderr,
-					"Error: Unknown add style\n");
-				break;
-	}
+					  "Error: Unknown add style\n");
+	    break;
+    }
 
 
-	/* convert back to network format & write out */
-	if (conv) {
-		swap_bytes(buf1, count);
-		swap_bytes(buf2, count);
-	}
+    /* convert back to network format & write out */
+    if (conv) {
+	swap_bytes(buf1, count);
+	swap_bytes(buf2, count);
+    }
 
-	if (fwrite(buf1, sizeof(short), count, stdout) != count) {
-		fprintf(stderr, "Error writing data\n");
-		return -1;
-	}
+    if (fwrite(buf1, sizeof(short), count, stdout) != count) {
+	fprintf(stderr, "Error writing data\n");
+	return -1;
+    }
 
-	return 0;
+    return 0;
 }
 
 

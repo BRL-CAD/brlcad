@@ -45,8 +45,8 @@
 #define CELLNULL ( (struct cell *) 0)
 
 struct cell {
-	float	c_dist;			/* distance from emanation plane to in_hit */
-	point_t	c_hit;			/* 3-space hit point of ray */
+    float	c_dist;			/* distance from emanation plane to in_hit */
+    point_t	c_hit;			/* 3-space hit point of ray */
 };
 
 extern	int	width;			/* # of pixels in X; picture width */
@@ -60,7 +60,7 @@ int		using_mlib = 0;		/* Material routines NOT used */
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
-	{"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL }
+    {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL }
 };
 
 
@@ -96,13 +96,13 @@ int
 view_init(register struct application *ap, char *file, char *obj, int minus_o)
 {
 
-	ap->a_hit = rayhit;
-	ap->a_miss = raymiss;
-	ap->a_onehit = 1;
+    ap->a_hit = rayhit;
+    ap->a_miss = raymiss;
+    ap->a_onehit = 1;
 
-	output_is_binary = 1;		/* output is binary */
+    output_is_binary = 1;		/* output is binary */
 
-	return(0);			/* No framebuffer needed */
+    return(0);			/* No framebuffer needed */
 }
 
 /*
@@ -121,48 +121,48 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
 void
 view_2init(struct application *ap)
 {
-	if ( outfp == NULL )
-		bu_exit(EXIT_FAILURE, "outfp is NULL\n");
+    if ( outfp == NULL )
+	bu_exit(EXIT_FAILURE, "outfp is NULL\n");
 
-	/*
-	 *  For now, RTRANGE does not operate in parallel, while ray-tracing.
-	 *  However, not dropping out of parallel mode until here permits
-	 *  tree walking and database prepping to still be done in parallel.
-	 */
-	if ( npsw >= 1 )  {
-		bu_log("Note: changing from %d cpus to 1 cpu\n", npsw );
-		npsw = 1;		/* Disable parallel processing */
-	}
-
-
-	/* malloc() a buffer that has room for as many struct cell 's
-	 * as the incoming file is wide (width).
-	 * Rather than using malloc(), though, bu_malloc() is used.  This
-	 * has the advantage of inbuild error-checking and automatic aborting
-	 * if there is no memory.  Also, bu_malloc() takes a string as its
-	 * final parameter: this tells the user exactly where memory ran out.
-	 */
+    /*
+     *  For now, RTRANGE does not operate in parallel, while ray-tracing.
+     *  However, not dropping out of parallel mode until here permits
+     *  tree walking and database prepping to still be done in parallel.
+     */
+    if ( npsw >= 1 )  {
+	bu_log("Note: changing from %d cpus to 1 cpu\n", npsw );
+	npsw = 1;		/* Disable parallel processing */
+    }
 
 
-	cellp = (struct cell *)bu_malloc(sizeof(struct cell) * width,
-		"cell buffer" );
+    /* malloc() a buffer that has room for as many struct cell 's
+     * as the incoming file is wide (width).
+     * Rather than using malloc(), though, bu_malloc() is used.  This
+     * has the advantage of inbuild error-checking and automatic aborting
+     * if there is no memory.  Also, bu_malloc() takes a string as its
+     * final parameter: this tells the user exactly where memory ran out.
+     */
 
 
-	/* Obtain the maximun distance within the model to use as the
-	 * background distance.  Also get the coordinates of the model's
-	 * bounding box and feed them to
-	 * pdv_3space.  This will allow the image to appear in the plot
-	 * starting with the same size as the model.
-	 */
+    cellp = (struct cell *)bu_malloc(sizeof(struct cell) * width,
+				     "cell buffer" );
 
-	pdv_3space(outfp, ap->a_rt_i->rti_pmin, ap->a_rt_i->rti_pmax);
 
-	/* Find the max dist fron emantion plane to end of model
-	 * space.  This can be twice the radius of the bounding
-	 * sphere.
-	 */
+    /* Obtain the maximun distance within the model to use as the
+     * background distance.  Also get the coordinates of the model's
+     * bounding box and feed them to
+     * pdv_3space.  This will allow the image to appear in the plot
+     * starting with the same size as the model.
+     */
 
-	max_dist = 2 * (ap->a_rt_i->rti_radius);
+    pdv_3space(outfp, ap->a_rt_i->rti_pmin, ap->a_rt_i->rti_pmax);
+
+    /* Find the max dist fron emantion plane to end of model
+     * space.  This can be twice the radius of the bounding
+     * sphere.
+     */
+
+    max_dist = 2 * (ap->a_rt_i->rti_radius);
 }
 
 
@@ -177,21 +177,21 @@ int
 raymiss(register struct application *ap)
 {
 
-	struct	cell	*posp;		/* store the current cell position */
+    struct	cell	*posp;		/* store the current cell position */
 
-	/* Getting defensive.... just in case. */
-	if (ap->a_x > width)  {
-		bu_exit(EXIT_FAILURE, "raymiss: pixels exceed width\n");
-	}
+    /* Getting defensive.... just in case. */
+    if (ap->a_x > width)  {
+	bu_exit(EXIT_FAILURE, "raymiss: pixels exceed width\n");
+    }
 
-	posp = &(cellp[ap->a_x]);
+    posp = &(cellp[ap->a_x]);
 
-	/* Find the hit point for the miss. */
+    /* Find the hit point for the miss. */
 
-	VJOIN1(posp->c_hit, ap->a_ray.r_pt, max_dist, ap->a_ray.r_dir);
-	posp->c_dist = max_dist;
+    VJOIN1(posp->c_hit, ap->a_ray.r_pt, max_dist, ap->a_ray.r_dir);
+    posp->c_dist = max_dist;
 
-	return(0);
+    return(0);
 }
 
 /*
@@ -203,7 +203,7 @@ raymiss(register struct application *ap)
 void
 view_pixel(void)
 {
-	return;
+    return;
 }
 
 void view_setup(void) {}
@@ -222,40 +222,40 @@ void view_cleanup(void) {}
 int
 rayhit(struct application *ap, register struct partition *PartHeadp, struct seg *segp)
 {
-	register struct partition *pp = PartHeadp->pt_forw;
-	struct	cell	*posp;		/* stores current cell position */
+    register struct partition *pp = PartHeadp->pt_forw;
+    struct	cell	*posp;		/* stores current cell position */
 
 
-	if ( pp == PartHeadp )
-		return(0);		/* nothing was actually hit?? */
+    if ( pp == PartHeadp )
+	return(0);		/* nothing was actually hit?? */
 
 
-	/* Getting defensive.... just in case. */
-	if (ap->a_x > width)  {
-		bu_exit(EXIT_FAILURE, "rayhit: pixels exceed width\n");
-	}
+    /* Getting defensive.... just in case. */
+    if (ap->a_x > width)  {
+	bu_exit(EXIT_FAILURE, "rayhit: pixels exceed width\n");
+    }
 
-	posp = &(cellp[ap->a_x]);
+    posp = &(cellp[ap->a_x]);
 
-	/* Calculate the hit distance and the direction vector.  This is done
-	 * by VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir).
-	 */
+    /* Calculate the hit distance and the direction vector.  This is done
+     * by VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir).
+     */
 
-	VJOIN1(pp->pt_inhit->hit_point, ap->a_ray.r_pt,
-		pp->pt_inhit->hit_dist, ap->a_ray.r_dir);
+    VJOIN1(pp->pt_inhit->hit_point, ap->a_ray.r_pt,
+	   pp->pt_inhit->hit_dist, ap->a_ray.r_dir);
 
-	/* Now store the distance and the direction vector as appropriate.
-	 * Output the ray data: screen plane (pixel) coordinates
-	 * for x and y positions of a ray, region_id, and hit_distance.
-	 * The x and y positions are represented by ap->a_x and ap->a_y.
-	 *
-	 *  Assume all rays are parallel.
-	 */
+    /* Now store the distance and the direction vector as appropriate.
+     * Output the ray data: screen plane (pixel) coordinates
+     * for x and y positions of a ray, region_id, and hit_distance.
+     * The x and y positions are represented by ap->a_x and ap->a_y.
+     *
+     *  Assume all rays are parallel.
+     */
 
-	posp->c_dist = pp->pt_inhit->hit_dist;
-	VMOVE(posp->c_hit, pp->pt_inhit->hit_point);
+    posp->c_dist = pp->pt_inhit->hit_dist;
+    VMOVE(posp->c_hit, pp->pt_inhit->hit_point);
 
-	return(0);
+    return(0);
 }
 
 /*
@@ -269,41 +269,41 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 
 void	view_eol(struct application *ap)
 {
-	struct cell	*posp;
-	int		i;
-	int		cont;		/* continue flag */
+    struct cell	*posp;
+    int		i;
+    int		cont;		/* continue flag */
 
-	posp = &(cellp[0]);
-	cont = 0;
+    posp = &(cellp[0]);
+    cont = 0;
 
-	/* Plot the starting point and set cont to 0.  Then
-	 * march along the entire array and continue to plot the
-	 * hit points based on their distance from the emanation
-	 * plane. When consecutive hit-points with identical distances
-	 * are found, cont is set to one so that the entire sequence
-	 * of like-distanced hit-points can be plotted together.
-	 */
+    /* Plot the starting point and set cont to 0.  Then
+     * march along the entire array and continue to plot the
+     * hit points based on their distance from the emanation
+     * plane. When consecutive hit-points with identical distances
+     * are found, cont is set to one so that the entire sequence
+     * of like-distanced hit-points can be plotted together.
+     */
 
-	pdv_3move( outfp, posp->c_hit );
+    pdv_3move( outfp, posp->c_hit );
 
-	for ( i = 0; i < width-1; i++, posp++ )  {
-		if ( posp->c_dist == (posp+1)->c_dist )  {
-			cont = 1;
-			continue;
-		} else  {
-			if (cont)  {
-				pdv_3cont(outfp, posp->c_hit);
-				cont = 0;
-			}
-			pdv_3cont(outfp, (posp+1)->c_hit);
-		}
+    for ( i = 0; i < width-1; i++, posp++ )  {
+	if ( posp->c_dist == (posp+1)->c_dist )  {
+	    cont = 1;
+	    continue;
+	} else  {
+	    if (cont)  {
+		pdv_3cont(outfp, posp->c_hit);
+		cont = 0;
+	    }
+	    pdv_3cont(outfp, (posp+1)->c_hit);
 	}
+    }
 
-	/* Catch the boundary condition if the last couple of cells
-	 * heve the same distance.
-	 */
+    /* Catch the boundary condition if the last couple of cells
+     * heve the same distance.
+     */
 
-	pdv_3cont(outfp, posp->c_hit);
+    pdv_3cont(outfp, posp->c_hit);
 }
 
 
@@ -317,7 +317,7 @@ void
 view_end(struct application *ap)
 {
 
-	fflush(outfp);
+    fflush(outfp);
 }
 
 

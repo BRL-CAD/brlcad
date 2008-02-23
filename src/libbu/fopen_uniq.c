@@ -48,7 +48,7 @@
  *  Open a file for output.  Assures that the file did not previously exist.
  *
  *  Typical Usages:
-@code
+ @code
  *	static int n = 0;
  *	FILE *fp;
  *
@@ -60,8 +60,8 @@
  *	fp = bu_fopen_uniq((char *)NULL, "output%d.pl", n++);
  *	...
  *	fclose(fp);
-@endcode
- */
+ @endcode
+*/
 FILE *
 bu_fopen_uniq(const char *outfmt, const char *namefmt, int n)
 {

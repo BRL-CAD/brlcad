@@ -85,7 +85,7 @@ main(int argc, char **argv)
 	fprintf(stderr, "anim_keyread: get_args error");
 
     while (!feof(stdin)) {
-   /* read one keyframe */
+	/* read one keyframe */
 	scanf("%lf", &time);
 	scanf("%lf", &viewsize);
 	scanf("%lf %lf %lf", eyept, eyept+1, eyept+2);
@@ -143,21 +143,21 @@ int get_args(int argc, char **argv)
 
     while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
 	switch (c) {
-	case 'y':
-	    mode = YPR;
-	    break;
-	case 'z':
-	    mode = XYZ;
-	    break;
-	case 'q':
-	    mode = QUATERNION;
-	    break;
-	case 'r':
-	    units = RADIANS;
-	    break;
-	default:
-	    fprintf(stderr, "Unknown option: -%c\n", c);
-	    return(0);
+	    case 'y':
+		mode = YPR;
+		break;
+	    case 'z':
+		mode = XYZ;
+		break;
+	    case 'q':
+		mode = QUATERNION;
+		break;
+	    case 'r':
+		units = RADIANS;
+		break;
+	    default:
+		fprintf(stderr, "Unknown option: -%c\n", c);
+		return(0);
 	}
     }
     return(1);

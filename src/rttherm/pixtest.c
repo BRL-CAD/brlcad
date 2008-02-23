@@ -85,7 +85,7 @@ main(int ac, char *av)
 	MAT3X3VEC( dest, xyz2rgb, xyz );
 
 	if ( dest[0] > 1 || dest[1] > 1 || dest[2] > 1 ||
-	    dest[0] < 0 || dest[1] < 0 || dest[2] < 0 )  {
+	     dest[0] < 0 || dest[1] < 0 || dest[2] < 0 )  {
 	    VPRINT("src ", src);
 	    VPRINT("dest", dest);
 	}

@@ -66,105 +66,105 @@ Usage: fb-bw [-h -i] [-F framebuffer]\n\
 int
 get_args(int argc, register char **argv)
 {
-	register int c;
+    register int c;
 
-	while ( (c = bu_getopt( argc, argv, "hiF:X:Y:s:w:n:" )) != EOF )  {
-		switch ( c )  {
-		case 'h':
-			/* high-res */
-			height = width = 1024;
-			break;
-		case 'i':
-			inverse = 1;
-			break;
-		case 'F':
-			framebuffer = bu_optarg;
-			break;
-		case 'X':
-			scr_xoff = atoi(bu_optarg);
-			break;
-		case 'Y':
-			scr_yoff = atoi(bu_optarg);
-			break;
-		case 's':
-			/* square size */
-			height = width = atoi(bu_optarg);
-			break;
-		case 'w':
-			width = atoi(bu_optarg);
-			break;
-		case 'n':
-			height = atoi(bu_optarg);
-			break;
+    while ( (c = bu_getopt( argc, argv, "hiF:X:Y:s:w:n:" )) != EOF )  {
+	switch ( c )  {
+	    case 'h':
+		/* high-res */
+		height = width = 1024;
+		break;
+	    case 'i':
+		inverse = 1;
+		break;
+	    case 'F':
+		framebuffer = bu_optarg;
+		break;
+	    case 'X':
+		scr_xoff = atoi(bu_optarg);
+		break;
+	    case 'Y':
+		scr_yoff = atoi(bu_optarg);
+		break;
+	    case 's':
+		/* square size */
+		height = width = atoi(bu_optarg);
+		break;
+	    case 'w':
+		width = atoi(bu_optarg);
+		break;
+	    case 'n':
+		height = atoi(bu_optarg);
+		break;
 
-		default:		/* '?' */
-			return(0);
-		}
+	    default:		/* '?' */
+		return(0);
 	}
+    }
 
-	if ( bu_optind >= argc ) {
-		if ( isatty(fileno(stdout)) )
-			return(0);
-		file_name = "-";
-		outfp = stdout;
-	} else {
-		file_name = argv[bu_optind];
-		if ( (outfp = fopen(file_name, "wb")) == NULL )  {
-			(void)fprintf( stderr,
-				"fb-bw: cannot open \"%s\" for writing\n",
-				file_name );
-			return(0);
-		}
+    if ( bu_optind >= argc ) {
+	if ( isatty(fileno(stdout)) )
+	    return(0);
+	file_name = "-";
+	outfp = stdout;
+    } else {
+	file_name = argv[bu_optind];
+	if ( (outfp = fopen(file_name, "wb")) == NULL )  {
+	    (void)fprintf( stderr,
+			   "fb-bw: cannot open \"%s\" for writing\n",
+			   file_name );
+	    return(0);
 	}
+    }
 
-	if ( argc > ++bu_optind )
-		(void)fprintf( stderr, "fb-bw: excess argument(s) ignored\n" );
+    if ( argc > ++bu_optind )
+	(void)fprintf( stderr, "fb-bw: excess argument(s) ignored\n" );
 
-	return(1);		/* OK */
+    return(1);		/* OK */
 }
 
 int
 main(int argc, char **argv)
 {
-	int	x, y;
-	int	xin, yin;		/* number of sceen output lines */
+    int	x, y;
+    int	xin, yin;		/* number of sceen output lines */
 
-	height = width = 512;		/* Defaults */
+    height = width = 512;		/* Defaults */
 
-	if ( !get_args( argc, argv ) )  {
-		(void)fputs(usage, stderr);
-		bu_exit( 1, NULL );
+    if ( !get_args( argc, argv ) )  {
+	(void)fputs(usage, stderr);
+	bu_exit( 1, NULL );
+    }
+
+    /* Open Display Device */
+    if ((fbp = fb_open(framebuffer, width, height )) == NULL ) {
+	fprintf( stderr, "fb_open failed\n");
+	bu_exit( 1, NULL );
+    }
+
+    /* determine "reasonable" behavior */
+    xin = fb_getwidth(fbp) - scr_xoff;
+    if ( xin < 0 ) xin = 0;
+    if ( xin > width ) xin = width;
+    yin = fb_getheight(fbp) - scr_yoff;
+    if ( yin < 0 ) yin = 0;
+    if ( yin > height ) yin = height;
+
+    for ( y = scr_yoff; y < scr_yoff + yin; y++ )  {
+	if ( inverse ) {
+	    (void)fb_read( fbp, scr_xoff, fb_getheight(fbp)-1-y, inbuf, xin );
+	} else {
+	    (void)fb_read( fbp, scr_xoff, y, inbuf, xin );
 	}
-
-	/* Open Display Device */
-	if ((fbp = fb_open(framebuffer, width, height )) == NULL ) {
-		fprintf( stderr, "fb_open failed\n");
-		bu_exit( 1, NULL );
+	for ( x = 0; x < xin; x++ ) {
+	    obuf[x] = (((int)inbuf[3*x+RED]) + ((int)inbuf[3*x+GRN])
+		       + ((int)inbuf[3*x+BLU])) / 3;
 	}
+	fwrite( &obuf[0], sizeof( char ), xin, outfp );
+    }
 
-	/* determine "reasonable" behavior */
-	xin = fb_getwidth(fbp) - scr_xoff;
-	if ( xin < 0 ) xin = 0;
-	if ( xin > width ) xin = width;
-	yin = fb_getheight(fbp) - scr_yoff;
-	if ( yin < 0 ) yin = 0;
-	if ( yin > height ) yin = height;
-
-	for ( y = scr_yoff; y < scr_yoff + yin; y++ )  {
-	    if ( inverse ) {
-			(void)fb_read( fbp, scr_xoff, fb_getheight(fbp)-1-y, inbuf, xin );
-	    } else {
-			(void)fb_read( fbp, scr_xoff, y, inbuf, xin );
-	    }
-		for ( x = 0; x < xin; x++ ) {
-			obuf[x] = (((int)inbuf[3*x+RED]) + ((int)inbuf[3*x+GRN])
-				+ ((int)inbuf[3*x+BLU])) / 3;
-		}
-		fwrite( &obuf[0], sizeof( char ), xin, outfp );
-	}
-
-	fb_close( fbp );
-	bu_exit( 0, NULL );
+    fb_close( fbp );
+    bu_exit( 0, NULL );
 }
 
 /*

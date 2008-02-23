@@ -44,30 +44,30 @@
  * Description of Sun header for files containing raster images
  */
 struct rasterfile {
-	int	ras_magic;		/* magic number */
-	int	ras_width;		/* width (pixels) of image */
-	int	ras_height;		/* height (pixels) of image */
-	int	ras_depth;		/* depth (1, 8, or 24 bits) of pixel */
-	int	ras_length;		/* length (bytes) of image */
-	int	ras_type;		/* type of file; see RT_* below */
-	int	ras_maptype;		/* type of colormap; see RMT_* below */
-	int	ras_maplength;		/* length (bytes) of following map */
-	/* color map follows for ras_maplength bytes, followed by image */
+    int	ras_magic;		/* magic number */
+    int	ras_width;		/* width (pixels) of image */
+    int	ras_height;		/* height (pixels) of image */
+    int	ras_depth;		/* depth (1, 8, or 24 bits) of pixel */
+    int	ras_length;		/* length (bytes) of image */
+    int	ras_type;		/* type of file; see RT_* below */
+    int	ras_maptype;		/* type of colormap; see RMT_* below */
+    int	ras_maplength;		/* length (bytes) of following map */
+    /* color map follows for ras_maplength bytes, followed by image */
 } header;
 
 char	inbuf[sizeof(struct rasterfile)];
 
 #define	RAS_MAGIC	0x59a66a95
 
-	/* Sun supported ras_type's */
+/* Sun supported ras_type's */
 #define RT_OLD		0	/* Raw pixrect image in 68000 byte order */
 #define RT_STANDARD	1	/* Raw pixrect image in 68000 byte order */
 #define RT_BYTE_ENCODED	2	/* Run-length compression of bytes */
 #define RT_EXPERIMENTAL 0xffff	/* Reserved for testing */
 
-	/* Sun registered ras_maptype's */
+/* Sun registered ras_maptype's */
 #define RMT_RAW		2
-	/* Sun supported ras_maptype's */
+/* Sun supported ras_maptype's */
 #define RMT_NONE	0	/* ras_maplength is expected to be 0 */
 #define RMT_EQUAL_RGB	1	/* red[ras_maplength/3], green[], blue[] */
 
@@ -90,9 +90,9 @@ int	inverted;
 int	pure;			/* No Sun header */
 int	verbose;
 struct colors {
-	unsigned char	CL_red;
-	unsigned char	CL_green;
-	unsigned char	CL_blue;
+    unsigned char	CL_red;
+    unsigned char	CL_green;
+    unsigned char	CL_blue;
 };
 struct colors Cmap[256];
 
@@ -108,65 +108,65 @@ Usage: sun-pix [-b -h -i -P -v -C] [sun.bitmap]\n";
 unsigned long
 getlong(char *msgp)
 {
-	register unsigned char *p = (unsigned char *) msgp;
-	register unsigned long u;
+    register unsigned char *p = (unsigned char *) msgp;
+    register unsigned long u;
 
-	u = *p++; u <<= 8;
-	u |= *p++; u <<= 8;
-	u |= *p++; u <<= 8;
-	return (u | *p);
+    u = *p++; u <<= 8;
+    u |= *p++; u <<= 8;
+    u |= *p++; u <<= 8;
+    return (u | *p);
 }
 
 int
 get_args(int argc, register char **argv)
 {
-	register int c;
+    register int c;
 
-	while ( (c = bu_getopt( argc, argv, "bhiPvC" )) != EOF )  {
-		switch ( c )  {
-		case 'b':
-			pixout = 0;	/* bw(5) */
-			break;
-		case 'C':
-			colorout = 1;	/* output just the color map */
-			break;
-		case 'h':
-			hflag = 1;	/* print header */
-			break;
-		case 'i':
-			inverted = 1;
-			break;
-		case 'P':
-			pure = 1;
-			break;
-		case 'v':
-			verbose = 1;
-			break;
+    while ( (c = bu_getopt( argc, argv, "bhiPvC" )) != EOF )  {
+	switch ( c )  {
+	    case 'b':
+		pixout = 0;	/* bw(5) */
+		break;
+	    case 'C':
+		colorout = 1;	/* output just the color map */
+		break;
+	    case 'h':
+		hflag = 1;	/* print header */
+		break;
+	    case 'i':
+		inverted = 1;
+		break;
+	    case 'P':
+		pure = 1;
+		break;
+	    case 'v':
+		verbose = 1;
+		break;
 
-		default:		/* '?' */
-			return(0);
-		}
+	    default:		/* '?' */
+		return(0);
 	}
+    }
 
-	if ( bu_optind >= argc )  {
-		if ( isatty(fileno(stdin)) )
-			return(0);
-		file_name = "-";
-		fp = stdin;
-	} else {
-		file_name = argv[bu_optind];
-		if ( (fp = fopen(file_name, "r")) == NULL )  {
-			(void)fprintf( stderr,
-				"sun-pix: cannot open \"%s\" for reading\n",
-				file_name );
-			return(0);
-		}
+    if ( bu_optind >= argc )  {
+	if ( isatty(fileno(stdin)) )
+	    return(0);
+	file_name = "-";
+	fp = stdin;
+    } else {
+	file_name = argv[bu_optind];
+	if ( (fp = fopen(file_name, "r")) == NULL )  {
+	    (void)fprintf( stderr,
+			   "sun-pix: cannot open \"%s\" for reading\n",
+			   file_name );
+	    return(0);
 	}
+    }
 
-	if ( argc > ++bu_optind )
-		(void)fprintf( stderr, "sun-pix: excess argument(s) ignored\n" );
+    if ( argc > ++bu_optind )
+	(void)fprintf( stderr, "sun-pix: excess argument(s) ignored\n" );
 
-	return(1);		/* OK */
+    return(1);		/* OK */
 }
 
 
@@ -195,54 +195,54 @@ get_args(int argc, register char **argv)
 int
 decoderead(unsigned char *buf, int size, int length, FILE *fp)
 
-				/* should be one! */
-				/* number of items to read */
-				/* input file pointer */
+    /* should be one! */
+    /* number of items to read */
+    /* input file pointer */
 {
-	static	int	repeat = -1;
-	static	int	lastchar = 0;
-	int		number_read;
+    static	int	repeat = -1;
+    static	int	lastchar = 0;
+    int		number_read;
 
-	number_read = 0;
+    number_read = 0;
 
-	if (size != 1) {
-		fprintf(stderr, "decoderead: unable to process size = %d.\n",
-			size);
-		bu_exit (1, NULL);
-	}
+    if (size != 1) {
+	fprintf(stderr, "decoderead: unable to process size = %d.\n",
+		size);
+	bu_exit (1, NULL);
+    }
 
-	while (length) {
-		if (repeat >= 0) {
-			*buf = lastchar;
-			--length;
-			++buf;
-			number_read++;
-			--repeat;
+    while (length) {
+	if (repeat >= 0) {
+	    *buf = lastchar;
+	    --length;
+	    ++buf;
+	    number_read++;
+	    --repeat;
+	} else {
+	    lastchar = getc(fp);
+	    if (lastchar < 0) return(number_read);
+	    if (lastchar == ESCAPE) {
+		repeat = getc(fp);
+		if (repeat <0) return(number_read);
+		if (repeat == 0) {
+		    *buf = ESCAPE;
+		    ++buf;
+		    number_read++;
+		    --length;
+		    --repeat;
 		} else {
-			lastchar = getc(fp);
-			if (lastchar < 0) return(number_read);
-			if (lastchar == ESCAPE) {
-				repeat = getc(fp);
-				if (repeat <0) return(number_read);
-				if (repeat == 0) {
-					*buf = ESCAPE;
-					++buf;
-					number_read++;
-					--length;
-					--repeat;
-				} else {
-					lastchar = getc(fp);
-					if (lastchar < 0) return(number_read);
-				}
-			} else {
-				*buf = lastchar;
-				--length;
-				++buf;
-				++number_read;
-			}
+		    lastchar = getc(fp);
+		    if (lastchar < 0) return(number_read);
 		}
+	    } else {
+		*buf = lastchar;
+		--length;
+		++buf;
+		++number_read;
+	    }
 	}
-	return(number_read);
+    }
+    return(number_read);
 }
 
 unsigned char bits[8] = { 128, 64, 32, 16, 8, 4, 2, 1 };
@@ -250,172 +250,172 @@ unsigned char bits[8] = { 128, 64, 32, 16, 8, 4, 2, 1 };
 int
 main(int argc, char **argv)
 {
-	register int	x;
-	register int	off = 0;
-	register int	on = 255;
-	register int	width;			/* line width in bits */
-	register int	scanbytes;		/* bytes/line (padded to 16 bits) */
-	unsigned char	buf[4096];
+    register int	x;
+    register int	off = 0;
+    register int	on = 255;
+    register int	width;			/* line width in bits */
+    register int	scanbytes;		/* bytes/line (padded to 16 bits) */
+    unsigned char	buf[4096];
 
-	fp = stdin;
-	if ( !get_args( argc, argv ) || (isatty(fileno(stdout)) && (hflag == 0)) ) {
-		(void)fputs(usage, stderr);
-		bu_exit ( 1, NULL );
-	}
-	if ( inverted ) {
-		off = 255;
-		on = 0;
-	}
+    fp = stdin;
+    if ( !get_args( argc, argv ) || (isatty(fileno(stdout)) && (hflag == 0)) ) {
+	(void)fputs(usage, stderr);
+	bu_exit ( 1, NULL );
+    }
+    if ( inverted ) {
+	off = 255;
+	on = 0;
+    }
 
-	if ( !pure )  {
-		register long nbits;
+    if ( !pure )  {
+	register long nbits;
 
-		fread( inbuf, sizeof(struct rasterfile), 1, fp );
+	fread( inbuf, sizeof(struct rasterfile), 1, fp );
 
-		header.ras_magic = getlong( &inbuf[NET_LONG_LEN*0] );
-		header.ras_width = getlong( &inbuf[NET_LONG_LEN*1] );
-		header.ras_height = getlong( &inbuf[NET_LONG_LEN*2] );
-		header.ras_depth = getlong( &inbuf[NET_LONG_LEN*3] );
-		header.ras_length = getlong( &inbuf[NET_LONG_LEN*4] );
-		header.ras_type = getlong( &inbuf[NET_LONG_LEN*5] );
-		header.ras_maptype = getlong( &inbuf[NET_LONG_LEN*6] );
-		header.ras_maplength = getlong( &inbuf[NET_LONG_LEN*7] );
+	header.ras_magic = getlong( &inbuf[NET_LONG_LEN*0] );
+	header.ras_width = getlong( &inbuf[NET_LONG_LEN*1] );
+	header.ras_height = getlong( &inbuf[NET_LONG_LEN*2] );
+	header.ras_depth = getlong( &inbuf[NET_LONG_LEN*3] );
+	header.ras_length = getlong( &inbuf[NET_LONG_LEN*4] );
+	header.ras_type = getlong( &inbuf[NET_LONG_LEN*5] );
+	header.ras_maptype = getlong( &inbuf[NET_LONG_LEN*6] );
+	header.ras_maplength = getlong( &inbuf[NET_LONG_LEN*7] );
 
-		if ( header.ras_magic != RAS_MAGIC )  {
-			fprintf(stderr,
-				"sun-pix: bad magic number, was x%x, s/b x%x\n",
-				header.ras_magic, RAS_MAGIC );
-			bu_exit (1, NULL);
-		}
-
-		/* Width is rounded up to next multiple of 16 bits */
-		nbits = header.ras_width * header.ras_depth;
-		nbits = (nbits + 15) & ~15;
-		header.ras_width = nbits / header.ras_depth;
-
-		if (verbose)  {
-			fprintf( stderr,
-				"ras_width = %d, ras_height = %d\nras_depth = %d, ras_length = %d\n",
-				header.ras_width, header.ras_height,
-				header.ras_depth, header.ras_length );
-			fprintf( stderr,
-				"ras_type = %d, ras_maptype = %d, ras_maplength = %d\n",
-				header.ras_type,
-				header.ras_maptype,
-				header.ras_maplength );
-		}
-		if ( hflag ) {
-			printf( "-w%d -n%d\n", header.ras_width, header.ras_height );
-			bu_exit ( 0, NULL );
-		}
-	} else {
-		/* "pure" bitmap */
-		header.ras_type = RT_STANDARD;
-		header.ras_depth = 1;
+	if ( header.ras_magic != RAS_MAGIC )  {
+	    fprintf(stderr,
+		    "sun-pix: bad magic number, was x%x, s/b x%x\n",
+		    header.ras_magic, RAS_MAGIC );
+	    bu_exit (1, NULL);
 	}
 
-	switch ( header.ras_type )  {
+	/* Width is rounded up to next multiple of 16 bits */
+	nbits = header.ras_width * header.ras_depth;
+	nbits = (nbits + 15) & ~15;
+	header.ras_width = nbits / header.ras_depth;
+
+	if (verbose)  {
+	    fprintf( stderr,
+		     "ras_width = %d, ras_height = %d\nras_depth = %d, ras_length = %d\n",
+		     header.ras_width, header.ras_height,
+		     header.ras_depth, header.ras_length );
+	    fprintf( stderr,
+		     "ras_type = %d, ras_maptype = %d, ras_maplength = %d\n",
+		     header.ras_type,
+		     header.ras_maptype,
+		     header.ras_maplength );
+	}
+	if ( hflag ) {
+	    printf( "-w%d -n%d\n", header.ras_width, header.ras_height );
+	    bu_exit ( 0, NULL );
+	}
+    } else {
+	/* "pure" bitmap */
+	header.ras_type = RT_STANDARD;
+	header.ras_depth = 1;
+    }
+
+    switch ( header.ras_type )  {
 	case RT_OLD:		/* ??? */
 	case RT_BYTE_ENCODED:
 	case RT_STANDARD:
-		break;
+	    break;
 	default:
-		fprintf(stderr, "sun-pix:  Unable to process type %d images\n",
-			header.ras_type );
-		bu_exit (1, NULL);
-	}
+	    fprintf(stderr, "sun-pix:  Unable to process type %d images\n",
+		    header.ras_type );
+	    bu_exit (1, NULL);
+    }
 
-	width = header.ras_width;
-	x = 0;
+    width = header.ras_width;
+    x = 0;
 
-	switch ( header.ras_depth )  {
+    switch ( header.ras_depth )  {
 	case 1:
-		/* 1-bit image */
-		/*  Gobble colormap -- ought to know what to do with it */
-		for ( x=0; x<header.ras_maplength; x++)  {
-			(void)getc(fp);
-		}
-		if (colorout) {
-			fprintf(stdout, "%d\t%04x %04x %04x\n", off, off<<8,
-			    off<<8, off<<8);
-			fprintf(stdout, "%d\t%04x %04x %04x\n", on, on<<8,
-			    on<<8, on<<8);
-			break;
-		}
+	    /* 1-bit image */
+	    /*  Gobble colormap -- ought to know what to do with it */
+	    for ( x=0; x<header.ras_maplength; x++)  {
+		(void)getc(fp);
+	    }
+	    if (colorout) {
+		fprintf(stdout, "%d\t%04x %04x %04x\n", off, off<<8,
+			off<<8, off<<8);
+		fprintf(stdout, "%d\t%04x %04x %04x\n", on, on<<8,
+			on<<8, on<<8);
+		break;
+	    }
 
-		scanbytes = ((width + 15) & ~15L) / 8;
-		while ( (header.ras_type == RT_BYTE_ENCODED) ?
+	    scanbytes = ((width + 15) & ~15L) / 8;
+	    while ( (header.ras_type == RT_BYTE_ENCODED) ?
 		    decoderead(buf, sizeof(*buf), scanbytes, fp) :
 		    fread(buf, sizeof(*buf), scanbytes, fp) ) {
-			for ( x = 0; x < width; x++ ) {
-				if ( buf[x>>3] & bits[x&7] ) {
-					putchar(on);
-					if (pixout) {putchar(on);putchar(on);}
-				} else {
-					putchar(off);
-					if (pixout) {putchar(off);putchar(off);}
-				}
-			}
+		for ( x = 0; x < width; x++ ) {
+		    if ( buf[x>>3] & bits[x&7] ) {
+			putchar(on);
+			if (pixout) {putchar(on);putchar(on);}
+		    } else {
+			putchar(off);
+			if (pixout) {putchar(off);putchar(off);}
+		    }
 		}
-		break;
+	    }
+	    break;
 	case 8:
-		/* 8-bit image */
-		if (header.ras_maptype != RMT_EQUAL_RGB) {
-			fprintf(stderr, "sun-pix:  unable to handle depth=8, maptype = %d.\n",
-				header.ras_maptype);
-			bu_exit (1, NULL);
+	    /* 8-bit image */
+	    if (header.ras_maptype != RMT_EQUAL_RGB) {
+		fprintf(stderr, "sun-pix:  unable to handle depth=8, maptype = %d.\n",
+			header.ras_maptype);
+		bu_exit (1, NULL);
+	    }
+	    scanbytes = width;
+	    for (x = 0; x < header.ras_maplength/3; x++) {
+		if (inverted) {
+		    Cmap[x].CL_red = 255-(unsigned char)getc(fp);
+		} else {
+		    Cmap[x].CL_red = getc(fp);
 		}
-		scanbytes = width;
-		for (x = 0; x < header.ras_maplength/3; x++) {
-			if (inverted) {
-				Cmap[x].CL_red = 255-(unsigned char)getc(fp);
-			} else {
-				Cmap[x].CL_red = getc(fp);
-			}
+	    }
+	    for (x = 0; x < header.ras_maplength/3; x++) {
+		if (inverted) {
+		    Cmap[x].CL_green = 255-(unsigned char)getc(fp);
+		} else {
+		    Cmap[x].CL_green = getc(fp);
 		}
-		for (x = 0; x < header.ras_maplength/3; x++) {
-			if (inverted) {
-				Cmap[x].CL_green = 255-(unsigned char)getc(fp);
-			} else {
-				Cmap[x].CL_green = getc(fp);
-			}
+	    }
+	    for (x = 0; x < header.ras_maplength/3; x++) {
+		if (inverted) {
+		    Cmap[x].CL_blue = 255-(unsigned char) getc(fp);
+		} else {
+		    Cmap[x].CL_blue = getc(fp);
 		}
-		for (x = 0; x < header.ras_maplength/3; x++) {
-			if (inverted) {
-				Cmap[x].CL_blue = 255-(unsigned char) getc(fp);
-			} else {
-				Cmap[x].CL_blue = getc(fp);
-			}
-		}
-		if (colorout) {
-			for (x = 0; x <header.ras_maplength/3; x++) {
-				fprintf(stdout, "%d\t%04x %04x %04x\n",
-				    x, Cmap[x].CL_red<<8, Cmap[x].CL_green<<8,
-				    Cmap[x].CL_blue<<8);
-			}
-			break;
-		}
-
-		while ((header.ras_type == RT_BYTE_ENCODED) ?
-		    decoderead(buf, sizeof(*buf), scanbytes, fp):
-		    fread(buf, sizeof(*buf), scanbytes, fp) ) {
-			for (x=0; x < width; x++ ) {
-				if (pixout) {
-					putchar(Cmap[buf[x]].CL_red);
-					putchar(Cmap[buf[x]].CL_green);
-					putchar(Cmap[buf[x]].CL_blue);
-				} else {
-					putchar(buf[x]);
-				}
-			}
+	    }
+	    if (colorout) {
+		for (x = 0; x <header.ras_maplength/3; x++) {
+		    fprintf(stdout, "%d\t%04x %04x %04x\n",
+			    x, Cmap[x].CL_red<<8, Cmap[x].CL_green<<8,
+			    Cmap[x].CL_blue<<8);
 		}
 		break;
+	    }
+
+	    while ((header.ras_type == RT_BYTE_ENCODED) ?
+		   decoderead(buf, sizeof(*buf), scanbytes, fp):
+		   fread(buf, sizeof(*buf), scanbytes, fp) ) {
+		for (x=0; x < width; x++ ) {
+		    if (pixout) {
+			putchar(Cmap[buf[x]].CL_red);
+			putchar(Cmap[buf[x]].CL_green);
+			putchar(Cmap[buf[x]].CL_blue);
+		    } else {
+			putchar(buf[x]);
+		    }
+		}
+	    }
+	    break;
 	default:
-		fprintf(stderr, "sun-pix:  unable to handle depth=%d\n",
-			header.ras_depth );
-		bu_exit (1, NULL);
-	}
-	bu_exit (0, NULL);
+	    fprintf(stderr, "sun-pix:  unable to handle depth=%d\n",
+		    header.ras_depth );
+	    bu_exit (1, NULL);
+    }
+    bu_exit (0, NULL);
 }
 
 /*

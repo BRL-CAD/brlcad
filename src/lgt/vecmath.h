@@ -18,7 +18,7 @@
  * information.
  */
 /** @file vecmath.h
-	Author:		Gary S. Moss
+    Author:		Gary S. Moss
 */
 #ifndef Abs
 #define Abs( a )		((a) > 0 ? (a) : -(a))
@@ -41,7 +41,7 @@
 				(C)[Y] = (A)[Z]*(B)[X]-(A)[X]*(B)[Z]; \
 				(C)[Z] = (A)[X]*(B)[Y]-(A)[Y]*(B)[X]; }
 #define DEGRAD	57.2957795130823208767981548141051703324054724665642
-					/* degrees per radian */
+/* degrees per radian */
 #define DiffVec( A, B )       { (A)[X] -= (B)[X]; \
 				(A)[Y] -= (B)[Y]; \
 				(A)[Z] -= (B)[Z]; }
@@ -61,7 +61,7 @@
 #endif
 #define Expand_Vec_Int( V )	(int)(V)[X], (int)(V)[Y], (int)(V)[Z]
 #define LOG10E	0.43429448190325182765112891891660508229439700580367
-					/* log of e to the base 10 */
+/* log of e to the base 10 */
 #define Mag( A )	      	sqrt( AbsDotProd(A, A) )
 #define Mag3(a1, a2, a3)		(sqrt(Sqr(a1)+Sqr(a2)+Sqr(a3)))
 #ifndef Min
@@ -79,7 +79,7 @@
 #define NonZeroVec( V )	(!NearZero((V)[X]) || !NearZero((V)[Y])|| !NearZero((V)[Z]))
 #if !defined(PI)
 #define PI	3.14159265358979323846264338327950288419716939937511
-					/* ratio of circumf. to diam. */
+/* ratio of circumf. to diam. */
 #endif
 #define RelDist3d( A, B )	(Sqr((A)[X]-(B)[X])+\
 				 Sqr((A)[Y]-(B)[Y])+\

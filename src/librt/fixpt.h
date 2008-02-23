@@ -37,8 +37,8 @@
 
 #define	FIXPT_SCALE	((1<<28)-1)
 struct fixpt  {
-	int	i;
-	int	f;		/* Ranges 0 to FIXPT_SCALE-1 */
+    int	i;
+    int	f;		/* Ranges 0 to FIXPT_SCALE-1 */
 };
 
 #define FIXPT_FLOAT( fp, fl )	{ \

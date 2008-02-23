@@ -79,16 +79,16 @@ main (int argc, char **argv)
     /* Handle command-line options */
     while ((opt = bu_getopt(argc, argv, OPT_STRING)) != -1)
 	switch (opt) {
-	case 'n':
-	    bu_strlcpy(rayname, bu_optarg, BUF_LEN);
-	    break;
-	case 'r':
-	    if (sscanf(bu_optarg, "%F", &ray_radius) != 1) {
-		bu_exit(1, "Illegal radius: '%s'\n", bu_optarg);
-	    }
-	    break;
-	case '?':
-	    print_usage();
+	    case 'n':
+		bu_strlcpy(rayname, bu_optarg, BUF_LEN);
+		break;
+	    case 'r':
+		if (sscanf(bu_optarg, "%F", &ray_radius) != 1) {
+		    bu_exit(1, "Illegal radius: '%s'\n", bu_optarg);
+		}
+		break;
+	    case '?':
+		print_usage();
 	}
     
     /* Ensure proper command-line syntax */

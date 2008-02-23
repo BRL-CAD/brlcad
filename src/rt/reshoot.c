@@ -29,41 +29,41 @@
  * eliminate extraneous information to produce the input to this
  * program.  The following awk program, will suffice:  @verbatim
 
-	/Pnt/ { START=index($0, "(") + 1
-	       STR=substr($0, START, index($0, ")") - START)
-	       gsub(  ", ", ",", STR)
-	       printf "Pnt=%s\n", STR
+ /Pnt/ { START=index($0, "(") + 1
+ STR=substr($0, START, index($0, ")") - START)
+ gsub(  ", ", ",", STR)
+ printf "Pnt=%s\n", STR
 
-	       }
+ }
 
 
-	/Dir/ { START=index($0, "(") + 1
-	       STR=substr($0, START, index($0, ")") - START)
-	       gsub(  ", ", ",", STR)
-	       printf "Dir=%s\n", STR
-	       }
-	/PT/  { PARTIN=$3
-	       PARTOUT=$5
-	       }
-	/InHIT/ { INHIT=$2 }
-	/OutHIT/ { OUTHIT=$2 }
-	/Region/ { printf "\tregion=%s in=%s in%s out=%s out%s\n", $2, PARTIN, INHIT, PARTOUT, OUTHIT}
+ /Dir/ { START=index($0, "(") + 1
+ STR=substr($0, START, index($0, ")") - START)
+ gsub(  ", ", ",", STR)
+ printf "Dir=%s\n", STR
+ }
+ /PT/  { PARTIN=$3
+ PARTOUT=$5
+ }
+ /InHIT/ { INHIT=$2 }
+ /OutHIT/ { OUTHIT=$2 }
+ /Region/ { printf "\tregion=%s in=%s in%s out=%s out%s\n", $2, PARTIN, INHIT, PARTOUT, OUTHIT}
 
-@endverbatim
+ @endverbatim
  * If this awk program is stored in the file p.awk then: @verbatim
-	awk -f p.awk < logfile > inputfile
-@endverbatim
+ awk -f p.awk < logfile > inputfile
+ @endverbatim
  * will produce a suitable input file for this program.  The form is as
  * follows: @verbatim
-	Pnt=1, 2, 3
-	Dir=4, 5, 6
-		region=/all.g/platform.r in=platform.s indist=10016.8 out=platform.s outdist=10023.8
-@endverbatim
+ Pnt=1, 2, 3
+ Dir=4, 5, 6
+ region=/all.g/platform.r in=platform.s indist=10016.8 out=platform.s outdist=10023.8
+ @endverbatim
  * where the line begining with "region" may be repeated any number of times, representing each
  * region encountered along the ray.
  * now run this program as follows: @verbatim
-	reshoot geom.g obj [obj...] < inputfile
-@endverbatim
+ reshoot geom.g obj [obj...] < inputfile
+ @endverbatim
  * and this  will re-shoot all of the rays that the original program
  * shot, and compare the results.
  *
@@ -368,7 +368,7 @@ main(int argc, char **argv)
 	char *p = bu_vls_addr(&buf);
 
 	switch (*p) {
-	case 'P' :
+	    case 'P' :
 	    {
 
 		if (BU_LIST_NON_EMPTY(&sh.regions)) {
@@ -381,7 +381,7 @@ main(int argc, char **argv)
 
 		break;
 	    }
-	case 'D' :
+	    case 'D' :
 	    {
 		if (bu_struct_parse(&buf, shot_sp, (const char *)&sh)) {
 		    bu_exit(EXIT_FAILURE, "error parsing dir");
@@ -389,7 +389,7 @@ main(int argc, char **argv)
 		break;
 	    }
 
-	default:
+	    default:
 	    {
 		struct reg_hit *rh = bu_calloc(1, sizeof (struct reg_hit), "");
 

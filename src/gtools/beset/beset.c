@@ -148,14 +148,14 @@ int main(int argc, char *argv[]) {
 
     source_db = db_open(argv[ac+1], "r+w");
     db_dirbuild(source_db);
-       pop.db_c = db_create("testdb", 5);
+    pop.db_c = db_create("testdb", 5);
     db_close(pop.db_c);
 
 
     for (g = 1; g < opts.gens; g++ ) {
 #ifdef VERBOSE
 	printf("\nGeneration %d:\n"
-		"--------------\n", g);
+	       "--------------\n", g);
 #endif
 
 	total_fitness = 0.0f;
@@ -173,9 +173,9 @@ int main(int argc, char *argv[]) {
 	 * note: need to calculate outside of main pop
 	 * loop because it's needed for pop_wrand_ind()*/
 	for (i = 0; i < pop.size; i++) {
-	   fit_diff(NL(pop.parent[i].id), pop.db_p, &fstate);
-	   pop.parent[i].fitness = fstate.fitness;
-	   total_fitness += FITNESS;
+	    fit_diff(NL(pop.parent[i].id), pop.db_p, &fstate);
+	    pop.parent[i].fitness = fstate.fitness;
+	    total_fitness += FITNESS;
 	}
 	/* sort population - used for keeping top N and dropping bottom M */
 	qsort(pop.parent, pop.size, sizeof(struct individual), cmp_ind);
@@ -214,7 +214,7 @@ int main(int argc, char *argv[]) {
 		pop_gop(gop, NL(pop.parent[parent1].id), NULL, NL(pop.child[i].id), NULL,
 			pop.db_p, pop.db_c, &rt_uniresource);
 	    } else {
-	    /* If we're performing crossover, we need a second parent */
+		/* If we're performing crossover, we need a second parent */
 		parent2 = pop_wrand_ind(pop.parent, pop.size, total_fitness, opts.kill_lower);
 		++i;
 		pop.child[i].id = i;
@@ -247,10 +247,10 @@ int main(int argc, char *argv[]) {
 
 #ifdef VERBOSE
     printf("\nFINAL POPULATION\n"
-	    "----------------\n");
+	   "----------------\n");
     for (i = 0; i < pop.size; i++)
 	printf("%s\tf:%.5g\n", NL(pop.child[i].id),
-		pop.child[i].fitness);
+	       pop.child[i].fitness);
 #endif
 
 

@@ -37,10 +37,10 @@ int main(int argc, char *argv[])
 #else
 
 #  include "tcl.h"
-ClientData *cdata;
-Tcl_Interp *twerp;
+    ClientData *cdata;
+    Tcl_Interp *twerp;
 
-int parse_point_file(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
+    int parse_point_file(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 #endif
 {
     long int datapoints;

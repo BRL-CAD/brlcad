@@ -51,15 +51,15 @@
  *	General I/O for ASCII files: remapid_file support
  */
 struct remapid_file  {
-	long		file_magic;
-	FILE		*file_ptr;	/* the actual file */
-	char		*file_name;
-	struct bu_vls	file_buf;	/* contents of current line */
-	char		*file_bp;	/* pointer into current line */
-	int		file_needline;	/* time to grab another line? */
-	int		file_linenm;
-	int		file_comment;	/* the comment character */
-	int		file_buflen;	/* length of intact buffer */
+    long		file_magic;
+    FILE		*file_ptr;	/* the actual file */
+    char		*file_name;
+    struct bu_vls	file_buf;	/* contents of current line */
+    char		*file_bp;	/* pointer into current line */
+    int		file_needline;	/* time to grab another line? */
+    int		file_linenm;
+    int		file_comment;	/* the comment character */
+    int		file_buflen;	/* length of intact buffer */
 };
 typedef struct remapid_file		REMAPID_FILE;
 #define REMAPID_FILE_MAGIC		0x6275666c
@@ -210,7 +210,7 @@ remapid_printfile (register REMAPID_FILE *bfp)
     bu_log("  needline %d\n", bfp->file_needline);
     bu_log("  linenm   %d\n", bfp->file_linenm);
     bu_log("  comment  '%c' (%d)\n",
-	bfp->file_comment, bfp->file_comment);
+	   bfp->file_comment, bfp->file_comment);
     bu_log("  buflen   %d\n", bfp->file_buflen);
 }
 
@@ -246,14 +246,14 @@ remapid_file_err (register REMAPID_FILE *bfp, register char *text1, register cha
     if (text1 && (*text1 != '\0'))
 	bu_log("%s: ", text1);
     bu_log("Error: file %s, line %d: %s\n",
-	bfp->file_name, bfp->file_linenm, text2);
+	   bfp->file_name, bfp->file_linenm, text2);
     bu_log("%s\n", bu_vls_addr(&(bfp->file_buf)));
 
     /*
      *	Print out position-indicating arrow, if requested
      */
     if ((cursor_pos >= 0)
-     && (cursor_pos < bu_vls_strlen(&(bfp->file_buf))))
+	&& (cursor_pos < bu_vls_strlen(&(bfp->file_buf))))
     {
 	cp = bu_vls_addr(&(bfp->file_buf));
 	for (i = 0; i < cursor_pos; ++i)
@@ -407,7 +407,7 @@ void print_curr_id (void *v, int depth)
     BU_CKMAG(cip, CURR_ID_MAGIC, "curr_id");
 
     bu_log(" curr_id <x%x> %d %d...\n",
-	cip, cip->ci_id, cip->ci_newid);
+	   cip, cip->ci_id, cip->ci_newid);
     for (BU_LIST_FOR(rp, remap_reg, &(cip->ci_regions)))
     {
 	BU_CKMAG(rp, REMAP_REG_MAGIC, "remap_reg");
@@ -430,7 +430,7 @@ void print_nonempty_curr_id (void *v, int depth)
     if (BU_LIST_NON_EMPTY(&(cip->ci_regions)))
     {
 	bu_log(" curr_id <x%x> %d %d...\n",
-	    cip, cip->ci_id, cip->ci_newid);
+	       cip, cip->ci_id, cip->ci_newid);
 	for (BU_LIST_FOR(rp, remap_reg, &(cip->ci_regions)))
 	{
 	    BU_CKMAG(rp, REMAP_REG_MAGIC, "remap_reg");
@@ -555,7 +555,7 @@ int compare_curr_ids (void *v1, void *v2)
 int read_int (REMAPID_FILE *sfp, int *ch, int *n)
 
 
-			/* The result */
+    /* The result */
 
 {
     int	got_digit = 0;	/* Did we actually succeed in reading a number? */
@@ -770,7 +770,7 @@ void write_assignment (void *v, int depth)
 	    if (rt_db_put_internal(rp->rr_dp, dbip, rp->rr_ip, &rt_uniresource) < 0)
 	    {
 		bu_log("remapid: rt_db_put_internal(%s) failed.  ",
-		    rp->rr_dp->d_namep);
+		       rp->rr_dp->d_namep);
 		bu_exit (1, "This shouldn't happen\n");
 	    }
 	}
@@ -780,55 +780,55 @@ void write_assignment (void *v, int depth)
 static void
 tankill_reassign(char *db_name)
 {
-	FILE *fd_in;
-	int vertex_count, id, surr_code;
-	struct curr_id *id_map, *cip;
+    FILE *fd_in;
+    int vertex_count, id, surr_code;
+    struct curr_id *id_map, *cip;
 
-	/* open TANKILL model */
-	if ( (fd_in=fopen( db_name, "r" )) == NULL )
+    /* open TANKILL model */
+    if ( (fd_in=fopen( db_name, "r" )) == NULL )
+    {
+	bu_log( "Cannot open TANKILL database (%s)\n", db_name );
+	perror( "remapid" );
+	bu_exit( EXIT_FAILURE, "Cannot open TANKILL database\n" );
+    }
+
+    /* make a 'curr_id' structure to feed to bu_rb_search */
+    cip = mk_curr_id( 0 );
+
+    /* filter TANKILL model, changing ids as we go */
+    while ( fscanf( fd_in, "%d %d %d", &vertex_count, &id, &surr_code ) != EOF )
+    {
+	int coord_no=0;
+	int in_space=1;
+	int ch;
+
+	cip->ci_id = id;
+	id_map = (struct curr_id *)bu_rb_search( assignment, 0, (void *)cip );
+	if ( !id_map )
+	    printf( "%d %d %d", vertex_count, id, surr_code );
+	else
+	    printf( "%d %d %d", vertex_count, id_map->ci_newid, surr_code );
+
+	/* just copy the rest of the component */
+	while ( coord_no < 3*vertex_count || !in_space )
 	{
-		bu_log( "Cannot open TANKILL database (%s)\n", db_name );
-		perror( "remapid" );
-		bu_exit( EXIT_FAILURE, "Cannot open TANKILL database\n" );
+	    ch = fgetc( fd_in );
+	    if ( ch == EOF && coord_no < 3*vertex_count )
+	    {
+		bu_log( "Unexpected EOF while processing ident %d\n", id );
+		bu_exit( EXIT_FAILURE, "Unexpected EOF\n" );
+	    }
+
+	    if ( isspace( ch ) )
+		in_space = 1;
+	    else if ( in_space )
+	    {
+		in_space = 0;
+		coord_no++;
+	    }
+	    putchar( ch );
 	}
-
-	/* make a 'curr_id' structure to feed to bu_rb_search */
-	cip = mk_curr_id( 0 );
-
-	/* filter TANKILL model, changing ids as we go */
-	while ( fscanf( fd_in, "%d %d %d", &vertex_count, &id, &surr_code ) != EOF )
-	{
-		int coord_no=0;
-		int in_space=1;
-		int ch;
-
-		cip->ci_id = id;
-		id_map = (struct curr_id *)bu_rb_search( assignment, 0, (void *)cip );
-		if ( !id_map )
-			printf( "%d %d %d", vertex_count, id, surr_code );
-		else
-			printf( "%d %d %d", vertex_count, id_map->ci_newid, surr_code );
-
-		/* just copy the rest of the component */
-		while ( coord_no < 3*vertex_count || !in_space )
-		{
-			ch = fgetc( fd_in );
-			if ( ch == EOF && coord_no < 3*vertex_count )
-			{
-				bu_log( "Unexpected EOF while processing ident %d\n", id );
-				bu_exit( EXIT_FAILURE, "Unexpected EOF\n" );
-			}
-
-			if ( isspace( ch ) )
-				in_space = 1;
-			else if ( in_space )
-			{
-				in_space = 0;
-				coord_no++;
-			}
-			putchar( ch );
-		}
-	}
+    }
 }
 
 /************************************************************************
@@ -889,7 +889,7 @@ main (int argc, char **argv)
 	    print_usage();
     }
 
-	rt_init_resource( &rt_uniresource, 0, NULL );
+    rt_init_resource( &rt_uniresource, 0, NULL );
 
     /*
      *	Open database and specification file, as necessary

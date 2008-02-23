@@ -56,7 +56,7 @@ struct chore	*await2;
 struct chore	*await3;
 
 void step1(aa)
-     void	*aa;
+    void	*aa;
 {
     struct chore	*chorep;
     int		pix_y;
@@ -98,7 +98,7 @@ void step1(aa)
 }
 
 void step2(aa)
-     void	*aa;
+    void	*aa;
 {
     struct chore	*chorep;
     register unsigned char	*cp;
@@ -158,7 +158,7 @@ void step2(aa)
  *  this can take a long time.
  */
 void step3(aa)
-     void	*aa;
+    void	*aa;
 {
     struct chore	*chorep;
 

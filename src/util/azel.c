@@ -80,11 +80,11 @@ PrintUsage (void)
 void
 GetCoord (FILE *Whence, double *Coord, char Label, int LineNm, char *FileName)
 
-			/* File from which to read */
-			/* Where to store coordinate */
-			/* Name of coordinate */
-			/* How far in input? */
-			/* What input stream? */
+    /* File from which to read */
+    /* Where to store coordinate */
+    /* Name of coordinate */
+    /* How far in input? */
+    /* What input stream? */
 
 {
     int     Ch;
@@ -160,7 +160,7 @@ main (int argc, char **argv)
 		if (sscanf(bu_optarg, "%lf", &Azim) != 1)
 		{
 		    (void) fprintf(stderr,
-			"Bad azimuth specification: '%s'\n", bu_optarg);
+				   "Bad azimuth specification: '%s'\n", bu_optarg);
 		    PrintUsage();
 		}
 		break;
@@ -168,7 +168,7 @@ main (int argc, char **argv)
 		if (sscanf(bu_optarg, "%lf", &CelSiz) != 1)
 		{
 		    (void) fprintf(stderr,
-			"Bad cell-size specification: '%s'\n", bu_optarg);
+				   "Bad cell-size specification: '%s'\n", bu_optarg);
 		    PrintUsage();
 		}
 		break;
@@ -176,7 +176,7 @@ main (int argc, char **argv)
 		if (sscanf(bu_optarg, "%lf", &Elev) != 1)
 		{
 		    (void) fprintf(stderr,
-			"Bad elevation specification: '%s'\n", bu_optarg);
+				   "Bad elevation specification: '%s'\n", bu_optarg);
 		    PrintUsage();
 		}
 		break;

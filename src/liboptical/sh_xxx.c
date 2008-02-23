@@ -75,34 +75,34 @@
  * to any particular use of the shader.
  */
 struct xxx_specific {
-	long	magic;	/* magic # for memory validity check, must come 1st */
-	double	xxx_val;	/* variables for shader ... */
-	double	xxx_dist;
-	vect_t	xxx_delta;
-	point_t xxx_min;
-	point_t xxx_max;
-	mat_t	xxx_m_to_sh;	/* model to shader space matrix */
-	mat_t	xxx_m_to_r;	/* model to shader space matrix */
+    long	magic;	/* magic # for memory validity check, must come 1st */
+    double	xxx_val;	/* variables for shader ... */
+    double	xxx_dist;
+    vect_t	xxx_delta;
+    point_t xxx_min;
+    point_t xxx_max;
+    mat_t	xxx_m_to_sh;	/* model to shader space matrix */
+    mat_t	xxx_m_to_r;	/* model to shader space matrix */
 };
 
 /* The default values for the variables in the shader specific structure */
 const static
 struct xxx_specific xxx_defaults = {
-	xxx_MAGIC,
-	1.0,				/* xxx_val */
-	0.0,				/* xxx_dist */
-	{ 1.0, 1.0, 1.0 },		/* xxx_delta */
-	{ 0.0, 0.0, 0.0 },		/* xxx_min */
-	{ 0.0, 0.0, 0.0 },		/* xxx_max */
-	{	0.0, 0.0, 0.0, 0.0,	/* xxx_m_to_sh */
-		0.0, 0.0, 0.0, 0.0,
-		0.0, 0.0, 0.0, 0.0,
-		0.0, 0.0, 0.0, 0.0 },
-	{	0.0, 0.0, 0.0, 0.0,	/* xxx_m_to_r */
-		0.0, 0.0, 0.0, 0.0,
-		0.0, 0.0, 0.0, 0.0,
-		0.0, 0.0, 0.0, 0.0 }
-	};
+    xxx_MAGIC,
+    1.0,				/* xxx_val */
+    0.0,				/* xxx_dist */
+    { 1.0, 1.0, 1.0 },		/* xxx_delta */
+    { 0.0, 0.0, 0.0 },		/* xxx_min */
+    { 0.0, 0.0, 0.0 },		/* xxx_max */
+    {	0.0, 0.0, 0.0, 0.0,	/* xxx_m_to_sh */
+	0.0, 0.0, 0.0, 0.0,
+	0.0, 0.0, 0.0, 0.0,
+	0.0, 0.0, 0.0, 0.0 },
+    {	0.0, 0.0, 0.0, 0.0,	/* xxx_m_to_r */
+	0.0, 0.0, 0.0, 0.0,
+	0.0, 0.0, 0.0, 0.0,
+	0.0, 0.0, 0.0, 0.0 }
+};
 
 #define SHDR_NULL	((struct xxx_specific *)0)
 #define SHDR_O(m)	bu_offsetof(struct xxx_specific, m)
@@ -114,20 +114,20 @@ struct xxx_specific xxx_defaults = {
  * structure above
  */
 struct bu_structparse xxx_print_tab[] = {
-	{"%f",  1, "val",		SHDR_O(xxx_val),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",  1, "dist",		SHDR_O(xxx_dist),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",  3, "delta",		SHDR_AO(xxx_delta),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",  3, "max",		SHDR_AO(xxx_max),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",  3, "min",		SHDR_AO(xxx_min),	BU_STRUCTPARSE_FUNC_NULL },
-	{"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%f",  1, "val",		SHDR_O(xxx_val),	BU_STRUCTPARSE_FUNC_NULL },
+    {"%f",  1, "dist",		SHDR_O(xxx_dist),	BU_STRUCTPARSE_FUNC_NULL },
+    {"%f",  3, "delta",		SHDR_AO(xxx_delta),	BU_STRUCTPARSE_FUNC_NULL },
+    {"%f",  3, "max",		SHDR_AO(xxx_max),	BU_STRUCTPARSE_FUNC_NULL },
+    {"%f",  3, "min",		SHDR_AO(xxx_min),	BU_STRUCTPARSE_FUNC_NULL },
+    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 
 };
 struct bu_structparse xxx_parse_tab[] = {
-	{"i",	bu_byteoffset(xxx_print_tab[0]), "xxx_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",  1, "v",		SHDR_O(xxx_val),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",  1, "dist",	SHDR_O(xxx_dist),	bu_mm_cvt },
-	{"%f",  3, "d",		SHDR_AO(xxx_delta),	BU_STRUCTPARSE_FUNC_NULL },
-	{"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"i",	bu_byteoffset(xxx_print_tab[0]), "xxx_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL },
+    {"%f",  1, "v",		SHDR_O(xxx_val),	BU_STRUCTPARSE_FUNC_NULL },
+    {"%f",  1, "dist",	SHDR_O(xxx_dist),	bu_mm_cvt },
+    {"%f",  3, "d",		SHDR_AO(xxx_delta),	BU_STRUCTPARSE_FUNC_NULL },
+    {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
 HIDDEN int	xxx_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), xxx_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
@@ -142,11 +142,11 @@ HIDDEN void	xxx_print(register struct region *rp, char *dp), xxx_free(char *cp);
  * values for the parameters.
  */
 struct mfuncs xxx_mfuncs[] = {
-	{MF_MAGIC,	"xxx",	0,	MFI_NORMAL|MFI_HIT|MFI_UV,	0,
-	xxx_setup,	xxx_render,	xxx_print,	xxx_free },
+    {MF_MAGIC,	"xxx",	0,	MFI_NORMAL|MFI_HIT|MFI_UV,	0,
+     xxx_setup,	xxx_render,	xxx_print,	xxx_free },
 
-	{0,		(char *)0,	0,		0,		0,
-	0,		0,		0,		0 }
+    {0,		(char *)0,	0,		0,		0,
+     0,		0,		0,		0 }
 };
 
 
@@ -165,62 +165,62 @@ HIDDEN int
 xxx_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
 
 
-				/* pointer to reg_udata in *rp */
+    /* pointer to reg_udata in *rp */
 
-				/* New since 4.4 release */
+    /* New since 4.4 release */
 {
-	register struct xxx_specific	*xxx_sp;
-	mat_t	tmp;
-	vect_t	bb_min, bb_max, v_tmp;
+    register struct xxx_specific	*xxx_sp;
+    mat_t	tmp;
+    vect_t	bb_min, bb_max, v_tmp;
 
-	/* check the arguments */
-	RT_CHECK_RTI(rtip);
-	BU_CK_VLS( matparm );
-	RT_CK_REGION(rp);
+    /* check the arguments */
+    RT_CHECK_RTI(rtip);
+    BU_CK_VLS( matparm );
+    RT_CK_REGION(rp);
 
 
-	if (rdebug&RDEBUG_SHADE)
-		bu_log("xxx_setup(%s)\n", rp->reg_name);
+    if (rdebug&RDEBUG_SHADE)
+	bu_log("xxx_setup(%s)\n", rp->reg_name);
 
-	/* Get memory for the shader parameters and shader-specific data */
-	BU_GETSTRUCT( xxx_sp, xxx_specific );
-	*dpp = (char *)xxx_sp;
+    /* Get memory for the shader parameters and shader-specific data */
+    BU_GETSTRUCT( xxx_sp, xxx_specific );
+    *dpp = (char *)xxx_sp;
 
-	/* initialize the default values for the shader */
-	memcpy(xxx_sp, &xxx_defaults, sizeof(struct xxx_specific));
+    /* initialize the default values for the shader */
+    memcpy(xxx_sp, &xxx_defaults, sizeof(struct xxx_specific));
 
-	/* parse the user's arguments for this use of the shader. */
-	if (bu_struct_parse( matparm, xxx_parse_tab, (char *)xxx_sp ) < 0 )
-		return(-1);
+    /* parse the user's arguments for this use of the shader. */
+    if (bu_struct_parse( matparm, xxx_parse_tab, (char *)xxx_sp ) < 0 )
+	return(-1);
 
-	/* Optional:
-	 *
-	 * If the shader needs to operate in a coordinate system which stays
-	 * fixed on the region when the region is moved (as in animation)
-	 * we need to get a matrix to perform the appropriate transform(s).
-	 *
-	 * db_shader_mat returns a matrix which maps points on/in the region
-	 * into the unit cube.  This unit cube is formed by first mapping from
-	 * world coordinates into "region coordinates" (the coordinate system
-	 * in which the region is defined).  Then the bounding box of the
-	 * region is used to establish a mapping to the unit cube
-	 *
-*	db_shader_mat(xxx_sp->xxx_m_to_sh, rtip, rp, xxx_sp->xxx_min,
-*		xxx_sp->xxx_max);
-	 *
-	 * Alternatively, shading may be done in "region coordinates"
-	 * if desired:
-	 *
-*	db_region_mat(xxx_sp->xxx_m_to_r, rtip->rti_dbip, rp->reg_name, &rt_uniresource);
-	 *
-	 */
+    /* Optional:
+     *
+     * If the shader needs to operate in a coordinate system which stays
+     * fixed on the region when the region is moved (as in animation)
+     * we need to get a matrix to perform the appropriate transform(s).
+     *
+     * db_shader_mat returns a matrix which maps points on/in the region
+     * into the unit cube.  This unit cube is formed by first mapping from
+     * world coordinates into "region coordinates" (the coordinate system
+     * in which the region is defined).  Then the bounding box of the
+     * region is used to establish a mapping to the unit cube
+     *
+     *	db_shader_mat(xxx_sp->xxx_m_to_sh, rtip, rp, xxx_sp->xxx_min,
+     *		xxx_sp->xxx_max);
+     *
+     * Alternatively, shading may be done in "region coordinates"
+     * if desired:
+     *
+     *	db_region_mat(xxx_sp->xxx_m_to_r, rtip->rti_dbip, rp->reg_name, &rt_uniresource);
+     *
+     */
 
-	if (rdebug&RDEBUG_SHADE) {
-		bu_struct_print( " Parameters:", xxx_print_tab, (char *)xxx_sp );
-		bn_mat_print( "m_to_sh", xxx_sp->xxx_m_to_sh );
-	}
+    if (rdebug&RDEBUG_SHADE) {
+	bu_struct_print( " Parameters:", xxx_print_tab, (char *)xxx_sp );
+	bn_mat_print( "m_to_sh", xxx_sp->xxx_m_to_sh );
+    }
 
-	return(1);
+    return(1);
 }
 
 /*
@@ -229,7 +229,7 @@ xxx_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
 HIDDEN void
 xxx_print(register struct region *rp, char *dp)
 {
-	bu_struct_print( rp->reg_name, xxx_print_tab, (char *)dp );
+    bu_struct_print( rp->reg_name, xxx_print_tab, (char *)dp );
 }
 
 /*
@@ -238,7 +238,7 @@ xxx_print(register struct region *rp, char *dp)
 HIDDEN void
 xxx_free(char *cp)
 {
-	bu_free( cp, "xxx_specific" );
+    bu_free( cp, "xxx_specific" );
 }
 
 /*
@@ -252,47 +252,47 @@ int
 xxx_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
 
 
-				/* defined in ../h/shadework.h */
-				/* ptr to the shader-specific struct */
+    /* defined in ../h/shadework.h */
+    /* ptr to the shader-specific struct */
 {
-	register struct xxx_specific *xxx_sp =
-		(struct xxx_specific *)dp;
-	point_t pt;
-	VSETALL(pt, 0);
+    register struct xxx_specific *xxx_sp =
+	(struct xxx_specific *)dp;
+    point_t pt;
+    VSETALL(pt, 0);
 
-	/* check the validity of the arguments we got */
-	RT_AP_CHECK(ap);
-	RT_CHECK_PT(pp);
-	CK_xxx_SP(xxx_sp);
+    /* check the validity of the arguments we got */
+    RT_AP_CHECK(ap);
+    RT_CHECK_PT(pp);
+    CK_xxx_SP(xxx_sp);
 
-	if (rdebug&RDEBUG_SHADE)
-		bu_struct_print( "xxx_render Parameters:", xxx_print_tab, (char *)xxx_sp );
+    if (rdebug&RDEBUG_SHADE)
+	bu_struct_print( "xxx_render Parameters:", xxx_print_tab, (char *)xxx_sp );
 
-	/* If we are performing the shading in "region" space, we must
-	 * transform the hit point from "model" space to "region" space.
-	 * See the call to db_region_mat in xxx_setup().
-	MAT4X3PNT(pt, xxx_sp->xxx_m_to_sh, swp->sw_hit.hit_point);
-	MAT4X3PNT(pt, xxx_sp->xxx_m_to_r, swp->sw_hit.hit_point);
+    /* If we are performing the shading in "region" space, we must
+     * transform the hit point from "model" space to "region" space.
+     * See the call to db_region_mat in xxx_setup().
+     MAT4X3PNT(pt, xxx_sp->xxx_m_to_sh, swp->sw_hit.hit_point);
+     MAT4X3PNT(pt, xxx_sp->xxx_m_to_r, swp->sw_hit.hit_point);
 
-	if (rdebug&RDEBUG_SHADE) {
-		bu_log("xxx_render()  model:(%g %g %g) shader:(%g %g %g)\n",
-			V3ARGS(swp->sw_hit.hit_point),
-			V3ARGS(pt) );
-	}
-	 */
+     if (rdebug&RDEBUG_SHADE) {
+     bu_log("xxx_render()  model:(%g %g %g) shader:(%g %g %g)\n",
+     V3ARGS(swp->sw_hit.hit_point),
+     V3ARGS(pt) );
+     }
+    */
 
-	/* XXX perform shading operations here */
-	VMOVE(swp->sw_color, pt);
+    /* XXX perform shading operations here */
+    VMOVE(swp->sw_color, pt);
 
-	/* shader must perform transmission/reflection calculations
-	 *
-	 * 0 < swp->sw_transmit <= 1 causes transmission computations
-	 * 0 < swp->sw_reflect <= 1 causes reflection computations
-	 */
-	if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
-		(void)rr_render( ap, pp, swp );
+    /* shader must perform transmission/reflection calculations
+     *
+     * 0 < swp->sw_transmit <= 1 causes transmission computations
+     * 0 < swp->sw_reflect <= 1 causes reflection computations
+     */
+    if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
+	(void)rr_render( ap, pp, swp );
 
-	return(1);
+    return(1);
 }
 
 /*

@@ -676,8 +676,8 @@ writecomb( const struct rt_comb_internal *comb, const char *name )
 	rt_tree_array = (struct rt_tree_array *)bu_calloc( node_count,
 							   sizeof( struct rt_tree_array ), "tree list" );
 	actual_count = (struct rt_tree_array *)db_flatten_tree(
-							       rt_tree_array, comb->tree, OP_UNION,
-							       0, &rt_uniresource ) - rt_tree_array;
+	    rt_tree_array, comb->tree, OP_UNION,
+	    0, &rt_uniresource ) - rt_tree_array;
 	BU_ASSERT_LONG( actual_count, ==, node_count );
     } else {
 	rt_tree_array = (struct rt_tree_array *)NULL;
@@ -980,8 +980,8 @@ checkcomb(void)
 	    if ( !ptr )
 		done2 = 1;
 	    else if (*ptr != 'u' &&
-		    (*ptr != '-' || *(ptr+1) != '\0') &&
-		    (*ptr != '+' || *(ptr+1) != '\0')) {
+		     (*ptr != '-' || *(ptr+1) != '\0') &&
+		     (*ptr != '+' || *(ptr+1) != '\0')) {
 		int k;
 
 		/* skip past matrix */
@@ -1247,8 +1247,8 @@ int build_comb(struct rt_comb_internal *comb, struct directory *dp, int node_cou
 		matrix = (matp_t)NULL;
 		done2 = 1;
 	    } else if (*ptr == 'u' ||
-		     (*ptr == '-' && *(ptr+1) == '\0') ||
-		     (*ptr == '+' && *(ptr+1) == '\0')) {
+		       (*ptr == '-' && *(ptr+1) == '\0') ||
+		       (*ptr == '+' && *(ptr+1) == '\0')) {
 		/* assume another relational operator */
 		matrix = (matp_t)NULL;
 	    } else {
@@ -1634,7 +1634,7 @@ f_red(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	 */
 	if (!dbip->dbi_read_only) {
 	    if ((node_count = checkcomb()) < 0) {
-  /* Do some quick checking on the edited file */
+		/* Do some quick checking on the edited file */
 		Tcl_AppendResult(interp, "Error in edited region, no changes made\n", (char *)NULL);
 		if (comb)
 		    rt_comb_ifree(&intern, &rt_uniresource);
@@ -1644,7 +1644,7 @@ f_red(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	    if (comb) {
 		if (save_comb(dp)) {
-  /* Save combination to a temp name */
+		    /* Save combination to a temp name */
 		    Tcl_AppendResult(interp, "No changes made\n", (char *)NULL);
 		    rt_comb_ifree(&intern, &rt_uniresource);
 		    (void)unlink(red_tmpfil);

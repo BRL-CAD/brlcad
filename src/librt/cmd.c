@@ -52,54 +52,54 @@
 char *
 rt_read_cmd(register FILE *fp)
 {
-	register int	c;
-	register char	*buf;
-	register int	curpos;
-	register int	curlen;
+    register int	c;
+    register char	*buf;
+    register int	curpos;
+    register int	curlen;
 
-	curpos = 0;
-	curlen = 400;
-	buf = bu_malloc( curlen, "rt_read_cmd command buffer" );
+    curpos = 0;
+    curlen = 400;
+    buf = bu_malloc( curlen, "rt_read_cmd command buffer" );
 
-	do  {
-		c = fgetc(fp);
-		if ( c == EOF )  {
-			c = '\0';
-		} else if ( c == '#' )  {
-			/* All comments run to the end of the line */
-			while ( (c = fgetc(fp)) != EOF && c != '\n' )
-			    ;
-			continue;
-		} else if ( c == '\n' )  {
-			c = ' ';
-		} else if ( c == ';' )  {
-			c = '\0';
-		} else if ( c == '\\' )  {
-			/*  Backslash takes next character literally.
-			 *  EOF detection here is not a problem, next
-			 *  pass will detect it.
-			 */
-			c = fgetc(fp);
-		} else if ( !isascii(c) )  {
-			c = '?';
-		}
-		if ( c != '\0' && curpos == 0 && isspace(c) )  {
-			/*  Dispose of leading white space.
-			 *  Necessary to slurp up what newlines turn into.
-			 */
-			continue;
-		}
-		if ( curpos >= curlen )  {
-			curlen *= 2;
-			buf = bu_realloc( buf, curlen, "rt_read_cmd command buffer" );
-		}
-		buf[curpos++] = c;
-	} while ( c != '\0' );
-	if ( curpos <= 1 )  {
-		bu_free( buf, "rt_read_cmd command buffer (EOF)" );
-		return( (char *)0 );		/* EOF */
+    do  {
+	c = fgetc(fp);
+	if ( c == EOF )  {
+	    c = '\0';
+	} else if ( c == '#' )  {
+	    /* All comments run to the end of the line */
+	    while ( (c = fgetc(fp)) != EOF && c != '\n' )
+		;
+	    continue;
+	} else if ( c == '\n' )  {
+	    c = ' ';
+	} else if ( c == ';' )  {
+	    c = '\0';
+	} else if ( c == '\\' )  {
+	    /*  Backslash takes next character literally.
+	     *  EOF detection here is not a problem, next
+	     *  pass will detect it.
+	     */
+	    c = fgetc(fp);
+	} else if ( !isascii(c) )  {
+	    c = '?';
 	}
-	return( buf );				/* OK */
+	if ( c != '\0' && curpos == 0 && isspace(c) )  {
+	    /*  Dispose of leading white space.
+	     *  Necessary to slurp up what newlines turn into.
+	     */
+	    continue;
+	}
+	if ( curpos >= curlen )  {
+	    curlen *= 2;
+	    buf = bu_realloc( buf, curlen, "rt_read_cmd command buffer" );
+	}
+	buf[curpos++] = c;
+    } while ( c != '\0' );
+    if ( curpos <= 1 )  {
+	bu_free( buf, "rt_read_cmd command buffer (EOF)" );
+	return( (char *)0 );		/* EOF */
+    }
+    return( buf );				/* OK */
 }
 
 #define MAXWORDS	4096	/* Max # of args per command */
@@ -118,50 +118,50 @@ rt_read_cmd(register FILE *fp)
 int
 rt_split_cmd(char **argv, int lim, register char *lp)
 {
-	register int	nwords;			/* number of words seen */
-	register char	*lp1;
+    register int	nwords;			/* number of words seen */
+    register char	*lp1;
 
-	argv[0] = "_NIL_";		/* sanity */
+    argv[0] = "_NIL_";		/* sanity */
 
-	while ( *lp != '\0' && isspace( *lp ) )
-		lp++;
+    while ( *lp != '\0' && isspace( *lp ) )
+	lp++;
 
-	if ( *lp == '\0' )
-		return(0);		/* No words */
+    if ( *lp == '\0' )
+	return(0);		/* No words */
 
 #ifdef HAVE_SHELL_ESCAPE
-	/* Handle "!" shell escape char so the shell can parse the line */
-	if ( *lp == '!' )  {
-		int	ret;
-		ret = system( lp+1 );
-		if ( ret != 0 )  {
-			perror("system(3)");
-			bu_log("rt_split_cmd() FAILED: !%s\n", lp);
-		}
-		return(0);		/* No words */
+    /* Handle "!" shell escape char so the shell can parse the line */
+    if ( *lp == '!' )  {
+	int	ret;
+	ret = system( lp+1 );
+	if ( ret != 0 )  {
+	    perror("system(3)");
+	    bu_log("rt_split_cmd() FAILED: !%s\n", lp);
 	}
+	return(0);		/* No words */
+    }
 #endif
 
-	/* some non-space string has been seen, argv[0] is set */
-	nwords = 1;
-	argv[0] = lp;
+    /* some non-space string has been seen, argv[0] is set */
+    nwords = 1;
+    argv[0] = lp;
 
-	for (; *lp != '\0'; lp++ )  {
-		if ( !isspace( *lp ) )
-			continue;	/* skip over current word */
+    for (; *lp != '\0'; lp++ )  {
+	if ( !isspace( *lp ) )
+	    continue;	/* skip over current word */
 
-		*lp = '\0';		/* terminate current word */
-		lp1 = lp + 1;
-		if ( *lp1 != '\0' && !isspace( *lp1 ) )  {
-			/* Begin next word */
-			if ( nwords >= lim-1 )
-				break;	/* argv[] full */
+	*lp = '\0';		/* terminate current word */
+	lp1 = lp + 1;
+	if ( *lp1 != '\0' && !isspace( *lp1 ) )  {
+	    /* Begin next word */
+	    if ( nwords >= lim-1 )
+		break;	/* argv[] full */
 
-			argv[nwords++] = lp1;
-		}
+	    argv[nwords++] = lp1;
 	}
-	argv[nwords] = (char *)0;	/* safety */
-	return( nwords );
+    }
+    argv[nwords] = (char *)0;	/* safety */
+    return( nwords );
 }
 
 /*
@@ -177,40 +177,40 @@ rt_split_cmd(char **argv, int lim, register char *lp)
  */
 int
 rt_do_cmd(struct rt_i *rtip, const char *ilp, register const struct command_tab *tp)
-						/* FUTURE:  for globbing */
+    /* FUTURE:  for globbing */
 
 
 {
-	register int	nwords;			/* number of words seen */
-	char		*cmd_args[MAXWORDS+1];	/* array of ptrs to args */
-	char 		*lp;
-	int		retval;
+    register int	nwords;			/* number of words seen */
+    char		*cmd_args[MAXWORDS+1];	/* array of ptrs to args */
+    char 		*lp;
+    int		retval;
 
-	lp = bu_strdup(ilp);
+    lp = bu_strdup(ilp);
 
-	nwords = rt_split_cmd( cmd_args, MAXWORDS, lp );
-	if ( nwords <= 0 )
-		return(0);	/* No command to process */
+    nwords = rt_split_cmd( cmd_args, MAXWORDS, lp );
+    if ( nwords <= 0 )
+	return(0);	/* No command to process */
 
 
-	for (; tp->ct_cmd != (char *)0; tp++ )  {
-		if ( cmd_args[0][0] != tp->ct_cmd[0] ||
-				/* the length of "n" is not significant, just needs to be big enough */
-		    strncmp( cmd_args[0], tp->ct_cmd, MAXWORDS ) != 0 )
-			continue;
-		if ( (nwords >= tp->ct_min) && (nwords <= tp->ct_max) ) {
-		    retval = tp->ct_func( nwords, cmd_args );
-		    bu_free(lp, "rt_do_cmd lp");
-		    return retval;
-		}
-		bu_log("rt_do_cmd Usage: %s %s\n\t%s\n",
-			tp->ct_cmd, tp->ct_parms, tp->ct_comment );
-		bu_free(lp, "rt_do_cmd lp");
-		return(-1);		/* ERROR */
+    for (; tp->ct_cmd != (char *)0; tp++ )  {
+	if ( cmd_args[0][0] != tp->ct_cmd[0] ||
+	     /* the length of "n" is not significant, just needs to be big enough */
+	     strncmp( cmd_args[0], tp->ct_cmd, MAXWORDS ) != 0 )
+	    continue;
+	if ( (nwords >= tp->ct_min) && (nwords <= tp->ct_max) ) {
+	    retval = tp->ct_func( nwords, cmd_args );
+	    bu_free(lp, "rt_do_cmd lp");
+	    return retval;
 	}
-	bu_log("rt_do_cmd(%s):  command not found\n", cmd_args[0]);
+	bu_log("rt_do_cmd Usage: %s %s\n\t%s\n",
+	       tp->ct_cmd, tp->ct_parms, tp->ct_comment );
 	bu_free(lp, "rt_do_cmd lp");
-	return(-1);			/* ERROR */
+	return(-1);		/* ERROR */
+    }
+    bu_log("rt_do_cmd(%s):  command not found\n", cmd_args[0]);
+    bu_free(lp, "rt_do_cmd lp");
+    return(-1);			/* ERROR */
 }
 
 /*

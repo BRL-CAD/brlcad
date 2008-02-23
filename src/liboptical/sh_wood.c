@@ -98,25 +98,25 @@ HIDDEN void	wood_D_set BU_ARGS((const struct bu_structparse *, const char *, con
 
 #ifdef eRT
 struct mfuncs wood_mfuncs[] = {
-	{MF_MAGIC,	"wood",	0,		MFI_HIT|MFI_UV|MFI_NORMAL,	0,
-	wood_init,	wood_setup,	wood_render,	wood_print,	wood_free},
+    {MF_MAGIC,	"wood",	0,		MFI_HIT|MFI_UV|MFI_NORMAL,	0,
+     wood_init,	wood_setup,	wood_render,	wood_print,	wood_free},
 
-	{MF_MAGIC,	"w",		0,		MFI_HIT|MFI_UV|MFI_NORMAL,	0,
-	wood_init,	wood_setup,	wood_render,	wood_print,	wood_free},
+    {MF_MAGIC,	"w",		0,		MFI_HIT|MFI_UV|MFI_NORMAL,	0,
+     wood_init,	wood_setup,	wood_render,	wood_print,	wood_free},
 
-	{0,		(char *)0,	0,		0,	0,
-	0,		0,		0,		0,		0}
+    {0,		(char *)0,	0,		0,	0,
+     0,		0,		0,		0,		0}
 };
 #else
 struct mfuncs wood_mfuncs[] = {
-	{MF_MAGIC,	"wood",	0, 		MFI_HIT|MFI_UV|MFI_NORMAL,	0,
-	wood_setup,	wood_render,	wood_print,	wood_free},
+    {MF_MAGIC,	"wood",	0, 		MFI_HIT|MFI_UV|MFI_NORMAL,	0,
+     wood_setup,	wood_render,	wood_print,	wood_free},
 
-	{MF_MAGIC,	"w",		0,		MFI_HIT|MFI_UV|MFI_NORMAL,	0,
-	wood_setup,	wood_render,	wood_print,	wood_free},
+    {MF_MAGIC,	"w",		0,		MFI_HIT|MFI_UV|MFI_NORMAL,	0,
+     wood_setup,	wood_render,	wood_print,	wood_free},
 
-	{0,		(char *)0,	0,		0,	0,
-	0,		0,		0,		0}
+    {0,		(char *)0,	0,		0,	0,
+     0,		0,		0,		0}
 };
 #endif
 
@@ -125,33 +125,33 @@ struct mfuncs wood_mfuncs[] = {
  */
 
 struct wood_specific {
-	struct	wood_specific	*forw;
-	struct	region		*rp;
-	int			ident;
-	int			flags;
-	int			overlay;
-	int			ns;
-	fastf_t			jitter;
-	fastf_t			lt_rgb[3];
-	fastf_t			dk_rgb[3];
-	fastf_t			depth;
-	fastf_t			spacing;
-	fastf_t			phase;
-	fastf_t			dd;
-	fastf_t			qd;
-	fastf_t			dz;
-	fastf_t			qp;
-	fastf_t			scale;
-	fastf_t			dither[3];
-	vect_t			vertex;
-	vect_t			dir;
-	vect_t			rot;
-	vect_t			b_min;
-	vect_t			b_max;
-	vect_t			c_min;
-	vect_t			c_max;
-	vect_t			D;
-	vect_t			V;
+    struct	wood_specific	*forw;
+    struct	region		*rp;
+    int			ident;
+    int			flags;
+    int			overlay;
+    int			ns;
+    fastf_t			jitter;
+    fastf_t			lt_rgb[3];
+    fastf_t			dk_rgb[3];
+    fastf_t			depth;
+    fastf_t			spacing;
+    fastf_t			phase;
+    fastf_t			dd;
+    fastf_t			qd;
+    fastf_t			dz;
+    fastf_t			qp;
+    fastf_t			scale;
+    fastf_t			dither[3];
+    vect_t			vertex;
+    vect_t			dir;
+    vect_t			rot;
+    vect_t			b_min;
+    vect_t			b_max;
+    vect_t			c_min;
+    vect_t			c_max;
+    vect_t			D;
+    vect_t			V;
 };
 
 HIDDEN void	wood_setup_2 BU_ARGS((struct wood_specific *));
@@ -178,36 +178,36 @@ static struct wood_specific	*Wood_Chain;
  */
 
 struct bu_structparse wood_parse[] = {
-	{"%d",	1, "ident",		WOOD_O(ident),		BU_STRUCTPARSE_FUNC_NULL },
-	{"%d",	1, "id",		WOOD_O(ident),		BU_STRUCTPARSE_FUNC_NULL },
-	{"%d",	1, "overlay",		WOOD_O(overlay),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%d",	1, "o",			WOOD_O(overlay),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%d",	1, "ns",		WOOD_O(ns),		BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",	1, "jitter",		WOOD_O(jitter),		BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",	1, "j",			WOOD_O(jitter),		BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",	3, "lt_rgb",		WOOD_OA(lt_rgb),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",	3, "lt",		WOOD_OA(lt_rgb),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",	3, "dk_rgb",		WOOD_OA(dk_rgb),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",	3, "dk",		WOOD_OA(dk_rgb),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",	1, "spacing",		WOOD_O(spacing),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",	1, "s",			WOOD_O(spacing),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",	1, "scale",		WOOD_O(scale),		BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",	1, "sc",		WOOD_O(scale),		BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",	1, "phase",		WOOD_O(phase),		BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",	1, "p",			WOOD_O(phase),		BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",	1, "qd",		WOOD_O(qd),		BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",	1, "qp",		WOOD_O(qp),		BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",	3, "dither",		WOOD_OA(dither),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",	3, "di",		WOOD_OA(dither),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",	1, "depth",		WOOD_O(depth),		BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",	1, "de",		WOOD_O(depth),		BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",	1, "dd",		WOOD_O(dd),		BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",	1, "dz",		WOOD_O(dz),		BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",	3, "rotation",		WOOD_OA(rot),		BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",	3, "r",			WOOD_OA(rot),		BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",	3, "D",			WOOD_OA(D),		wood_D_set },
-	{"%f",	3, "V",			WOOD_OA(V),		wood_V_set },
-	{"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%d",	1, "ident",		WOOD_O(ident),		BU_STRUCTPARSE_FUNC_NULL },
+    {"%d",	1, "id",		WOOD_O(ident),		BU_STRUCTPARSE_FUNC_NULL },
+    {"%d",	1, "overlay",		WOOD_O(overlay),	BU_STRUCTPARSE_FUNC_NULL },
+    {"%d",	1, "o",			WOOD_O(overlay),	BU_STRUCTPARSE_FUNC_NULL },
+    {"%d",	1, "ns",		WOOD_O(ns),		BU_STRUCTPARSE_FUNC_NULL },
+    {"%f",	1, "jitter",		WOOD_O(jitter),		BU_STRUCTPARSE_FUNC_NULL },
+    {"%f",	1, "j",			WOOD_O(jitter),		BU_STRUCTPARSE_FUNC_NULL },
+    {"%f",	3, "lt_rgb",		WOOD_OA(lt_rgb),	BU_STRUCTPARSE_FUNC_NULL },
+    {"%f",	3, "lt",		WOOD_OA(lt_rgb),	BU_STRUCTPARSE_FUNC_NULL },
+    {"%f",	3, "dk_rgb",		WOOD_OA(dk_rgb),	BU_STRUCTPARSE_FUNC_NULL },
+    {"%f",	3, "dk",		WOOD_OA(dk_rgb),	BU_STRUCTPARSE_FUNC_NULL },
+    {"%f",	1, "spacing",		WOOD_O(spacing),	BU_STRUCTPARSE_FUNC_NULL },
+    {"%f",	1, "s",			WOOD_O(spacing),	BU_STRUCTPARSE_FUNC_NULL },
+    {"%f",	1, "scale",		WOOD_O(scale),		BU_STRUCTPARSE_FUNC_NULL },
+    {"%f",	1, "sc",		WOOD_O(scale),		BU_STRUCTPARSE_FUNC_NULL },
+    {"%f",	1, "phase",		WOOD_O(phase),		BU_STRUCTPARSE_FUNC_NULL },
+    {"%f",	1, "p",			WOOD_O(phase),		BU_STRUCTPARSE_FUNC_NULL },
+    {"%f",	1, "qd",		WOOD_O(qd),		BU_STRUCTPARSE_FUNC_NULL },
+    {"%f",	1, "qp",		WOOD_O(qp),		BU_STRUCTPARSE_FUNC_NULL },
+    {"%f",	3, "dither",		WOOD_OA(dither),	BU_STRUCTPARSE_FUNC_NULL },
+    {"%f",	3, "di",		WOOD_OA(dither),	BU_STRUCTPARSE_FUNC_NULL },
+    {"%f",	1, "depth",		WOOD_O(depth),		BU_STRUCTPARSE_FUNC_NULL },
+    {"%f",	1, "de",		WOOD_O(depth),		BU_STRUCTPARSE_FUNC_NULL },
+    {"%f",	1, "dd",		WOOD_O(dd),		BU_STRUCTPARSE_FUNC_NULL },
+    {"%f",	1, "dz",		WOOD_O(dz),		BU_STRUCTPARSE_FUNC_NULL },
+    {"%f",	3, "rotation",		WOOD_OA(rot),		BU_STRUCTPARSE_FUNC_NULL },
+    {"%f",	3, "r",			WOOD_OA(rot),		BU_STRUCTPARSE_FUNC_NULL },
+    {"%f",	3, "D",			WOOD_OA(D),		wood_D_set },
+    {"%f",	3, "V",			WOOD_OA(V),		wood_V_set },
+    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
 /*
@@ -233,17 +233,17 @@ static	int	wood_done = 0;
 HIDDEN int wood_init (void)
 {
 
-	/*
-	 *	Initialize the wood chain
-	 */
+    /*
+     *	Initialize the wood chain
+     */
 
-	Wood_Chain = WOOD_NULL;
+    Wood_Chain = WOOD_NULL;
 
-	/*
-	 *	Return to caller
-	 */
+    /*
+     *	Return to caller
+     */
 
-	return (1);
+    return (1);
 }
 
 /*
@@ -255,18 +255,18 @@ HIDDEN int wood_init (void)
 
 HIDDEN void wood_V_set (const struct bu_structparse *sdp, const char *name, const char *base, char *value)
 {
-	register struct wood_specific *wd =
-		(struct wood_specific *)base;
+    register struct wood_specific *wd =
+	(struct wood_specific *)base;
 
-	wd->flags |= EXPLICIT_VERTEX;
+    wd->flags |= EXPLICIT_VERTEX;
 }
 
 HIDDEN void wood_D_set (const struct bu_structparse *sdp, const char *name, const char *base, char *value)
 {
-	register struct wood_specific *wd =
-		(struct wood_specific *)base;
+    register struct wood_specific *wd =
+	(struct wood_specific *)base;
 
-	wd->flags |= EXPLICIT_DIRECTION;
+    wd->flags |= EXPLICIT_DIRECTION;
 }
 
 /*
@@ -275,180 +275,180 @@ HIDDEN void wood_D_set (const struct bu_structparse *sdp, const char *name, cons
 HIDDEN int wood_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
 
 
-				/* New since 4.4 release */
+    /* New since 4.4 release */
 {
-	register int i;
-	register struct wood_specific *wd;
+    register int i;
+    register struct wood_specific *wd;
 
-	extern struct resource		rt_uniresource;
-	register struct resource	*resp = &rt_uniresource;
+    extern struct resource		rt_uniresource;
+    register struct resource	*resp = &rt_uniresource;
 
 #ifndef eRT
-	/*
-	 *	If this isn't the customized RT, then call "wood_init"
-	 *	here to prep the noise tables.
-	 */
+    /*
+     *	If this isn't the customized RT, then call "wood_init"
+     *	here to prep the noise tables.
+     */
 
-	if (!wood_done) {
-		wood_init();
-		wood_done = 1;
-		}
+    if (!wood_done) {
+	wood_init();
+	wood_done = 1;
+    }
 #endif
 
-	/*
-	 *	Get the impure storage for the control block
-	 */
+    /*
+     *	Get the impure storage for the control block
+     */
 
-	BU_CK_VLS( matparm );
-	BU_GETSTRUCT( wd, wood_specific );
-	*dpp = (char *)wd;
+    BU_CK_VLS( matparm );
+    BU_GETSTRUCT( wd, wood_specific );
+    *dpp = (char *)wd;
 
-	/*
-	 *	Load the default values
-	 */
+    /*
+     *	Load the default values
+     */
 
-	if (rp->reg_mater.ma_color_valid) {
-		VSCALE (wd->lt_rgb, rp->reg_mater.ma_color, 255);
-		}
-	   else {
-		wd->lt_rgb[0] = 255;	/* Light yellow */
-		wd->lt_rgb[1] = 255;
-		wd->lt_rgb[2] = 224;
-		}
+    if (rp->reg_mater.ma_color_valid) {
+	VSCALE (wd->lt_rgb, rp->reg_mater.ma_color, 255);
+    }
+    else {
+	wd->lt_rgb[0] = 255;	/* Light yellow */
+	wd->lt_rgb[1] = 255;
+	wd->lt_rgb[2] = 224;
+    }
 
-	wd->dk_rgb[0] = 191;		/* Brownish-red */
-	wd->dk_rgb[1] =  97;
-	wd->dk_rgb[2] =   0;
+    wd->dk_rgb[0] = 191;		/* Brownish-red */
+    wd->dk_rgb[1] =  97;
+    wd->dk_rgb[2] =   0;
 
-	wd->ident     = 0;
-	wd->forw      = WOOD_NULL;
-	wd->rp	      = rp;
-	wd->flags     = 0;
-	wd->overlay   = 0;		/* Draw only one ring */
-	wd->ns	      = 10;
-	wd->jitter    = 0.0;
-	wd->scale     = 1.0;
-	wd->spacing   = 5;		/* 5mm space between rings */
-	wd->dd        = 0.0;		/* no dither of vertex */
-	wd->dz        = 0.0;		/* nor of Z-axis */
-	wd->qd        = 0;
-	wd->qp        = 0;
-	wd->phase     = 5;
-	wd->depth     = 0;
+    wd->ident     = 0;
+    wd->forw      = WOOD_NULL;
+    wd->rp	      = rp;
+    wd->flags     = 0;
+    wd->overlay   = 0;		/* Draw only one ring */
+    wd->ns	      = 10;
+    wd->jitter    = 0.0;
+    wd->scale     = 1.0;
+    wd->spacing   = 5;		/* 5mm space between rings */
+    wd->dd        = 0.0;		/* no dither of vertex */
+    wd->dz        = 0.0;		/* nor of Z-axis */
+    wd->qd        = 0;
+    wd->qp        = 0;
+    wd->phase     = 5;
+    wd->depth     = 0;
 
-	wd->dither[0] = bn_rand0to1 (resp->re_randptr);
-	wd->dither[1] = bn_rand0to1 (resp->re_randptr);
-	wd->dither[2] = bn_rand0to1 (resp->re_randptr);
+    wd->dither[0] = bn_rand0to1 (resp->re_randptr);
+    wd->dither[1] = bn_rand0to1 (resp->re_randptr);
+    wd->dither[2] = bn_rand0to1 (resp->re_randptr);
 
-	VSETALL (wd->rot, 0);
-	VSETALL (wd->vertex, 0);
-	VSETALL (wd->D, 0);
-	VSETALL (wd->V, 0);
+    VSETALL (wd->rot, 0);
+    VSETALL (wd->vertex, 0);
+    VSETALL (wd->D, 0);
+    VSETALL (wd->V, 0);
 
-	/*
-	 *	Parse the MATPARM field
-	 */
+    /*
+     *	Parse the MATPARM field
+     */
 
-	if (bu_struct_parse( matparm, wood_parse, (char *)wd ) < 0 )  {
-		bu_free( (char *)wd, "wood_specific" );
-		return(-1);
-		}
+    if (bu_struct_parse( matparm, wood_parse, (char *)wd ) < 0 )  {
+	bu_free( (char *)wd, "wood_specific" );
+	return(-1);
+    }
 
-	/*
-	 *	Do some sundry range and misc. checking
-	 */
+    /*
+     *	Do some sundry range and misc. checking
+     */
 
-	for (i=0; i<3; i++) {
-		if (wd->dither[i] < 0 || wd->dither[i] > 1.0) {
-			bu_log ("wood_setup(%s):  dither is out of range.\n",
-				rp->reg_name);
-			return (-1);
-			}
-		}
+    for (i=0; i<3; i++) {
+	if (wd->dither[i] < 0 || wd->dither[i] > 1.0) {
+	    bu_log ("wood_setup(%s):  dither is out of range.\n",
+		    rp->reg_name);
+	    return (-1);
+	}
+    }
 
-	if (wd->flags == EXPLICIT_VERTEX) {
-		bu_log ("wood_setup(%s):  Explicit vertex specfied without direction\n", rp->reg_name);
-		return (-1);
-		}
+    if (wd->flags == EXPLICIT_VERTEX) {
+	bu_log ("wood_setup(%s):  Explicit vertex specfied without direction\n", rp->reg_name);
+	return (-1);
+    }
 
-	if (wd->flags == EXPLICIT_DIRECTION) {
-		bu_log ("wood_setup(%s):  Explicit direction specfied without vertex\n", rp->reg_name);
-		return (-1);
-		}
+    if (wd->flags == EXPLICIT_DIRECTION) {
+	bu_log ("wood_setup(%s):  Explicit direction specfied without vertex\n", rp->reg_name);
+	return (-1);
+    }
 
-	/*
-	 *	Get the bounding RPP
-	 */
+    /*
+     *	Get the bounding RPP
+     */
 
-	if (rt_bound_tree (rp->reg_treetop, wd->b_min, wd->b_max) < 0) return (-1);
+    if (rt_bound_tree (rp->reg_treetop, wd->b_min, wd->b_max) < 0) return (-1);
 
-	/*
-	 *	Add it to the wood chain
-	 */
+    /*
+     *	Add it to the wood chain
+     */
 
-	wd->forw   = Wood_Chain;
-	Wood_Chain = wd;
+    wd->forw   = Wood_Chain;
+    Wood_Chain = wd;
 
-	/*
-	 *	See if the user has flagged this region as a member of a larger
-	 *	combination.  If so, go ahead and process it
-	 */
+    /*
+     *	See if the user has flagged this region as a member of a larger
+     *	combination.  If so, go ahead and process it
+     */
 
-	if (wd->ident == 0)
-		wood_setup_2 (wd);
+    if (wd->ident == 0)
+	wood_setup_2 (wd);
 
-	   else {
-		register struct wood_specific	*wc;
-		vect_t			c_min, c_max;
-
-		/*
-		 *	First, process the accumulated chain of wood regions and
-		 *	process all regions which have the specified ident field.
-		 */
-
-		VSETALL (c_min, 0);
-		VSETALL (c_max, 0);
-
-		for (wc = Wood_Chain; wc != WOOD_NULL; wc = wc->forw) {
-			if (wc->ident == wd->ident) {
-				VMIN (c_min, wc->b_min);
-				VMAX (c_max, wc->b_max);
-				}
-			}
-
-		/*
-		 *	Now, loop through the chain again this time updating the
-		 *	regions' min/max fields with the new values
-		 */
-
-		for (wc = Wood_Chain; wc != WOOD_NULL; wc = wc->forw) {
-			if (wc->ident == wd->ident) {
-				VMOVE (wc->b_min, c_min);
-				VMOVE (wc->b_max, c_max);
-				wood_setup_2 (wc);
-				}
-			}
-
-		/*
-		 *	End of multi-region processing loop
-		 */
-
-		}
+    else {
+	register struct wood_specific	*wc;
+	vect_t			c_min, c_max;
 
 	/*
-	 *	Normalize the RGB colors
+	 *	First, process the accumulated chain of wood regions and
+	 *	process all regions which have the specified ident field.
 	 */
 
-	for (i = 0; i < 3; i++) {
-		wd->lt_rgb[i] *= bn_inv255;
-		wd->dk_rgb[i] *= bn_inv255;
-		}
+	VSETALL (c_min, 0);
+	VSETALL (c_max, 0);
+
+	for (wc = Wood_Chain; wc != WOOD_NULL; wc = wc->forw) {
+	    if (wc->ident == wd->ident) {
+		VMIN (c_min, wc->b_min);
+		VMAX (c_max, wc->b_max);
+	    }
+	}
 
 	/*
-	 *	Return to the caller
+	 *	Now, loop through the chain again this time updating the
+	 *	regions' min/max fields with the new values
 	 */
 
-	return (1);
+	for (wc = Wood_Chain; wc != WOOD_NULL; wc = wc->forw) {
+	    if (wc->ident == wd->ident) {
+		VMOVE (wc->b_min, c_min);
+		VMOVE (wc->b_max, c_max);
+		wood_setup_2 (wc);
+	    }
+	}
+
+	/*
+	 *	End of multi-region processing loop
+	 */
+
+    }
+
+    /*
+     *	Normalize the RGB colors
+     */
+
+    for (i = 0; i < 3; i++) {
+	wd->lt_rgb[i] *= bn_inv255;
+	wd->dk_rgb[i] *= bn_inv255;
+    }
+
+    /*
+     *	Return to the caller
+     */
+
+    return (1);
 }
 
 /*
@@ -457,50 +457,50 @@ HIDDEN int wood_setup(register struct region *rp, struct bu_vls *matparm, char *
 
 HIDDEN void wood_setup_2 (struct wood_specific *wd)
 {
-	mat_t	xlate;
-	int	i;
-	vect_t	a_vertex, a_dir;
+    mat_t	xlate;
+    int	i;
+    vect_t	a_vertex, a_dir;
 
-	extern struct resource		rt_uniresource;
-	register struct resource	*resp = &rt_uniresource;
+    extern struct resource		rt_uniresource;
+    register struct resource	*resp = &rt_uniresource;
 
-	/*
-	 *	See if the user specified absolute coordinates for the vertex and
-	 *	direction.  If so, use those instead of the RPP.
-	 */
+    /*
+     *	See if the user specified absolute coordinates for the vertex and
+     *	direction.  If so, use those instead of the RPP.
+     */
 
-	bn_mat_angles (xlate, V3ARGS (wd->rot));
+    bn_mat_angles (xlate, V3ARGS (wd->rot));
 
-	if (wd->flags & EXPLICIT_VERTEX) {
-		MAT4X3PNT (wd->vertex, xlate, wd->V);
-		MAT4X3PNT (wd->dir, xlate, wd->D);
-		}
-	   else {
-		if (wd->dz > 0.0) {
-			for (i=0; i<2; i++) {
-				a_vertex[i] = wd->b_min[i];
-				a_dir[i] = wd->b_max[i];
-				}
-			/* Z component is [2] */
-			a_vertex[2] = ((wd->b_max[2] - wd->b_min[2]) *
-					(bn_rand0to1(resp->re_randptr) * wd->dz)) + wd->b_min[2];
-			a_dir[2]    = ((wd->b_max[2] - wd->b_min[2]) *
-					(bn_rand0to1(resp->re_randptr) * wd->dz)) + wd->b_min[2];
-			}
-		   else {
-			for (i=0; i<3; i++) {
-				a_vertex[i] = ((wd->b_max[i] - wd->b_min[i]) *
-						(bn_rand0to1(resp->re_randptr) * wd->dd)) + wd->b_min[i];
-				a_dir[i]    = ((wd->b_max[i] - wd->b_min[i]) *
-						(bn_rand0to1(resp->re_randptr) * wd->dd)) + wd->b_max[i];
-				}
-			}
-		MAT4X3PNT (wd->vertex, xlate, a_vertex);
-		MAT4X3PNT (wd->dir, xlate, a_dir);
-		}
+    if (wd->flags & EXPLICIT_VERTEX) {
+	MAT4X3PNT (wd->vertex, xlate, wd->V);
+	MAT4X3PNT (wd->dir, xlate, wd->D);
+    }
+    else {
+	if (wd->dz > 0.0) {
+	    for (i=0; i<2; i++) {
+		a_vertex[i] = wd->b_min[i];
+		a_dir[i] = wd->b_max[i];
+	    }
+	    /* Z component is [2] */
+	    a_vertex[2] = ((wd->b_max[2] - wd->b_min[2]) *
+			   (bn_rand0to1(resp->re_randptr) * wd->dz)) + wd->b_min[2];
+	    a_dir[2]    = ((wd->b_max[2] - wd->b_min[2]) *
+			   (bn_rand0to1(resp->re_randptr) * wd->dz)) + wd->b_min[2];
+	}
+	else {
+	    for (i=0; i<3; i++) {
+		a_vertex[i] = ((wd->b_max[i] - wd->b_min[i]) *
+			       (bn_rand0to1(resp->re_randptr) * wd->dd)) + wd->b_min[i];
+		a_dir[i]    = ((wd->b_max[i] - wd->b_min[i]) *
+			       (bn_rand0to1(resp->re_randptr) * wd->dd)) + wd->b_max[i];
+	    }
+	}
+	MAT4X3PNT (wd->vertex, xlate, a_vertex);
+	MAT4X3PNT (wd->dir, xlate, a_dir);
+    }
 
-	VSUB2 (wd->dir, wd->dir, wd->vertex);
-	VUNITIZE (wd->dir);
+    VSUB2 (wd->dir, wd->dir, wd->vertex);
+    VUNITIZE (wd->dir);
 }
 
 /*
@@ -508,7 +508,7 @@ HIDDEN void wood_setup_2 (struct wood_specific *wd)
  */
 HIDDEN void wood_print(register struct region *rp)
 {
-	bu_struct_print(rp->reg_name, wood_parse, (char *)rp->reg_udata);
+    bu_struct_print(rp->reg_name, wood_parse, (char *)rp->reg_udata);
 }
 
 /*
@@ -520,28 +520,28 @@ HIDDEN void wood_print(register struct region *rp)
  */
 HIDDEN void wood_free (char *cp)
 {
-	register struct wood_specific *wd =
-		(struct wood_specific *)cp;
+    register struct wood_specific *wd =
+	(struct wood_specific *)cp;
 
-	register struct wood_specific *wc;
+    register struct wood_specific *wc;
 
-	if (Wood_Chain == wd) {
+    if (Wood_Chain == wd) {
 /*		bu_log ("wood_free(%s):  Releasing region (at head).\n", wd->rp->reg_name); */
-		Wood_Chain = wd->forw;
-		bu_free ((char *)wd, "wood_specific");
-		return;
-		}
-
-	for (wc = Wood_Chain; wc != WOOD_NULL; wc = wc->forw) {
-		if (wc->forw == wd) {
-/*			bu_log ("wood_free(%s):  Releasing region.\n", wd->rp->reg_name); */
-			wc->forw = wd->forw;
-			bu_free ((char *)wd, "wood_specific");
-			return;
-			}
-		}
-
+	Wood_Chain = wd->forw;
 	bu_free ((char *)wd, "wood_specific");
+	return;
+    }
+
+    for (wc = Wood_Chain; wc != WOOD_NULL; wc = wc->forw) {
+	if (wc->forw == wd) {
+/*			bu_log ("wood_free(%s):  Releasing region.\n", wd->rp->reg_name); */
+	    wc->forw = wd->forw;
+	    bu_free ((char *)wd, "wood_specific");
+	    return;
+	}
+    }
+
+    bu_free ((char *)wd, "wood_specific");
 }
 
 /*
@@ -555,62 +555,62 @@ HIDDEN void wood_free (char *cp)
 
 HIDDEN double wood_noise (double x, double y, double z, struct wood_specific *wd)
 {
-	int	xi, yi, zi;
-	double	xr, yr, zr;
-	double	n1, n2, noise1, noise2, noise3, noise;
+    int	xi, yi, zi;
+    double	xr, yr, zr;
+    double	n1, n2, noise1, noise2, noise3, noise;
 
-	xi = x * IPOINTS;
-	xr = (x * IPOINTS) - xi;
-	yi = y * IPOINTS;
-	yr = (y * IPOINTS) - yi;
-	zi = z * IPOINTS;
-	zr = (z * IPOINTS) - zi;
+    xi = x * IPOINTS;
+    xr = (x * IPOINTS) - xi;
+    yi = y * IPOINTS;
+    yr = (y * IPOINTS) - yi;
+    zi = z * IPOINTS;
+    zr = (z * IPOINTS) - zi;
 
-	n1     = (1 - xr) * turb_table[xi][yi][zi] +
-		       xr * turb_table[xi + 1][yi][zi];
-	n2     = (1 - xr) * turb_table[xi][yi + 1][zi] +
-		       xr * turb_table[xi + 1][yi + 1][zi];
-	noise1 = (1 - yr) * n1 + yr * n2;
+    n1     = (1 - xr) * turb_table[xi][yi][zi] +
+	xr * turb_table[xi + 1][yi][zi];
+    n2     = (1 - xr) * turb_table[xi][yi + 1][zi] +
+	xr * turb_table[xi + 1][yi + 1][zi];
+    noise1 = (1 - yr) * n1 + yr * n2;
 
-	n1     = (1 - xr) * turb_table[xi][yi][zi + 1] +
-		       xr * turb_table[xi + 1][yi][zi + 1];
-	n2     = (1 - xr) * turb_table[xi][yi + 1][zi + 1] +
-		       xr * turb_table[xi + 1][yi + 1][zi + 1];
-	noise2 = (1 - yr) * n1 + yr * n2;
+    n1     = (1 - xr) * turb_table[xi][yi][zi + 1] +
+	xr * turb_table[xi + 1][yi][zi + 1];
+    n2     = (1 - xr) * turb_table[xi][yi + 1][zi + 1] +
+	xr * turb_table[xi + 1][yi + 1][zi + 1];
+    noise2 = (1 - yr) * n1 + yr * n2;
 
-	noise3 = (1 - zr) * noise1 + zr * noise2;
-	noise  = pow (noise3, wd->scale);
+    noise3 = (1 - zr) * noise1 + zr * noise2;
+    noise  = pow (noise3, wd->scale);
 
-	return (noise);
+    return (noise);
 }
 
 HIDDEN double wood_turb (double x, double y, double z, struct wood_specific *wd)
 {
-	extern struct resource		rt_uniresource;
-	register struct resource	*resp = &rt_uniresource;
+    extern struct resource		rt_uniresource;
+    register struct resource	*resp = &rt_uniresource;
 
-	int	i;
-	fastf_t	a, b, c, turb = 0.0, scale;
+    int	i;
+    fastf_t	a, b, c, turb = 0.0, scale;
 
-	for (i=0; i<wd->ns; i++) {
-		scale = (double)i / (double)wd->ns;
+    for (i=0; i<wd->ns; i++) {
+	scale = (double)i / (double)wd->ns;
 
-		a = (x * scale) +
-		    (bn_rand_half (resp->re_randptr) * wd->jitter) +
-		    wd->dither[X];
+	a = (x * scale) +
+	    (bn_rand_half (resp->re_randptr) * wd->jitter) +
+	    wd->dither[X];
 
-		b = (y * scale) +
-		    (bn_rand_half (resp->re_randptr) * wd->jitter) +
-		    wd->dither[Y];
+	b = (y * scale) +
+	    (bn_rand_half (resp->re_randptr) * wd->jitter) +
+	    wd->dither[Y];
 
-		c = (z * scale) +
-		    (bn_rand_half (resp->re_randptr) * wd->jitter) +
-		    wd->dither[Z];
+	c = (z * scale) +
+	    (bn_rand_half (resp->re_randptr) * wd->jitter) +
+	    wd->dither[Z];
 
-		turb += wood_noise (a, b, c, wd);
-		}
+	turb += wood_noise (a, b, c, wd);
+    }
 
-	return (turb);
+    return (turb);
 }
 
 /*
@@ -623,80 +623,80 @@ HIDDEN double wood_turb (double x, double y, double z, struct wood_specific *wd)
  */
 HIDDEN int wood_render(struct application *ap, struct partition *partp, struct shadework *swp, char *dp)
 {
-	register struct wood_specific *wd =
-		(struct wood_specific *)dp;
+    register struct wood_specific *wd =
+	(struct wood_specific *)dp;
 
-	vect_t	g, h;
-	point_t	dprod, lprod;
-	double	c, A, B, C;
-	double	x, y, z, xd, yd, zd;
-	double	mixture, pp, pq, wt;
+    vect_t	g, h;
+    point_t	dprod, lprod;
+    double	c, A, B, C;
+    double	x, y, z, xd, yd, zd;
+    double	mixture, pp, pq, wt;
 
-	/*
-	 *	Compute the normalized hit point
-	 */
+    /*
+     *	Compute the normalized hit point
+     */
 
-	xd = wd->b_max[0] - wd->b_min[0] + 1.0;
-	yd = wd->b_max[1] - wd->b_min[1] + 1.0;
-	zd = wd->b_max[2] - wd->b_min[2] + 1.0;
+    xd = wd->b_max[0] - wd->b_min[0] + 1.0;
+    yd = wd->b_max[1] - wd->b_min[1] + 1.0;
+    zd = wd->b_max[2] - wd->b_min[2] + 1.0;
 
-	x = wd->dither[X] + ((swp->sw_hit.hit_point[0] - wd->b_min[0]) / xd);
-	y = wd->dither[Y] + ((swp->sw_hit.hit_point[1] - wd->b_min[1]) / yd);
-	z = wd->dither[Z] + ((swp->sw_hit.hit_point[2] - wd->b_min[2]) / zd);
+    x = wd->dither[X] + ((swp->sw_hit.hit_point[0] - wd->b_min[0]) / xd);
+    y = wd->dither[Y] + ((swp->sw_hit.hit_point[1] - wd->b_min[1]) / yd);
+    z = wd->dither[Z] + ((swp->sw_hit.hit_point[2] - wd->b_min[2]) / zd);
 
-	/*
-	 *	Compute the distance from the ring center to the hit
-	 *	point by formulating a triangle between the hit point,
-	 *	the ring vertex, and ring's local X-axis.
-	 */
+    /*
+     *	Compute the distance from the ring center to the hit
+     *	point by formulating a triangle between the hit point,
+     *	the ring vertex, and ring's local X-axis.
+     */
 
-	VSUB2 (h, swp->sw_hit.hit_point, wd->vertex);
-	VMOVE (g, h);
-	VUNITIZE (g);				/* xlate to ray */
+    VSUB2 (h, swp->sw_hit.hit_point, wd->vertex);
+    VMOVE (g, h);
+    VUNITIZE (g);				/* xlate to ray */
 
-	wt = wood_turb (x, y, z, wd) * wd->depth;	/* used in two places */
+    wt = wood_turb (x, y, z, wd) * wd->depth;	/* used in two places */
 
-	c = fabs (VDOT (g, wd->dir));
-	A = MAGNITUDE (h) + wt;
-	B = c * A;				/* abscissa */
-	C = sqrt (pow (A, 2.0) - pow (B, 2.0));	/* ordinate */
+    c = fabs (VDOT (g, wd->dir));
+    A = MAGNITUDE (h) + wt;
+    B = c * A;				/* abscissa */
+    C = sqrt (pow (A, 2.0) - pow (B, 2.0));	/* ordinate */
 
-	/*
-	 *	Divide the ordinate by the spacing coefficient, and
-	 *	compute the sine from that product.
-	 */
+    /*
+     *	Divide the ordinate by the spacing coefficient, and
+     *	compute the sine from that product.
+     */
 
-	c = fabs (sin ((C / wd->spacing) * bn_pi));
+    c = fabs (sin ((C / wd->spacing) * bn_pi));
 
-	/*
-	 *	Dither the "q" control
-	 */
+    /*
+     *	Dither the "q" control
+     */
 
-	pq = cos (((wd->qd * wt) + wd->qp + wd->phase) * bn_degtorad);
-	pp = cos (wd->phase * bn_degtorad);
+    pq = cos (((wd->qd * wt) + wd->qp + wd->phase) * bn_degtorad);
+    pp = cos (wd->phase * bn_degtorad);
 
-	/*
-	 *	Color the hit point based on the phase of the ring
-	 */
+    /*
+     *	Color the hit point based on the phase of the ring
+     */
 
-	if (c < pq) {
-		VMOVE (swp->sw_color, wd->lt_rgb);
-		}
-	   else if (c >= pp) {
-			VMOVE (swp->sw_color, wd->dk_rgb);
-			}
-		   else {
-			mixture = (c - pq) / (pp - pq);
-			VSCALE (lprod, wd->lt_rgb, (1.0 - mixture));
-			VSCALE (dprod, wd->dk_rgb, mixture);
-			VADD2 (swp->sw_color, lprod, dprod);
-			}
+    if (c < pq) {
+	VMOVE (swp->sw_color, wd->lt_rgb);
+    }
+    else if (c >= pp) {
+	VMOVE (swp->sw_color, wd->dk_rgb);
+    }
+    else {
+	mixture = (c - pq) / (pp - pq);
+	VSCALE (lprod, wd->lt_rgb, (1.0 - mixture));
+	VSCALE (dprod, wd->dk_rgb, mixture);
+	VADD2 (swp->sw_color, lprod, dprod);
+    }
 
-	/*
-	 *	All done.  Return to the caller
-	 */
+    /*
+     *	All done.  Return to the caller
+     */
 
-	return(1);
+    return(1);
 }
 
 /*

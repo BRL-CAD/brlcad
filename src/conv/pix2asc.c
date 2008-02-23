@@ -39,20 +39,20 @@ int
 main(void)
 {
 #if defined(_WIN32) && !defined(__CYGWIN__)
-	setmode(fileno(stdin), O_BINARY);
-	setmode(fileno(stdout), O_BINARY);
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
 #endif
-	while ( !feof(stdin) &&
+    while ( !feof(stdin) &&
 	    fread( (char *)pix, sizeof(pix), 1, stdin) == 1 )  {
-		putc( map[pix[0]>>4], stdout );
-		putc( map[pix[0]&0xF], stdout );
-		putc( map[pix[1]>>4], stdout );
-		putc( map[pix[1]&0xF], stdout );
-		putc( map[pix[2]>>4], stdout );
-		putc( map[pix[2]&0xF], stdout );
-		putc( '\n', stdout );
-	}
-	return 0;
+	putc( map[pix[0]>>4], stdout );
+	putc( map[pix[0]&0xF], stdout );
+	putc( map[pix[1]>>4], stdout );
+	putc( map[pix[1]&0xF], stdout );
+	putc( map[pix[2]>>4], stdout );
+	putc( map[pix[2]&0xF], stdout );
+	putc( '\n', stdout );
+    }
+    return 0;
 }
 
 /*

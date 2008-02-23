@@ -193,13 +193,13 @@ main (int argc, char **argv)
 		    if ((sscanf(argv[1], "%d", &ctr_x) != 1) || (ctr_x < 0))
 		    {
 			(void) fprintf(stderr, "Illegal -o value: %s\n",
-			    argv[1]);
+				       argv[1]);
 			goto error;
 		    }
 		    if ((sscanf(argv[2], "%d", &ctr_y) != 1) || (ctr_y < 0))
 		    {
 			(void) fprintf(stderr, "Illegal -o value: %s\n",
-			    argv[2]);
+				       argv[2]);
 			goto error;
 		    }
 		    argv += 2;
@@ -215,7 +215,7 @@ main (int argc, char **argv)
 			|| (fb_width < 0))
 		    {
 			(void) fprintf(stderr, "Illegal -W value: %s\n",
-			    argv[1]);
+				       argv[1]);
 			goto error;
 		    }
 		    argv++;
@@ -231,7 +231,7 @@ main (int argc, char **argv)
 			|| (fb_height < 0))
 		    {
 			(void) fprintf(stderr, "Illegal -N value: %s\n",
-			    argv[1]);
+				       argv[1]);
 			goto error;
 		    }
 		    argv++;
@@ -247,7 +247,7 @@ main (int argc, char **argv)
 			|| (fb_height < 0))
 		    {
 			(void) fprintf(stderr, "Illegal -S value: %s\n",
-			    argv[1]);
+				       argv[1]);
 			goto error;
 		    }
 		    fb_width = fb_height;
@@ -263,7 +263,7 @@ main (int argc, char **argv)
 		    if ((sscanf(argv[1], "%d", &unit_r) != 1) || (unit_r <= 0))
 		    {
 			(void) fprintf(stderr, "Illegal -s value: %s\n",
-			    argv[1]);
+				       argv[1]);
 			goto error;
 		    }
 		    argv++;
@@ -279,7 +279,7 @@ main (int argc, char **argv)
 			(Quantum <= 0))
 		    {
 			(void) fprintf(stderr, "Illegal -q value: %s\n",
-			    argv[1]);
+				       argv[1]);
 			goto error;
 		    }
 		    argv++;
@@ -294,20 +294,20 @@ main (int argc, char **argv)
 		    if ((sscanf(argv[1], "%lf", &arc_min) != 1) || (arc_min < 0))
 		    {
 			(void) fprintf(stderr, "Illegal -a value: %s\n",
-			    argv[1]);
+				       argv[1]);
 			goto error;
 		    }
 		    if ((sscanf(argv[2], "%lf", &arc_max) != 1) ||
 			(arc_max > 360))
 		    {
 			(void) fprintf(stderr, "Illegal -a value: %s\n",
-			    argv[2]);
+				       argv[2]);
 			goto error;
 		    }
 		    if (arc_max < arc_min)
 		    {
 			(void) fprintf(stderr, "Illegal -a values: %g > %g\n",
-			    arc_min, arc_max);
+				       arc_min, arc_max);
 			goto error;
 		    }
 		    argv += 2;
@@ -322,7 +322,7 @@ main (int argc, char **argv)
 		    if (sscanf(argv[1], "%lf", &twist) != 1)
 		    {
 			(void) fprintf(stderr, "Illegal -t value: %s\n",
-			    argv[1]);
+				       argv[1]);
 			goto error;
 		    }
 		    twist *= Deg2Rad;
@@ -339,7 +339,7 @@ main (int argc, char **argv)
 			argv[1][1] != '\0')
 		    {
 			(void) fprintf(stderr, "Illegal -z value: %s\n",
-			    argv[1]);
+				       argv[1]);
 			goto error;
 		    }
 		    Half = (argv[1][0] == 'l') ? H_LEFT : H_RIGHT;
@@ -356,7 +356,7 @@ main (int argc, char **argv)
 			(intensity < 0) || (intensity > 255))
 		    {
 			(void) fprintf(stderr, "Illegal -b value: %s\n",
-			    argv[1]);
+				       argv[1]);
 			goto error;
 		    }
 		    Color[C_BKGRND][RED] = intensity;
@@ -364,7 +364,7 @@ main (int argc, char **argv)
 			(intensity < 0) || (intensity > 255))
 		    {
 			(void) fprintf(stderr, "Illegal -b value: %s\n",
-			    argv[2]);
+				       argv[2]);
 			goto error;
 		    }
 		    Color[C_BKGRND][GRN] = intensity;
@@ -372,7 +372,7 @@ main (int argc, char **argv)
 			(intensity < 0) || (intensity > 255))
 		    {
 			(void) fprintf(stderr, "Illegal -b value: %s\n",
-			    argv[3]);
+				       argv[3]);
 			goto error;
 		    }
 		    Color[C_BKGRND][BLU] = intensity;
@@ -391,7 +391,7 @@ main (int argc, char **argv)
 			(intensity < 0) || (intensity > 255))
 		    {
 			(void) fprintf(stderr, "Illegal -i value: %s\n",
-			    argv[1]);
+				       argv[1]);
 			goto error;
 		    }
 		    Color[C_INTERIOR][RED] = intensity;
@@ -399,7 +399,7 @@ main (int argc, char **argv)
 			(intensity < 0) || (intensity > 255))
 		    {
 			(void) fprintf(stderr, "Illegal -i value: %s\n",
-			    argv[2]);
+				       argv[2]);
 			goto error;
 		    }
 		    Color[C_INTERIOR][GRN] = intensity;
@@ -407,7 +407,7 @@ main (int argc, char **argv)
 			(intensity < 0) || (intensity > 255))
 		    {
 			(void) fprintf(stderr, "Illegal -i value: %s\n",
-			    argv[3]);
+				       argv[3]);
 			goto error;
 		    }
 		    Color[C_INTERIOR][BLU] = intensity;
@@ -426,7 +426,7 @@ main (int argc, char **argv)
 			(intensity < 0) || (intensity > 255))
 		    {
 			(void) fprintf(stderr, "Illegal -l value: %s\n",
-			    argv[1]);
+				       argv[1]);
 			goto error;
 		    }
 		    Color[C_RAMP][RED] = intensity;
@@ -434,7 +434,7 @@ main (int argc, char **argv)
 			(intensity < 0) || (intensity > 255))
 		    {
 			(void) fprintf(stderr, "Illegal -l value: %s\n",
-			    argv[2]);
+				       argv[2]);
 			goto error;
 		    }
 		    Color[C_RAMP][GRN] = intensity;
@@ -442,7 +442,7 @@ main (int argc, char **argv)
 			(intensity < 0) || (intensity > 255))
 		    {
 			(void) fprintf(stderr, "Illegal -l value: %s\n",
-			    argv[3]);
+				       argv[3]);
 			goto error;
 		    }
 		    Color[C_RAMP][BLU] = intensity;
@@ -463,7 +463,7 @@ main (int argc, char **argv)
 			(intensity < 0) || (intensity > 255))
 		    {
 			(void) fprintf(stderr, "Illegal -%c value: %s\n",
-			    *Opt, argv[1]);
+				       *Opt, argv[1]);
 			goto error;
 		    }
 		    Color[C_PERIM][RED] = intensity;
@@ -471,7 +471,7 @@ main (int argc, char **argv)
 			(intensity < 0) || (intensity > 255))
 		    {
 			(void) fprintf(stderr, "Illegal -%c value: %s\n",
-			    *Opt, argv[2]);
+				       *Opt, argv[2]);
 			goto error;
 		    }
 		    Color[C_PERIM][GRN] = intensity;
@@ -479,7 +479,7 @@ main (int argc, char **argv)
 			(intensity < 0) || (intensity > 255))
 		    {
 			(void) fprintf(stderr, "Illegal -%c value: %s\n",
-			    *Opt, argv[3]);
+				       *Opt, argv[3]);
 			goto error;
 		    }
 		    Color[C_PERIM][BLU] = intensity;
@@ -520,7 +520,7 @@ main (int argc, char **argv)
 		    Interior = BI_WEDGES;
 		    break;
 		case '?':
-		error:
+	    error:
 		default:
 		    PrintUsage(1);
 		    (void) bu_exit (*Opt != '?', NULL);
@@ -612,7 +612,7 @@ main (int argc, char **argv)
 	    break;
 	default:
 	    (void) fputs("Bad interior.  Shouldn't happen\n",
-			    stderr);
+			 stderr);
 	    (void) bu_exit (1, NULL);
 	    break;
     }
@@ -639,7 +639,7 @@ main (int argc, char **argv)
 	    {
 		if (! merge)
 		    COPYRGB(fbbPtr, Color[C_BKGRND])
-		continue;
+			continue;
 	    }
 
 	    /* Determine this point's "azimuth" (i.e., theta) */
@@ -664,7 +664,7 @@ main (int argc, char **argv)
 	    {
 		if (! merge)
 		    COPYRGB(fbbPtr, Color[C_BKGRND])
-		continue;
+			continue;
 	    }
 
 	    /* Look up the value of the function for this value of theta */
@@ -680,18 +680,18 @@ main (int argc, char **argv)
 	    {
 		if (! merge)
 		    COPYRGB(fbbPtr, Color[C_BKGRND])
-	    }
+			}
 	    else
 	    {
 		(*Fill_Func)(fbbPtr, rho, npf_rho, unit_r, merge);
 
 		if (perimeter && (npf_rho - rho / unit_r < .02))
 		    COPYRGB(fbbPtr, Color[C_PERIM])
-	    }
+			}
 
 	    if (draw_grid && OnGrid(theta, rho/unit_r))
 		COPYRGB(fbbPtr, Color[C_BLACK])
-	}
+		    }
 	fb_write(fbPtr, fb_x_loc, fb_y_loc + y, fbb, LineLength);
     }
 
@@ -719,12 +719,12 @@ PrintUsage (int ShoOpts)
 bool
 LoadNPF (char *FileName, double *Table, int Quantum, double convert, double arc_min, double arc_max)
 
-			/* Name of input file */
-			/* Location for storing function */
-			/* Angular resolution of Table (in degrees) */
-			/* Factor to convert input units to radians */
-			/* First angle of interest */
-			/* Last    "    "     "    */
+    /* Name of input file */
+    /* Location for storing function */
+    /* Angular resolution of Table (in degrees) */
+    /* Factor to convert input units to radians */
+    /* First angle of interest */
+    /* Last    "    "     "    */
 
 {
     bool	Warnings = 0;	/* Have any warning messages been printed? */
@@ -749,7 +749,7 @@ LoadNPF (char *FileName, double *Table, int Quantum, double convert, double arc_
     else if ((fPtr = fopen(FileName, "rb")) == NULL)
     {
 	(void) fprintf(stderr, "%s:  Cannot open input file '%s'\n",
-	    ProgName, FileName);
+		       ProgName, FileName);
 	(void) bu_exit (1, NULL);
     }
 
@@ -759,14 +759,14 @@ LoadNPF (char *FileName, double *Table, int Quantum, double convert, double arc_
 
     /* Fill the table */
     while ((fscanf(fPtr, "%lf", &theta) == 1) &&
-	(fscanf(fPtr, "%lf", &rho) == 1))
+	   (fscanf(fPtr, "%lf", &rho) == 1))
     {
 	theta *= convert;
 	if ((theta < 0.0) || (npf_index(theta / Deg2Rad) * Quantum > 360))
 	{
 	    (void) fprintf(stderr,
-		"Fatal:  Theta out of range: %g %s\n",
-		theta / convert, (convert == 1.0) ? "radians" : "degrees");
+			   "Fatal:  Theta out of range: %g %s\n",
+			   theta / convert, (convert == 1.0) ? "radians" : "degrees");
 	    Warnings = 2;
 	}
 	if ((rho < 0.0) || (rho > 1.0))
@@ -800,7 +800,7 @@ LoadNPF (char *FileName, double *Table, int Quantum, double convert, double arc_
 		(void) fprintf(stderr, "Warning:  No entry in input for ");
 		if (gap_max > gap_min)
 		    (void) fprintf(stderr, "%d <= theta <= %d degrees\n",
-			    gap_min, gap_max);
+				   gap_min, gap_max);
 		else
 		    (void) fprintf(stderr, "theta == %d degrees\n", gap_min);
 	    }
@@ -813,14 +813,14 @@ LoadNPF (char *FileName, double *Table, int Quantum, double convert, double arc_
 	(void) fprintf(stderr, "Warning:  No entry in input for ");
 	if (gap_max > gap_min)
 	    (void) fprintf(stderr, "%d <= theta <= %d degrees\n",
-		    gap_min, gap_max);
+			   gap_min, gap_max);
 	else
 	    (void) fprintf(stderr, "theta == %d degrees\n", gap_min);
     }
 
-     if (fPtr != stdin)
+    if (fPtr != stdin)
 	(void) fclose(fPtr);
-     return(Warnings);
+    return(Warnings);
 }
 
 int
@@ -864,38 +864,38 @@ ArgCompat (int Interior)
 void
 Fill_Empty (unsigned char *fbbPtr, double rho, double npf_rho, int unit_r, int merge)
 
-				/* Pointer to within fbb */
-				/* Radius of current pixel */
-				/* Value of function at this theta */
-				/* Unit radius (in pixels) */
-				/* Overlay onto current FB contents? */
+    /* Pointer to within fbb */
+    /* Radius of current pixel */
+    /* Value of function at this theta */
+    /* Unit radius (in pixels) */
+    /* Overlay onto current FB contents? */
 
 {
     if (! merge)
 	COPYRGB(fbbPtr, Color[C_BKGRND])
-}
+	    }
 
 void
 Fill_Constant (unsigned char *fbbPtr, double rho, double npf_rho, int unit_r, int merge)
 
-				/* Pointer to within fbb */
-				/* Radius of current pixel */
-				/* Value of function at this theta */
-				/* Unit radius (in pixels) */
-				/* Overlay onto current FB contents? */
+    /* Pointer to within fbb */
+    /* Radius of current pixel */
+    /* Value of function at this theta */
+    /* Unit radius (in pixels) */
+    /* Overlay onto current FB contents? */
 
 {
     COPYRGB(fbbPtr, Color[C_INTERIOR])
-}
+	}
 
 void
 Fill_Ramp (unsigned char *fbbPtr, double rho, double npf_rho, int unit_r, int merge)
 
-				/* Pointer to within fbb */
-				/* Radius of current pixel */
-				/* Value of function at this theta */
-				/* Unit radius (in pixels) */
-				/* Overlay onto current FB contents? */
+    /* Pointer to within fbb */
+    /* Radius of current pixel */
+    /* Value of function at this theta */
+    /* Unit radius (in pixels) */
+    /* Overlay onto current FB contents? */
 
 {
     RGBpixel	ThisPix;	/* Ramped color for current pixel */
@@ -907,51 +907,51 @@ Fill_Ramp (unsigned char *fbbPtr, double rho, double npf_rho, int unit_r, int me
     ThisPix[BLU] = ((double)Color[C_RAMP][BLU]) * rho / unit_r +
 	255 * (1 - rho / unit_r);
     COPYRGB(fbbPtr, ThisPix)
-}
+	}
 
 void
 Fill_Wedges (unsigned char *fbbPtr, double rho, double npf_rho, int unit_r, int merge)
 
-				/* Pointer to within fbb */
-				/* Radius of current pixel */
-				/* Value of function at this theta */
-				/* Unit radius (in pixels) */
-				/* Overlay onto current FB contents? */
+    /* Pointer to within fbb */
+    /* Radius of current pixel */
+    /* Value of function at this theta */
+    /* Unit radius (in pixels) */
+    /* Overlay onto current FB contents? */
 
 {
     if (npf_rho > .8)
 	COPYRGB(fbbPtr, Color[C_RED])
-    else if (npf_rho > .6)
-	COPYRGB(fbbPtr, Color[C_ORANGE])
-    else if (npf_rho > .4)
-	COPYRGB(fbbPtr, Color[C_YELLOW])
-    else if (npf_rho > .2)
-	COPYRGB(fbbPtr, Color[C_GREEN])
-    else
-	COPYRGB(fbbPtr, Color[C_BLUE])
-}
+	    else if (npf_rho > .6)
+		COPYRGB(fbbPtr, Color[C_ORANGE])
+		    else if (npf_rho > .4)
+			COPYRGB(fbbPtr, Color[C_YELLOW])
+			    else if (npf_rho > .2)
+				COPYRGB(fbbPtr, Color[C_GREEN])
+				    else
+					COPYRGB(fbbPtr, Color[C_BLUE])
+					    }
 
 void
 Fill_Rings (unsigned char *fbbPtr, double rho, double npf_rho, int unit_r, int merge)
 
-				/* Pointer to within fbb */
-				/* Radius of current pixel */
-				/* Value of function at this theta */
-				/* Unit radius (in pixels) */
-				/* Overlay onto current FB contents? */
+    /* Pointer to within fbb */
+    /* Radius of current pixel */
+    /* Value of function at this theta */
+    /* Unit radius (in pixels) */
+    /* Overlay onto current FB contents? */
 
 {
     if (rho / unit_r > .8)
 	COPYRGB(fbbPtr, Color[C_RED])
-    else if (rho / unit_r > .6)
-	COPYRGB(fbbPtr, Color[C_ORANGE])
-    else if (rho / unit_r > .4)
-	COPYRGB(fbbPtr, Color[C_YELLOW])
-    else if (rho / unit_r > .2)
-	COPYRGB(fbbPtr, Color[C_GREEN])
-    else
-	COPYRGB(fbbPtr, Color[C_BLUE])
-}
+	    else if (rho / unit_r > .6)
+		COPYRGB(fbbPtr, Color[C_ORANGE])
+		    else if (rho / unit_r > .4)
+			COPYRGB(fbbPtr, Color[C_YELLOW])
+			    else if (rho / unit_r > .2)
+				COPYRGB(fbbPtr, Color[C_GREEN])
+				    else
+					COPYRGB(fbbPtr, Color[C_BLUE])
+					    }
 
 /*
  * Local Variables:

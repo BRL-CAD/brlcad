@@ -200,7 +200,7 @@ mkstemp(char *file_template)
  * (len) length to contain the filename.
  *
  * Typical Use:
-@code
+ @code
  *	FILE *fp;
  *	char filename[MAXPATHLEN];
  *	fp = bu_temp_file(&filename, MAXPATHLEN); // get file name
@@ -215,8 +215,8 @@ mkstemp(char *file_template)
  *	rewind(fp);
  *	while (fputc(0, fp) == 0);
  *	fclose(fp);
-@endcode
- */
+ @endcode
+*/
 FILE *
 bu_temp_file(char *filepath, size_t len)
 {

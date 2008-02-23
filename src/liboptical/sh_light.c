@@ -161,10 +161,10 @@ aim_set (const struct bu_structparse *sdp, const char *name, const char *base, c
  */
 HIDDEN void
 light_cvt_visible(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
-     /* structure description */
-     /* struct member name */
-     /* begining of structure */
-     /* string containing value */
+    /* structure description */
+    /* struct member name */
+    /* begining of structure */
+    /* string containing value */
 {
     struct light_specific *lsp = (struct light_specific *)base;
 
@@ -212,10 +212,10 @@ light_pt_allocate(register struct light_specific *lsp)
  */
 HIDDEN void
 light_pt_set(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
-     /* structure description */
-     /* struct member name */
-     /* begining of structure */
-     /* string containing value */
+    /* structure description */
+    /* struct member name */
+    /* begining of structure */
+    /* string containing value */
 {
     struct light_specific *lsp = (struct light_specific *)base;
     fastf_t *p = (fastf_t *)(base+sdp->sp_offset);
@@ -308,46 +308,46 @@ ray_setup(struct application *ap,
     face = BN_RANDOM(idx) * 2.9999;
 
     switch (face) {
-    case 0: /* XMIN */
-	VSET(ap->a_ray.r_pt,
-	     tree_min[X] - 10.0,
-	     tree_min[Y] + BN_RANDOM(idx) * span[Y],
-	     tree_min[Z] + BN_RANDOM(idx) * span[Z]);
-	VSET(pt,
-	     tree_max[X],
-	     tree_min[Y] + BN_RANDOM(idx) * span[Y],
-	     tree_min[Z] + BN_RANDOM(idx) * span[Z]);
-	break;
+	case 0: /* XMIN */
+	    VSET(ap->a_ray.r_pt,
+		 tree_min[X] - 10.0,
+		 tree_min[Y] + BN_RANDOM(idx) * span[Y],
+		 tree_min[Z] + BN_RANDOM(idx) * span[Z]);
+	    VSET(pt,
+		 tree_max[X],
+		 tree_min[Y] + BN_RANDOM(idx) * span[Y],
+		 tree_min[Z] + BN_RANDOM(idx) * span[Z]);
+	    break;
 
-    case 1: /* YMIN */
-	VSET(ap->a_ray.r_pt,
-	     tree_min[X] + BN_RANDOM(idx) * span[X],
-	     tree_min[Y] - 10.0,
-	     tree_min[Z] + BN_RANDOM(idx) * span[Z]);
-	VSET(pt,
-	     tree_min[X] + BN_RANDOM(idx) * span[X],
-	     tree_max[Y],
-	     tree_min[Z] + BN_RANDOM(idx) * span[Z]);
-	break;
+	case 1: /* YMIN */
+	    VSET(ap->a_ray.r_pt,
+		 tree_min[X] + BN_RANDOM(idx) * span[X],
+		 tree_min[Y] - 10.0,
+		 tree_min[Z] + BN_RANDOM(idx) * span[Z]);
+	    VSET(pt,
+		 tree_min[X] + BN_RANDOM(idx) * span[X],
+		 tree_max[Y],
+		 tree_min[Z] + BN_RANDOM(idx) * span[Z]);
+	    break;
 
-    case 2: /* ZMIN */
-	VSET(ap->a_ray.r_pt,
-	     tree_min[X] +
-	     BN_RANDOM(idx) * span[X],
+	case 2: /* ZMIN */
+	    VSET(ap->a_ray.r_pt,
+		 tree_min[X] +
+		 BN_RANDOM(idx) * span[X],
 
-	     tree_min[Y] +
-	     BN_RANDOM(idx) * span[Y],
+		 tree_min[Y] +
+		 BN_RANDOM(idx) * span[Y],
 
-	     tree_min[Z] - 10.0);
-	VSET(pt,
-	     tree_min[X] +
-	     BN_RANDOM(idx) * span[X],
+		 tree_min[Z] - 10.0);
+	    VSET(pt,
+		 tree_min[X] +
+		 BN_RANDOM(idx) * span[X],
 
-	     tree_min[Y] +
-	     BN_RANDOM(idx) * span[Y],
+		 tree_min[Y] +
+		 BN_RANDOM(idx) * span[Y],
 
-	     tree_max[Z]);
-	break;
+		 tree_max[Z]);
+	    break;
     }
     VSUB2(ap->a_ray.r_dir, pt, ap->a_ray.r_pt);
     VUNITIZE(ap->a_ray.r_dir);
@@ -1376,7 +1376,7 @@ light_vis(struct light_obs_stuff *los, char *flags)
 
 
 	    if ( VisRayvsLightN > cosine89_99deg &&
-		   VisRayvsSurfN > cosine89_99deg ) {
+		 VisRayvsSurfN > cosine89_99deg ) {
 
 		/* ok, we can shoot at this sample point */
 		if (rdebug & RDEBUG_LIGHT )
@@ -1744,24 +1744,24 @@ light_obs(struct application *ap, struct shadework *swp, int have)
 		       vis_ray);
 
 	    switch (lv = light_vis(&los, flags)) {
-	    case 1:
-		/* remember the last ray that hit */
-		VMOVE(tl_p, los.to_light_center);
-		visibility++;
-		break;
-	    case -1:
-		/* this is our clue to give up on
-		 * this light source.
-		 */
-		VMOVE(tl_p, los.to_light_center);
-		visibility = vis_ray = tot_vis_rays;
-		break;
-	    case 0:	/* light not visible */
-		if (rdebug & RDEBUG_LIGHT)
-		    bu_log("light not visible\n");
-		break;
-	    default:
-		bu_log("light_vis = %d\n", lv);
+		case 1:
+		    /* remember the last ray that hit */
+		    VMOVE(tl_p, los.to_light_center);
+		    visibility++;
+		    break;
+		case -1:
+		    /* this is our clue to give up on
+		     * this light source.
+		     */
+		    VMOVE(tl_p, los.to_light_center);
+		    visibility = vis_ray = tot_vis_rays;
+		    break;
+		case 0:	/* light not visible */
+		    if (rdebug & RDEBUG_LIGHT)
+			bu_log("light not visible\n");
+		    break;
+		default:
+		    bu_log("light_vis = %d\n", lv);
 	    }
 	}
 	if (visibility) {
@@ -1804,26 +1804,26 @@ light_maker(int num, mat_t v2m)
     /* Determine the Light location(s) in view space */
     for ( i=0; i<num; i++ )  {
 	switch (i)  {
-	case 0:
-	    /* 0:  At left edge, 1/2 high */
-	    VSET( color, 1,  1,  1 );	/* White */
-	    VSET( temp, -1, 0, 1 );
-	    break;
+	    case 0:
+		/* 0:  At left edge, 1/2 high */
+		VSET( color, 1,  1,  1 );	/* White */
+		VSET( temp, -1, 0, 1 );
+		break;
 
-	case 1:
-	    /* 1: At right edge, 1/2 high */
-	    VSET( color,  1, 1, 1 );
-	    VSET( temp, 1, 0, 1 );
-	    break;
+	    case 1:
+		/* 1: At right edge, 1/2 high */
+		VSET( color,  1, 1, 1 );
+		VSET( temp, 1, 0, 1 );
+		break;
 
-	case 2:
-	    /* 2:  Behind, and overhead */
-	    VSET( color, 1, 1,  1 );
-	    VSET( temp, 0, 1, -0.5 );
-	    break;
+	    case 2:
+		/* 2:  Behind, and overhead */
+		VSET( color, 1, 1,  1 );
+		VSET( temp, 0, 1, -0.5 );
+		break;
 
-	default:
-	    return;
+	    default:
+		return;
 	}
 
 	if (rdebug & RDEBUG_LIGHT) {

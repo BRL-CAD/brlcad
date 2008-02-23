@@ -39,61 +39,61 @@
  */
 
 union record  {
-	char	u_id;		/* To differentiate SOLID vs COMB */
-	char	u_size[128];	/* Total record size */
-	struct solids  {
-		char	s_id;
-		char	s_type;
-		char	s_name[16];
-		short	s_num;		/* COMGEOM solid # temporary */
-		float	s_values[24];
-	}  s;
-	struct combination  {
-		char	c_id;
-		char	c_flags;
-		char	c_name[16];
-		short	c_regionid;
-		short	c_aircode;
-		short	c_length;		/* in 128 byte granules */
-		short	c_num;			/* region #, from COMGEOM */
-		short	c_material;		/* material code */
-		short  	c_los;			/* line of sight percentage */
-		char	c_pad[128-30];
-	}  c;
-	struct members  {
-		char	m_id;
-		char	m_relation;		/* OR, UNION, DIFF */
-		char	m_brname[16];		/* Name of this branch */
-		char	m_instname[16];		/* Name of refered-to obj */
-		short 	m_pad1;
-		mat_t	m_mat;			/* Homogeneous Xform Matrix */
-		short	m_num;			/* solid # ref, from COMGEOM */
-		short	m_pad2;
-	}  M;
-	struct	ars_rec	{
-		char	a_id;		/* A */
-		char	a_type;
-		char	a_name[16];
-		short	a_m;		/* # curves */
-		short	a_n;		/* # points per curve */
-		short	a_curlen;	/* # granules per curve */
-		short	a_totlen;	/* # granules per solid */
-		short	a_pad;
-		float	a_xmax;		/* max x coordinate */
-		float	a_xmin;		/* min x coordinate */
-		float	a_ymax;		/* max y coordinate */
-		float	a_ymin;		/* min y coordinate */
-		float	a_zmax;		/* max z coordinate */
-		float	a_zmin;		/* min z coordinate */
-	}    a;
-	struct	ars_ext	{
-		char	b_id;		/*   B   */
-		char	b_type;
-		short	b_n;        /* 1.1 1.2 1.3 2.1 2.2 2.3 */
-		short	b_ngranule;
-		short	b_pad;
-		float	b_values[8*3];
-	}   b;
+    char	u_id;		/* To differentiate SOLID vs COMB */
+    char	u_size[128];	/* Total record size */
+    struct solids  {
+	char	s_id;
+	char	s_type;
+	char	s_name[16];
+	short	s_num;		/* COMGEOM solid # temporary */
+	float	s_values[24];
+    }  s;
+    struct combination  {
+	char	c_id;
+	char	c_flags;
+	char	c_name[16];
+	short	c_regionid;
+	short	c_aircode;
+	short	c_length;		/* in 128 byte granules */
+	short	c_num;			/* region #, from COMGEOM */
+	short	c_material;		/* material code */
+	short  	c_los;			/* line of sight percentage */
+	char	c_pad[128-30];
+    }  c;
+    struct members  {
+	char	m_id;
+	char	m_relation;		/* OR, UNION, DIFF */
+	char	m_brname[16];		/* Name of this branch */
+	char	m_instname[16];		/* Name of refered-to obj */
+	short 	m_pad1;
+	mat_t	m_mat;			/* Homogeneous Xform Matrix */
+	short	m_num;			/* solid # ref, from COMGEOM */
+	short	m_pad2;
+    }  M;
+    struct	ars_rec	{
+	char	a_id;		/* A */
+	char	a_type;
+	char	a_name[16];
+	short	a_m;		/* # curves */
+	short	a_n;		/* # points per curve */
+	short	a_curlen;	/* # granules per curve */
+	short	a_totlen;	/* # granules per solid */
+	short	a_pad;
+	float	a_xmax;		/* max x coordinate */
+	float	a_xmin;		/* min x coordinate */
+	float	a_ymax;		/* max y coordinate */
+	float	a_ymin;		/* min y coordinate */
+	float	a_zmax;		/* max z coordinate */
+	float	a_zmin;		/* min z coordinate */
+    }    a;
+    struct	ars_ext	{
+	char	b_id;		/*   B   */
+	char	b_type;
+	short	b_n;        /* 1.1 1.2 1.3 2.1 2.2 2.3 */
+	short	b_ngranule;
+	short	b_pad;
+	float	b_values[8*3];
+    }   b;
 };
 
 /*

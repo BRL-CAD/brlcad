@@ -98,7 +98,7 @@ struct sol_name_dist *mk_solid (char *name, fastf_t dist)
     struct sol_name_dist	*sp;
 
     sp = (struct sol_name_dist *)
-	    bu_malloc(sizeof(struct sol_name_dist), "solid name-and_dist");
+	bu_malloc(sizeof(struct sol_name_dist), "solid name-and_dist");
     sp -> magic = SOL_NAME_DIST_MAGIC;
     sp -> name = name;
     sp -> dist = dist;
@@ -145,10 +145,10 @@ static int rpt_hit (struct application *ap, struct partition *ph, struct seg *se
     struct sol_name_dist	*old_sol;
     struct sol_name_dist	*sol;
     static int			(*orders[])() =
-				{
-				    sol_comp_name,
-				    sol_comp_dist
-				};
+	{
+	    sol_comp_name,
+	    sol_comp_dist
+	};
 
     bu_log("I hit it!\n");
     /*
@@ -167,21 +167,21 @@ static int rpt_hit (struct application *ap, struct partition *ph, struct seg *se
     pp = ph -> pt_forw;
     BU_CKMAG(pp, PT_MAGIC, "partition structure");
     for (sh = pp -> pt_inseg;
-	    *((long *) sh) != BU_LIST_HEAD_MAGIC;
-	    sh = (struct seg *) (sh -> l.forw))
+	 *((long *) sh) != BU_LIST_HEAD_MAGIC;
+	 sh = (struct seg *) (sh -> l.forw))
 	BU_CKMAG(sh, RT_SEG_MAGIC, "segment structure");
 
     /*
      *	March down the list of segments
      */
     for (sp = (struct seg *) (sh -> l.forw);
-	    sp != sh;
-	    sp = (struct seg *) sp -> l.forw)
+	 sp != sh;
+	 sp = (struct seg *) sp -> l.forw)
     {
 	BU_CKMAG(sp, RT_SEG_MAGIC, "seg structure");
 	bu_log("I saw solid %s at distance %g\n",
-	    sp -> seg_stp -> st_name,
-	    sp -> seg_in.hit_dist);
+	       sp -> seg_stp -> st_name,
+	       sp -> seg_in.hit_dist);
 
 	sol = mk_solid(sp -> seg_stp -> st_name, sp -> seg_in.hit_dist);
 	if (bu_rb_insert(solids, (void *) sol) < 0)

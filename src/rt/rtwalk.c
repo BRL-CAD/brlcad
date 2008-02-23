@@ -262,7 +262,7 @@ main(int argc, char **argv)
 
 	    /* Shoot Ray */
 	    if (R_DEBUG>=3)fprintf(stderr, "try=%d, maxtogo=%g  ",
-				  failed_try, max_dist_togo);
+				   failed_try, max_dist_togo);
 	    ap.a_hit = hit;
 	    ap.a_miss = miss;
 	    ap.a_onehit = 1;
@@ -304,7 +304,7 @@ main(int argc, char **argv)
 		 */
 		if ( VEQUAL( norm_cur_try, norm_prev_step ) )  {
 		    if (R_DEBUG>=3)fprintf(stderr,
-					  "Try prev dir\n");
+					   "Try prev dir\n");
 		    VMOVE( ap.a_ray.r_dir, dir_prev_step );
 		    continue;
 		}

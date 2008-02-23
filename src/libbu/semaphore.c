@@ -50,8 +50,8 @@
 #  include <sys/machd.h>	/* For HZ */
 # endif
 struct bu_semaphores {
-	long	magic;
-	long	p;
+    long	magic;
+    long	p;
 };
 # define DEFINED_BU_SEMAPHORES	1
 #endif
@@ -65,8 +65,8 @@ struct bu_semaphores {
 /* Alliant FX/8 */
 # include <cncall.h>
 struct bu_semaphores {
-	long	magic;
-	char	c;
+    long	magic;
+    char	c;
 };
 # define DEFINED_BU_SEMAPHORES	1
 #endif
@@ -93,8 +93,8 @@ static usptr_t		*bu_lockstuff = 0;
 extern int		_utrace;
 
 struct bu_semaphores {
-	long	magic;
-	ulock_t	ltp;
+    long	magic;
+    ulock_t	ltp;
 };
 # define DEFINED_BU_SEMAPHORES	1
 #endif /* SGI_4D */
@@ -104,16 +104,16 @@ struct bu_semaphores {
 #ifdef ardent
 #	include <thread.h>
 struct bu_semaphores {
-	long	magic;
-	char	sem;
+    long	magic;
+    char	sem;
 };
 # define DEFINED_BU_SEMAPHORES	1
 #endif
 
 #if defined(convex) || defined(__convex__)
 struct bu_semaphores {
-	long	magic;
-	long	sem;
+    long	magic;
+    long	sem;
 };
 # define DEFINED_BU_SEMAPHORES	1
 #endif
@@ -122,8 +122,8 @@ struct bu_semaphores {
 #	include <parallel.h>
 #	include <sys/sysadmin.h>
 struct bu_semaphores {
-	long	magic;
-	char	sem;
+    long	magic;
+    char	sem;
 };
 # define DEFINED_BU_SEMAPHORES	1
 #endif
@@ -136,8 +136,8 @@ struct bu_semaphores {
 #	include <thread.h>
 #	include <synch.h>
 struct bu_semaphores {
-	long	magic;
-	mutex_t	mu;
+    long	magic;
+    mutex_t	mu;
 };
 # define DEFINED_BU_SEMAPHORES	1
 #endif	/* SUNOS */
@@ -156,8 +156,8 @@ struct bu_semaphores {
 #	include <pthread.h>
 #  if !defined(sgi)
 struct bu_semaphores {
-	long	magic;
-	pthread_mutex_t	mu;
+    long	magic;
+    pthread_mutex_t	mu;
 };
 #	define DEFINED_BU_SEMAPHORES	1
 #  endif
@@ -224,11 +224,11 @@ bu_semaphore_sgi_init()
  */
 static void
 bu_convex_acquire(p)
-register long *p;
+    register long *p;
 {
-	asm("getlck:");
-	asm("	tas	@0(ap)");	/* try to set the lock */
-	asm("	jbra.f	getlck");	/* loop until successful */
+    asm("getlck:");
+    asm("	tas	@0(ap)");	/* try to set the lock */
+    asm("	jbra.f	getlck");	/* loop until successful */
 }
 #endif /* convex */
 
@@ -251,102 +251,102 @@ void
 bu_semaphore_init(unsigned int nsemaphores)
 {
 #if !defined(PARALLEL) && !defined(DEFINED_BU_SEMAPHORES)
-	return;					/* No support on this hardware */
+    return;					/* No support on this hardware */
 #else
-	unsigned int	i;
+    unsigned int	i;
 
-	if ( bu_nsemaphores != 0 )  return;	/* Already called */
-	bu_semaphores = (struct bu_semaphores *)calloc(nsemaphores, sizeof(struct bu_semaphores) );
-	if ( !bu_semaphores )  {
-		fprintf(stderr, "bu_semaphore_init(): could not allocate space for %d semaphores of len %ld\n",
-			nsemaphores, (long)sizeof(struct bu_semaphores));
-		exit(2); /* cannot call bu_exit() here */
-	}
+    if ( bu_nsemaphores != 0 )  return;	/* Already called */
+    bu_semaphores = (struct bu_semaphores *)calloc(nsemaphores, sizeof(struct bu_semaphores) );
+    if ( !bu_semaphores )  {
+	fprintf(stderr, "bu_semaphore_init(): could not allocate space for %d semaphores of len %ld\n",
+		nsemaphores, (long)sizeof(struct bu_semaphores));
+	exit(2); /* cannot call bu_exit() here */
+    }
 
-	/*
-	 *  Begin vendor-specific initialization sections.
-	 */
+    /*
+     *  Begin vendor-specific initialization sections.
+     */
 
 #	if defined(alliant)
-	for ( i=0; i < nsemaphores; i++ )  {
-		bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
-		(void) initialize_lock( &bu_semaphores[i].c );
-	}
+    for ( i=0; i < nsemaphores; i++ )  {
+	bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
+	(void) initialize_lock( &bu_semaphores[i].c );
+    }
 #	endif
 
 #	ifdef ardent
-	for ( i=0; i < nsemaphores; i++ )  {
-		bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
-		bu_semaphores[i].sem = 1;	/* mark as released */
-	}
+    for ( i=0; i < nsemaphores; i++ )  {
+	bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
+	bu_semaphores[i].sem = 1;	/* mark as released */
+    }
 #	endif
 
 #	if defined(convex) || defined(__convex__)
-	for ( i=0; i < nsemaphores; i++ )  {
-		bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
-		bu_semaphores[i].sem = 0;	/* mark as released */
-	}
+    for ( i=0; i < nsemaphores; i++ )  {
+	bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
+	bu_semaphores[i].sem = 0;	/* mark as released */
+    }
 #	endif
 
 #	ifdef CRAY
-	for ( i=0; i < nsemaphores; i++ )  {
-		bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
-		LOCKASGN( &bu_semaphores[i].p );
-	}
+    for ( i=0; i < nsemaphores; i++ )  {
+	bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
+	LOCKASGN( &bu_semaphores[i].p );
+    }
 #	endif /* CRAY */
 
 #	if defined(n16)
-	/*
-	 *			Encore MultiMax.
-	 *  While the manual suggests that one should use spin_create()
-	 *  to aquire a new control structure for spin locking, it turns
-	 *  out that the library support for that simply malloc()s a 1-byte
-	 *  area to contain the lock, and sets it to PAR_UNLOCKED.
-	 */
-	for ( i=0; i < nsemaphores; i++ )  {
-		bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
-		bu_semaphores[i].sem = PAR_UNLOCKED;
-	}
+    /*
+     *			Encore MultiMax.
+     *  While the manual suggests that one should use spin_create()
+     *  to aquire a new control structure for spin locking, it turns
+     *  out that the library support for that simply malloc()s a 1-byte
+     *  area to contain the lock, and sets it to PAR_UNLOCKED.
+     */
+    for ( i=0; i < nsemaphores; i++ )  {
+	bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
+	bu_semaphores[i].sem = PAR_UNLOCKED;
+    }
 #	endif
 
 #	ifdef SGI_4D
-	bu_semaphore_sgi_init();
-	for ( i=0; i < nsemaphores; i++ )  {
-		bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
-		if ( (bu_semaphores[i].ltp = usnewlock(bu_lockstuff)) == NULL )  {
-			perror("usnewlock");
-			fprintf(stderr, "bu_semaphore_init: usnewlock() failed, unable to allocate lock [%d]\n", i);
-			bu_bomb("fatal semaphore initialization failure");
-		}
+    bu_semaphore_sgi_init();
+    for ( i=0; i < nsemaphores; i++ )  {
+	bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
+	if ( (bu_semaphores[i].ltp = usnewlock(bu_lockstuff)) == NULL )  {
+	    perror("usnewlock");
+	    fprintf(stderr, "bu_semaphore_init: usnewlock() failed, unable to allocate lock [%d]\n", i);
+	    bu_bomb("fatal semaphore initialization failure");
 	}
+    }
 #	endif
 
 #	ifdef SUNOS
-	for ( i=0; i < nsemaphores; i++ )  {
-		bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
-		if (mutex_init( &bu_semaphores[i].mu, USYNC_THREAD, NULL)) {
-			fprintf(stderr, "bu_semaphore_init(): mutex_init() failed on [%d]\n", i);
-			bu_bomb("fatal semaphore acquisition failure");
-		}
-
+    for ( i=0; i < nsemaphores; i++ )  {
+	bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
+	if (mutex_init( &bu_semaphores[i].mu, USYNC_THREAD, NULL)) {
+	    fprintf(stderr, "bu_semaphore_init(): mutex_init() failed on [%d]\n", i);
+	    bu_bomb("fatal semaphore acquisition failure");
 	}
+
+    }
 #	endif
 #	if defined(HAVE_PTHREAD_H) && !defined(sgi)
-	for ( i=0; i < nsemaphores; i++ )  {
-		bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
-		if (pthread_mutex_init( &bu_semaphores[i].mu,  NULL)) {
-			fprintf(stderr, "bu_semaphore_init(): pthread_mutex_init() failed on [%d]\n", i);
-			bu_bomb("fatal semaphore acquisition failure");
-		}
+    for ( i=0; i < nsemaphores; i++ )  {
+	bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
+	if (pthread_mutex_init( &bu_semaphores[i].mu,  NULL)) {
+	    fprintf(stderr, "bu_semaphore_init(): pthread_mutex_init() failed on [%d]\n", i);
+	    bu_bomb("fatal semaphore acquisition failure");
 	}
+    }
 #	endif
 
-	/*
-	 *  This should be last thing done before returning, so that
-	 *  any subroutines called (e.g. bu_calloc()) won't think that
-	 *  parallel operation has begun yet, and do acquire/release.
-	 */
-	bu_nsemaphores = nsemaphores;
+    /*
+     *  This should be last thing done before returning, so that
+     *  any subroutines called (e.g. bu_calloc()) won't think that
+     *  parallel operation has begun yet, and do acquire/release.
+     */
+    bu_nsemaphores = nsemaphores;
 #endif	/* PARALLEL */
 }
 
@@ -357,65 +357,65 @@ void
 bu_semaphore_acquire(unsigned int i)
 {
 #if !defined(PARALLEL) && !defined(DEFINED_BU_SEMAPHORES)
-	return;					/* No support on this hardware */
+    return;					/* No support on this hardware */
 #else
-	if (bu_semaphores == NULL) {
-		/* Semaphores not initialized yet.  Must be non-parallel */
-		return;
-	}
+    if (bu_semaphores == NULL) {
+	/* Semaphores not initialized yet.  Must be non-parallel */
+	return;
+    }
 
-	BU_CKMAG(bu_semaphores, BU_SEMAPHORE_MAGIC, "bu_semaphore");
+    BU_CKMAG(bu_semaphores, BU_SEMAPHORE_MAGIC, "bu_semaphore");
 
-	if (i >= bu_nsemaphores) {
-		fprintf(stderr, "bu_semaphore_acquire(%d): semaphore # exceeds max of %d\n",
-			i, bu_nsemaphores - 1);
-		bu_bomb("fatal semaphore acquisition failure");
-	}
+    if (i >= bu_nsemaphores) {
+	fprintf(stderr, "bu_semaphore_acquire(%d): semaphore # exceeds max of %d\n",
+		i, bu_nsemaphores - 1);
+	bu_bomb("fatal semaphore acquisition failure");
+    }
 
-	BU_CKMAG(&bu_semaphores[i], BU_SEMAPHORE_MAGIC, "bu_semaphore");
+    BU_CKMAG(&bu_semaphores[i], BU_SEMAPHORE_MAGIC, "bu_semaphore");
 
-	/*
-	 *  Begin vendor-specific initialization sections.
-	 */
+    /*
+     *  Begin vendor-specific initialization sections.
+     */
 
 #	if defined(alliant)
-	(void) lock( &bu_semaphores[i].c );
+    (void) lock( &bu_semaphores[i].c );
 #	endif
 
 #	ifdef ardent
-	{
-		register long	*p = &bu_semaphores[i].sem;
-		while ( SYNCH_Adr = p, !SYNCH_Val )  while ( !*p );
-	}
+    {
+	register long	*p = &bu_semaphores[i].sem;
+	while ( SYNCH_Adr = p, !SYNCH_Val )  while ( !*p );
+    }
 #	endif
 
 #	if defined(convex) || defined(__convex__)
-	bu_convex_acquire( &bu_semaphores[i].sem );
+    bu_convex_acquire( &bu_semaphores[i].sem );
 #	endif
 
 #	ifdef CRAY
-	LOCKON( &bu_semaphores[i].p );
+    LOCKON( &bu_semaphores[i].p );
 #	endif /* CRAY */
 
 #	if defined(n16)
-	(void)spin_lock( (LOCK *)&bu_semaphores[i].sem );
+    (void)spin_lock( (LOCK *)&bu_semaphores[i].sem );
 #	endif
 
 #	ifdef SGI_4D
-	uswsetlock( bu_semaphores[i].ltp, 1000);
+    uswsetlock( bu_semaphores[i].ltp, 1000);
 #	endif
 
 #	ifdef SUNOS
-	if (mutex_lock(&bu_semaphores[i].mu)) {
-		fprintf(stderr, "bu_semaphore_acquire(): mutex_lock() failed on [%d]\n", i);
-		bu_bomb("fatal semaphore acquisition failure");
-	}
+    if (mutex_lock(&bu_semaphores[i].mu)) {
+	fprintf(stderr, "bu_semaphore_acquire(): mutex_lock() failed on [%d]\n", i);
+	bu_bomb("fatal semaphore acquisition failure");
+    }
 #	endif
 #	if defined(HAVE_PTHREAD_H) && !defined(sgi)
-	if (pthread_mutex_lock(&bu_semaphores[i].mu)) {
-		fprintf(stderr, "bu_semaphore_acquire(): pthread_mutex_lock() failed on [%d]\n", i);
-		bu_bomb("fatal semaphore acquisition failure");
-	}
+    if (pthread_mutex_lock(&bu_semaphores[i].mu)) {
+	fprintf(stderr, "bu_semaphore_acquire(): pthread_mutex_lock() failed on [%d]\n", i);
+	bu_bomb("fatal semaphore acquisition failure");
+    }
 #	endif
 
 #endif
@@ -428,62 +428,62 @@ void
 bu_semaphore_release(unsigned int i)
 {
 #if !defined(PARALLEL) && !defined(DEFINED_BU_SEMAPHORES)
-	return;					/* No support on this hardware */
+    return;					/* No support on this hardware */
 #else
-	if ( bu_semaphores == NULL )  {
-		/* Semaphores not initialized yet.  Must be non-parallel */
-		return;
-	}
+    if ( bu_semaphores == NULL )  {
+	/* Semaphores not initialized yet.  Must be non-parallel */
+	return;
+    }
 
-	BU_CKMAG(bu_semaphores, BU_SEMAPHORE_MAGIC, "bu_semaphore");
+    BU_CKMAG(bu_semaphores, BU_SEMAPHORE_MAGIC, "bu_semaphore");
 
-	if ( i >= bu_nsemaphores )  {
-		fprintf(stderr, "bu_semaphore_release(%d): semaphore # exceeds max of %d\n",
-			i, bu_nsemaphores - 1);
-		exit(3); /* cannot call bu_exit() here */
-	}
+    if ( i >= bu_nsemaphores )  {
+	fprintf(stderr, "bu_semaphore_release(%d): semaphore # exceeds max of %d\n",
+		i, bu_nsemaphores - 1);
+	exit(3); /* cannot call bu_exit() here */
+    }
 
-	BU_CKMAG(&bu_semaphores[i], BU_SEMAPHORE_MAGIC, "bu_semaphore");
+    BU_CKMAG(&bu_semaphores[i], BU_SEMAPHORE_MAGIC, "bu_semaphore");
 
-	/*
-	 *  Begin vendor-specific initialization sections.
-	 */
+    /*
+     *  Begin vendor-specific initialization sections.
+     */
 
 #	if defined(alliant)
-	(void) unlock( &bu_semaphores[i].c );
+    (void) unlock( &bu_semaphores[i].c );
 #	endif
 
 #	ifdef ardent
-	bu_semaphores[i].sem = 1;	/* release */
+    bu_semaphores[i].sem = 1;	/* release */
 #	endif
 
 #	if defined(convex) || defined(__convex__)
-	bu_semaphores[i].sem = 0;	/* release */
+    bu_semaphores[i].sem = 0;	/* release */
 #	endif
 
 #	ifdef CRAY
-	LOCKOFF( &bu_semaphores[i].p );
+    LOCKOFF( &bu_semaphores[i].p );
 #	endif /* CRAY */
 
 #	if defined(n16)
-	(void)spin_unlock( (LOCK *)&bu_semaphores[i].sem );
+    (void)spin_unlock( (LOCK *)&bu_semaphores[i].sem );
 #	endif
 
 #	ifdef SGI_4D
-	usunsetlock( bu_semaphores[i].ltp );
+    usunsetlock( bu_semaphores[i].ltp );
 #	endif
 
 #	ifdef SUNOS
-	if ( mutex_unlock( &bu_semaphores[i].mu ) )  {
-		fprintf(stderr, "bu_semaphore_acquire(): mutex_unlock() failed on [%d]\n", i);
-		bu_bomb("fatal semaphore acquisition failure");
-	}
+    if ( mutex_unlock( &bu_semaphores[i].mu ) )  {
+	fprintf(stderr, "bu_semaphore_acquire(): mutex_unlock() failed on [%d]\n", i);
+	bu_bomb("fatal semaphore acquisition failure");
+    }
 #	endif
 #	if defined(HAVE_PTHREAD_H) && !defined (sgi)
-	if ( pthread_mutex_unlock( &bu_semaphores[i].mu ) )  {
-		fprintf(stderr, "bu_semaphore_acquire(): pthread_mutex_unlock() failed on [%d]\n", i);
-		bu_bomb("fatal semaphore acquisition failure");
-	}
+    if ( pthread_mutex_unlock( &bu_semaphores[i].mu ) )  {
+	fprintf(stderr, "bu_semaphore_acquire(): pthread_mutex_unlock() failed on [%d]\n", i);
+	bu_bomb("fatal semaphore acquisition failure");
+    }
 #	endif
 #endif
 }

@@ -41,17 +41,17 @@
 void
 rt_htbl_init(struct rt_htbl *b, int len, const char *str)
 
-				/* initial len. */
+    /* initial len. */
 
 {
-	if (bu_debug & BU_DEBUG_PTBL)
-		bu_log("rt_htbl_init(%8x, len=%d, %s)\n", b, len, str);
-	BU_LIST_INIT(&b->l);
-	b->l.magic = RT_HTBL_MAGIC;
-	if ( len <= 0 )  len = 64;
-	b->blen = len;
-	b->hits = (struct hit *)bu_calloc(b->blen, sizeof(struct hit), str);
-	b->end = 0;
+    if (bu_debug & BU_DEBUG_PTBL)
+	bu_log("rt_htbl_init(%8x, len=%d, %s)\n", b, len, str);
+    BU_LIST_INIT(&b->l);
+    b->l.magic = RT_HTBL_MAGIC;
+    if ( len <= 0 )  len = 64;
+    b->blen = len;
+    b->hits = (struct hit *)bu_calloc(b->blen, sizeof(struct hit), str);
+    b->end = 0;
 }
 
 /*
@@ -62,10 +62,10 @@ rt_htbl_init(struct rt_htbl *b, int len, const char *str)
 void
 rt_htbl_reset(struct rt_htbl *b)
 {
-	RT_CK_HTBL(b);
-	b->end = 0;
-	if (bu_debug & BU_DEBUG_PTBL)
-		bu_log("rt_htbl_reset(%8x)\n", b);
+    RT_CK_HTBL(b);
+    b->end = 0;
+    if (bu_debug & BU_DEBUG_PTBL)
+	bu_log("rt_htbl_reset(%8x)\n", b);
 }
 
 /*
@@ -77,13 +77,13 @@ rt_htbl_reset(struct rt_htbl *b)
 void
 rt_htbl_free(struct rt_htbl *b)
 {
-	RT_CK_HTBL(b);
+    RT_CK_HTBL(b);
 
-	bu_free((genptr_t)b->hits, "rt_htbl.hits[]");
-	memset((char *)b, 0, sizeof(struct rt_htbl));	/* sanity */
+    bu_free((genptr_t)b->hits, "rt_htbl.hits[]");
+    memset((char *)b, 0, sizeof(struct rt_htbl));	/* sanity */
 
-	if (bu_debug & BU_DEBUG_PTBL)
-		bu_log("rt_htbl_free(%8x)\n", b);
+    if (bu_debug & BU_DEBUG_PTBL)
+	bu_log("rt_htbl_free(%8x)\n", b);
 }
 
 /*
@@ -94,17 +94,17 @@ rt_htbl_free(struct rt_htbl *b)
 struct hit *
 rt_htbl_get(struct rt_htbl *b)
 {
-	RT_CK_HTBL(b);
+    RT_CK_HTBL(b);
 
-	if ( b->end >= b->blen )  {
-		/* Increase size of array */
-		b->hits = (struct hit *)bu_realloc( (char *)b->hits,
-			sizeof(struct hit) * (b->blen *= 4),
-			"rt_htbl.hits[]" );
-	}
+    if ( b->end >= b->blen )  {
+	/* Increase size of array */
+	b->hits = (struct hit *)bu_realloc( (char *)b->hits,
+					    sizeof(struct hit) * (b->blen *= 4),
+					    "rt_htbl.hits[]" );
+    }
 
-	/* There is sufficient room */
-	return &b->hits[b->end++];
+    /* There is sufficient room */
+    return &b->hits[b->end++];
 }
 
 /*

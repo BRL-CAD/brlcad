@@ -208,15 +208,15 @@ main(int argc, char **argv)
 	    }
 	}
 	if ( id == ID_POLY)
+	{
+	    if ( rt_pg_to_bot( &intern, &tol, &rt_uniresource ) )
 	    {
-		if ( rt_pg_to_bot( &intern, &tol, &rt_uniresource ) )
-		    {
-			fprintf( stderr, "%s: Conversion from polysolid to BOT failed for solid %s\n",
-				 argv[0], dp->d_namep );
-			errors++;
-			continue;
-		    }
+		fprintf( stderr, "%s: Conversion from polysolid to BOT failed for solid %s\n",
+			 argv[0], dp->d_namep );
+		errors++;
+		continue;
 	    }
+	}
 
 	/* to insure null termination */
 	bu_strlcpy( name, dp->d_namep, sizeof(name) );

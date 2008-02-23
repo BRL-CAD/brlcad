@@ -65,7 +65,7 @@ static Tcl_HashTable bots;		/* hash table with a bot_face_list entry for each BO
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
-	{"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL }
+    {"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL }
 };
 
 const char title[] = "RT BoT Faces";
@@ -101,22 +101,22 @@ int
 view_init( struct application *ap, char *file, char *obj, int minus_o )
 {
 
-	if ( !minus_o )
-		outfp = stdout;
+    if ( !minus_o )
+	outfp = stdout;
 
-	ap->a_hit = rayhit;
-	ap->a_miss = raymiss;
-	ap->a_onehit = 1;
+    ap->a_hit = rayhit;
+    ap->a_miss = raymiss;
+    ap->a_onehit = 1;
 
-	output_is_binary = 0;
+    output_is_binary = 0;
 
-	if ( !rpt_overlap )
-		 ap->a_logoverlap = rt_silent_logoverlap;
+    if ( !rpt_overlap )
+	ap->a_logoverlap = rt_silent_logoverlap;
 
-	/* initialize hash table */
-	Tcl_InitHashTable( &bots, TCL_STRING_KEYS );
+    /* initialize hash table */
+    Tcl_InitHashTable( &bots, TCL_STRING_KEYS );
 
-	return(0);		/* No framebuffer needed */
+    return(0);		/* No framebuffer needed */
 }
 
 /*
@@ -130,62 +130,62 @@ void
 view_2init( struct application *ap, char *framename )
 {
 #ifdef HAVE_SYS_STAT_H
-	struct stat sb;
-	char line[RT_MAXLINE];
+    struct stat sb;
+    char line[RT_MAXLINE];
 #endif
 
-	if ( outfp == NULL )
-		bu_exit(EXIT_FAILURE, "outfp is NULL\n");
+    if ( outfp == NULL )
+	bu_exit(EXIT_FAILURE, "outfp is NULL\n");
 
 #ifdef HAVE_SYS_STAT_H
-	/* read in any existing data */
-	if ( outfp != NULL && stat( framename, &sb ) >= 0 && sb.st_size > 0 )  {
-		Tcl_HashEntry *entry;
-		char *bot_name;
-		struct bu_ptbl *faces=NULL;
-		int newPtr;
-		int i, j;
+    /* read in any existing data */
+    if ( outfp != NULL && stat( framename, &sb ) >= 0 && sb.st_size > 0 )  {
+	Tcl_HashEntry *entry;
+	char *bot_name;
+	struct bu_ptbl *faces=NULL;
+	int newPtr;
+	int i, j;
 
-		/* File exists, with partial results */
-		while ( bu_fgets( line, RT_MAXLINE, outfp ) ) {
-			if ( !strncmp( line, "BOT:", 4 ) ) {
-				struct directory *dp;
+	/* File exists, with partial results */
+	while ( bu_fgets( line, RT_MAXLINE, outfp ) ) {
+	    if ( !strncmp( line, "BOT:", 4 ) ) {
+		struct directory *dp;
 
-				/* found a BOT entry, addit to the hash table */
-				i = 4;
-				while ( line[i] != '\0' && isspace( line[i] ) ) i++;
-				if ( line[i] == '\0' ) {
-					bu_log( "Unexpected EOF found in partial results (%s)\n", outputfile );
-					bu_exit(EXIT_FAILURE, "Unexpected EOF");
-				}
-				j = i;
-				while ( line[j] != '\0' && !isspace( line[j] ) ) j++;
-				line[j] = '\0';
-				if ( (dp=db_lookup( ap->a_rt_i->rti_dbip, &line[i], LOOKUP_QUIET)) == DIR_NULL ) {
-					bot_name = bu_strdup( &line[i] );
-				} else {
-					bot_name = dp->d_namep;
-				}
-				entry = Tcl_CreateHashEntry( &bots, bot_name, &newPtr );
-				if ( newPtr ) {
-					faces = (struct bu_ptbl *)bu_calloc( 1, sizeof( struct bu_ptbl ),
-									       "bot_faces" );
-					bu_ptbl_init( faces, 128, "bot faces" );
-					Tcl_SetHashValue( entry, (char *)faces );
-				} else {
-					faces = (struct bu_ptbl *)Tcl_GetHashValue( entry );
-				}
-			} else {
-				long int face_num;
-
-				if ( !faces ) {
-					bu_exit( EXIT_FAILURE, "No faces structure while reading partial data!!!\n" );
-				}
-				face_num = atoi( line );
-				bu_ptbl_ins_unique( faces, (long *)face_num );
-			}
+		/* found a BOT entry, addit to the hash table */
+		i = 4;
+		while ( line[i] != '\0' && isspace( line[i] ) ) i++;
+		if ( line[i] == '\0' ) {
+		    bu_log( "Unexpected EOF found in partial results (%s)\n", outputfile );
+		    bu_exit(EXIT_FAILURE, "Unexpected EOF");
 		}
+		j = i;
+		while ( line[j] != '\0' && !isspace( line[j] ) ) j++;
+		line[j] = '\0';
+		if ( (dp=db_lookup( ap->a_rt_i->rti_dbip, &line[i], LOOKUP_QUIET)) == DIR_NULL ) {
+		    bot_name = bu_strdup( &line[i] );
+		} else {
+		    bot_name = dp->d_namep;
+		}
+		entry = Tcl_CreateHashEntry( &bots, bot_name, &newPtr );
+		if ( newPtr ) {
+		    faces = (struct bu_ptbl *)bu_calloc( 1, sizeof( struct bu_ptbl ),
+							 "bot_faces" );
+		    bu_ptbl_init( faces, 128, "bot faces" );
+		    Tcl_SetHashValue( entry, (char *)faces );
+		} else {
+		    faces = (struct bu_ptbl *)Tcl_GetHashValue( entry );
+		}
+	    } else {
+		long int face_num;
+
+		if ( !faces ) {
+		    bu_exit( EXIT_FAILURE, "No faces structure while reading partial data!!!\n" );
+		}
+		face_num = atoi( line );
+		bu_ptbl_ins_unique( faces, (long *)face_num );
+	    }
 	}
+    }
 
 #endif
 }
@@ -200,7 +200,7 @@ view_2init( struct application *ap, char *framename )
 int
 raymiss()
 {
-	return(0);
+    return(0);
 }
 
 /*
@@ -211,7 +211,7 @@ raymiss()
 void
 view_pixel()
 {
-	return;
+    return;
 }
 
 /*
@@ -222,38 +222,38 @@ view_pixel()
 int
 rayhit( struct application *ap, struct partition *PartHeadp )
 {
-	register struct partition *pp = PartHeadp->pt_forw;
-	Tcl_HashEntry *entry;
-	int newPtr;
-	struct bu_ptbl *faces;
+    register struct partition *pp = PartHeadp->pt_forw;
+    Tcl_HashEntry *entry;
+    int newPtr;
+    struct bu_ptbl *faces;
 
-	if ( pp == PartHeadp )
-		return(0);		/* nothing was actually hit?? */
+    if ( pp == PartHeadp )
+	return(0);		/* nothing was actually hit?? */
 
-	if ( ap->a_rt_i->rti_save_overlaps )
-		rt_rebuild_overlaps( PartHeadp, ap, 1 );
+    if ( ap->a_rt_i->rti_save_overlaps )
+	rt_rebuild_overlaps( PartHeadp, ap, 1 );
 
-	/* did we hit a BOT?? */
-	if ( pp->pt_inseg->seg_stp->st_dp->d_major_type != DB5_MAJORTYPE_BRLCAD ||
-	    pp->pt_inseg->seg_stp->st_dp->d_minor_type != DB5_MINORTYPE_BRLCAD_BOT ) {
-		return 0;
-	}
+    /* did we hit a BOT?? */
+    if ( pp->pt_inseg->seg_stp->st_dp->d_major_type != DB5_MAJORTYPE_BRLCAD ||
+	 pp->pt_inseg->seg_stp->st_dp->d_minor_type != DB5_MINORTYPE_BRLCAD_BOT ) {
+	return 0;
+    }
 
-	/* this is a BOT, get the hash tabel entry for it */
-	bu_semaphore_acquire( BU_SEM_LISTS );
-	entry = Tcl_CreateHashEntry( &bots, pp->pt_inseg->seg_stp->st_dp->d_namep, &newPtr );
-	if ( newPtr ) {
-		faces = (struct bu_ptbl *)bu_malloc( sizeof( struct bu_ptbl ), "faces" );
-		bu_ptbl_init( faces, 128, "faces" );
-		Tcl_SetHashValue( entry, (char *)faces );
-	} else {
-		faces = (struct bu_ptbl *)Tcl_GetHashValue( entry );
-	}
+    /* this is a BOT, get the hash tabel entry for it */
+    bu_semaphore_acquire( BU_SEM_LISTS );
+    entry = Tcl_CreateHashEntry( &bots, pp->pt_inseg->seg_stp->st_dp->d_namep, &newPtr );
+    if ( newPtr ) {
+	faces = (struct bu_ptbl *)bu_malloc( sizeof( struct bu_ptbl ), "faces" );
+	bu_ptbl_init( faces, 128, "faces" );
+	Tcl_SetHashValue( entry, (char *)faces );
+    } else {
+	faces = (struct bu_ptbl *)Tcl_GetHashValue( entry );
+    }
 
-	bu_ptbl_ins_unique( faces, (long *)(size_t)pp->pt_inhit->hit_surfno );
-	bu_semaphore_release( BU_SEM_LISTS );
+    bu_ptbl_ins_unique( faces, (long *)(size_t)pp->pt_inhit->hit_surfno );
+    bu_semaphore_release( BU_SEM_LISTS );
 
-	return(0);
+    return(0);
 }
 
 /*
@@ -275,27 +275,27 @@ void	view_eol()
 void
 view_end()
 {
-	Tcl_HashEntry *entry;
-	Tcl_HashSearch search;
-	struct bu_ptbl *faces;
+    Tcl_HashEntry *entry;
+    Tcl_HashSearch search;
+    struct bu_ptbl *faces;
 
-	/* rewrite entire output file */
-	rewind( outfp );
+    /* rewrite entire output file */
+    rewind( outfp );
 
-	entry = Tcl_FirstHashEntry( &bots, &search );
+    entry = Tcl_FirstHashEntry( &bots, &search );
 
-	while ( entry ) {
-		int i;
+    while ( entry ) {
+	int i;
 
-		fprintf( outfp, "BOT: %s\n", Tcl_GetHashKey( &bots, entry ) );
-		faces = (struct bu_ptbl *)Tcl_GetHashValue( entry );
-		for ( i=0; i<BU_PTBL_LEN( faces ); i++ ) {
-			fprintf( outfp, "\t%ld\n", (long int)BU_PTBL_GET( faces, i ) );
-		}
-		entry = Tcl_NextHashEntry( &search );
+	fprintf( outfp, "BOT: %s\n", Tcl_GetHashKey( &bots, entry ) );
+	faces = (struct bu_ptbl *)Tcl_GetHashValue( entry );
+	for ( i=0; i<BU_PTBL_LEN( faces ); i++ ) {
+	    fprintf( outfp, "\t%ld\n", (long int)BU_PTBL_GET( faces, i ) );
 	}
+	entry = Tcl_NextHashEntry( &search );
+    }
 
-	fflush(outfp);
+    fflush(outfp);
 }
 
 void view_setup() {}

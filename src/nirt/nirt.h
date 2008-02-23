@@ -96,18 +96,18 @@
 
 /** DATA STRUCTURES */
 typedef struct {
-	char	*com_name;		/* for invoking	    	         */
-	void	(*com_func)();          /* what to do?      	         */
-	char	*com_desc;		/* Help description 	         */
-	char	*com_args;		/* Command arguments for usage   */
+    char	*com_name;		/* for invoking	    	         */
+    void	(*com_func)();          /* what to do?      	         */
+    char	*com_desc;		/* Help description 	         */
+    char	*com_args;		/* Command arguments for usage   */
 } com_table;
 
 struct VarTable {
-	double	azimuth;
-	double	elevation;
-	vect_t  direct;
-	vect_t  target;
-	vect_t  grid;
+    double	azimuth;
+    double	elevation;
+    vect_t  direct;
+    vect_t  target;
+    vect_t  grid;
 };
 
 typedef struct attributes {

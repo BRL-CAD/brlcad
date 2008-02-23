@@ -18,7 +18,7 @@
  * information.
  */
 /** @file screen.h
-	Author:		Gary S. Moss
+    Author:		Gary S. Moss
 */
 
 #define TITLE_PTR		&template[ 0][ 7]

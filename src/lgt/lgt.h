@@ -18,7 +18,7 @@
  * information.
  */
 /** @file lgt.h
-	Author:		Gary S. Moss
+    Author:		Gary S. Moss
 */
 #ifndef INCL_LGT
 #define INCL_LGT
@@ -73,7 +73,7 @@
 #define Rotate( f )	(f) = (f) + 1 > 2 ? 0 : (f) + 1
 
 #ifndef DEBUG_OFF /* This is from "librt/debug.h", #include <debug.h> would
-			be better.					*/
+		     be better.					*/
 #define DEBUG_OFF	0	/* No debugging */
 
 /* These definitions are each for one bit */
@@ -113,52 +113,52 @@
 typedef int	bool;
 
 /* Light source (LS) specific global information.
-	Directions are with respect to the center of the model as calculated
-	by 'librt.a'.
- */
+   Directions are with respect to the center of the model as calculated
+   by 'librt.a'.
+*/
 typedef struct
-	{
-	char	name[MAX_LGT_NM];/* Name of entry (i.e. ambient).	*/
-	int	beam;	/* Flag denotes gaussian beam intensity.	*/
-	int	over;	/* Flag denotes manual overide of position.	*/
-	int	rgb[3];	/* Pixel color of LS (0 to 255) for RGB.	*/
-	fastf_t	loc[3];	/* Location of LS in model space.		*/
-	fastf_t	azim;	/* Azimuthal direction of LS in radians.	*/
-	fastf_t	elev;	/* Elevational direction of LS in radians.	*/
-	fastf_t	dir[3];	/* Direction vector to LS.			*/
-	fastf_t	dist;	/* Distance to LS in from centroid of model.	*/
-	fastf_t	energy;	/* Intensity of LS.				*/
-	fastf_t	coef[3];/* Color of LS as coefficient (0.0 to 1.0).	*/
-	fastf_t	radius;	/* Radius of beam.				*/
-	struct soltab	*stp;	/* Solid table pointer to LIGHT solid.	*/
-	}
+{
+    char	name[MAX_LGT_NM];/* Name of entry (i.e. ambient).	*/
+    int	beam;	/* Flag denotes gaussian beam intensity.	*/
+    int	over;	/* Flag denotes manual overide of position.	*/
+    int	rgb[3];	/* Pixel color of LS (0 to 255) for RGB.	*/
+    fastf_t	loc[3];	/* Location of LS in model space.		*/
+    fastf_t	azim;	/* Azimuthal direction of LS in radians.	*/
+    fastf_t	elev;	/* Elevational direction of LS in radians.	*/
+    fastf_t	dir[3];	/* Direction vector to LS.			*/
+    fastf_t	dist;	/* Distance to LS in from centroid of model.	*/
+    fastf_t	energy;	/* Intensity of LS.				*/
+    fastf_t	coef[3];/* Color of LS as coefficient (0.0 to 1.0).	*/
+    fastf_t	radius;	/* Radius of beam.				*/
+    struct soltab	*stp;	/* Solid table pointer to LIGHT solid.	*/
+}
 Lgt_Source;
 #define LGT_NULL	(Lgt_Source *) NULL
 
 typedef struct
-	{
-	bool	m_fullscreen;
-	bool	m_lgts;
-	bool	m_over;
-	bool	m_keys;
-	int	m_noframes;
-	int	m_curframe;
-	int	m_endframe;
-	int	m_frame_sz;
-	FILE	*m_keys_fp;
-	fastf_t	m_azim_beg;
-	fastf_t m_azim_end;
-	fastf_t	m_elev_beg;
-	fastf_t m_elev_end;
-	fastf_t	m_roll_beg;
-	fastf_t m_roll_end;
-	fastf_t	m_dist_beg;
-	fastf_t m_dist_end;
-	fastf_t	m_grid_beg;
-	fastf_t m_grid_end;
-	fastf_t	m_pers_beg;
-	fastf_t m_pers_end;
-	}
+{
+    bool	m_fullscreen;
+    bool	m_lgts;
+    bool	m_over;
+    bool	m_keys;
+    int	m_noframes;
+    int	m_curframe;
+    int	m_endframe;
+    int	m_frame_sz;
+    FILE	*m_keys_fp;
+    fastf_t	m_azim_beg;
+    fastf_t m_azim_end;
+    fastf_t	m_elev_beg;
+    fastf_t m_elev_end;
+    fastf_t	m_roll_beg;
+    fastf_t m_roll_end;
+    fastf_t	m_dist_beg;
+    fastf_t m_dist_end;
+    fastf_t	m_grid_beg;
+    fastf_t m_grid_end;
+    fastf_t	m_pers_beg;
+    fastf_t m_pers_end;
+}
 Movie;
 #define MovieSize( sz, nf )	(int)sqrt((double)(nf)+0.5)*(sz)
 #define IK_INTENSITY	255.0

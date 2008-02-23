@@ -51,37 +51,37 @@
 void
 multispectral_shader_init(struct mfuncs **headp)
 {
-	/* multi-spectral-specific routines */
-	MFUNCS( temp_mfuncs );
+    /* multi-spectral-specific routines */
+    MFUNCS( temp_mfuncs );
 
-	/* Compiled from sources in liboptical */
-	MFUNCS( phg_mfuncs );
-	MFUNCS( stk_mfuncs );
-	MFUNCS( light_mfuncs );
-	MFUNCS( camo_mfuncs );
-	MFUNCS( noise_mfuncs );
+    /* Compiled from sources in liboptical */
+    MFUNCS( phg_mfuncs );
+    MFUNCS( stk_mfuncs );
+    MFUNCS( light_mfuncs );
+    MFUNCS( camo_mfuncs );
+    MFUNCS( noise_mfuncs );
 
 #if 0
-	/* these are not included yet as they do not have RT_MULTISPECTRAL hooks */
-	MFUNCS( cloud_mfuncs );
-	MFUNCS( spm_mfuncs );
-	MFUNCS( txt_mfuncs );
-	MFUNCS( cook_mfuncs );
-	MFUNCS( marble_mfuncs );
-	MFUNCS( stxt_mfuncs );
-	MFUNCS( points_mfuncs );
-	MFUNCS( toyota_mfuncs );
-	MFUNCS( wood_mfuncs );
-	MFUNCS( camo_mfuncs );
-	MFUNCS( scloud_mfuncs );
-	MFUNCS( air_mfuncs );
-	MFUNCS( rtrans_mfuncs );
-	MFUNCS( fire_mfuncs );
-	MFUNCS( brdf_mfuncs );
-	MFUNCS( gauss_mfuncs );
-	MFUNCS( gravel_mfuncs );
-	MFUNCS( prj_mfuncs );
-	MFUNCS( grass_mfuncs );
+    /* these are not included yet as they do not have RT_MULTISPECTRAL hooks */
+    MFUNCS( cloud_mfuncs );
+    MFUNCS( spm_mfuncs );
+    MFUNCS( txt_mfuncs );
+    MFUNCS( cook_mfuncs );
+    MFUNCS( marble_mfuncs );
+    MFUNCS( stxt_mfuncs );
+    MFUNCS( points_mfuncs );
+    MFUNCS( toyota_mfuncs );
+    MFUNCS( wood_mfuncs );
+    MFUNCS( camo_mfuncs );
+    MFUNCS( scloud_mfuncs );
+    MFUNCS( air_mfuncs );
+    MFUNCS( rtrans_mfuncs );
+    MFUNCS( fire_mfuncs );
+    MFUNCS( brdf_mfuncs );
+    MFUNCS( gauss_mfuncs );
+    MFUNCS( gravel_mfuncs );
+    MFUNCS( prj_mfuncs );
+    MFUNCS( grass_mfuncs );
 #endif
 }
 

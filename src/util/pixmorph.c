@@ -147,7 +147,7 @@ warp_image(unsigned char *dest, unsigned char *src,
 	fflush(stderr);
 	for (j = 0; j < width; j++, dest += 3) {
 	    double dsum_x, dsum_y, weightsum, x_x, x_y, new_x, new_y,
-		   frac_x, frac_y, newcolor;
+		frac_x, frac_y, newcolor;
 	    int fin_x, fin_y, findex;
 
 	    x_x = (double)j;
@@ -156,7 +156,7 @@ warp_image(unsigned char *dest, unsigned char *src,
 	    weightsum = dsum_x = dsum_y = 0.0;
 	    for (k = 0, tlines = lines; k < numlines; k++, tlines++) {
 		register double x_minus_p_x, x_minus_p_y, u, v, x, y, weight,
-				dist, tmpx, tmpy;
+		    dist, tmpx, tmpy;
 		register long int l2;
 
 		/* This is a fairly straightforward implementation of the
@@ -249,15 +249,15 @@ warp_image(unsigned char *dest, unsigned char *src,
 	    dest[RED] = ICLAMP(newcolor, 0, 255);
 
 	    newcolor = ((1-frac_x)*(1-frac_y)*(double)src[findex+GRN] +
-			     (1-frac_y)*frac_x*(double)src[findex+3+GRN] +
-			     frac_y*frac_x*(double)src[findex+width3+3+GRN] +
-			     frac_y*(1-frac_x)*(double)src[findex+width3+GRN]);
+			(1-frac_y)*frac_x*(double)src[findex+3+GRN] +
+			frac_y*frac_x*(double)src[findex+width3+3+GRN] +
+			frac_y*(1-frac_x)*(double)src[findex+width3+GRN]);
 	    dest[GRN] = ICLAMP(newcolor, 0, 255);
 
 	    newcolor = ((1-frac_x)*(1-frac_y)*(double)src[findex+BLU] +
-			     (1-frac_y)*frac_x*(double)src[findex+3+BLU] +
-			     frac_y*frac_x*(double)src[findex+width3+3+BLU] +
-			     frac_y*(1-frac_x)*(double)src[findex+width3+BLU]);
+			(1-frac_y)*frac_x*(double)src[findex+3+BLU] +
+			frac_y*frac_x*(double)src[findex+width3+3+BLU] +
+			frac_y*(1-frac_x)*(double)src[findex+width3+BLU]);
 	    dest[BLU] = ICLAMP(newcolor, 0, 255);
 	}
     }
@@ -359,16 +359,16 @@ get_args(int argc, char **argv, char **picAnamep, char **picBnamep, char **lines
 
     while ((c = bu_getopt(argc, argv, "w:n:")) != EOF) {
 	switch (c) {
-	case 'w':
-	    *widthp = atol(bu_optarg);
-	    *autosizep = 0;
-	    break;
-	case 'n':
-	    *heightp = atol(bu_optarg);
-	    *autosizep = 0;
-	    break;
-	default:
-	    return 0;
+	    case 'w':
+		*widthp = atol(bu_optarg);
+		*autosizep = 0;
+		break;
+	    case 'n':
+		*heightp = atol(bu_optarg);
+		*autosizep = 0;
+		break;
+	    default:
+		return 0;
 	}
     }
 
@@ -414,7 +414,7 @@ main(int argc, char **argv)
     autosize = 1L;
     pa_width = pa_height = 0;
     if (get_args(argc, argv, &picAname, &picBname, &linesfilename,
-	  &warpfrac, &dissolvefrac, &autosize, &pa_width, &pa_height) == 0
+		 &warpfrac, &dissolvefrac, &autosize, &pa_width, &pa_height) == 0
 	|| isatty(fileno(stdout))) {
 	fprintf(stderr,
 		"usage: pixmorph [-w width] [-n height] picA.pix picB.pix linesfile warpfrac dissolvefrac > out.pix\n");
@@ -463,7 +463,7 @@ main(int argc, char **argv)
 	if (pa_width > 0) {
 	    pa_height = sb.st_size/(3*pa_width);
 	    fprintf(stderr, "width = %ld, size = %ld, so height = %ld\n",
-		   pa_width, (long)sb.st_size, pa_height);
+		    pa_width, (long)sb.st_size, pa_height);
 	} else if (pa_height > 0) pa_width = sb.st_size/(3*pa_height);
 
 	if (pa_width <= 0 || pa_height <= 0) {
@@ -521,7 +521,7 @@ main(int argc, char **argv)
 	    "pixmorph: Warping first image into first intermediate image.\n");
     warp_image(wa, pa, lines, FIRST, pa_width, pa_height, numlines, a, b, p);
     fprintf(stderr,
-	   "pixmorph: Warping second image into second intermediate image.\n");
+	    "pixmorph: Warping second image into second intermediate image.\n");
     warp_image(wb, pb, lines, LAST, pa_width, pa_height, numlines, a, b, p);
 
     /* Do the dissolve */

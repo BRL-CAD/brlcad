@@ -103,55 +103,55 @@ static int	scr_height = 0;
 	(unsigned char)(((x) * 255.) / (1.0 - SETUP/100.0))	/* setup compensation */
 
 static  RGBpixel fcc_all[8] = {
-	/* 100% white */{255, 255, 255},
-	/* yellow */	{191, 191, 0},
-	/* cyan */	{0, 191, 191},
-	/* green */	{0, 191, 0},
-	/* magenta */	{191, 0, 191},
-	/* red */	{191, 0, 0},
-	/* blue */	{0, 0, 191},
-	/* black */	{0, 0, 0}
+    /* 100% white */{255, 255, 255},
+    /* yellow */	{191, 191, 0},
+    /* cyan */	{0, 191, 191},
+    /* green */	{0, 191, 0},
+    /* magenta */	{191, 0, 191},
+    /* red */	{191, 0, 0},
+    /* blue */	{0, 0, 191},
+    /* black */	{0, 0, 0}
 };
 
 /*
  *  SMPTE bars can be useful for aligning color demodulators
  */
 static	RGBpixel smpte_middle[7] = {
-	/* All bars at 75%, no blue, reversed side-to-side from eia_top */
-	/* blue */	{0, 0, 191},
-	/* black(red)*/	{0, 0, 0},
-	/* magenta */	{191, 0, 191},
-	/* black(green)*/{0, 0, 0},
-	/* cyan */	{0, 191, 191},
-	/* black(yellow)*/{0, 0, 0},
-	/* 75% grey */ 	{191, 191, 191},
+    /* All bars at 75%, no blue, reversed side-to-side from eia_top */
+    /* blue */	{0, 0, 191},
+    /* black(red)*/	{0, 0, 0},
+    /* magenta */	{191, 0, 191},
+    /* black(green)*/{0, 0, 0},
+    /* cyan */	{0, 191, 191},
+    /* black(yellow)*/{0, 0, 0},
+    /* 75% grey */ 	{191, 191, 191},
 };
 
 static  RGBpixel eia_top[7] = {
-	/* All bars at 75% */
-	/* grey */ 	{191, 191, 191},
-	/* yel */	{191, 191, 0},
-	/* cyan */	{0, 191, 191},
-	/* green */	{0, 191, 0},
-	/* magenta */	{191, 0, 191},
-	/* red */	{191, 0, 0},
-	/* blue */	{0, 0, 191}
+    /* All bars at 75% */
+    /* grey */ 	{191, 191, 191},
+    /* yel */	{191, 191, 0},
+    /* cyan */	{0, 191, 191},
+    /* green */	{0, 191, 0},
+    /* magenta */	{191, 0, 191},
+    /* red */	{191, 0, 0},
+    /* blue */	{0, 0, 191}
 };
 
 static RGBpixel botpart[5] = {
 #ifndef Floating_Initializers
-	/* Most systems can't handle floating-point formulas as initializers */
-	{ 0,		68,		114 },		/* 40 IRE -I */
-	{ 255,		255,		255 },		/* 100% white */
-	{ 69,		0,		129 },		/* 40 IRE Q */
-	{ 0,		0,		0 },		/* black */
-	{ 0,		0,		0 }		/* black */
+    /* Most systems can't handle floating-point formulas as initializers */
+    { 0,		68,		114 },		/* 40 IRE -I */
+    { 255,		255,		255 },		/* 100% white */
+    { 69,		0,		129 },		/* 40 IRE Q */
+    { 0,		0,		0 },		/* black */
+    { 0,		0,		0 }		/* black */
 #else
-	{ 0,		COMP(0.2472),	COMP(0.4123) },	/* 40 IRE -I */
-	{ 255,		255,		255 },		/* 100% white */
-	{ COMP(0.2508),	0,		COMP(0.4670) },	/* 40 IRE Q */
-	{ 0,		0,		0 },		/* black */
-	{ 0,		0,		0 }		/* black */
+    { 0,		COMP(0.2472),	COMP(0.4123) },	/* 40 IRE -I */
+    { 255,		255,		255 },		/* 100% white */
+    { COMP(0.2508),	0,		COMP(0.4670) },	/* 40 IRE Q */
+    { 0,		0,		0 },		/* black */
+    { 0,		0,		0 }		/* black */
 #endif
 };
 
@@ -170,123 +170,123 @@ int	mode = M_SMPTE;
 int
 get_args(int argc, register char **argv)
 {
-	register int c;
+    register int c;
 
-	while ( (c = bu_getopt( argc, argv, "efshF:S:W:N:" )) != EOF )  {
-		switch ( c )  {
-		case 'e':
-			mode = M_EIA;
-			break;
-		case 's':
-			mode = M_SMPTE;
-			break;
-		case 'f':
-			mode = M_FCC;
-			break;
-		case 'h':
-			/* high-res */
-			scr_height = scr_width = 1024;
-			break;
-		case 'F':
-			framebuffer = bu_optarg;
-			break;
-		case 'S':
-			scr_height = scr_width = atoi(bu_optarg);
-			break;
-		case 'W':
-			scr_width = atoi(bu_optarg);
-			break;
-		case 'N':
-			scr_height = atoi(bu_optarg);
-			break;
+    while ( (c = bu_getopt( argc, argv, "efshF:S:W:N:" )) != EOF )  {
+	switch ( c )  {
+	    case 'e':
+		mode = M_EIA;
+		break;
+	    case 's':
+		mode = M_SMPTE;
+		break;
+	    case 'f':
+		mode = M_FCC;
+		break;
+	    case 'h':
+		/* high-res */
+		scr_height = scr_width = 1024;
+		break;
+	    case 'F':
+		framebuffer = bu_optarg;
+		break;
+	    case 'S':
+		scr_height = scr_width = atoi(bu_optarg);
+		break;
+	    case 'W':
+		scr_width = atoi(bu_optarg);
+		break;
+	    case 'N':
+		scr_height = atoi(bu_optarg);
+		break;
 
-		default:		/* '?' */
-			return(0);
-		}
+	    default:		/* '?' */
+		return(0);
 	}
+    }
 
-	if ( argc > ++bu_optind )
-		(void)fprintf( stderr, "fbcbars: excess argument(s) ignored\n" );
+    if ( argc > ++bu_optind )
+	(void)fprintf( stderr, "fbcbars: excess argument(s) ignored\n" );
 
-	return(1);		/* OK */
+    return(1);		/* OK */
 }
 
 int
 main(int argc, char **argv)
 {
-	register int x, y;
-	register FBIO *fbp;
+    register int x, y;
+    register FBIO *fbp;
 
-	if ( !get_args( argc, argv ) )  {
-		(void)fputs(usage, stderr);
-		bu_exit( 1, NULL );
-	}
+    if ( !get_args( argc, argv ) )  {
+	(void)fputs(usage, stderr);
+	bu_exit( 1, NULL );
+    }
 
-	if ( (fbp = fb_open( framebuffer, scr_width, scr_height )) == NULL )
-		bu_exit(12, NULL);
+    if ( (fbp = fb_open( framebuffer, scr_width, scr_height )) == NULL )
+	bu_exit(12, NULL);
 
-	/* Get the screen size we were actually given */
-	scr_width = fb_getwidth(fbp);
-	scr_height = fb_getheight(fbp);
+    /* Get the screen size we were actually given */
+    scr_width = fb_getwidth(fbp);
+    scr_height = fb_getheight(fbp);
 
-	/*
-	 *  Operation is bottom-to-top.
-	 */
-	switch (mode)  {
+    /*
+     *  Operation is bottom-to-top.
+     */
+    switch (mode)  {
 	case M_FCC:
-		for ( x=0; x<scr_width; x++) {
-			COPYRGB( &scanline[3*x], fcc_all[x*8/scr_width] );
-		}
-		for ( y=0; y<scr_height; y++)
-			fb_write( fbp, 0, y, scanline, scr_width );
-		break;
+	    for ( x=0; x<scr_width; x++) {
+		COPYRGB( &scanline[3*x], fcc_all[x*8/scr_width] );
+	    }
+	    for ( y=0; y<scr_height; y++)
+		fb_write( fbp, 0, y, scanline, scr_width );
+	    break;
 
 	case M_EIA:
-		/*
-		 *  Build bottom line, and send it for 1/4th of the screen,
-		 *  then build the top line, and fill the rest of the screen.
-		 */
-		for ( x=0; x<scr_width; x++) {
-			COPYRGB( &scanline[3*x], botpart[x*5/scr_width] );
-		}
-		for ( y=0; y<(scr_height/4); y++)
-			fb_write( fbp, 0, y, scanline, scr_width );
+	    /*
+	     *  Build bottom line, and send it for 1/4th of the screen,
+	     *  then build the top line, and fill the rest of the screen.
+	     */
+	    for ( x=0; x<scr_width; x++) {
+		COPYRGB( &scanline[3*x], botpart[x*5/scr_width] );
+	    }
+	    for ( y=0; y<(scr_height/4); y++)
+		fb_write( fbp, 0, y, scanline, scr_width );
 
-		for ( x=0; x<scr_width; x++)  {
-			COPYRGB( &scanline[3*x], eia_top[x*7/scr_width] );
-		}
-		for (; y<scr_height; y++)
-			fb_write( fbp, 0, y, scanline, scr_width );
-		break;
+	    for ( x=0; x<scr_width; x++)  {
+		COPYRGB( &scanline[3*x], eia_top[x*7/scr_width] );
+	    }
+	    for (; y<scr_height; y++)
+		fb_write( fbp, 0, y, scanline, scr_width );
+	    break;
 
 	case M_SMPTE:
-		/*
-		 *  Build bottom line, and send it for 3/16th of the screen,
-		 *  then send the SMPTE middle for 1/16th of the screen,
-		 *  then build the top line, and fill the rest of the screen.
-		 *  (Convert upper 1/4 of EIA -I white Q black to smpte)
-		 */
-		for ( x=0; x<scr_width; x++) {
-			COPYRGB( &scanline[3*x], botpart[x*5/scr_width] );
-		}
-		for ( y=0; y<(scr_height*3/16); y++)
-			fb_write( fbp, 0, y, scanline, scr_width );
+	    /*
+	     *  Build bottom line, and send it for 3/16th of the screen,
+	     *  then send the SMPTE middle for 1/16th of the screen,
+	     *  then build the top line, and fill the rest of the screen.
+	     *  (Convert upper 1/4 of EIA -I white Q black to smpte)
+	     */
+	    for ( x=0; x<scr_width; x++) {
+		COPYRGB( &scanline[3*x], botpart[x*5/scr_width] );
+	    }
+	    for ( y=0; y<(scr_height*3/16); y++)
+		fb_write( fbp, 0, y, scanline, scr_width );
 
-		for ( x=0; x<scr_width; x++) {
-			COPYRGB( &scanline[3*x], smpte_middle[x*7/scr_width] );
-		}
-		for (; y<(scr_height*4/16); y++)
-			fb_write( fbp, 0, y, scanline, scr_width );
+	    for ( x=0; x<scr_width; x++) {
+		COPYRGB( &scanline[3*x], smpte_middle[x*7/scr_width] );
+	    }
+	    for (; y<(scr_height*4/16); y++)
+		fb_write( fbp, 0, y, scanline, scr_width );
 
-		for ( x=0; x<scr_width; x++)  {
-			COPYRGB( &scanline[3*x], eia_top[x*7/scr_width] );
-		}
-		for (; y<scr_height; y++)
-			fb_write( fbp, 0, y, scanline, scr_width );
-		break;
-	}
-	fb_close(fbp);
-	return(0);
+	    for ( x=0; x<scr_width; x++)  {
+		COPYRGB( &scanline[3*x], eia_top[x*7/scr_width] );
+	    }
+	    for (; y<scr_height; y++)
+		fb_write( fbp, 0, y, scanline, scr_width );
+	    break;
+    }
+    fb_close(fbp);
+    return(0);
 }
 
 /*

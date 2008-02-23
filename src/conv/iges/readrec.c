@@ -42,30 +42,30 @@
 
 int
 Readrec( recno )
-int recno;
+    int recno;
 {
 
-	int i, ch;
-	long offset;
+    int i, ch;
+    long offset;
 
-	currec = recno;
-	offset = (recno - 1) * reclen;
-	if ( fseek( fd, offset, 0 ) )
-	{
-		bu_log( "Error in seek\n" );
-		perror( "Readrec" );
-		bu_exit( 1, NULL );
-	}
-	counter = 0;
+    currec = recno;
+    offset = (recno - 1) * reclen;
+    if ( fseek( fd, offset, 0 ) )
+    {
+	bu_log( "Error in seek\n" );
+	perror( "Readrec" );
+	bu_exit( 1, NULL );
+    }
+    counter = 0;
 
-	for ( i=0; i<reclen; i++ )
-	{
-		if ( (ch=getc( fd )) == EOF )
-			return( 1 );
-		card[i] = ch;
-	}
+    for ( i=0; i<reclen; i++ )
+    {
+	if ( (ch=getc( fd )) == EOF )
+	    return( 1 );
+	card[i] = ch;
+    }
 
-	return( 0 );
+    return( 0 );
 }
 
 

@@ -60,9 +60,9 @@ static char		*tcp_port = "5555";	/* "gedd", remote mged */
 void	ph_cmd(register struct pkg_conn *pc, char *buf);
 void	ph_vlist(register struct pkg_conn *pc, char *buf);
 static struct pkg_switch pkgswitch[] = {
-	{ VRMSG_CMD,		ph_cmd,		"Command" },
-	{ VRMSG_VLIST,		ph_vlist,	"Import vlist" },
-	{ 0,			0,		(char *)0 }
+    { VRMSG_CMD,		ph_cmd,		"Command" },
+    { VRMSG_VLIST,		ph_vlist,	"Import vlist" },
+    { 0,			0,		(char *)0 }
 };
 
 #if 0
@@ -71,16 +71,16 @@ static struct pkg_switch pkgswitch[] = {
  */
 int
 pkg_send_vls( type, vp, pc )
-int		type;
-struct bu_vls	*vp;
-struct pkg_conn	*pc;
+    int		type;
+    struct bu_vls	*vp;
+    struct pkg_conn	*pc;
 {
-	BU_CK_VLS(vp);
-	if (!pc)  {
-		bu_log("pkg_send_vls:  NULL pointer\n");
-		return -1;
-	}
-	return pkg_send( type, bu_vls_addr(vp), bu_vls_strlen(vp)+1, pc );
+    BU_CK_VLS(vp);
+    if (!pc)  {
+	bu_log("pkg_send_vls:  NULL pointer\n");
+	return -1;
+    }
+    return pkg_send( type, bu_vls_addr(vp), bu_vls_strlen(vp)+1, pc );
 }
 #endif
 
@@ -93,20 +93,20 @@ struct pkg_conn	*pc;
 int
 vr_event_hook(struct bu_vls *vp)
 {
-	BU_CK_VLS(vp);
+    BU_CK_VLS(vp);
 
-	if ( vrmgr == PKC_NULL )  {
-		cmdline_hook = 0;	/* Relinquish this hook */
-		return 1;
-	}
-
-	if ( pkg_send_vls( VRMSG_EVENT, vp, vrmgr ) < 0 )  {
-		bu_log("event: pkg_send VRMSG_EVENT failed, disconnecting\n");
-		pkg_close(vrmgr);
-		vrmgr = PKC_NULL;
-		cmdline_hook = 0;	/* Relinquish this hook */
-	}
+    if ( vrmgr == PKC_NULL )  {
+	cmdline_hook = 0;	/* Relinquish this hook */
 	return 1;
+    }
+
+    if ( pkg_send_vls( VRMSG_EVENT, vp, vrmgr ) < 0 )  {
+	bu_log("event: pkg_send VRMSG_EVENT failed, disconnecting\n");
+	pkg_close(vrmgr);
+	vrmgr = PKC_NULL;
+	cmdline_hook = 0;	/* Relinquish this hook */
+    }
+    return 1;
 }
 
 /*
@@ -115,22 +115,22 @@ vr_event_hook(struct bu_vls *vp)
 void
 vr_input_hook(void)
 {
-	int	val;
+    int	val;
 
-	val = pkg_suckin(vrmgr);
-	if ( val < 0 ) {
-		bu_log("pkg_suckin() error\n");
-	} else if ( val == 0 )  {
-		bu_log("vrmgr sent us an EOF\n");
-	}
-	if ( val <= 0 )  {
-		Tcl_DeleteFileHandler(vrmgr->pkc_fd);
-		pkg_close(vrmgr);
-		vrmgr = PKC_NULL;
-		return;
-	}
-	if ( pkg_process( vrmgr ) < 0 )
-		bu_log("vrmgr:  pkg_process error encountered\n");
+    val = pkg_suckin(vrmgr);
+    if ( val < 0 ) {
+	bu_log("pkg_suckin() error\n");
+    } else if ( val == 0 )  {
+	bu_log("vrmgr sent us an EOF\n");
+    }
+    if ( val <= 0 )  {
+	Tcl_DeleteFileHandler(vrmgr->pkc_fd);
+	pkg_close(vrmgr);
+	vrmgr = PKC_NULL;
+	return;
+    }
+    if ( pkg_process( vrmgr ) < 0 )
+	bu_log("vrmgr:  pkg_process error encountered\n");
 }
 
 /*
@@ -139,46 +139,46 @@ vr_input_hook(void)
 void
 vr_viewpoint_hook(void)
 {
-	struct bu_vls	str;
-	static struct bu_vls	old_str;
-	quat_t		orient;
+    struct bu_vls	str;
+    static struct bu_vls	old_str;
+    quat_t		orient;
 
-	if ( vrmgr == PKC_NULL )  {
-		cmdline_hook = 0;	/* Relinquish this hook */
-		return;
-	}
+    if ( vrmgr == PKC_NULL )  {
+	cmdline_hook = 0;	/* Relinquish this hook */
+	return;
+    }
 
-	bu_vls_init_if_uninit(&old_str);
-	bu_vls_init(&str);
+    bu_vls_init_if_uninit(&old_str);
+    bu_vls_init(&str);
 
-	quat_mat2quat(orient, view_state->vs_vop->vo_rotation);
+    quat_mat2quat(orient, view_state->vs_vop->vo_rotation);
 
-	/* Need to send current viewpoint to VR mgr */
-	/* XXX more will be needed */
-	/* Eye point, quaturnion for orientation */
-	bu_vls_printf(&str, "pov {%e %e %e}   {%e %e %e %e}   %e   {%e %e %e}  %e\n",
-		      -view_state->vs_vop->vo_center[MDX],
-		      -view_state->vs_vop->vo_center[MDY],
-		      -view_state->vs_vop->vo_center[MDZ],
-		      V4ARGS(orient),
-		      view_state->vs_vop->vo_scale,
-		      V3ARGS(view_state->vs_vop->vo_eye_pos),
-		      view_state->vs_vop->vo_perspective);
+    /* Need to send current viewpoint to VR mgr */
+    /* XXX more will be needed */
+    /* Eye point, quaturnion for orientation */
+    bu_vls_printf(&str, "pov {%e %e %e}   {%e %e %e %e}   %e   {%e %e %e}  %e\n",
+		  -view_state->vs_vop->vo_center[MDX],
+		  -view_state->vs_vop->vo_center[MDY],
+		  -view_state->vs_vop->vo_center[MDZ],
+		  V4ARGS(orient),
+		  view_state->vs_vop->vo_scale,
+		  V3ARGS(view_state->vs_vop->vo_eye_pos),
+		  view_state->vs_vop->vo_perspective);
 
-	if ( bu_vls_strcmp( &old_str, &str ) == 0 )  {
-		bu_vls_free( &str );
-		return;
-	}
-
-	if ( pkg_send_vls( VRMSG_POV, &str, vrmgr ) < 0 )  {
-		bu_log("viewpoint: pkg_send VRMSG_POV failed, disconnecting\n");
-		pkg_close(vrmgr);
-		vrmgr = PKC_NULL;
-		viewpoint_hook = 0;	/* Relinquish this hook */
-	}
-	bu_vls_trunc( &old_str, 0 );
-	bu_vls_vlscat( &old_str, &str );
+    if ( bu_vls_strcmp( &old_str, &str ) == 0 )  {
 	bu_vls_free( &str );
+	return;
+    }
+
+    if ( pkg_send_vls( VRMSG_POV, &str, vrmgr ) < 0 )  {
+	bu_log("viewpoint: pkg_send VRMSG_POV failed, disconnecting\n");
+	pkg_close(vrmgr);
+	vrmgr = PKC_NULL;
+	viewpoint_hook = 0;	/* Relinquish this hook */
+    }
+    bu_vls_trunc( &old_str, 0 );
+    bu_vls_vlscat( &old_str, &str );
+    bu_vls_free( &str );
 }
 
 
@@ -192,73 +192,73 @@ vr_viewpoint_hook(void)
 int
 f_vrmgr(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-	struct bu_vls	str;
-	char		*role;
+    struct bu_vls	str;
+    char		*role;
 
-	if (argc < 3) {
-	  struct bu_vls vls;
+    if (argc < 3) {
+	struct bu_vls vls;
 
-	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "help vrmgr");
-	  Tcl_Eval(interp, bu_vls_addr(&vls));
-	  bu_vls_free(&vls);
-	  return TCL_ERROR;
-	}
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "help vrmgr");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
+    }
 
-	bu_vls_init(&str);
+    bu_vls_init(&str);
 
-	if ( vrmgr != PKC_NULL )  {
-	  Tcl_AppendResult(interp, "Closing link to VRmgr ",
-			   vr_host, "\n", (char *)NULL);
-		pkg_close( vrmgr );
-		vrmgr = PKC_NULL;
-		vr_host = "none";
-	}
+    if ( vrmgr != PKC_NULL )  {
+	Tcl_AppendResult(interp, "Closing link to VRmgr ",
+			 vr_host, "\n", (char *)NULL);
+	pkg_close( vrmgr );
+	vrmgr = PKC_NULL;
+	vr_host = "none";
+    }
 
-	vr_host = bu_strdup(argv[1]);
-	role = argv[2];
+    vr_host = bu_strdup(argv[1]);
+    role = argv[2];
 
-	if ( strcmp( role, "master" ) == 0 )  {
-	} else if ( strcmp( role, "slave" ) == 0 )  {
-	} else if ( strcmp( role, "overview" ) == 0 )  {
-	} else {
-	   Tcl_AppendResult(interp, "role '", role, "' unknown, must be master/slave/overview\n",
-			    (char *)NULL);
-	   return TCL_ERROR;
-	}
+    if ( strcmp( role, "master" ) == 0 )  {
+    } else if ( strcmp( role, "slave" ) == 0 )  {
+    } else if ( strcmp( role, "overview" ) == 0 )  {
+    } else {
+	Tcl_AppendResult(interp, "role '", role, "' unknown, must be master/slave/overview\n",
+			 (char *)NULL);
+	return TCL_ERROR;
+    }
 
-	vrmgr = pkg_open( vr_host, tcp_port, "tcp", "", "",
-		pkgswitch, NULL );
-	if ( vrmgr == PKC_ERROR )  {
-	  Tcl_AppendResult(interp, "mged/f_vrmgr: unable to contact ", vr_host,
-			   ", port ", tcp_port, "\n", (char *)NULL);
-	  vrmgr = PKC_NULL;
-	  return TCL_ERROR;
-	}
+    vrmgr = pkg_open( vr_host, tcp_port, "tcp", "", "",
+		      pkgswitch, NULL );
+    if ( vrmgr == PKC_ERROR )  {
+	Tcl_AppendResult(interp, "mged/f_vrmgr: unable to contact ", vr_host,
+			 ", port ", tcp_port, "\n", (char *)NULL);
+	vrmgr = PKC_NULL;
+	return TCL_ERROR;
+    }
 
-	bu_vls_from_argv( &str, argc-2, (const char **)argv+2 );
+    bu_vls_from_argv( &str, argc-2, (const char **)argv+2 );
 
-	/* Send initial message declaring our role */
-	if ( pkg_send_vls( VRMSG_ROLE, &str, vrmgr ) < 0 )  {
-	  Tcl_AppendResult(interp, "pkg_send VRMSG_ROLE failed, disconnecting\n", (char *)NULL);
-	  pkg_close(vrmgr);
-	  vrmgr = NULL;
-	  return TCL_ERROR;
-	}
+    /* Send initial message declaring our role */
+    if ( pkg_send_vls( VRMSG_ROLE, &str, vrmgr ) < 0 )  {
+	Tcl_AppendResult(interp, "pkg_send VRMSG_ROLE failed, disconnecting\n", (char *)NULL);
+	pkg_close(vrmgr);
+	vrmgr = NULL;
+	return TCL_ERROR;
+    }
 
-	/* Establish appropriate hooks */
-	if ( strcmp( role, "master" ) == 0 )  {
-		viewpoint_hook = vr_viewpoint_hook;
-	} else if ( strcmp( role, "slave" ) == 0 )  {
-		cmdline_hook = vr_event_hook;
-	} else if ( strcmp( role, "overview" ) == 0 )  {
-		/* No hooks required, just listen */
-	}
-	Tcl_CreateFileHandler(vrmgr->pkc_fd, TCL_READABLE,
-			     (Tcl_FileProc (*))vr_input_hook, (ClientData)NULL);
-	bu_vls_free( &str );
+    /* Establish appropriate hooks */
+    if ( strcmp( role, "master" ) == 0 )  {
+	viewpoint_hook = vr_viewpoint_hook;
+    } else if ( strcmp( role, "slave" ) == 0 )  {
+	cmdline_hook = vr_event_hook;
+    } else if ( strcmp( role, "overview" ) == 0 )  {
+	/* No hooks required, just listen */
+    }
+    Tcl_CreateFileHandler(vrmgr->pkc_fd, TCL_READABLE,
+			  (Tcl_FileProc (*))vr_input_hook, (ClientData)NULL);
+    bu_vls_free( &str );
 
-	return TCL_OK;
+    return TCL_OK;
 }
 
 /*
@@ -270,25 +270,25 @@ f_vrmgr(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 void
 ph_cmd(register struct pkg_conn *pc, char *buf)
 {
-	int		status;
-	const char	*result;
+    int		status;
+    const char	*result;
 #define CMD_BUFSIZE 1024
-	char buffer[CMD_BUFSIZE] = {0};
+    char buffer[CMD_BUFSIZE] = {0};
 
-	status = Tcl_Eval(interp, buf);
-	result = Tcl_GetStringResult(interp);
+    status = Tcl_Eval(interp, buf);
+    result = Tcl_GetStringResult(interp);
 
-	snprintf(buffer, CMD_BUFSIZE, "%s", result);
+    snprintf(buffer, CMD_BUFSIZE, "%s", result);
 
-	if ( pkg_2send( VRMSG_CMD_REPLY,
-		(status == TCL_OK) ? "Y" : "N", 1,
-		buffer, CMD_BUFSIZE, pc ) < 0 )  {
-		bu_log("ph_cmd: pkg_2send reply to vrmgr failed, disconnecting\n");
-		pkg_close(vrmgr);
-		vrmgr = PKC_NULL;
-		cmdline_hook = 0;	/* Relinquish this hook */
-	}
-	if (buf) (void)free(buf);
+    if ( pkg_2send( VRMSG_CMD_REPLY,
+		    (status == TCL_OK) ? "Y" : "N", 1,
+		    buffer, CMD_BUFSIZE, pc ) < 0 )  {
+	bu_log("ph_cmd: pkg_2send reply to vrmgr failed, disconnecting\n");
+	pkg_close(vrmgr);
+	vrmgr = PKC_NULL;
+	cmdline_hook = 0;	/* Relinquish this hook */
+    }
+    if (buf) (void)free(buf);
 }
 
 /*
@@ -300,19 +300,19 @@ ph_cmd(register struct pkg_conn *pc, char *buf)
 void
 ph_vlist(register struct pkg_conn *pc, char *buf)
 {
-	struct bu_list	vhead;
-	struct bu_vls	name;
+    struct bu_list	vhead;
+    struct bu_vls	name;
 
-	bu_vls_init(&name);
+    bu_vls_init(&name);
 
-	BU_LIST_INIT( &vhead );
+    BU_LIST_INIT( &vhead );
 
-	rt_vlist_import( &vhead, &name, (unsigned char *)buf );
+    rt_vlist_import( &vhead, &name, (unsigned char *)buf );
 
-	invent_solid( bu_vls_addr(&name), &vhead, 0x0000FF00L, 0 );
+    invent_solid( bu_vls_addr(&name), &vhead, 0x0000FF00L, 0 );
 
-	bu_vls_free( &name );
-	if (buf) (void)free(buf);
+    bu_vls_free( &name );
+    if (buf) (void)free(buf);
 }
 
 /*

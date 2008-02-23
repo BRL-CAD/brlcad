@@ -80,43 +80,43 @@ Usage: ssamp-bw [-s squarefilesize] [-w file_width] [-n file_height]\n\
 int
 get_args(int argc, register char **argv)
 {
-	register int c;
+    register int c;
 
-	while ( (c = bu_getopt( argc, argv, "vs:w:n:l:u:m:M:" )) != EOF )  {
-		switch ( c )  {
-		case 'v':
-			verbose++;
-			break;
-		case 's':
-			/* square file size */
-			height = width = atoi(bu_optarg);
-			break;
-		case 'w':
-			width = atoi(bu_optarg);
-			break;
-		case 'n':
-			height = atoi(bu_optarg);
-			break;
-		case 'l':
-			lower_wavelen = atof(bu_optarg);
-			break;
-		case 'u':
-			upper_wavelen = atof(bu_optarg);
-			break;
-		case 'm':
-			forced_minval = atof(bu_optarg);
-			break;
-		case 'M':
-			forced_maxval = atof(bu_optarg);
-			break;
+    while ( (c = bu_getopt( argc, argv, "vs:w:n:l:u:m:M:" )) != EOF )  {
+	switch ( c )  {
+	    case 'v':
+		verbose++;
+		break;
+	    case 's':
+		/* square file size */
+		height = width = atoi(bu_optarg);
+		break;
+	    case 'w':
+		width = atoi(bu_optarg);
+		break;
+	    case 'n':
+		height = atoi(bu_optarg);
+		break;
+	    case 'l':
+		lower_wavelen = atof(bu_optarg);
+		break;
+	    case 'u':
+		upper_wavelen = atof(bu_optarg);
+		break;
+	    case 'm':
+		forced_minval = atof(bu_optarg);
+		break;
+	    case 'M':
+		forced_maxval = atof(bu_optarg);
+		break;
 
-		default:		/* '?' */
-			return(0);
-		}
+	    default:		/* '?' */
+		return(0);
 	}
+    }
 
-	if ( bu_optind >= argc )  return 0;
-	return 1;	/* OK */
+    if ( bu_optind >= argc )  return 0;
+    return 1;	/* OK */
 }
 
 /*
@@ -125,20 +125,20 @@ get_args(int argc, register char **argv)
 void
 find_minmax(void)
 {
-	register fastf_t	max, min;
-	register int		i;
+    register fastf_t	max, min;
+    register int		i;
 
-	max = -INFINITY;
-	min =  INFINITY;
+    max = -INFINITY;
+    min =  INFINITY;
 
-	for ( i = width * height - 1; i >= 0; i-- )  {
-		register fastf_t	v;
+    for ( i = width * height - 1; i >= 0; i-- )  {
+	register fastf_t	v;
 
-		if ( (v = pixels[i]) > max )  max = v;
-		if ( v < min )  min = v;
-	}
-	computed_maxval = max;
-	computed_minval = min;
+	if ( (v = pixels[i]) > max )  max = v;
+	if ( v < min )  min = v;
+    }
+    computed_maxval = max;
+    computed_minval = min;
 }
 
 /*
@@ -147,80 +147,80 @@ find_minmax(void)
 int
 main(int argc, char **argv)
 {
-	int	i;
-	fastf_t	scale;
+    int	i;
+    fastf_t	scale;
 
-	if ( !get_args( argc, argv ) )  {
-		(void)fputs(usage, stderr);
-		return 1;
-	}
+    if ( !get_args( argc, argv ) )  {
+	(void)fputs(usage, stderr);
+	return 1;
+    }
 
-	if (verbose)	bu_debug = BU_DEBUG_COREDUMP;
+    if (verbose)	bu_debug = BU_DEBUG_COREDUMP;
 
-	datafile_basename = argv[bu_optind];
+    datafile_basename = argv[bu_optind];
 
-	/* Read spectrum definition */
-	snprintf( spectrum_name, 100, "%s.spect", datafile_basename );
-	spectrum = (struct bn_table *)bn_table_read( spectrum_name );
-	if ( spectrum == NULL )  {
-		bu_exit(EXIT_FAILURE, "ssamp-bw: Unable to read spectrum\n");
-	}
-	BN_CK_TABLE(spectrum);
-	if (verbose) bu_log("%s defines %d spectral samples\n", datafile_basename, spectrum->nx);
-	nwave = spectrum->nx;	/* shared with Tcl */
+    /* Read spectrum definition */
+    snprintf( spectrum_name, 100, "%s.spect", datafile_basename );
+    spectrum = (struct bn_table *)bn_table_read( spectrum_name );
+    if ( spectrum == NULL )  {
+	bu_exit(EXIT_FAILURE, "ssamp-bw: Unable to read spectrum\n");
+    }
+    BN_CK_TABLE(spectrum);
+    if (verbose) bu_log("%s defines %d spectral samples\n", datafile_basename, spectrum->nx);
+    nwave = spectrum->nx;	/* shared with Tcl */
 
-	/* Allocate and read 2-D spectral samples array */
-	data = bn_tabdata_binary_read( datafile_basename, width*height, spectrum );
-	if ( !data )  bu_exit(EXIT_FAILURE, "bn_tabdata_binary_read() of datafile_basename failed\n");
+    /* Allocate and read 2-D spectral samples array */
+    data = bn_tabdata_binary_read( datafile_basename, width*height, spectrum );
+    if ( !data )  bu_exit(EXIT_FAILURE, "bn_tabdata_binary_read() of datafile_basename failed\n");
 
-	if ( lower_wavelen <= 0 )  lower_wavelen = spectrum->x[0];
-	if ( upper_wavelen <= 0 )  upper_wavelen = spectrum->x[spectrum->nx];
+    if ( lower_wavelen <= 0 )  lower_wavelen = spectrum->x[0];
+    if ( upper_wavelen <= 0 )  upper_wavelen = spectrum->x[spectrum->nx];
 
-	/* Build filter to obtain portion of spectrum user wants */
-	filt = bn_tabdata_mk_linear_filter( spectrum, lower_wavelen, upper_wavelen );
-	if ( !filt )  bu_exit(EXIT_FAILURE, "bn_tabdata_mk_linear_filter() failed\n");
-	if ( verbose )  {
-		bn_pr_table( "spectrum", spectrum );
-		bn_pr_tabdata( "filter", filt );
-	}
+    /* Build filter to obtain portion of spectrum user wants */
+    filt = bn_tabdata_mk_linear_filter( spectrum, lower_wavelen, upper_wavelen );
+    if ( !filt )  bu_exit(EXIT_FAILURE, "bn_tabdata_mk_linear_filter() failed\n");
+    if ( verbose )  {
+	bn_pr_table( "spectrum", spectrum );
+	bn_pr_tabdata( "filter", filt );
+    }
 
-	/* Convert each of the spectral sample curves into scalor values */
-	pixels = bu_malloc( sizeof(fastf_t) * width * height, "fastf_t pixels" );
+    /* Convert each of the spectral sample curves into scalor values */
+    pixels = bu_malloc( sizeof(fastf_t) * width * height, "fastf_t pixels" );
 
-	for ( i = width*height-1; i >= 0; i-- )  {
-		struct bn_tabdata	*sp;
-		/* Filter spectral data into a single power level */
-		sp = (struct bn_tabdata *)
-			(((char *)data)+i*BN_SIZEOF_TABDATA(spectrum));
-		BN_CK_TABDATA(sp);
-		/* Assumes interpretation #1 of the input data (see bn.h) */
-		pixels[i] = bn_tabdata_mul_area1( filt, sp );
-	}
+    for ( i = width*height-1; i >= 0; i-- )  {
+	struct bn_tabdata	*sp;
+	/* Filter spectral data into a single power level */
+	sp = (struct bn_tabdata *)
+	    (((char *)data)+i*BN_SIZEOF_TABDATA(spectrum));
+	BN_CK_TABDATA(sp);
+	/* Assumes interpretation #1 of the input data (see bn.h) */
+	pixels[i] = bn_tabdata_mul_area1( filt, sp );
+    }
 
-	/* Obtain min and max values of that power level */
-	find_minmax();
-	bu_log("computed min = %g, max=%g\n", computed_minval, computed_maxval );
+    /* Obtain min and max values of that power level */
+    find_minmax();
+    bu_log("computed min = %g, max=%g\n", computed_minval, computed_maxval );
 
-	if ( forced_minval < 0 )  forced_minval = computed_minval;
-	if ( forced_maxval < 0 )  forced_maxval = computed_maxval;
-	bu_log("rescale  min = %g, max=%g\n", forced_minval, forced_maxval );
-	BU_ASSERT( forced_minval < forced_maxval );
+    if ( forced_minval < 0 )  forced_minval = computed_minval;
+    if ( forced_maxval < 0 )  forced_maxval = computed_maxval;
+    bu_log("rescale  min = %g, max=%g\n", forced_minval, forced_maxval );
+    BU_ASSERT( forced_minval < forced_maxval );
 
-	if ( isatty(fileno(stdout)) )  {
-		bu_log("ssamp-bw: Attempting to send binary output to the terminal, aborting\n");
-		return 1;
-	}
+    if ( isatty(fileno(stdout)) )  {
+	bu_log("ssamp-bw: Attempting to send binary output to the terminal, aborting\n");
+	return 1;
+    }
 
-	/* Convert to 0..255 range and output */
-	scale = 255 / (forced_maxval - forced_minval);
-	for ( i = 0; i < width*height; i++ )  {
-		register int	val;
-		val = (int)( (pixels[i] - forced_minval) * scale );
-		if ( val > 255 )  val = 255;
-		else if ( val < 0 ) val = 0;
-		putc( val, stdout );
-	}
-	return 0;
+    /* Convert to 0..255 range and output */
+    scale = 255 / (forced_maxval - forced_minval);
+    for ( i = 0; i < width*height; i++ )  {
+	register int	val;
+	val = (int)( (pixels[i] - forced_minval) * scale );
+	if ( val > 255 )  val = 255;
+	else if ( val < 0 ) val = 0;
+	putc( val, stdout );
+    }
+    return 0;
 }
 
 /*

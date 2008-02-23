@@ -50,70 +50,70 @@
 #define	TSTRING	5	/* linefeed terminated string */
 
 struct uplot {
-	int	targ;	/* type of args */
-	int	narg;	/* number or args */
-	char	*desc;	/* description */
+    int	targ;	/* type of args */
+    int	narg;	/* number or args */
+    char	*desc;	/* description */
 };
 struct uplot uerror = { 0, 0, 0 };
 struct uplot letters[] = {
-/*A*/	{ 0, 0, 0 },
-/*B*/	{ 0, 0, 0 },
-/*C*/	{ TCHAR, 3, "color" },
-/*D*/	{ 0, 0, 0 },
-/*E*/	{ 0, 0, 0 },
-/*F*/	{ TNONE, 0, "flush" },
-/*G*/	{ 0, 0, 0 },
-/*H*/	{ 0, 0, 0 },
-/*I*/	{ 0, 0, 0 },
-/*J*/	{ 0, 0, 0 },
-/*K*/	{ 0, 0, 0 },
-/*L*/	{ TSHORT, 6, "3line" },
-/*M*/	{ TSHORT, 3, "3move" },
-/*N*/	{ TSHORT, 3, "3cont" },
-/*O*/	{ TIEEE, 3, "d_3move" },
-/*P*/	{ TSHORT, 3, "3point" },
-/*Q*/	{ TIEEE, 3, "d_3cont" },
-/*R*/	{ 0, 0, 0 },
-/*S*/	{ TSHORT, 6, "3space" },
-/*T*/	{ 0, 0, 0 },
-/*U*/	{ 0, 0, 0 },
-/*V*/	{ TIEEE, 6, "d_3line" },
-/*W*/	{ TIEEE, 6, "d_3space" },
-/*X*/	{ TIEEE, 3, "d_3point" },
-/*Y*/	{ 0, 0, 0 },
-/*Z*/	{ 0, 0, 0 },
-/*[*/	{ 0, 0, 0 },
-/*\*/	{ 0, 0, 0 },
-/*]*/	{ 0, 0, 0 },
-/*^*/	{ 0, 0, 0 },
-/*_*/	{ 0, 0, 0 },
-/*`*/	{ 0, 0, 0 },
-/*a*/	{ TSHORT, 6, "arc" },
-/*b*/	{ 0, 0, 0 },
-/*c*/	{ TSHORT, 3, "circle" },
-/*d*/	{ 0, 0, 0 },
-/*e*/	{ TNONE, 0, "erase" },
-/*f*/	{ TSTRING, 1, "linmod" },
-/*g*/	{ 0, 0, 0 },
-/*h*/	{ 0, 0, 0 },
-/*i*/	{ TIEEE, 3, "d_circle" },
-/*j*/	{ 0, 0, 0 },
-/*k*/	{ 0, 0, 0 },
-/*l*/	{ TSHORT, 4, "line" },
-/*m*/	{ TSHORT, 2, "move" },
-/*n*/	{ TSHORT, 2, "cont" },
-/*o*/	{ TIEEE, 2, "d_move" },
-/*p*/	{ TSHORT, 2, "point" },
-/*q*/	{ TIEEE, 2, "d_cont" },
-/*r*/	{ TIEEE, 6, "d_arc" },
-/*s*/	{ TSHORT, 4, "space" },
-/*t*/	{ TSTRING, 1, "label" },
-/*u*/	{ 0, 0, 0 },
-/*v*/	{ TIEEE, 4, "d_line" },
-/*w*/	{ TIEEE, 4, "d_space" },
-/*x*/	{ TIEEE, 2, "d_point" },
-/*y*/	{ 0, 0, 0 },
-/*z*/	{ 0, 0, 0 }
+    /*A*/	{ 0, 0, 0 },
+    /*B*/	{ 0, 0, 0 },
+    /*C*/	{ TCHAR, 3, "color" },
+    /*D*/	{ 0, 0, 0 },
+    /*E*/	{ 0, 0, 0 },
+    /*F*/	{ TNONE, 0, "flush" },
+    /*G*/	{ 0, 0, 0 },
+    /*H*/	{ 0, 0, 0 },
+    /*I*/	{ 0, 0, 0 },
+    /*J*/	{ 0, 0, 0 },
+    /*K*/	{ 0, 0, 0 },
+    /*L*/	{ TSHORT, 6, "3line" },
+    /*M*/	{ TSHORT, 3, "3move" },
+    /*N*/	{ TSHORT, 3, "3cont" },
+    /*O*/	{ TIEEE, 3, "d_3move" },
+    /*P*/	{ TSHORT, 3, "3point" },
+    /*Q*/	{ TIEEE, 3, "d_3cont" },
+    /*R*/	{ 0, 0, 0 },
+    /*S*/	{ TSHORT, 6, "3space" },
+    /*T*/	{ 0, 0, 0 },
+    /*U*/	{ 0, 0, 0 },
+    /*V*/	{ TIEEE, 6, "d_3line" },
+    /*W*/	{ TIEEE, 6, "d_3space" },
+    /*X*/	{ TIEEE, 3, "d_3point" },
+    /*Y*/	{ 0, 0, 0 },
+    /*Z*/	{ 0, 0, 0 },
+    /*[*/	{ 0, 0, 0 },
+    /*\*/	{ 0, 0, 0 },
+    /*]*/	{ 0, 0, 0 },
+    /*^*/	{ 0, 0, 0 },
+    /*_*/	{ 0, 0, 0 },
+    /*`*/	{ 0, 0, 0 },
+    /*a*/	{ TSHORT, 6, "arc" },
+    /*b*/	{ 0, 0, 0 },
+    /*c*/	{ TSHORT, 3, "circle" },
+    /*d*/	{ 0, 0, 0 },
+    /*e*/	{ TNONE, 0, "erase" },
+    /*f*/	{ TSTRING, 1, "linmod" },
+    /*g*/	{ 0, 0, 0 },
+    /*h*/	{ 0, 0, 0 },
+    /*i*/	{ TIEEE, 3, "d_circle" },
+    /*j*/	{ 0, 0, 0 },
+    /*k*/	{ 0, 0, 0 },
+    /*l*/	{ TSHORT, 4, "line" },
+    /*m*/	{ TSHORT, 2, "move" },
+    /*n*/	{ TSHORT, 2, "cont" },
+    /*o*/	{ TIEEE, 2, "d_move" },
+    /*p*/	{ TSHORT, 2, "point" },
+    /*q*/	{ TIEEE, 2, "d_cont" },
+    /*r*/	{ TIEEE, 6, "d_arc" },
+    /*s*/	{ TSHORT, 4, "space" },
+    /*t*/	{ TSTRING, 1, "label" },
+    /*u*/	{ 0, 0, 0 },
+    /*v*/	{ TIEEE, 4, "d_line" },
+    /*w*/	{ TIEEE, 4, "d_space" },
+    /*x*/	{ TIEEE, 2, "d_point" },
+    /*y*/	{ 0, 0, 0 },
+    /*z*/	{ 0, 0, 0 }
 };
 
 int	verbose;
@@ -123,98 +123,98 @@ char	buf[8*32];
 int
 main(int argc, char **argv)
 {
-	register int	c;
-	struct	uplot *up;
-	int	desired_frame = 0;
-	int	current_frame = 0;
+    register int	c;
+    struct	uplot *up;
+    int	desired_frame = 0;
+    int	current_frame = 0;
 
-	while ( argc > 1 ) {
-		if ( strcmp(argv[1], "-v") == 0 ) {
-			verbose++;
-		} else
-			break;
+    while ( argc > 1 ) {
+	if ( strcmp(argv[1], "-v") == 0 ) {
+	    verbose++;
+	} else
+	    break;
 
-		argc--;
-		argv++;
+	argc--;
+	argv++;
+    }
+    if ( argc < 2 || isatty(fileno(stdin)) ) {
+	bu_exit(1, "Usage: plgetframe [-v] desired_frame < unix_plot\n" );
+    }
+    desired_frame = atoi(argv[1]);
+    current_frame = 0;
+
+    while ( (c = getchar()) != EOF ) {
+	/* look it up */
+	if ( c < 'A' || c > 'z' ) {
+	    up = &uerror;
+	} else {
+	    up = &letters[ c - 'A' ];
 	}
-	if ( argc < 2 || isatty(fileno(stdin)) ) {
-		bu_exit(1, "Usage: plgetframe [-v] desired_frame < unix_plot\n" );
-	}
-	desired_frame = atoi(argv[1]);
-	current_frame = 0;
-
-	while ( (c = getchar()) != EOF ) {
-		/* look it up */
-		if ( c < 'A' || c > 'z' ) {
-			up = &uerror;
-		} else {
-			up = &letters[ c - 'A' ];
-		}
-		if ( c == 'e' )  {
-			current_frame++;
-			if (verbose)  {
-				bu_log("%d, ", current_frame);
-			}
-			if ( current_frame > desired_frame )
-				break;
-			continue;
-		}
-
-		if ( up->targ == TBAD ) {
-			bu_log( "Bad command '%c' (0x%02x)\n", c, c );
-			continue;
-		}
-
-		if ( current_frame == desired_frame )  {
-			/* Duplicate input as output */
-			putchar( c );
-			if ( up->narg <= 0 )  continue;
-
-			switch ( up->targ ) {
-			case TNONE:
-				break;
-			case TCHAR:
-				fread( buf, 1, up->narg, stdin );
-				fwrite( buf, 1, up->narg, stdout );
-				break;
-			case TSHORT:
-				fread( buf, 2, up->narg, stdin );
-				fwrite( buf, 2, up->narg, stdout );
-				break;
-			case TIEEE:
-				fread( buf, 8, up->narg, stdin );
-				fwrite( buf, 8, up->narg, stdout );
-				break;
-			case TSTRING:
-				while ( (c = getchar()) != '\n' && c != EOF )
-					putchar(c);
-				putchar('\n');
-				break;
-			}
-		} else {
-			/* Silently discard input */
-			if ( up->narg <= 0 )  continue;
-
-			switch ( up->targ ) {
-			case TNONE:
-				break;
-			case TCHAR:
-				fread( buf, 1, up->narg, stdin );
-				break;
-			case TSHORT:
-				fread( buf, 2, up->narg, stdin );
-				break;
-			case TIEEE:
-				fread( buf, 8, up->narg, stdin );
-				break;
-			case TSTRING:
-				while ( (c = getchar()) != '\n' && c != EOF )
-				    ; /* NULL */
-			}
-		}
+	if ( c == 'e' )  {
+	    current_frame++;
+	    if (verbose)  {
+		bu_log("%d, ", current_frame);
+	    }
+	    if ( current_frame > desired_frame )
+		break;
+	    continue;
 	}
 
-	return 0;
+	if ( up->targ == TBAD ) {
+	    bu_log( "Bad command '%c' (0x%02x)\n", c, c );
+	    continue;
+	}
+
+	if ( current_frame == desired_frame )  {
+	    /* Duplicate input as output */
+	    putchar( c );
+	    if ( up->narg <= 0 )  continue;
+
+	    switch ( up->targ ) {
+		case TNONE:
+		    break;
+		case TCHAR:
+		    fread( buf, 1, up->narg, stdin );
+		    fwrite( buf, 1, up->narg, stdout );
+		    break;
+		case TSHORT:
+		    fread( buf, 2, up->narg, stdin );
+		    fwrite( buf, 2, up->narg, stdout );
+		    break;
+		case TIEEE:
+		    fread( buf, 8, up->narg, stdin );
+		    fwrite( buf, 8, up->narg, stdout );
+		    break;
+		case TSTRING:
+		    while ( (c = getchar()) != '\n' && c != EOF )
+			putchar(c);
+		    putchar('\n');
+		    break;
+	    }
+	} else {
+	    /* Silently discard input */
+	    if ( up->narg <= 0 )  continue;
+
+	    switch ( up->targ ) {
+		case TNONE:
+		    break;
+		case TCHAR:
+		    fread( buf, 1, up->narg, stdin );
+		    break;
+		case TSHORT:
+		    fread( buf, 2, up->narg, stdin );
+		    break;
+		case TIEEE:
+		    fread( buf, 8, up->narg, stdin );
+		    break;
+		case TSTRING:
+		    while ( (c = getchar()) != '\n' && c != EOF )
+			; /* NULL */
+	    }
+	}
+    }
+
+    return 0;
 }
 
 /*

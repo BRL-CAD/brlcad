@@ -144,7 +144,7 @@ void bu_rb_free_package (struct bu_rb_package *package)
      *	Remove node from the list of all packages
      */
     BU_CKMAG(package -> rbp_list_pos, BU_RB_LIST_MAGIC,
-	"red-black list element");
+	     "red-black list element");
     BU_LIST_DEQUEUE(&(package -> rbp_list_pos -> l));
 
     bu_free((genptr_t) package -> rbp_node, "red-black package nodes");

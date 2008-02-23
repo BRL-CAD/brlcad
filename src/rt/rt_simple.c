@@ -116,7 +116,7 @@ int main(int argc, char **argv)
      * interested in intersecting our ray with.
      */
     if ( rt_gettrees_and_attrs( rtip, (const char **)NULL,
-			       argc, (const char **)argv, 1 ) ) {
+				argc, (const char **)argv, 1 ) ) {
 	fprintf(stderr, "rt_gettrees FAILED\n");
 	return 1;
     }

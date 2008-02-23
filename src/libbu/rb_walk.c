@@ -165,10 +165,10 @@ static void postwalkdata (struct bu_rb_node *root, int order, void (*visit) (/* 
 void _rb_walk (bu_rb_tree *tree, int order, void (*visit) (/* ??? */), int what_to_visit, int trav_type)
 {
     static void (*walk[][3])() =
-		{
-		    { prewalknodes, inwalknodes, postwalknodes },
-		    { prewalkdata, inwalkdata, postwalkdata }
-		};
+	{
+	    { prewalknodes, inwalknodes, postwalknodes },
+	    { prewalkdata, inwalkdata, postwalkdata }
+	};
 
     BU_CKMAG(tree, BU_RB_TREE_MAGIC, "red-black tree");
     BU_RB_CKORDER(tree, order);
@@ -186,13 +186,13 @@ void _rb_walk (bu_rb_tree *tree, int order, void (*visit) (/* ??? */), int what_
 		    break;
 		default:
 		    bu_log("ERROR: _rb_walk(): Illegal visitation object: %d\n",
-			what_to_visit);
+			   what_to_visit);
 		    bu_bomb("");
 	    }
 	    break;
 	default:
 	    bu_log("ERROR: _rb_walk(): Illegal traversal type: %d\n",
-		trav_type);
+		   trav_type);
 	    bu_bomb("");
     }
 }

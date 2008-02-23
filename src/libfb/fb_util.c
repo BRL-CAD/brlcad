@@ -46,12 +46,12 @@
 int
 fb_sim_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
-	ifp->if_xcenter = xcenter;
-	ifp->if_ycenter = ycenter;
-	ifp->if_xzoom = xzoom;
-	ifp->if_yzoom = yzoom;
+    ifp->if_xcenter = xcenter;
+    ifp->if_ycenter = ycenter;
+    ifp->if_xzoom = xzoom;
+    ifp->if_yzoom = yzoom;
 
-	return	0;
+    return	0;
 }
 
 /*
@@ -63,12 +63,12 @@ fb_sim_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 int
 fb_sim_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
-	*xcenter = ifp->if_xcenter;
-	*ycenter = ifp->if_ycenter;
-	*xzoom = ifp->if_xzoom;
-	*yzoom = ifp->if_yzoom;
+    *xcenter = ifp->if_xcenter;
+    *ycenter = ifp->if_ycenter;
+    *xzoom = ifp->if_xzoom;
+    *yzoom = ifp->if_yzoom;
 
-	return	0;
+    return	0;
 }
 
 /*
@@ -80,11 +80,11 @@ fb_sim_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 int
 fb_sim_cursor(FBIO *ifp, int mode, int x, int y)
 {
-	ifp->if_cursmode = mode;
-	ifp->if_xcurs = x;
-	ifp->if_ycurs = y;
+    ifp->if_cursmode = mode;
+    ifp->if_xcurs = x;
+    ifp->if_ycurs = y;
 
-	return	0;
+    return	0;
 }
 
 /*
@@ -96,11 +96,11 @@ fb_sim_cursor(FBIO *ifp, int mode, int x, int y)
 int
 fb_sim_getcursor(FBIO *ifp, int *mode, int *x, int *y)
 {
-	*mode = ifp->if_cursmode;
-	*x = ifp->if_xcurs;
-	*y = ifp->if_ycurs;
+    *mode = ifp->if_cursmode;
+    *x = ifp->if_xcurs;
+    *y = ifp->if_ycurs;
 
-	return	0;
+    return	0;
 }
 
 /* Backward Compatibility Routines */
@@ -108,46 +108,46 @@ fb_sim_getcursor(FBIO *ifp, int *mode, int *x, int *y)
 int
 fb_reset(FBIO *ifp)
 {
-	return	0;
+    return	0;
 }
 
 int
 fb_viewport(FBIO *ifp, int left, int top, int right, int bottom)
 {
-	return	0;
+    return	0;
 }
 
 int
 fb_window(FBIO *ifp, int x, int y)
 {
-	int	xcenter, ycenter;
-	int	xzoom, yzoom;
+    int	xcenter, ycenter;
+    int	xzoom, yzoom;
 
-	fb_getview(ifp, &xcenter, &ycenter, &xzoom, &yzoom);
-	xcenter = x;
-	ycenter = y;
-	return fb_view(ifp, xcenter, ycenter, xzoom, yzoom);
+    fb_getview(ifp, &xcenter, &ycenter, &xzoom, &yzoom);
+    xcenter = x;
+    ycenter = y;
+    return fb_view(ifp, xcenter, ycenter, xzoom, yzoom);
 }
 
 int
 fb_zoom(FBIO *ifp, int x, int y)
 {
-	int	xcenter, ycenter;
-	int	xzoom, yzoom;
+    int	xcenter, ycenter;
+    int	xzoom, yzoom;
 
-	fb_getview(ifp, &xcenter, &ycenter, &xzoom, &yzoom);
-	xzoom = x;
-	yzoom = y;
-	return fb_view(ifp, xcenter, ycenter, xzoom, yzoom);
+    fb_getview(ifp, &xcenter, &ycenter, &xzoom, &yzoom);
+    xzoom = x;
+    yzoom = y;
+    return fb_view(ifp, xcenter, ycenter, xzoom, yzoom);
 }
 
 int
 fb_scursor(FBIO *ifp, int mode, int x, int y)
 {
-	/* We could actually implement this but it
-	 * is probably of no value.
-	 */
-	return	0;
+    /* We could actually implement this but it
+     * is probably of no value.
+     */
+    return	0;
 }
 
 /*

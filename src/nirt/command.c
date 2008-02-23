@@ -419,8 +419,8 @@ use_air(char *buffer, com_table *ctp)
 	bu_log(" Air %s in the current directory of database objects.\n",
 	       new_use ? "is not included" : "is included");
 	bu_log(
-	       " To set useair=%d requires building/prepping another directory.\n",
-	       new_use);
+	    " To set useair=%d requires building/prepping another directory.\n",
+	    new_use);
 	bu_log(" Do you want to do that now (y|n)[n]? ");
 	bu_fgets(response, sizeof(response), stdin);
 	while ((*rp == ' ') || (*rp == '\t'))

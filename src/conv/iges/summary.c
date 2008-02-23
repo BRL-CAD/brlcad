@@ -31,34 +31,34 @@
 void
 Summary()
 {
-	int i;
-	int indep_entities=0;
+    int i;
+    int indep_entities=0;
 
-	bu_log( "Summary of entity types found:\n" );
-	for ( i=0; i<=ntypes; i++ )
-	{
-		if ( typecount[i].count != 0 )
-			bu_log( "%10d %s (type %d)\n", typecount[i].count, typecount[i].name, typecount[i].type );
-	}
+    bu_log( "Summary of entity types found:\n" );
+    for ( i=0; i<=ntypes; i++ )
+    {
+	if ( typecount[i].count != 0 )
+	    bu_log( "%10d %s (type %d)\n", typecount[i].count, typecount[i].name, typecount[i].type );
+    }
 
-	for ( i=0; i<totentities; i++ )
-	{
-		int subord;
+    for ( i=0; i<totentities; i++ )
+    {
+	int subord;
 
-		subord = (dir[i]->status/10000)%100;
-		if ( !subord )
-			indep_entities++;
-	}
-	bu_log( "%d Independent entities\n", indep_entities );
+	subord = (dir[i]->status/10000)%100;
+	if ( !subord )
+	    indep_entities++;
+    }
+    bu_log( "%d Independent entities\n", indep_entities );
 }
 
 void
 Zero_counts()
 {
-	int i;
+    int i;
 
-	for ( i=0; i<=ntypes; i++ )
-		typecount[i].count = 0;
+    for ( i=0; i<=ntypes; i++ )
+	typecount[i].count = 0;
 }
 
 /*

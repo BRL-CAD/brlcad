@@ -563,7 +563,7 @@ main(int argc, char *argv[]) {
 	db_close(dbip);
 	bu_log("Unable to load the database directory for file: %s\n", geometry_file);
 	bu_exit(EXIT_FAILURE, "Can't read geometry file");
-     }
+    }
 
     /* fire up the client */
     bu_log("Connecting to %s, port %d\n", server_name, port);

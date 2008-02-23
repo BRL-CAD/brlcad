@@ -55,15 +55,15 @@ FBIO	*fbp;	/* XXX - debug */
 
 fhinit(void)
 {
-	int	i;
+    int	i;
 
-	Xleft = Yleft = Xright = Yright = -1;
+    Xleft = Yleft = Xright = Yright = -1;
 
-	/* Set initial horizons */
-	for ( i = 0; i < HSCREEN; i++ ) {
-		upper[ i ] = 0;
-		lower[ i ] = VSCREEN;
-	}
+    /* Set initial horizons */
+    for ( i = 0; i < HSCREEN; i++ ) {
+	upper[ i ] = 0;
+	lower[ i ] = VSCREEN;
+    }
 }
 
 /*
@@ -72,53 +72,53 @@ fhinit(void)
  */
 fhnewz(int *f, int num)
 {
-	int	x, y, Xprev, Yprev, Xi, Yi;
-	int	Previously, Currently;
+    int	x, y, Xprev, Yprev, Xi, Yi;
+    int	Previously, Currently;
 
-	/* Init previous X and Y values */
-	Xprev = 0;
-	Yprev = f[ 0 ];
+    /* Init previous X and Y values */
+    Xprev = 0;
+    Yprev = f[ 0 ];
+    /* VIEWING XFORM */
+
+    /* Fill left side */
+    Efill( );
+/*	Previously = fhvis( x, y );		/* <<< WHAT ARE X AND Y? */
+    Previously = fhvis( Xprev, Yprev );		/* <<< WHAT ARE X AND Y? */
+
+    /* Do each point in Z plane */
+    for ( x = 0; x < num; x++ ) {
+	y = f[x];
 	/* VIEWING XFORM */
 
-	/* Fill left side */
-	Efill( );
-/*	Previously = fhvis( x, y );		/* <<< WHAT ARE X AND Y? */
-	Previously = fhvis( Xprev, Yprev );		/* <<< WHAT ARE X AND Y? */
-
-	/* Do each point in Z plane */
-	for ( x = 0; x < num; x++ ) {
-		y = f[x];
-		/* VIEWING XFORM */
-
-		/* Check visibility and fill horizon */
-		Currently = fhvis( x, y );
-		if ( Currently == Previously ) {
-			if ( Currently != INVISIBLE ) {
-				/*
-				 * Current and Previous point both
-				 *  visible on same side of horizon.
-				 */
-				Draw( Xprev, Yprev, x, y );
-			}
-			/* else both invisible */
-		} else {
-			/*
-			 * Visibility has changed.
-			 * Draw line checking visibility along the way.
-			 */
-			Draw( Xprev, Yprev, x, y );
-		} /* end changed visibility */
-
+	/* Check visibility and fill horizon */
+	Currently = fhvis( x, y );
+	if ( Currently == Previously ) {
+	    if ( Currently != INVISIBLE ) {
 		/*
-		 * Reset "previous" point values for next iteration.
+		 * Current and Previous point both
+		 *  visible on same side of horizon.
 		 */
-		Previously = Currently;
-		Xprev = x;
-		Yprev = y;
-	}
+		Draw( Xprev, Yprev, x, y );
+	    }
+	    /* else both invisible */
+	} else {
+	    /*
+	     * Visibility has changed.
+	     * Draw line checking visibility along the way.
+	     */
+	    Draw( Xprev, Yprev, x, y );
+	} /* end changed visibility */
 
-	/* Fill Right Side */
-	Efill( );
+	/*
+	 * Reset "previous" point values for next iteration.
+	 */
+	Previously = Currently;
+	Xprev = x;
+	Yprev = y;
+    }
+
+    /* Fill Right Side */
+    Efill( );
 }
 
 /*
@@ -131,14 +131,14 @@ fhnewz(int *f, int num)
  */
 fhvis(int x, int y)
 {
-	/* See if hidden behind horizons */
-	if ( y < upper[x] && y > lower[x] )
-		return( INVISIBLE );
+    /* See if hidden behind horizons */
+    if ( y < upper[x] && y > lower[x] )
+	return( INVISIBLE );
 
-	if ( y >= upper[x] )
-		return( ABOVE );
+    if ( y >= upper[x] )
+	return( ABOVE );
 
-	return( BELOW );
+    return( BELOW );
 }
 
 /*
@@ -155,22 +155,22 @@ Efill(void)
  */
 Horizon(int x1, int y1, int x2, int y2)
 {
-	int	xinc, x, y;
-	double	slope;
+    int	xinc, x, y;
+    double	slope;
 
-	xinc = sign( x2 - x1 );
-	if ( xinc == 0 ) {
-		/* Vertical line */
-		upper[x2] = MAX( upper[x2], y2 );
-		lower[x2] = MIN( lower[x2], y2 );
-	} else {
-		slope = (y2 - y1) / (x2 - x1);
-		for ( x = x1; x <= x2; x += xinc ) {
-			y = slope * (x - x1) + y1;
-			upper[x] = MAX( upper[x], y );
-			lower[x] = MIN( lower[x], y );
-		}
+    xinc = sign( x2 - x1 );
+    if ( xinc == 0 ) {
+	/* Vertical line */
+	upper[x2] = MAX( upper[x2], y2 );
+	lower[x2] = MIN( lower[x2], y2 );
+    } else {
+	slope = (y2 - y1) / (x2 - x1);
+	for ( x = x1; x <= x2; x += xinc ) {
+	    y = slope * (x - x1) + y1;
+	    upper[x] = MAX( upper[x], y );
+	    lower[x] = MIN( lower[x], y );
 	}
+    }
 }
 
 /*
@@ -179,64 +179,64 @@ Horizon(int x1, int y1, int x2, int y2)
  */
 Intersect(int x1, int y1, int x2, int y2, int *hor, int *xi, int *yi)
 {
-	int	xinc, ysign, denom;
-	int	slope;
+    int	xinc, ysign, denom;
+    int	slope;
 
 /*
-printf("Intersect( (%3d,%3d)->(%3d,%3d) & (%3d,%3d)->(%3d,%3d) ) = ", x1, y1, x2, y2, x1, hor[x1], x2, hor[x2] );
-fflush( stdout );
+  printf("Intersect( (%3d,%3d)->(%3d,%3d) & (%3d,%3d)->(%3d,%3d) ) = ", x1, y1, x2, y2, x1, hor[x1], x2, hor[x2] );
+  fflush( stdout );
 */
-	xinc = sign( x2 - x1 );
-	if ( xinc == 0 ) {
-		/* Vertical line */
-		*xi = x2;
-		*yi = hor[x2];
+    xinc = sign( x2 - x1 );
+    if ( xinc == 0 ) {
+	/* Vertical line */
+	*xi = x2;
+	*yi = hor[x2];
 /*printf("(vert x2=%d) ", x2);*/
-	} else {
+    } else {
 #ifdef FOOBARBAZ
-		denom = (hor[x2]-hor[x1])-(y2-y1);
-		if ( denom == 0 ) {
-			/* same line! */
-			*xi = x1;
-		} else
-			*xi = x1 + ((x2-x1)*(hor[x1]-y1))/denom;
-		*yi = y1 + (*xi-x1)*((y2-y1)/(x2-x1)) + 0.5;
+	denom = (hor[x2]-hor[x1])-(y2-y1);
+	if ( denom == 0 ) {
+	    /* same line! */
+	    *xi = x1;
+	} else
+	    *xi = x1 + ((x2-x1)*(hor[x1]-y1))/denom;
+	*yi = y1 + (*xi-x1)*((y2-y1)/(x2-x1)) + 0.5;
 /*printf("(%3d,%3d)\n", *xi, *yi );*/
-		return;
+	return;
 #endif FOOBARBAZ
 
-		slope = (y2 - y1) / (x2 - x1);
-		ysign = sign( y1 - hor[x1 + xinc] );
+	slope = (y2 - y1) / (x2 - x1);
+	ysign = sign( y1 - hor[x1 + xinc] );
 #ifdef MYMETHOD
-		for ( *xi = x1; *xi <= x2; *xi += xinc ) {
-			*yi = y1 + (*xi-x1)*slope;	/* XXX */
-			if ( sign( *yi - hor[*xi + xinc] ) != ysign )
-				break;
-		}
-		if ( xinc == 1 && *xi > x2 ) *xi = x2;
-		if ( xinc == -1 && *xi < x2 ) *xi = x2;
-#else
-		*yi = y1;
-		*xi = x1;
-		while ( sign( *yi - hor[*xi + xinc] ) == ysign ) {
-			for ( *xi = x1; *xi <= x2; *xi += xinc )
-				*yi = *yi + slope;	/* XXX */
-/*printf("[%3d,%3d]", *xi, *yi );*/
-		}
-		*xi = *xi + xinc;
-#endif MYMETHOD
+	for ( *xi = x1; *xi <= x2; *xi += xinc ) {
+	    *yi = y1 + (*xi-x1)*slope;	/* XXX */
+	    if ( sign( *yi - hor[*xi + xinc] ) != ysign )
+		break;
 	}
+	if ( xinc == 1 && *xi > x2 ) *xi = x2;
+	if ( xinc == -1 && *xi < x2 ) *xi = x2;
+#else
+	*yi = y1;
+	*xi = x1;
+	while ( sign( *yi - hor[*xi + xinc] ) == ysign ) {
+	    for ( *xi = x1; *xi <= x2; *xi += xinc )
+		*yi = *yi + slope;	/* XXX */
+/*printf("[%3d,%3d]", *xi, *yi );*/
+	}
+	*xi = *xi + xinc;
+#endif MYMETHOD
+    }
 /*printf("(%3d,%3d)\n", *xi, *yi );*/
 }
 
 sign(int i)
 {
-	if ( i > 0 )
-		return( 1 );
-	else if ( i < 0 )
-		return( -1 );
-	else
-		return( 0 );
+    if ( i > 0 )
+	return( 1 );
+    else if ( i < 0 )
+	return( -1 );
+    else
+	return( 0 );
 }
 
 /*
@@ -245,79 +245,79 @@ sign(int i)
  */
 Draw(int x1, int y1, int x2, int y2)
 {
-	int	x, y, deltx, delty, error, i;
-	int	temp, s1, s2, interchange;
-	static	RGBpixel white = { 255, 255, 255 };	/* XXX - debug */
+    int	x, y, deltx, delty, error, i;
+    int	temp, s1, s2, interchange;
+    static	RGBpixel white = { 255, 255, 255 };	/* XXX - debug */
 
 /*printf("Draw (%d %d) -> (%d %d)\n", x1, y1, x2, y2 );*/
-	x = x1;
-	y = y1;
-	deltx = (x2 > x1 ? x2 - x1 : x1 - x2);
-	delty = (y2 > y1 ? y2 - y1 : y1 - y2);
-	s1 = sign(x2 - x1);
-	s2 = sign(y2 - y1);
+    x = x1;
+    y = y1;
+    deltx = (x2 > x1 ? x2 - x1 : x1 - x2);
+    delty = (y2 > y1 ? y2 - y1 : y1 - y2);
+    s1 = sign(x2 - x1);
+    s2 = sign(y2 - y1);
 
-	/* check for swap of deltx and delty */
-	if ( delty > deltx ) {
-		temp = deltx;
-		deltx = delty;
-		delty = temp;
-		interchange = 1;
-	} else
-		interchange = 0;
+    /* check for swap of deltx and delty */
+    if ( delty > deltx ) {
+	temp = deltx;
+	deltx = delty;
+	delty = temp;
+	interchange = 1;
+    } else
+	interchange = 0;
 
-	/* init error term */
-	error = 2 * delty - deltx;
+    /* init error term */
+    error = 2 * delty - deltx;
 
-	for ( i = 0; i < deltx; i++ ) {
+    for ( i = 0; i < deltx; i++ ) {
 /*		plotxy( x, y );*/
 /*		printf( "(%3d,%3d)\n", x, y );*/
-		if ( fhvis(x, y) ) {
-			upper[x] = MAX( upper[x], y );
-			lower[x] = MIN( lower[x], y );
-			fb_write( fbp, x, y, white, 1 );
-		}
-		while ( error >= 0 ) {
-			if ( interchange == 1 )
-				x += s1;
-			else
-				y += s2;
-			error -= 2 * deltx;
-		}
-		if ( interchange == 1 )
-			y += s2;
-		else
-			x += s1;
-		error += 2 * delty;
+	if ( fhvis(x, y) ) {
+	    upper[x] = MAX( upper[x], y );
+	    lower[x] = MIN( lower[x], y );
+	    fb_write( fbp, x, y, white, 1 );
 	}
+	while ( error >= 0 ) {
+	    if ( interchange == 1 )
+		x += s1;
+	    else
+		y += s2;
+	    error -= 2 * deltx;
+	}
+	if ( interchange == 1 )
+	    y += s2;
+	else
+	    x += s1;
+	error += 2 * delty;
+    }
 }
 
 #ifdef SOMBRERO
 int main()
 {
-	int	f[500];
-	int	x, y, z;
-	double	r;
+    int	f[500];
+    int	x, y, z;
+    double	r;
 
-	fhinit();
+    fhinit();
 
-	fbp = fb_open( NULL, 512, 512 );
-	/*fb_clear( fbp, PIXEL_NULL );*/
+    fbp = fb_open( NULL, 512, 512 );
+    /*fb_clear( fbp, PIXEL_NULL );*/
 
-	/* Nearest to Farthest */
-	for ( z = 500; z > 0; z-- ) {
-		/* Left to Right */
-		for ( x = 0; x < 500; x++ ) {
-			r = (x - 250) * (x - 250) + (z - 250) * (z - 250);
-			r = 0.10*sqrt( r ) + 0.00001;
-			y = 250.0 * sin( r ) / r + 100.0 + (500-z)/3;
-			f[x] = y;
+    /* Nearest to Farthest */
+    for ( z = 500; z > 0; z-- ) {
+	/* Left to Right */
+	for ( x = 0; x < 500; x++ ) {
+	    r = (x - 250) * (x - 250) + (z - 250) * (z - 250);
+	    r = 0.10*sqrt( r ) + 0.00001;
+	    y = 250.0 * sin( r ) / r + 100.0 + (500-z)/3;
+	    f[x] = y;
 /*			printf( "f[%3d] = %d\n", x, y );*/
-		}
-		fhnewz( f, 500 );
 	}
+	fhnewz( f, 500 );
+    }
 
-	return 0;
+    return 0;
 }
 #endif
 
@@ -326,46 +326,46 @@ Usage: fhor [width] < doubles\n";
 
 int main(int argc, char **argv)
 {
-	double	inbuf[512];
-	int	f[512];
-	int	i, x, y, z;
+    double	inbuf[512];
+    int	f[512];
+    int	i, x, y, z;
 
-	if ( isatty(fileno(stdin)) ) {
-		bu_exit(1, "%s", usage );
+    if ( isatty(fileno(stdin)) ) {
+	bu_exit(1, "%s", usage );
+    }
+
+    fhinit();
+
+    fbp = fb_open( NULL, 0, 0 );
+    /*fb_clear( fbp, PIXEL_NULL );*/
+
+    memset(f, 0, 512*sizeof(*f));
+    fhnewz( f, 512 );
+
+    /*
+     *  Nearest to Farthest
+     *  Here we reverse the sense of Z
+     *  (it now goes into the screen).
+     */
+    z = 0;
+    while ( fread( inbuf, sizeof(*inbuf), 512, stdin ) > 0 ) {
+	/* Left to Right */
+	/*memset(f, 0, 512*sizeof(*f));*/
+	for ( i = 0; i < 512; i++ ) {
+	    f[i] = 4*z;	/* up 4 for every z back */
 	}
-
-	fhinit();
-
-	fbp = fb_open( NULL, 0, 0 );
-	/*fb_clear( fbp, PIXEL_NULL );*/
-
-	memset(f, 0, 512*sizeof(*f));
+	for ( i = 0; i < 512; i++ ) {
+	    x = i + 2*z;	/* right 2 for every z back */
+	    if ( x >= 0 && x < 512 ) {
+		f[x] += 128 * inbuf[i];
+	    }
+	    /*printf( "f[%3d] = %d\n", x, y );*/
+	}
 	fhnewz( f, 512 );
+	z++;
+    }
 
-	/*
-	 *  Nearest to Farthest
-	 *  Here we reverse the sense of Z
-	 *  (it now goes into the screen).
-	 */
-	z = 0;
-	while ( fread( inbuf, sizeof(*inbuf), 512, stdin ) > 0 ) {
-		/* Left to Right */
-		/*memset(f, 0, 512*sizeof(*f));*/
-		for ( i = 0; i < 512; i++ ) {
-			f[i] = 4*z;	/* up 4 for every z back */
-		}
-		for ( i = 0; i < 512; i++ ) {
-			x = i + 2*z;	/* right 2 for every z back */
-			if ( x >= 0 && x < 512 ) {
-				f[x] += 128 * inbuf[i];
-			}
-			/*printf( "f[%3d] = %d\n", x, y );*/
-		}
-		fhnewz( f, 512 );
-		z++;
-	}
-
-	return 0;
+    return 0;
 }
 
 /*

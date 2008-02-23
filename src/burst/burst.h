@@ -209,29 +209,29 @@ typedef genptr_t pointer;			/* generic pointer */
 
 typedef struct ids	Ids;
 struct ids
-	{
-	short	i_lower;
-	short	i_upper;
-	Ids	*i_next;
-	};
+{
+    short	i_lower;
+    short	i_upper;
+    Ids	*i_next;
+};
 #define IDS_NULL	(Ids *) 0
 
 typedef struct colors	Colors;
 struct colors
-	{
-	short	c_lower;
-	short	c_upper;
-	unsigned char	c_rgb[3];
-	Colors	*c_next;
-	};
+{
+    short	c_lower;
+    short	c_upper;
+    unsigned char	c_rgb[3];
+    Colors	*c_next;
+};
 #define COLORS_NULL	(Colors *) 0
 
 typedef struct pt_queue	Pt_Queue;
 struct pt_queue
-	{
-	struct partition	*q_part;
-	Pt_Queue		*q_next;
-	};
+{
+    struct partition	*q_part;
+    Pt_Queue		*q_next;
+};
 
 #define PT_Q_NULL	(Pt_Queue *) 0
 

@@ -25,27 +25,27 @@
 
 /* Internal Host table */
 struct ihost {
-	struct bu_list	l;
-	char		*ht_name;	/* Official name of host */
-	int		ht_flags;	/* Control info about this host */
+    struct bu_list	l;
+    char		*ht_name;	/* Official name of host */
+    int		ht_flags;	/* Control info about this host */
 #define HT_HOLD		0x1
-	int		ht_when;	/* When to use this host */
+    int		ht_when;	/* When to use this host */
 #define HT_ALWAYS	1		/* Always try to use this one */
 #define HT_NIGHT	2		/* Only use at night */
 #define HT_PASSIVE	3		/* May call in, never initiated */
 #define HT_RS		4		/* While rays/second > ht_rs */
 #define HT_PASSRS	5		/* passive rays/second */
 #define HT_HACKNIGHT	6		/* Only use during "hackers night" */
-	int		ht_rs;		/* rays/second level */
-	int		ht_rs_miss;	/* number of consecutive misses */
-	int		ht_rs_wait;	/* # of auto adds to wait before */
-					/* restarting this server */
-	int		ht_where;	/* Where to find database */
+    int		ht_rs;		/* rays/second level */
+    int		ht_rs_miss;	/* number of consecutive misses */
+    int		ht_rs_wait;	/* # of auto adds to wait before */
+    /* restarting this server */
+    int		ht_where;	/* Where to find database */
 #define HT_CD		1		/* cd to ht_path first */
 #define HT_CONVERT	2		/* cd to ht_path, asc2g database */
 #define HT_USE		3		/* cd to ht_path, use asc database */
 					/* best of cd and convert */
-	char		*ht_path;	/* remote directory to run in */
+    char		*ht_path;	/* remote directory to run in */
 };
 #define IHOST_MAGIC	0x69486f73
 #define CK_IHOST(_p)	BU_CKMAG(_p, IHOST_MAGIC, "ihost")

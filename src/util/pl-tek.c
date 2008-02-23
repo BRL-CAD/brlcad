@@ -48,10 +48,10 @@
 #include "bn.h"
 
 struct uplot {
-	int	targ;	/* type of args */
-	int	narg;	/* number or args */
-	char	*desc;	/* description */
-	int	t3d;	/* non-zero if 3D */
+    int	targ;	/* type of args */
+    int	narg;	/* number or args */
+    char	*desc;	/* description */
+    int	t3d;	/* non-zero if 3D */
 };
 
 void	getstring(void);
@@ -82,64 +82,64 @@ static void	tekpoint(int xi, int yi);
 
 struct uplot uerror = { 0, 0, 0 };
 struct uplot letters[] = {
-/*A*/	{ 0, 0, 0, 0 },
-/*B*/	{ 0, 0, 0, 0 },
-/*C*/	{ TCHAR, 3, "color", 0 },
-/*D*/	{ 0, 0, 0, 0 },
-/*E*/	{ 0, 0, 0, 0 },
-/*F*/	{ TNONE, 0, "flush", 0 },
-/*G*/	{ 0, 0, 0, 0 },
-/*H*/	{ 0, 0, 0, 0 },
-/*I*/	{ 0, 0, 0, 0 },
-/*J*/	{ 0, 0, 0, 0 },
-/*K*/	{ 0, 0, 0, 0 },
-/*L*/	{ TSHORT, 6, "3line", 1 },
-/*M*/	{ TSHORT, 3, "3move", 1 },
-/*N*/	{ TSHORT, 3, "3cont", 1 },
-/*O*/	{ TIEEE, 3, "d_3move", 1 },
-/*P*/	{ TSHORT, 3, "3point", 1 },
-/*Q*/	{ TIEEE, 3, "d_3cont", 1 },
-/*R*/	{ 0, 0, 0, 0 },
-/*S*/	{ TSHORT, 6, "3space", 1 },
-/*T*/	{ 0, 0, 0, 0 },
-/*U*/	{ 0, 0, 0, 0 },
-/*V*/	{ TIEEE, 6, "d_3line", 1 },
-/*W*/	{ TIEEE, 6, "d_3space", 1 },
-/*X*/	{ TIEEE, 3, "d_3point", 1 },
-/*Y*/	{ 0, 0, 0, 0 },
-/*Z*/	{ 0, 0, 0, 0 },
-/*[*/	{ 0, 0, 0, 0 },
-/*\*/	{ 0, 0, 0, 0 },
-/*]*/	{ 0, 0, 0, 0 },
-/*^*/	{ 0, 0, 0, 0 },
-/*_*/	{ 0, 0, 0, 0 },
-/*`*/	{ 0, 0, 0, 0 },
-/*a*/	{ TSHORT, 6, "arc", 0 },
-/*b*/	{ 0, 0, 0, 0 },
-/*c*/	{ TSHORT, 3, "circle", 0 },
-/*d*/	{ 0, 0, 0, 0 },
-/*e*/	{ TNONE, 0, "erase", 0 },
-/*f*/	{ TSTRING, 1, "linmod", 0 },
-/*g*/	{ 0, 0, 0, 0 },
-/*h*/	{ 0, 0, 0, 0 },
-/*i*/	{ TIEEE, 3, "d_circle", 0 },
-/*j*/	{ 0, 0, 0, 0 },
-/*k*/	{ 0, 0, 0, 0 },
-/*l*/	{ TSHORT, 4, "line", 0 },
-/*m*/	{ TSHORT, 2, "move", 0 },
-/*n*/	{ TSHORT, 2, "cont", 0 },
-/*o*/	{ TIEEE, 2, "d_move", 0 },
-/*p*/	{ TSHORT, 2, "point", 0 },
-/*q*/	{ TIEEE, 2, "d_cont", 0 },
-/*r*/	{ TIEEE, 6, "d_arc", 0 },
-/*s*/	{ TSHORT, 4, "space", 0 },
-/*t*/	{ TSTRING, 1, "label", 0 },
-/*u*/	{ 0, 0, 0, 0 },
-/*v*/	{ TIEEE, 4, "d_line", 0 },
-/*w*/	{ TIEEE, 4, "d_space", 0 },
-/*x*/	{ TIEEE, 2, "d_point", 0 },
-/*y*/	{ 0, 0, 0, 0 },
-/*z*/	{ 0, 0, 0, 0 }
+    /*A*/	{ 0, 0, 0, 0 },
+    /*B*/	{ 0, 0, 0, 0 },
+    /*C*/	{ TCHAR, 3, "color", 0 },
+    /*D*/	{ 0, 0, 0, 0 },
+    /*E*/	{ 0, 0, 0, 0 },
+    /*F*/	{ TNONE, 0, "flush", 0 },
+    /*G*/	{ 0, 0, 0, 0 },
+    /*H*/	{ 0, 0, 0, 0 },
+    /*I*/	{ 0, 0, 0, 0 },
+    /*J*/	{ 0, 0, 0, 0 },
+    /*K*/	{ 0, 0, 0, 0 },
+    /*L*/	{ TSHORT, 6, "3line", 1 },
+    /*M*/	{ TSHORT, 3, "3move", 1 },
+    /*N*/	{ TSHORT, 3, "3cont", 1 },
+    /*O*/	{ TIEEE, 3, "d_3move", 1 },
+    /*P*/	{ TSHORT, 3, "3point", 1 },
+    /*Q*/	{ TIEEE, 3, "d_3cont", 1 },
+    /*R*/	{ 0, 0, 0, 0 },
+    /*S*/	{ TSHORT, 6, "3space", 1 },
+    /*T*/	{ 0, 0, 0, 0 },
+    /*U*/	{ 0, 0, 0, 0 },
+    /*V*/	{ TIEEE, 6, "d_3line", 1 },
+    /*W*/	{ TIEEE, 6, "d_3space", 1 },
+    /*X*/	{ TIEEE, 3, "d_3point", 1 },
+    /*Y*/	{ 0, 0, 0, 0 },
+    /*Z*/	{ 0, 0, 0, 0 },
+    /*[*/	{ 0, 0, 0, 0 },
+    /*\*/	{ 0, 0, 0, 0 },
+    /*]*/	{ 0, 0, 0, 0 },
+    /*^*/	{ 0, 0, 0, 0 },
+    /*_*/	{ 0, 0, 0, 0 },
+    /*`*/	{ 0, 0, 0, 0 },
+    /*a*/	{ TSHORT, 6, "arc", 0 },
+    /*b*/	{ 0, 0, 0, 0 },
+    /*c*/	{ TSHORT, 3, "circle", 0 },
+    /*d*/	{ 0, 0, 0, 0 },
+    /*e*/	{ TNONE, 0, "erase", 0 },
+    /*f*/	{ TSTRING, 1, "linmod", 0 },
+    /*g*/	{ 0, 0, 0, 0 },
+    /*h*/	{ 0, 0, 0, 0 },
+    /*i*/	{ TIEEE, 3, "d_circle", 0 },
+    /*j*/	{ 0, 0, 0, 0 },
+    /*k*/	{ 0, 0, 0, 0 },
+    /*l*/	{ TSHORT, 4, "line", 0 },
+    /*m*/	{ TSHORT, 2, "move", 0 },
+    /*n*/	{ TSHORT, 2, "cont", 0 },
+    /*o*/	{ TIEEE, 2, "d_move", 0 },
+    /*p*/	{ TSHORT, 2, "point", 0 },
+    /*q*/	{ TIEEE, 2, "d_cont", 0 },
+    /*r*/	{ TIEEE, 6, "d_arc", 0 },
+    /*s*/	{ TSHORT, 4, "space", 0 },
+    /*t*/	{ TSTRING, 1, "label", 0 },
+    /*u*/	{ 0, 0, 0, 0 },
+    /*v*/	{ TIEEE, 4, "d_line", 0 },
+    /*w*/	{ TIEEE, 4, "d_space", 0 },
+    /*x*/	{ TIEEE, 2, "d_point", 0 },
+    /*y*/	{ 0, 0, 0, 0 },
+    /*z*/	{ 0, 0, 0, 0 }
 };
 
 int	verbose;
@@ -156,176 +156,176 @@ Usage: pl-tek [-e] [-v] < file.pl > file.tek\n";
 int
 main(int argc, char **argv)
 {
-	register int	c;
-	struct	uplot *up;
+    register int	c;
+    struct	uplot *up;
 
-	while ( argc > 1 ) {
-		if ( strcmp(argv[1], "-v") == 0 ) {
-			verbose++;
-		} else if ( strcmp( argv[1], "-e" ) == 0 )  {
-			expand_it = 1;
-		} else {
-			fprintf(stderr, "pl-tek: argument '%s' ignored\n", argv[1]);
-			break;
-		}
-
-		argc--;
-		argv++;
-	}
-	/* Stdout may be a genuine Tektronix! */
-	if ( isatty(fileno(stdin)) ) {
-		bu_exit(1, "%s", usage );
+    while ( argc > 1 ) {
+	if ( strcmp(argv[1], "-v") == 0 ) {
+	    verbose++;
+	} else if ( strcmp( argv[1], "-e" ) == 0 )  {
+	    expand_it = 1;
+	} else {
+	    fprintf(stderr, "pl-tek: argument '%s' ignored\n", argv[1]);
+	    break;
 	}
 
-	/* Assume default space, in case one is not provided */
-	sp[0] = sp[1] = sp[2] = -32767;
-	sp[3] = sp[4] = sp[5] = 32767;
-	doscale();
+	argc--;
+	argv++;
+    }
+    /* Stdout may be a genuine Tektronix! */
+    if ( isatty(fileno(stdin)) ) {
+	bu_exit(1, "%s", usage );
+    }
 
-	/* Initialize the Tektronix */
-	(void)putc(ESC, stdout);
-	(void)putc(';', stdout);		/* Miniature typeface */
-	(void)putc(US, stdout);
+    /* Assume default space, in case one is not provided */
+    sp[0] = sp[1] = sp[2] = -32767;
+    sp[3] = sp[4] = sp[5] = 32767;
+    doscale();
 
-	while ( (c = getchar()) != EOF ) {
-		/* look it up */
-		if ( c < 'A' || c > 'z' ) {
-			up = &uerror;
-		} else {
-			up = &letters[ c - 'A' ];
-		}
+    /* Initialize the Tektronix */
+    (void)putc(ESC, stdout);
+    (void)putc(';', stdout);		/* Miniature typeface */
+    (void)putc(US, stdout);
 
-		if ( up->targ == TBAD ) {
-			fprintf( stderr, "Bad command '%c' (0x%02x)\n", c, c );
-			continue;
-		}
-
-		if ( up->narg > 0 )
-			getargs( up );
-
-		if ( verbose )  {
-			register int	i;
-			fprintf( stderr, "%s", up->desc );
-			switch ( up->targ )  {
-			case TCHAR:
-			case TSHORT:
-			case TIEEE:
-				for ( i=0; i < up->narg; i++ )
-					fprintf( stderr, " %g", arg[i] );
-				break;
-			case TSTRING:
-				fprintf( stderr, " '%s'", strarg );
-				break;
-			}
-			fprintf( stderr, "\n");
-		}
-
-		/* check for space command */
-		switch ( c ) {
-		case 's':		/* space */
-		case 'w':		/* d_space */
-			sp[0] = arg[0];
-			sp[1] = arg[1];
-			sp[2] = 0;
-			sp[3] = arg[2];
-			sp[4] = arg[3];
-			sp[5] = 0;
-			doscale();
-			seenscale++;
-			continue;
-		case 'S':		/* 3space */
-		case 'W':		/* d_3space */
-			sp[0] = arg[0];
-			sp[1] = arg[1];
-			sp[2] = arg[2];
-			sp[3] = arg[3];
-			sp[4] = arg[4];
-			sp[5] = arg[5];
-			doscale();
-			seenscale++;
-			continue;
-		}
-
-		/* do it */
-		switch ( c ) {
-		case 'm':	/* 2-d move */
-		case 'M':	/* 3move */
-		case 'o':	/* d_move */
-		case 'O':	/* d_3move */
-			tekmove( (int)((arg[0] - sp[0]) * scale),
-				 (int)((arg[1] - sp[1]) * scale) );
-			break;
-
-		case 'n':	/* 2-d continue */
-		case 'N':	/* 3cont */
-		case 'q':	/* d_cont */
-		case 'Q':	/* d_3cont */
-			tekcont( (int)((arg[0] - sp[0]) * scale),
-				 (int)((arg[1] - sp[1]) * scale) );
-			break;
-
-		case 'p':	/* 2-d point */
-		case 'P':	/* 3point */
-		case 'x':	/* d_point */
-		case 'X':	/* d_3point */
-			tekpoint( (int)((arg[0] - sp[0]) * scale),
-				 (int)((arg[1] - sp[1]) * scale) );
-			break;
-
-		case 'l':	/* 2-d line */
-		case 'v':	/* d_line */
-			tekmove( (int)((arg[0] - sp[0]) * scale),
-				 (int)((arg[1] - sp[1]) * scale) );
-			tekcont( (int)((arg[2] - sp[0]) * scale),
-				 (int)((arg[3] - sp[1]) * scale) );
-			break;
-
-		case 'L':	/* 3line */
-		case 'V':	/* d_3line */
-			tekmove( (int)((arg[0] - sp[0]) * scale),
-				 (int)((arg[1] - sp[1]) * scale) );
-			tekcont( (int)((arg[3] - sp[0]) * scale),
-				 (int)((arg[4] - sp[1]) * scale) );
-			break;
-
-		case 'c':	/* circle */
-		case 'i':	/* d_circle */
-			fprintf(stderr, "pl-tek: circle unimplemented\n");
-			break;
-
-		case 'a':	/* arc */
-		case 'r':	/* d_arc */
-			fprintf(stderr, "pl-tek: arc unimplemented\n");
-			break;
-
-		case 'f':	/* linmod */
-			teklinemod( strarg );
-			break;
-
-		case 'e':	/* erase */
-			tekerase();
-			break;
-
-		case 't': 	/* text label */
-			teklabel( strarg );
-			break;
-
-		case 'C':	/* set color */
-			break;
-
-		case 'F':	/* flush buffer */
-			break;
-
-		default:
-			fprintf(stderr, "pl-tek: unknown command byte x%x\n", c );
-		}
+    while ( (c = getchar()) != EOF ) {
+	/* look it up */
+	if ( c < 'A' || c > 'z' ) {
+	    up = &uerror;
+	} else {
+	    up = &letters[ c - 'A' ];
 	}
 
-	if ( !seenscale ) {
-		fprintf( stderr, "pl-tek: WARNING no space command in file, defaulting to +/-32k\n" );
+	if ( up->targ == TBAD ) {
+	    fprintf( stderr, "Bad command '%c' (0x%02x)\n", c, c );
+	    continue;
 	}
 
-	return(0);
+	if ( up->narg > 0 )
+	    getargs( up );
+
+	if ( verbose )  {
+	    register int	i;
+	    fprintf( stderr, "%s", up->desc );
+	    switch ( up->targ )  {
+		case TCHAR:
+		case TSHORT:
+		case TIEEE:
+		    for ( i=0; i < up->narg; i++ )
+			fprintf( stderr, " %g", arg[i] );
+		    break;
+		case TSTRING:
+		    fprintf( stderr, " '%s'", strarg );
+		    break;
+	    }
+	    fprintf( stderr, "\n");
+	}
+
+	/* check for space command */
+	switch ( c ) {
+	    case 's':		/* space */
+	    case 'w':		/* d_space */
+		sp[0] = arg[0];
+		sp[1] = arg[1];
+		sp[2] = 0;
+		sp[3] = arg[2];
+		sp[4] = arg[3];
+		sp[5] = 0;
+		doscale();
+		seenscale++;
+		continue;
+	    case 'S':		/* 3space */
+	    case 'W':		/* d_3space */
+		sp[0] = arg[0];
+		sp[1] = arg[1];
+		sp[2] = arg[2];
+		sp[3] = arg[3];
+		sp[4] = arg[4];
+		sp[5] = arg[5];
+		doscale();
+		seenscale++;
+		continue;
+	}
+
+	/* do it */
+	switch ( c ) {
+	    case 'm':	/* 2-d move */
+	    case 'M':	/* 3move */
+	    case 'o':	/* d_move */
+	    case 'O':	/* d_3move */
+		tekmove( (int)((arg[0] - sp[0]) * scale),
+			 (int)((arg[1] - sp[1]) * scale) );
+		break;
+
+	    case 'n':	/* 2-d continue */
+	    case 'N':	/* 3cont */
+	    case 'q':	/* d_cont */
+	    case 'Q':	/* d_3cont */
+		tekcont( (int)((arg[0] - sp[0]) * scale),
+			 (int)((arg[1] - sp[1]) * scale) );
+		break;
+
+	    case 'p':	/* 2-d point */
+	    case 'P':	/* 3point */
+	    case 'x':	/* d_point */
+	    case 'X':	/* d_3point */
+		tekpoint( (int)((arg[0] - sp[0]) * scale),
+			  (int)((arg[1] - sp[1]) * scale) );
+		break;
+
+	    case 'l':	/* 2-d line */
+	    case 'v':	/* d_line */
+		tekmove( (int)((arg[0] - sp[0]) * scale),
+			 (int)((arg[1] - sp[1]) * scale) );
+		tekcont( (int)((arg[2] - sp[0]) * scale),
+			 (int)((arg[3] - sp[1]) * scale) );
+		break;
+
+	    case 'L':	/* 3line */
+	    case 'V':	/* d_3line */
+		tekmove( (int)((arg[0] - sp[0]) * scale),
+			 (int)((arg[1] - sp[1]) * scale) );
+		tekcont( (int)((arg[3] - sp[0]) * scale),
+			 (int)((arg[4] - sp[1]) * scale) );
+		break;
+
+	    case 'c':	/* circle */
+	    case 'i':	/* d_circle */
+		fprintf(stderr, "pl-tek: circle unimplemented\n");
+		break;
+
+	    case 'a':	/* arc */
+	    case 'r':	/* d_arc */
+		fprintf(stderr, "pl-tek: arc unimplemented\n");
+		break;
+
+	    case 'f':	/* linmod */
+		teklinemod( strarg );
+		break;
+
+	    case 'e':	/* erase */
+		tekerase();
+		break;
+
+	    case 't': 	/* text label */
+		teklabel( strarg );
+		break;
+
+	    case 'C':	/* set color */
+		break;
+
+	    case 'F':	/* flush buffer */
+		break;
+
+	    default:
+		fprintf(stderr, "pl-tek: unknown command byte x%x\n", c );
+	}
+    }
+
+    if ( !seenscale ) {
+	fprintf( stderr, "pl-tek: WARNING no space command in file, defaulting to +/-32k\n" );
+    }
+
+    return(0);
 }
 
 /*** Input args ***/
@@ -333,67 +333,67 @@ main(int argc, char **argv)
 int
 getshort(void)
 {
-	register long	v, w;
+    register long	v, w;
 
-	v = getchar();
-	v |= (getchar()<<8);	/* order is important! */
+    v = getchar();
+    v |= (getchar()<<8);	/* order is important! */
 
-	/* worry about sign extension - sigh */
-	if ( v <= 0x7FFF )  return(v);
-	w = -1;
-	w &= ~0x7FFF;
-	return( w | v );
+    /* worry about sign extension - sigh */
+    if ( v <= 0x7FFF )  return(v);
+    w = -1;
+    w &= ~0x7FFF;
+    return( w | v );
 }
 
 void
 getargs(struct uplot *up)
 {
-	int	i;
+    int	i;
 
-	for ( i = 0; i < up->narg; i++ ) {
-		switch ( up->targ ) {
-			case TSHORT:
-				arg[i] = getshort();
-				break;
-			case TIEEE:
-				arg[i] = getieee();
-				break;
-			case TSTRING:
-				getstring();
-				break;
-			case TCHAR:
-				arg[i] = getchar();
-				break;
-			case TNONE:
-			default:
-				arg[i] = 0;	/* ? */
-				break;
-		}
+    for ( i = 0; i < up->narg; i++ ) {
+	switch ( up->targ ) {
+	    case TSHORT:
+		arg[i] = getshort();
+		break;
+	    case TIEEE:
+		arg[i] = getieee();
+		break;
+	    case TSTRING:
+		getstring();
+		break;
+	    case TCHAR:
+		arg[i] = getchar();
+		break;
+	    case TNONE:
+	    default:
+		arg[i] = 0;	/* ? */
+		break;
 	}
+    }
 }
 
 void
 getstring(void)
 {
-	int	c;
-	char	*cp;
+    int	c;
+    char	*cp;
 
-	cp = strarg;
-	while ( (c = getchar()) != '\n' && c != EOF )
-		*cp++ = c;
-	*cp = 0;
+    cp = strarg;
+    while ( (c = getchar()) != '\n' && c != EOF )
+	*cp++ = c;
+    *cp = 0;
 }
 
 
 double
 getieee(void)
 {
-	unsigned char	in[8];
-	double	d;
+    unsigned char	in[8];
+    double	d;
 
-	fread( in, 8, 1, stdin );
-	ntohd( (unsigned char *)&d, in, 1 );
-	return	d;
+    fread( in, 8, 1, stdin );
+    ntohd( (unsigned char *)&d, in, 1 );
+    return	d;
 }
 
 /*
@@ -407,27 +407,27 @@ getieee(void)
 void
 doscale(void)
 {
-	double	dx, dy, dz;
-	double	max;
+    double	dx, dy, dz;
+    double	max;
 
-	dx = (sp[3] - sp[0]);
-	dy = (sp[4] - sp[1]);
-	dz = (sp[5] - sp[2]);
+    dx = (sp[3] - sp[0]);
+    dy = (sp[4] - sp[1]);
+    dz = (sp[5] - sp[2]);
 
-	max = dx;
-	if ( dy > max ) max = dy;
-	if ( dz > max ) max = dz;
+    max = dx;
+    if ( dy > max ) max = dy;
+    if ( dz > max ) max = dz;
 
-	if ( expand_it )
-		scale = 4096 / max;
-	else
-		scale = (4096-1000) / max;
-	if ( verbose )  {
-		fprintf( stderr, "doscale: min=(%g, %g), max=(%g, %g), scale=%g\n",
-			sp[0], sp[1],
-			sp[3], sp[4],
-			scale );
-	}
+    if ( expand_it )
+	scale = 4096 / max;
+    else
+	scale = (4096-1000) / max;
+    if ( verbose )  {
+	fprintf( stderr, "doscale: min=(%g, %g), max=(%g, %g), scale=%g\n",
+		 sp[0], sp[1],
+		 sp[3], sp[4],
+		 scale );
+    }
 }
 
 /*
@@ -448,103 +448,103 @@ static int oextra = -1;
 static void
 tekcont(register int x, register int y)
 {
-	int hix, hiy, lox, loy, extra;
-	int n;
+    int hix, hiy, lox, loy, extra;
+    int n;
 
-	if ( verbose ) fprintf(stderr, " tekcont(%d,%d)\n", x, y );
-	hix=(x>>7) & 037;
-	hiy=(y>>7) & 037;
-	lox = (x>>2)&037;
-	loy=(y>>2)&037;
-	extra = (x & 03) + ((y<<2) & 014);
-	n = (abs(hix-ohix) + abs(hiy-ohiy) + 6) / 12;
-	if (hiy != ohiy) {
-		(void)putc(hiy|040, stdout);
-		ohiy=hiy;
+    if ( verbose ) fprintf(stderr, " tekcont(%d,%d)\n", x, y );
+    hix=(x>>7) & 037;
+    hiy=(y>>7) & 037;
+    lox = (x>>2)&037;
+    loy=(y>>2)&037;
+    extra = (x & 03) + ((y<<2) & 014);
+    n = (abs(hix-ohix) + abs(hiy-ohiy) + 6) / 12;
+    if (hiy != ohiy) {
+	(void)putc(hiy|040, stdout);
+	ohiy=hiy;
+    }
+    if (hix != ohix) {
+	if (extra != oextra) {
+	    (void)putc(extra|0140, stdout);
+	    oextra=extra;
 	}
-	if (hix != ohix) {
-		if (extra != oextra) {
-			(void)putc(extra|0140, stdout);
-			oextra=extra;
-		}
-		(void)putc(loy|0140, stdout);
-		(void)putc(hix|040, stdout);
-		ohix=hix;
-		oloy=loy;
-	} else {
-		if (extra != oextra) {
-			(void)putc(extra|0140, stdout);
-			(void)putc(loy|0140, stdout);
-			oextra=extra;
-			oloy=loy;
-		} else if (loy != oloy) {
-			(void)putc(loy|0140, stdout);
-			oloy=loy;
-		}
+	(void)putc(loy|0140, stdout);
+	(void)putc(hix|040, stdout);
+	ohix=hix;
+	oloy=loy;
+    } else {
+	if (extra != oextra) {
+	    (void)putc(extra|0140, stdout);
+	    (void)putc(loy|0140, stdout);
+	    oextra=extra;
+	    oloy=loy;
+	} else if (loy != oloy) {
+	    (void)putc(loy|0140, stdout);
+	    oloy=loy;
 	}
-	(void)putc(lox|0100, stdout);
-	while (n--)
-		(void)putc(0, stdout);
+    }
+    (void)putc(lox|0100, stdout);
+    while (n--)
+	(void)putc(0, stdout);
 }
 
 static void
 tekmove(int xi, int yi)
 {
-	(void)putc(GS, stdout);			/* Next vector blank */
-	tekcont(xi, yi);
+    (void)putc(GS, stdout);			/* Next vector blank */
+    tekcont(xi, yi);
 }
 
 static void
 tekerase(void)
 {
-	extern unsigned sleep(unsigned int);	/* DAG -- was missing */
+    extern unsigned sleep(unsigned int);	/* DAG -- was missing */
 
-	(void)putc(ESC, stdout);
-	(void)putc(FF, stdout);
-	ohix = ohiy = oloy = oextra = -1;
-	(void)fflush(stdout);
+    (void)putc(ESC, stdout);
+    (void)putc(FF, stdout);
+    ohix = ohiy = oloy = oextra = -1;
+    (void)fflush(stdout);
 
-	(void)sleep(3);
+    (void)sleep(3);
 }
 
 static void
 teklabel(register char *s)
 {
-	(void)putc(US, stdout);
-	for (; *s; s++ )
-		(void)putc(*s, stdout);
-	ohix = ohiy = oloy = oextra = -1;
+    (void)putc(US, stdout);
+    for (; *s; s++ )
+	(void)putc(*s, stdout);
+    ohix = ohiy = oloy = oextra = -1;
 }
 
 static void
 teklinemod(register char *s)
 {
-	register int c;				/* DAG -- was char */
+    register int c;				/* DAG -- was char */
 
-	(void)putc(ESC, stdout);
-	switch (s[0]) {
+    (void)putc(ESC, stdout);
+    switch (s[0]) {
 	case 'l':
-		c = 'd';
-		break;
+	    c = 'd';
+	    break;
 	case 'd':
-		if (s[3] != 'd')c='a';
-		else c='b';
-		break;
+	    if (s[3] != 'd')c='a';
+	    else c='b';
+	    break;
 	case 's':
-		if (s[5] != '\0')c='c';
-		else c='`';
-		break;
+	    if (s[5] != '\0')c='c';
+	    else c='`';
+	    break;
 	default:			/* DAG -- added support for colors */
-		c = '`';
-		break;
-	}
-	(void)putc(c, stdout);
+	    c = '`';
+	    break;
+    }
+    (void)putc(c, stdout);
 }
 
 static void
 tekpoint(int xi, int yi) {
-	tekmove(xi, yi);
-	tekcont(xi, yi);
+    tekmove(xi, yi);
+    tekcont(xi, yi);
 }
 
 /*

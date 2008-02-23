@@ -23,9 +23,9 @@
 
 extern void splitdit( double X[], int N, int M );
 extern void ditsplit(
-	double x[],
-	int	n,	/* length */
-	int	m);	/* n = 2^m */
+    double x[],
+    int	n,	/* length */
+    int	m);	/* n = 2^m */
 
 /*
  * Local Variables:

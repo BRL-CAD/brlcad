@@ -142,35 +142,35 @@ struct locrec
 static Cell	*grid;
 
 static char	*usage[] = {
-	"",
-	"cell-fb ($Revision$)",
-	"",
-	"Usage: cell-fb [options] [file]",
-	"Options:",
-	" -C            Use first 3 fields as r, g, and b",
-	" -M \"r g b r g b\"  Ramp between two colors",
-	" -F dev        Use frame-buffer device `dev'",
-	" -N n          Set frame-buffer height to `n' pixels",
-	" -S n          Set frame-buffer height and width to `n' pixels",
-	" -W n          Set frame-buffer width to `n' pixels",
-	" -X n          Set local debug flag to hex value `n' (default is 0)",
-	" -a \"h v\"    Print pixel coords of point",
-	" -b n          Ignore values not equal to `n'",
-	" -c n          Assume cell size of `n' user units (default is 100)",
-	" -d \"m n\"      Expect input in interval [m, n] (default is [0, 1])",
-	" -e            Erase frame buffer before displaying picture",
-	" -f n          Display field `n' of cell data",
-	" -g            Leave space between cells",
-	" -h            Use high-resolution frame buffer (sames as -S 1024)",
-	" -i            Round values (default is to interpolate colors)",
-	" -k            Display color key",
-	" -l \"a e\"      Write log information to stdout",
-	" -m \"n r g b\"  Map value `n' to color ``r g b''",
-	" -p \"x y\"      Offset picture from bottom-left corner of display",
-	" -s \"w h\"      Set cell width and height in pixels",
-	" -v n          Display view number `n' (default is all views)",
-	" -x n          Set LIBRT(3) debug flag to hex value `n' (default is 0)",
-	0
+    "",
+    "cell-fb ($Revision$)",
+    "",
+    "Usage: cell-fb [options] [file]",
+    "Options:",
+    " -C            Use first 3 fields as r, g, and b",
+    " -M \"r g b r g b\"  Ramp between two colors",
+    " -F dev        Use frame-buffer device `dev'",
+    " -N n          Set frame-buffer height to `n' pixels",
+    " -S n          Set frame-buffer height and width to `n' pixels",
+    " -W n          Set frame-buffer width to `n' pixels",
+    " -X n          Set local debug flag to hex value `n' (default is 0)",
+    " -a \"h v\"    Print pixel coords of point",
+    " -b n          Ignore values not equal to `n'",
+    " -c n          Assume cell size of `n' user units (default is 100)",
+    " -d \"m n\"      Expect input in interval [m, n] (default is [0, 1])",
+    " -e            Erase frame buffer before displaying picture",
+    " -f n          Display field `n' of cell data",
+    " -g            Leave space between cells",
+    " -h            Use high-resolution frame buffer (sames as -S 1024)",
+    " -i            Round values (default is to interpolate colors)",
+    " -k            Display color key",
+    " -l \"a e\"      Write log information to stdout",
+    " -m \"n r g b\"  Map value `n' to color ``r g b''",
+    " -p \"x y\"      Offset picture from bottom-left corner of display",
+    " -s \"w h\"      Set cell width and height in pixels",
+    " -v n          Display view number `n' (default is all views)",
+    " -x n          Set LIBRT(3) debug flag to hex value `n' (default is 0)",
+    0
 };
 static char	fbfile[MAX_LINE] = { 0 };/* Name of frame-buffer device */
 
@@ -229,8 +229,8 @@ static RGBpixel	colortbl[12] =		/* The map: value --> R, G, B */
 
 #if 0
 static const char   *mon_nam[] =
-			{ "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-			  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+{ "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
 #endif
 
 static struct locrec	gp_locs;
@@ -262,7 +262,7 @@ main (int argc, char **argv)
     grid = (Cell *) bu_malloc(sizeof(Cell) * maxcells, "grid");
     if (debug_flag & CFB_DBG_MEM)
 	bu_log("grid = 0x%x... %ld cells @ %d bytes/cell\n",
-	    grid, maxcells, sizeof(Cell));
+	       grid, maxcells, sizeof(Cell));
     do
     {
 	struct locrec	*lrp;
@@ -278,7 +278,7 @@ main (int argc, char **argv)
 	    {
 		BU_LIST_DEQUEUE(&(lrp->l));
 		bu_log("%g %g	%d %d\n", lrp -> h, lrp -> v,
-		    (int) H2SCRX(lrp -> h), (int) V2SCRY(lrp -> v));
+		       (int) H2SCRX(lrp -> h), (int) V2SCRY(lrp -> v));
 		bu_free((char *) lrp, "location record");
 	    }
 	else
@@ -326,7 +326,7 @@ static long read_Cell_Data(void)
 	    bu_strlcat(format, " %d %d %d", sizeof(format));
 	else
 	{
-	   /* Skip to field of interest */
+	    /* Skip to field of interest */
 	    for (i = 1; i < field; i++)
 		bu_strlcat(format, " %*lf", sizeof(format));
 	    bu_strlcat(format, " %lf", sizeof(format));
@@ -353,7 +353,7 @@ static long read_Cell_Data(void)
 
 	    maxcells *= 2;
 	    grid = (Cell *) bu_realloc((char *) grid,
-					sizeof(Cell) * maxcells, "grid");
+				       sizeof(Cell) * maxcells, "grid");
 	    if (debug_flag & CFB_DBG_MEM)
 		bu_log("maxcells increased to %ld\n", maxcells);
 	    gp = grid + ncells;
@@ -361,9 +361,9 @@ static long read_Cell_Data(void)
 	/* Process any non-data (i.e. view-header) lines */
 	while ((state != STATE_BEYOND_DATA) &&
 	       ((color_flag &&
-		(sscanf(lbp, format, &x, &y, &r, &g, &b) != 5))
-	    || (! color_flag &&
-		(sscanf(lbp, format, &x, &y, &value.v_scalar) != 3))))
+		 (sscanf(lbp, format, &x, &y, &r, &g, &b) != 5))
+		|| (! color_flag &&
+		    (sscanf(lbp, format, &x, &y, &value.v_scalar) != 3))))
 	{
 	    if (state == STATE_VIEW_TOP)
 		state = STATE_IN_HEADER;
@@ -394,7 +394,7 @@ static long read_Cell_Data(void)
 	    MinMax(ymin, ymax, y);
 	    if (debug_flag & CFB_DBG_MINMAX)
 		bu_log("x=%g, y=%g, xmin=%g, xmax=%g, ymin=%g, ymax=%g\n",
-		    x, y, xmin, xmax, ymin, ymax);
+		       x, y, xmin, xmax, ymin, ymax);
 	    gp->c_x = x;
 	    gp->c_y = y;
 	    if (color_flag)
@@ -494,10 +494,10 @@ static bool display_Cells (long int ncells)
 	bu_log("Cannot clear frame buffer\n");
 
     buf = (unsigned char *) bu_malloc(sizeof(RGBpixel) * fb_width,
-						"line of frame buffer");
+				      "line of frame buffer");
     if (debug_flag & CFB_DBG_MEM)
 	bu_log("buf = 0x%x... %d pixels @ %d bytes/pixel\n",
-	    buf, fb_width, sizeof(RGBpixel));
+	       buf, fb_width, sizeof(RGBpixel));
 
     for (gp = grid; gp < ep; gp++)
     {
@@ -513,13 +513,13 @@ static bool display_Cells (long int ncells)
 		    bu_log("%g = V2SCRY(%g)\n", V2SCRY(lasty), lasty);
 		y0 = V2SCRY(lasty);
 		if ( y0 >= 0 && y0 < fb_height )  {
-			for (y1 = y0 + hgt; y0 < y1; y0++)
-			    if (fb_write(fbiop, 0, y0, buf, fb_width) == -1)
-			    {
-				bu_log("Couldn't write to <%d,%d>\n", 0, y0);
-				(void) fb_close(fbiop);
-				return (false);
-			    }
+		    for (y1 = y0 + hgt; y0 < y1; y0++)
+			if (fb_write(fbiop, 0, y0, buf, fb_width) == -1)
+			{
+			    bu_log("Couldn't write to <%d,%d>\n", 0, y0);
+			    (void) fb_close(fbiop);
+			    return (false);
+			}
 		}
 	    }
 	    /* Clear buffer. */
@@ -528,7 +528,7 @@ static bool display_Cells (long int ncells)
 		COPYRGB(&buf[3*x0], BACKGROUND);
 	    }
 
-	     /* Draw grid line between rows of cells. */
+	    /* Draw grid line between rows of cells. */
 	    if (grid_flag && (lasty != NEG_INFINITY))
 	    {
 		if (fb_write(fbiop, 0, y0, buf, fb_width) == -1)
@@ -546,10 +546,10 @@ static bool display_Cells (long int ncells)
 	/* Be careful only to write color within bounds of the screen */
 	x0 = H2SCRX(gp->c_x);
 	if ( x0 >= 0 && x0 <= fb_width - wid )  {
-		for (x1 = x0 + wid; x0 < x1;  x0++)
-		{
-		    COPYRGB(&buf[3*x0], pixel);
-		}
+	    for (x1 = x0 + wid; x0 < x1;  x0++)
+	    {
+		COPYRGB(&buf[3*x0], pixel);
+	    }
 	}
     }
 
@@ -566,7 +566,7 @@ static bool display_Cells (long int ncells)
     /* Draw color key. */
     if (key_flag && (fb_width < (10 + 1) * wid))
 	bu_log("Width of key (%d) would exceed frame-buffer width (%d)\n",
-		(10 + 1) * wid, fb_width);
+	       (10 + 1) * wid, fb_width);
     else if (key_flag)
     {
 	register int	i, j;
@@ -692,7 +692,7 @@ static struct locrec *mk_locrec (fastf_t h, fastf_t v)
     struct locrec	*lrp;
 
     lrp = (struct locrec *)
-	    bu_malloc(sizeof(struct locrec), "location record");
+	bu_malloc(sizeof(struct locrec), "location record");
     lrp -> locrec_magic = LOCREC_MAGIC;
     lrp -> h = h;
     lrp -> v = v;
@@ -714,29 +714,29 @@ static bool pars_Argv (register int argc, register char **argv)
 		color_flag = true;
 		break;
 	    case 'M':
-		{
-		    RGBpixel	lo_rgb, hi_rgb;
-		    int		lo_red, lo_grn, lo_blu;
-		    int		hi_red, hi_grn, hi_blu;
+	    {
+		RGBpixel	lo_rgb, hi_rgb;
+		int		lo_red, lo_grn, lo_blu;
+		int		hi_red, hi_grn, hi_blu;
 
-		    if (sscanf(bu_optarg, "%d %d %d %d %d %d",
-			    &lo_red, &lo_grn, &lo_blu,
-			    &hi_red, &hi_grn, &hi_blu)
-			< 3)
-		    {
-			bu_log("Invalid color-mapping: '%s'\n",
-			    bu_optarg);
-			return (false);
-		    }
-		    lo_rgb[RED] = lo_red;
-		    lo_rgb[GRN] = lo_grn;
-		    lo_rgb[BLU] = lo_blu;
-		    hi_rgb[RED] = hi_red;
-		    hi_rgb[GRN] = hi_grn;
-		    hi_rgb[BLU] = hi_blu;
-		    fill_colortbl(lo_rgb, hi_rgb);
-		    break;
+		if (sscanf(bu_optarg, "%d %d %d %d %d %d",
+			   &lo_red, &lo_grn, &lo_blu,
+			   &hi_red, &hi_grn, &hi_blu)
+		    < 3)
+		{
+		    bu_log("Invalid color-mapping: '%s'\n",
+			   bu_optarg);
+		    return (false);
 		}
+		lo_rgb[RED] = lo_red;
+		lo_rgb[GRN] = lo_grn;
+		lo_rgb[BLU] = lo_blu;
+		hi_rgb[RED] = hi_red;
+		hi_rgb[GRN] = hi_grn;
+		hi_rgb[BLU] = hi_blu;
+		fill_colortbl(lo_rgb, hi_rgb);
+		break;
+	    }
 	    case 'F':
 		(void) bu_strlcpy(fbfile, bu_optarg, sizeof(fbfile));
 		break;
@@ -773,7 +773,7 @@ static bool pars_Argv (register int argc, register char **argv)
 		if (fb_height < -1)
 		{
 		    bu_log("Frame-buffer dimensions out of range: %d\n",
-			fb_height);
+			   fb_height);
 		    return (false);
 		}
 		fb_width = fb_height;
@@ -786,20 +786,20 @@ static bool pars_Argv (register int argc, register char **argv)
 		}
 		break;
 	    case 'a':
-		{
-		    fastf_t		h;
-		    fastf_t		v;
-		    struct locrec	*lrp;
+	    {
+		fastf_t		h;
+		fastf_t		v;
+		struct locrec	*lrp;
 
-		    if (sscanf(bu_optarg, "%lf %lf", &h, &v) != 2)
-		    {
-			bu_log("Invalid grid-plane location: '%s'\n", bu_optarg);
-			return (false);
-		    }
-		    lrp = mk_locrec(h, v);
-		    BU_LIST_INSERT(&(gp_locs.l), &(lrp -> l));
+		if (sscanf(bu_optarg, "%lf %lf", &h, &v) != 2)
+		{
+		    bu_log("Invalid grid-plane location: '%s'\n", bu_optarg);
+		    return (false);
 		}
-		break;
+		lrp = mk_locrec(h, v);
+		BU_LIST_INSERT(&(gp_locs.l), &(lrp -> l));
+	    }
+	    break;
 	    case 'b':
 		if (sscanf(bu_optarg, "%lf", &bool_val) != 1)
 		{
@@ -829,7 +829,7 @@ static bool pars_Argv (register int argc, register char **argv)
 		if (dom_min >= dom_max)
 		{
 		    bu_log("Bad domain for input: [%lf, %lf]\n",
-			dom_min, dom_max);
+			   dom_min, dom_max);
 		    return (false);
 		}
 		dom_cvt = 10.0 / (dom_max - dom_min);
@@ -868,32 +868,32 @@ static bool pars_Argv (register int argc, register char **argv)
 		    view_flag = 1;
 		break;
 	    case 'm':
-		{
-		    double	value;
-		    RGBpixel	rgb;
-		    int		red, grn, blu;
-		    int		index;
+	    {
+		double	value;
+		RGBpixel	rgb;
+		int		red, grn, blu;
+		int		index;
 
-		    if (sscanf(bu_optarg, "%lf %d %d %d", &value, &red, &grn, &blu)
-			< 4)
-		    {
-			bu_log("Invalid color-mapping: '%s'\n",
-			    bu_optarg);
-			return (false);
-		    }
-		    value *= 10.0;
-		    index = value + 0.01;
-		    if (index < 0 || index > MAX_COLORTBL)
-		    {
-			bu_log("Value out of range (%s)\n", bu_optarg);
-			return (false);
-		    }
-		    rgb[RED] = red;
-		    rgb[GRN] = grn;
-		    rgb[BLU] = blu;
-		    COPYRGB(colortbl[index], rgb);
-		    break;
+		if (sscanf(bu_optarg, "%lf %d %d %d", &value, &red, &grn, &blu)
+		    < 4)
+		{
+		    bu_log("Invalid color-mapping: '%s'\n",
+			   bu_optarg);
+		    return (false);
 		}
+		value *= 10.0;
+		index = value + 0.01;
+		if (index < 0 || index > MAX_COLORTBL)
+		{
+		    bu_log("Value out of range (%s)\n", bu_optarg);
+		    return (false);
+		}
+		rgb[RED] = red;
+		rgb[GRN] = grn;
+		rgb[BLU] = blu;
+		COPYRGB(colortbl[index], rgb);
+		break;
+	    }
 	    case 'p':
 		switch (sscanf(bu_optarg, "%d %d", &xorigin, &yorigin))
 		{
@@ -956,9 +956,9 @@ static bool pars_Argv (register int argc, register char **argv)
      * else take user specified dimensions
      */
     compute_fb_height = (fb_height == -1) ? SNUG_FIT :
-			(fb_height == 0) ? LOOSE_FIT : false;
+	(fb_height == 0) ? LOOSE_FIT : false;
     compute_fb_width = (fb_width == -1) ? SNUG_FIT :
-			(fb_width == 0) ? LOOSE_FIT : false;
+	(fb_width == 0) ? LOOSE_FIT : false;
     return (true);
 }
 /*	prnt_Usage() --	Print usage message. */
@@ -986,59 +986,59 @@ static void log_Run(void)
     (void) time(&clock);
 
     (void) printf("# Log information produced by cell-fb %s\n",
-	ctime(&clock) );
+		  ctime(&clock) );
     (void) printf("az_el: %f %f\n", az, el);
     (void) printf("view_extrema: %f %f %f %f\n",
-	SCRX2H(0), SCRX2H(fb_width), SCRY2V(0), SCRY2V(fb_height));
+		  SCRX2H(0), SCRX2H(fb_width), SCRY2V(0), SCRY2V(fb_height));
     (void) printf("fb_size: %d %d\n", fb_width, fb_height);
 
-	/* Produce the orientation, the model eye_pos, and the model
-	 * view size for input into rtregis.
-	 * First use the azimuth and elevation to produce the model2hv
-	 * matrix and use that to find the orientation.
-	 */
+    /* Produce the orientation, the model eye_pos, and the model
+     * view size for input into rtregis.
+     * First use the azimuth and elevation to produce the model2hv
+     * matrix and use that to find the orientation.
+     */
 
-	MAT_IDN( model2hv );
-	MAT_IDN( hv2model );
+    MAT_IDN( model2hv );
+    MAT_IDN( hv2model );
 
-	/* Print out the "view" just to keep rtregis from belly-aching */
+    /* Print out the "view" just to keep rtregis from belly-aching */
 
-	printf("View: %g azimuth, %g elevation\n", az, el);
+    printf("View: %g azimuth, %g elevation\n", az, el);
 
-	/** mat_ae( model2hv, az, el ); **/
-	/* Formula from rt/do.c */
-	bn_mat_angles( model2hv, 270.0+el, 0.0, 270.0-az );
-	model2hv[15] = 25.4;		/* input is in inches */
-	bn_mat_inv( hv2model, model2hv);
+    /** mat_ae( model2hv, az, el ); **/
+    /* Formula from rt/do.c */
+    bn_mat_angles( model2hv, 270.0+el, 0.0, 270.0-az );
+    model2hv[15] = 25.4;		/* input is in inches */
+    bn_mat_inv( hv2model, model2hv);
 
-	quat_mat2quat( orient, model2hv );
+    quat_mat2quat( orient, model2hv );
 
-	printf("Orientation: %.6f, %.6f, %.6f, %.6f\n", V4ARGS(orient) );
+    printf("Orientation: %.6f, %.6f, %.6f, %.6f\n", V4ARGS(orient) );
 
-	/* Now find the eye position in h, v space.  Note that the eye
-	 * is located at the center of the image; in this case, the center
-	 * of the screen space, i.e., the framebuffer. )
-	 * Also find the hv_viewsize at this time.
-	 */
-	hv_viewsize = SCRX2H( (double)fb_width ) - SCRX2H( 0.0 );
-	hv_eye[0] = SCRX2H( (double)fb_width/2 );
-	hv_eye[1] = SCRY2V( (double)fb_height/2 );
-	hv_eye[2] = hv_viewsize/2;
+    /* Now find the eye position in h, v space.  Note that the eye
+     * is located at the center of the image; in this case, the center
+     * of the screen space, i.e., the framebuffer. )
+     * Also find the hv_viewsize at this time.
+     */
+    hv_viewsize = SCRX2H( (double)fb_width ) - SCRX2H( 0.0 );
+    hv_eye[0] = SCRX2H( (double)fb_width/2 );
+    hv_eye[1] = SCRY2V( (double)fb_height/2 );
+    hv_eye[2] = hv_viewsize/2;
 
-	/* Debugging */
-	printf("hv_viewsize= %g\n", hv_viewsize);
-	printf("hv_eye= %.6f, %.6f, %.6f\n", V3ARGS(hv_eye) );
+    /* Debugging */
+    printf("hv_viewsize= %g\n", hv_viewsize);
+    printf("hv_eye= %.6f, %.6f, %.6f\n", V3ARGS(hv_eye) );
 
-	/* Now find the model eye_position and report on that */
-	MAT4X3PNT( m_eye, hv2model, hv_eye );
-	printf("Eye_pos: %.6f, %.6f, %.6f\n", V3ARGS(m_eye) );
+    /* Now find the model eye_position and report on that */
+    MAT4X3PNT( m_eye, hv2model, hv_eye );
+    printf("Eye_pos: %.6f, %.6f, %.6f\n", V3ARGS(m_eye) );
 
-	/*
-	 * Find the view size in model coordinates and print that as well.
-	 * Important:  Don't use %g format, it may round to nearest integer!
-	 */
-	m_viewsize = hv_viewsize/hv2model[15];
-	printf("Size: %.6f\n", m_viewsize);
+    /*
+     * Find the view size in model coordinates and print that as well.
+     * Important:  Don't use %g format, it may round to nearest integer!
+     */
+    m_viewsize = hv_viewsize/hv2model[15];
+    printf("Size: %.6f\n", m_viewsize);
 }
 
 static void

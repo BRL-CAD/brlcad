@@ -60,69 +60,69 @@ main(int argc, char *argv[])
     register int	count;
     register int	tfd;
 
-	if ( (count = bu_mread(0, buf, sizeof(buf))) < sizeof(buf) )  {
-		if ( count < 0 )  {
-			perror("buffer: mem read");
-			exit(1);
-		}
-		/* Entire input sequence fit into buf */
-		if ( write(1, buf, count) != count )  {
-			perror("buffer: stdout write 1");
-			exit(1);
-		}
-		exit(0);
+    if ( (count = bu_mread(0, buf, sizeof(buf))) < sizeof(buf) )  {
+	if ( count < 0 )  {
+	    perror("buffer: mem read");
+	    exit(1);
 	}
-
-	/* Create temporary file to hold data, get r/w file descriptor */
-	fp = bu_temp_file(template, 512);
-	if ((tfd = fileno(fp)) < 0 )  {
-		perror(template);
-		goto err;
+	/* Entire input sequence fit into buf */
+	if ( write(1, buf, count) != count )  {
+	    perror("buffer: stdout write 1");
+	    exit(1);
 	}
+	exit(0);
+    }
 
-	/* Stash away first buffer full */
+    /* Create temporary file to hold data, get r/w file descriptor */
+    fp = bu_temp_file(template, 512);
+    if ((tfd = fileno(fp)) < 0 )  {
+	perror(template);
+	goto err;
+    }
+
+    /* Stash away first buffer full */
+    if ( write(tfd, buf, count) != count )  {
+	perror("buffer: tmp write1");
+	goto err;
+    }
+
+    /* Continue reading and writing additional buffer loads to temp file */
+    while ( (count = bu_mread(0, buf, sizeof(buf))) > 0 )  {
 	if ( write(tfd, buf, count) != count )  {
-		perror("buffer: tmp write1");
-		goto err;
+	    perror("buffer: tmp write2");
+	    goto err;
 	}
+    }
+    if ( count < 0 )  {
+	perror("buffer: read");
+	goto err;
+    }
 
-	/* Continue reading and writing additional buffer loads to temp file */
-	while ( (count = bu_mread(0, buf, sizeof(buf))) > 0 )  {
-		if ( write(tfd, buf, count) != count )  {
-			perror("buffer: tmp write2");
-			goto err;
-		}
+    /* All input read, regurgitate it all on stdout */
+    if ( lseek( tfd, 0L, 0 ) < 0 )  {
+	perror("buffer: lseek");
+	goto err;
+    }
+    while ( (count = bu_mread(tfd, buf, sizeof(buf))) > 0 )  {
+	if ( write(1, buf, count) != count )  {
+	    perror("buffer: stdout write 2");
+	    goto err;
 	}
-	if ( count < 0 )  {
-		perror("buffer: read");
-		goto err;
-	}
+    }
+    if ( count < 0 )  {
+	perror("buffer: tmp read");
+	goto err;
+    }
+    (void)unlink(template);
+    return 0;
 
-	/* All input read, regurgitate it all on stdout */
-	if ( lseek( tfd, 0L, 0 ) < 0 )  {
-		perror("buffer: lseek");
-		goto err;
-	}
-	while ( (count = bu_mread(tfd, buf, sizeof(buf))) > 0 )  {
-		if ( write(1, buf, count) != count )  {
-			perror("buffer: stdout write 2");
-			goto err;
-		}
-	}
-	if ( count < 0 )  {
-		perror("buffer: tmp read");
-		goto err;
-	}
-	(void)unlink(template);
-	return 0;
-
-err:
-	if (fp) {
-	    fclose(fp);
-	    fp = NULL;
-	}
-	unlink(template);
-	return 1;
+ err:
+    if (fp) {
+	fclose(fp);
+	fp = NULL;
+    }
+    unlink(template);
+    return 1;
 }
 
 /*

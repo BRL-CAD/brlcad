@@ -46,67 +46,67 @@
 
 
 HIDDEN int	ts_open(),
-		ts_close(),
-		ts_clear(),
-		ts_read(),
-		ts_write(),
-		ts_rmap(),
-		ts_wmap(),
-		ts_view(),
-		ts_getview(),
-		ts_window(),		/* OLD */
-		ts_zoom(),		/* OLD */
-		ts_setcursor(),
-		ts_cursor(),
-		ts_getcursor(),
-		ts_readrect(),
-		ts_writerect(),
-		ts_flush(),
-		ts_free(),
-		ts_help();
+    ts_close(),
+    ts_clear(),
+    ts_read(),
+    ts_write(),
+    ts_rmap(),
+    ts_wmap(),
+    ts_view(),
+    ts_getview(),
+    ts_window(),		/* OLD */
+    ts_zoom(),		/* OLD */
+    ts_setcursor(),
+    ts_cursor(),
+    ts_getcursor(),
+    ts_readrect(),
+    ts_writerect(),
+    ts_flush(),
+    ts_free(),
+    ts_help();
 
 /* This is the ONLY thing that we normally "export" */
 FBIO ts_interface =  {
-	0,
-	ts_open,		/* open device		*/
-	ts_close,		/* close device		*/
-	ts_clear,		/* clear device		*/
-	ts_read,		/* read	pixels		*/
-	ts_write,		/* write pixels		*/
-	ts_rmap,		/* read colormap	*/
-	ts_wmap,		/* write colormap	*/
-	ts_view,		/* set view		*/
-	ts_getview,		/* get view		*/
-	ts_setcursor,		/* define cursor	*/
-	ts_cursor,		/* set cursor		*/
-	ts_getcursor,		/* get cursor		*/
-	ts_readrect,		/* read rectangle	*/
-	ts_writerect,		/* write rectangle	*/
-	fb_sim_bwreadrect,
-	fb_sim_bwwriterect,
-	fb_null,		/* handle events	*/
-	ts_flush,		/* flush output		*/
-	ts_free,		/* free resources	*/
-	ts_help,		/* help message		*/
-	"Tech-Source GDS 39XX",	/* device description	*/
-	2048,			/* max width		*/
-	1024,			/* max height		*/
-	"/dev/ts",		/* short device name	*/
-	1280,			/* default/current width  */
-	1024,			/* default/current height */
-	-1,			/* select file desc	*/
-	-1,			/* file descriptor	*/
-	1, 1,			/* zoom			*/
-	640, 512,		/* window		*/
-	0, 0, 0,		/* cursor		*/
-	PIXEL_NULL,		/* page_base		*/
-	PIXEL_NULL,		/* page_curp		*/
-	PIXEL_NULL,		/* page_endp		*/
-	-1,			/* page_no		*/
-	0,			/* page_dirty		*/
-	0L,			/* page_curpos		*/
-	0L,			/* page_pixels		*/
-	0			/* debug		*/
+    0,
+    ts_open,		/* open device		*/
+    ts_close,		/* close device		*/
+    ts_clear,		/* clear device		*/
+    ts_read,		/* read	pixels		*/
+    ts_write,		/* write pixels		*/
+    ts_rmap,		/* read colormap	*/
+    ts_wmap,		/* write colormap	*/
+    ts_view,		/* set view		*/
+    ts_getview,		/* get view		*/
+    ts_setcursor,		/* define cursor	*/
+    ts_cursor,		/* set cursor		*/
+    ts_getcursor,		/* get cursor		*/
+    ts_readrect,		/* read rectangle	*/
+    ts_writerect,		/* write rectangle	*/
+    fb_sim_bwreadrect,
+    fb_sim_bwwriterect,
+    fb_null,		/* handle events	*/
+    ts_flush,		/* flush output		*/
+    ts_free,		/* free resources	*/
+    ts_help,		/* help message		*/
+    "Tech-Source GDS 39XX",	/* device description	*/
+    2048,			/* max width		*/
+    1024,			/* max height		*/
+    "/dev/ts",		/* short device name	*/
+    1280,			/* default/current width  */
+    1024,			/* default/current height */
+    -1,			/* select file desc	*/
+    -1,			/* file descriptor	*/
+    1, 1,			/* zoom			*/
+    640, 512,		/* window		*/
+    0, 0, 0,		/* cursor		*/
+    PIXEL_NULL,		/* page_base		*/
+    PIXEL_NULL,		/* page_curp		*/
+    PIXEL_NULL,		/* page_endp		*/
+    -1,			/* page_no		*/
+    0,			/* page_dirty		*/
+    0L,			/* page_curpos		*/
+    0L,			/* page_pixels		*/
+    0			/* debug		*/
 };
 
 #define MODE_1MASK	(1<<1)
@@ -118,16 +118,16 @@ FBIO ts_interface =  {
 #define MODE_2OVERONLY	(1<<2)
 
 static struct modeflags {
-	char	c;
-	long	mask;
-	long	value;
-	char	*help;
+    char	c;
+    long	mask;
+    long	value;
+    char	*help;
 } modeflags[] = {
-	{ 'o',	MODE_1MASK, MODE_1OVERLAY,
-		"Enable Transparent Overlay Planes - else off" },
-	{ 'O',	MODE_2MASK, MODE_2OVERONLY,
-		"Enable ONLY the Overlay Planes" },
-	{ '\0', 0, 0, "" }
+    { 'o',	MODE_1MASK, MODE_1OVERLAY,
+      "Enable Transparent Overlay Planes - else off" },
+    { 'O',	MODE_2MASK, MODE_2OVERONLY,
+      "Enable ONLY the Overlay Planes" },
+    { '\0', 0, 0, "" }
 };
 
 /*
@@ -151,262 +151,262 @@ static int unit = 4;
 
 HIDDEN int
 ts_open( ifp, file, width, height )
-FBIO	*ifp;
-char	*file;
-int	width, height;
+    FBIO	*ifp;
+    char	*file;
+    int	width, height;
 {
-	struct point	viewmax;
-	int mode;
-	char curs_bitmap[512];
-	int i;
+    struct point	viewmax;
+    int mode;
+    char curs_bitmap[512];
+    int i;
 
-	FB_CK_FBIO(ifp);
+    FB_CK_FBIO(ifp);
 
-	/*
-	 *  First, attempt to determine operating mode for this open,
-	 *  based upon the "unit number" or flags.
-	 *  file = "/dev/X###"
-	 *  The default mode is zero.
-	 */
-	mode = 0;
-	if ( file != NULL )  {
-		register char *cp;
-		char	modebuf[80];
-		char	*mp;
-		int	alpha;
-		struct	modeflags *mfp;
+    /*
+     *  First, attempt to determine operating mode for this open,
+     *  based upon the "unit number" or flags.
+     *  file = "/dev/X###"
+     *  The default mode is zero.
+     */
+    mode = 0;
+    if ( file != NULL )  {
+	register char *cp;
+	char	modebuf[80];
+	char	*mp;
+	int	alpha;
+	struct	modeflags *mfp;
 
-		if ( strncmp(file, "/dev/ts", 7) ) {
-			/* How did this happen?? */
-			mode = 0;
-		}
-		else {
-			/* Parse the options */
-			alpha = 0;
-			mp = &modebuf[0];
-			cp = &file[7];
-			while ( *cp != '\0' && !isspace(*cp) ) {
-				*mp++ = *cp;	/* copy it to buffer */
-				if ( isdigit(*cp) ) {
-					cp++;
-					continue;
-				}
-				alpha++;
-				for ( mfp = modeflags; mfp->c != '\0'; mfp++ ) {
-					if ( mfp->c == *cp ) {
-						mode = (mode&~mfp->mask)|mfp->value;
-						break;
-					}
-				}
-				if ( mfp->c == '\0' && *cp != '-' ) {
-					fb_log( "if_ts: unknown option '%c' ignored\n", *cp );
-				}
-				cp++;
-			}
-			*mp = '\0';
-			if ( !alpha )
-				mode = atoi( modebuf );
-			if (strlen(cp) > 0) {
-				unit = atoi(cp);
-				printf("Unit %d\n", unit);
-			}
-		}
+	if ( strncmp(file, "/dev/ts", 7) ) {
+	    /* How did this happen?? */
+	    mode = 0;
 	}
-
-	/*printf("GSD unit = %d\n", unit);*/
-	/* GDSLSIZE 16bit words in display list */
-	if (open_gds(unit, GDSDLSIZE) < 0) {
-		fb_log("error %d\n", f_geterror());
-		exit(1);
+	else {
+	    /* Parse the options */
+	    alpha = 0;
+	    mp = &modebuf[0];
+	    cp = &file[7];
+	    while ( *cp != '\0' && !isspace(*cp) ) {
+		*mp++ = *cp;	/* copy it to buffer */
+		if ( isdigit(*cp) ) {
+		    cp++;
+		    continue;
+		}
+		alpha++;
+		for ( mfp = modeflags; mfp->c != '\0'; mfp++ ) {
+		    if ( mfp->c == *cp ) {
+			mode = (mode&~mfp->mask)|mfp->value;
+			break;
+		    }
+		}
+		if ( mfp->c == '\0' && *cp != '-' ) {
+		    fb_log( "if_ts: unknown option '%c' ignored\n", *cp );
+		}
+		cp++;
+	    }
+	    *mp = '\0';
+	    if ( !alpha )
+		mode = atoi( modebuf );
+	    if (strlen(cp) > 0) {
+		unit = atoi(cp);
+		printf("Unit %d\n", unit);
+	    }
 	}
-	init_gds(0);	/* if non-zero, will clear to altcolor */
+    }
+
+    /*printf("GSD unit = %d\n", unit);*/
+    /* GDSLSIZE 16bit words in display list */
+    if (open_gds(unit, GDSDLSIZE) < 0) {
+	fb_log("error %d\n", f_geterror());
+	exit(1);
+    }
+    init_gds(0);	/* if non-zero, will clear to altcolor */
 
 #if 0
-	if ((mode&MODE_2MASK) == MODE_2OVERONLY) {
-printf("Overlay Only\n");
-		f_ovlset(GDS_OVL_DISPLAY, GDS_OVL_ONLY, 0);
-	} else if ((mode&MODE_1MASK) == MODE_1OVERLAY) {
-printf("Overlay On\n");
-		f_ovlset(GDS_OVL_DISPLAY, GDS_OVL_ON, 0);
-	} else {
+    if ((mode&MODE_2MASK) == MODE_2OVERONLY) {
+	printf("Overlay Only\n");
+	f_ovlset(GDS_OVL_DISPLAY, GDS_OVL_ONLY, 0);
+    } else if ((mode&MODE_1MASK) == MODE_1OVERLAY) {
+	printf("Overlay On\n");
+	f_ovlset(GDS_OVL_DISPLAY, GDS_OVL_ON, 0);
+    } else {
 /* Seems that even doing this overlay off command leaves us with
  * only the RED channel.
  */
-printf("Overlay Off\n");
-		f_ovlset(GDS_OVL_DISPLAY, GDS_OVL_OFF, 0);
-	}
+	printf("Overlay Off\n");
+	f_ovlset(GDS_OVL_DISPLAY, GDS_OVL_OFF, 0);
+    }
 #endif
 
-	getviewmax(&viewmax);
-	ifp->if_width = viewmax.x + 1;
-	ifp->if_height = viewmax.y + 1;
+    getviewmax(&viewmax);
+    ifp->if_width = viewmax.x + 1;
+    ifp->if_height = viewmax.y + 1;
 
-	/* Initialize the hardware cursor bitmap */
-	for (i = 0; i < 512; i++) {
-		/* start with black */
-		curs_bitmap[i] = 0;
-	}
-	for (i = 0; i < 8; i++) {
-		/* fill in top and bottom rows */
-		curs_bitmap[i] = 255;
-		curs_bitmap[i+504] = 255;
-	}
-	for (i = 0; i < 64; i++) {
-		/* then three columns */
-		curs_bitmap[i*8] |= 0x80;
-		curs_bitmap[i*8+7] |= 0x01;
-		curs_bitmap[i*8+4] |= 0x80;
-	}
-	f_hwcset(GDS_HWC_BITMAP, curs_bitmap, 0);
+    /* Initialize the hardware cursor bitmap */
+    for (i = 0; i < 512; i++) {
+	/* start with black */
+	curs_bitmap[i] = 0;
+    }
+    for (i = 0; i < 8; i++) {
+	/* fill in top and bottom rows */
+	curs_bitmap[i] = 255;
+	curs_bitmap[i+504] = 255;
+    }
+    for (i = 0; i < 64; i++) {
+	/* then three columns */
+	curs_bitmap[i*8] |= 0x80;
+	curs_bitmap[i*8+7] |= 0x01;
+	curs_bitmap[i*8+4] |= 0x80;
+    }
+    f_hwcset(GDS_HWC_BITMAP, curs_bitmap, 0);
 
-	return(0);
+    return(0);
 }
 
 HIDDEN int
 ts_close( ifp )
-FBIO	*ifp;
+    FBIO	*ifp;
 {
-	close_gds(unit);
-	return(0);
+    close_gds(unit);
+    return(0);
 }
 
 HIDDEN int
 ts_clear( ifp, pp )
-FBIO	*ifp;
-RGBpixel	*pp;
+    FBIO	*ifp;
+    RGBpixel	*pp;
 {
-	struct	rectangle rect;
+    struct	rectangle rect;
 
-	if (pp != RGBPIXEL_NULL) {
-		setaltcolor(COLR24((*pp)[RED], (*pp)[GRN], (*pp)[BLU]));
-	} else {
-		setaltcolor(COLR24(0, 0, 0));
-	}
+    if (pp != RGBPIXEL_NULL) {
+	setaltcolor(COLR24((*pp)[RED], (*pp)[GRN], (*pp)[BLU]));
+    } else {
+	setaltcolor(COLR24(0, 0, 0));
+    }
 
-	rect.x0 = 0;
-	rect.y0 = 0;
-	rect.x1 = 1279;
-	rect.y1 = 1023;
-	if (f_fillrect(&rect)) {
-		fb_log("error 3 %d\n", f_geterror());
-		exit(1);
-	}
-	/* XXX - Note that this may not flush the display list */
+    rect.x0 = 0;
+    rect.y0 = 0;
+    rect.x1 = 1279;
+    rect.y1 = 1023;
+    if (f_fillrect(&rect)) {
+	fb_log("error 3 %d\n", f_geterror());
+	exit(1);
+    }
+    /* XXX - Note that this may not flush the display list */
 
-	return(0);
+    return(0);
 }
 
 HIDDEN int
 ts_read( ifp, x, y, pixelp, count )
-FBIO	*ifp;
-int	x, y;
-RGBpixel	*pixelp;
-int	count;
+    FBIO	*ifp;
+    int	x, y;
+    RGBpixel	*pixelp;
+    int	count;
 {
-	struct	point dest;
-	struct	size size;
+    struct	point dest;
+    struct	size size;
 
-	dest.x = x;
-	dest.y = y;
-	size.width = count;
-	size.height = 1;	/*XXX*/
+    dest.x = x;
+    dest.y = y;
+    size.width = count;
+    size.height = 1;	/*XXX*/
 
-	f_rdpixar_f(&dest, &size, 2, pixelp);
-	return(count);
+    f_rdpixar_f(&dest, &size, 2, pixelp);
+    return(count);
 }
 
 HIDDEN int
 ts_write( ifp, x, y, pixelp, count )
-FBIO	*ifp;
-int	x, y;
-RGBpixel	*pixelp;
-int	count;
+    FBIO	*ifp;
+    int	x, y;
+    RGBpixel	*pixelp;
+    int	count;
 {
-	struct	point dest;
-	struct	size size;
-	int	i;
-	unsigned char lbuf[1280][4];
+    struct	point dest;
+    struct	size size;
+    int	i;
+    unsigned char lbuf[1280][4];
 
 #if 1
-	for (i = 0; i < count; i++) {
-		/*lbuf[i][0] = 0;*/
-		lbuf[i][1] = pixelp[i][BLU];
-		lbuf[i][2] = pixelp[i][GRN];
-		lbuf[i][3] = pixelp[i][RED];
-	}
+    for (i = 0; i < count; i++) {
+	/*lbuf[i][0] = 0;*/
+	lbuf[i][1] = pixelp[i][BLU];
+	lbuf[i][2] = pixelp[i][GRN];
+	lbuf[i][3] = pixelp[i][RED];
+    }
 #endif
 
-	dest.x = x;
-	dest.y = y;
-	size.width = count;
-	size.height = 1;	/*XXX*/
+    dest.x = x;
+    dest.y = y;
+    size.width = count;
+    size.height = 1;	/*XXX*/
 #if 0
-	f_pixar_ff(&dest, &size, 2, pixelp);
+    f_pixar_ff(&dest, &size, 2, pixelp);
 #else
 #	if 0
-	/* This way dumps core if writes are longer than 1020 bytes -M */
-	f_pixar_ff(&dest, &size, 3, lbuf);
+    /* This way dumps core if writes are longer than 1020 bytes -M */
+    f_pixar_ff(&dest, &size, 3, lbuf);
 #	else
-	if ( count > 800 )  {
-		size.width = 800;
-		f_pixar_ff(&dest, &size, 3, lbuf);
-		size.width = count-800;
-		dest.x = 800;
-		f_pixar_ff(&dest, &size, 3, &lbuf[800][0]);
-	} else {
-		f_pixar_ff(&dest, &size, 3, lbuf);
-	}
+    if ( count > 800 )  {
+	size.width = 800;
+	f_pixar_ff(&dest, &size, 3, lbuf);
+	size.width = count-800;
+	dest.x = 800;
+	f_pixar_ff(&dest, &size, 3, &lbuf[800][0]);
+    } else {
+	f_pixar_ff(&dest, &size, 3, lbuf);
+    }
 #	endif
 #endif
 
-	return(count);
+    return(count);
 }
 
 HIDDEN int
 ts_rmap( ifp, cmp )
-FBIO	*ifp;
-ColorMap	*cmp;
+    FBIO	*ifp;
+    ColorMap	*cmp;
 {
-	int	i;
-	struct color cmap[256];
+    int	i;
+    struct color cmap[256];
 
-	if (f_rdclut(0, 256, cmap)) {
-		fb_log("error 2\n");
-		exit(1);
-	}
-	for (i = 0; i < 256; i++) {
-		cmp->cm_red[i] = cmap[i].red << 8;
-		cmp->cm_green[i] = cmap[i].green << 8;
-		cmp->cm_blue[i] = cmap[i].blue << 8;
-	}
+    if (f_rdclut(0, 256, cmap)) {
+	fb_log("error 2\n");
+	exit(1);
+    }
+    for (i = 0; i < 256; i++) {
+	cmp->cm_red[i] = cmap[i].red << 8;
+	cmp->cm_green[i] = cmap[i].green << 8;
+	cmp->cm_blue[i] = cmap[i].blue << 8;
+    }
 
-	return(0);
+    return(0);
 }
 
 HIDDEN int
 ts_wmap( ifp, cmp )
-FBIO	*ifp;
-ColorMap	*cmp;
+    FBIO	*ifp;
+    ColorMap	*cmp;
 {
-	int	i;
-	struct color cmap[256];
+    int	i;
+    struct color cmap[256];
 
-	if (cmp != COLORMAP_NULL) {
-		for (i = 0; i < 256; i++) {
-			cmap[i].red = cmp->cm_red[i]>>8;
-			cmap[i].green = cmp->cm_green[i]>>8;
-			cmap[i].blue = cmp->cm_blue[i]>>8;
-		}
-	} else {
-		for (i = 0; i < 256; i++)
-			cmap[i].red = cmap[i].green = cmap[i].blue = i;
+    if (cmp != COLORMAP_NULL) {
+	for (i = 0; i < 256; i++) {
+	    cmap[i].red = cmp->cm_red[i]>>8;
+	    cmap[i].green = cmp->cm_green[i]>>8;
+	    cmap[i].blue = cmp->cm_blue[i]>>8;
 	}
-	if (f_wrclut(0, 256, cmap)) {
-		fb_log("error 2\n");
-		exit(1);
-	}
+    } else {
+	for (i = 0; i < 256; i++)
+	    cmap[i].red = cmap[i].green = cmap[i].blue = i;
+    }
+    if (f_wrclut(0, 256, cmap)) {
+	fb_log("error 2\n");
+	exit(1);
+    }
 
-	return(0);
+    return(0);
 }
 
 
@@ -418,51 +418,51 @@ ColorMap	*cmp;
  */
 HIDDEN int
 ts_view( ifp, xcenter, ycenter, xzoom, yzoom )
-FBIO	*ifp;
-int	xcenter, ycenter;
-int	xzoom, yzoom;
+    FBIO	*ifp;
+    int	xcenter, ycenter;
+    int	xzoom, yzoom;
 {
-	struct point panorigin;
-	struct point factor;
+    struct point panorigin;
+    struct point factor;
 
-	if (xzoom <= 0) xzoom = 1;
-	if (yzoom <= 0) yzoom = 1;
+    if (xzoom <= 0) xzoom = 1;
+    if (yzoom <= 0) yzoom = 1;
 
-	/* save a working copy for outselves */
-	ifp->if_xcenter = xcenter;
-	ifp->if_ycenter = xcenter;
-	ifp->if_xzoom = xzoom;
-	ifp->if_yzoom = yzoom;
+    /* save a working copy for outselves */
+    ifp->if_xcenter = xcenter;
+    ifp->if_ycenter = xcenter;
+    ifp->if_xzoom = xzoom;
+    ifp->if_yzoom = yzoom;
 
-	panorigin.x = xcenter - ifp->if_width/(2*xzoom);
-	panorigin.y = ycenter - ifp->if_height/(2*yzoom);
-	f_pan(panorigin.x, panorigin.y);
-	f_exec_wr_dl(0);	/* flush display list, no wait */
+    panorigin.x = xcenter - ifp->if_width/(2*xzoom);
+    panorigin.y = ycenter - ifp->if_height/(2*yzoom);
+    f_pan(panorigin.x, panorigin.y);
+    f_exec_wr_dl(0);	/* flush display list, no wait */
 
-	factor.x = xzoom;
-	factor.y = yzoom;
-	f_zoom(factor.x, factor.y);
-	f_exec_wr_dl(0);	/* flush display list, no wait */
+    factor.x = xzoom;
+    factor.y = yzoom;
+    f_zoom(factor.x, factor.y);
+    f_exec_wr_dl(0);	/* flush display list, no wait */
 
-	return(0);
+    return(0);
 }
 
 /* return base^pow */
 HIDDEN int
 ipow(base, pow)
-int base;
-int pow;
+    int base;
+    int pow;
 {
-	int	i, n;
+    int	i, n;
 
-	if (pow <= 0)
-		return	1;
+    if (pow <= 0)
+	return	1;
 
-	n = base;
-	for (i = 1; i < pow; i++)
-		n *= base;
+    n = base;
+    for (i = 1; i < pow; i++)
+	n *= base;
 
-	return	n;
+    return	n;
 }
 
 /*
@@ -471,202 +471,202 @@ int pow;
  */
 HIDDEN int
 ts_getview( ifp, xcenter, ycenter, xzoom, yzoom )
-FBIO	*ifp;
-int	*xcenter, *ycenter;
-int	*xzoom, *yzoom;
+    FBIO	*ifp;
+    int	*xcenter, *ycenter;
+    int	*xzoom, *yzoom;
 {
-	struct point rpanorigin;
-	struct point rfactor;
+    struct point rpanorigin;
+    struct point rfactor;
 
-	f_rdzoom(&rfactor);
-	ifp->if_xzoom = rfactor.x;
-	ifp->if_yzoom = ipow(2, rfactor.y);	/* Bug fix - see above */
-	*xzoom = ifp->if_xzoom;
-	*yzoom = ifp->if_yzoom;
+    f_rdzoom(&rfactor);
+    ifp->if_xzoom = rfactor.x;
+    ifp->if_yzoom = ipow(2, rfactor.y);	/* Bug fix - see above */
+    *xzoom = ifp->if_xzoom;
+    *yzoom = ifp->if_yzoom;
 
-	/* read lower left pixel coordinate */
-	f_rdpan(&rpanorigin);
-	/* convert to center pixel coordinate */
-	*xcenter = rpanorigin.x + ifp->if_width/(2*ifp->if_xzoom);
-	*ycenter = rpanorigin.y + ifp->if_height/(2*ifp->if_yzoom);
+    /* read lower left pixel coordinate */
+    f_rdpan(&rpanorigin);
+    /* convert to center pixel coordinate */
+    *xcenter = rpanorigin.x + ifp->if_width/(2*ifp->if_xzoom);
+    *ycenter = rpanorigin.y + ifp->if_height/(2*ifp->if_yzoom);
 
 #if 0
-	printf("getview: hw pan %d %d\n\r", rpanorigin.x, rpanorigin.y);
-	printf("getview: hw zoom %d %d\n\r", rfactor.x, rfactor.y);
-	printf("getview: returning %d %d %d %d\n", *xcenter, *ycenter, *xzoom, *yzoom);
+    printf("getview: hw pan %d %d\n\r", rpanorigin.x, rpanorigin.y);
+    printf("getview: hw zoom %d %d\n\r", rfactor.x, rfactor.y);
+    printf("getview: returning %d %d %d %d\n", *xcenter, *ycenter, *xzoom, *yzoom);
 #endif
 
-	return(0);
+    return(0);
 }
 
 HIDDEN int
 ts_setcursor( ifp, bits, xbits, ybits, xorig, yorig )
-FBIO	*ifp;
-unsigned char *bits;
-int	xbits, ybits;
-int	xorig, yorig;
+    FBIO	*ifp;
+    unsigned char *bits;
+    int	xbits, ybits;
+    int	xorig, yorig;
 {
-	return(0);
+    return(0);
 }
 
 HIDDEN int
 ts_cursor( ifp, mode, x, y )
-FBIO	*ifp;
-int	mode;
-int	x, y;
+    FBIO	*ifp;
+    int	mode;
+    int	x, y;
 {
-	struct point pos;
-	struct color color;
-	struct rectangle rect;
+    struct point pos;
+    struct color color;
+    struct rectangle rect;
 
-	pos.x = x;
-	pos.y = y;
-	color.red = 255;
-	color.green = 255;
-	color.blue = 255;
-	rect.x0 = 0;
-	rect.x1 = 1279;
+    pos.x = x;
+    pos.y = y;
+    color.red = 255;
+    color.green = 255;
+    color.blue = 255;
+    rect.x0 = 0;
+    rect.x1 = 1279;
 
-	/* XXX - BUG in GDSLIB, has these two backward! */
-	rect.y1 = 0;
-	rect.y0 = -1023;	/* Gross... */
+    /* XXX - BUG in GDSLIB, has these two backward! */
+    rect.y1 = 0;
+    rect.y0 = -1023;	/* Gross... */
 
-	if (!mode) {
-		f_hwcset(GDS_HWC_STYLE, GDS_HWCS_OFF, 0);
-	} else {
-		f_hwcset(GDS_HWC_STYLE, GDS_HWCS_CH1|GDS_HWCS_BITMAP,
-			GDS_HWC_ASSIGN, 4,
-			GDS_HWC_COLOR, &color,
-			GDS_HWC_WINDOW, &rect,
-			GDS_HWC_POSITION, &pos, 0);
-	}
-	f_exec_wr_dl(0);	/* flush display list, no wait */
+    if (!mode) {
+	f_hwcset(GDS_HWC_STYLE, GDS_HWCS_OFF, 0);
+    } else {
+	f_hwcset(GDS_HWC_STYLE, GDS_HWCS_CH1|GDS_HWCS_BITMAP,
+		 GDS_HWC_ASSIGN, 4,
+		 GDS_HWC_COLOR, &color,
+		 GDS_HWC_WINDOW, &rect,
+		 GDS_HWC_POSITION, &pos, 0);
+    }
+    f_exec_wr_dl(0);	/* flush display list, no wait */
 
 #if 0
-{
+    {
 	int	assign;
 	struct point *pp;
 	assign = f_hwcget(GDS_HWC_ASSIGN);
 	pp = (struct point *)f_hwcget(GDS_HWC_POSITION);
 	printf("cursor: %d %d %d\n", assign, pp->x, pp->y);
-}
+    }
 #endif
 
-	return(0);
+    return(0);
 }
 
 HIDDEN int
 ts_getcursor( ifp, mode, x, y )
-FBIO	*ifp;
-int	*mode;
-int	*x, *y;
+    FBIO	*ifp;
+    int	*mode;
+    int	*x, *y;
 {
-	/*int	style;*/
-	int	assign;
-	struct point *pp;
+    /*int	style;*/
+    int	assign;
+    struct point *pp;
 
-	/*style = f_hwcget(GDS_HWC_ASSIGN);*/
-	assign = f_hwcget(GDS_HWC_ASSIGN);
-	pp = (struct point *)f_hwcget(GDS_HWC_POSITION);
+    /*style = f_hwcget(GDS_HWC_ASSIGN);*/
+    assign = f_hwcget(GDS_HWC_ASSIGN);
+    pp = (struct point *)f_hwcget(GDS_HWC_POSITION);
 
-	if (assign)
-		*mode = 1;
-	else
-		*mode = 0;
-	*x = pp->x;
-	*y = pp->y;
-	printf("getcursor: %d %d %d\n", *mode, *x, *y);
+    if (assign)
+	*mode = 1;
+    else
+	*mode = 0;
+    *x = pp->x;
+    *y = pp->y;
+    printf("getcursor: %d %d %d\n", *mode, *x, *y);
 }
 
 HIDDEN int
 ts_readrect( ifp, xmin, ymin, width, height, pp )
-FBIO	*ifp;
-int	xmin, ymin;
-int	width, height;
-RGBpixel	*pp;
+    FBIO	*ifp;
+    int	xmin, ymin;
+    int	width, height;
+    RGBpixel	*pp;
 {
 #if 0
-	struct	point dest;
-	struct	size size;
+    struct	point dest;
+    struct	size size;
 
-	dest.x = xmin;
-	dest.y = ymin;
-	size.width = width;
-	size.height = height;
-	f_rdpixar_f(&dest, &size, 2, pp);
+    dest.x = xmin;
+    dest.y = ymin;
+    size.width = width;
+    size.height = height;
+    f_rdpixar_f(&dest, &size, 2, pp);
 
-	return( width*height );
+    return( width*height );
 #else
-	/* until we get 24bit reads that work... sigh */
-	return fb_sim_readrect(ifp, xmin, ymin, width, height, pp);
+    /* until we get 24bit reads that work... sigh */
+    return fb_sim_readrect(ifp, xmin, ymin, width, height, pp);
 #endif
 }
 
 HIDDEN int
 ts_writerect( ifp, xmin, ymin, width, height, pp )
-FBIO	*ifp;
-int	xmin, ymin;
-int	width, height;
-RGBpixel	*pp;
+    FBIO	*ifp;
+    int	xmin, ymin;
+    int	width, height;
+    RGBpixel	*pp;
 {
 #if 0
-	struct	point dest;
-	struct	size size;
+    struct	point dest;
+    struct	size size;
 
-	dest.x = xmin;
-	dest.y = ymin;
-	size.width = width;
-	size.height = height;
-	f_pixar_ff(&dest, &size, 2, pp);
+    dest.x = xmin;
+    dest.y = ymin;
+    size.width = width;
+    size.height = height;
+    f_pixar_ff(&dest, &size, 2, pp);
 
-	return( width*height );
+    return( width*height );
 #else
-	/* until we get 24bit writes that work... sigh */
-	return fb_sim_writerect(ifp, xmin, ymin, width, height, pp);
+    /* until we get 24bit writes that work... sigh */
+    return fb_sim_writerect(ifp, xmin, ymin, width, height, pp);
 #endif
 }
 
 HIDDEN int
 ts_flush( ifp )
-FBIO	*ifp;
+    FBIO	*ifp;
 {
-	f_exec_wr_dl(0);	/* flush display list, no wait */
-	return(0);
+    f_exec_wr_dl(0);	/* flush display list, no wait */
+    return(0);
 }
 
 HIDDEN int
 ts_free( ifp )
-FBIO	*ifp;
+    FBIO	*ifp;
 {
-	/* XXX - should reset everything to sane mode */
-	return(0);
+    /* XXX - should reset everything to sane mode */
+    return(0);
 }
 
 HIDDEN int
 ts_help( ifp )
-FBIO	*ifp;
+    FBIO	*ifp;
 {
-	struct	modeflags *mfp;
+    struct	modeflags *mfp;
 
-	fb_log( "Description: %s\n", ts_interface.if_type );
-	fb_log( "Device: %s\n", ifp->if_name );
-	fb_log( "Max width/height: %d %d\n",
-		ts_interface.if_max_width,
-		ts_interface.if_max_height );
-	fb_log( "Default width/height: %d %d\n",
-		ts_interface.if_width,
-		ts_interface.if_height );
-	fb_log( "Usage: /dev/ts[options] [channel]\n" );
-	for ( mfp = modeflags; mfp->c != '\0'; mfp++ ) {
-		fb_log( "   %c   %s\n", mfp->c, mfp->help );
-	}
-	fb_log( "Channel Numbers:\n");
-	fb_log( " 0 for Red channel\n");
-	fb_log( " 1 for Green channel\n");
-	fb_log( " 2 for Blue channel\n");
-	fb_log( " 3 for Overlay channel\n");
-	fb_log( " 4 for RGB channels\n");
-	return(0);
+    fb_log( "Description: %s\n", ts_interface.if_type );
+    fb_log( "Device: %s\n", ifp->if_name );
+    fb_log( "Max width/height: %d %d\n",
+	    ts_interface.if_max_width,
+	    ts_interface.if_max_height );
+    fb_log( "Default width/height: %d %d\n",
+	    ts_interface.if_width,
+	    ts_interface.if_height );
+    fb_log( "Usage: /dev/ts[options] [channel]\n" );
+    for ( mfp = modeflags; mfp->c != '\0'; mfp++ ) {
+	fb_log( "   %c   %s\n", mfp->c, mfp->help );
+    }
+    fb_log( "Channel Numbers:\n");
+    fb_log( " 0 for Red channel\n");
+    fb_log( " 1 for Green channel\n");
+    fb_log( " 2 for Blue channel\n");
+    fb_log( " 3 for Overlay channel\n");
+    fb_log( " 4 for RGB channels\n");
+    return(0);
 }
 
 /*

@@ -274,7 +274,7 @@ ab_open(register FBIO *ifp, register char *file, int width, int height)
 
     /* Allocate memory for YUV and RGB buffers */
     if ( (ifp->if_yuv = malloc(720*486*2)) == NULL ||
-	(ifp->if_rgb = malloc(720*486*3)) == NULL )  {
+	 (ifp->if_rgb = malloc(720*486*3)) == NULL )  {
 	fb_log("ab_open: unable to malloc buffer\n");
 	return(-1);
     }
@@ -362,9 +362,9 @@ ab_readframe(FBIO *ifp)
 
     ab_log(ifp, "Reading frame");
     if ( ab_yuvio( 0, ifp->if_host, ifp->if_yuv,
-		  720*486*2, ifp->if_frame,
-		  (ifp->if_mode & MODE_4MASK) == MODE_4NETWORK
-		  ) != 720*486*2 )  {
+		   720*486*2, ifp->if_frame,
+		   (ifp->if_mode & MODE_4MASK) == MODE_4NETWORK
+	     ) != 720*486*2 )  {
 	fb_log("ab_readframe(%d): unable to get frame from %s!\n",
 	       ifp->if_frame, ifp->if_host);
 	return(-1);
@@ -404,9 +404,9 @@ ab_close(FBIO *ifp)
 	ab_log(ifp, "Writing frame");
 
 	if ( ab_yuvio( 1, ifp->if_host, ifp->if_yuv,
-		      720*486*2, ifp->if_frame,
-		      (ifp->if_mode & MODE_4MASK) == MODE_4NETWORK
-		      ) != 720*486*2 )  {
+		       720*486*2, ifp->if_frame,
+		       (ifp->if_mode & MODE_4MASK) == MODE_4NETWORK
+		 ) != 720*486*2 )  {
 	    fb_log("ab_close: unable to send frame %d to A60 %s!\n",
 		   ifp->if_frame, ifp->if_host);
 	    ret = -1;
@@ -469,7 +469,7 @@ ab_read(register FBIO *ifp, int x, register int y, unsigned char *pixelp, int co
 	return(0);
 
     if ( x < 0 || x > ifp->if_width ||
-	y < 0 || y > ifp->if_height)
+	 y < 0 || y > ifp->if_height)
 	return(-1);
 
     if ( (ifp->if_mode & STATE_FRAME_WAS_READ) == 0 )  {
@@ -525,7 +525,7 @@ ab_write(register FBIO *ifp, int x, int y, const unsigned char *pixelp, int coun
 	return(0);
 
     if ( x < 0 || x > ifp->if_width ||
-	y < 0 || y > ifp->if_height)
+	 y < 0 || y > ifp->if_height)
 	return(-1);
 
     /*
@@ -533,7 +533,7 @@ ab_write(register FBIO *ifp, int x, int y, const unsigned char *pixelp, int coun
      *  yet been read, then read it.
      */
     if ( (ifp->if_mode & STATE_FRAME_WAS_READ) == 0 &&
-	(ifp->if_mode & STATE_USER_HAS_WRITTEN) == 0 )  {
+	 (ifp->if_mode & STATE_USER_HAS_WRITTEN) == 0 )  {
 	/* Read in the frame first */
 	(void)ab_readframe(ifp);
     }
@@ -669,8 +669,8 @@ ab_help(FBIO *ifp)
  */
 int
 ab_yuvio(int output, char *host, char *buf, int len, int frame, int to_network)
-     /* 0=read(input), 1=write(output) */
-     /* frame number */
+    /* 0=read(input), 1=write(output) */
+    /* frame number */
 {
     struct sockaddr_in	sinme;		/* Client */
     struct sockaddr_in	sinhim;		/* Server */

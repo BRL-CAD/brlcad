@@ -39,8 +39,8 @@
 #define DEBUG_STRINGS	false
 
 /*
-	char.c - routines for displaying a string on a frame buffer.
- */
+  char.c - routines for displaying a string on a frame buffer.
+*/
 extern void fudge_Pixel();
 extern void fill_buf(register int wid, register int *buf), clear_buf(int wid, register int *buf);
 extern void squash(register int *buf0, register int *buf1, register int *buf2, register float *ret_buf, register int n);
@@ -52,69 +52,69 @@ void
 do_line(int xpos, int ypos, register const char* line, RGBpixel (*menu_border))
 
 
-		       /* Menu outline color, if NULL, do filtering. */
-	{
-		register int    currx;
-		register int    char_count, char_id;
-		register int len = strlen( line );
+    /* Menu outline color, if NULL, do filtering. */
+{
+    register int    currx;
+    register int    char_count, char_id;
+    register int len = strlen( line );
 #if DEBUG_STRINGS
-	fb_log( "do_line: xpos=%d ypos=%d line=\"%s\" menu_border=0x%x\n",
-		xpos, ypos, line, (int) menu_border );
+    fb_log( "do_line: xpos=%d ypos=%d line=\"%s\" menu_border=0x%x\n",
+	    xpos, ypos, line, (int) menu_border );
 #endif
-	if ( font.ffdes == NULL )
-		{
-		fb_log( "ERROR: must read font first.\n" );
-		return;
-		}
-	currx = xpos;
-
-	for ( char_count = 0; char_count < len; char_count++ )
-		{
-		char_id = (int) line[char_count] & 0377;
-
-		/* locate the bitmap for the character in the file */
-		if ( fseek( font.ffdes, (long)(SWABV(font.dir[char_id].addr)+font.offset), 0 )
-			== EOF
-			)
-			{
-			fb_log( "fseek() to %ld failed.\n",
-				(long)(SWABV(font.dir[char_id].addr) + font.offset)
-				);
-			return;
-			}
-
-		/* Read in the dimensions for the character */
-		font.width = SignedChar(font.dir[char_id].right) +
-				SignedChar(font.dir[char_id].left);
-		font.height = SignedChar(font.dir[char_id].up) +
-				SignedChar(font.dir[char_id].down);
-
-#if DEBUG_STRINGS
-		fb_log( "do_line: right=%d left=%d up=%d down=%d\n",
-			SignedChar(font.dir[char_id].right),
-			SignedChar(font.dir[char_id].left),
-			SignedChar(font.dir[char_id].up),
-			SignedChar(font.dir[char_id].down)
-			);
-		fb_log( "do_line: width=%d height=%d\n", font.width, font.height );
-#endif
-
-		if ( currx + font.width > fb_getwidth(fbp) - 1 )
-			break;		/* won't fit on screen */
-
-		if ( menu_border == (RGBpixel *)RGBPIXEL_NULL )
-			do_Char( char_id, currx, ypos,
-				SignedChar(font.dir[char_id].down)%2 );
-		else
-			menu_char(	currx,
-					ypos,
-					SignedChar(font.dir[char_id].down) % 2,
-					(unsigned char*)menu_border
-					);
-		currx += SWABV(font.dir[char_id].width) + 2;
-		}
+    if ( font.ffdes == NULL )
+    {
+	fb_log( "ERROR: must read font first.\n" );
 	return;
+    }
+    currx = xpos;
+
+    for ( char_count = 0; char_count < len; char_count++ )
+    {
+	char_id = (int) line[char_count] & 0377;
+
+	/* locate the bitmap for the character in the file */
+	if ( fseek( font.ffdes, (long)(SWABV(font.dir[char_id].addr)+font.offset), 0 )
+	     == EOF
+	    )
+	{
+	    fb_log( "fseek() to %ld failed.\n",
+		    (long)(SWABV(font.dir[char_id].addr) + font.offset)
+		);
+	    return;
 	}
+
+	/* Read in the dimensions for the character */
+	font.width = SignedChar(font.dir[char_id].right) +
+	    SignedChar(font.dir[char_id].left);
+	font.height = SignedChar(font.dir[char_id].up) +
+	    SignedChar(font.dir[char_id].down);
+
+#if DEBUG_STRINGS
+	fb_log( "do_line: right=%d left=%d up=%d down=%d\n",
+		SignedChar(font.dir[char_id].right),
+		SignedChar(font.dir[char_id].left),
+		SignedChar(font.dir[char_id].up),
+		SignedChar(font.dir[char_id].down)
+	    );
+	fb_log( "do_line: width=%d height=%d\n", font.width, font.height );
+#endif
+
+	if ( currx + font.width > fb_getwidth(fbp) - 1 )
+	    break;		/* won't fit on screen */
+
+	if ( menu_border == (RGBpixel *)RGBPIXEL_NULL )
+	    do_Char( char_id, currx, ypos,
+		     SignedChar(font.dir[char_id].down)%2 );
+	else
+	    menu_char(	currx,
+			ypos,
+			SignedChar(font.dir[char_id].down) % 2,
+			(unsigned char*)menu_border
+		);
+	currx += SWABV(font.dir[char_id].width) + 2;
+    }
+    return;
+}
 
 /* Shared by do_Char() and menu_char(). */
 static int filterbuf[FONTBUFSZ][FONTBUFSZ];
@@ -122,127 +122,127 @@ static int filterbuf[FONTBUFSZ][FONTBUFSZ];
 HIDDEN void
 do_Char(int c, int xpos, int ypos, int odd)
 {
-	register int    i, j;
-		int base;
-		int     	totwid = font.width;
-		int     	down;
-		static float	resbuf[FONTBUFSZ];
-		static RGBpixel fbline[FONTBUFSZ];
+    register int    i, j;
+    int base;
+    int     	totwid = font.width;
+    int     	down;
+    static float	resbuf[FONTBUFSZ];
+    static RGBpixel fbline[FONTBUFSZ];
 #if DEBUG_STRINGS
-	fb_log( "do_Char: c='%c' xpos=%d ypos=%d odd=%d\n",
-		c, xpos, ypos, odd );
+    fb_log( "do_Char: c='%c' xpos=%d ypos=%d odd=%d\n",
+	    c, xpos, ypos, odd );
 #endif
 
-	/* read in character bit map, with two blank lines on each end */
-	for (i = 0; i < 2; i++)
-		clear_buf (totwid, filterbuf[i]);
-	for (i = font.height + 1; i >= 2; i--)
-		fill_buf (font.width, filterbuf[i]);
-	for (i = font.height + 2; i < font.height + 4; i++)
-		clear_buf (totwid, filterbuf[i]);
+    /* read in character bit map, with two blank lines on each end */
+    for (i = 0; i < 2; i++)
+	clear_buf (totwid, filterbuf[i]);
+    for (i = font.height + 1; i >= 2; i--)
+	fill_buf (font.width, filterbuf[i]);
+    for (i = font.height + 2; i < font.height + 4; i++)
+	clear_buf (totwid, filterbuf[i]);
 
-	(void)SignedChar( font.dir[c].up );
-	down = SignedChar( font.dir[c].down );
+    (void)SignedChar( font.dir[c].up );
+    down = SignedChar( font.dir[c].down );
 
-	/* Initial base line for filtering depends on odd flag. */
-	base = (odd ? 1 : 2);
+    /* Initial base line for filtering depends on odd flag. */
+    base = (odd ? 1 : 2);
 
 
-	/* Produce a RGBpixel buffer from a description of the character and
-		the read back data from the frame buffer for anti-aliasing.
-	 */
-	for (i = font.height + base; i >= base; i--)
-		{
-		squash(	filterbuf[i - 1],	/* filter info */
-			filterbuf[i],
-			filterbuf[i + 1],
-			resbuf,
-			totwid + 4
-			);
-		fb_read( fbp, xpos, ypos - down + i, (unsigned char *)fbline, totwid+3);
-		for (j = 0; j < (totwid + 3) - 1; j++)
-			{
-				register int tmp;
-			/* EDITOR'S NOTE : do not rearrange this code,
-				the SUN compiler can't handle more
-				complex expressions. */
-			tmp = fbline[j][RED] & 0377;
-			fbline[j][RED] =
-				(int)(paint[RED]*resbuf[j]+(1-resbuf[j])*tmp);
-			fbline[j][RED] &= 0377;
-			tmp = fbline[j][GRN] & 0377;
-			fbline[j][GRN] =
-				(int)(paint[GRN]*resbuf[j]+(1-resbuf[j])*tmp);
-			fbline[j][GRN] &= 0377;
-			tmp = fbline[j][BLU] & 0377;
-			fbline[j][BLU] =
-				(int)(paint[BLU]*resbuf[j]+(1-resbuf[j])*tmp);
-			fbline[j][BLU] &= 0377;
-			}
-		fb_write( fbp, xpos, ypos - down + i, (unsigned char *)fbline,  totwid+3 );
-		}
-	return;
+    /* Produce a RGBpixel buffer from a description of the character and
+       the read back data from the frame buffer for anti-aliasing.
+    */
+    for (i = font.height + base; i >= base; i--)
+    {
+	squash(	filterbuf[i - 1],	/* filter info */
+		filterbuf[i],
+		filterbuf[i + 1],
+		resbuf,
+		totwid + 4
+	    );
+	fb_read( fbp, xpos, ypos - down + i, (unsigned char *)fbline, totwid+3);
+	for (j = 0; j < (totwid + 3) - 1; j++)
+	{
+	    register int tmp;
+	    /* EDITOR'S NOTE : do not rearrange this code,
+	       the SUN compiler can't handle more
+	       complex expressions. */
+	    tmp = fbline[j][RED] & 0377;
+	    fbline[j][RED] =
+		(int)(paint[RED]*resbuf[j]+(1-resbuf[j])*tmp);
+	    fbline[j][RED] &= 0377;
+	    tmp = fbline[j][GRN] & 0377;
+	    fbline[j][GRN] =
+		(int)(paint[GRN]*resbuf[j]+(1-resbuf[j])*tmp);
+	    fbline[j][GRN] &= 0377;
+	    tmp = fbline[j][BLU] & 0377;
+	    fbline[j][BLU] =
+		(int)(paint[BLU]*resbuf[j]+(1-resbuf[j])*tmp);
+	    fbline[j][BLU] &= 0377;
 	}
+	fb_write( fbp, xpos, ypos - down + i, (unsigned char *)fbline,  totwid+3 );
+    }
+    return;
+}
 
 void
 menu_char(int x_adjust, int menu_wid, int odd, register unsigned char *menu_border)
 {
-	register int    i, j, k;
-		int embold = 1;
-		int base;
-		int totwid = font.width;
-	/* Read in the character bit map, with two blank lines on each end. */
-	for (i = 0; i < 2; i++)
-		clear_buf (totwid, filterbuf[i]);
-	for (i = font.height + 1; i >= 2; i--)
-		fill_buf (font.width, filterbuf[i]);
-	for (i = font.height + 2; i < font.height + 4; i++)
-		clear_buf (totwid, filterbuf[i]);
+    register int    i, j, k;
+    int embold = 1;
+    int base;
+    int totwid = font.width;
+    /* Read in the character bit map, with two blank lines on each end. */
+    for (i = 0; i < 2; i++)
+	clear_buf (totwid, filterbuf[i]);
+    for (i = font.height + 1; i >= 2; i--)
+	fill_buf (font.width, filterbuf[i]);
+    for (i = font.height + 2; i < font.height + 4; i++)
+	clear_buf (totwid, filterbuf[i]);
 
-	for (k=0; k<embold; k++)
-		for (i=2; i<font.height+2; i++)
-			for (j=totwid+1; j>=2; j--)
-				filterbuf[i][j+1] |= filterbuf[i][j];
+    for (k=0; k<embold; k++)
+	for (i=2; i<font.height+2; i++)
+	    for (j=totwid+1; j>=2; j--)
+		filterbuf[i][j+1] |= filterbuf[i][j];
 
-	/* Initial base line for filtering depends on odd flag. */
-	base = (odd ? 1 : 2);
+    /* Initial base line for filtering depends on odd flag. */
+    base = (odd ? 1 : 2);
 
-	/* Change bits in menu that correspond to character bitmap. */
-	for (i = font.height + base, k = 0; i >= base; i--, k++)
-		{
-			register RGBpixel *menu;
-		menu = menu_addr + k * menu_wid + x_adjust;
-		for (j = 0; j < (totwid + 3) - 1; j++, menu++ )
-			if ( filterbuf[i][j] )
-				{
-				COPYRGB(*menu, menu_border);
-				}
-		}
-	return;
-	}
+    /* Change bits in menu that correspond to character bitmap. */
+    for (i = font.height + base, k = 0; i >= base; i--, k++)
+    {
+	register RGBpixel *menu;
+	menu = menu_addr + k * menu_wid + x_adjust;
+	for (j = 0; j < (totwid + 3) - 1; j++, menu++ )
+	    if ( filterbuf[i][j] )
+	    {
+		COPYRGB(*menu, menu_border);
+	    }
+    }
+    return;
+}
 
 /*	b i t x ( )
 	Extract a bit field from a bit string.
- */
+*/
 int
 bitx(register char *bitstring, register int posn)
 {
 #if 0 /* Was #ifdef vax, but doesn't work on 4.3BSD */
-	register field;
+    register field;
 
-	asm("extzv	r10,$1,(r11), r8");
-	return field;
+    asm("extzv	r10,$1,(r11), r8");
+    return field;
 #else
-	for (; posn >= 8; posn -= 8, bitstring++ )
-		;
+    for (; posn >= 8; posn -= 8, bitstring++ )
+	;
 #if defined( CANT_DO_ZERO_SHIFT )
-	if ( posn == 0 )
-		return (int)(*bitstring) & 1;
-	else
+    if ( posn == 0 )
+	return (int)(*bitstring) & 1;
+    else
 #endif
 	return (int)(*bitstring) & (1<<posn);
 #endif
-	}
+}
 
 /*
  * Local Variables:

@@ -137,21 +137,21 @@
  *	Functions internal to LIBREDBLACK
  */
 BU_EXTERN(struct bu_rb_node *_rb_neighbor, (struct bu_rb_node *node,
-					 int		order,
-					 int		sense
-					));
+					    int		order,
+					    int		sense
+	      ));
 BU_EXTERN(void _rb_rot_left,		(struct bu_rb_node	*x,
 					 int		order
-					));
+	      ));
 BU_EXTERN(void _rb_rot_right,		(struct bu_rb_node	*y,
 					 int		order
-					));
+	      ));
 BU_EXTERN(void _rb_walk,		(bu_rb_tree	*tree,
 					 int		order,
 					 void		(*visit)(),
 					 int		what_to_visit,
 					 int		trav_type
-					));
+	      ));
 BU_EXTERN(void bu_rb_free_node,		(struct bu_rb_node *node));
 BU_EXTERN(void bu_rb_free_package,	(struct bu_rb_package *package));
 

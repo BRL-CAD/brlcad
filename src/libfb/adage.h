@@ -22,10 +22,10 @@
 /** @{ */
 /** @file adage.h
 
-  Authors -
-	Mike J. Muuss
-	Gary S. Moss
- */
+Authors -
+Mike J. Muuss
+Gary S. Moss
+*/
 /** @} */
 #ifdef vax
 /* GSM : '' needed for Sys V emulation.					*/
@@ -110,13 +110,13 @@
  * Mike Muuss, BRL, 10/26/83.
  */
 struct ik_fbc  {
-	short	fbc_xviewport, fbc_yviewport;		/* Y<<16 | X */
-	short	fbc_xsizeview, fbc_ysizeview;
-	short	fbc_xwindow, fbc_ywindow;
-	short	fbc_xzoom, fbc_yzoom;
-	short	fbc_horiztime, fbc_nlines;
-	short	fbc_Lcontrol, fbc_Hcontrol;
-	short	fbc_xcursor, fbc_ycursor;
+    short	fbc_xviewport, fbc_yviewport;		/* Y<<16 | X */
+    short	fbc_xsizeview, fbc_ysizeview;
+    short	fbc_xwindow, fbc_ywindow;
+    short	fbc_xzoom, fbc_yzoom;
+    short	fbc_horiztime, fbc_nlines;
+    short	fbc_Lcontrol, fbc_Hcontrol;
+    short	fbc_xcursor, fbc_ycursor;
 };
 
 /* Definitions for features in fbc_Lcontrol */
@@ -144,13 +144,13 @@ struct ik_fbc  {
 #define IK_IO_INHIBIT	0200	/* Set invisible I/O.			*/
 /* GSM : /usr/5include/sys/types.h uses 'ushort'.			*/
 struct ikdevice {
-	short  ubwcount;	/* unibus word count (two's complement) */
-	unsigned short ubaddr;		/* unibus address register (must be even) */
-	unsigned short ubcomreg;	/* unibus status & command register */
-	unsigned short datareg;		/* data i/o register */
-	unsigned short ikloaddr;	/* ikonas lower address register */
-	unsigned short ikhiaddr;	/* ikonas upper address register */
-	unsigned short ikcomreg;	/* ikonas status & command register */
+    short  ubwcount;	/* unibus word count (two's complement) */
+    unsigned short ubaddr;		/* unibus address register (must be even) */
+    unsigned short ubcomreg;	/* unibus status & command register */
+    unsigned short datareg;		/* data i/o register */
+    unsigned short ikloaddr;	/* ikonas lower address register */
+    unsigned short ikhiaddr;	/* ikonas upper address register */
+    unsigned short ikcomreg;	/* ikonas status & command register */
 };
 #define IKREADY 0000200
 #define IKERROR	0100000

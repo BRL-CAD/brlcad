@@ -78,204 +78,204 @@ FILE	*ifp, *ofp;
 int
 get_args(int argc, register char **argv)
 {
-	register int c;
+    register int c;
 
-	while ( (c = bu_getopt( argc, argv, "fbrih#:s:w:n:S:W:N:" )) != EOF )  {
-		switch ( c )  {
-		case 'f':
-			minus90++;
-			break;
-		case 'b':
-			plus90++;
-			break;
-		case 'r':
-			reverse++;
-			break;
-		case 'i':
-			invert++;
-			break;
-		case '#':
-			pixbytes = atoi(bu_optarg);
-			break;
-		case 'h':
-			/* high-res */
-			nxin = nyin = 1024;
-			break;
-		case 'S':
-		case 's':
-			/* square size */
-			nxin = nyin = atoi(bu_optarg);
-			break;
-		case 'W':
-		case 'w':
-			nxin = atoi(bu_optarg);
-			break;
-		case 'N':
-		case 'n':
-			nyin = atoi(bu_optarg);
-			break;
+    while ( (c = bu_getopt( argc, argv, "fbrih#:s:w:n:S:W:N:" )) != EOF )  {
+	switch ( c )  {
+	    case 'f':
+		minus90++;
+		break;
+	    case 'b':
+		plus90++;
+		break;
+	    case 'r':
+		reverse++;
+		break;
+	    case 'i':
+		invert++;
+		break;
+	    case '#':
+		pixbytes = atoi(bu_optarg);
+		break;
+	    case 'h':
+		/* high-res */
+		nxin = nyin = 1024;
+		break;
+	    case 'S':
+	    case 's':
+		/* square size */
+		nxin = nyin = atoi(bu_optarg);
+		break;
+	    case 'W':
+	    case 'w':
+		nxin = atoi(bu_optarg);
+		break;
+	    case 'N':
+	    case 'n':
+		nyin = atoi(bu_optarg);
+		break;
 
-		default:		/* '?' */
-			return(0);
-		}
+	    default:		/* '?' */
+		return(0);
 	}
+    }
 
-	/* XXX - backward compatability hack */
-	if ( bu_optind+2 == argc ) {
-		nxin = atoi(argv[bu_optind++]);
-		nyin = atoi(argv[bu_optind++]);
+    /* XXX - backward compatability hack */
+    if ( bu_optind+2 == argc ) {
+	nxin = atoi(argv[bu_optind++]);
+	nyin = atoi(argv[bu_optind++]);
+    }
+    if ( bu_optind >= argc )  {
+	if ( isatty(fileno(stdin)) )
+	    return(0);
+	file_name = "-";
+	ifp = stdin;
+    } else {
+	file_name = argv[bu_optind];
+	if ( (ifp = fopen(file_name, "r")) == NULL )  {
+	    bu_log("pixrot: cannot open \"%s\" for reading\n", file_name );
+	    return(0);
 	}
-	if ( bu_optind >= argc )  {
-		if ( isatty(fileno(stdin)) )
-			return(0);
-		file_name = "-";
-		ifp = stdin;
-	} else {
-		file_name = argv[bu_optind];
-		if ( (ifp = fopen(file_name, "r")) == NULL )  {
-		    bu_log("pixrot: cannot open \"%s\" for reading\n", file_name );
-		    return(0);
-		}
-	}
+    }
 
-	if ( argc > ++bu_optind )
-		bu_log("pixrot: excess argument(s) ignored\n" );
+    if ( argc > ++bu_optind )
+	bu_log("pixrot: excess argument(s) ignored\n" );
 
-	return(1);		/* OK */
+    return(1);		/* OK */
 }
 
 int
 main(int argc, char **argv)
 {
-	int	x, y, j;
-	long	outbyte, outplace;
+    int	x, y, j;
+    long	outbyte, outplace;
 
-	if ( !get_args( argc, argv ) || isatty(fileno(stdout)) )  {
-	    bu_exit(1, "%s", usage);
-	}
+    if ( !get_args( argc, argv ) || isatty(fileno(stdout)) )  {
+	bu_exit(1, "%s", usage);
+    }
 
-	ofp = stdout;
+    ofp = stdout;
 
-	scanbytes = nxin * pixbytes;
-	buflines = MAXBUFBYTES / scanbytes;
-	if ( buflines <= 0 ) {
-		bu_exit(2, "pixrot: I'm not compiled to do a scanline that long!\n" );
-	}
-	if ( buflines > nyin ) buflines = nyin;
-	buffer = malloc( buflines * scanbytes );
-	obuf = (nyin > nxin) ? malloc( nyin * pixbytes ) : malloc( nxin * pixbytes );
-	if ( buffer == (unsigned char *)0 || obuf == (unsigned char *)0 ) {
-		bu_exit(3, "pixrot: malloc failed\n" );
-	}
+    scanbytes = nxin * pixbytes;
+    buflines = MAXBUFBYTES / scanbytes;
+    if ( buflines <= 0 ) {
+	bu_exit(2, "pixrot: I'm not compiled to do a scanline that long!\n" );
+    }
+    if ( buflines > nyin ) buflines = nyin;
+    buffer = malloc( buflines * scanbytes );
+    obuf = (nyin > nxin) ? malloc( nyin * pixbytes ) : malloc( nxin * pixbytes );
+    if ( buffer == (unsigned char *)0 || obuf == (unsigned char *)0 ) {
+	bu_exit(3, "pixrot: malloc failed\n" );
+    }
 
-	/*
-	 * Clear our "file pointer."  We need to maintain this
-	 * In order to tell if seeking is required.  ftell() always
-	 * fails on pipes, so we can't use it.
-	 */
-	outplace = 0;
+    /*
+     * Clear our "file pointer."  We need to maintain this
+     * In order to tell if seeking is required.  ftell() always
+     * fails on pipes, so we can't use it.
+     */
+    outplace = 0;
 
-	yin = 0;
-	while ( yin < nyin ) {
-		/* Fill buffer */
-		fill_buffer();
-		if ( reverse )
-			reverse_buffer();
-		if ( plus90 ) {
-			for ( x = 0; x < nxin; x++ ) {
-				obp = obuf;
-				bp = &buffer[ (lasty-firsty)*scanbytes + x*pixbytes ];
-				for ( y = lasty; y >= yin; y-- ) {
-  /* firsty? */
-					for ( j = 0; j < pixbytes; j++ )
-						*obp++ = *bp++;
-					bp = bp - scanbytes - pixbytes;
-				}
-				yout = x;
-				xout = (nyin - 1) - lasty;
-				outbyte = ((yout * nyin) + xout) * pixbytes;
-				if ( outplace != outbyte ) {
-					if ( fseek( ofp, outbyte, 0 ) < 0 ) {
-						bu_exit(3, "pixrot: Can't seek on output, yet I need to!\n" );
-					}
-					outplace = outbyte;
-				}
-				fwrite( obuf, pixbytes, buflines, ofp );
-				outplace += (pixbytes * buflines);
-			}
-		} else if ( minus90 ) {
-			for ( x = nxin-1; x >= 0; x-- ) {
-				obp = obuf;
-				bp = &buffer[ x*pixbytes ];
-				for ( y = firsty; y <= lasty; y++ ) {
-					for ( j = 0; j < pixbytes; j++ )
-						*obp++ = *bp++;
-					bp = bp + scanbytes - pixbytes;
-				}
-				yout = (nxin - 1) - x;
-				xout = yin;
-				outbyte = ((yout * nyin) + xout) * pixbytes;
-				if ( outplace != outbyte ) {
-					if ( fseek( ofp, outbyte, 0 ) < 0 ) {
-						bu_exit(3, "pixrot: Can't seek on output, yet I need to!\n" );
-					}
-					outplace = outbyte;
-				}
-				fwrite( obuf, pixbytes, buflines, ofp );
-				outplace += (pixbytes * buflines);
-			}
-		} else if ( invert ) {
-			for ( y = lasty; y >= firsty; y-- ) {
-				yout = (nyin - 1) - y;
-				outbyte = yout * scanbytes;
-				if ( outplace != outbyte ) {
-					if ( fseek( ofp, outbyte, 0 ) < 0 ) {
-						bu_exit(3, "pixrot: Can't seek on output, yet I need to!\n" );
-					}
-					outplace = outbyte;
-				}
-				fwrite( &buffer[(y-firsty)*scanbytes], 1, scanbytes, ofp );
-				outplace += scanbytes;
-			}
-		} else {
-			/* Reverse only */
-			for ( y = 0; y < buflines; y++ ) {
-				fwrite( &buffer[y*scanbytes], 1, scanbytes, ofp );
-			}
+    yin = 0;
+    while ( yin < nyin ) {
+	/* Fill buffer */
+	fill_buffer();
+	if ( reverse )
+	    reverse_buffer();
+	if ( plus90 ) {
+	    for ( x = 0; x < nxin; x++ ) {
+		obp = obuf;
+		bp = &buffer[ (lasty-firsty)*scanbytes + x*pixbytes ];
+		for ( y = lasty; y >= yin; y-- ) {
+		    /* firsty? */
+		    for ( j = 0; j < pixbytes; j++ )
+			*obp++ = *bp++;
+		    bp = bp - scanbytes - pixbytes;
 		}
-
-		yin += buflines;
+		yout = x;
+		xout = (nyin - 1) - lasty;
+		outbyte = ((yout * nyin) + xout) * pixbytes;
+		if ( outplace != outbyte ) {
+		    if ( fseek( ofp, outbyte, 0 ) < 0 ) {
+			bu_exit(3, "pixrot: Can't seek on output, yet I need to!\n" );
+		    }
+		    outplace = outbyte;
+		}
+		fwrite( obuf, pixbytes, buflines, ofp );
+		outplace += (pixbytes * buflines);
+	    }
+	} else if ( minus90 ) {
+	    for ( x = nxin-1; x >= 0; x-- ) {
+		obp = obuf;
+		bp = &buffer[ x*pixbytes ];
+		for ( y = firsty; y <= lasty; y++ ) {
+		    for ( j = 0; j < pixbytes; j++ )
+			*obp++ = *bp++;
+		    bp = bp + scanbytes - pixbytes;
+		}
+		yout = (nxin - 1) - x;
+		xout = yin;
+		outbyte = ((yout * nyin) + xout) * pixbytes;
+		if ( outplace != outbyte ) {
+		    if ( fseek( ofp, outbyte, 0 ) < 0 ) {
+			bu_exit(3, "pixrot: Can't seek on output, yet I need to!\n" );
+		    }
+		    outplace = outbyte;
+		}
+		fwrite( obuf, pixbytes, buflines, ofp );
+		outplace += (pixbytes * buflines);
+	    }
+	} else if ( invert ) {
+	    for ( y = lasty; y >= firsty; y-- ) {
+		yout = (nyin - 1) - y;
+		outbyte = yout * scanbytes;
+		if ( outplace != outbyte ) {
+		    if ( fseek( ofp, outbyte, 0 ) < 0 ) {
+			bu_exit(3, "pixrot: Can't seek on output, yet I need to!\n" );
+		    }
+		    outplace = outbyte;
+		}
+		fwrite( &buffer[(y-firsty)*scanbytes], 1, scanbytes, ofp );
+		outplace += scanbytes;
+	    }
+	} else {
+	    /* Reverse only */
+	    for ( y = 0; y < buflines; y++ ) {
+		fwrite( &buffer[y*scanbytes], 1, scanbytes, ofp );
+	    }
 	}
-	return 0;
+
+	yin += buflines;
+    }
+    return 0;
 }
 
 void
 fill_buffer(void)
 {
-	buflines = fread( buffer, scanbytes, buflines, ifp );
+    buflines = fread( buffer, scanbytes, buflines, ifp );
 
-	firsty = lasty + 1;
-	lasty = firsty + (buflines - 1);
+    firsty = lasty + 1;
+    lasty = firsty + (buflines - 1);
 }
 
 void
 reverse_buffer(void)
 {
-	int	i, j;
-	unsigned char *p1, *p2, temp;
+    int	i, j;
+    unsigned char *p1, *p2, temp;
 
-	for ( i = 0; i < buflines; i++ ) {
-		p1 = &buffer[ i * scanbytes ];
-		p2 = p1 + (scanbytes - pixbytes);
-		while ( p1 < p2 ) {
-			for ( j = 0; j < pixbytes; j++ ) {
-				temp = *p1;
-				*p1++ = *p2;
-				*p2++ = temp;
-			}
-			p2 -= 2*pixbytes;
-		}
+    for ( i = 0; i < buflines; i++ ) {
+	p1 = &buffer[ i * scanbytes ];
+	p2 = p1 + (scanbytes - pixbytes);
+	while ( p1 < p2 ) {
+	    for ( j = 0; j < pixbytes; j++ ) {
+		temp = *p1;
+		*p1++ = *p2;
+		*p2++ = temp;
+	    }
+	    p2 -= 2*pixbytes;
 	}
+    }
 }
 
 /*

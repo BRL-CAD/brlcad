@@ -149,54 +149,54 @@ format_output (const char* buffer, com_table* ctp)
     while (isspace(*bp))
 	++bp;
     switch (*bp) {
-    case 'r':
-	fmt_type = FMT_RAY;
-	break;
-    case 'h':
-	fmt_type = FMT_HEAD;
-	break;
-    case 'p':
-	fmt_type = FMT_PART;
-	break;
-    case 'f':
-	fmt_type = FMT_FOOT;
-	break;
-    case 'm':
-	fmt_type = FMT_MISS;
-	break;
-    case 'o':
-	fmt_type = FMT_OVLP;
-	break;
-    default:
-	--bp;
-	break;
+	case 'r':
+	    fmt_type = FMT_RAY;
+	    break;
+	case 'h':
+	    fmt_type = FMT_HEAD;
+	    break;
+	case 'p':
+	    fmt_type = FMT_PART;
+	    break;
+	case 'f':
+	    fmt_type = FMT_FOOT;
+	    break;
+	case 'm':
+	    fmt_type = FMT_MISS;
+	    break;
+	case 'o':
+	    fmt_type = FMT_OVLP;
+	    break;
+	default:
+	    --bp;
+	    break;
     }
     while (isspace(*++bp))
 	;
     
     switch (*bp) {
-    case '\0':     /* display current output specs */
-	if (fmt_type == FMT_NONE)
-	    fprintf(stderr, "Error: No output-statement type specified\n");
-	else
-	    show_ospec(oi_list[fmt_type]);
-	return;
-    case '"':
-	if (fmt_type == FMT_NONE) {
-	    fprintf(stderr, "Error: No output-statement type specified\n");
+	case '\0':     /* display current output specs */
+	    if (fmt_type == FMT_NONE)
+		fprintf(stderr, "Error: No output-statement type specified\n");
+	    else
+		show_ospec(oi_list[fmt_type]);
 	    return;
-	}
-	break;
-    default:
-	if (strncmp(bp, "default", 7) == 0) {
-	    use_defaults = 1;
+	case '"':
+	    if (fmt_type == FMT_NONE) {
+		fprintf(stderr, "Error: No output-statement type specified\n");
+		return;
+	    }
 	    break;
-	}
-	fprintf(stderr, "Error: Illegal format specifiation: '%s'\n", buffer);
-	/* fall through here */
-    case '?':
-	com_usage(ctp);
-	return;
+	default:
+	    if (strncmp(bp, "default", 7) == 0) {
+		use_defaults = 1;
+		break;
+	    }
+	    fprintf(stderr, "Error: Illegal format specifiation: '%s'\n", buffer);
+	    /* fall through here */
+	case '?':
+	    com_usage(ctp);
+	    return;
     }
 
     if (use_defaults) {
@@ -280,19 +280,19 @@ parse_fmt(const char *uoutspec, int outcom_type)
 	while (up != uos) {
 	    if (*up == '\\') {
 		switch (*(up + 1)) {
-		case 'n':
-		    *of++ = '\n';
-		    up += 2;
-		    break;
-		case '\042':
-		case '\047':
-		case '\134':
-		    *of++ = *(up + 1);
-		    up += 2;
-		    break;
-		default:
-		    *of++ = *up++;
-		    break;
+		    case 'n':
+			*of++ = '\n';
+			up += 2;
+			break;
+		    case '\042':
+		    case '\047':
+		    case '\134':
+			*of++ = *(up + 1);
+			up += 2;
+			break;
+		    default:
+			*of++ = *up++;
+			break;
 		}
 	    } else {
 		*of++ = *up++;
@@ -433,26 +433,26 @@ report(int outcom_type)
 
     for (oip = oi_list[outcom_type]; oip != OUTITEM_NULL; oip = oip->next) {
 	switch (ValTab[oip->code_nm].type) {
-	case OIT_INT:
-	    fprintf(outf, oip->format, ValTab[oip->code_nm].value.ival);
-	    break;
-	case OIT_FLOAT:
-	    fprintf(outf, oip->format,
-		    ValTab[oip->code_nm].value.fval * base2local);
-	    break;
-	case OIT_FNOUNIT:
-	    fprintf(outf, oip->format,
-		    ValTab[oip->code_nm].value.fval);
-	    break;
-	case OIT_STRING:
-	    fprintf(outf, oip->format, ValTab[oip->code_nm].value.sval);
-	    break;
-	default:
-	    fflush(stdout);
-	    fprintf(stderr, "Fatal: Invalid item type %d.  ",
-		    ValTab[oip->code_nm].type);
-	    fprintf(stderr, "This shouldn't happen\n");
-	    bu_exit (1, NULL);
+	    case OIT_INT:
+		fprintf(outf, oip->format, ValTab[oip->code_nm].value.ival);
+		break;
+	    case OIT_FLOAT:
+		fprintf(outf, oip->format,
+			ValTab[oip->code_nm].value.fval * base2local);
+		break;
+	    case OIT_FNOUNIT:
+		fprintf(outf, oip->format,
+			ValTab[oip->code_nm].value.fval);
+		break;
+	    case OIT_STRING:
+		fprintf(outf, oip->format, ValTab[oip->code_nm].value.sval);
+		break;
+	    default:
+		fflush(stdout);
+		fprintf(stderr, "Fatal: Invalid item type %d.  ",
+			ValTab[oip->code_nm].type);
+		fprintf(stderr, "This shouldn't happen\n");
+		bu_exit (1, NULL);
 	}
     }
     fflush(outf);
@@ -475,10 +475,10 @@ print_item (char *buffer, com_table *ctp)
 	++bp;
 
     switch (*bp) {
-    case '\0':
-    case '?':
-	com_usage(ctp);
-	return;
+	case '\0':
+	case '?':
+	    com_usage(ctp);
+	    return;
     }
 
     /* Read in the list of objects to output */
@@ -495,24 +495,24 @@ print_item (char *buffer, com_table *ctp)
 	for (vtp = (outval *)(ValTab + 1); vtp->name; ++vtp) {
 	    if (strcmp(vtp->name, bp0) == 0) {
 		switch (vtp->type) {
-		case OIT_INT:
-		    printf("%d\n", vtp->value.ival);
-		    break;
-		case OIT_FLOAT:
-		    printf("%g\n", vtp->value.fval * base2local);
-		    break;
-		case OIT_FNOUNIT:
-		    printf("%g\n", vtp->value.fval);
-		    break;
-		case OIT_STRING:
-		    printf("'%s'\n", vtp->value.sval);
-		    break;
-		default:
-		    fflush(stdout);
-		    fprintf(stderr, "Fatal: Invalid item type %d.  ",
-			    ValTab[vtp->code_nm].type);
-		    fprintf(stderr, "This shouldn't happen\n");
-		    bu_exit (1, NULL);
+		    case OIT_INT:
+			printf("%d\n", vtp->value.ival);
+			break;
+		    case OIT_FLOAT:
+			printf("%g\n", vtp->value.fval * base2local);
+			break;
+		    case OIT_FNOUNIT:
+			printf("%g\n", vtp->value.fval);
+			break;
+		    case OIT_STRING:
+			printf("'%s'\n", vtp->value.sval);
+			break;
+		    default:
+			fflush(stdout);
+			fprintf(stderr, "Fatal: Invalid item type %d.  ",
+				ValTab[vtp->code_nm].type);
+			fprintf(stderr, "This shouldn't happen\n");
+			bu_exit (1, NULL);
 		}
 		break;
 	    }
@@ -578,59 +578,59 @@ check_conv_spec (outitem *oip)
 
 	oi_type = ValTab[oip->code_nm].type;
 	switch (*cp) {
-	case 'd':
-	case 'o':
-	case 'u':
-	case 'x':
-	    if (oi_type != OIT_INT) {
+	    case 'd':
+	    case 'o':
+	    case 'u':
+	    case 'x':
+		if (oi_type != OIT_INT) {
+		    ++warnings;
+		    fprintf(stderr,
+			    "Warning: Conversion type '%%%c' specified",
+			    *cp);
+		    fprintf(stderr,
+			    " for item %s, which is %s\n",
+			    ValTab[oip->code_nm].name, oit_name(oi_type));
+		}
+		break;
+	    case 'f':
+	    case 'e':
+	    case 'E':
+	    case 'g':
+	    case 'G':
+		if ((oi_type != OIT_FLOAT) && (oi_type != OIT_FNOUNIT)) {
+		    ++warnings;
+		    fprintf(stderr,
+			    "Warning: Conversion type '%%%c' specified",
+			    *cp);
+		    fprintf(stderr,
+			    " for item %s, which is %s\n",
+			    ValTab[oip->code_nm].name, oit_name(oi_type));
+		}
+		break;
+	    case 's':
+		if (oi_type != OIT_STRING) {
+		    ++warnings;
+		    fprintf(stderr,
+			    "Warning: Conversion type '%%%c' specified",
+			    *cp);
+		    fprintf(stderr,
+			    " for item %s, which is %s\n",
+			    ValTab[oip->code_nm].name, oit_name(oi_type));
+		}
+		break;
+	    case 'c':
 		++warnings;
 		fprintf(stderr,
-			"Warning: Conversion type '%%%c' specified",
-			*cp);
+			"Warning: Conversion type '%%%c' specified", *cp);
 		fprintf(stderr,
-			" for item %s, which is %s\n",
+			" for item %s, which is a %s\n",
 			ValTab[oip->code_nm].name, oit_name(oi_type));
-	    }
-	    break;
-	case 'f':
-	case 'e':
-	case 'E':
-	case 'g':
-	case 'G':
-	    if ((oi_type != OIT_FLOAT) && (oi_type != OIT_FNOUNIT)) {
+		break;
+	    default:
 		++warnings;
 		fprintf(stderr,
-			"Warning: Conversion type '%%%c' specified",
-			*cp);
-		fprintf(stderr,
-			" for item %s, which is %s\n",
-			ValTab[oip->code_nm].name, oit_name(oi_type));
-	    }
-	    break;
-	case 's':
-	    if (oi_type != OIT_STRING) {
-		++warnings;
-		fprintf(stderr,
-			"Warning: Conversion type '%%%c' specified",
-			*cp);
-		fprintf(stderr,
-			" for item %s, which is %s\n",
-			ValTab[oip->code_nm].name, oit_name(oi_type));
-	    }
-	    break;
-	case 'c':
-	    ++warnings;
-	    fprintf(stderr,
-		    "Warning: Conversion type '%%%c' specified", *cp);
-	    fprintf(stderr,
-		    " for item %s, which is a %s\n",
-		    ValTab[oip->code_nm].name, oit_name(oi_type));
-	    break;
-	default:
-	    ++warnings;
-	    fprintf(stderr,
-		    "Warning: Unknown conversion type '%%%c'\n", *cp);
-	    break;
+			"Warning: Unknown conversion type '%%%c'\n", *cp);
+		break;
 	}
     }
     return (warnings);
@@ -646,12 +646,12 @@ direct_output(const char *buffer, com_table *ctp)
     static FILE	*(*openfunc)() = 0;
 
     while (isspace(*(buffer+i)))
-	    ++i;
+	++i;
 
     if (*(buffer+i) == '\0') {
 	/* display current destination */
 	printf("destination = %s%s'\n",
-	    (openfunc == popen) ? "'| " : "'", dest_string);
+	       (openfunc == popen) ? "'| " : "'", dest_string);
 	return;
     }
 
@@ -677,7 +677,7 @@ direct_output(const char *buffer, com_table *ctp)
 	snprintf(new_dest, strlen(buffer+i), "%s", buffer + i);
 	if ((newf = (*openfunc)(new_dest, "w")) == NULL) {
 	    fprintf(stderr, "Cannot open %s '%s'\n",
-		(openfunc == popen) ? "pipe" : "file", new_dest);
+		    (openfunc == popen) ? "pipe" : "file", new_dest);
 	    fprintf(stderr, "Destination remains = '%s'\n", dest_string);
 
 	    bu_free(new_dest, "new(now old)dest");
@@ -707,7 +707,7 @@ state_file(const char *buffer, com_table *ctp)
     static char	*new_name;
 
     while (isspace(*(buffer+i)))
-	    ++i;
+	++i;
 
     if (*(buffer+i) == '\0') {
 	/* display current state name */

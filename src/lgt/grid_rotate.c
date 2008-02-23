@@ -52,31 +52,31 @@
 void
 grid_Rotate(fastf_t azim, fastf_t elev, fastf_t roll, register fastf_t *des_H, register fastf_t *des_V)
 {
-	fastf_t	sn_azm = sin( azim );
-		fastf_t	cs_azm = cos( azim );
-		fastf_t	sn_elv = sin( elev );
-	des_H[0] = -sn_azm;
-	des_H[1] =  cs_azm;
-	des_H[2] =  0.0;
-	des_V[0] = -sn_elv*cs_azm;
-	des_V[1] = -sn_elv*sn_azm;
-	des_V[2] =  cos( elev );
+    fastf_t	sn_azm = sin( azim );
+    fastf_t	cs_azm = cos( azim );
+    fastf_t	sn_elv = sin( elev );
+    des_H[0] = -sn_azm;
+    des_H[1] =  cs_azm;
+    des_H[2] =  0.0;
+    des_V[0] = -sn_elv*cs_azm;
+    des_V[1] = -sn_elv*sn_azm;
+    des_V[2] =  cos( elev );
 
-	if ( !NEAR_ZERO(roll, 0.0) )
-		{
-			fastf_t	tmp_V[3], tmp_H[3], prime_V[3];
-			fastf_t	sn_roll = sin( roll );
-			fastf_t	cs_roll = cos( roll );
-		Scale2Vec( des_V, cs_roll, tmp_V );
-		Scale2Vec( des_H, sn_roll, tmp_H );
-		Add2Vec( tmp_V, tmp_H, prime_V );
-		Scale2Vec( des_V, -sn_roll, tmp_V );
-		Scale2Vec( des_H, cs_roll, tmp_H );
-		Add2Vec( tmp_V, tmp_H, des_H );
-		CopyVec( des_V, prime_V );
-		}
-	return;
-	}
+    if ( !NEAR_ZERO(roll, 0.0) )
+    {
+	fastf_t	tmp_V[3], tmp_H[3], prime_V[3];
+	fastf_t	sn_roll = sin( roll );
+	fastf_t	cs_roll = cos( roll );
+	Scale2Vec( des_V, cs_roll, tmp_V );
+	Scale2Vec( des_H, sn_roll, tmp_H );
+	Add2Vec( tmp_V, tmp_H, prime_V );
+	Scale2Vec( des_V, -sn_roll, tmp_V );
+	Scale2Vec( des_H, cs_roll, tmp_H );
+	Add2Vec( tmp_V, tmp_H, des_H );
+	CopyVec( des_V, prime_V );
+    }
+    return;
+}
 
 /*
  * Local Variables:

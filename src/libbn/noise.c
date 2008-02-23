@@ -78,31 +78,31 @@
 static void
 filter_args(fastf_t *src, fastf_t *p, fastf_t *f, int *ip)
 {
-	register int i;
-	point_t dst;
-	static unsigned long max2x = ~((unsigned long)0);
-	static unsigned long max = (~((unsigned long)0)) >> 1;
+    register int i;
+    point_t dst;
+    static unsigned long max2x = ~((unsigned long)0);
+    static unsigned long max = (~((unsigned long)0)) >> 1;
 
-	for (i=0; i < 3; i++) {
-		/* assure values are positive */
-		if (src[i] < 0) dst[i] = -src[i];
-		else dst[i] = src[i];
+    for (i=0; i < 3; i++) {
+	/* assure values are positive */
+	if (src[i] < 0) dst[i] = -src[i];
+	else dst[i] = src[i];
 
 
-		/* fold space */
-		while (dst[i] > max || dst[i]<0) {
-			if (dst[i] > max) {
-				dst[i] = max2x - dst[i];
-			} else {
-				dst[i] = -dst[i];
-			}
-		}
-
+	/* fold space */
+	while (dst[i] > max || dst[i]<0) {
+	    if (dst[i] > max) {
+		dst[i] = max2x - dst[i];
+	    } else {
+		dst[i] = -dst[i];
+	    }
 	}
 
-	p[X] = dst[0];	ip[X] = FLOOR(p[X]);	f[X] = p[X] - ip[X];
-	p[Y] = dst[1];	ip[Y] = FLOOR(p[Y]);	f[Y] = p[Y] - ip[Y];
-	p[Z] = dst[2];	ip[Z] = FLOOR(p[Z]);	f[Z] = p[Z] - ip[Z];
+    }
+
+    p[X] = dst[0];	ip[X] = FLOOR(p[X]);	f[X] = p[X] - ip[X];
+    p[Y] = dst[1];	ip[Y] = FLOOR(p[Y]);	f[Y] = p[Y] - ip[Y];
+    p[Z] = dst[2];	ip[Z] = FLOOR(p[Z]);	f[Z] = p[Z] - ip[Z];
 }
 
 
@@ -126,12 +126,12 @@ static double	RTable[MAXSIZE];
  *  for indicies into RTable.
  */
 struct str_ht {
-	long	magic;
-	char	hashTableValid;
-	long	*hashTableMagic1;
-	short	*hashTable;
-	long	*hashTableMagic2;
-	long	magic_end;
+    long	magic;
+    char	hashTableValid;
+    long	*hashTableMagic1;
+    short	*hashTable;
+    long	*hashTableMagic2;
+    long	magic_end;
 };
 
 static struct str_ht ht;
@@ -168,53 +168,53 @@ static struct str_ht ht;
 void
 bn_noise_init(void)
 {
-	int i, j, k, temp;
-	int rndtabi = BN_RAND_TABSIZE - 1;
+    int i, j, k, temp;
+    int rndtabi = BN_RAND_TABSIZE - 1;
 
-	bu_semaphore_acquire( BU_SEM_BN_NOISE );
+    bu_semaphore_acquire( BU_SEM_BN_NOISE );
 
-	if (ht.hashTableValid) {
-		bu_semaphore_release( BU_SEM_BN_NOISE );
-		return;
-	}
-
-	BN_RANDSEED(rndtabi, (BN_RAND_TABSIZE-1) );
-	ht.hashTableMagic1 = (long *) bu_malloc(
-		2*sizeof(long) + 4096*sizeof(short int),
-		"noise hashTable");
-	ht.hashTable = (short *)&ht.hashTableMagic1[1];
-	ht.hashTableMagic2 = (long *)&ht.hashTable[4096];
-
-	*ht.hashTableMagic1 = MAGIC_TAB1;
-	*ht.hashTableMagic2 = MAGIC_TAB2;
-
-	ht.magic_end = MAGIC_STRHT2;
-	ht.magic = MAGIC_STRHT1;
-
-	for (i = 0; i < 4096; i++)
-		ht.hashTable[i] = i;
-
-	/* scramble the hash table */
-	for (i = 4095; i > 0; i--) {
-		j = (int)(BN_RANDOM(rndtabi) * 4096.0);
-
-		temp = ht.hashTable[i];
-		ht.hashTable[i] = ht.hashTable[j];
-		ht.hashTable[j] = temp;
-	}
-
-	BN_RANDSEED(k, 13);
-
-	for (i = 0; i < MAXSIZE; i++)
-		RTable[i] = BN_RANDOM(k) * 2.0 - 1.0;
-
-
-	ht.hashTableValid = 1;
-
+    if (ht.hashTableValid) {
 	bu_semaphore_release( BU_SEM_BN_NOISE );
+	return;
+    }
+
+    BN_RANDSEED(rndtabi, (BN_RAND_TABSIZE-1) );
+    ht.hashTableMagic1 = (long *) bu_malloc(
+	2*sizeof(long) + 4096*sizeof(short int),
+	"noise hashTable");
+    ht.hashTable = (short *)&ht.hashTableMagic1[1];
+    ht.hashTableMagic2 = (long *)&ht.hashTable[4096];
+
+    *ht.hashTableMagic1 = MAGIC_TAB1;
+    *ht.hashTableMagic2 = MAGIC_TAB2;
+
+    ht.magic_end = MAGIC_STRHT2;
+    ht.magic = MAGIC_STRHT1;
+
+    for (i = 0; i < 4096; i++)
+	ht.hashTable[i] = i;
+
+    /* scramble the hash table */
+    for (i = 4095; i > 0; i--) {
+	j = (int)(BN_RANDOM(rndtabi) * 4096.0);
+
+	temp = ht.hashTable[i];
+	ht.hashTable[i] = ht.hashTable[j];
+	ht.hashTable[j] = temp;
+    }
+
+    BN_RANDSEED(k, 13);
+
+    for (i = 0; i < MAXSIZE; i++)
+	RTable[i] = BN_RANDOM(k) * 2.0 - 1.0;
 
 
-	CK_HT();
+    ht.hashTableValid = 1;
+
+    bu_semaphore_release( BU_SEM_BN_NOISE );
+
+
+    CK_HT();
 }
 
 
@@ -233,78 +233,78 @@ bn_noise_init(void)
 double
 bn_noise_perlin(fastf_t *point)
 {
-	register int	jx, jy, jz;
-	int ix, iy, iz;	/* lower integer lattice point */
-	double x, y, z;	/* corrected point */
-	double fx, fy, fz;	/* distance above integer lattice point */
-	double	sx, sy, sz, tx, ty, tz;
-	double	sum;
-	short	m;
-	point_t p, f;
-	int ip[3];
+    register int	jx, jy, jz;
+    int ix, iy, iz;	/* lower integer lattice point */
+    double x, y, z;	/* corrected point */
+    double fx, fy, fz;	/* distance above integer lattice point */
+    double	sx, sy, sz, tx, ty, tz;
+    double	sum;
+    short	m;
+    point_t p, f;
+    int ip[3];
 
-	if (!ht.hashTableValid) bn_noise_init();
-	else {
+    if (!ht.hashTableValid) bn_noise_init();
+    else {
 /*		CK_HT(); */
-	}
+    }
 
-	/* IS: const fastf_t *, point_t, point_t, int[3] */
-	/* NE: fastf_t *, fastf_t *, fastf_t *, int *    */
-	filter_args( point, p, f, ip);
-	ix = ip[X];
-	iy = ip[Y];
-	iz = ip[Z];
+    /* IS: const fastf_t *, point_t, point_t, int[3] */
+    /* NE: fastf_t *, fastf_t *, fastf_t *, int *    */
+    filter_args( point, p, f, ip);
+    ix = ip[X];
+    iy = ip[Y];
+    iz = ip[Z];
 
-	fx = f[X];
-	fy = f[Y];
-	fz = f[Z];
+    fx = f[X];
+    fy = f[Y];
+    fz = f[Z];
 
-	x = p[X];
-	y = p[Y];
-	z = p[Z];
+    x = p[X];
+    y = p[Y];
+    z = p[Z];
 
-	jx = ix + 1; /* (jx, jy, jz) = integer lattice point above (ix, iy, iz) */
-	jy = iy + 1;
-	jz = iz + 1;
+    jx = ix + 1; /* (jx, jy, jz) = integer lattice point above (ix, iy, iz) */
+    jy = iy + 1;
+    jz = iz + 1;
 
-	sx = SMOOTHSTEP(fx);
-	sy = SMOOTHSTEP(fy);
-	sz = SMOOTHSTEP(fz);
+    sx = SMOOTHSTEP(fx);
+    sy = SMOOTHSTEP(fy);
+    sz = SMOOTHSTEP(fz);
 
-	/* the complement values of sx, sy, sz */
-	tx = 1.0 - sx;
-	ty = 1.0 - sy;
-	tz = 1.0 - sz;
+    /* the complement values of sx, sy, sz */
+    tx = 1.0 - sx;
+    ty = 1.0 - sy;
+    tz = 1.0 - sz;
 
-	/*
-	 *  interpolate!
-	 */
-	/* get a repeatable random # 0..4096 & 0xFF*/
-	m = Hash3d( ix, iy, iz ) & 0xFF;
-	sum = INCRSUM(m, (tx*ty*tz), (x-ix), (y-iy), (z-iz));
+    /*
+     *  interpolate!
+     */
+    /* get a repeatable random # 0..4096 & 0xFF*/
+    m = Hash3d( ix, iy, iz ) & 0xFF;
+    sum = INCRSUM(m, (tx*ty*tz), (x-ix), (y-iy), (z-iz));
 
-	m = Hash3d( jx, iy, iz ) & 0xFF;
-	sum += INCRSUM(m, (sx*ty*tz), (x-jx), (y-iy), (z-iz));
+    m = Hash3d( jx, iy, iz ) & 0xFF;
+    sum += INCRSUM(m, (sx*ty*tz), (x-jx), (y-iy), (z-iz));
 
-	m = Hash3d( ix, jy, iz ) & 0xFF;
-	sum += INCRSUM(m, (tx*sy*tz), (x-ix), (y-jy), (z-iz));
+    m = Hash3d( ix, jy, iz ) & 0xFF;
+    sum += INCRSUM(m, (tx*sy*tz), (x-ix), (y-jy), (z-iz));
 
-	m = Hash3d( jx, jy, iz ) & 0xFF;
-	sum += INCRSUM(m, (sx*sy*tz), (x-jx), (y-jy), (z-iz));
+    m = Hash3d( jx, jy, iz ) & 0xFF;
+    sum += INCRSUM(m, (sx*sy*tz), (x-jx), (y-jy), (z-iz));
 
-	m = Hash3d( ix, iy, jz ) & 0xFF;
-	sum += INCRSUM(m, (tx*ty*sz), (x-ix), (y-iy), (z-jz));
+    m = Hash3d( ix, iy, jz ) & 0xFF;
+    sum += INCRSUM(m, (tx*ty*sz), (x-ix), (y-iy), (z-jz));
 
-	m = Hash3d( jx, iy, jz ) & 0xFF;
-	sum += INCRSUM(m, (sx*ty*sz), (x-jx), (y-iy), (z-jz));
+    m = Hash3d( jx, iy, jz ) & 0xFF;
+    sum += INCRSUM(m, (sx*ty*sz), (x-jx), (y-iy), (z-jz));
 
-	m = Hash3d( ix, jy, jz ) & 0xFF;
-	sum += INCRSUM(m, (tx*sy*sz), (x-ix), (y-jy), (z-jz));
+    m = Hash3d( ix, jy, jz ) & 0xFF;
+    sum += INCRSUM(m, (tx*sy*sz), (x-ix), (y-jy), (z-jz));
 
-	m = Hash3d( jx, jy, jz ) & 0xFF;
-	sum += INCRSUM(m, (sx*sy*sz), (x-jx), (y-jy), (z-jz));
+    m = Hash3d( jx, jy, jz ) & 0xFF;
+    sum += INCRSUM(m, (sx*sy*sz), (x-jx), (y-jy), (z-jz));
 
-	return sum;
+    return sum;
 
 }
 
@@ -314,104 +314,104 @@ bn_noise_perlin(fastf_t *point)
 void
 bn_noise_vec(fastf_t *point, fastf_t *result)
 {
-	register int	jx, jy, jz;
-	int ix, iy, iz;		/* lower integer lattice point */
-	double x, y, z;		/* corrected point */
-	double		px, py, pz, s;
-	double		sx, sy, sz, tx, ty, tz;
-	short		m;
-	point_t p, f;
-	int ip[3];
+    register int	jx, jy, jz;
+    int ix, iy, iz;		/* lower integer lattice point */
+    double x, y, z;		/* corrected point */
+    double		px, py, pz, s;
+    double		sx, sy, sz, tx, ty, tz;
+    short		m;
+    point_t p, f;
+    int ip[3];
 
 
-	if ( ! ht.hashTableValid ) bn_noise_init();
+    if ( ! ht.hashTableValid ) bn_noise_init();
 
 
-	/* sets:
-	 * x, y, z to range [0..maxval],
-	 * ix, iy, iz to integer portion,
-	 * fx, fy, fz to fractional portion
-	 */
-	filter_args( point, p, f, ip);
-	ix = ip[X];
-	iy = ip[Y];
-	iz = ip[Z];
+    /* sets:
+     * x, y, z to range [0..maxval],
+     * ix, iy, iz to integer portion,
+     * fx, fy, fz to fractional portion
+     */
+    filter_args( point, p, f, ip);
+    ix = ip[X];
+    iy = ip[Y];
+    iz = ip[Z];
 
-	x = p[X];
-	y = p[Y];
-	z = p[Z];
+    x = p[X];
+    y = p[Y];
+    z = p[Z];
 
-	jx = ix+1;   jy = iy + 1;   jz = iz + 1;
+    jx = ix+1;   jy = iy + 1;   jz = iz + 1;
 
-	sx = SMOOTHSTEP(x - ix);
-	sy = SMOOTHSTEP(y - iy);
-	sz = SMOOTHSTEP(z - iz);
+    sx = SMOOTHSTEP(x - ix);
+    sy = SMOOTHSTEP(y - iy);
+    sz = SMOOTHSTEP(z - iz);
 
-	/* the complement values of sx, sy, sz */
-	tx = 1.0 - sx;
-	ty = 1.0 - sy;
-	tz = 1.0 - sz;
+    /* the complement values of sx, sy, sz */
+    tx = 1.0 - sx;
+    ty = 1.0 - sy;
+    tz = 1.0 - sz;
 
-	/*
-	 *  interpolate!
-	 */
-	m = Hash3d( ix, iy, iz ) & 0xFF;
-	px = x-ix;
-	py = y-iy;
-	pz = z-iz;
-	s = tx*ty*tz;
-	result[0] = INCRSUM(m, s, px, py, pz);
-	result[1] = INCRSUM(m+4, s, px, py, pz);
-	result[2] = INCRSUM(m+8, s, px, py, pz);
+    /*
+     *  interpolate!
+     */
+    m = Hash3d( ix, iy, iz ) & 0xFF;
+    px = x-ix;
+    py = y-iy;
+    pz = z-iz;
+    s = tx*ty*tz;
+    result[0] = INCRSUM(m, s, px, py, pz);
+    result[1] = INCRSUM(m+4, s, px, py, pz);
+    result[2] = INCRSUM(m+8, s, px, py, pz);
 
-	m = Hash3d( jx, iy, iz ) & 0xFF;
-	px = x-jx;
-	s = sx*ty*tz;
-	result[0] += INCRSUM(m, s, px, py, pz);
-	result[1] += INCRSUM(m+4, s, px, py, pz);
-	result[2] += INCRSUM(m+8, s, px, py, pz);
+    m = Hash3d( jx, iy, iz ) & 0xFF;
+    px = x-jx;
+    s = sx*ty*tz;
+    result[0] += INCRSUM(m, s, px, py, pz);
+    result[1] += INCRSUM(m+4, s, px, py, pz);
+    result[2] += INCRSUM(m+8, s, px, py, pz);
 
-	m = Hash3d( jx, jy, iz ) & 0xFF;
-	py = y-jy;
-	s = sx*sy*tz;
-	result[0] += INCRSUM(m, s, px, py, pz);
-	result[1] += INCRSUM(m+4, s, px, py, pz);
-	result[2] += INCRSUM(m+8, s, px, py, pz);
+    m = Hash3d( jx, jy, iz ) & 0xFF;
+    py = y-jy;
+    s = sx*sy*tz;
+    result[0] += INCRSUM(m, s, px, py, pz);
+    result[1] += INCRSUM(m+4, s, px, py, pz);
+    result[2] += INCRSUM(m+8, s, px, py, pz);
 
-	m = Hash3d( ix, jy, iz ) & 0xFF;
-	px = x-ix;
-	s = tx*sy*tz;
-	result[0] += INCRSUM(m, s, px, py, pz);
-	result[1] += INCRSUM(m+4, s, px, py, pz);
-	result[2] += INCRSUM(m+8, s, px, py, pz);
+    m = Hash3d( ix, jy, iz ) & 0xFF;
+    px = x-ix;
+    s = tx*sy*tz;
+    result[0] += INCRSUM(m, s, px, py, pz);
+    result[1] += INCRSUM(m+4, s, px, py, pz);
+    result[2] += INCRSUM(m+8, s, px, py, pz);
 
-	m = Hash3d( ix, jy, jz ) & 0xFF;
-	pz = z-jz;
-	s = tx*sy*sz;
-	result[0] += INCRSUM(m, s, px, py, pz);
-	result[1] += INCRSUM(m+4, s, px, py, pz);
-	result[2] += INCRSUM(m+8, s, px, py, pz);
+    m = Hash3d( ix, jy, jz ) & 0xFF;
+    pz = z-jz;
+    s = tx*sy*sz;
+    result[0] += INCRSUM(m, s, px, py, pz);
+    result[1] += INCRSUM(m+4, s, px, py, pz);
+    result[2] += INCRSUM(m+8, s, px, py, pz);
 
-	m = Hash3d( jx, jy, jz ) & 0xFF;
-	px = x-jx;
-	s = sx*sy*sz;
-	result[0] += INCRSUM(m, s, px, py, pz);
-	result[1] += INCRSUM(m+4, s, px, py, pz);
-	result[2] += INCRSUM(m+8, s, px, py, pz);
+    m = Hash3d( jx, jy, jz ) & 0xFF;
+    px = x-jx;
+    s = sx*sy*sz;
+    result[0] += INCRSUM(m, s, px, py, pz);
+    result[1] += INCRSUM(m+4, s, px, py, pz);
+    result[2] += INCRSUM(m+8, s, px, py, pz);
 
-	m = Hash3d( jx, iy, jz ) & 0xFF;
-	py = y-iy;
-	s = sx*ty*sz;
-	result[0] += INCRSUM(m, s, px, py, pz);
-	result[1] += INCRSUM(m+4, s, px, py, pz);
-	result[2] += INCRSUM(m+8, s, px, py, pz);
+    m = Hash3d( jx, iy, jz ) & 0xFF;
+    py = y-iy;
+    s = sx*ty*sz;
+    result[0] += INCRSUM(m, s, px, py, pz);
+    result[1] += INCRSUM(m+4, s, px, py, pz);
+    result[2] += INCRSUM(m+8, s, px, py, pz);
 
-	m = Hash3d( ix, iy, jz ) & 0xFF;
-	px = x-ix;
-	s = tx*ty*sz;
-	result[0] += INCRSUM(m, s, px, py, pz);
-	result[1] += INCRSUM(m+4, s, px, py, pz);
-	result[2] += INCRSUM(m+8, s, px, py, pz);
+    m = Hash3d( ix, iy, jz ) & 0xFF;
+    px = x-ix;
+    s = tx*ty*sz;
+    result[0] += INCRSUM(m, s, px, py, pz);
+    result[1] += INCRSUM(m+4, s, px, py, pz);
+    result[2] += INCRSUM(m+8, s, px, py, pz);
 }
 /*************************************************************
  *@brief
@@ -424,17 +424,17 @@ bn_noise_vec(fastf_t *point, fastf_t *result)
  *@code
 		    (-h_val)
 		freq
- *@endcode
- *	Which on some systems is rather expensive to compute.
- *
- *************************************************************/
+		*@endcode
+		*	Which on some systems is rather expensive to compute.
+		*
+		*************************************************************/
 struct fbm_spec {
-	long	magic;
-	double	octaves;
-	double	lacunarity;
-	double	h_val;
-	double	remainder;
-	double	*spec_wgts;
+    long	magic;
+    double	octaves;
+    double	lacunarity;
+    double	h_val;
+    double	remainder;
+    double	*spec_wgts;
 };
 #define MAGIC_fbm_spec_wgt 0x837592
 
@@ -449,48 +449,48 @@ static int etbl_size = 0;
 static struct fbm_spec *
 build_spec_tbl(double h_val, double lacunarity, double octaves)
 {
-	struct fbm_spec	*ep;
-	double		*spec_wgts;
-	double		frequency;
-	int		i;
+    struct fbm_spec	*ep;
+    double		*spec_wgts;
+    double		frequency;
+    int		i;
 
-	/* The right spectral weights table for these parameters has not been
-	 * pre-computed.  As a result, we compute the table now and save it
-	 * with the knowledge that we'll likely want it again later.
-	 */
+    /* The right spectral weights table for these parameters has not been
+     * pre-computed.  As a result, we compute the table now and save it
+     * with the knowledge that we'll likely want it again later.
+     */
 
-	/* allocate storage for new tables if needed */
-	if (etbl_next >= etbl_size) {
-		if (etbl_size) {
-			etbl_size *= 2;
-			etbl = (struct fbm_spec *)bu_realloc((char *)etbl,
-					etbl_size*sizeof(struct fbm_spec),
-					"spectral weights table");
-		} else
-			etbl = (struct fbm_spec *)bu_calloc(etbl_size = 10,
-					sizeof(struct fbm_spec),
-					"spectral weights table");
+    /* allocate storage for new tables if needed */
+    if (etbl_next >= etbl_size) {
+	if (etbl_size) {
+	    etbl_size *= 2;
+	    etbl = (struct fbm_spec *)bu_realloc((char *)etbl,
+						 etbl_size*sizeof(struct fbm_spec),
+						 "spectral weights table");
+	} else
+	    etbl = (struct fbm_spec *)bu_calloc(etbl_size = 10,
+						sizeof(struct fbm_spec),
+						"spectral weights table");
 
-		if (!etbl) abort();
-	}
+	if (!etbl) abort();
+    }
 
-	/* set up the next available table */
-	ep = &etbl[etbl_next];
-	ep->magic = MAGIC_fbm_spec_wgt;	ep->octaves = octaves;
-	ep->h_val = h_val;		ep->lacunarity = lacunarity;
-	spec_wgts = ep->spec_wgts =
-		(double *)bu_malloc( ((int)(octaves+1)) * sizeof(double),
-		"spectral weights" );
+    /* set up the next available table */
+    ep = &etbl[etbl_next];
+    ep->magic = MAGIC_fbm_spec_wgt;	ep->octaves = octaves;
+    ep->h_val = h_val;		ep->lacunarity = lacunarity;
+    spec_wgts = ep->spec_wgts =
+	(double *)bu_malloc( ((int)(octaves+1)) * sizeof(double),
+			     "spectral weights" );
 
-	/* precompute and store spectral weights table */
-	for (frequency = 1.0, i=0; i < octaves; i++) {
-		/* compute weight for each frequency */
-		spec_wgts[i] = pow(frequency, -h_val);
-		frequency *= lacunarity;
-	}
+    /* precompute and store spectral weights table */
+    for (frequency = 1.0, i=0; i < octaves; i++) {
+	/* compute weight for each frequency */
+	spec_wgts[i] = pow(frequency, -h_val);
+	frequency *= lacunarity;
+    }
 
-	etbl_next++; /* saved for last in case we're running multi-threaded */
-	return ep;
+    etbl_next++; /* saved for last in case we're running multi-threaded */
+    return ep;
 }
 
 /**
@@ -503,38 +503,38 @@ build_spec_tbl(double h_val, double lacunarity, double octaves)
 struct fbm_spec		*
 find_spec_wgt(double h, double l, double o)
 {
-	struct fbm_spec	*ep;
-	int i;
+    struct fbm_spec	*ep;
+    int i;
 
 
-	for (ep = etbl, i=0; i < etbl_next; i++, ep++) {
-		if (ep->magic != MAGIC_fbm_spec_wgt)
-		    bu_bomb("find_spec_wgt");
-		if (ep->lacunarity == l && ep->h_val == h && ep->octaves >= o)
-		    return ep;
-	}
+    for (ep = etbl, i=0; i < etbl_next; i++, ep++) {
+	if (ep->magic != MAGIC_fbm_spec_wgt)
+	    bu_bomb("find_spec_wgt");
+	if (ep->lacunarity == l && ep->h_val == h && ep->octaves >= o)
+	    return ep;
+    }
 
-	/* we didn't find the table we wanted so we've got to semaphore on
-	 * the list to wait our turn to add what we want to the table.
-	 */
+    /* we didn't find the table we wanted so we've got to semaphore on
+     * the list to wait our turn to add what we want to the table.
+     */
 
-	bu_semaphore_acquire( BU_SEM_BN_NOISE );
+    bu_semaphore_acquire( BU_SEM_BN_NOISE );
 
-	/* We search the list one more time in case the last process to
-	 * hold the semaphore just created the table we were about to add
-	 */
-	for (ep = etbl, i=0; i < etbl_next; i++, ep++) {
-		if (ep->magic != MAGIC_fbm_spec_wgt)
-		    bu_bomb("find_spec_wgt");
-		if (ep->lacunarity == l && ep->h_val == h && ep->octaves >= o)
-		    break;
-	}
+    /* We search the list one more time in case the last process to
+     * hold the semaphore just created the table we were about to add
+     */
+    for (ep = etbl, i=0; i < etbl_next; i++, ep++) {
+	if (ep->magic != MAGIC_fbm_spec_wgt)
+	    bu_bomb("find_spec_wgt");
+	if (ep->lacunarity == l && ep->h_val == h && ep->octaves >= o)
+	    break;
+    }
 
-	if (i >= etbl_next) ep = build_spec_tbl(h, l, o);
+    if (i >= etbl_next) ep = build_spec_tbl(h, l, o);
 
-	bu_semaphore_release( BU_SEM_BN_NOISE );
+    bu_semaphore_release( BU_SEM_BN_NOISE );
 
-	return (ep);
+    return (ep);
 }
 /**
  * @brief
@@ -564,43 +564,43 @@ find_spec_wgt(double h, double l, double o)
 double
 bn_noise_fbm(fastf_t *point, double h_val, double lacunarity, double octaves)
 {
-	struct fbm_spec		*ep;
-	double			value, remainder, *spec_wgts;
-	point_t			pt;
-	int			i, oct;
+    struct fbm_spec		*ep;
+    double			value, remainder, *spec_wgts;
+    point_t			pt;
+    int			i, oct;
 
-	/* The first order of business is to see if we have pre-computed
-	 * the spectral weights table for these parameters in a previous
-	 * invocation.  If not, the we compute them and save them for
-	 * possible future use
+    /* The first order of business is to see if we have pre-computed
+     * the spectral weights table for these parameters in a previous
+     * invocation.  If not, the we compute them and save them for
+     * possible future use
+     */
+
+    ep = find_spec_wgt(h_val, lacunarity, octaves);
+
+    /* now we're ready to compute the fBm value */
+
+    value = 0.0;            /* initialize vars to proper values */
+    /* copy the point so we don't corrupt the caller's version */
+    PCOPY(pt, point);
+
+    spec_wgts = ep->spec_wgts;
+
+    /* inner loop of spectral construction */
+    oct=(int)octaves; /* save repeating double->int cast */
+    for (i=0; i < oct; i++) {
+	value += bn_noise_perlin( pt ) * spec_wgts[i];
+	PSCALE(pt, lacunarity);
+    }
+
+    remainder = octaves - (int)octaves;
+    if ( remainder ) {
+	/* add in ``octaves''  remainder
+	 * ``i''  and spatial freq. are preset in loop above
 	 */
+	value += remainder * bn_noise_perlin( pt ) * spec_wgts[i];
+    }
 
-	ep = find_spec_wgt(h_val, lacunarity, octaves);
-
-	/* now we're ready to compute the fBm value */
-
-	value = 0.0;            /* initialize vars to proper values */
-	/* copy the point so we don't corrupt the caller's version */
-	PCOPY(pt, point);
-
-	spec_wgts = ep->spec_wgts;
-
-	/* inner loop of spectral construction */
-	oct=(int)octaves; /* save repeating double->int cast */
-	for (i=0; i < oct; i++) {
-		value += bn_noise_perlin( pt ) * spec_wgts[i];
-		PSCALE(pt, lacunarity);
-	}
-
-	remainder = octaves - (int)octaves;
-	if ( remainder ) {
-		/* add in ``octaves''  remainder
-		 * ``i''  and spatial freq. are preset in loop above
-		 */
-	    value += remainder * bn_noise_perlin( pt ) * spec_wgts[i];
-	}
-
-	return( value );
+    return( value );
 
 } /* bn_noise_fbm() */
 
@@ -620,13 +620,13 @@ bn_noise_fbm(fastf_t *point, double h_val, double lacunarity, double octaves)
  * a more fbm-like quality in the mid-high values.  Values are in the
  * APPROXIMATE range [0 .. 1] depending upon the number of octaves evaluated.
  * Typical results:
-@code
+ @code
  * Min         0.00857137
  * Max            1.26712
  * Mean          0.395122
  * s.d.          0.174796
  * Var          0.0305536
-@endcode
+ @endcode
  * The function call pow() is relatively expensive.  Therfore, this function
  * pre-computes and saves the spectral weights in a table for re-use in
  * successive invocations.
@@ -634,69 +634,69 @@ bn_noise_fbm(fastf_t *point, double h_val, double lacunarity, double octaves)
 double
 bn_noise_turb(fastf_t *point, double h_val, double lacunarity, double octaves)
 {
-	struct fbm_spec		*ep;
-	double			value, remainder, *spec_wgts;
-	point_t			pt;
-	int			i, oct;
+    struct fbm_spec		*ep;
+    double			value, remainder, *spec_wgts;
+    point_t			pt;
+    int			i, oct;
 
 
-	/* The first order of business is to see if we have pre-computed
-	 * the spectral weights table for these parameters in a previous
-	 * invocation.  If not, the we compute them and save them for
-	 * possible future use
-	 */
+    /* The first order of business is to see if we have pre-computed
+     * the spectral weights table for these parameters in a previous
+     * invocation.  If not, the we compute them and save them for
+     * possible future use
+     */
 
 #define CACHE_SPECTRAL_WGTS 1
 #ifdef CACHE_SPECTRAL_WGTS
 
-	ep = find_spec_wgt(h_val, lacunarity, octaves);
+    ep = find_spec_wgt(h_val, lacunarity, octaves);
 
-	/* now we're ready to compute the fBm value */
+    /* now we're ready to compute the fBm value */
 
-	value = 0.0;            /* initialize vars to proper values */
+    value = 0.0;            /* initialize vars to proper values */
 
-	/* copy the point so we don't corrupt
-	 * the caller's copy of the variable
+    /* copy the point so we don't corrupt
+     * the caller's copy of the variable
+     */
+    PCOPY(pt, point);
+    spec_wgts = ep->spec_wgts;
+
+    /* inner loop of spectral construction */
+    oct=(int)octaves; /* save repeating double->int cast */
+    for (i=0; i < oct; i++) {
+	value += fabs(bn_noise_perlin( pt )) * spec_wgts[i];
+	PSCALE(pt, lacunarity);
+    }
+
+    remainder = octaves - (int)octaves;
+    if ( remainder ) {
+	/* add in ``octaves''  remainder
+	 * ``i''  and spatial freq. are preset in loop above
 	 */
-	PCOPY(pt, point);
-	spec_wgts = ep->spec_wgts;
-
-	/* inner loop of spectral construction */
-	oct=(int)octaves; /* save repeating double->int cast */
-	for (i=0; i < oct; i++) {
-		value += fabs(bn_noise_perlin( pt )) * spec_wgts[i];
-		PSCALE(pt, lacunarity);
-	}
-
-	remainder = octaves - (int)octaves;
-	if ( remainder ) {
-		/* add in ``octaves''  remainder
-		 * ``i''  and spatial freq. are preset in loop above
-		 */
-	    value += remainder * bn_noise_perlin( pt ) * spec_wgts[i];
-	}
+	value += remainder * bn_noise_perlin( pt ) * spec_wgts[i];
+    }
 #else
-	PCOPY(pt, point);
+    PCOPY(pt, point);
 
-	value = 0.0;            /* initialize vars to proper values */
-	frequency = 1.0;
+    value = 0.0;            /* initialize vars to proper values */
+    frequency = 1.0;
 
-	oct=(int)octaves; /* save repeating double->int cast */
-	for (i=0; i < oct; i++) {
-		value += fabs(bn_noise_perlin( pt )) * pow(frequency, -h_val);
-		frequency *= lacunarity;
-		PSCALE(pt, lacunarity);
-	}
+    oct=(int)octaves; /* save repeating double->int cast */
+    for (i=0; i < oct; i++) {
+	value += fabs(bn_noise_perlin( pt )) * pow(frequency, -h_val);
+	frequency *= lacunarity;
+	PSCALE(pt, lacunarity);
+    }
 
-	remainder = octaves - (int)octaves;
-	if ( remainder ) {
-		/* add in ``octaves''  remainder
-		 * ``i''  and spatial freq. are preset in loop above
-		 */
-	    value += remainder * bn_noise_perlin( pt ) * pow(frequency, -h_val);
-	}
+    remainder = octaves - (int)octaves;
+    if ( remainder ) {
+	/* add in ``octaves''  remainder
+	 * ``i''  and spatial freq. are preset in loop above
+	 */
+	value += remainder * bn_noise_perlin( pt ) * pow(frequency, -h_val);
+    }
 #endif
-	return( value );
+    return( value );
 
 } /* bn_noise_turb() */
 
@@ -709,55 +709,55 @@ bn_noise_turb(fastf_t *point, double h_val, double lacunarity, double octaves)
 double
 bn_noise_ridged(fastf_t *point, double h_val, double lacunarity, double octaves, double offset)
 {
-	struct fbm_spec		*ep;
-	double			result, weight, signal, *spec_wgts;
-	point_t			pt;
-	int			i;
+    struct fbm_spec		*ep;
+    double			result, weight, signal, *spec_wgts;
+    point_t			pt;
+    int			i;
 
-	/* The first order of business is to see if we have pre-computed
-	 * the spectral weights table for these parameters in a previous
-	 * invocation.  If not, the we compute them and save them for
-	 * possible future use
-	 */
+    /* The first order of business is to see if we have pre-computed
+     * the spectral weights table for these parameters in a previous
+     * invocation.  If not, the we compute them and save them for
+     * possible future use
+     */
 
-	ep = find_spec_wgt(h_val, lacunarity, octaves);
+    ep = find_spec_wgt(h_val, lacunarity, octaves);
 
-	/* copy the point so we don't corrupt
-	 * the caller's copy of the variable
-	 */
-	PCOPY(pt, point);
-	spec_wgts = ep->spec_wgts;
+    /* copy the point so we don't corrupt
+     * the caller's copy of the variable
+     */
+    PCOPY(pt, point);
+    spec_wgts = ep->spec_wgts;
 
 
-	/* get first octave */
+    /* get first octave */
+    signal = bn_noise_perlin(pt);
+
+    /* get absolute value of signal (this creates the ridges) */
+    if (signal < 0.0) signal = -signal;
+
+    /* invert and translate (note that "offset shoudl be ~= 1.0 */
+    signal = offset - signal;
+
+    /* square the signal, to increase "sharpness" of ridges */
+    signal *= signal;
+
+    /* assign initial value */
+    result = signal;
+    weight = 1.0;
+
+    for (i=1; i < octaves; i++ ) {
+	PSCALE(pt, lacunarity);
+
 	signal = bn_noise_perlin(pt);
 
-	/* get absolute value of signal (this creates the ridges) */
-	if (signal < 0.0) signal = -signal;
-
-	/* invert and translate (note that "offset shoudl be ~= 1.0 */
+	if (signal < 0.0) signal = - signal;
 	signal = offset - signal;
 
-	/* square the signal, to increase "sharpness" of ridges */
-	signal *= signal;
-
-	/* assign initial value */
-	result = signal;
-	weight = 1.0;
-
-	for (i=1; i < octaves; i++ ) {
-		PSCALE(pt, lacunarity);
-
-		signal = bn_noise_perlin(pt);
-
-		if (signal < 0.0) signal = - signal;
-		signal = offset - signal;
-
-		/* weight the contribution */
-		signal *= weight;
-		result += signal * spec_wgts[i];
-	}
-	return result;
+	/* weight the contribution */
+	signal *= weight;
+	result += signal * spec_wgts[i];
+    }
+    return result;
 }
 
 /**
@@ -768,42 +768,42 @@ bn_noise_ridged(fastf_t *point, double h_val, double lacunarity, double octaves,
 double
 bn_noise_mf(fastf_t *point, double h_val, double lacunarity, double octaves, double offset)
 {
-	double 			frequency = 1.0;
-	struct fbm_spec		*ep;
-	double			result, weight, signal, *spec_wgts;
-	point_t			pt;
-	int			i;
+    double 			frequency = 1.0;
+    struct fbm_spec		*ep;
+    double			result, weight, signal, *spec_wgts;
+    point_t			pt;
+    int			i;
 
-	/* The first order of business is to see if we have pre-computed
-	 * the spectral weights table for these parameters in a previous
-	 * invocation.  If not, the we compute them and save them for
-	 * possible future use
-	 */
+    /* The first order of business is to see if we have pre-computed
+     * the spectral weights table for these parameters in a previous
+     * invocation.  If not, the we compute them and save them for
+     * possible future use
+     */
 
-	ep = find_spec_wgt( h_val, lacunarity, octaves );
+    ep = find_spec_wgt( h_val, lacunarity, octaves );
 
-	/* copy the point so we don't corrupt
-	 * the caller's copy of the variable
-	 */
-	PCOPY( pt, point );
-	spec_wgts = ep->spec_wgts;
-	offset = 1.0;
+    /* copy the point so we don't corrupt
+     * the caller's copy of the variable
+     */
+    PCOPY( pt, point );
+    spec_wgts = ep->spec_wgts;
+    offset = 1.0;
 
-	result = (bn_noise_perlin(pt) + offset) * spec_wgts[0];
-	weight = result;
+    result = (bn_noise_perlin(pt) + offset) * spec_wgts[0];
+    weight = result;
 
-	for (i=1; i < octaves; i++) {
-		PSCALE(pt, lacunarity);
+    for (i=1; i < octaves; i++) {
+	PSCALE(pt, lacunarity);
 
-		if (weight > 1.0) weight = 1.0;
+	if (weight > 1.0) weight = 1.0;
 
-		signal = ( bn_noise_perlin(pt) + offset ) * spec_wgts[i];
+	signal = ( bn_noise_perlin(pt) + offset ) * spec_wgts[i];
 
-		signal += fabs(bn_noise_perlin( pt )) * pow(frequency, -h_val);
-		frequency *= lacunarity;
-		PSCALE(pt, lacunarity);
-	}
-	return result;
+	signal += fabs(bn_noise_perlin( pt )) * pow(frequency, -h_val);
+	frequency *= lacunarity;
+	PSCALE(pt, lacunarity);
+    }
+    return result;
 }
 
 /** @} */

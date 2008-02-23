@@ -45,35 +45,35 @@ extern double AmbientIntensity;
 
 /* Local information */
 struct cook_specific {
-	double	m;		/* rms slope - should be a vector of these XXX*/
-	int	shine;		/* temporary */
-	double	wgt_specular;
-	double	wgt_diffuse;
-	double	transmit;	/* Moss "transparency" */
-	double	reflect;	/* Moss "transmission" */
-	double	refrac_index;
-	double	extinction;
-	double	m2;		/* m^2 - plus check for near zero */
-	double	n[3];		/* "effective" RGB refract index */
-	double	rd[3];		/* Diffuse reflection coefficient */
+    double	m;		/* rms slope - should be a vector of these XXX*/
+    int	shine;		/* temporary */
+    double	wgt_specular;
+    double	wgt_diffuse;
+    double	transmit;	/* Moss "transparency" */
+    double	reflect;	/* Moss "transmission" */
+    double	refrac_index;
+    double	extinction;
+    double	m2;		/* m^2 - plus check for near zero */
+    double	n[3];		/* "effective" RGB refract index */
+    double	rd[3];		/* Diffuse reflection coefficient */
 };
 #define CK_NULL	((struct cook_specific *)0)
 #define CL_O(m)	bu_offsetof(struct cook_specific, m)
 
 struct bu_structparse cook_parse[] = {
-	{"%f", 1, "m",		CL_O(m),		BU_STRUCTPARSE_FUNC_NULL },
-	{"%f", 1, "specular",	CL_O(wgt_specular),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%f", 1, "sp",		CL_O(wgt_specular),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%f", 1, "diffuse",	CL_O(wgt_diffuse),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%f", 1, "di",		CL_O(wgt_diffuse),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%f", 1, "transmit",	CL_O(transmit),		BU_STRUCTPARSE_FUNC_NULL },
-	{"%f", 1, "tr",		CL_O(transmit),		BU_STRUCTPARSE_FUNC_NULL },
-	{"%f", 1, "reflect",	CL_O(reflect),		BU_STRUCTPARSE_FUNC_NULL },
-	{"%f", 1, "re",		CL_O(reflect),		BU_STRUCTPARSE_FUNC_NULL },
-	{"%f", 1, "ri",		CL_O(refrac_index),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%f", 1, "extinction",	CL_O(extinction),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%f", 1, "ex",		CL_O(extinction),	BU_STRUCTPARSE_FUNC_NULL },
-	{"",   0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%f", 1, "m",		CL_O(m),		BU_STRUCTPARSE_FUNC_NULL },
+    {"%f", 1, "specular",	CL_O(wgt_specular),	BU_STRUCTPARSE_FUNC_NULL },
+    {"%f", 1, "sp",		CL_O(wgt_specular),	BU_STRUCTPARSE_FUNC_NULL },
+    {"%f", 1, "diffuse",	CL_O(wgt_diffuse),	BU_STRUCTPARSE_FUNC_NULL },
+    {"%f", 1, "di",		CL_O(wgt_diffuse),	BU_STRUCTPARSE_FUNC_NULL },
+    {"%f", 1, "transmit",	CL_O(transmit),		BU_STRUCTPARSE_FUNC_NULL },
+    {"%f", 1, "tr",		CL_O(transmit),		BU_STRUCTPARSE_FUNC_NULL },
+    {"%f", 1, "reflect",	CL_O(reflect),		BU_STRUCTPARSE_FUNC_NULL },
+    {"%f", 1, "re",		CL_O(reflect),		BU_STRUCTPARSE_FUNC_NULL },
+    {"%f", 1, "ri",		CL_O(refrac_index),	BU_STRUCTPARSE_FUNC_NULL },
+    {"%f", 1, "extinction",	CL_O(extinction),	BU_STRUCTPARSE_FUNC_NULL },
+    {"%f", 1, "ex",		CL_O(extinction),	BU_STRUCTPARSE_FUNC_NULL },
+    {"",   0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
 HIDDEN int	cook_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), cmirror_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), cglass_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip);
@@ -84,17 +84,17 @@ HIDDEN double	fresnel(double c, double n);
 HIDDEN double	beckmann(double a, double m2);
 
 struct mfuncs cook_mfuncs[] = {
-	{MF_MAGIC,	"cook",		0,		MFI_NORMAL|MFI_LIGHT,	0,
-	cook_setup,	cook_render,	cook_print,	cook_free },
+    {MF_MAGIC,	"cook",		0,		MFI_NORMAL|MFI_LIGHT,	0,
+     cook_setup,	cook_render,	cook_print,	cook_free },
 
-	{MF_MAGIC,	"cmirror",	0,		MFI_NORMAL|MFI_LIGHT,	0,
-	cmirror_setup,	cook_render,	cook_print,	cook_free },
+    {MF_MAGIC,	"cmirror",	0,		MFI_NORMAL|MFI_LIGHT,	0,
+     cmirror_setup,	cook_render,	cook_print,	cook_free },
 
-	{MF_MAGIC,	"cglass",	0,		MFI_NORMAL|MFI_LIGHT,	0,
-	cglass_setup,	cook_render,	cook_print,	cook_free },
+    {MF_MAGIC,	"cglass",	0,		MFI_NORMAL|MFI_LIGHT,	0,
+     cglass_setup,	cook_render,	cook_print,	cook_free },
 
-	{0,		(char *)0,	0,		0,	0,
-	0,		0,		0,		0 }
+    {0,		(char *)0,	0,		0,	0,
+     0,		0,		0,		0 }
 };
 
 #define RI_AIR		1.0    /* Refractive index of air.		*/
@@ -111,41 +111,41 @@ struct mfuncs cook_mfuncs[] = {
 HIDDEN int
 cook_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
 {
-	register struct cook_specific *pp;
+    register struct cook_specific *pp;
 
-	BU_CK_VLS( matparm );
-	BU_GETSTRUCT( pp, cook_specific );
-	*dpp = (char *)pp;
+    BU_CK_VLS( matparm );
+    BU_GETSTRUCT( pp, cook_specific );
+    *dpp = (char *)pp;
 
-	pp->m = 0.2;
-	pp->shine = 10;
-	pp->wgt_specular = 0.7;
-	pp->wgt_diffuse = 0.3;
-	pp->transmit = 0.0;
-	pp->reflect = 0.0;
-	pp->refrac_index = RI_AIR;
-	pp->extinction = 0.0;
+    pp->m = 0.2;
+    pp->shine = 10;
+    pp->wgt_specular = 0.7;
+    pp->wgt_diffuse = 0.3;
+    pp->transmit = 0.0;
+    pp->reflect = 0.0;
+    pp->refrac_index = RI_AIR;
+    pp->extinction = 0.0;
 
-	/* XXX - scale only if >= 1.0 !? */
-	pp->n[0] = (1.0 + sqrt(rp->reg_mater.ma_color[0]*.99))
-		   / (1.0 - sqrt(rp->reg_mater.ma_color[0]*.99));
-	pp->n[1] = (1.0 + sqrt(rp->reg_mater.ma_color[1]*.99))
-		   / (1.0 - sqrt(rp->reg_mater.ma_color[1]*.99));
-	pp->n[2] = (1.0 + sqrt(rp->reg_mater.ma_color[2]*.99))
-		   / (1.0 - sqrt(rp->reg_mater.ma_color[2]*.99));
-	pp->rd[0] = fresnel( 0.0, pp->n[0] ) / bn_pi;
-	pp->rd[1] = fresnel( 0.0, pp->n[1] ) / bn_pi;
-	pp->rd[2] = fresnel( 0.0, pp->n[2] ) / bn_pi;
+    /* XXX - scale only if >= 1.0 !? */
+    pp->n[0] = (1.0 + sqrt(rp->reg_mater.ma_color[0]*.99))
+	/ (1.0 - sqrt(rp->reg_mater.ma_color[0]*.99));
+    pp->n[1] = (1.0 + sqrt(rp->reg_mater.ma_color[1]*.99))
+	/ (1.0 - sqrt(rp->reg_mater.ma_color[1]*.99));
+    pp->n[2] = (1.0 + sqrt(rp->reg_mater.ma_color[2]*.99))
+	/ (1.0 - sqrt(rp->reg_mater.ma_color[2]*.99));
+    pp->rd[0] = fresnel( 0.0, pp->n[0] ) / bn_pi;
+    pp->rd[1] = fresnel( 0.0, pp->n[1] ) / bn_pi;
+    pp->rd[2] = fresnel( 0.0, pp->n[2] ) / bn_pi;
 
-	if (bu_struct_parse( matparm, cook_parse, (char *)pp ) < 0 )  {
-		bu_free( (char *)pp, "cook_specific" );
-		return(-1);
-	}
+    if (bu_struct_parse( matparm, cook_parse, (char *)pp ) < 0 )  {
+	bu_free( (char *)pp, "cook_specific" );
+	return(-1);
+    }
 
-	pp->m2 = ( pp->m < 0.001 ) ? 0.0001 : pp->m * pp->m;
-	if (pp->transmit > 0 )
-		rp->reg_transmit = 1;
-	return(1);
+    pp->m2 = ( pp->m < 0.001 ) ? 0.0001 : pp->m * pp->m;
+    if (pp->transmit > 0 )
+	rp->reg_transmit = 1;
+    return(1);
 }
 
 /*
@@ -155,37 +155,37 @@ HIDDEN int
 cmirror_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
 
 
-				/* New since 4.4 release */
+    /* New since 4.4 release */
 {
-	register struct cook_specific *pp;
+    register struct cook_specific *pp;
 
-	BU_CK_VLS( matparm );
-	BU_GETSTRUCT( pp, cook_specific );
-	*dpp = (char *)pp;
+    BU_CK_VLS( matparm );
+    BU_GETSTRUCT( pp, cook_specific );
+    *dpp = (char *)pp;
 
-	pp->m = 0.2;
-	pp->shine = 4;
-	pp->wgt_specular = 0.6;
-	pp->wgt_diffuse = 0.4;
-	pp->transmit = 0.0;
-	pp->reflect = 0.75;
-	pp->refrac_index = 1.65;
-	pp->extinction = 0.0;
+    pp->m = 0.2;
+    pp->shine = 4;
+    pp->wgt_specular = 0.6;
+    pp->wgt_diffuse = 0.4;
+    pp->transmit = 0.0;
+    pp->reflect = 0.75;
+    pp->refrac_index = 1.65;
+    pp->extinction = 0.0;
 
-	pp->n[0] = (1.0 + sqrt(pp->reflect*.99))
-		   / (1.0 - sqrt(pp->reflect*.99));
-	pp->n[1] = pp->n[2] = pp->n[0];
-	pp->rd[0] = fresnel( 0.0, pp->n[0] ) / bn_pi;
-	pp->rd[1] = fresnel( 0.0, pp->n[1] ) / bn_pi;
-	pp->rd[2] = fresnel( 0.0, pp->n[2] ) / bn_pi;
+    pp->n[0] = (1.0 + sqrt(pp->reflect*.99))
+	/ (1.0 - sqrt(pp->reflect*.99));
+    pp->n[1] = pp->n[2] = pp->n[0];
+    pp->rd[0] = fresnel( 0.0, pp->n[0] ) / bn_pi;
+    pp->rd[1] = fresnel( 0.0, pp->n[1] ) / bn_pi;
+    pp->rd[2] = fresnel( 0.0, pp->n[2] ) / bn_pi;
 
-	if (bu_struct_parse( matparm, cook_parse, (char *)pp ) < 0 )
-		return(-1);
+    if (bu_struct_parse( matparm, cook_parse, (char *)pp ) < 0 )
+	return(-1);
 
-	pp->m2 = ( pp->m < 0.001 ) ? 0.0001 : pp->m * pp->m;
-	if (pp->transmit > 0 )
-		rp->reg_transmit = 1;
-	return(1);
+    pp->m2 = ( pp->m < 0.001 ) ? 0.0001 : pp->m * pp->m;
+    if (pp->transmit > 0 )
+	rp->reg_transmit = 1;
+    return(1);
 }
 
 /*
@@ -195,37 +195,37 @@ HIDDEN int
 cglass_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
 
 
-				/* New since 4.4 release */
+    /* New since 4.4 release */
 {
-	register struct cook_specific *pp;
+    register struct cook_specific *pp;
 
-	BU_CK_VLS( matparm );
-	BU_GETSTRUCT( pp, cook_specific );
-	*dpp = (char *)pp;
+    BU_CK_VLS( matparm );
+    BU_GETSTRUCT( pp, cook_specific );
+    *dpp = (char *)pp;
 
-	pp->m = 0.2;
-	pp->shine = 4;
-	pp->wgt_specular = 0.7;
-	pp->wgt_diffuse = 0.3;
-	pp->transmit = 0.8;
-	pp->reflect = 0.1;
-	/* leaving 0.1 for diffuse/specular */
-	pp->refrac_index = 1.65;
-	pp->extinction = 0.0;
+    pp->m = 0.2;
+    pp->shine = 4;
+    pp->wgt_specular = 0.7;
+    pp->wgt_diffuse = 0.3;
+    pp->transmit = 0.8;
+    pp->reflect = 0.1;
+    /* leaving 0.1 for diffuse/specular */
+    pp->refrac_index = 1.65;
+    pp->extinction = 0.0;
 
-	pp->n[0] = pp->refrac_index;
-	pp->n[1] = pp->n[2] = pp->n[0];
-	pp->rd[0] = fresnel( 0.0, pp->n[0] ) / bn_pi;
-	pp->rd[1] = fresnel( 0.0, pp->n[1] ) / bn_pi;
-	pp->rd[2] = fresnel( 0.0, pp->n[2] ) / bn_pi;
+    pp->n[0] = pp->refrac_index;
+    pp->n[1] = pp->n[2] = pp->n[0];
+    pp->rd[0] = fresnel( 0.0, pp->n[0] ) / bn_pi;
+    pp->rd[1] = fresnel( 0.0, pp->n[1] ) / bn_pi;
+    pp->rd[2] = fresnel( 0.0, pp->n[2] ) / bn_pi;
 
-	if (bu_struct_parse( matparm, cook_parse, (char *)pp ) < 0 )
-		return(-1);
+    if (bu_struct_parse( matparm, cook_parse, (char *)pp ) < 0 )
+	return(-1);
 
-	pp->m2 = ( pp->m < 0.001 ) ? 0.0001 : pp->m * pp->m;
-	if (pp->transmit > 0 )
-		rp->reg_transmit = 1;
-	return(1);
+    pp->m2 = ( pp->m < 0.001 ) ? 0.0001 : pp->m * pp->m;
+    if (pp->transmit > 0 )
+	rp->reg_transmit = 1;
+    return(1);
 }
 
 /*
@@ -234,7 +234,7 @@ cglass_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, str
 HIDDEN void
 cook_print(register struct region *rp, char *dp)
 {
-	bu_struct_print(rp->reg_name, cook_parse, (char *)dp);
+    bu_struct_print(rp->reg_name, cook_parse, (char *)dp);
 }
 
 /*
@@ -243,7 +243,7 @@ cook_print(register struct region *rp, char *dp)
 HIDDEN void
 cook_free(char *cp)
 {
-	bu_free( cp, "cook_specific" );
+    bu_free( cp, "cook_specific" );
 }
 
 
@@ -263,151 +263,151 @@ cook_free(char *cp)
 HIDDEN int
 cook_render(register struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
 {
-	register struct light_specific *lp;
-	register fastf_t *intensity, *to_light;
-	register int	i;
-	register fastf_t cosine;
-	register fastf_t refl;
-	vect_t	work;
-	vect_t	cprod;			/* color product */
-	vect_t	h;
-	point_t	matcolor;		/* Material color */
-	struct cook_specific *ps =
-		(struct cook_specific *)dp;
-	fastf_t	f, a;
-	fastf_t	n_dot_e, n_dot_l, n_dot_h, e_dot_h;
-	fastf_t	rd, G, D;
-	vect_t	Fv;
+    register struct light_specific *lp;
+    register fastf_t *intensity, *to_light;
+    register int	i;
+    register fastf_t cosine;
+    register fastf_t refl;
+    vect_t	work;
+    vect_t	cprod;			/* color product */
+    vect_t	h;
+    point_t	matcolor;		/* Material color */
+    struct cook_specific *ps =
+	(struct cook_specific *)dp;
+    fastf_t	f, a;
+    fastf_t	n_dot_e, n_dot_l, n_dot_h, e_dot_h;
+    fastf_t	rd, G, D;
+    vect_t	Fv;
 
-	/* XXX - Reflection coefficients - hack until RR_ is changed */
-	f = ps->transmit + ps->reflect;
-	if (f < 0 ) f = 0;
-	if (f > 1.0 ) f = 1.0;
-	/*swp->sw_reflect = ps->reflect;*/
-	cosine = -VDOT( swp->sw_hit.hit_normal, ap->a_ray.r_dir );
-	swp->sw_reflect = fresnel( cosine, ps->refrac_index );
-	/*swp->sw_transmit = ps->transmit;*/
-	swp->sw_transmit = f - swp->sw_reflect;
+    /* XXX - Reflection coefficients - hack until RR_ is changed */
+    f = ps->transmit + ps->reflect;
+    if (f < 0 ) f = 0;
+    if (f > 1.0 ) f = 1.0;
+    /*swp->sw_reflect = ps->reflect;*/
+    cosine = -VDOT( swp->sw_hit.hit_normal, ap->a_ray.r_dir );
+    swp->sw_reflect = fresnel( cosine, ps->refrac_index );
+    /*swp->sw_transmit = ps->transmit;*/
+    swp->sw_transmit = f - swp->sw_reflect;
 
-	swp->sw_refrac_index = ps->refrac_index;
-	swp->sw_extinction = ps->extinction;
-	if (swp->sw_xmitonly )
-	{
-		if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
-			(void)rr_render( ap, pp, swp );
-		return(1);	/* done */
+    swp->sw_refrac_index = ps->refrac_index;
+    swp->sw_extinction = ps->extinction;
+    if (swp->sw_xmitonly )
+    {
+	if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
+	    (void)rr_render( ap, pp, swp );
+	return(1);	/* done */
+    }
+
+    VMOVE( matcolor, swp->sw_color );
+
+    /* ambient component */
+    VSCALE( swp->sw_color, matcolor, AmbientIntensity );
+
+    n_dot_e = -VDOT( swp->sw_hit.hit_normal, ap->a_ray.r_dir );
+    if (n_dot_e < 0 ) {
+	/* Yow, we can't see this point, how did we hit it? */
+	bu_log( "cook: N.E < 0\n" );
+    }
+
+    /* Consider effects of each light source */
+    for ( i=ap->a_rt_i->rti_nlights-1; i >= 0; i-- )  {
+
+	if ((lp = (struct light_specific *)swp->sw_visible[i]) == LIGHT_NULL )
+	    continue;	/* shadowed */
+
+	/* Light is not shadowed -- add this contribution */
+	intensity = swp->sw_intensity+3*i;
+	to_light = swp->sw_tolight+3*i;
+
+	n_dot_l = VDOT( swp->sw_hit.hit_normal, to_light );
+	if (n_dot_l < 0 ) {
+	    /* light through back */
+	    /*VSET( swp->sw_color, 0, 1, 0 );*/
+	    continue;
 	}
 
-	VMOVE( matcolor, swp->sw_color );
+	/* Find H, the bisector of L and E */
+	VSUB2( h, to_light, ap->a_ray.r_dir );
+	VUNITIZE( h );	/* XXX - warning - L opposite of E */
 
-	/* ambient component */
-	VSCALE( swp->sw_color, matcolor, AmbientIntensity );
-
-	n_dot_e = -VDOT( swp->sw_hit.hit_normal, ap->a_ray.r_dir );
-	if (n_dot_e < 0 ) {
-		/* Yow, we can't see this point, how did we hit it? */
-		bu_log( "cook: N.E < 0\n" );
-	}
-
-	/* Consider effects of each light source */
-	for ( i=ap->a_rt_i->rti_nlights-1; i >= 0; i-- )  {
-
-		if ((lp = (struct light_specific *)swp->sw_visible[i]) == LIGHT_NULL )
-			continue;	/* shadowed */
-
-		/* Light is not shadowed -- add this contribution */
-		intensity = swp->sw_intensity+3*i;
-		to_light = swp->sw_tolight+3*i;
-
-		n_dot_l = VDOT( swp->sw_hit.hit_normal, to_light );
-		if (n_dot_l < 0 ) {
-			/* light through back */
-			/*VSET( swp->sw_color, 0, 1, 0 );*/
-			continue;
-		}
-
-		/* Find H, the bisector of L and E */
-		VSUB2( h, to_light, ap->a_ray.r_dir );
-		VUNITIZE( h );	/* XXX - warning - L opposite of E */
-
-		n_dot_h = VDOT( swp->sw_hit.hit_normal, h );
-		a = acos( n_dot_h );		/*XXXXXX*/
-		D = beckmann( a, ps->m2 );	/*XXX Sum k[i]*beck(a, m[i]) */
-		e_dot_h = -VDOT( ap->a_ray.r_dir, h );
+	n_dot_h = VDOT( swp->sw_hit.hit_normal, h );
+	a = acos( n_dot_h );		/*XXXXXX*/
+	D = beckmann( a, ps->m2 );	/*XXX Sum k[i]*beck(a, m[i]) */
+	e_dot_h = -VDOT( ap->a_ray.r_dir, h );
 #if 0
-		F = fresnel( e_dot_h, ps->n[0] );
+	F = fresnel( e_dot_h, ps->n[0] );
 #endif
-		Fv[0] = fresnel( e_dot_h, ps->n[0] );
-		Fv[1] = fresnel( e_dot_h, ps->n[1] );
-		Fv[2] = fresnel( e_dot_h, ps->n[2] );
-		G = 1.0;			/*XXXXXX*/
+	Fv[0] = fresnel( e_dot_h, ps->n[0] );
+	Fv[1] = fresnel( e_dot_h, ps->n[1] );
+	Fv[2] = fresnel( e_dot_h, ps->n[2] );
+	G = 1.0;			/*XXXXXX*/
 
 #if 0
-		rs = F * G * D / n_dot_e;
+	rs = F * G * D / n_dot_e;
 #endif
-		rd = n_dot_l;			/*XXX ? */
+	rd = n_dot_l;			/*XXX ? */
 
-		/* diffuse */
-		refl = rd * ps->wgt_diffuse * lp->lt_fraction;
-		VELMUL( work, lp->lt_color, intensity );
-		VELMUL( cprod, matcolor, work );
-		VJOIN1( swp->sw_color, swp->sw_color, refl, cprod );
+	/* diffuse */
+	refl = rd * ps->wgt_diffuse * lp->lt_fraction;
+	VELMUL( work, lp->lt_color, intensity );
+	VELMUL( cprod, matcolor, work );
+	VJOIN1( swp->sw_color, swp->sw_color, refl, cprod );
 
 #ifdef NOCOLORCHANGE
-		/* specular */
-		refl = rs * ps->wgt_specular * lp->lt_fraction;
+	/* specular */
+	refl = rs * ps->wgt_specular * lp->lt_fraction;
 /*XXX		VELMUL( work, lp->lt_color, intensity );*/
-		VJOIN1( swp->sw_color, swp->sw_color, refl, work );
+	VJOIN1( swp->sw_color, swp->sw_color, refl, work );
 #else
-		refl = G*D/n_dot_e * ps->wgt_specular * lp->lt_fraction;
-		VSCALE( Fv, Fv, refl );
-		VELMUL( work, work, Fv );
-		VADD2( swp->sw_color, swp->sw_color, work );
+	refl = G*D/n_dot_e * ps->wgt_specular * lp->lt_fraction;
+	VSCALE( Fv, Fv, refl );
+	VELMUL( work, work, Fv );
+	VADD2( swp->sw_color, swp->sw_color, work );
 #endif
-	}
-	if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
-		(void)rr_render( ap, pp, swp );
+    }
+    if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
+	(void)rr_render( ap, pp, swp );
 
-	return(1);
+    return(1);
 }
 
 HIDDEN double
 fresnel(double c, double n)
-		/* cos(theta) = V dot H */
-		/* index of refraction */
+    /* cos(theta) = V dot H */
+    /* index of refraction */
 {
-	double	g, gpc, gmc, t1, t2, f;
+    double	g, gpc, gmc, t1, t2, f;
 
-	if (n < 1.0 ) {
-		fprintf( stderr, "fresnel: can't handle n < 1.0\n" );
-		return( 0.0 );
-	}
-	/* avoid divide by zero.  limit -> 1.0 as theta -> pi/2 */
-	if (c < 1.0e-10 )
-		return( 1.0 );
+    if (n < 1.0 ) {
+	fprintf( stderr, "fresnel: can't handle n < 1.0\n" );
+	return( 0.0 );
+    }
+    /* avoid divide by zero.  limit -> 1.0 as theta -> pi/2 */
+    if (c < 1.0e-10 )
+	return( 1.0 );
 
-	g = sqrt( n*n + c*c - 1.0 );
-	gmc = g - c;
-	gpc = g + c;
-	t1 = c * gpc - 1.0;
-	t2 = c * gmc + 1.0;
-	f = 0.5 * (gmc*gmc) / (gpc*gpc) * (1.0 + (t1*t1) / (t2*t2));
+    g = sqrt( n*n + c*c - 1.0 );
+    gmc = g - c;
+    gpc = g + c;
+    t1 = c * gpc - 1.0;
+    t2 = c * gmc + 1.0;
+    f = 0.5 * (gmc*gmc) / (gpc*gpc) * (1.0 + (t1*t1) / (t2*t2));
 
-	return( f );
+    return( f );
 }
 double cos4(double a)
 {
-	double	c;
+    double	c;
 
-	c = cos(a);
-	return( c*c*c*c );
+    c = cos(a);
+    return( c*c*c*c );
 }
 double tan2(double a)
 {
-	double	t;
+    double	t;
 
-	t = tan(a);
-	return( t*t );
+    t = tan(a);
+    return( t*t );
 }
 /*
  *  The Beckmann Distribution
@@ -423,18 +423,18 @@ double tan2(double a)
  */
 HIDDEN double
 beckmann(double a, double m2)
-			/* angle between N and H */
-			/* rms slope squared (m^2) */
+    /* angle between N and H */
+    /* rms slope squared (m^2) */
 {
-	double	t1, t2;
+    double	t1, t2;
 
-	t1 = cos4(a);		/* note: no m^2 term */
-	if (t1 < 1.0e-20 )	/* avoid divide by zero */
-		return( 0.0 );
+    t1 = cos4(a);		/* note: no m^2 term */
+    if (t1 < 1.0e-20 )	/* avoid divide by zero */
+	return( 0.0 );
 
-	t2 = exp( -tan2(a)/m2 );
+    t2 = exp( -tan2(a)/m2 );
 
-	return( t2/t1 );
+    return( t2/t1 );
 }
 
 /*

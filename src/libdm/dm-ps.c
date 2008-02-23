@@ -65,61 +65,61 @@ static int      ps_setLineAttr(struct dm *dmp, int width, int style);
 static int	ps_setWinBounds(struct dm *dmp, register int *w), ps_debug(struct dm *dmp, int lvl);
 
 struct dm dm_ps = {
-  ps_close,
-  ps_drawBegin,
-  ps_drawEnd,
-  ps_normal,
-  ps_loadMatrix,
-  ps_drawString2D,
-  ps_drawLine2D,
-  ps_drawPoint2D,
-  ps_drawVList,
-  ps_setFGColor,
-  ps_setBGColor,
-  ps_setLineAttr,
-  Nu_int0,
-  ps_setWinBounds,
-  Nu_int0,
-  Nu_int0,
-  Nu_int0,
-  Nu_int0,
-  ps_debug,
-  Nu_int0,
-  Nu_int0,
-  Nu_int0,
-  Nu_int0,
-  0,
-  0,				/* no displaylist */
-  0,                            /* no stereo */
-  PLOTBOUND,			/* zoom-in limit */
-  1,				/* bound flag */
-  "ps",
-  "Screen to PostScript",
-  DM_TYPE_PS,
-  0,
-  0,
-  0,
-  0,
-  0,
-  1.0, /* aspect ratio */
-  0,
-  {0, 0},
-  {0, 0, 0, 0, 0},		/* bu_vls path name*/
-  {0, 0, 0, 0, 0},		/* bu_vls full name drawing window */
-  {0, 0, 0, 0, 0},		/* bu_vls short name drawing window */
-  {0, 0, 0},			/* bg color */
-  {0, 0, 0},			/* fg color */
-  {0.0, 0.0, 0.0},		/* clipmin */
-  {0.0, 0.0, 0.0},		/* clipmax */
-  0,				/* no debugging */
-  0,				/* no perspective */
-  0,				/* no lighting */
-  0,				/* no transparency */
-  0,				/* depth buffer is not writable */
-  0,				/* no zbuffer */
-  0,				/* no zclipping */
-  1,                            /* clear back buffer after drawing and swap */
-  0				/* Tcl interpreter */
+    ps_close,
+    ps_drawBegin,
+    ps_drawEnd,
+    ps_normal,
+    ps_loadMatrix,
+    ps_drawString2D,
+    ps_drawLine2D,
+    ps_drawPoint2D,
+    ps_drawVList,
+    ps_setFGColor,
+    ps_setBGColor,
+    ps_setLineAttr,
+    Nu_int0,
+    ps_setWinBounds,
+    Nu_int0,
+    Nu_int0,
+    Nu_int0,
+    Nu_int0,
+    ps_debug,
+    Nu_int0,
+    Nu_int0,
+    Nu_int0,
+    Nu_int0,
+    0,
+    0,				/* no displaylist */
+    0,                            /* no stereo */
+    PLOTBOUND,			/* zoom-in limit */
+    1,				/* bound flag */
+    "ps",
+    "Screen to PostScript",
+    DM_TYPE_PS,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1.0, /* aspect ratio */
+    0,
+    {0, 0},
+    {0, 0, 0, 0, 0},		/* bu_vls path name*/
+    {0, 0, 0, 0, 0},		/* bu_vls full name drawing window */
+    {0, 0, 0, 0, 0},		/* bu_vls short name drawing window */
+    {0, 0, 0},			/* bg color */
+    {0, 0, 0},			/* fg color */
+    {0.0, 0.0, 0.0},		/* clipmin */
+    {0.0, 0.0, 0.0},		/* clipmax */
+    0,				/* no debugging */
+    0,				/* no perspective */
+    0,				/* no lighting */
+    0,				/* no transparency */
+    0,				/* depth buffer is not writable */
+    0,				/* no zbuffer */
+    0,				/* no zclipping */
+    1,                            /* clear back buffer after drawing and swap */
+    0				/* Tcl interpreter */
 };
 
 char ps_usage[] = "Usage: ps [-f font] [-t title] [-c creator] [-s size in inches]\
@@ -137,188 +137,188 @@ static mat_t psmat;
 struct dm *
 ps_open(Tcl_Interp *interp, int argc, char **argv)
 {
-	static int	count = 0;
-	struct dm	*dmp;
-	Tcl_Obj		*obj;
+    static int	count = 0;
+    struct dm	*dmp;
+    Tcl_Obj		*obj;
 
-	BU_GETSTRUCT(dmp, dm);
-	if (dmp == DM_NULL)
-		return DM_NULL;
+    BU_GETSTRUCT(dmp, dm);
+    if (dmp == DM_NULL)
+	return DM_NULL;
 
-	*dmp = dm_ps;  /* struct copy */
-	dmp->dm_interp = interp;
+    *dmp = dm_ps;  /* struct copy */
+    dmp->dm_interp = interp;
 
-	dmp->dm_vars.priv_vars = (genptr_t)bu_calloc(1, sizeof(struct ps_vars), "ps_open: ps_vars");
-	if (dmp->dm_vars.priv_vars == (genptr_t)NULL) {
-		bu_free((genptr_t)dmp, "ps_open: dmp");
-		return DM_NULL;
-	}
+    dmp->dm_vars.priv_vars = (genptr_t)bu_calloc(1, sizeof(struct ps_vars), "ps_open: ps_vars");
+    if (dmp->dm_vars.priv_vars == (genptr_t)NULL) {
+	bu_free((genptr_t)dmp, "ps_open: dmp");
+	return DM_NULL;
+    }
 
-	obj = Tcl_GetObjResult(interp);
-	if (Tcl_IsShared(obj))
-		obj = Tcl_DuplicateObj(obj);
+    obj = Tcl_GetObjResult(interp);
+    if (Tcl_IsShared(obj))
+	obj = Tcl_DuplicateObj(obj);
 
-	bu_vls_init(&dmp->dm_pathName);
-	bu_vls_init(&dmp->dm_tkName);
-	bu_vls_printf(&dmp->dm_pathName, ".dm_ps%d", count++);
-	bu_vls_printf(&dmp->dm_tkName, "dm_ps%d", count++);
+    bu_vls_init(&dmp->dm_pathName);
+    bu_vls_init(&dmp->dm_tkName);
+    bu_vls_printf(&dmp->dm_pathName, ".dm_ps%d", count++);
+    bu_vls_printf(&dmp->dm_tkName, "dm_ps%d", count++);
 
-	bu_vls_init(&((struct ps_vars *)dmp->dm_vars.priv_vars)->fname);
-	bu_vls_init(&((struct ps_vars *)dmp->dm_vars.priv_vars)->font);
-	bu_vls_init(&((struct ps_vars *)dmp->dm_vars.priv_vars)->title);
-	bu_vls_init(&((struct ps_vars *)dmp->dm_vars.priv_vars)->creator);
+    bu_vls_init(&((struct ps_vars *)dmp->dm_vars.priv_vars)->fname);
+    bu_vls_init(&((struct ps_vars *)dmp->dm_vars.priv_vars)->font);
+    bu_vls_init(&((struct ps_vars *)dmp->dm_vars.priv_vars)->title);
+    bu_vls_init(&((struct ps_vars *)dmp->dm_vars.priv_vars)->creator);
 
-	/* set defaults */
-	bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars.priv_vars)->font, "Courier");
-	bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars.priv_vars)->title, "No Title");
-	bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars.priv_vars)->creator, "LIBDM dm-ps");
-	((struct ps_vars *)dmp->dm_vars.priv_vars)->scale = 0.0791;
-	((struct ps_vars *)dmp->dm_vars.priv_vars)->linewidth = 4;
-	((struct ps_vars *)dmp->dm_vars.priv_vars)->zclip = 0;
+    /* set defaults */
+    bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars.priv_vars)->font, "Courier");
+    bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars.priv_vars)->title, "No Title");
+    bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars.priv_vars)->creator, "LIBDM dm-ps");
+    ((struct ps_vars *)dmp->dm_vars.priv_vars)->scale = 0.0791;
+    ((struct ps_vars *)dmp->dm_vars.priv_vars)->linewidth = 4;
+    ((struct ps_vars *)dmp->dm_vars.priv_vars)->zclip = 0;
 
-	/* skip first argument */
-	--argc; ++argv;
+    /* skip first argument */
+    --argc; ++argv;
 
-	/* Process any options */
-	while (argv[0] != (char *)0 && argv[0][0] == '-') {
-		switch (argv[0][1]) {
-		case 'f':               /* font */
-			if (argv[0][2] != '\0')
-				bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars.priv_vars)->font, &argv[0][2]);
-			else {
-				argv++;
-				if (argv[0] == (char *)0 || argv[0][0] == '-') {
-					Tcl_AppendStringsToObj(obj, ps_usage, (char *)0);
-					(void)ps_close(dmp);
-
-					Tcl_SetObjResult(interp, obj);
-					return DM_NULL;
-				} else
-					bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars.priv_vars)->font, &argv[0][0]);
-			}
-			break;
-		case 't':               /* title */
-			if (argv[0][2] != '\0')
-				bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars.priv_vars)->title, &argv[0][2]);
-			else {
-				argv++;
-				if (argv[0] == (char *)0 || argv[0][0] == '-') {
-					Tcl_AppendStringsToObj(obj, ps_usage, (char *)0);
-					(void)ps_close(dmp);
-
-					Tcl_SetObjResult(interp, obj);
-					return DM_NULL;
-				} else
-					bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars.priv_vars)->title, &argv[0][0]);
-			}
-			break;
-		case 'c':               /* creator */
-			if (argv[0][2] != '\0')
-				bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars.priv_vars)->creator, &argv[0][2]);
-			else {
-				argv++;
-				if (argv[0] == (char *)0 || argv[0][0] == '-') {
-					Tcl_AppendStringsToObj(obj, ps_usage, (char *)0);
-					(void)ps_close(dmp);
-
-					Tcl_SetObjResult(interp, obj);
-					return DM_NULL;
-				} else
-					bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars.priv_vars)->creator, &argv[0][0]);
-			}
-			break;
-		case 's':               /* size in inches */
-			{
-				fastf_t size;
-
-				if (argv[0][2] != '\0')
-					sscanf(&argv[0][2], "%lf", &size);
-				else {
-					argv++;
-					if (argv[0] == (char *)0 || argv[0][0] == '-') {
-						Tcl_AppendStringsToObj(obj, ps_usage, (char *)0);
-						(void)ps_close(dmp);
-
-						Tcl_SetObjResult(interp, obj);
-						return DM_NULL;
-					} else
-						sscanf(&argv[0][0], "%lf", &size);
-				}
-
-				((struct ps_vars *)dmp->dm_vars.priv_vars)->scale = size * 0.017578125;
-			}
-			break;
-		case 'l':               /* line width */
-			if (argv[0][2] != '\0')
-				sscanf(&argv[0][2], "%d", &((struct ps_vars *)dmp->dm_vars.priv_vars)->linewidth);
-			else {
-				argv++;
-				if (argv[0] == (char *)0 || argv[0][0] == '-') {
-					Tcl_AppendStringsToObj(obj, ps_usage, (char *)0);
-					(void)ps_close(dmp);
-
-					Tcl_SetObjResult(interp, obj);
-					return DM_NULL;
-				} else
-					sscanf(&argv[0][0], "%d", &((struct ps_vars *)dmp->dm_vars.priv_vars)->linewidth);
-			}
-			break;
-		case 'z':
-#if 0
-			((struct ps_vars *)dmp->dm_vars.priv_vars)->zclip = 1;
-#else
-			dmp->dm_zclip = 1;
-#endif
-			break;
-		default:
+    /* Process any options */
+    while (argv[0] != (char *)0 && argv[0][0] == '-') {
+	switch (argv[0][1]) {
+	    case 'f':               /* font */
+		if (argv[0][2] != '\0')
+		    bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars.priv_vars)->font, &argv[0][2]);
+		else {
+		    argv++;
+		    if (argv[0] == (char *)0 || argv[0][0] == '-') {
 			Tcl_AppendStringsToObj(obj, ps_usage, (char *)0);
 			(void)ps_close(dmp);
 
 			Tcl_SetObjResult(interp, obj);
 			return DM_NULL;
+		    } else
+			bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars.priv_vars)->font, &argv[0][0]);
 		}
-		argv++;
-	}
+		break;
+	    case 't':               /* title */
+		if (argv[0][2] != '\0')
+		    bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars.priv_vars)->title, &argv[0][2]);
+		else {
+		    argv++;
+		    if (argv[0] == (char *)0 || argv[0][0] == '-') {
+			Tcl_AppendStringsToObj(obj, ps_usage, (char *)0);
+			(void)ps_close(dmp);
 
-	if (argv[0] == (char *)0) {
-		Tcl_AppendStringsToObj(obj, "no filename specified\n", (char *)NULL);
+			Tcl_SetObjResult(interp, obj);
+			return DM_NULL;
+		    } else
+			bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars.priv_vars)->title, &argv[0][0]);
+		}
+		break;
+	    case 'c':               /* creator */
+		if (argv[0][2] != '\0')
+		    bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars.priv_vars)->creator, &argv[0][2]);
+		else {
+		    argv++;
+		    if (argv[0] == (char *)0 || argv[0][0] == '-') {
+			Tcl_AppendStringsToObj(obj, ps_usage, (char *)0);
+			(void)ps_close(dmp);
+
+			Tcl_SetObjResult(interp, obj);
+			return DM_NULL;
+		    } else
+			bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars.priv_vars)->creator, &argv[0][0]);
+		}
+		break;
+	    case 's':               /* size in inches */
+	    {
+		fastf_t size;
+
+		if (argv[0][2] != '\0')
+		    sscanf(&argv[0][2], "%lf", &size);
+		else {
+		    argv++;
+		    if (argv[0] == (char *)0 || argv[0][0] == '-') {
+			Tcl_AppendStringsToObj(obj, ps_usage, (char *)0);
+			(void)ps_close(dmp);
+
+			Tcl_SetObjResult(interp, obj);
+			return DM_NULL;
+		    } else
+			sscanf(&argv[0][0], "%lf", &size);
+		}
+
+		((struct ps_vars *)dmp->dm_vars.priv_vars)->scale = size * 0.017578125;
+	    }
+	    break;
+	    case 'l':               /* line width */
+		if (argv[0][2] != '\0')
+		    sscanf(&argv[0][2], "%d", &((struct ps_vars *)dmp->dm_vars.priv_vars)->linewidth);
+		else {
+		    argv++;
+		    if (argv[0] == (char *)0 || argv[0][0] == '-') {
+			Tcl_AppendStringsToObj(obj, ps_usage, (char *)0);
+			(void)ps_close(dmp);
+
+			Tcl_SetObjResult(interp, obj);
+			return DM_NULL;
+		    } else
+			sscanf(&argv[0][0], "%d", &((struct ps_vars *)dmp->dm_vars.priv_vars)->linewidth);
+		}
+		break;
+	    case 'z':
+#if 0
+		((struct ps_vars *)dmp->dm_vars.priv_vars)->zclip = 1;
+#else
+		dmp->dm_zclip = 1;
+#endif
+		break;
+	    default:
+		Tcl_AppendStringsToObj(obj, ps_usage, (char *)0);
 		(void)ps_close(dmp);
 
 		Tcl_SetObjResult(interp, obj);
 		return DM_NULL;
 	}
+	argv++;
+    }
 
-	bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars.priv_vars)->fname, argv[0]);
+    if (argv[0] == (char *)0) {
+	Tcl_AppendStringsToObj(obj, "no filename specified\n", (char *)NULL);
+	(void)ps_close(dmp);
 
-	if ((((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp =
-	     fopen(bu_vls_addr(&((struct ps_vars *)dmp->dm_vars.priv_vars)->fname), "wb")) == NULL) {
-		Tcl_AppendStringsToObj(obj, "f_ps: Error opening file - ",
-				 ((struct ps_vars *)dmp->dm_vars.priv_vars)->fname,
-				 "\n", (char *)NULL);
-		(void)ps_close(dmp);
+	Tcl_SetObjResult(interp, obj);
+	return DM_NULL;
+    }
 
-		Tcl_SetObjResult(interp, obj);
-		return DM_NULL;
-	}
+    bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars.priv_vars)->fname, argv[0]);
 
-	setbuf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp,
-	       ((struct ps_vars *)dmp->dm_vars.priv_vars)->ttybuf );
-	fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp, "%%!PS-Adobe-1.0\n\
+    if ((((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp =
+	 fopen(bu_vls_addr(&((struct ps_vars *)dmp->dm_vars.priv_vars)->fname), "wb")) == NULL) {
+	Tcl_AppendStringsToObj(obj, "f_ps: Error opening file - ",
+			       ((struct ps_vars *)dmp->dm_vars.priv_vars)->fname,
+			       "\n", (char *)NULL);
+	(void)ps_close(dmp);
+
+	Tcl_SetObjResult(interp, obj);
+	return DM_NULL;
+    }
+
+    setbuf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp,
+	   ((struct ps_vars *)dmp->dm_vars.priv_vars)->ttybuf );
+    fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp, "%%!PS-Adobe-1.0\n\
 %%begin(plot)\n\
 %%%%DocumentFonts:  %s\n",
-		bu_vls_addr(&((struct ps_vars *)dmp->dm_vars.priv_vars)->font));
+	    bu_vls_addr(&((struct ps_vars *)dmp->dm_vars.priv_vars)->font));
 
-	fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp, "%%%%Title: %s\n",
-		bu_vls_addr(&((struct ps_vars *)dmp->dm_vars.priv_vars)->title));
+    fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp, "%%%%Title: %s\n",
+	    bu_vls_addr(&((struct ps_vars *)dmp->dm_vars.priv_vars)->title));
 
-	fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp, "\
+    fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp, "\
 %%%%Creator: %s\n\
 %%%%BoundingBox: 0 0 324 324	%% 4.5in square, for TeX\n\
 %%%%EndComments\n\
 \n",
-		bu_vls_addr(&((struct ps_vars *)dmp->dm_vars.priv_vars)->creator));
+	    bu_vls_addr(&((struct ps_vars *)dmp->dm_vars.priv_vars)->creator));
 
-	fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp, "\
+    fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp, "\
 %d setlinewidth\n\
 \n\
 %% Sizes, made functions to avoid scaling if not needed\n\
@@ -341,18 +341,18 @@ ps_open(Tcl_Interp *interp, int argc, char **argv)
 FntH  setfont\n\
 NEWPG\n\
 ",
-		((struct ps_vars *)dmp->dm_vars.priv_vars)->linewidth,
-		bu_vls_addr(&((struct ps_vars *)dmp->dm_vars.priv_vars)->font),
-		bu_vls_addr(&((struct ps_vars *)dmp->dm_vars.priv_vars)->font),
-		bu_vls_addr(&((struct ps_vars *)dmp->dm_vars.priv_vars)->font),
-		bu_vls_addr(&((struct ps_vars *)dmp->dm_vars.priv_vars)->font),
-		((struct ps_vars *)dmp->dm_vars.priv_vars)->scale,
-		((struct ps_vars *)dmp->dm_vars.priv_vars)->scale);
+	    ((struct ps_vars *)dmp->dm_vars.priv_vars)->linewidth,
+	    bu_vls_addr(&((struct ps_vars *)dmp->dm_vars.priv_vars)->font),
+	    bu_vls_addr(&((struct ps_vars *)dmp->dm_vars.priv_vars)->font),
+	    bu_vls_addr(&((struct ps_vars *)dmp->dm_vars.priv_vars)->font),
+	    bu_vls_addr(&((struct ps_vars *)dmp->dm_vars.priv_vars)->font),
+	    ((struct ps_vars *)dmp->dm_vars.priv_vars)->scale,
+	    ((struct ps_vars *)dmp->dm_vars.priv_vars)->scale);
 
-	MAT_IDN(psmat);
+    MAT_IDN(psmat);
 
-	Tcl_SetObjResult(interp, obj);
-	return dmp;
+    Tcl_SetObjResult(interp, obj);
+    return dmp;
 }
 
 /*
@@ -363,22 +363,22 @@ NEWPG\n\
 static int
 ps_close(struct dm *dmp)
 {
-  if (!((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp)
-    return TCL_ERROR;
+    if (!((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp)
+	return TCL_ERROR;
 
-  fputs("%end(plot)\n", ((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp);
-  (void)fclose(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp);
+    fputs("%end(plot)\n", ((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp);
+    (void)fclose(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp);
 
-  bu_vls_free(&dmp->dm_pathName);
-  bu_vls_free(&dmp->dm_tkName);
-  bu_vls_free(&((struct ps_vars *)dmp->dm_vars.priv_vars)->fname);
-  bu_vls_free(&((struct ps_vars *)dmp->dm_vars.priv_vars)->font);
-  bu_vls_free(&((struct ps_vars *)dmp->dm_vars.priv_vars)->title);
-  bu_vls_free(&((struct ps_vars *)dmp->dm_vars.priv_vars)->creator);
-  bu_free((genptr_t)dmp->dm_vars.priv_vars, "ps_close: ps_vars");
-  bu_free((genptr_t)dmp, "ps_close: dmp");
+    bu_vls_free(&dmp->dm_pathName);
+    bu_vls_free(&dmp->dm_tkName);
+    bu_vls_free(&((struct ps_vars *)dmp->dm_vars.priv_vars)->fname);
+    bu_vls_free(&((struct ps_vars *)dmp->dm_vars.priv_vars)->font);
+    bu_vls_free(&((struct ps_vars *)dmp->dm_vars.priv_vars)->title);
+    bu_vls_free(&((struct ps_vars *)dmp->dm_vars.priv_vars)->creator);
+    bu_free((genptr_t)dmp->dm_vars.priv_vars, "ps_close: ps_vars");
+    bu_free((genptr_t)dmp, "ps_close: dmp");
 
-  return TCL_OK;
+    return TCL_OK;
 }
 
 /*
@@ -389,7 +389,7 @@ ps_close(struct dm *dmp)
 static int
 ps_drawBegin(struct dm *dmp)
 {
-  return TCL_OK;
+    return TCL_OK;
 }
 
 /*
@@ -398,14 +398,14 @@ ps_drawBegin(struct dm *dmp)
 static int
 ps_drawEnd(struct dm *dmp)
 {
-  if ( !((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp )
-    return TCL_ERROR;
+    if ( !((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp )
+	return TCL_ERROR;
 
-  fputs("% showpage	% uncomment to use raw file\n",
-	((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp);
-  (void)fflush( ((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp );
+    fputs("% showpage	% uncomment to use raw file\n",
+	  ((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp);
+    (void)fflush( ((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp );
 
-  return TCL_OK;
+    return TCL_OK;
 }
 
 /*
@@ -417,33 +417,33 @@ ps_drawEnd(struct dm *dmp)
 static int
 ps_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 {
-	Tcl_Obj	*obj;
+    Tcl_Obj	*obj;
 
-	obj = Tcl_GetObjResult(dmp->dm_interp);
-	if (Tcl_IsShared(obj))
-		obj = Tcl_DuplicateObj(obj);
+    obj = Tcl_GetObjResult(dmp->dm_interp);
+    if (Tcl_IsShared(obj))
+	obj = Tcl_DuplicateObj(obj);
 
-	if (((struct ps_vars *)dmp->dm_vars.priv_vars)->debug) {
-		struct bu_vls tmp_vls;
+    if (((struct ps_vars *)dmp->dm_vars.priv_vars)->debug) {
+	struct bu_vls tmp_vls;
 
-		Tcl_AppendStringsToObj(obj, "ps_loadMatrix()\n", (char *)NULL);
+	Tcl_AppendStringsToObj(obj, "ps_loadMatrix()\n", (char *)NULL);
 
-		bu_vls_init(&tmp_vls);
-		bu_vls_printf(&tmp_vls, "which eye = %d\t", which_eye);
-		bu_vls_printf(&tmp_vls, "transformation matrix = \n");
-		bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[0], mat[4], mat[8], mat[12]);
-		bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[1], mat[5], mat[9], mat[13]);
-		bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[2], mat[6], mat[10], mat[14]);
-		bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[3], mat[7], mat[11], mat[15]);
+	bu_vls_init(&tmp_vls);
+	bu_vls_printf(&tmp_vls, "which eye = %d\t", which_eye);
+	bu_vls_printf(&tmp_vls, "transformation matrix = \n");
+	bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[0], mat[4], mat[8], mat[12]);
+	bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[1], mat[5], mat[9], mat[13]);
+	bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[2], mat[6], mat[10], mat[14]);
+	bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[3], mat[7], mat[11], mat[15]);
 
-		Tcl_AppendStringsToObj(obj, bu_vls_addr(&tmp_vls), (char *)NULL);
-		bu_vls_free(&tmp_vls);
-	}
+	Tcl_AppendStringsToObj(obj, bu_vls_addr(&tmp_vls), (char *)NULL);
+	bu_vls_free(&tmp_vls);
+    }
 
-	MAT_COPY(psmat, mat);
+    MAT_COPY(psmat, mat);
 
-	Tcl_SetObjResult(dmp->dm_interp, obj);
-	return TCL_OK;
+    Tcl_SetObjResult(dmp->dm_interp, obj);
+    return TCL_OK;
 }
 
 /*
@@ -459,22 +459,22 @@ ps_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 static int
 ps_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 {
-  static vect_t			last;
-  register struct bn_vlist	*tvp;
-  register point_t		*pt_prev=NULL;
-  register fastf_t		dist_prev=1.0;
-  register fastf_t		dist;
-  fastf_t			delta;
-  int useful = 0;
+    static vect_t			last;
+    register struct bn_vlist	*tvp;
+    register point_t		*pt_prev=NULL;
+    register fastf_t		dist_prev=1.0;
+    register fastf_t		dist;
+    fastf_t			delta;
+    int useful = 0;
 
-  if ( !((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp )
-    return TCL_ERROR;
+    if ( !((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp )
+	return TCL_ERROR;
 
 #if 0
-  if ( linestyle )
-    fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp, "DDV ");		/* Dot-dashed vectors */
-  else
-    fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp, "NV ");		/* Normal vectors */
+    if ( linestyle )
+	fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp, "DDV ");		/* Dot-dashed vectors */
+    else
+	fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp, "NV ");		/* Normal vectors */
 #endif
 
     /* delta is used in clipping to insure clipped endpoint is slightly
@@ -487,120 +487,120 @@ ps_drawVList(struct dm *dmp, register struct bn_vlist *vp)
     if ( delta < SQRT_SMALL_FASTF )
 	delta = SQRT_SMALL_FASTF;
 
-  for ( BU_LIST_FOR( tvp, bn_vlist, &vp->l ) )  {
-    register int	i;
-    register int	nused = tvp->nused;
-    register int	*cmd = tvp->cmd;
-    register point_t *pt = tvp->pt;
-    for ( i = 0; i < nused; i++, cmd++, pt++ )  {
-      static vect_t	start, fin;
-      switch ( *cmd )  {
-      case BN_VLIST_POLY_START:
-      case BN_VLIST_POLY_VERTNORM:
-	continue;
-      case BN_VLIST_POLY_MOVE:
-      case BN_VLIST_LINE_MOVE:
-	/* Move, not draw */
-		if (dmp->dm_perspective > 0)
-		{
+    for ( BU_LIST_FOR( tvp, bn_vlist, &vp->l ) )  {
+	register int	i;
+	register int	nused = tvp->nused;
+	register int	*cmd = tvp->cmd;
+	register point_t *pt = tvp->pt;
+	for ( i = 0; i < nused; i++, cmd++, pt++ )  {
+	    static vect_t	start, fin;
+	    switch ( *cmd )  {
+		case BN_VLIST_POLY_START:
+		case BN_VLIST_POLY_VERTNORM:
+		    continue;
+		case BN_VLIST_POLY_MOVE:
+		case BN_VLIST_LINE_MOVE:
+		    /* Move, not draw */
+		    if (dmp->dm_perspective > 0)
+		    {
 			/* cannot apply perspective transformation to
 			 * points behind eye plane!!!!
 			 */
 			dist = VDOT( *pt, &psmat[12] ) + psmat[15];
 			if ( dist <= 0.0 )
 			{
-				pt_prev = pt;
-				dist_prev = dist;
-				continue;
+			    pt_prev = pt;
+			    dist_prev = dist;
+			    continue;
 			}
 			else
 			{
-				MAT4X3PNT( last, psmat, *pt );
-				dist_prev = dist;
-				pt_prev = pt;
+			    MAT4X3PNT( last, psmat, *pt );
+			    dist_prev = dist;
+			    pt_prev = pt;
 			}
-		}
-		else
+		    }
+		    else
 			MAT4X3PNT( last, psmat, *pt );
-	continue;
-      case BN_VLIST_POLY_DRAW:
-      case BN_VLIST_POLY_END:
-      case BN_VLIST_LINE_DRAW:
-	/* draw */
-		if (dmp->dm_perspective > 0)
-		{
+		    continue;
+		case BN_VLIST_POLY_DRAW:
+		case BN_VLIST_POLY_END:
+		case BN_VLIST_LINE_DRAW:
+		    /* draw */
+		    if (dmp->dm_perspective > 0)
+		    {
 			/* cannot apply perspective transformation to
 			 * points behind eye plane!!!!
 			 */
 			dist = VDOT( *pt, &psmat[12] ) + psmat[15];
 			if ( dist <= 0.0 )
 			{
-				if ( dist_prev <= 0.0 )
-				{
-					/* nothing to plot */
-					dist_prev = dist;
-					pt_prev = pt;
-					continue;
-				}
-				else
-				{
-					fastf_t alpha;
-					vect_t diff;
-					point_t tmp_pt;
+			    if ( dist_prev <= 0.0 )
+			    {
+				/* nothing to plot */
+				dist_prev = dist;
+				pt_prev = pt;
+				continue;
+			    }
+			    else
+			    {
+				fastf_t alpha;
+				vect_t diff;
+				point_t tmp_pt;
 
-					/* clip this end */
-					VSUB2( diff, *pt, *pt_prev );
-					alpha = (dist_prev - delta) / ( dist_prev - dist );
-					VJOIN1( tmp_pt, *pt_prev, alpha, diff );
-					MAT4X3PNT( fin, psmat, tmp_pt );
-				}
+				/* clip this end */
+				VSUB2( diff, *pt, *pt_prev );
+				alpha = (dist_prev - delta) / ( dist_prev - dist );
+				VJOIN1( tmp_pt, *pt_prev, alpha, diff );
+				MAT4X3PNT( fin, psmat, tmp_pt );
+			    }
 			}
 			else
 			{
-				if ( dist_prev <= 0.0 )
-				{
-					fastf_t alpha;
-					vect_t diff;
-					point_t tmp_pt;
+			    if ( dist_prev <= 0.0 )
+			    {
+				fastf_t alpha;
+				vect_t diff;
+				point_t tmp_pt;
 
-					/* clip other end */
-					VSUB2( diff, *pt, *pt_prev );
-					alpha = (-dist_prev + delta) / ( dist - dist_prev );
-					VJOIN1( tmp_pt, *pt_prev, alpha, diff );
-					MAT4X3PNT( last, psmat, tmp_pt );
-					MAT4X3PNT( fin, psmat, *pt );
-				}
-				else
-				{
-					MAT4X3PNT( fin, psmat, *pt );
-				}
+				/* clip other end */
+				VSUB2( diff, *pt, *pt_prev );
+				alpha = (-dist_prev + delta) / ( dist - dist_prev );
+				VJOIN1( tmp_pt, *pt_prev, alpha, diff );
+				MAT4X3PNT( last, psmat, tmp_pt );
+				MAT4X3PNT( fin, psmat, *pt );
+			    }
+			    else
+			    {
+				MAT4X3PNT( fin, psmat, *pt );
+			    }
 			}
-		}
-		else
+		    }
+		    else
 			MAT4X3PNT( fin, psmat, *pt );
-	VMOVE( start, last );
-	VMOVE( last, fin );
-	break;
-      }
+		    VMOVE( start, last );
+		    VMOVE( last, fin );
+		    break;
+	    }
 
-      if (vclip( start, fin, dmp->dm_clipmin,
-		dmp->dm_clipmax ) == 0)
-	continue;
+	    if (vclip( start, fin, dmp->dm_clipmin,
+		       dmp->dm_clipmax ) == 0)
+		continue;
 
-      fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp,
-	      "newpath %d %d moveto %d %d lineto stroke\n",
-	      GED_TO_PS( start[0] * 2047 ),
-	      GED_TO_PS( start[1] * 2047 ),
-	      GED_TO_PS( fin[0] * 2047 ),
-	      GED_TO_PS( fin[1] * 2047 ) );
-      useful = 1;
+	    fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp,
+		    "newpath %d %d moveto %d %d lineto stroke\n",
+		    GED_TO_PS( start[0] * 2047 ),
+		    GED_TO_PS( start[1] * 2047 ),
+		    GED_TO_PS( fin[0] * 2047 ),
+		    GED_TO_PS( fin[1] * 2047 ) );
+	    useful = 1;
+	}
     }
-  }
 
-  if (useful)
-    return TCL_OK;
+    if (useful)
+	return TCL_OK;
 
-  return TCL_ERROR;
+    return TCL_ERROR;
 }
 
 /*
@@ -613,7 +613,7 @@ ps_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 static int
 ps_normal(struct dm *dmp)
 {
-  return TCL_OK;
+    return TCL_OK;
 }
 
 /*
@@ -626,34 +626,34 @@ ps_normal(struct dm *dmp)
 static int
 ps_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int size, int use_aspect)
 {
-  int sx, sy;
+    int sx, sy;
 
-  if ( !((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp )
-    return TCL_ERROR;
+    if ( !((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp )
+	return TCL_ERROR;
 
-  switch ( size )  {
-  default:
-    /* Smallest */
-    fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp, "DFntS ");
-    break;
-  case 1:
-    fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp, "DFntM ");
-    break;
-  case 2:
-    fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp, "DFntL ");
-    break;
-  case 3:
-    /* Largest */
-    fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp, "FntH ");
-    break;
-  }
+    switch ( size )  {
+	default:
+	    /* Smallest */
+	    fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp, "DFntS ");
+	    break;
+	case 1:
+	    fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp, "DFntM ");
+	    break;
+	case 2:
+	    fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp, "DFntL ");
+	    break;
+	case 3:
+	    /* Largest */
+	    fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp, "FntH ");
+	    break;
+    }
 
-  sx = x * 2047.0 + 2048;
-  sy = y * 2047.0 + 2048;
-  fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp,
-	  "(%s) %d %d moveto show\n", str, sx, sy );
+    sx = x * 2047.0 + 2048;
+    sy = y * 2047.0 + 2048;
+    fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp,
+	    "(%s) %d %d moveto show\n", str, sx, sy );
 
-  return TCL_OK;
+    return TCL_OK;
 }
 
 /*
@@ -663,86 +663,86 @@ ps_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int si
 static int
 ps_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
 {
-  int sx1, sy1;
-  int sx2, sy2;
+    int sx1, sy1;
+    int sx2, sy2;
 
-  if ( !((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp )
-    return TCL_ERROR;
+    if ( !((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp )
+	return TCL_ERROR;
 
-  sx1 = x1 * 2047.0 + 2048;
-  sx2 = x2 * 2047.0 + 2048;
-  sy1 = y1 * 2047.0 + 2048;
-  sy2 = y2 * 2047.0 + 2048;
+    sx1 = x1 * 2047.0 + 2048;
+    sx2 = x2 * 2047.0 + 2048;
+    sy1 = y1 * 2047.0 + 2048;
+    sy2 = y2 * 2047.0 + 2048;
 
-  fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp,
-	  "newpath %d %d moveto %d %d lineto stroke\n",
-	  sx1, sy1, sx2, sy2);
+    fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp,
+	    "newpath %d %d moveto %d %d lineto stroke\n",
+	    sx1, sy1, sx2, sy2);
 
-  return TCL_OK;
+    return TCL_OK;
 }
 
 static int
 ps_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 {
-  return ps_drawLine2D(dmp, x, y, x, y);
+    return ps_drawLine2D(dmp, x, y, x, y);
 }
 
 static int
 ps_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency)
 {
-  return TCL_OK;
+    return TCL_OK;
 }
 static int
 ps_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 {
-  return TCL_OK;
+    return TCL_OK;
 }
 
 static int
 ps_setLineAttr(struct dm *dmp, int width, int style)
 {
-  dmp->dm_lineWidth = width;
-  dmp->dm_lineStyle = style;
+    dmp->dm_lineWidth = width;
+    dmp->dm_lineStyle = style;
 
-  if (style == DM_DASHED_LINE)
-    fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp, "DDV "); /* Dot-dashed vectors */
-  else
-    fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp, "NV "); /* Normal vectors */
+    if (style == DM_DASHED_LINE)
+	fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp, "DDV "); /* Dot-dashed vectors */
+    else
+	fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp, "NV "); /* Normal vectors */
 
-  return TCL_OK;
+    return TCL_OK;
 }
 
 /* ARGSUSED */
 static int
 ps_debug(struct dm *dmp, int lvl)
 {
-  dmp->dm_debugLevel = lvl;
-  return TCL_OK;
+    dmp->dm_debugLevel = lvl;
+    return TCL_OK;
 }
 
 static int
 ps_setWinBounds(struct dm *dmp, register int *w)
 {
-  /* Compute the clipping bounds */
-  dmp->dm_clipmin[0] = w[0] / 2048.;
-  dmp->dm_clipmax[0] = w[1] / 2047.;
-  dmp->dm_clipmin[1] = w[2] / 2048.;
-  dmp->dm_clipmax[1] = w[3] / 2047.;
+    /* Compute the clipping bounds */
+    dmp->dm_clipmin[0] = w[0] / 2048.;
+    dmp->dm_clipmax[0] = w[1] / 2047.;
+    dmp->dm_clipmin[1] = w[2] / 2048.;
+    dmp->dm_clipmax[1] = w[3] / 2047.;
 
 #if 0
-  if (((struct ps_vars *)dmp->dm_vars.priv_vars)->zclip) {
+    if (((struct ps_vars *)dmp->dm_vars.priv_vars)->zclip) {
 #else
-  if (dmp->dm_zclip) {
+	if (dmp->dm_zclip) {
 #endif
-    dmp->dm_clipmin[2] = w[4] / 2048.;
-    dmp->dm_clipmax[2] = w[5] / 2047.;
-  } else {
-    dmp->dm_clipmin[2] = -1.0e20;
-    dmp->dm_clipmax[2] = 1.0e20;
-  }
+	    dmp->dm_clipmin[2] = w[4] / 2048.;
+	    dmp->dm_clipmax[2] = w[5] / 2047.;
+	} else {
+	    dmp->dm_clipmin[2] = -1.0e20;
+	    dmp->dm_clipmax[2] = 1.0e20;
+	}
 
-  return TCL_OK;
-}
+	return TCL_OK;
+    }
 
 /*
  * Local Variables:

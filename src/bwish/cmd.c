@@ -53,13 +53,13 @@ HIDDEN struct bu_cmdhist histHead;
 HIDDEN struct bu_cmdhist *currHist;
 
 HIDDEN struct bu_cmdtab bwish_cmds[] =
-    {
-	{"exit",		cmd_quit},
-	{"history",		cmd_history},
-	{"hist",		cmd_hist},
-	{"q",			cmd_quit},
-	{(char *)NULL,		CMD_NULL}
-    };
+{
+    {"exit",		cmd_quit},
+    {"history",		cmd_history},
+    {"hist",		cmd_hist},
+    {"q",			cmd_quit},
+    {(char *)NULL,		CMD_NULL}
+};
 
 #ifdef BWISH
 extern Tk_PhotoImageFormat tkImgFmtPIX;
@@ -130,7 +130,7 @@ void
 history_record(struct bu_vls *cmdp, struct timeval *start, struct timeval *finish, int status)
 
 
-     /* Either TCL_OK or TCL_ERROR */
+    /* Either TCL_OK or TCL_ERROR */
 {
     struct bu_cmdhist *new_hist;
 
@@ -188,7 +188,7 @@ timediff(struct timeval *tvdiff, struct timeval *start, struct timeval *finish)
 #if 0
 void
 history_journalize(hptr)
-     struct bu_cmdhist *hptr;
+    struct bu_cmdhist *hptr;
 {
     struct timeval tvdiff;
     struct bu_cmdhist *lasthptr;
@@ -215,10 +215,10 @@ history_journalize(hptr)
  */
 int
 cmd_journal(clientData, interp, argc, argv)
-     ClientData clientData;
-     Tcl_Interp *interp;
-     int argc;
-     char **argv;
+    ClientData clientData;
+    Tcl_Interp *interp;
+    int argc;
+    char **argv;
 {
     if (argc < 1 || 3 < argc) {
 	struct bu_vls vls;
@@ -276,10 +276,10 @@ cmd_journal(clientData, interp, argc, argv)
 
 int
 f_delay(clientData, interp, argc, argv)
-     ClientData clientData;
-     Tcl_Interp *interp;
-     int argc;
-     char **argv;
+    ClientData clientData;
+    Tcl_Interp *interp;
+    int argc;
+    char **argv;
 {
     struct timeval tv;
 

@@ -68,176 +68,176 @@ Usage: bw-ps [-e] [-c] [-L] [-h]\n\
 int
 get_args(int argc, register char **argv)
 {
-	register int c;
+    register int c;
 
-	while ( (c = bu_getopt( argc, argv, "ehcLs:w:n:S:W:N:" )) != EOF )  {
-		switch ( c )  {
-		case 'e':
-			/* Encapsulated PostScript */
-			encapsulated++;
-			break;
-		case 'h':
-			/* high-res */
-			height = width = 1024;
-			break;
-		case 'c':
-			center = 1;
-			break;
-		case 'L':
-			landscape = 1;
-			break;
-		case 's':
-			/* square file size */
-			height = width = atoi(bu_optarg);
-			break;
-		case 'w':
-			width = atoi(bu_optarg);
-			break;
-		case 'n':
-			height = atoi(bu_optarg);
-			break;
-		case 'S':
-			/* square file size */
-			outheight = outwidth = atof(bu_optarg);
-			break;
-		case 'W':
-			outwidth = atof(bu_optarg);
-			break;
-		case 'N':
-			outheight = atof(bu_optarg);
-			break;
+    while ( (c = bu_getopt( argc, argv, "ehcLs:w:n:S:W:N:" )) != EOF )  {
+	switch ( c )  {
+	    case 'e':
+		/* Encapsulated PostScript */
+		encapsulated++;
+		break;
+	    case 'h':
+		/* high-res */
+		height = width = 1024;
+		break;
+	    case 'c':
+		center = 1;
+		break;
+	    case 'L':
+		landscape = 1;
+		break;
+	    case 's':
+		/* square file size */
+		height = width = atoi(bu_optarg);
+		break;
+	    case 'w':
+		width = atoi(bu_optarg);
+		break;
+	    case 'n':
+		height = atoi(bu_optarg);
+		break;
+	    case 'S':
+		/* square file size */
+		outheight = outwidth = atof(bu_optarg);
+		break;
+	    case 'W':
+		outwidth = atof(bu_optarg);
+		break;
+	    case 'N':
+		outheight = atof(bu_optarg);
+		break;
 
-		default:		/* '?' */
-			return(0);
-		}
+	    default:		/* '?' */
+		return(0);
 	}
+    }
 
-	if ( bu_optind >= argc )  {
-		if ( isatty(fileno(stdin)) )
-			return(0);
-		file_name = "[stdin]";
-		infp = stdin;
-	} else {
-		file_name = argv[bu_optind];
-		if ( (infp = fopen(file_name, "r")) == NULL )  {
-			(void)fprintf( stderr,
-				"bw-ps: cannot open \"%s\" for reading\n",
-				file_name );
-			return(0);
-		}
-		/*fileinput++;*/
+    if ( bu_optind >= argc )  {
+	if ( isatty(fileno(stdin)) )
+	    return(0);
+	file_name = "[stdin]";
+	infp = stdin;
+    } else {
+	file_name = argv[bu_optind];
+	if ( (infp = fopen(file_name, "r")) == NULL )  {
+	    (void)fprintf( stderr,
+			   "bw-ps: cannot open \"%s\" for reading\n",
+			   file_name );
+	    return(0);
 	}
+	/*fileinput++;*/
+    }
 
-	if ( argc > ++bu_optind )
-		(void)fprintf( stderr, "bw-ps: excess argument(s) ignored\n" );
+    if ( argc > ++bu_optind )
+	(void)fprintf( stderr, "bw-ps: excess argument(s) ignored\n" );
 
-	return(1);		/* OK */
+    return(1);		/* OK */
 }
 
 int
 main(int argc, char **argv)
 {
-	FILE	*ofp = stdout;
-	int	num = 0;
-	int	scans_per_patch, bytes_per_patch;
-	int	y;
+    FILE	*ofp = stdout;
+    int	num = 0;
+    int	scans_per_patch, bytes_per_patch;
+    int	y;
 
-	outwidth = outheight = DEFAULT_SIZE;
+    outwidth = outheight = DEFAULT_SIZE;
 
-	if ( !get_args( argc, argv ) )  {
-		(void)fputs(usage, stderr);
-		bu_exit ( 1, NULL );
+    if ( !get_args( argc, argv ) )  {
+	(void)fputs(usage, stderr);
+	bu_exit ( 1, NULL );
+    }
+
+    if ( encapsulated ) {
+	xpoints = width;
+	ypoints = height;
+    } else {
+	xpoints = outwidth * 72 + 0.5;
+	ypoints = outheight * 72 + 0.5;
+    }
+    prolog(ofp, file_name, xpoints, ypoints);
+
+    scans_per_patch = MAX_BYTES / width;
+    if ( scans_per_patch > height )
+	scans_per_patch = height;
+    bytes_per_patch = scans_per_patch * width;
+
+    for ( y = 0; y < height; y += scans_per_patch ) {
+	/* start a patch */
+	fprintf(ofp, "save\n");
+	fprintf(ofp, "%d %d 8 [%d 0 0 %d 0 %d] {<\n ",
+		width, scans_per_patch,		/* patch size */
+		width, height,			/* total size = 1.0 */
+		-y );				/* patch y origin */
+
+	/* data */
+	num = 0;
+	while ( num < bytes_per_patch ) {
+	    fprintf( ofp, "%02x", getc(infp) );
+	    if ( (++num % 32) == 0 )
+		fprintf( ofp, "\n " );
 	}
 
-	if ( encapsulated ) {
-		xpoints = width;
-		ypoints = height;
-	} else {
-		xpoints = outwidth * 72 + 0.5;
-		ypoints = outheight * 72 + 0.5;
-	}
-	prolog(ofp, file_name, xpoints, ypoints);
+	/* close this patch */
+	fprintf(ofp, ">} image\n");
+	fprintf(ofp, "restore\n");
+    }
 
-	scans_per_patch = MAX_BYTES / width;
-	if ( scans_per_patch > height )
-		scans_per_patch = height;
-	bytes_per_patch = scans_per_patch * width;
-
-	for ( y = 0; y < height; y += scans_per_patch ) {
-		/* start a patch */
-		fprintf(ofp, "save\n");
-		fprintf(ofp, "%d %d 8 [%d 0 0 %d 0 %d] {<\n ",
-			width, scans_per_patch,		/* patch size */
-			width, height,			/* total size = 1.0 */
-			-y );				/* patch y origin */
-
-		/* data */
-		num = 0;
-		while ( num < bytes_per_patch ) {
-			fprintf( ofp, "%02x", getc(infp) );
-			if ( (++num % 32) == 0 )
-				fprintf( ofp, "\n " );
-		}
-
-		/* close this patch */
-		fprintf(ofp, ">} image\n");
-		fprintf(ofp, "restore\n");
-	}
-
-	postlog( ofp );
-	return 0;
+    postlog( ofp );
+    return 0;
 }
 
 void
 prolog(FILE *fp, char *name, int width, int height)
 
 
-				/* in points */
+    /* in points */
 {
-	time_t	ltime;
+    time_t	ltime;
 
-	ltime = time(0);
+    ltime = time(0);
 
-	if ( encapsulated ) {
-		fputs( "%!PS-Adobe-2.0 EPSF-1.2\n", fp );
-		fprintf(fp, "%%%%Title: %s\n", name );
-		fputs( "%%Creator: BRL-CAD bw-ps\n", fp );
-		fprintf(fp, "%%%%CreationDate: %s", ctime(&ltime) );
-		fputs( "%%Pages: 0\n", fp );
-	} else {
-		fputs( "%!PS-Adobe-1.0\n", fp );
-		fputs( "%begin(plot)\n", fp );
-		fprintf(fp, "%%%%Title: %s\n", name );
-		fputs( "%%Creator: BRL-CAD bw-ps\n", fp );
-		fprintf(fp, "%%%%CreationDate: %s", ctime(&ltime) );
-	}
-	fprintf(fp, "%%%%BoundingBox: 0 0 %d %d\n", width, height );
-	fputs( "%%EndComments\n\n", fp );
+    if ( encapsulated ) {
+	fputs( "%!PS-Adobe-2.0 EPSF-1.2\n", fp );
+	fprintf(fp, "%%%%Title: %s\n", name );
+	fputs( "%%Creator: BRL-CAD bw-ps\n", fp );
+	fprintf(fp, "%%%%CreationDate: %s", ctime(&ltime) );
+	fputs( "%%Pages: 0\n", fp );
+    } else {
+	fputs( "%!PS-Adobe-1.0\n", fp );
+	fputs( "%begin(plot)\n", fp );
+	fprintf(fp, "%%%%Title: %s\n", name );
+	fputs( "%%Creator: BRL-CAD bw-ps\n", fp );
+	fprintf(fp, "%%%%CreationDate: %s", ctime(&ltime) );
+    }
+    fprintf(fp, "%%%%BoundingBox: 0 0 %d %d\n", width, height );
+    fputs( "%%EndComments\n\n", fp );
 
-	if ( !encapsulated && landscape ) {
-		int	tmp;
-		tmp = pagewidth;
-		pagewidth = pageheight;
-		pageheight = tmp;
-		fprintf( fp, "90 rotate\n" );
-		fprintf( fp, "0 -%d translate\n", pageheight );
-	}
-	if ( !encapsulated && center ) {
-		int	xtrans, ytrans;
-		xtrans = (pagewidth - width)/2.0;
-		ytrans = (pageheight - height)/2.0;
-		fprintf( fp, "%d %d translate\n", xtrans, ytrans );
-	}
-	fprintf( fp, "%d %d scale\n\n", width, height );
+    if ( !encapsulated && landscape ) {
+	int	tmp;
+	tmp = pagewidth;
+	pagewidth = pageheight;
+	pageheight = tmp;
+	fprintf( fp, "90 rotate\n" );
+	fprintf( fp, "0 -%d translate\n", pageheight );
+    }
+    if ( !encapsulated && center ) {
+	int	xtrans, ytrans;
+	xtrans = (pagewidth - width)/2.0;
+	ytrans = (pageheight - height)/2.0;
+	fprintf( fp, "%d %d translate\n", xtrans, ytrans );
+    }
+    fprintf( fp, "%d %d scale\n\n", width, height );
 }
 
 void
 postlog(FILE *fp)
 {
-	if ( !encapsulated )
-		fputs( "%end(plot)\n", fp );
+    if ( !encapsulated )
+	fputs( "%end(plot)\n", fp );
 
-	fputs( "\nshowpage\n", fp );
+    fputs( "\nshowpage\n", fp );
 }
 
 /*

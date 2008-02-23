@@ -94,37 +94,37 @@ main(int argc, char **argv)
 	anim_dirn2mat(mat, dir, norm);
 	VSET(norm, mat[1], mat[5], 0.0);
 	switch (print_mode) {
-	case LOOKAT_SCRIPT:
-	    printf("start %d;\n", frame++);
-	    printf("clean;\n");
-	    if (print_viewsize)
-		printf("viewsize %.10g;\n", vsize);
-	    printf("eye_pt %.10g %.10g %.10g;\n", eye[0], eye[1], eye[2]);
-	    printf("viewrot %.10g\t%.10g\t%.10g\t0\n", -mat[1], -mat[5], -mat[9]);
-	    printf("%.10g\t%.10f\t%.10g\t0\n", mat[2], mat[6], mat[10]);
-	    printf("%.10g\t%.10g\t%.10g\t0\n", -mat[0], -mat[4], -mat[8]);
-	    printf("0\t0\t0\t1;\n");
-	    printf("end;\n");
-	    break;
-	case LOOKAT_YPR:
-	    anim_mat2ypr(angles, mat);
-	    angles[0] *= RTOD;
-	    angles[1] *= RTOD;
-	    angles[2] *= RTOD;
-	    printf("%.10g", time);
-	    if (print_viewsize)
-		printf("\t%.10g", vsize);
-	    printf("\t%.10g\t%.10g\t%.10g", eye[0], eye[1], eye[2]);
-	    printf("\t%.10g\t%.10g\t%.10g\n", angles[0], angles[1], angles[2]);
-	    break;
-	case LOOKAT_QUAT:
-	    anim_mat2quat(quat, mat);
-	    printf("%.10g", time);
-	    if (print_viewsize)
-		printf("\t%.10g", vsize);
-	    printf("\t%.10g\t%.10g\t%.10g", eye[0], eye[1], eye[2]);
-	    printf("\t%.10g\t%.10g\t%.10g\t%.10g\n", quat[0], quat[1], quat[2], quat[3]);
-	    break;
+	    case LOOKAT_SCRIPT:
+		printf("start %d;\n", frame++);
+		printf("clean;\n");
+		if (print_viewsize)
+		    printf("viewsize %.10g;\n", vsize);
+		printf("eye_pt %.10g %.10g %.10g;\n", eye[0], eye[1], eye[2]);
+		printf("viewrot %.10g\t%.10g\t%.10g\t0\n", -mat[1], -mat[5], -mat[9]);
+		printf("%.10g\t%.10f\t%.10g\t0\n", mat[2], mat[6], mat[10]);
+		printf("%.10g\t%.10g\t%.10g\t0\n", -mat[0], -mat[4], -mat[8]);
+		printf("0\t0\t0\t1;\n");
+		printf("end;\n");
+		break;
+	    case LOOKAT_YPR:
+		anim_mat2ypr(angles, mat);
+		angles[0] *= RTOD;
+		angles[1] *= RTOD;
+		angles[2] *= RTOD;
+		printf("%.10g", time);
+		if (print_viewsize)
+		    printf("\t%.10g", vsize);
+		printf("\t%.10g\t%.10g\t%.10g", eye[0], eye[1], eye[2]);
+		printf("\t%.10g\t%.10g\t%.10g\n", angles[0], angles[1], angles[2]);
+		break;
+	    case LOOKAT_QUAT:
+		anim_mat2quat(quat, mat);
+		printf("%.10g", time);
+		if (print_viewsize)
+		    printf("\t%.10g", vsize);
+		printf("\t%.10g\t%.10g\t%.10g", eye[0], eye[1], eye[2]);
+		printf("\t%.10g\t%.10g\t%.10g\t%.10g\n", quat[0], quat[1], quat[2], quat[3]);
+		break;
 	}
 
 
@@ -139,21 +139,21 @@ int get_args(int argc, char **argv)
     int c;
     while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
 	switch (c) {
-	case 'f':
-	    sscanf(bu_optarg, "%d", &frame);
-	    break;
-	case 'y':
-	    print_mode = LOOKAT_YPR;
-	    break;
-	case 'q':
-	    print_mode = LOOKAT_QUAT;
-	    break;
-	case 'v':
-	    print_viewsize = 1;
-	    break;
-	default:
-	    fprintf(stderr, "Unknown option: -%c\n", c);
-	    return(0);
+	    case 'f':
+		sscanf(bu_optarg, "%d", &frame);
+		break;
+	    case 'y':
+		print_mode = LOOKAT_YPR;
+		break;
+	    case 'q':
+		print_mode = LOOKAT_QUAT;
+		break;
+	    case 'v':
+		print_viewsize = 1;
+		break;
+	    default:
+		fprintf(stderr, "Unknown option: -%c\n", c);
+		return(0);
 	}
     }
     return(1);

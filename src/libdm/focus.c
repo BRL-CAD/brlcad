@@ -69,7 +69,7 @@ dm_x11_applicationfocus() {
 void
 dm_applicationfocus() {
 #ifdef DM_X
-  dm_x11_applicationfocus();
+    dm_x11_applicationfocus();
 #endif
 }
 

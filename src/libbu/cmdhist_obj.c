@@ -47,11 +47,11 @@ static struct bu_cmdhist_obj HeadCmdHistObj;		/* head of command history object 
 
 static struct bu_cmdtab ch_cmds[] =
 {
-	{"add",		bu_cmdhist_add},
-	{"curr",	bu_cmdhist_curr},
-	{"next",	bu_cmdhist_next},
-	{"prev",	bu_cmdhist_prev},
-	{(char *)NULL,	CMD_NULL}
+    {"add",		bu_cmdhist_add},
+    {"curr",	bu_cmdhist_curr},
+    {"next",	bu_cmdhist_next},
+    {"prev",	bu_cmdhist_prev},
+    {(char *)NULL,	CMD_NULL}
 };
 
 /**
@@ -60,7 +60,7 @@ static struct bu_cmdtab ch_cmds[] =
 int
 cho_hist(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-	return bu_cmd(clientData, interp, argc, argv, ch_cmds, 1);
+    return bu_cmd(clientData, interp, argc, argv, ch_cmds, 1);
 }
 
 
@@ -69,12 +69,12 @@ cho_hist(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  */
 static struct bu_cmdtab cho_cmds[] =
 {
-	{"add",		bu_cmdhist_add},
-	{"curr",	bu_cmdhist_curr},
-	{"history",	bu_cmdhist_history},
-	{"next",	bu_cmdhist_next},
-	{"prev",	bu_cmdhist_prev},
-	{(char *)NULL,	CMD_NULL}
+    {"add",		bu_cmdhist_add},
+    {"curr",	bu_cmdhist_curr},
+    {"history",	bu_cmdhist_history},
+    {"next",	bu_cmdhist_next},
+    {"prev",	bu_cmdhist_prev},
+    {(char *)NULL,	CMD_NULL}
 };
 
 
@@ -84,7 +84,7 @@ static struct bu_cmdtab cho_cmds[] =
 static int
 cho_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-	return bu_cmd(clientData, interp, argc, argv, cho_cmds, 1);
+    return bu_cmd(clientData, interp, argc, argv, cho_cmds, 1);
 }
 
 
@@ -94,11 +94,11 @@ cho_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 int
 Cho_Init(Tcl_Interp *interp)
 {
-	BU_LIST_INIT(&HeadCmdHistObj.l);
-	(void)Tcl_CreateCommand(interp, "ch_open", (Tcl_CmdProc *)cho_open_tcl,
-				(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+    BU_LIST_INIT(&HeadCmdHistObj.l);
+    (void)Tcl_CreateCommand(interp, "ch_open", (Tcl_CmdProc *)cho_open_tcl,
+			    (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 
-	return TCL_OK;
+    return TCL_OK;
 }
 
 
@@ -108,27 +108,27 @@ Cho_Init(Tcl_Interp *interp)
 static void
 cho_deleteProc(ClientData clientData)
 {
-	struct bu_cmdhist_obj *chop = (struct  bu_cmdhist_obj *)clientData;
-	struct bu_cmdhist *curr, *next;
+    struct bu_cmdhist_obj *chop = (struct  bu_cmdhist_obj *)clientData;
+    struct bu_cmdhist *curr, *next;
 
-	/* free list of commands */
+    /* free list of commands */
+    curr = BU_LIST_NEXT(bu_cmdhist, &chop->cho_head.l);
+    while (BU_LIST_NOT_HEAD(curr, &chop->cho_head.l)) {
 	curr = BU_LIST_NEXT(bu_cmdhist, &chop->cho_head.l);
-	while (BU_LIST_NOT_HEAD(curr, &chop->cho_head.l)) {
-		curr = BU_LIST_NEXT(bu_cmdhist, &chop->cho_head.l);
-		next = BU_LIST_PNEXT(bu_cmdhist, curr);
+	next = BU_LIST_PNEXT(bu_cmdhist, curr);
 
-		bu_vls_free(&curr->h_command);
+	bu_vls_free(&curr->h_command);
 
-		BU_LIST_DEQUEUE(&curr->l);
-		bu_free((genptr_t)curr, "cho_deleteProc: curr");
-		curr = next;
-	}
+	BU_LIST_DEQUEUE(&curr->l);
+	bu_free((genptr_t)curr, "cho_deleteProc: curr");
+	curr = next;
+    }
 
-	bu_vls_free(&chop->cho_name);
-	bu_vls_free(&chop->cho_head.h_command);
+    bu_vls_free(&chop->cho_name);
+    bu_vls_free(&chop->cho_head.h_command);
 
-	BU_LIST_DEQUEUE(&chop->l);
-	bu_free((genptr_t)chop, "cho_deleteProc: chop");
+    BU_LIST_DEQUEUE(&chop->l);
+    bu_free((genptr_t)chop, "cho_deleteProc: chop");
 }
 
 #if 0			/* As far as I can tell, this is not used.  CTJ */
@@ -140,26 +140,26 @@ cho_deleteProc(ClientData clientData)
  */
 static int
 cho_close_tcl(clientData, interp, argc, argv)
-     ClientData      clientData;
-     Tcl_Interp      *interp;
-     int             argc;
-     char            **argv;
+    ClientData      clientData;
+    Tcl_Interp      *interp;
+    int             argc;
+    char            **argv;
 {
-	struct bu_cmdhist_obj *chop = (struct  bu_cmdhist_obj *)clientData;
-	struct bu_vls vls;
+    struct bu_cmdhist_obj *chop = (struct  bu_cmdhist_obj *)clientData;
+    struct bu_vls vls;
 
-	if (argc != 2) {
-		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib cho_close");
-		Tcl_Eval(interp, bu_vls_addr(&vls));
-		bu_vls_free(&vls);
-		return TCL_ERROR;
-	}
+    if (argc != 2) {
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "helplib cho_close");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
+    }
 
-	/* Among other things, this will call cho_deleteProc. */
-	Tcl_DeleteCommand(interp, bu_vls_addr(&chop->cho_name));
+    /* Among other things, this will call cho_deleteProc. */
+    Tcl_DeleteCommand(interp, bu_vls_addr(&chop->cho_name));
 
-	return TCL_OK;
+    return TCL_OK;
 }
 #endif
 
@@ -170,32 +170,32 @@ cho_close_tcl(clientData, interp, argc, argv)
 static struct bu_cmdhist_obj *
 cho_open(ClientData clientData, Tcl_Interp *interp, char *name)
 {
-	struct bu_cmdhist_obj *chop;
+    struct bu_cmdhist_obj *chop;
 
-	/* quell compilation warning */
-	clientData = clientData;
+    /* quell compilation warning */
+    clientData = clientData;
 
-	/* check to see if command history object exists */
-	for (BU_LIST_FOR(chop, bu_cmdhist_obj, &HeadCmdHistObj.l)) {
-		if (strcmp(name, bu_vls_addr(&chop->cho_name)) == 0) {
-			Tcl_AppendResult(interp, "ch_open: ", name,
-					 " exists.\n", (char *)NULL);
-			return CMDHIST_OBJ_NULL;
-		}
+    /* check to see if command history object exists */
+    for (BU_LIST_FOR(chop, bu_cmdhist_obj, &HeadCmdHistObj.l)) {
+	if (strcmp(name, bu_vls_addr(&chop->cho_name)) == 0) {
+	    Tcl_AppendResult(interp, "ch_open: ", name,
+			     " exists.\n", (char *)NULL);
+	    return CMDHIST_OBJ_NULL;
 	}
+    }
 
-	BU_GETSTRUCT(chop, bu_cmdhist_obj);
-	bu_vls_init(&chop->cho_name);
-	bu_vls_strcpy(&chop->cho_name, name);
-	BU_LIST_INIT(&chop->cho_head.l);
-	bu_vls_init(&chop->cho_head.h_command);
-	chop->cho_head.h_start.tv_sec = chop->cho_head.h_start.tv_usec =
-		chop->cho_head.h_finish.tv_sec = chop->cho_head.h_finish.tv_usec = 0L;
-	chop->cho_head.h_status = TCL_OK;
-	chop->cho_curr = &chop->cho_head;
+    BU_GETSTRUCT(chop, bu_cmdhist_obj);
+    bu_vls_init(&chop->cho_name);
+    bu_vls_strcpy(&chop->cho_name, name);
+    BU_LIST_INIT(&chop->cho_head.l);
+    bu_vls_init(&chop->cho_head.h_command);
+    chop->cho_head.h_start.tv_sec = chop->cho_head.h_start.tv_usec =
+	chop->cho_head.h_finish.tv_sec = chop->cho_head.h_finish.tv_usec = 0L;
+    chop->cho_head.h_status = TCL_OK;
+    chop->cho_curr = &chop->cho_head;
 
-	BU_LIST_APPEND(&HeadCmdHistObj.l, &chop->l);
-	return chop;
+    BU_LIST_APPEND(&HeadCmdHistObj.l, &chop->l);
+    return chop;
 }
 
 /**
@@ -208,38 +208,38 @@ cho_open(ClientData clientData, Tcl_Interp *interp, char *name)
 int
 cho_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-	struct bu_cmdhist_obj *chop;
-	struct bu_vls vls;
+    struct bu_cmdhist_obj *chop;
+    struct bu_vls vls;
 
-	if (argc == 1) {
-		/* get list of command history objects */
-		for (BU_LIST_FOR(chop, bu_cmdhist_obj, &HeadCmdHistObj.l))
-			Tcl_AppendResult(interp, bu_vls_addr(&chop->cho_name), " ", (char *)NULL);
+    if (argc == 1) {
+	/* get list of command history objects */
+	for (BU_LIST_FOR(chop, bu_cmdhist_obj, &HeadCmdHistObj.l))
+	    Tcl_AppendResult(interp, bu_vls_addr(&chop->cho_name), " ", (char *)NULL);
 
-		return TCL_OK;
-	}
+	return TCL_OK;
+    }
 
-	if (argc == 2) {
-		if ((chop = cho_open(clientData, interp, argv[1])) == CMDHIST_OBJ_NULL)
-			return TCL_ERROR;
+    if (argc == 2) {
+	if ((chop = cho_open(clientData, interp, argv[1])) == CMDHIST_OBJ_NULL)
+	    return TCL_ERROR;
 
-		(void)Tcl_CreateCommand(interp,
-					bu_vls_addr(&chop->cho_name),
-					(Tcl_CmdProc *)cho_cmd,
-					(ClientData)chop,
-					cho_deleteProc);
+	(void)Tcl_CreateCommand(interp,
+				bu_vls_addr(&chop->cho_name),
+				(Tcl_CmdProc *)cho_cmd,
+				(ClientData)chop,
+				cho_deleteProc);
 
-		/* Return new function name as result */
-		Tcl_ResetResult(interp);
-		Tcl_AppendResult(interp, bu_vls_addr(&chop->cho_name), (char *)NULL);
-		return TCL_OK;
-	}
+	/* Return new function name as result */
+	Tcl_ResetResult(interp);
+	Tcl_AppendResult(interp, bu_vls_addr(&chop->cho_name), (char *)NULL);
+	return TCL_OK;
+    }
 
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib ch_open");
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "helplib ch_open");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
+    return TCL_ERROR;
 }
 /** @} */
 /*

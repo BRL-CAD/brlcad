@@ -52,11 +52,11 @@ main (void)
     wp = (struct whatsit *) bu_malloc(sizeof(struct whatsit), "the whatsit");
 
     bu_log("Before initializing, the whatsit = <%x> (%x, %g)\n",
-	    wp, wp -> w_magic, wp -> w_d);
+	   wp, wp -> w_magic, wp -> w_d);
     wp -> w_magic = WHATSIT_MAGIC;
     wp -> w_d = 4.96962656372528225336310;
     bu_log("After initializing, the whatsit = <%x> (%x, %g)\n",
-	    wp, wp -> w_magic, wp -> w_d);
+	   wp, wp -> w_magic, wp -> w_d);
 
     free_whatsit(wp, "the whatsit once");
     bu_log("Freed it once\n");

@@ -55,88 +55,88 @@
 fastf_t
 rt_nurb_par_edge(const struct face_g_snurb *srf, fastf_t epsilon)
 {
-	struct face_g_snurb * us, *vs, * uus, * vvs, *uvs;
-	fastf_t d1, d2, d3;
-	int i;
-	fastf_t *pt;
+    struct face_g_snurb * us, *vs, * uus, * vvs, *uvs;
+    fastf_t d1, d2, d3;
+    int i;
+    fastf_t *pt;
 
 
-	us = rt_nurb_s_diff(srf, RT_NURB_SPLIT_ROW);
-	vs = rt_nurb_s_diff(srf, RT_NURB_SPLIT_COL);
-	uus = rt_nurb_s_diff(us, RT_NURB_SPLIT_ROW);
-	vvs = rt_nurb_s_diff(vs, RT_NURB_SPLIT_COL);
-	uvs = rt_nurb_s_diff(vs, RT_NURB_SPLIT_ROW);
+    us = rt_nurb_s_diff(srf, RT_NURB_SPLIT_ROW);
+    vs = rt_nurb_s_diff(srf, RT_NURB_SPLIT_COL);
+    uus = rt_nurb_s_diff(us, RT_NURB_SPLIT_ROW);
+    vvs = rt_nurb_s_diff(vs, RT_NURB_SPLIT_COL);
+    uvs = rt_nurb_s_diff(vs, RT_NURB_SPLIT_ROW);
 
-	d1 = 0.0;
-	d2 = 0.0;
-	d3 = 0.0;
+    d1 = 0.0;
+    d2 = 0.0;
+    d3 = 0.0;
 
-	pt = (fastf_t *) uus->ctl_points;
+    pt = (fastf_t *) uus->ctl_points;
 
-	/* Find the maximum value of the 2nd derivative in U */
+    /* Find the maximum value of the 2nd derivative in U */
 
-	for ( i = 0; i < uus->s_size[0] * uus->s_size[1]; i++)
-	{
-		fastf_t mag;
+    for ( i = 0; i < uus->s_size[0] * uus->s_size[1]; i++)
+    {
+	fastf_t mag;
 
-		mag = MAGNITUDE( pt );
+	mag = MAGNITUDE( pt );
 
-		if ( mag > d1) d1 = mag;
+	if ( mag > d1) d1 = mag;
 
-		pt += RT_NURB_EXTRACT_COORDS(uus->pt_type);
+	pt += RT_NURB_EXTRACT_COORDS(uus->pt_type);
 
-	}
+    }
 
-	/* Find the maximum value of the partial derivative in UV */
+    /* Find the maximum value of the partial derivative in UV */
 
-	pt = (fastf_t *) uvs->ctl_points;
+    pt = (fastf_t *) uvs->ctl_points;
 
-	for ( i = 0; i < uvs->s_size[0] * uvs->s_size[1]; i++)
-	{
-		fastf_t mag;
+    for ( i = 0; i < uvs->s_size[0] * uvs->s_size[1]; i++)
+    {
+	fastf_t mag;
 
-		mag = MAGNITUDE( pt );
+	mag = MAGNITUDE( pt );
 
-		if ( mag > d2) d2 = mag;
+	if ( mag > d2) d2 = mag;
 
-		pt += RT_NURB_EXTRACT_COORDS(uvs->pt_type);
+	pt += RT_NURB_EXTRACT_COORDS(uvs->pt_type);
 
-	}
-
-
-	/* Find the maximum value of the 2nd derivative in V */
-	pt = (fastf_t *) vvs->ctl_points;
-
-	for ( i = 0; i < vvs->s_size[0] * vvs->s_size[1]; i++)
-	{
-		fastf_t mag;
-
-		mag = MAGNITUDE( pt );
-
-		if ( mag > d3) d3 = mag;
-
-		pt += RT_NURB_EXTRACT_COORDS(vvs->pt_type);
-
-	}
-
-	/* free up storage */
-
-	rt_nurb_free_snurb( us, (struct resource *)NULL);
-	rt_nurb_free_snurb( vs, (struct resource *)NULL);
-	rt_nurb_free_snurb( uus, (struct resource *)NULL);
-	rt_nurb_free_snurb( vvs, (struct resource *)NULL);
-	rt_nurb_free_snurb( uvs, (struct resource *)NULL);
+    }
 
 
-	/* The paper uses the following to calculate the longest edge size
-	 *			  	  1/2
-	 *  3.0 * (			)
-	 *	  (	   2.0		)
-	 *	  _________________________
-	 *	  (2.0 * (d1 + 2 D2 + d3)
-	 */
+    /* Find the maximum value of the 2nd derivative in V */
+    pt = (fastf_t *) vvs->ctl_points;
 
-	return ( 3.0 * sqrt( epsilon / (2.0*(d1 + (2.0 * d2)+ d3))));
+    for ( i = 0; i < vvs->s_size[0] * vvs->s_size[1]; i++)
+    {
+	fastf_t mag;
+
+	mag = MAGNITUDE( pt );
+
+	if ( mag > d3) d3 = mag;
+
+	pt += RT_NURB_EXTRACT_COORDS(vvs->pt_type);
+
+    }
+
+    /* free up storage */
+
+    rt_nurb_free_snurb( us, (struct resource *)NULL);
+    rt_nurb_free_snurb( vs, (struct resource *)NULL);
+    rt_nurb_free_snurb( uus, (struct resource *)NULL);
+    rt_nurb_free_snurb( vvs, (struct resource *)NULL);
+    rt_nurb_free_snurb( uvs, (struct resource *)NULL);
+
+
+    /* The paper uses the following to calculate the longest edge size
+     *			  	  1/2
+     *  3.0 * (			)
+     *	  (	   2.0		)
+     *	  _________________________
+     *	  (2.0 * (d1 + 2 D2 + d3)
+     */
+
+    return ( 3.0 * sqrt( epsilon / (2.0*(d1 + (2.0 * d2)+ d3))));
 }
 
 /*
@@ -155,80 +155,80 @@ rt_nurb_par_edge(const struct face_g_snurb *srf, fastf_t epsilon)
 fastf_t
 rt_cnurb_par_edge(const struct edge_g_cnurb *crv, fastf_t epsilon)
 {
-	struct edge_g_cnurb *d1, *d2;
-	fastf_t der2[5], t, *pt;
-	fastf_t num_coord_factor, final_t;
-	int num_coords;
-	int i, j;
+    struct edge_g_cnurb *d1, *d2;
+    fastf_t der2[5], t, *pt;
+    fastf_t num_coord_factor, final_t;
+    int num_coords;
+    int i, j;
 
-	if ( crv->order < 3)
-		return( -1.0 );
+    if ( crv->order < 3)
+	return( -1.0 );
 
-	num_coords = RT_NURB_EXTRACT_COORDS( crv->pt_type );
-	if ( num_coords > 5 )
-	{
-		bu_log( "ERROR: rt_cnurb_par_edge() cannot handle curves with more than 5 coordinates (curve has %d)\n",
-			num_coords );
-		bu_bomb( "ERROR: rt_cnurb_par_edge() cannot handle curves with more than 5 coordinates\n" );
-	}
+    num_coords = RT_NURB_EXTRACT_COORDS( crv->pt_type );
+    if ( num_coords > 5 )
+    {
+	bu_log( "ERROR: rt_cnurb_par_edge() cannot handle curves with more than 5 coordinates (curve has %d)\n",
+		num_coords );
+	bu_bomb( "ERROR: rt_cnurb_par_edge() cannot handle curves with more than 5 coordinates\n" );
+    }
 
-	for ( i=0; i<num_coords; i++ )
-	{
-		der2[i] = 0.0;
-	}
+    for ( i=0; i<num_coords; i++ )
+    {
+	der2[i] = 0.0;
+    }
 
-	final_t = MAX_FASTF;
-	num_coord_factor = sqrt( (double)num_coords );
+    final_t = MAX_FASTF;
+    num_coord_factor = sqrt( (double)num_coords );
 
-	d1 = rt_nurb_c_diff( crv );
-	d2 = rt_nurb_c_diff( d1 );
+    d1 = rt_nurb_c_diff( crv );
+    d2 = rt_nurb_c_diff( d1 );
 
 #if 0
-	pt = d1->ctl_points;
-	for ( i=0; i<d1->c_size; i++ )
-	{
-		for ( j=0; j<num_coords; j++ )
-		{
-			fastf_t abs_val;
-
-			abs_val = *pt > 0.0 ? *pt : -(*pt);
-			if ( abs_val > der1[j] )
-				der1[j] = abs_val;
-			pt++;
-		}
-	}
-#endif
-	pt = d2->ctl_points;
-	for ( i=0; i<d2->c_size; i++ )
-	{
-		for ( j=0; j<num_coords; j++ )
-		{
-			fastf_t abs_val;
-
-			abs_val = *pt > 0.0 ? *pt : -(*pt);
-			if ( abs_val > der2[j] )
-				der2[j] = abs_val;
-			pt++;
-		}
-	}
-
-	rt_nurb_free_cnurb( d1 );
-	rt_nurb_free_cnurb( d2 );
-
+    pt = d1->ctl_points;
+    for ( i=0; i<d1->c_size; i++ )
+    {
 	for ( j=0; j<num_coords; j++ )
 	{
-		if ( NEAR_ZERO( der2[j], SMALL_FASTF ) )
-			continue;
+	    fastf_t abs_val;
 
-		t = sqrt( 2.0 * epsilon / (num_coord_factor * der2[j] ) );
-		if ( t < final_t )
-			final_t = t;
+	    abs_val = *pt > 0.0 ? *pt : -(*pt);
+	    if ( abs_val > der1[j] )
+		der1[j] = abs_val;
+	    pt++;
 	}
+    }
+#endif
+    pt = d2->ctl_points;
+    for ( i=0; i<d2->c_size; i++ )
+    {
+	for ( j=0; j<num_coords; j++ )
+	{
+	    fastf_t abs_val;
 
-	if ( final_t == MAX_FASTF )
-		return( -1.0 );
-	else
-		return( final_t/2.0 );
+	    abs_val = *pt > 0.0 ? *pt : -(*pt);
+	    if ( abs_val > der2[j] )
+		der2[j] = abs_val;
+	    pt++;
+	}
+    }
+
+    rt_nurb_free_cnurb( d1 );
+    rt_nurb_free_cnurb( d2 );
+
+    for ( j=0; j<num_coords; j++ )
+    {
+	if ( NEAR_ZERO( der2[j], SMALL_FASTF ) )
+	    continue;
+
+	t = sqrt( 2.0 * epsilon / (num_coord_factor * der2[j] ) );
+	if ( t < final_t )
+	    final_t = t;
+    }
+
+    if ( final_t == MAX_FASTF )
+	return( -1.0 );
+    else
+	return( final_t/2.0 );
 }
 
 /*

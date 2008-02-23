@@ -337,21 +337,21 @@ tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
     if (dmp->dm_width == 0) {
 	dmp->dm_width =
 	    WidthOfScreen(Tk_Screen((
-				     (struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin)) - 30;
+					(struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin)) - 30;
 	++make_square;
     }
 
     if (dmp->dm_height == 0) {
 	dmp->dm_height =
 	    HeightOfScreen(Tk_Screen((
-				      (struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin)) - 30;
+					 (struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin)) - 30;
 	++make_square;
     }
 
     if (make_square > 0) {
 	/* Make window square */
 	if (dmp->dm_height <
-	   dmp->dm_width)
+	    dmp->dm_width)
 	    dmp->dm_width = dmp->dm_height;
 	else
 	    dmp->dm_height = dmp->dm_width;
@@ -416,7 +416,7 @@ tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
 	int return_val;
 
 	if (!XQueryExtension(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			    "XInputExtension", &return_val, &return_val, &return_val))
+			     "XInputExtension", &return_val, &return_val, &return_val))
 	    goto Skip_dials;
     }
 #endif
@@ -431,19 +431,19 @@ tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
     }
 
     if ( list == (XDeviceInfoPtr)NULL ||
-	list == (XDeviceInfoPtr)1 )  goto Done;
+	 list == (XDeviceInfoPtr)1 )  goto Done;
 
     for (j = 0; j < ndevices; ++j, list++) {
 	if (list->use == IsXExtensionDevice) {
 	    if (!strcmp(list->name, "dial+buttons")) {
 		if ((dev = XOpenDevice(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-				      list->id)) == (XDevice *)NULL) {
+				       list->id)) == (XDevice *)NULL) {
 		    bu_log("Tk_open: Couldn't open the dials+buttons\n");
 		    goto Done;
 		}
 
 		for (cip = dev->classes, k = 0; k < dev->num_classes;
-		    ++k, ++cip) {
+		     ++k, ++cip) {
 		    switch (cip->input_class) {
 #if IR_BUTTONS
 			case ButtonClass:

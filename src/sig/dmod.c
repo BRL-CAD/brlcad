@@ -142,7 +142,7 @@ int main(int argc, char **argv)
     register int j;
 
     if ( !get_args( argc, argv ) || isatty(fileno(infp))
-	|| isatty(fileno(stdout)) ) {
+	 || isatty(fileno(stdout)) ) {
 	bu_exit(1, "Usage: dmod {-a add -s sub -m mult -d div -A(abs) -e exp -r root} [doubles]\n");
     }
 

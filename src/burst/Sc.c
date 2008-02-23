@@ -67,24 +67,24 @@ char		ScTermname[ScTERMSIZ] = "UNKNOWN";
 
 /* Individual terminal control strings (TCS).			*/
 char		*ScBC, /* Backspace character.			*/
-  *ScPC, /* Padding character.			*/
-  *ScUP, /* Cursor up one line.			*/
-  *ScCS, /* Change scrolling region.		*/
-  *ScSO, /* Begin standout mode.			*/
-  *ScSE, /* End standout mode.			*/
-  *ScCE, /* Clear to end of line.			*/
-  *ScCL, /* Clear display and home cursor.	*/
-  *ScHO, /* Home cursor.				*/
-  *ScCM, /* Screen-relative cursor motion.	*/
-  *ScTI, /* Initialize terminal.			*/
-  *ScAL, /* Insert line.				*/
-  *ScDL, /* Delete line.				*/
-  *ScSR, /* Scroll text down.			*/
-  *ScSF; /* Scroll text up.			*/
+    *ScPC, /* Padding character.			*/
+    *ScUP, /* Cursor up one line.			*/
+    *ScCS, /* Change scrolling region.		*/
+    *ScSO, /* Begin standout mode.			*/
+    *ScSE, /* End standout mode.			*/
+    *ScCE, /* Clear to end of line.			*/
+    *ScCL, /* Clear display and home cursor.	*/
+    *ScHO, /* Home cursor.				*/
+    *ScCM, /* Screen-relative cursor motion.	*/
+    *ScTI, /* Initialize terminal.			*/
+    *ScAL, /* Insert line.				*/
+    *ScDL, /* Delete line.				*/
+    *ScSR, /* Scroll text down.			*/
+    *ScSF; /* Scroll text up.			*/
 
 /* Individual terminal parameters.				*/
 int		ScLI, /* Number of lines on screen.		*/
-  ScCO; /* Number of columns on screen.		*/
+    ScCO; /* Number of columns on screen.		*/
 
 
 /*
@@ -93,23 +93,23 @@ int		ScLI, /* Number of lines on screen.		*/
 static void
 ScLoadTP( void ) {
 #ifdef TIOCGWINSZ
-  /* Get window size for DMD layers support.			*/
-  struct _winsize		window;
+    /* Get window size for DMD layers support.			*/
+    struct _winsize		window;
 
-  if (	ioctl( fd_stdout, TIOCGWINSZ, &window ) == 0
-	&&	window.ws_row != 0 && window.ws_col != 0
+    if (	ioctl( fd_stdout, TIOCGWINSZ, &window ) == 0
+		&&	window.ws_row != 0 && window.ws_col != 0
 	)
     {
-      ScLI = (int) window.ws_row;
-      ScCO = (int) window.ws_col;
+	ScLI = (int) window.ws_row;
+	ScCO = (int) window.ws_col;
     }
-  else
+    else
 #endif
     {
-      ScLI = tgetnum( "li" );
-      ScCO = tgetnum( "co" );
+	ScLI = tgetnum( "li" );
+	ScCO = tgetnum( "co" );
     }
-  return;
+    return;
 }
 
 /*
@@ -117,22 +117,22 @@ ScLoadTP( void ) {
 */
 static void
 ScLoadTCS( void ) {
-  ScCS = tgetstr( "cs", &tstr_addr );
-  ScSE = tgetstr( "se", &tstr_addr );
-  ScSO = tgetstr( "so", &tstr_addr );
-  ScCE = tgetstr( "ce", &tstr_addr );
-  ScCL = tgetstr( "cl", &tstr_addr );
-  ScHO = tgetstr( "ho", &tstr_addr );
-  ScCM = tgetstr( "cm", &tstr_addr );
-  ScBC = tgetstr( "bc", &tstr_addr );
-  ScPC = tgetstr( "pc", &tstr_addr );
-  ScUP = tgetstr( "up", &tstr_addr );
-  ScTI = tgetstr( "ti", &tstr_addr );
-  ScAL = tgetstr( "al", &tstr_addr );
-  ScDL = tgetstr( "dl", &tstr_addr );
-  ScSR = tgetstr( "sr", &tstr_addr );
-  ScSF = tgetstr( "sf", &tstr_addr );
-  return;
+    ScCS = tgetstr( "cs", &tstr_addr );
+    ScSE = tgetstr( "se", &tstr_addr );
+    ScSO = tgetstr( "so", &tstr_addr );
+    ScCE = tgetstr( "ce", &tstr_addr );
+    ScCL = tgetstr( "cl", &tstr_addr );
+    ScHO = tgetstr( "ho", &tstr_addr );
+    ScCM = tgetstr( "cm", &tstr_addr );
+    ScBC = tgetstr( "bc", &tstr_addr );
+    ScPC = tgetstr( "pc", &tstr_addr );
+    ScUP = tgetstr( "up", &tstr_addr );
+    ScTI = tgetstr( "ti", &tstr_addr );
+    ScAL = tgetstr( "al", &tstr_addr );
+    ScDL = tgetstr( "dl", &tstr_addr );
+    ScSR = tgetstr( "sr", &tstr_addr );
+    ScSF = tgetstr( "sf", &tstr_addr );
+    return;
 }
 
 /*
@@ -144,7 +144,7 @@ ScLoadTCS( void ) {
 */
 int
 PutChr( char c ) {
-  return	putc( c, out_fp );
+    return	putc( c, out_fp );
 }
 
 /*
@@ -163,35 +163,35 @@ PutChr( char c ) {
 */
 boolean
 ScInit( FILE *fp ) {
-  char	*term; /* Name of terminal from environment. */
-  out_fp = fp;
-  fd_stdout = fileno( out_fp );
-  if ( (term = getenv( "TERM" )) == NULL )
+    char	*term; /* Name of terminal from environment. */
+    out_fp = fp;
+    fd_stdout = fileno( out_fp );
+    if ( (term = getenv( "TERM" )) == NULL )
     {
-      (void) fprintf( stderr, "TERM not set or exported!\n" );
-      return	0;
-    }
-  bu_strlcpy( ScTermname, term, ScTERMSIZ );
-
-  /* Get terminal entry.						*/
-  switch ( tgetent( ScTermcap, term ) )
-    {
-      case -1 :
-	(void) fprintf( stderr, "Can't open termcap file!\n" );
-	return	0;
-      case  0 :
-	(void) fprintf( stderr,
-			"Terminal type not in termcap file!\n"
-			);
+	(void) fprintf( stderr, "TERM not set or exported!\n" );
 	return	0;
     }
+    bu_strlcpy( ScTermname, term, ScTERMSIZ );
 
-  /* Get individual terminal parameters and control strings.	*/
-  ScLoadTP();
-  ScLoadTCS();
+    /* Get terminal entry.						*/
+    switch ( tgetent( ScTermcap, term ) )
+    {
+	case -1 :
+	    (void) fprintf( stderr, "Can't open termcap file!\n" );
+	    return	0;
+	case  0 :
+	    (void) fprintf( stderr,
+			    "Terminal type not in termcap file!\n"
+		);
+	    return	0;
+    }
 
-  tputs( ScTI, 1, (int (*)(int))PutChr );	/* Initialize terminal.			*/
-  return	1;		/* All is well.				*/
+    /* Get individual terminal parameters and control strings.	*/
+    ScLoadTP();
+    ScLoadTCS();
+
+    tputs( ScTI, 1, (int (*)(int))PutChr );	/* Initialize terminal.			*/
+    return	1;		/* All is well.				*/
 }
 
 /*
@@ -199,10 +199,10 @@ ScInit( FILE *fp ) {
 */
 boolean
 ScClrEOL( void ) {
-  if ( ScCE == NULL )
-    return	0;
-  tputs( ScCE, 1, (int (*)(int))PutChr );
-  return	1;
+    if ( ScCE == NULL )
+	return	0;
+    tputs( ScCE, 1, (int (*)(int))PutChr );
+    return	1;
 }
 
 /*
@@ -210,10 +210,10 @@ ScClrEOL( void ) {
 */
 boolean
 ScClrScrlReg( void ) {
-  if ( ScCS == NULL )
-    return	0;
-  tputs( tgoto( ScCS, ScLI-1, 0 ), 1, (int (*)(int))PutChr );
-  return	1;
+    if ( ScCS == NULL )
+	return	0;
+    tputs( tgoto( ScCS, ScLI-1, 0 ), 1, (int (*)(int))PutChr );
+    return	1;
 }
 
 /*
@@ -221,21 +221,21 @@ ScClrScrlReg( void ) {
 */
 boolean
 ScClrStandout( void ) {
-  if ( ScSE == NULL )
-    return	0;
-  tputs( ScSE, 1, (int (*)(int))PutChr );
-  return	1;
+    if ( ScSE == NULL )
+	return	0;
+    tputs( ScSE, 1, (int (*)(int))PutChr );
+    return	1;
 }
 
 /*
-Clear the screen and "home" the cursor.
+  Clear the screen and "home" the cursor.
 */
 boolean
 ScClrText( void ) {
-  if ( ScCL == NULL )
-    return	0;
-  tputs( ScCL, ScLI, (int (*)(int))PutChr );
-  return	1;
+    if ( ScCL == NULL )
+	return	0;
+    tputs( ScCL, ScLI, (int (*)(int))PutChr );
+    return	1;
 }
 
 /*
@@ -243,10 +243,10 @@ ScClrText( void ) {
 */
 boolean
 ScInsertLn( void ) {
-  if ( ScAL == NULL )
-    return	0;
-  tputs( ScAL, 1, (int (*)(int))PutChr );
-  return	1;
+    if ( ScAL == NULL )
+	return	0;
+    tputs( ScAL, 1, (int (*)(int))PutChr );
+    return	1;
 }
 
 /*
@@ -254,10 +254,10 @@ ScInsertLn( void ) {
 */
 boolean
 ScDeleteLn( void ) {
-  if ( ScDL == NULL )
-    return	0;
-  tputs( ScDL, 1, (int (*)(int))PutChr );
-  return	1;
+    if ( ScDL == NULL )
+	return	0;
+    tputs( ScDL, 1, (int (*)(int))PutChr );
+    return	1;
 }
 
 /*
@@ -265,10 +265,10 @@ ScDeleteLn( void ) {
 */
 boolean
 ScDnScroll( void ) {
-  if ( ScSR == NULL )
-    return	0;
-  tputs( ScSR, 1, (int (*)(int))PutChr );
-  return	1;
+    if ( ScSR == NULL )
+	return	0;
+    tputs( ScSR, 1, (int (*)(int))PutChr );
+    return	1;
 }
 
 /*
@@ -276,10 +276,10 @@ ScDnScroll( void ) {
 */
 boolean
 ScHmCursor( void ) {
-  if ( ScHO == NULL )
-    return	0;
-  tputs( ScHO, 1, (int (*)(int))PutChr );
-  return	1;
+    if ( ScHO == NULL )
+	return	0;
+    tputs( ScHO, 1, (int (*)(int))PutChr );
+    return	1;
 }
 
 /*
@@ -288,12 +288,12 @@ ScHmCursor( void ) {
 */
 boolean
 ScMvCursor( int x, int y ) {
-  if ( ScCM == NULL )
-    return	0;
+    if ( ScCM == NULL )
+	return	0;
 
-  --x; --y; /* Tgoto() adds 1 to each coordinate!? */
-  tputs( tgoto( ScCM, x, y ), 1, (int (*)(int))PutChr );
-  return	1;
+    --x; --y; /* Tgoto() adds 1 to each coordinate!? */
+    tputs( tgoto( ScCM, x, y ), 1, (int (*)(int))PutChr );
+    return	1;
 }
 
 /*
@@ -302,10 +302,10 @@ ScMvCursor( int x, int y ) {
 */
 boolean
 ScSetScrlReg( int top, int btm ) {
-  if ( ScCS == NULL )
-    return	0;
-  tputs( tgoto( ScCS, btm-1, top-1 ), 1, (int (*)(int))PutChr );
-  return	1;
+    if ( ScCS == NULL )
+	return	0;
+    tputs( tgoto( ScCS, btm-1, top-1 ), 1, (int (*)(int))PutChr );
+    return	1;
 }
 
 /*
@@ -313,10 +313,10 @@ ScSetScrlReg( int top, int btm ) {
 */
 boolean
 ScSetStandout( void ) {
-  if ( ScSO == NULL )
-    return	0;
-  tputs( ScSO, 1, (int (*)(int))PutChr );
-  return	1;
+    if ( ScSO == NULL )
+	return	0;
+    tputs( ScSO, 1, (int (*)(int))PutChr );
+    return	1;
 }
 
 /*
@@ -324,10 +324,10 @@ ScSetStandout( void ) {
 */
 boolean
 ScUpScroll( void ) {
-  if ( ScSF == NULL )
-    return	0;
-  tputs( ScSF, 1, (int (*)(int))PutChr );
-  return	1;
+    if ( ScSF == NULL )
+	return	0;
+    tputs( ScSF, 1, (int (*)(int))PutChr );
+    return	1;
 }
 
 /*

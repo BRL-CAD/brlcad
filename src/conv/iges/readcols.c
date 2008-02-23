@@ -35,16 +35,16 @@
 
 void
 Readcols( id, cols )
-char *id;
-int cols;
+    char *id;
+    int cols;
 {
-	int i;
-	char *tmp;
+    int i;
+    char *tmp;
 
-	tmp = id;
+    tmp = id;
 
-	for ( i=0; i<cols; i++ )
-		*tmp++ = card[counter++];
+    for ( i=0; i<cols; i++ )
+	*tmp++ = card[counter++];
 }
 
 

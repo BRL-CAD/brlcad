@@ -43,26 +43,26 @@
 int
 fb_sim_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
-	register int	y;
-	register int	tot;
-	int		got;
+    register int	y;
+    register int	tot;
+    int		got;
 
-	tot = 0;
-	for ( y=ymin; y < ymin+height; y++ )  {
-		got = fb_read( ifp, xmin, y, pp, width );
-		if ( got < 0 )  {
-			fb_log("fb_sim_readrect() y=%d unexpected EOF\n", y);
-			break;
-		}
-		tot += got;
-		if ( got != width )  {
-			fb_log("fb_sim_readrect() y=%d, read of %d got %d pixels, aborting\n",
-				y, width, got );
-			break;
-		}
-		pp += width * sizeof(RGBpixel);
+    tot = 0;
+    for ( y=ymin; y < ymin+height; y++ )  {
+	got = fb_read( ifp, xmin, y, pp, width );
+	if ( got < 0 )  {
+	    fb_log("fb_sim_readrect() y=%d unexpected EOF\n", y);
+	    break;
 	}
-	return(tot);
+	tot += got;
+	if ( got != width )  {
+	    fb_log("fb_sim_readrect() y=%d, read of %d got %d pixels, aborting\n",
+		   y, width, got );
+	    break;
+	}
+	pp += width * sizeof(RGBpixel);
+    }
+    return(tot);
 }
 
 /*
@@ -77,23 +77,23 @@ fb_sim_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned c
 int
 fb_sim_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
-	register int	y;
-	register int	tot;
-	int		got;
-	int		xlen;
+    register int	y;
+    register int	tot;
+    int		got;
+    int		xlen;
 
-	xlen = width;
-	if ( xmin + width > fb_getwidth(ifp) )
-		xlen = fb_getwidth(ifp) - xmin;
+    xlen = width;
+    if ( xmin + width > fb_getwidth(ifp) )
+	xlen = fb_getwidth(ifp) - xmin;
 
-	tot = 0;
-	for ( y=ymin; y < ymin+height; y++ )  {
-		got = fb_write( ifp, xmin, y, pp, xlen );
-		tot += got;
-		if ( got != xlen )  break;
-		pp += width * sizeof(RGBpixel);
-	}
-	return(tot);
+    tot = 0;
+    for ( y=ymin; y < ymin+height; y++ )  {
+	got = fb_write( ifp, xmin, y, pp, xlen );
+	tot += got;
+	if ( got != xlen )  break;
+	pp += width * sizeof(RGBpixel);
+    }
+    return(tot);
 }
 
 /*
@@ -103,30 +103,30 @@ fb_sim_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const uns
 int
 fb_sim_bwreadrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
-	register int	y;
-	register int	tot;
-	int		got;
-	unsigned char	buf[SIMBUF_SIZE*3];
+    register int	y;
+    register int	tot;
+    int		got;
+    unsigned char	buf[SIMBUF_SIZE*3];
 
-	if ( width > SIMBUF_SIZE )  {
-		fb_log("fb_sim_bwreadrect() width of %d exceeds internal buffer, aborting\n", width);
-		return -SIMBUF_SIZE;	/* FAIL */
-	}
+    if ( width > SIMBUF_SIZE )  {
+	fb_log("fb_sim_bwreadrect() width of %d exceeds internal buffer, aborting\n", width);
+	return -SIMBUF_SIZE;	/* FAIL */
+    }
 
-	tot = 0;
-	for ( y=ymin; y < ymin+height; y++ )  {
-		register int	x;
+    tot = 0;
+    for ( y=ymin; y < ymin+height; y++ )  {
+	register int	x;
 
-		got = fb_read( ifp, xmin, y, buf, width );
+	got = fb_read( ifp, xmin, y, buf, width );
 
-		/* Extract green chan */
-		for ( x=0; x < width; x++ )
-			*pp++ = buf[x*3+GRN];
+	/* Extract green chan */
+	for ( x=0; x < width; x++ )
+	    *pp++ = buf[x*3+GRN];
 
-		tot += got;
-		if ( got != width )  break;
-	}
-	return tot;
+	tot += got;
+	if ( got != width )  break;
+    }
+    return tot;
 }
 
 /*
@@ -135,41 +135,41 @@ fb_sim_bwreadrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned
 int
 fb_sim_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
-	register int	y;
-	register int	tot;
-	int		got;
-	int		xlen;
-	unsigned char	buf[SIMBUF_SIZE];
+    register int	y;
+    register int	tot;
+    int		got;
+    int		xlen;
+    unsigned char	buf[SIMBUF_SIZE];
 
-	if ( width > SIMBUF_SIZE )  {
-		fb_log("fb_sim_bwwriterect() width of %d exceeds internal buffer, aborting\n", width);
-		return -SIMBUF_SIZE;	/* FAIL */
+    if ( width > SIMBUF_SIZE )  {
+	fb_log("fb_sim_bwwriterect() width of %d exceeds internal buffer, aborting\n", width);
+	return -SIMBUF_SIZE;	/* FAIL */
+    }
+
+    xlen = width;
+    if ( xmin + width > fb_getwidth(ifp) )
+	xlen = fb_getwidth(ifp) - xmin;
+
+    tot = 0;
+    for ( y=ymin; y < ymin+height; y++ )  {
+	register int	x;
+	register unsigned char	*bp;
+
+	/* Copy monochrome (b&w) intensity into all three chans */
+	bp = buf;
+	for ( x=0; x < width; x++ )  {
+	    register unsigned char	c = *pp++;
+	    bp[0] = c;
+	    bp[1] = c;
+	    bp[2] = c;
+	    bp += 3;
 	}
 
-	xlen = width;
-	if ( xmin + width > fb_getwidth(ifp) )
-		xlen = fb_getwidth(ifp) - xmin;
-
-	tot = 0;
-	for ( y=ymin; y < ymin+height; y++ )  {
-		register int	x;
-		register unsigned char	*bp;
-
-		/* Copy monochrome (b&w) intensity into all three chans */
-		bp = buf;
-		for ( x=0; x < width; x++ )  {
-			register unsigned char	c = *pp++;
-			bp[0] = c;
-			bp[1] = c;
-			bp[2] = c;
-			bp += 3;
-		}
-
-		got = fb_write( ifp, xmin, y, buf, xlen );
-		tot += got;
-		if ( got != xlen )  break;
-	}
-	return tot;
+	got = fb_write( ifp, xmin, y, buf, xlen );
+	tot += got;
+	if ( got != xlen )  break;
+    }
+    return tot;
 }
 
 /*

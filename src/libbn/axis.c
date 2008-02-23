@@ -70,137 +70,137 @@ tp_3axis(FILE *fp,
 	 double tick_separation,/**< plot distance between ticks */
 	 double char_width)	/**< character scale (size) */
 {
-	register int i;
-	int	nticks;
-	point_t	tick_bottom;			/* -Y point of tick */
-	vect_t	axis_incr;			/* +X vect between ticks */
-	vect_t	axis_dir;
-	point_t	title_left;			/* left edge of title */
-	point_t	cur_point;
-	point_t	num_start;
-	point_t	num_center;			/* center point of number */
-	point_t	num_last_end;			/* end of last number */
-	vect_t	temp;
-	vect_t	diff;
-	mat_t	xlate_to_0;
-	mat_t	mat;				/* combined transform */
-	char	fmt[32];
-	char	str[64];
+    register int i;
+    int	nticks;
+    point_t	tick_bottom;			/* -Y point of tick */
+    vect_t	axis_incr;			/* +X vect between ticks */
+    vect_t	axis_dir;
+    point_t	title_left;			/* left edge of title */
+    point_t	cur_point;
+    point_t	num_start;
+    point_t	num_center;			/* center point of number */
+    point_t	num_last_end;			/* end of last number */
+    vect_t	temp;
+    vect_t	diff;
+    mat_t	xlate_to_0;
+    mat_t	mat;				/* combined transform */
+    char	fmt[32];
+    char	str[64];
 
-	/* Determine direction for ticks */
-	if ( ccw )
-		ccw = -1;			/* counter clockwise */
-	else
-		ccw = 1;			/* clockwise */
+    /* Determine direction for ticks */
+    if ( ccw )
+	ccw = -1;			/* counter clockwise */
+    else
+	ccw = 1;			/* clockwise */
 
-	if ( NEAR_ZERO(tick_separation, SMALL) )  tick_separation = 1;
+    if ( NEAR_ZERO(tick_separation, SMALL) )  tick_separation = 1;
 
+    /*
+     *  The point "origin" will be the center of the axis rotation.
+     *  On the assumption that this origin point is not at (0, 0, 0),
+     *  translate origin to (0, 0, 0) & apply the provided rotation matrix.
+     *  If the user provides translation or
+     *  scaling in his matrix, it will also be applied, but in most
+     *  cases that would not be useful.
+     */
+    MAT_IDN( xlate_to_0 );
+    MAT_DELTAS_VEC( xlate_to_0, origin);
+    bn_mat_mul( mat, rot, xlate_to_0 );
+    VMOVE( cur_point, origin );
+
+    /* Compute the bottom of the first tick */
+    VSET( temp, 0, -TICK_YLEN * ccw, 0 );
+    MAT4X3PNT( tick_bottom, mat, temp );
+
+    /* Compute the start of this tick's label */
+    VSET( temp, 0, -NUM_YOFF * ccw, 0 );
+    MAT4X3PNT( num_center, mat, temp );
+    temp[X] = -char_width*ndigits;
+    MAT4X3PNT( num_last_end, mat, temp );
+
+    /* Determine the increment between ticks */
+    VSET( temp, 1, 0, 0 );
+    MAT4X3VEC( axis_dir, mat, temp );
+    VSCALE( axis_incr, axis_dir, tick_separation );
+
+    /* Center the title, and find left edge */
+    VSET( temp, 0.5*(length - strlen(string)*char_width), -TITLE_YOFF*ccw, 0 );
+    MAT4X3PNT( title_left, mat, temp );
+    tp_3symbol(fp, string, title_left, rot, char_width );
+
+    nticks = length/tick_separation+0.5;
+    pdv_3move( fp, cur_point );
+    for ( i=0; i<=nticks; i++) {
 	/*
-	 *  The point "origin" will be the center of the axis rotation.
-	 *  On the assumption that this origin point is not at (0, 0, 0),
-	 *  translate origin to (0, 0, 0) & apply the provided rotation matrix.
-	 *  If the user provides translation or
-	 *  scaling in his matrix, it will also be applied, but in most
-	 *  cases that would not be useful.
+	 *  First, draw a tick.
+	 *  Then, if room, draw a numeric label.
+	 *  If last tick, done.
+	 *  Otherwise, advance in axis_dir direction.
 	 */
-	MAT_IDN( xlate_to_0 );
-	MAT_DELTAS_VEC( xlate_to_0, origin);
-	bn_mat_mul( mat, rot, xlate_to_0 );
-	VMOVE( cur_point, origin );
+	pdv_3cont( fp, tick_bottom );
 
-	/* Compute the bottom of the first tick */
-	VSET( temp, 0, -TICK_YLEN * ccw, 0 );
-	MAT4X3PNT( tick_bottom, mat, temp );
-
-	/* Compute the start of this tick's label */
-	VSET( temp, 0, -NUM_YOFF * ccw, 0 );
-	MAT4X3PNT( num_center, mat, temp );
-	temp[X] = -char_width*ndigits;
-	MAT4X3PNT( num_last_end, mat, temp );
-
-	/* Determine the increment between ticks */
-	VSET( temp, 1, 0, 0 );
-	MAT4X3VEC( axis_dir, mat, temp );
-	VSCALE( axis_incr, axis_dir, tick_separation );
-
-	/* Center the title, and find left edge */
-	VSET( temp, 0.5*(length - strlen(string)*char_width), -TITLE_YOFF*ccw, 0 );
-	MAT4X3PNT( title_left, mat, temp );
-	tp_3symbol(fp, string, title_left, rot, char_width );
-
-	nticks = length/tick_separation+0.5;
-	pdv_3move( fp, cur_point );
-	for ( i=0; i<=nticks; i++) {
-		/*
-		 *  First, draw a tick.
-		 *  Then, if room, draw a numeric label.
-		 *  If last tick, done.
-		 *  Otherwise, advance in axis_dir direction.
-		 */
-		pdv_3cont( fp, tick_bottom );
-
-		if (ndigits > 64) {
-		    bu_bomb("ERROR: Number of digits exceeds available buffer space");
-		}
-
-		if ( ndigits > 0 )  {
-			double f;
-			snprintf( fmt, 32, "%%%dg", ndigits);
-			snprintf( str, 64, fmt, label_start );
-			f = strlen(str) * char_width * 0.5;
-			VJOIN1( num_start, num_center, -f, axis_dir );
-
-			/* Only label this tick if the number will not
-			 * overlap with the previous number.
-			 */
-			VSUB2( diff, num_start, num_last_end );
-			if ( VDOT( diff, axis_dir ) >= 0 )  {
-				tp_3symbol( fp, str, num_start, rot, char_width );
-				VJOIN1( num_last_end, num_center, f, axis_dir );
-			}
-		}
-
-		if ( i == nticks )  break;
-
-		/* Advance, and draw next axis segment */
-		pdv_3move( fp, cur_point );
-		VADD2( cur_point, cur_point, axis_incr );
-		VADD2( tick_bottom, tick_bottom, axis_incr );
-		VADD2( num_center, num_center, axis_incr );
-
-		label_start += label_incr;
-
-		pdv_3cont( fp, cur_point);		/* draw axis */
+	if (ndigits > 64) {
+	    bu_bomb("ERROR: Number of digits exceeds available buffer space");
 	}
+
+	if ( ndigits > 0 )  {
+	    double f;
+	    snprintf( fmt, 32, "%%%dg", ndigits);
+	    snprintf( str, 64, fmt, label_start );
+	    f = strlen(str) * char_width * 0.5;
+	    VJOIN1( num_start, num_center, -f, axis_dir );
+
+	    /* Only label this tick if the number will not
+	     * overlap with the previous number.
+	     */
+	    VSUB2( diff, num_start, num_last_end );
+	    if ( VDOT( diff, axis_dir ) >= 0 )  {
+		tp_3symbol( fp, str, num_start, rot, char_width );
+		VJOIN1( num_last_end, num_center, f, axis_dir );
+	    }
+	}
+
+	if ( i == nticks )  break;
+
+	/* Advance, and draw next axis segment */
+	pdv_3move( fp, cur_point );
+	VADD2( cur_point, cur_point, axis_incr );
+	VADD2( tick_bottom, tick_bottom, axis_incr );
+	VADD2( num_center, num_center, axis_incr );
+
+	label_start += label_incr;
+
+	pdv_3cont( fp, cur_point);		/* draw axis */
+    }
 }
 
 void
 PL_FORTRAN(f3axis, F3AXIS)(fp, string, x, y, z, length, theta, ccw,
-	ndigits, label_start, label_incr, tick_separation, char_width )
-FILE		**fp;
-char		*string;	/* label for axis */
-float		*x, *y, *z;		/* start coordinates for axis */
-float		*length;	/* length of axis */
-float		*theta;		/* rotation off X-axis, in degrees */
-int		*ccw;
-int		*ndigits;	/* # digits wide */
-float		*label_start;	/* minimum value on axis */
-float		*label_incr;		/* increment for each tick */
-float		*tick_separation;		/* distance between ticks */
-float		*char_width;	/* character scale (size) */
+			   ndigits, label_start, label_incr, tick_separation, char_width )
+    FILE		**fp;
+    char		*string;	/* label for axis */
+    float		*x, *y, *z;		/* start coordinates for axis */
+    float		*length;	/* length of axis */
+    float		*theta;		/* rotation off X-axis, in degrees */
+    int		*ccw;
+    int		*ndigits;	/* # digits wide */
+    float		*label_start;	/* minimum value on axis */
+    float		*label_incr;		/* increment for each tick */
+    float		*tick_separation;		/* distance between ticks */
+    float		*char_width;	/* character scale (size) */
 {
-	char buf[128];
-	mat_t	mat;
-	vect_t	pnt;
+    char buf[128];
+    mat_t	mat;
+    vect_t	pnt;
 
-	VSET( pnt, *x, *y, *z );
-	MAT_IDN(mat);
-	bn_mat_angles( mat, 0.0, 0.0, *theta );
-	bu_strlcpy( buf, string, sizeof(buf) );
+    VSET( pnt, *x, *y, *z );
+    MAT_IDN(mat);
+    bn_mat_angles( mat, 0.0, 0.0, *theta );
+    bu_strlcpy( buf, string, sizeof(buf) );
 
-	tp_3axis( *fp, buf, pnt, mat, *length, *ccw,
-		*ndigits, *label_start, *label_incr,
-		*tick_separation, *char_width );
+    tp_3axis( *fp, buf, pnt, mat, *length, *ccw,
+	      *ndigits, *label_start, *label_incr,
+	      *tick_separation, *char_width );
 }
 /** @} */
 /*

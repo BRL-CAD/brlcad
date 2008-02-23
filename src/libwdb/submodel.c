@@ -47,17 +47,17 @@
 int
 mk_submodel(struct rt_wdb *fp, const char *name, const char *file, const char *treetop, int meth)
 {
-	struct rt_submodel_internal *in;
+    struct rt_submodel_internal *in;
 
-	BU_GETSTRUCT( in, rt_submodel_internal );
-	in->magic = RT_SUBMODEL_INTERNAL_MAGIC;
-	bu_vls_init( &in->file );
-	if ( file )  bu_vls_strcpy( &in->file, file );
-	bu_vls_init( &in->treetop );
-	bu_vls_strcpy( &in->treetop, treetop );
-	in->meth = meth;
+    BU_GETSTRUCT( in, rt_submodel_internal );
+    in->magic = RT_SUBMODEL_INTERNAL_MAGIC;
+    bu_vls_init( &in->file );
+    if ( file )  bu_vls_strcpy( &in->file, file );
+    bu_vls_init( &in->treetop );
+    bu_vls_strcpy( &in->treetop, treetop );
+    in->meth = meth;
 
-	return wdb_export( fp, name, (genptr_t)in, ID_SUBMODEL, mk_conv2mm );
+    return wdb_export( fp, name, (genptr_t)in, ID_SUBMODEL, mk_conv2mm );
 }
 
 /*

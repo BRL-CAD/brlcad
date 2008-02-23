@@ -41,10 +41,10 @@ extern struct bn_unif *RandomFlag;
  * 	From page 135 of Digital Halftoning.
  */
 static unsigned char	ordered[4][4] = {
-	{2, 16, 3, 13},
-	{12, 8, 9, 5},
-	{4, 14, 1, 15},
-	{10, 6, 11, 7}};
+    {2, 16, 3, 13},
+    {12, 8, 9, 5},
+    {4, 14, 1, 15},
+    {10, 6, 11, 7}};
 
 /*	tone_folly	4x4 square ordered dither dispersed (folly and van dam)
  *
@@ -73,12 +73,12 @@ static unsigned char	ordered[4][4] = {
 int
 tone_folly(int pix, int x, int y, int nx, int ny, int new)
 {
-	register int threshold = 16*ordered[ x % 4][ y % 4];
+    register int threshold = 16*ordered[ x % 4][ y % 4];
 
-	if (RandomFlag) {
-		threshold += BN_UNIF_DOUBLE(RandomFlag)*63;
-	}
-	return ((pix*Levels + threshold)/255);
+    if (RandomFlag) {
+	threshold += BN_UNIF_DOUBLE(RandomFlag)*63;
+    }
+    return ((pix*Levels + threshold)/255);
 }
 
 /*

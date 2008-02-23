@@ -60,8 +60,8 @@ static int	bu_log_indent_cur_level = 0; /* formerly rt_g.rtg_logindent */
 void
 bu_log_indent_delta(int delta)
 {
-	if ( (bu_log_indent_cur_level += delta) < 0 )
-		bu_log_indent_cur_level = 0;
+    if ( (bu_log_indent_cur_level += delta) < 0 )
+	bu_log_indent_cur_level = 0;
 }
 
 /**
@@ -74,18 +74,18 @@ bu_log_indent_delta(int delta)
 void
 bu_log_indent_vls(struct bu_vls *v)
 {
-	bu_vls_spaces( v, bu_log_indent_cur_level );
+    bu_vls_spaces( v, bu_log_indent_cur_level );
 }
 
 #if 1
 struct bu_hook_list bu_log_hook_list = {
-	{
-		BU_LIST_HEAD_MAGIC,
-		&bu_log_hook_list.l,
-		&bu_log_hook_list.l
-	},
-	BUHOOK_NULL,
-	GENPTR_NULL
+    {
+	BU_LIST_HEAD_MAGIC,
+	&bu_log_hook_list.l,
+	&bu_log_hook_list.l
+    },
+    BUHOOK_NULL,
+    GENPTR_NULL
 };
 #else
 struct bu_hook_list bu_log_hook_list;
@@ -319,9 +319,9 @@ bu_log(const char *fmt, ...)
 
     } else {
 #if 1
-	    bu_log_call_hooks(bu_vls_addr(&output));
+	bu_log_call_hooks(bu_vls_addr(&output));
 #else
-	    bu_call_hook(&bu_log_hook_list, (genptr_t)bu_vls_addr(&output));
+	bu_call_hook(&bu_log_hook_list, (genptr_t)bu_vls_addr(&output));
 #endif
     }
 
@@ -361,17 +361,17 @@ bu_flog(FILE *fp, const char *fmt, ...)
 
 	len = bu_vls_strlen(&output);
 	if (len) {
-	  bu_semaphore_acquire(BU_SEM_SYSCALL);
-	  ret = fwrite( bu_vls_addr(&output), len, 1, fp );
-	  bu_semaphore_release(BU_SEM_SYSCALL);
-	  if ( ret != 1 )  bu_bomb("bu_flog: write error");
+	    bu_semaphore_acquire(BU_SEM_SYSCALL);
+	    ret = fwrite( bu_vls_addr(&output), len, 1, fp );
+	    bu_semaphore_release(BU_SEM_SYSCALL);
+	    if ( ret != 1 )  bu_bomb("bu_flog: write error");
 	}
 
     } else {
 #if 1
-	    bu_log_call_hooks(bu_vls_addr(&output));
+	bu_log_call_hooks(bu_vls_addr(&output));
 #else
-	    bu_call_hook(&bu_log_hook_list, (genptr_t)bu_vls_addr(&output));
+	bu_call_hook(&bu_log_hook_list, (genptr_t)bu_vls_addr(&output));
 #endif
     }
 

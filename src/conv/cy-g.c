@@ -219,174 +219,174 @@ main(int argc, char **argv)
 
 	} else
 
-	/* optional header items
-	 *
-	 * NAME, DATE, LTMIN, LTMAX, LGMIN, LGMAX, RMIN, RMAX, SCALE,
-	 * RPROP, FILLED, SMOOTHED, SPACE, INSIDE_OUT, COLOR,
-	 * THETA_RIGHTHAND
-	 */
-
-	if (strncasecmp("NAME=", line, 5) == 0) {
-	    /* name of the scan subject */
-
-	    cptr = line+5;
-	    snprintf(name, sizeof(name), "%s", cptr);
-
-	    if (strlen(name) <= 0) {
-		bu_log("Encountered empty NAME, using \"%s\" as object name\n", CY_DATA);
-		snprintf(name, sizeof(name), "%s", CY_DATA);
-	    } else {
-		db5_update_attribute("_GLOBAL", "NAME", cptr, outfp->dbip);
-		bu_log("NAME=%s\n", name);
-	    }
-
-	} else if (strncasecmp("DATE=", line, 5) == 0) {
-	    /* date the scan was performed */
-
-	    cptr = line+5;
-	    snprintf(date, sizeof(date), "%s", cptr);
-	    if (strlen(date) <= 0) {
-		bu_log("Encountered empty DATE, ignoring\n");
-	    } else {
-		db5_update_attribute("_GLOBAL", "DATE", cptr, outfp->dbip);
-		bu_log("DATE=%s\n", date);
-	    }
-
-	} else if (strncasecmp("SPACE=", line, 6) == 0) {
-	    /* what kind of scan */
-
-	    cptr = line+6;
-	    snprintf(space, sizeof(date), "%s", cptr);
-	    db5_update_attribute("_GLOBAL", "SPACE", cptr, outfp->dbip);
-	    bu_log("SPACE=%s\n", space);
-
-	    if (strcasecmp(space, "CYLINDRICAL") != 0) {
-		/* don't support CARTESIAN or BILATERAL */
-		bu_log("Encountered SPACE=%s\n", space);
-		bu_exit(1, "%s only supports CYLINDRICAL scans\n", argv[0]);
-	    }
-
-	} else if (strncasecmp("COLOR=", line, 6) == 0) {
-	    /* unknown/unsupported */
-
-	    cptr = line+6;
-	    snprintf(color, sizeof(date), "%s", cptr);
-	    db5_update_attribute("_GLOBAL", "COLOR", cptr, outfp->dbip);
-	    bu_log("COLOR=%s\n", color);
-
-	    if (strcasecmp(color, "SGI") != 0) {
-		bu_log("Encountered unknown COLOR, ignoring\n");
-	    }
-
-	} else if (strncasecmp("LGMIN=", line, 6) == 0) {
-	    /* minimum longitude data window (inclusive) */
-
-	    cptr = line+6;
-	    lgmin = atoi(cptr);
-	    db5_update_attribute("_GLOBAL", "LGMIN", cptr, outfp->dbip);
-	    bu_log("LGMIN=%d\n", lgmin);
-
-	} else if (strncasecmp("LGMAX=", line, 6) == 0) {
-	    /* maximum longitude data window (inclusive) */
-
-	    cptr = line+6;
-	    lgmax = atoi(cptr);
-	    db5_update_attribute("_GLOBAL", "LGMAX", cptr, outfp->dbip);
-	    bu_log("LGMAX=%d\n", lgmax);
-
-	} else if (strncasecmp("LTMIN=", line, 6) == 0) {
-	    /* minimum latitude data window (inclusive) */
-
-	    cptr = line+6;
-	    ltmin = atoi(cptr);
-	    db5_update_attribute("_GLOBAL", "LTMIN", cptr, outfp->dbip);
-	    bu_log("LTMIN=%d\n", ltmin);
-
-	} else if (strncasecmp("LTMAX=", line, 6) == 0) {
-	    /* maximum latitude data window (inclusive) */
-
-	    cptr = line+6;
-	    ltmax = atoi(cptr);
-	    db5_update_attribute("_GLOBAL", "LTMAX", cptr, outfp->dbip);
-	    bu_log("LTMAX=%d\n", ltmax);
-
-	} else if (strncasecmp("RMIN=", line, 5) == 0) {
-	    /* minimum radius */
-
-	    cptr = line+5;
-	    rmin = atoi(cptr);
-	    db5_update_attribute("_GLOBAL", "RMIN", cptr, outfp->dbip);
-	    bu_log("RMIN=%d\n", rmin);
-
-	} else if (strncasecmp("RMAX=", line, 5) == 0) {
-	    /* maximum radius */
-
-	    cptr = line+5;
-	    rmax = atoi(cptr);
-	    db5_update_attribute("_GLOBAL", "RMAX", cptr, outfp->dbip);
-	    bu_log("RMAX=%d\n", rmax);
-
-	} else if (strncasecmp("LTSHIFT=", line, 8) == 0) {
-	    /* translate latitude values by (+/-) N positions,
-	     * wrapping around at the latitude limit.
+	    /* optional header items
+	     *
+	     * NAME, DATE, LTMIN, LTMAX, LGMIN, LGMAX, RMIN, RMAX, SCALE,
+	     * RPROP, FILLED, SMOOTHED, SPACE, INSIDE_OUT, COLOR,
+	     * THETA_RIGHTHAND
 	     */
 
-	    cptr = line+8;
-	    ltshift = atoi(cptr);
-	    db5_update_attribute("_GLOBAL", "LTSHIFT", cptr, outfp->dbip);
-	    bu_log("LTSHIFT=%d\n", ltshift);
+	    if (strncasecmp("NAME=", line, 5) == 0) {
+		/* name of the scan subject */
 
-	} else if (strncasecmp("SCALE=", line, 6) == 0) {
-	    /* scan value scaling factor */
+		cptr = line+5;
+		snprintf(name, sizeof(name), "%s", cptr);
 
-	    cptr = line+6;
-	    scale = atof(cptr);
-	    db5_update_attribute("_GLOBAL", "SCALE", cptr, outfp->dbip);
-	    bu_log("SCALE=%lf\n", scale);
+		if (strlen(name) <= 0) {
+		    bu_log("Encountered empty NAME, using \"%s\" as object name\n", CY_DATA);
+		    snprintf(name, sizeof(name), "%s", CY_DATA);
+		} else {
+		    db5_update_attribute("_GLOBAL", "NAME", cptr, outfp->dbip);
+		    bu_log("NAME=%s\n", name);
+		}
 
-	} else if (strncasecmp("RPROP=", line, 6) == 0) {
-	    /* radius scaling factor */
+	    } else if (strncasecmp("DATE=", line, 5) == 0) {
+		/* date the scan was performed */
 
-	    cptr = line+6;
-	    rprop = atof(cptr);
-	    db5_update_attribute("_GLOBAL", "RPROP", cptr, outfp->dbip);
-	    bu_log("RPROP=%lf\n", rprop);
+		cptr = line+5;
+		snprintf(date, sizeof(date), "%s", cptr);
+		if (strlen(date) <= 0) {
+		    bu_log("Encountered empty DATE, ignoring\n");
+		} else {
+		    db5_update_attribute("_GLOBAL", "DATE", cptr, outfp->dbip);
+		    bu_log("DATE=%s\n", date);
+		}
 
-	} else if (strncasecmp("FILLED=", line, 7) == 0) {
-	    /* unknown/unsupported */
+	    } else if (strncasecmp("SPACE=", line, 6) == 0) {
+		/* what kind of scan */
 
-	    cptr = line+6;
-	    filled = strncasecmp(cptr, "TRUE", 4) == 0 ? 1 : 0; 
-	    db5_update_attribute("_GLOBAL", "FILLED", cptr, outfp->dbip);
-	    bu_log("FILLED=%d\n", filled);
+		cptr = line+6;
+		snprintf(space, sizeof(date), "%s", cptr);
+		db5_update_attribute("_GLOBAL", "SPACE", cptr, outfp->dbip);
+		bu_log("SPACE=%s\n", space);
 
-	} else if (strncasecmp("SMOOTHED=", line, 9) == 0) {
-	    /* unknown/unsupported */
+		if (strcasecmp(space, "CYLINDRICAL") != 0) {
+		    /* don't support CARTESIAN or BILATERAL */
+		    bu_log("Encountered SPACE=%s\n", space);
+		    bu_exit(1, "%s only supports CYLINDRICAL scans\n", argv[0]);
+		}
 
-	    cptr = line+9;
-	    smoothed = strncasecmp(cptr, "TRUE", 4) == 0 ? 1 : 0; 
-	    db5_update_attribute("_GLOBAL", "SMOOTHED", cptr, outfp->dbip);
-	    bu_log("SMOOTHED=%d\n", smoothed);
+	    } else if (strncasecmp("COLOR=", line, 6) == 0) {
+		/* unknown/unsupported */
 
-	} else if (strncasecmp("INSIDE_OUT=", line, 11) == 0) {
-	    /* unsupported, presumably being scanned from the inside */
+		cptr = line+6;
+		snprintf(color, sizeof(date), "%s", cptr);
+		db5_update_attribute("_GLOBAL", "COLOR", cptr, outfp->dbip);
+		bu_log("COLOR=%s\n", color);
 
-	    cptr = line+11;
-	    inside_out = strncasecmp(cptr, "TRUE", 4) == 0 ? 1 : 0; 
-	    db5_update_attribute("_GLOBAL", "INSIDE_OUT", cptr, outfp->dbip);
-	    bu_log("INSIDE_OUT=%d\n", inside_out);
+		if (strcasecmp(color, "SGI") != 0) {
+		    bu_log("Encountered unknown COLOR, ignoring\n");
+		}
 
-	} else if (strncasecmp("THETA_RIGHTHAND=", line, 16) == 0) {
-	    /* unsupported */
+	    } else if (strncasecmp("LGMIN=", line, 6) == 0) {
+		/* minimum longitude data window (inclusive) */
 
-	    cptr = line+16;
-	    theta_righthand = strncasecmp(cptr, "TRUE", 4) == 0 ? 1 : 0; 
-	    db5_update_attribute("_GLOBAL", "THETA_RIGHTHAND", cptr, outfp->dbip);
-	    bu_log("INSIDE_OUT=%d\n", theta_righthand);
+		cptr = line+6;
+		lgmin = atoi(cptr);
+		db5_update_attribute("_GLOBAL", "LGMIN", cptr, outfp->dbip);
+		bu_log("LGMIN=%d\n", lgmin);
 
-	} else {
-	    bu_log("UNKNOWN HEADER LINE: %s (skipping)\n", line);
-	}
+	    } else if (strncasecmp("LGMAX=", line, 6) == 0) {
+		/* maximum longitude data window (inclusive) */
+
+		cptr = line+6;
+		lgmax = atoi(cptr);
+		db5_update_attribute("_GLOBAL", "LGMAX", cptr, outfp->dbip);
+		bu_log("LGMAX=%d\n", lgmax);
+
+	    } else if (strncasecmp("LTMIN=", line, 6) == 0) {
+		/* minimum latitude data window (inclusive) */
+
+		cptr = line+6;
+		ltmin = atoi(cptr);
+		db5_update_attribute("_GLOBAL", "LTMIN", cptr, outfp->dbip);
+		bu_log("LTMIN=%d\n", ltmin);
+
+	    } else if (strncasecmp("LTMAX=", line, 6) == 0) {
+		/* maximum latitude data window (inclusive) */
+
+		cptr = line+6;
+		ltmax = atoi(cptr);
+		db5_update_attribute("_GLOBAL", "LTMAX", cptr, outfp->dbip);
+		bu_log("LTMAX=%d\n", ltmax);
+
+	    } else if (strncasecmp("RMIN=", line, 5) == 0) {
+		/* minimum radius */
+
+		cptr = line+5;
+		rmin = atoi(cptr);
+		db5_update_attribute("_GLOBAL", "RMIN", cptr, outfp->dbip);
+		bu_log("RMIN=%d\n", rmin);
+
+	    } else if (strncasecmp("RMAX=", line, 5) == 0) {
+		/* maximum radius */
+
+		cptr = line+5;
+		rmax = atoi(cptr);
+		db5_update_attribute("_GLOBAL", "RMAX", cptr, outfp->dbip);
+		bu_log("RMAX=%d\n", rmax);
+
+	    } else if (strncasecmp("LTSHIFT=", line, 8) == 0) {
+		/* translate latitude values by (+/-) N positions,
+		 * wrapping around at the latitude limit.
+		 */
+
+		cptr = line+8;
+		ltshift = atoi(cptr);
+		db5_update_attribute("_GLOBAL", "LTSHIFT", cptr, outfp->dbip);
+		bu_log("LTSHIFT=%d\n", ltshift);
+
+	    } else if (strncasecmp("SCALE=", line, 6) == 0) {
+		/* scan value scaling factor */
+
+		cptr = line+6;
+		scale = atof(cptr);
+		db5_update_attribute("_GLOBAL", "SCALE", cptr, outfp->dbip);
+		bu_log("SCALE=%lf\n", scale);
+
+	    } else if (strncasecmp("RPROP=", line, 6) == 0) {
+		/* radius scaling factor */
+
+		cptr = line+6;
+		rprop = atof(cptr);
+		db5_update_attribute("_GLOBAL", "RPROP", cptr, outfp->dbip);
+		bu_log("RPROP=%lf\n", rprop);
+
+	    } else if (strncasecmp("FILLED=", line, 7) == 0) {
+		/* unknown/unsupported */
+
+		cptr = line+6;
+		filled = strncasecmp(cptr, "TRUE", 4) == 0 ? 1 : 0; 
+		db5_update_attribute("_GLOBAL", "FILLED", cptr, outfp->dbip);
+		bu_log("FILLED=%d\n", filled);
+
+	    } else if (strncasecmp("SMOOTHED=", line, 9) == 0) {
+		/* unknown/unsupported */
+
+		cptr = line+9;
+		smoothed = strncasecmp(cptr, "TRUE", 4) == 0 ? 1 : 0; 
+		db5_update_attribute("_GLOBAL", "SMOOTHED", cptr, outfp->dbip);
+		bu_log("SMOOTHED=%d\n", smoothed);
+
+	    } else if (strncasecmp("INSIDE_OUT=", line, 11) == 0) {
+		/* unsupported, presumably being scanned from the inside */
+
+		cptr = line+11;
+		inside_out = strncasecmp(cptr, "TRUE", 4) == 0 ? 1 : 0; 
+		db5_update_attribute("_GLOBAL", "INSIDE_OUT", cptr, outfp->dbip);
+		bu_log("INSIDE_OUT=%d\n", inside_out);
+
+	    } else if (strncasecmp("THETA_RIGHTHAND=", line, 16) == 0) {
+		/* unsupported */
+
+		cptr = line+16;
+		theta_righthand = strncasecmp(cptr, "TRUE", 4) == 0 ? 1 : 0; 
+		db5_update_attribute("_GLOBAL", "THETA_RIGHTHAND", cptr, outfp->dbip);
+		bu_log("INSIDE_OUT=%d\n", theta_righthand);
+
+	    } else {
+		bu_log("UNKNOWN HEADER LINE: %s (skipping)\n", line);
+	    }
     }
 
 
@@ -417,8 +417,8 @@ main(int argc, char **argv)
     /* DATA contains NLT * NLG * 2 bytes data values */
     data = (short *)bu_malloc(nlt * nlg * sizeof(short), "data");
 /*
-    bu_log("VOIDVAL is %d\n", VOIDVAL);
-    bu_log("MAXVAL is %d\n", MAXVAL);
+  bu_log("VOIDVAL is %d\n", VOIDVAL);
+  bu_log("MAXVAL is %d\n", MAXVAL);
 */
 
     /* read int the actual data values */

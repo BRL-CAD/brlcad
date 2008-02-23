@@ -40,20 +40,20 @@ extern int irfft_adds, irfft_mults;
 int
 main(int argc, char **argv)
 {
-	double	x[4097];
-	int	n, m;
+    double	x[4097];
+    int	n, m;
 
-	if ( argc != 2 ) {
-		fprintf( stderr, "Usage: ifftc length > fftlength.c\n" );
-		return 1;
-	}
+    if ( argc != 2 ) {
+	fprintf( stderr, "Usage: ifftc length > fftlength.c\n" );
+	return 1;
+    }
 
-	n = atoi(argv[1]);
-	m = log((double)n)/log(2.0) + 0.5;	/* careful truncation */
+    n = atoi(argv[1]);
+    m = log((double)n)/log(2.0) + 0.5;	/* careful truncation */
 
-	ditsplit( x, n, m );
-	fprintf( stderr, "adds = %d, mults = %d\n", irfft_adds, irfft_mults );
-	return 0;
+    ditsplit( x, n, m );
+    fprintf( stderr, "adds = %d, mults = %d\n", irfft_adds, irfft_mults );
+    return 0;
 }
 
 /*

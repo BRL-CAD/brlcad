@@ -48,51 +48,51 @@ Usage: dauto [window_size (512)] < doubles\n";
 
 int main(int argc, char **argv)
 {
-	int	i, j, n, L;
-	register double *dp1, *dp2;
+    int	i, j, n, L;
+    register double *dp1, *dp2;
 
-	if ( isatty(fileno(stdin)) || isatty(fileno(stdout)) ) {
-		bu_exit(1, "%s", usage );
-	}
+    if ( isatty(fileno(stdin)) || isatty(fileno(stdout)) ) {
+	bu_exit(1, "%s", usage );
+    }
 
-	L = (argc > 1) ? atoi(argv[1]) : 512;
-	data = (double *)bu_calloc( L, sizeof(double), "data" );
-	r = (double *)bu_calloc( L, sizeof(double), "r" );
-	weight = (double *)bu_calloc( L, sizeof(double), "weight" );
+    L = (argc > 1) ? atoi(argv[1]) : 512;
+    data = (double *)bu_calloc( L, sizeof(double), "data" );
+    r = (double *)bu_calloc( L, sizeof(double), "r" );
+    weight = (double *)bu_calloc( L, sizeof(double), "weight" );
+
+    for ( i = 0; i < L; i++ ) {
+	weight[i] = 1.0 / (double)(L-i);
+    }
+
+    while ( !feof( stdin ) ) {
+	n = fread( data, sizeof(*data), L, stdin );
+	if ( n <= 0 )
+	    break;
+	if ( n < L )
+	    memset((char *)&data[n], 0, (L-n)*sizeof(*data));
 
 	for ( i = 0; i < L; i++ ) {
-		weight[i] = 1.0 / (double)(L-i);
+	    r[i] = 0;
+	    dp1 = &data[0];
+	    dp2 = &data[i];
+	    for ( j = L-i; j > 0; j-- ) {
+		r[i] += *dp1++ * *dp2++;
+	    }
 	}
 
-	while ( !feof( stdin ) ) {
-		n = fread( data, sizeof(*data), L, stdin );
-		if ( n <= 0 )
-			break;
-		if ( n < L )
-			memset((char *)&data[n], 0, (L-n)*sizeof(*data));
-
-		for ( i = 0; i < L; i++ ) {
-			r[i] = 0;
-			dp1 = &data[0];
-			dp2 = &data[i];
-			for ( j = L-i; j > 0; j-- ) {
-				r[i] += *dp1++ * *dp2++;
-			}
-		}
-
-		/* unbias the estimation */
-		for ( i = 0; i < L; i++ ) {
-			r[i] *= weight[i];
-		}
-
-		fwrite( r, sizeof(*r), L, stdout );
+	/* unbias the estimation */
+	for ( i = 0; i < L; i++ ) {
+	    r[i] *= weight[i];
 	}
 
-	bu_free(data, "data");
-	bu_free(r, "r");
-	bu_free(weight, "weight");
+	fwrite( r, sizeof(*r), L, stdout );
+    }
 
-	return 0;
+    bu_free(data, "data");
+    bu_free(r, "r");
+    bu_free(weight, "weight");
+
+    return 0;
 }
 
 /*

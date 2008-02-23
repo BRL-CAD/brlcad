@@ -42,50 +42,50 @@
 
 void
 rt_nurb_map_oslo(struct oslo_mat *oslo, fastf_t *old_pts, fastf_t *new_pts, int o_stride, int n_stride, int lower, int upper, int pt_type)
-					/* Oslo matrix  */
-					/* Old control points */
-					/* New control points */
-					/* inc to next point of old mesh*/
-					/* inc to next point of new mesh*/
-			/* Upper and lower bounds for curve generation */
+    /* Oslo matrix  */
+    /* Old control points */
+    /* New control points */
+    /* inc to next point of old mesh*/
+    /* inc to next point of new mesh*/
+    /* Upper and lower bounds for curve generation */
 
 {
-	register fastf_t *c_ptr;		/* new curve pointer */
-	register fastf_t *o_pts;
-	register struct oslo_mat *o_ptr;	/* oslo matrix pointer */
-	register int	k;
-	int	j, 				/* j loop */
-		i;				/* oslo loop */
-	int	coords;
+    register fastf_t *c_ptr;		/* new curve pointer */
+    register fastf_t *o_pts;
+    register struct oslo_mat *o_ptr;	/* oslo matrix pointer */
+    register int	k;
+    int	j, 				/* j loop */
+	i;				/* oslo loop */
+    int	coords;
 
-	coords = RT_NURB_EXTRACT_COORDS( pt_type);
+    coords = RT_NURB_EXTRACT_COORDS( pt_type);
 
-	c_ptr = new_pts;
+    c_ptr = new_pts;
 
-	if ( lower != 0)
-		for ( i = 0,  o_ptr = oslo; i < lower; i++,  o_ptr =
-		    o_ptr->next)
-			;
-	else
-		o_ptr = oslo;
+    if ( lower != 0)
+	for ( i = 0,  o_ptr = oslo; i < lower; i++,  o_ptr =
+		  o_ptr->next)
+	    ;
+    else
+	o_ptr = oslo;
 
-	for ( j = lower; j < upper; j++, o_ptr = o_ptr->next) {
-		fastf_t o_scale;
-		o_pts = &old_pts[(o_ptr->offset * o_stride)];
+    for ( j = lower; j < upper; j++, o_ptr = o_ptr->next) {
+	fastf_t o_scale;
+	o_pts = &old_pts[(o_ptr->offset * o_stride)];
 
-		o_scale = o_ptr->o_vec[0];
+	o_scale = o_ptr->o_vec[0];
 
-		for ( k = 0; k < coords; k++)
-			c_ptr[k] = o_pts[k] * o_scale;
+	for ( k = 0; k < coords; k++)
+	    c_ptr[k] = o_pts[k] * o_scale;
 
-		for ( i = 1; i <= o_ptr->osize; i++) {
-			o_scale = o_ptr->o_vec[i];
-			o_pts += o_stride;
-			for ( k = 0; k < coords; k++)
-				c_ptr[k] += o_scale * o_pts[k];
-		}
-		c_ptr += n_stride;
+	for ( i = 1; i <= o_ptr->osize; i++) {
+	    o_scale = o_ptr->o_vec[i];
+	    o_pts += o_stride;
+	    for ( k = 0; k < coords; k++)
+		c_ptr[k] += o_scale * o_pts[k];
 	}
+	c_ptr += n_stride;
+    }
 }
 
 /** @} */

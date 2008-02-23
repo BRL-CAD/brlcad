@@ -74,92 +74,92 @@ void
 vas_open(void)
 {
 
-	/* Open VAS Port */
-	if ((vas_fd=open(VAS_PORT, O_RDWR)) < 0) {
-		perror(VAS_PORT);
-		bu_exit(1, NULL);
-	}
+    /* Open VAS Port */
+    if ((vas_fd=open(VAS_PORT, O_RDWR)) < 0) {
+	perror(VAS_PORT);
+	bu_exit(1, NULL);
+    }
 
-	/* Setup VAS line */
+    /* Setup VAS line */
 
 #if defined(HAVE_XOPEN)
 
-	vtty.c_cflag = BAUD | CS8;      /* Character size = 8 bits */
-	vtty.c_cflag &= ~CSTOPB;         /* One stop bit */
-	vtty.c_cflag |= CREAD;           /* Enable the reader */
-	vtty.c_cflag &= ~PARENB;         /* Parity disable */
-	vtty.c_cflag &= ~HUPCL;          /* No hangup on close */
-	vtty.c_cflag |= CLOCAL;          /* Line has no modem control */
+    vtty.c_cflag = BAUD | CS8;      /* Character size = 8 bits */
+    vtty.c_cflag &= ~CSTOPB;         /* One stop bit */
+    vtty.c_cflag |= CREAD;           /* Enable the reader */
+    vtty.c_cflag &= ~PARENB;         /* Parity disable */
+    vtty.c_cflag &= ~HUPCL;          /* No hangup on close */
+    vtty.c_cflag |= CLOCAL;          /* Line has no modem control */
 
-	vtty.c_iflag &= ~(BRKINT|ICRNL|INLCR|IXON|IXANY|IXOFF);
-	vtty.c_iflag |= IGNBRK|IGNPAR;
+    vtty.c_iflag &= ~(BRKINT|ICRNL|INLCR|IXON|IXANY|IXOFF);
+    vtty.c_iflag |= IGNBRK|IGNPAR;
 
-	vtty.c_oflag &= ~(OPOST|ONLCR|OCRNL);    /* Turn off all post-processing */
+    vtty.c_oflag &= ~(OPOST|ONLCR|OCRNL);    /* Turn off all post-processing */
 
 /* output tab expansion ON */
 #if defined(TAB3)
-	vtty.c_oflag |= TAB3;
+    vtty.c_oflag |= TAB3;
 #elif defined(OXTABS)
-	vtty.c_oflag |= OXTABS;
+    vtty.c_oflag |= OXTABS;
 #endif
 
-	vtty.c_cc[VMIN] = 1;
-	vtty.c_cc[VTIME] = 0;
+    vtty.c_cc[VMIN] = 1;
+    vtty.c_cc[VTIME] = 0;
 
-	vtty.c_lflag &= ~ICANON;         /* Raw mode */
-	vtty.c_lflag &= ~ISIG;           /* Signals OFF */
-	vtty.c_lflag &= ~(ECHO|ECHOE|ECHOK);     /* Echo mode OFF */
+    vtty.c_lflag &= ~ICANON;         /* Raw mode */
+    vtty.c_lflag &= ~ISIG;           /* Signals OFF */
+    vtty.c_lflag &= ~(ECHO|ECHOE|ECHOK);     /* Echo mode OFF */
 
-	if ( tsetattr(vas_fd, TCSAFLUSH, &vtty) < 0 ) {
-		perror(VAS_PORT);
-		bu_exit(1, NULL);
-	}
+    if ( tsetattr(vas_fd, TCSAFLUSH, &vtty) < 0 ) {
+	perror(VAS_PORT);
+	bu_exit(1, NULL);
+    }
 
-	/* Be certain the FNDELAY is off */
-	if ( fcntl(vas_fd, F_SETFL, 0) < 0 )  {
-		perror(VAS_PORT);
-		bu_exit(2, NULL);
-	}
+    /* Be certain the FNDELAY is off */
+    if ( fcntl(vas_fd, F_SETFL, 0) < 0 )  {
+	perror(VAS_PORT);
+	bu_exit(2, NULL);
+    }
 
 #elif defined(HAVE_TERMIO_H)
 
-	vtty.c_cflag = BAUD | CS8;      /* Character size = 8 bits */
-	vtty.c_cflag &= ~CSTOPB;         /* One stop bit */
-	vtty.c_cflag |= CREAD;           /* Enable the reader */
-	vtty.c_cflag &= ~PARENB;         /* Parity disable */
-	vtty.c_cflag &= ~HUPCL;          /* No hangup on close */
-	vtty.c_cflag |= CLOCAL;          /* Line has no modem control */
+    vtty.c_cflag = BAUD | CS8;      /* Character size = 8 bits */
+    vtty.c_cflag &= ~CSTOPB;         /* One stop bit */
+    vtty.c_cflag |= CREAD;           /* Enable the reader */
+    vtty.c_cflag &= ~PARENB;         /* Parity disable */
+    vtty.c_cflag &= ~HUPCL;          /* No hangup on close */
+    vtty.c_cflag |= CLOCAL;          /* Line has no modem control */
 
-	vtty.c_iflag &= ~(BRKINT|ICRNL|INLCR|IXON|IXANY|IXOFF);
-	vtty.c_iflag |= IGNBRK|IGNPAR;
+    vtty.c_iflag &= ~(BRKINT|ICRNL|INLCR|IXON|IXANY|IXOFF);
+    vtty.c_iflag |= IGNBRK|IGNPAR;
 
-	vtty.c_oflag &= ~(OPOST|ONLCR|OCRNL);    /* Turn off all post-processing */
-	vtty.c_oflag |= TAB3;		/* output tab expansion ON */
-	vtty.c_cc[VMIN] = 1;
-	vtty.c_cc[VTIME] = 0;
+    vtty.c_oflag &= ~(OPOST|ONLCR|OCRNL);    /* Turn off all post-processing */
+    vtty.c_oflag |= TAB3;		/* output tab expansion ON */
+    vtty.c_cc[VMIN] = 1;
+    vtty.c_cc[VTIME] = 0;
 
-	vtty.c_lflag &= ~ICANON;         /* Raw mode */
-	vtty.c_lflag &= ~ISIG;           /* Signals OFF */
-	vtty.c_lflag &= ~(ECHO|ECHOE|ECHOK);     /* Echo mode OFF */
+    vtty.c_lflag &= ~ICANON;         /* Raw mode */
+    vtty.c_lflag &= ~ISIG;           /* Signals OFF */
+    vtty.c_lflag &= ~(ECHO|ECHOE|ECHOK);     /* Echo mode OFF */
 
-	if ( ioctl(vas_fd, TCSETA, &vtty) < 0 )  {
-		perror(VAS_PORT);
-		bu_exit(1, NULL);
-	}
+    if ( ioctl(vas_fd, TCSETA, &vtty) < 0 )  {
+	perror(VAS_PORT);
+	bu_exit(1, NULL);
+    }
 
-	/* Be certain the FNDELAY is off */
-	if ( fcntl(vas_fd, F_SETFL, 0) < 0 )  {
-		perror(VAS_PORT);
-		bu_exit(2, NULL);
-	}
+    /* Be certain the FNDELAY is off */
+    if ( fcntl(vas_fd, F_SETFL, 0) < 0 )  {
+	perror(VAS_PORT);
+	bu_exit(2, NULL);
+    }
 
 #elif defined(HAVE_SGTTY_H)
 
-	vtty.sg_ispeed = BAUD;
-	vtty.sg_ospeed = BAUD;
-	vtty.sg_flags = RAW|EVENP|ODDP;
-	ioctl(vas_fd,TIOCSETP,&vtty);
-	ioctl(vas_fd,TIOCEXCL,&vtty);	/* exclusive use */
+    vtty.sg_ispeed = BAUD;
+    vtty.sg_ospeed = BAUD;
+    vtty.sg_flags = RAW|EVENP|ODDP;
+    ioctl(vas_fd,TIOCSETP,&vtty);
+    ioctl(vas_fd,TIOCEXCL,&vtty);	/* exclusive use */
 
 #endif
 }
@@ -174,16 +174,16 @@ vas_open(void)
 int
 vas_rawputc(char c)
 {
-	int	got;
+    int	got;
 
-	got = write(vas_fd, &c, 1);
-	if (got != 1)  {
-		perror("VAS Write");
-		return(got);
-		/* Error recovery?? */
-	}
-	if (debug) fprintf(stderr, "vas_rawputc 0%o '%c'\n", c, c);
+    got = write(vas_fd, &c, 1);
+    if (got != 1)  {
+	perror("VAS Write");
 	return(got);
+	/* Error recovery?? */
+    }
+    if (debug) fprintf(stderr, "vas_rawputc 0%o '%c'\n", c, c);
+    return(got);
 }
 
 /*
@@ -197,38 +197,38 @@ vas_rawputc(char c)
 int
 vas_putc(char c)
 {
-	int	got;
-	int	reply;
-	int	count;
+    int	got;
+    int	reply;
+    int	count;
 
-	for ( count=0; count<20; count++ )  {
-		got = write(vas_fd, &c, 1);
-		if (got < 1)  {
-			perror("VAS Write");
-			return(got);
-			/* Error recovery?? */
-		}
-		if (debug) fprintf(stderr, "vas_putc 0%o '%c'\n", c, c);
-
-reread:
-		reply=vas_getc();
-		if ( reply == 006 )
-			return(got);		/* ACK */
-		if ( reply >= 0x60 && reply <= 0x78 )  {
-			vas_response(reply);
-			return(got);
-		}
-		if ( reply == 007 )  {
-			if (count>4) fprintf(stderr, "retry\n");
-			sleep(1);
-			continue;		/* NACK, please repeat */
-		}
-		fprintf(stderr, "vas4:  non-ACK rcvd for cmd %c\n", c);
-		vas_response(reply);
-		goto reread;		/* See if ACK is buffered up */
+    for ( count=0; count<20; count++ )  {
+	got = write(vas_fd, &c, 1);
+	if (got < 1)  {
+	    perror("VAS Write");
+	    return(got);
+	    /* Error recovery?? */
 	}
-	fprintf(stderr, "vas4:  unable to perform cmd %c after retries\n", c);
-	return(-1);
+	if (debug) fprintf(stderr, "vas_putc 0%o '%c'\n", c, c);
+
+    reread:
+	reply=vas_getc();
+	if ( reply == 006 )
+	    return(got);		/* ACK */
+	if ( reply >= 0x60 && reply <= 0x78 )  {
+	    vas_response(reply);
+	    return(got);
+	}
+	if ( reply == 007 )  {
+	    if (count>4) fprintf(stderr, "retry\n");
+	    sleep(1);
+	    continue;		/* NACK, please repeat */
+	}
+	fprintf(stderr, "vas4:  non-ACK rcvd for cmd %c\n", c);
+	vas_response(reply);
+	goto reread;		/* See if ACK is buffered up */
+    }
+    fprintf(stderr, "vas4:  unable to perform cmd %c after retries\n", c);
+    return(-1);
 }
 
 /*
@@ -239,9 +239,9 @@ reread:
 void
 vas_puts(char *s)
 {
-	while (*s != '\0' ) {
-		vas_putc(*s++);
-	}
+    while (*s != '\0' ) {
+	vas_putc(*s++);
+    }
 }
 
 /*
@@ -252,10 +252,10 @@ vas_puts(char *s)
 void
 vas_putnum(int n)
 {
-	char	buf[32];
+    char	buf[32];
 
-	sprintf(buf, "%d", n);
-	vas_puts(buf);
+    sprintf(buf, "%d", n);
+    vas_puts(buf);
 }
 
 
@@ -267,17 +267,17 @@ vas_putnum(int n)
 int
 vas_getc(void)
 {
-	char c;
-	int readval = read(vas_fd, &c, 1);
+    char c;
+    int readval = read(vas_fd, &c, 1);
 
-	if (readval > 0)  {
-	    if (debug)fprintf(stderr, "vas_getc: 0%o %c\n", c&0377, c&0377);
-	    return(c & 0377);
-	}
-	if (readval < 0) {
-	    perror("READ ERROR");
-	}
-	return(EOF);
+    if (readval > 0)  {
+	if (debug)fprintf(stderr, "vas_getc: 0%o %c\n", c&0377, c&0377);
+	return(c & 0377);
+    }
+    if (readval < 0) {
+	perror("READ ERROR");
+    }
+    return(EOF);
 }
 
 /*
@@ -286,8 +286,8 @@ vas_getc(void)
 void
 vas_close(void)
 {
-	close(vas_fd);
-	vas_fd = -1;
+    close(vas_fd);
+    vas_fd = -1;
 }
 
 /*
@@ -304,16 +304,16 @@ vas_close(void)
 int
 vas_await(int c, int sec)
 {
-	int	reply;
-	int	count;
+    int	reply;
+    int	count;
 
-	for (count=0; count<20; count++)  {
-		reply = vas_getc();
-		if (debug) vas_response(reply);
-		if ( reply == c )  return(0);	/* OK */
-		if (!debug) vas_response(reply);
-	}
-	return(-1);			/* BAD:  too many bad chars */
+    for (count=0; count<20; count++)  {
+	reply = vas_getc();
+	if (debug) vas_response(reply);
+	if ( reply == c )  return(0);	/* OK */
+	if (!debug) vas_response(reply);
+    }
+    return(-1);			/* BAD:  too many bad chars */
 }
 
 /*
@@ -326,127 +326,127 @@ vas_await(int c, int sec)
 void
 vas_response(char c)
 {
-	fprintf(stderr, "---Got 0%o '%c' ", c, c);
-	switch (c)  {
+    fprintf(stderr, "---Got 0%o '%c' ", c, c);
+    switch (c)  {
 	case 6:
-		fprintf(stderr, "last command accepted\n");
-		break;
+	    fprintf(stderr, "last command accepted\n");
+	    break;
 	case 7:
-		fprintf(stderr, "***Command ignored at current activity level\n");
-		break;
+	    fprintf(stderr, "***Command ignored at current activity level\n");
+	    break;
 	case 'I':
-		fprintf(stderr, "Initialized.  Controller is ready for operation\n");
-		break;
+	    fprintf(stderr, "Initialized.  Controller is ready for operation\n");
+	    break;
 	case 'P':
-		fprintf(stderr, "Program cmd accepted\n");
-		break;
+	    fprintf(stderr, "Program cmd accepted\n");
+	    break;
 	case 'F':
-		fprintf(stderr, "Frame rate cmd accepted\n");
-		break;
+	    fprintf(stderr, "Frame rate cmd accepted\n");
+	    break;
 	case 'E':
-		fprintf(stderr, "Update cmd accepted\n");
-		break;
+	    fprintf(stderr, "Update cmd accepted\n");
+	    break;
 	case 'U':
-		fprintf(stderr, "Update cmd accepted\n");
-		break;
+	    fprintf(stderr, "Update cmd accepted\n");
+	    break;
 	case 'S':
-		fprintf(stderr, "Search command accepted, ready for E/E\n");
-		break;
+	    fprintf(stderr, "Search command accepted, ready for E/E\n");
+	    break;
 	case 'W':
-		fprintf(stderr, "After E/E, search began, scene is not correct\n");
-		break;
+	    fprintf(stderr, "After E/E, search began, scene is not correct\n");
+	    break;
 	case 'B':
-		fprintf(stderr, "After E/E, search began, frame code lost while checking scene\n");
-		break;
+	    fprintf(stderr, "After E/E, search began, frame code lost while checking scene\n");
+	    break;
 	case 'N':
-		fprintf(stderr, "After E/E, search for frame fails (preceding frame not found)\n");
-		break;
+	    fprintf(stderr, "After E/E, search for frame fails (preceding frame not found)\n");
+	    break;
 	case 'R':
-		fprintf(stderr, "Ready to accept Record command\n");
-		break;
+	    fprintf(stderr, "Ready to accept Record command\n");
+	    break;
 	case 'M':
-		fprintf(stderr, "Preroll fails after Record cmd, backspace for retry begins\n");
-		break;
+	    fprintf(stderr, "Preroll fails after Record cmd, backspace for retry begins\n");
+	    break;
 	case 'X':
-		fprintf(stderr, "Notice:  2 frames before cut-in\n");
-		break;
+	    fprintf(stderr, "Notice:  2 frames before cut-in\n");
+	    break;
 	case 'Y':
-		fprintf(stderr, "Notice:  2 frames before cut-out\n");
-		break;
+	    fprintf(stderr, "Notice:  2 frames before cut-out\n");
+	    break;
 	case 'D':
-		fprintf(stderr, "Recording done, starting backspacing for next preroll\n");
-		break;
+	    fprintf(stderr, "Recording done, starting backspacing for next preroll\n");
+	    break;
 	case 'J':
-		fprintf(stderr, "Jaunt:  standby timeout;  tape moving back to Title\n");
-		break;
+	    fprintf(stderr, "Jaunt:  standby timeout;  tape moving back to Title\n");
+	    break;
 	case 'T':
-		fprintf(stderr, "Trash:  recording interrupted by STOP\n");
-		break;
+	    fprintf(stderr, "Trash:  recording interrupted by STOP\n");
+	    break;
 	case 'Q':
-		fprintf(stderr, "Quit:  Ending EDIT mode\n");
-		break;
+	    fprintf(stderr, "Quit:  Ending EDIT mode\n");
+	    break;
 	case 'L':
-		fprintf(stderr, "Located sought frame\n");
-		break;
+	    fprintf(stderr, "Located sought frame\n");
+	    break;
 	case 'K':
-		fprintf(stderr, "Knave:  Search-for-frame failed\n");
-		break;
+	    fprintf(stderr, "Knave:  Search-for-frame failed\n");
+	    break;
 
-	/**** Current activity states ****/
-	/**** These are all suspect, as they don't match the BRL manual ***/
+	    /**** Current activity states ****/
+	    /**** These are all suspect, as they don't match the BRL manual ***/
 	case '`':
-		fprintf(stderr, "Idling:  Power-on condition or newly initialized\n");
-		break;
+	    fprintf(stderr, "Idling:  Power-on condition or newly initialized\n");
+	    break;
 	case 'a':
-		fprintf(stderr, "Register function is active\n");
-		break;
+	    fprintf(stderr, "Register function is active\n");
+	    break;
 	case 'b':
-		fprintf(stderr, "Accepting programming for a recording\n");
-		break;
+	    fprintf(stderr, "Accepting programming for a recording\n");
+	    break;
 	case 'c':
-		fprintf(stderr, "Accepting programming for an edit recording\n");
-		break;
+	    fprintf(stderr, "Accepting programming for an edit recording\n");
+	    break;
 	case 'd':
-		fprintf(stderr, "Flashing E/E switch; ready to search for frame\n");
-		break;
+	    fprintf(stderr, "Flashing E/E switch; ready to search for frame\n");
+	    break;
 	case 'e':
-		fprintf(stderr, "Checking for position on correct scene\n");
-		break;
+	    fprintf(stderr, "Checking for position on correct scene\n");
+	    break;
 	case 'f':
-		fprintf(stderr, "Ready to record next recording or TITLE\n");
-		break;
+	    fprintf(stderr, "Ready to record next recording or TITLE\n");
+	    break;
 	case 'g':
-		fprintf(stderr, "Prerolling, about to make recording\n");
-		break;
+	    fprintf(stderr, "Prerolling, about to make recording\n");
+	    break;
 	case 'h':
-		fprintf(stderr, "Recording in progress\n");
-		break;
+	    fprintf(stderr, "Recording in progress\n");
+	    break;
 	case 'i':
-		fprintf(stderr, "Backspacing for next preroll and recording\n");
-		break;
+	    fprintf(stderr, "Backspacing for next preroll and recording\n");
+	    break;
 	case 'j':
-		fprintf(stderr, "Searching for frame preceding next to record\n");
-		break;
+	    fprintf(stderr, "Searching for frame preceding next to record\n");
+	    break;
 	case 'k':
-		fprintf(stderr, "Accepting programming for Frame Change\n");
-		break;
+	    fprintf(stderr, "Accepting programming for Frame Change\n");
+	    break;
 	case 'l':
-		fprintf(stderr, "Accepting programming for HOLD\n");
-		break;
+	    fprintf(stderr, "Accepting programming for HOLD\n");
+	    break;
 	case 'm':
-		fprintf(stderr, "Displaying a warning message\n");
-		break;
+	    fprintf(stderr, "Displaying a warning message\n");
+	    break;
 	case 'n':
-		fprintf(stderr, "Ready to record first recording on old scene\n");
-		break;
+	    fprintf(stderr, "Ready to record first recording on old scene\n");
+	    break;
 	case 'o':
-		fprintf(stderr, "Holding momentarily before allowing to RECORD\n");
-		break;
+	    fprintf(stderr, "Holding momentarily before allowing to RECORD\n");
+	    break;
 
 	default:
-		fprintf(stderr, "???unknown???\n");
-		break;
-	}
+	    fprintf(stderr, "???unknown???\n");
+	    break;
+    }
 }
 
 /*

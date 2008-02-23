@@ -245,37 +245,37 @@ main(int argc, char **argv)
     bu_setprogname(argv[0]);
 
     while ((c = bu_getopt(argc, argv, "d:hbicnrx:X:")) != EOF)
+    {
+	switch ( c )
 	{
-	    switch ( c )
-		{
-		    case 'd':
-			dpy_string = bu_optarg;
-			break;
-		    case 'r':
-			read_only_flag = 1;
-			break;
-		    case 'n':		/* "not new" == "classic" */
-		    case 'c':
-			classic_mged = 1;
-			break;
-		    case 'x':
-			sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
-			break;
-		    case 'X':
-			sscanf( bu_optarg, "%x", (unsigned int *)&bu_debug );
-			break;
-		    case 'b':
-			run_in_foreground = 0;  /* run in background */
-			break;
-		    default:
-			fprintf( stdout, "Unrecognized option (%c)\n", c );
-			/* Fall through to help */
-		    case 'h':
-			fprintf(stdout, "Usage:  %s [-b] [-c] [-d display] [-h] [-r] [-x#] [-X#] [database [command]]\n", argv[0]);
-			fflush(stdout);
-			return(1);
-		}
+	    case 'd':
+		dpy_string = bu_optarg;
+		break;
+	    case 'r':
+		read_only_flag = 1;
+		break;
+	    case 'n':		/* "not new" == "classic" */
+	    case 'c':
+		classic_mged = 1;
+		break;
+	    case 'x':
+		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
+		break;
+	    case 'X':
+		sscanf( bu_optarg, "%x", (unsigned int *)&bu_debug );
+		break;
+	    case 'b':
+		run_in_foreground = 0;  /* run in background */
+		break;
+	    default:
+		fprintf( stdout, "Unrecognized option (%c)\n", c );
+		/* Fall through to help */
+	    case 'h':
+		fprintf(stdout, "Usage:  %s [-b] [-c] [-d display] [-h] [-r] [-x#] [-X#] [database [command]]\n", argv[0]);
+		fflush(stdout);
+		return(1);
 	}
+    }
 
     argc -= (bu_optind - 1);
     argv += (bu_optind - 1);
@@ -620,7 +620,7 @@ main(int argc, char **argv)
 	} /* classic */
 
     } else {
-  /* !interactive */
+	/* !interactive */
 
 	if ( !run_in_foreground && use_pipe ) {
 	    notify_parent_done(parent_pipe[1]);
@@ -1050,7 +1050,7 @@ mged_process_char(char ch)
 		if (curr_cmd_list->cl_tie)
 		    curr_dm_list = curr_cmd_list->cl_tie;
 		if (cmdline_hook) {
-   /* Command-line hooks don't do CMD_MORE */
+		    /* Command-line hooks don't do CMD_MORE */
 		    reset_Tty(fileno(stdin));
 
 		    if ((*cmdline_hook)(&input_str_prefix))
@@ -1258,45 +1258,45 @@ mged_process_char(char ch)
 	    escaped = bracketed = 0;
 	    break;
 	case CTRL_W:                   /* backward-delete-word */
-	    {
-		char *start;
-		char *curr;
-		int len;
+	{
+	    char *start;
+	    char *curr;
+	    int len;
 
-		start = bu_vls_addr(&input_str);
-		curr = start + input_str_index - 1;
+	    start = bu_vls_addr(&input_str);
+	    curr = start + input_str_index - 1;
 
-		/* skip spaces */
-		while (curr > start && *curr == ' ')
-		    --curr;
+	    /* skip spaces */
+	    while (curr > start && *curr == ' ')
+		--curr;
 
-		/* find next space */
-		while (curr > start && *curr != ' ')
-		    --curr;
+	    /* find next space */
+	    while (curr > start && *curr != ' ')
+		--curr;
 
-		bu_vls_init(&temp);
-		bu_vls_strcat(&temp, start+input_str_index);
+	    bu_vls_init(&temp);
+	    bu_vls_strcat(&temp, start+input_str_index);
 
-		if (curr == start)
-		    input_str_index = 0;
-		else
-		    input_str_index = curr - start + 1;
+	    if (curr == start)
+		input_str_index = 0;
+	    else
+		input_str_index = curr - start + 1;
 
-		len = bu_vls_strlen(&input_str);
-		bu_vls_trunc(&input_str, input_str_index);
-		pr_prompt();
-		bu_log("%S%S%*s", &input_str, &temp, len - input_str_index, SPACES);
-		pr_prompt();
-		bu_log("%S", &input_str);
-		bu_vls_vlscat(&input_str, &temp);
-		bu_vls_free(&temp);
-	    }
+	    len = bu_vls_strlen(&input_str);
+	    bu_vls_trunc(&input_str, input_str_index);
+	    pr_prompt();
+	    bu_log("%S%S%*s", &input_str, &temp, len - input_str_index, SPACES);
+	    pr_prompt();
+	    bu_log("%S", &input_str);
+	    bu_vls_vlscat(&input_str, &temp);
+	    bu_vls_free(&temp);
+	}
 
-	    escaped = bracketed = 0;
-	    break;
+	escaped = bracketed = 0;
+	break;
 	case 'd':
 	    if (escaped) {
-                 /* delete-word */
+		/* delete-word */
 		char *start;
 		char *curr;
 		int i;
@@ -1329,7 +1329,7 @@ mged_process_char(char ch)
 	    break;
 	case 'f':
 	    if (escaped) {
-                 /* forward-word */
+		/* forward-word */
 		char *start;
 		char *curr;
 
@@ -1359,7 +1359,7 @@ mged_process_char(char ch)
 	    break;
 	case 'b':
 	    if (escaped) {
-                 /* backward-word */
+		/* backward-word */
 		char *start;
 		char *curr;
 
@@ -2059,7 +2059,7 @@ log_event(char *event, char *arg)
 		  dmp->dm_name,
 		  uname,
 		  arg
-		  );
+	);
 
 #ifdef _WIN32
     logfd = open( LOGFILE, _O_WRONLY|_O_APPEND|O_CREAT, _S_IREAD|_S_IWRITE );
@@ -2360,10 +2360,10 @@ do_rc(void)
  */
 int
 f_opendb(
-	 ClientData clientData,
-	 Tcl_Interp *interp,
-	 int	argc,
-	 char	**argv)
+    ClientData clientData,
+    Tcl_Interp *interp,
+    int	argc,
+    char	**argv)
 {
     struct db_i		*save_dbip = DBI_NULL;
     struct mater		*save_materp = MATER_NULL;
@@ -2396,8 +2396,8 @@ f_opendb(
     bu_vls_init(&msg);
 
     if (argc == 3 &&
-       strcmp("y", argv[2]) && strcmp("Y", argv[2]) &&
-       strcmp("n", argv[2]) && strcmp("N", argv[2])) {
+	strcmp("y", argv[2]) && strcmp("Y", argv[2]) &&
+	strcmp("n", argv[2]) && strcmp("N", argv[2])) {
 	bu_vls_printf(&vls, "help opendb");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -2412,7 +2412,7 @@ f_opendb(
 
     /* Get input file */
     if ( ((dbip = db_open( argv[1], "r+w" )) == DBI_NULL ) &&
-	((dbip = db_open( argv[1], "r"   )) == DBI_NULL ) )  {
+	 ((dbip = db_open( argv[1], "r"   )) == DBI_NULL ) )  {
 	char line[128];
 
 	/*
@@ -2465,7 +2465,7 @@ f_opendb(
 		    }
 		}
 	    } else {
-  /* not initializing mged */
+		/* not initializing mged */
 		if (argc == 2) {
 		    /* need to reset this before returning */
 		    dbip = save_dbip;
@@ -2679,10 +2679,10 @@ f_opendb(
  */
 int
 f_closedb(
-	  ClientData clientData,
-	  Tcl_Interp *interp,
-	  int	argc,
-	  char	**argv)
+    ClientData clientData,
+    Tcl_Interp *interp,
+    int	argc,
+    char	**argv)
 {
     char *av[2];
 

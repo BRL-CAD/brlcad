@@ -46,16 +46,16 @@
 int
 main(int argc, char *argv[])
 {
-  if (argc > 0) {
-      bu_log("Usage: binfo\n\treturns information about the BRL-CAD runtime environment characteristics\n");
-  }
+    if (argc > 0) {
+	bu_log("Usage: binfo\n\treturns information about the BRL-CAD runtime environment characteristics\n");
+    }
 
-  bu_log("bu_version=[%s]\n", bu_version());
-  bu_log("bn_version=[%s]\n", bn_version());
-  bu_log("rt_version=[%s]\n", rt_version());
-  bu_log("fb_version=[%s]\n", fb_version());
+    bu_log("bu_version=[%s]\n", bu_version());
+    bu_log("bn_version=[%s]\n", bn_version());
+    bu_log("rt_version=[%s]\n", rt_version());
+    bu_log("fb_version=[%s]\n", fb_version());
 
-  return 0;
+    return 0;
 }
 
 

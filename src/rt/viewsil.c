@@ -58,7 +58,7 @@ static	unsigned char *scanbuf;
  *  the command line, or from within an animation script.
  */
 struct bu_structparse view_parse[] = {
-	{"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL}
+    {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL}
 };
 
 const char title[] = "RT Simple Intersection Lightmap";
@@ -87,13 +87,13 @@ int	raymiss(register struct application *ap);
 int
 view_init(register struct application *ap, char *file, char *obj, int minus_o)
 {
-	if (rt_g.rtg_parallel) {
-		rt_g.rtg_parallel = 0;
-		bu_log("rtsil: Can't do parallel yet, using one CPU\n");
-	}
-	scanbuf = (unsigned char *)
-		bu_malloc( width, "scanline buffer" );
-	return(0);		/* no framebuffer needed */
+    if (rt_g.rtg_parallel) {
+	rt_g.rtg_parallel = 0;
+	bu_log("rtsil: Can't do parallel yet, using one CPU\n");
+    }
+    scanbuf = (unsigned char *)
+	bu_malloc( width, "scanline buffer" );
+    return(0);		/* no framebuffer needed */
 }
 
 /*
@@ -105,9 +105,9 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
 void
 view_2init(struct application *ap)
 {
-	ap->a_hit = rayhit;
-	ap->a_miss = raymiss;
-	ap->a_onehit = 1;
+    ap->a_hit = rayhit;
+    ap->a_miss = raymiss;
+    ap->a_onehit = 1;
 }
 
 /*
@@ -129,14 +129,14 @@ view_pixel(register struct application *ap)
 void
 view_eol(register struct application *ap)
 {
-	bu_semaphore_acquire( BU_SEM_SYSCALL );
-	if ( outfp != NULL )
-		fwrite( scanbuf, 1, width, outfp );
+    bu_semaphore_acquire( BU_SEM_SYSCALL );
+    if ( outfp != NULL )
+	fwrite( scanbuf, 1, width, outfp );
 #if 0
-	else if ( fbp != FBIO_NULL )
-		fb_write( fbp, 0, ap->a_y, scanbuf, width );
+    else if ( fbp != FBIO_NULL )
+	fb_write( fbp, 0, ap->a_y, scanbuf, width );
 #endif
-	bu_semaphore_release( BU_SEM_SYSCALL );
+    bu_semaphore_release( BU_SEM_SYSCALL );
 }
 
 /*
@@ -180,10 +180,10 @@ view_cleanup(struct rt_i *rtip)
 int
 rayhit(register struct application *ap, struct partition *PartHeadp, struct seg *segp)
 {
-	bu_semaphore_acquire( RT_SEM_RESULTS );
-	scanbuf[ap->a_x] = 1;
-	bu_semaphore_release( RT_SEM_RESULTS );
-	return(1);	/* report hit to main routine */
+    bu_semaphore_acquire( RT_SEM_RESULTS );
+    scanbuf[ap->a_x] = 1;
+    bu_semaphore_release( RT_SEM_RESULTS );
+    return(1);	/* report hit to main routine */
 }
 
 /*
@@ -194,10 +194,10 @@ rayhit(register struct application *ap, struct partition *PartHeadp, struct seg 
 int
 raymiss(register struct application *ap)
 {
-	bu_semaphore_acquire( RT_SEM_RESULTS );
-	scanbuf[ap->a_x] = 255;
-	bu_semaphore_release( RT_SEM_RESULTS );
-	return(0);
+    bu_semaphore_acquire( RT_SEM_RESULTS );
+    scanbuf[ap->a_x] = 255;
+    bu_semaphore_release( RT_SEM_RESULTS );
+    return(0);
 }
 
 void application_init (void) {}

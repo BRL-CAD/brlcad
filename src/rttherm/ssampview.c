@@ -48,11 +48,11 @@ extern struct bn_table *spectrum; /* from liboptical */
 
 extern void
 rt_spect_curve_to_xyz(
-		      point_t			xyz,
-		      const struct bn_tabdata	*tabp,
-		      const struct bn_tabdata	*cie_x,
-		      const struct bn_tabdata	*cie_y,
-		      const struct bn_tabdata	*cie_z);
+    point_t			xyz,
+    const struct bn_tabdata	*tabp,
+    const struct bn_tabdata	*cie_x,
+    const struct bn_tabdata	*cie_y,
+    const struct bn_tabdata	*cie_z);
 
 extern void
 rt_spect_make_NTSC_RGB(struct bn_tabdata		**rp,
@@ -114,17 +114,17 @@ char			*first_command = "no_command?";
 void
 assign_tabdata_to_tcl_var(Tcl_Interp *interp, const char *name, const struct bn_tabdata *tabp)
 {
-	struct bu_vls	str;
+    struct bu_vls	str;
 
-	BN_CK_TABDATA(tabp);
+    BN_CK_TABDATA(tabp);
 
-	bu_vls_init(&str);
+    bu_vls_init(&str);
 
-	bn_tabdata_to_tcl(&str, tabp);
-	Tcl_SetVar( interp, (char *)name, bu_vls_addr(&str), 0 );
-	Tcl_AppendResult( interp, name, " ", (char *)NULL );
+    bn_tabdata_to_tcl(&str, tabp);
+    Tcl_SetVar( interp, (char *)name, bu_vls_addr(&str), 0 );
+    Tcl_AppendResult( interp, name, " ", (char *)NULL );
 
-	bu_vls_free(&str);
+    bu_vls_free(&str);
 }
 
 /*
@@ -134,89 +134,89 @@ assign_tabdata_to_tcl_var(Tcl_Interp *interp, const char *name, const struct bn_
 int
 getntsccurves(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
 {
-	extern struct bn_tabdata *rt_NTSC_r_tabdata;
-	extern struct bn_tabdata *rt_NTSC_g_tabdata;
-	extern struct bn_tabdata *rt_NTSC_b_tabdata;
+    extern struct bn_tabdata *rt_NTSC_r_tabdata;
+    extern struct bn_tabdata *rt_NTSC_g_tabdata;
+    extern struct bn_tabdata *rt_NTSC_b_tabdata;
 
-	/* These are the curves as sampled to our spectrum intervals */
-	assign_tabdata_to_tcl_var( interp, "ntsc_r_samp", ntsc_r );
-	assign_tabdata_to_tcl_var( interp, "ntsc_g_samp", ntsc_g );
-	assign_tabdata_to_tcl_var( interp, "ntsc_b_samp", ntsc_b );
-
-#if 0
-	/* These are the curves from the data tables in the library */
-	assign_tabdata_to_tcl_var( interp, "ntsc_r_orig", rt_NTSC_r_tabdata );
-	assign_tabdata_to_tcl_var( interp, "ntsc_g_orig", rt_NTSC_g_tabdata );
-	assign_tabdata_to_tcl_var( interp, "ntsc_b_orig", rt_NTSC_b_tabdata );
-#endif
-
-	/* Sum togther the sampled curves */
-	{
-		struct bn_tabdata	*sum;
-		BN_GET_TABDATA( sum, ntsc_r->table );
-		bn_tabdata_add( sum, ntsc_r, ntsc_g );
-		bn_tabdata_add( sum, sum, ntsc_b );
-		assign_tabdata_to_tcl_var( interp, "ntsc_sum", sum );
-		bn_tabdata_free( sum );
-	}
+    /* These are the curves as sampled to our spectrum intervals */
+    assign_tabdata_to_tcl_var( interp, "ntsc_r_samp", ntsc_r );
+    assign_tabdata_to_tcl_var( interp, "ntsc_g_samp", ntsc_g );
+    assign_tabdata_to_tcl_var( interp, "ntsc_b_samp", ntsc_b );
 
 #if 0
-	/* Check out the RGB to spectrum curves */
-	{
-		struct bn_tabdata	*r, *g, *b, *sum;
-		point_t		rgb;
-
-		BN_GET_TABDATA( r, ntsc_r->table );
-		BN_GET_TABDATA( g, ntsc_r->table );
-		BN_GET_TABDATA( b, ntsc_r->table );
-		BN_GET_TABDATA( sum, ntsc_r->table );
-
-		VSET( rgb, 1, 0, 0 );
-		rt_spect_reflectance_rgb( r, rgb );
-		assign_tabdata_to_tcl_var( interp, "reflectance_r", r );
-
-		VSET( rgb, 0, 1, 0 );
-		rt_spect_reflectance_rgb( g, rgb );
-		assign_tabdata_to_tcl_var( interp, "reflectance_g", g );
-
-		VSET( rgb, 0, 0, 1 );
-		rt_spect_reflectance_rgb( b, rgb );
-		assign_tabdata_to_tcl_var( interp, "reflectance_b", b );
-
-		bn_tabdata_add( sum, r, g );
-		bn_tabdata_add( sum, sum, b );
-		assign_tabdata_to_tcl_var( interp, "reflectance_sum", sum );
-
-		bn_tabdata_free( r );
-		bn_tabdata_free( g );
-		bn_tabdata_free( b );
-		bn_tabdata_free( sum );
-	}
+    /* These are the curves from the data tables in the library */
+    assign_tabdata_to_tcl_var( interp, "ntsc_r_orig", rt_NTSC_r_tabdata );
+    assign_tabdata_to_tcl_var( interp, "ntsc_g_orig", rt_NTSC_g_tabdata );
+    assign_tabdata_to_tcl_var( interp, "ntsc_b_orig", rt_NTSC_b_tabdata );
 #endif
 
-	/* Check out the black body curves */
-	{
-		struct bn_tabdata	*a, *b, *c;
+    /* Sum togther the sampled curves */
+    {
+	struct bn_tabdata	*sum;
+	BN_GET_TABDATA( sum, ntsc_r->table );
+	bn_tabdata_add( sum, ntsc_r, ntsc_g );
+	bn_tabdata_add( sum, sum, ntsc_b );
+	assign_tabdata_to_tcl_var( interp, "ntsc_sum", sum );
+	bn_tabdata_free( sum );
+    }
 
-		BN_GET_TABDATA( a, ntsc_r->table );
-		BN_GET_TABDATA( b, ntsc_r->table );
-		BN_GET_TABDATA( c, ntsc_r->table );
+#if 0
+    /* Check out the RGB to spectrum curves */
+    {
+	struct bn_tabdata	*r, *g, *b, *sum;
+	point_t		rgb;
 
-		rt_spect_black_body_fast( a, 5000.0 );
-		assign_tabdata_to_tcl_var( interp, "a_5000", a );
+	BN_GET_TABDATA( r, ntsc_r->table );
+	BN_GET_TABDATA( g, ntsc_r->table );
+	BN_GET_TABDATA( b, ntsc_r->table );
+	BN_GET_TABDATA( sum, ntsc_r->table );
 
-		rt_spect_black_body_fast( b, 6500.0 );
-		assign_tabdata_to_tcl_var( interp, "b_6500", b );
+	VSET( rgb, 1, 0, 0 );
+	rt_spect_reflectance_rgb( r, rgb );
+	assign_tabdata_to_tcl_var( interp, "reflectance_r", r );
 
-		rt_spect_black_body_fast( c, 10000.0 );
-		assign_tabdata_to_tcl_var( interp, "c_10000", c );
+	VSET( rgb, 0, 1, 0 );
+	rt_spect_reflectance_rgb( g, rgb );
+	assign_tabdata_to_tcl_var( interp, "reflectance_g", g );
 
-		bn_tabdata_free( a );
-		bn_tabdata_free( b );
-		bn_tabdata_free( c );
-	}
+	VSET( rgb, 0, 0, 1 );
+	rt_spect_reflectance_rgb( b, rgb );
+	assign_tabdata_to_tcl_var( interp, "reflectance_b", b );
 
-	return TCL_OK;
+	bn_tabdata_add( sum, r, g );
+	bn_tabdata_add( sum, sum, b );
+	assign_tabdata_to_tcl_var( interp, "reflectance_sum", sum );
+
+	bn_tabdata_free( r );
+	bn_tabdata_free( g );
+	bn_tabdata_free( b );
+	bn_tabdata_free( sum );
+    }
+#endif
+
+    /* Check out the black body curves */
+    {
+	struct bn_tabdata	*a, *b, *c;
+
+	BN_GET_TABDATA( a, ntsc_r->table );
+	BN_GET_TABDATA( b, ntsc_r->table );
+	BN_GET_TABDATA( c, ntsc_r->table );
+
+	rt_spect_black_body_fast( a, 5000.0 );
+	assign_tabdata_to_tcl_var( interp, "a_5000", a );
+
+	rt_spect_black_body_fast( b, 6500.0 );
+	assign_tabdata_to_tcl_var( interp, "b_6500", b );
+
+	rt_spect_black_body_fast( c, 10000.0 );
+	assign_tabdata_to_tcl_var( interp, "c_10000", c );
+
+	bn_tabdata_free( a );
+	bn_tabdata_free( b );
+	bn_tabdata_free( c );
+    }
+
+    return TCL_OK;
 }
 
 /*
@@ -232,88 +232,88 @@ getspectrum(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
     struct bu_vls vls;
     int	wl;
 
-	BN_CK_TABLE(spectrum);
+    BN_CK_TABLE(spectrum);
 
-	bu_vls_init(&vls);
-	Tcl_ResetResult(interp);
+    bu_vls_init(&vls);
+    Tcl_ResetResult(interp);
 
-	if ( argc <= 1 )  {
-	    bu_vls_printf(&vls, "%d", spectrum->nx);
-	    Tcl_SetResult(interp, bu_vls_addr(&vls), TCL_VOLATILE);
-	    bu_vls_free(&vls);
-	    return TCL_OK;
-	}
-	if ( argc != 2 )  {
-	    Tcl_AppendResult(interp, "Usage: getspectrum [wl]", (char *)NULL);
-	    return TCL_ERROR;
-	}
-	wl = atoi(argv[2]);
-
-	if ( wl < 0 || wl > spectrum->nx )  {
-	    bu_vls_printf(&vls, "getspectrum: wavelength %d out of range 0..%d", wl, spectrum->nx);
-	    Tcl_SetResult(interp, bu_vls_addr(&vls), TCL_VOLATILE);
-	    bu_vls_free(&vls);
-	    return TCL_ERROR;
-	}
-
-	bu_vls_printf(&vls, interp->result, "%g", spectrum->x[wl]);
+    if ( argc <= 1 )  {
+	bu_vls_printf(&vls, "%d", spectrum->nx);
 	Tcl_SetResult(interp, bu_vls_addr(&vls), TCL_VOLATILE);
 	bu_vls_free(&vls);
 	return TCL_OK;
+    }
+    if ( argc != 2 )  {
+	Tcl_AppendResult(interp, "Usage: getspectrum [wl]", (char *)NULL);
+	return TCL_ERROR;
+    }
+    wl = atoi(argv[2]);
+
+    if ( wl < 0 || wl > spectrum->nx )  {
+	bu_vls_printf(&vls, "getspectrum: wavelength %d out of range 0..%d", wl, spectrum->nx);
+	Tcl_SetResult(interp, bu_vls_addr(&vls), TCL_VOLATILE);
+	bu_vls_free(&vls);
+	return TCL_ERROR;
+    }
+
+    bu_vls_printf(&vls, interp->result, "%g", spectrum->x[wl]);
+    Tcl_SetResult(interp, bu_vls_addr(&vls), TCL_VOLATILE);
+    bu_vls_free(&vls);
+    return TCL_OK;
 }
 
 int
 getspectval(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
 {
-	struct bn_tabdata	*sp;
-	int	x, y, wl;
-	char	*cp;
-	fastf_t	val;
-	struct bu_vls vls;
+    struct bn_tabdata	*sp;
+    int	x, y, wl;
+    char	*cp;
+    fastf_t	val;
+    struct bu_vls vls;
 
-	Tcl_ResetResult(interp);
+    Tcl_ResetResult(interp);
 
-	if ( argc != 4 )  {
-	    Tcl_AppendResult(interp, "Usage: getspect x y wl", (char *)NULL);
-	    return TCL_ERROR;
-	}
-	x = atoi(argv[1]);
-	y = atoi(argv[2]);
-	wl = atoi(argv[3]);
+    if ( argc != 4 )  {
+	Tcl_AppendResult(interp, "Usage: getspect x y wl", (char *)NULL);
+	return TCL_ERROR;
+    }
+    x = atoi(argv[1]);
+    y = atoi(argv[2]);
+    wl = atoi(argv[3]);
 
-	BN_CK_TABLE(spectrum);
+    BN_CK_TABLE(spectrum);
 
-	if ( x < 0 || x >= width )  {
-	    Tcl_AppendResult(interp, "x out of range", (char *)NULL);
-	    return TCL_ERROR;
-	}
-	if ( y < 0 || y >= height )  {
-	    Tcl_AppendResult(interp, "y out of range", (char *)NULL);
-	    return TCL_ERROR;
-	}
-	if ( wl < 0 || wl >= spectrum->nx )  {
-	    Tcl_AppendResult(interp, "wavelength index out of range", (char *)NULL);
-	    return TCL_ERROR;
-	}
+    if ( x < 0 || x >= width )  {
+	Tcl_AppendResult(interp, "x out of range", (char *)NULL);
+	return TCL_ERROR;
+    }
+    if ( y < 0 || y >= height )  {
+	Tcl_AppendResult(interp, "y out of range", (char *)NULL);
+	return TCL_ERROR;
+    }
+    if ( wl < 0 || wl >= spectrum->nx )  {
+	Tcl_AppendResult(interp, "wavelength index out of range", (char *)NULL);
+	return TCL_ERROR;
+    }
 
-	if ( !data )  {
-	    Tcl_AppendResult(interp, "pixel data table not loaded yet", (char *)NULL);
-	    return TCL_ERROR;
-	}
+    if ( !data )  {
+	Tcl_AppendResult(interp, "pixel data table not loaded yet", (char *)NULL);
+	return TCL_ERROR;
+    }
 
-	cp = (char *)data;
-	cp = cp + (y * width + x) * BN_SIZEOF_TABDATA(spectrum);
-	sp = (struct bn_tabdata *)cp;
-	BN_CK_TABDATA(sp);
-	val = sp->y[wl];
-	if ( use_atmosphere )
-		val *= atmosphere->y[wl];
+    cp = (char *)data;
+    cp = cp + (y * width + x) * BN_SIZEOF_TABDATA(spectrum);
+    sp = (struct bn_tabdata *)cp;
+    BN_CK_TABDATA(sp);
+    val = sp->y[wl];
+    if ( use_atmosphere )
+	val *= atmosphere->y[wl];
 
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "%g", val);
-	Tcl_SetResult(interp, bu_vls_addr(&vls), TCL_VOLATILE);
-	bu_vls_free(&vls);
-	return TCL_OK;
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "%g", val);
+    Tcl_SetResult(interp, bu_vls_addr(&vls), TCL_VOLATILE);
+    bu_vls_free(&vls);
+    return TCL_OK;
 }
 
 /*
@@ -325,42 +325,42 @@ getspectval(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
 int
 getspectxy(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
 {
-	struct bn_tabdata	*sp;
-	int	x, y;
-	char	*cp;
-	struct bu_vls	str;
+    struct bn_tabdata	*sp;
+    int	x, y;
+    char	*cp;
+    struct bu_vls	str;
 
-	Tcl_ResetResult(interp);
+    Tcl_ResetResult(interp);
 
-	if ( argc != 3 )  {
-	    Tcl_AppendResult(interp, "Usage: getspectxy x y", (char *)NULL);
-	    return TCL_ERROR;
-	}
-	x = atoi(argv[1]);
-	y = atoi(argv[2]);
+    if ( argc != 3 )  {
+	Tcl_AppendResult(interp, "Usage: getspectxy x y", (char *)NULL);
+	return TCL_ERROR;
+    }
+    x = atoi(argv[1]);
+    y = atoi(argv[2]);
 
-	BN_CK_TABLE(spectrum);
+    BN_CK_TABLE(spectrum);
 
-	if ( x < 0 || x >= width || y < 0 || y >= height )  {
-	    Tcl_AppendResult(interp, "x or y out of range", (char *)NULL);
-	    return TCL_ERROR;
-	}
+    if ( x < 0 || x >= width || y < 0 || y >= height )  {
+	Tcl_AppendResult(interp, "x or y out of range", (char *)NULL);
+	return TCL_ERROR;
+    }
 
-	if ( !data )  {
-	    Tcl_AppendResult(interp, "pixel data table not loaded yet", (char *)NULL);
-	    return TCL_ERROR;
-	}
-	cp = (char *)data;
-	cp = cp + (y * width + x) * BN_SIZEOF_TABDATA(spectrum);
-	sp = (struct bn_tabdata *)cp;
-	BN_CK_TABDATA(sp);
+    if ( !data )  {
+	Tcl_AppendResult(interp, "pixel data table not loaded yet", (char *)NULL);
+	return TCL_ERROR;
+    }
+    cp = (char *)data;
+    cp = cp + (y * width + x) * BN_SIZEOF_TABDATA(spectrum);
+    sp = (struct bn_tabdata *)cp;
+    BN_CK_TABDATA(sp);
 
-	bu_vls_init(&str);
-	bn_tabdata_to_tcl( &str, sp );
-	Tcl_SetResult( interp, bu_vls_addr(&str), TCL_VOLATILE);
-	bu_vls_free(&str);
+    bu_vls_init(&str);
+    bn_tabdata_to_tcl( &str, sp );
+    Tcl_SetResult( interp, bu_vls_addr(&str), TCL_VOLATILE);
+    bu_vls_free(&str);
 
-	return TCL_OK;
+    return TCL_OK;
 }
 
 /*
@@ -370,28 +370,28 @@ getspectxy(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
 int
 tcl_fb_cursor(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
 {
-	FBIO	*ifp;
-	long	mode, x, y;
+    FBIO	*ifp;
+    long	mode, x, y;
 
-	Tcl_ResetResult(interp);
+    Tcl_ResetResult(interp);
 
-	if ( argc != 5 )  {
-	    Tcl_AppendResult(interp, "Usage: fb_cursor fbp mode x y", (char *)NULL);
-	    return TCL_ERROR;
-	}
-	ifp = (FBIO *)atol(argv[1]);
-	mode = atol(argv[2]);
-	x = atol(argv[3]);
-	y = atol(argv[4]);
+    if ( argc != 5 )  {
+	Tcl_AppendResult(interp, "Usage: fb_cursor fbp mode x y", (char *)NULL);
+	return TCL_ERROR;
+    }
+    ifp = (FBIO *)atol(argv[1]);
+    mode = atol(argv[2]);
+    x = atol(argv[3]);
+    y = atol(argv[4]);
 
-	ifp = fbp;	/* XXX hack, ignore tcl arg. */
+    ifp = fbp;	/* XXX hack, ignore tcl arg. */
 
-	FB_CK_FBIO(ifp);
-	if ( fb_cursor( ifp, mode, x, y ) < 0 )  {
-	    Tcl_AppendResult(interp, "fb_cursor got error from library", (char *)NULL);
-	    return TCL_ERROR;
-	}
-	return TCL_OK;
+    FB_CK_FBIO(ifp);
+    if ( fb_cursor( ifp, mode, x, y ) < 0 )  {
+	Tcl_AppendResult(interp, "fb_cursor got error from library", (char *)NULL);
+	return TCL_ERROR;
+    }
+    return TCL_OK;
 }
 
 /*
@@ -400,81 +400,81 @@ tcl_fb_cursor(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
 int
 tcl_fb_readpixel(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
 {
-	FBIO	*ifp;
-	long	mode, x, y;
-	unsigned char	pixel[4];
-	struct bu_vls vls;
+    FBIO	*ifp;
+    long	mode, x, y;
+    unsigned char	pixel[4];
+    struct bu_vls vls;
 
-	Tcl_ResetResult(interp);
+    Tcl_ResetResult(interp);
 
-	if ( argc != 4 )  {
-	    Tcl_AppendResult(interp, "Usage: fb_readpixel fbp x y", (char *)NULL);
-	    return TCL_ERROR;
-	}
-	ifp = (FBIO *)atol(argv[1]);
-	x = atol(argv[2]);
-	y = atol(argv[3]);
+    if ( argc != 4 )  {
+	Tcl_AppendResult(interp, "Usage: fb_readpixel fbp x y", (char *)NULL);
+	return TCL_ERROR;
+    }
+    ifp = (FBIO *)atol(argv[1]);
+    x = atol(argv[2]);
+    y = atol(argv[3]);
 
-	ifp = fbp;	/* XXX hack, ignore tcl arg. */
+    ifp = fbp;	/* XXX hack, ignore tcl arg. */
 
-	FB_CK_FBIO(ifp);
-	if ( fb_read( ifp, x, y, pixel, 1 ) < 0 )  {
-	    Tcl_AppendResult(interp, "fb_readpixel got error from library", (char *)NULL);
-	    return TCL_ERROR;
-	}
+    FB_CK_FBIO(ifp);
+    if ( fb_read( ifp, x, y, pixel, 1 ) < 0 )  {
+	Tcl_AppendResult(interp, "fb_readpixel got error from library", (char *)NULL);
+	return TCL_ERROR;
+    }
 
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "%d %d %d", pixel[RED], pixel[GRN], pixel[BLU]);
-	Tcl_SetResult(interp, bu_vls_addr(&vls), TCL_VOLATILE);
-	bu_vls_free(&vls);
-	return TCL_OK;
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "%d %d %d", pixel[RED], pixel[GRN], pixel[BLU]);
+    Tcl_SetResult(interp, bu_vls_addr(&vls), TCL_VOLATILE);
+    bu_vls_free(&vls);
+    return TCL_OK;
 }
 
 int
 tcl_appinit(Tcl_Interp *inter)
 {
-	interp = inter;	/* set global var */
-	if ( Tcl_Init(interp) == TCL_ERROR )  {
-		return TCL_ERROR;
-	}
+    interp = inter;	/* set global var */
+    if ( Tcl_Init(interp) == TCL_ERROR )  {
+	return TCL_ERROR;
+    }
 
-	/* Run tk.tcl script */
-	if ( Tk_Init(interp) == TCL_ERROR )  return TCL_ERROR;
+    /* Run tk.tcl script */
+    if ( Tk_Init(interp) == TCL_ERROR )  return TCL_ERROR;
 
-	/* Add commands offered by the libraries */
-	bu_tcl_setup(interp);
-	rt_tcl_setup(interp);
+    /* Add commands offered by the libraries */
+    bu_tcl_setup(interp);
+    rt_tcl_setup(interp);
 
-	/* Add commands offered by this program */
-	Tcl_CreateCommand(interp, "fb_cursor", (Tcl_CmdProc *)tcl_fb_cursor, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
-	Tcl_CreateCommand(interp, "fb_readpixel", (Tcl_CmdProc *)tcl_fb_readpixel, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+    /* Add commands offered by this program */
+    Tcl_CreateCommand(interp, "fb_cursor", (Tcl_CmdProc *)tcl_fb_cursor, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+    Tcl_CreateCommand(interp, "fb_readpixel", (Tcl_CmdProc *)tcl_fb_readpixel, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 
-	Tcl_CreateCommand(interp, "doit", (Tcl_CmdProc *)doit, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
-	Tcl_CreateCommand(interp, "doit1", (Tcl_CmdProc *)doit1, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+    Tcl_CreateCommand(interp, "doit", (Tcl_CmdProc *)doit, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+    Tcl_CreateCommand(interp, "doit1", (Tcl_CmdProc *)doit1, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 
-	Tcl_CreateCommand(interp, "getspectval", (Tcl_CmdProc *)getspectval, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
-	Tcl_CreateCommand(interp, "getspectrum", (Tcl_CmdProc *)getspectrum, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
-	Tcl_CreateCommand(interp, "getspectxy", (Tcl_CmdProc *)getspectxy, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
-	Tcl_CreateCommand(interp, "getntsccurves", (Tcl_CmdProc *)getntsccurves, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+    Tcl_CreateCommand(interp, "getspectval", (Tcl_CmdProc *)getspectval, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+    Tcl_CreateCommand(interp, "getspectrum", (Tcl_CmdProc *)getspectrum, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+    Tcl_CreateCommand(interp, "getspectxy", (Tcl_CmdProc *)getspectxy, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+    Tcl_CreateCommand(interp, "getntsccurves", (Tcl_CmdProc *)getntsccurves, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 
-	Tcl_LinkVar( interp, "minval", (char *)&minval, TCL_LINK_DOUBLE );
-	Tcl_LinkVar( interp, "maxval", (char *)&maxval, TCL_LINK_DOUBLE );
+    Tcl_LinkVar( interp, "minval", (char *)&minval, TCL_LINK_DOUBLE );
+    Tcl_LinkVar( interp, "maxval", (char *)&maxval, TCL_LINK_DOUBLE );
 
-	Tcl_LinkVar( interp, "width", (char *)&width, TCL_LINK_INT );
-	Tcl_LinkVar( interp, "height", (char *)&height, TCL_LINK_INT );
-	Tcl_LinkVar( interp, "nwave", (char *)&nwave, TCL_LINK_INT );
-	Tcl_LinkVar( interp, "use_atmosphere", (char *)&use_atmosphere, TCL_LINK_INT );
-	Tcl_LinkVar( interp, "use_cie_xyz", (char *)&use_cie_xyz, TCL_LINK_INT );
+    Tcl_LinkVar( interp, "width", (char *)&width, TCL_LINK_INT );
+    Tcl_LinkVar( interp, "height", (char *)&height, TCL_LINK_INT );
+    Tcl_LinkVar( interp, "nwave", (char *)&nwave, TCL_LINK_INT );
+    Tcl_LinkVar( interp, "use_atmosphere", (char *)&use_atmosphere, TCL_LINK_INT );
+    Tcl_LinkVar( interp, "use_cie_xyz", (char *)&use_cie_xyz, TCL_LINK_INT );
 
-	/* Tell Tcl script what to do first */
-	Tcl_SetVar( interp, "first_command", first_command, 0 );
+    /* Tell Tcl script what to do first */
+    Tcl_SetVar( interp, "first_command", first_command, 0 );
 
-	/* Specify startup file to invoke when run interactively */
-	/* Source the TCL part of this lashup */
-	/* Tcl7 way:  tcl_RcFileName = "./ssampview.tcl"; */
-	Tcl_SetVar(interp, "tcl_rcFileName", "~/brlcad/rttherm/ssampview.tcl", TCL_GLOBAL_ONLY);
+    /* Specify startup file to invoke when run interactively */
+    /* Source the TCL part of this lashup */
+    /* Tcl7 way:  tcl_RcFileName = "./ssampview.tcl"; */
+    Tcl_SetVar(interp, "tcl_rcFileName", "~/brlcad/rttherm/ssampview.tcl", TCL_GLOBAL_ONLY);
 
-	return TCL_OK;
+    return TCL_OK;
 }
 
 void check( double x, double y, double z);
@@ -483,91 +483,91 @@ void check( double x, double y, double z);
 void
 check(double x, double y, double z)
 {
-	point_t	xyz;
-	point_t	rgb;
-	point_t	xyz2, rgb2;
-	struct bn_tabdata	*tabp;
-	fastf_t	tab_area;
+    point_t	xyz;
+    point_t	rgb;
+    point_t	xyz2, rgb2;
+    struct bn_tabdata	*tabp;
+    fastf_t	tab_area;
 
-	BN_GET_TABDATA( tabp, spectrum );
-	xyz[X] = x;
-	xyz[Y] = y;
-	xyz[Z] = z;
-	VPRINT( "\nstarting xyz", xyz );
+    BN_GET_TABDATA( tabp, spectrum );
+    xyz[X] = x;
+    xyz[Y] = y;
+    xyz[Z] = z;
+    VPRINT( "\nstarting xyz", xyz );
 
 #if 0
-	/* XXX No way to do this yet!! */
-	rt_spect_xyz_to_curve( tabp, xyz, cie_x, cie_y, cie_z );
+    /* XXX No way to do this yet!! */
+    rt_spect_xyz_to_curve( tabp, xyz, cie_x, cie_y, cie_z );
 #else
-	MAT3X3VEC( rgb, xyz2rgb, xyz );
-	VPRINT( "rgb", rgb );
-	{
-	    float rrggbb[3];
-	    VMOVE( rrggbb, rgb);
+    MAT3X3VEC( rgb, xyz2rgb, xyz );
+    VPRINT( "rgb", rgb );
+    {
+	float rrggbb[3];
+	VMOVE( rrggbb, rgb);
 
-	    rt_spect_reflectance_rgb( tabp, rrggbb );
-	}
+	rt_spect_reflectance_rgb( tabp, rrggbb );
+    }
 #endif
-	bn_print_table_and_tabdata( "/dev/tty", tabp );
-	tab_area = bn_tabdata_area2( tabp );
-	bu_log(" tab_area = %g\n", tab_area);
+    bn_print_table_and_tabdata( "/dev/tty", tabp );
+    tab_area = bn_tabdata_area2( tabp );
+    bu_log(" tab_area = %g\n", tab_area);
 
-	rt_spect_curve_to_xyz( xyz2, tabp, cie_x, cie_y, cie_z );
+    rt_spect_curve_to_xyz( xyz2, tabp, cie_x, cie_y, cie_z );
 
-	VPRINT( "xyz2", xyz2 );
-	MAT3X3VEC( rgb2, xyz2rgb, xyz2 );
-	VPRINT( "rgb2", rgb2 );
+    VPRINT( "xyz2", xyz2 );
+    MAT3X3VEC( rgb2, xyz2rgb, xyz2 );
+    VPRINT( "rgb2", rgb2 );
 
-	bn_tabdata_free( tabp );
-bu_exit(2, NULL);
+    bn_tabdata_free( tabp );
+    bu_exit(2, NULL);
 }
 
 void
 conduct_tests(void)
 {
-	struct bn_tabdata	*flat;
-	vect_t			xyz;
+    struct bn_tabdata	*flat;
+    vect_t			xyz;
 
-	/* Code for testing library routines */
-	spectrum = bn_table_make_uniform( 20, 340.0, 760.0 );
-	rt_spect_make_CIE_XYZ( &cie_x, &cie_y, &cie_z, spectrum );
-bu_log("X:\n");bn_print_table_and_tabdata( "/dev/tty", cie_x );
-bu_log("Y:\n");bn_print_table_and_tabdata( "/dev/tty", cie_y );
-bu_log("Z:\n");bn_print_table_and_tabdata( "/dev/tty", cie_z );
+    /* Code for testing library routines */
+    spectrum = bn_table_make_uniform( 20, 340.0, 760.0 );
+    rt_spect_make_CIE_XYZ( &cie_x, &cie_y, &cie_z, spectrum );
+    bu_log("X:\n");bn_print_table_and_tabdata( "/dev/tty", cie_x );
+    bu_log("Y:\n");bn_print_table_and_tabdata( "/dev/tty", cie_y );
+    bu_log("Z:\n");bn_print_table_and_tabdata( "/dev/tty", cie_z );
 
-	rt_spect_make_NTSC_RGB( &ntsc_r, &ntsc_g, &ntsc_b, spectrum );
-bu_log("R:\n");bn_print_table_and_tabdata( "/dev/tty", ntsc_r );
-bu_log("G:\n");bn_print_table_and_tabdata( "/dev/tty", ntsc_g );
-bu_log("B:\n");bn_print_table_and_tabdata( "/dev/tty", ntsc_b );
-	{
-		struct bu_vls str;
-		bu_vls_init(&str);
-		bn_tabdata_to_tcl( &str, ntsc_r );
-		bu_log("ntsc_r tcl:  %s\n", bu_vls_addr(&str) );
-		bu_vls_free(&str);
-	}
+    rt_spect_make_NTSC_RGB( &ntsc_r, &ntsc_g, &ntsc_b, spectrum );
+    bu_log("R:\n");bn_print_table_and_tabdata( "/dev/tty", ntsc_r );
+    bu_log("G:\n");bn_print_table_and_tabdata( "/dev/tty", ntsc_g );
+    bu_log("B:\n");bn_print_table_and_tabdata( "/dev/tty", ntsc_b );
+    {
+	struct bu_vls str;
+	bu_vls_init(&str);
+	bn_tabdata_to_tcl( &str, ntsc_r );
+	bu_log("ntsc_r tcl:  %s\n", bu_vls_addr(&str) );
+	bu_vls_free(&str);
+    }
 
 /* "A flat spectral curve is represente by equal XYZ values".  Hall pg 52 */
-	flat = bn_tabdata_get_constval( 42.0, spectrum );
-	bu_log("flat:\n");bn_print_table_and_tabdata( "/dev/tty", flat );
-	rt_spect_curve_to_xyz(xyz, flat, cie_x, cie_y, cie_z );
-	VPRINT("flat xyz?", xyz);
+    flat = bn_tabdata_get_constval( 42.0, spectrum );
+    bu_log("flat:\n");bn_print_table_and_tabdata( "/dev/tty", flat );
+    rt_spect_curve_to_xyz(xyz, flat, cie_x, cie_y, cie_z );
+    VPRINT("flat xyz?", xyz);
 
-return;
+    return;
 
-	/* Check identity of XYZ->RGB->spectrum->XYZ->RGB */
-	check( 0.313,     0.329,      0.358);	/* D6500 white */
-	check( 0.670,     0.330,      0.000);	/* NTSC red primary */
-	check( 0.210,     0.710,      0.080);	/* NTSC green primary */
-	check( 0.140,     0.080,      0.780);	/* NTSC blue primary */
-	check( .5, .5, .5 );
-	check( 1, 0, 0 );
-	check( 0, 1, 0 );
-	check( 0, 0, 1 );
-	check( 1, 1, 1 );
-	check( 1, 1, 0 );
-	check( 1, 0, 1 );
-	check( 0, 1, 1 );
+    /* Check identity of XYZ->RGB->spectrum->XYZ->RGB */
+    check( 0.313,     0.329,      0.358);	/* D6500 white */
+    check( 0.670,     0.330,      0.000);	/* NTSC red primary */
+    check( 0.210,     0.710,      0.080);	/* NTSC green primary */
+    check( 0.140,     0.080,      0.780);	/* NTSC blue primary */
+    check( .5, .5, .5 );
+    check( 1, 0, 0 );
+    check( 0, 1, 0 );
+    check( 0, 0, 1 );
+    check( 1, 1, 1 );
+    check( 1, 1, 0 );
+    check( 1, 0, 1 );
+    check( 0, 1, 1 );
 }
 
 static char usage[] = "\
@@ -578,37 +578,37 @@ Usage: ssampview [-t] [-s squarefilesize] [-w file_width] [-n file_height]\n\
 int
 get_args(int argc, register char **argv)
 {
-	register int c;
+    register int c;
 
-	while ( (c = bu_getopt( argc, argv, "ts:w:n:" )) != EOF )  {
-		switch ( c )  {
-		case 't':
-			fprintf(stderr, "ssampview: conducting library tests\n");
-			conduct_tests();
-			first_command = "do_testing";
-			Tk_Main( 1, argv, tcl_appinit );
-			/* NOTREACHED */
-			bu_exit(0, NULL);
-			/* NOTREACHED */
-			break;
-		case 's':
-			/* square file size */
-			height = width = atoi(bu_optarg);
-			break;
-		case 'w':
-			width = atoi(bu_optarg);
-			break;
-		case 'n':
-			height = atoi(bu_optarg);
-			break;
+    while ( (c = bu_getopt( argc, argv, "ts:w:n:" )) != EOF )  {
+	switch ( c )  {
+	    case 't':
+		fprintf(stderr, "ssampview: conducting library tests\n");
+		conduct_tests();
+		first_command = "do_testing";
+		Tk_Main( 1, argv, tcl_appinit );
+		/* NOTREACHED */
+		bu_exit(0, NULL);
+		/* NOTREACHED */
+		break;
+	    case 's':
+		/* square file size */
+		height = width = atoi(bu_optarg);
+		break;
+	    case 'w':
+		width = atoi(bu_optarg);
+		break;
+	    case 'n':
+		height = atoi(bu_optarg);
+		break;
 
-		default:		/* '?' */
-			return(0);
-		}
+	    default:		/* '?' */
+		return(0);
 	}
+    }
 
-	if ( bu_optind >= argc )  return 0;
-	return 1;	/* OK */
+    if ( bu_optind >= argc )  return 0;
+    return 1;	/* OK */
 }
 
 /*
@@ -618,115 +618,115 @@ int
 main(int argc, char **argv)
 {
 
-	bu_debug = BU_DEBUG_COREDUMP;
-	rt_g.debug = 1;
+    bu_debug = BU_DEBUG_COREDUMP;
+    rt_g.debug = 1;
 
-	rt_make_ntsc_xyz2rgb( xyz2rgb );
+    rt_make_ntsc_xyz2rgb( xyz2rgb );
 
-	if ( !get_args( argc, argv ) )  {
-		(void)fputs(usage, stderr);
-		bu_exit( 1, NULL );
-	}
+    if ( !get_args( argc, argv ) )  {
+	(void)fputs(usage, stderr);
+	bu_exit( 1, NULL );
+    }
 
-	if ( argc > 1 && strcmp(argv[1], "-t") == 0 )  {
-	}
+    if ( argc > 1 && strcmp(argv[1], "-t") == 0 )  {
+    }
 
-	datafile_basename = argv[bu_optind];
+    datafile_basename = argv[bu_optind];
 
-	first_command = "doit1 42";
+    first_command = "doit1 42";
 
-	if ( (fbp = fb_open( NULL, width, height )) == FBIO_NULL )  {
-		bu_exit(EXIT_FAILURE, "Unable to open fb\n");
-	}
-	fb_view( fbp, width/2, height/2, fb_getwidth(fbp)/width, fb_getheight(fbp)/height );
+    if ( (fbp = fb_open( NULL, width, height )) == FBIO_NULL )  {
+	bu_exit(EXIT_FAILURE, "Unable to open fb\n");
+    }
+    fb_view( fbp, width/2, height/2, fb_getwidth(fbp)/width, fb_getheight(fbp)/height );
 
-	/* Read spectrum definition */
-	snprintf( spectrum_name, 100, "%s.spect", datafile_basename );
-	spectrum = (struct bn_table *)bn_table_read( spectrum_name );
-	if ( spectrum == NULL )  {
-		bu_exit(EXIT_FAILURE, "Unable to read spectrum\n");
-	}
-	BN_CK_TABLE(spectrum);
-	bu_log("spectrum has %d samples\n", spectrum->nx);
-	nwave = spectrum->nx;	/* shared with Tcl */
+    /* Read spectrum definition */
+    snprintf( spectrum_name, 100, "%s.spect", datafile_basename );
+    spectrum = (struct bn_table *)bn_table_read( spectrum_name );
+    if ( spectrum == NULL )  {
+	bu_exit(EXIT_FAILURE, "Unable to read spectrum\n");
+    }
+    BN_CK_TABLE(spectrum);
+    bu_log("spectrum has %d samples\n", spectrum->nx);
+    nwave = spectrum->nx;	/* shared with Tcl */
 
-	/* Read atmosphere curve -- input is in microns, not nm */
-	atmosphere_orig = bn_read_table_and_tabdata( "../rttherm/std_day_1km.dat" );
-	bn_table_scale( (struct bn_table *)(atmosphere_orig->table), 1000.0 );
-	atmosphere = bn_tabdata_resample_max( spectrum, atmosphere_orig );
+    /* Read atmosphere curve -- input is in microns, not nm */
+    atmosphere_orig = bn_read_table_and_tabdata( "../rttherm/std_day_1km.dat" );
+    bn_table_scale( (struct bn_table *)(atmosphere_orig->table), 1000.0 );
+    atmosphere = bn_tabdata_resample_max( spectrum, atmosphere_orig );
 
-	/* Allocate and read 2-D spectrum array */
-	data = bn_tabdata_binary_read( datafile_basename, width*height, spectrum );
-	if ( !data )  bu_exit(EXIT_FAILURE, "bn_tabdata_binary_read() of datafile_basename failed\n");
+    /* Allocate and read 2-D spectrum array */
+    data = bn_tabdata_binary_read( datafile_basename, width*height, spectrum );
+    if ( !data )  bu_exit(EXIT_FAILURE, "bn_tabdata_binary_read() of datafile_basename failed\n");
 
-	/* Allocate framebuffer image buffer */
-	pixels = (unsigned char *)bu_malloc( width * height * 3, "pixels[]" );
+    /* Allocate framebuffer image buffer */
+    pixels = (unsigned char *)bu_malloc( width * height * 3, "pixels[]" );
 
-	find_minmax();
-	bu_log("min = %g, max=%g Watts\n", minval, maxval );
+    find_minmax();
+    bu_log("min = %g, max=%g Watts\n", minval, maxval );
 
-	Tk_Main( 1, argv, tcl_appinit );
-	/* NOTREACHED */
+    Tk_Main( 1, argv, tcl_appinit );
+    /* NOTREACHED */
 
-	return 0;
+    return 0;
 }
 
 int
 doit(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
 {
-	int	wl;
-	char	cmd[96];
+    int	wl;
+    char	cmd[96];
 
-	for ( wl = 0; wl < spectrum->nx; wl++ )  {
-		sprintf( cmd, "doit1 %d", wl );
-		Tcl_Eval( interp, cmd );
-	}
-	return TCL_OK;
+    for ( wl = 0; wl < spectrum->nx; wl++ )  {
+	sprintf( cmd, "doit1 %d", wl );
+	Tcl_Eval( interp, cmd );
+    }
+    return TCL_OK;
 }
 
 int
 doit1(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
 {
-	int	wl;
-	char	buf[32];
-	int	got;
+    int	wl;
+    char	buf[32];
+    int	got;
 
-	Tcl_ResetResult(interp);
+    Tcl_ResetResult(interp);
 
-	if ( argc != 2 )  {
-	    Tcl_AppendResult(interp, "Usage: doit1 wavel#", (char *)NULL);
-	    return TCL_ERROR;
-	}
-	wl = atoi(argv[1]);
-	if ( wl < 0 || wl >= spectrum->nx )  {
-	    Tcl_AppendResult(interp, "Wavelength number out of range", (char *)NULL);
-	    return TCL_ERROR;
-	}
+    if ( argc != 2 )  {
+	Tcl_AppendResult(interp, "Usage: doit1 wavel#", (char *)NULL);
+	return TCL_ERROR;
+    }
+    wl = atoi(argv[1]);
+    if ( wl < 0 || wl >= spectrum->nx )  {
+	Tcl_AppendResult(interp, "Wavelength number out of range", (char *)NULL);
+	return TCL_ERROR;
+    }
 
-	if ( !data )  {
-	    Tcl_AppendResult(interp, "pixel data table not loaded yet", (char *)NULL);
-	    return TCL_ERROR;
-	}
+    if ( !data )  {
+	Tcl_AppendResult(interp, "pixel data table not loaded yet", (char *)NULL);
+	return TCL_ERROR;
+    }
 
-	bu_log("doit1 %d: %g um to %g um\n",
-		wl,
-		spectrum->x[wl] * 0.001,
-		spectrum->x[wl+1] * 0.001 );
-	if ( use_cie_xyz )
-		show_color(wl);
-	else
-		rescale(wl);
-	(void)fb_writerect( fbp, 0, 0, width, height, pixels );
-	fb_poll(fbp);
+    bu_log("doit1 %d: %g um to %g um\n",
+	   wl,
+	   spectrum->x[wl] * 0.001,
+	   spectrum->x[wl+1] * 0.001 );
+    if ( use_cie_xyz )
+	show_color(wl);
+    else
+	rescale(wl);
+    (void)fb_writerect( fbp, 0, 0, width, height, pixels );
+    fb_poll(fbp);
 
-	/* export C variables to TCL, one-way */
-	/* These are being traced by Tk, this will cause update */
-	sprintf(buf, "%d", wl);
-	Tcl_SetVar(interp, "x", buf, TCL_GLOBAL_ONLY);
-	sprintf(buf, "%g", spectrum->x[wl] * 0.001);
-	Tcl_SetVar(interp, "lambda", buf, TCL_GLOBAL_ONLY);
+    /* export C variables to TCL, one-way */
+    /* These are being traced by Tk, this will cause update */
+    sprintf(buf, "%d", wl);
+    Tcl_SetVar(interp, "x", buf, TCL_GLOBAL_ONLY);
+    sprintf(buf, "%g", spectrum->x[wl] * 0.001);
+    Tcl_SetVar(interp, "lambda", buf, TCL_GLOBAL_ONLY);
 
-	return TCL_OK;
+    return TCL_OK;
 }
 
 /*
@@ -734,31 +734,31 @@ doit1(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
 void
 find_minmax(void)
 {
-	char			*cp;
-	int			todo;
-	register fastf_t	max, min;
-	int		nbytes;
-	int		j;
+    char			*cp;
+    int			todo;
+    register fastf_t	max, min;
+    int		nbytes;
+    int		j;
 
-	cp = (char *)data;
-	nbytes = BN_SIZEOF_TABDATA(spectrum);
+    cp = (char *)data;
+    nbytes = BN_SIZEOF_TABDATA(spectrum);
 
-	max = -INFINITY;
-	min =  INFINITY;
+    max = -INFINITY;
+    min =  INFINITY;
 
-	for ( todo = width * height; todo > 0; todo--, cp += nbytes )  {
-		struct bn_tabdata	*sp;
-		sp = (struct bn_tabdata *)cp;
-		BN_CK_TABDATA(sp);
-		for ( j = 0; j < spectrum->nx; j++ )  {
-			register fastf_t	v;
+    for ( todo = width * height; todo > 0; todo--, cp += nbytes )  {
+	struct bn_tabdata	*sp;
+	sp = (struct bn_tabdata *)cp;
+	BN_CK_TABDATA(sp);
+	for ( j = 0; j < spectrum->nx; j++ )  {
+	    register fastf_t	v;
 
-			if ( (v = sp->y[j]) > max )  max = v;
-			if ( v < min )  min = v;
-		}
+	    if ( (v = sp->y[j]) > max )  max = v;
+	    if ( v < min )  min = v;
 	}
-	maxval = max;
-	minval = min;
+    }
+    maxval = max;
+    minval = min;
 }
 
 /*
@@ -770,37 +770,37 @@ find_minmax(void)
 void
 rescale(int wav)
 {
-	char		*cp;
-	unsigned char	*pp;
-	int		todo;
-	int		nbytes;
-	fastf_t		scale;
-	fastf_t		atmos_scale;
+    char		*cp;
+    unsigned char	*pp;
+    int		todo;
+    int		nbytes;
+    fastf_t		scale;
+    fastf_t		atmos_scale;
 
-	cp = (char *)data;
-	nbytes = BN_SIZEOF_TABDATA(spectrum);
+    cp = (char *)data;
+    nbytes = BN_SIZEOF_TABDATA(spectrum);
 
-	pp = pixels;
+    pp = pixels;
 
-	scale = 255 / (maxval - minval);
+    scale = 255 / (maxval - minval);
 
-	if ( use_atmosphere )
-		atmos_scale = atmosphere->y[wav];
-	else
-		atmos_scale = 1;
+    if ( use_atmosphere )
+	atmos_scale = atmosphere->y[wav];
+    else
+	atmos_scale = 1;
 
-	for ( todo = width * height; todo > 0; todo--, cp += nbytes, pp += 3 )  {
-		struct bn_tabdata	*sp;
-		register int		val;
+    for ( todo = width * height; todo > 0; todo--, cp += nbytes, pp += 3 )  {
+	struct bn_tabdata	*sp;
+	register int		val;
 
-		sp = (struct bn_tabdata *)cp;
-		BN_CK_TABDATA(sp);
+	sp = (struct bn_tabdata *)cp;
+	BN_CK_TABDATA(sp);
 
-		val = (sp->y[wav] * atmos_scale - minval) * scale;
-		if ( val > 255 )  val = 255;
-		else if ( val < 0 ) val = 0;
-		pp[0] = pp[1] = pp[2] = val;
-	}
+	val = (sp->y[wav] * atmos_scale - minval) * scale;
+	if ( val > 255 )  val = 255;
+	else if ( val < 0 ) val = 0;
+	pp[0] = pp[1] = pp[2] = val;
+    }
 }
 
 
@@ -814,82 +814,82 @@ rescale(int wav)
 void
 show_color(int off)
 {
-	char		*cp;
-	unsigned char	*pp;
-	int		todo;
-	int		nbytes;
-	fastf_t		scale;
-	struct bn_tabdata *new;
+    char		*cp;
+    unsigned char	*pp;
+    int		todo;
+    int		nbytes;
+    fastf_t		scale;
+    struct bn_tabdata *new;
 
-	cp = (char *)data;
-	nbytes = BN_SIZEOF_TABDATA(spectrum);
+    cp = (char *)data;
+    nbytes = BN_SIZEOF_TABDATA(spectrum);
 
-	pp = pixels;
+    pp = pixels;
 
-	scale = 255 / (maxval - minval);
+    scale = 255 / (maxval - minval);
 
-	/* Build CIE curves */
-	if ( cie_x->magic == 0 )
-		rt_spect_make_CIE_XYZ( &cie_x, &cie_y, &cie_z, spectrum );
+    /* Build CIE curves */
+    if ( cie_x->magic == 0 )
+	rt_spect_make_CIE_XYZ( &cie_x, &cie_y, &cie_z, spectrum );
 
-	BN_GET_TABDATA(new, spectrum);
+    BN_GET_TABDATA(new, spectrum);
 
-	for ( todo = width * height; todo > 0; todo--, cp += nbytes, pp += 3 )  {
-		struct bn_tabdata	*sp;
-		point_t			xyz;
-		point_t			rgb;
-		register int		val;
+    for ( todo = width * height; todo > 0; todo--, cp += nbytes, pp += 3 )  {
+	struct bn_tabdata	*sp;
+	point_t			xyz;
+	point_t			rgb;
+	register int		val;
 
-		sp = (struct bn_tabdata *)cp;
-		BN_CK_TABDATA(sp);
+	sp = (struct bn_tabdata *)cp;
+	BN_CK_TABDATA(sp);
 
-		if ( use_atmosphere )  {
-			bn_tabdata_mul( new, sp, atmosphere );
-			bn_tabdata_freq_shift( new, new, spectrum->x[off] - 380.0 );
-		} else {
-			bn_tabdata_freq_shift( new, sp, spectrum->x[off] - 380.0 );
-		}
-
-#if 0
-		if ( todo == (width/2)*(height/2) )  {
-			struct bu_vls str;
-			bu_vls_init(&str);
-
-			bu_vls_printf(&str, "popup_plot_tabdata centerpoint {");
-			bn_tabdata_to_tcl(&str, sp);
-			bu_vls_printf(&str, "}" );
-			Tcl_Eval( interp, bu_vls_addr(&str) );
-
-			bu_vls_trunc(&str, 0);
-			bu_vls_printf(&str, "popup_plot_tabdata centerpoint_shifted {");
-			bn_tabdata_to_tcl(&str, new);
-			bu_vls_printf(&str, "}" );
-			Tcl_Eval( interp, bu_vls_addr(&str) );
-			bu_vls_free(&str);
-		}
-#endif
-
-		rt_spect_curve_to_xyz( xyz, new, cie_x, cie_y, cie_z );
-
-		MAT3X3VEC( rgb, xyz2rgb, xyz );
-
-		val = (rgb[RED] - minval) * scale;
-		if ( val > 255 )  val = 255;
-		else if ( val < 0 ) val = 0;
-		pp[RED] = val;
-
-		val = (rgb[GRN] - minval) * scale;
-		if ( val > 255 )  val = 255;
-		else if ( val < 0 ) val = 0;
-		pp[GRN] = val;
-
-		val = (rgb[BLU] - minval) * scale;
-		if ( val > 255 )  val = 255;
-		else if ( val < 0 ) val = 0;
-		pp[BLU] = val;
+	if ( use_atmosphere )  {
+	    bn_tabdata_mul( new, sp, atmosphere );
+	    bn_tabdata_freq_shift( new, new, spectrum->x[off] - 380.0 );
+	} else {
+	    bn_tabdata_freq_shift( new, sp, spectrum->x[off] - 380.0 );
 	}
 
-	bn_tabdata_free( new );
+#if 0
+	if ( todo == (width/2)*(height/2) )  {
+	    struct bu_vls str;
+	    bu_vls_init(&str);
+
+	    bu_vls_printf(&str, "popup_plot_tabdata centerpoint {");
+	    bn_tabdata_to_tcl(&str, sp);
+	    bu_vls_printf(&str, "}" );
+	    Tcl_Eval( interp, bu_vls_addr(&str) );
+
+	    bu_vls_trunc(&str, 0);
+	    bu_vls_printf(&str, "popup_plot_tabdata centerpoint_shifted {");
+	    bn_tabdata_to_tcl(&str, new);
+	    bu_vls_printf(&str, "}" );
+	    Tcl_Eval( interp, bu_vls_addr(&str) );
+	    bu_vls_free(&str);
+	}
+#endif
+
+	rt_spect_curve_to_xyz( xyz, new, cie_x, cie_y, cie_z );
+
+	MAT3X3VEC( rgb, xyz2rgb, xyz );
+
+	val = (rgb[RED] - minval) * scale;
+	if ( val > 255 )  val = 255;
+	else if ( val < 0 ) val = 0;
+	pp[RED] = val;
+
+	val = (rgb[GRN] - minval) * scale;
+	if ( val > 255 )  val = 255;
+	else if ( val < 0 ) val = 0;
+	pp[GRN] = val;
+
+	val = (rgb[BLU] - minval) * scale;
+	if ( val > 255 )  val = 255;
+	else if ( val < 0 ) val = 0;
+	pp[BLU] = val;
+    }
+
+    bn_tabdata_free( new );
 }
 
 /*

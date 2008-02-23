@@ -53,7 +53,7 @@ options, it is ignored for all other options\n";
 void
 usage()
 {
-	bu_exit( 1, message );
+    bu_exit( 1, message );
 }
 
 /*

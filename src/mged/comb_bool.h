@@ -84,13 +84,13 @@ extern struct bool_tree_node	*comb_bool_tree;
 
 #ifdef USE_PROTOTYPES
 extern struct bool_tree_node	*bt_create_internal (
-				    int,
-				    struct bool_tree_node *,
-				    struct bool_tree_node *);
+    int,
+    struct bool_tree_node *,
+    struct bool_tree_node *);
 extern struct bool_tree_node	*bt_create_leaf (char*);
 extern void			show_tree_infix (
-				    struct bool_tree_node *,
-				    int);
+    struct bool_tree_node *,
+    int);
 extern void			show_tree_lisp (struct bool_tree_node *);
 extern int			cvt_to_gift_bool (struct bool_tree_node *);
 extern void			show_gift_bool (struct bool_tree_node *, int);

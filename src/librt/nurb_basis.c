@@ -63,42 +63,42 @@ fastf_t
 rt_nurb_basis_eval(register struct knot_vector *knts, int interval, int order, fastf_t mu)
 {
 
-	register fastf_t den;
-	register fastf_t k1;
-	register fastf_t k2;
-	register fastf_t k3;
-	register fastf_t *kk = knts->knots + interval;
-	fastf_t b1, b2;
+    register fastf_t den;
+    register fastf_t k1;
+    register fastf_t k2;
+    register fastf_t k3;
+    register fastf_t *kk = knts->knots + interval;
+    fastf_t b1, b2;
 
-	k1 = *(kk);
-	k2 = *(kk + 1);
+    k1 = *(kk);
+    k2 = *(kk + 1);
 
-	if (order <= 1) {
-		if ( ( k1 <= mu) && (mu < k2))
-			return 1.0;
-		else
-			return 0.0;
-	}
-
-	k3 = *(kk + order);
-
-	den = ( *(kk + order - 1) - k1);
-
-	if ( den == 0.0)
-		b1 = 0.0;
+    if (order <= 1) {
+	if ( ( k1 <= mu) && (mu < k2))
+	    return 1.0;
 	else
-		b1 = ((mu - k1) *
-		    rt_nurb_basis_eval( knts, interval, order - 1, mu)) / den;
+	    return 0.0;
+    }
 
-	den = ( k3 - k2);
+    k3 = *(kk + order);
 
-	if (den == 0.0)
-		b2 = 0.0;
-	else
-		b2 = ((k3 - mu) *
-		    rt_nurb_basis_eval( knts, interval + 1, order - 1, mu)) / den;
+    den = ( *(kk + order - 1) - k1);
 
-	return (b1 + b2);
+    if ( den == 0.0)
+	b1 = 0.0;
+    else
+	b1 = ((mu - k1) *
+	      rt_nurb_basis_eval( knts, interval, order - 1, mu)) / den;
+
+    den = ( k3 - k2);
+
+    if (den == 0.0)
+	b2 = 0.0;
+    else
+	b2 = ((k3 - mu) *
+	      rt_nurb_basis_eval( knts, interval + 1, order - 1, mu)) / den;
+
+    return (b1 + b2);
 }
 /** @} */
 

@@ -44,47 +44,47 @@ void makesintab(void);
 
 int main(int argc, char **argv)
 {
-	int	i;
-	double	d;
-	double	period, stepsize, findex;
-	int	setsize;
+    int	i;
+    double	d;
+    double	period, stepsize, findex;
+    int	setsize;
 
-	if ( isatty(fileno(stdout)) || argc < 2 ) {
-		bu_exit(1, "%s", usage );
+    if ( isatty(fileno(stdout)) || argc < 2 ) {
+	bu_exit(1, "%s", usage );
+    }
+
+    makesintab();
+    fprintf(stderr, "init done\n");
+
+    setsize = atoi(argv[1]);
+
+    findex = 0;
+    stepsize = 0;
+    while ( fread(&period, sizeof(period), 1, stdin) == 1 ) {
+	if ( period > 0 )
+	    stepsize = TABSIZE / period;
+	for ( i = setsize; i > 0; i-- ) {
+	    d = sintab[(int)findex];
+	    d *= 0.4;
+	    fwrite( &d, sizeof(d), 1, stdout );
+	    findex += stepsize;
+	    if ( findex > TABSIZE )
+		findex -= TABSIZE;
 	}
-
-	makesintab();
-	fprintf(stderr, "init done\n");
-
-	setsize = atoi(argv[1]);
-
-	findex = 0;
-	stepsize = 0;
-	while ( fread(&period, sizeof(period), 1, stdin) == 1 ) {
-		if ( period > 0 )
-			stepsize = TABSIZE / period;
-		for ( i = setsize; i > 0; i-- ) {
-			d = sintab[(int)findex];
-			d *= 0.4;
-			fwrite( &d, sizeof(d), 1, stdout );
-			findex += stepsize;
-			if ( findex > TABSIZE )
-				findex -= TABSIZE;
-		}
-	}
-	return 0;
+    }
+    return 0;
 }
 
 void
 makesintab(void)
 {
-	int	i;
-	double	theta;
+    int	i;
+    double	theta;
 
-	for ( i = 0; i < TABSIZE; i ++ ) {
-		theta = i / (double)TABSIZE * 2 * M_PI;
-		sintab[i] = sin(theta);
-	}
+    for ( i = 0; i < TABSIZE; i ++ ) {
+	theta = i / (double)TABSIZE * 2 * M_PI;
+	sintab[i] = sin(theta);
+    }
 }
 
 /*

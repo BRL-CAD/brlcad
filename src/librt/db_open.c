@@ -273,7 +273,7 @@ db_close(register struct db_i *dbip)
 
     RT_CK_DBI(dbip);
     if (RT_G_DEBUG&DEBUG_DB) bu_log("db_close(%s) x%x uses=%d\n",
-				   dbip->dbi_filename, dbip, dbip->dbi_uses );
+				    dbip->dbi_filename, dbip, dbip->dbi_uses );
 
     bu_semaphore_acquire(BU_SEM_LISTS);
     if ( (--dbip->dbi_uses) > 0 )  {
@@ -373,8 +373,8 @@ db_close(register struct db_i *dbip)
  */
 int
 db_dump(struct rt_wdb *wdbp, struct db_i *dbip)
-     /* output */
-     /* input */
+    /* output */
+    /* input */
 {
     register int		i;
     register struct directory *dp;

@@ -39,35 +39,35 @@
 int
 main(void)
 {
-   int ichoice;			/*  Choice.  */
-   char *irX = "ir-X";		/*  Calls ir-X program.  */
-   char *irsgi = "ir-sgi";	/*  Calls ir-sgi program.  */
-   char *X_or_SGI;		/*  will be set to one of the above */
-   char showtherm[125];		/*  Calls showtherm program.  */
-   char gfile[16];		/*  .g file.  */
-   char group[26];		/*  Group names.  */
-   int ngrp;			/*  Number of groups.  */
-   int i, j, k;			/*  Loop counters.  */
+    int ichoice;			/*  Choice.  */
+    char *irX = "ir-X";		/*  Calls ir-X program.  */
+    char *irsgi = "ir-sgi";	/*  Calls ir-sgi program.  */
+    char *X_or_SGI;		/*  will be set to one of the above */
+    char showtherm[125];		/*  Calls showtherm program.  */
+    char gfile[16];		/*  .g file.  */
+    char group[26];		/*  Group names.  */
+    int ngrp;			/*  Number of groups.  */
+    int i, j, k;			/*  Loop counters.  */
 
-   /*  Find option.  */
-   (void)printf("This takes a BRL-CAD mged model with a PRISM\n");
-   (void)printf("temperature output file and raytrace and/or\n");
-   (void)printf("display it.  Make your selection.\n");
-   (void)printf("\t0 - raytrace & store file\n");
-   (void)printf("\t1 - raytrace, store, & showtherm file\n");
-   (void)printf("\t2 - showtherm file\n");
-   (void)fflush(stdout);
-   (void)scanf("%d", &ichoice);
+    /*  Find option.  */
+    (void)printf("This takes a BRL-CAD mged model with a PRISM\n");
+    (void)printf("temperature output file and raytrace and/or\n");
+    (void)printf("display it.  Make your selection.\n");
+    (void)printf("\t0 - raytrace & store file\n");
+    (void)printf("\t1 - raytrace, store, & showtherm file\n");
+    (void)printf("\t2 - showtherm file\n");
+    (void)fflush(stdout);
+    (void)scanf("%d", &ichoice);
 
-   while ( (ichoice !=0 ) && (ichoice != 1) &&(ichoice != 2) )
-   {
+    while ( (ichoice !=0 ) && (ichoice != 1) &&(ichoice != 2) )
+    {
 	(void)printf("Your choice was not 0, 1, or 2, enter again!!\n");
 	(void)fflush(stdout);
 	(void)scanf("%d", &ichoice);
-   }
+    }
 
-   if ( (ichoice == 0) || (ichoice == 1) )
-   {
+    if ( (ichoice == 0) || (ichoice == 1) )
+    {
 	/*  Start setting showtherm variable.  */
 	showtherm[0] = 's';
 	showtherm[1] = 'h';
@@ -92,31 +92,31 @@ main(void)
 	j = 0;
 	while ( (gfile[j] != '\0') && (i < 123) )
 	{
-	   showtherm[i] = gfile[j];
-	   i++;
-	   j++;
+	    showtherm[i] = gfile[j];
+	    i++;
+	    j++;
 	}
 	for (j=0; j<ngrp; j++)
 	{
-	   (void)printf("Enter group %d (25 char max).\n\t", j);
-	   (void)fflush(stdout);
-	   (void)scanf("%25s", group);
-	   showtherm[i] = ' ';
-	   i++;
-	   k = 0;
-	   while ( (group[k] != '\0') && (i < 123) )
-	   {
+	    (void)printf("Enter group %d (25 char max).\n\t", j);
+	    (void)fflush(stdout);
+	    (void)scanf("%25s", group);
+	    showtherm[i] = ' ';
+	    i++;
+	    k = 0;
+	    while ( (group[k] != '\0') && (i < 123) )
+	    {
 		showtherm[i] = group[k];
 		i++;
 		k++;
-	   }
+	    }
 	}
 	showtherm[i] = '\0';
 	if (i >= 123)
 	{
-	   (void)printf("There are too many characters for showtherm,\n");
-	   (void)printf("please revise pictx.\n");
-	   (void)fflush(stdout);
+	    (void)printf("There are too many characters for showtherm,\n");
+	    (void)printf("please revise pictx.\n");
+	    (void)fflush(stdout);
 	}
 
 	/*  Call the program showtherm with the appropriate options.  */
@@ -125,10 +125,10 @@ main(void)
 	(void)printf("\nThe program showtherm is now being run.\n\t%s\n\n", showtherm);
 	(void)fflush(stdout);
 	system(showtherm);
-   }
+    }
 
-   if ( (ichoice == 1) || (ichoice == 2) )
-   {
+    if ( (ichoice == 1) || (ichoice == 2) )
+    {
 	char choice[81];
 
 	/*  Call the program ir-X or ir-sgi so that a file that has been raytraced  */
@@ -136,17 +136,17 @@ main(void)
 	choice[0] = '\0';
 	while ( strcmp( choice, "sgi" ) && strcmp( choice, "X" ) && strcmp( choice, "x" ) )
 	{
-		(void)printf("\nSelect display ('X' or 'sgi') -> " );
-		(void)fflush(stdout);
-		(void)scanf( "%80s", choice );
+	    (void)printf("\nSelect display ('X' or 'sgi') -> " );
+	    (void)fflush(stdout);
+	    (void)scanf( "%80s", choice );
 	}
 	if ( !strcmp( choice, "X" ) || !strcmp( choice, "x" ) )
-		X_or_SGI = irX;
+	    X_or_SGI = irX;
 	else if ( !strcmp( choice, "sgi" ) )
-		X_or_SGI = irsgi;
+	    X_or_SGI = irsgi;
 	else
 	{
-		bu_exit(1, "Bad choice for display (%s)\n", choice );
+	    bu_exit(1, "Bad choice for display (%s)\n", choice );
 	}
 	(void)printf("\nThe program %s in now being run.  If option\n", X_or_SGI);
 	(void)printf("0 or 1 was used when the name of a file is asked\n");
@@ -154,8 +154,8 @@ main(void)
 	(void)printf("stored.\n\n");
 	(void)fflush(stdout);
 	system(X_or_SGI);
-   }
-   return 0;
+    }
+    return 0;
 }
 
 /*

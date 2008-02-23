@@ -44,7 +44,7 @@
 #endif
 
 #ifndef HZ
-	/* It's not always in sys/param.h;  if not, guess */
+/* It's not always in sys/param.h;  if not, guess */
 #	define	HZ		60
 #	define	DEFAULT_HZ	yes
 #endif
@@ -61,8 +61,8 @@ static struct tms tms0;
 void
 rt_prep_timer(void)
 {
-	(void)time(&time0);
-	(void)times(&tms0);
+    (void)time(&time0);
+    (void)times(&tms0);
 }
 
 /*
@@ -77,44 +77,44 @@ rt_prep_timer(void)
 double
 rt_get_timer(struct bu_vls *vp, double *elapsed)
 {
-	time_t	now;
-	double	user_cpu_secs;
-	double	sys_cpu_secs;
-	double	elapsed_secs;
-	double	percent;
-	struct tms tmsnow;
+    time_t	now;
+    double	user_cpu_secs;
+    double	sys_cpu_secs;
+    double	elapsed_secs;
+    double	percent;
+    struct tms tmsnow;
 
-	/* Real time.  1 second resolution. */
-	(void)time(&now);
-	elapsed_secs = now-time0;
+    /* Real time.  1 second resolution. */
+    (void)time(&now);
+    elapsed_secs = now-time0;
 
-	/* CPU time */
-	(void)times(&tmsnow);
-	user_cpu_secs = (tmsnow.tms_utime + tmsnow.tms_cutime) -
-		(tms0.tms_utime + tms0.tms_cutime );
-	user_cpu_secs /= HZ;
-	sys_cpu_secs = (tmsnow.tms_stime + tmsnow.tms_cstime) -
-		(tms0.tms_stime + tms0.tms_cstime );
-	sys_cpu_secs /= HZ;
-	if ( user_cpu_secs < 0.00001 )  user_cpu_secs = 0.00001;
-	if ( elapsed_secs < 0.00001 )  elapsed_secs = user_cpu_secs;	/* It can't be any less! */
+    /* CPU time */
+    (void)times(&tmsnow);
+    user_cpu_secs = (tmsnow.tms_utime + tmsnow.tms_cutime) -
+	(tms0.tms_utime + tms0.tms_cutime );
+    user_cpu_secs /= HZ;
+    sys_cpu_secs = (tmsnow.tms_stime + tmsnow.tms_cstime) -
+	(tms0.tms_stime + tms0.tms_cstime );
+    sys_cpu_secs /= HZ;
+    if ( user_cpu_secs < 0.00001 )  user_cpu_secs = 0.00001;
+    if ( elapsed_secs < 0.00001 )  elapsed_secs = user_cpu_secs;	/* It can't be any less! */
 
-	if ( elapsed )  *elapsed = elapsed_secs;
+    if ( elapsed )  *elapsed = elapsed_secs;
 
-	if ( vp )  {
-		percent = user_cpu_secs/elapsed_secs*100.0;
-		BU_CK_VLS(vp);
+    if ( vp )  {
+	percent = user_cpu_secs/elapsed_secs*100.0;
+	BU_CK_VLS(vp);
 #ifdef DEFAULT_HZ
-		bu_vls_printf( vp,
-"%g user + %g sys in %g elapsed secs (%g%%) WARNING: HZ=60 assumed, fix librt/timerunix.c",
-			user_cpu_secs, sys_cpu_secs, elapsed_secs, percent );
+	bu_vls_printf( vp,
+		       "%g user + %g sys in %g elapsed secs (%g%%) WARNING: HZ=60 assumed, fix librt/timerunix.c",
+		       user_cpu_secs, sys_cpu_secs, elapsed_secs, percent );
 #else
-		bu_vls_printf( vp,
-			"%g user + %g sys in %g elapsed secs (%g%%)",
-			user_cpu_secs, sys_cpu_secs, elapsed_secs, percent );
+	bu_vls_printf( vp,
+		       "%g user + %g sys in %g elapsed secs (%g%%)",
+		       user_cpu_secs, sys_cpu_secs, elapsed_secs, percent );
 #endif
-	}
-	return( user_cpu_secs );
+    }
+    return( user_cpu_secs );
 }
 
 /*
@@ -125,21 +125,21 @@ rt_get_timer(struct bu_vls *vp, double *elapsed)
 double
 rt_read_timer(char *str, int len)
 {
-	struct bu_vls	vls;
-	double		cpu;
-	int		todo;
+    struct bu_vls	vls;
+    double		cpu;
+    int		todo;
 
-	if ( !str )  return  rt_get_timer( (struct bu_vls *)0, (double *)0 );
+    if ( !str )  return  rt_get_timer( (struct bu_vls *)0, (double *)0 );
 
-	bu_vls_init( &vls );
-	cpu = rt_get_timer( &vls, (double *)0 );
-	todo = bu_vls_strlen( &vls );
+    bu_vls_init( &vls );
+    cpu = rt_get_timer( &vls, (double *)0 );
+    todo = bu_vls_strlen( &vls );
 
-	if (todo > len)
-	    todo = len;
-	bu_strlcpy( str, bu_vls_addr(&vls), todo );
+    if (todo > len)
+	todo = len;
+    bu_strlcpy( str, bu_vls_addr(&vls), todo );
 
-	return cpu;
+    return cpu;
 }
 
 /** @} */

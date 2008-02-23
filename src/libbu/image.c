@@ -134,11 +134,11 @@ png_save(int fd, unsigned char *rgb, int width, int height)
 
     png_init_io (png_ptr, fh);
     png_set_IHDR (png_ptr, info_ptr, (unsigned)width, (unsigned)height, 8, PNG_COLOR_TYPE_RGB,
-                  PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE,
-                  PNG_FILTER_TYPE_BASE);
+		  PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE,
+		  PNG_FILTER_TYPE_BASE);
     png_write_info (png_ptr, info_ptr);
     for (i = height-1; i >= 0; --i)
-        png_write_row (png_ptr, (png_bytep) (rgb + width*3*i));
+	png_write_row (png_ptr, (png_bytep) (rgb + width*3*i));
     png_write_end (png_ptr, info_ptr);
 
     png_destroy_write_struct(&png_ptr, &info_ptr);
@@ -284,7 +284,7 @@ bu_image_save_close(struct bu_image_file *bif)
     }
     switch (r) {
 	case 0: bu_log("Failed to write image\n"); break;
-	/* 1 signals success with no further action needed */
+	    /* 1 signals success with no further action needed */
 	case 2: close(bif->fd); break;
     }
     bu_free(bif->filename, "bu_image_file filename");

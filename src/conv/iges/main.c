@@ -55,10 +55,10 @@ struct file_list *curr_file;
 struct name_list *name_root;
 
 char operator[]={
-	' ',
-	'u',
-	'+',
-	'-' };
+    ' ',
+    'u',
+    '+',
+    '-' };
 
 mat_t *identity;
 
@@ -94,249 +94,249 @@ Try the '-t' option to convert all the trimmed surfaces into one BRL-CAD solid.\
 void
 Suggestions()
 {
-	int i;
-	int csg=0;
-	int brep=0;
-	int splines=0;
-	int tsurfs=0;
-	int drawing=0;
+    int i;
+    int csg=0;
+    int brep=0;
+    int splines=0;
+    int tsurfs=0;
+    int drawing=0;
 
-	/* categorize the elements in the IGES file as to whether they are
-	 * CSG, BREP, Trimmed surfaces, Spline surfaces, or drawing elements
-	 */
-	for ( i=0; i<NTYPES; i++ )
-	{
-		if ( (typecount[i].type >= 150 && typecount[i].type <= 184) ||
-		    typecount[i].type == 430 )
-			csg += typecount[i].count;
-		else if ( typecount[i].type == 186 ||
-			 (typecount[i].type >= 502 && typecount[i].type <=514) )
-			brep += typecount[i].count;
-		else if ( typecount[i].type == 128 )
-			splines += typecount[i].count;
-		else if ( typecount[i].type == 144 )
-			tsurfs += typecount[i].count;
-		else if ( (typecount[i].type >= 100 && typecount[i].type <= 112) ||
-			 typecount[i].type == 126 ||
-			 (typecount[i].type >= 202 && typecount[i].type <= 230) ||
-			 typecount[i].type == 404 || typecount[i].type == 410 )
-			drawing += typecount[i].count;
-	}
+    /* categorize the elements in the IGES file as to whether they are
+     * CSG, BREP, Trimmed surfaces, Spline surfaces, or drawing elements
+     */
+    for ( i=0; i<NTYPES; i++ )
+    {
+	if ( (typecount[i].type >= 150 && typecount[i].type <= 184) ||
+	     typecount[i].type == 430 )
+	    csg += typecount[i].count;
+	else if ( typecount[i].type == 186 ||
+		  (typecount[i].type >= 502 && typecount[i].type <=514) )
+	    brep += typecount[i].count;
+	else if ( typecount[i].type == 128 )
+	    splines += typecount[i].count;
+	else if ( typecount[i].type == 144 )
+	    tsurfs += typecount[i].count;
+	else if ( (typecount[i].type >= 100 && typecount[i].type <= 112) ||
+		  typecount[i].type == 126 ||
+		  (typecount[i].type >= 202 && typecount[i].type <= 230) ||
+		  typecount[i].type == 404 || typecount[i].type == 410 )
+	    drawing += typecount[i].count;
+    }
 
-	if ( (csg || brep) && (do_splines || do_drawings || trimmed_surf ) )
-		bu_log( msg1, iges_file );
+    if ( (csg || brep) && (do_splines || do_drawings || trimmed_surf ) )
+	bu_log( msg1, iges_file );
 
-	if ( drawing && csg == 0 && brep == 0 && !do_drawings )
-		bu_log( msg2, iges_file );
+    if ( drawing && csg == 0 && brep == 0 && !do_drawings )
+	bu_log( msg2, iges_file );
 
-	if ( splines && csg == 0 && brep == 0 && !do_splines )
-		bu_log( msg3, iges_file );
+    if ( splines && csg == 0 && brep == 0 && !do_splines )
+	bu_log( msg3, iges_file );
 
-	if ( tsurfs && csg == 0 && brep == 0 && !trimmed_surf )
-		bu_log( msg4, iges_file );
+    if ( tsurfs && csg == 0 && brep == 0 && !trimmed_surf )
+	bu_log( msg4, iges_file );
 }
 
 int
 main( argc, argv )
-int argc;
-char *argv[];
+    int argc;
+    char *argv[];
 {
-	int i;
-	int c;
-	int file_count=0;
-	char *output_file=(char *)NULL;
+    int i;
+    int c;
+    int file_count=0;
+    char *output_file=(char *)NULL;
 
 
-	while ( (c=bu_getopt( argc, argv, "3dntpo:x:X:N:" )) != EOF )
+    while ( (c=bu_getopt( argc, argv, "3dntpo:x:X:N:" )) != EOF )
+    {
+	switch ( c )
 	{
-		switch ( c )
-		{
-			case '3':
-				do_drawings = 1;
-				do_projection = 0;
-				break;
-			case 'd':
-				do_drawings = 1;
-				break;
-			case 'n':
-				do_splines = 1;
-				break;
-			case 'o':
-				output_file = bu_optarg;
-				break;
-			case 't':
-				trimmed_surf = 1;
-				break;
-			case 'p':
-				do_bots = 0;
-				break;
-			case 'N':
-				solid_name = bu_optarg;
-				break;
-			case 'x':
-				sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
-				if ( RT_G_DEBUG & DEBUG_MEM )
-					bu_debug |= BU_DEBUG_MEM_LOG;
-				if ( RT_G_DEBUG & DEBUG_MEM_FULL )
-					bu_debug |= BU_DEBUG_MEM_CHECK;
-				break;
-			case 'X':
-				sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug );
-				break;
-			default:
-				usage();
-				bu_exit(1, NULL);
-				break;
-		}
-	}
-
-	if (bu_optind >= argc || output_file == (char *)NULL || do_drawings+do_splines+trimmed_surf > 1) {
+	    case '3':
+		do_drawings = 1;
+		do_projection = 0;
+		break;
+	    case 'd':
+		do_drawings = 1;
+		break;
+	    case 'n':
+		do_splines = 1;
+		break;
+	    case 'o':
+		output_file = bu_optarg;
+		break;
+	    case 't':
+		trimmed_surf = 1;
+		break;
+	    case 'p':
+		do_bots = 0;
+		break;
+	    case 'N':
+		solid_name = bu_optarg;
+		break;
+	    case 'x':
+		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
+		if ( RT_G_DEBUG & DEBUG_MEM )
+		    bu_debug |= BU_DEBUG_MEM_LOG;
+		if ( RT_G_DEBUG & DEBUG_MEM_FULL )
+		    bu_debug |= BU_DEBUG_MEM_CHECK;
+		break;
+	    case 'X':
+		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug );
+		break;
+	    default:
 		usage();
 		bu_exit(1, NULL);
+		break;
 	}
+    }
 
-	if ( bu_debug & BU_DEBUG_MEM_CHECK )
-	{
-		bu_log( "Memory checking enabled\n" );
-		bu_mem_barriercheck();
-	}
+    if (bu_optind >= argc || output_file == (char *)NULL || do_drawings+do_splines+trimmed_surf > 1) {
+	usage();
+	bu_exit(1, NULL);
+    }
 
-	bu_log( "%s", brlcad_ident("IGES to BRL-CAD Translator"));
-	bu_log( "Please direct bug reports to <bugs@brlcad.org>\n\n" );
+    if ( bu_debug & BU_DEBUG_MEM_CHECK )
+    {
+	bu_log( "Memory checking enabled\n" );
+	bu_mem_barriercheck();
+    }
 
-	/* Initialize some variables */
-	ntypes = NTYPES;
-	regroot = NULL;
-	edge_root = NULL;
-	vertex_root = NULL;
-	name_root = NULL;
-	tol.magic = BN_TOL_MAGIC;
-	tol.dist = 0.005;
-	tol.dist_sq = tol.dist * tol.dist;
-	tol.perp = 1e-6;
-	tol.para = 1 - tol.perp;
+    bu_log( "%s", brlcad_ident("IGES to BRL-CAD Translator"));
+    bu_log( "Please direct bug reports to <bugs@brlcad.org>\n\n" );
 
-	Initstack();	/* Initialize node stack */
+    /* Initialize some variables */
+    ntypes = NTYPES;
+    regroot = NULL;
+    edge_root = NULL;
+    vertex_root = NULL;
+    name_root = NULL;
+    tol.magic = BN_TOL_MAGIC;
+    tol.dist = 0.005;
+    tol.dist_sq = tol.dist * tol.dist;
+    tol.perp = 1e-6;
+    tol.para = 1 - tol.perp;
 
-	identity = (mat_t *)bu_malloc( sizeof( mat_t ), "main: identity" );
-	for ( i=0; i<16; i++ )
-	{
-		if ( !(i%5) )
-			(*identity)[i] = 1.0;
-		else
-			(*identity)[i] = 0.0;
-	}
+    Initstack();	/* Initialize node stack */
 
-	if ( (fdout = wdb_fopen( output_file )) == NULL )
-	{
-		bu_log( "Cannot open %s\n", output_file );
-		perror( "iges-g" );
-		usage();
-		bu_exit( 1, NULL );
-	}
-	bu_strlcpy( brlcad_file,  output_file, sizeof(brlcad_file) );
-
-	argc -= bu_optind;
-	argv += bu_optind;
-
-	BU_LIST_INIT( &iges_list.l );
-	curr_file = (struct file_list *)bu_malloc( sizeof( struct file_list ), "iges-g: curr_file" );
-	if ( solid_name )
-		bu_strlcpy( curr_file->obj_name, Make_unique_brl_name( solid_name ), NAMESIZE+1 );
+    identity = (mat_t *)bu_malloc( sizeof( mat_t ), "main: identity" );
+    for ( i=0; i<16; i++ )
+    {
+	if ( !(i%5) )
+	    (*identity)[i] = 1.0;
 	else
-		bu_strlcpy( curr_file->obj_name, Make_unique_brl_name( "all" ), NAMESIZE+1 );
+	    (*identity)[i] = 0.0;
+    }
 
-	curr_file->file_name = (char *)bu_malloc( strlen(argv[0])+1, "iges-g: curr_file->file_name" );
-	bu_strlcpy( curr_file->file_name, argv[0], strlen(argv[0])+1 );
-	BU_LIST_APPEND( &iges_list.l, &curr_file->l );
+    if ( (fdout = wdb_fopen( output_file )) == NULL )
+    {
+	bu_log( "Cannot open %s\n", output_file );
+	perror( "iges-g" );
+	usage();
+	bu_exit( 1, NULL );
+    }
+    bu_strlcpy( brlcad_file,  output_file, sizeof(brlcad_file) );
 
-	while ( BU_LIST_NON_EMPTY( &iges_list.l ) )
+    argc -= bu_optind;
+    argv += bu_optind;
+
+    BU_LIST_INIT( &iges_list.l );
+    curr_file = (struct file_list *)bu_malloc( sizeof( struct file_list ), "iges-g: curr_file" );
+    if ( solid_name )
+	bu_strlcpy( curr_file->obj_name, Make_unique_brl_name( solid_name ), NAMESIZE+1 );
+    else
+	bu_strlcpy( curr_file->obj_name, Make_unique_brl_name( "all" ), NAMESIZE+1 );
+
+    curr_file->file_name = (char *)bu_malloc( strlen(argv[0])+1, "iges-g: curr_file->file_name" );
+    bu_strlcpy( curr_file->file_name, argv[0], strlen(argv[0])+1 );
+    BU_LIST_APPEND( &iges_list.l, &curr_file->l );
+
+    while ( BU_LIST_NON_EMPTY( &iges_list.l ) )
+    {
+	if ( RT_G_DEBUG & DEBUG_MEM_FULL )
+	    bu_mem_barriercheck();
+
+	curr_file = BU_LIST_FIRST( file_list, &iges_list.l );
+	iges_file = curr_file->file_name;
+
+	fd = fopen( iges_file, "rb" );	/* open IGES file */
+	if ( fd == NULL )
 	{
-		if ( RT_G_DEBUG & DEBUG_MEM_FULL )
-			bu_mem_barriercheck();
-
-		curr_file = BU_LIST_FIRST( file_list, &iges_list.l );
-		iges_file = curr_file->file_name;
-
-		fd = fopen( iges_file, "rb" );	/* open IGES file */
-		if ( fd == NULL )
-		{
-			bu_log( "Cannot open %s\n", iges_file );
-			perror( "iges-g" );
-			usage();
-			bu_exit( 1, NULL );
-		}
-
-		bu_log( "\n\n\nIGES FILE: %s\n", iges_file );
-
-		reclen = Recsize() * sizeof( char ); /* Check length of records */
-		if ( reclen == 0 )
-			bu_exit(1, "File (%s) not in IGES ASCII format\n", iges_file );
-
-		Freestack();	/* Set node stack to empty */
-
-		Zero_counts();	/* Set summary information to all zeros */
-
-		Readstart();	/* Read start section */
-
-		Readglobal( file_count);	/* Read global section */
-
-		pstart = Findp();	/* Find start of parameter section */
-
-		Makedir();	/* Read directory section and build a linked list of entries */
-
-		Summary();	/* Print a summary of what is in the IGES file */
-
-		Docolor();	/* Get color info from color definition entities */
-
-		Get_att();	/* Look for a BRL-CAD attribute definition */
-
-		Evalxform();	/* Accumulate the transformation matrices */
-
-		Check_names();	/* Look for name entities */
-
-		if ( do_drawings )
-			Conv_drawings();	/* convert drawings to wire edges */
-		else if ( trimmed_surf )
-		{
-			Do_subfigs();		/* Look for Singular Subfigure Instances */
-
-			Convtrimsurfs();	/* try to convert trimmed surfaces to a single solid */
-		}
-		else if ( do_splines )
-			Convsurfs();		/* Convert NURBS to a single solid */
-		else
-		{
-			Convinst();	/* Handle Instances */
-
-			Convsolids();	/* Convert solid entities */
-
-			Convtree();	/* Convert Boolean Trees */
-
-			Convassem();	/* Convert solid assemblies */
-		}
-
-		if ( RT_G_DEBUG & DEBUG_MEM_FULL )
-			bu_mem_barriercheck();
-
-		Free_dir();
-
-		if ( RT_G_DEBUG & DEBUG_MEM_FULL )
-			bu_mem_barriercheck();
-
-		BU_LIST_DEQUEUE( &curr_file->l );
-		bu_free( (char *)curr_file->file_name, "iges-g: curr_file->file_name" );
-		bu_free( (char *)curr_file, "iges-g: curr_file" );
-		file_count++;
-
-		if ( RT_G_DEBUG & DEBUG_MEM_FULL )
-			bu_mem_barriercheck();
-
+	    bu_log( "Cannot open %s\n", iges_file );
+	    perror( "iges-g" );
+	    usage();
+	    bu_exit( 1, NULL );
 	}
 
-	iges_file = argv[0];
-	Suggestions();
-	return 0;
+	bu_log( "\n\n\nIGES FILE: %s\n", iges_file );
+
+	reclen = Recsize() * sizeof( char ); /* Check length of records */
+	if ( reclen == 0 )
+	    bu_exit(1, "File (%s) not in IGES ASCII format\n", iges_file );
+
+	Freestack();	/* Set node stack to empty */
+
+	Zero_counts();	/* Set summary information to all zeros */
+
+	Readstart();	/* Read start section */
+
+	Readglobal( file_count);	/* Read global section */
+
+	pstart = Findp();	/* Find start of parameter section */
+
+	Makedir();	/* Read directory section and build a linked list of entries */
+
+	Summary();	/* Print a summary of what is in the IGES file */
+
+	Docolor();	/* Get color info from color definition entities */
+
+	Get_att();	/* Look for a BRL-CAD attribute definition */
+
+	Evalxform();	/* Accumulate the transformation matrices */
+
+	Check_names();	/* Look for name entities */
+
+	if ( do_drawings )
+	    Conv_drawings();	/* convert drawings to wire edges */
+	else if ( trimmed_surf )
+	{
+	    Do_subfigs();		/* Look for Singular Subfigure Instances */
+
+	    Convtrimsurfs();	/* try to convert trimmed surfaces to a single solid */
+	}
+	else if ( do_splines )
+	    Convsurfs();		/* Convert NURBS to a single solid */
+	else
+	{
+	    Convinst();	/* Handle Instances */
+
+	    Convsolids();	/* Convert solid entities */
+
+	    Convtree();	/* Convert Boolean Trees */
+
+	    Convassem();	/* Convert solid assemblies */
+	}
+
+	if ( RT_G_DEBUG & DEBUG_MEM_FULL )
+	    bu_mem_barriercheck();
+
+	Free_dir();
+
+	if ( RT_G_DEBUG & DEBUG_MEM_FULL )
+	    bu_mem_barriercheck();
+
+	BU_LIST_DEQUEUE( &curr_file->l );
+	bu_free( (char *)curr_file->file_name, "iges-g: curr_file->file_name" );
+	bu_free( (char *)curr_file, "iges-g: curr_file" );
+	file_count++;
+
+	if ( RT_G_DEBUG & DEBUG_MEM_FULL )
+	    bu_mem_barriercheck();
+
+    }
+
+    iges_file = argv[0];
+    Suggestions();
+    return 0;
 }
 
 /*

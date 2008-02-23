@@ -49,7 +49,7 @@
 int
 mk_id(struct rt_wdb *fp, const char *title)
 {
-	return mk_id_editunits( fp, title, 1.0 );
+    return mk_id_editunits( fp, title, 1.0 );
 }
 
 /*
@@ -65,7 +65,7 @@ mk_id(struct rt_wdb *fp, const char *title)
 int
 mk_id_units(struct rt_wdb *fp, const char *title, register const char *units)
 {
-	return mk_id_editunits( fp, title, bu_units_conversion(units) );
+    return mk_id_editunits( fp, title, bu_units_conversion(units) );
 }
 
 /*
@@ -91,12 +91,12 @@ mk_id_units(struct rt_wdb *fp, const char *title, register const char *units)
  */
 int
 mk_id_editunits(
-	struct rt_wdb *wdbp,
-	const char *title,
-	double local2mm )
+    struct rt_wdb *wdbp,
+    const char *title,
+    double local2mm )
 {
-	RT_CK_WDB(wdbp);
-	return db_update_ident( wdbp->dbip, title, local2mm );
+    RT_CK_WDB(wdbp);
+    return db_update_ident( wdbp->dbip, title, local2mm );
 }
 
 /*

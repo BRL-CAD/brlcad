@@ -57,7 +57,7 @@ static void bu_rb_fixup (bu_rb_tree *tree, struct bu_rb_node *node, int order)
     BU_RB_CKORDER(tree, order);
 
     while ((node != bu_rb_root(tree, order))
-	&& (bu_rb_get_color(node, order) == BU_RB_BLACK))
+	   && (bu_rb_get_color(node, order) == BU_RB_BLACK))
     {
 	parent = bu_rb_parent(node, order);
 	if (node == bu_rb_left_child(parent, order))
@@ -74,9 +74,9 @@ static void bu_rb_fixup (bu_rb_tree *tree, struct bu_rb_node *node, int order)
 	    w = bu_rb_other_child(parent, order, direction);
 	}
 	if ((bu_rb_get_color(bu_rb_child(w, order, direction), order)
-		== BU_RB_BLACK)
-	 && (bu_rb_get_color(bu_rb_other_child(w, order, direction), order)
-		 == BU_RB_BLACK))
+	     == BU_RB_BLACK)
+	    && (bu_rb_get_color(bu_rb_other_child(w, order, direction), order)
+		== BU_RB_BLACK))
 	{
 	    bu_rb_set_color(w, order, BU_RB_RED);
 	    node = parent;
@@ -84,11 +84,11 @@ static void bu_rb_fixup (bu_rb_tree *tree, struct bu_rb_node *node, int order)
 	else
 	{
 	    if (bu_rb_get_color(bu_rb_other_child(w, order, direction),
-		order)
-		    == BU_RB_BLACK)
+				order)
+		== BU_RB_BLACK)
 	    {
 		bu_rb_set_color(bu_rb_child(w, order, direction), order,
-		    BU_RB_BLACK);
+				BU_RB_BLACK);
 		bu_rb_set_color(w, order, BU_RB_RED);
 		bu_rb_other_rotate(w, order, direction);
 		w = bu_rb_other_child(parent, order, direction);
@@ -96,7 +96,7 @@ static void bu_rb_fixup (bu_rb_tree *tree, struct bu_rb_node *node, int order)
 	    bu_rb_set_color(w, order, bu_rb_get_color(parent, order));
 	    bu_rb_set_color(parent, order, BU_RB_BLACK);
 	    bu_rb_set_color(bu_rb_other_child(w, order, direction),
-				order, BU_RB_BLACK);
+			    order, BU_RB_BLACK);
 	    bu_rb_rotate(parent, order, direction);
 	    node = bu_rb_root(tree, order);
 	}
@@ -124,10 +124,10 @@ static void _rb_delete (bu_rb_tree *tree, struct bu_rb_node *node, int order)
 
     if (tree -> rbt_debug & BU_RB_DEBUG_DELETE)
 	bu_log("_rb_delete(%p,%p,%d): data=%p\n",
-	    tree, node, order, bu_rb_data(node, order));
+	       tree, node, order, bu_rb_data(node, order));
 
     if ((bu_rb_left_child(node, order) == bu_rb_null(tree))
-     || (bu_rb_right_child(node, order) == bu_rb_null(tree)))
+	|| (bu_rb_right_child(node, order) == bu_rb_null(tree)))
 	y = node;
     else
 	y = _rb_neighbor(node, order, SENSE_MAX);
@@ -182,7 +182,7 @@ void bu_rb_delete (bu_rb_tree *tree, int order)
     if (tree -> rbt_nm_nodes <= 0)
     {
 	bu_log("ERROR: Attempt to delete from tree with %d nodes\n",
-		tree -> rbt_nm_nodes);
+	       tree -> rbt_nm_nodes);
 	bu_bomb("");
     }
     if (bu_rb_current(tree) == bu_rb_null(tree))
@@ -195,7 +195,7 @@ void bu_rb_delete (bu_rb_tree *tree, int order)
     package = (bu_rb_current(tree) -> rbn_package)[order];
 
     node = (struct bu_rb_node **)
-	    bu_malloc(nm_orders * sizeof(struct bu_rb_node *), "node list");
+	bu_malloc(nm_orders * sizeof(struct bu_rb_node *), "node list");
 
     for (order = 0; order < nm_orders; ++order)
 	node[order] = (package -> rbp_node)[order];

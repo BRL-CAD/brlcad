@@ -40,9 +40,9 @@ extern int dirarraylen;	/* number of elements in the "dir" array */
 extern int reclen; /* IGES file record length (in bytes) */
 extern int currec; /* current record number in the "card" buffer */
 extern int ntypes; /* Number of different types of IGES entities recognized by
-			this code */
+		      this code */
 extern int brlcad_att_de; /* DE sequence number for BRL-CAD attribute
-		definition entity */
+			     definition entity */
 extern int do_bots; /* flag indicating NMG solids should be written as BOT solids */
 extern FILE *fd; /* file pointer for IGES file */
 extern struct rt_wdb *fdout; /* file pointer for BRL-CAD output file */
@@ -50,7 +50,7 @@ extern char brlcad_file[]; /* name of brlcad output file (".g" file) */
 extern struct iges_directory **dir; /* Directory array */
 extern struct reglist *regroot; /* list of regions created from solids of revolution */
 extern struct types typecount[]; /* Count of how many entities of each type actually
-				appear in the IGES file */
+				    appear in the IGES file */
 extern char operator[]; /* characters representing operators: 'u', '+', and '-' */
 extern struct iges_edge_list *edge_root;
 extern struct iges_vertex_list *vertex_root;

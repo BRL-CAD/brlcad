@@ -94,10 +94,10 @@ compare_colors(void)
 	mp2 = mater_hd2;
 	while ( mp2 != MATER_NULL ) {
 	    if ( mp1->mt_low == mp2->mt_low &&
-		mp1->mt_high == mp2->mt_high &&
-		mp1->mt_r == mp2->mt_r &&
-		mp1->mt_g == mp2->mt_g &&
-		mp1->mt_b == mp2->mt_b ) {
+		 mp1->mt_high == mp2->mt_high &&
+		 mp1->mt_r == mp2->mt_r &&
+		 mp1->mt_g == mp2->mt_g &&
+		 mp1->mt_b == mp2->mt_b ) {
 		found1 = 1;
 		break;
 	    } else {
@@ -112,10 +112,10 @@ compare_colors(void)
 	mp1 = mater_hd1;
 	while ( mp1 != MATER_NULL ) {
 	    if ( mp1->mt_low == mp2->mt_low &&
-		mp1->mt_high == mp2->mt_high &&
-		mp1->mt_r == mp2->mt_r &&
-		mp1->mt_g == mp2->mt_g &&
-		mp1->mt_b == mp2->mt_b ) {
+		 mp1->mt_high == mp2->mt_high &&
+		 mp1->mt_r == mp2->mt_r &&
+		 mp1->mt_g == mp2->mt_g &&
+		 mp1->mt_b == mp2->mt_b ) {
 		found2 = 1;
 		break;
 	    } else {

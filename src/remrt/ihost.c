@@ -66,17 +66,17 @@ struct bu_list	HostHead;
 char *
 get_our_hostname(void)
 {
-	char temp[512];
-	struct hostent *hp;
+    char temp[512];
+    struct hostent *hp;
 
-	/* Init list head here */
-	BU_LIST_INIT( &HostHead );
+    /* Init list head here */
+    BU_LIST_INIT( &HostHead );
 
-	gethostname(temp, sizeof(temp));
+    gethostname(temp, sizeof(temp));
 
-	hp = gethostbyname(temp);
+    hp = gethostbyname(temp);
 
-	return bu_strdup(hp->h_name);
+    return bu_strdup(hp->h_name);
 }
 
 /*
@@ -90,39 +90,39 @@ get_our_hostname(void)
 struct ihost *
 host_lookup_by_hostent(const struct hostent * addr, int enter)
 {
-	register struct ihost	*ihp;
-	const struct hostent *	addr2;
-	const struct hostent *	addr3;
+    register struct ihost	*ihp;
+    const struct hostent *	addr2;
+    const struct hostent *	addr3;
 
-	addr2 = gethostbyname(addr->h_name);
-	if ( addr != addr2 )  {
-		bu_log("host_lookup_by_hostent(%s) got %s?\n",
-			addr->h_name, addr2 ? addr2->h_name : "NULL" );
-		return IHOST_NULL;
-	}
-	addr3 = gethostbyaddr(addr2->h_addr_list[0],
-	    sizeof(struct in_addr), addr2->h_addrtype);
-	if ( addr != addr3 )  {
-		bu_log("host_lookup_by_hostent(%s) got %s?\n",
-			addr->h_name, addr3 ? addr3->h_name : "NULL" );
-		return IHOST_NULL;
-	}
-	/* Now addr->h_name points to the "formal" name of the host */
+    addr2 = gethostbyname(addr->h_name);
+    if ( addr != addr2 )  {
+	bu_log("host_lookup_by_hostent(%s) got %s?\n",
+	       addr->h_name, addr2 ? addr2->h_name : "NULL" );
+	return IHOST_NULL;
+    }
+    addr3 = gethostbyaddr(addr2->h_addr_list[0],
+			  sizeof(struct in_addr), addr2->h_addrtype);
+    if ( addr != addr3 )  {
+	bu_log("host_lookup_by_hostent(%s) got %s?\n",
+	       addr->h_name, addr3 ? addr3->h_name : "NULL" );
+	return IHOST_NULL;
+    }
+    /* Now addr->h_name points to the "formal" name of the host */
 
-	/* Search list for existing instance */
-	for ( BU_LIST_FOR( ihp, ihost, &HostHead ) )  {
-		CK_IHOST(ihp);
+    /* Search list for existing instance */
+    for ( BU_LIST_FOR( ihp, ihost, &HostHead ) )  {
+	CK_IHOST(ihp);
 
-		if ( strcmp( ihp->ht_name, addr->h_name ) != 0 )
-			continue;
-		return( ihp );
-	}
-	if ( enter == 0 )
-		return( IHOST_NULL );
+	if ( strcmp( ihp->ht_name, addr->h_name ) != 0 )
+	    continue;
+	return( ihp );
+    }
+    if ( enter == 0 )
+	return( IHOST_NULL );
 
-	/* If not found and enter==1, enter in host table w/defaults */
-	/* Note: gethostbyxxx() routines keep stuff in a static buffer */
-	return( make_default_host( addr->h_name ) );
+    /* If not found and enter==1, enter in host table w/defaults */
+    /* Note: gethostbyxxx() routines keep stuff in a static buffer */
+    return( make_default_host( addr->h_name ) );
 }
 
 /*
@@ -135,24 +135,24 @@ host_lookup_by_hostent(const struct hostent * addr, int enter)
 struct ihost *
 make_default_host(const char* name)
 {
-	register struct ihost	*ihp;
+    register struct ihost	*ihp;
 
-	BU_GETSTRUCT( ihp, ihost );
-	ihp->l.magic = IHOST_MAGIC;
+    BU_GETSTRUCT( ihp, ihost );
+    ihp->l.magic = IHOST_MAGIC;
 
-	/* Make private copy of host name -- callers have static buffers */
-	ihp->ht_name = bu_strdup( name );
+    /* Make private copy of host name -- callers have static buffers */
+    ihp->ht_name = bu_strdup( name );
 
-	/* Default host parameters */
-	ihp->ht_flags = 0x0;
-	ihp->ht_when = HT_PASSIVE;
-	ihp->ht_where = HT_CONVERT;
-	ihp->ht_path = "/tmp";
+    /* Default host parameters */
+    ihp->ht_flags = 0x0;
+    ihp->ht_when = HT_PASSIVE;
+    ihp->ht_where = HT_CONVERT;
+    ihp->ht_path = "/tmp";
 
-	/* Add to linked list of known hosts */
-	BU_LIST_INSERT( &HostHead, &ihp->l );
+    /* Add to linked list of known hosts */
+    BU_LIST_INSERT( &HostHead, &ihp->l );
 
-	return(ihp);
+    return(ihp);
 }
 
 /*
@@ -161,40 +161,40 @@ make_default_host(const char* name)
 struct ihost *
 host_lookup_by_addr(const struct sockaddr_in * from, int enter)
 {
-	register struct ihost	*ihp;
-	struct hostent	*addr;
-	unsigned long	addr_tmp;
-	char		name[64];
+    register struct ihost	*ihp;
+    struct hostent	*addr;
+    unsigned long	addr_tmp;
+    char		name[64];
 
-	addr_tmp = from->sin_addr.s_addr;
-	addr = gethostbyaddr( (char *)&from->sin_addr, sizeof (struct in_addr),
-		from->sin_family);
-	if ( addr != NULL )  {
-		ihp = host_lookup_by_hostent( addr, enter );
-		if ( ihp )  return ihp;
-	}
+    addr_tmp = from->sin_addr.s_addr;
+    addr = gethostbyaddr( (char *)&from->sin_addr, sizeof (struct in_addr),
+			  from->sin_family);
+    if ( addr != NULL )  {
+	ihp = host_lookup_by_hostent( addr, enter );
+	if ( ihp )  return ihp;
+    }
 
-	/* Host name is not known */
-	addr_tmp = ntohl(addr_tmp);
-	sprintf( name, "%ld.%ld.%ld.%ld",
-		(addr_tmp>>24) & 0xff,
-		(addr_tmp>>16) & 0xff,
-		(addr_tmp>> 8) & 0xff,
-		(addr_tmp    ) & 0xff );
-	if ( enter == 0 )  {
-		bu_log("%s: unknown host\n", name);
-		return( IHOST_NULL );
-	}
+    /* Host name is not known */
+    addr_tmp = ntohl(addr_tmp);
+    sprintf( name, "%ld.%ld.%ld.%ld",
+	     (addr_tmp>>24) & 0xff,
+	     (addr_tmp>>16) & 0xff,
+	     (addr_tmp>> 8) & 0xff,
+	     (addr_tmp    ) & 0xff );
+    if ( enter == 0 )  {
+	bu_log("%s: unknown host\n", name);
+	return( IHOST_NULL );
+    }
 
-	/* See if this host has been previously entered by number */
-	for ( BU_LIST_FOR( ihp, ihost, &HostHead ) )  {
-		CK_IHOST(ihp);
-		if ( strcmp( ihp->ht_name, name ) == 0 )
-			return( ihp );
-	}
+    /* See if this host has been previously entered by number */
+    for ( BU_LIST_FOR( ihp, ihost, &HostHead ) )  {
+	CK_IHOST(ihp);
+	if ( strcmp( ihp->ht_name, name ) == 0 )
+	    return( ihp );
+    }
 
-	/* Create a new hostent structure */
-	return( make_default_host( name ) );
+    /* Create a new hostent structure */
+    return( make_default_host( name ) );
 }
 
 /*
@@ -203,23 +203,23 @@ host_lookup_by_addr(const struct sockaddr_in * from, int enter)
 struct ihost *
 host_lookup_by_name(const char* name, int enter)
 {
-	struct sockaddr_in	sockhim;
-	struct hostent		*addr;
+    struct sockaddr_in	sockhim;
+    struct hostent		*addr;
 
-	/* Determine name to be found */
-	if ( isdigit( *name ) )  {
-		/* Numeric */
-		sockhim.sin_family = AF_INET;
-		sockhim.sin_addr.s_addr = inet_addr(name);
-		return( host_lookup_by_addr( &sockhim, enter ) );
-	} else {
-		addr = gethostbyname(name);
-	}
-	if ( addr == NULL )  {
-		bu_log("%s:  bad host\n", name);
-		return( IHOST_NULL );
-	}
-	return( host_lookup_by_hostent( addr, enter ) );
+    /* Determine name to be found */
+    if ( isdigit( *name ) )  {
+	/* Numeric */
+	sockhim.sin_family = AF_INET;
+	sockhim.sin_addr.s_addr = inet_addr(name);
+	return( host_lookup_by_addr( &sockhim, enter ) );
+    } else {
+	addr = gethostbyname(name);
+    }
+    if ( addr == NULL )  {
+	bu_log("%s:  bad host\n", name);
+	return( IHOST_NULL );
+    }
+    return( host_lookup_by_hostent( addr, enter ) );
 }
 
 /*
@@ -228,16 +228,16 @@ host_lookup_by_name(const char* name, int enter)
 struct ihost *
 host_lookup_of_fd(int fd)
 {
-	auto socklen_t	fromlen;
-	struct sockaddr_in from;
+    auto socklen_t	fromlen;
+    struct sockaddr_in from;
 
-	fromlen = sizeof (from);
-	if (getpeername(fd, (struct sockaddr *)&from, &fromlen) < 0) {
-		perror("getpeername");
-		return IHOST_NULL;
-	}
+    fromlen = sizeof (from);
+    if (getpeername(fd, (struct sockaddr *)&from, &fromlen) < 0) {
+	perror("getpeername");
+	return IHOST_NULL;
+    }
 
-	return host_lookup_by_addr( &from, 1 );
+    return host_lookup_by_addr( &from, 1 );
 }
 
 /*

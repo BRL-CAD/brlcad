@@ -32,21 +32,21 @@
 #include "vmath.h"
 
 void Matmult( a, b, c )
-mat_t a, b, c;
+    mat_t a, b, c;
 {
-	mat_t tmp;
-	int i, j, k;
+    mat_t tmp;
+    int i, j, k;
 
-	for ( i=0; i<4; i++ )
-		for ( j=0; j<4; j++ )
-		{
-			tmp[i*4+j] = 0.0;
-			for ( k=0; k<4; k++ )
-				tmp[i*4+j] += a[i*4+k] * b[k*4+j];
-		}
-	for ( i=0; i<4; i++ )
-		for ( j=0; j<4; j++ )
-			c[i*4+j] = tmp[i*4+j];
+    for ( i=0; i<4; i++ )
+	for ( j=0; j<4; j++ )
+	{
+	    tmp[i*4+j] = 0.0;
+	    for ( k=0; k<4; k++ )
+		tmp[i*4+j] += a[i*4+k] * b[k*4+j];
+	}
+    for ( i=0; i<4; i++ )
+	for ( j=0; j<4; j++ )
+	    c[i*4+j] = tmp[i*4+j];
 }
 
 /*

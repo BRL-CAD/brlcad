@@ -946,84 +946,84 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 	/* Grab parameter from arg list, and print it */
 	switch ( *ep ) {
 	    case 's':
-		{
-		    register char *str;
+	    {
+		register char *str;
 
-		    str = va_arg(ap, char *);
-		    if (str)  {
-			if (flags & FIELDLEN) {
-			    int stringlen = strlen(str);
-			    int left_justify;
+		str = va_arg(ap, char *);
+		if (str)  {
+		    if (flags & FIELDLEN) {
+			int stringlen = strlen(str);
+			int left_justify;
 
-			    if ((left_justify = (fieldlen < 0)))
-				fieldlen *= -1; /* make positive */
+			if ((left_justify = (fieldlen < 0)))
+			    fieldlen *= -1; /* make positive */
 
-			    if (stringlen >= fieldlen)
-				bu_vls_strncat(vls, str, (size_t)fieldlen);
-			    else {
-				struct bu_vls padded;
-				int i;
+			if (stringlen >= fieldlen)
+			    bu_vls_strncat(vls, str, (size_t)fieldlen);
+			else {
+			    struct bu_vls padded;
+			    int i;
 
-				bu_vls_init(&padded);
-				if (left_justify)
-				    bu_vls_strcat(&padded, str);
-				for (i = 0; i < fieldlen - stringlen; ++i)
-				    bu_vls_putc(&padded, ' ');
-				if (!left_justify)
-				    bu_vls_strcat(&padded, str);
-				bu_vls_vlscat(vls, &padded);
-			    }
-			} else {
-			    bu_vls_strcat(vls, str);
+			    bu_vls_init(&padded);
+			    if (left_justify)
+				bu_vls_strcat(&padded, str);
+			    for (i = 0; i < fieldlen - stringlen; ++i)
+				bu_vls_putc(&padded, ' ');
+			    if (!left_justify)
+				bu_vls_strcat(&padded, str);
+			    bu_vls_vlscat(vls, &padded);
 			}
-		    }  else  {
-			if (flags & FIELDLEN)
-			    bu_vls_strncat(vls, "(null)", (size_t)fieldlen);
-			else
-			    bu_vls_strcat(vls, "(null)");
+		    } else {
+			bu_vls_strcat(vls, str);
 		    }
+		}  else  {
+		    if (flags & FIELDLEN)
+			bu_vls_strncat(vls, "(null)", (size_t)fieldlen);
+		    else
+			bu_vls_strcat(vls, "(null)");
 		}
-		break;
+	    }
+	    break;
 	    case 'S':
-		{
-		    register struct bu_vls *vp;
+	    {
+		register struct bu_vls *vp;
 
-		    vp = va_arg(ap, struct bu_vls *);
-		    if (vp) {
-			BU_CK_VLS(vp);
-			if (flags & FIELDLEN) {
-			    int	stringlen = bu_vls_strlen(vp);
-			    int	left_justify;
+		vp = va_arg(ap, struct bu_vls *);
+		if (vp) {
+		    BU_CK_VLS(vp);
+		    if (flags & FIELDLEN) {
+			int	stringlen = bu_vls_strlen(vp);
+			int	left_justify;
 
-			    if ((left_justify = (fieldlen < 0)))
-				fieldlen *= -1;
+			if ((left_justify = (fieldlen < 0)))
+			    fieldlen *= -1;
 
-			    if (stringlen >= fieldlen)
-				bu_vls_strncat(vls, bu_vls_addr(vp), (size_t)fieldlen);
-			    else {
-				struct bu_vls padded;
-				int i;
+			if (stringlen >= fieldlen)
+			    bu_vls_strncat(vls, bu_vls_addr(vp), (size_t)fieldlen);
+			else {
+			    struct bu_vls padded;
+			    int i;
 
-				bu_vls_init(&padded);
-				if (left_justify)
-				    bu_vls_vlscat(&padded, vp);
-				for (i = 0; i < fieldlen - stringlen; ++i)
-				    bu_vls_putc(&padded, ' ');
-				if (!left_justify)
-				    bu_vls_vlscat(&padded, vp);
-				bu_vls_vlscat(vls, &padded);
-			    }
-			} else {
-			    bu_vls_vlscat(vls, vp);
+			    bu_vls_init(&padded);
+			    if (left_justify)
+				bu_vls_vlscat(&padded, vp);
+			    for (i = 0; i < fieldlen - stringlen; ++i)
+				bu_vls_putc(&padded, ' ');
+			    if (!left_justify)
+				bu_vls_vlscat(&padded, vp);
+			    bu_vls_vlscat(vls, &padded);
 			}
-		    }  else  {
-			if (flags & FIELDLEN)
-			    bu_vls_strncat(vls, "(null)", (size_t)fieldlen);
-			else
-			    bu_vls_strcat(vls, "(null)");
+		    } else {
+			bu_vls_vlscat(vls, vp);
 		    }
+		}  else  {
+		    if (flags & FIELDLEN)
+			bu_vls_strncat(vls, "(null)", (size_t)fieldlen);
+		    else
+			bu_vls_strcat(vls, "(null)");
 		}
-		break;
+	    }
+	    break;
 	    case 'e':
 	    case 'E':
 	    case 'f':

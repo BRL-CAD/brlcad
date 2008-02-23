@@ -157,29 +157,29 @@
  *  or stack pointer from inside the display list.
  */
 #define BATODLA(b)	( (b)<<3 & 0xFFF0  |  (b)>>12 & 0x000E )
-			/* 3, not 4, to convert byte address to word addr */
+/* 3, not 4, to convert byte address to word addr */
 
 /*
  * Format of /dev/vgrs0 (buffered and signalled register device)
  */
 struct vgregb  {
-	short	vg_fs1;		/* Function Switch Unit 1 */
-	short	vg_fs2;		/* Function Switch Unit 1 */
-	short	vg_tix;		/* Tablet X input */
-	short	vg_tiy;		/* Tablet Y input */
-	short	vg_jx;		/* Joystick X input */
-	short	vg_jy;		/* Joystick Y input */
-	short	vg_jz;		/* Joystick Z input */
-	short	vg_d0;		/* Dial 0 */
-	short	vg_d1;		/* Dial 1 */
-	short	vg_d2;		/* Dial 2 */
-	short	vg_d3;		/* Dial 3 */
-	short	vg_d4;		/* Dial 4 */
-	short	vg_d5;		/* Dial 5 */
-	short	vg_d6;		/* Dial 6 */
-	short	vg_d7;		/* Dial 7 */
-	short	vg_d8;		/* Dial 8 */
-	short	vg_d9;		/* Dial 9 */
+    short	vg_fs1;		/* Function Switch Unit 1 */
+    short	vg_fs2;		/* Function Switch Unit 1 */
+    short	vg_tix;		/* Tablet X input */
+    short	vg_tiy;		/* Tablet Y input */
+    short	vg_jx;		/* Joystick X input */
+    short	vg_jy;		/* Joystick Y input */
+    short	vg_jz;		/* Joystick Z input */
+    short	vg_d0;		/* Dial 0 */
+    short	vg_d1;		/* Dial 1 */
+    short	vg_d2;		/* Dial 2 */
+    short	vg_d3;		/* Dial 3 */
+    short	vg_d4;		/* Dial 4 */
+    short	vg_d5;		/* Dial 5 */
+    short	vg_d6;		/* Dial 6 */
+    short	vg_d7;		/* Dial 7 */
+    short	vg_d8;		/* Dial 8 */
+    short	vg_d9;		/* Dial 9 */
 };
 
 /*

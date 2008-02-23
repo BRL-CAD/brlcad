@@ -62,82 +62,82 @@ int	wpad;
 int
 main(int argc, char **argv)
 {
-	register int	i;
-	register int	j;
-	int	nh, nw;
-	int	dh, dw;
-	int	todo;
+    register int	i;
+    register int	j;
+    int	nh, nw;
+    int	dh, dw;
+    int	todo;
 
-	if ( argc < 4 )  {
-		fputs( usage, stderr );
-		bu_exit (1, NULL);
-	}
+    if ( argc < 4 )  {
+	fputs( usage, stderr );
+	bu_exit (1, NULL);
+    }
 
-	nbytes = atoi(argv[1]);
-	iwidth = atoi(argv[2]);
-	iheight = atoi(argv[3]);
+    nbytes = atoi(argv[1]);
+    iwidth = atoi(argv[2]);
+    iheight = atoi(argv[3]);
 
-	if ( argc >= 6 )  {
-		owidth = atoi(argv[4]);
-		oheight = atoi(argv[5]);
-	}
+    if ( argc >= 6 )  {
+	owidth = atoi(argv[4]);
+	oheight = atoi(argv[5]);
+    }
 
-	/* Determine how many samples/lines to discard after each one saved,
-	 * and how much padding to add to the end of each line.
-	 */
-	nh = (iheight + oheight-1) / oheight;
-	nw = (iwidth + owidth-1) / owidth;
+    /* Determine how many samples/lines to discard after each one saved,
+     * and how much padding to add to the end of each line.
+     */
+    nh = (iheight + oheight-1) / oheight;
+    nw = (iwidth + owidth-1) / owidth;
 
-	dh = nh - 1;
-	dw = nw - 1;
-	discard = dh;
-	if ( dw > discard ) discard = dw;
+    dh = nh - 1;
+    dw = nw - 1;
+    discard = dh;
+    if ( dw > discard ) discard = dw;
 
 
-	wpad = owidth - ( iwidth / (discard+1) );
+    wpad = owidth - ( iwidth / (discard+1) );
 
-	iline = (unsigned char *)bu_calloc( (iwidth+1), nbytes, "iline" );
-	oline = (unsigned char *)bu_calloc( (owidth+1),  nbytes, "oline" );
+    iline = (unsigned char *)bu_calloc( (iwidth+1), nbytes, "iline" );
+    oline = (unsigned char *)bu_calloc( (owidth+1),  nbytes, "oline" );
 
-	todo = iwidth / (discard+1) * (discard+1);
-	if ( owidth < todo )  todo = owidth;
-	if ( todo > iwidth/(discard+1) )  todo = iwidth/(discard+1);
+    todo = iwidth / (discard+1) * (discard+1);
+    if ( owidth < todo )  todo = owidth;
+    if ( todo > iwidth/(discard+1) )  todo = iwidth/(discard+1);
 #if 0
-	fprintf(stderr, "dh=%d dw=%d, discard=%d\n", dh, dw, discard);
-	fprintf(stderr, "todo=%d\n", todo);
+    fprintf(stderr, "dh=%d dw=%d, discard=%d\n", dh, dw, discard);
+    fprintf(stderr, "todo=%d\n", todo);
 #endif
 
-	while ( !feof(stdin) )  {
-		register unsigned char	*ip, *op;
+    while ( !feof(stdin) )  {
+	register unsigned char	*ip, *op;
 
-		/* Scrunch down first scanline of input data */
-		if ( fread( iline, nbytes, iwidth, stdin ) != iwidth ) break;
-		ip = iline;
-		op = oline;
-		for ( i=0; i < todo; i++ )  {
-			for ( j=0; j < nbytes; j++ )  {
-				*op++ = *ip++;
-			}
-			ip += discard * nbytes;
-		}
-		if ( fwrite( oline, nbytes, owidth, stdout ) != owidth )  {
-			perror("fwrite");
-			goto out;
-		}
-
-		/* Discard extra scanlines of input data */
-		for ( i=0; i < discard; i++ )  {
-			if ( fread( iline, nbytes, iwidth, stdin ) != iwidth )  {
-			    goto out;
-			}
-		}
+	/* Scrunch down first scanline of input data */
+	if ( fread( iline, nbytes, iwidth, stdin ) != iwidth ) break;
+	ip = iline;
+	op = oline;
+	for ( i=0; i < todo; i++ )  {
+	    for ( j=0; j < nbytes; j++ )  {
+		*op++ = *ip++;
+	    }
+	    ip += discard * nbytes;
+	}
+	if ( fwrite( oline, nbytes, owidth, stdout ) != owidth )  {
+	    perror("fwrite");
+	    goto out;
 	}
 
- out:
-	bu_free(iline, "iline");
-	bu_free(oline, "oline");
+	/* Discard extra scanlines of input data */
+	for ( i=0; i < discard; i++ )  {
+	    if ( fread( iline, nbytes, iwidth, stdin ) != iwidth )  {
+		goto out;
+	    }
+	}
+    }
 
-	return 0;
+ out:
+    bu_free(iline, "iline");
+    bu_free(oline, "oline");
+
+    return 0;
 }
 
 /*

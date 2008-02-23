@@ -33,16 +33,16 @@
 #include "bu.h"
 
 fastf_t brlabs( a )
-register const fastf_t a;
+    register const fastf_t a;
 {
-	register fastf_t b;
+    register fastf_t b;
 
-	if ( a > 0 )
-		b = a;
-	else
-		b = (-a);
+    if ( a > 0 )
+	b = a;
+    else
+	b = (-a);
 
-	return( b );
+    return( b );
 }
 
 /*

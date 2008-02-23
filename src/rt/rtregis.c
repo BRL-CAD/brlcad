@@ -85,75 +85,75 @@ int
 main(int argc, char **argv)
 {
 
-	mat_t		mod2view1;		/* first log matrix its view */
-	mat_t		mod2view2;		/* second log matrix to its view*/
-	mat_t		regismat;		/* registration matrix */
-	mat_t		view2model;		/* matrix for converting from view to model space */
-	int		ret;			/* function return code */
+    mat_t		mod2view1;		/* first log matrix its view */
+    mat_t		mod2view2;		/* second log matrix to its view*/
+    mat_t		regismat;		/* registration matrix */
+    mat_t		view2model;		/* matrix for converting from view to model space */
+    int		ret;			/* function return code */
 
-	MAT_IDN(mod2view1);				/* makes an identity matrix */
-	MAT_IDN(mod2view2);
-	MAT_IDN(regismat);
+    MAT_IDN(mod2view1);				/* makes an identity matrix */
+    MAT_IDN(mod2view2);
+    MAT_IDN(regismat);
 
-	/* Check to see that the correct format is given, else print
-	 * usage message.
-	 */
+    /* Check to see that the correct format is given, else print
+     * usage message.
+     */
 
-	if (argc != 3)  {
-		fputs(usage, stderr);
-		return 1;
-	}
+    if (argc != 3)  {
+	fputs(usage, stderr);
+	return 1;
+    }
 
-	/* Now process the arguments from main: i.e. open the log files
-	 * for reading and send to read_rt_file().
-	 * Send read_rt_file() a pointer to local model matrix
-	 * and to the appropriate log file.
-	 * ( Note &view2model[0] can be used, but is not elegant.)
-	 */
+    /* Now process the arguments from main: i.e. open the log files
+     * for reading and send to read_rt_file().
+     * Send read_rt_file() a pointer to local model matrix
+     * and to the appropriate log file.
+     * ( Note &view2model[0] can be used, but is not elegant.)
+     */
 
-	fp = fopen(argv[1], "r");
-	if ( fp == NULL )  {
-		perror(argv[1]);
-		return 1;
-	}
+    fp = fopen(argv[1], "r");
+    if ( fp == NULL )  {
+	perror(argv[1]);
+	return 1;
+    }
 
-	ret = read_rt_file(fp, argv[1], mod2view1);
-	if (ret < 0)  {
-	    return 2;
-	}
-	fclose(fp);		/* clean up */
+    ret = read_rt_file(fp, argv[1], mod2view1);
+    if (ret < 0)  {
+	return 2;
+    }
+    fclose(fp);		/* clean up */
 
-	fp = fopen(argv[2], "r");
-	if ( fp == NULL )  {
-		perror(argv[2]);
-		return 2;
-	}
+    fp = fopen(argv[2], "r");
+    if ( fp == NULL )  {
+	perror(argv[2]);
+	return 2;
+    }
 
-	ret = read_rt_file(fp, argv[2], mod2view2);
-	if (ret < 0)  {
-	    return 2;
-	}
+    ret = read_rt_file(fp, argv[2], mod2view2);
+    if (ret < 0)  {
+	return 2;
+    }
 
-	fclose(fp);
+    fclose(fp);
 
-	if (verbose)  {
-		bn_mat_inv(view2model, mod2view1);
-		bn_mat_print("mod2view1-plot.log", mod2view1);
-		bn_mat_print("mod2view2-pix.log", mod2view2);
-		fprintf(stderr, "mod2view1[0, 1, 2, 3, 15]: %.6f, %.6f, %.6f, %.6f, %.6f\n",
+    if (verbose)  {
+	bn_mat_inv(view2model, mod2view1);
+	bn_mat_print("mod2view1-plot.log", mod2view1);
+	bn_mat_print("mod2view2-pix.log", mod2view2);
+	fprintf(stderr, "mod2view1[0, 1, 2, 3, 15]: %.6f, %.6f, %.6f, %.6f, %.6f\n",
 		mod2view1[0], mod2view1[1], mod2view1[2], mod2view1[3], mod2view1[15]);
-	}
+    }
 
-	/* Now build the registration matrix for the two files. */
+    /* Now build the registration matrix for the two files. */
 
-	ret = mat_build(mod2view1, mod2view2, regismat);
-	if (ret == FALSE)  {
-		fprintf(stderr, "regis: can't build registration matrix!\n");
-		return 3;
-	}
-	print_info(regismat);
+    ret = mat_build(mod2view1, mod2view2, regismat);
+    if (ret == FALSE)  {
+	fprintf(stderr, "regis: can't build registration matrix!\n");
+	return 3;
+    }
+    print_info(regismat);
 
-	return 0;
+    return 0;
 }
 
 
@@ -169,46 +169,46 @@ int
 mat_build(fastf_t *mat1, fastf_t *mat2, fastf_t *regismat)
 {
 
-	vect_t	adelta, bdelta;		/* deltas for mod1 and mod2 */
-	vect_t	delta;			/* difference bet. mod1 and mod2 deltas */
-	fastf_t	scale;
+    vect_t	adelta, bdelta;		/* deltas for mod1 and mod2 */
+    vect_t	delta;			/* difference bet. mod1 and mod2 deltas */
+    fastf_t	scale;
 
-	/* At this point it is important to check that the rotation part
-	 * of the matices is within a certain tolerance: ie. that the
-	 * two images were raytraced from the same angle.  No overlays will
-	 * be possible if they are not at the same rotation.
-	 */
+    /* At this point it is important to check that the rotation part
+     * of the matices is within a certain tolerance: ie. that the
+     * two images were raytraced from the same angle.  No overlays will
+     * be possible if they are not at the same rotation.
+     */
 
-	/* Now record the deltas: the translation part of the matrix. */
-	VSET(adelta, mat1[MDX], mat1[MDY], mat1[MDZ]);
-	VSET(bdelta, mat2[MDX], mat2[MDY], mat2[MDZ]);
+    /* Now record the deltas: the translation part of the matrix. */
+    VSET(adelta, mat1[MDX], mat1[MDY], mat1[MDZ]);
+    VSET(bdelta, mat2[MDX], mat2[MDY], mat2[MDZ]);
 
-	/* Take the difference between the deltas. Also scale the size
-	 * of the model (scale).  These will be used to register two
-	 * pixel files later on.
-	 */
+    /* Take the difference between the deltas. Also scale the size
+     * of the model (scale).  These will be used to register two
+     * pixel files later on.
+     */
 
-	VSUB2(delta, adelta, bdelta);
-	scale = mat1[15]/mat2[15];
+    VSUB2(delta, adelta, bdelta);
+    scale = mat1[15]/mat2[15];
 
-	VPRINT("delta", delta);
-	fprintf(stderr, "scale: %.6f\n", scale);
+    VPRINT("delta", delta);
+    fprintf(stderr, "scale: %.6f\n", scale);
 
-	/* If the first log corresponds to a UNIX-Plot file, following
-	 * applies.  Since UNIX-Plot files are in model coordinates, the
-	 * mod2view2 ("model2pix") is also the registration matrix.  In
-	 * this case, pl-fb needs to learn that the UNIX-Plot file's space
-	 * runs from -1 -> 1 in x and y.  This can be done by adding an
-	 * alternate space command in that program. Therefore the below
-	 * applies.
-	 * What if the first log corresponds to a hi-res pixel file to be
-	 * registered with a lo-res pixel file?  Then the above calculated
-	 * deltas are used.   This will be implemented later.
-	 */
+    /* If the first log corresponds to a UNIX-Plot file, following
+     * applies.  Since UNIX-Plot files are in model coordinates, the
+     * mod2view2 ("model2pix") is also the registration matrix.  In
+     * this case, pl-fb needs to learn that the UNIX-Plot file's space
+     * runs from -1 -> 1 in x and y.  This can be done by adding an
+     * alternate space command in that program. Therefore the below
+     * applies.
+     * What if the first log corresponds to a hi-res pixel file to be
+     * registered with a lo-res pixel file?  Then the above calculated
+     * deltas are used.   This will be implemented later.
+     */
 
-	MAT_COPY( regismat, mat2);
-	bn_mat_print("regismat", regismat);
-	return(1);				/* OK */
+    MAT_COPY( regismat, mat2);
+    bn_mat_print("regismat", regismat);
+    return(1);				/* OK */
 }
 
 
@@ -223,14 +223,14 @@ void
 print_info(fastf_t *mat)
 {
 
-	int	i;
+    int	i;
 
-	fprintf(stdout, "plrot -m\"");
-	for ( i = 0; i < 15; i++ )  {
-		fprintf(stdout, "%.6f ", mat[i]);
-	}
-	fprintf(stdout, "%g\" -S\"-1 -1 -1 1 1 1\"\n", mat[15]);
-	return;
+    fprintf(stdout, "plrot -m\"");
+    for ( i = 0; i < 15; i++ )  {
+	fprintf(stdout, "%.6f ", mat[i]);
+    }
+    fprintf(stdout, "%g\" -S\"-1 -1 -1 1 1 1\"\n", mat[15]);
+    return;
 }
 
 /*

@@ -43,12 +43,12 @@ extern void dm_var_init(struct dm_list *initial_dm_list);
 int
 PS_dm_init(struct dm_list *o_dm_list, int argc, char **argv)
 {
-  dm_var_init(o_dm_list);
+    dm_var_init(o_dm_list);
 
-  if ((dmp = dm_open(interp, DM_TYPE_PS, argc, argv)) == DM_NULL)
-    return TCL_ERROR;
+    if ((dmp = dm_open(interp, DM_TYPE_PS, argc, argv)) == DM_NULL)
+	return TCL_ERROR;
 
-  return TCL_OK;
+    return TCL_OK;
 }
 
 /*

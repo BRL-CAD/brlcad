@@ -18,7 +18,7 @@
  * information.
  */
 /** @file tree.h
-	Author:		Gary S. Moss
+    Author:		Gary S. Moss
 */
 
 #define INCL_TREE
@@ -29,55 +29,55 @@ typedef struct pointlist	PtList;
 
 /* Linked-list node for 3-d coordinates.				*/
 struct pointlist
-	{
-	float	c_point[3];
-	PtList	*c_next;
-	};
+{
+    float	c_point[3];
+    PtList	*c_next;
+};
 
 
 /* Octree node.								*/
 struct octree
-	{
-	short	o_bitv;		/* Bit vector identifying this octant.	*/
-	short	o_temp;		/* Temperature datum (deg.fahrenheit).	*/
-	PtList	*o_points;	/* Origin of octant and member coords.	*/
-	Trie	*o_triep;	/* Associated region's trie tree leaf.	*/
-	Octree	*o_sibling;	/* Next octant at this level.		*/
-	Octree	*o_child;	/* Sub-octants (next level).		*/
-	};
+{
+    short	o_bitv;		/* Bit vector identifying this octant.	*/
+    short	o_temp;		/* Temperature datum (deg.fahrenheit).	*/
+    PtList	*o_points;	/* Origin of octant and member coords.	*/
+    Trie	*o_triep;	/* Associated region's trie tree leaf.	*/
+    Octree	*o_sibling;	/* Next octant at this level.		*/
+    Octree	*o_child;	/* Sub-octants (next level).		*/
+};
 
 /* Linked-list of octree nodes used by the trie tree.			*/
 struct octreeplist
-	{
-	Octree	*p_octp;
-	OcList	*p_next;
-	};
+{
+    Octree	*p_octp;
+    OcList	*p_next;
+};
 
 /* Trie tree node.							*/
 union trie
-	{
-	struct	/* Internal nodes: datum is current letter.		*/
-		{
-		int	t_char;  /* Current letter.			*/
-		Trie	*t_altr; /* Alternate letter node link.		*/
-		Trie	*t_next; /* Next letter node link.		*/
-		}
-	n;
-	struct	/* Leaf nodes: datum is list of octree leaves.		*/
-		{
-		OcList	*t_octp; /* Octree leaf list pointer.		*/
-		Trie	*t_altr; /* Alternate letter node link.		*/
-		Trie	*t_next; /* Next letter node link.		*/
-		}
-	l;
-	};
+{
+    struct	/* Internal nodes: datum is current letter.		*/
+    {
+	int	t_char;  /* Current letter.			*/
+	Trie	*t_altr; /* Alternate letter node link.		*/
+	Trie	*t_next; /* Next letter node link.		*/
+    }
+    n;
+    struct	/* Leaf nodes: datum is list of octree leaves.		*/
+    {
+	OcList	*t_octp; /* Octree leaf list pointer.		*/
+	Trie	*t_altr; /* Alternate letter node link.		*/
+	Trie	*t_next; /* Next letter node link.		*/
+    }
+    l;
+};
 
 /* Header format for storing data base on the disk.			*/
 typedef struct
-	{
-	int	f_temp;
-	int	f_length;
-	}
+{
+    int	f_temp;
+    int	f_length;
+}
 F_Hdr_Ptlist;
 
 #define PTLIST_NULL	(PtList *) NULL

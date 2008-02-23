@@ -83,217 +83,217 @@ FILE	*ifp, *ofp;
 int
 get_args(int argc, register char **argv)
 {
-	register int c;
+    register int c;
 
-	while ( (c = bu_getopt( argc, argv, "fbrihs:w:n:S:W:N:a:" )) != EOF )  {
-		switch ( c )  {
-		case 'f':
-			minus90++;
-			break;
-		case 'b':
-			plus90++;
-			break;
-		case 'r':
-			reverse++;
-			break;
-		case 'i':
-			invert++;
-			break;
-		case 'h':
-			/* high-res */
-			nxin = nyin = 1024;
-			break;
-		case 'S':
-		case 's':
-			/* square size */
-			nxin = nyin = atoi(bu_optarg);
-			break;
-		case 'W':
-		case 'w':
-			nxin = atoi(bu_optarg);
-			break;
-		case 'N':
-		case 'n':
-			nyin = atoi(bu_optarg);
-			break;
-		case 'a':
-			angle = atof(bu_optarg);
-			break;
+    while ( (c = bu_getopt( argc, argv, "fbrihs:w:n:S:W:N:a:" )) != EOF )  {
+	switch ( c )  {
+	    case 'f':
+		minus90++;
+		break;
+	    case 'b':
+		plus90++;
+		break;
+	    case 'r':
+		reverse++;
+		break;
+	    case 'i':
+		invert++;
+		break;
+	    case 'h':
+		/* high-res */
+		nxin = nyin = 1024;
+		break;
+	    case 'S':
+	    case 's':
+		/* square size */
+		nxin = nyin = atoi(bu_optarg);
+		break;
+	    case 'W':
+	    case 'w':
+		nxin = atoi(bu_optarg);
+		break;
+	    case 'N':
+	    case 'n':
+		nyin = atoi(bu_optarg);
+		break;
+	    case 'a':
+		angle = atof(bu_optarg);
+		break;
 
-		default:		/* '?' */
-			return(0);
-		}
+	    default:		/* '?' */
+		return(0);
 	}
+    }
 
-	/* XXX - backward compatability hack */
-	if ( bu_optind+2 == argc ) {
-		nxin = atoi(argv[bu_optind++]);
-		nyin = atoi(argv[bu_optind++]);
+    /* XXX - backward compatability hack */
+    if ( bu_optind+2 == argc ) {
+	nxin = atoi(argv[bu_optind++]);
+	nyin = atoi(argv[bu_optind++]);
+    }
+    if ( bu_optind >= argc )  {
+	if ( isatty(fileno(stdin)) )
+	    return(0);
+	file_name = "-";
+	ifp = stdin;
+    } else {
+	file_name = argv[bu_optind];
+	if ( (ifp = fopen(file_name, "r")) == NULL )  {
+	    (void)fprintf( stderr,
+			   "bwrot: cannot open \"%s\" for reading\n",
+			   file_name );
+	    return(0);
 	}
-	if ( bu_optind >= argc )  {
-		if ( isatty(fileno(stdin)) )
-			return(0);
-		file_name = "-";
-		ifp = stdin;
-	} else {
-		file_name = argv[bu_optind];
-		if ( (ifp = fopen(file_name, "r")) == NULL )  {
-			(void)fprintf( stderr,
-				"bwrot: cannot open \"%s\" for reading\n",
-				file_name );
-			return(0);
-		}
-	}
+    }
 
-	if ( argc > ++bu_optind )
-		(void)fprintf( stderr, "bwrot: excess argument(s) ignored\n" );
+    if ( argc > ++bu_optind )
+	(void)fprintf( stderr, "bwrot: excess argument(s) ignored\n" );
 
-	return(1);		/* OK */
+    return(1);		/* OK */
 }
 
 int
 main(int argc, char **argv)
 {
-	int	x, y;
-	long	outbyte, outplace;
+    int	x, y;
+    long	outbyte, outplace;
 
-	if ( !get_args( argc, argv ) || isatty(fileno(stdout)) )  {
-		(void)fputs(usage, stderr);
-		bu_exit ( 1, NULL );
-	}
+    if ( !get_args( argc, argv ) || isatty(fileno(stdout)) )  {
+	(void)fputs(usage, stderr);
+	bu_exit ( 1, NULL );
+    }
 
-	ofp = stdout;
+    ofp = stdout;
 
-	scanbytes = nxin;
-	buflines = MAXBUFBYTES / scanbytes;
-	if ( buflines <= 0 ) {
-		fprintf( stderr, "bwrot: I'm not compiled to do a scanline that long!\n" );
-		bu_exit ( 1, NULL );
-	}
-	if ( buflines > nyin ) buflines = nyin;
-	buffer = (unsigned char *)malloc( buflines * scanbytes );
-	obuf = (unsigned char *)malloc( (nyin > nxin) ? nyin : nxin );
-	if ( buffer == (unsigned char *)0 || obuf == (unsigned char *)0 ) {
-		fprintf( stderr, "bwrot: malloc failed\n" );
-		bu_exit ( 3, NULL );
-	}
+    scanbytes = nxin;
+    buflines = MAXBUFBYTES / scanbytes;
+    if ( buflines <= 0 ) {
+	fprintf( stderr, "bwrot: I'm not compiled to do a scanline that long!\n" );
+	bu_exit ( 1, NULL );
+    }
+    if ( buflines > nyin ) buflines = nyin;
+    buffer = (unsigned char *)malloc( buflines * scanbytes );
+    obuf = (unsigned char *)malloc( (nyin > nxin) ? nyin : nxin );
+    if ( buffer == (unsigned char *)0 || obuf == (unsigned char *)0 ) {
+	fprintf( stderr, "bwrot: malloc failed\n" );
+	bu_exit ( 3, NULL );
+    }
 
-	/*
-	 * Break out to added arbitrary angle routine
-	 */
-	if ( angle ) {
-		arbrot( angle );
-		bu_exit ( 0, NULL );
-	}
+    /*
+     * Break out to added arbitrary angle routine
+     */
+    if ( angle ) {
+	arbrot( angle );
+	bu_exit ( 0, NULL );
+    }
 
-	/*
-	 * Clear our "file pointer."  We need to maintain this
-	 * In order to tell if seeking is required.  ftell() always
-	 * fails on pipes, so we can't use it.
-	 */
-	outplace = 0;
+    /*
+     * Clear our "file pointer."  We need to maintain this
+     * In order to tell if seeking is required.  ftell() always
+     * fails on pipes, so we can't use it.
+     */
+    outplace = 0;
 
-	yin = 0;
-	while ( yin < nyin ) {
-		/* Fill buffer */
-		fill_buffer();
-		if ( !buflines )
-			break;
-		if ( reverse )
-			reverse_buffer();
-		if ( plus90 ) {
-			for ( x = 0; x < nxin; x++ ) {
-				obp = obuf;
-				bp = &buffer[ (lasty-firsty)*scanbytes + x ];
-				for ( y = lasty; y >= yin; y-- ) {
-  /* firsty? */
-					*obp++ = *bp;
-					bp -= scanbytes;
-				}
-				yout = x;
-				xout = (nyin - 1) - lasty;
-				outbyte = ((yout * nyin) + xout);
-				if ( outplace != outbyte ) {
-					if ( fseek( ofp, outbyte, 0 ) < 0 ) {
-						fprintf( stderr, "bwrot: Can't seek on output, yet I need to!\n" );
-						bu_exit ( 3, NULL );
-					}
-					outplace = outbyte;
-				}
-				fwrite( obuf, 1, buflines, ofp );
-				outplace += buflines;
-			}
-		} else if ( minus90 ) {
-			for ( x = nxin-1; x >= 0; x-- ) {
-				obp = obuf;
-				bp = &buffer[ x ];
-				for ( y = firsty; y <= lasty; y++ ) {
-					*obp++ = *bp;
-					bp += scanbytes;
-				}
-				yout = (nxin - 1) - x;
-				xout = yin;
-				outbyte = ((yout * nyin) + xout);
-				if ( outplace != outbyte ) {
-					if ( fseek( ofp, outbyte, 0 ) < 0 ) {
-						fprintf( stderr, "bwrot: Can't seek on output, yet I need to!\n" );
-						bu_exit ( 3, NULL );
-					}
-					outplace = outbyte;
-				}
-				fwrite( obuf, 1, buflines, ofp );
-				outplace += buflines;
-			}
-		} else if ( invert ) {
-			for ( y = lasty; y >= firsty; y-- ) {
-				yout = (nyin - 1) - y;
-				outbyte = yout * scanbytes;
-				if ( outplace != outbyte ) {
-					if ( fseek( ofp, outbyte, 0 ) < 0 ) {
-						fprintf( stderr, "bwrot: Can't seek on output, yet I need to!\n" );
-						bu_exit ( 3, NULL );
-					}
-					outplace = outbyte;
-				}
-				fwrite( &buffer[(y-firsty)*scanbytes], 1, scanbytes, ofp );
-				outplace += scanbytes;
-			}
-		} else {
-			/* Reverse only */
-			for ( y = 0; y < buflines; y++ ) {
-				fwrite( &buffer[y*scanbytes], 1, scanbytes, ofp );
-			}
+    yin = 0;
+    while ( yin < nyin ) {
+	/* Fill buffer */
+	fill_buffer();
+	if ( !buflines )
+	    break;
+	if ( reverse )
+	    reverse_buffer();
+	if ( plus90 ) {
+	    for ( x = 0; x < nxin; x++ ) {
+		obp = obuf;
+		bp = &buffer[ (lasty-firsty)*scanbytes + x ];
+		for ( y = lasty; y >= yin; y-- ) {
+		    /* firsty? */
+		    *obp++ = *bp;
+		    bp -= scanbytes;
 		}
-
-		yin += buflines;
+		yout = x;
+		xout = (nyin - 1) - lasty;
+		outbyte = ((yout * nyin) + xout);
+		if ( outplace != outbyte ) {
+		    if ( fseek( ofp, outbyte, 0 ) < 0 ) {
+			fprintf( stderr, "bwrot: Can't seek on output, yet I need to!\n" );
+			bu_exit ( 3, NULL );
+		    }
+		    outplace = outbyte;
+		}
+		fwrite( obuf, 1, buflines, ofp );
+		outplace += buflines;
+	    }
+	} else if ( minus90 ) {
+	    for ( x = nxin-1; x >= 0; x-- ) {
+		obp = obuf;
+		bp = &buffer[ x ];
+		for ( y = firsty; y <= lasty; y++ ) {
+		    *obp++ = *bp;
+		    bp += scanbytes;
+		}
+		yout = (nxin - 1) - x;
+		xout = yin;
+		outbyte = ((yout * nyin) + xout);
+		if ( outplace != outbyte ) {
+		    if ( fseek( ofp, outbyte, 0 ) < 0 ) {
+			fprintf( stderr, "bwrot: Can't seek on output, yet I need to!\n" );
+			bu_exit ( 3, NULL );
+		    }
+		    outplace = outbyte;
+		}
+		fwrite( obuf, 1, buflines, ofp );
+		outplace += buflines;
+	    }
+	} else if ( invert ) {
+	    for ( y = lasty; y >= firsty; y-- ) {
+		yout = (nyin - 1) - y;
+		outbyte = yout * scanbytes;
+		if ( outplace != outbyte ) {
+		    if ( fseek( ofp, outbyte, 0 ) < 0 ) {
+			fprintf( stderr, "bwrot: Can't seek on output, yet I need to!\n" );
+			bu_exit ( 3, NULL );
+		    }
+		    outplace = outbyte;
+		}
+		fwrite( &buffer[(y-firsty)*scanbytes], 1, scanbytes, ofp );
+		outplace += scanbytes;
+	    }
+	} else {
+	    /* Reverse only */
+	    for ( y = 0; y < buflines; y++ ) {
+		fwrite( &buffer[y*scanbytes], 1, scanbytes, ofp );
+	    }
 	}
-	return 0;
+
+	yin += buflines;
+    }
+    return 0;
 }
 
 void
 fill_buffer(void)
 {
-	buflines = fread( buffer, scanbytes, buflines, ifp );
+    buflines = fread( buffer, scanbytes, buflines, ifp );
 
-	firsty = lasty + 1;
-	lasty = firsty + (buflines - 1);
+    firsty = lasty + 1;
+    lasty = firsty + (buflines - 1);
 }
 
 void
 reverse_buffer(void)
 {
-	int	i;
-	unsigned char *p1, *p2, temp;
+    int	i;
+    unsigned char *p1, *p2, temp;
 
-	for ( i = 0; i < buflines; i++ ) {
-		p1 = &buffer[ i * scanbytes ];
-		p2 = p1 + (scanbytes - 1);
-		while ( p1 < p2 ) {
-			temp = *p1;
-			*p1++ = *p2;
-			*p2-- = temp;
-		}
+    for ( i = 0; i < buflines; i++ ) {
+	p1 = &buffer[ i * scanbytes ];
+	p2 = p1 + (scanbytes - 1);
+	while ( p1 < p2 ) {
+	    temp = *p1;
+	    *p1++ = *p2;
+	    *p2-- = temp;
 	}
+    }
 }
 
 /*
@@ -325,58 +325,58 @@ reverse_buffer(void)
 
 void
 arbrot(double a)
-		/* rotation angle */
+    /* rotation angle */
 {
-	int	x, y;				/* working coord */
-	double	x2, y2;				/* its rotated position */
-	double	xc, yc;				/* rotation origin */
-	int	x_min, y_min, x_max, y_max;	/* area to rotate */
-	double	x_goop, y_goop;
-	double	sina, cosa;
+    int	x, y;				/* working coord */
+    double	x2, y2;				/* its rotated position */
+    double	xc, yc;				/* rotation origin */
+    int	x_min, y_min, x_max, y_max;	/* area to rotate */
+    double	x_goop, y_goop;
+    double	sina, cosa;
 
-	if ( buflines != nyin ) {
-		/* I won't all fit in the buffer */
-		fprintf(stderr, "bwrot: Sorry but I can't do an arbitrary rotate of an image this large\n");
-		bu_exit (1, NULL);
+    if ( buflines != nyin ) {
+	/* I won't all fit in the buffer */
+	fprintf(stderr, "bwrot: Sorry but I can't do an arbitrary rotate of an image this large\n");
+	bu_exit (1, NULL);
+    }
+    if ( buflines > nyin ) buflines = nyin;
+    fill_buffer();
+
+    /*
+     * Convert rotation angle to radians.
+     * Because we "pull down" the pixel from their rotated positions
+     * to their standard ones, the sign of the rotation is reversed.
+     */
+    a = -DtoR(a);
+    sina = sin(a);
+    cosa = cos(a);
+
+    /* XXX - Let the user pick the rotation origin? */
+    xc = nxin / 2.0;
+    yc = nyin / 2.0;
+
+    x_goop = xc - xc * cosa + yc * sina;
+    y_goop = yc - yc * cosa - xc * sina;
+
+    x_min = 0;
+    y_min = 0;
+    x_max = nxin;
+    y_max = nyin;
+
+    for ( y = y_min; y < y_max; y++ ) {
+	x2 = x_min * cosa - y * sina + x_goop;
+	y2 = x_min * sina + y * cosa + y_goop;
+	for ( x = x_min; x < x_max; x++ ) {
+	    /* check for in bounds */
+	    if ( x2 >= 0 && x2 < nxin && y2 >= 0 && y2 < nyin )
+		putchar(buffer[(int)y2*nyin + (int)x2]);
+	    else
+		putchar(0);	/* XXX - setable color? */
+	    /* "forward difference" our coordinates */
+	    x2 += cosa;
+	    y2 += sina;
 	}
-	if ( buflines > nyin ) buflines = nyin;
-	fill_buffer();
-
-	/*
-	 * Convert rotation angle to radians.
-	 * Because we "pull down" the pixel from their rotated positions
-	 * to their standard ones, the sign of the rotation is reversed.
-	 */
-	a = -DtoR(a);
-	sina = sin(a);
-	cosa = cos(a);
-
-	/* XXX - Let the user pick the rotation origin? */
-	xc = nxin / 2.0;
-	yc = nyin / 2.0;
-
-	x_goop = xc - xc * cosa + yc * sina;
-	y_goop = yc - yc * cosa - xc * sina;
-
-	x_min = 0;
-	y_min = 0;
-	x_max = nxin;
-	y_max = nyin;
-
-	for ( y = y_min; y < y_max; y++ ) {
-		x2 = x_min * cosa - y * sina + x_goop;
-		y2 = x_min * sina + y * cosa + y_goop;
-		for ( x = x_min; x < x_max; x++ ) {
-			/* check for in bounds */
-			if ( x2 >= 0 && x2 < nxin && y2 >= 0 && y2 < nyin )
-				putchar(buffer[(int)y2*nyin + (int)x2]);
-			else
-				putchar(0);	/* XXX - setable color? */
-			/* "forward difference" our coordinates */
-			x2 += cosa;
-			y2 += sina;
-		}
-	}
+    }
 }
 
 /*

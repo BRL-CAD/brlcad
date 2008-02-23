@@ -54,39 +54,39 @@ int
 main(int argc, char **argv)
 {
 
-	dunnopen();
+    dunnopen();
 
-	if (!ready(5)) {
-		bu_exit(50, "dunncolor:  camera not ready\n");
-	}
+    if (!ready(5)) {
+	bu_exit(50, "dunncolor:  camera not ready\n");
+    }
 
-	if ( argc > 2 && strcmp( argv[1], "-p" ) == 0 )  {
-		/* Polaroid rather than external camera */
-		polaroid = 1;
-		argc--; argv++;
-	}
-	getexposure("old");
-	if (!ready(5)) {
-		bu_exit(50, "dunncolor:  camera not ready\n");
-	}
+    if ( argc > 2 && strcmp( argv[1], "-p" ) == 0 )  {
+	/* Polaroid rather than external camera */
+	polaroid = 1;
+	argc--; argv++;
+    }
+    getexposure("old");
+    if (!ready(5)) {
+	bu_exit(50, "dunncolor:  camera not ready\n");
+    }
 
-	/* check argument */
-	if ( argc != 5 && argc != 6 ) {
-		bu_exit(25, "usage: dunncolor [-p] baseval redval greenval blueval\n");
-	}
+    /* check argument */
+    if ( argc != 5 && argc != 6 ) {
+	bu_exit(25, "usage: dunncolor [-p] baseval redval greenval blueval\n");
+    }
 
-	dunnsend('A', atoi(*++argv));
-	dunnsend('R', atoi(*++argv));
-	dunnsend('G', atoi(*++argv));
-	dunnsend('B', atoi(*++argv));
+    dunnsend('A', atoi(*++argv));
+    dunnsend('R', atoi(*++argv));
+    dunnsend('G', atoi(*++argv));
+    dunnsend('B', atoi(*++argv));
 
-	getexposure("new");
+    getexposure("new");
 
-	if (!ready(5)) {
-		bu_exit(50, "dunncolor:  camera not ready\n");
-	}
+    if (!ready(5)) {
+	bu_exit(50, "dunncolor:  camera not ready\n");
+    }
 
-	return 0;
+    return 0;
 }
 
 /*

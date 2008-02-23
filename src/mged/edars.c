@@ -50,38 +50,38 @@ extern struct bn_tol		mged_tol;	/* from ged.c */
 
 void
 find_nearest_ars_pt(
-	int *crv,
-	int *col,
-	struct rt_ars_internal *ars,
-	point_t pick_pt,
-	vect_t dir)
+    int *crv,
+    int *col,
+    struct rt_ars_internal *ars,
+    point_t pick_pt,
+    vect_t dir)
 {
-	int i, j;
-	int pt_no;
-	int closest_i=0, closest_j=0;
-	fastf_t min_dist_sq=MAX_FASTF;
+    int i, j;
+    int pt_no;
+    int closest_i=0, closest_j=0;
+    fastf_t min_dist_sq=MAX_FASTF;
 
-	RT_ARS_CK_MAGIC( ars );
+    RT_ARS_CK_MAGIC( ars );
 
-	pt_no = 0;
-	for ( i=0; i<ars->ncurves; i++ )
+    pt_no = 0;
+    for ( i=0; i<ars->ncurves; i++ )
+    {
+	for ( j=0; j<ars->pts_per_curve; j++ )
 	{
-		for ( j=0; j<ars->pts_per_curve; j++ )
-		{
-			fastf_t dist_sq;
+	    fastf_t dist_sq;
 
-			dist_sq = bn_distsq_line3_pt3( pick_pt, dir, &ars->curves[i][j*3] );
-			if ( dist_sq < min_dist_sq )
-			{
-				min_dist_sq = dist_sq;
-				closest_i = i;
-				closest_j = j;
-			}
-			pt_no += 3;
-		}
+	    dist_sq = bn_distsq_line3_pt3( pick_pt, dir, &ars->curves[i][j*3] );
+	    if ( dist_sq < min_dist_sq )
+	    {
+		min_dist_sq = dist_sq;
+		closest_i = i;
+		closest_j = j;
+	    }
+	    pt_no += 3;
 	}
-	*crv = closest_i;
-	*col = closest_j;
+    }
+    *crv = closest_i;
+    *col = closest_j;
 }
 
 /*

@@ -57,35 +57,35 @@ vect_t			background = { 0.0, 0.0, 0.0 }; /* Black */
 void
 optical_shader_init(struct mfuncs	**headp)
 {
-	/*
-	 *  Connect up shader ("material") interfaces
-	 *  Note that sh_plastic.c defines the required "default" entry.
-	 */
-	MFUNCS( phg_mfuncs );
-	MFUNCS( null_mfuncs ); /* null test shader */
-	MFUNCS( light_mfuncs );
-	MFUNCS( cloud_mfuncs );
-	MFUNCS( spm_mfuncs );
-	MFUNCS( txt_mfuncs );
-	MFUNCS( stk_mfuncs );
-	MFUNCS( cook_mfuncs );
-	MFUNCS( stxt_mfuncs );
-	MFUNCS( points_mfuncs );
-	MFUNCS( toyota_mfuncs );
-	MFUNCS( wood_mfuncs );
-	MFUNCS( camo_mfuncs );
-	MFUNCS( scloud_mfuncs );
-	MFUNCS( air_mfuncs );
-	MFUNCS( rtrans_mfuncs );
-	MFUNCS( fire_mfuncs );
-	MFUNCS( brdf_mfuncs );
-	MFUNCS( gauss_mfuncs );
-	MFUNCS( noise_mfuncs );
-	MFUNCS( prj_mfuncs );
-	MFUNCS( grass_mfuncs );
-	MFUNCS( tthrm_mfuncs );
-	MFUNCS( flat_mfuncs );
-	MFUNCS( bbd_mfuncs );
+    /*
+     *  Connect up shader ("material") interfaces
+     *  Note that sh_plastic.c defines the required "default" entry.
+     */
+    MFUNCS( phg_mfuncs );
+    MFUNCS( null_mfuncs ); /* null test shader */
+    MFUNCS( light_mfuncs );
+    MFUNCS( cloud_mfuncs );
+    MFUNCS( spm_mfuncs );
+    MFUNCS( txt_mfuncs );
+    MFUNCS( stk_mfuncs );
+    MFUNCS( cook_mfuncs );
+    MFUNCS( stxt_mfuncs );
+    MFUNCS( points_mfuncs );
+    MFUNCS( toyota_mfuncs );
+    MFUNCS( wood_mfuncs );
+    MFUNCS( camo_mfuncs );
+    MFUNCS( scloud_mfuncs );
+    MFUNCS( air_mfuncs );
+    MFUNCS( rtrans_mfuncs );
+    MFUNCS( fire_mfuncs );
+    MFUNCS( brdf_mfuncs );
+    MFUNCS( gauss_mfuncs );
+    MFUNCS( noise_mfuncs );
+    MFUNCS( prj_mfuncs );
+    MFUNCS( grass_mfuncs );
+    MFUNCS( tthrm_mfuncs );
+    MFUNCS( flat_mfuncs );
+    MFUNCS( bbd_mfuncs );
 }
 
 /*

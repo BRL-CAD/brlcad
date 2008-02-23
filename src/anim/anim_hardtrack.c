@@ -142,7 +142,7 @@ main(int argc, char **argv)
     }
 
     if (axes || cent ) {
-  /* vehicle has own reference frame */
+	/* vehicle has own reference frame */
 	anim_add_trans(m_axes, centroid, zero);
 	anim_add_trans(m_rev_axes, zero, rcentroid);
     }
@@ -218,20 +218,20 @@ main(int argc, char **argv)
 	    anim_add_trans(mat_v, p3, rcentroid);
 	}
 	else {
-  /* analyze positions for steering */
+	    /* analyze positions for steering */
 	    /*get useful direction unit vectors*/
 	    if (frame == first_frame) {
-  /* first frame*/
+		/* first frame*/
 		VSUBUNIT(dir, p3, p2);
 		VMOVE(dir2, dir);
 	    }
 	    else if (val < 3) {
-  /*last frame*/
+		/*last frame*/
 		VSUBUNIT(dir, p2, p1);
 		VMOVE(dir2, dir);
 	    }
 	    else if (frame > first_frame) {
-  /*normal*/
+		/*normal*/
 		VSUBUNIT(dir, p3, p1);
 		VSUBUNIT(dir2, p2, p1);/*needed for vertical case*/
 	    }
@@ -246,7 +246,7 @@ main(int argc, char **argv)
 	VMOVE(wheel_prev, wheel_now);
 	MAT4X3PNT(wheel_now, mat_v, to_track);
 	if (frame > first_frame) {
-   /* increment distance by distance moved */
+	    /* increment distance by distance moved */
 	    VSUB2(vdelta, wheel_now, wheel_prev);
 	    MAT3X3VEC(temp, mat_v, to_front);/*new front of vehicle*/
 	    distance += VDOT(temp, vdelta);/*portion of vdelta in line with track*/
@@ -265,12 +265,12 @@ main(int argc, char **argv)
 		    anim_y_p_r2mat(wmat, 0.0, y_rot+r[count].ang, 0.0);
 		    anim_add_trans(wmat, position, r[count].pos);
 		    if ((axes || cent) && links_placed) {
-  /* link moved from vehicle coords */
+			/* link moved from vehicle coords */
 			bn_mat_mul(mat_x, wmat, m_rev_axes);
 			bn_mat_mul(wmat, m_axes, mat_x);
 		    }
 		    else if (axes || cent) {
-  /* link moved to vehicle coords */
+			/* link moved to vehicle coords */
 			MAT_MOVE(mat_x, wmat);
 			bn_mat_mul(wmat, m_axes, mat_x);
 		    }
@@ -343,13 +343,13 @@ int track_prep(void)/*run once at the beginning to establish important track inf
 	while (arc_angle < 0.0)
 	    arc_angle += 2.0*M_PI;
 	if (arc_angle > M_PI) {
-  /* concave */
+	    /* concave */
 	    x[i].w.ang0 = 0.5*(x[i].w.ang0 + x[i].w.ang1);
 	    x[i].w.ang1 = x[i].w.ang0;
 	    x[i].w.arc = 0.0;
 	}
 	else {
-  /* convex - angles are already correct */
+	    /* convex - angles are already correct */
 	    x[i].w.arc = arc_angle;
 	}
     }
@@ -428,75 +428,75 @@ int get_args(int argc, char **argv)
     while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
 	i=0;
 	switch (c) {
-	case 'b':
-	    bu_optind -= 1;
-	    sscanf(argv[bu_optind+(i++)], "%lf", &yaw );
-	    sscanf(argv[bu_optind+(i++)], "%lf", &pch );
-	    sscanf(argv[bu_optind+(i++)], "%lf", &rll );
-	    bu_optind += 3;
-	    anim_dx_y_z2mat(m_axes, rll, -pch, yaw);
-	    anim_dz_y_x2mat(m_rev_axes, -rll, pch, -yaw);
-	    axes = 1;
-	    break;
-	case 'd':
-	    bu_optind -= 1;
-	    sscanf(argv[bu_optind+(i++)], "%lf", centroid);
-	    sscanf(argv[bu_optind+(i++)], "%lf", centroid+1);
-	    sscanf(argv[bu_optind+(i++)], "%lf", centroid+2);
-	    bu_optind += 3;
-	    VREVERSE(rcentroid, centroid);
-	    cent = 1;
-	    break;
-	case 'f':
-	    sscanf(bu_optarg, "%d", &first_frame);
-	    break;
-	case 'i':
-	    sscanf(bu_optarg, "%lf", &init_dist);
-	    break;
-	case 'p':
-	    links_placed = 1;
-	    break;
-	case 'r':
-	    sscanf(bu_optarg, "%lf", &radius);
-	    break;
-	case 'w':
-	    wheel_nindex = bu_optind - 1;
-	    /*sscanf(bu_optarg, "%s", wheel_name);*/
-	    print_wheel = 1;
-	    break;
-	case 'l':
-	    sscanf(bu_optarg, "%d", &num_links);
-	    link_nindex = bu_optind;
-	    bu_optind += 1;
-	    print_link = 1;
-	    break;
-	case 's':
-	    steer = 1;
-	    break;
-	case 'g':
-	    sscanf(bu_optarg, "%d", &arced_frame);
-	    print_mode = TRACK_ARCED;
-	    break;
-	case 'm':
-	    switch (*bu_optarg) {
-	    case 'l':
-		bu_strlcpy(link_cmd, argv[bu_optind], sizeof(link_cmd));
+	    case 'b':
+		bu_optind -= 1;
+		sscanf(argv[bu_optind+(i++)], "%lf", &yaw );
+		sscanf(argv[bu_optind+(i++)], "%lf", &pch );
+		sscanf(argv[bu_optind+(i++)], "%lf", &rll );
+		bu_optind += 3;
+		anim_dx_y_z2mat(m_axes, rll, -pch, yaw);
+		anim_dz_y_x2mat(m_rev_axes, -rll, pch, -yaw);
+		axes = 1;
+		break;
+	    case 'd':
+		bu_optind -= 1;
+		sscanf(argv[bu_optind+(i++)], "%lf", centroid);
+		sscanf(argv[bu_optind+(i++)], "%lf", centroid+1);
+		sscanf(argv[bu_optind+(i++)], "%lf", centroid+2);
+		bu_optind += 3;
+		VREVERSE(rcentroid, centroid);
+		cent = 1;
+		break;
+	    case 'f':
+		sscanf(bu_optarg, "%d", &first_frame);
+		break;
+	    case 'i':
+		sscanf(bu_optarg, "%lf", &init_dist);
+		break;
+	    case 'p':
+		links_placed = 1;
+		break;
+	    case 'r':
+		sscanf(bu_optarg, "%lf", &radius);
 		break;
 	    case 'w':
-		bu_strlcpy(wheel_cmd, argv[bu_optind], sizeof(wheel_cmd));
+		wheel_nindex = bu_optind - 1;
+		/*sscanf(bu_optarg, "%s", wheel_name);*/
+		print_wheel = 1;
+		break;
+	    case 'l':
+		sscanf(bu_optarg, "%d", &num_links);
+		link_nindex = bu_optind;
+		bu_optind += 1;
+		print_link = 1;
+		break;
+	    case 's':
+		steer = 1;
+		break;
+	    case 'g':
+		sscanf(bu_optarg, "%d", &arced_frame);
+		print_mode = TRACK_ARCED;
+		break;
+	    case 'm':
+		switch (*bu_optarg) {
+		    case 'l':
+			bu_strlcpy(link_cmd, argv[bu_optind], sizeof(link_cmd));
+			break;
+		    case 'w':
+			bu_strlcpy(wheel_cmd, argv[bu_optind], sizeof(wheel_cmd));
+			break;
+		    default:
+			fprintf(stderr, "Unknown option: -m%c\n", *bu_optarg);
+			return(0);
+		}
+		bu_optind += 1;
+		break;
+	    case 'c':
+		get_circumf = 1;
 		break;
 	    default:
-		fprintf(stderr, "Unknown option: -m%c\n", *bu_optarg);
+		fprintf(stderr, "Unknown option: -%c\n", c);
 		return(0);
-	    }
-	    bu_optind += 1;
-	    break;
-	case 'c':
-	    get_circumf = 1;
-	    break;
-	default:
-	    fprintf(stderr, "Unknown option: -%c\n", c);
-	    return(0);
 	}
     }
     return(1);

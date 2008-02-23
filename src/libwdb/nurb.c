@@ -51,16 +51,16 @@
 int
 mk_bspline( struct rt_wdb *wdbp, const char *name, struct face_g_snurb **surfs )
 {
-	struct rt_nurb_internal	*ni;
+    struct rt_nurb_internal	*ni;
 
-	BU_GETSTRUCT( ni, rt_nurb_internal );
-	ni->magic = RT_NURB_INTERNAL_MAGIC;
-	ni->srfs = surfs;
+    BU_GETSTRUCT( ni, rt_nurb_internal );
+    ni->magic = RT_NURB_INTERNAL_MAGIC;
+    ni->srfs = surfs;
 
-	for ( ni->nsrf = 0; ni->srfs[ni->nsrf] != NULL; ni->nsrf++ )  
-	    ; /* NIL */
+    for ( ni->nsrf = 0; ni->srfs[ni->nsrf] != NULL; ni->nsrf++ )  
+	; /* NIL */
 
-	return wdb_export( wdbp, name, (genptr_t)ni, ID_BSPLINE, mk_conv2mm );
+    return wdb_export( wdbp, name, (genptr_t)ni, ID_BSPLINE, mk_conv2mm );
 }
 
 /*

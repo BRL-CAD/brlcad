@@ -54,77 +54,77 @@ unsigned char	buf[MAX_BYTES];
 int
 main(int argc, char **argv)
 {
-	int	i, len, times;
-	register long	count;
-	register unsigned char *bp;
+    int	i, len, times;
+    register long	count;
+    register unsigned char *bp;
 
-	if ( argc < 1 || isatty(fileno(stdout)) ) {
-		bu_exit(1, "%s", Usage );
+    if ( argc < 1 || isatty(fileno(stdout)) ) {
+	bu_exit(1, "%s", Usage );
+    }
+
+    count = -1;
+    if ( argc > 1 && strncmp( argv[1], "-r", 2 ) == 0 ) {
+	count = atoi( &argv[1][2] );
+	argv++;
+	argc--;
+    }
+
+    if ( argc > 1 ) {
+	/* get values from the command line */
+	i = 0;
+	while ( argc > 1 && i < MAX_BYTES ) {
+	    buf[i] = atoi( argv[i+1] );
+	    argc--;
+	    i++;
 	}
-
-	count = -1;
-	if ( argc > 1 && strncmp( argv[1], "-r", 2 ) == 0 ) {
-		count = atoi( &argv[1][2] );
-		argv++;
-		argc--;
+	len = i;
+    } else if ( !isatty(fileno(stdin)) ) {
+	/* get values from stdin */
+	len = fread( (char *)buf, 1, MAX_BYTES, stdin );
+	if ( len <= 0 ) {
+	    bu_exit(2, "%s", Usage );
 	}
+    } else {
+	/* assume black */
+	buf[0] = 0;
+	len = 1;
+    }
 
-	if ( argc > 1 ) {
-		/* get values from the command line */
-		i = 0;
-		while ( argc > 1 && i < MAX_BYTES ) {
-			buf[i] = atoi( argv[i+1] );
-			argc--;
-			i++;
-		}
-		len = i;
-	} else if ( !isatty(fileno(stdin)) ) {
-		/* get values from stdin */
-		len = fread( (char *)buf, 1, MAX_BYTES, stdin );
-		if ( len <= 0 ) {
-			bu_exit(2, "%s", Usage );
-		}
-	} else {
-		/* assume black */
-		buf[0] = 0;
-		len = 1;
+    /*
+     * Replicate the pattern as many times as it will fit
+     * in the buffer.
+     */
+    copies_per_buf = 1;
+    bytes_in_buf = len;
+    bp = &buf[len];
+    while ( (MAX_BYTES - bytes_in_buf) >= len ) {
+	for ( i = 0; i < len; i++ )
+	    *bp++ = buf[i];
+	copies_per_buf++;
+	bytes_in_buf += len;
+    }
+
+    if ( count < 0 ) {
+	/* output forever */
+	while ( 1 )  {
+	    if ( write( 1, (char *)buf, bytes_in_buf ) != bytes_in_buf )  {
+		perror("write");
+		break;
+	    }
 	}
+	return 1;
+    }
 
-	/*
-	 * Replicate the pattern as many times as it will fit
-	 * in the buffer.
-	 */
-	copies_per_buf = 1;
-	bytes_in_buf = len;
-	bp = &buf[len];
-	while ( (MAX_BYTES - bytes_in_buf) >= len ) {
-		for ( i = 0; i < len; i++ )
-			*bp++ = buf[i];
-		copies_per_buf++;
-		bytes_in_buf += len;
+    while ( count > 0 ) {
+	times = copies_per_buf > count ? count : copies_per_buf;
+	if ( write( 1, (char *)buf, len * times ) != len * times )  {
+	    perror("write");
+	    return 1;
 	}
+	count -= times;
+    }
 
-	if ( count < 0 ) {
-		/* output forever */
-		while ( 1 )  {
-			if ( write( 1, (char *)buf, bytes_in_buf ) != bytes_in_buf )  {
-				perror("write");
-				break;
-			}
-		}
-		return 1;
-	}
-
-	while ( count > 0 ) {
-		times = copies_per_buf > count ? count : copies_per_buf;
-		if ( write( 1, (char *)buf, len * times ) != len * times )  {
-			perror("write");
-			return 1;
-		}
-		count -= times;
-	}
-
-	return 0;
+    return 0;
 }
 
 /*

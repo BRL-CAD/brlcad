@@ -18,7 +18,7 @@
  * information.
  */
 /** @file glob.c
-	Author:		Gary S. Moss
+    Author:		Gary S. Moss
 */
 
 #include "common.h"
@@ -40,29 +40,29 @@ FBIO	*fbiop = FBIO_NULL;    /* Framebuffer interface ptr.	*/
 /* Initialization for root of IR data base octree.			*/
 PtList	ir_ptlist = { {0.0, 0.0, 0.0}, PTLIST_NULL };
 Octree	ir_octree =
-	{ 0, ABSOLUTE_ZERO, &ir_ptlist, TRIE_NULL, OCTREE_NULL, OCTREE_NULL };
+{ 0, ABSOLUTE_ZERO, &ir_ptlist, TRIE_NULL, OCTREE_NULL, OCTREE_NULL };
 
 /* Light sources.
-	lgts[0]		ambient lighting
-	lgts[1]		primary lighting
-	...		user defined
- */
+   lgts[0]		ambient lighting
+   lgts[1]		primary lighting
+   ...		user defined
+*/
 Lgt_Source	lgts[MAX_LGTS];
 
 /* Animation control structure.						*/
 Movie	movie =
-	{
-	false,	/* m_fullscreen */
-	true,	/* m_lgts */
-	false,	/* m_over */
-	false,	/* m_keys */
-	1,	/* m_noframes */
-	0,	/* m_curframe */
-	0,	/* m_endframe */
-	-1,	/* m_frame_sz */
-	NULL,	/* m_keys_fp */
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	};
+{
+    false,	/* m_fullscreen */
+    true,	/* m_lgts */
+    false,	/* m_over */
+    false,	/* m_keys */
+    1,	/* m_noframes */
+    0,	/* m_curframe */
+    0,	/* m_endframe */
+    -1,	/* m_frame_sz */
+    NULL,	/* m_keys_fp */
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+};
 
 /* Globals for line-buffering pixel I/O.				*/
 RGBpixel	bgpixel;		/* Background color.		*/

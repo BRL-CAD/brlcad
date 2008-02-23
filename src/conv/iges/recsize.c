@@ -48,54 +48,54 @@
 
 #define	NRECS	20	/* Maximum number of records to sample */
 #define	NCHAR	256	/* Maximuim number of characters to read
-				in case there are no LF's */
+			   in case there are no LF's */
 
 int
 Recsize()
 {
 
-	int i, j, k=(-1), recl=0, length[NRECS], ch;
+    int i, j, k=(-1), recl=0, length[NRECS], ch;
 
-	for ( j=0; j<NRECS; j++ )
+    for ( j=0; j<NRECS; j++ )
+    {
+	i = 1;
+	while ( (ch=getc( fd ) ) != '\n' && i < NCHAR && ch != EOF )
+	    i++;
+	if ( i == NCHAR )
 	{
-		i = 1;
-		while ( (ch=getc( fd ) ) != '\n' && i < NCHAR && ch != EOF )
-			i++;
-		if ( i == NCHAR )
-		{
-			recl = 80;
-			break;
-		}
-		else if ( ch == EOF )
-		{
-			k = j - 1;
-			break;
-		}
-		else
-			length[j] = i; /* record this record length */
+	    recl = 80;
+	    break;
 	}
-	if ( k == (-1) )	/* We didn't encounter an early EOF */
-		k = NRECS;
-
-	if ( fseek( fd, 0L, 0 ) ) /* rewind file */
+	else if ( ch == EOF )
 	{
-		bu_log( "Cannot rewind file\n" );
-		perror( "Recsize" );
-		bu_exit( 1, NULL );
+	    k = j - 1;
+	    break;
 	}
+	else
+	    length[j] = i; /* record this record length */
+    }
+    if ( k == (-1) )	/* We didn't encounter an early EOF */
+	k = NRECS;
 
-	if ( recl == 0 )	/* then LF's were found */
+    if ( fseek( fd, 0L, 0 ) ) /* rewind file */
+    {
+	bu_log( "Cannot rewind file\n" );
+	perror( "Recsize" );
+	bu_exit( 1, NULL );
+    }
+
+    if ( recl == 0 )	/* then LF's were found */
+    {
+	recl = length[1];	/* don't use length[0] */
+
+	/* check for consistent record lengths */
+	for ( j=2; j<k; j++ )
 	{
-		recl = length[1];	/* don't use length[0] */
-
-		/* check for consistent record lengths */
-		for ( j=2; j<k; j++ )
-		{
-			if ( recl != length[j] )
-				return( 0 );
-		}
+	    if ( recl != length[j] )
+		return( 0 );
 	}
-	return( recl );
+    }
+    return( recl );
 }
 
 

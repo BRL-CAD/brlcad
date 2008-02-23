@@ -48,6 +48,16 @@
 int
 mk_brep( struct rt_wdb* file, const char* name, ON_Brep* brep )
 {
-  bu_log("mk_brep() requires BRL-CAD to be built with openNURBS\n");
-  return -1;
+    bu_log("mk_brep() requires BRL-CAD to be built with openNURBS\n");
+    return -1;
 }
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

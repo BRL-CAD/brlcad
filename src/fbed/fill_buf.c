@@ -47,53 +47,53 @@
 void
 fill_buf(register int wid, register int *buf)
 {
-	char    bitrow[FONTBUFSZ];
-	register int     j;
+    char    bitrow[FONTBUFSZ];
+    register int     j;
 
-	if ( font.ffdes == NULL )
-		return;
-	/* Read the row, rounding width up to nearest byte value. */
-	if ( (int)fread( bitrow, (size_t)(wid / 8) + ((wid % 8 == 0) ? 0 : 1), 1, font.ffdes)
-		< 1
-		)
-		{
-		(void) fprintf( stderr, "fill_buf() read failed!\n" );
-		return;
-		}
-
-	/* For each bit in the row, set the array value to 1 if it's on.
-		The bitx routine extracts the bit value.  Can't just use the
-		j-th bit because the bytes are backwards.
-	 */
-	for (j = 0; j < wid; j++)
-		if (bitx (bitrow, (j & ~7) + (7 - (j & 7))))
-		    buf[j + 2] = 1;
-		else
-		    buf[j + 2] = 0;
-
-	/* Need two samples worth of background on either end to make the
-		filtering come out right without special casing the
-		filtering.
-	 */
-	buf[0] = buf[1] = buf[wid + 2] = buf[wid + 3] = 0;
+    if ( font.ffdes == NULL )
 	return;
-	}
+    /* Read the row, rounding width up to nearest byte value. */
+    if ( (int)fread( bitrow, (size_t)(wid / 8) + ((wid % 8 == 0) ? 0 : 1), 1, font.ffdes)
+	 < 1
+	)
+    {
+	(void) fprintf( stderr, "fill_buf() read failed!\n" );
+	return;
+    }
+
+    /* For each bit in the row, set the array value to 1 if it's on.
+       The bitx routine extracts the bit value.  Can't just use the
+       j-th bit because the bytes are backwards.
+    */
+    for (j = 0; j < wid; j++)
+	if (bitx (bitrow, (j & ~7) + (7 - (j & 7))))
+	    buf[j + 2] = 1;
+	else
+	    buf[j + 2] = 0;
+
+    /* Need two samples worth of background on either end to make the
+       filtering come out right without special casing the
+       filtering.
+    */
+    buf[0] = buf[1] = buf[wid + 2] = buf[wid + 3] = 0;
+    return;
+}
 
 /*	c l e a r _ b u f ( )
 	Just sets all the buffer values to zero (this is used to
 	"read" background areas of the character needed for filtering near
 	the edges of the character definition.
- */
+*/
 void
 clear_buf(int wid, register int *buf)
 {
-	register int     i, w = wid + 4;
+    register int     i, w = wid + 4;
 
-	/* Clear each value in the row. */
-	for ( i = 0; i < w; i++ )
-		buf[i] = 0;
-	return;
-	}
+    /* Clear each value in the row. */
+    for ( i = 0; i < w; i++ )
+	buf[i] = 0;
+    return;
+}
 
 /*
  * Local Variables:

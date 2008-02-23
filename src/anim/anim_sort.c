@@ -114,7 +114,7 @@ main(int argc, char **argv)
 	    }
 	    if (number==frame_number) {
 		if (!success) {
-  /*first successful match*/
+		    /*first successful match*/
 		    printf("%s", line);
 		    if (!suppressed) printf("clean;\n");
 		    success = 1;
@@ -172,15 +172,15 @@ int get_args(int argc, char **argv)
 
     while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
 	switch (c) {
-	case 'c':
-	    suppressed = 1;
-	    break;
-	case 'i':
-	    incremental = 1;
-	    break;
-	default:
-	    fprintf(stderr, "Unknown option: -%c\n", c);
-	    return(0);
+	    case 'c':
+		suppressed = 1;
+		break;
+	    case 'i':
+		incremental = 1;
+		break;
+	    default:
+		fprintf(stderr, "Unknown option: -%c\n", c);
+		return(0);
 	}
     }
     return(1);

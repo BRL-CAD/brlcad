@@ -60,16 +60,16 @@ void write_bot(struct rt_bot_internal *bot, FILE *fh, char *name)
     /* Vertices */
     fwrite (&num_vertices, sizeof(int), 1, fh);
     for (i = 0; i < num_vertices; i++)
-      for (n = 0; n < 3; n++) {
-	v = (float)vertices[3*i+n] * 0.001;
-	fwrite ( &v, sizeof(float), 1, fh);
-      }
+	for (n = 0; n < 3; n++) {
+	    v = (float)vertices[3*i+n] * 0.001;
+	    fwrite ( &v, sizeof(float), 1, fh);
+	}
 
     /* Faces */
     fwrite (&num_faces, sizeof(int), 1, fh);
     for (i = 0; i < num_faces; i++)
-      for (n = 0; n < 3; n++)
-	fwrite (&faces[3*i+n], sizeof(int), 1, fh);
+	for (n = 0; n < 3; n++)
+	    fwrite (&faces[3*i+n], sizeof(int), 1, fh);
 }
 
 
@@ -117,8 +117,8 @@ int main(int ac, char *av[])
 	/* dump all the bots */
 	FOR_ALL_DIRECTORY_START(dp, rtip->rti_dbip)
 
-	/* we only dump BOT primitives, so skip some obvious exceptions */
-	if (dp->d_major_type != DB5_MAJORTYPE_BRLCAD) continue;
+	    /* we only dump BOT primitives, so skip some obvious exceptions */
+	    if (dp->d_major_type != DB5_MAJORTYPE_BRLCAD) continue;
 	if (dp->d_flags & DIR_COMB) continue;
 
 	/* get the internal form */
@@ -138,7 +138,7 @@ int main(int ac, char *av[])
 	write_bot(bot, fh, dp->d_namep);
 
 	FOR_ALL_DIRECTORY_END
-    }
+	    }
     return 0;
 }
 

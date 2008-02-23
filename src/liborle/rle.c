@@ -270,60 +270,60 @@ rle_rhdr(FILE *fp, int *flags, register unsigned char *bgpixel)
     SWAB( x_magic );
     if ( x_magic != XtndRMAGIC )
     {
-     Old_Rle_Header	setup;
-    if ( fread( (char *) &setup, sizeof(setup), 1, fp ) != 1 )
-    {
-	(void) fprintf( stderr, "Read of Old RLE header failed!\n" );
-	return	-1;
-    }
-    SWAB( setup.xpos );
-    SWAB( setup.ypos );
-    SWAB( setup.xsize );
-    SWAB( setup.ysize );
-    r_setup.h_xpos = setup.xpos;
-    r_setup.h_ypos = setup.ypos;
-    r_setup.h_xlen = setup.xsize;
-    r_setup.h_ylen = setup.ysize;
-    switch ( x_magic & ~0xff) {
-	case RMAGIC :
-	    if ( rle_verbose )
-		(void) fprintf( stderr,	"Frame buffer image saved in Old Run Length Encoded form\n");
-	    r_setup.h_ncolors = 3;
-	    break;
-	case WMAGIC :
-	    if ( rle_verbose )
-		(void) fprintf( stderr, "Frame buffer image saved in Old B&W RLE form\n");
-	    r_setup.h_ncolors = 1;
-	    break;
-	default:
-	    (void) fprintf(	stderr, "File not in RLE format, can't display (magic=0x%x)\n", x_magic & ~0xff);
+	Old_Rle_Header	setup;
+	if ( fread( (char *) &setup, sizeof(setup), 1, fp ) != 1 )
+	{
+	    (void) fprintf( stderr, "Read of Old RLE header failed!\n" );
 	    return	-1;
-    } /* End switch */
-    switch ( x_magic & 0xFF ) {
-	case 'B' : /* Background given.				*/
-	    r_setup.h_flags = H_CLEARFIRST;
-	    r_setup.h_background[0] = setup.bg_r;
-	    r_setup.h_background[1] = setup.bg_g;
-	    r_setup.h_background[2] = setup.bg_b;
-	    break;
-	default: /* Straight 'box' save.			*/
-	    r_setup.h_flags = H_BOXSAVE;
-	    r_setup.h_background[0] = 0;
-	    r_setup.h_background[1] = 0;
-	    r_setup.h_background[2] = 0;
-	    if ( rle_verbose )
-		(void) fprintf( stderr, "Saved as a straight box image\n");
-	    break;
-    } /* End switch */
-    r_setup.h_pixelbits = 8;
-    r_setup.h_ncmap = setup.map ? 3 : 0;
-    r_setup.h_cmaplen = 8;
-    _func_Get_Inst = _get_Old_Inst;
+	}
+	SWAB( setup.xpos );
+	SWAB( setup.ypos );
+	SWAB( setup.xsize );
+	SWAB( setup.ysize );
+	r_setup.h_xpos = setup.xpos;
+	r_setup.h_ypos = setup.ypos;
+	r_setup.h_xlen = setup.xsize;
+	r_setup.h_ylen = setup.ysize;
+	switch ( x_magic & ~0xff) {
+	    case RMAGIC :
+		if ( rle_verbose )
+		    (void) fprintf( stderr,	"Frame buffer image saved in Old Run Length Encoded form\n");
+		r_setup.h_ncolors = 3;
+		break;
+	    case WMAGIC :
+		if ( rle_verbose )
+		    (void) fprintf( stderr, "Frame buffer image saved in Old B&W RLE form\n");
+		r_setup.h_ncolors = 1;
+		break;
+	    default:
+		(void) fprintf(	stderr, "File not in RLE format, can't display (magic=0x%x)\n", x_magic & ~0xff);
+		return	-1;
+	} /* End switch */
+	switch ( x_magic & 0xFF ) {
+	    case 'B' : /* Background given.				*/
+		r_setup.h_flags = H_CLEARFIRST;
+		r_setup.h_background[0] = setup.bg_r;
+		r_setup.h_background[1] = setup.bg_g;
+		r_setup.h_background[2] = setup.bg_b;
+		break;
+	    default: /* Straight 'box' save.			*/
+		r_setup.h_flags = H_BOXSAVE;
+		r_setup.h_background[0] = 0;
+		r_setup.h_background[1] = 0;
+		r_setup.h_background[2] = 0;
+		if ( rle_verbose )
+		    (void) fprintf( stderr, "Saved as a straight box image\n");
+		break;
+	} /* End switch */
+	r_setup.h_pixelbits = 8;
+	r_setup.h_ncmap = setup.map ? 3 : 0;
+	r_setup.h_cmaplen = 8;
+	_func_Get_Inst = _get_Old_Inst;
     } /* End if */
     else
     {
 	if ( fread( (char *)&r_setup, sizeof(Xtnd_Rle_Header), 1, fp )
-	    != 1
+	     != 1
 	    )
 	{
 	    (void) fprintf( stderr, "Read of RLE header failed!\n" );
@@ -487,8 +487,8 @@ rle_rmap(FILE *fp, RLEColorMap *cmap)
     if ( rle_verbose )
 	(void) fprintf( stderr, "Reading color map\n");
     if (	_get_Color_Map_Seg( fp, cmap->cm_red ) == -1
-	||	_get_Color_Map_Seg( fp, cmap->cm_green ) == -1
-	||	_get_Color_Map_Seg( fp, cmap->cm_blue ) == -1
+		||	_get_Color_Map_Seg( fp, cmap->cm_green ) == -1
+		||	_get_Color_Map_Seg( fp, cmap->cm_blue ) == -1
 	)
 	return	-1;
     else
@@ -560,8 +560,8 @@ rle_wmap(FILE *fp, RLEColorMap *cmap)
 	return _put_Std_Map( fp );
     }
     if (	_put_Color_Map_Seg( fp, cmap->cm_red ) == -1
-	||	_put_Color_Map_Seg( fp, cmap->cm_green ) == -1
-	||	_put_Color_Map_Seg( fp, cmap->cm_blue ) == -1
+		||	_put_Color_Map_Seg( fp, cmap->cm_green ) == -1
+		||	_put_Color_Map_Seg( fp, cmap->cm_blue ) == -1
 	)
 	return	-1;
     else

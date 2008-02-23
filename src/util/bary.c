@@ -73,7 +73,7 @@ void show_sites (struct bu_list *sl)
     for (BU_LIST_FOR(sp, site, sl))
     {
 	bu_log("I got a site (%g, %g, %g)\n",
-	    sp -> s_x, sp -> s_y, sp -> s_z);
+	       sp -> s_x, sp -> s_y, sp -> s_z);
     }
 }
 
@@ -110,7 +110,7 @@ int read_point (FILE *fp, fastf_t *c_p, int c_len, int normalize, struct bu_vls 
 	    c_p[i] = strtod(cp, &endp);
 	    if (endp == cp)
 		bu_exit (1, "Illegal input at line %d: '%s'\n",
-		    line_nm, bu_vls_addr(bp));
+			 line_nm, bu_vls_addr(bp));
 	    cp = endp;
 	}
 
@@ -125,14 +125,14 @@ int read_point (FILE *fp, fastf_t *c_p, int c_len, int normalize, struct bu_vls 
 	goto wrap_up;
     }
 
-    wrap_up:
-	if ((return_code == 1) && (tail != 0))
-	{
-	    bu_vls_trunc(tail, 0);
-	    bu_vls_strcat(tail, cp);
-	}
-	bu_vls_vlsfree(bp);
-	return (return_code);
+ wrap_up:
+    if ((return_code == 1) && (tail != 0))
+    {
+	bu_vls_trunc(tail, 0);
+	bu_vls_strcat(tail, cp);
+    }
+    bu_vls_vlsfree(bp);
+    return (return_code);
 }
 
 int
@@ -201,7 +201,7 @@ main (int argc, char **argv)
 	++nm_sites;
 
     coeff = (fastf_t *)
-		bu_malloc(nm_sites * sizeof(fastf_t), "coefficient array");
+	bu_malloc(nm_sites * sizeof(fastf_t), "coefficient array");
 
     while (read_point(infp, coeff, nm_sites, normalize, tail_buf) != EOF)
     {

@@ -37,57 +37,57 @@ void
 Convsolids()
 {
 
-	int i, totsolids=0, conv=0;
+    int i, totsolids=0, conv=0;
 
-	bu_log( "\n\nConverting solid entities:\n" );
+    bu_log( "\n\nConverting solid entities:\n" );
 
-	for ( i=0; i<totentities; i++ )
+    for ( i=0; i<totentities; i++ )
+    {
+	switch ( dir[i]->type )
 	{
-		switch ( dir[i]->type )
-		{
-			case 150:
-				totsolids++;
-				conv += block( i );
-				break;
-			case 152:
-				totsolids++;
-				conv += wedge( i );
-				break;
-			case 154:
-				totsolids++;
-				conv += cyl( i );
-				break;
-			case 156:
-				totsolids++;
-				conv += cone( i );
-				break;
-			case 158:
-				totsolids++;
-				conv += sphere( i );
-				break;
-			case 160:
-				totsolids++;
-				conv += torus( i );
-				break;
-			case 162:
-				totsolids++;
-				conv += revolve( i );
-				break;
-			case 164:
-				totsolids++;
-				conv += extrude( i );
-				break;
-			case 168:
-				totsolids++;
-				conv += ell( i );
-				break;
-			case 186:
-				totsolids++;
-				conv += brep( i );
-				break;
-		}
+	    case 150:
+		totsolids++;
+		conv += block( i );
+		break;
+	    case 152:
+		totsolids++;
+		conv += wedge( i );
+		break;
+	    case 154:
+		totsolids++;
+		conv += cyl( i );
+		break;
+	    case 156:
+		totsolids++;
+		conv += cone( i );
+		break;
+	    case 158:
+		totsolids++;
+		conv += sphere( i );
+		break;
+	    case 160:
+		totsolids++;
+		conv += torus( i );
+		break;
+	    case 162:
+		totsolids++;
+		conv += revolve( i );
+		break;
+	    case 164:
+		totsolids++;
+		conv += extrude( i );
+		break;
+	    case 168:
+		totsolids++;
+		conv += ell( i );
+		break;
+	    case 186:
+		totsolids++;
+		conv += brep( i );
+		break;
 	}
-	bu_log( "Converted %d solids successfully out of %d total solids\n", conv, totsolids );
+    }
+    bu_log( "Converted %d solids successfully out of %d total solids\n", conv, totsolids );
 }
 
 /*

@@ -356,7 +356,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
     if (make_square > 0) {
 	/* Make window square */
 	if (dmp->dm_height <
-	   dmp->dm_width)
+	    dmp->dm_width)
 	    dmp->dm_width = dmp->dm_height;
 	else
 	    dmp->dm_height = dmp->dm_width;
@@ -436,7 +436,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 	int return_val;
 
 	if (!XQueryExtension(pubvars->dpy,
-			    "XInputExtension", &return_val, &return_val, &return_val))
+			     "XInputExtension", &return_val, &return_val, &return_val))
 	    goto Skip_dials;
     }
 
@@ -450,19 +450,19 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
     }
 
     if ( list == (XDeviceInfoPtr)NULL ||
-	list == (XDeviceInfoPtr)1 )  goto Done;
+	 list == (XDeviceInfoPtr)1 )  goto Done;
 
     for (j = 0; j < ndevices; ++j, list++) {
 	if (list->use == IsXExtensionDevice) {
 	    if (!strcmp(list->name, "dial+buttons")) {
 		if ((dev = XOpenDevice(pubvars->dpy,
-				      list->id)) == (XDevice *)NULL) {
+				       list->id)) == (XDevice *)NULL) {
 		    bu_log("X_open_dm: Couldn't open the dials+buttons\n");
 		    goto Done;
 		}
 
 		for (cip = dev->classes, k = 0; k < dev->num_classes;
-		    ++k, ++cip) {
+		     ++k, ++cip) {
 		    switch (cip->input_class) {
 #ifdef IR_BUTTONS
 			case ButtonClass:

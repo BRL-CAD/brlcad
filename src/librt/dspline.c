@@ -65,54 +65,54 @@
 static void
 GetBeta(fastf_t *m, const double bias, const double tension)
 {
-	register int i;
-	double d, b2, b3;
-	register double tmp;
+    register int i;
+    double d, b2, b3;
+    register double tmp;
 
-	b2 = bias * bias;
-	b3 = bias * b2;
+    b2 = bias * bias;
+    b3 = bias * b2;
 
-	tmp = 2.0 * b3;
-	m[12] = tmp;
-	m[ 0] = -tmp;
+    tmp = 2.0 * b3;
+    m[12] = tmp;
+    m[ 0] = -tmp;
 
-	tmp = tension+b2+bias;
-	m[ 1] = 2.0 * (tmp + b3);
-	m[ 2] = -2.0 * (tmp + 1.0);
+    tmp = tension+b2+bias;
+    m[ 1] = 2.0 * (tmp + b3);
+    m[ 2] = -2.0 * (tmp + 1.0);
 
-	tmp = tension + 2.0 * b2;
-	m[ 5] = -3.0 * (tmp + 2.0 * b3);
-	m[ 6] =  3.0 * tmp;
+    tmp = tension + 2.0 * b2;
+    m[ 5] = -3.0 * (tmp + 2.0 * b3);
+    m[ 6] =  3.0 * tmp;
 
-	tmp = 6.0 * b3;
-	m[ 4] = tmp;
-	m[ 8] = -tmp;
+    tmp = 6.0 * b3;
+    m[ 4] = tmp;
+    m[ 8] = -tmp;
 
-	m[ 9] = 6.0 * (b3 - bias);
-	m[10] = 6.0 * bias;
+    m[ 9] = 6.0 * (b3 - bias);
+    m[10] = 6.0 * bias;
 
-	tmp = tension + 4.0 * (b2 + bias);
-	m[13] = tmp;
-	d = 1.0 / ( tmp + 2.0 * b3 + 2.0);
+    tmp = tension + 4.0 * (b2 + bias);
+    m[13] = tmp;
+    d = 1.0 / ( tmp + 2.0 * b3 + 2.0);
 
-	m[ 3] = m[14] = 2.0;
-	m[ 7] = m[11] = m[15] = 0.0;
+    m[ 3] = m[14] = 2.0;
+    m[ 7] = m[11] = m[15] = 0.0;
 
-	for (i=0; i < 16; i++) m[i] *= d;
+    for (i=0; i < 16; i++) m[i] *= d;
 }
 
 static void
 GetCardinal(fastf_t *m, const double tension)
 {
-	m[ 1] = 2.0 - tension;
-	m[ 2] = tension - 2.0;
-	m[ 4] = 2.0 * tension;
-	m[ 5] = tension - 3.0;
-	m[ 6] = 3.0 - 2.0 * tension;
-	m[13] = 1.0;
-	m[ 3] = m[10] = tension;
-	m[ 0] = m[7] = m[ 8] = -tension;
-	m[ 9] = m[11] = m[12] = m[14] = m[15] = 0.0;
+    m[ 1] = 2.0 - tension;
+    m[ 2] = tension - 2.0;
+    m[ 4] = 2.0 * tension;
+    m[ 5] = tension - 3.0;
+    m[ 6] = 3.0 - 2.0 * tension;
+    m[13] = 1.0;
+    m[ 3] = m[10] = tension;
+    m[ 0] = m[7] = m[ 8] = -tension;
+    m[ 9] = m[11] = m[12] = m[14] = m[15] = 0.0;
 }
 
 /*	R T _ D S P L I N E _ M A T R I X
@@ -123,18 +123,18 @@ GetCardinal(fastf_t *m, const double tension)
 void
 rt_dspline_matrix(fastf_t *m, const char *type, const double tension, const double bias)
 
-				/* "Cardinal", "Catmull", "Beta" */
-				/* Cardinal tension of .5 is Catmull spline */
-				/* only for B spline */
+    /* "Cardinal", "Catmull", "Beta" */
+    /* Cardinal tension of .5 is Catmull spline */
+    /* only for B spline */
 {
-	if (!strncmp(type, "Cardinal", 8))	GetCardinal(m, tension);
-	else if (!strncmp(type, "Catmull", 7))	GetCardinal(m, 0.5);
-	else if (!strncmp(type, "Beta", 4)) 	GetBeta(m, bias, tension);
-	else {
-		bu_log( "Error: %s:%d spline type \"%s\" Unknown\n",
-			__FILE__, __LINE__, type);
-		abort();
-	}
+    if (!strncmp(type, "Cardinal", 8))	GetCardinal(m, tension);
+    else if (!strncmp(type, "Catmull", 7))	GetCardinal(m, 0.5);
+    else if (!strncmp(type, "Beta", 4)) 	GetBeta(m, bias, tension);
+    else {
+	bu_log( "Error: %s:%d spline type \"%s\" Unknown\n",
+		__FILE__, __LINE__, type);
+	abort();
+    }
 }
 
 /*	R T _ D S P L I N E 4
@@ -148,18 +148,18 @@ rt_dspline_matrix(fastf_t *m, const char *type, const double tension, const doub
  */
 double
 rt_dspline4(fastf_t *m, double a, double b, double c, double d, double alpha)
-			/* spline matrix */
-			/* control pts */
-			/* point to interpolate at */
+    /* spline matrix */
+    /* control pts */
+    /* point to interpolate at */
 {
-	double p0, p1, p2, p3;
+    double p0, p1, p2, p3;
 
-	p0 = m[ 0]*a + m[ 1]*b + m[ 2]*c + m[ 3]*d;
-	p1 = m[ 4]*a + m[ 5]*b + m[ 6]*c + m[ 7]*d;
-	p2 = m[ 8]*a + m[ 9]*b + m[10]*c + m[11]*d;
-	p3 = m[12]*a + m[13]*b + m[14]*c + m[15]*d;
+    p0 = m[ 0]*a + m[ 1]*b + m[ 2]*c + m[ 3]*d;
+    p1 = m[ 4]*a + m[ 5]*b + m[ 6]*c + m[ 7]*d;
+    p2 = m[ 8]*a + m[ 9]*b + m[10]*c + m[11]*d;
+    p3 = m[12]*a + m[13]*b + m[14]*c + m[15]*d;
 
-	return  p3 +  alpha*(p2 + alpha*(p1 + alpha*p0) );
+    return  p3 +  alpha*(p2 + alpha*(p1 + alpha*p0) );
 }
 
 /*	R T _ D S P L I N E 4 V
@@ -175,25 +175,25 @@ rt_dspline4(fastf_t *m, double a, double b, double c, double d, double alpha)
  */
 void
 rt_dspline4v(double *pt, const fastf_t *m, const double *a, const double *b, const double *c, const double *d, const int depth, const double alpha)
-		/* result */
-			/* spline matrix obtained with spline_matrix() */
-			/* knots */
+    /* result */
+    /* spline matrix obtained with spline_matrix() */
+    /* knots */
 
 
-			/* number of values per knot */
-			/* 0 <= alpha <= 1 */
+    /* number of values per knot */
+    /* 0 <= alpha <= 1 */
 {
-	int i;
-	double p0, p1, p2, p3;
+    int i;
+    double p0, p1, p2, p3;
 
-	for (i=0; i < depth; i++) {
-		p0 = m[ 0]*a[i] + m[ 1]*b[i] + m[ 2]*c[i] + m[ 3]*d[i];
-		p1 = m[ 4]*a[i] + m[ 5]*b[i] + m[ 6]*c[i] + m[ 7]*d[i];
-		p2 = m[ 8]*a[i] + m[ 9]*b[i] + m[10]*c[i] + m[11]*d[i];
-		p3 = m[12]*a[i] + m[13]*b[i] + m[14]*c[i] + m[15]*d[i];
+    for (i=0; i < depth; i++) {
+	p0 = m[ 0]*a[i] + m[ 1]*b[i] + m[ 2]*c[i] + m[ 3]*d[i];
+	p1 = m[ 4]*a[i] + m[ 5]*b[i] + m[ 6]*c[i] + m[ 7]*d[i];
+	p2 = m[ 8]*a[i] + m[ 9]*b[i] + m[10]*c[i] + m[11]*d[i];
+	p3 = m[12]*a[i] + m[13]*b[i] + m[14]*c[i] + m[15]*d[i];
 
-		pt[i] = p3 +  alpha*(p2 + alpha*(p1 + alpha*p0) );
-	}
+	pt[i] = p3 +  alpha*(p2 + alpha*(p1 + alpha*p0) );
+    }
 }
 
 
@@ -224,39 +224,39 @@ rt_dspline4v(double *pt, const fastf_t *m, const double *a, const double *b, con
  */
 void
 rt_dspline_n(double *r, const fastf_t *m, const double *knots, const int nknots, const int depth, const double alpha)
-			/* result */
-			/* spline matrix */
-			/* knot values */
-			/* number of knots */
-			/* number of values per knot */
-			/* point on surface (0..1) to evaluate */
+    /* result */
+    /* spline matrix */
+    /* knot values */
+    /* number of knots */
+    /* number of values per knot */
+    /* point on surface (0..1) to evaluate */
 {
-	double *a, *b, *c, *d, x;
-	int nspans = nknots - 3;
-	int span;
+    double *a, *b, *c, *d, x;
+    int nspans = nknots - 3;
+    int span;
 
-	/* validate args */
-	if (nspans < 1 || depth < 1 || alpha < 0.0 || alpha > 1.0 ||
-	    !r || !knots)
-	    bu_bomb("invalid args given to rt_dspline_r");
-
-
-	/* compute which knots (span) we're going to interpolate */
+    /* validate args */
+    if (nspans < 1 || depth < 1 || alpha < 0.0 || alpha > 1.0 ||
+	!r || !knots)
+	bu_bomb("invalid args given to rt_dspline_r");
 
 
-	x = alpha * nspans;
-	span = (int)x;
-	if (span >= nspans) span = nspans - 1;
-	x -= span;
+    /* compute which knots (span) we're going to interpolate */
 
-	/* compute point (alpha 0..1) within this span */
 
-	a = (double *)&knots[span*depth];
-	b = a+depth;
-	c = b+depth;
-	d = c+depth;
+    x = alpha * nspans;
+    span = (int)x;
+    if (span >= nspans) span = nspans - 1;
+    x -= span;
 
-	rt_dspline4v(r, m, a, b, c, d, depth, x);
+    /* compute point (alpha 0..1) within this span */
+
+    a = (double *)&knots[span*depth];
+    b = a+depth;
+    c = b+depth;
+    d = c+depth;
+
+    rt_dspline4v(r, m, a, b, c, d, depth, x);
 
 }
 

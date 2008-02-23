@@ -49,7 +49,7 @@ int		use_air = 0;		/* Handling of air in librt */
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
-	{"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL }
+    {"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL }
 };
 
 static mat_t	model2hv;		/* model coords to GIFT h, v in inches */
@@ -87,25 +87,25 @@ int
 view_init(register struct application *ap, char *file, char *obj, int minus_o)
 {
 
-	if ( !minus_o )
-		outfp = stdout;
+    if ( !minus_o )
+	outfp = stdout;
 
-	/*
-	 *  Cause grid_setup() to align the grid on one inch boundaries,
-	 *  or cell_width boundaries, if it is given.
-	 */
-	if ( cell_width > 0 )
-		gift_grid_rounding = cell_width;
-	else
-		gift_grid_rounding = 25.4;		/* one inch */
+    /*
+     *  Cause grid_setup() to align the grid on one inch boundaries,
+     *  or cell_width boundaries, if it is given.
+     */
+    if ( cell_width > 0 )
+	gift_grid_rounding = cell_width;
+    else
+	gift_grid_rounding = 25.4;		/* one inch */
 
-	ap->a_hit = rayhit;
-	ap->a_miss = raymiss;
-	ap->a_onehit = 0;
+    ap->a_hit = rayhit;
+    ap->a_miss = raymiss;
+    ap->a_onehit = 0;
 
-	output_is_binary = 0;		/* output is printable ascii */
+    output_is_binary = 0;		/* output is printable ascii */
 
-	return(0);		/* No framebuffer needed */
+    return(0);		/* No framebuffer needed */
 }
 
 /*
@@ -119,27 +119,27 @@ void
 view_2init(struct application *ap)
 {
 
-	if ( outfp == NULL )
-		bu_exit(EXIT_FAILURE, "outfp is NULL\n");
+    if ( outfp == NULL )
+	bu_exit(EXIT_FAILURE, "outfp is NULL\n");
 
-	/*
-	 *  Not dropping out of parallel mode until here permits
-	 *  tree walking and database prepping to still be done in parallel.
-	 */
-	if ( npsw >= 1 )  {
-		bu_log("Note: changing from %d cpus to 1 cpu\n", npsw );
-		npsw = 1;		/* Disable parallel processing */
-	}
+    /*
+     *  Not dropping out of parallel mode until here permits
+     *  tree walking and database prepping to still be done in parallel.
+     */
+    if ( npsw >= 1 )  {
+	bu_log("Note: changing from %d cpus to 1 cpu\n", npsw );
+	npsw = 1;		/* Disable parallel processing */
+    }
 
-	/*
-	 *  GIFT uses an H, V coordinate system that is anchored at the
-	 *  model origin, but rotated according to the view.
-	 *  For convenience later, build a matrix that will take
-	 *  a point in model space (with units of mm), and convert it
-	 *  to a point in HV space, with units of inches.
-	 */
-	MAT_COPY( model2hv, Viewrotscale );
-	model2hv[15] = 1/MM2IN;
+    /*
+     *  GIFT uses an H, V coordinate system that is anchored at the
+     *  model origin, but rotated according to the view.
+     *  For convenience later, build a matrix that will take
+     *  a point in model space (with units of mm), and convert it
+     *  to a point in HV space, with units of inches.
+     */
+    MAT_COPY( model2hv, Viewrotscale );
+    model2hv[15] = 1/MM2IN;
 }
 
 /*
@@ -152,7 +152,7 @@ view_2init(struct application *ap)
 int
 raymiss(register struct application *ap)
 {
-	return(0);
+    return(0);
 }
 
 /*
@@ -163,7 +163,7 @@ raymiss(register struct application *ap)
 void
 view_pixel(void)
 {
-	return;
+    return;
 }
 
 /*
@@ -175,43 +175,43 @@ view_pixel(void)
 int
 rayhit(struct application *ap, register struct partition *PartHeadp, struct seg *segp)
 {
-	register struct partition *pp = PartHeadp->pt_forw;
-	point_t			hv;		/* GIFT h, v coords, in inches */
-	fastf_t			dot;
-	vect_t			normal;
+    register struct partition *pp = PartHeadp->pt_forw;
+    point_t			hv;		/* GIFT h, v coords, in inches */
+    fastf_t			dot;
+    vect_t			normal;
 
-	if ( pp == PartHeadp )
-		return(0);		/* nothing was actually hit?? */
+    if ( pp == PartHeadp )
+	return(0);		/* nothing was actually hit?? */
 
-	if ( jitter & JITTER_CELL )  {
-		/*
-		 *  Find exact h, v coordinates of actual ray start by
-		 *  projecting start point into GIFT h, v coordinates.
-		 */
-		MAT4X3PNT( hv, model2hv, ap->a_ray.r_pt );
-	} else {
-		/*
-		 *  Find the H, V coordinates of the grid cell _center_,
-		 *  for GIFT compatible behavior.
-		 *  RT uses the lower left _corner_ of each cell.
-		 */
-		point_t		center;
-		fastf_t		dx;
-		fastf_t		dy;
+    if ( jitter & JITTER_CELL )  {
+	/*
+	 *  Find exact h, v coordinates of actual ray start by
+	 *  projecting start point into GIFT h, v coordinates.
+	 */
+	MAT4X3PNT( hv, model2hv, ap->a_ray.r_pt );
+    } else {
+	/*
+	 *  Find the H, V coordinates of the grid cell _center_,
+	 *  for GIFT compatible behavior.
+	 *  RT uses the lower left _corner_ of each cell.
+	 */
+	point_t		center;
+	fastf_t		dx;
+	fastf_t		dy;
 
-		dx = ap->a_x + 0.5;
-		dy = ap->a_y + 0.5;
-		VJOIN2( center, viewbase_model, dx, dx_model, dy, dy_model );
-		MAT4X3PNT( hv, model2hv, center );
-	}
+	dx = ap->a_x + 0.5;
+	dy = ap->a_y + 0.5;
+	VJOIN2( center, viewbase_model, dx, dx_model, dy, dy_model );
+	MAT4X3PNT( hv, model2hv, center );
+    }
 
-	RT_HIT_NORMAL( normal, pp->pt_inhit, pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip );
-	dot = -VDOT( normal, ap->a_ray.r_dir );
-	if ( dot < 0 )  dot = 0;
-	fprintf( outfp, "%g %g %g\n",
-		hv[0], hv[1], dot );
+    RT_HIT_NORMAL( normal, pp->pt_inhit, pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip );
+    dot = -VDOT( normal, ap->a_ray.r_dir );
+    if ( dot < 0 )  dot = 0;
+    fprintf( outfp, "%g %g %g\n",
+	     hv[0], hv[1], dot );
 
-	return(0);
+    return(0);
 }
 
 /*
@@ -232,7 +232,7 @@ void	view_eol(void)
 void
 view_end(void)
 {
-	fflush(outfp);
+    fflush(outfp);
 }
 
 void view_setup(void) {}

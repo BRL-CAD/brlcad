@@ -59,95 +59,95 @@ Usage: pixfields [-v]\n\
 int
 get_args(int argc, register char **argv)
 {
-	register int c;
+    register int c;
 
-	while ( (c = bu_getopt( argc, argv, "vw:n:s:" )) != EOF )  {
-		switch ( c )  {
-		case 'v':
-			verbose++;
-			break;
-		case 'w':
-			width = atoi(bu_optarg);
-			break;
-		case 'n':
-			height = atoi(bu_optarg);
-			break;
-		case 's':
-			width = height = atoi(bu_optarg);
-			break;
-		default:		/* '?' */
-			return(0);
-		}
+    while ( (c = bu_getopt( argc, argv, "vw:n:s:" )) != EOF )  {
+	switch ( c )  {
+	    case 'v':
+		verbose++;
+		break;
+	    case 'w':
+		width = atoi(bu_optarg);
+		break;
+	    case 'n':
+		height = atoi(bu_optarg);
+		break;
+	    case 's':
+		width = height = atoi(bu_optarg);
+		break;
+	    default:		/* '?' */
+		return(0);
+	}
+    }
+
+    if ( bu_optind >= argc + 1 )  {
+	(void) fprintf( stderr,
+			"pixfields: must supply two file names\n");
+	return(0);
+    } else {
+
+	if ( (fldonefp = fopen(argv[bu_optind], "r")) == NULL )  {
+	    (void)fprintf( stderr,
+			   "pixfields: cannot open \"%s\" for reading\n",
+			   argv[bu_optind] );
+	    return(0);
 	}
 
-	if ( bu_optind >= argc + 1 )  {
-		(void) fprintf( stderr,
-		    "pixfields: must supply two file names\n");
-		return(0);
-	} else {
-
-		if ( (fldonefp = fopen(argv[bu_optind], "r")) == NULL )  {
-			(void)fprintf( stderr,
-				"pixfields: cannot open \"%s\" for reading\n",
-				argv[bu_optind] );
-			return(0);
-		}
-
-		if ( (fldtwofp = fopen(argv[++bu_optind], "r")) == NULL )  {
-			(void)fprintf( stderr,
-				"pixfields: cannot open \"%s\" for reading\n",
-				argv[bu_optind] );
-			return(0);
-		}
-
+	if ( (fldtwofp = fopen(argv[++bu_optind], "r")) == NULL )  {
+	    (void)fprintf( stderr,
+			   "pixfields: cannot open \"%s\" for reading\n",
+			   argv[bu_optind] );
+	    return(0);
 	}
 
-	if ( isatty(fileno(stdout)) )
-		return(0);
+    }
 
-	if ( argc > ++bu_optind )
-		(void)fprintf( stderr, "pixfields: excess argument(s) ignored\n" );
+    if ( isatty(fileno(stdout)) )
+	return(0);
 
-	return(1);		/* OK */
+    if ( argc > ++bu_optind )
+	(void)fprintf( stderr, "pixfields: excess argument(s) ignored\n" );
+
+    return(1);		/* OK */
 }
 
 int
 main(int argc, char **argv)
 {
-	char	*line1;
-	char	*line2;
-	int	line_number;
+    char	*line1;
+    char	*line2;
+    int	line_number;
 
-	if ( !get_args( argc, argv ) )  {
-		fputs( usage, stderr );
-		bu_exit ( 1, NULL );
+    if ( !get_args( argc, argv ) )  {
+	fputs( usage, stderr );
+	bu_exit ( 1, NULL );
+    }
+
+    line1 = (char *) malloc(width*3+1);
+    line2 = (char *) malloc(width*3+1);
+
+    line_number = 0;
+    for (;;)  {
+	if ( fread( line1, 3*sizeof(char), width, fldonefp ) != width )
+	    break;
+	if ( fread( line2, 3*sizeof(char), width, fldtwofp ) != width )  {
+	    fprintf(stderr, "pixfields: premature EOF on 2nd file?\n");
+	    bu_exit (2, NULL);
 	}
-
-	line1 = (char *) malloc(width*3+1);
-	line2 = (char *) malloc(width*3+1);
-
-	line_number = 0;
-	for (;;)  {
-		if ( fread( line1, 3*sizeof(char), width, fldonefp ) != width )
-			break;
-		if ( fread( line2, 3*sizeof(char), width, fldtwofp ) != width )  {
-			fprintf(stderr, "pixfields: premature EOF on 2nd file?\n");
-			bu_exit (2, NULL);
-		}
-		if ( (line_number & 1) == 0 )  {
-			if ( fwrite( line1, 3*sizeof(char), width, stdout ) != width )  {
-				perror("fwrite line1");
-				bu_exit (1, NULL);
-			}
-		} else {
-			if ( fwrite( line2, 3*sizeof(char), width, stdout ) != width )  {
-				perror("fwrite line2");
-				bu_exit (1, NULL);
-			}
-		}
-		line_number++;
+	if ( (line_number & 1) == 0 )  {
+	    if ( fwrite( line1, 3*sizeof(char), width, stdout ) != width )  {
+		perror("fwrite line1");
+		bu_exit (1, NULL);
+	    }
+	} else {
+	    if ( fwrite( line2, 3*sizeof(char), width, stdout ) != width )  {
+		perror("fwrite line2");
+		bu_exit (1, NULL);
+	    }
 	}
-	bu_exit ( 0, NULL );
+	line_number++;
+    }
+    bu_exit ( 0, NULL );
 }
 
 /*

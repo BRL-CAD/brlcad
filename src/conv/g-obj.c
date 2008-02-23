@@ -96,621 +96,621 @@ static int	inches = 0;
 int
 main(int argc, char **argv)
 {
-	register int	c;
-	double		percent;
+    register int	c;
+    double		percent;
 
-	bu_setlinebuf( stderr );
+    bu_setlinebuf( stderr );
 
 #if MEMORY_LEAK_CHECKING
-	rt_g.debug |= DEBUG_MEM_FULL;
+    rt_g.debug |= DEBUG_MEM_FULL;
 #endif
-	tree_state = rt_initial_tree_state;	/* struct copy */
-	tree_state.ts_tol = &tol;
-	tree_state.ts_ttol = &ttol;
-	tree_state.ts_m = &the_model;
+    tree_state = rt_initial_tree_state;	/* struct copy */
+    tree_state.ts_tol = &tol;
+    tree_state.ts_ttol = &ttol;
+    tree_state.ts_m = &the_model;
 
-	ttol.magic = RT_TESS_TOL_MAGIC;
-	/* Defaults, updated by command line options. */
-	ttol.abs = 0.0;
-	ttol.rel = 0.01;
-	ttol.norm = 0.0;
+    ttol.magic = RT_TESS_TOL_MAGIC;
+    /* Defaults, updated by command line options. */
+    ttol.abs = 0.0;
+    ttol.rel = 0.01;
+    ttol.norm = 0.0;
 
-	/* XXX These need to be improved */
-	tol.magic = BN_TOL_MAGIC;
-	tol.dist = 0.005;
-	tol.dist_sq = tol.dist * tol.dist;
-	tol.perp = 1e-5;
-	tol.para = 1 - tol.perp;
+    /* XXX These need to be improved */
+    tol.magic = BN_TOL_MAGIC;
+    tol.dist = 0.005;
+    tol.dist_sq = tol.dist * tol.dist;
+    tol.perp = 1e-5;
+    tol.para = 1 - tol.perp;
 
-	rt_init_resource( &rt_uniresource, 0, NULL );
+    rt_init_resource( &rt_uniresource, 0, NULL );
 
-	the_model = nmg_mm();
-	BU_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
+    the_model = nmg_mm();
+    BU_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
 
-	/* Get command line arguments. */
-	while ((c = bu_getopt(argc, argv, "mua:n:o:r:vx:D:P:X:e:i")) != EOF) {
-		switch (c) {
-		case 'm':		/* include 'usemtl' statements */
-			usemtl = 1;
-			break;
-		case 'u':		/* Include vertexuse normals */
-			do_normals = 1;
-			break;
-		case 'a':		/* Absolute tolerance. */
-			ttol.abs = atof(bu_optarg);
-			ttol.rel = 0.0;
-			break;
-		case 'n':		/* Surface normal tolerance. */
-			ttol.norm = atof(bu_optarg);
-			ttol.rel = 0.0;
-			break;
-		case 'o':		/* Output file name. */
-			output_file = bu_optarg;
-			break;
-		case 'r':		/* Relative tolerance. */
-			ttol.rel = atof(bu_optarg);
-			break;
-		case 'v':
-			verbose++;
-			break;
-		case 'P':
-			ncpu = atoi( bu_optarg );
-			rt_g.debug = 1;	/* XXX DEBUG_ALLRAYS -- to get core dumps */
-			break;
-		case 'x':
-			sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
-			break;
-		case 'D':
-			tol.dist = atof(bu_optarg);
-			tol.dist_sq = tol.dist * tol.dist;
-			rt_pr_tol( &tol );
-			break;
-		case 'X':
-			sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug );
-			NMG_debug = rt_g.NMG_debug;
-			break;
-		case 'e':		/* Error file name. */
-			error_file = bu_optarg;
-			break;
-		case 'i':
-			inches = 1;
-			break;
-		default:
-			bu_exit(1, usage, argv[0]);
-			break;
-		}
-	}
-
-	if (bu_optind+1 >= argc) {
+    /* Get command line arguments. */
+    while ((c = bu_getopt(argc, argv, "mua:n:o:r:vx:D:P:X:e:i")) != EOF) {
+	switch (c) {
+	    case 'm':		/* include 'usemtl' statements */
+		usemtl = 1;
+		break;
+	    case 'u':		/* Include vertexuse normals */
+		do_normals = 1;
+		break;
+	    case 'a':		/* Absolute tolerance. */
+		ttol.abs = atof(bu_optarg);
+		ttol.rel = 0.0;
+		break;
+	    case 'n':		/* Surface normal tolerance. */
+		ttol.norm = atof(bu_optarg);
+		ttol.rel = 0.0;
+		break;
+	    case 'o':		/* Output file name. */
+		output_file = bu_optarg;
+		break;
+	    case 'r':		/* Relative tolerance. */
+		ttol.rel = atof(bu_optarg);
+		break;
+	    case 'v':
+		verbose++;
+		break;
+	    case 'P':
+		ncpu = atoi( bu_optarg );
+		rt_g.debug = 1;	/* XXX DEBUG_ALLRAYS -- to get core dumps */
+		break;
+	    case 'x':
+		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
+		break;
+	    case 'D':
+		tol.dist = atof(bu_optarg);
+		tol.dist_sq = tol.dist * tol.dist;
+		rt_pr_tol( &tol );
+		break;
+	    case 'X':
+		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug );
+		NMG_debug = rt_g.NMG_debug;
+		break;
+	    case 'e':		/* Error file name. */
+		error_file = bu_optarg;
+		break;
+	    case 'i':
+		inches = 1;
+		break;
+	    default:
 		bu_exit(1, usage, argv[0]);
+		break;
 	}
+    }
 
-	if ( !output_file )
-		fp = stdout;
-	else
+    if (bu_optind+1 >= argc) {
+	bu_exit(1, usage, argv[0]);
+    }
+
+    if ( !output_file )
+	fp = stdout;
+    else
+    {
+	/* Open output file */
+	if ( (fp=fopen( output_file, "wb+" )) == NULL )
 	{
-		/* Open output file */
-		if ( (fp=fopen( output_file, "wb+" )) == NULL )
-		{
-			perror( argv[0] );
-			bu_exit(1, "Cannot open output file (%s) for writing\n", output_file );
-		}
-	}
-
-	/* Open g-obj error log file */
-	if (!error_file) {
-	    fpe = stderr;
-#if defined(_WIN32) && !defined(__CYGWIN__)
-	    setmode(fileno(fpe), O_BINARY);
-#endif
-	} else if ((fpe=fopen(error_file, "wb")) == NULL) {
 	    perror( argv[0] );
-	    bu_exit(1, "Cannot open output file (%s) for writing\n", error_file );
+	    bu_exit(1, "Cannot open output file (%s) for writing\n", output_file );
 	}
+    }
 
-	/* Open BRL-CAD database */
-	argc -= bu_optind;
-	argv += bu_optind;
-	if ((dbip = db_open(argv[0], "r")) == DBI_NULL) {
-		perror(argv[0]);
-		bu_exit(1, "Unable to open geometry file (%s) for reading\n", argv[0]);
-	}
-	if ( db_dirbuild( dbip ) ) {
-	    bu_exit(1, "db_dirbuild failed\n");
-	}
+    /* Open g-obj error log file */
+    if (!error_file) {
+	fpe = stderr;
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	setmode(fileno(fpe), O_BINARY);
+#endif
+    } else if ((fpe=fopen(error_file, "wb")) == NULL) {
+	perror( argv[0] );
+	bu_exit(1, "Cannot open output file (%s) for writing\n", error_file );
+    }
 
-	BN_CK_TOL(tree_state.ts_tol);
-	RT_CK_TESS_TOL(tree_state.ts_ttol);
+    /* Open BRL-CAD database */
+    argc -= bu_optind;
+    argv += bu_optind;
+    if ((dbip = db_open(argv[0], "r")) == DBI_NULL) {
+	perror(argv[0]);
+	bu_exit(1, "Unable to open geometry file (%s) for reading\n", argv[0]);
+    }
+    if ( db_dirbuild( dbip ) ) {
+	bu_exit(1, "db_dirbuild failed\n");
+    }
+
+    BN_CK_TOL(tree_state.ts_tol);
+    RT_CK_TESS_TOL(tree_state.ts_ttol);
 
 /* Write out  header */
-	if (inches)
-		fprintf(fp, "# BRL-CAD generated Wavefront OBJ file (Units in)\n");
-	else
-		fprintf(fp, "# BRL-CAD generated Wavefront OBJ file (Units mm)\n");
+    if (inches)
+	fprintf(fp, "# BRL-CAD generated Wavefront OBJ file (Units in)\n");
+    else
+	fprintf(fp, "# BRL-CAD generated Wavefront OBJ file (Units mm)\n");
 
-	fprintf( fp, "# BRL-CAD model: %s\n# BRL_CAD objects:", argv[0] );
+    fprintf( fp, "# BRL-CAD model: %s\n# BRL_CAD objects:", argv[0] );
 
-	for ( c=1; c<argc; c++ )
-		fprintf( fp, " %s", argv[c] );
-	fprintf( fp, "\n" );
+    for ( c=1; c<argc; c++ )
+	fprintf( fp, " %s", argv[c] );
+    fprintf( fp, "\n" );
 
-	/* Walk indicated tree(s).  Each region will be output separately */
-	(void) db_walk_tree(dbip, argc-1, (const char **)(argv+1),
-		1,			/* ncpu */
-		&tree_state,
-		0,			/* take all regions */
-		do_region_end,
-		nmg_booltree_leaf_tess,
-		(genptr_t)NULL);	/* in librt/nmg_bool.c */
+    /* Walk indicated tree(s).  Each region will be output separately */
+    (void) db_walk_tree(dbip, argc-1, (const char **)(argv+1),
+			1,			/* ncpu */
+			&tree_state,
+			0,			/* take all regions */
+			do_region_end,
+			nmg_booltree_leaf_tess,
+			(genptr_t)NULL);	/* in librt/nmg_bool.c */
 
-	percent = 0;
-	if (regions_tried>0) {
-		percent = ((double)regions_converted * 100) / regions_tried;
-		printf("Tried %d regions, %d converted to NMG's successfully.  %g%%\n",
-			regions_tried, regions_converted, percent);
-	}
-	percent = 0;
+    percent = 0;
+    if (regions_tried>0) {
+	percent = ((double)regions_converted * 100) / regions_tried;
+	printf("Tried %d regions, %d converted to NMG's successfully.  %g%%\n",
+	       regions_tried, regions_converted, percent);
+    }
+    percent = 0;
 
-	if ( regions_tried > 0 ) {
-		percent = ((double)regions_written * 100) / regions_tried;
-		printf( "                  %d triangulated successfully. %g%%\n",
-			regions_written, percent );
-	}
-	fclose(fp);
+    if ( regions_tried > 0 ) {
+	percent = ((double)regions_written * 100) / regions_tried;
+	printf( "                  %d triangulated successfully. %g%%\n",
+		regions_written, percent );
+    }
+    fclose(fp);
 
-	/* Release dynamic storage */
-	nmg_km(the_model);
-	rt_vlist_cleanup();
-	db_close(dbip);
+    /* Release dynamic storage */
+    nmg_km(the_model);
+    rt_vlist_cleanup();
+    db_close(dbip);
 
 #if MEMORY_LEAK_CHECKING
-	bu_prmem("After complete G-ACAD conversion");
+    bu_prmem("After complete G-ACAD conversion");
 #endif
 
-	return 0;
+    return 0;
 }
 
 static void
 nmg_to_obj(struct nmgregion *r, struct db_full_path *pathp, int region_id, int aircode, int los, int material_id)
 {
-	struct model *m;
-	struct shell *s;
-	struct vertex *v;
-	struct bu_ptbl verts;
-	struct bu_ptbl norms;
-	char *region_name;
-	int numverts = 0;		/* Number of vertices to output */
-	int numtri   = 0;		/* Number of triangles to output */
-	int i;
+    struct model *m;
+    struct shell *s;
+    struct vertex *v;
+    struct bu_ptbl verts;
+    struct bu_ptbl norms;
+    char *region_name;
+    int numverts = 0;		/* Number of vertices to output */
+    int numtri   = 0;		/* Number of triangles to output */
+    int i;
 
-	NMG_CK_REGION( r );
-	RT_CK_FULL_PATH(pathp);
+    NMG_CK_REGION( r );
+    RT_CK_FULL_PATH(pathp);
 
-	region_name = db_path_to_string( pathp );
+    region_name = db_path_to_string( pathp );
 
 #if 0
-	printf("Attempting to process region %s\n", region_name);
-	fflush(stdout);
+    printf("Attempting to process region %s\n", region_name);
+    fflush(stdout);
 #endif
 
-	m = r->m_p;
-	NMG_CK_MODEL( m );
+    m = r->m_p;
+    NMG_CK_MODEL( m );
 
-	/* triangulate model */
-	nmg_triangulate_model( m, &tol );
+    /* triangulate model */
+    nmg_triangulate_model( m, &tol );
 
-	/* list all vertices in result */
-	nmg_vertex_tabulate( &verts, &r->l.magic );
+    /* list all vertices in result */
+    nmg_vertex_tabulate( &verts, &r->l.magic );
 
-	/* Get number of vertices */
-	numverts = BU_PTBL_END (&verts);
+    /* Get number of vertices */
+    numverts = BU_PTBL_END (&verts);
 
-	/* get list of vertexuse normals */
-	if ( do_normals )
-		nmg_vertexuse_normal_tabulate( &norms, &r->l.magic );
+    /* get list of vertexuse normals */
+    if ( do_normals )
+	nmg_vertexuse_normal_tabulate( &norms, &r->l.magic );
 
 /* XXX Check vertices, shells faces first? Do not want to punt mid-stream */
 /* BEGIN CHECK SECTION */
 /* Check vertices */
 
-	for ( i=0; i<numverts; i++ )
-	{
-		v = (struct vertex *)BU_PTBL_GET( &verts, i );
-		NMG_CK_VERTEX( v );
-	}
+    for ( i=0; i<numverts; i++ )
+    {
+	v = (struct vertex *)BU_PTBL_GET( &verts, i );
+	NMG_CK_VERTEX( v );
+    }
 
 /* Check triangles */
-	for ( BU_LIST_FOR( s, shell, &r->s_hd ) )
+    for ( BU_LIST_FOR( s, shell, &r->s_hd ) )
+    {
+	struct faceuse *fu;
+
+	NMG_CK_SHELL( s );
+
+	for ( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
 	{
-		struct faceuse *fu;
+	    struct loopuse *lu;
 
-		NMG_CK_SHELL( s );
+	    NMG_CK_FACEUSE( fu );
 
-		for ( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
+	    if ( fu->orientation != OT_SAME )
+		continue;
+
+	    for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+	    {
+		struct edgeuse *eu;
+		int vert_count=0;
+
+		NMG_CK_LOOPUSE( lu );
+
+		if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+		    continue;
+
+		/* check vertex numbers for each triangle */
+		for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 		{
-			struct loopuse *lu;
+		    NMG_CK_EDGEUSE( eu );
 
-			NMG_CK_FACEUSE( fu );
+		    v = eu->vu_p->v_p;
+		    NMG_CK_VERTEX( v );
 
-			if ( fu->orientation != OT_SAME )
-				continue;
-
-			for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
-			{
-				struct edgeuse *eu;
-				int vert_count=0;
-
-				NMG_CK_LOOPUSE( lu );
-
-				if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
-					continue;
-
-				/* check vertex numbers for each triangle */
-				for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
-				{
-					NMG_CK_EDGEUSE( eu );
-
-					v = eu->vu_p->v_p;
-					NMG_CK_VERTEX( v );
-
-					vert_count++;
-					i = bu_ptbl_locate( &verts, (long *)v );
-					if ( i < 0 )
-					{
-		/*XXX*/				bu_ptbl_free( &verts);
-		/*XXX*/				bu_free( region_name, "region name" );
-						bu_log( "Vertex from eu x%x is not in nmgregion x%x\n", eu, r );
-						bu_exit(1, "ERROR: Can't find vertex in list!");
-					}
-				}
-				if ( vert_count > 3 )
-				{
-		/*XXX*/			bu_ptbl_free( &verts);
-		/*XXX*/			bu_free( region_name, "region name" );
-					bu_log( "lu x%x has %d vertices!\n", lu, vert_count );
-					bu_exit(1, "ERROR: LU is not a triangle\n");
-				}
-				else if ( vert_count < 3 )
-					continue;
-				numtri++;
-			}
+		    vert_count++;
+		    i = bu_ptbl_locate( &verts, (long *)v );
+		    if ( i < 0 )
+		    {
+			/*XXX*/				bu_ptbl_free( &verts);
+			/*XXX*/				bu_free( region_name, "region name" );
+			bu_log( "Vertex from eu x%x is not in nmgregion x%x\n", eu, r );
+			bu_exit(1, "ERROR: Can't find vertex in list!");
+		    }
 		}
+		if ( vert_count > 3 )
+		{
+		    /*XXX*/			bu_ptbl_free( &verts);
+		    /*XXX*/			bu_free( region_name, "region name" );
+		    bu_log( "lu x%x has %d vertices!\n", lu, vert_count );
+		    bu_exit(1, "ERROR: LU is not a triangle\n");
+		}
+		else if ( vert_count < 3 )
+		    continue;
+		numtri++;
+	    }
 	}
+    }
 
 /* END CHECK SECTION */
 /* Write pertinent info for this region */
 
-	if ( usemtl )
-		fprintf( fp, "usemtl %d_%d_%d\n", aircode, los, material_id );
+    if ( usemtl )
+	fprintf( fp, "usemtl %d_%d_%d\n", aircode, los, material_id );
 
-	fprintf( fp, "g %s", pathp->fp_names[0]->d_namep );
-	for ( i=1; i<pathp->fp_len; i++ )
-		fprintf( fp, "/%s", pathp->fp_names[i]->d_namep );
-	fprintf( fp, "\n" );
+    fprintf( fp, "g %s", pathp->fp_names[0]->d_namep );
+    for ( i=1; i<pathp->fp_len; i++ )
+	fprintf( fp, "/%s", pathp->fp_names[i]->d_namep );
+    fprintf( fp, "\n" );
 
-	/* Write vertices */
-	for ( i=0; i<numverts; i++ )
+    /* Write vertices */
+    for ( i=0; i<numverts; i++ )
+    {
+	v = (struct vertex *)BU_PTBL_GET( &verts, i );
+	NMG_CK_VERTEX( v );
+	if (inches)
+	    fprintf( fp, "v %f %f %f\n", V3ARGSIN( v->vg_p->coord ));
+	else
+	    fprintf( fp, "v %f %f %f\n", V3ARGS( v->vg_p->coord ));
+    }
+
+    /* Write vertexuse normals */
+    if ( do_normals )
+    {
+	for ( i=0; i<BU_PTBL_END( &norms ); i++ )
 	{
-		v = (struct vertex *)BU_PTBL_GET( &verts, i );
-		NMG_CK_VERTEX( v );
-		if (inches)
-			fprintf( fp, "v %f %f %f\n", V3ARGSIN( v->vg_p->coord ));
-		else
-			fprintf( fp, "v %f %f %f\n", V3ARGS( v->vg_p->coord ));
+	    struct vertexuse_a_plane *va;
+
+	    va = (struct vertexuse_a_plane *)BU_PTBL_GET( &norms, i );
+	    NMG_CK_VERTEXUSE_A_PLANE( va );
+	    if (inches)
+		fprintf( fp, "vn %f %f %f\n", V3ARGSIN( va->N ));
+	    else
+		fprintf( fp, "vn %f %f %f\n", V3ARGS( va->N ));
 	}
+    }
 
-	/* Write vertexuse normals */
-	if ( do_normals )
+    /* output triangles */
+    for ( BU_LIST_FOR( s, shell, &r->s_hd ) )
+    {
+	struct faceuse *fu;
+
+	NMG_CK_SHELL( s );
+
+	for ( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
 	{
-		for ( i=0; i<BU_PTBL_END( &norms ); i++ )
+	    struct loopuse *lu;
+
+	    NMG_CK_FACEUSE( fu );
+
+	    if ( fu->orientation != OT_SAME )
+		continue;
+
+	    for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+	    {
+		struct edgeuse *eu;
+		int vert_count=0;
+		int use_normals=1;
+
+		NMG_CK_LOOPUSE( lu );
+
+		if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+		    continue;
+
+		/* Each vertexuse of the face must have a normal in order
+		 * to use the normals in Wavefront
+		 */
+		if ( do_normals )
 		{
-			struct vertexuse_a_plane *va;
+		    for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+		    {
+			NMG_CK_EDGEUSE( eu );
 
-			va = (struct vertexuse_a_plane *)BU_PTBL_GET( &norms, i );
-			NMG_CK_VERTEXUSE_A_PLANE( va );
-			if (inches)
-				fprintf( fp, "vn %f %f %f\n", V3ARGSIN( va->N ));
-			else
-				fprintf( fp, "vn %f %f %f\n", V3ARGS( va->N ));
-		}
-	}
-
-	/* output triangles */
-	for ( BU_LIST_FOR( s, shell, &r->s_hd ) )
-	{
-		struct faceuse *fu;
-
-		NMG_CK_SHELL( s );
-
-		for ( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
-		{
-			struct loopuse *lu;
-
-			NMG_CK_FACEUSE( fu );
-
-			if ( fu->orientation != OT_SAME )
-				continue;
-
-			for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+			if ( !eu->vu_p->a.magic_p )
 			{
-				struct edgeuse *eu;
-				int vert_count=0;
-				int use_normals=1;
-
-				NMG_CK_LOOPUSE( lu );
-
-				if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
-					continue;
-
-				/* Each vertexuse of the face must have a normal in order
-				 * to use the normals in Wavefront
-				 */
-				if ( do_normals )
-				{
-					for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
-					{
-						NMG_CK_EDGEUSE( eu );
-
-						if ( !eu->vu_p->a.magic_p )
-						{
-							use_normals = 0;
-							break;
-						}
-
-						if ( *eu->vu_p->a.magic_p != NMG_VERTEXUSE_A_PLANE_MAGIC )
-						{
-							use_normals = 0;
-							break;
-						}
-					}
-				}
-				else
-					use_normals = 0;
-
-				fprintf( fp, "f" );
-
-				/* list vertex numbers for each triangle */
-				for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
-				{
-					NMG_CK_EDGEUSE( eu );
-
-					v = eu->vu_p->v_p;
-					NMG_CK_VERTEX( v );
-
-					vert_count++;
-					i = bu_ptbl_locate( &verts, (long *)v );
-					if ( i < 0 )
-					{
-						bu_ptbl_free( &verts);
-						bu_log( "Vertex from eu x%x is not in nmgregion x%x\n", eu, r );
-		/*XXX*/				bu_free( region_name, "region name" );
-		/*XXX*/				bu_exit(1, "Can't find vertex in list!\n");
-					}
-
-					if ( use_normals )
-					{
-						int j;
-
-						j = bu_ptbl_locate( &norms, (long *)eu->vu_p->a.magic_p );
-						fprintf( fp, " %ld//%ld", i+1+vert_offset, j+1+norm_offset );
-					}
-					else
-						fprintf( fp, " %ld", i+1+vert_offset );
-				}
-
-				fprintf( fp, "\n" );
-
-				if ( vert_count > 3 )
-				{
-					bu_ptbl_free( &verts);
-					bu_free( region_name, "region name" );
-					bu_log( "lu x%x has %d vertices!\n", lu, vert_count );
-					bu_exit(1, "ERROR: LU is not a triangle\n" );
-				}
+			    use_normals = 0;
+			    break;
 			}
+
+			if ( *eu->vu_p->a.magic_p != NMG_VERTEXUSE_A_PLANE_MAGIC )
+			{
+			    use_normals = 0;
+			    break;
+			}
+		    }
 		}
+		else
+		    use_normals = 0;
+
+		fprintf( fp, "f" );
+
+		/* list vertex numbers for each triangle */
+		for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+		{
+		    NMG_CK_EDGEUSE( eu );
+
+		    v = eu->vu_p->v_p;
+		    NMG_CK_VERTEX( v );
+
+		    vert_count++;
+		    i = bu_ptbl_locate( &verts, (long *)v );
+		    if ( i < 0 )
+		    {
+			bu_ptbl_free( &verts);
+			bu_log( "Vertex from eu x%x is not in nmgregion x%x\n", eu, r );
+			/*XXX*/				bu_free( region_name, "region name" );
+			/*XXX*/				bu_exit(1, "Can't find vertex in list!\n");
+		    }
+
+		    if ( use_normals )
+		    {
+			int j;
+
+			j = bu_ptbl_locate( &norms, (long *)eu->vu_p->a.magic_p );
+			fprintf( fp, " %ld//%ld", i+1+vert_offset, j+1+norm_offset );
+		    }
+		    else
+			fprintf( fp, " %ld", i+1+vert_offset );
+		}
+
+		fprintf( fp, "\n" );
+
+		if ( vert_count > 3 )
+		{
+		    bu_ptbl_free( &verts);
+		    bu_free( region_name, "region name" );
+		    bu_log( "lu x%x has %d vertices!\n", lu, vert_count );
+		    bu_exit(1, "ERROR: LU is not a triangle\n" );
+		}
+	    }
 	}
+    }
 /*	regions_converted++;
 	printf("Processed region %s\n", region_name);
 	printf("Regions attempted = %d Regions done = %d\n", regions_tried, regions_converted);
 	fflush(stdout);
 */
-	vert_offset += numverts;
-	bu_ptbl_free( &verts);
-	if ( do_normals )
-	{
-		norm_offset += BU_PTBL_END( &norms );
-		bu_ptbl_free( &norms);
-	}
-	bu_free( region_name, "region name" );
+    vert_offset += numverts;
+    bu_ptbl_free( &verts);
+    if ( do_normals )
+    {
+	norm_offset += BU_PTBL_END( &norms );
+	bu_ptbl_free( &norms);
+    }
+    bu_free( region_name, "region name" );
 }
 
 /*
-*			D O _ R E G I O N _ E N D
-*
-*  Called from db_walk_tree().
-*
-*  This routine must be prepared to run in parallel.
-*/
+ *			D O _ R E G I O N _ E N D
+ *
+ *  Called from db_walk_tree().
+ *
+ *  This routine must be prepared to run in parallel.
+ */
 union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
-	union tree		*ret_tree;
-	struct bu_list		vhead;
-	struct nmgregion	*r;
+    union tree		*ret_tree;
+    struct bu_list		vhead;
+    struct nmgregion	*r;
 
-	RT_CK_FULL_PATH(pathp);
-	RT_CK_TREE(curtree);
-	RT_CK_TESS_TOL(tsp->ts_ttol);
-	BN_CK_TOL(tsp->ts_tol);
-	NMG_CK_MODEL(*tsp->ts_m);
+    RT_CK_FULL_PATH(pathp);
+    RT_CK_TREE(curtree);
+    RT_CK_TESS_TOL(tsp->ts_ttol);
+    BN_CK_TOL(tsp->ts_tol);
+    NMG_CK_MODEL(*tsp->ts_m);
 
-	BU_LIST_INIT(&vhead);
+    BU_LIST_INIT(&vhead);
 
-	if (RT_G_DEBUG&DEBUG_TREEWALK || verbose) {
-		char	*sofar = db_path_to_string(pathp);
-		bu_log("\ndo_region_end(%d %d%%) %s\n",
-			regions_tried,
-			regions_tried>0 ? (regions_converted * 100) / regions_tried : 0,
-			sofar);
-		bu_free(sofar, "path string");
-	}
+    if (RT_G_DEBUG&DEBUG_TREEWALK || verbose) {
+	char	*sofar = db_path_to_string(pathp);
+	bu_log("\ndo_region_end(%d %d%%) %s\n",
+	       regions_tried,
+	       regions_tried>0 ? (regions_converted * 100) / regions_tried : 0,
+	       sofar);
+	bu_free(sofar, "path string");
+    }
 
-	if (curtree->tr_op == OP_NOP)
-		return  curtree;
+    if (curtree->tr_op == OP_NOP)
+	return  curtree;
 
-	regions_tried++;
+    regions_tried++;
 
-	/* Begin bomb protection */
-	if ( ncpu == 1 ) {
-		if ( BU_SETJUMP )  {
-			/* Error, bail out */
-			char *sofar;
-			BU_UNSETJUMP;		/* Relinquish the protection */
+    /* Begin bomb protection */
+    if ( ncpu == 1 ) {
+	if ( BU_SETJUMP )  {
+	    /* Error, bail out */
+	    char *sofar;
+	    BU_UNSETJUMP;		/* Relinquish the protection */
 
-			sofar = db_path_to_string(pathp);
-			bu_log( "FAILED in Boolean evaluation: %s\n", sofar );
-			fprintf(fpe, "Failed Bool. Eval.: %s\n", sofar);
-			fflush(fpe);
-			bu_free( (char *)sofar, "sofar" );
+	    sofar = db_path_to_string(pathp);
+	    bu_log( "FAILED in Boolean evaluation: %s\n", sofar );
+	    fprintf(fpe, "Failed Bool. Eval.: %s\n", sofar);
+	    fflush(fpe);
+	    bu_free( (char *)sofar, "sofar" );
 
-			/* Sometimes the NMG library adds debugging bits when
-			 * it detects an internal error, before bombing out.
-			 */
-			rt_g.NMG_debug = NMG_debug;	/* restore mode */
+	    /* Sometimes the NMG library adds debugging bits when
+	     * it detects an internal error, before bombing out.
+	     */
+	    rt_g.NMG_debug = NMG_debug;	/* restore mode */
 
-			/* Release any intersector 2d tables */
-			nmg_isect2d_final_cleanup();
+	    /* Release any intersector 2d tables */
+	    nmg_isect2d_final_cleanup();
 
-			/* Release the tree memory & input regions */
+	    /* Release the tree memory & input regions */
 /*XXX*/			/* db_free_tree(curtree);*/		/* Does an nmg_kr() */
 
-			/* Get rid of (m)any other intermediate structures */
-			if ( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC )  {
-				nmg_km(*tsp->ts_m);
-			} else {
-				bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
-			}
+	    /* Get rid of (m)any other intermediate structures */
+	    if ( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC )  {
+		nmg_km(*tsp->ts_m);
+	    } else {
+		bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
+	    }
 
-			/* Now, make a new, clean model structure for next pass. */
-			*tsp->ts_m = nmg_mm();
-			goto out;
-		}
+	    /* Now, make a new, clean model structure for next pass. */
+	    *tsp->ts_m = nmg_mm();
+	    goto out;
 	}
-	ret_tree = nmg_booltree_evaluate( curtree, tsp->ts_tol, &rt_uniresource );	/* librt/nmg_bool.c */
+    }
+    ret_tree = nmg_booltree_evaluate( curtree, tsp->ts_tol, &rt_uniresource );	/* librt/nmg_bool.c */
 
-	if ( ret_tree )
-		r = ret_tree->tr_d.td_r;
-	else
-		r = (struct nmgregion *)NULL;
+    if ( ret_tree )
+	r = ret_tree->tr_d.td_r;
+    else
+	r = (struct nmgregion *)NULL;
 /*	regions_done++;  XXX */
 
-	BU_UNSETJUMP;		/* Relinquish the protection */
-	regions_converted++;
+    BU_UNSETJUMP;		/* Relinquish the protection */
+    regions_converted++;
 
-	if (r != 0)
+    if (r != 0)
+    {
+	struct shell *s;
+	int empty_region=0;
+	int empty_model=0;
+
+	/* Kill cracks */
+	s = BU_LIST_FIRST( shell, &r->s_hd );
+	while ( BU_LIST_NOT_HEAD( &s->l, &r->s_hd ) )
 	{
-		struct shell *s;
-		int empty_region=0;
-		int empty_model=0;
+	    struct shell *next_s;
 
-		/* Kill cracks */
-		s = BU_LIST_FIRST( shell, &r->s_hd );
-		while ( BU_LIST_NOT_HEAD( &s->l, &r->s_hd ) )
+	    next_s = BU_LIST_PNEXT( shell, &s->l );
+	    if ( nmg_kill_cracks( s ) )
+	    {
+		if ( nmg_ks( s ) )
 		{
-			struct shell *next_s;
-
-			next_s = BU_LIST_PNEXT( shell, &s->l );
-			if ( nmg_kill_cracks( s ) )
-			{
-				if ( nmg_ks( s ) )
-				{
-					empty_region = 1;
-					break;
-				}
-			}
-			s = next_s;
+		    empty_region = 1;
+		    break;
 		}
-
-		/* kill zero length edgeuses */
-		if ( !empty_region )
-		{
-			 empty_model = nmg_kill_zero_length_edgeuses( *tsp->ts_m );
-		}
-
-		if ( !empty_region && !empty_model )
-		{
-			if ( BU_SETJUMP )
-			{
-				char *sofar;
-
-				BU_UNSETJUMP;
-
-				sofar = db_path_to_string(pathp);
-				bu_log( "FAILED in triangulator: %s\n", sofar );
-				fprintf(fpe, "Failed in triangulator: %s\n", sofar);
-				fflush(fpe);
-				bu_free( (char *)sofar, "sofar" );
-
-				/* Sometimes the NMG library adds debugging bits when
-				 * it detects an internal error, before bombing out.
-				 */
-				rt_g.NMG_debug = NMG_debug;	/* restore mode */
-
-				/* Release any intersector 2d tables */
-				nmg_isect2d_final_cleanup();
-
-				/* Get rid of (m)any other intermediate structures */
-				if ( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC )
-				{
-					nmg_km(*tsp->ts_m);
-				}
-				else
-				{
-					bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
-				}
-
-				/* Now, make a new, clean model structure for next pass. */
-				*tsp->ts_m = nmg_mm();
-				goto out;
-			}
-		/* Write the region to the TANKILL file */
-			nmg_to_obj( r, pathp, tsp->ts_regionid, tsp->ts_aircode, tsp->ts_los, tsp->ts_gmater );
-
-			regions_written++;
-
-			BU_UNSETJUMP;
-		}
-
-		if ( !empty_model )
-			nmg_kr( r );
+	    }
+	    s = next_s;
 	}
 
-out:
-	/*
-	 *  Dispose of original tree, so that all associated dynamic
-	 *  memory is released now, not at the end of all regions.
-	 *  A return of TREE_NULL from this routine signals an error,
-	 *  and there is no point to adding _another_ message to our output,
-	 *  so we need to cons up an OP_NOP node to return.
-	 */
-
-
-	db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
-
-	if (regions_tried>0) {
-		float npercent;
-		float tpercent;
-
-		npercent = (float)(regions_converted * 100) / regions_tried;
-		tpercent = (float)(regions_written * 100) / regions_tried;
-		printf("Tried %d regions, %d conv. to NMG's %d conv. to tri. nmgper = %.2f%% triper = %.2f%% \n",
-		regions_tried, regions_converted, regions_written, npercent, tpercent);
+	/* kill zero length edgeuses */
+	if ( !empty_region )
+	{
+	    empty_model = nmg_kill_zero_length_edgeuses( *tsp->ts_m );
 	}
 
-	BU_GETUNION(curtree, tree);
-	curtree->magic = RT_TREE_MAGIC;
-	curtree->tr_op = OP_NOP;
-	return(curtree);
+	if ( !empty_region && !empty_model )
+	{
+	    if ( BU_SETJUMP )
+	    {
+		char *sofar;
+
+		BU_UNSETJUMP;
+
+		sofar = db_path_to_string(pathp);
+		bu_log( "FAILED in triangulator: %s\n", sofar );
+		fprintf(fpe, "Failed in triangulator: %s\n", sofar);
+		fflush(fpe);
+		bu_free( (char *)sofar, "sofar" );
+
+		/* Sometimes the NMG library adds debugging bits when
+		 * it detects an internal error, before bombing out.
+		 */
+		rt_g.NMG_debug = NMG_debug;	/* restore mode */
+
+		/* Release any intersector 2d tables */
+		nmg_isect2d_final_cleanup();
+
+		/* Get rid of (m)any other intermediate structures */
+		if ( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC )
+		{
+		    nmg_km(*tsp->ts_m);
+		}
+		else
+		{
+		    bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
+		}
+
+		/* Now, make a new, clean model structure for next pass. */
+		*tsp->ts_m = nmg_mm();
+		goto out;
+	    }
+	    /* Write the region to the TANKILL file */
+	    nmg_to_obj( r, pathp, tsp->ts_regionid, tsp->ts_aircode, tsp->ts_los, tsp->ts_gmater );
+
+	    regions_written++;
+
+	    BU_UNSETJUMP;
+	}
+
+	if ( !empty_model )
+	    nmg_kr( r );
+    }
+
+ out:
+    /*
+     *  Dispose of original tree, so that all associated dynamic
+     *  memory is released now, not at the end of all regions.
+     *  A return of TREE_NULL from this routine signals an error,
+     *  and there is no point to adding _another_ message to our output,
+     *  so we need to cons up an OP_NOP node to return.
+     */
+
+
+    db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
+
+    if (regions_tried>0) {
+	float npercent;
+	float tpercent;
+
+	npercent = (float)(regions_converted * 100) / regions_tried;
+	tpercent = (float)(regions_written * 100) / regions_tried;
+	printf("Tried %d regions, %d conv. to NMG's %d conv. to tri. nmgper = %.2f%% triper = %.2f%% \n",
+	       regions_tried, regions_converted, regions_written, npercent, tpercent);
+    }
+
+    BU_GETUNION(curtree, tree);
+    curtree->magic = RT_TREE_MAGIC;
+    curtree->tr_op = OP_NOP;
+    return(curtree);
 }
 
 /*

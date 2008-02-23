@@ -115,8 +115,8 @@ typedef unsigned char ext_timeval_t[8+4];	/* storage for on-wire format */
 
 void
 bu_gtimeval( tvp, msgp )
-     struct timeval *tvp;
-     const unsigned char *msgp;
+    struct timeval *tvp;
+    const unsigned char *msgp;
 {
     tvp->tv_sec = (((time_t)BU_GLONG( msgp+0 )) << 32) |
 	BU_GLONG( msgp+4 );
@@ -125,8 +125,8 @@ bu_gtimeval( tvp, msgp )
 
 unsigned char *
 bu_ptimeval( msgp, tvp )
-     const struct timeval *tvp;
-     unsigned char *msgp;
+    const struct timeval *tvp;
+    unsigned char *msgp;
 {
     long upper = (long)(tvp->tv_sec >> 32);
     long lower = (long)(tvp->tv_sec & 0xFFFFFFFFL);

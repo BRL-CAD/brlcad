@@ -100,11 +100,11 @@ incr_ars_pt(void)
 
     ars_pt++;
     if ( ars_pt >= ars_ptspercurve )
-	{
-	    ars_curve++;
-	    ars_pt = 0;
-	    ret = 1;
-	}
+    {
+	ars_curve++;
+	ars_pt = 0;
+	ret = 1;
+    }
 
     if ( ars_curve >= ars_ncurves )
 	return( 2 );
@@ -459,24 +459,24 @@ sktbld(void)
     verts = (point2d_t *)bu_calloc( vert_count, sizeof( point2d_t ), "verts" );
 
     if ( bu_fgets( buf, BUFSIZE, ifp ) == (char *)0 )
-	    bu_exit( -1, "Unexpected EOF while reading sketch (%s) data\n", name );
+	bu_exit( -1, "Unexpected EOF while reading sketch (%s) data\n", name );
 
     verts = (point2d_t *)bu_calloc( vert_count, sizeof( point2d_t ), "verts" );
     cp = buf;
     ptr = strtok( buf, " " );
     if ( !ptr )
-	    bu_exit( 1, "ERROR: no vertices for sketch (%s)\n", name );
+	bu_exit( 1, "ERROR: no vertices for sketch (%s)\n", name );
     for ( i=0; i<vert_count; i++ )
-	{
-	    verts[i][0] = atof( ptr );
-	    ptr = strtok( (char *)NULL, " " );
-	    if ( !ptr )
-		    bu_exit( 1, "ERROR: not enough vertices for sketch (%s)\n", name );
-	    verts[i][1] = atof( ptr );
-	    ptr = strtok( (char *)NULL, " " );
-	    if ( !ptr && i < vert_count-1 )
-		    bu_exit( 1, "ERROR: not enough vertices for sketch (%s)\n", name );
-	}
+    {
+	verts[i][0] = atof( ptr );
+	ptr = strtok( (char *)NULL, " " );
+	if ( !ptr )
+	    bu_exit( 1, "ERROR: not enough vertices for sketch (%s)\n", name );
+	verts[i][1] = atof( ptr );
+	ptr = strtok( (char *)NULL, " " );
+	if ( !ptr && i < vert_count-1 )
+	    bu_exit( 1, "ERROR: not enough vertices for sketch (%s)\n", name );
+    }
 
     skt = (struct rt_sketch_internal *)bu_calloc( 1, sizeof( struct rt_sketch_internal ), "sketch" );
     skt->magic = RT_SKETCH_INTERNAL_MAGIC;
@@ -491,70 +491,70 @@ sktbld(void)
     crv->segments = (genptr_t *)bu_calloc( crv->seg_count, sizeof( genptr_t ), "segments" );
     crv->reverse = (int *)bu_calloc( crv->seg_count, sizeof( int ), "reverse" );
     for ( j=0; j<crv->seg_count; j++ )
+    {
+	double radius;
+	int k;
+
+	if ( bu_fgets( buf, BUFSIZE, ifp ) == (char *)0 )
+	    bu_exit( -1, "Unexpected EOF while reading sketch (%s) data\n", name );
+
+	cp = buf + 2;
+	switch ( *cp )
 	{
-	    double radius;
-	    int k;
-
-	    if ( bu_fgets( buf, BUFSIZE, ifp ) == (char *)0 )
+	    case LSEG:
+		lsg = (struct line_seg *)bu_malloc( sizeof( struct line_seg ), "line segment" );
+		sscanf( cp+1, "%d %d %d", &crv->reverse[j], &lsg->start, &lsg->end );
+		lsg->magic = CURVE_LSEG_MAGIC;
+		crv->segments[j] = lsg;
+		break;
+	    case CARC:
+		csg = (struct carc_seg *)bu_malloc( sizeof( struct carc_seg ), "arc segment" );
+		sscanf( cp+1, "%d %d %d %lf %d %d", &crv->reverse[j], &csg->start, &csg->end,
+			&radius, &csg->center_is_left, &csg->orientation );
+		csg->radius = radius;
+		csg->magic = CURVE_CARC_MAGIC;
+		crv->segments[j] = csg;
+		break;
+	    case NURB:
+		nsg = (struct nurb_seg *)bu_malloc( sizeof( struct nurb_seg ), "nurb segment" );
+		sscanf( cp+1, "%d %d %d %d %d", &crv->reverse[j], &nsg->order, &nsg->pt_type,
+			&nsg->k.k_size, &nsg->c_size );
+		nsg->k.knots = (fastf_t *)bu_calloc( nsg->k.k_size, sizeof( fastf_t ), "knots" );
+		nsg->ctl_points = (int *)bu_calloc( nsg->c_size, sizeof( int ), "control points" );
+		if ( bu_fgets( buf, BUFSIZE, ifp ) == (char *)0 )
 		    bu_exit( -1, "Unexpected EOF while reading sketch (%s) data\n", name );
-
-	    cp = buf + 2;
-	    switch ( *cp )
+		cp = buf + 3;
+		ptr = strtok( cp, " " );
+		if ( !ptr )
+		    bu_exit( 1, "ERROR: not enough knots for nurb segment in sketch (%s)\n", name );
+		for ( k=0; k<nsg->k.k_size; k++ )
 		{
-		    case LSEG:
-			lsg = (struct line_seg *)bu_malloc( sizeof( struct line_seg ), "line segment" );
-			sscanf( cp+1, "%d %d %d", &crv->reverse[j], &lsg->start, &lsg->end );
-			lsg->magic = CURVE_LSEG_MAGIC;
-			crv->segments[j] = lsg;
-			break;
-		    case CARC:
-			csg = (struct carc_seg *)bu_malloc( sizeof( struct carc_seg ), "arc segment" );
-			sscanf( cp+1, "%d %d %d %lf %d %d", &crv->reverse[j], &csg->start, &csg->end,
-				&radius, &csg->center_is_left, &csg->orientation );
-			csg->radius = radius;
-			csg->magic = CURVE_CARC_MAGIC;
-			crv->segments[j] = csg;
-			break;
-		    case NURB:
-			nsg = (struct nurb_seg *)bu_malloc( sizeof( struct nurb_seg ), "nurb segment" );
-			sscanf( cp+1, "%d %d %d %d %d", &crv->reverse[j], &nsg->order, &nsg->pt_type,
-				&nsg->k.k_size, &nsg->c_size );
-			nsg->k.knots = (fastf_t *)bu_calloc( nsg->k.k_size, sizeof( fastf_t ), "knots" );
-			nsg->ctl_points = (int *)bu_calloc( nsg->c_size, sizeof( int ), "control points" );
-			if ( bu_fgets( buf, BUFSIZE, ifp ) == (char *)0 )
-				bu_exit( -1, "Unexpected EOF while reading sketch (%s) data\n", name );
-			cp = buf + 3;
-			ptr = strtok( cp, " " );
-			if ( !ptr )
-				bu_exit( 1, "ERROR: not enough knots for nurb segment in sketch (%s)\n", name );
-			for ( k=0; k<nsg->k.k_size; k++ )
-			    {
-				nsg->k.knots[k] = atof( ptr );
-				ptr = strtok( (char *)NULL, " " );
-				if ( !ptr && k<nsg->k.k_size-1 )
-					bu_exit( 1, "ERROR: not enough knots for nurb segment in sketch (%s)\n", name );
-			    }
-			if ( bu_fgets( buf, BUFSIZE, ifp ) == (char *)0 )
-				bu_exit( -1, "Unexpected EOF while reading sketch (%s) data\n", name );
-			cp = buf + 3;
-			ptr = strtok( cp, " " );
-			if ( !ptr )
-				bu_exit( 1, "ERROR: not enough control points for nurb segment in sketch (%s)\n", name );
-			for ( k=0; k<nsg->c_size; k++ )
-			    {
-				nsg->ctl_points[k] = atoi( ptr );
-				ptr = strtok( (char *)NULL, " " );
-				if ( !ptr && k<nsg->c_size-1 )
-					bu_exit( 1, "ERROR: not enough control points for nurb segment in sketch (%s)\n", name );
-			    }
-			nsg->magic = CURVE_NURB_MAGIC;
-			crv->segments[j] = nsg;
-			break;
-		    default:
-			bu_exit( 1, "Unrecognized segment type (%c) in sketch (%s)\n", *cp, name );
+		    nsg->k.knots[k] = atof( ptr );
+		    ptr = strtok( (char *)NULL, " " );
+		    if ( !ptr && k<nsg->k.k_size-1 )
+			bu_exit( 1, "ERROR: not enough knots for nurb segment in sketch (%s)\n", name );
 		}
-
+		if ( bu_fgets( buf, BUFSIZE, ifp ) == (char *)0 )
+		    bu_exit( -1, "Unexpected EOF while reading sketch (%s) data\n", name );
+		cp = buf + 3;
+		ptr = strtok( cp, " " );
+		if ( !ptr )
+		    bu_exit( 1, "ERROR: not enough control points for nurb segment in sketch (%s)\n", name );
+		for ( k=0; k<nsg->c_size; k++ )
+		{
+		    nsg->ctl_points[k] = atoi( ptr );
+		    ptr = strtok( (char *)NULL, " " );
+		    if ( !ptr && k<nsg->c_size-1 )
+			bu_exit( 1, "ERROR: not enough control points for nurb segment in sketch (%s)\n", name );
+		}
+		nsg->magic = CURVE_NURB_MAGIC;
+		crv->segments[j] = nsg;
+		break;
+	    default:
+		bu_exit( 1, "Unrecognized segment type (%c) in sketch (%s)\n", *cp, name );
 	}
+
+    }
 
     (void)mk_sketch(ofp, name,  skt );
 }
@@ -637,12 +637,12 @@ nmgbld(void)
     /* Second, process counts for each kind of structure */
     cp = strtok( buf, " " );
     for ( j=0; j<26; j++ )
-	{
-	    struct_count[j] = atol( cp );
-	    bu_plong( ((unsigned char *)ext.ext_buf)+
-		      SIZEOF_NETWORK_LONG*(j+1), struct_count[j] );
-	    cp = strtok( (char *)NULL, " " );
-	}
+    {
+	struct_count[j] = atol( cp );
+	bu_plong( ((unsigned char *)ext.ext_buf)+
+		  SIZEOF_NETWORK_LONG*(j+1), struct_count[j] );
+	cp = strtok( (char *)NULL, " " );
+    }
 
     /* Remaining lines have 32 bytes per line, in hex */
     /* There are 4 lines to make up one granule */
@@ -652,13 +652,13 @@ nmgbld(void)
 	unsigned int cp_i;
 
 	if ( bu_fgets( buf, BUFSIZE, ifp ) == (char *)0 )
-		bu_exit( -1, "Unexpected EOF while reading NMG %s data, hex line %d\n", name, j );
+	    bu_exit( -1, "Unexpected EOF while reading NMG %s data, hex line %d\n", name, j );
 
 	for ( k=0; k<32; k++ )
-	    {
-		sscanf( &buf[k*2], "%2x", &cp_i );
-		*cp++ = cp_i;
-	    }
+	{
+	    sscanf( &buf[k*2], "%2x", &cp_i );
+	    *cp++ = cp_i;
+	}
     }
 
     /* Next, import this disk record into memory */
@@ -976,10 +976,10 @@ combbld(void)
 
     /* Spit them out, all at once.  Use GIFT semantics. */
     if ( mk_comb(ofp, name, &head, is_reg,
-		temp_nflag ? matname : (char *)0,
-		temp_pflag ? matparm : (char *)0,
-		override ? (unsigned char *)rgb : (unsigned char *)0,
-		regionid, aircode, material, los, inherit, 0, 1) < 0 )  {
+		 temp_nflag ? matname : (char *)0,
+		 temp_pflag ? matparm : (char *)0,
+		 override ? (unsigned char *)rgb : (unsigned char *)0,
+		 regionid, aircode, material, los, inherit, 0, 1) < 0 )  {
 	fprintf(stderr, "asc2g: mk_lrcomb fail\n");
 	abort();
     }
@@ -1056,10 +1056,10 @@ arsabld(void)
 
     ars_curves = (fastf_t **)bu_calloc( (ars_ncurves+1), sizeof(fastf_t *), "ars_curves" );
     for ( i=0; i<ars_ncurves; i++ )
-	{
-	    ars_curves[i] = (fastf_t *)bu_calloc( ars_ptspercurve + 1,
-						  sizeof( fastf_t ) * ELEMENTS_PER_VECT, "ars_curve" );
-	}
+    {
+	ars_curves[i] = (fastf_t *)bu_calloc( ars_ptspercurve + 1,
+					      sizeof( fastf_t ) * ELEMENTS_PER_VECT, "ars_curve" );
+    }
 
     ars_pt = 0;
     ars_curve = 0;
@@ -1560,58 +1560,58 @@ botbld(void)
     /* get vertices */
     vertices = (fastf_t *)bu_calloc( num_vertices * 3, sizeof( fastf_t ), "botbld: vertices" );
     for ( i=0; i<num_vertices; i++ )
+    {
+	bu_fgets( buf, BUFSIZE, ifp);
+	sscanf( buf, "%d: %le %le %le", &j, &a[0], &a[1], &a[2] );
+	if ( i != j )
 	{
-	    bu_fgets( buf, BUFSIZE, ifp);
-	    sscanf( buf, "%d: %le %le %le", &j, &a[0], &a[1], &a[2] );
-	    if ( i != j )
-		{
-		    bu_log( "Vertices out of order in solid %s (expecting %d, found %d)\n",
-			    my_name, i, j );
-		    bu_free( (char *)vertices, "botbld: vertices" );
-		    bu_log( "Skipping this solid!\n" );
-		    while ( buf[0] == '\t' )
-			bu_fgets( buf, BUFSIZE, ifp);
-		    return;
-		}
-	    VMOVE( &vertices[i*3], a );
+	    bu_log( "Vertices out of order in solid %s (expecting %d, found %d)\n",
+		    my_name, i, j );
+	    bu_free( (char *)vertices, "botbld: vertices" );
+	    bu_log( "Skipping this solid!\n" );
+	    while ( buf[0] == '\t' )
+		bu_fgets( buf, BUFSIZE, ifp);
+	    return;
 	}
+	VMOVE( &vertices[i*3], a );
+    }
 
     /* get faces (and possibly thicknesses */
     faces = (int *)bu_calloc( num_faces * 3, sizeof( int ), "botbld: faces" );
     if ( mode == RT_BOT_PLATE )
 	thick = (fastf_t *)bu_calloc( num_faces, sizeof( fastf_t ), "botbld thick" );
     for ( i=0; i<num_faces; i++ )
+    {
+	bu_fgets( buf, BUFSIZE, ifp);
+	if ( mode == RT_BOT_PLATE )
+	    sscanf( buf, "%d: %d %d %d %le", &j, &faces[i*3], &faces[i*3+1], &faces[i*3+2], &a[0] );
+	else
+	    sscanf( buf, "%d: %d %d %d", &j, &faces[i*3], &faces[i*3+1], &faces[i*3+2] );
+
+	if ( i != j )
 	{
-	    bu_fgets( buf, BUFSIZE, ifp);
+	    bu_log( "Faces out of order in solid %s (expecting %d, found %d)\n",
+		    my_name, i, j );
+	    bu_free( (char *)vertices, "botbld: vertices" );
+	    bu_free( (char *)faces, "botbld: faces" );
 	    if ( mode == RT_BOT_PLATE )
-		sscanf( buf, "%d: %d %d %d %le", &j, &faces[i*3], &faces[i*3+1], &faces[i*3+2], &a[0] );
-	    else
-		sscanf( buf, "%d: %d %d %d", &j, &faces[i*3], &faces[i*3+1], &faces[i*3+2] );
-
-	    if ( i != j )
-		{
-		    bu_log( "Faces out of order in solid %s (expecting %d, found %d)\n",
-			    my_name, i, j );
-		    bu_free( (char *)vertices, "botbld: vertices" );
-		    bu_free( (char *)faces, "botbld: faces" );
-		    if ( mode == RT_BOT_PLATE )
-			bu_free( (char *)thick, "botbld thick" );
-		    bu_log( "Skipping this solid!\n" );
-		    while ( buf[0] == '\t' )
-			bu_fgets( buf, BUFSIZE, ifp);
-		    return;
-		}
-
-	    if ( mode == RT_BOT_PLATE )
-		thick[i] = a[0];
+		bu_free( (char *)thick, "botbld thick" );
+	    bu_log( "Skipping this solid!\n" );
+	    while ( buf[0] == '\t' )
+		bu_fgets( buf, BUFSIZE, ifp);
+	    return;
 	}
+
+	if ( mode == RT_BOT_PLATE )
+	    thick[i] = a[0];
+    }
 
     if ( mode == RT_BOT_PLATE )
-	{
-	    /* get bit vector */
-	    bu_fgets( buf, BUFSIZE, ifp);
-	    facemode = bu_hex_to_bitv( &buf[1] );
-	}
+    {
+	/* get bit vector */
+	bu_fgets( buf, BUFSIZE, ifp);
+	facemode = bu_hex_to_bitv( &buf[1] );
+    }
 
     mk_bot( ofp, my_name, mode, orientation, 0, num_vertices, num_faces,
 	    vertices, faces, thick, facemode );
@@ -1619,10 +1619,10 @@ botbld(void)
     bu_free( (char *)vertices, "botbld: vertices" );
     bu_free( (char *)faces, "botbld: faces" );
     if ( mode == RT_BOT_PLATE )
-	{
-	    bu_free( (char *)thick, "botbld thick" );
-	    bu_free( (char *)facemode, "botbld facemode" );
-	}
+    {
+	bu_free( (char *)thick, "botbld thick" );
+	bu_free( (char *)facemode, "botbld facemode" );
+    }
 }
 
 /*		P I P E B L D
@@ -1659,25 +1659,25 @@ pipebld(void)
     BU_LIST_INIT( &head );
     bu_fgets( buf, BUFSIZE, ifp);
     while ( strncmp (buf, "END_PIPE", 8 ) )
-	{
-	    double id, od, x, y, z, bendradius;
+    {
+	double id, od, x, y, z, bendradius;
 
-	    sp = (struct wdb_pipept *)bu_malloc(sizeof(struct wdb_pipept), "pipe");
+	sp = (struct wdb_pipept *)bu_malloc(sizeof(struct wdb_pipept), "pipe");
 
-	    (void)sscanf( buf, "%le %le %le %le %le %le",
-			  &id, &od,
-			  &bendradius, &x, &y, &z );
+	(void)sscanf( buf, "%le %le %le %le %le %le",
+		      &id, &od,
+		      &bendradius, &x, &y, &z );
 
-	    sp->l.magic = WDB_PIPESEG_MAGIC;
+	sp->l.magic = WDB_PIPESEG_MAGIC;
 
-	    sp->pp_id = id;
-	    sp->pp_od = od;
-	    sp->pp_bendradius = bendradius;
-	    VSET( sp->pp_coord, x, y, z );
+	sp->pp_id = id;
+	sp->pp_od = od;
+	sp->pp_bendradius = bendradius;
+	VSET( sp->pp_coord, x, y, z );
 
-	    BU_LIST_INSERT( &head, &sp->l);
-	    bu_fgets( buf, BUFSIZE, ifp);
-	}
+	BU_LIST_INSERT( &head, &sp->l);
+	bu_fgets( buf, BUFSIZE, ifp);
+    }
 
     mk_pipe(ofp, name, &head);
     mk_pipe_free( &head );

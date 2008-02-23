@@ -30,14 +30,14 @@ short ibuf[16*1024];
 
 int main(void)
 {
-	int n, i;
+    int n, i;
 
-	while ((n=fread(ibuf, sizeof(*ibuf), 1024, stdin)) > 0) {
-		for (i=0; i < n; ++i)
-			printf("%hd\n", ibuf[i]);
-	}
+    while ((n=fread(ibuf, sizeof(*ibuf), 1024, stdin)) > 0) {
+	for (i=0; i < n; ++i)
+	    printf("%hd\n", ibuf[i]);
+    }
 
-	return 0;
+    return 0;
 }
 
 /*

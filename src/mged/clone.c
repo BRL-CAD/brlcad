@@ -251,7 +251,7 @@ get_name(struct db_i *_dbip, struct directory *dp, struct clone_state *state, in
 	bu_vls_strcpy(newname, prefix);
 
         if ((dp->d_flags & DIR_SOLID) || (dp->d_flags & DIR_REGION)) {
-    	/* primitives and regions */
+	    /* primitives and regions */
     	    if (suffix[0] != 0)
     		if ((i == 1) && is_in_list(obj_list, buf)) {
     		    j = index_in_list(obj_list, buf);
@@ -1147,7 +1147,7 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     olen = 2*len;
 
     for (i = 0; (fabs(olen-len) >= VUNITIZE_TOL) && (i < 250); i++) {
-  /* number of track iterations */
+	/* number of track iterations */
 	fprintf(stdout, ".");
 	fflush(stdout);
 	for (j = 0; j < n_links; j++) /* set length of each link based on current track length */
@@ -1158,7 +1158,7 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	for (j = 0; j < n_verts+1; j++) /* around the track once */
 	    for (k = 0; k < n_links; k++) {
-  /* for each sub-link */
+		/* for each sub-link */
 		if ((k == 0) && (j == 0)) {continue;} /* the first sub-link of the first link is already in position */
 		min = mid;
 		max = s.t[s.n_segs];
@@ -1237,8 +1237,8 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		     -atan2(pt[Y], sqrt(pt[X]*pt[X]+pt[Z]*pt[Z])));
 		VSCALE(state.rot, state.rot, radtodeg);
 		/*
-		VSUB2(state.rot, state.rot, rots[j]);
-		VADD2(rots[j], state.rot, rots[j]);
+		  VSUB2(state.rot, state.rot, rots[j]);
+		  VADD2(rots[j], state.rot, rots[j]);
 		*/
 
 		state.src = dps[j];

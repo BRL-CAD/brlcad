@@ -59,11 +59,11 @@
  */
 mat_zero(register matp_t m)
 {
-	register int i = 0;
+    register int i = 0;
 
-	/* Clear everything */
-	for (; i<16; i++)
-		*m++ = 0;
+    /* Clear everything */
+    for (; i<16; i++)
+	*m++ = 0;
 }
 
 
@@ -74,11 +74,11 @@ mat_zero(register matp_t m)
  */
 mat_idn(register matp_t m)
 {
-	/* Clear everything first */
-	mat_zero( m );
+    /* Clear everything first */
+    mat_zero( m );
 
-	/* Set ones in the diagonal */
-	m[0] = m[5] = m[10] = m[15] = 1;
+    /* Set ones in the diagonal */
+    m[0] = m[5] = m[10] = m[15] = 1;
 }
 
 
@@ -89,11 +89,11 @@ mat_idn(register matp_t m)
  */
 mat_copy(register matp_t om, register matp_t im)
 {
-	register int i = 0;
+    register int i = 0;
 
-	/* Copy all elements */
-	for (; i<16; i++)
-		*om++ = *im++;
+    /* Copy all elements */
+    for (; i<16; i++)
+	*om++ = *im++;
 }
 
 
@@ -106,25 +106,25 @@ mat_copy(register matp_t om, register matp_t im)
  */
 mat_mul(register matp_t om, register matp_t im1, register matp_t im2)
 {
-	register int em1;		/* Element subscript for im1 */
-	register int em2;		/* Element subscript for im2 */
-	register int el = 0;		/* Element subscript for om */
-	register int i;			/* For counting */
+    register int em1;		/* Element subscript for im1 */
+    register int em2;		/* Element subscript for im2 */
+    register int el = 0;		/* Element subscript for om */
+    register int i;			/* For counting */
 
-	/* For each element in the output matrix... */
-	for (; el<16; el++) {
+    /* For each element in the output matrix... */
+    for (; el<16; el++) {
 
-		om[el] = 0;		/* Start with zero in output */
-		em1 = (el/4)*4;		/* Element at right of row in im1 */
-		em2 = el%4;		/* Element at top of column in im2 */
+	om[el] = 0;		/* Start with zero in output */
+	em1 = (el/4)*4;		/* Element at right of row in im1 */
+	em2 = el%4;		/* Element at top of column in im2 */
 
-		for (i=0; i<4; i++) {
-			om[el] += im1[em1] * im2[em2];
+	for (i=0; i<4; i++) {
+	    om[el] += im1[em1] * im2[em2];
 
-			em1++;		/* Next row element in m1 */
-			em2 += 4;	/* Next column element in m2 */
-		}
+	    em1++;		/* Next row element in m1 */
+	    em2 += 4;	/* Next column element in m2 */
 	}
+    }
 }
 
 
@@ -136,21 +136,21 @@ mat_mul(register matp_t om, register matp_t im1, register matp_t im2)
  */
 vecXmat(register vectp_t ov, register vectp_t iv, register matp_t im)
 {
-	register int el = 0;		/* Position in output vector */
-	register int ev;		/* Position in input vector */
-	register int em;		/* Position in input matrix */
+    register int el = 0;		/* Position in output vector */
+    register int ev;		/* Position in input vector */
+    register int em;		/* Position in input matrix */
 
-	/* For each element in the output array... */
-	for (; el<4; el++) {
+    /* For each element in the output array... */
+    for (; el<4; el++) {
 
-		ov[el] = 0;		/* Start with zero in output */
-		em = el;		/* Top of column in input matrix */
+	ov[el] = 0;		/* Start with zero in output */
+	em = el;		/* Top of column in input matrix */
 
-		for (ev=0; ev<4; ev++) {
-			ov[el] += iv[ev] * im[em];
-			em += 4;	/* Next element in column from im */
-		}
+	for (ev=0; ev<4; ev++) {
+	    ov[el] += iv[ev] * im[em];
+	    em += 4;	/* Next element in column from im */
 	}
+    }
 }
 
 
@@ -162,18 +162,18 @@ vecXmat(register vectp_t ov, register vectp_t iv, register matp_t im)
  */
 matXvec(register vectp_t ov, register matp_t im, register vectp_t iv)
 {
-	register int eo = 0;		/* Position in output vector */
-	register int em = 0;		/* Position in input matrix */
-	register int ei;		/* Position in input vector */
+    register int eo = 0;		/* Position in output vector */
+    register int em = 0;		/* Position in input matrix */
+    register int ei;		/* Position in input vector */
 
-	/* For each element in the output array... */
-	for (; eo<4; eo++) {
+    /* For each element in the output array... */
+    for (; eo<4; eo++) {
 
-		ov[eo] = 0;		/* Start with zero in output */
+	ov[eo] = 0;		/* Start with zero in output */
 
-		for (ei=0; ei<4; ei++)
-			ov[eo] += im[em++] * iv[ei];
-	}
+	for (ei=0; ei<4; ei++)
+	    ov[eo] += im[em++] * iv[ei];
+    }
 }
 
 
@@ -184,11 +184,11 @@ matXvec(register vectp_t ov, register matp_t im, register vectp_t iv)
  */
 mat_print(register matp_t m)
 {
-	register int i;
+    register int i;
 
-	for (i=0; i<16; i++) {
-		printf("%f%c", m[i], ((i+1)%4) ? '\t' : '\n');
-	}
+    for (i=0; i<16; i++) {
+	printf("%f%c", m[i], ((i+1)%4) ? '\t' : '\n');
+    }
 }
 
 
@@ -201,9 +201,9 @@ mat_print(register matp_t m)
  */
 mat_hscale(register matp_t m, float hscale)
 {
-	m[0] *= hscale;
-	m[5] *= hscale;
-	m[10] *= hscale;
+    m[0] *= hscale;
+    m[5] *= hscale;
+    m[10] *= hscale;
 }
 
 
@@ -223,82 +223,82 @@ mat_hscale(register matp_t m, float hscale)
 void
 mat_inv(register matp_t output, matp_t input)
 {
-	register int i, j;			/* Indices */
-	static int k;				/* Indices */
-	static int	z[4];			/* Temporary */
-	static float	b[4];			/* Temporary */
-	static float	c[4];			/* Temporary */
+    register int i, j;			/* Indices */
+    static int k;				/* Indices */
+    static int	z[4];			/* Temporary */
+    static float	b[4];			/* Temporary */
+    static float	c[4];			/* Temporary */
 
-	mat_copy( output, input );	/* Duplicate */
+    mat_copy( output, input );	/* Duplicate */
 
-	/* Initialization */
-	for ( j = 0; j < 4; j++ )
-		z[j] = j;
+    /* Initialization */
+    for ( j = 0; j < 4; j++ )
+	z[j] = j;
 
-	/* Main Loop */
-	for ( i = 0; i < 4; i++ )  {
-		static float y;				/* local temporary */
+    /* Main Loop */
+    for ( i = 0; i < 4; i++ )  {
+	static float y;				/* local temporary */
 
-		k = i;
-		y = output[i*4+i];
-		for ( j = i+1; j < 4; j++ )  {
-			static float w;			/* local temporary */
+	k = i;
+	y = output[i*4+i];
+	for ( j = i+1; j < 4; j++ )  {
+	    static float w;			/* local temporary */
 
-			w = output[i*4+j];
-			if ( fabs(w) > fabs(y) )  {
-				k = j;
-				y = w;
-			}
-		}
-
-		if ( fabs(y) < EPSILON )  {
-			printf("mat_inv:  error!\n");
-			return;
-		}
-		y = 1.0 / y;
-
-		for ( j = 0; j < 4; j++ )  {
-			static float temp;		/* Local */
-
-			c[j] = output[j*4+k];
-			output[j*4+k] = output[j*4+i];
-			output[j*4+i] = - c[j] * y;
-			temp = output[i*4+j] * y;
-			b[j] = temp;
-			output[i*4+j] = temp;
-		}
-
-		output[i*4+i] = y;
-		j = z[i];
-		z[i] = z[k];
-		z[k] = j;
-		for ( k = 0; k < 4; k++ )  {
-			if ( k == i )  continue;
-			for ( j = 0; j < 4; j++ )  {
-				if ( j == i )  continue;
-				output[k*4+j] = output[k*4+j] - b[j] * c[k];
-			}
-		}
+	    w = output[i*4+j];
+	    if ( fabs(w) > fabs(y) )  {
+		k = j;
+		y = w;
+	    }
 	}
 
-	/*  Second Loop */
-	for ( i = 0; i < 4; i++ )  {
-		while ( (k = z[i]) != i )  {
-			static int p;			/* Local temp */
-
-			for ( j = 0; j < 4; j++ )  {
-				static float w;		/* Local temp */
-
-				w = output[i*4+j];
-				output[i*4+j] = output[k*4+j];
-				output[k*4+j] = w;
-			}
-			p = z[i];
-			z[i] = z[k];
-			z[k] = p;
-		}
+	if ( fabs(y) < EPSILON )  {
+	    printf("mat_inv:  error!\n");
+	    return;
 	}
-	return;
+	y = 1.0 / y;
+
+	for ( j = 0; j < 4; j++ )  {
+	    static float temp;		/* Local */
+
+	    c[j] = output[j*4+k];
+	    output[j*4+k] = output[j*4+i];
+	    output[j*4+i] = - c[j] * y;
+	    temp = output[i*4+j] * y;
+	    b[j] = temp;
+	    output[i*4+j] = temp;
+	}
+
+	output[i*4+i] = y;
+	j = z[i];
+	z[i] = z[k];
+	z[k] = j;
+	for ( k = 0; k < 4; k++ )  {
+	    if ( k == i )  continue;
+	    for ( j = 0; j < 4; j++ )  {
+		if ( j == i )  continue;
+		output[k*4+j] = output[k*4+j] - b[j] * c[k];
+	    }
+	}
+    }
+
+    /*  Second Loop */
+    for ( i = 0; i < 4; i++ )  {
+	while ( (k = z[i]) != i )  {
+	    static int p;			/* Local temp */
+
+	    for ( j = 0; j < 4; j++ )  {
+		static float w;		/* Local temp */
+
+		w = output[i*4+j];
+		output[i*4+j] = output[k*4+j];
+		output[k*4+j] = w;
+	    }
+	    p = z[i];
+	    z[i] = z[k];
+	    z[k] = p;
+	}
+    }
+    return;
 }
 
 
@@ -311,10 +311,10 @@ mat_inv(register matp_t output, matp_t input)
  */
 vtoh_move(register float *h, register float *v)
 {
-	*h++ = *v++;
-	*h++ = *v++;
-	*h++ = *v;
-	*h++ = 1;
+    *h++ = *v++;
+    *h++ = *v++;
+    *h++ = *v;
+    *h++ = 1;
 }
 
 /*
@@ -326,19 +326,19 @@ vtoh_move(register float *h, register float *v)
  */
 htov_move(register float *v, register float *h)
 {
-	static float inv;
+    static float inv;
 
-	if ( h[3] == 1 )  {
-		*v++ = *h++;
-		*v++ = *h++;
-		*v   = *h;
-	}  else  {
-		inv = 1 / h[3];
+    if ( h[3] == 1 )  {
+	*v++ = *h++;
+	*v++ = *h++;
+	*v   = *h;
+    }  else  {
+	inv = 1 / h[3];
 
-		*v++ = *h++ * inv;
-		*v++ = *h++ * inv;
-		*v   = *h   * inv;
-	}
+	*v++ = *h++ * inv;
+	*v++ = *h++ * inv;
+	*v   = *h   * inv;
+    }
 }
 
 /*

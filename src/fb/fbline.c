@@ -48,22 +48,22 @@ typedef int	bool;			/* boolean data type */
 #define true	1
 
 struct  coords {
-	short		x;
-	short		y;
+    short		x;
+    short		y;
 }; 		/* Cartesian coordinates */
 
 struct stroke {
-	struct stroke	*next;		/* next in list, or NULL */
-	struct coords	pixel;		/* starting scan, nib */
-	short		xsign;		/* 0 or +1 */
-	short		ysign;		/* -1, 0, or +1 */
-	bool		ymajor; 	/* true iff Y is major dir. */
+    struct stroke	*next;		/* next in list, or NULL */
+    struct coords	pixel;		/* starting scan, nib */
+    short		xsign;		/* 0 or +1 */
+    short		ysign;		/* -1, 0, or +1 */
+    bool		ymajor; 	/* true iff Y is major dir. */
 #undef major
 #undef minor
-	short		major;		/* major dir delta (nonneg) */
-	short		minor;		/* minor dir delta (nonneg) */
-	short		e;		/* DDA error accumulator */
-	short		de;		/* increment for `e' */
+    short		major;		/* major dir delta (nonneg) */
+    short		minor;		/* minor dir delta (nonneg) */
+    short		e;		/* DDA error accumulator */
+    short		de;		/* increment for `e' */
 }; 		/* rasterization descriptor */
 
 static char	*framebuffer = NULL;
@@ -93,53 +93,53 @@ int
 get_args(int argc, register char **argv)
 {
 
-	register int c;
+    register int c;
 
-	while ( (c = bu_getopt( argc, argv, "hW:w:N:n:cF:r:g:b:" )) != EOF )  {
-		switch ( c )  {
-		case 'h':
-			/* high-res */
-			screen_height = screen_width = 1024;
-			break;
-		case 'W':
-		case 'w':
-			screen_width = atoi(bu_optarg);
-			break;
-		case 'N':
-		case 'n':
-			screen_height = atoi(bu_optarg);
-			break;
-		case 'c':
-			clear = 1;
-			break;
-		case 'F':
-			framebuffer = bu_optarg;
-			break;
-		case 'r':
-			pixcolor[RED] = atoi( bu_optarg );
-			break;
-		case 'g':
-			pixcolor[GRN] = atoi( bu_optarg );
-			break;
-		case 'b':
-			pixcolor[BLU] = atoi( bu_optarg );
-			break;
-		default:		/* '?' */
-			return(0);
-		}
+    while ( (c = bu_getopt( argc, argv, "hW:w:N:n:cF:r:g:b:" )) != EOF )  {
+	switch ( c )  {
+	    case 'h':
+		/* high-res */
+		screen_height = screen_width = 1024;
+		break;
+	    case 'W':
+	    case 'w':
+		screen_width = atoi(bu_optarg);
+		break;
+	    case 'N':
+	    case 'n':
+		screen_height = atoi(bu_optarg);
+		break;
+	    case 'c':
+		clear = 1;
+		break;
+	    case 'F':
+		framebuffer = bu_optarg;
+		break;
+	    case 'r':
+		pixcolor[RED] = atoi( bu_optarg );
+		break;
+	    case 'g':
+		pixcolor[GRN] = atoi( bu_optarg );
+		break;
+	    case 'b':
+		pixcolor[BLU] = atoi( bu_optarg );
+		break;
+	    default:		/* '?' */
+		return(0);
 	}
+    }
 
-	if ( bu_optind+4 > argc )
-		return(0);		/* BAD */
-	fbx1 = atoi( argv[bu_optind++]);
-	fby1 = atoi( argv[bu_optind++]);
-	fbx2 = atoi( argv[bu_optind++]);
-	fby2 = atoi( argv[bu_optind++]);
+    if ( bu_optind+4 > argc )
+	return(0);		/* BAD */
+    fbx1 = atoi( argv[bu_optind++]);
+    fby1 = atoi( argv[bu_optind++]);
+    fbx2 = atoi( argv[bu_optind++]);
+    fby2 = atoi( argv[bu_optind++]);
 
-	if ( argc > bu_optind )
-		(void)fprintf( stderr, "fbline: excess argument(s) ignored\n" );
+    if ( argc > bu_optind )
+	(void)fprintf( stderr, "fbline: excess argument(s) ignored\n" );
 
-	return(1);		/* OK */
+    return(1);		/* OK */
 }
 
 /*
@@ -148,32 +148,32 @@ get_args(int argc, register char **argv)
 int
 main(int argc, char **argv)
 {
-	struct coords	start, end;
+    struct coords	start, end;
 
-	if ( !get_args( argc, argv ) ) {
-		fputs( usage, stderr);
-		bu_exit(1, NULL);
-	}
+    if ( !get_args( argc, argv ) ) {
+	fputs( usage, stderr);
+	bu_exit(1, NULL);
+    }
 
-	if ( (fbp = fb_open( framebuffer, screen_width, screen_height )) == NULL )
-		bu_exit(12, NULL);
+    if ( (fbp = fb_open( framebuffer, screen_width, screen_height )) == NULL )
+	bu_exit(12, NULL);
 
-	if ( clear ) {
-		fb_clear( fbp, PIXEL_NULL);
-	}
-	screen_width = fb_getwidth(fbp);
-	screen_height = fb_getheight(fbp);
+    if ( clear ) {
+	fb_clear( fbp, PIXEL_NULL);
+    }
+    screen_width = fb_getwidth(fbp);
+    screen_height = fb_getheight(fbp);
 
-	start.x = fbx1;
-	start.y = fby1;
-	end.x = fbx2;
-	end.y = fby2;
-	edgelimit( &start );
-	edgelimit( &end );
-	BuildStr( &start, &end );	/* pixels */
+    start.x = fbx1;
+    start.y = fby1;
+    end.x = fbx2;
+    end.y = fby2;
+    edgelimit( &start );
+    edgelimit( &end );
+    BuildStr( &start, &end );	/* pixels */
 
-	fb_close( fbp );
-	bu_exit(0, NULL);
+    fb_close( fbp );
+    bu_exit(0, NULL);
 }
 
 /*
@@ -185,11 +185,11 @@ main(int argc, char **argv)
 void
 edgelimit(register struct coords *ppos)
 {
-	if ( ppos->x >= screen_width )
-		ppos->x = screen_width -1;
+    if ( ppos->x >= screen_width )
+	ppos->x = screen_width -1;
 
-	if ( ppos->y >= screen_height )
-		ppos->y = screen_height -1;
+    if ( ppos->y >= screen_height )
+	ppos->y = screen_height -1;
 }
 
 /*
@@ -200,39 +200,39 @@ edgelimit(register struct coords *ppos)
 void
 BuildStr(struct coords *pt1, struct coords *pt2)
 {
-	struct stroke cur_stroke;
-	register struct stroke *vp = &cur_stroke;
+    struct stroke cur_stroke;
+    register struct stroke *vp = &cur_stroke;
 
-	/* arrange for pt1 to have the smaller Y-coordinate: */
-	if ( pt1->y > pt2->y )  {
-		register struct coords *temp;	/* temporary for swap */
+    /* arrange for pt1 to have the smaller Y-coordinate: */
+    if ( pt1->y > pt2->y )  {
+	register struct coords *temp;	/* temporary for swap */
 
-		temp = pt1;		/* swap pointers */
-		pt1 = pt2;
-		pt2 = temp;
-	}
+	temp = pt1;		/* swap pointers */
+	pt1 = pt2;
+	pt2 = temp;
+    }
 
-	/* set up DDA parameters for stroke */
-	vp->pixel = *pt1;		/* initial pixel */
-	vp->major = pt2->y - vp->pixel.y;	/* always nonnegative */
-	vp->ysign = vp->major ? 1 : 0;
-	vp->minor = pt2->x - vp->pixel.x;
-	if ( (vp->xsign = vp->minor ? (vp->minor > 0 ? 1 : -1) : 0) < 0 )
-		vp->minor = -vp->minor;
+    /* set up DDA parameters for stroke */
+    vp->pixel = *pt1;		/* initial pixel */
+    vp->major = pt2->y - vp->pixel.y;	/* always nonnegative */
+    vp->ysign = vp->major ? 1 : 0;
+    vp->minor = pt2->x - vp->pixel.x;
+    if ( (vp->xsign = vp->minor ? (vp->minor > 0 ? 1 : -1) : 0) < 0 )
+	vp->minor = -vp->minor;
 
-	/* if Y is not really major, correct the assignments */
-	if ( !(vp->ymajor = vp->minor <= vp->major) )  {
-		register short	temp;	/* temporary for swap */
+    /* if Y is not really major, correct the assignments */
+    if ( !(vp->ymajor = vp->minor <= vp->major) )  {
+	register short	temp;	/* temporary for swap */
 
-		temp = vp->minor;
-		vp->minor = vp->major;
-		vp->major = temp;
-	}
+	temp = vp->minor;
+	vp->minor = vp->major;
+	vp->major = temp;
+    }
 
-	vp->e = vp->major / 2 - vp->minor;	/* initial DDA error */
-	vp->de = vp->major - vp->minor;
+    vp->e = vp->major / 2 - vp->minor;	/* initial DDA error */
+    vp->de = vp->major - vp->minor;
 
-	Raster( vp );
+    Raster( vp );
 }
 
 /*
@@ -247,34 +247,34 @@ BuildStr(struct coords *pt1, struct coords *pt2)
 void
 Raster(register struct stroke *vp)
 {
-	register short	dy;		/* raster within active band */
+    register short	dy;		/* raster within active band */
 
-	/*
-	 *  Write the color of this vector on all pixels.
-	 */
-	for ( dy = vp->pixel.y; dy < screen_height; )  {
+    /*
+     *  Write the color of this vector on all pixels.
+     */
+    for ( dy = vp->pixel.y; dy < screen_height; )  {
 
-		/* set the appropriate pixel in the buffer */
-		fb_write( fbp, vp->pixel.x, dy, pixcolor, 1 );
+	/* set the appropriate pixel in the buffer */
+	fb_write( fbp, vp->pixel.x, dy, pixcolor, 1 );
 
-		if ( vp->major-- == 0 )
-			return;		/* Done */
+	if ( vp->major-- == 0 )
+	    return;		/* Done */
 
-		if ( vp->e < 0 )  {
-			/* advance major & minor */
-			dy += vp->ysign;
-			vp->pixel.x += vp->xsign;
-			vp->e += vp->de;
-		}  else	{
-			/* advance major only */
-			if ( vp->ymajor )	/* Y is major dir */
-				++dy;
-			else			/* X is major dir */
-				vp->pixel.x += vp->xsign;
-			vp->e -= vp->minor;
-		}
+	if ( vp->e < 0 )  {
+	    /* advance major & minor */
+	    dy += vp->ysign;
+	    vp->pixel.x += vp->xsign;
+	    vp->e += vp->de;
+	}  else	{
+	    /* advance major only */
+	    if ( vp->ymajor )	/* Y is major dir */
+		++dy;
+	    else			/* X is major dir */
+		vp->pixel.x += vp->xsign;
+	    vp->e -= vp->minor;
 	}
-	fprintf(stderr, "line left screen?\n");
+    }
+    fprintf(stderr, "line left screen?\n");
 }
 
 /*

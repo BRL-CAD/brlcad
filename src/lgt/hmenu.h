@@ -19,11 +19,11 @@
  */
 /** @file hmenu.h
 
-	Authors:	Gary S. Moss
-			Douglas A. Gwyn
+Authors:	Gary S. Moss
+Douglas A. Gwyn
 
-	This code is derived in part from menuhit(9.3) in AT&T 9th Edition UNIX,
-		Version 1 Programmer's Manual.
+This code is derived in part from menuhit(9.3) in AT&T 9th Edition UNIX,
+Version 1 Programmer's Manual.
 
 */
 #ifndef INCL_HM
@@ -35,47 +35,47 @@ struct HMenu;
 	current menu item. "hfn()" is called only when a menu item is
 	selected.  Its argument is a NULL pointer for now.  "data" is set
 	to the return value from "hfn()".
- */
+*/
 typedef struct HMitem
-	{
-	char		*text;	/* menu item string			*/
-	char		*help;	/* help string				*/
-	struct HMenu	*next;	/* sub-menu pointer or NULL		*/
-	void		(*dfn)(), (*bfn)();
-	int		(*hfn)();
-	long		data;
-	}
+{
+    char		*text;	/* menu item string			*/
+    char		*help;	/* help string				*/
+    struct HMenu	*next;	/* sub-menu pointer or NULL		*/
+    void		(*dfn)(), (*bfn)();
+    int		(*hfn)();
+    long		data;
+}
 HMitem;
 
 /*	"item" is an array of HMitems, terminated by an item with a
-		zero "text" field.
+	zero "text" field.
 	"generator()" takes an integer parameter and returns a pointer
-		to a HMitem.  It only is significant if "item" == 0.
- */
+	to a HMitem.  It only is significant if "item" == 0.
+*/
 typedef struct HMenu
-	{
-	HMitem	*item;
-	HMitem	*(*generator)();
-	short	prevtop;	/* Top entry currently visable		*/
-	short	prevhit;	/* Offset from top of last select	*/
-	short	sticky;		/* If set, menu stays around after SELECT,
-					and until QUIT. */
-	void	(*func)();	/* Execute after selection is made.	*/
-	}
+{
+    HMitem	*item;
+    HMitem	*(*generator)();
+    short	prevtop;	/* Top entry currently visable		*/
+    short	prevhit;	/* Offset from top of last select	*/
+    short	sticky;		/* If set, menu stays around after SELECT,
+				   and until QUIT. */
+    void	(*func)();	/* Execute after selection is made.	*/
+}
 HMenu;
 
 typedef struct HWin
-	{
-	struct HWin	*next;
-	HMenu	*menup;
-	int	menux;
-	int	menuy;
-	int	width;
-	int	height;
-	int	submenu;	/* At least one entry has a submenu.	*/
-	int	*dirty;		/* Dynamically allocated bitmap. ON bits
-					mean character needs a redraw.	*/
-	}
+{
+    struct HWin	*next;
+    HMenu	*menup;
+    int	menux;
+    int	menuy;
+    int	width;
+    int	height;
+    int	submenu;	/* At least one entry has a submenu.	*/
+    int	*dirty;		/* Dynamically allocated bitmap. ON bits
+			   mean character needs a redraw.	*/
+}
 HWindow;
 
 extern HMitem	*hmenuhit(HMenu *menup, int menux, int menuy);	/* Application's calls menu.		*/

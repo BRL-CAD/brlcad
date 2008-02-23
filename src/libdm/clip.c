@@ -45,82 +45,82 @@ static int	code();
 int
 clip (fastf_t *xp1, fastf_t *yp1, fastf_t *xp2, fastf_t *yp2)
 {
-	char code1, code2;
+    char code1, code2;
 
-	code1 = code (*xp1, *yp1);
-	code2 = code (*xp2, *yp2);
+    code1 = code (*xp1, *yp1);
+    code2 = code (*xp2, *yp2);
 
-	while (code1 || code2) {
-		if (code1 & code2)
-			return (-1);	/* No part is visible */
+    while (code1 || code2) {
+	if (code1 & code2)
+	    return (-1);	/* No part is visible */
 
-		/* SWAP codes, X's, and Y's */
-		if (code1 == 0) {
-			char ctemp;
-			fastf_t temp;
+	/* SWAP codes, X's, and Y's */
+	if (code1 == 0) {
+	    char ctemp;
+	    fastf_t temp;
 
-			ctemp = code1;
-			code1 = code2;
-			code2 = ctemp;
+	    ctemp = code1;
+	    code1 = code2;
+	    code2 = ctemp;
 
-			temp = *xp1;
-			*xp1 = *xp2;
-			*xp2 = temp;
+	    temp = *xp1;
+	    *xp1 = *xp2;
+	    *xp2 = temp;
 
-			temp = *yp1;
-			*yp1 = *yp2;
-			*yp2 = temp;
-		}
-
-		if (code1 & 01)  {
-  	/* Push toward left edge */
-			*yp1 = *yp1 + (*yp2-*yp1)*(GED_MIN-*xp1)/(*xp2-*xp1);
-			*xp1 = GED_MIN;
-		}
-		else if (code1 & 02)  {
-  	/* Push toward right edge */
-			*yp1 = *yp1 + (*yp2-*yp1)*(GED_MAX-*xp1)/(*xp2-*xp1);
-			*xp1 = GED_MAX;
-		}
-		else if (code1 & 04)  {
-  	/* Push toward bottom edge */
-			*xp1 = *xp1 + (*xp2-*xp1)*(GED_MIN-*yp1)/(*yp2-*yp1);
-			*yp1 = GED_MIN;
-		}
-		else if (code1 & 010)  {
-  	/* Push toward top edge */
-			*xp1 = *xp1 + (*xp2-*xp1)*(GED_MAX-*yp1)/(*yp2-*yp1);
-			*yp1 = GED_MAX;
-		}
-
-		code1 = code (*xp1, *yp1);
+	    temp = *yp1;
+	    *yp1 = *yp2;
+	    *yp2 = temp;
 	}
 
-	return (0);
+	if (code1 & 01)  {
+	    /* Push toward left edge */
+	    *yp1 = *yp1 + (*yp2-*yp1)*(GED_MIN-*xp1)/(*xp2-*xp1);
+	    *xp1 = GED_MIN;
+	}
+	else if (code1 & 02)  {
+	    /* Push toward right edge */
+	    *yp1 = *yp1 + (*yp2-*yp1)*(GED_MAX-*xp1)/(*xp2-*xp1);
+	    *xp1 = GED_MAX;
+	}
+	else if (code1 & 04)  {
+	    /* Push toward bottom edge */
+	    *xp1 = *xp1 + (*xp2-*xp1)*(GED_MIN-*yp1)/(*yp2-*yp1);
+	    *yp1 = GED_MIN;
+	}
+	else if (code1 & 010)  {
+	    /* Push toward top edge */
+	    *xp1 = *xp1 + (*xp2-*xp1)*(GED_MAX-*yp1)/(*yp2-*yp1);
+	    *yp1 = GED_MAX;
+	}
+
+	code1 = code (*xp1, *yp1);
+    }
+
+    return (0);
 }
 
 static int
 code (fastf_t x, fastf_t y)
 {
-	int cval;
+    int cval;
 
-	cval = 0;
-	if (x < GED_MIN)
-		cval |= 01;
-	else if (x > GED_MAX)
-		cval |= 02;
+    cval = 0;
+    if (x < GED_MIN)
+	cval |= 01;
+    else if (x > GED_MAX)
+	cval |= 02;
 
-	if (y < GED_MIN)
-		cval |= 04;
-	else if (y > GED_MAX)
-		cval |= 010;
+    if (y < GED_MIN)
+	cval |= 04;
+    else if (y > GED_MAX)
+	cval |= 010;
 
-	return (cval);
+    return (cval);
 }
 
 /* XXX need to test more thoroughly
-#define ANGLE_EPSILON 0.0001
-#define CLIP_DISTANCE 1000000000.0
+   #define ANGLE_EPSILON 0.0001
+   #define CLIP_DISTANCE 1000000000.0
 */
 #define EPSILON 0.0001
 #define CLIP_DISTANCE 100000000.0
@@ -141,62 +141,62 @@ code (fastf_t x, fastf_t y)
  */
 int vclip( vect_t a, vect_t b, register fastf_t *min, register fastf_t *max )
 {
-	static vect_t diff;
-	static double sv;
-	static double st;
-	static double mindist, maxdist;
-	register fastf_t *pt = &a[0];
-	register fastf_t *dir = &diff[0];
-	register int i;
+    static vect_t diff;
+    static double sv;
+    static double st;
+    static double mindist, maxdist;
+    register fastf_t *pt = &a[0];
+    register fastf_t *dir = &diff[0];
+    register int i;
 
-	mindist = -CLIP_DISTANCE;
-	maxdist = CLIP_DISTANCE;
-	VSUB2( diff, b, a );
+    mindist = -CLIP_DISTANCE;
+    maxdist = CLIP_DISTANCE;
+    VSUB2( diff, b, a );
 
-	for ( i=0; i < 3; i++, pt++, dir++, max++, min++ )  {
-		if ( *dir < -EPSILON )  {
-			if ( (sv = (*min - *pt) / *dir) < 0.0 )
-				return(0);	/* MISS */
-			if (maxdist > sv)
-				maxdist = sv;
-			if ( mindist < (st = (*max - *pt) / *dir) )
-				mindist = st;
-		}  else if ( *dir > EPSILON )  {
-			if ( (st = (*max - *pt) / *dir) < 0.0 )
-				return(0);	/* MISS */
-			if (maxdist > st)
-				maxdist = st;
-			if ( mindist < ((sv = (*min - *pt) / *dir)) )
-				mindist = sv;
-		}  else  {
-			/*
-			 *  If direction component along this axis is NEAR 0,
-			 *  (ie, this ray is aligned with this axis),
-			 *  merely check against the boundaries.
-			 */
-			if ( (*min > *pt) || (*max < *pt) )
-				return(0);	/* MISS */;
-		}
+    for ( i=0; i < 3; i++, pt++, dir++, max++, min++ )  {
+	if ( *dir < -EPSILON )  {
+	    if ( (sv = (*min - *pt) / *dir) < 0.0 )
+		return(0);	/* MISS */
+	    if (maxdist > sv)
+		maxdist = sv;
+	    if ( mindist < (st = (*max - *pt) / *dir) )
+		mindist = st;
+	}  else if ( *dir > EPSILON )  {
+	    if ( (st = (*max - *pt) / *dir) < 0.0 )
+		return(0);	/* MISS */
+	    if (maxdist > st)
+		maxdist = st;
+	    if ( mindist < ((sv = (*min - *pt) / *dir)) )
+		mindist = sv;
+	}  else  {
+	    /*
+	     *  If direction component along this axis is NEAR 0,
+	     *  (ie, this ray is aligned with this axis),
+	     *  merely check against the boundaries.
+	     */
+	    if ( (*min > *pt) || (*max < *pt) )
+		return(0);	/* MISS */;
 	}
-	if ( mindist >= maxdist )
-		return(0);	/* MISS */
+    }
+    if ( mindist >= maxdist )
+	return(0);	/* MISS */
 
-	if ( mindist > 1 || maxdist < 0 )
-		return(0);	/* MISS */
+    if ( mindist > 1 || maxdist < 0 )
+	return(0);	/* MISS */
 
-	if ( mindist <= 0 && maxdist >= 1 )
-		return(1);	/* HIT, no clipping needed */
+    if ( mindist <= 0 && maxdist >= 1 )
+	return(1);	/* HIT, no clipping needed */
 
-	/* Don't grow one end of a contained segment */
-	if ( mindist < 0 )
-		mindist = 0;
-	if ( maxdist > 1 )
-		maxdist = 1;
+    /* Don't grow one end of a contained segment */
+    if ( mindist < 0 )
+	mindist = 0;
+    if ( maxdist > 1 )
+	maxdist = 1;
 
-	/* Compute actual intercept points */
-	VJOIN1( b, a, maxdist, diff );		/* b must go first */
-	VJOIN1( a, a, mindist, diff );
-	return(1);		/* HIT */
+    /* Compute actual intercept points */
+    VJOIN1( b, a, maxdist, diff );		/* b must go first */
+    VJOIN1( a, a, mindist, diff );
+    return(1);		/* HIT */
 }
 
 /*

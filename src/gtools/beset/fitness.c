@@ -219,7 +219,7 @@ compare_hit(register struct application *ap, struct partition *partHeadp, struct
      * finish evaluating it before proceeding */
     if (status == STATUS_PP) {
 	if (pp->pt_outhit->hit_dist > fstate->a_len) {
-  /* trim ray */
+	    /* trim ray */
 	    fstate->diff += fstate->a_len - lastpt;
 	    lastpt = fstate->a_len;
 	} else {
@@ -241,7 +241,7 @@ compare_hit(register struct application *ap, struct partition *partHeadp, struct
     }
     while (pp != partHeadp && pp->pt_inhit->hit_dist < fstate->a_len) {
 	if (pp->pt_outhit->hit_dist > fstate->a_len) {
-  /* trim bounding box */
+	    /* trim bounding box */
 	    fstate->diff += fstate->a_len - pp->pt_inhit->hit_dist;
 	    lastpt = fstate->a_len;
 	} else {
@@ -349,13 +349,13 @@ fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
      * uncomment to calculate # of nodes
      * and use in fitness calculation
      *
-    struct directory *dp
-    struct rt_db_internal in;
-    int n_leaves;
-    if (!rt_db_lookup_internal(db, obj, &dp, &in, LOOKUP_NOISY, &rt_uniresource))
-	bu_exit(EXIT_FAILURE, "Failed to read object to raytrace");
-    n_leaves = db_count_tree_nodes(((struct rt_comb_internal *)in.idb_ptr)->tree, 0);
-    rt_db_free_internal(&in, &rt_uniresource);
+     struct directory *dp
+     struct rt_db_internal in;
+     int n_leaves;
+     if (!rt_db_lookup_internal(db, obj, &dp, &in, LOOKUP_NOISY, &rt_uniresource))
+     bu_exit(EXIT_FAILURE, "Failed to read object to raytrace");
+     n_leaves = db_count_tree_nodes(((struct rt_comb_internal *)in.idb_ptr)->tree, 0);
+     rt_db_free_internal(&in, &rt_uniresource);
     */
 
     fstate->rtip = rt_new_rti(db);
@@ -365,10 +365,10 @@ fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
 	bu_exit(EXIT_FAILURE, "rt_gettree failed");
 
     /*
-    for (i = 0; i < fstate->max_cpus; i++) {
-	rt_init_resource(&fstate->resource[i], i, fstate->rtip);
-	bn_rand_init(fstate->resource[i].re_randptr, i);
-    }
+      for (i = 0; i < fstate->max_cpus; i++) {
+      rt_init_resource(&fstate->resource[i], i, fstate->rtip);
+      bn_rand_init(fstate->resource[i].re_randptr, i);
+      }
     */
 
     /* stash bounding box and if comparing to source
@@ -379,34 +379,34 @@ fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
 /*	z_max = fstate->rtip->mdl_max[Z];*/
     }
     /*else {
-	* instead of storing min and max, just compute
-	 * what we're going to need later
-	for (i = 0; i < 3; i++) {
-	    diff[i] = 0;
-	    if (fstate->min[i] > fstate->rtip->mdl_min[i])
-		diff[i] += fstate->min[i] - fstate->rtip->mdl_min[i];
-	    if (fstate->max[i] < fstate->rtip->mdl_max[i])
-		diff[i] += fstate->rtip->mdl_max[i] - fstate->max[i];
-	    if (fstate->min[i]  < fstate->rtip->mdl_min[i])
-		min[i] = fstate->min[i];
-	    else
-		min[i] = fstate->rtip->mdl_min[i];
-	    if (fstate->max[i] > fstate->rtip->mdl_max[i])
-		max[i] = fstate->max[i];
-	    else
-		max[i] = fstate->rtip->mdl_max[i];
-	    diff[i] = max[i] - min[i];
-	}
-	fastf_t tmp = (diff[X]/fstate->gridSpacing[X]-1) * (diff[Y]/fstate->gridSpacing[Y] - 1);
-	fstate->volume = (fstate->a_len + (max[Z] - fstate->max[Z])) * tmp;
-    }
+     * instead of storing min and max, just compute
+     * what we're going to need later
+     for (i = 0; i < 3; i++) {
+     diff[i] = 0;
+     if (fstate->min[i] > fstate->rtip->mdl_min[i])
+     diff[i] += fstate->min[i] - fstate->rtip->mdl_min[i];
+     if (fstate->max[i] < fstate->rtip->mdl_max[i])
+     diff[i] += fstate->rtip->mdl_max[i] - fstate->max[i];
+     if (fstate->min[i]  < fstate->rtip->mdl_min[i])
+     min[i] = fstate->min[i];
+     else
+     min[i] = fstate->rtip->mdl_min[i];
+     if (fstate->max[i] > fstate->rtip->mdl_max[i])
+     max[i] = fstate->max[i];
+     else
+     max[i] = fstate->rtip->mdl_max[i];
+     diff[i] = max[i] - min[i];
+     }
+     fastf_t tmp = (diff[X]/fstate->gridSpacing[X]-1) * (diff[Y]/fstate->gridSpacing[Y] - 1);
+     fstate->volume = (fstate->a_len + (max[Z] - fstate->max[Z])) * tmp;
+     }
     */
 
 
     /*rt_prep_parallel(fstate->rtip, fstate->ncpu)o;*/
 
     rt_prep(fstate->rtip);
-        if (fstate->capture) {
+    if (fstate->capture) {
 	/* Store bounding box of voxel data -- fixed bounding box for fitness */
 	fstate->gridSpacing[X] = (fstate->rtip->mdl_max[X] - fstate->rtip->mdl_min[X]) / (fstate->res[X] + 1);
 	fstate->gridSpacing[Y] = (fstate->rtip->mdl_max[Y] - fstate->rtip->mdl_min[Y]) / (fstate->res[Y] + 1);
@@ -415,8 +415,8 @@ fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
 
 	/* allocate storage for saved rays */
 	fstate->ray = bu_malloc(sizeof(struct part *) * fstate->res[X] * fstate->res[Y], "ray");
-VMOVE(fstate->min, fstate->rtip->mdl_min);
-    VMOVE(fstate->max, fstate->rtip->mdl_max);
+	VMOVE(fstate->min, fstate->rtip->mdl_min);
+	VMOVE(fstate->max, fstate->rtip->mdl_max);
 
 
     } else {
@@ -438,8 +438,8 @@ VMOVE(fstate->min, fstate->rtip->mdl_min);
 	fstate->volume = (fstate->a_len + (max[Z] - fstate->max[Z])) * tmp;
 	/* scale fitness to the unon of the sources and individual's bounding boxes */
 	/* FIXME: sloppy
-	fastf_t tmp = (diff[X]/fstate->gridSpacing[X]-1) * (diff[Y]/fstate->gridSpacing[Y] * diff[Z] - 1);
-	if (tmp < 0) tmp = 0;*/
+	   fastf_t tmp = (diff[X]/fstate->gridSpacing[X]-1) * (diff[Y]/fstate->gridSpacing[Y] * diff[Z] - 1);
+	   if (tmp < 0) tmp = 0;*/
     }
 
 
@@ -455,8 +455,8 @@ VMOVE(fstate->min, fstate->rtip->mdl_min);
 
     /* clean up resources and rtip */
     /*
-    for (i = 0; i < fstate->max_cpus; i++)
-	rt_clean_resource(fstate->rtip, &fstate->resource[i]);
+      for (i = 0; i < fstate->max_cpus; i++)
+      rt_clean_resource(fstate->rtip, &fstate->resource[i]);
     */
     rt_free_rti(fstate->rtip);
 
@@ -526,16 +526,16 @@ free_rays(struct fitness_state *fstate)
  *	fitness increases
  */
 /*
-void
-fit_updateRes(int rows, int cols, struct fitness_state *fstate) {
-    if ( fstate->ray != NULL) {
-	free_ray(fstate);
-    }
-    fstate->res[X] = rows;
-    fstate->res[Y] = cols;
-    fit_store(fstate->name, fstate);
+  void
+  fit_updateRes(int rows, int cols, struct fitness_state *fstate) {
+  if ( fstate->ray != NULL) {
+  free_ray(fstate);
+  }
+  fstate->res[X] = rows;
+  fstate->res[Y] = cols;
+  fit_store(fstate->name, fstate);
 
-}
+  }
 */
 
 

@@ -360,10 +360,10 @@ db_dirdelete(register struct db_i *dbip, register struct directory *dp)
     headp = &(dbip->dbi_Head[db_dirhash(dp->d_namep)]);
 
     if ( dp->d_flags & RT_DIR_INMEM )
-	{
-	    if ( dp->d_un.ptr != NULL )
-		bu_free( dp->d_un.ptr, "db_dirdelete() inmem ptr" );
-	}
+    {
+	if ( dp->d_un.ptr != NULL )
+	    bu_free( dp->d_un.ptr, "db_dirdelete() inmem ptr" );
+    }
 
     if ( *headp == dp )  {
 	RT_DIR_FREE_NAMEP(dp);	/* frees d_namep */
@@ -461,10 +461,10 @@ db_pr_dir(register const struct db_i *dbip)
 	    if ( dp->d_flags & DIR_SOLID )
 		flags = "SOL";
 	    else if ( (dp->d_flags & (DIR_COMB|DIR_REGION)) ==
-		     (DIR_COMB|DIR_REGION) )
+		      (DIR_COMB|DIR_REGION) )
 		flags = "REG";
 	    else if ( (dp->d_flags & (DIR_COMB|DIR_REGION)) ==
-		     DIR_COMB )
+		      DIR_COMB )
 		flags = "COM";
 	    else
 		flags = "Bad";

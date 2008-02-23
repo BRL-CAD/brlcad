@@ -76,173 +76,173 @@ q Q cr	QUIT\r\n\
 void
 SimpleInput(void)	/* ==== get keyboard input.	*/
 {
-	register char ch;
-	static char c;
+    register char ch;
+    static char c;
 
-	if ( read( 0, &c, 1) <= 0 ) {
-		Run = 0;
-		return;
-	}
-	ch = c & ~0x80;		/* strip off parity bit */
-	switch ( ch ) {
+    if ( read( 0, &c, 1) <= 0 ) {
+	Run = 0;
+	return;
+    }
+    ch = c & ~0x80;		/* strip off parity bit */
+    switch ( ch ) {
 	default:
-		fprintf( stderr,
-		"Unknown command(%c:0%o). Type '?' for help!           \r\n",
-			ch, ch );
-		break;
+	    fprintf( stderr,
+		     "Unknown command(%c:0%o). Type '?' for help!           \r\n",
+		     ch, ch );
+	    break;
 
 	case '?':
-		fprintf( stderr, "%s", help );
-		return;
+	    fprintf( stderr, "%s", help );
+	    return;
 
 	case 'q':
 	case 'Q':
 	case '\r':
-		Run = 0;
-		return;
+	    Run = 0;
+	    return;
 
 	case 'B':
 	case 'h':
-		--curX;		/* Go left.	*/
-		return;
+	    --curX;		/* Go left.	*/
+	    return;
 	case 'N':
 	case 'j':
-		--curY;		/* Go down.	*/
-		return;
+	    --curY;		/* Go down.	*/
+	    return;
 	case 'P':
 	case 'k':
-		++curY;		/* Go up.	*/
-		return;
+	    ++curY;		/* Go up.	*/
+	    return;
 	case 'F':
 	case 'l':
-		++curX;		/* Go right.	*/
-		return;
+	    ++curX;		/* Go right.	*/
+	    return;
 	case ctl('b'):
 	case 'H':
-		curX -= JumpSpeed;	/* Go LEFT.	*/
-		return;
+	    curX -= JumpSpeed;	/* Go LEFT.	*/
+	    return;
 	case ctl('n'):
 	case 'J':
-		curY -= JumpSpeed;	/* Go DOWN.	*/
-		return;
+	    curY -= JumpSpeed;	/* Go DOWN.	*/
+	    return;
 	case ctl('p'):
 	case 'K':
-		curY += JumpSpeed;	/* Go UP.	*/
-		return;
+	    curY += JumpSpeed;	/* Go UP.	*/
+	    return;
 	case ctl('f'):
 	case 'L':
-		curX += JumpSpeed;	/* Go RIGHT.	*/
-		return;
-	}
+	    curX += JumpSpeed;	/* Go RIGHT.	*/
+	    return;
+    }
 }
 
 int
 main(int argc, char **argv)
 {
-	int width, height;
+    int width, height;
 
-	setbuf( stderr, malloc( BUFSIZ ) );
-	width = height = 0;
-	curX = curY = -1;
+    setbuf( stderr, malloc( BUFSIZ ) );
+    width = height = 0;
+    curX = curY = -1;
 
-	while ( argc > 1 ) {
-		if ( strcmp( argv[1], "-h" ) == 0 ) {
-			width = height = 1024;
-		} else if ( strncmp( argv[1], "-x", 2 ) == 0 ) {
-			if ( xflag++ != 0 )
-				break;
-			xprefix = &argv[1][2];
-		} else if ( strncmp( argv[1], "-y", 2 ) == 0 ) {
-			if ( yflag++ != 0 )
-				break;
-			yprefix = &argv[1][2];
-		} else
-			break;
-		argc--;
-		argv++;
-	}
-	/*
-	 * Check for optional starting coordinate.
-	 * Test for bad flags while we're at it.
-	 */
-	if ( argc > 1 && argv[1][0] != '-' ) {
-		curX = atoi( argv[1] );
-		argc--;
-		argv++;
-	}
-	if ( argc > 1 && argv[1][0] != '-' ) {
-		curY = atoi( argv[1] );
-		argc--;
-		argv++;
-	}
-	if ( argc > 1 ) {
-		bu_exit(1, "%s", usage );
-	}
+    while ( argc > 1 ) {
+	if ( strcmp( argv[1], "-h" ) == 0 ) {
+	    width = height = 1024;
+	} else if ( strncmp( argv[1], "-x", 2 ) == 0 ) {
+	    if ( xflag++ != 0 )
+		break;
+	    xprefix = &argv[1][2];
+	} else if ( strncmp( argv[1], "-y", 2 ) == 0 ) {
+	    if ( yflag++ != 0 )
+		break;
+	    yprefix = &argv[1][2];
+	} else
+	    break;
+	argc--;
+	argv++;
+    }
+    /*
+     * Check for optional starting coordinate.
+     * Test for bad flags while we're at it.
+     */
+    if ( argc > 1 && argv[1][0] != '-' ) {
+	curX = atoi( argv[1] );
+	argc--;
+	argv++;
+    }
+    if ( argc > 1 && argv[1][0] != '-' ) {
+	curY = atoi( argv[1] );
+	argc--;
+	argv++;
+    }
+    if ( argc > 1 ) {
+	bu_exit(1, "%s", usage );
+    }
 
-	/* fix up pointers for printf */
-	if ( xprefix == NULL )
-		xprefix = &null_str;
-	if ( yprefix == NULL )
-		yprefix = &null_str;
+    /* fix up pointers for printf */
+    if ( xprefix == NULL )
+	xprefix = &null_str;
+    if ( yprefix == NULL )
+	yprefix = &null_str;
 
-	if ( (fbp = fb_open( NULL, width, height )) == NULL )
-		bu_exit(12, "Unable to open framebuffer\n");
+    if ( (fbp = fb_open( NULL, width, height )) == NULL )
+	bu_exit(12, "Unable to open framebuffer\n");
 
-	JumpSpeed = fb_getwidth(fbp)/16;
-	if ( JumpSpeed < 2 )  JumpSpeed = 2;
-	/* check for default starting positions */
+    JumpSpeed = fb_getwidth(fbp)/16;
+    if ( JumpSpeed < 2 )  JumpSpeed = 2;
+    /* check for default starting positions */
+    if ( curX < 0 )
+	curX = fb_getwidth(fbp)/2;
+    if ( curY < 0 )
+	curY = fb_getheight(fbp)/2;
+    oldX = oldY = -1;
+
+    /* Set RAW mode */
+    save_Tty( 0 );
+    set_Raw( 0 );
+    clr_Echo( 0 );
+
+    while ( Run )  {
 	if ( curX < 0 )
-		curX = fb_getwidth(fbp)/2;
+	    curX = 0;
+	if ( curX >= fb_getwidth(fbp) )
+	    curX = fb_getwidth(fbp) -1;
 	if ( curY < 0 )
-		curY = fb_getheight(fbp)/2;
-	oldX = oldY = -1;
+	    curY = 0;
+	if ( curY >= fb_getheight(fbp) )
+	    curY = fb_getheight(fbp) -1;
 
-	/* Set RAW mode */
-	save_Tty( 0 );
-	set_Raw( 0 );
-	clr_Echo( 0 );
-
-	while ( Run )  {
-		if ( curX < 0 )
-			curX = 0;
-		if ( curX >= fb_getwidth(fbp) )
-			curX = fb_getwidth(fbp) -1;
-		if ( curY < 0 )
-			curY = 0;
-		if ( curY >= fb_getheight(fbp) )
-			curY = fb_getheight(fbp) -1;
-
-		if ( oldX != curX || oldY != curY ) {
-			/* get pixel value, move cursor */
-			fb_read( fbp, curX, curY, curPix, 1 );
-			fb_cursor( fbp, 1, curX, curY );
-			oldX = curX;
-			oldY = curY;
-		}
-		fprintf( stderr, "xy=(%4d,%4d)  [%3d,%3d,%3d]      \r",
-			curX, curY, curPix[RED], curPix[GRN], curPix[BLU] );
-		fflush( stderr );
-
-		SimpleInput();			/* read and do keybord	*/
+	if ( oldX != curX || oldY != curY ) {
+	    /* get pixel value, move cursor */
+	    fb_read( fbp, curX, curY, curPix, 1 );
+	    fb_cursor( fbp, 1, curX, curY );
+	    oldX = curX;
+	    oldY = curY;
 	}
-
-	fb_cursor( fbp, 0, curX, curY );	/* turn off */
-
-	fprintf( stderr, "\n" );
+	fprintf( stderr, "xy=(%4d,%4d)  [%3d,%3d,%3d]      \r",
+		 curX, curY, curPix[RED], curPix[GRN], curPix[BLU] );
 	fflush( stderr );
 
-	reset_Tty( 0 );
+	SimpleInput();			/* read and do keybord	*/
+    }
 
-	/* write final location on stdout */
-	if ( xflag != 0 && yflag == 0 )
-		printf( "%s%d\n", xprefix, curX );
-	else if ( yflag != 0 && xflag == 0 )
-		printf( "%s%d\n", yprefix, curY );
-	else
-		printf( "%s%d %s%d\n", xprefix, curX, yprefix, curY );
+    fb_cursor( fbp, 0, curX, curY );	/* turn off */
 
-	fb_close( fbp );
-	return 0;
+    fprintf( stderr, "\n" );
+    fflush( stderr );
+
+    reset_Tty( 0 );
+
+    /* write final location on stdout */
+    if ( xflag != 0 && yflag == 0 )
+	printf( "%s%d\n", xprefix, curX );
+    else if ( yflag != 0 && xflag == 0 )
+	printf( "%s%d\n", yprefix, curY );
+    else
+	printf( "%s%d %s%d\n", xprefix, curX, yprefix, curY );
+
+    fb_close( fbp );
+    return 0;
 }
 
 /*

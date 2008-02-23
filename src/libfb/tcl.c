@@ -110,10 +110,10 @@ int fb_cmd_close_existing(ClientData clientData, Tcl_Interp *interp, int argc, c
 int fb_cmd_common_file_size(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 
 static struct bu_cmdtab cmdtab[] = {
-	{"fb_open_existing",	 fb_cmd_open_existing},
-	{"fb_close_existing",	 fb_cmd_close_existing},
-	{"fb_common_file_size",	 fb_cmd_common_file_size},
-	{(char *)0, (int (*)())0}
+    {"fb_open_existing",	 fb_cmd_open_existing},
+    {"fb_close_existing",	 fb_cmd_close_existing},
+    {"fb_common_file_size",	 fb_cmd_common_file_size},
+    {(char *)0, (int (*)())0}
 };
 
 /* XXX this device list shouldn't be in here */
@@ -480,7 +480,7 @@ fb_cmd_common_file_size(ClientData clientData, Tcl_Interp *interp, int argc, cha
 	bu_vls_init( &vls );
 	bu_vls_printf( &vls, "%lu %lu", width, height );
 	Tcl_SetObjResult( interp,
-	    Tcl_NewStringObj(bu_vls_addr( &vls ), bu_vls_strlen(&vls)) );
+			  Tcl_NewStringObj(bu_vls_addr( &vls ), bu_vls_strlen(&vls)) );
 	bu_vls_free( &vls );
 	return TCL_OK;
     }
@@ -503,18 +503,18 @@ int
 #ifdef BRLCAD_DEBUG
 Fb_d_Init(Tcl_Interp *interp)
 #else
-Fb_Init(Tcl_Interp *interp)
+    Fb_Init(Tcl_Interp *interp)
 #endif
 {
-	/* register commands */
-	bu_register_cmds(interp, cmdtab);
+    /* register commands */
+    bu_register_cmds(interp, cmdtab);
 
-	/* initialize framebuffer object code */
-	Fbo_Init(interp);
+    /* initialize framebuffer object code */
+    Fbo_Init(interp);
 
-	Tcl_PkgProvide(interp,  "Fb", brlcad_version());
+    Tcl_PkgProvide(interp,  "Fb", brlcad_version());
 
-	return TCL_OK;
+    return TCL_OK;
 }
 
 

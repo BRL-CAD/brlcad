@@ -52,32 +52,32 @@ bu_rb_tree *bu_rb_create (char *description, int nm_orders, int (**order_funcs)(
      */
     tree = (bu_rb_tree *) bu_malloc(sizeof(bu_rb_tree), "red-black tree");
     tree -> rbt_root = (struct bu_rb_node **)
-		    bu_malloc(nm_orders * sizeof(struct bu_rb_node),
-			"red-black roots");
+	bu_malloc(nm_orders * sizeof(struct bu_rb_node),
+		  "red-black roots");
     tree -> rbt_unique = (char *)
-		bu_malloc((size_t) ceil((double) (nm_orders / 8.0)),
-			    "red-black uniqueness flags");
+	bu_malloc((size_t) ceil((double) (nm_orders / 8.0)),
+		  "red-black uniqueness flags");
     bu_rb_null(tree) = (struct bu_rb_node *)
-		    bu_malloc(sizeof(struct bu_rb_node),
-				"red-black empty node");
+	bu_malloc(sizeof(struct bu_rb_node),
+		  "red-black empty node");
     bu_rb_null(tree) -> rbn_parent = (struct bu_rb_node **)
-		bu_malloc(nm_orders * sizeof(struct bu_rb_node *),
-			    "red-black parents");
+	bu_malloc(nm_orders * sizeof(struct bu_rb_node *),
+		  "red-black parents");
     bu_rb_null(tree) -> rbn_left = (struct bu_rb_node **)
-		bu_malloc(nm_orders * sizeof(struct bu_rb_node *),
-			    "red-black left children");
+	bu_malloc(nm_orders * sizeof(struct bu_rb_node *),
+		  "red-black left children");
     bu_rb_null(tree) -> rbn_right = (struct bu_rb_node **)
-		bu_malloc(nm_orders * sizeof(struct bu_rb_node *),
-			    "red-black right children");
+	bu_malloc(nm_orders * sizeof(struct bu_rb_node *),
+		  "red-black right children");
     bu_rb_null(tree) -> rbn_color = (char *)
-		bu_malloc((size_t) ceil((double) (nm_orders / 8.0)),
-			    "red-black colors");
+	bu_malloc((size_t) ceil((double) (nm_orders / 8.0)),
+		  "red-black colors");
     bu_rb_null(tree) -> rbn_size = (int *)
-		bu_malloc(nm_orders * sizeof(int),
-			    "red-black subtree sizes");
+	bu_malloc(nm_orders * sizeof(int),
+		  "red-black subtree sizes");
     bu_rb_null(tree) -> rbn_package = (struct bu_rb_package **)
-		bu_malloc(nm_orders * sizeof(struct bu_rb_package *),
-			    "red-black packages");
+	bu_malloc(nm_orders * sizeof(struct bu_rb_package *),
+		  "red-black packages");
     /*
      *	Fill in the tree
      */
@@ -131,7 +131,7 @@ bu_rb_tree *bu_rb_create1 (char *description, int (*order_func) (/* ??? */))
     int		(**ofp)();
 
     ofp = (int (**)())
-		bu_malloc(sizeof(int (*)()), "red-black function table");
+	bu_malloc(sizeof(int (*)()), "red-black function table");
     *ofp = order_func;
     return (bu_rb_create(description, 1, ofp));
 }

@@ -17,31 +17,31 @@
 #ifndef lint
 char	redata_dummy;      /* some systems can't handle empty object modules */
 #else
-		/* Nothing further to do on BSD systems */
+/* Nothing further to do on BSD systems */
 #endif
 #else
 
 struct	{
-	int	number;
-	char	*message;
-	}	re_msgtab[] =
-	{
-	{	11,	"range endpoint too large"	},
-	{	16,	"bad number"	},
-	{	25,	"`\\digit' out of range"	},
-	{	35,	"no match"	},
-	{	36,	"illegal or missing delimiter"	},
-	{	41,	"no remembered search string"	},
-	{	42,	"'\\( \\)' imbalance"	},
-	{	43,	"too many `\\(' s"	},
-	{	44,	"more than 2 numbers given"	},
-	{	45,	"'\\}' expected"	},
-	{	46,	"first number exceeds second"	},
-	{	49,	"'[ ]' imbalance"	},
-	{	50,	"regular expression overflow"	},
-	{	51,	"regular expression error"	},
-	{	0,	"unknown r.e. error"	}
-	};
+    int	number;
+    char	*message;
+}	re_msgtab[] =
+{
+    {	11,	"range endpoint too large"	},
+    {	16,	"bad number"	},
+    {	25,	"`\\digit' out of range"	},
+    {	35,	"no match"	},
+    {	36,	"illegal or missing delimiter"	},
+    {	41,	"no remembered search string"	},
+    {	42,	"'\\( \\)' imbalance"	},
+    {	43,	"too many `\\(' s"	},
+    {	44,	"more than 2 numbers given"	},
+    {	45,	"'\\}' expected"	},
+    {	46,	"first number exceeds second"	},
+    {	49,	"'[ ]' imbalance"	},
+    {	50,	"regular expression overflow"	},
+    {	51,	"regular expression error"	},
+    {	0,	"unknown r.e. error"	}
+};
 
 #endif
 

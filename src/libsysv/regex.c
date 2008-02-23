@@ -19,17 +19,17 @@
 #ifndef lint
 char	regex_dummy;      /* some systems can't handle empty object modules */
 #else
-		/* Nothing further to do on systems that have regex */
+/* Nothing further to do on systems that have regex */
 #endif
 #else
 
 /* For systems with SYSV regular expression support */
 #if defined(USE_SYSV_RE)
 extern struct re_msg
-	{
-	int	number;
-	char	*message;
-	}	re_msgtab[];
+{
+    int	number;
+    char	*message;
+}	re_msgtab[];
 
 static char	*re_err;		/* sneak path to error string */
 
@@ -37,16 +37,16 @@ static char	*re_err;		/* sneak path to error string */
 
 static void
 re_error( n )
-	register int		n;	/* error number */
-	{
-	register struct re_msg	*mp;
+    register int		n;	/* error number */
+{
+    register struct re_msg	*mp;
 
-	for ( mp = re_msgtab; mp->number > 0; ++mp )
-		if ( mp->number == n )
-			break;
+    for ( mp = re_msgtab; mp->number > 0; ++mp )
+	if ( mp->number == n )
+	    break;
 
-	re_err = mp->message;
-	}
+    re_err = mp->message;
+}
 
 /* macros for <regexp.h> */
 #define INIT		register char	*re_str = instring;
@@ -89,28 +89,28 @@ static char	re_buf[ESIZE];		/* compiled r.e. */
 
 char	*
 re_comp( s )				/* returns 0 or ptr to error message */
-	char	*s;
-	{
-	re_err = (char *)0;
+    char	*s;
+{
+    re_err = (char *)0;
 
-	if ( s != (char *)0 && *s != '\0' )
-		(void)compile( s, re_buf, &re_buf[ESIZE], '\0' );
-	else if ( re_buf[0] == '\0' )
-		ERROR( 41 );		/* no remembered search string */
-	/* else use remembered search string from previous call */
+    if ( s != (char *)0 && *s != '\0' )
+	(void)compile( s, re_buf, &re_buf[ESIZE], '\0' );
+    else if ( re_buf[0] == '\0' )
+	ERROR( 41 );		/* no remembered search string */
+    /* else use remembered search string from previous call */
 
-	return re_err;
-	}
+    return re_err;
+}
 
 /*	Test for match against compiled expression	*/
 
 int
 re_exec( s )				/* returns 1 if s matches, else 0 */
-	char	*s;
-	{
-	locs = 0;			/* ??? */
-	return step( s, re_buf );
-	}
+    char	*s;
+{
+    locs = 0;			/* ??? */
+    return step( s, re_buf );
+}
 #endif
 
 
@@ -133,28 +133,28 @@ static regex_t reg;
 
 char *
 re_comp(s)
-const char *s;
+    const char *s;
 {
-	int i;
-	static char errbuf[2048] = {0};
-	i = regcomp(&reg, s, REG_BASIC|REG_NOSUB);
+    int i;
+    static char errbuf[2048] = {0};
+    i = regcomp(&reg, s, REG_BASIC|REG_NOSUB);
 
-	if (i) {
-		regerror(i, &reg, errbuf, sizeof(errbuf));
-		return errbuf;
-	}
-	return (char *)0;
+    if (i) {
+	regerror(i, &reg, errbuf, sizeof(errbuf));
+	return errbuf;
+    }
+    return (char *)0;
 }
 
 int
 re_exec(s)
-const char *s;
+    const char *s;
 {
-	int i;
+    int i;
 
-	i = regexec(&reg, s, (size_t) 0, (regmatch_t *)0, 0);
+    i = regexec(&reg, s, (size_t) 0, (regmatch_t *)0, 0);
 
-	return !i;
+    return !i;
 }
 #endif
 

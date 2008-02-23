@@ -96,9 +96,9 @@ static int read_hsv (fastf_t *hsvp, char *buf)
     if (sscanf(buf, "%lf %lf %lf", tmp, tmp + 1, tmp + 2) != 3)
 	return (0);
     if ((tmp[HUE] < 0.0) || (tmp[HUE] > 360.0)
-     || (tmp[SAT] < 0.0) || (tmp[SAT] >   1.0)
-     || (tmp[VAL] < 0.0) || (tmp[VAL] >   1.0))
-	    return (0);
+	|| (tmp[SAT] < 0.0) || (tmp[SAT] >   1.0)
+	|| (tmp[VAL] < 0.0) || (tmp[VAL] >   1.0))
+	return (0);
     if (tmp[SAT] == 0.0)
 	tmp[HUE] = ACHROMATIC;
     VMOVE(hsvp, tmp);
@@ -114,8 +114,8 @@ static int read_row (unsigned char *rp, long int width, FILE *infp)
 	return (0);
     *(rp + RED) = *(rp + GRN) = *(rp + BLU) = 0;
     *(rp + 3 * (width + 1) + RED) =
-    *(rp + 3 * (width + 1) + GRN) =
-    *(rp + 3 * (width + 1) + BLU) = 0;
+	*(rp + 3 * (width + 1) + GRN) =
+	*(rp + 3 * (width + 1) + BLU) = 0;
     return (1);
 }
 
@@ -213,12 +213,12 @@ int hsv_to_rgb (fastf_t *hsv, unsigned char *rgb)
     if (sat == 0.0)
 	if (hue == ACHROMATIC)
 	    VSETALL(float_rgb, val)
-	else
-	{
-	    (void) fprintf(stderr, "Illegal HSV (%g, %g, %g)\n",
-		    V3ARGS(hsv));
-	    return (0);
-	}
+		else
+		{
+		    (void) fprintf(stderr, "Illegal HSV (%g, %g, %g)\n",
+				   V3ARGS(hsv));
+		    return (0);
+		}
     else
     {
 	if (hue == 360.0)
@@ -239,7 +239,7 @@ int hsv_to_rgb (fastf_t *hsv, unsigned char *rgb)
 	    case 5: VSET(float_rgb, val, p, q); break;
 	    default:
 		(void) fprintf(stderr, "%s:%d: This shouldn't happen\n",
-		    __FILE__, __LINE__);
+			       __FILE__, __LINE__);
 		bu_exit (1, NULL);
 	}
     }
@@ -279,7 +279,7 @@ static int is_interior (unsigned char *pix_rgb)
     if (tol_using_rgb)
 	return ((colors_specified == COLORS_EXTERIOR)	?
 		(! same_rgb(pix_rgb, exterior_rgb))	:
-		   same_rgb(pix_rgb, interior_rgb));
+		same_rgb(pix_rgb, interior_rgb));
     else
     {
 	fastf_t	pix_hsv[3];
@@ -287,7 +287,7 @@ static int is_interior (unsigned char *pix_rgb)
 	rgb_to_hsv(pix_rgb, pix_hsv);
 	return ((colors_specified == COLORS_EXTERIOR)	?
 		(! same_hsv(pix_hsv, exterior_hsv))	:
-		   same_hsv(pix_hsv, interior_hsv));
+		same_hsv(pix_hsv, interior_hsv));
     }
 }
 
@@ -299,7 +299,7 @@ static int is_exterior (unsigned char *pix_rgb)
     if (tol_using_rgb)
 	return ((colors_specified == COLORS_INTERIOR)	?
 		(! same_rgb(pix_rgb, interior_rgb))	:
-		   same_rgb(pix_rgb, exterior_rgb));
+		same_rgb(pix_rgb, exterior_rgb));
     else
     {
 	fastf_t	pix_hsv[3];
@@ -307,7 +307,7 @@ static int is_exterior (unsigned char *pix_rgb)
 	rgb_to_hsv(pix_rgb, pix_hsv);
 	return ((colors_specified == COLORS_INTERIOR)	?
 		(! same_hsv(pix_hsv, interior_hsv))	:
-		   same_hsv(pix_hsv, exterior_hsv));
+		same_hsv(pix_hsv, exterior_hsv));
     }
 }
 
@@ -316,10 +316,10 @@ static int is_exterior (unsigned char *pix_rgb)
  */
 static int is_border (unsigned char *prp, unsigned char *trp, unsigned char *nrp, int col_nm)
 
-				/* Previous row */
-				/* Current (this) row */
-				/* Next row */
-				/* Current column */
+    /* Previous row */
+    /* Current (this) row */
+    /* Next row */
+    /* Current column */
 
 {
     unsigned char	pix_rgb[3];
@@ -540,14 +540,14 @@ main (int argc, char **argv)
 
 #if 0
     (void) fprintf(stderr,
-	"We'll put a border of %d/%d/%d around regions of %d/%d/%d\n",
-	V3ARGS(border_rgb), V3ARGS(interior_rgb));
+		   "We'll put a border of %d/%d/%d around regions of %d/%d/%d\n",
+		   V3ARGS(border_rgb), V3ARGS(interior_rgb));
     if (tol_using_rgb)
 	(void) fprintf(stderr, "With an RGB tol of %d/%d/%d\n",
-	V3ARGS(rgb_tol));
+		       V3ARGS(rgb_tol));
     else
 	(void) fprintf(stderr, "With an HSV tol of %g/%g/%g\n",
-	V3ARGS(hsv_tol));
+		       V3ARGS(hsv_tol));
 #endif
 
     /*
@@ -587,7 +587,7 @@ main (int argc, char **argv)
      *	Initialize current- and next-row buffers
      */
     if ((! read_row(inrow[this_row], file_width, infp))
-     || (! read_row(inrow[next_row], file_width, infp)))
+	|| (! read_row(inrow[next_row], file_width, infp)))
     {
 	perror(file_name);
 	(void) fprintf(stderr, "pixborder:  fread() error\n");
@@ -617,8 +617,8 @@ main (int argc, char **argv)
 		unsigned char	*color_ptr;
 
 		if ((col_nm >= left_edge) && (col_nm <= right_edge)
-		 && is_border(inrow[prev_row], inrow[this_row],
-			    inrow[next_row], col_nm))
+		    && is_border(inrow[prev_row], inrow[this_row],
+				 inrow[next_row], col_nm))
 		    color_ptr = border_rgb;
 		else
 		    color_ptr = inrow[this_row] + (col_nm + 1) * 3;

@@ -46,13 +46,13 @@ fastf_t dm_wrap(); /* wrap given value to new value in the range (-1.0, 1.0) */
 
 int
 dm_limit(i)
-int i;
+    int i;
 {
-  if ( i > NOISE )
-    return( i-NOISE );
-  if ( i < -NOISE )
-    return( i+NOISE );
-  return(0);
+    if ( i > NOISE )
+	return( i-NOISE );
+    if ( i < -NOISE )
+	return( i+NOISE );
+    return(0);
 }
 
 /*
@@ -62,13 +62,13 @@ int i;
  */
 int
 dm_unlimit(i)
-int i;
+    int i;
 {
-  if ( i > 0 )
-    return( i + NOISE );
-  if ( i < 0 )
-    return( i - NOISE );
-  return(0);
+    if ( i > 0 )
+	return( i + NOISE );
+    if ( i < 0 )
+	return( i - NOISE );
+    return(0);
 }
 
 /*			D M _ W R A P
@@ -78,42 +78,42 @@ int i;
  */
 fastf_t
 dm_wrap(f)
-fastf_t f;
+    fastf_t f;
 {
 #if 1
-  int i;
-  fastf_t tmp_f;
+    int i;
+    fastf_t tmp_f;
 
-  /* This way makes no assumption about the size of f */
-  if (f > 1.0) {
-    tmp_f = (f - 1.0) / 2.0;
-    i = tmp_f;
-    tmp_f = (tmp_f - i) * 2.0;
+    /* This way makes no assumption about the size of f */
+    if (f > 1.0) {
+	tmp_f = (f - 1.0) / 2.0;
+	i = tmp_f;
+	tmp_f = (tmp_f - i) * 2.0;
 
-    if (tmp_f == 0)
-      return 1.0;
-    else
-      return (-1.0 + tmp_f);
-  }
+	if (tmp_f == 0)
+	    return 1.0;
+	else
+	    return (-1.0 + tmp_f);
+    }
 
-  if (f < -1.0) {
-    tmp_f = (f + 1.0) / 2.0;
-    i = tmp_f;
-    tmp_f = (tmp_f - i) * 2.0;
+    if (f < -1.0) {
+	tmp_f = (f + 1.0) / 2.0;
+	i = tmp_f;
+	tmp_f = (tmp_f - i) * 2.0;
 
-    if (tmp_f == 0)
-      return -1.0;
-    else
-      return (1.0 + tmp_f);
-  }
+	if (tmp_f == 0)
+	    return -1.0;
+	else
+	    return (1.0 + tmp_f);
+    }
 
-  return f;
+    return f;
 #else
-  if (f > 1.0)
-    return(f - 2.0);
-  if (f < -1.0)
-    return(f + 2.0);
-  return f;
+    if (f > 1.0)
+	return(f - 2.0);
+    if (f < -1.0)
+	return(f + 2.0);
+    return f;
 #endif
 }
 #endif

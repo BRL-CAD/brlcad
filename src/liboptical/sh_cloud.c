@@ -34,27 +34,27 @@
 #include "rtprivate.h"
 
 struct cloud_specific {
-	fastf_t	cl_thresh;
-	fastf_t	cl_range;
+    fastf_t	cl_thresh;
+    fastf_t	cl_range;
 };
 #define CL_NULL	((struct cloud_specific *)0)
 #define CL_O(m)	bu_offsetof(struct cloud_specific, m)
 
 struct bu_structparse cloud_parse[] = {
-	{"%f",	1, "thresh",	CL_O(cl_thresh),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",	1, "range",	CL_O(cl_range),		BU_STRUCTPARSE_FUNC_NULL },
-	{"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%f",	1, "thresh",	CL_O(cl_thresh),	BU_STRUCTPARSE_FUNC_NULL },
+    {"%f",	1, "range",	CL_O(cl_range),		BU_STRUCTPARSE_FUNC_NULL },
+    {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
 HIDDEN int	cloud_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), cloud_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
 HIDDEN void	cloud_print(register struct region *rp, char *dp), cloud_free(char *cp);
 
 struct mfuncs cloud_mfuncs[] = {
-	{MF_MAGIC,	"cloud",	0,		MFI_UV,		0,
-	cloud_setup,	cloud_render,	cloud_print,	cloud_free },
+    {MF_MAGIC,	"cloud",	0,		MFI_UV,		0,
+     cloud_setup,	cloud_render,	cloud_print,	cloud_free },
 
-	{0,		(char *)0,	0,		0,		0,
-	0,		0,		0,		0 }
+    {0,		(char *)0,	0,		0,		0,
+     0,		0,		0,		0 }
 };
 
 #define	NUMSINES	4
@@ -67,45 +67,45 @@ struct mfuncs cloud_mfuncs[] = {
 double
 cloud_texture(register fastf_t x, register fastf_t y, fastf_t Contrast, fastf_t initFx, fastf_t initFy)
 {
-	register int	i;
-	fastf_t	Px, Py, Fx, Fy, C;
-	fastf_t	t1, t2, k;
+    register int	i;
+    fastf_t	Px, Py, Fx, Fy, C;
+    fastf_t	t1, t2, k;
 
-	t1 = t2 = 0;
+    t1 = t2 = 0;
+
+    /*
+     * Compute initial Phases and Frequencies
+     * Freq "1" goes through 2Pi as x or y go thru 0.0 -> 1.0
+     */
+    Fx = bn_twopi * initFx;
+    Fy = bn_twopi * initFy;
+    Px = bn_halfpi * bn_tab_sin( 0.5 * Fy * y );
+    Py = bn_halfpi * bn_tab_sin( 0.5 * Fx * x );
+    C = 1.0;	/* ??? */
+
+    for ( i = 0; i < NUMSINES; i++ ) {
+	/*
+	 * Compute one term of each summation.
+	 */
+	t1 += C * bn_tab_sin( Fx * x + Px ) + Contrast;
+	t2 += C * bn_tab_sin( Fy * y + Py ) + Contrast;
 
 	/*
-	 * Compute initial Phases and Frequencies
-	 * Freq "1" goes through 2Pi as x or y go thru 0.0 -> 1.0
+	 * Compute the new phases and frequencies.
+	 * N.B. The phases shouldn't vary the same way!
 	 */
-	Fx = bn_twopi * initFx;
-	Fy = bn_twopi * initFy;
-	Px = bn_halfpi * bn_tab_sin( 0.5 * Fy * y );
-	Py = bn_halfpi * bn_tab_sin( 0.5 * Fx * x );
-	C = 1.0;	/* ??? */
+	Px = bn_halfpi * bn_tab_sin( Fy * y );
+	Py = bn_halfpi * bn_tab_sin( Fx * x );
+	Fx *= 2.0;
+	Fy *= 2.0;
+	C  *= 0.707;
+    }
 
-	for ( i = 0; i < NUMSINES; i++ ) {
-		/*
-		 * Compute one term of each summation.
-		 */
-		t1 += C * bn_tab_sin( Fx * x + Px ) + Contrast;
-		t2 += C * bn_tab_sin( Fy * y + Py ) + Contrast;
+    /* Choose a magic k! */
+    /* Compute max possible summation */
+    k =  NUMSINES * 2 * NUMSINES;
 
-		/*
-		 * Compute the new phases and frequencies.
-		 * N.B. The phases shouldn't vary the same way!
-		 */
-		Px = bn_halfpi * bn_tab_sin( Fy * y );
-		Py = bn_halfpi * bn_tab_sin( Fx * x );
-		Fx *= 2.0;
-		Fy *= 2.0;
-		C  *= 0.707;
-	}
-
-	/* Choose a magic k! */
-	/* Compute max possible summation */
-	k =  NUMSINES * 2 * NUMSINES;
-
-	return( t1 * t2 / k );
+    return( t1 * t2 / k );
 }
 
 /*
@@ -114,18 +114,18 @@ cloud_texture(register fastf_t x, register fastf_t y, fastf_t Contrast, fastf_t 
 HIDDEN int
 cloud_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
 {
-	register struct cloud_specific *cp;
+    register struct cloud_specific *cp;
 
-	BU_CK_VLS( matparm );
-	BU_GETSTRUCT( cp, cloud_specific );
-	*dpp = (char *)cp;
+    BU_CK_VLS( matparm );
+    BU_GETSTRUCT( cp, cloud_specific );
+    *dpp = (char *)cp;
 
-	cp->cl_thresh = 0.35;
-	cp->cl_range = 0.3;
-	if (bu_struct_parse( matparm, cloud_parse, (char *)cp ) < 0 )
-		return(-1);
+    cp->cl_thresh = 0.35;
+    cp->cl_range = 0.3;
+    if (bu_struct_parse( matparm, cloud_parse, (char *)cp ) < 0 )
+	return(-1);
 
-	return(1);
+    return(1);
 }
 
 /*
@@ -134,7 +134,7 @@ cloud_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
 HIDDEN void
 cloud_print(register struct region *rp, char *dp)
 {
-	bu_struct_print( rp->reg_name, cloud_parse, (char *)dp );
+    bu_struct_print( rp->reg_name, cloud_parse, (char *)dp );
 }
 
 /*
@@ -143,7 +143,7 @@ cloud_print(register struct region *rp, char *dp)
 HIDDEN void
 cloud_free(char *cp)
 {
-	bu_free( cp, "cloud_specific" );
+    bu_free( cp, "cloud_specific" );
 }
 
 /*
@@ -158,31 +158,31 @@ cloud_free(char *cp)
 int
 cloud_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
 {
-	register struct cloud_specific *cp =
-		(struct cloud_specific *)dp;
-	double intensity;
-	fastf_t	TR;
+    register struct cloud_specific *cp =
+	(struct cloud_specific *)dp;
+    double intensity;
+    fastf_t	TR;
 
-	intensity = cloud_texture( swp->sw_uv.uv_u, swp->sw_uv.uv_v,
-		1.0, 2.0, 1.0 );
+    intensity = cloud_texture( swp->sw_uv.uv_u, swp->sw_uv.uv_v,
+			       1.0, 2.0, 1.0 );
 
-	/* Intensity is normalized - check bounds */
-	if (intensity > 1.0 )
-		intensity = 1.0;
-	else if (intensity < 0.0 )
-		intensity = 0.0;
+    /* Intensity is normalized - check bounds */
+    if (intensity > 1.0 )
+	intensity = 1.0;
+    else if (intensity < 0.0 )
+	intensity = 0.0;
 
-	/* Compute Translucency Function */
-	TR = 1.0 - ( intensity - cp->cl_thresh ) / cp->cl_range;
-	if (TR < 0.0)
-		TR = 0.0;
-	else if (TR > 1.0)
-		TR = 1.0;
+    /* Compute Translucency Function */
+    TR = 1.0 - ( intensity - cp->cl_thresh ) / cp->cl_range;
+    if (TR < 0.0)
+	TR = 0.0;
+    else if (TR > 1.0)
+	TR = 1.0;
 
-	swp->sw_color[0] = ((1-TR) * intensity + (TR * .31));	/* Red */
-	swp->sw_color[1] = ((1-TR) * intensity + (TR * .31));	/* Green */
-	swp->sw_color[2] = ((1-TR) * intensity + (TR * .78));	/* Blue */
-	return(1);
+    swp->sw_color[0] = ((1-TR) * intensity + (TR * .31));	/* Red */
+    swp->sw_color[1] = ((1-TR) * intensity + (TR * .31));	/* Green */
+    swp->sw_color[2] = ((1-TR) * intensity + (TR * .78));	/* Blue */
+    return(1);
 }
 
 /*

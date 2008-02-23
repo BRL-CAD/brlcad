@@ -145,35 +145,35 @@ int bu_hsv_to_rgb (fastf_t *hsv, unsigned char *rgb)
 	|| ((NEAR_ZERO(hue - ACHROMATIC, SMALL_FASTF)) && (sat > 0.0))) /* hue == ACHROMATIC */
     {
 	bu_log("bu_hsv_to_rgb: Illegal HSV (%g, %g, %g)\n",
-	    V3ARGS(hsv));
+	       V3ARGS(hsv));
 	return (0);
     }
 
     /* so hue == ACHROMATIC (or is ignored)	*/
     if (NEAR_ZERO(sat, SMALL_FASTF)) {
 	VSETALL(float_rgb, val)
-    } else {
-	if (NEAR_ZERO(hue - 360.0, SMALL_FASTF))
-	    hue = 0.0;
-	hue /= 60.0;
-	hue_int = floor((double) hue);
-	hue_frac = hue - hue_int;
-	p = val * (1.0 - sat);
-	q = val * (1.0 - (sat * hue_frac));
-	t = val * (1.0 - (sat * (1.0 - hue_frac)));
-	switch (hue_int) {
-	    case 0: VSET(float_rgb, val, t, p); break;
-	    case 1: VSET(float_rgb, q, val, p); break;
-	    case 2: VSET(float_rgb, p, val, t); break;
-	    case 3: VSET(float_rgb, p, q, val); break;
-	    case 4: VSET(float_rgb, t, p, val); break;
-	    case 5: VSET(float_rgb, val, p, q); break;
-	    default:
-		bu_log("%s:%d: This shouldn't happen\n",
-		       __FILE__, __LINE__);
-		bu_bomb("unexpected condition encountered in bu_hsv_to_rgb\n");
-	}
-    }
+	    } else {
+		if (NEAR_ZERO(hue - 360.0, SMALL_FASTF))
+		    hue = 0.0;
+		hue /= 60.0;
+		hue_int = floor((double) hue);
+		hue_frac = hue - hue_int;
+		p = val * (1.0 - sat);
+		q = val * (1.0 - (sat * hue_frac));
+		t = val * (1.0 - (sat * (1.0 - hue_frac)));
+		switch (hue_int) {
+		    case 0: VSET(float_rgb, val, t, p); break;
+		    case 1: VSET(float_rgb, q, val, p); break;
+		    case 2: VSET(float_rgb, p, val, t); break;
+		    case 3: VSET(float_rgb, p, q, val); break;
+		    case 4: VSET(float_rgb, t, p, val); break;
+		    case 5: VSET(float_rgb, val, p, q); break;
+		    default:
+			bu_log("%s:%d: This shouldn't happen\n",
+			       __FILE__, __LINE__);
+			bu_bomb("unexpected condition encountered in bu_hsv_to_rgb\n");
+		}
+	    }
 
     rgb[RED] = float_rgb[RED] * 255;
     rgb[GRN] = float_rgb[GRN] * 255;
@@ -219,8 +219,8 @@ int bu_str_to_rgb (char *str, unsigned char *rgb)
 	}
 	VSET(rgb, r, g, b);
 	if ((r < 0) || (r > 255)
-	 || (g < 0) || (g > 255)
-	 || (b < 0) || (b > 255))
+	    || (g < 0) || (g > 255)
+	    || (b < 0) || (b > 255))
 	    return 0;
     }
     else

@@ -49,36 +49,36 @@ double	obuf[512];
 
 int main(int argc, char **argv)
 {
-	int	i, num;
-	double	scale;
+    int	i, num;
+    double	scale;
 
-	scale = 1.0;
+    scale = 1.0;
 
-	if ( argc > 1 ) {
-		if ( strcmp( argv[1], "-n" ) == 0 )
-			scale = 1.0;
-		else
-			scale = atof( argv[1] );
-		argc--;
+    if ( argc > 1 ) {
+	if ( strcmp( argv[1], "-n" ) == 0 )
+	    scale = 1.0;
+	else
+	    scale = atof( argv[1] );
+	argc--;
+    }
+
+    if ( argc > 1 || scale == 0 || isatty(fileno(stdin)) || isatty(fileno(stdout)) ) {
+	bu_exit(1, "Usage: f-d [-n || scale] < floats > doubles\n");
+    }
+
+    while ( (num = fread( &ibuf[0], sizeof( ibuf[0] ), 512, stdin)) > 0 ) {
+	if ( scale != 1.0 ) {
+	    for ( i = 0; i < num; i++ )
+		obuf[i] = ibuf[i] * scale;
+	} else {
+	    for ( i = 0; i < num; i++ )
+		obuf[i] = ibuf[i];
 	}
 
-	if ( argc > 1 || scale == 0 || isatty(fileno(stdin)) || isatty(fileno(stdout)) ) {
-		bu_exit(1, "Usage: f-d [-n || scale] < floats > doubles\n");
-	}
+	fwrite( &obuf[0], sizeof( obuf[0] ), num, stdout );
+    }
 
-	while ( (num = fread( &ibuf[0], sizeof( ibuf[0] ), 512, stdin)) > 0 ) {
-		if ( scale != 1.0 ) {
-			for ( i = 0; i < num; i++ )
-				obuf[i] = ibuf[i] * scale;
-		} else {
-			for ( i = 0; i < num; i++ )
-				obuf[i] = ibuf[i];
-		}
-
-		fwrite( &obuf[0], sizeof( obuf[0] ), num, stdout );
-	}
-
-	return 0;
+    return 0;
 }
 
 /*

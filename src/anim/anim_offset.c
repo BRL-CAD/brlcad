@@ -87,18 +87,18 @@ int get_args(int argc, char **argv)
     int c;
     while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
 	switch (c) {
-	case 'r':
-	    full_print = 1;
-	    break;
-	case 'o':
-	    sscanf(argv[bu_optind-1], "%lf", offset+0);
-	    sscanf(argv[bu_optind], "%lf", offset+1);
-	    sscanf(argv[bu_optind+1], "%lf", offset+2);
-	    bu_optind += 2;
-	    break;
-	default:
-	    fprintf(stderr, "Unknown option: -%c\n", c);
-	    return(0);
+	    case 'r':
+		full_print = 1;
+		break;
+	    case 'o':
+		sscanf(argv[bu_optind-1], "%lf", offset+0);
+		sscanf(argv[bu_optind], "%lf", offset+1);
+		sscanf(argv[bu_optind+1], "%lf", offset+2);
+		bu_optind += 2;
+		break;
+	    default:
+		fprintf(stderr, "Unknown option: -%c\n", c);
+		return(0);
 	}
     }
     return(1);

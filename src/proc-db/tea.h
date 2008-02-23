@@ -24,7 +24,7 @@
 #define PATCH_COUNT	32
 
 typedef struct {
-	float x, y, z;
+    float x, y, z;
 } dt;
 
 typedef int pt[DEGREE][DEGREE];

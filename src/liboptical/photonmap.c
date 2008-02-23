@@ -308,7 +308,7 @@ void GetMaterial(char *MS, vect_t spec, fastf_t *refi, fastf_t *transmit) {
     /* Initialize spec and refi */
     spec[0]= spec[1]= spec[2]= *refi= *transmit= 0;
     if (CheckMaterial("plastic", MS)) {
-  /* Checks that the first 7 chars match any of the characters found in plastic */
+	/* Checks that the first 7 chars match any of the characters found in plastic */
 	/* Plastic Shader */
 	phong_sp->magic= PL_MAGIC;
 	phong_sp->shine= 10;
@@ -896,7 +896,7 @@ void alarmhandler(int sig) {
     p = (float)ICSize/PMap[PM_GLOBAL]->MaxPhotons + .015;
     tl = (float)t*1.0/p - t;
     bu_log("    Irradiance Cache Progress: %d%%. Approximate time left: ",
-	    (int)(100.0*p), (1.0/p-1.0)*(float)t, (float)t*1.0/p);
+	   (int)(100.0*p), (1.0/p-1.0)*(float)t, (float)t*1.0/p);
 #define BAH(s, w) if (tl > (s)) { float d = floor(tl / (float)(s)); \
     tl -= d * (s); bu_log("%d "w, (int)d, d>1?"s":""); }
     BAH(60*60*24, "day%s, ");
@@ -1312,7 +1312,7 @@ void LocatePhotons(struct PhotonSearch *Search, struct PNode *Root) {
     Node.P= Root->P;
     Node.Dist= (Root->P.Pos[0] - Search->Pos[0])*(Root->P.Pos[0] - Search->Pos[0]) + (Root->P.Pos[1] - Search->Pos[1])*(Root->P.Pos[1] - Search->Pos[1]) + (Root->P.Pos[2] - Search->Pos[2])*(Root->P.Pos[2] - Search->Pos[2]);
     if (Node.Dist < Search->RadSq && angle > GPM_ATOL) {
-  /* Check that Result is within Radius and Angular Tolerance */
+	/* Check that Result is within Radius and Angular Tolerance */
 	if (Search->Found < Search->Max) {
 	    Push(Search, Node);
 	} else {
@@ -1330,7 +1330,7 @@ void LocatePhotons(struct PhotonSearch *Search, struct PNode *Root) {
 
     angle= VDOT(Search->Normal, Root->P.Normal);
     if (Dist < Search->RadSq && angle > GPM_ATOL) {
-  /* Check that Result is within Radius and Angular Tolerance */
+	/* Check that Result is within Radius and Angular Tolerance */
 	/*  if (Dist < NP->RadSq) {*/
 	if (Search->Found < Search->Max) {
 	    Search->List[Search->Found++].P= Root->P;

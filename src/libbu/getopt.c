@@ -65,14 +65,14 @@ bu_getopt(int nargc, char *const *nargv, const char *ostr)
     register char	*oli;		/* option letter list index */
 
     if (*place=='\0') {
- 			/* update scanning pointer */
+	/* update scanning pointer */
 	if (bu_optind >= nargc || *(place = nargv[bu_optind]) != '-' ||
-	   !*++place)  {
+	    !*++place)  {
 	    place = EMSG;
 	    return(EOF);
 	}
 	if (*place == '-') {
- 	/* found "--" */
+	    /* found "--" */
 	    place = EMSG;
 	    ++bu_optind;
 	    return(EOF);
@@ -91,7 +91,7 @@ bu_getopt(int nargc, char *const *nargv, const char *ostr)
 	tell(": illegal option -- ");
     }
     if (*++oli != ':') {
- 		/* don't need argument */
+	/* don't need argument */
 	bu_optarg = NULL;
 	if (*place == '\0') {
 	    ++bu_optind;
@@ -99,10 +99,10 @@ bu_getopt(int nargc, char *const *nargv, const char *ostr)
 	}
     }
     else {
- 				/* need an argument */
+	/* need an argument */
 	if (*place) bu_optarg = place;	/* no white space */
 	else if (nargc <= ++bu_optind) {
- 	/* no arg */
+	    /* no arg */
 	    place = EMSG;
 	    tell(": option requires an argument -- ");
 	}

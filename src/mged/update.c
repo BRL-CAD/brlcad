@@ -45,9 +45,9 @@ extern int event_check();
 void
 mged_update(int	non_blocking)
 {
-	if (non_blocking >= 0)
-		event_check(non_blocking);
-	refresh();
+    if (non_blocking >= 0)
+	event_check(non_blocking);
+    refresh();
 }
 
 int
@@ -56,21 +56,21 @@ f_update(ClientData	clientData,
 	 int		argc,
 	 char		**argv)
 {
-	int non_blocking;
+    int non_blocking;
 
-	if (argc != 2 || sscanf(argv[1], "%d", &non_blocking) != 1) {
-		struct bu_vls vls;
+    if (argc != 2 || sscanf(argv[1], "%d", &non_blocking) != 1) {
+	struct bu_vls vls;
 
-		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helpdevel mged_update");
-		Tcl_Eval(interp, bu_vls_addr(&vls));
-		bu_vls_free(&vls);
-		return TCL_ERROR;
-	}
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "helpdevel mged_update");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
+    }
 
-	mged_update(non_blocking);
+    mged_update(non_blocking);
 
-	return TCL_OK;
+    return TCL_OK;
 }
 
 
@@ -85,10 +85,10 @@ WaitVariableProc(ClientData	clientData,	/* Pointer to integer to set to 1. */
 		 char		*name2,		/* Second part of variable name. */
 		 int		flags)		/* Information about what happened. */
 {
-	int *donePtr = (int *) clientData;
+    int *donePtr = (int *) clientData;
 
-	*donePtr = 1;
-	return (char *) NULL;
+    *donePtr = 1;
+    return (char *) NULL;
 }
 
 
@@ -100,14 +100,14 @@ static void
 WaitVisibilityProc(ClientData	clientData,	/* Pointer to integer to set to 1. */
 		   XEvent	*eventPtr)	/* Information about event (not used). */
 {
-	int *donePtr = (int *) clientData;
+    int *donePtr = (int *) clientData;
 
-	if (eventPtr->type == VisibilityNotify) {
-		*donePtr = 1;
-	}
-	if (eventPtr->type == DestroyNotify) {
-		*donePtr = 2;
-	}
+    if (eventPtr->type == VisibilityNotify) {
+	*donePtr = 1;
+    }
+    if (eventPtr->type == DestroyNotify) {
+	*donePtr = 2;
+    }
 }
 
 /*
@@ -118,11 +118,11 @@ static void
 WaitWindowProc(ClientData	clientData,	/* Pointer to integer to set to 1. */
 	       XEvent		*eventPtr)	/* Information about event. */
 {
-	int *donePtr = (int *) clientData;
+    int *donePtr = (int *) clientData;
 
-	if (eventPtr->type == DestroyNotify) {
-		*donePtr = 1;
-	}
+    if (eventPtr->type == DestroyNotify) {
+	*donePtr = 1;
+    }
 }
 
 /*
@@ -136,88 +136,88 @@ f_wait(ClientData	clientData,	/* Main window associated with interpreter. */
        int		argc,		/* Number of arguments. */
        char		**argv)		/* Argument strings. */
 {
-	int c, done;
-	size_t length;
-	Tk_Window window;
+    int c, done;
+    size_t length;
+    Tk_Window window;
 
-	if (argc != 3) {
-		Tcl_AppendResult(interp, "wrong # args: should be \"",
-				 argv[0], " variable|visibility|window name\"", (char *) NULL);
-		return TCL_ERROR;
+    if (argc != 3) {
+	Tcl_AppendResult(interp, "wrong # args: should be \"",
+			 argv[0], " variable|visibility|window name\"", (char *) NULL);
+	return TCL_ERROR;
+    }
+    c = argv[1][0];
+    length = strlen(argv[1]);
+    if ((c == 'v') && (strncmp(argv[1], "variable", length) == 0)
+	&& (length >= 2)) {
+	if (Tcl_TraceVar(interp, argv[2],
+			 TCL_GLOBAL_ONLY|TCL_TRACE_WRITES|TCL_TRACE_UNSETS,
+			 (Tcl_VarTraceProc *)WaitVariableProc,
+			 (ClientData) &done) != TCL_OK) {
+	    return TCL_ERROR;
 	}
-	c = argv[1][0];
-	length = strlen(argv[1]);
-	if ((c == 'v') && (strncmp(argv[1], "variable", length) == 0)
-	    && (length >= 2)) {
-		if (Tcl_TraceVar(interp, argv[2],
-				 TCL_GLOBAL_ONLY|TCL_TRACE_WRITES|TCL_TRACE_UNSETS,
-				 (Tcl_VarTraceProc *)WaitVariableProc,
-				 (ClientData) &done) != TCL_OK) {
-			return TCL_ERROR;
-		}
-		done = 0;
-		while (!done) {
-			mged_update(0);
-		}
-		Tcl_UntraceVar(interp, argv[2],
-			       TCL_GLOBAL_ONLY|TCL_TRACE_WRITES|TCL_TRACE_UNSETS,
-			       (Tcl_VarTraceProc *)WaitVariableProc,
-			       (ClientData) &done);
-	} else if ((c == 'v') && (strncmp(argv[1], "visibility", length) == 0)
-		   && (length >= 2)) {
-
-		window = Tk_NameToWindow(interp, argv[2], tkwin);
-		if (window == NULL) {
-			return TCL_ERROR;
-		}
-		Tk_CreateEventHandler(window, VisibilityChangeMask|StructureNotifyMask,
-				      WaitVisibilityProc, (ClientData) &done);
-		done = 0;
-		while (!done) {
-			mged_update(0);
-		}
-		if (done != 1) {
-			/*
-			 * Note that we do not delete the event handler because it
-			 * was deleted automatically when the window was destroyed.
-			 */
-
-			Tcl_ResetResult(interp);
-			Tcl_AppendResult(interp, "window \"", argv[2],
-					 "\" was deleted before its visibility changed",
-					 (char *) NULL);
-			return TCL_ERROR;
-		}
-		Tk_DeleteEventHandler(window, VisibilityChangeMask|StructureNotifyMask,
-				      WaitVisibilityProc, (ClientData) &done);
-	} else if ((c == 'w') && (strncmp(argv[1], "window", length) == 0)) {
-		window = Tk_NameToWindow(interp, argv[2], tkwin);
-		if (window == NULL) {
-			return TCL_ERROR;
-		}
-		Tk_CreateEventHandler(window, StructureNotifyMask,
-				      WaitWindowProc, (ClientData) &done);
-		done = 0;
-		while (!done) {
-			mged_update(0);
-		}
-		/*
-		 * Note:  there's no need to delete the event handler.  It was
-		 * deleted automatically when the window was destroyed.
-		 */
-	} else {
-		Tcl_AppendResult(interp, "bad option \"", argv[1],
-				 "\": must be variable, visibility, or window", (char *) NULL);
-		return TCL_ERROR;
+	done = 0;
+	while (!done) {
+	    mged_update(0);
 	}
+	Tcl_UntraceVar(interp, argv[2],
+		       TCL_GLOBAL_ONLY|TCL_TRACE_WRITES|TCL_TRACE_UNSETS,
+		       (Tcl_VarTraceProc *)WaitVariableProc,
+		       (ClientData) &done);
+    } else if ((c == 'v') && (strncmp(argv[1], "visibility", length) == 0)
+	       && (length >= 2)) {
 
+	window = Tk_NameToWindow(interp, argv[2], tkwin);
+	if (window == NULL) {
+	    return TCL_ERROR;
+	}
+	Tk_CreateEventHandler(window, VisibilityChangeMask|StructureNotifyMask,
+			      WaitVisibilityProc, (ClientData) &done);
+	done = 0;
+	while (!done) {
+	    mged_update(0);
+	}
+	if (done != 1) {
+	    /*
+	     * Note that we do not delete the event handler because it
+	     * was deleted automatically when the window was destroyed.
+	     */
+
+	    Tcl_ResetResult(interp);
+	    Tcl_AppendResult(interp, "window \"", argv[2],
+			     "\" was deleted before its visibility changed",
+			     (char *) NULL);
+	    return TCL_ERROR;
+	}
+	Tk_DeleteEventHandler(window, VisibilityChangeMask|StructureNotifyMask,
+			      WaitVisibilityProc, (ClientData) &done);
+    } else if ((c == 'w') && (strncmp(argv[1], "window", length) == 0)) {
+	window = Tk_NameToWindow(interp, argv[2], tkwin);
+	if (window == NULL) {
+	    return TCL_ERROR;
+	}
+	Tk_CreateEventHandler(window, StructureNotifyMask,
+			      WaitWindowProc, (ClientData) &done);
+	done = 0;
+	while (!done) {
+	    mged_update(0);
+	}
 	/*
-	 * Clear out the interpreter's result, since it may have been set
-	 * by event handlers.
+	 * Note:  there's no need to delete the event handler.  It was
+	 * deleted automatically when the window was destroyed.
 	 */
+    } else {
+	Tcl_AppendResult(interp, "bad option \"", argv[1],
+			 "\": must be variable, visibility, or window", (char *) NULL);
+	return TCL_ERROR;
+    }
 
-	Tcl_ResetResult(interp);
-	return TCL_OK;
+    /*
+     * Clear out the interpreter's result, since it may have been set
+     * by event handlers.
+     */
+
+    Tcl_ResetResult(interp);
+    return TCL_OK;
 }
 
 /*

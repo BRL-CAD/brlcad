@@ -174,9 +174,9 @@ create_text_overlay( struct bu_vls *vp )
  */
 void
 screen_vls(
-	   int	xbase,
-	   int	ybase,
-	   struct bu_vls	*vp)
+    int	xbase,
+    int	ybase,
+    struct bu_vls	*vp)
 {
     register char	*start;
     register char	*end;
@@ -401,7 +401,7 @@ dotitles(struct bu_vls *overlay_vls)
 	 * Print information about object illuminated
 	 */
 	if ( illump != SOLID_NULL &&
-	    (state==ST_O_PATH || state==ST_O_PICK || state==ST_S_PICK) )  {
+	     (state==ST_O_PATH || state==ST_O_PICK || state==ST_S_PICK) )  {
 	    for ( i=0; i < illump->s_fullpath.fp_len; i++ )  {
 		if ( i == ipathpos  &&  state == ST_O_PATH )  {
 		    DM_SET_FGCOLOR(dmp,
@@ -573,7 +573,7 @@ dotitles(struct bu_vls *overlay_vls)
 	    bu_vls_strcat(&vls, " Path: ");
 	    for ( i=0; i < illump->s_fullpath.fp_len; i++ )  {
 		if ( i == ipathpos  &&
-		    (state == ST_O_PATH || state == ST_O_EDIT) )
+		     (state == ST_O_PATH || state == ST_O_EDIT) )
 		    bu_vls_strcat( &vls, "/__MATRIX__" );
 		bu_vls_printf(&vls, "/%s",
 			      DB_FULL_PATH_GET(&illump->s_fullpath, i)->d_namep );

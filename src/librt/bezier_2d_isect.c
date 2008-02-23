@@ -66,10 +66,10 @@ int CrossingCount(
     V2SUB2( to_pt, ray_start, V[0] );
     sign = old_sign = SGN( V2DOT( to_pt, ray_perp ) );
     for (i = 1; i <= degree; i++) {
-	    V2SUB2( to_pt, ray_start, V[i] );
-	    sign = SGN( V2DOT( to_pt, ray_perp ) );
-	    if (sign != old_sign) n_crossings++;
-	    old_sign = sign;
+	V2SUB2( to_pt, ray_start, V[i] );
+	sign = SGN( V2DOT( to_pt, ray_perp ) );
+	if (sign != old_sign) n_crossings++;
+	old_sign = sign;
     }
 
     return n_crossings;
@@ -94,9 +94,9 @@ ControlPolygonFlatEnough(
     double 	max_distance_below;
     double 	error;			/* Precision of root		*/
     double 	intercept_1,
-		intercept_2,
-			left_intercept,
-			right_intercept;
+	intercept_2,
+	left_intercept,
+	right_intercept;
     double 	a, b, c;		/* Coefficients of implicit	*/
 					/* eqn for line from V[0]-V[deg]*/
 
@@ -117,13 +117,13 @@ ControlPolygonFlatEnough(
 
 	for (i = 1; i < degree; i++) {
 	    /* Compute distance from each of the points to that line	*/
-		distance[i] = a * V[i][X] + b * V[i][Y] + c;
-		if (distance[i] > 0.0) {
-				distance[i] = (distance[i] * distance[i]) * abSquared;
-		}
-		if (distance[i] < 0.0) {
-				distance[i] = -((distance[i] * distance[i]) * abSquared);
-		}
+	    distance[i] = a * V[i][X] + b * V[i][Y] + c;
+	    if (distance[i] > 0.0) {
+		distance[i] = (distance[i] * distance[i]) * abSquared;
+	    }
+	    if (distance[i] < 0.0) {
+		distance[i] = -((distance[i] * distance[i]) * abSquared);
+	    }
 	}
     }
 
@@ -132,12 +132,12 @@ ControlPolygonFlatEnough(
     max_distance_above = 0.0;
     max_distance_below = 0.0;
     for (i = 1; i < degree; i++) {
-		if (distance[i] < 0.0) {
-			max_distance_below = MIN(max_distance_below, distance[i]);
-		};
-		if (distance[i] > 0.0) {
-			max_distance_above = MAX(max_distance_above, distance[i]);
-		}
+	if (distance[i] < 0.0) {
+	    max_distance_below = MIN(max_distance_below, distance[i]);
+	};
+	if (distance[i] > 0.0) {
+	    max_distance_above = MAX(max_distance_above, distance[i]);
+	}
     }
     bu_free((char *)distance, "ControlPolygonFlatEnough" );
 
@@ -178,10 +178,10 @@ ControlPolygonFlatEnough(
     error = 0.5 * (right_intercept-left_intercept);
 
     if (error < epsilon) {
-		return 1;
+	return 1;
     }
     else {
-		return 0;
+	return 0;
     }
 }
 
@@ -211,47 +211,47 @@ Bezier(
 
     Vtemp = (point2d_t **)bu_calloc( degree+1, sizeof(point2d_t *), "Bezier: Vtemp array" );
     for ( i=0; i<=degree; i++ )
-	    Vtemp[i] = (point2d_t *)bu_calloc( degree+1, sizeof( point2d_t ),
-					       "Bezier: Vtemp[i] array" );
+	Vtemp[i] = (point2d_t *)bu_calloc( degree+1, sizeof( point2d_t ),
+					   "Bezier: Vtemp[i] array" );
     /* Copy control points	*/
     for (j =0; j <= degree; j++) {
-		V2MOVE( Vtemp[0][j], V[j]);
+	V2MOVE( Vtemp[0][j], V[j]);
     }
 
     /* Triangle computation	*/
     for (i = 1; i <= degree; i++) {
-		for (j =0; j <= degree - i; j++) {
-		Vtemp[i][j][X] =
-			(1.0 - t) * Vtemp[i-1][j][X] + t * Vtemp[i-1][j+1][X];
-		Vtemp[i][j][Y] =
-			(1.0 - t) * Vtemp[i-1][j][Y] + t * Vtemp[i-1][j+1][Y];
-		}
+	for (j =0; j <= degree - i; j++) {
+	    Vtemp[i][j][X] =
+		(1.0 - t) * Vtemp[i-1][j][X] + t * Vtemp[i-1][j+1][X];
+	    Vtemp[i][j][Y] =
+		(1.0 - t) * Vtemp[i-1][j][Y] + t * Vtemp[i-1][j+1][Y];
+	}
     }
 
     if (Left != NULL) {
-		for (j = 0; j <= degree; j++) {
-		V2MOVE( Left[j], Vtemp[j][0]);
-		}
+	for (j = 0; j <= degree; j++) {
+	    V2MOVE( Left[j], Vtemp[j][0]);
+	}
     }
     if (Right != NULL) {
-		for (j = 0; j <= degree; j++) {
-		V2MOVE( Right[j], Vtemp[degree-j][j]);
-		}
+	for (j = 0; j <= degree; j++) {
+	    V2MOVE( Right[j], Vtemp[degree-j][j]);
+	}
     }
 
     V2MOVE( eval_pt, Vtemp[degree][0] );
 
     if ( normal ) {
-	    V2SUB2( tangent, Vtemp[degree-1][1], Vtemp[degree-1][0] );
-	    normal[X] = tangent[Y];
-	    normal[Y] = -tangent[X];
-	    len = sqrt( MAG2SQ( normal ) );
-	    normal[X] /= len;
-	    normal[Y] /= len;
+	V2SUB2( tangent, Vtemp[degree-1][1], Vtemp[degree-1][0] );
+	normal[X] = tangent[Y];
+	normal[Y] = -tangent[X];
+	len = sqrt( MAG2SQ( normal ) );
+	normal[X] /= len;
+	normal[Y] /= len;
     }
 
     for ( i=0; i<=degree; i++ )
-	    bu_free( (char *)Vtemp[i], "Bezier: Vtemp[i]" );
+	bu_free( (char *)Vtemp[i], "Bezier: Vtemp[i]" );
     bu_free( (char *)Vtemp, "Bezier: Vtemp" );
 
     return;
@@ -280,75 +280,75 @@ ComputeXIntercept(
     point2d_t	intercept,		/* calculated intercept point */
     point2d_t	normal )		/* calculated unit normal at intercept */
 {
-	fastf_t beta;
-	fastf_t denom;
-	fastf_t len;
-	point2d_t seg_line;
+    fastf_t beta;
+    fastf_t denom;
+    fastf_t len;
+    point2d_t seg_line;
 
-	denom = (V[degree][X] - V[0][X]) * ray_dir[Y] -
-		(V[degree][Y] - V[0][Y]) * ray_dir[X];
+    denom = (V[degree][X] - V[0][X]) * ray_dir[Y] -
+	(V[degree][Y] - V[0][Y]) * ray_dir[X];
 
-	if ( NEAR_ZERO( denom, SMALL_FASTF ) )
-		return 0;
+    if ( NEAR_ZERO( denom, SMALL_FASTF ) )
+	return 0;
 
-	beta = (V[0][Y] * ray_dir[X] - V[0][X] * ray_dir[Y] +
-		ray_start[X] * ray_dir[Y] - ray_start[Y] * ray_dir[X] ) / denom;
+    beta = (V[0][Y] * ray_dir[X] - V[0][X] * ray_dir[Y] +
+	    ray_start[X] * ray_dir[Y] - ray_start[Y] * ray_dir[X] ) / denom;
 
-	if ( beta < 0.0 || beta > 1.0 )
-		return 0;
+    if ( beta < 0.0 || beta > 1.0 )
+	return 0;
 
-	V2SUB2( seg_line, V[degree], V[0] );
-	V2JOIN1( intercept, V[0], beta, seg_line );
+    V2SUB2( seg_line, V[degree], V[0] );
+    V2JOIN1( intercept, V[0], beta, seg_line );
 
-	/* calculate normal */
-	normal[X] = seg_line[Y];
-	normal[Y] = -seg_line[X];
-	len = sqrt( MAG2SQ( seg_line ) );
-	normal[X] /= len;
-	normal[Y] /= len;
+    /* calculate normal */
+    normal[X] = seg_line[Y];
+    normal[Y] = -seg_line[X];
+    len = sqrt( MAG2SQ( seg_line ) );
+    normal[X] /= len;
+    normal[Y] /= len;
 
-	return 1;
+    return 1;
 #if 0
-	V2MOVE( p, ray_start );
-	p[Z] = 0.0;
-	V2MOVE( d, ray_dir );
-	d[Z] = 0.0;
-	V2MOVE( a, V[0] );
-	a[Z] = 0.0;
-	V2SUB2( c, V[degree], V[0] );
-	c[Z] = 0.0;
+    V2MOVE( p, ray_start );
+    p[Z] = 0.0;
+    V2MOVE( d, ray_dir );
+    d[Z] = 0.0;
+    V2MOVE( a, V[0] );
+    a[Z] = 0.0;
+    V2SUB2( c, V[degree], V[0] );
+    c[Z] = 0.0;
 
-	/* calculate intercept */
-	ret = bn_isect_line2_lseg2( dist, p, d, a, c, &tol );
+    /* calculate intercept */
+    ret = bn_isect_line2_lseg2( dist, p, d, a, c, &tol );
 
-	bu_log( "\tbn_isect_line2_lseg2() returned %d\n", ret );
+    bu_log( "\tbn_isect_line2_lseg2() returned %d\n", ret );
 
-	if ( ret <= 0 )
-		return 0;
+    if ( ret <= 0 )
+	return 0;
 
-	switch ( ret ) {
-		case 1:
-			/* intercept at V[0] */
-			V2MOVE( intercept, V[0] );
-			break;
-		case 2:
-			/* intercept at V[degree] */
-			V2MOVE( intercept, V[degree] );
-			break;
-		case 3:
-			/* intercept between endpoints */
-			V2JOIN1( intercept, ray_start, dist[0], ray_dir );
-			break;
-	}
+    switch ( ret ) {
+	case 1:
+	    /* intercept at V[0] */
+	    V2MOVE( intercept, V[0] );
+	    break;
+	case 2:
+	    /* intercept at V[degree] */
+	    V2MOVE( intercept, V[degree] );
+	    break;
+	case 3:
+	    /* intercept between endpoints */
+	    V2JOIN1( intercept, ray_start, dist[0], ray_dir );
+	    break;
+    }
 
-	/* calculate normal */
-	normal[X] = c[Y];
-	normal[Y] = -c[X];
-	len = sqrt( MAG2SQ( c ) );
-	normal[X] /= len;
-	normal[Y] /= len;
+    /* calculate normal */
+    normal[X] = c[Y];
+    normal[Y] = -c[X];
+    len = sqrt( MAG2SQ( c ) );
+    normal[X] /= len;
+    normal[Y] /= len;
 
-	return 1;
+    return 1;
 #endif
 }
 
@@ -373,40 +373,40 @@ FindRoots(
 {
     int         i;
     point2d_t   *Left,                  /* New left and right           */
-		*Right;                 /* control polygons             */
+	*Right;                 /* control polygons             */
     int         left_count,             /* Solution count from          */
-		right_count;            /* children                     */
+	right_count;            /* children                     */
     point2d_t   *left_t,                /* Solutions from kids          */
-		*right_t;
+	*right_t;
     point2d_t	*left_n,		/* normals from kids		*/
-		*right_n;
+	*right_n;
     int		total_count;
     point2d_t	eval_pt;
 
     switch (CrossingCount(w, degree, ray_start, ray_dir, ray_perp)) {
 	case 0 : {
-       /* No solutions here    */
-	     return 0;
+	    /* No solutions here    */
+	    return 0;
 	}
 	case 1 : {
-       /* Unique solution      */
+	    /* Unique solution      */
 	    /* Stop recursion when the tree is deep enough      */
 	    /* if deep enough, return 1 solution at midpoint    */
 	    if (depth >= MAXDEPTH) {
-		    *intercept = (point2d_t *)bu_malloc( sizeof( point2d_t ), "FindRoots: unique solution (intercept)" );
-		    *normal = (point2d_t *)bu_malloc( sizeof( point2d_t ), "FindRoots: unique solution (normal)" );
-		    Bezier( w, degree, 0.5, NULL, NULL, *intercept[0], *normal[0] );
-		    return 1;
+		*intercept = (point2d_t *)bu_malloc( sizeof( point2d_t ), "FindRoots: unique solution (intercept)" );
+		*normal = (point2d_t *)bu_malloc( sizeof( point2d_t ), "FindRoots: unique solution (normal)" );
+		Bezier( w, degree, 0.5, NULL, NULL, *intercept[0], *normal[0] );
+		return 1;
 	    }
 	    if (ControlPolygonFlatEnough(w, degree, epsilon)) {
-		    *intercept = (point2d_t *)bu_malloc( sizeof( point2d_t ), "FindRoots: unique solution (intercept)" );
-		    *normal = (point2d_t *)bu_malloc( sizeof( point2d_t ), "FindRoots: unique solution (normal)" );
-		    if ( !ComputeXIntercept( w, degree, ray_start, ray_dir, epsilon, *intercept[0], *normal[0] ) ) {
-			    bu_free( (char *)(*intercept), "FindRoots: no solution" );
-			    bu_free( (char *)(*normal), "FindRoots: no solution" );
-			    return 0;
-		    }
-		    return 1;
+		*intercept = (point2d_t *)bu_malloc( sizeof( point2d_t ), "FindRoots: unique solution (intercept)" );
+		*normal = (point2d_t *)bu_malloc( sizeof( point2d_t ), "FindRoots: unique solution (normal)" );
+		if ( !ComputeXIntercept( w, degree, ray_start, ray_dir, epsilon, *intercept[0], *normal[0] ) ) {
+		    bu_free( (char *)(*intercept), "FindRoots: no solution" );
+		    bu_free( (char *)(*normal), "FindRoots: no solution" );
+		    return 0;
+		}
+		return 1;
 	    }
 	    break;
 	}
@@ -426,29 +426,29 @@ FindRoots(
     bu_free( (char *)Left, "FindRoots: Left" );
     bu_free( (char *)Right, "FindRoots: Right" );
     if ( total_count ) {
-	    *intercept = (point2d_t *)bu_calloc( total_count, sizeof( point2d_t ),
-				       "FindRoots: roots compilation" );
-	    *normal = (point2d_t *)bu_calloc( total_count, sizeof( point2d_t ),
+	*intercept = (point2d_t *)bu_calloc( total_count, sizeof( point2d_t ),
+					     "FindRoots: roots compilation" );
+	*normal = (point2d_t *)bu_calloc( total_count, sizeof( point2d_t ),
 					  "FindRoots: normal compilation" );
     }
 
     /* Gather solutions together        */
     for (i = 0; i < left_count; i++) {
-	    V2MOVE( (*intercept)[i], left_t[i] );
-	    V2MOVE( (*normal)[i], left_n[i] );
+	V2MOVE( (*intercept)[i], left_t[i] );
+	V2MOVE( (*normal)[i], left_n[i] );
     }
     for (i = 0; i < right_count; i++) {
-	    V2MOVE( (*intercept)[i+left_count], right_t[i] );
-	    V2MOVE( (*normal)[i+left_count], right_n[i] );
+	V2MOVE( (*intercept)[i+left_count], right_t[i] );
+	V2MOVE( (*normal)[i+left_count], right_n[i] );
     }
 
     if ( left_count ) {
-	    bu_free( (char *)left_t, "Left roots" );
-	    bu_free( (char *)left_n, "Left normals" );
+	bu_free( (char *)left_t, "Left roots" );
+	bu_free( (char *)left_n, "Left normals" );
     }
     if ( right_count ) {
-	    bu_free( (char *)right_t, "Right roots" );
-	    bu_free( (char *)right_n, "Right normals" );
+	bu_free( (char *)right_t, "Right roots" );
+	bu_free( (char *)right_n, "Right normals" );
     }
 
     /* Send back total number of solutions      */
@@ -458,54 +458,54 @@ FindRoots(
 struct bezier_2d_list *
 subdivide_bezier( struct bezier_2d_list *bezier_in, int degree, fastf_t epsilon, int depth )
 {
-	struct bezier_2d_list *bz_l, *bz_r, *new_head;
-	struct bezier_2d_list *left_rtrn, *rt_rtrn;
-	point2d_t pt;
+    struct bezier_2d_list *bz_l, *bz_r, *new_head;
+    struct bezier_2d_list *left_rtrn, *rt_rtrn;
+    point2d_t pt;
 
-	/* create a new head */
-	new_head = (struct bezier_2d_list *)bu_malloc( sizeof( struct bezier_2d_list ),
-						       "subdivide_bezier: new_head" );
-	BU_LIST_INIT( &new_head->l );
-	if ( depth >= MAXDEPTH ) {
-		BU_LIST_APPEND( &new_head->l, &bezier_in->l );
-		return( new_head );
-	}
-
-	if ( ControlPolygonFlatEnough( bezier_in->ctl, degree, epsilon ) ) {
-		BU_LIST_APPEND( &new_head->l, &bezier_in->l );
-		return( new_head );
-	}
-
-	/* allocate memory for left and right curves */
-	bz_l = (struct bezier_2d_list *)bu_malloc( sizeof( struct bezier_2d_list ), "subdivide_bezier: bz_l" );
-	BU_LIST_INIT( &bz_l->l );
-	bz_r = (struct bezier_2d_list *)bu_malloc( sizeof( struct bezier_2d_list ), "subdivide_bezier: bz_r" );
-	BU_LIST_INIT( &bz_r->l );
-	bz_l->ctl = (point2d_t *)bu_calloc( degree + 1, sizeof( point2d_t ),
-					    "subdivide_bezier: bz_l->ctl" );
-	bz_r->ctl = (point2d_t *)bu_calloc( degree + 1, sizeof( point2d_t ),
-					    "subdivide_bezier: bz_r->ctl" );
-
-	/* subdivide at t = 0.5 */
-	Bezier( bezier_in->ctl, degree, 0.5, bz_l->ctl, bz_r->ctl, pt, NULL );
-
-	/* eliminate original */
-	BU_LIST_DEQUEUE( &bezier_in->l );
-	bu_free( (char *)bezier_in->ctl, "subdivide_bezier: bezier_in->ctl" );
-	bu_free( (char *)bezier_in, "subdivide_bezier: bezier_in" );
-
-	/* recurse on left curve */
-	left_rtrn = subdivide_bezier( bz_l, degree, epsilon, depth+1 );
-
-	/* recurse on right curve */
-	rt_rtrn = subdivide_bezier( bz_r, degree, epsilon, depth+1 );
-
-	BU_LIST_APPEND_LIST( &new_head->l, &left_rtrn->l );
-	BU_LIST_APPEND_LIST( &new_head->l, &rt_rtrn->l );
-	bu_free( (char *)left_rtrn, "subdivide_bezier: left_rtrn (head)" );
-	bu_free( (char *)rt_rtrn, "subdivide_bezier: rt_rtrn (head)" );
-
+    /* create a new head */
+    new_head = (struct bezier_2d_list *)bu_malloc( sizeof( struct bezier_2d_list ),
+						   "subdivide_bezier: new_head" );
+    BU_LIST_INIT( &new_head->l );
+    if ( depth >= MAXDEPTH ) {
+	BU_LIST_APPEND( &new_head->l, &bezier_in->l );
 	return( new_head );
+    }
+
+    if ( ControlPolygonFlatEnough( bezier_in->ctl, degree, epsilon ) ) {
+	BU_LIST_APPEND( &new_head->l, &bezier_in->l );
+	return( new_head );
+    }
+
+    /* allocate memory for left and right curves */
+    bz_l = (struct bezier_2d_list *)bu_malloc( sizeof( struct bezier_2d_list ), "subdivide_bezier: bz_l" );
+    BU_LIST_INIT( &bz_l->l );
+    bz_r = (struct bezier_2d_list *)bu_malloc( sizeof( struct bezier_2d_list ), "subdivide_bezier: bz_r" );
+    BU_LIST_INIT( &bz_r->l );
+    bz_l->ctl = (point2d_t *)bu_calloc( degree + 1, sizeof( point2d_t ),
+					"subdivide_bezier: bz_l->ctl" );
+    bz_r->ctl = (point2d_t *)bu_calloc( degree + 1, sizeof( point2d_t ),
+					"subdivide_bezier: bz_r->ctl" );
+
+    /* subdivide at t = 0.5 */
+    Bezier( bezier_in->ctl, degree, 0.5, bz_l->ctl, bz_r->ctl, pt, NULL );
+
+    /* eliminate original */
+    BU_LIST_DEQUEUE( &bezier_in->l );
+    bu_free( (char *)bezier_in->ctl, "subdivide_bezier: bezier_in->ctl" );
+    bu_free( (char *)bezier_in, "subdivide_bezier: bezier_in" );
+
+    /* recurse on left curve */
+    left_rtrn = subdivide_bezier( bz_l, degree, epsilon, depth+1 );
+
+    /* recurse on right curve */
+    rt_rtrn = subdivide_bezier( bz_r, degree, epsilon, depth+1 );
+
+    BU_LIST_APPEND_LIST( &new_head->l, &left_rtrn->l );
+    BU_LIST_APPEND_LIST( &new_head->l, &rt_rtrn->l );
+    bu_free( (char *)left_rtrn, "subdivide_bezier: left_rtrn (head)" );
+    bu_free( (char *)rt_rtrn, "subdivide_bezier: rt_rtrn (head)" );
+
+    return( new_head );
 }
 
 /** @} */

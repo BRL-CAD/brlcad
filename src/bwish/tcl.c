@@ -141,7 +141,7 @@ Cad_Main(int argc, char **argv, Tcl_AppInitProc (*appInitProc), Tcl_Interp *inte
 	Cad_Exit(status);
 #endif
     } else {
-  /* We're running interactively. */
+	/* We're running interactively. */
 	/* Set up to handle commands from user as well as
 	   provide a command line editing capability. */
 	initInput();
@@ -166,9 +166,9 @@ Cad_MainLoop(void)
 #else
 	while (1)
 #endif
-	    {
-		Tcl_DoOneEvent(0);
-	    }
+	{
+	    Tcl_DoOneEvent(0);
+	}
 }
 
 void

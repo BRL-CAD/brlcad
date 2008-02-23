@@ -41,48 +41,48 @@
 
 void
 Readcnv( inum, id )
-char *id;
-fastf_t *inum;
+    char *id;
+    fastf_t *inum;
 {
-	int i=(-1), done=0, lencard;
-	char num[80];
+    int i=(-1), done=0, lencard;
+    char num[80];
 
-	if ( card[counter] == eof ) /* This is an empty field */
-	{
-		counter++;
-		return;
-	}
-	else if ( card[counter] == eor ) /* Up against the end of record */
-		return;
+    if ( card[counter] == eof ) /* This is an empty field */
+    {
+	counter++;
+	return;
+    }
+    else if ( card[counter] == eor ) /* Up against the end of record */
+	return;
 
-	if ( card[72] == 'P' )
-		lencard = PARAMLEN;
+    if ( card[72] == 'P' )
+	lencard = PARAMLEN;
+    else
+	lencard = CARDLEN;
+
+    if ( counter >= lencard )
+	Readrec( ++currec );
+
+    while ( !done )
+    {
+	while ( (num[++i] = card[counter++]) != eof && num[i] != eor
+		&& counter <= lencard )
+	    if ( num[i] == 'D' )
+		num[i] = 'e';
+
+	if ( counter > lencard && num[i] != eor && num[i] != eof )
+	    Readrec( ++currec );
 	else
-		lencard = CARDLEN;
+	    done = 1;
+    }
 
-	if ( counter >= lencard )
-		Readrec( ++currec );
+    if ( num[i] == eor )
+	counter--;
 
-	while ( !done )
-	{
-		while ( (num[++i] = card[counter++]) != eof && num[i] != eor
-			&& counter <= lencard )
-				if ( num[i] == 'D' )
-					num[i] = 'e';
-
-		if ( counter > lencard && num[i] != eor && num[i] != eof )
-			Readrec( ++currec );
-		else
-			done = 1;
-	}
-
-	if ( num[i] == eor )
-		counter--;
-
-	num[++i] = '\0';
-	*inum = atof( num ) * conv_factor;
-	if ( *id != '\0' )
-		bu_log( "%s%g\n", id, *inum );
+    num[++i] = '\0';
+    *inum = atof( num ) * conv_factor;
+    if ( *id != '\0' )
+	bu_log( "%s%g\n", id, *inum );
 }
 
 

@@ -59,39 +59,39 @@ extern fastf_t brlabs();
 /* Circularly linked list of files and names for external references */
 struct file_list
 {
-	struct bu_list		l;			/* for links */
-	char			*file_name;		/* Name of external file */
-	char			obj_name[NAMESIZE+1];	/* BRL-CAD name for top level object */
+    struct bu_list		l;			/* for links */
+    char			*file_name;		/* Name of external file */
+    char			obj_name[NAMESIZE+1];	/* BRL-CAD name for top level object */
 };
 
 /* linked list of used BRL-CAD object names */
 struct name_list
 {
-	char name[NAMESIZE+1];
-	struct name_list *next;
+    char name[NAMESIZE+1];
+    struct name_list *next;
 };
 
 /* Structure for storing info from the IGES file directory section along with
-	transformation matrices */
+   transformation matrices */
 struct iges_directory
 {
-	int type; /* IGES entity type */
-	int form; /* IGES form number */
-	int view; /* View field from DE, indicates which views this entity is in */
-	int param; /* record number for parameter entry */
-	int paramlines; /* number of lines for this entity in parameter section */
-	int direct; /* directory entry sequence number */
-	int status; /* status entry from directory entry */
+    int type; /* IGES entity type */
+    int form; /* IGES form number */
+    int view; /* View field from DE, indicates which views this entity is in */
+    int param; /* record number for parameter entry */
+    int paramlines; /* number of lines for this entity in parameter section */
+    int direct; /* directory entry sequence number */
+    int status; /* status entry from directory entry */
 /*
  * Note that the directory entry sequence number and the directory structure
  * array index are not the same.  The index into the array can be calculated
  * as (sequence number - 1)/2.
  */
-	int trans; /* index into directory array for transformation matrix */
-	int colorp; /* pointer to color definition entity (or color number) */
-	unsigned char rgb[3]; /* Actual color */
-	char *mater;	/* material parameter string */
-	int referenced;
+    int trans; /* index into directory array for transformation matrix */
+    int colorp; /* pointer to color definition entity (or color number) */
+    unsigned char rgb[3]; /* Actual color */
+    char *mater;	/* material parameter string */
+    int referenced;
 /*
  * uses of the "referenced" field:
  *	for solid objects - number of times this entity is referenced by
@@ -101,112 +101,112 @@ struct iges_directory
  *	for attribute instances - It contains the DE for the attribute
  *		definition entity.
  */
-	char *name; /* entity name */
-	mat_t *rot; /*  transformation matrix. */
+    char *name; /* entity name */
+    mat_t *rot; /*  transformation matrix. */
 };
 
 /* Structure used in builing boolean trees in memory */
 struct node
 {
-	int op; /* if positive, this is an operator (Union, Intersect, or Subtract)
-		   if negative, this is a directory entry sequence number (operand) */
-	struct node *left, *right, *parent;
+    int op; /* if positive, this is an operator (Union, Intersect, or Subtract)
+	       if negative, this is a directory entry sequence number (operand) */
+    struct node *left, *right, *parent;
 };
 
 /* structure for storing atributes */
 struct brlcad_att
 {
-	char			*material_name;
-	char			*material_params;
-	int			region_flag;
-	int			ident;
-	int			air_code;
-	int			material_code;
-	int			los_density;
-	int			inherit;
-	int			color_defined;
+    char			*material_name;
+    char			*material_params;
+    int			region_flag;
+    int			ident;
+    int			air_code;
+    int			material_code;
+    int			los_density;
+    int			inherit;
+    int			color_defined;
 };
 
 /* Structure for linked list of points */
 struct ptlist
 {
-	point_t pt;
-	struct ptlist *next, *prev;
+    point_t pt;
+    struct ptlist *next, *prev;
 };
 
 /* Structures for Parametric Splines */
 struct segment
 {
-	int segno;
-	fastf_t tmin, tmax;
-	fastf_t cx[4], cy[4], cz[4];
-	struct segment *next;
+    int segno;
+    fastf_t tmin, tmax;
+    fastf_t cx[4], cy[4], cz[4];
+    struct segment *next;
 };
 
 struct spline
 {
-	int ndim, nsegs;
-	struct segment *start;
+    int ndim, nsegs;
+    struct segment *start;
 };
 
 struct reglist
 {
-	char name[NAMESIZE+1];
-	struct node *tree;
-	struct reglist *next;
+    char name[NAMESIZE+1];
+    struct node *tree;
+    struct reglist *next;
 };
 
 struct types
 {
-	int	type;
-	char	*name;
-	int	count;
+    int	type;
+    char	*name;
+    int	count;
 };
 
 struct iges_edge_use
 {
-	int	edge_de;		/* directory sequence number for edge list or vertex list */
-	int	edge_is_vertex;		/* flag */
-	int	index;			/* index into list for this edge */
-	int	orient;			/* orientation flag (1 => agrees with geometry */
-	struct iges_param_curve *root;
+    int	edge_de;		/* directory sequence number for edge list or vertex list */
+    int	edge_is_vertex;		/* flag */
+    int	index;			/* index into list for this edge */
+    int	orient;			/* orientation flag (1 => agrees with geometry */
+    struct iges_param_curve *root;
 };
 
 struct iges_vertex
 {
-	point_t pt;
-	struct vertex *v;
+    point_t pt;
+    struct vertex *v;
 };
 
 struct iges_vertex_list
 {
-	int vert_de;
-	int no_of_verts;
-	struct iges_vertex *i_verts;
-	struct iges_vertex_list *next;
+    int vert_de;
+    int no_of_verts;
+    struct iges_vertex *i_verts;
+    struct iges_vertex_list *next;
 };
 
 struct iges_edge
 {
-	int curve_de;
-	int start_vert_de;
-	int start_vert_index;
-	int end_vert_de;
-	int end_vert_index;
+    int curve_de;
+    int start_vert_de;
+    int start_vert_index;
+    int end_vert_de;
+    int end_vert_index;
 };
 
 struct iges_param_curve
 {
-	int curve_de;
-	struct iges_param_curve *next;
+    int curve_de;
+    struct iges_param_curve *next;
 };
 
 struct iges_edge_list
 {
-	int edge_de;
-	int no_of_edges;
-	struct iges_edge *i_edge;
-	struct iges_edge_list *next;
+    int edge_de;
+    int no_of_edges;
+    struct iges_edge *i_edge;
+    struct iges_edge_list *next;
 };
 
 #define MEMCHECK if ( bu_debug & BU_DEBUG_MEM_CHECK ) {\

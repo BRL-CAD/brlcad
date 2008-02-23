@@ -89,7 +89,7 @@ struct chore	*await3;
  *  this can take a long time.
  */
 void step1(aa)
-     void *aa;
+    void *aa;
 {
     struct chore	*chorep;
     int		pix_y;
@@ -134,7 +134,7 @@ void step1(aa)
 
 /* format conversion */
 void step2(aa)
-     void	*aa;
+    void	*aa;
 {
     struct chore	*chorep;
     register unsigned char	*cp;
@@ -188,7 +188,7 @@ void step2(aa)
 
 /* output via SCSI bus to IPU.  This is the time consuming step. */
 void step3(aa)
-     void	*aa;
+    void	*aa;
 {
     struct chore	*chorep;
     int		canon_y;

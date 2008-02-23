@@ -32,32 +32,32 @@
 #define	Subtract	3
 
 Treecheck( root )
-struct node *root;
+    struct node *root;
 {
-	struct node *ptr, *Pop();
+    struct node *ptr, *Pop();
 
-	ptr = root;
-	while ( 1 )
+    ptr = root;
+    while ( 1 )
+    {
+	while ( ptr != NULL )
 	{
-		while ( ptr != NULL )
-		{
-			Push( ptr );
-			ptr = ptr->left;
-		}
-		ptr = Pop();
-
-		if ( ptr->op == Intersect || ptr->op == Subtract )
-			if ( ptr->right->op == Union )	/* Not a legal BRL-CAD tree */
-				return( 0 );
-		if ( ptr->parent == NULL )
-			return( 1 );
-
-		if ( ptr != ptr->parent->right )
-			ptr = ptr->parent->right;
-		else
-			ptr = NULL;
-
+	    Push( ptr );
+	    ptr = ptr->left;
 	}
+	ptr = Pop();
+
+	if ( ptr->op == Intersect || ptr->op == Subtract )
+	    if ( ptr->right->op == Union )	/* Not a legal BRL-CAD tree */
+		return( 0 );
+	if ( ptr->parent == NULL )
+	    return( 1 );
+
+	if ( ptr != ptr->parent->right )
+	    ptr = ptr->parent->right;
+	else
+	    ptr = NULL;
+
+    }
 }
 
 /*

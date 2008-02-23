@@ -53,28 +53,28 @@
 #define MSB	1	/* Most Signifigent Byte */
 
 struct GIF_head {
-	char		GH_Magic[6];
-	unsigned char	GH_ScreenWidth[2];	/* MSB, LSB */
-	unsigned char	GH_ScreenHeight[2];	/* MSB, LSB */
-	unsigned char	GH_Flags;
-	unsigned char	GH_Background;
-	unsigned char	GH_EOB;
-	};
+    char		GH_Magic[6];
+    unsigned char	GH_ScreenWidth[2];	/* MSB, LSB */
+    unsigned char	GH_ScreenHeight[2];	/* MSB, LSB */
+    unsigned char	GH_Flags;
+    unsigned char	GH_Background;
+    unsigned char	GH_EOB;
+};
 
 struct GIF_Image {
-	char		IH_Magic;
-	unsigned char	IH_Left[2];		/* MSB, LSB */
-	unsigned char	IH_Top[2];		/* MSB, LSB */
-	unsigned char	IH_Width[2];		/* MSB, LSB */
-	unsigned char	IH_Height[2];		/* MSB, LSB */
-	unsigned char	IH_Flags;
-	};
+    char		IH_Magic;
+    unsigned char	IH_Left[2];		/* MSB, LSB */
+    unsigned char	IH_Top[2];		/* MSB, LSB */
+    unsigned char	IH_Width[2];		/* MSB, LSB */
+    unsigned char	IH_Height[2];		/* MSB, LSB */
+    unsigned char	IH_Flags;
+};
 
 struct acolor {
-	unsigned char	red;
-	unsigned char	green;
-	unsigned char	blue;
-	};
+    unsigned char	red;
+    unsigned char	green;
+    unsigned char	blue;
+};
 
 #define WORD(x)	(((int)x[MSB]<<8)+(int)x[LSB])
 
@@ -102,194 +102,194 @@ int getByte(FILE *inp);
 int
 main(int argc, char **argv)
 {
-	int	 i, idx, n;
-	int	maxcolors;
-	int	code;
-	int	verbose=0;
-	int	headers=0;
-	int	interlaced;
-	char	*file_name;
+    int	 i, idx, n;
+    int	maxcolors;
+    int	code;
+    int	verbose=0;
+    int	headers=0;
+    int	interlaced;
+    char	*file_name;
 
-	unsigned char line[3*2048];
-	unsigned char *lp;
+    unsigned char line[3*2048];
+    unsigned char *lp;
 
-	int lineNumber, lineInc, lineIdx;
-	static int lace[4] = {8, 8, 4, 2};
-	static int offs[4] = {0, 4, 2, 1};
+    int lineNumber, lineInc, lineIdx;
+    static int lace[4] = {8, 8, 4, 2};
+    static int offs[4] = {0, 4, 2, 1};
 
-	FBIO *fbp;
-	FILE *fp;
+    FBIO *fbp;
+    FILE *fp;
 
-	while ((code = bu_getopt(argc, argv, "vFh")) != EOF) {
-		switch (code) {
-		case 'h':
-			headers=1;
-			break;
-		case 'v':
-			verbose=1;
-			break;
-		case 'F':
-			framebuffer = bu_optarg;
-			break;
-		default:	/* '?' */
-			usage(argv);
-			bu_exit(1, NULL);
-		}
+    while ((code = bu_getopt(argc, argv, "vFh")) != EOF) {
+	switch (code) {
+	    case 'h':
+		headers=1;
+		break;
+	    case 'v':
+		verbose=1;
+		break;
+	    case 'F':
+		framebuffer = bu_optarg;
+		break;
+	    default:	/* '?' */
+		usage(argv);
+		bu_exit(1, NULL);
 	}
+    }
 
-	if ( bu_optind >= argc )  {
-		if ( isatty(fileno(stdin)) ) {
-			(void) fprintf(stderr, "%s: No input file.\n", argv[0]);
-			usage(argv);
-			bu_exit(1, NULL);
-		}
-		file_name = "-";
-		fp = stdin;
-	} else {
-		file_name = argv[bu_optind];
-		if ( (fp = fopen(file_name, "rb")) == NULL )  {
-			(void)fprintf( stderr,
-			    "%s: cannot open \"%s\" for reading\n", argv[0],
-			    file_name );
-			usage(argv);
-			bu_exit(1, NULL);
-		}
+    if ( bu_optind >= argc )  {
+	if ( isatty(fileno(stdin)) ) {
+	    (void) fprintf(stderr, "%s: No input file.\n", argv[0]);
+	    usage(argv);
+	    bu_exit(1, NULL);
 	}
+	file_name = "-";
+	fp = stdin;
+    } else {
+	file_name = argv[bu_optind];
+	if ( (fp = fopen(file_name, "rb")) == NULL )  {
+	    (void)fprintf( stderr,
+			   "%s: cannot open \"%s\" for reading\n", argv[0],
+			   file_name );
+	    usage(argv);
+	    bu_exit(1, NULL);
+	}
+    }
 /*
  * read in the Header and then check for consitence.
  */
-	n= fread(&Header, 1, 13, fp);
+    n= fread(&Header, 1, 13, fp);
 
-	if (n != 13) {
-		fprintf(stderr, "%s: only %d bytes in header.\n", argv[0], n);
-		bu_exit(1, NULL);
-	}
+    if (n != 13) {
+	fprintf(stderr, "%s: only %d bytes in header.\n", argv[0], n);
+	bu_exit(1, NULL);
+    }
 
-	ScreenWidth = WORD(Header.GH_ScreenWidth);
-	ScreenHeight= WORD(Header.GH_ScreenHeight);
-	GlobalMap   = (Header.GH_Flags>>7);
-	CR	    = (Header.GH_Flags>>4) & 0x07;
-	GlobalPixels= (Header.GH_Flags&0x07) + 1;
-	if (headers) {
-		fprintf(stderr, "-w%d -n%d\n", ScreenWidth, ScreenHeight);
-		bu_exit(0, NULL);
-	}
+    ScreenWidth = WORD(Header.GH_ScreenWidth);
+    ScreenHeight= WORD(Header.GH_ScreenHeight);
+    GlobalMap   = (Header.GH_Flags>>7);
+    CR	    = (Header.GH_Flags>>4) & 0x07;
+    GlobalPixels= (Header.GH_Flags&0x07) + 1;
+    if (headers) {
+	fprintf(stderr, "-w%d -n%d\n", ScreenWidth, ScreenHeight);
+	bu_exit(0, NULL);
+    }
 /*
  * In verbose mode, output a message before checking to allow the
  * "smarter" user look over the header even if the header is barfO.
  */
-	if (verbose) {
-		fprintf(stderr, "Magic=%.6s, -w%d -n%d, M=%d, cr=%d, pixel=%d, bg=%d\n",
-		    Header.GH_Magic, ScreenWidth, ScreenHeight, GlobalMap,
-		    CR, GlobalPixels, Header.GH_Background);
-	}
+    if (verbose) {
+	fprintf(stderr, "Magic=%.6s, -w%d -n%d, M=%d, cr=%d, pixel=%d, bg=%d\n",
+		Header.GH_Magic, ScreenWidth, ScreenHeight, GlobalMap,
+		CR, GlobalPixels, Header.GH_Background);
+    }
 
-	if (Header.GH_EOB) {
-		fprintf(stderr, "%s: missing EOB in header.\n", argv[0]);
-		bu_exit(1, NULL);
-	}
-	maxcolors = 1 << GlobalPixels;
+    if (Header.GH_EOB) {
+	fprintf(stderr, "%s: missing EOB in header.\n", argv[0]);
+	bu_exit(1, NULL);
+    }
+    maxcolors = 1 << GlobalPixels;
 
 /*
  * Read in the Global color map.
  */
-	for (i=0;i<maxcolors;i++) {
-		n = fread(&GlobalColors[i], 1, 3, fp);
-		if (n != 3) {
-			fprintf(stdout, "%s: only read %d global colors.\n",
-			    argv[0], i);
-			bu_exit(1, NULL);
-		}
+    for (i=0;i<maxcolors;i++) {
+	n = fread(&GlobalColors[i], 1, 3, fp);
+	if (n != 3) {
+	    fprintf(stdout, "%s: only read %d global colors.\n",
+		    argv[0], i);
+	    bu_exit(1, NULL);
 	}
+    }
 /*
  * Read in the image header.
  */
-	n= fread(&Im, 1, sizeof(Im), fp);
+    n= fread(&Im, 1, sizeof(Im), fp);
 
-	if (n != sizeof(Im)) {
-		fprintf(stderr, "%s: only %d bytes in image header.\n",
-		    argv[0], n);
-		bu_exit(1, NULL);
-	}
-	if (verbose) {
-		fprintf(stderr, "Magic=%c, left=%d, top=%d, Width=%d, Height=%d\n",
-		    Im.IH_Magic, WORD(Im.IH_Left), WORD(Im.IH_Top), WORD(Im.IH_Width),
-		    WORD(Im.IH_Height));
-		fprintf(stderr, "Map=%d, Interlaced=%d, pixel=%d\n",
-		    Im.IH_Flags>>7, (Im.IH_Flags>>6)&0x01, Im.IH_Flags&0x03);
-	}
+    if (n != sizeof(Im)) {
+	fprintf(stderr, "%s: only %d bytes in image header.\n",
+		argv[0], n);
+	bu_exit(1, NULL);
+    }
+    if (verbose) {
+	fprintf(stderr, "Magic=%c, left=%d, top=%d, Width=%d, Height=%d\n",
+		Im.IH_Magic, WORD(Im.IH_Left), WORD(Im.IH_Top), WORD(Im.IH_Width),
+		WORD(Im.IH_Height));
+	fprintf(stderr, "Map=%d, Interlaced=%d, pixel=%d\n",
+		Im.IH_Flags>>7, (Im.IH_Flags>>6)&0x01, Im.IH_Flags&0x03);
+    }
 
-	interlaced = (Im.IH_Flags>>6)&0x01;
+    interlaced = (Im.IH_Flags>>6)&0x01;
 
 /*
  * Read the image color map if any.
  */
-	if (Im.IH_Flags>>7) {
-		GlobalPixels= (Im.IH_Flags&0x07) + 1;
-		for (i=0;i<maxcolors;i++) {
-			n = fread(&GlobalColors[i], 1, 3, fp);
-			if (n != 3) {
-				fprintf(stdout,
-				    "%s: only read %d global colors.\n",
-				    argv[0], i);
-				bu_exit(1, NULL);
-			}
-		}
-	}
-
-	if (WORD(Im.IH_Width) > 2048) {
-		fprintf(stderr, "%s: Input line greater than internal buffer!\n",
-		    argv[0]);
+    if (Im.IH_Flags>>7) {
+	GlobalPixels= (Im.IH_Flags&0x07) + 1;
+	for (i=0;i<maxcolors;i++) {
+	    n = fread(&GlobalColors[i], 1, 3, fp);
+	    if (n != 3) {
+		fprintf(stdout,
+			"%s: only read %d global colors.\n",
+			argv[0], i);
 		bu_exit(1, NULL);
+	    }
 	}
+    }
 
-	MinBits = getc(fp) + 1;
+    if (WORD(Im.IH_Width) > 2048) {
+	fprintf(stderr, "%s: Input line greater than internal buffer!\n",
+		argv[0]);
+	bu_exit(1, NULL);
+    }
 
-	if (verbose) {
-		fprintf(stderr, "MinBits=%d\n", MinBits);
-	}
+    MinBits = getc(fp) + 1;
 
-	if (interlaced ) {
-		lineIdx = 0;
+    if (verbose) {
+	fprintf(stderr, "MinBits=%d\n", MinBits);
+    }
 
-		lineNumber = offs[lineIdx];
-		lineInc= lace[lineIdx];
-	} else {
-		lineIdx = 4;
-		lineNumber = 0;
-		lineInc = 1;
-	}
+    if (interlaced ) {
+	lineIdx = 0;
+
+	lineNumber = offs[lineIdx];
+	lineInc= lace[lineIdx];
+    } else {
+	lineIdx = 4;
+	lineNumber = 0;
+	lineInc = 1;
+    }
 /*
  * Open the frame buffer.
  */
-	fbp = fb_open(framebuffer, WORD(Im.IH_Width),
-	    WORD(Im.IH_Height));
+    fbp = fb_open(framebuffer, WORD(Im.IH_Width),
+		  WORD(Im.IH_Height));
 
 /*
  * The speed of this loop can be greatly increased by moving all of
  * the WORD macro calls out of the loop.
  */
-	for (i=0; i<WORD(Im.IH_Height);i++) {
-		int k;
-		lp = line;
-		for (k=0;k<WORD(Im.IH_Width);k++) {
-			idx = getByte(fp);
-			*lp++ = GlobalColors[idx].red;
-			*lp++ = GlobalColors[idx].green;
-			*lp++ = GlobalColors[idx].blue;
-		}
-		fb_write(fbp, 0, WORD(Im.IH_Height)-lineNumber, line,
-		    WORD(Im.IH_Width));
-		fb_flush(fbp);
-		lineNumber += lineInc;
-		if (lineNumber >= WORD(Im.IH_Height)) {
-			++lineIdx;
-			lineInc = lace[lineIdx];
-			lineNumber = offs[lineIdx];
-		}
+    for (i=0; i<WORD(Im.IH_Height);i++) {
+	int k;
+	lp = line;
+	for (k=0;k<WORD(Im.IH_Width);k++) {
+	    idx = getByte(fp);
+	    *lp++ = GlobalColors[idx].red;
+	    *lp++ = GlobalColors[idx].green;
+	    *lp++ = GlobalColors[idx].blue;
 	}
-	fb_close(fbp);
-	return(0);
+	fb_write(fbp, 0, WORD(Im.IH_Height)-lineNumber, line,
+		 WORD(Im.IH_Width));
+	fb_flush(fbp);
+	lineNumber += lineInc;
+	if (lineNumber >= WORD(Im.IH_Height)) {
+	    ++lineIdx;
+	    lineInc = lace[lineIdx];
+	    lineNumber = offs[lineIdx];
+	}
+    }
+    fb_close(fbp);
+    return(0);
 }
 /* getcode - Get a LWZ "code"
  *
@@ -325,34 +325,34 @@ main(int argc, char **argv)
 int
 getcode(FILE *inp)
 {
-	static unsigned int lastbits = 0;
-	static int bitsleft = 0;
-	static int count=0;
-	int code;
+    static unsigned int lastbits = 0;
+    static int bitsleft = 0;
+    static int count=0;
+    int code;
 
 
-	while (bitsleft < Bits) {
+    while (bitsleft < Bits) {
 /*
  * get a new block counter if needed.
  */
-		if (--count <= 0) {
-			count = (unsigned char) getc(inp);
-			if (count == 0) return(-1);
-		}
+	if (--count <= 0) {
+	    count = (unsigned char) getc(inp);
+	    if (count == 0) return(-1);
+	}
 /*
  * stuff another byte into last bits.
  */
-		lastbits |= (unsigned char) getc(inp) << bitsleft;
-		bitsleft += 8;
-	}
-	code = (1<<Bits)-1;	/* make mask */
-	code &= lastbits;	/* extract the code */
+	lastbits |= (unsigned char) getc(inp) << bitsleft;
+	bitsleft += 8;
+    }
+    code = (1<<Bits)-1;	/* make mask */
+    code &= lastbits;	/* extract the code */
 /*
  * clean up the state variables.
  */
-	bitsleft -= Bits;
-	lastbits = lastbits >> Bits;
-	return(code);
+    bitsleft -= Bits;
+    lastbits = lastbits >> Bits;
+    return(code);
 }
 
 /* getByte	get a byte from the input stream decompressing as we go.
@@ -391,92 +391,92 @@ getcode(FILE *inp)
  */
 int getByte(FILE *inp)
 {
-	int code, incode;
-	static int	firstcode, oldcode;
-	static int	firstTime = 1;
-	static int	clear_code, end_code;
-	static int	max_code, next_ent;
+    int code, incode;
+    static int	firstcode, oldcode;
+    static int	firstTime = 1;
+    static int	clear_code, end_code;
+    static int	max_code, next_ent;
 #define	PREFIX	0
 #define SUFIX	1
-	static int	table[2][1<<12];
-	static int	stack[1<<13], *sp;
+    static int	table[2][1<<12];
+    static int	stack[1<<13], *sp;
 
-	int i;
+    int i;
 
-	if (firstTime) {
-		firstTime = 0;
-		Bits = MinBits;
-		clear_code = 1 << (Bits-1);
-		end_code = clear_code+1;
-		max_code=clear_code<<1;
-		next_ent = clear_code+2;
+    if (firstTime) {
+	firstTime = 0;
+	Bits = MinBits;
+	clear_code = 1 << (Bits-1);
+	end_code = clear_code+1;
+	max_code=clear_code<<1;
+	next_ent = clear_code+2;
 
-		for (i=0;i<clear_code;i++) {
-			table[PREFIX][i] = 0;
-			table[SUFIX][i]  = i;
-		}
-
-		sp = stack;
-
-		do {
-			firstcode=oldcode=getcode(inp);
-		} while (firstcode == clear_code);
-		return(firstcode);
+	for (i=0;i<clear_code;i++) {
+	    table[PREFIX][i] = 0;
+	    table[SUFIX][i]  = i;
 	}
 
-	if (sp > stack) return(*--sp);
+	sp = stack;
 
-	while ((code=getcode(inp)) >= 0) {
-		if (code == clear_code) {
-			for (i=0;i<clear_code;i++) {
-				table[PREFIX][i] = 0;
-				table[SUFIX][i]  = i;
-			}
-			Bits = MinBits;
-			max_code = clear_code<<1;
-			next_ent = clear_code+2;
-			sp=stack;
-			firstcode=oldcode=getcode(inp);
-			return(firstcode);
-		} else if (code == end_code) {
-			return (-1);
-		}
+	do {
+	    firstcode=oldcode=getcode(inp);
+	} while (firstcode == clear_code);
+	return(firstcode);
+    }
 
-		incode = code;
+    if (sp > stack) return(*--sp);
 
-		if (code >= next_ent) {
-			*sp++ =firstcode;
-			code = oldcode;
-		}
-
-		while (code >= clear_code) {
-			*sp++ = table[SUFIX][code];
-			code = table[PREFIX][code];
-		}
-
-		*sp++ = firstcode = table[SUFIX][code];
-
-		if ((code=next_ent) < (1<<12)) {
-			table[PREFIX][code] = oldcode;
-			table[SUFIX][code]  = firstcode;
-			next_ent++;
-			if ((next_ent >= max_code) &&
-			    (max_code < (1<<12))) {
-				max_code *= 2;
-				Bits++;
-			}
-		}
-
-		oldcode = incode;
-
-		if (sp >stack) return(*--sp);
+    while ((code=getcode(inp)) >= 0) {
+	if (code == clear_code) {
+	    for (i=0;i<clear_code;i++) {
+		table[PREFIX][i] = 0;
+		table[SUFIX][i]  = i;
+	    }
+	    Bits = MinBits;
+	    max_code = clear_code<<1;
+	    next_ent = clear_code+2;
+	    sp=stack;
+	    firstcode=oldcode=getcode(inp);
+	    return(firstcode);
+	} else if (code == end_code) {
+	    return (-1);
 	}
-	return(code);
+
+	incode = code;
+
+	if (code >= next_ent) {
+	    *sp++ =firstcode;
+	    code = oldcode;
+	}
+
+	while (code >= clear_code) {
+	    *sp++ = table[SUFIX][code];
+	    code = table[PREFIX][code];
+	}
+
+	*sp++ = firstcode = table[SUFIX][code];
+
+	if ((code=next_ent) < (1<<12)) {
+	    table[PREFIX][code] = oldcode;
+	    table[SUFIX][code]  = firstcode;
+	    next_ent++;
+	    if ((next_ent >= max_code) &&
+		(max_code < (1<<12))) {
+		max_code *= 2;
+		Bits++;
+	    }
+	}
+
+	oldcode = incode;
+
+	if (sp >stack) return(*--sp);
+    }
+    return(code);
 }
 void
 usage(char **argv)
 {
-	fprintf(stderr, "%s [-h] [-v] [-F frame_buffer] [gif_file]\n", argv[0]);
+    fprintf(stderr, "%s [-h] [-v] [-F frame_buffer] [gif_file]\n", argv[0]);
 }
 
 /*

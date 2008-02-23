@@ -101,11 +101,11 @@ main (int argc, char *argv[])
 		break;
 	    case '#':
 		if ((sscanf(bu_optarg, "%d.%d", &c_per_p, &d_per_p) != 2)
-		 && (sscanf(bu_optarg, ".%d", &d_per_p) != 1)
-		 && (sscanf(bu_optarg, "%d", &c_per_p) != 1))
+		    && (sscanf(bu_optarg, ".%d", &d_per_p) != 1)
+		    && (sscanf(bu_optarg, "%d", &c_per_p) != 1))
 		{
 		    bu_log("Invalid pixel-size specification: '%s'\n",
-			bu_optarg);
+			   bu_optarg);
 		    print_usage();
 		}
 		break;
@@ -114,16 +114,16 @@ main (int argc, char *argv[])
 		print_usage();
 	}
 
-	if (c_per_p <= 0)
-	{
-	    bu_log("Illegal number of color bytes per pixel: %d\n", c_per_p);
-	    return 1;
-	}
-	if (d_per_p <= 0)
-	{
-	    bu_log("Illegal number of doubles per pixel: %d\n", d_per_p);
-	    return 1;
-	}
+    if (c_per_p <= 0)
+    {
+	bu_log("Illegal number of color bytes per pixel: %d\n", c_per_p);
+	return 1;
+    }
+    if (d_per_p <= 0)
+    {
+	bu_log("Illegal number of doubles per pixel: %d\n", d_per_p);
+	return 1;
+    }
 
     /*
      *	Establish the input stream

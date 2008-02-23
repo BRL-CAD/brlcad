@@ -36,38 +36,38 @@ void
 Initstack()
 {
 
-	jtop = (-1);
-	stklen = STKBLK;
-	stk = (union tree **)bu_malloc( stklen*sizeof( union tree * ), "Initstack: stk" );
-	if ( stk == NULL )
-	{
-		bu_log( "Cannot allocate stack space\n" );
-		perror( "Initstack" );
-		bu_exit( 1, NULL );
-	}
+    jtop = (-1);
+    stklen = STKBLK;
+    stk = (union tree **)bu_malloc( stklen*sizeof( union tree * ), "Initstack: stk" );
+    if ( stk == NULL )
+    {
+	bu_log( "Cannot allocate stack space\n" );
+	perror( "Initstack" );
+	bu_exit( 1, NULL );
+    }
 }
 
 /*  This function pushes a pointer onto the stack. */
 
 void
 Push(ptr)
-union tree *ptr;
+    union tree *ptr;
 {
 
-	jtop++;
-	if ( jtop == stklen )
+    jtop++;
+    if ( jtop == stklen )
+    {
+	stklen += STKBLK;
+	stk = (union tree **)bu_realloc( (char *)stk, stklen*sizeof( union tree *),
+					 "Push: stk" );
+	if ( stk == NULL )
 	{
-		stklen += STKBLK;
-		stk = (union tree **)bu_realloc( (char *)stk, stklen*sizeof( union tree *),
-			"Push: stk" );
-		if ( stk == NULL )
-		{
-			bu_log( "Cannot reallocate stack space\n" );
-			perror( "Push" );
-			bu_exit( 1, NULL );
-		}
+	    bu_log( "Cannot reallocate stack space\n" );
+	    perror( "Push" );
+	    bu_exit( 1, NULL );
 	}
-	stk[jtop] = ptr;
+    }
+    stk[jtop] = ptr;
 }
 
 
@@ -77,24 +77,24 @@ union tree *ptr;
 union tree *
 Pop()
 {
-	union tree *ptr;
+    union tree *ptr;
 
-	if ( jtop == (-1) )
-		ptr=NULL;
-	else
-	{
-		ptr = stk[jtop];
-		jtop--;
-	}
+    if ( jtop == (-1) )
+	ptr=NULL;
+    else
+    {
+	ptr = stk[jtop];
+	jtop--;
+    }
 
-	return(ptr);
+    return(ptr);
 }
 
 void
 Freestack()
 {
-	jtop = (-1);
-	return;
+    jtop = (-1);
+    return;
 }
 
 /*

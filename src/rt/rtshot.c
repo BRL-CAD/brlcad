@@ -178,15 +178,15 @@ main(int argc, char **argv)
 	    argv += 2;
 	    break;
 	case 'r':
-	    {
-		float ray_len;
+	{
+	    float ray_len;
 
-		sscanf( argv[1], "%f", &ray_len );
-		set_ray_length = ray_len;
-	    }
-	    argc -= 2;
-	    argv += 2;
-	    break;
+	    sscanf( argv[1], "%f", &ray_len );
+	    set_ray_length = ray_len;
+	}
+	argc -= 2;
+	argv += 2;
+	break;
 	case 'U':
 	    sscanf( argv[1], "%d", &use_air );
 	    argc -= 2;
@@ -247,28 +247,28 @@ main(int argc, char **argv)
 	    continue;
 
 	case 'O':
+	{
+	    if ( !strcmp( argv[1], "resolve" ) || !strcmp( argv[1], "0") )
+		overlap_claimant_handling = 0;
+	    else if ( !strcmp( argv[1], "rebuild_fastgen" ) || !strcmp( argv[1], "1") )
+		overlap_claimant_handling = 1;
+	    else if ( !strcmp( argv[1], "rebuild_all" ) || !strcmp( argv[1], "2") )
+		overlap_claimant_handling = 2;
+	    else if ( !strcmp( argv[1], "retain" ) || !strcmp( argv[1], "3") )
+		overlap_claimant_handling = 3;
+	    else
 	    {
-		if ( !strcmp( argv[1], "resolve" ) || !strcmp( argv[1], "0") )
-		    overlap_claimant_handling = 0;
-		else if ( !strcmp( argv[1], "rebuild_fastgen" ) || !strcmp( argv[1], "1") )
-		    overlap_claimant_handling = 1;
-		else if ( !strcmp( argv[1], "rebuild_all" ) || !strcmp( argv[1], "2") )
-		    overlap_claimant_handling = 2;
-		else if ( !strcmp( argv[1], "retain" ) || !strcmp( argv[1], "3") )
-		    overlap_claimant_handling = 3;
-		else
-		    {
-			bu_log( "Illegal argument (%s) to '-O' option.  Must be:\n", argv[1] );
-			bu_log( "\t'resolve' or '0'\n");
-			bu_log( "\t'rebuild_fastgen' or '1'\n");
-			bu_log( "\t'rebuild_all' or '2'\n");
-			bu_log( "\t'retain' or '3'\n");
-			bu_exit(1, NULL);
-		    }
-		argc -= 2;
-		argv += 2;
+		bu_log( "Illegal argument (%s) to '-O' option.  Must be:\n", argv[1] );
+		bu_log( "\t'resolve' or '0'\n");
+		bu_log( "\t'rebuild_fastgen' or '1'\n");
+		bu_log( "\t'rebuild_all' or '2'\n");
+		bu_log( "\t'retain' or '3'\n");
+		bu_exit(1, NULL);
 	    }
-	    continue;
+	    argc -= 2;
+	    argv += 2;
+	}
+	continue;
 
 	default:
     err:
@@ -416,7 +416,7 @@ int hit(register struct application *ap, struct partition *PartHeadp, struct seg
 	       pp->pt_regionp->reg_bit);
 
 	entry = Tcl_FindHashEntry( (Tcl_HashTable *)ap->a_rt_i->Orca_hash_tbl,
-			       (const char *)(size_t)pp->pt_regionp->reg_bit );
+				   (const char *)(size_t)pp->pt_regionp->reg_bit );
 	if ( !entry ) {
 	    inv_mat = (matp_t)NULL;
 	}
@@ -426,14 +426,14 @@ int hit(register struct application *ap, struct partition *PartHeadp, struct seg
 	}
 
 	if ( pp->pt_overlap_reg )
-	    {
-		struct region *pp_reg;
-		int j=-1;
+	{
+	    struct region *pp_reg;
+	    int j=-1;
 
-		bu_log( "    Claiming regions:\n" );
-		while ( (pp_reg=pp->pt_overlap_reg[++j]) )
-		    bu_log( "        %s\n", pp_reg->reg_name );
-	    }
+	    bu_log( "    Claiming regions:\n" );
+	    while ( (pp_reg=pp->pt_overlap_reg[++j]) )
+		bu_log( "        %s\n", pp_reg->reg_name );
+	}
 
 	/* inhit info */
 	stp = pp->pt_inseg->seg_stp;

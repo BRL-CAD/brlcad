@@ -48,24 +48,24 @@ Usage: fbhelp [-F framebuffer]\n";
 int
 main(int argc, char **argv)
 {
-	register int c;
-	FBIO	*fbp;
+    register int c;
+    FBIO	*fbp;
 
-	while ( (c = bu_getopt( argc, argv, "F:" )) != EOF ) {
-		switch ( c ) {
-		case 'F':
-			framebuffer = bu_optarg;
-			break;
-		default:		/* '?' */
-			(void)fputs(usage, stderr);
-			return 1;
-		}
+    while ( (c = bu_getopt( argc, argv, "F:" )) != EOF ) {
+	switch ( c ) {
+	    case 'F':
+		framebuffer = bu_optarg;
+		break;
+	    default:		/* '?' */
+		(void)fputs(usage, stderr);
+		return 1;
 	}
-	if ( argc > ++bu_optind ) {
-		(void)fprintf( stderr, "fbhelp: excess argument(s) ignored\n" );
-	}
+    }
+    if ( argc > ++bu_optind ) {
+	(void)fprintf( stderr, "fbhelp: excess argument(s) ignored\n" );
+    }
 
-	printf("\
+    printf("\
 A Frame Buffer display device is selected by\n\
 setting the environment variable FB_FILE:\n\
 (/bin/sh )  FB_FILE=/dev/device; export FB_FILE\n\
@@ -73,16 +73,16 @@ setting the environment variable FB_FILE:\n\
 Many programs also accept a \"-F framebuffer\" flag.\n\
 Type \"man brlcad\" for more information.\n" );
 
-	printf("=============== Available Devices ================\n");
-	fb_genhelp();
+    printf("=============== Available Devices ================\n");
+    fb_genhelp();
 
-	printf("=============== Current Selection ================\n");
-	if ( (fbp = fb_open( framebuffer, 0, 0 )) == FBIO_NULL ) {
-		fprintf( stderr, "fbhelp: Can't open frame buffer\n" );
-		return	1;
-	}
-	fb_help( fbp );
-	return	fb_close( fbp );
+    printf("=============== Current Selection ================\n");
+    if ( (fbp = fb_open( framebuffer, 0, 0 )) == FBIO_NULL ) {
+	fprintf( stderr, "fbhelp: Can't open frame buffer\n" );
+	return	1;
+    }
+    fb_help( fbp );
+    return	fb_close( fbp );
 }
 
 /*

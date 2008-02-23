@@ -64,117 +64,117 @@ static const char *Usage = "usage: bwstat [-v] [file.bw]\n";
 void
 show_hist(long int *bin, int sum)
 {
-	int	i;
+    int	i;
 
-	printf( "Histogram:\n" );
+    printf( "Histogram:\n" );
 
-	for ( i = 0; i < 256; i++ ) {
-		printf( "%3d: %10ld (%10f)\n", i, bin[i], (float)bin[i]/sum * 100.0 );
-	}
+    for ( i = 0; i < 256; i++ ) {
+	printf( "%3d: %10ld (%10f)\n", i, bin[i], (float)bin[i]/sum * 100.0 );
+    }
 }
 
 
 int
 main(int argc, char **argv)
 {
-	int	i, n;
-	double	d;
-	long	num_pixels;
-	register unsigned char *bp;
-	long	sum, partial_sum;
-	int	max, min, mode, median;
-	double	mean, var, skew;
-	FILE	*fp;
+    int	i, n;
+    double	d;
+    long	num_pixels;
+    register unsigned char *bp;
+    long	sum, partial_sum;
+    int	max, min, mode, median;
+    double	mean, var, skew;
+    FILE	*fp;
 
-	/* check for verbose flag */
-	if ( argc > 1 && strcmp(argv[1], "-v") == 0 ) {
-		verbose++;
-		argv++;
-		argc--;
+    /* check for verbose flag */
+    if ( argc > 1 && strcmp(argv[1], "-v") == 0 ) {
+	verbose++;
+	argv++;
+	argc--;
+    }
+
+    /* look for optional input file */
+    if ( argc > 1 ) {
+	if ( (fp = fopen(argv[1], "r")) == 0 ) {
+	    bu_exit(1, "bwstat: can't open \"%s\"\n", argv[1] );
 	}
+	argv++;
+	argc--;
+    } else
+	fp = stdin;
 
-	/* look for optional input file */
-	if ( argc > 1 ) {
-		if ( (fp = fopen(argv[1], "r")) == 0 ) {
-			bu_exit(1, "bwstat: can't open \"%s\"\n", argv[1] );
-		}
-		argv++;
-		argc--;
-	} else
-		fp = stdin;
+    /* check usage */
+    if ( argc > 1 || isatty(fileno(fp)) ) {
+	bu_exit(1, "%s", Usage );
+    }
 
-	/* check usage */
-	if ( argc > 1 || isatty(fileno(fp)) ) {
-		bu_exit(1, "%s", Usage );
+    /*
+     * Build the histogram.
+     */
+    num_pixels = 0;
+    while ( (n = fread(buf, sizeof(*buf), IBUFSIZE, fp)) > 0 ) {
+	num_pixels += n;
+	bp = &buf[0];
+	for ( i = 0; i < n; i++ )
+	    bin[ *bp++ ]++;
+    }
+
+    /*
+     * Find sum, min, max, mode.
+     */
+    sum = 0;
+    min = 256;
+    max = -1;
+    mode = 0;
+    for ( i = 0; i < 256; i++ ) {
+	sum += i * bin[i];
+	if ( i < min && bin[i] != 0 )
+	    min = i;
+	if ( i > max && bin[i] != 0 )
+	    max = i;
+	if ( bin[i] > bin[mode] ) {
+	    mode = i;
 	}
+    }
+    mean = (double)sum/(double)num_pixels;
 
-	/*
-	 * Build the histogram.
-	 */
-	num_pixels = 0;
-	while ( (n = fread(buf, sizeof(*buf), IBUFSIZE, fp)) > 0 ) {
-		num_pixels += n;
-		bp = &buf[0];
-		for ( i = 0; i < n; i++ )
-			bin[ *bp++ ]++;
+    /*
+     * Now do a second pass to compute median,
+     *  variance and skew.
+     */
+    partial_sum = 0;
+    median = 0;
+    var = skew = 0.0;
+    for ( i = 0; i < 256; i++ ) {
+	if ( partial_sum < sum/2.0 ) {
+	    partial_sum += i * bin[i];
+	    median = i;
 	}
+	d = (double)i - mean;
+	var += bin[i] * d * d;
+	skew += bin[i] * d * d * d;
+    }
+    var /= (double)num_pixels;
+    skew /= (double)num_pixels;
 
-	/*
-	 * Find sum, min, max, mode.
-	 */
-	sum = 0;
-	min = 256;
-	max = -1;
-	mode = 0;
-	for ( i = 0; i < 256; i++ ) {
-		sum += i * bin[i];
-		if ( i < min && bin[i] != 0 )
-			min = i;
-		if ( i > max && bin[i] != 0 )
-			max = i;
-		if ( bin[i] > bin[mode] ) {
-			mode = i;
-		}
-	}
-	mean = (double)sum/(double)num_pixels;
+    /*
+     * Display the results.
+     */
+    printf( "Pixels  %14ld (%.0f x %.0f)\n", num_pixels,
+	    sqrt((double)num_pixels), sqrt((double)num_pixels) );
+    printf( "Min     %14d\n", min );
+    printf( "Max     %14d\n", max );
+    printf( "Mode    %14d (%ld pixels)\n", mode, bin[mode] );
+    printf( "Median  %14d\n", median );
+    printf( "Mean    %14.3f\n", mean );
+    printf( "s.d.    %14.3f\n", sqrt( var ) );
+    printf( "Var     %14.3f\n", var );
+    printf( "Skew    %14.3f\n", skew );
 
-	/*
-	 * Now do a second pass to compute median,
-	 *  variance and skew.
-	 */
-	partial_sum = 0;
-	median = 0;
-	var = skew = 0.0;
-	for ( i = 0; i < 256; i++ ) {
-		if ( partial_sum < sum/2.0 ) {
-			partial_sum += i * bin[i];
-			median = i;
-		}
-		d = (double)i - mean;
-		var += bin[i] * d * d;
-		skew += bin[i] * d * d * d;
-	}
-	var /= (double)num_pixels;
-	skew /= (double)num_pixels;
+    if ( verbose )
+	show_hist( bin, sum );
 
-	/*
-	 * Display the results.
-	 */
-	printf( "Pixels  %14ld (%.0f x %.0f)\n", num_pixels,
-		sqrt((double)num_pixels), sqrt((double)num_pixels) );
-	printf( "Min     %14d\n", min );
-	printf( "Max     %14d\n", max );
-	printf( "Mode    %14d (%ld pixels)\n", mode, bin[mode] );
-	printf( "Median  %14d\n", median );
-	printf( "Mean    %14.3f\n", mean );
-	printf( "s.d.    %14.3f\n", sqrt( var ) );
-	printf( "Var     %14.3f\n", var );
-	printf( "Skew    %14.3f\n", skew );
-
-	if ( verbose )
-		show_hist( bin, sum );
-
-	return 0;
+    return 0;
 }
 
 /*

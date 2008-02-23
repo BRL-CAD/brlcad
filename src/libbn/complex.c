@@ -47,35 +47,35 @@
 void
 bn_cx_div(register bn_complex_t *ap, register const bn_complex_t *bp)
 {
-	register fastf_t r, s;
-	register fastf_t ap__re;
+    register fastf_t r, s;
+    register fastf_t ap__re;
 
-	/* Note: classical formula may cause unnecessary overflow */
-	ap__re = ap->re;
-	r = bp->re;
-	s = bp->im;
-	if ( ABS( r ) >= ABS( s ) )  {
-		if ( NEAR_ZERO( r, SQRT_SMALL_FASTF ) )
-			goto err;
-		r = s / r;			/* <= 1 */
-		s = 1.0 / (bp->re + r * s);
-		ap->re = (ap->re + ap->im * r) * s;
-		ap->im = (ap->im - ap__re * r) * s;
-		return;
-	}  else  {
-		/* ABS( s ) > ABS( r ) */
-		if ( NEAR_ZERO( s, SQRT_SMALL_FASTF ) )
-			goto err;
-		r = r / s;			/* < 1 */
-		s = 1.0 / (s + r * bp->re);
-		ap->re = (ap->re * r + ap->im) * s;
-		ap->im = (ap->im * r - ap__re) * s;
-		return;
-	}
-err:
-	bu_log("bn_cx_div: division by zero: %gR+%gI / %gR+%gI\n",
-		ap->re, ap->im, bp->re, bp->im );
-	ap->re = ap->im = 1.0e20;		/* "INFINITY" */
+    /* Note: classical formula may cause unnecessary overflow */
+    ap__re = ap->re;
+    r = bp->re;
+    s = bp->im;
+    if ( ABS( r ) >= ABS( s ) )  {
+	if ( NEAR_ZERO( r, SQRT_SMALL_FASTF ) )
+	    goto err;
+	r = s / r;			/* <= 1 */
+	s = 1.0 / (bp->re + r * s);
+	ap->re = (ap->re + ap->im * r) * s;
+	ap->im = (ap->im - ap__re * r) * s;
+	return;
+    }  else  {
+	/* ABS( s ) > ABS( r ) */
+	if ( NEAR_ZERO( s, SQRT_SMALL_FASTF ) )
+	    goto err;
+	r = r / s;			/* < 1 */
+	s = 1.0 / (s + r * bp->re);
+	ap->re = (ap->re * r + ap->im) * s;
+	ap->im = (ap->im * r - ap__re) * s;
+	return;
+    }
+ err:
+    bu_log("bn_cx_div: division by zero: %gR+%gI / %gR+%gI\n",
+	   ap->re, ap->im, bp->re, bp->im );
+    ap->re = ap->im = 1.0e20;		/* "INFINITY" */
 }
 
 /**
@@ -91,52 +91,52 @@ err:
 void
 bn_cx_sqrt(bn_complex_t *op, register const bn_complex_t *ip)
 {
-	register fastf_t	ampl, temp;
-	/* record signs of original real & imaginary parts */
-	register int	re_sign;
-	register int	im_sign;
+    register fastf_t	ampl, temp;
+    /* record signs of original real & imaginary parts */
+    register int	re_sign;
+    register int	im_sign;
 
-	/* special cases are not necessary; they are here for speed */
-	im_sign = SIGN( ip->im );
-	if ( (re_sign = SIGN(ip->re))  == 0 )  {
-		if ( im_sign == 0 )
-			op->re = op->im = 0;
-		else if ( im_sign > 0 )
-			op->re = op->im = sqrt( ip->im * 0.5 );
-		else			/* im_sign < 0 */
-			op->re = -(op->im = sqrt( ip->im * -0.5 ));
-	} else if ( im_sign == 0 )  {
-		if ( re_sign > 0 )  {
-			op->re = sqrt( ip->re );
-			op->im = 0.0;
-		}  else  {
-  		/* re_sign < 0 */
-			op->im = sqrt( -ip->re );
-			op->re = 0.0;
-		}
+    /* special cases are not necessary; they are here for speed */
+    im_sign = SIGN( ip->im );
+    if ( (re_sign = SIGN(ip->re))  == 0 )  {
+	if ( im_sign == 0 )
+	    op->re = op->im = 0;
+	else if ( im_sign > 0 )
+	    op->re = op->im = sqrt( ip->im * 0.5 );
+	else			/* im_sign < 0 */
+	    op->re = -(op->im = sqrt( ip->im * -0.5 ));
+    } else if ( im_sign == 0 )  {
+	if ( re_sign > 0 )  {
+	    op->re = sqrt( ip->re );
+	    op->im = 0.0;
 	}  else  {
-		/* no shortcuts */
-		ampl = bn_cx_ampl( ip );
-		if ( (temp = (ampl - ip->re) * 0.5) < 0.0 )  {
-			/* This case happens rather often, when the
-			 *  hypot() in bn_cx_ampl() returns an ampl ever so
-			 *  slightly smaller than ip->re.  This can easily
-			 *  happen when ip->re ~= 10**20.
-			 *  Just ignore the imaginary part.
-			 */
-			op->im = 0;
-		} else
-			op->im = sqrt( temp );
-
-		if ( (temp = (ampl + ip->re) * 0.5) < 0.0 )  {
-			op->re = 0.0;
-		} else {
-			if ( im_sign > 0 )
-				op->re = sqrt(temp);
-			else			/* im_sign < 0 */
-				op->re = -sqrt(temp);
-		}
+	    /* re_sign < 0 */
+	    op->im = sqrt( -ip->re );
+	    op->re = 0.0;
 	}
+    }  else  {
+	/* no shortcuts */
+	ampl = bn_cx_ampl( ip );
+	if ( (temp = (ampl - ip->re) * 0.5) < 0.0 )  {
+	    /* This case happens rather often, when the
+	     *  hypot() in bn_cx_ampl() returns an ampl ever so
+	     *  slightly smaller than ip->re.  This can easily
+	     *  happen when ip->re ~= 10**20.
+	     *  Just ignore the imaginary part.
+	     */
+	    op->im = 0;
+	} else
+	    op->im = sqrt( temp );
+
+	if ( (temp = (ampl + ip->re) * 0.5) < 0.0 )  {
+	    op->re = 0.0;
+	} else {
+	    if ( im_sign > 0 )
+		op->re = sqrt(temp);
+	    else			/* im_sign < 0 */
+		op->re = -sqrt(temp);
+	}
+    }
 }
 /** @} */
 /*

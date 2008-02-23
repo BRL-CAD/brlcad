@@ -292,9 +292,9 @@ view_init( struct application *ap, char *file, char *obj, int minus_o, int minus
 	occlusion_rtip = rt_new_rti( dbip ); /* clones dbip */
 
 	for ( i=0; i < MAX_PSW; i++ ) {
-		rt_init_resource( &occlusion_resources[i], i, occlusion_rtip );
-		bn_rand_init( occlusion_resources[i].re_randptr, i );
-	    }
+	    rt_init_resource( &occlusion_resources[i], i, occlusion_rtip );
+	    bn_rand_init( occlusion_resources[i].re_randptr, i );
+	}
 
 	db_close(dbip);			 /* releases original dbip */
 
@@ -461,9 +461,9 @@ view_2init( struct application *ap )
      *
      */
     if (overlay && bgcolor[RED] == 0 && bgcolor[GRN] == 0 && bgcolor[BLU] == 1) {
-	    bgcolor[RED] = fb_bg_color[RED];
-	    bgcolor[GRN] = fb_bg_color[GRN];
-	    bgcolor[BLU] = fb_bg_color[BLU];
+	bgcolor[RED] = fb_bg_color[RED];
+	bgcolor[GRN] = fb_bg_color[GRN];
+	bgcolor[BLU] = fb_bg_color[BLU];
     }
     return;
 }

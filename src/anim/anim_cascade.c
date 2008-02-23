@@ -91,62 +91,62 @@ main (int argc, char **argv)
 	fprintf(stderr, "anim_cascade: Argument error.");
 
     switch (output_mode) {
-    case CASCADE_A:
-	if (cmd_fcen) {
-	    VMOVE(cen1, fcenter);
-	    read_cen1 = 0;
-	}
-	if (cmd_rcen) {
-	    VMOVE(cen2, rcenter);
-	    read_cen2 = 0;
-	}
-	if (cmd_fypr) {
-	    anim_dy_p_r2mat(m_rot1, fypr[0], fypr[1], fypr[2]);
-	    read_rot1 = 0;
-	}
-	if (cmd_rypr) {
-	    anim_dy_p_r2mat(m_rot2, rypr[0], rypr[1], rypr[2]);
-	    read_rot2 = 0;
-	}
-	break;
-    case CASCADE_R:
-	if (cmd_fcen) {
-	    VMOVE(cen1, fcenter);
-	    read_cen1 = 0;
-	}
-	if (cmd_acen) {
-	    VMOVE(cen2, acenter);
-	    read_cen2 = 0;
-	}
-	if (cmd_fypr) {
-	    anim_dy_p_r2mat(m_rot1, fypr[0], fypr[1], fypr[2]);
-	    read_rot1 = 0;
-	}
-	if (cmd_aypr) {
-	    anim_dy_p_r2mat(m_rot2, aypr[0], aypr[1], aypr[2]);
-	    read_rot2 = 0;
-	}
-	break;
-    case CASCADE_F:
-	if (cmd_acen) {
-	    VMOVE(cen1, acenter);
-	    read_cen1 = 0;
-	}
-	if (cmd_rcen) {
-	    VMOVE(cen2, rcenter);
-	    read_cen2 = 0;
-	}
-	if (cmd_aypr) {
-	    anim_dy_p_r2mat(m_rot1, aypr[0], aypr[1], aypr[2]);
-	    read_rot1 = 0;
-	}
-	if (cmd_rypr) {
-	    anim_dy_p_r2mat(m_rot2, rypr[0], rypr[1], rypr[2]);
-	    read_rot2 = 0;
-	}
-	break;
-    default:
-	break;
+	case CASCADE_A:
+	    if (cmd_fcen) {
+		VMOVE(cen1, fcenter);
+		read_cen1 = 0;
+	    }
+	    if (cmd_rcen) {
+		VMOVE(cen2, rcenter);
+		read_cen2 = 0;
+	    }
+	    if (cmd_fypr) {
+		anim_dy_p_r2mat(m_rot1, fypr[0], fypr[1], fypr[2]);
+		read_rot1 = 0;
+	    }
+	    if (cmd_rypr) {
+		anim_dy_p_r2mat(m_rot2, rypr[0], rypr[1], rypr[2]);
+		read_rot2 = 0;
+	    }
+	    break;
+	case CASCADE_R:
+	    if (cmd_fcen) {
+		VMOVE(cen1, fcenter);
+		read_cen1 = 0;
+	    }
+	    if (cmd_acen) {
+		VMOVE(cen2, acenter);
+		read_cen2 = 0;
+	    }
+	    if (cmd_fypr) {
+		anim_dy_p_r2mat(m_rot1, fypr[0], fypr[1], fypr[2]);
+		read_rot1 = 0;
+	    }
+	    if (cmd_aypr) {
+		anim_dy_p_r2mat(m_rot2, aypr[0], aypr[1], aypr[2]);
+		read_rot2 = 0;
+	    }
+	    break;
+	case CASCADE_F:
+	    if (cmd_acen) {
+		VMOVE(cen1, acenter);
+		read_cen1 = 0;
+	    }
+	    if (cmd_rcen) {
+		VMOVE(cen2, rcenter);
+		read_cen2 = 0;
+	    }
+	    if (cmd_aypr) {
+		anim_dy_p_r2mat(m_rot1, aypr[0], aypr[1], aypr[2]);
+		read_rot1 = 0;
+	    }
+	    if (cmd_rypr) {
+		anim_dy_p_r2mat(m_rot2, rypr[0], rypr[1], rypr[2]);
+		read_rot2 = 0;
+	    }
+	    break;
+	default:
+	    break;
     }
 
 
@@ -216,85 +216,85 @@ int get_args(int argc, char **argv)
     print_time = 1;
     while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
 	switch (c) {
-	case 'f':
-	    d = *(bu_optarg);
-	    if (d == 'c') {
-		sscanf(argv[bu_optind], "%lf", fcenter+0);
-		sscanf(argv[bu_optind+1], "%lf", fcenter+1);
-		sscanf(argv[bu_optind+2], "%lf", fcenter+2);
-		bu_optind += 3;
-		cmd_fcen = 1;
+	    case 'f':
+		d = *(bu_optarg);
+		if (d == 'c') {
+		    sscanf(argv[bu_optind], "%lf", fcenter+0);
+		    sscanf(argv[bu_optind+1], "%lf", fcenter+1);
+		    sscanf(argv[bu_optind+2], "%lf", fcenter+2);
+		    bu_optind += 3;
+		    cmd_fcen = 1;
+		    break;
+		} else if ( d =='y') {
+		    sscanf(argv[bu_optind], "%lf", fypr+0);
+		    sscanf(argv[bu_optind+1], "%lf", fypr+1);
+		    sscanf(argv[bu_optind+2], "%lf", fypr+2);
+		    bu_optind += 3;
+		    cmd_fypr = 1;
+		    break;
+		} else {
+		    fprintf(stderr, "anim_cascade: unknown option -f%c\n", d);
+		}
 		break;
-	    } else if ( d =='y') {
-		sscanf(argv[bu_optind], "%lf", fypr+0);
-		sscanf(argv[bu_optind+1], "%lf", fypr+1);
-		sscanf(argv[bu_optind+2], "%lf", fypr+2);
-		bu_optind += 3;
-		cmd_fypr = 1;
+	    case 'r':
+		d = *(bu_optarg);
+		if (d == 'c') {
+		    sscanf(argv[bu_optind], "%lf", rcenter+0);
+		    sscanf(argv[bu_optind+1], "%lf", rcenter+1);
+		    sscanf(argv[bu_optind+2], "%lf", rcenter+2);
+		    bu_optind += 3;
+		    cmd_rcen = 1;
+		    break;
+		} else if ( d =='y') {
+		    sscanf(argv[bu_optind], "%lf", rypr+0);
+		    sscanf(argv[bu_optind+1], "%lf", rypr+1);
+		    sscanf(argv[bu_optind+2], "%lf", rypr+2);
+		    bu_optind += 3;
+		    cmd_rypr = 1;
+		    break;
+		} else {
+		    fprintf(stderr, "anim_cascade: unknown option -r%c\n", d);
+		}
 		break;
-	    } else {
-		fprintf(stderr, "anim_cascade: unknown option -f%c\n", d);
-	    }
-	    break;
-	case 'r':
-	    d = *(bu_optarg);
-	    if (d == 'c') {
-		sscanf(argv[bu_optind], "%lf", rcenter+0);
-		sscanf(argv[bu_optind+1], "%lf", rcenter+1);
-		sscanf(argv[bu_optind+2], "%lf", rcenter+2);
-		bu_optind += 3;
-		cmd_rcen = 1;
+	    case 'a':
+		d = *(bu_optarg);
+		if (d == 'c') {
+		    sscanf(argv[bu_optind], "%lf", acenter+0);
+		    sscanf(argv[bu_optind+1], "%lf", acenter+1);
+		    sscanf(argv[bu_optind+2], "%lf", acenter+2);
+		    bu_optind += 3;
+		    cmd_acen = 1;
+		    break;
+		} else if ( d =='y') {
+		    sscanf(argv[bu_optind], "%lf", aypr+0);
+		    sscanf(argv[bu_optind+1], "%lf", aypr+1);
+		    sscanf(argv[bu_optind+2], "%lf", aypr+2);
+		    bu_optind += 3;
+		    cmd_aypr = 1;
+		    break;
+		} else {
+		    fprintf(stderr, "anim_cascade: unknown option -a%c\n", d);
+		}
 		break;
-	    } else if ( d =='y') {
-		sscanf(argv[bu_optind], "%lf", rypr+0);
-		sscanf(argv[bu_optind+1], "%lf", rypr+1);
-		sscanf(argv[bu_optind+2], "%lf", rypr+2);
-		bu_optind += 3;
-		cmd_rypr = 1;
+	    case 'o':
+		d = *(bu_optarg);
+		if (d == 'r') {
+		    output_mode = CASCADE_R;
+		} else if (d == 'f') {
+		    output_mode = CASCADE_F;
+		} else if (d == 'a') {
+		    /* default */
+		    output_mode = CASCADE_A;
+		} else {
+		    fprintf(stderr, "anim_cascade: unknown option -i%c\n", d);
+		}
 		break;
-	    } else {
-		fprintf(stderr, "anim_cascade: unknown option -r%c\n", d);
-	    }
-	    break;
-	case 'a':
-	    d = *(bu_optarg);
-	    if (d == 'c') {
-		sscanf(argv[bu_optind], "%lf", acenter+0);
-		sscanf(argv[bu_optind+1], "%lf", acenter+1);
-		sscanf(argv[bu_optind+2], "%lf", acenter+2);
-		bu_optind += 3;
-		cmd_acen = 1;
+	    case 's':
+		print_time = 0;
 		break;
-	    } else if ( d =='y') {
-		sscanf(argv[bu_optind], "%lf", aypr+0);
-		sscanf(argv[bu_optind+1], "%lf", aypr+1);
-		sscanf(argv[bu_optind+2], "%lf", aypr+2);
-		bu_optind += 3;
-		cmd_aypr = 1;
-		break;
-	    } else {
-		fprintf(stderr, "anim_cascade: unknown option -a%c\n", d);
-	    }
-	    break;
-	case 'o':
-	    d = *(bu_optarg);
-	    if (d == 'r') {
-		output_mode = CASCADE_R;
-	    } else if (d == 'f') {
-		output_mode = CASCADE_F;
-	    } else if (d == 'a') {
-  /* default */
-		output_mode = CASCADE_A;
-	    } else {
-		fprintf(stderr, "anim_cascade: unknown option -i%c\n", d);
-	    }
-	    break;
-	case 's':
-	    print_time = 0;
-	    break;
-	default:
-	    fprintf(stderr, "anim_cascade: unknown option: -%c\n", c);
-	    return(0);
+	    default:
+		fprintf(stderr, "anim_cascade: unknown option: -%c\n", c);
+		return(0);
 	}
     }
     return(1);

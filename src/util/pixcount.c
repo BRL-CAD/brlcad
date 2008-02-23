@@ -77,8 +77,8 @@ struct pixel *mk_pixel (unsigned char *color)
 
     pp -> p_magic = PIXEL_MAGIC;
     pp -> p_color = (unsigned char *)
-		bu_malloc(pixel_size * sizeof(unsigned char),
-			"pixel color");
+	bu_malloc(pixel_size * sizeof(unsigned char),
+		  "pixel color");
     for (i = 0; i < pixel_size; ++i)
 	pp -> p_color[i] = color[i];
     pp -> p_count = 0;
@@ -267,10 +267,10 @@ main (int argc, char **argv)
      *	Read the input stream into the palette
      */
     buf = (unsigned char *)
-		bu_malloc(pixel_size * sizeof(unsigned char),
-			"pixel buffer");
+	bu_malloc(pixel_size * sizeof(unsigned char),
+		  "pixel buffer");
     while (fread((void *) buf, pixel_size * sizeof(unsigned char), 1, infp)
-	    == 1)
+	   == 1)
     {
 	pp = lookup_pixel(palette, buf);
 	BU_CKMAG(pp, PIXEL_MAGIC, "pixel");

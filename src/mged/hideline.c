@@ -79,29 +79,29 @@ struct solid *sp;
 static int
 hit_headon(struct application *ap, struct partition *PartHeadp)
 {
-	register char diff_solid;
-	vect_t	diff;
-	register fastf_t len;
+    register char diff_solid;
+    vect_t	diff;
+    register fastf_t len;
 
-	if (PartHeadp->pt_forw->pt_forw != PartHeadp)
-	  Tcl_AppendResult(interp, "hit_headon: multiple partitions\n", (char *)NULL);
+    if (PartHeadp->pt_forw->pt_forw != PartHeadp)
+	Tcl_AppendResult(interp, "hit_headon: multiple partitions\n", (char *)NULL);
 
-	VJOIN1(PartHeadp->pt_forw->pt_inhit->hit_point, ap->a_ray.r_pt,
-	    PartHeadp->pt_forw->pt_inhit->hit_dist, ap->a_ray.r_dir);
-	VSUB2(diff, PartHeadp->pt_forw->pt_inhit->hit_point, aim_point);
+    VJOIN1(PartHeadp->pt_forw->pt_inhit->hit_point, ap->a_ray.r_pt,
+	   PartHeadp->pt_forw->pt_inhit->hit_dist, ap->a_ray.r_dir);
+    VSUB2(diff, PartHeadp->pt_forw->pt_inhit->hit_point, aim_point);
 
-	diff_solid = (FIRST_SOLID(sp) !=
-		PartHeadp->pt_forw->pt_inseg->seg_stp->st_dp);
-	len = MAGNITUDE(diff);
+    diff_solid = (FIRST_SOLID(sp) !=
+		  PartHeadp->pt_forw->pt_inseg->seg_stp->st_dp);
+    len = MAGNITUDE(diff);
 
-	if (	NEAR_ZERO(len, epsilon)
-	    ||
-	    ( diff_solid &&
-	    VDOT(diff, ap->a_ray.r_dir) > 0 )
-	    )
-		return(1);
-	else
-		return(0);
+    if (	NEAR_ZERO(len, epsilon)
+		||
+		( diff_solid &&
+		  VDOT(diff, ap->a_ray.r_dir) > 0 )
+	)
+	return(1);
+    else
+	return(0);
 }
 
 /*
@@ -117,7 +117,7 @@ hit_headon(struct application *ap, struct partition *PartHeadp)
 static int
 hit_tangent(struct application *ap, struct partition *PartHeadp)
 {
-	return(1);		/* always a hit */
+    return(1);		/* always a hit */
 }
 
 /*
@@ -127,7 +127,7 @@ hit_tangent(struct application *ap, struct partition *PartHeadp)
 static int
 hit_overlap(struct application *ap, struct partition *PartHeadp)
 {
-	return(0);		/* never a hit */
+    return(0);		/* never a hit */
 }
 
 /*
@@ -136,157 +136,157 @@ hit_overlap(struct application *ap, struct partition *PartHeadp)
 int
 f_hideline(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-	FILE 	*plotfp;
-	char 	visible;
-	int 	i, numobjs;
-	char 	*objname[MAXOBJECTS], title[1];
-	fastf_t 	len, u, step;
-	float 	ratio;
-	vect_t	last_move;
-	struct rt_i	*rtip;
-	struct resource resource;
-	struct application a;
-	vect_t temp;
-	vect_t last, dir;
-	register struct bn_vlist	*vp;
+    FILE 	*plotfp;
+    char 	visible;
+    int 	i, numobjs;
+    char 	*objname[MAXOBJECTS], title[1];
+    fastf_t 	len, u, step;
+    float 	ratio;
+    vect_t	last_move;
+    struct rt_i	*rtip;
+    struct resource resource;
+    struct application a;
+    vect_t temp;
+    vect_t last, dir;
+    register struct bn_vlist	*vp;
 
-	CHECK_DBI_NULL;
+    CHECK_DBI_NULL;
 
-	if (argc < 2 || 4 < argc) {
-	  struct bu_vls vls;
+    if (argc < 2 || 4 < argc) {
+	struct bu_vls vls;
 
-	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "help H");
-	  Tcl_Eval(interp, bu_vls_addr(&vls));
-	  bu_vls_free(&vls);
-	  return TCL_ERROR;
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "help H");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
+    }
+
+    if ((plotfp = fopen(argv[1], "w")) == NULL) {
+	Tcl_AppendResult(interp, "f_hideline: unable to open \"", argv[1],
+			 "\" for writing.\n", (char *)NULL);
+	return TCL_ERROR;
+    }
+    pl_space(plotfp, (int)GED_MIN, (int)GED_MIN, (int)GED_MAX, (int)GED_MAX);
+
+    /*  Build list of objects being viewed */
+    numobjs = 0;
+    FOR_ALL_SOLIDS(sp) {
+	for (i = 0; i < numobjs; i++)  {
+	    if ( objname[i] == FIRST_SOLID(sp)->d_namep )
+		break;
 	}
+	if (i == numobjs)
+	    objname[numobjs++] = FIRST_SOLID(sp)->d_namep;
+    }
 
-	if ((plotfp = fopen(argv[1], "w")) == NULL) {
-	  Tcl_AppendResult(interp, "f_hideline: unable to open \"", argv[1],
-			   "\" for writing.\n", (char *)NULL);
-	  return TCL_ERROR;
-	}
-	pl_space(plotfp, (int)GED_MIN, (int)GED_MIN, (int)GED_MAX, (int)GED_MAX);
+    Tcl_AppendResult(interp, "Generating hidden-line drawing of the following regions:\n",
+		     (char *)NULL);
+    for (i = 0; i < numobjs; i++)
+	Tcl_AppendResult(interp, "\t", objname[i], "\n", (char *)NULL);
 
-	/*  Build list of objects being viewed */
-	numobjs = 0;
-	FOR_ALL_SOLIDS(sp) {
-		for (i = 0; i < numobjs; i++)  {
-			if ( objname[i] == FIRST_SOLID(sp)->d_namep )
-				break;
-		}
-		if (i == numobjs)
-			objname[numobjs++] = FIRST_SOLID(sp)->d_namep;
-	}
+    /* Initialization for librt */
+    if ((rtip = rt_dirbuild(dbip->dbi_filename, title, 0)) == RTI_NULL) {
+	Tcl_AppendResult(interp, "f_hideline: unable to open model file \"",
+			 dbip->dbi_filename, "\"\n", (char *)NULL);
+	return TCL_ERROR;
+    }
+    a.a_hit = hit_headon;
+    a.a_miss = hit_tangent;
+    a.a_overlap = hit_overlap;
+    a.a_rt_i = rtip;
+    a.a_resource = &resource;
+    a.a_level = 0;
+    a.a_onehit = 1;
+    a.a_diverge = 0;
+    a.a_rbeam = 0;
 
-	Tcl_AppendResult(interp, "Generating hidden-line drawing of the following regions:\n",
-			 (char *)NULL);
-	for (i = 0; i < numobjs; i++)
-	  Tcl_AppendResult(interp, "\t", objname[i], "\n", (char *)NULL);
+    if (argc > 2) {
+	sscanf(argv[2], "%f", &step);
+	step = view_state->vs_Viewscale/step;
+	sscanf(argv[3], "%f", &epsilon);
+	epsilon *= view_state->vs_Viewscale/100;
+    } else {
+	step = view_state->vs_Viewscale/256;
+	epsilon = 0.1*view_state->vs_Viewscale;
+    }
 
-	/* Initialization for librt */
-	if ((rtip = rt_dirbuild(dbip->dbi_filename, title, 0)) == RTI_NULL) {
-	  Tcl_AppendResult(interp, "f_hideline: unable to open model file \"",
-			   dbip->dbi_filename, "\"\n", (char *)NULL);
-	  return TCL_ERROR;
-	}
-	a.a_hit = hit_headon;
-	a.a_miss = hit_tangent;
-	a.a_overlap = hit_overlap;
-	a.a_rt_i = rtip;
-	a.a_resource = &resource;
-	a.a_level = 0;
-	a.a_onehit = 1;
-	a.a_diverge = 0;
-	a.a_rbeam = 0;
-
-	if (argc > 2) {
-		sscanf(argv[2], "%f", &step);
-		step = view_state->vs_Viewscale/step;
-		sscanf(argv[3], "%f", &epsilon);
-		epsilon *= view_state->vs_Viewscale/100;
-	} else {
-		step = view_state->vs_Viewscale/256;
-		epsilon = 0.1*view_state->vs_Viewscale;
-	}
-
-	for (i = 0; i < numobjs; i++)
-	  if (rt_gettree(rtip, objname[i]) == -1)
+    for (i = 0; i < numobjs; i++)
+	if (rt_gettree(rtip, objname[i]) == -1)
 	    Tcl_AppendResult(interp, "f_hideline: rt_gettree failed on \"",
 			     objname[i], "\"\n", (char *)NULL);
 
-	/* Crawl along the vectors raytracing as we go */
-	VSET(temp, 0.0, 0.0, -1.0);				/* looking at model */
-	MAT4X3VEC(a.a_ray.r_dir, view_state->vs_view2model, temp);
-	VUNITIZE(a.a_ray.r_dir);
+    /* Crawl along the vectors raytracing as we go */
+    VSET(temp, 0.0, 0.0, -1.0);				/* looking at model */
+    MAT4X3VEC(a.a_ray.r_dir, view_state->vs_view2model, temp);
+    VUNITIZE(a.a_ray.r_dir);
 
-	FOR_ALL_SOLIDS(sp) {
+    FOR_ALL_SOLIDS(sp) {
 
-		ratio = sp->s_size / VIEWSIZE;		/* ignore if small or big */
-		if (ratio >= dmp->dmr_bound || ratio < 0.001)
-			continue;
+	ratio = sp->s_size / VIEWSIZE;		/* ignore if small or big */
+	if (ratio >= dmp->dmr_bound || ratio < 0.001)
+	    continue;
 
-		Tcl_AppendResult(interp, "Primitive\n", (char *)NULL);
-		for ( BU_LIST_FOR( vp, bn_vlist, &(sp->s_vlist) ) )  {
-			register int	i;
-			register int	nused = vp->nused;
-			register int	*cmd = vp->cmd;
-			register point_t *pt = vp->pt;
-			for ( i = 0; i < nused; i++, cmd++, pt++ )  {
-			  Tcl_AppendResult(interp, "\tVector\n", (char *)NULL);
-				switch ( *cmd )  {
-				case BN_VLIST_POLY_START:
-				case BN_VLIST_POLY_VERTNORM:
-					break;
-				case BN_VLIST_POLY_MOVE:
-				case BN_VLIST_LINE_MOVE:
-					/* move */
-					VMOVE(last, *pt);
-					MOVE(last);
-					break;
-				case BN_VLIST_POLY_DRAW:
-				case BN_VLIST_POLY_END:
-				case BN_VLIST_LINE_DRAW:
-					/* setup direction && length */
-					VSUB2(dir, *pt, last);
-					len = MAGNITUDE(dir);
-					VUNITIZE(dir);
-					visible = FALSE;
-					{
-					  struct bu_vls tmp_vls;
+	Tcl_AppendResult(interp, "Primitive\n", (char *)NULL);
+	for ( BU_LIST_FOR( vp, bn_vlist, &(sp->s_vlist) ) )  {
+	    register int	i;
+	    register int	nused = vp->nused;
+	    register int	*cmd = vp->cmd;
+	    register point_t *pt = vp->pt;
+	    for ( i = 0; i < nused; i++, cmd++, pt++ )  {
+		Tcl_AppendResult(interp, "\tVector\n", (char *)NULL);
+		switch ( *cmd )  {
+		    case BN_VLIST_POLY_START:
+		    case BN_VLIST_POLY_VERTNORM:
+			break;
+		    case BN_VLIST_POLY_MOVE:
+		    case BN_VLIST_LINE_MOVE:
+			/* move */
+			VMOVE(last, *pt);
+			MOVE(last);
+			break;
+		    case BN_VLIST_POLY_DRAW:
+		    case BN_VLIST_POLY_END:
+		    case BN_VLIST_LINE_DRAW:
+			/* setup direction && length */
+			VSUB2(dir, *pt, last);
+			len = MAGNITUDE(dir);
+			VUNITIZE(dir);
+			visible = FALSE;
+			{
+			    struct bu_vls tmp_vls;
 
-					  bu_vls_init(&tmp_vls);
-					  bu_vls_printf(&tmp_vls, "\t\tDraw 0 -> %g, step %g\n", len, step);
-					  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-					  bu_vls_free(&tmp_vls);
-					}
-					for (u = 0; u <= len; u += step) {
-						VJOIN1(aim_point, last, u, dir);
-						MAT4X3PNT(temp, view_state->vs_model2view, aim_point);
-						temp[Z] = 100;			/* parallel project */
-						MAT4X3PNT(a.a_ray.r_pt, view_state->vs_view2model, temp);
-						if (rt_shootray(&a)) {
-							if (!visible) {
-								visible = TRUE;
-								MOVE(aim_point);
-							}
-						} else {
-							if (visible) {
-								visible = FALSE;
-								DRAW(aim_point);
-							}
-						}
-					}
-					if (visible)
-						DRAW(aim_point);
-					VMOVE(last, *pt); /* new last vertex */
-				}
+			    bu_vls_init(&tmp_vls);
+			    bu_vls_printf(&tmp_vls, "\t\tDraw 0 -> %g, step %g\n", len, step);
+			    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+			    bu_vls_free(&tmp_vls);
 			}
+			for (u = 0; u <= len; u += step) {
+			    VJOIN1(aim_point, last, u, dir);
+			    MAT4X3PNT(temp, view_state->vs_model2view, aim_point);
+			    temp[Z] = 100;			/* parallel project */
+			    MAT4X3PNT(a.a_ray.r_pt, view_state->vs_view2model, temp);
+			    if (rt_shootray(&a)) {
+				if (!visible) {
+				    visible = TRUE;
+				    MOVE(aim_point);
+				}
+			    } else {
+				if (visible) {
+				    visible = FALSE;
+				    DRAW(aim_point);
+				}
+			    }
+			}
+			if (visible)
+			    DRAW(aim_point);
+			VMOVE(last, *pt); /* new last vertex */
 		}
+	    }
 	}
-	fclose(plotfp);
-	return TCL_OK;
+    }
+    fclose(plotfp);
+    return TCL_OK;
 }
 
 /*

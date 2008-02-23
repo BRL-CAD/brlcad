@@ -51,13 +51,13 @@ int		use_air = 0;		/* Handling of air in librt */
 int		using_mlib = 0;		/* Material routines NOT used */
 
 static struct rayinfo {
-	int	sight;
-	vect_t	ip;		/* intersection point */
-	vect_t	norm;		/* normal vector */
-	vect_t	spec;		/* specular direction */
-	struct	curvature curvature;
-	fastf_t	dist;
-	int	reg, sol, surf;
+    int	sight;
+    vect_t	ip;		/* intersection point */
+    vect_t	norm;		/* normal vector */
+    vect_t	spec;		/* specular direction */
+    struct	curvature curvature;
+    fastf_t	dist;
+    int	reg, sol, surf;
 } rayinfo[MAXREFLECT], *rayp;
 
 
@@ -75,9 +75,9 @@ int	numreflect = DEFAULTREFLECT;	/* max number of reflections */
 struct bu_structparse view_parse[] = {
 #if !defined(__alpha)   /* XXX Alpha does not support this initialization! */
 
-	{"%d",	1, "maxreflect",	bu_byteoffset(numreflect),	BU_STRUCTPARSE_FUNC_NULL },
+    {"%d",	1, "maxreflect",	bu_byteoffset(numreflect),	BU_STRUCTPARSE_FUNC_NULL },
 #endif
-	{"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
 const char title[] = "RTRAD";
@@ -121,11 +121,11 @@ int view_init( register struct application *ap,
 	       char *obj,
 	       int minus_o)
 {
-	ap->a_hit = radhit;
-	ap->a_miss = radmiss;
-	ap->a_onehit = 1;
+    ap->a_hit = radhit;
+    ap->a_miss = radmiss;
+    ap->a_onehit = 1;
 
-	return(0);		/* no framebuffer needed */
+    return(0);		/* no framebuffer needed */
 }
 /*
  *  Output a physical record (256 logical records)
@@ -135,36 +135,36 @@ int view_init( register struct application *ap,
 int
 writephysrec(FILE *fp)
 {
-	union radrec	skiprec;
-	long	length;
-	static int totbuf = 0;
-	int buf = 0;
+    union radrec	skiprec;
+    long	length;
+    static int totbuf = 0;
+    int buf = 0;
 
-	/* Pad out the record if not full */
-	memset((char *)&skiprec, 0, sizeof(skiprec));
-	skiprec.p.pad[16] = -1;
-	while ( precindex < 256 ) {
-		memcpy(&physrec[precindex*sizeof(union radrec)], &skiprec, sizeof(skiprec));
-		precindex++;
-		buf++;
-	}
+    /* Pad out the record if not full */
+    memset((char *)&skiprec, 0, sizeof(skiprec));
+    skiprec.p.pad[16] = -1;
+    while ( precindex < 256 ) {
+	memcpy(&physrec[precindex*sizeof(union radrec)], &skiprec, sizeof(skiprec));
+	precindex++;
+	buf++;
+    }
 
-	length = sizeof(physrec);
-	fwrite( &length, sizeof(length), 1, fp );
-	if ( fwrite( physrec, sizeof(physrec), 1, fp ) != 1 ) {
-		bu_log( "writephysrec: error writing physical record\n" );
-		return( 0 );
-	}
-	fwrite( &length, sizeof(length), 1, fp );
+    length = sizeof(physrec);
+    fwrite( &length, sizeof(length), 1, fp );
+    if ( fwrite( physrec, sizeof(physrec), 1, fp ) != 1 ) {
+	bu_log( "writephysrec: error writing physical record\n" );
+	return( 0 );
+    }
+    fwrite( &length, sizeof(length), 1, fp );
 
-	memset((char *)physrec, 0, sizeof(physrec));	/* paranoia */
-	precindex = 0;
-	precnum++;
+    memset((char *)physrec, 0, sizeof(physrec));	/* paranoia */
+    precindex = 0;
+    precnum++;
 
-	totbuf += buf;
-	/*fprintf( stderr, "PREC %d, buf = %d, totbuf = %d\n", precnum, buf, totbuf );*/
+    totbuf += buf;
+    /*fprintf( stderr, "PREC %d, buf = %d, totbuf = %d\n", precnum, buf, totbuf );*/
 
-	return( 1 );
+    return( 1 );
 }
 
 /*
@@ -175,68 +175,68 @@ writephysrec(FILE *fp)
 int
 writerec(union radrec *rp, FILE *fp)
 {
-	if ( precindex >= 256 ) {
-		if ( writephysrec( fp ) == 0 )
-			return( 0 );
-	}
-	memcpy(&physrec[precindex*sizeof(*rp)], rp, sizeof(*rp));
+    if ( precindex >= 256 ) {
+	if ( writephysrec( fp ) == 0 )
+	    return( 0 );
+    }
+    memcpy(&physrec[precindex*sizeof(*rp)], rp, sizeof(*rp));
 
-	precindex++;
-	recnum++;
+    precindex++;
+    recnum++;
 
-	if ( precindex >= 256 ) {
-		if ( writephysrec( fp ) == 0 )
-			return( 0 );
-	}
-	return( 1 );
+    if ( precindex >= 256 ) {
+	if ( writephysrec( fp ) == 0 )
+	    return( 0 );
+    }
+    return( 1 );
 }
 
 /* beginning of a frame */
 void
 view_2init(struct application *ap)
 {
-	extern double azimuth, elevation;
-	vect_t temp, aimpt;
-	union radrec r;
+    extern double azimuth, elevation;
+    vect_t temp, aimpt;
+    union radrec r;
 
-	if ( numreflect > MAXREFLECT ) {
-		bu_log("Warning: maxreflect too large (%d), using %d\n",
-			numreflect, MAXREFLECT );
-		numreflect = MAXREFLECT;
-	}
+    if ( numreflect > MAXREFLECT ) {
+	bu_log("Warning: maxreflect too large (%d), using %d\n",
+	       numreflect, MAXREFLECT );
+	numreflect = MAXREFLECT;
+    }
 
-	bu_log( "Ray Spacing: %f rays/cm\n", 10.0*(width/viewsize) );
+    bu_log( "Ray Spacing: %f rays/cm\n", 10.0*(width/viewsize) );
 
-	/* Header Record */
-	memset((char *)&r, 0, sizeof(r));
+    /* Header Record */
+    memset((char *)&r, 0, sizeof(r));
 
-	/*XXX*/
-	r.h.head[0] = 'h'; r.h.head[1] = 'e';
-	r.h.head[2] = 'a'; r.h.head[3] = 'd';
+    /*XXX*/
+    r.h.head[0] = 'h'; r.h.head[1] = 'e';
+    r.h.head[2] = 'a'; r.h.head[3] = 'd';
 
-	r.h.id = 1;
-	r.h.iview = 1;
-	r.h.miview = - r.h.iview;
-	VSET( temp, 0.0, 0.0, -1.414 );	/* Point we are looking at */
-	MAT4X3PNT( aimpt, view2model, temp );
-	r.h.cx = aimpt[0];		/* aimpoint */
-	r.h.cy = aimpt[1];
-	r.h.cz = aimpt[2];
-	r.h.back = 1.414*viewsize/2.0;	/* backoff */
-	r.h.e = elevation;
-	r.h.a = azimuth;
-	r.h.vert = viewsize;
-	r.h.horz = viewsize;
-	r.h.nvert = height;
-	r.h.nhorz = width;
-	r.h.maxrfl = numreflect;
+    r.h.id = 1;
+    r.h.iview = 1;
+    r.h.miview = - r.h.iview;
+    VSET( temp, 0.0, 0.0, -1.414 );	/* Point we are looking at */
+    MAT4X3PNT( aimpt, view2model, temp );
+    r.h.cx = aimpt[0];		/* aimpoint */
+    r.h.cy = aimpt[1];
+    r.h.cz = aimpt[2];
+    r.h.back = 1.414*viewsize/2.0;	/* backoff */
+    r.h.e = elevation;
+    r.h.a = azimuth;
+    r.h.vert = viewsize;
+    r.h.horz = viewsize;
+    r.h.nvert = height;
+    r.h.nhorz = width;
+    r.h.maxrfl = numreflect;
 
-	writerec( &r, outfp );
+    writerec( &r, outfp );
 
-	/* XXX - write extra header records */
-	memset((char *)&r, 0, sizeof(r));
-	writerec( &r, outfp );
-	writerec( &r, outfp );
+    /* XXX - write extra header records */
+    memset((char *)&r, 0, sizeof(r));
+    writerec( &r, outfp );
+    writerec( &r, outfp );
 }
 
 /* end of each pixel */
@@ -252,112 +252,112 @@ void	view_cleanup(void) {}
 void
 view_end(void)
 {
-	/* flush any partial output record */
-	if ( precindex > 0 ) {
-		writephysrec( outfp );
-	}
+    /* flush any partial output record */
+    if ( precindex > 0 ) {
+	writephysrec( outfp );
+    }
 
-	bu_log( "view_end: %d physical records, (%d/%d) logical\n",
-		precnum, recnum, precnum*256 );
+    bu_log( "view_end: %d physical records, (%d/%d) logical\n",
+	    precnum, recnum, precnum*256 );
 }
 
 static int
 radhit(register struct application *ap, struct partition *PartHeadp, struct seg *segHeadp)
 {
-	register struct partition *pp;
-	register struct hit *hitp;
-	struct application sub_ap;
-	fastf_t	f;
-	vect_t	to_eye, work;
-	int	depth;
+    register struct partition *pp;
+    register struct hit *hitp;
+    struct application sub_ap;
+    fastf_t	f;
+    vect_t	to_eye, work;
+    int	depth;
 
+    for ( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
+	if ( pp->pt_outhit->hit_dist >= 0.0 )  break;
+    if ( pp == PartHeadp )  {
+	bu_log("radhit:  no hit out front?\n");
+	return(0);
+    }
+
+    if (R_DEBUG&RDEBUG_HITS)  {
+	rt_pr_pt( ap->a_rt_i, pp );
+    }
+
+    hitp = pp->pt_inhit;
+    if ( hitp->hit_dist >= INFINITY )  {
+	bu_log("radhit:  entry beyond infinity\n");
+	return(1);
+    }
+    /* Check to see if eye is "inside" the solid */
+    if ( hitp->hit_dist < 0 )  {
+	/* XXX */
+	bu_log("radhit:  GAK, eye inside solid (%g)\n", hitp->hit_dist );
 	for ( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
-		if ( pp->pt_outhit->hit_dist >= 0.0 )  break;
-	if ( pp == PartHeadp )  {
-		bu_log("radhit:  no hit out front?\n");
-		return(0);
-	}
+	    rt_pr_pt( ap->a_rt_i, pp );
+	return(0);
+    }
 
-	if (R_DEBUG&RDEBUG_HITS)  {
-		rt_pr_pt( ap->a_rt_i, pp );
-	}
+    rayp = &rayinfo[ ap->a_level ];
 
-	hitp = pp->pt_inhit;
-	if ( hitp->hit_dist >= INFINITY )  {
-		bu_log("radhit:  entry beyond infinity\n");
-		return(1);
-	}
-	/* Check to see if eye is "inside" the solid */
-	if ( hitp->hit_dist < 0 )  {
-		/* XXX */
-		bu_log("radhit:  GAK, eye inside solid (%g)\n", hitp->hit_dist );
-		for ( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
-			rt_pr_pt( ap->a_rt_i, pp );
-		return(0);
-	}
+    RT_HIT_NORMAL( rayp->norm, hitp, pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip );
 
-	rayp = &rayinfo[ ap->a_level ];
+    if (R_DEBUG&RDEBUG_HITS)  {
+	rt_pr_hit( " In", hitp );
+    }
 
-	RT_HIT_NORMAL( rayp->norm, hitp, pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip );
+    rayp->dist = hitp->hit_dist;
+    rayp->reg = pp->pt_regionp->reg_regionid;
+    rayp->sol = pp->pt_inseg->seg_stp->st_id;
+    rayp->surf = hitp->hit_surfno;
+    RT_CURVATURE( &(rayp->curvature), hitp, pp->pt_inflip, pp->pt_inseg->seg_stp );
+    if ( VDOT( rayp->norm, ap->a_ray.r_dir ) < 0 ) {
+	bu_log(" debug: flipping curvature\n");
+	rayp->curvature.crv_c1 = - rayp->curvature.crv_c1;
+	rayp->curvature.crv_c2 = - rayp->curvature.crv_c2;
+    }
+    VMOVE( rayp->ip, hitp->hit_point );
 
-	if (R_DEBUG&RDEBUG_HITS)  {
-		rt_pr_hit( " In", hitp );
-	}
+    /* Compute the specular direction */
+    VREVERSE( to_eye, ap->a_ray.r_dir );
+    f = 2 * VDOT( to_eye, rayp->norm );
+    VSCALE( work, rayp->norm, f );
+    /* I have been told this has unit length */
+    VSUB2( rayp->spec, work, to_eye );
 
-	rayp->dist = hitp->hit_dist;
-	rayp->reg = pp->pt_regionp->reg_regionid;
-	rayp->sol = pp->pt_inseg->seg_stp->st_id;
-	rayp->surf = hitp->hit_surfno;
-	RT_CURVATURE( &(rayp->curvature), hitp, pp->pt_inflip, pp->pt_inseg->seg_stp );
-	if ( VDOT( rayp->norm, ap->a_ray.r_dir ) < 0 ) {
-		bu_log(" debug: flipping curvature\n");
-		rayp->curvature.crv_c1 = - rayp->curvature.crv_c1;
-		rayp->curvature.crv_c2 = - rayp->curvature.crv_c2;
-	}
-	VMOVE( rayp->ip, hitp->hit_point );
+    /* Save info for 1st ray */
+    if ( ap->a_level == 0 ) {
+	firstray = ap->a_ray;	/* struct copy */
+	rayp->sight = 1;	/* the 1st intersect is always visible */
+    } else {
+	/* Check for visibility */
+	rayp->sight = isvisible( ap, hitp, rayp->norm );
+    }
 
-	/* Compute the specular direction */
-	VREVERSE( to_eye, ap->a_ray.r_dir );
-	f = 2 * VDOT( to_eye, rayp->norm );
-	VSCALE( work, rayp->norm, f );
-	/* I have been told this has unit length */
-	VSUB2( rayp->spec, work, to_eye );
+    /*
+     * Shoot another ray in the specular direction.
+     */
+    if ( ap->a_level < numreflect-1 ) {
+	sub_ap = *ap;	/* struct copy */
+	sub_ap.a_level = ap->a_level+1;
+	VMOVE( sub_ap.a_ray.r_pt, hitp->hit_point );
+	VMOVE( sub_ap.a_ray.r_dir, rayp->spec );
+	depth = rt_shootray( &sub_ap );
+    } else {
+	bu_log( "radhit:  max reflections exceeded [%d %d]\n",
+		ap->a_x, ap->a_y );
+	depth = 0;
+    }
 
-	/* Save info for 1st ray */
-	if ( ap->a_level == 0 ) {
-		firstray = ap->a_ray;	/* struct copy */
-		rayp->sight = 1;	/* the 1st intersect is always visible */
-	} else {
-		/* Check for visibility */
-		rayp->sight = isvisible( ap, hitp, rayp->norm );
-	}
-
-	/*
-	 * Shoot another ray in the specular direction.
-	 */
-	if ( ap->a_level < numreflect-1 ) {
-		sub_ap = *ap;	/* struct copy */
-		sub_ap.a_level = ap->a_level+1;
-		VMOVE( sub_ap.a_ray.r_pt, hitp->hit_point );
-		VMOVE( sub_ap.a_ray.r_dir, rayp->spec );
-		depth = rt_shootray( &sub_ap );
-	} else {
-		bu_log( "radhit:  max reflections exceeded [%d %d]\n",
-			ap->a_x, ap->a_y );
-		depth = 0;
-	}
-
-	if ( ap->a_level == 0 ) {
-		/* We're the 1st ray, output the raylist */
-		dumpall( ap, depth+1 );
-	}
-	return(depth+1);	/* report hit to main routine */
+    if ( ap->a_level == 0 ) {
+	/* We're the 1st ray, output the raylist */
+	dumpall( ap, depth+1 );
+    }
+    return(depth+1);	/* report hit to main routine */
 }
 
 static int
 radmiss(struct application *ap)
 {
-	return(0);
+    return(0);
 }
 
 /*********** Eye Visibility Routines ************/
@@ -369,44 +369,44 @@ radmiss(struct application *ap)
 static int
 hiteye(struct application *ap, struct partition *PartHeadp, struct seg *segHeadp)
 {
-	register struct partition *pp;
-	register struct hit *hitp;
-	vect_t work;
+    register struct partition *pp;
+    register struct hit *hitp;
+    vect_t work;
 
-	for ( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
-		if ( pp->pt_outhit->hit_dist > 0 )  break;
-	if ( pp == PartHeadp )  {
-		bu_log("hiteye:  no hit out front?\n");
-		return(1);
-	}
-	hitp = pp->pt_inhit;
-	if ( hitp->hit_dist >= INFINITY )  {
-		bu_log("hiteye:  entry beyond infinity\n");
-		return(1);
-	}
-	/* The current ray segment exits "in front" of me,
-	 * find out where it went in.
-	 * Check to see if eye is "inside" of the solid.
+    for ( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
+	if ( pp->pt_outhit->hit_dist > 0 )  break;
+    if ( pp == PartHeadp )  {
+	bu_log("hiteye:  no hit out front?\n");
+	return(1);
+    }
+    hitp = pp->pt_inhit;
+    if ( hitp->hit_dist >= INFINITY )  {
+	bu_log("hiteye:  entry beyond infinity\n");
+	return(1);
+    }
+    /* The current ray segment exits "in front" of me,
+     * find out where it went in.
+     * Check to see if eye is "inside" of the solid.
+     */
+    if ( hitp->hit_dist < -1.0e-10 )  {
+	/*
+	 * If we are under 1.0 units inside of a solid, we pushed
+	 * into it ourselves in trying to get away from the surface.
+	 * Otherwise, its hard to tell how we got in here!
 	 */
-	if ( hitp->hit_dist < -1.0e-10 )  {
-		/*
-		 * If we are under 1.0 units inside of a solid, we pushed
-		 * into it ourselves in trying to get away from the surface.
-		 * Otherwise, its hard to tell how we got in here!
-		 */
-		if ( hitp->hit_dist < -1.001 ) {
-			bu_log("hiteye: *** GAK2, eye inside solid (%g) ***\n", hitp->hit_dist );
-			for ( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
-				rt_pr_pt( ap->a_rt_i, pp );
-		}
-		return(0);
+	if ( hitp->hit_dist < -1.001 ) {
+	    bu_log("hiteye: *** GAK2, eye inside solid (%g) ***\n", hitp->hit_dist );
+	    for ( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
+		rt_pr_pt( ap->a_rt_i, pp );
 	}
+	return(0);
+    }
 
-	VSUB2( work, firstray.r_pt, ap->a_ray.r_pt );
-	if ( hitp->hit_dist * hitp->hit_dist > MAGSQ(work) )
-		return(1);
-	else
-		return(0);
+    VSUB2( work, firstray.r_pt, ap->a_ray.r_pt );
+    if ( hitp->hit_dist * hitp->hit_dist > MAGSQ(work) )
+	return(1);
+    else
+	return(0);
 }
 
 /*
@@ -416,7 +416,7 @@ hiteye(struct application *ap, struct partition *PartHeadp, struct seg *segHeadp
 static int
 hittrue(struct application *ap)
 {
-	return(1);
+    return(1);
 }
 
 /*
@@ -432,129 +432,129 @@ hittrue(struct application *ap)
 static int
 isvisible(struct application *ap, struct hit *hitp, const fastf_t *norm)
 {
-	struct application sub_ap;
-	vect_t	rdir;
+    struct application sub_ap;
+    vect_t	rdir;
 
-	/* compute the ray direction */
-	VSUB2( rdir, firstray.r_pt, hitp->hit_point );
-	VUNITIZE( rdir );
-	if ( VDOT(rdir, norm) < 0 )
-		return( 0 );	/* backfacing */
+    /* compute the ray direction */
+    VSUB2( rdir, firstray.r_pt, hitp->hit_point );
+    VUNITIZE( rdir );
+    if ( VDOT(rdir, norm) < 0 )
+	return( 0 );	/* backfacing */
 
-	sub_ap = *ap;	/* struct copy */
-	sub_ap.a_level = ap->a_level+1;
-	sub_ap.a_onehit = 1;
-	sub_ap.a_hit = hiteye;
-	sub_ap.a_miss = hittrue;
-	/*
-	 * New origin is one unit in the ray direction in
-	 * order to get away from the surface we intersected.
-	 */
-	VADD2( sub_ap.a_ray.r_pt, hitp->hit_point, rdir );
-	VMOVE( sub_ap.a_ray.r_dir, rdir );
+    sub_ap = *ap;	/* struct copy */
+    sub_ap.a_level = ap->a_level+1;
+    sub_ap.a_onehit = 1;
+    sub_ap.a_hit = hiteye;
+    sub_ap.a_miss = hittrue;
+    /*
+     * New origin is one unit in the ray direction in
+     * order to get away from the surface we intersected.
+     */
+    VADD2( sub_ap.a_ray.r_pt, hitp->hit_point, rdir );
+    VMOVE( sub_ap.a_ray.r_dir, rdir );
 
-	return( rt_shootray( &sub_ap ) );
+    return( rt_shootray( &sub_ap ) );
 }
 
 /************** Output Routines ***************/
 void
 dumpall(struct application *ap, int depth)
 {
-	int	i;
-	union radrec r;
+    int	i;
+    union radrec r;
 
-	if ( depth > numreflect ) {
-		bu_log( "dumpall: %d reflections!\n", depth );
-	}
+    if ( depth > numreflect ) {
+	bu_log( "dumpall: %d reflections!\n", depth );
+    }
 
-	/* Firing record */
-	/*printf( "Ray [%d %d], depth = %d\n", ap->a_x, ap->a_y, depth );*/
+    /* Firing record */
+    /*printf( "Ray [%d %d], depth = %d\n", ap->a_x, ap->a_y, depth );*/
 
-	memset((char *)&r, 0, sizeof(r));
+    memset((char *)&r, 0, sizeof(r));
 
-	/*XXX*/
-	r.f.head[0] = 'f'; r.f.head[1] = 'i';
-	r.f.head[2] = 'r'; r.f.head[3] = 'e';
+    /*XXX*/
+    r.f.head[0] = 'f'; r.f.head[1] = 'i';
+    r.f.head[2] = 'r'; r.f.head[3] = 'e';
 
-	/*
-	 * Make sure there's enough space in
-	 * the physical record.
-	 */
-	i = 1 + depth;
-	if ( depth < numreflect )
-		i++;	/* escape */
-	if ( precindex + i > 256 )
-		writephysrec( outfp );
+    /*
+     * Make sure there's enough space in
+     * the physical record.
+     */
+    i = 1 + depth;
+    if ( depth < numreflect )
+	i++;	/* escape */
+    if ( precindex + i > 256 )
+	writephysrec( outfp );
 
-	r.f.irf = i-1;			/* num recs in ray, not counting fire */
-	r.f.ox = ap->a_ray.r_pt[0];	/* ray origin */
-	r.f.oy = ap->a_ray.r_pt[1];
-	r.f.oz = ap->a_ray.r_pt[2];
-	r.f.h = (ap->a_x - width/2) * viewsize/width;
-	r.f.v = (ap->a_y - height/2) * viewsize/height;
-	r.f.ih = ap->a_x + 1;		/* Radsim counts from 1 */
-	r.f.iv = ap->a_y + 1;
-	writerec( &r, outfp );
+    r.f.irf = i-1;			/* num recs in ray, not counting fire */
+    r.f.ox = ap->a_ray.r_pt[0];	/* ray origin */
+    r.f.oy = ap->a_ray.r_pt[1];
+    r.f.oz = ap->a_ray.r_pt[2];
+    r.f.h = (ap->a_x - width/2) * viewsize/width;
+    r.f.v = (ap->a_y - height/2) * viewsize/height;
+    r.f.ih = ap->a_x + 1;		/* Radsim counts from 1 */
+    r.f.iv = ap->a_y + 1;
+    writerec( &r, outfp );
 
-	for ( i = 0; i < depth; i++ ) {
-		dumpray( &rayinfo[i] );
-	}
+    for ( i = 0; i < depth; i++ ) {
+	dumpray( &rayinfo[i] );
+    }
 
-	if ( depth == numreflect )
-		return;			/* no escape */
+    if ( depth == numreflect )
+	return;			/* no escape */
 
-	/* Escape record */
-	memset((char *)&r, 0, sizeof(r));
+    /* Escape record */
+    memset((char *)&r, 0, sizeof(r));
 
-	/*XXX*/
-	r.e.head[0] = 'e'; r.e.head[1] = 's';
-	r.e.head[2] = 'c'; r.e.head[3] = 'p';
+    /*XXX*/
+    r.e.head[0] = 'e'; r.e.head[1] = 's';
+    r.e.head[2] = 'c'; r.e.head[3] = 'p';
 
-	r.e.sight = -3;			/* XXX line of sight for escape? */
-	r.e.dx = rayinfo[depth-1].spec[0];	/* escape direction */
-	r.e.dy = rayinfo[depth-1].spec[1];
-	r.e.dz = rayinfo[depth-1].spec[2];
-	writerec( &r, outfp );
+    r.e.sight = -3;			/* XXX line of sight for escape? */
+    r.e.dx = rayinfo[depth-1].spec[0];	/* escape direction */
+    r.e.dy = rayinfo[depth-1].spec[1];
+    r.e.dz = rayinfo[depth-1].spec[2];
+    writerec( &r, outfp );
 }
 
 void
 dumpray(struct rayinfo *rp)
 {
-	union radrec r;
+    union radrec r;
 
 #ifdef DEBUG1
-	printf( " visible = %d\n", rp->sight );
-	printf( " i = (%f %f %f)\n", rp->ip[0], rp->ip[1], rp->ip[2] );
-	printf( " n = (%f %f %f)\n", rp->norm[0], rp->norm[1], rp->norm[2] );
-	printf( " p = (%f %f %f)\n", rp->spec[0], rp->spec[1], rp->spec[2] );
+    printf( " visible = %d\n", rp->sight );
+    printf( " i = (%f %f %f)\n", rp->ip[0], rp->ip[1], rp->ip[2] );
+    printf( " n = (%f %f %f)\n", rp->norm[0], rp->norm[1], rp->norm[2] );
+    printf( " p = (%f %f %f)\n", rp->spec[0], rp->spec[1], rp->spec[2] );
 #endif
 
-	/* Reflection record */
-	memset((char *)&r, 0, sizeof(r));
+    /* Reflection record */
+    memset((char *)&r, 0, sizeof(r));
 
-	/*XXX*/
-	r.r.head[0] = 'r'; r.r.head[1] = 'e';
-	r.r.head[2] = 'l'; r.r.head[3] = 'f';
+    /*XXX*/
+    r.r.head[0] = 'r'; r.r.head[1] = 'e';
+    r.r.head[2] = 'l'; r.r.head[3] = 'f';
 
-	r.r.packedid = 12345;
-	r.r.sight = rp->sight;
-	r.r.ix = rp->ip[0];		/* intersection */
-	r.r.iy = rp->ip[1];
-	r.r.iz = rp->ip[2];
-	r.r.nx = rp->norm[0];		/* normal */
-	r.r.ny = rp->norm[1];
-	r.r.nz = rp->norm[2];
-	r.r.px = rp->curvature.crv_pdir[0];	/* principle plane */
-	r.r.py = rp->curvature.crv_pdir[1];
-	r.r.pz = rp->curvature.crv_pdir[2];
-	r.r.rc1 = rp->curvature.crv_c1;
-	r.r.rc2 = rp->curvature.crv_c2;
-	r.r.dfirst = rp->dist;
-	r.r.ireg = rp->reg;
-	r.r.isol = rp->sol;
-	r.r.isurf = rp->surf;
+    r.r.packedid = 12345;
+    r.r.sight = rp->sight;
+    r.r.ix = rp->ip[0];		/* intersection */
+    r.r.iy = rp->ip[1];
+    r.r.iz = rp->ip[2];
+    r.r.nx = rp->norm[0];		/* normal */
+    r.r.ny = rp->norm[1];
+    r.r.nz = rp->norm[2];
+    r.r.px = rp->curvature.crv_pdir[0];	/* principle plane */
+    r.r.py = rp->curvature.crv_pdir[1];
+    r.r.pz = rp->curvature.crv_pdir[2];
+    r.r.rc1 = rp->curvature.crv_c1;
+    r.r.rc2 = rp->curvature.crv_c2;
+    r.r.dfirst = rp->dist;
+    r.r.ireg = rp->reg;
+    r.r.isol = rp->sol;
+    r.r.isurf = rp->surf;
 
-	writerec( &r, outfp );
+    writerec( &r, outfp );
 }
 
 

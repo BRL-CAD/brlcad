@@ -78,8 +78,8 @@
  */
 /* parameters for solid, internal representation */
 struct rt_xxx_internal {
-	long	magic;
-	vect_t	v;
+    long	magic;
+    vect_t	v;
 };
 #  define RT_XXX_INTERNAL_MAGIC	0xxx
 #  define RT_XXX_CK_MAGIC(_p)	BU_CKMAG(_p, RT_XXX_INTERNAL_MAGIC, "rt_xxx_internal")
@@ -87,7 +87,7 @@ struct rt_xxx_internal {
 
 /* ray tracing form of solid, including precomputed terms */
 struct xxx_specific {
-	vect_t	xxx_V;
+    vect_t	xxx_V;
 };
 
 
@@ -109,13 +109,13 @@ struct xxx_specific {
 int
 rt_xxx_prep( struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip )
 {
-	struct rt_xxx_internal		*xxx_ip;
-	register struct xxx_specific	*xxx;
-	const struct bn_tol		*tol = &rtip->rti_tol;
+    struct rt_xxx_internal		*xxx_ip;
+    register struct xxx_specific	*xxx;
+    const struct bn_tol		*tol = &rtip->rti_tol;
 
-	RT_CK_DB_INTERNAL(ip);
-	xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
-	RT_XXX_CK_MAGIC(xxx_ip);
+    RT_CK_DB_INTERNAL(ip);
+    xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
+    RT_XXX_CK_MAGIC(xxx_ip);
 }
 
 /**
@@ -124,8 +124,8 @@ rt_xxx_prep( struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip )
 void
 rt_xxx_print( const struct soltab *stp )
 {
-	register const struct xxx_specific *xxx =
-		(struct xxx_specific *)stp->st_specific;
+    register const struct xxx_specific *xxx =
+	(struct xxx_specific *)stp->st_specific;
 }
 
 /**
@@ -142,12 +142,12 @@ rt_xxx_print( const struct soltab *stp )
 int
 rt_xxx_shot( struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead )
 {
-	register struct xxx_specific *xxx =
-		(struct xxx_specific *)stp->st_specific;
-	register struct seg *segp;
-	const struct bn_tol	*tol = &ap->a_rt_i->rti_tol;
+    register struct xxx_specific *xxx =
+	(struct xxx_specific *)stp->st_specific;
+    register struct seg *segp;
+    const struct bn_tol	*tol = &ap->a_rt_i->rti_tol;
 
-	return(0);			/* MISS */
+    return(0);			/* MISS */
 }
 
 #define RT_XXX_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
@@ -164,7 +164,7 @@ rt_xxx_vshot(struct soltab *stp[],	/* An array of solid pointers */
 	     int n,			/* Number of ray/object pairs */
 	     struct application *ap)
 {
-	rt_vstub( stp, rp, segp, n, ap );
+    rt_vstub( stp, rp, segp, n, ap );
 }
 
 /**
@@ -175,10 +175,10 @@ rt_xxx_vshot(struct soltab *stp[],	/* An array of solid pointers */
 void
 rt_xxx_norm( struct hit *hitp, struct soltab *stp, struct xray *rp )
 {
-	register struct xxx_specific *xxx =
-		(struct xxx_specific *)stp->st_specific;
+    register struct xxx_specific *xxx =
+	(struct xxx_specific *)stp->st_specific;
 
-	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
+    VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
 }
 
 /**
@@ -189,13 +189,13 @@ rt_xxx_norm( struct hit *hitp, struct soltab *stp, struct xray *rp )
 void
 rt_xxx_curve( struct curvature *cvp, struct hit *hitp, struct soltab *stp )
 {
-	register struct xxx_specific *xxx =
-		(struct xxx_specific *)stp->st_specific;
+    register struct xxx_specific *xxx =
+	(struct xxx_specific *)stp->st_specific;
 
-	cvp->crv_c1 = cvp->crv_c2 = 0;
+    cvp->crv_c1 = cvp->crv_c2 = 0;
 
-	/* any tangent direction */
-	bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
+    /* any tangent direction */
+    bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
 }
 
 /**
@@ -209,8 +209,8 @@ rt_xxx_curve( struct curvature *cvp, struct hit *hitp, struct soltab *stp )
 void
 rt_xxx_uv( struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp )
 {
-	register struct xxx_specific *xxx =
-		(struct xxx_specific *)stp->st_specific;
+    register struct xxx_specific *xxx =
+	(struct xxx_specific *)stp->st_specific;
 }
 
 /**
@@ -219,10 +219,10 @@ rt_xxx_uv( struct application *ap, struct soltab *stp, struct hit *hitp, struct 
 void
 rt_xxx_free( struct soltab *stp )
 {
-	register struct xxx_specific *xxx =
-		(struct xxx_specific *)stp->st_specific;
+    register struct xxx_specific *xxx =
+	(struct xxx_specific *)stp->st_specific;
 
-	bu_free( (char *)xxx, "xxx_specific" );
+    bu_free( (char *)xxx, "xxx_specific" );
 }
 
 /**
@@ -231,7 +231,7 @@ rt_xxx_free( struct soltab *stp )
 int
 rt_xxx_class( const struct soltab *stp, const vect_t min, const vect_t max, const struct bn_tol *tol )
 {
-	return RT_CLASSIFY_UNIMPLEMENTED;
+    return RT_CLASSIFY_UNIMPLEMENTED;
 }
 
 /**
@@ -240,13 +240,13 @@ rt_xxx_class( const struct soltab *stp, const vect_t min, const vect_t max, cons
 int
 rt_xxx_plot( struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol )
 {
-	struct rt_xxx_internal	*xxx_ip;
+    struct rt_xxx_internal	*xxx_ip;
 
-	RT_CK_DB_INTERNAL(ip);
-	xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
-	RT_XXX_CK_MAGIC(xxx_ip);
+    RT_CK_DB_INTERNAL(ip);
+    xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
+    RT_XXX_CK_MAGIC(xxx_ip);
 
-	return(-1);
+    return(-1);
 }
 
 /**
@@ -259,13 +259,13 @@ rt_xxx_plot( struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 int
 rt_xxx_tess( struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol )
 {
-	struct rt_xxx_internal	*xxx_ip;
+    struct rt_xxx_internal	*xxx_ip;
 
-	RT_CK_DB_INTERNAL(ip);
-	xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
-	RT_XXX_CK_MAGIC(xxx_ip);
+    RT_CK_DB_INTERNAL(ip);
+    xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
+    RT_XXX_CK_MAGIC(xxx_ip);
 
-	return(-1);
+    return(-1);
 }
 
 /**
@@ -277,29 +277,29 @@ rt_xxx_tess( struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 int
 rt_xxx_import( struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip )
 {
-	struct rt_xxx_internal	*xxx_ip;
-	union record			*rp;
+    struct rt_xxx_internal	*xxx_ip;
+    union record			*rp;
 
-	BU_CK_EXTERNAL( ep );
-	rp = (union record *)ep->ext_buf;
-	/* Check record type */
-	if ( rp->u_id != ID_SOLID )  {
-		bu_log("rt_xxx_import: defective record\n");
-		return(-1);
-	}
+    BU_CK_EXTERNAL( ep );
+    rp = (union record *)ep->ext_buf;
+    /* Check record type */
+    if ( rp->u_id != ID_SOLID )  {
+	bu_log("rt_xxx_import: defective record\n");
+	return(-1);
+    }
 
-	RT_CK_DB_INTERNAL( ip );
-	ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	ip->idb_type = ID_XXX;
-	ip->idb_meth = &rt_functab[ID_XXX];
-	ip->idb_ptr = bu_malloc( sizeof(struct rt_xxx_internal), "rt_xxx_internal");
-	xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
-	xxx_ip->magic = RT_XXX_INTERNAL_MAGIC;
+    RT_CK_DB_INTERNAL( ip );
+    ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    ip->idb_type = ID_XXX;
+    ip->idb_meth = &rt_functab[ID_XXX];
+    ip->idb_ptr = bu_malloc( sizeof(struct rt_xxx_internal), "rt_xxx_internal");
+    xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
+    xxx_ip->magic = RT_XXX_INTERNAL_MAGIC;
 
-	if (mat == NULL) mat = bn_mat_identity;
-	MAT4X3PNT( xxx_ip->xxx_V, mat, &rp->s.s_values[0] );
+    if (mat == NULL) mat = bn_mat_identity;
+    MAT4X3PNT( xxx_ip->xxx_V, mat, &rp->s.s_values[0] );
 
-	return(0);			/* OK */
+    return(0);			/* OK */
 }
 
 /**
@@ -310,37 +310,37 @@ rt_xxx_import( struct rt_db_internal *ip, const struct bu_external *ep, const ma
 int
 rt_xxx_export( struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip )
 {
-	struct rt_xxx_internal	*xxx_ip;
-	union record		*rec;
+    struct rt_xxx_internal	*xxx_ip;
+    union record		*rec;
 
-	RT_CK_DB_INTERNAL(ip);
-	if ( ip->idb_type != ID_XXX )  return(-1);
-	xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
-	RT_XXX_CK_MAGIC(xxx_ip);
+    RT_CK_DB_INTERNAL(ip);
+    if ( ip->idb_type != ID_XXX )  return(-1);
+    xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
+    RT_XXX_CK_MAGIC(xxx_ip);
 
-	BU_CK_EXTERNAL(ep);
-	ep->ext_nbytes = sizeof(union record);
-	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "xxx external");
-	rec = (union record *)ep->ext_buf;
+    BU_CK_EXTERNAL(ep);
+    ep->ext_nbytes = sizeof(union record);
+    ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "xxx external");
+    rec = (union record *)ep->ext_buf;
 
-	rec->s.s_id = ID_SOLID;
-	rec->s.s_type = XXX;	/* GED primitive type from db.h */
+    rec->s.s_id = ID_SOLID;
+    rec->s.s_type = XXX;	/* GED primitive type from db.h */
 
-	/* Since libwdb users may want to operate in units other
-	 * than mm, we offer the opportunity to scale the solid
-	 * (to get it into mm) on the way out.
-	 */
+    /* Since libwdb users may want to operate in units other
+     * than mm, we offer the opportunity to scale the solid
+     * (to get it into mm) on the way out.
+     */
 
 
-	/* convert from local editing units to mm and export
-	 * to database record format
-	 *
-	 * Warning: type conversion: double to float
-	 */
-	VSCALE( &rec->s.s_values[0], xxx_ip->xxx_V, local2mm );
-	rec->s.s_values[3] = xxx_ip->xxx_radius * local2mm;
+    /* convert from local editing units to mm and export
+     * to database record format
+     *
+     * Warning: type conversion: double to float
+     */
+    VSCALE( &rec->s.s_values[0], xxx_ip->xxx_V, local2mm );
+    rec->s.s_values[3] = xxx_ip->xxx_radius * local2mm;
 
-	return(0);
+    return(0);
 }
 
 
@@ -357,34 +357,34 @@ rt_xxx_export( struct bu_external *ep, const struct rt_db_internal *ip, double l
 int
 rt_xxx_import5( struct rt_db_internal  *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip )
 {
-	struct rt_xxx_internal	*xxx_ip;
-	fastf_t				vv[ELEMENTS_PER_VECT*1];
+    struct rt_xxx_internal	*xxx_ip;
+    fastf_t				vv[ELEMENTS_PER_VECT*1];
 
-	RT_CK_DB_INTERNAL(ip)
+    RT_CK_DB_INTERNAL(ip)
 	BU_CK_EXTERNAL( ep );
 
-	BU_ASSERT_LONG( ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 3*4 );
+    BU_ASSERT_LONG( ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 3*4 );
 
-	/* set up the internal structure */
-	ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	ip->idb_type = ID_XXX;
-	ip->idb_meth = &rt_functab[ID_XXX];
-	ip->idb_ptr = bu_malloc( sizeof(struct rt_xxx_internal), "rt_xxx_internal");
-	xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
-	xxx_ip->magic = RT_XXX_INTERNAL_MAGIC;
+    /* set up the internal structure */
+    ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    ip->idb_type = ID_XXX;
+    ip->idb_meth = &rt_functab[ID_XXX];
+    ip->idb_ptr = bu_malloc( sizeof(struct rt_xxx_internal), "rt_xxx_internal");
+    xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
+    xxx_ip->magic = RT_XXX_INTERNAL_MAGIC;
 
-	/* Convert the data in ep->ext_buf into internal format.
-	 * Note the conversion from network data
-	 * (Big Endian ints, IEEE double floating point) to host local data
-	 * representations.
-	 */
-	ntohd( (unsigned char *)&vv, (char *)ep->ext_buf, ELEMENTS_PER_VECT*1 );
+    /* Convert the data in ep->ext_buf into internal format.
+     * Note the conversion from network data
+     * (Big Endian ints, IEEE double floating point) to host local data
+     * representations.
+     */
+    ntohd( (unsigned char *)&vv, (char *)ep->ext_buf, ELEMENTS_PER_VECT*1 );
 
-	/* Apply the modeling transformation */
-	if (mat == NULL) mat = bn_mat_identity;
-	MAT4X3PNT( xxx_ip->v, mat, vv );
+    /* Apply the modeling transformation */
+    if (mat == NULL) mat = bn_mat_identity;
+    MAT4X3PNT( xxx_ip->v, mat, vv );
 
-	return(0);			/* OK */
+    return(0);			/* OK */
 }
 
 /**
@@ -399,29 +399,29 @@ rt_xxx_import5( struct rt_db_internal  *ip, const struct bu_external *ep, const 
 int
 rt_xxx_export5( struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip )
 {
-	struct rt_xxx_internal	*xxx_ip;
-	fastf_t			vec[ELEMENTS_PER_VECT];
+    struct rt_xxx_internal	*xxx_ip;
+    fastf_t			vec[ELEMENTS_PER_VECT];
 
-	RT_CK_DB_INTERNAL(ip);
-	if ( ip->idb_type != ID_XXX )  return(-1);
-	xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
-	RT_XXX_CK_MAGIC(xxx_ip);
+    RT_CK_DB_INTERNAL(ip);
+    if ( ip->idb_type != ID_XXX )  return(-1);
+    xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
+    RT_XXX_CK_MAGIC(xxx_ip);
 
-	BU_CK_EXTERNAL(ep);
-	ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT;
-	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "xxx external");
+    BU_CK_EXTERNAL(ep);
+    ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT;
+    ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "xxx external");
 
 
-	/* Since libwdb users may want to operate in units other
-	 * than mm, we offer the opportunity to scale the solid
-	 * (to get it into mm) on the way out.
-	 */
-	VSCALE( vec, xxx_ip->v, local2mm );
+    /* Since libwdb users may want to operate in units other
+     * than mm, we offer the opportunity to scale the solid
+     * (to get it into mm) on the way out.
+     */
+    VSCALE( vec, xxx_ip->v, local2mm );
 
-	/* Convert from internal (host) to database (network) format */
-	htond( ep->ext_buf, (unsigned char *)vec, ELEMENTS_PER_VECT*1 );
+    /* Convert from internal (host) to database (network) format */
+    htond( ep->ext_buf, (unsigned char *)vec, ELEMENTS_PER_VECT*1 );
 
-	return 0;
+    return 0;
 }
 
 /**
@@ -434,20 +434,20 @@ rt_xxx_export5( struct bu_external *ep, const struct rt_db_internal *ip, double 
 int
 rt_xxx_describe( struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local )
 {
-	register struct rt_xxx_internal	*xxx_ip =
-		(struct rt_xxx_internal *)ip->idb_ptr;
-	char	buf[256];
+    register struct rt_xxx_internal	*xxx_ip =
+	(struct rt_xxx_internal *)ip->idb_ptr;
+    char	buf[256];
 
-	RT_XXX_CK_MAGIC(xxx_ip);
-	bu_vls_strcat( str, "truncated general xxx (XXX)\n");
+    RT_XXX_CK_MAGIC(xxx_ip);
+    bu_vls_strcat( str, "truncated general xxx (XXX)\n");
 
-	sprintf(buf, "\tV (%g, %g, %g)\n",
-		INTCLAMP(xxx_ip->v[X] * mm2local),
-		INTCLAMP(xxx_ip->v[Y] * mm2local),
-		INTCLAMP(xxx_ip->v[Z] * mm2local) );
-	bu_vls_strcat( str, buf );
+    sprintf(buf, "\tV (%g, %g, %g)\n",
+	    INTCLAMP(xxx_ip->v[X] * mm2local),
+	    INTCLAMP(xxx_ip->v[Y] * mm2local),
+	    INTCLAMP(xxx_ip->v[Z] * mm2local) );
+    bu_vls_strcat( str, buf );
 
-	return(0);
+    return(0);
 }
 
 /**
@@ -458,15 +458,15 @@ rt_xxx_describe( struct bu_vls *str, const struct rt_db_internal *ip, int verbos
 void
 rt_xxx_ifree( struct rt_db_internal *ip )
 {
-	register struct rt_xxx_internal	*xxx_ip;
+    register struct rt_xxx_internal	*xxx_ip;
 
-	RT_CK_DB_INTERNAL(ip);
-	xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
-	RT_XXX_CK_MAGIC(xxx_ip);
-	xxx_ip->magic = 0;			/* sanity */
+    RT_CK_DB_INTERNAL(ip);
+    xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
+    RT_XXX_CK_MAGIC(xxx_ip);
+    xxx_ip->magic = 0;			/* sanity */
 
-	bu_free( (char *)xxx_ip, "xxx ifree" );
-	ip->idb_ptr = GENPTR_NULL;	/* sanity */
+    bu_free( (char *)xxx_ip, "xxx ifree" );
+    ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }
 
 /**

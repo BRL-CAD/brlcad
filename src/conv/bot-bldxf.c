@@ -81,10 +81,10 @@ int parse_args(int ac, char *av[])
     /* get all the option flags from the command line */
     while ((c=bu_getopt(ac, av, options)) != EOF)
 	switch (c) {
-	case 'd'	: debug = strtol(bu_optarg, NULL, 16); break;
-	case '?'	:
-	case 'h'	:
-	default		: usage("Bad or help flag specified\n"); break;
+	    case 'd'	: debug = strtol(bu_optarg, NULL, 16); break;
+	    case '?'	:
+	    case 'h'	:
+	    default		: usage("Bad or help flag specified\n"); break;
 	}
 
     return(bu_optind);
@@ -92,24 +92,24 @@ int parse_args(int ac, char *av[])
 
 
 static int tbl[19][8] = {
-	{ 0, 1, 3, 4,	1, 2, 0, 5},
-	{ 0, 1, 4, 3,	1, 2, 0, 5},
-	{ 0, 1, 3, 5,	1, 2, 0, 4},
-	{ 0, 1, 5, 3,	1, 2, 0, 4},
-	{ 0, 1, 5, 4,	1, 2, 0, 3},
-	{ 0, 1, 4, 5,	1, 2, 0, 3},
-	{ 0, 2, 3, 4,	0, 1, 2, 5},
-	{ 0, 2, 4, 3,	0, 1, 2, 5},
-	{ 0, 2, 3, 5,	0, 1, 2, 4},
-	{ 0, 2, 5, 3,	0, 1, 2, 4},
-	{ 0, 2, 4, 5,	0, 1, 2, 3},
-	{ 0, 2, 5, 4,	0, 1, 2, 3},
-	{ 1, 2, 3, 4,	0, 1, 5, 2},
-	{ 1, 2, 4, 3,	0, 1, 5, 2},
-	{ 1, 2, 3, 5,	0, 1, 4, 2},
-	{ 1, 2, 5, 3,	0, 1, 4, 2},
-	{ 1, 2, 4, 5,	0, 1, 3, 2},
-	{ 1, 2, 5, 4,	0, 1, 3, 2}
+    { 0, 1, 3, 4,	1, 2, 0, 5},
+    { 0, 1, 4, 3,	1, 2, 0, 5},
+    { 0, 1, 3, 5,	1, 2, 0, 4},
+    { 0, 1, 5, 3,	1, 2, 0, 4},
+    { 0, 1, 5, 4,	1, 2, 0, 3},
+    { 0, 1, 4, 5,	1, 2, 0, 3},
+    { 0, 2, 3, 4,	0, 1, 2, 5},
+    { 0, 2, 4, 3,	0, 1, 2, 5},
+    { 0, 2, 3, 5,	0, 1, 2, 4},
+    { 0, 2, 5, 3,	0, 1, 2, 4},
+    { 0, 2, 4, 5,	0, 1, 2, 3},
+    { 0, 2, 5, 4,	0, 1, 2, 3},
+    { 1, 2, 3, 4,	0, 1, 5, 2},
+    { 1, 2, 4, 3,	0, 1, 5, 2},
+    { 1, 2, 3, 5,	0, 1, 4, 2},
+    { 1, 2, 5, 3,	0, 1, 4, 2},
+    { 1, 2, 4, 5,	0, 1, 3, 2},
+    { 1, 2, 5, 4,	0, 1, 3, 2}
 };
 
 /*
@@ -391,10 +391,10 @@ void write_dxf(struct rt_bot_internal *bot, char *name)
 }
 
 int r_start (
-		struct db_tree_state * tsp,
-		struct db_full_path * pathp,
-		const struct rt_comb_internal * combp,
-		genptr_t client_data )
+    struct db_tree_state * tsp,
+    struct db_full_path * pathp,
+    const struct rt_comb_internal * combp,
+    genptr_t client_data )
 {
     int i;
     if (debug&DEBUG_NAMES) {
@@ -411,10 +411,10 @@ int r_start (
 }
 
 union tree *r_end (
-		struct db_tree_state * tsp,
-		struct db_full_path * pathp,
-		union tree * curtree,
-		genptr_t client_data )
+    struct db_tree_state * tsp,
+    struct db_full_path * pathp,
+    union tree * curtree,
+    genptr_t client_data )
 {
     int i;
     if (debug&DEBUG_NAMES) {
@@ -440,9 +440,9 @@ void add_bots(struct rt_bot_internal *bot_dest,
     int limit;
 
     if (debug&DEBUG_BOTS)
-    bu_log("adding bots v:%d f:%d  v:%d f:%d\n",
-	   bot_dest->num_vertices, bot_dest->num_faces,
-	   bot_src->num_vertices, bot_src->num_faces);
+	bu_log("adding bots v:%d f:%d  v:%d f:%d\n",
+	       bot_dest->num_vertices, bot_dest->num_faces,
+	       bot_src->num_vertices, bot_src->num_faces);
 
     /* allocate space for extra vertices */
     bot_dest->vertices =
@@ -470,15 +470,15 @@ void add_bots(struct rt_bot_internal *bot_dest,
     bot_dest->num_faces += bot_src->num_faces;
 
     if (debug&DEBUG_BOTS)
-    bu_log("...new bot v:%d f:%d\n",
-	   bot_dest->num_vertices, bot_dest->num_faces);
+	bu_log("...new bot v:%d f:%d\n",
+	       bot_dest->num_vertices, bot_dest->num_faces);
 }
 
 union tree * l_func (
-		struct db_tree_state * tsp,
-		struct db_full_path * pathp,
-		struct rt_db_internal * ip,
-		genptr_t client_data )
+    struct db_tree_state * tsp,
+    struct db_full_path * pathp,
+    struct rt_db_internal * ip,
+    genptr_t client_data )
 {
     int i;
     struct rt_bot_internal *bot;
@@ -594,8 +594,8 @@ int main(int ac, char *av[])
 	/* dump all the bots */
 	FOR_ALL_DIRECTORY_START(dp, rtip->rti_dbip)
 
-	/* we only dump BOT primitives, so skip some obvious exceptions */
-	if (dp->d_major_type != DB5_MAJORTYPE_BRLCAD) continue;
+	    /* we only dump BOT primitives, so skip some obvious exceptions */
+	    if (dp->d_major_type != DB5_MAJORTYPE_BRLCAD) continue;
 	if (dp->d_flags & DIR_COMB) continue;
 
 	if (debug&DEBUG_NAMES)
@@ -619,8 +619,8 @@ int main(int ac, char *av[])
 
 	write_dxf(bot, dp->d_namep);
 
-FOR_ALL_DIRECTORY_END
-    }
+	FOR_ALL_DIRECTORY_END
+	    }
     return 0;
 }
 

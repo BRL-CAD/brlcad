@@ -41,16 +41,16 @@
 #define DG_GED_MIN -2048.0
 
 struct dg_qray_fmt_data {
-  char type;
-  char *fmt;
+    char type;
+    char *fmt;
 };
 
 struct dg_qray_dataList {
-  struct bu_list l;
-  fastf_t x_in;
-  fastf_t y_in;
-  fastf_t z_in;
-  fastf_t los;
+    struct bu_list l;
+    fastf_t x_in;
+    fastf_t y_in;
+    fastf_t z_in;
+    fastf_t los;
 };
 
 extern void qray_data_to_vlist();

@@ -40,7 +40,7 @@
 #include "rtprivate.h"
 
 #include "db.h"  /* Yes, I know I shouldn't be peeking, put I am only
-			looking to see what units we prefer... */
+		    looking to see what units we prefer... */
 
 
 extern struct resource resource[];
@@ -50,7 +50,7 @@ int	using_mlib = 0;		/* Material routines NOT used */
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
-	{"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL}
+    {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL}
 };
 
 const char title[] = "RT Weight";
@@ -81,11 +81,11 @@ fastf_t	density[MAXMATLS];
 char	*dens_name[MAXMATLS];
 
 struct datapoint {
-	struct datapoint *next;
-	vect_t	centroid;
-	fastf_t	weight;
-	fastf_t	volume;
-	};
+    struct datapoint *next;
+    vect_t	centroid;
+    fastf_t	weight;
+    fastf_t	volume;
+};
 
 extern int     	rpt_overlap;     	/* report region verbosely */
 extern fastf_t  cell_width;      	/* model space grid cell width */
@@ -353,7 +353,7 @@ void	view_end(struct application *ap)
 	    MAX_ITEM = rp->reg_regionid;
 	/* */
 	for ( dp = (struct datapoint *) rp->reg_udata;
-	     dp != (struct datapoint *) NULL; dp = dp->next ) {
+	      dp != (struct datapoint *) NULL; dp = dp->next ) {
 	    sum_x += dp->weight * dp->centroid[X];
 	    sum_y += dp->weight * dp->centroid[Y];
 	    sum_z += dp->weight * dp->centroid[Z];

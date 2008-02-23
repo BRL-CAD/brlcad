@@ -144,7 +144,7 @@ main(int argc, char **argv)
 	fprintf(stderr, "Anim_track: Argument error.\n");
 
     if (axes || cent ) {
-  /* vehicle has own reference frame */
+	/* vehicle has own reference frame */
 	anim_add_trans(m_axes, centroid, zero);
 	anim_add_trans(m_rev_axes, zero, rcentroid);
     }
@@ -286,7 +286,7 @@ main(int argc, char **argv)
 	    VMOVE(wheel_prev, wheel_now);
 	    MAT4X3PNT(wheel_now, mat_x, to_track);
 	    if (frame > first_frame) {
-  /* increment distance by distance moved*/
+		/* increment distance by distance moved*/
 		VSUB2(vdelta, wheel_now, wheel_prev);
 		MAT3X3VEC(temp, mat_x, to_front);/*new front of vehicle*/
 		distance += VDOT(temp, vdelta);/*portion of vdelta in line with track*/
@@ -315,7 +315,7 @@ main(int argc, char **argv)
 		    anim_y_p_r2mat(wmat, 0.0, y_rot, 0.0);
 		    anim_add_trans(wmat, position, zero);
 		    if (axes || cent) {
-  /* link moved to vehicle coords */
+			/* link moved to vehicle coords */
 			MAT_MOVE(mat_x, wmat);
 			bn_mat_mul(wmat, m_axes, mat_x);
 		    }
@@ -379,113 +379,113 @@ int get_args(int argc, char **argv)
     while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
 	i=0;
 	switch (c) {
-	case 's':
-	    dist_mode = STEERED;
-	    break;
-	case 'y':
-	    dist_mode = CALCULATED;
-	    break;
-	case 'c':
-	    get_circumf = 1;
-	    break;
-	case 'u':
-	    dist_mode = GIVEN;
-	    break;
-	case 'v':
-	    read_wheels = 1;
-	    break;
-	case 'b':
-	    bu_optind -= 1;
-	    sscanf(argv[bu_optind+(i++)], "%lf", &yaw );
-	    sscanf(argv[bu_optind+(i++)], "%lf", &pch );
-	    sscanf(argv[bu_optind+(i++)], "%lf", &rll );
-	    bu_optind += 3;
-	    anim_dx_y_z2mat(m_axes, rll, -pch, yaw);
-	    anim_dz_y_x2mat(m_rev_axes, -rll, pch, -yaw);
-	    axes = 1;
-	    break;
-	case 'd':
-	    bu_optind -= 1;
-	    sscanf(argv[bu_optind+(i++)], "%lf", centroid);
-	    sscanf(argv[bu_optind+(i++)], "%lf", centroid+1);
-	    sscanf(argv[bu_optind+(i++)], "%lf", centroid+2);
-	    bu_optind += 3;
-	    VREVERSE(rcentroid, centroid);
-	    cent = 1;
-	    break;
-	case 'f':
-	    sscanf(bu_optarg, "%d", &first_frame);
-	    break;
-	case 'i':
-	    sscanf(bu_optarg, "%lf", &init_dist);
-	    break;
-	case 'r':
-	    sscanf(bu_optarg, "%lf", &radius);
-	    one_radius = 1;
-	    break;
-	case 'p':
-	    sscanf(bu_optarg, "%d", &num_links);
-	    link_nindex = bu_optind;
-	    bu_optind += 1;
-	    print_link = 1;
-	    break;
-	case 'w':
-	    wheel_nindex = bu_optind - 1;
-	    /*sscanf(bu_optarg, "%s", wheel_name);*/
-	    print_wheel = 1;
-	    break;
-	case 'g':
-	    sscanf(bu_optarg, "%d", &arced_frame);
-	    print_mode = PRINT_ARCED;
-	    break;
-	case 'm':
-	    switch (*bu_optarg) {
-	    case 'p':
-		bu_strlcpy(link_cmd, argv[bu_optind], sizeof(link_cmd));
+	    case 's':
+		dist_mode = STEERED;
 		break;
-	    case 'w':
-		bu_strlcpy(wheel_cmd, argv[bu_optind], sizeof(wheel_cmd));
+	    case 'y':
+		dist_mode = CALCULATED;
 		break;
-	    default:
-		fprintf(stderr, "Unknown option: -m%c\n", *bu_optarg);
-		return(0);
-	    }
-	    bu_optind += 1;
-	    break;
-	case 'l':
-	    switch (*bu_optarg) {
-	    case 'm':
-		len_mode = TRACK_MIN;
+	    case 'c':
+		get_circumf = 1;
+		break;
+	    case 'u':
+		dist_mode = GIVEN;
+		break;
+	    case 'v':
+		read_wheels = 1;
+		break;
+	    case 'b':
+		bu_optind -= 1;
+		sscanf(argv[bu_optind+(i++)], "%lf", &yaw );
+		sscanf(argv[bu_optind+(i++)], "%lf", &pch );
+		sscanf(argv[bu_optind+(i++)], "%lf", &rll );
+		bu_optind += 3;
+		anim_dx_y_z2mat(m_axes, rll, -pch, yaw);
+		anim_dz_y_x2mat(m_rev_axes, -rll, pch, -yaw);
+		axes = 1;
+		break;
+	    case 'd':
+		bu_optind -= 1;
+		sscanf(argv[bu_optind+(i++)], "%lf", centroid);
+		sscanf(argv[bu_optind+(i++)], "%lf", centroid+1);
+		sscanf(argv[bu_optind+(i++)], "%lf", centroid+2);
+		bu_optind += 3;
+		VREVERSE(rcentroid, centroid);
+		cent = 1;
 		break;
 	    case 'f':
-		len_mode = TRACK_FIXED;
-		sscanf(argv[bu_optind], "%lf", &first_tracklen);
-		tracklen = first_tracklen;
-		bu_optind++;
+		sscanf(bu_optarg, "%d", &first_frame);
 		break;
-	    case 's':
-		len_mode = TRACK_STRETCH;
-		sscanf(argv[bu_optind], "%lf", &first_tracklen);
-		tracklen = first_tracklen;
-		bu_optind++;
+	    case 'i':
+		sscanf(bu_optarg, "%lf", &init_dist);
 		break;
-	    case 'e':
-		len_mode = TRACK_ELASTIC;
-		sscanf(argv[bu_optind], "%lf", &first_tracklen);
-		tracklen = first_tracklen;
-		bu_optind++;
+	    case 'r':
+		sscanf(bu_optarg, "%lf", &radius);
+		one_radius = 1;
+		break;
+	    case 'p':
+		sscanf(bu_optarg, "%d", &num_links);
+		link_nindex = bu_optind;
+		bu_optind += 1;
+		print_link = 1;
+		break;
+	    case 'w':
+		wheel_nindex = bu_optind - 1;
+		/*sscanf(bu_optarg, "%s", wheel_name);*/
+		print_wheel = 1;
+		break;
+	    case 'g':
+		sscanf(bu_optarg, "%d", &arced_frame);
+		print_mode = PRINT_ARCED;
+		break;
+	    case 'm':
+		switch (*bu_optarg) {
+		    case 'p':
+			bu_strlcpy(link_cmd, argv[bu_optind], sizeof(link_cmd));
+			break;
+		    case 'w':
+			bu_strlcpy(wheel_cmd, argv[bu_optind], sizeof(wheel_cmd));
+			break;
+		    default:
+			fprintf(stderr, "Unknown option: -m%c\n", *bu_optarg);
+			return(0);
+		}
+		bu_optind += 1;
+		break;
+	    case 'l':
+		switch (*bu_optarg) {
+		    case 'm':
+			len_mode = TRACK_MIN;
+			break;
+		    case 'f':
+			len_mode = TRACK_FIXED;
+			sscanf(argv[bu_optind], "%lf", &first_tracklen);
+			tracklen = first_tracklen;
+			bu_optind++;
+			break;
+		    case 's':
+			len_mode = TRACK_STRETCH;
+			sscanf(argv[bu_optind], "%lf", &first_tracklen);
+			tracklen = first_tracklen;
+			bu_optind++;
+			break;
+		    case 'e':
+			len_mode = TRACK_ELASTIC;
+			sscanf(argv[bu_optind], "%lf", &first_tracklen);
+			tracklen = first_tracklen;
+			bu_optind++;
+			break;
+		    default:
+			fprintf(stderr, "Unknown option: -l%c\n", *bu_optarg);
+			return(0);
+		}
+		break;
+	    case 'a':
+		anti_strobe = 1;
 		break;
 	    default:
-		fprintf(stderr, "Unknown option: -l%c\n", *bu_optarg);
+		fprintf(stderr, "Unknown option: -%c\n", c);
 		return(0);
-	    }
-	    break;
-	case 'a':
-	    anti_strobe = 1;
-	    break;
-	default:
-	    fprintf(stderr, "Unknown option: -%c\n", c);
-	    return(0);
 	}
     }
     return(1);
@@ -526,13 +526,13 @@ int track_prep(void)
 	while (arc_angle < 0.0)
 	    arc_angle += 2.0*M_PI;
 	if (arc_angle > M_PI) {
-  /* concave */
+	    /* concave */
 	    x[i].w.ang0 = 0.5*(x[i].w.ang0 + x[i].w.ang1);
 	    x[i].w.ang1 = x[i].w.ang0;
 	    x[i].w.arc = 0.0;
 	}
 	else {
-  /* convex - angles are already correct */
+	    /* convex - angles are already correct */
 	    x[i].w.arc = arc_angle;
 	}
     }
@@ -572,7 +572,7 @@ int track_prep(void)
     /* calculate geometry of hyperbolic segment */
     hyperlen = tracklen - linearlen;
     if (hyperlen < x[0].t.len) {
-  /* desired length of hyperbola less than straight line*/
+	/* desired length of hyperbola less than straight line*/
 	if ((len_mode==TRACK_ELASTIC)||(len_mode==TRACK_STRETCH)) {
 	    tracklen += (x[0].t.len-hyperlen);
 	    hyperlen = tracklen - linearlen;
@@ -650,7 +650,7 @@ int get_link(fastf_t *pos, fastf_t *angle_p, fastf_t dist)
 	*angle_p = hyper_get_ang(curve_a, curve_c, pos[X]);
     }
     else {
-  /* practically linear */
+	/* practically linear */
 	VSCALE(temp, (x[0].t.dir), dist);
 	VADD2(pos, x[0].t.pos0, temp);
 	*angle_p = atan2(x[0].t.dir[Z], x[0].t.dir[X]);

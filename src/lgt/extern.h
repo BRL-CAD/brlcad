@@ -18,18 +18,18 @@
  * information.
  */
 /** @file extern.h
-	Authors:	Gary S. Moss
-			Jeff Hanes	(math consultation)
+    Authors:	Gary S. Moss
+    Jeff Hanes	(math consultation)
 
-	Note: preceeding #include "./extern.h" must be the following:
+    Note: preceeding #include "./extern.h" must be the following:
 
-	#include <assert.h>
+    #include <assert.h>
 
-		#include "vmath.h"
-	#include "raytrace.h"
-	#include "fb.h"
-	#include "./hmenu.h"
-	#include "./lgt.h"
+    #include "vmath.h"
+    #include "raytrace.h"
+    #include "fb.h"
+    #include "./hmenu.h"
+    #include "./lgt.h"
 */
 
 #include "common.h"

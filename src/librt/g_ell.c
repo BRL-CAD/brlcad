@@ -41,7 +41,7 @@
 #include "./debug.h"
 
 BU_EXTERN(int rt_sph_prep, (struct soltab *stp, struct rt_db_internal *ip,
-	struct rt_i *rtip));
+			    struct rt_i *rtip));
 
 const struct bu_structparse rt_ell_parse[] = {
     { "%f", 3, "V", bu_offsetof(struct rt_ell_internal, v[X]), BU_STRUCTPARSE_FUNC_NULL },
@@ -49,7 +49,7 @@ const struct bu_structparse rt_ell_parse[] = {
     { "%f", 3, "B", bu_offsetof(struct rt_ell_internal, b[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "C", bu_offsetof(struct rt_ell_internal, c[X]), BU_STRUCTPARSE_FUNC_NULL },
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
- };
+};
 
 static void  nmg_sphere_face_snurb(struct faceuse *fu, const matp_t m);
 
@@ -147,13 +147,13 @@ static void  nmg_sphere_face_snurb(struct faceuse *fu, const matp_t m);
  */
 
 struct ell_specific {
-	vect_t	ell_V;		/* Vector to center of ellipsoid */
-	vect_t	ell_Au;		/* unit-length A vector */
-	vect_t	ell_Bu;
-	vect_t	ell_Cu;
-	vect_t	ell_invsq;	/* [ 1/(|A|**2), 1/(|B|**2), 1/(|C|**2) ] */
-	mat_t	ell_SoR;	/* Scale(Rot(vect)) */
-	mat_t	ell_invRSSR;	/* invRot(Scale(Scale(Rot(vect)))) */
+    vect_t	ell_V;		/* Vector to center of ellipsoid */
+    vect_t	ell_Au;		/* unit-length A vector */
+    vect_t	ell_Bu;
+    vect_t	ell_Cu;
+    vect_t	ell_invsq;	/* [ 1/(|A|**2), 1/(|B|**2), 1/(|C|**2) ] */
+    mat_t	ell_SoR;	/* Scale(Rot(vect)) */
+    mat_t	ell_invRSSR;	/* invRot(Scale(Scale(Rot(vect)))) */
 };
 #define ELL_NULL	((struct ell_specific *)0)
 
@@ -175,140 +175,140 @@ struct ell_specific {
 int
 rt_ell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
-	register struct ell_specific *ell;
-	struct rt_ell_internal	*eip;
-	fastf_t	magsq_a, magsq_b, magsq_c;
-	mat_t	R;
-	mat_t	Rinv;
-	mat_t	SS;
-	mat_t	mtemp;
-	vect_t	Au, Bu, Cu;	/* A, B, C with unit length */
-	vect_t	w1, w2, P;	/* used for bounding RPP */
-	fastf_t	f;
+    register struct ell_specific *ell;
+    struct rt_ell_internal	*eip;
+    fastf_t	magsq_a, magsq_b, magsq_c;
+    mat_t	R;
+    mat_t	Rinv;
+    mat_t	SS;
+    mat_t	mtemp;
+    vect_t	Au, Bu, Cu;	/* A, B, C with unit length */
+    vect_t	w1, w2, P;	/* used for bounding RPP */
+    fastf_t	f;
 
-	eip = (struct rt_ell_internal *)ip->idb_ptr;
-	RT_ELL_CK_MAGIC(eip);
+    eip = (struct rt_ell_internal *)ip->idb_ptr;
+    RT_ELL_CK_MAGIC(eip);
 
-	/*
-	 *  For a fast way out, hand this solid off to the SPH routine.
-	 *  If it takes it, then there is nothing to do, otherwise
-	 *  the solid is an ELL.
-	 */
-	if ( rt_sph_prep( stp, ip, rtip ) == 0 ) {
-	  return(0);		/* OK */
-	}
+    /*
+     *  For a fast way out, hand this solid off to the SPH routine.
+     *  If it takes it, then there is nothing to do, otherwise
+     *  the solid is an ELL.
+     */
+    if ( rt_sph_prep( stp, ip, rtip ) == 0 ) {
+	return(0);		/* OK */
+    }
 
-	/* Validate that |A| > 0, |B| > 0, |C| > 0 */
-	magsq_a = MAGSQ( eip->a );
-	magsq_b = MAGSQ( eip->b );
-	magsq_c = MAGSQ( eip->c );
+    /* Validate that |A| > 0, |B| > 0, |C| > 0 */
+    magsq_a = MAGSQ( eip->a );
+    magsq_b = MAGSQ( eip->b );
+    magsq_c = MAGSQ( eip->c );
 
-	if ( magsq_a < rtip->rti_tol.dist || magsq_b < rtip->rti_tol.dist || magsq_c < rtip->rti_tol.dist ) {
-		bu_log("sph(%s):  zero length A(%g), B(%g), or C(%g) vector\n",
-			stp->st_name, magsq_a, magsq_b, magsq_c );
-		return(1);		/* BAD */
-	}
+    if ( magsq_a < rtip->rti_tol.dist || magsq_b < rtip->rti_tol.dist || magsq_c < rtip->rti_tol.dist ) {
+	bu_log("sph(%s):  zero length A(%g), B(%g), or C(%g) vector\n",
+	       stp->st_name, magsq_a, magsq_b, magsq_c );
+	return(1);		/* BAD */
+    }
 
-	/* Create unit length versions of A, B, C */
-	f = 1.0/sqrt(magsq_a);
-	VSCALE( Au, eip->a, f );
-	f = 1.0/sqrt(magsq_b);
-	VSCALE( Bu, eip->b, f );
-	f = 1.0/sqrt(magsq_c);
-	VSCALE( Cu, eip->c, f );
+    /* Create unit length versions of A, B, C */
+    f = 1.0/sqrt(magsq_a);
+    VSCALE( Au, eip->a, f );
+    f = 1.0/sqrt(magsq_b);
+    VSCALE( Bu, eip->b, f );
+    f = 1.0/sqrt(magsq_c);
+    VSCALE( Cu, eip->c, f );
 
-	/* Validate that A.B == 0, B.C == 0, A.C == 0 (check dir only) */
-	f = VDOT( Au, Bu );
-	if ( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
-		bu_log("ell(%s):  A not perpendicular to B, f=%f\n", stp->st_name, f);
-		return(1);		/* BAD */
-	}
-	f = VDOT( Bu, Cu );
-	if ( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
-		bu_log("ell(%s):  B not perpendicular to C, f=%f\n", stp->st_name, f);
-		return(1);		/* BAD */
-	}
-	f = VDOT( Au, Cu );
-	if ( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
-		bu_log("ell(%s):  A not perpendicular to C, f=%f\n", stp->st_name, f);
-		return(1);		/* BAD */
-	}
+    /* Validate that A.B == 0, B.C == 0, A.C == 0 (check dir only) */
+    f = VDOT( Au, Bu );
+    if ( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
+	bu_log("ell(%s):  A not perpendicular to B, f=%f\n", stp->st_name, f);
+	return(1);		/* BAD */
+    }
+    f = VDOT( Bu, Cu );
+    if ( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
+	bu_log("ell(%s):  B not perpendicular to C, f=%f\n", stp->st_name, f);
+	return(1);		/* BAD */
+    }
+    f = VDOT( Au, Cu );
+    if ( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
+	bu_log("ell(%s):  A not perpendicular to C, f=%f\n", stp->st_name, f);
+	return(1);		/* BAD */
+    }
 
-	/* Solid is OK, compute constant terms now */
-	BU_GETSTRUCT( ell, ell_specific );
-	stp->st_specific = (genptr_t)ell;
+    /* Solid is OK, compute constant terms now */
+    BU_GETSTRUCT( ell, ell_specific );
+    stp->st_specific = (genptr_t)ell;
 
-	VMOVE( ell->ell_V, eip->v );
+    VMOVE( ell->ell_V, eip->v );
 
-	VSET( ell->ell_invsq, 1.0/magsq_a, 1.0/magsq_b, 1.0/magsq_c );
-	VMOVE( ell->ell_Au, Au );
-	VMOVE( ell->ell_Bu, Bu );
-	VMOVE( ell->ell_Cu, Cu );
+    VSET( ell->ell_invsq, 1.0/magsq_a, 1.0/magsq_b, 1.0/magsq_c );
+    VMOVE( ell->ell_Au, Au );
+    VMOVE( ell->ell_Bu, Bu );
+    VMOVE( ell->ell_Cu, Cu );
 
-	MAT_IDN( ell->ell_SoR );
-	MAT_IDN( R );
+    MAT_IDN( ell->ell_SoR );
+    MAT_IDN( R );
 
-	/* Compute R and Rinv matrices */
-	VMOVE( &R[0], Au );
-	VMOVE( &R[4], Bu );
-	VMOVE( &R[8], Cu );
-	bn_mat_trn( Rinv, R );			/* inv of rot mat is trn */
+    /* Compute R and Rinv matrices */
+    VMOVE( &R[0], Au );
+    VMOVE( &R[4], Bu );
+    VMOVE( &R[8], Cu );
+    bn_mat_trn( Rinv, R );			/* inv of rot mat is trn */
 
-	/* Compute SoS (Affine transformation) */
-	MAT_IDN( SS );
-	SS[ 0] = ell->ell_invsq[0];
-	SS[ 5] = ell->ell_invsq[1];
-	SS[10] = ell->ell_invsq[2];
+    /* Compute SoS (Affine transformation) */
+    MAT_IDN( SS );
+    SS[ 0] = ell->ell_invsq[0];
+    SS[ 5] = ell->ell_invsq[1];
+    SS[10] = ell->ell_invsq[2];
 
-	/* Compute invRSSR */
-	bn_mat_mul( mtemp, SS, R );
-	bn_mat_mul( ell->ell_invRSSR, Rinv, mtemp );
+    /* Compute invRSSR */
+    bn_mat_mul( mtemp, SS, R );
+    bn_mat_mul( ell->ell_invRSSR, Rinv, mtemp );
 
-	/* Compute SoR */
-	VSCALE( &ell->ell_SoR[0], eip->a, ell->ell_invsq[0] );
-	VSCALE( &ell->ell_SoR[4], eip->b, ell->ell_invsq[1] );
-	VSCALE( &ell->ell_SoR[8], eip->c, ell->ell_invsq[2] );
+    /* Compute SoR */
+    VSCALE( &ell->ell_SoR[0], eip->a, ell->ell_invsq[0] );
+    VSCALE( &ell->ell_SoR[4], eip->b, ell->ell_invsq[1] );
+    VSCALE( &ell->ell_SoR[8], eip->c, ell->ell_invsq[2] );
 
-	/* Compute bounding sphere */
-	VMOVE( stp->st_center, eip->v );
-	f = magsq_a;
-	if ( magsq_b > f )
-		f = magsq_b;
-	if ( magsq_c > f )
-		f = magsq_c;
-	stp->st_aradius = stp->st_bradius = sqrt(f);
+    /* Compute bounding sphere */
+    VMOVE( stp->st_center, eip->v );
+    f = magsq_a;
+    if ( magsq_b > f )
+	f = magsq_b;
+    if ( magsq_c > f )
+	f = magsq_c;
+    stp->st_aradius = stp->st_bradius = sqrt(f);
 
-	/* Compute bounding RPP */
-	VSET( w1, magsq_a, magsq_b, magsq_c );
+    /* Compute bounding RPP */
+    VSET( w1, magsq_a, magsq_b, magsq_c );
 
-	/* X */
-	VSET( P, 1.0, 0, 0 );		/* bounding plane normal */
-	MAT3X3VEC( w2, R, P );		/* map plane to local coord syst */
-	VELMUL( w2, w2, w2 );		/* square each term */
-	f = VDOT( w1, w2 );
-	f = sqrt(f);
-	stp->st_min[X] = ell->ell_V[X] - f;	/* V.P +/- f */
-	stp->st_max[X] = ell->ell_V[X] + f;
+    /* X */
+    VSET( P, 1.0, 0, 0 );		/* bounding plane normal */
+    MAT3X3VEC( w2, R, P );		/* map plane to local coord syst */
+    VELMUL( w2, w2, w2 );		/* square each term */
+    f = VDOT( w1, w2 );
+    f = sqrt(f);
+    stp->st_min[X] = ell->ell_V[X] - f;	/* V.P +/- f */
+    stp->st_max[X] = ell->ell_V[X] + f;
 
-	/* Y */
-	VSET( P, 0, 1.0, 0 );		/* bounding plane normal */
-	MAT3X3VEC( w2, R, P );		/* map plane to local coord syst */
-	VELMUL( w2, w2, w2 );		/* square each term */
-	f = VDOT( w1, w2 );
-	f = sqrt(f);
-	stp->st_min[Y] = ell->ell_V[Y] - f;	/* V.P +/- f */
-	stp->st_max[Y] = ell->ell_V[Y] + f;
+    /* Y */
+    VSET( P, 0, 1.0, 0 );		/* bounding plane normal */
+    MAT3X3VEC( w2, R, P );		/* map plane to local coord syst */
+    VELMUL( w2, w2, w2 );		/* square each term */
+    f = VDOT( w1, w2 );
+    f = sqrt(f);
+    stp->st_min[Y] = ell->ell_V[Y] - f;	/* V.P +/- f */
+    stp->st_max[Y] = ell->ell_V[Y] + f;
 
-	/* Z */
-	VSET( P, 0, 0, 1.0 );		/* bounding plane normal */
-	MAT3X3VEC( w2, R, P );		/* map plane to local coord syst */
-	VELMUL( w2, w2, w2 );		/* square each term */
-	f = VDOT( w1, w2 );
-	f = sqrt(f);
-	stp->st_min[Z] = ell->ell_V[Z] - f;	/* V.P +/- f */
-	stp->st_max[Z] = ell->ell_V[Z] + f;
+    /* Z */
+    VSET( P, 0, 0, 1.0 );		/* bounding plane normal */
+    MAT3X3VEC( w2, R, P );		/* map plane to local coord syst */
+    VELMUL( w2, w2, w2 );		/* square each term */
+    f = VDOT( w1, w2 );
+    f = sqrt(f);
+    stp->st_min[Z] = ell->ell_V[Z] - f;	/* V.P +/- f */
+    stp->st_max[Z] = ell->ell_V[Z] + f;
 
-	return(0);			/* OK */
+    return(0);			/* OK */
 }
 
 /**
@@ -317,12 +317,12 @@ rt_ell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 void
 rt_ell_print(register const struct soltab *stp)
 {
-	register struct ell_specific *ell =
-		(struct ell_specific *)stp->st_specific;
+    register struct ell_specific *ell =
+	(struct ell_specific *)stp->st_specific;
 
-	VPRINT("V", ell->ell_V);
-	bn_mat_print("S o R", ell->ell_SoR );
-	bn_mat_print("invRSSR", ell->ell_invRSSR );
+    VPRINT("V", ell->ell_V);
+    bn_mat_print("S o R", ell->ell_SoR );
+    bn_mat_print("invRSSR", ell->ell_invRSSR );
 }
 
 /**
@@ -339,42 +339,42 @@ rt_ell_print(register const struct soltab *stp)
 int
 rt_ell_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
-	register struct ell_specific *ell =
-		(struct ell_specific *)stp->st_specific;
-	register struct seg *segp;
+    register struct ell_specific *ell =
+	(struct ell_specific *)stp->st_specific;
+    register struct seg *segp;
 
-	vect_t	dprime;		/* D' */
-	vect_t	pprime;		/* P' */
-	vect_t	xlated;		/* translated vector */
-	fastf_t	dp, dd;		/* D' dot P', D' dot D' */
-	fastf_t	k1, k2;		/* distance constants of solution */
-	fastf_t	root;		/* root of radical */
+    vect_t	dprime;		/* D' */
+    vect_t	pprime;		/* P' */
+    vect_t	xlated;		/* translated vector */
+    fastf_t	dp, dd;		/* D' dot P', D' dot D' */
+    fastf_t	k1, k2;		/* distance constants of solution */
+    fastf_t	root;		/* root of radical */
 
-	/* out, Mat, vect */
-	MAT4X3VEC( dprime, ell->ell_SoR, rp->r_dir );
-	VSUB2( xlated, rp->r_pt, ell->ell_V );
-	MAT4X3VEC( pprime, ell->ell_SoR, xlated );
+    /* out, Mat, vect */
+    MAT4X3VEC( dprime, ell->ell_SoR, rp->r_dir );
+    VSUB2( xlated, rp->r_pt, ell->ell_V );
+    MAT4X3VEC( pprime, ell->ell_SoR, xlated );
 
-	dp = VDOT( dprime, pprime );
-	dd = VDOT( dprime, dprime );
+    dp = VDOT( dprime, pprime );
+    dd = VDOT( dprime, dprime );
 
-	if ( (root = dp*dp - dd * (VDOT(pprime, pprime)-1.0)) < 0 )
-		return(0);		/* No hit */
-	root = sqrt(root);
+    if ( (root = dp*dp - dd * (VDOT(pprime, pprime)-1.0)) < 0 )
+	return(0);		/* No hit */
+    root = sqrt(root);
 
-	RT_GET_SEG(segp, ap->a_resource);
-	segp->seg_stp = stp;
-	if ( (k1=(-dp+root)/dd) <= (k2=(-dp-root)/dd) )  {
-		/* k1 is entry, k2 is exit */
-		segp->seg_in.hit_dist = k1;
-		segp->seg_out.hit_dist = k2;
-	} else {
-		/* k2 is entry, k1 is exit */
-		segp->seg_in.hit_dist = k2;
-		segp->seg_out.hit_dist = k1;
-	}
-	BU_LIST_INSERT( &(seghead->l), &(segp->l) );
-	return(2);			/* HIT */
+    RT_GET_SEG(segp, ap->a_resource);
+    segp->seg_stp = stp;
+    if ( (k1=(-dp+root)/dd) <= (k2=(-dp-root)/dd) )  {
+	/* k1 is entry, k2 is exit */
+	segp->seg_in.hit_dist = k1;
+	segp->seg_out.hit_dist = k2;
+    } else {
+	/* k2 is entry, k1 is exit */
+	segp->seg_in.hit_dist = k2;
+	segp->seg_out.hit_dist = k1;
+    }
+    BU_LIST_INSERT( &(seghead->l), &(segp->l) );
+    return(2);			/* HIT */
 }
 
 #define RT_ELL_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
@@ -386,54 +386,54 @@ rt_ell_shot(struct soltab *stp, register struct xray *rp, struct application *ap
  */
 void
 rt_ell_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-			       /* An array of solid pointers */
-			       /* An array of ray pointers */
-			       /* array of segs (results returned) */
-			       /* Number of ray/object pairs */
+    /* An array of solid pointers */
+    /* An array of ray pointers */
+    /* array of segs (results returned) */
+    /* Number of ray/object pairs */
 
 {
-	register int    i;
-	register struct ell_specific *ell;
+    register int    i;
+    register struct ell_specific *ell;
 
-	vect_t	dprime;		/* D' */
-	vect_t	pprime;		/* P' */
-	vect_t	xlated;		/* translated vector */
-	fastf_t	dp, dd;		/* D' dot P', D' dot D' */
-	fastf_t	k1, k2;		/* distance constants of solution */
-	fastf_t	root;		/* root of radical */
+    vect_t	dprime;		/* D' */
+    vect_t	pprime;		/* P' */
+    vect_t	xlated;		/* translated vector */
+    fastf_t	dp, dd;		/* D' dot P', D' dot D' */
+    fastf_t	k1, k2;		/* distance constants of solution */
+    fastf_t	root;		/* root of radical */
 
-	/* for each ray/ellipse pair */
-	for (i = 0; i < n; i++) {
-		if (stp[i] == 0) continue; /* stp[i] == 0 signals skip ray */
+    /* for each ray/ellipse pair */
+    for (i = 0; i < n; i++) {
+	if (stp[i] == 0) continue; /* stp[i] == 0 signals skip ray */
 
-		ell = (struct ell_specific *)stp[i]->st_specific;
+	ell = (struct ell_specific *)stp[i]->st_specific;
 
-		MAT4X3VEC( dprime, ell->ell_SoR, rp[i]->r_dir );
-		VSUB2( xlated, rp[i]->r_pt, ell->ell_V );
-		MAT4X3VEC( pprime, ell->ell_SoR, xlated );
+	MAT4X3VEC( dprime, ell->ell_SoR, rp[i]->r_dir );
+	VSUB2( xlated, rp[i]->r_pt, ell->ell_V );
+	MAT4X3VEC( pprime, ell->ell_SoR, xlated );
 
-		dp = VDOT( dprime, pprime );
-		dd = VDOT( dprime, dprime );
+	dp = VDOT( dprime, pprime );
+	dd = VDOT( dprime, dprime );
 
-		if ( (root = dp*dp - dd * (VDOT(pprime, pprime)-1.0)) < 0 ) {
-			RT_ELL_SEG_MISS(segp[i]);		/* No hit */
-		}
-		else {
-			root = sqrt(root);
-
-			segp[i].seg_stp = stp[i];
-
-			if ( (k1=(-dp+root)/dd) <= (k2=(-dp-root)/dd) )  {
-				/* k1 is entry, k2 is exit */
-				segp[i].seg_in.hit_dist = k1;
-				segp[i].seg_out.hit_dist = k2;
-			} else {
-				/* k2 is entry, k1 is exit */
-				segp[i].seg_in.hit_dist = k2;
-				segp[i].seg_out.hit_dist = k1;
-			}
-		}
+	if ( (root = dp*dp - dd * (VDOT(pprime, pprime)-1.0)) < 0 ) {
+	    RT_ELL_SEG_MISS(segp[i]);		/* No hit */
 	}
+	else {
+	    root = sqrt(root);
+
+	    segp[i].seg_stp = stp[i];
+
+	    if ( (k1=(-dp+root)/dd) <= (k2=(-dp-root)/dd) )  {
+		/* k1 is entry, k2 is exit */
+		segp[i].seg_in.hit_dist = k1;
+		segp[i].seg_out.hit_dist = k2;
+	    } else {
+		/* k2 is entry, k1 is exit */
+		segp[i].seg_in.hit_dist = k2;
+		segp[i].seg_out.hit_dist = k1;
+	    }
+	}
+    }
 }
 
 /**
@@ -444,19 +444,19 @@ rt_ell_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 void
 rt_ell_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
-	register struct ell_specific *ell =
-		(struct ell_specific *)stp->st_specific;
-	vect_t xlated;
-	fastf_t scale;
+    register struct ell_specific *ell =
+	(struct ell_specific *)stp->st_specific;
+    vect_t xlated;
+    fastf_t scale;
 
-	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
-	VSUB2( xlated, hitp->hit_point, ell->ell_V );
-	MAT4X3VEC( hitp->hit_normal, ell->ell_invRSSR, xlated );
-	scale = 1.0 / MAGNITUDE( hitp->hit_normal );
-	VSCALE( hitp->hit_normal, hitp->hit_normal, scale );
+    VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
+    VSUB2( xlated, hitp->hit_point, ell->ell_V );
+    MAT4X3VEC( hitp->hit_normal, ell->ell_invRSSR, xlated );
+    scale = 1.0 / MAGNITUDE( hitp->hit_normal );
+    VSCALE( hitp->hit_normal, hitp->hit_normal, scale );
 
-	/* tuck away this scale for the curvature routine */
-	hitp->hit_vpriv[X] = scale;
+    /* tuck away this scale for the curvature routine */
+    hitp->hit_vpriv[X] = scale;
 }
 
 /**
@@ -467,33 +467,33 @@ rt_ell_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 void
 rt_ell_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
 {
-	register struct ell_specific *ell =
-		(struct ell_specific *)stp->st_specific;
-	vect_t	u, v;			/* basis vectors (with normal) */
-	vect_t	vec1, vec2;		/* eigen vectors */
-	vect_t	tmp;
-	fastf_t	a, b, c, scale;
+    register struct ell_specific *ell =
+	(struct ell_specific *)stp->st_specific;
+    vect_t	u, v;			/* basis vectors (with normal) */
+    vect_t	vec1, vec2;		/* eigen vectors */
+    vect_t	tmp;
+    fastf_t	a, b, c, scale;
 
-	/*
-	 * choose a tangent plane coordinate system
-	 *  (u, v, normal) form a right-handed triple
-	 */
-	bn_vec_ortho( u, hitp->hit_normal );
-	VCROSS( v, hitp->hit_normal, u );
+    /*
+     * choose a tangent plane coordinate system
+     *  (u, v, normal) form a right-handed triple
+     */
+    bn_vec_ortho( u, hitp->hit_normal );
+    VCROSS( v, hitp->hit_normal, u );
 
-	/* get the saved away scale factor */
-	scale = - hitp->hit_vpriv[X];
+    /* get the saved away scale factor */
+    scale = - hitp->hit_vpriv[X];
 
-	/* find the second fundamental form */
-	MAT4X3VEC( tmp, ell->ell_invRSSR, u );
-	a = VDOT(u, tmp) * scale;
-	b = VDOT(v, tmp) * scale;
-	MAT4X3VEC( tmp, ell->ell_invRSSR, v );
-	c = VDOT(v, tmp) * scale;
+    /* find the second fundamental form */
+    MAT4X3VEC( tmp, ell->ell_invRSSR, u );
+    a = VDOT(u, tmp) * scale;
+    b = VDOT(v, tmp) * scale;
+    MAT4X3VEC( tmp, ell->ell_invRSSR, v );
+    c = VDOT(v, tmp) * scale;
 
-	bn_eigen2x2( &cvp->crv_c1, &cvp->crv_c2, vec1, vec2, a, b, c );
-	VCOMB2( cvp->crv_pdir, vec1[X], u, vec1[Y], v );
-	VUNITIZE( cvp->crv_pdir );
+    bn_eigen2x2( &cvp->crv_c1, &cvp->crv_c2, vec1, vec2, a, b, c );
+    VCOMB2( cvp->crv_pdir, vec1[X], u, vec1[Y], v );
+    VUNITIZE( cvp->crv_pdir );
 }
 
 /**
@@ -507,36 +507,36 @@ rt_ell_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 void
 rt_ell_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
 {
-	register struct ell_specific *ell =
-		(struct ell_specific *)stp->st_specific;
-	vect_t work;
-	vect_t pprime;
-	fastf_t r;
+    register struct ell_specific *ell =
+	(struct ell_specific *)stp->st_specific;
+    vect_t work;
+    vect_t pprime;
+    fastf_t r;
 
-	/* hit_point is on surface;  project back to unit sphere,
-	 * creating a vector from vertex to hit point which always
-	 * has length=1.0
-	 */
-	VSUB2( work, hitp->hit_point, ell->ell_V );
-	MAT4X3VEC( pprime, ell->ell_SoR, work );
-	/* Assert that pprime has unit length */
+    /* hit_point is on surface;  project back to unit sphere,
+     * creating a vector from vertex to hit point which always
+     * has length=1.0
+     */
+    VSUB2( work, hitp->hit_point, ell->ell_V );
+    MAT4X3VEC( pprime, ell->ell_SoR, work );
+    /* Assert that pprime has unit length */
 
-	/* U is azimuth, atan() range: -pi to +pi */
-	uvp->uv_u = bn_atan2( pprime[Y], pprime[X] ) * bn_inv2pi;
-	if ( uvp->uv_u < 0 )
-		uvp->uv_u += 1.0;
-	/*
-	 *  V is elevation, atan() range: -pi/2 to +pi/2,
-	 *  because sqrt() ensures that X parameter is always >0
-	 */
-	uvp->uv_v = bn_atan2( pprime[Z],
-		sqrt( pprime[X] * pprime[X] + pprime[Y] * pprime[Y]) ) *
-		bn_invpi + 0.5;
+    /* U is azimuth, atan() range: -pi to +pi */
+    uvp->uv_u = bn_atan2( pprime[Y], pprime[X] ) * bn_inv2pi;
+    if ( uvp->uv_u < 0 )
+	uvp->uv_u += 1.0;
+    /*
+     *  V is elevation, atan() range: -pi/2 to +pi/2,
+     *  because sqrt() ensures that X parameter is always >0
+     */
+    uvp->uv_v = bn_atan2( pprime[Z],
+			  sqrt( pprime[X] * pprime[X] + pprime[Y] * pprime[Y]) ) *
+	bn_invpi + 0.5;
 
-	/* approximation: r / (circumference, 2 * pi * aradius) */
-	r = ap->a_rbeam + ap->a_diverge * hitp->hit_dist;
-	uvp->uv_du = uvp->uv_dv =
-		bn_inv2pi * r / stp->st_aradius;
+    /* approximation: r / (circumference, 2 * pi * aradius) */
+    r = ap->a_rbeam + ap->a_diverge * hitp->hit_dist;
+    uvp->uv_du = uvp->uv_dv =
+	bn_inv2pi * r / stp->st_aradius;
 }
 
 /**
@@ -545,16 +545,16 @@ rt_ell_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 void
 rt_ell_free(register struct soltab *stp)
 {
-	register struct ell_specific *ell =
-		(struct ell_specific *)stp->st_specific;
+    register struct ell_specific *ell =
+	(struct ell_specific *)stp->st_specific;
 
-	bu_free( (char *)ell, "ell_specific" );
+    bu_free( (char *)ell, "ell_specific" );
 }
 
 int
 rt_ell_class(void)
 {
-	return(0);
+    return(0);
 }
 
 /**
@@ -569,36 +569,36 @@ rt_ell_16pts(register fastf_t *ov,
 	     fastf_t *A,
 	     fastf_t *B)
 {
-	static fastf_t c, d, e, f, g, h;
+    static fastf_t c, d, e, f, g, h;
 
-	e = h = .92388;			/* cos(22.5) */
-	c = d = .707107;		/* cos(45) */
-	g = f = .382683;		/* cos(67.5) */
+    e = h = .92388;			/* cos(22.5) */
+    c = d = .707107;		/* cos(45) */
+    g = f = .382683;		/* cos(67.5) */
 
-	/*
-	 * For angle theta, compute surface point as
-	 *
-	 *	V  +  cos(theta) * A  + sin(theta) * B
-	 *
-	 * note that sin(theta) is cos(90-theta).
-	 */
+    /*
+     * For angle theta, compute surface point as
+     *
+     *	V  +  cos(theta) * A  + sin(theta) * B
+     *
+     * note that sin(theta) is cos(90-theta).
+     */
 
-	VADD2( ELLOUT(1), V, A );
-	VJOIN2( ELLOUT(2), V, e, A, f, B );
-	VJOIN2( ELLOUT(3), V, c, A, d, B );
-	VJOIN2( ELLOUT(4), V, g, A, h, B );
-	VADD2( ELLOUT(5), V, B );
-	VJOIN2( ELLOUT(6), V, -g, A, h, B );
-	VJOIN2( ELLOUT(7), V, -c, A, d, B );
-	VJOIN2( ELLOUT(8), V, -e, A, f, B );
-	VSUB2( ELLOUT(9), V, A );
-	VJOIN2( ELLOUT(10), V, -e, A, -f, B );
-	VJOIN2( ELLOUT(11), V, -c, A, -d, B );
-	VJOIN2( ELLOUT(12), V, -g, A, -h, B );
-	VSUB2( ELLOUT(13), V, B );
-	VJOIN2( ELLOUT(14), V, g, A, -h, B );
-	VJOIN2( ELLOUT(15), V, c, A, -d, B );
-	VJOIN2( ELLOUT(16), V, e, A, -f, B );
+    VADD2( ELLOUT(1), V, A );
+    VJOIN2( ELLOUT(2), V, e, A, f, B );
+    VJOIN2( ELLOUT(3), V, c, A, d, B );
+    VJOIN2( ELLOUT(4), V, g, A, h, B );
+    VADD2( ELLOUT(5), V, B );
+    VJOIN2( ELLOUT(6), V, -g, A, h, B );
+    VJOIN2( ELLOUT(7), V, -c, A, d, B );
+    VJOIN2( ELLOUT(8), V, -e, A, f, B );
+    VSUB2( ELLOUT(9), V, A );
+    VJOIN2( ELLOUT(10), V, -e, A, -f, B );
+    VJOIN2( ELLOUT(11), V, -c, A, -d, B );
+    VJOIN2( ELLOUT(12), V, -g, A, -h, B );
+    VSUB2( ELLOUT(13), V, B );
+    VJOIN2( ELLOUT(14), V, g, A, -h, B );
+    VJOIN2( ELLOUT(15), V, c, A, -d, B );
+    VJOIN2( ELLOUT(16), V, e, A, -f, B );
 }
 
 /**
@@ -607,45 +607,45 @@ rt_ell_16pts(register fastf_t *ov,
 int
 rt_ell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
-	register int		i;
-	struct rt_ell_internal	*eip;
-	fastf_t top[16*3];
-	fastf_t middle[16*3];
-	fastf_t bottom[16*3];
+    register int		i;
+    struct rt_ell_internal	*eip;
+    fastf_t top[16*3];
+    fastf_t middle[16*3];
+    fastf_t bottom[16*3];
 
-	RT_CK_DB_INTERNAL(ip);
-	eip = (struct rt_ell_internal *)ip->idb_ptr;
-	RT_ELL_CK_MAGIC(eip);
+    RT_CK_DB_INTERNAL(ip);
+    eip = (struct rt_ell_internal *)ip->idb_ptr;
+    RT_ELL_CK_MAGIC(eip);
 
-	rt_ell_16pts( top, eip->v, eip->a, eip->b );
-	rt_ell_16pts( bottom, eip->v, eip->b, eip->c );
-	rt_ell_16pts( middle, eip->v, eip->a, eip->c );
+    rt_ell_16pts( top, eip->v, eip->a, eip->b );
+    rt_ell_16pts( bottom, eip->v, eip->b, eip->c );
+    rt_ell_16pts( middle, eip->v, eip->a, eip->c );
 
-	RT_ADD_VLIST( vhead, &top[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
-	for ( i=0; i<16; i++ )  {
-		RT_ADD_VLIST( vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
-	}
+    RT_ADD_VLIST( vhead, &top[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
+    for ( i=0; i<16; i++ )  {
+	RT_ADD_VLIST( vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
+    }
 
-	RT_ADD_VLIST( vhead, &bottom[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
-	for ( i=0; i<16; i++ )  {
-		RT_ADD_VLIST( vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
-	}
+    RT_ADD_VLIST( vhead, &bottom[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
+    for ( i=0; i<16; i++ )  {
+	RT_ADD_VLIST( vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
+    }
 
-	RT_ADD_VLIST( vhead, &middle[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
-	for ( i=0; i<16; i++ )  {
-		RT_ADD_VLIST( vhead, &middle[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
-	}
-	return(0);
+    RT_ADD_VLIST( vhead, &middle[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
+    for ( i=0; i<16; i++ )  {
+	RT_ADD_VLIST( vhead, &middle[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
+    }
+    return(0);
 }
 
 #if 0
 static point_t	octa_verts[6] = {
-	{ 1, 0, 0 },	/* XPLUS */
-	{-1, 0, 0 },	/* XMINUS */
-	{ 0, 1, 0 },	/* YPLUS */
-	{ 0,-1, 0 },	/* YMINUS */
-	{ 0, 0, 1 },	/* ZPLUS */
-	{ 0, 0,-1 }	/* ZMINUS */
+    { 1, 0, 0 },	/* XPLUS */
+    {-1, 0, 0 },	/* XMINUS */
+    { 0, 1, 0 },	/* YPLUS */
+    { 0,-1, 0 },	/* YMINUS */
+    { 0, 0, 1 },	/* ZPLUS */
+    { 0, 0,-1 }	/* ZMINUS */
 };
 
 #define XPLUS 0
@@ -674,20 +674,20 @@ static point_t	octa_verts[6] = {
  * };
  */
 struct ell_state {
-	struct shell	*s;
-	struct rt_ell_internal	*eip;
-	mat_t		invRinvS;
-	mat_t		invRoS;
-	fastf_t		theta_tol;
+    struct shell	*s;
+    struct rt_ell_internal	*eip;
+    mat_t		invRinvS;
+    mat_t		invRoS;
+    fastf_t		theta_tol;
 };
 
 struct ell_vert_strip {
-	int		nverts_per_strip;
-	int		nverts;
-	struct vertex	**vp;
-	vect_t		*norms;
-	int		nfaces;
-	struct faceuse	**fu;
+    int		nverts_per_strip;
+    int		nverts;
+    struct vertex	**vp;
+    vect_t		*norms;
+    int		nfaces;
+    struct faceuse	**fu;
 };
 
 /**
@@ -726,365 +726,365 @@ struct ell_vert_strip {
 int
 rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
-	mat_t	R;
-	mat_t	S;
-	mat_t	invR;
-	mat_t	invS;
-	vect_t	Au, Bu, Cu;	/* A, B, C with unit length */
-	fastf_t	Alen, Blen, Clen;
-	fastf_t	invAlen, invBlen, invClen;
-	fastf_t	magsq_a, magsq_b, magsq_c;
-	fastf_t	f;
-	struct ell_state	state;
-	register int		i;
-	fastf_t		radius;
-	int		nsegs;
-	int		nstrips;
-	struct ell_vert_strip	*strips;
-	int		j;
-	struct vertex		**vertp[4];
-	int	faceno;
-	int	stripno;
-	int	boff;		/* base offset */
-	int	toff;		/* top offset */
-	int	blim;		/* base subscript limit */
-	int	tlim;		/* top subscrpit limit */
-	fastf_t	rel;		/* Absolutized relative tolerance */
+    mat_t	R;
+    mat_t	S;
+    mat_t	invR;
+    mat_t	invS;
+    vect_t	Au, Bu, Cu;	/* A, B, C with unit length */
+    fastf_t	Alen, Blen, Clen;
+    fastf_t	invAlen, invBlen, invClen;
+    fastf_t	magsq_a, magsq_b, magsq_c;
+    fastf_t	f;
+    struct ell_state	state;
+    register int		i;
+    fastf_t		radius;
+    int		nsegs;
+    int		nstrips;
+    struct ell_vert_strip	*strips;
+    int		j;
+    struct vertex		**vertp[4];
+    int	faceno;
+    int	stripno;
+    int	boff;		/* base offset */
+    int	toff;		/* top offset */
+    int	blim;		/* base subscript limit */
+    int	tlim;		/* top subscrpit limit */
+    fastf_t	rel;		/* Absolutized relative tolerance */
 
-	RT_CK_DB_INTERNAL(ip);
-	state.eip = (struct rt_ell_internal *)ip->idb_ptr;
-	RT_ELL_CK_MAGIC(state.eip);
+    RT_CK_DB_INTERNAL(ip);
+    state.eip = (struct rt_ell_internal *)ip->idb_ptr;
+    RT_ELL_CK_MAGIC(state.eip);
 
-	/* Validate that |A| > 0, |B| > 0, |C| > 0 */
-	magsq_a = MAGSQ( state.eip->a );
-	magsq_b = MAGSQ( state.eip->b );
-	magsq_c = MAGSQ( state.eip->c );
-	if ( magsq_a < tol->dist || magsq_b < tol->dist || magsq_c < tol->dist ) {
-		bu_log("rt_ell_tess():  zero length A, B, or C vector\n");
-		return(-2);		/* BAD */
+    /* Validate that |A| > 0, |B| > 0, |C| > 0 */
+    magsq_a = MAGSQ( state.eip->a );
+    magsq_b = MAGSQ( state.eip->b );
+    magsq_c = MAGSQ( state.eip->c );
+    if ( magsq_a < tol->dist || magsq_b < tol->dist || magsq_c < tol->dist ) {
+	bu_log("rt_ell_tess():  zero length A, B, or C vector\n");
+	return(-2);		/* BAD */
+    }
+
+    /* Create unit length versions of A, B, C */
+    invAlen = 1.0/(Alen = sqrt(magsq_a));
+    VSCALE( Au, state.eip->a, invAlen );
+    invBlen = 1.0/(Blen = sqrt(magsq_b));
+    VSCALE( Bu, state.eip->b, invBlen );
+    invClen = 1.0/(Clen = sqrt(magsq_c));
+    VSCALE( Cu, state.eip->c, invClen );
+
+    /* Validate that A.B == 0, B.C == 0, A.C == 0 (check dir only) */
+    f = VDOT( Au, Bu );
+    if ( ! NEAR_ZERO(f, tol->dist) )  {
+	bu_log("ell():  A not perpendicular to B, f=%f\n", f);
+	return(-3);		/* BAD */
+    }
+    f = VDOT( Bu, Cu );
+    if ( ! NEAR_ZERO(f, tol->dist) )  {
+	bu_log("ell():  B not perpendicular to C, f=%f\n", f);
+	return(-3);		/* BAD */
+    }
+    f = VDOT( Au, Cu );
+    if ( ! NEAR_ZERO(f, tol->dist) )  {
+	bu_log("ell():  A not perpendicular to C, f=%f\n", f);
+	return(-3);		/* BAD */
+    }
+
+    {
+	vect_t	axb;
+	VCROSS( axb, Au, Bu );
+	f = VDOT( axb, Cu );
+	if ( f < 0 )  {
+	    VREVERSE( Cu, Cu );
+	    VREVERSE( state.eip->c, state.eip->c );
 	}
+    }
 
-	/* Create unit length versions of A, B, C */
-	invAlen = 1.0/(Alen = sqrt(magsq_a));
-	VSCALE( Au, state.eip->a, invAlen );
-	invBlen = 1.0/(Blen = sqrt(magsq_b));
-	VSCALE( Bu, state.eip->b, invBlen );
-	invClen = 1.0/(Clen = sqrt(magsq_c));
-	VSCALE( Cu, state.eip->c, invClen );
+    /* Compute R and Rinv matrices */
+    MAT_IDN( R );
+    VMOVE( &R[0], Au );
+    VMOVE( &R[4], Bu );
+    VMOVE( &R[8], Cu );
+    bn_mat_trn( invR, R );			/* inv of rot mat is trn */
 
-	/* Validate that A.B == 0, B.C == 0, A.C == 0 (check dir only) */
-	f = VDOT( Au, Bu );
-	if ( ! NEAR_ZERO(f, tol->dist) )  {
-		bu_log("ell():  A not perpendicular to B, f=%f\n", f);
-		return(-3);		/* BAD */
-	}
-	f = VDOT( Bu, Cu );
-	if ( ! NEAR_ZERO(f, tol->dist) )  {
-		bu_log("ell():  B not perpendicular to C, f=%f\n", f);
-		return(-3);		/* BAD */
-	}
-	f = VDOT( Au, Cu );
-	if ( ! NEAR_ZERO(f, tol->dist) )  {
-		bu_log("ell():  A not perpendicular to C, f=%f\n", f);
-		return(-3);		/* BAD */
-	}
+    /* Compute S and invS matrices */
+    /* invS is just 1/diagonal elements */
+    MAT_IDN( S );
+    S[ 0] = invAlen;
+    S[ 5] = invBlen;
+    S[10] = invClen;
+    bn_mat_inv( invS, S );
 
-	{
-		vect_t	axb;
-		VCROSS( axb, Au, Bu );
-		f = VDOT( axb, Cu );
-		if ( f < 0 )  {
-			VREVERSE( Cu, Cu );
-			VREVERSE( state.eip->c, state.eip->c );
-		}
-	}
+    /* invRinvS, for converting points from unit sphere to model */
+    bn_mat_mul( state.invRinvS, invR, invS );
 
-	/* Compute R and Rinv matrices */
-	MAT_IDN( R );
-	VMOVE( &R[0], Au );
-	VMOVE( &R[4], Bu );
-	VMOVE( &R[8], Cu );
-	bn_mat_trn( invR, R );			/* inv of rot mat is trn */
+    /* invRoS, for converting normals from unit sphere to model */
+    bn_mat_mul( state.invRoS, invR, S );
 
-	/* Compute S and invS matrices */
-	/* invS is just 1/diagonal elements */
-	MAT_IDN( S );
-	S[ 0] = invAlen;
-	S[ 5] = invBlen;
-	S[10] = invClen;
-	bn_mat_inv( invS, S );
+    /* Compute radius of bounding sphere */
+    radius = Alen;
+    if ( Blen > radius )
+	radius = Blen;
+    if ( Clen > radius )
+	radius = Clen;
 
-	/* invRinvS, for converting points from unit sphere to model */
-	bn_mat_mul( state.invRinvS, invR, invS );
-
-	/* invRoS, for converting normals from unit sphere to model */
-	bn_mat_mul( state.invRoS, invR, S );
-
-	/* Compute radius of bounding sphere */
-	radius = Alen;
-	if ( Blen > radius )
-		radius = Blen;
-	if ( Clen > radius )
-		radius = Clen;
-
-	/*
-	 *  Establish tolerances
-	 */
-	if ( ttol->rel <= 0.0 || ttol->rel >= 1.0 )  {
-		rel = 0.0;		/* none */
+    /*
+     *  Establish tolerances
+     */
+    if ( ttol->rel <= 0.0 || ttol->rel >= 1.0 )  {
+	rel = 0.0;		/* none */
+    } else {
+	/* Convert rel to absolute by scaling by radius */
+	rel = ttol->rel * radius;
+    }
+    if ( ttol->abs <= 0.0 )  {
+	if ( rel <= 0.0 )  {
+	    /* No tolerance given, use a default */
+	    rel = 0.10 * radius;	/* 10% */
 	} else {
-		/* Convert rel to absolute by scaling by radius */
-		rel = ttol->rel * radius;
+	    /* Use absolute-ized relative tolerance */
 	}
-	if ( ttol->abs <= 0.0 )  {
-		if ( rel <= 0.0 )  {
-			/* No tolerance given, use a default */
-			rel = 0.10 * radius;	/* 10% */
-		} else {
-			/* Use absolute-ized relative tolerance */
-		}
-	} else {
-		/* Absolute tolerance was given, pick smaller */
-		if ( ttol->rel <= 0.0 || rel > ttol->abs )
-		{
-			rel = ttol->abs;
-			if ( rel > radius )
-				rel = radius;
-		}
-	}
-
-	/*
-	 *  Converte distance tolerance into a maximum permissible
-	 *  angle tolerance.  'radius' is largest radius.
-	 */
-	state.theta_tol = 2 * acos( 1.0 - rel / radius );
-
-	/* To ensure normal tolerance, remain below this angle */
-	if ( ttol->norm > 0.0 && ttol->norm < state.theta_tol )  {
-		state.theta_tol = ttol->norm;
-	}
-
-	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
-	state.s = BU_LIST_FIRST(shell, &(*r)->s_hd);
-
-	/* Find the number of segments to divide 90 degrees worth into */
-	nsegs = (int)(bn_halfpi / state.theta_tol + 0.999);
-	if ( nsegs < 2 )  nsegs = 2;
-
-	/*  Find total number of strips of vertices that will be needed.
-	 *  nsegs for each hemisphere, plus the equator.
-	 *  Note that faces are listed in the the stripe ABOVE, ie, toward
-	 *  the poles.  Thus, strips[0] will have 4 faces.
-	 */
-	nstrips = 2 * nsegs + 1;
-	strips = (struct ell_vert_strip *)bu_calloc( nstrips,
-		sizeof(struct ell_vert_strip), "strips[]" );
-
-	/* North pole */
-	strips[0].nverts = 1;
-	strips[0].nverts_per_strip = 0;
-	strips[0].nfaces = 4;
-	/* South pole */
-	strips[nstrips-1].nverts = 1;
-	strips[nstrips-1].nverts_per_strip = 0;
-	strips[nstrips-1].nfaces = 4;
-	/* equator */
-	strips[nsegs].nverts = nsegs * 4;
-	strips[nsegs].nverts_per_strip = nsegs;
-	strips[nsegs].nfaces = 0;
-
-	for ( i=1; i<nsegs; i++ )  {
-		strips[i].nverts_per_strip =
-			strips[nstrips-1-i].nverts_per_strip = i;
-		strips[i].nverts =
-			strips[nstrips-1-i].nverts = i * 4;
-		strips[i].nfaces =
-			strips[nstrips-1-i].nfaces = (2 * i + 1)*4;
-	}
-	/* All strips have vertices and normals */
-	for ( i=0; i<nstrips; i++ )  {
-		strips[i].vp = (struct vertex **)bu_calloc( strips[i].nverts,
-			sizeof(struct vertex *), "strip vertex[]" );
-		strips[i].norms = (vect_t *)bu_calloc( strips[i].nverts,
-			sizeof( vect_t ), "strip normals[]" );
-	}
-	/* All strips have faces, except for the equator */
-	for ( i=0; i < nstrips; i++ )  {
-		if ( strips[i].nfaces <= 0 )  continue;
-		strips[i].fu = (struct faceuse **)bu_calloc( strips[i].nfaces,
-			sizeof(struct faceuse *), "strip faceuse[]" );
-	}
-
-	/* First, build the triangular mesh topology */
-	/* Do the top. "toff" in i-1 is UP, towards +B */
-	for ( i = 1; i <= nsegs; i++ )  {
-		faceno = 0;
-		tlim = strips[i-1].nverts;
-		blim = strips[i].nverts;
-		for ( stripno=0; stripno<4; stripno++ )  {
-			toff = stripno * strips[i-1].nverts_per_strip;
-			boff = stripno * strips[i].nverts_per_strip;
-
-			/* Connect this quarter strip */
-			for ( j = 0; j < strips[i].nverts_per_strip; j++ )  {
-
-				/* "Right-side-up" triangle */
-				vertp[0] = &(strips[i].vp[j+boff]);
-				vertp[1] = &(strips[i-1].vp[(j+toff)%tlim]);
-				vertp[2] = &(strips[i].vp[(j+1+boff)%blim]);
-				if ( (strips[i-1].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
-					bu_log("rt_ell_tess() nmg_cmface failure\n");
-					goto fail;
-				}
-				if ( j+1 >= strips[i].nverts_per_strip )  break;
-
-				/* Follow with interior "Up-side-down" triangle */
-				vertp[0] = &(strips[i].vp[(j+1+boff)%blim]);
-				vertp[1] = &(strips[i-1].vp[(j+toff)%tlim]);
-				vertp[2] = &(strips[i-1].vp[(j+1+toff)%tlim]);
-				if ( (strips[i-1].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
-					bu_log("rt_ell_tess() nmg_cmface failure\n");
-					goto fail;
-				}
-			}
-		}
-	}
-	/* Do the bottom.  Everything is upside down. "toff" in i+1 is DOWN */
-	for ( i = nsegs; i < nstrips; i++ )  {
-		faceno = 0;
-		tlim = strips[i+1].nverts;
-		blim = strips[i].nverts;
-		for ( stripno=0; stripno<4; stripno++ )  {
-			toff = stripno * strips[i+1].nverts_per_strip;
-			boff = stripno * strips[i].nverts_per_strip;
-
-			/* Connect this quarter strip */
-			for ( j = 0; j < strips[i].nverts_per_strip; j++ )  {
-
-				/* "Right-side-up" triangle */
-				vertp[0] = &(strips[i].vp[j+boff]);
-				vertp[1] = &(strips[i].vp[(j+1+boff)%blim]);
-				vertp[2] = &(strips[i+1].vp[(j+toff)%tlim]);
-				if ( (strips[i+1].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
-					bu_log("rt_ell_tess() nmg_cmface failure\n");
-					goto fail;
-				}
-				if ( j+1 >= strips[i].nverts_per_strip )  break;
-
-				/* Follow with interior "Up-side-down" triangle */
-				vertp[0] = &(strips[i].vp[(j+1+boff)%blim]);
-				vertp[1] = &(strips[i+1].vp[(j+1+toff)%tlim]);
-				vertp[2] = &(strips[i+1].vp[(j+toff)%tlim]);
-				if ( (strips[i+1].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
-					bu_log("rt_ell_tess() nmg_cmface failure\n");
-					goto fail;
-				}
-			}
-		}
-	}
-
-	/*  Compute the geometry of each vertex.
-	 *  Start with the location in the unit sphere, and project back.
-	 *  i=0 is "straight up" along +B.
-	 */
-	for ( i=0; i < nstrips; i++ )  {
-		double	alpha;		/* decline down from B to A */
-		double	beta;		/* angle around equator (azimuth) */
-		fastf_t		cos_alpha, sin_alpha;
-		fastf_t		cos_beta, sin_beta;
-		point_t		sphere_pt;
-		point_t		model_pt;
-
-		alpha = (((double)i) / (nstrips-1));
-		cos_alpha = cos(alpha*bn_pi);
-		sin_alpha = sin(alpha*bn_pi);
-		for ( j=0; j < strips[i].nverts; j++ )  {
-
-			beta = ((double)j) / strips[i].nverts;
-			cos_beta = cos(beta*bn_twopi);
-			sin_beta = sin(beta*bn_twopi);
-			VSET( sphere_pt,
-				cos_beta * sin_alpha,
-				cos_alpha,
-				sin_beta * sin_alpha );
-			/* Convert from ideal sphere coordinates */
-			MAT4X3PNT( model_pt, state.invRinvS, sphere_pt );
-			VADD2( model_pt, model_pt, state.eip->v );
-			/* Associate vertex geometry */
-			nmg_vertex_gv( strips[i].vp[j], model_pt );
-
-			/* Convert sphere normal to ellipsoid normal */
-			MAT4X3VEC( strips[i].norms[j], state.invRoS, sphere_pt );
-			/* May not be unit length anymore */
-			VUNITIZE( strips[i].norms[j] );
-		}
-	}
-
-	/* Associate face geometry.  Equator has no faces */
-	for ( i=0; i < nstrips; i++ )  {
-		for ( j=0; j < strips[i].nfaces; j++ )  {
-			if ( nmg_fu_planeeqn( strips[i].fu[j], tol ) < 0 )
-				goto fail;
-		}
-	}
-
-	/* Associate normals with vertexuses */
-	for ( i=0; i < nstrips; i++ )
+    } else {
+	/* Absolute tolerance was given, pick smaller */
+	if ( ttol->rel <= 0.0 || rel > ttol->abs )
 	{
-		for ( j=0; j < strips[i].nverts; j++ )
+	    rel = ttol->abs;
+	    if ( rel > radius )
+		rel = radius;
+	}
+    }
+
+    /*
+     *  Converte distance tolerance into a maximum permissible
+     *  angle tolerance.  'radius' is largest radius.
+     */
+    state.theta_tol = 2 * acos( 1.0 - rel / radius );
+
+    /* To ensure normal tolerance, remain below this angle */
+    if ( ttol->norm > 0.0 && ttol->norm < state.theta_tol )  {
+	state.theta_tol = ttol->norm;
+    }
+
+    *r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
+    state.s = BU_LIST_FIRST(shell, &(*r)->s_hd);
+
+    /* Find the number of segments to divide 90 degrees worth into */
+    nsegs = (int)(bn_halfpi / state.theta_tol + 0.999);
+    if ( nsegs < 2 )  nsegs = 2;
+
+    /*  Find total number of strips of vertices that will be needed.
+     *  nsegs for each hemisphere, plus the equator.
+     *  Note that faces are listed in the the stripe ABOVE, ie, toward
+     *  the poles.  Thus, strips[0] will have 4 faces.
+     */
+    nstrips = 2 * nsegs + 1;
+    strips = (struct ell_vert_strip *)bu_calloc( nstrips,
+						 sizeof(struct ell_vert_strip), "strips[]" );
+
+    /* North pole */
+    strips[0].nverts = 1;
+    strips[0].nverts_per_strip = 0;
+    strips[0].nfaces = 4;
+    /* South pole */
+    strips[nstrips-1].nverts = 1;
+    strips[nstrips-1].nverts_per_strip = 0;
+    strips[nstrips-1].nfaces = 4;
+    /* equator */
+    strips[nsegs].nverts = nsegs * 4;
+    strips[nsegs].nverts_per_strip = nsegs;
+    strips[nsegs].nfaces = 0;
+
+    for ( i=1; i<nsegs; i++ )  {
+	strips[i].nverts_per_strip =
+	    strips[nstrips-1-i].nverts_per_strip = i;
+	strips[i].nverts =
+	    strips[nstrips-1-i].nverts = i * 4;
+	strips[i].nfaces =
+	    strips[nstrips-1-i].nfaces = (2 * i + 1)*4;
+    }
+    /* All strips have vertices and normals */
+    for ( i=0; i<nstrips; i++ )  {
+	strips[i].vp = (struct vertex **)bu_calloc( strips[i].nverts,
+						    sizeof(struct vertex *), "strip vertex[]" );
+	strips[i].norms = (vect_t *)bu_calloc( strips[i].nverts,
+					       sizeof( vect_t ), "strip normals[]" );
+    }
+    /* All strips have faces, except for the equator */
+    for ( i=0; i < nstrips; i++ )  {
+	if ( strips[i].nfaces <= 0 )  continue;
+	strips[i].fu = (struct faceuse **)bu_calloc( strips[i].nfaces,
+						     sizeof(struct faceuse *), "strip faceuse[]" );
+    }
+
+    /* First, build the triangular mesh topology */
+    /* Do the top. "toff" in i-1 is UP, towards +B */
+    for ( i = 1; i <= nsegs; i++ )  {
+	faceno = 0;
+	tlim = strips[i-1].nverts;
+	blim = strips[i].nverts;
+	for ( stripno=0; stripno<4; stripno++ )  {
+	    toff = stripno * strips[i-1].nverts_per_strip;
+	    boff = stripno * strips[i].nverts_per_strip;
+
+	    /* Connect this quarter strip */
+	    for ( j = 0; j < strips[i].nverts_per_strip; j++ )  {
+
+		/* "Right-side-up" triangle */
+		vertp[0] = &(strips[i].vp[j+boff]);
+		vertp[1] = &(strips[i-1].vp[(j+toff)%tlim]);
+		vertp[2] = &(strips[i].vp[(j+1+boff)%blim]);
+		if ( (strips[i-1].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
+		    bu_log("rt_ell_tess() nmg_cmface failure\n");
+		    goto fail;
+		}
+		if ( j+1 >= strips[i].nverts_per_strip )  break;
+
+		/* Follow with interior "Up-side-down" triangle */
+		vertp[0] = &(strips[i].vp[(j+1+boff)%blim]);
+		vertp[1] = &(strips[i-1].vp[(j+toff)%tlim]);
+		vertp[2] = &(strips[i-1].vp[(j+1+toff)%tlim]);
+		if ( (strips[i-1].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
+		    bu_log("rt_ell_tess() nmg_cmface failure\n");
+		    goto fail;
+		}
+	    }
+	}
+    }
+    /* Do the bottom.  Everything is upside down. "toff" in i+1 is DOWN */
+    for ( i = nsegs; i < nstrips; i++ )  {
+	faceno = 0;
+	tlim = strips[i+1].nverts;
+	blim = strips[i].nverts;
+	for ( stripno=0; stripno<4; stripno++ )  {
+	    toff = stripno * strips[i+1].nverts_per_strip;
+	    boff = stripno * strips[i].nverts_per_strip;
+
+	    /* Connect this quarter strip */
+	    for ( j = 0; j < strips[i].nverts_per_strip; j++ )  {
+
+		/* "Right-side-up" triangle */
+		vertp[0] = &(strips[i].vp[j+boff]);
+		vertp[1] = &(strips[i].vp[(j+1+boff)%blim]);
+		vertp[2] = &(strips[i+1].vp[(j+toff)%tlim]);
+		if ( (strips[i+1].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
+		    bu_log("rt_ell_tess() nmg_cmface failure\n");
+		    goto fail;
+		}
+		if ( j+1 >= strips[i].nverts_per_strip )  break;
+
+		/* Follow with interior "Up-side-down" triangle */
+		vertp[0] = &(strips[i].vp[(j+1+boff)%blim]);
+		vertp[1] = &(strips[i+1].vp[(j+1+toff)%tlim]);
+		vertp[2] = &(strips[i+1].vp[(j+toff)%tlim]);
+		if ( (strips[i+1].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
+		    bu_log("rt_ell_tess() nmg_cmface failure\n");
+		    goto fail;
+		}
+	    }
+	}
+    }
+
+    /*  Compute the geometry of each vertex.
+     *  Start with the location in the unit sphere, and project back.
+     *  i=0 is "straight up" along +B.
+     */
+    for ( i=0; i < nstrips; i++ )  {
+	double	alpha;		/* decline down from B to A */
+	double	beta;		/* angle around equator (azimuth) */
+	fastf_t		cos_alpha, sin_alpha;
+	fastf_t		cos_beta, sin_beta;
+	point_t		sphere_pt;
+	point_t		model_pt;
+
+	alpha = (((double)i) / (nstrips-1));
+	cos_alpha = cos(alpha*bn_pi);
+	sin_alpha = sin(alpha*bn_pi);
+	for ( j=0; j < strips[i].nverts; j++ )  {
+
+	    beta = ((double)j) / strips[i].nverts;
+	    cos_beta = cos(beta*bn_twopi);
+	    sin_beta = sin(beta*bn_twopi);
+	    VSET( sphere_pt,
+		  cos_beta * sin_alpha,
+		  cos_alpha,
+		  sin_beta * sin_alpha );
+	    /* Convert from ideal sphere coordinates */
+	    MAT4X3PNT( model_pt, state.invRinvS, sphere_pt );
+	    VADD2( model_pt, model_pt, state.eip->v );
+	    /* Associate vertex geometry */
+	    nmg_vertex_gv( strips[i].vp[j], model_pt );
+
+	    /* Convert sphere normal to ellipsoid normal */
+	    MAT4X3VEC( strips[i].norms[j], state.invRoS, sphere_pt );
+	    /* May not be unit length anymore */
+	    VUNITIZE( strips[i].norms[j] );
+	}
+    }
+
+    /* Associate face geometry.  Equator has no faces */
+    for ( i=0; i < nstrips; i++ )  {
+	for ( j=0; j < strips[i].nfaces; j++ )  {
+	    if ( nmg_fu_planeeqn( strips[i].fu[j], tol ) < 0 )
+		goto fail;
+	}
+    }
+
+    /* Associate normals with vertexuses */
+    for ( i=0; i < nstrips; i++ )
+    {
+	for ( j=0; j < strips[i].nverts; j++ )
+	{
+	    struct faceuse *fu;
+	    struct vertexuse *vu;
+	    vect_t norm_opp;
+
+	    NMG_CK_VERTEX( strips[i].vp[j] );
+	    VREVERSE( norm_opp, strips[i].norms[j] )
+
+		for ( BU_LIST_FOR( vu, vertexuse, &strips[i].vp[j]->vu_hd ) )
 		{
-			struct faceuse *fu;
-			struct vertexuse *vu;
-			vect_t norm_opp;
-
-			NMG_CK_VERTEX( strips[i].vp[j] );
-			VREVERSE( norm_opp, strips[i].norms[j] )
-
-			for ( BU_LIST_FOR( vu, vertexuse, &strips[i].vp[j]->vu_hd ) )
-			{
-				fu = nmg_find_fu_of_vu( vu );
-				NMG_CK_FACEUSE( fu );
-				/* get correct direction of normals depending on
-				 * faceuse orientation
-				 */
-				if ( fu->orientation == OT_SAME )
-					nmg_vertexuse_nv( vu, strips[i].norms[j] );
-				else if ( fu->orientation == OT_OPPOSITE )
-					nmg_vertexuse_nv( vu, norm_opp );
-			}
+		    fu = nmg_find_fu_of_vu( vu );
+		    NMG_CK_FACEUSE( fu );
+		    /* get correct direction of normals depending on
+		     * faceuse orientation
+		     */
+		    if ( fu->orientation == OT_SAME )
+			nmg_vertexuse_nv( vu, strips[i].norms[j] );
+		    else if ( fu->orientation == OT_OPPOSITE )
+			nmg_vertexuse_nv( vu, norm_opp );
 		}
 	}
+    }
 
-	/* Compute "geometry" for region and shell */
-	nmg_region_a( *r, tol );
+    /* Compute "geometry" for region and shell */
+    nmg_region_a( *r, tol );
 
-	/* Release memory */
-	/* All strips have vertices and normals */
-	for ( i=0; i<nstrips; i++ )  {
-		bu_free( (char *)strips[i].vp, "strip vertex[]" );
-		bu_free( (char *)strips[i].norms, "strip norms[]" );
-	}
-	/* All strips have faces, except for equator */
-	for ( i=0; i < nstrips; i++ )  {
-		if ( strips[i].fu == (struct faceuse **)0 )  continue;
-		bu_free( (char *)strips[i].fu, "strip faceuse[]" );
-	}
-	bu_free( (char *)strips, "strips[]" );
-	return(0);
-fail:
-	/* Release memory */
-	/* All strips have vertices and normals */
-	for ( i=0; i<nstrips; i++ )  {
-		bu_free( (char *)strips[i].vp, "strip vertex[]" );
-		bu_free( (char *)strips[i].norms, "strip norms[]" );
-	}
-	/* All strips have faces, except for equator */
-	for ( i=0; i < nstrips; i++ )  {
-		if ( strips[i].fu == (struct faceuse **)0 )  continue;
-		bu_free( (char *)strips[i].fu, "strip faceuse[]" );
-	}
-	bu_free( (char *)strips, "strips[]" );
-	return(-1);
+    /* Release memory */
+    /* All strips have vertices and normals */
+    for ( i=0; i<nstrips; i++ )  {
+	bu_free( (char *)strips[i].vp, "strip vertex[]" );
+	bu_free( (char *)strips[i].norms, "strip norms[]" );
+    }
+    /* All strips have faces, except for equator */
+    for ( i=0; i < nstrips; i++ )  {
+	if ( strips[i].fu == (struct faceuse **)0 )  continue;
+	bu_free( (char *)strips[i].fu, "strip faceuse[]" );
+    }
+    bu_free( (char *)strips, "strips[]" );
+    return(0);
+ fail:
+    /* Release memory */
+    /* All strips have vertices and normals */
+    for ( i=0; i<nstrips; i++ )  {
+	bu_free( (char *)strips[i].vp, "strip vertex[]" );
+	bu_free( (char *)strips[i].norms, "strip norms[]" );
+    }
+    /* All strips have faces, except for equator */
+    for ( i=0; i < nstrips; i++ )  {
+	if ( strips[i].fu == (struct faceuse **)0 )  continue;
+	bu_free( (char *)strips[i].fu, "strip faceuse[]" );
+    }
+    bu_free( (char *)strips, "strips[]" );
+    return(-1);
 }
 
 /**
@@ -1097,37 +1097,37 @@ fail:
 int
 rt_ell_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
-	struct rt_ell_internal	*eip;
-	union record		*rp;
-	fastf_t	vec[3*4];
+    struct rt_ell_internal	*eip;
+    union record		*rp;
+    fastf_t	vec[3*4];
 
-	BU_CK_EXTERNAL( ep );
-	rp = (union record *)ep->ext_buf;
-	/* Check record type */
-	if ( rp->u_id != ID_SOLID )  {
-		bu_log("rt_ell_import: defective record\n");
-		return(-1);
-	}
+    BU_CK_EXTERNAL( ep );
+    rp = (union record *)ep->ext_buf;
+    /* Check record type */
+    if ( rp->u_id != ID_SOLID )  {
+	bu_log("rt_ell_import: defective record\n");
+	return(-1);
+    }
 
-	RT_CK_DB_INTERNAL( ip );
-	ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	ip->idb_type = ID_ELL;
-	ip->idb_meth = &rt_functab[ID_ELL];
-	ip->idb_ptr = bu_malloc( sizeof(struct rt_ell_internal), "rt_ell_internal");
-	eip = (struct rt_ell_internal *)ip->idb_ptr;
-	eip->magic = RT_ELL_INTERNAL_MAGIC;
+    RT_CK_DB_INTERNAL( ip );
+    ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    ip->idb_type = ID_ELL;
+    ip->idb_meth = &rt_functab[ID_ELL];
+    ip->idb_ptr = bu_malloc( sizeof(struct rt_ell_internal), "rt_ell_internal");
+    eip = (struct rt_ell_internal *)ip->idb_ptr;
+    eip->magic = RT_ELL_INTERNAL_MAGIC;
 
-	/* Convert from database to internal format */
-	rt_fastf_float( vec, rp->s.s_values, 4 );
+    /* Convert from database to internal format */
+    rt_fastf_float( vec, rp->s.s_values, 4 );
 
-	/* Apply modeling transformations */
-	if ( mat == NULL )  mat = bn_mat_identity;
-	MAT4X3PNT( eip->v, mat, &vec[0*3] );
-	MAT4X3VEC( eip->a, mat, &vec[1*3] );
-	MAT4X3VEC( eip->b, mat, &vec[2*3] );
-	MAT4X3VEC( eip->c, mat, &vec[3*3] );
+    /* Apply modeling transformations */
+    if ( mat == NULL )  mat = bn_mat_identity;
+    MAT4X3PNT( eip->v, mat, &vec[0*3] );
+    MAT4X3VEC( eip->a, mat, &vec[1*3] );
+    MAT4X3VEC( eip->b, mat, &vec[2*3] );
+    MAT4X3VEC( eip->c, mat, &vec[3*3] );
 
-	return(0);		/* OK */
+    return(0);		/* OK */
 }
 
 /**
@@ -1136,29 +1136,29 @@ rt_ell_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 int
 rt_ell_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
-	struct rt_ell_internal	*tip;
-	union record		*rec;
+    struct rt_ell_internal	*tip;
+    union record		*rec;
 
-	RT_CK_DB_INTERNAL(ip);
-	if ( ip->idb_type != ID_ELL && ip->idb_type != ID_SPH )  return(-1);
-	tip = (struct rt_ell_internal *)ip->idb_ptr;
-	RT_ELL_CK_MAGIC(tip);
+    RT_CK_DB_INTERNAL(ip);
+    if ( ip->idb_type != ID_ELL && ip->idb_type != ID_SPH )  return(-1);
+    tip = (struct rt_ell_internal *)ip->idb_ptr;
+    RT_ELL_CK_MAGIC(tip);
 
-	BU_CK_EXTERNAL(ep);
-	ep->ext_nbytes = sizeof(union record);
-	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "ell external");
-	rec = (union record *)ep->ext_buf;
+    BU_CK_EXTERNAL(ep);
+    ep->ext_nbytes = sizeof(union record);
+    ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "ell external");
+    rec = (union record *)ep->ext_buf;
 
-	rec->s.s_id = ID_SOLID;
-	rec->s.s_type = GENELL;
+    rec->s.s_id = ID_SOLID;
+    rec->s.s_type = GENELL;
 
-	/* NOTE: This also converts to dbfloat_t */
-	VSCALE( &rec->s.s_values[0], tip->v, local2mm );
-	VSCALE( &rec->s.s_values[3], tip->a, local2mm );
-	VSCALE( &rec->s.s_values[6], tip->b, local2mm );
-	VSCALE( &rec->s.s_values[9], tip->c, local2mm );
+    /* NOTE: This also converts to dbfloat_t */
+    VSCALE( &rec->s.s_values[0], tip->v, local2mm );
+    VSCALE( &rec->s.s_values[3], tip->a, local2mm );
+    VSCALE( &rec->s.s_values[6], tip->b, local2mm );
+    VSCALE( &rec->s.s_values[9], tip->c, local2mm );
 
-	return(0);
+    return(0);
 }
 
 /**
@@ -1171,33 +1171,33 @@ rt_ell_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 int
 rt_ell_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
-	struct rt_ell_internal	*eip;
-	fastf_t			vec[ELEMENTS_PER_VECT*4];
+    struct rt_ell_internal	*eip;
+    fastf_t			vec[ELEMENTS_PER_VECT*4];
 
-	RT_CK_DB_INTERNAL( ip );
-	BU_CK_EXTERNAL( ep );
+    RT_CK_DB_INTERNAL( ip );
+    BU_CK_EXTERNAL( ep );
 
-	BU_ASSERT_LONG( ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT*4 );
+    BU_ASSERT_LONG( ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT*4 );
 
-	ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	ip->idb_type = ID_ELL;
-	ip->idb_meth = &rt_functab[ID_ELL];
-	ip->idb_ptr = bu_malloc( sizeof(struct rt_ell_internal), "rt_ell_internal");
+    ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    ip->idb_type = ID_ELL;
+    ip->idb_meth = &rt_functab[ID_ELL];
+    ip->idb_ptr = bu_malloc( sizeof(struct rt_ell_internal), "rt_ell_internal");
 
-	eip = (struct rt_ell_internal *)ip->idb_ptr;
-	eip->magic = RT_ELL_INTERNAL_MAGIC;
+    eip = (struct rt_ell_internal *)ip->idb_ptr;
+    eip->magic = RT_ELL_INTERNAL_MAGIC;
 
-	/* Convert from database (network) to internal (host) format */
-	ntohd( (unsigned char *)vec, ep->ext_buf, ELEMENTS_PER_VECT*4 );
+    /* Convert from database (network) to internal (host) format */
+    ntohd( (unsigned char *)vec, ep->ext_buf, ELEMENTS_PER_VECT*4 );
 
-	/* Apply modeling transformations */
-	if ( mat == NULL )  mat = bn_mat_identity;
-	MAT4X3PNT( eip->v, mat, &vec[0*ELEMENTS_PER_VECT] );
-	MAT4X3VEC( eip->a, mat, &vec[1*ELEMENTS_PER_VECT] );
-	MAT4X3VEC( eip->b, mat, &vec[2*ELEMENTS_PER_VECT] );
-	MAT4X3VEC( eip->c, mat, &vec[3*ELEMENTS_PER_VECT] );
+    /* Apply modeling transformations */
+    if ( mat == NULL )  mat = bn_mat_identity;
+    MAT4X3PNT( eip->v, mat, &vec[0*ELEMENTS_PER_VECT] );
+    MAT4X3VEC( eip->a, mat, &vec[1*ELEMENTS_PER_VECT] );
+    MAT4X3VEC( eip->b, mat, &vec[2*ELEMENTS_PER_VECT] );
+    MAT4X3VEC( eip->c, mat, &vec[3*ELEMENTS_PER_VECT] );
 
-	return 0;		/* OK */
+    return 0;		/* OK */
 }
 
 /**
@@ -1212,28 +1212,28 @@ rt_ell_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 int
 rt_ell_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
-	struct rt_ell_internal	*eip;
-	fastf_t			vec[ELEMENTS_PER_VECT*4];
+    struct rt_ell_internal	*eip;
+    fastf_t			vec[ELEMENTS_PER_VECT*4];
 
-	RT_CK_DB_INTERNAL(ip);
-	if ( ip->idb_type != ID_ELL && ip->idb_type != ID_SPH )  return(-1);
-	eip = (struct rt_ell_internal *)ip->idb_ptr;
-	RT_ELL_CK_MAGIC(eip);
+    RT_CK_DB_INTERNAL(ip);
+    if ( ip->idb_type != ID_ELL && ip->idb_type != ID_SPH )  return(-1);
+    eip = (struct rt_ell_internal *)ip->idb_ptr;
+    RT_ELL_CK_MAGIC(eip);
 
-	BU_CK_EXTERNAL(ep);
-	ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT*4;
-	ep->ext_buf = (genptr_t)bu_malloc( ep->ext_nbytes, "ell external");
+    BU_CK_EXTERNAL(ep);
+    ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT*4;
+    ep->ext_buf = (genptr_t)bu_malloc( ep->ext_nbytes, "ell external");
 
-	/* scale 'em into local buffer */
-	VSCALE( &vec[0*ELEMENTS_PER_VECT], eip->v, local2mm );
-	VSCALE( &vec[1*ELEMENTS_PER_VECT], eip->a, local2mm );
-	VSCALE( &vec[2*ELEMENTS_PER_VECT], eip->b, local2mm );
-	VSCALE( &vec[3*ELEMENTS_PER_VECT], eip->c, local2mm );
+    /* scale 'em into local buffer */
+    VSCALE( &vec[0*ELEMENTS_PER_VECT], eip->v, local2mm );
+    VSCALE( &vec[1*ELEMENTS_PER_VECT], eip->a, local2mm );
+    VSCALE( &vec[2*ELEMENTS_PER_VECT], eip->b, local2mm );
+    VSCALE( &vec[3*ELEMENTS_PER_VECT], eip->c, local2mm );
 
-	/* Convert from internal (host) to database (network) format */
-	htond( ep->ext_buf, (unsigned char *)vec, ELEMENTS_PER_VECT*4 );
+    /* Convert from internal (host) to database (network) format */
+    htond( ep->ext_buf, (unsigned char *)vec, ELEMENTS_PER_VECT*4 );
 
-	return 0;
+    return 0;
 }
 
 /**
@@ -1246,62 +1246,62 @@ rt_ell_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 int
 rt_ell_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
-	register struct rt_ell_internal	*tip =
-		(struct rt_ell_internal *)ip->idb_ptr;
-	fastf_t	mag_a, mag_b, mag_c;
-	char	buf[256];
-	double	angles[5];
-	vect_t	unitv;
+    register struct rt_ell_internal	*tip =
+	(struct rt_ell_internal *)ip->idb_ptr;
+    fastf_t	mag_a, mag_b, mag_c;
+    char	buf[256];
+    double	angles[5];
+    vect_t	unitv;
 
-	RT_ELL_CK_MAGIC(tip);
-	bu_vls_strcat( str, "ellipsoid (ELL)\n");
+    RT_ELL_CK_MAGIC(tip);
+    bu_vls_strcat( str, "ellipsoid (ELL)\n");
 
-	sprintf(buf, "\tV (%g, %g, %g)\n",
-		INTCLAMP(tip->v[X] * mm2local),
-		INTCLAMP(tip->v[Y] * mm2local),
-		INTCLAMP(tip->v[Z] * mm2local) );
-	bu_vls_strcat( str, buf );
+    sprintf(buf, "\tV (%g, %g, %g)\n",
+	    INTCLAMP(tip->v[X] * mm2local),
+	    INTCLAMP(tip->v[Y] * mm2local),
+	    INTCLAMP(tip->v[Z] * mm2local) );
+    bu_vls_strcat( str, buf );
 
-	mag_a = MAGNITUDE(tip->a);
-	mag_b = MAGNITUDE(tip->b);
-	mag_c = MAGNITUDE(tip->c);
+    mag_a = MAGNITUDE(tip->a);
+    mag_b = MAGNITUDE(tip->b);
+    mag_c = MAGNITUDE(tip->c);
 
-	sprintf(buf, "\tA (%g, %g, %g) mag=%g\n",
-		INTCLAMP(tip->a[X] * mm2local),
-		INTCLAMP(tip->a[Y] * mm2local),
-		INTCLAMP(tip->a[Z] * mm2local),
-		INTCLAMP(mag_a * mm2local) );
-	bu_vls_strcat( str, buf );
+    sprintf(buf, "\tA (%g, %g, %g) mag=%g\n",
+	    INTCLAMP(tip->a[X] * mm2local),
+	    INTCLAMP(tip->a[Y] * mm2local),
+	    INTCLAMP(tip->a[Z] * mm2local),
+	    INTCLAMP(mag_a * mm2local) );
+    bu_vls_strcat( str, buf );
 
-	sprintf(buf, "\tB (%g, %g, %g) mag=%g\n",
-		INTCLAMP(tip->b[X] * mm2local),
-		INTCLAMP(tip->b[Y] * mm2local),
-		INTCLAMP(tip->b[Z] * mm2local),
-		INTCLAMP(mag_b * mm2local) );
-	bu_vls_strcat( str, buf );
+    sprintf(buf, "\tB (%g, %g, %g) mag=%g\n",
+	    INTCLAMP(tip->b[X] * mm2local),
+	    INTCLAMP(tip->b[Y] * mm2local),
+	    INTCLAMP(tip->b[Z] * mm2local),
+	    INTCLAMP(mag_b * mm2local) );
+    bu_vls_strcat( str, buf );
 
-	sprintf(buf, "\tC (%g, %g, %g) mag=%g\n",
-		INTCLAMP(tip->c[X] * mm2local),
-		INTCLAMP(tip->c[Y] * mm2local),
-		INTCLAMP(tip->c[Z] * mm2local),
-		INTCLAMP(mag_c * mm2local) );
-	bu_vls_strcat( str, buf );
+    sprintf(buf, "\tC (%g, %g, %g) mag=%g\n",
+	    INTCLAMP(tip->c[X] * mm2local),
+	    INTCLAMP(tip->c[Y] * mm2local),
+	    INTCLAMP(tip->c[Z] * mm2local),
+	    INTCLAMP(mag_c * mm2local) );
+    bu_vls_strcat( str, buf );
 
-	if ( !verbose )  return(0);
+    if ( !verbose )  return(0);
 
-	VSCALE( unitv, tip->a, 1/mag_a );
-	rt_find_fallback_angle( angles, unitv );
-	rt_pr_fallback_angle( str, "\tA", angles );
+    VSCALE( unitv, tip->a, 1/mag_a );
+    rt_find_fallback_angle( angles, unitv );
+    rt_pr_fallback_angle( str, "\tA", angles );
 
-	VSCALE( unitv, tip->b, 1/mag_b );
-	rt_find_fallback_angle( angles, unitv );
-	rt_pr_fallback_angle( str, "\tB", angles );
+    VSCALE( unitv, tip->b, 1/mag_b );
+    rt_find_fallback_angle( angles, unitv );
+    rt_pr_fallback_angle( str, "\tB", angles );
 
-	VSCALE( unitv, tip->c, 1/mag_c );
-	rt_find_fallback_angle( angles, unitv );
-	rt_pr_fallback_angle( str, "\tC", angles );
+    VSCALE( unitv, tip->c, 1/mag_c );
+    rt_find_fallback_angle( angles, unitv );
+    rt_pr_fallback_angle( str, "\tC", angles );
 
-	return(0);
+    return(0);
 }
 
 /**
@@ -1312,9 +1312,9 @@ rt_ell_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 void
 rt_ell_ifree(struct rt_db_internal *ip)
 {
-	RT_CK_DB_INTERNAL(ip);
-	bu_free( ip->idb_ptr, "ell ifree" );
-	ip->idb_ptr = GENPTR_NULL;
+    RT_CK_DB_INTERNAL(ip);
+    bu_free( ip->idb_ptr, "ell ifree" );
+    ip->idb_ptr = GENPTR_NULL;
 }
 
 /*  The U parameter runs south to north.
@@ -1322,11 +1322,11 @@ rt_ell_ifree(struct rt_db_internal *ip)
  *  at the south pole.
  */
 static const fastf_t rt_ell_uvw[5*ELEMENTS_PER_VECT] = {
-	0, 1, 0,
-	0, 0, 0,
-	1, 0, 0,
-	1, 1, 0,
-	0, 1, 0
+    0, 1, 0,
+    0, 0, 0,
+    1, 0, 0,
+    1, 1, 0,
+    0, 1, 0
 };
 
 /**
@@ -1335,180 +1335,180 @@ static const fastf_t rt_ell_uvw[5*ELEMENTS_PER_VECT] = {
 int
 rt_ell_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bn_tol *tol)
 {
-	mat_t	R;
-	mat_t	S;
-	mat_t	invR;
-	mat_t	invS;
-	mat_t		invRinvS;
-	mat_t		invRoS;
-	mat_t	unit2model;
-	mat_t	xlate;
-	vect_t	Au, Bu, Cu;	/* A, B, C with unit length */
-	fastf_t	Alen, Blen, Clen;
-	fastf_t	invAlen, invBlen, invClen;
-	fastf_t	magsq_a, magsq_b, magsq_c;
-	fastf_t	f;
-	register int		i;
-	fastf_t		radius;
-	struct rt_ell_internal	*eip;
-	struct vertex		*verts[8];
-	struct vertex		**vertp[4];
-	struct faceuse		*fu;
-	struct shell		*s;
-	struct loopuse		*lu;
-	struct edgeuse		*eu;
-	point_t			pole;
+    mat_t	R;
+    mat_t	S;
+    mat_t	invR;
+    mat_t	invS;
+    mat_t		invRinvS;
+    mat_t		invRoS;
+    mat_t	unit2model;
+    mat_t	xlate;
+    vect_t	Au, Bu, Cu;	/* A, B, C with unit length */
+    fastf_t	Alen, Blen, Clen;
+    fastf_t	invAlen, invBlen, invClen;
+    fastf_t	magsq_a, magsq_b, magsq_c;
+    fastf_t	f;
+    register int		i;
+    fastf_t		radius;
+    struct rt_ell_internal	*eip;
+    struct vertex		*verts[8];
+    struct vertex		**vertp[4];
+    struct faceuse		*fu;
+    struct shell		*s;
+    struct loopuse		*lu;
+    struct edgeuse		*eu;
+    point_t			pole;
 
-	RT_CK_DB_INTERNAL(ip);
-	eip = (struct rt_ell_internal *)ip->idb_ptr;
-	RT_ELL_CK_MAGIC(eip);
+    RT_CK_DB_INTERNAL(ip);
+    eip = (struct rt_ell_internal *)ip->idb_ptr;
+    RT_ELL_CK_MAGIC(eip);
 
-	/* Validate that |A| > 0, |B| > 0, |C| > 0 */
-	magsq_a = MAGSQ( eip->a );
-	magsq_b = MAGSQ( eip->b );
-	magsq_c = MAGSQ( eip->c );
-	if ( magsq_a < tol->dist || magsq_b < tol->dist || magsq_c < tol->dist ) {
-		bu_log("rt_ell_tess():  zero length A, B, or C vector\n");
-		return(-2);		/* BAD */
+    /* Validate that |A| > 0, |B| > 0, |C| > 0 */
+    magsq_a = MAGSQ( eip->a );
+    magsq_b = MAGSQ( eip->b );
+    magsq_c = MAGSQ( eip->c );
+    if ( magsq_a < tol->dist || magsq_b < tol->dist || magsq_c < tol->dist ) {
+	bu_log("rt_ell_tess():  zero length A, B, or C vector\n");
+	return(-2);		/* BAD */
+    }
+
+    /* Create unit length versions of A, B, C */
+    invAlen = 1.0/(Alen = sqrt(magsq_a));
+    VSCALE( Au, eip->a, invAlen );
+    invBlen = 1.0/(Blen = sqrt(magsq_b));
+    VSCALE( Bu, eip->b, invBlen );
+    invClen = 1.0/(Clen = sqrt(magsq_c));
+    VSCALE( Cu, eip->c, invClen );
+
+    /* Validate that A.B == 0, B.C == 0, A.C == 0 (check dir only) */
+    f = VDOT( Au, Bu );
+    if ( ! NEAR_ZERO(f, tol->dist) )  {
+	bu_log("ell():  A not perpendicular to B, f=%f\n", f);
+	return(-3);		/* BAD */
+    }
+    f = VDOT( Bu, Cu );
+    if ( ! NEAR_ZERO(f, tol->dist) )  {
+	bu_log("ell():  B not perpendicular to C, f=%f\n", f);
+	return(-3);		/* BAD */
+    }
+    f = VDOT( Au, Cu );
+    if ( ! NEAR_ZERO(f, tol->dist) )  {
+	bu_log("ell():  A not perpendicular to C, f=%f\n", f);
+	return(-3);		/* BAD */
+    }
+
+    {
+	vect_t	axb;
+	VCROSS( axb, Au, Bu );
+	f = VDOT( axb, Cu );
+	if ( f < 0 )  {
+	    VREVERSE( Cu, Cu );
+	    VREVERSE( eip->c, eip->c );
 	}
+    }
 
-	/* Create unit length versions of A, B, C */
-	invAlen = 1.0/(Alen = sqrt(magsq_a));
-	VSCALE( Au, eip->a, invAlen );
-	invBlen = 1.0/(Blen = sqrt(magsq_b));
-	VSCALE( Bu, eip->b, invBlen );
-	invClen = 1.0/(Clen = sqrt(magsq_c));
-	VSCALE( Cu, eip->c, invClen );
+    /* Compute R and Rinv matrices */
+    MAT_IDN( R );
+    VMOVE( &R[0], Au );
+    VMOVE( &R[4], Bu );
+    VMOVE( &R[8], Cu );
+    bn_mat_trn( invR, R );			/* inv of rot mat is trn */
 
-	/* Validate that A.B == 0, B.C == 0, A.C == 0 (check dir only) */
-	f = VDOT( Au, Bu );
-	if ( ! NEAR_ZERO(f, tol->dist) )  {
-		bu_log("ell():  A not perpendicular to B, f=%f\n", f);
-		return(-3);		/* BAD */
-	}
-	f = VDOT( Bu, Cu );
-	if ( ! NEAR_ZERO(f, tol->dist) )  {
-		bu_log("ell():  B not perpendicular to C, f=%f\n", f);
-		return(-3);		/* BAD */
-	}
-	f = VDOT( Au, Cu );
-	if ( ! NEAR_ZERO(f, tol->dist) )  {
-		bu_log("ell():  A not perpendicular to C, f=%f\n", f);
-		return(-3);		/* BAD */
-	}
+    /* Compute S and invS matrices */
+    /* invS is just 1/diagonal elements */
+    MAT_IDN( S );
+    S[ 0] = invAlen;
+    S[ 5] = invBlen;
+    S[10] = invClen;
+    bn_mat_inv( invS, S );
 
-	{
-		vect_t	axb;
-		VCROSS( axb, Au, Bu );
-		f = VDOT( axb, Cu );
-		if ( f < 0 )  {
-			VREVERSE( Cu, Cu );
-			VREVERSE( eip->c, eip->c );
-		}
-	}
+    /* invRinvS, for converting points from unit sphere to model */
+    bn_mat_mul( invRinvS, invR, invS );
 
-	/* Compute R and Rinv matrices */
-	MAT_IDN( R );
-	VMOVE( &R[0], Au );
-	VMOVE( &R[4], Bu );
-	VMOVE( &R[8], Cu );
-	bn_mat_trn( invR, R );			/* inv of rot mat is trn */
+    /* invRoS, for converting normals from unit sphere to model */
+    bn_mat_mul( invRoS, invR, S );
 
-	/* Compute S and invS matrices */
-	/* invS is just 1/diagonal elements */
-	MAT_IDN( S );
-	S[ 0] = invAlen;
-	S[ 5] = invBlen;
-	S[10] = invClen;
-	bn_mat_inv( invS, S );
+    /* Compute radius of bounding sphere */
+    radius = Alen;
+    if ( Blen > radius )
+	radius = Blen;
+    if ( Clen > radius )
+	radius = Clen;
 
-	/* invRinvS, for converting points from unit sphere to model */
-	bn_mat_mul( invRinvS, invR, invS );
+    MAT_IDN( xlate );
+    MAT_DELTAS_VEC( xlate, eip->v );
+    bn_mat_mul( unit2model, xlate, invRinvS );
 
-	/* invRoS, for converting normals from unit sphere to model */
-	bn_mat_mul( invRoS, invR, S );
+    /*
+     *  --- Build Topology ---
+     *
+     *  There is a vertex at either pole, and a single longitude line.
+     *  There is a single face, an snurb with singularities.
+     *  vert[0] is the south pole, and is the first row of the ctl_points.
+     *  vert[1] is the north pole, and is the last row of the ctl_points.
+     *
+     *  Somewhat surprisingly, the U parameter runs from south to north.
+     */
+    for ( i=0; i<8; i++ )  verts[i] = (struct vertex *)0;
 
-	/* Compute radius of bounding sphere */
-	radius = Alen;
-	if ( Blen > radius )
-		radius = Blen;
-	if ( Clen > radius )
-		radius = Clen;
+    *r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
+    s = BU_LIST_FIRST(shell, &(*r)->s_hd);
 
-	MAT_IDN( xlate );
-	MAT_DELTAS_VEC( xlate, eip->v );
-	bn_mat_mul( unit2model, xlate, invRinvS );
+    vertp[0] = &verts[0];
+    vertp[1] = &verts[0];
+    vertp[2] = &verts[1];
+    vertp[3] = &verts[1];
 
-	/*
-	 *  --- Build Topology ---
-	 *
-	 *  There is a vertex at either pole, and a single longitude line.
-	 *  There is a single face, an snurb with singularities.
-	 *  vert[0] is the south pole, and is the first row of the ctl_points.
-	 *  vert[1] is the north pole, and is the last row of the ctl_points.
-	 *
-	 *  Somewhat surprisingly, the U parameter runs from south to north.
-	 */
-	for ( i=0; i<8; i++ )  verts[i] = (struct vertex *)0;
+    if ( (fu = nmg_cmface( s, vertp, 4 )) == 0 )  {
+	bu_log("rt_ell_tnurb(%s): nmg_cmface() fail on face\n");
+	return -1;
+    }
 
-	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
-	s = BU_LIST_FIRST(shell, &(*r)->s_hd);
+    /* March around the fu's loop assigning uv parameter values */
+    lu = BU_LIST_FIRST( loopuse, &fu->lu_hd );
+    NMG_CK_LOOPUSE(lu);
+    eu = BU_LIST_FIRST( edgeuse, &lu->down_hd );
+    NMG_CK_EDGEUSE(eu);
 
-	vertp[0] = &verts[0];
-	vertp[1] = &verts[0];
-	vertp[2] = &verts[1];
-	vertp[3] = &verts[1];
+    /* Loop always has Counter-Clockwise orientation (CCW) */
+    for ( i=0; i < 4; i++ )  {
+	nmg_vertexuse_a_cnurb( eu->vu_p, &rt_ell_uvw[i*ELEMENTS_PER_VECT] );
+	nmg_vertexuse_a_cnurb( eu->eumate_p->vu_p, &rt_ell_uvw[(i+1)*ELEMENTS_PER_VECT] );
+	eu = BU_LIST_NEXT( edgeuse, &eu->l );
+    }
 
-	if ( (fu = nmg_cmface( s, vertp, 4 )) == 0 )  {
-		bu_log("rt_ell_tnurb(%s): nmg_cmface() fail on face\n");
-		return -1;
-	}
+    /* Associate vertex geometry */
+    VSUB2( pole, eip->v, eip->c );		/* south pole */
+    nmg_vertex_gv( verts[0], pole );
+    VADD2( pole, eip->v, eip->c );
+    nmg_vertex_gv( verts[1], pole );	/* north pole */
 
-	/* March around the fu's loop assigning uv parameter values */
-	lu = BU_LIST_FIRST( loopuse, &fu->lu_hd );
-	NMG_CK_LOOPUSE(lu);
-	eu = BU_LIST_FIRST( edgeuse, &lu->down_hd );
-	NMG_CK_EDGEUSE(eu);
+    /* Build snurb, transformed into final position */
+    nmg_sphere_face_snurb( fu, unit2model );
 
-	/* Loop always has Counter-Clockwise orientation (CCW) */
-	for ( i=0; i < 4; i++ )  {
-		nmg_vertexuse_a_cnurb( eu->vu_p, &rt_ell_uvw[i*ELEMENTS_PER_VECT] );
-		nmg_vertexuse_a_cnurb( eu->eumate_p->vu_p, &rt_ell_uvw[(i+1)*ELEMENTS_PER_VECT] );
-		eu = BU_LIST_NEXT( edgeuse, &eu->l );
-	}
-
-	/* Associate vertex geometry */
-	VSUB2( pole, eip->v, eip->c );		/* south pole */
-	nmg_vertex_gv( verts[0], pole );
-	VADD2( pole, eip->v, eip->c );
-	nmg_vertex_gv( verts[1], pole );	/* north pole */
-
-	/* Build snurb, transformed into final position */
-	nmg_sphere_face_snurb( fu, unit2model );
-
-	/* Associate edge geometry (trimming curve) -- linear in param space */
-	eu = BU_LIST_FIRST( edgeuse, &lu->down_hd );
-	NMG_CK_EDGEUSE(eu);
-	for ( i=0; i < 4; i++ )  {
+    /* Associate edge geometry (trimming curve) -- linear in param space */
+    eu = BU_LIST_FIRST( edgeuse, &lu->down_hd );
+    NMG_CK_EDGEUSE(eu);
+    for ( i=0; i < 4; i++ )  {
 #if 0
-struct snurb sn;
-fastf_t	param[4];
-bu_log("\neu=x%x, vu=x%x, v=x%x  ", eu, eu->vu_p, eu->vu_p->v_p);
-VPRINT("xyz", eu->vu_p->v_p->vg_p->coord);
-nmg_hack_snurb( &sn, fu->f_p->g.snurb_p );
-VPRINT("uv", eu->vu_p->a.cnurb_p->param);
-rt_nurb_s_eval( &sn, V2ARGS(eu->vu_p->a.cnurb_p->param), param );
-VPRINT("surf(u, v)", param);
+	struct snurb sn;
+	fastf_t	param[4];
+	bu_log("\neu=x%x, vu=x%x, v=x%x  ", eu, eu->vu_p, eu->vu_p->v_p);
+	VPRINT("xyz", eu->vu_p->v_p->vg_p->coord);
+	nmg_hack_snurb( &sn, fu->f_p->g.snurb_p );
+	VPRINT("uv", eu->vu_p->a.cnurb_p->param);
+	rt_nurb_s_eval( &sn, V2ARGS(eu->vu_p->a.cnurb_p->param), param );
+	VPRINT("surf(u, v)", param);
 #endif
 
-		nmg_edge_g_cnurb_plinear(eu);
-		eu = BU_LIST_NEXT( edgeuse, &eu->l );
-	}
+	nmg_edge_g_cnurb_plinear(eu);
+	eu = BU_LIST_NEXT( edgeuse, &eu->l );
+    }
 
-	/* Compute "geometry" for region and shell */
-	nmg_region_a( *r, tol );
+    /* Compute "geometry" for region and shell */
+    nmg_region_a( *r, tol );
 
-	return 0;
+    return 0;
 }
 
 /*
@@ -1518,49 +1518,49 @@ VPRINT("surf(u, v)", param);
 static void
 nmg_sphere_face_snurb(struct faceuse *fu, const matp_t m)
 {
-	struct face_g_snurb	*fg;
-	fastf_t root2_2;
-	register fastf_t	*op;
+    struct face_g_snurb	*fg;
+    fastf_t root2_2;
+    register fastf_t	*op;
 
-	NMG_CK_FACEUSE(fu);
-	root2_2 = sqrt(2.0)*0.5;
+    NMG_CK_FACEUSE(fu);
+    root2_2 = sqrt(2.0)*0.5;
 
-	/* Let the library allocate all the storage */
-	/* The V direction runs from south to north pole */
-	nmg_face_g_snurb( fu,
-		3, 3,		/* u, v order */
-		8, 12,		/* Number of knots, u, v */
-		NULL, NULL,	/* initial u, v knot vectors */
-		9, 5,		/* n_rows, n_cols */
-		RT_NURB_MAKE_PT_TYPE( 4, RT_NURB_PT_XYZ, RT_NURB_PT_RATIONAL ),
-		NULL );		/* initial mesh */
+    /* Let the library allocate all the storage */
+    /* The V direction runs from south to north pole */
+    nmg_face_g_snurb( fu,
+		      3, 3,		/* u, v order */
+		      8, 12,		/* Number of knots, u, v */
+		      NULL, NULL,	/* initial u, v knot vectors */
+		      9, 5,		/* n_rows, n_cols */
+		      RT_NURB_MAKE_PT_TYPE( 4, RT_NURB_PT_XYZ, RT_NURB_PT_RATIONAL ),
+		      NULL );		/* initial mesh */
 
-	fg = fu->f_p->g.snurb_p;
-	NMG_CK_FACE_G_SNURB(fg);
+    fg = fu->f_p->g.snurb_p;
+    NMG_CK_FACE_G_SNURB(fg);
 
-	fg->v.knots[ 0] = 0;
-	fg->v.knots[ 1] = 0;
-	fg->v.knots[ 2] = 0;
-	fg->v.knots[ 3] = 0.25;
-	fg->v.knots[ 4] = 0.25;
-	fg->v.knots[ 5] = 0.5;
-	fg->v.knots[ 6] = 0.5;
-	fg->v.knots[ 7] = 0.75;
-	fg->v.knots[ 8] = 0.75;
-	fg->v.knots[ 9] = 1;
-	fg->v.knots[10] = 1;
-	fg->v.knots[11] = 1;
+    fg->v.knots[ 0] = 0;
+    fg->v.knots[ 1] = 0;
+    fg->v.knots[ 2] = 0;
+    fg->v.knots[ 3] = 0.25;
+    fg->v.knots[ 4] = 0.25;
+    fg->v.knots[ 5] = 0.5;
+    fg->v.knots[ 6] = 0.5;
+    fg->v.knots[ 7] = 0.75;
+    fg->v.knots[ 8] = 0.75;
+    fg->v.knots[ 9] = 1;
+    fg->v.knots[10] = 1;
+    fg->v.knots[11] = 1;
 
-	fg->u.knots[0] = 0;
-	fg->u.knots[1] = 0;
-	fg->u.knots[2] = 0;
-	fg->u.knots[3] = 0.5;
-	fg->u.knots[4] = 0.5;
-	fg->u.knots[5] = 1;
-	fg->u.knots[6] = 1;
-	fg->u.knots[7] = 1;
+    fg->u.knots[0] = 0;
+    fg->u.knots[1] = 0;
+    fg->u.knots[2] = 0;
+    fg->u.knots[3] = 0.5;
+    fg->u.knots[4] = 0.5;
+    fg->u.knots[5] = 1;
+    fg->u.knots[6] = 1;
+    fg->u.knots[7] = 1;
 
-	op = fg->ctl_points;
+    op = fg->ctl_points;
 
 /* Inspired by MAT4X4PNT */
 #define M(x, y, z, w)	{ \
@@ -1570,59 +1570,59 @@ nmg_sphere_face_snurb(struct faceuse *fu, const matp_t m)
 	*op++ = m[12]*(x) + m[13]*(y) + m[14]*(z) + m[15]*(w); }
 
 
-	M(   0     ,   0     ,-1.0     , 1.0     );
-	M( root2_2 ,   0     ,-root2_2 , root2_2 );
-	M( 1.0     ,   0     ,   0     , 1.0     );
-	M( root2_2 ,   0     , root2_2 , root2_2 );
-	M(   0     ,   0     , 1.0     , 1.0     );
+    M(   0     ,   0     ,-1.0     , 1.0     );
+    M( root2_2 ,   0     ,-root2_2 , root2_2 );
+    M( 1.0     ,   0     ,   0     , 1.0     );
+    M( root2_2 ,   0     , root2_2 , root2_2 );
+    M(   0     ,   0     , 1.0     , 1.0     );
 
-	M(   0     ,   0     ,-root2_2 , root2_2 );
-	M( 0.5     ,-0.5     ,-0.5     , 0.5     );
-	M( root2_2 ,-root2_2 ,   0     , root2_2 );
-	M( 0.5     ,-0.5     , 0.5     , 0.5     );
-	M(   0     ,   0     , root2_2 , root2_2 );
+    M(   0     ,   0     ,-root2_2 , root2_2 );
+    M( 0.5     ,-0.5     ,-0.5     , 0.5     );
+    M( root2_2 ,-root2_2 ,   0     , root2_2 );
+    M( 0.5     ,-0.5     , 0.5     , 0.5     );
+    M(   0     ,   0     , root2_2 , root2_2 );
 
-	M(   0     ,   0     ,-1.0     , 1.0     );
-	M(   0     ,-root2_2 ,-root2_2 , root2_2 );
-	M(   0     ,-1.0     ,   0     , 1.0     );
-	M(   0     ,-root2_2 , root2_2 , root2_2 );
-	M(   0     ,   0     , 1.0     , 1.0     );
+    M(   0     ,   0     ,-1.0     , 1.0     );
+    M(   0     ,-root2_2 ,-root2_2 , root2_2 );
+    M(   0     ,-1.0     ,   0     , 1.0     );
+    M(   0     ,-root2_2 , root2_2 , root2_2 );
+    M(   0     ,   0     , 1.0     , 1.0     );
 
-	M(   0     ,   0     ,-root2_2 , root2_2 );
-	M(-0.5     ,-0.5     ,-0.5     , 0.5     );
-	M(-root2_2 ,-root2_2 ,   0     , root2_2 );
-	M(-0.5     ,-0.5     , 0.5     , 0.5     );
-	M(   0     ,   0     , root2_2 , root2_2 );
+    M(   0     ,   0     ,-root2_2 , root2_2 );
+    M(-0.5     ,-0.5     ,-0.5     , 0.5     );
+    M(-root2_2 ,-root2_2 ,   0     , root2_2 );
+    M(-0.5     ,-0.5     , 0.5     , 0.5     );
+    M(   0     ,   0     , root2_2 , root2_2 );
 
-	M(   0     ,   0     ,-1.0     , 1.0     );
-	M(-root2_2 ,   0     ,-root2_2 , root2_2 );
-	M(-1.0     ,   0     ,   0     , 1.0     );
-	M(-root2_2 ,   0     , root2_2 , root2_2 );
-	M(   0     ,   0     , 1.0     , 1.0     );
+    M(   0     ,   0     ,-1.0     , 1.0     );
+    M(-root2_2 ,   0     ,-root2_2 , root2_2 );
+    M(-1.0     ,   0     ,   0     , 1.0     );
+    M(-root2_2 ,   0     , root2_2 , root2_2 );
+    M(   0     ,   0     , 1.0     , 1.0     );
 
-	M(   0     ,   0     ,-root2_2 , root2_2 );
-	M(-0.5     , 0.5     ,-0.5     , 0.5     );
-	M(-root2_2 , root2_2 ,   0     , root2_2 );
-	M(-0.5     , 0.5     , 0.5     , 0.5     );
-	M(   0     ,   0     , root2_2 , root2_2 );
+    M(   0     ,   0     ,-root2_2 , root2_2 );
+    M(-0.5     , 0.5     ,-0.5     , 0.5     );
+    M(-root2_2 , root2_2 ,   0     , root2_2 );
+    M(-0.5     , 0.5     , 0.5     , 0.5     );
+    M(   0     ,   0     , root2_2 , root2_2 );
 
-	M(   0     ,   0     ,-1.0     , 1.0     );
-	M(   0     , root2_2 ,-root2_2 , root2_2 );
-	M(   0     , 1.0     ,   0     , 1.0     );
-	M(   0     , root2_2 , root2_2 , root2_2 );
-	M(   0     ,   0     , 1.0     , 1.0     );
+    M(   0     ,   0     ,-1.0     , 1.0     );
+    M(   0     , root2_2 ,-root2_2 , root2_2 );
+    M(   0     , 1.0     ,   0     , 1.0     );
+    M(   0     , root2_2 , root2_2 , root2_2 );
+    M(   0     ,   0     , 1.0     , 1.0     );
 
-	M(   0     ,   0     ,-root2_2 , root2_2 );
-	M( 0.5     , 0.5     ,-0.5     , 0.5     );
-	M( root2_2 , root2_2 ,   0     , root2_2 );
-	M( 0.5     , 0.5     , 0.5     , 0.5     );
-	M(   0     ,   0     , root2_2 , root2_2 );
+    M(   0     ,   0     ,-root2_2 , root2_2 );
+    M( 0.5     , 0.5     ,-0.5     , 0.5     );
+    M( root2_2 , root2_2 ,   0     , root2_2 );
+    M( 0.5     , 0.5     , 0.5     , 0.5     );
+    M(   0     ,   0     , root2_2 , root2_2 );
 
-	M(   0     ,   0     ,-1.0     , 1.0     );
-	M( root2_2 ,   0     ,-root2_2 , root2_2 );
-	M( 1.0     ,   0     ,   0     , 1.0     );
-	M( root2_2 ,   0     , root2_2 , root2_2 );
-	M(   0     ,   0     , 1.0     , 1.0     );
+    M(   0     ,   0     ,-1.0     , 1.0     );
+    M( root2_2 ,   0     ,-root2_2 , root2_2 );
+    M( 1.0     ,   0     ,   0     , 1.0     );
+    M( root2_2 ,   0     , root2_2 , root2_2 );
+    M(   0     ,   0     , 1.0     , 1.0     );
 }
 
 /** @} */

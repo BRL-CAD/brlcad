@@ -101,9 +101,9 @@ get_args(int argc, register char **argv)
 		file_width = atol(bu_optarg);
 		autosize = 0;
 		break;
-	    /*
-	     *	application-specific options
-	     */
+		/*
+		 *	application-specific options
+		 */
 	    case 'c':
 		make_cells = 1;
 		break;

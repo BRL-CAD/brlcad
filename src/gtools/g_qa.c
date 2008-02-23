@@ -79,7 +79,7 @@ char *options = "A:a:de:f:g:Gn:N:pP:rS:s:t:U:u:vV:W:";
 #endif
 
 int analysis_flags = ANALYSIS_VOLUME | ANALYSIS_OVERLAPS | ANALYSIS_WEIGHT | \
-	ANALYSIS_EXP_AIR | ANALYSIS_ADJ_AIR | ANALYSIS_GAP;
+ANALYSIS_EXP_AIR | ANALYSIS_ADJ_AIR | ANALYSIS_GAP;
 int multiple_analyses = 1;
 
 
@@ -204,7 +204,7 @@ struct region_pair {
  */
 
 static struct region_pair gapList = {
-  /* list of gaps */
+    /* list of gaps */
     {
 	BU_LIST_HEAD_MAGIC,
 	(struct bu_list *)&gapList,
@@ -217,7 +217,7 @@ static struct region_pair gapList = {
     {0.0, 0.0, 0.0, }
 };
 static struct region_pair adjAirList = {
-  /* list of adjacent air */
+    /* list of adjacent air */
     {
 	BU_LIST_HEAD_MAGIC,
 	(struct bu_list *)&adjAirList,
@@ -230,7 +230,7 @@ static struct region_pair adjAirList = {
     {0.0, 0.0, 0.0, }
 };
 static struct region_pair exposedAirList = {
-  /* list of exposed air */
+    /* list of exposed air */
     {
 	BU_LIST_HEAD_MAGIC,
 	(struct bu_list *)&exposedAirList,
@@ -243,7 +243,7 @@ static struct region_pair exposedAirList = {
     {0.0, 0.0, 0.0, }
 };
 static struct region_pair overlapList = {
-  /* list of overlaps */
+    /* list of overlaps */
     {
 	BU_LIST_HEAD_MAGIC,
 	(struct bu_list *)&overlapList,
@@ -271,13 +271,13 @@ struct cvt_tab {
 
 static const struct cvt_tab units_tab[3][40] = {
     {
-     /* length, stolen from bu/units.c with the  "none" value removed
-       * Values for converting from given units to mm
-       */
+	/* length, stolen from bu/units.c with the  "none" value removed
+	 * Values for converting from given units to mm
+	 */
 	{1.0,		"mm"}, /* default */
 	/*	{0.0,		"none"}, */ /* this is removed to force a certain
-					    * amount of error checking for the user
-					    */
+					     * amount of error checking for the user
+					     */
 	{1.0e-7,	"angstrom"},
 	{1.0e-7,	"decinanometer"},
 	{1.0e-6,	"nm"},
@@ -315,9 +315,9 @@ static const struct cvt_tab units_tab[3][40] = {
 	{0.0,		""}			/* LAST ENTRY */
     },
     {
-    /* volume
-      * Values for converting from given units to mm^3
-      */
+	/* volume
+	 * Values for converting from given units to mm^3
+	 */
 	{1.0, "cu mm"}, /* default */
 
 	{1.0, "mm"},
@@ -352,9 +352,9 @@ static const struct cvt_tab units_tab[3][40] = {
 	{0.0,		""}			/* LAST ENTRY */
     },
     {
-     /* weight
-       * Values for converting given units to grams
-       */
+	/* weight
+	 * Values for converting given units to grams
+	 */
 	{1.0, "grams"}, /* default */
 
 	{1.0, "g"},
@@ -469,85 +469,85 @@ parse_args(int ac, char *av[])
     /* get all the option flags from the command line */
     while ((c=bu_getopt(ac, av, options)) != EOF) {
 	switch (c) {
-	case 'A'	:
+	    case 'A'	:
 	    {
 		char *p;
 		analysis_flags = 0;
 		multiple_analyses = 0;
 		for (p = bu_optarg; *p; p++) {
 		    switch (*p) {
-		    case 'A' :
-			analysis_flags = ANALYSIS_VOLUME | ANALYSIS_WEIGHT | \
-			    ANALYSIS_OVERLAPS | ANALYSIS_ADJ_AIR | ANALYSIS_GAP | \
-			    ANALYSIS_EXP_AIR;
-			multiple_analyses = 1;
-			break;
-		    case 'a' :
-			if (analysis_flags)
+			case 'A' :
+			    analysis_flags = ANALYSIS_VOLUME | ANALYSIS_WEIGHT | \
+				ANALYSIS_OVERLAPS | ANALYSIS_ADJ_AIR | ANALYSIS_GAP | \
+				ANALYSIS_EXP_AIR;
 			    multiple_analyses = 1;
+			    break;
+			case 'a' :
+			    if (analysis_flags)
+				multiple_analyses = 1;
 
 			    analysis_flags |= ANALYSIS_ADJ_AIR;
 
-			break;
-		    case 'b' :
-			if (analysis_flags)
-			    multiple_analyses = 1;
+			    break;
+			case 'b' :
+			    if (analysis_flags)
+				multiple_analyses = 1;
 
-			analysis_flags |= ANALYSIS_BOX;
+			    analysis_flags |= ANALYSIS_BOX;
 
-			break;
-		    case 'e' :
-			if (analysis_flags)
-			    multiple_analyses = 1;
+			    break;
+			case 'e' :
+			    if (analysis_flags)
+				multiple_analyses = 1;
 
-			analysis_flags |= ANALYSIS_EXP_AIR;
-			break;
-		    case 'g' :
-			if (analysis_flags)
-			    multiple_analyses = 1;
+			    analysis_flags |= ANALYSIS_EXP_AIR;
+			    break;
+			case 'g' :
+			    if (analysis_flags)
+				multiple_analyses = 1;
 
-			analysis_flags |= ANALYSIS_GAP;
-			break;
-		    case 'o' :
-			if (analysis_flags)
-			    multiple_analyses = 1;
+			    analysis_flags |= ANALYSIS_GAP;
+			    break;
+			case 'o' :
+			    if (analysis_flags)
+				multiple_analyses = 1;
 
-			analysis_flags |= ANALYSIS_OVERLAPS;
-			break;
-		    case 'v' :
-			if (analysis_flags)
-			    multiple_analyses = 1;
+			    analysis_flags |= ANALYSIS_OVERLAPS;
+			    break;
+			case 'v' :
+			    if (analysis_flags)
+				multiple_analyses = 1;
 
-			analysis_flags |= ANALYSIS_VOLUME;
-			break;
-		    case 'w' :
-			if (analysis_flags)
-			    multiple_analyses = 1;
+			    analysis_flags |= ANALYSIS_VOLUME;
+			    break;
+			case 'w' :
+			    if (analysis_flags)
+				multiple_analyses = 1;
 
-			analysis_flags |= ANALYSIS_WEIGHT;
-			break;
-		    default:
-			bu_exit(EXIT_FAILURE, "Unknown analysis type \"%c\" requested.\n", *p);
-			break;
+			    analysis_flags |= ANALYSIS_WEIGHT;
+			    break;
+			default:
+			    bu_exit(EXIT_FAILURE, "Unknown analysis type \"%c\" requested.\n", *p);
+			    break;
 		    }
 		}
 		break;
 	    }
-	case 'a'	:
-	    bu_log("azimuth not implemented\n");
-	    if (sscanf(bu_optarg, "%lg", &azimuth_deg) != 1)
-		bu_exit(EXIT_FAILURE, "error parsing azimuth \"%s\"\n", bu_optarg);
-	    break;
-	case 'e'	:
-	    bu_log("elevation not implemented\n");
-	    if (sscanf(bu_optarg, "%lg", &elevation_deg) != 1)
-		bu_exit(EXIT_FAILURE, "error parsing elevation \"%s\"\n", bu_optarg);
-	    break;
-	case 'd'	: debug = 1; break;
+	    case 'a'	:
+		bu_log("azimuth not implemented\n");
+		if (sscanf(bu_optarg, "%lg", &azimuth_deg) != 1)
+		    bu_exit(EXIT_FAILURE, "error parsing azimuth \"%s\"\n", bu_optarg);
+		break;
+	    case 'e'	:
+		bu_log("elevation not implemented\n");
+		if (sscanf(bu_optarg, "%lg", &elevation_deg) != 1)
+		    bu_exit(EXIT_FAILURE, "error parsing elevation \"%s\"\n", bu_optarg);
+		break;
+	    case 'd'	: debug = 1; break;
 
-	case 'f'	: densityFileName = bu_optarg; break;
+	    case 'f'	: densityFileName = bu_optarg; break;
 
-	case 'g'	:
+	    case 'g'	:
 	    {
 		double value1, value2;
 		i = 0;
@@ -579,60 +579,60 @@ parse_args(int ac, char *av[])
 		       gridSpacingLimit / units[LINE]->val, units[LINE]->name);
 		break;
 	    }
-	case 'G'	:
-	    makeOverlapAssemblies = 1;
-	    bu_exit(EXIT_FAILURE, "-G option unimplemented\n");
-	    break;
-	case 'n'	:
-	    if (sscanf(bu_optarg, "%d", &c) != 1 || c < 0)
-		bu_exit(EXIT_FAILURE, "num_hits must be integer value >= 0, not \"%s\"\n", bu_optarg);
-	    require_num_hits = c;
-	    break;
-
-	case 'N'	:
-	    num_views = atoi(bu_optarg);
-	    break;
-	case 'p'	:
-	    plot_files = ! plot_files;
-	    break;
-	case 'P'	:
-	    /* cannot ask for more cpu's than the machine has */
-	    if ((c=atoi(bu_optarg)) > 0 && c <= max_cpus ) ncpu = c;
-	    break;
-	case 'r'	:
-	    print_per_region_stats = 1;
-	    break;
-	case 'S'	:
-	    if (sscanf(bu_optarg, "%lg", &a) != 1 || a <= 1.0) {
-		bu_log("error in specifying minimum samples per model axis: \"%s\"\n", bu_optarg);
+	    case 'G'	:
+		makeOverlapAssemblies = 1;
+		bu_exit(EXIT_FAILURE, "-G option unimplemented\n");
 		break;
-	    }
-	    Samples_per_model_axis = a + 1;
-	    break;
-	case 't'	:
-	    if (read_units_double(&overlap_tolerance, bu_optarg, units_tab[0]))
-		bu_exit(EXIT_FAILURE, "error in overlap tolerance distance \"%s\"\n", bu_optarg);
-	    break;
-	case 'v'	:
-	    verbose = 1;
-	    break;
-	case 'V'	:
-	    if (read_units_double(&volume_tolerance, bu_optarg, units_tab[1]))
-		bu_exit(-1, "error in volume tolerance \"%s\"\n", bu_optarg);
-	    break;
-	case 'W'	:
-	    if (read_units_double(&weight_tolerance, bu_optarg, units_tab[2]))
-		bu_exit(-1, "error in weight tolerance \"%s\"\n", bu_optarg);
-	    break;
+	    case 'n'	:
+		if (sscanf(bu_optarg, "%d", &c) != 1 || c < 0)
+		    bu_exit(EXIT_FAILURE, "num_hits must be integer value >= 0, not \"%s\"\n", bu_optarg);
+		require_num_hits = c;
+		break;
 
-	case 'U'	:
-	    use_air = strtol(bu_optarg, (char **)NULL, 10);
-	    if (errno == ERANGE || errno == EINVAL) {
-		perror("-U argument");
-		bu_exit(EXIT_FAILURE, NULL);	/* left blank due to use of perror() */
-	    }
-	    break;
-	case 'u'	:
+	    case 'N'	:
+		num_views = atoi(bu_optarg);
+		break;
+	    case 'p'	:
+		plot_files = ! plot_files;
+		break;
+	    case 'P'	:
+		/* cannot ask for more cpu's than the machine has */
+		if ((c=atoi(bu_optarg)) > 0 && c <= max_cpus ) ncpu = c;
+		break;
+	    case 'r'	:
+		print_per_region_stats = 1;
+		break;
+	    case 'S'	:
+		if (sscanf(bu_optarg, "%lg", &a) != 1 || a <= 1.0) {
+		    bu_log("error in specifying minimum samples per model axis: \"%s\"\n", bu_optarg);
+		    break;
+		}
+		Samples_per_model_axis = a + 1;
+		break;
+	    case 't'	:
+		if (read_units_double(&overlap_tolerance, bu_optarg, units_tab[0]))
+		    bu_exit(EXIT_FAILURE, "error in overlap tolerance distance \"%s\"\n", bu_optarg);
+		break;
+	    case 'v'	:
+		verbose = 1;
+		break;
+	    case 'V'	:
+		if (read_units_double(&volume_tolerance, bu_optarg, units_tab[1]))
+		    bu_exit(-1, "error in volume tolerance \"%s\"\n", bu_optarg);
+		break;
+	    case 'W'	:
+		if (read_units_double(&weight_tolerance, bu_optarg, units_tab[2]))
+		    bu_exit(-1, "error in weight tolerance \"%s\"\n", bu_optarg);
+		break;
+
+	    case 'U'	:
+		use_air = strtol(bu_optarg, (char **)NULL, 10);
+		if (errno == ERANGE || errno == EINVAL) {
+		    perror("-U argument");
+		    bu_exit(EXIT_FAILURE, NULL);	/* left blank due to use of perror() */
+		}
+		break;
+	    case 'u'	:
 	    {
 		char *ptr = bu_optarg;
 		const struct cvt_tab *cv;
@@ -663,12 +663,12 @@ parse_args(int ac, char *av[])
 		break;
 	    }
 
-	case '?'	:
-	case 'h'	:
-	default		:
-	    fprintf(stderr, "Bad or help flag '%c' specified\n", c);
-	    usage("");
-	    break;
+	    case '?'	:
+	    case 'h'	:
+	    default		:
+		fprintf(stderr, "Bad or help flag '%c' specified\n", c);
+		usage("");
+		break;
 	}
     }
 
@@ -741,7 +741,7 @@ parse_densities_buffer(char *buf, unsigned long len)
 		   idx,
 		   densities[idx].density,
 		   densities[idx].name
-		   );
+		);
 #endif
 }
 /*	g e t _ d e n s i t i e s _ f r o m _ f i l e
@@ -1022,9 +1022,9 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 	VJOIN1(opt, ap->a_ray.r_pt, pp->pt_outhit->hit_dist, ap->a_ray.r_dir);
 
 	DLOG("%s %g->%g\n",
-			  pp->pt_regionp->reg_name,
-			  pp->pt_inhit->hit_dist,
-			  pp->pt_outhit->hit_dist);
+	     pp->pt_regionp->reg_name,
+	     pp->pt_inhit->hit_dist,
+	     pp->pt_outhit->hit_dist);
 
 	/* checking for air sticking out of the model .
 	 * This is done here because there may be any number of air
@@ -1082,9 +1082,9 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 	    /* make sure mater index is within range of densities */
 	    if (pp->pt_regionp->reg_gmater >= num_densities)
 		bu_exit(EXIT_FAILURE, "density index %d on region %s is outside of range of table [1..%d]\nSet GIFTmater on region or add entry to density table\n",
-		       pp->pt_regionp->reg_gmater,
-		       pp->pt_regionp->reg_name,
-		       num_densities); /* XXX this should do something else */
+			pp->pt_regionp->reg_gmater,
+			pp->pt_regionp->reg_name,
+			num_densities); /* XXX this should do something else */
 	    else {
 
 		/* make sure the density index has been set */
@@ -1117,7 +1117,7 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 
 		} else
 		    bu_exit(EXIT_FAILURE, "density index %d from region %s is not set.\nAdd entry to density table\n",
-			   pp->pt_regionp->reg_gmater, pp->pt_regionp->reg_name);
+			    pp->pt_regionp->reg_gmater, pp->pt_regionp->reg_name);
 	    }
 	}
 
@@ -1138,10 +1138,10 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 	    }
 
 	    DLOG("\t\tvol hit %s oDist:%g objVol:%g %s\n",
-		     pp->pt_regionp->reg_name,
-		     dist,
-		     prd->optr->o_len[state->curr_view],
-		     prd->optr->o_name);
+		 pp->pt_regionp->reg_name,
+		 dist,
+		 prd->optr->o_len[state->curr_view],
+		 prd->optr->o_name);
 
 	    if (plot_volume) {
 		point_t opt;
@@ -1437,12 +1437,12 @@ list_report(struct region_pair *list)
     for (BU_LIST_FOR(rp, region_pair, &(list->l))) {
 	if (rp->r2) {
 	    bu_log("%s %s count:%lu dist:%g%s @ (%g %g %g)\n",
-	       rp->r.r1->reg_name, rp->r2->reg_name, rp->count,
-	       rp->max_dist / units[LINE]->val, units[LINE]->name, V3ARGS(rp->coord));
+		   rp->r.r1->reg_name, rp->r2->reg_name, rp->count,
+		   rp->max_dist / units[LINE]->val, units[LINE]->name, V3ARGS(rp->coord));
 	} else {
 	    bu_log("%s count:%lu dist:%g%s @ (%g %g %g)\n",
-	       rp->r.r1->reg_name, rp->count,
-	       rp->max_dist / units[LINE]->val, units[LINE]->name, V3ARGS(rp->coord));
+		   rp->r.r1->reg_name, rp->count,
+		   rp->max_dist / units[LINE]->val, units[LINE]->name, V3ARGS(rp->coord));
 	}
     }
 }
@@ -1594,9 +1594,9 @@ view_reports(struct cstate *state)
 
 		if (verbose)
 		    bu_log("\t%s volume %g %s\n",
-		       obj_tbl[obj].o_name,
-		       val / units[VOL]->val,
-		       units[VOL]->name);
+			   obj_tbl[obj].o_name,
+			   val / units[VOL]->val,
+			   units[VOL]->name);
 	    }
 	}
     }
@@ -1609,11 +1609,11 @@ view_reports(struct cstate *state)
 		(state->area[view] / state->shots[view]);
 
 
-		if (verbose)
-		    bu_log("\t%s %g %s\n",
-			   obj_tbl[obj].o_name,
-			   grams_per_cu_mm / units[WGT]->val,
-			   units[WGT]->name);
+	    if (verbose)
+		bu_log("\t%s %g %s\n",
+		       obj_tbl[obj].o_name,
+		       grams_per_cu_mm / units[WGT]->val,
+		       units[WGT]->name);
 	}
     }
 }

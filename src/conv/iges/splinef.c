@@ -35,21 +35,21 @@
 
 fastf_t
 splinef( c, s )
-fastf_t c[4], s;
+    fastf_t c[4], s;
 {
-	int i;
-	float retval;
-	double stopow=1.0;
+    int i;
+    float retval;
+    double stopow=1.0;
 
-	retval = c[0];
-	for ( i=1; i<4; i++ )
-	{
-		stopow *= s;
-		if ( c[i] != 0.0 )
-			retval += c[i]*stopow;
-	}
+    retval = c[0];
+    for ( i=1; i<4; i++ )
+    {
+	stopow *= s;
+	if ( c[i] != 0.0 )
+	    retval += c[i]*stopow;
+    }
 
-	return( retval );
+    return( retval );
 }
 
 /*

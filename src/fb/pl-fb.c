@@ -337,7 +337,7 @@ static struct descr	*freep = STROKE_NULL;	/* head of free stroke list */
  */
 static stroke *
 Dequeue(register struct band *bp, register stroke **hp)
-     /* *hp -> first descr in list */
+    /* *hp -> first descr in list */
 {
     register stroke *vp;		/* -> descriptor */
 
@@ -382,8 +382,8 @@ Requeue(register struct band *bp, register stroke *vp)
  */
 static void
 Raster(register stroke *vp, register struct band *np)
-     /* -> rasterization descr */
-     /* *np -> next band 1st descr */
+    /* -> rasterization descr */
+    /* *np -> next band 1st descr */
 {
     register short	dy;		/* raster within active band */
 
@@ -405,7 +405,7 @@ Raster(register stroke *vp, register struct band *np)
 	}
 
 	if ( vp->major-- == 0 ) {
-  /* done! */
+	    /* done! */
 	    FREE_STROKE( vp );	/* return to "malloc" */
 	    return;
 	}
@@ -463,7 +463,7 @@ OutBuild(void)				/* returns true if successful */
     for ( hp = &band[0], np = &band[1], ystart = 0;
 	  hp < bandEnd;
 	  hp = np++, ystart += lines_per_band
-	  )	{
+	)	{
 	if (debug) fprintf(stderr, "OutBuild:  band y=%d\n", ystart);
 	if ( over )  {
 	    /* Read in current band */
@@ -696,7 +696,7 @@ prep_dda(register stroke *vp, register coords *pt1, register coords *pt2)
  */
 static bool
 BuildStr(coords *pt1, coords *pt2)		/* returns true or dies */
-     /* endpoints */
+    /* endpoints */
 {
     register stroke *vp;		/* -> rasterization descr */
     register int	thick;
@@ -749,7 +749,7 @@ BuildStr(coords *pt1, coords *pt2)		/* returns true or dies */
 
 static bool
 GetCoords(register coords *coop)
-     /* -> input coordinates */
+    /* -> input coordinates */
 {
     unsigned char buf[4];
     double	x, y;
@@ -840,7 +840,7 @@ bool Get3DCoords(register coords *coop)
 
 bool
 GetDCoords(register coords *coop)
-     /* -> input coordinates */
+    /* -> input coordinates */
 {
     static unsigned char	in[2*8];
     static double	out[2];
@@ -963,358 +963,358 @@ DoFile(void)	/* returns vpl status code */
     /* process each frame into a raster image file */
 
     for (;;)			/* for each frame */
+    {
+	InitDesc();		/* empty descriptor lists */
+
+	virpos.x = virpos.y = 0;
+	plotted = false;
+
+	for (;;)		/* read until EOF*/
 	{
-	    InitDesc();		/* empty descriptor lists */
+	    c = getc( pfin );
+	    if ( debug > 1 )  fprintf(stderr, "%c\n", c);
+	    switch ( c )
+	    {
+		/* record type */
+		case EOF:
+		    if ( debug ) fprintf( stderr, "EOF\n");
 
-	    virpos.x = virpos.y = 0;
-	    plotted = false;
+		    if ( plotted )  {
+			/* flush strokes */
+			if ( debug ) fprintf( stderr, "flushing\n");
+			if ( !OutBuild() )
+			    return Foo( -6 );
+		    }
+		    return Foo( 0 );/* success */
 
-	    for (;;)		/* read until EOF*/
+		case 'e':	/* erase */
+		    if ( debug )  fprintf( stderr, "Erase\n");
+
+		    if ( plotted )  {
+			/* flush strokes */
+			if ( debug ) fprintf( stderr, "flushing\n");
+			if ( !OutBuild() )
+			    return Foo( -6 );
+		    }
+		    if ( !firsterase ) {
+			if ( immediate )
+			    fb_clear( fbp, RGBPIXEL_NULL );
+			over = 0;
+		    }
+		    firsterase = false;
+		    break;	/* next frame */
+
+		case 'F':	/* flush */
+		    if ( debug )  fprintf( stderr, "Flush\n");
+
+		    if ( plotted )  {
+			/* flush strokes */
+			if ( debug ) fprintf( stderr, "flushing\n");
+			if ( !OutBuild() )
+			    return Foo( -6 );
+			if ( !immediate )
+			    over = 1;
+		    }
+		    firsterase = false;
+		    break;	/* next frame */
+
+		case 'f':	/* linemod */
+		    if (debug)
+			fprintf( stderr, "linemod\n");
+		    /* ignore for time being */
+		    while ( (c = getc( pfin )) != EOF
+			    && c != '\n'
+			)
+			;	/* eat string */
+		    continue;
+
+		case 'L':
+		case 'M':
+		    if ( !Get3Coords( &newpos ) )
+			return Foo( -8 );
+		    virpos = newpos;
+		    if ( c == 'M'  )  {
+			if ( debug )
+			    fprintf( stderr, "Move3\n");
+			continue;
+		    }
+		    if ( debug )
+			fprintf( stderr, "Line3\n");
+
+		case 'N':	/* continue3 */
+		case 'P':	/* point3 */
+		    if ( !Get3Coords( &newpos ) )
+			return Foo( -9 );
+		    if ( c == 'P' )  {
+			if ( debug )
+			    fprintf( stderr, "point3\n");
+			virpos = newpos;
+		    } else
+			if ( debug )
+			    fprintf( stderr, "cont3\n");
+
+		    if ( !BuildStr( &virpos, &newpos ) )
+			return Foo( -10 );
+		    plotted = true;
+		    virpos = newpos;
+		    continue;
+
+		case 'l':	/* line */
+		case 'm':	/* move */
+		    if ( !GetCoords( &newpos ) )
+			return Foo( -8 );
+		    virpos = newpos;
+		    if ( c == 'm' )  {
+			if ( debug )
+			    fprintf( stderr, "move\n");
+			continue;
+		    }
+		    /* line: fall through */
+		    if ( debug )
+			fprintf( stderr, "line\n");
+
+		case 'n':	/* cont */
+		case 'p':	/* point */
+		    if ( !GetCoords( &newpos ) )
+			return Foo( -9 );
+		    if ( c == 'p' )  {
+			if ( debug )
+			    fprintf( stderr, "point\n");
+			virpos = newpos;
+		    } else
+			if ( debug )
+			    fprintf( stderr, "cont\n");
+
+		    if ( !BuildStr( &virpos, &newpos ) )
+			return Foo( -10 );
+		    plotted = true;
+		    virpos = newpos;
+		    continue;
+
+		    /* IEEE */
+		case 'V':
+		case 'O':
+		    if ( !Get3DCoords( &newpos ) )
+			return Foo( -8 );
+		    virpos = newpos;
+		    if ( c == 'O'  )  {
+			if ( debug )
+			    fprintf( stderr, "dMove3\n");
+			continue;
+		    }
+		    if ( debug )
+			fprintf( stderr, "dLine3\n");
+
+		case 'Q':	/* continue3 */
+		case 'X':	/* point3 */
+		    if ( !Get3DCoords( &newpos ) )
+			return Foo( -9 );
+		    if ( c == 'X' )  {
+			if ( debug )
+			    fprintf( stderr, "dpoint3\n");
+			virpos = newpos;
+		    } else
+			if ( debug )
+			    fprintf( stderr, "dcont3\n");
+
+		    if ( !BuildStr( &virpos, &newpos ) )
+			return Foo( -10 );
+		    plotted = true;
+		    virpos = newpos;
+		    continue;
+
+		case 'v':	/* line */
+		case 'o':	/* move */
+		    if ( !GetDCoords( &newpos ) )
+			return Foo( -8 );
+		    virpos = newpos;
+		    if ( c == 'o' )  {
+			if ( debug )
+			    fprintf( stderr, "dmove\n");
+			continue;
+		    }
+		    /* line: fall through */
+		    if ( debug )
+			fprintf( stderr, "dline\n");
+
+		case 'q':	/* cont */
+		case 'x':	/* point */
+		    if ( !GetDCoords( &newpos ) )
+			return Foo( -9 );
+		    if ( c == 'x' )  {
+			if ( debug )
+			    fprintf( stderr, "dpoint\n");
+			virpos = newpos;
+		    } else
+			if ( debug )
+			    fprintf( stderr, "dcont\n");
+
+		    if ( !BuildStr( &virpos, &newpos ) )
+			return Foo( -10 );
+		    plotted = true;
+		    virpos = newpos;
+		    continue;
+
+		case 'W':
 		{
-		    c = getc( pfin );
-		    if ( debug > 1 )  fprintf(stderr, "%c\n", c);
-		    switch ( c )
-			{
-				/* record type */
-			    case EOF:
-				if ( debug ) fprintf( stderr, "EOF\n");
+		    unsigned char	in[6*8];
+		    double	out[6];
+		    if ( debug )
+			fprintf( stderr, "dspace3\n");
+		    if ( fread( in, sizeof(in), 1, pfin) != 1 )
+			return Foo( -11 );
+		    ntohd( (unsigned char *)out, in, 5 );
+		    /* Only need X and Y, ignore Z */
+		    space.left  = out[0]; /* x1 */
+		    space.bottom= out[1]; /* y1 */
+		    /* z1 */
+		    space.right = out[3]; /* x2 */
+		    space.top   = out[4]; /* y2 */
+		    /* z2 */
+		    goto spacend;
+		}
 
-				if ( plotted )  {
-				    /* flush strokes */
-				    if ( debug ) fprintf( stderr, "flushing\n");
-				    if ( !OutBuild() )
-					return Foo( -6 );
-				}
-				return Foo( 0 );/* success */
+		case 'w':	/* space */
+		{
+		    unsigned char	in[4*8];
+		    double	out[4];
+		    if ( debug )
+			fprintf( stderr, "dspace\n");
+		    if ( fread( in, sizeof(in), 1, pfin) != 1 )
+			return Foo( -11 );
+		    ntohd( (unsigned char *)out, in, 4 );
+		    space.left  = out[0]; /* x1 */
+		    space.bottom= out[1]; /* y1 */
+		    space.right = out[2]; /* x2 */
+		    space.top   = out[3]; /* y2 */
+		    goto spacend;
+		}
 
-			    case 'e':	/* erase */
-				if ( debug )  fprintf( stderr, "Erase\n");
+		case 'S':
+		{
+		    if ( debug )
+			fprintf( stderr, "space3\n");
+		    if ( fread( (char *)buf3,
+				(int)sizeof buf3, 1, pfin)
+			 != 1
+			)
+			return Foo( -11 );
+		    /* Only need X and Y, ignore Z */
+		    space.left  = sxt16((long)(buf3[1]<<8) | buf3[0]); /* x1 */
+		    space.bottom= sxt16((long)(buf3[3]<<8) | buf3[2]); /* y1 */
+		    /* z1 */
+		    space.right = sxt16((long)(buf3[7]<<8) | buf3[6]); /* x2 */
+		    space.top   = sxt16((long)(buf3[9]<<8) | buf3[8]); /* y2 */
+		    /* z2 */
+		    goto spacend;
+		}
 
-				if ( plotted )  {
-				    /* flush strokes */
-				    if ( debug ) fprintf( stderr, "flushing\n");
-				    if ( !OutBuild() )
-					return Foo( -6 );
-				}
-				if ( !firsterase ) {
-				    if ( immediate )
-					fb_clear( fbp, RGBPIXEL_NULL );
-				    over = 0;
-				}
-				firsterase = false;
-				break;	/* next frame */
+		case 's':	/* space */
+		    if ( debug )
+			fprintf( stderr, "space\n");
+		    {
+			if ( fread( (char *)buf2,
+				    (int)sizeof buf2, 1, pfin
+				 ) != 1
+			    )
+			    return Foo( -11 );
+			space.left  = sxt16((long)(buf2[1]<<8) | buf2[0]); /* x1 */
+			space.bottom= sxt16((long)(buf2[3]<<8) | buf2[2]); /* y1 */
+			space.right = sxt16((long)(buf2[5]<<8) | buf2[4]); /* x2 */
+			space.top   = sxt16((long)(buf2[7]<<8) | buf2[6]); /* y2 */
+		    }
 
-			    case 'F':	/* flush */
-				if ( debug )  fprintf( stderr, "Flush\n");
+	    spacend:
+		    delta = space.right - space.left;
+		    deltao2 = space.top - space.bottom;
+		    if ( deltao2 > delta )
+			delta = deltao2;
+		    if ( delta <= 0 )  {
+			fprintf( stderr, "pl-fb: delta = %g, bad space()\n", delta );
+			return Foo( -42 );
+		    }
+		    deltao2 = delta / 2.0;
+		    if ( debug )
+			fprintf( stderr, "Space: X=(%g,%g) Y=(%g,%g) delta=%g\n",
+				 space.left, space.right,
+				 space.bottom, space.top,
+				 delta );
+		    continue;
 
-				if ( plotted )  {
-				    /* flush strokes */
-				    if ( debug ) fprintf( stderr, "flushing\n");
-				    if ( !OutBuild() )
-					return Foo( -6 );
-				    if ( !immediate )
-					over = 1;
-				}
-				firsterase = false;
-				break;	/* next frame */
+		case 'C':	/* color */
+		    if ( fread( cur_color, 1, 3, pfin) != 3 )
+			return Foo( -11 );
+		    if ( debug )
+			fprintf( stderr, "Color is R%d G%d B%d\n",
+				 cur_color[RED],
+				 cur_color[GRN],
+				 cur_color[BLU]);
+		    continue;
 
-			    case 'f':	/* linemod */
-				if (debug)
-				    fprintf( stderr, "linemod\n");
-				/* ignore for time being */
-				while ( (c = getc( pfin )) != EOF
-					&& c != '\n'
-					)
-				    ;	/* eat string */
-				continue;
+		case 't':	/* label */
+		    if ( debug )
+			fprintf( stderr, "label: ");
 
-			    case 'L':
-			    case 'M':
-				if ( !Get3Coords( &newpos ) )
-				    return Foo( -8 );
-				virpos = newpos;
-				if ( c == 'M'  )  {
-				    if ( debug )
-					fprintf( stderr, "Move3\n");
-				    continue;
-				}
-				if ( debug )
-				    fprintf( stderr, "Line3\n");
+		    newpos = virpos;
+		    while ( (c = getc( pfin )) != EOF && c != '\n'
+			)  {
+			/* vectorize the characters */
+			put_vector_char( c, &newpos);
 
-			    case 'N':	/* continue3 */
-			    case 'P':	/* point3 */
-				if ( !Get3Coords( &newpos ) )
-				    return Foo( -9 );
-				if ( c == 'P' )  {
-				    if ( debug )
-					fprintf( stderr, "point3\n");
-				    virpos = newpos;
-				} else
-				    if ( debug )
-					fprintf( stderr, "cont3\n");
+			if ( debug )
+			    putc( c, stderr );
+		    }
 
-				if ( !BuildStr( &virpos, &newpos ) )
-				    return Foo( -10 );
-				plotted = true;
-				virpos = newpos;
-				continue;
+		    plotted = true;
+		    virpos = newpos;
+		    continue;
 
-			    case 'l':	/* line */
-			    case 'm':	/* move */
-				if ( !GetCoords( &newpos ) )
-				    return Foo( -8 );
-				virpos = newpos;
-				if ( c == 'm' )  {
-				    if ( debug )
-					fprintf( stderr, "move\n");
-				    continue;
-				}
-				/* line: fall through */
-				if ( debug )
-				    fprintf( stderr, "line\n");
+		    /* discard the deadwood */
+		case 'c':
+		{
+		    char buf[3*2];
+		    if ( fread(buf, sizeof(buf), 1, pfin) != 1 )
+			return Foo( -11 );
+		    if ( debug )
+			fprintf( stderr, "circle ignored\n" );
+		    continue;
+		}
+		case 'i':
+		{
+		    char buf[3*8];
+		    if ( fread(buf, sizeof(buf), 1, pfin) != 1 )
+			return Foo( -11 );
+		    if ( debug )
+			fprintf( stderr, "d_circle ignored\n" );
+		    continue;
+		}
+		case 'a':
+		{
+		    char buf[6*2];
+		    if ( fread(buf, sizeof(buf), 1, pfin) != 1 )
+			return Foo( -11 );
+		    if ( debug )
+			fprintf( stderr, "arc ignored\n" );
+		    continue;
+		}
+		case 'r':
+		{
+		    char buf[6*8];
+		    if ( fread(buf, sizeof(buf), 1, pfin) != 1 )
+			return Foo( -11 );
+		    if ( debug )
+			fprintf( stderr, "d_arc ignored\n" );
+		    continue;
+		}
 
-			    case 'n':	/* cont */
-			    case 'p':	/* point */
-				if ( !GetCoords( &newpos ) )
-				    return Foo( -9 );
-				if ( c == 'p' )  {
-				    if ( debug )
-					fprintf( stderr, "point\n");
-				    virpos = newpos;
-				} else
-				    if ( debug )
-					fprintf( stderr, "cont\n");
+		default:
+		    fprintf( stderr, "bad command '%c' (0x%02x)\n", c, c );
 
-				if ( !BuildStr( &virpos, &newpos ) )
-				    return Foo( -10 );
-				plotted = true;
-				virpos = newpos;
-				continue;
-
-				/* IEEE */
-			    case 'V':
-			    case 'O':
-				if ( !Get3DCoords( &newpos ) )
-				    return Foo( -8 );
-				virpos = newpos;
-				if ( c == 'O'  )  {
-				    if ( debug )
-					fprintf( stderr, "dMove3\n");
-				    continue;
-				}
-				if ( debug )
-				    fprintf( stderr, "dLine3\n");
-
-			    case 'Q':	/* continue3 */
-			    case 'X':	/* point3 */
-				if ( !Get3DCoords( &newpos ) )
-				    return Foo( -9 );
-				if ( c == 'X' )  {
-				    if ( debug )
-					fprintf( stderr, "dpoint3\n");
-				    virpos = newpos;
-				} else
-				    if ( debug )
-					fprintf( stderr, "dcont3\n");
-
-				if ( !BuildStr( &virpos, &newpos ) )
-				    return Foo( -10 );
-				plotted = true;
-				virpos = newpos;
-				continue;
-
-			    case 'v':	/* line */
-			    case 'o':	/* move */
-				if ( !GetDCoords( &newpos ) )
-				    return Foo( -8 );
-				virpos = newpos;
-				if ( c == 'o' )  {
-				    if ( debug )
-					fprintf( stderr, "dmove\n");
-				    continue;
-				}
-				/* line: fall through */
-				if ( debug )
-				    fprintf( stderr, "dline\n");
-
-			    case 'q':	/* cont */
-			    case 'x':	/* point */
-				if ( !GetDCoords( &newpos ) )
-				    return Foo( -9 );
-				if ( c == 'x' )  {
-				    if ( debug )
-					fprintf( stderr, "dpoint\n");
-				    virpos = newpos;
-				} else
-				    if ( debug )
-					fprintf( stderr, "dcont\n");
-
-				if ( !BuildStr( &virpos, &newpos ) )
-				    return Foo( -10 );
-				plotted = true;
-				virpos = newpos;
-				continue;
-
-			    case 'W':
-				{
-				    unsigned char	in[6*8];
-				    double	out[6];
-				    if ( debug )
-					fprintf( stderr, "dspace3\n");
-				    if ( fread( in, sizeof(in), 1, pfin) != 1 )
-					return Foo( -11 );
-				    ntohd( (unsigned char *)out, in, 5 );
-				    /* Only need X and Y, ignore Z */
-				    space.left  = out[0]; /* x1 */
-				    space.bottom= out[1]; /* y1 */
-				    /* z1 */
-				    space.right = out[3]; /* x2 */
-				    space.top   = out[4]; /* y2 */
-				    /* z2 */
-				    goto spacend;
-				}
-
-			    case 'w':	/* space */
-				{
-				    unsigned char	in[4*8];
-				    double	out[4];
-				    if ( debug )
-					fprintf( stderr, "dspace\n");
-				    if ( fread( in, sizeof(in), 1, pfin) != 1 )
-					return Foo( -11 );
-				    ntohd( (unsigned char *)out, in, 4 );
-				    space.left  = out[0]; /* x1 */
-				    space.bottom= out[1]; /* y1 */
-				    space.right = out[2]; /* x2 */
-				    space.top   = out[3]; /* y2 */
-				    goto spacend;
-				}
-
-			    case 'S':
-				{
-				    if ( debug )
-					fprintf( stderr, "space3\n");
-				    if ( fread( (char *)buf3,
-					       (int)sizeof buf3, 1, pfin)
-					!= 1
-					)
-					return Foo( -11 );
-				    /* Only need X and Y, ignore Z */
-				    space.left  = sxt16((long)(buf3[1]<<8) | buf3[0]); /* x1 */
-				    space.bottom= sxt16((long)(buf3[3]<<8) | buf3[2]); /* y1 */
-				    /* z1 */
-				    space.right = sxt16((long)(buf3[7]<<8) | buf3[6]); /* x2 */
-				    space.top   = sxt16((long)(buf3[9]<<8) | buf3[8]); /* y2 */
-				    /* z2 */
-				    goto spacend;
-				}
-
-			    case 's':	/* space */
-				if ( debug )
-				    fprintf( stderr, "space\n");
-				{
-				    if ( fread( (char *)buf2,
-						(int)sizeof buf2, 1, pfin
-						) != 1
-					 )
-					return Foo( -11 );
-				    space.left  = sxt16((long)(buf2[1]<<8) | buf2[0]); /* x1 */
-				    space.bottom= sxt16((long)(buf2[3]<<8) | buf2[2]); /* y1 */
-				    space.right = sxt16((long)(buf2[5]<<8) | buf2[4]); /* x2 */
-				    space.top   = sxt16((long)(buf2[7]<<8) | buf2[6]); /* y2 */
-				}
-
-			spacend:
-				delta = space.right - space.left;
-				deltao2 = space.top - space.bottom;
-				if ( deltao2 > delta )
-				    delta = deltao2;
-				if ( delta <= 0 )  {
-				    fprintf( stderr, "pl-fb: delta = %g, bad space()\n", delta );
-				    return Foo( -42 );
-				}
-				deltao2 = delta / 2.0;
-				if ( debug )
-				    fprintf( stderr, "Space: X=(%g,%g) Y=(%g,%g) delta=%g\n",
-					     space.left, space.right,
-					     space.bottom, space.top,
-					     delta );
-				continue;
-
-			    case 'C':	/* color */
-				if ( fread( cur_color, 1, 3, pfin) != 3 )
-				    return Foo( -11 );
-				if ( debug )
-				    fprintf( stderr, "Color is R%d G%d B%d\n",
-					     cur_color[RED],
-					     cur_color[GRN],
-					     cur_color[BLU]);
-				continue;
-
-			    case 't':	/* label */
-				if ( debug )
-				    fprintf( stderr, "label: ");
-
-				newpos = virpos;
-				while ( (c = getc( pfin )) != EOF && c != '\n'
-					)  {
-				    /* vectorize the characters */
-				    put_vector_char( c, &newpos);
-
-				    if ( debug )
-					putc( c, stderr );
-				}
-
-				plotted = true;
-				virpos = newpos;
-				continue;
-
-				/* discard the deadwood */
-			    case 'c':
-				{
-				    char buf[3*2];
-				    if ( fread(buf, sizeof(buf), 1, pfin) != 1 )
-					return Foo( -11 );
-				    if ( debug )
-					fprintf( stderr, "circle ignored\n" );
-				    continue;
-				}
-			    case 'i':
-				{
-				    char buf[3*8];
-				    if ( fread(buf, sizeof(buf), 1, pfin) != 1 )
-					return Foo( -11 );
-				    if ( debug )
-					fprintf( stderr, "d_circle ignored\n" );
-				    continue;
-				}
-			    case 'a':
-				{
-				    char buf[6*2];
-				    if ( fread(buf, sizeof(buf), 1, pfin) != 1 )
-					return Foo( -11 );
-				    if ( debug )
-					fprintf( stderr, "arc ignored\n" );
-				    continue;
-				}
-			    case 'r':
-				{
-				    char buf[6*8];
-				    if ( fread(buf, sizeof(buf), 1, pfin) != 1 )
-					return Foo( -11 );
-				    if ( debug )
-					fprintf( stderr, "d_arc ignored\n" );
-				    continue;
-				}
-
-			    default:
-				fprintf( stderr, "bad command '%c' (0x%02x)\n", c, c );
-
-				return Foo( -12 );	/* bad input */
-			}
-		    break;
-		}		/* next input record */
-	}			/* next frame */
+		    return Foo( -12 );	/* bad input */
+	    }
+	    break;
+	}		/* next input record */
+    }			/* next frame */
 }
 
 
@@ -1323,7 +1323,7 @@ DoFile(void)	/* returns vpl status code */
 */
 static void
 Catch(register int sig)
-     /* signal number */
+    /* signal number */
 {
     register int pid;		/* this process's ID */
     register int *psig;		/* -> sigs[.] */

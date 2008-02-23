@@ -54,17 +54,17 @@ static const char *mdefault = "default"; /* Name of default material */
  */
 void
 mlib_add_shader( headp, mfp1 )
-struct mfuncs **headp;
-struct mfuncs *mfp1;
+    struct mfuncs **headp;
+    struct mfuncs *mfp1;
 {
-	register struct mfuncs *mfp;
+    register struct mfuncs *mfp;
 
-	RT_CK_MF(mfp1);
-	for ( mfp = mfp1; mfp->mf_name != (char *)0; mfp++ )  {
-		RT_CK_MF(mfp);
-		mfp->mf_forw = *headp;
-		*headp = mfp;
-	}
+    RT_CK_MF(mfp1);
+    for ( mfp = mfp1; mfp->mf_name != (char *)0; mfp++ )  {
+	RT_CK_MF(mfp);
+	mfp->mf_forw = *headp;
+	*headp = mfp;
+    }
 }
 
 #ifdef HAVE_DLOPEN
@@ -78,55 +78,55 @@ struct mfuncs *mfp1;
 static struct mfuncs *
 try_load(const char *path, const char *material, const char *shader_name)
 {
-	void *handle;
-	struct mfuncs *shader_mfuncs;
-	struct mfuncs *mfp;
-	const char *dl_error_str;
-	char sym[MAXPATHLEN];
+    void *handle;
+    struct mfuncs *shader_mfuncs;
+    struct mfuncs *mfp;
+    const char *dl_error_str;
+    char sym[MAXPATHLEN];
 
 
-	if ( ! (handle = dlopen(path, RTLD_NOW)) ) {
-		if (R_DEBUG&RDEBUG_MATERIAL)
-			bu_log("dlopen failed on \"%s\"\n", path);
-		return (struct mfuncs *)NULL;
-	} else if (R_DEBUG&RDEBUG_MATERIAL) {
-		bu_log("%s open... ", path);
-	}
-
-	/* Find the {shader}_mfuncs symbol in the library */
-	snprintf(sym, MAXPATHLEN, "%s_mfuncs", shader_name);
-	shader_mfuncs = dlsym(handle, sym);
-	if ( (dl_error_str=dlerror()) == (char *)NULL) goto found;
-
-
-	/* We didn't find a {shader}_mfuncs symbol, so
-	 * try the generic "shader_mfuncs" symbol.
-	 */
-	shader_mfuncs = dlsym(handle, "shader_mfuncs");
-	if ( (dl_error_str=dlerror()) != (char *)NULL) {
-		/* didn't find anything appropriate, give up */
-		if (R_DEBUG&RDEBUG_MATERIAL) bu_log("%s has no %s table, %s\n", material, sym, dl_error_str);
-		dlclose(handle);
-		return (struct mfuncs *)NULL;
-	}
-
-found:
+    if ( ! (handle = dlopen(path, RTLD_NOW)) ) {
 	if (R_DEBUG&RDEBUG_MATERIAL)
-		bu_log("%s_mfuncs table found\n", shader_name);
+	    bu_log("dlopen failed on \"%s\"\n", path);
+	return (struct mfuncs *)NULL;
+    } else if (R_DEBUG&RDEBUG_MATERIAL) {
+	bu_log("%s open... ", path);
+    }
 
-	/* make sure the shader we were looking for is in the mfuncs table */
-	for (mfp = shader_mfuncs; mfp->mf_name != (char *)NULL; mfp++) {
-		RT_CK_MF(mfp);
+    /* Find the {shader}_mfuncs symbol in the library */
+    snprintf(sym, MAXPATHLEN, "%s_mfuncs", shader_name);
+    shader_mfuncs = dlsym(handle, sym);
+    if ( (dl_error_str=dlerror()) == (char *)NULL) goto found;
 
-		if ( ! strcmp(mfp->mf_name, shader_name))
-			return shader_mfuncs; /* found ! */
-	}
 
-	if (R_DEBUG&RDEBUG_MATERIAL) bu_log("shader '%s' not found in library\n", shader_name);
-
-	/* found the library, but not the shader */
+    /* We didn't find a {shader}_mfuncs symbol, so
+     * try the generic "shader_mfuncs" symbol.
+     */
+    shader_mfuncs = dlsym(handle, "shader_mfuncs");
+    if ( (dl_error_str=dlerror()) != (char *)NULL) {
+	/* didn't find anything appropriate, give up */
+	if (R_DEBUG&RDEBUG_MATERIAL) bu_log("%s has no %s table, %s\n", material, sym, dl_error_str);
 	dlclose(handle);
 	return (struct mfuncs *)NULL;
+    }
+
+ found:
+    if (R_DEBUG&RDEBUG_MATERIAL)
+	bu_log("%s_mfuncs table found\n", shader_name);
+
+    /* make sure the shader we were looking for is in the mfuncs table */
+    for (mfp = shader_mfuncs; mfp->mf_name != (char *)NULL; mfp++) {
+	RT_CK_MF(mfp);
+
+	if ( ! strcmp(mfp->mf_name, shader_name))
+	    return shader_mfuncs; /* found ! */
+    }
+
+    if (R_DEBUG&RDEBUG_MATERIAL) bu_log("shader '%s' not found in library\n", shader_name);
+
+    /* found the library, but not the shader */
+    dlclose(handle);
+    return (struct mfuncs *)NULL;
 }
 
 
@@ -140,69 +140,69 @@ struct mfuncs *
 load_dynamic_shader(const char *material,
 		    const int mlen)
 {
-	struct mfuncs *shader_mfuncs = (struct mfuncs *)NULL;
-	char libname[MAXPATHLEN];
-	char libpath[MAXPATHLEN];
-	char *cwd = (char *)NULL;
-	int old_rdebug = R_DEBUG;
-	char sh_name[128]; /* XXX constants are bogus */
+    struct mfuncs *shader_mfuncs = (struct mfuncs *)NULL;
+    char libname[MAXPATHLEN];
+    char libpath[MAXPATHLEN];
+    char *cwd = (char *)NULL;
+    int old_rdebug = R_DEBUG;
+    char sh_name[128]; /* XXX constants are bogus */
 
-	if (mlen < sizeof(sh_name)) {
-	    bu_strlcpy(sh_name, material, sizeof(sh_name));
-	} else {
-	    bu_log("shader name too long \"%s\" %d > %d\n",
-		   material, mlen, sizeof(sh_name));
-	    return (struct mfuncs *)NULL;
-	}
-	/* rdebug |= RDEBUG_MATERIAL; */
+    if (mlen < sizeof(sh_name)) {
+	bu_strlcpy(sh_name, material, sizeof(sh_name));
+    } else {
+	bu_log("shader name too long \"%s\" %d > %d\n",
+	       material, mlen, sizeof(sh_name));
+	return (struct mfuncs *)NULL;
+    }
+    /* rdebug |= RDEBUG_MATERIAL; */
 
-	if (R_DEBUG&RDEBUG_MATERIAL)
-		bu_log("load_dynamic_shader( \"%s\", %d )\n", sh_name, mlen);
+    if (R_DEBUG&RDEBUG_MATERIAL)
+	bu_log("load_dynamic_shader( \"%s\", %d )\n", sh_name, mlen);
 
-	cwd = getcwd((char *)NULL, (size_t)MAXPATHLEN);
+    cwd = getcwd((char *)NULL, (size_t)MAXPATHLEN);
 
-	if ( cwd ) {
-		/* Look in the current working directory for {sh_name}.so */
-		snprintf(libname, sizeof(libname), "%s/%s.so", cwd, sh_name);
-		if ( (shader_mfuncs = try_load(libname, material, sh_name)) )
-			goto done;
-
-
-		/* Look in the current working directory for shaders.so */
-		snprintf(libname, sizeof(libname), "%s/shaders.so", cwd);
-		if ( (shader_mfuncs = try_load(libname, material, sh_name)) )
-			goto done;
-
-	} else {
-		bu_log("Cannot get current working directory\n\tSkipping local shader load\n");
-	}
-
-	/* Look in the location indicated by $LD_LIBRARY_PATH for
-	 * lib{sh_name}.so
-	 */
-	snprintf(libname, sizeof(libname), "lib%s.so", sh_name);
+    if ( cwd ) {
+	/* Look in the current working directory for {sh_name}.so */
+	snprintf(libname, sizeof(libname), "%s/%s.so", cwd, sh_name);
 	if ( (shader_mfuncs = try_load(libname, material, sh_name)) )
-		goto done;
+	    goto done;
 
-	/* Look in BRL-CAD install dir under lib dir for lib{sh_name}.so */
-	snprintf(libpath, sizeof(libpath), "/lib/lib%s.so", sh_name);
-	bu_strlcpy(libname, bu_brlcad_root(libpath, 1), sizeof(libname));
+
+	/* Look in the current working directory for shaders.so */
+	snprintf(libname, sizeof(libname), "%s/shaders.so", cwd);
 	if ( (shader_mfuncs = try_load(libname, material, sh_name)) )
-		goto done;
+	    goto done;
 
-done:
-	/* clean up memory allocated */
-	if (cwd) free(cwd);
+    } else {
+	bu_log("Cannot get current working directory\n\tSkipping local shader load\n");
+    }
 
-	/* print appropriate log messages */
-	if (shader_mfuncs)
-		bu_log("loaded from %s\n", libname);
-	else
-		bu_log("WARNING: shader [%s] not found\n", sh_name);
+    /* Look in the location indicated by $LD_LIBRARY_PATH for
+     * lib{sh_name}.so
+     */
+    snprintf(libname, sizeof(libname), "lib%s.so", sh_name);
+    if ( (shader_mfuncs = try_load(libname, material, sh_name)) )
+	goto done;
 
-	rdebug = old_rdebug;
+    /* Look in BRL-CAD install dir under lib dir for lib{sh_name}.so */
+    snprintf(libpath, sizeof(libpath), "/lib/lib%s.so", sh_name);
+    bu_strlcpy(libname, bu_brlcad_root(libpath, 1), sizeof(libname));
+    if ( (shader_mfuncs = try_load(libname, material, sh_name)) )
+	goto done;
 
-	return shader_mfuncs;
+ done:
+    /* clean up memory allocated */
+    if (cwd) free(cwd);
+
+    /* print appropriate log messages */
+    if (shader_mfuncs)
+	bu_log("loaded from %s\n", libname);
+    else
+	bu_log("WARNING: shader [%s] not found\n", sh_name);
+
+    rdebug = old_rdebug;
+
+    return shader_mfuncs;
 }
 #endif
 
@@ -216,103 +216,103 @@ done:
  */
 int
 mlib_setup( struct mfuncs **headp,
-	register struct region *rp,
-	struct rt_i *rtip )
+	    register struct region *rp,
+	    struct rt_i *rtip )
 {
-	register const struct mfuncs *mfp;
+    register const struct mfuncs *mfp;
 #ifdef HAVE_DLOPEN
-	register struct mfuncs *mfp_new;
+    register struct mfuncs *mfp_new;
 #endif
-	int		ret;
-	struct bu_vls	param;
-	const char	*material;
-	int		mlen;
+    int		ret;
+    struct bu_vls	param;
+    const char	*material;
+    int		mlen;
 
-	RT_CK_REGION(rp);
-	RT_CK_RTI(rtip);
+    RT_CK_REGION(rp);
+    RT_CK_RTI(rtip);
 
-	if ( rp->reg_mfuncs != (char *)0 )  {
-		bu_log("mlib_setup:  region %s already setup\n", rp->reg_name );
-		return(-1);
-	}
-	bu_vls_init( &param );
-	material = rp->reg_mater.ma_shader;
-	if ( material == NULL || material[0] == '\0' )  {
-		material = mdefault;
-		mlen = strlen(mdefault);
-	} else {
-		char	*endp;
-		endp = strchr( material, ' ' );
-		if ( endp )  {
-			mlen = endp - material;
-			bu_vls_strcpy( &param, rp->reg_mater.ma_shader+mlen+1 );
-		} else {
-			mlen = strlen(material);
-		}
-	}
-retry:
-	for ( mfp = *headp; mfp != MF_NULL; mfp = mfp->mf_forw )  {
-	    if (material[0] != mfp->mf_name[0] ||
-		strncmp(material, mfp->mf_name, strlen(mfp->mf_name)))
-		continue;
-	    goto found;
-	}
-
-#ifdef HAVE_DLOPEN
-	/* If we get here, then the shader wasn't found in the list of
-	 * compiled-in (or previously loaded) shaders.  See if we can
-	 * dynamically load it.
-	 */
-
-	bu_log("Shader \"%s\"... ", material);
-
-	if ((mfp_new = load_dynamic_shader(material, mlen))) {
-		mlib_add_shader(headp, mfp_new);
-		bu_log("retrying\n");
-		goto retry;
-	}
-#else
-	bu_log("****** dynamic shader loading not available ******\n");
-#endif
-
-
-	/* If we get here, then the shader was not found at all (either in
-	 * the compiled-in or dynamically loaded shader sets).  We set the
-	 * shader name to "default" (which should match an entry in the
-	 * table) and search again.
-	 */
-
-	bu_log("*ERROR mlib_setup('%s'):  material not known, default assumed %s\n\n",
-		material, rp->reg_name );
-	if ( material != mdefault )  {
-		material = mdefault;
-		mlen = strlen(mdefault);
-		bu_vls_trunc( &param, 0 );
-		goto retry;
-	}
-	bu_vls_free( &param );
+    if ( rp->reg_mfuncs != (char *)0 )  {
+	bu_log("mlib_setup:  region %s already setup\n", rp->reg_name );
 	return(-1);
-found:
-	rp->reg_mfuncs = (char *)mfp;
-	rp->reg_udata = (char *)0;
-
-	if (R_DEBUG&RDEBUG_MATERIAL)
-		bu_log("mlib_setup(%s) shader=%s\n", rp->reg_name, mfp->mf_name);
-	if ( (ret = mfp->mf_setup( rp, &param, &rp->reg_udata, mfp, rtip, headp )) < 0 )  {
-		bu_log("ERROR mlib_setup(%s) failed. Material='%s', param='%s'.\n",
-			rp->reg_name, material, bu_vls_addr(&param) );
-		if ( material != mdefault )  {
-			/* If not default material, change to default & retry */
-			bu_log("\tChanging %s material to default and retrying.\n", rp->reg_name);
-			material = mdefault;
-			bu_vls_trunc( &param, 0 );
-			goto retry;
-		}
-		/* What to do if default setup fails? */
-		bu_log("mlib_setup(%s) error recovery failed.\n", rp->reg_name);
+    }
+    bu_vls_init( &param );
+    material = rp->reg_mater.ma_shader;
+    if ( material == NULL || material[0] == '\0' )  {
+	material = mdefault;
+	mlen = strlen(mdefault);
+    } else {
+	char	*endp;
+	endp = strchr( material, ' ' );
+	if ( endp )  {
+	    mlen = endp - material;
+	    bu_vls_strcpy( &param, rp->reg_mater.ma_shader+mlen+1 );
+	} else {
+	    mlen = strlen(material);
 	}
-	bu_vls_free( &param );
-	return(ret);		/* Good or bad, as mf_setup says */
+    }
+ retry:
+    for ( mfp = *headp; mfp != MF_NULL; mfp = mfp->mf_forw )  {
+	if (material[0] != mfp->mf_name[0] ||
+	    strncmp(material, mfp->mf_name, strlen(mfp->mf_name)))
+	    continue;
+	goto found;
+    }
+
+#ifdef HAVE_DLOPEN
+    /* If we get here, then the shader wasn't found in the list of
+     * compiled-in (or previously loaded) shaders.  See if we can
+     * dynamically load it.
+     */
+
+    bu_log("Shader \"%s\"... ", material);
+
+    if ((mfp_new = load_dynamic_shader(material, mlen))) {
+	mlib_add_shader(headp, mfp_new);
+	bu_log("retrying\n");
+	goto retry;
+    }
+#else
+    bu_log("****** dynamic shader loading not available ******\n");
+#endif
+
+
+    /* If we get here, then the shader was not found at all (either in
+     * the compiled-in or dynamically loaded shader sets).  We set the
+     * shader name to "default" (which should match an entry in the
+     * table) and search again.
+     */
+
+    bu_log("*ERROR mlib_setup('%s'):  material not known, default assumed %s\n\n",
+	   material, rp->reg_name );
+    if ( material != mdefault )  {
+	material = mdefault;
+	mlen = strlen(mdefault);
+	bu_vls_trunc( &param, 0 );
+	goto retry;
+    }
+    bu_vls_free( &param );
+    return(-1);
+ found:
+    rp->reg_mfuncs = (char *)mfp;
+    rp->reg_udata = (char *)0;
+
+    if (R_DEBUG&RDEBUG_MATERIAL)
+	bu_log("mlib_setup(%s) shader=%s\n", rp->reg_name, mfp->mf_name);
+    if ( (ret = mfp->mf_setup( rp, &param, &rp->reg_udata, mfp, rtip, headp )) < 0 )  {
+	bu_log("ERROR mlib_setup(%s) failed. Material='%s', param='%s'.\n",
+	       rp->reg_name, material, bu_vls_addr(&param) );
+	if ( material != mdefault )  {
+	    /* If not default material, change to default & retry */
+	    bu_log("\tChanging %s material to default and retrying.\n", rp->reg_name);
+	    material = mdefault;
+	    bu_vls_trunc( &param, 0 );
+	    goto retry;
+	}
+	/* What to do if default setup fails? */
+	bu_log("mlib_setup(%s) error recovery failed.\n", rp->reg_name);
+    }
+    bu_vls_free( &param );
+    return(ret);		/* Good or bad, as mf_setup says */
 }
 
 /*
@@ -323,21 +323,21 @@ found:
 void
 mlib_free( register struct region *rp )
 {
-	register const struct mfuncs *mfp = (struct mfuncs *)rp->reg_mfuncs;
+    register const struct mfuncs *mfp = (struct mfuncs *)rp->reg_mfuncs;
 
-	if ( mfp == MF_NULL )  {
-		bu_log("mlib_free(%s):  reg_mfuncs NULL\n", rp->reg_name);
-		return;
-	}
-	if ( mfp->mf_magic != MF_MAGIC )  {
-		bu_log("mlib_free(%s):  reg_mfuncs bad magic, %x != %x\n",
-			rp->reg_name,
-			mfp->mf_magic, MF_MAGIC );
-		return;
-	}
-	if ( mfp->mf_free ) mfp->mf_free( rp->reg_udata );
-	rp->reg_mfuncs = (char *)0;
-	rp->reg_udata = (char *)0;
+    if ( mfp == MF_NULL )  {
+	bu_log("mlib_free(%s):  reg_mfuncs NULL\n", rp->reg_name);
+	return;
+    }
+    if ( mfp->mf_magic != MF_MAGIC )  {
+	bu_log("mlib_free(%s):  reg_mfuncs bad magic, %x != %x\n",
+	       rp->reg_name,
+	       mfp->mf_magic, MF_MAGIC );
+	return;
+    }
+    if ( mfp->mf_free ) mfp->mf_free( rp->reg_udata );
+    rp->reg_mfuncs = (char *)0;
+    rp->reg_udata = (char *)0;
 }
 
 

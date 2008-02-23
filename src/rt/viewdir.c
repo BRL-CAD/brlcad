@@ -45,7 +45,7 @@ int		using_mlib = 0;		/* Material routines NOT used */
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
-	{"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL }
+    {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL }
 };
 
 
@@ -78,13 +78,13 @@ int
 view_init(register struct application *ap, char *file, char *obj, int minus_o)
 {
 
-	ap->a_hit = rayhit;
-	ap->a_miss = raymiss;
-	ap->a_onehit = 1;		/* only the first hit is considered */
+    ap->a_hit = rayhit;
+    ap->a_miss = raymiss;
+    ap->a_onehit = 1;		/* only the first hit is considered */
 
-	output_is_binary = 0;		/* output is not binary */
+    output_is_binary = 0;		/* output is not binary */
 
-	return(0);			/* No framebuffer needed */
+    return(0);			/* No framebuffer needed */
 }
 
 /*
@@ -103,18 +103,18 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
 void
 view_2init(struct application *ap)
 {
-	if ( outfp == NULL )
-		bu_exit(EXIT_FAILURE, "outfp is NULL\n");
+    if ( outfp == NULL )
+	bu_exit(EXIT_FAILURE, "outfp is NULL\n");
 
-	/*
-	 *  For now, RTVIEWDIR does not operate in parallel, while ray-tracing.
-	 *  However, not dropping out of parallel mode here permits
-	 *  tree walking and database prepping to still be done in parallel.
-	 */
-	if ( npsw >= 1 )  {
-		bu_log("Note: changing from %d cpus to 1 cpu\n", npsw );
-		npsw = 1;		/* Disable parallel processing */
-	}
+    /*
+     *  For now, RTVIEWDIR does not operate in parallel, while ray-tracing.
+     *  However, not dropping out of parallel mode here permits
+     *  tree walking and database prepping to still be done in parallel.
+     */
+    if ( npsw >= 1 )  {
+	bu_log("Note: changing from %d cpus to 1 cpu\n", npsw );
+	npsw = 1;		/* Disable parallel processing */
+    }
 
 
 }
@@ -131,15 +131,15 @@ int
 raymiss(register struct application *ap)
 {
 
-	struct	cell	*posp;		/* store the current cell position */
+    struct	cell	*posp;		/* store the current cell position */
 
-	/* Getting defensive.... just in case. */
-	if (ap->a_x > width)  {
-		bu_exit(EXIT_FAILURE, "raymiss: pixels exceed width\n");
-	}
+    /* Getting defensive.... just in case. */
+    if (ap->a_x > width)  {
+	bu_exit(EXIT_FAILURE, "raymiss: pixels exceed width\n");
+    }
 
 
-	return(0);
+    return(0);
 }
 
 /*
@@ -151,7 +151,7 @@ raymiss(register struct application *ap)
 void
 view_pixel(void)
 {
-	return;
+    return;
 }
 
 void view_setup(void) {}
@@ -167,40 +167,40 @@ void view_cleanup(void) {}
  *
  */
 
- int
+int
 rayhit(struct application *ap, register struct partition *PartHeadp)
 {
-	register struct partition *pp = PartHeadp->pt_forw;
+    register struct partition *pp = PartHeadp->pt_forw;
 
-	if ( pp == PartHeadp )
-		return(0);		/* nothing was actually hit?? */
-
-
-	/* Getting defensive.... just in case. */
-	if (ap->a_x > width)  {
-		bu_exit(EXIT_FAILURE, "rayhit: pixels exceed width\n");
-	}
+    if ( pp == PartHeadp )
+	return(0);		/* nothing was actually hit?? */
 
 
-	/* Calculate the hit distance and the direction vector.  This is done
-	 * by VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir).
-	 */
+    /* Getting defensive.... just in case. */
+    if (ap->a_x > width)  {
+	bu_exit(EXIT_FAILURE, "rayhit: pixels exceed width\n");
+    }
 
-	VJOIN1(pp->pt_inhit->hit_point, ap->a_ray.r_pt,
-		pp->pt_inhit->hit_dist, ap->a_ray.r_dir);
 
-	/* Print the information onto stdout.  The first three numbers are
-	 * ray impact coordinates, and the next three numbers are the ray
-	 * direction.  The line must be semi-colon terminated so that
-	 * the output can be read by "miss" for use with PCAVAM.
-	 */
+    /* Calculate the hit distance and the direction vector.  This is done
+     * by VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir).
+     */
 
-	fprintf(stdout, "%g %g %g %g %g %g;\n",
+    VJOIN1(pp->pt_inhit->hit_point, ap->a_ray.r_pt,
+	   pp->pt_inhit->hit_dist, ap->a_ray.r_dir);
+
+    /* Print the information onto stdout.  The first three numbers are
+     * ray impact coordinates, and the next three numbers are the ray
+     * direction.  The line must be semi-colon terminated so that
+     * the output can be read by "miss" for use with PCAVAM.
+     */
+
+    fprintf(stdout, "%g %g %g %g %g %g;\n",
 	    pp->pt_inhit->hit_point[0], pp->pt_inhit->hit_point[1], pp->pt_inhit->hit_point[2],
 	    ap->a_ray.r_dir[0], ap->a_ray.r_dir[1], ap->a_ray.r_dir[2]);
 
 
-	return(0);
+    return(0);
 }
 
 /*
@@ -229,7 +229,7 @@ void
 view_end(struct application *ap)
 {
 
-	fflush(outfp);
+    fflush(outfp);
 }
 
 

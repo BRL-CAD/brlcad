@@ -254,7 +254,7 @@ int main(int argc, char **argv)
 		      rt_version(),
 		      bn_version(),
 		      bu_version()
-		      );
+	    );
     }
 
     /* Identify what host we're running on */
@@ -515,36 +515,36 @@ int get_args( int argc, register char **argv )
 		(void)rt_do_cmd( (struct rt_i *)0, bu_optarg, rt_cmdtab );
 		break;
 	    case 'C':
-		{
-		    int		r, g, b;
-		    register char	*cp = bu_optarg;
+	    {
+		int		r, g, b;
+		register char	*cp = bu_optarg;
 
-		    r = atoi(cp);
-		    while ( (*cp >= '0' && *cp <= '9') )  cp++;
-		    while ( *cp && (*cp < '0' || *cp > '9') ) cp++;
-		    g = atoi(cp);
-		    while ( (*cp >= '0' && *cp <= '9') )  cp++;
-		    while ( *cp && (*cp < '0' || *cp > '9') ) cp++;
-		    b = atoi(cp);
+		r = atoi(cp);
+		while ( (*cp >= '0' && *cp <= '9') )  cp++;
+		while ( *cp && (*cp < '0' || *cp > '9') ) cp++;
+		g = atoi(cp);
+		while ( (*cp >= '0' && *cp <= '9') )  cp++;
+		while ( *cp && (*cp < '0' || *cp > '9') ) cp++;
+		b = atoi(cp);
 
-		    if ( r < 0 || r > 255 )  r = 255;
-		    if ( g < 0 || g > 255 )  g = 255;
-		    if ( b < 0 || b > 255 )  b = 255;
+		if ( r < 0 || r > 255 )  r = 255;
+		if ( g < 0 || g > 255 )  g = 255;
+		if ( b < 0 || b > 255 )  b = 255;
 
-		    if (r == 0)
-			background[0] = 0.0;
-		    else
-			background[0] = r / 255.0;
-		    if (g == 0)
-			background[1] = 0.0;
-		    else
-			background[1] = g / 255.0;
-		    if (b == 0)
-			background[2] = 0.0;
-		    else
-			background[2] = b / 255.0;
-		}
-		break;
+		if (r == 0)
+		    background[0] = 0.0;
+		else
+		    background[0] = r / 255.0;
+		if (g == 0)
+		    background[1] = 0.0;
+		else
+		    background[1] = g / 255.0;
+		if (b == 0)
+		    background[2] = 0.0;
+		else
+		    background[2] = b / 255.0;
+	    }
+	    break;
 	    case 'J':
 		sscanf( bu_optarg, "%x", &jitter );
 		break;
@@ -649,25 +649,25 @@ int get_args( int argc, register char **argv )
 		break;
 	    case 'V':
 		/* View aspect */
-		{
-		    fastf_t xx, yy;
-		    register char *cp = bu_optarg;
+	    {
+		fastf_t xx, yy;
+		register char *cp = bu_optarg;
 
-		    xx = atof(cp);
-		    while ( (*cp >= '0' && *cp <= '9')
-			   || *cp == '.' )  cp++;
-		    while ( *cp && (*cp < '0' || *cp > '9') ) cp++;
-		    yy = atof(cp);
-		    if ( NEAR_ZERO(yy, SMALL) )
-			aspect = xx;
-		    else
-			aspect = xx/yy;
-		    if ( aspect <= 0.0 ) {
-			fprintf(stderr, "Bogus aspect %g, using 1.0\n", aspect);
-			aspect = 1.0;
-		    }
+		xx = atof(cp);
+		while ( (*cp >= '0' && *cp <= '9')
+			|| *cp == '.' )  cp++;
+		while ( *cp && (*cp < '0' || *cp > '9') ) cp++;
+		yy = atof(cp);
+		if ( NEAR_ZERO(yy, SMALL) )
+		    aspect = xx;
+		else
+		    aspect = xx/yy;
+		if ( aspect <= 0.0 ) {
+		    fprintf(stderr, "Bogus aspect %g, using 1.0\n", aspect);
+		    aspect = 1.0;
 		}
-		break;
+	    }
+	    break;
 	    default:		/* '?' */
 		fprintf(stderr, "unknown option %c\n", c);
 		return(0);	/* BAD */
@@ -1132,7 +1132,7 @@ grid_setup(void)
     }
 
     if ( cell_width <= 0 || cell_width >= INFINITY ||
-	cell_height <= 0 || cell_height >= INFINITY )  {
+	 cell_height <= 0 || cell_height >= INFINITY )  {
 	bu_log("grid_setup: cell size ERROR (%g, %g) mm\n",
 	       cell_width, cell_height );
 	bu_exit(EXIT_FAILURE, "cell size");
@@ -1196,8 +1196,8 @@ do_frame(int framenumber)
 
     if (rt_verbosity & VERBOSE_VIEWDETAIL)
 	bu_log(
-	       "View: %g azimuth, %g elevation off of front view\n",
-	       azimuth, elevation);
+	    "View: %g azimuth, %g elevation off of front view\n",
+	    azimuth, elevation);
     quat_mat2quat( quat, model2view );
     if (rt_verbosity & VERBOSE_VIEWDETAIL) {
 	bu_log("Orientation: %g, %g, %g, %g\n", V4ARGS(quat) );
@@ -1750,7 +1750,7 @@ view_pixel(register struct application *ap)
 	if ( b > 255 ) b = 255;
 	else if ( b < 0 )  b = 0;
 	if ( r == ibackground[0] && g == ibackground[1] &&
-	    b == ibackground[2] )  {
+	     b == ibackground[2] )  {
 	    r = inonbackground[0];
 	    g = inonbackground[1];
 	    b = inonbackground[2];
@@ -1837,13 +1837,13 @@ view_setup(struct rt_i *rtip)
 		bu_log("mlib_setup failure on %s\n", regp->reg_name);
 		break;
 	    case 0:
-		{
-		    struct region *r = BU_LIST_NEXT( region, &regp->l );
-		    /* zap reg_udata? beware of light structs */
-		    rt_del_regtree( rtip, regp, &rt_uniresource );
-		    regp = r;
-		    continue;
-		}
+	    {
+		struct region *r = BU_LIST_NEXT( region, &regp->l );
+		/* zap reg_udata? beware of light structs */
+		rt_del_regtree( rtip, regp, &rt_uniresource );
+		regp = r;
+		continue;
+	    }
 	    case 1:
 		/* Full success */
 		break;
@@ -1877,13 +1877,13 @@ view_re_setup( struct rt_i *rtip )
 		    bu_log( "view_re_setup(): mlib_setup failed for region %s\n", rp->reg_name );
 		    break;
 		case 0:
-		    {
-			struct region *r = BU_LIST_NEXT( region, &rp->l );
-			/* zap reg_udata? beware of light structs */
-			rt_del_regtree( rtip, rp, &rt_uniresource );
-			rp = r;
-			continue;
-		    }
+		{
+		    struct region *r = BU_LIST_NEXT( region, &rp->l );
+		    /* zap reg_udata? beware of light structs */
+		    rt_del_regtree( rtip, rp, &rt_uniresource );
+		    rp = r;
+		    continue;
+		}
 		case 1:
 		    break;
 	    }
@@ -1994,18 +1994,18 @@ colorview(register struct application *ap, struct partition *PartHeadp, struct s
 
     pp = PartHeadp->pt_forw;
     if ( ap->a_flag == 1 )
-	{
-	    /* This ray is an escaping internal ray after refraction through glass.
-	     * Sometimes, after refraction and starting a new ray at the glass exit,
-	     * the new ray hits a sliver of the same glass, and gets confused. This bit
-	     * of code attempts to spot this behavior and skip over the glass sliver.
-	     * Any sliver less than 0.05mm thick will be skipped (0.05 is a SWAG).
-	     */
-	    if ( (genptr_t)pp->pt_regionp == ap->a_uptr &&
-		pp->pt_forw != PartHeadp &&
-		pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist < 0.05 )
-		pp = pp->pt_forw;
-	}
+    {
+	/* This ray is an escaping internal ray after refraction through glass.
+	 * Sometimes, after refraction and starting a new ray at the glass exit,
+	 * the new ray hits a sliver of the same glass, and gets confused. This bit
+	 * of code attempts to spot this behavior and skip over the glass sliver.
+	 * Any sliver less than 0.05mm thick will be skipped (0.05 is a SWAG).
+	 */
+	if ( (genptr_t)pp->pt_regionp == ap->a_uptr &&
+	     pp->pt_forw != PartHeadp &&
+	     pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist < 0.05 )
+	    pp = pp->pt_forw;
+    }
 
     for (; pp != PartHeadp; pp = pp->pt_forw )
 	if ( pp->pt_outhit->hit_dist >= 0.0 ) break;
@@ -2044,7 +2044,7 @@ colorview(register struct application *ap, struct partition *PartHeadp, struct s
 	fastf_t f;
 
 	if ( pp->pt_outhit->hit_dist >= INFINITY ||
-	    ap->a_level > max_bounces )  {
+	     ap->a_level > max_bounces )  {
 	    VSETALL( ap->a_color, 0.18 );	/* 18% Grey */
 	    ap->a_user = 1;		/* Signal view_pixel:  HIT */
 	    ap->a_dist = hitp->hit_dist;
@@ -2164,7 +2164,7 @@ view_2init(register struct application *ap, char *framename)
      *	create default light sources
      */
     if ( BU_LIST_IS_EMPTY( &(LightHead.l) )  ||
-	BU_LIST_UNINITIALIZED( &(LightHead.l ) ) )  {
+	 BU_LIST_UNINITIALIZED( &(LightHead.l ) ) )  {
 	if (R_DEBUG&RDEBUG_SHOWERR)bu_log("No explicit light\n");
 	light_maker(1, view2model);
     }

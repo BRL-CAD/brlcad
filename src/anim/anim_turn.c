@@ -81,7 +81,7 @@ main(int argc, char **argv)
 	fprintf(stderr, "ascript: Get_args error");
 
     if (!angle_set) {
-  /* set angle if not yet done */
+	/* set angle if not yet done */
 	scanf("%*f%*[^-0123456789]");
 	VSCAN(temp1);
 	scanf("%*f%*[^-0123456789]");
@@ -101,7 +101,7 @@ main(int argc, char **argv)
 	/*update to and from matrices */
 
 	if (count) {
-  /* not first time through */
+	    /* not first time through */
 	    /* calculate matrices corrsponding to last position*/
 	    anim_y_p_r2mat(m_to_world, angle, 0.0, 0.0);
 	    anim_add_trans(m_to_world, front, zero);
@@ -127,7 +127,7 @@ main(int argc, char **argv)
 	    angle = bn_atan2(temp1[1], temp1[0]);
 	}
 	else {
-  /*first time through */
+	    /*first time through */
 	    /*angle is already determined*/
 	    VMOVE(front, point);
 	}
@@ -147,7 +147,7 @@ main(int argc, char **argv)
 		printf("%.10g %.10g %.10g 0.0\n", time, factor*RTOD*yaw, RTOD*roll_ang);
 	}
 	else {
-  /* print position and orientation of vehicle */
+	    /* print position and orientation of vehicle */
 	    if (!(count%print_int))
 		printf("%.10g %.10g %.10g %.10g %.10g 0.0 0.0\n", time, front[0], front[1], front[2], RTOD * angle);
 	}
@@ -163,28 +163,28 @@ int get_args(int argc, char **argv)
     int c;
     while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
 	switch (c) {
-	case 'l':
-	    sscanf(bu_optarg, "%lf", &length);
-	    break;
-	case 'a':
-	    sscanf(bu_optarg, "%lf", &angle);
-	    angle *= DTOR; /* degrees to radians */
-	    angle_set = 1;
-	    break;
-	case 'r':
-	    sscanf(bu_optarg, "%lf", &radius);
-	    turn_wheels = 1;
-	    break;
-	case 'f':
-	    turn_wheels = 1;
-	    sscanf(bu_optarg, "%lf", &factor);
-	    break;
-	case 'p':
-	    sscanf(bu_optarg, "%d", &print_int);
-	    break;
-	default:
-	    fprintf(stderr, "Unknown option: -%c\n", c);
-	    return(0);
+	    case 'l':
+		sscanf(bu_optarg, "%lf", &length);
+		break;
+	    case 'a':
+		sscanf(bu_optarg, "%lf", &angle);
+		angle *= DTOR; /* degrees to radians */
+		angle_set = 1;
+		break;
+	    case 'r':
+		sscanf(bu_optarg, "%lf", &radius);
+		turn_wheels = 1;
+		break;
+	    case 'f':
+		turn_wheels = 1;
+		sscanf(bu_optarg, "%lf", &factor);
+		break;
+	    case 'p':
+		sscanf(bu_optarg, "%d", &print_int);
+		break;
+	    default:
+		fprintf(stderr, "Unknown option: -%c\n", c);
+		return(0);
 	}
     }
     return(1);

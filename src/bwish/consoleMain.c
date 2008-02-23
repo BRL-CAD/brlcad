@@ -30,7 +30,7 @@ extern int TCL_LOCAL_APPINIT _ANSI_ARGS_((Tcl_Interp *interp));
  */
 
 #ifdef TCL_LOCAL_MAIN_HOOK
-    extern int TCL_LOCAL_MAIN_HOOK _ANSI_ARGS_((int *argc, char ***argv));
+extern int TCL_LOCAL_MAIN_HOOK _ANSI_ARGS_((int *argc, char ***argv));
 #endif
 
 extern int Cad_AppInit(Tcl_Interp *interp);
@@ -54,8 +54,8 @@ extern int Cad_AppInit(Tcl_Interp *interp);
 
 int
 main(
-    int argc,
-    char *argv[])
+     int argc,
+     char *argv[])
 {
     char *p;
 
@@ -106,7 +106,7 @@ main(
 
 int
 Tcl_AppInit(
-    Tcl_Interp *interp)		/* Interpreter for application. */
+	    Tcl_Interp *interp)		/* Interpreter for application. */
 {
     if (Tcl_Init(interp) == TCL_ERROR) {
 	return TCL_ERROR;

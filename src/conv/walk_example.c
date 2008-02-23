@@ -94,14 +94,14 @@ int parse_args(int ac, char *av[])
     /* get all the option flags from the command line */
     while ((c=bu_getopt(ac, av, options)) != EOF) {
 	switch (c) {
-	case 'd':
-	    debug = strtol(bu_optarg, NULL, 16);
-	    break;
-	case '?':
-	case 'h':
-	default:
-	    usage(bu_basename(av[0]), "Bad or help flag specified\n");
-	    break;
+	    case 'd':
+		debug = strtol(bu_optarg, NULL, 16);
+		break;
+	    case '?':
+	    case 'h':
+	    default:
+		usage(bu_basename(av[0]), "Bad or help flag specified\n");
+		break;
 	}
     }
 
@@ -200,7 +200,7 @@ leaf_func (struct db_tree_state * tsp,
 
     /* here we do primitive type specific processing */
     switch (ip->idb_minor_type) {
-    case ID_BOT:
+	case ID_BOT:
 	{
 	    /* This is the data payload for a "Bag of Triangles" or
 	     * "BOT" primitive.  see rtgeom.h for more information
@@ -213,7 +213,7 @@ leaf_func (struct db_tree_state * tsp,
 
 	    break;
 	}
-    case ID_ARB8:
+	case ID_ARB8:
 	{
 	    struct rt_arb_internal *arb = (struct rt_arb_internal *)ip->idb_ptr;
 	    RT_ARB_CK_MAGIC(arb);
@@ -222,10 +222,10 @@ leaf_func (struct db_tree_state * tsp,
 
 	    break;
 	}
-    /*
-     * Note:  A complete program would process each possible type of object here,
-     * not just a couple of primitive types
-     */
+	/*
+	 * Note:  A complete program would process each possible type of object here,
+	 * not just a couple of primitive types
+	 */
 
     }
 

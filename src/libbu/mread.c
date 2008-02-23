@@ -32,9 +32,6 @@
  * If a read error occurs, a negative value will be returns and errno
  * should be set (by read()).
  *
- * @authors   Robert S. Miles
- * @authors   Christopher Sean Morrison
- *
  */
 
 #include "common.h"
@@ -75,9 +72,10 @@ bu_mread(int fd, void *bufp, long int n)
 }
 /** @} */
 
-/* Local Variables:
- * mode: C
+/*
+ * Local Variables:
  * tab-width: 8
+ * mode: C
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

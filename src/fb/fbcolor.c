@@ -68,103 +68,103 @@ Usage: fbcolor [-h] [-F framebuffer]\n\
 int
 main(int argc, char **argv)
 {
-	register int i;
+    register int i;
 
-	if ( ! pars_Argv( argc, argv ) )  {
-		(void)fputs(usage, stderr);
-		return	1;
-	}
-	if ( (fbp = fb_open( framebuffer, scr_width, scr_height )) == FBIO_NULL )  {
-		fprintf(stderr, "fbcolor:  fb_open(%s) failure\n", framebuffer);
-		return	1;
-	}
+    if ( ! pars_Argv( argc, argv ) )  {
+	(void)fputs(usage, stderr);
+	return	1;
+    }
+    if ( (fbp = fb_open( framebuffer, scr_width, scr_height )) == FBIO_NULL )  {
+	fprintf(stderr, "fbcolor:  fb_open(%s) failure\n", framebuffer);
+	return	1;
+    }
 
-	/* Get the actual screen size we were given */
-	scr_width = fb_getwidth(fbp);
-	scr_height = fb_getheight(fbp);
+    /* Get the actual screen size we were given */
+    scr_width = fb_getwidth(fbp);
+    scr_height = fb_getheight(fbp);
 
-	fb_rmap( fbp, &old_map );
-	fb_clear( fbp, RGBPIXEL_NULL );
+    fb_rmap( fbp, &old_map );
+    fb_clear( fbp, RGBPIXEL_NULL );
 
-	rgbhsv( col, &col[3] );
+    rgbhsv( col, &col[3] );
 
-	/* Note that color 0, 0, 0 is special;  use 1, 1, 1 for black */
-	/* Red */
-	for ( i=0; i<255; i++)  {
-		buf[3*i+RED] = i;
-		buf[3*i+GRN] = 1;
-		buf[3*i+BLU] = 1;
-	}
-	for ( i=0; i<99; i++ )
-		fb_write( fbp, 0, i, buf, 256 );
+    /* Note that color 0, 0, 0 is special;  use 1, 1, 1 for black */
+    /* Red */
+    for ( i=0; i<255; i++)  {
+	buf[3*i+RED] = i;
+	buf[3*i+GRN] = 1;
+	buf[3*i+BLU] = 1;
+    }
+    for ( i=0; i<99; i++ )
+	fb_write( fbp, 0, i, buf, 256 );
 
-	/* Green */
-	memset((char *)buf, 0, sizeof(buf));
-	for ( i=0; i<255; i++) {
-		buf[3*i+RED] = 1;
-		buf[3*i+GRN] = i;
-		buf[3*i+BLU] = 1;
-	}
-	for ( i=100; i<199; i++ )
-		fb_write( fbp, 0, i, buf, 256 );
+    /* Green */
+    memset((char *)buf, 0, sizeof(buf));
+    for ( i=0; i<255; i++) {
+	buf[3*i+RED] = 1;
+	buf[3*i+GRN] = i;
+	buf[3*i+BLU] = 1;
+    }
+    for ( i=100; i<199; i++ )
+	fb_write( fbp, 0, i, buf, 256 );
 
-	/* Blue */
-	memset((char *)buf, 0, sizeof(buf));
-	for ( i=0; i<255; i++)  {
-		buf[3*i+RED] = 1;
-		buf[3*i+GRN] = 1;
-		buf[3*i+BLU] = i;
-	}
-	for ( i=200; i<299; i++ )
-		fb_write( fbp, 0, i, buf, 256 );
+    /* Blue */
+    memset((char *)buf, 0, sizeof(buf));
+    for ( i=0; i<255; i++)  {
+	buf[3*i+RED] = 1;
+	buf[3*i+GRN] = 1;
+	buf[3*i+BLU] = i;
+    }
+    for ( i=200; i<299; i++ )
+	fb_write( fbp, 0, i, buf, 256 );
 
-	/* Set RAW mode */
-	save_Tty( 0 );
-	set_Raw( 0 );
-	clr_Echo( 0 );
+    /* Set RAW mode */
+    save_Tty( 0 );
+    set_Raw( 0 );
+    clr_Echo( 0 );
 
-	do  {
-		/* Build color map for current value */
-		memset((char *)&cm, 0, sizeof(cm));
-		for ( i=0; i<col[RED]; i++ )
-			cm.cm_red[i] = 0xFFFF;
-		for (; i<255; i++ )
-			cm.cm_red[i] = 0;
+    do  {
+	/* Build color map for current value */
+	memset((char *)&cm, 0, sizeof(cm));
+	for ( i=0; i<col[RED]; i++ )
+	    cm.cm_red[i] = 0xFFFF;
+	for (; i<255; i++ )
+	    cm.cm_red[i] = 0;
 
-		for ( i=0; i<col[GRN]; i++ )
-			cm.cm_green[i] = 0xFFFF;
-		for (; i<255; i++ )
-			cm.cm_green[i] = 0;
+	for ( i=0; i<col[GRN]; i++ )
+	    cm.cm_green[i] = 0xFFFF;
+	for (; i<255; i++ )
+	    cm.cm_green[i] = 0;
 
-		for ( i=0; i<col[BLU]; i++ )
-			cm.cm_blue[i] = 0xFFFF;
-		for (; i<255; i++ )
-			cm.cm_blue[i] = 0;
+	for ( i=0; i<col[BLU]; i++ )
+	    cm.cm_blue[i] = 0xFFFF;
+	for (; i<255; i++ )
+	    cm.cm_blue[i] = 0;
 
-		/* 0, 0, 0 is color chosen */
-		cm.cm_red[0] = col[RED]<<8;
-		cm.cm_green[0] = col[GRN]<<8;
-		cm.cm_blue[0] = col[BLU]<<8;
+	/* 0, 0, 0 is color chosen */
+	cm.cm_red[0] = col[RED]<<8;
+	cm.cm_green[0] = col[GRN]<<8;
+	cm.cm_blue[0] = col[BLU]<<8;
 
-		/* 1, 1, 1 is for black */
-		cm.cm_red[1] = 0;
-		cm.cm_green[1] = 0;
-		cm.cm_blue[1] = 0;
+	/* 1, 1, 1 is for black */
+	cm.cm_red[1] = 0;
+	cm.cm_green[1] = 0;
+	cm.cm_blue[1] = 0;
 
-		fb_wmap( fbp, &cm );
+	fb_wmap( fbp, &cm );
 
-		(void) fprintf( stdout,
-				"%c rgb=%3d,%3d,%3d hsv=%3d,%3d,%3d   \r",
-				"RGBHSIx"[curchan],
-				col[0], col[1], col[2],
-				col[3], col[4], col[5]	);
-		(void) fflush( stdout );
-	} while ( doKeyPad() );
+	(void) fprintf( stdout,
+			"%c rgb=%3d,%3d,%3d hsv=%3d,%3d,%3d   \r",
+			"RGBHSIx"[curchan],
+			col[0], col[1], col[2],
+			col[3], col[4], col[5]	);
+	(void) fflush( stdout );
+    } while ( doKeyPad() );
 
-	fb_wmap( fbp, &old_map );
-	reset_Tty( 0 );
-	(void) fprintf( stdout,  "\n");	/* Move off of the output line.	*/
-	return	0;
+    fb_wmap( fbp, &old_map );
+    reset_Tty( 0 );
+    (void) fprintf( stdout,  "\n");	/* Move off of the output line.	*/
+    return	0;
 }
 
 char help[] = "\r\n\
@@ -184,86 +184,86 @@ q	quit\r\n\
 int
 doKeyPad(void)
 {
-	register int ch;
+    register int ch;
 
-	if ( (ch = getchar()) == EOF )
-		return	0;		/* done */
+    if ( (ch = getchar()) == EOF )
+	return	0;		/* done */
 
-	switch ( ch )  {
+    switch ( ch )  {
 	default :
-		(void) fprintf( stdout,
-				"\r\n'%c' bad -- Type ? for help\r\n",
-				ch
-				);
-		break;
+	    (void) fprintf( stdout,
+			    "\r\n'%c' bad -- Type ? for help\r\n",
+			    ch
+		);
+	    break;
 	case '?' :
-		(void) fprintf( stdout, "\r\n%s", help );
-		break;
+	    (void) fprintf( stdout, "\r\n%s", help );
+	    break;
 	case '\r' :
 	case '\n' :				/* Done, return to normal */
 	case 'q' :
-		return	0;
+	    return	0;
 	case 'Q' :				/* Done, leave "as is" */
-		return	0;
+	    return	0;
 
 	case 'r':
-		curchan = 0;
-		break;
+	    curchan = 0;
+	    break;
 	case 'g':
-		curchan = 1;
-		break;
+	    curchan = 1;
+	    break;
 	case 'b':
-		curchan = 2;
-		break;
+	    curchan = 2;
+	    break;
 	case 'h':
-		curchan = 3;
-		break;
+	    curchan = 3;
+	    break;
 	case 's':
-		curchan = 4;
-		break;
+	    curchan = 4;
+	    break;
 	case 'v':
 	case 'i':
-		curchan = 5;
-		break;
+	    curchan = 5;
+	    break;
 	case '/':
-		if ( ++curchan >= 6 )  curchan = 0;
-		break;
+	    if ( ++curchan >= 6 )  curchan = 0;
+	    break;
 
-	/* unit changes with -+ or ,. */
+	    /* unit changes with -+ or ,. */
 	case '+':
 	case '.':
-		col[curchan]++;
-		new_rgb();
-		break;
+	    col[curchan]++;
+	    new_rgb();
+	    break;
 	case '-':
 	case ',':
-		col[curchan]--;
-		new_rgb();
-		break;
+	    col[curchan]--;
+	    new_rgb();
+	    break;
 
-	/* big changes with <> */
+	    /* big changes with <> */
 	case '>':
-		col[curchan]+=16;
-		new_rgb();
-		break;
+	    col[curchan]+=16;
+	    new_rgb();
+	    break;
 	case '<':
-		col[curchan]-=16;
-		new_rgb();
-		break;
-	}
-	return	1;		/* keep going */
+	    col[curchan]-=16;
+	    new_rgb();
+	    break;
+    }
+    return	1;		/* keep going */
 }
 
 void
 new_rgb(void) {
-	/* Wrap values to stay in range 0..255 */
-	if ( col[curchan] < 0 ) col[curchan] = 255;
-	if ( col[curchan] > 255 ) col[curchan] = 0;
-	/* recompute either rgb or hsv from the other */
-	if ( curchan < 3 )
-		rgbhsv( col, &col[3] );
-	else
-		hsvrgb( &col[3], col );
+    /* Wrap values to stay in range 0..255 */
+    if ( col[curchan] < 0 ) col[curchan] = 255;
+    if ( col[curchan] > 255 ) col[curchan] = 0;
+    /* recompute either rgb or hsv from the other */
+    if ( curchan < 3 )
+	rgbhsv( col, &col[3] );
+    else
+	hsvrgb( &col[3], col );
 }
 
 /*	p a r s _ A r g v ( )
@@ -271,32 +271,32 @@ new_rgb(void) {
 int
 pars_Argv(int argc, register char **argv)
 {
-	register int	c;
-	while ( (c = bu_getopt( argc, argv, "F:s:S:w:W:n:N:h" )) != EOF )  {
-		switch ( c )  {
-		case 'F':
-			framebuffer = bu_optarg;
-			break;
-		case 'h' : /* High resolution frame buffer.	*/
-			scr_height = scr_width = 1024;
-			break;
-		case 's':
-		case 'S':
-			scr_height = scr_width = atoi(bu_optarg);
-			break;
-		case 'w':
-		case 'W':
-			scr_width = atoi(bu_optarg);
-			break;
-		case 'n':
-		case 'N':
-			scr_height = atoi(bu_optarg);
-			break;
-		case '?' :
-			return	0;
-		}
+    register int	c;
+    while ( (c = bu_getopt( argc, argv, "F:s:S:w:W:n:N:h" )) != EOF )  {
+	switch ( c )  {
+	    case 'F':
+		framebuffer = bu_optarg;
+		break;
+	    case 'h' : /* High resolution frame buffer.	*/
+		scr_height = scr_width = 1024;
+		break;
+	    case 's':
+	    case 'S':
+		scr_height = scr_width = atoi(bu_optarg);
+		break;
+	    case 'w':
+	    case 'W':
+		scr_width = atoi(bu_optarg);
+		break;
+	    case 'n':
+	    case 'N':
+		scr_height = atoi(bu_optarg);
+		break;
+	    case '?' :
+		return	0;
 	}
-	return	1;
+    }
+    return	1;
 }
 
 /* rgbhsv
@@ -306,49 +306,49 @@ pars_Argv(int argc, register char **argv)
 void
 rgbhsv(register int *rgb, register int *hsv)
 {
-	int	s, v;
-	int	r, g, b;
-	int	x;
-	static int h;
-	double dif = 0;
+    int	s, v;
+    int	r, g, b;
+    int	x;
+    static int h;
+    double dif = 0;
 
-	r = rgb[0];
-	g = rgb[1];
-	b = rgb[2];
-	v = ((r > g) ? r : g);
-	v = ((v > b) ? v : b);
-	x = ((r < g) ? r : g);
-	x = ((x < b) ? x : b);
-	if (v != x)  {
-	    dif = (double) (v - x);
-	    if (r != v)  {
-		if (g == v)  {
-		    if (b != x)
-			h = (int) (42.5 * (3. - (double)(v-b) / dif));
-		    else
-			h = (int) (42.5 * (1. + (double)(v-r) / dif));
-		} else {
-		    if (r != x)
-			h = (int) (42.5 * (5. - (double)(v-r) / dif));
-		    else
-			h = (int) (42.5 * (3. + (double)(v-g) / dif));
-		}
-	    } else {
-		if (g != x)
-		    h = (int) (42.5 * (1. - (double)(v-g) / dif));
+    r = rgb[0];
+    g = rgb[1];
+    b = rgb[2];
+    v = ((r > g) ? r : g);
+    v = ((v > b) ? v : b);
+    x = ((r < g) ? r : g);
+    x = ((x < b) ? x : b);
+    if (v != x)  {
+	dif = (double) (v - x);
+	if (r != v)  {
+	    if (g == v)  {
+		if (b != x)
+		    h = (int) (42.5 * (3. - (double)(v-b) / dif));
 		else
-		    h = (int) (42.5 * (5. + (double)(v-b) / dif));
+		    h = (int) (42.5 * (1. + (double)(v-r) / dif));
+	    } else {
+		if (r != x)
+		    h = (int) (42.5 * (5. - (double)(v-r) / dif));
+		else
+		    h = (int) (42.5 * (3. + (double)(v-g) / dif));
 	    }
+	} else {
+	    if (g != x)
+		h = (int) (42.5 * (1. - (double)(v-g) / dif));
+	    else
+		h = (int) (42.5 * (5. + (double)(v-b) / dif));
 	}
+    }
 
-	if (v != 0)
-	    s = (int)(255. * dif / (double)v);
-	else
-	    s = 0;
+    if (v != 0)
+	s = (int)(255. * dif / (double)v);
+    else
+	s = 0;
 
-	hsv[0] = h;
-	hsv[1] = s;
-	hsv[2] = v;
+    hsv[0] = h;
+    hsv[1] = s;
+    hsv[2] = v;
 }
 
 /* hsvrgb
@@ -361,21 +361,21 @@ double modf(double, double *);
 void
 hsvrgb(register int *hsv, register int *rgb)
 {
-	int r, g, b, m, n, k;
-	double h, s, v, foo;
-	double f;
+    int r, g, b, m, n, k;
+    double h, s, v, foo;
+    double f;
 
-	if (hsv[1] != 0)
+    if (hsv[1] != 0)
+    {
+	s = (double)hsv[1] / 255.;
+	h = (double)hsv[0] / 42.666;
+	f = modf(h, &(foo));
+	v = (double)hsv[2];
+	m = (int) (v * (1. - s) + .5);
+	n = (int) (v * (1. - s*f) + .5);
+	k = (int) (v * (1. - (s * (1.-f))) + .5);
+	switch ((int) h)
 	{
-	    s = (double)hsv[1] / 255.;
-	    h = (double)hsv[0] / 42.666;
-	    f = modf(h, &(foo));
-	    v = (double)hsv[2];
-	    m = (int) (v * (1. - s) + .5);
-	    n = (int) (v * (1. - s*f) + .5);
-	    k = (int) (v * (1. - (s * (1.-f))) + .5);
-	    switch ((int) h)
-	    {
 	    case 0:
 		r = hsv[2];
 		g = k;
@@ -407,14 +407,14 @@ hsvrgb(register int *hsv, register int *rgb)
 		g = m;
 		b = n;
 		break;
-	    }
 	}
-	else
-	    r = g = b = hsv[2];
+    }
+    else
+	r = g = b = hsv[2];
 
-	rgb[0] = r;
-	rgb[1] = g;
-	rgb[2] = b;
+    rgb[0] = r;
+    rgb[1] = g;
+    rgb[2] = b;
 }
 
 /*

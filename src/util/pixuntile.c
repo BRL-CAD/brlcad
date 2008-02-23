@@ -57,51 +57,51 @@ Usage: pixuntile [-h] [-s squareinsize] [-w in_width] [-n in_height]\n\
 int
 get_args(int argc, register char **argv)
 {
-	register int c;
+    register int c;
 
-	while ( (c = bu_getopt( argc, argv, "hs:w:n:S:W:N:o:" )) != EOF )  {
-		switch ( c )  {
-		case 'h':
-			/* high-res */
-			in_height = in_width = 1024;
-			break;
-		case 's':
-			/* square input file size */
-			in_height = in_width = atoi(bu_optarg);
-			break;
-		case 'w':
-			in_width = atoi(bu_optarg);
-			break;
-		case 'n':
-			in_height = atoi(bu_optarg);
-			break;
-		case 'S':
-			out_height = out_width = atoi(bu_optarg);
-			break;
-		case 'W':
-			out_width = atoi(bu_optarg);
-			break;
-		case 'N':
-			out_height = atoi(bu_optarg);
-			break;
-		case 'o':
-			framenumber = atoi(bu_optarg);
-			break;
-		default:		/* '?' */
-			return(0);	/* Bad */
-		}
-	}
-
-	if ( isatty(fileno(stdin)) )  {
+    while ( (c = bu_getopt( argc, argv, "hs:w:n:S:W:N:o:" )) != EOF )  {
+	switch ( c )  {
+	    case 'h':
+		/* high-res */
+		in_height = in_width = 1024;
+		break;
+	    case 's':
+		/* square input file size */
+		in_height = in_width = atoi(bu_optarg);
+		break;
+	    case 'w':
+		in_width = atoi(bu_optarg);
+		break;
+	    case 'n':
+		in_height = atoi(bu_optarg);
+		break;
+	    case 'S':
+		out_height = out_width = atoi(bu_optarg);
+		break;
+	    case 'W':
+		out_width = atoi(bu_optarg);
+		break;
+	    case 'N':
+		out_height = atoi(bu_optarg);
+		break;
+	    case 'o':
+		framenumber = atoi(bu_optarg);
+		break;
+	    default:		/* '?' */
 		return(0);	/* Bad */
 	}
+    }
 
-	if ( bu_optind >= argc )  {
-		fprintf(stderr, "pixuntile: basename or filename(s) missing\n");
-		return(0);	/* Bad */
-	}
+    if ( isatty(fileno(stdin)) )  {
+	return(0);	/* Bad */
+    }
 
-	return(1);		/* OK */
+    if ( bu_optind >= argc )  {
+	fprintf(stderr, "pixuntile: basename or filename(s) missing\n");
+	return(0);	/* Bad */
+    }
+
+    return(1);		/* OK */
 }
 
 int	numx;
@@ -111,63 +111,63 @@ int	pixsize = 3;
 int
 main(int argc, char **argv)
 {
-	int	i, y;
-	char ibuf[1024*3] = {0};
-	char name[80] = {0};
-	FILE	*f[8];
+    int	i, y;
+    char ibuf[1024*3] = {0};
+    char name[80] = {0};
+    FILE	*f[8];
 
-	if ( !get_args( argc, argv ) )  {
-		(void)fputs(usage, stderr);
-		bu_exit (1, NULL);
-	}
+    if ( !get_args( argc, argv ) )  {
+	(void)fputs(usage, stderr);
+	bu_exit (1, NULL);
+    }
 
-	if ( bu_optind+1 == argc )  {
-		base_name = argv[bu_optind];
-		islist = 0;
-	} else {
-		islist = 1;
-	}
+    if ( bu_optind+1 == argc )  {
+	base_name = argv[bu_optind];
+	islist = 0;
+    } else {
+	islist = 1;
+    }
 
-	if ( in_width < 1 ) {
-		fprintf(stderr, "pixuntile: width of %d out of range\n", in_width);
-		bu_exit (12, NULL);
-	}
+    if ( in_width < 1 ) {
+	fprintf(stderr, "pixuntile: width of %d out of range\n", in_width);
+	bu_exit (12, NULL);
+    }
 
-	numx = in_width / out_width;
-	numy = in_height / out_height;
+    numx = in_width / out_width;
+    numy = in_height / out_height;
 
-	y = 0;
-	while ( fread(ibuf, pixsize, in_width, stdin) == in_width ) {
-		if ( y == 0 ) {
-			/* open a new set of output files */
-			for ( i = 0; i < numx; i++ ) {
-				if ( f[i] != 0 )
-					fclose(f[i]);
-				fprintf(stderr, "%d ", framenumber);  fflush(stdout);
-				if ( islist )  {
-					/* See if we read all the files */
-					if ( bu_optind >= argc )
-						goto done;
-					bu_strlcpy( name, argv[bu_optind++], sizeof(name) );
-				} else {
-					snprintf( name, sizeof(name), "%s.%d", base_name, framenumber );
-				}
-				if ( (f[i] = fopen(name, "w")) == NULL ) {
-					perror( name );
-					goto done;
-				}
-				framenumber++;
-			}
+    y = 0;
+    while ( fread(ibuf, pixsize, in_width, stdin) == in_width ) {
+	if ( y == 0 ) {
+	    /* open a new set of output files */
+	    for ( i = 0; i < numx; i++ ) {
+		if ( f[i] != 0 )
+		    fclose(f[i]);
+		fprintf(stderr, "%d ", framenumber);  fflush(stdout);
+		if ( islist )  {
+		    /* See if we read all the files */
+		    if ( bu_optind >= argc )
+			goto done;
+		    bu_strlcpy( name, argv[bu_optind++], sizeof(name) );
+		} else {
+		    snprintf( name, sizeof(name), "%s.%d", base_name, framenumber );
 		}
-		/* split this scanline up into the output files */
-		for ( i = 0; i < numx; i++ ) {
-			fwrite(&ibuf[i*out_width*pixsize], pixsize, out_width, f[i]);
+		if ( (f[i] = fopen(name, "w")) == NULL ) {
+		    perror( name );
+		    goto done;
 		}
-		y = (y + 1) % out_height;
+		framenumber++;
+	    }
 	}
-done:
-	fprintf( stderr, "\n" );
-	bu_exit ( 0, NULL );
+	/* split this scanline up into the output files */
+	for ( i = 0; i < numx; i++ ) {
+	    fwrite(&ibuf[i*out_width*pixsize], pixsize, out_width, f[i]);
+	}
+	y = (y + 1) % out_height;
+    }
+ done:
+    fprintf( stderr, "\n" );
+    bu_exit ( 0, NULL );
 }
 
 /*

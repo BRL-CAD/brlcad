@@ -57,24 +57,24 @@
  */
 int
 mk_strsol( fp, name, string_solid, string_arg )
-FILE		*fp;
-const char	*name;
-const char	*string_solid;
-const char	*string_arg;
+    FILE		*fp;
+    const char	*name;
+    const char	*string_solid;
+    const char	*string_arg;
 {
-	union record	rec[DB_SS_NGRAN];
+    union record	rec[DB_SS_NGRAN];
 
-	BU_ASSERT_LONG( mk_version, <=, 4 );
+    BU_ASSERT_LONG( mk_version, <=, 4 );
 
-	memset((char *)rec, 0, sizeof(rec));
-	rec[0].ss.ss_id = DBID_STRSOL;
-	NAMEMOVE( name, rec[0].ss.ss_name );
-	bu_strlcpy( rec[0].ss.ss_keyword, string_solid, sizeof(rec[0].ss.ss_keyword) );
-	bu_strlcpy( rec[0].ss.ss_args, string_arg, DB_SS_LEN );
+    memset((char *)rec, 0, sizeof(rec));
+    rec[0].ss.ss_id = DBID_STRSOL;
+    NAMEMOVE( name, rec[0].ss.ss_name );
+    bu_strlcpy( rec[0].ss.ss_keyword, string_solid, sizeof(rec[0].ss.ss_keyword) );
+    bu_strlcpy( rec[0].ss.ss_args, string_arg, DB_SS_LEN );
 
-	if ( fwrite( (char *)rec, sizeof(rec), 1, fp ) != 1 )
-		return -1;
-	return 0;
+    if ( fwrite( (char *)rec, sizeof(rec), 1, fp ) != 1 )
+	return -1;
+    return 0;
 }
 
 #else

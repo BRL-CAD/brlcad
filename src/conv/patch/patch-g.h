@@ -23,58 +23,58 @@
 
 struct input {
 
-	fastf_t x, y, z;
-	fastf_t	rsurf_thick;
-	int	surf_type;
-	int	surf_thick;
-	int	spacecode;
-	int	cc;
-	int  	ept[10];
-	int	mirror;
-	int	vc;
+    fastf_t x, y, z;
+    fastf_t	rsurf_thick;
+    int	surf_type;
+    int	surf_thick;
+    int	spacecode;
+    int	cc;
+    int  	ept[10];
+    int	mirror;
+    int	vc;
 
-	int	prevsurf_type;
-	char	surf_mode;
+    int	prevsurf_type;
+    char	surf_mode;
 
 } in[10000];
 
 struct patch_verts {
-	struct vertex *vp;
-	point_t coord;
+    struct vertex *vp;
+    point_t coord;
 };
 
 struct patch_faces
 {
-	struct faceuse *fu;
-	fastf_t thick;
+    struct faceuse *fu;
+    fastf_t thick;
 };
 
 struct patches{
 
-	fastf_t x, y, z;
-	int flag;
-	fastf_t radius;
-	int mirror;
-	fastf_t thick;
+    fastf_t x, y, z;
+    int flag;
+    fastf_t radius;
+    int mirror;
+    fastf_t thick;
 
 };
 
 #define NAMESIZE 16
 struct names{
 
-	char	ug[NAMESIZE+1];
-	char	lg[NAMESIZE+1];
-	int	eqlos,
-		matcode;
+    char	ug[NAMESIZE+1];
+    char	lg[NAMESIZE+1];
+    int	eqlos,
+	matcode;
 
 } nm[9999];
 
 struct subtract_list{
 
-	int			outsolid,
-				insolid,
-				inmirror;
-	struct subtract_list	*next;
+    int			outsolid,
+	insolid,
+	inmirror;
+    struct subtract_list	*next;
 };
 
 point_t		pt[4];

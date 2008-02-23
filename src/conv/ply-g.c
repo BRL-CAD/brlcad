@@ -76,53 +76,53 @@ static char line[MAX_LINE_SIZE];
 #define TYPE_DOUBLE	7
 
 static char *types[]={
-	"char",
-	"uchar",
-	"short",
-	"ushort",
-	"int",
-	"uint",
-	"float",
-	"double",
-	NULL };
+    "char",
+    "uchar",
+    "short",
+    "ushort",
+    "int",
+    "uint",
+    "float",
+    "double",
+    NULL };
 
 static char *types2[]={
-	"int8",
-	"uint8",
-	"int16",
-	"uint16",
-	"int32",
-	"uint32",
-	"float32",
-	"float64",
-	NULL };
+    "int8",
+    "uint8",
+    "int16",
+    "uint16",
+    "int32",
+    "uint32",
+    "float32",
+    "float64",
+    NULL };
 
 
 static int length[]={
-	1,
-	1,
-	2,
-	2,
-	4,
-	4,
-	4,
-	8,
-	0 };
+    1,
+    1,
+    2,
+    2,
+    4,
+    4,
+    4,
+    8,
+    0 };
 
 struct prop {
-	int type;
-	int index_type;		/* only used for lists */
-	int list_type;		/* only used for lists */
-	char *name;
-	struct prop *next;
+    int type;
+    int index_type;		/* only used for lists */
+    int list_type;		/* only used for lists */
+    char *name;
+    struct prop *next;
 };
 #define PROP_LIST_TYPE	-1
 
 struct element {
-	int type;
-	int count;
-	struct prop *props;
-	struct element *next;
+    int type;
+    int count;
+    struct prop *props;
+    struct element *next;
 };
 
 
@@ -138,752 +138,752 @@ static int cur_face=-1;
 void
 log_elements()
 {
-	struct element *elemp;
-	struct prop *p;
+    struct element *elemp;
+    struct prop *p;
 
-	elemp = root;
+    elemp = root;
 
-	while ( elemp ) {
-		bu_log( "element:\n" );
-		switch ( elemp->type ) {
-		case ELEMENT_VERTEX:
-			bu_log( "\t%d vertices\n", elemp->count );
-			break;
-		case ELEMENT_FACE:
-			bu_log( "\t%d faces\n", elemp->count );
-			break;
-		case ELEMENT_OTHER:
-			bu_log( "\t%d others\n", elemp->count );
-			break;
-		}
-		p = elemp->props;
-		while ( p ) {
-			if ( p->type == PROP_LIST_TYPE ) {
-				bu_log( "\t\tproperty (%s) is a list\n", p->name );
-			} else {
-				bu_log( "\t\tproperty (%s) is a %s\n", p->name, types[p->type] );
-			}
-			p = p->next;
-		}
-		elemp = elemp->next;
+    while ( elemp ) {
+	bu_log( "element:\n" );
+	switch ( elemp->type ) {
+	    case ELEMENT_VERTEX:
+		bu_log( "\t%d vertices\n", elemp->count );
+		break;
+	    case ELEMENT_FACE:
+		bu_log( "\t%d faces\n", elemp->count );
+		break;
+	    case ELEMENT_OTHER:
+		bu_log( "\t%d others\n", elemp->count );
+		break;
 	}
+	p = elemp->props;
+	while ( p ) {
+	    if ( p->type == PROP_LIST_TYPE ) {
+		bu_log( "\t\tproperty (%s) is a list\n", p->name );
+	    } else {
+		bu_log( "\t\tproperty (%s) is a %s\n", p->name, types[p->type] );
+	    }
+	    p = p->next;
+	}
+	elemp = elemp->next;
+    }
 }
 
 
 int
 get_endianness()
 {
-	if (bu_byteorder() == BU_BIG_ENDIAN) {
-		/* big Endian */
-		return PLY_BIN_BIG_ENDIAN;
-	} else {
-		return PLY_BIN_LITTLE_ENDIAN;
-	}
+    if (bu_byteorder() == BU_BIG_ENDIAN) {
+	/* big Endian */
+	return PLY_BIN_BIG_ENDIAN;
+    } else {
+	return PLY_BIN_LITTLE_ENDIAN;
+    }
 }
 
 /* Byte swaps a 4-byte val */
 void lswap4(unsigned int *in, unsigned int *out)
 {
-	unsigned int r;
+    unsigned int r;
 
-	r = *in;
-	*out = ((r & 0xff) << 24) |
-	       ((r & 0xff00) << 8) |
-	       ((r & 0xff0000) >> 8) |
-	       ((r & 0xff000000) >> 24);
+    r = *in;
+    *out = ((r & 0xff) << 24) |
+	((r & 0xff00) << 8) |
+	((r & 0xff0000) >> 8) |
+	((r & 0xff000000) >> 24);
 }
 
 /* Byte swaps an 8-byte val */
 void lswap8(unsigned long long *in, unsigned long long *out )
 {
-	long long r;
+    long long r;
 
-	r = *in;
-	*out = ((r & 0xffLL) << 56) |
-	       ((r & 0xff00LL) << 40) |
-	       ((r & 0xff0000LL) << 24) |
-	       ((r & 0xff000000LL) << 8) |
-	       ((r & 0xff00000000LL) >> 8) |
-	       ((r & 0xff0000000000LL) >> 24) |
-	       ((r & 0xff000000000000LL) >> 40) |
-	       ((r & 0xff00000000000000LL) >> 56);
+    r = *in;
+    *out = ((r & 0xffLL) << 56) |
+	((r & 0xff00LL) << 40) |
+	((r & 0xff0000LL) << 24) |
+	((r & 0xff000000LL) << 8) |
+	((r & 0xff00000000LL) >> 8) |
+	((r & 0xff0000000000LL) >> 24) |
+	((r & 0xff000000000000LL) >> 40) |
+	((r & 0xff00000000000000LL) >> 56);
 }
 
 void
 skip( int type )
 {
-	char buf[16];
-	double val_double;
+    char buf[16];
+    double val_double;
 
-	if ( ply_file_type != PLY_ASCII ) {
-		if ( !fread( buf, 1, length[type], ply_fp ) ) {
-			bu_exit(1, "Unexpected EOF while reading data\n" );
-		}
-	} else {
-		if ( fscanf( ply_fp, "%lf", &val_double ) != 1 ) {
-			bu_exit(1, "ERROR: unable to parse data\n" );
-		}
+    if ( ply_file_type != PLY_ASCII ) {
+	if ( !fread( buf, 1, length[type], ply_fp ) ) {
+	    bu_exit(1, "Unexpected EOF while reading data\n" );
 	}
+    } else {
+	if ( fscanf( ply_fp, "%lf", &val_double ) != 1 ) {
+	    bu_exit(1, "ERROR: unable to parse data\n" );
+	}
+    }
 }
 
 double
 get_double( int type )
 {
-	unsigned char buf1[16], buf2[16];
-	char val_char;
-	unsigned char val_uchar;
-	short val_short;
-	unsigned short val_ushort;
-	int val_int;
-	unsigned int val_uint;
-	float val_float;
-	double val_double;
-	double val;
+    unsigned char buf1[16], buf2[16];
+    char val_char;
+    unsigned char val_uchar;
+    short val_short;
+    unsigned short val_ushort;
+    int val_int;
+    unsigned int val_uint;
+    float val_float;
+    double val_double;
+    double val;
 
-	if ( ply_file_type == PLY_ASCII ) {
-		switch ( type ) {
-		case TYPE_CHAR:
-			if ( fscanf( ply_fp, " %c", &val_char ) != 1 ) {
-				bu_exit(1, "ERROR parsing data\n" );
-			}
-			val = val_char;
-			break;
-		case TYPE_UCHAR:
-			if ( fscanf( ply_fp, " %c", &val_uchar ) != 1 ) {
-				bu_exit(1, "ERROR parsing data\n" );
-			}
-			val = val_uchar;
-			break;
-		case TYPE_SHORT:
-			if ( fscanf( ply_fp, "%hd", &val_short ) != 1 ) {
-				bu_exit(1, "ERROR parsing data\n" );
-			}
-			val = val_short;
-			break;
-		case TYPE_USHORT:
-			if ( fscanf( ply_fp, "%hu", &val_ushort ) != 1 ) {
-				bu_exit(1, "ERROR parsing data\n" );
-			}
-			val = val_ushort;
-			break;
-		case TYPE_INT:
-			if ( fscanf( ply_fp, "%d", &val_int ) != 1 ) {
-				bu_exit(1, "ERROR parsing data\n" );
-			}
-			val = val_int;
-			break;
-		case TYPE_UINT:
-			if ( fscanf( ply_fp, "%u", &val_uint ) != 1 ) {
-				bu_exit(1, "ERROR parsing data\n" );
-			}
-			val = val_uint;
-			break;
-		case TYPE_FLOAT:
-			if ( fscanf( ply_fp, "%f", &val_float ) != 1 ) {
-				bu_exit(1, "ERROR parsing data\n" );
-			}
-			val = val_float;
-			break;
-		case TYPE_DOUBLE:
-			if ( fscanf( ply_fp, "%lf", &val_double ) != 1 ) {
-				bu_exit(1, "ERROR parsing data\n" );
-			}
-			val = val_double;
-			break;
+    if ( ply_file_type == PLY_ASCII ) {
+	switch ( type ) {
+	    case TYPE_CHAR:
+		if ( fscanf( ply_fp, " %c", &val_char ) != 1 ) {
+		    bu_exit(1, "ERROR parsing data\n" );
 		}
-	} else {
-		if ( !fread( buf1, 1, length[type], ply_fp ) ) {
-			bu_exit(1, "Unexpected EOF while reading data\n" );
+		val = val_char;
+		break;
+	    case TYPE_UCHAR:
+		if ( fscanf( ply_fp, " %c", &val_uchar ) != 1 ) {
+		    bu_exit(1, "ERROR parsing data\n" );
 		}
-		if ( ply_file_type != endianness ) {
-			/* need to swap bytes */
-			switch ( length[type] ) {
-			case 1:
-				/* just copy to buf2 */
-				buf2[0] = buf1[0];
-				break;
-			case 2:
-#if 1
-				buf2[0] = buf1[1];
-				buf2[1] = buf1[0];
-#else
-				swab( buf1, buf2, 2 );
-#endif
-				break;
-			case 4:
-				lswap4( (unsigned int *)buf1, (unsigned int *)buf2 );
-				break;
-			case 8:
-				lswap8( (unsigned long long *)buf1, (unsigned long long *)buf2 );
-				break;
-			default:
-				bu_exit(1, "Property has illegal length (%d)!\n", length[type] );
-				break;
-			}
-		} else {
-			/* just copy to buf2 */
-			memcpy(buf2, buf1, length[type]);
+		val = val_uchar;
+		break;
+	    case TYPE_SHORT:
+		if ( fscanf( ply_fp, "%hd", &val_short ) != 1 ) {
+		    bu_exit(1, "ERROR parsing data\n" );
 		}
-		switch ( type ) {
-		case TYPE_CHAR:
-			val = *((char *)buf2);
-			break;
-		case TYPE_UCHAR:
-			val = *((unsigned char *)buf2);
-			break;
-		case TYPE_SHORT:
-			val = *((short *)buf2);
-			break;
-		case TYPE_USHORT:
-			val = *((unsigned short *)buf2);
-			break;
-		case TYPE_INT:
-			val = *((int *)buf2 );
-			break;
-		case TYPE_UINT:
-			val = *((unsigned int *)buf2);
-			break;
-		case TYPE_FLOAT:
-			val = *((float *)buf2);
-			break;
-		case TYPE_DOUBLE:
-			val = *((double *)buf2);
-			break;
+		val = val_short;
+		break;
+	    case TYPE_USHORT:
+		if ( fscanf( ply_fp, "%hu", &val_ushort ) != 1 ) {
+		    bu_exit(1, "ERROR parsing data\n" );
 		}
+		val = val_ushort;
+		break;
+	    case TYPE_INT:
+		if ( fscanf( ply_fp, "%d", &val_int ) != 1 ) {
+		    bu_exit(1, "ERROR parsing data\n" );
+		}
+		val = val_int;
+		break;
+	    case TYPE_UINT:
+		if ( fscanf( ply_fp, "%u", &val_uint ) != 1 ) {
+		    bu_exit(1, "ERROR parsing data\n" );
+		}
+		val = val_uint;
+		break;
+	    case TYPE_FLOAT:
+		if ( fscanf( ply_fp, "%f", &val_float ) != 1 ) {
+		    bu_exit(1, "ERROR parsing data\n" );
+		}
+		val = val_float;
+		break;
+	    case TYPE_DOUBLE:
+		if ( fscanf( ply_fp, "%lf", &val_double ) != 1 ) {
+		    bu_exit(1, "ERROR parsing data\n" );
+		}
+		val = val_double;
+		break;
 	}
+    } else {
+	if ( !fread( buf1, 1, length[type], ply_fp ) ) {
+	    bu_exit(1, "Unexpected EOF while reading data\n" );
+	}
+	if ( ply_file_type != endianness ) {
+	    /* need to swap bytes */
+	    switch ( length[type] ) {
+		case 1:
+		    /* just copy to buf2 */
+		    buf2[0] = buf1[0];
+		    break;
+		case 2:
+#if 1
+		    buf2[0] = buf1[1];
+		    buf2[1] = buf1[0];
+#else
+		    swab( buf1, buf2, 2 );
+#endif
+		    break;
+		case 4:
+		    lswap4( (unsigned int *)buf1, (unsigned int *)buf2 );
+		    break;
+		case 8:
+		    lswap8( (unsigned long long *)buf1, (unsigned long long *)buf2 );
+		    break;
+		default:
+		    bu_exit(1, "Property has illegal length (%d)!\n", length[type] );
+		    break;
+	    }
+	} else {
+	    /* just copy to buf2 */
+	    memcpy(buf2, buf1, length[type]);
+	}
+	switch ( type ) {
+	    case TYPE_CHAR:
+		val = *((char *)buf2);
+		break;
+	    case TYPE_UCHAR:
+		val = *((unsigned char *)buf2);
+		break;
+	    case TYPE_SHORT:
+		val = *((short *)buf2);
+		break;
+	    case TYPE_USHORT:
+		val = *((unsigned short *)buf2);
+		break;
+	    case TYPE_INT:
+		val = *((int *)buf2 );
+		break;
+	    case TYPE_UINT:
+		val = *((unsigned int *)buf2);
+		break;
+	    case TYPE_FLOAT:
+		val = *((float *)buf2);
+		break;
+	    case TYPE_DOUBLE:
+		val = *((double *)buf2);
+		break;
+	}
+    }
 
-	return( val*scale_factor );
+    return( val*scale_factor );
 }
 
 int
 get_int( int type )
 {
-	unsigned char buf1[16], buf2[16];
-	int val_int;
-	unsigned int val_uint;
-	double val_double;
-	int val;
+    unsigned char buf1[16], buf2[16];
+    int val_int;
+    unsigned int val_uint;
+    double val_double;
+    int val;
 
 
-	if ( ply_file_type == PLY_ASCII ) {
-		switch ( type ) {
-		case TYPE_CHAR:
-		case TYPE_UCHAR:
-		case TYPE_SHORT:
-		case TYPE_USHORT:
-		case TYPE_INT:
-			if ( fscanf( ply_fp, "%d", &val_int ) != 1 ) {
-				bu_exit(1, "ERROR parsing data\n" );
-			}
-			val = val_int;
-			break;
-		case TYPE_UINT:
-			if ( fscanf( ply_fp, "%u", &val_uint ) != 1 ) {
-				bu_exit(1, "ERROR parsing data\n" );
-			}
-			val = val_uint;
-			break;
-		case TYPE_FLOAT:
-		case TYPE_DOUBLE:
-			if ( fscanf( ply_fp, "%lf", &val_double ) != 1 ) {
-				bu_exit(1, "ERROR parsing data\n" );
-			}
-			val = val_double;
-			break;
+    if ( ply_file_type == PLY_ASCII ) {
+	switch ( type ) {
+	    case TYPE_CHAR:
+	    case TYPE_UCHAR:
+	    case TYPE_SHORT:
+	    case TYPE_USHORT:
+	    case TYPE_INT:
+		if ( fscanf( ply_fp, "%d", &val_int ) != 1 ) {
+		    bu_exit(1, "ERROR parsing data\n" );
 		}
-	} else {
-		if ( !fread( buf1, 1, length[type], ply_fp ) ) {
-			bu_exit(1, "Unexpected EOF while reading data\n" );
+		val = val_int;
+		break;
+	    case TYPE_UINT:
+		if ( fscanf( ply_fp, "%u", &val_uint ) != 1 ) {
+		    bu_exit(1, "ERROR parsing data\n" );
 		}
-		if ( ply_file_type != endianness ) {
-			/* need to swap bytes */
-			switch ( length[type] ) {
-			case 1:
-				/* just copy to buf2 */
-				buf2[0] = buf1[0];
-				break;
-			case 2:
-#if 1
-				buf2[0] = buf1[1];
-				buf2[1] = buf1[0];
-#else
-				swab( buf1, buf2, 2 );
-#endif
-				break;
-			case 4:
-				lswap4( (unsigned int *)buf1, (unsigned int *)buf2 );
-				break;
-			case 8:
-				lswap8( (unsigned long long *)buf1, (unsigned long long *)buf2 );
-				break;
-			default:
-				bu_exit(1, "Property has illegal length (%d)!\n", length[type] );
-				break;
-			}
-		} else {
-			/* just copy to buf2 */
-			memcpy(buf2, buf1, length[type]);
+		val = val_uint;
+		break;
+	    case TYPE_FLOAT:
+	    case TYPE_DOUBLE:
+		if ( fscanf( ply_fp, "%lf", &val_double ) != 1 ) {
+		    bu_exit(1, "ERROR parsing data\n" );
 		}
-		switch ( type ) {
-		case TYPE_CHAR:
-			val = *((char *)buf2);
-			break;
-		case TYPE_UCHAR:
-			val = *((unsigned char *)buf2);
-			break;
-		case TYPE_SHORT:
-			val = *((short *)buf2);
-			break;
-		case TYPE_USHORT:
-			val = *((unsigned short *)buf2);
-			break;
-		case TYPE_INT:
-			val = *((int *)buf2 );
-			break;
-		case TYPE_UINT:
-			val = *((unsigned int *)buf2);
-			break;
-		case TYPE_FLOAT:
-			val = *((float *)buf2);
-			break;
-		case TYPE_DOUBLE:
-			val = *((double *)buf2);
-			break;
-		}
+		val = val_double;
+		break;
 	}
+    } else {
+	if ( !fread( buf1, 1, length[type], ply_fp ) ) {
+	    bu_exit(1, "Unexpected EOF while reading data\n" );
+	}
+	if ( ply_file_type != endianness ) {
+	    /* need to swap bytes */
+	    switch ( length[type] ) {
+		case 1:
+		    /* just copy to buf2 */
+		    buf2[0] = buf1[0];
+		    break;
+		case 2:
+#if 1
+		    buf2[0] = buf1[1];
+		    buf2[1] = buf1[0];
+#else
+		    swab( buf1, buf2, 2 );
+#endif
+		    break;
+		case 4:
+		    lswap4( (unsigned int *)buf1, (unsigned int *)buf2 );
+		    break;
+		case 8:
+		    lswap8( (unsigned long long *)buf1, (unsigned long long *)buf2 );
+		    break;
+		default:
+		    bu_exit(1, "Property has illegal length (%d)!\n", length[type] );
+		    break;
+	    }
+	} else {
+	    /* just copy to buf2 */
+	    memcpy(buf2, buf1, length[type]);
+	}
+	switch ( type ) {
+	    case TYPE_CHAR:
+		val = *((char *)buf2);
+		break;
+	    case TYPE_UCHAR:
+		val = *((unsigned char *)buf2);
+		break;
+	    case TYPE_SHORT:
+		val = *((short *)buf2);
+		break;
+	    case TYPE_USHORT:
+		val = *((unsigned short *)buf2);
+		break;
+	    case TYPE_INT:
+		val = *((int *)buf2 );
+		break;
+	    case TYPE_UINT:
+		val = *((unsigned int *)buf2);
+		break;
+	    case TYPE_FLOAT:
+		val = *((float *)buf2);
+		break;
+	    case TYPE_DOUBLE:
+		val = *((double *)buf2);
+		break;
+	}
+    }
 
-	return( val );
+    return( val );
 }
 
 struct element *
 new_element(char *str)
 {
-	struct element *ptr;
-	char *c;
+    struct element *ptr;
+    char *c;
 
+    if ( verbose ) {
+	bu_log( "Creating a new element structure\n" );
+    }
+
+    ptr = (struct element *)bu_calloc( 1, sizeof( struct element ), "element" );
+
+    if ( root ) {
+	struct element *ptr2;
+
+	ptr2 = root;
+	while ( ptr2->next != NULL ) {
+	    ptr2 = ptr2->next;
+	}
+
+	ptr2->next = ptr;
+    } else {
 	if ( verbose ) {
-		bu_log( "Creating a new element structure\n" );
+	    bu_log( "This element will be the root\n" );
 	}
+	root = ptr;
+    }
 
-	ptr = (struct element *)bu_calloc( 1, sizeof( struct element ), "element" );
+    c = strtok( str, " \t" );
+    if ( !c ) {
+	bu_log( "Error parsing line %s\n", line );
+	bu_free( (char *)ptr, "element" );
+	return( (struct element *)NULL );
+    }
 
-	if ( root ) {
-		struct element *ptr2;
+    if ( !strncmp( c, "vertex", 6 ) ) {
+	/* this is a vertex element */
+	ptr->type = ELEMENT_VERTEX;
+    } else if ( !strncmp( c, "face", 4 ) ) {
+	/* this ia a face element */
+	ptr->type = ELEMENT_FACE;
+    } else {
+	ptr->type = ELEMENT_OTHER;
+    }
 
-		ptr2 = root;
-		while ( ptr2->next != NULL ) {
-			ptr2 = ptr2->next;
-		}
+    c = strtok( (char *)NULL, " \t" );
+    if ( !c ) {
+	bu_log( "Error parsing line %s\n", line );
+	bu_free( (char *)ptr, "element" );
+	return( (struct element *)NULL );
+    }
 
-		ptr2->next = ptr;
-	} else {
-		if ( verbose ) {
-			bu_log( "This element will be the root\n" );
-		}
-		root = ptr;
-	}
+    ptr->count = atoi( c );
 
-	c = strtok( str, " \t" );
-	if ( !c ) {
-		bu_log( "Error parsing line %s\n", line );
-		bu_free( (char *)ptr, "element" );
-		return( (struct element *)NULL );
-	}
-
-	if ( !strncmp( c, "vertex", 6 ) ) {
-		/* this is a vertex element */
-		ptr->type = ELEMENT_VERTEX;
-	} else if ( !strncmp( c, "face", 4 ) ) {
-		/* this ia a face element */
-		ptr->type = ELEMENT_FACE;
-	} else {
-		ptr->type = ELEMENT_OTHER;
-	}
-
-	c = strtok( (char *)NULL, " \t" );
-	if ( !c ) {
-		bu_log( "Error parsing line %s\n", line );
-		bu_free( (char *)ptr, "element" );
-		return( (struct element *)NULL );
-	}
-
-	ptr->count = atoi( c );
-
-	return( ptr );
+    return( ptr );
 }
 
 int
 get_property( struct element *ptr )
 {
-	char *c;
-	char *tmp_buf;
-	struct prop *p;
-	int i;
+    char *c;
+    char *tmp_buf;
+    struct prop *p;
+    int i;
 
-	if ( !ptr->props ) {
-		ptr->props = (struct prop *)bu_calloc( 1, sizeof( struct prop ), "property" );
-		p = ptr->props;
-	} else {
-		p = ptr->props;
-		while ( p->next ) {
-			p = p->next;
-		}
-		p->next = (struct prop *)bu_calloc( 1, sizeof( struct prop ), "property" );
-		p = p->next;
+    if ( !ptr->props ) {
+	ptr->props = (struct prop *)bu_calloc( 1, sizeof( struct prop ), "property" );
+	p = ptr->props;
+    } else {
+	p = ptr->props;
+	while ( p->next ) {
+	    p = p->next;
+	}
+	p->next = (struct prop *)bu_calloc( 1, sizeof( struct prop ), "property" );
+	p = p->next;
+    }
+
+    tmp_buf = bu_strdup( line );
+
+    c = strtok( tmp_buf, " \t" );
+    if ( c ) {
+	if ( strcmp( c, "property" ) ) {
+	    bu_exit(1, "get_property called for non-property, line = %s\n", line );
+	}
+    } else {
+	bu_exit(1, "Unexpected EOL while parsing property, line = %s\n", line );
+    }
+
+    c = strtok( (char *)NULL, " \t" );
+    if ( !c ) {
+	bu_exit(1, "Unexpected EOL while parsing property, line = %s\n", line );
+    }
+
+    if ( !strcmp( c, "list" ) ) {
+	if ( verbose ) {
+	    bu_log( "\tfound a list\n" );
 	}
 
-	tmp_buf = bu_strdup( line );
-
-	c = strtok( tmp_buf, " \t" );
-	if ( c ) {
-		if ( strcmp( c, "property" ) ) {
-			bu_exit(1, "get_property called for non-property, line = %s\n", line );
-		}
-	} else {
-		bu_exit(1, "Unexpected EOL while parsing property, line = %s\n", line );
-	}
+	p->type = PROP_LIST_TYPE;
 
 	c = strtok( (char *)NULL, " \t" );
 	if ( !c ) {
-		bu_exit(1, "Unexpected EOL while parsing property, line = %s\n", line );
+	    bu_exit(1, "Unexpected EOL while parsing property, line = %s\n", line );
+	}
+	i = 0;
+	while ( types[i] ) {
+	    if ( !strcmp( c, types[i] ) || !strcmp( c, types2[i] ) ) {
+		p->index_type = i;
+		break;
+	    }
+	    i++;
 	}
 
-	if ( !strcmp( c, "list" ) ) {
-		if ( verbose ) {
-			bu_log( "\tfound a list\n" );
-		}
-
-		p->type = PROP_LIST_TYPE;
-
-		c = strtok( (char *)NULL, " \t" );
-		if ( !c ) {
-			bu_exit(1, "Unexpected EOL while parsing property, line = %s\n", line );
-		}
-		i = 0;
-		while ( types[i] ) {
-			if ( !strcmp( c, types[i] ) || !strcmp( c, types2[i] ) ) {
-				p->index_type = i;
-				break;
-			}
-			i++;
-		}
-
-		if ( !types[i] ) {
-			bu_exit(1, "Cannot find property type for line %s\n", line );
-		}
-
-
-		c = strtok( (char *)NULL, " \t" );
-		if ( !c ) {
-			bu_exit(1, "Unexpected EOL while parsing property, line = %s\n", line );
-		}
-		i = 0;
-		while ( types[i] ) {
-			if ( !strcmp( c, types[i] ) || !strcmp( c, types2[i] ) ) {
-				p->list_type = i;
-				break;
-			}
-			i++;
-		}
-
-		if ( !types[i] ) {
-			bu_log( "Cannot find property type for line %s\n", line );
-			bu_exit(1, "type = %s\n", c );
-		}
-
-
-	} else {
-		i = 0;
-		while ( types[i] ) {
-			if ( !strcmp( c, types[i] ) || !strcmp( c, types2[i] ) ) {
-				p->type = i;
-				break;
-			}
-			i++;
-		}
-
-		if ( !types[i] ) {
-			bu_log( "Cannot find property type for line %s\n", line );
-			bu_exit(1, "type = %s\n", c );
-		}
+	if ( !types[i] ) {
+	    bu_exit(1, "Cannot find property type for line %s\n", line );
 	}
+
 
 	c = strtok( (char *)NULL, " \t" );
 	if ( !c ) {
-		bu_exit(1, "Unexpected EOL while parsing property, line = %s\n", line );
+	    bu_exit(1, "Unexpected EOL while parsing property, line = %s\n", line );
+	}
+	i = 0;
+	while ( types[i] ) {
+	    if ( !strcmp( c, types[i] ) || !strcmp( c, types2[i] ) ) {
+		p->list_type = i;
+		break;
+	    }
+	    i++;
 	}
 
-	p->name = bu_strdup( c );
+	if ( !types[i] ) {
+	    bu_log( "Cannot find property type for line %s\n", line );
+	    bu_exit(1, "type = %s\n", c );
+	}
 
-	bu_free( tmp_buf, "copy of line" );
-	return( 0 );
+
+    } else {
+	i = 0;
+	while ( types[i] ) {
+	    if ( !strcmp( c, types[i] ) || !strcmp( c, types2[i] ) ) {
+		p->type = i;
+		break;
+	    }
+	    i++;
+	}
+
+	if ( !types[i] ) {
+	    bu_log( "Cannot find property type for line %s\n", line );
+	    bu_exit(1, "type = %s\n", c );
+	}
+    }
+
+    c = strtok( (char *)NULL, " \t" );
+    if ( !c ) {
+	bu_exit(1, "Unexpected EOL while parsing property, line = %s\n", line );
+    }
+
+    p->name = bu_strdup( c );
+
+    bu_free( tmp_buf, "copy of line" );
+    return( 0 );
 }
 
 int
 read_ply_header()
 {
 
+    if ( verbose ) {
+	bu_log( "Reading header...\n" );
+    }
+    if ( bu_fgets( line, MAX_LINE_SIZE, ply_fp ) == NULL ) {
+	bu_log( "Unexpected EOF in input file!\n" );
+	return( 1 );
+    }
+    if ( strncmp( line, "ply", 3 ) ) {
+	bu_log( "Input file does not appear to be a PLY file!\n" );
+	return( 1 );
+    }
+    while ( bu_fgets( line, MAX_LINE_SIZE, ply_fp ) ) {
+	struct element *elem_ptr;
+	int len;
+
+	len = strlen( line );
+	len--;
+	while ( len && isspace( line[len] ) ) {
+	    line[len] = '\0';
+	    len--;
+	}
+
 	if ( verbose ) {
-		bu_log( "Reading header...\n" );
+	    bu_log( "Processing line:%s\n", line );
 	}
-	if ( bu_fgets( line, MAX_LINE_SIZE, ply_fp ) == NULL ) {
-		bu_log( "Unexpected EOF in input file!\n" );
+
+	if ( !strncmp( line, "end_header", 10 ) ) {
+	    if ( verbose ) {
+		bu_log( "Found end of header\n" );
+	    }
+	    break;
+	}
+
+	if ( !strncmp( line, "comment", 7 ) ) {
+	    /* comment */
+	    bu_log( "%s\n", line );
+	    continue;
+	}
+
+	if ( !strncmp( line, "format", 6 ) ) {
+	    /* format specification */
+	    if ( !strncmp( &line[7], "ascii", 5 ) ) {
+		ply_file_type = PLY_ASCII;
+	    } else if ( !strncmp( &line[7], "binary_big_endian", 17 ) ) {
+		ply_file_type = PLY_BIN_BIG_ENDIAN;
+	    } else if ( !strncmp( &line[7], "binary_little_endian", 20 ) ) {
+		ply_file_type = PLY_BIN_LITTLE_ENDIAN;
+	    } else {
+		bu_log( "Unrecognized PLY format:%s\n", line );
 		return( 1 );
-	}
-	if ( strncmp( line, "ply", 3 ) ) {
-		bu_log( "Input file does not appear to be a PLY file!\n" );
-		return( 1 );
-	}
-	while ( bu_fgets( line, MAX_LINE_SIZE, ply_fp ) ) {
-		struct element *elem_ptr;
-		int len;
+	    }
 
-		len = strlen( line );
-		len--;
-		while ( len && isspace( line[len] ) ) {
-			line[len] = '\0';
-			len--;
-		}
-
-		if ( verbose ) {
-			bu_log( "Processing line:%s\n", line );
-		}
-
-		if ( !strncmp( line, "end_header", 10 ) ) {
-			if ( verbose ) {
-				bu_log( "Found end of header\n" );
-			}
+	    if ( verbose ) {
+		switch ( ply_file_type ) {
+		    case PLY_ASCII:
+			bu_log( "This is an ASCII PLY file\n" );
+			break;
+		    case PLY_BIN_BIG_ENDIAN:
+			bu_log( "This is a binary big endian PLY file\n" );
+			break;
+		    case PLY_BIN_LITTLE_ENDIAN:
+			bu_log( "This is a binary little endian PLY file\n" );
 			break;
 		}
-
-		if ( !strncmp( line, "comment", 7 ) ) {
-			/* comment */
-			bu_log( "%s\n", line );
-			continue;
-		}
-
-		if ( !strncmp( line, "format", 6 ) ) {
-			/* format specification */
-			if ( !strncmp( &line[7], "ascii", 5 ) ) {
-				ply_file_type = PLY_ASCII;
-			} else if ( !strncmp( &line[7], "binary_big_endian", 17 ) ) {
-				ply_file_type = PLY_BIN_BIG_ENDIAN;
-			} else if ( !strncmp( &line[7], "binary_little_endian", 20 ) ) {
-				ply_file_type = PLY_BIN_LITTLE_ENDIAN;
-			} else {
-				bu_log( "Unrecognized PLY format:%s\n", line );
-				return( 1 );
-			}
-
-			if ( verbose ) {
-				switch ( ply_file_type ) {
-				case PLY_ASCII:
-					bu_log( "This is an ASCII PLY file\n" );
-					break;
-				case PLY_BIN_BIG_ENDIAN:
-					bu_log( "This is a binary big endian PLY file\n" );
-					break;
-				case PLY_BIN_LITTLE_ENDIAN:
-					bu_log( "This is a binary little endian PLY file\n" );
-					break;
-				}
-			}
-		} else if ( !strncmp( line, "element", 7 ) ) {
-			/* found an element description */
-			if ( verbose ) {
-				bu_log( "Found an element\n" );
-			}
-			elem_ptr = new_element( &line[8] );
-		} else if ( !strncmp( line, "property", 8 ) ) {
-			if ( !elem_ptr ) {
-				bu_log( "Encountered \"property\" before \"element\"\n" );
-				return( 1 );
-			}
-			if ( get_property( elem_ptr ) ) {
-				return( 1 );
-			}
-		}
+	    }
+	} else if ( !strncmp( line, "element", 7 ) ) {
+	    /* found an element description */
+	    if ( verbose ) {
+		bu_log( "Found an element\n" );
+	    }
+	    elem_ptr = new_element( &line[8] );
+	} else if ( !strncmp( line, "property", 8 ) ) {
+	    if ( !elem_ptr ) {
+		bu_log( "Encountered \"property\" before \"element\"\n" );
+		return( 1 );
+	    }
+	    if ( get_property( elem_ptr ) ) {
+		return( 1 );
+	    }
 	}
+    }
 
-	return 0;
+    return 0;
 }
 
 int
 read_ply_data( struct rt_bot_internal *bot )
 {
-	struct element *elem_ptr;
-	struct prop *p;
-	int i;
+    struct element *elem_ptr;
+    struct prop *p;
+    int i;
 
-	elem_ptr = root;
-	while ( elem_ptr ) {
-		for ( i=0; i<elem_ptr->count; i++ ) {
-			switch ( elem_ptr->type ) {
-			case ELEMENT_VERTEX:
-				cur_vertex++;
-				p = elem_ptr->props;
-				while ( p ) {
-					if ( !strcmp( p->name, "x" ) ) {
-						bot->vertices[cur_vertex*3] = get_double(p->type );
-					} else if ( !strcmp( p->name, "y" ) ) {
-						bot->vertices[cur_vertex*3+1] = get_double(p->type );
-					} else if ( !strcmp( p->name, "z" ) ) {
-						bot->vertices[cur_vertex*3+2] = get_double(p->type );
-					} else {
-						skip( p->type );
-					}
-					p = p->next;
-				}
-				break;
-			case ELEMENT_FACE:
-				cur_face++;
-				p = elem_ptr->props;
-				while ( p ) {
-					if ( p->type == PROP_LIST_TYPE ) {
-						int vcount;
-						int index;
-						int v[4];
-
-						vcount = get_int( p->index_type );
-
-						if ( vcount < 3 || vcount > 4) {
-							bu_log( "ignoring face with %d vertices\n", vcount );
-							for ( index=0; index < vcount; index++ ) {
-								skip( p->list_type );
-							}
-							continue;
-						}
-
-						for ( index=0; index < vcount; index++ ) {
-							v[index] = get_int( p->list_type );
-							bot->faces[cur_face*3+index] = v[index];
-						}
-
-						if ( vcount == 4 ) {
-							/* need to break this into two BOT faces */
-							bot->num_faces++;
-							bot->faces = (int *)bu_realloc( bot->faces,
-											bot->num_faces * 3 * sizeof( int ),
-											"bot_faces" );
-							cur_face++;
-							/* bot->faces[cur_face*3] was already set above when index == 4 */
-							bot->faces[cur_face*3+1] = v[0];
-							bot->faces[cur_face*3+2] = v[2];
-						}
-
-					}
-					p = p->next;
-				}
-				break;
+    elem_ptr = root;
+    while ( elem_ptr ) {
+	for ( i=0; i<elem_ptr->count; i++ ) {
+	    switch ( elem_ptr->type ) {
+		case ELEMENT_VERTEX:
+		    cur_vertex++;
+		    p = elem_ptr->props;
+		    while ( p ) {
+			if ( !strcmp( p->name, "x" ) ) {
+			    bot->vertices[cur_vertex*3] = get_double(p->type );
+			} else if ( !strcmp( p->name, "y" ) ) {
+			    bot->vertices[cur_vertex*3+1] = get_double(p->type );
+			} else if ( !strcmp( p->name, "z" ) ) {
+			    bot->vertices[cur_vertex*3+2] = get_double(p->type );
+			} else {
+			    skip( p->type );
 			}
+			p = p->next;
+		    }
+		    break;
+		case ELEMENT_FACE:
+		    cur_face++;
+		    p = elem_ptr->props;
+		    while ( p ) {
+			if ( p->type == PROP_LIST_TYPE ) {
+			    int vcount;
+			    int index;
+			    int v[4];
 
-		}
-		elem_ptr = elem_ptr->next;
+			    vcount = get_int( p->index_type );
+
+			    if ( vcount < 3 || vcount > 4) {
+				bu_log( "ignoring face with %d vertices\n", vcount );
+				for ( index=0; index < vcount; index++ ) {
+				    skip( p->list_type );
+				}
+				continue;
+			    }
+
+			    for ( index=0; index < vcount; index++ ) {
+				v[index] = get_int( p->list_type );
+				bot->faces[cur_face*3+index] = v[index];
+			    }
+
+			    if ( vcount == 4 ) {
+				/* need to break this into two BOT faces */
+				bot->num_faces++;
+				bot->faces = (int *)bu_realloc( bot->faces,
+								bot->num_faces * 3 * sizeof( int ),
+								"bot_faces" );
+				cur_face++;
+				/* bot->faces[cur_face*3] was already set above when index == 4 */
+				bot->faces[cur_face*3+1] = v[0];
+				bot->faces[cur_face*3+2] = v[2];
+			    }
+
+			}
+			p = p->next;
+		    }
+		    break;
+	    }
+
 	}
+	elem_ptr = elem_ptr->next;
+    }
 
-	return( 0 );
+    return( 0 );
 }
 
 int
 main( int argc, char *argv[] )
 {
-	struct rt_bot_internal *bot;
-	struct element *elem_ptr;
-	int c;
+    struct rt_bot_internal *bot;
+    struct element *elem_ptr;
+    int c;
 
-	/* get command line arguments */
-	while ((c = bu_getopt(argc, argv, "dvs:")) != EOF)
+    /* get command line arguments */
+    while ((c = bu_getopt(argc, argv, "dvs:")) != EOF)
+    {
+	switch ( c )
 	{
-		switch ( c )
-		{
-			case 's':	/* scale factor */
-				scale_factor = atof( bu_optarg );
-				if ( scale_factor < SQRT_SMALL_FASTF ) {
-					bu_log( "scale factor too small\n" );
-					bu_exit(1, "%s\n", usage );
-				}
-				break;
-			case 'd':	/* debug */
-				bu_debug = BU_DEBUG_COREDUMP;
-				break;
-			case 'v':	/* verbose */
-				verbose = 1;
-				break;
-			default:
-				bu_log( "%s\n", usage );
-				break;
+	    case 's':	/* scale factor */
+		scale_factor = atof( bu_optarg );
+		if ( scale_factor < SQRT_SMALL_FASTF ) {
+		    bu_log( "scale factor too small\n" );
+		    bu_exit(1, "%s\n", usage );
 		}
+		break;
+	    case 'd':	/* debug */
+		bu_debug = BU_DEBUG_COREDUMP;
+		break;
+	    case 'v':	/* verbose */
+		verbose = 1;
+		break;
+	    default:
+		bu_log( "%s\n", usage );
+		break;
 	}
+    }
 
-	if ( argc - bu_optind < 2 ) {
-		bu_exit(1, "%s\n", usage );
+    if ( argc - bu_optind < 2 ) {
+	bu_exit(1, "%s\n", usage );
+    }
+
+    ply_file = argv[bu_optind++];
+    brlcad_file = argv[bu_optind];
+
+    if ( (out_fp = wdb_fopen( brlcad_file )) == NULL ) {
+	perror( brlcad_file );
+	bu_exit(1, "ERROR: Cannot open output file (%s)\n", brlcad_file );
+    }
+
+    if ( (ply_fp=fopen( ply_file, "rb")) == NULL ) {
+	perror( ply_file );
+	bu_exit(1, "ERROR: Cannot open PLY file (%s)\n", ply_file );
+    }
+
+    endianness = get_endianness();
+    if ( verbose ) {
+	if ( endianness == PLY_BIN_BIG_ENDIAN ) {
+	    bu_log( "This machine is BigEndian\n" );
+	} else {
+	    bu_log( "This machine is LittleEndian\n" );
 	}
+    }
 
-	ply_file = argv[bu_optind++];
-	brlcad_file = argv[bu_optind];
+    /* read header */
+    if ( read_ply_header() ) {
+	bu_exit( 1, "ERROR: File does not seem to be a PLY file\n" );
+    }
 
-	if ( (out_fp = wdb_fopen( brlcad_file )) == NULL ) {
-		perror( brlcad_file );
-		bu_exit(1, "ERROR: Cannot open output file (%s)\n", brlcad_file );
+    if ( verbose ) {
+	log_elements();
+    }
+
+    /* malloc BOT storage */
+    bot = (struct rt_bot_internal *)bu_calloc( 1, sizeof( struct rt_bot_internal ), "BOT" );
+    bot->magic = RT_BOT_INTERNAL_MAGIC;
+    bot->mode = RT_BOT_SURFACE;
+    bot->orientation = RT_BOT_UNORIENTED;
+    bot->num_vertices = 0;
+    bot->num_faces = 0;
+
+    elem_ptr = root;
+    while ( elem_ptr ) {
+	switch ( elem_ptr->type ) {
+	    case ELEMENT_VERTEX:
+		bot->num_vertices += elem_ptr->count;
+		break;
+	    case ELEMENT_FACE:
+		bot->num_faces += elem_ptr->count;
+		break;
 	}
+	elem_ptr = elem_ptr->next;
+    }
 
-	if ( (ply_fp=fopen( ply_file, "rb")) == NULL ) {
-		perror( ply_file );
-		bu_exit(1, "ERROR: Cannot open PLY file (%s)\n", ply_file );
-	}
-
-	endianness = get_endianness();
-	if ( verbose ) {
-		if ( endianness == PLY_BIN_BIG_ENDIAN ) {
-			bu_log( "This machine is BigEndian\n" );
-		} else {
-			bu_log( "This machine is LittleEndian\n" );
-		}
-	}
-
-	/* read header */
-	if ( read_ply_header() ) {
-		bu_exit( 1, "ERROR: File does not seem to be a PLY file\n" );
-	}
-
-	if ( verbose ) {
-		log_elements();
-	}
-
-	/* malloc BOT storage */
-	bot = (struct rt_bot_internal *)bu_calloc( 1, sizeof( struct rt_bot_internal ), "BOT" );
-	bot->magic = RT_BOT_INTERNAL_MAGIC;
-	bot->mode = RT_BOT_SURFACE;
-	bot->orientation = RT_BOT_UNORIENTED;
-	bot->num_vertices = 0;
-	bot->num_faces = 0;
-
-	elem_ptr = root;
-	while ( elem_ptr ) {
-		switch ( elem_ptr->type ) {
-		case ELEMENT_VERTEX:
-			bot->num_vertices += elem_ptr->count;
-			break;
-		case ELEMENT_FACE:
-			bot->num_faces += elem_ptr->count;
-			break;
-		}
-		elem_ptr = elem_ptr->next;
-	}
-
-	if ( bot->num_faces < 1 || bot->num_vertices < 1 ) {
-		bu_log( "This PLY file appears to contain no geometry!\n" );
-		return( 0 );
-	}
-
-	bot->faces = (int *)bu_calloc( bot->num_faces * 3, sizeof( int ), "bot faces" );
-	bot->vertices = (fastf_t *)bu_calloc( bot->num_vertices * 3, sizeof( fastf_t ), "bot vertices" );
-
-	read_ply_data( bot );
-
-	wdb_export( out_fp, "ply_bot", (genptr_t)bot, ID_BOT, 1.0 );
-
+    if ( bot->num_faces < 1 || bot->num_vertices < 1 ) {
+	bu_log( "This PLY file appears to contain no geometry!\n" );
 	return( 0 );
+    }
+
+    bot->faces = (int *)bu_calloc( bot->num_faces * 3, sizeof( int ), "bot faces" );
+    bot->vertices = (fastf_t *)bu_calloc( bot->num_vertices * 3, sizeof( fastf_t ), "bot vertices" );
+
+    read_ply_data( bot );
+
+    wdb_export( out_fp, "ply_bot", (genptr_t)bot, ID_BOT, 1.0 );
+
+    return( 0 );
 }
 
 /*

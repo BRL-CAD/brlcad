@@ -131,48 +131,48 @@ HIDDEN int ogl_help(FBIO *ifp);
 
 /* This is the ONLY thing that we normally "export" */
 FBIO ogl_interface =
-    {
-	0,			/* magic number slot	*/
-	fb_ogl_open,		/* open device		*/
-	fb_ogl_close,		/* close device		*/
-	ogl_clear,		/* clear device		*/
-	ogl_read,		/* read	pixels		*/
-	ogl_write,		/* write pixels		*/
-	ogl_rmap,		/* read colormap	*/
-	ogl_wmap,		/* write colormap	*/
-	ogl_view,		/* set view		*/
-	ogl_getview,		/* get view		*/
-	ogl_setcursor,		/* define cursor	*/
-	ogl_cursor,		/* set cursor		*/
-	fb_sim_getcursor,	/* get cursor		*/
-	fb_sim_readrect,	/* read rectangle	*/
-	ogl_writerect,		/* write rectangle	*/
-	fb_sim_bwreadrect,
-	ogl_bwwriterect,	/* write rectangle	*/
-	ogl_poll,		/* process events	*/
-	ogl_flush,		/* flush output		*/
-	ogl_free,		/* free resources	*/
-	ogl_help,		/* help message		*/
-	"Silicon Graphics OpenGL",	/* device description	*/
-	XMAXSCREEN+1,			/* max width		*/
-	YMAXSCREEN+1,			/* max height		*/
-	"/dev/ogl",		/* short device name	*/
-	512,			/* default/current width  */
-	512,			/* default/current height */
-	-1,			/* select file desc	*/
-	-1,			/* file descriptor	*/
-	1, 1,			/* zoom			*/
-	256, 256,		/* window center	*/
-	0, 0, 0,		/* cursor		*/
-	PIXEL_NULL,		/* page_base		*/
-	PIXEL_NULL,		/* page_curp		*/
-	PIXEL_NULL,		/* page_endp		*/
-	-1,			/* page_no		*/
-	0,			/* page_dirty		*/
-	0L,			/* page_curpos		*/
-	0L,			/* page_pixels		*/
-	0			/* debug		*/
-    };
+{
+    0,			/* magic number slot	*/
+    fb_ogl_open,		/* open device		*/
+    fb_ogl_close,		/* close device		*/
+    ogl_clear,		/* clear device		*/
+    ogl_read,		/* read	pixels		*/
+    ogl_write,		/* write pixels		*/
+    ogl_rmap,		/* read colormap	*/
+    ogl_wmap,		/* write colormap	*/
+    ogl_view,		/* set view		*/
+    ogl_getview,		/* get view		*/
+    ogl_setcursor,		/* define cursor	*/
+    ogl_cursor,		/* set cursor		*/
+    fb_sim_getcursor,	/* get cursor		*/
+    fb_sim_readrect,	/* read rectangle	*/
+    ogl_writerect,		/* write rectangle	*/
+    fb_sim_bwreadrect,
+    ogl_bwwriterect,	/* write rectangle	*/
+    ogl_poll,		/* process events	*/
+    ogl_flush,		/* flush output		*/
+    ogl_free,		/* free resources	*/
+    ogl_help,		/* help message		*/
+    "Silicon Graphics OpenGL",	/* device description	*/
+    XMAXSCREEN+1,			/* max width		*/
+    YMAXSCREEN+1,			/* max height		*/
+    "/dev/ogl",		/* short device name	*/
+    512,			/* default/current width  */
+    512,			/* default/current height */
+    -1,			/* select file desc	*/
+    -1,			/* file descriptor	*/
+    1, 1,			/* zoom			*/
+    256, 256,		/* window center	*/
+    0, 0, 0,		/* cursor		*/
+    PIXEL_NULL,		/* page_base		*/
+    PIXEL_NULL,		/* page_curp		*/
+    PIXEL_NULL,		/* page_endp		*/
+    -1,			/* page_no		*/
+    0,			/* page_dirty		*/
+    0L,			/* page_curpos		*/
+    0L,			/* page_pixels		*/
+    0			/* debug		*/
+};
 
 
 /*
@@ -447,7 +447,7 @@ ogl_getmem(FBIO *ifp)
     if ( (SGI(ifp)->mi_shmid = shmget( SHMEM_KEY, size, 0 )) < 0 )  {
 	/* No existing one, create a new one */
 	if ( (SGI(ifp)->mi_shmid = shmget(
-					 SHMEM_KEY, size, IPC_CREAT|0666 )) < 0 )  {
+		  SHMEM_KEY, size, IPC_CREAT|0666 )) < 0 )  {
 	    fb_log("ogl_getmem: shmget failed, errno=%d\n", errno);
 	    goto fail;
 	}
@@ -586,27 +586,27 @@ ogl_xmit_scanlines(register FBIO *ifp, int ybase, int nlines, int xbase, int npi
 	    /* Blank out area left of image */
 	    glColor3b( 0, 0, 0 );
 	    if ( clp->xscrmin < 0 )  glRecti(clp->xscrmin - CLIP_XTRA,
-					    clp->yscrmin - CLIP_XTRA,
-					    CLIP_XTRA,
-					    clp->yscrmax + CLIP_XTRA);
+					     clp->yscrmin - CLIP_XTRA,
+					     CLIP_XTRA,
+					     clp->yscrmax + CLIP_XTRA);
 
 	    /* Blank out area below image */
 	    if ( clp->yscrmin < 0 )  glRecti(clp->xscrmin - CLIP_XTRA,
-					    clp->yscrmin - CLIP_XTRA,
-					    clp->xscrmax + CLIP_XTRA,
-					    CLIP_XTRA);
+					     clp->yscrmin - CLIP_XTRA,
+					     clp->xscrmax + CLIP_XTRA,
+					     CLIP_XTRA);
 
 	    /* Blank out area right of image */
 	    if ( clp->xscrmax >= ifp->if_width )  glRecti(ifp->if_width - CLIP_XTRA,
-							 clp->yscrmin - CLIP_XTRA,
-							 clp->xscrmax + CLIP_XTRA,
-							 clp->yscrmax + CLIP_XTRA);
+							  clp->yscrmin - CLIP_XTRA,
+							  clp->xscrmax + CLIP_XTRA,
+							  clp->yscrmax + CLIP_XTRA);
 
 	    /* Blank out area above image */
 	    if ( clp->yscrmax >= ifp->if_height )  glRecti(clp->xscrmin - CLIP_XTRA,
-							  ifp->if_height- CLIP_XTRA,
-							  clp->xscrmax + CLIP_XTRA,
-							  clp->yscrmax + CLIP_XTRA);
+							   ifp->if_height- CLIP_XTRA,
+							   clp->xscrmax + CLIP_XTRA,
+							   clp->yscrmax + CLIP_XTRA);
 
 	} else if (OGL(ifp)->front_flag) {
 	    /* in COPY mode, always draw full sized image into backbuffer.
@@ -636,8 +636,8 @@ ogl_xmit_scanlines(register FBIO *ifp, int ybase, int nlines, int xbase, int npi
 	op = SGI(ifp)->mi_scanline;
 	for ( n=nlines; n>0; n--, y++ )  {
 	    oglp = (struct ogl_pixel *)&ifp->if_mem[
-						    (y*SGI(ifp)->mi_memwidth)*
-						    sizeof(struct ogl_pixel) ];
+		(y*SGI(ifp)->mi_memwidth)*
+		sizeof(struct ogl_pixel) ];
 	    for ( x=xbase+npix-1; x>=xbase; x-- )  {
 		op[x].red   = CMR(ifp)[oglp[x].red];
 		op[x].green = CMG(ifp)[oglp[x].green];
@@ -831,12 +831,12 @@ fb_ogl_open(FBIO *ifp, char *file, int width, int height)
 
     /* Build a descriptive window title bar */
     (void)snprintf( title, 128, "BRL-CAD /dev/ogl %s, %s",
-		   ((ifp->if_mode & MODE_2MASK) == MODE_2TRANSIENT) ?
-		   "Transient Win":
-		   "Lingering Win",
-		   ((ifp->if_mode & MODE_1MASK) == MODE_1MALLOC) ?
-		   "Private Mem" :
-		   "Shared Mem" );
+		    ((ifp->if_mode & MODE_2MASK) == MODE_2TRANSIENT) ?
+		    "Transient Win":
+		    "Lingering Win",
+		    ((ifp->if_mode & MODE_1MASK) == MODE_1MALLOC) ?
+		    "Private Mem" :
+		    "Shared Mem" );
 
 
     /* initialize window state variables before calling ogl_getmem */
@@ -875,7 +875,7 @@ fb_ogl_open(FBIO *ifp, char *file, int width, int height)
 	OGL(ifp)->glxc = glXCreateContext(OGL(ifp)->dispp,
 					  OGL(ifp)->vip, 0, False);
     } else {
- 		/* try direct context */
+	/* try direct context */
 	OGL(ifp)->glxc = glXCreateContext(OGL(ifp)->dispp,
 					  OGL(ifp)->vip, 0, True);
     }
@@ -916,7 +916,7 @@ fb_ogl_open(FBIO *ifp, char *file, int width, int height)
 	}
 	XStoreColors(OGL(ifp)->dispp, OGL(ifp)->xcmap, color_cell, 256);
     } else {
-  /* read only colormap */
+	/* read only colormap */
 	if ( CJDEBUG ) {
 	    printf("Allocating read-only colormap.");
 	}
@@ -1167,7 +1167,7 @@ fb_ogl_close(FBIO *ifp)
      * call final_close if not lingering
      */
     if ( ogl_nwindows > 1 ||
-	(ifp->if_mode & MODE_2MASK) == MODE_2TRANSIENT )
+	 (ifp->if_mode & MODE_2MASK) == MODE_2TRANSIENT )
 	return ogl_final_close( ifp );
 
     if ( CJDEBUG )
@@ -1285,7 +1285,7 @@ ogl_free(FBIO *ifp)
 HIDDEN int
 ogl_clear(FBIO *ifp, unsigned char *pp)
 
-     /* pointer to beginning of memory segment*/
+    /* pointer to beginning of memory segment*/
 {
     struct ogl_pixel		bg;
     register struct ogl_pixel      *oglp;
@@ -1318,7 +1318,7 @@ ogl_clear(FBIO *ifp, unsigned char *pp)
     /* Flood rectangle in shared memory */
     for ( y=0; y < ifp->if_height; y++ )  {
 	oglp = (struct ogl_pixel *)&ifp->if_mem[
-						(y*SGI(ifp)->mi_memwidth+0)*sizeof(struct ogl_pixel) ];
+	    (y*SGI(ifp)->mi_memwidth+0)*sizeof(struct ogl_pixel) ];
 	for ( cnt=ifp->if_width-1; cnt >= 0; cnt-- )  {
 	    *oglp++ = bg;	/* struct copy */
 	}
@@ -1372,7 +1372,7 @@ ogl_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
     if ( xzoom < 1 ) xzoom = 1;
     if ( yzoom < 1 ) yzoom = 1;
     if ( ifp->if_xcenter == xcenter && ifp->if_ycenter == ycenter
-	&& ifp->if_xzoom == xzoom && ifp->if_yzoom == yzoom )
+	 && ifp->if_xzoom == xzoom && ifp->if_yzoom == yzoom )
 	return(0);
 
     if ( xcenter < 0 || xcenter >= ifp->if_width )
@@ -1467,7 +1467,7 @@ ogl_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
     if (CJDEBUG) printf("entering ogl_read\n");
 
     if ( x < 0 || x >= ifp->if_width ||
-	y < 0 || y >= ifp->if_height)
+	 y < 0 || y >= ifp->if_height)
 	return(-1);
 
     ret = 0;
@@ -1483,7 +1483,7 @@ ogl_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
 	    scan_count = count;
 
 	oglp = (struct ogl_pixel *)&ifp->if_mem[
-						(y*SGI(ifp)->mi_memwidth+x)*sizeof(struct ogl_pixel) ];
+	    (y*SGI(ifp)->mi_memwidth+x)*sizeof(struct ogl_pixel) ];
 
 	n = scan_count;
 	while ( n )  {
@@ -1529,7 +1529,7 @@ ogl_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, int co
     ybase = y = ystart;
 
     if ( x < 0 || x >= ifp->if_width ||
-	y < 0 || y >= ifp->if_height)
+	 y < 0 || y >= ifp->if_height)
 	return(-1);
 
     ret = 0;
@@ -1548,7 +1548,7 @@ ogl_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, int co
 	    scan_count = pix_count;
 
 	oglp = (struct ogl_pixel *)&ifp->if_mem[
-						(y*SGI(ifp)->mi_memwidth+x)*sizeof(struct ogl_pixel) ];
+	    (y*SGI(ifp)->mi_memwidth+x)*sizeof(struct ogl_pixel) ];
 
 	n = scan_count;
 	if ( (n & 3) != 0 )  {
@@ -1617,12 +1617,12 @@ ogl_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, int co
 	} else {
 	    /* Normal case -- multi-pixel write */
 	    if ( SGI(ifp)->mi_doublebuffer) {
-  /* refresh whole screen */
+		/* refresh whole screen */
 		ogl_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
 		glXSwapBuffers( OGL(ifp)->dispp, OGL(ifp)->wind);
 	    }
 	    else {
-  /* just write rectangle */
+		/* just write rectangle */
 		ogl_xmit_scanlines( ifp, ybase, y-ybase, 0, ifp->if_width );
 		if (OGL(ifp)->copy_flag) {
 		    backbuffer_to_screen(ifp, -1);
@@ -1661,13 +1661,13 @@ ogl_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsign
     if ( width <= 0 || height <= 0 )
 	return(0);  /* do nothing */
     if ( xmin < 0 || xmin+width > ifp->if_width ||
-	ymin < 0 || ymin+height > ifp->if_height )
+	 ymin < 0 || ymin+height > ifp->if_height )
 	return(-1); /* no can do */
 
     cp = (unsigned char *)(pp);
     for ( y = ymin; y < ymin+height; y++ )  {
 	oglp = (struct ogl_pixel *)&ifp->if_mem[
-						(y*SGI(ifp)->mi_memwidth+xmin)*sizeof(struct ogl_pixel) ];
+	    (y*SGI(ifp)->mi_memwidth+xmin)*sizeof(struct ogl_pixel) ];
 	for ( x = xmin; x < xmin+width; x++ )  {
 	    /* alpha channel is always zero */
 	    oglp->red   = cp[RED];
@@ -1689,12 +1689,12 @@ ogl_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsign
 	}
 
 	if ( SGI(ifp)->mi_doublebuffer) {
-  /* refresh whole screen */
+	    /* refresh whole screen */
 	    ogl_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
 	    glXSwapBuffers( OGL(ifp)->dispp, OGL(ifp)->wind);
 	}
 	else {
-  /* just write rectangle*/
+	    /* just write rectangle*/
 	    ogl_xmit_scanlines( ifp, ymin, height, xmin, width );
 	    if (OGL(ifp)->copy_flag) {
 		backbuffer_to_screen(ifp, -1);
@@ -1732,13 +1732,13 @@ ogl_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsi
     if ( width <= 0 || height <= 0 )
 	return(0);  /* do nothing */
     if ( xmin < 0 || xmin+width > ifp->if_width ||
-	ymin < 0 || ymin+height > ifp->if_height )
+	 ymin < 0 || ymin+height > ifp->if_height )
 	return(-1); /* no can do */
 
     cp = (unsigned char *)(pp);
     for ( y = ymin; y < ymin+height; y++ )  {
 	oglp = (struct ogl_pixel *)&ifp->if_mem[
-						(y*SGI(ifp)->mi_memwidth+xmin)*sizeof(struct ogl_pixel) ];
+	    (y*SGI(ifp)->mi_memwidth+xmin)*sizeof(struct ogl_pixel) ];
 	for ( x = xmin; x < xmin+width; x++ )  {
 	    register int	val;
 	    /* alpha channel is always zero */
@@ -1760,12 +1760,12 @@ ogl_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsi
 	}
 
 	if ( SGI(ifp)->mi_doublebuffer) {
-  /* refresh whole screen */
+	    /* refresh whole screen */
 	    ogl_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
 	    glXSwapBuffers( OGL(ifp)->dispp, OGL(ifp)->wind);
 	}
 	else {
-  /* just write rectangle*/
+	    /* just write rectangle*/
 	    ogl_xmit_scanlines( ifp, ymin, height, xmin, width );
 	    if (OGL(ifp)->copy_flag) {
 		backbuffer_to_screen(ifp, -1);
@@ -2064,7 +2064,7 @@ ogl_flush(FBIO *ifp)
 #if 0
 HIDDEN int
 fb_cnull(ifp)
-     FBIO *ifp;
+    FBIO *ifp;
 {
     return(0);
 }
@@ -2162,60 +2162,60 @@ ogl_do_event(FBIO *ifp)
 		    expose_callback(ifp, &event);
 		break;
 	    case ButtonPress:
-		{
-		    int button = (int) event.xbutton.button;
-		    if (button == Button1) {
-			/* Check for single button mouse remap.
-			 * ctrl-1 => 2
-			 * meta-1 => 3
-			 */
-			if (event.xbutton.state & ControlMask)
-			    button = Button2;
-			else if (event.xbutton.state & Mod1Mask)
-			    button = Button3;
-		    }
-
-		    switch (button) {
-			case Button1:
-			    break;
-			case Button2:
-			    {
-				int	x, y;
-				int	ix, iy;
-				unsigned char	cp[3] = {0};
-
-				x = event.xbutton.x;
-				y = event.xbutton.y;
-
-				if (x < 0 || y < 0) {
-				    fb_log("No RGB (outside image viewport)\n");
-				    break;
-				}
-
-				fb_log("At image (%d, %d), real RGB=(%3d %3d %3d) UNIMPLEMENTED\n",
-				       x, y, cp[RED], cp[GRN], cp[BLU]);
-
-				break;
-			    }
-			case Button3:
-			    OGL(ifp)->alive = 0;
-			    break;
-			default:
-			    fb_log("unhandled mouse event\n");
-			    break;
-		    }
-		    break;
+	    {
+		int button = (int) event.xbutton.button;
+		if (button == Button1) {
+		    /* Check for single button mouse remap.
+		     * ctrl-1 => 2
+		     * meta-1 => 3
+		     */
+		    if (event.xbutton.state & ControlMask)
+			button = Button2;
+		    else if (event.xbutton.state & Mod1Mask)
+			button = Button3;
 		}
+
+		switch (button) {
+		    case Button1:
+			break;
+		    case Button2:
+		    {
+			int	x, y;
+			int	ix, iy;
+			unsigned char	cp[3] = {0};
+
+			x = event.xbutton.x;
+			y = event.xbutton.y;
+
+			if (x < 0 || y < 0) {
+			    fb_log("No RGB (outside image viewport)\n");
+			    break;
+			}
+
+			fb_log("At image (%d, %d), real RGB=(%3d %3d %3d) UNIMPLEMENTED\n",
+			       x, y, cp[RED], cp[GRN], cp[BLU]);
+
+			break;
+		    }
+		    case Button3:
+			OGL(ifp)->alive = 0;
+			break;
+		    default:
+			fb_log("unhandled mouse event\n");
+			break;
+		}
+		break;
+	    }
 	    case ConfigureNotify:
-		{
-		    XConfigureEvent *conf = (XConfigureEvent *)&event;
+	    {
+		XConfigureEvent *conf = (XConfigureEvent *)&event;
 
-		    if (conf->width == OGL(ifp)->win_width &&
-		       conf->height == OGL(ifp)->win_height)
-			return;
+		if (conf->width == OGL(ifp)->win_width &&
+		    conf->height == OGL(ifp)->win_height)
+		    return;
 
-		    ogl_configureWindow(ifp, conf->width, conf->height);
-		}
+		ogl_configureWindow(ifp, conf->width, conf->height);
+	    }
 	    default:
 		break;
 	}
@@ -2233,7 +2233,7 @@ expose_callback(FBIO *ifp, XEvent *eventPtr)
 
     if ( multiple_windows || OGL(ifp)->firstTime ) {
 	if ( glXMakeCurrent(OGL(ifp)->dispp, OGL(ifp)->wind,
-			   OGL(ifp)->glxc) == False) {
+			    OGL(ifp)->glxc) == False) {
 	    fb_log("Warning, libfb/expose_callback: glXMakeCurrent unsuccessful.\n");
 	}
     }
@@ -2255,7 +2255,7 @@ expose_callback(FBIO *ifp, XEvent *eventPtr)
 
 	/* set copy mode if possible and requested */
 	if ( SGI(ifp)->mi_doublebuffer &&
-	    ((ifp->if_mode & MODE_11MASK)==MODE_11COPY) ) {
+	     ((ifp->if_mode & MODE_11MASK)==MODE_11COPY) ) {
 	    /* Copy mode only works if there are two
 	     * buffers to use. It conflicts with
 	     * double buffering
@@ -2303,7 +2303,7 @@ expose_callback(FBIO *ifp, XEvent *eventPtr)
 		 -1.0, 1.0);
 	glPixelZoom((float) ifp->if_xzoom, (float) ifp->if_yzoom);
     } else if ( (OGL(ifp)->win_width > ifp->if_width) ||
-	       (OGL(ifp)->win_height > ifp->if_height) ) {
+		(OGL(ifp)->win_height > ifp->if_height) ) {
 	/* clear whole buffer if window larger than framebuffer */
 	if ( OGL(ifp)->copy_flag && !OGL(ifp)->front_flag ) {
 	    glDrawBuffer(GL_FRONT);
@@ -2361,7 +2361,7 @@ void
 ogl_configureWindow(FBIO *ifp, int width, int height)
 {
     if (width == OGL(ifp)->win_width &&
-       height == OGL(ifp)->win_height)
+	height == OGL(ifp)->win_height)
 	return;
 
     ifp->if_width = ifp->if_max_width = width;
@@ -2426,35 +2426,35 @@ backbuffer_to_screen(register FBIO *ifp, int one_y)
     if (one_y > clp->ypixmax) {
 	return;
     } else if (one_y < 0) {
-  /* do whole visible screen */
+	/* do whole visible screen */
 
 	/* Blank out area left of image */
 	glColor3b( 0, 0, 0 );
 	if ( clp->xscrmin < 0 )  glRecti(clp->xscrmin - CLIP_XTRA,
-					clp->yscrmin - CLIP_XTRA,
-					CLIP_XTRA,
-					clp->yscrmax + CLIP_XTRA);
+					 clp->yscrmin - CLIP_XTRA,
+					 CLIP_XTRA,
+					 clp->yscrmax + CLIP_XTRA);
 
 	/* Blank out area below image */
 	if ( clp->yscrmin < 0 )  glRecti(clp->xscrmin - CLIP_XTRA,
-					clp->yscrmin - CLIP_XTRA,
-					clp->xscrmax + CLIP_XTRA,
-					CLIP_XTRA);
+					 clp->yscrmin - CLIP_XTRA,
+					 clp->xscrmax + CLIP_XTRA,
+					 CLIP_XTRA);
 
 	/* We are in copy mode, so we use vp_width rather
 	 * than if_width
 	 */
 	/* Blank out area right of image */
 	if ( clp->xscrmax >= OGL(ifp)->vp_width )  glRecti(ifp->if_width - CLIP_XTRA,
-							  clp->yscrmin - CLIP_XTRA,
-							  clp->xscrmax + CLIP_XTRA,
-							  clp->yscrmax + CLIP_XTRA);
+							   clp->yscrmin - CLIP_XTRA,
+							   clp->xscrmax + CLIP_XTRA,
+							   clp->yscrmax + CLIP_XTRA);
 
 	/* Blank out area above image */
 	if ( clp->yscrmax >= OGL(ifp)->vp_height )  glRecti(clp->xscrmin - CLIP_XTRA,
-							   OGL(ifp)->vp_height - CLIP_XTRA,
-							   clp->xscrmax + CLIP_XTRA,
-							   clp->yscrmax + CLIP_XTRA);
+							    OGL(ifp)->vp_height - CLIP_XTRA,
+							    clp->xscrmax + CLIP_XTRA,
+							    clp->yscrmax + CLIP_XTRA);
 
 	/* copy image from backbuffer */
 	glRasterPos2i(clp->xpixmin, clp->ypixmin);
@@ -2468,7 +2468,7 @@ backbuffer_to_screen(register FBIO *ifp, int one_y)
     } else if (one_y < clp->ypixmin) {
 	return;
     } else {
-  /* draw one scanline */
+	/* draw one scanline */
 	glRasterPos2i(clp->xpixmin, one_y);
 	glCopyPixels(SGI(ifp)->mi_xoff + clp->xpixmin,
 		     SGI(ifp)->mi_yoff + one_y,

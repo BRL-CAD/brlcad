@@ -87,209 +87,209 @@ Usage: pixflip-fb [-h]\n\
 int
 get_args(int argc, register char **argv)
 {
-	register int c;
+    register int c;
 
-	while ( (c = bu_getopt( argc, argv, "hs:w:n:S:W:N:o:f:p:rzv" )) != EOF )  {
-		switch ( c )  {
-		case 'h':
-			/* high-res */
-			screen_height = screen_width = 1024;
-			break;
-		case 's':
-			/* square input file size */
-			file_height = file_width = atoi(bu_optarg);
-			break;
-		case 'w':
-			file_width = atoi(bu_optarg);
-			break;
-		case 'n':
-			file_height = atoi(bu_optarg);
-			break;
-		case 'S':
-			screen_height = screen_width = atoi(bu_optarg);
-			break;
-		case 'W':
-			screen_width = atoi(bu_optarg);
-			break;
-		case 'N':
-			screen_height = atoi(bu_optarg);
-			break;
-		case 'o':
-			framenumber = atoi(bu_optarg);
-			break;
-		case 'f':
-			fps = atoi(bu_optarg);
-			break;
-		case 'p':
-			passes = atoi(bu_optarg);
-			if (passes<1)  passes=1;
-			break;
-		case 'r':
-			rocking = 1;
-			break;
-		case 'z':
-			zoom = 0;
-			break;
-		case 'v':
-			verbose = 1;
-			break;
-		default:		/* '?' */
-			return(0);	/* Bad */
-		}
-	}
-
-	if ( bu_optind >= argc )  {
-		fprintf(stderr, "pixflip-fb: basename or filename(s) missing\n");
+    while ( (c = bu_getopt( argc, argv, "hs:w:n:S:W:N:o:f:p:rzv" )) != EOF )  {
+	switch ( c )  {
+	    case 'h':
+		/* high-res */
+		screen_height = screen_width = 1024;
+		break;
+	    case 's':
+		/* square input file size */
+		file_height = file_width = atoi(bu_optarg);
+		break;
+	    case 'w':
+		file_width = atoi(bu_optarg);
+		break;
+	    case 'n':
+		file_height = atoi(bu_optarg);
+		break;
+	    case 'S':
+		screen_height = screen_width = atoi(bu_optarg);
+		break;
+	    case 'W':
+		screen_width = atoi(bu_optarg);
+		break;
+	    case 'N':
+		screen_height = atoi(bu_optarg);
+		break;
+	    case 'o':
+		framenumber = atoi(bu_optarg);
+		break;
+	    case 'f':
+		fps = atoi(bu_optarg);
+		break;
+	    case 'p':
+		passes = atoi(bu_optarg);
+		if (passes<1)  passes=1;
+		break;
+	    case 'r':
+		rocking = 1;
+		break;
+	    case 'z':
+		zoom = 0;
+		break;
+	    case 'v':
+		verbose = 1;
+		break;
+	    default:		/* '?' */
 		return(0);	/* Bad */
 	}
+    }
 
-	return(1);		/* OK */
+    if ( bu_optind >= argc )  {
+	fprintf(stderr, "pixflip-fb: basename or filename(s) missing\n");
+	return(0);	/* Bad */
+    }
+
+    return(1);		/* OK */
 }
 
 int
 main(int argc, char **argv)
 {
-	register int i;
-	unsigned char	*obuf;
-	int	scanbytes;		/* bytes per input image */
-	int	islist = 0;		/* set if a list, zero if basename */
-	char	name[256];
-	int	fd;
-	struct timeval tv;
-	fd_set readfds;
+    register int i;
+    unsigned char	*obuf;
+    int	scanbytes;		/* bytes per input image */
+    int	islist = 0;		/* set if a list, zero if basename */
+    char	name[256];
+    int	fd;
+    struct timeval tv;
+    fd_set readfds;
 
-	FD_ZERO(&readfds);
-	FD_SET(fileno(stdin), &readfds);
+    FD_ZERO(&readfds);
+    FD_SET(fileno(stdin), &readfds);
 
-	if ( !get_args( argc, argv ) )  {
-		(void)fputs(usage, stderr);
-		bu_exit( 1, NULL);
+    if ( !get_args( argc, argv ) )  {
+	(void)fputs(usage, stderr);
+	bu_exit( 1, NULL);
+    }
+
+    if ( bu_optind+1 == argc )  {
+	input_basename = argv[bu_optind];
+	islist = 0;
+    } else {
+	islist = 1;
+    }
+
+    if ( file_width < 1 ) {
+	fprintf(stderr, "pixflip-fb: width of %d out of range\n", file_width);
+	bu_exit(12, NULL);
+    }
+
+    if ( (fbp = fb_open( NULL, screen_width, screen_height )) == FBIO_NULL )  {
+	fprintf(stderr, "pixflip-fb: fb_open failed\n");
+	bu_exit(12, NULL);
+    }
+    screen_width = fb_getwidth(fbp);
+    screen_height = fb_getheight(fbp);
+
+    if (zoom) {
+	if (verbose) fprintf(stderr,
+			     "pixflip-fb: zoom = %d x %d\n",
+			     screen_width/file_width,
+			     screen_height/file_height);
+	fb_view(fbp, file_width/2, file_height/2,
+		screen_width/file_width,
+		screen_height/file_height);
+    }
+
+    if ( fps <= 1 )  {
+	tv.tv_sec = fps ? 1L : 4L;
+	tv.tv_usec = 0L;
+    } else {
+	tv.tv_sec = 0L;
+	tv.tv_usec = (long) (1000000/fps);
+    }
+
+    scanbytes = file_width * file_height * sizeof(RGBpixel);
+
+    for ( maxframe = 0; maxframe < MAXFRAMES;  )  {
+
+	if ( (obuf = (unsigned char *)malloc( scanbytes )) == (unsigned char *)0 )  {
+	    (void)fprintf(stderr, "pixflip-fb:  malloc %d failure\n", scanbytes );
+	    break;
 	}
+	memset((char *)obuf, 0, scanbytes);
+	frames[maxframe] = obuf;
 
-	if ( bu_optind+1 == argc )  {
-		input_basename = argv[bu_optind];
-		islist = 0;
+	fprintf(stderr, "%d ", framenumber);  fflush(stdout);
+	if ( islist )  {
+	    /* See if we read all the files */
+	    if ( bu_optind >= argc )
+		goto done;
+	    bu_strlcpy(name, argv[bu_optind++], sizeof(name));
 	} else {
-		islist = 1;
+	    snprintf(name, sizeof(name), "%s.%d", input_basename, framenumber);
+	}
+	if ( (fd=open(name, 0))<0 )  {
+	    perror(name);
+	    goto done;
 	}
 
-	if ( file_width < 1 ) {
-		fprintf(stderr, "pixflip-fb: width of %d out of range\n", file_width);
-		bu_exit(12, NULL);
+	/* Read in .pix file.  Bottom to top */
+	i = read( fd, obuf, scanbytes );
+	if ( i <= 0 )  {
+	    perror(name);
+	} else if ( i != scanbytes ) {
+	    fprintf(stderr, "\npixflip-fb:  %s wanted %d got %d\n",
+		    name, scanbytes, i );
 	}
+	close(fd);
 
-	if ( (fbp = fb_open( NULL, screen_width, screen_height )) == FBIO_NULL )  {
-		fprintf(stderr, "pixflip-fb: fb_open failed\n");
-		bu_exit(12, NULL);
-	}
-	screen_width = fb_getwidth(fbp);
-	screen_height = fb_getheight(fbp);
-
-	if (zoom) {
-		if (verbose) fprintf(stderr,
-			"pixflip-fb: zoom = %d x %d\n",
-			screen_width/file_width,
-			screen_height/file_height);
-		fb_view(fbp, file_width/2, file_height/2,
-			screen_width/file_width,
-			screen_height/file_height);
-	}
-
-	if ( fps <= 1 )  {
-		tv.tv_sec = fps ? 1L : 4L;
-		tv.tv_usec = 0L;
+	/* Show user the frame that was just read */
+	showframe( maxframe++ );
+	framenumber++;
+    }
+ done:
+    while (passes-- > 0)  {
+	if ( !rocking )  {
+	    /* Play from start to finish, over and over */
+	    for ( i=0; i<maxframe; i++ )  {
+		showframe(i);
+		select( fileno(stdin)+1, &readfds,
+			(fd_set *)0, (fd_set *)0, &tv );
+	    }
 	} else {
-		tv.tv_sec = 0L;
-		tv.tv_usec = (long) (1000000/fps);
+	    /* Play from start to finish and back */
+	    for ( i=0; i<maxframe; i++ )  {
+		showframe(i);
+		select( fileno(stdin)+1, &readfds,
+			(fd_set *)0, (fd_set *)0, &tv );
+	    }
+	    while (i-->0)  {
+		showframe(i);
+		select( fileno(stdin)+1, &readfds,
+			(fd_set *)0, (fd_set *)0, &tv );
+	    }
 	}
+    }
+    fb_close( fbp );
 
-	scanbytes = file_width * file_height * sizeof(RGBpixel);
-
-	for ( maxframe = 0; maxframe < MAXFRAMES;  )  {
-
-		if ( (obuf = (unsigned char *)malloc( scanbytes )) == (unsigned char *)0 )  {
-			(void)fprintf(stderr, "pixflip-fb:  malloc %d failure\n", scanbytes );
-			break;
-		}
-		memset((char *)obuf, 0, scanbytes);
-		frames[maxframe] = obuf;
-
-		fprintf(stderr, "%d ", framenumber);  fflush(stdout);
-		if ( islist )  {
-			/* See if we read all the files */
-			if ( bu_optind >= argc )
-				goto done;
-			bu_strlcpy(name, argv[bu_optind++], sizeof(name));
-		} else {
-			snprintf(name, sizeof(name), "%s.%d", input_basename, framenumber);
-		}
-		if ( (fd=open(name, 0))<0 )  {
-			perror(name);
-			goto done;
-		}
-
-		/* Read in .pix file.  Bottom to top */
-		i = read( fd, obuf, scanbytes );
-		if ( i <= 0 )  {
-			perror(name);
-		} else if ( i != scanbytes ) {
-			fprintf(stderr, "\npixflip-fb:  %s wanted %d got %d\n",
-				name, scanbytes, i );
-		}
-		close(fd);
-
-		/* Show user the frame that was just read */
-		showframe( maxframe++ );
-		framenumber++;
-	}
-done:
-	while (passes-- > 0)  {
-		if ( !rocking )  {
-			/* Play from start to finish, over and over */
-			for ( i=0; i<maxframe; i++ )  {
-				showframe(i);
-				select( fileno(stdin)+1, &readfds,
-					(fd_set *)0, (fd_set *)0, &tv );
-			}
-		} else {
-			/* Play from start to finish and back */
-			for ( i=0; i<maxframe; i++ )  {
-				showframe(i);
-				select( fileno(stdin)+1, &readfds,
-					(fd_set *)0, (fd_set *)0, &tv );
-			}
-			while (i-->0)  {
-				showframe(i);
-				select( fileno(stdin)+1, &readfds,
-					(fd_set *)0, (fd_set *)0, &tv );
-			}
-		}
-	}
-	fb_close( fbp );
-
-	fprintf(stderr, "\n");
-	bu_exit(0, NULL);
+    fprintf(stderr, "\n");
+    bu_exit(0, NULL);
 }
 
 void
 showframe(register int i)
 {
-	if ( verbose )  {
-		fprintf(stderr, " %d", i);
-		fflush( stderr );
-	}
+    if ( verbose )  {
+	fprintf(stderr, " %d", i);
+	fflush( stderr );
+    }
 
-	if ( i < 0 || i > maxframe )  {
-		fprintf(stderr, "pixflip-fb:  %d out of range\n", i);
-		return;
-	}
+    if ( i < 0 || i > maxframe )  {
+	fprintf(stderr, "pixflip-fb:  %d out of range\n", i);
+	return;
+    }
 
-	fb_writerect( fbp, 0, 0, file_width, file_height, frames[i] );
+    fb_writerect( fbp, 0, 0, file_width, file_height, frames[i] );
 
-	if ( verbose )  {
-		fprintf(stderr, ",");
-		fflush( stderr );
-	}
+    if ( verbose )  {
+	fprintf(stderr, ",");
+	fflush( stderr );
+    }
 }
 
 /*

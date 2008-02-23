@@ -33,36 +33,36 @@
 void
 dbpr_arb(struct solidrec *sp, register struct directory *dp)
 {
-	int i;
-	char *s;
+    int i;
+    char *s;
 
-	if ( (i=sp->s_cgtype) < 0 )
-		i = -i;
-	switch ( i )  {
+    if ( (i=sp->s_cgtype) < 0 )
+	i = -i;
+    switch ( i )  {
 	case ARB4:
-		s="ARB4";
-		break;
+	    s="ARB4";
+	    break;
 	case ARB5:
-		s="ARB5";
-		break;
+	    s="ARB5";
+	    break;
 	case RAW:
 	case ARB6:
-		s="ARB6";
-		break;
+	    s="ARB6";
+	    break;
 	case ARB7:
-		s="ARB7";
-		break;
+	    s="ARB7";
+	    break;
 	case ARB8:
-		s="ARB8";
-		break;
+	    s="ARB8";
+	    break;
 	default:
-		s="??";
-		break;
-	}
+	    s="??";
+	    break;
+    }
 
-	bu_log("%s:  ARB8 (%s)\n", dp->d_namep, s );
+    bu_log("%s:  ARB8 (%s)\n", dp->d_namep, s );
 
-	/* more in edsol.c/pr_solid, called from do_list */
+    /* more in edsol.c/pr_solid, called from do_list */
 }
 
 /*

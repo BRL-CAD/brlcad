@@ -153,38 +153,38 @@ main(int ac, char *av[])
     file_height = png_get_image_height( png_p, info_p );
 
     if ( ipu_debug )
+    {
+	switch (color_type)
 	{
-	    switch (color_type)
-		{
-		case PNG_COLOR_TYPE_GRAY:
-		    bu_log( "color type: b/w (bit depth=%d)\n", bit_depth );
-		    break;
-		case PNG_COLOR_TYPE_GRAY_ALPHA:
-		    bu_log( "color type: b/w with alpha channel (bit depth=%d)\n", bit_depth );
-		    break;
-		case PNG_COLOR_TYPE_PALETTE:
-		    bu_log( "color type: color palette (bit depth=%d)\n", bit_depth );
-		    break;
-		case PNG_COLOR_TYPE_RGB:
-		    bu_log( "color type: RGB (bit depth=%d)\n", bit_depth );
-		    break;
-		case PNG_COLOR_TYPE_RGB_ALPHA:
-		    bu_log( "color type: RGB with alpha channel (bit depth=%d)\n", bit_depth );
-		    break;
-		default:
-		    bu_log( "Unrecognized color type (bit depth=%d)\n", bit_depth );
-		    break;
-		}
-	    bu_log( "Image size: %d X %d\n", file_width, file_height );
+	    case PNG_COLOR_TYPE_GRAY:
+		bu_log( "color type: b/w (bit depth=%d)\n", bit_depth );
+		break;
+	    case PNG_COLOR_TYPE_GRAY_ALPHA:
+		bu_log( "color type: b/w with alpha channel (bit depth=%d)\n", bit_depth );
+		break;
+	    case PNG_COLOR_TYPE_PALETTE:
+		bu_log( "color type: color palette (bit depth=%d)\n", bit_depth );
+		break;
+	    case PNG_COLOR_TYPE_RGB:
+		bu_log( "color type: RGB (bit depth=%d)\n", bit_depth );
+		break;
+	    case PNG_COLOR_TYPE_RGB_ALPHA:
+		bu_log( "color type: RGB with alpha channel (bit depth=%d)\n", bit_depth );
+		break;
+	    default:
+		bu_log( "Unrecognized color type (bit depth=%d)\n", bit_depth );
+		break;
 	}
+	bu_log( "Image size: %d X %d\n", file_width, file_height );
+    }
 
     if ( png_get_bKGD( png_p, info_p, &input_backgrd ) )
-	{
-	    if ( ipu_debug && (color_type == PNG_COLOR_TYPE_GRAY_ALPHA ||
-			      color_type == PNG_COLOR_TYPE_RGB_ALPHA ) )
-		bu_log( "background color: %d %d %d\n", input_backgrd->red, input_backgrd->green, input_backgrd->blue );
-	    png_set_background( png_p, input_backgrd, PNG_BACKGROUND_GAMMA_FILE, 1, 1.0 );
-	}
+    {
+	if ( ipu_debug && (color_type == PNG_COLOR_TYPE_GRAY_ALPHA ||
+			   color_type == PNG_COLOR_TYPE_RGB_ALPHA ) )
+	    bu_log( "background color: %d %d %d\n", input_backgrd->red, input_backgrd->green, input_backgrd->blue );
+	png_set_background( png_p, input_backgrd, PNG_BACKGROUND_GAMMA_FILE, 1, 1.0 );
+    }
     else
 	png_set_background( png_p, &def_backgrd, PNG_BACKGROUND_GAMMA_FILE, 0, 1.0 );
 
@@ -196,12 +196,12 @@ main(int ac, char *av[])
 		gamma, def_screen_gamma );
 
     if ( ipu_debug )
-	{
-	    if ( png_get_interlace_type( png_p, info_p ) == PNG_INTERLACE_NONE )
-		bu_log( "not interlaced\n" );
-	    else
-		bu_log( "interlaced\n" );
-	}
+    {
+	if ( png_get_interlace_type( png_p, info_p ) == PNG_INTERLACE_NONE )
+	    bu_log( "not interlaced\n" );
+	else
+	    bu_log( "interlaced\n" );
+    }
 
     png_read_update_info( png_p, info_p );
 
@@ -218,23 +218,23 @@ main(int ac, char *av[])
     png_read_image( png_p, scanline );
 
     if ( ipu_debug )
+    {
+	png_timep mod_time;
+	png_textp text;
+	int num_text;
+
+	png_read_end(png_p, info_p );
+	if ( png_get_text( png_p, info_p, &text, &num_text ) )
 	{
-	    png_timep mod_time;
-	    png_textp text;
-	    int num_text;
+	    int i;
 
-	    png_read_end(png_p, info_p );
-	    if ( png_get_text( png_p, info_p, &text, &num_text ) )
-		{
-		    int i;
-
-		    for ( i=0; i<num_text; i++ )
-			bu_log( "%s: %s\n", text[i].key, text[i].text );
-		}
-	    if ( png_get_tIME( png_p, info_p, &mod_time ) )
-		bu_log( "Last modified: %d/%d/%d %d:%d:%d\n", mod_time->month, mod_time->day,
-			mod_time->year, mod_time->hour, mod_time->minute, mod_time->second );
+	    for ( i=0; i<num_text; i++ )
+		bu_log( "%s: %s\n", text[i].key, text[i].text );
 	}
+	if ( png_get_tIME( png_p, info_p, &mod_time ) )
+	    bu_log( "Last modified: %d/%d/%d %d:%d:%d\n", mod_time->month, mod_time->day,
+		    mod_time->year, mod_time->hour, mod_time->minute, mod_time->second );
+    }
 
     if (ipu_debug)
 	fprintf(stderr, "Image is %dx%d\n", file_width, file_height);

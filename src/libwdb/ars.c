@@ -53,15 +53,15 @@
 int
 mk_ars(struct rt_wdb *filep, const char *name, int ncurves, int pts_per_curve, fastf_t **curves)
 {
-	struct rt_ars_internal	*ars;
+    struct rt_ars_internal	*ars;
 
-	BU_GETSTRUCT( ars, rt_ars_internal );
-	ars->magic = RT_ARS_INTERNAL_MAGIC;
-	ars->ncurves = ncurves;
-	ars->pts_per_curve = pts_per_curve;
-	ars->curves = curves;
+    BU_GETSTRUCT( ars, rt_ars_internal );
+    ars->magic = RT_ARS_INTERNAL_MAGIC;
+    ars->ncurves = ncurves;
+    ars->pts_per_curve = pts_per_curve;
+    ars->curves = curves;
 
-	return wdb_export( filep, name, (genptr_t)ars, ID_ARS, mk_conv2mm );
+    return wdb_export( filep, name, (genptr_t)ars, ID_ARS, mk_conv2mm );
 }
 
 /*

@@ -46,36 +46,36 @@
 int
 rt_nurb_crv_in_range(struct edge_g_cnurb *crv, fastf_t u_min, fastf_t u_max, fastf_t v_min, fastf_t v_max)
 {
-	point_t eval;
-	fastf_t *pts;
-	int	coords = RT_NURB_EXTRACT_COORDS( crv->pt_type );
-	int 	rat = RT_NURB_IS_PT_RATIONAL(crv->pt_type);
-	int	i;
+    point_t eval;
+    fastf_t *pts;
+    int	coords = RT_NURB_EXTRACT_COORDS( crv->pt_type );
+    int 	rat = RT_NURB_IS_PT_RATIONAL(crv->pt_type);
+    int	i;
 
-	pts = &crv->ctl_points[0];
+    pts = &crv->ctl_points[0];
 
-	for ( i = 0; i < crv->c_size; i++)
+    for ( i = 0; i < crv->c_size; i++)
+    {
+	if (rat)
 	{
-		if (rat)
-		{
-			eval[0] = pts[0] / pts[2];
-			eval[1] = pts[1] / pts[2];
-			eval[2] = 1;
-		} else	{
-			eval[0] = pts[0];
-			eval[1] = pts[1];
-			eval[2] = 1;
-		}
-
-		if ( eval[0] < u_min || eval[0] > u_max )
-			return 0;
-
-		if ( eval[1] < v_min || eval[1] > v_max )
-			return 0;
-
-		pts += coords;
+	    eval[0] = pts[0] / pts[2];
+	    eval[1] = pts[1] / pts[2];
+	    eval[2] = 1;
+	} else	{
+	    eval[0] = pts[0];
+	    eval[1] = pts[1];
+	    eval[2] = 1;
 	}
-	return 1;
+
+	if ( eval[0] < u_min || eval[0] > u_max )
+	    return 0;
+
+	if ( eval[1] < v_min || eval[1] > v_max )
+	    return 0;
+
+	pts += coords;
+    }
+    return 1;
 }
 
 /*

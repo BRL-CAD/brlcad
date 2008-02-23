@@ -55,8 +55,8 @@
  * Left to calling routine to avoid dividing by zero.
  */
 fastf_t hyper_get_x(fastf_t a, fastf_t c, fastf_t s, int d, int x, int cos_ang)
-     /* curve parameters */
-     /* arclength value  */
+    /* curve parameters */
+    /* arclength value  */
 {
     fastf_t arg, asinh_arg;
 
@@ -113,11 +113,11 @@ fastf_t hyper_get_ang(fastf_t a, fastf_t c, fastf_t x)
  * It uses the values of a, b, and c from the last call as a start.
  */
 int getcurve(fastf_t *pa, fastf_t *pb, fastf_t *pc, fastf_t *pth0, fastf_t *pth1, fastf_t delta_s, fastf_t *p_zero, fastf_t *p_one, fastf_t r_zero, fastf_t r_one)
-     /* curve parameters */
-     /* angle where curve contacts circle0, circle1 */
-     /* desired arclength */
-     /* radii of circle0 and circle1 */
-     /* center of circle0 and circle1 */
+    /* curve parameters */
+    /* angle where curve contacts circle0, circle1 */
+    /* desired arclength */
+    /* radii of circle0 and circle1 */
+    /* center of circle0 and circle1 */
 {
 
     int status, i, solved;

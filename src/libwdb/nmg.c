@@ -50,9 +50,9 @@
 int
 mk_nmg( struct rt_wdb *filep, const char *name, struct model *m )
 {
-	NMG_CK_MODEL( m );
+    NMG_CK_MODEL( m );
 
-	return wdb_export( filep, name, (genptr_t)m, ID_NMG, mk_conv2mm );
+    return wdb_export( filep, name, (genptr_t)m, ID_NMG, mk_conv2mm );
 }
 
 /*
@@ -66,11 +66,11 @@ mk_nmg( struct rt_wdb *filep, const char *name, struct model *m )
 int
 mk_bot_from_nmg( struct rt_wdb *ofp, const char *name, struct shell *s )
 {
-	struct rt_bot_internal *botp;
+    struct rt_bot_internal *botp;
 
-	botp = nmg_bot( s, &ofp->wdb_tol );
+    botp = nmg_bot( s, &ofp->wdb_tol );
 
-	return wdb_export( ofp, name, (genptr_t)botp, ID_BOT, mk_conv2mm );
+    return wdb_export( ofp, name, (genptr_t)botp, ID_BOT, mk_conv2mm );
 }
 
 /*

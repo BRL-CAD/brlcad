@@ -60,96 +60,96 @@ Usage: fbcmrot [-h] [-i increment] steps_per_second\n";
 int
 get_args(int argc, register char **argv)
 {
-	register int c;
+    register int c;
 
-	while ( (c = bu_getopt( argc, argv, "hi:" )) != EOF )  {
-		switch ( c )  {
-		case 'h':
-			/* high-res */
-			size = 1024;
-			break;
-		case 'i':
-			/* increment */
-			increment = atoi(bu_optarg);
-			break;
+    while ( (c = bu_getopt( argc, argv, "hi:" )) != EOF )  {
+	switch ( c )  {
+	    case 'h':
+		/* high-res */
+		size = 1024;
+		break;
+	    case 'i':
+		/* increment */
+		increment = atoi(bu_optarg);
+		break;
 
-		default:		/* '?' */
-			return(0);
-		}
+	    default:		/* '?' */
+		return(0);
 	}
+    }
 
-	if ( bu_optind >= argc )  {
-		/* no fps specified */
-		fps = 0;
-	} else {
-		fps = atof(argv[bu_optind]);
-		if ( fps == 0 )
-			onestep++;
-	}
+    if ( bu_optind >= argc )  {
+	/* no fps specified */
+	fps = 0;
+    } else {
+	fps = atof(argv[bu_optind]);
+	if ( fps == 0 )
+	    onestep++;
+    }
 
-	if ( argc > ++bu_optind )
-		(void)fprintf( stderr, "fbcmrot: excess argument(s) ignored\n" );
+    if ( argc > ++bu_optind )
+	(void)fprintf( stderr, "fbcmrot: excess argument(s) ignored\n" );
 
-	return(1);		/* OK */
+    return(1);		/* OK */
 }
 
 int
 main(int argc, char **argv)
 {
-	register int i;
-	struct timeval tv;
+    register int i;
+    struct timeval tv;
 
-	if ( !get_args( argc, argv ) )  {
-		(void)fputs(usage, stderr);
-		bu_exit( 1, NULL );
+    if ( !get_args( argc, argv ) )  {
+	(void)fputs(usage, stderr);
+	bu_exit( 1, NULL );
+    }
+
+    if ( fps > 0.0 ) {
+	tv.tv_sec = (long) (1.0 / fps);
+	tv.tv_usec = (long) (((1.0 / fps) - tv.tv_sec) * 1000000);
+    }
+
+    if ( (fbp = fb_open( NULL, size, size)) == FBIO_NULL )  {
+	fprintf(stderr, "fbcmrot:  fb_open failed\n");
+	return	1;
+    }
+
+    local_inp = &cm1;
+    local_outp = &cm2;
+    fb_rmap( fbp, local_inp );
+
+    while (1)  {
+	register int from;
+	ColorMap *tp;
+
+	/* Build color map for current value */
+	for ( i=0, from = increment; i < 256; i++, from++ ) {
+	    if ( from < 0 )
+		from += 256;
+	    else if ( from > 255 )
+		from -= 256;
+	    local_outp->cm_red[i]   = local_inp->cm_red[from];
+	    local_outp->cm_green[i] = local_inp->cm_green[from];
+	    local_outp->cm_blue[i]  = local_inp->cm_blue[from];
 	}
 
-	if ( fps > 0.0 ) {
-		tv.tv_sec = (long) (1.0 / fps);
-		tv.tv_usec = (long) (((1.0 / fps) - tv.tv_sec) * 1000000);
+	fb_wmap( fbp, local_outp );
+	tp = local_outp;
+	local_outp = local_inp;
+	local_inp = tp;
+
+	if ( fps > 0.0 )  {
+	    fd_set readfds;
+
+	    FD_ZERO(&readfds);
+	    FD_SET(fileno(stdin), &readfds);
+	    select(fileno(stdin)+1, &readfds, (fd_set *)0, (fd_set *)0, &tv);
 	}
-
-	if ( (fbp = fb_open( NULL, size, size)) == FBIO_NULL )  {
-		fprintf(stderr, "fbcmrot:  fb_open failed\n");
-		return	1;
-	}
-
-	local_inp = &cm1;
-	local_outp = &cm2;
-	fb_rmap( fbp, local_inp );
-
-	while (1)  {
-		register int from;
-		ColorMap *tp;
-
-		/* Build color map for current value */
-		for ( i=0, from = increment; i < 256; i++, from++ ) {
-			if ( from < 0 )
-				from += 256;
-			else if ( from > 255 )
-				from -= 256;
-			local_outp->cm_red[i]   = local_inp->cm_red[from];
-			local_outp->cm_green[i] = local_inp->cm_green[from];
-			local_outp->cm_blue[i]  = local_inp->cm_blue[from];
-		}
-
-		fb_wmap( fbp, local_outp );
-		tp = local_outp;
-		local_outp = local_inp;
-		local_inp = tp;
-
-		if ( fps > 0.0 )  {
-			fd_set readfds;
-
-			FD_ZERO(&readfds);
-			FD_SET(fileno(stdin), &readfds);
-			select(fileno(stdin)+1, &readfds, (fd_set *)0, (fd_set *)0, &tv);
-		}
-		if ( onestep )
-			break;
-	}
-	fb_close( fbp );
-	return	0;
+	if ( onestep )
+	    break;
+    }
+    fb_close( fbp );
+    return	0;
 }
 
 /*

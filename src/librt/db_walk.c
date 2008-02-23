@@ -103,7 +103,7 @@ db_preorder_traverse( struct directory *dp,
 
     if (RT_G_DEBUG & DEBUG_DB)
 	bu_log("db_preorder_traverse(%s) x%x, x%x, comb_enter=x%x, comb_exit=x%x, leaf=x%x, client_data=x%x\n",
-		dp->d_namep, dtp->dbip, dp, dtp->comb_enter_func, dtp->comb_exit_func, dtp->leaf_func, dtp->client_data );
+	       dp->d_namep, dtp->dbip, dp, dtp->comb_enter_func, dtp->comb_exit_func, dtp->leaf_func, dtp->client_data );
 
     if ( dp->d_flags & DIR_COMB )  {
 	/* entering region */
@@ -121,7 +121,7 @@ db_preorder_traverse( struct directory *dp,
 	    /* recurse */
 	    for ( i=1; i < dp->d_len; i++ )  {
 		if ( (mdp = db_lookup( dtp->dbip, rp[i].M.m_instname,
-				LOOKUP_NOISY )) == DIR_NULL )
+				       LOOKUP_NOISY )) == DIR_NULL )
 		    continue;
 		db_preorder_traverse( mdp, dtp );
 	    }
@@ -149,7 +149,7 @@ db_preorder_traverse( struct directory *dp,
 	    dtp->leaf_func( dtp->dbip, dp, dtp->client_data );
     } else {
 	bu_log("db_preorder_traverse:  %s is neither COMB nor SOLID?\n",
-		dp->d_namep );
+	       dp->d_namep );
     }
 }
 

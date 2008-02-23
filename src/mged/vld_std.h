@@ -18,12 +18,12 @@
  * information.
  */
 /** @file vld_std.h
-	std.h -- Douglas A. Gwyn's standard C programming definitions
+    std.h -- Douglas A. Gwyn's standard C programming definitions
 
-	When installing a VLD/VMB software distribution,
-	this file may need to be tailored slightly to fit the target system.
-	Usually this just involves enabling some of the "kludges for deficient
-	C implementations" at the end of this file.
+    When installing a VLD/VMB software distribution,
+    this file may need to be tailored slightly to fit the target system.
+    Usually this just involves enabling some of the "kludges for deficient
+    C implementations" at the end of this file.
 */
 
 #ifndef	VLD_STD_H_
@@ -46,27 +46,27 @@ typedef void	*pointer;		/* generic pointer */
 /* Universal constants */
 
 #define DEGRAD	57.2957795130823208767981548141051703324054724665642
-					/* degrees per radian */
+/* degrees per radian */
 #define	E	2.71828182845904523536028747135266249775724709369996
-					/* base of natural logs */
+/* base of natural logs */
 #define	GAMMA	0.57721566490153286061
-					/* Euler's constant */
+/* Euler's constant */
 #define LOG10E	0.43429448190325182765112891891660508229439700580367
-					/* log of e to the base 10 */
+/* log of e to the base 10 */
 #define PHI	1.618033988749894848204586834365638117720309180
-					/* golden ratio */
+/* golden ratio */
 #if !defined(PI)	/* sometimes found in math.h */
 #define PI	3.14159265358979323846264338327950288419716939937511
-					/* ratio of circumf. to diam. */
+/* ratio of circumf. to diam. */
 #endif
 
 /* Useful macros */
 
 /*
-	The comment "UNSAFE" means that the macro argument(s) may be evaluated
-	more than once, so the programmer must realize that the macro doesn't
-	quite act like a genuine function.  This matters only when evaluating
-	an argument produces "side effects".
+  The comment "UNSAFE" means that the macro argument(s) may be evaluated
+  more than once, so the programmer must realize that the macro doesn't
+  quite act like a genuine function.  This matters only when evaluating
+  an argument produces "side effects".
 */
 
 /* arbitrary numerical arguments and value: */
@@ -99,20 +99,20 @@ typedef void	*pointer;		/* generic pointer */
 /* weird macros for special tricks with source code symbols: */
 #ifdef STD_C
 #define	PASTE( a, b )	a ## b
-					/* paste together two token strings */
+/* paste together two token strings */
 #define	STRINGIZE( s )	# s
-					/* convert tokens to string literal */
+/* convert tokens to string literal */
 #else
 /* Q8JOIN is for internal <std.h> use only: */
 #define	Q8JOIN( s )	s
 #define	PASTE( a, b )	Q8JOIN(a)b
-					/* paste together two token strings */
-	/* WARNING:  This version of PASTE may expand its arguments
-	   before pasting, unlike the Standard C version. */
+/* paste together two token strings */
+/* WARNING:  This version of PASTE may expand its arguments
+   before pasting, unlike the Standard C version. */
 #define	STRINGIZE( s )	"s"		/* (Reiser cpp behavior assumed) */
 					/* convert tokens to string literal */
-	/* WARNING:  This version of STRINGIZE does not properly handle " and
-	   \ characters in character-constant and string-literal tokens. */
+/* WARNING:  This version of STRINGIZE does not properly handle " and
+   \ characters in character-constant and string-literal tokens. */
 #endif
 
 #if defined(sgi) && defined(mips)	/* missing from <signal.h>: */

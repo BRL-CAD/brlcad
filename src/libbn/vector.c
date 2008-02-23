@@ -52,72 +52,72 @@
 void
 tp_3vector(FILE *plotfp, fastf_t *from, fastf_t *to, double fromheadfract, double toheadfract)
 {
-	register fastf_t	len;
-	register fastf_t	hooklen;
-	vect_t	diff;
-	vect_t	c1, c2;
-	vect_t	h1, h2;
-	vect_t	backup;
-	point_t	tip;
+    register fastf_t	len;
+    register fastf_t	hooklen;
+    vect_t	diff;
+    vect_t	c1, c2;
+    vect_t	h1, h2;
+    vect_t	backup;
+    point_t	tip;
 
-	pdv_3line( plotfp, from, to );
-	/* "pen" is left at "to" position */
+    pdv_3line( plotfp, from, to );
+    /* "pen" is left at "to" position */
 
-	VSUB2( diff, to, from );
-	if ( (len = MAGNITUDE(diff)) < SMALL )  return;
-	VSCALE( diff, diff, 1/len );
-	bn_vec_ortho( c1, diff );
-	VCROSS( c2, c1, diff );
+    VSUB2( diff, to, from );
+    if ( (len = MAGNITUDE(diff)) < SMALL )  return;
+    VSCALE( diff, diff, 1/len );
+    bn_vec_ortho( c1, diff );
+    VCROSS( c2, c1, diff );
 
-	if ( fromheadfract != 0 )  {
-		hooklen = fromheadfract*len;
-		VSCALE( backup, diff, -hooklen );
+    if ( fromheadfract != 0 )  {
+	hooklen = fromheadfract*len;
+	VSCALE( backup, diff, -hooklen );
 
-		VSCALE( h1, c1, hooklen );
-		VADD3( tip, from, h1, backup );
-		pdv_3move( plotfp, from );
-		pdv_3cont( plotfp, tip );
+	VSCALE( h1, c1, hooklen );
+	VADD3( tip, from, h1, backup );
+	pdv_3move( plotfp, from );
+	pdv_3cont( plotfp, tip );
 
-		VSCALE( h2, c2, hooklen );
-		VADD3( tip, from, h2, backup );
-		pdv_3move( plotfp, tip );
-	}
-	if ( toheadfract != 0 )  {
-		hooklen = toheadfract*len;
-		VSCALE( backup, diff, -hooklen );
+	VSCALE( h2, c2, hooklen );
+	VADD3( tip, from, h2, backup );
+	pdv_3move( plotfp, tip );
+    }
+    if ( toheadfract != 0 )  {
+	hooklen = toheadfract*len;
+	VSCALE( backup, diff, -hooklen );
 
-		VSCALE( h1, c1, hooklen );
-		VADD3( tip, to, h1, backup );
-		pdv_3move( plotfp, to );
-		pdv_3cont( plotfp, tip );
+	VSCALE( h1, c1, hooklen );
+	VADD3( tip, to, h1, backup );
+	pdv_3move( plotfp, to );
+	pdv_3cont( plotfp, tip );
 
-		VSCALE( h2, c2, hooklen );
-		VADD3( tip, to, h2, backup );
-		pdv_3move( plotfp, tip );
-	}
-	/* Be certain "pen" is left at "to" position */
-	if ( fromheadfract != 0 || toheadfract != 0 )
-		pdv_3cont( plotfp, to );
+	VSCALE( h2, c2, hooklen );
+	VADD3( tip, to, h2, backup );
+	pdv_3move( plotfp, tip );
+    }
+    /* Be certain "pen" is left at "to" position */
+    if ( fromheadfract != 0 || toheadfract != 0 )
+	pdv_3cont( plotfp, to );
 
 }
 
 void
 PL_FORTRAN(f3vect, F3VECT)(fp, fx, fy, fz, tx, ty, tz, fl, tl )
-FILE	**fp;
-float	*fx;
-float	*fy;
-float	*fz;
-float	*tx;
-float	*ty;
-float	*tz;
-float	*fl;
-float	*tl;
+    FILE	**fp;
+    float	*fx;
+    float	*fy;
+    float	*fz;
+    float	*tx;
+    float	*ty;
+    float	*tz;
+    float	*fl;
+    float	*tl;
 {
-	point_t	from, to;
+    point_t	from, to;
 
-	VSET( from, *fx, *fy, *fz );
-	VSET( to, *tx, *ty, *tz );
-	tp_3vector( *fp, from, to, *fl, *tl );
+    VSET( from, *fx, *fy, *fz );
+    VSET( to, *tx, *ty, *tz );
+    tp_3vector( *fp, from, to, *fl, *tl );
 }
 
 /** @} */

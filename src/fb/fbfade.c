@@ -19,44 +19,44 @@
  *
  */
 /** @file fbfade.c
-	fbfade -- "twinkle" fade in or out a frame buffer image
+    fbfade -- "twinkle" fade in or out a frame buffer image
 
-	created:	89/04/29	D A Gwyn with help from G S Moss
+    created:	89/04/29	D A Gwyn with help from G S Moss
 
-	Typical compilation:	cc -O -I/usr/include/brlcad -o fbfade \
-					fbfade.c /usr/brlcad/lib/libfb.a
-	Add -DNO_DRAND48, -DNO_VFPRINTF, or -DNO_STRRCHR if drand48(),
-	vfprintf(), or strrchr() are not present in your C library
-	(e.g. on 4BSD-based systems).
+    Typical compilation:	cc -O -I/usr/include/brlcad -o fbfade \
+    fbfade.c /usr/brlcad/lib/libfb.a
+    Add -DNO_DRAND48, -DNO_VFPRINTF, or -DNO_STRRCHR if drand48(),
+    vfprintf(), or strrchr() are not present in your C library
+    (e.g. on 4BSD-based systems).
 
-	This program displays a frame buffer image gradually, randomly
-	selecting the pixel display sequence.  (Suggested by Gary Moss.)
-	It requires fast single-pixel write support for best effect.
+    This program displays a frame buffer image gradually, randomly
+    selecting the pixel display sequence.  (Suggested by Gary Moss.)
+    It requires fast single-pixel write support for best effect.
 
-	Options:
+    Options:
 
-	-h		assumes 1024x1024 default input size instead of 512x512
+    -h		assumes 1024x1024 default input size instead of 512x512
 
-	-f in_fb_file	reads from the specified frame buffer file instead
-			of assuming constant black ("fade out") value
+    -f in_fb_file	reads from the specified frame buffer file instead
+    of assuming constant black ("fade out") value
 
-	-s size		input size (width & height)
+    -s size		input size (width & height)
 
-	-w width	input width
+    -w width	input width
 
-	-n height	input height
+    -n height	input height
 
-	-F out_fb_file	writes to the specified frame buffer file instead
-			of the one specified by the FB_FILE environment
-			variable (the default frame buffer, if no FB_FILE)
+    -F out_fb_file	writes to the specified frame buffer file instead
+    of the one specified by the FB_FILE environment
+    variable (the default frame buffer, if no FB_FILE)
 
-	-S size		output size (width & height)
+    -S size		output size (width & height)
 
-	-W width	output width
+    -W width	output width
 
-	-N height	output height
+    -N height	output height
 
-	out_fb_file	same as -F out_fb_file, for convenience
+    out_fb_file	same as -F out_fb_file, for convenience
 */
 
 #define	USAGE1 "fbfade [ -s size ] [ -w width ] [ -n height ] [ -f in_fb_file ]"

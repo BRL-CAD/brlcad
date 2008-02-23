@@ -24,48 +24,48 @@
 #define MENU_FONT	"/usr/lib/vfont/fix.6"
 
 typedef struct
-	{
-	int p_x;
-	int p_y;
-	}
+{
+    int p_x;
+    int p_y;
+}
 Point;
 
 typedef struct
-	{
-	Point r_origin;
-	Point r_corner;
-	}
+{
+    Point r_origin;
+    Point r_corner;
+}
 Rectangle;
 
 typedef struct
-	{
-	RGBpixel color;
-	void (*func)();
-	char *label;
-	} Seg;
+{
+    RGBpixel color;
+    void (*func)();
+    char *label;
+} Seg;
 
 typedef struct
-	{
-	int wid, hgt;
-	int n_segs, seg_hgt;
-	int max_chars, char_base;
-	int on_flag, cmap_base;
-	int last_pick;
-	Rectangle rect;
-	RGBpixel *outlines, *touching, *selected;
-	RGBpixel *under, *image;
-	char *title, *font;
-	Seg		*segs;
-	ColorMap	cmap;
-	}
+{
+    int wid, hgt;
+    int n_segs, seg_hgt;
+    int max_chars, char_base;
+    int on_flag, cmap_base;
+    int last_pick;
+    Rectangle rect;
+    RGBpixel *outlines, *touching, *selected;
+    RGBpixel *under, *image;
+    char *title, *font;
+    Seg		*segs;
+    ColorMap	cmap;
+}
 Menu;
 
 typedef struct
-	{
-	RGBpixel  *n_buf;
-	int n_wid;
-	int n_hgt;
-	}
+{
+    RGBpixel  *n_buf;
+    int n_wid;
+    int n_hgt;
+}
 Panel;
 
 #define RESERVED_CMAP  ((pallet.cmap_base+pallet.n_segs+1)*2)

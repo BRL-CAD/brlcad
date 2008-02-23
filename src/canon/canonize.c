@@ -40,7 +40,7 @@ char cmdbuf[64]="/usr/mdqs/bin/qpr -q "; /* queue name filled in by main() */
  */
 void
 queue(fp)
-     FILE *fp;
+    FILE *fp;
 {
     char img_buffer[8 * 1024];
     int img_bytes, i, args, bytes_read;
@@ -81,9 +81,9 @@ queue(fp)
 
     /* write the image down the pipe */
     for ( bytes_read = 0;
-	 bytes_read < img_bytes &&
-	     (i = fread(img_buffer, 1, sizeof(img_buffer), fp));
-	 bytes_read += i ) {
+	  bytes_read < img_bytes &&
+	      (i = fread(img_buffer, 1, sizeof(img_buffer), fp));
+	  bytes_read += i ) {
 	fwrite(img_buffer, 1, i, pfp);
     }
 

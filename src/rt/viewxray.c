@@ -61,7 +61,7 @@ static int xraymiss(register struct application *ap);
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
-	{"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL }
+    {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL }
 };
 
 const char title[] = "RT X-Ray";
@@ -90,63 +90,63 @@ int	using_mlib = 0;			/* Material routines NOT used */
 int
 view_init(register struct application *ap, char *file, char *obj, int minus_o, int minus_F)
 {
-	/*
-	 * We need to work to get the output pixels and scanlines
-	 * in order before we can run in parallel.  Something like
-	 * view.c does in its dynamic buffering mode.
-	 *
-	 * XXX this hack-around causes a need for more careful
-	 * semaphore acquisition since it may block
-	 */
-	if (rt_g.rtg_parallel) {
-		rt_g.rtg_parallel = 0;
-		bu_log("rtxray: Can't do parallel yet, using one CPU\n");
-	}
+    /*
+     * We need to work to get the output pixels and scanlines
+     * in order before we can run in parallel.  Something like
+     * view.c does in its dynamic buffering mode.
+     *
+     * XXX this hack-around causes a need for more careful
+     * semaphore acquisition since it may block
+     */
+    if (rt_g.rtg_parallel) {
+	rt_g.rtg_parallel = 0;
+	bu_log("rtxray: Can't do parallel yet, using one CPU\n");
+    }
 
-	if ( lightmodel == LGT_BW ) {
-		if ( minus_o )
-			pixsize = 1;		/* BW file */
-		else
-			pixsize = 3;		/* Frame buffer */
-	} else {
-		/* XXX - Floating output uses no buffer */
-		pixsize = 0;
-	}
-	if ( pixsize ) {
-		scanbuf = (unsigned char *)
-			bu_malloc( width*pixsize, "scanline buffer" );
-	}
+    if ( lightmodel == LGT_BW ) {
+	if ( minus_o )
+	    pixsize = 1;		/* BW file */
+	else
+	    pixsize = 3;		/* Frame buffer */
+    } else {
+	/* XXX - Floating output uses no buffer */
+	pixsize = 0;
+    }
+    if ( pixsize ) {
+	scanbuf = (unsigned char *)
+	    bu_malloc( width*pixsize, "scanline buffer" );
+    }
 
-	if ( minus_F || (!minus_o && !minus_F) ) {
-	    /* open a framebuffer? */
-	    if ( lightmodel == LGT_FLOAT ) {
-		bu_log("rtxray: Can't do floating point mode to frame buffer, use -o\n");
-		return 0;
-	    }
-	    return 1;
+    if ( minus_F || (!minus_o && !minus_F) ) {
+	/* open a framebuffer? */
+	if ( lightmodel == LGT_FLOAT ) {
+	    bu_log("rtxray: Can't do floating point mode to frame buffer, use -o\n");
+	    return 0;
 	}
+	return 1;
+    }
 
-	/* no framebuffer */
-	return 0;
+    /* no framebuffer */
+    return 0;
 }
 
 /* beginning of a frame */
 void
 view_2init(struct application *ap, char *framename)
 {
-	/*
-	 *  This is a dangerous hack to allow us to use -A #
-	 *  as a way of passing in a contrast_boost factor.
-	 *  We need a way for view modules to add their own
-	 *  flags to the command line arguments.
-	 */
-	if (AmbientIntensity > 1.0)
-		contrast_boost = AmbientIntensity;
-	bu_log("Contrast Boost = %5.2f\n", contrast_boost);
+    /*
+     *  This is a dangerous hack to allow us to use -A #
+     *  as a way of passing in a contrast_boost factor.
+     *  We need a way for view modules to add their own
+     *  flags to the command line arguments.
+     */
+    if (AmbientIntensity > 1.0)
+	contrast_boost = AmbientIntensity;
+    bu_log("Contrast Boost = %5.2f\n", contrast_boost);
 
-	ap->a_hit = xrayhit;
-	ap->a_miss = xraymiss;
-	ap->a_onehit = 0;
+    ap->a_hit = xrayhit;
+    ap->a_miss = xraymiss;
+    ap->a_onehit = 0;
 }
 
 /* end of each pixel */
@@ -221,104 +221,104 @@ view_end(void)
 static int
 xrayhit(register struct application *ap, struct partition *PartHeadp, struct seg *segp)
 {
-	register struct partition *pp;
-	register struct hit *hitp;
-	fastf_t	totdist;
-	fastf_t	fvalue;
-	unsigned char value;
+    register struct partition *pp;
+    register struct hit *hitp;
+    fastf_t	totdist;
+    fastf_t	fvalue;
+    unsigned char value;
 
+    for ( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
+	if ( pp->pt_outhit->hit_dist >= 0.0 )  break;
+    if ( pp == PartHeadp )  {
+	bu_log("xrayhit:  no hit out front?\n");
+	return(0);
+    }
+
+    if (R_DEBUG&RDEBUG_HITS)  {
+	rt_pr_pt( ap->a_rt_i, pp );
+    }
+
+    hitp = pp->pt_inhit;
+    if ( hitp->hit_dist >= INFINITY )  {
+	bu_log("xrayhit:  entry beyond infinity\n");
+	return(1);
+    }
+    /* Check to see if eye is "inside" the solid */
+    if ( hitp->hit_dist < 0.0 )  {
+	/* XXX */
+	bu_log("xrayhit:  Eye inside solid (%g)\n", hitp->hit_dist );
 	for ( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
-		if ( pp->pt_outhit->hit_dist >= 0.0 )  break;
-	if ( pp == PartHeadp )  {
-		bu_log("xrayhit:  no hit out front?\n");
-		return(0);
-	}
+	    rt_pr_pt( ap->a_rt_i, pp );
+	return(0);
+    }
 
-	if (R_DEBUG&RDEBUG_HITS)  {
-		rt_pr_pt( ap->a_rt_i, pp );
-	}
+    /* Finally! We are ready to walk the partition chain */
 
-	hitp = pp->pt_inhit;
-	if ( hitp->hit_dist >= INFINITY )  {
-		bu_log("xrayhit:  entry beyond infinity\n");
-		return(1);
-	}
-	/* Check to see if eye is "inside" the solid */
-	if ( hitp->hit_dist < 0.0 )  {
-		/* XXX */
-		bu_log("xrayhit:  Eye inside solid (%g)\n", hitp->hit_dist );
-		for ( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
-			rt_pr_pt( ap->a_rt_i, pp );
-		return(0);
-	}
+    /* Compute the total thickness */
+    totdist = 0;
+    while ( pp != PartHeadp ) {
+	double	dist;
 
-	/* Finally! We are ready to walk the partition chain */
+	dist = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
+	totdist += dist;
 
-	/* Compute the total thickness */
-	totdist = 0;
-	while ( pp != PartHeadp ) {
-		double	dist;
+	pp = pp->pt_forw;
+    }
 
-		dist = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
-		totdist += dist;
-
-		pp = pp->pt_forw;
-	}
-
-	switch ( lightmodel ) {
+    switch ( lightmodel ) {
 	case LGT_FLOAT:
-		bu_semaphore_acquire( BU_SEM_SYSCALL );
-		fwrite( &totdist, sizeof(totdist), 1, outfp );
-		bu_semaphore_release( BU_SEM_SYSCALL );
-		break;
+	    bu_semaphore_acquire( BU_SEM_SYSCALL );
+	    fwrite( &totdist, sizeof(totdist), 1, outfp );
+	    bu_semaphore_release( BU_SEM_SYSCALL );
+	    break;
 	case LGT_BW:
-		fvalue = 1.0 - contrast_boost*totdist/viewsize;
-		if ( fvalue > 1.0 ) fvalue = 1.0;
-		else if ( fvalue <= 0.0 ) fvalue = 0.0;
-		value = 1.0 + 254.99 * fvalue;
-		bu_semaphore_acquire( RT_SEM_RESULTS );
-		if ( pixsize == 1 ) {
-			scanbuf[ap->a_x] = value;
-		} else {
-			scanbuf[ap->a_x*3+RED] = value;
-			scanbuf[ap->a_x*3+GRN] = value;
-			scanbuf[ap->a_x*3+BLU] = value;
-		}
-		bu_semaphore_release( RT_SEM_RESULTS );
-		break;
-	}
+	    fvalue = 1.0 - contrast_boost*totdist/viewsize;
+	    if ( fvalue > 1.0 ) fvalue = 1.0;
+	    else if ( fvalue <= 0.0 ) fvalue = 0.0;
+	    value = 1.0 + 254.99 * fvalue;
+	    bu_semaphore_acquire( RT_SEM_RESULTS );
+	    if ( pixsize == 1 ) {
+		scanbuf[ap->a_x] = value;
+	    } else {
+		scanbuf[ap->a_x*3+RED] = value;
+		scanbuf[ap->a_x*3+GRN] = value;
+		scanbuf[ap->a_x*3+BLU] = value;
+	    }
+	    bu_semaphore_release( RT_SEM_RESULTS );
+	    break;
+    }
 
-	return(1);	/* report hit to main routine */
+    return(1);	/* report hit to main routine */
 }
 
 static int
 xraymiss(register struct application *ap)
 {
-	static	double	zero = 0;
+    static	double	zero = 0;
 
-	switch ( lightmodel ) {
+    switch ( lightmodel ) {
 	case LGT_BW:
-		bu_semaphore_acquire( RT_SEM_RESULTS );
-		if ( pixsize == 1 ) {
-			scanbuf[ap->a_x] = 0;
-		} else {
-			scanbuf[ap->a_x*3+RED] = 0;
-			scanbuf[ap->a_x*3+GRN] = 0;
-			scanbuf[ap->a_x*3+BLU] = 0;
-		}
-		bu_semaphore_release( RT_SEM_RESULTS );
-		break;
+	    bu_semaphore_acquire( RT_SEM_RESULTS );
+	    if ( pixsize == 1 ) {
+		scanbuf[ap->a_x] = 0;
+	    } else {
+		scanbuf[ap->a_x*3+RED] = 0;
+		scanbuf[ap->a_x*3+GRN] = 0;
+		scanbuf[ap->a_x*3+BLU] = 0;
+	    }
+	    bu_semaphore_release( RT_SEM_RESULTS );
+	    break;
 	case LGT_FLOAT:
-		bu_semaphore_acquire( BU_SEM_SYSCALL );
-		fwrite( &zero, sizeof(zero), 1, outfp );
-		bu_semaphore_release( BU_SEM_SYSCALL );
-		break;
+	    bu_semaphore_acquire( BU_SEM_SYSCALL );
+	    fwrite( &zero, sizeof(zero), 1, outfp );
+	    bu_semaphore_release( BU_SEM_SYSCALL );
+	    break;
 	default:
-		bu_log( "xraymiss: Bad lighting model %d\n", lightmodel );
-		break;
-	}
+	    bu_log( "xraymiss: Bad lighting model %d\n", lightmodel );
+	    break;
+    }
 
-	return(0);	/* report miss to main routine */
+    return(0);	/* report miss to main routine */
 }
 
 void application_init (void) {}

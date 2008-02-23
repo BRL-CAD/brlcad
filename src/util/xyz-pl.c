@@ -44,34 +44,34 @@ int	debug = 0;
 int
 main(int argc, char *argv)
 {
-	double	xyz[3];
-	int	i;
-	int	first = 1;
+    double	xyz[3];
+    int	i;
+    int	first = 1;
 
-	for (;;)  {
-		xyz[0] = xyz[1] = xyz[2] = 0.0;
+    for (;;)  {
+	xyz[0] = xyz[1] = xyz[2] = 0.0;
 
-		buf[0] = '\0';
-		bu_fgets( buf, sizeof(buf), stdin );
-		if ( feof(stdin) )  break;
-		i = sscanf( buf, "%lf %lf %lf",
-			&xyz[0], &xyz[1], &xyz[2] );
-		if (debug)  {
-			fprintf(stderr, "buf=%s", buf);
-			fprintf(stderr, "%d: %f\t%f\t%f\n",
-				i, xyz[0], xyz[1], xyz[2] );
-		}
-		if ( i <= 0 )
-			break;
-		if ( first )  {
-			first = 0;
-			pdv_3move( stdout, xyz );
-		} else {
-			pdv_3cont( stdout, xyz );
-		}
+	buf[0] = '\0';
+	bu_fgets( buf, sizeof(buf), stdin );
+	if ( feof(stdin) )  break;
+	i = sscanf( buf, "%lf %lf %lf",
+		    &xyz[0], &xyz[1], &xyz[2] );
+	if (debug)  {
+	    fprintf(stderr, "buf=%s", buf);
+	    fprintf(stderr, "%d: %f\t%f\t%f\n",
+		    i, xyz[0], xyz[1], xyz[2] );
 	}
+	if ( i <= 0 )
+	    break;
+	if ( first )  {
+	    first = 0;
+	    pdv_3move( stdout, xyz );
+	} else {
+	    pdv_3cont( stdout, xyz );
+	}
+    }
 
-	return 0;
+    return 0;
 }
 
 /*

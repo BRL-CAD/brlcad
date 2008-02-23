@@ -86,9 +86,9 @@ if_hit(struct application *ap, struct partition *part_head, struct seg *finished
 	++part_nm;
 
 	RT_HIT_NORMAL( inormal, part->pt_inhit, part->pt_inseg->seg_stp,
-		&ap->a_ray, part->pt_inflip );
+		       &ap->a_ray, part->pt_inflip );
 	RT_HIT_NORMAL( onormal, part->pt_outhit, part->pt_outseg->seg_stp,
-		&ap->a_ray, part->pt_outflip );
+		       &ap->a_ray, part->pt_outflip );
 
 	/* Update the output values */
 	/*
@@ -105,32 +105,32 @@ if_hit(struct application *ap, struct partition *part_head, struct seg *finished
 	}
 	if (nirt_debug & DEBUG_HITS) {
 	    bu_log("Partition %d entry: (%g, %g, %g) exit: (%g, %g, %g)\n",
-		part_nm, r_entry(X), r_entry(Y), r_entry(Z),
-			 r_exit(X),  r_exit(Y),  r_exit(Z));
+		   part_nm, r_entry(X), r_entry(Y), r_entry(Z),
+		   r_exit(X),  r_exit(Y),  r_exit(Z));
 	}
 
 	r_entry(D) = r_entry(X) * cos(er) * cos(ar)
-		    + r_entry(Y) * cos(er) * sin(ar)
-		    + r_entry(Z) * sin(er);
+	    + r_entry(Y) * cos(er) * sin(ar)
+	    + r_entry(Z) * sin(er);
 	r_exit(D) = r_exit(X) * cos(er) * cos(ar)
-		    + r_exit(Y) * cos(er) * sin(ar)
-		    + r_exit(Z) * sin(er);
+	    + r_exit(Y) * cos(er) * sin(ar)
+	    + r_exit(Z) * sin(er);
 	n_entry(D) = n_entry(X) * cos(er) * cos(ar)
-		    + n_entry(Y) * cos(er) * sin(ar)
-		    + n_entry(Z) * sin(er);
+	    + n_entry(Y) * cos(er) * sin(ar)
+	    + n_entry(Z) * sin(er);
 	n_entry(H) = n_entry(X) * (-sin(ar))
-		    + n_entry(Y) * cos(ar);
+	    + n_entry(Y) * cos(ar);
 	n_entry(V) = n_entry(X) * (-sin(er)) * cos(ar)
-		    + n_entry(Y) * (-sin(er)) * sin(ar)
-		    + n_entry(Z) * cos(er);
+	    + n_entry(Y) * (-sin(er)) * sin(ar)
+	    + n_entry(Z) * cos(er);
 	n_exit(D) = n_exit(X) * cos(er) * cos(ar)
-		    + n_exit(Y) * cos(er) * sin(ar)
-		    + n_exit(Z) * sin(er);
+	    + n_exit(Y) * cos(er) * sin(ar)
+	    + n_exit(Z) * sin(er);
 	n_exit(H) = n_exit(X) * (-sin(ar))
-		    + n_exit(Y) * cos(ar);
+	    + n_exit(Y) * cos(ar);
 	n_exit(V) = n_exit(X) * (-sin(er)) * cos(ar)
-		    + n_exit(Y) * (-sin(er)) * sin(ar)
-		    + n_exit(Z) * cos(er);
+	    + n_exit(Y) * (-sin(er)) * sin(ar)
+	    + n_exit(Z) * cos(er);
 	ValTab[VTI_LOS].value.fval = r_entry(D) - r_exit(D);
 	ValTab[VTI_SLOS].value.fval = 0.01 * ValTab[VTI_LOS].value.fval *
 	    part->pt_regionp->reg_los;
@@ -149,7 +149,7 @@ if_hit(struct application *ap, struct partition *part_head, struct seg *finished
 	if (part->pt_overlap_reg == 0) {
 	    ValTab[VTI_CLAIMANT_COUNT].value.ival = 1;
 	    ValTab[VTI_CLAIMANT_LIST].value.sval =
-	    ValTab[VTI_CLAIMANT_LISTN].value.sval =
+		ValTab[VTI_CLAIMANT_LISTN].value.sval =
 		ValTab[VTI_REG_NAME].value.sval;
 	} else {
 	    struct region	**rpp;
@@ -245,7 +245,7 @@ if_hit(struct application *ap, struct partition *part_head, struct seg *finished
 	fprintf(stderr, "Previously unreported overlaps.  Shouldn't happen\n");
 	ovp = ovlp_list.forw;
 	while ( ovp != &ovlp_list ) {
-		bu_log( " OVERLAP:\n\t%s %s (%g %g %g) %g\n", ovp->reg1->reg_name, ovp->reg2->reg_name, V3ARGS( ovp->in_point ), ovp->out_dist - ovp->in_dist );
+	    bu_log( " OVERLAP:\n\t%s %s (%g %g %g) %g\n", ovp->reg1->reg_name, ovp->reg2->reg_name, V3ARGS( ovp->in_point ), ovp->out_dist - ovp->in_dist );
 	    ovp = ovp->forw;
 	}
     }
@@ -292,9 +292,9 @@ if_overlap(register struct application *ap, register struct partition *pp, struc
     new_ovlp->in_dist = pp->pt_inhit->hit_dist;
     new_ovlp->out_dist = pp->pt_outhit->hit_dist;
     VJOIN1(new_ovlp->in_point, ap->a_ray.r_pt, pp->pt_inhit->hit_dist,
-	ap->a_ray.r_dir );
+	   ap->a_ray.r_dir );
     VJOIN1(new_ovlp->out_point, ap->a_ray.r_pt, pp->pt_outhit->hit_dist,
-	ap->a_ray.r_dir );
+	   ap->a_ray.r_dir );
 
     /* Insert the new overlap into the list of overlaps */
     new_ovlp->forw = ovlp_list.forw;
@@ -316,7 +316,7 @@ get_obliq(fastf_t *ray, fastf_t *normal)
     cos_obl = fabs(VDOT(ray, normal) * MAGNITUDE(normal) / MAGNITUDE(ray));
     if (cos_obl < 1.001) {
 	if (cos_obl > 1)
-		cos_obl = 1;
+	    cos_obl = 1;
 	obliquity = acos(cos_obl);
     } else {
 	fflush(stdout);
@@ -328,11 +328,11 @@ get_obliq(fastf_t *ray, fastf_t *normal)
     /* convert obliquity to degrees */
     obliquity = fabs(obliquity * 180/PI);
     if (obliquity > 90 && obliquity <= 180)
-	    obliquity = 180 - obliquity;
+	obliquity = 180 - obliquity;
     else if (obliquity > 180 && obliquity <= 270)
-	    obliquity = obliquity - 180;
+	obliquity = obliquity - 180;
     else if (obliquity > 270 && obliquity <= 360)
-	    obliquity = 360 - obliquity;
+	obliquity = 360 - obliquity;
 
     return (obliquity);
 }
@@ -345,9 +345,9 @@ find_ovlp(struct partition *pp)
 
     for (op = ovlp_list.forw; op != &ovlp_list; op = op->forw) {
 	if (((pp->pt_inhit->hit_dist <= op->in_dist)
-	    && (op->in_dist <= pp->pt_outhit->hit_dist)) ||
+	     && (op->in_dist <= pp->pt_outhit->hit_dist)) ||
 	    ((pp->pt_inhit->hit_dist <= op->out_dist)
-	    && (op->in_dist <= pp->pt_outhit->hit_dist)))
+	     && (op->in_dist <= pp->pt_outhit->hit_dist)))
 	    break;
     }
     return ((op == &ovlp_list) ? OVERLAP_NULL : op);

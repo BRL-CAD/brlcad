@@ -98,46 +98,46 @@ main(int argc, char **argv)
     init_Lgts();
 
     if ( ! pars_Argv( argc, argv ) )
-	{
-	    prnt_Usage();
-	    return	1;
-	}
+    {
+	prnt_Usage();
+	return	1;
+    }
 
     for ( i = 0; i < NSIG; i++ )
 	switch ( i )
-	    {
-		case SIGINT :
-		    if ( (norml_sig = signal( i, SIG_IGN )) == SIG_IGN )
-			{
-			    if ( ! tty )
-				abort_sig = SIG_IGN;
-			    else
-				{
-				 /* MEX windows on IRIS (other than
-				     the console) ignore SIGINT. */
-				    prnt_Scroll( "WARNING: Signal 1 was being ignored!" );
-				    goto	tty_sig;
-				}
-			}
+	{
+	    case SIGINT :
+		if ( (norml_sig = signal( i, SIG_IGN )) == SIG_IGN )
+		{
+		    if ( ! tty )
+			abort_sig = SIG_IGN;
 		    else
-			{
-			tty_sig:
-			    norml_sig = intr_sig;
-			    abort_sig = abort_RT;
-			    (void) signal( i,  norml_sig );
-			}
-		    break;
-		case SIGCHLD :
-		    break; /* Leave SIGCHLD alone. */
-		case SIGPIPE :
-		    (void) signal( i, SIG_IGN );
-		    break;
-		case SIGQUIT :
-		    break;
-		case SIGTSTP :
-		    (void) signal( i, stop_sig );
-		    break;
-	    }
+		    {
+			/* MEX windows on IRIS (other than
+			   the console) ignore SIGINT. */
+			prnt_Scroll( "WARNING: Signal 1 was being ignored!" );
+			goto	tty_sig;
+		    }
+		}
+		else
+		{
+		tty_sig:
+		    norml_sig = intr_sig;
+		    abort_sig = abort_RT;
+		    (void) signal( i,  norml_sig );
+		}
+		break;
+	    case SIGCHLD :
+		break; /* Leave SIGCHLD alone. */
+	    case SIGPIPE :
+		(void) signal( i, SIG_IGN );
+		break;
+	    case SIGQUIT :
+		break;
+	    case SIGTSTP :
+		(void) signal( i, stop_sig );
+		break;
+	}
     /* Main loop.							*/
     user_Interaction();
     /*NOTREACHED*/
@@ -152,14 +152,14 @@ interpolate_Frame(int frame)
     if ( movie.m_noframes == 1 )
 	return	1;
     if ( ! movie.m_fullscreen )
-	{
-		register int	frames_across;
+    {
+	register int	frames_across;
 	register int	size;
 	size = MovieSize( movie.m_frame_sz, movie.m_noframes );
 	frames_across = size / movie.m_frame_sz;
 	x_fb_origin = (frame % frames_across) * movie.m_frame_sz;
 	y_fb_origin = (frame / frames_across) * movie.m_frame_sz;
-	}
+    }
     bu_log( "Frame %d:\n", frame );
     if ( movie.m_keys )
 	return	key_Frame() == -1 ? 0 : 1;
@@ -173,31 +173,31 @@ interpolate_Frame(int frame)
     bu_log( "\tview elevation\t%g\n", lgts[0].elev*DEGRAD );
     bu_log( "\tview roll\t%g\n", grid_roll*DEGRAD );
     if ( movie.m_over )
+    {
+	lgts[0].over = 1;
+	lgts[0].dist = movie.m_dist_beg +
+	    rel_frame * (movie.m_dist_end - movie.m_dist_beg);
+	grid_dist = movie.m_grid_beg +
+	    rel_frame * (movie.m_grid_end - movie.m_grid_beg);
+	bu_log( "\teye distance\t%g\n", lgts[0].dist );
+	bu_log( "\tgrid distance\t%g\n", grid_dist );
+    }
+    else
+    {
+	lgts[0].over = 0;
+	if ( NEAR_ZERO(movie.m_pers_beg, SMALL_FASTF) && NEAR_ZERO(movie.m_pers_end, SMALL_FASTF) )
 	{
-	    lgts[0].over = 1;
-	    lgts[0].dist = movie.m_dist_beg +
-		rel_frame * (movie.m_dist_end - movie.m_dist_beg);
+	    rel_perspective = 0.0;
 	    grid_dist = movie.m_grid_beg +
 		rel_frame * (movie.m_grid_end - movie.m_grid_beg);
-	    bu_log( "\teye distance\t%g\n", lgts[0].dist );
 	    bu_log( "\tgrid distance\t%g\n", grid_dist );
 	}
-    else
-	{
-	    lgts[0].over = 0;
-	    if ( NEAR_ZERO(movie.m_pers_beg, SMALL_FASTF) && NEAR_ZERO(movie.m_pers_end, SMALL_FASTF) )
-		{
-		    rel_perspective = 0.0;
-		    grid_dist = movie.m_grid_beg +
-			rel_frame * (movie.m_grid_end - movie.m_grid_beg);
-		    bu_log( "\tgrid distance\t%g\n", grid_dist );
-		}
-	    else
-		if ( movie.m_pers_beg >= 0.0 )
-		    rel_perspective = movie.m_pers_beg +
-			rel_frame * (movie.m_pers_end - movie.m_pers_beg);
-	    bu_log( "\tperspective\t%g\n", rel_perspective );
-	}
+	else
+	    if ( movie.m_pers_beg >= 0.0 )
+		rel_perspective = movie.m_pers_beg +
+		    rel_frame * (movie.m_pers_end - movie.m_pers_beg);
+	bu_log( "\tperspective\t%g\n", rel_perspective );
+    }
     return	1;
 }
 
@@ -215,12 +215,12 @@ ready_Output_Device(int frame)
 {
     int size;
     if ( force_cellsz )
-	{
-	    grid_sz = (int)(view_size / cell_sz);
-	    grid_sz = Max( grid_sz, 1 ); /* must be non-zero */
-	    setGridSize( grid_sz );
-	    prnt_Status();
-	}
+    {
+	grid_sz = (int)(view_size / cell_sz);
+	grid_sz = Max( grid_sz, 1 ); /* must be non-zero */
+	setGridSize( grid_sz );
+	prnt_Status();
+    }
     /* Calculate size of frame buffer image (pixels across square image). */
     if ( movie.m_noframes > 1 && ! movie.m_fullscreen )
 	/* Fit frames of movie. */
@@ -231,20 +231,20 @@ ready_Output_Device(int frame)
 	else
 	    size = grid_sz; /* just 1 pixel/ray */
     if ( movie.m_noframes > 1 && movie.m_fullscreen )
-	{
-		char	framefile[MAX_LN];
+    {
+	char	framefile[MAX_LN];
 	/* We must be doing full-screen frames. */
 	size = grid_sz;
 	(void) snprintf( framefile, MAX_LN, "%s.%04d", prefix, frame );
 	if ( ! fb_Setup( framefile, size ) )
 	    return	0;
-	}
+    }
     else
-	{
-	    if ( frame == movie.m_curframe && ! fb_Setup( fb_file, size ) )
-		return	0;
-	    fb_Zoom_Window();
-	}
+    {
+	if ( frame == movie.m_curframe && ! fb_Setup( fb_file, size ) )
+	    return	0;
+	fb_Zoom_Window();
+    }
     return	1;
 }
 
@@ -257,10 +257,10 @@ close_Output_Device(int frame)
 #endif
 	if (	(movie.m_noframes > 1 && movie.m_fullscreen)
 		||	frame == movie.m_endframe )
-	    {
-		(void) fb_close( fbiop );
-		fbiop = FBIO_NULL;
-	    }
+	{
+	    (void) fb_close( fbiop );
+	    fbiop = FBIO_NULL;
+	}
     return;
 }
 

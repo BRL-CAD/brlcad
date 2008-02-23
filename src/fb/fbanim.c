@@ -72,140 +72,140 @@ Usage: fbanim [-h -i -r -v] [-p passes]\n\
 int
 get_args(int argc, register char **argv)
 {
-	register int c;
+    register int c;
 
-	while ( (c = bu_getopt( argc, argv, "s:w:n:hirvp:S:W:N:" )) != EOF )  {
-		switch ( c )  {
-		case 's':
-			subimage_width = subimage_height = atoi(bu_optarg);
-			break;
-		case 'w':
-			subimage_width = atoi(bu_optarg);
-			break;
-		case 'n':
-			subimage_height = atoi(bu_optarg);
-			break;
-		case 'i':
-			inverse = 1;
-			break;
-		case 'p':
-			passes = atoi(bu_optarg);
-			if (passes<1)  passes=1;
-			break;
-		case 'r':
-			rocking = 1;
-			break;
-		case 'v':
-			verbose = 1;
-			break;
-		case 'h':
-			/* high-res screen */
-			screen_width = screen_height = 1024;
-			break;
-		case 'S':
-			screen_height = screen_width = atoi(bu_optarg);
-			break;
-		case 'W':
-			screen_width = atoi(bu_optarg);
-			break;
-		case 'N':
-			screen_height = atoi(bu_optarg);
-			break;
+    while ( (c = bu_getopt( argc, argv, "s:w:n:hirvp:S:W:N:" )) != EOF )  {
+	switch ( c )  {
+	    case 's':
+		subimage_width = subimage_height = atoi(bu_optarg);
+		break;
+	    case 'w':
+		subimage_width = atoi(bu_optarg);
+		break;
+	    case 'n':
+		subimage_height = atoi(bu_optarg);
+		break;
+	    case 'i':
+		inverse = 1;
+		break;
+	    case 'p':
+		passes = atoi(bu_optarg);
+		if (passes<1)  passes=1;
+		break;
+	    case 'r':
+		rocking = 1;
+		break;
+	    case 'v':
+		verbose = 1;
+		break;
+	    case 'h':
+		/* high-res screen */
+		screen_width = screen_height = 1024;
+		break;
+	    case 'S':
+		screen_height = screen_width = atoi(bu_optarg);
+		break;
+	    case 'W':
+		screen_width = atoi(bu_optarg);
+		break;
+	    case 'N':
+		screen_height = atoi(bu_optarg);
+		break;
 
-		default:		/* '?' */
-			return(0);
-		}
-	}
-
-	if ( bu_optind+1 >= argc )	/* two mandatory positional args */
+	    default:		/* '?' */
 		return(0);
-	return(1);		/* OK */
+	}
+    }
+
+    if ( bu_optind+1 >= argc )	/* two mandatory positional args */
+	return(0);
+    return(1);		/* OK */
 }
 
 int
 main(int argc, char **argv)
 {
-	register int i;
+    register int i;
 
-	if ( !get_args( argc, argv ) )  {
-		(void)fputs(Usage, stderr);
-		bu_exit( 1, NULL );
+    if ( !get_args( argc, argv ) )  {
+	(void)fputs(Usage, stderr);
+	bu_exit( 1, NULL );
+    }
+
+    /* If not given with -s & -n, use (old) positional param (compat) */
+    if ( subimage_width <= 0 || subimage_height <= 0 )  {
+	subimage_width = subimage_height = atoi(argv[bu_optind]);
+	if ( subimage_width == 0 ) {
+	    fprintf(stderr, "fbanim: must specify image size\n");
+	    bu_exit( 2, NULL );
 	}
+    }
+    nframes = atoi(argv[bu_optind+1]);
+    if ( bu_optind+2 >= argc )
+	fps = 8;
+    else
+	fps = atoi(argv[bu_optind+2]);
 
-	/* If not given with -s & -n, use (old) positional param (compat) */
-	if ( subimage_width <= 0 || subimage_height <= 0 )  {
-		subimage_width = subimage_height = atoi(argv[bu_optind]);
-		if ( subimage_width == 0 ) {
-			fprintf(stderr, "fbanim: must specify image size\n");
-			bu_exit( 2, NULL );
-		}
-	}
-	nframes = atoi(argv[bu_optind+1]);
-	if ( bu_optind+2 >= argc )
-		fps = 8;
-	else
-		fps = atoi(argv[bu_optind+2]);
+    if ( fps <= 1 )  {
+	sec = fps ? 1 : 4;
+	usec = 0;
+    } else {
+	sec = 0;
+	usec = 1000000/fps;
+    }
 
-	if ( fps <= 1 )  {
-		sec = fps ? 1 : 4;
-		usec = 0;
+    if ( (fbp = fb_open( NULL, screen_width, screen_height )) == NULL )  {
+	fprintf(stderr, "fbanim: fb_open failed\n");
+	bu_exit(12, NULL);
+    }
+    screen_width = fb_getwidth(fbp);
+    screen_height = fb_getheight(fbp);
+
+    im_line = screen_width/subimage_width;	/* number of images across line */
+
+    fb_zoom( fbp, screen_width/subimage_width, screen_height/subimage_height );
+
+    while (passes-- > 0)  {
+	if ( !rocking )  {
+	    /* Play from start to finish, over and over */
+	    for ( i=0; i<nframes; i++ )
+		newframe(i);
 	} else {
-		sec = 0;
-		usec = 1000000/fps;
+	    /* Play from start to finish and back */
+	    for ( i=0; i<nframes; i++ )
+		newframe(i);
+	    while (i-->0)
+		newframe(i);
 	}
-
-	if ( (fbp = fb_open( NULL, screen_width, screen_height )) == NULL )  {
-		fprintf(stderr, "fbanim: fb_open failed\n");
-		bu_exit(12, NULL);
-	}
-	screen_width = fb_getwidth(fbp);
-	screen_height = fb_getheight(fbp);
-
-	im_line = screen_width/subimage_width;	/* number of images across line */
-
-	fb_zoom( fbp, screen_width/subimage_width, screen_height/subimage_height );
-
-	while (passes-- > 0)  {
-		if ( !rocking )  {
-			/* Play from start to finish, over and over */
-			for ( i=0; i<nframes; i++ )
-				newframe(i);
-		} else {
-			/* Play from start to finish and back */
-			for ( i=0; i<nframes; i++ )
-				newframe(i);
-			while (i-->0)
-				newframe(i);
-		}
-	}
-	fb_close( fbp );
-	return(0);
+    }
+    fb_close( fbp );
+    return(0);
 }
 
 void
 newframe(register int i)
 {
-	register int	xPan, yPan;		/* Pan Location */
-	struct timeval tv;
-	fd_set fds;
+    register int	xPan, yPan;		/* Pan Location */
+    struct timeval tv;
+    fd_set fds;
 
-	xPan = (i%im_line)*subimage_width+subimage_width/2;
-	yPan = (i/im_line)*subimage_height+subimage_height/2;
-	if ( inverse )
-		yPan = screen_width - yPan;
-	if ( verbose )  {
-		printf("%3d: %3d %3d\n", i, xPan, yPan);
-		fflush( stdout );
-	}
-	fb_window( fbp, xPan, yPan );
+    xPan = (i%im_line)*subimage_width+subimage_width/2;
+    yPan = (i/im_line)*subimage_height+subimage_height/2;
+    if ( inverse )
+	yPan = screen_width - yPan;
+    if ( verbose )  {
+	printf("%3d: %3d %3d\n", i, xPan, yPan);
+	fflush( stdout );
+    }
+    fb_window( fbp, xPan, yPan );
 
-	FD_ZERO(&fds);
-	FD_SET(fileno(stdin), &fds);
+    FD_ZERO(&fds);
+    FD_SET(fileno(stdin), &fds);
 
-	tv.tv_sec = sec;
-	tv.tv_usec = usec;
+    tv.tv_sec = sec;
+    tv.tv_usec = usec;
 
-	select(fileno(stdin)+1, &fds, (fd_set *)0, (fd_set *)0, &tv);
+    select(fileno(stdin)+1, &fds, (fd_set *)0, (fd_set *)0, &tv);
 }
 
 /*

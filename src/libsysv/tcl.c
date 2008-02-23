@@ -29,7 +29,7 @@ SYSV_EXPORT int
 #ifdef BRLCAD_DEBUG
 Sysv_d_Init(Tcl_Interp *interp)
 #else
-Sysv_Init(Tcl_Interp *interp)
+    Sysv_Init(Tcl_Interp *interp)
 #endif
 {
     return TCL_OK;

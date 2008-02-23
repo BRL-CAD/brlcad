@@ -187,7 +187,7 @@ generate_brep(int count, ON_3dPoint *points)
     // EDGES
 
     // left face edges
-                                         /* curve */
+    /* curve */
     brep->NewEdge(brep->m_V[0], brep->m_V[1], 0, NULL, SMALL_FASTF); /* 0 */
     brep->NewEdge(brep->m_V[1], brep->m_V[2], 1, NULL, SMALL_FASTF); /* 1 */
     brep->NewEdge(brep->m_V[2], brep->m_V[3], 2, NULL, SMALL_FASTF); /* 2 */
@@ -414,5 +414,6 @@ main(int argc, char *argv[])
 // mode: C++
 // c-basic-offset: 4
 // indent-tabs-mode: t
+// c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8

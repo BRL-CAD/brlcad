@@ -51,25 +51,25 @@
 void
 bu_vls_printb(struct bu_vls *vls, const char *s, register long unsigned int v, register const char *bits)
 {
-	register int i, any = 0;
-	register char c;
+    register int i, any = 0;
+    register char c;
 
-	if (*bits++ == 8)
-		bu_vls_printf( vls, "%s=0%lo <", s, v);
-	else
-		bu_vls_printf( vls, "%s=x%lx <", s, v);
-	while ((i = *bits++)) {
-		if (v & (1L << (i-1))) {
-			if (any)
-				bu_vls_strcat( vls, ",");
-			any = 1;
-			for (; (c = *bits) > 32; bits++)
-				bu_vls_printf( vls, "%c", c);
-		} else
-			for (; *bits > 32; bits++)
-				;
-	}
-	bu_vls_strcat( vls, ">");
+    if (*bits++ == 8)
+	bu_vls_printf( vls, "%s=0%lo <", s, v);
+    else
+	bu_vls_printf( vls, "%s=x%lx <", s, v);
+    while ((i = *bits++)) {
+	if (v & (1L << (i-1))) {
+	    if (any)
+		bu_vls_strcat( vls, ",");
+	    any = 1;
+	    for (; (c = *bits) > 32; bits++)
+		bu_vls_printf( vls, "%c", c);
+	} else
+	    for (; *bits > 32; bits++)
+				   ;
+    }
+    bu_vls_strcat( vls, ">");
 }
 
 /**
@@ -80,12 +80,12 @@ bu_vls_printb(struct bu_vls *vls, const char *s, register long unsigned int v, r
 void
 bu_printb(const char *s, register long unsigned int v, register const char *bits)
 {
-	struct bu_vls	str;
+    struct bu_vls	str;
 
-	bu_vls_init(&str);
-	bu_vls_printb( &str, s, v, bits );
-	bu_log("%s", bu_vls_addr(&str) );
-	bu_vls_free(&str);
+    bu_vls_init(&str);
+    bu_vls_printb( &str, s, v, bits );
+    bu_log("%s", bu_vls_addr(&str) );
+    bu_vls_free(&str);
 }
 /** @} */
 /*

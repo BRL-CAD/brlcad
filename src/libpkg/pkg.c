@@ -288,7 +288,7 @@ pkg_open(const char *host, const char *service, const char *protocol, const char
 	register struct servent *sp;
 	if ((sp = getservbyname(service, "tcp")) == NULL) {
 	    snprintf(errbuf, MAX_ERRBUF_SIZE, "pkg_open(%s,%s): unknown service\n",
-		    host, service );
+		     host, service );
 	    errlog(errbuf);
 	    return(PKC_ERROR);
 	}
@@ -326,7 +326,7 @@ pkg_open(const char *host, const char *service, const char *protocol, const char
 	register struct servent *sp;
 	if ( (sp = getservbyname( service, "tcp" )) == NULL )  {
 	    snprintf(errbuf, MAX_ERRBUF_SIZE, "pkg_open(%s,%s): unknown service\n",
-		    host, service );
+		     host, service );
 	    errlog(errbuf);
 	    return(PKC_ERROR);
 	}
@@ -341,7 +341,7 @@ pkg_open(const char *host, const char *service, const char *protocol, const char
     } else {
 	if ( (hp = gethostbyname(host)) == NULL )  {
 	    snprintf(errbuf, MAX_ERRBUF_SIZE, "pkg_open(%s,%s): unknown host\n",
-		    host, service );
+		     host, service );
 	    errlog(errbuf);
 	    return(PKC_ERROR);
 	}
@@ -365,7 +365,7 @@ pkg_open(const char *host, const char *service, const char *protocol, const char
     if ( addr->sa_family == AF_INET ) {
 	int	on = 1;
 	if ( setsockopt( netfd, IPPROTO_TCP, TCP_NODELAY,
-			(char *)&on, sizeof(on) ) < 0 )  {
+			 (char *)&on, sizeof(on) ) < 0 )  {
 	    pkg_perror( errlog, "pkg_open: setsockopt TCP_NODELAY" );
 	}
     }
@@ -465,8 +465,8 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
     } else {
 	if ((sp = getservbyname(service, "tcp")) == NULL) {
 	    snprintf(errbuf, MAX_ERRBUF_SIZE,
-		    "pkg_permserver(%s,%d): unknown service\n",
-		    service, backlog );
+		     "pkg_permserver(%s,%d): unknown service\n",
+		     service, backlog );
 	    errlog(errbuf);
 	    return(PKC_ERROR);
 	}
@@ -524,8 +524,8 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
     } else {
 	if ( (sp = getservbyname( service, "tcp" )) == NULL )  {
 	    snprintf(errbuf, MAX_ERRBUF_SIZE,
-		    "pkg_permserver(%s,%d): unknown service\n",
-		    service, backlog );
+		     "pkg_permserver(%s,%d): unknown service\n",
+		     service, backlog );
 	    errlog(errbuf);
 	    return(-1);
 	}
@@ -548,13 +548,13 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
 
     if ( addr->sa_family == AF_INET ) {
 	if ( setsockopt( pkg_listenfd, SOL_SOCKET, SO_REUSEADDR,
-			(char *)&on, sizeof(on) ) < 0 )  {
+			 (char *)&on, sizeof(on) ) < 0 )  {
 	    pkg_perror( errlog, "pkg_permserver: setsockopt SO_REUSEADDR" );
 	}
 #  if defined(TCP_NODELAY)
 	/* SunOS 3.x defines it but doesn't support it! */
 	if ( setsockopt( pkg_listenfd, IPPROTO_TCP, TCP_NODELAY,
-			(char *)&on, sizeof(on) ) < 0 )  {
+			 (char *)&on, sizeof(on) ) < 0 )  {
 	    pkg_perror( errlog, "pkg_permserver: setsockopt TCP_NODELAY" );
 	}
 #  endif
@@ -894,7 +894,7 @@ pkg_send(int type, const char *buf, int len, register struct pkg_conn *pc)
 	 * Otherwise, just flush, and proceed.
 	 */
 	if ( len <= MAXQLEN && len <= PKG_STREAMLEN -
-	    sizeof(struct pkg_header) - pc->pkc_strpos )  {
+	     sizeof(struct pkg_header) - pc->pkc_strpos )  {
 	    (void)pkg_stream( type, buf, len, pc );
 	    return( (pkg_flush(pc) < 0) ? -1 : len );
 	}
@@ -1616,7 +1616,7 @@ pkg_gethdr(register struct pkg_conn *pc, char *buf)
      *  This will block until the new header arrives (feature).
      */
     if ( (i = pkg_inget( pc, (char *)&(pc->pkc_hdr),
-			sizeof(struct pkg_header) )) != sizeof(struct pkg_header) )  {
+			 sizeof(struct pkg_header) )) != sizeof(struct pkg_header) )  {
 	if (i > 0) {
 	    sprintf(errbuf, "pkg_gethdr: header read of %d?\n", i);
 	    (pc->pkc_errlog)(errbuf);
@@ -1639,8 +1639,8 @@ pkg_gethdr(register struct pkg_conn *pc, char *buf)
 	/* Slide over one byte and try again */
 	memmove((char *)&pc->pkc_hdr, ((char *)&pc->pkc_hdr)+1, sizeof(struct pkg_header)-1);
 	if ( (i=pkg_inget( pc,
-			  ((char *)&pc->pkc_hdr)+sizeof(struct pkg_header)-1,
-			  1 )) != 1 )  {
+			   ((char *)&pc->pkc_hdr)+sizeof(struct pkg_header)-1,
+			   1 )) != 1 )  {
 	    sprintf(errbuf, "pkg_gethdr: hdr read=%d?\n", i);
 	    (pc->pkc_errlog)(errbuf);
 	    return(-1);
@@ -1797,7 +1797,7 @@ pkg_timestamp(void)
 #else
 	    (int)GetCurrentProcessId()
 #endif
-	    );
+	);
     /* Don't fflush here, wait for rest of line */
 }
 

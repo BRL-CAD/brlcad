@@ -53,86 +53,86 @@
 int
 main(int argc, char **argv)
 {
-							/*  START # 1  */
-   struct rt_wdb *fpw;		/*  File to be written to.  */
-   char filemged[26];		/*  Mged file create.  */
-   double hgt, wid, dpt;		/*  Height, width, & depth of handle.  */
-   double rds;			/*  Radius of the corner of window.  */
-   point_t pts[8];		/*  Eight points of arb8.  */
-   point_t bs;			/*  Base of rcc.  */
-   vect_t ht;			/*  Height of rcc.  */
-   fastf_t rad;			/*  Radius of rcc.  */
-   char *temp;			/*  Temporary character string.  */
-   char temp1[16];		/*  Temporary character string.  */
+    /*  START # 1  */
+    struct rt_wdb *fpw;		/*  File to be written to.  */
+    char filemged[26];		/*  Mged file create.  */
+    double hgt, wid, dpt;		/*  Height, width, & depth of handle.  */
+    double rds;			/*  Radius of the corner of window.  */
+    point_t pts[8];		/*  Eight points of arb8.  */
+    point_t bs;			/*  Base of rcc.  */
+    vect_t ht;			/*  Height of rcc.  */
+    fastf_t rad;			/*  Radius of rcc.  */
+    char *temp;			/*  Temporary character string.  */
+    char temp1[16];		/*  Temporary character string.  */
 
-   char solnam[8];		/*  Solid name.  */
-   char regnam[8];		/*  Region name.  */
-   char grpnam[5];		/*  Group name.  */
-   int numwin;			/*  Number of windows to be created (<=26).  */
+    char solnam[8];		/*  Solid name.  */
+    char regnam[8];		/*  Region name.  */
+    char grpnam[5];		/*  Group name.  */
+    int numwin;			/*  Number of windows to be created (<=26).  */
 
-   struct wmember comb;		/*  Used to make regions.  */
-   struct wmember comb1;	/*  Used to make groups.  */
+    struct wmember comb;		/*  Used to make regions.  */
+    struct wmember comb1;	/*  Used to make groups.  */
 
-   int i, j, k;			/*  Loop counters.  */
+    int i, j, k;			/*  Loop counters.  */
 
-   /*  Set up solid, region, and group names.  */
-   solnam[0] = 's';
-   solnam[1] = '.';
-   solnam[2] = 'w';
-   solnam[3] = 'i';
-   solnam[4] = 'n';
-   solnam[5] = ' ';
-   solnam[6] = '#';
-   solnam[7] = '\0';
-   regnam[0] = 'r';
-   regnam[1] = '.';
-   regnam[2] = 'w';
-   regnam[3] = 'i';
-   regnam[4] = 'n';
-   regnam[5] = ' ';
-   regnam[6] = '#';
-   regnam[7] = '\0';
-   grpnam[0] = 'w';
-   grpnam[1] = 'i';
-   grpnam[2] = 'n';
-   grpnam[3] = ' ';
-   grpnam[4] = '\0';
+    /*  Set up solid, region, and group names.  */
+    solnam[0] = 's';
+    solnam[1] = '.';
+    solnam[2] = 'w';
+    solnam[3] = 'i';
+    solnam[4] = 'n';
+    solnam[5] = ' ';
+    solnam[6] = '#';
+    solnam[7] = '\0';
+    regnam[0] = 'r';
+    regnam[1] = '.';
+    regnam[2] = 'w';
+    regnam[3] = 'i';
+    regnam[4] = 'n';
+    regnam[5] = ' ';
+    regnam[6] = '#';
+    regnam[7] = '\0';
+    grpnam[0] = 'w';
+    grpnam[1] = 'i';
+    grpnam[2] = 'n';
+    grpnam[3] = ' ';
+    grpnam[4] = '\0';
 
-   /*  If there are no arguments ask questions.  */
-   if (argc == 1)
-   {
-   							/*  START # 3  */
+    /*  If there are no arguments ask questions.  */
+    if (argc == 1)
+    {
+	/*  START # 3  */
 
-   /*  Print info about the window.  */
-   (void)printf("\nThe windows are composed of 2 arb8s and 4 cylinders.\n");
-   (void)printf("The front of the window is centered at (0, 0, 0) and\n");
-   (void)printf("extends in the negative x-direction the depth of the\n");
-   (void)printf("window.\n\n");
+	/*  Print info about the window.  */
+	(void)printf("\nThe windows are composed of 2 arb8s and 4 cylinders.\n");
+	(void)printf("The front of the window is centered at (0, 0, 0) and\n");
+	(void)printf("extends in the negative x-direction the depth of the\n");
+	(void)printf("window.\n\n");
 
-   /*  Find name of mged file to be created.  */
-   (void)printf("Enter the mged file to be created (25 char max).\n\t");
-   (void)fflush(stdout);
-   (void)scanf("%26s", filemged);
+	/*  Find name of mged file to be created.  */
+	(void)printf("Enter the mged file to be created (25 char max).\n\t");
+	(void)fflush(stdout);
+	(void)scanf("%26s", filemged);
 
-   /*  Find the number of windows to create.  */
-   (void)printf("Enter the number of windows to create (26 max).\n\t");
-   (void)fflush(stdout);
-   (void)scanf("%d", &numwin);
+	/*  Find the number of windows to create.  */
+	(void)printf("Enter the number of windows to create (26 max).\n\t");
+	(void)fflush(stdout);
+	(void)scanf("%d", &numwin);
 
-   /*  Find the dimensions of the windows.  */
-   (void)printf("Enter the height, width, and depth of the window.\n\t");
-   (void)fflush(stdout);
-   (void)scanf("%lf %lf %lf", &hgt, &wid, &dpt);
-   (void)printf("Enter the radius of the corner.\n\t");
-   (void)fflush(stdout);
-   (void)scanf("%lf", &rds);
+	/*  Find the dimensions of the windows.  */
+	(void)printf("Enter the height, width, and depth of the window.\n\t");
+	(void)fflush(stdout);
+	(void)scanf("%lf %lf %lf", &hgt, &wid, &dpt);
+	(void)printf("Enter the radius of the corner.\n\t");
+	(void)fflush(stdout);
+	(void)scanf("%lf", &rds);
 
-   }							/*  END # 3  */
+    }							/*  END # 3  */
 
-   /*  If there are arguments get answers from arguments.  */
-   else
-   {
-   							/*  START # 4  */
+    /*  If there are arguments get answers from arguments.  */
+    else
+    {
+	/*  START # 4  */
 	/*  List options.  */
 	/*	-fname - name = mged file name.  */
 	/*	-n# - # = number of windows.  */
@@ -143,72 +143,72 @@ main(int argc, char **argv)
 
 	for (i=1; i<argc; i++)
 	{
-							/*  START # 5  */
-	   /*  Put argument in temporary character string.  */
-	   temp = argv[i];
+	    /*  START # 5  */
+	    /*  Put argument in temporary character string.  */
+	    temp = argv[i];
 
-	   /*  -f - mged file.  */
-	   if (temp[1] == 'f')
-	   {
-	   						/*  START # 6  */
+	    /*  -f - mged file.  */
+	    if (temp[1] == 'f')
+	    {
+		/*  START # 6  */
 		j = 2;
 		k = 0;
 		while ( (temp[j] != '\0') && (k < 25) )
 		{
-							/*  START # 7  */
-		   filemged[k] = temp[j];
-		   j++;
-		   k++;
+		    /*  START # 7  */
+		    filemged[k] = temp[j];
+		    j++;
+		    k++;
 		}					/*  END # 7  */
 		filemged[k] = '\0';
-	   }						/*  END # 6  */
+	    }						/*  END # 6  */
 
-	   /*  All other options.  */
-	   else
-	   {
-	   						/*  START # 8  */
+	    /*  All other options.  */
+	    else
+	    {
+		/*  START # 8  */
 		/*  Set up temporary character string.  */
 		j = 2;
 		k = 0;
 		while ( (temp[j] != '\0') && (k < 15) )
 		{
-							/*  START # 9  */
-		   temp1[k] = temp[j];
-		   j++;
-		   k++;
+		    /*  START # 9  */
+		    temp1[k] = temp[j];
+		    j++;
+		    k++;
 		}					/*  END # 9  */
 		temp1[k] = '\0';
 		if (temp[1] == 'n')
 		{
-		   (void)sscanf(temp1, "%d", &numwin);
-		   if (numwin > 26) numwin = 26;
+		    (void)sscanf(temp1, "%d", &numwin);
+		    if (numwin > 26) numwin = 26;
 		}
 		else if (temp[1] == 'h') (void)sscanf(temp1, "%lf", &hgt);
 		else if (temp[1] == 'w') (void)sscanf(temp1, "%lf", &wid);
 		else if (temp[1] == 'd') (void)sscanf(temp1, "%lf", &dpt);
 		else if (temp[1] == 'r') (void)sscanf(temp1, "%lf", &rds);
-	   }						/*  END # 8  */
+	    }						/*  END # 8  */
 	}						/*  END # 5  */
-   }							/*  END # 4  */
+    }							/*  END # 4  */
 
-   /*  Print out all info.  */
-   (void)printf("\nmged file:  %s\n", filemged);
-   (void)printf("height of window:  %f mm\n", hgt);
-   (void)printf("width of window:  %f mm\n", wid);
-   (void)printf("depth of window:  %f mm\n", dpt);
-   (void)printf("radius of corner:  %f mm\n", rds);
-   (void)printf("number of windows:  %d\n\n", numwin);
-   (void)fflush(stdout);
+    /*  Print out all info.  */
+    (void)printf("\nmged file:  %s\n", filemged);
+    (void)printf("height of window:  %f mm\n", hgt);
+    (void)printf("width of window:  %f mm\n", wid);
+    (void)printf("depth of window:  %f mm\n", dpt);
+    (void)printf("radius of corner:  %f mm\n", rds);
+    (void)printf("number of windows:  %d\n\n", numwin);
+    (void)fflush(stdout);
 
-   /*  Open mged file.  */
-   fpw = wdb_fopen(filemged);
+    /*  Open mged file.  */
+    fpw = wdb_fopen(filemged);
 
-   /*  Write ident record.  */
-   mk_id(fpw, "windows");
+    /*  Write ident record.  */
+    mk_id(fpw, "windows");
 
-   for (i=0; i<numwin; i++)
-   {
-   							/*  START # 2  */
+    for (i=0; i<numwin; i++)
+    {
+	/*  START # 2  */
 	/*  Create first arb8.  */
 	pts[0][0] = (fastf_t)0.;
 	pts[0][1] = (fastf_t) (wid / 2. - rds);
@@ -357,12 +357,12 @@ main(int argc, char **argv)
 
 	grpnam[3] = 97 + i;
 	mk_lfcomb(fpw, grpnam, &comb1, 0);
-   }							/*  START # 2  */
+    }							/*  START # 2  */
 
-   /*  Close file.  */
-   wdb_close(fpw);
+    /*  Close file.  */
+    wdb_close(fpw);
 
-   return 0;
+    return 0;
 }							/*  END # 1  */
 
 /*

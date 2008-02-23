@@ -58,66 +58,66 @@ or	pixautosize [-b bytes_per_sample] [-l file_length]\n";
 int
 get_args(int argc, register char **argv)
 {
-	register int c;
+    register int c;
 
-	while ( (c = bu_getopt( argc, argv, "b:f:l:" )) != EOF )  {
-		switch ( c )  {
-		case 'b':
-			bytes_per_sample = atoi(bu_optarg);
-			break;
-		case 'f':
-			file_name = bu_optarg;
-			break;
-		case 'l':
-			file_length = atoi(bu_optarg);
-			break;
-		default:		/* '?' */
-			return(0);
-		}
+    while ( (c = bu_getopt( argc, argv, "b:f:l:" )) != EOF )  {
+	switch ( c )  {
+	    case 'b':
+		bytes_per_sample = atoi(bu_optarg);
+		break;
+	    case 'f':
+		file_name = bu_optarg;
+		break;
+	    case 'l':
+		file_length = atoi(bu_optarg);
+		break;
+	    default:		/* '?' */
+		return(0);
 	}
+    }
 
-	if ( argc > ++bu_optind )
-		(void)fprintf( stderr, "pixautosize: excess argument(s) ignored\n" );
+    if ( argc > ++bu_optind )
+	(void)fprintf( stderr, "pixautosize: excess argument(s) ignored\n" );
 
-	return(1);		/* OK */
+    return(1);		/* OK */
 }
 
 int
 main(int argc, char **argv)
 {
-	int	ret = 0;
-	int	nsamp;
+    int	ret = 0;
+    int	nsamp;
 
-	if ( !get_args( argc, argv ) || bytes_per_sample <= 0 )  {
-		(void)fputs(usage, stderr);
-		return 1;
+    if ( !get_args( argc, argv ) || bytes_per_sample <= 0 )  {
+	(void)fputs(usage, stderr);
+	return 1;
+    }
+
+    if ( !file_name && file_length <= 0 )  {
+	(void)fputs(usage, stderr);
+	return 1;
+    }
+
+    if ( file_name ) {
+	if ( !fb_common_file_size(&width, &height, file_name, bytes_per_sample) ) {
+	    fprintf(stderr, "pixautosize: unable to autosize file '%s'\n", file_name);
+	    ret = 1;		/* ERROR */
 	}
-
-	if ( !file_name && file_length <= 0 )  {
-		(void)fputs(usage, stderr);
-		return 1;
+    } else {
+	nsamp = file_length/bytes_per_sample;
+	if ( !fb_common_image_size(&width, &height, nsamp) ) {
+	    fprintf(stderr, "pixautosize: unable to autosize nsamples=%d\n", nsamp);
+	    ret = 2;		/* ERROR */
 	}
+    }
 
-	if ( file_name ) {
-		if ( !fb_common_file_size(&width, &height, file_name, bytes_per_sample) ) {
-			fprintf(stderr, "pixautosize: unable to autosize file '%s'\n", file_name);
-			ret = 1;		/* ERROR */
-		}
-	} else {
-		nsamp = file_length/bytes_per_sample;
-		if ( !fb_common_image_size(&width, &height, nsamp) ) {
-			fprintf(stderr, "pixautosize: unable to autosize nsamples=%d\n", nsamp);
-			ret = 2;		/* ERROR */
-		}
-	}
-
-	/*
-	 *  Whether or not an error message was printed to stderr above,
-	 *  print out the width and height on stdout.
-	 *  They will be zero on error.
-	 */
-	printf("WIDTH=%lu; HEIGHT=%lu\n", width, height);
-	return ret;
+    /*
+     *  Whether or not an error message was printed to stderr above,
+     *  print out the width and height on stdout.
+     *  They will be zero on error.
+     */
+    printf("WIDTH=%lu; HEIGHT=%lu\n", width, height);
+    return ret;
 }
 
 /*

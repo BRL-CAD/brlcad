@@ -61,9 +61,9 @@ static const bn_poly_t bn_Zero_poly = { BN_POLY_MAGIC, 0, {0.0} };
  */
 void
 rt_poly_eval_w_2derivatives(register bn_complex_t *cZ, register bn_poly_t *eqn, register bn_complex_t *b, register bn_complex_t *c, register bn_complex_t *d)
-     /* input */
-     /* input */
-     /* outputs */
+    /* input */
+    /* input */
+    /* outputs */
 {
     register int	n;
     register int	m;

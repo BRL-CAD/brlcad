@@ -160,29 +160,29 @@ main(int argc, char **argv)
     slope = dist/time;
 
     switch (v0_set) {
-    case TIME_ABSOLUTE:
-	v0 = inv0;
-	break;
-    case TIME_RELATIVE:
-	v0 = slope*inv0;
-	break;
-    default:
-    case TIME_NONE:
-	v0 = slope;
-	break;
+	case TIME_ABSOLUTE:
+	    v0 = inv0;
+	    break;
+	case TIME_RELATIVE:
+	    v0 = slope*inv0;
+	    break;
+	default:
+	case TIME_NONE:
+	    v0 = slope;
+	    break;
     }
 
     switch (v1_set) {
-    case TIME_ABSOLUTE:
-	v1 = inv1;
-	break;
-    case TIME_RELATIVE:
-	v1 = slope*inv1;
-	break;
-    default:
-    case TIME_NONE:
-	v1 = slope;
-	break;
+	case TIME_ABSOLUTE:
+	    v1 = inv1;
+	    break;
+	case TIME_RELATIVE:
+	    v1 = slope*inv1;
+	    break;
+	default:
+	case TIME_NONE:
+	    v1 = slope;
+	    break;
     }
     if (v0<0.0) {
 	fprintf(stderr, "anim_time: Start velocity must be non-negative.\n");
@@ -237,46 +237,46 @@ int get_args(int argc, char **argv)
 
     while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
 	switch (c) {
-	case 's':
-	    sscanf(bu_optarg, "%lf", &inv0);
-	    v0_set = TIME_ABSOLUTE;
-	    break;
-	case 'e':
-	    sscanf(bu_optarg, "%lf", &inv1);
-	    v1_set = TIME_ABSOLUTE;
-	    break;
-	case 'i':
-	    sscanf(bu_optarg, "%lf", &inv0);
-	    v0_set = TIME_RELATIVE;
-	    if ((inv0>3.0)||(inv0<0.0)) {
-		fprintf(stderr, "anim_time: -i argument must lie between 0.0 and 3.0\n");
+	    case 's':
+		sscanf(bu_optarg, "%lf", &inv0);
+		v0_set = TIME_ABSOLUTE;
+		break;
+	    case 'e':
+		sscanf(bu_optarg, "%lf", &inv1);
+		v1_set = TIME_ABSOLUTE;
+		break;
+	    case 'i':
+		sscanf(bu_optarg, "%lf", &inv0);
+		v0_set = TIME_RELATIVE;
+		if ((inv0>3.0)||(inv0<0.0)) {
+		    fprintf(stderr, "anim_time: -i argument must lie between 0.0 and 3.0\n");
+		    return 0;
+		}
+		break;
+	    case 'f':
+		sscanf(bu_optarg, "%lf", &inv1);
+		v1_set = TIME_RELATIVE;
+		if ((inv1>3.0)||(inv1<0.0)) {
+		    fprintf(stderr, "anim_time: -f argument must lie between 0.0 and 3.0\n");
+		    return 0;
+		}
+		break;
+	    case 'q':
+		query = 1;
+		break;
+	    case 'm':
+		sscanf(bu_optarg, "%d", &maxlines);
+		domem = 1;
+		break;
+	    case 'v':
+		verbose = 1;
+		break;
+	    case 'd':
+		debug = 1;
+		break;
+	    default:
+		fprintf(stderr, "Unknown option: -%c\n", c);
 		return 0;
-	    }
-	    break;
-	case 'f':
-	    sscanf(bu_optarg, "%lf", &inv1);
-	    v1_set = TIME_RELATIVE;
-	    if ((inv1>3.0)||(inv1<0.0)) {
-		fprintf(stderr, "anim_time: -f argument must lie between 0.0 and 3.0\n");
-		return 0;
-	    }
-	    break;
-	case 'q':
-	    query = 1;
-	    break;
-	case 'm':
-	    sscanf(bu_optarg, "%d", &maxlines);
-	    domem = 1;
-	    break;
-	case 'v':
-	    verbose = 1;
-	    break;
-	case 'd':
-	    debug = 1;
-	    break;
-	default:
-	    fprintf(stderr, "Unknown option: -%c\n", c);
-	    return 0;
 	}
     }
     return 1;

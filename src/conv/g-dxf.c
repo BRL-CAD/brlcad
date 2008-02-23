@@ -370,8 +370,8 @@ static unsigned char rgb[]={
  */
 int
 main(argc, argv)
-     int	argc;
-     char	*argv[];
+    int	argc;
+    char	*argv[];
 {
     register int	c;
     double		percent;
@@ -596,10 +596,10 @@ find_closest_color( float color[3] )
 
 static void
 nmg_to_dxf( r, pathp, region_id, color )
-     struct nmgregion *r;
-     struct db_full_path *pathp;
-     int region_id;
-     float color[3];
+    struct nmgregion *r;
+    struct db_full_path *pathp;
+    int region_id;
+    float color[3];
 {
     struct model *m;
     struct shell *s;
@@ -814,10 +814,10 @@ nmg_to_dxf( r, pathp, region_id, color )
 }
 
 union tree *get_layer(tsp, pathp, curtree, client_data)
-     register struct db_tree_state	*tsp;
-     struct db_full_path	*pathp;
-     union tree		*curtree;
-     genptr_t		client_data;
+    register struct db_tree_state	*tsp;
+    struct db_full_path	*pathp;
+    union tree		*curtree;
+    genptr_t		client_data;
 {
     char *layer_name;
     int color_num;
@@ -840,10 +840,10 @@ union tree *get_layer(tsp, pathp, curtree, client_data)
  *  This routine must be prepared to run in parallel.
  */
 union tree *do_region_end(tsp, pathp, curtree, client_data)
-     register struct db_tree_state	*tsp;
-     struct db_full_path	*pathp;
-     union tree		*curtree;
-     genptr_t		client_data;
+    register struct db_tree_state	*tsp;
+    struct db_full_path	*pathp;
+    union tree		*curtree;
+    genptr_t		client_data;
 {
     union tree		*ret_tree;
     struct bu_list		vhead;

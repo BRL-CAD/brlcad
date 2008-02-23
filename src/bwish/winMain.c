@@ -185,7 +185,7 @@ Tcl_AppInit(Tcl_Interp *interp)
     Tcl_SetVar(interp, "tcl_rcFileName", "~/bwishrc.tcl", TCL_GLOBAL_ONLY);
     return TCL_OK;
 
-error:
+ error:
     MessageBeep(MB_ICONEXCLAMATION);
     MessageBox(NULL, Tcl_GetStringResult(interp), "Error in bwish",
 	       MB_ICONSTOP | MB_OK | MB_TASKMODAL | MB_SETFOREGROUND);
@@ -225,7 +225,7 @@ BwishPanic(const char *format, ...)
 
     MessageBeep(MB_ICONEXCLAMATION);
     MessageBox(NULL, buf, "Fatal Error in bwish",
-	    MB_ICONSTOP | MB_OK | MB_TASKMODAL | MB_SETFOREGROUND);
+	       MB_ICONSTOP | MB_OK | MB_TASKMODAL | MB_SETFOREGROUND);
 #ifdef _MSC_VER
     DebugBreak();
 #endif

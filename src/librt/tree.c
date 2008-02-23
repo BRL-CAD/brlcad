@@ -132,8 +132,8 @@ const struct db_tree_state	rt_initial_tree_state = {
  */
 /* ARGSUSED */
 HIDDEN int rt_gettree_region_start(struct db_tree_state *tsp, struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
-     /*const*/
-     /*const*/
+    /*const*/
+    /*const*/
 
 
 {
@@ -209,9 +209,9 @@ HIDDEN union tree *rt_gettree_region_end(register struct db_tree_state *tsp, str
     if ( tsp->ts_mater.ma_shader )
 	shader_len = strlen( tsp->ts_mater.ma_shader );
     if ( shader_len )
-	{
-	    rp->reg_mater.ma_shader = bu_strdup( tsp->ts_mater.ma_shader );
-	}
+    {
+	rp->reg_mater.ma_shader = bu_strdup( tsp->ts_mater.ma_shader );
+    }
     else
 	rp->reg_mater.ma_shader = (char *)NULL;
 
@@ -347,7 +347,7 @@ HIDDEN struct soltab *rt_find_identical_solid(register const matp_t mat, registe
      *  submodel solid.
      */
     if ( dp->d_uses > 0 && dp->d_uses < 100 &&
-	rtip->rti_dont_instance == 0
+	 rtip->rti_dont_instance == 0
 	)  {
 	struct bu_list	*mid;
 
@@ -457,7 +457,7 @@ HIDDEN struct soltab *rt_find_identical_solid(register const matp_t mat, registe
  *  This routine must be prepared to run in parallel.
  */
 HIDDEN union tree *rt_gettree_leaf(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
-     /*const*/
+    /*const*/
 
 /*const*/
 
@@ -909,13 +909,13 @@ rt_gettree(struct rt_i *rtip, const char *node)
     rv =  rt_gettrees_and_attrs( rtip, NULL, 1, argv, 1 );
 
     if (rv == 0 || rv == -2)
-	{
-	    return 0;
-	}
+    {
+	return 0;
+    }
     else
-	{
-	    return -1;
-	}
+    {
+	return -1;
+    }
 }
 
 int
@@ -925,13 +925,13 @@ rt_gettrees(struct rt_i *rtip, int argc, const char **argv, int ncpus)
     rv = rt_gettrees_and_attrs( rtip, NULL, argc, argv, ncpus );
 
     if (rv == 0 || rv == -2)
-	{
-	    return 0;
-	}
+    {
+	return 0;
+    }
     else
-	{
-	    return -1;
-	}
+    {
+	return -1;
+    }
 }
 
 /*
@@ -954,7 +954,7 @@ rt_bound_tree(register const union tree *tp, fastf_t *tree_min, fastf_t *tree_ma
 
     switch ( tp->tr_op )  {
 
-    case OP_SOLID:
+	case OP_SOLID:
 	{
 	    register const struct soltab	*stp;
 
@@ -976,39 +976,39 @@ rt_bound_tree(register const union tree *tp, fastf_t *tree_min, fastf_t *tree_ma
 	    return(0);
 	}
 
-    default:
-	bu_log( "rt_bound_tree(x%x): unknown op=x%x\n",
-		tp, tp->tr_op );
-	return(-1);
+	default:
+	    bu_log( "rt_bound_tree(x%x): unknown op=x%x\n",
+		    tp, tp->tr_op );
+	    return(-1);
 
-    case OP_XOR:
-    case OP_UNION:
-	/* BINARY type -- expand to contain both */
-	if ( rt_bound_tree( tp->tr_b.tb_left, tree_min, tree_max ) < 0 ||
-	    rt_bound_tree( tp->tr_b.tb_right, r_min, r_max ) < 0 )
-	    return(-1);
-	VMIN( tree_min, r_min );
-	VMAX( tree_max, r_max );
-	break;
-    case OP_INTERSECT:
-	/* BINARY type -- find common area only */
-	if ( rt_bound_tree( tp->tr_b.tb_left, tree_min, tree_max ) < 0 ||
-	    rt_bound_tree( tp->tr_b.tb_right, r_min, r_max ) < 0 )
-	    return(-1);
-	/* min = largest min, max = smallest max */
-	VMAX( tree_min, r_min );
-	VMIN( tree_max, r_max );
-	break;
-    case OP_SUBTRACT:
-	/* BINARY type -- just use left tree */
-	if ( rt_bound_tree( tp->tr_b.tb_left, tree_min, tree_max ) < 0 ||
-	    rt_bound_tree( tp->tr_b.tb_right, r_min, r_max ) < 0 )
-	    return(-1);
-	/* Discard right rpp */
-	break;
-    case OP_NOP:
-	/* Implies that this tree has nothing in it */
-	break;
+	case OP_XOR:
+	case OP_UNION:
+	    /* BINARY type -- expand to contain both */
+	    if ( rt_bound_tree( tp->tr_b.tb_left, tree_min, tree_max ) < 0 ||
+		 rt_bound_tree( tp->tr_b.tb_right, r_min, r_max ) < 0 )
+		return(-1);
+	    VMIN( tree_min, r_min );
+	    VMAX( tree_max, r_max );
+	    break;
+	case OP_INTERSECT:
+	    /* BINARY type -- find common area only */
+	    if ( rt_bound_tree( tp->tr_b.tb_left, tree_min, tree_max ) < 0 ||
+		 rt_bound_tree( tp->tr_b.tb_right, r_min, r_max ) < 0 )
+		return(-1);
+	    /* min = largest min, max = smallest max */
+	    VMAX( tree_min, r_min );
+	    VMIN( tree_max, r_max );
+	    break;
+	case OP_SUBTRACT:
+	    /* BINARY type -- just use left tree */
+	    if ( rt_bound_tree( tp->tr_b.tb_left, tree_min, tree_max ) < 0 ||
+		 rt_bound_tree( tp->tr_b.tb_right, r_min, r_max ) < 0 )
+		return(-1);
+	    /* Discard right rpp */
+	    break;
+	case OP_NOP:
+	    /* Implies that this tree has nothing in it */
+	    break;
     }
     return(0);
 }
@@ -1026,7 +1026,7 @@ rt_tree_kill_dead_solid_refs(register union tree *tp)
 
     switch ( tp->tr_op )  {
 
-    case OP_SOLID:
+	case OP_SOLID:
 	{
 	    register struct soltab	*stp;
 
@@ -1034,7 +1034,7 @@ rt_tree_kill_dead_solid_refs(register union tree *tp)
 	    RT_CK_SOLTAB(stp);
 	    if ( stp->st_aradius <= 0 )  {
 		if (RT_G_DEBUG&DEBUG_TREEWALK)bu_log("rt_tree_kill_dead_solid_refs: encountered dead solid '%s' stp=x%x, tp=x%x\n",
-						    stp->st_dp->d_namep, stp, tp);
+						     stp->st_dp->d_namep, stp, tp);
 		rt_free_soltab(stp);
 		tp->tr_a.tu_stp = SOLTAB_NULL;
 		tp->tr_op = OP_NOP;	/* Convert to NOP */
@@ -1042,28 +1042,28 @@ rt_tree_kill_dead_solid_refs(register union tree *tp)
 	    return;
 	}
 
-    default:
-	bu_log( "rt_tree_kill_dead_solid_refs(x%x): unknown op=x%x\n",
-		tp, tp->tr_op );
-	return;
+	default:
+	    bu_log( "rt_tree_kill_dead_solid_refs(x%x): unknown op=x%x\n",
+		    tp, tp->tr_op );
+	    return;
 
-    case OP_XOR:
-    case OP_UNION:
-    case OP_INTERSECT:
-    case OP_SUBTRACT:
-	/* BINARY */
-	rt_tree_kill_dead_solid_refs( tp->tr_b.tb_left );
-	rt_tree_kill_dead_solid_refs( tp->tr_b.tb_right );
-	break;
-    case OP_NOT:
-    case OP_GUARD:
-    case OP_XNOP:
-	/* UNARY tree -- for completeness only, should never be seen */
-	rt_tree_kill_dead_solid_refs( tp->tr_b.tb_left );
-	break;
-    case OP_NOP:
-	/* This sub-tree has nothing further in it */
-	return;
+	case OP_XOR:
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	    /* BINARY */
+	    rt_tree_kill_dead_solid_refs( tp->tr_b.tb_left );
+	    rt_tree_kill_dead_solid_refs( tp->tr_b.tb_right );
+	    break;
+	case OP_NOT:
+	case OP_GUARD:
+	case OP_XNOP:
+	    /* UNARY tree -- for completeness only, should never be seen */
+	    rt_tree_kill_dead_solid_refs( tp->tr_b.tb_left );
+	    break;
+	case OP_NOP:
+	    /* This sub-tree has nothing further in it */
+	    return;
     }
     return;
 }
@@ -1093,77 +1093,77 @@ rt_tree_elim_nops( register union tree *tp, struct resource *resp )
 
     switch ( tp->tr_op )  {
 
-    case OP_SOLID:
-	return(0);		/* Retain */
+	case OP_SOLID:
+	    return(0);		/* Retain */
 
-    default:
-	bu_log( "rt_tree_elim_nops(x%x): unknown op=x%x\n",
-		tp, tp->tr_op );
-	return(-1);
+	default:
+	    bu_log( "rt_tree_elim_nops(x%x): unknown op=x%x\n",
+		    tp, tp->tr_op );
+	    return(-1);
 
-    case OP_XOR:
-    case OP_UNION:
-	/* BINARY type -- rewrite tp as surviving side */
-	left = tp->tr_b.tb_left;
-	right = tp->tr_b.tb_right;
-	if ( rt_tree_elim_nops( left, resp ) < 0 )  {
-	    *tp = *right;	/* struct copy */
-	    RT_FREE_TREE( left, resp );
-	    RT_FREE_TREE( right, resp );
-	    goto top;
-	}
-	if ( rt_tree_elim_nops( right, resp ) < 0 )  {
-	    *tp = *left;	/* struct copy */
-	    RT_FREE_TREE( left, resp );
-	    RT_FREE_TREE( right, resp );
-	    goto top;
-	}
-	break;
-    case OP_INTERSECT:
-	/* BINARY type -- if either side fails, nuke subtree */
-	left = tp->tr_b.tb_left;
-	right = tp->tr_b.tb_right;
-	if ( rt_tree_elim_nops( left, resp ) < 0 ||
-	    rt_tree_elim_nops( right, resp ) < 0 )  {
-	    db_free_tree( left, resp );
-	    db_free_tree( right, resp );
-	    tp->tr_op = OP_NOP;
-	    return(-1);	/* eliminate reference to tp */
-	}
-	break;
-    case OP_SUBTRACT:
-	/* BINARY type -- if right fails, rewrite (X - 0 = X).
-	 *  If left fails, nuke entire subtree (0 - X = 0).
-	 */
-	left = tp->tr_b.tb_left;
-	right = tp->tr_b.tb_right;
-	if ( rt_tree_elim_nops( left, resp ) < 0 )  {
-	    db_free_tree( left, resp );
-	    db_free_tree( right, resp );
-	    tp->tr_op = OP_NOP;
-	    return(-1);	/* eliminate reference to tp */
-	}
-	if ( rt_tree_elim_nops( right, resp ) < 0 )  {
-	    *tp = *left;	/* struct copy */
-	    RT_FREE_TREE( left, resp );
-	    RT_FREE_TREE( right, resp );
-	    goto top;
-	}
-	break;
-    case OP_NOT:
-    case OP_GUARD:
-    case OP_XNOP:
-	/* UNARY tree -- for completeness only, should never be seen */
-	left = tp->tr_b.tb_left;
-	if ( rt_tree_elim_nops( left, resp ) < 0 )  {
-	    RT_FREE_TREE( left, resp );
-	    tp->tr_op = OP_NOP;
-	    return(-1);	/* Kill ref to unary op, too */
-	}
-	break;
-    case OP_NOP:
-	/* Implies that this tree has nothing in it */
-	return(-1);		/* Kill ref to this NOP */
+	case OP_XOR:
+	case OP_UNION:
+	    /* BINARY type -- rewrite tp as surviving side */
+	    left = tp->tr_b.tb_left;
+	    right = tp->tr_b.tb_right;
+	    if ( rt_tree_elim_nops( left, resp ) < 0 )  {
+		*tp = *right;	/* struct copy */
+		RT_FREE_TREE( left, resp );
+		RT_FREE_TREE( right, resp );
+		goto top;
+	    }
+	    if ( rt_tree_elim_nops( right, resp ) < 0 )  {
+		*tp = *left;	/* struct copy */
+		RT_FREE_TREE( left, resp );
+		RT_FREE_TREE( right, resp );
+		goto top;
+	    }
+	    break;
+	case OP_INTERSECT:
+	    /* BINARY type -- if either side fails, nuke subtree */
+	    left = tp->tr_b.tb_left;
+	    right = tp->tr_b.tb_right;
+	    if ( rt_tree_elim_nops( left, resp ) < 0 ||
+		 rt_tree_elim_nops( right, resp ) < 0 )  {
+		db_free_tree( left, resp );
+		db_free_tree( right, resp );
+		tp->tr_op = OP_NOP;
+		return(-1);	/* eliminate reference to tp */
+	    }
+	    break;
+	case OP_SUBTRACT:
+	    /* BINARY type -- if right fails, rewrite (X - 0 = X).
+	     *  If left fails, nuke entire subtree (0 - X = 0).
+	     */
+	    left = tp->tr_b.tb_left;
+	    right = tp->tr_b.tb_right;
+	    if ( rt_tree_elim_nops( left, resp ) < 0 )  {
+		db_free_tree( left, resp );
+		db_free_tree( right, resp );
+		tp->tr_op = OP_NOP;
+		return(-1);	/* eliminate reference to tp */
+	    }
+	    if ( rt_tree_elim_nops( right, resp ) < 0 )  {
+		*tp = *left;	/* struct copy */
+		RT_FREE_TREE( left, resp );
+		RT_FREE_TREE( right, resp );
+		goto top;
+	    }
+	    break;
+	case OP_NOT:
+	case OP_GUARD:
+	case OP_XNOP:
+	    /* UNARY tree -- for completeness only, should never be seen */
+	    left = tp->tr_b.tb_left;
+	    if ( rt_tree_elim_nops( left, resp ) < 0 )  {
+		RT_FREE_TREE( left, resp );
+		tp->tr_op = OP_NOP;
+		return(-1);	/* Kill ref to unary op, too */
+	    }
+	    break;
+	case OP_NOP:
+	    /* Implies that this tree has nothing in it */
+	    return(-1);		/* Kill ref to this NOP */
     }
     return(0);
 }
@@ -1191,7 +1191,7 @@ rt_getregion(struct rt_i *rtip, register const char *reg_name)
 	register const char	*cp;
 	/* First, check for a match of the full path */
 	if ( *reg_base == regp->reg_name[0] &&
-	    strcmp( reg_base, regp->reg_name ) == 0 )
+	     strcmp( reg_base, regp->reg_name ) == 0 )
 	    return(regp);
 	/* Second, check for a match of the database node name */
 	cp = bu_basename( regp->reg_name );
@@ -1314,7 +1314,7 @@ rt_find_solid(const struct rt_i *rtip, register const char *name)
 
     RT_CHECK_RTI(rtip);
     if ( (dp = db_lookup( (struct db_i *)rtip->rti_dbip, (char *)name,
-			 LOOKUP_QUIET )) == DIR_NULL )
+			  LOOKUP_QUIET )) == DIR_NULL )
 	return(RT_SOLTAB_NULL);
 
     RT_VISIT_ALL_SOLTABS_START( stp, (struct rt_i *)rtip )  {
@@ -1343,48 +1343,48 @@ rt_optim_tree(register union tree *tp, struct resource *resp)
     *sp++ = tp;
     while ( (tp = *--sp) != TREE_NULL ) {
 	switch ( tp->tr_op )  {
-	case OP_NOP:
-	    /* XXX Consider eliminating nodes of form (A op NOP) */
-	    /* XXX Needs to be detected in previous iteration */
-	    break;
-	case OP_SOLID:
-	    break;
-	case OP_SUBTRACT:
-	    while ( (low=tp->tr_b.tb_left)->tr_op == OP_SUBTRACT )  {
-				/* Rewrite X - A - B as X - ( A union B ) */
-		tp->tr_b.tb_left = low->tr_b.tb_left;
-		low->tr_op = OP_UNION;
-		low->tr_b.tb_left = low->tr_b.tb_right;
-		low->tr_b.tb_right = tp->tr_b.tb_right;
-		tp->tr_b.tb_right = low;
-	    }
-	    /* push both nodes - search left first */
-	    *sp++ = tp->tr_b.tb_right;
-	    *sp++ = tp->tr_b.tb_left;
-	    if ( sp >= stackend )  {
-		register int off = sp - resp->re_boolstack;
-		rt_grow_boolstack( resp );
-		sp = &(resp->re_boolstack[off]);
-		stackend = &(resp->re_boolstack[resp->re_boolslen-1]);
-	    }
-	    break;
-	case OP_UNION:
-	case OP_INTERSECT:
-	case OP_XOR:
-	    /* Need to look at 3-level optimizations here, both sides */
-	    /* push both nodes - search left first */
-	    *sp++ = tp->tr_b.tb_right;
-	    *sp++ = tp->tr_b.tb_left;
-	    if ( sp >= stackend )  {
-		register int off = sp - resp->re_boolstack;
-		rt_grow_boolstack( resp );
-		sp = &(resp->re_boolstack[off]);
-		stackend = &(resp->re_boolstack[resp->re_boolslen-1]);
-	    }
-	    break;
-	default:
-	    bu_log("rt_optim_tree: bad op x%x\n", tp->tr_op);
-	    break;
+	    case OP_NOP:
+		/* XXX Consider eliminating nodes of form (A op NOP) */
+		/* XXX Needs to be detected in previous iteration */
+		break;
+	    case OP_SOLID:
+		break;
+	    case OP_SUBTRACT:
+		while ( (low=tp->tr_b.tb_left)->tr_op == OP_SUBTRACT )  {
+		    /* Rewrite X - A - B as X - ( A union B ) */
+		    tp->tr_b.tb_left = low->tr_b.tb_left;
+		    low->tr_op = OP_UNION;
+		    low->tr_b.tb_left = low->tr_b.tb_right;
+		    low->tr_b.tb_right = tp->tr_b.tb_right;
+		    tp->tr_b.tb_right = low;
+		}
+		/* push both nodes - search left first */
+		*sp++ = tp->tr_b.tb_right;
+		*sp++ = tp->tr_b.tb_left;
+		if ( sp >= stackend )  {
+		    register int off = sp - resp->re_boolstack;
+		    rt_grow_boolstack( resp );
+		    sp = &(resp->re_boolstack[off]);
+		    stackend = &(resp->re_boolstack[resp->re_boolslen-1]);
+		}
+		break;
+	    case OP_UNION:
+	    case OP_INTERSECT:
+	    case OP_XOR:
+		/* Need to look at 3-level optimizations here, both sides */
+		/* push both nodes - search left first */
+		*sp++ = tp->tr_b.tb_right;
+		*sp++ = tp->tr_b.tb_left;
+		if ( sp >= stackend )  {
+		    register int off = sp - resp->re_boolstack;
+		    rt_grow_boolstack( resp );
+		    sp = &(resp->re_boolstack[off]);
+		    stackend = &(resp->re_boolstack[resp->re_boolslen-1]);
+		}
+		break;
+	    default:
+		bu_log("rt_optim_tree: bad op x%x\n", tp->tr_op);
+		break;
 	}
     }
 }
@@ -1398,31 +1398,31 @@ rt_tree_region_assign(register union tree *tp, register const struct region *reg
     RT_CK_TREE(tp);
     RT_CK_REGION(regionp);
     switch ( tp->tr_op )  {
-    case OP_NOP:
-	return;
+	case OP_NOP:
+	    return;
 
-    case OP_SOLID:
-	tp->tr_a.tu_regionp = (struct region *)regionp;
-	return;
+	case OP_SOLID:
+	    tp->tr_a.tu_regionp = (struct region *)regionp;
+	    return;
 
-    case OP_NOT:
-    case OP_GUARD:
-    case OP_XNOP:
-	tp->tr_b.tb_regionp = (struct region *)regionp;
-	rt_tree_region_assign( tp->tr_b.tb_left, regionp );
-	return;
+	case OP_NOT:
+	case OP_GUARD:
+	case OP_XNOP:
+	    tp->tr_b.tb_regionp = (struct region *)regionp;
+	    rt_tree_region_assign( tp->tr_b.tb_left, regionp );
+	    return;
 
-    case OP_UNION:
-    case OP_INTERSECT:
-    case OP_SUBTRACT:
-    case OP_XOR:
-	tp->tr_b.tb_regionp = (struct region *)regionp;
-	rt_tree_region_assign( tp->tr_b.tb_left, regionp );
-	rt_tree_region_assign( tp->tr_b.tb_right, regionp );
-	return;
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	case OP_XOR:
+	    tp->tr_b.tb_regionp = (struct region *)regionp;
+	    rt_tree_region_assign( tp->tr_b.tb_left, regionp );
+	    rt_tree_region_assign( tp->tr_b.tb_right, regionp );
+	    return;
 
-    default:
-	bu_bomb("rt_tree_region_assign: bad op\n");
+	default:
+	    bu_bomb("rt_tree_region_assign: bad op\n");
     }
 }
 

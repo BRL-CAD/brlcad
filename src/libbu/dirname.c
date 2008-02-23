@@ -65,8 +65,8 @@ bu_dirname(const char *cp)
     if ( strcmp( cp, "/" ) == 0 )
 	return bu_strdup("/");
     if ( strcmp( cp, "." ) == 0 ||
-	strcmp( cp, ".." ) == 0 ||
-	strrchr(cp, '/') == NULL )
+	 strcmp( cp, ".." ) == 0 ||
+	 strrchr(cp, '/') == NULL )
 	return bu_strdup(".");
 
     /* Make a duplicate copy of the string, and shorten it in place */

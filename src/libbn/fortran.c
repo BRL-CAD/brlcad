@@ -83,11 +83,11 @@
 void
 pl_strncpy(register char *out, register char *in, register int sz)
 {
-	register int c = '\0';
+    register int c = '\0';
 
-	while ( --sz > 0 && (c = *in++) != '\0' && c != '$' )
-		*out++ = c;
-	*out++ = '\0';
+    while ( --sz > 0 && (c = *in++) != '\0' && c != '$' )
+	*out++ = c;
+    *out++ = '\0';
 }
 
 /**
@@ -112,11 +112,11 @@ pl_strncpy(register char *out, register char *in, register int sz)
  */
 void
 F(ifdopn, IFDOPN)( plotfp, fd )
-FILE	**plotfp;
-int	*fd;
+    FILE	**plotfp;
+    int	*fd;
 {
-	if ( (*plotfp = fdopen(*fd, "wb")) == NULL )
-		perror("IFDOPN/fdopen");
+    if ( (*plotfp = fdopen(*fd, "wb")) == NULL )
+	perror("IFDOPN/fdopen");
 }
 
 /**
@@ -126,14 +126,14 @@ int	*fd;
  */
 void
 F(ifopen, IFOPEN)( plotfp, name )
-FILE	**plotfp;
-char	*name;
+    FILE	**plotfp;
+    char	*name;
 {
-	char	buf[128];
+    char	buf[128];
 
-	pl_strncpy( buf, name, (int)sizeof(buf) );
-	if ( (*plotfp = fopen(buf, "wb")) == NULL )
-		perror(buf);
+    pl_strncpy( buf, name, (int)sizeof(buf) );
+    if ( (*plotfp = fopen(buf, "wb")) == NULL )
+	perror(buf);
 }
 
 /*
@@ -142,93 +142,93 @@ char	*name;
 
 void
 F(i2pnt, I2PNT)( plotfp, x, y )
-FILE	**plotfp;
-int	*x, *y;
+    FILE	**plotfp;
+    int	*x, *y;
 {
-	pl_point( *plotfp, *x, *y );
+    pl_point( *plotfp, *x, *y );
 }
 
 void
 F(i2line, I2LINE)( plotfp, x1, y1, x2, y2 )
-FILE	**plotfp;
-int	*x1, *y1, *x2, *y2;
+    FILE	**plotfp;
+    int	*x1, *y1, *x2, *y2;
 {
-	pl_line( *plotfp, *x1, *y1, *x2, *y2 );
+    pl_line( *plotfp, *x1, *y1, *x2, *y2 );
 }
 
 void
 F(ilinmd, ILINMD)( plotfp, s )
-FILE	**plotfp;
-char *s;
+    FILE	**plotfp;
+    char *s;
 {
-	char buf[32];
-	pl_strncpy( buf, s, (int)sizeof(buf) );
-	pl_linmod( *plotfp, buf );
+    char buf[32];
+    pl_strncpy( buf, s, (int)sizeof(buf) );
+    pl_linmod( *plotfp, buf );
 }
 
 void
 F(i2move, I2MOVE)( plotfp, x, y )
-FILE	**plotfp;
-int	*x, *y;
+    FILE	**plotfp;
+    int	*x, *y;
 {
-	pl_move( *plotfp, *x, *y );
+    pl_move( *plotfp, *x, *y );
 }
 
 void
 F(i2cont, I2CONT)( plotfp, x, y )
-FILE	**plotfp;
-int	*x, *y;
+    FILE	**plotfp;
+    int	*x, *y;
 {
-	pl_cont( *plotfp, *x, *y );
+    pl_cont( *plotfp, *x, *y );
 }
 
 void
 F(i2labl, I2LABL)( plotfp, s )
-FILE	**plotfp;
-char *s;
+    FILE	**plotfp;
+    char *s;
 {
-	char	buf[256];
-	pl_strncpy( buf, s, (int)sizeof(buf) );
-	pl_label( *plotfp, buf );
+    char	buf[256];
+    pl_strncpy( buf, s, (int)sizeof(buf) );
+    pl_label( *plotfp, buf );
 }
 
 void
 F(i2spac, I2SPAC)( plotfp, x1, y1, x2, y2 )
-FILE	**plotfp;
-int	*x1, *y1, *x2, *y2;
+    FILE	**plotfp;
+    int	*x1, *y1, *x2, *y2;
 {
-	pl_space( *plotfp, *x1, *y1, *x2, *y2 );
+    pl_space( *plotfp, *x1, *y1, *x2, *y2 );
 }
 
 void
 F(ierase, IERASE)( plotfp )
-FILE	**plotfp;
+    FILE	**plotfp;
 {
-	pl_erase( *plotfp );
+    pl_erase( *plotfp );
 }
 
 void
 F(i2circ, I2CIRC)( plotfp, x, y, r )
-FILE	**plotfp;
-int	*x, *y, *r;
+    FILE	**plotfp;
+    int	*x, *y, *r;
 {
-	pl_circle( *plotfp, *x, *y, *r );
+    pl_circle( *plotfp, *x, *y, *r );
 }
 
 void
 F(i2arc, I2ARC)( plotfp, xc, yc, x1, y1, x2, y2 )
-FILE	**plotfp;
-int	*xc, *yc, *x1, *y1, *x2, *y2;
+    FILE	**plotfp;
+    int	*xc, *yc, *x1, *y1, *x2, *y2;
 {
-	pl_arc( *plotfp, *xc, *yc, *x1, *y1, *x2, *y2 );
+    pl_arc( *plotfp, *xc, *yc, *x1, *y1, *x2, *y2 );
 }
 
 void
 F(i2box, I2BOX)( plotfp, x1, y1, x2, y2 )
-FILE	**plotfp;
-int	*x1, *y1, *x2, *y2;
+    FILE	**plotfp;
+    int	*x1, *y1, *x2, *y2;
 {
-	pl_box( *plotfp, *x1, *y1, *x2, *y2 );
+    pl_box( *plotfp, *x1, *y1, *x2, *y2 );
 }
 
 /*
@@ -238,66 +238,66 @@ int	*x1, *y1, *x2, *y2;
 /* Warning: r, g, b are ints.  The output is chars. */
 void
 F(icolor, ICOLOR)( plotfp, r, g, b )
-FILE	**plotfp;
-int	*r, *g, *b;
+    FILE	**plotfp;
+    int	*r, *g, *b;
 {
-	pl_color( *plotfp, *r, *g, *b );
+    pl_color( *plotfp, *r, *g, *b );
 }
 
 void
 F(iflush, IFLUSH)( plotfp )
-FILE	**plotfp;
+    FILE	**plotfp;
 {
-	pl_flush( *plotfp );
+    pl_flush( *plotfp );
 }
 
 void
 F(i3spac, I3SPAC)( plotfp, x1, y1, z1, x2, y2, z2 )
-FILE	**plotfp;
-int	*x1, *y1, *z1, *x2, *y2, *z2;
+    FILE	**plotfp;
+    int	*x1, *y1, *z1, *x2, *y2, *z2;
 {
-	pl_3space( *plotfp, *x1, *y1, *z1, *x2, *y2, *z2 );
+    pl_3space( *plotfp, *x1, *y1, *z1, *x2, *y2, *z2 );
 }
 
 void
 F(i3pnt, I3PNT)( plotfp, x, y, z )
-FILE	**plotfp;
-int	*x, *y, *z;
+    FILE	**plotfp;
+    int	*x, *y, *z;
 {
-	pl_3point( *plotfp, *x, *y, *z );
+    pl_3point( *plotfp, *x, *y, *z );
 
 }
 
 void
 F(i3move, I3MOVE)( plotfp, x, y, z )
-FILE	**plotfp;
-int	*x, *y, *z;
+    FILE	**plotfp;
+    int	*x, *y, *z;
 {
-	pl_3move( *plotfp, *x, *y, *z );
+    pl_3move( *plotfp, *x, *y, *z );
 }
 
 void
 F(i3cont, I3CONT)( plotfp, x, y, z )
-FILE	**plotfp;
-int	*x, *y, *z;
+    FILE	**plotfp;
+    int	*x, *y, *z;
 {
-	pl_3cont( *plotfp, *x, *y, *z );
+    pl_3cont( *plotfp, *x, *y, *z );
 }
 
 void
 F(i3line, I3LINE)( plotfp, x1, y1, z1, x2, y2, z2 )
-FILE	**plotfp;
-int	*x1, *y1, *z1, *x2, *y2, *z2;
+    FILE	**plotfp;
+    int	*x1, *y1, *z1, *x2, *y2, *z2;
 {
-	pl_3line( *plotfp, *x1, *y1, *z1, *x2, *y2, *z2 );
+    pl_3line( *plotfp, *x1, *y1, *z1, *x2, *y2, *z2 );
 }
 
 void
 F(i3box, I3BOX)( plotfp, x1, y1, z1, x2, y2, z2 )
-FILE	**plotfp;
-int	*x1, *y1, *z1, *x2, *y2, *z2;
+    FILE	**plotfp;
+    int	*x1, *y1, *z1, *x2, *y2, *z2;
 {
-	pl_3box( *plotfp, *x1, *y1, *z1, *x2, *y2, *z2 );
+    pl_3box( *plotfp, *x1, *y1, *z1, *x2, *y2, *z2 );
 }
 
 /*
@@ -306,66 +306,66 @@ int	*x1, *y1, *z1, *x2, *y2, *z2;
 
 void
 F(f2pnt, F2PNT)( plotfp, x, y )
-FILE	**plotfp;
-float	*x, *y;
+    FILE	**plotfp;
+    float	*x, *y;
 {
-	pd_point( *plotfp, *x, *y );
+    pd_point( *plotfp, *x, *y );
 }
 
 void
 F(f2line, F2LINE)( plotfp, x1, y1, x2, y2 )
-FILE	**plotfp;
-float	*x1, *y1, *x2, *y2;
+    FILE	**plotfp;
+    float	*x1, *y1, *x2, *y2;
 {
-	pd_line( *plotfp, *x1, *y1, *x2, *y2 );
+    pd_line( *plotfp, *x1, *y1, *x2, *y2 );
 }
 
 void
 F(f2move, F2MOVE)( plotfp, x, y )
-FILE	**plotfp;
-float	*x, *y;
+    FILE	**plotfp;
+    float	*x, *y;
 {
-	pd_move( *plotfp, *x, *y );
+    pd_move( *plotfp, *x, *y );
 }
 
 void
 F(f2cont, F2CONT)( plotfp, x, y )
-FILE	**plotfp;
-float	*x, *y;
+    FILE	**plotfp;
+    float	*x, *y;
 {
-	pd_cont( *plotfp, *x, *y );
+    pd_cont( *plotfp, *x, *y );
 }
 
 void
 F(f2spac, F2SPAC)( plotfp, x1, y1, x2, y2 )
-FILE	**plotfp;
-float	*x1, *y1, *x2, *y2;
+    FILE	**plotfp;
+    float	*x1, *y1, *x2, *y2;
 {
-	pd_space( *plotfp, *x1, *y1, *x2, *y2 );
+    pd_space( *plotfp, *x1, *y1, *x2, *y2 );
 }
 
 void
 F(f2circ, F2CIRC)( plotfp, x, y, r )
-FILE	**plotfp;
-float	*x, *y, *r;
+    FILE	**plotfp;
+    float	*x, *y, *r;
 {
-	pd_circle( *plotfp, *x, *y, *r );
+    pd_circle( *plotfp, *x, *y, *r );
 }
 
 void
 F(f2arc, F2ARC)( plotfp, xc, yc, x1, y1, x2, y2 )
-FILE	**plotfp;
-float	*xc, *yc, *x1, *y1, *x2, *y2;
+    FILE	**plotfp;
+    float	*xc, *yc, *x1, *y1, *x2, *y2;
 {
-	pd_arc( *plotfp, *xc, *yc, *x1, *y1, *x2, *y2 );
+    pd_arc( *plotfp, *xc, *yc, *x1, *y1, *x2, *y2 );
 }
 
 void
 F(f2box, F2BOX)( plotfp, x1, y1, x2, y2 )
-FILE	**plotfp;
-float	*x1, *y1, *x2, *y2;
+    FILE	**plotfp;
+    float	*x1, *y1, *x2, *y2;
 {
-	pd_box( *plotfp, *x1, *y1, *x2, *y2 );
+    pd_box( *plotfp, *x1, *y1, *x2, *y2 );
 }
 
 /*
@@ -375,99 +375,99 @@ float	*x1, *y1, *x2, *y2;
 
 void
 F(a2spac, A3SPAC)( plotfp, min, max )
-FILE	**plotfp;
-float	min[3];
-float	max[3];
+    FILE	**plotfp;
+    float	min[3];
+    float	max[3];
 {
-	pd_3space( *plotfp, min[0], min[1], min[2], max[0], max[1], max[2] );
+    pd_3space( *plotfp, min[0], min[1], min[2], max[0], max[1], max[2] );
 }
 
 void
 F(f3spac, F3SPAC)( plotfp, x1, y1, z1, x2, y2, z2 )
-FILE	**plotfp;
-float	*x1, *y1, *z1, *x2, *y2, *z2;
+    FILE	**plotfp;
+    float	*x1, *y1, *z1, *x2, *y2, *z2;
 {
-	pd_3space( *plotfp, *x1, *y1, *z1, *x2, *y2, *z2 );
+    pd_3space( *plotfp, *x1, *y1, *z1, *x2, *y2, *z2 );
 }
 
 void
 F(a3pnt, A3PNT)( plotfp, pt )
-FILE	**plotfp;
-float	pt[3];
+    FILE	**plotfp;
+    float	pt[3];
 {
-	pd_3point( *plotfp, pt[0], pt[1], pt[2] );
+    pd_3point( *plotfp, pt[0], pt[1], pt[2] );
 }
 
 void
 F(f3pnt, F3PNT)( plotfp, x, y, z )
-FILE	**plotfp;
-float	*x, *y, *z;
+    FILE	**plotfp;
+    float	*x, *y, *z;
 {
-	pd_3point( *plotfp, *x, *y, *z );
+    pd_3point( *plotfp, *x, *y, *z );
 }
 
 void
 F(a3move, A3MOVE)( plotfp, pt )
-FILE	**plotfp;
-float	pt[3];
+    FILE	**plotfp;
+    float	pt[3];
 {
-	pd_3move( *plotfp, pt[0], pt[1], pt[2] );
+    pd_3move( *plotfp, pt[0], pt[1], pt[2] );
 }
 
 void
 F(f3move, F3MOVE)( plotfp, x, y, z )
-FILE	**plotfp;
-float	*x, *y, *z;
+    FILE	**plotfp;
+    float	*x, *y, *z;
 {
-	pd_3move( *plotfp, *x, *y, *z );
+    pd_3move( *plotfp, *x, *y, *z );
 }
 
 void
 F(a3cont, A3CONT)( plotfp, pt )
-FILE	**plotfp;
-float	pt[3];
+    FILE	**plotfp;
+    float	pt[3];
 {
-	pd_3cont( *plotfp, pt[0], pt[1], pt[2] );
+    pd_3cont( *plotfp, pt[0], pt[1], pt[2] );
 }
 
 void
 F(f3cont, F3CONT)( plotfp, x, y, z )
-FILE	**plotfp;
-float	*x, *y, *z;
+    FILE	**plotfp;
+    float	*x, *y, *z;
 {
-	pd_3cont( *plotfp, *x, *y, *z );
+    pd_3cont( *plotfp, *x, *y, *z );
 }
 
 void
 F(a3line, A3LINE)( plotfp, a, b )
-FILE	**plotfp;
-float	a[3], b[3];
+    FILE	**plotfp;
+    float	a[3], b[3];
 {
-	pd_3line( *plotfp, a[0], a[1], a[2], b[0], b[1], b[2] );
+    pd_3line( *plotfp, a[0], a[1], a[2], b[0], b[1], b[2] );
 }
 
 void
 F(f3line, F3LINE)( plotfp, x1, y1, z1, x2, y2, z2 )
-FILE	**plotfp;
-float	*x1, *y1, *z1, *x2, *y2, *z2;
+    FILE	**plotfp;
+    float	*x1, *y1, *z1, *x2, *y2, *z2;
 {
-	pd_3line( *plotfp, *x1, *y1, *z1, *x2, *y2, *z2 );
+    pd_3line( *plotfp, *x1, *y1, *z1, *x2, *y2, *z2 );
 }
 
 void
 F(a3box, A3BOX)( plotfp, a, b )
-FILE	**plotfp;
-float	a[3], b[3];
+    FILE	**plotfp;
+    float	a[3], b[3];
 {
-	pd_3box( *plotfp, a[0], a[1], a[2], b[0], b[1], b[2] );
+    pd_3box( *plotfp, a[0], a[1], a[2], b[0], b[1], b[2] );
 }
 
 void
 F(f3box, F3BOX)( plotfp, x1, y1, z1, x2, y2, z2 )
-FILE	**plotfp;
-float	*x1, *y1, *z1, *x2, *y2, *z2;
+    FILE	**plotfp;
+    float	*x1, *y1, *z1, *x2, *y2, *z2;
 {
-	pd_3box( *plotfp, *x1, *y1, *z1, *x2, *y2, *z2 );
+    pd_3box( *plotfp, *x1, *y1, *z1, *x2, *y2, *z2 );
 }
 
 /** @} */

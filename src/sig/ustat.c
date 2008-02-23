@@ -46,7 +46,7 @@ char *progname = "(noname)";
  */
 void usage(void)
 {
-	bu_exit(1, "Usage: %s [ file ]\n", progname);
+    bu_exit(1, "Usage: %s [ file ]\n", progname);
 }
 
 /*
@@ -54,56 +54,56 @@ void usage(void)
  */
 int parse_args(int ac, char **av)
 {
-	int  c;
+    int  c;
 
-	if (!(progname=strrchr(*av, '/')))
-		progname = *av;
+    if (!(progname=strrchr(*av, '/')))
+	progname = *av;
 
-	/* Turn off bu_getopt's error messages */
-	bu_opterr = 0;
+    /* Turn off bu_getopt's error messages */
+    bu_opterr = 0;
 
-	/* get all the option flags from the command line */
-	while ((c=bu_getopt(ac, av, options)) != EOF)
-		switch (c) {
-		case '?'	:
-		case 'h'	:
-		default		: usage(); break;
-		}
+    /* get all the option flags from the command line */
+    while ((c=bu_getopt(ac, av, options)) != EOF)
+	switch (c) {
+	    case '?'	:
+	    case 'h'	:
+	    default		: usage(); break;
+	}
 
-	return(bu_optind);
+    return(bu_optind);
 }
 
 void comp_stats(FILE *fd)
 {
-	unsigned short *buffer=(unsigned short *)NULL;
-	unsigned short min, max;
-	double stdev, sum, sum_sq, num, sqrt(double);
-	int count;
-	int i;
+    unsigned short *buffer=(unsigned short *)NULL;
+    unsigned short min, max;
+    double stdev, sum, sum_sq, num, sqrt(double);
+    int count;
+    int i;
 
 
-	buffer = (unsigned short *)bu_calloc(10240, sizeof(short), "buffer");
+    buffer = (unsigned short *)bu_calloc(10240, sizeof(short), "buffer");
 
-	stdev = sum = sum_sq = count = num = 0.0;
-	min = 65535;
-	max = 0;
+    stdev = sum = sum_sq = count = num = 0.0;
+    min = 65535;
+    max = 0;
 
-	while ( (count=fread((void *)buffer, sizeof(short), 10240, fd)) ) {
-		for (i=0; i < count; ++i) {
-			sum += (double)buffer[i];
-			sum_sq += (double)(buffer[i]) * (double)(buffer[i]);
-			if (buffer[i] > max) max = buffer[i];
-			if (buffer[i] < min) min = buffer[i];
-		}
-		num += (double)count;
+    while ( (count=fread((void *)buffer, sizeof(short), 10240, fd)) ) {
+	for (i=0; i < count; ++i) {
+	    sum += (double)buffer[i];
+	    sum_sq += (double)(buffer[i]) * (double)(buffer[i]);
+	    if (buffer[i] > max) max = buffer[i];
+	    if (buffer[i] < min) min = buffer[i];
 	}
+	num += (double)count;
+    }
 
-	stdev = sqrt( ((num * sum_sq) - (sum*sum)) / (num * (num-1)) );
+    stdev = sqrt( ((num * sum_sq) - (sum*sum)) / (num * (num-1)) );
 
-	(void)printf("   Num: %g\n   Min: %u\n   Max: %u\n   Sum: %g\n  Mean: %g\nSStdev: %g\n",
-		num, min, max, sum, sum/num, stdev);
+    (void)printf("   Num: %g\n   Min: %u\n   Max: %u\n   Sum: %g\n  Mean: %g\nSStdev: %g\n",
+		 num, min, max, sum, sum/num, stdev);
 
-	bu_free(buffer, "buffer");
+    bu_free(buffer, "buffer");
 }
 
 
@@ -115,24 +115,24 @@ void comp_stats(FILE *fd)
  */
 int main(int ac, char **av)
 {
-	int arg_index;
+    int arg_index;
 
-	/* parse command flags
-	 */
-	arg_index = parse_args(ac, av);
-	if (arg_index < ac) {
-		/* open file of shorts */
-		if (freopen(av[arg_index], "r", stdin) == (FILE *)NULL) {
-			perror(av[arg_index]);
-			return(-1);
-		}
-	} else if (isatty((int)fileno(stdin))) {
-		usage();
+    /* parse command flags
+     */
+    arg_index = parse_args(ac, av);
+    if (arg_index < ac) {
+	/* open file of shorts */
+	if (freopen(av[arg_index], "r", stdin) == (FILE *)NULL) {
+	    perror(av[arg_index]);
+	    return(-1);
 	}
+    } else if (isatty((int)fileno(stdin))) {
+	usage();
+    }
 
-	comp_stats(stdin);
+    comp_stats(stdin);
 
-	return 0;
+    return 0;
 }
 
 /*

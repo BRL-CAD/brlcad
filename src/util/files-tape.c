@@ -80,26 +80,26 @@ Usage: files-tape [-b bytes] [-k Kbytes] [files]\n";
 int
 get_args(int argc, register char **argv)
 {
-	register int c;
+    register int c;
 
-	while ( (c = bu_getopt( argc, argv, "b:k:" )) != EOF )  {
-		switch ( c )  {
-		case 'b':
-			bufsize = atoi( bu_optarg );	/* bytes */
-			break;
-		case 'k':
-			bufsize = atoi( bu_optarg ) * 1024; /* Kbytes */
-			break;
+    while ( (c = bu_getopt( argc, argv, "b:k:" )) != EOF )  {
+	switch ( c )  {
+	    case 'b':
+		bufsize = atoi( bu_optarg );	/* bytes */
+		break;
+	    case 'k':
+		bufsize = atoi( bu_optarg ) * 1024; /* Kbytes */
+		break;
 
-		default:		/* '?' */
-			return(0);	/* BAD */
-		}
+	    default:		/* '?' */
+		return(0);	/* BAD */
 	}
+    }
 
-	if ( isatty(fileno(stdout)) )
-		return(0);		/* BAD */
+    if ( isatty(fileno(stdout)) )
+	return(0);		/* BAD */
 
-	return(1);			/* OK */
+    return(1);			/* OK */
 }
 
 /*
@@ -108,44 +108,44 @@ get_args(int argc, register char **argv)
 int
 main(int argc, char **argv)
 {
-	register int	fd;
+    register int	fd;
 
-	if ( !get_args( argc, argv ) )  {
-		(void)fputs(usage, stderr);
-		bu_exit (1, NULL);
-	}
+    if ( !get_args( argc, argv ) )  {
+	(void)fputs(usage, stderr);
+	bu_exit (1, NULL);
+    }
 
-	/* Obtain output buffer */
-	if ( (buf = (char *)malloc( bufsize )) == NULL )  {
-		perror("malloc");
-		bu_exit (1, NULL);
-	}
+    /* Obtain output buffer */
+    if ( (buf = (char *)malloc( bufsize )) == NULL )  {
+	perror("malloc");
+	bu_exit (1, NULL);
+    }
 
-	if ( bu_optind >= argc )  {
-		/* Perform operation once, from stdin */
-		fileout( 0, "-" );
-		bu_exit (0, NULL);
-	}
-
-	/* Perform operation on each argument */
-	for (; bu_optind < argc; bu_optind++ )  {
-		if ( (fd = open( argv[bu_optind], 0 )) < 0 )  {
-			perror( argv[bu_optind] );
-			/*
-			 *  It is unclear whether an exiting,
-			 *  or continuing with the next file
-			 *  is really the right thing here.
-			 *  If the intended size was known,
-			 *  a null "file" could be written to tape,
-			 *  to preserve the image numbering.
-			 *  For now, punt.
-			 */
-			bu_exit (1, NULL);
-		}
-		fileout( fd, argv[bu_optind] );
-		(void)close(fd);
-	}
+    if ( bu_optind >= argc )  {
+	/* Perform operation once, from stdin */
+	fileout( 0, "-" );
 	bu_exit (0, NULL);
+    }
+
+    /* Perform operation on each argument */
+    for (; bu_optind < argc; bu_optind++ )  {
+	if ( (fd = open( argv[bu_optind], 0 )) < 0 )  {
+	    perror( argv[bu_optind] );
+	    /*
+	     *  It is unclear whether an exiting,
+	     *  or continuing with the next file
+	     *  is really the right thing here.
+	     *  If the intended size was known,
+	     *  a null "file" could be written to tape,
+	     *  to preserve the image numbering.
+	     *  For now, punt.
+	     */
+	    bu_exit (1, NULL);
+	}
+	fileout( fd, argv[bu_optind] );
+	(void)close(fd);
+    }
+    bu_exit (0, NULL);
 }
 
 /*
@@ -154,28 +154,28 @@ main(int argc, char **argv)
 void
 fileout(register int fd, char *name)
 {
-	register int	count, out;
+    register int	count, out;
 
-	while ( (count = bu_mread( fd, buf, bufsize )) > 0 )  {
-		if ( count < bufsize )  {
-			/* Short read, zero rest of buffer */
-			memset(buf+count, 0, bufsize-count);
-		}
-		if ( (out = write( 1, buf, bufsize )) != bufsize )  {
-			perror("files-tape: write");
-			fprintf(stderr, "files-tape:  %s, write ret=%d\n", name, out);
-			bu_exit (1, NULL);
-		}
-		if ( byteswritten < TSIZE && byteswritten+bufsize > TSIZE )
-			fprintf(stderr, "files-tape: WARNING:  Tape capacity reached in file %s\n", name);
-		byteswritten += bufsize;
+    while ( (count = bu_mread( fd, buf, bufsize )) > 0 )  {
+	if ( count < bufsize )  {
+	    /* Short read, zero rest of buffer */
+	    memset(buf+count, 0, bufsize-count);
 	}
-	if ( count == 0 )
-	    return;
+	if ( (out = write( 1, buf, bufsize )) != bufsize )  {
+	    perror("files-tape: write");
+	    fprintf(stderr, "files-tape:  %s, write ret=%d\n", name, out);
+	    bu_exit (1, NULL);
+	}
+	if ( byteswritten < TSIZE && byteswritten+bufsize > TSIZE )
+	    fprintf(stderr, "files-tape: WARNING:  Tape capacity reached in file %s\n", name);
+	byteswritten += bufsize;
+    }
+    if ( count == 0 )
+	return;
 
-	perror("READ ERROR");
+    perror("READ ERROR");
 
-	bu_exit (1, NULL);
+    bu_exit (1, NULL);
 }
 
 /*

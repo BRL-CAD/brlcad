@@ -55,8 +55,8 @@ struct rt_wdb *outfp;
 #ifndef HAVE_DRAND48
 /* simulate drand48() --  using 31-bit random() -- assumed to exist */
 double drand48() {
-  extern long random();
-  return (double)random() / 2147483648.0; /* range [0, 1) */
+    extern long random();
+    return (double)random() / 2147483648.0; /* range [0, 1) */
 }
 #endif
 
@@ -64,75 +64,75 @@ int
 main(int argc, char **argv)
 {
 
-	char * id_name = "terrain database";
-	char * nurb_name = "terrain";
-	int	i, j;
-	fastf_t 	hscale;
+    char * id_name = "terrain database";
+    char * nurb_name = "terrain";
+    int	i, j;
+    fastf_t 	hscale;
 
-	outfp = wdb_fopen("terrain.g");
+    outfp = wdb_fopen("terrain.g");
 
-	hscale = 2.5;
+    hscale = 2.5;
 
 
-	while ((i=bu_getopt(argc, argv, "dh:")) != EOF) {
-		switch (i) {
-		case 'd' : rt_g.debug |= DEBUG_MEM | DEBUG_MEM_FULL; break;
-		case 'h' :
-			hscale = atof( bu_optarg );
-			break;
-		default	:
-			(void)fprintf(stderr,
-				"Usage: %s [-d] > database.g\n", *argv);
-			return(-1);
-		}
+    while ((i=bu_getopt(argc, argv, "dh:")) != EOF) {
+	switch (i) {
+	    case 'd' : rt_g.debug |= DEBUG_MEM | DEBUG_MEM_FULL; break;
+	    case 'h' :
+		hscale = atof( bu_optarg );
+		break;
+	    default	:
+		(void)fprintf(stderr,
+			      "Usage: %s [-d] > database.g\n", *argv);
+		return(-1);
+	}
+    }
+
+    /* Create the database header record.
+     * this solid will consist of three surfaces
+     * a top surface, bottom surface, and the sides
+     * (so that it will be closed).
+     */
+
+    mk_id( outfp, id_name);
+
+    for ( i = 0; i < 10; i++)
+	for ( j = 0; j < 10; j++)
+	{
+	    fastf_t		v;
+	    fastf_t		drand48(void);
+
+	    v = (hscale * drand48()) + 10.0;
+
+	    grid[i][j][0] = i;
+	    grid[i][j][1] = j;
+	    grid[i][j][2] = v;
+
 	}
 
-	/* Create the database header record.
-	 * this solid will consist of three surfaces
-	 * a top surface, bottom surface, and the sides
-	 * (so that it will be closed).
-	 */
+    interpolate_data();
 
-	mk_id( outfp, id_name);
+    mk_bspline( outfp, nurb_name, surfs);
 
-	for ( i = 0; i < 10; i++)
-		for ( j = 0; j < 10; j++)
-		{
-			fastf_t		v;
-			fastf_t		drand48(void);
-
-			v = (hscale * drand48()) + 10.0;
-
-			grid[i][j][0] = i;
-			grid[i][j][1] = j;
-			grid[i][j][2] = v;
-
-		}
-
-	interpolate_data();
-
-	mk_bspline( outfp, nurb_name, surfs);
-
-	return 0;
+    return 0;
 }
 
 /* Interpoate the data using b-splines */
 void
 interpolate_data(void)
 {
-	struct face_g_snurb *srf;
-	fastf_t * data;
-	fastf_t rt_nurb_par_edge();
+    struct face_g_snurb *srf;
+    fastf_t * data;
+    fastf_t rt_nurb_par_edge();
 
-	data = &grid[0][0][0];
+    data = &grid[0][0][0];
 
-	BU_GETSTRUCT( srf, face_g_snurb );
+    BU_GETSTRUCT( srf, face_g_snurb );
 
-	rt_nurb_sinterp( srf, 4, data, 10, 10 );
-	rt_nurb_kvnorm( &srf->u );
-	rt_nurb_kvnorm( &srf->v );
+    rt_nurb_sinterp( srf, 4, data, 10, 10 );
+    rt_nurb_kvnorm( &srf->u );
+    rt_nurb_kvnorm( &srf->v );
 
-	surfs[nsurf++] = srf;
+    surfs[nsurf++] = srf;
 }
 
 /*

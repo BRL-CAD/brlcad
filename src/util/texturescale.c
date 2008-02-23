@@ -75,7 +75,7 @@ static int read_radii (fastf_t *r1p, fastf_t *r2p, char *buf)
     if (sscanf(buf, "%lf %lf", tmp, tmp + 1) != 2)
 	return (0);
     if ((tmp[0] <= 0.0) || (tmp[1] <= 0.0))
-	    return (0);
+	return (0);
     *r1p = tmp[0];
     *r2p = tmp[1];
     return (1);
@@ -90,8 +90,8 @@ static int read_row (char *rp, long int width, FILE *infp)
 	return (0);
     *(rp + RED) = *(rp + GRN) = *(rp + BLU) = 0;
     *(rp + 3 * (width + 1) + RED) =
-    *(rp + 3 * (width + 1) + GRN) =
-    *(rp + 3 * (width + 1) + BLU) = 0;
+	*(rp + 3 * (width + 1) + GRN) =
+	*(rp + 3 * (width + 1) + BLU) = 0;
     return (1);
 }
 
@@ -133,7 +133,7 @@ get_args (int argc, register char **argv)
 		if (! read_radii(&r1, &r2, bu_optarg))
 		{
 		    (void) fprintf(stderr,
-			"Illegal torus radii: '%s'\n", bu_optarg);
+				   "Illegal torus radii: '%s'\n", bu_optarg);
 		    return (0);
 		}
 		solid_type = TORUS;

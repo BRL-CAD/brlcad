@@ -36,13 +36,13 @@
 
 int
 mk_sketch(
-	struct rt_wdb *fp,
-	const char *name,
-	struct rt_sketch_internal *skt )
+    struct rt_wdb *fp,
+    const char *name,
+    struct rt_sketch_internal *skt )
 {
-	RT_SKETCH_CK_MAGIC( skt );
+    RT_SKETCH_CK_MAGIC( skt );
 
-	return wdb_export( fp, name, (genptr_t)skt, ID_SKETCH, mk_conv2mm );
+    return wdb_export( fp, name, (genptr_t)skt, ID_SKETCH, mk_conv2mm );
 }
 
 /*
