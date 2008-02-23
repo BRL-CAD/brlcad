@@ -52,9 +52,9 @@ typedef void render_work_t(struct render_s *render, tie_t *tie, tie_ray_t *ray, 
 typedef void render_free_t(struct render_s *render);
 
 typedef struct render_s {
-  render_work_t *work;
-  render_free_t *free;
-  void *data;
+    render_work_t *work;
+    render_free_t *free;
+    void *data;
 } render_t;
 
 #endif

@@ -43,52 +43,52 @@ tienet_buffer_t dispatcher_mesg;
 void
 master_dispatcher_init ()
 {
-  TIENET_BUFFER_INIT(dispatcher_mesg);
-  dispatcher_frame = 1;
+    TIENET_BUFFER_INIT(dispatcher_mesg);
+    dispatcher_frame = 1;
 }
 
 
 void
 master_dispatcher_free ()
 {
-  TIENET_BUFFER_FREE(dispatcher_mesg);
+    TIENET_BUFFER_FREE(dispatcher_mesg);
 }
 
 
 void
 master_dispatcher_generate (void *data, int data_len, int image_w, int image_h, int image_format)
 {
-  int i, n, size;
-  camera_tile_t tile;
+    int i, n, size;
+    camera_tile_t tile;
 
-  size = data_len + sizeof (camera_tile_t);
+    size = data_len + sizeof (camera_tile_t);
 
-  TIENET_BUFFER_SIZE(dispatcher_mesg, size);
+    TIENET_BUFFER_SIZE(dispatcher_mesg, size);
 
-  tienet_master_begin ();
+    tienet_master_begin ();
 
-  /* Copy data payload to front */
-  bcopy(data, dispatcher_mesg.data, data_len);
+    /* Copy data payload to front */
+    bcopy(data, dispatcher_mesg.data, data_len);
 
-  tile.size_x = image_w / DISPATCHER_TILE_NUM;
-  tile.size_y = image_h / DISPATCHER_TILE_NUM;
-  tile.format = image_format;
-  tile.frame = dispatcher_frame;
+    tile.size_x = image_w / DISPATCHER_TILE_NUM;
+    tile.size_y = image_h / DISPATCHER_TILE_NUM;
+    tile.format = image_format;
+    tile.frame = dispatcher_frame;
 
-  for (i = 0; i < image_h; i += tile.size_y)
-  {
-    tile.orig_y = i;
-    for (n = 0; n < image_w; n += tile.size_x)
+    for (i = 0; i < image_h; i += tile.size_y)
     {
-      tile.orig_x = n;
-      TCOPY(camera_tile_t, &tile, 0, dispatcher_mesg.data, data_len);
-      tienet_master_push(dispatcher_mesg.data, size);
+	tile.orig_y = i;
+	for (n = 0; n < image_w; n += tile.size_x)
+	{
+	    tile.orig_x = n;
+	    TCOPY(camera_tile_t, &tile, 0, dispatcher_mesg.data, data_len);
+	    tienet_master_push(dispatcher_mesg.data, size);
+	}
     }
-  }
 
-  tienet_master_end ();
+    tienet_master_end ();
 
-  dispatcher_frame = (dispatcher_frame + 1) % (1<<14);
+    dispatcher_frame = (dispatcher_frame + 1) % (1<<14);
 }
 
 /*

@@ -32,8 +32,8 @@
 
 
 typedef struct texture_stack_s {
-  int			num;
-  texture_t		**list;
+    int			num;
+    texture_t		**list;
 } texture_stack_t;
 
 

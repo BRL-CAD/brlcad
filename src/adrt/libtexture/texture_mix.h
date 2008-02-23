@@ -32,9 +32,9 @@
 
 
 typedef struct texture_mix_s {
-  texture_t *texture1;
-  texture_t *texture2;
-  tfloat coef;
+    texture_t *texture1;
+    texture_t *texture2;
+    tfloat coef;
 } texture_mix_t;
 
 

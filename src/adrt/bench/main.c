@@ -46,9 +46,9 @@
 #ifdef HAVE_GETOPT_LONG
 static struct option longopts[] =
 {
-	{ "dump cache", no_argument,	NULL, 'c' },
-	{ "dump image",	no_argument,	NULL, 'i' },
-	{ "help",	no_argument,	NULL, 'h' },
+    { "dump cache", no_argument,	NULL, 'c' },
+    { "dump image",	no_argument,	NULL, 'i' },
+    { "help",	no_argument,	NULL, 'h' },
 };
 #endif
 
@@ -56,12 +56,12 @@ static char shortopts[] = "cdh";
 
 
 static void finish(int sig) {
-  bu_exit(EXIT_FAILURE, "Collected signal %d, aborting!\n", sig);
+    bu_exit(EXIT_FAILURE, "Collected signal %d, aborting!\n", sig);
 }
 
 
 static void help() {
-  printf("%s\n", "usage: adrt_bench [options] [proj_env_file]\n\
+    printf("%s\n", "usage: adrt_bench [options] [proj_env_file]\n\
   -c\t\tdump cache.\n\
   -d\t\tdump ppm image.\n\
   -h\t\tdisplay help.\n");
@@ -69,60 +69,60 @@ static void help() {
 
 
 int main(int argc, char **argv) {
-  int c = 0, image, cache;
-  char proj[64], temp[64];
+    int c = 0, image, cache;
+    char proj[64], temp[64];
 
 
-  signal(SIGINT, finish);
+    signal(SIGINT, finish);
 
-  if (argc == 1) {
-    help();
-    return EXIT_FAILURE;
-  }
+    if (argc == 1) {
+	help();
+	return EXIT_FAILURE;
+    }
 
-  /* Initialize */
-  cache = 0;
-  image = 0;
-  proj[0] = 0;
+    /* Initialize */
+    cache = 0;
+    image = 0;
+    proj[0] = 0;
 
-  /* Parse command line options */
+    /* Parse command line options */
 
-  while ((c =
+    while ((c =
 #ifdef HAVE_GETOPT_LONG
-	getopt_long(argc, argv, shortopts, longopts, NULL)
+	    getopt_long(argc, argv, shortopts, longopts, NULL)
 #else
-	getopt(argc, argv, shortopts)
+	    getopt(argc, argv, shortopts)
 #endif
-	)!= -1)
-  {
-	  switch (c) {
-		  case 'c':
-			  cache = 1;
-			  break;
-		  case 'd':
-			  image = 1;
-			  break;
-		  case 'h':
-			  help();
-			  return EXIT_SUCCESS;
-		default:
-			  help();
-			  return EXIT_FAILURE;
-	  }
-  }
-  argc -= optind;
-  argv += optind;
+	       )!= -1)
+    {
+	switch (c) {
+	    case 'c':
+		cache = 1;
+		break;
+	    case 'd':
+		image = 1;
+		break;
+	    case 'h':
+		help();
+		return EXIT_SUCCESS;
+	    default:
+		help();
+		return EXIT_FAILURE;
+	}
+    }
+    argc -= optind;
+    argv += optind;
 
-  bu_strlcpy(proj, argv[0], sizeof(proj));
+    bu_strlcpy(proj, argv[0], sizeof(proj));
 
-  if (proj[0]) {
-    bench(proj, cache, image);
-  } else {
-    help();
-    return EXIT_FAILURE;
-  }
+    if (proj[0]) {
+	bench(proj, cache, image);
+    } else {
+	help();
+	return EXIT_FAILURE;
+    }
 
-  return EXIT_SUCCESS;
+    return EXIT_SUCCESS;
 }
 
 /*

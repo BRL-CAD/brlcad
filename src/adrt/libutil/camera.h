@@ -37,33 +37,33 @@
 
 
 typedef struct util_camera_view_s {
-  TIE_3 step_x;
-  TIE_3 step_y;
-  TIE_3 pos;
-  TIE_3 top_l;
+    TIE_3 step_x;
+    TIE_3 step_y;
+    TIE_3 pos;
+    TIE_3 top_l;
 } util_camera_view_t;
 
 
 typedef struct util_camera_s {
-  TIE_3 pos;
-  TIE_3 focus;
-  tfloat tilt;
-  tfloat fov;
-  tfloat dof;
-  int thread_num;
-  int view_num;
-  util_camera_view_t *view_list;
+    TIE_3 pos;
+    TIE_3 focus;
+    tfloat tilt;
+    tfloat fov;
+    tfloat dof;
+    int thread_num;
+    int view_num;
+    util_camera_view_t *view_list;
 } util_camera_t;
 
 
 typedef struct util_camera_thread_data_s {
-  common_db_t *db;
-  util_camera_t *camera;
-  tie_t *tie;
-  common_work_t work;
-  void *res_buf;
-  unsigned int *scanline;
-  pthread_mutex_t mut;
+    common_db_t *db;
+    util_camera_t *camera;
+    tie_t *tie;
+    common_work_t work;
+    void *res_buf;
+    unsigned int *scanline;
+    pthread_mutex_t mut;
 } util_camera_thread_data_t;
 
 

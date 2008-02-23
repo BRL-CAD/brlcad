@@ -32,7 +32,7 @@
 
 
 typedef struct texture_bump_s {
-  TIE_3 coef;
+    TIE_3 coef;
 } texture_bump_t;
 
 

@@ -32,8 +32,8 @@
 
 
 typedef struct texture_blend_s {
-  TIE_3 color1;
-  TIE_3 color2;
+    TIE_3 color1;
+    TIE_3 color2;
 } texture_blend_t;
 
 

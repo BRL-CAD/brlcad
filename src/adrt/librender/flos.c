@@ -45,13 +45,13 @@
 #include "bu.h"
 
 void render_flos_init(render_t *render, TIE_3 frag_pos) {
-  render_flos_t *d;
+    render_flos_t *d;
 
-  render->work = render_flos_work;
-  render->free = render_flos_free;
-  render->data = (render_flos_t *)bu_malloc(sizeof(render_flos_t), "render_flos_init");
-  d = (render_flos_t *)render->data;
-  d->frag_pos = frag_pos;
+    render->work = render_flos_work;
+    render->free = render_flos_free;
+    render->data = (render_flos_t *)bu_malloc(sizeof(render_flos_t), "render_flos_init");
+    d = (render_flos_t *)render->data;
+    d->frag_pos = frag_pos;
 }
 
 
@@ -60,39 +60,39 @@ void render_flos_free(render_t *render) {
 
 
 void render_flos_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel) {
-  tie_id_t id, tid;
-  adrt_mesh_t *mesh;
-  TIE_3 vec;
-  tfloat angle;
-  render_flos_t *rd;
+    tie_id_t id, tid;
+    adrt_mesh_t *mesh;
+    TIE_3 vec;
+    tfloat angle;
+    render_flos_t *rd;
    
-  rd = (render_flos_t *)render->data;
+    rd = (render_flos_t *)render->data;
 
-  if ((mesh = (adrt_mesh_t *)tie_work(tie, ray, &id, render_hit, NULL))) {
-    MATH_VEC_SET((*pixel), 0.0, 0.5, 0.0);
-  } else {
-    return;
-  }
+    if ((mesh = (adrt_mesh_t *)tie_work(tie, ray, &id, render_hit, NULL))) {
+	MATH_VEC_SET((*pixel), 0.0, 0.5, 0.0);
+    } else {
+	return;
+    }
 
-  MATH_VEC_SUB(vec, ray->pos, id.pos);
-  MATH_VEC_UNITIZE(vec);
-  MATH_VEC_DOT(angle, vec, id.norm);
+    MATH_VEC_SUB(vec, ray->pos, id.pos);
+    MATH_VEC_UNITIZE(vec);
+    MATH_VEC_DOT(angle, vec, id.norm);
 
-  /* Determine if direct line of sight to fragment */
-  ray->pos = rd->frag_pos;
-  MATH_VEC_SUB(ray->dir, id.pos, rd->frag_pos);
-  MATH_VEC_UNITIZE(ray->dir);
+    /* Determine if direct line of sight to fragment */
+    ray->pos = rd->frag_pos;
+    MATH_VEC_SUB(ray->dir, id.pos, rd->frag_pos);
+    MATH_VEC_UNITIZE(ray->dir);
 
-  if (tie_work(tie, ray, &tid, render_hit, NULL)) {
-    if (fabs (id.pos.v[0] - tid.pos.v[0]) < TIE_PREC &&
-        fabs (id.pos.v[1] - tid.pos.v[1]) < TIE_PREC &&
-        fabs (id.pos.v[2] - tid.pos.v[2]) < TIE_PREC)
-      {
-        MATH_VEC_SET((*pixel), 1.0, 0.0, 0.0);
-      }
-  }
+    if (tie_work(tie, ray, &tid, render_hit, NULL)) {
+	if (fabs (id.pos.v[0] - tid.pos.v[0]) < TIE_PREC &&
+	    fabs (id.pos.v[1] - tid.pos.v[1]) < TIE_PREC &&
+	    fabs (id.pos.v[2] - tid.pos.v[2]) < TIE_PREC)
+	{
+	    MATH_VEC_SET((*pixel), 1.0, 0.0, 0.0);
+	}
+    }
 
-  MATH_VEC_MUL_SCALAR((*pixel), (*pixel), (0.5+angle*0.5));
+    MATH_VEC_MUL_SCALAR((*pixel), (*pixel), (0.5+angle*0.5));
 }
 
 /*

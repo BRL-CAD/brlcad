@@ -33,13 +33,13 @@
 
 
 typedef struct texture_camo_s {
-  tfloat size;
-  int octaves;
-  int absolute;
-  TIE_3 color1;
-  TIE_3 color2;
-  TIE_3 color3;
-  texture_perlin_t perlin;
+    tfloat size;
+    int octaves;
+    int absolute;
+    TIE_3 color1;
+    TIE_3 color2;
+    TIE_3 color3;
+    texture_perlin_t perlin;
 } texture_camo_t;
 
 

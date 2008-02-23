@@ -1,7 +1,26 @@
-/*
+/*                           T I E . C
+ * BRL-CAD
+ *
+ * Copyright (c) 2008 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file tie.c
  *  tie.c
  *
-*/
+ */
 
 #include "common.h"
 
@@ -35,54 +54,54 @@ TIE_VAL(int tie_check_degenerate) = 1;
 
 static void tie_tri_prep(tie_t *tie)
 {
-  TIE_3 v1, v2, u, v;
-  int i, i1, i2;
-  tie_tri_t *tri;
+    TIE_3 v1, v2, u, v;
+    int i, i1, i2;
+    tie_tri_t *tri;
 
-  for (i = 0; i < tie->tri_num; i++) {
-    tri = &tie->tri_list[i];
+    for (i = 0; i < tie->tri_num; i++) {
+	tri = &tie->tri_list[i];
 
-    v1 = tri->data[1];
-    v2 = tri->data[2];
+	v1 = tri->data[1];
+	v2 = tri->data[2];
 
-    /* Compute Normal */
-    MATH_VEC_SUB(u, tri->data[1], tri->data[0]);
-    MATH_VEC_SUB(v, tri->data[2], tri->data[0]);
-    MATH_VEC_CROSS(tri->data[1], u, v);
+/* Compute Normal */
+	MATH_VEC_SUB(u, tri->data[1], tri->data[0]);
+	MATH_VEC_SUB(v, tri->data[2], tri->data[0]);
+	MATH_VEC_CROSS(tri->data[1], u, v);
 
-    MATH_VEC_UNITIZE(tri->data[1]);
+	MATH_VEC_UNITIZE(tri->data[1]);
 
-    /* Compute i1 and i2 */
-    u.v[0] = fabs(tri->data[1].v[0]);
-    u.v[1] = fabs(tri->data[1].v[1]);
-    u.v[2] = fabs(tri->data[1].v[2]);
+/* Compute i1 and i2 */
+	u.v[0] = fabs(tri->data[1].v[0]);
+	u.v[1] = fabs(tri->data[1].v[1]);
+	u.v[2] = fabs(tri->data[1].v[2]);
 
-    if (u.v[2] > u.v[1] && u.v[2] > u.v[0]) {
-      i1 = 0;
-      i2 = 1;
-    } else if (u.v[1] > u.v[2] && u.v[1] > u.v[0]) {
-      i1 = 0;
-      i2 = 2;
-    } else {
-      i1 = 1;
-      i2 = 2;
+	if (u.v[2] > u.v[1] && u.v[2] > u.v[0]) {
+	    i1 = 0;
+	    i2 = 1;
+	} else if (u.v[1] > u.v[2] && u.v[1] > u.v[0]) {
+	    i1 = 0;
+	    i2 = 2;
+	} else {
+	    i1 = 1;
+	    i2 = 2;
+	}
+
+/* compute u1, v2, u2, v2 */
+	tri->data[2].v[1] = v1.v[i1] - tri->data[0].v[i1];
+	tri->data[2].v[2] = v2.v[i1] - tri->data[0].v[i1];
+	tri->v[0] = v1.v[i2] - tri->data[0].v[i2];
+	tri->v[1] = v2.v[i2] - tri->data[0].v[i2];
+
+	if (i1 == 0 && i2 == 1)
+	    tri->v = (tfloat *)((intptr_t)(tri->v) + 2);
+	else if (i1 == 0)
+	    tri->v = (tfloat *)((intptr_t)(tri->v) + 1);
+
+/* Compute DotVN */
+	MATH_VEC_MUL_SCALAR(v1, tri->data[0], -1.0);
+	MATH_VEC_DOT(tri->data[2].v[0], v1, tri->data[1]);
     }
-
-    /* compute u1, v2, u2, v2 */
-    tri->data[2].v[1] = v1.v[i1] - tri->data[0].v[i1];
-    tri->data[2].v[2] = v2.v[i1] - tri->data[0].v[i1];
-    tri->v[0] = v1.v[i2] - tri->data[0].v[i2];
-    tri->v[1] = v2.v[i2] - tri->data[0].v[i2];
-
-    if (i1 == 0 && i2 == 1)
-      tri->v = (tfloat *)((intptr_t)(tri->v) + 2);
-    else if (i1 == 0)
-      tri->v = (tfloat *)((intptr_t)(tri->v) + 1);
-
-    /* Compute DotVN */
-    MATH_VEC_MUL_SCALAR(v1, tri->data[0], -1.0);
-    MATH_VEC_DOT(tri->data[2].v[0], v1, tri->data[1]);
-  }
 }
 
 
@@ -100,13 +119,13 @@ static void tie_tri_prep(tie_t *tie)
  */
 TIE_FUNC(void tie_init, tie_t *tie, unsigned int tri_num, int kdmethod)
 {
-  tie->kdtree = NULL;
-  tie->kdmethod = kdmethod;
-  tie->tri_num = 0;
-  tie->tri_num_alloc = tri_num;
-  tie->tri_list = (tie_tri_t *)bu_malloc(sizeof(tie_tri_t) * tri_num, "tie_init");
-  tie->stat = 0;
-  tie->rays_fired = 0;
+    tie->kdtree = NULL;
+    tie->kdmethod = kdmethod;
+    tie->tri_num = 0;
+    tie->tri_num_alloc = tri_num;
+    tie->tri_list = (tie_tri_t *)bu_malloc(sizeof(tie_tri_t) * tri_num, "tie_init");
+    tie->stat = 0;
+    tie->rays_fired = 0;
 }
 
 /**
@@ -120,15 +139,15 @@ TIE_FUNC(void tie_init, tie_t *tie, unsigned int tri_num, int kdmethod)
  */
 TIE_FUNC(void tie_free, tie_t *tie)
 {
-  int i;
+    int i;
 
-  /* Free Triangle Data */
-  for (i = 0; i < tie->tri_num; i++)
-    bu_free ((void *)((intptr_t)(tie->tri_list[i].v) & ~0x7L), "tri_list.v in tie_free");
-  bu_free (tie->tri_list, "tie_free");
+/* Free Triangle Data */
+    for (i = 0; i < tie->tri_num; i++)
+	bu_free ((void *)((intptr_t)(tie->tri_list[i].v) & ~0x7L), "tri_list.v in tie_free");
+    bu_free (tie->tri_list, "tie_free");
 
-  /* Free KDTREE Nodes */
-  tie_kdtree_free (tie);
+/* Free KDTREE Nodes */
+    tie_kdtree_free (tie);
 }
 
 
@@ -142,11 +161,11 @@ TIE_FUNC(void tie_free, tie_t *tie)
  */
 TIE_FUNC(void tie_prep, tie_t *tie)
 {
-  /* Build the kd-tree */
-  tie_kdtree_prep (tie);
+/* Build the kd-tree */
+    tie_kdtree_prep (tie);
 
-  /* Prep all the triangles */
-  tie_tri_prep (tie);
+/* Prep all the triangles */
+    tie_tri_prep (tie);
 }
 
 
@@ -173,195 +192,195 @@ TIE_FUNC(void tie_prep, tie_t *tie)
  */
 TIE_FUNC(void* tie_work, tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ray_t*, tie_id_t*, tie_tri_t*, void *ptr), void *ptr)
 {
-  tie_stack_t stack[40];
-  tie_id_t t, id_list[256];
-  tie_tri_t *hit_list[256], *tri;
-  tie_geom_t *data;
-  tie_kdtree_t *node_aligned, *temp[2];
-  tfloat near, far, dirinv[3], dist;
-  int i, n, ab[3], split, stack_ind, hit_count;
-  void *result;
+    tie_stack_t stack[40];
+    tie_id_t t, id_list[256];
+    tie_tri_t *hit_list[256], *tri;
+    tie_geom_t *data;
+    tie_kdtree_t *node_aligned, *temp[2];
+    tfloat near, far, dirinv[3], dist;
+    int i, n, ab[3], split, stack_ind, hit_count;
+    void *result;
 
 
 /*ErPLog( "ray: %f %f %f %f %f %f\n", ray->pos.v[0], ray->pos.v[1], ray->pos.v[2], ray->dir.v[0], ray->dir.v[1], ray->dir.v[2] );*/
 
-  if (!tie->kdtree)
+    if (!tie->kdtree)
+	return (NULL);
+
+    ray->kdtree_depth = 0;
+
+/*
+ * Precompute direction inverse since it's used in a bunch of divides,
+ * this allows those divides to become fast multiplies.
+ */
+    for (i = 0; i < 3; i++) {
+	if (ray->dir.v[i] == 0.0)
+	    ray->dir.v[i] = TIE_PREC;
+	dirinv[i] = 1.0 / ray->dir.v[i];
+	ab[i] = dirinv[i] < 0.0 ? 1.0 : 0.0;
+    }
+
+/* Extracting value of splitting plane from tie->kdtree pointer */
+    split = ((intptr_t)(((tie_kdtree_t *)((intptr_t)tie->kdtree & ~0x7L))->data)) & 0x3;
+
+/* Initialize ray segment */
+    if (ray->dir.v[split] < 0.0)
+	far = (tie->min.v[split] - ray->pos.v[split]) * dirinv[split];
+    else
+	far = (tie->max.v[split] - ray->pos.v[split]) * dirinv[split];
+
+    stack_ind = 0;
+    stack[0].node = tie->kdtree;
+    stack[0].near = 0;
+    stack[0].far = far;
+
+/* Process items on the stack */
+    do {
+	near = stack[stack_ind].near;
+	far = stack[stack_ind].far;
+
+/*
+ * Take the pointer from stack[stack_ind] and remove lower pts bits used to store data to
+ * give a valid ptr address.
+ */
+	node_aligned = (tie_kdtree_t *)((intptr_t)stack[stack_ind].node & ~0x7L);
+	stack_ind--;
+
+/*
+ * KDTREE TRAVERSAL
+ *
+ * 3 conditions can happen here:
+ *   - Ray only intersects the nearest node
+ *   - Ray only intersects the furthest node
+ *   - Ray intersects both nodes, pushing the furthest onto the stack
+ *
+ * Gordon Stoll's Mantra - Rays are Measured in Millions :-)
+ */
+	while (((intptr_t)(node_aligned->data)) & 0x4) {
+	    ray->kdtree_depth++;
+
+/* Retreive the splitting plane */
+	    split = ((intptr_t)(node_aligned->data)) & 0x3;
+
+/* Calculate the projected 1d distance to splitting axis */
+	    dist = (node_aligned->axis - ray->pos.v[split]) * dirinv[split];
+
+	    temp[0] = &((tie_kdtree_t *)(node_aligned->data))[ab[split]];
+	    temp[1] = &((tie_kdtree_t *)(node_aligned->data))[1-ab[split]];
+
+	    i = near >= dist; /* Node B Only? */
+	    node_aligned = (tie_kdtree_t *)((intptr_t)(temp[i]) & ~0x7L);
+
+	    if (far < dist || i)
+		continue;
+
+/* Nearest Node and Push Furthest */
+	    stack_ind++;
+	    stack[stack_ind].node = temp[1];
+	    stack[stack_ind].near = dist;
+	    stack[stack_ind].far = far;
+	    far = dist;
+	}
+
+
+/*
+ * RAY/TRIANGLE INTERSECTION - Only gets executed on geometry nodes.
+ * This part of the function is being executed because the KDTREE Traversal is Complete.
+ */
+	data = (tie_geom_t *)(node_aligned->data);
+	if (data->tri_num == 0)
+	    continue;
+
+	hit_count = 0;
+	for (i = 0; i < data->tri_num; i++) {
+/*
+ * Triangle Intersection Code
+ */
+	    tfloat u0, v0, *v;
+	    int i1, i2;
+
+	    tri = data->tri_list[i];
+	    MATH_VEC_DOT(u0, tri->data[1], ray->pos);
+	    MATH_VEC_DOT(v0, tri->data[1], ray->dir);
+	    t.dist = -(tri->data[2].v[0] + u0) / v0;
+
+/*
+ * Intersection point on triangle must lie within the kdtree node or it is rejected
+ * Apply TIE_PREC to near and far such that triangles that lie on orthogonal planes
+ * aren't in a precision fuzz boundary, thus missing something they should actualy
+ * have hit.
+ */
+	    if (t.dist < near-TIE_PREC || t.dist > far+TIE_PREC)
+		continue;
+
+/* Compute Intersection Point (P = O + Dt) */
+	    MATH_VEC_MUL_SCALAR(t.pos, ray->dir, t.dist);
+	    MATH_VEC_ADD(t.pos, ray->pos, t.pos);
+
+/* Extract i1 and i2 indices from lower bits of the v pointer */
+	    v = (tfloat *)((intptr_t)(tri->v) & ~0x7L);
+
+	    i1 = TIE_TAB1[((intptr_t)(tri->v) & 0x7)];
+	    i2 = TIE_TAB1[3 + ((intptr_t)(tri->v) & 0x7)];
+
+/* Compute U and V */
+	    u0 = t.pos.v[i1] - tri->data[0].v[i1];
+	    v0 = t.pos.v[i2] - tri->data[0].v[i2];
+
+/*
+ * Compute the barycentric coordinates, and make sure the coordinates
+ * fall within the boundaries of the triangle plane.
+ */
+	    if (fabs(tri->data[2].v[1]) <= TIE_PREC) {
+		t.beta = u0 / tri->data[2].v[2];
+		if (t.beta < 0 || t.beta > 1)
+		    continue;
+		t.alpha = (v0 - t.beta*v[1]) / v[0];
+	    } else {
+		t.beta = (v0*tri->data[2].v[1] - u0*v[0]) / (v[1]*tri->data[2].v[1] - tri->data[2].v[2]*v[0]);
+		if (t.beta < 0 || t.beta > 1)
+		    continue;
+		t.alpha = (u0 - t.beta*tri->data[2].v[2]) / tri->data[2].v[1];
+	    }
+
+	    if (t.alpha < 0 || (t.alpha + t.beta) > 1.0)
+		continue;
+
+/* Triangle Intersected, append it in the list */
+	    if (hit_count < 0xff) {
+		hit_list[hit_count] = tri;
+		id_list[hit_count] = t;
+		hit_count++;
+	    }
+	}
+
+
+/* If we hit something, then sort the hit triangles on demand */
+	for (i = 0; i < hit_count; i++) {
+/* Sort the list so that HitList and IDList [n] is in order wrt [i] */
+	    for (n = i; n < hit_count; n++) {
+		if (id_list[n].dist < id_list[i].dist) {
+/* Swap */
+		    tri = hit_list[i];
+		    t = id_list[i];
+		    hit_list[i] = hit_list[n];
+		    id_list[i] = id_list[n];
+		    hit_list[n] = tri;
+		    id_list[n] = t;
+		}
+	    }
+
+	    id_list[i].norm = hit_list[i]->data[1];
+	    result = hitfunc(ray, &id_list[i], hit_list[i], ptr);
+
+	    if (result) {
+		*id = id_list[i];
+		return (result);
+	    }
+	}
+    } while (stack_ind >= 0);
+
     return (NULL);
-
-  ray->kdtree_depth = 0;
-
-  /*
-  * Precompute direction inverse since it's used in a bunch of divides,
-  * this allows those divides to become fast multiplies.
-  */
-  for (i = 0; i < 3; i++) {
-    if (ray->dir.v[i] == 0.0)
-      ray->dir.v[i] = TIE_PREC;
-    dirinv[i] = 1.0 / ray->dir.v[i];
-    ab[i] = dirinv[i] < 0.0 ? 1.0 : 0.0;
-  }
-
-  /* Extracting value of splitting plane from tie->kdtree pointer */
-  split = ((intptr_t)(((tie_kdtree_t *)((intptr_t)tie->kdtree & ~0x7L))->data)) & 0x3;
-
-  /* Initialize ray segment */
-  if (ray->dir.v[split] < 0.0)
-    far = (tie->min.v[split] - ray->pos.v[split]) * dirinv[split];
-  else
-    far = (tie->max.v[split] - ray->pos.v[split]) * dirinv[split];
-
-  stack_ind = 0;
-  stack[0].node = tie->kdtree;
-  stack[0].near = 0;
-  stack[0].far = far;
-
-  /* Process items on the stack */
-  do {
-    near = stack[stack_ind].near;
-    far = stack[stack_ind].far;
-
-    /*
-    * Take the pointer from stack[stack_ind] and remove lower pts bits used to store data to
-    * give a valid ptr address.
-    */
-    node_aligned = (tie_kdtree_t *)((intptr_t)stack[stack_ind].node & ~0x7L);
-    stack_ind--;
-
-    /*
-    * KDTREE TRAVERSAL
-    *
-    * 3 conditions can happen here:
-    *   - Ray only intersects the nearest node
-    *   - Ray only intersects the furthest node
-    *   - Ray intersects both nodes, pushing the furthest onto the stack
-    *
-    * Gordon Stoll's Mantra - Rays are Measured in Millions :-)
-    */
-    while (((intptr_t)(node_aligned->data)) & 0x4) {
-      ray->kdtree_depth++;
-
-      /* Retreive the splitting plane */
-      split = ((intptr_t)(node_aligned->data)) & 0x3;
-
-      /* Calculate the projected 1d distance to splitting axis */
-      dist = (node_aligned->axis - ray->pos.v[split]) * dirinv[split];
-
-      temp[0] = &((tie_kdtree_t *)(node_aligned->data))[ab[split]];
-      temp[1] = &((tie_kdtree_t *)(node_aligned->data))[1-ab[split]];
-
-      i = near >= dist; /* Node B Only? */
-      node_aligned = (tie_kdtree_t *)((intptr_t)(temp[i]) & ~0x7L);
-
-      if (far < dist || i)
-        continue;
-
-      /* Nearest Node and Push Furthest */
-      stack_ind++;
-      stack[stack_ind].node = temp[1];
-      stack[stack_ind].near = dist;
-      stack[stack_ind].far = far;
-      far = dist;
-    }
-
-
-    /*
-    * RAY/TRIANGLE INTERSECTION - Only gets executed on geometry nodes.
-    * This part of the function is being executed because the KDTREE Traversal is Complete.
-    */
-    data = (tie_geom_t *)(node_aligned->data);
-    if (data->tri_num == 0)
-      continue;
-
-    hit_count = 0;
-    for (i = 0; i < data->tri_num; i++) {
-      /*
-      * Triangle Intersection Code
-      */
-      tfloat u0, v0, *v;
-      int i1, i2;
-
-      tri = data->tri_list[i];
-      MATH_VEC_DOT(u0, tri->data[1], ray->pos);
-      MATH_VEC_DOT(v0, tri->data[1], ray->dir);
-      t.dist = -(tri->data[2].v[0] + u0) / v0;
-
-      /*
-      * Intersection point on triangle must lie within the kdtree node or it is rejected
-      * Apply TIE_PREC to near and far such that triangles that lie on orthogonal planes
-      * aren't in a precision fuzz boundary, thus missing something they should actualy
-      * have hit.
-      */
-      if (t.dist < near-TIE_PREC || t.dist > far+TIE_PREC)
-        continue;
-
-      /* Compute Intersection Point (P = O + Dt) */
-      MATH_VEC_MUL_SCALAR(t.pos, ray->dir, t.dist);
-      MATH_VEC_ADD(t.pos, ray->pos, t.pos);
-
-      /* Extract i1 and i2 indices from lower bits of the v pointer */
-      v = (tfloat *)((intptr_t)(tri->v) & ~0x7L);
-
-      i1 = TIE_TAB1[((intptr_t)(tri->v) & 0x7)];
-      i2 = TIE_TAB1[3 + ((intptr_t)(tri->v) & 0x7)];
-
-      /* Compute U and V */
-      u0 = t.pos.v[i1] - tri->data[0].v[i1];
-      v0 = t.pos.v[i2] - tri->data[0].v[i2];
-
-      /*
-      * Compute the barycentric coordinates, and make sure the coordinates
-      * fall within the boundaries of the triangle plane.
-      */
-      if (fabs(tri->data[2].v[1]) <= TIE_PREC) {
-        t.beta = u0 / tri->data[2].v[2];
-        if (t.beta < 0 || t.beta > 1)
-          continue;
-        t.alpha = (v0 - t.beta*v[1]) / v[0];
-      } else {
-        t.beta = (v0*tri->data[2].v[1] - u0*v[0]) / (v[1]*tri->data[2].v[1] - tri->data[2].v[2]*v[0]);
-        if (t.beta < 0 || t.beta > 1)
-          continue;
-        t.alpha = (u0 - t.beta*tri->data[2].v[2]) / tri->data[2].v[1];
-      }
-
-      if (t.alpha < 0 || (t.alpha + t.beta) > 1.0)
-        continue;
-
-      /* Triangle Intersected, append it in the list */
-      if (hit_count < 0xff) {
-        hit_list[hit_count] = tri;
-        id_list[hit_count] = t;
-        hit_count++;
-      }
-    }
-
-
-    /* If we hit something, then sort the hit triangles on demand */
-    for (i = 0; i < hit_count; i++) {
-      /* Sort the list so that HitList and IDList [n] is in order wrt [i] */
-      for (n = i; n < hit_count; n++) {
-        if (id_list[n].dist < id_list[i].dist) {
-          /* Swap */
-          tri = hit_list[i];
-          t = id_list[i];
-          hit_list[i] = hit_list[n];
-          id_list[i] = id_list[n];
-          hit_list[n] = tri;
-          id_list[n] = t;
-        }
-      }
-
-      id_list[i].norm = hit_list[i]->data[1];
-      result = hitfunc(ray, &id_list[i], hit_list[i], ptr);
-
-      if (result) {
-        *id = id_list[i];
-        return (result);
-      }
-    }
-  } while (stack_ind >= 0);
-
-  return (NULL);
 }
 
 
@@ -385,43 +404,53 @@ TIE_FUNC(void* tie_work, tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfu
  */
 TIE_FUNC(void tie_push, tie_t *tie, TIE_3 **tlist, int tnum, void *plist, int pstride)
 {
-  int i;
+    int i;
 
-  /* expand the tri buffer if needed */
-  if (tnum + tie->tri_num > tie->tri_num_alloc) {
-    tie->tri_list = (tie_tri_t *)bu_realloc(
-		    tie->tri_list, 
-		    sizeof(tie_tri_t) * (tie->tri_num + tnum),
-		    "tri_list during tie_push");
-    tie->tri_num_alloc += tnum;
-  }
-
-  for (i = 0; i < tnum; i++) {
-
-    if (tie_check_degenerate) {
-      TIE_3 u, v, w;
-
-      MATH_VEC_SUB(u, (*tlist[i*3+1]), (*tlist[i*3+0]));
-      MATH_VEC_SUB(v, (*tlist[i*3+2]), (*tlist[i*3+0]));
-      MATH_VEC_CROSS(w, u, v);
-
-      if (MAGNITUDE(w.v) < 0.0001 * 0.0001)
-        continue;
+/* expand the tri buffer if needed */
+    if (tnum + tie->tri_num > tie->tri_num_alloc) {
+	tie->tri_list = (tie_tri_t *)bu_realloc(
+	    tie->tri_list, 
+	    sizeof(tie_tri_t) * (tie->tri_num + tnum),
+	    "tri_list during tie_push");
+	tie->tri_num_alloc += tnum;
     }
 
-    /* pack pack pack */
-    tie->tri_list[tie->tri_num].data[0] = *tlist[i*3+0];
-    tie->tri_list[tie->tri_num].data[1] = *tlist[i*3+1];
-    tie->tri_list[tie->tri_num].data[2] = *tlist[i*3+2];
+    for (i = 0; i < tnum; i++) {
 
-    /* set the association pointer */
-    tie->tri_list[tie->tri_num].ptr = plist;
-    if (plist)
-      plist = (void *)((intptr_t)plist + pstride);
+	if (tie_check_degenerate) {
+	    TIE_3 u, v, w;
 
-    /* XXX this looks like it might cause fragmentation? use a memory pool? */
-    tie->tri_list[tie->tri_num].v = (tfloat *)bu_malloc(2*sizeof(tfloat),"");
-    tie->tri_num++;
-  }
-  return;
+	    MATH_VEC_SUB(u, (*tlist[i*3+1]), (*tlist[i*3+0]));
+	    MATH_VEC_SUB(v, (*tlist[i*3+2]), (*tlist[i*3+0]));
+	    MATH_VEC_CROSS(w, u, v);
+
+	    if (MAGNITUDE(w.v) < 0.0001 * 0.0001)
+		continue;
+	}
+
+/* pack pack pack */
+	tie->tri_list[tie->tri_num].data[0] = *tlist[i*3+0];
+	tie->tri_list[tie->tri_num].data[1] = *tlist[i*3+1];
+	tie->tri_list[tie->tri_num].data[2] = *tlist[i*3+2];
+
+/* set the association pointer */
+	tie->tri_list[tie->tri_num].ptr = plist;
+	if (plist)
+	    plist = (void *)((intptr_t)plist + pstride);
+
+/* XXX this looks like it might cause fragmentation? use a memory pool? */
+	tie->tri_list[tie->tri_num].v = (tfloat *)bu_malloc(2*sizeof(tfloat),"");
+	tie->tri_num++;
+    }
+    return;
 }
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -31,8 +31,8 @@
 
 
 void render_flat_init(render_t *render) {
-  render->work = render_flat_work;
-  render->free = render_flat_free;
+    render->work = render_flat_work;
+    render->free = render_flat_free;
 }
 
 
@@ -41,14 +41,14 @@ void render_flat_free(render_t *render) {
 
 
 void render_flat_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel) {
-  tie_id_t id;
-  adrt_mesh_t *mesh;
+    tie_id_t id;
+    adrt_mesh_t *mesh;
 
-  if ((mesh = (adrt_mesh_t *)tie_work(tie, ray, &id, render_hit, NULL))) {
-    *pixel = mesh->attributes->color;
-    if (mesh->texture)
-      mesh->texture->work(mesh->texture, mesh, ray, &id, pixel);
-  }
+    if ((mesh = (adrt_mesh_t *)tie_work(tie, ray, &id, render_hit, NULL))) {
+	*pixel = mesh->attributes->color;
+	if (mesh->texture)
+	    mesh->texture->work(mesh->texture, mesh, ray, &id, pixel);
+    }
 }
 
 /*

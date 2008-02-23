@@ -32,37 +32,37 @@
 #include "bu.h"
 
 void texture_mix_init(texture_t *texture, texture_t *texture1, texture_t *texture2, tfloat coef) {
-  texture_mix_t *td;
+    texture_mix_t *td;
 
-  texture->data = bu_malloc(sizeof(texture_mix_t), "texture data");
-  texture->free = texture_mix_free;
-  texture->work = (texture_work_t *)texture_mix_work;
+    texture->data = bu_malloc(sizeof(texture_mix_t), "texture data");
+    texture->free = texture_mix_free;
+    texture->work = (texture_work_t *)texture_mix_work;
 
-  td = (texture_mix_t *)texture->data;
-  td->texture1 = texture1;
-  td->texture2 = texture2;
-  td->coef = coef;
+    td = (texture_mix_t *)texture->data;
+    td->texture1 = texture1;
+    td->texture2 = texture2;
+    td->coef = coef;
 }
 
 
 void texture_mix_free(texture_t *texture) {
-  bu_free(texture->data, "texture data");
+    bu_free(texture->data, "texture data");
 }
 
 
 void texture_mix_work(__TEXTURE_WORK_PROTOTYPE__) {
-  texture_mix_t *td;
-  TIE_3 t;
-  int i;
+    texture_mix_t *td;
+    TIE_3 t;
+    int i;
 
 
-  td = (texture_mix_t *)texture->data;
+    td = (texture_mix_t *)texture->data;
 
-  td->texture1->work(td->texture1, ADRT_MESH(mesh), ray, id, pixel);
-  td->texture2->work(td->texture2, ADRT_MESH(mesh), ray, id, &t);
-  MATH_VEC_MUL_SCALAR((*pixel), (*pixel), td->coef);
-  MATH_VEC_MUL_SCALAR(t, t, (1.0 - td->coef));
-  MATH_VEC_ADD((*pixel), (*pixel), t);
+    td->texture1->work(td->texture1, ADRT_MESH(mesh), ray, id, pixel);
+    td->texture2->work(td->texture2, ADRT_MESH(mesh), ray, id, &t);
+    MATH_VEC_MUL_SCALAR((*pixel), (*pixel), td->coef);
+    MATH_VEC_MUL_SCALAR(t, t, (1.0 - td->coef));
+    MATH_VEC_ADD((*pixel), (*pixel), t);
 }
 
 /*

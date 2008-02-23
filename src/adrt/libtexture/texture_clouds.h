@@ -33,12 +33,12 @@
 
 
 typedef struct texture_clouds_s {
-  tfloat size;
-  int octaves;
-  int absolute;
-  TIE_3	scale;
-  TIE_3 translate;
-  texture_perlin_t perlin;
+    tfloat size;
+    int octaves;
+    int absolute;
+    TIE_3	scale;
+    TIE_3 translate;
+    texture_perlin_t perlin;
 } texture_clouds_t;
 
 void texture_clouds_init(texture_t *texture, tfloat size, int octaves, int absolute, TIE_3 scale, TIE_3 translate);

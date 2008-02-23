@@ -38,9 +38,9 @@
 
 
 typedef struct texture_image_s {
-  short	w;
-  short	h;
-  unsigned char *image;
+    short	w;
+    short	h;
+    unsigned char *image;
 } texture_image_t;
 
 void texture_image_init(texture_t *texture, short w, short h, unsigned char *image);

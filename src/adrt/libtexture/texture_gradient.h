@@ -33,7 +33,7 @@
 
 
 typedef struct texture_gradient_s {
-  int		axis;
+    int		axis;
 } texture_gradient_t;
 
 void texture_gradient_init(texture_t *texture, int axis);

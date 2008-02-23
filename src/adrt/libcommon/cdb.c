@@ -37,27 +37,27 @@
 
 
 int common_db_load(common_db_t *db, const char *path) {
-  char proj_path[ADRT_NAME_SIZE], *path_ptr;
+    char proj_path[ADRT_NAME_SIZE], *path_ptr;
 
-  /* Parse path out of proj file and chdir to it */
-  strncpy(proj_path, path, sizeof(proj_path));
+    /* Parse path out of proj file and chdir to it */
+    strncpy(proj_path, path, sizeof(proj_path));
 
-  path_ptr = strrchr(proj_path, '/');
-  if (path_ptr) {
-    path_ptr[0] = 0;
-    chdir(proj_path);
-  }
+    path_ptr = strrchr(proj_path, '/');
+    if (path_ptr) {
+	path_ptr[0] = 0;
+	chdir(proj_path);
+    }
 
 
-  /* Load Environment Data */
-  common_env_init(&db->env);
-  common_env_read(&db->env, path);
-  common_env_prep(&db->env);
+    /* Load Environment Data */
+    common_env_init(&db->env);
+    common_env_read(&db->env, path);
+    common_env_prep(&db->env);
 
-  /* Load Animation Data */
-  common_anim_read(&db->anim, db->env.frames_file);
+    /* Load Animation Data */
+    common_anim_read(&db->anim, db->env.frames_file);
 
-  return(0);
+    return(0);
 }
 
 /*

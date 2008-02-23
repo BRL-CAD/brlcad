@@ -40,20 +40,20 @@
 /**********************/
 
 typedef struct common_unpack_prop_node_s {
-  char 			name[256];
-  common_prop_t		prop;
+    char 			name[256];
+    common_prop_t		prop;
 } common_unpack_prop_node_t;
 
 
 typedef struct common_unpack_texture_node_s {
-  char			name[256];
-  texture_t		*texture;
+    char			name[256];
+    texture_t		*texture;
 } common_unpack_texture_node_t;
 
 
 typedef struct common_unpack_mesh_node_s {
-  char			name[256];
-  common_mesh_t		mesh;
+    char			name[256];
+    common_mesh_t		mesh;
 } common_unpack_mesh_node_t;
 
 

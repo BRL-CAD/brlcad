@@ -52,16 +52,16 @@
         } }
 
 typedef struct tienet_buffer_s {
-  uint8_t *data;
-  uint32_t size;
-  uint32_t ind;
+    uint8_t *data;
+    uint32_t size;
+    uint32_t ind;
 } tienet_buffer_t;
 
 
 typedef struct tienet_sem_s {
-  int val;
-  pthread_mutex_t mut;
-  pthread_cond_t cond;
+    int val;
+    pthread_mutex_t mut;
+    pthread_cond_t cond;
 } tienet_sem_t;
 
 

@@ -31,40 +31,40 @@
 #include "bu.h"
 
 void texture_bump_init(texture_t *texture, TIE_3 coef) {
-  texture_bump_t *sd;
+    texture_bump_t *sd;
 
-  texture->data = bu_malloc(sizeof(texture_bump_t), "texture data");
-  texture->free = texture_bump_free;
-  texture->work = (texture_work_t *)texture_bump_work;
+    texture->data = bu_malloc(sizeof(texture_bump_t), "texture data");
+    texture->free = texture_bump_free;
+    texture->work = (texture_work_t *)texture_bump_work;
 
-  sd = (texture_bump_t *)texture->data;
-  sd->coef = coef;
+    sd = (texture_bump_t *)texture->data;
+    sd->coef = coef;
 }
 
 
 void texture_bump_free(texture_t *texture) {
-  bu_free(texture->data, "texture data");
+    bu_free(texture->data, "texture data");
 }
 
 
 void texture_bump_work(__TEXTURE_WORK_PROTOTYPE__) {
-  texture_bump_t *sd;
-  TIE_3 n;
-  tfloat d;
+    texture_bump_t *sd;
+    TIE_3 n;
+    tfloat d;
 
 
-  sd = (texture_bump_t *)texture->data;
+    sd = (texture_bump_t *)texture->data;
 
 
-  n.v[0] = id->norm.v[0] + sd->coef.v[0]*(2*pixel->v[0]-1.0);
-  n.v[1] = id->norm.v[1] + sd->coef.v[1]*(2*pixel->v[1]-1.0);
-  n.v[2] = id->norm.v[2] + sd->coef.v[2]*(2*pixel->v[2]-1.0);
-  MATH_VEC_UNITIZE(n);
+    n.v[0] = id->norm.v[0] + sd->coef.v[0]*(2*pixel->v[0]-1.0);
+    n.v[1] = id->norm.v[1] + sd->coef.v[1]*(2*pixel->v[1]-1.0);
+    n.v[2] = id->norm.v[2] + sd->coef.v[2]*(2*pixel->v[2]-1.0);
+    MATH_VEC_UNITIZE(n);
 
-  MATH_VEC_DOT(d, n, id->norm);
-  if (d < 0)
-    MATH_VEC_MUL_SCALAR(n, n, -1.0);
-  id->norm = n;
+    MATH_VEC_DOT(d, n, id->norm);
+    if (d < 0)
+	MATH_VEC_MUL_SCALAR(n, n, -1.0);
+    id->norm = n;
 }
 
 /*

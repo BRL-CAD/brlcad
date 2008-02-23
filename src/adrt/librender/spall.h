@@ -30,11 +30,11 @@
 #include "render_internal.h"
 
 typedef struct render_spall_s {
-  TIE_3 ray_pos;
-  TIE_3 ray_dir;
-  tfloat plane[4];
-  tfloat angle;
-  tie_t tie;
+    TIE_3 ray_pos;
+    TIE_3 ray_dir;
+    tfloat plane[4];
+    tfloat angle;
+    tie_t tie;
 } render_spall_t;
 
 void render_spall_init(render_t *render, TIE_3 ray_pos, TIE_3 ray_dir, tfloat angle);

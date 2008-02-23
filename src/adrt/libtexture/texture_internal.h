@@ -40,9 +40,9 @@ typedef void texture_work_t(struct texture_s *texture, void *mesh, tie_ray_t *ra
 
 
 typedef struct texture_s {
-  texture_free_t *free;
-  texture_work_t *work;
-  void *data;
+    texture_free_t *free;
+    texture_work_t *work;
+    void *data;
 } texture_t;
 
 

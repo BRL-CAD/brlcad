@@ -30,10 +30,10 @@
 
 
 void rise_post_process(tfloat *image, int w, int h) {
-  int	i;
+    int	i;
 
-  for (i = 0; i < 4 * w * h; i++)
-    if (image[i] > 1) image[i] = 1;
+    for (i = 0; i < 4 * w * h; i++)
+	if (image[i] > 1) image[i] = 1;
 }
 
 /*

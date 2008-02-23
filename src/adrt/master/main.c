@@ -46,14 +46,14 @@
 #ifdef HAVE_GETOPT_LONG
 static struct option longopts[] =
 {
-	{ "exec",	required_argument,	NULL, 'e' },
-	{ "help",	no_argument,		NULL, 'h' },
-	{ "comp_host",	required_argument,	NULL, 'c' },
-	{ "obs_port",	required_argument,	NULL, 'o' },
-	{ "port",	required_argument,	NULL, 'p' },
-	{ "build",	no_argument,		NULL, 'b' },
-	{ "verbose",	no_argument,		NULL, 'v' },
-  	{ "list",	required_argument,	NULL, 'l' },
+    { "exec",	required_argument,	NULL, 'e' },
+    { "help",	no_argument,		NULL, 'h' },
+    { "comp_host",	required_argument,	NULL, 'c' },
+    { "obs_port",	required_argument,	NULL, 'o' },
+    { "port",	required_argument,	NULL, 'p' },
+    { "build",	no_argument,		NULL, 'b' },
+    { "verbose",	no_argument,		NULL, 'v' },
+    { "list",	required_argument,	NULL, 'l' },
 };
 #endif
 
@@ -61,13 +61,13 @@ static char shortopts[] = "bc:e:i:ho:p:vl:";
 
 
 static void finish(int sig) {
-  printf("Collected signal %d, aborting!\n", sig);
-  exit(EXIT_FAILURE);
+    printf("Collected signal %d, aborting!\n", sig);
+    exit(EXIT_FAILURE);
 }
 
 
 static void help() {
-  printf("%s\n", "usage: adrt_master [options]\n\
+    printf("%s\n", "usage: adrt_master [options]\n\
   -h\t\tdisplay help.\n\
   -c\t\tconnect to component server.\n\
   -e\t\tscript to execute that starts slaves.\n\
@@ -80,78 +80,78 @@ static void help() {
 
 
 int main(int argc, char **argv) {
-  int port = 0, obs_port = 0, c = 0, verbose = 0;
-  char exec[64], list[64], comp_host[64];
+    int port = 0, obs_port = 0, c = 0, verbose = 0;
+    char exec[64], list[64], comp_host[64];
 
 
-  signal(SIGINT, finish);
+    signal(SIGINT, finish);
 
 
-  /* Initialize strings */
-  list[0] = 0;
-  exec[0] = 0;
-  comp_host[0] = 0;
-  port = TN_MASTER_PORT;
-  obs_port = ADRT_PORT;
+    /* Initialize strings */
+    list[0] = 0;
+    exec[0] = 0;
+    comp_host[0] = 0;
+    port = TN_MASTER_PORT;
+    obs_port = ADRT_PORT;
 
-  /* Parse command line options */
+    /* Parse command line options */
 
-  while ((c = 
+    while ((c = 
 #ifdef HAVE_GETOPT_LONG
-	getopt_long(argc, argv, shortopts, longopts, NULL)
+	    getopt_long(argc, argv, shortopts, longopts, NULL)
 #else
-	getopt(argc, argv, shortopts)
+	    getopt(argc, argv, shortopts)
 #endif
-	)!= -1)
-  {
-	  switch (c) {
+	       )!= -1)
+    {
+	switch (c) {
             case 'c':
-              strncpy(comp_host, optarg, 64-1);
-	      comp_host[64-1] = '\0'; /* sanity */
-              break;
+		strncpy(comp_host, optarg, 64-1);
+		comp_host[64-1] = '\0'; /* sanity */
+		break;
 
             case 'h':
-              help();
-              return EXIT_SUCCESS;
+		help();
+		return EXIT_SUCCESS;
 
             case 'o':
-              obs_port = atoi(optarg);
-              break;
+		obs_port = atoi(optarg);
+		break;
 
             case 'p':
-              port = atoi(optarg);
-              break;
+		port = atoi(optarg);
+		break;
 
             case 'l':
-              strncpy(list, optarg, 64-1);
-	      list[64-1] = '\0'; /* sanity */
-              break;
+		strncpy(list, optarg, 64-1);
+		list[64-1] = '\0'; /* sanity */
+		break;
 
             case 'e':
-              strncpy(exec, optarg, 64-1);
-	      exec[64-1] = '\0'; /* sanity */
-              break;
+		strncpy(exec, optarg, 64-1);
+		exec[64-1] = '\0'; /* sanity */
+		break;
 
             case 'b':
-              printf("adrt_master build: %s %s\n", __DATE__, __TIME__);
-              return EXIT_SUCCESS;
-              break;
+		printf("adrt_master build: %s %s\n", __DATE__, __TIME__);
+		return EXIT_SUCCESS;
+		break;
 
             case 'v':
-              verbose = 1;
-              break;
+		verbose = 1;
+		break;
 
             default:
-              help();
-              return EXIT_FAILURE;
-	  }
-  }
-  argc -= optind;
-  argv += optind;
+		help();
+		return EXIT_FAILURE;
+	}
+    }
+    argc -= optind;
+    argv += optind;
 
-  master_init (port, obs_port, list, exec, comp_host, verbose);
+    master_init (port, obs_port, list, exec, comp_host, verbose);
 
-  return EXIT_SUCCESS;
+    return EXIT_SUCCESS;
 }
 
 /*

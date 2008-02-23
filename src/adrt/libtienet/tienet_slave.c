@@ -65,23 +65,23 @@ void tienet_slave_init(int port, char *host,
                        void fcb_free(void),
                        int ver_key)
 {
-  tienet_slave_fcb_work = fcb_work;
-  tienet_slave_fcb_free = fcb_free;
+    tienet_slave_fcb_work = fcb_work;
+    tienet_slave_fcb_free = fcb_free;
 
 
-  /* Store version key for comparisson with version key on master */
-  tienet_slave_ver_key = ver_key;
+    /* Store version key for comparisson with version key on master */
+    tienet_slave_ver_key = ver_key;
 
-  /*
-  * If host is specified, connect to master, do work, shutdown.
-  */
+    /*
+     * If host is specified, connect to master, do work, shutdown.
+     */
 
-  if (host[0]) {
-    tienet_slave_worker(port, host);
-  } else {
-    fprintf(stdout, "missing hostname, exiting.\n");
-    exit(1);
-  }
+    if (host[0]) {
+	tienet_slave_worker(port, host);
+    } else {
+	fprintf(stdout, "missing hostname, exiting.\n");
+	exit(1);
+    }
 }
 
 
@@ -90,139 +90,139 @@ void tienet_slave_free() {
 
 
 void tienet_slave_worker(int port, char *host) {
-  tienet_buffer_t result, buffer;
-  struct sockaddr_in master, slave;
-  struct hostent h;
-  short op;
-  uint32_t size;
-  int slave_socket;
+    tienet_buffer_t result, buffer;
+    struct sockaddr_in master, slave;
+    struct hostent h;
+    short op;
+    uint32_t size;
+    int slave_socket;
 #if TN_COMPRESSION
-  tienet_buffer_t buffer_comp;
-  unsigned long dest_len;
+    tienet_buffer_t buffer_comp;
+    unsigned long dest_len;
 #endif
 
 
-  /* Initialize res_buf to NULL for realloc'ing */
-  TIENET_BUFFER_INIT(result);
-  TIENET_BUFFER_INIT(buffer);
+    /* Initialize res_buf to NULL for realloc'ing */
+    TIENET_BUFFER_INIT(result);
+    TIENET_BUFFER_INIT(buffer);
 #if TN_COMPRESSION
-  TIENET_BUFFER_INIT(buffer_comp);
+    TIENET_BUFFER_INIT(buffer_comp);
 #endif
 
-  if (gethostbyname(host)) {
-    h = gethostbyname(host)[0];
-  } else {
-    fprintf(stderr, "unknown host: %s\n", host);
-    exit(1);
-  }
+    if (gethostbyname(host)) {
+	h = gethostbyname(host)[0];
+    } else {
+	fprintf(stderr, "unknown host: %s\n", host);
+	exit(1);
+    }
 
-  master.sin_family = h.h_addrtype;
-  memcpy((char *)&master.sin_addr.s_addr, h.h_addr_list[0], h.h_length);
-  master.sin_port = htons(port);
+    master.sin_family = h.h_addrtype;
+    memcpy((char *)&master.sin_addr.s_addr, h.h_addr_list[0], h.h_length);
+    master.sin_port = htons(port);
 
-  /* Create a socket */
-  if ((slave_socket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-    fprintf(stderr, "unable to create socket, exiting.\n");
-    exit(1);
-  }
+    /* Create a socket */
+    if ((slave_socket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+	fprintf(stderr, "unable to create socket, exiting.\n");
+	exit(1);
+    }
 
-  /* Bind any available port number */
-  slave.sin_family = AF_INET;
-  slave.sin_addr.s_addr = htonl(INADDR_ANY);
-  slave.sin_port = htons(0);
+    /* Bind any available port number */
+    slave.sin_family = AF_INET;
+    slave.sin_addr.s_addr = htonl(INADDR_ANY);
+    slave.sin_port = htons(0);
 
-  if (bind(slave_socket, (struct sockaddr *)&slave, sizeof(slave)) < 0) {
-    fprintf(stderr, "unable to bind socket, exiting\n");
-    exit(1);
-  }
+    if (bind(slave_socket, (struct sockaddr *)&slave, sizeof(slave)) < 0) {
+	fprintf(stderr, "unable to bind socket, exiting\n");
+	exit(1);
+    }
 
-  /* connect to master and request work */
-  if (connect(slave_socket, (struct sockaddr *)&master, sizeof(master)) < 0) {
-    fprintf(stderr, "cannot connect to master, exiting.\n");
-    exit(1);
-  }
+    /* connect to master and request work */
+    if (connect(slave_socket, (struct sockaddr *)&master, sizeof(master)) < 0) {
+	fprintf(stderr, "cannot connect to master, exiting.\n");
+	exit(1);
+    }
 
-  /* receive endian of master */
-  tienet_recv(slave_socket, &tienet_endian, sizeof(short), 0);
-  tienet_endian = tienet_endian == 1 ? 0 : 1;
+    /* receive endian of master */
+    tienet_recv(slave_socket, &tienet_endian, sizeof(short), 0);
+    tienet_endian = tienet_endian == 1 ? 0 : 1;
 
-  /* send version key, master will respond whether to continue or not */
-  tienet_send(slave_socket, &tienet_slave_ver_key, sizeof(int), tienet_endian);
+    /* send version key, master will respond whether to continue or not */
+    tienet_send(slave_socket, &tienet_slave_ver_key, sizeof(int), tienet_endian);
 
-  /* If version mismatch then exit */
-  tienet_recv(slave_socket, &op, sizeof(short), tienet_endian);
-  if (op == TN_OP_COMPLETE)
-    return;
+    /* If version mismatch then exit */
+    tienet_recv(slave_socket, &op, sizeof(short), tienet_endian);
+    if (op == TN_OP_COMPLETE)
+	return;
 
-  /* Request Work Unit */
+    /* Request Work Unit */
 //  op = TN_OP_REQWORK;
 //  tienet_send(slave_socket, &op, sizeof(short), tienet_endian);
 
-  while (1) {
-    tienet_recv(slave_socket, &op, sizeof(short), tienet_endian);
-    if (op == TN_OP_SHUTDOWN || op == TN_OP_COMPLETE) {
-      close(slave_socket);
-      exit(0);
-    } else {
-      tienet_recv(slave_socket, &size, sizeof(uint32_t), tienet_endian);
-      TIENET_BUFFER_SIZE(buffer, size);
-      tienet_recv(slave_socket, buffer.data, size, 0);
-      buffer.ind = size;
+    while (1) {
+	tienet_recv(slave_socket, &op, sizeof(short), tienet_endian);
+	if (op == TN_OP_SHUTDOWN || op == TN_OP_COMPLETE) {
+	    close(slave_socket);
+	    exit(0);
+	} else {
+	    tienet_recv(slave_socket, &size, sizeof(uint32_t), tienet_endian);
+	    TIENET_BUFFER_SIZE(buffer, size);
+	    tienet_recv(slave_socket, buffer.data, size, 0);
+	    buffer.ind = size;
 
-      /* Process work and Generate Results */
-      tienet_slave_fcb_work(&buffer, &result);
+	    /* Process work and Generate Results */
+	    tienet_slave_fcb_work(&buffer, &result);
 
-      if (!result.ind)
-        continue;
+	    if (!result.ind)
+		continue;
 
-      /* Send Result Back, length of: result + op_code + result_length + compression_length */
-      TIENET_BUFFER_SIZE(buffer, result.ind+sizeof(short)+sizeof(int)+sizeof(uint32_t));
+	    /* Send Result Back, length of: result + op_code + result_length + compression_length */
+	    TIENET_BUFFER_SIZE(buffer, result.ind+sizeof(short)+sizeof(int)+sizeof(uint32_t));
 
-      buffer.ind = 0;
+	    buffer.ind = 0;
 
-      /* Pack Operation Code */
-      op = TN_OP_RESULT;
-      if (tienet_endian) tienet_flip(&op, &op, sizeof(short));
-      TCOPY(short, &op, 0, buffer.data, buffer.ind);
-      if (tienet_endian) tienet_flip(&op, &op, sizeof(short));
-      buffer.ind += sizeof(short);
+	    /* Pack Operation Code */
+	    op = TN_OP_RESULT;
+	    if (tienet_endian) tienet_flip(&op, &op, sizeof(short));
+	    TCOPY(short, &op, 0, buffer.data, buffer.ind);
+	    if (tienet_endian) tienet_flip(&op, &op, sizeof(short));
+	    buffer.ind += sizeof(short);
 
-      /* Pack Result Length */
-      if (tienet_endian) tienet_flip(&result.ind, &result.ind, sizeof(uint32_t));
-      TCOPY(uint32_t, &result.ind, 0, buffer.data, buffer.ind);
-      if (tienet_endian) tienet_flip(&result.ind, &result.ind, sizeof(uint32_t));
-      buffer.ind += sizeof(uint32_t);
+	    /* Pack Result Length */
+	    if (tienet_endian) tienet_flip(&result.ind, &result.ind, sizeof(uint32_t));
+	    TCOPY(uint32_t, &result.ind, 0, buffer.data, buffer.ind);
+	    if (tienet_endian) tienet_flip(&result.ind, &result.ind, sizeof(uint32_t));
+	    buffer.ind += sizeof(uint32_t);
 
 #if TN_COMPRESSION
-      /* Compress the result buffer */
-      TIENET_BUFFER_SIZE(buffer_comp, result.ind+32);
+	    /* Compress the result buffer */
+	    TIENET_BUFFER_SIZE(buffer_comp, result.ind+32);
 
-      dest_len = buffer_comp.size+32;
-      compress(buffer_comp.data, &dest_len, result.data, result.ind);
-      size = (uint32_t)dest_len;
+	    dest_len = buffer_comp.size+32;
+	    compress(buffer_comp.data, &dest_len, result.data, result.ind);
+	    size = (uint32_t)dest_len;
     
-      /* Pack Compressed Result Length */
-      if (tienet_endian) tienet_flip(&size, &size, sizeof(uint32_t));
-      TCOPY(uint32_t, &size, 0, buffer.data, buffer.ind);
-      if (tienet_endian) tienet_flip(&size, &size, sizeof(uint32_t));
-      buffer.ind += sizeof(uint32_t);
+	    /* Pack Compressed Result Length */
+	    if (tienet_endian) tienet_flip(&size, &size, sizeof(uint32_t));
+	    TCOPY(uint32_t, &size, 0, buffer.data, buffer.ind);
+	    if (tienet_endian) tienet_flip(&size, &size, sizeof(uint32_t));
+	    buffer.ind += sizeof(uint32_t);
 
-      /* Pack Compressed Result Data */
-      memcpy(&((char *)buffer.data)[buffer.ind], buffer_comp.data, size);
-      buffer.ind += size;
+	    /* Pack Compressed Result Data */
+	    memcpy(&((char *)buffer.data)[buffer.ind], buffer_comp.data, size);
+	    buffer.ind += size;
 #else
-      /* Pack Result Data */
-      memcpy(&((char *)buffer.data)[buffer.ind], result.data, result.ind);
-      buffer.ind += result.ind;
+	    /* Pack Result Data */
+	    memcpy(&((char *)buffer.data)[buffer.ind], result.data, result.ind);
+	    buffer.ind += result.ind;
 #endif
-      tienet_send(slave_socket, buffer.data, buffer.ind, 0);
+	    tienet_send(slave_socket, buffer.data, buffer.ind, 0);
+	}
     }
-  }
 
-  TIENET_BUFFER_FREE(result);
-  TIENET_BUFFER_FREE(buffer);
+    TIENET_BUFFER_FREE(result);
+    TIENET_BUFFER_FREE(buffer);
 #if TN_COMPRESSION
-  TIENET_BUFFER_FREE(buffer_comp);
+    TIENET_BUFFER_FREE(buffer_comp);
 #endif
 }
 

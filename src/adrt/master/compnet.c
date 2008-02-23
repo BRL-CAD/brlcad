@@ -60,81 +60,81 @@ int master_compserv_active;
 
 
 /*
-* Establish a connection to the component server.
-*/
+ * Establish a connection to the component server.
+ */
 void compnet_connect(char *host, int port) {
-  struct hostent hostent;
-  struct sockaddr_in compserv, master;
+    struct hostent hostent;
+    struct sockaddr_in compserv, master;
 
-  master_compserv_active = 0;
+    master_compserv_active = 0;
 
-  /* If no host name is supplied then do nothing */
-  if (!strlen(host))
-    return;
+    /* If no host name is supplied then do nothing */
+    if (!strlen(host))
+	return;
 
-  /* server address */
-  if (gethostbyname(host)) {
-    hostent = gethostbyname(host)[0];
-  } else {
-    fprintf(stderr, "hostname %s unknown, exiting.\n", host);
-    exit(1);
-  }
+    /* server address */
+    if (gethostbyname(host)) {
+	hostent = gethostbyname(host)[0];
+    } else {
+	fprintf(stderr, "hostname %s unknown, exiting.\n", host);
+	exit(1);
+    }
 
-  /* create a socket */
-  if ((master_compserv_socket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-    fprintf(stderr, "cannot create socket for component server connection, exiting.");
-    exit(1);
-  }
+    /* create a socket */
+    if ((master_compserv_socket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+	fprintf(stderr, "cannot create socket for component server connection, exiting.");
+	exit(1);
+    }
 
-  /* client address */
-  master.sin_family = AF_INET;
-  master.sin_addr.s_addr = INADDR_ANY;
-  master.sin_port = htons(0);
+    /* client address */
+    master.sin_family = AF_INET;
+    master.sin_addr.s_addr = INADDR_ANY;
+    master.sin_port = htons(0);
 
-  compserv.sin_family = hostent.h_addrtype;
-  memcpy((char*)&compserv.sin_addr.s_addr, hostent.h_addr_list[0], hostent.h_length);
-  compserv.sin_port = htons(port);
+    compserv.sin_family = hostent.h_addrtype;
+    memcpy((char*)&compserv.sin_addr.s_addr, hostent.h_addr_list[0], hostent.h_length);
+    compserv.sin_port = htons(port);
 
-  if (bind(master_compserv_socket, (struct sockaddr *)&master, sizeof(master)) < 0) {
-    fprintf(stderr, "unable to bind component server connection socket, exiting.\n");
-    exit(1);
-  }
+    if (bind(master_compserv_socket, (struct sockaddr *)&master, sizeof(master)) < 0) {
+	fprintf(stderr, "unable to bind component server connection socket, exiting.\n");
+	exit(1);
+    }
 
-  /* connect to master */
-  if (connect(master_compserv_socket, (struct sockaddr *)&compserv, sizeof(compserv)) < 0) {
-    fprintf(stderr, "cannot connect to component server, exiting.\n");
-    exit(1);
-  }
+    /* connect to master */
+    if (connect(master_compserv_socket, (struct sockaddr *)&compserv, sizeof(compserv)) < 0) {
+	fprintf(stderr, "cannot connect to component server, exiting.\n");
+	exit(1);
+    }
 
-  /* data may now be transmitted to the server */
-  master_compserv_active = 1;
+    /* data may now be transmitted to the server */
+    master_compserv_active = 1;
 }
 
 /*
-* Update the status of a component
-*/
+ * Update the status of a component
+ */
 void compnet_update(char *string, char status) {
-  char message[ADRT_NAME_SIZE];
+    char message[ADRT_NAME_SIZE];
 
-  if (!master_compserv_active)
-    return;
+    if (!master_compserv_active)
+	return;
 
-  /* format message */
-  snprintf(message, ADRT_NAME_SIZE, "%c%s,%d%c", SET_BASE_ATTS_STATE, string, status, TERM);
+    /* format message */
+    snprintf(message, ADRT_NAME_SIZE, "%c%s,%d%c", SET_BASE_ATTS_STATE, string, status, TERM);
 
-  /* Send string */
-  tienet_send(master_compserv_socket, message, strlen(message), 0);
+    /* Send string */
+    tienet_send(master_compserv_socket, message, strlen(message), 0);
 }
 
 
 void compnet_reset() {
-  char message;
+    char message;
 
-  if (!master_compserv_active)
-    return;
+    if (!master_compserv_active)
+	return;
 
-  message = RESET_BASE_ATTS;
-  tienet_send(master_compserv_socket, &message, 1, 0);
+    message = RESET_BASE_ATTS;
+    tienet_send(master_compserv_socket, &message, 1, 0);
 }
 
 /*

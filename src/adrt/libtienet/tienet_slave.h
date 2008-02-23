@@ -31,8 +31,8 @@
 
 
 extern	void	tienet_slave_init(int port, char *host, void fcb_work(tienet_buffer_t *buffer, tienet_buffer_t *result),
-                                                        void fcb_free(void),
-                                                        int ver_key);
+				  void fcb_free(void),
+				  int ver_key);
 extern	void	tienet_slave_free();
 extern	short	tienet_endian;
 

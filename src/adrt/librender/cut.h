@@ -30,10 +30,10 @@
 #include "render_internal.h"
 
 typedef struct render_cut_s {
-  TIE_3 ray_pos;
-  TIE_3 ray_dir;
-  tfloat plane[4];
-  tie_t tie;
+    TIE_3 ray_pos;
+    TIE_3 ray_dir;
+    tfloat plane[4];
+    tie_t tie;
 } render_cut_t;
 
 void render_cut_init(render_t *render, TIE_3 ray_pos, TIE_3 ray_dir);

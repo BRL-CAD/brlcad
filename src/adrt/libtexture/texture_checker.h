@@ -32,7 +32,7 @@
 
 
 typedef struct texture_checker_s {
-  int tile;
+    int tile;
 } texture_checker_t;
 
 
