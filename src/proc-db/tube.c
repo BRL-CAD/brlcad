@@ -22,10 +22,6 @@
  *  Program to generate a gun-tube as a procedural spline.
  *  The tube's core lies on the X axis.
  *
- *
- *  Author -
- *	Michael John Muuss
- *
  */
 
 #include "common.h"
@@ -367,19 +363,20 @@ read_frame( FILE *fp )
     sample[nsamples][X] *= 1000;
     sample[nsamples][Y] *= 1000;
     sample[nsamples][Z] *= 1000;
-}
+
 #else
-/* Kurt's / Kathy's format, in inches */
-if ( cur_time <= 0 )  {
-    /* Really should use Y and Z initial conditions, too */
-    for ( nsamples=0; nsamples < (sizeof(dxtab)/sizeof(dxtab[0])); nsamples++ )  {
-	sample[nsamples][X] = dxtab[nsamples];
-	sample[nsamples][Y] = sample[nsamples][Z] = 0;
+
+    /* Kurt's / Kathy's format, in inches */
+    if ( cur_time <= 0 )  {
+	/* Really should use Y and Z initial conditions, too */
+	for ( nsamples=0; nsamples < (sizeof(dxtab)/sizeof(dxtab[0])); nsamples++ )  {
+	    sample[nsamples][X] = dxtab[nsamples];
+	    sample[nsamples][Y] = sample[nsamples][Z] = 0;
+	}
+	return(0);		/* OK */
     }
-    return(0);		/* OK */
-}
-if ( last_read_time > cur_time )
-    return(0);		/* OK, reuse last step's data */
+    if ( last_read_time > cur_time )
+	return(0);		/* OK, reuse last step's data */
     /* Ferret out next time marker */
     while (1)  {
 	if ( bu_fgets( buf, sizeof(buf), fp ) == NULL )  {
@@ -394,67 +391,67 @@ if ( last_read_time > cur_time )
 	break;
     }
 
-for ( nsamples=0;;nsamples++)  {
-    int	nmass;
-    float	kx, ky, kz;
-
-    buf[0] = '\0';
-    if ( bu_fgets( buf, sizeof(buf), fp ) == NULL )  return(-1);
-    /* center of mass #, +X, +Z, -Y (chg of coordinates) */
-    if ( buf[0] == '\0' || buf[0] == '\n' )
-	break;		/* stop at a blank line */
-    i = sscanf( buf, "%d %f %f %f",
-		&nmass, &kx, &ky, &kz );
-    if ( i != 4 )  {
-	fprintf( stderr, "input line in error: %s\n", buf );
-	return(-1);
-    }
-    if ( nmass-1 != nsamples )  {
-	fprintf( stderr, "nmass %d / nsamples %d mismatch\n",
-		 nmass, nsamples );
-	return(-1);
-    }
+    for ( nsamples=0;;nsamples++)  {
+	int	nmass;
+	float	kx, ky, kz;
+	
+	buf[0] = '\0';
+	if ( bu_fgets( buf, sizeof(buf), fp ) == NULL )  return(-1);
+	/* center of mass #, +X, +Z, -Y (chg of coordinates) */
+	if ( buf[0] == '\0' || buf[0] == '\n' )
+	    break;		/* stop at a blank line */
+	i = sscanf( buf, "%d %f %f %f",
+		    &nmass, &kx, &ky, &kz );
+	if ( i != 4 )  {
+	    fprintf( stderr, "input line in error: %s\n", buf );
+	    return(-1);
+	}
+	if ( nmass-1 != nsamples )  {
+	    fprintf( stderr, "nmass %d / nsamples %d mismatch\n",
+		     nmass, nsamples );
+	    return(-1);
+	}
 #define EXAGERATION	(4 * oradius)
-    /* scale = EXAGERATIONmm / MAX_DEVIATIONmm */
-    /* Deviations used here manually derived */
-    dx = kx * inches2mm * EXAGERATION / (0.95 * inches2mm);
-    sample[nsamples][X] = dx + dxtab[nsamples];
-    sample[nsamples][Y] = kz * inches2mm *
-	EXAGERATION / (0.00002 * inches2mm) /5;
-    sample[nsamples][Z] = -ky * inches2mm *
-	EXAGERATION / (0.02 * inches2mm);
-}
+	/* scale = EXAGERATIONmm / MAX_DEVIATIONmm */
+	/* Deviations used here manually derived */
+	dx = kx * inches2mm * EXAGERATION / (0.95 * inches2mm);
+	sample[nsamples][X] = dx + dxtab[nsamples];
+	sample[nsamples][Y] = kz * inches2mm *
+	    EXAGERATION / (0.00002 * inches2mm) /5;
+	sample[nsamples][Z] = -ky * inches2mm *
+	    EXAGERATION / (0.02 * inches2mm);
+    }
 /* Extrapolate data for the right side -- end of muzzle */
-sample[nsamples][X] = dxtab[nsamples] + dx;	/* reuse last displacement */
-sample[nsamples][Y] = sample[nsamples-1][Y] * 2 - sample[nsamples-2][Y];
-sample[nsamples][Z] = sample[nsamples-1][Z] * 2 - sample[nsamples-2][Z];
-nsamples++;
+    sample[nsamples][X] = dxtab[nsamples] + dx;	/* reuse last displacement */
+    sample[nsamples][Y] = sample[nsamples-1][Y] * 2 - sample[nsamples-2][Y];
+    sample[nsamples][Z] = sample[nsamples-1][Z] * 2 - sample[nsamples-2][Z];
+    nsamples++;
 #endif
-if ( nsamples <= 4 )  {
-    fprintf(stderr, "insufficient samples\n");
-    return(-1);
-}
-return(0);			/* OK */
+    if ( nsamples <= 4 )  {
+	fprintf(stderr, "insufficient samples\n");
+	return(-1);
+    }
+    return(0);			/* OK */
 }
 
 void
 read_pos(FILE *fp)
 {
-static float	last_read_time = -5;
-static float	pos = 0;
+    static float	last_read_time = -5;
+    static float	pos = 0;
 
 /* Skip over needless intermediate time steps */
-while ( last_read_time < cur_time )  {
-if ( feof(fp) )
-    break;
-    fscanf( fp, "%f %f", &last_read_time, &pos );
-    /* HACK:  tmax[kathy]=6.155ms, tmax[kurt]=9.17 */
-    /* we just read a Kurt number, make it a Kathy number */
-    last_read_time = last_read_time / 9.17 * 6.155;
+    while ( last_read_time < cur_time )  {
+	if ( feof(fp) )
+	    break;
+	fscanf( fp, "%f %f", &last_read_time, &pos );
+	/* HACK:  tmax[kathy]=6.155ms, tmax[kurt]=9.17 */
+	/* we just read a Kurt number, make it a Kathy number */
+	last_read_time = last_read_time / 9.17 * 6.155;
     }
 
 /* Kurt's data is in inches */
-projectile_pos = pos * inches2mm;
+    projectile_pos = pos * inches2mm;
 }
 
 void
