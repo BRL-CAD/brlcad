@@ -92,12 +92,6 @@ typedef int ptrdiff_t;
 #    endif
 #endif
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
-#  if !defined(__cplusplus) && !defined(inline)
-#    define inline __inline
-#  endif
-#endif
-
 /*
  * Used to tag functions that are only to be visible within the module being
  * built and not outside it (where this is supported by the linker).
