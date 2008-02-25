@@ -349,10 +349,10 @@ main (int argc, char **argv)
     int             	   if_hit(struct application *ap, struct partition *part_head, struct seg *finished_segs);
     int             	   if_miss(struct application *ap);
 
-#ifdef _WIN32
-    _setmode(_fileno(stdin), _O_BINARY);
-    _setmode(_fileno(stdout), _O_BINARY);
-    _setmode(_fileno(stderr), _O_BINARY);
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
+    setmode(fileno(stderr), O_BINARY);
 #endif
 
     BU_LIST_INIT(&script_list);

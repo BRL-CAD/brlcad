@@ -66,7 +66,7 @@ main(int argc, char **argv)
 	printf("Usage: conv-vg2g file.vg file.g\n");
 	return 11;
     }
-    if ((ifd = open( argv[1], O_BINARY)) < 0) {
+    if ((ifd = open( argv[1], O_RDONLY | O_BINARY)) < 0) {
 	perror(argv[1]);
 	return 12;
     }

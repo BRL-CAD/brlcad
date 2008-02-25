@@ -221,15 +221,11 @@ main(argc, argv)
 	    }
 	} else {
 	    /* Open binary output file */
-#ifdef _WIN32
-	    if ((bfd=open(output_file, _O_WRONLY|_O_CREAT|_O_TRUNC|_O_BINARY, _S_IREAD|_S_IWRITE)) < 0)
-#else
-		if ( (bfd=open( output_file, O_WRONLY|O_CREAT|O_TRUNC, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)) < 0 )
-#endif
-		{
-		    perror( argv[0] );
-		    bu_exit(1, "Cannot open binary output file (%s) for writing\n", output_file );
-		}
+	    if ( (bfd=open( output_file, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)) < 0 )
+	    {
+		perror( argv[0] );
+		bu_exit(1, "Cannot open binary output file (%s) for writing\n", output_file );
+	    }
 	}
     }
 

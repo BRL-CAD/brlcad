@@ -137,7 +137,7 @@ main(int argc, char **argv)
     }
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
-    setmode(fileno(stdout), _O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
 #endif
 
     scanpix = screen_width;

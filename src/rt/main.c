@@ -159,17 +159,12 @@ int main(int argc, char **argv)
     struct bu_vls	times;
     int i;
 
-#ifdef _WIN32
-#if 1
-    _setmode(_fileno(stdin), _O_BINARY);
-    _setmode(_fileno(stdout), _O_BINARY);
-    _setmode(_fileno(stderr), _O_BINARY);
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
+    setmode(fileno(stderr), O_BINARY);
 #else
-    _fmode = _O_BINARY;
-#endif
-#endif
-
-#ifndef _WIN32
+    bu_setlinebuf( stdout );
     bu_setlinebuf( stderr );
 #endif
 

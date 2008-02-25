@@ -237,9 +237,10 @@ main(int argc, char **argv)
 
     Tcl_Channel chan;
 
-#ifdef _WIN32
-    _fmode = _O_BINARY;
-    run_in_foreground=1;
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
+    setmode(fileno(stderr), O_BINARY);
 #endif
 
     bu_setprogname(argv[0]);

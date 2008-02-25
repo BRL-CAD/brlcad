@@ -177,7 +177,7 @@ get_args(int argc, register char **argv)
 	    bu_exit(1, NULL);
 	}
 #ifdef _WIN32
-	_setmode(infd, _O_BINARY);
+	setmode(infd, O_BINARY);
 #endif
 	fileinput++;
     }

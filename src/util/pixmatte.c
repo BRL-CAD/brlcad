@@ -219,7 +219,9 @@ main(int argc, char **argv)
 	usage( "Cannot write image to tty\n", 1);
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
-    setmode(fileno(stdout), _O_BINARY);
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
+    setmode(fileno(stderr), O_BINARY);
 #endif
 
     bu_log("pixmatte:\tif( %s ", file_name[0] );

@@ -151,7 +151,7 @@ dsk_open(FBIO *ifp, char *file, int width, int height)
     }
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
-    setmode(ifp->if_fd, _O_BINARY);
+    setmode(ifp->if_fd, O_BINARY);
 #endif
 
     ifp->if_width = width;

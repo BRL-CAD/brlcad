@@ -276,10 +276,6 @@ pkg_open(const char *host, const char *service, const char *protocol, const char
 	return(PKC_ERROR);
     }
 
-#if 0
-    _setmode(netfd, _O_BINARY);
-#endif
-
     memset((char *)&saServer, 0, sizeof(saServer));
 
     if (atoi(service) > 0) {
@@ -477,10 +473,6 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
 	pkg_perror(errlog, "pkg_permserver:  socket");
 	return(PKC_ERROR);
     }
-
-#if 0
-    _setmode(pkg_listenfd, _O_BINARY);
-#endif
 
     saServer.sin_family = AF_INET;
     saServer.sin_addr = iface;

@@ -114,8 +114,11 @@ main(int argc, char **argv)
 	finp = stdin;
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
-    setmode(fileno(stdout), _O_BINARY);
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
+    setmode(fileno(stderr), O_BINARY);
 #endif
+
     foutp = stdout;
     
     if ( isatty(fileno(finp)) || isatty(fileno(foutp)) ) {

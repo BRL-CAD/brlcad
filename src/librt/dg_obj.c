@@ -2011,7 +2011,7 @@ dgo_rtcheck_cmd(struct dg_obj	*dgop,
 
     /* As parent, send view information down pipe */
     fp = _fdopen(_open_osfhandle((HFILE)pipe_oDup, _O_TEXT), "wb");
-    _setmode(_fileno(fp), _O_BINARY);
+    setmode(_fileno(fp), O_BINARY);
 
 #if 1
     VSET(temp, 0.0, 0.0, 1.0);
@@ -2027,7 +2027,7 @@ dgo_rtcheck_cmd(struct dg_obj	*dgop,
     /* initialize the rtcheck struct */
     rtcp->fd = pipe_iDup;
     rtcp->fp = _fdopen( _open_osfhandle((HFILE)pipe_iDup, _O_TEXT), "rb" );
-    _setmode(_fileno(rtcp->fp), _O_BINARY);
+    setmode(_fileno(rtcp->fp), O_BINARY);
     rtcp->hProcess = pi.hProcess;
     rtcp->pid = pi.dwProcessId;
     rtcp->vbp = rt_vlblock_init();
