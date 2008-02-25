@@ -1911,16 +1911,6 @@ AC_C_CONST
 AC_C_INLINE
 AC_C_VOLATILE
 AC_C_BIGENDIAN
-if test "x$ac_cv_c_bigendian" = "xyes" ; then
-	AC_DEFINE(NATURAL_IEEE, , [64-bit floating point storage technique is big endian])
-else
-	if test "x$ac_cv_c_bigendian" = "xno" ; then
-	       AC_DEFINE(REVERSE_IEEE, , [64-bit floating point storage technique is little endian])
-	else
-		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-		AC_MSG_ERROR([*** Don't know the endian of this machine! ***])
-	fi
-fi
 
 # figure out what size pointers the compiler is actually generating
 AC_CHECK_SIZEOF(int)
@@ -1946,6 +1936,14 @@ BC_COMPLIANT_FLOAT
 # determine whether the double-precision floating point implementation
 # seems IEEE 754 compliant.
 BC_COMPLIANT_DOUBLE
+
+# warn if either floating point compliance failed
+if test "x$bc_compliant_float" = "xno" || test "x$bc_compliant_double" = "xno" ; then
+    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+    AC_MSG_WARN([The floating point implementation does not seem to be IEEE 754])
+    AC_MSG_WARN([compliant.  The behavior or htond and htonf may be incorrect.])
+    AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
+fi
 
 dnl Last step is to make sure that we can actually compile
 BC_SANITY_CHECK

@@ -70,7 +70,6 @@
  * declare results of configure tests
  */
 
-#define REVERSE_IEEE		yes
 #define HAS_OPENGL		1
 #define HAVE_FCNTL_H		1
 #define HAVE_PUTENV     	1

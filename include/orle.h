@@ -24,7 +24,7 @@
 #  endif
 #endif
 
-#ifdef NATURAL_IEEE
+#ifdef WORDS_BIGENDIAN
 #  define SWAB(shrt)  (shrt = ((shrt >> 8) & 0xff) | ((shrt << 8) & 0xff00))
 #else
 #  define SWAB(shrt)

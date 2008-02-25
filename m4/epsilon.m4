@@ -156,8 +156,8 @@ int main (int ac, char *av[]) {
     }
     return 0;
 }
-], [ AC_MSG_RESULT(yes) ], [ AC_MSG_RESULT(no) ]
-)
+], [bc_compliant_float=yes], [bc_compliant_float=no])
+AC_MSG_RESULT([$bc_compliant_float])
 ])
 
 
@@ -200,6 +200,6 @@ int main (int ac, char *av[]) {
     }
     return 0;
 }
-], [ AC_MSG_RESULT(yes) ], [ AC_MSG_RESULT(no) ]
-)
+], [bc_compliant_double=yes], [bc_compliant_double=no])
+AC_MSG_RESULT([$bc_compliant_double])
 ])

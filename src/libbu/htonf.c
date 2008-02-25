@@ -24,8 +24,7 @@
  * @brief convert floats to host/network format
  *
  * Host to Network Floats  +  Network to Host Floats.
- *  Author -
- *	Michael John Muuss
+ *
  */
 
 #include "common.h"
@@ -39,84 +38,80 @@
 #include <stdio.h>
 
 /**
- *			H T O N F
+ * H T O N F
  *
- *  Host to Network Floats
+ * Host to Network Floats
  */
 void
 htonf(register unsigned char *out, register const unsigned char *in, int count)
 {
-#if	defined(NATURAL_IEEE)
-    /*
-     *  First, the case where the system already operates in
-     *  IEEE format internally, using big-endian order.
-     *  These are the lucky ones.
-     */
-    memcpy(out, in, count*SIZEOF_NETWORK_FLOAT);
-    return;
-#	define	HTONF	yes1
-#endif
+    register int i;
 
-#if	defined(REVERSE_IEEE)
-    /* This machine uses IEEE, but in little-endian byte order */
-    register int	i;
-    for ( i=count-1; i >= 0; i-- )  {
-	*out++ = in[3];
-	*out++ = in[2];
-	*out++ = in[1];
-	*out++ = in[0];
-	in += SIZEOF_NETWORK_FLOAT;
+    switch (bu_byteorder()) {
+	case BU_BIG_ENDIAN:
+	    /*
+	     * First, the case where the system already operates in
+	     * IEEE format internally, using big-endian order.  These
+	     * are the lucky ones.
+	     */
+	    memcpy(out, in, count*SIZEOF_NETWORK_FLOAT);
+	    return;
+	case BU_LITTLE_ENDIAN:
+	    /*
+	     * This machine uses IEEE, but in little-endian byte order
+	     */
+	    for ( i=count-1; i >= 0; i-- )  {
+		*out++ = in[3];
+		*out++ = in[2];
+		*out++ = in[1];
+		*out++ = in[0];
+		in += SIZEOF_NETWORK_FLOAT;
+	    }
+	    return;
     }
-    return;
-#	define	HTONF	yes2
-#endif
 
-    /* Now, for the machine-specific stuff. */
-
-#ifndef HTONF
-# include "ntohf.c:  ERROR, no NtoHD conversion for this machine type"
-#endif
+    bu_bomb("ntohf.c:  ERROR, no NtoHD conversion for this machine type\n");
 }
 
 
 /**
- *			N T O H F
+ * N T O H F
  *
- *  Network to Host Floats
+ * Network to Host Floats
  */
 void
 ntohf(register unsigned char *out, register const unsigned char *in, int count)
 {
-#ifdef NATURAL_IEEE
-    /*
-     *  First, the case where the system already operates in
-     *  IEEE format internally, using big-endian order.
-     *  These are the lucky ones.
-     */
-    if ( sizeof(float) != SIZEOF_NETWORK_FLOAT )
-	bu_bomb("ntohf:  sizeof(float) != SIZEOF_NETWORK_FLOAT\n");
-    memcpy(out, in, count*SIZEOF_NETWORK_FLOAT);
-    return;
-#	define	NTOHF	yes1
-#endif
-#if	defined(REVERSE_IEEE)
-    /* This machine uses IEEE, but in little-endian byte order */
-    register int	i;
-    for ( i=count-1; i >= 0; i-- )  {
-	*out++ = in[3];
-	*out++ = in[2];
-	*out++ = in[1];
-	*out++ = in[0];
-	in += SIZEOF_NETWORK_FLOAT;
-    }
-    return;
-#	define	NTOHF	yes2
-#endif
+    register int i;
 
-#ifndef NTOHF
-# include "ntohf.c:  ERROR, no NtoHD conversion for this machine type"
-#endif
+    switch (bu_byteorder()) {
+	case BU_BIG_ENDIAN:
+	    /*
+	     *  First, the case where the system already operates in
+	     *  IEEE format internally, using big-endian order.  These
+	     *  are the lucky ones.
+	     */
+	    if ( sizeof(float) != SIZEOF_NETWORK_FLOAT )
+		bu_bomb("ntohf:  sizeof(float) != SIZEOF_NETWORK_FLOAT\n");
+	    memcpy(out, in, count*SIZEOF_NETWORK_FLOAT);
+	    return;
+	case BU_LITTLE_ENDIAN:
+	    /*
+	     * This machine uses IEEE, but in little-endian byte order
+	     */
+	    for ( i=count-1; i >= 0; i-- )  {
+		*out++ = in[3];
+		*out++ = in[2];
+		*out++ = in[1];
+		*out++ = in[0];
+		in += SIZEOF_NETWORK_FLOAT;
+	    }
+	    return;
+    }
+
+    bu_bomb("ntohf.c:  ERROR, no NtoHD conversion for this machine type\n");
 }
+
 /** @} */
 /*
  * Local Variables:

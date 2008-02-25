@@ -68,6 +68,9 @@ src/librt/bomb.c
 
 7.12.0
 ------
+include/common.h
+	NATURAL_IEEE -> bu_byteorder() == BU_BIG_ENDIAN || defined(WORDS_BIGENDIAN)
+	REVERSE_IEEE -> bu_byteorder() == BU_LITTLE_ENDIAN
 include/bu.h
 	bu_log(char *, ...) -> bu_log(const char *, ...) [const]
 	bu_flog(FILE *, char *, ...) -> bu_flog(FILE *, const char *, ...) [const]

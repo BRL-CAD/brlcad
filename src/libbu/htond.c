@@ -52,8 +52,6 @@
  *  allocates only 4 bytes of space, these routines *still* return
  *  8 bytes in the IEEE buffer.
  *
- *  Author -
- *	Michael John Muuss
  */
 
 #include "common.h"
@@ -89,44 +87,49 @@
 	continue; } \
 
 /**
- *			H T O N D
+ * H T O N D
  *
- *  @brief Host to Network Doubles
+ * @brief Host to Network Doubles
  */
 void
 htond(register unsigned char *out, register const unsigned char *in, int count)
 {
-#if	defined(NATURAL_IEEE)
-    /*
-     *  First, the case where the system already operates in
-     *  IEEE format internally, using big-endian order.
-     *  These are the lucky ones.
-     */
-    memcpy(out, in, count*8);
-    return;
-#	define	HTOND	yes1
-#endif
-#if	defined(REVERSE_IEEE)
-    /* This machine uses IEEE, but in little-endian byte order */
-    register int	i;
-    for ( i=count-1; i >= 0; i-- )  {
-	*out++ = in[7];
-	*out++ = in[6];
-	*out++ = in[5];
-	*out++ = in[4];
-	*out++ = in[3];
-	*out++ = in[2];
-	*out++ = in[1];
-	*out++ = in[0];
-	in += SIZEOF_NETWORK_DOUBLE;
+    register int i;
+
+    switch (bu_byteorder()) {
+	case BU_BIG_ENDIAN:
+	    /*
+	     *  First, the case where the system already operates in
+	     *  IEEE format internally, using big-endian order.  These
+	     *  are the lucky ones.
+	     */
+	    memcpy(out, in, count*8);
+	    return;
+	case BU_LITTLE_ENDIAN:
+	    /*
+	     * This machine uses IEEE, but in little-endian byte order
+	     */
+	    for ( i=count-1; i >= 0; i-- )  {
+		*out++ = in[7];
+		*out++ = in[6];
+		*out++ = in[5];
+		*out++ = in[4];
+		*out++ = in[3];
+		*out++ = in[2];
+		*out++ = in[1];
+		*out++ = in[0];
+		in += SIZEOF_NETWORK_DOUBLE;
+	    }
+	    return;
     }
-    return;
-#	define	HTOND	yes2
 
-    /* Now, for the machine-specific stuff. */
+    /* Now, for the machine-specific stuff.
+     *
+     * XXX - Note that the below will not likely work without defining
+     * a corresponding pre-processor flag.
+     */
 
-#endif
-#if	defined(sgi) && !defined(mips)
+#if defined(sgi) && !defined(mips)
     /*
      *  Silicon Graphics Iris workstation.
      *  On the 2-D and 3-D, a double is type converted to a float
@@ -134,7 +137,6 @@ htond(register unsigned char *out, register const unsigned char *in, int count)
      *  number of exponent bits than double precision, so we
      *  have to engage in gyrations here.
      */
-    register int	i;
     for ( i=count-1; i >= 0; i-- )  {
 	/* Brain-damaged 3-D case */
 	float small;
@@ -158,15 +160,13 @@ htond(register unsigned char *out, register const unsigned char *in, int count)
 	*out++ = *fp++;
     }
     return;
-#	define	HTOND	yes3
 #endif
-#if	defined(vax)
+#if defined(vax)
     /*
      *  Digital Equipment's VAX.
      *  VAX order is +6, +4, +2, sign|exp|fraction+0
      *  with 8 bits of exponent, excess 128 base 2, exp=0 => zero.
      */
-    register int	i;
     for ( i=count-1; i >= 0; i-- )  {
 	register unsigned long left, right, signbit;
 	register int exp;
@@ -186,11 +186,11 @@ htond(register unsigned char *out, register const unsigned char *in, int count)
 	}
 	exp += 1023 - 129;
 	/* Round LSB by adding 4, rather than truncating */
-#		ifdef ROUNDING
+#  ifdef ROUNDING
 	right = (left<<(32-3)) | ((right+4)>>3);
-#		else
+#  else
 	right = (left<<(32-3)) | (right>>3);
-#		endif
+#  endif
 	left =  ((left & 0x007FFFFF)>>3) | signbit | (exp<<20);
 	*out++ = left>>24;
 	*out++ = left>>16;
@@ -202,15 +202,13 @@ htond(register unsigned char *out, register const unsigned char *in, int count)
 	*out++ = right;
     }
     return;
-#	define	HTOND	yes4
 #endif
-#if	defined(ibm) || defined(gould)
+#if defined(ibm) || defined(gould)
     /*
      *  IBM Format.
      *  7-bit exponent, base 16.
      *  No hidden bits in mantissa (56 bits).
      */
-    register int	i;
     for ( i=count-1; i >= 0; i-- )  {
 	register unsigned long left, right, signbit;
 	register int exp;
@@ -290,11 +288,11 @@ htond(register unsigned char *out, register const unsigned char *in, int count)
 	}
 
 	/* Having nearly VAX format, shift to IEEE, rounding. */
-#		ifdef ROUNDING
+#  ifdef ROUNDING
 	right = (left<<(32-3)) | ((right+4)>>3);
-#		else
+#  else
 	right = (left<<(32-3)) | (right>>3);
-#		endif
+#  endif
 	left =  ((left & 0x007FFFFF)>>3) | signbit | (exp<<20);
 
 	*out++ = left>>24;
@@ -307,28 +305,21 @@ htond(register unsigned char *out, register const unsigned char *in, int count)
 	*out++ = right;
     }
     return;
-#	define	HTOND	yes5
 #endif
-#if	defined(CRAY1) || defined(CRAY2) || defined(eta10)
+#if defined(CRAY1) || defined(CRAY2) || defined(eta10)
     /*
      *  Cray version.  Somewhat easier using 64-bit registers.
      *  15 bit exponent, biased 040000 (octal).  48 mantissa bits.
      *  No hidden bits.
      */
-    register int	i;
     for ( i=count-1; i >= 0; i-- )  {
 	register unsigned long word, signbit;
 	register int exp;
 
-#ifdef never
-	if ( (((int)in) & 07) == 0 )
-	    word = *((unsigned long *)in);
-	else
-#endif
-	    word  = (((long)in[0])<<56) | (((long)in[1])<<48) |
-		(((long)in[2])<<40) | (((long)in[3])<<32) |
-		(((long)in[4])<<24) | (((long)in[5])<<16) |
-		(((long)in[6])<<8) | ((long)in[7]);
+	word  = (((long)in[0])<<56) | (((long)in[1])<<48) |
+	    (((long)in[2])<<40) | (((long)in[3])<<32) |
+	    (((long)in[4])<<24) | (((long)in[5])<<16) |
+	    (((long)in[6])<<8) | ((long)in[7]);
 	in += 8;
 
 	if ( word == 0 )
@@ -362,7 +353,6 @@ htond(register unsigned char *out, register const unsigned char *in, int count)
 	*out++ = word;
     }
     return;
-#	define	HTOND	yes6
 #endif
 #if defined(convex_NATIVE) || defined(__convex__NATIVE)
     /*
@@ -372,7 +362,6 @@ htond(register unsigned char *out, register const unsigned char *in, int count)
      *  In modern times, Convex seems to use IEEE by default,
      *  so we do too.
      */
-    register int	i;
     for ( i=count-1; i >= 0; i-- )  {
 	register unsigned long long	word;
 	register int exp;
@@ -398,57 +387,61 @@ htond(register unsigned char *out, register const unsigned char *in, int count)
 	out += 8;
     }
     return;
-#	define	HTOND	yes7
 #endif
 
-#ifndef	HTOND
-# include "htond.c:  ERROR, no HtoND conversion for this machine type"
-#endif
+    bu_bomb("htond.c:  ERROR, no HtoND conversion for this machine type\n");
 }
 
 /**
- *			N T O H D
+ * N T O H D
  *
- *  @brief Network to Host Doubles
+ * @brief Network to Host Doubles
  */
 void
 ntohd(register unsigned char *out, register const unsigned char *in, int count)
 {
-#ifdef NATURAL_IEEE
-    /*
-     *  First, the case where the system already operates in
-     *  IEEE format internally, using big-endian order.
-     *  These are the lucky ones.
-     */
-    if ( sizeof(double) != SIZEOF_NETWORK_DOUBLE )
-	bu_bomb("ntohd:  sizeof(double) != SIZEOF_NETWORK_DOUBLE\n");
-    memcpy(out, in, count*SIZEOF_NETWORK_DOUBLE);
-    return;
-#	define	NTOHD	yes1
-#endif
-#if	defined(REVERSE_IEEE)
-    /* This machine uses IEEE, but in little-endian byte order */
-    register int	i;
-    for ( i=count-1; i >= 0; i-- )  {
-	*out++ = in[7];
-	*out++ = in[6];
-	*out++ = in[5];
-	*out++ = in[4];
-	*out++ = in[3];
-	*out++ = in[2];
-	*out++ = in[1];
-	*out++ = in[0];
-	in += SIZEOF_NETWORK_DOUBLE;
+    register int i;
+
+    switch (bu_byteorder()) {
+	case BU_BIG_ENDIAN:
+	    /*
+	     *  First, the case where the system already operates in
+	     *  IEEE format internally, using big-endian order.  These
+	     *  are the lucky ones.
+	     */
+	    if ( sizeof(double) != SIZEOF_NETWORK_DOUBLE )
+		bu_bomb("ntohd:  sizeof(double) != SIZEOF_NETWORK_DOUBLE\n");
+	    memcpy(out, in, count*SIZEOF_NETWORK_DOUBLE);
+	    return;
+	case BU_LITTLE_ENDIAN:
+	    /*
+	     * This machine uses IEEE, but in little-endian byte order
+	     */
+	    for ( i=count-1; i >= 0; i-- )  {
+		*out++ = in[7];
+		*out++ = in[6];
+		*out++ = in[5];
+		*out++ = in[4];
+		*out++ = in[3];
+		*out++ = in[2];
+		*out++ = in[1];
+		*out++ = in[0];
+		in += SIZEOF_NETWORK_DOUBLE;
+	    }
+	    return;
     }
-    return;
-#	define	NTOHD	yes2
-#endif
-#if	defined(sgi) && !defined(mips)
+
+    /* Now, for the machine-specific stuff.
+     *
+     * XXX - Note that the below will not likely work without defining
+     * a corresponding pre-processor flag.
+     */
+
+#if defined(sgi) && !defined(mips)
     /*
      *  Silicon Graphics Iris workstation.
      *  See comments in htond() for discussion of the braindamage.
      */
-    register int	i;
     for ( i=count-1; i >= 0; i-- )  {
 	/* Brain-damaged 3-D case */
 	float small;
@@ -470,15 +463,13 @@ ntohd(register unsigned char *out, register const unsigned char *in, int count)
 	*out++ = *fp++;
     }
     return;
-#	define	NTOHD	yes3
 #endif
-#if	defined(vax)
+#if defined(vax)
     /*
      *  Digital Equipment's VAX.
      *  VAX order is +6, +4, +2, sign|exp|fraction+0
      *  with 8 bits of exponent, excess 128 base 2, exp=0 => zero.
      */
-    register int	i;
     for ( i=count-1; i >= 0; i-- )  {
 	register unsigned long left, right, signbit;
 	register int fix, exp;
@@ -530,15 +521,13 @@ ntohd(register unsigned char *out, register const unsigned char *in, int count)
 	out += 8;
     }
     return;
-#	define	NTOHD	yes4
 #endif
-#if	defined(ibm) || defined(gould)
+#if defined(ibm) || defined(gould)
     /*
      *  IBM Format.
      *  7-bit exponent, base 16.
      *  No hidden bits in mantissa (56 bits).
      */
-    register int	i;
     for ( i=count-1; i >= 0; i-- )  {
 	register unsigned long left, right;
 	register int fix, exp, signbit;
@@ -621,28 +610,21 @@ ntohd(register unsigned char *out, register const unsigned char *in, int count)
 	*out++ = right;
     }
     return;
-#	define	NTOHD	yes5
 #endif
-#if	defined(CRAY1) || defined(CRAY2) || defined(eta10)
+#if defined(CRAY1) || defined(CRAY2) || defined(eta10)
     /*
      *  Cray version.  Somewhat easier using 64-bit registers.
      *  15 bit exponent, biased 040000 (octal).  48 mantissa bits.
      *  No hidden bits.
      */
-    register int	i;
     for ( i=count-1; i >= 0; i-- )  {
 	register unsigned long word, signbit;
 	register int exp;
 
-#ifdef never
-	if ( (((int)in) & 07) == 0 )
-	    word = *((unsigned long *)in);
-	else
-#endif
-	    word  = (((long)in[0])<<56) | (((long)in[1])<<48) |
-		(((long)in[2])<<40) | (((long)in[3])<<32) |
-		(((long)in[4])<<24) | (((long)in[5])<<16) |
-		(((long)in[6])<<8) | ((long)in[7]);
+	word  = (((long)in[0])<<56) | (((long)in[1])<<48) |
+	    (((long)in[2])<<40) | (((long)in[3])<<32) |
+	    (((long)in[4])<<24) | (((long)in[5])<<16) |
+	    (((long)in[6])<<8) | ((long)in[7]);
 	in += 8;
 
 	exp = (word>>(64-12)) & 0x7FF;
@@ -671,13 +653,11 @@ ntohd(register unsigned char *out, register const unsigned char *in, int count)
 	*out++ = word;
     }
     return;
-#	define	NTOHD	yes6
 #endif
 #if defined(convex_NATIVE) || defined(__convex__NATIVE)
     /*
      *  Convex C1 version, for Native Convex floating point.
      */
-    register int	i;
     for ( i=count-1; i >= 0; i-- )  {
 	register unsigned long long	word;
 	register int exp;
@@ -705,12 +685,9 @@ ntohd(register unsigned char *out, register const unsigned char *in, int count)
 	out += 8;
     }
     return;
-#	define	NTOHD	yes7
 #endif
 
-#ifndef	NTOHD
-# include "ntohd.c:  ERROR, no NtoHD conversion for this machine type"
-#endif
+    bu_bomb("ntohd.c:  ERROR, no NtoHD conversion for this machine type\n");
 }
 /** @} */
 /*
