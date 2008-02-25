@@ -73,6 +73,7 @@
 
 
 #define CJDEBUG 0
+#define DIRECT_COLOR_VISUAL_ALLOWED 0
 
 /*WWW these come from Iris gl gl.h*/
 #define XMAXSCREEN	1279
@@ -730,7 +731,11 @@ fb_ogl_open(FBIO *ifp, char *file, int width, int height)
 	    return(-1);
 	}
     }
+#if DIRECT_COLOR_VISUAL_ALLOWED
     ifp->if_mode = mode;
+#else
+    ifp->if_mode = mode|MODE_7SWCMAP;
+#endif
 
     /*
      *  Allocate extension memory sections,
@@ -2566,7 +2571,7 @@ fb_ogl_choose_visual(FBIO *ifp)
 	    maxvip = vibase + good[0];
 	    for (i=1; i<j; i++) {
 		vip = vibase + good[i];
-		if (vip->depth >= maxvip->depth) {
+		if (vip->depth > maxvip->depth) {
 		    maxvip = vip;
 		}
 	    }
