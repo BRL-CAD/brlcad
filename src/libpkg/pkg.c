@@ -1391,11 +1391,16 @@ pkg_bwaitfor(int type, register struct pkg_conn *pc)
  *  A plausable code sample might be:
  *
  *	for (;;)  {
+ *		fd_set fds;
+ *		struct timeval t;
+ *		t.tv_sec = 99; t.tv_usec = 0;
+ *		FD_ZERO(&fds);
+ *		FD_SET(pc->pkc_fd, &fds);
  *		if ( pkg_process( pc ) < 0 )  {
  *			printf("pkg_process error encountered\n");
  *			continue;
  *		}
- *		if ( bsdselect( pc->pkc_fd, 99, 0 ) != 0 )  {
+ *		if ( select( pc->pkc_fd+1, &fds, NULL, NULL, &t) <= 0 )  {
  *			if ( pkg_suckin( pc ) <= 0 )  {
  *				printf("pkg_suckin error or EOF\n");
  *				break;
