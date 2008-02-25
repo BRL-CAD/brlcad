@@ -37,11 +37,6 @@
 
 #include "common.h"
 
-#ifndef HAVE_BSDSELECT
-int
-bsdselect(long readfds, int sec, int us);
-#endif
-
 #ifndef HAVE_MEMSET
 char *
 memset(char *s, char c, int n);
