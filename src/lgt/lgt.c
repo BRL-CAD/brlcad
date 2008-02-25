@@ -252,15 +252,12 @@ ready_Output_Device(int frame)
 void
 close_Output_Device(int frame)
 {
-#if SGI_WINCLOSE_BUG
-    if ( strncmp( fbiop->if_name, "/dev/sgi", 8 ) != 0 )
-#endif
-	if (	(movie.m_noframes > 1 && movie.m_fullscreen)
-		||	frame == movie.m_endframe )
-	{
-	    (void) fb_close( fbiop );
-	    fbiop = FBIO_NULL;
-	}
+    if ((movie.m_noframes > 1 && movie.m_fullscreen) ||
+	(frame == movie.m_endframe))
+    {
+	(void) fb_close( fbiop );
+	fbiop = FBIO_NULL;
+    }
     return;
 }
 

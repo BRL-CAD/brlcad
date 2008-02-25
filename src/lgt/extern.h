@@ -18,35 +18,10 @@
  * information.
  */
 /** @file extern.h
-    Authors:	Gary S. Moss
-    Jeff Hanes	(math consultation)
-
-    Note: preceeding #include "./extern.h" must be the following:
-
-    #include <assert.h>
-
-    #include "vmath.h"
-    #include "raytrace.h"
-    #include "fb.h"
-    #include "./hmenu.h"
-    #include "./lgt.h"
-*/
+ *
+ */
 
 #include "common.h"
-
-/* Set pre-processor switch to make up for SGI 4d Release 2 winclose() bug. */
-#ifdef SGI4D_Rel2
-#define SGI_WINCLOSE_BUG 1
-#else
-#define SGI_WINCLOSE_BUG 0
-#endif
-
-/* Set pre_processor switch to make up for SGI 3000 series math library. */
-#if defined(sgi) && ! defined(mips)
-#define SINGLE_PRECISION 1
-#else
-#define SINGLE_PRECISION 0
-#endif
 
 extern void (*norml_sig)(), (*abort_sig)();
 extern void abort_RT();
