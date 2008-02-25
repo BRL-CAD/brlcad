@@ -269,6 +269,8 @@ SHLIB_LD		= @SHLIB_LD@
 SHLIB_LD_LIBS		= @SHLIB_LD_LIBS@
 TK_SHLIB_LD_EXTRAS	= @TK_SHLIB_LD_EXTRAS@
 
+SHLIB_SUFFIX		= @SHLIB_SUFFIX@
+
 # Additional search flags needed to find the various shared libraries
 # at run-time.  The first symbol is for use when creating a binary
 # with cc, and the second is for use when running ld directly.
