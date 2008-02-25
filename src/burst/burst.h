@@ -19,7 +19,7 @@
  *
  */
 /** @file burst.h
- *	Author:		Gary S. Moss
+ *
  */
 
 #ifndef __BURST_H__
@@ -42,20 +42,6 @@ typedef genptr_t pointer;			/* generic pointer */
 
 
 #define DEGRAD	57.2957795130823208767981548141051703324054724665642
-
-/* allow for SGI screw-up, the single-precision math libraries */
-#if defined( sgi ) && ! defined( mips )
-#  define SINGLE_PRECISION 1
-#else
-#  define SINGLE_PRECISION 0
-#endif
-
-/* allow for SGI screw-up, winclose() dumps core on some systems */
-#if defined(SGI4D_Rel2)
-#  define SGI_WINCLOSE_BUG 1
-#else
-#  define SGI_WINCLOSE_BUG 0
-#endif
 
 /* menu configuration */
 #define MENU_LFT	1

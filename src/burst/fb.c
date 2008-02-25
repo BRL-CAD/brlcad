@@ -94,10 +94,10 @@ openFbDevice( devname )
 	ret = 0;
 	goto	safe_exit;
     }
-    if (	(	(fbiop != FBIO_NULL && fb_getwidth( fbiop ) != devwid)
-			||	pixgrid == NULL)
-		&&	(pixgrid = (unsigned char *) calloc( devwid*3, sizeof(unsigned char) ))
-		== (unsigned char *) NULL )
+    if (((fbiop != FBIO_NULL && fb_getwidth( fbiop ) != devwid)
+	 ||	pixgrid == NULL)
+	&&	(pixgrid = (unsigned char *) calloc( devwid*3, sizeof(unsigned char) ))
+	== (unsigned char *) NULL )
     {
 	prntScr( "Memory allocation of %d bytes failed.",
 		 sizeof(unsigned char)*devwid );
@@ -107,21 +107,11 @@ openFbDevice( devname )
     (void) memset((char *) pixgrid, NUL, sizeof(unsigned char)*devwid*3);
     if ( fbiop != FBIO_NULL )
     {
-#if SGI_WINCLOSE_BUG
-	if ( strncmp( fbiop->if_name, "/dev/sgi", 8 ) == 0 )
+	if ( ! closFbDevice() )
 	{
-	    prntScr( "IRIS can't change window size." );
 	    ret = 0;
 	    goto	safe_exit;
 	}
-	else
-#endif
-	    if ( ! closFbDevice() )
-	    {
-		ret = 0;
-		goto	safe_exit;
-	    }
-
     }
     fbiop = fb_open( devname, devwid, devhgt );
     if ( fbiop == NULL )
