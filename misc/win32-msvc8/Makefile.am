@@ -7,6 +7,7 @@ EXTRA_DIST= \
 	bot2bldxf/bot2bldxf.vcproj \
 	bot2raw/bot2raw.vcproj \
 	bot_shell2vtk/bot_shell2vtk.vcproj \
+	breplicator/breplicator.vcproj \
 	brlcad/brlcad.sln \
 	btclsh/btclsh.vcproj \
 	bw2fb/bw2fb.vcproj \
@@ -99,6 +100,7 @@ EXTRA_DIST= \
 	nmg2bot/nmg2bot.vcproj \
 	nmg2rib/nmg2rib.vcproj \
 	nmg2sgp/nmg2sgp.vcproj \
+	opennurbs/opennurbs.vcproj \
 	orle2fb/orle2fb.vcproj \
 	pix2asc/pix2asc.vcproj \
 	pix2bw/pix2bw.vcproj \
