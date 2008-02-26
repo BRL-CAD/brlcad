@@ -438,6 +438,7 @@ Popup Menu    Right or Ctrl-Left
 	method initTree          {}
 	method initMged          {}
 	method closeMged         {}
+	method updateRtControl   {}
 
 	# interface operations
 	method closeDb           {}
@@ -1327,6 +1328,8 @@ Popup Menu    Right or Ctrl-Left
     }
     $itk_component(mged) fb_active 0
     $itk_component(rtcntrl) update_fb_mode
+    bind $itk_component(rtcntrl) <Visibility> "raise $itk_component(rtcntrl)"
+    bind $itk_component(rtcntrl) <FocusOut> "raise $itk_component(rtcntrl)"
 
     # create view axes control panel
     #    itk_component add vac {
@@ -1413,6 +1416,8 @@ Popup Menu    Right or Ctrl-Left
 	-state normal
     $itk_component(canvas_menu) menuconfigure .view.45,45 \
 	-state normal
+
+    bind $itk_component(canvasF) <Configure> [::itcl::code $this updateRtControl]
 }
 
 ::itcl::body ArcherCore::closeMged {} {
@@ -1420,6 +1425,13 @@ Popup Menu    Right or Ctrl-Left
     #    catch {delete object $itk_component(vac)}
     #    catch {delete object $itk_component(mac)}
     catch {delete object $itk_component(mged)}
+}
+
+::itcl::body ArcherCore::updateRtControl {} {
+    ::update
+    if {[info exists itk_component(rtcntrl)]} {
+	$itk_component(rtcntrl) configure -size "Size of Pane"
+    }
 }
 
 # ------------------------------------------------------------
@@ -3448,7 +3460,7 @@ Popup Menu    Right or Ctrl-Left
 
     # How screwed up is this?
     $itk_component(vpane) fraction $fraction1 $fraction2 $fraction3
-    update
+    ::update
     after idle $itk_component(vpane) fraction $fraction1 $fraction2 $fraction3
 
 
@@ -3525,7 +3537,7 @@ Popup Menu    Right or Ctrl-Left
 
     # How screwed up is this?
     $itk_component(vpane) fraction $fraction1 $fraction2 $fraction3
-    update
+    ::update
     after idle $itk_component(vpane) fraction $fraction1 $fraction2 $fraction3
 
     switch -- $state {
