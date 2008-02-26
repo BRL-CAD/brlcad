@@ -51,7 +51,7 @@
 				Optimization="2"
 				InlineFunctionExpansion="1"
 				AdditionalIncludeDirectories="../../../src/other/tcl/generic;../../../src/other/tcl/win;../../../src/other/tcl/libtommath;../../../include"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;TCL_PIPE_DLL=\&quot;tclpipe.dll\&quot;;TCL_THREADS=1;BUILD_tcl;IGNORE_CONFIG_H;CFG_RUNTIME_BINDIR=0;CFG_RUNTIME_DOCDIR=0;CFG_RUNTIME_INCDIR=0;CFG_RUNTIME_LIBDIR=0;CFG_RUNTIME_SCRDIR=0;CFG_INSTALL_BINDIR=0;CFG_INSTALL_DOCDIR=0;CFG_INSTALL_INCDIR=0;CFG_INSTALL_LIBDIR=0;CFG_INSTALL_SCRDIR=0;TCL_CFGVAL_ENCODING=\&quot;UTF-8\&quot;"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;TCL_PIPE_DLL=\&quot;tclpipe.dll\&quot;;TCL_THREADS=1;BUILD_tcl;IGNORE_CONFIG_H;CFG_RUNTIME_BINDIR=0;CFG_RUNTIME_DOCDIR=0;CFG_RUNTIME_INCDIR=0;CFG_RUNTIME_LIBDIR=0;CFG_RUNTIME_SCRDIR=0;CFG_INSTALL_BINDIR=0;CFG_INSTALL_DOCDIR=0;CFG_INSTALL_INCDIR=0;CFG_INSTALL_LIBDIR=0;CFG_INSTALL_SCRDIR=0;TCL_CFGVAL_ENCODING=\&quot;UTF-8\&quot;;inline=__inline"
 				StringPooling="true"
 				BasicRuntimeChecks="0"
 				RuntimeLibrary="2"
