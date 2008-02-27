@@ -21,7 +21,7 @@
 /** @{ */
 /** @file fb.h
  * @brief
- *  BRL "Generic" Framebuffer Library Interface Defines.
+ * "Generic" Framebuffer Library Interface Defines.
  *
  * This is the file that application programs should include for framebuffer support
  *
@@ -30,8 +30,7 @@
 #ifndef __FB_H__
 #define __FB_H__
 
-#include "fbio.h"
-#include "bu.h"
+#include <stdlib.h>
 
 /*
  * Needed for fd_set, avoid including sys/select.h outright since it
@@ -46,13 +45,9 @@
 #if defined(HAVE_SYS_TIME_H)
 #  include <sys/time.h>
 #endif
-#if defined(HAVE_UNISTD_H)
-#  include <unistd.h>
-#else
-#  if defined(HAVE_SYS_UNISTD_H)
-#    include <sys/unistd.h>
-#  endif
-#endif
+
+#include "fbio.h"
+#include "bu.h"
 
 
 /* Library entry points which are macros. */
