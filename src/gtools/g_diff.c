@@ -19,30 +19,27 @@
  */
 /** @file g_diff.c
  *
- *	Routine to determine the differences between two BRL-CAD databases (".g" files).
- *	With no options, the output to stdout is an MGED script that may be fed to
- *	MGED to convert the first database to the match the second.
- *	The script uses the MGED "db" command to make the changes. Some solid types
- *	do not yet have support in the "db" command. Such solids that change from
- *	one database to the next, will be noted by a comment in the database as:
- *	"#IMPORT solid_name from database_name"
+ * Routine to determine the differences between two BRL-CAD databases
+ * (".g" files).  With no options, the output to stdout is an MGED
+ * script that may be fed to MGED to convert the first database to the
+ * match the second.  The script uses the MGED "db" command to make
+ * the changes. Some solid types do not yet have support in the "db"
+ * command. Such solids that change from one database to the next,
+ * will be noted by a comment in the database as: "#IMPORT solid_name
+ * from database_name"
  *
- *  Author -
- *      John R. Anderson
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <string.h>
+#include "bio.h"
 
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "tcl.h"
 
 #include "vmath.h"
 #include "nmg.h"
@@ -50,7 +47,6 @@
 #include "raytrace.h"
 #include "wdb.h"
 #include "../librt/debug.h"
-#include "tcl.h"
 #include "mater.h"
 
 

@@ -19,23 +19,19 @@
  *
  */
 /** @file Hm.c
- *	Author:	Gary S. Moss
  *
- * This code is derived in part from menuhit(9.3) in AT&T 9th Edition UNIX,
- *	Version 1 Programmer's Manual.
+ * This code is derived in part from menuhit(9.3) in AT&T 9th Edition
+ * UNIX, Version 1 Programmer's Manual.
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <fcntl.h>
 #include <signal.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
 
+#include "bio.h"
 #include "bu.h"
 
 #include "./Sc.h"

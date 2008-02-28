@@ -39,10 +39,7 @@
 #include <vector>
 #include <stack>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 // CGM headers
 #include "NoAcisQueryEngine.hpp"

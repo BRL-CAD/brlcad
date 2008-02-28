@@ -19,24 +19,16 @@
  */
 /** @file pl-asc.c
  *
- *  Plot3(5) to ASCII converter.
- *  Grew out of pldebug to be more generally useful as an ascii
- *  editable plot file format.
- *
- *  Author -
- *	Phillip Dykstra
+ * Plot3(5) to ASCII converter.  Grew out of pldebug to be more
+ * generally useful as an ascii editable plot file format.
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 

@@ -29,21 +29,13 @@
  *  almost arbitrary size.
  *  Note: this buffer code also appears in bwcrop.c
  *
- *  Author -
- *	Phillip Dykstra
- *	16 June 1986
- *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 

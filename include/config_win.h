@@ -35,12 +35,6 @@
 #define __STDC__ 1
 #define USE_PROTOTYPES 1
 
-/* XXX - should not rely on config_win.h providing these headers. */
-#define NOMINMAX
-#include <windows.h>
-#include <fcntl.h>
-#include <io.h>
-
 /*  4244 conversion from type 1 to type 2
  *  4305 truncation
  *  4018 signed/unsigned mismatch

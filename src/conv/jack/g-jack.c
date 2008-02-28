@@ -22,9 +22,6 @@
  *  Program to convert a BRL-CAD model (in a .g file) to a JACK Psurf file,
  *  by calling on the NMG booleans.
  *
- *  Author -
- *	Michael J. Markowski
- *
  */
 
 #include "common.h"
@@ -33,10 +30,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "vmath.h"
 #include "nmg.h"

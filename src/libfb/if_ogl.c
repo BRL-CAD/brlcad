@@ -21,17 +21,17 @@
 /** @{ */
 /** @file if_ogl.c
  *
- *  Frame Buffer Library interface for OpenGL.
+ * Frame Buffer Library interface for OpenGL.
  *
- *  There are several different Frame Buffer modes supported.
- *  Set your environment FB_FILE to the appropriate type.
- *  Note that some of the /dev/sgi modes are not supported, and there are
- *  some new modes.
- *  (see the modeflag definitions below).
- *	/dev/ogl[options]
+ * There are several different Frame Buffer modes supported.
+ * Set your environment FB_FILE to the appropriate type.
+ * Note that some of the /dev/sgi modes are not supported, and there are
+ * some new modes.
+ * (see the modeflag definitions below).
+ * /dev/ogl[options]
  *
- *  This code is basically a port of the 4d Framebuffer interface from
- *  IRIS GL to OpenGL.
+ * This code is basically a port of the 4d Framebuffer interface from
+ * IRIS GL to OpenGL.
  *
  */
 /** @} */
@@ -40,7 +40,6 @@
 
 #ifdef IF_OGL
 
-#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -50,9 +49,6 @@
 #include <errno.h>
 #include <X11/keysym.h>
 #include <X11/StringDefs.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
 #ifdef HAVE_GL_GLX_H
 #  include <GL/glx.h>
 #endif
@@ -65,6 +61,7 @@
 #ifdef HAVE_SYS_WAIT_H
 #  include <sys/wait.h>
 #endif
+#include "bio.h"
 
 #undef RED
 

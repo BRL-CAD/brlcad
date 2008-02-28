@@ -19,12 +19,13 @@
  */
 /** @file remrt.c
  *
- *  Controller for network ray-tracing
- *  Operating as both a network client and server,
- *  starts remote invocations of "rtsrv" via "rsh", then
- *  handles incomming connections offering cycles,
- *  accepting input (solicited and unsolicited) via the pkg.c routines,
- *  and storing the results in files and/or a framebuffer.
+ * Controller for network ray-tracing
+ *
+ * Operating as both a network client and server, starts remote
+ * invocations of "rtsrv" via "rsh", then handles incomming
+ * connections offering cycles, accepting input (solicited and
+ * unsolicited) via the pkg.c routines, and storing the results in
+ * files and/or a framebuffer.
  *
  */
 
@@ -32,7 +33,6 @@
 
 #include <stdlib.h>
 #include <stddef.h>
-#include <stdio.h>
 #include <ctype.h>
 #include <signal.h>
 #include <errno.h>
@@ -45,13 +45,10 @@
 #include <netinet/in.h>
 #include <time.h>
 #include <sys/time.h>		/* sometimes includes <time.h> */
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
 #ifdef HAVE_SYS_WAIT_H
 #  include <sys/wait.h>
 #endif
+#include "bio.h"
 
 #ifndef FD_MOVE
 #  define FD_MOVE(a, b) { register int _i; for (_i = 0; _i < FD_SETSIZE; _i++) \

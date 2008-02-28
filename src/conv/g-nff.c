@@ -20,27 +20,18 @@
  */
 /** @file g-nff.c
  *
- *  Program to convert a BRL-CAD model (in a .g file) to an NFF file
- *  by calling on the NMG booleans.
+ * Program to convert a BRL-CAD model (in a .g file) to an NFF file by
+ * calling on the NMG booleans.
  *
- *  Authors -
- *	John R. Anderson
  */
 
 #include "common.h"
 
 /* system headers */
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
-#if defined(HAVE_UNISTD_H)
-#  include <unistd.h>
-#else
-#  if defined(HAVE_SYS_UNISTD_H)
-#    include <sys/unistd.h>
-#  endif
-#endif
+#include "bio.h"
 
 /* interface headers */
 #include "vmath.h"

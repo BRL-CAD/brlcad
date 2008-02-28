@@ -23,14 +23,10 @@
 
 #include "common.h"
 
-#include <stdio.h>
-#include <fcntl.h>
 #ifdef HAVE_TERMIO_H
 #  include <termio.h>
 #endif
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "fb.h"
 

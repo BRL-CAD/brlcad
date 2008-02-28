@@ -19,21 +19,17 @@
  */
 /** @file msrandom.c
  *
- * Generate a random number between the two values given. The number can be
- * uniform across the entire range or it can be a gaussian distrubution
- * around the center of the range (or a named center.)
+ * Generate a random number between the two values given. The number
+ * can be uniform across the entire range or it can be a gaussian
+ * distrubution around the center of the range (or a named center.)
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "vmath.h"
 #include "bu.h"

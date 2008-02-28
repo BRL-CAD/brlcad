@@ -25,19 +25,14 @@
  *
  *	-n will normalize the data (scale 0 to 255, between 0.0 and 1.0).
  *
- *  Phil Dykstra - 5 Nov 85.
  */
 
 #include "common.h"
 
 #include <stdlib.h> /* for atof() */
 #include <string.h>
-#include <stdio.h>
 #include <math.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 

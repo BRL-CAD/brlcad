@@ -29,20 +29,15 @@
  *  It is not clear that this tool is useful on image sizes other
  *  than the default of 720 x 485.
  *
- *  The code was liberally borrowed from libfb/if_ab.c
- *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 #include "vmath.h"

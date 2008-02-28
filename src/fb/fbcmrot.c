@@ -20,26 +20,19 @@
  */
 /** @file fbcmrot.c
  *
- * Function -
- *	Dynamicly rotate the color map
- *
- *  Author -
- *	Michael John Muuss
+ * Dynamicly rotate the color map
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <math.h>
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>		/* For struct timeval */
 #endif
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 #include "fb.h"

@@ -29,19 +29,12 @@
  *  The use of read() and write() is prefered over fread() and fwrite()
  *  for reasons of efficiency, given the large buffer size in use.
  *
- *  Author -
- *	Michael John Muuss
- *
  */
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 

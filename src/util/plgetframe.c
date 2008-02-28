@@ -18,26 +18,17 @@
  * information.
  */
 /** @file plgetframe.c
- *			P L D E B U G . C
  *
- *  Program to separate Plot3(5) file with flush/clear commands into
- *  separate files.
- *
- *  Authors -
- *	Michael John Muuss
- *	Phillip Dykstra
+ * Program to separate Plot3(5) file with flush/clear commands into
+ * separate files.
  *
  */
 
 #include "common.h"
 
-#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 

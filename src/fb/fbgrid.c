@@ -20,21 +20,12 @@
  */
 /** @file fbgrid.c
  *
- *  Author -
- *	Phillip Dykstra
- *  	Includes the old fbgrid code by:
- *	Michael John Muuss
- *	Gary S. Moss
- *
  */
 
 #include "common.h"
 
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
 #include <stdlib.h>
-#include <stdio.h>
+#include "bio.h"
 
 #include "bu.h"
 #include "fb.h"

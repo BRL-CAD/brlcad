@@ -21,28 +21,24 @@
 /** @{ */
 /** @file ispar.c
  *
- *  @brief
- *  subroutine to determine if we are multi-threaded
+ * @brief
+ * subroutine to determine if we are multi-threaded
  *
- *  This subroutine is separated off from parallel.c so that
- *  bu_bomb() and others can call it, without causing either
- *  parallel.c or semaphore.c to get referenced and thus causing
- *  the loader to drag in all the parallel processing stuff from
- *  the vendor library.
+ * This subroutine is separated off from parallel.c so that bu_bomb()
+ * and others can call it, without causing either parallel.c or
+ * semaphore.c to get referenced and thus causing the loader to drag
+ * in all the parallel processing stuff from the vendor library.
  *
  */
 
 #include "common.h"
 
-#include <stdio.h>
 #include <math.h>
 #include <signal.h>
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 

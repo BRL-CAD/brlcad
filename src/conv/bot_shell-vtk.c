@@ -19,42 +19,42 @@
  *
  */
 /** @file bot_shell-vtk.c
- *	This program uses raytracing to determine which triangles of the specified objects
- *	are external, and includes them in an output VTK polydata file.
  *
- *	Each triangle gets one ray shot at it along its normal from outside the model bounding box.
- *	If that triangle appears as the first object hit along the ray, then that triangle is
- *	added to the output list. Only triangles from BOT primitives are considered as candidates
- *	for inclusion in the VTK data. Non-BOT primitives that get hit along the ray may
- *	"hide" BOT triangles, but they will not be represented in the output.
+ * This program uses raytracing to determine which triangles of the
+ * specified objects are external, and includes them in an output VTK
+ * polydata file.
  *
- *	The "-m" option specifies that triangles that are first or last on each ray should
- *	be included in the output. This can improve performance, but can also degrade performance
- *	considerabley. With the "-m" option, "onehit" processing is turned off.
+ * Each triangle gets one ray shot at it along its normal from outside
+ * the model bounding box.  If that triangle appears as the first
+ * object hit along the ray, then that triangle is added to the output
+ * list. Only triangles from BOT primitives are considered as
+ * candidates for inclusion in the VTK data. Non-BOT primitives that
+ * get hit along the ray may "hide" BOT triangles, but they will not
+ * be represented in the output.
  *
- *	If a "-g" option is provided, then rays are shot from a uniform grid from three orthogonal
- *	directions and the first and last triangles hit are included in the output (implies "-m").
+ * The "-m" option specifies that triangles that are first or last on
+ * each ray should be included in the output. This can improve
+ * performance, but can also degrade performance considerabley. With
+ * the "-m" option, "onehit" processing is turned off.
  *
- *	If a "-n" option is provided, then vertex normals will be included in the VTK output data.
- *	Note that this will not provide any additional information unless the BOT primitives
- *	in the model have vertex normals. This can significantly increase the size of the VTK
- *	output file.
+ * If a "-g" option is provided, then rays are shot from a uniform
+ * grid from three orthogonal directions and the first and last
+ * triangles hit are included in the output (implies "-m").
+ *
+ * If a "-n" option is provided, then vertex normals will be included
+ * in the VTK output data.  Note that this will not provide any
+ * additional information unless the BOT primitives in the model have
+ * vertex normals. This can significantly increase the size of the VTK
+ * output file.
  */
 
 #include "common.h"
 
 /* system headers */
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
-#if defined(HAVE_UNISTD_H)
-#  include <unistd.h>
-#else
-#  if defined(HAVE_SYS_UNISTD_H)
-#    include <sys/unistd.h>
-#  endif
-#endif
+#include "bio.h"
 
 /* interface headers */
 #include "vmath.h"

@@ -20,28 +20,16 @@
  */
 /** @file fbcmap.c
  *
- *	Write a built-in colormap to a framebuffer.
- *	When invoked with no arguments, or with a flavor of 0,
- *	the standard 1:1 ramp color-map is written.
- *	Other flavors provide interesting alternatives.
- *
- *  Author -
- *	Mike Muuss, 7/17/82
- *	VAX version 10/18/83
- *
- *	Conversion to generic frame buffer utility using libfb(3).
- *	In the process, the name has been changed to fbcmap from ikcmap.
- *	Gary S. Moss, BRL. 03/12/85
+ * Write a built-in colormap to a framebuffer.  When invoked with no
+ * arguments, or with a flavor of 0, the standard 1:1 ramp color-map
+ * is written.  Other flavors provide interesting alternatives.
  *
  */
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 #include "fb.h"

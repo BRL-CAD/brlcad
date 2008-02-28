@@ -32,18 +32,12 @@
  *	pix-bw image.pixi | halftone -R -S -w1280 -n960 | \
  *		bw-a -w1280 -n960 | atobm -name image.bm >image.bm
  *
- * Author -
- *	Christopher T. Johnson	- January 28, 1991
- *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 #include "vmath.h"

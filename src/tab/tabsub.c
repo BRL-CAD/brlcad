@@ -19,33 +19,28 @@
  */
 /** @file tabsub.c
  *
- *  This program is a simple macro processor for taking
- *  a big table of input values, and a prototype output document,
- *  and generating an instantiation of the output document
- *  for each line of input values.
+ * This program is a simple macro processor for taking a big table of
+ * input values, and a prototype output document, and generating an
+ * instantiation of the output document for each line of input values.
  *
- *  This program follows "tabinterp", and is the last step in creating
- *  RT animation scripts.
+ * This program follows "tabinterp", and is the last step in creating
+ * RT animation scripts.
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <ctype.h>
 #include <math.h>
 #include <string.h>
-
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
 #ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h>
 #endif
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "vmath.h"
 #include "raytrace.h"

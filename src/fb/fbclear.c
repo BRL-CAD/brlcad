@@ -23,19 +23,12 @@
  *  This program is intended to be used to clear a frame buffer
  *  to black, or to the specified color
  *
- *  Authors -
- *	Michael John Muuss
- *	Gary S. Moss
- *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
-#include <stdio.h>
+#include "bio.h"
 
 #include "bu.h"
 #include "fb.h"

@@ -47,9 +47,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 
 #define LOCAL_PORT 10000

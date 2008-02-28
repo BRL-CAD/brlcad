@@ -19,25 +19,18 @@
  */
 /** @file pixfields.c
  *
- *  pixfields takes two input pictures and extracts field 1 from the first
- *  pix file and field 2 comes from the second pix file.
- *  This is useful for creating field-by-field animation for
- *  NTSC video display.
- *
- *  Author -
- *	Christopher T. Johnson - 05 December 1989
+ * pixfields takes two input pictures and extracts field 1 from the
+ * first pix file and field 2 comes from the second pix file.  This is
+ * useful for creating field-by-field animation for NTSC video
+ * display.
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 

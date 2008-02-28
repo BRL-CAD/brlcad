@@ -19,29 +19,22 @@
  */
 /** @file pixmerge.c
  *
- *  Given two streams of data, typically pix(5) or bw(5) images,
- *  generate an output stream of the same size, where the value of
- *  the output is determined by a formula involving the first
- *  (foreground) stream and a constant, or the value of the second
- *  (background) stream.
+ * Given two streams of data, typically pix(5) or bw(5) images,
+ * generate an output stream of the same size, where the value of the
+ * output is determined by a formula involving the first (foreground)
+ * stream and a constant, or the value of the second (background)
+ * stream.
  *
- *  This routine operates on a pixel-by-pixel basis, and thus
- *  is independent of the resolution of the image.
- *
- *  Author -
- *	Michael John Muuss
+ * This routine operates on a pixel-by-pixel basis, and thus is
+ * independent of the resolution of the image.
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 

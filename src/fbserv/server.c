@@ -28,7 +28,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-
 #if defined (HAVE_SYS_SELECT_H)
 #  include <sys/select.h>
 #else
@@ -38,14 +37,9 @@
 #  if defined(HAVE_SYS_TIME_H)
 #    include <sys/time.h>
 #  endif
-#  if defined(HAVE_UNISTD_H)
-#    include <unistd.h>
-#  else
-#    if defined(HAVE_SYS_UNISTD_H)
-#      include <sys/unistd.h>
-#    endif
-#  endif
 #endif
+#include "bio.h"
+
 #include "fb.h"
 #include "fbmsg.h"
 #include "pkg.h"

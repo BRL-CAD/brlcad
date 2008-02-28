@@ -20,15 +20,9 @@
  */
 /** @file g-x3d.c
  *
- *  Program to convert a BRL-CAD model (in a .g file) to a X3D facetted model
- *  by calling on the NMG booleans. This program is a modified version of
- *  g-vrml (authored by John R. Anderson).
- *
- *  Author -
- *      Bob Parker
- *
- *  Author of g-vrml -
- *	John R. Anderson
+ * Program to convert a BRL-CAD model (in a .g file) to a X3D facetted
+ * model by calling on the NMG booleans. This program is a modified
+ * version of g-vrml (authored by John R. Anderson).
  *
  */
 
@@ -37,19 +31,11 @@
 /* system headers */
 #include <stdlib.h>
 #include <stddef.h>
-#include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <fcntl.h>
 #include <math.h>
 #include <string.h>
-#if defined(HAVE_UNISTD_H)
-#  include <unistd.h>
-#else
-#  if defined(HAVE_SYS_UNISTD_H)
-#    include <sys/unistd.h>
-#  endif
-#endif
+#include "bio.h"
 
 /* interface headers */
 #include "vmath.h"

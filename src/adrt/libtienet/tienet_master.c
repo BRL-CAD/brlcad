@@ -35,9 +35,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "tie.h"
 #include "tienet_define.h"

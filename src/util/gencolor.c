@@ -23,21 +23,14 @@
  *  number of times.  It gets the byte values either from the
  *  command line, or stdin.  Defaults to black.
  *
- *  Author -
- *	Phillip Dykstra
- *
  */
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 

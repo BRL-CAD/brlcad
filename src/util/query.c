@@ -33,27 +33,15 @@
  *		or	y
  *		or	response
  *
- *  Calls:
- *	get_args
- *
- *  Method:
- *	straight-forward.
- *
- *  Author:
- *	Christopher T. Johnson - 90/08/28
  */
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
 #include <errno.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 

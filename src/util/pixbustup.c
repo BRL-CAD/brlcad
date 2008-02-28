@@ -19,23 +19,16 @@
  */
 /** @file pixbustup.c
  *
- *	Take concatenated .pix files, and write them into individual files.
- *	Mostly a holdover from the days when RT wrote animations into
- *	one huge file, but still occasionally useful.
- *
- *  Author -
- *	Michael John Muuss
+ * Take concatenated .pix files, and write them into individual files.
+ * Mostly a holdover from the days when RT wrote animations into one
+ * huge file, but still occasionally useful.
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 

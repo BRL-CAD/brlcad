@@ -19,26 +19,18 @@
  */
 /** @file pl-ps.c
  *
- *  Display plot3(5) as PostScript.
- *  Based on pl-X.c and bw-ps.c
- *
- *  Authors -
- *	Michael John Muuss
- *	Phillip Dykstra
+ * Display plot3(5) as PostScript.
+ * Based on pl-X.c and bw-ps.c
  *
  */
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h> /* for atof() */
 #include <math.h>
 #include <time.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 

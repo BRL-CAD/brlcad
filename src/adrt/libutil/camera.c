@@ -32,10 +32,8 @@
 #include <string.h>
 #include <sys/time.h>
 #include <time.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
 
+#include "bio.h"
 #include "common.h"
 
 #include "image.h"

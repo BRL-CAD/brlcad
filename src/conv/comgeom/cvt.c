@@ -23,11 +23,6 @@
  *	This is the mainline for converting COM-GEOM
  * cards to a GED style database.
  *
- *  Author -
- *	Michael John Muuss
- *
- *  Original Version -
- *	February, 1980
  */
 
 #include "common.h"
@@ -37,9 +32,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <math.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "vmath.h"
 #include "raytrace.h"

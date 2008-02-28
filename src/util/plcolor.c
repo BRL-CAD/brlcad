@@ -19,20 +19,14 @@
  */
 /** @file plcolor.c
  *
- *  Output a color in UNIX plot format, for inclusion in a plot file.
- *
- *  Author -
- *	Phillip Dykstra
+ * Output a color in UNIX plot format, for inclusion in a plot file.
  *
  */
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 #include "vmath.h"

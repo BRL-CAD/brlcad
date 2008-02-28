@@ -37,15 +37,10 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <ctype.h>
 #include <string.h>
 #include <stdarg.h>
-#include <fcntl.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 

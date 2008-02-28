@@ -54,11 +54,7 @@
 /* without OBJ_BREP, this entire procedural example is disabled */
 #ifdef OBJ_BREP
 
-#include <stdio.h>		/* Direct the output to stdout */
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -22,18 +22,11 @@
  *
  *  Program to take bottom-up pixel files and send them to a framebuffer.
  *
- *  Author -
- *	Michael John Muuss
- *
  */
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
@@ -43,6 +36,7 @@
 #ifdef HAVE_WINSOCK_H
 #  include <winsock.h>
 #endif
+#include "bio.h"
 
 #include "bu.h"
 #include "fb.h"

@@ -66,9 +66,11 @@ brlcadinclude_wanted = \
 	vmath.h \
 	wdb.h
 
-# headers used by multiple packages but still considered private
+# headers used by multiple packages but still considered private.
+# public headers should NOT include these headers.
 noinst_HEADERS = \
 	brlcad_version.h \
+	bio.h \
 	conf.h \
 	fbmsg.h \
 	machine.h \

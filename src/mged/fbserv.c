@@ -37,10 +37,7 @@
 #  include <sys/socket.h>
 #  include <netinet/in.h>		/* For htonl(), etc */
 #endif
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "tcl.h"
 #include "bu.h"

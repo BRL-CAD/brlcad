@@ -19,30 +19,23 @@
  */
 /** @file pixrot.c
  *
- *  Rotate, Invert, and/or Reverse the pixels in a RGB (.pix) file.
+ * Rotate, Invert, and/or Reverse the pixels in a RGB (.pix) file.
  *
- *  The rotation logic was worked out for data ordered with
- *  "upper left" first.  It is being used on files in first
- *  quadrant order (lower left first).  Thus the "forward",
- *  "backward" flags are reversed.
+ * The rotation logic was worked out for data ordered with "upper
+ * left" first.  It is being used on files in first quadrant order
+ * (lower left first).  Thus the "forward", "backward" flags are
+ * reversed.
  *
- *  This is a generalization of bwrot and can in fact handle
- *  "pixels" of any size.  Thus this routine could be used
- *  to say, rotate a matix of floating point values, etc.
- *
- *  Author -
- *	Phillip Dykstra
- *	24 Sep 1986
+ * This is a generalization of bwrot and can in fact handle "pixels"
+ * of any size.  Thus this routine could be used to say, rotate a
+ * matix of floating point values, etc.
  *
  */
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 

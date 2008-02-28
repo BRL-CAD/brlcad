@@ -19,22 +19,16 @@
  */
 /** @file pixclump.c
  *
- *	Quantize the color values in a PIX(5) stream to
- *	a set of specified values
- *
- *  Author -
- *	Paul J. Tanenbaum
+ * Quantize the color values in a PIX(5) stream to a set of specified
+ * values
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "vmath.h"
 #include "bu.h"

@@ -19,23 +19,16 @@
  */
 /** @file plline2.c
  *
- *  Output a 2-D line with double coordinates in UNIX plot format.
- *
- *  Author -
- *	Phil Dykstra
+ * Output a 2-D line with double coordinates in UNIX plot format.
  *
  */
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h> /* for atof() */
 #include <math.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 #include "vmath.h"

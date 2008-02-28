@@ -22,17 +22,14 @@
  *  Routines to handle initialization of the grid,
  *  and dispatch of the first rays from the eye.
  *
- *  Author -
- *	Michael John Muuss
- *
  */
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include "bio.h"
 
 #include "bu.h"
 #include "vmath.h"
@@ -49,8 +46,8 @@
 #  ifdef HAVE_SYS_WAIT_H
 #    include <sys/wait.h>
 #  endif
-#  include <unistd.h>
 #endif
+
 
 #define CRT_BLEND(v)	(0.26*(v)[X] + 0.66*(v)[Y] + 0.08*(v)[Z])
 #define NTSC_BLEND(v)	(0.30*(v)[X] + 0.59*(v)[Y] + 0.11*(v)[Z])

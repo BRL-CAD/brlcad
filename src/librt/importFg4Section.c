@@ -21,10 +21,10 @@
 /** @{ */
 /** @file importFg4Section.c
  *
- *      Some of this code was taken from conv/fast4-g.c and libwdb/bot.c
- *      and modified to behave as a method of the BRL-CAD database object
- *      that imports a Fastgen4 section from a string. This section can
- *      only contain GRIDs, CTRIs and CQUADs.
+ * Some of this code was taken from conv/fast4-g.c and libwdb/bot.c
+ * and modified to behave as a method of the BRL-CAD database object
+ * that imports a Fastgen4 section from a string. This section can
+ * only contain GRIDs, CTRIs and CQUADs.
  *
  */
 
@@ -32,19 +32,11 @@
 
 /* system headers */
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#else
-#  ifdef HAVE_SYS_UNISTD_H
-#    include <sys/unistd.h>
-#  endif
-#endif
+#include "bio.h"
 
 /* interface headers */
 #include "db.h"

@@ -23,22 +23,14 @@
  * Output is: (file1-file2)/2 + 127
  * or magnitude (-m): abs(file1-file2)
  *
- *  Author -
- *	Phillip Dykstra
- *	26 June 1986
- *
  */
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 

@@ -19,48 +19,38 @@
  */
 /** @file patch-g.c
  *
- *	Converts FASTGEN format target descriptions to MGED format.
- *	  This version assumes the following FASTGEN primitives:
- *		0 - triangle (< 0.99" thick for plate mode)
- *		1 - triangle (< 1.99" thick but > 0.99")
- *		2 - triangle (< 2.99" thick but > 1.99")
- *		3 - triangle (< 3.99" thick but > 2.99")
- *		4 - donut / torus (changed from type 3 by rpatch)
- *		5 - wedge
- *		6 - sphere
- *		7 - box
- *		8 - cylinder (24pt type-4's converted by rpatch)
- *		9 - rod
- *	  The target is also assumed to be pointing forward along the
- *	  positive X-axis and positive Y on the left side of the target.
+ * Converts FASTGEN format target descriptions to MGED format.
  *
- *  Author -
- *	Bill Mermagen Jr.
- *      Dan Dender
- *  Revisions -
- *	Robert L. Strausser, The SURVICE Engineering Co.; Jul. '93
+ * This version assumes the following FASTGEN primitives:
  *
- *	John R. Anderson (Jan '94)
- *		Converted proc_tri and proc_plate to produce NMG's
+ *	0 - triangle (< 0.99" thick for plate mode)
+ *	1 - triangle (< 1.99" thick but > 0.99")
+ *	2 - triangle (< 2.99" thick but > 1.99")
+ *	3 - triangle (< 3.99" thick but > 2.99")
+ *	4 - donut / torus (changed from type 3 by rpatch)
+ *	5 - wedge
+ *	6 - sphere
+ *	7 - box
+ *	8 - cylinder (24pt type-4's converted by rpatch)
+ *	9 - rod
+ *
+ * The target is also assumed to be pointing forward along the
+ * positive X-axis and positive Y on the left side of the target.
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <math.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
 #ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h>
 #endif
+#include "bio.h"
 
 #include "vmath.h"
 #include "bu.h"

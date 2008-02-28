@@ -19,19 +19,13 @@
  */
 /** @file parsarg.c
  *
- *  Author:		Gary S. Moss
- *
  */
 
 #include "common.h"
 
-#include <stdio.h>
 #include <signal.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "vmath.h"
 #include "raytrace.h"

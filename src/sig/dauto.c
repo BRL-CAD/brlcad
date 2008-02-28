@@ -19,23 +19,20 @@
  */
 /** @file dauto.c
  *
- *  Compute the autocorrelation function of doubles.
- *  Given L elements at a time, data[0..L-1], we estimate
- *  the autocorrelation at lag 0, trough lag L-1, r[0..L-1].
- *  The first value is based on L samples, the last on only one.
- *  Zeros are assumed outside of the range of an input record.
+ * Compute the autocorrelation function of doubles.  Given L elements
+ * at a time, data[0..L-1], we estimate the autocorrelation at lag 0,
+ * trough lag L-1, r[0..L-1].  The first value is based on L samples,
+ * the last on only one.  Zeros are assumed outside of the range of an
+ * input record.
+ *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 

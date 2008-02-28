@@ -19,26 +19,16 @@
  */
 /** @file pl-tek.c
  *
- *  Convert 3-D color extended UNIX-plot file to Tektronix 4014 plot.
- *  Gets rid of (floating point, flush, 3D, color, text).
- *
- *  Authors -
- *	Michael John Muss
- *	Phillip Dykstra
- *
- *  Based heavily on pl-pl.c
+ * Convert 3-D color extended UNIX-plot file to Tektronix 4014 plot.
+ * Gets rid of (floating point, flush, 3D, color, text).
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "common.h"
 

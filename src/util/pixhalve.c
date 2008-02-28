@@ -19,22 +19,19 @@
  */
 /** @file pixhalve.c
  *
- *  Reduce the resolution of a .pix file by one half in each direction,
- *  using a 5x5 pyramid filter.
+ * Reduce the resolution of a .pix file by one half in each direction,
+ * using a 5x5 pyramid filter.
  *
- *  As this tool is used primarily for preparing images for NTSC television,
- *  convert RGB to YUV, then apply different filter kernels;  use 3x3 for Y,
- *  5x5 for U and V.
+ * As this tool is used primarily for preparing images for NTSC
+ * television, convert RGB to YUV, then apply different filter
+ * kernels; use 3x3 for Y, 5x5 for U and V.
  *
  */
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 #include "vmath.h"

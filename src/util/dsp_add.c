@@ -19,9 +19,7 @@
  */
 /** @file dsp_add.c
  *
- */
-
-/*	D S P _ A D D . C --- add 2 files of network unsigned shorts
+ * add 2 files of network unsigned shorts
  *
  *	Options
  *	h	help
@@ -30,11 +28,8 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <sys/stat.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 #include "vmath.h"

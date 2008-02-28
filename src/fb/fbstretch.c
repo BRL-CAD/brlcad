@@ -79,15 +79,11 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <assert.h>
 #include <signal.h>
 #include <string.h>
 #include <stdarg.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 #include "fb.h"			/* BRL-CAD package libfb.a interface */

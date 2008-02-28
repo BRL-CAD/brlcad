@@ -22,20 +22,14 @@
  *  Convert an 8-bit black and white file to a 24-bit
  *  color one by replicating each value three times.
  *
- *  Author -
- *	Phillip Dykstra
- *
  */
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
 #include <string.h>
+#include "bio.h"
 
 #include "bu.h"
 

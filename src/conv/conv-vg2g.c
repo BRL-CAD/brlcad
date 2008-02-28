@@ -22,10 +22,6 @@
  *
  *  Converts .vg files to .g (latest style, with idents).
  *
- *  Authors -
- *	Mike Muuss, BRL, 5/25/84.
- *	Keith A. Applin
- *
  */
 
 #include "common.h"
@@ -39,9 +35,7 @@
 #ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h>
 #endif
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 #include <fcntl.h>
 
 #include "db.h"

@@ -20,24 +20,17 @@
  */
 /** @file fbline.c
  *
- *  Draw a single 2-D line on the framebuffer, in a given color
+ * Draw a single 2-D line on the framebuffer, in a given color
  *
- *  Author -
- *	Michael John Muuss
- *
- * Acknowledgment:
- * 	Based rather heavily on plot-fb.c
+ * Based rather heavily on plot-fb.c
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
-#include <stdio.h>
 #include <ctype.h>
+#include "bio.h"
 
 #include "bu.h"
 #include "fb.h"

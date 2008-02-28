@@ -18,25 +18,17 @@
  * information.
  */
 /** @file reflect.c
-    Author:		Gary S. Moss
-
-    Thanks to Edwin O. Davisson and Robert Shnidman for contributions
-    to the refraction algorithm.
-*/
+ *
+ */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <signal.h>
-#include <fcntl.h>
 #include <math.h>
 #include <assert.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "vmath.h"
 #include "raytrace.h"

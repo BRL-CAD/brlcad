@@ -19,22 +19,16 @@
  */
 /** @file bw-ps.c
  *
- *  Convert a black and white (bw) file to an 8-bit PostScript image.
- *
- *  Author -
- *	Phillip Dykstra
+ * Convert a black and white (bw) file to an 8-bit PostScript image.
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h> /* for atof() */
-#include <stdio.h>
 #include <math.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
 #include <time.h>	/* for ctime() */
+#include "bio.h"
 
 #include "bu.h"
 

@@ -21,22 +21,12 @@
  *
  *  I/O routines to talk to a Lyon-Lamb VAS IV video animation controller.
  *
- *
- *  Authors -
- *	Steve Satterfield, USNA
- *	Joe Johnson, USNA
- *	Michael John Muuss, BRL
- *
  */
 
 #include "common.h"
 
-#if HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
 #include <stdlib.h>
-#include <stdio.h>
-#include <fcntl.h>
+#include "bio.h"
 
 #if defined(HAVE_XOPEN)
 #  include <termios.h>

@@ -19,22 +19,16 @@
  */
 /** @file rle-pix.c
  *
- *  Decode a Utah Raster Toolkit RLE image, and output as a pix(5) file.
- *
- *  Author -
- *	Michael John Muuss
+ * Decode a Utah Raster Toolkit RLE image, and output as a pix(5)
+ * file.
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "fb.h"
 #include "bu.h"

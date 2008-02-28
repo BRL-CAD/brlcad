@@ -19,20 +19,16 @@
  */
 /** @file png-bw.c
  *
- *	Convert PNG (Portable Network Graphics) format to bw
+ * Convert PNG (Portable Network Graphics) format to bw
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "png.h"
 #include "bu.h"

@@ -19,26 +19,16 @@
  */
 /** @file dunncomm.c
  *
- *	Common routines needed for both dunncolor and dunnsnap
- *
- *  Author -
- *	Don Merritt
- *	August 1985
+ * Common routines needed for both dunncolor and dunnsnap
  *
  */
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
-#include <fcntl.h>
 #include <signal.h>
 #include <string.h>
 #include <sys/time.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
 #ifdef __NetBSD__
 #  define USE_OLD_TTY
 #  include <sys/ioctl_compat.h>
@@ -47,6 +37,7 @@
 #  include <sys/ioctl_compat.h>
 #  define OCRNL   0000010
 #endif
+#include "bio.h"
 
 /*
  *  This file will work IFF one of these three flags is set:

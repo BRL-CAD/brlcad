@@ -19,8 +19,6 @@
  */
 /** @file tpkg.c
  *
- * Author: Christopher Sean Morrison
- *
  * Relatively simple example file transfer program using libpkg,
  * written in a ttcp style.
  *
@@ -36,9 +34,7 @@
 #include <signal.h>
 #include <string.h>
 #include <stdio.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 /* interface headers */
 #include "bu.h"

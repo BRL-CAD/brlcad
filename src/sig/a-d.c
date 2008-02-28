@@ -20,18 +20,16 @@
 /** @file a-d.c
  *
  * Ascii to double.
+ *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <ctype.h>
 #include <string.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 

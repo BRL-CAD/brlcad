@@ -33,13 +33,7 @@
 #include <ctype.h>
 #include <math.h>
 #include <string.h>
-#if defined(HAVE_UNISTD_H)
-#  include <unistd.h>
-#else
-#  if defined(HAVE_SYS_UNISTD_H)
-#    include <sys/unistd.h>
-#  endif
-#endif
+#include "bio.h"
 
 /* interface headers */
 #include "vmath.h"

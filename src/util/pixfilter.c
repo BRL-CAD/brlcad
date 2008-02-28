@@ -23,21 +23,13 @@
  *  Leaves the outer rows untouched.
  *  Allows an alternate divisor and offset to be given.
  *
- *  Author -
- *	Phillip Dykstra
- *	15 Aug 1985
- *
  */
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 

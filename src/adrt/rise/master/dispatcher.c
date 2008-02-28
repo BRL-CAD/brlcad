@@ -19,10 +19,9 @@
  */
 /** @file dispatcher.c
  *
- *  Author -
- *      Justin L. Shumaker
- *
  */
+
+#include "common.h"
 
 #include "dispatcher.h"
 #include <stdio.h>
@@ -31,14 +30,9 @@
 #include <sys/time.h>
 #include "adrt_common.h"
 
-#include "common.h"
-
+#include "bio.h"
 #include "rise.h"
 #include "tienet.h"
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
 
 #ifdef HAVE_SYS_SYSINFO_H
 #  include <sys/sysinfo.h>

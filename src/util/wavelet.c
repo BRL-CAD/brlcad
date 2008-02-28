@@ -19,9 +19,9 @@
  */
 /** @file wavelet.c
  *
- *      This program performs a wavelet transformation on data.
- *      Transformations possible are decompositions and reconstructions.
- *      Currently, only the Haar wavelet is supported.
+ * This program performs a wavelet transformation on data.
+ * Transformations possible are decompositions and reconstructions.
+ * Currently, only the Haar wavelet is supported.
  *
  *	Options
  *	-D		decompose
@@ -43,10 +43,7 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 #include "vmath.h"

@@ -33,16 +33,11 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <math.h>
 #include <signal.h>
-
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>		/* For struct timeval */
-#endif
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
 #endif
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
@@ -51,6 +46,7 @@
 #ifdef HAVE_SYS_WAIT_H
 #  include <sys/wait.h>
 #endif
+#include "bio.h"
 
 #include "tcl.h"
 #include "cmd.h"			/* includes bu.h */

@@ -20,24 +20,16 @@
 /** @file pixhist3d-pl.c
  *
  * RGB color space utilization to unix plot.
- *  Plots a point for each unique RGB value found in a pix file.
- *  Resolution is 128 steps along each color axis.
  *
- * Must be compiled with BRL System V plot(3) library.
- *
- *  Author -
- *	Phillip Dykstra
- *	19 June 1986
+ * Plots a point for each unique RGB value found in a pix file.
+ * Resolution is 128 steps along each color axis.
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 #include "vmath.h"

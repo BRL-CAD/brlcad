@@ -24,21 +24,14 @@
  *  Allows any number of add, subtract, multiply, divide, or
  *  exponentiation operations to be performed on a stream of values.
  *
- *  Author -
- *	Phillip Dykstra
- *	17 Apr 1987
  */
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 

@@ -20,28 +20,19 @@
  */
 /** @file pixflip-fb.c
  *
- *  Given multiple .pix files with ordinary lines of pixels,
- *  sequence through them on the current framebuffer.
- *  A window-system version of "pixtile and fbanim".
- *  This program depends heavily on having lots of virtual memory
- *  in which to buffer all the images.
- *
- *  Author -
- *	Michael John Muuss
+ * Given multiple .pix files with ordinary lines of pixels, sequence
+ * through them on the current framebuffer.  A window-system version
+ * of "pixtile and fbanim".  This program depends heavily on having
+ * lots of virtual memory in which to buffer all the images.
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
-
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>		/* For struct timeval */
-#endif
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
 #endif
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
@@ -49,9 +40,7 @@
 #ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h>
 #endif
-#ifdef HAVE_SYS_FCNTL_H
-#  include <sys/fcntl.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 #include "fb.h"

@@ -19,22 +19,16 @@
  */
 /** @file pix-ps.c
  *
- *  Convert an RGB (pix) file to an 24-bit color PostScript image.
- *
- *  Author -
- *	Phillip Dykstra
+ * Convert an RGB (pix) file to an 24-bit color PostScript image.
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h> /* for atof() */
-#include <stdio.h>
 #include <math.h>
 #include <time.h>	/* for ctime() */
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 

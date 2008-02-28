@@ -30,22 +30,14 @@
  *  This routine operates on a pixel-by-pixel basis, and thus
  *  is independent of the resolution of the image.
  *
- *  Authors -
- *	Paul Randal Stay
- *      Glenn Durfee
- *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <sys/time.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 

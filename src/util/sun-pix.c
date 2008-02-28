@@ -19,23 +19,15 @@
  */
 /** @file sun-pix.c
  *
- *  Program to take Sun bitmap files created with Sun's ``screendump''
- *  command, and convert them to pix(5) format files.
- *
- *  Authors -
- *	Phillip Dykstra
- *	Michael John Muuss
+ * Program to take Sun bitmap files created with Sun's ``screendump''
+ * command, and convert them to pix(5) format files.
  *
  */
 
 #include "common.h"
 
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-
-#include <stdio.h>
 #include <stdlib.h>
+#include "bio.h"
 
 #include "bu.h"
 

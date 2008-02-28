@@ -21,34 +21,27 @@
  *
  *  Utility for morphing two BRL-CAD pix files.
  *
- *  Author -
- *      Glenn Durfee
- *
- *  Description -
- *      Morphs two pix files.  Performs the morph according to the given line
- *      segment correspondence file and two values in [0, 1]: the first,
- *      warpfrac, is a value which describes how far each image is warped;
- *      the second, dissolvefrac, specifies how much of a cross-dissolve
- *      is performed on the two resulting warped images to produce an
- *      output.  Typically, the user sets warpfrac = dissolvefrac.
- *      See the man page for more details.
+ *  Morphs two pix files.  Performs the morph according to the given
+ *  line segment correspondence file and two values in [0, 1]: the
+ *  first, warpfrac, is a value which describes how far each image is
+ *  warped; the second, dissolvefrac, specifies how much of a
+ *  cross-dissolve is performed on the two resulting warped images to
+ *  produce an output.  Typically, the user sets warpfrac =
+ *  dissolvefrac.  See the man page for more details.
  *
  *  For details of the morph algorithm, see
- *        T. Beier and S. Neely.  Feature-Based Image Metamorphosis.  In
- *        "SIGGRAPH 1992 Computer Graphics Proceedings (volume 26 number 2)"
- *        (Chicago, July 26-31, 1992).
+ *    T. Beier and S. Neely.  Feature-Based Image Metamorphosis.  In
+ *    "SIGGRAPH 1992 Computer Graphics Proceedings (volume 26 number 2)"
+ *    (Chicago, July 26-31, 1992).
  */
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <math.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 #include "vmath.h"

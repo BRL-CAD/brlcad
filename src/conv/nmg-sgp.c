@@ -22,21 +22,15 @@
  *
  *  Program to convert an NMG BRL-CAD model (in a .g file) to a SGP facetted model
  *
- *  Author -
- *	John R. Anderson
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
 #include <errno.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "vmath.h"
 #include "nmg.h"

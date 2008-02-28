@@ -19,12 +19,8 @@
  */
 /** @file dstat.c
  *
- *  Compute statistics of double precision floats.
- *  Gives min, max, mode, median, mean, s.d., var, and skew.
- *
- *  Author -
- *	Phillip Dykstra
- *	18 Sep 1986
+ * Compute statistics of double precision floats.
+ * Gives min, max, mode, median, mean, s.d., var, and skew.
  *
  */
 
@@ -32,11 +28,8 @@
 
 #include <string.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 

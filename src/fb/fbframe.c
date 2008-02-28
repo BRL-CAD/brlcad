@@ -19,24 +19,16 @@
  *
  */
 /** @file fbframe.c
- *			F B F R A M E
  *
- *  Overwrite a frame (border) on the current framebuffer.
- *  CCW from the bottom:  Red, Green, Blue, White
- *
- *  Author -
- *	Phil Dykstra
+ * Overwrite a frame (border) on the current framebuffer.  CCW from
+ * the bottom: Red, Green, Blue, White
  *
  */
 
 #include "common.h"
 
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-
 #include <stdlib.h>
-#include <stdio.h>
+#include "bio.h"
 
 #include "bu.h"
 #include "fb.h"

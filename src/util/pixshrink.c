@@ -19,25 +19,15 @@
  */
 /** @file pixshrink.c
  *
- *	scale down a picture by a uniform factor.
- *
- *	Options
- *	h	help
- *
- *  Author -
- *	Lee A. Butler
+ * scale down a picture by a uniform factor.
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 

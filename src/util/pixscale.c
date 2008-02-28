@@ -31,19 +31,12 @@
  *  Note: This is a simple extension to bwcrop.  Improvements made
  *  there should be incorporated here.
  *
- *  Author -
- *	Phillip Dykstra
- * 	23 Sep 1986
- *
  */
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 

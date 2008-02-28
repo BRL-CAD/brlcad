@@ -18,20 +18,13 @@
  * information.
  */
 /** @file orle-pix.c
- *			R L E - P I X . C
- *
- *  Author -
- *	Gary S. Moss
  *
  */
 
 #include "common.h"
 
-#include <stdio.h>
 #include <string.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "fb.h"		/* For Pixel typedef */
 #include "orle.h"

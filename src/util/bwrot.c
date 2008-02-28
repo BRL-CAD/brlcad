@@ -35,20 +35,13 @@
  *  Note that this program can be applied to any collection
  *  of single byte entities.
  *
- *  Author -
- *	Phillip Dykstra
- *	24 Sep 1986
- *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 

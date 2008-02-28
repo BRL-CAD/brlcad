@@ -20,23 +20,16 @@
  */
 /** @file fbgamma.c
  *
- *  Load a gamma correcting colormap into a framebuffer.
- *
- *  Author -
- *	Phillip Dykstra
+ * Load a gamma correcting colormap into a framebuffer.
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <math.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 #include "fb.h"

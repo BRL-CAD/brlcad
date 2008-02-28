@@ -22,19 +22,12 @@
  *  Read a .pix file of a given resolution, and produce one with
  *  twice as many pixels by interpolating between the pixels.
  *
- *  Author -
- *	Michael John Muuss
- *
  */
 
 #include "common.h"
 
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-
 #include <stdlib.h>
-#include <stdio.h>
+#include "bio.h"
 
 #include "bu.h"
 

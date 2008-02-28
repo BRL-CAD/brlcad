@@ -20,24 +20,19 @@
  */
 /** @file g-xxx.c
  *
- *	Sample code for converting BRL-CAD models to some other format.
- *	This code assumes that your receiving format can handle CSG primitives
- *	and Boolean trees with transformation matrices
+ * Sample code for converting BRL-CAD models to some other format.
+ * This code assumes that your receiving format can handle CSG
+ * primitives and Boolean trees with transformation matrices
  *
- *  Author -
- *	John R. Anderson
  */
 
 #include "common.h"
 
 /* system headers */
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 /* interface headers */
 #include "vmath.h"

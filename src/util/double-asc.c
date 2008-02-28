@@ -19,23 +19,15 @@
  */
 /** @file double-asc.c
  *
- *  		Take a stream of IEEE doubles and make them ASCII
- *
- *  Author -
- *	Paul Tanenbaum
+ * Take a stream of IEEE doubles and make them ASCII
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
-#include <fcntl.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "vmath.h"
 #include "bu.h"

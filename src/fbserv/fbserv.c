@@ -54,7 +54,6 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <ctype.h>
@@ -62,11 +61,6 @@
 #include <errno.h>
 #include <string.h>
 #include <time.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
-
 #if HAVE_SYSLOG_H
 #  include <syslog.h>
 #endif
@@ -83,10 +77,10 @@
 #ifdef HAVE_SYS_WAIT_H
 #  include <sys/wait.h>
 #endif
-
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>		/* For struct timeval */
 #endif
+#include "bio.h"
 
 #include "fb.h"
 #include "pkg.h"

@@ -22,24 +22,14 @@
  * Filter output from NIRT(1) to generate an MGED(1) object
  * representing a shotline through some geometry.
  *
- * Author:
- *   Paul Tanenbaum
- *
- * Date:
- *   4 December 1990
- *
  */
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "vmath.h"
 #include "db.h"

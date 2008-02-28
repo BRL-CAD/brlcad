@@ -18,25 +18,19 @@
  * information.
  */
 /** @file pix-sun.c
- *	Program to take a BRL-CAD PIX format image file and convert the
- *	image to a Sun Microsystems 8-bit deep color "rasterfile" format
- *	image.
  *
- *  Author -
- *	Lee A. Butler
+ * Program to take a BRL-CAD PIX format image file and convert the
+ * image to a Sun Microsystems 8-bit deep color "rasterfile" format
+ * image.
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <ctype.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 

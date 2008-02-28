@@ -24,16 +24,11 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <ctype.h>
 #include <signal.h>
-#include <fcntl.h>
 #include <errno.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "fb.h"
 

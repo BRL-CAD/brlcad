@@ -128,6 +128,8 @@ struct bu_semaphores {
 # define DEFINED_BU_SEMAPHORES	1
 #endif
 
+#include "bio.h"
+
 /*
  * multithreading support for SunOS 5.X / Solaris 2.x
  */
@@ -145,13 +147,6 @@ struct bu_semaphores {
 /*
  * multithread support built on POSIX Threads (pthread) library.
  */
-#ifdef HAVE_UNISTD_H
-#	include	<unistd.h>
-#else
-#  ifdef HAVE_SYS_UNISTD_H
-#	include <sys/unistd.h>
-#  endif
-#endif
 #ifdef HAVE_PTHREAD_H
 #	include <pthread.h>
 #  if !defined(sgi)

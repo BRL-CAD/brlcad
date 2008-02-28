@@ -20,21 +20,16 @@
  */
 /** @file fbanim.c
  *
- * Function -
- *	Dynamicly modify framebuffer Zoom and Window parameters,
- *	to flip betwen sub-images, giving an inexpensive animation
- *	effect.
+ * Dynamicly modify framebuffer Zoom and Window parameters, to flip
+ * betwen sub-images, giving an inexpensive animation effect.
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
-#include <stdio.h>
 #include <string.h>
+#include "bio.h"
 
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>		/* For struct timeval */

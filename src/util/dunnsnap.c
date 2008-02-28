@@ -19,24 +19,17 @@
  */
 /** @file dunnsnap.c
  *
- *	Checks status of the Dunn camera and exposes the number of frames
- *	of film specified in the argument (default is 1 frame).
+ * Checks status of the Dunn camera and exposes the number of frames
+ * of film specified in the argument (default is 1 frame).
  *
- *	dunnsnap [num_frames]
- *
- *  Author -
- *	Don Merritt
- *	August 1985
+ * dunnsnap [num_frames]
  *
  */
 
 #include "common.h"
 
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
-#include <stdio.h>
 #include <stdlib.h>
+#include "bio.h"
 
 #include "bu.h"
 #include "fb.h"

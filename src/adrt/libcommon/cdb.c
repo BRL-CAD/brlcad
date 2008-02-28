@@ -22,16 +22,12 @@
  *  Comments -
  *      Common Library - Database loader
  *
- *  Author -
- *      Justin L. Shumaker
- *
  */
 
 #include "cdb.h"
 #include <string.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+
+#include "bio.h"
 #include "canim.h"
 #include "env.h"
 

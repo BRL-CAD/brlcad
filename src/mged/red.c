@@ -19,26 +19,19 @@
  */
 /** @file red.c
  *
- *	These routines allow editing of a combination using the text editor
- *	of the users choice.
- *
- *  Author -
- *	John Anderson
+ * These routines allow editing of a combination using the text editor
+ * of the users choice.
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <signal.h>
 #include <string.h>
 #include <errno.h>
 #include <ctype.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 #include "vmath.h"

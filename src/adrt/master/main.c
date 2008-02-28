@@ -26,14 +26,11 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
 
+#include "bio.h"
 #include "adrt.h"
 #include "master.h"
 #include "tienet.h"

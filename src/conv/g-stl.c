@@ -20,8 +20,8 @@
  */
 /** @file g-stl.c
  *
- *  Program to convert a BRL-CAD model (in a .g file) to an STL file
- *  by calling on the NMG booleans.  Based on g-acad.c.
+ * Program to convert a BRL-CAD model (in a .g file) to an STL file by
+ * calling on the NMG booleans.  Based on g-acad.c.
  *
  */
 
@@ -31,18 +31,10 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <fcntl.h>
-#include <stdio.h>
 #include <ctype.h>
 #include <math.h>
 #include <string.h>
-#if defined(HAVE_UNISTD_H)
-#  include <unistd.h>
-#else
-#  if defined(HAVE_SYS_UNISTD_H)
-#    include <sys/unistd.h>
-#  endif
-#endif
+#include "bio.h"
 
 /* interface headers */
 #include "vmath.h"

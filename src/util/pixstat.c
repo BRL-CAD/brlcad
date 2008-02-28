@@ -31,22 +31,14 @@
  * (lastly, some statistics such as mode and median, require the
  *  histogram)
  *
- *  Author -
- *	Phillip Dykstra
- *	6 Aug 1986
- *
  */
 
 #include "common.h"
 
-#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 

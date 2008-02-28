@@ -41,14 +41,9 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <math.h>
-#include <fcntl.h>
 #include <string.h>
-
-#if HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "vmath.h"
 #include "bu.h"

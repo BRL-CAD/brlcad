@@ -19,14 +19,13 @@
  */
 /** @file ihost.c
  *
- *  Internal host table routines.
+ * Internal host table routines.
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <ctype.h>
 #include <signal.h>
 #include <errno.h>
@@ -40,9 +39,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "vmath.h"
 #include "raytrace.h"

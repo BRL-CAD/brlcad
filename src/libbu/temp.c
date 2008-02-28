@@ -28,8 +28,6 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
-#include <fcntl.h>
 #include <string.h>
 #include <time.h>
 #ifdef HAVE_SYS_TYPES_H
@@ -38,9 +36,7 @@
 #ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h>
 #endif
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 

@@ -25,22 +25,14 @@
  *  exponentiation operations to be performed on a picture.
  *  Keeps track of and reports clipping.
  *
- *  Author -
- *  	Lee A. Butler
- *	25 October 1990
- *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <math.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 

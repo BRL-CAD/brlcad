@@ -21,9 +21,7 @@
 /** @{ */
 /** @file g_pipe.c
  *
- *	Intersect a ray with a pipe solid.
- *
- *  Authors -
+ * Intersect a ray with a pipe solid.
  *
  */
 /** @} */
@@ -38,10 +36,7 @@
 /* for isnan() function */
 #include <float.h>
 #include <math.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "tcl.h"
 #include "vmath.h"

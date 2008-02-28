@@ -21,9 +21,6 @@
  *
  *    Give a good ole' CPM style Hex dump of a file or standard input.
  *
- *    Author -
- *	Lee A. Butler
- *
  *    Options
  *    h    help
  *    o    offset from begining of data from which to start dump
@@ -31,14 +28,10 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 

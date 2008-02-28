@@ -75,13 +75,9 @@
 
 #include <stdlib.h>
 #include <signal.h>
-#include <stdio.h>
 #include <string.h>
 #include <ctype.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 #include "fb.h"

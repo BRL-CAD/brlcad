@@ -20,21 +20,15 @@
  */
 /** @file fb-rle.c
  *
- *  Encode a framebuffer image using the Utah Raster Toolkit RLE library
- *
- *  Author -
- *	Michael John Muuss
+ * Encode a framebuffer image using the Utah Raster Toolkit RLE
+ * library
  *
  */
 
 #include "common.h"
 
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-
-#include <stdio.h>
 #include <time.h>
+#include "bio.h"
 
 #include "bu.h"
 #include "fb.h"

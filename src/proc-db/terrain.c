@@ -19,20 +19,17 @@
  */
 /** @file terrain.c
  *
- * Create a random terrain spline model database.
- * Future additions to this program would be to include
- * random trees and objects to be inserted into the database.
+ * Create a random terrain spline model database.  Future additions to
+ * this program would be to include random trees and objects to be
+ * inserted into the database.
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 #include "vmath.h"		/* BRL-CAD Vector macros */

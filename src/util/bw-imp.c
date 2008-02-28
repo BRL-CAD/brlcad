@@ -19,33 +19,20 @@
  */
 /** @file bw-imp.c
  *
- */
-
-/*
- *			B W - I M P . C
+ * Borrows heavily from Steve Hawley's & Geoffrey Cooper's "traceconv"
+ * program.
  *
- *  Authors -
- *	Douglas A. Gwyn
- *	Michael John Muuss
- *
- *  Borrows heavily from Steve Hawley's & Geoffrey Cooper's
- *  "traceconv" program.
- *
- *  Notes -
- *	The image is printed upside down to simplify the arithmetic,
- *	due to the organization of the input file.
+ * Notes - The image is printed upside down to simplify the
+ * arithmetic, due to the organization of the input file.
  *
  */
 
 #include "common.h"
 
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "bio.h"
+
 #include "bu.h"
 
 typedef int bool;

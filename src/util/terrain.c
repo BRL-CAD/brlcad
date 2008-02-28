@@ -19,33 +19,28 @@
  */
 /** @file terrain.c
  *
- */
-
-/*	T E R R A I N . C --- generate pseudo-terrain
+ * generate pseudo-terrain
  *
- *	Options
- *	w	number of postings in X direction
- *	n	number of postings in Y direction
- *	s	number of postings in X,Y direction
- *	L	Noise Lacunarity
- *	H	Noise H value
- *	O	Noise Octaves
- *	S	Noise Scale
- *	V	Noise Vector scale (affine scale)
- *	D	Noise Delta
- *	f	noise function (f=fbm t=turb T=1.0-turb)
- *	c	toggle host-net conversion
- *	o	offset
+ * Options
+ * w	number of postings in X direction
+ * n	number of postings in Y direction
+ * s	number of postings in X,Y direction
+ * L	Noise Lacunarity
+ * H	Noise H value
+ * O	Noise Octaves
+ * S	Noise Scale
+ * V	Noise Vector scale (affine scale)
+ * D	Noise Delta
+ * f	noise function (f=fbm t=turb T=1.0-turb)
+ * c	toggle host-net conversion
+ * o	offset
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 #include "vmath.h"

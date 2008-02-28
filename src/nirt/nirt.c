@@ -21,25 +21,15 @@
  *
  * This program is Natalie's Interactive Ray-Tracer
  *
- * Author:
- *   Natalie L. Barker
- *
- * Date:
- *   Jan 90
- *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <ctype.h>
 #include <math.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 #include "vmath.h"

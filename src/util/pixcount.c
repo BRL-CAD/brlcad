@@ -19,21 +19,15 @@
  */
 /** @file pixcount.c
  *
- *	Sort the pixels of an input stream by color value.
- *
- *  Author -
- *	Paul J. Tanenbaum
+ * Sort the pixels of an input stream by color value.
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 

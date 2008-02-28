@@ -20,7 +20,7 @@
  */
 /** @file g-var.c
  *
- *  BRL-CAD to (OpenGL) Vertex Array Exporter.
+ * BRL-CAD to (OpenGL) Vertex Array Exporter.
  *
  */
 
@@ -28,12 +28,8 @@
 
 /* system headers */
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #ifdef HAVE_STDINT_H
 #  include <stdint.h>

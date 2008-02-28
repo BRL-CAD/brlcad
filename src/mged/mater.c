@@ -19,21 +19,17 @@
  */
 /** @file mater.c
  *
- *  Code to deal with establishing and maintaining the tables which
- *  map region ID codes into worthwhile material information
- *  (colors and outboard database "handles").
+ * Code to deal with establishing and maintaining the tables which map
+ * region ID codes into worthwhile material information (colors and
+ * outboard database "handles").
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "vmath.h"
 #include "db.h"

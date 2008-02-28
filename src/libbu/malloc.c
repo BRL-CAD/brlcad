@@ -23,23 +23,19 @@
  * @file malloc.c
  *
  * @brief
- *  Parallel-protected debugging-enhanced wrapper around system malloc().
+ * Parallel-protected debugging-enhanced wrapper around system malloc().
  *
- *  The bu_malloc() routines can't use bu_log() because that uses
- *  the bu_vls() routines which depend on bu_malloc().  So it goes direct
- *  to stderr, semaphore protected.
+ * The bu_malloc() routines can't use bu_log() because that uses the
+ * bu_vls() routines which depend on bu_malloc().  So it goes direct
+ * to stderr, semaphore protected.
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 

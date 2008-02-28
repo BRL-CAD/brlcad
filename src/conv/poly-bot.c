@@ -19,24 +19,18 @@
  *
  */
 /** @file poly-bot.c
- *			P O L Y - B O T
  *
- *  Program to convert all the polysolids in a BRL-CAD model (in a .g file) to BOT solids
+ * Program to convert all the polysolids in a BRL-CAD model (in a .g
+ * file) to BOT solids
  *
- *  Author -
- *	John R. Anderson
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "vmath.h"
 #include "nmg.h"

@@ -21,28 +21,15 @@
 /** @{ */
 /** @file db_io.c
  *
- * Functions -
- *	db_getmrec	Read all records into malloc()ed memory chunk
- *	db_get		Get records from database
- *	db_put		Put records to database
- *
- *
- *  Authors -
- *	Michael John Muuss
- *
  */
 
 #include "common.h"
 
-#include <stdio.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
+#include "bio.h"
 
 #include "vmath.h"
 #include "db.h"

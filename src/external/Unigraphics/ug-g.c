@@ -26,12 +26,12 @@
 #define DO_SUPPRESSIONS 0
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <signal.h>
 #include <time.h>
 #include <libexc.h>
 #include <math.h>
 #include <string.h>
+#include "bio.h"
 
 #include "db.h"
 #include "vmath.h"
@@ -56,10 +56,6 @@
 #include <uf_eval.h>
 #include <uf_sket.h>
 #include <uf_error.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
 
 #include "./conv.h"
 #include "./ug_misc.h"

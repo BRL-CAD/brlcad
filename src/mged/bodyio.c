@@ -23,28 +23,21 @@
  *	cmd_import_body - read an object's body from a file
  *	cmd_export_body - write an object's body to a file
  *
- *  Author -
- *	Paul J. Tanenbaum
  */
 
 #include "common.h"
 
-#include <stdio.h>
 #include <signal.h>
 #include <math.h>
 #include <time.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <fcntl.h>
 #include <errno.h>
-
 #ifdef HAVE_PWD_H
 #  include <pwd.h>
 #endif
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 #include "vmath.h"

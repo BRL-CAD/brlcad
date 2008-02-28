@@ -22,18 +22,12 @@
  *
  *  Plot an RGB profile of a framebuffer scanline.
  *
- *  Author -
- *	Phillip Dykstra
- *
  */
 
 #include "common.h"
 
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
 #include <stdlib.h>
-#include <stdio.h>
+#include "bio.h"
 
 #include "bu.h"
 #include "fb.h"

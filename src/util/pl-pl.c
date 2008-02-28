@@ -19,23 +19,17 @@
  */
 /** @file pl-pl.c
  *
- *  Plot smasher.
- *  Gets rid of (floating point, flush, 3D, color, text).
+ * Plot smasher.
  *
- *  Author -
- *	Phillip Dykstra
+ * Gets rid of (floating point, flush, 3D, color, text).
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 

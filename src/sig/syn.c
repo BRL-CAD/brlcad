@@ -18,21 +18,16 @@
  * information.
  */
 /** @file syn.c
- *  Multi Sine Synthesis
- */
-
-/*
- * $Id$
+ *
+ * Multi Sine Synthesis
+ *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #define TABSIZE	512
 double	sintab[TABSIZE];

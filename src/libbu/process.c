@@ -21,20 +21,13 @@
  *
  * process management routines
  *
- * Author -
- *   Christopher Sean Morrison
- *
- * Source -
- *   BRL-CAD Open Source
  */
 
 #include "common.h"
 
 /* system headers */
 #include <sys/types.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 /* common headers */
 #include "bu.h"

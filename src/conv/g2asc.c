@@ -23,24 +23,14 @@
  *  This program generates an ASCII data file which contains
  *  a GED database.
  *
- *  Usage:  g2asc file.g file.asc
- *
- *  Author -
- *  	Charles M Kennedy
- *  	Michael J Muuss
- *	Susanne Muuss, J.D.
- *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <ctype.h>
 #include <string.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "vmath.h"
 #include "db.h"

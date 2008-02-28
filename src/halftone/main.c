@@ -60,20 +60,14 @@
  *	Fairly simple.  Most of the algorthems are inspired by
  *		Digital Halftoning by Robert Ulichney
  *
- * Author:
- *	Christopher T. Johnson	- 90/03/21
- *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <ctype.h>
 #include <math.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "vmath.h"
 #include "raytrace.h"

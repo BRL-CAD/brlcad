@@ -19,18 +19,14 @@
  */
 /** @file pixfieldsep.c
  *
- *  Separate an interlaced video image into two separate .pix files.
+ * Separate an interlaced video image into two separate .pix files.
  *
  */
 
 #include "common.h"
 
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
-
 #include <stdlib.h>
-#include <stdio.h>
+#include "bio.h"
 
 #include "bu.h"
 

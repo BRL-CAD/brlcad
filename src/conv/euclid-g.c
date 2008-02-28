@@ -22,26 +22,16 @@
  *
  *  Program to convert Euclid file into a BRL-CAD NMG object.
  *
- *  Authors -
- *	Michael Markowski
- *	John R. Anderson
  */
 
 #include "common.h"
 
 /* system headers */
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
-#if defined(HAVE_UNISTD_H)
-#  include <unistd.h>
-#else
-#  if defined(HAVE_SYS_UNISTD_H)
-#    include <sys/unistd.h>
-#  endif
-#endif
 #include <errno.h>
+#include "bio.h"
 
 /* interface headers */
 #include "vmath.h"

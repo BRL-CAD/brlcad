@@ -18,20 +18,17 @@
  * information.
  */
 /** @file dauto2.c
- *		D A U T O . C
  *
- *  Compute the autocorrelation function of doubles.
+ * Compute the autocorrelation function of doubles.
+ *
  */
 
 #include "common.h"
 
 #include <string.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 
 #define	BSIZE	2048		/* Must be AT LEAST 2*Points in spectrum */

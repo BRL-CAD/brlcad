@@ -20,17 +20,15 @@
 /** @file d-a.c
  *
  * double to ascii.
+ *
  */
 
 #include "common.h"
 
 #include <string.h>
-#include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 int	nflag = 0;
 

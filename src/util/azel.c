@@ -44,21 +44,15 @@
  *	coordinates, and the point is output in derotated form:
  *
  *			x  y  z  field_1  field_2  ...  field_n.
- *  Author -
- *	Paul J. Tanenbaum
  *
  */
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <math.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "vmath.h"
 #include "bu.h"

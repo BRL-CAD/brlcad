@@ -19,28 +19,21 @@
  */
 /** @file pixdiff.c
  *
- *  Compute the difference between two .pix files.
- *  To establish context, a monochrome image is produced when there
- *  are no differences;  otherwise the channels that differ are
- *  highlighted on differing pixels.
+ * Compute the difference between two .pix files.  To establish
+ * context, a monochrome image is produced when there are no
+ * differences; otherwise the channels that differ are highlighted on
+ * differing pixels.
  *
- *  This routine operates on a pixel-by-pixel basis, and thus
- *  is independent of the resolution of the image.
- *
- *  Author -
- *	Michael John Muuss
+ * This routine operates on a pixel-by-pixel basis, and thus is
+ * independent of the resolution of the image.
  *
  */
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 
 long	matching;

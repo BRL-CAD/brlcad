@@ -19,25 +19,17 @@
  */
 /** @file bwfilter.c
  *
- *  Filters a black and white file with an arbitrary 3x3 kernel.
- *  Leaves the outer rows untouched.
- *  Allows an alternate divisor and offset to be given.
- *
- *  Author -
- *	Phillip Dykstra
- *	15 Aug 1985
+ * Filters a black and white file with an arbitrary 3x3 kernel.
+ * Leaves the outer rows untouched.  Allows an alternate divisor and
+ * offset to be given.
  *
  */
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 

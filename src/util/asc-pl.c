@@ -19,24 +19,17 @@
  */
 /** @file asc-pl.c
  *
- *	Produce UNIX plot commands in PLOT3(5) format
- *	from ASCII representation.
- *
- *  Author -
- *	Paul Tanenbaum
+ * Produce UNIX plot commands in PLOT3(5) format from ASCII
+ * representation.
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <ctype.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "plot3.h"
 #include "bu.h"

@@ -20,21 +20,15 @@
  */
 /** @file fb-pix.c
  *
- *  Program to take a frame buffer image and write a .pix image.
- *
- *  Author -
- *	Michael John Muuss
+ * Program to take a frame buffer image and write a .pix image.
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
 #include <sys/stat.h>
+#include "bio.h"
 
 #include "bu.h"
 #include "fb.h"

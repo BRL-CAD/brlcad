@@ -18,24 +18,20 @@
  * information.
  */
 /** @file pixcolors.c
- *	Count the number of different pixel values in a PIX format image.
- *	If the "-v" option is selected, list each unique pixel value
- *	to the standard output.
  *
- *	Author(s)
- *	Lee A. Butler	butler@stsci.edu
+ * Count the number of different pixel values in a PIX format image.
+ * If the "-v" option is selected, list each unique pixel value to the
+ * standard output.
  *
- *	Options
- *	v	list colors
+ * Options
+ * v	list colors
+ *
  */
 
 #include "common.h"
 
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
-#include <stdio.h>
 #include <stdlib.h>
+#include "bio.h"
 
 #include "bu.h"
 

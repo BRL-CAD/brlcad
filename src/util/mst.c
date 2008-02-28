@@ -19,28 +19,21 @@
  */
 /** @file mst.c
  *
- *	Construct a minimum spanning tree using Prim's Algorithm
+ * Construct a minimum spanning tree using Prim's Algorithm
  *
- *	After reading in a graph, the program builds and maintains
- *	a priority queue of "bridges" between the gradually expanding
- *	MST and each of the vertices not yet in the MST.  In this
- *	context, vertices are classified as "civilized" (i.e. in the
- *	MST) and "uncivilized" (not yet in the MST).
- *
- *  Author -
- *	Paul J. Tanenbaum
+ * After reading in a graph, the program builds and maintains
+ * a priority queue of "bridges" between the gradually expanding
+ * MST and each of the vertices not yet in the MST.  In this
+ * context, vertices are classified as "civilized" (i.e. in the
+ * MST) and "uncivilized" (not yet in the MST).
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 

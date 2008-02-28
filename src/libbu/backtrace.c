@@ -23,11 +23,6 @@
  *
  * Extract a backtrace of the current call stack.
  *
- * Author -
- *   Christopher Sean Morrison
- *
- * Source -
- *   BRL-CAD Open Source
  */
 
 #include "common.h"
@@ -39,7 +34,6 @@
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
-
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
 #endif
@@ -49,15 +43,13 @@
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
 #ifdef HAVE_PROCESS_H
 #  include <process.h>
 #endif
 #ifdef HAVE_SYS_SELECT_H
 #  include <sys/select.h>
 #endif
+#include "bio.h"
 
 /* common headers */
 #include "bu.h"

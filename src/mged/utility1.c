@@ -26,15 +26,11 @@
  *	edcodes()	allows for easy editing of region ident codes
  *	f_which_id()	lists all regions with given ident number
  *
- *  Author -
- *	Keith A. Applin
- *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
@@ -45,10 +41,7 @@
 #include <math.h>
 #include <time.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 #include "vmath.h"

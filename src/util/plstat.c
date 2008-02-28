@@ -19,22 +19,15 @@
  */
 /** @file plstat.c
  *
- *  Print statistics about a Plot3(5) format file.
- *
- *  Author -
- *	Phillip Dykstra
+ * Print statistics about a Plot3(5) format file.
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 

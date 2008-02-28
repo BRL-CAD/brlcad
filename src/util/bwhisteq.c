@@ -19,24 +19,16 @@
  */
 /** @file bwhisteq.c
  *
- *  Build up the histgram of a picture and output the "equalized"
- *  version of it on stdout.
- *
- *  Author -
- *	Phillip Dykstra
- *	2 Sept 1986
+ * Build up the histgram of a picture and output the "equalized"
+ * version of it on stdout.
  *
  */
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
 
 #include "bu.h"
 

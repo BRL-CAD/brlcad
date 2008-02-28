@@ -19,25 +19,15 @@
  */
 /** @file pixrect.c
  *
- *  Remove a portion of a potentially huge pix file.
- *
- *  Authors -
- *	Phillip Dykstra
- *	2 Oct 1985
- *
- *      Further additions by John Grosh, 1 April 1990
+ * Remove a portion of a potentially huge pix file.
  *
  */
 
 #include "common.h"
 
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-
 #include <stdlib.h>
-#include <stdio.h>
 #include <ctype.h>
+#include "bio.h"
 
 #include "bu.h"
 

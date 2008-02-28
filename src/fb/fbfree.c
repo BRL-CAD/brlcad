@@ -23,18 +23,12 @@
  *  Free any resources associated with a frame buffer.
  *  Just calls fb_free().
  *
- *  Authors -
- *	Phillip Dykstra
- *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 #include "fb.h"

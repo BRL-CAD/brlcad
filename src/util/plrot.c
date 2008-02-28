@@ -19,25 +19,17 @@
  */
 /** @file plrot.c
  *
- *  Rotate, Translate, and Scale a Unixplot file.
- *
- *  Authors -
- *	Phillip Dykstra
- *	Michael John Muuss
+ * Rotate, Translate, and Scale a Unixplot file.
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h> /* atof() */
-#include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 #include <math.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 #include "vmath.h"

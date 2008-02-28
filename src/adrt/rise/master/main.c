@@ -19,9 +19,6 @@
  */
 /** @file main.c
  *
- *  Author -
- *      Justin L. Shumaker
- *
  */
 
 #include "common.h"
@@ -30,13 +27,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
 #ifdef HAVE_GETOPT_H
 #  include <getopt.h>
 #endif
 
+#include "bio.h"
 #include "bu.h"
 
 #include "rise.h"

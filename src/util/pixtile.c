@@ -19,24 +19,17 @@
  */
 /** @file pixtile.c
  *
- *  Given multiple .pix files with ordinary lines of pixels,
- *  produce a single image with each image side-by-side,
- *  right to left, bottom to top on STDOUT.
- *
- *  Author -
- *	Michael John Muuss
+ * Given multiple .pix files with ordinary lines of pixels, produce a
+ * single image with each image side-by-side, right to left, bottom to
+ * top on STDOUT.
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 

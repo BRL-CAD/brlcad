@@ -20,21 +20,16 @@
  */
 /** @file fblabel.c
  *
- *  Function -
- *	Draw a Label on a Frame buffer image.
+ * Draw a Label on a Frame buffer image.
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <ctype.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 #include "fb.h"

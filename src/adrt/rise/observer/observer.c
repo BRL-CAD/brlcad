@@ -19,9 +19,6 @@
  */
 /** @file observer.c
  *
- *  Author -
- *      Justin L. Shumaker
- *
  */
 
 #include "common.h"
@@ -44,12 +41,11 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
 #if RISE_USE_COMPRESSION
-#include <zlib.h>
+#  include <zlib.h>
 #endif
+
+#include "bio.h"
 
 
 typedef struct rise_observer_net_info_s {

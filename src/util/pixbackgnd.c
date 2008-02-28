@@ -19,24 +19,18 @@
  */
 /** @file pixbackgnd.c
  *
- * Function -
- *	Backgound Maker
+ * Backgound Maker
  *
- *  Given Hue and Saturation for background, make top light and bottom dark.
- *  Generates a pix(5) stream on stdout.
+ * Given Hue and Saturation for background, make top light and bottom dark.
+ * Generates a pix(5) stream on stdout.
  *
- *  Author -
- *	Michael John Muuss
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 

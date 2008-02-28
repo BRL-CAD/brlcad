@@ -32,19 +32,13 @@
  *	1024	5.12i	(4.95i)
  *	1280	6.4i	(6.2i)
  *
- *  Author -
- *	Ronald B. Natalie
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 #include "fb.h"

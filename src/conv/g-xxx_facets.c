@@ -20,8 +20,8 @@
  */
 /** @file g-xxx_facets.c
  *
- *  Program to convert a BRL-CAD model (in a .g file) to a facetted format
- *  by calling on the NMG booleans.  Based on g-stl.c.
+ * Program to convert a BRL-CAD model (in a .g file) to a facetted
+ * format by calling on the NMG booleans.  Based on g-stl.c.
  *
  */
 
@@ -32,9 +32,7 @@
 #include <ctype.h>
 #include <math.h>
 #include <string.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "vmath.h"
 #include "nmg.h"

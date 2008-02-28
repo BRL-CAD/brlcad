@@ -36,23 +36,12 @@
  *  Because two files are being processed, the "file_*" things refer
  *  to the input file, and the "scr_*" things refer to the output file.
  *
- *  Author -
- *	Michael John Muuss
- *
- *  Acknowledgement -
- *	getbits() drawn from paintimp.c by
- *	Dave Johnson, Brown University Computer Science
- *
  */
 
 #include "common.h"
 
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-
-#include <stdio.h>
 #include <stdlib.h>
+#include "bio.h"
 
 #include "bu.h"
 

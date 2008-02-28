@@ -21,6 +21,7 @@
  *
  *  Average Magnitude Difference Function
  *  (Experimental: for pitch extraction)
+ *
  */
 
 #include "common.h"
@@ -29,9 +30,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 
 #define	BSIZE	2048		/* Must be AT LEAST 2*Points in spectrum */

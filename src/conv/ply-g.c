@@ -30,14 +30,7 @@
 #include <math.h>
 #include <string.h>
 #include <ctype.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#else
-#  ifdef HAVE_SYS_UNISTD_H
-#    include <sys/unistd.h>
-#  endif
-#endif
+#include "bio.h"
 
 /* interface headers */
 #include "bu.h"

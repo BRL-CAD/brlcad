@@ -37,14 +37,8 @@
 #define	CURSOR	1
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <ctype.h>
-#include <fcntl.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
 #include <X11/X.h>
 #ifdef HAVE_XOSDEFS_H
 #  include <X11/Xfuncproto.h>
@@ -60,6 +54,7 @@
 #include <X11/Xutil.h>
 #include <X11/cursorfont.h>
 #include <X11/Xatom.h>		/* for XA_RGB_BEST_MAP */
+#include "bio.h"
 
 #include "fb.h"
 

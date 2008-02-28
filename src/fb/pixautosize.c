@@ -20,23 +20,17 @@
  */
 /** @file pixautosize.c
  *
- *  Program to determine if a given file is one of the "standard"
- *  sizes as known by the framebuffer library.
+ * Program to determine if a given file is one of the "standard" sizes
+ * as known by the framebuffer library.
  *
- *  Used by pixinfo.sh to determine size of .pix and .bw files.
- *
- *  Author -
- *	Michael John Muuss
+ * Used by pixinfo.sh to determine size of .pix and .bw files.
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
-#include <stdio.h>
+#include "bio.h"
 
 #include "bu.h"
 #include "vmath.h"

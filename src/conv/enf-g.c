@@ -20,21 +20,19 @@
  */
 /** @file enf-g.c
  *
- *  Program to convert the tessellated Elysium Neutral File format to BRL-CAD.
+ * Program to convert the tessellated Elysium Neutral File format to
+ * BRL-CAD format.
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "db.h"
 #include "vmath.h"

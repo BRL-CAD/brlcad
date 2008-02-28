@@ -36,7 +36,7 @@
 /* #define BSD42 */
 /* #define BSD41a */
 
-/* does not include common.h so it may remain stand-alone */
+/* does not include common.h or bio.h so it may remain stand-alone */
 
 #ifndef _WIN32
 #  include <unistd.h>

@@ -22,21 +22,13 @@
  * Display a color histogram of a pix file.
  * 0 is top of screen, 255 bottom.
  *
- *  Author -
- *	Phillip Dykstra
- *	16 June 1986
- *
  */
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "fb.h"
 

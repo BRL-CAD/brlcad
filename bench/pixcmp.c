@@ -28,19 +28,14 @@
  *  This routine operates on a pixel-by-pixel basis, and thus
  *  is independent of the resolution of the image.
  *
- *  Author -
- *	Christopher Sean Morrison
- *	Charles M. Kennedy
- *	Michael John Muuss
  */
 
-#include <stdio.h>
+#include "common.h"
+
 #include <stdlib.h>
 #include <string.h>
+#include "bio.h"
 
-#ifndef _WIN32
-#  include <unistd.h>
-#endif
 
 /* exit codes for argument processing errors */
 #define OPTS_ERROR 127

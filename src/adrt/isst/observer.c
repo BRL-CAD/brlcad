@@ -47,14 +47,11 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
-
 #if ISST_USE_COMPRESSION
-#include <zlib.h>
+#  include <zlib.h>
 #endif
 
+#include "bio.h"
 
 typedef struct isst_observer_net_info_s {
     struct hostent master;

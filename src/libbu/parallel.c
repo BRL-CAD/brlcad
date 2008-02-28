@@ -147,6 +147,8 @@ static struct sched_param bu_param;
 #  include <sys/sysadmin.h>
 #endif
 
+#include "bio.h"
+
 /*
  * multithreading support for SunOS 5.X / Solaris 2.x
  */
@@ -160,13 +162,6 @@ static struct sched_param bu_param;
 /*
  * multithread support built on POSIX Threads (pthread) library.
  */
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#else
-#  ifdef HAVE_SYS_UNISTD_H
-#    include <sys/unistd.h>
-#  endif
-#endif
 #ifdef HAVE_PTHREAD_H
 #  include <pthread.h>
 #  define rt_thread_t	pthread_t

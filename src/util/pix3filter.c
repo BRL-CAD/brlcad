@@ -23,25 +23,13 @@
  *  Leaves the outer rows untouched.
  *  Allows an alternate divisor and offset to be given.
  *
- *  Author -
- *	Phillip Dykstra
- *	15 Aug 1985
- *
- *  Modified -
- *	Christopher T. Johnson - 01 March 1989
- *	    Added the 3rd dimension.
- *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 

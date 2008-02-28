@@ -19,42 +19,20 @@
  */
 /** @file pipe.c
  *
- * Generate piping (fuel, hydraulic lines, etc) in MGED
- * format from input (points in space defining the routing).
- * Makes both tubing regions and fluid regions or solid cable.
- * Automatically generates elbow regions (and fluid in the
- * elbows) when the piping changes direction.
+ * Generate piping (fuel, hydraulic lines, etc) in MGED format from
+ * input (points in space defining the routing).  Makes both tubing
+ * regions and fluid regions or solid cable.  Automatically generates
+ * elbow regions (and fluid in the elbows) when the piping changes
+ * direction.
  *
- * Version 1.0
- * Author:	Earl P. Weaver
- * 		Ballistic Research Labratory
- * 		Aberdeen Proving Ground, Md.
- * Date:	Mon March 13 1989
- * Version 2.0
- * Changes by:	John R. Anderson
- * Date:	Wed December 6 1989
- *
- * Version 3.0
- * Changes by:	John R. Anderson
- * Date: 	Tuesday January 18, 1994
- *	combined code into a single file
- *
- * Version 3.1
- * Changes by:	John R. Anderson
- * Date:	Wednesday May 18, 1994
- *	included in BRL-CAD distribution
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "vmath.h"
 #include "raytrace.h"

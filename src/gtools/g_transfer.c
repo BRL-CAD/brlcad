@@ -19,8 +19,6 @@
  */
 /** @file g_transfer.c
  *
- * Author: Christopher Sean Morrison
- *
  * Relatively simple example database transfer program that shows how
  * to open a database, extract a serialized version of specified
  * geometry objects, transfer those objects to a remove host, and
@@ -39,9 +37,7 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <string.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 /* interface headers */
 #include "raytrace.h"

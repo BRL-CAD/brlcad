@@ -33,21 +33,14 @@
  *  This multi-channel output is fed to the next stage to generate
  *  control scripts, etc.
  *
- *  Author -
- *	Michael John Muuss
- *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 #include "vmath.h"

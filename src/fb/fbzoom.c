@@ -20,24 +20,15 @@
  */
 /** @file fbzoom.c
  *
- * Function -
- *	Dynamicly modify Ikonas Zoom and Window parameters,
- *	using VI and/or EMACS-like keystrokes on a regular terminal.
- *
- *  Authors -
- *	Bob Suckling
- *	Michael John Muuss
- *	Gary S. Moss
+ * Dynamicly modify Ikonas Zoom and Window parameters, using VI and/or
+ * EMACS-like keystrokes on a regular terminal.
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
-#include <stdio.h>
+#include "bio.h"
 
 #include "bu.h"
 #include "fb.h"

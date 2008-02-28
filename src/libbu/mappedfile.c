@@ -43,14 +43,8 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
-#include <fcntl.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
@@ -63,6 +57,7 @@
 #    define MAP_FAILED	((void *)-1)	/* Error return from mmap() */
 #  endif
 #endif
+#include "bio.h"
 
 #include "bu.h"
 

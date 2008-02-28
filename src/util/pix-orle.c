@@ -19,21 +19,14 @@
  */
 /** @file pix-orle.c
  *
- *  Encode a .pix file using the old ORLE library
- *
- *  Author -
- *	Michael John Muuss
+ * Encode a .pix file using the old ORLE library
  *
  */
 
 #include "common.h"
 
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-
 #include <stdlib.h>
-#include <stdio.h>
+#include "bio.h"
 
 #include "bu.h"
 #include "fb.h"

@@ -50,27 +50,21 @@
  |    |Idents  : reg_#, ident, space, mat,%, desc  : 5i5, 5x, a50               |
  --------------------------------------------------------------------------------
  *
- *  Author -
- *	Gary S. Moss
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <signal.h>
 #include <math.h>
 #include <string.h>
-
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
 #ifdef HAVE_SYS_WAIT_H
 #  include <sys/wait.h>
 #endif
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "vmath.h"
 #include "raytrace.h"

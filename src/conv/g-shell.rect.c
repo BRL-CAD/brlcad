@@ -20,27 +20,21 @@
  */
 /** @file g-shell.rect.c
  *
- *	This routine creates an single NMG shell from an object by
- *	raytracing and using the hit points as vertices in the shell.
- *	Raytracing is doe in the Y-direction primarily. The -r option
- *	requests raytracing in the X and Z directions to refine the
- *	shape of the shell.
+ * This routine creates an single NMG shell from an object by
+ * raytracing and using the hit points as vertices in the shell.
+ * Raytracing is doe in the Y-direction primarily. The -r option
+ * requests raytracing in the X and Z directions to refine the shape
+ * of the shell.
+ *
  */
 
 #include "common.h"
 
 /* system headers */
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
-#if defined(HAVE_UNISTD_H)
-#  include <unistd.h>
-#else
-#  if defined(HAVE_SYS_UNISTD_H)
-#    include <sys/unistd.h>
-#  endif
-#endif
+#include "bio.h"
 
 /* interface headers */
 #include "vmath.h"

@@ -19,24 +19,20 @@
  */
 /** @file material.c
  *
- *  Routines to coordinate the implementation of material properties
+ * Routines to coordinate the implementation of material properties
  *
  */
 
 #include "common.h"
 
-#include <stdio.h>
 #include <ctype.h>
 #include <math.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
 #ifdef HAVE_SYS_PARAM_H
 #  include <sys/param.h>
 #  include <dlfcn.h>
 #endif
+#include "bio.h"
 
 #include "bu.h"
 #include "vmath.h"

@@ -26,19 +26,16 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 #include <math.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
 #ifdef HAVE_SYS_TYPES_H
 # include <sys/types.h>
 #endif
 #ifdef HAVE_SYS_STAT_H
 # include <sys/stat.h>
 #endif
+#include "bio.h"
 
 #include "vmath.h"
 #include "raytrace.h"

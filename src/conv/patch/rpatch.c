@@ -19,24 +19,20 @@
  */
 /** @file rpatch.c
  *
- *	Front end to patch.
- *	John R. Anderson
- *		Based on rpatch.f by Bill Mermagen Jr.
- *     This pre-processor program alters the data file format
- *     for use by the main conversion program.
+ * Front end to patch.
+ *
+ * This pre-processor program alters the data file format for use by
+ * the main conversion program.
+ *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <ctype.h>
 #include <math.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 
 #define	MAXLINELEN	256

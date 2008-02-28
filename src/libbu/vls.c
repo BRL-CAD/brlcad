@@ -21,26 +21,22 @@
 /** @{ */
 /** @file vls.c
  *
- *  @brief The variable length string package.
+ * @brief The variable length string package.
  *
- *  The variable length string package.
+ * The variable length string package.
  *
- *  Assumption:  libc-provided sprintf() function is safe to use in parallel,
- *  on parallel systems.
+ * Assumption:  libc-provided sprintf() function is safe to use in parallel,
+ * on parallel systems.
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <ctype.h>
 #include <string.h>
 #include <stdarg.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 

@@ -21,24 +21,18 @@
 /** @{ */
 /** @file if_ab.c
  *
- *  Communicate with an Abekas A60 digital videodisk as if it was
- *  a framebuffer, to ease the task of loading and storing images.
- *
- *  Authors -
- *	Michael John Muuss
- *	Phillip Dykstra
+ * Communicate with an Abekas A60 digital videodisk as if it was a
+ * framebuffer, to ease the task of loading and storing images.
  *
  */
 /** @} */
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <math.h>
 #include <time.h>
-#include <fcntl.h>
 #include <string.h>
 
 #include <netdb.h>
@@ -46,10 +40,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "fb.h"
 

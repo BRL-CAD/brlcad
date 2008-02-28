@@ -28,9 +28,7 @@
 
 #include <sys/select.h>
 
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 void tienet_flip(void* src, void* dest, size_t size) {
     size_t i;

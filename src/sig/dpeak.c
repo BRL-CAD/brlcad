@@ -19,19 +19,17 @@
  */
 /** @file dpeak.c
  *
- *  An EXPERIMENTAL routine to find the N peak values in data set.
- *  Where "peak" means negative second difference, local maximum.
+ * An EXPERIMENTAL routine to find the N peak values in data set.
+ * Where "peak" means negative second difference, local maximum.
+ *
  */
 
 #include "common.h"
 
 #include <string.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 
 #define	BSIZE	2048		/* Must be AT LEAST 2*Points in spectrum */

@@ -19,19 +19,17 @@
  */
 /** @file cmd.c
  *
- *  The hooks to most of mged's commands when running in console mode.
+ * The hooks to most of mged's commands when running in console mode.
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <signal.h>
 #include <time.h>
 #include <string.h>
-
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
 #endif
@@ -41,9 +39,7 @@
 #ifdef HAVE_SYS_WAIT_H
 #  include <sys/wait.h>
 #endif
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "tcl.h"
 #include "tk.h"

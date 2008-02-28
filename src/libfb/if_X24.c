@@ -50,19 +50,12 @@
 
 #include <errno.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <time.h>
 #include <sys/types.h>
 #include <string.h>
-#include <fcntl.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
 #endif
-
 #ifdef HAVE_SYS_MMAN_H
 #  include <sys/mman.h>
 #  define CAN_LINGER 1
@@ -89,6 +82,7 @@
 #include <X11/Xatom.h>
 
 #include <ctype.h>
+#include "bio.h"
 
 #include "fb.h"
 

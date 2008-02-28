@@ -19,30 +19,20 @@
  *
  */
 /** @file g-euclid1.c
- *			G - E U C L I D . C
  *
- *  Program to convert a BRL-CAD model (in a .g file) to a Euclid "decoded" facetted model
- *  by calling on the NMG booleans.
+ * Program to convert a BRL-CAD model (in a .g file) to a Euclid
+ * "decoded" facetted model by calling on the NMG booleans.
  *
- *  Author -
- *	John R. Anderson
  */
 
 #include "common.h"
 
 /* system headers */
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
 #include <signal.h>
-#if defined(HAVE_UNISTD_H)
-#  include <unistd.h>
-#else
-#  if defined(HAVE_SYS_UNISTD_H)
-#    include <sys/unistd.h>
-#  endif
-#endif
+#include "bio.h"
 
 /* interface headers */
 #include "vmath.h"

@@ -26,26 +26,18 @@
  * This allows an offset into both the display and source file.
  * The color planes to be loaded are also selectable.
  *
- *  Author -
- *	Phillip Dykstra
- *	15 Aug 1985
- *
  */
 
 #include "common.h"
 
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include <stdlib.h>
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
 #ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h>
 #endif
-
-#include <stdlib.h>
-#include <stdio.h>
+#include "bio.h"
 
 #include "bu.h"
 #include "fb.h"

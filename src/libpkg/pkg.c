@@ -78,6 +78,10 @@
 
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
+#else
+#  include <windows.h>
+#  include <io.h>
+#  include <fcntl.h>
 #endif
 
 

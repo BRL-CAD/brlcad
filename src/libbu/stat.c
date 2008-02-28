@@ -21,25 +21,20 @@
 /** @{ */
 /** @file stat.c
  *
- *  Support routines for identifying properties of files and
- *  directories such as whether they exist or are the same as another
- *  given file.
+ * Support routines for identifying properties of files and
+ * directories such as whether they exist or are the same as another
+ * given file.
  *
  */
 
 #include "common.h"
 
-#include <stdio.h>
 #include <string.h>
-
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
 #ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h>
-#endif
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
 #endif
 #ifdef HAVE_PWD_H
 #  include <pwd.h>
@@ -47,6 +42,7 @@
 #ifdef HAVE_GRP_H
 #  include <grp.h>
 #endif
+#include "bio.h"
 
 #include "bu.h"
 

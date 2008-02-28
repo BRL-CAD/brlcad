@@ -19,25 +19,19 @@
  */
 /** @file pl-X.c
  *
- *  Display plot3(5) on an X Window System display (X11R2)
- *
- *  Author -
- *	Phillip Dykstra
+ * Display plot3(5) on an X Window System display (X11R2)
  *
  */
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
+#ifdef HAVE_X11_XLIB_H
+#  include <X11/Xlib.h>
+#  include <X11/Xutil.h>
 #endif
+#include "bio.h"
 
 #include "dm.h" /* for dm_applicationfocus() */
 #include "bu.h"

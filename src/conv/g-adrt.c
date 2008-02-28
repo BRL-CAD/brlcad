@@ -28,12 +28,9 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
 #include <string.h>
 #include <math.h>
+#include "bio.h"
 
 #include "vmath.h"		/* vector math macros */
 #include "raytrace.h"		/* librt interface definitions */

@@ -19,26 +19,22 @@
  */
 /** @file remapid.c
  *
- *	Perform batch modifications of region IDs for BRL-CAD
- *	(or TANKILL) geometry
+ * Perform batch modifications of region IDs for BRL-CAD (or TANKILL)
+ * geometry
  *
- *	The program reads a .g (or TANKILL) file and a spec file
- *	indicating which region IDs to change to which new values.
- *	For a .g file, the specified changes are made to that file;
- *	For a TANKILL file, a modified model is written to stdout.
+ * The program reads a .g (or TANKILL) file and a spec file indicating
+ * which region IDs to change to which new values.  For a .g file, the
+ * specified changes are made to that file; For a TANKILL file, a
+ * modified model is written to stdout.
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <ctype.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 #include "vmath.h"

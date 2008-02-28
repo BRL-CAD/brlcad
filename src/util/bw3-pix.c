@@ -22,21 +22,14 @@
  * Merge three BW files into one RGB pix file.
  *  (i.e. combine the colors)
  *
- *  Author -
- *	Phillip Dykstra
- *	13 June 1986
- *
  */
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 

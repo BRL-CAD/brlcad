@@ -19,17 +19,15 @@
  */
 /** @file ddisp.c
  *
- *  Data Display - shows doubles on a framebuffer in various ways.
+ * Data Display - shows doubles on a framebuffer in various ways.
+ *
  */
 
 #include "common.h"
 
 #include <string.h>
 #include <stdlib.h>
-#include <stdio.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "fb.h"
 

@@ -42,19 +42,13 @@
  *  Method:
  *	straight-forward.
  *
- *  Author:
- *	Christopher T. Johnson - 88/12/27
  */
 
 #include "common.h"
 
 #include <stdlib.h> /* for atof() */
-#include <stdio.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
-
 #include <math.h>
+#include "bio.h"
 
 #include "vmath.h"
 #include "bu.h"

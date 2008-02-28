@@ -18,30 +18,21 @@
  * information.
  */
 /** @file umod.c
- *		I M O D . C
  *
- *  Modify intensities in a stream of short (16 bit) unsigned integers.
+ * Modify intensities in a stream of short (16 bit) unsigned integers.
  *
- *  Allows any number of add, subtract, multiply, divide, or
- *  exponentiation operations to be performed on a picture.
- *  Keeps track of and reports clipping.
- *
- *  Author -
- *  	Lee A. Butler
- *	25 October 1990
+ * Allows any number of add, subtract, multiply, divide, or
+ * exponentiation operations to be performed on a picture.  Keeps
+ * track of and reports clipping.
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 

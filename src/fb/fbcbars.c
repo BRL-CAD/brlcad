@@ -50,9 +50,6 @@
  *  Thus, this bundled version is more efficient, easier to use,
  *  and more likely to have the desired effect.
  *
- *  Author -
- *	Michael John Muuss
- *
  *  Original inspiration -
  *	"ikcolorbars" by Mike Pique, University of North Carolina.
  *
@@ -63,11 +60,8 @@
 
 #include "common.h"
 
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
 #include <stdlib.h>
-#include <stdio.h>
+#include "bio.h"
 
 #include "bu.h"
 #include "fb.h"

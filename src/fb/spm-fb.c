@@ -20,19 +20,13 @@
  */
 /** @file spm-fb.c
  *
- *  Author -
- *	Phil Dykstra
- *
  */
 
 #include "common.h"
 
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
+#include "bio.h"
 
 #include "bu.h"
 #include "fb.h"

@@ -19,24 +19,17 @@
  */
 /** @file pixuntile.c
  *
- *  Given a single .pix file with multiple images, each
- *  side-by-side, right to left, bottom to top, break them
- *  up into separate .pix files.
- *
- *  Author -
- *	Phillip Dykstra
+ * Given a single .pix file with multiple images, each side-by-side,
+ * right to left, bottom to top, break them up into separate .pix
+ * files.
  *
  */
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 

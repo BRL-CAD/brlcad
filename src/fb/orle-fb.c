@@ -22,20 +22,13 @@
  *
  *  Display an old RLE format image on a framebuffer
  *
- *  Author -
- *	Gary S. Moss
- *
  */
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 #include "fb.h"

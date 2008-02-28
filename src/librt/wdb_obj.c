@@ -37,10 +37,7 @@
 #include <math.h>
 #include <errno.h>
 #include <assert.h>
-
-#if defined(HAVE_UNISTD_H)
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "tcl.h"
 #include "bu.h"

@@ -19,23 +19,16 @@
  */
 /** @file pix-rle.c
  *
- *  Encode a .pix file using the Utah Raster Toolkit RLE library
- *
- *  Author -
- *	Michael John Muuss
+ * Encode a .pix file using the Utah Raster Toolkit RLE library
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <time.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 #include "fb.h"

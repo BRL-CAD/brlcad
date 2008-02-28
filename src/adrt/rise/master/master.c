@@ -19,9 +19,6 @@
  */
 /** @file master.c
  *
- *  Author -
- *      Justin L. Shumaker
- *
  */
 
 #include "master.h"
@@ -31,6 +28,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
+
+#include "bio.h"
+
 /*** lib common ***/
 #include "canim.h"
 #include "cdb.h"
@@ -50,9 +50,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
 #if RISE_USE_COMPRESSION
 #include <zlib.h>
 #endif

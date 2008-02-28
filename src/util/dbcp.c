@@ -19,35 +19,24 @@
  */
 /** @file dbcp.c
  *
- *	Double-buffered copy program for UNIX
+ * Double-buffered copy program for UNIX
  *
- *	Usage:    dbcp {nblocks} < inputfile > outputfile
+ * Usage:    dbcp {nblocks} < inputfile > outputfile
  *
- *  Author -
- *	Doug Kingston
- *
- *  Source -
- *	Davis, Polk, and Wardwell
- *	Chase Manhattan Building
- *	New York, NY
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <signal.h>
 #include <errno.h>
-
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
 #ifdef HAVE_SYS_WAIT_H
 #  include <sys/wait.h>
 #endif
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 

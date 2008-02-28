@@ -18,22 +18,16 @@
  * information.
  */
 /** @file alias-pix.c
- *	Convert ALIAS(tm) PIX format image files to BRL PIX fomat files.
  *
- *	Author:
- *	Lee A. Butler
+ * Convert ALIAS(tm) PIX format image files to BRL PIX fomat files.
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <ctype.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 

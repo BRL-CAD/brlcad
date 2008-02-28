@@ -22,21 +22,13 @@
  * Converts a RGB pix file into 3 8-bit BW files.
  *  (i.e. seperates the colors)
  *
- *  Author -
- *	Phillip Dykstra
- *	13 June 1986
- *
  */
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 

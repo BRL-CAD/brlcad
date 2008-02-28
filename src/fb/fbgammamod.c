@@ -20,20 +20,17 @@
  */
 /** @file fbgammamod.c
  *
- *  Program to rapidly compute per-color gamma ramps and linear corrections.
+ * Program to rapidly compute per-color gamma ramps and linear
+ * corrections.
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <math.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 #include "fb.h"

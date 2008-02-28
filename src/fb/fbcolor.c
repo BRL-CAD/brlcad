@@ -20,24 +20,16 @@
  */
 /** @file fbcolor.c
  *
- * Function -
- *	Dynamicly show the desired color as the background,
- *	and in bargraph form, using the color map.
- *
- *  Author -
- *	Michael John Muuss
+ * Dynamicly show the desired color as the background, and in bargraph
+ * form, using the color map.
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 #include "fb.h"

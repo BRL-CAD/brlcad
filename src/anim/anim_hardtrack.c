@@ -19,6 +19,7 @@
  *
  */
 /** @file anim_hardtrack.c
+ *
  *  Animate the links and wheels of a tracked vehicle. It is assumed
  *  that the wheels do not translate with respect to the vehicle.
  *
@@ -30,10 +31,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
 
+#include "bio.h"
 #include "vmath.h"
 #include "bu.h"
 #include "bn.h"

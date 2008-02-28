@@ -22,19 +22,12 @@
  *  Embed a smaller pix file in a larger space, replicating the boundary
  *  pixels to fill out the borders, and output as a pix file.
  *
- *  Author -
- *	Michael John Muuss
- *
  */
 
 #include "common.h"
 
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-
 #include <stdlib.h>
-#include <stdio.h>
+#include "bio.h"
 
 #include "bu.h"
 

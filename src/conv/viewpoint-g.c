@@ -20,11 +20,11 @@
  */
 /** @file viewpoint-g.c
  *
- *  Converter from Viewpoint Datalabs coor/elem format
- *  to BRL-CAD format.  Will assign vertex normals if they
- *  are present in the input files.  Two files are expected
- *  one containing vertex coordinates (and optional normals)
- *  and the second which lists the vertex numbers for each polygonal face.
+ * Converter from Viewpoint Datalabs coor/elem format to BRL-CAD
+ * format.  Will assign vertex normals if they are present in the
+ * input files.  Two files are expected one containing vertex
+ * coordinates (and optional normals) and the second which lists the
+ * vertex numbers for each polygonal face.
  *
  */
 
@@ -32,18 +32,10 @@
 
 /* system headers */
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
 #include <errno.h>
-
-#if defined(HAVE_UNISTD_H)
-#  include <unistd.h>
-#else
-#  if defined(HAVE_SYS_UNISTD_H)
-#    include <sys/unistd.h>
-#  endif
-#endif
+#include "bio.h"
 
 /* interface headers */
 #include "vmath.h"

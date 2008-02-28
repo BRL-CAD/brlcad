@@ -18,17 +18,15 @@
  * information.
  */
 /** @file tea.c
- * Convert the Utah Teapot description from the IEEE CG&A database to the
- * BRL-CAD spline format. (Note that this has the closed bottom)
+ *
+ * Convert the Utah Teapot description from the IEEE CG&A database to
+ * the BRL-CAD spline format. (Note that this has the closed bottom)
  *
  */
 
 #include "common.h"
 
-#include <stdio.h>		/* Direct the output to stdout */
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "vmath.h"		/* BRL-CAD Vector macros */
 #include "nurb.h"		/* BRL-CAD Spline data structures */

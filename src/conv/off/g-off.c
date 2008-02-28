@@ -19,24 +19,18 @@
  */
 /** @file g-off.c
  *
- *  Program to convert a BRL-CAD model (in a .g file) to an OFF file
- *  by calling on the NMG booleans.
- *  Inspired by Michael J. Markowski's g-jack.c converter.
- *
- *  Author
- *	Glenn Durfee
+ * Program to convert a BRL-CAD model (in a .g file) to an OFF file by
+ * calling on the NMG booleans.  Inspired by Michael J. Markowski's
+ * g-jack.c converter.
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
+#include "bio.h"
 
 #include "bu.h"
 #include "vmath.h"

@@ -25,15 +25,10 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
-#  include <stdarg.h>
+#include <stdarg.h>
 #ifdef HAVE_SYS_IOCTL_H
 #  include <sys/ioctl.h>
 #  include <sys/resource.h>
@@ -47,9 +42,7 @@
 #ifdef HAVE_SYS_WAIT_H
 #  include <sys/wait.h>
 #endif
-#ifdef HAVE_SYS_FCNTL_H
-#  include <sys/fcntl.h>
-#endif
+#include "bio.h"
 
 #ifdef VMIN
 #  undef VMIN

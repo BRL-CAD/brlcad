@@ -18,22 +18,17 @@
  * information.
  */
 /** @file lgt.c
-    Author:		Gary S. Moss
-*/
+ *
+ */
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <fcntl.h>
 #include <math.h>
 #include <signal.h>
 #include <assert.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "vmath.h"
 #include "raytrace.h"

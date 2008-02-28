@@ -19,21 +19,19 @@
  */
 /** @file dfft.c
  *
- *  Compute FFT's of a stream of doubles (Real data).
+ * Compute FFT's of a stream of doubles (Real data).
  *
- *  Presently 512 point spectrum only.
- *  Which means we need a 1K data segment to get spectrum at midpoint.
+ * Presently 512 point spectrum only.
+ * Which means we need a 1K data segment to get spectrum at midpoint.
+ *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <math.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 

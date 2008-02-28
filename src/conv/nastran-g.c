@@ -20,25 +20,18 @@
  */
 /** @file nastran-g.c
  *
- *	Code to convert a NASTRAN finite element model to BRL-CAD.
- *
- *  Author -
- *      John R. Anderson
+ * Code to convert a NASTRAN finite element model to BRL-CAD.
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "vmath.h"
 #include "nmg.h"

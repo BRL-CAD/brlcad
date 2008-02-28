@@ -19,23 +19,16 @@
  */
 /** @file bw-rle.c
  *
- *  Encode a .bw file using the Utah Raster Toolkit RLE library
- *
- *  Author -
- *	Michael John Muuss
+ * Encode a .bw file using the Utah Raster Toolkit RLE library
  *
  */
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 #include "fb.h"

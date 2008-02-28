@@ -32,10 +32,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
 
+#include "bio.h"
 #include "bu.h"
 
 #include "isst.h"

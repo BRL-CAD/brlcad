@@ -19,27 +19,20 @@
  */
 /** @file dpix-pix.c
  *
- *  Convert double precision images in .dpix form to a .pix file.
- *  By default, will determin min/max values to drive exposure
- *  calculations, and perform linear interpolation on the way to 1-byte
- *  values.
+ * Convert double precision images in .dpix form to a .pix file.  By
+ * default, will determin min/max values to drive exposure
+ * calculations, and perform linear interpolation on the way to 1-byte
+ * values.
  *
- *  Reads the binary input file, finds the minimum and maximum values
- *  read, and linearly interpolates these values between 0 and 255.
- *
- *  Author -
- *	S. Muuss, J.D., Feb 04, 1990.
+ * Reads the binary input file, finds the minimum and maximum values
+ * read, and linearly interpolates these values between 0 and 255.
  *
  */
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 

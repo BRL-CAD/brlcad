@@ -19,29 +19,22 @@
  */
 /** @file bwmod.c
  *
- *  Modify intensities in Black and White files.
+ * Modify intensities in Black and White files.
  *
- *  Allows any number of add, subtract, multiply, divide, or
- *  exponentiation operations to be performed on a picture.
- *  Keeps track of and reports clipping.
+ * Allows any number of add, subtract, multiply, divide, or
+ * exponentiation operations to be performed on a picture.  Keeps
+ * track of and reports clipping.
  *
- *  Note that this works on PIX files also but there is no
- *  distinction made between colors.
- *
- *  Author -
- *	Phillip Dykstra
- *	31 July 1986
+ * Note that this works on PIX files also but there is no distinction
+ * made between colors.
  *
  */
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 

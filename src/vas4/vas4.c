@@ -19,26 +19,16 @@
  */
 /** @file vas4.c
  *
- *  Program to control the Lyon-Lamb VAS IV video animation controller
- *  with Sony BVU-850 recorder (or equiv).
- *
- *
- *  Authors -
- *	Steve Satterfield, USNA
- *	Joe Johnson, USNA
- *	Michael John Muuss, BRL
+ * Program to control the Lyon-Lamb VAS IV video animation controller
+ * with Sony BVU-850 recorder (or equiv).
  *
  */
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "fb.h"
 #include "bu.h"

@@ -20,21 +20,15 @@
  */
 /** @file fbhelp.c
  *
- *  Print out info about the selected frame buffer.
- *  Just calls fb_help().
- *
- *  Authors -
- *	Phillip Dykstra
+ * Print out info about the selected frame buffer.
+ * Just calls fb_help().
  *
  */
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 #include "fb.h"

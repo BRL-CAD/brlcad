@@ -22,22 +22,14 @@
  * Display, and optionally dump to tty, a histogram of a
  * black and white file.  Black is top of screen, white bottom.
  *
- *  Author -
- *	Phillip Dykstra
- *	18 June 1986
- *
  */
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "fb.h"
 #include "bu.h"

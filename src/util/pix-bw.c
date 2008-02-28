@@ -27,22 +27,14 @@
  * -crt  will use weights for "typical" color CRT phosphors and
  *       a D6500 alignment white.
  *
- *  Author -
- *	Phillip Dykstra
- *	13 June 1986
- *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 

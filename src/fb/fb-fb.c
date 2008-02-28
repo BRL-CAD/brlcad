@@ -20,21 +20,15 @@
  */
 /** @file fb-fb.c
  *
- *  Program to copy the entire image on a framebuffer to another framebuffer.
- *
- *  Author -
- *	Michael John Muuss
+ * Program to copy the entire image on a framebuffer to another
+ * framebuffer.
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
-
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 #include "fb.h"

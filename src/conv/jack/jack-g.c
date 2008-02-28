@@ -19,23 +19,16 @@
  */
 /** @file jack-g.c
  *
- *  Program to convert JACK Psurf file into a BRL-CAD NMG object.
- *
- *  Author -
- *	Michael John Markowski
+ * Program to convert JACK Psurf file into a BRL-CAD NMG object.
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 #include "vmath.h"

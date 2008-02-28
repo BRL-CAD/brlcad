@@ -23,19 +23,12 @@
  *  it in 8-bit black and white form in pix order,
  *  i.e. Bottom UP, left to right.
  *
- *  Author -
- *	Phillip Dykstra
- *	15 Aug 1985
- *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
-#include <stdio.h>
+#include "bio.h"
 
 #include "bu.h"
 #include "fb.h"

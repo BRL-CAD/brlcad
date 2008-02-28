@@ -19,26 +19,24 @@
  */
 /** @file dconv.c
  *
- *  Fast FFT based convolution
+ * Fast FFT based convolution
  *
- *  This uses the overlap-save method to achieve a linear convolution
- *  (straight FFT's give you a circular convolution).
- *  An M-point kernel is convolved with N-point sequences (in xform space).
- *  The first M-1 points are incorrect, while the remaining points yield
- *  a true linear convolution.  Thus the first M-1 points of each xform
- *  are thrown away, while the last M-1 points of each input section
- *  are saved for the next xform.
+ * This uses the overlap-save method to achieve a linear convolution
+ * (straight FFT's give you a circular convolution).  An M-point
+ * kernel is convolved with N-point sequences (in xform space).  The
+ * first M-1 points are incorrect, while the remaining points yield a
+ * true linear convolution.  Thus the first M-1 points of each xform
+ * are thrown away, while the last M-1 points of each input section
+ * are saved for the next xform.
+ *
  */
 
 #include "common.h"
 
 #include <string.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 

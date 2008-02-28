@@ -19,15 +19,10 @@
  *
  */
 /** @file g-vrml.c
- *			G - V R M L 2 . C
  *
- *  Program to convert a BRL-CAD model (in a .g file) to a VRML (2.0)  facetted model
- *  by calling on the NMG booleans.
+ * Program to convert a BRL-CAD model (in a .g file) to a VRML (2.0)
+ * facetted model by calling on the NMG booleans.
  *
- *  Author -
- *	John R. Anderson
- *  Modified -
- *	July 1999 by John P. Williams, QUADRA Enterprises to output VRML2 format
  */
 
 #include "common.h"
@@ -35,19 +30,11 @@
 /* system headers */
 #include <stdlib.h>
 #include <stddef.h>
-#include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <fcntl.h>
 #include <math.h>
 #include <string.h>
-#if defined(HAVE_UNISTD_H)
-#  include <unistd.h>
-#else
-#  if defined(HAVE_SYS_UNISTD_H)
-#    include <sys/unistd.h>
-#  endif
-#endif
+#include "bio.h"
 
 /* interface headers */
 #include "vmath.h"

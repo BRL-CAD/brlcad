@@ -19,24 +19,15 @@
  */
 /** @file pixelswap.c
  *
- */
-
-/*	P I X E L S W A P -- interchange pixel values in an image
- *	Options
- *	h	help
+ * interchange pixel values in an image
  *
- *	$Id$
  */
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "bu.h"
 #include "fb.h"

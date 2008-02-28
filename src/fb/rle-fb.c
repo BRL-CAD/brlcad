@@ -23,20 +23,12 @@
  *  Decode a Utah Raster Toolkit RLE image, and display on a
  *  BRL libfb(3) framebuffer.
  *
- *  Authors -
- *	Michael John Muuss
- *	Paul R. Stay
- *
  */
 
 #include "common.h"
 
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-
 #include <stdlib.h>
-#include <stdio.h>
+#include "bio.h"
 
 #include "bu.h"
 #include "fb.h"
