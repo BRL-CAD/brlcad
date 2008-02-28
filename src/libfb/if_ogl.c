@@ -2184,18 +2184,22 @@ ogl_do_event(FBIO *ifp)
 		    {
 			int	x, y;
 			int	ix, iy;
-			unsigned char	cp[3] = {0};
+			register struct ogl_pixel *oglp;
 
 			x = event.xbutton.x;
-			y = event.xbutton.y;
+			y = ifp->if_height - event.xbutton.y;
 
 			if (x < 0 || y < 0) {
 			    fb_log("No RGB (outside image viewport)\n");
 			    break;
 			}
 
-			fb_log("At image (%d, %d), real RGB=(%3d %3d %3d) UNIMPLEMENTED\n",
-			       x, y, cp[RED], cp[GRN], cp[BLU]);
+			oglp = (struct ogl_pixel *)&ifp->if_mem[
+			    (y*SGI(ifp)->mi_memwidth)*
+			    sizeof(struct ogl_pixel) ];
+
+			fb_log("At image (%d, %d), real RGB=(%3d %3d %3d)\n",
+			       x, y, (int)oglp[x].red, (int)oglp[x].green, (int)oglp[x].blue);
 
 			break;
 		    }
