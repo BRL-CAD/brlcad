@@ -5385,12 +5385,15 @@ wdb_print_node(struct rt_wdb		*wdbp,
 	       int			pathpos,
 	       int			indentSize,
 	       char			prefix,
-	       int			cflag)
+	       int			cflag,
+               int                      displayDepth,
+               int                      currdisplayDepth)
 {
     register int			i;
     register struct directory	*nextdp;
     struct rt_db_internal		intern;
     struct rt_comb_internal		*comb;
+
 
     if (cflag && !(dp->d_flags & DIR_COMB))
 	return;
@@ -5494,8 +5497,11 @@ wdb_print_node(struct rt_wdb		*wdbp,
 		bu_vls_free(&tmp_vls);
 
 		Tcl_AppendResult(interp, rt_tree_array[i].tl_tree->tr_l.tl_name, "\n", (char *)NULL);
-	    } else
-		wdb_print_node(wdbp, interp, nextdp, pathpos+1, indentSize, op, cflag);
+	    } else {
+		if (currdisplayDepth < displayDepth) {
+		    wdb_print_node(wdbp, interp, nextdp, pathpos+1, indentSize, op, cflag, displayDepth, currdisplayDepth+1);
+		}
+	    }
 	    db_free_tree( rt_tree_array[i].tl_tree, &rt_uniresource );
 	}
 	if (rt_tree_array) bu_free((char *)rt_tree_array, "printnode: rt_tree_array");

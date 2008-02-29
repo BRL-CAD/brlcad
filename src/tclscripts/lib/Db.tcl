@@ -544,7 +544,7 @@
     $help add tol	{{"[abs #] [rel #] [norm #] [dist #] [perp #]"} {show/set tessellation and calculation tolerances}}
     $help add tops	{{} {find all top level objects}}
     $help add track	{{args} {create a track}}
-    $help add tree	{{[-c] [-i n] [-o outfile] object(s)} {print out a tree of all members of an object}}
+    $help add tree	{{[-c] [-i n] [-d n] [-o outfile] object(s)} {print out a tree of all members of an object, or all members to depth n in the tree if n -d option is supplied}}
     $help add unhide	{{[objects]} {unset the "hidden" flag for the specified objects so they will appear in a "t" or "ls" command output}}
     $help add units	{{[mm|cm|m|in|ft|...]}	{change units}}
     $help add version	{{} {return the database version}}

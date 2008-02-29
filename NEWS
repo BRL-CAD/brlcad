@@ -11,6 +11,7 @@ entire history of the project is available through SVN.
 --- 2007-11-XX  Release 7.11.0                                     ---
 ----------------------------------------------------------------------
 
+* tree -d option in MGED for limiting tree display depth - Cliff Yapp
 * added mouse color query support to OpenGL framebuffer - Bob Parker
 * fixed X11 framebuffer colormapping bug - Bob Parker 
 * libpng updated to 1.2.25 - Erik Greenwald

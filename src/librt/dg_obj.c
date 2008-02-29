@@ -33,6 +33,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <limits.h>
 #include <signal.h>
 #include <errno.h>
 #ifdef HAVE_SYS_TYPES_H
@@ -105,12 +106,12 @@ static int dgo_shaded_mode_tcl();
 
 #include "./debug.h"
 
-#define DGO_CHECK_WDBP_NULL(_dgop, _interp) \
-	if (_dgop->dgo_wdbp == RT_WDB_NULL) \
-	{ \
-		Tcl_AppendResult(_interp, "Not associated with a database!\n", (char *)NULL); \
-		return TCL_ERROR; \
-	}
+#define DGO_CHECK_WDBP_NULL(_dgop, _interp)				\
+    if (_dgop->dgo_wdbp == RT_WDB_NULL)					\
+    {									\
+	Tcl_AppendResult(_interp, "Not associated with a database!\n", (char *)NULL); \
+	return TCL_ERROR;						\
+    }
 
 /*
  *  It is expected that entries on this mater list will be sorted
@@ -128,7 +129,7 @@ extern void	dgo_init_qray(struct dg_obj *dgop);
 extern void	dgo_free_qray(struct dg_obj *dgop);
 
 /* in wdb_obj.c */
-void wdb_print_node(struct rt_wdb *wdbp, Tcl_Interp *interp, register struct directory *dp, int pathpos, int indentSize, char prefix, int cflag);
+void wdb_print_node(struct rt_wdb *wdbp, Tcl_Interp *interp, register struct directory *dp, int pathpos, int indentSize, char prefix, int cflag, int displayDepth, int currdisplayDepth);
 
 static int dgo_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int dgo_headSolid_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
@@ -442,7 +443,7 @@ dgo_illum_cmd(struct dg_obj	*dgop,
 
     return TCL_OK;
 
- bad:
+bad:
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias dgo_illum %s", argv[0]);
     Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -811,7 +812,7 @@ dgo_how_cmd(struct dg_obj	*dgop,
     /* match NOT found */
     Tcl_AppendResult(interp, "-1", (char *)NULL);
 
- good:
+good:
     if (dpp != (struct directory **)NULL)
 	bu_free((genptr_t)dpp, "dgo_how_cmd: directory pointers");
     bu_vls_free(&vls);
@@ -2566,7 +2567,7 @@ dgo_shaded_mode_cmd(struct dg_obj	*dgop,
 	return TCL_OK;
     }
 
- bad:
+bad:
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias dgo_shaded_mode %s", argv[0]);
     Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -2796,7 +2797,7 @@ dgo_nmg_region_start(struct db_tree_state *tsp, struct db_full_path *pathp, cons
     rt_db_free_internal(&intern, tsp->ts_resp);
     return 0;
 
- out:
+out:
     /* Successful fastpath drawing of this solid */
     db_add_node_to_full_path(pathp, dp);
     dgo_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
@@ -4359,7 +4360,7 @@ static void
 dgo_print_schain(struct dg_obj *dgop, Tcl_Interp *interp, int lvl)
 
 
-    /* debug level */
+/* debug level */
 {
     register struct solid		*sp;
     register struct bn_vlist	*vp;
@@ -4651,6 +4652,7 @@ dgo_tree_cmd(struct dg_obj	*dgop,
     register int			j;
     int				cflag = 0;
     int				indentSize = -1;
+    int                         displayDepth = INT_MAX;
     int				c;
     struct bu_vls			vls;
     FILE				*fdout = NULL;
@@ -4671,7 +4673,7 @@ dgo_tree_cmd(struct dg_obj	*dgop,
 
     /* Parse options */
     bu_optind = 1;	/* re-init bu_getopt() */
-    while ((c=bu_getopt(argc, argv, "i:o:c")) != EOF) {
+    while ((c=bu_getopt(argc, argv, "d:i:o:c")) != EOF) {
 	switch (c) {
 	    case 'i':
 		indentSize = atoi(bu_optarg);
@@ -4684,6 +4686,13 @@ dgo_tree_cmd(struct dg_obj	*dgop,
 		    Tcl_SetErrno( errno );
 		    Tcl_AppendResult( interp, "Failed to open output file, ",
 				      strerror( errno ), (char *)NULL );
+		    return TCL_ERROR;
+		}
+		break;
+	    case 'd':
+		displayDepth = atoi(bu_optarg);
+		if ( displayDepth < 0 ){
+		    Tcl_AppendResult( interp, "Negative number supplied as depth - unsupported.", (char *)NULL );
 		    return TCL_ERROR;
 		}
 		break;
@@ -4724,7 +4733,7 @@ dgo_tree_cmd(struct dg_obj	*dgop,
 	    Tcl_AppendResult(interp, "\n", (char *)NULL);
 	if ((dp = db_lookup(dgop->dgo_wdbp->dbip, next, LOOKUP_NOISY)) == DIR_NULL)
 	    continue;
-	wdb_print_node(dgop->dgo_wdbp, interp, dp, 0, indentSize, 0, cflag);
+	wdb_print_node(dgop->dgo_wdbp, interp, dp, 0, indentSize, 0, cflag, displayDepth, 0);
     }
 
     if (buffer) {

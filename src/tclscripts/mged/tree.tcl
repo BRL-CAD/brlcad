@@ -24,7 +24,7 @@
 #       few options.
 #
 # Usage:
-#       tree [-c] [-i n] [-o outfile] object(s)
+#       tree [-c] [-i n] [-d n] [-o outfile] object(s)
 #
 proc tree {args} {
     set argc [llength $args]
@@ -35,6 +35,7 @@ proc tree {args} {
     set indent 0
     set fid ""
     set cflag 0
+    set displayDepth 0
 
     # process options
     for {set i 0} {$i < $argc} {incr i} {
@@ -57,6 +58,24 @@ proc tree {args} {
 		}
 		set indent [lindex $args $i]
 		if {[string is integer $indent] == 0} {
+		    if {$fid != ""} {
+			close $fid
+		    }
+		    return [_mged_tree]
+		}
+	    }
+	    -d 
+	    -
+	    -depth {
+		incr i
+		if {$i == $argc} {
+		    if {$fid != ""} {
+			close $fid
+		    }
+		    return [_mged_tree]
+		}
+		set displayDepth [lindex $args $i]
+		if {[string is integer $displayDepth] == 0} {
 		    if {$fid != ""} {
 			close $fid
 		    }

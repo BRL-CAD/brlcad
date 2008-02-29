@@ -258,7 +258,7 @@ set mged_help_data(tor-rcc)     {{torname newname}     {create an rcc from a tor
 set mged_help_data(tra)		$helplib_data(vo_tra)
 set mged_help_data(track)	{{<parameters>}	{adds tracks to database}}
 set mged_help_data(translate)	{{x y z}	{trans object to x,y, z}}
-set mged_help_data(tree)	{{[-c] [-i n] [-o outfile] object(s)}	{print out a tree of all members of an object}}
+set mged_help_data(tree)	{{[-c] [-i n] [-d n] [-o outfile] object(s)}	{print out a tree of all members of an object, or all members to depth n if -d option is supplied}}
 set mged_help_data(t_muves)	{{}	{list all the known MUVES components/systems}}
 set mged_help_data(unhide)	$helplib_data(wdb_unhide)
 set mged_help_data(units)	$helplib_data(wdb_units)
