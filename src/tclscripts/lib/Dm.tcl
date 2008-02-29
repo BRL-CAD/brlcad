@@ -131,8 +131,14 @@
 
 ::itcl::body Dm::constructor {args} {
     global tcl_platform
+    global env
 
-    if {[catch {dm_bestXType :0} priv_type]} {
+    catch {set display $env(DISPLAY)}
+    if {$display == ""} {
+	set display :0
+    }
+
+    if {[catch {dm_bestXType $display} priv_type]} {
 	if {$tcl_platform(os) != "Windows NT"} {
 	    set priv_type X
 	} else {
