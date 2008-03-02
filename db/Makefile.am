@@ -9,13 +9,16 @@ G2A=$(top_builddir)/src/conv/g2asc
 # gmake seems to prefix the src with the appropriate srcdir automagically...
 # the library path is set since libtool won't do it for us for non libtool libs
 .asc.g:
+	@sync
 	@if test -x $(A2G) ; then \
 		echo $(A2G) $< $@ ; \
 		LD_LIBRARY_PATH=$(top_builddir)/src/other/tcl/unix:$(top_builddir)/src/other/tk/unix:$$LD_LIBRARY_PATH \
 		DYLD_LIBRARY_PATH=$(top_builddir)/src/other/tcl/unix:$(top_buildir)/src/other/tk/unix:$$DYLD_LIBRARY_PATH \
 		$(A2G) `if test -e $< ; then echo $< ; else echo $(top_srcdir)/db/$< ; fi` $@ ; \
 	else \
-		echo "$(A2G) does not exist" ; \
+		$(ECHO) "ls -lad $(A2G)" ; \
+		$(ECHO) "`ls -lad $(A2G)`" ; \
+		$(ECHO) "$(A2G) does not exist" ; \
 	fi
 
 BENCHMARK_MODELS = \
