@@ -5,11 +5,22 @@ SUBDIRS = include
 A2G=$(top_builddir)/src/conv/asc2g
 G2A=$(top_builddir)/src/conv/g2asc
 
-# the shell script test -e fu is to cope with gmake vs irix make weirdness...
-# gmake seems to prefix the src with the appropriate srcdir automagically...
-# the library path is set since libtool won't do it for us for non libtool libs
-.asc.g:
+.PHONY: prep
+
+# cause asc2g to kick off once so that it compiles lt-asc2g and avoids
+# parallel build failures when it comes time to using it.
+prep:
+	@if test -x $(A2G) ; then \
+		if `$(A2G)` -ne 1 ; then \
+			$(ECHO) "Unexpected exit code from $(A2G)" ; \
+		fi ; \
+	fi
 	@sync
+
+# gmake seems to prefix the src with the appropriate srcdir
+# automagically...  the library path is set since libtool won't do it
+# for us for non libtool libs.
+.asc.g: prep
 	@if test -x $(A2G) ; then \
 		echo $(A2G) $< $@ ; \
 		LD_LIBRARY_PATH=$(top_builddir)/src/other/tcl/unix:$(top_builddir)/src/other/tk/unix:$$LD_LIBRARY_PATH \
