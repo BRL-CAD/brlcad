@@ -311,6 +311,12 @@ dist-hook:
 	if test "x$$missing" = "x1" ; then \
 		exit 1 ; \
 	fi
+	files="`find $(distdir)/src/tclscripts \( -name pkgIndex.tcl -o -name tclIndex \)`" ; \
+	empty=`for file in $$files ; do found="\`grep -v '^#' $$file | perl -0777 -pi -e 's/^\n//g'\`" ; if test "x$$found" = "x" ; then echo $$file ; fi ; done | wc | awk '{print $$1}'` ; \
+	if test $$empty -gt 9 ; then \
+		echo "TOO MANY EMPTY PKGINDEX.TCL/TCLINDEX FILES" ; \
+		exit 1 ; \
+	fi
 	find $(distdir) -type f \( -name '.cvsignore' -or -name 'brlcad_config.h' \) -exec rm -f {} \;
 	find $(distdir) -type d \( -name 'CVS' -or -name '.svn' \) -prune -exec rm -rf {} \;
 
@@ -335,6 +341,20 @@ install-data-local:
 	    d?????-???*) warn_umask=yes ;; \
 	    d??-??????*) warn_umask=yes ;; \
 	  esac ; \
+	fi ; \
+	files="`find $(top_builddir)/src/tclscripts \( -name pkgIndex.tcl -o -name tclIndex \)`" ; \
+	empty=`for file in $$files ; do found="\`grep -v '^#' $$file | perl -0777 -pi -e 's/^\n//g'\`" ; if test "x$$found" = "x" ; then echo $$file ; fi ; done | wc | awk '{print $$1}'` ; \
+	if test $$empty -gt 9 ; then \
+	    $(ECHO) ; \
+	    $(ECHO) "}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}" ; \
+	    $(ECHO) "  WARNING: Too many of the pkgIndex.tcl and" ; \
+	    $(ECHO) "           tclIndex files are empty." ; \
+	    $(ECHO) ; \
+	    $(ECHO) "  It is likely that the indices are not being" ; \
+	    $(ECHO) "  generated properly which will affect run-time" ; \
+	    $(ECHO) "  functionality. VERIFY THE FILES." ; \
+	    $(ECHO) "{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{" ; \
+	    $(ECHO) ; \
 	fi ; \
 	if test "x$$warn_umask" = "xyes" ; then \
 	    $(ECHO) ; \
@@ -395,6 +415,7 @@ install-data-local:
 		USER="unknown" ; \
 	    fi ; \
 	    $(ECHO) "Installed BRL-CAD Release @BRLCAD_VERSION@ Build @CONFIG_DATE@ by ${USER} to $(DESTDIR)$(prefix) on `date`" >> install.$(host_triplet).log ; \
+	    chmod ugo+rw install.$(host_triplet).log ; \
 	fi
 
 
@@ -413,7 +434,7 @@ all-local:
 	@$(ECHO)
 	@if test "x$(MAKECMDGOALS)" = "xall-am" -o "x$(.TARGETS)" = "xall-am" -o "x$(MAKECMDGOALS)" = "xfast" -o "x$(.TARGETS)" = "xfast" ; then \
 	  $(ECHO) $(ECHO_N) "Elapsed compilation time: " ;\
-	  sh $(top_srcdir)/sh/elapsed.sh `cat $(top_builddir)/include/conf/DATE` ;\
+	  sh $(top_srcdir)/sh/elapsed.sh `cat $(top_srcdir)/include/conf/DATE` ;\
 	  $(ECHO) $(ECHO_N) "Elapsed time since configuration: " ;\
 	  sh $(top_srcdir)/sh/elapsed.sh @CONFIG_TIME@ ;\
 	  $(ECHO) "---" ;\
@@ -421,7 +442,7 @@ all-local:
 	  $(ECHO) "Run 'make benchmark' to run the BRL-CAD Benchmark Suite" ;\
 	elif test "x$(MAKECMDGOALS)" = "xinstall-am" -o "x$(.TARGETS)" = "xinstall-am" ; then \
 	  $(ECHO) $(ECHO_N) "Elapsed installation time: " ;\
-	  sh $(top_srcdir)/sh/elapsed.sh `cat $(top_builddir)/include/conf/DATE` ;\
+	  sh $(top_srcdir)/sh/elapsed.sh `cat $(top_srcdir)/include/conf/DATE` ;\
 	  $(ECHO) $(ECHO_N) "Elapsed time since configuration: " ;\
 	  sh $(top_srcdir)/sh/elapsed.sh @CONFIG_TIME@ ;\
 	  $(ECHO) "---" ;\
@@ -430,14 +451,14 @@ all-local:
 	  $(ECHO) ;\
 	  line1="  BRL-CAD @BRLCAD_VERSION@ is now installed into $(prefix)" ;\
 	  line2="  Be sure to add $(prefix)/bin to your PATH" ;\
-	  separator="`$(ECHO) $$line1 | tr '[a-zA-Z0-9.\-/ ]' '*'`" ;\
+	  separator="`$(ECHO) $$line1 | tr '[[:print:]]' '*'`" ;\
 	  $(ECHO) "$${separator}****" ;\
 	  $(ECHO) "$$line1" ;\
 	  $(ECHO) "$$line2" ;\
 	  $(ECHO) "$${separator}****" ;\
 	elif test "x$(MAKECMDGOALS)" = "x" -a "x$(.TARGETS)" = "x" ; then \
 	  $(ECHO) $(ECHO_N) "Elapsed time: " ;\
-	  sh $(top_srcdir)/sh/elapsed.sh `cat $(top_builddir)/include/conf/DATE` ;\
+	  sh $(top_srcdir)/sh/elapsed.sh `cat $(top_srcdir)/include/conf/DATE` ;\
 	  $(ECHO) $(ECHO_N) "Elapsed time since configuration: " ;\
 	  sh $(top_srcdir)/sh/elapsed.sh @CONFIG_TIME@ ;\
 	  $(ECHO) "---" ;\
