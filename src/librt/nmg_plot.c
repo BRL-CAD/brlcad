@@ -47,6 +47,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <signal.h>
+#include "bio.h"
 
 #include "vmath.h"
 #include "nmg.h"

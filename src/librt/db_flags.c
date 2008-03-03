@@ -38,6 +38,8 @@
 
 #include "common.h"
 
+#include "bio.h"
+
 #include "bu.h"
 #include "vmath.h"
 #include "db.h"

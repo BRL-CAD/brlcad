@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <fcntl.h>
+#include "bio.h"
 
 #include "vmath.h"
 #include "raytrace.h"

@@ -32,6 +32,7 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <math.h>
+#include "bio.h"
 
 #include "bu.h"
 #include "vmath.h"

@@ -27,6 +27,8 @@
 
 #include "common.h"
 
+#include "bio.h"
+
 #include "raytrace.h"
 #include "brlcad_version.h"
 

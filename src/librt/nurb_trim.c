@@ -30,6 +30,7 @@
 
 #include <stdio.h>
 #include <math.h>
+#include "bio.h"
 
 #include "vmath.h"
 #include "raytrace.h"

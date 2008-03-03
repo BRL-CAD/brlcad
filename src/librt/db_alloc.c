@@ -37,6 +37,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include "bio.h"
 
 #include "vmath.h"
 #include "db.h"

@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include "bio.h"
 
 #include "vmath.h"
 #include "raytrace.h"

@@ -31,6 +31,8 @@
 #include <assert.h>
 #include <vector>
 #include <limits>
+#include "bio.h"
+
 #include "tnt.h"
 #include "jama_lu.h"
 

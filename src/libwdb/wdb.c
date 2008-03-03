@@ -45,6 +45,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
+#include "bio.h"
 
 #include "bu.h"
 #include "vmath.h"

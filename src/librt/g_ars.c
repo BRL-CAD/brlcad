@@ -32,6 +32,7 @@
 #include <string.h>
 #include <math.h>
 #include <ctype.h>
+#include "bio.h"
 
 #include "tcl.h"
 #include "vmath.h"

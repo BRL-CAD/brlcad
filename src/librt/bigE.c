@@ -41,6 +41,7 @@
 #include <time.h>
 #include <ctype.h>
 #include <string.h>
+#include "bio.h"
 
 #include "bu.h"
 #include "vmath.h"

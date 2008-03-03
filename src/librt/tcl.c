@@ -39,6 +39,7 @@
 #include <ctype.h>
 #include <math.h>
 #include <string.h>
+#include "bio.h"
 
 #include "tcl.h"
 

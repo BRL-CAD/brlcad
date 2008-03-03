@@ -34,6 +34,7 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
+#include "bio.h"
 
 #include "vmath.h"
 #include "raytrace.h"

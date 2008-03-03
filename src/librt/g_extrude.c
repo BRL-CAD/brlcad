@@ -34,6 +34,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
+#include "bio.h"
 
 #include "tcl.h"
 #include "vmath.h"

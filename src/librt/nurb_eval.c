@@ -31,6 +31,8 @@
 
 #include <stdio.h>
 #include <math.h>
+#include "bio.h"
+
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
