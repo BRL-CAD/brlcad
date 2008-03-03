@@ -243,11 +243,7 @@ typedef unsigned short uint16_t;
 #define F_OK 0
 
 #undef DELETE
-#undef IN
-#undef OUT
 #undef complex
-#undef rad1
-#undef rad2
 
 /*
  * faking it
@@ -260,10 +256,6 @@ typedef unsigned short uint16_t;
 
 #if defined(_MSC_VER) && (_MSC_VER <= 1200) /* MSVC 6.0 and before */
 #   define for if (0) {} else for           /* proper for-scope */
-#endif
-
-#ifdef small
-#   undef small /* defined as part of the Microsoft Interface Definition Language (MIDL) */
 #endif
 
 #ifdef __cplusplus
