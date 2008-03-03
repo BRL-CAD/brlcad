@@ -32,6 +32,7 @@
 
 /* system headers */
 #include <signal.h>
+#include "bio.h"
 
 /* common headers */
 #include "bu.h"

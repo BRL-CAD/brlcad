@@ -35,6 +35,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <sys/stat.h>	/* for file mode info in WRMODE */
+#include "bio.h"
 
 #include <png.h>
 
