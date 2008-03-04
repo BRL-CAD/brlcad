@@ -25,9 +25,9 @@
  *   Jason Owens
  */
 
-#include "bio.h"
 #include "common.h"
 
+#include "bio.h"
 #include "opennurbs_ext.h"
 #include <assert.h>
 #include <vector>
