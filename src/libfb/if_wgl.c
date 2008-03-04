@@ -35,7 +35,6 @@
  */
 /** @} */
 
-#include "bio.h"
 #include "common.h"
 
 #ifdef IF_WGL
@@ -45,6 +44,8 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <errno.h>
+
+#include "bio.h"
 #ifdef HAVE_GL_GL_H
 #  include <GL/gl.h>
 #endif
