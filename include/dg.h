@@ -1,0 +1,134 @@
+/*                      R A Y T R A C E . H
+ * BRL-CAD
+ *
+ * Copyright (c) 1993-2008 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @addtogroup librt */
+/** @{ */
+/** @file dg.h
+ *
+ *
+ */
+
+#ifndef __DG_H__
+#define __DG_H__
+
+#include "bio.h"
+#include "raytrace.h"
+
+__BEGIN_DECLS
+
+/*
+ * Carl's vdraw stuff.
+ */
+#define RT_VDRW_PREFIX		"_VDRW"
+#define RT_VDRW_PREFIX_LEN	6
+#define RT_VDRW_MAXNAME		31
+#define RT_VDRW_DEF_COLOR	0xffff00
+struct vd_curve {
+    struct bu_list	l;
+    char		vdc_name[RT_VDRW_MAXNAME+1]; 	/**< @brief  name array */
+    long		vdc_rgb;	/**< @brief  color */
+    struct bu_list	vdc_vhd;	/**< @brief  head of list of vertices */
+};
+#define VD_CURVE_NULL	((struct vd_curve *)NULL)
+
+/**
+ * Used to keep track of forked rt's for possible future aborts.
+ * Currently used in mged/rtif.c and librt/dg_obj.c
+ */
+struct run_rt {
+    struct bu_list l;
+#ifdef _WIN32
+    HANDLE fd;
+    HANDLE hProcess;
+    DWORD pid;
+
+#  ifdef TCL_OK
+    Tcl_Channel chan;
+#  else
+    genptr_t chan;
+#  endif
+#else
+    int fd;
+    int pid;
+#endif
+    int aborted;
+};
+
+/*
+ *			D G _ O B J
+ *
+ * A drawable geometry object is associated with a database object
+ * and is used to maintain lists of geometry that are ready for display.
+ * This geometry can come from a Brl-Cad database or from vdraw commands.
+ * The drawable geometry object is also capabable of raytracing geometry
+ * that comes from a Brl-Cad database.
+ */
+struct dg_qray_color {
+    unsigned char r;
+    unsigned char g;
+    unsigned char b;
+};
+
+struct dg_qray_fmt {
+    char type;
+    struct bu_vls fmt;
+};
+
+struct dg_obj {
+    struct bu_list		l;
+    struct bu_vls		dgo_name;		/**< @brief  drawable geometry object name */
+    struct rt_wdb		*dgo_wdbp;		/**< @brief  associated database */
+    struct bu_list		dgo_headSolid;		/**< @brief  head of solid list */
+    struct bu_list		dgo_headVDraw;		/**< @brief  head of vdraw list */
+    struct vd_curve		*dgo_currVHead;		/**< @brief  current vdraw head */
+    struct solid		*dgo_freeSolids;	/**< @brief  ptr to head of free solid list */
+    char			*dgo_rt_cmd[RT_MAXARGS];
+    int				dgo_rt_cmd_len;
+    struct bu_observer		dgo_observers;
+    struct run_rt		dgo_headRunRt;		/**< @brief  head of forked rt processes */
+    struct bu_vls		dgo_qray_basename;	/**< @brief  basename of query ray vlist */
+    struct bu_vls		dgo_qray_script;	/**< @brief  query ray script */
+    char			dgo_qray_effects;	/**< @brief  t for text, g for graphics or b for both */
+    int				dgo_qray_cmd_echo;	/**< @brief  0 - don't echo command, 1 - echo command */
+    struct dg_qray_fmt		*dgo_qray_fmts;
+    struct dg_qray_color	dgo_qray_odd_color;
+    struct dg_qray_color	dgo_qray_even_color;
+    struct dg_qray_color	dgo_qray_void_color;
+    struct dg_qray_color	dgo_qray_overlap_color;
+    int				dgo_shaded_mode;	/**< @brief  1 - draw bots shaded by default */
+    char			*dgo_outputHandler;	/**< @brief  tcl script for handling output */
+    int				dgo_uplotOutputMode;	/**< @brief  output mode for unix plots */
+    void			(*dgo_rtCmdNotify)();	/**< @brief  function called when rt command completes */
+};
+RT_EXPORT extern struct dg_obj HeadDGObj;		/**< @brief  head of drawable geometry object list */
+#define RT_DGO_NULL		((struct dg_obj *)NULL)
+
+__END_DECLS
+
+#endif /* __DG_H__ */
+/** @} */
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */
