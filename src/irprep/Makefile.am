@@ -3,8 +3,11 @@
 if WITH_X11
 IR_X_BIN=ir-X
 IR_X_MAN=ir-X.1
+IRDISP_BIN=irdisp
+IRDISP_MAN=irdisp.1
 else
 IR_X_EXTRA=ir-X.c ir-X.1
+IRDISP_EXTRA=irdisp.c irdisp.1
 endif
 
 bin_PROGRAMS = \
@@ -13,7 +16,7 @@ bin_PROGRAMS = \
 	firpass \
 	${IR_X_BIN} \
 	ir-sgi \
-	irdisp \
+	${IRDISP_BIN} \
 	secpass \
 	shapefact
 
@@ -57,14 +60,15 @@ man_MANS = \
 	all_sf.1 \
 	showtherm.1 \
 	firpass.1 \
-	irdisp.1 \
+	${IRDISP_MAN} \
 	ir-sgi.1 \
-	ir-X.1 \
+	${IR_X_MAN} \
 	secpass.1 \
 	shapefact.1
 
 EXTRA_DIST = \
 	$(man_MANS) \
+	${IRDISP_EXTRA} \
 	${IR_X_EXTRA} \
 	Compile.sgi \
 	pictsgi.1 \
