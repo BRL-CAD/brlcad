@@ -29,11 +29,12 @@
 #include <signal.h>
 #include <math.h>
 
+#include "bio.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 #include "mater.h"
-#include "raytrace.h"
+#include "dg.h"
 #include "nmg.h"
 #include "./sedit.h"
 #include "./ged.h"

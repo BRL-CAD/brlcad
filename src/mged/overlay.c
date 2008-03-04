@@ -26,10 +26,11 @@
 #include <math.h>
 #include <signal.h>
 #include <stdio.h>
+
+#include "bio.h"
 #include "vmath.h"
 #include "mater.h"
-
-#include "raytrace.h"
+#include "dg.h"
 #include "./ged.h"
 #include "./sedit.h"
 #include "./mged_solid.h"

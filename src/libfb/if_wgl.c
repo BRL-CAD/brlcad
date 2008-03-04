@@ -35,6 +35,7 @@
  */
 /** @} */
 
+#include "bio.h"
 #include "common.h"
 
 #ifdef IF_WGL

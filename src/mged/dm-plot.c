@@ -30,6 +30,7 @@
 #  include <sys/time.h>		/* for struct timeval */
 #endif
 
+#include "bio.h"
 #include "bu.h"
 #include "vmath.h"
 #include "mater.h"

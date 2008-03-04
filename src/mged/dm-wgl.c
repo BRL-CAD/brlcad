@@ -29,6 +29,8 @@
 #include <math.h>
 #include <string.h>
 
+#include "bio.h"
+
 #ifdef HAVE_GL_GLX_H
 #  include <GL/glx.h>
 #endif

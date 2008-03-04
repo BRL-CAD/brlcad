@@ -32,9 +32,10 @@
 #include <string.h>
 
 /* common headers */
+#include "bio.h"
 #include "bu.h"
 #include "bn.h"
-#include "raytrace.h"
+#include "dg.h"
 #include "vmath.h"
 #include "tclcad.h"
 

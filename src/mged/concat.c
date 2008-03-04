@@ -41,6 +41,7 @@
 #  include <pwd.h>
 #endif
 
+#include "bio.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "db.h"

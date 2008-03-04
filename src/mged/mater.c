@@ -29,12 +29,12 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "bio.h"
 
+#include "bio.h"
 #include "vmath.h"
 #include "db.h"
 #include "mater.h"
-#include "raytrace.h"
+#include "dg.h"
 #include "./ged.h"
 #include "./mged_solid.h"
 #include "./mged_dm.h"

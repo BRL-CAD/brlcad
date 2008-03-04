@@ -34,6 +34,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "bio.h"
+
 int lmap[256];		/* Map HEX ASCII to binary in left nybble */
 int rmap[256];		/* Map HEX ASCII to binary in right nybble */
 

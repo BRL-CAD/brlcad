@@ -108,6 +108,7 @@ Example Use -
 
 #include "tcl.h"
 
+#include "bio.h"
 #include "bu.h"
 #include "vmath.h"
 #include "mater.h"

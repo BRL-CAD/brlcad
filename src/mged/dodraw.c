@@ -26,11 +26,12 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "bio.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 #include "nmg.h"
-#include "raytrace.h"
+#include "dg.h"
 #include "rtgeom.h"		/* for ID_POLY special support */
 #include "db.h"
 

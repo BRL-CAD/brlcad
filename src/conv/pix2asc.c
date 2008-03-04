@@ -30,6 +30,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "bio.h"
 
 unsigned char pix[3];		/* RGB of one pixel */
 

@@ -47,7 +47,7 @@
 #include "vmath.h"
 #include "nmg.h"
 #include "rtgeom.h"
-#include "raytrace.h"
+#include "dg.h"
 #include "solid.h"
 
 /* #define debug 1 */

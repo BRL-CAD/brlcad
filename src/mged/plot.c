@@ -32,12 +32,12 @@
 #ifdef HAVE_SYS_WAIT_H
 #  include <sys/wait.h>
 #endif
-#include "bio.h"
 
+#include "bio.h"
 #include "bu.h"
 #include "vmath.h"
 #include "mater.h"
-#include "raytrace.h"
+#include "dg.h"
 #include "plot3.h"
 
 #include "./ged.h"

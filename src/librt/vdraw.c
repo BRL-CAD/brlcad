@@ -113,7 +113,7 @@
 #include "vmath.h"
 #include "mater.h"
 #include "nmg.h"
-#include "raytrace.h"
+#include "dg.h"
 
 
 #ifndef M_SQRT2

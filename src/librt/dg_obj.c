@@ -49,7 +49,7 @@
 #include "vmath.h"
 #include "bn.h"
 #include "mater.h"
-#include "raytrace.h"
+#include "dg.h"
 #include "rtgeom.h"
 #include "solid.h"
 #include "plot3.h"

@@ -55,9 +55,10 @@
 #include "itk.h"
 #endif
 
+#include "bio.h"
 #include "bu.h"
 #include "vmath.h"
-#include "raytrace.h"
+#include "dg.h"
 #include "dm-Null.h"
 
 #include "./ged.h"

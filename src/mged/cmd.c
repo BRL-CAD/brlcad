@@ -50,7 +50,7 @@
 #include "vmath.h"
 #include "bn.h"
 #include "rtgeom.h"
-#include "raytrace.h"
+#include "dg.h"
 #include "tclcad.h"
 
 #include "./ged.h"

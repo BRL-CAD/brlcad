@@ -51,7 +51,7 @@
 #include "tcl.h"
 #include "cmd.h"			/* includes bu.h */
 #include "vmath.h"
-#include "raytrace.h"
+#include "dg.h"
 #include "solid.h"
 #include "./qray.h"
 

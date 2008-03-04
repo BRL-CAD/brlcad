@@ -35,6 +35,7 @@
 #  include <sys/types.h>
 #endif
 
+#include "bio.h"
 #include "tcl.h"
 #include "tk.h"
 #include "dm_xvars.h"

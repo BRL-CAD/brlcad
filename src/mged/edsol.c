@@ -31,12 +31,13 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include "bio.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 #include "nmg.h"
 #include "rtgeom.h"
-#include "raytrace.h"
+#include "dg.h"
 #include "nurb.h"
 #include "wdb.h"
 #include "db.h"

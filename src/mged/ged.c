@@ -42,7 +42,7 @@
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
-#include "raytrace.h"
+#include "dg.h"
 #include "mater.h"
 #include "libtermio.h"
 #include "db.h"
