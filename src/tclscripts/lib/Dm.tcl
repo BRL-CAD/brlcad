@@ -134,7 +134,7 @@
     global env
 
     catch {set display $env(DISPLAY)}
-    if {$display == ""} {
+    if {![info exists display] || $display == ""} {
 	set display :0
     }
 
