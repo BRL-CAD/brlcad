@@ -92,7 +92,8 @@ ON_INC = \
 	opennurbs_viewport.h \
 	opennurbs_workspace.h \
 	opennurbs_x.h \
-	opennurbs_xform.h
+	opennurbs_xform.h \
+	opennurbs_zlib.h
 
 ON_SRC = \
 	opennurbs_3dm_attributes.cpp \
@@ -243,7 +244,6 @@ EXTRA_DIST = \
 	example_write \
 	faq.txt \
 	opennurbs.dsp \
-	opennurbs_zlib.h \
 	opennurbs_memory_new.cpp \
 	opennurbs_zlib_memory.cpp \
 	readme.txt
