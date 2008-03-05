@@ -33,6 +33,7 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "bio.h"
 #include "tcl.h"
 #include "cmd.h"                  /* includes bu.h */
 #include "fb.h"
