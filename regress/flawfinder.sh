@@ -11,7 +11,7 @@ fi
 
 rm -f flawfinder.log
 
-echo running flawfinder...
+echo "running flawfinder..."
 
 ${TOPSRC}/misc/flawfinder --followdotdir --minlevel=5 --singleline --neverignore --falsepositive --quiet ${TOPSRC}/src/[^o]* > flawfinder.log 2>&1
 
@@ -27,6 +27,21 @@ else
 	cat flawfinder.log
     fi
     echo "-> flawfinder.sh FAILED"
+fi
+
+echo "running bio.h public header check..."
+
+if test ! -f "$TOPSRC/include/bio.h" ; then
+    echo "Unable to find include/bio.h, aborting"
+    exit 1
+fi
+
+# make sure nobody includes bio.h in a public header
+FOUND="`grep '[^f]bio.h' $TOPSRC/include/*.h | grep -v 'include/bio.h'`"
+if test "x$FOUND" = "x" ; then
+    echo "-> bio.h check succeeded"
+else
+    echo "-> bio.h check FAILED"
 fi
 
 exit $NUMBER_WRONG
