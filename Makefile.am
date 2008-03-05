@@ -434,7 +434,7 @@ all-local:
 	@$(ECHO)
 	@if test "x$(MAKECMDGOALS)" = "xall-am" -o "x$(.TARGETS)" = "xall-am" -o "x$(MAKECMDGOALS)" = "xfast" -o "x$(.TARGETS)" = "xfast" ; then \
 	  $(ECHO) $(ECHO_N) "Elapsed compilation time: " ;\
-	  sh $(top_srcdir)/sh/elapsed.sh `cat $(top_srcdir)/include/conf/DATE` ;\
+	  sh $(top_srcdir)/sh/elapsed.sh `cat $(top_builddir)/include/conf/DATE` ;\
 	  $(ECHO) $(ECHO_N) "Elapsed time since configuration: " ;\
 	  sh $(top_srcdir)/sh/elapsed.sh @CONFIG_TIME@ ;\
 	  $(ECHO) "---" ;\
@@ -442,7 +442,7 @@ all-local:
 	  $(ECHO) "Run 'make benchmark' to run the BRL-CAD Benchmark Suite" ;\
 	elif test "x$(MAKECMDGOALS)" = "xinstall-am" -o "x$(.TARGETS)" = "xinstall-am" ; then \
 	  $(ECHO) $(ECHO_N) "Elapsed installation time: " ;\
-	  sh $(top_srcdir)/sh/elapsed.sh `cat $(top_srcdir)/include/conf/DATE` ;\
+	  sh $(top_srcdir)/sh/elapsed.sh `cat $(top_builddir)/include/conf/DATE` ;\
 	  $(ECHO) $(ECHO_N) "Elapsed time since configuration: " ;\
 	  sh $(top_srcdir)/sh/elapsed.sh @CONFIG_TIME@ ;\
 	  $(ECHO) "---" ;\
@@ -458,7 +458,7 @@ all-local:
 	  $(ECHO) "$${separator}****" ;\
 	elif test "x$(MAKECMDGOALS)" = "x" -a "x$(.TARGETS)" = "x" ; then \
 	  $(ECHO) $(ECHO_N) "Elapsed time: " ;\
-	  sh $(top_srcdir)/sh/elapsed.sh `cat $(top_srcdir)/include/conf/DATE` ;\
+	  sh $(top_srcdir)/sh/elapsed.sh `cat $(top_builddir)/include/conf/DATE` ;\
 	  $(ECHO) $(ECHO_N) "Elapsed time since configuration: " ;\
 	  sh $(top_srcdir)/sh/elapsed.sh @CONFIG_TIME@ ;\
 	  $(ECHO) "---" ;\
