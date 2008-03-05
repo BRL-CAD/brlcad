@@ -6424,7 +6424,7 @@ RT_EXPORT BU_EXTERN(int rt_mk_binunif,
 		     long max_count));
 
 /* XXX do not rely on *_ifree() functions, why are these needed? */
-#if 0
+#ifdef _RT_DECL_IFREE
 /* defined in g_dsp.c */
 RT_EXPORT BU_EXTERN(void rt_dsp_ifree,
 		    (struct rt_db_internal *ip));
