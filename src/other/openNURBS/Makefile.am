@@ -248,5 +248,10 @@ EXTRA_DIST = \
 	opennurbs_zlib_memory.cpp \
 	readme.txt
 
+if BUILD_ZLIB
+DEPADD = src/other/libz
+endif
+DEPENDS = ${DEPADD}
+
 include $(top_srcdir)/misc/Makefile.defs
 
