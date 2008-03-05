@@ -27,7 +27,6 @@
 #ifndef __DG_H__
 #define __DG_H__
 
-#include "bio.h"
 #include "raytrace.h"
 
 __BEGIN_DECLS

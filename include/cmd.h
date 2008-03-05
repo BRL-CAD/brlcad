@@ -34,7 +34,7 @@
 #  include <sys/time.h>
 #endif
 #include <time.h>
-#include "bio.h"
+
 #include "bu.h"
 
 #define MAXARGS 9000
