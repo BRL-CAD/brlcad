@@ -36,6 +36,7 @@
 #include <math.h>
 #include <string.h>
 #include <ctype.h>
+#include "bio.h"
 
 #include "tcl.h"
 #include "cmd.h"		/* this includes bu.h */
