@@ -219,7 +219,11 @@ EXTRA_DIST = \
 	timerunix.c \
 	vshoot.c
 
-DEPADD= DEPENDS = src/libbn src/libsysv src/other/openNURBS
+if BUILD_REGEX
+DEPADD = src/other/libregex
+endif
+
+DEPENDS = src/libbn src/libsysv src/other/openNURBS ${DEPADD}
 
 include $(top_srcdir)/misc/Makefile.defs
 

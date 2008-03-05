@@ -76,5 +76,11 @@ EXTRA_DIST = \
 test:	pngtest
 	./pngtest ${top_srcdir}/src/other/libpng/pngtest.png
 
+if BUILD_ZLIB
+DEPADD = src/other/libz
+endif
+
+DEPENDS = ${DEPADD}
+
 include $(top_srcdir)/misc/Makefile.defs
 
