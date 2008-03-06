@@ -887,13 +887,13 @@
     }
 
     set v_obj [View::get_viewname]
-    #    if {$tcl_platform(os) != "Windows NT"} {
-    #	eval $geo rt $v_obj -F $itk_option(-listen) -w $width -n $height -V $aspect $args
-    #    } else {
-    #	eval $geo rt $v_obj $args
-    #    }
 
-    eval $geo rt $v_obj -F $itk_option(-listen) -w $width -n $height -V $aspect $args
+    # If arguments remain, they should specify size, framebuffer etc.
+    if {[llength $args] > 0} {
+	eval $geo rt $v_obj $args
+    } else {
+	eval $geo rt $v_obj -F $itk_option(-listen) -w $width -n $height -V $aspect $args
+    }
 }
 
 ::itcl::body Display::rtabort {{gi 0}} {
@@ -967,10 +967,14 @@
     #    if {$tcl_platform(os) != "Windows NT"} {
     #	eval $geo rtedge $v_obj -F $itk_option(-listen) -w $width -n $height -V $aspect $args
     #    } else {
-    #	eval $geo rtedge $v_obj $args
     #    }
 
-    eval $geo rtedge $v_obj -F $itk_option(-listen) -w $width -n $height -V $aspect $args
+    # If arguments remain, they should specify size, framebuffer etc.
+    if {[llength $args] > 0} {
+	eval $geo rtedge $v_obj $args
+    } else {
+	eval $geo rtedge $v_obj -F $itk_option(-listen) -w $width -n $height -V $aspect $args
+    }
 }
 
 ::itcl::body Display::rtweight {args} {
