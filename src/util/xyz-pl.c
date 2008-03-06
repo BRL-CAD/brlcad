@@ -24,13 +24,11 @@
  *	x y z
  *  and produce a 3-D UNIX-plot file of the resulting space curve.
  *
- *  Author -
- *	Michael John Muuss
- *
  */
-#include <stdio.h>
 
 #include "common.h"
+
+#include <stdio.h>
 
 #include "bu.h"
 #include "vmath.h"

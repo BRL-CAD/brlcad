@@ -51,8 +51,6 @@
  * This lexer grammar is to tokenize comma-separated value point
  * files.
  *
- * Author -
- *   Christopher Sean Morrison
  */
 
 #include "common.h"

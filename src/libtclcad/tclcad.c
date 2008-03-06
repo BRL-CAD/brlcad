@@ -22,15 +22,7 @@
  *
  * Initialize BRL-CAD's Tcl interface.
  *
- * Author --
- *   Bob Parker
  */
-
-#if defined(_WIN32) && !defined(__CYGWIN__)
-#  define IGNORE_CONFIG_H
-#  define snprintf _snprintf
-#  include <fcntl.h>
-#endif
 
 #include "common.h"
 
@@ -41,6 +33,7 @@
 #include <itcl.h>
 #include <itk.h>
 #include <blt.h>
+#include "bio.h"
 
 #include "bu.h"
 #include "dm.h"

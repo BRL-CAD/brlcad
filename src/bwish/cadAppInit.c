@@ -24,11 +24,13 @@
  *
  */
 
+#include "common.h"
+
 #if defined(_WIN32) && !defined(__CYGWIN__)
 #  include <winsock2.h>
 #endif
+#include "bio.h"
 
-#include "common.h"
 #include "itcl.h"
 
 #ifdef BWISH

@@ -19,33 +19,30 @@
  */
 /** @file camera.c
  *
- *  Comments -
  *      Utilities Library - Camera
  *
  */
 
 #if 0
+
+#include "common.h"
+
 #include "camera.h"
 #include <pthread.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
 #include <time.h>
-
-#include "bio.h"
-#include "common.h"
-
-#include "image.h"
-#include "umath.h"
-
-#include "bu.h"
-
 #ifdef HAVE_SYS_SYSINFO_H
 #  include <sys/sysinfo.h>
 #elif defined(HAVE_SYS_SYSCTL_H)
 #  include <sys/sysctl.h>
 #endif
+#include "bio.h"
+
+#include "image.h"
+#include "umath.h"
+#include "bu.h"
 
 pthread_t *util_tlist;
 
