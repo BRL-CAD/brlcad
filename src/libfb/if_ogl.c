@@ -93,10 +93,6 @@ HIDDEN XVisualInfo *	fb_ogl_choose_visual(FBIO *ifp);
 HIDDEN int		is_linear_cmap(register FBIO *ifp);
 
 HIDDEN int	ogl_nwindows = 0; 	/* number of open windows */
-HIDDEN int	multiple_windows = 0;	/* someone wants to be ready
-					 * for multiple windows, at the
-					 * expense of speed.
-					 */
 HIDDEN	XColor	color_cell[256];		/* used to set colormap */
 
 int ogl_refresh(FBIO *ifp, int x, int y, int w, int h);
@@ -298,10 +294,6 @@ struct oglinfo {
 #define MODE_4NORMAL	(0<<3)		/* dither if it seems necessary */
 #define MODE_4NODITH	(1<<3)		/* suppress any dithering */
 
-#define MODE_5MASK	(1<<4)
-#define MODE_5NORMAL	(0<<4)	 	/* fast - assume no multiple windows */
-#define MODE_5MULTI	(1<<4)		/* be ready for multiple windows */
-
 #define MODE_7MASK	(1<<6)
 #define MODE_7NORMAL	(0<<6)		/* install colormap in hardware if possible*/
 #define MODE_7SWCMAP	(1<<6)		/* use software colormapping */
@@ -338,8 +330,6 @@ HIDDEN struct modeflags {
       "Full centered screen - else windowed" },
     { 'd',  MODE_4MASK, MODE_4NODITH,
       "Suppress dithering - else dither if not 24-bit buffer" },
-    { 'm',  MODE_5MASK, MODE_5MULTI,
-      "Be ready for multiple windows - else optimize for single windows" },
     { 'c',	MODE_7MASK, MODE_7SWCMAP,
       "Perform software colormap - else use hardware colormap if possible" },
     { 's',	MODE_9MASK, MODE_9SINGLEBUF,
@@ -750,14 +740,6 @@ fb_ogl_open(FBIO *ifp, char *file, int width, int height)
 
     SGI(ifp)->mi_shmid = -1;	/* indicate no shared memory */
 
-    if (ogl_nwindows && !multiple_windows) {
-	fb_log("Warning - fb_ogl_open: Multiple windows opened. Use /dev/oglm for first window!");
-    }
-
-    /* Anyone can turn this on; no one can turn it off */
-    if ( (ifp->if_mode & MODE_5MASK) == MODE_5MULTI )
-	multiple_windows = 1;
-
     /* the Silicon Graphics Library Window management routines
      * use shared memory. This causes lots of problems when you
      * want to pass a window structure to a child process.
@@ -872,27 +854,13 @@ fb_ogl_open(FBIO *ifp, char *file, int width, int height)
     }
 
     /* Open an OpenGL context with this visual*/
-    if (multiple_windows) {
- 	/* force indirect context */
-	OGL(ifp)->glxc = glXCreateContext(OGL(ifp)->dispp,
-					  OGL(ifp)->vip, 0, False);
-    } else {
-	/* try direct context */
-	OGL(ifp)->glxc = glXCreateContext(OGL(ifp)->dispp,
-					  OGL(ifp)->vip, 0, True);
-    }
-
+    OGL(ifp)->glxc = glXCreateContext(OGL(ifp)->dispp, OGL(ifp)->vip, 0, True /* direct context */);
     if (OGL(ifp)->glxc == NULL) {
 	fb_log("ERROR: Couldn't create an OpenGL context!\n");
 	return -1;
     }
 
     direct = glXIsDirect(OGL(ifp)->dispp, OGL(ifp)->glxc);
-    if (!direct) {
-	/* we failed to get a direct context, so we must acquire/release the context */
-	multiple_windows=1;
-    }
-
     if (CJDEBUG) {
 	fb_log("Framebuffer drawing context is %s.\n", direct ? "direct" : "indirect");
     }
@@ -1075,7 +1043,6 @@ _ogl_open_existing(FBIO *ifp, Display *dpy, Window win, Colormap cmap, XVisualIn
     OGL(ifp)->use_ext_ctrl = 1;
 
     SGI(ifp)->mi_shmid = -1;	/* indicate no shared memory */
-    multiple_windows = 1;
     ifp->if_width = ifp->if_max_width = width;
     ifp->if_height = ifp->if_max_height = height;
 
@@ -1296,10 +1263,8 @@ ogl_clear(FBIO *ifp, unsigned char *pp)
 
     if ( CJDEBUG ) printf("entering ogl_clear\n");
 
-    if (multiple_windows) {
-	if (glXMakeCurrent(OGL(ifp)->dispp, OGL(ifp)->wind, OGL(ifp)->glxc)==False) {
-	    fb_log("Warning, ogl_clear: glXMakeCurrent unsuccessful.\n");
-	}
+    if (glXMakeCurrent(OGL(ifp)->dispp, OGL(ifp)->wind, OGL(ifp)->glxc)==False) {
+	fb_log("Warning, ogl_clear: glXMakeCurrent unsuccessful.\n");
     }
 
     /* Set clear colors */
@@ -1351,10 +1316,8 @@ ogl_clear(FBIO *ifp, unsigned char *pp)
 	    }
 	}
 
-	if (multiple_windows) {
-	    /* unattach context for other threads to use */
-	    glXMakeCurrent(OGL(ifp)->dispp, None, NULL);
-	}
+	/* unattach context for other threads to use */
+	glXMakeCurrent(OGL(ifp)->dispp, None, NULL);
     }
 
     return(0);
@@ -1397,10 +1360,8 @@ ogl_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
     if (OGL(ifp)->use_ext_ctrl) {
 	ogl_clipper(ifp);
     } else {
-	if (multiple_windows) {
-	    if (glXMakeCurrent(OGL(ifp)->dispp, OGL(ifp)->wind, OGL(ifp)->glxc)==False) {
-		fb_log("Warning, ogl_view: glXMakeCurrent unsuccessful.\n");
-	    }
+	if (glXMakeCurrent(OGL(ifp)->dispp, OGL(ifp)->wind, OGL(ifp)->glxc)==False) {
+	    fb_log("Warning, ogl_view: glXMakeCurrent unsuccessful.\n");
 	}
 
 	/* Set clipping matrix  and zoom level */
@@ -1429,10 +1390,8 @@ ogl_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 	    }
 	}
 
-	if (multiple_windows) {
-	    /* unattach context for other threads to use */
-	    glXMakeCurrent(OGL(ifp)->dispp, None, NULL);
-	}
+	/* unattach context for other threads to use */
+	glXMakeCurrent(OGL(ifp)->dispp, None, NULL);
     }
 
     return(0);
@@ -1594,10 +1553,8 @@ ogl_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, int co
     if ( (ifp->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH )
 	return ret;
 
-    if (multiple_windows) {
-	if (glXMakeCurrent(OGL(ifp)->dispp, OGL(ifp)->wind, OGL(ifp)->glxc)==False) {
-	    fb_log("Warning, ogl_write: glXMakeCurrent unsuccessful.\n");
-	}
+    if (glXMakeCurrent(OGL(ifp)->dispp, OGL(ifp)->wind, OGL(ifp)->glxc)==False) {
+	fb_log("Warning, ogl_write: glXMakeCurrent unsuccessful.\n");
     }
 
     if (!OGL(ifp)->use_ext_ctrl) {
@@ -1632,10 +1589,8 @@ ogl_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, int co
 	    }
 	}
 
-	if (multiple_windows) {
-	    /* unattach context for other threads to use */
-	    glXMakeCurrent(OGL(ifp)->dispp, None, NULL);
-	}
+	/* unattach context for other threads to use */
+	glXMakeCurrent(OGL(ifp)->dispp, None, NULL);
     }
 
     return(ret);
@@ -1684,10 +1639,8 @@ ogl_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsign
 	return width*height;
 
     if (!OGL(ifp)->use_ext_ctrl) {
-	if (multiple_windows) {
-	    if (glXMakeCurrent(OGL(ifp)->dispp, OGL(ifp)->wind, OGL(ifp)->glxc)==False) {
-		fb_log("Warning, ogl_writerect: glXMakeCurrent unsuccessful.\n");
-	    }
+	if (glXMakeCurrent(OGL(ifp)->dispp, OGL(ifp)->wind, OGL(ifp)->glxc)==False) {
+	    fb_log("Warning, ogl_writerect: glXMakeCurrent unsuccessful.\n");
 	}
 
 	if ( SGI(ifp)->mi_doublebuffer) {
@@ -1703,10 +1656,8 @@ ogl_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsign
 	    }
 	}
 
-	if (multiple_windows) {
-	    /* unattach context for other threads to use */
-	    glXMakeCurrent(OGL(ifp)->dispp, None, NULL);
-	}
+	/* unattach context for other threads to use */
+	glXMakeCurrent(OGL(ifp)->dispp, None, NULL);
     }
 
     return(width*height);
@@ -1755,10 +1706,8 @@ ogl_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsi
 	return width*height;
 
     if (!OGL(ifp)->use_ext_ctrl) {
-	if (multiple_windows) {
-	    if (glXMakeCurrent(OGL(ifp)->dispp, OGL(ifp)->wind, OGL(ifp)->glxc)==False) {
-		fb_log("Warning, ogl_writerect: glXMakeCurrent unsuccessful.\n");
-	    }
+	if (glXMakeCurrent(OGL(ifp)->dispp, OGL(ifp)->wind, OGL(ifp)->glxc)==False) {
+	    fb_log("Warning, ogl_writerect: glXMakeCurrent unsuccessful.\n");
 	}
 
 	if ( SGI(ifp)->mi_doublebuffer) {
@@ -1774,10 +1723,8 @@ ogl_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsi
 	    }
 	}
 
-	if (multiple_windows) {
-	    /* unattach context for other threads to use */
-	    glXMakeCurrent(OGL(ifp)->dispp, None, NULL);
-	}
+	/* unattach context for other threads to use */
+	glXMakeCurrent(OGL(ifp)->dispp, None, NULL);
     }
 
     return(width*height);
@@ -1866,10 +1813,8 @@ ogl_wmap(register FBIO *ifp, register const ColorMap *cmp)
 
 	    /* Software color mapping, trigger a repaint */
 
-	    if (multiple_windows) {
-		if (glXMakeCurrent(OGL(ifp)->dispp, OGL(ifp)->wind, OGL(ifp)->glxc)==False) {
-		    fb_log("Warning, ogl_wmap: glXMakeCurrent unsuccessful.\n");
-		}
+	    if (glXMakeCurrent(OGL(ifp)->dispp, OGL(ifp)->wind, OGL(ifp)->glxc)==False) {
+		fb_log("Warning, ogl_wmap: glXMakeCurrent unsuccessful.\n");
 	    }
 
 	    ogl_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
@@ -1878,10 +1823,8 @@ ogl_wmap(register FBIO *ifp, register const ColorMap *cmp)
 	    } else if (OGL(ifp)->copy_flag) {
 		backbuffer_to_screen(ifp, -1);
 	    }
-	    if (multiple_windows) {
-		/* unattach context for other threads to use, also flushes */
-		glXMakeCurrent(OGL(ifp)->dispp, None, NULL);
-	    }
+	    /* unattach context for other threads to use, also flushes */
+	    glXMakeCurrent(OGL(ifp)->dispp, None, NULL);
 	} else {
 	    /* Send color map to hardware */
 	    /* This code has yet to be tested */
@@ -1926,7 +1869,6 @@ ogl_help(FBIO *ifp)
     fb_log( "	mi_doublebuffer=%d\n", SGI(ifp)->mi_doublebuffer );
     fb_log( "	mi_cmap_flag=%d\n", SGI(ifp)->mi_cmap_flag );
     fb_log( "	ogl_nwindows=%d\n", ogl_nwindows );
-    fb_log( "	multiple_windows=%d\n", multiple_windows );
 
     fb_log("X11 Visual:\n");
 
@@ -2043,10 +1985,8 @@ HIDDEN int
 ogl_flush(FBIO *ifp)
 {
     if ( (ifp->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH )  {
-	if (multiple_windows) {
-	    if (glXMakeCurrent(OGL(ifp)->dispp, OGL(ifp)->wind, OGL(ifp)->glxc)==False) {
-		fb_log("Warning, ogl_flush: glXMakeCurrent unsuccessful.\n");
-	    }
+	if (glXMakeCurrent(OGL(ifp)->dispp, OGL(ifp)->wind, OGL(ifp)->glxc)==False) {
+	    fb_log("Warning, ogl_flush: glXMakeCurrent unsuccessful.\n");
 	}
 	/* Send entire in-memory buffer to the screen, all at once */
 	ogl_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
@@ -2237,7 +2177,7 @@ expose_callback(FBIO *ifp, XEvent *eventPtr)
     if ( CJDEBUG ) fb_log("entering expose_callback()\n");
 
 
-    if ( multiple_windows || OGL(ifp)->firstTime ) {
+    if ( OGL(ifp)->firstTime ) {
 	if ( glXMakeCurrent(OGL(ifp)->dispp, OGL(ifp)->wind,
 			    OGL(ifp)->glxc) == False) {
 	    fb_log("Warning, libfb/expose_callback: glXMakeCurrent unsuccessful.\n");
@@ -2353,14 +2293,8 @@ expose_callback(FBIO *ifp, XEvent *eventPtr)
 	fb_log("double %d, stereo %d, aux %d\n", dbb, getster, getaux);
     }
 
-    if ( multiple_windows ) {
-	/* unattach context for other threads to use */
-	glXMakeCurrent(OGL(ifp)->dispp, None, NULL);
-    }
-#if 0
-    XFlush(OGL(ifp)->dispp);
-    glFlush();
-#endif
+    /* unattach context for other threads to use */
+    glXMakeCurrent(OGL(ifp)->dispp, None, NULL);
 }
 
 void
