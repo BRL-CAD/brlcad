@@ -854,7 +854,7 @@ fb_ogl_open(FBIO *ifp, char *file, int width, int height)
     }
 
     /* Open an OpenGL context with this visual*/
-    OGL(ifp)->glxc = glXCreateContext(OGL(ifp)->dispp, OGL(ifp)->vip, 0, True /* direct context */);
+    OGL(ifp)->glxc = glXCreateContext(OGL(ifp)->dispp, OGL(ifp)->vip, 0, False /* direct context */);
     if (OGL(ifp)->glxc == NULL) {
 	fb_log("ERROR: Couldn't create an OpenGL context!\n");
 	return -1;
@@ -1316,9 +1316,10 @@ ogl_clear(FBIO *ifp, unsigned char *pp)
 	    }
 	}
 
-	/* unattach context for other threads to use */
-	glXMakeCurrent(OGL(ifp)->dispp, None, NULL);
     }
+
+    /* unattach context for other threads to use */
+    glXMakeCurrent(OGL(ifp)->dispp, None, NULL);
 
     return(0);
 }
@@ -1553,11 +1554,12 @@ ogl_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, int co
     if ( (ifp->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH )
 	return ret;
 
-    if (glXMakeCurrent(OGL(ifp)->dispp, OGL(ifp)->wind, OGL(ifp)->glxc)==False) {
-	fb_log("Warning, ogl_write: glXMakeCurrent unsuccessful.\n");
-    }
-
     if (!OGL(ifp)->use_ext_ctrl) {
+
+	if (glXMakeCurrent(OGL(ifp)->dispp, OGL(ifp)->wind, OGL(ifp)->glxc)==False) {
+	    fb_log("Warning, ogl_write: glXMakeCurrent unsuccessful.\n");
+	}
+
 	if ( xstart + count <= ifp->if_width  )  {
 	    /* "Fast path" case for writes of less than one scanline.
 	     * The assumption is that there will be a lot of short
@@ -1823,6 +1825,7 @@ ogl_wmap(register FBIO *ifp, register const ColorMap *cmp)
 	    } else if (OGL(ifp)->copy_flag) {
 		backbuffer_to_screen(ifp, -1);
 	    }
+
 	    /* unattach context for other threads to use, also flushes */
 	    glXMakeCurrent(OGL(ifp)->dispp, None, NULL);
 	} else {
@@ -1988,6 +1991,7 @@ ogl_flush(FBIO *ifp)
 	if (glXMakeCurrent(OGL(ifp)->dispp, OGL(ifp)->wind, OGL(ifp)->glxc)==False) {
 	    fb_log("Warning, ogl_flush: glXMakeCurrent unsuccessful.\n");
 	}
+
 	/* Send entire in-memory buffer to the screen, all at once */
 	ogl_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
 	if ( SGI(ifp)->mi_doublebuffer) {
@@ -1997,6 +2001,9 @@ ogl_flush(FBIO *ifp)
 		backbuffer_to_screen(ifp, -1);
 	    }
 	}
+
+	/* unattach context for other threads to use, also flushes */
+	glXMakeCurrent(OGL(ifp)->dispp, None, NULL);
     }
     XFlush(OGL(ifp)->dispp);
     glFlush();
@@ -2176,15 +2183,12 @@ expose_callback(FBIO *ifp, XEvent *eventPtr)
 
     if ( CJDEBUG ) fb_log("entering expose_callback()\n");
 
-
-    if ( OGL(ifp)->firstTime ) {
-	if ( glXMakeCurrent(OGL(ifp)->dispp, OGL(ifp)->wind,
-			    OGL(ifp)->glxc) == False) {
-	    fb_log("Warning, libfb/expose_callback: glXMakeCurrent unsuccessful.\n");
-	}
+    if (glXMakeCurrent(OGL(ifp)->dispp, OGL(ifp)->wind, OGL(ifp)->glxc)==False) {
+	fb_log("Warning, expose_callback: glXMakeCurrent unsuccessful.\n");
     }
 
     if ( OGL(ifp)->firstTime ) {
+
 	OGL(ifp)->firstTime = 0;
 
 	/* just in case the configuration is double buffered but
