@@ -9,25 +9,33 @@ if test ! -f "$TOPSRC/misc/flawfinder" ; then
     exit 1
 fi
 
-rm -f flawfinder.log
-
-echo "running flawfinder..."
-
-${TOPSRC}/misc/flawfinder --followdotdir --minlevel=5 --singleline --neverignore --falsepositive --quiet ${TOPSRC}/src/[^o]* > flawfinder.log 2>&1
-
-NUMBER_WRONG=0
-if test "x`grep \"No hits found.\" flawfinder.log`" = "x" ; then
-    NUMBER_WRONG="`grep \"Hits = \" flawfinder.log | awk '{print $3}'`"
+HAVE_PYTHON=no
+if test `env python -h` -ne 0 ; then
+    HAVE_PYTHON=yes
 fi
 
-if test "x$NUMBER_WRONG" = "x0" ; then
-    echo "-> flawfinder.sh succeeded"
-else
-    if test -f flawfinder.log ; then
-	cat flawfinder.log
+if test "x$HAVE_PYTHON" = "x" ; then
+
+    echo "running flawfinder..."
+
+    rm -f flawfinder.log
+    ${TOPSRC}/misc/flawfinder --followdotdir --minlevel=5 --singleline --neverignore --falsepositive --quiet ${TOPSRC}/src/[^o]* > flawfinder.log 2>&1
+
+    NUMBER_WRONG=0
+    if test "x`grep \"No hits found.\" flawfinder.log`" = "x" ; then
+	NUMBER_WRONG="`grep \"Hits = \" flawfinder.log | awk '{print $3}'`"
     fi
-    echo "-> flawfinder.sh FAILED"
-fi
+
+    if test "x$NUMBER_WRONG" = "x0" ; then
+	echo "-> flawfinder.sh succeeded"
+    else
+	if test -f flawfinder.log ; then
+	    cat flawfinder.log
+	fi
+	echo "-> flawfinder.sh FAILED"
+    fi
+
+fi # HAVE_PYTHON
 
 echo "running bio.h public header check..."
 
