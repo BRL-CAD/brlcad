@@ -67,6 +67,8 @@
 #define METABALL_ISOPOTENTIAL	1
 #define METABALL_BLOB		2
 
+#define PLOT_THE_BIG_BOUNDING_SPHERE 0
+
 const char *metaballnames[] =
 {
     "Metaball",
@@ -128,7 +130,7 @@ fastf_t rt_metaball_get_bounding_sphere(point_t *center, fastf_t threshold, stru
 		fastf_t additive;
 		VSUB2(d, mbpt2->coord, mbpt->coord);
 		mag = MAGNITUDE(d) + dist;
-		additive = (mbpt2->fldstr*mbpt2->fldstr) / mag;
+		additive = fabs(mbpt2->fldstr) * mbpt2->fldstr / mag;
 		dist += additive;
 	    }
 	/* then see if this is a 'defining' point */
@@ -238,7 +240,7 @@ rt_metaball_point_value_iso(point_t *p, struct bu_list *points)
 
     for (BU_LIST_FOR(mbpt, wdb_metaballpt, points)) {
 	VSUB2(v, mbpt->coord, *p);
-	ret += mbpt->fldstr / MAGSQ(v);	/* f/r^2 */
+	ret += fabs(mbpt->fldstr) * mbpt->fldstr / MAGSQ(v);	/* f/r^2 */
     }
     return ret;
 }
@@ -352,7 +354,7 @@ rt_metaball_norm(register struct hit *hitp, struct soltab *stp, register struct 
 	    for (BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)) {
 		VSUB2(v, hitp->hit_point, mbpt->coord);
 		a = MAGSQ(v);
-		VJOIN1(hitp->hit_normal, hitp->hit_normal, mbpt->fldstr / (a*a), v);	/* f/r^4 */
+		VJOIN1(hitp->hit_normal, hitp->hit_normal, fabs(mbpt->fldstr)*mbpt->fldstr / (a*a), v);	/* f/r^4 */
 	    }
 	    break;
 	case METABALL_BLOB:
