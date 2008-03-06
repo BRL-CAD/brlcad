@@ -86,10 +86,6 @@ HIDDEN PIXELFORMATDESCRIPTOR *	wgl_choose_visual();
 HIDDEN int		is_linear_cmap();
 
 HIDDEN int	wgl_nwindows = 0; 	/* number of open windows */
-HIDDEN int	multiple_windows = 0;	/* someone wants to be ready
-					 * for multiple windows, at the
-					 * expense of speed.
-					 */
 /*HIDDEN	XColor	color_cell[256];*/		/* used to set colormap */
 
 int wgl_refresh();
@@ -291,10 +287,6 @@ struct wglinfo {
 #define MODE_4NORMAL	(0<<3)		/* dither if it seems necessary */
 #define MODE_4NODITH	(1<<3)		/* suppress any dithering */
 
-#define MODE_5MASK	(1<<4)
-#define MODE_5NORMAL	(0<<4)	 	/* fast - assume no multiple windows */
-#define MODE_5MULTI	(1<<4)		/* be ready for multiple windows */
-
 #define MODE_7MASK	(1<<6)
 #define MODE_7NORMAL	(0<<6)		/* install colormap in hardware if possible*/
 #define MODE_7SWCMAP	(1<<6)		/* use software colormapping */
@@ -331,8 +323,6 @@ HIDDEN struct modeflags {
       "Full centered screen - else windowed" },
     { 'd',  MODE_4MASK, MODE_4NODITH,
       "Suppress dithering - else dither if not 24-bit buffer" },
-    { 'm',  MODE_5MASK, MODE_5MULTI,
-      "Be ready for multiple windows - else optimize for single windows" },
     { 'c',	MODE_7MASK, MODE_7SWCMAP,
       "Perform software colormap - else use hardware colormap if possible" },
     { 's',	MODE_9MASK, MODE_9SINGLEBUF,
@@ -724,14 +714,6 @@ wgl_open( ifp, file, width, height )
 
     SGI(ifp)->mi_shmid = -1;	/* indicate no shared memory */
 
-    if (wgl_nwindows && !multiple_windows) {
-	fb_log("Warning - wgl_open: Multiple windows opened. Use /dev/wglm for first window!");
-    }
-
-    /* Anyone can turn this on; no one can turn it off */
-    if ( (ifp->if_mode & MODE_5MASK) == MODE_5MULTI )
-	multiple_windows = 1;
-
     /* the Silicon Graphics Library Window management routines
      * use shared memory. This causes lots of problems when you
      * want to pass a window structure to a child process.
@@ -944,7 +926,6 @@ _wgl_open_existing(FBIO *ifp,
     WGL(ifp)->use_ext_ctrl = 1;
 
     SGI(ifp)->mi_shmid = -1;	/* indicate no shared memory */
-    multiple_windows = 1;
     ifp->if_width = ifp->if_max_width = width;
     ifp->if_height = ifp->if_max_height = height;
 
@@ -1141,22 +1122,21 @@ wgl_free( ifp )
 }
 
 
+/**
+ * pp is a pointer to beginning of memory segment
+ */
 HIDDEN int
-wgl_clear( ifp, pp )
-    FBIO	*ifp;
-    unsigned char	*pp;		/* pointer to beginning of memory segment*/
+wgl_clear( FBIO *ifp, unsigned char *pp )
 {
-    struct wgl_pixel		bg;
-    register struct wgl_pixel      *wglp;
-    register int			cnt;
-    register int			y;
+    struct wgl_pixel bg;
+    register struct wgl_pixel *wglp;
+    register int cnt;
+    register int y;
 
     if ( CJDEBUG ) printf("entering wgl_clear\n");
 
-    if (multiple_windows) {
-	if (wglMakeCurrent(WGL(ifp)->hdc, WGL(ifp)->glxc)==False) {
-	    fb_log("Warning, wgl_clear: wglMakeCurrent unsuccessful.\n");
-	}
+    if (wglMakeCurrent(WGL(ifp)->hdc, WGL(ifp)->glxc)==False) {
+	fb_log("Warning, wgl_clear: wglMakeCurrent unsuccessful.\n");
     }
 
     /* Set clear colors */
@@ -1208,11 +1188,10 @@ wgl_clear( ifp, pp )
 	    }
 	}
 
-	if (multiple_windows) {
-	    /* unattach context for other threads to use */
-	    wglMakeCurrent(WGL(ifp)->hdc, WGL(ifp)->glxc);
-	}
     }
+
+    /* unattach context for other threads to use */
+    wglMakeCurrent(NULL, NULL);
 
     return(0);
 }
@@ -1257,10 +1236,8 @@ wgl_view( ifp, xcenter, ycenter, xzoom, yzoom )
     if (WGL(ifp)->use_ext_ctrl) {
 	wgl_clipper(ifp);
     } else {
-	if (multiple_windows) {
-	    if (wglMakeCurrent(WGL(ifp)->hdc, WGL(ifp)->glxc)==False) {
-		fb_log("Warning, wgl_view: wglMakeCurrent unsuccessful.\n");
-	    }
+	if (wglMakeCurrent(WGL(ifp)->hdc, WGL(ifp)->glxc)==False) {
+	    fb_log("Warning, wgl_view: wglMakeCurrent unsuccessful.\n");
 	}
 
 	/* Set clipping matrix  and zoom level */
@@ -1289,10 +1266,8 @@ wgl_view( ifp, xcenter, ycenter, xzoom, yzoom )
 	    }
 	}
 
-	if (multiple_windows) {
-	    /* unattach context for other threads to use */
-	    wglMakeCurrent(WGL(ifp)->hdc, WGL(ifp)->glxc);
-	}
+	/* unattach context for other threads to use */
+	wglMakeCurrent(NULL, NULL);
     }
 
     return(0);
@@ -1462,13 +1437,12 @@ wgl_write( ifp, xstart, ystart, pixelp, count ) /*write count pixels from pixelp
     if ( (ifp->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH )
 	return ret;
 
-    if (multiple_windows) {
+    if (!WGL(ifp)->use_ext_ctrl) {
+
 	if (wglMakeCurrent(WGL(ifp)->hdc, WGL(ifp)->glxc)==False) {
 	    fb_log("Warning, wgl_write: wglMakeCurrent unsuccessful.\n");
 	}
-    }
 
-    if (!WGL(ifp)->use_ext_ctrl) {
 	if ( xstart + count <= ifp->if_width  )  {
 	    /* "Fast path" case for writes of less than one scanline.
 	     * The assumption is that there will be a lot of short
@@ -1495,10 +1469,8 @@ wgl_write( ifp, xstart, ystart, pixelp, count ) /*write count pixels from pixelp
 	    }
 	}
 
-	if (multiple_windows) {
-	    /* unattach context for other threads to use */
-	    wglMakeCurrent(WGL(ifp)->hdc, NULL);
-	}
+	/* unattach context for other threads to use */
+	wglMakeCurrent(NULL, NULL);
     }
 
     return(ret);
@@ -1552,10 +1524,8 @@ wgl_writerect(FBIO *ifp,
 	return width*height;
 
     if (!WGL(ifp)->use_ext_ctrl) {
-	if (multiple_windows) {
-	    if (wglMakeCurrent(WGL(ifp)->hdc, WGL(ifp)->glxc)==False) {
-		fb_log("Warning, wgl_writerect: wglMakeCurrent unsuccessful.\n");
-	    }
+	if (wglMakeCurrent(WGL(ifp)->hdc, WGL(ifp)->glxc)==False) {
+	    fb_log("Warning, wgl_writerect: wglMakeCurrent unsuccessful.\n");
 	}
 
 	if ( SGI(ifp)->mi_doublebuffer) {
@@ -1571,10 +1541,8 @@ wgl_writerect(FBIO *ifp,
 	    }
 	}
 
-	if (multiple_windows) {
-	    /* unattach context for other threads to use */
-	    wglMakeCurrent(WGL(ifp)->hdc, WGL(ifp)->glxc);
-	}
+	/* unattach context for other threads to use */
+	wglMakeCurrent(NULL, NULL);
     }
 
     return(width*height);
@@ -1628,10 +1596,8 @@ wgl_bwwriterect(FBIO *ifp,
 	return width*height;
 
     if (!WGL(ifp)->use_ext_ctrl) {
-	if (multiple_windows) {
-	    if (wglMakeCurrent(WGL(ifp)->hdc, WGL(ifp)->glxc)==False) {
-		fb_log("Warning, wgl_writerect: wglMakeCurrent unsuccessful.\n");
-	    }
+	if (wglMakeCurrent(WGL(ifp)->hdc, WGL(ifp)->glxc)==False) {
+	    fb_log("Warning, wgl_writerect: wglMakeCurrent unsuccessful.\n");
 	}
 
 	if ( SGI(ifp)->mi_doublebuffer) {
@@ -1647,10 +1613,8 @@ wgl_bwwriterect(FBIO *ifp,
 	    }
 	}
 
-	if (multiple_windows) {
-	    /* unattach context for other threads to use */
-	    wglMakeCurrent(WGL(ifp)->hdc, WGL(ifp)->glxc);
-	}
+	/* unattach context for other threads to use */
+	wglMakeCurrent(NULL, NULL);
     }
 
     return(width*height);
@@ -1741,10 +1705,8 @@ wgl_wmap(register FBIO *ifp,
 
 	    /* Software color mapping, trigger a repaint */
 
-	    if (multiple_windows) {
-		if (wglMakeCurrent(WGL(ifp)->hdc, WGL(ifp)->glxc)==False) {
-		    fb_log("Warning, wgl_wmap: wglMakeCurrent unsuccessful.\n");
-		}
+	    if (wglMakeCurrent(WGL(ifp)->hdc, WGL(ifp)->glxc)==False) {
+		fb_log("Warning, wgl_wmap: wglMakeCurrent unsuccessful.\n");
 	    }
 
 	    wgl_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
@@ -1753,10 +1715,9 @@ wgl_wmap(register FBIO *ifp,
 	    } else if (WGL(ifp)->copy_flag) {
 		backbuffer_to_screen(ifp, -1);
 	    }
-	    if (multiple_windows) {
-		/* unattach context for other threads to use, also flushes */
-		wglMakeCurrent(WGL(ifp)->hdc, WGL(ifp)->glxc);
-	    }
+
+	    /* unattach context for other threads to use, also flushes */
+	    wglMakeCurrent(NULL, NULL);
 	} else {
 	    /* Send color map to hardware */
 	    /* This code has yet to be tested */
@@ -1801,7 +1762,6 @@ wgl_help(FBIO *ifp)
     fb_log( "	mi_doublebuffer=%d\n", SGI(ifp)->mi_doublebuffer );
     fb_log( "	mi_cmap_flag=%d\n", SGI(ifp)->mi_cmap_flag );
     fb_log( "	wgl_nwindows=%d\n", wgl_nwindows );
-    fb_log( "	multiple_windows=%d\n", multiple_windows );
 
     fb_log("X11 Visual:\n");
 
@@ -1867,11 +1827,11 @@ HIDDEN int
 wgl_flush(FBIO *ifp)
 {
     if ( (ifp->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH )  {
-	if (multiple_windows) {
-	    if (wglMakeCurrent(WGL(ifp)->hdc, WGL(ifp)->glxc)==False) {
-		fb_log("Warning, wgl_flush: wglMakeCurrent unsuccessful.\n");
-	    }
+
+	if (wglMakeCurrent(WGL(ifp)->hdc, WGL(ifp)->glxc)==False) {
+	    fb_log("Warning, wgl_flush: wglMakeCurrent unsuccessful.\n");
 	}
+
 	/* Send entire in-memory buffer to the screen, all at once */
 	wgl_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
 	if ( SGI(ifp)->mi_doublebuffer) {
@@ -1881,6 +1841,9 @@ wgl_flush(FBIO *ifp)
 		backbuffer_to_screen(ifp, -1);
 	    }
 	}
+
+	/* unattach context for other threads to use, also flushes */
+	wglMakeCurrent(NULL, NULL);
     }
     /* XFlush(WGL(ifp)->dispp); */
     glFlush();
@@ -1997,11 +1960,8 @@ expose_callback(FBIO *ifp,
 
     if ( CJDEBUG ) fb_log("entering expose_callback()\n");
 
-
-    if ( multiple_windows || WGL(ifp)->firstTime ) {
-	if ( wglMakeCurrent(WGL(ifp)->hdc, WGL(ifp)->glxc) == False) {
-	    fb_log("Warning, libfb/expose_callback: wglMakeCurrent unsuccessful.\n");
-	}
+    if ( wglMakeCurrent(WGL(ifp)->hdc, WGL(ifp)->glxc) == False) {
+	fb_log("Warning, libfb/expose_callback: wglMakeCurrent unsuccessful.\n");
     }
 
     if ( WGL(ifp)->firstTime ) {
@@ -2112,10 +2072,8 @@ expose_callback(FBIO *ifp,
 	fb_log("double %d, stereo %d, aux %d\n", dbb, getster, getaux);
     }
 
-    if ( multiple_windows ) {
-	/* unattach context for other threads to use */
-	wglMakeCurrent(WGL(ifp)->hdc, WGL(ifp)->glxc);
-    }
+    /* unattach context for other threads to use */
+    wglMakeCurrent(NULL, NULL);
 }
 
 void
