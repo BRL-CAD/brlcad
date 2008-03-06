@@ -2676,6 +2676,7 @@ metaball_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt)
 	metaballpt->coord[1] = atof( argv[i+1] ) * local2base;
 	metaballpt->coord[2] = atof( argv[i+2] ) * local2base;
 	metaballpt->fldstr = atof( argv[i+3] ) * local2base;
+	metaballpt->sweat = 0.0;
 
 	BU_LIST_INSERT( &metaball->metaball_ctrl_head, &metaballpt->l );
     }
