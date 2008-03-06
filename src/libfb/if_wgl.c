@@ -82,9 +82,6 @@ HIDDEN void		wgl_clipper();
 HIDDEN int		wgl_getmem();
 HIDDEN void		backbuffer_to_screen();
 HIDDEN void		wgl_cminit();
-#if 0
-HIDDEN void		reorder_cursor();
-#endif
 HIDDEN PIXELFORMATDESCRIPTOR *	wgl_choose_visual();
 HIDDEN int		is_linear_cmap();
 
@@ -111,11 +108,6 @@ HIDDEN int	wgl_open(),
     wgl_getview(),
     wgl_setcursor(),
     wgl_cursor(),
-#if 0
-    wgl_getcursor(),
-    wgl_readrect(),
-    fb_cnull(),
-#endif
     wgl_writerect(),
     wgl_bwwriterect(),
     wgl_poll(),
@@ -601,9 +593,6 @@ LONG WINAPI MainWndProc (
 {
     switch (uMsg) {
 	case WM_PAINT:
-#if 0
-	    fprintf(stderr, "XXXMainWndProc: msg - WM_PAINT\n");
-#endif
 	    if (!WGL(saveifp)->use_ext_ctrl)
 		expose_callback(saveifp, 0);
 	    break;
@@ -614,9 +603,6 @@ LONG WINAPI MainWndProc (
 	case WM_MBUTTONDOWN:
 	    break;
 	case WM_CLOSE:
-#if 0
-	    fprintf(stderr, "XXXMainWndProc: msg - WM_CLOSE\n");
-#endif
 	    WGL(saveifp)->alive = -1;
 	    break;
 	case WM_LBUTTONUP:
@@ -631,9 +617,6 @@ LONG WINAPI MainWndProc (
 	case WM_KEYDOWN:
 	    break;
 	case WM_KEYUP:
-#if 0
-	    fprintf(stderr, "XXXMainWndProc: msg - WM_KEYUP\n");
-#endif
 	    WGL(saveifp)->alive = 0;
 	    break;
 	case WM_SIZE:
@@ -926,18 +909,6 @@ wgl_open_existing(ifp, argc, argv)
 			      glxc, double_buffer, soft_cmap);
 }
 
-#if 0
-FBIO *ifp;
-Display *dpy;
-Window win;
-Colormap cmap;
-PIXELFORMATDESCRIPTOR *vip;
-int width;
-int height;
-HGLRC glxc;
-int double_buffer;
-int soft_cmap;
-#endif
 
 int
 _wgl_open_existing(FBIO *ifp,
@@ -1503,13 +1474,6 @@ wgl_write( ifp, xstart, ystart, pixelp, count ) /*write count pixels from pixelp
 	     * The assumption is that there will be a lot of short
 	     * writes, and it's best just to ignore the backbuffer
 	     */
-#if 0
-	    if ( SGI(ifp)->mi_doublebuffer ) {
-		/* "turn off" doublebuffering*/
-		SGI(ifp)->mi_doublebuffer = 0;
-		glDrawBuffer(GL_FRONT);
-	    }
-#endif
 	    wgl_xmit_scanlines( ifp, ybase, 1, xstart, count );
 	    if (WGL(ifp)->copy_flag) {
 		/* repaint one scanline from backbuffer */
@@ -1923,13 +1887,6 @@ wgl_flush(FBIO *ifp)
     return(0);
 }
 
-#if 0
-HIDDEN int
-fb_cnull(FBIO *ifp)
-{
-    return(0);
-}
-#endif
 
 /*
  * W G L _ C L I P P E R ( )
@@ -2186,32 +2143,6 @@ wgl_configureWindow(FBIO *ifp,
     wgl_clipper(ifp);
 }
 
-#if 0
-/* reorder_cursor - reverses the order of the scanlines.
- * scanlines are byte aligned, the specified cursor is xbits
- * by ybits bits in size.
- *
- */
-HIDDEN void
-reorder_cursor(char *dst,
-	       char *src,
-	       int xbits,
-	       int ybits)
-{
-    int xbytes;
-    int i, j, k;
-
-    if ( (xbytes = xbits /8) * 8 != xbits)
-	xbytes++;
-
-    for (j=0, k=(ybits-1)*xbytes; j < ybits*xbytes; j+=xbytes, k-=xbytes) {
-	for (i=0; i < xbytes; i++) {
-	    dst[j+i] = src[k+i];
-	}
-    }
-
-}
-#endif
 
 /* BACKBUFFER_TO_SCREEN - copy pixels from copy on the backbuffer
  * to the front buffer. Do one scanline specified by one_y, or whole
@@ -2384,32 +2315,20 @@ wgl_refresh(FBIO *ifp,
 	y -= h;
     }
 
-#if 0
-    if (glIsEnabled(GL_DEPTH_TEST)) {
-	glDisable(GL_DEPTH_TEST);
-	dflag = 1;
-    }
-#endif
-
     glGetIntegerv(GL_MATRIX_MODE, &mm);
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
 
-#if 0
-    glOrtho(0.0, WGL(ifp)->win_width, 0.0, WGL(ifp)->win_height, -1.0, 1.0);
-#else
     wgl_clipper(ifp);
     clp = &(WGL(ifp)->clip);
     glOrtho( clp->oleft, clp->oright, clp->obottom, clp->otop, -1.0, 1.0);
     glPixelZoom((float) ifp->if_xzoom, (float) ifp->if_yzoom);
-#endif
+
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glLoadIdentity();
-#if 0
-    glTranslatef(0.0, 0.0, -1.0);
-#endif
+
     glViewport(0, 0, WGL(ifp)->win_width, WGL(ifp)->win_height);
     wgl_xmit_scanlines(ifp, y, h, x, w);
     glMatrixMode(GL_PROJECTION);
@@ -2417,11 +2336,6 @@ wgl_refresh(FBIO *ifp,
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
     glMatrixMode(mm);
-
-#if 0
-    if (dflag)
-	glEnable(GL_DEPTH_TEST);
-#endif
 
     glFlush();
     return 0;
