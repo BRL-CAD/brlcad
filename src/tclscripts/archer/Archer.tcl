@@ -115,6 +115,13 @@ package provide Archer 1.0
     public {
 	# Public Class Variables
 	common plugins ""
+	common pluginMajorTypeCore "Core"
+   	common pluginMajorTypeCommand "Command"
+   	common pluginMajorTypeWizard "Wizard"
+   	common pluginMajorTypeUtility "Utility"
+   	common pluginMinorTypeMged "Mged"
+   	common pluginMinorTypeSdb "Sdb"
+   	common pluginMinorTypeBoth "Both"
 
 	# Plugins Section
 	proc initArcher {}
@@ -133,6 +140,12 @@ package provide Archer 1.0
 				 {_xmlAction ""}}
 	proc pluginSdb {_archer}
 	proc pluginUnregister {_name}
+
+	method pluginGetMinAllowableRid {}
+   	method pluginUpdateProgressBar {percent}
+	method pluginUpdateSaveMode {mode}
+	method pluginUpdateStatusBar {msg}
+
 
 	method abort               {args}
 	method adjustNormals       {args}
@@ -319,10 +332,6 @@ package provide Archer 1.0
 	method invokeUtilityDialog {_class _wname _w}
 	method invokeWizardDialog {_class _action _wname}
 	method invokeWizardUpdate {_wizard _action _oname _name}
-	method pluginGetMinAllowableRid {}
-	method pluginUpdateProgressBar {_percent}
-	method pluginUpdateSaveMode {_mode}
-	method pluginUpdateStatusBar {_msg}
 	method updateUtilityMenu {}
 	method updateWizardMenu {}
 
@@ -978,6 +987,7 @@ package provide Archer 1.0
     set idx [lsearch -exact $::Archer::plugins $plug]
     set ::Archer::plugins [lreplace $::Archer::plugins $idx $idx ""]
 }
+
 
 
 ##################################### SDB Commands #####################################
