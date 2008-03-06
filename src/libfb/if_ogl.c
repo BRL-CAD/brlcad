@@ -86,9 +86,6 @@ HIDDEN void		ogl_clipper(register FBIO *ifp);
 HIDDEN int		ogl_getmem(FBIO *ifp);
 HIDDEN void		backbuffer_to_screen(register FBIO *ifp, int one_y);
 HIDDEN void		ogl_cminit(register FBIO *ifp);
-#if 0
-HIDDEN void		reorder_cursor();
-#endif
 HIDDEN XVisualInfo *	fb_ogl_choose_visual(FBIO *ifp);
 HIDDEN int		is_linear_cmap(register FBIO *ifp);
 
@@ -111,11 +108,6 @@ HIDDEN int ogl_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom);
 HIDDEN int ogl_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom);
 HIDDEN int ogl_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig);
 HIDDEN int ogl_cursor(FBIO *ifp, int mode, int x, int y);
-#if 0
-HIDDEN int ogl_getcursor();
-HIDDEN int ogl_readrect();
-HIDDEN int fb_cnull();
-#endif
 HIDDEN int ogl_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp);
 HIDDEN int ogl_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp);
 HIDDEN int ogl_poll(FBIO *ifp);
@@ -2010,14 +2002,6 @@ ogl_flush(FBIO *ifp)
     return(0);
 }
 
-#if 0
-HIDDEN int
-fb_cnull(ifp)
-    FBIO *ifp;
-{
-    return(0);
-}
-#endif
 
 /*
  * O G L _ C L I P P E R ( )
@@ -2324,29 +2308,6 @@ ogl_configureWindow(FBIO *ifp, int width, int height)
     ogl_clipper(ifp);
 }
 
-#if 0
-/* reorder_cursor - reverses the order of the scanlines.
- * scanlines are byte aligned, the specified cursor is xbits
- * by ybits bits in size.
- *
- */
-HIDDEN void
-reorder_cursor(char *dst, char *src, int xbits, int ybits)
-{
-    int xbytes;
-    int i, j, k;
-
-    if ( (xbytes = xbits /8) * 8 != xbits)
-	xbytes++;
-
-    for (j=0, k=(ybits-1)*xbytes; j < ybits*xbytes; j+=xbytes, k-=xbytes) {
-	for (i=0; i < xbytes; i++) {
-	    dst[j+i] = src[k+i];
-	}
-    }
-
-}
-#endif
 
 /* BACKBUFFER_TO_SCREEN - copy pixels from copy on the backbuffer
  * to the front buffer. Do one scanline specified by one_y, or whole
@@ -2562,32 +2523,21 @@ ogl_refresh(FBIO *ifp, int x, int y, int w, int h)
 	y -= h;
     }
 
-#if 0
-    if (glIsEnabled(GL_DEPTH_TEST)) {
-	glDisable(GL_DEPTH_TEST);
-	dflag = 1;
-    }
-#endif
 
     glGetIntegerv(GL_MATRIX_MODE, &mm);
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
 
-#if 0
-    glOrtho(0.0, OGL(ifp)->win_width, 0.0, OGL(ifp)->win_height, -1.0, 1.0);
-#else
     ogl_clipper(ifp);
     clp = &(OGL(ifp)->clip);
     glOrtho( clp->oleft, clp->oright, clp->obottom, clp->otop, -1.0, 1.0);
     glPixelZoom((float) ifp->if_xzoom, (float) ifp->if_yzoom);
-#endif
+
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glLoadIdentity();
-#if 0
-    glTranslatef(0.0, 0.0, -1.0);
-#endif
+
     glViewport(0, 0, OGL(ifp)->win_width, OGL(ifp)->win_height);
     ogl_xmit_scanlines(ifp, y, h, x, w);
     glMatrixMode(GL_PROJECTION);
@@ -2595,11 +2545,6 @@ ogl_refresh(FBIO *ifp, int x, int y, int w, int h)
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
     glMatrixMode(mm);
-
-#if 0
-    if (dflag)
-	glEnable(GL_DEPTH_TEST);
-#endif
 
     glFlush();
     return 0;
