@@ -1443,7 +1443,7 @@ body GeometryBrowser::rgbToHex { { rgb "0 0 0" } } {
 	set b 0
     }
 
-    if [ catch { format {"#%02x%02x%02x"} $r $g $b } color ] {
+    if [ catch { format {#%02x%02x%02x} $r $g $b } color ] {
 	puts $color
 	return "#000000"
     }
