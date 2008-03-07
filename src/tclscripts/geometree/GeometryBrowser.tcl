@@ -828,6 +828,7 @@ body GeometryBrowser::setNodeColor { { node "" } { color "" } } {
     if { [ string compare $color "" ] == 0 } {
 	puts "attr rm $nodeName rgb"
 	set retval [ attr rm $nodeName rgb ]
+	eval draw [who]
 	$this checkAutoRender
 	return $retval
     }
@@ -837,6 +838,7 @@ body GeometryBrowser::setNodeColor { { node "" } { color "" } } {
 	scan $color {%d %d %d} r g b
 	puts "comb_color $nodeName $r $g $b"
 	set retval [ comb_color $nodeName $r $g $b ]
+	eval draw [who]
 	$this checkAutoRender
 	return $retval
     }
@@ -845,6 +847,7 @@ body GeometryBrowser::setNodeColor { { node "" } { color "" } } {
     if { [ llength [ split $rgb "/" ] ] == 3 } {
 	puts "attr set $nodeName $rgb"
 	set retval [ attr set $nodeName $rgb ]
+	eval draw [who]
 	$this checkAutoRender
 	return $retval
     }
