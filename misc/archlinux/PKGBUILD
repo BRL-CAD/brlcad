@@ -56,8 +56,8 @@ arch=('i686')
 depends=('libpng' 'zlib' 'libgl' 'tk>=8.5')
 
 options=('!libtool')
-source=(brlcad.sh)
-md5sums=('6e46ccfca93dd363d931c25ab21ac512')
+source=('brlcad.sh')
+md5sums=('eb537947981d71cd8f0e329127e3aa5c')
 
 build() {
     cd $startdir/../../
