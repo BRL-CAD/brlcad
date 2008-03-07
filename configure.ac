@@ -3636,9 +3636,6 @@ AC_CONFIG_FILES([
 	m4/Makefile
 	misc/Makefile
 	misc/archlinux/Makefile
-	misc/archlinux/PKGBUILD
-	misc/archlinux/brlcad.install
-	misc/archlinux/brlcad.sh
 	misc/brlcad-config
 	misc/brlcad.spec
 	misc/debian/Makefile
