@@ -737,6 +737,7 @@ install-binaries: binaries
 	@@INSTALL_LIB@
 	@chmod 555 $(LIB_INSTALL_DIR)/$(LIB_FILE)
 	@$(INSTALL_LIBRARY) libtcl$(SHLIB_SUFFIX) $(LIB_INSTALL_DIR)/libtcl$(SHLIB_SUFFIX)
+	@chmod +x $(LIB_INSTALL_DIR)/libtcl$(SHLIB_SUFFIX)
 	@if test "$(TCL_BUILD_EXP_FILE)" != ""; then \
 	    echo "Installing $(TCL_EXP_FILE) to $(LIB_INSTALL_DIR)/"; \
 	    $(INSTALL_DATA) $(TCL_BUILD_EXP_FILE) \
@@ -750,6 +751,7 @@ install-binaries: binaries
 	    echo "Installing $(STUB_LIB_FILE) to $(LIB_INSTALL_DIR)/"; \
 	    @INSTALL_STUB_LIB@ ; \
 	    $(INSTALL_LIBRARY) libtclstub.a $(LIB_INSTALL_DIR)/libtclstub.a ; \
+	    @chmod +x $(LIB_INSTALL_DIR)/libtclstub.a ; \
 	fi
 	@EXTRA_INSTALL_BINARIES@
 
