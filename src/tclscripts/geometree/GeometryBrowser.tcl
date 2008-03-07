@@ -455,6 +455,10 @@ body GeometryBrowser::constructor {} {
 
     # run redraw now and start initial updateHook
     $this validateGeometry
+
+    bind $_itemMenu <ButtonRelease> {::tk::MenuInvoke %W 1}
+    bind $_bgMenu <ButtonRelease> {::tk::MenuInvoke %W 1}
+    bind $itk_component(colorMenu) <ButtonRelease> {::tk::MenuInvoke %W 1}
 }
 
 
