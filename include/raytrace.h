@@ -536,7 +536,7 @@ struct region  {
     int			reg_regionid;	/**< @brief Region ID code.  If <=0, use reg_aircode */
     int			reg_aircode;	/**< @brief Region ID AIR code */
     int			reg_gmater;	/**< @brief GIFT Material code */
-    int			reg_los;	/**< @brief equivalent LOS estimate ?? */
+    int			reg_los;	/**< @brief approximate line-of-sight thickness equivalence */
     struct mater_info	reg_mater;	/**< @brief Real material information */
     genptr_t		reg_mfuncs;	/**< @brief User appl. funcs for material */
     genptr_t		reg_udata;	/**< @brief User appl. data for material */
@@ -934,7 +934,7 @@ struct db_tree_state {
     int			ts_regionid;	/**< @brief GIFT compat region ID code*/
     int			ts_aircode;	/**< @brief GIFT compat air code */
     int			ts_gmater;	/**< @brief GIFT compat material code */
-    int			ts_los;		/**< @brief equivalent LOS estimate .. */
+    int			ts_los;		/**< @brief equivalent LOS estimate */
     struct mater_info	ts_mater;	/**< @brief material properties */
 
     /* XXX ts_mat should be a matrix pointer, not a matrix */
