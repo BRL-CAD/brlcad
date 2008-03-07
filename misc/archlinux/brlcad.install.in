@@ -44,15 +44,15 @@
 
 # arg 1:  the new package version
 post_install() {
-  if ! [ `grep '@BRLCAD_ROOT@/lib' etc/ld.so.conf` ]; then
-    echo "@BRLCAD_ROOT@/brlcad/lib" >>etc/ld.so.conf
+  if ! [ `grep '/opt/brlcad/lib' etc/ld.so.conf` ]; then
+    echo "/opt/brlcad/lib" >>etc/ld.so.conf
     sbin/ldconfig -r .
   fi
 }
 
 # arg 1:  the old package version
 pre_remove() {
-  cat etc/ld.so.conf | grep -v '@BRLCAD_ROOT@/lib' >/tmp/.pacbrlcad
+  cat etc/ld.so.conf | grep -v '/opt/brlcad/lib' >/tmp/.pacbrlcad
   mv /tmp/.pacbrlcad etc/ld.so.conf
   chmod 644 etc/ld.so.conf
   sbin/ldconfig -r .

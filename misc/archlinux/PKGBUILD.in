@@ -41,27 +41,27 @@
 # Contributor: Loui Chang <louipc.ist@gmail.com>
 #
 ###
+pkgname=brlcad
+_major=$(cat ../../include/conf/MAJOR)
+_minor=$(cat ../../include/conf/MINOR)
+_patch=$(cat ../../include/conf/PATCH)
 
-pkgname=@PACKAGE_NAME@
-pkgver=@MAJOR_VERSION@.@MINOR_VERSION@.@PATCH_VERSION@
+pkgver=$_major.$_minor.$_patch
 pkgrel=1
-pkgdesc="An extensive Constructive Solid Geometry (CSG) solid modeling system."
+pkgdesc="An extensive Constructive Solid Geometry (CSG) modeling system."
 url="http://brlcad.org"
 license=('custom:BDL' 'BSD' 'LGPL')
 install=brlcad.install
 arch=('i686')
-depends=('libpng' 'zlib' 'libgl' 'jove' 'tk>=8.5')
-
-# TODO: Make separate packages for itcl, itk, iwidgets
-#depends=('libpng' 'zlib' 'libgl' 'jove' 'tk' 'blt' 'itcl' )
+depends=('libpng' 'zlib' 'libgl' 'tk>=8.5')
 
 options=('!libtool')
 source=(brlcad.sh)
 md5sums=('6e46ccfca93dd363d931c25ab21ac512')
 
 build() {
-    cd $startdir/src/$pkgname-$pkgver
-    ./configure --prefix=@BRLCAD_ROOT@ --enable-optimized --disable-sdltest \
+    cd $startdir/../../
+    ./configure --prefix=/opt/brlcad --enable-optimized --disable-sdltest \
     --disable-jove-build
     make || return 1
     make DESTDIR=$startdir/pkg install || return 1
@@ -73,7 +73,6 @@ build() {
     cp $startdir/src/$pkgname-$pkgver/doc/legal/bdl.txt \
         $startdir/pkg/usr/share/licenses/$pkgname
 
-    # TODO: maybe remove irrelevant READMEs, INSTALL etc...
 }
 
 # Local Variables:

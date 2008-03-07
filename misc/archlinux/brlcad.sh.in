@@ -41,9 +41,8 @@
 # Contributor: Loui Chang <louipc.ist@gmail.com>
 #
 ###
-export BRLCADDIR=@BRLCAD_ROOT@
+export BRLCADDIR=/opt/brlcad
 export PATH=$PATH:$BRLCADDIR/bin
-export MANPATH=$MANPATH:$BRLCADDIR/man
 
 # Local Variables:
 # tab-width: 8
