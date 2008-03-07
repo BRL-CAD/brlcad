@@ -28,17 +28,6 @@
 #
 #
 
-#
-# Extend Autopath
-#
-foreach i $auto_path {
-    set geometreeDir [file join $i {..} tclscripts geometree ]
-    if {  [file exists $geometreeDir] } {
-	lappend auto_path $geometreeDir
-    }
-}
-
-
 package require GeometryBrowser
 
 # All GeometryBrowser stuff is in the GeometryBrowser namespace
