@@ -406,7 +406,6 @@ package provide Archer 1.0
 	    buildEmbeddedMenubar
 	    pack $itk_component(menubar) -side top -fill x -padx 1
 	}
-    }
 
     # Populate the primary toolbar
     $itk_component(primaryToolbar) insert 0 button new \
@@ -722,6 +721,7 @@ package provide Archer 1.0
 	-relief flat \
 	-overrelief raised \
 	-command [::itcl::code $this createObj bot]
+    }
 
     eval itk_initialize $args
 
@@ -761,9 +761,11 @@ package provide Archer 1.0
     set mInstanceInit 0
     updateTheme
 
-    # Change the command window's prompt
-    $itk_component(cmd) configure -prompt "Archer> "
-    $itk_component(cmd) reinitialize
+    if {!$mViewOnly} {
+	# Change the command window's prompt
+	$itk_component(cmd) configure -prompt "Archer> "
+	$itk_component(cmd) reinitialize
+    }
 }
 
 
