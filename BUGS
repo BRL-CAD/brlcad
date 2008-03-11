@@ -15,6 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
+* MGED File->Preferences->Fonts results in error "named font "button
+  _font" doesn't exist on Linux.
+
 * lingering default isn't working for at least one linux user
 
 * rtwizard seems to be busted (again)
