@@ -24,6 +24,7 @@ brlcadinclude_wanted = \
 	cmd.h \
 	db.h \
 	db5.h \
+	dg.h \
 	dm-Null.h \
 	dm-X.h \
 	dm-glx.h \
