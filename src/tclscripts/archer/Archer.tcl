@@ -6735,7 +6735,7 @@ package provide Archer 1.0
 	set fail [catch {$mWizardClass $parent.\#auto $this $mWizardTop $mWizardState $wizOrigin $wizUnits} wiz]
 
 	if {$fail} {
-	    nitNoWizard $parent "Failed to initialize the $mWizardClass wizard."
+	    initNoWizard $parent "Failed to initialize the $mWizardClass wizard."
 	} else {
 	    # try to create a new wizard instance
 	    itk_component add $mWizardClass {
