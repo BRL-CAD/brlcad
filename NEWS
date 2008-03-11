@@ -8,9 +8,37 @@ see that file and the SVN log for more historic information.  The
 entire history of the project is available through SVN.
 
 ----------------------------------------------------------------------
---- 2007-11-XX  Release 7.11.0                                     ---
+--- 2008-03-11  Release 7.11.0                                     ---
 ----------------------------------------------------------------------
 
+Coalescing after just over a year of concentrated development efforts,
+this release unveils a plethora of Windows-specific enhancements, bug
+fixes, and additional tools ported.  Notably, the Windows improvements
+include fixing various issues with file management and porting many
+more ray tracers, geometry converters, framebuffer tools, and MGED
+classic mode support.
+
+This release also includes a new geometry converter for the United
+Kingdom's INTAVAL format from Her Majesty's Ministry of Defence.  The
+new importer was jointly developed by TNO PML and IABG mbH and is
+included in the BRL-CAD sources as a contributed module.
+
+Of the numerous bug fixes and feature enhancements in this release,
+one of the biggest productivity enhancements is the addition of the
+mged "clone" and "tracker" commands.  Clone is a very powerful yet
+simple command that provides an intuitive means for performing deep
+copies of objects.  Tracker provides an interface for replicating
+objects along a spline path.  These 'new' commands originate from
+modifications originally developed by the now defunct Geometric
+Solutions, Inc., and after receiving considerable updates and rewrites
+are now once again available to users.
+
+Finally, this release also marks a major change to the BRL-CAD source
+code repository with a move from CVS to Subversion recently completed.
+The conversion was successfully completed with the entire history of
+BRL-CAD development preserved, accounting for nearly 25 years of
+continuous active development.
+ 
 * automatic redraw updates after Geometry Browser edits - Bob Parker
 * improved Geometry Browser mouse behavior in mged - Bob Parker
 * make fast4-g use GIFT_material=1 and los=100 - Sean Morrison
