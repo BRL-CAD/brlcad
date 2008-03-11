@@ -11,6 +11,7 @@ entire history of the project is available through SVN.
 --- 2007-11-XX  Release 7.11.0                                     ---
 ----------------------------------------------------------------------
 
+* automatic redraw updates after Geometry Browser edits - Bob Parker
 * improved Geometry Browser mouse behavior in mged - Bob Parker
 * make fast4-g use GIFT_material=1 and los=100 - Sean Morrison
 * fixed Mac OS X 'ogl' framebuffer crash - Sean Morrison, Bob Parker
