@@ -92,7 +92,9 @@ endif
 # end INSTALL_MODELS
 
 
-MOSTLYCLEANFILES = ${MODELS:asc=g}
+MOSTLYCLEANFILES = \
+	${BUILT_SOURCES} \
+	lockfile
 
 DEPS=src/conv
 
