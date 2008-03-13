@@ -1902,7 +1902,7 @@ Popup Menu    Right or Ctrl-Left
     }
 
     foreach dname {ul ur ll lr} {
-	set dm [$itk_component(mged) component $dname]
+	set dm [$_comp component $dname]
 	set win [$dm component dm]
 
 	# Turn off mouse bindings
