@@ -674,18 +674,22 @@ wdb_prep_dbip(Tcl_Interp *interp, const char *filename)
 	/*
 	 * Check to see if we can access the database
 	 */
-	if (!bu_file_readable(filename)) {
+	if (bu_file_exists(filename) && !bu_file_readable(filename)) {
+	    Tcl_AppendResult(interp,
+			     "wdb_prep_dbip: ", filename, " is not readable",
+			     (char *)NULL);
+
 	    return DBI_NULL;
 	}
 
 	/* db_create does a db_dirbuild */
 	if ((dbip = db_create(filename, 5)) == DBI_NULL) {
 	    Tcl_AppendResult(interp,
-			     "wdb_open: failed to create ", filename,
+			     "wdb_prep_dbip: failed to create ", filename,
 			     (char *)NULL);
 	    if (dbip == DBI_NULL)
 		Tcl_AppendResult(interp,
-				 "opendb: no database is currently opened!", \
+				 "wdb_prep_dbip: no database is currently opened!", \
 				 (char *)NULL);
 		
 	    return DBI_NULL;
