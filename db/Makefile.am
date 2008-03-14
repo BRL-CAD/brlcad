@@ -5,12 +5,13 @@ SUBDIRS = include
 A2G=$(top_builddir)/src/conv/asc2g
 G2A=$(top_builddir)/src/conv/g2asc
 
+
 # gmake seems to prefix the source .asc with the appropriate srcdir
 # automagically...  the library path is set for Tcl/Tk since libtool
 # won't do it for us for non libtool libs.  make them all depend on a
 # single file so that asc2g runs at least once to completion so the
 # wrapper script doesn't fail when compiling in parallel.
-.asc.g: operators.g
+.asc.g: operators.asc2g
 	@i=0 ; while [ ! -f lockfile ] && [ $$i -lt 10 ] ; do sleep 1 ; i=`expr $$i + 1` ; done
 	@echo $(A2G) $< $@ ; \
 	LD_LIBRARY_PATH=$(top_builddir)/src/other/tcl/unix:$(top_builddir)/src/other/tk/unix:$$LD_LIBRARY_PATH \
@@ -19,13 +20,13 @@ G2A=$(top_builddir)/src/conv/g2asc
 
 # cause asc2g to kick off so that it compiles lt-asc2g and avoids
 # parallel build failures.  use a simple file locking mechanism.
-operators.g: operators.asc
+operators.asc2g: operators.asc $(top_builddir)/src/conv/asc2g
 	@rm -f lockfile
 	@if test -x $(A2G) ; then \
-		echo $(A2G) $< $@ ; \
+		echo $(A2G) operators.asc $@ ; \
 		LD_LIBRARY_PATH=$(top_builddir)/src/other/tcl/unix:$(top_builddir)/src/other/tk/unix:$$LD_LIBRARY_PATH \
 		DYLD_LIBRARY_PATH=$(top_builddir)/src/other/tcl/unix:$(top_buildir)/src/other/tk/unix:$$DYLD_LIBRARY_PATH \
-		$(A2G) `if test -e $< ; then echo $< ; else echo $(top_srcdir)/db/$< ; fi` $@ ; \
+		$(A2G) `if test -e operators.asc ; then echo operators.asc ; else echo $(top_srcdir)/db/operators.asc ; fi` $@ ; \
 	else \
 		$(ECHO) "ls -lad $(A2G)" ; \
 		$(ECHO) "`ls -lad $(A2G)`" ; \
@@ -56,6 +57,7 @@ MODELS = \
 	kman.asc \
 	ktank.asc \
 	lgt-test.asc \
+	operators.asc \
 	pic.asc \
 	prim.asc \
 	tank_car.asc \
@@ -69,14 +71,13 @@ MODELS = \
 EXTRA_DIST = \
 	${MODELS} \
 	db.php \
-	operators.asc \
 	terra.dsp
 
 dbdir = $(BRLCAD_DATA)/db
 
 if INSTALL_MODELS
 BUILT_SOURCES = \
-	operators.g \
+	operators.asc2g \
 	${MODELS:asc=g}
 db_DATA = \
 	$(BUILT_SOURCES) \
@@ -84,7 +85,7 @@ db_DATA = \
 
 else !INSTALL_MODELS
 BUILT_SOURCES = \
-	operators.g \
+	operators.asc2g \
 	${BENCHMARK_MODELS:asc=g}
 db_DATA = $(BUILT_SOURCES)
 
