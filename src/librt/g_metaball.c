@@ -151,7 +151,6 @@ fastf_t rt_metaball_get_bounding_sphere(point_t *center, fastf_t threshold, stru
 	if (dist > r)
 	    r = dist;
     }
-    printf("radius? %g\n", r);
     return r;
 }
 
@@ -218,7 +217,7 @@ rt_metaball_print(register const struct soltab *stp)
     mb = (struct rt_metaball_internal *)stp->st_specific;
     RT_METABALL_CK_MAGIC(mb);
     for ( BU_LIST_FOR( mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)) ++metaball_count;
-    bu_log( "Metaball with %d points and a threshold of %g (%s rendering)\n", metaball_count, mb->threshold );
+    bu_log( "Metaball with %d points and a threshold of %g (%s rendering)\n", metaball_count, mb->threshold, rt_metaball_lookup_type_name(mb->method) );
     metaball_count=0;
     for ( BU_LIST_FOR( mbpt, wdb_metaballpt, &mb->metaball_ctrl_head))
 	bu_log("\t%d: %g field strength at (%g, %g, %g) and 'goo' of %g\n", ++metaball_count, mbpt->fldstr, V3ARGS(mbpt->coord), mbpt->sweat);
@@ -271,7 +270,6 @@ rt_metaball_point_value_blob(point_t *p, struct bu_list *points)
 	VSUB2(v, mbpt->coord, *p);
 	ret += exp((mbpt->sweat/mbpt->fldstr) * MAGSQ(v) - mbpt->sweat);
     }
-    printf("%g\n", ret);
     return ret;
 }
 
