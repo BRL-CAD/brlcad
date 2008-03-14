@@ -310,7 +310,7 @@ if_overlap(register struct application *ap, register struct partition *pp, struc
 fastf_t
 get_obliq(fastf_t *ray, fastf_t *normal)
 {
-    double	cos_obl;
+    fastf_t	cos_obl;
     fastf_t	obliquity;
 
     cos_obl = fabs(VDOT(ray, normal) * MAGNITUDE(normal) / MAGNITUDE(ray));
@@ -320,7 +320,7 @@ get_obliq(fastf_t *ray, fastf_t *normal)
 	obliquity = acos(cos_obl);
     } else {
 	fflush(stdout);
-	fprintf (stderr, "Error:  cos(obliquity) > 1\n");
+	fprintf (stderr, "Error:  cos(obliquity) > 1 (%g)\n", cos_obl);
 	obliquity = 0;
 	bu_exit(1, NULL);
     }
