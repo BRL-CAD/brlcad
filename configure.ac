@@ -218,6 +218,42 @@ else
 fi
 AC_SUBST(BRLCAD_ROOT)
 
+# make sure the user doesn't try to set /usr as the prefix
+if test "x$BRLCAD_ROOT" = "x/usr" ; then
+    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+    AC_MSG_WARN([It is STRONGLY recommended that you DO NOT install BRL-CAD into /usr])
+    AC_MSG_WARN([as BRL-CAD provides several libraries that may conflict with other])
+    AC_MSG_WARN([libraries (e.g. librt, libbu, libbn) on certain system configurations.])
+    AC_MSG_WARN([])
+    AC_MSG_WARN([Since our libraries predate all those that we're known to conflict with])
+    AC_MSG_WARN([and are at the very core of our geometry services and project heritage,])
+    AC_MSG_WARN([we have no plans to change the names of our libraries at this time.])
+    AC_MSG_WARN([])
+    AC_MSG_WARN([If you choose to continue installing into /usr, you do so entirely at])
+    AC_MSG_WARN([your own risk.  You have been warned.])
+    AC_MSG_NOTICE([])
+    AC_MSG_NOTICE([Consider using a different --prefix value.])
+    while true ; do
+	AC_MSG_NOTICE([])
+	AC_MSG_NOTICE([Would you like to continue with /usr as the install prefix? [[yes/no]]])
+	read bc_answer
+	case "x$bc_answer" in
+	    x*[[yY]][[eE]][[sS]]*)
+		bc_answer=yes
+		break ;;
+	    x*[[nN]][[oO]]*)
+		bc_answer=no
+		break ;;
+	    x*)
+		AC_MSG_NOTICE([Please answer 'yes' or 'no'])
+		;;
+	esac
+    done
+    if test "x$bc_answer" = "xno" ; then
+	AC_MSG_ERROR([*** Aborting due to --prefix=/usr ***])
+    fi
+fi
+
 # set up the BRLCAD_DATA install directory
 #   e.g. /usr/local/share/brlcad/7.4.0
 AC_MSG_CHECKING([where BRL-CAD resources are to be installed])
