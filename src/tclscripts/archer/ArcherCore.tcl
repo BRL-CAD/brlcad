@@ -283,7 +283,6 @@ namespace eval ArcherCore {
 	variable mViewingParamsColorPref
 	variable mTheme "Crystal_Large"
 	variable mThemePref ""
-	variable mSdbTopGroup all
 	variable mScaleColor Yellow
 	variable mScaleColorPref ""
 	variable mMeasuringStickMode 0
@@ -1442,6 +1441,7 @@ Popup Menu    Right or Ctrl-Left
     closeMged
 
     grid $itk_component(canvas) -row 1 -column 0 -columnspan 3 -sticky news
+    set mDbType ""
 
     refreshTree 0
 }
@@ -2757,7 +2757,6 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::dblClick {tags} {
-    #set element [lindex [split $tags ":"] 1]
     set element [split $tags ":"]
     if {[llength $element] > 1} {
 	set element [lindex $element 1]
@@ -4009,10 +4008,6 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::pwd {} {
-    if {[info exists itk_component(sdb)]} {
-	return [eval $itk_component(sdb) pwd]
-    }
-
     ::pwd
 }
 

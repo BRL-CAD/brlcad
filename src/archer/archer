@@ -265,11 +265,7 @@ proc main {} {
     if {$argv != ""} {
 	set target [lindex $argv 0]
 	set ext [file extension $target]
-	if {$ext == ".g"} {
-	    $::ArcherCore::application Load "BRL-CAD" $target
-	} elseif {$ext == ".xg" || $ext == ".sdb"} {
-	    $::ArcherCore::application Load "IVAVIEW" $target
-	}
+	$::ArcherCore::application Load $target
     }
 
     $::ArcherCore::application configure -quitcmd [list exitArcher $::ArcherCore::application]

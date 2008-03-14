@@ -32,10 +32,6 @@ namespace eval Archer {
 	set debug 0
     }
 
-    if {![info exists haveSdb]} {
-	set haveSdb 0
-    }
-
     set methodDecls ""
     set methodImpls ""
     set extraMgedCommands ""
@@ -120,8 +116,7 @@ package provide Archer 1.0
    	common pluginMajorTypeWizard "Wizard"
    	common pluginMajorTypeUtility "Utility"
    	common pluginMinorTypeMged "Mged"
-   	common pluginMinorTypeSdb "Sdb"
-   	common pluginMinorTypeBoth "Both"
+   	common pluginMinorTypeAll "All"
 
 	# Plugins Section
 	proc initArcher {}
@@ -138,7 +133,6 @@ package provide Archer 1.0
 				 {_tooltip ""} \
 				 {_action ""} \
 				 {_xmlAction ""}}
-	proc pluginSdb {_archer}
 	proc pluginUnregister {_name}
 
 	method pluginGetMinAllowableRid {}
@@ -146,26 +140,12 @@ package provide Archer 1.0
 	method pluginUpdateSaveMode {mode}
 	method pluginUpdateStatusBar {msg}
 
-
-	method abort               {args}
-	method adjustNormals       {args}
-	method compact             {args}
-	method decimate            {args}
-	method decimate2           {args}
-	method decimateAttr        {args}
-	method decimateAttr2       {args}
-	method exportFg4	   {}
-	method exportStl	   {}
-	method exportVrml	   {}
-	method importFg4	   {}
-	method importStl	   {_importDir}
 	method importFg4Sections   {_slist _wlist _delta}
 	method purgeHistory        {}
-	method reverseNormals      {args}
 
 	# ArcherCore Override Section
+	method Load                {_target}
 	method updateTheme {}
-	method Load {_type _target}
     }
 
     protected {
@@ -179,23 +159,10 @@ package provide Archer 1.0
 	variable mWizardState ""
 	variable mNoWizardActive 0
 
-	variable sdbCommands { \
-				   abort adjustNormals compact decimate decimate2 \
-				   decimateAttr decimateAttr2 erase exportFg4 \
-				   exportStl exportVrml importFg4 importStl \
-				   reverseNormals
-	}
-
 	# ArcherCore Override Section
-	method closeDb {}
 	method dblClick {_tags}
-	method fillTree {{_node ""}}
-	method initDefaultBindings {}
+	method initDefaultBindings {{_comp ""}}
 	method initMged {}
-	method loadMenu {_menu _snode}
-	method newDb {}
-	method openDb {}
-	method saveDb {}
 	method selectNode {_tags {_rflag 1}}
 	method toggleTreeView {_state}
 
@@ -214,10 +181,8 @@ package provide Archer 1.0
 	method buildPreferencesDialog {}
 	method buildToplevelMenubar {}
 	method buildViewAxesPreferences {}
-	method closeSdb {}
 	method doAboutArcher {}
 	method doArcherHelp {}
-	method initSdb {}
 	method launchDisplayMenuBegin {_dm _m _x _y}
 	method launchDisplayMenuEnd {}
 	method menuStatusCB {_w}
@@ -375,14 +340,6 @@ package provide Archer 1.0
 	method createSphere {_name}
 	method createTgc {_name}
 	method createTorus {_name}
-
-	# SDB Edit Section
-	method adjustCompNormals {_comp}
-	method editApplyCallback {_comp}
-	method editComponent {_comp}
-	method editDismissCallback {_dialog}
-	method reverseCompNormals {_comp}
-	method toggleCompNormals {_comp}
     }
 
     private {
@@ -781,7 +738,6 @@ package provide Archer 1.0
 ################################### Public Section ###################################
 
 ################################### Plugins Section ###################################
-
 ::itcl::body Archer::initArcher {} {
     # Load plugins
     if {[catch {pluginLoader} msg]} {
@@ -970,14 +926,6 @@ package provide Archer 1.0
     lappend ::Archer::plugins [Plugin \#auto $majorType $minorType $name $class $file $description $version $developer $icon $tooltip $action $xmlAction]
 }
 
-::itcl::body Archer::pluginSdb {_archer} {
-    if {[catch {$_archer component sdb} sdb]} {
-	return ""
-    } else {
-	return $sdb
-    }
-}
-
 ::itcl::body Archer::pluginUnregister {name} {
     set plugin [plugin_query $name]
 
@@ -990,288 +938,6 @@ package provide Archer 1.0
     set ::Archer::plugins [lreplace $::Archer::plugins $idx $idx ""]
 }
 
-
-
-##################################### SDB Commands #####################################
-
-::itcl::body Archer::abort {args} {
-    eval sdbWrapper abort 0 0 0 0 $args
-}
-
-
-::itcl::body Archer::adjustNormals {args} {
-    eval sdbWrapper adjustNormals 0 0 1 1 $args
-}
-
-
-::itcl::body Archer::compact {args} {
-    eval sdbWrapper compact 0 0 1 0 $args
-}
-
-
-::itcl::body Archer::decimate {args} {
-    eval sdbWrapper decimate 0 0 1 1 $args
-    _redraw_obj [lindex $args end]
-}
-
-
-::itcl::body Archer::decimate2 {args} {
-    eval sdbWrapper decimate2 0 0 1 1 $args
-    _redraw_obj [lindex $args end]
-}
-
-
-::itcl::body Archer::decimateAttr {args} {
-    eval sdbWrapper decimateAttr 0 0 0 1 $args
-}
-
-
-::itcl::body Archer::decimateAttr2 {args} {
-    eval sdbWrapper decimateAttr2 0 0 0 1 $args
-}
-
-
-::itcl::body Archer::exportFg4 {} {
-    if {![info exists itk_component(sdb)]} {
-	return
-    }
-
-    set typelist {
-	{"Fastgen 4" {".fg4"}}
-	{"All Files" {*}}
-    }
-
-    set target [tk_getSaveFile -parent $itk_interior \
-		    -initialdir $mLastSelectedDir \
-		    -title "Open Fastgen 4" \
-		    -filetypes $typelist]
-
-    if {$target == ""} {
-	return
-    } else {
-	set mLastSelectedDir [file dirname $target]
-    }
-
-    SetWaitCursor
-
-    # Make sure we're in the root directory/group
-    set savePwd [pwd]
-    cd /
-
-    $itk_component(sdb) exportFg4 $target
-    cd $savePwd
-
-    SetNormalCursor
-}
-
-
-::itcl::body Archer::exportStl {} {
-    if {![info exists itk_component(sdb)]} {
-	return
-    }
-
-    set stlDir [tk_chooseDirectory -parent $itk_interior \
-		    -title "Open STL Directory" \
-		    -initialdir $mLastSelectedDir]
-
-    if {$stlDir == ""} {
-	return
-    }
-
-    if {![file exists $stlDir]} {
-	file mkdir $stlDir
-    } elseif {[file type $stlDir] != "directory"} {
-	::sdialogs::Stddlgs::errordlg "STL Error" \
-	    "$stlDir must be a directory"
-	return
-    }
-
-    set mLastSelectedDir $stlDir
-    SetWaitCursor
-
-    # Make sure we're in the root directory/group
-    set savePwd [pwd]
-    cd /
-
-    $itk_component(sdb) exportStl $stlDir
-    cd $savePwd
-
-    SetNormalCursor
-}
-
-
-::itcl::body Archer::exportVrml {} {
-    if {![info exists itk_component(sdb)]} {
-	return
-    }
-
-    set typelist {
-	{"VRML" {".vrml"}}
-	{"All Files" {*}}
-    }
-
-    set target [tk_getSaveFile -parent $itk_interior \
-		    -initialdir $mLastSelectedDir \
-		    -title "Open VRML" \
-		    -filetypes $typelist]
-
-    if {$target == ""} {
-	return
-    } else {
-	set mLastSelectedDir [file dirname $target]
-    }
-
-    SetWaitCursor
-
-    # Make sure we're in the root directory/group
-    set savePwd [pwd]
-    cd /
-
-    $itk_component(sdb) exportVrml $target
-    cd $savePwd
-
-    SetNormalCursor
-}
-
-
-::itcl::body Archer::importFg4 {} {
-    if {![info exists itk_component(sdb)]} {
-	return
-    }
-
-    set typelist {
-	{"Fastgen 4" {".fg4"}}
-	{"All Files" {*}}
-    }
-
-    set target [tk_getOpenFile -parent $itk_interior \
-		    -initialdir $mLastSelectedDir \
-		    -title "Import Fastgen 4" \
-		    -filetypes $typelist]
-
-    if {$target == ""} {
-	return
-    } else {
-	set mLastSelectedDir [file dirname $target]
-    }
-
-    SetWaitCursor
-
-    # Make sure we're in the root directory/group
-    set savePwd [pwd]
-    cd /
-
-    set i 0
-    set topGroup $mSdbTopGroup
-
-    # Find an unused toplevel group to use for the import
-    while {![catch {$itk_component(sdb) get $topGroup}]} {
-	incr i
-	set topGroup $mSdbTopGroup$i
-    }
-
-    group $topGroup
-    $itk_component(sdb) importFg4 $target $topGroup
-    $itk_component(sdb) categorizeFg4 $topGroup
-    cd $savePwd
-
-    refreshTree
-
-    set mNeedSave 1
-    updateSaveMode
-    SetNormalCursor
-}
-
-
-::itcl::body Archer::importStl {importDir} {
-    if {![info exists itk_component(sdb)]} {
-	return
-    }
-
-    if {$importDir} {
-	set stlDir [tk_chooseDirectory -parent $itk_interior \
-			-title "Import STL Directory" \
-			-initialdir $mLastSelectedDir]
-
-	if {$stlDir == ""} {
-	    return
-	}
-
-	if {![file exists $stlDir]} {
-	    ::sdialogs::Stddlgs::errordlg "STL Error" \
-		"$stlDir does not exist"
-	    return
-	}
-
-	if {[file type $stlDir] != "directory"} {
-	    ::sdialogs::Stddlgs::errordlg "STL Error" \
-		"$stlDir must be a directory"
-	    return
-	}
-
-	set mLastSelectedDir $stlDir
-    } else {
-	set typelist {
-	    {"STL" {".stl"}}
-	    {"All Files" {*}}
-	}
-
-	set stlDir [tk_getOpenFile -parent $itk_interior \
-			-title "Import STL" \
-			-initialdir $mLastSelectedDir \
-			-filetypes $typelist]
-
-	if {$stlDir == ""} {
-	    return
-	} else {
-	    set mLastSelectedDir [file dirname $stlDir]
-	}
-
-	if {![file exists $stlDir]} {
-	    ::sdialogs::Stddlgs::errordlg "STL Error" \
-		"$stlDir does not exist"
-	    return
-	}
-    }
-
-    SetWaitCursor
-
-    # Make sure we're in the root directory/group
-    set savePwd [pwd]
-    cd /
-
-    set i 0
-    set topGroup $mSdbTopGroup
-
-    # Find an unused toplevel group to use for the import
-    while {![catch {$itk_component(sdb) get $topGroup}]} {
-	incr i
-	set topGroup $mSdbTopGroup$i
-    }
-
-    group $topGroup
-    $itk_component(sdb) importStl $stlDir $topGroup
-    if [catch {$itk_component(sdb) get $topGroup}] {
-	set msg "No STL files were imported."
-
-	if {$importDir} {
-	    append msg "\n\nPlease make sure the directory structure\n" \
-		"follows the necessary guidlines."
-	}
-	::sdialogs::Stddlgs::warningdlg "STL Warning" \
-	    $msg
-    } else {
-	$itk_component(sdb) categorizeFg4 $topGroup
-
-	refreshTree
-
-	set mNeedSave 1
-	updateSaveMode
-    }
-    cd $savePwd
-
-    SetNormalCursor
-}
 
 
 ## - importFg4Sections
@@ -1463,8 +1129,222 @@ package provide Archer 1.0
     updateSaveMode
 }
 
-::itcl::body Archer::reverseNormals {args} {
-    eval sdbWrapper reverseNormals 0 0 1 1 $args
+::itcl::body Archer::Load {_target} {
+    if {$mNeedSave} {
+	$itk_component(saveDialog) center [namespace tail $this]
+	if {[$itk_component(saveDialog) activate]} {
+	    saveDb
+	} else {
+	    set mNeedSave 0
+	    updateSaveMode
+	}
+    }
+
+    # Get rid of any existing edit dialogs
+    foreach ed $mActiveEditDialogs {
+	::itcl::delete object $ed
+    }
+    set mActiveEditDialogs {}
+
+    set mTarget $_target
+    set mDbType "BRL-CAD"
+
+    if {![catch {$mTarget ls}]} {
+	set mDbShared 1
+	set mDbReadOnly 1
+    } elseif {[file exists $mTarget]} {
+	if {[file writable $mTarget]} {
+	    set mDbReadOnly 0
+	} else {
+	    set mDbReadOnly 1
+	}
+    } else {
+	set mDbReadOnly 0
+    }
+
+    if {$mDbNoCopy || $mDbReadOnly} {
+	set mTargetOldCopy $mTargetCopy
+	set mTargetCopy ""
+    } else {
+	createTargetCopy
+    }
+
+    # Load MGED database
+    if {[info exists itk_component(mged)]} {
+	if {$mDbShared} {
+	    $itk_component(mged) sharedDb $mTarget
+	} elseif {$mDbNoCopy || $mDbReadOnly} {
+	    $itk_component(mged) opendb $mTarget
+	} else {
+	    $itk_component(mged) opendb $mTargetCopy
+	}
+    } else {
+	initMged
+
+	grid forget $itk_component(canvas)
+	if {!$mViewOnly} {
+	    grid $itk_component(mged) -row 1 -column 0 -columnspan 3 -sticky news
+	    after idle "$this component cmd configure -cmd_prefix \"[namespace tail $this] cmd\""
+	} else {
+	    grid $itk_component(mged) -row 1 -column 0 -sticky news
+	}
+    }
+
+    setColorOption dbCmd -primitiveLabelColor $mPrimitiveLabelColor
+    setColorOption dbCmd -scaleColor $mScaleColor
+    setColorOption dbCmd -viewingParamsColor $mViewingParamsColor
+
+    set mDbTitle [$itk_component(mged) title]
+    set mDbUnits [$itk_component(mged) units]
+
+    if {!$mViewOnly} {
+	initDbAttrView $mTarget
+	applyPreferences
+	doLighting
+	updateModesMenu
+	updateWizardMenu
+	updateUtilityMenu
+	deleteTargetOldCopy
+
+	# refresh tree contents
+	SetWaitCursor
+	refreshTree 0
+	SetNormalCursor
+    } else {
+	applyPreferences
+	doLighting
+    }
+
+    if {$mBindingMode == 0} {
+	set mDefaultBindingMode $ROTATE_MODE
+	beginViewRotate
+    }
+}
+
+::itcl::body Archer::updateTheme {} {
+    if {$mInstanceInit} {
+	return
+    }
+
+    ArcherCore::updateTheme
+
+    set dir [file join $mImgDir Themes $mTheme]
+
+    if {!$mViewOnly} {
+	# Primary 
+	$itk_component(primaryToolbar) itemconfigure new \
+	    -image [image create photo \
+			-file [file join $dir file_new.png]]
+	$itk_component(primaryToolbar) itemconfigure preferences \
+	    -image [image create photo \
+			-file [file join $dir configure.png]]
+	$itk_component(primaryToolbar) itemconfigure cut \
+	    -image [image create photo \
+			-file [file join $dir edit_cut.png]]
+	$itk_component(primaryToolbar) itemconfigure copy \
+	    -image [image create photo \
+			-file [file join $dir edit_copy.png]]
+	$itk_component(primaryToolbar) itemconfigure paste \
+	    -image [image create photo \
+			-file [file join $dir edit_paste.png]]
+	$itk_component(primaryToolbar) itemconfigure comb \
+	    -image [image create photo \
+			-file [file join $dir combination.png]]
+	$itk_component(primaryToolbar) itemconfigure arb6 \
+	    -image [image create photo \
+			-file [file join $dir primitive_arb6.png]]
+	$itk_component(primaryToolbar) itemconfigure arb8 \
+	    -image [image create photo \
+			-file [file join $dir primitive_arb8.png]]
+	$itk_component(primaryToolbar) itemconfigure cone \
+	    -image [image create photo \
+			-file [file join $dir primitive_cone.png]]
+	#$itk_component(primaryToolbar) itemconfigure pipe \
+	    -image [image create photo \
+			-file [file join $dir primitive_pipe.png]]
+	$itk_component(primaryToolbar) itemconfigure sphere \
+	    -image [image create photo \
+			-file [file join $dir primitive_sph.png]]
+	$itk_component(primaryToolbar) itemconfigure torus \
+	    -image [image create photo \
+			-file [file join $dir primitive_tor.png]]
+	$itk_component(primaryToolbar) itemconfigure other \
+	    -image [image create photo \
+			-file [file join $dir primitive_list.png]]
+
+	# We catch this because the item may not exist
+	catch {$itk_component(primaryToolbar) itemconfigure wizards \
+		   -image [image create photo \
+			       -file [file join $dir wizard.png]]}
+
+	#$itk_component(primaryToolbar) itemconfigure ehy \
+	    -image [image create photo \
+			-file [file join $dir primitive_ehy.png]]
+	#$itk_component(primaryToolbar) itemconfigure epa \
+	    -image [image create photo \
+			-file [file join $dir primitive_epa.png]]
+	#$itk_component(primaryToolbar) itemconfigure rpc \
+	    -image [image create photo \
+			-file [file join $dir primitive_rpc.png]]
+	#$itk_component(primaryToolbar) itemconfigure rhc \
+	    -image [image create photo \
+			-file [file join $dir primitive_rhc.png]]
+	#$itk_component(primaryToolbar) itemconfigure ell \
+	    -image [image create photo \
+			-file [file join $dir primitive_ell.png]]
+	#$itk_component(primaryToolbar) itemconfigure eto \
+	    -image [image create photo \
+			-file [file join $dir primitive_eto.png]]
+	#$itk_component(primaryToolbar) itemconfigure half \
+	    -image [image create photo \
+			-file [file join $dir primitive_half.png]]
+	#$itk_component(primaryToolbar) itemconfigure part \
+	    -image [image create photo \
+			-file [file join $dir primitive_part.png]]
+	#$itk_component(primaryToolbar) itemconfigure grip \
+	    -image [image create photo \
+			-file [file join $dir primitive_grip.png]]
+	#$itk_component(primaryToolbar) itemconfigure extrude \
+	    -image [image create photo \
+			-file [file join $dir primitive_extrude.png]]
+	#$itk_component(primaryToolbar) itemconfigure sketch \
+	    -image [image create photo \
+			-file [file join $dir primitive_sketch.png]]
+	#$itk_component(primaryToolbar) itemconfigure bot \
+	    -image [image create photo \
+			-file [file join $dir primitive_bot.png]]
+
+	catch {
+	    $itk_component(viewToolbar) itemconfigure edit_rotate \
+		-image [image create photo \
+			    -file [file join $dir edit_rotate.png]]
+	    $itk_component(viewToolbar) itemconfigure edit_translate \
+		-image [image create photo \
+			    -file [file join $dir edit_translate.png]]
+	    $itk_component(viewToolbar) itemconfigure edit_scale \
+		-image [image create photo \
+			    -file [file join $dir edit_scale.png]]
+	    $itk_component(viewToolbar) itemconfigure edit_center \
+		-image [image create photo \
+			    -file [file join $dir edit_select.png]]
+	}
+
+	# Attribute View Toolbar
+	$itk_component(objViewToolbar) itemconfigure objAttrView \
+	    -image [image create photo \
+			-file [file join $dir option_text.png]]
+	$itk_component(objViewToolbar) itemconfigure objEditView \
+	    -image [image create photo \
+			-file [file join $dir option_tree.png]]
+
+	# Object Edit Toolbar
+	$itk_component(objEditToolbar) itemconfigure prev \
+	    -image [image create photo \
+			-file [file join $dir arrow_back.png]]
+	$itk_component(objEditToolbar) itemconfigure next \
+	    -image [image create photo \
+			-file [file join $dir arrow_forward.png]]
+    }
 }
 
 ################################### End Public Section ###################################
@@ -1474,29 +1354,8 @@ package provide Archer 1.0
 ################################### Protected Section ###################################
 
 ################################### ArcherCore Override Section ###################################
-::itcl::body Archer::closeDb {} {
-    switch -- $mDbType {
-	"BRL-CAD" {
-	    pack forget $itk_component(mged)
-	    closeMged
-	}
-	"IVAVIEW" {
-	    pack forget $itk_component(sdb)
-	    closeSdb
-	}
-	default {
-	}
-    }
-    grid $itk_component(canvas) -row 1 -column 0 -columnspan 3 -sticky news
-    set mDbType ""
-
-    refreshTree 0
-}
-
 
 ::itcl::body Archer::dblClick {tags} {
-
-    #set element [lindex [split $tags ":"] 1]
     set element [split $tags ":"]
     if {[llength $element] > 1} {
 	set element [lindex $element 1]
@@ -1539,110 +1398,20 @@ package provide Archer 1.0
 }
 
 
-::itcl::body Archer::fillTree {{node ""}} {
-    switch -- $mDbType {
-	"BRL-CAD" {
-	    if {$node == ""} {
-		# set node to root
-		set node "root"
-
-		# get toplevel objects
-		set tops [dbCmd tops]
-	    } else {
-		set nname [$itk_component(tree) query -text $node]
-
-		# get all its children
-		set tops [getNodeChildren $nname]
-	    }
-
-	    set stem "leaf"
-
-	    foreach cname $tops {
-		set cname [string trim $cname " /\\"]
-
-		# need to get rid of any "/R" left
-		set cname [string trimright $cname "/R"]
-		if {$cname == "_GLOBAL"} {
-		    continue
-		}
-
-		# need to add whether its a "leaf" or "branch" ... this seems to work,
-		# as long as they don't change BRL-CAD
-		set l [lindex [split [dbCmd l $cname] "\n"] 0]
-		if {[lindex $l [expr [llength $l] -1]] == "--"} {set stem "branch"}
-
-		# add to tree
-		set cnode [$itk_component(tree) insert end $node $cname $stem]
-		set cpath [$itk_component(tree) query -path $cnode]
-
-		if {0 <= [dbCmd how $cpath]} {
-		    $itk_component(tree) alternode $cnode -color blue
-		} else {
-		    $itk_component(tree) alternode $cnode -color black
-		}
-
-		set stem "leaf"
-	    }
-	}
-	"IVAVIEW" {
-	    set savePwd [pwd]
-	    cd /
-	    if {$node == ""} {
-		# set node to root
-		set node "root"
-		set nname ""
-
-		# get toplevel objects
-		set tops [lsort -dictionary [dbCmd ls -p /]]
-	    } else {
-		set nname [$itk_component(tree) query -path $node]
-
-		# get all its children
-		set tops [lsort -dictionary [dbCmd ls -p $nname]]
-	    }
-
-	    if {$tops == $nname} {
-		cd $savePwd
-		return
-	    }
-
-	    foreach item $tops {
-		set name [lindex $item 0]
-		set type [lindex $item 1]
-
-		# add to tree
-		set cnode [$itk_component(tree) insert end $node $name $type]
-		set cpath [$itk_component(tree) query -path $cnode]
-
-		if {0 <= [dbCmd how $cpath]} {
-		    $itk_component(tree) alternode $cnode -color blue
-		} else {
-		    $itk_component(tree) alternode $cnode -color black
-		}
-	    }
-
-	    # This directory/group may not exist (i.e. due to being deleted).
-	    catch {cd $savePwd}
+::itcl::body Archer::initDefaultBindings {{_comp ""}} {
+    if {$_comp == ""} {
+	if {[info exists itk_component(mged)]} {
+	    set _comp $itk_component(mged)
+	} else {
+	    return
 	}
     }
 
-    ::update idletasks
-}
-
-::itcl::body Archer::initDefaultBindings {} {
-    if {[info exists itk_component(mged)]} {
-	set comp $itk_component(mged)
-    } elseif {[info exists itk_component(sdb)]} {
-	set comp $itk_component(sdb)
-    } else {
-	return
-    }
-
-    ArcherCore::initDefaultBindings $comp
+    ArcherCore::initDefaultBindings $_comp
 
     if {!$mViewOnly} {
 	foreach dname {ul ur ll lr} {
-	    set dm [$itk_component(mged) component $dname]
+	    set dm [$_comp component $dname]
 	    set win [$dm component dm]
 
 	    if {$ArcherCore::inheritFromToplevel} {
@@ -1657,14 +1426,6 @@ package provide Archer 1.0
 		    "[::itcl::code $this launchDisplayMenuBegin $dm [$itk_component(menubar) component display-menu] %X %Y]; break"
 	    }
 	}
-    }
-
-    if {$mDbType == "BRL-CAD"} {
-	$itk_component(viewToolbar) itemconfigure cpick \
-	    -state normal
-    } else {
-	$itk_component(viewToolbar) itemconfigure cpick \
-	    -state disabled
     }
 
     if {$mMode != 0} {
@@ -1724,490 +1485,6 @@ package provide Archer 1.0
     }
 }
 
-::itcl::body Archer::Load {type target} {
-    if {$mNeedSave} {
-	$itk_component(saveDialog) center [namespace tail $this]
-	if {[$itk_component(saveDialog) activate]} {
-	    saveDb
-	} else {
-	    set mNeedSave 0
-	    updateSaveMode
-	}
-    }
-
-    # Get rid of any existing edit dialogs
-    foreach ed $mActiveEditDialogs {
-	::itcl::delete object $ed
-    }
-    set mActiveEditDialogs {}
-
-    set mTarget $target
-    set mDbType $type
-
-    if {![catch {$mTarget ls}]} {
-	set mDbShared 1
-	set mDbReadOnly 1
-    } elseif {[file exists $mTarget]} {
-	if {[file writable $mTarget]} {
-	    set mDbReadOnly 0
-	} else {
-	    set mDbReadOnly 1
-	}
-    } else {
-	set mDbReadOnly 0
-    }
-
-    if {$mDbNoCopy || $mDbReadOnly} {
-	set mTargetOldCopy $mTargetCopy
-	set mTargetCopy ""
-    } else {
-	createTargetCopy
-    }
-
-    switch -- $type {
-	"BRL-CAD" {
-	    if {[info exists itk_component(sdb)]} {
-		#		set oldSdb $itk_component(sdb)
-		#		itk_component delete sdb
-		#		rename $oldSdb ""
-		rename $itk_component(sdb) ""
-	    }
-
-	    # load MGED database
-	    if {[info exists itk_component(mged)]} {
-		if {$mDbShared} {
-		    $itk_component(mged) sharedDb $mTarget
-		} elseif {$mDbNoCopy || $mDbReadOnly} {
-		    $itk_component(mged) opendb $mTarget
-		} else {
-		    $itk_component(mged) opendb $mTargetCopy
-		}
-	    } else {
-		initMged
-
-		grid forget $itk_component(canvas)
-		if {!$mViewOnly} {
-		    grid $itk_component(mged) -row 1 -column 0 -columnspan 3 -sticky news
-		    after idle "$this component cmd configure -cmd_prefix \"[namespace tail $this] cmd\""
-		} else {
-		    grid $itk_component(mged) -row 1 -column 0 -sticky news
-		}
-	    }
-
-	    if {!$mViewOnly} {
-		updateCreationButtons 1
-		dbCmd size [expr {$mGroundPlaneSize * 1.5 * [dbCmd base2local]}]
-		buildGroundPlane
-		showGroundPlane
-	    }
-	}
-	"IVAVIEW" {
-	    if {[info exists itk_component(mged)]} {
-		rename $itk_component(mged) ""
-		rename $itk_component(rtcntrl) ""
-	    }
-
-	    # load SDB database
-	    if {[info exists itk_component(sdb)]} {
-		if {$mDbShared} {
-		    $itk_component(sdb) sharedDb $mTarget
-		} elseif {$mDbNoCopy || $mDbReadOnly} {
-		    $itk_component(sdb) openDb $mTarget
-		} else {
-		    $itk_component(sdb) openDb $mTargetCopy
-		}
-	    } else {
-		initSdb
-
-		grid forget $itk_component(canvas)
-		if {!$mViewOnly} {
-		    grid $itk_component(sdb) -row 1 -column 0 -columnspan 3 -sticky news
-		    after idle "$this component cmd configure -cmd_prefix \"[namespace tail $this] cmd\""
-		} else {
-		    grid $itk_component(sdb) -row 1 -column 0 -sticky news
-		}
-	    }
-
-	    if {!$mViewOnly} {
-		updateCreationButtons 0
-		buildGroundPlane
-		showGroundPlane
-		doAutoview
-	    }
-	}
-	default {
-	    return
-	}
-    }
-
-    setColorOption dbCmd -primitiveLabelColor $mPrimitiveLabelColor
-    setColorOption dbCmd -scaleColor $mScaleColor
-    setColorOption dbCmd -viewingParamsColor $mViewingParamsColor
-
-    if {!$mViewOnly} {
-	initDbAttrView $mTarget
-	applyPreferences
-	doLighting
-	updateModesMenu
-	updateWizardMenu
-	updateUtilityMenu
-	deleteTargetOldCopy
-
-	# refresh tree contents
-	SetWaitCursor
-	refreshTree 0
-	SetNormalCursor
-    } else {
-	applyPreferences
-	doLighting
-    }
-
-    if {$mBindingMode == 0} {
-	set mDefaultBindingMode $ROTATE_MODE
-	beginViewRotate
-    }
-}
-
-::itcl::body Archer::loadMenu {menu snode} {
-    # destroy old menu
-    if [winfo exists $menu.color] {
-	$menu.color delete 0 end
-	destroy $menu.color
-    }
-    if {[winfo exists $menu.trans]} {
-	$menu.trans delete 0 end
-	destroy $menu.trans
-    }
-    $menu delete 0 end
-
-    #set element [lindex [split $snode ":"] 1]
-    set element [split $snode ":"]
-    if {[llength $element] > 1} {
-	set element [lindex $element 1]
-    }
-
-    set node [$itk_component(tree) query -path $element]
-    set nodeType [$itk_component(tree) query -nodetype $element]
-
-    set mRenderMode [dbCmd how $node]
-    # do this in case "ev" was used from the command line
-    if {2 < $mRenderMode} {
-	set mRenderMode 2
-    }
-
-    set mPrevSelectedObjPath $mSelectedObjPath
-    set mPrevSelectedObj $mSelectedObj
-    set mSelectedObjPath $node
-    set mSelectedObj [$itk_component(tree) query -text $element]
-
-    #    if {$mPrevSelectedObj != $mSelectedObj} {
-    #	if {!$mViewOnly} {
-    #	    if {$mObjViewMode == $OBJ_ATTR_VIEW_MODE} {
-    #		initObjAttrView
-    #	    } else {
-    #		initObjEditView
-    #	    }
-    #	}
-    #    }
-
-    $itk_component(tree) selection clear
-    $itk_component(tree) selection set $snode
-
-    #    if {!$mViewOnly} {
-    #	updateCutMode
-    #	updateCopyMode
-    #	updatePasteMode
-    #    }
-
-    if {$nodeType == "leaf"} {
-	$menu add radiobutton -label "Wireframe" \
-	    -indicatoron 1 -value 0 -variable [::itcl::scope mRenderMode] \
-	    -command [::itcl::code $this render $node 0 1 1]
-
-	if {[info exists itk_component(sdb)]} {
-	    $menu add radiobutton -label "Shaded" \
-		-indicatoron 1 -value 1 -variable [::itcl::scope mRenderMode] \
-		-command [::itcl::code $this render $node 1 1 1]
-	} else {
-	    $menu add radiobutton -label "Shaded (Mode 1)" \
-		-indicatoron 1 -value 1 -variable [::itcl::scope mRenderMode] \
-		-command [::itcl::code $this render $node 1 1 1]
-	    $menu add radiobutton -label "Shaded (Mode 2)" \
-		-indicatoron 1 -value 2 -variable [::itcl::scope mRenderMode] \
-		-command [::itcl::code $this render $node 2 1 1]
-
-	    if {$mEnableBigE} {
-		$menu add radiobutton \
-		    -label "Evaluated" \
-		    -indicatoron 1 \
-		    -value 3 \
-		    -variable [::itcl::scope mRenderMode] \
-		    -command [::itcl::code $this render $node 3 1 1]
-	    }
-	}
-
-	$menu add radiobutton -label "Off" \
-	    -indicatoron 1 -value -1 -variable [::itcl::scope mRenderMode] \
-	    -command [::itcl::code $this render $node -1 1 1]
-    } else {
-	$menu add command -label "Wireframe" \
-	    -command [::itcl::code $this render $node 0 1 1]
-
-	if {[info exists itk_component(sdb)]} {
-	    $menu add command -label "Shaded" \
-		-command [::itcl::code $this render $node 1 1 1]
-	} else {
-	    $menu add command -label "Shaded (Mode 1)" \
-		-command [::itcl::code $this render $node 1 1 1]
-	    $menu add command -label "Shaded (Mode 2)" \
-		-command [::itcl::code $this render $node 2 1 1]
-
-	    if {$mEnableBigE} {
-		$menu add command \
-		    -label "Evaluated" \
-		    -command [::itcl::code $this render $node 3 1 1]
-	    }
-	}
-
-	$menu add command -label "Off" \
-	    -command [::itcl::code $this render $node -1 1 1]
-    }
-
-    #XXX need to copy over
-    #    $menu add separator
-    #    $menu add command -label "Copy" \
-	#	    -command [::itcl::code $this alter_obj "Copy" $mSelectedComp]
-    #    $menu add command -label "Rename" \
-	#	    -command [::itcl::code $this alter_obj "Rename" $mSelectedComp]
-    #    $menu add command -label "Delete" \
-	#	    -command [::itcl::code $this delete_obj $mSelectedComp]
-
-
-    $menu add separator
-
-    # Build color menu
-    $menu add cascade -label "Color" \
-	-menu $menu.color
-    set color [menu $menu.color -tearoff 0]
-
-    $color configure \
-	-background $SystemButtonFace
-
-    $color add command -label "Red" \
-	-command [::itcl::code $this setDisplayColor $node {255 0 0}]
-    $color add command -label "Orange" \
-	-command [::itcl::code $this setDisplayColor $node {204 128 51}]
-    $color add command -label "Yellow" \
-	-command [::itcl::code $this setDisplayColor $node {219 219 112}]
-    $color add command -label "Green" \
-	-command [::itcl::code $this setDisplayColor $node {0 255 0}]
-    $color add command -label "Blue" \
-	-command [::itcl::code $this setDisplayColor $node {0 0 255}]
-    $color add command -label "Indigo" \
-	-command [::itcl::code $this setDisplayColor $node {0 0 128}]
-    $color add command -label "Violet" \
-	-command [::itcl::code $this setDisplayColor $node {128 0 128}]
-    $color add separator
-    $color add command -label "Default" \
-	-command [::itcl::code $this setDisplayColor $node {}]
-    $color add command -label "Select..." \
-	-command [::itcl::code $this selectDisplayColor $node]
-
-    if {($mDisplayType == "wgl" || $mDisplayType == "ogl") && ($nodeType != "leaf" || 0 < $mRenderMode)} {
-	# Build transparency menu
-	$menu add cascade -label "Transparency" \
-	    -menu $menu.trans
-	set trans [menu $menu.trans -tearoff 0]
-
-	$trans configure \
-	    -background $SystemButtonFace
-
-	$trans add command -label "0%" \
-	    -command [::itcl::code $this setTransparency $node 1.0]
-	#$trans add command -label "25%" \
-	    #	-command [::itcl::code $this setTransparency $node 0.75]
-	#$trans add command -label "50%" \
-	    #	-command [::itcl::code $this setTransparency $node 0.5]
-	#$trans add command -label "75%" \
-	    #	-command [::itcl::code $this setTransparency $node 0.25]
-	$trans add command -label "10%" \
-	    -command [::itcl::code $this setTransparency $node 0.9]
-	$trans add command -label "20%" \
-	    -command [::itcl::code $this setTransparency $node 0.8]
-	$trans add command -label "30%" \
-	    -command [::itcl::code $this setTransparency $node 0.7]
-	$trans add command -label "40%" \
-	    -command [::itcl::code $this setTransparency $node 0.6]
-	$trans add command -label "50%" \
-	    -command [::itcl::code $this setTransparency $node 0.5]
-	$trans add command -label "60%" \
-	    -command [::itcl::code $this setTransparency $node 0.4]
-	$trans add command -label "70%" \
-	    -command [::itcl::code $this setTransparency $node 0.3]
-	$trans add command -label "80%" \
-	    -command [::itcl::code $this setTransparency $node 0.2]
-	$trans add command -label "90%" \
-	    -command [::itcl::code $this setTransparency $node 0.1]
-    }
-
-    if {[info exists itk_component(sdb)] && $nodeType == "leaf"} {
-	$menu add separator
-	$menu add command -label "Edit..." \
-	    -command [::itcl::code $this editComponent $node]
-    }
-
-    if {[info exists itk_component(sdb)]} {
-	$menu add separator
-	if {$nodeType == "leaf"} {
-	    if {[catch {$itk_component(sdb) attr get $node $mShowNormalsTag} mShowNormals]} {
-		set mShowNormals 0
-	    }
-	    $menu add checkbutton -label "Show Normals" \
-		-indicatoron 1 -variable [::itcl::scope mShowNormals] \
-		-command [::itcl::code $this toggleCompNormals $node]
-	}
-	$menu add command -label "Sync Normals" \
-	    -command [::itcl::code $this adjustCompNormals $node]
-	$menu add command -label "Reverse Normals" \
-	    -command [::itcl::code $this reverseCompNormals $node]
-	$menu add separator
-	$menu add command -label "Decimate" \
-	    -command [::itcl::code $this decimate2 $node]
-	if {[$itk_component(sdb) busy]} {
-	    $menu add separator
-	    $menu add command -label "Abort" \
-		-command [::itcl::code $this abort]
-	}
-    }
-
-    # set up bindings for status
-    bind $menu <<MenuSelect>> \
-	[::itcl::code $this menuStatusCB %W]
-}
-
-::itcl::body Archer::newDb {} {
-    if {$::Archer::haveSdb} {
-	set typelist {
-	    {"BRL-CAD Database" {".g"}}
-	    {"IVAVIEW Database" {".xg"}}
-	    {"All Files" {*}}
-	}
-    } else {
-	set typelist {
-	    {"BRL-CAD Database" {".g"}}
-	    {"All Files" {*}}
-	}
-    }
-
-    #XXX This is not quite right, but it gets us
-    #    enough of the behavior we want (for the moment).
-    set target [tk_getSaveFile -parent $itk_interior \
-		    -initialdir $mLastSelectedDir \
-		    -title "Create a New Database" \
-		    -filetypes $typelist]
-
-    if {$target == ""} {
-	return
-    } else {
-	set mLastSelectedDir [file dirname $target]
-    }
-
-    if {[file exists $target]} {
-	file delete -force $target
-    }
-
-    set type ""
-    if {$::Archer::haveSdb} {
-	switch -- [file extension $target] {
-	    ".g"   {
-		set type "BRL-CAD"
-		set db [Db \#auto $target]
-		::itcl::delete object $db
-	    }
-	    ".xg" {
-		set type "IVAVIEW"
-		set sdb [Sdb \#auto $target]
-		::itcl::delete object $sdb
-	    }
-	    default {
-		return
-	    }
-	}
-    } else {
-	switch -- [file extension $target] {
-	    ".g"   {
-		set type "BRL-CAD"
-		set db [Db \#auto $target]
-		::itcl::delete object $db
-	    }
-	    default {
-		return
-	    }
-	}
-    }
-    Load $type $target
-}
-
-::itcl::body Archer::openDb {} {
-    if {$::Archer::haveSdb} {
-	set typelist {
-	    {"BRL-CAD Database" {".g"}}
-	    {"IVAVIEW Database" {".xg"}}
-	    {"All Files" {*}}
-	}
-    } else {
-	set typelist {
-	    {"BRL-CAD Database" {".g"}}
-	    {"All Files" {*}}
-	}
-    }
-
-    set target [tk_getOpenFile -parent $itk_interior \
-		    -initialdir $mLastSelectedDir \
-		    -title "Open Database" \
-		    -filetypes $typelist]
-
-    if {$target == ""} {
-	return
-    } else {
-	set mLastSelectedDir [file dirname $target]
-    }
-
-    set type ""
-    if {$::Archer::haveSdb} {
-	switch -- [file extension $target] {
-	    ".g"   {set type "BRL-CAD"}
-	    ".xg" {set type "IVAVIEW"}
-	    default {
-		return
-	    }
-	}
-    } else {
-	switch -- [file extension $target] {
-	    ".g"   {set type "BRL-CAD"}
-	    default {
-		return
-	    }
-	}
-    }
-    Load $type $target
-}
-
-::itcl::body Archer::saveDb {} {
-    set mNeedSave 0
-    updateSaveMode
-
-    # Sanity
-    if {$mTarget == "" ||
-	$mTargetCopy == "" ||
-	$mDbReadOnly ||
-	$mDbNoCopy} {
-	return
-    }
-
-    file copy -force $mTargetCopy $mTarget
-}
-
 ::itcl::body Archer::selectNode {tags {rflag 1}} {
     set tags [split $tags ":"]
     if {[llength $tags] > 1} {
@@ -2231,12 +1508,7 @@ package provide Archer 1.0
     #    routine gets randomly called by the
     #    hierarchy widget after a Load. When called its
     #    tag refers to a node in the previous database.
-    if {[info exists itk_component(sdb)]} {
-	set savePwd [pwd]
-	cd /
-    } else {
-	set savePwd ""
-    }
+    set savePwd ""
 
     if {[catch {dbCmd get_type $node} ret]} {
 	if {$savePwd != ""} {
@@ -2540,9 +1812,6 @@ package provide Archer 1.0
 	-highlightcolor [$itk_component(licenseDialogTabs) cget -background] \
 	-borderwidth 0 \
 	-font $mFontText
-    if {$::Archer::haveSdb} {
-	$itk_component(licenseDialogTabs) insert end -text "IVAVIEW" -stipple gray25
-    }
     $itk_component(licenseDialogTabs) insert end -text "BRL-CAD" -stipple gray25
 
     incr aboutTabIndex
@@ -2551,29 +1820,6 @@ package provide Archer 1.0
 	-fill both
 
     set licenseTabIndex -1
-
-    # IVAVIEW License Info
-    if {$::Archer::haveSdb} {
-	set fd [open [file join $brlcadDataPath doc ivaviewLicense.txt] r]
-	set mIvaviewLicenseInfo [read $fd]
-	close $fd
-	itk_component add ivaviewLicenseInfo {
-	    ::iwidgets::scrolledtext $itk_component(licenseDialogTabs).ivaviewLicenseInfo \
-		-wrap word \
-		-hscrollmode dynamic \
-		-vscrollmode dynamic \
-		-textfont $mFontText \
-		-background $SystemButtonFace \
-		-textbackground $SystemButtonFace
-	} {}
-	$itk_component(ivaviewLicenseInfo) insert 0.0 $mIvaviewLicenseInfo
-	$itk_component(ivaviewLicenseInfo) configure -state disabled
-
-	incr licenseTabIndex
-	$itk_component(licenseDialogTabs) tab configure $licenseTabIndex \
-	    -window $itk_component(ivaviewLicenseInfo) \
-	    -fill both
-    }
 
     # BRL-CAD License Info
     #    set fd [open [file join $env(ARCHER_HOME) $brlcadDataPath COPYING] r]
@@ -4064,18 +3310,6 @@ package provide Archer 1.0
 }
 
 
-::itcl::body Archer::closeSdb {} {
-    catch {delete object $itk_component(sdb)}
-
-    if {$ArcherCore::inheritFromToplevel} {
-    } else {
-	#	$itk_component(menubar) menuconfigure .file.rt  -state disabled
-	#	$itk_component(menubar) menuconfigure .file.png -state disabled
-	#	$itk_component(menubar) delete .modes
-    }
-}
-
-
 ::itcl::body Archer::doAboutArcher {} {
     bind $itk_component(aboutDialog) <Enter> "raise $itk_component(aboutDialog)"
     bind $itk_component(aboutDialog) <Configure> "raise $itk_component(aboutDialog)"
@@ -4096,144 +3330,6 @@ package provide Archer 1.0
     }
 }
 
-
-::itcl::body Archer::initSdb {} {
-    itk_component add sdb {
-	if {$mDbNoCopy || $mDbReadOnly} {
-	    set _target $mTarget
-	} else {
-	    set _target $mTargetCopy
-	}
-
-	SdbBrlView $itk_component(canvasF).sdb $_target \
-	    -type $mDisplayType \
-	    -showhandle 0 \
-	    -sashcursor sb_v_double_arrow \
-	    -hsashcursor sb_h_double_arrow \
-	    -showViewingParams $mShowViewingParams
-    } {
-	keep -sashwidth -sashheight -sashborderwidth
-	keep -sashindent -thickness
-    }
-    set tmp_dbCommands [$itk_component(sdb) getUserCmds]
-    set unwrappedDbCommands {}
-    foreach cmd $tmp_dbCommands {
-	if {[lsearch $bannedDbCommands $cmd] == -1} {
-	    lappend unwrappedDbCommands $cmd
-	}
-    }
-
-    set dbSpecificCommands $sdbCommands
-
-    $itk_component(sdb) transparencyAll 1
-    $itk_component(sdb) bounds "-4096 4095 -4096 4095 -4096 4095"
-    $itk_component(sdb) configure -paneCallback [::itcl::code $this updateActivePane]
-
-    # Override axes hot keys in the Mged widget
-    #    bind [$itk_component(sdb) component ul component dm] m [::itcl::code $this _toggle_model_axes ul]
-    #    bind [$itk_component(sdb) component ur component dm] m [::itcl::code $this _toggle_model_axes ur]
-    #    bind [$itk_component(sdb) component ll component dm] m [::itcl::code $this _toggle_model_axes ll]
-    #    bind [$itk_component(sdb) component lr component dm] m [::itcl::code $this _toggle_model_axes lr]
-    #    bind [$itk_component(sdb) component ul component dm] T [::itcl::code $this _toggle_model_axes_ticks ul]
-    #    bind [$itk_component(sdb) component ur component dm] T [::itcl::code $this _toggle_model_axes_ticks ur]
-    #    bind [$itk_component(sdb) component ll component dm] T [::itcl::code $this _toggle_model_axes_ticks ll]
-    #    bind [$itk_component(sdb) component lr component dm] T [::itcl::code $this _toggle_model_axes_ticks lr]
-    #    bind [$itk_component(sdb) component ul component dm] v [::itcl::code $this _toggle_view_axes ul]
-    #    bind [$itk_component(sdb) component ur component dm] v [::itcl::code $this _toggle_view_axes ur]
-    #    bind [$itk_component(sdb) component ll component dm] v [::itcl::code $this _toggle_view_axes ll]
-    #    bind [$itk_component(sdb) component lr component dm] v [::itcl::code $this _toggle_view_axes lr]
-
-
-    # Other bindings for mged
-    #bind $itk_component(sdb) <Enter> {focus %W}
-
-    if {!$mViewOnly} {
-	if {$ArcherCore::inheritFromToplevel} {
-	    $itk_component(filemenu) entryconfigure "Raytrace Control Panel..." -state disabled
-	    #$itk_component(filemenu) entryconfigure "Export Geometry to PNG..." -state normal
-	    #$itk_component(filemenu) entryconfigure "Compact" -state normal
-	    catch {$itk_component(filemenu) delete "Purge History"}
-
-	    $itk_component(filemenu) insert "Import" command \
-		-label "Compact" \
-		-command [::itcl::code $this compact]
-
-	    $itk_component(filemenu) entryconfigure "Import" -state normal
-	    $itk_component(filemenu) entryconfigure "Export" -state normal
-	    $itk_component(displaymenu) entryconfigure "Standard Views" -state normal
-	    $itk_component(displaymenu) entryconfigure "Reset" -state normal
-	    $itk_component(displaymenu) entryconfigure "Autoview" -state normal
-	    $itk_component(displaymenu) entryconfigure "Center..." -state normal
-	    $itk_component(modesmenu) entryconfigure "View Axes" -state normal
-	    $itk_component(modesmenu) entryconfigure "Model Axes" -state normal
-	} else {
-	    $itk_component(menubar) menuconfigure .file.rt  -state disabled
-	    #$itk_component(menubar) menuconfigure .file.png -state normal
-	    #$itk_component(menubar) menuconfigure .file.compact -state normal
-	    catch {$itk_component(menubar) delete .file.purgeHist}
-
-	    $itk_component(menubar) insert .file.import command compact \
-		-label "Compact" \
-		-helpstr "Compact the target description"
-
-	    $itk_component(menubar) menuconfigure .file.import -state normal
-	    $itk_component(menubar) menuconfigure .file.export -state normal
-	    $itk_component(menubar) menuconfigure .display.standard -state normal
-	    $itk_component(menubar) menuconfigure .display.reset -state normal
-	    $itk_component(menubar) menuconfigure .display.autoview -state normal
-	    $itk_component(menubar) menuconfigure .display.center -state normal
-
-	    $itk_component(menubar) menuconfigure .file.compact \
-		-command [::itcl::code $this compact]
-	}
-
-	$itk_component(canvas_menu) menuconfigure .raytrace.rt \
-	    -state disabled
-	$itk_component(canvas_menu) menuconfigure .raytrace.rt.fivetwelve \
-	    -state disabled
-	$itk_component(canvas_menu) menuconfigure .raytrace.rt.tentwenty \
-	    -state disabled
-	$itk_component(canvas_menu) menuconfigure .raytrace.rt.window \
-	    -state disabled
-	$itk_component(canvas_menu) menuconfigure .raytrace.rtcheck \
-	    -state disabled
-	$itk_component(canvas_menu) menuconfigure .raytrace.rtcheck.fifty \
-	    -state disabled
-	$itk_component(canvas_menu) menuconfigure .raytrace.rtcheck.hundred \
-	    -state disabled
-	$itk_component(canvas_menu) menuconfigure .raytrace.rtcheck.twofiftysix \
-	    -state disabled
-	$itk_component(canvas_menu) menuconfigure .raytrace.rtcheck.fivetwelve \
-	    -state disabled
-	$itk_component(canvas_menu) menuconfigure .raytrace.rtedge \
-	    -state disabled
-	$itk_component(canvas_menu) menuconfigure .raytrace.rtedge.fivetwelve \
-	    -state disabled
-	$itk_component(canvas_menu) menuconfigure .raytrace.rtedge.tentwenty \
-	    -state disabled
-	$itk_component(canvas_menu) menuconfigure .raytrace.rtedge.window \
-	    -state disabled
-	$itk_component(canvas_menu) menuconfigure .raytrace.nirt \
-	    -state disabled
-    }
-
-    $itk_component(canvas_menu) menuconfigure .view.front \
-	-state normal
-    $itk_component(canvas_menu) menuconfigure .view.rear \
-	-state normal
-    $itk_component(canvas_menu) menuconfigure .view.port \
-	-state normal
-    $itk_component(canvas_menu) menuconfigure .view.starboard \
-	-state normal
-    $itk_component(canvas_menu) menuconfigure .view.top \
-	-state normal
-    $itk_component(canvas_menu) menuconfigure .view.bottom \
-	-state normal
-    $itk_component(canvas_menu) menuconfigure .view.35,25 \
-	-state normal
-    $itk_component(canvas_menu) menuconfigure .view.45,45 \
-	-state normal
-}
 
 ::itcl::body Archer::launchDisplayMenuBegin {_dm _m _x _y} {
     set currentDisplay $_dm
@@ -4436,8 +3532,7 @@ package provide Archer 1.0
 	    -variable [::itcl::scope mMode] \
 	    -command [::itcl::code $this setMode 1]
 
-	if {([info exists itk_component(mged)] ||
-	     [info exists itk_component(sdb)]) && $mMode != 0} {
+	if {[info exists itk_component(mged)] && $mMode != 0} {
 	    $itk_component(modesmenu) add separator
 	    $itk_component(modesmenu) add cascade \
 		-label "Active Pane" \
@@ -4495,16 +3590,14 @@ package provide Archer 1.0
 	    -variable [::itcl::scope mLighting] \
 	    -command [::itcl::code $this doLighting]
 
-	if {![info exists itk_component(mged)] &&
-	    ![info exists itk_component(sdb)]} {
+	if {![info exists itk_component(mged)]} {
 	    # Disable a few entries until we read a database
 	    #$itk_component(modesmenu) entryconfigure "Active Pane" -state disabled
 	    $itk_component(modesmenu) entryconfigure "View Axes" -state disabled
 	    $itk_component(modesmenu) entryconfigure "Model Axes" -state disabled
 	}
     } else {
-	if {([info exists itk_component(mged)] ||
-	     [info exists itk_component(sdb)]) && $mMode != 0} {
+	if {[info exists itk_component(mged)] && $mMode != 0} {
 	    $itk_component(menubar) menuconfigure .modes \
 		-text "Modes" \
 		-menu {
@@ -4602,8 +3695,7 @@ package provide Archer 1.0
 	    -variable [::itcl::scope mMode] \
 	    -command [::itcl::code $this setMode 1]
 
-	if {([info exists itk_component(mged)] ||
-	     [info exists itk_component(sdb)]) && $mMode != 0} {
+	if {[info exists itk_component(mged)] && $mMode != 0} {
 	    set i 0
 	    $itk_component(menubar) menuconfigure .modes.activePane.ul \
 		-value $i \
@@ -4632,8 +3724,7 @@ package provide Archer 1.0
 		-command [::itcl::code $this doMultiPane]
 	}
 
-	if {![info exists itk_component(mged)] &&
-	    ![info exists itk_component(sdb)]} {
+	if {![info exists itk_component(mged)]} {
 	    $itk_component(menubar) menuconfigure .modes.viewaxes \
 		-offvalue 0 \
 		-onvalue 1 \
@@ -4683,132 +3774,6 @@ package provide Archer 1.0
 	    -onvalue 2 \
 	    -variable [::itcl::scope mLighting] \
 	    -command [::itcl::code $this doLighting]
-    }
-}
-
-::itcl::body Archer::updateTheme {} {
-    if {$mInstanceInit} {
-	return
-    }
-
-    ArcherCore::updateTheme
-
-    set dir [file join $mImgDir Themes $mTheme]
-
-    if {!$mViewOnly} {
-	# Primary 
-	$itk_component(primaryToolbar) itemconfigure new \
-	    -image [image create photo \
-			-file [file join $dir file_new.png]]
-	$itk_component(primaryToolbar) itemconfigure preferences \
-	    -image [image create photo \
-			-file [file join $dir configure.png]]
-	$itk_component(primaryToolbar) itemconfigure cut \
-	    -image [image create photo \
-			-file [file join $dir edit_cut.png]]
-	$itk_component(primaryToolbar) itemconfigure copy \
-	    -image [image create photo \
-			-file [file join $dir edit_copy.png]]
-	$itk_component(primaryToolbar) itemconfigure paste \
-	    -image [image create photo \
-			-file [file join $dir edit_paste.png]]
-	$itk_component(primaryToolbar) itemconfigure comb \
-	    -image [image create photo \
-			-file [file join $dir combination.png]]
-	$itk_component(primaryToolbar) itemconfigure arb6 \
-	    -image [image create photo \
-			-file [file join $dir primitive_arb6.png]]
-	$itk_component(primaryToolbar) itemconfigure arb8 \
-	    -image [image create photo \
-			-file [file join $dir primitive_arb8.png]]
-	$itk_component(primaryToolbar) itemconfigure cone \
-	    -image [image create photo \
-			-file [file join $dir primitive_cone.png]]
-	#$itk_component(primaryToolbar) itemconfigure pipe \
-	    -image [image create photo \
-			-file [file join $dir primitive_pipe.png]]
-	$itk_component(primaryToolbar) itemconfigure sphere \
-	    -image [image create photo \
-			-file [file join $dir primitive_sph.png]]
-	$itk_component(primaryToolbar) itemconfigure torus \
-	    -image [image create photo \
-			-file [file join $dir primitive_tor.png]]
-	$itk_component(primaryToolbar) itemconfigure other \
-	    -image [image create photo \
-			-file [file join $dir primitive_list.png]]
-
-	# We catch this because the item may not exist
-	catch {$itk_component(primaryToolbar) itemconfigure wizards \
-		   -image [image create photo \
-			       -file [file join $dir wizard.png]]}
-
-	#$itk_component(primaryToolbar) itemconfigure ehy \
-	    -image [image create photo \
-			-file [file join $dir primitive_ehy.png]]
-	#$itk_component(primaryToolbar) itemconfigure epa \
-	    -image [image create photo \
-			-file [file join $dir primitive_epa.png]]
-	#$itk_component(primaryToolbar) itemconfigure rpc \
-	    -image [image create photo \
-			-file [file join $dir primitive_rpc.png]]
-	#$itk_component(primaryToolbar) itemconfigure rhc \
-	    -image [image create photo \
-			-file [file join $dir primitive_rhc.png]]
-	#$itk_component(primaryToolbar) itemconfigure ell \
-	    -image [image create photo \
-			-file [file join $dir primitive_ell.png]]
-	#$itk_component(primaryToolbar) itemconfigure eto \
-	    -image [image create photo \
-			-file [file join $dir primitive_eto.png]]
-	#$itk_component(primaryToolbar) itemconfigure half \
-	    -image [image create photo \
-			-file [file join $dir primitive_half.png]]
-	#$itk_component(primaryToolbar) itemconfigure part \
-	    -image [image create photo \
-			-file [file join $dir primitive_part.png]]
-	#$itk_component(primaryToolbar) itemconfigure grip \
-	    -image [image create photo \
-			-file [file join $dir primitive_grip.png]]
-	#$itk_component(primaryToolbar) itemconfigure extrude \
-	    -image [image create photo \
-			-file [file join $dir primitive_extrude.png]]
-	#$itk_component(primaryToolbar) itemconfigure sketch \
-	    -image [image create photo \
-			-file [file join $dir primitive_sketch.png]]
-	#$itk_component(primaryToolbar) itemconfigure bot \
-	    -image [image create photo \
-			-file [file join $dir primitive_bot.png]]
-
-	catch {
-	    $itk_component(viewToolbar) itemconfigure edit_rotate \
-		-image [image create photo \
-			    -file [file join $dir edit_rotate.png]]
-	    $itk_component(viewToolbar) itemconfigure edit_translate \
-		-image [image create photo \
-			    -file [file join $dir edit_translate.png]]
-	    $itk_component(viewToolbar) itemconfigure edit_scale \
-		-image [image create photo \
-			    -file [file join $dir edit_scale.png]]
-	    $itk_component(viewToolbar) itemconfigure edit_center \
-		-image [image create photo \
-			    -file [file join $dir edit_select.png]]
-	}
-
-	# Attribute View Toolbar
-	$itk_component(objViewToolbar) itemconfigure objAttrView \
-	    -image [image create photo \
-			-file [file join $dir option_text.png]]
-	$itk_component(objViewToolbar) itemconfigure objEditView \
-	    -image [image create photo \
-			-file [file join $dir option_tree.png]]
-
-	# Object Edit Toolbar
-	$itk_component(objEditToolbar) itemconfigure prev \
-	    -image [image create photo \
-			-file [file join $dir arrow_back.png]]
-	$itk_component(objEditToolbar) itemconfigure next \
-	    -image [image create photo \
-			-file [file join $dir arrow_forward.png]]
     }
 }
 
@@ -6358,8 +5323,7 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::initDbAttrView {name} {
-    if {![info exists itk_component(mged)] &&
-	![info exists itk_component(sdb)]} {
+    if {![info exists itk_component(mged)]} {
 	return
     }
 
@@ -6380,12 +5344,7 @@ package provide Archer 1.0
 	set mWizardState ""
     }
 
-    #XXX These should get moved to the Load method
     set mDbName $name
-    if {[info exists itk_component(mged)]} {
-	set mDbTitle [$itk_component(mged) title]
-	set mDbUnits [$itk_component(mged) units]
-    }
     set mPrevObjViewMode $OBJ_ATTR_VIEW_MODE
     set mPrevSelectedObjPath ""
     set mPrevSelectedObj ""
@@ -6529,8 +5488,7 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::initObjAttrView {} {
-    if {![info exists itk_component(mged)] &&
-	![info exists itk_component(sdb)]} {
+    if {![info exists itk_component(mged)]} {
 	return
     }
 
@@ -7233,13 +6191,9 @@ package provide Archer 1.0
 	}
 
 	set minorType [$plugin get -minorType]
-	if {($minorType == $pluginMinorTypeBoth &&
-	     ([info exists itk_component(mged)] ||
-	      [info exists itk_component(sdb)])) ||
-	    ($minorType == $pluginMinorTypeMged &&
-	     [info exists itk_component(mged)]) ||
-	    ($minorType == $pluginMinorTypeSdb &&
-	     [info exists itk_component(sdb)])} {
+	if {[info exists itk_component(mged)] &&
+	    ($minorType == $pluginMinorTypeAll ||
+	     $minorType == $pluginMinorTypeMged)} {
 	    lappend uplugins $plugin
 	}
     }
@@ -7287,14 +6241,11 @@ package provide Archer 1.0
 	    continue
 	}
 
+
 	set minorType [$plugin get -minorType]
-	if {($minorType == $pluginMinorTypeBoth &&
-	     ([info exists itk_component(mged)] ||
-	      [info exists itk_component(sdb)])) ||
-	    ($minorType == $pluginMinorTypeMged &&
-	     [info exists itk_component(mged)]) ||
-	    ($minorType == $pluginMinorTypeSdb &&
-	     [info exists itk_component(sdb)])} {
+	if {[info exists itk_component(mged)] &&
+	    ($minorType == $pluginMinorTypeAll ||
+	     $minorType == $pluginMinorTypeMged)} {
 	    lappend wplugins $plugin
 	}
     }
@@ -7488,8 +6439,7 @@ package provide Archer 1.0
     if {$mModelAxesSizePref != $mModelAxesSize} {
 	set mModelAxesSize $mModelAxesSizePref
 
-	if {[info exists itk_component(mged)] ||
-	    [info exists itk_component(sdb)]} {
+	if {[info exists itk_component(mged)]} {
 	    switch -- $mModelAxesSize {
 		"Small" {
 		    dbCmd configure -modelAxesSize 0.2
@@ -7528,8 +6478,7 @@ package provide Archer 1.0
 	set mModelAxesPosition \
 	    "$mModelAxesPositionXPref $mModelAxesPositionYPref $mModelAxesPositionZPref"
 
-	if {[info exists itk_component(mged)] ||
-	    [info exists itk_component(sdb)]} {
+	if {[info exists itk_component(mged)]} {
 	    dbCmd configure -modelAxesPosition $mModelAxesPosition
 	}
     }
@@ -7537,8 +6486,7 @@ package provide Archer 1.0
     if {$mModelAxesLineWidthPref != $mModelAxesLineWidth} {
 	set mModelAxesLineWidth $mModelAxesLineWidthPref
 
-	if {[info exists itk_component(mged)] ||
-	    [info exists itk_component(sdb)]} {
+	if {[info exists itk_component(mged)]} {
 	    dbCmd configure -modelAxesLineWidth $mModelAxesLineWidth
 	}
     }
@@ -7546,8 +6494,7 @@ package provide Archer 1.0
     if {$mModelAxesColorPref != $mModelAxesColor} {
 	set mModelAxesColor $mModelAxesColorPref
 
-	if {[info exists itk_component(mged)] ||
-	    [info exists itk_component(sdb)]} {
+	if {[info exists itk_component(mged)]} {
 	    setColorOption dbCmd -modelAxesColor $mModelAxesColor -modelAxesTripleColor
 	}
     }
@@ -7555,8 +6502,7 @@ package provide Archer 1.0
     if {$mModelAxesLabelColorPref != $mModelAxesLabelColor} {
 	set mModelAxesLabelColor $mModelAxesLabelColorPref
 
-	if {[info exists itk_component(mged)] ||
-	    [info exists itk_component(sdb)]} {
+	if {[info exists itk_component(mged)]} {
 	    setColorOption dbCmd -modelAxesLabelColor $mModelAxesLabelColor
 	}
     }
@@ -7564,8 +6510,7 @@ package provide Archer 1.0
     if {$mModelAxesTickIntervalPref != $mModelAxesTickInterval} {
 	set mModelAxesTickInterval $mModelAxesTickIntervalPref
 
-	if {[info exists itk_component(mged)] ||
-	    [info exists itk_component(sdb)]} {
+	if {[info exists itk_component(mged)]} {
 	    dbCmd configure -modelAxesTickInterval $mModelAxesTickInterval
 	}
     }
@@ -7573,8 +6518,7 @@ package provide Archer 1.0
     if {$mModelAxesTicksPerMajorPref != $mModelAxesTicksPerMajor} {
 	set mModelAxesTicksPerMajor $mModelAxesTicksPerMajorPref
 
-	if {[info exists itk_component(mged)] ||
-	    [info exists itk_component(sdb)]} {
+	if {[info exists itk_component(mged)]} {
 	    dbCmd configure -modelAxesTicksPerMajor $mModelAxesTicksPerMajor
 	}
     }
@@ -7582,8 +6526,7 @@ package provide Archer 1.0
     if {$mModelAxesTickThresholdPref != $mModelAxesTickThreshold} {
 	set mModelAxesTickThreshold $mModelAxesTickThresholdPref
 
-	if {[info exists itk_component(mged)] ||
-	    [info exists itk_component(sdb)]} {
+	if {[info exists itk_component(mged)]} {
 	    dbCmd configure -modelAxesTickThreshold $mModelAxesTickThreshold
 	}
     }
@@ -7591,8 +6534,7 @@ package provide Archer 1.0
     if {$mModelAxesTickLengthPref != $mModelAxesTickLength} {
 	set mModelAxesTickLength $mModelAxesTickLengthPref
 
-	if {[info exists itk_component(mged)] ||
-	    [info exists itk_component(sdb)]} {
+	if {[info exists itk_component(mged)]} {
 	    dbCmd configure -modelAxesTickLength $mModelAxesTickLength
 	}
     }
@@ -7600,8 +6542,7 @@ package provide Archer 1.0
     if {$mModelAxesTickMajorLengthPref != $mModelAxesTickMajorLength} {
 	set mModelAxesTickMajorLength $mModelAxesTickMajorLengthPref
 
-	if {[info exists itk_component(mged)] ||
-	    [info exists itk_component(sdb)]} {
+	if {[info exists itk_component(mged)]} {
 	    dbCmd configure -modelAxesTickMajorLength $mModelAxesTickMajorLength
 	}
     }
@@ -7609,8 +6550,7 @@ package provide Archer 1.0
     if {$mModelAxesTickColorPref != $mModelAxesTickColor} {
 	set mModelAxesTickColor $mModelAxesTickColorPref
 
-	if {[info exists itk_component(mged)] ||
-	    [info exists itk_component(sdb)]} {
+	if {[info exists itk_component(mged)]} {
 	    setColorOption dbCmd -modelAxesTickColor $mModelAxesTickColor
 	}
     }
@@ -7618,8 +6558,7 @@ package provide Archer 1.0
     if {$mModelAxesTickMajorColorPref != $mModelAxesTickMajorColor} {
 	set mModelAxesTickMajorColor $mModelAxesTickMajorColorPref
 
-	if {[info exists itk_component(mged)] ||
-	    [info exists itk_component(sdb)]} {
+	if {[info exists itk_component(mged)]} {
 	    setColorOption dbCmd -modelAxesTickMajorColor $mModelAxesTickMajorColor
 	}
     }
@@ -7698,8 +6637,7 @@ package provide Archer 1.0
     if {$mViewAxesSizePref != $mViewAxesSize} {
 	set mViewAxesSize $mViewAxesSizePref
 
-	if {[info exists itk_component(mged)] ||
-	    [info exists itk_component(sdb)]} {
+	if {[info exists itk_component(mged)]} {
 	    # sanity
 	    set offset 0.0
 	    switch -- $mViewAxesSize {
@@ -7725,8 +6663,7 @@ package provide Archer 1.0
 	set positionNotSet 0
 	set mViewAxesPosition $mViewAxesPositionPref
 
-	if {[info exists itk_component(mged)] ||
-	    [info exists itk_component(sdb)]} {
+	if {[info exists itk_component(mged)]} {
 	    switch -- $mViewAxesPosition {
 		default -
 		"Center" {
@@ -7752,8 +6689,7 @@ package provide Archer 1.0
 	$mViewAxesPositionPref != $mViewAxesPosition} {
 	set mViewAxesPosition $mViewAxesPositionPref
 
-	if {[info exists itk_component(mged)] ||
-	    [info exists itk_component(sdb)]} {
+	if {[info exists itk_component(mged)]} {
 	    # sanity
 	    set offset 0.0
 	    switch -- $mViewAxesSize {
@@ -7795,8 +6731,7 @@ package provide Archer 1.0
     if {$mViewAxesLineWidthPref != $mViewAxesLineWidth} {
 	set mViewAxesLineWidth $mViewAxesLineWidthPref
 
-	if {[info exists itk_component(mged)] ||
-	    [info exists itk_component(sdb)]} {
+	if {[info exists itk_component(mged)]} {
 	    dbCmd configure -viewAxesLineWidth $mViewAxesLineWidth
 	}
     }
@@ -7804,8 +6739,7 @@ package provide Archer 1.0
     if {$mViewAxesColorPref != $mViewAxesColor} {
 	set mViewAxesColor $mViewAxesColorPref
 
-	if {[info exists itk_component(mged)] ||
-	    [info exists itk_component(sdb)]} {
+	if {[info exists itk_component(mged)]} {
 	    setColorOption dbCmd -viewAxesColor $mViewAxesColor -viewAxesTripleColor
 	}
     }
@@ -7813,13 +6747,11 @@ package provide Archer 1.0
     if {$mViewAxesLabelColorPref != $mViewAxesLabelColor} {
 	set mViewAxesLabelColor $mViewAxesLabelColorPref
 
-	if {[info exists itk_component(mged)] ||
-	    [info exists itk_component(sdb)]} {
+	if {[info exists itk_component(mged)]} {
 	    setColorOption dbCmd -viewAxesLabelColor $mViewAxesLabelColor
 	}
     }
 }
-
 
 ::itcl::body Archer::doPreferences {} {
     # update preference variables
@@ -8314,144 +7246,6 @@ package provide Archer 1.0
     $itk_component(torView) createGeometry $name
 }
 
-
-################################### SDB Edit Section ###################################
-
-::itcl::body Archer::adjustCompNormals {comp} {
-    if {[$itk_component(sdb) busy]} {
-	return
-    }
-
-    #SetWaitCursor
-
-    set savePwd [pwd]
-    cd /
-
-    $itk_component(sdb) normalCallback [::itcl::code $this pluginUpdateProgressBar]
-
-    if {[catch {$itk_component(sdb) adjustNormals 0 1 1 0 $comp}]} {
-	#SetNormalCursor
-	pluginUpdateProgressBar 0
-	return
-    }
-
-    set mNeedSave 1
-    updateSaveMode
-
-    pluginUpdateProgressBar 0
-
-    set renderMode [dbCmd how -b $comp]
-    cd $savePwd
-
-    if {[llength $renderMode] == 2} {
-	eval render $comp $renderMode 1
-    }
-
-    #SetNormalCursor
-}
-
-::itcl::body Archer::editApplyCallback {comp} {
-    set mNeedSave 1
-    updateSaveMode
-
-    set savePwd [pwd]
-    cd /
-    set renderMode [dbCmd how -b $comp]
-    cd $savePwd
-
-    if {[llength $renderMode] == 2} {
-	eval render $comp $renderMode 1
-    }
-}
-
-::itcl::body Archer::editComponent {comp} {
-    if {![info exists itk_component(sdb)]} {
-	return
-    }
-
-    set savePwd [pwd]
-    cd /
-    set editDialog [SdbEditFg4 .\#auto $itk_component(sdb) $comp \
-			[::itcl::code $this editApplyCallback] \
-			[::itcl::code $this editDismissCallback]]
-    cd $savePwd
-
-    $editDialog center [namespace tail $this]
-    $editDialog activate
-    lappend mActiveEditDialogs $editDialog
-}
-
-::itcl::body Archer::editDismissCallback {editDialog} {
-    set i [lsearch $mActiveEditDialogs [namespace tail $editDialog]]
-    if {$i != -1} {
-	set mActiveEditDialogs [lreplace $mActiveEditDialogs $i $i]
-    }
-}
-
-::itcl::body Archer::adjustCompNormals {comp} {
-    if {[$itk_component(sdb) busy]} {
-	return
-    }
-
-    #SetWaitCursor
-
-    set savePwd [pwd]
-    cd /
-
-    $itk_component(sdb) normalCallback [::itcl::code $this pluginUpdateProgressBar]
-
-    if {[catch {$itk_component(sdb) adjustNormals 0 1 1 0 $comp}]} {
-	#SetNormalCursor
-	pluginUpdateProgressBar 0
-	return
-    }
-
-    set mNeedSave 1
-    updateSaveMode
-
-    pluginUpdateProgressBar 0
-
-    set renderMode [dbCmd how -b $comp]
-    cd $savePwd
-
-    if {[llength $renderMode] == 2} {
-	eval render $comp $renderMode 1
-    }
-
-    #SetNormalCursor
-}
-
-::itcl::body Archer::reverseCompNormals {comp} {
-    set mNeedSave 1
-    updateSaveMode
-
-    set savePwd [pwd]
-    cd /
-    eval sdbWrapper reverseNormals 0 1 1 0 $comp
-    set renderMode [dbCmd how -b $comp]
-    cd $savePwd
-
-    if {[llength $renderMode] == 2} {
-	eval render $comp $renderMode 1
-    }
-}
-
-::itcl::body Archer::toggleCompNormals {comp} {
-    if {[catch {$itk_component(sdb) attr get $comp $mShowNormalsTag} mShowNormals]} {
-	$itk_component(sdb) attr set $comp $mShowNormalsTag 1
-    } else {
-	if {$mShowNormals == 1} {
-	    $itk_component(sdb) attr set $comp $mShowNormalsTag 0
-	} else {
-	    $itk_component(sdb) attr set $comp $mShowNormalsTag 1
-	}
-    }
-
-    set mNeedSave 1
-    updateSaveMode
-
-    redrawObj $comp
-}
 
 ################################### End Protected Section ###################################
 

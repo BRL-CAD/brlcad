@@ -43,7 +43,7 @@ proc LoadArcherCoreLibs {} {
 
     # can't use sharedlibextension without changing tkimg build
     if {![file exists [file join $tkimgdir tkimg.$ext]]} {
-	puts "ERROR: Unable to initialize Archer imagery"
+	puts "ERROR: Unable to initialize ArcherCore imagery"
 	exit 1
     }
 
@@ -52,18 +52,13 @@ proc LoadArcherCoreLibs {} {
     if { [catch {package require Swidgets} _initialized] } {
 	puts "$_initialized"
 	puts ""
-	puts "ERROR: Unable to load Archer Scripting"
+	puts "ERROR: Unable to load ArcherCore Scripting"
 	exit 1
     }
 }
 
 proc LoadArcherLibs {} {
-    # Try to load Sdb
-    if {[catch {package require Sdb 1.1}]} {
-	set Archer::haveSdb 0
-    } else {
-	set Archer::haveSdb 1
-    }
+    # Nothing for now
 }
 
 # Local Variables:
