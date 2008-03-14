@@ -93,12 +93,15 @@ const char *rt_metaball_lookup_type_name(const int id)
 
 /* compute the bounding sphere for a metaball cluster. center is filled, and the
  * radius is returned. */
-fastf_t rt_metaball_get_bounding_sphere(point_t *center, fastf_t threshold, struct bu_list *points)
+fastf_t rt_metaball_get_bounding_sphere(point_t *center, fastf_t threshold, struct rt_metaball_internal *mb)
 {
     struct wdb_metaballpt *mbpt, *mbpt2;
     point_t min, max, d;
     fastf_t r = 0.0, dist, mag;
     int i;
+    struct bu_list *points;
+
+    points = &mb->metaball_ctrl_head;
 
     /* find a bounding box for the POINTS (NOT the surface) */
     VSETALL(min, +INFINITY);
@@ -130,13 +133,25 @@ fastf_t rt_metaball_get_bounding_sphere(point_t *center, fastf_t threshold, stru
 		fastf_t additive;
 		VSUB2(d, mbpt2->coord, mbpt->coord);
 		mag = MAGNITUDE(d) + dist;
-		additive = fabs(mbpt2->fldstr) * mbpt2->fldstr / mag;
+
+		switch( mb->method ) {
+		case METABALL_METABALL:
+		    additive = fabs(mbpt2->fldstr) * mbpt2->fldstr / mag;
+		    break;
+		case METABALL_ISOPOTENTIAL:
+		    additive = exp(( mbpt2->sweat / mbpt2->fldstr ) * mag*mag - mbpt2->sweat);
+		    break;
+		case METABALL_BLOB:
+		    break;
+		}
+
 		dist += additive;
 	    }
 	/* then see if this is a 'defining' point */
 	if (dist > r)
 	    r = dist;
     }
+    printf("radius? %g\n", r);
     return r;
 }
 
@@ -172,7 +187,7 @@ rt_metaball_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     }
 
     /* find the bounding sphere */
-    stp->st_aradius = rt_metaball_get_bounding_sphere(&stp->st_center, mb->threshold, &mb->metaball_ctrl_head);
+    stp->st_aradius = rt_metaball_get_bounding_sphere(&stp->st_center, mb->threshold, mb);
     stp->st_bradius = stp->st_aradius * 1.01;
     /* generate a bounding box around the sphere...
      * XXX this can be optimized greatly to reduce the BSP presense... */
@@ -256,6 +271,7 @@ rt_metaball_point_value_blob(point_t *p, struct bu_list *points)
 	VSUB2(v, mbpt->coord, *p);
 	ret += exp((mbpt->sweat/mbpt->fldstr) * MAGSQ(v) - mbpt->sweat);
     }
+    printf("%g\n", ret);
     return ret;
 }
 
@@ -447,7 +463,7 @@ rt_metaball_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
     RT_CK_DB_INTERNAL(ip);
     mb = (struct rt_metaball_internal *)ip->idb_ptr;
     RT_METABALL_CK_MAGIC(mb);
-    rad = rt_metaball_get_bounding_sphere(&bsc, mb->threshold, &mb->metaball_ctrl_head);
+    rad = rt_metaball_get_bounding_sphere(&bsc, mb->threshold, mb);
     /* cope with the case where 0 points are defined. */
     if (rad<0)
 	return 0;
