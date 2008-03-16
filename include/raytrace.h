@@ -21,18 +21,21 @@
 /** @{ */
 /** @file raytrace.h
  *
- *  All the data structures and manifest constants
- *  necessary for interacting with the BRL-CAD LIBRT ray-tracing library.
+ * All the data structures and manifest constants necessary for
+ * interacting with the BRL-CAD LIBRT ray-tracing library.
  *
- *  Note that this header file defines many internal data structures,
- *  as well as the library's external (interface) data structures.  These are
- *  provided for the convenience of applications builders.  However,
- *  the internal data structures are subject to change in each release.
+ * Note that this header file defines many internal data structures,
+ * as well as the library's external (interface) data structures.
+ * These are provided for the convenience of applications builders.
+ * However, the internal data structures are subject to change in each
+ * release.
  *
  */
 
 #ifndef __RAYTRACE_H__
 #define __RAYTRACE_H__
+
+#include "common.h"
 
 /* interface headers */
 #include "tcl.h"
