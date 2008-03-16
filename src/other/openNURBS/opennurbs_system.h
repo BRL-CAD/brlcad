@@ -129,6 +129,10 @@
 
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdlib.h>
 #include <memory.h>
 //#include <malloc.h>
@@ -162,12 +166,16 @@
 // is declared in Rpcdce.h and defined in Rpcrt4.lib.
 #include <Rpc.h>
 
-#endif
+#endif /* ON_OS_WINDOWS */
 
 #if defined(ON_COMPILER_GNU)
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <wctype.h>
+#endif
+
+#ifdef __cplusplus
+} /* extern "C" */
 #endif
 
 #if defined (cplusplus) || defined(_cplusplus) || defined(__cplusplus)
