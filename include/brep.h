@@ -33,6 +33,7 @@
 #ifndef BREP_H
 #define BREP_H
 
+#include "common.h"
 
 #ifdef __cplusplus
 extern "C++" {
@@ -47,17 +48,14 @@ extern "C++" {
 #include <iostream>
 #include <fstream>
 }
-extern "C" {
+
+__BEGIN_DECLS
+
 #endif
 
 #include "vmath.h"
 #include "bu.h"
 
-#if 0
-#ifdef __cplusplus
-extern "C" {
-#endif
-#endif
 
 #ifndef __cplusplus
 typedef struct _on_brep_placeholder {
@@ -101,9 +99,7 @@ struct brep_specific {
     BrepBoundingVolume* bvh;
 };
 
-#ifdef __cplusplus
-}
-#endif
+__END_DECLS
 
 #endif  /* BREP_H */
 
