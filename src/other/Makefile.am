@@ -39,7 +39,11 @@ TCLDIR=
 endif
 
 if BUILD_TK
+if WITH_X11
 TKDIR=tk
+else !WITH_X11
+TKDIR=
+endif
 else !BUILD_TK
 TKDIR=
 endif
@@ -63,13 +67,21 @@ TERMLIBDIR=
 endif
 
 if BUILD_TKIMG
+if WITH_X11
 TKIMGDIR=tkimg
+else !WITH_X11
+TKIMGDIR=
+endif
 else !BUILD_TKIMG
 TKIMGDIR=
 endif
 
 if BUILD_BLT
+if WITH_X11
 BLTDIR=blt
+else !WITH_X11
+BLTDIR=
+endif
 else !BUILD_BLT
 BLTDIR=
 endif

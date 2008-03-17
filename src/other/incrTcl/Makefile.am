@@ -1,6 +1,26 @@
 # $Id$
 
+ITCLLIB = \
+	libitcl.la \
+	libitcl@ITCL_VERSION@.la
+
+if WITH_X11
+ITKDIR = itk
+ITKLIB = \
+	libitk.la \
+	libitk@ITCL_VERSION@.la
+else !WITH_X11
+ITKDIR =
+ITKLIB =
+endif
+
 SUBDIRS = \
+	doc \
+	itcl \
+	$(ITKDIR) \
+	tools
+
+DIST_SUBDIRS = \
 	doc \
 	itcl \
 	itk \
@@ -16,10 +36,8 @@ EXTRA_DIST = \
 	tcl.m4
 
 lib_LTLIBRARIES = \
-	libitcl.la \
-	libitcl@ITCL_VERSION@.la \
-	libitk.la \
-	libitk@ITCL_VERSION@.la
+	$(ITCLLIB) \
+	$(ITKLIB)
 
 libitcl_la_LIBADD = \
 	itcl/generic/itclStubInit.lo \
