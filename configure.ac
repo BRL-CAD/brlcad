@@ -937,7 +937,6 @@ AM_PROG_CC_C_O
 
 AC_PROG_CXX
 
-
 AC_PROG_CPP
 AC_REQUIRE_CPP
 
@@ -1939,22 +1938,6 @@ if test "x$bc_build_warnings" != "xno" ; then
 	fi
 fi
 
-dnl AC_C_PROTOTYPES
-AM_C_PROTOTYPES
-AC_DEFINE(USE_PROTOTYPES,1,heh)
-
-AC_C_CONST
-AC_C_INLINE
-AC_C_VOLATILE
-AC_C_BIGENDIAN
-
-# figure out what size pointers the compiler is actually generating
-AC_CHECK_SIZEOF(int)
-AC_CHECK_SIZEOF(long)
-AC_CHECK_SIZEOF(long long)
-AC_CHECK_SIZEOF(void *, 4)
-pointer_size="$ac_cv_sizeof_void_p"
-
 # determine the minimum single-precision floating point tolerance
 # value at compile time such that: 1.0 + value != 1.0
 # ANSI defines this as FLT_EPSILON but float.h may not provide it.
@@ -1981,8 +1964,29 @@ if test "x$bc_compliant_float" = "xno" || test "x$bc_compliant_double" = "xno" ;
     AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
 fi
 
-dnl Last step is to make sure that we can actually compile
-BC_SANITY_CHECK
+dnl AC_C_PROTOTYPES
+AM_C_PROTOTYPES
+AC_DEFINE(USE_PROTOTYPES,1,heh)
+
+AC_C_CONST
+AC_C_INLINE
+AC_C_VOLATILE
+AC_C_BIGENDIAN
+
+# figure out what size pointers the compiler is actually generating
+AC_CHECK_SIZEOF(int)
+AC_CHECK_SIZEOF(long)
+AC_CHECK_SIZEOF(long long)
+AC_CHECK_SIZEOF(void *, 4)
+pointer_size="$ac_cv_sizeof_void_p"
+
+dnl Make sure that we can actually compile C code
+BC_SANITY_CHECK([$CC compiler and flags for sanity])
+
+dnl Make sure that we can actually compile C++ code
+AC_LANG_PUSH([C++])
+BC_SANITY_CHECK([$CXX compiler and flags for sanity])
+AC_LANG_POP
 
 
 dnl ***************************
