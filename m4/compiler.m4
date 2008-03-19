@@ -155,7 +155,11 @@ BC_PREPROCESSOR_RECOGNIZES([$1], [$2], [$3])
 ])
 
 AC_DEFUN([BC_SANITY_CHECK], [
-AC_MSG_CHECKING(compiler and flags for sanity)
+__msg="$1"
+if test "x$__msg" = "x" ; then
+	__msg="compiler and flags for sanity"
+fi
+AC_MSG_CHECKING([$__msg])
 AC_TRY_RUN([
 #include <stdio.h>
 int main(){exit(0);}
