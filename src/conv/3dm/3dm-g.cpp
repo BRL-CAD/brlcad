@@ -1,0 +1,209 @@
+/*                           3 D M - G . C P P
+ * BRL-CAD
+ *
+ * Copyright (c) 2004-2008 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file 3dm-g.cpp
+ *
+ *  Program to convert a Rhino model (in a .3dm file) to a BRL-CAD .g 
+ *  file.
+ *
+ *  Authors -
+ *	David J. Godbey
+ *
+ *  Source -
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068
+ */
+
+#include "common.h"
+
+
+/* without OBJ_BREP, this entire procedural example is disabled */
+#ifdef OBJ_BREP
+
+#include <unistd.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "machine.h"		/* BRL-CAD specific machine data types */
+#include "vmath.h"		/* BRL-CAD Vector macros */
+#include "wdb.h"
+using namespace std;
+
+#ifdef __cplusplus
+}
+#endif
+
+void printPoints(struct rt_brep_internal* bi, ON_TextLog* dump) {
+  ON_Brep* brep = bi->brep;
+  if (brep) {
+    const int count = brep->m_V.Count();
+    for (int i = 0; i < count; i++) {
+      ON_BrepVertex& bv = brep->m_V[i];
+      bv.Dump(*dump);
+    }
+  } else {
+    dump->Print("brep was NULL!\n");
+  }
+}
+
+int main(int argc, char** argv) {
+    char mcount = '0';
+    struct rt_wdb* outfp;
+    ON_TextLog error_log;
+    char* id_name = "3dm -> g conversion";
+    char* outFileName;
+    const char* inputFileName;
+    ONX_Model model;
+    
+    ON::Begin();
+    ON_TextLog dump_to_stdout;
+    ON_TextLog* dump = &dump_to_stdout;
+
+  int c;
+	while ((c = bu_getopt(argc, argv, "o:dvt:s:")) != EOF) {
+		switch ( c ) {
+			case 's':	/* scale factor */
+				break;
+			case 'o':	/* ignore colors */
+        outFileName = bu_optarg;
+				break;
+			case 'd':	/* debug */
+				break;
+			case 't':	/* tolerance */
+				break;
+			case 'v':	/* verbose */
+				break;
+			default:
+				break;
+		}
+	}
+    argc -= bu_optind;
+    argv += bu_optind;
+    inputFileName  = argv[0];
+    if (outFileName == NULL) {
+      dump->Print("\n ** Error **\n Need an output file to continue. Rerun using -o \n** Error **\n\n");
+      return 1;
+// strip file suffix and add .g      
+    }
+
+    dump->Print("\n");
+    dump->Print("Input file %s.\n", inputFileName);
+    dump->Print("Output file %s.\n", outFileName);
+
+    FILE* archive_fp = ON::OpenFile(inputFileName, "rb");
+    if ( !archive_fp ) {
+      dump->Print("  Unable to open file.\n" );
+    }
+
+    // create achive object from file pointer
+    ON_BinaryFile archive( ON::read3dm, archive_fp );
+
+    // read the contents of the file into "model"
+    bool rc = model.Read( archive, dump );
+
+    ON::CloseFile( archive_fp );
+    
+    outfp = wdb_fopen(outFileName);
+    // print diagnostic
+    if ( rc )
+      dump->Print("Input 3dm file successfully read.\n");
+    else
+      dump->Print("Errors during reading 3dm file.\n");
+
+    // see if everything is in good shape
+    if ( model.IsValid(dump) )
+      dump->Print("Model is valid.\n");
+    else
+      dump->Print("Model is not valid.\n");
+
+    dump->Print("Number of NURBS objects read wass %d\n.", model.m_object_table.Count());
+    for (int i = 0; i < model.m_object_table.Count(); i++ ) {
+      dump->PushIndent();
+
+    // object's attibutes
+      ON_3dmObjectAttributes myAttributes = model.m_object_table[i].m_attributes;
+      ON_String constr(myAttributes.m_name);
+      myAttributes.Dump(*dump); // On debug print
+      dump->Print("\n");
+
+      string geom_base;
+      if (constr == NULL) {
+        string genName("rhino");
+        genName+=mcount++;
+        geom_base = genName.c_str();
+        dump->Print("Object has no name - creating one %s.\n", geom_base.c_str());
+      } else {
+        const char* cstr = constr;
+        geom_base = cstr;
+      }
+
+      string geom_name(geom_base+".s");
+      string region_name(geom_base+".r");
+
+      dump->Print("primitive is %s.\n", geom_name.c_str());
+      dump->Print("region created is %s.\n", region_name.c_str());
+
+    // object definition
+      const ON_Geometry* pGeometry = ON_Geometry::Cast(model.m_object_table[i].m_object);
+      if ( pGeometry ) {
+        ON_Brep *brep;
+        if ((brep = const_cast<ON_Brep * >(ON_Brep::Cast(pGeometry)))) {
+          mk_id(outfp, id_name);
+          mk_brep(outfp, geom_name.c_str(), brep);
+          unsigned char rgb[] = {255,0,0};
+          mk_region1(outfp, region_name.c_str(), geom_name.c_str(), "plastic", "", rgb);
+//          brep->Dump(*dump);  // on if debug or verbose
+          dump->PopIndent();
+        } else {
+          dump->Print("\n\n ***** Got a different kind of object than geometry - investigate. ***** \n\n");
+        }
+      }
+    }
+
+    wdb_close(outfp);
+
+    model.Destroy();
+    ON::End();
+
+    return 0;
+}
+
+#else /* !OBJ_BREP */
+
+int
+main(int argc, char *argv[])
+{
+    printf("ERROR: Boundary Representation object support is not available with\n"
+	   "       this compilation of BRL-CAD.\n");
+    return 1;
+}
+
+#endif /* OBJ_BREP */
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C++
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

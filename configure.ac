@@ -3744,6 +3744,7 @@ AC_CONFIG_FILES([
 	src/conv/jack/Makefile
 	src/conv/off/Makefile
 	src/conv/patch/Makefile
+	src/conv/3dm/Makefile
 	src/external/Makefile
 	src/external/Cubit/Makefile
 	src/external/EndgameFramework/Makefile

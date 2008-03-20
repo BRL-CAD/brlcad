@@ -31,7 +31,8 @@ SUBDIRS = \
 	iges \
 	jack \
 	off \
-	patch
+	patch \
+        3dm
 
 bin_PROGRAMS = \
 	asc-nmg \
@@ -49,6 +50,7 @@ bin_PROGRAMS = \
 	euclid_format \
 	euclid_unformat \
 	fast4-g \
+	g-3dm \
 	g-acad \
 	g-adrt \
 	g-dxf \
@@ -149,6 +151,9 @@ g4_g5_LDADD = ${WDB}
 g5_g4_SOURCES = g5-g4.c
 g5_g4_LDADD = ${WDB}
 
+g_3dm_SOURCES = g-3dm.c
+g_3dm_LDADD = ${WDB}
+
 g_acad_SOURCES = g-acad.c
 g_acad_LDADD = ${WDB}
 
@@ -245,6 +250,7 @@ dist_man_MANS = \
 	enf-g.1 \
 	euclid-g.1 \
 	fast4-g.1 \
+	g-3dm.1 \
 	g-acad.1 \
 	g-dxf.1 \
 	g-euclid.1 \
