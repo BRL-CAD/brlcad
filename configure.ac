@@ -1367,22 +1367,19 @@ AC_CHECK_LIB(itcl3.4, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl3.4",
 dnl check if libitk library links
 itk_link_works=no
 LIBITK=""
-PRELIBS="$LIBS"
-LIBS="$LIBS $LIBITCL"
-AC_CHECK_LIB(itk3.4, Itcl_Init, itk_link_works=yes ; LIBITCL="-litk3.4",
-    [AC_CHECK_LIB(itk34, Itcl_Init, itk_link_works=yes ; LIBITCL="-litk34",
-	[AC_CHECK_LIB(itk3.3, Itcl_Init, itk_link_works=yes ; LIBITCL="-litk3.3",
-	    [AC_CHECK_LIB(itk33, Itcl_Init, itk_link_works=yes ; LIBITCL="-litk33",
-		[AC_CHECK_LIB(itk3.2, Itcl_Init, itk_link_works=yes ; LIBITCL="-litk3.2",
-		    [AC_CHECK_LIB(itk32, Itcl_Init, itk_link_works=yes ; LIBITCL="-litk32",
-			[AC_CHECK_LIB(itk, Itcl_Init, itk_link_works=yes ; LIBITCL="-litk")]
+AC_CHECK_LIB(itk3.4, Itk_Init, itk_link_works=yes ; LIBITK="-litk3.4",
+    [AC_CHECK_LIB(itk34, Itk_Init, itk_link_works=yes ; LIBITK="-litk34",
+	[AC_CHECK_LIB(itk3.3, Itk_Init, itk_link_works=yes ; LIBITK="-litk3.3",
+	    [AC_CHECK_LIB(itk33, Itk_Init, itk_link_works=yes ; LIBITK="-litk33",
+		[AC_CHECK_LIB(itk3.2, Itk_Init, itk_link_works=yes ; LIBITK="-litk3.2",
+		    [AC_CHECK_LIB(itk32, Itk_Init, itk_link_works=yes ; LIBITK="-litk32",
+			[AC_CHECK_LIB(itk, Itk_Init, itk_link_works=yes ; LIBITK="-litk")]
 		    )]
 		)]
 	    )]
 	)]
     )]
 )
-LIBS="$PRELIBS"
 
 dnl check if a socket library links
 socket_link_works=no
