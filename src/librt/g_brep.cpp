@@ -24,12 +24,17 @@
  * Implementation of a generalized Boundary Representation (BREP)
  * primitive using the openNURBS library.
  *
- * Authors -
- *   Jason Owens
- *
  */
 
 #include "common.h"
+
+#include <vector>
+#include <list>
+#include <iostream>
+#include <algorithm>
+#include <set>
+#include <utility>
+
 #include "brep.h"
 #include "raytrace.h"
 #include "rtgeom.h"
@@ -42,13 +47,6 @@
 #ifdef read
 #   undef read
 #endif
-
-#include <vector>
-#include <list>
-#include <iostream>
-#include <algorithm>
-#include <set>
-#include <utility>
 
 #ifdef __cplusplus
 extern "C" {
