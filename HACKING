@@ -825,8 +825,8 @@ VERSION NUMBERS & COMPATIBILITY
 -------------------------------
 
 The BRL-CAD version number is in the include/conf directory in the
-MAJOR, MINOR, and PATCH files.  The README, ChangeLog, HISTORY files
-as well as a variety of documents in the doc/ directory may also make
+MAJOR, MINOR, and PATCH files.  The README, ChangeLog, NEWS files as
+well as a variety of documents in the doc/ directory may also make
 references to version numbers.  See the MAKING A RELEASE steps listed
 below for a more concise list of what needs to be updated.
 
@@ -899,7 +899,7 @@ COMPATIBILITY section.  Commit the changes to the source repository.
 the updated ChangeLog.  Use the YYYY-MM-DD of the previous release.
 Get the date from the NEWS file.
 
-    rcs2log -h users.sourceforge.net -r "-d>YYYY-MM-DD" | fold -s > ChangeLog
+    svn2cl.sh --break-before-msg -r {YYYY-MM-DD}:HEAD
 
 5) A "./configure && make" completes successfully on all platforms.
 
