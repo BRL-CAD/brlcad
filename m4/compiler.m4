@@ -67,7 +67,7 @@ AC_TRY_COMPILE( [], [int i;], [if AC_TRY_COMMAND([grep "nrecognize" conftest.err
 m4_popdef([AC_TRY_EVAL])
 rm -f conftest.err
 AC_TRY_RUN( [
-#include <stdio.h>
+#include <stdlib.h>
 int main(){exit(0);}
 ], [], [bc_[$2]_works=no])
 AC_MSG_RESULT($bc_[$2]_works)
@@ -162,7 +162,6 @@ fi
 AC_MSG_CHECKING([$__msg])
 AC_TRY_RUN([
 #include <stdlib.h>
-#include <stdio.h>
 int main(){exit(0);}
 	],
 	[	AC_MSG_RESULT(yes) ],
