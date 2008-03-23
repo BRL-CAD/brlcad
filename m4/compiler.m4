@@ -161,6 +161,7 @@ if test "x$__msg" = "x" ; then
 fi
 AC_MSG_CHECKING([$__msg])
 AC_TRY_RUN([
+#include <stdlib.h>
 #include <stdio.h>
 int main(){exit(0);}
 	],
