@@ -22,12 +22,6 @@
  *  Program to convert a Rhino model (in a .3dm file) to a BRL-CAD .g 
  *  file.
  *
- *  Authors -
- *	David J. Godbey
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068
  */
 
 #include "common.h"
@@ -42,7 +36,6 @@
 extern "C" {
 #endif
 
-#include "machine.h"		/* BRL-CAD specific machine data types */
 #include "vmath.h"		/* BRL-CAD Vector macros */
 #include "wdb.h"
 using namespace std;
