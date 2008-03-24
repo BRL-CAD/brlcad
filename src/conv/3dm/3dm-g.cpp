@@ -26,7 +26,6 @@
 
 #include "common.h"
 
-
 /* without OBJ_BREP, this entire procedural example is disabled */
 #ifdef OBJ_BREP
 
@@ -44,6 +43,13 @@ using namespace std;
 }
 #endif
 
+char * itoa(int num) {
+	static char	line[10];
+
+	sprintf(line, "%d", num);
+	return line;
+}
+
 void printPoints(struct rt_brep_internal* bi, ON_TextLog* dump) {
   ON_Brep* brep = bi->brep;
   if (brep) {
@@ -58,7 +64,7 @@ void printPoints(struct rt_brep_internal* bi, ON_TextLog* dump) {
 }
 
 int main(int argc, char** argv) {
-    char mcount = '0';
+    int mcount = 0;
     struct rt_wdb* outfp;
     ON_TextLog error_log;
     char* id_name = "3dm -> g conversion";
@@ -92,7 +98,8 @@ int main(int argc, char** argv) {
     argv += bu_optind;
     inputFileName  = argv[0];
     if (outFileName == NULL) {
-      dump->Print("\n ** Error **\n Need an output file to continue. Rerun using -o \n** Error **\n\n");
+      dump->Print("\n** Error **\n Need an output file to continue. Syntax: \n");
+      dump->Print(" ./3dm-g  -o <output file>.g <input file>.3dm \n** Error **\n\n");
       return 1;
 // strip file suffix and add .g      
     }
@@ -140,7 +147,7 @@ int main(int argc, char** argv) {
       string geom_base;
       if (constr == NULL) {
         string genName("rhino");
-        genName+=mcount++;
+        genName+=itoa(mcount++);
         geom_base = genName.c_str();
         dump->Print("Object has no name - creating one %s.\n", geom_base.c_str());
       } else {
@@ -158,6 +165,9 @@ int main(int argc, char** argv) {
       const ON_Geometry* pGeometry = ON_Geometry::Cast(model.m_object_table[i].m_object);
       if ( pGeometry ) {
         ON_Brep *brep;
+        ON_Curve *curve;
+        ON_Surface *surface;
+        ON_Mesh *mesh;
         if ((brep = const_cast<ON_Brep * >(ON_Brep::Cast(pGeometry)))) {
           mk_id(outfp, id_name);
           mk_brep(outfp, geom_name.c_str(), brep);
@@ -165,6 +175,14 @@ int main(int argc, char** argv) {
           mk_region1(outfp, region_name.c_str(), geom_name.c_str(), "plastic", "", rgb);
 //          brep->Dump(*dump);  // on if debug or verbose
           dump->PopIndent();
+        } else if (pGeometry->HasBrepForm()) {
+          dump->Print("\n\n ***** HasBrepForm. ***** \n\n");
+        } else if ((curve = const_cast<ON_Curve * >(ON_Curve::Cast(pGeometry)))) {
+          dump->Print("\n\n ***** ON_Curve. ***** \n\n");
+        } else if ((surface = const_cast<ON_Surface * >(ON_Surface::Cast(pGeometry)))) {
+          dump->Print("\n\n ***** ON_Surface. ***** \n\n");
+        } else if ((mesh = const_cast<ON_Mesh * >(ON_Mesh::Cast(pGeometry)))) {
+          dump->Print("\n\n ***** ON_Mesh. ***** \n\n");
         } else {
           dump->Print("\n\n ***** Got a different kind of object than geometry - investigate. ***** \n\n");
         }
