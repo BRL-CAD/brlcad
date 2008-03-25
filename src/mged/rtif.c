@@ -935,8 +935,52 @@ f_saveview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     register int i;
     register FILE *fp;
     char *base;
+    int c;
+    char rtcmd[255] = {'r', 't', 0};
+    char outlog[255] = {0};
+    char outpix[255] = {0};
+    char inputg[255] = {0};
 
     CHECK_DBI_NULL;
+
+    if (argc < 2) {
+	struct bu_vls vls;
+
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "help saveview");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
+    }
+
+    bu_optind = 1;
+    while ((c = bu_getopt(argc, argv, "e:l:o:")) != EOF) {
+	switch (c) {
+	    case 'e':
+		snprintf(rtcmd, 255, "%s", bu_optarg);
+		break;
+	    case 'l':
+		snprintf(outlog, 255, "%s", bu_optarg);
+		break;
+	    case 'o':
+		snprintf(outpix, 255, "%s", bu_optarg);
+		break;
+	    case 'i':
+		snprintf(inputg, 255, "%s", bu_optarg);
+		break;
+	    default: {
+		struct bu_vls vls;
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "Option '%c' unknown\n", c);
+		bu_vls_printf(&vls, "help saveview");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	    }
+	}
+    }
+    argc -= bu_optind-1;
+    argv += bu_optind-1;
 
     if (argc < 2) {
 	struct bu_vls vls;
@@ -952,6 +996,7 @@ f_saveview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	perror(argv[1]);
 	return TCL_ERROR;
     }
+    (void)bu_fchmod(fp, 0755);	/* executable */
 
     if (!dbip->dbi_filename) {
 	bu_log("Error: geometry file is not specified\n");
@@ -964,16 +1009,25 @@ f_saveview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     }
 
     base = basename_without_suffix( argv[1], ".sh" );
-    (void)bu_fchmod(fp, 0755);	/* executable */
+    if (outpix[0] == '\0') {
+	snprintf(outpix, 255, "%s.pix", base);
+    }
+    if (outlog[0] == '\0') {
+	snprintf(outlog, 255, "%s.log", base);
+    }
 
     /* Do not specify -v option to rt; batch jobs must print everything. -Mike */
-    (void)fprintf(fp, "#!/bin/sh\nrt -M ");
+    (void)fprintf(fp, "#!/bin/sh\n%s -M ", rtcmd);
     if ( view_state->vs_vop->vo_perspective > 0 )
 	(void)fprintf(fp, "-p%g ", view_state->vs_vop->vo_perspective);
     for ( i=2; i < argc; i++ )
 	(void)fprintf(fp, "%s ", argv[i]);
-    (void)fprintf(fp, "\\\n -o %s.pix\\\n $*\\\n", base);
-    (void)fprintf(fp, " %s\\\n ", dbip->dbi_filename);
+    (void)fprintf(fp, "\\\n -o %s\\\n $*\\\n", outpix);
+
+    if (inputg[0] == '\0') {
+	snprintf(inputg, 255, "%s", dbip->dbi_filename);
+    }
+    (void)fprintf(fp, " %s\\\n ", inputg);
 
     /* Find all unique top-level entries.
      *  Mark ones already done with s_wflag == UP
@@ -994,7 +1048,7 @@ f_saveview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		forw->s_wflag = UP;
 	}
     }
-    (void)fprintf(fp, "\\\n 2>> %s.log\\\n", base);
+    (void)fprintf(fp, "\\\n 2>> %s\\\n", outlog);
     (void)fprintf(fp, " <<EOF\n");
 
     {

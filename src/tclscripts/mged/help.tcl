@@ -232,7 +232,14 @@ set mged_help_data(rtarea)	$helplib_data(dgo_rtarea)
 set mged_help_data(rtedge)	$helplib_data(dgo_rtedge)
 set mged_help_data(rtweight)	$helplib_data(dgo_rtweight)
 set mged_help_data(savekey)	{{file [time]}	{save keyframe in file (experimental)}}
-set mged_help_data(saveview)	{{file [args]}	{save view in file for RT}}
+set mged_help_data(saveview)	{{[-e command] [-l logfile] [-o outputfile] [-i inputfile] file [args]}	{
+Save the current view to specified 'file' as an rt render script
+    Options:
+      -e command     specify command script will run (default: rt)
+      -l logfile     specify output log file (default: 'file'.log)
+      -o outputfile  specify output data file (default: 'file'.pix)
+      -i inputfile   specify input data file (default is opendb filepath)
+}}
 set mged_help_data(sca)		$helplib_data(vo_sca)
 set mged_help_data(sed)		{{<path>}	{solid-edit named solid}}
 set mged_help_data(setview)	$helplib_data(vo_setview)
