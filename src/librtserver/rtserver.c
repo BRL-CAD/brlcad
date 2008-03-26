@@ -46,13 +46,14 @@
 #endif
 #include "RtServerImpl.h"
 
-static int working_threads=0;
-static int max_working_threads=0;
-static pthread_mutex_t counter_mutex = PTHREAD_MUTEX_INITIALIZER;
+#if TESTING
+#include <sys/time.h>
+#include <time.h>
+#endif
 
 
 /* number of cpus (only used for call to rt_prep_parallel) */
-int ncpus=1;
+static int ncpus=1;
 
 /* verbosity flag */
 static int verbose=0;
@@ -76,7 +77,7 @@ static pthread_mutex_t resource_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t session_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 /* mutexes to protect the input and output queues */
-static pthread_mutex_t *input_queue_mutex=NULL, *output_queue_mutex=NULL;
+static pthread_mutex_t *output_queue_mutex=NULL;
 
 /* input queues condition and mutex */
 static pthread_mutex_t input_queue_ready_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -143,7 +144,6 @@ static struct rtserver_geometry **rts_geometry=NULL;	/* array of rtserver_geomet
 static int num_geometries=0;	/* the length of the rts_geometry array */
 static int used_session_0=0;	/* flag indicating if initial session has been used */
 static int needs_initialization=1;	/* flag indicating if init has already been done */
-#define GEOMETRIES_BLOCK_SIZE	5	/* the number of slots to allocate at one time */
 
 /* the title of this BRL-CAD database */
 static char *title=NULL;
@@ -162,9 +162,7 @@ fillItemTree( jobject parent_node,
 	      jmethodID itemTree_setLos_id,
 	      jmethodID itemTree_setUseCount_id );
 
-
-/* MACRO to add a ray to a job */
-#define RTS_ADD_RAY_TO_JOB( _ajob, _aray ) bu_ptbl_ins( &(_ajob)->rtjob_rays, (long *)(_aray) )
+#define GEOMETRIES_BLOCK_SIZE	5	/* the number of slots to allocate at one time */
 
 /* MACROS for getting and releasing resources */
 #define RTS_GET_XRAY( _p ) \
@@ -186,7 +184,6 @@ fillItemTree( jobject parent_node,
 	bu_ptbl_ins( &rts_resource.xrays, (long *)(_p) ); \
 	pthread_mutex_unlock( &resource_mutex ); \
 	_p = (struct xray *)NULL;
-
 
 #define RTS_GET_RTSERVER_JOB( _p ) \
 	pthread_mutex_lock( &resource_mutex ); \
@@ -309,6 +306,7 @@ fillItemTree( jobject parent_node,
 		pthread_mutex_unlock( &resource_mutex ); \
 	}
 
+
 int
 get_unique_jobid()
 {
@@ -378,12 +376,6 @@ rts_resource_init()
     bu_ptbl_init( &rts_resource.xrays, 128, "xrays" );
     pthread_mutex_unlock( &resource_mutex ); \
 						 }
-
-int
-get_max_working_threads()
-{
-    return max_working_threads;
-}
 
 
 /* print a summary of librt resources */
@@ -550,7 +542,6 @@ rts_init()
     /* Things like bu_malloc() must have these initialized for use with parallel processing */
     bu_semaphore_init( RT_SEM_LAST );
 
-    input_queue_mutex = NULL;
     output_queue_mutex = NULL;
 
     input_queue = NULL;
@@ -1093,6 +1084,32 @@ rts_hit( struct application *ap, struct partition *partHeadp, struct seg *segs )
     return 1;
 }
 
+struct rtserver_job *
+rts_get_next_job( int *queue )
+{
+    struct rtserver_job *ajob = NULL;
+    int found = 0;
+
+    pthread_mutex_lock( &input_queue_ready_mutex );
+    while( ajob == NULL ) {
+	for ( (*queue)=0; (*queue)<num_queues; (*queue)++ ) {
+	    if ( BU_LIST_NON_EMPTY( &input_queue[*queue].l ) ) {
+
+		/* get next job from this queue */
+		ajob = BU_LIST_FIRST( rtserver_job, &input_queue[*queue].l );
+		BU_LIST_DEQUEUE( &ajob->l );
+		found = 1;
+		break;
+	    }
+	}
+	if( !found ) {
+	    pthread_cond_wait( &input_queue_ready, &input_queue_ready_mutex );
+	}
+    }
+    pthread_mutex_unlock( &input_queue_ready_mutex );
+    return ajob;    
+}
+
 /* Routine to weave a list of results that are from multiple shots.
  * These are typically from articulated geometry where each "piece" is
  * raytraced separately. This routine must order them and handle any overlaps
@@ -1109,13 +1126,12 @@ void *
 rtserver_thread( void *num )
 {
 
-    int queues_are_empty=1;		/* initially, all the queues will be empty */
     struct application ap;
     long thread_no=(long)(num);
 
-    if ( verbose ) {
-	fprintf( stderr, "starting thread x%lx (%ld)\n", (long unsigned int)pthread_self(), thread_no );
-    }
+/*    if ( verbose ) { */
+	fprintf( stderr, "starting thread %ld (%ld)\n", (long unsigned int)pthread_self(), thread_no );
+/*    } */
 
     /* set up our own application structure */
     RT_APPLICATION_INIT(&ap);
@@ -1125,156 +1141,119 @@ rtserver_thread( void *num )
 
     /* run forever */
     while ( 1 ) {
+	struct rtserver_job *ajob;
+	struct rtserver_result *aresult;
+	int sessionid;
+	int j;
 	int queue;
-	int count_empty;
 
-	if ( queues_are_empty ) {
-	    /* wait until someone says there is stuff in an input queue */
-	    pthread_mutex_lock( &input_queue_ready_mutex );
-	    pthread_cond_wait( &input_queue_ready, &input_queue_ready_mutex );
-	    pthread_mutex_unlock( &input_queue_ready_mutex );
-	    queues_are_empty = 0;
+	/* Get the next job from the input queues
+	 * this call may block if there are no jobs ready
+	 */
+	ajob = rts_get_next_job( &queue ); 
+
+	/* if this job is an exit signal, just exit */
+	if ( ajob->exit_flag ) {
+	    pthread_exit( (void *)0 );
 	}
 
-	/* check all the queues in order (priority) */
-	count_empty = 0;
-	for ( queue=0; queue<num_queues; queue++ ) {
-	    pthread_mutex_lock( &input_queue_mutex[queue] );
-	    if ( BU_LIST_NON_EMPTY( &input_queue[queue].l ) ) {
-		struct rtserver_job *ajob;
-		struct rtserver_result *aresult;
-		struct xray *aray;
-		int sessionid;
-		int i, j;
+	/* grab the session id */
+	sessionid = ajob->sessionid;
 
-		/* get next job from this queue */
-		ajob = BU_LIST_FIRST( rtserver_job, &input_queue[queue].l );
-		BU_LIST_DEQUEUE( &ajob->l );
-		pthread_mutex_unlock( &input_queue_mutex[queue] );
+	/* get a result structure for this job */
+	RTS_GET_RTSERVER_RESULT( aresult );
 
-		pthread_mutex_lock( &counter_mutex );
-		working_threads++;
-		if ( working_threads > max_working_threads ) {
-		    max_working_threads = working_threads;
-		}
-		/*				fprintf( stderr, "max threads working at one time is: %d\n", max_working_threads ); */
-		pthread_mutex_unlock( &counter_mutex );
+	/* remember which job we are from */
+	aresult->the_job = ajob;
+	
+	/* initialize hit count */
+	aresult->got_some_hits = 0;
 
-		/* if this job is an exit signal, just exit */
-		if ( ajob->exit_flag ) {
-		    pthread_exit( (void *)0 );
-		}
+	/* set the desired onehit flag */
+	ap.a_onehit = ajob->maxHits;
 
-		/* grab the session id */
-		sessionid = ajob->sessionid;
+	/* do some work
+	 * we may have a bunch of rays for this job
+	 */
+	if ( verbose ) {
+	    fprintf( stderr, "Got a job with %d rays\n", BU_PTBL_LEN( &ajob->rtjob_rays ) );
+	}
+	for ( j=0; j<BU_PTBL_LEN( &ajob->rtjob_rays ); j++ ) {
+	    struct ray_result *ray_res;
+	    struct xray *aray;
+	    int i;
 
-		/* get a result structure for this job */
-		RTS_GET_RTSERVER_RESULT( aresult );
+	    aray = (struct xray *)BU_PTBL_GET( &ajob->rtjob_rays, j );
 
-		/* remember which job we are from */
-		aresult->the_job = ajob;
+	    /* get a ray result structure for this ray */
+	    RTS_GET_RAY_RESULT( ray_res );
 
-		/* initialize hit count */
-		aresult->got_some_hits = 0;
+	    /* add this ray result structure to the overall result structure */
+	    BU_LIST_INSERT( &aresult->resultHead.l, &ray_res->l );
 
-		/* set the desired onehit flag */
-		ap.a_onehit = ajob->maxHits;
+	    /* stash a pointer to the ray result structure in the application
+	     * structure (so the hit routine can find it)
+	     */
+	    ap.a_uptr = (genptr_t)ray_res;
 
-		/* do some work
-		 * we may have a bunch of rays for this job
-		 */
-		if ( verbose ) {
-		    fprintf( stderr, "Got a job with %d rays\n", BU_PTBL_LEN( &ajob->rtjob_rays ) );
-		}
-		for ( j=0; j<BU_PTBL_LEN( &ajob->rtjob_rays ); j++ ) {
-		    struct ray_result *ray_res;
-
-		    aray = (struct xray *)BU_PTBL_GET( &ajob->rtjob_rays, j );
-
-		    /* get a ray result structure for this ray */
-		    RTS_GET_RAY_RESULT( ray_res );
-
-		    /* add this ray result structure to the overall result structure */
-		    BU_LIST_INSERT( &aresult->resultHead.l, &ray_res->l );
-
-		    /* stash a pointer to the ray result structure in the application
-		     * structure (so the hit routine can find it)
-		     */
-		    ap.a_uptr = (genptr_t)ray_res;
-
-		    if ( verbose ) {
-			fprintf( stderr, "thread x%lx (%ld) got job %d\n",
-				 (unsigned long int)pthread_self(), thread_no, ajob->rtjob_id );
-		    }
-
-		    /* shoot this ray at each rt_i structure for this session */
-		    for ( i=0; i<rts_geometry[sessionid]->rts_number_of_rtis; i++ ) {
-			struct rtserver_rti *rts_rtip;
-			struct rt_i *rtip;
-
-			rts_rtip = rts_geometry[sessionid]->rts_rtis[i];
-			rtip = rts_rtip->rtrti_rtip;
-			ap.a_rt_i = rtip;
-			ap.a_resource =
-			    (struct resource *)BU_PTBL_GET( &rtip->rti_resources,
-							    thread_no );
-			if ( rts_rtip->rtrti_xform ) {
-			    MAT4X3PNT( ap.a_ray.r_pt,
-				       rts_rtip->rtrti_xform,
-				       aray->r_pt );
-			    MAT4X3VEC( ap.a_ray.r_dir,
-				       rts_rtip->rtrti_xform,
-				       aray->r_dir );
-			} else {
-			    VMOVE( ap.a_ray.r_pt, aray->r_pt );
-			    VMOVE( ap.a_ray.r_dir, aray->r_dir );
-			}
-			ap.a_ray.index = aray->index;
-			if ( verbose ) {
-			    fprintf( stderr, "shooting ray (%g %g %g) -> (%g %g %g)\n",
-				     V3ARGS( ap.a_ray.r_pt ), V3ARGS( ap.a_ray.r_dir ) );
-			}
-			if ( rt_shootray( &ap ) ) {
-			    aresult->got_some_hits = 1;
-			}
-		    }
-
-		    /* weave together results of all the rays
-		     * nothing to do if we only have one rt_i
-		     */
-		    rts_uber_boolweave( ray_res );
-
-		}
-
-		/* put results on output queue */
-		if ( verbose ) {
-		    fprintf( stderr, "Putting results on output queue\n" );
-		}
-		pthread_mutex_lock( &output_queue_mutex[queue] );
-		BU_LIST_INSERT( &output_queue[queue].l, &aresult->l );
-		pthread_mutex_unlock( &output_queue_mutex[queue] );
-
-		/* let everyone know that results are available */
-		pthread_mutex_lock( &output_queue_ready_mutex );
-		pthread_cond_broadcast( &output_queue_ready );
-		pthread_mutex_unlock( &output_queue_ready_mutex );
-		if ( verbose ) {
-		    fprintf(stderr, "Results placed on output qeueue and queue ready broadcast\n" );
-		}
-
-		pthread_mutex_lock( &counter_mutex );
-		working_threads--;
-		pthread_mutex_unlock( &counter_mutex );
-
-		break;
-	    } else {
-		/* nothing in this queue */
-		pthread_mutex_unlock( &input_queue_mutex[queue] );
-		count_empty++;
+	    if ( verbose ) {
+		fprintf( stderr, "thread x%lx (%ld) got job %d\n",
+			 (unsigned long int)pthread_self(), thread_no, ajob->rtjob_id );
 	    }
+
+	    /* shoot this ray at each rt_i structure for this session */
+	    for ( i=0; i<rts_geometry[sessionid]->rts_number_of_rtis; i++ ) {
+		struct rtserver_rti *rts_rtip;
+		struct rt_i *rtip;
+
+		rts_rtip = rts_geometry[sessionid]->rts_rtis[i];
+		rtip = rts_rtip->rtrti_rtip;
+		ap.a_rt_i = rtip;
+		ap.a_resource =
+		    (struct resource *)BU_PTBL_GET( &rtip->rti_resources,
+							    thread_no );
+		if ( rts_rtip->rtrti_xform ) {
+		    MAT4X3PNT( ap.a_ray.r_pt,
+			       rts_rtip->rtrti_xform,
+			       aray->r_pt );
+		    MAT4X3VEC( ap.a_ray.r_dir,
+			       rts_rtip->rtrti_xform,
+			       aray->r_dir );
+		} else {
+		    VMOVE( ap.a_ray.r_pt, aray->r_pt );
+		    VMOVE( ap.a_ray.r_dir, aray->r_dir );
+		}
+		ap.a_ray.index = aray->index;
+		if ( verbose ) {
+		    fprintf( stderr, "shooting ray (%g %g %g) -> (%g %g %g)\n",
+			     V3ARGS( ap.a_ray.r_pt ), V3ARGS( ap.a_ray.r_dir ) );
+		}
+		if ( rt_shootray( &ap ) ) {
+		    aresult->got_some_hits = 1;
+		}
+	    }
+
+	    /* weave together results of all the rays
+	     * nothing to do if we only have one rt_i
+	     */
+	    rts_uber_boolweave( ray_res );
+	    
 	}
-	if ( count_empty == num_queues ) {
-	    queues_are_empty = 1;
+
+	/* put results on output queue */
+	if ( verbose ) {
+	    fprintf( stderr, "Putting results on output queue\n" );
+	}
+	pthread_mutex_lock( &output_queue_mutex[queue] );
+	BU_LIST_INSERT( &output_queue[queue].l, &aresult->l );
+	pthread_mutex_unlock( &output_queue_mutex[queue] );
+	
+	/* let everyone know that results are available */
+	pthread_mutex_lock( &output_queue_ready_mutex );
+	pthread_cond_broadcast( &output_queue_ready );
+	pthread_mutex_unlock( &output_queue_ready_mutex );
+	if ( verbose ) {
+	    fprintf(stderr, "Results placed on output qeueue and queue ready broadcast\n" );
 	}
     }
     return 0;
@@ -1284,14 +1263,15 @@ rtserver_thread( void *num )
 void
 rts_submit_job( struct rtserver_job *ajob, int queue )
 {
+
+    pthread_mutex_lock( &input_queue_ready_mutex );
+
     /* insert this job into the input queue (at the end) */
-    pthread_mutex_lock( &input_queue_mutex[queue] );
     BU_LIST_INSERT( &input_queue[queue].l, &ajob->l );
-    pthread_mutex_unlock( &input_queue_mutex[queue] );
 
     /* let everyone know that jobs are waiting */
-    pthread_mutex_lock( &input_queue_ready_mutex );
     pthread_cond_broadcast( &input_queue_ready );
+
     pthread_mutex_unlock( &input_queue_ready_mutex );
 
 }
@@ -1317,8 +1297,6 @@ rts_start_server_threads( int thread_count, int queue_count )
 							     num_queues * sizeof( struct rtserver_result ), "output_queue" );
 
 	/* create the mutexes */
-	input_queue_mutex = (pthread_mutex_t *)bu_realloc( input_queue_mutex,
-							   num_queues * sizeof( pthread_mutex_t ), "input_queue_mutex" );
 	output_queue_mutex = (pthread_mutex_t *)bu_realloc( output_queue_mutex,
 							    num_queues * sizeof( pthread_mutex_t ), "output_queue_mutex" );
 
@@ -1326,7 +1304,6 @@ rts_start_server_threads( int thread_count, int queue_count )
 	for ( i=old_queue_count; i<num_queues; i++ ) {
 	    BU_LIST_INIT( &input_queue[i].l );
 	    BU_LIST_INIT( &output_queue[i].l );
-	    pthread_mutex_init( &input_queue_mutex[i], NULL );
 	    pthread_mutex_init( &output_queue_mutex[i], NULL );
 	}
     }
@@ -1391,6 +1368,39 @@ rts_get_any_waiting_result( int sessionid )
     return( NULL );
 }
 
+struct rtserver_result *
+rts_get_result( int queue, int id, int sessionid )
+{
+    struct rtserver_result *myresult = NULL;
+
+    while( myresult == NULL ) {
+	pthread_mutex_lock( &output_queue_mutex[queue] );
+	if ( BU_LIST_NON_EMPTY( &output_queue[queue].l ) ) {
+	    /* look for our result */
+	    struct rtserver_result *aresult;
+	    for ( BU_LIST_FOR( aresult, rtserver_result, &output_queue[queue].l ) ) {
+		if ( aresult->the_job->rtjob_id == id &&
+		     aresult->the_job->sessionid == sessionid ) {
+		    BU_LIST_DEQUEUE( &aresult->l );
+		    myresult = aresult;
+		    break;
+		}
+	    }
+	}
+	if( myresult == NULL ) {
+	    /* wait for result ready condition */
+	    pthread_mutex_lock( &output_queue_ready_mutex );
+	    pthread_mutex_unlock( &output_queue_mutex[queue] );
+	    pthread_cond_wait( &output_queue_ready, &output_queue_ready_mutex );
+	    pthread_mutex_unlock( &output_queue_ready_mutex );
+	} else {
+	    pthread_mutex_unlock( &output_queue_mutex[queue] );
+	}
+    }
+
+    return myresult;
+}
+
 /* Routine to submit a job and get the results.
  * This routine submits a job to the highest priority queue and waits for the result
  */
@@ -1400,6 +1410,7 @@ rts_submit_job_to_queue_and_wait( struct rtserver_job *ajob, int queue )
     int id;
     int queue_is_empty=0;
     int sessionid;
+    struct rtserver_result *aresult;
 
     /* grab some identifying info */
     id = ajob->rtjob_id;
@@ -1408,71 +1419,10 @@ rts_submit_job_to_queue_and_wait( struct rtserver_job *ajob, int queue )
     /* submit the job */
     rts_submit_job( ajob, queue );
 
-    /* run until we get our result from this queue */
-    while ( 1 ) {
-	struct rtserver_result *aresult;
+    /* get our result, this may block until the result is ready */
+    aresult = rts_get_result( queue, id, sessionid );
 
-	if ( queue_is_empty ) {
-	    /* wait until someone says there is stuff in the queue */
-	    if ( verbose ) {
-		fprintf( stderr, "Waiting for output queue to be ready\n" );
-	    }
-	    pthread_mutex_lock( &output_queue_ready_mutex );
-	    pthread_mutex_unlock( &output_queue_mutex[queue] );
-	    pthread_cond_wait( &output_queue_ready, &output_queue_ready_mutex );
-	    pthread_mutex_unlock( &output_queue_ready_mutex );
-	    queue_is_empty = 0;
-	    if ( verbose ) {
-		fprintf( stderr, "Output queue is ready\n" );
-	    }
-	}
-
-	/* lock the queue */
-	if ( verbose ) {
-	    fprintf( stderr, "Locking the output queue to check for results\n" );
-	}
-	pthread_mutex_lock( &output_queue_mutex[queue] );
-
-	/* check for a result */
-	if ( BU_LIST_NON_EMPTY( &output_queue[queue].l ) ) {
-	    int found=0;
-	    /* look for our result */
-	    for ( BU_LIST_FOR( aresult, rtserver_result, &output_queue[queue].l ) ) {
-		if ( aresult->the_job->rtjob_id == id &&
-		     aresult->the_job->sessionid == sessionid ) {
-		    BU_LIST_DEQUEUE( &aresult->l );
-		    found = 1;
-		    break;
-		}
-	    }
-
-	    if ( found ) {
-		if ( verbose ) {
-		    fprintf( stderr, "Found our result, unlocking the output queue\n" );
-		}
-
-		/* unlock the queue */
-		pthread_mutex_unlock( &output_queue_mutex[queue] );
-
-		/* return the result */
-		return( aresult );
-	    } else {
-		/* unlock the queue */
-		if ( verbose ) {
-		    fprintf( stderr, " Did not find our result, unlock queue and set empty to true\n" );
-		}
-
-		queue_is_empty = 1;
-	    }
-	} else {
-	    if ( verbose ) {
-		fprintf( stderr, "queue is empty, just unlock it and continue\n" );
-	    }
-
-	    /* nothing available */
-	    queue_is_empty = 1;
-	}
-    }
+    return aresult;
 }
 
 /* Routine to submit a job and get the results.
@@ -1658,8 +1608,6 @@ rts_shutdown()
     input_queue = NULL;
     free( output_queue );
     output_queue = NULL;
-    free( input_queue_mutex );
-    input_queue_mutex = NULL;
     free( output_queue_mutex );
     output_queue_mutex = NULL;
     num_queues = 0;
@@ -2983,219 +2931,10 @@ get_model_extents( int sessionid, point_t min, point_t max )
     VMOVE( max, rts_geometry[sessionid]->rts_mdl_max );
 }
 
-#ifdef TESTING
-/* usage statement */
-static const char *usage="Usage:\n\t%s [-n num_cpus] [-t num_threads] [-q num_queues] [-a] [-s grid_size] [-v] [-o object] model.g\n";
-
-int
-main( int argc, char *argv[] )
+void rts_set_verbosity( int v )
 {
-    int ret;
-    int nthreads=1;
-    int c;
-    extern char *bu_optarg;
-    extern int bu_optind, bu_opterr, optopt;
-    struct rtserver_job *ajob;
-    struct rtserver_result *aresult;
-    struct xray *aray;
-    char *name;
-    int i, j;
-    int grid_size = 64;
-    fastf_t cell_size;
-    vect_t model_size;
-    vect_t xdir, zdir;
-    int job_count=0;
-    char **result_map;
-    struct bu_ptbl objs;
-    int my_session_id;
-    int queue_count=3;
-    int thread_count=2;
-
-    /* Things like bu_malloc() must have these initialized for use with parallel processing */
-    bu_semaphore_init( RT_SEM_LAST );
-
-    /* initialize the list of BRL-CAD objects to be raytraced (this is used for the "-o" option) */
-    bu_ptbl_init( &objs, 64, "objects" );
-
-    /* initialize the rtserver resources (cached structures) */
-    rts_resource_init();
-
-    /* process command line args */
-    while ( (c=bu_getopt( argc, argv, "vs:n:t:q:ao:" ) ) != -1 ) {
-	switch ( c ) {
-	    case 'n':	/* number of cpus to use for prepping */
-		ncpus = atoi( bu_optarg );
-		break;
-	    case 't':	/* number of server threads to start */
-		thread_count = atoi( bu_optarg );
-		break;
-	    case 'q':	/* number of request queues to create */
-		queue_count = atoi( bu_optarg );
-		break;
-	    case 'a':	/* set flag to use air regions in the BRL-CAD model */
-		use_air = 1;
-		break;
-	    case 's':	/* set the grid size (default is 64x64) */
-		grid_size = atoi( bu_optarg );
-		break;
-	    case 'v':	/* turn on verbose logging */
-		verbose = 1;
-		break;
-	    case 'o':	/* add an object name to the list of BRL-CAD objects to raytrace */
-		bu_ptbl_ins( &objs, (long *)bu_optarg );
-		break;
-	    default:	/* ERROR */
-		bu_exit(1, usage, argv[0]);
-	}
-    }
-
-    /* load geometry */
-    if ( BU_PTBL_LEN( &objs ) > 0 ) {
-	char **objects;
-
-	objects = (char **)bu_malloc( BU_PTBL_LEN( &objs ) * sizeof( char *), "objects" );
-	for ( i=0; i<BU_PTBL_LEN( &objs ); i++ ) {
-	    objects[i] = (char *)BU_PTBL_GET( &objs, i );
-	}
-	my_session_id = rts_load_geometry( argv[bu_optind], 0, BU_PTBL_LEN( &objs ), objects, thread_count );
-    } else {
-	if ( bu_optind >= argc ) {
-	    fprintf( stderr, "No BRL-CAD model specified\n" );
-	    bu_exit(1, usage, argv[0]);
-	}
-	my_session_id = rts_load_geometry( argv[bu_optind], 0, 0, (char **)NULL, thread_count );
-    }
-
-    if ( my_session_id < 0 ) {
-	bu_exit(2, "Failed to load geometry from file (%s)\n", argv[bu_optind] );
-    }
-
-    /* exercise the open session capability */
-    my_session_id = rts_open_session();
-    my_session_id = rts_open_session();
-    rts_close_session( my_session_id );
-    my_session_id = rts_open_session();
-    if ( my_session_id < 0 ) {
-	bu_exit(2, "Failed to open session\n" );
-    } else {
-	fprintf( stderr, "Using session id %d\n", my_session_id );
-    }
-#if 0
-    get_muves_components();
-
-    if ( verbose ) {
-	fprintf( stderr, "MUVES Component List: (%d components)\n", comp_count );
-	i = 0;
-	while ( names[i] ) {
-	    fprintf( stderr, "\t%d - %s\n", i, names[i] );
-	    i++;
-	}
-    }
-#endif
-    /* start the server threads */
-    rts_start_server_threads( thread_count, queue_count );
-
-    /* submit and wait for a job */
-    RTS_GET_RTSERVER_JOB( ajob );
-    RTS_GET_XRAY( aray );
-    RTS_ADD_RAY_TO_JOB( ajob, aray );
-
-    VSET( aray->r_pt, -2059.812865, -6750.847220, -323.551389 );
-    VSET( aray->r_dir, 0, 1, 0 );
-    ajob->sessionid = my_session_id;
-    aresult = rts_submit_job_and_wait( ajob );
-    /* list results */
-    fprintf( stderr, "shot from (%g %g %g) in direction (%g %g %g):\n",
-	     V3ARGS( aray->r_pt ),
-	     V3ARGS( aray->r_dir ) );
-    if ( !aresult->got_some_hits ) {
-	fprintf( stderr, "\tMissed\n" );
-    } else {
-	struct ray_result *ray_res;
-	struct ray_hit *ahit;
-
-	ray_res = BU_LIST_FIRST( ray_result, &aresult->resultHead.l );
-	for ( BU_LIST_FOR( ahit, ray_hit, &ray_res->hitHead.l ) ) {
-	    fprintf( stderr, "\thit on comp %d at dist = %g los = %g\n",
-		     ahit->comp_id, ahit->hit_dist, ahit->los );
-	}
-    }
-
-    RTS_FREE_RTSERVER_RESULT( aresult );
-    rts_pr_resource_summary();
-
-    /* submit some jobs */
-    VSET( xdir, 1, 0, 0 );
-    VSET( zdir, 0, 0, 1 );
-    VSUB2( model_size, rts_geometry[my_session_id]->rts_mdl_max, rts_geometry[my_session_id]->rts_mdl_min );
-    cell_size = model_size[X] / grid_size;
-    for ( i=0; i<grid_size; i++ ) {
-	for ( j=0; j<grid_size; j++ ) {
-	    RTS_GET_RTSERVER_JOB( ajob );
-	    ajob->rtjob_id = (grid_size - i - 1)*1000 + j;
-	    ajob->sessionid = my_session_id;
-	    RTS_GET_XRAY( aray );
-	    VJOIN2( aray->r_pt,
-		    rts_geometry[my_session_id]->rts_mdl_min,
-		    i*cell_size,
-		    zdir,
-		    j*cell_size,
-		    xdir );
-	    aray->index = ajob->rtjob_id;
-	    VSET( aray->r_dir, 0, 1, 0 );
-
-	    RTS_ADD_RAY_TO_JOB( ajob, aray );
-
-	    rts_submit_job( ajob, j%num_queues );
-	    job_count++;
-	}
-    }
-
-
-    result_map = (char **)bu_calloc( grid_size, sizeof( char *), "result_map" );
-    for ( i=0; i<grid_size; i++ ) {
-	result_map[i] = (char *)bu_calloc( (grid_size+1), sizeof( char ), "result_map[i]" );
-    }
-    /* get all the results */
-    while ( job_count ) {
-	aresult = rts_get_any_waiting_result( my_session_id );
-	if ( aresult ) {
-	    i = aresult->the_job->rtjob_id/1000;
-	    j = aresult->the_job->rtjob_id%1000;
-	    if ( aresult->got_some_hits ) {
-		/* count hits */
-		struct ray_hit *ahit;
-		struct ray_result *ray_res;
-		int hit_count=0;
-
-		ray_res = BU_LIST_FIRST( ray_result, &aresult->resultHead.l );
-		for ( BU_LIST_FOR( ahit, ray_hit, &ray_res->hitHead.l ) ) {
-		    hit_count++;
-		}
-		if ( hit_count <= 9 ) {
-		    result_map[i][j] = '0' + hit_count;
-		} else {
-		    result_map[i][j] = '*';
-		}
-	    } else {
-		result_map[i][j] = ' ';
-	    }
-	    job_count--;
-
-	    RTS_FREE_RTSERVER_RESULT( aresult );
-	}
-    }
-
-    for ( i=0; i<grid_size; i++ ) {
-	fprintf( stderr, "%s\n", result_map[i] );
-    }
-
-
-    rts_pr_resource_summary();
-
-    return 0;
+    verbose = v;
 }
-#endif
 
 /*
  * Local Variables:

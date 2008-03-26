@@ -103,6 +103,9 @@ struct rtserver_geometry {
 						   and component names as values */
 };
 
+/* MACRO to add a ray to a job */
+#define RTS_ADD_RAY_TO_JOB( _ajob, _aray ) bu_ptbl_ins( &(_ajob)->rtjob_rays, (long *)(_aray) )
+
 extern void get_model_extents( int sessionid, point_t min, point_t max );
 
 extern struct rtserver_result *rts_submit_job_and_wait( struct rtserver_job *ajob );
