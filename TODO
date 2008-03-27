@@ -40,8 +40,6 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 * verify/finish clone mirror support
 
-* verify dbconcat with a prefix works
-
 * address the TODO items in src/mged/clone.c
 
 * fix the "(type)(size_t)val" hacks (using ints like ptrs, etc)
