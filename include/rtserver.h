@@ -106,29 +106,25 @@ struct rtserver_geometry {
 /* MACRO to add a ray to a job */
 #define RTS_ADD_RAY_TO_JOB( _ajob, _aray ) bu_ptbl_ins( &(_ajob)->rtjob_rays, (long *)(_aray) )
 
-extern void rts_set_verbosity( int v );
+extern int get_max_working_threads();
 
-extern void get_model_extents( int sessionid, point_t min, point_t max );
-
-extern struct rtserver_result *rts_submit_job_and_wait( struct rtserver_job *ajob );
+extern struct rtserver_job *rts_get_rtserver_job();
 
 extern struct rtserver_result *rts_get_any_waiting_result( int sessionid );
 
+extern struct rtserver_result *rts_submit_job_and_wait( struct rtserver_job *ajob );
+
 extern struct rtserver_result *rts_submit_job_to_queue_and_wait( struct rtserver_job *ajob, int queue_count );
 
-extern struct rtserver_job *rts_get_rtserver_job();
-
 extern struct xray *rts_get_xray();
 
-extern int get_max_working_threads();
+extern void get_model_extents( int sessionid, point_t min, point_t max );
 
-extern struct xray *rts_get_xray();
+extern void rts_free_rtserver_job( struct rtserver_job *job );
 
 extern void rts_free_xray( struct xray *ray );
 
-extern struct rtserver_job *rts_get_rtserver_job();
-
-extern void rts_free_rtserver_job( struct rtserver_job *job );
+extern void rts_set_verbosity( int v );
 
 /** @} */
 /*
