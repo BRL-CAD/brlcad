@@ -15,6 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
+* report of mged being locked up on startup taking full cpu, works
+  fine with with -c with X dm.
+
 * MGED File->Preferences->Fonts results in error "named font "button
   _font" doesn't exist on Linux.
 
