@@ -853,6 +853,18 @@ against MGED database objects."\
 	hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
     }
 
+#separate weak prims from dbbinary
+.$id.menubar.create add separator
+
+# binary object
+set ptype "binunif"
+.$id.menubar.create add command -label "$ptype..."\
+    -command "binunif_create $id"
+
+set ksl {}
+lappend ksl "summary \"Make a $ptype.\"" "see_also \"make, in\""
+hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
+
     menu .$id.menubar.view -title "View" -tearoff $mged_default(tearoff_menus)
     .$id.menubar.view add command -label "Top (t)" -underline 5\
 	-command "mged_apply $id \"press top\""
