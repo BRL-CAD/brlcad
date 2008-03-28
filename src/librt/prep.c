@@ -343,7 +343,7 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
 	rtip->rti_sol_by_type[id][rtip->rti_nsol_by_type[id]++] = stp;
     } RT_VISIT_ALL_SOLTABS_END
 	  if ( RT_G_DEBUG & (DEBUG_DB|DEBUG_SOLIDS) )  {
-	      bu_log("rt_prep_parallel(%s,%d) printing number of prims by type\n",
+	      bu_log("rt_prep_parallel(%s,%d) printing number of primitives by type\n",
 		     rtip->rti_dbip->dbi_filename,
 		     rtip->rti_dbip->dbi_uses);
 	      for ( i=1; i <= ID_MAX_SOLID; i++ )  {

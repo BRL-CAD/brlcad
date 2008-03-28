@@ -185,7 +185,7 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	outdp = LAST_SOLID(illump);
 
 	if ( argc < arg+1 ) {
-	    Tcl_AppendResult(interp, "You are in Prim Edit mode, using edited primitive as outside primitive: ", (char *)NULL);
+	    Tcl_AppendResult(interp, "You are in Primitive Edit mode, using edited primitive as outside primitive: ", (char *)NULL);
 	    add_solid_path_to_result( interp, illump );
 	    Tcl_AppendResult(interp, "\n", (char *)NULL);
 	}

@@ -141,12 +141,12 @@ struct menu_item second_menu[] = {
     { "Rate/Abs", btn_item_hit, BV_RATE_TOGGLE },
     { "Zoom In 2X", btn_item_hit, BV_ZOOM_IN },
     { "Zoom Out 2X", btn_item_hit, BV_ZOOM_OUT },
-    { "Prim Illum", btn_item_hit, BE_S_ILLUMINATE },
+    { "Primitive Illum", btn_item_hit, BE_S_ILLUMINATE },
     { "Matrix Illum", btn_item_hit, BE_O_ILLUMINATE },
     { "", (void (*)())NULL, 0 }
 };
 struct menu_item sed_menu[] = {
-    { "*PRIM EDIT*", btn_head_menu, 2 },
+    { "*PRIMITIVE EDIT*", btn_head_menu, 2 },
     { "Edit Menu", btn_item_hit, BE_S_EDIT },
     { "Rotate", btn_item_hit, BE_S_ROTATE },
     { "Translate", btn_item_hit, BE_S_TRANS },
@@ -500,11 +500,11 @@ be_o_illuminate(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 
 int
 be_s_illuminate(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
-    if ( not_state( ST_VIEW, "Prim Illuminate" ) )
+    if ( not_state( ST_VIEW, "Primitive Illuminate" ) )
 	return TCL_ERROR;
 
     if ( ill_common() )  {
-	(void)chg_state( ST_VIEW, ST_S_PICK, "Prim Illuminate" );
+	(void)chg_state( ST_VIEW, ST_S_PICK, "Primitive Illuminate" );
     }
     return TCL_OK;
 }
@@ -741,7 +741,7 @@ be_reject(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
 int
 be_s_edit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
     /* solid editing */
-    if ( not_state( ST_S_EDIT, "Prim Edit (Menu)" ) )
+    if ( not_state( ST_S_EDIT, "Primitive Edit (Menu)" ) )
 	return TCL_ERROR;
 
     edsol = BE_S_EDIT;
@@ -752,7 +752,7 @@ be_s_edit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
 int
 be_s_rotate(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
     /* rotate solid */
-    if ( not_state( ST_S_EDIT, "Prim Rotate" ) )
+    if ( not_state( ST_S_EDIT, "Primitive Rotate" ) )
 	return TCL_ERROR;
 
     es_edflag = SROT;
@@ -766,7 +766,7 @@ be_s_rotate(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
 int
 be_s_trans(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
     /* translate solid */
-    if ( not_state( ST_S_EDIT, "Prim Translate" ) )
+    if ( not_state( ST_S_EDIT, "Primitive Translate" ) )
 	return TCL_ERROR;
 
     edsol = BE_S_TRANS;
@@ -781,7 +781,7 @@ be_s_trans(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
 int
 be_s_scale(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
     /* scale solid */
-    if ( not_state( ST_S_EDIT, "Prim Scale" ) )
+    if ( not_state( ST_S_EDIT, "Primitive Scale" ) )
 	return TCL_ERROR;
 
     edsol = BE_S_SCALE;

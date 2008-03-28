@@ -744,18 +744,18 @@ against MGED database objects."\
 	    } }
 
     menu .$id.menubar.edit -title "Edit" -tearoff $mged_default(tearoff_menus)
-    .$id.menubar.edit add command -label "Prim Selection..." -underline 0 \
+    .$id.menubar.edit add command -label "Primitive Selection..." -underline 0 \
 	-command "winset \$mged_gui($id,active_dm); build_edit_menu_all s1"
-    hoc_register_menu_data "Edit" "Prim Selection..." "Prim Selection"\
+    hoc_register_menu_data "Edit" "Primitive Selection..." "Primitive Selection"\
 	{ { summary "A tool for selecting a primitive to edit." } }
     .$id.menubar.edit add command -label "Matrix Selection..." -underline 0 \
 	-command "winset \$mged_gui($id,active_dm); build_edit_menu_all o"
     hoc_register_menu_data "Edit" "Matrix Selection..." "Matrix Selection"\
 	{ { summary "A tool for selecting a matrix to edit." } }
     .$id.menubar.edit add separator
-    .$id.menubar.edit add command -label "Prim Editor" -underline 6 \
+    .$id.menubar.edit add command -label "Primitive Editor" -underline 6 \
 	-command "init_edit_solid $id"
-    hoc_register_menu_data "Edit" "Prim Editor" "Prim Editor"\
+    hoc_register_menu_data "Edit" "Primitive Editor" "Primitive Editor"\
 	{ { summary "A tool for editing/creating primitives." } }
     .$id.menubar.edit add command -label "Combination Editor" -underline 0 \
 	-command "init_comb $id"
@@ -1052,9 +1052,9 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	    { see_also "rset, vars" } }
     .$id.menubar.settings.mouse_behavior add separator
     .$id.menubar.settings.mouse_behavior add radiobutton -value s -variable mged_gui($id,mouse_behavior)\
-	-label "Pick Edit-Prim" -underline 10\
+	-label "Pick Edit-Primitive" -underline 10\
 	-command "set_mouse_behavior $id"
-    hoc_register_menu_data "Mouse Behavior" "Pick Edit-Prim" "Pick Edit-Prim"\
+    hoc_register_menu_data "Mouse Behavior" "Pick Edit-Primitive" "Pick Edit-Primitive"\
 	{ { synopsis "Enter pick edit-solid mode." }
 	    { description "In this mode, the mouse is used to fire rays for selecting
 	a solid to edit. If more than one solid is hit, a listbox of the hit
@@ -1890,17 +1890,6 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
     hoc_register_menu_data "Tools" "Upgrade Database..." "Upgrade Database..."\
 	{ { summary "Upgrade to the current database format." }
 	    { see_also dbupgrade } }
-
-    # XXX These are already included on the edit menu! -- csm
-    #	.$id.menubar.tools add separator
-    #	.$id.menubar.tools add command -label "Prim Editor" -underline 0\
-	#			-command "init_edit_solid $id"
-    #	hoc_register_menu_data "Tools" "Prim Editor" "Prim Editor"\
-	#			{ { summary "Tool for creating/editing primitives." } }
-    #	.$id.menubar.tools add command -label "Combination Editor" -underline 0\
-	#			-command "init_comb $id"
-    #	hoc_register_menu_data "Tools" "Combination Editor" "Combination Editor"\
-	#			{ { summary "Tool for creating/editing combinations." } }
 
     # BEGIN WINDOWS (display main windows)
 
