@@ -23,10 +23,10 @@
  *
  * @brief parallel safe version of fprintf for logging
  *
- *  BRL-CAD support library, error logging routine.
- *  Note that the user may provide his own logging routine,
- *  by replacing these functions.  That is why this is in file of it's own.
- *  For example, LGT and RTSRV take advantage of this.
+ * BRL-CAD support library, error logging routine.  Note that the user
+ * may provide his own logging routine, by replacing these functions.
+ * That is why this is in file of it's own.  For example, LGT and
+ * RTSRV take advantage of this.
  *
  * @par  Primary Functions (replacements MUST implement all these) -
  * @n	bu_log			Called to log library events.
@@ -41,6 +41,7 @@
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
@@ -48,9 +49,22 @@
 
 #include "bu.h"
 
-BU_EXTERN(void	bu_vls_vprintf, (struct bu_vls *vls, const char *fmt, va_list ap));
 
-static int	bu_log_indent_cur_level = 0; /* formerly rt_g.rtg_logindent */
+struct bu_hook_list bu_log_hook_list = {
+    {
+	BU_LIST_HEAD_MAGIC,
+	&bu_log_hook_list.l,
+	&bu_log_hook_list.l
+    },
+    BUHOOK_NULL,
+    GENPTR_NULL
+};
+
+static int bu_log_first_time = 1;
+static int bu_log_hooks_called = 0;
+static int bu_log_indent_cur_level = 0;
+
+
 /**
  *			B U _ L O G _ I N D E N T _ D E L T A
  *
@@ -63,6 +77,7 @@ bu_log_indent_delta(int delta)
     if ( (bu_log_indent_cur_level += delta) < 0 )
 	bu_log_indent_cur_level = 0;
 }
+
 
 /**
  *			B U _ L O G _ I N D E N T _ V L S
@@ -77,22 +92,6 @@ bu_log_indent_vls(struct bu_vls *v)
     bu_vls_spaces( v, bu_log_indent_cur_level );
 }
 
-#if 1
-struct bu_hook_list bu_log_hook_list = {
-    {
-	BU_LIST_HEAD_MAGIC,
-	&bu_log_hook_list.l,
-	&bu_log_hook_list.l
-    },
-    BUHOOK_NULL,
-    GENPTR_NULL
-};
-#else
-struct bu_hook_list bu_log_hook_list;
-#endif
-
-static int bu_log_first_time = 1;
-static int bu_log_hooks_called = 0;
 
 /**
  *			B U _ L O G _ A D D _ H O O K
@@ -151,7 +150,6 @@ bu_log_delete_hook(bu_hook_t func, genptr_t clientdata)
 #endif
 }
 
-#if 1
 HIDDEN void
 bu_log_call_hooks(genptr_t buf)
 {
@@ -173,7 +171,7 @@ bu_log_call_hooks(genptr_t buf)
 
     bu_log_hooks_called = 0;
 }
-#endif
+
 
 /**
  *			B U _ L O G _ D O _ I N D E N T _ L E V E L
@@ -185,7 +183,6 @@ bu_log_call_hooks(genptr_t buf)
  *  level of all messages at that recursion level, even if the calls
  *  to bu_log come from non-librt routines.
  */
-
 HIDDEN void
 bu_log_do_indent_level(struct bu_vls *new, register const char *old)
 {
@@ -202,12 +199,12 @@ bu_log_do_indent_level(struct bu_vls *new, register const char *old)
     }
 }
 
+
 /**
  *			B U _ P U T C H A R
  *
  * Log a single character with no flushing.
  */
-
 void
 bu_putchar(int c)
 {
@@ -231,11 +228,8 @@ bu_putchar(int c)
 	char buf[2];
 	buf[0] = (char)c;
 	buf[1] = '\0';
-#if 1
+
 	bu_log_call_hooks(buf);
-#else
-	bu_call_hook(&bu_log_hook_list, (genptr_t)buf);
-#endif
     }
 
     if (bu_log_indent_cur_level > 0 && c == '\n') {
@@ -318,11 +312,7 @@ bu_log(const char *fmt, ...)
 	}
 
     } else {
-#if 1
 	bu_log_call_hooks(bu_vls_addr(&output));
-#else
-	bu_call_hook(&bu_log_hook_list, (genptr_t)bu_vls_addr(&output));
-#endif
     }
 
     bu_vls_free(&output);
@@ -368,11 +358,7 @@ bu_flog(FILE *fp, const char *fmt, ...)
 	}
 
     } else {
-#if 1
 	bu_log_call_hooks(bu_vls_addr(&output));
-#else
-	bu_call_hook(&bu_log_hook_list, (genptr_t)bu_vls_addr(&output));
-#endif
     }
 
     va_end(ap);
