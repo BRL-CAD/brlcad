@@ -447,6 +447,7 @@ pixuntile_SOURCES = pixuntile.c
 pixuntile_LDADD = ${BU}
 
 if WITH_X11
+
 pl_X_SOURCES = pl-X.c
 pl_X_LDADD = ${DM} ${DM_LIBS} ${BU}
 pl_X_CFLAGS = ${X_CFLAGS}
@@ -454,6 +455,7 @@ pl_X_CFLAGS = ${X_CFLAGS}
 pl_dm_SOURCES = pl-dm.c
 pl_dm_LDADD = ${DM} ${DM_LIBS} ${BU}
 pl_dm_CFLAGS = ${X_CFLAGS}
+
 endif
 
 pl_asc_SOURCES = pl-asc.c
