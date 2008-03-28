@@ -21,9 +21,6 @@
  *
  *  Example application that shows how to hook into the display manager.
  *
- *  Author -
- *	Bob Parker
- *
  */
 
 #include "common.h"
@@ -85,12 +82,6 @@ static int cmd_vrot();
 static int cmd_zoom();
 static void cmd_setup();
 
-#ifdef DM_X
-static int X_dmInit();
-static int X_doEvent();
-static int X_dm();
-#endif
-
 #ifdef DM_WGL
 static int Wgl_dmInit();
 static int Wgl_doEvent();
@@ -108,6 +99,11 @@ static void Ogl_colorchange();
 static void Ogl_establish_zbuffer();
 static void Ogl_establish_lighting();
 #endif
+
+static int X_dmInit();
+static int X_doEvent();
+static int X_dm();
+
 
 struct cmdtab {
     char *ct_name;
@@ -202,8 +198,6 @@ struct bu_structparse Ogl_vparse[] = {
 #else  /* !DM_WGL && !DM_OGL */
 
 struct bu_structparse X_vparse[] = {
-    {"%d",  1, "zclip",             X_MV_O(zclip),        refresh},
-    {"%d",  1, "debug",             X_MV_O(debug),        BU_STRUCTPARSE_FUNC_NULL },
     {"",	0,  (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
@@ -217,9 +211,7 @@ static char usage[] = "Usage: pl-dm [-t o|X] plot_file(s)\n";
  * Gets the output from bu_log and appends it to clientdata vls.
  */
 static int
-output_catch(clientdata, str)
-    genptr_t clientdata;
-    genptr_t str;
+output_catch(genptr_t clientdata, genptr_t str)
 {
     register struct bu_vls *vp = (struct bu_vls *)clientdata;
     register int len;
@@ -239,8 +231,7 @@ output_catch(clientdata, str)
  *
  */
 void
-start_catching_output(vp)
-    struct bu_vls *vp;
+start_catching_output(struct bu_vls *vp)
 {
     bu_log_add_hook(output_catch, (genptr_t)vp);
 }
@@ -251,15 +242,13 @@ start_catching_output(vp)
  * Turns off the output catch hook.
  */
 void
-stop_catching_output(vp)
-    struct bu_vls *vp;
+stop_catching_output(struct bu_vls *vp)
 {
     bu_log_delete_hook(output_catch, (genptr_t)vp);
 }
 
 int
-get_args( argc, argv )
-    register char **argv;
+get_args( int argc, char **argv )
 {
     register int c;
 
@@ -297,10 +286,9 @@ get_args( argc, argv )
     return(1);		/* OK */
 }
 
+
 int
-main(argc, argv)
-    int argc;
-    char *argv[];
+main(int argc, char *argv[])
 {
     int n;
     char *file;
@@ -329,10 +317,9 @@ main(argc, argv)
 }
 
 static int
-appInit(_interp)
-    Tcl_Interp *_interp;
+appInit(Tcl_Interp *_interp)
 {
-    char *filename;
+    const char *filename;
     struct bu_vls str;
     struct bu_vls str2;
 
@@ -401,6 +388,7 @@ appInit(_interp)
     }
 }
 
+
 static void
 refresh() {
     int i;
@@ -427,9 +415,9 @@ refresh() {
     DM_DRAW_END(dmp);
 }
 
+
 static void
-vrot(x, y, z)
-    double x, y, z;
+vrot(double x, double y, double z)
 {
     mat_t newrot;
 
@@ -441,6 +429,7 @@ vrot(x, y, z)
     bn_mat_mul2( newrot, Viewrot );
 }
 
+
 /*
  *                      S E T V I E W
  *
@@ -449,10 +438,11 @@ vrot(x, y, z)
  * Given that viewvec = scale . rotate . (xlate to view center) . modelvec,
  * we just replace the rotation matrix.
  * (This assumes rotation around the view center).
+ *
+ * DOUBLE angles, in degrees
  */
 static void
-setview(a1, a2, a3)
-    double a1, a2, a3;		/* DOUBLE angles, in degrees */
+setview(double a1, double a2, double a3)
 {
     point_t model_pos;
     point_t new_pos;
@@ -460,9 +450,9 @@ setview(a1, a2, a3)
     buildHrot(Viewrot, a1 * degtorad, a2 * degtorad, a3 * degtorad);
 }
 
+
 static int
-islewview(vdiff)
-    vect_t vdiff;
+islewview(vect_t vdiff)
 {
     vect_t old_model_pos;
     vect_t old_view_pos;
@@ -475,9 +465,9 @@ islewview(vdiff)
     return slewview(view_pos);
 }
 
+
 static int
-slewview(view_pos)
-    vect_t view_pos;
+slewview(vect_t view_pos)
 {
     vect_t new_model_pos;
 
@@ -487,10 +477,9 @@ slewview(view_pos)
     return TCL_OK;
 }
 
+
 static int
-zoom(interp, val)
-    Tcl_Interp *interp;
-    double val;
+zoom(Tcl_Interp *interp, double val)
 {
     if ( val < SMALL_FASTF || val > INFINITY )  {
 	Tcl_AppendResult(interp,
@@ -505,6 +494,7 @@ zoom(interp, val)
 
     return TCL_OK;
 }
+
 
 /*
  *                      S I Z E _ R E S E T
@@ -571,6 +561,7 @@ size_reset()
     V_MAX( Viewscale, radial[Z] );
 }
 
+
 /*
  *                      N E W _ M A T S
  *
@@ -585,6 +576,7 @@ new_mats()
     bn_mat_inv( view2model, model2view );
 }
 
+
 /*
  *                      B U I L D H R O T
  *
@@ -595,9 +587,7 @@ new_mats()
  * There is important information in dx, dy, dz, s .
  */
 static void
-buildHrot( mat, alpha, beta, ggamma )
-    register matp_t mat;
-    double alpha, beta, ggamma;
+buildHrot( register matp_t mat, double alpha, double beta, double ggamma )
 {
     static fastf_t calpha, cbeta, cgamma;
     static fastf_t salpha, sbeta, sgamma;
@@ -647,15 +637,12 @@ buildHrot( mat, alpha, beta, ggamma )
     mat[10] = calpha * cbeta;
 }
 
+
 /*
  * Open one or more plot files.
  */
 static int
-cmd_openpl(clientData, interp, argc, argv)
-    ClientData clientData;
-    Tcl_Interp *interp;
-    int     argc;
-    char    **argv;
+cmd_openpl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     static int not_first = 0;
     int i;
@@ -716,7 +703,7 @@ cmd_openpl(clientData, interp, argc, argv)
 
     up_to_vl:
 	plp->pl_vbp = rt_vlblock_init();
-	rt_uplot_to_vlist(plp->pl_vbp, fp, 0.001);
+	rt_uplot_to_vlist(plp->pl_vbp, fp, 0.001, 0);
 	plp->pl_draw = 1;
 	fclose( fp );
     }
@@ -737,15 +724,12 @@ cmd_openpl(clientData, interp, argc, argv)
     return TCL_OK;
 }
 
+
 /*
  * Rotate the view.
  */
 static int
-cmd_vrot(clientData, interp, argc, argv)
-    ClientData clientData;
-    Tcl_Interp *interp;
-    int     argc;
-    char    **argv;
+cmd_vrot(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     mat_t newrot;
 
@@ -770,11 +754,7 @@ cmd_vrot(clientData, interp, argc, argv)
  * Do display manager specific commands.
  */
 static int
-cmd_dm(clientData, interp, argc, argv)
-    ClientData clientData;
-    Tcl_Interp *interp;
-    int     argc;
-    char    **argv;
+cmd_dm(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     int status;
 
@@ -798,11 +778,7 @@ cmd_dm(clientData, interp, argc, argv)
  * Clear the screen.
  */
 static int
-cmd_clear(clientData, interp, argc, argv)
-    ClientData clientData;
-    Tcl_Interp *interp;
-    int     argc;
-    char    **argv;
+cmd_clear(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     struct plot_list *plp;
 
@@ -827,11 +803,7 @@ cmd_clear(clientData, interp, argc, argv)
  * Close the specified plots.
  */
 static int
-cmd_closepl(clientData, interp, argc, argv)
-    ClientData clientData;
-    Tcl_Interp *interp;
-    int     argc;
-    char    **argv;
+cmd_closepl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     int i;
     struct plot_list *plp;
@@ -866,11 +838,7 @@ cmd_closepl(clientData, interp, argc, argv)
  * Draw the specified plots.
  */
 static int
-cmd_draw(clientData, interp, argc, argv)
-    ClientData clientData;
-    Tcl_Interp *interp;
-    int     argc;
-    char    **argv;
+cmd_draw(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     int i;
     struct plot_list *plp;
@@ -902,11 +870,7 @@ cmd_draw(clientData, interp, argc, argv)
  * Erase the specified plots.
  */
 static int
-cmd_erase(clientData, interp, argc, argv)
-    ClientData clientData;
-    Tcl_Interp *interp;
-    int     argc;
-    char    **argv;
+cmd_erase(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     int i;
     struct plot_list *plp;
@@ -938,11 +902,7 @@ cmd_erase(clientData, interp, argc, argv)
  * Print a list of the load plot objects.
  */
 static int
-cmd_list(clientData, interp, argc, argv)
-    ClientData clientData;
-    Tcl_Interp *interp;
-    int	argc;
-    char	**argv;
+cmd_list(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     struct plot_list *plp;
     int len;
@@ -984,11 +944,7 @@ cmd_list(clientData, interp, argc, argv)
  *  (i.e., a zoom out) which is accomplished by reducing Viewscale in half.
  */
 static int
-cmd_zoom(clientData, interp, argc, argv)
-    ClientData clientData;
-    Tcl_Interp *interp;
-    int	argc;
-    char	**argv;
+cmd_zoom(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     int status;
     double	val;
@@ -1012,11 +968,7 @@ cmd_zoom(clientData, interp, argc, argv)
 }
 
 static int
-cmd_reset(clientData, interp, argc, argv)
-    ClientData clientData;
-    Tcl_Interp *interp;
-    int     argc;
-    char    **argv;
+cmd_reset(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     size_reset();
     new_mats();
@@ -1032,11 +984,7 @@ cmd_reset(clientData, interp, argc, argv)
  *  make that point the new view center.
  */
 static int
-cmd_slewview(clientData, interp, argc, argv)
-    ClientData clientData;
-    Tcl_Interp *interp;
-    int     argc;
-    char    **argv;
+cmd_slewview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     int status;
     vect_t view_pos;
@@ -1064,11 +1012,7 @@ cmd_slewview(clientData, interp, argc, argv)
 
 /* set view using azimuth, elevation and twist angles */
 static int
-cmd_aetview(clientData, interp, argc, argv)
-    ClientData clientData;
-    Tcl_Interp *interp;
-    int	argc;
-    char	**argv;
+cmd_aetview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     int iflag = 0;
     fastf_t o_twist;
@@ -1127,11 +1071,7 @@ cmd_aetview(clientData, interp, argc, argv)
  * Exit.
  */
 static int
-cmd_exit(clientData, interp, argc, argv)
-    ClientData clientData;
-    Tcl_Interp *interp;
-    int     argc;
-    char    **argv;
+cmd_exit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     if (dmp != DM_NULL)
 	DM_CLOSE(dmp);
@@ -1147,9 +1087,7 @@ cmd_exit(clientData, interp, argc, argv)
  * Register application commands with the Tcl interpreter.
  */
 static void
-cmd_setup(interp, commands)
-    Tcl_Interp *interp;
-    struct cmdtab commands[];
+cmd_setup(Tcl_Interp *interp, struct cmdtab commands[])
 {
     register struct cmdtab *ctp;
 
@@ -1177,12 +1115,11 @@ X_dmInit()
     av[2] = "sampler_bind_dm";
     av[3] = (char *)NULL;
 
-    if ((dmp = DM_OPEN(DM_TYPE_X, 3, av)) == DM_NULL) {
+    if ((dmp = DM_OPEN(interp, DM_TYPE_X, 3, av)) == DM_NULL) {
 	Tcl_AppendResult(interp, "Failed to open a display manager\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
-    ((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.zclip = 0;
     Tk_CreateGenericHandler(X_doEvent, (ClientData)DM_TYPE_X);
     dm_configureWindowShape(dmp);
     DM_SET_WIN_BOUNDS(dmp, windowbounds);
@@ -1194,9 +1131,7 @@ X_dmInit()
  * Event handler for the X display manager.
  */
 static int
-X_doEvent(clientData, eventPtr)
-    ClientData clientData;
-    XEvent *eventPtr;
+X_doEvent(ClientData clientData, XEvent *eventPtr)
 {
     if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
 	refresh();
@@ -1263,34 +1198,15 @@ X_doEvent(clientData, eventPtr)
  * Handle X display manger specific commands.
  */
 static int
-X_dm(argc, argv)
-    int argc;
-    char *argv[];
+X_dm(int argc, char *argv[])
 {
     int status;
 
     if ( !strcmp( argv[0], "set" )) {
 	struct bu_vls tmp_vls;
-	struct bu_vls vls;
 
-	bu_vls_init(&vls);
 	bu_vls_init(&tmp_vls);
 	start_catching_output(&tmp_vls);
-
-	if ( argc < 2 )  {
-	    /* Bare set command, print out current settings */
-	    bu_struct_print("X internal variables", X_vparse, (const char *)&((struct x_vars *)dmp->dm_vars.priv_vars)->mvars);
-	} else if ( argc == 2 ) {
-	    bu_vls_struct_item_named( &vls, X_vparse, argv[1], (const char *)&((struct x_vars *)dmp->dm_vars.priv_vars)->mvars, ',');
-	    bu_log( "%S\n", &vls );
-	} else {
-	    bu_vls_printf( &vls, "%s=\"", argv[1] );
-	    bu_vls_from_argv( &vls, argc-2, argv+2 );
-	    bu_vls_putc( &vls, '\"' );
-	    bu_struct_parse( &vls, X_vparse, (char *)&((struct x_vars *)dmp->dm_vars.priv_vars)->mvars);
-	}
-
-	bu_vls_free(&vls);
 
 	stop_catching_output(&tmp_vls);
 	Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
@@ -1407,9 +1323,7 @@ Ogl_dmInit()
  * Event handler for the ogl display manager.
  */
 static int
-Ogl_doEvent(clientData, eventPtr)
-    ClientData clientData;
-    XEvent *eventPtr;
+Ogl_doEvent(ClientData clientData, XEvent *eventPtr)
 {
     if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
 	glClearColor(0.0, 0.0, 0.0, 0.0);
@@ -1479,9 +1393,7 @@ Ogl_doEvent(clientData, eventPtr)
  * Handle ogl display manager specific commands.
  */
 static int
-Ogl_dm(argc, argv)
-    int argc;
-    char *argv[];
+Ogl_dm(int argc, char *argv[])
 {
     int status;
 
@@ -1653,9 +1565,7 @@ Wgl_dmInit()
  * Event handler for the wgl display manager.
  */
 static int
-Wgl_doEvent(clientData, eventPtr)
-    ClientData clientData;
-    XEvent *eventPtr;
+Wgl_doEvent(ClientData clientData, XEvent *eventPtr)
 {
     if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
 	glClearColor(0.0, 0.0, 0.0, 0.0);
@@ -1725,9 +1635,7 @@ Wgl_doEvent(clientData, eventPtr)
  * Handle wgl display manager specific commands.
  */
 static int
-Wgl_dm(argc, argv)
-    int argc;
-    char *argv[];
+Wgl_dm(int argc, char *argv[])
 {
     int status;
 
