@@ -454,7 +454,7 @@ pl_X_CFLAGS = ${X_CFLAGS}
 
 pl_dm_SOURCES = pl-dm.c
 pl_dm_LDADD = ${DM} ${DM_LIBS} ${BU}
-pl_dm_CFLAGS = ${X_CFLAGS}
+pl_dm_CFLAGS = ${X_CFLAGS} ${TK_CPPFLAGS}
 
 endif
 
