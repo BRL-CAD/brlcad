@@ -1,14 +1,28 @@
 # $Id$
 
 if WITH_X11
+
 PL_X = pl-X
 PL_X_EXTRA =
-else
+
+PL_DM = pl-dm
+PL_DM_EXTRA =
+
+else !WITH_X11
+
 PL_X =
 PL_X_EXTRA = pl-X.c
+
+PL_DM =
+PL_DM_EXTRA = pl-dm
+
 endif
+# WITH_X11
+
 
 bin_PROGRAMS = \
+	${PL_DM} \
+	${PL_X} \
 	alias-pix \
 	ap-pix \
 	asc-pl \
@@ -102,7 +116,6 @@ bin_PROGRAMS = \
 	pixsubst \
 	pixtile \
 	pixuntile \
-	${PL_X} \
 	pl-asc \
 	pl-hpgl \
 	pl-pl \
@@ -132,8 +145,6 @@ bin_PROGRAMS = \
 
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
-# XXX - pl-dm doesn't work, needs to be updated to newer dm interface
-# noinst_PROGRAMS = pl-dm
 noinst_PROGRAMS = roots_example
 
 dist_bin_SCRIPTS = \
@@ -144,10 +155,6 @@ dist_bin_SCRIPTS = \
 ##########################################
 # All the sources and flags sorted below #
 ##########################################
-
-# XXX - example code doesn't work so disable for now
-# pl_dm_SOURCES = pl-dm.c
-# pl_dm_LDADD = ${BU} ${DM}
 
 alias_pix_SOURCES = alias-pix.c
 alias_pix_LDADD = ${BU}
@@ -443,6 +450,10 @@ if WITH_X11
 pl_X_SOURCES = pl-X.c
 pl_X_LDADD = ${DM} ${DM_LIBS} ${BU}
 pl_X_CFLAGS = ${X_CFLAGS}
+
+pl_dm_SOURCES = pl-dm.c
+pl_dm_LDADD = ${DM} ${DM_LIBS} ${BU}
+pl_dm_CFLAGS = ${X_CFLAGS}
 endif
 
 pl_asc_SOURCES = pl-asc.c
@@ -642,6 +653,7 @@ sample_applications_DATA = \
 EXTRA_DIST = \
 	$(man_MANS) \
 	$(sample_applications_DATA) \
+	${PL_DM_EXTRA} \
 	${PL_X_EXTRA} \
 	rtwizard.bat
 
