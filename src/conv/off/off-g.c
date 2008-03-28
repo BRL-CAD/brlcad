@@ -208,7 +208,7 @@ int main(int argc, char **argv)
     if (argc != 3)  {
 	bu_exit(2, "Usage: off-g file.off file.g\n");
     }
-    if ((fpin = fopen(argv[1], "rt")) == NULL) {
+    if ((fpin = fopen(argv[1], "r")) == NULL) {
 	bu_exit(1, "%s: cannot open %s for reading\n",
 		argv[0], argv[1]);
     }
