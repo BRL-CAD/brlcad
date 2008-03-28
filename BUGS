@@ -15,7 +15,8 @@ on-going issues.
 Recent Bugs
 -----------
 
-* /dev/ogl framebuffer is blank on mac os x
+* /dev/ogl framebuffer is not refreshing/updating on mac os x,
+  resulting in the window remaining blank until you give expose events
 
 * report of mged being locked up on startup taking full cpu, works
   fine with with -c with X dm.
