@@ -247,7 +247,6 @@ rt_binunif_import5( struct rt_db_internal	*ip,
 	    ldestp = (unsigned long *) bip->u.uint8;
 	    for (i = 0; i < bip->count; ++i, ++ldestp, srcp += 4) {
 		*ldestp = bu_glong( srcp );
-		bu_log("Just got %ld", *ldestp);
 	    }
 	    break;
 	case DB5_MINORTYPE_BINU_64BITINT:
