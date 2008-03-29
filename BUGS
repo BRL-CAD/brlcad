@@ -40,8 +40,6 @@ Recent Bugs
   embedded framebuffer diplay on Mac OS X when you sweep a raytrace
   rectangle.  sweeping still works if you leave it at All.
 
-* mged isn't updating the graphics window sometimes with new 8.5 tcl.
-
 * invalid shaders result in an "Unable to locate where BRL-CAD ... is
   installed" message that refers to being unable to find a
   /lib/libSHADER.so file.  Quite a bogus message and probably not
@@ -78,8 +76,6 @@ Recent Bugs
 
 * dsp primitive is going into what seems to be an unbounded memory
   allocation loop during prep, inside dsp_layers().
-
-* mged -c, select ogl display manager, crashes X11 -- tested on os x
 
 * crashes during photonmap raytrace of m35 where right node is invalid
   rt -o test.pix -V 1.0 -P4 -J0 -l7 -A0 ~/Desktop/m35.g all.g box.r sph.r
