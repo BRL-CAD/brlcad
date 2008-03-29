@@ -255,7 +255,7 @@ struct dm_obj {
     void			*dmo_drawLabelsHookClientData;
 };
 
-#define DM_OPEN(_type, _argc, _argv) dm_open(_type, _argc, _argv)
+#define DM_OPEN(_interp, _type, _argc, _argv) dm_open(_interp, _type, _argc, _argv)
 #define DM_CLOSE(_dmp) _dmp->dm_close(_dmp)
 #define DM_DRAW_BEGIN(_dmp) _dmp->dm_drawBegin(_dmp)
 #define DM_DRAW_END(_dmp) _dmp->dm_drawEnd(_dmp)
