@@ -5,8 +5,8 @@ if WITH_X11
 PL_X = pl-X
 PL_X_EXTRA =
 
-PL_DM = pl-dm
-PL_DM_EXTRA =
+PL_DM =
+PL_DM_EXTRA = pl-dm
 
 else !WITH_X11
 
