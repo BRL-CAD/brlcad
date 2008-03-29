@@ -30,13 +30,6 @@
 #include <math.h>
 #include <string.h>
 
-#ifdef HAVE_GL_GLX_H
-#  include <GL/glx.h>
-#endif
-#ifdef HAVE_GL_GL_H
-#  include <GL/gl.h>
-#endif
-
 #include "tcl.h"
 #include "tk.h"
 
@@ -1043,7 +1036,6 @@ X_dmInit()
     }
 
     Tk_CreateGenericHandler(X_doEvent, (ClientData)DM_TYPE_X);
-    dm_configureWindowShape(dmp);
     DM_SET_WIN_BOUNDS(dmp, windowbounds);
 
     return TCL_OK;
@@ -1058,7 +1050,6 @@ X_doEvent(ClientData clientData, XEvent *eventPtr)
     if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
 	refresh();
     } else if (eventPtr->type == ConfigureNotify) {
-	dm_configureWindowShape(dmp);
 	refresh();
     } else if ( eventPtr->type == MotionNotify ) {
 	int mx, my;
