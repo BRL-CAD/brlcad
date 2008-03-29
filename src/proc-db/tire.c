@@ -1,14 +1,14 @@
-/*                      T I R E . C
+/*                          T I R E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2008 United States Government as represented by
+ * Copyright (c) 2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
- * This program is free software; you can redistribute it and/or
+ * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
  * version 2.1 as published by the Free Software Foundation.
  *
- * This program is distributed in the hope that it will be useful, but
+ * This library is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
@@ -18,13 +18,11 @@
  * information.
  */
 /** @file tire.c
-    TITLE: Tire Generator
-    
-    AUTHOR: Clifford Yapp
-    
-    DESCRIPTION: Program to create basic tire shapes.
-    
-*/
+ *
+ * Tire Generator
+ *
+ * Program to create basic tire shapes.
+ */
 
 #include "common.h"
 
