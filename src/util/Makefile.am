@@ -5,8 +5,8 @@ if WITH_X11
 PL_X = pl-X
 PL_X_EXTRA =
 
-PL_DM =
-PL_DM_EXTRA = pl-dm
+PL_DM = pl-dm
+PL_DM_EXTRA =
 
 else !WITH_X11
 
@@ -14,7 +14,7 @@ PL_X =
 PL_X_EXTRA = pl-X.c
 
 PL_DM =
-PL_DM_EXTRA = pl-dm
+PL_DM_EXTRA = pl-dm.c
 
 endif
 # WITH_X11
@@ -453,8 +453,8 @@ pl_X_LDADD = ${DM} ${DM_LIBS} ${BU}
 pl_X_CFLAGS = ${X_CFLAGS}
 
 pl_dm_SOURCES = pl-dm.c
-pl_dm_LDADD = ${DM} ${DM_LIBS} ${BU}
-pl_dm_CFLAGS = ${X_CFLAGS} ${TK_CPPFLAGS}
+pl_dm_LDADD = ${DM} ${DM_LIBS} ${BU} ${TK}
+pl_dm_CFLAGS = ${TK_CPPFLAGS} ${X_CFLAGS}
 
 endif
 
