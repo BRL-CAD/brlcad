@@ -208,7 +208,7 @@ void CalcInputVals(fastf_t *inarray, fastf_t *outarray)
     bu_log("yc = %.2f \n",outarray[0]);
     outarray[1] = (inarray[1] * inarray[3] - 2 * inarray[0] * inarray[4])/(4 * inarray[0] * inarray[2] - inarray[1] * inarray[1]);
     outarray[2] = 2 * sqrt(2 / (inarray[0] + inarray[2] + sqrt(inarray[1] * inarray[1] + (inarray[0] - inarray[2]) * (inarray[0] - inarray[2]))));
-    outarray[3] = 2 * sqrt( -2 / (inarray[0] + inarray[2] + sqrt(inarray[1] * inarray[1] - (inarray[0] - inarray[2]) * (inarray[0] - inarray[2]))));
+    outarray[3] = 2 * sqrt(2 / (inarray[0] + inarray[2] - sqrt(inarray[1] * inarray[1] + (inarray[0] - inarray[2]) * (inarray[0] - inarray[2]))));
     outarray[4] = outarray[2] * sin(atan(inarray[1] / (inarray[0] - inarray[2])));
     outarray[5] = outarray[3] * cos(atan(inarray[1] / (inarray[0] - inarray[2])));
 }
