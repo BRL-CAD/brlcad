@@ -49,6 +49,8 @@ new names should be listed for reference.
 **************
 7.12
 ----
+src/rt/viewarea.c
+	terminology and output format [deprecated 7.12]
 include/wdb.h
 	mk_fastgen_region() -> mk_comb() [deprecated 7.12]
 src/libbu/parallel.c

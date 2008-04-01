@@ -40,8 +40,6 @@
 #include "plot3.h"
 #include "rtprivate.h"
 
-#define	MM2IN	0.03937008		/* mm times MM2IN gives inches */
-#define TOL 0.01/MM2IN			/* GIFT has a 0.01 inch tolerance */
 
 extern int	npsw;			/* number of worker PSWs to run */
 
@@ -50,6 +48,8 @@ int		use_air = 1;		/* Handling of air in librt */
 extern int 	 rpt_overlap;
 
 extern fastf_t  rt_cline_radius;        /* from g_cline.c */
+
+extern double units; /* from opt.c */
 
 static long hit_count=0;
 static fastf_t cell_area=0.0;
@@ -73,7 +73,7 @@ Options:\n\
  -G #		Grid cell height in millimeters (conflicts with -s)\n\
  -J #		Jitter.  Default is off.  Any non-zero number is on\n\
  -U #		Set use_air boolean to # (default=1)\n\
- -c \"set rt_cline_radius=radius\"      Additional radius to be added to CLINE solids\n\
+ -u units	Set the display units (default=mm)\n\
  -x #		Set librt debug flags\n\
 ";
 
@@ -458,13 +458,34 @@ print_region_area_list(long int *count, struct rt_i *rtip, area_type_t type)
     }
     for (listp = listHead; listp->cell != NULL;) {
 	struct area_list *prev = listp;
+	double factor = 1.0; // show mm in parens by default
+
+	// if millimeters, show meters in parens
+	if (NEAR_ZERO(units - 1.0, SMALL_FASTF)) {
+	    factor = bu_units_conversion("m");
+	}
+
 	cell = listp->cell;
 	if (type == PRESENTED_AREA) {
-	    bu_log("Region %s\t(%ld hits)\t= %18.4lf square mm\t(%.4lf square meters)\n", cell->name, cell->hits, cell_area * (fastf_t)cell->hits, cell_area * (fastf_t)cell->hits / 1000000.0);
+	    bu_log("Region %s\t(%ld hits)\t= %18.4lf square %s\t(%.4lf square %s)\n",
+		   cell->name,
+		   cell->hits,
+		   cell_area * (fastf_t)cell->hits / (units*units),
+		   bu_units_string(units),
+		   cell_area * (fastf_t)cell->hits / (factor*factor),
+		   bu_units_string(factor)
+		);
 	    fflush(stdout); fflush(stderr);
 	}
 	if (type == EXPOSED_AREA) {
-	    bu_log("Region %s\t(%ld hits)\t= %18.4lf square mm\t(%.4lf square meters)\n", cell->name, cell->exposures, cell_area * (fastf_t)cell->exposures, cell_area * (fastf_t)cell->exposures / 1000000.0);
+	    bu_log("Region %s\t(%ld hits)\t= %18.4lf square %s\t(%.4lf square %s)\n",
+		   cell->name,
+		   cell->exposures,
+		   cell_area * (fastf_t)cell->exposures / (units*units),
+		   bu_units_string(units),
+		   cell_area * (fastf_t)cell->exposures / (factor*factor),
+		   bu_units_string(factor)
+		   );
 	    fflush(stdout); fflush(stderr);
 	}
 	listp = listp->next;
@@ -552,6 +573,13 @@ print_assembly_area_list(struct rt_i *rtip, long int max_depth, area_type_t type
     for (listp = listHead; listp->cell != NULL;) {
 	int indents = max_depth - listp->cell->depth;
 	struct area_list *prev = listp;
+	double factor = 1.0; // show mm in parens by default
+
+	// if millimeters, show meters in parens
+	if (NEAR_ZERO(units - 1.0, SMALL_FASTF)) {
+	    factor = bu_units_conversion("m");
+	}
+
 	cell = listp->cell;
 
 	while (indents-- > 0) {
@@ -563,11 +591,25 @@ print_assembly_area_list(struct rt_i *rtip, long int max_depth, area_type_t type
 	}
 
 	if (type == PRESENTED_AREA) {
-	    bu_log("Assembly %s\t(%ld hits)\t= %18.4lf square mm\t(%.4lf square meters)\n", cell->name, cell->hits, cell_area * (fastf_t)cell->hits, cell_area * (fastf_t)cell->hits / 1000000.0);
+	    bu_log("Assembly %s\t(%ld hits)\t= %18.4lf square %s\t(%.4lf square %s)\n",
+		   cell->name,
+		   cell->hits,
+		   cell_area * (fastf_t)cell->hits / (units*units),
+		   bu_units_string(units),
+		   cell_area * (fastf_t)cell->hits / (factor*factor),
+		   bu_units_string(factor)
+		);
 	    fflush(stdout); fflush(stderr);
 	}
 	if (type == EXPOSED_AREA) {
-	    bu_log("Assembly %s\t(%ld hits)\t= %18.4lf square mm\t(%.4lf square meters)\n", cell->name, cell->exposures, cell_area * (fastf_t)cell->exposures, cell_area * (fastf_t)cell->exposures / 1000000.0);
+	    bu_log("Assembly %s\t(%ld hits)\t= %18.4lf square %s\t(%.4lf square %s)\n",
+		   cell->name,
+		   cell->exposures,
+		   cell_area * (fastf_t)cell->exposures / (units*units),
+		   bu_units_string(units),
+		   cell_area * (fastf_t)cell->exposures / (factor*factor),
+		   bu_units_string(factor)
+		);
 	    fflush(stdout); fflush(stderr);
 	}
 
@@ -601,6 +643,13 @@ view_end(struct application *ap)
     long int exposed_region_count = 0;
     long int exposed_assembly_count = 0;
 
+    double factor = 1.0; // show mm in parens by default
+
+    // if millimeters, show meters in parens
+    if (NEAR_ZERO(units - 1.0, SMALL_FASTF)) {
+	factor = bu_units_conversion("m");
+    }
+
     cumulative = print_region_area_list(&presented_region_count, rtip, PRESENTED_AREA);
     (void) print_region_area_list(&exposed_region_count, rtip, EXPOSED_AREA);
 
@@ -619,13 +668,28 @@ view_end(struct application *ap)
 
     bu_log("\nSummary\n=======\n");
     total_area = cell_area * (fastf_t)hit_count;
-    bu_log("Cumulative Presented Areas (%ld hits) = %18.4lf square mm\t(%.4lf square meters)\n", cumulative, cell_area * (fastf_t)cumulative, cell_area * (fastf_t)cumulative / 1000000.0);
-    bu_log("Total Exposed Area         (%ld hits) = %18.4lf square mm\t(%.4lf square meters)\n", hit_count, total_area, total_area / 1000000.0);
+    bu_log("Cumulative Presented Areas (%ld hits) = %18.4lf square %s\t(%.4lf square %s)\n",
+	   cumulative,
+	   cell_area * (fastf_t)cumulative / (units*units),
+	   bu_units_string(units),
+	   cell_area * (fastf_t)cumulative / (factor*factor),
+	   bu_units_string(factor)
+	);
+    bu_log("Total Exposed Area         (%ld hits) = %18.4lf square %s\t(%.4lf square %s)\n",
+	   hit_count,
+	   total_area / (units*units),
+	   bu_units_string(units),
+	   total_area / (factor*factor),
+	   bu_units_string(factor)
+	);
     bu_log("Number of Presented Regions:    %8d\n", presented_region_count);
     bu_log("Number of Presented Assemblies: %8d\n", presented_assembly_count);
     bu_log("Number of Exposed Regions:    %8d\n", exposed_region_count);
     bu_log("Number of Exposed Assemblies: %8d\n", exposed_assembly_count);
-    bu_log("\n");
+    bu_log("\n"
+	   "WARNING: The terminology and output format of 'rtarea' is deprecated"
+	   "         and subject to change in a future release of BRL-CAD."
+	   "\n");
 
     /* free the assembly areas */
     cell = (struct area *)rp->reg_udata;

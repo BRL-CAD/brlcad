@@ -22,8 +22,6 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 * fix incrTcl pathing issues when only using system tcl/tk
   (get incrTcl subconfigure to work like was done for Tcl)
 
-* rtarea report local units by default and have option for override
-
 * (re)verify rtarea results, fix naming convention
 
 
@@ -327,7 +325,7 @@ DOCUMENTATION
 	Keybindings, GUI elements, scripting
 
 * Introduction to BRL-CAD Tutorial
-	mged, rt, pix-png, rtcheck rtarea, rtweight, g_qa, fbserv, nirt
+	mged, rt, pix-png, rtcheck, rtarea, rtweight, g_qa, fbserv, nirt
 
 * DoD V/L M&S Industry Diagram
 	Similar to existing Industry Diagram
