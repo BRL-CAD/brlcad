@@ -19,9 +19,9 @@
  */
 /** @file masonry.c
  *
- *	build a wall out of various materials.
+ * build a wall out of various materials.
  *
- *	Currently builds "wood frame" walls for typical building constructs.
+ * Currently builds "wood frame" walls for typical building constructs.
  *
  */
 
@@ -216,14 +216,14 @@ set_rotate(char *s)
  */
 int parse_args(int ac, char **av)
 {
-    int  c;
+    int c;
     struct opening *op;
     double dx, dy, width, height;
     int R, G, B;
     int units_lock=0;
     FILE *logfile;
 
-    if (  ! (progname=strrchr(*av, '/'))  )
+    if (! (progname=strrchr(*av, '/')) )
 	progname = *av;
     else
 	++progname;
@@ -235,88 +235,110 @@ int parse_args(int ac, char **av)
     bu_opterr = 0;
 
     /* get all the option flags from the command line */
-    while ((c=bu_getopt(ac, av, options)) != EOF)
+    while ((c=bu_getopt(ac, av, options)) != EOF) {
 	switch (c) {
-	    case 'T'	: set_translate(bu_optarg);
+	    case 'T':
+		set_translate(bu_optarg);
 		units_lock = 1;
 		break;
-	    case 'R'	: set_rotate(bu_optarg);
+	    case 'R':
+		set_rotate(bu_optarg);
 		break;
-	    case 'b'	: if (sscanf(bu_optarg, "%lf,%lf,%lf",
-				     &width, &height, &dy) == 3) {
-		brick_width = width * unit_conv;
-		brick_height = height * unit_conv;
-		brick_depth = dy * unit_conv;
-		units_lock = 1;
-	    } else
-		usage("error parsing -b option\n");
+	    case 'b':
+		if (sscanf(bu_optarg, "%lf,%lf,%lf", &width, &height, &dy) == 3) {
+		    brick_width = width * unit_conv;
+		    brick_height = height * unit_conv;
+		    brick_depth = dy * unit_conv;
+		    units_lock = 1;
+		} else {
+		    usage("error parsing -b option\n");
+		}
 
 		break;
-	    case 'c'	: if (sscanf(bu_optarg, "%d %d %d", &R, &G, &B)
-			      == 3) {
-		color = def_color;
-		color[0] = R & 0x0ff;
-		color[1] = G & 0x0ff;
-		color[2] = B & 0x0ff;
-	    }
+	    case 'c':
+		if (sscanf(bu_optarg, "%d %d %d", &R, &G, &B) == 3) {
+		    color = def_color;
+		    color[0] = R & 0x0ff;
+		    color[1] = G & 0x0ff;
+		    color[2] = B & 0x0ff;
+		}
 		break;
-	    case 'd'	: debug = !debug; break;
-	    case 'l'	: log_cmds = !log_cmds; break;
-	    case 'm'	: if ((dx=atof(bu_optarg)) > 0.0) {
-		min_mortar = dx * unit_conv;
-		units_lock = 1;
-		make_mortar = 1;
-	    } else
-		usage("error parsing -m option\n");
+	    case 'd':
+		debug = !debug;
+		break;
+	    case 'l':
+		log_cmds = !log_cmds;
+		break;
+	    case 'm':
+		if ((dx=atof(bu_optarg)) > 0.0) {
+		    min_mortar = dx * unit_conv;
+		    units_lock = 1;
+		    make_mortar = 1;
+		} else {
+		    usage("error parsing -m option\n");
+		}
 
 		break;
-	    case 'n'	: obj_name = bu_optarg; break;
-	    case 'o'	: if (ol_hd.ex == 0.0)
-		usage("set wall dim before openings\n");
-	    else if (sscanf(bu_optarg, "%lf,%lf,%lf,%lf",
-			    &dx, &dy, &width, &height) == 4) {
-		op = (struct opening *)bu_calloc(1, sizeof(struct opening), "calloc opening");
-		BU_LIST_INSERT(&ol_hd.l, &op->l);
-		op->sx = dx * unit_conv;
-		op->sz = dy * unit_conv;
-		op->ex = width * unit_conv;
-		op->ez = height * unit_conv;
-
-		/* do bounds checking */
-		if (op->sx < 0.0) op->sx = 0.0;
-		if (op->sz < 0.0) op->sz = 0.0;
-		if (op->ex > WALL_WIDTH)
-		    op->ex = WALL_WIDTH;
-		if (op->ez > WALL_HEIGHT)
-		    op->ez = WALL_HEIGHT;
-
-		units_lock = 1;
-	    } else
-		usage("error parsing -o option\n");
+	    case 'n':
+		obj_name = bu_optarg;
 		break;
-	    case 'r'	: rand_brick_color = !rand_brick_color; break;
-	    case 't'	: type = bu_optarg; break;
-	    case 'u'	: if (units_lock)
-		bu_log(
-		    "Warning: attempting to change units in mid-parse\n");
+	    case 'o':
+		if (ol_hd.ex == 0.0) {
+		    usage("set wall dim before openings\n");
+		} else if (sscanf(bu_optarg, "%lf,%lf,%lf,%lf", &dx, &dy, &width, &height) == 4) {
+		    op = (struct opening *)bu_calloc(1, sizeof(struct opening), "calloc opening");
+		    BU_LIST_INSERT(&ol_hd.l, &op->l);
+		    op->sx = dx * unit_conv;
+		    op->sz = dy * unit_conv;
+		    op->ex = width * unit_conv;
+		    op->ez = height * unit_conv;
+		    
+		    /* do bounds checking */
+		    if (op->sx < 0.0) op->sx = 0.0;
+		    if (op->sz < 0.0) op->sz = 0.0;
+		    if (op->ex > WALL_WIDTH)
+			op->ex = WALL_WIDTH;
+		    if (op->ez > WALL_HEIGHT)
+			op->ez = WALL_HEIGHT;
+		    
+		    units_lock = 1;
+		} else {
+		    usage("error parsing -o option\n");
+		}
+		break;
+	    case 'r':
+		rand_brick_color = !rand_brick_color;
+		break;
+	    case 't':
+		type = bu_optarg;
+		break;
+	    case 'u':
+		if (units_lock)
+		    bu_log("Warning: attempting to change units in mid-parse\n");
+
 		if ((dx=bu_units_conversion(bu_optarg)) != 0.0) {
 		    unit_conv = dx;
 		    units = bu_optarg;
-		} else
+		} else {
 		    usage("error parsing -u (units)\n");
+		}
 		break;
-	    case 'w'	: if (sscanf(bu_optarg, "%lf,%lf",
-				     &width, &height) == 2) {
-		WALL_WIDTH = width * unit_conv;
-		WALL_HEIGHT = height * unit_conv;
-		units_lock = 1;
-	    } else
-		usage("error parsing -w (wall dimensions)\n");
+	    case 'w':
+		if (sscanf(bu_optarg, "%lf,%lf", &width, &height) == 2) {
+		    WALL_WIDTH = width * unit_conv;
+		    WALL_HEIGHT = height * unit_conv;
+		    units_lock = 1;
+		} else {
+		    usage("error parsing -w (wall dimensions)\n");
+		}
 		break;
-	    case '?'	:
-	    case 'h'	:
-	    default		: usage("Bad or help flag specified\n"); break;
+	    case '?':
+	    case 'h':
+	    default:
+		usage("Bad or help flag specified\n");
+		break;
 	}
+    }
 
 
     if (log_cmds) {
@@ -335,80 +357,6 @@ int parse_args(int ac, char **av)
 }
 
 
-#if 0
-void
-v_segs(sz, ez, seglist, sx, ex)
-    double sz, ez, sx, ex;
-    struct boardseg *seglist;
-{
-    struct opening *op;
-    struct boardseg *seg, *sp;
-
-    seg = (struct boardseg *)bu_calloc(1, sizeof(struct boardseg), "initial seg");
-    seg->s = sz;
-    seg->e = ez;
-
-    if (!seg) abort();
-
-    /* trim opening to X bounds of wall */
-    if (seg->s < ol_hd.sz) seg->s = ol_hd.sz;
-    if (seg->e > WALL_HEIGHT) seg->e = WALL_HEIGHT;
-    BU_LIST_APPEND(&(seglist->l), &(seg->l));
-
-
-    for (BU_LIST_FOR(op, opening, &ol_hd.l) ) {
-	if ((sx >= op->sx && sx <= op->ex) ||
-	    (ex >= op->sx && ex <= op->ex) ||
-	    (sx <= op->sx && ex >= op->ex) ) {
-
-	    /* opening in vertical segment */
-	    for (BU_LIST_FOR(seg, boardseg, &(seglist->l)) ) {
-
-
-		if (op->sz <= seg->s) {
-		    if (op->ez >= seg->e) {
-			/* opening covers entire segment.
-			 * segement gets deleted
-			 */
-			sp = BU_LIST_PLAST(boardseg, &(seg->l));
-			BU_LIST_DEQUEUE(&(seg->l));
-			bu_free((char *)seg, "seg free");
-			if (debug)
-			    bu_log("deleting segment\n");
-			seg = sp;
-		    } else if (op->ez > seg->s) {
-			/* opening covers begining of segment */
-			seg->s = op->ez;
-		    }
-		    /* else opening is entirely prior to seg->s */
-		} else if (op->ez >= seg->e) {
-		    if (op->sz < seg->e) {
-			/* opening covers end of segment */
-			seg->e = op->sz;
-		    }
-		    /* else opening entirely after segment */
-		} else {
-		    /* there is an opening in the middle of the
-		     * segment.  We must divide the segment into
-		     * 2 segements
-		     */
-		    sp = (struct boardseg *)bu_calloc(1, sizeof(struct boardseg), "alloc boardseg");
-		    sp->s = seg->s;
-		    sp->e = op->sz;
-		    seg->s = op->ez;
-		    BU_LIST_INSERT(&(seg->l), &(sp->l));
-		    if (debug)
-			bu_log("splitting segment\n");
-		}
-
-
-	    }
-	}
-    }
-}
-#endif
-
-
 void
 h_segs(double sz, double ez, struct boardseg *seglist, double sx, double ex)
 {
@@ -422,7 +370,6 @@ h_segs(double sz, double ez, struct boardseg *seglist, double sx, double ex)
     if (seg->s < ol_hd.sx) seg->s = ol_hd.sx;
     if (seg->e > WALL_WIDTH) seg->e = WALL_WIDTH;
     BU_LIST_APPEND(&(seglist->l), &(seg->l));
-
 
     for (BU_LIST_FOR(op, opening, &ol_hd.l) ) {
 
@@ -467,7 +414,6 @@ h_segs(double sz, double ez, struct boardseg *seglist, double sx, double ex)
 	    }
 	}
     }
-
 }
 
 void
@@ -648,14 +594,11 @@ frame_opening(struct rt_wdb *fd, struct wmember *wm_hd, struct opening *op)
 		}
 	    }
 	}
-
     }
-
 
     /* build the top of the opening */
     if (op->ez < WALL_HEIGHT-bd_thin*2.0) {
 	/* put in board in top of opening */
-
 
 	if (op->ez+bd_thin+beam_height < WALL_HEIGHT-bd_thin) {
 	    /* there's room to separate the beam from the
@@ -666,7 +609,6 @@ frame_opening(struct rt_wdb *fd, struct wmember *wm_hd, struct opening *op)
 		     op->sx, op->ex,
 		     0.0, bd_thick,
 		     op->ez, op->ez+bd_thin);
-
 
 	    /* put the beam in */
 	    mk_h_rpp(fd, wm_hd,
@@ -689,7 +631,6 @@ frame_opening(struct rt_wdb *fd, struct wmember *wm_hd, struct opening *op)
 		     op->ez+bd_thin,
 		     WALL_HEIGHT-bd_thin-beam_height);
 
-
 	    span = op->ex - op->sx;
 	    span -= bd_thin*2.0;
 
@@ -706,7 +647,6 @@ frame_opening(struct rt_wdb *fd, struct wmember *wm_hd, struct opening *op)
 
 	    frame_o_sides(fd, wm_hd, op,
 			  WALL_HEIGHT-bd_thin-beam_height);
-
 
 	} else {
 	    /* Make the beam on the top of the window the top
@@ -727,7 +667,6 @@ frame_opening(struct rt_wdb *fd, struct wmember *wm_hd, struct opening *op)
 	/* There is no top board capping the opening
 	 * (with the possible exception of the top rail of the wall)
 	 */
-
 	frame_o_sides(fd, wm_hd, op, WALL_HEIGHT-bd_thin);
     }
 }
@@ -753,9 +692,7 @@ frame(struct rt_wdb *fd)
 
     if (!color) color = stud_color;
 
-
     mk_id(fd, "A wall");
-
 
     /* find the segments of the base-board */
     s_hd = (struct boardseg *)bu_calloc(1, sizeof(struct boardseg), "s_hd");
@@ -801,7 +738,6 @@ frame(struct rt_wdb *fd)
 	bu_free( (char *)seg, "seg_free 4");
     }
 
-
     /* put in the vertical stud boards that are not a part of an
      * opening for a window or a door.
      */
@@ -837,7 +773,6 @@ frame(struct rt_wdb *fd)
 		     bd_thin, WALL_HEIGHT-bd_thin);
 	}
 
-
 	if (pos < WALL_WIDTH-bd_thin &&
 	    pos+stud_spacing > WALL_WIDTH-bd_thin)
 	    pos = WALL_WIDTH - bd_thin - stud_spacing;
@@ -846,12 +781,10 @@ frame(struct rt_wdb *fd)
     for (BU_LIST_FOR(op, opening, &ol_hd.l))
 	frame_opening(fd, &wm_hd, op);
 
-
     /* put all the studding in a region */
     snprintf(sol_name, 64, "r.%s.studs", obj_name);
     mk_lcomb(fd, sol_name, &wm_hd, 1,
 	     stud_properties[0], stud_properties[1], color, 0);
-
 }
 
 void
@@ -898,7 +831,6 @@ sheetrock(struct rt_wdb *fd)
     snprintf(sol_name, 64, "r.%s.sr1", obj_name);
     mk_lcomb(fd, sol_name, &wm_hd, 1, (char *)NULL, (char *)NULL,
 	     color, 0);
-
 }
 
 void
@@ -1051,11 +983,11 @@ brick(struct rt_wdb *fd)
 }
 
 
-/*
- *	M A I N
+/**
+ * M A I N
  *
- *	Call parse_args to handle command line arguments first, then
- *	process input.
+ * Call parse_args to handle command line arguments first, then
+ * process input.
  */
 int main(int ac, char **av)
 {
