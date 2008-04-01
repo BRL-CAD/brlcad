@@ -204,13 +204,44 @@ void CheckRes (fastf_t *result1)
 
 void CalcInputVals(fastf_t *inarray, fastf_t *outarray)
 {
-    outarray[0] = (inarray[1] * inarray[4] - 2 * inarray[2] * inarray[3]) / (4*inarray[0] * inarray[2] - inarray[1] * inarray[1]);
-    bu_log("yc = %.2f \n",outarray[0]);
-    outarray[1] = (inarray[1] * inarray[3] - 2 * inarray[0] * inarray[4])/(4 * inarray[0] * inarray[2] - inarray[1] * inarray[1]);
-    outarray[2] = 2 * sqrt(2 / (inarray[0] + inarray[2] + sqrt(inarray[1] * inarray[1] + (inarray[0] - inarray[2]) * (inarray[0] - inarray[2]))));
-    outarray[3] = 2 * sqrt(2 / (inarray[0] + inarray[2] - sqrt(inarray[1] * inarray[1] + (inarray[0] - inarray[2]) * (inarray[0] - inarray[2]))));
-    outarray[4] = outarray[2] * sin(atan(inarray[1] / (inarray[0] - inarray[2])));
-    outarray[5] = outarray[3] * cos(atan(inarray[1] / (inarray[0] - inarray[2])));
+    fastf_t A,B,C,D,E;
+    fastf_t Ap,Cp,Dp,Ep;
+    fastf_t App, Cpp, Fpp;
+    fastf_t x0,y0;
+    fastf_t theta;
+    fastf_t semimajor, semiminor;
+
+    A = inarray[0];
+    B = inarray[1];
+    C = inarray[2];
+    D = inarray[3];
+    E = inarray[4];
+
+    theta = .5*atan(B/(A-C));
+    
+    /*B' is zero with above theta choice*/
+    Ap = A*cos(theta)*cos(theta)+B*cos(theta)*sin(theta)+C*sin(theta)*sin(theta);
+    Cp = A*sin(theta)*sin(theta)-B*sin(theta)*cos(theta)+C*cos(theta)*cos(theta);
+    Dp = D*cos(theta)+E*sin(theta);
+    Ep = E*cos(theta)-D*sin(theta);
+
+
+    /*Dpp and Epp are zero when translated to the origin - solve for x0,yo*/
+
+    x0 = Dp/(2*Ap);
+    y0 = Ep/(2*Cp);
+    App = Ap;
+    Cpp = Cp;
+    Fpp = 1 + Ap*x0*x0 - Dp*x0 + Cp*y0*y0 - Ep * y0;
+
+    semimajor = sqrt(-Fpp/Ap);
+    semiminor = sqrt(-Fpp/Cp);
+
+    outarray[0] = x0;
+    outarray[1] = y0;
+    outarray[2] = semimajor;
+    outarray[3] = semiminor;
+    outarray[4] = theta;
 }
 
 void MakeTireCore(struct rt_wdb (*file), fastf_t flat_r, fastf_t outer_r, fastf_t core_width)
@@ -259,7 +290,7 @@ int main()
     fastf_t **matell2;
     fastf_t **testmat1;
     fastf_t result1[5];
-    fastf_t result1a[6];
+    fastf_t result2[5];
     
     matell1 = (fastf_t **)bu_malloc(5 * sizeof(fastf_t *),"matrixrows");
     for (i = 0; i < 5; i++)
@@ -309,8 +340,8 @@ int main()
     SolveTri(testmat1,result1);
     printVec(result1,5);
     CheckRes(result1);
-    CalcInputVals(result1,result1a);
-    printVec(result1a,6);
+    CalcInputVals(result1,result2);
+    printVec(result2,5);
 
 /*
  *   Create_Ell1_Mat(matell1, 1015.0,50.0,1000.0,1420.0,1450.0);
