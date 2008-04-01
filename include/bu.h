@@ -2520,6 +2520,8 @@ BU_EXPORT BU_EXTERN(double bu_units_conversion,
 		    (const char *str));
 BU_EXPORT BU_EXTERN(const char *bu_units_string,
 		    (const double mm));
+BU_EXPORT BU_EXTERN(const char *bu_nearest_units_string,
+		    (const double mm));
 BU_EXPORT BU_EXTERN(double bu_mm_value,
 		    (const char *s));
 BU_EXPORT BU_EXTERN(void bu_mm_cvt,
