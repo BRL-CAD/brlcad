@@ -101,12 +101,15 @@ struct boardseg {
 };
 
 
-/*
- *	U S A G E --- tell user how to invoke this program, then exit
+/**
+ * U S A G E
+ *
+ * tell user how to invoke this program, then exit
  */
 void usage(char *s)
 {
-    if (s) (void)bu_log("%s\n", s);
+    if (s)
+	bu_log("%s\n", s);
 
     bu_exit(1, "Usage: %s %s\n%s\n%s\n%s\n",
 	    progname,
@@ -476,7 +479,8 @@ frame_o_sides(struct rt_wdb *fd, struct wmember *wm_hd, struct opening *op, doub
 	/* put in a closing board on the side */
 	sx = op->sx-bd_thin;
 
-	if (sx < bd_thin) sx = 0.0;
+	if (sx < bd_thin)
+	    sx = 0.0;
 	mk_v_rpp(fd, wm_hd,
 		 sx,	 op->sx,
 		 0.0,	 bd_thick,
@@ -541,8 +545,10 @@ frame_opening(struct rt_wdb *fd, struct wmember *wm_hd, struct opening *op)
     if (op->sz > bd_thin) {
 	/* put in bottom board of opening */
 
-	if (op->sz-bd_thin >= bd_thin) pos = op->sz - bd_thin;
-	else pos = bd_thin;
+	if (op->sz-bd_thin >= bd_thin)
+	    pos = op->sz - bd_thin;
+	else
+	    pos = bd_thin;
 
 	mk_h_rpp(fd, wm_hd, op->sx, op->ex, 0.0, bd_thick,
 		 pos, op->sz);
@@ -690,7 +696,8 @@ frame(struct rt_wdb *fd)
     }
     BU_LIST_INIT(&wm_hd.l);
 
-    if (!color) color = stud_color;
+    if (!color)
+	color = stud_color;
 
     mk_id(fd, "A wall");
 
@@ -795,7 +802,8 @@ sheetrock(struct rt_wdb *fd)
     struct opening *op;
     int i=0;
 
-    if (!color) color = sheetrock_color;
+    if (!color)
+	color = sheetrock_color;
 
     BU_LIST_INIT(&wm_hd.l);
 
@@ -945,7 +953,8 @@ brick(struct rt_wdb *fd)
     point_t pts[8];
     char proto_brick[64];
 
-    if (!color) color = brick_color;
+    if (!color)
+	color = brick_color;
 
     horiz_bricks = (WALL_WIDTH-brick_depth) / brick_width;
     mortar_width = WALL_WIDTH - horiz_bricks * brick_width;
@@ -999,7 +1008,8 @@ int main(int ac, char **av)
     if ((parse_args(ac, av)) < ac)
 	usage("excess command line arguments\n");
 
-    if (ac < 2) usage((char *)NULL);
+    if (ac < 2)
+	usage((char *)NULL);
 
     snprintf(sol_name, 64, "%s.g", progname);
     if ((db_fd = wdb_fopen(sol_name)) == (struct rt_wdb *)NULL) {
@@ -1017,11 +1027,15 @@ int main(int ac, char **av)
 	}
     }
 
-    if (*type == 'f') frame(db_fd);
-    else if (*type == 's') sheetrock(db_fd);
-    else if (*type == 'b') {
-	if (type[1] == 'm' ) mortar_brick(db_fd);
-	else brick(db_fd);
+    if (*type == 'f') {
+	frame(db_fd);
+    } else if (*type == 's') {
+	sheetrock(db_fd);
+    } else if (*type == 'b') {
+	if (type[1] == 'm')
+	    mortar_brick(db_fd);
+	else
+	    brick(db_fd);
     }
 
     wdb_close(db_fd);
