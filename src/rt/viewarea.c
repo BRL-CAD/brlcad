@@ -687,8 +687,8 @@ view_end(struct application *ap)
     bu_log("Number of Exposed Regions:    %8d\n", exposed_region_count);
     bu_log("Number of Exposed Assemblies: %8d\n", exposed_assembly_count);
     bu_log("\n"
-	   "WARNING: The terminology and output format of 'rtarea' is deprecated"
-	   "         and subject to change in a future release of BRL-CAD."
+	   "WARNING: The terminology and output format of 'rtarea' is deprecated\n"
+	   "         and subject to change in a future release of BRL-CAD.\n"
 	   "\n");
 
     /* free the assembly areas */
