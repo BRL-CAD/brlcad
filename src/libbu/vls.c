@@ -805,11 +805,16 @@ bu_vls_gets(register struct bu_vls *vp, register FILE *fp)
     if (!bufp)
 	return -1;
 
-    /* strip the trailing newline */
-    if (bufp[strlen(bufp)-1] == '\n')
+    /* strip the trailing EOL (or at least part of it) */
+    if ((bufp[strlen(bufp)-1] == '\n') ||
+	(bufp[strlen(bufp)-1] == '\r'))
 	bufp[strlen(bufp)-1] = '\0';
 
-    bu_vls_printf(vp, "%s", buffer);
+    /* handle \r\n lines */
+    if (bufp[strlen(bufp)-1] == '\r')
+	bufp[strlen(bufp)-1] = '\0';
+
+    bu_vls_printf(vp, "%s", bufp);
 
     /* sanity check */
     endlen = bu_vls_strlen(vp);
