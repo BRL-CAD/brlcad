@@ -587,8 +587,8 @@ main(int argc, char **argv)
 		}
 		bu_log("%s\nMGED unable to initialize gui, reverting to classic mode.\n", Tcl_GetStringResult(interp));
 		classic_mged=1;
-		cbreak_mode = COMMAND_LINE_EDITING;
 #if !defined(_WIN32) || defined(__CYGWIN__)
+		cbreak_mode = COMMAND_LINE_EDITING;
 		save_Tty(fileno(stdin));
 #endif
 		get_attached();
