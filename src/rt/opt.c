@@ -122,6 +122,8 @@ fastf_t		frame_delta_t = (fastf_t)(1.0/30.0); /* 1.0 / frames_per_second_playbac
 double		airdensity;    /* is the scene hazy (we shade the void space */
 double		haze[3] = { 0.8, 0.9, 0.99 };	      /* color of the haze */
 
+double units = 1.0;
+
 /***** end variables shared with view.c *****/
 
 /* temporary kludge to get rt to use a tighter tolerance for raytracing */
@@ -153,7 +155,7 @@ int get_args( int argc, register char **argv )
 
 
 #define GETOPT_STR	\
-	".:,:@:a:b:c:d:e:f:g:h:ij:l:n:o:p:q:rs:tv:w:x:A:BC:D:E:F:G:H:IJ:K:MN:O:P:Q:RST:U:V:WX:!:+:"
+	".:,:@:a:b:c:d:e:f:g:h:ij:l:n:o:p:q:rs:tu:v:w:x:A:BC:D:E:F:G:H:IJ:K:MN:O:P:Q:RST:U:V:WX:!:+:"
 
     while ( (c=bu_getopt( argc, argv, GETOPT_STR )) != EOF )  {
 	switch ( c )  {
@@ -198,7 +200,7 @@ int get_args( int argc, register char **argv )
 		    sub_grid_mode = 1;
 		} else {
 		    sub_grid_mode = 0;
-		    bu_log("ERROR, bad sub-rectangle, ignored\n");
+		    bu_log("WARNING: bad sub-rectangle, ignored\n");
 		}
 	    }
 	    break;
@@ -321,7 +323,6 @@ int get_args( int argc, register char **argv )
 	    case '!':
 		sscanf( bu_optarg, "%x", (unsigned int *)&bu_debug );
 		break;
-
 	    case 's':
 		/* Square size */
 		i = atoi( bu_optarg );
@@ -422,6 +423,13 @@ int get_args( int argc, register char **argv )
 		    rt_perspective = 0;
 		}
 		break;
+	    case 'u':
+		units = bu_units_conversion(bu_optarg);
+		if (units <= 0.0) {
+		    units = 1.0;
+		    bu_log("WARNING: bad units, using default (%s)\n", bu_units_string(units));
+		}
+		break;
 	    case 'v': /* Set level of "non-debug" debugging output */
 		sscanf( bu_optarg, "%x", (unsigned int *)&rt_verbosity );
 		bu_printb( "Verbosity:", rt_verbosity,
@@ -433,8 +441,8 @@ int get_args( int argc, register char **argv )
 		break;
 
 	    case 'P':
-		/* Number of parallel workers */
 	    {
+		/* Number of parallel workers */
 		int avail_cpus;
 
 		avail_cpus = bu_avail_cpus();
@@ -494,17 +502,10 @@ int get_args( int argc, register char **argv )
 		}
 		frame_delta_t = 1.0 / frame_delta_t;
 		break;
-#if 0
-	    case ?:
-		/* XXX what letter to use? */
-		/* Specify the pixel to end at */
-		/* Actually processed in do_frame() */
-		string_pix_end = bu_optarg;
-		break;
-#endif
 	    case 'V':
-		/* View aspect */
 	    {
+		/* View aspect */
+
 		fastf_t xx, yy;
 		register char *cp = bu_optarg;
 
@@ -542,13 +543,16 @@ int get_args( int argc, register char **argv )
 			rt_text_mode = 1;
 			break;
 		    default:
-			fprintf(stderr, "unknown option %c\n", *cp);
+			fprintf(stderr, "ERROR: unknown option %c\n", *cp);
 			return(0);	/* BAD */
 		}
 	    }
 	    break;
+	    case EOF:
+		fprintf(stderr, "ERROR: unknown option %c\n", c);
+		return(0);	/* BAD */
 	    default:		/* '?' */
-		fprintf(stderr, "unknown option %c\n", c);
+		fprintf(stderr, "ERROR: bad option specified\n");
 		return(0);	/* BAD */
 	}
     }
