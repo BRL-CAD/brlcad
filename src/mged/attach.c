@@ -591,7 +591,7 @@ get_attached(void)
     bu_vls_free(&type);
 
     if (inflimit <= 0) {
-	bu_log("\nInfinite Loop protection, attach aborted!\n");
+	bu_log("\nInfinite loop protection, attach aborted!\n");
 	return;
     }
 
