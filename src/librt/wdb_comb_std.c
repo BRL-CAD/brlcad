@@ -659,7 +659,7 @@ wdb_comb_std_cmd(struct rt_wdb	*wdbp,
 		    if (!strcmp(tok->tp->tr_l.tl_name, comb_name)) {
 			db_free_tree( tok->tp, &rt_uniresource );
 			if (rt_db_get_internal(&intern1, dp, wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-			    Tcl_AppendResult(interp, "Cannot get records for ", comb_name, "\n" );
+			    Tcl_AppendResult(interp, "Cannot get records for ", comb_name, "\n", (char *)NULL);
 			    Tcl_AppendResult(interp, "Database read error, aborting\n", (char *)NULL);
 			    return TCL_ERROR;
 			}
