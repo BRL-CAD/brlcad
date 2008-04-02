@@ -1,7 +1,7 @@
-/*                      R A Y T R A C E . H
+/*                            D G . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2008 United States Government as represented by
+ * Copyright (c) 2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,6 +21,7 @@
 /** @{ */
 /** @file dg.h
  *
+ * Brief description
  *
  */
 
@@ -306,7 +307,9 @@ RT_EXPORT BU_EXTERN(int	dg_E_cmd,
 __END_DECLS
 
 #endif /* __DG_H__ */
+
 /** @} */
+
 /*
  * Local Variables:
  * mode: C
