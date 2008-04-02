@@ -539,39 +539,43 @@ get_attached(void)
 {
     int argc;
     char *argv[3];
-    char line[80] = {0};
     struct w_dm *wp = (struct w_dm *)NULL;
     int inflimit = 1000;
-    char *ret = (char *)NULL;
+    int ret;
+    struct bu_vls type;
+
+    bu_vls_init(&type);
 
     while (inflimit > 0) {
-	memset(line, 0, 80);
-
+	bu_vls_trunc(&type, 0);
 	bu_log("attach (nu");
 
 	/* print all the available display manager types, skipping plot and ps */
 	wp = &which_dm[2];
-	for (; wp->type != -1; wp++ ) {
+	for (; wp->type != -1; wp++) {
 	    bu_log("|%s", wp->name);
 	}
 	bu_log(")[nu]? ");
 
-	ret = bu_fgets(line, sizeof(line), stdin); /* \n, Null terminated */
-
-	/* handle EOF */
-	if (!ret) {
+	ret = bu_vls_gets(&type, stdin);
+	if (ret < 0) {
+	    /* handle EOF */
 	    bu_log("\n");
+	    bu_vls_free(&type);
 	    return;
 	}
 
-	if (line[0] == '\n' || strncmp(line, "nu", 2) == 0) {
-	    return;  /* Nothing more to do. */
+	if (bu_vls_strlen(&type) == 0 || strcmp(bu_vls_addr(&type), "nu") == 0) {
+	    /* Nothing more to do. */
+	    bu_vls_free(&type);
+	    return;
 	}
 
-	line[strlen(line)-1] = '\0';        /* remove newline */
+	/* trim whitespace before comparisons (but not before checking empty) */
+	bu_vls_trimspace(&type);
 
-	for ( wp = &which_dm[2]; wp->type != -1; wp++ ) {
-	    if ( strcmp( line, wp->name ) == 0 ) {
+	for (wp = &which_dm[2]; wp->type != -1; wp++) {
+	    if (strcmp(bu_vls_addr(&type), wp->name) == 0) {
 		break;
 	    }
 	}
@@ -584,10 +588,14 @@ get_attached(void)
 	inflimit--;
     }
 
+    bu_vls_free(&type);
+
     if (inflimit <= 0) {
 	bu_log("\nInfinite Loop protection, attach aborted!\n");
 	return;
     }
+
+    bu_log("Starting an %s display manager\n", wp->name);
 
     argc = 2;
     argv[0] = "";
