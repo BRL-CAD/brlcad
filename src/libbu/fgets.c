@@ -37,7 +37,7 @@
 
 
 /**
- *			 B U _ F G E T S
+ * b u _ f g e t s
  *
  * Reads in at most one less than size characters from stream and
  * stores them into the buffer pointed to by s. Reading stops after an
@@ -47,7 +47,6 @@
  * buffer. Returns s on success, and NULL on error or when end of file
  * occurs while no characters have been read.
  */
-
 char *
 bu_fgets(char *s, int size, FILE *stream)
 {
@@ -112,7 +111,10 @@ bu_fgets(char *s, int size, FILE *stream)
     else
 	return s;
 }
+
+
 /** @} */
+
 /*
  * Local Variables:
  * mode: C
