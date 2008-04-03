@@ -24,7 +24,7 @@ REM	Author:		Bob Parker
 REM	Company:	Survice Engineering
 
 SETLOCAL
-SET CAD_VERSION=7.12.0
+SET CAD_VERSION=7.12.1
 SET SAVE_CD=%CD%
 SET PATH=%~dp0
 SET ARCHER=%~dp0archer
