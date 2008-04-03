@@ -4,7 +4,7 @@
 ;BRL-CAD Version Variables
 
   !ifndef VERSION
-    !define VERSION '7.12.0'
+    !define VERSION '7.12.1'
   !endif
 
 ;--------------------------------
@@ -36,6 +36,7 @@
 
   Var MUI_TEMP
   Var STARTMENU_FOLDER
+  Var BRLCAD_DATA_DIR
 
 ;--------------------------------
 ;Interface Settings
@@ -111,28 +112,21 @@ Section "BRL-CAD (required)" BRL-CAD
   SectionIn RO
 
   ; Set output path to the installation directory.
-  ;SetOutPath $INSTDIR
-
-  ; Put file there
-  ;File "..\..\brlcadInstall\*"
+  SetOutPath $INSTDIR
+  File /r "..\..\brlcadInstall\archer.ico"
+  File /r "..\..\brlcadInstall\brlcad.ico"
 
   SetOutPath $INSTDIR\bin
-  File /r ..\..\brlcadInstall\bin\*
+  File /r "..\..\brlcadInstall\bin\*"
 
   SetOutPath $INSTDIR\include
-  File /r ..\..\brlcadInstall\include\*
+  File /r "..\..\brlcadInstall\include\*"
 
   SetOutPath $INSTDIR\lib
   File /r "..\..\brlcadInstall\lib\*"
 
   SetOutPath $INSTDIR\share
   File /r "..\..\brlcadInstall\share\*"
-
-  ;SetOutPath $INSTDIR\plugins
-  ;File /r ..\..\brlcadInstall\plugins\*
-
-  ;SetOutPath $INSTDIR\tclscripts
-  ;File /r ..\..\brlcadInstall\tclscripts\*
 
   ; Write the installation path into the registry
   WriteRegStr HKLM SOFTWARE\BRL-CAD "Install_Dir" "$INSTDIR"
@@ -144,6 +138,13 @@ Section "BRL-CAD (required)" BRL-CAD
   WriteUninstaller "uninstall.exe"
 
 
+  StrCpy $BRLCAD_DATA_DIR "$INSTDIR\share\brlcad\${VERSION}"
+
+  ; Create desktop icons
+  SetOutPath $INSTDIR
+  CreateShortCut "$DESKTOP\Archer.lnk" "$INSTDIR\bin\archer.bat" "" "$INSTDIR\archer.ico" 0
+  CreateShortCut "$DESKTOP\MGED.lnk" "$INSTDIR\bin\mged.bat" "" "$INSTDIR\brlcad.ico" 0
+
   !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
     ;Main start menu shortcuts
     SetOutPath $INSTDIR
@@ -151,7 +152,6 @@ Section "BRL-CAD (required)" BRL-CAD
     CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Archer.lnk" "$INSTDIR\bin\archer.bat" "" "$INSTDIR\archer.ico" 0
     CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\MGED.lnk" "$INSTDIR\bin\mged.bat" "" "$INSTDIR\brlcad.ico" 0
     CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Uninstall.lnk" "$INSTDIR\uninstall.exe" "" "$INSTDIR\uninstall.exe" 0
-  
   !insertmacro MUI_STARTMENU_WRITE_END
 
 SectionEnd
@@ -164,7 +164,10 @@ Section "Documentation (required)" Documentation
   !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
     ;Main start menu shortcuts
     SetOutPath $INSTDIR
-    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Manual.lnk" "$INSTDIR\share\brlcad\${VERSION}\html\manuals\index.html" "" "" 0
+    CreateDirectory "$SMPROGRAMS\$STARTMENU_FOLDER\Manuals"
+    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Manuals\Archer.lnk" "$BRLCAD_DATA_DIR\html\manuals\archer\Archer_Documentation.chm" "" "$INSTDIR\archer.ico" 0
+    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Manuals\BRL-CAD.lnk" "$BRLCAD_DATA_DIR\html\manuals\index.html" "" "$INSTDIR\brlcad.ico" 0
+    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Manuals\MGED.lnk" "$BRLCAD_DATA_DIR\html\manuals\mged\index.html" "" "$INSTDIR\brlcad.ico" 0
   !insertmacro MUI_STARTMENU_WRITE_END
 SectionEnd
 
@@ -208,41 +211,29 @@ Section "Uninstall"
   DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\BRL-CAD"
   DeleteRegKey HKLM SOFTWARE\BRL-CAD
 
-  ; Remove files and uninstaller
-  ;Delete $INSTDIR\bin\*
-  ;RMDir /r "$INSTDIR\doc"
-  ;Delete $INSTDIR\include\*.h
-  ;RMDir /r "$INSTDIR\lib"
-  ;RMDir /r "$INSTDIR\plugins"
-  ;Delete $INSTDIR\Samples\*.*
-  ;RMDir /r "$INSTDIR\tclscripts"
-  ;Delete $INSTDIR\*
-
   !insertmacro MUI_STARTMENU_GETFOLDER Application $MUI_TEMP
 
+
   ; Remove shortcuts, if any
+  Delete "$SMPROGRAMS\$MUI_TEMP\Manuals\*"
   Delete "$SMPROGRAMS\$MUI_TEMP\*"
+  Delete "$DESKTOP\Archer.lnk"
+  Delete "$DESKTOP\MGED.lnk"
+
+
+  ; Remove miscellaneous files
+  Delete "$INSTDIR\archer.ico"
+  Delete "$INSTDIR\brlcad.ico"
+  Delete "$INSTDIR\uninstall.exe"
+
 
   ; Remove directories used
-  RMDir "$SMPROGRAMS\$MUI_TEMP"
-  ;RMDir "$INSTDIR\bin"
   RMDir /r "$INSTDIR\bin"
   RMDir /r "$INSTDIR\include"
   RMDir /r "$INSTDIR\lib"
   RMDir /r "$INSTDIR\share"
-  Delete $INSTDIR\uninstall.exe
   RMDir "$INSTDIR"
-
-  ;Delete empty start menu parent diretories
-  StrCpy $MUI_TEMP "$SMPROGRAMS\$MUI_TEMP"
- 
-  startMenuDeleteLoop:
-    RMDir $MUI_TEMP
-    GetFullPathName $MUI_TEMP "$MUI_TEMP\.."
-    
-    IfErrors startMenuDeleteLoopDone
-  
-    StrCmp $MUI_TEMP $SMPROGRAMS startMenuDeleteLoopDone startMenuDeleteLoop
-  startMenuDeleteLoopDone:
+  RMDir "$SMPROGRAMS\$MUI_TEMP\Manuals"
+  RMDir "$SMPROGRAMS\$MUI_TEMP"
 
 SectionEnd
