@@ -80,7 +80,7 @@ fastf_t GetEllSlopeAtPoint(fastf_t *inarray, fastf_t x)
     return slope;
 }
 
-/*
+
 void ValidateEqn(fastf_t *coeff, fastf_t *coord)
 {
     fastf_t result1,result2;
@@ -90,7 +90,7 @@ void ValidateEqn(fastf_t *coeff, fastf_t *coord)
     printf("Eval at %6.4f,%6.4f is %6.6f\n",coord[0],coord[1],result1+1);
     printf("Eval at %6.4f,%6.4f is %6.6f\n\n",coord[2],coord[3],result2+1);
 }
-*/
+
 void ValidateEqnYder(fastf_t *coeff, fastf_t *coord, fastf_t slope1)
 {
     fastf_t result1;
@@ -189,11 +189,10 @@ void Create_Ell1_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t dyme
     mat[4][5] = -1;
 
     printf("ell1x1 : %6.6f; ell1y1 : %6.6f;\nell1x2 : %6.6f; ell1y2 : %6.6f;\nell1x3 : %6.6f; ell1y3 : %6.6f;\n",dymeas/2,zmeas,dytred/2,ztire-dztred,0.0,ztire);
-/*    coordcheck[0] = dymeas/2;
+    coordcheck[0] = dymeas/2;
     coordcheck[1] = zmeas;
     coordcheck[2] = dytred/2;
-    coordcheck[3] = ztire-dztred;*/
-
+    coordcheck[3] = ztire-dztred;
 }
 
 void Create_Ell2_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t dymax, fastf_t zymax, fastf_t ztire, fastf_t dyhub, fastf_t zhub, fastf_t *coeff, fastf_t *coordcheck) 
@@ -233,11 +232,10 @@ void Create_Ell2_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t dyma
     mat[4][5] =0;
 
    printf("ell2x1 : %6.6f; ell2y1 : %6.6f;\nell2x2 : %6.6f; ell2y2 : %6.6f;\nell2x3 : %6.6f; ell2y3 : %6.6f;\n",dymax/2,zymax,dytred/2,ztire-dztred,dymax/2-dyhub,zhub); 
-/*    coordcheck[0] = dymax/2;
+    coordcheck[0] = dymax/2;
     coordcheck[1] = zymax;
     coordcheck[2] = dytred/2;
-    coordcheck[3] = ztire-dztred; */
-
+    coordcheck[3] = ztire-dztred;
 }
 
 void SortRows(fastf_t **mat, int colnum)
@@ -292,13 +290,16 @@ void SolveTri(fastf_t **mat, fastf_t *result1)
 
 void CalcInputVals(fastf_t *inarray, fastf_t *outarray, fastf_t *coordinates, fastf_t *ell1coeff)
 {
-    fastf_t A,B,C,D,E;
-    fastf_t Ap,Cp,Dp,Ep;
-    fastf_t App, Cpp, Fpp;
-    fastf_t x0,y0;
+    fastf_t A,B,C,D,E,F;
+    fastf_t Dp,Ep,Fp;
+    fastf_t App, Bpp,Cpp,Dpp, Epp,Fpp;
+    fastf_t x0,y0,xa,ya;
     fastf_t theta;
     fastf_t semimajor, semiminor;
     fastf_t coeffarray2[5],translatedcoords[6];
+
+    printVec(coordinates,6,"Coordinates");
+    printVec(inarray,5,"Coefficients");
 
     A = inarray[0];
     B = inarray[1];
@@ -306,45 +307,45 @@ void CalcInputVals(fastf_t *inarray, fastf_t *outarray, fastf_t *coordinates, fa
     D = inarray[3];
     E = inarray[4];
 
+    /*Translation to Center of Ellipse*/
+    x0 = -(B*E-2*C*D)/(4*A*C-B*B);
+    y0 = -(B*D-2*A*E)/(4*A*C-B*B);
+
+    /*Translate to the Origin for Rotation*/
+
+    Fp = 1-y0*E-x0*D+y0*y0*C+x0*y0*B+x0*x0*A;
+
     printf("eqn : %6.9f*x^2+%6.9f*x*y+%6.9f*y^2+%6.9f*x+%6.9f*y+1\n",A,B,C,D,E);
 
+    printf("transeqn : %6.9f*x^2+%6.9f*x*y+%6.9f*y^2+%6.9f\n",A,B,C,Fp);
+
+    /*Rotation Angle*/
     theta = .5*atan(B/(A-C));
     
     /*B' is zero with above theta choice*/
-    Ap = A*cos(theta)*cos(theta)+B*cos(theta)*sin(theta)+C*sin(theta)*sin(theta);
-    Cp = A*sin(theta)*sin(theta)-B*sin(theta)*cos(theta)+C*cos(theta)*cos(theta);
-    Dp = D*cos(theta)+E*sin(theta);
-    Ep = E*cos(theta)-D*sin(theta);
-    coeffarray2[0] = Ap;
-    coeffarray2[1] = 0;
-    coeffarray2[2] = Cp;
-    coeffarray2[3] = Dp;
-    coeffarray2[4] = Ep;
-    translatedcoords[0] = coordinates[0]*cos(theta)-coordinates[1]*sin(theta);
-    translatedcoords[1] = coordinates[0]*sin(theta)+coordinates[1]*cos(theta);
-    translatedcoords[2] = coordinates[2]*cos(theta)-coordinates[3]*sin(theta);
-    translatedcoords[3] = coordinates[2]*sin(theta)+coordinates[3]*cos(theta);
+    App = A*cos(theta)*cos(theta)+B*cos(theta)*sin(theta)+C*sin(theta)*sin(theta);
+    Bpp = 2*(C-A)*cos(theta)*sin(theta)+B*cos(theta)*cos(theta)-B*sin(theta)*sin(theta);
+    Cpp = A*sin(theta)*sin(theta)-B*sin(theta)*cos(theta)+C*cos(theta)*cos(theta);
+    coeffarray2[0] = App/Fp;
+    coeffarray2[1] = Bpp/Fp;
+    coeffarray2[2] = Cpp/Fp;
+    coeffarray2[3] = 0;
+    coeffarray2[4] = 0;
 
-/*    printf("Ap = %6.4f\n",Ap);
-    printf("Cp = %6.4f\n",Cp);
-    printf("Dp = %6.4f\n",Dp);
-    printf("Ep = %6.4f\n",Ep);
+    printf("App = %6.4f\n",App);
+    printf("Bpp = %6.4f\n",Bpp);
+    printf("Cpp = %6.4f\n",Cpp);
 
-    printf("eqn1 = %6.6f*x^2+%6.6f*y^2+%6.6f*x+%6.6f*y+1\n",Ap,Cp,Dp,Ep);
-*/
+    printf("roteqn : %6.6f*x^2+%6.6f*x*y+%6.6f*y^2+%6.6f\n",App,Bpp,Cpp,Fp);
+
    /*Dpp and Epp are zero when translated to the origin - solve for x0,y0*/
 
-    x0 = Dp/(2*Ap);
-    y0 = Ep/(2*Cp);
-    App = Ap;
-    Cpp = Cp;
-    Fpp = 1 + Ap*x0*x0 - Dp*x0 + Cp*y0*y0 - Ep * y0;
 
-    semimajor = sqrt(-Fpp/Ap);
-    semiminor = sqrt(-Fpp/Cp);
+    semimajor = sqrt(-Fp/App);
+    semiminor = sqrt(-Fp/Cpp);
 
-    outarray[0] = x0;
-    outarray[1] = y0;
+    outarray[0] = -x0;
+    outarray[1] = -y0;
     outarray[2] = semimajor;
     outarray[3] = semiminor;
     outarray[4] = R2D(theta);
@@ -392,11 +393,11 @@ int main()
 {
 /*    struct rt_wdb *db_fp; */
     int i;
-    fastf_t **matell1,**matell1save;
-    fastf_t **matell2,**matell2save;
+    fastf_t **matell1;
+    fastf_t **matell2;
 /*    fastf_t **testmat1; */
     fastf_t result1[5],result1a[5];
-    fastf_t result2[5],result2a[5],checkforzero[5];
+    fastf_t result2[5],result2a[5];
     fastf_t coordinates1[6],coordinates2[6];
     
     matell1 = (fastf_t **)bu_malloc(5 * sizeof(fastf_t *),"matrixrows");
@@ -407,14 +408,7 @@ int main()
     for (i = 0; i < 5; i++)
 	matell2[i] = (fastf_t *)bu_malloc(6 * sizeof(fastf_t),"matrixcols");
 
-    matell1save = (fastf_t **)bu_malloc(5 * sizeof(fastf_t *),"matrixrows");
-    for (i = 0; i < 5; i++)
-	matell1save[i] = (fastf_t *)bu_malloc(6 * sizeof(fastf_t),"matrixcols");
-    
-    matell2save = (fastf_t **)bu_malloc(5 * sizeof(fastf_t *),"matrixrows");
-    for (i = 0; i < 5; i++)
-	matell2save[i] = (fastf_t *)bu_malloc(6 * sizeof(fastf_t),"matrixcols");
-    
+ 
 /*    testmat1 = (fastf_t **)bu_malloc(5 * sizeof(fastf_t *),"matrixrows");
     for (i = 0; i < 5; i++)
 	testmat1[i] = (fastf_t *)bu_malloc(6 * sizeof(fastf_t),"matrixcols");
@@ -432,31 +426,19 @@ int main()
 
     
     Create_Ell1_Mat(matell1, 120.0,6.5,100.0,202.5,206.0,coordinates1);
-    MAT_COPY(matell1save,matell1);
-    printMatrix(matell1save,"Ell1 Matrix");
     Triangularize(matell1);
     SolveTri(matell1,result1);
     printVec(result1,5,"Ellipse 1 Coefficients");
     CalcInputVals(result1,result1a,coordinates1,result1);
     printVec(result1a,5,"Ellipse 1 Input Parameters");
-    ValidateMatrix(result1,matell1save,checkforzero);
-    printVec(checkforzero,5,"Validity Check for original Ell1 matrix");
-    ValidateMatrix(result1,matell1,checkforzero);
-    printVec(checkforzero,5,"Validity Check for reduced Ell1 matrix");
-
+    
     Create_Ell2_Mat(matell2, 120.0,6.5,126.0,182.5,206.0,21.5,111.0,result1,coordinates2);
-    MAT_COPY(matell2save, matell2);
-    printMatrix(matell2,"Ell2 Matrix");
     Triangularize(matell2);
     SolveTri(matell2,result2);
     printVec(result2,5,"Ellipse 2 Coefficients");
     CalcInputVals(result2,result2a,coordinates2,result1);
     printVec(result2a,5,"Ellipse 2 Input Paramenters");
-    ValidateMatrix(result2,matell2save,checkforzero);
-    printVec(checkforzero,5,"Validity Check for original Ell2 matrix");
-    ValidateMatrix(result2,matell2save,checkforzero);
-    printVec(checkforzero,5,"Validity Check for reduced Ell2 matrix");
-
+    
 
 
 /*    if ((db_fp = wdb_fopen(av[1])) == NULL) {
