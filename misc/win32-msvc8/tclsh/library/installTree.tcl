@@ -77,6 +77,13 @@ if {$missingFile} {
 }
 
 
+# Set Tcl related versions
+set tclVersion "8.5"
+set itclVersion "3.4"
+set iwidgetsVersion "4.0.2"
+set bltVersion "2.4"
+
+
 # Set BRL-CAD's version
 set fd [open [file join $rootDir include conf MAJOR] "r"]
 set major [read $fd]
@@ -127,8 +134,8 @@ puts "Creating [file join $installDir bin]"
 file mkdir [file join $installDir bin]
 puts "Creating [file join $installDir lib]"
 file mkdir [file join $installDir lib]
-puts "Creating [file join $installDir lib iwidgets4.0.2]"
-file mkdir [file join $installDir lib iwidgets4.0.2]
+puts "Creating [file join $installDir lib iwidgets$iwidgetsVersion]"
+file mkdir [file join $installDir lib iwidgets$iwidgetsVersion]
 puts "Creating [file join $installDir share]"
 file mkdir [file join $installDir share]
 puts "Creating [file join $installDir share brlcad]"
@@ -152,6 +159,13 @@ file mkdir [file join $shareDir sample_applications]
 # End Create install directories
 
 
+# Copy files to install directory
+puts "copy [file join $rootDir doc html manuals archer archer.ico] [file join $installDir]"
+file copy [file join $rootDir doc html manuals archer archer.ico] [file join $installDir]
+puts "copy [file join $rootDir misc nsis brlcad.ico] [file join $installDir]"
+file copy [file join $rootDir misc nsis brlcad.ico] [file join $installDir]
+
+
 # Copy files to the bin directory
 puts "copy [file join $rootDir src archer archer] [file join $installDir bin]"
 file copy [file join $rootDir src archer archer] [file join $installDir bin]
@@ -170,18 +184,18 @@ file copy [file join $rootDir include] $installDir
 
 
 # Copy files to the lib directory
-puts "copy [file join $rootDir src other blt library] [file join $installDir lib blt2.4]"
-file copy [file join $rootDir src other blt library] [file join $installDir lib blt2.4]
-puts "copy [file join $rootDir src other tcl library] [file join $installDir lib tcl8.5]"
-file copy [file join $rootDir src other tcl library] [file join $installDir lib tcl8.5]
-puts "copy [file join $rootDir src other tk library] [file join $installDir lib tk8.5]"
-file copy [file join $rootDir src other tk library] [file join $installDir lib tk8.5]
-puts "copy [file join $rootDir src other incrTcl itcl library] [file join $installDir lib itcl3.4]"
-file copy [file join $rootDir src other incrTcl itcl library] [file join $installDir lib itcl3.4]
-puts "copy [file join $rootDir src other incrTcl itk library] [file join $installDir lib itk3.4]"
-file copy [file join $rootDir src other incrTcl itk library] [file join $installDir lib itk3.4]
-puts "copy [file join $rootDir src other iwidgets generic] [file join $installDir lib iwidgets4.0.2]"
-file copy [file join $rootDir src other iwidgets generic] [file join $installDir lib iwidgets4.0.2 scripts]
+puts "copy [file join $rootDir src other blt library] [file join $installDir lib blt$bltVersion]"
+file copy [file join $rootDir src other blt library] [file join $installDir lib blt$bltVersion]
+puts "copy [file join $rootDir src other tcl library] [file join $installDir lib tcl$tclVersion]"
+file copy [file join $rootDir src other tcl library] [file join $installDir lib tcl$tclVersion]
+puts "copy [file join $rootDir src other tk library] [file join $installDir lib tk$tclVersion]"
+file copy [file join $rootDir src other tk library] [file join $installDir lib tk$tclVersion]
+puts "copy [file join $rootDir src other incrTcl itcl library] [file join $installDir lib itcl$itclVersion]"
+file copy [file join $rootDir src other incrTcl itcl library] [file join $installDir lib itcl$itclVersion]
+puts "copy [file join $rootDir src other incrTcl itk library] [file join $installDir lib itk$itclVersion]"
+file copy [file join $rootDir src other incrTcl itk library] [file join $installDir lib itk$itclVersion]
+puts "copy [file join $rootDir src other iwidgets generic] [file join $installDir lib iwidgets$iwidgetsVersion]"
+file copy [file join $rootDir src other iwidgets generic] [file join $installDir lib iwidgets$iwidgetsVersion scripts]
 # End Copy files to the lib directory
 
 
@@ -240,18 +254,18 @@ file copy [file join $rootDir src util roots_example.c] [file join $shareDir sam
 # Remove undesired directories/files as a result of wholesale copies
 file delete -force [file join $installDir include .cvsignore]
 file delete -force [file join $installDir include conf .cvsignore]
-file delete -force [file join $installDir lib blt2.4 Makefile.am]
-file delete -force [file join $installDir lib blt2.4 dd_protocols Makefile.am]
-file delete -force [file join $installDir lib itcl3.4 Makefile.am]
-file delete -force [file join $installDir lib itk3.4 Makefile.am]
-file delete -force [file join $installDir lib iwidgets4.0.2 Makefile.am]
-file delete -force [file join $installDir lib iwidgets4.0.2 scripts Makefile.am]
-#file delete -force [file join $installDir lib tk8.5 Makefile.am]
-#file delete -force [file join $installDir lib tk8.5 demos Makefile.am]
-#file delete -force [file join $installDir lib tk8.5 demos images Makefile.am]
-#file delete -force [file join $installDir lib tk8.5 images Makefile.am]
-#file delete -force [file join $installDir lib tk8.5 msgs Makefile.am]
-#file delete -force [file join $installDir lib tk8.5 ttk Makefile.am]
+file delete -force [file join $installDir lib blt$bltVersion Makefile.am]
+file delete -force [file join $installDir lib blt$bltVersion dd_protocols Makefile.am]
+file delete -force [file join $installDir lib itcl$itclVersion Makefile.am]
+file delete -force [file join $installDir lib itk$itclVersion Makefile.am]
+file delete -force [file join $installDir lib iwidgets$iwidgetsVersion Makefile.am]
+file delete -force [file join $installDir lib iwidgets$iwidgetsVersion scripts Makefile.am]
+#file delete -force [file join $installDir lib tk$tclVersion Makefile.am]
+#file delete -force [file join $installDir lib tk$tclVersion demos Makefile.am]
+#file delete -force [file join $installDir lib tk$tclVersion demos images Makefile.am]
+#file delete -force [file join $installDir lib tk$tclVersion images Makefile.am]
+#file delete -force [file join $installDir lib tk$tclVersion msgs Makefile.am]
+#file delete -force [file join $installDir lib tk$tclVersion ttk Makefile.am]
 
 file delete -force [file join $shareDir doc .cvsignore]
 file delete -force [file join $shareDir doc book Makefile.am]
@@ -311,10 +325,10 @@ file delete -force [file join $shareDir vfont Makefile.am]
 set fd1 [open [file join $rootDir src other iwidgets iwidgets.tcl.in] r]
 set lines [read $fd1]
 close $fd1
-puts "Creating [file join $installDir lib iwidgets4.0.2 iwidgets.tcl]"
-set fd2 [open [file join $installDir lib iwidgets4.0.2 iwidgets.tcl] w]
-set lines [regsub -all {@ITCL_VERSION@} $lines "3.4"]
-set lines [regsub -all {@IWIDGETS_VERSION@} $lines "4.0.2"]
+puts "Creating [file join $installDir lib iwidgets$iwidgetsVersion iwidgets.tcl]"
+set fd2 [open [file join $installDir lib iwidgets$iwidgetsVersion iwidgets.tcl] w]
+set lines [regsub -all {@ITCL_VERSION@} $lines $itclVersion]
+set lines [regsub -all {@IWIDGETS_VERSION@} $lines $iwidgetsVersion]
 puts $fd2 $lines
 close $fd2
 # End Create iwidgets.tcl
@@ -324,9 +338,9 @@ close $fd2
 set fd1 [open [file join $rootDir src other iwidgets pkgIndex.tcl.in] r]
 set lines [read $fd1]
 close $fd1
-puts "Creating [file join $installDir lib iwidgets4.0.2 pkgIndex.tcl]"
-set fd2 [open [file join $installDir lib iwidgets4.0.2 pkgIndex.tcl] w]
-set lines [regsub -all {@IWIDGETS_VERSION@} $lines "4.0.2"]
+puts "Creating [file join $installDir lib iwidgets$iwidgetsVersion pkgIndex.tcl]"
+set fd2 [open [file join $installDir lib iwidgets$iwidgetsVersion pkgIndex.tcl] w]
+set lines [regsub -all {@IWIDGETS_VERSION@} $lines $iwidgetsVersion]
 puts $fd2 $lines
 close $fd2
 # End Create pkgIndex.tcl for iwidgets
@@ -338,7 +352,7 @@ set lines [read $fd1]
 close $fd1
 puts "Creating [file join $rootDir src other tk win wish.exe.manifest]"
 set fd2 [open [file join $rootDir src other tk win wish.exe.manifest] w]
-set lines [regsub -all {@TK_WIN_VERSION@} $lines "8.5"]
+set lines [regsub -all {@TK_WIN_VERSION@} $lines $tclVersion]
 set lines [regsub -all {@MACHINE@} $lines "x86"]
 puts $fd2 $lines
 close $fd2
