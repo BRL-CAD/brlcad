@@ -42,11 +42,11 @@
 #define ROWS 5
 #define COLS 5
 
-void printMatrix(fastf_t **mat)
+void printMatrix(fastf_t **mat, char *strname)
 {
     int i=0;
     int j = 0;
-    bu_log("\n-----%s------\n", "M");
+    bu_log("\n-----%s------\n", strname);
     for (i = 0; i < 30; i++) {
 	if (i%6 == 0 && i != 0) {
 	    bu_log("]\n");
@@ -57,14 +57,14 @@ void printMatrix(fastf_t **mat)
     bu_log("\n-----------\n");
 }
 
-void printVec(fastf_t *result1, int c)
+void printVec(fastf_t *result1, int c, char *strname)
 {
     int i=0;
-    bu_log("\n-----%s------\n", "V");
+    bu_log("\n\n-----%s------\n", strname);
     for (i = 0; i < c; i++) {
 	bu_log("%.8f ", result1[i]);
     }
-    bu_log("\n-----------\n");
+    bu_log("\n-------------------------\n\n");
 }
 
 fastf_t GetEllSlopeAtPoint(fastf_t *inarray, fastf_t x)
@@ -80,6 +80,7 @@ fastf_t GetEllSlopeAtPoint(fastf_t *inarray, fastf_t x)
     return slope;
 }
 
+/*
 void ValidateEqn(fastf_t *coeff, fastf_t *coord)
 {
     fastf_t result1,result2;
@@ -89,7 +90,35 @@ void ValidateEqn(fastf_t *coeff, fastf_t *coord)
     printf("Eval at %6.4f,%6.4f is %6.6f\n",coord[0],coord[1],result1+1);
     printf("Eval at %6.4f,%6.4f is %6.6f\n\n",coord[2],coord[3],result2+1);
 }
+*/
+void ValidateEqnYder(fastf_t *coeff, fastf_t *coord, fastf_t slope1)
+{
+    fastf_t result1;
+    result1 = 2*coeff[0]*coord[2]+coeff[1]*(coord[3]+coord[3]*slope1)+coeff[2]*2*coord[3]*slope1+coeff[3]+coeff[4]*slope1;
+    printf("\nF'(y) Sanity check :\n");
+    printf("Eval at %6.4f,%6.4f is %6.6f\n\n",coord[2],coord[3],result1);
+}
+/*
+void ValidateEqnZder(fastf_t *coeff, fastf_t *coord)
+{
+    fastf_t result1;
+    result1 = coeff[1]*coord[4]+2*coeff[2]*coord[5]+coeff[4];
+    printf("\nF'(z) Sanity check :\n");
+    printf("Eval at %6.4f,%6.4f is %6.6f\n",coord[4],coord[5],result1);
+}
+*/
 
+void ValidateMatrix(fastf_t * coeff, fastf_t **matrix_eval, fastf_t *check_for_zero)
+{
+    int i,j;
+    fastf_t temp;
+    for (i = 0; i < 5; i++){
+	temp = 0;
+	for (j = 0; j < 5; j++)
+	    temp += coeff[j] * matrix_eval[i][j];
+	check_for_zero[i] = temp-matrix_eval[i][5];
+    }
+}
 void TestMatrixGeneration(fastf_t **matrix_test, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2,
 			  fastf_t x3, fastf_t y3, fastf_t x4, fastf_t y4,
 			  fastf_t x5, fastf_t y5)
@@ -160,21 +189,18 @@ void Create_Ell1_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t dyme
     mat[4][5] = -1;
 
     printf("ell1x1 : %6.6f; ell1y1 : %6.6f;\nell1x2 : %6.6f; ell1y2 : %6.6f;\nell1x3 : %6.6f; ell1y3 : %6.6f;\n",dymeas/2,zmeas,dytred/2,ztire-dztred,0.0,ztire);
-    coordcheck[0] = dymeas/2;
+/*    coordcheck[0] = dymeas/2;
     coordcheck[1] = zmeas;
     coordcheck[2] = dytred/2;
-    coordcheck[3] = ztire-dztred;
+    coordcheck[3] = ztire-dztred;*/
 
 }
 
-void Create_Ell2_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t dymax, fastf_t zymax, fastf_t ztire, fastf_t dyhub, fastf_t zhub, fastf_t *coeff,
-		     fastf_t *coordcheck) 
+void Create_Ell2_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t dymax, fastf_t zymax, fastf_t ztire, fastf_t dyhub, fastf_t zhub, fastf_t *coeff, fastf_t *coordcheck) 
 {
     fastf_t ell1slope;
     ell1slope = GetEllSlopeAtPoint(coeff,dytred/2);
-
-    printf("slope of E1 = %6.6f\n",ell1slope);
-
+    printf("Ell1slope = %6.6f\n",ell1slope);
     mat[0][0] = (dymax / 2) * (dymax / 2);
     mat[0][1] = (zymax * dymax / 2);
     mat[0][2] = zymax * zymax;
@@ -195,22 +221,22 @@ void Create_Ell2_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t dyma
     mat[2][5] = -1;
     mat[3][0] = 2 * (dytred / 2);
     mat[3][1] = (ztire - dztred) + (dytred / 2) * ell1slope;
-    mat[3][2] = 2*(dytred / 2) * ell1slope;
+    mat[3][2] = 2*(ztire - dztred) * ell1slope;
     mat[3][3] = 1;
     mat[3][4] = ell1slope;
-    mat[3][5] = -1;
-    mat[4][0] = 2 * zymax;
+    mat[3][5] = 0;
+    mat[4][0] = 0;
     mat[4][1] = dymax / 2;
-    mat[4][2] = 0;
+    mat[4][2] = 2*zymax;
     mat[4][3] = 0;
     mat[4][4] = 1;
-    mat[4][5] =- 1;
+    mat[4][5] =0;
 
-    printf("ell2x1 : %6.6f; ell2y1 : %6.6f;\nell2x2 : %6.6f; ell2y2 : %6.6f;\nell2x3 : %6.6f; ell2y3 : %6.6f;\n",dymax/2,zymax,dytred/2,ztire-dztred,dymax/2-dyhub,zhub);
-    coordcheck[0] = dymax/2;
+   printf("ell2x1 : %6.6f; ell2y1 : %6.6f;\nell2x2 : %6.6f; ell2y2 : %6.6f;\nell2x3 : %6.6f; ell2y3 : %6.6f;\n",dymax/2,zymax,dytred/2,ztire-dztred,dymax/2-dyhub,zhub); 
+/*    coordcheck[0] = dymax/2;
     coordcheck[1] = zymax;
     coordcheck[2] = dytred/2;
-    coordcheck[3] = ztire-dztred;
+    coordcheck[3] = ztire-dztred; */
 
 }
 
@@ -264,7 +290,7 @@ void SolveTri(fastf_t **mat, fastf_t *result1)
     }
 }
 
-void CalcInputVals(fastf_t *inarray, fastf_t *outarray, fastf_t *coordinates)
+void CalcInputVals(fastf_t *inarray, fastf_t *outarray, fastf_t *coordinates, fastf_t *ell1coeff)
 {
     fastf_t A,B,C,D,E;
     fastf_t Ap,Cp,Dp,Ep;
@@ -279,9 +305,8 @@ void CalcInputVals(fastf_t *inarray, fastf_t *outarray, fastf_t *coordinates)
     C = inarray[2];
     D = inarray[3];
     E = inarray[4];
-    ValidateEqn(inarray,coordinates);
-    
-    /*printf("eqn1 = %6.6f*x^2+%6.6f*x*y+%6.6f*y^2+%6.6f*x+%6.6f*y+F\n",A,B,C,D,E);*/
+
+    printf("eqn : %6.9f*x^2+%6.9f*x*y+%6.9f*y^2+%6.9f*x+%6.9f*y+1\n",A,B,C,D,E);
 
     theta = .5*atan(B/(A-C));
     
@@ -299,15 +324,14 @@ void CalcInputVals(fastf_t *inarray, fastf_t *outarray, fastf_t *coordinates)
     translatedcoords[1] = coordinates[0]*sin(theta)+coordinates[1]*cos(theta);
     translatedcoords[2] = coordinates[2]*cos(theta)-coordinates[3]*sin(theta);
     translatedcoords[3] = coordinates[2]*sin(theta)+coordinates[3]*cos(theta);
-    ValidateEqn(coeffarray2,translatedcoords);
 
-    printf("Ap = %6.4f\n",Ap);
+/*    printf("Ap = %6.4f\n",Ap);
     printf("Cp = %6.4f\n",Cp);
     printf("Dp = %6.4f\n",Dp);
     printf("Ep = %6.4f\n",Ep);
 
-    printf("eqn1 = %6.6f*x^2+%6.6f*y^2+%6.6f*x+%6.6f*y+F\n",Ap,Cp,Dp,Ep);
-
+    printf("eqn1 = %6.6f*x^2+%6.6f*y^2+%6.6f*x+%6.6f*y+1\n",Ap,Cp,Dp,Ep);
+*/
    /*Dpp and Epp are zero when translated to the origin - solve for x0,y0*/
 
     x0 = Dp/(2*Ap);
@@ -368,12 +392,12 @@ int main()
 {
 /*    struct rt_wdb *db_fp; */
     int i;
-    fastf_t **matell1;
-    fastf_t **matell2;
-    fastf_t **testmat1;
+    fastf_t **matell1,**matell1save;
+    fastf_t **matell2,**matell2save;
+/*    fastf_t **testmat1; */
     fastf_t result1[5],result1a[5];
-    fastf_t result2[5],result2a[5];
-    fastf_t coordinates[6];
+    fastf_t result2[5],result2a[5],checkforzero[5];
+    fastf_t coordinates1[6],coordinates2[6];
     
     matell1 = (fastf_t **)bu_malloc(5 * sizeof(fastf_t *),"matrixrows");
     for (i = 0; i < 5; i++)
@@ -382,35 +406,56 @@ int main()
     matell2 = (fastf_t **)bu_malloc(5 * sizeof(fastf_t *),"matrixrows");
     for (i = 0; i < 5; i++)
 	matell2[i] = (fastf_t *)bu_malloc(6 * sizeof(fastf_t),"matrixcols");
+
+    matell1save = (fastf_t **)bu_malloc(5 * sizeof(fastf_t *),"matrixrows");
+    for (i = 0; i < 5; i++)
+	matell1save[i] = (fastf_t *)bu_malloc(6 * sizeof(fastf_t),"matrixcols");
     
-    testmat1 = (fastf_t **)bu_malloc(5 * sizeof(fastf_t *),"matrixrows");
+    matell2save = (fastf_t **)bu_malloc(5 * sizeof(fastf_t *),"matrixrows");
+    for (i = 0; i < 5; i++)
+	matell2save[i] = (fastf_t *)bu_malloc(6 * sizeof(fastf_t),"matrixcols");
+    
+/*    testmat1 = (fastf_t **)bu_malloc(5 * sizeof(fastf_t *),"matrixrows");
     for (i = 0; i < 5; i++)
 	testmat1[i] = (fastf_t *)bu_malloc(6 * sizeof(fastf_t),"matrixcols");
  
 
-/*
-    printMatrix(testmat1);
+
+    printMatrix(testmat1,"Test Matrix");
     Triangularize(testmat1);
-    printMatrix(testmat1);
+    printMatrix(testmat1, "Triangularized Test Matrix");
     SolveTri(testmat1,result1);
-    printVec(result1,5);
+    printVec(result1,5,"Test Matrix Result 1");
     printf("slope = %6.4f\n\n",GetEllSlopeAtPoint(result1,-4.8));
     CalcInputVals(result1,result2);
-    printVec(result2,5);*/
+    printVec(result2,5,"Test Matrix Result 2");*/
 
     
-    Create_Ell1_Mat(matell1, 120.0,6.5,100.0,202.5,206.0,coordinates);
+    Create_Ell1_Mat(matell1, 120.0,6.5,100.0,202.5,206.0,coordinates1);
+    MAT_COPY(matell1save,matell1);
+    printMatrix(matell1save,"Ell1 Matrix");
     Triangularize(matell1);
     SolveTri(matell1,result1);
-    printVec(result1,5);
-    CalcInputVals(result1,result1a,coordinates);
-    printVec(result1a,5);
+    printVec(result1,5,"Ellipse 1 Coefficients");
+    CalcInputVals(result1,result1a,coordinates1,result1);
+    printVec(result1a,5,"Ellipse 1 Input Parameters");
+    ValidateMatrix(result1,matell1save,checkforzero);
+    printVec(checkforzero,5,"Validity Check for original Ell1 matrix");
+    ValidateMatrix(result1,matell1,checkforzero);
+    printVec(checkforzero,5,"Validity Check for reduced Ell1 matrix");
 
-    Create_Ell2_Mat(matell2, 120.0,6.5,126.0,182.5,206.0,21.5,111.0,result1,coordinates);
+    Create_Ell2_Mat(matell2, 120.0,6.5,126.0,182.5,206.0,21.5,111.0,result1,coordinates2);
+    MAT_COPY(matell2save, matell2);
+    printMatrix(matell2,"Ell2 Matrix");
     Triangularize(matell2);
     SolveTri(matell2,result2);
-    CalcInputVals(result2,result2a,coordinates);
-    printVec(result2a,5);
+    printVec(result2,5,"Ellipse 2 Coefficients");
+    CalcInputVals(result2,result2a,coordinates2,result1);
+    printVec(result2a,5,"Ellipse 2 Input Paramenters");
+    ValidateMatrix(result2,matell2save,checkforzero);
+    printVec(checkforzero,5,"Validity Check for original Ell2 matrix");
+    ValidateMatrix(result2,matell2save,checkforzero);
+    printVec(checkforzero,5,"Validity Check for reduced Ell2 matrix");
 
 
 
