@@ -1,3 +1,5 @@
+@ECHO OFF
+
 REM                      A R C H E R . B A T
 REM  BRL-CAD
 REM 
@@ -17,8 +19,6 @@ REM  You should have received a copy of the GNU Lesser General Public
 REM  License along with this file; see the file named COPYING for more
 REM  information.
 REM 
-REM REM REM 
-@ECHO OFF
 
 REM	Author:		Bob Parker
 REM	Company:	Survice Engineering
