@@ -67,7 +67,7 @@ void printVec(fastf_t *result1, int c, char *strname)
     bu_log("\n-------------------------\n\n");
 }
 
-fastf_t GetEllSlopeAtPoint(fastf_t *inarray, fastf_t x)
+fastf_t GetEllSlopeAtPoint(fastf_t *inarray, fastf_t x, fastf_t y)
 {
     fastf_t A,B,C,D,E,F,slope;
     A = inarray[0];
@@ -76,7 +76,8 @@ fastf_t GetEllSlopeAtPoint(fastf_t *inarray, fastf_t x)
     D = inarray[3];
     E = inarray[4];
     F = -1;
-    slope = ((2*B*E-4*C*D-8*x*A*C+2*x*B*B)/(2*sqrt(-4*C*F+E*E+2*x*B*E-4*x*C*D-4*x*x*A*C+x*x*B*B))+B)/(2*C);
+    slope = -(D+y*B+2*x*A)/(E+2*y*C+x*B);
+/*    slope = -((2*B*E - 4*C*D - 8*x*A*C + 2*x*B*B)/(2*sqrt(E*E + 2*x*B*E - 4*x*C*D - 4*x*x*A*C + x*x*B*B))+B)/(2*C);*/
     return slope;
 }
 
@@ -155,7 +156,7 @@ void TestMatrixGeneration(fastf_t **matrix_test, fastf_t x1, fastf_t y1, fastf_t
     matrix_test[4][5] = -1;
 }
 
-void Create_Ell1_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t dymeas, fastf_t zmeas, fastf_t ztire,fastf_t *coordcheck) 
+void Create_Ell1_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t dymeas, fastf_t zmeas, fastf_t ztire) 
 {
     mat[0][0] = (dymeas/2) * (dymeas/2);
     mat[0][1] = (zmeas * dymeas/2);
@@ -187,19 +188,10 @@ void Create_Ell1_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t dyme
     mat[4][3] = (-dytred / 2);
     mat[4][4] = (ztire - dztred);
     mat[4][5] = -1;
-
-    printf("ell1x1 : %6.6f; ell1y1 : %6.6f;\nell1x2 : %6.6f; ell1y2 : %6.6f;\nell1x3 : %6.6f; ell1y3 : %6.6f;\n",dymeas/2,zmeas,dytred/2,ztire-dztred,0.0,ztire);
-    coordcheck[0] = dymeas/2;
-    coordcheck[1] = zmeas;
-    coordcheck[2] = dytred/2;
-    coordcheck[3] = ztire-dztred;
 }
 
-void Create_Ell2_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t dymax, fastf_t zymax, fastf_t ztire, fastf_t dyhub, fastf_t zhub, fastf_t *coeff, fastf_t *coordcheck) 
+void Create_Ell2_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t dymax, fastf_t zymax, fastf_t ztire, fastf_t dyhub, fastf_t zhub, fastf_t ell1slope) 
 {
-    fastf_t ell1slope;
-    ell1slope = GetEllSlopeAtPoint(coeff,dytred/2);
-    printf("Ell1slope = %6.6f\n",ell1slope);
     mat[0][0] = (dymax / 2) * (dymax / 2);
     mat[0][1] = (zymax * dymax / 2);
     mat[0][2] = zymax * zymax;
@@ -229,13 +221,7 @@ void Create_Ell2_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t dyma
     mat[4][2] = 2*zymax;
     mat[4][3] = 0;
     mat[4][4] = 1;
-    mat[4][5] =0;
-
-   printf("ell2x1 : %6.6f; ell2y1 : %6.6f;\nell2x2 : %6.6f; ell2y2 : %6.6f;\nell2x3 : %6.6f; ell2y3 : %6.6f;\n",dymax/2,zymax,dytred/2,ztire-dztred,dymax/2-dyhub,zhub); 
-    coordcheck[0] = dymax/2;
-    coordcheck[1] = zymax;
-    coordcheck[2] = dytred/2;
-    coordcheck[3] = ztire-dztred;
+    mat[4][5] = 0;
 }
 
 void SortRows(fastf_t **mat, int colnum)
@@ -288,18 +274,17 @@ void SolveTri(fastf_t **mat, fastf_t *result1)
     }
 }
 
-void CalcInputVals(fastf_t *inarray, fastf_t *outarray, fastf_t *coordinates, fastf_t *ell1coeff)
+void CalcInputVals(fastf_t *inarray, fastf_t *outarray, int orientation)
 {
     fastf_t A,B,C,D,E,F;
     fastf_t Dp,Ep,Fp;
     fastf_t App, Bpp,Cpp,Dpp, Epp,Fpp;
-    fastf_t x0,y0,xa,ya;
+    fastf_t x0,y0;
     fastf_t theta;
+    fastf_t length1, length2;
     fastf_t semimajor, semiminor;
-    fastf_t coeffarray2[5],translatedcoords[6];
+    fastf_t semimajorx,semimajory;
 
-    printVec(coordinates,6,"Coordinates");
-    printVec(inarray,5,"Coefficients");
 
     A = inarray[0];
     B = inarray[1];
@@ -315,59 +300,130 @@ void CalcInputVals(fastf_t *inarray, fastf_t *outarray, fastf_t *coordinates, fa
 
     Fp = 1-y0*E-x0*D+y0*y0*C+x0*y0*B+x0*x0*A;
 
-    printf("eqn : %6.9f*x^2+%6.9f*x*y+%6.9f*y^2+%6.9f*x+%6.9f*y+1\n",A,B,C,D,E);
-
-    printf("transeqn : %6.9f*x^2+%6.9f*x*y+%6.9f*y^2+%6.9f\n",A,B,C,Fp);
-
     /*Rotation Angle*/
-    theta = .5*atan(B/(A-C));
+    theta = .5*atan(1000*B/(1000*A-1000*C));
     
     /*B' is zero with above theta choice*/
     App = A*cos(theta)*cos(theta)+B*cos(theta)*sin(theta)+C*sin(theta)*sin(theta);
     Bpp = 2*(C-A)*cos(theta)*sin(theta)+B*cos(theta)*cos(theta)-B*sin(theta)*sin(theta);
     Cpp = A*sin(theta)*sin(theta)-B*sin(theta)*cos(theta)+C*cos(theta)*cos(theta);
-    coeffarray2[0] = App/Fp;
-    coeffarray2[1] = Bpp/Fp;
-    coeffarray2[2] = Cpp/Fp;
-    coeffarray2[3] = 0;
-    coeffarray2[4] = 0;
 
-    printf("App = %6.4f\n",App);
-    printf("Bpp = %6.4f\n",Bpp);
-    printf("Cpp = %6.4f\n",Cpp);
+    length1 = sqrt(-Fp/App);
+    length2 = sqrt(-Fp/Cpp);
 
-    printf("roteqn : %6.6f*x^2+%6.6f*x*y+%6.6f*y^2+%6.6f\n",App,Bpp,Cpp,Fp);
+    if (length1 > length2) {
+	semimajor = length1;
+	semiminor = length2;
+    } else {
+	semimajor = length2;
+	semiminor = length1;
+    }
 
-   /*Dpp and Epp are zero when translated to the origin - solve for x0,y0*/
+    /*Based on orientation of Ellipse, largest component of C is either in the
+     *y direction (0) or z direction (1);
+     */
 
-
-    semimajor = sqrt(-Fp/App);
-    semiminor = sqrt(-Fp/Cpp);
+    if (orientation == 0){
+	semimajorx = semimajor*cos(-theta);
+	semimajory = semimajor*sin(-theta);
+    }else{
+	semimajorx = semimajor*sin(-theta);
+	semimajory = semimajor*cos(-theta);
+    }
 
     outarray[0] = -x0;
     outarray[1] = -y0;
-    outarray[2] = semimajor;
-    outarray[3] = semiminor;
-    outarray[4] = R2D(theta);
+    outarray[2] = semimajorx;
+    outarray[3] = semimajory;
+    outarray[4] = semiminor;
 }
 
-void MakeTireCore(struct rt_wdb (*file), fastf_t flat_r, fastf_t outer_r, fastf_t core_width)
+void MakeTireCore(struct rt_wdb (*file), fastf_t dytred, fastf_t dztred, fastf_t dell1ymeas, fastf_t ell1zmeas, fastf_t ztire, fastf_t dymax, fastf_t zymax, fastf_t dyhub, fastf_t zhub)
 {
-    struct wmember tirecorelist;
-    vect_t a;
-    fastf_t bmag;
-    vect_t b;
-    vect_t c;
-    point_t origin;
-    point_t cut_base;
-    vect_t cut_height;
+    struct wmember tirecoretred, tirecoresides, tirecoretredcuts, tirecoresidecuts ,tirecorelist;
+    int i;
+    vect_t vertex,height;
+    point_t origin,normal,C;
     unsigned char rgb[3];
+    fastf_t ell1slope,ell2slope;
+    fastf_t ell1coefficients[5],ell2coefficients[5];
+    fastf_t ell1cadparams[5],ell2cadparams[5];
+    fastf_t **matrixell1;
+    fastf_t **matrixell2;
+    matrixell1 = (fastf_t **)bu_malloc(5 * sizeof(fastf_t *),"matrixrows");
+    for (i = 0; i < 5; i++)
+	matrixell1[i] = (fastf_t *)bu_malloc(6 * sizeof(fastf_t),"matrixcols");
+    
+    matrixell2 = (fastf_t **)bu_malloc(5 * sizeof(fastf_t *),"matrixrows");
+    for (i = 0; i < 5; i++)
+	matrixell2[i] = (fastf_t *)bu_malloc(6 * sizeof(fastf_t),"matrixcols");
+   
+    Create_Ell1_Mat(matrixell1, dytred, dztred, dell1ymeas, ell1zmeas, ztire);
+    Triangularize(matrixell1);
+    SolveTri(matrixell1,ell1coefficients);
+    printVec(ell1coefficients,5,"Ellipse 1 Coefficients");
+    printf("elleqn1 : %6.9f*x^2+%6.9f*x*y+%6.9f*y^2+%6.9f*x+%6.9f*y-1;\n",ell1coefficients[0],ell1coefficients[1],ell1coefficients[2],ell1coefficients[3],ell1coefficients[4]);
+    ell1slope = GetEllSlopeAtPoint(ell1coefficients,dytred/2,ztire-dztred);
+    printf("ell1slope = %6.9f\n",ell1slope);
+    Create_Ell2_Mat(matrixell2, dytred, dztred, dymax, zymax, ztire, dyhub, zhub, ell1slope);
+    Triangularize(matrixell2);
+    SolveTri(matrixell2,ell2coefficients);
+    printVec(ell2coefficients,5,"Ellipse 2 Coefficients");
+    printf("elleqn1 : %6.9f*x^2+%6.9f*x*y+%6.9f*y^2+%6.9f*x+%6.9f*y-1;\n",ell2coefficients[0],ell2coefficients[1],ell2coefficients[2],ell2coefficients[3],ell2coefficients[4]);
+    ell2slope = GetEllSlopeAtPoint(ell2coefficients,dytred/2,ztire-dztred);
+    printf("ell2slope = %6.9f\n",ell2slope);
+    CalcInputVals(ell1coefficients,ell1cadparams,0);
+    printVec(ell1cadparams,5,"Ellipse 1 Input Parameters");
+    CalcInputVals(ell2coefficients,ell2cadparams,1);
+    printVec(ell2cadparams,5,"Ellipse 2 Input Parameters");
+
+
+    VSET(origin, 0, ell1cadparams[0], 0);
+    VSET(normal, 0, 1, 0);
+    VSET(C, 0, ell1cadparams[2],ell1cadparams[3]);
+    mk_eto(file, "Ellipse1.s", origin, normal, C, ell1cadparams[1], ell1cadparams[4]);
+    VSET(origin, 0, ell2cadparams[0], 0);
+    VSET(C, 0, ell2cadparams[2],ell2cadparams[3]);
+    mk_eto(file, "Ellipse2.s", origin, normal, C, ell2cadparams[1], ell2cadparams[4]);
+    VSET(origin, 0, -ell2cadparams[0], 0);
+    VSET(normal, 0, -1, 0);
+    VSET(C, 0, -ell2cadparams[2],-ell2cadparams[3]);
+    mk_eto(file, "Ellipse3.s", origin, normal, C, ell2cadparams[1], ell2cadparams[4]);
+    VSET(vertex, 0, dytred/2, 0);
+    VSET(height, 0, dymax/2-dytred/2, 0);
+    mk_rcc(file, "TopClipR.s", vertex, height, ztire);
+    VSET(vertex, 0, -dytred/2, 0);
+    VSET(height, 0, -dymax/2+dytred/2, 0);
+    mk_rcc(file, "TopClipL.s", vertex, height, ztire);
+    VSET(vertex, 0, -dymax/2, 0);
+    VSET(height, 0, dymax, 0);
+    mk_rcc(file, "SideClipOuter.s", vertex, height, ztire - dztred);
+    mk_rcc(file, "SideClipInner.s", vertex, height, zhub);
+    VSET(rgb, 217, 217, 217);
+    BU_LIST_INIT(&tirecoretredcuts.l);
+    (void)mk_addmember("TopClipR.s", &tirecoretredcuts.l, NULL, WMOP_UNION);
+    (void)mk_addmember("TopClipL.s", &tirecoretredcuts.l, NULL, WMOP_UNION);
+    mk_lcomb(file, "tire-core-tred-cuts.c", &tirecoretredcuts, 0, "plastic", "di=.8 sp=.2", rgb, 0);
+    BU_LIST_INIT(&tirecoresidecuts.l);
+    (void)mk_addmember("SideClipOuter.s", &tirecoresidecuts.l, NULL, WMOP_UNION);
+    (void)mk_addmember("SideClipInner.s", &tirecoresidecuts.l, NULL, WMOP_UNION);
+    mk_lcomb(file, "tire-core-side-cuts.c", &tirecoresidecuts, 0, "plastic", "di=.8 sp=.2", rgb, 0);
+    
+
+    BU_LIST_INIT(&tirecorelist.l);
+    (void)mk_addmember("Ellipse1.s", &tirecorelist.l, NULL, WMOP_UNION);
+    (void)mk_addmember("Ellipse2.s", &tirecorelist.l, NULL, WMOP_UNION);
+    (void)mk_addmember("Ellipse3.s", &tirecorelist.l, NULL, WMOP_UNION);
+    VSET(rgb, 217, 217, 217);
+    mk_lcomb(file, "tire-core.c", &tirecorelist, 0, "plastic", "di=.8 sp=.2", rgb, 0);
+/*
+
     if (!NEAR_ZERO(flat_r - outer_r, SMALL_FASTF)) 
 	bmag = sqrt((core_width / 2) * (core_width / 2) / (1 - (flat_r * flat_r) / (outer_r * outer_r)));
-    /* bu_log("Magnitude of flat_r is %f \n", flat_r);
-     * bu_log("Magnitude of core_width is %f \n", core_width);
-     * bu_log("Magnitude of outer_r is %f \n", outer_r);
-     * bu_log("Magnitude of bmag is %f \n", bmag);*/
+	* bu_log("Magnitude of flat_r is %f \n", flat_r);
+	* bu_log("Magnitude of core_width is %f \n", core_width);
+	* bu_log("Magnitude of outer_r is %f \n", outer_r);
+	* bu_log("Magnitude of bmag is %f \n", bmag);
     VSET(origin, 0, 0, 0);
     VSET(a, outer_r, 0, 0);
     VSET(b, 0, bmag, 0);
@@ -386,69 +442,21 @@ void MakeTireCore(struct rt_wdb (*file), fastf_t flat_r, fastf_t outer_r, fastf_
 	(void)mk_addmember("core-cut.s", &tirecorelist.l, NULL, WMOP_INTERSECT);
     VSET(rgb, 0, 0, 0);
     mk_lcomb(file, "tire-core.c", &tirecorelist, 0, "plastic", "di=.8 sp=.2", rgb, 0);
+*/
 }
 
 
-int main()
+int main(int ac, char *av[])
 {
-/*    struct rt_wdb *db_fp; */
-    int i;
-    fastf_t **matell1;
-    fastf_t **matell2;
-/*    fastf_t **testmat1; */
-    fastf_t result1[5],result1a[5];
-    fastf_t result2[5],result2a[5];
-    fastf_t coordinates1[6],coordinates2[6];
-    
-    matell1 = (fastf_t **)bu_malloc(5 * sizeof(fastf_t *),"matrixrows");
-    for (i = 0; i < 5; i++)
-	matell1[i] = (fastf_t *)bu_malloc(6 * sizeof(fastf_t),"matrixcols");
-    
-    matell2 = (fastf_t **)bu_malloc(5 * sizeof(fastf_t *),"matrixrows");
-    for (i = 0; i < 5; i++)
-	matell2[i] = (fastf_t *)bu_malloc(6 * sizeof(fastf_t),"matrixcols");
+    struct rt_wdb *db_fp;
 
- 
-/*    testmat1 = (fastf_t **)bu_malloc(5 * sizeof(fastf_t *),"matrixrows");
-    for (i = 0; i < 5; i++)
-	testmat1[i] = (fastf_t *)bu_malloc(6 * sizeof(fastf_t),"matrixcols");
- 
+    if ((db_fp = wdb_fopen(av[1])) == NULL) {
+       db_fp = wdb_fopen("test.g");
+    }
+    mk_id(db_fp, "Test Database");
+    MakeTireCore(db_fp, 120.0,6.5,100.0,202.5,206.0,126.0,182.5,21.5,111.0);
+    wdb_close(db_fp);
 
-
-    printMatrix(testmat1,"Test Matrix");
-    Triangularize(testmat1);
-    printMatrix(testmat1, "Triangularized Test Matrix");
-    SolveTri(testmat1,result1);
-    printVec(result1,5,"Test Matrix Result 1");
-    printf("slope = %6.4f\n\n",GetEllSlopeAtPoint(result1,-4.8));
-    CalcInputVals(result1,result2);
-    printVec(result2,5,"Test Matrix Result 2");*/
-
-    
-    Create_Ell1_Mat(matell1, 120.0,6.5,100.0,202.5,206.0,coordinates1);
-    Triangularize(matell1);
-    SolveTri(matell1,result1);
-    printVec(result1,5,"Ellipse 1 Coefficients");
-    CalcInputVals(result1,result1a,coordinates1,result1);
-    printVec(result1a,5,"Ellipse 1 Input Parameters");
-    
-    Create_Ell2_Mat(matell2, 120.0,6.5,126.0,182.5,206.0,21.5,111.0,result1,coordinates2);
-    Triangularize(matell2);
-    SolveTri(matell2,result2);
-    printVec(result2,5,"Ellipse 2 Coefficients");
-    CalcInputVals(result2,result2a,coordinates2,result1);
-    printVec(result2a,5,"Ellipse 2 Input Paramenters");
-    
-
-
-/*    if ((db_fp = wdb_fopen(av[1])) == NULL) {
- *       perror(av[1]);
- *       return 1;
- *   }
- *   mk_id(db_fp, "Test Database");
- *   MakeTireCore(db_fp, 100, 100, 40);
- *   wdb_close(db_fp);
- */
     return 0;
 }
 
