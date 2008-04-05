@@ -392,10 +392,10 @@ void MakeTireCore(struct rt_wdb (*file), fastf_t dytred, fastf_t dztred, fastf_t
     mk_eto(file, "Ellipse3.s", origin, normal, C, ell2cadparams[1], ell2cadparams[4]);
     VSET(vertex, 0, dytred/2, 0);
     VSET(height, 0, dymax/2-dytred/2, 0);
-    mk_rcc(file, "TopClipR.s", vertex, height, ztire);
+    mk_rcc(file, "TopClipR.s", vertex, height, ztire - dztred);
     VSET(vertex, 0, -dytred/2, 0);
     VSET(height, 0, -dymax/2+dytred/2, 0);
-    mk_rcc(file, "TopClipL.s", vertex, height, ztire);
+    mk_rcc(file, "TopClipL.s", vertex, height, ztire - dztred);
     VSET(vertex, 0, -dymax/2, 0);
     VSET(height, 0, dymax, 0);
     mk_rcc(file, "SideClipOuter.s", vertex, height, ztire - dztred);
@@ -471,6 +471,8 @@ int main(int ac, char *av[])
     }
     mk_id(db_fp, "Test Database");
     MakeTireCore(db_fp, 120.0,6.5,100.0,202.5,206.0,126.0,182.5,21.5,111.0);
+
+
     wdb_close(db_fp);
 
     return 0;
