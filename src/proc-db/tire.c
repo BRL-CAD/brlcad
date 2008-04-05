@@ -340,7 +340,8 @@ void CalcInputVals(fastf_t *inarray, fastf_t *outarray, int orientation)
 
 void MakeTireCore(struct rt_wdb (*file), fastf_t dytred, fastf_t dztred, fastf_t dell1ymeas, fastf_t ell1zmeas, fastf_t ztire, fastf_t dymax, fastf_t zymax, fastf_t dyhub, fastf_t zhub)
 {
-    struct wmember tirecoretred, tirecoresides, tirecoretredcuts, tirecoresidecuts ,tirecorelist;
+    struct wmember tiresideoutercutright, tiresideoutercutleft, tiresideinnercutright, tiresideinnercutleft;
+    struct wmember tiretred, tiresides, tiresurface;
     int i;
     vect_t vertex,height;
     point_t origin,normal,C;
@@ -400,24 +401,39 @@ void MakeTireCore(struct rt_wdb (*file), fastf_t dytred, fastf_t dztred, fastf_t
     mk_rcc(file, "SideClipOuter.s", vertex, height, ztire - dztred);
     mk_rcc(file, "SideClipInner.s", vertex, height, zhub);
     VSET(rgb, 217, 217, 217);
-    BU_LIST_INIT(&tirecoretredcuts.l);
-    (void)mk_addmember("TopClipR.s", &tirecoretredcuts.l, NULL, WMOP_UNION);
-    (void)mk_addmember("TopClipL.s", &tirecoretredcuts.l, NULL, WMOP_UNION);
-    mk_lcomb(file, "tire-core-tred-cuts.c", &tirecoretredcuts, 0, "plastic", "di=.8 sp=.2", rgb, 0);
-    BU_LIST_INIT(&tirecoresidecuts.l);
-    (void)mk_addmember("SideClipOuter.s", &tirecoresidecuts.l, NULL, WMOP_UNION);
-    (void)mk_addmember("SideClipInner.s", &tirecoresidecuts.l, NULL, WMOP_UNION);
-    mk_lcomb(file, "tire-core-side-cuts.c", &tirecoresidecuts, 0, "plastic", "di=.8 sp=.2", rgb, 0);
-    
+    BU_LIST_INIT(&tiresideoutercutright.l);
+    (void)mk_addmember("Ellipse2.s", &tiresideoutercutright.l, NULL, WMOP_UNION);
+    (void)mk_addmember("SideClipOuter.s", &tiresideoutercutright.l, NULL, WMOP_INTERSECT);
+    mk_lcomb(file, "tire-side-outer-cut-right.c", &tiresideoutercutright, 0, "plastic", "di=.8 sp=.2", rgb, 0);
+    BU_LIST_INIT(&tiresideoutercutleft.l);
+    (void)mk_addmember("Ellipse3.s", &tiresideoutercutleft.l, NULL, WMOP_UNION);
+    (void)mk_addmember("SideClipOuter.s", &tiresideoutercutleft.l, NULL, WMOP_INTERSECT);
+    mk_lcomb(file, "tire-side-outer-cut-left.c", &tiresideoutercutleft, 0, "plastic", "di=.8 sp=.2", rgb, 0);
+    BU_LIST_INIT(&tiresideinnercutright.l);
+    (void)mk_addmember("tire-side-outer-cut-right.c", &tiresideinnercutright.l, NULL, WMOP_UNION);
+    (void)mk_addmember("SideClipInner.s", &tiresideinnercutright.l, NULL, WMOP_SUBTRACT);
+    mk_lcomb(file, "tire-side-inner-cut-right.c", &tiresideinnercutright, 0, "plastic", "di=.8 sp=.2", rgb, 0);
+    BU_LIST_INIT(&tiresideinnercutleft.l);
+    (void)mk_addmember("tire-side-outer-cut-left.c", &tiresideinnercutleft.l, NULL, WMOP_UNION);
+    (void)mk_addmember("SideClipInner.s", &tiresideinnercutleft.l, NULL, WMOP_SUBTRACT);
+    mk_lcomb(file, "tire-side-inner-cut-left.c", &tiresideinnercutleft, 0, "plastic", "di=.8 sp=.2", rgb, 0);
+    BU_LIST_INIT(&tiresides.l);
+    (void)mk_addmember("tire-side-inner-cut-right.c", &tiresides.l, NULL, WMOP_UNION);
+    (void)mk_addmember("tire-side-inner-cut-left.c", &tiresides.l, NULL, WMOP_UNION);
+    mk_lcomb(file, "tire-sides.c", &tiresides, 0, "plastic", "di=.8 sp=.2", rgb, 0);
 
-    BU_LIST_INIT(&tirecorelist.l);
-    (void)mk_addmember("Ellipse1.s", &tirecorelist.l, NULL, WMOP_UNION);
-    (void)mk_addmember("Ellipse2.s", &tirecorelist.l, NULL, WMOP_UNION);
-    (void)mk_addmember("Ellipse3.s", &tirecorelist.l, NULL, WMOP_UNION);
-    VSET(rgb, 217, 217, 217);
-    mk_lcomb(file, "tire-core.c", &tirecorelist, 0, "plastic", "di=.8 sp=.2", rgb, 0);
+    BU_LIST_INIT(&tiretred.l);
+    (void)mk_addmember("Ellipse1.s", &tiretred.l, NULL, WMOP_UNION);
+    (void)mk_addmember("TopClipR.s", &tiretred.l, NULL, WMOP_SUBTRACT);
+    (void)mk_addmember("TopClipL.s", &tiretred.l, NULL, WMOP_SUBTRACT);
+    mk_lcomb(file, "tire-tred-surface.c", &tiretred, 0, "plastic", "di=.8 sp=.2", rgb, 0);
+
+    BU_LIST_INIT(&tiresurface.l);
+    (void)mk_addmember("tire-sides.c", &tiresurface.l, NULL, WMOP_UNION);
+    (void)mk_addmember("tire-tred-surface.c", &tiresurface.l, NULL, WMOP_UNION);
+    mk_lcomb(file, "tire-surface.c", &tiresurface, 0, "plastic", "di=.8 sp=.2", rgb, 0);
+
 /*
-
     if (!NEAR_ZERO(flat_r - outer_r, SMALL_FASTF)) 
 	bmag = sqrt((core_width / 2) * (core_width / 2) / (1 - (flat_r * flat_r) / (outer_r * outer_r)));
 	* bu_log("Magnitude of flat_r is %f \n", flat_r);
@@ -451,7 +467,7 @@ int main(int ac, char *av[])
     struct rt_wdb *db_fp;
 
     if ((db_fp = wdb_fopen(av[1])) == NULL) {
-       db_fp = wdb_fopen("test.g");
+       db_fp = wdb_fopen("tire.g");
     }
     mk_id(db_fp, "Test Database");
     MakeTireCore(db_fp, 120.0,6.5,100.0,202.5,206.0,126.0,182.5,21.5,111.0);
