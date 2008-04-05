@@ -848,13 +848,13 @@ rt_cut_it(register struct rt_i *rtip, int ncpu)
 	    /* Also add infinite solids to a special BOXNODE */
 	    rt_cut_extend( &rtip->rti_inf_box, stp, rtip );
 	}
-    } RT_VISIT_ALL_SOLTABS_END
+    } RT_VISIT_ALL_SOLTABS_END;
 
-	  /* Dynamic decisions on tree limits.  Note that there will be
-	   * (2**rtip->rti_cutdepth)*rtip->rti_cutlen potential leaf slots.
-	   * Also note that solids will typically span several leaves.
-	   */
-	  rtip->rti_cutlen = (int)log((double)rtip->nsolids);  /* ln ~= log2 */
+    /* Dynamic decisions on tree limits.  Note that there will be
+     * (2**rtip->rti_cutdepth)*rtip->rti_cutlen potential leaf slots.
+     * Also note that solids will typically span several leaves.
+     */
+    rtip->rti_cutlen = (int)log((double)(rtip->nsolids+1));  /* ln ~= log2, nsolids+1 to avoid log(0) */
     rtip->rti_cutdepth = 2 * rtip->rti_cutlen;
     if ( rtip->rti_cutlen < 3 )  rtip->rti_cutlen = 3;
     if ( rtip->rti_cutdepth < 12 )  rtip->rti_cutdepth = 12;
