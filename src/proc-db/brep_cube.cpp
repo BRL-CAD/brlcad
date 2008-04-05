@@ -423,8 +423,8 @@ main(int argc, char** argv)
     struct rt_wdb* outfp;
     ON_Brep* brep;
     ON_TextLog error_log;
-    char* id_name = "B-Rep Example";
-    char* geom_name = "cube.s";
+    const char* id_name = "B-Rep Example";
+    const char* geom_name = "cube.s";
 
     ON::Begin();
 

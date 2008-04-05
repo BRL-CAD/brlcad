@@ -67,7 +67,7 @@ int main(int argc, char** argv) {
     int mcount = 0;
     struct rt_wdb* outfp;
     ON_TextLog error_log;
-    char* id_name = "3dm -> g conversion";
+    const char* id_name = "3dm -> g conversion";
     char* outFileName;
     const char* inputFileName;
     ONX_Model model;
