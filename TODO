@@ -135,8 +135,6 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
   managers, geometry converters, and image converters.  consider
   apache's module management as an example.
 
-* libbu routine to make a temp file reliably/consistently
-
 * review "eclectic" from GSI as a tessellation approach
 
 * review and merge in the rest of the GSI modifications
