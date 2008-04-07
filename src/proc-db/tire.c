@@ -190,7 +190,7 @@ void Create_Ell1_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t dyme
     mat[4][5] = -1;
 }
 
-void Create_Ell2_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t dymax, fastf_t zymax, fastf_t ztire, fastf_t dyhub, fastf_t zhub, fastf_t ell1slope) 
+void Create_Ell2_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t dymax, fastf_t zymax, fastf_t dell2ymeas, fastf_t ell2zmeas, fastf_t ztire, fastf_t dyhub, fastf_t zhub, fastf_t ell1slope) 
 {
     mat[0][0] = (dymax / 2) * (dymax / 2);
     mat[0][1] = (zymax * dymax / 2);
@@ -216,12 +216,12 @@ void Create_Ell2_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t dyma
     mat[3][3] = 1;
     mat[3][4] = ell1slope;
     mat[3][5] = 0;
-    mat[4][0] = 0;
-    mat[4][1] = dymax / 2;
-    mat[4][2] = 2*zymax;
-    mat[4][3] = 0;
-    mat[4][4] = 1;
-    mat[4][5] = 0;
+    mat[4][0] = (dell2ymeas / 2) * (dell2ymeas / 2);
+    mat[4][1] = (ell2zmeas*dell2ymeas / 2);
+    mat[4][2] = ell2zmeas*ell2zmeas;
+    mat[4][3] = dell2ymeas / 2;
+    mat[4][4] = ell2zmeas;
+    mat[4][5] = -1;
 }
 
 void SortRows(fastf_t **mat, int colnum)
@@ -338,7 +338,7 @@ void CalcInputVals(fastf_t *inarray, fastf_t *outarray, int orientation)
     outarray[4] = semiminor;
 }
 
-void MakeTireCore(struct rt_wdb (*file), fastf_t dytred, fastf_t dztred, fastf_t dell1ymeas, fastf_t ell1zmeas, fastf_t ztire, fastf_t dymax, fastf_t zymax, fastf_t dyhub, fastf_t zhub)
+void MakeTireCore(struct rt_wdb (*file), fastf_t dytred, fastf_t dztred, fastf_t dell1ymeas, fastf_t ell1zmeas, fastf_t dell2ymeas, fastf_t ell2zmeas, fastf_t ztire, fastf_t dymax, fastf_t zymax, fastf_t dyhub, fastf_t zhub)
 {
     struct wmember tiresideoutercutright, tiresideoutercutleft, tiresideinnercutright, tiresideinnercutleft;
     struct wmember tiretred, tiresides, tiresurface;
@@ -349,8 +349,7 @@ void MakeTireCore(struct rt_wdb (*file), fastf_t dytred, fastf_t dztred, fastf_t
     fastf_t ell1slope,ell2slope;
     fastf_t ell1coefficients[5],ell2coefficients[5];
     fastf_t ell1cadparams[5],ell2cadparams[5];
-    fastf_t **matrixell1;
-    fastf_t **matrixell2;
+    fastf_t **matrixell1,**matrixell2,**matrixell3;
     matrixell1 = (fastf_t **)bu_malloc(5 * sizeof(fastf_t *),"matrixrows");
     for (i = 0; i < 5; i++)
 	matrixell1[i] = (fastf_t *)bu_malloc(6 * sizeof(fastf_t),"matrixcols");
@@ -358,6 +357,10 @@ void MakeTireCore(struct rt_wdb (*file), fastf_t dytred, fastf_t dztred, fastf_t
     matrixell2 = (fastf_t **)bu_malloc(5 * sizeof(fastf_t *),"matrixrows");
     for (i = 0; i < 5; i++)
 	matrixell2[i] = (fastf_t *)bu_malloc(6 * sizeof(fastf_t),"matrixcols");
+
+    matrixell3 = (fastf_t **)bu_malloc(5 * sizeof(fastf_t *),"matrixrows");
+    for (i = 0; i < 5; i++)
+	matrixell3[i] = (fastf_t *)bu_malloc(6 * sizeof(fastf_t),"matrixcols");
    
     Create_Ell1_Mat(matrixell1, dytred, dztred, dell1ymeas, ell1zmeas, ztire);
     Triangularize(matrixell1);
@@ -366,7 +369,7 @@ void MakeTireCore(struct rt_wdb (*file), fastf_t dytred, fastf_t dztred, fastf_t
     printf("elleqn1 : %6.9f*x^2+%6.9f*x*y+%6.9f*y^2+%6.9f*x+%6.9f*y-1;\n",ell1coefficients[0],ell1coefficients[1],ell1coefficients[2],ell1coefficients[3],ell1coefficients[4]);
     ell1slope = GetEllSlopeAtPoint(ell1coefficients,dytred/2,ztire-dztred);
     printf("ell1slope = %6.9f\n",ell1slope);
-    Create_Ell2_Mat(matrixell2, dytred, dztred, dymax, zymax, ztire, dyhub, zhub, ell1slope);
+    Create_Ell2_Mat(matrixell2, dytred, dztred, dymax, zymax, dell2ymeas, ell2zmeas, ztire, dyhub, zhub, ell1slope);
     Triangularize(matrixell2);
     SolveTri(matrixell2,ell2coefficients);
     printVec(ell2coefficients,5,"Ellipse 2 Coefficients");
@@ -384,22 +387,28 @@ void MakeTireCore(struct rt_wdb (*file), fastf_t dytred, fastf_t dztred, fastf_t
     VSET(C, 0, ell1cadparams[2],ell1cadparams[3]);
     mk_eto(file, "Ellipse1.s", origin, normal, C, ell1cadparams[1], ell1cadparams[4]);
     VSET(origin, 0, ell2cadparams[0], 0);
+    VSET(normal, 0, ell2cadparams[2]/sqrt(ell2cadparams[2]*ell2cadparams[2]), 0);
     VSET(C, 0, ell2cadparams[2],ell2cadparams[3]);
     mk_eto(file, "Ellipse2.s", origin, normal, C, ell2cadparams[1], ell2cadparams[4]);
     VSET(origin, 0, -ell2cadparams[0], 0);
-    VSET(normal, 0, -1, 0);
+    VSET(normal, 0, -ell2cadparams[2]/sqrt(ell2cadparams[2]*ell2cadparams[2]), 0);
     VSET(C, 0, -ell2cadparams[2],-ell2cadparams[3]);
     mk_eto(file, "Ellipse3.s", origin, normal, C, ell2cadparams[1], ell2cadparams[4]);
-    VSET(vertex, 0, dytred/2, 0);
-    VSET(height, 0, dymax/2-dytred/2, 0);
+    VSET(vertex, 0, 0, 0);
+    VSET(height, 0, dymax+sqrt(ell2cadparams[2]*ell2cadparams[2]), 0);
     mk_rcc(file, "TopClipR.s", vertex, height, ztire - dztred);
-    VSET(vertex, 0, -dytred/2, 0);
-    VSET(height, 0, -dymax/2+dytred/2, 0);
+    VSET(vertex, 0, 0, 0);
+    VSET(height, 0, -dymax-sqrt(ell2cadparams[2]*ell2cadparams[2]), 0);
     mk_rcc(file, "TopClipL.s", vertex, height, ztire - dztred);
-    VSET(vertex, 0, -dymax/2, 0);
-    VSET(height, 0, dymax, 0);
+    VSET(vertex, 0, -dymax-sqrt(ell2cadparams[2]*ell2cadparams[2]), 0);
+    VSET(height, 0, 2*(dymax+sqrt(ell2cadparams[2]*ell2cadparams[2])), 0);
     mk_rcc(file, "SideClipOuter.s", vertex, height, ztire - dztred);
     mk_rcc(file, "SideClipInner.s", vertex, height, zhub);
+
+    VSET(vertex, 0, -dytred/2, 0);
+    VSET(height, 0, dytred, 0);
+    mk_rcc(file, "InnerSolid.s", vertex, height, ztire-dztred);
+
     VSET(rgb, 217, 217, 217);
     BU_LIST_INIT(&tiresideoutercutright.l);
     (void)mk_addmember("Ellipse2.s", &tiresideoutercutright.l, NULL, WMOP_UNION);
@@ -470,7 +479,7 @@ int main(int ac, char *av[])
        db_fp = wdb_fopen("tire.g");
     }
     mk_id(db_fp, "Test Database");
-    MakeTireCore(db_fp, 120.0,6.5,100.0,202.5,206.0,126.0,182.5,21.5,111.0);
+    MakeTireCore(db_fp, 120.0,6.5,100.0,202.5,90.0,120.0,206.0,146.0,182.5,10.0,111.0);
 
 
     wdb_close(db_fp);
