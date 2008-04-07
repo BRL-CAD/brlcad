@@ -787,7 +787,7 @@ maintainability, and portability of the source code at all times.
 
 2) Bugs, typos, and compilation errors are to be expected as part of
 the process of active software development and documentation, but it
-is ultimately unacceptible to allow them to persist.  If it is
+is ultimately unacceptable to allow them to persist.  If it is
 discovered that a recent modification introduces a new problem, such
 as causing a compilation portability failure, then it is the
 responsibility of the contributor that introduced the change to assist
