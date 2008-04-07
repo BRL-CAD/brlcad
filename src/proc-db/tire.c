@@ -342,6 +342,8 @@ void MakeTireCore(struct rt_wdb (*file), fastf_t dytred, fastf_t dztred, fastf_t
 {
     struct wmember tiresideoutercutright, tiresideoutercutleft, tiresideinnercutright, tiresideinnercutleft;
     struct wmember tiretred, tiresides, tiresurface;
+    struct wmember innersolid;
+    struct wmember tire;
     int i;
     vect_t vertex,height;
     point_t origin,normal,C;
@@ -408,6 +410,14 @@ void MakeTireCore(struct rt_wdb (*file), fastf_t dytred, fastf_t dztred, fastf_t
     VSET(vertex, 0, -dytred/2, 0);
     VSET(height, 0, dytred, 0);
     mk_rcc(file, "InnerSolid.s", vertex, height, ztire-dztred);
+    VSET(normal, 0, 1, 0);
+    mk_cone(file, "LeftCone.s", vertex, normal, dytred/2 - (dymax/2 - dyhub), ztire-dztred,zhub);
+    VSET(vertex, 0, dytred/2, 0);
+    VSET(normal, 0, -1, 0);
+    mk_cone(file, "RightCone.s", vertex, normal, dytred/2 - (dymax/2 - dyhub), ztire-dztred,zhub);
+
+
+    
 
     VSET(rgb, 217, 217, 217);
     BU_LIST_INIT(&tiresideoutercutright.l);
@@ -442,6 +452,25 @@ void MakeTireCore(struct rt_wdb (*file), fastf_t dytred, fastf_t dztred, fastf_t
     (void)mk_addmember("tire-tred-surface.c", &tiresurface.l, NULL, WMOP_UNION);
     mk_lcomb(file, "tire-surface.c", &tiresurface, 0, "plastic", "di=.8 sp=.2", rgb, 0);
 
+    BU_LIST_INIT(&innersolid.l);
+    (void)mk_addmember("InnerSolid.s", &innersolid.l, NULL, WMOP_UNION);
+    if ((dytred/2 - (dymax/2 - dyhub)) > 0 ) {
+	(void)mk_addmember("LeftCone.s", &innersolid.l, NULL, WMOP_SUBTRACT);
+	(void)mk_addmember("RightCone.s", &innersolid.l, NULL, WMOP_SUBTRACT);
+    }
+    if ((dytred/2 - (dymax/2 - dyhub)) < 0 ) {
+	(void)mk_addmember("LeftCone.s", &innersolid.l, NULL, WMOP_UNION);
+	(void)mk_addmember("RightCone.s", &innersolid.l, NULL, WMOP_UNION);
+    }
+    (void)mk_addmember("SideClipInner.s", &innersolid.l, NULL, WMOP_SUBTRACT);
+    mk_lcomb(file, "tire-solid.c", &innersolid, 0, "plastic", "di=.8 sp=.2", rgb, 0);
+
+    BU_LIST_INIT(&tire.l);
+    (void)mk_addmember("tire-surface.c", &tire.l, NULL, WMOP_UNION);
+    (void)mk_addmember("tire-solid.c", &tire.l, NULL, WMOP_UNION);
+    mk_lcomb(file, "tire.c", &tire, 1, "plastic", "di=.8 sp=.2", rgb, 0);
+  
+
 /*
     if (!NEAR_ZERO(flat_r - outer_r, SMALL_FASTF)) 
 	bmag = sqrt((core_width / 2) * (core_width / 2) / (1 - (flat_r * flat_r) / (outer_r * outer_r)));
@@ -470,7 +499,6 @@ void MakeTireCore(struct rt_wdb (*file), fastf_t dytred, fastf_t dztred, fastf_t
 */
 }
 
-
 int main(int ac, char *av[])
 {
     struct rt_wdb *db_fp;
@@ -480,8 +508,7 @@ int main(int ac, char *av[])
     }
     mk_id(db_fp, "Test Database");
     MakeTireCore(db_fp, 120.0,6.5,100.0,202.5,90.0,120.0,206.0,146.0,182.5,10.0,111.0);
-
-
+ 
     wdb_close(db_fp);
 
     return 0;
