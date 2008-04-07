@@ -144,6 +144,7 @@ Section "BRL-CAD (required)" BRL-CAD
   SetOutPath $INSTDIR
   CreateShortCut "$DESKTOP\Archer.lnk" "$INSTDIR\bin\archer.bat" "" "$INSTDIR\archer.ico" 0
   CreateShortCut "$DESKTOP\MGED.lnk" "$INSTDIR\bin\mged.bat" "" "$INSTDIR\brlcad.ico" 0
+  CreateShortCut "$DESKTOP\RtWizard.lnk" "$INSTDIR\bin\rtwizard.bat" "" "$INSTDIR\brlcad.ico" 0
 
   !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
     ;Main start menu shortcuts
@@ -151,6 +152,7 @@ Section "BRL-CAD (required)" BRL-CAD
     CreateDirectory "$SMPROGRAMS\$STARTMENU_FOLDER"
     CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Archer.lnk" "$INSTDIR\bin\archer.bat" "" "$INSTDIR\archer.ico" 0
     CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\MGED.lnk" "$INSTDIR\bin\mged.bat" "" "$INSTDIR\brlcad.ico" 0
+    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\RtWizard.lnk" "$INSTDIR\bin\rtwizard.bat" "" "$INSTDIR\brlcad.ico" 0
     CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Uninstall.lnk" "$INSTDIR\uninstall.exe" "" "$INSTDIR\uninstall.exe" 0
   !insertmacro MUI_STARTMENU_WRITE_END
 
@@ -219,6 +221,7 @@ Section "Uninstall"
   Delete "$SMPROGRAMS\$MUI_TEMP\*"
   Delete "$DESKTOP\Archer.lnk"
   Delete "$DESKTOP\MGED.lnk"
+  Delete "$DESKTOP\RtWizard.lnk"
 
 
   ; Remove miscellaneous files
