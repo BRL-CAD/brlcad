@@ -61,8 +61,7 @@ md5sums=('eb537947981d71cd8f0e329127e3aa5c')
 
 build() {
     cd $startdir/../../
-    ./configure --prefix=/opt/brlcad --enable-optimized --disable-sdltest \
-    --disable-jove-build
+    ./configure --prefix=/opt/brlcad
     make || return 1
     make DESTDIR=$startdir/pkg install || return 1
 
