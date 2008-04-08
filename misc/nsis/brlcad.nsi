@@ -21,6 +21,9 @@
   ; The file to write
   OutFile "brlcad-${VERSION}.exe"
 
+  ; Read in the program files path
+  ReadEnvStr $PROGRAMFILES "PROGRAMFILES"
+
   ; The default installation directory
   InstallDir $PROGRAMFILES\BRL-CAD
 
