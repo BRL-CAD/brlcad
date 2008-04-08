@@ -82,6 +82,18 @@ fastf_t GetEllSlopeAtPoint(fastf_t *inarray, fastf_t x, fastf_t y)
     return slope;
 }
 
+fastf_t GetYmax(fastf_t *inarray)
+{
+    fastf_t A,B,C,D,E,F,ymax;
+    A = inarray[0];
+    B = inarray[1];
+    C = inarray[2];
+    D = inarray[3];
+    E = inarray[4];
+    F = -1;
+    
+    return ymax;
+}
 
 void Create_Ell1_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t dytop, fastf_t dztop, fastf_t ztire) 
 {
@@ -203,9 +215,8 @@ void SolveTri(fastf_t **mat, fastf_t *result1)
 
 void CalcInputVals(fastf_t *inarray, fastf_t *outarray, int orientation)
 {
-    fastf_t A,B,C,D,E,F;
-    fastf_t Dp,Ep,Fp;
-    fastf_t App, Bpp,Cpp,Dpp, Epp,Fpp;
+    fastf_t A,B,C,D,E,Fp;
+    fastf_t App, Bpp,Cpp;
     fastf_t x0,y0;
     fastf_t theta;
     fastf_t length1, length2;
@@ -265,7 +276,7 @@ void CalcInputVals(fastf_t *inarray, fastf_t *outarray, int orientation)
     outarray[4] = semiminor;
 }
 
-void MakeTireCore(struct rt_wdb (*file), char *suffix, fastf_t dytred, fastf_t dztred, fastf_t dytop, fastf_t dztop, fastf_t dyside2, fastf_t zside2, fastf_t ztire, fastf_t dyside1, fastf_t zside1, fastf_t dyhub, fastf_t zhub)
+void MakeTireCore(struct rt_wdb (*file), char *suffix, fastf_t dytred, fastf_t dztred, fastf_t dytop, fastf_t dztop, fastf_t dyside1, fastf_t zside1, fastf_t dyside2, fastf_t zside2, fastf_t ztire, fastf_t dyhub, fastf_t zhub)
 {
     struct wmember tiresideoutercutright, tiresideoutercutleft, tiresideinnercutright, tiresideinnercutleft;
     struct wmember tiretred, tiresides, tiresurface;
@@ -276,7 +287,6 @@ void MakeTireCore(struct rt_wdb (*file), char *suffix, fastf_t dytred, fastf_t d
     int i;
     vect_t vertex,height;
     point_t origin,normal,C;
-    unsigned char rgb[3];
     fastf_t ell1slope,ell2slope;
     fastf_t ell1coefficients[5],ell2coefficients[5];
     fastf_t ell1cadparams[5],ell2cadparams[5];
@@ -328,17 +338,17 @@ void MakeTireCore(struct rt_wdb (*file), char *suffix, fastf_t dytred, fastf_t d
     bu_vls_printf(&str, "Ellipse3%s.s", suffix);	
     mk_eto(file, bu_vls_addr(&str), origin, normal, C, ell2cadparams[1], ell2cadparams[4]);
     VSET(vertex, 0, 0, 0);
-    VSET(height, 0, dyside1+sqrt(ell2cadparams[2]*ell2cadparams[2]), 0);
+    VSET(height, 0, dyside1/2, 0);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "TopClipR%s.s", suffix);	
     mk_rcc(file, bu_vls_addr(&str), vertex, height, ztire - dztred);
     VSET(vertex, 0, 0, 0);
-    VSET(height, 0, -dyside1-sqrt(ell2cadparams[2]*ell2cadparams[2]), 0);
+    VSET(height, 0, -dyside1/2, 0);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "TopClipL%s.s", suffix);	
     mk_rcc(file, bu_vls_addr(&str), vertex, height, ztire - dztred);
-    VSET(vertex, 0, -dyside1-sqrt(ell2cadparams[2]*ell2cadparams[2]), 0);
-    VSET(height, 0, 2*(dyside1+sqrt(ell2cadparams[2]*ell2cadparams[2])), 0);
+    VSET(vertex, 0, -dyside1, 0);
+    VSET(height, 0, 2*dyside1, 0);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "SideClipOuter%s.s", suffix);	
     mk_rcc(file, bu_vls_addr(&str), vertex, height, ztire - dztred);
@@ -364,57 +374,72 @@ void MakeTireCore(struct rt_wdb (*file), char *suffix, fastf_t dytred, fastf_t d
 
     
 
-    VSET(rgb, 217, 217, 217);
     BU_LIST_INIT(&tiresideoutercutright.l);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Ellipse2%s.s", suffix);	
     (void)mk_addmember(bu_vls_addr(&str), &tiresideoutercutright.l, NULL, WMOP_UNION);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "SideClipOuter%s.s", suffix);	
-    (void)mk_addmember(bu_vls_addr(&str), &tiresideoutercutright.l, NULL, WMOP_INTERSECT);
+    (void)mk_addmember(bu_vls_addr(&str), &tiresideoutercutright.l, NULL, WMOP_SUBTRACT);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "tire-side-outer-cut-right%s.c", suffix);	
-    mk_lcomb(file, bu_vls_addr(&str), &tiresideoutercutright, 0, "plastic", "di=.8 sp=.2", rgb, 0);
-    BU_LIST_INIT(&tiresideoutercutleft.l);
+    mk_lcomb(file, bu_vls_addr(&str), &tiresideoutercutright, 0, NULL, NULL, NULL, 0);
+ 
+   BU_LIST_INIT(&tiresideoutercutleft.l);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Ellipse3%s.s", suffix);	
     (void)mk_addmember(bu_vls_addr(&str), &tiresideoutercutleft.l, NULL, WMOP_UNION);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "SideClipOuter%s.s", suffix);	
-    (void)mk_addmember(bu_vls_addr(&str), &tiresideoutercutleft.l, NULL, WMOP_INTERSECT);
+    (void)mk_addmember(bu_vls_addr(&str), &tiresideoutercutleft.l, NULL, WMOP_SUBTRACT);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "tire-side-outer-cut-left%s.c", suffix);	
-    mk_lcomb(file, bu_vls_addr(&str), &tiresideoutercutleft, 0, "plastic", "di=.8 sp=.2", rgb, 0);
+    mk_lcomb(file, bu_vls_addr(&str), &tiresideoutercutleft, 0, NULL, NULL, NULL, 0);
+
     BU_LIST_INIT(&tiresideinnercutright.l);
     bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "tire-side-outer-cut-right%s.c", suffix);	
+    bu_vls_printf(&str, "Ellipse2%s.s", suffix);	
     (void)mk_addmember(bu_vls_addr(&str), &tiresideinnercutright.l, NULL, WMOP_UNION);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "SideClipInner%s.s", suffix);	
-    (void)mk_addmember(bu_vls_addr(&str), &tiresideinnercutright.l, NULL, WMOP_SUBTRACT);
+    (void)mk_addmember(bu_vls_addr(&str), &tiresideinnercutright.l, NULL, WMOP_INTERSECT);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "tire-side-inner-cut-right%s.c", suffix);	
-    mk_lcomb(file, bu_vls_addr(&str), &tiresideinnercutright, 0, "plastic", "di=.8 sp=.2", rgb, 0);
+    mk_lcomb(file, bu_vls_addr(&str), &tiresideinnercutright, 0, NULL, NULL, NULL, 0);
+
     BU_LIST_INIT(&tiresideinnercutleft.l);
     bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "tire-side-outer-cut-left%s.c", suffix);	
+    bu_vls_printf(&str, "Ellipse3%s.s", suffix);	
     (void)mk_addmember(bu_vls_addr(&str), &tiresideinnercutleft.l, NULL, WMOP_UNION);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "SideClipInner%s.s", suffix);	
-    (void)mk_addmember(bu_vls_addr(&str), &tiresideinnercutleft.l, NULL, WMOP_SUBTRACT);
+    (void)mk_addmember(bu_vls_addr(&str), &tiresideinnercutleft.l, NULL, WMOP_INTERSECT);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "tire-side-inner-cut-left%s.c", suffix);	
-    mk_lcomb(file, bu_vls_addr(&str), &tiresideinnercutleft, 0, "plastic", "di=.8 sp=.2", rgb, 0);
+    mk_lcomb(file, bu_vls_addr(&str), &tiresideinnercutleft, 0, NULL, NULL, NULL, 0);
+
     BU_LIST_INIT(&tiresides.l);
     bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "Ellipse2%s.s", suffix);	
+    (void)mk_addmember(bu_vls_addr(&str), &tiresides.l, NULL, WMOP_UNION);
+    bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "tire-side-inner-cut-right%s.c", suffix);	
+    (void)mk_addmember(bu_vls_addr(&str), &tiresides.l, NULL, WMOP_SUBTRACT);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "tire-side-outer-cut-right%s.c", suffix);	
+    (void)mk_addmember(bu_vls_addr(&str), &tiresides.l, NULL, WMOP_SUBTRACT);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "Ellipse3%s.s", suffix);	
     (void)mk_addmember(bu_vls_addr(&str), &tiresides.l, NULL, WMOP_UNION);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "tire-side-inner-cut-left%s.c", suffix);	
-    (void)mk_addmember(bu_vls_addr(&str), &tiresides.l, NULL, WMOP_UNION);
+    (void)mk_addmember(bu_vls_addr(&str), &tiresides.l, NULL, WMOP_SUBTRACT);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "tire-side-outer-cut-left%s.c", suffix);	
+    (void)mk_addmember(bu_vls_addr(&str), &tiresides.l, NULL, WMOP_SUBTRACT);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "tire-sides%s.c", suffix);	
-    mk_lcomb(file, bu_vls_addr(&str), &tiresides, 0, "plastic", "di=.8 sp=.2", rgb, 0);
+    mk_lcomb(file, bu_vls_addr(&str), &tiresides, 0, NULL, NULL, NULL, 0);
 
     BU_LIST_INIT(&tiretred.l);
     bu_vls_trunc(&str,0);
@@ -428,7 +453,7 @@ void MakeTireCore(struct rt_wdb (*file), char *suffix, fastf_t dytred, fastf_t d
     (void)mk_addmember(bu_vls_addr(&str), &tiretred.l, NULL, WMOP_SUBTRACT);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "tire-tred-surface%s.c", suffix);	
-    mk_lcomb(file, bu_vls_addr(&str), &tiretred, 0, "plastic", "di=.8 sp=.2", rgb, 0);
+    mk_lcomb(file, bu_vls_addr(&str), &tiretred, 0, NULL, NULL, NULL, 0);
 
     BU_LIST_INIT(&tiresurface.l);
     bu_vls_trunc(&str,0);
@@ -439,7 +464,7 @@ void MakeTireCore(struct rt_wdb (*file), char *suffix, fastf_t dytred, fastf_t d
     (void)mk_addmember(bu_vls_addr(&str), &tiresurface.l, NULL, WMOP_UNION);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "tire-surface%s.c", suffix);	
-    mk_lcomb(file, bu_vls_addr(&str), &tiresurface, 0, "plastic", "di=.8 sp=.2", rgb, 0);
+    mk_lcomb(file, bu_vls_addr(&str), &tiresurface, 0, NULL, NULL, NULL, 0);
 
     BU_LIST_INIT(&innersolid.l);
     bu_vls_trunc(&str,0);
@@ -466,7 +491,7 @@ void MakeTireCore(struct rt_wdb (*file), char *suffix, fastf_t dytred, fastf_t d
     (void)mk_addmember(bu_vls_addr(&str), &innersolid.l, NULL, WMOP_SUBTRACT);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "tire-solid%s.c", suffix);	
-    mk_lcomb(file, bu_vls_addr(&str), &innersolid, 0, "plastic", "di=.8 sp=.2", rgb, 0);
+    mk_lcomb(file, bu_vls_addr(&str), &innersolid, 0, NULL, NULL, NULL, 0);
 
     BU_LIST_INIT(&tire.l);
     bu_vls_trunc(&str,0);
@@ -477,7 +502,7 @@ void MakeTireCore(struct rt_wdb (*file), char *suffix, fastf_t dytred, fastf_t d
     (void)mk_addmember(bu_vls_addr(&str), &tire.l, NULL, WMOP_UNION);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "tire%s.c", suffix);	
-    mk_lcomb(file, bu_vls_addr(&str), &tire, 1, "plastic", "di=.8 sp=.2", rgb, 0);
+    mk_lcomb(file, bu_vls_addr(&str), &tire, 0, NULL, NULL, NULL, 0);
   
     bu_vls_free(&str);
 
@@ -493,14 +518,39 @@ void MakeTireCore(struct rt_wdb (*file), char *suffix, fastf_t dytred, fastf_t d
 int main(int ac, char *av[])
 {
     struct rt_wdb *db_fp;
-
+    fastf_t dytred,dztred,dytop,dztop,dyside1,zside1,dyside2,zside2,ztire,dyhub,zhub;
+    fastf_t cutscaley,cutscalez;
+    struct wmember tire;
+    unsigned char rgb[3];
+    VSET(rgb, 40, 40, 40);
     if ((db_fp = wdb_fopen(av[1])) == NULL) {
        db_fp = wdb_fopen("tire.g");
     }
     mk_id(db_fp, "Test Database");
-    MakeTireCore(db_fp, "", 120.0,6.5,100.0,3.5,90.0,120.0,206.0,146.0,182.5,126.0,111.0);
-    MakeTireCore(db_fp, "-cut", 110.0,6.5,90.0,3.5,70.0,100.0,186.0,126.0,162.5,106.0,91.0);
+    
+    dytred = 124.0;
+    dztred = 6.5;
+    dytop = 100.0;
+    dztop = 3.5;
+    dyside1 = 150;
+    zside1 = 180;
+    dyside2 = 135;
+    zside2 = 120;
+    ztire = 206;
+    dyhub = 100;
+    zhub = 110;
+
+    cutscaley = 0.8;
+    cutscalez = 0.9;
+
+    MakeTireCore(db_fp, "-solid", dytred, dztred, dytop, dztop, dyside1, zside1, dyside2, zside2, ztire, dyhub, zhub);
+    MakeTireCore(db_fp, "-cut", dytred*cutscaley, dztred*cutscalez, dytop*cutscaley, dztop*cutscalez, dyside1*cutscaley, zside1*cutscalez, dyside2*cutscaley, zside2*cutscalez, ztire*cutscalez, dyhub*cutscaley, zhub*cutscalez);
  
+    BU_LIST_INIT(&tire.l);
+    (void)mk_addmember("tire-solid.c", &tire.l, NULL, WMOP_UNION);
+    (void)mk_addmember("tire-cut.c", &tire.l, NULL, WMOP_SUBTRACT);
+    mk_lcomb(db_fp, "tire.c", &tire, 1,  "plastic", "di=.8 sp=.2", rgb, 0);
+
     wdb_close(db_fp);
 
     return 0;
