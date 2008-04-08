@@ -399,7 +399,7 @@ level, with the exception of manual pages that should be colocated
 with any corresponding source files.
 
 Header files private to a library go into that library's directory.
-Public header files go intp the include/ directory on the top level.
+Public header files go into the include/ directory on the top level.
 Public header files should not include any headers that are private.
 Headers should include any other headers that they require for correct
 parsing (this is an on-going clean-up effort).  Public header files
