@@ -56,7 +56,6 @@
 #include "./cmd.h"
 #include "brlcad_version.h"
 
-
 char MGEDCopyRight_Notice[] = "@(#) \
 BRL-CAD is Open Source software. \
 This software is Copyright (c) 1985-2008 by the United States Government \
@@ -533,6 +532,8 @@ main(int argc, char **argv)
 	    }
 	    mged_finish(1);
 	}
+    } else {
+	(void)Tcl_Eval(interp, "opendb_callback nul");
     }
 
     if ( dbip != DBI_NULL && (read_only_flag || dbip->dbi_read_only) ) {
@@ -2649,19 +2650,6 @@ f_opendb(
 
     bu_vls_free(&vls);
     bu_vls_free(&msg);
-
-#ifdef _WIN32
-    /*XXX
-     *    This combined with the mged.bat (which contains "mged.exe 2>&1 nul")
-     *    causes Windows to pass the stdout/stderr to mged's command window.
-     *    There must be a better way, but, I've run out of time (for now).
-     */
-    if (!strcmp(argv[1], "nul")) {
-	Tcl_Eval(interp, "rename db \"\"; rename .inmem \"\"");
-	dbip = DBI_NULL;
-	rt_material_head = MATER_NULL;
-    }
-#endif
 
     return TCL_OK;
 }

@@ -35,7 +35,7 @@ SET WEB_BROWSER=C:\Program Files\Internet Explorer\IEXPLORE.EXE
 IF "%1"=="-g" (
     START /B mged.exe %2
 ) ELSE (
-    START /B mged.exe 2>&1 nul
+    START /B mged.exe %1
 )
 
 CLS
