@@ -82,87 +82,13 @@ fastf_t GetEllSlopeAtPoint(fastf_t *inarray, fastf_t x, fastf_t y)
 }
 
 
-void ValidateEqn(fastf_t *coeff, fastf_t *coord)
+void Create_Ell1_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t dytop, fastf_t dztop, fastf_t ztire) 
 {
-    fastf_t result1,result2;
-    result1 = coeff[0]*coord[0]*coord[0]+coeff[1]*coord[0]*coord[1]+coeff[2]*coord[1]*coord[1]+coeff[3]*coord[0]+coeff[4]*coord[1];
-    result2 = coeff[0]*coord[2]*coord[2]+coeff[1]*coord[2]*coord[3]+coeff[2]*coord[3]*coord[3]+coeff[3]*coord[2]+coeff[4]*coord[3];
-    printf("\nSanity check :\n");
-    printf("Eval at %6.4f,%6.4f is %6.6f\n",coord[0],coord[1],result1+1);
-    printf("Eval at %6.4f,%6.4f is %6.6f\n\n",coord[2],coord[3],result2+1);
-}
-
-void ValidateEqnYder(fastf_t *coeff, fastf_t *coord, fastf_t slope1)
-{
-    fastf_t result1;
-    result1 = 2*coeff[0]*coord[2]+coeff[1]*(coord[3]+coord[3]*slope1)+coeff[2]*2*coord[3]*slope1+coeff[3]+coeff[4]*slope1;
-    printf("\nF'(y) Sanity check :\n");
-    printf("Eval at %6.4f,%6.4f is %6.6f\n\n",coord[2],coord[3],result1);
-}
-/*
-void ValidateEqnZder(fastf_t *coeff, fastf_t *coord)
-{
-    fastf_t result1;
-    result1 = coeff[1]*coord[4]+2*coeff[2]*coord[5]+coeff[4];
-    printf("\nF'(z) Sanity check :\n");
-    printf("Eval at %6.4f,%6.4f is %6.6f\n",coord[4],coord[5],result1);
-}
-*/
-
-void ValidateMatrix(fastf_t * coeff, fastf_t **matrix_eval, fastf_t *check_for_zero)
-{
-    int i,j;
-    fastf_t temp;
-    for (i = 0; i < 5; i++){
-	temp = 0;
-	for (j = 0; j < 5; j++)
-	    temp += coeff[j] * matrix_eval[i][j];
-	check_for_zero[i] = temp-matrix_eval[i][5];
-    }
-}
-void TestMatrixGeneration(fastf_t **matrix_test, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2,
-			  fastf_t x3, fastf_t y3, fastf_t x4, fastf_t y4,
-			  fastf_t x5, fastf_t y5)
-{
-    matrix_test[0][0] = x1*x1;
-    matrix_test[0][1] = x1*y1;
-    matrix_test[0][2] = y1*y1;
-    matrix_test[0][3] = x1;
-    matrix_test[0][4] = y1;
-    matrix_test[0][5] = -1;
-    matrix_test[1][0] = x2*x2;
-    matrix_test[1][1] = x2*y2;
-    matrix_test[1][2] = y2*y2;
-    matrix_test[1][3] = x2;
-    matrix_test[1][4] = y2;
-    matrix_test[1][5] = -1;
-    matrix_test[2][0] = x3*x3;
-    matrix_test[2][1] = x3*y3;
-    matrix_test[2][2] = y3*y3;
-    matrix_test[2][3] = x3;
-    matrix_test[2][4] = y3;
-    matrix_test[2][5] = -1;
-    matrix_test[3][0] = x4*x4;
-    matrix_test[3][1] = x4*y4;
-    matrix_test[3][2] = y4*y4;
-    matrix_test[3][3] = x4;
-    matrix_test[3][4] = y4;
-    matrix_test[3][5] = -1;
-    matrix_test[4][0] = x5*x5;
-    matrix_test[4][1] = x5*y5;
-    matrix_test[4][2] = y5*y5;
-    matrix_test[4][3] = x5;
-    matrix_test[4][4] = y5;
-    matrix_test[4][5] = -1;
-}
-
-void Create_Ell1_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t dymeas, fastf_t zmeas, fastf_t ztire) 
-{
-    mat[0][0] = (dymeas/2) * (dymeas/2);
-    mat[0][1] = (zmeas * dymeas/2);
-    mat[0][2] = zmeas * zmeas;
-    mat[0][3] = dymeas / 2;
-    mat[0][4] = zmeas;
+    mat[0][0] = (dytop/2) * (dytop/2);
+    mat[0][1] = ((ztire-dztop) * dytop/2);
+    mat[0][2] = (ztire-dztop) * (ztire-dztop);
+    mat[0][3] = dytop / 2;
+    mat[0][4] = (ztire-dztop);
     mat[0][5] = -1;
     mat[1][0] = (dytred / 2) * (dytred / 2);
     mat[1][1] = (ztire - dztred) * (dytred / 2);
@@ -176,11 +102,11 @@ void Create_Ell1_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t dyme
     mat[2][3] = 0;
     mat[2][4] = ztire;
     mat[2][5] = -1;
-    mat[3][0] = (-dymeas / 2) * (-dymeas / 2);
-    mat[3][1] = (zmeas * -dymeas / 2);
-    mat[3][2] = zmeas * zmeas;
-    mat[3][3] = -dymeas / 2;
-    mat[3][4] = zmeas;
+    mat[3][0] = (-dytop / 2) * (-dytop / 2);
+    mat[3][1] = ((ztire-dztop) * -dytop / 2);
+    mat[3][2] = (ztire-dztop) * (ztire-dztop);
+    mat[3][3] = -dytop / 2;
+    mat[3][4] = (ztire-dztop);
     mat[3][5] = -1;
     mat[4][0] = (-dytred / 2) * (-dytred / 2);
     mat[4][1] = (ztire - dztred) * (-dytred / 2);
@@ -190,13 +116,13 @@ void Create_Ell1_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t dyme
     mat[4][5] = -1;
 }
 
-void Create_Ell2_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t dymax, fastf_t zymax, fastf_t dell2ymeas, fastf_t ell2zmeas, fastf_t ztire, fastf_t dyhub, fastf_t zhub, fastf_t ell1slope) 
+void Create_Ell2_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t dyside1, fastf_t zside1, fastf_t dyside2, fastf_t zside2, fastf_t ztire, fastf_t dyhub, fastf_t zhub, fastf_t ell1slope) 
 {
-    mat[0][0] = (dymax / 2) * (dymax / 2);
-    mat[0][1] = (zymax * dymax / 2);
-    mat[0][2] = zymax * zymax;
-    mat[0][3] = dymax / 2;
-    mat[0][4] = zymax;
+    mat[0][0] = (dyside1 / 2) * (dyside1 / 2);
+    mat[0][1] = (zside1 * dyside1 / 2);
+    mat[0][2] = zside1 * zside1;
+    mat[0][3] = dyside1 / 2;
+    mat[0][4] = zside1;
     mat[0][5] = -1;
     mat[1][0] = (dytred / 2) * (dytred / 2);
     mat[1][1] = (ztire - dztred) * (dytred / 2);
@@ -204,10 +130,10 @@ void Create_Ell2_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t dyma
     mat[1][3] = (dytred / 2);
     mat[1][4] = (ztire - dztred);
     mat[1][5] = -1;
-    mat[2][0] = (dymax / 2 - dyhub) * (dymax / 2 - dyhub);
-    mat[2][1] = (dymax / 2 - dyhub) * zhub;
+    mat[2][0] = (dyhub/2) * (dyhub/2);
+    mat[2][1] = (dyhub/2) * zhub;
     mat[2][2] = zhub * zhub;
-    mat[2][3] = dymax / 2 - dyhub;
+    mat[2][3] = dyhub/2;
     mat[2][4] = zhub;
     mat[2][5] = -1;
     mat[3][0] = 2 * (dytred / 2);
@@ -216,11 +142,11 @@ void Create_Ell2_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t dyma
     mat[3][3] = 1;
     mat[3][4] = ell1slope;
     mat[3][5] = 0;
-    mat[4][0] = (dell2ymeas / 2) * (dell2ymeas / 2);
-    mat[4][1] = (ell2zmeas*dell2ymeas / 2);
-    mat[4][2] = ell2zmeas*ell2zmeas;
-    mat[4][3] = dell2ymeas / 2;
-    mat[4][4] = ell2zmeas;
+    mat[4][0] = (dyside2 / 2) * (dyside2 / 2);
+    mat[4][1] = (zside2*dyside2 / 2);
+    mat[4][2] = zside2*zside2;
+    mat[4][3] = dyside2 / 2;
+    mat[4][4] = zside2;
     mat[4][5] = -1;
 }
 
@@ -338,7 +264,7 @@ void CalcInputVals(fastf_t *inarray, fastf_t *outarray, int orientation)
     outarray[4] = semiminor;
 }
 
-void MakeTireCore(struct rt_wdb (*file), fastf_t dytred, fastf_t dztred, fastf_t dell1ymeas, fastf_t ell1zmeas, fastf_t dell2ymeas, fastf_t ell2zmeas, fastf_t ztire, fastf_t dymax, fastf_t zymax, fastf_t dyhub, fastf_t zhub)
+void MakeTireCore(struct rt_wdb (*file), fastf_t dytred, fastf_t dztred, fastf_t dytop, fastf_t dztop, fastf_t dyside2, fastf_t zside2, fastf_t ztire, fastf_t dyside1, fastf_t zside1, fastf_t dyhub, fastf_t zhub)
 {
     struct wmember tiresideoutercutright, tiresideoutercutleft, tiresideinnercutright, tiresideinnercutleft;
     struct wmember tiretred, tiresides, tiresurface;
@@ -364,14 +290,14 @@ void MakeTireCore(struct rt_wdb (*file), fastf_t dytred, fastf_t dztred, fastf_t
     for (i = 0; i < 5; i++)
 	matrixell3[i] = (fastf_t *)bu_malloc(6 * sizeof(fastf_t),"matrixcols");
    
-    Create_Ell1_Mat(matrixell1, dytred, dztred, dell1ymeas, ell1zmeas, ztire);
+    Create_Ell1_Mat(matrixell1, dytred, dztred, dytop, dztop, ztire);
     Triangularize(matrixell1);
     SolveTri(matrixell1,ell1coefficients);
     printVec(ell1coefficients,5,"Ellipse 1 Coefficients");
     printf("elleqn1 : %6.9f*x^2+%6.9f*x*y+%6.9f*y^2+%6.9f*x+%6.9f*y-1;\n",ell1coefficients[0],ell1coefficients[1],ell1coefficients[2],ell1coefficients[3],ell1coefficients[4]);
     ell1slope = GetEllSlopeAtPoint(ell1coefficients,dytred/2,ztire-dztred);
     printf("ell1slope = %6.9f\n",ell1slope);
-    Create_Ell2_Mat(matrixell2, dytred, dztred, dymax, zymax, dell2ymeas, ell2zmeas, ztire, dyhub, zhub, ell1slope);
+    Create_Ell2_Mat(matrixell2, dytred, dztred, dyside1, zside1, dyside2, zside2, ztire, dyhub, zhub, ell1slope);
     Triangularize(matrixell2);
     SolveTri(matrixell2,ell2coefficients);
     printVec(ell2coefficients,5,"Ellipse 2 Coefficients");
@@ -397,13 +323,13 @@ void MakeTireCore(struct rt_wdb (*file), fastf_t dytred, fastf_t dztred, fastf_t
     VSET(C, 0, -ell2cadparams[2],-ell2cadparams[3]);
     mk_eto(file, "Ellipse3.s", origin, normal, C, ell2cadparams[1], ell2cadparams[4]);
     VSET(vertex, 0, 0, 0);
-    VSET(height, 0, dymax+sqrt(ell2cadparams[2]*ell2cadparams[2]), 0);
+    VSET(height, 0, dyside1+sqrt(ell2cadparams[2]*ell2cadparams[2]), 0);
     mk_rcc(file, "TopClipR.s", vertex, height, ztire - dztred);
     VSET(vertex, 0, 0, 0);
-    VSET(height, 0, -dymax-sqrt(ell2cadparams[2]*ell2cadparams[2]), 0);
+    VSET(height, 0, -dyside1-sqrt(ell2cadparams[2]*ell2cadparams[2]), 0);
     mk_rcc(file, "TopClipL.s", vertex, height, ztire - dztred);
-    VSET(vertex, 0, -dymax-sqrt(ell2cadparams[2]*ell2cadparams[2]), 0);
-    VSET(height, 0, 2*(dymax+sqrt(ell2cadparams[2]*ell2cadparams[2])), 0);
+    VSET(vertex, 0, -dyside1-sqrt(ell2cadparams[2]*ell2cadparams[2]), 0);
+    VSET(height, 0, 2*(dyside1+sqrt(ell2cadparams[2]*ell2cadparams[2])), 0);
     mk_rcc(file, "SideClipOuter.s", vertex, height, ztire - dztred);
     mk_rcc(file, "SideClipInner.s", vertex, height, zhub);
 
@@ -411,10 +337,10 @@ void MakeTireCore(struct rt_wdb (*file), fastf_t dytred, fastf_t dztred, fastf_t
     VSET(height, 0, dytred, 0);
     mk_rcc(file, "InnerSolid.s", vertex, height, ztire-dztred);
     VSET(normal, 0, 1, 0);
-    mk_cone(file, "LeftCone.s", vertex, normal, dytred/2 - (dymax/2 - dyhub), ztire-dztred,zhub);
+    mk_cone(file, "LeftCone.s", vertex, normal, dytred/2 - dyhub/2, ztire-dztred,zhub);
     VSET(vertex, 0, dytred/2, 0);
     VSET(normal, 0, -1, 0);
-    mk_cone(file, "RightCone.s", vertex, normal, dytred/2 - (dymax/2 - dyhub), ztire-dztred,zhub);
+    mk_cone(file, "RightCone.s", vertex, normal, dytred/2 - dyhub/2, ztire-dztred,zhub);
 
 
     
@@ -454,11 +380,11 @@ void MakeTireCore(struct rt_wdb (*file), fastf_t dytred, fastf_t dztred, fastf_t
 
     BU_LIST_INIT(&innersolid.l);
     (void)mk_addmember("InnerSolid.s", &innersolid.l, NULL, WMOP_UNION);
-    if ((dytred/2 - (dymax/2 - dyhub)) > 0 ) {
+    if ((dytred/2 - dyhub/2) > 0 ) {
 	(void)mk_addmember("LeftCone.s", &innersolid.l, NULL, WMOP_SUBTRACT);
 	(void)mk_addmember("RightCone.s", &innersolid.l, NULL, WMOP_SUBTRACT);
     }
-    if ((dytred/2 - (dymax/2 - dyhub)) < 0 ) {
+    if ((dytred/2 - dyhub/2) < 0 ) {
 	(void)mk_addmember("LeftCone.s", &innersolid.l, NULL, WMOP_UNION);
 	(void)mk_addmember("RightCone.s", &innersolid.l, NULL, WMOP_UNION);
     }
@@ -507,7 +433,7 @@ int main(int ac, char *av[])
        db_fp = wdb_fopen("tire.g");
     }
     mk_id(db_fp, "Test Database");
-    MakeTireCore(db_fp, 120.0,6.5,100.0,202.5,90.0,120.0,206.0,146.0,182.5,10.0,111.0);
+    MakeTireCore(db_fp, 120.0,6.5,100.0,3.5,90.0,120.0,206.0,146.0,182.5,126.0,111.0);
  
     wdb_close(db_fp);
 
