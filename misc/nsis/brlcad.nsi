@@ -11,6 +11,29 @@
 ;Include Modern UI
 
   !include "MUI.nsh"
+  !include "FileFunc.nsh"
+
+!insertmacro GetFileName
+
+Function .onInit
+  ; For the moment this must be global (nsis requires it)
+  Var /GLOBAL PROG_FILES
+
+  ReadEnvStr $PROG_FILES "PROGRAMFILES"
+  StrCpy $INSTDIR "$PROG_FILES\BRL-CAD"
+FunctionEnd
+
+; Tack on BRL-CAD if it's not already there
+Function .onVerifyInstDir
+  ${GetFileName} $INSTDIR $R0
+  StrCmp "BRL-CAD" $R0 found notFound
+
+  notFound:
+    StrCpy $INSTDIR "$INSTDIR\BRL-CAD"
+
+  found:
+
+FunctionEnd
 
 ;--------------------------------
 ;Configuration
@@ -21,11 +44,8 @@
   ; The file to write
   OutFile "brlcad-${VERSION}.exe"
 
-  ; Read in the program files path
-  ReadEnvStr $PROGRAMFILES "PROGRAMFILES"
-
   ; The default installation directory
-  InstallDir $PROGRAMFILES\BRL-CAD
+  ;InstallDir $PROGRAMFILES\BRL-CAD
 
   ; Registry key to check for directory (so if you install again, it will 
   ; overwrite the old one automatically)
