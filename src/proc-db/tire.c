@@ -48,13 +48,37 @@ void printMatrix(fastf_t **mat, char *strname)
     int j = 0;
     bu_log("\n----%s------\n", strname);
     for (i = 0; i < 30; i++) {
-	if (i%6 == 0 && i != 0) {
-	    bu_log("]\n");
+	if ((i+1)%6 == 0 && i != 0) {
+	    bu_log("%.4f\n", mat[j][i%6]);
 	    j++;
+	} else {
+	    bu_log("%.4f, ", mat[j][i%6]);
 	}
-	bu_log("%.4f, ", mat[j][i%6]);
     }
     bu_log("\n-----------\n");
+    bu_log("\n----Maxima%s------\n[", strname);
+    i = 0;
+    j = 0;
+    for (i = 0; i < 30; i++) {
+	if ((i+1)%6 == 0 && i != 0) {
+	    bu_log("%.4f],[", mat[j][i%6]);
+	    j++;
+	} else {
+	    bu_log("%.4f, ", mat[j][i%6]);
+	}
+    }
+    bu_log("\n-----------\n");
+}
+
+void printMatrixEqns(fastf_t **mat, char *strname)
+{
+    int i=0;
+    bu_log("\n----%s------\n", strname);
+    for (i = 0; i < 5; i++) {
+	bu_log("eqn%1.0d : ",i+1);
+	bu_log("A*%.4f+B*%.4f+C*%.4f+D*%.4f+E*%.4f-1=0;\n", mat[i][0], mat[i][1], mat[i][2], mat[i][3], mat[i][4]);
+    }
+    bu_log("\n");
 }
 
 void printVec(fastf_t *result1, int c, char *strname)
@@ -115,6 +139,7 @@ void Create_Ell1_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t dyto
     mat[4][3] = (-dytred / 2);
     mat[4][4] = (ztire - dztred);
     mat[4][5] = -1;
+    printMatrixEqns(mat,"Ell1");
 }
 
 void Create_Ell2_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t dyside1, fastf_t zside1, fastf_t dyside2, fastf_t zside2, fastf_t ztire, fastf_t dyhub, fastf_t zhub, fastf_t ell1slope) 
@@ -158,7 +183,7 @@ void SortRows(fastf_t **mat, int colnum)
     fastf_t temp_elem;
     high_row = colnum;
     for (exam_row = high_row + 1; exam_row < 5; exam_row++) {
-	if (mat[exam_row][0] > mat[high_row][0])
+	if (fabs(mat[exam_row][0]) > fabs(mat[high_row][0]))
 	    high_row = exam_row;
     }
     if (high_row != colnum) {
@@ -199,6 +224,7 @@ void SolveTri(fastf_t **mat, fastf_t *result1)
 	}
 	result1[i]=inter;
     }
+	printMatrix(mat,"Solved");
 }
 
 void CalcInputVals(fastf_t *inarray, fastf_t *outarray, int orientation)
@@ -211,7 +237,7 @@ void CalcInputVals(fastf_t *inarray, fastf_t *outarray, int orientation)
     fastf_t semimajor, semiminor;
     fastf_t semimajorx,semimajory;
 
-
+    bu_log("A=%6.9f,B=%6.9f,C=%6.9f,D=%6.9f,E=%6.9f,F=-1",inarray[0],inarray[1],inarray[2],inarray[3],inarray[4]);
     A = inarray[0];
     B = inarray[1];
     C = inarray[2];
