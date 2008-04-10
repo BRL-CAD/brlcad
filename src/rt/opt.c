@@ -121,6 +121,8 @@ int		sub_ymax = 0;
 fastf_t		frame_delta_t = (fastf_t)(1.0/30.0); /* 1.0 / frames_per_second_playback */
 double		airdensity;    /* is the scene hazy (we shade the void space */
 double		haze[3] = { 0.8, 0.9, 0.99 };	      /* color of the haze */
+int             do_kut_plane = 0;
+plane_t         kut_plane;
 
 double units = 1.0;
 
@@ -155,7 +157,7 @@ int get_args( int argc, register char **argv )
 
 
 #define GETOPT_STR	\
-	".:,:@:a:b:c:d:e:f:g:h:ij:l:n:o:p:q:rs:tu:v:w:x:A:BC:D:E:F:G:H:IJ:K:MN:O:P:Q:RST:U:V:WX:!:+:"
+	".:,:@:a:b:c:d:e:f:g:h:ij:k:l:n:o:p:q:rs:tu:v:w:x:A:BC:D:E:F:G:H:IJ:K:MN:O:P:Q:RST:U:V:WX:!:+:"
 
     while ( (c=bu_getopt( argc, argv, GETOPT_STR )) != EOF )  {
 	switch ( c )  {
@@ -204,6 +206,27 @@ int get_args( int argc, register char **argv )
 		}
 	    }
 	    break;
+	    case 'k':      /* define cutting plane */
+	    {
+		fastf_t f;
+
+		do_kut_plane = 1;
+		i = sscanf(bu_optarg, "%lg,%lg,%lg,%lg",
+			   &kut_plane[X], &kut_plane[Y], &kut_plane[Z], &kut_plane[H]);
+		if( i != 4 ) {
+		    bu_exit( EXIT_FAILURE, "ERROR: bad cutting plane\n" );
+		}
+
+		/* verify that normal has unit length */
+		f = MAGNITUDE( kut_plane );
+		if( f <= SMALL ) {
+		    bu_exit( EXIT_FAILURE, "Bad normal for cutting plane, length=%g\n", f );
+		}
+		f = 1.0 /f;
+		VSCALE( kut_plane, kut_plane, f );
+		kut_plane[3] *= f;
+		break;
+	    }
 	    case '.':
 		nu_gfactor = (double)atof( bu_optarg );
 		break;

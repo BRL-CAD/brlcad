@@ -198,6 +198,17 @@ This option exists primarily for
 .IR mged (1)
 to allow sweeping out a rectangular portion of the view for ray-tracing.
 .TP
+.B \-k xdir,ydir,zdir,dist
+enables the use of a \fIcutting plane\fR. The xdir, ydir, zdir, and dist
+define a plane (equivalent to a halfspace primitive with the same parameters).
+The vector (xdir, ydir, zdir) is normal to the plane and points away from
+the space to be subtracted. The dist parameter specifies the distance from
+the origin to the plane in the normal direction.
+The resulting image approximates subtracting the halfspace from the objects
+being raytraced. Note that this is not exactly the same as actually
+subtracting the halfspace, but it is faster. If explicit lights are used,
+objects that are cut away by the cutting plane will still cast shadows.
+.TP
 .B \-l#
 Select lighting model.  Default is 0.
 Model 0 is a full lighting model with the ability to implement

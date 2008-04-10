@@ -85,6 +85,10 @@ extern int	curframe;		/* from main.c */
 extern fastf_t	frame_delta_t;		/* from main.c */
 extern double	airdensity;		/* from opt.c */
 extern double	haze[3];		/* from opt.c */
+extern int      do_kut_plane;           /* from opt.c */
+extern plane_t  kut_plane;              /* from opt.c */
+vect_t          kut_norm;
+struct soltab   *kut_soltab = NULL;
 
 extern struct floatpixel	*curr_float_frame;	/* buffer of full frame */
 
@@ -761,6 +765,48 @@ colorview(register struct application *ap, struct partition *PartHeadp, struct s
 	return(0);
     }
 
+    if( do_kut_plane ) {
+	fastf_t slant_factor;
+	fastf_t dist;
+	fastf_t norm_dist = DIST_PT_PLANE( ap->a_ray.r_pt, kut_plane );
+
+	if ( (slant_factor = -VDOT( kut_plane, ap->a_ray.r_dir )) < -1.0e-10 )  {
+	    /* exit point, ignore everything before "dist" */
+	    dist = norm_dist/slant_factor;
+	    for (; pp != PartHeadp; pp = pp->pt_forw ) {
+		if( pp->pt_outhit->hit_dist >= dist ) {
+		    if( pp->pt_inhit->hit_dist < dist ) {
+			pp->pt_inhit->hit_dist = dist;
+			pp->pt_inflip = 0;
+			pp->pt_inseg->seg_stp = kut_soltab;
+		    }
+		    break;
+		}
+	    }
+	    if( pp == PartHeadp ) {
+		/* we ignored everything, this is now a miss */
+		ap->a_miss(ap);
+		return(0);
+	    }
+	} else if ( slant_factor > 1.0e-10 )  {
+	    /* entry point, ignore everything after "dist" */
+	    dist = norm_dist/slant_factor;
+	    if( pp->pt_inhit->hit_dist > dist ) {
+		/* everything is after kut plane, this is now a miss */
+		ap->a_miss(ap);
+		return(0);
+	    }
+	}  else  {
+	    /* ray is parallel to plane when dir.N == 0.
+	     * If it is inside the solid, this is a miss */
+	    if ( norm_dist < 0.0 ) {
+		ap->a_miss(ap);
+		return(0);
+	    }
+	}
+	
+    }
+
 
     RT_CK_PT(pp);
     hitp = pp->pt_inhit;
@@ -1060,6 +1106,12 @@ free_scanlines(void)
     scanline = (struct scanline *)0;
 }
 
+void
+kut_ft_norm( struct hit *hitp, struct soltab *stp, struct xray *ray )
+{
+    VMOVE( hitp->hit_normal, kut_norm );
+}
+
 /*
  *  			V I E W _ I N I T
  *
@@ -1078,9 +1130,27 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o, i
 	rpt_dist = 0;
     }
 
+    if( do_kut_plane ) {
+	struct rt_functab *functab;
+	struct directory *dp;
+	char *name;
+
+	kut_soltab = bu_calloc( 1, sizeof( struct soltab ), "kut_soltab" );
+	kut_soltab->l.magic = RT_SOLTAB_MAGIC;
+	dp = bu_calloc( 1, sizeof( struct directory ), "kut dp" );
+	dp->d_namep = bu_strdup( "fake kut primitive" );
+	kut_soltab->st_dp = dp;
+	functab = bu_calloc( 1, sizeof( struct rt_functab ), "kut_soltab->st_meth" );
+	functab->magic = RT_FUNCTAB_MAGIC;
+	functab->ft_norm = kut_ft_norm;
+	kut_soltab->st_meth = functab;
+	VREVERSE( kut_norm, kut_plane );
+    }
+
     if (minus_F || (!minus_o && !minus_F)) {
 	return 1;		/* open a framebuffer */
     }
+
     return 0;
 }
 
@@ -1247,7 +1317,11 @@ view_2init(register struct application *ap, char *framename)
     ap->a_refrac_index = 1.0;	/* RI_AIR -- might be water? */
     ap->a_cumlen = 0.0;
     ap->a_miss = hit_nothing;
-    ap->a_onehit = a_onehit;
+    if( do_kut_plane ) {
+	ap->a_onehit = 0;
+    } else {
+	ap->a_onehit = a_onehit;
+    }
 
     if (rpt_dist)
 	pwidth = 3+8;
