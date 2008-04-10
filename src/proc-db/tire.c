@@ -49,10 +49,10 @@ void printMatrix(fastf_t **mat, char *strname)
     bu_log("\n----%s------\n", strname);
     for (i = 0; i < 30; i++) {
 	if ((i+1)%6 == 0 && i != 0) {
-	    bu_log("%.4f\n", mat[j][i%6]);
+	    bu_log("%.7f\n", mat[j][i%6]);
 	    j++;
 	} else {
-	    bu_log("%.4f, ", mat[j][i%6]);
+	    bu_log("%.7f, ", mat[j][i%6]);
 	}
     }
     bu_log("\n-----------\n");
@@ -61,10 +61,10 @@ void printMatrix(fastf_t **mat, char *strname)
     j = 0;
     for (i = 0; i < 30; i++) {
 	if ((i+1)%6 == 0 && i != 0) {
-	    bu_log("%.4f],[", mat[j][i%6]);
+	    bu_log("%.7f],[", mat[j][i%6]);
 	    j++;
 	} else {
-	    bu_log("%.4f, ", mat[j][i%6]);
+	    bu_log("%.7f, ", mat[j][i%6]);
 	}
     }
     bu_log("\n-----------\n");
@@ -107,40 +107,65 @@ fastf_t GetEllSlopeAtPoint(fastf_t *inarray, fastf_t x, fastf_t y)
 }
 
 
-
-void Create_Ell1_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t dytop, fastf_t dztop, fastf_t ztire) 
+ void Create_Ell1_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t d1, fastf_t ztire) 
 {
-    mat[0][0] = (dytop/2) * (dytop/2);
-    mat[0][1] = ((ztire-dztop) * dytop/2);
-    mat[0][2] = (ztire-dztop) * (ztire-dztop);
-    mat[0][3] = dytop / 2;
-    mat[0][4] = (ztire-dztop);
+    fastf_t y1,z1,y2,z2,y3,z3,y4,z4,y5,z5;
+
+    y1 = dytred/2;
+    z1 = ztire-dztred;
+    y2 = dytred/2;
+    z2 = ztire - (dztred+2*(d1-dztred));
+    y3 = 0.0;
+    z3 = ztire;
+    y4 = 0.0;
+    z4 = ztire-2*d1;
+    y5 = -dytred/2;
+    z5 = ztire-dztred;
+
+    mat[0][0] = y1*y1;
+    mat[0][1] = y1*z1;
+    mat[0][2] = z1*z1;
+    mat[0][3] = y1;
+    mat[0][4] = z1;
     mat[0][5] = -1;
-    mat[1][0] = (dytred / 2) * (dytred / 2);
-    mat[1][1] = (ztire - dztred) * (dytred / 2);
-    mat[1][2] = (ztire - dztred) * (ztire - dztred);
-    mat[1][3] = (dytred / 2);
-    mat[1][4] = (ztire - dztred);
+    mat[1][0] = y2*y2;
+    mat[1][1] = y2*z2;
+    mat[1][2] = z2*z2;
+    mat[1][3] = y2;
+    mat[1][4] = z2;
     mat[1][5] = -1;
-    mat[2][0] = 0;
-    mat[2][1] = 0;
-    mat[2][2] = ztire * ztire;
-    mat[2][3] = 0;
-    mat[2][4] = ztire;
+    mat[2][0] = y3*y3;
+    mat[2][1] = y3*z3;
+    mat[2][2] = z3*z3;
+    mat[2][3] = y3;
+    mat[2][4] = z3;
     mat[2][5] = -1;
-    mat[3][0] = (-dytop / 2) * (-dytop / 2);
-    mat[3][1] = ((ztire-dztop) * -dytop / 2);
-    mat[3][2] = (ztire-dztop) * (ztire-dztop);
-    mat[3][3] = -dytop / 2;
-    mat[3][4] = (ztire-dztop);
+    mat[3][0] = y4*y4;
+    mat[3][1] = y4*z4;
+    mat[3][2] = z4*z4;
+    mat[3][3] = y4;
+    mat[3][4] = z4;
     mat[3][5] = -1;
-    mat[4][0] = (-dytred / 2) * (-dytred / 2);
-    mat[4][1] = (ztire - dztred) * (-dytred / 2);
-    mat[4][2] = (ztire - dztred) * (ztire - dztred);
-    mat[4][3] = (-dytred / 2);
-    mat[4][4] = (ztire - dztred);
+    mat[4][0] = y5*y5;
+    mat[4][1] = y5*z5;
+    mat[4][2] = z5*z5;
+    mat[4][3] = y5;
+    mat[4][4] = z5;
     mat[4][5] = -1;
+    printMatrix(mat,"Ell1");
+    printMatrixEqns(mat,"Ell1");
+    bu_log("y1 : %6.7f, ",dytred/2);
+    bu_log("z1 : %6.7f\n",ztire-dztred);
+    bu_log("y2 : %6.7f, ",dytred/2);
+    bu_log("z2 : %6.7f\n",(ztire - (dztred+2*(d1-dztred))));
+    bu_log("y3 : %6.7f, ",0.0);
+    bu_log("z3 : %6.7f\n",ztire);
+    bu_log("y4 : %6.7f, ",0.0);
+    bu_log("z4 : %6.7f\n",(ztire-2*d1));
+    bu_log("y5 : %6.7f, ",-dytred/2);
+    bu_log("z5 : %6.7f\n",ztire-dztred);
 }
+ 
 
 void Create_Ell2_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t dyside1, fastf_t zside1, fastf_t dyside2, fastf_t zside2, fastf_t ztire, fastf_t dyhub, fastf_t zhub, fastf_t ell1slope) 
 {
@@ -224,6 +249,7 @@ void SolveTri(fastf_t **mat, fastf_t *result1)
 	}
 	result1[i]=inter;
     }
+    printMatrix(mat,"solved");
 }
 
 void CalcInputVals(fastf_t *inarray, fastf_t *outarray, int orientation)
@@ -289,7 +315,7 @@ void CalcInputVals(fastf_t *inarray, fastf_t *outarray, int orientation)
     outarray[4] = semiminor;
 }
 
-void MakeTireCore(struct rt_wdb (*file), char *suffix, fastf_t dytred, fastf_t dztred, fastf_t dytop, fastf_t dztop, fastf_t dyside1, fastf_t zside1, fastf_t dyside2, fastf_t zside2, fastf_t ztire, fastf_t dyhub, fastf_t zhub)
+void MakeTireCore(struct rt_wdb (*file), char *suffix, fastf_t dytred, fastf_t dztred, fastf_t d1, fastf_t dyside1, fastf_t zside1, fastf_t dyside2, fastf_t zside2, fastf_t ztire, fastf_t dyhub, fastf_t zhub)
 {
     struct wmember tiresideoutercutright, tiresideoutercutleft, tiresideinnercutright, tiresideinnercutleft,tirecuttopcyl;
     struct wmember tiretred, tiresides, tiresurface;
@@ -312,7 +338,7 @@ void MakeTireCore(struct rt_wdb (*file), char *suffix, fastf_t dytred, fastf_t d
     for (i = 0; i < 5; i++)
 	matrixell2[i] = (fastf_t *)bu_malloc(6 * sizeof(fastf_t),"matrixcols");
 
-    Create_Ell1_Mat(matrixell1, dytred, dztred, dytop, dztop, ztire);
+    Create_Ell1_Mat(matrixell1, dytred, dztred, d1, ztire);
     Triangularize(matrixell1);
     SolveTri(matrixell1,ell1coefficients);
     printVec(ell1coefficients,5,"Ellipse 1 Coefficients");
@@ -543,8 +569,8 @@ void MakeTireCore(struct rt_wdb (*file), char *suffix, fastf_t dytred, fastf_t d
 int main(int ac, char *av[])
 {
     struct rt_wdb *db_fp;
-    fastf_t dytred,dztred,dytop,dztop,dyside1,zside1,dyside2,zside2,ztire,dyhub,zhub;
-    fastf_t cutscaley,cutscalez;
+    fastf_t dytred,dztred,dyside1,zside1,dyside2,zside2,ztire,dyhub,zhub,d1;
+    fastf_t scaley,scalez,cutscaley,cutscalez;
     struct wmember tire;
     unsigned char rgb[3];
     VSET(rgb, 40, 40, 40);
@@ -553,23 +579,24 @@ int main(int ac, char *av[])
     }
     mk_id(db_fp, "Test Database");
     
-    dytred = 124.0;
-    dztred = 6.5;
-    dytop = 100.0;
-    dztop = 3.5;
-    dyside1 = 150;
-    zside1 = 180;
-    dyside2 = 135;
-    zside2 = 120;
-    ztire = 206;
-    dyhub = 100;
-    zhub = 110;
+    dytred = 340.0;
+    dztred = 30;
+    d1 = 50;
+    dyside1 = 440;
+    zside1 = 670;
+    dyside2 = 460;
+    zside2 = 530;
+    ztire = 760;
+    dyhub = 320;
+    zhub = 460; 
 
-    cutscaley = 0.8;
-    cutscalez = 0.9;
+    scaley = 1.3;
+    scalez = 1;
+    cutscaley = scaley*0.8;
+    cutscalez = scalez*0.9;
 
-    MakeTireCore(db_fp, "-solid", dytred, dztred, dytop, dztop, dyside1, zside1, dyside2, zside2, ztire, dyhub, zhub);
-    MakeTireCore(db_fp, "-cut", dytred*cutscaley, dztred*cutscalez, dytop*cutscaley, dztop*cutscalez, dyside1*cutscaley, zside1*cutscalez, dyside2*cutscaley, zside2*cutscalez, ztire*cutscalez, dyhub*cutscaley, zhub*cutscalez);
+    MakeTireCore(db_fp, "-solid", dytred*scaley, dztred*scalez, d1*scalez, dyside1*scaley, zside1*scalez, dyside2*scaley, zside2*scalez, ztire*scalez, dyhub*scaley, zhub*scalez);
+    MakeTireCore(db_fp, "-cut", dytred*cutscaley, dztred*cutscalez, d1*cutscalez, dyside1*cutscaley, zside1*cutscalez, dyside2*cutscaley, zside2*cutscalez, ztire*cutscalez, dyhub*cutscaley, zhub*cutscalez);
  
     BU_LIST_INIT(&tire.l);
     (void)mk_addmember("tire-solid.c", &tire.l, NULL, WMOP_UNION);
