@@ -107,6 +107,7 @@ fastf_t GetEllSlopeAtPoint(fastf_t *inarray, fastf_t x, fastf_t y)
 }
 
 
+
 void Create_Ell1_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t dytop, fastf_t dztop, fastf_t ztire) 
 {
     mat[0][0] = (dytop/2) * (dytop/2);
@@ -139,7 +140,6 @@ void Create_Ell1_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t dyto
     mat[4][3] = (-dytred / 2);
     mat[4][4] = (ztire - dztred);
     mat[4][5] = -1;
-    printMatrixEqns(mat,"Ell1");
 }
 
 void Create_Ell2_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t dyside1, fastf_t zside1, fastf_t dyside2, fastf_t zside2, fastf_t ztire, fastf_t dyhub, fastf_t zhub, fastf_t ell1slope) 
@@ -183,11 +183,11 @@ void SortRows(fastf_t **mat, int colnum)
     fastf_t temp_elem;
     high_row = colnum;
     for (exam_row = high_row + 1; exam_row < 5; exam_row++) {
-	if (fabs(mat[exam_row][0]) > fabs(mat[high_row][0]))
+	if (fabs(mat[exam_row][colnum]) > fabs(mat[high_row][colnum]))
 	    high_row = exam_row;
     }
     if (high_row != colnum) {
-	for(colcount = colnum; colcount < 5; colcount++){
+	for(colcount = colnum; colcount < 6; colcount++){
 	    temp_elem = mat[colnum][colcount];
 	    mat[colnum][colcount] = mat[high_row][colcount];
 	    mat[high_row][colcount] = temp_elem;
@@ -210,7 +210,7 @@ void Triangularize(fastf_t **mat)
 		mat[k][j] -= rowmult*mat[i][j];
 	    }
 	}
-    }
+     }
 }
 	    
 void SolveTri(fastf_t **mat, fastf_t *result1)
@@ -224,7 +224,6 @@ void SolveTri(fastf_t **mat, fastf_t *result1)
 	}
 	result1[i]=inter;
     }
-	printMatrix(mat,"Solved");
 }
 
 void CalcInputVals(fastf_t *inarray, fastf_t *outarray, int orientation)
