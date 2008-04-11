@@ -576,8 +576,9 @@ void MakeTireCore(struct rt_wdb (*file), char *suffix, fastf_t dytred, fastf_t d
 int main(int ac, char *av[])
 {
     struct rt_wdb *db_fp;
-    fastf_t dytred,dztred,dyside1,zside1,dyside2,zside2,ztire,dyhub,zhub,d1;
+    fastf_t dytred,dztred,dyside1,zside1,ztire,dyhub,zhub,d1;
     fastf_t scaley,scalez,cutscaley,cutscalez;
+    fastf_t width, ratio, wheeldiam;
     struct wmember tire;
     unsigned char rgb[3];
     VSET(rgb, 40, 40, 40);
@@ -597,16 +598,31 @@ int main(int ac, char *av[])
     dyhub = 320;
     zhub = 460; */
 
-    dyside1 = 225;
-    ztire = ((225*.5)*2+InToMM(16))/2;
-    zside1 = ztire-50;    
-    dytred = InToMM(7);
+/*Testing automatic conversions from std dimension info to geometry*/
+
+/*    width = 255;
+    ratio = 40;
+    wheeldiam = fInToMM(18.0);
+
+    dyside1 = width;
+    ztire = ((width*ratio/100)*2+wheeldiam)/2;
+    zhub = ztire-width*ratio/100;
+    zside1 = ztire-((ztire-zhub)/2*1.2);
     dztred = fInToMM(11.0/32.0);
-    d1 = 40;
-    dyhub = InToMM(7);
-    zhub = ztire-225*.5; 
-    dyside2 = dyside1*.8;
-    zside2 = (zside1-zhub)/2+zhub;
+    dytred = .8 * width;
+    dyhub = dytred;
+    d1 = (ztire-zhub)/2.5;*/
+
+/* 255/40R18 Tredwidth=8.9in */
+
+    dyside1 = 255;
+    ztire = ((255*.4)*2+InToMM(18))/2;
+    zside1 = ztire-50;    
+    dytred = fInToMM(8.9);
+    dztred = fInToMM(11.0/32.0);
+    dyhub = fInToMM(8.9);
+    zhub = ztire-255*.4; 
+    d1 = (ztire-zhub)/3;
 
     bu_log("dyzide1 = %6.7f\n",dyside1);
     bu_log("ztire = %6.7f\n",ztire);
@@ -616,10 +632,8 @@ int main(int ac, char *av[])
     bu_log("d1 = %6.7f\n",d1);
     bu_log("dyhub = %6.7f\n",dyhub);
     bu_log("zhub = %6.7f\n",zhub);
-    bu_log("dyside2 = %6.7f\n",dyside2);
-    bu_log("zside2 = %6.7f\n",zside2);
 
-    scaley = 1;
+    scaley = 1.6;
     scalez = 1;
     cutscaley = scaley*0.8;
     cutscalez = scalez*0.9;
