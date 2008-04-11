@@ -39,6 +39,13 @@
 #define D2R(x) (x * DEG2RAD)
 #define R2D(x) (x / DEG2RAD)
 
+#define InToMM(x) (x * 25.4)
+
+fastf_t fInToMM(fastf_t x)
+{
+    return x * 25.4;
+}
+
 #define ROWS 5
 #define COLS 5
 
@@ -49,10 +56,10 @@ void printMatrix(fastf_t **mat, char *strname)
     bu_log("\n----%s------\n", strname);
     for (i = 0; i < 30; i++) {
 	if ((i+1)%6 == 0 && i != 0) {
-	    bu_log("%.7f\n", mat[j][i%6]);
+	    bu_log("%.16f\n", mat[j][i%6]);
 	    j++;
 	} else {
-	    bu_log("%.7f, ", mat[j][i%6]);
+	    bu_log("%.16f, ", mat[j][i%6]);
 	}
     }
     bu_log("\n-----------\n");
@@ -86,7 +93,7 @@ void printVec(fastf_t *result1, int c, char *strname)
     int i=0;
     bu_log("\n\n----%s------\n", strname);
     for (i = 0; i < c; i++) {
-	bu_log("%.8f ", result1[i]);
+	bu_log("%.16f ", result1[i]);
     }
     bu_log("\n-------------------------\n\n");
 }
@@ -193,12 +200,12 @@ void Create_Ell2_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t dysi
     mat[3][3] = 1;
     mat[3][4] = ell1slope;
     mat[3][5] = 0;
-    mat[4][0] = (dyside2 / 2) * (dyside2 / 2);
-    mat[4][1] = (zside2*dyside2 / 2);
-    mat[4][2] = zside2*zside2;
-    mat[4][3] = dyside2 / 2;
-    mat[4][4] = zside2;
-    mat[4][5] = -1;
+    mat[4][0] = 2 * (dyhub / 2);
+    mat[4][1] = zhub + (dyhub / 2) * -ell1slope;
+    mat[4][2] = 2*zhub*-ell1slope;
+    mat[4][3] = 1;
+    mat[4][4] = -ell1slope;
+    mat[4][5] = 0;
 }
 
 void SortRows(fastf_t **mat, int colnum)
@@ -579,7 +586,7 @@ int main(int ac, char *av[])
     }
     mk_id(db_fp, "Test Database");
     
-    dytred = 340.0;
+/*    dytred = 340.0;
     dztred = 30;
     d1 = 50;
     dyside1 = 440;
@@ -588,9 +595,31 @@ int main(int ac, char *av[])
     zside2 = 530;
     ztire = 760;
     dyhub = 320;
-    zhub = 460; 
+    zhub = 460; */
 
-    scaley = 1.3;
+    dyside1 = 225;
+    ztire = ((225*.5)*2+InToMM(16))/2;
+    zside1 = ztire-50;    
+    dytred = InToMM(7);
+    dztred = fInToMM(11.0/32.0);
+    d1 = 40;
+    dyhub = InToMM(7);
+    zhub = ztire-225*.5; 
+    dyside2 = dyside1*.8;
+    zside2 = (zside1-zhub)/2+zhub;
+
+    bu_log("dyzide1 = %6.7f\n",dyside1);
+    bu_log("ztire = %6.7f\n",ztire);
+    bu_log("zside1 = %6.7f\n",zside1);
+    bu_log("dytred = %6.7f\n",dytred);
+    bu_log("dztred = %6.7f\n",dztred);
+    bu_log("d1 = %6.7f\n",d1);
+    bu_log("dyhub = %6.7f\n",dyhub);
+    bu_log("zhub = %6.7f\n",zhub);
+    bu_log("dyside2 = %6.7f\n",dyside2);
+    bu_log("zside2 = %6.7f\n",zside2);
+
+    scaley = 1;
     scalez = 1;
     cutscaley = scaley*0.8;
     cutscalez = scalez*0.9;
