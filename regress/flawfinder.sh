@@ -10,7 +10,7 @@ if test ! -f "$TOPSRC/misc/flawfinder" ; then
 fi
 
 HAVE_PYTHON=no
-if test `env python -h` -ne 0 ; then
+if test "`env python -V 2>&1 | awk '{print $1}'`" = "xPython" ; then
     HAVE_PYTHON=yes
 fi
 
