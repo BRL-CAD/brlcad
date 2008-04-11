@@ -619,10 +619,10 @@ int main(int ac, char *av[])
     ztire = ((255*.4)*2+InToMM(18))/2;
     zside1 = ztire-50;    
     dytred = fInToMM(8.9);
-    dztred = fInToMM(11.0/32.0);
+    dztred = fInToMM(14.0/32.0);
     dyhub = fInToMM(8.9);
     zhub = ztire-255*.4; 
-    d1 = (ztire-zhub)/3;
+    d1 = (ztire-zhub)/2.5;
 
     bu_log("dyzide1 = %6.7f\n",dyside1);
     bu_log("ztire = %6.7f\n",ztire);
@@ -633,7 +633,7 @@ int main(int ac, char *av[])
     bu_log("dyhub = %6.7f\n",dyhub);
     bu_log("zhub = %6.7f\n",zhub);
 
-    scaley = 1.6;
+    scaley = 1;
     scalez = 1;
     cutscaley = scaley*0.8;
     cutscalez = scalez*0.9;
