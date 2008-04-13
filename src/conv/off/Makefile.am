@@ -8,11 +8,13 @@ AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
 g_off_SOURCES = g-off.c
 g_off_LDADD = \
-	${RT}
+	${RT} \
+	${RT_LIBS}
 
 off_g_SOURCES = off-g.c
 off_g_LDADD = \
-	${WDB}
+	${WDB} \
+	${WDB_LIBS}
 
 include $(top_srcdir)/misc/Makefile.defs
 

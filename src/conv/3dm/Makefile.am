@@ -1,7 +1,5 @@
 # $Id$
 
-proc_db_libs = ${WDB}
-LDADD = ${proc_db_libs}
 AM_CPPFLAGS = ${TCL_CPPFLAGS} -Wall
 
 bin_PROGRAMS = 3dm-g
@@ -15,7 +13,8 @@ else
 endif
 
 3dm_g_LDADD = \
-	${proc_db_libs} \
+	${WDB} \
+	${WDB_LIBS} \
 	${OPENNURBS}
 
 include $(top_srcdir)/misc/Makefile.defs

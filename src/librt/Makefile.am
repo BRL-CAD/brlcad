@@ -6,14 +6,15 @@ noinst_LTLIBRARIES = librt_nil.la
 
 BREP_SRCS = g_brep.cpp opennurbs_ext.cpp
 BREP_TEST = brep_test
-BREP_CPPFLAGS = @SSE@ -DOBJ_BREP=1 $(TNT_CPPFLAGS) $(OPENNURBS_CPPFLAGS)
-BREP_LIBADD = $(OPENNURBS)
+BREP_CPPFLAGS = @SSE@ -DOBJ_BREP=1 ${TNT_CPPFLAGS} ${OPENNURBS_CPPFLAGS}
+BREP_LIBADD = ${OPENNURBS}
 
 brep_test_SOURCES = brep_test.cpp
 # cannot set per-target CPPFLAGS until automake 1.7+
 brep_test_CXXFLAGS = ${SSE}
 brep_test_LDADD = \
-	librt.la
+	librt.la \
+	${RT_LIBS}
 
 # cannot set per-target CPPFLAGS until automake 1.7+
 AM_CPPFLAGS = \
@@ -181,11 +182,13 @@ librt_la_LIBADD = \
 
 comb_SOURCES = comb.c
 comb_LDADD = \
-	librt.la
+	librt.la \
+	${RT_LIBS}
 
 nurb_example_SOURCES = nurb_example.c
 nurb_example_LDADD = \
-	librt.la
+	librt.la \
+	${RT_LIBS}
 
 # XXX this should be noinst or moved to include
 include_HEADERS = \

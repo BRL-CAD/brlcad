@@ -8,10 +8,14 @@ AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
 patch_g_SOURCES = patch-g.c
 patch_g_LDADD = \
-	${WDB}
+	${WDB}\
+	${WDB_LIBS}
 
 rpatch_SOURCES = rpatch.c
-rpatch_LDADD = ${BU} ${SYSV}
+rpatch_LDADD = \
+	${BU} \
+	${BU_LIBS} \
+	${SYSV}
 
 noinst_HEADERS = patch-g.h
 

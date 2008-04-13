@@ -27,6 +27,8 @@ iges_SOURCES = \
 
 iges_LDADD = \
 	${WDB} \
+	${BU} \
+	${BU_LIBS} \
 	${OPENNURBS}
 
 iges_g_SOURCES = \
@@ -103,14 +105,16 @@ iges_g_SOURCES = \
 	wedge.c
 
 iges_g_LDADD = \
-	${WDB}
+	${WDB} \
+	${WDB_LIBS}
 
 g_iges_SOURCES = \
 	g-iges.c \
 	iges.c
 
 g_iges_LDADD = \
-	${RT}
+	${RT} \
+	${RT_LIBS}
 
 EXTRA_DIST = \
 	$(man_MANS) \

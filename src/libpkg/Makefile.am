@@ -17,7 +17,8 @@ libpkg_la_LIBADD = ${PKG_LIBS}
 tpkg_SOURCES = tpkg.c
 tpkg_LDADD = \
 	libpkg.la \
-	${BU}
+	${BU} \
+	${BU_LIBS}
 
 sample_applicationsdir=$(SAMPLE_APPLICATIONS_DIR)
 sample_applications_DATA = tpkg.c

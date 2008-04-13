@@ -80,7 +80,8 @@ libbu_la_LIBADD = \
 
 htester_SOURCES = htester.c
 htester_LDADD = \
-	libbu.la
+	libbu.la \
+	${BU_LIBS}
 
 include_HEADERS = rb_internals.h
 
@@ -96,7 +97,8 @@ EXTRA_DIST = \
 AM_CPPFLAGS = \
 	-DPREFIX=\"$(prefix)\" \
 	${PNG_CPPFLAGS} \
-	${TCL_CPPFLAGS}
+	${TCL_CPPFLAGS} \
+	${LIBZ_CPPFLAGS}
 
 if BUILD_TCL
 TCLDEP = $(LDEP) src/other/tcl

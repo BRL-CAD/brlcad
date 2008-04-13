@@ -6,11 +6,13 @@ AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
 g_jack_SOURCES = g-jack.c
 g_jack_LDADD = \
-	${WDB}
+	${WDB} \
+	${WDB_LIBS}
 
 jack_g_SOURCES = jack-g.c
 jack_g_LDADD = \
-	${WDB}
+	${WDB} \
+	${WDB_LIBS}
 
 include $(top_srcdir)/misc/Makefile.defs
 
