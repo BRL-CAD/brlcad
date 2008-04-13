@@ -383,12 +383,12 @@ void MakeTireCore(struct rt_wdb (*file), char *suffix, fastf_t dytred, fastf_t d
     bu_vls_printf(&str, "Ellipse3%s.s", suffix);	
     mk_eto(file, bu_vls_addr(&str), origin, normal, C, ell2cadparams[1], ell2cadparams[4]);
     VSET(vertex, 0, 0, 0);
-    VSET(height, 0, ell1cadparams[2], 0);
+    VSET(height, 0, ell1cadparams[2]+ell1cadparams[2]*.01, 0);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "TopClipR%s.s", suffix);	
     mk_rcc(file, bu_vls_addr(&str), vertex, height, ztire - dztred);
     VSET(vertex, 0, 0, 0);
-    VSET(height, 0, -ell1cadparams[2], 0);
+    VSET(height, 0, -ell1cadparams[2]-ell1cadparams[2]*.01, 0);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "TopClipL%s.s", suffix);	
     mk_rcc(file, bu_vls_addr(&str), vertex, height, ztire - dztred);
