@@ -30,14 +30,13 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
 #include <sys/stat.h>	/* for file mode info in WRMODE */
-#include "bio.h"
-
 #include <png.h>
+
+#include "bio.h"
 
 #include "bu.h"
 
