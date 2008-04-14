@@ -761,6 +761,7 @@ cmd_rt(ClientData	clientData,
 {
     const char *ptr;
     char buf[256] = {0};
+    int doRtcheck;
 
     CHECK_DBI_NULL;
 
@@ -768,6 +769,11 @@ cmd_rt(ClientData	clientData,
     if (argv[0][0] == '_' && argv[0][1] == 'm' &&
 	strncmp(argv[0], "_mged_", 6) == 0)
 	argv[0] += 6;
+
+    if (!strcmp(argv[0], "rtcheck"))
+	doRtcheck = 1;
+    else
+	doRtcheck = 0;
 
     ptr = bu_brlcad_root("bin", 1);
     if (ptr) {
@@ -778,6 +784,9 @@ cmd_rt(ClientData	clientData,
 #endif
 	argv[0] = buf;
     }
+
+    if (doRtcheck)
+	return dgo_rtcheck_cmd(dgop, view_state->vs_vop, interp, argc, argv);   
 
     return dgo_rt_cmd(dgop, view_state->vs_vop, interp, argc, argv);
 }
