@@ -39,13 +39,6 @@
 #define D2R(x) (x * DEG2RAD)
 #define R2D(x) (x / DEG2RAD)
 
-#define InToMM(x) (x * 25.4)
-
-fastf_t fInToMM(fastf_t x)
-{
-    return x * 25.4;
-}
-
 #define ROWS 5
 #define COLS 5
 
@@ -615,7 +608,7 @@ void MakeTireCore(struct rt_wdb (*file), fastf_t dytred, fastf_t dztred, fastf_t
     CalcInputVals(cut2coefficients,cut2cadparams,1);
     printVec(cut1cadparams,5,"Cut 1 Input Parameters");
     printVec(cut2cadparams,5,"Cut 2 Input Parameters");
-    MakeTireSurface(file,"-cut",cut1cadparams,cut2cadparams,cut_ztire,cut_dztred,cut_dytred,dyhub,zhub,dyside1);
+    MakeTireSurface(file,"-cut",cut1cadparams,cut2cadparams,cut_ztire,cut_dztred,cut_dytred,cut_dyhub,zhub,dyside1);
 
     for (i = 0; i < 5; i++)
     	bu_free((char *)matrixell1[i], "matrixell1 element");
@@ -638,7 +631,6 @@ int main(int ac, char *av[])
 {
     struct rt_wdb *db_fp;
     fastf_t dytred,dztred,dyside1,zside1,ztire,dyhub,zhub,d1;
-    fastf_t scaley,scalez,cutscaley,cutscalez;
     fastf_t width, ratio, wheeldiam, thickness;
     struct wmember tire;
     unsigned char rgb[3];
@@ -648,22 +640,12 @@ int main(int ac, char *av[])
     }
     mk_id(db_fp, "Test Database");
     
-/*    dytred = 340.0;
-    dztred = 30;
-    d1 = 50;
-    dyside1 = 440;
-    zside1 = 670;
-    dyside2 = 460;
-    zside2 = 530;
-    ztire = 760;
-    dyhub = 320;
-    zhub = 460; */
 
-/*Testing automatic conversions from std dimension info to geometry*/
+/*Automatic conversion from std dimension info to geometry*/
 
     width = 225;
     ratio = 40;
-    wheeldiam = fInToMM(18.0);
+    wheeldiam = 18.0*bu_units_conversion("in");
 
     dyside1 = width;
     ztire = ((width*ratio/100)*2+wheeldiam)/2;
@@ -675,33 +657,7 @@ int main(int ac, char *av[])
     d1 = (ztire-zhub)/2.5;
     thickness = 15;
 
-/* 255/40R18 Tredwidth=8.9in 
-
-    dyside1 = 255;
-    ztire = ((255*.4)*2+InToMM(18))/2;
-    zside1 = ztire-50;    
-    dytred = fInToMM(8.9);
-    dztred = fInToMM(14.0/32.0);
-    dyhub = fInToMM(8.9);
-    zhub = ztire-255*.4; 
-    d1 = (ztire-zhub)/2.5;
-    thickness = 15;
-*/
-    bu_log("dyzide1 = %6.7f\n",dyside1);
-    bu_log("ztire = %6.7f\n",ztire);
-    bu_log("zside1 = %6.7f\n",zside1);
-    bu_log("dytred = %6.7f\n",dytred);
-    bu_log("dztred = %6.7f\n",dztred);
-    bu_log("d1 = %6.7f\n",d1);
-    bu_log("dyhub = %6.7f\n",dyhub);
-    bu_log("zhub = %6.7f\n",zhub);
-
-    scaley = 1;
-    scalez = 1;
-    cutscaley = scaley*0.8;
-    cutscalez = scalez*0.9;
-
-    MakeTireCore(db_fp, dytred*scaley, dztred*scalez, d1*scalez, dyside1*scaley, zside1*scalez, ztire*scalez, dyhub*scaley, zhub*scalez, thickness);
+    MakeTireCore(db_fp, dytred, dztred, d1, dyside1, zside1, ztire, dyhub, zhub, thickness);
  
     BU_LIST_INIT(&tire.l);
     (void)mk_addmember("tire-solid.c", &tire.l, NULL, WMOP_UNION);
