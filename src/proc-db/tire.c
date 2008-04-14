@@ -318,7 +318,7 @@ void CalcInputVals(fastf_t *inarray, fastf_t *outarray, int orientation)
     outarray[3] = semimajory;
     outarray[4] = semiminor;
 }
-void MakeTireSurface(struct rt_wdb (*file), char *suffix, fastf_t *ell1cadparams, fastf_t *ell2cadparams, fastf_t ztire, fastf_t dztred, fastf_t dytred, fastf_t dyhub, fastf_t zhub)
+void MakeTireSurface(struct rt_wdb (*file), char *suffix, fastf_t *ell1cadparams, fastf_t *ell2cadparams, fastf_t ztire, fastf_t dztred, fastf_t dytred, fastf_t dyhub, fastf_t zhub, fastf_t dyside1)
 {
     struct wmember tiresideoutercutright, tiresideoutercutleft, tiresideinnercutright, tiresideinnercutleft,tirecuttopcyl;
     struct wmember tiretred, tiresides, tiresurface;
@@ -357,14 +357,16 @@ void MakeTireSurface(struct rt_wdb (*file), char *suffix, fastf_t *ell1cadparams
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "TopClipL%s.s", suffix);	
     mk_rcc(file, bu_vls_addr(&str), vertex, height, ztire - dztred);
+    VSET(vertex, 0, -dyside1/2,0);
+    VSET(height, 0, dyside1, 0);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "SideClipInner%s.s", suffix);	
+    mk_rcc(file, bu_vls_addr(&str), vertex, height, zhub);
     VSET(vertex, 0, -dytred/2, 0);
     VSET(height, 0, dytred, 0);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "SideClipOuter1%s.s", suffix);	
     mk_rcc(file, bu_vls_addr(&str), vertex, height, ztire - dztred);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "SideClipInner%s.s", suffix);	
-    mk_rcc(file, bu_vls_addr(&str), vertex, height, zhub);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "SideClipOuter2%s.s", suffix);	
     mk_rcc(file, bu_vls_addr(&str), vertex, height, ztire);
@@ -581,7 +583,7 @@ void MakeTireCore(struct rt_wdb (*file), fastf_t dytred, fastf_t dztred, fastf_t
     printVec(ell1cadparams,5,"Ellipse 1 Input Parameters");
     CalcInputVals(ell2coefficients,ell2cadparams,1);
     printVec(ell2cadparams,5,"Ellipse 2 Input Parameters");
-    MakeTireSurface(file,"-solid",ell1cadparams,ell2cadparams,ztire,dztred,dytred,dyhub,zhub);
+    MakeTireSurface(file,"-solid",ell1cadparams,ell2cadparams,ztire,dztred,dytred,dyhub,zhub,dyside1);
 
     cut_ztire = ztire-thickness;
     cut_dyside1 = dyside1-thickness*2;
@@ -613,7 +615,7 @@ void MakeTireCore(struct rt_wdb (*file), fastf_t dytred, fastf_t dztred, fastf_t
     CalcInputVals(cut2coefficients,cut2cadparams,1);
     printVec(cut1cadparams,5,"Cut 1 Input Parameters");
     printVec(cut2cadparams,5,"Cut 2 Input Parameters");
-    MakeTireSurface(file,"-cut",cut1cadparams,cut2cadparams,cut_ztire,cut_dztred,cut_dytred,cut_dyhub,cut_zhub);
+    MakeTireSurface(file,"-cut",cut1cadparams,cut2cadparams,cut_ztire,cut_dztred,cut_dytred,dyhub,zhub,dyside1);
 
     for (i = 0; i < 5; i++)
     	bu_free((char *)matrixell1[i], "matrixell1 element");
@@ -659,7 +661,7 @@ int main(int ac, char *av[])
 
 /*Testing automatic conversions from std dimension info to geometry*/
 
-/*    width = 255;
+    width = 225;
     ratio = 40;
     wheeldiam = fInToMM(18.0);
 
@@ -667,12 +669,13 @@ int main(int ac, char *av[])
     ztire = ((width*ratio/100)*2+wheeldiam)/2;
     zhub = ztire-width*ratio/100;
     zside1 = ztire-((ztire-zhub)/2*1.2);
-    dztred = fInToMM(11.0/32.0);
+    dztred = .001*ratio*zside1;
     dytred = .8 * width;
     dyhub = dytred;
-    d1 = (ztire-zhub)/2.5;*/
+    d1 = (ztire-zhub)/2.5;
+    thickness = 15;
 
-/* 255/40R18 Tredwidth=8.9in */
+/* 255/40R18 Tredwidth=8.9in 
 
     dyside1 = 255;
     ztire = ((255*.4)*2+InToMM(18))/2;
@@ -683,7 +686,7 @@ int main(int ac, char *av[])
     zhub = ztire-255*.4; 
     d1 = (ztire-zhub)/2.5;
     thickness = 15;
-
+*/
     bu_log("dyzide1 = %6.7f\n",dyside1);
     bu_log("ztire = %6.7f\n",ztire);
     bu_log("zside1 = %6.7f\n",zside1);
