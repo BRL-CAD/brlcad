@@ -42,45 +42,6 @@
 #define ROWS 5
 #define COLS 5
 
-void printMatrix(fastf_t **mat, char *strname)
-{
-    int i=0;
-    int j = 0;
-    bu_log("\n----%s------\n", strname);
-    for (i = 0; i < 30; i++) {
-	if ((i+1)%6 == 0 && i != 0) {
-	    bu_log("%.16f\n", mat[j][i%6]);
-	    j++;
-	} else {
-	    bu_log("%.16f, ", mat[j][i%6]);
-	}
-    }
-    bu_log("\n-----------\n");
-    bu_log("\n----Maxima%s------\n[", strname);
-    i = 0;
-    j = 0;
-    for (i = 0; i < 30; i++) {
-	if ((i+1)%6 == 0 && i != 0) {
-	    bu_log("%.7f],[", mat[j][i%6]);
-	    j++;
-	} else {
-	    bu_log("%.7f, ", mat[j][i%6]);
-	}
-    }
-    bu_log("\n-----------\n");
-}
-
-void printMatrixEqns(fastf_t **mat, char *strname)
-{
-    int i=0;
-    bu_log("\n----%s------\n", strname);
-    for (i = 0; i < 5; i++) {
-	bu_log("eqn%1.0d : ",i+1);
-	bu_log("A*%.4f+B*%.4f+C*%.4f+D*%.4f+E*%.4f-1=0;\n", mat[i][0], mat[i][1], mat[i][2], mat[i][3], mat[i][4]);
-    }
-    bu_log("\n");
-}
-
 void printVec(fastf_t *result1, int c, char *strname)
 {
     int i=0;
@@ -91,22 +52,21 @@ void printVec(fastf_t *result1, int c, char *strname)
     bu_log("\n-------------------------\n\n");
 }
 
-
-fastf_t GetEllSlopeAtPoint(fastf_t *inarray, fastf_t x, fastf_t y)
+/* Evaluate Partial Derivative of Ellipse Equation at a point */
+fastf_t GetEllPartialAtPoint(fastf_t *inarray, fastf_t x, fastf_t y)
 {
-    fastf_t A,B,C,D,E,F,slope;
+    fastf_t A,B,C,D,E,F,partial;
     A = inarray[0];
     B = inarray[1];
     C = inarray[2];
     D = inarray[3];
     E = inarray[4];
     F = -1;
-    slope = -(D+y*B+2*x*A)/(E+2*y*C+x*B);
-/*    slope = -((2*B*E - 4*C*D - 8*x*A*C + 2*x*B*B)/(2*sqrt(E*E + 2*x*B*E - 4*x*C*D - 4*x*x*A*C + x*x*B*B))+B)/(2*C);*/
-    return slope;
+    partial = -(D+y*B+2*x*A)/(E+2*y*C+x*B);
+    return partial;
 }
 
-
+/* Create General Conic Matrix for Ellipse describing tire tread surface */
  void Create_Ell1_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t d1, fastf_t ztire) 
 {
     fastf_t y1,z1,y2,z2,y3,z3,y4,z4,y5,z5;
@@ -152,20 +112,10 @@ fastf_t GetEllSlopeAtPoint(fastf_t *inarray, fastf_t x, fastf_t y)
     mat[4][3] = y5;
     mat[4][4] = z5;
     mat[4][5] = -1;
-    bu_log("y1 : %6.7f, ",dytred/2);
-    bu_log("z1 : %6.7f\n",ztire-dztred);
-    bu_log("y2 : %6.7f, ",dytred/2);
-    bu_log("z2 : %6.7f\n",(ztire - (dztred+2*(d1-dztred))));
-    bu_log("y3 : %6.7f, ",0.0);
-    bu_log("z3 : %6.7f\n",ztire);
-    bu_log("y4 : %6.7f, ",0.0);
-    bu_log("z4 : %6.7f\n",(ztire-2*d1));
-    bu_log("y5 : %6.7f, ",-dytred/2);
-    bu_log("z5 : %6.7f\n",ztire-dztred);
 }
  
-
-void Create_Ell2_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t dyside1, fastf_t zside1, fastf_t ztire, fastf_t dyhub, fastf_t zhub, fastf_t ell1slope) 
+/* Create General Conic Matrix for Ellipse describing the tire side */
+void Create_Ell2_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t dyside1, fastf_t zside1, fastf_t ztire, fastf_t dyhub, fastf_t zhub, fastf_t ell1partial) 
 {
     mat[0][0] = (dyside1 / 2) * (dyside1 / 2);
     mat[0][1] = (zside1 * dyside1 / 2);
@@ -186,19 +136,20 @@ void Create_Ell2_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t dysi
     mat[2][4] = zhub;
     mat[2][5] = -1;
     mat[3][0] = 2 * (dytred / 2);
-    mat[3][1] = (ztire - dztred) + (dytred / 2) * ell1slope;
-    mat[3][2] = 2*(ztire - dztred) * ell1slope;
+    mat[3][1] = (ztire - dztred) + (dytred / 2) * ell1partial;
+    mat[3][2] = 2*(ztire - dztred) * ell1partial;
     mat[3][3] = 1;
-    mat[3][4] = ell1slope;
+    mat[3][4] = ell1partial;
     mat[3][5] = 0;
     mat[4][0] = 2 * (dyhub / 2);
-    mat[4][1] = zhub + (dyhub / 2) * -ell1slope;
-    mat[4][2] = 2*zhub*-ell1slope;
+    mat[4][1] = zhub + (dyhub / 2) * -ell1partial;
+    mat[4][2] = 2*zhub*-ell1partial;
     mat[4][3] = 1;
-    mat[4][4] = -ell1slope;
+    mat[4][4] = -ell1partial;
     mat[4][5] = 0;
 }
 
+/* Sort Rows of 5x6 matrix - for use in Gaussian Elimination */
 void SortRows(fastf_t **mat, int colnum)
 {
     int high_row, exam_row;
@@ -218,7 +169,8 @@ void SortRows(fastf_t **mat, int colnum)
     }
 }
 
-void Triangularize(fastf_t **mat)
+/* Convert 5x6 matrix to Reduced Echelon Form */
+void Echelon(fastf_t **mat)
 {
     int i,j,k;
     fastf_t pivot,rowmult;
@@ -235,8 +187,11 @@ void Triangularize(fastf_t **mat)
 	}
      }
 }
-	    
-void SolveTri(fastf_t **mat, fastf_t *result1)
+	   
+/* Take Reduced Echelon form of Matrix and solve for 
+ * General Conic Coefficients
+ */ 
+void SolveEchelon(fastf_t **mat, fastf_t *result1)
 {
     int i,j;
     fastf_t inter;
@@ -249,6 +204,10 @@ void SolveTri(fastf_t **mat, fastf_t *result1)
     }
 }
 
+/* Using the coefficients of the General Conic Equation
+ * solution, calculate input values required by the
+ * BRL-CAD mk_eto command.
+ */
 void CalcInputVals(fastf_t *inarray, fastf_t *outarray, int orientation)
 {
     fastf_t A,B,C,D,E,Fp;
@@ -259,32 +218,32 @@ void CalcInputVals(fastf_t *inarray, fastf_t *outarray, int orientation)
     fastf_t semimajor, semiminor;
     fastf_t semimajorx,semimajory;
 
-    bu_log("A=%6.9f,B=%6.9f,C=%6.9f,D=%6.9f,E=%6.9f,F=-1",inarray[0],inarray[1],inarray[2],inarray[3],inarray[4]);
     A = inarray[0];
     B = inarray[1];
     C = inarray[2];
     D = inarray[3];
     E = inarray[4];
 
-    /*Translation to Center of Ellipse*/
+    /* Translation to Center of Ellipse */
     x0 = -(B*E-2*C*D)/(4*A*C-B*B);
     y0 = -(B*D-2*A*E)/(4*A*C-B*B);
 
-    /*Translate to the Origin for Rotation*/
-
+    /* Translate to the Origin for Rotation */
     Fp = 1-y0*E-x0*D+y0*y0*C+x0*y0*B+x0*x0*A;
 
-    /*Rotation Angle*/
+    /* Rotation Angle */
     theta = .5*atan(1000*B/(1000*A-1000*C));
     
-    /*B' is zero with above theta choice*/
+    /* Calculate A'', B'' and C'' - B'' is zero with above theta choice */
     App = A*cos(theta)*cos(theta)+B*cos(theta)*sin(theta)+C*sin(theta)*sin(theta);
     Bpp = 2*(C-A)*cos(theta)*sin(theta)+B*cos(theta)*cos(theta)-B*sin(theta)*sin(theta);
     Cpp = A*sin(theta)*sin(theta)-B*sin(theta)*cos(theta)+C*cos(theta)*cos(theta);
 
+    /* Solve for semimajor and semiminor lengths*/
     length1 = sqrt(-Fp/App);
     length2 = sqrt(-Fp/Cpp);
 
+    /* BRL-CAD's eto primitive requires that C is the semimajor */
     if (length1 > length2) {
 	semimajor = length1;
 	semiminor = length2;
@@ -293,8 +252,8 @@ void CalcInputVals(fastf_t *inarray, fastf_t *outarray, int orientation)
 	semiminor = length1;
     }
 
-    /*Based on orientation of Ellipse, largest component of C is either in the
-     *y direction (0) or z direction (1);
+    /* Based on orientation of Ellipse, largest component of C is either in the
+     * y direction (0) or z direction (1) - find the components.
      */
 
     if (orientation == 0){
@@ -305,12 +264,19 @@ void CalcInputVals(fastf_t *inarray, fastf_t *outarray, int orientation)
 	semimajory = semimajor*cos(-theta);
     }
 
+    /* Return final BRL-CAD input parameters */
     outarray[0] = -x0;
     outarray[1] = -y0;
     outarray[2] = semimajorx;
     outarray[3] = semimajory;
     outarray[4] = semiminor;
 }
+
+
+/* Function to actually insert BRL-CAD primitives into a designated file and form
+ * the correct combinations.  Takes a suffix argument to allow definition of unique
+ * tree names.
+ */
 void MakeTireSurface(struct rt_wdb (*file), char *suffix, fastf_t *ell1cadparams, fastf_t *ell2cadparams, fastf_t ztire, fastf_t dztred, fastf_t dytred, fastf_t dyhub, fastf_t zhub, fastf_t dyside1)
 {
     struct wmember tiresideoutercutright, tiresideoutercutleft, tiresideinnercutright, tiresideinnercutleft,tirecuttopcyl;
@@ -322,6 +288,7 @@ void MakeTireSurface(struct rt_wdb (*file), char *suffix, fastf_t *ell1cadparams
     vect_t vertex,height;
     point_t origin,normal,C;
    
+    /* Insert primitives */
     VSET(origin, 0, ell1cadparams[0], 0);
     VSET(normal, 0, 1, 0);
     VSET(C, 0, ell1cadparams[2],ell1cadparams[3]);
@@ -364,6 +331,10 @@ void MakeTireSurface(struct rt_wdb (*file), char *suffix, fastf_t *ell1cadparams
     bu_vls_printf(&str, "SideClipOuter2%s.s", suffix);	
     mk_rcc(file, bu_vls_addr(&str), vertex, height, ztire);
  
+    /* Insert primitives to ensure a solid interior - based
+     * on dimensions, either add or subtract cones from the
+     * sides of the solid.
+     */
     VSET(vertex, 0, -dytred/2, 0);
     VSET(height, 0, dytred, 0);
     bu_vls_trunc(&str,0);
@@ -381,6 +352,7 @@ void MakeTireSurface(struct rt_wdb (*file), char *suffix, fastf_t *ell1cadparams
     	mk_cone(file, bu_vls_addr(&str), vertex, normal, dytred/2 - dyhub/2, ztire-dztred,zhub);
     }	
 
+    /* Define the tire tread surface trimming volume */
     BU_LIST_INIT(&tirecuttopcyl.l);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "SideClipOuter2%s.s", suffix);	
@@ -392,7 +364,7 @@ void MakeTireSurface(struct rt_wdb (*file), char *suffix, fastf_t *ell1cadparams
     bu_vls_printf(&str, "tire-outer-sides-trim%s.c", suffix);	
     mk_lcomb(file, bu_vls_addr(&str), &tirecuttopcyl, 0, NULL, NULL, NULL, 0);
     
-
+    /* Define outer cut for right (positive y) side of tire */
     BU_LIST_INIT(&tiresideoutercutright.l);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Ellipse2%s.s", suffix);	
@@ -404,7 +376,8 @@ void MakeTireSurface(struct rt_wdb (*file), char *suffix, fastf_t *ell1cadparams
     bu_vls_printf(&str, "tire-side-outer-cut-right%s.c", suffix);	
     mk_lcomb(file, bu_vls_addr(&str), &tiresideoutercutright, 0, NULL, NULL, NULL, 0);
  
-   BU_LIST_INIT(&tiresideoutercutleft.l);
+    /* Define outer cut for left (negative y) side of tire */
+    BU_LIST_INIT(&tiresideoutercutleft.l);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Ellipse3%s.s", suffix);	
     (void)mk_addmember(bu_vls_addr(&str), &tiresideoutercutleft.l, NULL, WMOP_UNION);
@@ -415,6 +388,7 @@ void MakeTireSurface(struct rt_wdb (*file), char *suffix, fastf_t *ell1cadparams
     bu_vls_printf(&str, "tire-side-outer-cut-left%s.c", suffix);	
     mk_lcomb(file, bu_vls_addr(&str), &tiresideoutercutleft, 0, NULL, NULL, NULL, 0);
 
+    /* Define inner cut for right (positive y) side of tire */
     BU_LIST_INIT(&tiresideinnercutright.l);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Ellipse2%s.s", suffix);	
@@ -426,6 +400,7 @@ void MakeTireSurface(struct rt_wdb (*file), char *suffix, fastf_t *ell1cadparams
     bu_vls_printf(&str, "tire-side-inner-cut-right%s.c", suffix);	
     mk_lcomb(file, bu_vls_addr(&str), &tiresideinnercutright, 0, NULL, NULL, NULL, 0);
 
+    /* Define inner cut for left (negative y) side of tire */
     BU_LIST_INIT(&tiresideinnercutleft.l);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Ellipse3%s.s", suffix);	
@@ -437,6 +412,7 @@ void MakeTireSurface(struct rt_wdb (*file), char *suffix, fastf_t *ell1cadparams
     bu_vls_printf(&str, "tire-side-inner-cut-left%s.c", suffix);	
     mk_lcomb(file, bu_vls_addr(&str), &tiresideinnercutleft, 0, NULL, NULL, NULL, 0);
 
+    /* Combine cuts and primitives to make final tire side surfaces */
     BU_LIST_INIT(&tiresides.l);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Ellipse2%s.s", suffix);	
@@ -460,6 +436,7 @@ void MakeTireSurface(struct rt_wdb (*file), char *suffix, fastf_t *ell1cadparams
     bu_vls_printf(&str, "tire-sides%s.c", suffix);	
     mk_lcomb(file, bu_vls_addr(&str), &tiresides, 0, NULL, NULL, NULL, 0);
 
+    /* Combine cuts and primitives to make final tire tread surface */
     BU_LIST_INIT(&tiretred.l);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Ellipse1%s.s", suffix);	
@@ -474,6 +451,9 @@ void MakeTireSurface(struct rt_wdb (*file), char *suffix, fastf_t *ell1cadparams
     bu_vls_printf(&str, "tire-tred-surface%s.c", suffix);	
     mk_lcomb(file, bu_vls_addr(&str), &tiretred, 0, NULL, NULL, NULL, 0);
 
+    /* Combine tire tread surface and tire side surfaces to make final
+     * tire surface.
+     */
     BU_LIST_INIT(&tiresurface.l);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "tire-sides%s.c", suffix);	
@@ -485,6 +465,7 @@ void MakeTireSurface(struct rt_wdb (*file), char *suffix, fastf_t *ell1cadparams
     bu_vls_printf(&str, "tire-surface%s.c", suffix);	
     mk_lcomb(file, bu_vls_addr(&str), &tiresurface, 0, NULL, NULL, NULL, 0);
 
+    /* Combine inner solid, cones, and cuts to ensure a filled inner volume. */
     BU_LIST_INIT(&innersolid.l);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "InnerSolid%s.s", suffix);	
@@ -514,6 +495,7 @@ void MakeTireSurface(struct rt_wdb (*file), char *suffix, fastf_t *ell1cadparams
     bu_vls_printf(&str, "tire-solid%s.c", suffix);	
     mk_lcomb(file, bu_vls_addr(&str), &innersolid, 0, NULL, NULL, NULL, 0);
 
+    /* Assemble surfaces and interior fill to make final tire shape */
     BU_LIST_INIT(&tire.l);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "tire-surface%s.c", suffix);	
@@ -526,19 +508,19 @@ void MakeTireSurface(struct rt_wdb (*file), char *suffix, fastf_t *ell1cadparams
     mk_lcomb(file, bu_vls_addr(&str), &tire, 0, NULL, NULL, NULL, 0);
   
     bu_vls_free(&str);
-
-
 }
 
+/* Use the Gaussian Elimination Routines and MakeTireSurface routine to solve
+ * for and insert the shapes needed for a hollow tire*/
 void MakeTireCore(struct rt_wdb (*file), fastf_t dytred, fastf_t dztred, fastf_t d1, fastf_t dyside1, fastf_t zside1, fastf_t ztire, fastf_t dyhub, fastf_t zhub, fastf_t thickness)
 {
     int i;
-    fastf_t ell1slope,ell2slope;
+    fastf_t ell1partial;
     fastf_t ell1coefficients[5],ell2coefficients[5];
     fastf_t ell1cadparams[5],ell2cadparams[5];
     fastf_t **matrixell1,**matrixell2;
     fastf_t cut_dytred,cut_dztred,cut_d1,cut_dyside1,cut_zside1,cut_ztire,cut_dyhub,cut_zhub;
-    fastf_t cut1slope,cut2slope;
+    fastf_t cut1partial;
     fastf_t cut1coefficients[5],cut2coefficients[5];
     fastf_t cut1cadparams[5],cut2cadparams[5];
     fastf_t **matrixcut1,**matrixcut2;
@@ -560,24 +542,25 @@ void MakeTireCore(struct rt_wdb (*file), fastf_t dytred, fastf_t dztred, fastf_t
     for (i = 0; i < 5; i++)
 	matrixcut2[i] = (fastf_t *)bu_malloc(6 * sizeof(fastf_t),"matrixcols");
 
+    /* Find outer tread ellipse equation */
     Create_Ell1_Mat(matrixell1, dytred, dztred, d1, ztire);
-    Triangularize(matrixell1);
-    SolveTri(matrixell1,ell1coefficients);
-    printVec(ell1coefficients,5,"Ellipse 1 Coefficients");
-    ell1slope = GetEllSlopeAtPoint(ell1coefficients,dytred/2,ztire-dztred);
-    printf("ell1slope = %6.9f\n",ell1slope);
-    Create_Ell2_Mat(matrixell2, dytred, dztred, dyside1, zside1, ztire, dyhub, zhub, ell1slope);
-    Triangularize(matrixell2);
-    SolveTri(matrixell2,ell2coefficients);
-    printVec(ell2coefficients,5,"Ellipse 2 Coefficients");
-    ell2slope = GetEllSlopeAtPoint(ell2coefficients,dytred/2,ztire-dztred);
-    printf("ell2slope = %6.9f\n",ell2slope);
+    Echelon(matrixell1);
+    SolveEchelon(matrixell1,ell1coefficients);
+    ell1partial = GetEllPartialAtPoint(ell1coefficients,dytred/2,ztire-dztred);
+    /* Find outer side ellipse equation */
+    Create_Ell2_Mat(matrixell2, dytred, dztred, dyside1, zside1, ztire, dyhub, zhub, ell1partial);
+    Echelon(matrixell2);
+    SolveEchelon(matrixell2,ell2coefficients);
+    /* Calculate BRL-CAD input parameters for outer tread ellipse */
     CalcInputVals(ell1coefficients,ell1cadparams,0);
     printVec(ell1cadparams,5,"Ellipse 1 Input Parameters");
+    /* Calculate BRL-CAD input parameters for outer side ellipse */
     CalcInputVals(ell2coefficients,ell2cadparams,1);
     printVec(ell2cadparams,5,"Ellipse 2 Input Parameters");
+    /* Insert outer tire volume */
     MakeTireSurface(file,"-solid",ell1cadparams,ell2cadparams,ztire,dztred,dytred,dyhub,zhub,dyside1);
 
+    /* Calculate input parameters for inner cut*/
     cut_ztire = ztire-thickness;
     cut_dyside1 = dyside1-thickness*2;
     cut_zside1 = zside1;
@@ -587,27 +570,22 @@ void MakeTireCore(struct rt_wdb (*file), fastf_t dytred, fastf_t dztred, fastf_t
     cut_dyhub = dyhub - thickness*2;
     cut_zhub = zhub;
 
-    bu_log("cut_ztire = %6.9f\n",cut_ztire);
-    bu_log("cut_dyside1 = %6.9f\n",cut_dyside1);
-    bu_log("cut_zside1 = %6.9f\n",cut_zside1);
-    bu_log("cut_d1 = %6.9f\n", cut_d1);
-    bu_log("cut_dytred = %6.9f\n",cut_dytred);
-    bu_log("cut_dztred = %6.9f\n",cut_dztred);
-    bu_log("cut_dyhub = %6.9f\n",cut_dyhub);
-    bu_log("cut_zhub = %6.9f\n",cut_zhub);
-
+    /* Find inner tread cut ellipse equation */
     Create_Ell1_Mat(matrixcut1, cut_dytred, cut_dztred, cut_d1, cut_ztire);
-    Triangularize(matrixcut1);
-    SolveTri(matrixcut1,cut1coefficients);
-    cut1slope = GetEllSlopeAtPoint(cut1coefficients,cut_dytred/2,cut_ztire-cut_dztred);
-    Create_Ell2_Mat(matrixcut2, cut_dytred, cut_dztred, cut_dyside1, cut_zside1, cut_ztire, cut_dyhub, cut_zhub, cut1slope);
-    Triangularize(matrixcut2);
-    SolveTri(matrixcut2,cut2coefficients);
-    cut2slope = GetEllSlopeAtPoint(cut2coefficients,cut_dytred/2,cut_ztire-cut_dztred);
+    Echelon(matrixcut1);
+    SolveEchelon(matrixcut1,cut1coefficients);
+    cut1partial = GetEllPartialAtPoint(cut1coefficients,cut_dytred/2,cut_ztire-cut_dztred);
+    /* Find inner cut side ellipse equation */
+    Create_Ell2_Mat(matrixcut2, cut_dytred, cut_dztred, cut_dyside1, cut_zside1, cut_ztire, cut_dyhub, cut_zhub, cut1partial);
+    Echelon(matrixcut2);
+    SolveEchelon(matrixcut2,cut2coefficients);
+    /* Calculate BRL-CAD input parameters for inner cut tread ellipse */
     CalcInputVals(cut1coefficients,cut1cadparams,0);
-    CalcInputVals(cut2coefficients,cut2cadparams,1);
     printVec(cut1cadparams,5,"Cut 1 Input Parameters");
+    /* Calculate BRL-CAD input parameters for inner cut side ellipse */
+    CalcInputVals(cut2coefficients,cut2cadparams,1);
     printVec(cut2cadparams,5,"Cut 2 Input Parameters");
+    /* Insert inner tire cut volume */
     MakeTireSurface(file,"-cut",cut1cadparams,cut2cadparams,cut_ztire,cut_dztred,cut_dytred,cut_dyhub,zhub,dyside1);
 
     for (i = 0; i < 5; i++)
@@ -627,7 +605,7 @@ void MakeTireCore(struct rt_wdb (*file), fastf_t dytred, fastf_t dztred, fastf_t
 
 }
 
-
+/* Process command line arguments */
 int ReadArgs(int argc, char **argv, fastf_t *isoarray)
 {
     int c = 0;
@@ -663,24 +641,27 @@ int main(int ac, char *av[])
     unsigned char rgb[3];
     fastf_t isoarray[3];
 
- 
-    VSET(rgb, 40, 40, 40);
-    
+    /* Set Default Parameters - 255/40R18 */ 
     isoarray[0] = 255;
     isoarray[1] = 40;
     isoarray[2] = 18;
 
+    /* Process arguments */
     ReadArgs(ac, av, isoarray);
  
+    /* Create/Open file name if supplied,
+     * else use "tire.g"
+     */
     db_fp = wdb_fopen( av[bu_optind] );
-    if (db_fp == NULL)
+    if (db_fp == NULL){
 	db_fp = wdb_fopen("tire.g");
-    
- 
-    mk_id(db_fp, "Test Database");
+        mk_id(db_fp, "Tire");
+    }
 
-/*Automatic conversion from std dimension info to geometry*/
+    /* Set Tire color */
+    VSET(rgb, 40, 40, 40);
 
+    /*Automatic conversion from std dimension info to geometry*/
     width = isoarray[0];
     ratio = isoarray[1];
     wheeldiam = isoarray[2]*bu_units_conversion("in");
@@ -695,13 +676,18 @@ int main(int ac, char *av[])
     d1 = (ztire-zhub)/2.5;
     thickness = 15;
 
+    /* Call routine to actually make the tire geometry*/
     MakeTireCore(db_fp, dytred, dztred, d1, dyside1, zside1, ztire, dyhub, zhub, thickness);
  
+    /* Combine the tire solid and tire cutout into the
+     * final tire region.
+     */
     BU_LIST_INIT(&tire.l);
     (void)mk_addmember("tire-solid.c", &tire.l, NULL, WMOP_UNION);
     (void)mk_addmember("tire-cut.c", &tire.l, NULL, WMOP_SUBTRACT);
     mk_lcomb(db_fp, "tire.c", &tire, 1,  "plastic", "di=.8 sp=.2", rgb, 0);
 
+    /* Close database */
     wdb_close(db_fp);
 
     return 0;
