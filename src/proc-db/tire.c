@@ -490,7 +490,7 @@ void MakeTireSurface(struct rt_wdb (*file), char *suffix, fastf_t *ell1cadparams
     bu_vls_printf(&str, "InnerSolid%s.s", suffix);	
     (void)mk_addmember(bu_vls_addr(&str), &innersolid.l, NULL, WMOP_UNION);
     if ((dytred/2 - dyhub/2) > 0 && !NEAR_ZERO(dytred/2 - dyhub/2, SMALL_FASTF)) {
-    	bu_log("Subtracting cones");
+    	bu_log("Subtracting cones\n");
     	bu_vls_trunc(&str,0);
     	bu_vls_printf(&str, "LeftCone%s.s", suffix);	
 	(void)mk_addmember(bu_vls_addr(&str), &innersolid.l, NULL, WMOP_SUBTRACT);
@@ -499,7 +499,7 @@ void MakeTireSurface(struct rt_wdb (*file), char *suffix, fastf_t *ell1cadparams
 	(void)mk_addmember(bu_vls_addr(&str), &innersolid.l, NULL, WMOP_SUBTRACT);
     }
     if ((dytred/2 - dyhub/2) < 0 && !NEAR_ZERO(dytred/2 - dyhub/2, SMALL_FASTF)) {
-    	bu_log("Adding cones");
+    	bu_log("Adding cones\n");
     	bu_vls_trunc(&str,0);
     	bu_vls_printf(&str, "LeftCone%s.s", suffix);	
 	(void)mk_addmember(bu_vls_addr(&str), &innersolid.l, NULL, WMOP_UNION);
@@ -627,6 +627,33 @@ void MakeTireCore(struct rt_wdb (*file), fastf_t dytred, fastf_t dztred, fastf_t
 
 }
 
+
+int ReadArgs(int argc, char **argv, fastf_t *isoarray)
+{
+    int c = 0;
+    char *options="d:";
+    int d1, d2, d3;
+    char tiretype;
+    bu_log("Reading args\n");
+
+    bu_opterr = 0;
+
+    while ((c=bu_getopt(argc, argv, options)) != -1) {
+	bu_log("in while loop -> %c\n",c);
+        switch (c) {
+            case 'd' :
+		sscanf(bu_optarg,"%d/%d%c%d",&d1,&d2,&tiretype,&d3);
+		bu_log("Dimensions: Width=%2.0dmm, Ratio=%2.0d, Wheel Diameter=%2.0din\n",d1,d2,d3);
+		isoarray[0] = d1;
+		isoarray[1] = d2;
+		isoarray[2] = d3;
+                break;
+	   }
+	 }
+	 return(bu_optind);
+ }
+
+
 int main(int ac, char *av[])
 {
     struct rt_wdb *db_fp;
@@ -634,18 +661,29 @@ int main(int ac, char *av[])
     fastf_t width, ratio, wheeldiam, thickness;
     struct wmember tire;
     unsigned char rgb[3];
+    fastf_t isoarray[3];
+
+ 
     VSET(rgb, 40, 40, 40);
-    if ((db_fp = wdb_fopen(av[1])) == NULL) {
-       db_fp = wdb_fopen("tire.g");
-    }
-    mk_id(db_fp, "Test Database");
     
+    isoarray[0] = 255;
+    isoarray[1] = 40;
+    isoarray[2] = 18;
+
+    ReadArgs(ac, av, isoarray);
+ 
+    db_fp = wdb_fopen( av[bu_optind] );
+    if (db_fp == NULL)
+	db_fp = wdb_fopen("tire.g");
+    
+ 
+    mk_id(db_fp, "Test Database");
 
 /*Automatic conversion from std dimension info to geometry*/
 
-    width = 225;
-    ratio = 40;
-    wheeldiam = 18.0*bu_units_conversion("in");
+    width = isoarray[0];
+    ratio = isoarray[1];
+    wheeldiam = isoarray[2]*bu_units_conversion("in");
 
     dyside1 = width;
     ztire = ((width*ratio/100)*2+wheeldiam)/2;
