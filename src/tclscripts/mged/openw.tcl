@@ -198,7 +198,9 @@ if {![info exists mged_browser]} {
     if {[file exists $mged_default(web_browser)]} {
 	set mged_browser $mged_default(web_browser)
     } else {
-	if {[info exists env(PATH)]} {
+	if { ($::tcl_platform(os) == "Windows NT") && [file exists "C:/Program Files/Internet Explorer/iexplore.exe"] } {
+	    set mged_default(web_browser) "C:/Program Files/Internet Explorer/iexplore.exe"
+	} else if {[info exists env(PATH)]} {
 	    set pathlist [split $env(PATH) :]
 	    foreach path $pathlist {
 		if {[file exists $path/netscape]} {
