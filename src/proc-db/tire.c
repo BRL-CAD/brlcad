@@ -42,6 +42,23 @@
 #define ROWS 5
 #define COLS 5
 
+
+
+void getYRotMat(mat_t (*t), fastf_t theta)
+{
+    fastf_t sin_ = sin(theta);
+    fastf_t cos_ = cos(theta);
+    mat_t r;
+    MAT_ZERO(r);
+    r[0] = cos_;
+    r[2] = sin_;
+    r[5] = 1;
+    r[8] = -sin_;
+    r[10] = cos_;
+    r[15] = 1;
+    memcpy(*t, r, sizeof(*t));
+}
+
 void printVec(fastf_t *result1, int c, char *strname)
 {
     int i=0;
@@ -275,8 +292,10 @@ void CalcInputVals(fastf_t *inarray, fastf_t *outarray, int orientation)
 
 void MakeWheelRims(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t zhub, int bolts, fastf_t bolt_diam, fastf_t bolt_circ_diam, fastf_t spigot_diam, fastf_t fixing_offset, fastf_t bead_height, fastf_t bead_width, fastf_t rim_thickness)
 {
-    struct wmember tireleftbead, tirerightbead, tireleftflat, tirerightflat, tirefixingface;
+    struct wmember tireleftbead, tirerightbead, tireleftflat, tirerightflat, tirefixingface, hubhole,hubholes;
     struct wmember tirebeadlefttrans, tirebeadrighttrans, wheelrim, innerhub, wheel;
+    int i;
+    mat_t y;
     vect_t normal, height;
     point_t origin, vertex, C;
     struct bu_vls str;
@@ -369,6 +388,31 @@ void MakeWheelRims(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t z
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Inner-Hub-Cut%s.s", suffix);	
     mk_eto(file, bu_vls_addr(&str), origin, normal, C, (zhub-2*bead_height-rim_thickness)/2+spigot_diam/2+rim_thickness*.7, 20);   
+
+    VSET(vertex, 0, 0, (zhub - (bolt_circ_diam/2+bolt_diam/2))/1.4);
+    VSET(height, 0, dyhub/2, 0);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "Hub-Hole%s.s", suffix); 
+    mk_rcc(file, bu_vls_addr(&str), vertex, height,(zhub - (bolt_circ_diam/2+bolt_diam/2))/8.5 );
+
+
+    BU_LIST_INIT(&hubhole.l);
+    BU_LIST_INIT(&hubholes.l);
+    for (i=1; i<=10; i++) {
+	bu_vls_trunc(&str,0);
+	bu_vls_printf(&str, "Hub-Hole%s.s",suffix);
+	getYRotMat(&y,D2R(i*360/10));
+	(void)mk_addmember(bu_vls_addr(&str), &hubhole.l, y, WMOP_UNION);
+	bu_vls_trunc(&str,0);
+	bu_vls_printf(&str, "Hub-Hole-%1.0d%s.c", i, suffix);
+	mk_lcomb(file, bu_vls_addr(&str), &hubhole, 0, NULL, NULL, NULL, 0);
+	(void)mk_addmember(bu_vls_addr(&str), &hubholes.l, NULL, WMOP_UNION);
+	(void)BU_LIST_POP_T(&hubhole.l,struct wmember);
+    }
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "Hub-Holes%s.c",suffix);
+    mk_lcomb(file, bu_vls_addr(&str), &hubholes, 0, NULL, NULL, NULL, 0);
+
 
     /*Make combination for Left bead*/ 
     BU_LIST_INIT(&tireleftbead.l);
@@ -502,11 +546,17 @@ void MakeWheelRims(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t z
     bu_vls_printf(&str, "Inner-Hub-Cut%s.s", suffix);	
     (void)mk_addmember(bu_vls_addr(&str), &innerhub.l, NULL, WMOP_SUBTRACT);
     bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "Hub-Holes%s.c", suffix);	
+    (void)mk_addmember(bu_vls_addr(&str), &innerhub.l, NULL, WMOP_SUBTRACT);
+    bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Inner-Hub%s.c", suffix);	
     mk_lcomb(file, bu_vls_addr(&str), &innerhub, 0, NULL, NULL, NULL, 0);
 
 
     /*Other inner hub cuts/bolts/etc here*/
+
+
+
 
     /*Make combination for Wheel*/ 
     BU_LIST_INIT(&wheel.l);
@@ -942,8 +992,8 @@ int main(int ac, char *av[])
 
 
     bolts = 5;
-    bolt_diam = 20;
-    bolt_circ_diam = 110;
+    bolt_diam = 5;
+    bolt_circ_diam = 50;
     spigot_diam = 20;
     fixing_offset = 15;
     bead_height = 8;
