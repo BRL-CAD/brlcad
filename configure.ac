@@ -1202,7 +1202,7 @@ if test "x$bc_with_x11" != "xno" ; then
 	fi
     fi
 
-    dnl find X11 libraries
+    dnl find X11 libraries.  sets X_CFLAGS, X_LIBS, and X_EXTRA_LIBS
     AC_PATH_XTRA
     if test "x$have_x" = "xyes" ; then
 	AC_DEFINE(HAVE_X11_XLIB_H, 1, Define to 1 if you have the <X11/Xlib.h> header file.)
@@ -1214,16 +1214,21 @@ if test "x$bc_with_x11" != "xno" ; then
     LIBXI=""
 
     PRELIBS="$LIBS"
-    LIBS="$PRELIBS $X_LIBS"
+    PRECPPFLAGS="$CPPFLAGS"
+
+    CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+
+    LIBS="$LIBS $X_LIBS"
     AC_CHECK_LIB(X11, XCreateWindow, LIBX11="-lX11")
 
     LIBS="$LIBS $LIBX11"
     AC_CHECK_LIB(Xext, XShapeCombineMask, LIBXEXT="-lXext")
 
-    LIBS="$LIBS $LIBX11 $LIBXEXT"
+    LIBS="$LIBS $LIBXEXT"
     AC_CHECK_LIB(Xi, XGetExtensionVersion, LIBXI="-lXi")
-
     X_LIBS="$LIBS $LIBXI"
+
+    CPPFLAGS="$PRECPPFLAGS"
     LIBS="$PRELIBS"
 fi
 
