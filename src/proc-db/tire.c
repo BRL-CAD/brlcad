@@ -276,7 +276,7 @@ void CalcInputVals(fastf_t *inarray, fastf_t *outarray, int orientation)
 void MakeWheelRims(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t zhub, int bolts, fastf_t bolt_diam, fastf_t bolt_circ_diam, fastf_t spigot_diam, fastf_t fixing_offset, fastf_t bead_height, fastf_t bead_width, fastf_t rim_thickness)
 {
     struct wmember tireleftbead, tirerightbead, tireleftflat, tirerightflat, tirefixingface;
-    struct wmember tirebeadlefttrans, tirebeadrighttrans, wheelrim;
+    struct wmember tirebeadlefttrans, tirebeadrighttrans, wheelrim, innerhub, wheel;
     vect_t normal, height;
     point_t origin, vertex, C;
     struct bu_vls str;
@@ -355,7 +355,21 @@ void MakeWheelRims(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t z
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Inner-Fixing-cut%s.s", suffix);	
     mk_rcc(file, bu_vls_addr(&str), vertex, height, zhub - rim_thickness - 2*bead_height);
+
+    VSET(origin, 0,dyhub/2-2*bead_width-(.3*(dyhub-4*bead_width))*.25, 0);
+    VSET(normal, 0, -1, 0);
+    VSET(C, 0, -(.3*(dyhub-4*bead_width))*.5,(zhub-2*bead_height-rim_thickness)/2-spigot_diam/2)
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "Inner-Hub%s.s", suffix);	
+    mk_eto(file, bu_vls_addr(&str), origin, normal, C, (zhub-2*bead_height-rim_thickness)/2+spigot_diam/2+rim_thickness*.7, 20);   
    
+    VSET(origin, 0,dyhub/2-2*bead_width-(.3*(dyhub-4*bead_width))*.25-10, 0);
+    VSET(normal, 0, -1, 0);
+    VSET(C, 0, -(.3*(dyhub-4*bead_width))*.5,(zhub-2*bead_height-rim_thickness)/2-spigot_diam/2)
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "Inner-Hub-Cut%s.s", suffix);	
+    mk_eto(file, bu_vls_addr(&str), origin, normal, C, (zhub-2*bead_height-rim_thickness)/2+spigot_diam/2+rim_thickness*.7, 20);   
+
     /*Make combination for Left bead*/ 
     BU_LIST_INIT(&tireleftbead.l);
     bu_vls_trunc(&str,0);
@@ -452,7 +466,7 @@ void MakeWheelRims(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t z
     bu_vls_printf(&str, "Fixing%s.c", suffix);	
     mk_lcomb(file, bu_vls_addr(&str), &tirefixingface, 0, NULL, NULL, NULL, 0);
 
-    /*Make final wheel rim combination*/
+    /*Make wheel rim combination*/
     BU_LIST_INIT(&wheelrim.l);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Left-Bead%s.c", suffix);	
@@ -476,9 +490,36 @@ void MakeWheelRims(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t z
     bu_vls_printf(&str, "Fixing%s.c", suffix);	
     (void)mk_addmember(bu_vls_addr(&str), &wheelrim.l, NULL, WMOP_UNION);
     bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "Wheel-Rim.c");	
+    bu_vls_printf(&str, "Wheel-Rim%s.c", suffix);	
     mk_lcomb(file, bu_vls_addr(&str), &wheelrim, 0, NULL, NULL, NULL, 0);
 
+    /*Make combination for Inner-Hub*/ 
+    BU_LIST_INIT(&innerhub.l);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "Inner-Hub%s.s", suffix);	
+    (void)mk_addmember(bu_vls_addr(&str), &innerhub.l, NULL, WMOP_UNION);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "Inner-Hub-Cut%s.s", suffix);	
+    (void)mk_addmember(bu_vls_addr(&str), &innerhub.l, NULL, WMOP_SUBTRACT);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "Inner-Hub%s.c", suffix);	
+    mk_lcomb(file, bu_vls_addr(&str), &innerhub, 0, NULL, NULL, NULL, 0);
+
+
+    /*Other inner hub cuts/bolts/etc here*/
+
+    /*Make combination for Wheel*/ 
+    BU_LIST_INIT(&wheel.l);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "Inner-Hub%s.c", suffix);	
+    (void)mk_addmember(bu_vls_addr(&str), &wheel.l, NULL, WMOP_UNION);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "Wheel-Rim%s.c", suffix);	
+    (void)mk_addmember(bu_vls_addr(&str), &wheel.l, NULL, WMOP_UNION);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "Wheel%s.c", suffix);	
+    mk_lcomb(file, bu_vls_addr(&str), &wheel, 0, NULL, NULL, NULL, 0);
+    
 
 }
 
@@ -821,7 +862,7 @@ int ReadArgs(int argc, char **argv, fastf_t *isoarray)
     int c = 0;
     char *options="d:";
     int d1, d2, d3;
-    char tiretype;
+    char spacer1,tiretype;
     bu_log("Reading args\n");
 
     bu_opterr = 0;
@@ -830,7 +871,7 @@ int ReadArgs(int argc, char **argv, fastf_t *isoarray)
 	bu_log("in while loop -> %c\n",c);
         switch (c) {
             case 'd' :
-		sscanf(bu_optarg,"%d/%d%c%d",&d1,&d2,&tiretype,&d3);
+		sscanf(bu_optarg,"%d%c%d%c%d",&d1,&spacer1,&d2,&tiretype,&d3);
 		bu_log("Dimensions: Width=%2.0dmm, Ratio=%2.0d, Wheel Diameter=%2.0din\n",d1,d2,d3);
 		isoarray[0] = d1;
 		isoarray[1] = d2;
@@ -903,14 +944,14 @@ int main(int ac, char *av[])
     bolts = 5;
     bolt_diam = 20;
     bolt_circ_diam = 110;
-    spigot_diam = 60;
-    fixing_offset = 45;
+    spigot_diam = 20;
+    fixing_offset = 15;
     bead_height = 8;
     bead_width = 8;
     rim_thickness = 5;
 
     /* Make wheel rim */
-    MakeWheelRims(db_fp, "test", dyhub, zhub, bolts, bolt_diam, bolt_circ_diam, spigot_diam, fixing_offset, bead_height, bead_width, rim_thickness);
+    MakeWheelRims(db_fp, "", dyhub, zhub, bolts, bolt_diam, bolt_circ_diam, spigot_diam, fixing_offset, bead_height, bead_width, rim_thickness);
 
 
 
