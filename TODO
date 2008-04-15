@@ -17,16 +17,18 @@ http://sf.net/pm/?group_id=105292
 THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------
 
+* test and release
+
+
+THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
+-------------------------------------------------
+
 * verify/finish clone mirror support
 
 * fix incrTcl pathing issues when only using system tcl/tk
   (get incrTcl subconfigure to work like was done for Tcl)
 
 * (re)verify rtarea results, fix naming convention
-
-
-THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
--------------------------------------------------
 
 * test configure/build on stripped down box (Erik, fresh FBSD install)
 
