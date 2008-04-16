@@ -297,6 +297,7 @@ void MakeWheelRims(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t z
     fastf_t inner_width, left_width, right_width, fixing_width, inner_width_left_start, inner_width_right_start;
     fastf_t fixing_width_left_trans, fixing_width_right_trans, fixing_width_middle;
     fastf_t fixing_start_left, fixing_start_right, fixing_start_middle;
+    struct wmember bolthole,boltholes;
     int i;
     mat_t y;
     vect_t normal, height;
@@ -396,18 +397,23 @@ void MakeWheelRims(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t z
 
     VSET(origin, 0, fixing_start_right, 0);
     VSET(normal, 0, -1, 0);
-    VSET(C, 0, -fixing_width/2,(zhub-2*bead_height-rim_thickness)/2-spigot_diam/2)
+    VSET(C, 0, -fixing_width/2,(zhub-2*bead_height-rim_thickness)/2+rim_thickness*.4)
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Inner-Hub%s.s", suffix);	
-    mk_eto(file, bu_vls_addr(&str), origin, normal, C, (zhub-2*bead_height-rim_thickness)/2+spigot_diam/2+rim_thickness*.7, 20);   
+    mk_eto(file, bu_vls_addr(&str), origin, normal, C, (zhub-2*bead_height-rim_thickness)/2+rim_thickness*.4, 20);   
    
     VSET(origin, 0,fixing_start_right-10, 0);
     VSET(normal, 0, -1, 0);
-    VSET(C, 0, -fixing_width/2,(zhub-2*bead_height-rim_thickness)/2-spigot_diam/2)
+    VSET(C, 0, -fixing_width/2,(zhub-2*bead_height-rim_thickness)/2+rim_thickness*.4)
     bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "Inner-Hub-Cut%s.s", suffix);	
-    mk_eto(file, bu_vls_addr(&str), origin, normal, C, (zhub-2*bead_height-rim_thickness)/2+spigot_diam/2+rim_thickness*.7, 20);   
+    bu_vls_printf(&str, "Inner-Hub-Cut1%s.s", suffix);	
+    mk_eto(file, bu_vls_addr(&str), origin, normal, C, (zhub-2*bead_height-rim_thickness)/2+rim_thickness*.4, 20);   
 
+    VSET(origin, 0,0, 0);
+    VSET(height, 0, dyhub/2, 0);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "Inner-Hub-Cut2%s.s", suffix);	
+    mk_rcc(file, bu_vls_addr(&str), origin, height, spigot_diam/2);   
 
     /* Make the circular pattern of holes in the hub - this involves the creation of
      * one primitive, a series of transformed combinations which use that primitive,
@@ -415,11 +421,11 @@ void MakeWheelRims(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t z
      * both primitives and combinations it is placed between the two sections.
      */
 
-    VSET(vertex, 0, 0, (zhub - (bolt_circ_diam/2+bolt_diam/2))/1.4);
+    VSET(vertex, 0, 0, (zhub - (bolt_circ_diam/2+bolt_diam/2))/1.25);
     VSET(height, 0, dyhub/2, 0);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Hub-Hole%s.s", suffix); 
-    mk_rcc(file, bu_vls_addr(&str), vertex, height,(zhub - (bolt_circ_diam/2+bolt_diam/2))/8.5 );
+    mk_rcc(file, bu_vls_addr(&str), vertex, height,(zhub - (bolt_circ_diam/2+bolt_diam/2))/6.5 );
 
 
     BU_LIST_INIT(&hubhole.l);
@@ -439,6 +445,32 @@ void MakeWheelRims(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t z
     bu_vls_printf(&str, "Hub-Holes%s.c",suffix);
     mk_lcomb(file, bu_vls_addr(&str), &hubholes, 0, NULL, NULL, NULL, 0);
 
+    /* Make the bolt holes in the hub 
+     */
+
+    VSET(vertex, 0, 0, bolt_circ_diam/2);
+    VSET(height, 0, dyhub/2, 0);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "Bolt-Hole%s.s", suffix); 
+    mk_rcc(file, bu_vls_addr(&str), vertex, height, bolt_diam/2 );
+
+
+    BU_LIST_INIT(&bolthole.l);
+    BU_LIST_INIT(&boltholes.l);
+    for (i=1; i<=bolts; i++) {
+	bu_vls_trunc(&str,0);
+	bu_vls_printf(&str, "Bolt-Hole%s.s",suffix);
+	getYRotMat(&y,D2R(i*360/bolts));
+	(void)mk_addmember(bu_vls_addr(&str), &bolthole.l, y, WMOP_UNION);
+	bu_vls_trunc(&str,0);
+	bu_vls_printf(&str, "Bolt-Hole-%1.0d%s.c", i, suffix);
+	mk_lcomb(file, bu_vls_addr(&str), &bolthole, 0, NULL, NULL, NULL, 0);
+	(void)mk_addmember(bu_vls_addr(&str), &boltholes.l, NULL, WMOP_UNION);
+	(void)BU_LIST_POP_T(&bolthole.l,struct wmember);
+    }
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "Bolt-Holes%s.c",suffix);
+    mk_lcomb(file, bu_vls_addr(&str), &boltholes, 0, NULL, NULL, NULL, 0);
 
     /*Make combination for Left bead*/ 
     BU_LIST_INIT(&tireleftbead.l);
@@ -569,10 +601,16 @@ void MakeWheelRims(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t z
     bu_vls_printf(&str, "Inner-Hub%s.s", suffix);	
     (void)mk_addmember(bu_vls_addr(&str), &innerhub.l, NULL, WMOP_UNION);
     bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "Inner-Hub-Cut%s.s", suffix);	
+    bu_vls_printf(&str, "Inner-Hub-Cut1%s.s", suffix);	
+    (void)mk_addmember(bu_vls_addr(&str), &innerhub.l, NULL, WMOP_SUBTRACT);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "Inner-Hub-Cut2%s.s", suffix);	
     (void)mk_addmember(bu_vls_addr(&str), &innerhub.l, NULL, WMOP_SUBTRACT);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Hub-Holes%s.c", suffix);	
+    (void)mk_addmember(bu_vls_addr(&str), &innerhub.l, NULL, WMOP_SUBTRACT);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "Bolt-Holes%s.c", suffix);	
     (void)mk_addmember(bu_vls_addr(&str), &innerhub.l, NULL, WMOP_SUBTRACT);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Inner-Hub%s.c", suffix);	
@@ -593,7 +631,7 @@ void MakeWheelRims(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t z
     bu_vls_printf(&str, "Wheel-Rim%s.c", suffix);	
     (void)mk_addmember(bu_vls_addr(&str), &wheel.l, NULL, WMOP_UNION);
     bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "Wheel%s.c", suffix);	
+    bu_vls_printf(&str, "wheel%s.c", suffix);	
     mk_lcomb(file, bu_vls_addr(&str), &wheel, 0, NULL, NULL, NULL, 0);
     
 
@@ -1018,9 +1056,9 @@ int main(int ac, char *av[])
 
 
     bolts = 5;
-    bolt_diam = 5;
-    bolt_circ_diam = 50;
-    spigot_diam = 20;
+    bolt_diam = 10;
+    bolt_circ_diam = 75;
+    spigot_diam = 40;
     fixing_offset = 15;
     bead_height = 8;
     bead_width = 8;
