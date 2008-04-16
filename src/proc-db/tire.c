@@ -294,6 +294,9 @@ void MakeWheelRims(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t z
 {
     struct wmember tireleftbead, tirerightbead, tireleftflat, tirerightflat, tirefixingface, hubhole,hubholes;
     struct wmember tirebeadlefttrans, tirebeadrighttrans, wheelrim, innerhub, wheel;
+    fastf_t inner_width, left_width, right_width, fixing_width, inner_width_left_start, inner_width_right_start;
+    fastf_t fixing_width_left_trans, fixing_width_right_trans, fixing_width_middle;
+    fastf_t fixing_start_left, fixing_start_right, fixing_start_middle;
     int i;
     mat_t y;
     vect_t normal, height;
@@ -334,40 +337,56 @@ void MakeWheelRims(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t z
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Right-Bead-Trans-cut%s.s", suffix);
     mk_cone(file, bu_vls_addr(&str), vertex, normal, bead_width, zhub-rim_thickness, zhub-bead_height-rim_thickness);
-    VSET(vertex, 0, -dyhub/2+2*bead_width, 0);
-    VSET(height, 0, (.7*(dyhub-4*bead_width)/2+fixing_offset), 0);
+    
+    /* At this point, some intermediate values are calculated to ease the bookkeeping */
+
+    inner_width = dyhub-4*bead_width;
+    inner_width_left_start = -dyhub/2 + 2*bead_width;
+    inner_width_right_start = dyhub/2 - 2*bead_width;
+    fixing_width = .25*inner_width;
+    fixing_width_left_trans = .25*fixing_width;
+    fixing_width_right_trans = .25*fixing_width;
+    fixing_width_middle = .5*fixing_width;
+    fixing_start_middle = fixing_offset - fixing_width_middle/2;
+    fixing_start_left = fixing_start_middle - fixing_width_left_trans;
+    fixing_start_right = fixing_offset + fixing_width_middle;
+    right_width = inner_width_right_start - fixing_start_left - fixing_width;
+    left_width = inner_width_left_start - fixing_start_left;
+
+    VSET(vertex, 0, inner_width_left_start, 0);
+    VSET(height, 0, -left_width, 0);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "LeftInnerRim%s.s", suffix);	
     mk_rcc(file, bu_vls_addr(&str), vertex, height, zhub - bead_height);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "LeftInnerRim-cut%s.s", suffix);	
     mk_rcc(file, bu_vls_addr(&str), vertex, height, zhub - rim_thickness - bead_height);
-    VSET(vertex, 0, dyhub/2-2*bead_width, 0);
-    VSET(height, 0, -(.7*(dyhub-4*bead_width)/2-fixing_offset), 0);
+    VSET(vertex, 0, inner_width_right_start, 0);
+    VSET(height, 0, -right_width, 0);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "RightInnerRim%s.s", suffix);	
     mk_rcc(file, bu_vls_addr(&str), vertex, height, zhub - bead_height);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "RightInnerRim-cut%s.s", suffix);	
     mk_rcc(file, bu_vls_addr(&str), vertex, height, zhub - rim_thickness - bead_height);
-    VSET(vertex, 0, -dyhub/2+2*bead_width+(.7*(dyhub-4*bead_width)/2+fixing_offset), 0);
+    VSET(vertex, 0, fixing_start_left, 0);
     VSET(normal, 0, 1, 0);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Left-Fixing-Trans%s.s", suffix);	
-    mk_cone(file, bu_vls_addr(&str), vertex, normal,(.3*(dyhub-4*bead_width))*.25 , zhub - bead_height, zhub-2*bead_height);
+    mk_cone(file, bu_vls_addr(&str), vertex, normal, fixing_width_left_trans, zhub - bead_height, zhub-2*bead_height);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Left-Fixing-Trans-cut%s.s", suffix);
-    mk_cone(file, bu_vls_addr(&str), vertex, normal,(.3*(dyhub-4*bead_width))*.25 , zhub- bead_height -rim_thickness, zhub-2*bead_height-rim_thickness);
-    VSET(vertex, 0, dyhub/2-2*bead_width-(.7*(dyhub-4*bead_width)/2-fixing_offset), 0);
+    mk_cone(file, bu_vls_addr(&str), vertex, normal, fixing_width_left_trans, zhub- bead_height -rim_thickness, zhub-2*bead_height-rim_thickness);
+    VSET(vertex, 0, fixing_start_right, 0);
     VSET(normal, 0, -1, 0);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Right-Fixing-Trans%s.s", suffix);	
-    mk_cone(file, bu_vls_addr(&str), vertex, normal,(.3*(dyhub-4*bead_width))*.25 , zhub - bead_height, zhub-2*bead_height);
+    mk_cone(file, bu_vls_addr(&str), vertex, normal, fixing_width_right_trans, zhub - bead_height, zhub-2*bead_height);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Right-Fixing-Trans-cut%s.s", suffix);
-    mk_cone(file, bu_vls_addr(&str), vertex, normal,(.3*(dyhub-4*bead_width))*.25 , zhub- bead_height -rim_thickness, zhub-2*bead_height-rim_thickness);
-    VSET(vertex, 0, -dyhub/2+2*bead_width+(.7*(dyhub-4*bead_width)/2+fixing_offset)+(.3*(dyhub-4*bead_width))*.25, 0);
-    VSET(height, 0, (.3*(dyhub-4*bead_width))*.5, 0);
+    mk_cone(file, bu_vls_addr(&str), vertex, normal, fixing_width_right_trans, zhub- bead_height -rim_thickness, zhub-2*bead_height-rim_thickness);
+    VSET(vertex, 0, fixing_start_middle, 0);
+    VSET(height, 0, fixing_width_middle, 0);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Inner-Fixing%s.s", suffix);	
     mk_rcc(file, bu_vls_addr(&str), vertex, height, zhub - 2*bead_height);
@@ -375,19 +394,26 @@ void MakeWheelRims(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t z
     bu_vls_printf(&str, "Inner-Fixing-cut%s.s", suffix);	
     mk_rcc(file, bu_vls_addr(&str), vertex, height, zhub - rim_thickness - 2*bead_height);
 
-    VSET(origin, 0,dyhub/2-2*bead_width-(.3*(dyhub-4*bead_width))*.25, 0);
+    VSET(origin, 0, fixing_start_right, 0);
     VSET(normal, 0, -1, 0);
-    VSET(C, 0, -(.3*(dyhub-4*bead_width))*.5,(zhub-2*bead_height-rim_thickness)/2-spigot_diam/2)
+    VSET(C, 0, -fixing_width/2,(zhub-2*bead_height-rim_thickness)/2-spigot_diam/2)
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Inner-Hub%s.s", suffix);	
     mk_eto(file, bu_vls_addr(&str), origin, normal, C, (zhub-2*bead_height-rim_thickness)/2+spigot_diam/2+rim_thickness*.7, 20);   
    
-    VSET(origin, 0,dyhub/2-2*bead_width-(.3*(dyhub-4*bead_width))*.25-10, 0);
+    VSET(origin, 0,fixing_start_right-10, 0);
     VSET(normal, 0, -1, 0);
-    VSET(C, 0, -(.3*(dyhub-4*bead_width))*.5,(zhub-2*bead_height-rim_thickness)/2-spigot_diam/2)
+    VSET(C, 0, -fixing_width/2,(zhub-2*bead_height-rim_thickness)/2-spigot_diam/2)
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Inner-Hub-Cut%s.s", suffix);	
     mk_eto(file, bu_vls_addr(&str), origin, normal, C, (zhub-2*bead_height-rim_thickness)/2+spigot_diam/2+rim_thickness*.7, 20);   
+
+
+    /* Make the circular pattern of holes in the hub - this involves the creation of
+     * one primitive, a series of transformed combinations which use that primitive,
+     * and a combination combining all of the previous combinations.  Since it requires
+     * both primitives and combinations it is placed between the two sections.
+     */
 
     VSET(vertex, 0, 0, (zhub - (bolt_circ_diam/2+bolt_diam/2))/1.4);
     VSET(height, 0, dyhub/2, 0);
