@@ -66,7 +66,7 @@ static int cmp_ind(const void *p1, const void *p2)
 }
 
 int
-parse_args (int ac, char *av[], struct options *opts)
+parse_args (int ac, char *av[], struct beset_options *opts)
 {
     int c;
 
@@ -123,7 +123,7 @@ int main(int argc, char *argv[]) {
     struct fitness_state fstate;
     struct population pop = {NULL, NULL, NULL, NULL, NULL, 0};
     char dbname[256] = {0};
-    struct options opts = {DEFAULT_POP_SIZE, DEFAULT_GENS, DEFAULT_RES, 0, 0};
+    struct beset_options opts = {DEFAULT_POP_SIZE, DEFAULT_GENS, DEFAULT_RES, 0, 0};
     struct individual *tmp = NULL;
     int  ac;
     struct directory *dp;

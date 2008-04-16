@@ -43,7 +43,7 @@
 #define NL(a) pop.name[(a)]
 #define NL_P(a) p->name[(a)]
 
-struct options{
+struct beset_options{
     int pop_size;
     int gens;
     int res;
