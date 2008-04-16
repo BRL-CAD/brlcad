@@ -145,6 +145,8 @@ while [ ! "x$*" = "x" ] ; do
     size="`echo \"$size 1024 / p\" | dc`"
     DMG_CAPACITY="`expr $DMG_CAPACITY + $size`"
 done
+pkg_size="`du -ks $PKG | awk '{print $1}'`"
+DMG_CAPACITY="`expr $DMG_CAPACITY + $pkg_size`"
 
 hdiutil create "$DMG" -megabytes $DMG_CAPACITY -layout NONE -type SPARSE -volname $DMG_NAME
 if [ ! "x$?" = "x0" ] ; then
