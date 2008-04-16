@@ -159,7 +159,7 @@ set mged_help_data(mater)	{{comb [material]}	{assign/delete material to combinat
 set mged_help_data(matpick)	{{"# or a/b"}	{select arc which has matrix to be edited, in O_PATH state}}
 set mged_help_data(memprint)	{{}	{print memory maps}}
 set mged_help_data(mirface)	{{"#### axis"}	{mirror an ARB face}}
-set mged_help_data(mirror)	{{old new axis}	{mirror solid or combination around axis}}
+set mged_help_data(mirror)	{{old new axis [mirror_pt]}	{mirror primitive or combination around axis}}
 set mged_help_data(mrot)	$helplib_data(vo_mrot)
 set mged_help_data(mv)		$helplib_data(wdb_move)
 set mged_help_data(mvall)	$helplib_data(wdb_moveall)

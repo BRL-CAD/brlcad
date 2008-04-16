@@ -685,11 +685,12 @@ f_mirror(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     char *av[3];
     int k;
+    fastf_t mirror_pt = 0.0;
 
     CHECK_DBI_NULL;
     CHECK_READ_ONLY;
 
-    if (argc < 4 || 4 < argc) {
+    if (argc < 4 || 5 < argc) {
 	struct bu_vls vls;
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help mirror");
@@ -711,11 +712,16 @@ f_mirror(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
+    if (argc == 5 && sscanf(argv[4], "%lf", &mirror_pt) != 1) {
+	Tcl_AppendResult(interp, "p must be a float\n", (char *)NULL);
+	return TCL_ERROR;
+    }
+
     /* no interrupts */
     (void)signal( SIGINT, SIG_IGN );
 
     /* mirror the object */
-    rt_mirror(dbip, argv[1], argv[2], k, &rt_uniresource);
+    rt_mirror(dbip, argv[1], argv[2], k, mirror_pt, &rt_uniresource);
 
     /* restore interrupts */
     (void)signal( SIGINT, SIG_DFL );

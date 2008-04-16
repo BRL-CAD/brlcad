@@ -44,12 +44,17 @@
 
 
 /**
- * mirror object about some axis
+ * mirror object about some axis at a specified point
  *
  * returns a directory pointer to the new mirrored object
  **/
 struct directory *
-rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct resource *resp)
+rt_mirror(struct db_i		*dbip,
+	  const char 		*from,
+	  const char 		*to,
+	  int 			axis,
+	  fastf_t 		mirror_pt,
+	  struct resource 	*resp)
 {
     register struct directory *dp;
     struct rt_db_internal internal;
@@ -94,8 +99,10 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
     RT_CK_DB_INTERNAL( &internal );
 
     /* Build mirror transform matrix, for those who need it. */
+    mirror_pt *= dbip->dbi_local2base;
     MAT_IDN( mirmat );
     mirmat[axis*5] = -1.0;
+    mirmat[3 + axis*4] -= 2 * (mirmat[3 + axis*4] - mirror_pt);
 
     switch (id) {
 	case ID_TOR:
@@ -105,7 +112,7 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
 	    tor = (struct rt_tor_internal *)internal.idb_ptr;
 	    RT_TOR_CK_MAGIC( tor );
 
-	    tor->v[axis] *= -1.0;
+	    tor->v[axis] -= 2 * (tor->v[axis] - mirror_pt);
 	    tor->h[axis] *= -1.0;
 
 	    break;
@@ -118,7 +125,7 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
 	    tgc = (struct rt_tgc_internal *)internal.idb_ptr;
 	    RT_TGC_CK_MAGIC( tgc );
 
-	    tgc->v[axis] *= -1.0;
+	    tgc->v[axis] -= 2 * (tgc->v[axis] - mirror_pt);
 	    tgc->h[axis] *= -1.0;
 	    tgc->a[axis] *= -1.0;
 	    tgc->b[axis] *= -1.0;
@@ -135,6 +142,7 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
 	    ell = (struct rt_ell_internal *)internal.idb_ptr;
 	    RT_ELL_CK_MAGIC( ell );
 
+	    ell->v[axis] -= 2 * (ell->v[axis] - mirror_pt);
 	    ell->v[axis] *= -1.0;
 	    ell->a[axis] *= -1.0;
 	    ell->b[axis] *= -1.0;
@@ -150,7 +158,7 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
 	    RT_ARB_CK_MAGIC( arb );
 
 	    for ( i=0; i<8; i++ )
-		arb->pt[i][axis] *= -1.0;
+		arb->pt[i][axis] -= 2 * (arb->pt[i][axis] - mirror_pt);
 	    break;
 	}
 	case ID_HALF:
@@ -171,7 +179,7 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
 	    grp = (struct rt_grip_internal *)internal.idb_ptr;
 	    RT_GRIP_CK_MAGIC( grp );
 
-	    grp->center[axis] *= -1.0;
+	    grp->center[axis] -= 2 * (grp->center[axis] - mirror_pt);
 	    grp->normal[axis] *= -1.0;
 
 	    break;
@@ -194,7 +202,7 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
 		last = (pg->poly[i].npts - 1)*3;
 		/* mirror coords and temporarily store in reverse order */
 		for ( j=0; j<pg->poly[i].npts*3; j += 3 ) {
-		    pg->poly[i].verts[j+axis] *= -1.0;
+		    pg->poly[i].verts[j+axis] -= 2 * (pg->poly[i].verts[j+axis] - mirror_pt); 
 		    VMOVE( &verts[last-j], &pg->poly[i].verts[j] );
 		    pg->poly[i].norms[j+axis] *= -1.0;
 		    VMOVE( &norms[last-j], &pg->poly[i].norms[j] );
@@ -254,7 +262,7 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
 
 		/* mirror each control point */
 		for ( j=0; j<orig_size[0]*orig_size[1]; j++ ) {
-		    nurb->srfs[i]->ctl_points[j*ncoords+axis] *= -1.0;
+		    nurb->srfs[i]->ctl_points[j*ncoords+axis] -= 2 * (nurb->srfs[i]->ctl_points[j*ncoords+axis] - mirror_pt);
 		}
 
 		/* copy mirrored control points into new mesh
@@ -284,7 +292,7 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
 	    RT_ARBN_CK_MAGIC( arbn );
 
 	    for ( i=0; i<arbn->neqn; i++ ) {
-		arbn->eqn[i][axis] *= -1.0;
+		arbn->eqn[i][axis] -= 2 * (arbn->eqn[i][axis] - mirror_pt);
 	    }
 
 	    break;
@@ -298,7 +306,7 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
 	    RT_PIPE_CK_MAGIC( pipe );
 
 	    for ( BU_LIST_FOR( ps, wdb_pipept, &pipe->pipe_segs_head ) ) {
-		ps->pp_coord[axis] *= -1.0;
+		ps->pp_coord[axis] -= 2 * (ps->pp_coord[axis] - mirror_pt);
 	    }
 
 	    break;
@@ -322,7 +330,7 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
 	    rpc = (struct rt_rpc_internal *)internal.idb_ptr;
 	    RT_RPC_CK_MAGIC( rpc );
 
-	    rpc->rpc_V[axis] *= -1.0;
+	    rpc->rpc_V[axis] -= 2 * (rpc->rpc_V[axis] - mirror_pt);
 	    rpc->rpc_H[axis] *= -1.0;
 	    rpc->rpc_B[axis] *= -1.0;
 
@@ -335,7 +343,7 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
 	    rhc = (struct rt_rhc_internal *)internal.idb_ptr;
 	    RT_RHC_CK_MAGIC( rhc );
 
-	    rhc->rhc_V[axis] *= -1.0;
+	    rhc->rhc_V[axis] -= 2 * (rhc->rhc_V[axis] - mirror_pt);
 	    rhc->rhc_H[axis] *= -1.0;
 	    rhc->rhc_B[axis] *= -1.0;
 
@@ -348,7 +356,7 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
 	    epa = (struct rt_epa_internal *)internal.idb_ptr;
 	    RT_EPA_CK_MAGIC( epa );
 
-	    epa->epa_V[axis] *= -1.0;
+	    epa->epa_V[axis] -= 2 * (epa->epa_V[axis] - mirror_pt);
 	    epa->epa_H[axis] *= -1.0;
 	    epa->epa_Au[axis] *= -1.0;
 
@@ -361,7 +369,7 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
 	    eto = (struct rt_eto_internal *)internal.idb_ptr;
 	    RT_ETO_CK_MAGIC( eto );
 
-	    eto->eto_V[axis] *= -1.0;
+	    eto->eto_V[axis] -= 2 * (eto->eto_V[axis] - mirror_pt);
 	    eto->eto_N[axis] *= -1.0;
 	    eto->eto_C[axis] *= -1.0;
 
@@ -384,7 +392,7 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
 		v = (struct vertex *)BU_PTBL_GET( &table, i );
 		NMG_CK_VERTEX( v );
 
-		v->vg_p->coord[axis] *= -1.0;
+		v->vg_p->coord[axis] -= 2 * (v->vg_p->coord[axis] - mirror_pt);
 	    }
 
 	    bu_ptbl_reset( &table );
@@ -457,7 +465,7 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
 	    /* mirror each vertex */
 	    for ( i=0; i<ars->ncurves; i++ ) {
 		for ( j=0; j<ars->pts_per_curve; j++ ) {
-		    ars->curves[i][j*3+axis] *= -1.0;
+		    ars->curves[i][j*3+axis] -= 2 * (ars->curves[i][j*3+axis] - mirror_pt);
 		}
 	    }
 
@@ -520,7 +528,7 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
 	    superell = (struct rt_superell_internal *)internal.idb_ptr;
 	    RT_SUPERELL_CK_MAGIC( superell );
 
-	    superell->v[axis] *= -1.0;
+	    superell->v[axis] -= 2 * (superell->v[axis] - mirror_pt);
 	    superell->a[axis] *= -1.0;
 	    superell->b[axis] *= -1.0;
 	    superell->c[axis] *= -1.0;
@@ -549,7 +557,7 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
 
 	    /* mirror each vertex */
 	    for ( i=0; i<bot->num_vertices; i++ ) {
-		bot->vertices[(i*3)+axis] *= -1.0;
+		bot->vertices[(i*3)+axis] -= 2 * (bot->vertices[(i*3)+axis] - mirror_pt);
 	    }
 
 	    /* fix normals */
