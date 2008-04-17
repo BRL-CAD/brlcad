@@ -93,8 +93,7 @@ get_args(int argc, register char **argv)
 		d = atof(bu_optarg);
 
 		if ( d == 0.0 ) {
-		    (void)fprintf( stderr, "bwmod: divide by zero!\n" );
-		    bu_exit ( 2, NULL );
+		    bu_exit(2, "bwmod: cannot divide by zero!\n");
 		}
 		val[ numop++ ] = 1.0 / d;
 		break;
@@ -110,8 +109,7 @@ get_args(int argc, register char **argv)
 		op[ numop ] = POW;
 		d = atof(bu_optarg);
 		if ( d == 0.0 ) {
-		    (void)fprintf( stderr, "bwmod: zero root!\n" );
-		    bu_exit ( 2, NULL );
+		    bu_exit(2, "bwmod: zero root!\n");
 		}
 		val[ numop++ ] = 1.0 / d;
 		break;
