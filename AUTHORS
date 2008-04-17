@@ -58,17 +58,29 @@ DEVELOPERS
 ----------
 
 Muuss, Michael John
+nicknames mike
+1984 April
 U.S. Army Ballistic Research Laboratory
 U.S. Army Research Laboratory
 
 Weaver, Earl P.
 U.S. Army Ballistic Research Laboratory
 
-Moss, Gary S.
+Gwyn, Douglas A.
+nicknames gwyn
+1986 January
 U.S. Army Ballistic Research Laboratory
 U.S. Army Research Laboratory
 
 Dykstra, Phillip
+nicknames phil
+1986 August
+U.S. Army Ballistic Research Laboratory
+U.S. Army Research Laboratory
+
+Moss, Gary S.
+nicknames moss
+1986 September
 U.S. Army Ballistic Research Laboratory
 U.S. Army Research Laboratory
 
@@ -77,14 +89,14 @@ U.S. Army Ballistic Research Laboratory
 U.S. Army Research Laboratory
 
 Kennedy, Charles Michael  <kermit@brlcad.org>
-U.S. Army Ballistic Research Laboratory
-U.S. Army Research Laboratory
-
-Gwyn, Douglas A.
+nicknames kermit, g2asc
+1986 November
 U.S. Army Ballistic Research Laboratory
 U.S. Army Research Laboratory
 
 Stay, Paul Randal
+nicknames stay
+1986 October
 U.S. Army Ballistic Research Laboratory
 U.S. Army Research Laboratory
 
@@ -92,58 +104,90 @@ Hanes, Jeff
 U.S. Army Ballistic Research Laboratory
 U.S. Army Research Laboratory
 
-Butler, Lee A.  <butler@arl.army.mil>
-U.S. Army Ballistic Research Laboratory
-U.S. Army Research Laboratory
 
 Johnson, Christopher T.  <cjohnson@cyberpaladin.com>
+nicknames cjohnson
+1989 February
 Cray Research, Inc.
 Geometric Solutions, Inc.
 Paladin Software
 JRMTech, Inc.
 
-Ross, Adam
-Geometric Solutions, Inc.
+Butler, Lee A.  <butler@arl.army.mil>
+nicknames butler, lbutler
+1989 July
+U.S. Army Ballistic Research Laboratory
+U.S. Army Research Laboratory
+
+Tanenbaum, Paul J.
+nicknames pjt
+1991 January
+U.S. Army Ballistic Research Laboratory
+U.S. Army Research Laboratory
 
 Markowski, Michael J.  <michael.markowski@arl.army.mil>
+nicknames mmark, mm
+1991 June
 U.S. Army Ballistic Research Laboratory
 
+
+Durfee, Glenn Edward
+nicknames gdurf
+1992 August
+ARL Student Hire / Carnegie Mellon University
+
 Anderson, John R.  <jra@arl.army.mil>  **
+nicknames jra, johnranderson
+1993 May
 U.S. Army Ballistic Research Laboratory
 U.S. Army Research Laboratory
 Open Source
 
-Tanenbaum, Paul J.
-U.S. Army Ballistic Research Laboratory
-U.S. Army Research Laboratory
 
-Durfee, Glenn Edward
-ARL Student Hire / Carnegie Mellon University
+Ross, Adam
+nicknames adam
+1995 October
+Geometric Solutions, Inc.
 
 Parker, Robert G.  **
+nicknames include bparker, bob1961
+1995 January
 U.S. Army Research Laboratory
 SURVICE Engineering, Inc.
 Open Source
 
 Morrison, Christopher Sean  <morrison@brlcad.org>  **
+nicknames sean, morrison, brlcad
+1998 December
 ARL Student Hire / Johns Hopkins University
 Quantum Research International, Inc.
 Open Source
 
+
 Bowers, Ronald Anthony
+nicknames rbowers
+2001 March
+U.S. Army Research Laboratory
+
+Christy, TraNese Shantell
+nicknames tranese
+2001 March
 U.S. Army Research Laboratory
 
 Hartley, Robert F.  <hartley@vt.edu>
+nicknames hartley
+2002 August
 ARL Student Hire / Virginia Tech
 
-Christy, TraNese Shantell
-U.S. Army Research Laboratory
-
 Shumaker, Justin
+nicknames twingy, justin
+2003 June
 Quantum Research International, Inc.
 U.S. Army Research Laboratory
 
 Greenwald, Erik  <erikg@arl.army.mil>  **
+nicknames erikg, erikgreenwald
+2003 November
 U.S. Army Research Laboratory
 Open Source
 
@@ -184,11 +228,18 @@ Open Source
 Quantum Research International, Inc.
 
 Harder, Brad  **
+nicknames bharder
+2007 September
 Open Source
 
 
 CODE CONTRIBUTIONS
 ------------------
+
+Kingston III, Douglas P.
+nicknames dpk
+1983 December
+U.S. Army Ballistic Research Laboratory
 
 Hartwig, Jr., George W.
 U.S. Army Ballistic Research Laboratory
@@ -205,7 +256,9 @@ U.S. Army Ballistic Research Laboratory
 Miles, Robert S.
 U.S. Army Ballistic Research Laboratory
 
-Kingston III, Douglas P.
+Reschly, Jr., Robert J.
+nicknames reschly
+1986 May
 U.S. Army Ballistic Research Laboratory
 
 Mermagen, Jr., William
@@ -217,15 +270,19 @@ U.S. Army Research Laboratory
 Becker, David
 Cray Research
 
-Hunt, Jim  <jhunt@ara.com>
-Applied Research Associates, Inc.
-U.S. Army Research Laboratory
-
 Dender, Daniel C
 U.S. Army Research Laboratory
 SURVICE Engineering, Inc.
 
+Hunt, Jim  <jhunt@ara.com>
+nicknames jehunt
+1991 May
+Applied Research Associates, Inc.
+U.S. Army Research Laboratory
+
 Coates, Sue
+nicknames scoates
+1991 September
 U.S. Army Research Laboratory (??? only brl)
 
 Ross, Brant A
@@ -252,9 +309,6 @@ University of Alabama
 Suckling, Bob
 U.S. Army Ballistic Research Laboratory
 
-Reschly, Jr., Robert J.
-U.S. Army Ballistic Research Laboratory
-
 Gigante, Mike
 Royal Melbourne Institute of Technology
 
@@ -267,6 +321,8 @@ Dray, Adam
 Geometric Solutions, Inc.
 
 Nuzman, Carl J.
+nicknames cnuzman
+1994 June
 ARL Student Hire / Princeton University
 
 Laut, Bill
@@ -278,9 +334,13 @@ Manchester-Computing Centre, UK
 Brand, Mario
 
 McCarty, Cormac
+nicknames mccarty
+1998 July
 ARL Student Hire / Johns Hopkins University
 
 Owens, Jason
+nicknames jlowens, jlowenz
+1998 July
 ARL Student Hire / Johns Hopkins University
 
 Yemc, David J.
@@ -295,13 +355,22 @@ SGI
 Garriques, Jr., Rick
 SURVICE Engineering, Inc.
 
+Gillich, Michael John
+nicknames mjgillich
+2002 December
+U.S. Army Research Laboratory
+
 Roßberg, Daniel
+nicknames d_rossberg
+2005 June
 Industrieanlagen-Betriebsgesellschaft mbH (IABG)
 
 Howard, Doug
 SURVICE Engineering, Inc.
 
 Silva, Prasad Prometheus
+nicknames prasad_silva
+2006 May
 U.S. Army Research Laboratory
 
 James (swcto)
@@ -311,17 +380,20 @@ Bonomo, Jonathan
 Open Source
 
 Myers, Timothy J.
+nicknames joevalleyfield
+2007 April
 U.S. Army Research Laboratory
-
-Gillich, Michael John
-U.S. Army Research Laboratory
-
-Yapp, Cliff
-Open Source
-Quantum Research International, Inc.
 
 Poole, Ben
+nicknames poolio
+2007 June
 ARL Student Hire / Carnegie Mellon University
+
+Yapp, Cliff
+nicknames starseeker
+2007 September
+Open Source
+Quantum Research International, Inc.
 
 
 SPECIAL THANKS
@@ -348,6 +420,8 @@ Willson, Stephen Hunter
 Northrup Research and Technology Center
 
 Merrit, Don
+nicknames merritt
+1988 September
 U.S. Army Research Laboratory
 
 zum Brunnen, Rick
@@ -432,6 +506,8 @@ Thomas, Balbir
 Open Source
 
 Remenak, Daniel T.
+nicknames DTRemenak, Erroneous
+2005 July
 California Institute of Technology
 Open Source
 
@@ -444,28 +520,38 @@ Qryon LLC
 Butkiewicz, Mark
 SURVICE Engineering, Inc.
 
-Kulhavy, Karel (clock3)
+Kulhavy, Karel
+nicknames clock3
 Open Source
 
 Fiedler, Stefan
 Open Source
 
-Chang, Loui (louipc)
+Chang, Loui
+nicknames louipc
+2007 August
 Open Source
 
 Nabazas, Aldas
+2007
 Open Source
 
 Markus Elfring
+2007
 Open Source
 
 Ed Schouten
+2007
 Open Source
 
-Montecelo, Manuel A. Fernandez (mafm)
+Montecelo, Manuel A. Fernandez
+nicknames mafm
+2008 April
 Open Source
 
-Bautu, Elena (ebautu)
+Bautu, Elena
+nicknames ebautu
+2008 April
 Open Source
 
 
