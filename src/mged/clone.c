@@ -368,12 +368,13 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 {
     int i;
     mat_t matrix;
+
     MAT_IDN(matrix);
 
     /* mirror */
     if (state->miraxis != W) {
-	/* matrix[5*state->miraxis] *= -1; */
-	bu_log("WARNING: mirroring not implemented!");
+	matrix[state->miraxis*5] = -1.0;
+	matrix[3 + state->miraxis*4] -= 2 * (matrix[3 + state->miraxis*4] - state->mirpos);
     }
 
     /* translate */
