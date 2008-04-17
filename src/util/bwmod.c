@@ -37,11 +37,12 @@
 #include "bio.h"
 
 #include "bu.h"
+#include "vmath.h"
 
 
 char *progname = "(noname)";
 
-char	*file_name;
+char *file_name;
 
 char usage[] = "\
 Usage: bwmod [-c] {-a add -s sub -m mult -d div -A -e exp -r root\n\
@@ -92,7 +93,7 @@ get_args(int argc, register char **argv)
 		op[ numop ] = MULT;
 		d = atof(bu_optarg);
 
-		if ( d == 0.0 ) {
+		if ( NEAR_ZERO(d, SMALL_FASTF) ) {
 		    bu_exit(2, "bwmod: cannot divide by zero!\n");
 		}
 		val[ numop++ ] = 1.0 / d;
@@ -108,7 +109,7 @@ get_args(int argc, register char **argv)
 	    case 'r':
 		op[ numop ] = POW;
 		d = atof(bu_optarg);
-		if ( d == 0.0 ) {
+		if ( NEAR_ZERO(d, SMALL_FASTF) ) {
 		    bu_exit(2, "bwmod: zero root!\n");
 		}
 		val[ numop++ ] = 1.0 / d;
