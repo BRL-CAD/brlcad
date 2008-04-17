@@ -702,9 +702,9 @@ void MakeTreadPattern(struct rt_wdb (*file), char *suffix, fastf_t dwidth, fastf
     VSET(rgb, 40, 40, 40);
 
     circumference = F_PI*2*ztire;
-    spacing = 2.0;
+    spacing = 0;
     number_of_patterns = 200;
-    patternwidth=(circumference-spacing*number_of_patterns)/number_of_patterns;
+    patternwidth=(circumference-spacing*number_of_patterns)/number_of_patterns/2;
     
     PatternPoints(pointlist,-patternwidth,0,z_base,ztire,-dwidth/2,0,dwidth/20,dwidth/20,dwidth/20);
     mk_arb8(file,"patterncomponent1.s",&pointlist[0]);
@@ -769,10 +769,10 @@ void MakeTreadPattern(struct rt_wdb (*file), char *suffix, fastf_t dwidth, fastf
 
     BU_LIST_INIT(&tread.l);
     BU_LIST_INIT(&treadrotated.l);
-    for (i=1; i<=number_of_patterns/4; i++) {
+    for (i=1; i<=number_of_patterns; i++) {
 	bu_vls_trunc(&str,0);
 	bu_vls_printf(&str, "tread_master.c");
-	getYRotMat(&y,D2R(i*4*360/number_of_patterns));
+	getYRotMat(&y,D2R(i*360/number_of_patterns));
 	(void)mk_addmember("tire-tread-shape.c",&tread.l, NULL, WMOP_UNION);
 	(void)mk_addmember(bu_vls_addr(&str), &tread.l, y, WMOP_INTERSECT);
 	bu_vls_trunc(&str,0);
