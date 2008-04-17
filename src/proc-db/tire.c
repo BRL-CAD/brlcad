@@ -313,12 +313,16 @@ void MakeWheelRims(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t z
     fastf_t fixing_width_left_trans, fixing_width_right_trans, fixing_width_middle;
     fastf_t fixing_start_left, fixing_start_right, fixing_start_middle;
     struct wmember bolthole,boltholes;
+    unsigned char rgb[3];
     int i;
     mat_t y;
     vect_t normal, height;
     point_t origin, vertex, C;
     struct bu_vls str;
     bu_vls_init(&str);
+    
+    /* Set wheel color */
+    VSET(rgb, 217, 217, 217);
     
     /* Insert primitives */
     VSET(vertex, 0, -dyhub/2, 0);
@@ -632,11 +636,6 @@ void MakeWheelRims(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t z
     mk_lcomb(file, bu_vls_addr(&str), &innerhub, 0, NULL, NULL, NULL, 0);
 
 
-    /*Other inner hub cuts/bolts/etc here*/
-
-
-
-
     /*Make combination for Wheel*/ 
     BU_LIST_INIT(&wheel.l);
     bu_vls_trunc(&str,0);
@@ -646,8 +645,8 @@ void MakeWheelRims(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t z
     bu_vls_printf(&str, "Wheel-Rim%s.c", suffix);	
     (void)mk_addmember(bu_vls_addr(&str), &wheel.l, NULL, WMOP_UNION);
     bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "wheel%s.c", suffix);	
-    mk_lcomb(file, bu_vls_addr(&str), &wheel, 0, NULL, NULL, NULL, 0);
+    bu_vls_printf(&str, "wheel%s.r", suffix);	
+    mk_lcomb(file, bu_vls_addr(&str), &wheel, 1, "plastic", "di=.8 sp=.2", rgb, 0);
     
 
 }
@@ -783,7 +782,7 @@ void MakeTreadPattern(struct rt_wdb (*file), char *suffix, fastf_t dwidth, fastf
     }
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "tread.c");
-    mk_lcomb(file, bu_vls_addr(&str), &treadrotated, 1, "plastic", "di=.8 sp=.2", rgb,0);
+    mk_lcomb(file, bu_vls_addr(&str), &treadrotated, 0, NULL,NULL,NULL ,0);
 }
 
 
@@ -1169,10 +1168,10 @@ void MakeTireCore(struct rt_wdb (*file), fastf_t dytred, fastf_t dztred, fastf_t
 }
 
 /* Process command line arguments */
-int ReadArgs(int argc, char **argv, fastf_t *isoarray)
+int ReadArgs(int argc, char **argv, fastf_t *isoarray, struct bu_vls *name, int *gen_name)
 {
     int c = 0;
-    char *options="d:";
+    char *options="d:n:a";
     int d1, d2, d3;
     char spacer1,tiretype;
     bu_log("Reading args\n");
@@ -1182,13 +1181,20 @@ int ReadArgs(int argc, char **argv, fastf_t *isoarray)
     while ((c=bu_getopt(argc, argv, options)) != -1) {
 	bu_log("in while loop -> %c\n",c);
         switch (c) {
-            case 'd' :
+	    case 'a' :
+		gen_name[0] = 1;
+		break;
+	    case 'd' :
 		sscanf(bu_optarg,"%d%c%d%c%d",&d1,&spacer1,&d2,&tiretype,&d3);
 		bu_log("Dimensions: Width=%2.0dmm, Ratio=%2.0d, Wheel Diameter=%2.0din\n",d1,d2,d3);
 		isoarray[0] = d1;
 		isoarray[1] = d2;
 		isoarray[2] = d3;
                 break;
+	    case 'n':
+		bu_vls_trunc(name,0);
+		bu_vls_printf(name, "%s", bu_optarg);
+		break;
 	   }
 	 }
 	 return(bu_optind);
@@ -1202,9 +1208,16 @@ int main(int ac, char *av[])
     fastf_t width, ratio, wheeldiam, thickness;
     int bolts;
     fastf_t bolt_diam, bolt_circ_diam, spigot_diam, fixing_offset, bead_height, bead_width, rim_thickness;
-    struct wmember tire;
+    struct wmember tire,wheel_and_tire;
     unsigned char rgb[3];
     fastf_t isoarray[3];
+    struct bu_vls name;
+    bu_vls_init(&name);
+    bu_vls_trunc(&name,0);
+    int gen_name[1];
+    gen_name[0] = 0;
+    struct bu_vls str;
+    bu_vls_init(&str);
 
     /* Set Default Parameters - 255/40R18 */ 
     isoarray[0] = 255;
@@ -1212,9 +1225,26 @@ int main(int ac, char *av[])
     isoarray[2] = 18;
 
     /* Process arguments */
-    ReadArgs(ac, av, isoarray);
+    ReadArgs(ac, av, isoarray, &name, gen_name);
+
+    if (bu_vls_strlen(&name) == 0 && gen_name[0] == 0) {
+	bu_vls_printf(&name, "tire");
+    }
+
+    if (bu_vls_strlen(&name) != 0 && gen_name[0] == 1) {
+	bu_vls_printf(&name, "-%d-%dR%d",(int)isoarray[0],(int)isoarray[1],(int)isoarray[2]);
+    }
+
+    if (bu_vls_strlen(&name) == 0 && gen_name[0] == 1) {
+	bu_vls_printf(&name, "tire-%d-%dR%d",(int)isoarray[0],(int)isoarray[1],(int)isoarray[2]);
+    }
+    
+
+	bu_log("name = %s\n",bu_vls_addr(&name));
  
-    /* Create/Open file name if supplied,
+
+
+/* Create/Open file name if supplied,
      * else use "tire.g"
      */
     db_fp = wdb_fopen( av[bu_optind] );
@@ -1250,7 +1280,8 @@ int main(int ac, char *av[])
     BU_LIST_INIT(&tire.l);
     (void)mk_addmember("tire-solid.c", &tire.l, NULL, WMOP_UNION);
     (void)mk_addmember("tire-cut.c", &tire.l, NULL, WMOP_SUBTRACT);
-    mk_lcomb(db_fp, "tire.c", &tire, 1,  "plastic", "di=.8 sp=.2", rgb, 0);
+    (void)mk_addmember("tread.c",&tire.l, NULL, WMOP_UNION);
+    mk_lcomb(db_fp, "tire.r", &tire, 1,  "plastic", "di=.8 sp=.2", rgb, 0);
 
     bolts = 5;
     bolt_diam = 10;
@@ -1264,7 +1295,11 @@ int main(int ac, char *av[])
     /* Make wheel rim */
     MakeWheelRims(db_fp, "", dyhub, zhub, bolts, bolt_diam, bolt_circ_diam, spigot_diam, fixing_offset, bead_height, bead_width, rim_thickness);
 
-
+    /* Final top level providing a single name for the tire+wheel */
+    BU_LIST_INIT(&wheel_and_tire.l);
+    (void)mk_addmember("tire.r", &wheel_and_tire.l, NULL, WMOP_UNION);
+    (void)mk_addmember("wheel.r", &wheel_and_tire.l, NULL, WMOP_UNION);
+    mk_lcomb(db_fp, bu_vls_addr(&name), &wheel_and_tire, 0,  NULL, NULL, NULL, 0);
 
 
     /* Close database */
