@@ -265,7 +265,7 @@ get_name(struct db_i *_dbip, struct directory *dp, struct clone_state *state, in
     	    else
     		bu_vls_printf(newname, "%d", num + i*state->incr);
 	} else /* non-region combinations */
-    	    bu_vls_printf(newname, "%d", (num==0)?2:num+i);
+    	    bu_vls_printf(newname, "%d", (num==0)?i+1:i+num);
 	i++;
     } while (db_lookup(_dbip, bu_vls_addr(newname), LOOKUP_QUIET) != NULL);
     return newname;
