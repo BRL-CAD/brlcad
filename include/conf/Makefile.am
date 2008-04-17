@@ -25,6 +25,7 @@ BUILT_SOURCES = \
 
 EXTRA_DIST = \
 	$(BUILT_SOURCES) \
+        CMakeLists.txt \
 	MAJOR \
 	MINOR \
 	PATCH \

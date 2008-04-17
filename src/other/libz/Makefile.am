@@ -43,6 +43,7 @@ minigzip_LDADD = libz.la
 
 EXTRA_DIST = \
 	$(man_MANS) \
+        CMakeLists.txt \
 	FAQ \
 	INDEX \
 	Makefile.in.orig \
@@ -53,7 +54,6 @@ EXTRA_DIST = \
 	configure \
 	contrib \
 	examples \
-	libz.dsp \
 	make_vms.com \
 	minigzip.c \
 	msdos \

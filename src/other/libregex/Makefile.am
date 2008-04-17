@@ -15,8 +15,8 @@ noinst_HEADERS = \
 	utils.h
 
 EXTRA_DIST =		\
-	engine.c	\
-	libregex.dsp
+	CMakeLists.txt	\
+	engine.c
 
 include $(top_srcdir)/misc/Makefile.defs
 

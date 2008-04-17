@@ -92,7 +92,7 @@ man_MANS = \
 
 EXTRA_DIST = \
 	$(man_MANS) \
-	libbu.dsp
+	CMakeLists.txt
 
 AM_CPPFLAGS = \
 	-DPREFIX=\"$(prefix)\" \

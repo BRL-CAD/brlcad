@@ -1,8 +1,8 @@
 # $Id$
 
 EXTRA_DIST = \
+        CMakeLists.txt \
 	brlcad.def \
-	brlcad.dsp \
 	brlcad.rc \
 	TclDummies.c
 

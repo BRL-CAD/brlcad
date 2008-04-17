@@ -235,6 +235,7 @@ ON_EXTRA = \
 
 EXTRA_DIST = \
 	${ON_EXTRA} \
+        CMakeLists.txt \
 	example_brep \
 	example_dump \
 	example_gl \
@@ -243,7 +244,6 @@ EXTRA_DIST = \
 	example_userdata \
 	example_write \
 	faq.txt \
-	opennurbs.dsp \
 	opennurbs_memory_new.cpp \
 	opennurbs_zlib_memory.cpp \
 	readme.txt

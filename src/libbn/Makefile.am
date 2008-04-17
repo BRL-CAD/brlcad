@@ -44,7 +44,7 @@ AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
 EXTRA_DIST = \
 	$(man_MANS) \
-	libbn.dsp \
+	CMakeLists.txt \
 	plot3.doc
 
 DEPS=src/libbu

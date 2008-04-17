@@ -46,7 +46,7 @@ man_MANS = libwdb.3
 EXTRA_DIST = \
 	$(man_MANS) \
 	$(BREP_EXTRA) \
-	libwdb.dsp \
+	CMakeLists.txt \
 	reg4.c \
 	spl.c
 
