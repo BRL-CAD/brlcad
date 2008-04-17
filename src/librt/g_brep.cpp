@@ -155,6 +155,7 @@ distribute(const int count, const ON_3dVector* v, double x[], double y[], double
 
 bool
 brep_pt_trimmed(pt2d_t pt, const ON_BrepFace& face) {
+    bool retVal = false;
     TRACE1("brep_pt_trimmed: " << PT2(pt));
     // for each loop
     const ON_Surface* surf = face.SurfaceOf();
@@ -177,8 +178,13 @@ brep_pt_trimmed(pt2d_t pt, const ON_BrepFace& face) {
 	    intersections += trimCurve->NumIntersectionsWith(ray);
 	}
     }
-    // the point is trimmed if the # of intersections is even
-    return (intersections % 2) == 0;
+// If we base trimming on the number of intersections with, rhino generated curves won't raytrace.
+// In fact, we need to ignore trimming for the time being, just return false. 
+// To do: figure out what this code does, and fix it for rhino generated geometries. djg 4/16/08
+    // the point is trimmed if the # of intersections is even and non-zero
+    retVal= (intersections > 0 && (intersections % 2) == 0); 
+
+    return retVal;
 }
 
 // XXX - most of this function is broken :-( except for the bezier span caching

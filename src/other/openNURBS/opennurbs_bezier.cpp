@@ -1150,6 +1150,12 @@ int ON_BezierCurve::NumIntersectionsWith(const ON_Line& segment) const
   stack.push_back(*this);
   while (stack.size() > 0) {
     ON_BezierCurve crv = stack.back();
+
+// The assertion below does not allow rhino converted structures to raytrace.  
+// Need to figure out why, and what it means for CVCount to be 0. djg 4/15/08
+if (crv.CVCount() < 1 ) {
+  return 0;
+}
     stack.pop_back();
 
     int qstats = 0;
