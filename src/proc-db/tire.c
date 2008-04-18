@@ -1027,7 +1027,7 @@ void MakeTireSurface(struct rt_wdb (*file), char *suffix, fastf_t *ell1cadparams
 
 /* Use the Gaussian Elimination Routines and MakeTireSurface routine to solve
  * for and insert the shapes needed for a hollow tire*/
-void MakeTireCore(struct rt_wdb (*file), fastf_t dytred, fastf_t dztred, fastf_t d1, fastf_t dyside1, fastf_t zside1, fastf_t ztire, fastf_t dyhub, fastf_t zhub, fastf_t thickness)
+void MakeTireCore(struct rt_wdb (*file), fastf_t dytred, fastf_t dztred, fastf_t d1, fastf_t dyside1, fastf_t zside1, fastf_t ztire, fastf_t dyhub, fastf_t zhub, fastf_t thickness, int *add_tread)
 {
     int i;
     fastf_t ell1partial,elltredpartial;
@@ -1042,7 +1042,11 @@ void MakeTireCore(struct rt_wdb (*file), fastf_t dytred, fastf_t dztred, fastf_t
     fastf_t ztire_with_offset,d1_intercept;
     struct wmember tiretred;
 
-    ztire_with_offset = ztire-11.0/32.0*bu_units_conversion("in");
+    if (add_tread[0] != 0){
+	ztire_with_offset = ztire-11.0/32.0*bu_units_conversion("in");
+    } else {
+	ztire_with_offset = ztire;
+    }
 
     matrixell1 = (fastf_t **)bu_malloc(5 * sizeof(fastf_t *),"matrixrows");
     for (i = 0; i < 5; i++)
@@ -1086,35 +1090,38 @@ void MakeTireCore(struct rt_wdb (*file), fastf_t dytred, fastf_t dztred, fastf_t
     /* Insert outer tire volume */
     MakeTireSurface(file,"-solid",ell1cadparams,ell2cadparams,ztire_with_offset,dztred,dytred,dyhub,zhub,dyside1);
 
-    /* Find tread surface */
-    d1_intercept = GetValueAtZPoint(ell2coefficients,ztire-d1);
-    bu_log("d1_intercept = %6.4f\n",d1_intercept);
-    Create_Ell1_Mat(matrixelltred1, dytred, dztred, d1, ztire);
-    Echelon(matrixelltred1);
-    SolveEchelon(matrixelltred1,ell1tredcoefficients);
-    CalcInputVals(ell1tredcoefficients,ell1tredcadparams,0);
-    elltredpartial = GetEllPartialAtPoint(ell1tredcoefficients,dytred/2,ztire-dztred);
-    printVec(ell1tredcoefficients,5,"Ellipse 1 Tred Coefficients");
-    Create_Ell2_Mat(matrixelltred2, dytred, dztred, d1_intercept*2, ztire-d1, ztire, dyhub, zhub, elltredpartial);
-    Echelon(matrixelltred2);
-    SolveEchelon(matrixelltred2,ell2tredcoefficients);
-    printVec(ell2tredcoefficients,5,"Ellipse 2 Tred Coefficients");
-    CalcInputVals(ell2tredcoefficients,ell2tredcadparams,1);
-    printVec(ell2tredcadparams,5,"Ellipse 2 Tred Input Parameters");
-    MakeTireSurface(file,"-tread-outer",ell1tredcadparams,ell2tredcadparams,ztire,dztred,dytred,dyhub,zhub,d1_intercept*2);
-
-    /* The tire tread shape needed is the subtraction of the slick surface from the tread shape,
-     * which is handled here to supply the correct shape for later tread work.
-     */
-    BU_LIST_INIT(&tiretred.l);
-    (void)mk_addmember("tire-tread-outer.c", &tiretred.l, NULL, WMOP_UNION);
-    (void)mk_addmember("tire-solid.c", &tiretred.l, NULL, WMOP_SUBTRACT);
-    mk_lcomb(file, "tire-tread-shape.c", &tiretred, 0, NULL, NULL, NULL, 0);
-
-
-    /* Call function to generate primitives and combinations for actual tread pattern */
-    MakeTreadPattern(file, "-tread1", d1_intercept*2, ztire-d1, ztire);
-
+    if (add_tread[0] != 0) {
+	/* Find tread surface */
+	d1_intercept = GetValueAtZPoint(ell2coefficients,ztire-d1);
+	bu_log("d1_intercept = %6.4f\n",d1_intercept);
+	Create_Ell1_Mat(matrixelltred1, dytred, dztred, d1, ztire);
+	Echelon(matrixelltred1);
+	SolveEchelon(matrixelltred1,ell1tredcoefficients);
+	CalcInputVals(ell1tredcoefficients,ell1tredcadparams,0);
+	elltredpartial = GetEllPartialAtPoint(ell1tredcoefficients,dytred/2,ztire-dztred);
+	printVec(ell1tredcoefficients,5,"Ellipse 1 Tred Coefficients");
+	Create_Ell2_Mat(matrixelltred2, dytred, dztred, d1_intercept*2, ztire-d1, ztire, dyhub, zhub, elltredpartial);
+	Echelon(matrixelltred2);
+	SolveEchelon(matrixelltred2,ell2tredcoefficients);
+	printVec(ell2tredcoefficients,5,"Ellipse 2 Tred Coefficients");
+	CalcInputVals(ell2tredcoefficients,ell2tredcadparams,1);
+	printVec(ell2tredcadparams,5,"Ellipse 2 Tred Input Parameters");
+	MakeTireSurface(file,"-tread-outer",ell1tredcadparams,ell2tredcadparams,ztire,dztred,dytred,dyhub,zhub,d1_intercept*2);
+	
+	/* The tire tread shape needed is the subtraction of the slick surface from the tread shape,
+	 * which is handled here to supply the correct shape for later tread work.
+	 */
+	BU_LIST_INIT(&tiretred.l);
+	(void)mk_addmember("tire-tread-outer.c", &tiretred.l, NULL, WMOP_UNION);
+	(void)mk_addmember("tire-solid.c", &tiretred.l, NULL, WMOP_SUBTRACT);
+	mk_lcomb(file, "tire-tread-shape.c", &tiretred, 0, NULL, NULL, NULL, 0);
+	
+	
+	/* Call function to generate primitives and combinations for actual tread pattern */
+	MakeTreadPattern(file, "-tread1", d1_intercept*2, ztire-d1, ztire);
+	
+    }
+    
     /* Calculate input parameters for inner cut*/
     cut_ztire = ztire_with_offset-thickness;
     cut_dyside1 = dyside1-thickness*2;
@@ -1136,10 +1143,8 @@ void MakeTireCore(struct rt_wdb (*file), fastf_t dytred, fastf_t dztred, fastf_t
     SolveEchelon(matrixcut2,cut2coefficients);
     /* Calculate BRL-CAD input parameters for inner cut tread ellipse */
     CalcInputVals(cut1coefficients,cut1cadparams,0);
-    printVec(cut1cadparams,5,"Cut 1 Input Parameters");
     /* Calculate BRL-CAD input parameters for inner cut side ellipse */
     CalcInputVals(cut2coefficients,cut2cadparams,1);
-    printVec(cut2cadparams,5,"Cut 2 Input Parameters");
     /* Insert inner tire cut volume */
     MakeTireSurface(file,"-cut",cut1cadparams,cut2cadparams,cut_ztire,cut_dztred,cut_dytred,cut_dyhub,zhub,dyside1);
 
@@ -1168,10 +1173,10 @@ void MakeTireCore(struct rt_wdb (*file), fastf_t dytred, fastf_t dztred, fastf_t
 }
 
 /* Process command line arguments */
-int ReadArgs(int argc, char **argv, fastf_t *isoarray, struct bu_vls *name, int *gen_name)
+int ReadArgs(int argc, char **argv, fastf_t *isoarray, struct bu_vls *name, int *gen_name, int *add_tread)
 {
     int c = 0;
-    char *options="d:n:a";
+    char *options="d:n:at";
     int d1, d2, d3;
     char spacer1,tiretype;
     bu_log("Reading args\n");
@@ -1195,6 +1200,9 @@ int ReadArgs(int argc, char **argv, fastf_t *isoarray, struct bu_vls *name, int 
 		bu_vls_trunc(name,0);
 		bu_vls_printf(name, "%s", bu_optarg);
 		break;
+	    case 't':
+		add_tread[0] = 1;
+		break;
 	   }
 	 }
 	 return(bu_optind);
@@ -1214,8 +1222,9 @@ int main(int ac, char *av[])
     struct bu_vls name;
     bu_vls_init(&name);
     bu_vls_trunc(&name,0);
-    int gen_name[1];
+    int gen_name[1], add_tread[1];
     gen_name[0] = 0;
+    add_tread[0] = 0;
     struct bu_vls str;
     bu_vls_init(&str);
 
@@ -1225,8 +1234,13 @@ int main(int ac, char *av[])
     isoarray[2] = 18;
 
     /* Process arguments */
-    ReadArgs(ac, av, isoarray, &name, gen_name);
+    ReadArgs(ac, av, isoarray, &name, gen_name, add_tread);
 
+
+    /* Based on arguments, assign name for toplevel object
+     * Default of "tire" is respected unless overridden by
+     * user supplied options.
+     */
     if (bu_vls_strlen(&name) == 0 && gen_name[0] == 0) {
 	bu_vls_printf(&name, "tire");
     }
@@ -1240,11 +1254,7 @@ int main(int ac, char *av[])
     }
     
 
-	bu_log("name = %s\n",bu_vls_addr(&name));
- 
-
-
-/* Create/Open file name if supplied,
+    /* Create/Open file name if supplied,
      * else use "tire.g"
      */
     db_fp = wdb_fopen( av[bu_optind] );
@@ -1260,7 +1270,6 @@ int main(int ac, char *av[])
     width = isoarray[0];
     ratio = isoarray[1];
     wheeldiam = isoarray[2]*bu_units_conversion("in");
-
     dyside1 = width;
     ztire = ((width*ratio/100)*2+wheeldiam)/2;
     zhub = ztire-width*ratio/100;
@@ -1272,15 +1281,15 @@ int main(int ac, char *av[])
     thickness = 15;
 
     /* Call routine to actually make the tire geometry*/
-    MakeTireCore(db_fp, dytred, dztred, d1, dyside1, zside1, ztire, dyhub, zhub, thickness);
+    MakeTireCore(db_fp, dytred, dztred, d1, dyside1, zside1, ztire, dyhub, zhub, thickness, add_tread);
      
-   /* Combine the tire solid and tire cutout into the
+   /* Combine the tire solid, tire cutout and tread into the
     * final tire region.
     */
     BU_LIST_INIT(&tire.l);
     (void)mk_addmember("tire-solid.c", &tire.l, NULL, WMOP_UNION);
     (void)mk_addmember("tire-cut.c", &tire.l, NULL, WMOP_SUBTRACT);
-    (void)mk_addmember("tread.c",&tire.l, NULL, WMOP_UNION);
+    if (add_tread[0] != 0) (void)mk_addmember("tread.c",&tire.l, NULL, WMOP_UNION);
     mk_lcomb(db_fp, "tire.r", &tire, 1,  "plastic", "di=.8 sp=.2", rgb, 0);
 
     bolts = 5;
@@ -1292,10 +1301,10 @@ int main(int ac, char *av[])
     bead_width = 8;
     rim_thickness = 5;
 
-    /* Make wheel rim */
+    /* Make wheel region*/
     MakeWheelRims(db_fp, "", dyhub, zhub, bolts, bolt_diam, bolt_circ_diam, spigot_diam, fixing_offset, bead_height, bead_width, rim_thickness);
 
-    /* Final top level providing a single name for the tire+wheel */
+    /* Final top level providing a single name for tire+wheel */
     BU_LIST_INIT(&wheel_and_tire.l);
     (void)mk_addmember("tire.r", &wheel_and_tire.l, NULL, WMOP_UNION);
     (void)mk_addmember("wheel.r", &wheel_and_tire.l, NULL, WMOP_UNION);
