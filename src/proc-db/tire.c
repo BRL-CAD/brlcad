@@ -1042,7 +1042,7 @@ void MakeTireCore(struct rt_wdb (*file), fastf_t dytred, fastf_t dztred, fastf_t
     fastf_t ztire_with_offset,d1_intercept;
     struct wmember tiretred;
 
-    if (add_tread[0] != 0){
+    if (add_tread && *add_tread != 0){
 	ztire_with_offset = ztire-11.0/32.0*bu_units_conversion("in");
     } else {
 	ztire_with_offset = ztire;
@@ -1090,7 +1090,7 @@ void MakeTireCore(struct rt_wdb (*file), fastf_t dytred, fastf_t dztred, fastf_t
     /* Insert outer tire volume */
     MakeTireSurface(file,"-solid",ell1cadparams,ell2cadparams,ztire_with_offset,dztred,dytred,dyhub,zhub,dyside1);
 
-    if (add_tread[0] != 0) {
+    if (add_tread && *add_tread != 0) {
 	/* Find tread surface */
 	d1_intercept = GetValueAtZPoint(ell2coefficients,ztire-d1);
 	bu_log("d1_intercept = %6.4f\n",d1_intercept);
@@ -1187,7 +1187,7 @@ int ReadArgs(int argc, char **argv, fastf_t *isoarray, struct bu_vls *name, int 
 	bu_log("in while loop -> %c\n",c);
         switch (c) {
 	    case 'a' :
-		gen_name[0] = 1;
+		*gen_name = 1;
 		break;
 	    case 'd' :
 		sscanf(bu_optarg,"%d%c%d%c%d",&d1,&spacer1,&d2,&tiretype,&d3);
@@ -1201,7 +1201,7 @@ int ReadArgs(int argc, char **argv, fastf_t *isoarray, struct bu_vls *name, int 
 		bu_vls_printf(name, "%s", bu_optarg);
 		break;
 	    case 't':
-		add_tread[0] = 1;
+		*add_tread = 1;
 		break;
 	   }
 	 }
@@ -1220,13 +1220,13 @@ int main(int ac, char *av[])
     unsigned char rgb[3];
     fastf_t isoarray[3];
     struct bu_vls name;
+    struct bu_vls str;
+    int gen_name = 0;
+    int add_tread = 0;
+
+    bu_vls_init(&str);
     bu_vls_init(&name);
     bu_vls_trunc(&name,0);
-    int gen_name[1], add_tread[1];
-    gen_name[0] = 0;
-    add_tread[0] = 0;
-    struct bu_vls str;
-    bu_vls_init(&str);
 
     /* Set Default Parameters - 255/40R18 */ 
     isoarray[0] = 255;
@@ -1234,22 +1234,22 @@ int main(int ac, char *av[])
     isoarray[2] = 18;
 
     /* Process arguments */
-    ReadArgs(ac, av, isoarray, &name, gen_name, add_tread);
+    ReadArgs(ac, av, isoarray, &name, &gen_name, &add_tread);
 
 
     /* Based on arguments, assign name for toplevel object
      * Default of "tire" is respected unless overridden by
      * user supplied options.
      */
-    if (bu_vls_strlen(&name) == 0 && gen_name[0] == 0) {
+    if (bu_vls_strlen(&name) == 0 && gen_name == 0) {
 	bu_vls_printf(&name, "tire");
     }
 
-    if (bu_vls_strlen(&name) != 0 && gen_name[0] == 1) {
+    if (bu_vls_strlen(&name) != 0 && gen_name == 1) {
 	bu_vls_printf(&name, "-%d-%dR%d",(int)isoarray[0],(int)isoarray[1],(int)isoarray[2]);
     }
 
-    if (bu_vls_strlen(&name) == 0 && gen_name[0] == 1) {
+    if (bu_vls_strlen(&name) == 0 && gen_name == 1) {
 	bu_vls_printf(&name, "tire-%d-%dR%d",(int)isoarray[0],(int)isoarray[1],(int)isoarray[2]);
     }
     
@@ -1281,7 +1281,7 @@ int main(int ac, char *av[])
     thickness = 15;
 
     /* Call routine to actually make the tire geometry*/
-    MakeTireCore(db_fp, dytred, dztred, d1, dyside1, zside1, ztire, dyhub, zhub, thickness, add_tread);
+    MakeTireCore(db_fp, dytred, dztred, d1, dyside1, zside1, ztire, dyhub, zhub, thickness, &add_tread);
      
    /* Combine the tire solid, tire cutout and tread into the
     * final tire region.
@@ -1289,7 +1289,7 @@ int main(int ac, char *av[])
     BU_LIST_INIT(&tire.l);
     (void)mk_addmember("tire-solid.c", &tire.l, NULL, WMOP_UNION);
     (void)mk_addmember("tire-cut.c", &tire.l, NULL, WMOP_SUBTRACT);
-    if (add_tread[0] != 0) (void)mk_addmember("tread.c",&tire.l, NULL, WMOP_UNION);
+    if (add_tread != 0) (void)mk_addmember("tread.c",&tire.l, NULL, WMOP_UNION);
     mk_lcomb(db_fp, "tire.r", &tire, 1,  "plastic", "di=.8 sp=.2", rgb, 0);
 
     bolts = 5;
