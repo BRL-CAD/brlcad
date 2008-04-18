@@ -75,7 +75,8 @@ scripties = \
 	solid.tcl \
 	text.tcl \
 	titles.tcl \
-	tree.tcl
+	tree.tcl \
+	xclone.tcl
 
 dist_tcl_DATA = \
 	l_i0_v0_s0.gif \
