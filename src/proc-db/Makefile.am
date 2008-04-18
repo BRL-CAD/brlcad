@@ -94,7 +94,9 @@ noinst_HEADERS = \
 	tea.h \
 	vegitation.h
 
-man_MANS = picket_fence.1
+man_MANS = \
+	picket_fence.1\
+	tire.1
 
 EXTRA_DIST = \
 	$(man_MANS) \

@@ -1,0 +1,119 @@
+.TH TIRE 1 BRL-CAD
+.\"                         T I R E . 1
+.\" BRL-CAD
+.\"
+.\" Copyright (c) 2005-2008 United States Government as represented by
+.\" the U.S. Army Research Laboratory.
+.\"
+.\" Redistribution and use in source (Docbook format) and 'compiled'
+.\" forms (PDF, PostScript, HTML, RTF, etc), with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\" 1. Redistributions of source code (Docbook format) must retain the
+.\" above copyright notice, this list of conditions and the following
+.\" disclaimer.
+.\"
+.\" 2. Redistributions in compiled form (transformed to other DTDs,
+.\" converted to PDF, PostScript, HTML, RTF, and other formats) must
+.\" reproduce the above copyright notice, this list of conditions and
+.\" the following disclaimer in the documentation and/or other
+.\" materials provided with the distribution.
+.\"
+.\" 3. The name of the author may not be used to endorse or promote
+.\" products derived from this documentation without specific prior
+.\" written permission.
+.\"
+.\" THIS DOCUMENTATION IS PROVIDED BY THE AUTHOR AS IS'' AND ANY
+.\" EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+.\" OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+.\" BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+.\" LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+.\" USE OF THIS DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\".\".\"
+.SH NAME
+tire \- Generate a tire model, given standard tire dimension information
+.SH SYNOPSIS
+.B tire
+[options ... ]
+[filename]
+.SH DESCRIPTION
+.I tire\^
+creates a geometry file in either in
+.I tire.g\^
+(the default file) or
+.I <filename>\^
+(if overridden by specifying a filename) of a curved sidewall tire and
+interior wheel.  If no dimensions are supplied defaults are used.  The
+default is to 
+.I not\^
+model tread (due to performance issues) but tread modeling is implemented
+and available as a user option with the
+.B \-t
+flag.
+.LP
+.B IMPORTANT 
+-  The tire models produced by BRL-CAD with this procedure are only approximate
+in terms of tire width and shape - in particular the fitting routine used to generate
+primitives for that case does not guarantee a maximum width.  It should be
+.I close
+but it is unlikely to be exact.
+.TP
+.B \-a #
+instructs 
+.I tire
+to automatically add dimensional information to the toplevel object name 
+used in the generated BRL-CAD database tree.  Works with the 
+.B \-n
+option or standalone.  Output format uses '-' instead of '/' because the
+latter has significance in BRL-CAD object trees.
+.TP
+.B \-d width/ratio/wheeldiam #
+This option accepts tire dimensions in the form of width of the tire
+(in mm), ratio of sidewall height to tire width, and the diameter of
+the wheel the tire is designed to fit over (in inches).  This is a
+fairly standard method for specifying automotive tire dimensions,
+and BRL-CAD can use these dimensions to create a model with approximately
+those dimensions.  The '/' character will work but other options are
+also allowed provided they don't have numeric significance - for example
+the common notation width/ratioRwheeldiam will work as-is.
+.TP
+.B \-n name #
+allows the user to specify a name other than 'tire' for the root name
+of the toplevel database object.  Works with the
+.B \a
+option or standalone.
+.TP
+.B \-t #
+If this flag is supplied, the procedure will model the tire to include
+geometric tread.  Tread modeling can SIGNIFICANTLY lengthen raytracing times.
+
+.SH EXAMPLE
+The following will create a tire with width=185mm, ratio=65mm, and wheel
+diameter = 15in.  The 
+.B \-t
+flag will instruct the procedure to model using tread, the
+.B \-n
+flag will set the root name to 'autowheel' instead of tire, and the
+.B \-a
+flag will append '-185-65R15' to 'autowheel' to create the final
+toplevel name 'autowheel-185-65R15' in the database rather than 'tire'.
+Because a filename was supplied, the resulting model will be stored in
+mytire.g rather than tire.g (if necessary mytire.g will be created.)
+
+.nf
+	\fBtire -d 185/65R15 -t -a -n autowheel mytire.g\fR
+.fi
+
+.SH DIAGNOSTICS
+Not much error checking yet - need to add.
+.SH "BUG REPORTS"
+Reports of bugs or problems should be submitted via electronic
+mail to <devs@brlcad.org>.
