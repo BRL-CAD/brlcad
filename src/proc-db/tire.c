@@ -656,33 +656,33 @@ void MakeWheelRims(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t z
  * many tread patterns can be defined in this fashion.
  */
 
-void PatternPoints(fastf_t *pointlist,fastf_t pattern_back, fastf_t pattern_front, fastf_t z_base, fastf_t z_height, \
+void PatternPoints(fastf_t *pointlist,fastf_t pattern_back1, fastf_t pattern_front1, fastf_t pattern_back2, fastf_t pattern_front2, fastf_t z_base, fastf_t z_height, \
 		   fastf_t ystart, fastf_t negxoffset,fastf_t posxoffset, fastf_t negxwidth, fastf_t posxwidth)
 {
-    pointlist[0] = pattern_back;
+    pointlist[0] = pattern_back1;
     pointlist[1] = ystart+negxoffset;
-    pointlist[2] = z_base;
-    pointlist[3] = pattern_front;
+    pointlist[2] = z_height;
+    pointlist[3] = pattern_front1;
     pointlist[4] = ystart+posxoffset;
-    pointlist[5] = z_base;
-    pointlist[6] = pattern_front;
+    pointlist[5] = z_height;
+    pointlist[6] = pattern_front2;
     pointlist[7] = ystart+posxoffset;
-    pointlist[8] = z_height;
-    pointlist[9] = pattern_back;
+    pointlist[8] = z_base;
+    pointlist[9] = pattern_back2;
     pointlist[10] = ystart+negxoffset;
-    pointlist[11] = z_height;
-    pointlist[12] = pattern_back;
+    pointlist[11] = z_base;
+    pointlist[12] = pattern_back1;
     pointlist[13] = ystart+negxoffset+negxwidth;
-    pointlist[14] = z_base;
-    pointlist[15] = pattern_front;
+    pointlist[14] = z_height;
+    pointlist[15] = pattern_front1;
     pointlist[16] = ystart+posxoffset+posxwidth;
-    pointlist[17] = z_base;
-    pointlist[18] = pattern_front;
+    pointlist[17] = z_height;
+    pointlist[18] = pattern_front2;
     pointlist[19] = ystart+posxoffset+posxwidth;
-    pointlist[20] = z_height;
-    pointlist[21] = pattern_back;
+    pointlist[20] = z_base;
+    pointlist[21] = pattern_back2;
     pointlist[22] = ystart+negxoffset+negxwidth;
-    pointlist[23] =  z_height;
+    pointlist[23] = z_base;
 
 }
 
@@ -691,8 +691,8 @@ void MakeTreadPattern(struct rt_wdb (*file), char *suffix, fastf_t dwidth, fastf
     struct bu_vls str;
     bu_vls_init(&str);
     struct wmember treadpattern, tread, treadrotated;
-    fastf_t circumference;
-    fastf_t spacing,patternwidth;
+    fastf_t circumference_outer,circumference_inner;
+    fastf_t patternwidth1,patternwidth2;
     mat_t y;
     int number_of_patterns;
     fastf_t pointlist[24];
@@ -700,60 +700,61 @@ void MakeTreadPattern(struct rt_wdb (*file), char *suffix, fastf_t dwidth, fastf
     unsigned char rgb[3];
     VSET(rgb, 40, 40, 40);
 
-    circumference = F_PI*2*ztire;
-    spacing = 0;
-    number_of_patterns = 200;
-    patternwidth=(circumference-spacing*number_of_patterns)/number_of_patterns/2;
-    
-    PatternPoints(pointlist,-patternwidth,0,z_base,ztire,-dwidth/2,0,dwidth/20,dwidth/20,dwidth/20);
+    circumference_outer = F_PI*2*ztire;
+    number_of_patterns = 120;
+    patternwidth1=circumference_outer/number_of_patterns/2;
+
+    circumference_inner = F_PI*2*(ztire-11.0/32.0*bu_units_conversion("in"));
+    patternwidth2=circumference_inner/number_of_patterns/2;
+
+    PatternPoints(pointlist,-patternwidth1,0,-patternwidth2,0,z_base,ztire,-dwidth/2,0,dwidth/20,dwidth/20,dwidth/20);
     mk_arb8(file,"patterncomponent1.s",&pointlist[0]);
-    PatternPoints(pointlist,0,patternwidth,z_base,ztire,-dwidth/2,dwidth/20,0,dwidth/20,dwidth/20);
+    PatternPoints(pointlist,0,patternwidth1,0,patternwidth2,z_base,ztire,-dwidth/2,dwidth/20,0,dwidth/20,dwidth/20);
     mk_arb8(file,"patterncomponent11.s",&pointlist[0]);
     
-    PatternPoints(pointlist,-patternwidth,0,z_base,ztire,-dwidth/2+dwidth/10,0,dwidth/20,dwidth/20,dwidth/20);
+    PatternPoints(pointlist,-patternwidth1,0,-patternwidth2,0,z_base,ztire,-dwidth/2+dwidth/10,0,dwidth/20,dwidth/20,dwidth/20);
     mk_arb8(file,"patterncomponent2.s",&pointlist[0]);
-    PatternPoints(pointlist,0,patternwidth,z_base,ztire,-dwidth/2+dwidth/10,dwidth/20,0,dwidth/20,dwidth/20);
+    PatternPoints(pointlist,0,patternwidth1,0,patternwidth2,z_base,ztire,-dwidth/2+dwidth/10,dwidth/20,0,dwidth/20,dwidth/20);
     mk_arb8(file,"patterncomponent12.s",&pointlist[0]);
  
-    PatternPoints(pointlist,-patternwidth,0,z_base,ztire,-dwidth/2+2*dwidth/10,0,dwidth/20,dwidth/20,dwidth/20);
+    PatternPoints(pointlist,-patternwidth1,0,-patternwidth2,0,z_base,ztire,-dwidth/2+2*dwidth/10,0,dwidth/20,dwidth/20,dwidth/20);
     mk_arb8(file,"patterncomponent3.s",&pointlist[0]);
-    PatternPoints(pointlist,0,patternwidth,z_base,ztire,-dwidth/2+2*dwidth/10,dwidth/20,0,dwidth/20,dwidth/20);
+    PatternPoints(pointlist,0,patternwidth1,0,patternwidth2,z_base,ztire,-dwidth/2+2*dwidth/10,dwidth/20,0,dwidth/20,dwidth/20);
     mk_arb8(file,"patterncomponent13.s",&pointlist[0]);
     
-    PatternPoints(pointlist,-patternwidth,0,z_base,ztire,-dwidth/2+3*dwidth/10,0,dwidth/20,dwidth/20,dwidth/20);
+    PatternPoints(pointlist,-patternwidth1,0,-patternwidth2,0,z_base,ztire,-dwidth/2+3*dwidth/10,0,dwidth/20,dwidth/20,dwidth/20);
     mk_arb8(file,"patterncomponent4.s",&pointlist[0]);
-    PatternPoints(pointlist,0,patternwidth,z_base,ztire,-dwidth/2+3*dwidth/10,dwidth/20,0,dwidth/20,dwidth/20);
+    PatternPoints(pointlist,0,patternwidth1,0,patternwidth2,z_base,ztire,-dwidth/2+3*dwidth/10,dwidth/20,0,dwidth/20,dwidth/20);
     mk_arb8(file,"patterncomponent14.s",&pointlist[0]);
     
-    PatternPoints(pointlist,-patternwidth,0,z_base,ztire,-dwidth/2+4*dwidth/10,0,dwidth/20,dwidth/20,dwidth/20);
+    PatternPoints(pointlist,-patternwidth1,0,-patternwidth2,0,z_base,ztire,-dwidth/2+4*dwidth/10,0,dwidth/20,dwidth/20,dwidth/20);
     mk_arb8(file,"patterncomponent5.s",&pointlist[0]);
-    PatternPoints(pointlist,0,patternwidth,z_base,ztire,-dwidth/2+4*dwidth/10,dwidth/20,0,dwidth/20,dwidth/20);
+    PatternPoints(pointlist,0,patternwidth1,0,patternwidth2,z_base,ztire,-dwidth/2+4*dwidth/10,dwidth/20,0,dwidth/20,dwidth/20);
     mk_arb8(file,"patterncomponent15.s",&pointlist[0]);
-    PatternPoints(pointlist,-patternwidth,0,z_base,ztire,-dwidth/2,0,dwidth/20,dwidth/20,dwidth/20);
 
-    PatternPoints(pointlist,-patternwidth,0,z_base,ztire,dwidth/2,0,-dwidth/20,-dwidth/20,-dwidth/20);
+    PatternPoints(pointlist,-patternwidth1,0,-patternwidth2,0,z_base,ztire,dwidth/2,0,-dwidth/20,-dwidth/20,-dwidth/20);
     mk_arb8(file,"patterncomponent6.s",&pointlist[0]);
-    PatternPoints(pointlist,0,patternwidth,z_base,ztire,dwidth/2,-dwidth/20,0,-dwidth/20,-dwidth/20);
+    PatternPoints(pointlist,0,patternwidth1,0,patternwidth2,z_base,ztire,dwidth/2,-dwidth/20,0,-dwidth/20,-dwidth/20);
     mk_arb8(file,"patterncomponent16.s",&pointlist[0]);
     
-    PatternPoints(pointlist,-patternwidth,0,z_base,ztire,dwidth/2-dwidth/10,0,-dwidth/20,-dwidth/20,-dwidth/20);
+    PatternPoints(pointlist,-patternwidth1,0,-patternwidth2,0,z_base,ztire,dwidth/2-dwidth/10,0,-dwidth/20,-dwidth/20,-dwidth/20);
     mk_arb8(file,"patterncomponent7.s",&pointlist[0]);
-    PatternPoints(pointlist,0,patternwidth,z_base,ztire,dwidth/2-dwidth/10,-dwidth/20,0,-dwidth/20,-dwidth/20);
+    PatternPoints(pointlist,0,patternwidth1,0,patternwidth2,z_base,ztire,dwidth/2-dwidth/10,-dwidth/20,0,-dwidth/20,-dwidth/20);
     mk_arb8(file,"patterncomponent17.s",&pointlist[0]);
    
-    PatternPoints(pointlist,-patternwidth,0,z_base,ztire,dwidth/2-2*dwidth/10,0,-dwidth/20,-dwidth/20,-dwidth/20);
+    PatternPoints(pointlist,-patternwidth1,0,-patternwidth2,0,z_base,ztire,dwidth/2-2*dwidth/10,0,-dwidth/20,-dwidth/20,-dwidth/20);
     mk_arb8(file,"patterncomponent8.s",&pointlist[0]);
-    PatternPoints(pointlist,0,patternwidth,z_base,ztire,dwidth/2-2*dwidth/10,-dwidth/20,0,-dwidth/20,-dwidth/20);
+    PatternPoints(pointlist,0,patternwidth1,0,patternwidth2,z_base,ztire,dwidth/2-2*dwidth/10,-dwidth/20,0,-dwidth/20,-dwidth/20);
     mk_arb8(file,"patterncomponent18.s",&pointlist[0]);
     
-    PatternPoints(pointlist,-patternwidth,0,z_base,ztire,dwidth/2-3*dwidth/10,0,-dwidth/20,-dwidth/20,-dwidth/20);
+    PatternPoints(pointlist,-patternwidth1,0,-patternwidth2,0,z_base,ztire,dwidth/2-3*dwidth/10,0,-dwidth/20,-dwidth/20,-dwidth/20);
     mk_arb8(file,"patterncomponent9.s",&pointlist[0]);
-    PatternPoints(pointlist,0,patternwidth,z_base,ztire,dwidth/2-3*dwidth/10,-dwidth/20,0,-dwidth/20,-dwidth/20);
+    PatternPoints(pointlist,0,patternwidth1,0,patternwidth2,z_base,ztire,dwidth/2-3*dwidth/10,-dwidth/20,0,-dwidth/20,-dwidth/20);
     mk_arb8(file,"patterncomponent19.s",&pointlist[0]);
     
-    PatternPoints(pointlist,-patternwidth,0,z_base,ztire,dwidth/2-4*dwidth/10,0,-dwidth/20,-dwidth/20,-dwidth/20);
+    PatternPoints(pointlist,-patternwidth1,0,-patternwidth2,0,z_base,ztire,dwidth/2-4*dwidth/10,0,-dwidth/20,-dwidth/20,-dwidth/20);
     mk_arb8(file,"patterncomponent10.s",&pointlist[0]);
-    PatternPoints(pointlist,0,patternwidth,z_base,ztire,dwidth/2-4*dwidth/10,-dwidth/20,0,-dwidth/20,-dwidth/20);
+    PatternPoints(pointlist,0,patternwidth1,0,patternwidth2,z_base,ztire,dwidth/2-4*dwidth/10,-dwidth/20,0,-dwidth/20,-dwidth/20);
     mk_arb8(file,"patterncomponent20.s",&pointlist[0]);
 
     BU_LIST_INIT(&treadpattern.l);
