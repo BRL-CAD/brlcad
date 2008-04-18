@@ -691,7 +691,6 @@ void MakeTreadPattern(struct rt_wdb (*file), char *suffix, fastf_t dwidth, fastf
     struct bu_vls str;
     bu_vls_init(&str);
     struct wmember treadpattern, tread, treadrotated;
-    fastf_t circumference_outer,circumference_inner;
     fastf_t patternwidth1,patternwidth2;
     mat_t y;
     int number_of_patterns;
@@ -700,12 +699,18 @@ void MakeTreadPattern(struct rt_wdb (*file), char *suffix, fastf_t dwidth, fastf
     unsigned char rgb[3];
     VSET(rgb, 40, 40, 40);
 
-    circumference_outer = F_PI*2*ztire;
-    number_of_patterns = 120;
-    patternwidth1=circumference_outer/number_of_patterns/2;
+    number_of_patterns = 13;
+    patternwidth1=2*(ztire+(ztire/cos(D2R(180/number_of_patterns))-ztire))*sin(D2R(180/number_of_patterns))/2;
+    patternwidth2=2*(z_base+(z_base/cos(D2R(180/number_of_patterns))-z_base))*sin(D2R(180/number_of_patterns))/2;
 
-    circumference_inner = F_PI*2*(ztire-11.0/32.0*bu_units_conversion("in"));
-    patternwidth2=circumference_inner/number_of_patterns/2;
+    bu_log("\n\nouter_radius = %6.9f\n",ztire);
+    bu_log("inner_radius = %6.9f\n",z_base);
+    bu_log("patternwidthtop = %6.9f\n",patternwidth1);
+    bu_log("patternwidthbottom = %6.9f\n",patternwidth2);
+
+    bu_log("arc lengthtop = %6.9f\n",ztire*F_PI*2/number_of_patterns);
+    bu_log("arc lengthbottom = %6.9f\n",z_base*F_PI*2/number_of_patterns);
+    bu_log("number_of_arcs = %d\n",number_of_patterns);
 
     PatternPoints(pointlist,-patternwidth1,0,-patternwidth2,0,z_base,ztire,-dwidth/2,0,dwidth/20,dwidth/20,dwidth/20);
     mk_arb8(file,"patterncomponent1.s",&pointlist[0]);
@@ -1094,19 +1099,15 @@ void MakeTireCore(struct rt_wdb (*file), fastf_t dytred, fastf_t dztred, fastf_t
     if (add_tread && *add_tread != 0) {
 	/* Find tread surface */
 	d1_intercept = GetValueAtZPoint(ell2coefficients,ztire-d1);
-	bu_log("d1_intercept = %6.4f\n",d1_intercept);
 	Create_Ell1_Mat(matrixelltred1, dytred, dztred, d1, ztire);
 	Echelon(matrixelltred1);
 	SolveEchelon(matrixelltred1,ell1tredcoefficients);
 	CalcInputVals(ell1tredcoefficients,ell1tredcadparams,0);
 	elltredpartial = GetEllPartialAtPoint(ell1tredcoefficients,dytred/2,ztire-dztred);
-	printVec(ell1tredcoefficients,5,"Ellipse 1 Tred Coefficients");
 	Create_Ell2_Mat(matrixelltred2, dytred, dztred, d1_intercept*2, ztire-d1, ztire, dyhub, zhub, elltredpartial);
 	Echelon(matrixelltred2);
 	SolveEchelon(matrixelltred2,ell2tredcoefficients);
-	printVec(ell2tredcoefficients,5,"Ellipse 2 Tred Coefficients");
 	CalcInputVals(ell2tredcoefficients,ell2tredcadparams,1);
-	printVec(ell2tredcadparams,5,"Ellipse 2 Tred Input Parameters");
 	MakeTireSurface(file,"-tread-outer",ell1tredcadparams,ell2tredcadparams,ztire,dztred,dytred,dyhub,zhub,d1_intercept*2);
 	
 	/* The tire tread shape needed is the subtraction of the slick surface from the tread shape,
