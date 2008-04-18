@@ -962,6 +962,7 @@ int
 f_clone(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     struct clone_state	state;
+    struct directory *copy;
 
     /* allow interrupts */
     if ( setjmp( jmp_env ) == 0 )
@@ -979,7 +980,13 @@ f_clone(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
 
     /* do it, use global dbip */
-    (void)copy_object(dbip, &rt_uniresource, &state);
+    if ((copy = copy_object(dbip, &rt_uniresource, &state)) != (struct directory *)NULL) {
+	Tcl_DString ds;
+
+	Tcl_DStringInit(&ds);
+	Tcl_DStringAppend(&ds, copy->d_namep, -1);
+	Tcl_DStringResult(interp, &ds);
+    }
 
     (void)signal( SIGINT, SIG_IGN );
     return TCL_OK;
