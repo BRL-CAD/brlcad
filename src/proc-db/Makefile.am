@@ -1,6 +1,6 @@
 # $Id$
 
-proc_db_libs = ${WDB}
+proc_db_libs = ${WDB} ${WDB_LIBS}
 
 LDADD = ${proc_db_libs}
 AM_CPPFLAGS = ${TCL_CPPFLAGS} -Wall
