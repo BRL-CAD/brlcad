@@ -46,6 +46,7 @@ DISTCLEANFILES = \
 	ltmain.sh \
 	ltmain.sh.backup \
 	mkinstalldirs \
-	py-compile
+	py-compile \
+	ylwrap
 
 include $(top_srcdir)/misc/Makefile.defs
