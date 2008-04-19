@@ -5,6 +5,8 @@
  *
  */
 
+#include "common.h"
+
 #ifdef _GNU_SOURCE
 #  undef _GNU_SOURCE
 #endif
