@@ -15,11 +15,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <setjmp.h>
-#ifdef HAVE_STRINGS_H
-#  include <strings.h>
-#else
-#  include <string.h>
-#endif
+#include <string.h>
 
 
 /*
