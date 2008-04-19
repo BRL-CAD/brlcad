@@ -3,9 +3,11 @@
 if WITH_PARSERS
 SS_BIN = scriptsort
 SS_SRC = scriptsort.c script.l
+SS_BLT = script.c
 else
 SS_BIN =
 SS_SRC =
+SS_BLT =
 endif
 
 bin_PROGRAMS = \
@@ -26,7 +28,8 @@ man_MANS = \
 	tabinterp.1 \
 	tabsub.1
 
-BUILT_SOURCES = script.c
+BUILT_SOURCES = ${SS_BLT}
+
 DISTCLEANFILES = $(BUILT_SOURCES)
 
 EXTRA_DIST = \
