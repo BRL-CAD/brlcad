@@ -656,33 +656,36 @@ void MakeWheelRims(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t z
  * many tread patterns can be defined in this fashion.
  */
 
-void PatternPoints(fastf_t *pointlist,fastf_t pattern_back1, fastf_t pattern_front1, fastf_t pattern_back2, fastf_t pattern_front2, fastf_t z_base, fastf_t z_height, \
-		   fastf_t ystart, fastf_t negxoffset,fastf_t posxoffset, fastf_t negxwidth, fastf_t posxwidth)
+void PatternPoints(fastf_t *pointlist, fastf_t x1, fastf_t y1, fastf_t z1, fastf_t x2, fastf_t y2, fastf_t x3,
+		   fastf_t z3, fastf_t x4, fastf_t y5, fastf_t y6)
 {
-    pointlist[0] = pattern_back1;
-    pointlist[1] = ystart+negxoffset;
-    pointlist[2] = z_height;
-    pointlist[3] = pattern_front1;
-    pointlist[4] = ystart+posxoffset;
-    pointlist[5] = z_height;
-    pointlist[6] = pattern_front2;
-    pointlist[7] = ystart+posxoffset;
-    pointlist[8] = z_base;
-    pointlist[9] = pattern_back2;
-    pointlist[10] = ystart+negxoffset;
-    pointlist[11] = z_base;
-    pointlist[12] = pattern_back1;
-    pointlist[13] = ystart+negxoffset+negxwidth;
-    pointlist[14] = z_height;
-    pointlist[15] = pattern_front1;
-    pointlist[16] = ystart+posxoffset+posxwidth;
-    pointlist[17] = z_height;
-    pointlist[18] = pattern_front2;
-    pointlist[19] = ystart+posxoffset+posxwidth;
-    pointlist[20] = z_base;
-    pointlist[21] = pattern_back2;
-    pointlist[22] = ystart+negxoffset+negxwidth;
-    pointlist[23] = z_base;
+    pointlist[0] = x1;
+    pointlist[1] = y1;
+    pointlist[2] = z1;
+    pointlist[3] = x2;
+    pointlist[4] = y2;
+    pointlist[5] = z1;
+
+    pointlist[6] = x3;
+    pointlist[7] = y2;
+    pointlist[8] = z3;
+    pointlist[9] = x4;
+    pointlist[10] = y1;
+    pointlist[11] = z3;
+
+    pointlist[12] = x1;
+    pointlist[13] = y5;
+    pointlist[14] = z1;
+    pointlist[15] = x2;
+    pointlist[16] = y6;
+    pointlist[17] = z1;
+
+    pointlist[18] = x3;
+    pointlist[19] = y6;
+    pointlist[20] = z3;
+    pointlist[21] = x4;
+    pointlist[22] = y5;
+    pointlist[23] = z3;
 
 }
 
@@ -694,64 +697,92 @@ void MakeTreadPattern(struct rt_wdb (*file), char *suffix, fastf_t dwidth, fastf
     fastf_t patternwidth1,patternwidth2;
     mat_t y;
     int number_of_patterns;
-    fastf_t pointlist[24];
+    fastf_t pointlist[24],arbsixlist[18];
     int i;
     unsigned char rgb[3];
     VSET(rgb, 40, 40, 40);
 
-    number_of_patterns = 50;
+    number_of_patterns = 100;
     patternwidth1=ztire*sin(F_PI/number_of_patterns);
     patternwidth2=z_base*sin(F_PI/number_of_patterns);
 
-    PatternPoints(pointlist,-patternwidth1,0,-patternwidth2,0,z_base,ztire,-dwidth/2,0,dwidth/20,dwidth/20,dwidth/20);
-    mk_arb8(file,"patterncomponent1.s",&pointlist[0]);
-    PatternPoints(pointlist,0,patternwidth1,0,patternwidth2,z_base,ztire,-dwidth/2,dwidth/20,0,dwidth/20,dwidth/20);
-    mk_arb8(file,"patterncomponent11.s",&pointlist[0]);
-    
-    PatternPoints(pointlist,-patternwidth1,0,-patternwidth2,0,z_base,ztire,-dwidth/2+dwidth/10,0,dwidth/20,dwidth/20,dwidth/20);
-    mk_arb8(file,"patterncomponent2.s",&pointlist[0]);
-    PatternPoints(pointlist,0,patternwidth1,0,patternwidth2,z_base,ztire,-dwidth/2+dwidth/10,dwidth/20,0,dwidth/20,dwidth/20);
-    mk_arb8(file,"patterncomponent12.s",&pointlist[0]);
- 
-    PatternPoints(pointlist,-patternwidth1,0,-patternwidth2,0,z_base,ztire,-dwidth/2+2*dwidth/10,0,dwidth/20,dwidth/20,dwidth/20);
-    mk_arb8(file,"patterncomponent3.s",&pointlist[0]);
-    PatternPoints(pointlist,0,patternwidth1,0,patternwidth2,z_base,ztire,-dwidth/2+2*dwidth/10,dwidth/20,0,dwidth/20,dwidth/20);
-    mk_arb8(file,"patterncomponent13.s",&pointlist[0]);
-    
-    PatternPoints(pointlist,-patternwidth1,0,-patternwidth2,0,z_base,ztire,-dwidth/2+3*dwidth/10,0,dwidth/20,dwidth/20,dwidth/20);
-    mk_arb8(file,"patterncomponent4.s",&pointlist[0]);
-    PatternPoints(pointlist,0,patternwidth1,0,patternwidth2,z_base,ztire,-dwidth/2+3*dwidth/10,dwidth/20,0,dwidth/20,dwidth/20);
-    mk_arb8(file,"patterncomponent14.s",&pointlist[0]);
-    
-    PatternPoints(pointlist,-patternwidth1,0,-patternwidth2,0,z_base,ztire,-dwidth/2+4*dwidth/10,0,dwidth/20,dwidth/20,dwidth/20);
-    mk_arb8(file,"patterncomponent5.s",&pointlist[0]);
-    PatternPoints(pointlist,0,patternwidth1,0,patternwidth2,z_base,ztire,-dwidth/2+4*dwidth/10,dwidth/20,0,dwidth/20,dwidth/20);
-    mk_arb8(file,"patterncomponent15.s",&pointlist[0]);
 
-    PatternPoints(pointlist,-patternwidth1,0,-patternwidth2,0,z_base,ztire,dwidth/2,0,-dwidth/20,-dwidth/20,-dwidth/20);
-    mk_arb8(file,"patterncomponent6.s",&pointlist[0]);
-    PatternPoints(pointlist,0,patternwidth1,0,patternwidth2,z_base,ztire,dwidth/2,-dwidth/20,0,-dwidth/20,-dwidth/20);
-    mk_arb8(file,"patterncomponent16.s",&pointlist[0]);
-    
-    PatternPoints(pointlist,-patternwidth1,0,-patternwidth2,0,z_base,ztire,dwidth/2-dwidth/10,0,-dwidth/20,-dwidth/20,-dwidth/20);
-    mk_arb8(file,"patterncomponent7.s",&pointlist[0]);
-    PatternPoints(pointlist,0,patternwidth1,0,patternwidth2,z_base,ztire,dwidth/2-dwidth/10,-dwidth/20,0,-dwidth/20,-dwidth/20);
-    mk_arb8(file,"patterncomponent17.s",&pointlist[0]);
-   
-    PatternPoints(pointlist,-patternwidth1,0,-patternwidth2,0,z_base,ztire,dwidth/2-2*dwidth/10,0,-dwidth/20,-dwidth/20,-dwidth/20);
-    mk_arb8(file,"patterncomponent8.s",&pointlist[0]);
-    PatternPoints(pointlist,0,patternwidth1,0,patternwidth2,z_base,ztire,dwidth/2-2*dwidth/10,-dwidth/20,0,-dwidth/20,-dwidth/20);
-    mk_arb8(file,"patterncomponent18.s",&pointlist[0]);
-    
-    PatternPoints(pointlist,-patternwidth1,0,-patternwidth2,0,z_base,ztire,dwidth/2-3*dwidth/10,0,-dwidth/20,-dwidth/20,-dwidth/20);
-    mk_arb8(file,"patterncomponent9.s",&pointlist[0]);
-    PatternPoints(pointlist,0,patternwidth1,0,patternwidth2,z_base,ztire,dwidth/2-3*dwidth/10,-dwidth/20,0,-dwidth/20,-dwidth/20);
-    mk_arb8(file,"patterncomponent19.s",&pointlist[0]);
-    
-    PatternPoints(pointlist,-patternwidth1,0,-patternwidth2,0,z_base,ztire,dwidth/2-4*dwidth/10,0,-dwidth/20,-dwidth/20,-dwidth/20);
-    mk_arb8(file,"patterncomponent10.s",&pointlist[0]);
-    PatternPoints(pointlist,0,patternwidth1,0,patternwidth2,z_base,ztire,dwidth/2-4*dwidth/10,-dwidth/20,0,-dwidth/20,-dwidth/20);
-    mk_arb8(file,"patterncomponent20.s",&pointlist[0]);
+    for (i = 0; i < 5; i++){
+	bu_vls_trunc(&str,0);
+	bu_vls_printf(&str,"patterncomponent%d.s",i+1);
+	PatternPoints(pointlist,-patternwidth1,-dwidth/2+i*dwidth/10,z_base,0,-dwidth/2+i*dwidth/10+dwidth/20,0,ztire,-patternwidth1, -dwidth/2+(i*dwidth/10)+dwidth/20, -dwidth/2+(i*dwidth/10)+dwidth/10);
+	mk_arb8(file,bu_vls_addr(&str),&pointlist[0]);
+    }    
+
+    for (i = 0; i < 5; i++){
+	bu_vls_trunc(&str,0);
+	bu_vls_printf(&str,"patterncomponent%d.s",i+6);
+	PatternPoints(pointlist,-patternwidth1,dwidth/2-i*dwidth/10,z_base,0,dwidth/2-i*dwidth/10-dwidth/20,0,ztire,-patternwidth1, dwidth/2-(i*dwidth/10)-dwidth/20,dwidth/2-(i*dwidth/10)-dwidth/10);
+	mk_arb8(file,bu_vls_addr(&str),&pointlist[0]);
+    }
+
+    for (i = 0; i < 5; i++){
+	bu_vls_trunc(&str,0);
+	bu_vls_printf(&str,"patterncomponent%d.s",i+11);
+	PatternPoints(pointlist,patternwidth1,-dwidth/2+i*dwidth/10,z_base,0,-dwidth/2+i*dwidth/10+dwidth/20,0,ztire,patternwidth1, -dwidth/2+(i*dwidth/10)+dwidth/20, -dwidth/2+(i*dwidth/10)+dwidth/10);
+	mk_arb8(file,bu_vls_addr(&str),&pointlist[0]);
+    }    
+
+    for (i = 0; i < 5; i++){
+	bu_vls_trunc(&str,0);
+	bu_vls_printf(&str,"patterncomponent%d.s",i+16);
+	PatternPoints(pointlist,patternwidth1,dwidth/2-i*dwidth/10,z_base,0,dwidth/2-i*dwidth/10-dwidth/20,0,ztire,patternwidth1, dwidth/2-(i*dwidth/10)-dwidth/20,dwidth/2-(i*dwidth/10)-dwidth/10);
+	mk_arb8(file,bu_vls_addr(&str),&pointlist[0]);
+    }
+
+
+    arbsixlist[0] = patternwidth1+.01*patternwidth1;
+    arbsixlist[1] = dwidth/2;
+    arbsixlist[2] = z_base;
+    arbsixlist[3] = patternwidth1+.01*patternwidth1;
+    arbsixlist[4] = dwidth/2;
+    arbsixlist[5] = ztire;
+    arbsixlist[6] = patternwidth1+.01*patternwidth1;
+    arbsixlist[7] = -dwidth/2;
+    arbsixlist[8] = ztire;
+    arbsixlist[9] = patternwidth1+.01*patternwidth1;
+    arbsixlist[10] = -dwidth/2;
+    arbsixlist[11] = z_base;
+    arbsixlist[12] = patternwidth2;
+    arbsixlist[13] = dwidth/2;
+    arbsixlist[14] = z_base;
+    arbsixlist[15] = patternwidth2;
+    arbsixlist[16] = -dwidth/2;
+    arbsixlist[17] = z_base;
+
+
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str,"patterncomponentcut1.s");
+    mk_arb6(file,bu_vls_addr(&str),&arbsixlist[0]);
+
+    arbsixlist[0] = -patternwidth1-.01*patternwidth1;
+    arbsixlist[1] = dwidth/2;
+    arbsixlist[2] = z_base;
+    arbsixlist[3] = -patternwidth1-.01*patternwidth1;
+    arbsixlist[4] = dwidth/2;
+    arbsixlist[5] = ztire;
+    arbsixlist[6] = -patternwidth1-.01*patternwidth1;
+    arbsixlist[7] = -dwidth/2;
+    arbsixlist[8] = ztire;
+    arbsixlist[9] = -patternwidth1-.01*patternwidth1;
+    arbsixlist[10] = -dwidth/2;
+    arbsixlist[11] = z_base;
+    arbsixlist[12] = -patternwidth2;
+    arbsixlist[13] = dwidth/2;
+    arbsixlist[14] = z_base;
+    arbsixlist[15] = -patternwidth2;
+    arbsixlist[16] = -dwidth/2;
+    arbsixlist[17] = z_base;
+
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str,"patterncomponentcut2.s");
+    mk_arb6(file,bu_vls_addr(&str),&arbsixlist[0]);
+
 
     BU_LIST_INIT(&treadpattern.l);
     for (i = 1; i <= 20; i++){
@@ -759,6 +790,15 @@ void MakeTreadPattern(struct rt_wdb (*file), char *suffix, fastf_t dwidth, fastf
 	bu_vls_printf(&str, "patterncomponent%d.s",i);
 	(void)mk_addmember(bu_vls_addr(&str), &treadpattern.l, NULL, WMOP_UNION);
     }
+
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "patterncomponentcut1.s");
+    (void)mk_addmember(bu_vls_addr(&str), &treadpattern.l, NULL, WMOP_SUBTRACT);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "patterncomponentcut2.s",i);
+    (void)mk_addmember(bu_vls_addr(&str), &treadpattern.l, NULL, WMOP_SUBTRACT);
+
+
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "tread_master.c");
     mk_lcomb(file, bu_vls_addr(&str), &treadpattern, 0, NULL, NULL, NULL, 0);
