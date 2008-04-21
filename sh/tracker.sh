@@ -617,14 +617,14 @@ for _item in $_itemURLS ; do
 	    if [ "x$DELETED" = "xyes" -o "x$_itemStatus" = "xClosed" ] ; then
 		# add the item to the output list
 		_itemLines="$_itemLines
-	$_itemLine"
+$_itemLine"
 		wrote=$(($wrote + 1))
 	    fi
 	fi
     else
 	# add the item to the output list
 	_itemLines="$_itemLines
-	$_itemLine"
+$_itemLine"
 	wrote=$(($wrote + 1))
     fi
 
