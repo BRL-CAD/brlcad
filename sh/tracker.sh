@@ -534,9 +534,9 @@ for _item in $_itemURLS ; do
     _itemTitle="`decode \"$_itemTitle\"`"
     [ $VERBOSE -gt 0 ] && echo "Processing $count of $_totalItemCount: $_itemTitle"
 
-    # extract the type
-    _itemType="`echo \"$_itemData\" | grep -C1 Tracker | head -n 3 | tail -n 1 | sed 's/.*<a[^>]*>\([^<]*\)<\/a>.*/\1/'`"
-    [ $VERBOSE -gt 1 ] && echo "${_itemID}: Type is $_itemType"
+    # extract the category type
+    _itemType="`echo \"$_itemData\" | grep -C1 "Tracker</a>" | head -n 3 | tail -n 1 | sed 's/.*<a[^>]*>\([^<]*\)<\/a>.*/\1/'`"
+    [ $VERBOSE -gt 1 ] && echo "${_itemID}: Category is $_itemType"
     _itemLine="$_itemLine,$_itemType"
 
     # extract the description
