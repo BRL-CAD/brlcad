@@ -11,6 +11,7 @@ entire history of the project is available through SVN.
 --- 2008-04-01  Release 7.12.1                                     ---
 ----------------------------------------------------------------------
 
+* add mk_arb5, mk_arb6 and mk_arb7 to libwdb - Cliff Yapp
 * added xclone command to mged for xpushed deep copies - Bob Parker
 * fixed clone infinite loop for combinations - Sean Morrison, C. Yapp
 * wrap mged resource paths with spaces - Bob Parker, Elena Bautu
