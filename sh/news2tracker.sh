@@ -359,7 +359,7 @@ _revisions="`echo \"$_annotate\" | awk '{print $3, $1}' | grep '^*' | sort -r -n
 for _revision in $_revisions ; do
     [ $VERBOSE -gt 1 ] && echo "Looking up $_revision"
 
-    _date="`echo \"$_log\" | grep -C2 $_revision | tail -1 | sed 's/.*\([0-9][0-9][0-9][0-9]\)-\([0-9][0-9]\)-\([0-9][0-9]\).*/\1 \2 \3/'`"
+    _date="`echo \"$_log\" | grep -C2 revision=\"$_revision\" | tail -1 | sed 's/.*\([0-9][0-9][0-9][0-9]\)-\([0-9][0-9]\)-\([0-9][0-9]\).*/\1 \2 \3/'`"
     _today="`days`"
     _added="`days $_date`"
     if [ $(($_today - $_added)) -gt $CLOSED ] ; then
@@ -397,7 +397,7 @@ for _revision in $_revisions ; do
     _itemLine="$_itemLine,\"Unknown submission/request date\""
 
     # get the date
-    _itemDateLastUpdated="`echo \"$_log\" | grep -C2 $_revision | tail -1 | sed 's/.*\([0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]\)T\([0-9][0-9]:[0-9][0-9]\).*/\1 \2/'`"
+    _itemDateLastUpdated="`echo \"$_log\" | grep -C2 revision=\"$_revision\" | tail -1 | sed 's/.*\([0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]\)T\([0-9][0-9]:[0-9][0-9]\).*/\1 \2/'`"
     [ $VERBOSE -gt 1 ] && echo "${_revision}: Date Last Updated is $_itemDateLastUpdated"
     _itemLine="$_itemLine,$_itemDateLastUpdated"
 
@@ -405,7 +405,7 @@ for _revision in $_revisions ; do
     _itemLine="$_itemLine,Patched"
 
     # comment is the log message
-    _itemComment="`echo \"$_log\" | grep -A100 $_revision | perl -0777 -pi -e 's/.*?<msg>(.*?)<\/msg>.*/\1/s' | sed 's/\"/\&quot;/g' | perl -0777 -pi -e 's/\n/\r\n/g'`"
+    _itemComment="`echo \"$_log\" | grep -A100 revision=\"$_revision\" | perl -0777 -pi -e 's/.*?<msg>(.*?)<\/msg>.*/\1/s' | sed 's/\"/\&quot;/g' | perl -0777 -pi -e 's/\n/\r\n/g'`"
     [ $VERBOSE -gt 1 ] && echo "${_revision}: Comment is $_itemComment"
     _itemLine="$_itemLine,\"$_itemComment\""
 
