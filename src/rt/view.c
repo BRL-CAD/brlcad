@@ -140,17 +140,21 @@ int a_onehit = -1;
 static int overlay = 0;
 
 /* Viewing module specific "set" variables */
+/* 
+ * Note: The actual byte offsets will get set at run time
+ *       in application_init. Also, the variables associated
+ *       with bounces, ireflect and background are globals
+ *       that live in liboptical. These globals will eventually
+ *       go away and become part of something like struct shadework.
+ */
 struct bu_structparse view_parse[] = {
-/*XXX need to investigate why this doesn't work on Windows */
-#if !defined(__alpha) && !defined(_WIN32) /* XXX Alpha does not support this initialization! */
-    {"%f",	1, "gamma",	bu_byteoffset(gamma_corr),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "bounces",	bu_byteoffset(max_bounces),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "ireflect",	bu_byteoffset(max_ireflect),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "a_onehit",	bu_byteoffset(a_onehit),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f", ELEMENTS_PER_VECT, "background", bu_byteoffset(background[0]),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%d", 1, "overlay",	bu_byteoffset(overlay),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%d", 1, "ov", bu_byteoffset(overlay),	BU_STRUCTPARSE_FUNC_NULL },
-#endif
+    {"%f",	1, "gamma",	0,		BU_STRUCTPARSE_FUNC_NULL },
+    {"%d",	1, "bounces",	0,		BU_STRUCTPARSE_FUNC_NULL },
+    {"%d",	1, "ireflect",	0,		BU_STRUCTPARSE_FUNC_NULL },
+    {"%d",	1, "a_onehit",	0,		BU_STRUCTPARSE_FUNC_NULL },
+    {"%f", ELEMENTS_PER_VECT, "background", 0,	BU_STRUCTPARSE_FUNC_NULL },
+    {"%d", 1, "overlay",	0,		BU_STRUCTPARSE_FUNC_NULL },
+    {"%d", 1, "ov", 0,	BU_STRUCTPARSE_FUNC_NULL },
     {"",	0, (char *)0,	0,				BU_STRUCTPARSE_FUNC_NULL }
 };
 
@@ -1586,6 +1590,15 @@ view_2init(register struct application *ap, char *framename)
 void application_init (void)
 {
     /*    rpt_overlap = 1; */
+
+    /* Set the byte offsets at run time */
+    view_parse[0].sp_offset = bu_byteoffset(gamma_corr);
+    view_parse[1].sp_offset = bu_byteoffset(max_bounces);
+    view_parse[2].sp_offset = bu_byteoffset(max_ireflect);
+    view_parse[3].sp_offset = bu_byteoffset(a_onehit);
+    view_parse[4].sp_offset = bu_byteoffset(background[0]);
+    view_parse[5].sp_offset = bu_byteoffset(overlay);
+    view_parse[6].sp_offset = bu_byteoffset(overlay);
 }
 
 /*
