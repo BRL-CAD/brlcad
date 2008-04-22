@@ -1,10 +1,8 @@
 # $Id$
 
-adrtd = \
+SUBDIRS = \
 	bench \
-	rise
-
-always_compile = \
+	doc \
 	isst \
 	libcommon \
 	librender \
@@ -13,22 +11,10 @@ always_compile = \
 	libtienet \
 	libutil \
 	master \
-	slave
-
-if BUILD_ADRT
-SUBDIRS = \
-	${always_compile} \
-	${adrtd}
-else
-SUBDIRS = ${always_compile}
-endif
-
-DIST_SUBDIRS = \
-	${adrtd} \
-	${always_compile} \
-	doc \
 	misc \
-	scripts
+	rise \
+	scripts \
+	slave
 
 tieincludedir = $(includedir)/tie
 tieinclude_HEADERS = adrt.h adrt_struct.h
