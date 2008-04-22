@@ -43,31 +43,31 @@
 #include "tienet.h"
 #include "render_util.h"
 
-typedef struct isst_slave_project_s
+typedef struct adrt_slave_project_s
 {
     tie_t tie;
     render_camera_t camera;
     uint16_t last_frame;
     uint8_t active;
-} isst_slave_project_t;
+} adrt_slave_project_t;
 
-uint32_t isst_slave_threads;
-isst_slave_project_t isst_workspace_list[ADRT_MAX_WORKSPACE_NUM];
+uint32_t adrt_slave_threads;
+adrt_slave_project_t adrt_workspace_list[ADRT_MAX_WORKSPACE_NUM];
 
 void 
-isst_slave_free() 
+adrt_slave_free() 
 {
     uint16_t i;
 
     for (i = 0; i < ADRT_MAX_WORKSPACE_NUM; i++)
-	if (isst_workspace_list[i].active)
+	if (adrt_workspace_list[i].active)
 	{
 //      render_camera_free (&camera);
 	}
 }
 
 void
-isst_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
+adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 {
     TIE_3 pos, foc;
     unsigned char rm, op;
@@ -94,14 +94,14 @@ isst_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
     switch (op) {
 	case ADRT_WORK_INIT:
 	{
-	    render_camera_init (&isst_workspace_list[wid].camera, isst_slave_threads);
-	    slave_load (&isst_workspace_list[wid].tie, &work->data[ind], wlen-ind);
-	    render_camera_prep (&isst_workspace_list[wid].camera);
+	    render_camera_init (&adrt_workspace_list[wid].camera, adrt_slave_threads);
+	    slave_load (&adrt_workspace_list[wid].tie, &work->data[ind], wlen-ind);
+	    render_camera_prep (&adrt_workspace_list[wid].camera);
 	    printf ("ready.\n");
 	    result->ind = 0;
 
 	    /* Mark the workspace as active so it can be cleaned up when the time comes. */
-	    isst_workspace_list[wid].active = 1;
+	    adrt_workspace_list[wid].active = 1;
 	}
 	break;
 
@@ -170,7 +170,7 @@ isst_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 #endif
 	    /* Fire the shot */
 	    ray.depth = 0;
-	    render_util_shotline_list (&isst_workspace_list[wid].tie, &ray, &mesg, &dlen);
+	    render_util_shotline_list (&adrt_workspace_list[wid].tie, &ray, &mesg, &dlen);
 
 	    /* Make room for shot data */
 	    TIENET_BUFFER_SIZE((*result), result->ind + dlen + 2*sizeof (TIE_3));
@@ -238,9 +238,9 @@ isst_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 	    TCOPY(uint16_t, work->data, ind, &image_format, 0);
 	    ind += 2;
 
-	    isst_workspace_list[wid].camera.w = image_w;
-	    isst_workspace_list[wid].camera.h = image_h;
-	    render_camera_prep (&isst_workspace_list[wid].camera);
+	    adrt_workspace_list[wid].camera.w = image_w;
+	    adrt_workspace_list[wid].camera.h = image_h;
+	    render_camera_prep (&adrt_workspace_list[wid].camera);
 	    result->ind = 0;
 	}
 	break;
@@ -271,19 +271,19 @@ isst_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 	    rm = work->data[ind];
 	    ind += 1;
 
-	    if (rm != isst_workspace_list[wid].camera.rm || rm & 1<<7)
+	    if (rm != adrt_workspace_list[wid].camera.rm || rm & 1<<7)
 	    {
 		rm = rm & ((1<<7)-1);
 
-		isst_workspace_list[wid].camera.render.free (&isst_workspace_list[wid].camera.render);
+		adrt_workspace_list[wid].camera.render.free (&adrt_workspace_list[wid].camera.render);
 
 		switch (rm) {
 		    case RENDER_METHOD_DEPTH:
-			render_depth_init(&isst_workspace_list[wid].camera.render);
+			render_depth_init(&adrt_workspace_list[wid].camera.render);
 			break;
 
 		    case RENDER_METHOD_COMPONENT:
-			render_component_init(&isst_workspace_list[wid].camera.render);
+			render_component_init(&adrt_workspace_list[wid].camera.render);
 			break;
 
 		    case RENDER_METHOD_FLOS:
@@ -293,24 +293,24 @@ isst_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 			/* Extract shot position and direction */
 			TCOPY(TIE_3, work->data, ind, &frag_pos, 0);
 			ind += sizeof (TIE_3);
-			render_flos_init(&isst_workspace_list[wid].camera.render, frag_pos);
+			render_flos_init(&adrt_workspace_list[wid].camera.render, frag_pos);
 		    }
 		    break;
 
 		    case RENDER_METHOD_GRID:
-			render_grid_init(&isst_workspace_list[wid].camera.render);
+			render_grid_init(&adrt_workspace_list[wid].camera.render);
 			break;
 
 		    case RENDER_METHOD_NORMAL:
-			render_normal_init(&isst_workspace_list[wid].camera.render);
+			render_normal_init(&adrt_workspace_list[wid].camera.render);
 			break;
 
 		    case RENDER_METHOD_PATH:
-			render_path_init(&isst_workspace_list[wid].camera.render, 12);
+			render_path_init(&adrt_workspace_list[wid].camera.render, 12);
 			break;
 
 		    case RENDER_METHOD_PHONG:
-			render_phong_init(&isst_workspace_list[wid].camera.render);
+			render_phong_init(&adrt_workspace_list[wid].camera.render);
 			break;
 
 		    case RENDER_METHOD_CUT:
@@ -324,7 +324,7 @@ isst_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 			TCOPY(TIE_3, work->data, ind, &shot_dir, 0);
 			ind += sizeof (TIE_3);
 
-			render_cut_init(&isst_workspace_list[wid].camera.render, shot_pos, shot_dir);
+			render_cut_init(&adrt_workspace_list[wid].camera.render, shot_pos, shot_dir);
 		    }
 		    break;
 
@@ -343,7 +343,7 @@ isst_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 			TCOPY(tfloat, work->data, ind, &angle, 0);
 			ind += sizeof (tfloat);
 
-			render_spall_init (&isst_workspace_list[wid].camera.render, shot_pos, shot_dir, angle);
+			render_spall_init (&adrt_workspace_list[wid].camera.render, shot_pos, shot_dir, angle);
 		    }
 		    break;
 
@@ -351,7 +351,7 @@ isst_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 			break;
 		}
 
-		isst_workspace_list[wid].camera.rm = rm;
+		adrt_workspace_list[wid].camera.rm = rm;
 	    }
 
 	    /* The portion of the image to be rendered */
@@ -360,26 +360,26 @@ isst_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 	    ind += sizeof (camera_tile_t);
 
 	    /* Update camera if different frame */
-	    if (tile.frame != isst_workspace_list[wid].last_frame)
+	    if (tile.frame != adrt_workspace_list[wid].last_frame)
 	    {
-		isst_workspace_list[wid].camera.type = type;
-		isst_workspace_list[wid].camera.fov = fov;
-		isst_workspace_list[wid].camera.pos = pos;
-		isst_workspace_list[wid].camera.focus = foc;
-		render_camera_prep (&isst_workspace_list[wid].camera);
+		adrt_workspace_list[wid].camera.type = type;
+		adrt_workspace_list[wid].camera.fov = fov;
+		adrt_workspace_list[wid].camera.pos = pos;
+		adrt_workspace_list[wid].camera.focus = foc;
+		render_camera_prep (&adrt_workspace_list[wid].camera);
 	    }
-	    isst_workspace_list[wid].last_frame = tile.frame;
+	    adrt_workspace_list[wid].last_frame = tile.frame;
 
-	    render_camera_render (&isst_workspace_list[wid].camera, &isst_workspace_list[wid].tie, &tile, result);
+	    render_camera_render (&adrt_workspace_list[wid].camera, &adrt_workspace_list[wid].tie, &tile, result);
 	}
 	break;
 
 	case ADRT_WORK_MINMAX:
 	{
-	    TCOPY(TIE_3, &isst_workspace_list[wid].tie.min, 0, result->data, result->ind);
+	    TCOPY(TIE_3, &adrt_workspace_list[wid].tie.min, 0, result->data, result->ind);
 	    result->ind += sizeof (TIE_3);
 
-	    TCOPY(TIE_3, &isst_workspace_list[wid].tie.max, 0, result->data, result->ind);
+	    TCOPY(TIE_3, &adrt_workspace_list[wid].tie.max, 0, result->data, result->ind);
 	    result->ind += sizeof (TIE_3);
 	}
 	break;
@@ -390,27 +390,27 @@ isst_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 
 #if 0
     gettimeofday(&tv, NULL);
-    printf("[Work Units Completed: %.6d  Rays: %.5d k/sec %lld]\r", ++isst_slave_completed, (int)((tfloat)tie->rays_fired / (tfloat)(1000 * (tv.tv_sec - isst_slave_startsec + 1))), tie->rays_fired);
+    printf("[Work Units Completed: %.6d  Rays: %.5d k/sec %lld]\r", ++adrt_slave_completed, (int)((tfloat)tie->rays_fired / (tfloat)(1000 * (tv.tv_sec - adrt_slave_startsec + 1))), tie->rays_fired);
     fflush(stdout);
 #endif
 }
 
 void 
-isst_slave(int port, char *host, int threads) 
+adrt_slave(int port, char *host, int threads) 
 {
     int i;
-    isst_slave_threads = threads;
-    tienet_slave_init(port, host, isst_slave_work, isst_slave_free, ADRT_VER_KEY);
+    adrt_slave_threads = threads;
+    tienet_slave_init(port, host, adrt_slave_work, adrt_slave_free, ADRT_VER_KEY);
 
     /* Initialize all workspaces as inactive */
     for (i = 0; i < ADRT_MAX_WORKSPACE_NUM; i++)
-	isst_workspace_list[i].active = 0;
+	adrt_workspace_list[i].active = 0;
 
 /*  slave_last_frame = 0; */
 }
 
 #if 0
-void isst_slave_mesg(void *mesg, unsigned int mesg_len) 
+void adrt_slave_mesg(void *mesg, unsigned int mesg_len) 
 {
     short		op;
     TIE_3		foo;

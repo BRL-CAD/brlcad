@@ -58,7 +58,7 @@ static void finish(int sig) {
 
 static void help() {
     printf("%s\n", ADRT_VER_DETAIL);
-    printf("%s", "usage: isst_slave [options] [host]\n\
+    printf("%s", "usage: adrt_slave [options] [host]\n\
   -v\t\tdisplay version\n\
   -h\t\tdisplay help\n\
   -p\t\tport number\n\
@@ -132,7 +132,7 @@ int main(int argc, char **argv) {
 	    port = TN_MASTER_PORT;
     }
 
-    isst_slave(port, host, threads);
+    adrt_slave(port, host, threads);
 
     return EXIT_SUCCESS;
 }
