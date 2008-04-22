@@ -40,11 +40,15 @@
 
 #ifdef IF_OGL
 
+#ifdef HAVE_SYS_TYPES_H
+#  include <sys/types.h>
+#endif
+#include <sys/ipc.h>
+#include <sys/shm.h>
+
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include <sys/ipc.h>
-#include <sys/shm.h>
 #include <signal.h>
 #include <errno.h>
 #include <X11/keysym.h>
@@ -54,9 +58,6 @@
 #endif
 #ifdef HAVE_GL_GL_H
 #  include <GL/gl.h>
-#endif
-#ifdef HAVE_SYS_TYPES_H
-#  include <sys/types.h>
 #endif
 #ifdef HAVE_SYS_WAIT_H
 #  include <sys/wait.h>
