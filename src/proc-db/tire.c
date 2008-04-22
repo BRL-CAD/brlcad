@@ -798,7 +798,7 @@ void MakeTreadPattern(struct rt_wdb (*file), char *suffix, fastf_t dwidth, fastf
     
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str,"%s",suffix);
-    MakeExtrude(file, bu_vls_addr(&str), verts, patternwidth1, dwidth, z_base, ztire);
+    MakeExtrude(file, bu_vls_addr(&str), verts, 2*patternwidth1, dwidth, z_base, ztire);
 
 
 
