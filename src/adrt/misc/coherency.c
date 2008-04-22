@@ -17,10 +17,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file coherency.c
- *
- * Author -
- *   Justin L. Shumaker
+/**
+ * @file coherency.c
  */
 
 #include <stdio.h>

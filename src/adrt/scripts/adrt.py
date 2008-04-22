@@ -17,11 +17,6 @@
 # License along with this file; see the file named COPYING for more
 # information.
 #
-###
-#
-# Author -
-#  Justin Shumaker
-#
 ################
 ## REQUIRES PYTHON 2.3 RIGHT NOW
 ## CHANGE THESE TO WHERE YOUR PYTHON 2.2 IS LOCATED

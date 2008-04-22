@@ -17,10 +17,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bench.c
- *
- * Author -
- *   Justin Shumaker
+/**
+ * @file bench.c
  */
 
 #include "bench.h"
