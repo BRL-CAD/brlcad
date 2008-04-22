@@ -42,6 +42,10 @@
 #include "./nirt.h"
 #include "./usrfmt.h"
 
+
+/* fmax() is c99 but several of the BSDs don't provide it, so macrofy */
+#define FMAX(a,b) ((((double)(a))>((double)(b)))?((double)(a)):((double)(b)))
+
 extern int		nirt_debug;
 extern com_table	ComTab[];
 extern int		silent_flag;
@@ -205,7 +209,7 @@ get_comtab_ent (char *pattern, int pat_len)
     int		len;
 
     for (ctp = ComTab; ctp->com_name; ++ctp) {
-	len = fmax(pat_len, (int)strlen(ctp->com_name));
+	len = FMAX(pat_len, (int)strlen(ctp->com_name));
 	if ((strncmp (pattern, ctp->com_name, len)) == 0)
 	    break;
     }
