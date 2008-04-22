@@ -55,6 +55,10 @@ static void finish(int sig) {
     bu_exit(EXIT_FAILURE, "Collected signal %d, aborting!\n", sig);
 }
 
+static void info(int sig) {
+	/* something to display info about clients, threads and port. */
+    return;
+}
 
 static void help() {
     printf("%s\n", ADRT_VER_DETAIL);
@@ -73,6 +77,8 @@ int main(int argc, char **argv) {
 
     /* Default Port */
     signal(SIGINT, finish);
+    signal(SIGINFO, info);
+    signal(SIGUSR1, info);
 
     /* Initialize strings */
     host[0] = 0;
