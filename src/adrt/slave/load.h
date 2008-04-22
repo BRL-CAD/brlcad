@@ -19,9 +19,6 @@
  */
 /** @file load.h
  *
- * Author -
- *   Justin Shumaker
- *
  * $Id$
  */
 

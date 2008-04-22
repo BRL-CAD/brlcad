@@ -19,9 +19,6 @@
  */
 /** @file grid.c
  *
- *  Author -
- *      Justin L. Shumaker
- *
  */
 
 #include "grid.h"

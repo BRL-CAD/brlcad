@@ -19,9 +19,6 @@
  */
 /** @file compnet.c
  *
- * Author -
- *   Justin Shumaker
- *
  */
 
 /*

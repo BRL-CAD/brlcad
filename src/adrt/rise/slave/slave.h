@@ -19,9 +19,6 @@
  */
 /** @file slave.h
  *
- *  Author -
- *      Justin L. Shumaker
- *
  */
 
 #ifndef _RISE_SLAVE_H

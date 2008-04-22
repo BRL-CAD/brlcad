@@ -19,9 +19,6 @@
  */
 /** @file spall.h
  *
- *  Author -
- *      Justin L. Shumaker
- *
  */
 
 #ifndef _RENDER_SPALL_H

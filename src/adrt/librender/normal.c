@@ -19,9 +19,6 @@
  */
 /** @file normal.c
  *
- *  Author -
- *      Justin L. Shumaker
- *
  */
 
 #include "normal.h"

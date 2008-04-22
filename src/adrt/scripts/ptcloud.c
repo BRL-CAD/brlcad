@@ -19,9 +19,6 @@
  */
 /** @file ptcloud.c
  *
- * Author -
- *  Justin Shumaker
- *
  */
 
 #include <stdio.h>

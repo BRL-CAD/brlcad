@@ -19,9 +19,6 @@
  */
 /** @file spall.c
  *
- *  Author -
- *      Justin L. Shumaker
- *
  */
 
 #include "spall.h"

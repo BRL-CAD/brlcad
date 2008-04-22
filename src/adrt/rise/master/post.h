@@ -19,9 +19,6 @@
  */
 /** @file post.h
  *
- *  Author -
- *      Justin L. Shumaker
- *
  */
 
 #ifndef _RISE_POST_H

@@ -19,9 +19,6 @@
  */
 /** @file rise_struct.h
  *
- *  Author -
- *      Justin L. Shumaker
- *
  */
 
 #ifndef _RISE_STRUCT_H

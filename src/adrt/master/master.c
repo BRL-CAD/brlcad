@@ -19,9 +19,6 @@
  */
 /** @file master.c
  *
- * Author -
- *   Justin Shumaker
- *
  */
 
 #include "master.h"

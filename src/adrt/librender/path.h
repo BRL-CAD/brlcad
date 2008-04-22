@@ -19,9 +19,6 @@
  */
 /** @file path.h
  *
- *  Author -
- *      Justin L. Shumaker
- *
  */
 
 #ifndef _RENDER_PATH_H

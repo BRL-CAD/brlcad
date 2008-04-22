@@ -19,9 +19,6 @@
  */
 /** @file component.h
  *
- *  Author -
- *      Justin L. Shumaker
- *
  */
 
 #ifndef _RENDER_COMPONENT_H

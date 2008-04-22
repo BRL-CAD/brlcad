@@ -19,9 +19,6 @@
  */
 /** @file compnet.h
  *
- * Author -
- *   Justin Shumaker
- *
  */
 
 #ifndef _ISST_COMPNET_H

@@ -19,9 +19,6 @@
  */
 /** @file main.c
  *
- * Author -
- *   Justin Shumaker
- *
  */
 
 #include "common.h"

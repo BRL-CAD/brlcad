@@ -19,9 +19,6 @@
  */
 /** @file post.c
  *
- *  Author -
- *      Justin L. Shumaker
- *
  */
 
 #include "post.h"

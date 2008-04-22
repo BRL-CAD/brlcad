@@ -44,9 +44,6 @@
  */
 /** @file surfel.c
  *
- *  Author -
- *      Justin L. Shumaker
- *
  */
 
 #include "component.h"

@@ -19,9 +19,6 @@
  */
 /** @file slave.c
  *
- *  Author -
- *      Justin L. Shumaker
- *
  */
 
 #include "slave.h"

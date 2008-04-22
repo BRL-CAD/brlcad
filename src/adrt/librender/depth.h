@@ -19,9 +19,6 @@
  */
 /** @file depth.h
  *
- *  Author -
- *      Justin L. Shumaker
- *
  */
 
 #ifndef _RENDER_DEPTH_H

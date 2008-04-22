@@ -19,9 +19,6 @@
  */
 /** @file flat.h
  *
- *  Author -
- *      Justin L. Shumaker
- *
  */
 
 #ifndef _RENDER_FLAT_H

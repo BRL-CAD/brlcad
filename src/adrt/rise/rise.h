@@ -19,9 +19,6 @@
  */
 /** @file rise.h
  *
- *  Author -
- *      Justin L. Shumaker
- *
  */
 
 #ifndef _RISE_H

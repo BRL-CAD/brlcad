@@ -44,9 +44,6 @@
  */
 /** @file camera.h
  *
- *  Author -
- *      Justin L. Shumaker
- *
  */
 
 #include <pthread.h>

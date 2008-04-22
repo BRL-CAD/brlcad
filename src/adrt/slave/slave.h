@@ -19,9 +19,6 @@
  */
 /** @file slave.h
  *
- * Author -
- *   Justin Shumaker
- *
  * $Id$
  */
 

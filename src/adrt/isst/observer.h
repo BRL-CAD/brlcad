@@ -19,9 +19,6 @@
  */
 /** @file observer.h
  *
- * Author -
- *   Justin Shumaker
- *
  */
 
 #ifndef _ISST_OBSERVER_H

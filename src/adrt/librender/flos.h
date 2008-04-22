@@ -44,9 +44,6 @@
  */
 /** @file render.h
  *
- *  Author -
- *      Justin L. Shumaker
- *
  */
 
 

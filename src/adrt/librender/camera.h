@@ -19,9 +19,6 @@
  */
 /** @file camera.h
  *
- *  Author -
- *      Justin L. Shumaker
- *
  */
 
 #ifndef _RENDER_CAMERA_H
