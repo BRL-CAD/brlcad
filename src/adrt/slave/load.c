@@ -234,24 +234,18 @@ slave_load_MySQL (uint32_t pid, tie_t *tie, const char *hostname)
 int
 slave_load (tie_t *tie, void *data, uint32_t dlen)
 {
-    int retval = 0;
     TIE_VAL(tie_check_degenerate) = 0;
 
     switch(*(char *)data) {
 #if HAVE_MYSQL
 	case 0x0:	/* mysql float */
-	    retval = slave_load_MySQL ( *(uint32_t *)((int)data + 2 + *((char *)data+1)), tie, (char *)data + 2);
+	    return slave_load_MySQL ( *(uint32_t *)((int)data + 2 + *((char *)data+1)), tie, (char *)data + 2);
 #endif
 	default:
 	    fprintf(stderr, "Unknown load format\n");
 	    return 1;
     }
-
-    /* prep tie */
-    if( retval == 0 )
-	tie_prep (tie);
-
-    return 1; 
+    return -1; 
 }
 
 /*
