@@ -92,7 +92,8 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 	case ADRT_WORK_INIT:
 	{
 	    render_camera_init (&adrt_workspace_list[wid].camera, adrt_slave_threads);
-	    slave_load (&adrt_workspace_list[wid].tie, &work->data[ind], wlen-ind);
+	    if( slave_load (&adrt_workspace_list[wid].tie, &work->data[ind], wlen-ind) != 0 )
+		bu_exit (1, "Failed to load geometry. Going into a flaming tailspin\n");
 	    render_camera_prep (&adrt_workspace_list[wid].camera);
 	    printf ("ready.\n");
 	    result->ind = 0;

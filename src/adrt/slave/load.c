@@ -68,7 +68,7 @@ slave_load_free ()
 MYSQL slave_load_mysql_db;
 
 
-void
+int
 slave_load_MySQL (uint32_t pid, tie_t *tie, const char *hostname)
 {
     MYSQL_RES *res;
@@ -152,8 +152,7 @@ slave_load_MySQL (uint32_t pid, tie_t *tie, const char *hostname)
 	memcpy(&ftype, &((char *)gdata)[gind], 1);
 	gind += 1;
 
-	if (ftype)
-	{
+	if (ftype) {
 	    /* face num 32-bit */
 	    memcpy(&f32num, &((char *)gdata)[gind], sizeof(uint32_t));
 	    gind += sizeof(uint32_t);
@@ -166,9 +165,7 @@ slave_load_MySQL (uint32_t pid, tie_t *tie, const char *hostname)
 
 	    /* assign the current mesh to group of triangles */
 	    tie_push (tie, tlist, f32num, &slave_load_mesh_list[mind], 0);
-	}
-	else
-	{
+	} else {
 	    /* face num 16-bit */
 	    memcpy(&f16num, &((char *)gdata)[gind], sizeof(uint16_t));
 	    gind += sizeof(uint16_t);
@@ -191,11 +188,9 @@ slave_load_MySQL (uint32_t pid, tie_t *tie, const char *hostname)
     mysql_free_result (res);
 
     /* Query the mesh attributes map for the attribute id */
-    for (i = 0; i < slave_load_mesh_num; i++)
-    {
+    for (i = 0; i < slave_load_mesh_num; i++) {
 	snprintf (query, 256, "select attr from meshattrmap where mesh='%s' and gid=%d", slave_load_mesh_list[i].name, gid);
-	if (!mysql_query (&slave_load_mysql_db, query))
-	{
+	if (!mysql_query (&slave_load_mysql_db, query)) {
 	    char attr[48];
 
 	    res = mysql_use_result (&slave_load_mysql_db);
@@ -208,8 +203,7 @@ slave_load_MySQL (uint32_t pid, tie_t *tie, const char *hostname)
 
 	    snprintf (query, 256, "select data from attribute where gid='%d' and name='%s' and type='color'", gid, attr);
 /* printf("query[%d]: %s\n", i, query); */
-	    if (!mysql_query (&slave_load_mysql_db, query))
-	    {
+	    if (!mysql_query (&slave_load_mysql_db, query)) {
 		res = mysql_use_result (&slave_load_mysql_db);
 		while ((row = mysql_fetch_row (res)))
 		    sscanf(row[0], "%f %f %f", &slave_load_mesh_list[i].attributes->color.v[0], &slave_load_mesh_list[i].attributes->color.v[1], &slave_load_mesh_list[i].attributes->color.v[2]);
@@ -225,38 +219,39 @@ slave_load_MySQL (uint32_t pid, tie_t *tie, const char *hostname)
     res = mysql_use_result (&slave_load_mysql_db);
     row = mysql_fetch_row (res);
 
-    if (atoi(row[0]) > 0)
-    {
+    if (atoi(row[0]) > 0) {
 	printf ("acceleration structure found\n");
 	tie_kdtree_cache_load (tie, row[1], atoi(row[0]));
     }
 
-    /* prep tie */
-    tie_prep (tie);
-
     mysql_free_result (res);
-
     mysql_close (&slave_load_mysql_db);
-    return;
+
+    return 0;
 }
 #endif
 
-void
+int
 slave_load (tie_t *tie, void *data, uint32_t dlen)
 {
+    int retval = 0;
     TIE_VAL(tie_check_degenerate) = 0;
 
     switch(*(char *)data) {
 #if HAVE_MYSQL
 	case 0x0:	/* mysql float */
-	    slave_load_MySQL ( *(uint32_t *)((int)data + 2 + *((char *)data+1)), tie, (char *)data + 2);
-	    break;
+	    retval = slave_load_MySQL ( *(uint32_t *)((int)data + 2 + *((char *)data+1)), tie, (char *)data + 2);
 #endif
 	default:
 	    fprintf(stderr, "Unknown load format\n");
-	    exit(-1);
+	    return 1;
     }
-    return; 
+
+    /* prep tie */
+    if( retval == 0 )
+	tie_prep (tie);
+
+    return 1; 
 }
 
 /*
