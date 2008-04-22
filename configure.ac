@@ -1192,13 +1192,15 @@ dnl *** X11 ***
 if test "x$bc_with_x11" != "xno" ; then
 
     if test "x$bc_with_x11_val" != "x" ; then
-	if test "x$x_includes" = "xNONE"; then
-	    x_includes="$bc_with_x11_val/include"
-	    ac_x_includes="$x_includes"
-	fi
-	if test "x$x_libraries" = "xNONE"; then
-	    x_libraries="$bc_with_x11_val/lib"
-	    ac_x_libraries="$x_libraries"
+        if test "x$bc_with_x11_val" != "xyes" ; then
+	    if test "x$x_includes" = "xNONE"; then
+		x_includes="$bc_with_x11_val/include"
+		ac_x_includes="$x_includes"
+	    fi
+	    if test "x$x_libraries" = "xNONE"; then
+		x_libraries="$bc_with_x11_val/lib"
+		ac_x_libraries="$x_libraries"
+	    fi
 	fi
     fi
 
