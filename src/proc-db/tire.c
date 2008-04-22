@@ -672,7 +672,7 @@ void MakeExtrude(struct rt_wdb (*file), char *suffix, point2d_t *verts, fastf_t 
 
 
     /* Set vertex and orientation vectors?? */
-    VSET( V, -patternwidth1/2, -tirewidth/2, zbase );
+    VSET( V, 0, -tirewidth/2, zbase );
     VSET( u_vec, 1, 0, 0 );
     VSET( v_vec, 0, 1, 0 );
     VMOVE( skt->V, V );
@@ -687,7 +687,7 @@ void MakeExtrude(struct rt_wdb (*file), char *suffix, point2d_t *verts, fastf_t 
     skt->vert_count = 12;/* this probably needs to be counted at input or included in pre-defineds */
     skt->verts = (point2d_t *)bu_calloc( skt->vert_count, sizeof( point2d_t ), "verts" );
     for ( i=0; i<skt->vert_count; i++ ) {
-	tmpvert[0][0] = verts[i][0]*patternwidth1;
+	tmpvert[0][0] = verts[i][0]*patternwidth1-patternwidth1/2;
 	tmpvert[0][1] = verts[i][1]*tirewidth;
 	V2MOVE( skt->verts[i], tmpvert[0] );
     }
@@ -830,7 +830,7 @@ void MakeTreadPattern(struct rt_wdb (*file), char *suffix, fastf_t dwidth, fastf
 	PatternPoints(pointlist,patternwidth1,dwidth/2-i*dwidth/10,z_base,0,dwidth/2-i*dwidth/10-dwidth/20,0,ztire,patternwidth1, dwidth/2-(i*dwidth/10)-dwidth/20,dwidth/2-(i*dwidth/10)-dwidth/10);
 	mk_arb8(file,bu_vls_addr(&str),&pointlist[0]);
     }
-*/
+
 
     arbsixlist[0] = patternwidth1+.01*patternwidth1;
     arbsixlist[1] = dwidth/2;
@@ -879,6 +879,7 @@ void MakeTreadPattern(struct rt_wdb (*file), char *suffix, fastf_t dwidth, fastf
     bu_vls_printf(&str,"patterncomponentcut2%s.s",suffix);
     mk_arb6(file,bu_vls_addr(&str),&arbsixlist[0]);
 
+*/
 
     BU_LIST_INIT(&treadpattern.l);
   
@@ -894,13 +895,13 @@ void MakeTreadPattern(struct rt_wdb (*file), char *suffix, fastf_t dwidth, fastf
     bu_vls_printf(&str, "extrude%s",suffix);
     (void)mk_addmember(bu_vls_addr(&str), &treadpattern.l, NULL, WMOP_UNION);
 
-    bu_vls_trunc(&str,0);
+    /*   bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "patterncomponentcut1%s.s",suffix);
     (void)mk_addmember(bu_vls_addr(&str), &treadpattern.l, NULL, WMOP_SUBTRACT);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "patterncomponentcut2%s.s",suffix);
     (void)mk_addmember(bu_vls_addr(&str), &treadpattern.l, NULL, WMOP_SUBTRACT);
-    
+    */
 
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "tread_master%s.c",suffix);
