@@ -79,11 +79,7 @@ _bu_close_files()
 
     /* free the head */
     if (_bu_tf->fd != -1) {
-	int err = close(_bu_tf->fd);
-	perror("boo");
-	if (err)
-	    printf("ERrOR: is %d\n", err);
-
+	close(_bu_tf->fd);
 	_bu_tf->fd = -1;
     }
     if (BU_VLS_IS_INITIALIZED(&_bu_tf->fn) && bu_vls_addr(&_bu_tf->fn)) {
