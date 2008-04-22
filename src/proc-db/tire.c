@@ -43,6 +43,17 @@
 #define COLS 5
 #define F_PI 3.1415926535897932384626433832795029L 
 
+void
+show_help(const char *name) {
+    printf("%s [-d <width>/<aspect>R<rim size>] [-a|-n <name>] [-t] [-h]\n", name);
+    printf("\t-d <width>/<aspect>R<rim size>\tSpecify tire dimensions (American units)\n");
+    printf("\t-a\tAutomatically generate top level name (tire-<width>-<aspect>R<rim size>\n");
+    printf("\t-n <name>\tSpecity top level name\n");
+    printf("\t-t\tGenerate tread\n");
+    printf("\t-h\tShow help\n");
+    return;
+}
+
 
 void getYRotMat(mat_t (*t), fastf_t theta)
 {
@@ -1379,7 +1390,7 @@ void MakeTireCore(struct rt_wdb (*file), char *suffix, fastf_t dytred, fastf_t d
 int ReadArgs(int argc, char **argv, fastf_t *isoarray, struct bu_vls *name, struct bu_vls *dimens, int *gen_name, int *add_tread)
 {
     int c = 0;
-    char *options="d:n:at";
+    char *options="d:n:ath";
     int d1, d2, d3;
     char spacer1,tiretype;
     bu_log("Reading args\n");
@@ -1407,6 +1418,12 @@ int ReadArgs(int argc, char **argv, fastf_t *isoarray, struct bu_vls *name, stru
 	    case 't':
 		*add_tread = 1;
 		break;
+	    case 'h':
+		show_help(*argv);
+		bu_exit(EXIT_SUCCESS, "");
+	    default:
+		show_help(*argv);
+		bu_exit(EXIT_FAILURE, "");
 	   }
 	 }
 	 return(bu_optind);
@@ -1441,8 +1458,10 @@ int main(int ac, char *av[])
     isoarray[2] = 18;
 
     /* Process arguments */
-    ReadArgs(ac, av, isoarray, &name, &dimen, &gen_name, &add_tread);
-
+    if( ReadArgs(ac, av, isoarray, &name, &dimen, &gen_name, &add_tread) == 1 ) {
+	show_help(*av);
+	bu_exit(0, "");
+    }
 
     /* Based on arguments, assign name for toplevel object
      * Default of "tire" is respected unless overridden by
