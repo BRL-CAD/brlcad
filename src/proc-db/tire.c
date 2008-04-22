@@ -651,7 +651,7 @@ void MakeWheelRims(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t z
 
 }
 
-void MakeExtrude(struct rt_wdb (*file), char *suffix, point2d_t *verts, fastf_t patternwidth1, fastf_t tirewidth, fastf_t zbase, fastf_t ztire)
+void MakeExtrude(struct rt_wdb (*file), char *suffix, point2d_t *verts, fastf_t patternwidth1, fastf_t patternwidth2, fastf_t tirewidth, fastf_t zbase, fastf_t ztire)
 {
     struct rt_sketch_internal *skt;
     struct line_seg *lsg;
@@ -672,22 +672,20 @@ void MakeExtrude(struct rt_wdb (*file), char *suffix, point2d_t *verts, fastf_t 
 
 
     /* Set vertex and orientation vectors?? */
-    VSET( V, 0, -tirewidth/2, zbase );
+    VSET( V, 0, -tirewidth/2, zbase-.1*zbase );
     VSET( u_vec, 1, 0, 0 );
     VSET( v_vec, 0, 1, 0 );
     VMOVE( skt->V, V );
     VMOVE( skt->u_vec, u_vec );
     VMOVE( skt->v_vec, v_vec );
 
-    /* Set height for eventual extrusion */
-    VSET( h, 0, 0, ztire-zbase);
 
 
     /* Define links between/order of vertices */
     skt->vert_count = 12;/* this probably needs to be counted at input or included in pre-defineds */
     skt->verts = (point2d_t *)bu_calloc( skt->vert_count, sizeof( point2d_t ), "verts" );
     for ( i=0; i<skt->vert_count; i++ ) {
-	tmpvert[0][0] = verts[i][0]*patternwidth1-patternwidth1/2;
+	tmpvert[0][0] = verts[i][0]*patternwidth2-patternwidth2/2;
 	tmpvert[0][1] = verts[i][1]*tirewidth;
 	V2MOVE( skt->verts[i], tmpvert[0] );
     }
@@ -715,9 +713,24 @@ void MakeExtrude(struct rt_wdb (*file), char *suffix, point2d_t *verts, fastf_t 
 
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str,"sketch%s",suffix);
-    bu_vls_trunc(&str2,0);
-    bu_vls_printf(&str2,"extrude%s",suffix);
     mk_sketch(file, bu_vls_addr(&str), skt );
+
+    /* Set height for eventual extrusion */
+    VSET( h, patternwidth1/2-patternwidth2/2, 0, ztire-(zbase-.11*zbase));
+    bu_vls_trunc(&str2,0);
+    bu_vls_printf(&str2,"extrude1%s",suffix);
+    mk_extrusion(file, bu_vls_addr(&str2), bu_vls_addr(&str), V, h, u_vec, v_vec, 0);    
+
+    /* Set height for eventual extrusion */
+    VSET( h, -patternwidth1/2+patternwidth2/2, 0, ztire-(zbase-.11*zbase)); 
+    bu_vls_trunc(&str2,0);
+    bu_vls_printf(&str2,"extrude2%s",suffix);
+    mk_extrusion(file, bu_vls_addr(&str2), bu_vls_addr(&str), V, h, u_vec, v_vec, 0);
+
+    /* Set height for eventual extrusion */
+    VSET( h, 0, 0, ztire-(zbase-.11*zbase));
+    bu_vls_trunc(&str2,0);
+    bu_vls_printf(&str2,"extrude3%s",suffix);
     mk_extrusion(file, bu_vls_addr(&str2), bu_vls_addr(&str), V, h, u_vec, v_vec, 0);
 }
 
@@ -798,7 +811,7 @@ void MakeTreadPattern(struct rt_wdb (*file), char *suffix, fastf_t dwidth, fastf
     
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str,"%s",suffix);
-    MakeExtrude(file, bu_vls_addr(&str), verts, 2*patternwidth1, dwidth, z_base, ztire);
+    MakeExtrude(file, bu_vls_addr(&str), verts, 2*patternwidth1, 2*patternwidth2, dwidth, z_base, ztire);
 
 
 
@@ -892,7 +905,13 @@ void MakeTreadPattern(struct rt_wdb (*file), char *suffix, fastf_t dwidth, fastf
     */
 
     bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "extrude%s",suffix);
+    bu_vls_printf(&str, "extrude1%s",suffix);
+    (void)mk_addmember(bu_vls_addr(&str), &treadpattern.l, NULL, WMOP_UNION);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "extrude2%s",suffix);
+    (void)mk_addmember(bu_vls_addr(&str), &treadpattern.l, NULL, WMOP_UNION);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "extrude3%s",suffix);
     (void)mk_addmember(bu_vls_addr(&str), &treadpattern.l, NULL, WMOP_UNION);
 
     /*   bu_vls_trunc(&str,0);
