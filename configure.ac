@@ -607,9 +607,6 @@ BC_ARG_ALIAS([build_ug], [ug-build])
 BC_ARG_ALIAS([build_ug], [nx])
 BC_ARG_ALIAS([build_ug], [nx-build])
 
-# ADRT aliases (help uses adrt-build)
-BC_ARG_ALIAS([build_adrt], [adrt])
-
 # install geometry aliases (help uses models-install)
 BC_ARG_ALIAS([install_geometry], [models])
 BC_ARG_ALIAS([install_geometry], [models-build])
@@ -757,13 +754,6 @@ if test "x$set_everything" != "x" ; then
 			bc_build_ug=no
 		fi
 	fi
-	# ADRT is known to not build on several platforms due to its
-        # external dependencies, so only allow it to be disabled.
-	if test "x$bc_build_adrt_set" = "xno" ; then
-		if test "x$set_everything" = "xno" ; then
-			bc_build_adrt="no"
-		fi
-	fi
 fi
 
 
@@ -874,9 +864,6 @@ AC_MSG_RESULT($bc_build_ef)
 
 AC_MSG_CHECKING(whether to compile the Unigraphics importer)
 AC_MSG_RESULT($bc_build_ug)
-
-AC_MSG_CHECKING(whether to compile ADRT)
-AC_MSG_RESULT($bc_build_adrt)
 
 AC_MSG_CHECKING(whether to install example geometry databases)
 AC_MSG_RESULT($bc_install_geometry)
@@ -3376,14 +3363,6 @@ fi # bc_with_wgl
 AC_MSG_CHECKING(whether to build against WindowsGL)
 AC_MSG_RESULT($build_against_wgl)
 
-dnl *** ADRT compilation ***
-dnl figure out whether we have everything we need to build ADRT
-build_brlcad_adrt="no"
-if test "x$bc_build_adrt" = "xauto" ; then
-    build_brlcad_adrt="yes"
-fi
-
-
 dnl *** Knobs availability ***
 dials_and_buttons=no
 AC_MSG_CHECKING(for SGI dials and buttons support)
@@ -3459,7 +3438,6 @@ AM_CONDITIONAL(BUILD_JOVE, [test "x$build_brlcad_jove" = "xyes"])
 AM_CONDITIONAL(BUILD_EF, [test "x$bc_build_ef" = "xyes"])
 AM_CONDITIONAL(BUILD_CUBIT, [test "x$bc_build_cubit" = "xyes"])
 AM_CONDITIONAL(BUILD_UG, [test "x$bc_build_ug" = "xyes"])
-AM_CONDITIONAL(BUILD_ADRT, [test "x$build_brlcad_adrt" = "xyes"])
 
 # libfb and libdm interfaces
 AM_CONDITIONAL(WITH_X11, [test "x$build_against_x11" != "xno"])
@@ -3975,7 +3953,6 @@ AC_MSG_RESULT([Build Template Numerical Toolkit......: $build_brlcad_tnt])
 AC_MSG_RESULT([Build openNURBS.......................: $build_brlcad_opennurbs])
 AC_MSG_RESULT([Build jove ...........................: $build_brlcad_jove])
 AC_MSG_RESULT([])
-AC_MSG_RESULT([ADRT support .........................: $build_brlcad_adrt])
 AC_MSG_RESULT([X11 support ..........................: $build_against_x11])
 AC_MSG_RESULT([OpenGL support .......................: $build_against_opengl])
 AC_MSG_RESULT([Java Developer Kit support ...........: $build_against_java])
