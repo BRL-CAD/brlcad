@@ -49,7 +49,9 @@
 #  define BRLCAD_ROOT "/usr/brlcad"
 #endif
 
-#define MAX_WHERE_SIZE (size_t)(MAXPATHLEN + 64)
+
+/* arbitrary buffer size large enough to hold a couple paths and a label */
+#define MAX_WHERE_SIZE (size_t)((MAXPATHLEN*2) + 64)
 
 
 /* internal storage for bu_getprogname/bu_setprogname */
